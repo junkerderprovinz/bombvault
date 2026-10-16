@@ -99,10 +99,10 @@ type Settings struct {
 	// Settings stays comparable; read and write it through OwnRetention
 	// and SetOwnRetention.
 	RetentionOverrides string
-	// Off-site retention policy, separate from the local one so the off-site
-	// repo can serve as a longer archive. All zero never prunes the off-site
-	// repo. A domain listed in OffsiteRetentionOverrides ages its built-in
-	// off-site repo by its own policy instead.
+	// Off-site keep-policy a domain's primary off-site target starts with when
+	// its off-site field creates one, and the one it ages by while it has no
+	// target row. A domain listed in OffsiteRetentionOverrides starts from its
+	// own policy instead.
 	OffsiteRetentionKeepLast    int
 	OffsiteRetentionKeepDaily   int
 	OffsiteRetentionKeepWeekly  int

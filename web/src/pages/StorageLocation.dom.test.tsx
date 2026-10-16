@@ -389,29 +389,21 @@ describe("a destination", () => {
     const keep = card("How long to keep");
     expect(within(keep).getByText("Custom values · Keeps 0 latest, 7 daily, 4 weekly, 6 monthly, 1 yearly.")).toBeTruthy();
     const back = within(keep).getAllByRole("button", { name: "Reset to the storage location" });
-    // Containers is the copy its domain's off-site settings describe.
-    expect(back).toHaveLength(1);
+    // Containers, the copy its domain's off-site settings describe, goes back for its keep rules too.
+    expect(back).toHaveLength(2);
 
-    await click(back[0]);
+    await click(back[1]);
     expect(updateOffsiteTarget).toHaveBeenCalledWith("t-flash", target(), undefined, ["retention"]);
     expect(await screen.findByText("Back to the storage location’s rules")).toBeTruthy();
   });
 
-  it("offers the primary copy no way back on any setting", async () => {
+  it("offers the primary copy no way back on a setting other than its keep rules", async () => {
     await renderPage("destination:box");
 
     for (const title of ["Connection", "Copy"]) {
       expect(within(card(title)).getAllByText("Containers").length).toBeGreaterThan(0);
       expect(within(card(title)).queryByRole("button", { name: "Reset to the storage location" })).toBeNull();
     }
-  });
-
-  it("points the primary copy's own keep rules to the off-site retention settings", async () => {
-    await renderPage("destination:box");
-
-    const link = within(card("How long to keep")).getByRole("link", { name: "Off-site retention" });
-    expect(link.getAttribute("href")).toBe("/settings/storage#retention");
-    expect(within(card("How long to keep")).getAllByRole("link")).toHaveLength(1);
   });
 
   it("says when each section copies", async () => {
@@ -596,17 +588,16 @@ describe("the copy a section's off-site settings describe", () => {
     sections: [section({ domain: "files", targetId: "t-primary", primary: true })],
   });
 
-  it("shows its values and offers nothing to change them with", async () => {
+  it("lets its keep rules be changed here and nothing else", async () => {
     stage(PRIMARY, [target({ id: "t-primary", domain: "files", destinationId: undefined, sortOrder: 0 })]);
     await renderPage("target:t-primary");
 
-    expect(screen.queryByRole("switch")).toBeNull();
-    expect(screen.queryByRole("radiogroup")).toBeNull();
-    expect(screen.queryByRole("spinbutton")).toBeNull();
-    expect(within(card("How long to keep")).getByText("Long")).toBeTruthy();
+    expect(screen.getAllByRole("switch").map((s) => s.getAttribute("aria-label"))).toEqual(["Ask before keeping less"]);
+    expect(screen.getAllByRole("radiogroup")).toHaveLength(1);
+    expect(within(card("How long to keep")).getByRole("radio", { name: "Long" })).toBeTruthy();
     expect(
       screen.getByLabelText(
-        "This is the copy from the off-site field of Folders. You set its values in Settings, Storage locations. This page only shows them."
+        "This is the copy from the off-site field of Folders. You set how long it keeps backups here. Its other values come from Settings, Storage locations."
       )
     ).toBeTruthy();
   });

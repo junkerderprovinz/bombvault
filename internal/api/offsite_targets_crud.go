@@ -476,8 +476,8 @@ func (h *Handler) handleTamperTestOffsiteTarget(w http.ResponseWriter, r *http.R
 }
 
 // followDestination gives t its destination's values for the named settings
-// and stops t keeping its own. The primary cannot follow: the domain's
-// off-site settings write its values on every save.
+// and stops t keeping its own. The primary follows only for its keep-policy:
+// the domain's off-site settings write its other values on every save.
 func (h *Handler) followDestination(t *store.OffsiteTarget, existing store.OffsiteTarget, names []string) error {
 	follow, err := parseOwnSettings(names)
 	if err != nil {
@@ -489,7 +489,7 @@ func (h *Handler) followDestination(t *store.OffsiteTarget, existing store.Offsi
 		return err
 	case !ok:
 		return errors.New("this target follows no destination")
-	case existing.SortOrder == 0:
+	case existing.SortOrder == 0 && follow&^store.OwnRetention != 0:
 		return errors.New("the off-site settings of the domain decide these for its primary target")
 	}
 	t.TakeFrom(d, follow)

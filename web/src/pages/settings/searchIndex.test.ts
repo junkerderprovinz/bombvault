@@ -40,17 +40,10 @@ describe("the settings search index", () => {
 
   it("knows every keep rule of the retention grids with its (i)", () => {
     const grid = /\["\w+", "(settings\.retention\w+)", "(settings\.retention\w+Info)"\]/g;
-    expect(pageSource("storage")).toContain("<RetentionRulesCard");
-    const sectionSource = readFileSync(join(HERE, "OwnRetentionCard.tsx"), "utf8");
-    const pageRules = [...sectionSource.matchAll(grid)].map(([, key, hint]) => ({ key, hint }));
     const targetSource = readFileSync(join(HERE, "..", "..", "components", "OffsiteTargetsSection.tsx"), "utf8");
     const targetRules = [...targetSource.matchAll(grid)].map(([, key, hint]) => ({ key, hint }));
-    expect(pageRules.map((r) => r.key)).toContain("settings.retentionYearly");
     expect(targetRules.map((r) => r.key)).toContain("settings.retentionYearly");
 
-    const section = SETTINGS_INDEX.storage.find((c) => c.title === "settings.retentionOffsiteTitle");
-    expect(section).toBeDefined();
-    for (const rule of pageRules) expect(section?.rows).toContainEqual(rule);
     for (const card of SETTINGS_INDEX.storage.filter((c) => c.title === "offsite.copyDomainTitle")) {
       for (const rule of targetRules) expect(card.rows).toContainEqual(rule);
     }
@@ -116,17 +109,12 @@ describe("the settings search index", () => {
     for (const row of rows) expect(card?.rows).toContainEqual(row);
   });
 
-  it("indexes each switch and the extra-targets line of the retention card with its (i)", () => {
-    const source = readFileSync(join(HERE, "OwnRetentionCard.tsx"), "utf8");
-    const rows = SETTINGS_INDEX.storage.find((c) => c.title === "settings.retentionOffsiteTitle")?.rows ?? [];
-    const hint = "settings.ownOffsiteRetentionToggleHint";
-    expect(source).toContain(`"${hint}"`);
-    expect(rows).toContainEqual({ key: "settings.ownOffsiteRetention", hint });
-    expect(source).toContain('"settings.retentionExtraTargets"');
-    expect(rows).toContainEqual({ key: "settings.retentionExtraTargets" });
-    for (const key of ["nav.containers", "nav.vms", "nav.flash", "nav.files", "nav.zfs", "nav.config"] as const) {
+  it("indexes the retention card's pointer to the storage locations and its link", () => {
+    const source = readFileSync(join(HERE, "sections", "RetentionCards.tsx"), "utf8");
+    const rows = SETTINGS_INDEX.storage.find((c) => c.title === "storage.keep.title")?.rows ?? [];
+    for (const key of ["settings.retentionWhere", "storage.rules.open"] as const) {
       expect(source).toContain(`"${key}"`);
-      expect(rows).toContainEqual({ key, hint });
+      expect(rows).toContainEqual({ key });
     }
   });
 

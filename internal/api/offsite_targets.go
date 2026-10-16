@@ -42,7 +42,9 @@ func validOffsiteDomain(domain string) bool {
 // decoded it stays empty, which offsiteModeForTarget treats as the global
 // class. A primary that follows a destination takes name, storage class,
 // append-only flag and provider from it instead, and stops following it once
-// the field names another location or none.
+// the field names another location or none. The keep-policy is set on the
+// storage location's page, so an existing primary keeps its own; the off-site
+// settings only seed a new one.
 func (s *Service) syncPrimaryOffsiteTarget(domain string, settings store.Settings) error {
 	if s.store == nil {
 		return nil
@@ -101,6 +103,8 @@ func (s *Service) syncPrimaryOffsiteTarget(domain string, settings store.Setting
 		t.ID = primary.ID
 		t.CreatedAt = primary.CreatedAt
 		t.CredsRef = primary.CredsRef
+		t.Own = primary.Own
+		t.TakeFrom(*primary, store.OwnRetention)
 		if primary.DestinationID != "" {
 			t.StorageClass, t.Immutable, t.Provider = primary.StorageClass, primary.Immutable, primary.Provider
 		}
@@ -230,12 +234,12 @@ func (s *Service) rejectAdoptionOverOwnSettings(settings store.Settings) (string
 	return "", nil
 }
 
-// sameOffsitePolicy reports whether a and b replicate, age and limit the same way.
+// sameOffsitePolicy reports whether a and b replicate and limit the same way.
+// The keep-policy does not count: a target taken over as the primary keeps its
+// own.
 func sameOffsitePolicy(a, b store.OffsiteTarget) bool {
 	return a.Immutable == b.Immutable && a.Schedule == b.Schedule &&
-		a.RetentionKeepLast == b.RetentionKeepLast && a.RetentionKeepDaily == b.RetentionKeepDaily &&
-		a.RetentionKeepWeekly == b.RetentionKeepWeekly && a.RetentionKeepMonthly == b.RetentionKeepMonthly &&
-		a.RetentionKeepYearly == b.RetentionKeepYearly && storedCompression(a.Compression) == storedCompression(b.Compression) &&
+		storedCompression(a.Compression) == storedCompression(b.Compression) &&
 		a.LimitUpload == b.LimitUpload && a.LimitDownload == b.LimitDownload &&
 		a.GrowthBudgetGB == b.GrowthBudgetGB
 }

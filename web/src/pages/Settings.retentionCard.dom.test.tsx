@@ -97,7 +97,7 @@ async function renderRetention() {
   await act(async () => {
     render(<RouterProvider router={router} />);
   });
-  await screen.findByRole("heading", { name: new RegExp(`^${en["settings.retentionOffsiteTitle"]}`) });
+  await screen.findByRole("heading", { name: new RegExp(`^${en["storage.keep.title"]}`) });
   return router;
 }
 
@@ -105,7 +105,7 @@ function card(name: string): HTMLElement {
   return document.querySelector(`[data-search-card="${name}"]`) as HTMLElement;
 }
 
-const OFFSITE = en["settings.retentionOffsiteTitle"];
+const KEEP = en["storage.keep.title"];
 const PREVIEW = en["restore.preview"];
 
 beforeEach(() => {
@@ -134,37 +134,17 @@ afterEach(() => {
 });
 
 describe("the retention cards of the Storage locations tile", () => {
-  it("draws the Off-site retention card and the Preview card in a row, and no card for the local rules", async () => {
-    await renderRetention();
+  it("send the keep rules to the storage locations and keep no fields of their own", async () => {
+    const router = await renderRetention();
     const cards = [...document.querySelectorAll("[data-search-card]")].map((c) => c.getAttribute("data-search-card"));
-    const at = cards.indexOf(OFFSITE);
-    expect(cards.slice(at, at + 2)).toEqual([OFFSITE, PREVIEW]);
-    expect(screen.getAllByText(en["settings.retentionYearly"])).toHaveLength(1);
-  });
-
-  it("shows the shared rules and a switch per source, named by the source", async () => {
-    await renderRetention();
-    expect(within(card(OFFSITE)).getAllByRole("spinbutton").map((f) => (f as HTMLInputElement).value)).toEqual(["0", "0", "0", "12", "0"]);
-    const switches = within(card(OFFSITE)).getAllByRole("switch");
-    expect(switches).toHaveLength(6);
-    expect(switches[0].getAttribute("aria-label")).toBe(en["settings.ownOffsiteRetentionFor"].replace("{source}", en["nav.containers"]));
-    expect(within(card(OFFSITE)).getByText(en["nav.containers"])).toBeTruthy();
-  });
-
-  it("unfolds a source's off-site fields under its switch and saves them as its own off-site rules", async () => {
-    await renderRetention();
-    const toggle = within(card(OFFSITE)).getByRole("switch", {
-      name: en["settings.ownOffsiteRetentionFor"].replace("{source}", en["nav.containers"]),
-    });
+    const at = cards.indexOf(KEEP);
+    expect(cards.slice(at, at + 2)).toEqual([KEEP, PREVIEW]);
+    expect(within(card(KEEP)).getByText(en["settings.retentionWhere"])).toBeTruthy();
+    expect(within(card(KEEP)).queryAllByRole("spinbutton")).toHaveLength(0);
     await act(async () => {
-      fireEvent.click(toggle);
+      fireEvent.click(within(card(KEEP)).getByRole("link", { name: en["storage.rules.open"] }));
     });
-    await waitFor(() => expect(putCalls).toHaveLength(1));
-    expect(putCalls[0].ownOffsiteRetention).toEqual({
-      containers: { keepLast: 0, keepDaily: 0, keepWeekly: 0, keepMonthly: 12, keepYearly: 0 },
-    });
-    expect(putCalls[0].ownRetention).toEqual({});
-    expect(within(card(OFFSITE)).getAllByRole("spinbutton")).toHaveLength(10);
+    expect(router.state.location.pathname).toBe("/storage");
   });
 
   it("has one preview, on its own card, asking about both copies", async () => {
@@ -179,27 +159,8 @@ describe("the retention cards of the Storage locations tile", () => {
     await waitFor(() => expect(previews).toHaveLength(2));
     expect(previews).toEqual(expect.arrayContaining([["containers", undefined], ["containers", "offsite"]]));
   });
-
-  it("links the additional off-site targets to the off-site cards", async () => {
-    const router = await renderRetention();
-    const link = within(card(OFFSITE)).getByRole("link", { name: en["settings.retentionExtraTargets"] });
-    await act(async () => {
-      fireEvent.click(link);
-    });
-    expect(router.state.location.pathname).toBe("/settings/storage");
-  });
-
-  it("puts the OR rule and the append-only note in the rules card's (i)", async () => {
-    await renderRetention();
-    const tips = (name: string) =>
-      [...card(name).querySelectorAll("h2 [aria-label]")].map((el) => el.getAttribute("aria-label") ?? "").join(" ");
-    expect(tips(OFFSITE)).toContain(en["settings.retentionCombineInfo"]);
-    expect(tips(OFFSITE)).toContain(en["settings.retentionImmutableNotPruned"]);
-    for (const key of ["settings.retentionCombineInfo", "settings.retentionImmutableNotPruned"] as const) {
-      expect(screen.queryByText(en[key])).toBeNull();
-    }
-  });
 });
+
 
 describe("the storage locations tile", () => {
   it("says the locations could not be read instead of checking forever", async () => {

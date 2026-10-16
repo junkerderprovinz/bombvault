@@ -244,17 +244,25 @@ export function OffsiteWizard({
   // Bumped when the tamper test cannot run at all.
   const [tamperShake, setTamperShake] = useState(0);
 
-  // The prune step reports what happens rather than offering a choice:
-  // service.go's copyToOffsiteTarget never prunes an immutable target from
-  // here and applies the domain's off-site keep values otherwise, its own or
-  // the shared ones.
-  const keep = settings.ownOffsiteRetention?.[domain] ?? {
-    keepLast: settings.offsiteRetentionKeepLast,
-    keepDaily: settings.offsiteRetentionKeepDaily,
-    keepWeekly: settings.offsiteRetentionKeepWeekly,
-    keepMonthly: settings.offsiteRetentionKeepMonthly,
-    keepYearly: settings.offsiteRetentionKeepYearly,
-  };
+  // The prune step reports what happens rather than offering a choice: the
+  // copy pass never prunes an immutable target from here and applies the
+  // target's keep values otherwise. Before the target exists, the values it
+  // will start with stand in.
+  const keep = primaryTarget
+    ? {
+        keepLast: primaryTarget.retentionKeepLast,
+        keepDaily: primaryTarget.retentionKeepDaily,
+        keepWeekly: primaryTarget.retentionKeepWeekly,
+        keepMonthly: primaryTarget.retentionKeepMonthly,
+        keepYearly: primaryTarget.retentionKeepYearly,
+      }
+    : (settings.ownOffsiteRetention?.[domain] ?? {
+        keepLast: settings.offsiteRetentionKeepLast,
+        keepDaily: settings.offsiteRetentionKeepDaily,
+        keepWeekly: settings.offsiteRetentionKeepWeekly,
+        keepMonthly: settings.offsiteRetentionKeepMonthly,
+        keepYearly: settings.offsiteRetentionKeepYearly,
+      });
   const keepTotal = keep.keepLast + keep.keepDaily + keep.keepWeekly + keep.keepMonthly + keep.keepYearly;
   const pruneMode: "farside" | "policy" | "none" = immutable
     ? "farside"

@@ -1,7 +1,6 @@
 // The rows a storage location's cards are made of: a setting with its control,
 // and the sections that hold a setting for themselves.
 import type { ReactNode } from "react";
-import { Link } from "react-router-dom";
 import type { FollowedSetting, OffsiteDomain, StorageLocation, StorageLocationSection } from "../../lib/api";
 import { useT } from "../../lib/i18n";
 import { DOMAIN_LABEL, canFollow, deviating } from "../../lib/storageLocations";
@@ -79,8 +78,8 @@ export function DomainGlyph({ domain }: { domain: OffsiteDomain }) {
 /**
  * Deviations lists the sections that hold `setting` themselves, each with its
  * own value and the way back to the location's. The copy a domain's off-site
- * settings describe cannot go back, so it gets the reason instead of a button,
- * and for retention a link to the page where those rules are set.
+ * settings describe goes back only for retention; for anything else it gets
+ * the reason instead of a button.
  */
 export function Deviations({
   location,
@@ -112,7 +111,7 @@ export function Deviations({
               {t("storage.keep.custom")} · {describe(section)}
             </span>
           </span>
-          {canFollow(location, section) ? (
+          {canFollow(location, section, setting) && (
             <Button
               label={t("storage.own.reset")}
               labelKey="storage.own.reset"
@@ -121,16 +120,6 @@ export function Deviations({
               disabled={busy}
               onClick={() => onFollow(section, setting)}
             />
-          ) : (
-            setting === "retention" &&
-            section.primary && (
-              <Link
-                to="/settings/storage#retention"
-                className="text-sm text-accentText underline decoration-carbon-border underline-offset-[3px] hover:decoration-accentText"
-              >
-                {t("settings.retentionOffsiteTitle")}
-              </Link>
-            )
           )}
         </li>
       ))}

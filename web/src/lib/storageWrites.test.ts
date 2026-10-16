@@ -115,10 +115,10 @@ describe("writable", () => {
     expect(can.has("offPremises")).toBe(false);
   });
 
-  it("changes nothing on the copy a domain's off-site settings describe", () => {
+  it("changes only the keep rules of the copy a domain's off-site settings describe", () => {
     const loc = location({ id: "target:t1", object: "target", sections: [section({ targetId: "t1", primary: true })] });
     expect(settingsOwned(loc)).toBe(true);
-    expect(writable(loc, { targets: [target()] }).size).toBe(0);
+    expect([...writable(loc, { targets: [target()] })]).toEqual(["retention"]);
   });
 
   it("lets the local folder change the shared rule and nothing else", () => {

@@ -531,8 +531,11 @@ func (r *Repo) PrimaryFromDestination(destID, domain, location string, settle fu
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
 			t = OffsiteTarget{ID: newID(), Domain: domain, Role: RoleOffsite, CreatedAt: time.Now().Unix()}
-			if _, err := tx.Exec(`INSERT INTO offsite_targets (id, domain, name, repo, role, enabled, created_at, sort_order)
-				VALUES (?, ?, ?, ?, ?, 1, ?, 0)`, t.ID, domain, d.Name, location, RoleOffsite, t.CreatedAt); err != nil {
+			t.TakeFrom(d, OwnRetention)
+			if _, err := tx.Exec(`INSERT INTO offsite_targets (id, domain, name, repo, role, enabled, created_at, sort_order,
+				  retention_keep_last, retention_keep_daily, retention_keep_weekly, retention_keep_monthly, retention_keep_yearly)
+				VALUES (?, ?, ?, ?, ?, 1, ?, 0, ?, ?, ?, ?, ?)`, t.ID, domain, d.Name, location, RoleOffsite, t.CreatedAt,
+				t.RetentionKeepLast, t.RetentionKeepDaily, t.RetentionKeepWeekly, t.RetentionKeepMonthly, t.RetentionKeepYearly); err != nil {
 				return err
 			}
 		case err != nil:

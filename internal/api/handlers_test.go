@@ -1111,7 +1111,9 @@ func TestSettingsPutImmutableRetentionWarning(t *testing.T) {
 		t.Fatalf("note must explain the append-only conflict, got %q", notes[0])
 	}
 
-	// Immutable without off-site retention → ok, no note.
+	// Immutable without off-site retention → ok, no note. A fresh instance,
+	// since the target the first save created keeps its daily 14.
+	h, _ = newTestRouter(t, d, &fakeResticEngine{})
 	body = `{
 		"containersPath": "backups/c",
 		"vmsPath": "backups/v",

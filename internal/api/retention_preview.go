@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/restic"
+	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
 // RetentionPolicyView is the keep-policy a preview was computed with, carried
@@ -21,8 +22,8 @@ type RetentionPolicyView struct {
 	KeepWeekly  int  `json:"keepWeekly"`
 	KeepMonthly int  `json:"keepMonthly"`
 	KeepYearly  int  `json:"keepYearly"`
-	// Own marks the domain's own keep-policy, local or off-site, as opposed to
-	// the shared one.
+	// Own marks the domain's own keep-policy, as opposed to the shared local
+	// one or the storage location's.
 	Own bool `json:"own"`
 }
 
@@ -99,8 +100,8 @@ func (s *Service) PreviewRetention(ctx context.Context, domain, source string) (
 	policy := s.retentionPolicyForSource(settings, domain, source)
 	_, own := settings.OwnRetention()[domain]
 	if isOffsiteSource(source) {
-		_, own = settings.OwnOffsiteRetention()[domain]
-		own = own && s.isBuiltInOffsiteSource(settings, domain, source)
+		t, err := s.offsiteTargetForSource(settings, domain, source)
+		own = err == nil && t.DestinationID != "" && t.Keeps(store.OwnRetention)
 	}
 	out := RetentionPreview{Policy: RetentionPolicyView{
 		On:          policy.Any(),

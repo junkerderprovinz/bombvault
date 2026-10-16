@@ -1318,7 +1318,7 @@ func TestNewCredentialsReachADirectRepositoryOnlyWhenTheyOpenIt(t *testing.T) {
 	}
 }
 
-func TestASettingsSaveWarnsWhenTheFieldTargetsDirectRepositoryKeepsLess(t *testing.T) {
+func TestASettingsSaveLeavesTheFieldTargetsKeepPolicyAlone(t *testing.T) {
 	f := newPlacementFixture(t)
 	field := f.fieldTarget("containers", "b2:bkt:containers")
 	f.container("web", f.direct(field).ID)
@@ -1332,11 +1332,27 @@ func TestASettingsSaveWarnsWhenTheFieldTargetsDirectRepositoryKeepsLess(t *testi
 	if res["ok"] != true {
 		t.Fatalf("save = %v", res)
 	}
-	if codes := warningCodes(t, res); !slices.Equal(codes, []string{"direct-retention-lowered"}) {
+	if codes := warningCodes(t, res); len(codes) != 0 {
 		t.Fatalf("warnings = %v", codes)
 	}
-	if _, ok := res["notes"].([]any); !ok {
-		t.Fatalf("no notes list in %v", res)
+	if got, ok, err := f.st.GetOffsiteTarget(field.ID); err != nil || !ok || got.RetentionKeepLast != field.RetentionKeepLast {
+		t.Fatalf("field target = %+v, found=%v err=%v, want its keep-policy unchanged", got, ok, err)
+	}
+}
+
+func TestLoweringTheFieldTargetsKeepPolicyWarnsAboutItsDirectRepository(t *testing.T) {
+	f := newPlacementFixture(t)
+	field := f.fieldTarget("containers", "b2:bkt:containers")
+	field.RetentionKeepDaily = 30
+	field, err := f.st.UpsertOffsiteTarget(field)
+	if err != nil {
+		t.Fatal(err)
+	}
+	f.container("web", f.direct(field).ID)
+	v := offsiteTargetToView(field)
+	v.RetentionKeepDaily = 7
+	if codes := warningCodes(t, f.do("PUT", "/api/offsite/targets/"+field.ID, v)); !slices.Equal(codes, []string{"direct-retention-lowered"}) {
+		t.Fatalf("warnings = %v", codes)
 	}
 }
 

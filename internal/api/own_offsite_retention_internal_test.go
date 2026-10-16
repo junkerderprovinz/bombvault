@@ -101,7 +101,7 @@ func TestAnotherSourcesOwnOffsitePolicyLeavesTheSharedOneOnTheCopyPass(t *testin
 	}
 }
 
-func TestASettingsSaveCarriesTheOwnOffsitePolicyToTheCopyPass(t *testing.T) {
+func TestTheCopyPassAgesTheFieldTargetByTheKeepPolicySetOnIt(t *testing.T) {
 	f := newPlacementFixture(t)
 	withOwnOffsiteRetention(f, 3, nil)
 	extra, err := f.st.UpsertOffsiteTarget(store.OffsiteTarget{
@@ -110,14 +110,23 @@ func TestASettingsSaveCarriesTheOwnOffsitePolicyToTheCopyPass(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	field, ok, err := f.st.FieldOffsiteTarget("containers")
+	if err != nil || !ok {
+		t.Fatalf("field target: found=%v err=%v", ok, err)
+	}
+	v := offsiteTargetToView(field)
+	v.RetentionKeepLast, v.RetentionKeepDaily = 0, 14
+	if res := f.do("PUT", "/api/offsite/targets/"+field.ID, v); res["ok"] != true {
+		t.Fatalf("PUT target: %v", res["error"])
+	}
 	settings, err := f.st.GetSettings()
 	if err != nil {
 		t.Fatal(err)
 	}
-	v := toView(settings)
-	v.OwnOffsiteRetention = map[string]store.RetentionKeep{"containers": {KeepDaily: 14, KeepMonthly: -1}}
-	if res := f.do("PUT", "/api/settings", v); res["ok"] != true {
-		t.Fatalf("PUT: %v", res["error"])
+	sv := toView(settings)
+	sv.OwnOffsiteRetention = map[string]store.RetentionKeep{"containers": {KeepWeekly: 2}}
+	if res := f.do("PUT", "/api/settings", sv); res["ok"] != true {
+		t.Fatalf("PUT settings: %v", res["error"])
 	}
 
 	targets, err := f.st.OffsiteTargetsForDomain("containers")
@@ -131,7 +140,7 @@ func TestASettingsSaveCarriesTheOwnOffsitePolicyToTheCopyPass(t *testing.T) {
 		}
 	}
 	if primary.Repo != "offsite/containers" || primary.RetentionKeepDaily != 14 || primary.RetentionKeepLast != 0 || primary.RetentionKeepMonthly != 0 {
-		t.Fatalf("primary target = %+v, want offsite/containers on the containers' own daily 14", primary)
+		t.Fatalf("primary target = %+v, want offsite/containers on the daily 14 set on it", primary)
 	}
 
 	dest := f.root + "/offsite/containers"
@@ -146,7 +155,7 @@ func TestASettingsSaveCarriesTheOwnOffsitePolicyToTheCopyPass(t *testing.T) {
 	replicateContainers(f, stored)
 
 	if got := forgetsAt(f, dest); len(got) != 1 || got[0].Policy != (restic.RetentionPolicy{KeepDaily: 14, Direct: true}) {
-		t.Fatalf("built-in off-site forgets = %+v, want the containers' own daily 14", got)
+		t.Fatalf("built-in off-site forgets = %+v, want the daily 14 set on the target", got)
 	}
 	if got := forgetsAt(f, extraDest); len(got) != 1 || got[0].Policy != (restic.RetentionPolicy{KeepLast: 9, Direct: true}) {
 		t.Fatalf("forgets on the additional target %s = %+v, want its own keep-last 9", extra.Name, got)
@@ -205,7 +214,7 @@ func TestAManualPruneOfAnAdditionalTargetIgnoresTheSourcesOwnOffsitePolicy(t *te
 	}
 }
 
-func TestTheOffsitePreviewNamesTheSourcesOwnPolicy(t *testing.T) {
+func TestTheOffsitePreviewShowsTheFieldTargetsPolicy(t *testing.T) {
 	f := newPlacementFixture(t)
 	withOwnOffsiteRetention(f, 3, map[string]store.RetentionKeep{"containers": {KeepDaily: 14}})
 	dest := f.root + "/offsite/containers"
@@ -216,7 +225,8 @@ func TestTheOffsitePreviewNamesTheSourcesOwnPolicy(t *testing.T) {
 	if err != nil {
 		t.Fatalf("PreviewRetention: %v", err)
 	}
-	want := RetentionPolicyView{On: true, KeepDaily: 14, Own: true}
+	// The target is a storage location by itself, so its rules are the location's.
+	want := RetentionPolicyView{On: true, KeepDaily: 14}
 	if got.Policy != want {
 		t.Fatalf("policy = %+v, want %+v", got.Policy, want)
 	}

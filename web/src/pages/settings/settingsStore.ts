@@ -9,27 +9,13 @@ import {
   putSettings,
   type OffsiteTarget,
 } from "../../lib/api";
-import { subscribeOffsiteTargets, type OffsiteDomain } from "../../lib/useOffsiteTargets";
-import { useNamedRepos } from "../../lib/useNamedRepos";
+import { subscribeOffsiteTargets } from "../../lib/useOffsiteTargets";
 import { useConfirm } from "../../lib/useConfirm";
 import { pushSaveWarnings } from "../../lib/placementCodes";
-import { directAsk, primaryDirects, retentionLowered } from "../../lib/directRepo";
 import type { Settings, Container, VM } from "../../lib/api";
 import { useT } from "../../lib/i18n";
 import { useToast } from "../../lib/toast";
 import type { SaveState } from "./shared";
-
-/** The off-site rules a domain ages by: its own, or the shared ones. */
-function offsiteRetentionOf(s: Settings, domain: string) {
-  const own = s.ownOffsiteRetention[domain as OffsiteDomain];
-  return {
-    retentionKeepLast: own ? own.keepLast : s.offsiteRetentionKeepLast,
-    retentionKeepDaily: own ? own.keepDaily : s.offsiteRetentionKeepDaily,
-    retentionKeepWeekly: own ? own.keepWeekly : s.offsiteRetentionKeepWeekly,
-    retentionKeepMonthly: own ? own.keepMonthly : s.offsiteRetentionKeepMonthly,
-    retentionKeepYearly: own ? own.keepYearly : s.offsiteRetentionKeepYearly,
-  };
-}
 
 /** settleHookClears turns a sent hook removal into the state it left behind.
  *  The clear flag holds for one write; kept, it would wipe the hook again on
@@ -46,10 +32,9 @@ function settleHookClears(s: Settings): Settings {
 // useSettingsStore loads the settings and owns every write to them.
 // SettingsPage calls it once and hands the result to its pages.
 export function useSettingsStore() {
-  const { t, lang } = useT();
+  const { t } = useT();
   const { push } = useToast();
   const { confirm, confirmDialog } = useConfirm();
-  const namedRepos = useNamedRepos();
   const [allTargets, setAllTargets] = useState<OffsiteTarget[]>([]);
   useEffect(() => {
     const load = () => {
@@ -62,7 +47,6 @@ export function useSettingsStore() {
     load();
     return subscribeOffsiteTargets(load);
   }, []);
-  const fieldDirects = primaryDirects(allTargets, namedRepos);
 
   const [settings, setSettings] = useState<Settings | null>(null);
   // savedBaseline is the server's last-confirmed state. Every save merges its
@@ -133,9 +117,6 @@ export function useSettingsStore() {
     | "dbDumpsEnabled";
   const [domainToggleBusy, setDomainToggleBusy] = useState<Partial<Record<DomainToggleKey, boolean>>>({});
   const [domainToggleShake, setDomainToggleShake] = useState<Partial<Record<DomainToggleKey, number>>>({});
-
-  const [, setRetSaveState] = useState<SaveState>("idle");
-  const [, setRetSaveError] = useState<string | null>(null);
 
   // The containers and VMs the order lists of the schedules page arrange.
   const [containers, setContainers] = useState<Container[]>([]);
@@ -291,25 +272,6 @@ export function useSettingsStore() {
       push(err instanceof Error ? err.message : t("settings.error"), "fail");
       return false;
     }
-  }
-
-  // A domain's off-site rules, its own or the shared ones, are copied onto its
-  // field target, so a save that lowers them reaches that target's direct
-  // repository at once. Declined, the fields go back to what was saved.
-  async function saveOffsiteRetention(patch: Partial<Settings>): Promise<boolean> {
-    const before = savedBaseline.current;
-    if (before) {
-      const after = { ...before, ...patch };
-      const reached = fieldDirects.filter((u) =>
-        retentionLowered(offsiteRetentionOf(before, u.target.domain), offsiteRetentionOf(after, u.target.domain))
-      );
-      if (reached.length > 0 && !(await confirm(directAsk(t, lang, "offsite.directRetentionAsk", reached)))) {
-        const restore = Object.fromEntries(Object.keys(patch).map((k) => [k, before[k as keyof Settings]]));
-        setSettings((prev) => (prev ? { ...prev, ...restore } : prev));
-        return false;
-      }
-    }
-    return save(patch, setRetSaveState, setRetSaveError);
   }
 
   // toggleDomainEnabled saves a domain row the moment it is clicked (#142): an
@@ -592,7 +554,6 @@ export function useSettingsStore() {
     platformSet,
     confirmDialog,
     allTargets,
-    fieldDirects,
     authEnabled,
     setAuthEnabled,
     totpEnabled,
@@ -603,7 +564,6 @@ export function useSettingsStore() {
     containers,
     vms,
     save,
-    saveOffsiteRetention,
     debouncedSave,
     cancelDebounce,
     applyImportedSettings,

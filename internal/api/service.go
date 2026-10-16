@@ -2013,14 +2013,20 @@ func keepPolicy(k store.RetentionKeep) restic.RetentionPolicy {
 }
 
 // offsiteRetentionPolicy is the keep-policy of a domain's built-in off-site
-// repo, separate from the local one so the off-site copy can be kept longer as
-// an archive. All zero, the default, never prunes it.
+// repo: its target's, set on the storage location's page, or the off-site
+// settings' while the domain has no target row. All zero never prunes it.
 func (s *Service) offsiteRetentionPolicy(settings store.Settings, domain string) restic.RetentionPolicy {
+	if s.store != nil {
+		if t, ok, err := s.store.FieldOffsiteTarget(domain); err == nil && ok {
+			return targetOffsiteRetentionPolicy(t)
+		}
+	}
 	return keepPolicy(offsiteKeep(settings, domain))
 }
 
 // offsiteKeep is the domain's own off-site keep-policy when it has one, the
-// shared off-site one otherwise.
+// shared off-site one otherwise. It seeds the target a domain's off-site field
+// creates.
 func offsiteKeep(settings store.Settings, domain string) store.RetentionKeep {
 	if k, own := settings.OwnOffsiteRetention()[domain]; own {
 		return k
@@ -2038,11 +2044,8 @@ func sharedOffsiteKeep(settings store.Settings) store.RetentionKeep {
 	}
 }
 
-// targetOffsiteRetentionPolicy is the per-DESTINATION off-site keep-policy (the
-// plural successor to offsiteRetentionPolicy, which reads the settings
-// columns). All-zero means keep-everything, exactly as the global default. For a
-// backfilled N=1 target these fields equal the global policy, so behavior is
-// unchanged.
+// targetOffsiteRetentionPolicy is the keep-policy of one off-site target.
+// All zero keeps everything.
 func targetOffsiteRetentionPolicy(t store.OffsiteTarget) restic.RetentionPolicy {
 	return restic.RetentionPolicy{
 		KeepLast:    t.RetentionKeepLast,
@@ -2116,28 +2119,20 @@ func (s *Service) applyTargetCreds(mode restic.Mode, settings store.Settings, ta
 }
 
 // retentionPolicyForSource returns the keep-policy to apply for a given repo
-// source: the domain's local policy, the domain's off-site policy for its
-// built-in off-site repo, and an additional target's own rule, which the copy
-// pass ages the same repository by.
+// source: the domain's local policy, or the off-site target's own rule, which
+// the copy pass ages the same repository by.
 func (s *Service) retentionPolicyForSource(settings store.Settings, domain, source string) restic.RetentionPolicy {
 	if !isOffsiteSource(source) {
 		return s.retentionPolicy(settings, domain)
 	}
-	if t, err := s.offsiteTargetForSource(settings, domain, source); err == nil && !isBuiltInOffsiteTarget(settings, domain, t) {
+	if t, err := s.offsiteTargetForSource(settings, domain, source); err == nil {
 		return targetAgingPolicy(t)
 	}
-	// A target ages its copies from a direct repository like any other copy,
-	// as the copy pass does (targetAgingPolicy).
+	// Without a target row the off-site settings decide, and copies from a
+	// direct repository age like any other copy, as in targetAgingPolicy.
 	p := s.offsiteRetentionPolicy(settings, domain)
 	p.Direct = true
 	return p
-}
-
-// isBuiltInOffsiteSource reports whether an off-site source reaches the repo
-// the domain's off-site setting names rather than an additional target.
-func (s *Service) isBuiltInOffsiteSource(settings store.Settings, domain, source string) bool {
-	t, err := s.offsiteTargetForSource(settings, domain, source)
-	return err != nil || isBuiltInOffsiteTarget(settings, domain, t)
 }
 
 func isBuiltInOffsiteTarget(settings store.Settings, domain string, t store.OffsiteTarget) bool {

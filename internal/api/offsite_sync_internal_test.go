@@ -115,6 +115,47 @@ func fieldTarget(t *testing.T, st *store.Repo) store.OffsiteTarget {
 	return tg
 }
 
+func TestTheOffsiteFieldsTargetKeepsTheKeepPolicySetOnItsLocation(t *testing.T) {
+	s, st := newSyncTestService(t)
+	settings, err := st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	settings.OffsiteRetentionKeepDaily = 14
+	if err := st.UpdateSettings(settings); err != nil {
+		t.Fatal(err)
+	}
+	setContainersField(t, s, st, "s3:containers")
+	primary := fieldTarget(t, st)
+	if primary.RetentionKeepDaily != 14 {
+		t.Fatalf("new primary keeps %d daily, want the 14 the off-site settings start it with", primary.RetentionKeepDaily)
+	}
+
+	primary.RetentionKeepDaily, primary.RetentionKeepWeekly = 30, 4
+	if _, err := st.UpsertOffsiteTarget(primary); err != nil {
+		t.Fatal(err)
+	}
+	settings, err = st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	settings.OffsiteRetentionKeepDaily, settings.OffsiteRetentionKeepWeekly = 7, 0
+	if err := st.UpdateSettings(settings); err != nil {
+		t.Fatal(err)
+	}
+	s.syncAllPrimaryOffsiteTargets(settings)
+
+	if got := fieldTarget(t, st); got.RetentionKeepDaily != 30 || got.RetentionKeepWeekly != 4 {
+		t.Fatalf("after a settings save the primary keeps %d daily, %d weekly, want 30 and 4", got.RetentionKeepDaily, got.RetentionKeepWeekly)
+	}
+	if p := s.retentionPolicyForSource(settings, "containers", "offsite"); p.KeepDaily != 30 || p.KeepWeekly != 4 {
+		t.Fatalf("an off-site prune ages by %+v, want the target's 30 daily and 4 weekly", p)
+	}
+	if p := s.offsiteRetentionPolicy(settings, "containers"); p.KeepDaily != 30 || p.KeepWeekly != 4 {
+		t.Fatalf("the built-in off-site policy is %+v, want the target's", p)
+	}
+}
+
 func TestClearingTheOffsiteFieldSwitchesItsTargetOff(t *testing.T) {
 	s, st := newSyncTestService(t)
 	setContainersField(t, s, st, "s3:b2")

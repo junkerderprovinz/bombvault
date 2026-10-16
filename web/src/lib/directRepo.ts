@@ -61,15 +61,6 @@ export function alsoDirectText(t: T, use: DirectUse): string {
   return t("offsite.alsoDirect").replace("{target}", offsiteTargetLabel(use.target)).replace("{n}", itemsText([use.repo]));
 }
 
-/** primaryDirects lists each domain's field target whose direct repository is
- *  in use; the off-site retention settings edit exactly those rows. */
-export function primaryDirects(targets: OffsiteTarget[], repos: NamedRepo[]): DirectUse[] {
-  return targets.flatMap((target) => {
-    const use = target.sortOrder === 0 ? directUse(target, repos) : undefined;
-    return use ? [use] : [];
-  });
-}
-
 /** repoDisplayName is a repository's name on screen: its own, or for a direct
  *  repository without one its target's, with "direct" in the reader's language. */
 export function repoDisplayName(t: (key: TranslationKey) => string, name: string, directOf?: string): string {

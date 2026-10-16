@@ -169,7 +169,7 @@ func TestATargetKeepsItsOwnValueUntilItFollowsAgain(t *testing.T) {
 	}
 }
 
-func TestOnlyADerivedTargetOutsideThePrimarySlotCanFollow(t *testing.T) {
+func TestOnlyADerivedTargetCanFollowAndThePrimaryOnlyForItsKeepPolicy(t *testing.T) {
 	f := newPlacementFixture(t)
 	box := f.destination("Box", "rclone:box:BombVault")
 	loose, err := f.st.CreateOffsiteTarget(store.OffsiteTarget{Domain: "vms", Name: "By hand", Repo: "s3:bucket/vms", Enabled: true})
@@ -186,9 +186,24 @@ func TestOnlyADerivedTargetOutsideThePrimarySlotCanFollow(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	body = map[string]any{"domain": "flash", "repo": primary.Repo, "enabled": true, "follow": []string{"retention"}}
+	primary.RetentionKeepYearly = 3
+	if primary, err = f.st.UpsertOffsiteTarget(primary); err != nil {
+		t.Fatal(err)
+	}
+	body = map[string]any{"domain": "flash", "repo": primary.Repo, "enabled": true, "follow": []string{"compression"}}
 	if res := f.do(http.MethodPut, "/api/offsite/targets/"+primary.ID, body); res["ok"] != false {
-		t.Errorf("the primary followed its destination: %v", res)
+		t.Errorf("the primary followed its destination's compression: %v", res)
+	}
+	body["follow"] = []string{"retention"}
+	if res := f.do(http.MethodPut, "/api/offsite/targets/"+primary.ID, body); res["ok"] != true {
+		t.Fatalf("the primary could not follow its destination's keep-policy: %v", res)
+	}
+	got, ok, err := f.st.GetOffsiteTarget(primary.ID)
+	if err != nil || !ok {
+		t.Fatalf("primary: found=%v err=%v", ok, err)
+	}
+	if got.Keeps(store.OwnRetention) || got.RetentionKeepYearly != 0 {
+		t.Errorf("primary = own %d, %d yearly, want the destination's keep-policy", got.Own, got.RetentionKeepYearly)
 	}
 }
 

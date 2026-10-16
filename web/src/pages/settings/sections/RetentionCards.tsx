@@ -1,34 +1,28 @@
-import { alsoDirectText } from "../../../lib/directRepo";
+import { Link } from "react-router-dom";
+
 import { InfoBubble } from "../../../components/InfoBubble";
 import { RetentionPreview } from "../../../components/RetentionPreview";
 import { useT } from "../../../lib/i18n";
 import { Card } from "../shared";
-import { RetentionRulesCard } from "../OwnRetentionCard";
 import { useSettings } from "../settingsStore";
 
-/** RetentionCards are the keep rules of the built-in off-site copies and the
- *  preview of what the next run deletes. */
+/** RetentionCards point to the storage locations, which hold every keep rule,
+ *  and preview what the next run deletes. */
 export function RetentionCards({ nextHue }: { nextHue: () => number }) {
   const { t } = useT();
-  const { settings, setSettings, fieldDirects, saveOffsiteRetention, debouncedSave, cancelDebounce } = useSettings();
+  const { settings } = useSettings();
 
   return (
     <div id="retention" className="flex scroll-mt-6 flex-col gap-6 md:gap-10">
-      <RetentionRulesCard
-        settings={settings}
-        setSettings={setSettings}
-        save={saveOffsiteRetention}
-        debouncedSave={debouncedSave}
-        cancelDebounce={cancelDebounce}
-        t={t}
-        hueIndex={nextHue()}
-      >
-        {fieldDirects.map((u) => (
-          <p key={u.target.id} className="text-xs text-carbon-textMuted">
-            {alsoDirectText(t, u)}
-          </p>
-        ))}
-      </RetentionRulesCard>
+      <Card title={t("storage.keep.title")} hueIndex={nextHue()}>
+        <p className="text-sm text-carbon-textSub">{t("settings.retentionWhere")}</p>
+        <Link
+          to="/storage"
+          className="w-fit text-sm text-accentText hover:underline pointer-coarse:inline-flex pointer-coarse:min-h-(--btn-h) pointer-coarse:items-center"
+        >
+          {t("storage.rules.open")}
+        </Link>
+      </Card>
 
       {/* It runs on a button, because it costs one restic call per item per
           repository. */}

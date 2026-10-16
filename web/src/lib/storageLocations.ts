@@ -105,11 +105,15 @@ export function deviating(location: StorageLocation, setting: FollowedSetting): 
 }
 
 /** canFollow reports whether the server gives a section its location's value
- *  back. A target made from a destination can follow it, except the copy a
- *  domain's off-site settings describe, which those settings rewrite on every
- *  save. A domain with a local rule of its own goes back to the shared one. */
-export function canFollow(location: StorageLocation, section: StorageLocationSection): boolean {
-  if (location.object === "destination") return section.use === "copy" && !!section.targetId && !section.primary;
+ *  for `setting` back, or for everything it holds itself when no setting is
+ *  named. A target made from a destination can follow it. The copy a domain's
+ *  off-site settings describe follows only for retention, since those settings
+ *  rewrite the rest on every save. A domain with a local rule of its own goes
+ *  back to the shared one. */
+export function canFollow(location: StorageLocation, section: StorageLocationSection, setting?: FollowedSetting): boolean {
+  if (location.object === "destination") {
+    return section.use === "copy" && !!section.targetId && (!section.primary || setting === "retention");
+  }
   return (location.object === "path" || location.object === "repo") && section.use === "home";
 }
 

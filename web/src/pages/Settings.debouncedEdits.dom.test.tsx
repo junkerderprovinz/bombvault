@@ -323,24 +323,3 @@ describe("importing settings while an edit is still inside its debounce", () => 
     await waitFor(() => expect(cacheLimit().value).toBe("1024"));
   });
 });
-
-describe("the yearly off-site retention rule", () => {
-  it("saves its count next to the other keep rules", async () => {
-    await renderPage();
-    await gotoPage("storage");
-
-    const input = screen.getAllByLabelText(en["settings.retentionYearly"])[0] as HTMLInputElement;
-    expect(input.value).toBe("0");
-    await act(async () => {
-      fireEvent.change(input, { target: { value: "3" } });
-    });
-    await act(async () => {
-      vi.advanceTimersByTime(900);
-    });
-
-    await waitFor(() => expect(putCalls).toHaveLength(1));
-    const sent = putCalls[0].body;
-    expect(sent.offsiteRetentionKeepYearly).toBe(3);
-    expect(sent.offsiteRetentionKeepMonthly).toBe(12);
-  });
-});

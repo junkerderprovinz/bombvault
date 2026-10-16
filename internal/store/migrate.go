@@ -3260,6 +3260,20 @@ ALTER TABLE runs ADD COLUMN snapshot_fallback TEXT NOT NULL DEFAULT '';`,
   PRIMARY KEY (scope_kind, scope_id)
 );`,
 	},
+	{
+		// At the upgrade a domain's primary target follows its storage
+		// location's keep-policy when it holds the same values and keeps its
+		// own otherwise, so no copy ages differently than before.
+		version: primaryKeepMigration,
+		name:    "primary_target_keep_follows_location",
+		sql: `UPDATE offsite_targets AS t SET own_settings = (t.own_settings & ~1) | (
+  SELECT t.retention_keep_last <> d.retention_keep_last OR t.retention_keep_daily <> d.retention_keep_daily
+      OR t.retention_keep_weekly <> d.retention_keep_weekly OR t.retention_keep_monthly <> d.retention_keep_monthly
+      OR t.retention_keep_yearly <> d.retention_keep_yearly
+    FROM offsite_targets d WHERE d.id = t.destination_id AND d.role = 'destination')
+ WHERE t.role = 'offsite' AND t.sort_order = 0
+   AND EXISTS (SELECT 1 FROM offsite_targets d WHERE d.id = t.destination_id AND d.role = 'destination');`,
+	},
 }
 
 // dbDumpMigrationBase numbers the three database-dump columns from one place,
@@ -3425,6 +3439,10 @@ const containerSnapshotMigration = 380
 // anomalyRebaseMigration numbers the series whose source BombVault changed
 // itself.
 const anomalyRebaseMigration = 390
+
+// primaryKeepMigration numbers the keep-policy a domain's primary off-site
+// target takes from its storage location.
+const primaryKeepMigration = 400
 
 // oneLineColumns are the names and locations the recovery kit prints.
 var oneLineColumns = []struct {

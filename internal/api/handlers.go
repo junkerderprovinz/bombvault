@@ -2368,13 +2368,14 @@ type settingsView struct {
 	// OwnRetention holds the domains that age by a local keep-policy of their
 	// own instead of the one above, keyed by domain name.
 	OwnRetention map[string]store.RetentionKeep `json:"ownRetention"`
-	// OwnOffsiteRetention holds the domains whose built-in off-site repo ages
-	// by a keep-policy of its own instead of the off-site one below.
+	// OwnOffsiteRetention holds the domains whose new primary off-site target
+	// starts from a keep-policy of its own instead of the off-site one below.
 	OwnOffsiteRetention map[string]store.RetentionKeep `json:"ownOffsiteRetention"`
 	// Compression is restic's --compression per repository, keyed like
 	// store.Settings.Compression.
 	Compression map[string]string `json:"compression"`
-	// Separate off-site retention keep-policy (all 0 = off-site keeps everything).
+	// The keep-policy a new primary off-site target starts with (all 0 keeps
+	// everything). The target's own is set on its storage location's page.
 	OffsiteRetentionKeepLast    int `json:"offsiteRetentionKeepLast"`
 	OffsiteRetentionKeepDaily   int `json:"offsiteRetentionKeepDaily"`
 	OffsiteRetentionKeepWeekly  int `json:"offsiteRetentionKeepWeekly"`

@@ -160,8 +160,11 @@ describe("canFollow", () => {
     expect(canFollow(location(), section({ targetId: "t1" }))).toBe(true);
   });
 
-  it("refuses the copy a domain's off-site settings describe", () => {
-    expect(canFollow(location(), section({ targetId: "t1", primary: true }))).toBe(false);
+  it("lets the copy a domain's off-site settings describe follow only for its keep rules", () => {
+    const primary = section({ targetId: "t1", primary: true });
+    expect(canFollow(location(), primary, "retention")).toBe(true);
+    expect(canFollow(location(), primary, "compression")).toBe(false);
+    expect(canFollow(location(), primary)).toBe(false);
   });
 
   it("lets a domain with a local rule of its own go back to the shared one", () => {

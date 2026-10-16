@@ -122,10 +122,11 @@ const (
 var FollowedSettings = []OwnSettings{OwnRetention, OwnCompression, OwnLimits, OwnEnabled}
 
 // Keeps reports whether t holds setting itself instead of taking it from a
-// destination. The target in a domain's primary slot always does, since the
-// domain's off-site settings write it on every save.
+// destination. The target in a domain's primary slot keeps everything but its
+// keep-policy, since the domain's off-site settings write the rest on every
+// save.
 func (t OffsiteTarget) Keeps(setting OwnSettings) bool {
-	return t.DestinationID == "" || t.SortOrder == 0 || t.Own&setting != 0
+	return t.DestinationID == "" || t.Own&setting != 0 || t.SortOrder == 0 && setting != OwnRetention
 }
 
 // TakeFrom gives t the value d has for each of settings.

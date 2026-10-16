@@ -50,9 +50,8 @@ describe("the settings index in English", () => {
       .map((h) => `${h.item.page}: ${h.item.cardName ?? ""}`);
   const copyCards = (hits: string[]) => hits.filter((h) => h.startsWith("storage: Off-site copy"));
 
-  it("leads the yearly rule to the off-site retention card and to each off-site destination", () => {
+  it("leads the yearly rule to each off-site destination", () => {
     const hits = where("keep yearly");
-    expect(hits).toContain(`storage: ${en["settings.retentionOffsiteTitle"]}`);
     expect(copyCards(hits)).toHaveLength(6);
     expect(hits.every((h) => h.startsWith("storage: "))).toBe(true);
   });
@@ -69,11 +68,8 @@ describe("the settings index in English", () => {
     expect(copyCards(hits)).toHaveLength(6);
   });
 
-  it("leads each source's own off-site rules to the retention card, by the phrase and by the source's name", () => {
-    const offsite = `storage: ${en["settings.retentionOffsiteTitle"]}`;
-    expect(where("own off-site keep rules")).toContain(offsite);
-    expect(where(en["nav.vms"])).toContain(offsite);
-    expect(where("additional off-site storage locations keep")).toEqual([offsite]);
+  it("leads a search for where keep rules are set to the pointer to the storage locations", () => {
+    expect(where("set per storage location")).toEqual([`storage: ${en["storage.keep.title"]}`]);
   });
 
   it("finds the preview on its own card", () => {

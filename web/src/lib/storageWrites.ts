@@ -65,8 +65,8 @@ export function storageClassOf(location: StorageLocation, records: LocationRecor
 }
 
 /** settingsOwned reports whether the location is the copy a domain's off-site
- *  settings describe. Those settings rewrite its target on every save, so
- *  nothing is changed on the target itself. */
+ *  settings describe. Those settings rewrite its target on every save, except
+ *  for its keep-policy. */
 export function settingsOwned(location: StorageLocation): boolean {
   return location.object === "target" && location.sections.some((section) => section.primary);
 }
@@ -80,7 +80,8 @@ export function writable(location: StorageLocation, records: LocationRecords): S
       if (!records.destination) return new Set();
       return new Set(s3 ? [...DESTINATION, "storageClass"] : DESTINATION);
     case "target":
-      if (settingsOwned(location) || !ownTarget(location, records)) return new Set();
+      if (!ownTarget(location, records)) return new Set();
+      if (settingsOwned(location)) return new Set(["retention"]);
       return new Set([...TARGET, ...(s3 ? (["storageClass"] as const) : []), ...(withCredentials ? (["credsRef"] as const) : [])]);
     case "repo":
       return new Set(withCredentials ? [...REPO, "credsRef"] : REPO);
@@ -147,9 +148,10 @@ export type SectionSetting = keyof SectionPatch;
 
 /**
  * sectionSettings lists what the server lets a section hold for itself. A
- * target made from a destination has its own keep-policy and compression,
- * except the copy a domain's off-site settings describe. A domain that writes
- * to a folder or a named repository has its own local keep-policy.
+ * target made from a destination has its own keep-policy and compression; the
+ * copy a domain's off-site settings describe takes its compression from those.
+ * A domain that writes to a folder or a named repository has its own local
+ * keep-policy.
  */
 export function sectionSettings(
   location: StorageLocation,
@@ -157,8 +159,9 @@ export function sectionSettings(
   section: StorageLocationSection
 ): SectionSetting[] {
   if (location.object === "destination") {
-    const derived = section.use === "copy" && !section.primary && records.targets.some((t) => t.id === section.targetId);
-    return derived ? ["retention", "compression"] : [];
+    const derived = section.use === "copy" && records.targets.some((t) => t.id === section.targetId);
+    if (!derived) return [];
+    return section.primary ? ["retention"] : ["retention", "compression"];
   }
   const home = (location.object === "path" || location.object === "repo") && section.use === "home";
   return home ? ["retention"] : [];

@@ -117,22 +117,46 @@ func TestATargetSwitchedOffByItselfStaysOffWhenItsDestinationComesBack(t *testin
 	}
 }
 
-func TestThePrimaryNeverTakesItsDestinationsSettings(t *testing.T) {
+func TestThePrimaryTakesOnlyItsDestinationsKeepPolicy(t *testing.T) {
+	r := newRepo(t)
+	d := saveDestination(t, r, store.OffsiteTarget{Name: "B2", Repo: "rclone:b2:bv", RetentionKeepWeekly: 4})
+	primary, err := r.PrimaryFromDestination(d.ID, "flash", "rclone:b2:bv/flash", func(s *store.Settings) { s.FlashOffsite = "rclone:b2:bv/flash" })
+	if err != nil {
+		t.Fatal(err)
+	}
+	if primary.Own != 0 || primary.RetentionKeepWeekly != 4 {
+		t.Fatalf("new primary = %+v, own %d, want the destination's keep-policy", followedOf(primary), primary.Own)
+	}
+	for _, setting := range store.FollowedSettings {
+		if primary.Keeps(setting) == (setting == store.OwnRetention) {
+			t.Fatalf("the primary keeps setting %d: %v", setting, primary.Keeps(setting))
+		}
+	}
+	d.RetentionKeepDaily, d.Enabled = 3, false
+	saveDestination(t, r, d)
+	if got := targetByID(t, r, primary.ID); got.RetentionKeepDaily != 3 || !got.Enabled {
+		t.Fatalf("primary = %+v, want the destination's keep-policy and its own switch", followedOf(got))
+	}
+}
+
+func TestAPrimaryWithItsOwnKeepPolicyKeepsItThroughADestinationSave(t *testing.T) {
 	r := newRepo(t)
 	d := saveDestination(t, r, store.OffsiteTarget{Name: "B2", Repo: "rclone:b2:bv"})
 	primary, err := r.PrimaryFromDestination(d.ID, "flash", "rclone:b2:bv/flash", func(s *store.Settings) { s.FlashOffsite = "rclone:b2:bv/flash" })
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, setting := range store.FollowedSettings {
-		if !primary.Keeps(setting) {
-			t.Fatalf("the primary follows its destination for setting %d", setting)
-		}
+	primary.RetentionKeepMonthly = 12
+	if primary, err = r.UpsertOffsiteTarget(primary); err != nil {
+		t.Fatal(err)
 	}
-	d.RetentionKeepDaily, d.Enabled = 3, false
+	if primary.Own&store.OwnRetention == 0 {
+		t.Fatalf("own = %d, want a changed keep-policy held as the primary's own", primary.Own)
+	}
+	d.RetentionKeepMonthly = 2
 	saveDestination(t, r, d)
-	if got := targetByID(t, r, primary.ID); got.RetentionKeepDaily != 0 || !got.Enabled {
-		t.Fatalf("primary = %+v, want the values the domain's off-site settings gave it", followedOf(got))
+	if got := targetByID(t, r, primary.ID); got.RetentionKeepMonthly != 12 {
+		t.Fatalf("primary = %+v, want its own keep-policy", followedOf(got))
 	}
 }
 

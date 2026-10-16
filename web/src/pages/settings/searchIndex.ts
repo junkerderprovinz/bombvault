@@ -27,10 +27,6 @@ export interface SearchCard {
   body?: TranslationKey[];
 }
 
-// The six sources of the retention cards, each the caption of its switch.
-const SOURCE_ROWS = (hint: TranslationKey): SearchRow[] =>
-  (["nav.containers", "nav.vms", "nav.flash", "nav.files", "nav.zfs", "nav.config"] as const).map((key) => ({ key, hint }));
-
 // The five keep rules, drawn with their (i) wherever a keep-policy is edited.
 const KEEP_RULE_ROWS: SearchRow[] = [
   { key: "settings.retentionLast", hint: "settings.retentionLastInfo" },
@@ -207,17 +203,8 @@ export const SETTINGS_INDEX: Record<SettingsPageId, SearchCard[]> = {
       ],
     },
     {
-      title: "settings.retentionOffsiteTitle",
-      hint: "settings.retentionOffsiteHint",
-      rows: [
-        { key: "retentionPreview.sharedPolicy" },
-        ...KEEP_RULE_ROWS,
-        { key: "settings.ownRetentionTitle", hint: "settings.ownOffsiteRetentionHint" },
-        { key: "settings.ownOffsiteRetention", hint: "settings.ownOffsiteRetentionToggleHint" },
-        ...SOURCE_ROWS("settings.ownOffsiteRetentionToggleHint"),
-        { key: "settings.retentionExtraTargets" },
-      ],
-      body: ["settings.retentionCombineInfo", "settings.retentionImmutableNotPruned"],
+      title: "storage.keep.title",
+      rows: [{ key: "settings.retentionWhere" }, { key: "storage.rules.open" }],
     },
     {
       title: "restore.preview",
