@@ -1722,6 +1722,7 @@ const cs: Partial<Translations> = {
   "snapshot.reason.nestedMount": "v {path} je připojen jiný souborový systém",
   "snapshot.reason.sshMissing": "není nastaveno připojení SSH k hostiteli",
   "snapshot.reason.hostUnreachable": "hostitel neodpověděl přes SSH",
+  "snapshot.reason.hostLoginRefused": "BombVault se nemohl přihlásit k hostiteli přes SSH",
   "snapshot.reason.viewUnavailable": "tento hostitel nepovoluje zobrazení snímků",
   "snapshot.reason.chrootRefused": "kontejner BombVault potřebuje capability SYS_CHROOT, aby mohl vstoupit do zobrazení snímků",
   "snapshot.reason.datasetUnknown": "hostitel nezná datovou sadu {path}",

@@ -1724,6 +1724,7 @@ const pt: Partial<Translations> = {
   "snapshot.reason.nestedMount": "está montado outro sistema de ficheiros em {path}",
   "snapshot.reason.sshMissing": "não está configurada nenhuma ligação SSH ao host",
   "snapshot.reason.hostUnreachable": "o host não respondeu por SSH",
+  "snapshot.reason.hostLoginRefused": "o BombVault não conseguiu iniciar sessão no host por SSH",
   "snapshot.reason.viewUnavailable": "este host não permite a vista de instantâneos",
   "snapshot.reason.chrootRefused": "o contentor do BombVault precisa da capability SYS_CHROOT para entrar na vista de instantâneos",
   "snapshot.reason.datasetUnknown": "o host não lista o conjunto de dados {path}",

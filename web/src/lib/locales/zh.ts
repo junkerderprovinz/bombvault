@@ -1715,6 +1715,7 @@ const zh: Partial<Translations> = {
   "snapshot.reason.nestedMount": "{path} 下挂载了另一个文件系统",
   "snapshot.reason.sshMissing": "尚未设置到主机的 SSH 连接",
   "snapshot.reason.hostUnreachable": "主机没有通过 SSH 响应",
+  "snapshot.reason.hostLoginRefused": "BombVault 无法通过 SSH 登录主机",
   "snapshot.reason.viewUnavailable": "此主机不允许使用快照视图",
   "snapshot.reason.chrootRefused": "BombVault 的容器需要 SYS_CHROOT 能力才能进入快照视图",
   "snapshot.reason.datasetUnknown": "主机没有列出数据集 {path}",

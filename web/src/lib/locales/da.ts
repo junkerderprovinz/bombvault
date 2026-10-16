@@ -1724,6 +1724,7 @@ const da: Partial<Translations> = {
   "snapshot.reason.nestedMount": "et andet filsystem er monteret på {path}",
   "snapshot.reason.sshMissing": "der er ikke sat nogen SSH-forbindelse til hosten op",
   "snapshot.reason.hostUnreachable": "hosten svarede ikke over SSH",
+  "snapshot.reason.hostLoginRefused": "BombVault kunne ikke logge ind på hosten over SSH",
   "snapshot.reason.viewUnavailable": "denne host tillader ikke snapshot-visningen",
   "snapshot.reason.chrootRefused": "BombVaults container skal have capability'en SYS_CHROOT for at gå ind i snapshot-visningen",
   "snapshot.reason.datasetUnknown": "hosten kender ikke datasættet {path}",

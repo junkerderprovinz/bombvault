@@ -1721,6 +1721,7 @@ const uk: Partial<Translations> = {
   "snapshot.reason.nestedMount": "у {path} змонтовано іншу файлову систему",
   "snapshot.reason.sshMissing": "SSH-з'єднання з хостом не налаштовано",
   "snapshot.reason.hostUnreachable": "хост не відповів по SSH",
+  "snapshot.reason.hostLoginRefused": "BombVault не зміг увійти на хост по SSH",
   "snapshot.reason.viewUnavailable": "цей хост не дозволяє перегляд знімків",
   "snapshot.reason.chrootRefused": "контейнеру BombVault потрібна capability SYS_CHROOT, щоб увійти в перегляд знімків",
   "snapshot.reason.datasetUnknown": "хост не показує набір даних {path}",

@@ -2229,6 +2229,7 @@ const et: Partial<Translations> = {
   "snapshot.reason.nestedMount": "kohas {path} on ühendatud mõni muu failisüsteem",
   "snapshot.reason.sshMissing": "hostiga pole SSH-ühendust seadistatud",
   "snapshot.reason.hostUnreachable": "host ei vastanud SSH kaudu",
+  "snapshot.reason.hostLoginRefused": "BombVault ei saanud SSH kaudu hosti sisse logida",
   "snapshot.reason.viewUnavailable": "see host ei luba hetktõmmiste vaadet",
   "snapshot.reason.chrootRefused": "BombVaulti konteiner vajab hetktõmmiste vaatesse sisenemiseks õigust SYS_CHROOT",
   "snapshot.reason.datasetUnknown": "host ei loetle andmestikku {path}",

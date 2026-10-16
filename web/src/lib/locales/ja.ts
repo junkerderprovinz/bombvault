@@ -1715,6 +1715,7 @@ const ja: Partial<Translations> = {
   "snapshot.reason.nestedMount": "{path} に別のファイルシステムがマウントされています",
   "snapshot.reason.sshMissing": "ホストへのSSH接続が設定されていません",
   "snapshot.reason.hostUnreachable": "ホストがSSHで応答しませんでした",
+  "snapshot.reason.hostLoginRefused": "BombVault が SSH でホストにログインできませんでした",
   "snapshot.reason.viewUnavailable": "このホストではスナップショットビューが許可されていません",
   "snapshot.reason.chrootRefused": "スナップショットビューに入るには、BombVault のコンテナに SYS_CHROOT ケーパビリティが必要です",
   "snapshot.reason.datasetUnknown": "ホストにデータセット {path} がありません",

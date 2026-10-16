@@ -1724,6 +1724,7 @@ const tr: Partial<Translations> = {
   "snapshot.reason.nestedMount": "{path} konumuna başka bir dosya sistemi bağlı",
   "snapshot.reason.sshMissing": "host ile SSH bağlantısı kurulmamış",
   "snapshot.reason.hostUnreachable": "host SSH üzerinden yanıt vermedi",
+  "snapshot.reason.hostLoginRefused": "BombVault SSH üzerinden host'a giriş yapamadı",
   "snapshot.reason.viewUnavailable": "bu host anlık görüntü görünümüne izin vermiyor",
   "snapshot.reason.chrootRefused": "BombVault'un kapsayıcısı anlık görüntü görünümüne girmek için SYS_CHROOT yetkisine ihtiyaç duyuyor",
   "snapshot.reason.datasetUnknown": "host {path} veri kümesini listelemiyor",

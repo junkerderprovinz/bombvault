@@ -1723,6 +1723,7 @@ const nl: Partial<Translations> = {
   "snapshot.reason.nestedMount": "op {path} is een ander bestandssysteem gemount",
   "snapshot.reason.sshMissing": "er is geen SSH-verbinding met de host ingesteld",
   "snapshot.reason.hostUnreachable": "de host antwoordde niet via SSH",
+  "snapshot.reason.hostLoginRefused": "BombVault kon niet via SSH inloggen op de host",
   "snapshot.reason.viewUnavailable": "deze host staat de snapshotweergave niet toe",
   "snapshot.reason.chrootRefused": "de container van BombVault heeft de capability SYS_CHROOT nodig om de snapshotweergave binnen te gaan",
   "snapshot.reason.datasetUnknown": "de host kent de dataset {path} niet",

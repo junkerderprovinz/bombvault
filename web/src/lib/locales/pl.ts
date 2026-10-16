@@ -1721,6 +1721,7 @@ const pl: Partial<Translations> = {
   "snapshot.reason.nestedMount": "w {path} jest zamontowany inny system plików",
   "snapshot.reason.sshMissing": "nie skonfigurowano połączenia SSH z hostem",
   "snapshot.reason.hostUnreachable": "host nie odpowiedział przez SSH",
+  "snapshot.reason.hostLoginRefused": "BombVault nie mógł zalogować się do hosta przez SSH",
   "snapshot.reason.viewUnavailable": "ten host nie zezwala na widok migawek",
   "snapshot.reason.chrootRefused": "kontener BombVault potrzebuje uprawnienia SYS_CHROOT, aby wejść do widoku migawek",
   "snapshot.reason.datasetUnknown": "host nie wymienia zbioru danych {path}",

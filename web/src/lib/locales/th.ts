@@ -1725,6 +1725,7 @@ const th: Partial<Translations> = {
   "snapshot.reason.nestedMount": "มีระบบไฟล์อื่นเมานต์อยู่ที่ {path}",
   "snapshot.reason.sshMissing": "ยังไม่ได้ตั้งค่าการเชื่อมต่อ SSH ไปยังโฮสต์",
   "snapshot.reason.hostUnreachable": "โฮสต์ไม่ตอบกลับผ่าน SSH",
+  "snapshot.reason.hostLoginRefused": "BombVault เข้าสู่ระบบโฮสต์ผ่าน SSH ไม่ได้",
   "snapshot.reason.viewUnavailable": "โฮสต์นี้ไม่อนุญาตให้ดูสแนปช็อต",
   "snapshot.reason.chrootRefused": "คอนเทนเนอร์ของ BombVault ต้องมี capability SYS_CHROOT จึงจะเข้าสู่มุมมองสแนปช็อตได้",
   "snapshot.reason.datasetUnknown": "โฮสต์ไม่แสดงชุดข้อมูล {path} ในรายการ",

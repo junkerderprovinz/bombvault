@@ -2229,6 +2229,7 @@ const ca: Partial<Translations> = {
   "snapshot.reason.nestedMount": "hi ha un altre sistema de fitxers muntat a {path}",
   "snapshot.reason.sshMissing": "no hi ha cap connexió SSH amb l'amfitrió configurada",
   "snapshot.reason.hostUnreachable": "l'amfitrió no ha respost per SSH",
+  "snapshot.reason.hostLoginRefused": "BombVault no ha pogut iniciar sessió a l'amfitrió per SSH",
   "snapshot.reason.viewUnavailable": "aquest amfitrió no permet la vista d'instantànies",
   "snapshot.reason.chrootRefused": "el contenidor de BombVault necessita la capacitat SYS_CHROOT per entrar a la vista d'instantànies",
   "snapshot.reason.datasetUnknown": "l'amfitrió no llista el conjunt de dades {path}",

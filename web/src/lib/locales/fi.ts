@@ -1724,6 +1724,7 @@ const fi: Partial<Translations> = {
   "snapshot.reason.nestedMount": "polkuun {path} on liitetty toinen tiedostojärjestelmä",
   "snapshot.reason.sshMissing": "isäntään ei ole määritetty SSH-yhteyttä",
   "snapshot.reason.hostUnreachable": "isäntä ei vastannut SSH:n kautta",
+  "snapshot.reason.hostLoginRefused": "BombVault ei voinut kirjautua isäntään SSH:n kautta",
   "snapshot.reason.viewUnavailable": "tämä isäntä ei salli tilannevedosnäkymää",
   "snapshot.reason.chrootRefused": "BombVaultin kontti tarvitsee SYS_CHROOT-capabilityn päästäkseen tilannevedosnäkymään",
   "snapshot.reason.datasetUnknown": "isäntä ei listaa tietojoukkoa {path}",

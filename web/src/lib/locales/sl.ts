@@ -2213,6 +2213,7 @@ const sl: Partial<Translations> = {
   "snapshot.reason.nestedMount": "na {path} je priklopljen drug datotečni sistem",
   "snapshot.reason.sshMissing": "povezava SSH do gostitelja ni nastavljena",
   "snapshot.reason.hostUnreachable": "gostitelj ni odgovoril prek SSH",
+  "snapshot.reason.hostLoginRefused": "BombVault se ni mogel prijaviti na gostitelja prek SSH",
   "snapshot.reason.viewUnavailable": "ta gostitelj ne dovoli pogleda posnetkov",
   "snapshot.reason.chrootRefused": "vsebnik aplikacije BombVault potrebuje zmožnost SYS_CHROOT, da vstopi v pogled posnetkov",
   "snapshot.reason.datasetUnknown": "gostitelj ne pozna zbirke podatkov {path}",

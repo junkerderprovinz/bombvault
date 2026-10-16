@@ -20,6 +20,11 @@ const REASON_KEY: Record<string, TranslationKey> = {
   "repo-in-container": "snapshot.reason.repoInContainer",
 };
 
+// A host that refused the key did answer, so it gets a sentence of its own.
+const EXACT_KEY: Record<string, TranslationKey> = {
+  "zfs-unreachable: ssh-auth": "snapshot.reason.hostLoginRefused",
+};
+
 /** The window a snapshot backup held the container down, in whole seconds
  *  rounded up, so a window under a second does not read as none. */
 export function snapshotWindowText(t: Translate, ms: number): string {
@@ -31,7 +36,7 @@ export function snapshotFallbackText(t: Translate, raw: string): string {
   const sep = raw.indexOf(": ");
   const code = sep < 0 ? raw : raw.slice(0, sep);
   const detail = sep < 0 ? "" : raw.slice(sep + 2);
-  const key = REASON_KEY[code];
+  const key = EXACT_KEY[raw] ?? REASON_KEY[code];
   const reason = key
     ? t(key).replace("{path}", detail)
     : t("snapshot.reason.other").replace("{path}", detail).replace("{code}", code);

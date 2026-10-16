@@ -2229,6 +2229,7 @@ const eu: Partial<Translations> = {
   "snapshot.reason.nestedMount": "beste fitxategi-sistema bat muntatuta dago hemen: {path}",
   "snapshot.reason.sshMissing": "ez dago ostalariarekiko SSH konexiorik konfiguratuta",
   "snapshot.reason.hostUnreachable": "ostalariak ez du SSH bidez erantzun",
+  "snapshot.reason.hostLoginRefused": "BombVaultek ezin izan du ostalarian saioa hasi SSH bidez",
   "snapshot.reason.viewUnavailable": "ostalari honek ez du argazkien ikuspegia onartzen",
   "snapshot.reason.chrootRefused": "BombVaulten edukiontziak SYS_CHROOT gaitasuna behar du argazkien ikuspegian sartzeko",
   "snapshot.reason.datasetUnknown": "ostalariak ez du {path} datu multzoa zerrendatzen",

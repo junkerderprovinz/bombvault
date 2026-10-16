@@ -27,6 +27,15 @@ describe("snapshotFallbackText", () => {
     );
   });
 
+  it("tells a refused key apart from a host that did not answer", () => {
+    expect(snapshotFallbackText(t, "zfs-unreachable: ssh-auth")).toBe(
+      "Stopped for the whole backup: BombVault could not log in to the host over SSH",
+    );
+    expect(snapshotFallbackText(t, "zfs-unreachable: ssh-unreachable")).toBe(
+      "Stopped for the whole backup: the host did not answer over SSH",
+    );
+  });
+
   it("names the capability a refused chroot needs", () => {
     expect(snapshotFallbackText(t, "chroot-refused")).toBe(
       "Stopped for the whole backup: BombVault's container needs the SYS_CHROOT capability to enter the snapshot view",

@@ -1724,6 +1724,7 @@ const sv: Partial<Translations> = {
   "snapshot.reason.nestedMount": "ett annat filsystem är monterat på {path}",
   "snapshot.reason.sshMissing": "ingen SSH-anslutning till värden är inställd",
   "snapshot.reason.hostUnreachable": "värden svarade inte över SSH",
+  "snapshot.reason.hostLoginRefused": "BombVault kunde inte logga in på värden över SSH",
   "snapshot.reason.viewUnavailable": "den här värden tillåter inte vyn över ögonblicksbilder",
   "snapshot.reason.chrootRefused": "BombVaults container behöver capabilityn SYS_CHROOT för att gå in i vyn över ögonblicksbilder",
   "snapshot.reason.datasetUnknown": "värden listar inte datauppsättningen {path}",

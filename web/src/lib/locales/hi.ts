@@ -2229,6 +2229,7 @@ const hi: Partial<Translations> = {
   "snapshot.reason.nestedMount": "{path} पर कोई दूसरा फ़ाइल सिस्टम माउंट है",
   "snapshot.reason.sshMissing": "होस्ट से SSH कनेक्शन सेट नहीं है",
   "snapshot.reason.hostUnreachable": "होस्ट ने SSH पर जवाब नहीं दिया",
+  "snapshot.reason.hostLoginRefused": "BombVault SSH पर होस्ट में लॉग इन नहीं कर सका",
   "snapshot.reason.viewUnavailable": "यह होस्ट स्नैपशॉट व्यू की अनुमति नहीं देता",
   "snapshot.reason.chrootRefused": "स्नैपशॉट व्यू में जाने के लिए BombVault के कंटेनर को SYS_CHROOT capability चाहिए",
   "snapshot.reason.datasetUnknown": "होस्ट की सूची में डेटासेट {path} नहीं है",

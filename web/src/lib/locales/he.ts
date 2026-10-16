@@ -1724,6 +1724,7 @@ const he: Partial<Translations> = {
   "snapshot.reason.nestedMount": "מערכת קבצים אחרת מחוברת ב-{path}",
   "snapshot.reason.sshMissing": "לא הוגדר חיבור SSH אל המארח",
   "snapshot.reason.hostUnreachable": "המארח לא ענה דרך SSH",
+  "snapshot.reason.hostLoginRefused": "ההתחברות של BombVault למארח דרך SSH נכשלה",
   "snapshot.reason.viewUnavailable": "המארח הזה לא מאפשר את תצוגת התצלומים",
   "snapshot.reason.chrootRefused": "המכולה של BombVault צריכה את ההרשאה SYS_CHROOT כדי להיכנס לתצוגת התצלומים",
   "snapshot.reason.datasetUnknown": "המארח לא מציג את מערך הנתונים {path} ברשימה",

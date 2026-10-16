@@ -1724,6 +1724,7 @@ const el: Partial<Translations> = {
   "snapshot.reason.nestedMount": "άλλο σύστημα αρχείων είναι προσαρτημένο στο {path}",
   "snapshot.reason.sshMissing": "δεν έχει ρυθμιστεί σύνδεση SSH με τον host",
   "snapshot.reason.hostUnreachable": "ο host δεν απάντησε μέσω SSH",
+  "snapshot.reason.hostLoginRefused": "το BombVault δεν μπόρεσε να συνδεθεί στον host μέσω SSH",
   "snapshot.reason.viewUnavailable": "αυτός ο host δεν επιτρέπει την προβολή στιγμιοτύπων",
   "snapshot.reason.chrootRefused": "το κοντέινερ του BombVault χρειάζεται το capability SYS_CHROOT για να μπει στην προβολή στιγμιοτύπων",
   "snapshot.reason.datasetUnknown": "ο host δεν έχει στη λίστα του το σύνολο δεδομένων {path}",

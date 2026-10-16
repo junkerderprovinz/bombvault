@@ -1725,6 +1725,7 @@ const ro: Partial<Translations> = {
   "snapshot.reason.nestedMount": "un alt sistem de fișiere este montat la {path}",
   "snapshot.reason.sshMissing": "nu este configurată nicio conexiune SSH la gazdă",
   "snapshot.reason.hostUnreachable": "gazda nu a răspuns prin SSH",
+  "snapshot.reason.hostLoginRefused": "BombVault nu s-a putut autentifica pe gazdă prin SSH",
   "snapshot.reason.viewUnavailable": "această gazdă nu permite vizualizarea instantaneelor",
   "snapshot.reason.chrootRefused": "containerul BombVault are nevoie de capabilitatea SYS_CHROOT ca să intre în vizualizarea instantaneelor",
   "snapshot.reason.datasetUnknown": "gazda nu listează setul de date {path}",

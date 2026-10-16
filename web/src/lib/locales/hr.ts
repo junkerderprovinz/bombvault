@@ -2229,6 +2229,7 @@ const hr: Partial<Translations> = {
   "snapshot.reason.nestedMount": "na {path} je montiran drugi datotečni sustav",
   "snapshot.reason.sshMissing": "nije postavljena SSH veza s hostom",
   "snapshot.reason.hostUnreachable": "host nije odgovorio putem SSH-a",
+  "snapshot.reason.hostLoginRefused": "BombVault se nije mogao prijaviti na host putem SSH-a",
   "snapshot.reason.viewUnavailable": "ovaj host ne dopušta prikaz snimaka",
   "snapshot.reason.chrootRefused": "spremnik aplikacije BombVault treba sposobnost SYS_CHROOT da bi ušao u prikaz snimaka",
   "snapshot.reason.datasetUnknown": "host ne navodi skup podataka {path}",
