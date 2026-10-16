@@ -105,7 +105,7 @@ describe("the cards", () => {
   it("show the notes of every release under the version on their badge", async () => {
     await renderWindow();
     for (const version of [NEWEST, QUIET]) {
-      expect(within(card(version)).getByRole("heading", { level: 2, name: version })).toBeTruthy();
+      expect(within(card(version)).getByRole("heading", { level: 3, name: version })).toBeTruthy();
       expect(await within(card(version)).findByText("One list.")).toBeTruthy();
     }
   });

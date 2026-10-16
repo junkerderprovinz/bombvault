@@ -1,7 +1,8 @@
-import { useEffect, useId, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useState, type CSSProperties } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { Badge } from "../../components/Badge";
+import { hueVars } from "../../lib/appearance";
 import { Button } from "../../components/Button";
 import { IconEye, IconForward } from "../../components/glyphs";
 import { IconCheck, IconClose } from "../../components/navGlyphs";
@@ -10,7 +11,6 @@ import { useT } from "../../lib/i18n";
 import { CHANGES, placed, RELEASES, type Change } from "../../lib/whatsNew";
 import { markSeen, newer, openWhatsNew, releaseOf, useWhatsNew, useWhatsNewOpen } from "../../lib/whatsNewStore";
 import { InstanceWindow } from "../instances/InstanceWindow";
-import { Card } from "./shared";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -72,7 +72,7 @@ function ChangeRow({ change, seen, absent, describedBy, onGo }: { change: Change
       data-change={change.id}
       data-seen={seen || undefined}
       data-absent={absent || undefined}
-      className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-control bg-carbon-surface2 px-3 py-2.5"
+      className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-control bg-carbon-surface px-3 py-2.5"
     >
       <i aria-hidden="true" className={`glim-new-dot glim-new-dot-still${seen ? " glim-new-dot-seen" : ""}`} />
       {/* A seen change is greyed in its words, which keep their contrast, and
@@ -108,28 +108,36 @@ function ReleaseCard({ version, hueIndex, onGo }: { version: string; hueIndex: n
   const changes = CHANGES.filter((change) => change.since === version);
 
   return (
-    <div data-release={version}>
-      <Card title={version} hueIndex={hueIndex}>
-        <ReleaseNotes version={`v${version}`} />
-        {byPage(t, changes).map((page) => (
-          <div key={page.name} className="flex flex-col gap-1.5">
-            <h4 className="glim-eyebrow">{page.name}</h4>
-            <ul className="flex flex-col gap-1.5">
-              {page.changes.map((change) => (
-                <ChangeRow
-                  key={change.id}
-                  change={change}
-                  seen={seen.has(change.id)}
-                  absent={absent.has(change.id)}
-                  describedBy={`${id}-${change.id}`}
-                  onGo={onGo}
-                />
-              ))}
-            </ul>
-          </div>
-        ))}
-      </Card>
-    </div>
+    <section
+      data-release={version}
+      aria-labelledby={`${id}-v`}
+      className="relative glim-notch-card glim-hue flex flex-col gap-4 rounded-card bg-carbon-surface2 p-4 sm:p-5"
+      style={hueVars(hueIndex) as CSSProperties}
+    >
+      <h3 id={`${id}-v`} className="flex items-center">
+        <Badge tone="heading" size="heading" hueIndex={hueIndex}>
+          {version}
+        </Badge>
+      </h3>
+      <ReleaseNotes version={`v${version}`} />
+      {byPage(t, changes).map((page) => (
+        <div key={page.name} className="flex flex-col gap-1.5">
+          <h4 className="glim-eyebrow">{page.name}</h4>
+          <ul className="flex flex-col gap-1.5">
+            {page.changes.map((change) => (
+              <ChangeRow
+                key={change.id}
+                change={change}
+                seen={seen.has(change.id)}
+                absent={absent.has(change.id)}
+                describedBy={`${id}-${change.id}`}
+                onGo={onGo}
+              />
+            ))}
+          </ul>
+        </div>
+      ))}
+    </section>
   );
 }
 
@@ -180,7 +188,7 @@ export function WhatsNewWindow({ version, onClose }: { version: string | null; o
         </>
       }
     >
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-6">
         {listed.length > 0 && (
           <div className="flex justify-end">
             <Button
