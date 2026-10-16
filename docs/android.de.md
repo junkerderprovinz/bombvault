@@ -61,7 +61,7 @@ Das Zahnrad neben dem Plus öffnet die Einstellungen der App:
 - das Aussehen, das dem ersten Server der Liste folgt, bis du ein eigenes einstellst, und die Animationen, die eine eigene Einstellung haben,
 - ein Bericht zum Kopieren, wenn du ein Problem meldest; er enthält keine Adresse, keinen Namen und keine Phrase,
 - die Karte Über diese App mit der Datenschutzerklärung,
-- **Alle Server entfernen**, das jeden Server aus der App entfernt und die Gruppe verlässt. Auf den Servern selbst ändert sich nichts.
+- **Alle Server entfernen**, das jeden Server aus der App entfernt und die Gruppe verlässt. Jeder Server, den das Handy noch erreicht, nimmt es von seiner Instanzen-Seite.
 
 ## Downloads und Uploads {#files}
 

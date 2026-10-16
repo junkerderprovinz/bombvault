@@ -89,6 +89,18 @@ class Servers(context: Context) {
     @Synchronized
     fun forgetMembers() = write(all().filter { it.url.isNotEmpty() }.map { it.copy(member = null) })
 
+    /**
+     * A member that left the group stays as a server added by hand when it
+     * has an address of its own, and goes otherwise.
+     */
+    @Synchronized
+    fun forgetMember(member: String) {
+        write(all().mapNotNull { if (it.member != member) it else if (it.url.isEmpty()) null else it.copy(member = null) })
+        val keys = JSONObject(prefs.getString(KEYS, "{}")!!)
+        keys.remove(member)
+        prefs.edit().putString(KEYS, keys.toString()).apply()
+    }
+
     @Synchronized
     fun remove(id: String) = write(all().filter { it.id != id })
 

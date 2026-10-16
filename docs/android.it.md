@@ -57,7 +57,7 @@ L'ingranaggio accanto al pulsante + apre le impostazioni dell'app:
 - l'aspetto, che segue il primo server dell'elenco finché non imposti il tuo, e le animazioni, che hanno un'impostazione propria,
 - un report da copiare quando segnali un problema; non contiene indirizzi, nomi né la frase,
 - la scheda **Informazioni** con l'informativa sulla privacy,
-- **Rimuovi tutti i server**, che toglie ogni server dall'app e lascia il gruppo. Sui server stessi non cambia nulla.
+- **Rimuovi tutti i server**, che toglie ogni server dall'app e lascia il gruppo. Ogni server che il telefono raggiunge ancora lo toglie dalla sua pagina Istanze.
 
 ## Download e caricamenti {#files}
 

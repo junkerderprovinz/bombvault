@@ -79,7 +79,8 @@ type Member struct {
 	ID      string `json:"id"`
 	Name    string `json:"name"`
 	Version string `json:"version"`
-	// Direct is true when the member announced itself on this network.
+	// Direct is true when the member announced itself on this network or
+	// answered at its address, and no call there has failed since.
 	Direct bool `json:"direct"`
 	// Relay is true when the member is connected to the same relay.
 	Relay bool `json:"relay"`
@@ -466,7 +467,8 @@ func (m *Manager) AdmitsRelayKey(key string) bool {
 
 // Members lists the members reachable now, sorted by name. A member shows as
 // Direct when multicast placed it on this network or a direct call to it,
-// found by the address exchange or the LAN sweep, has answered recently.
+// found by the address exchange or the LAN sweep, has answered recently, and
+// no call to that address has failed since.
 func (m *Manager) Members() []Member {
 	m.mu.Lock()
 	c, active := m.client, m.keys != nil
@@ -476,7 +478,7 @@ func (m *Manager) Members() []Member {
 	}
 	byID := map[string]*Member{}
 	for _, p := range m.disc.Peers() {
-		byID[p.ID] = &Member{ID: p.ID, Name: p.Name, Version: p.Version, Direct: true, Address: p.URL}
+		byID[p.ID] = &Member{ID: p.ID, Name: p.Name, Version: p.Version, Direct: !m.directDown(p.URL), Address: p.URL}
 	}
 	if c != nil {
 		for _, s := range c.Siblings() {
@@ -494,7 +496,7 @@ func (m *Manager) Members() []Member {
 		if _, ok := byID[id]; ok {
 			continue
 		}
-		byID[id] = &Member{ID: id, Name: a.name, Version: a.version, Direct: true, Address: a.url}
+		byID[id] = &Member{ID: id, Name: a.name, Version: a.version, Direct: !m.directDown(a.url), Address: a.url}
 	}
 	gone := m.departedNow()
 	out := make([]Member, 0, len(byID))
@@ -647,11 +649,17 @@ func (m *Manager) stillDown(url string) {
 	}
 }
 
+// confirmedDirect reports whether memberID answered at its address within
+// addrTTL and no call there has failed since.
 func (m *Manager) confirmedDirect(memberID string) bool {
 	m.addrMu.Lock()
 	defer m.addrMu.Unlock()
 	a := m.addrs[memberID]
-	return a != nil && !a.confirmed.IsZero() && time.Since(a.confirmed) < addrTTL
+	if a == nil || a.confirmed.IsZero() || time.Since(a.confirmed) >= addrTTL {
+		return false
+	}
+	at, failed := m.failed[a.url]
+	return !failed || time.Since(at) >= directRetry
 }
 
 // confirmedAddresses snapshots every member address that answered within

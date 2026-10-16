@@ -57,7 +57,7 @@ A plusz melletti fogaskerék nyitja meg az alkalmazás beállításait:
 - a megjelenés, amely a lista első szerverét követi, amíg sajátot nem állítasz be, valamint az animációk, amelyeknek külön beállításuk van,
 - egy másolható jelentés, ha hibát jelentesz; nincs benne cím, név vagy jelmondat,
 - a Névjegy kártya az adatvédelmi irányelvekkel,
-- a **Minden szerver eltávolítása**, amely minden szervert eltávolít az alkalmazásból, és kilép a csoportból. Magukon a szervereken semmi sem változik.
+- a **Minden szerver eltávolítása**, amely minden szervert eltávolít az alkalmazásból, és kilép a csoportból. Minden szerver, amelyet a telefon még elér, leveszi a telefont a Példányok oldaláról.
 
 ## Letöltések és feltöltések {#files}
 

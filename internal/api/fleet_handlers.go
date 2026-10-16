@@ -146,8 +146,9 @@ func (h *Handler) handleDeleteFleetPeer(w http.ResponseWriter, r *http.Request) 
 	writeJSON(w, http.StatusOK, okEnvelope(nil))
 }
 
-// handleFleetPeerPoll polls one member now and returns the recorded result.
-// POST /api/fleet/peers/{id}/poll
+// handleFleetPeerPoll polls one member now and returns the recorded result. A
+// member that answers it left the group takes its row along, which the answer
+// says. POST /api/fleet/peers/{id}/poll
 func (h *Handler) handleFleetPeerPoll(w http.ResponseWriter, r *http.Request) {
 	p, ok := h.lookupFleetPeer(w, r)
 	if !ok {
@@ -155,8 +156,12 @@ func (h *Handler) handleFleetPeerPoll(w http.ResponseWriter, r *http.Request) {
 	}
 	_, _ = h.svc.pollAndRecordFleetPeer(r.Context(), p) //nolint:errcheck,gosec // the persisted result is what the response reports
 	fresh, ok, err := h.store.GetFleetPeer(p.ID)
-	if err != nil || !ok {
+	switch {
+	case err != nil:
 		fresh = p
+	case !ok:
+		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "code": "memberLeft", "error": "that instance is not in the group any more, so its row is gone"})
+		return
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"peer": fleetPeerToView(fresh, h.svc.pairing().Members())}))
 }

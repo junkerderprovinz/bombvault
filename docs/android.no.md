@@ -60,7 +60,7 @@ Tannhjulet ved siden av plusstegnet åpner innstillingene i appen:
 - utseendet, som følger den første serveren i listen til du velger ditt eget, og animasjonene, som har en egen innstilling,
 - en rapport å kopiere når du melder fra om et problem; den inneholder ingen adresse, ikke noe navn og ingen frase,
 - kortet Om appen med personvernerklæringen,
-- **Fjern alle servere**, som fjerner alle servere fra appen og forlater gruppen. Ingenting endres på selve serverne.
+- **Fjern alle servere**, som fjerner alle servere fra appen og forlater gruppen. Hver server telefonen fortsatt når, fjerner den fra sin Instanser-side.
 
 ## Nedlastinger og opplastinger {#files}
 

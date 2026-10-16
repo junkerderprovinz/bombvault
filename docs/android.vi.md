@@ -62,7 +62,7 @@ Biểu tượng bánh răng cạnh dấu cộng mở phần cài đặt của �
 - giao diện, theo máy chủ đầu tiên trong danh sách cho đến khi bạn tự chọn, còn hiệu ứng chuyển động có cài đặt riêng,
 - một bản báo cáo để sao chép khi báo lỗi; nó không chứa địa chỉ, tên hay cụm từ nào,
 - thẻ Giới thiệu kèm chính sách quyền riêng tư,
-- **Xóa tất cả máy chủ**, xóa mọi máy chủ khỏi ứng dụng và rời nhóm. Trên chính các máy chủ thì không có gì thay đổi.
+- **Xóa tất cả máy chủ**, xóa mọi máy chủ khỏi ứng dụng và rời nhóm. Mỗi máy chủ mà điện thoại còn kết nối được sẽ gỡ điện thoại khỏi trang Phiên bản của nó.
 
 ## Tải xuống và tải lên {#files}
 

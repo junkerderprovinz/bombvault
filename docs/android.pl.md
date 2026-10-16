@@ -60,7 +60,7 @@ Zębatka obok plusa otwiera ustawienia aplikacji:
 - wygląd, który podąża za pierwszym serwerem na liście, dopóki nie ustawisz własnego, oraz animacje, które mają osobne ustawienie,
 - raport do skopiowania, gdy zgłaszasz problem; nie zawiera adresu, nazwy ani frazy,
 - karta O aplikacji z polityką prywatności,
-- **Usuń wszystkie serwery**, które usuwa z aplikacji wszystkie serwery i opuszcza grupę. Na samych serwerach nic się nie zmienia.
+- **Usuń wszystkie serwery**, które usuwa z aplikacji wszystkie serwery i opuszcza grupę. Każdy serwer, do którego telefon jeszcze dociera, usuwa go ze swojej strony Instancje.
 
 ## Pobieranie i wysyłanie plików {#files}
 

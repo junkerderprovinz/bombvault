@@ -30,6 +30,9 @@ type phone struct {
 	seed    []byte
 	client  *relay.Client
 	session string
+	// heard gets every call an instance makes to the phone other than the
+	// question for its key.
+	heard chan relay.ProxyCall
 }
 
 // joinPhone connects a phone with the words and its own key, which it names
@@ -44,8 +47,13 @@ func joinPhone(t *testing.T, relayURL, phrase, id string, seenBy ...*instance) *
 	if err != nil {
 		t.Fatal(err)
 	}
+	heard := make(chan relay.ProxyCall, 16)
 	serve := func(_ context.Context, call relay.ProxyCall) (int, []byte) {
 		if call.Method != http.MethodGet || call.Path != "/api/group/peer/key" {
+			select {
+			case heard <- call:
+			default:
+			}
 			return http.StatusNotFound, nil
 		}
 		proof := keydeposit.Prove(seed, keydeposit.Claim{Action: keydeposit.ProofKey, OwnerID: id, KeeperID: call.Sender})
@@ -70,7 +78,7 @@ func joinPhone(t *testing.T, relayURL, phrase, id string, seenBy ...*instance) *
 			time.Sleep(20 * time.Millisecond)
 		}
 	}
-	return &phone{t: t, id: id, seed: seed, client: c}
+	return &phone{t: t, id: id, seed: seed, client: c, heard: heard}
 }
 
 // ask sends target one peer call in the name of sender and returns its status

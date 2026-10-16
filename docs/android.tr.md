@@ -62,7 +62,7 @@ Artı işaretinin yanındaki dişli, uygulamanın ayarlarını açar:
 - sen kendininkini ayarlayana kadar listedeki ilk sunucuyu izleyen görünüm, ve kendi ayarı olan animasyonlar,
 - bir sorun bildirirken kopyalanacak bir rapor; içinde adres, ad ya da ifade yoktur,
 - gizlilik politikasıyla birlikte Hakkında kartı,
-- **Tüm sunucuları kaldır**: tüm sunucuları uygulamadan kaldırır ve gruptan ayrılır. Sunucuların kendisinde hiçbir şey değişmez.
+- **Tüm sunucuları kaldır**: tüm sunucuları uygulamadan kaldırır ve gruptan ayrılır. Telefonun hâlâ ulaştığı her sunucu onu kendi Örnekler sayfasından kaldırır.
 
 ## İndirmeler ve yüklemeler {#files}
 

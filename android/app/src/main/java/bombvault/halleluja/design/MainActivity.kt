@@ -108,7 +108,7 @@ class MainActivity : ComponentActivity() {
             found = it
             pushState()
         }
-        pairing = Pairing(this, servers) { runOnUiThread(::pushState) }
+        pairing = Pairing(this, servers, onMemberLeft = { member -> runOnUiThread { pages.forget(member) } }) { runOnUiThread(::pushState) }
         pages = RelayPages(
             pairing,
             servers,

@@ -61,7 +61,7 @@ El engranaje junto al botón + abre los ajustes de la app:
 - el aspecto, que sigue al primer servidor de la lista hasta que defines el tuyo, y las animaciones, que tienen su propio ajuste,
 - un informe para copiar cuando comuniques un problema; no contiene ninguna dirección, nombre ni frase,
 - la tarjeta **Acerca de** con la política de privacidad,
-- **Quitar todos los servidores**, que quita todos los servidores de la app y abandona el grupo. En los propios servidores no cambia nada.
+- **Quitar todos los servidores**, que quita todos los servidores de la app y abandona el grupo. Cada servidor al que el móvil aún llega lo quita de su página de Instancias.
 
 ## Descargas y subidas {#files}
 

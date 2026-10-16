@@ -48,6 +48,15 @@ func (s *Service) syncFleetPeers() ([]store.FleetPeer, error) {
 	}
 	for _, m := range s.pairing().Members() {
 		if i, ok := known[m.ID]; ok {
+			// A member found on the network and never polled would otherwise
+			// leave no address to ask after a restart whether it is still in
+			// the group.
+			if m.Kind == "" && m.Address != "" && rows[i].MemberURL != m.Address {
+				if err := s.store.SetFleetPeerMemberURL(m.ID, m.Address); err != nil {
+					return nil, err
+				}
+				rows[i].MemberURL = m.Address
+			}
 			if (m.Name != "" && rows[i].Name != m.Name) || (m.Kind != "" && rows[i].Kind != m.Kind) {
 				if m.Name != "" {
 					rows[i].Name = m.Name
@@ -76,7 +85,11 @@ func (s *Service) syncFleetPeers() ([]store.FleetPeer, error) {
 		if adopted {
 			continue
 		}
-		p, err := s.store.CreateFleetPeer(store.FleetPeer{MemberID: m.ID, Name: m.Name, Kind: m.Kind, Enabled: true, SortOrder: len(rows)})
+		row := store.FleetPeer{MemberID: m.ID, Name: m.Name, Kind: m.Kind, Enabled: true, SortOrder: len(rows)}
+		if m.Kind == "" {
+			row.MemberURL = m.Address
+		}
+		p, err := s.store.CreateFleetPeer(row)
 		if err != nil {
 			return nil, err
 		}
@@ -159,4 +172,57 @@ func (s *Service) RunFleetPolls(ctx context.Context) error {
 		_, _ = s.pollAndRecordFleetPeer(ctx, p) //nolint:errcheck,gosec // recorded per peer, not surfaced to the sweep caller
 	}
 	return nil
+}
+
+// A member that left the group while this instance was down never tells it,
+// and one that is out of reach is not asked by anything else until the daily
+// Fleet sweep. absentCheckDelay gives the relay and the network time to bring
+// back the members still in the group before the first check after a start.
+const (
+	absentCheckDelay   = 30 * time.Second
+	absentCheckEvery   = 5 * time.Minute
+	absentCheckTimeout = 10 * time.Second
+)
+
+func (s *Service) absentMembersLoop() {
+	ctx := s.StopContext()
+	wait := absentCheckDelay
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-time.After(wait):
+		}
+		s.askAbsentMembers(ctx)
+		wait = absentCheckEvery
+	}
+}
+
+// askAbsentMembers asks every member that has a row and an address but is not
+// in reach now, and drops the row of one that answers it left the group.
+// Nothing else of the answer is recorded; polls do that.
+func (s *Service) askAbsentMembers(ctx context.Context) {
+	if !s.pairing().Active() {
+		return
+	}
+	rows, err := s.store.ListFleetPeers()
+	if err != nil {
+		log.Printf("group: %v", err)
+		return
+	}
+	present := map[string]bool{}
+	for _, m := range s.pairing().Members() {
+		present[m.ID] = true
+	}
+	for _, p := range rows {
+		if p.MemberID == "" || p.Kind != "" || p.MemberURL == "" || present[p.MemberID] {
+			continue
+		}
+		cctx, cancel := context.WithTimeout(ctx, absentCheckTimeout)
+		_, _, err := s.pairing().Call(cctx, p.MemberID, http.MethodGet, group.ProbePath, nil)
+		cancel()
+		if left, ok := errors.AsType[*group.LeftError](err); ok {
+			s.dropFormerMember(left)
+		}
+	}
 }

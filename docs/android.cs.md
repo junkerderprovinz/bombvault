@@ -61,7 +61,7 @@ Ozubené kolo vedle plusu otevře nastavení aplikace:
 - vzhled, který se řídí prvním serverem v seznamu, dokud si nenastavíš vlastní, a animace, které mají vlastní nastavení,
 - hlášení ke zkopírování, když hlásíš problém; neobsahuje žádnou adresu, název ani frázi,
 - kartu O aplikaci se zásadami ochrany osobních údajů,
-- **Odebrat všechny servery**, které z aplikace odebere všechny servery a opustí skupinu. Na samotných serverech se nic nezmění.
+- **Odebrat všechny servery**, které z aplikace odebere všechny servery a opustí skupinu. Každý server, na který telefon ještě dosáhne, ho odebere ze své stránky Instance.
 
 ## Stahování a nahrávání {#files}
 
