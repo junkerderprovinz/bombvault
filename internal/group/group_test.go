@@ -1213,3 +1213,47 @@ func TestARenamedMemberShowsUpUnderItsNewNameOnTheRelay(t *testing.T) {
 	}
 	t.Fatalf("a's members after b's rename = %+v, want b as Loft", a.Members())
 }
+
+func directOf(t *testing.T, m *Manager, id string) bool {
+	t.Helper()
+	for _, mem := range m.Members() {
+		if mem.ID == id {
+			return mem.Direct
+		}
+	}
+	t.Fatalf("%s is not among the members %+v", id, m.Members())
+	return false
+}
+
+func TestAMemberWhoseDirectAddressJustFailedIsNotShownAsDirect(t *testing.T) {
+	a, b := relayPair(t, echo)
+	mux := http.NewServeMux()
+	mux.HandleFunc("POST "+directPath, b.ServeDirect)
+	srv := httptest.NewTLSServer(mux)
+	t.Cleanup(srv.Close)
+	a.ConfirmAddress("id-b", srv.URL, "Attic", "")
+	if !directOf(t, a, "id-b") {
+		t.Fatal("a member that answered at its address is not shown as direct")
+	}
+	a.directFailed(context.Background(), srv.URL)
+	if directOf(t, a, "id-b") {
+		t.Fatal("a member whose address just failed is still shown as direct")
+	}
+	a.refresh(context.Background())
+	if !directOf(t, a, "id-b") {
+		t.Fatal("the address answers again, but the member is not shown as direct")
+	}
+}
+
+func TestAMemberOnThisNetworkWhoseAddressJustFailedIsNotShownAsDirect(t *testing.T) {
+	a, _ := member(t, "id-a", "Cellar", testSecret, echo)
+	_, pb := member(t, "id-b", "Attic", testSecret, echo)
+	a.disc.Observe(pb)
+	if !directOf(t, a, "id-b") {
+		t.Fatal("a member announced on this network is not shown as direct")
+	}
+	a.directFailed(context.Background(), pb.URL)
+	if directOf(t, a, "id-b") {
+		t.Fatal("a member whose announced address just failed is still shown as direct")
+	}
+}
