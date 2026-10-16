@@ -109,3 +109,16 @@ export function formatClockTime(unix: number, withSeconds = true): string {
   const ss = String(d.getSeconds()).padStart(2, "0");
   return `${hh}:${mm}:${ss}`;
 }
+
+/**
+ * snapshotStamp reads the time at the end of a snapshot name BombVault made,
+ * such as bombvault-prerestore-20261015201434, as unix seconds. The stamp is
+ * UTC, so its digits differ from the local clock. null when the name ends in
+ * no stamp.
+ */
+export function snapshotStamp(name: string): number | null {
+  const m = /-(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})$/.exec(name);
+  if (!m) return null;
+  const [y, mo, d, h, mi, s] = m.slice(1).map(Number);
+  return Date.UTC(y, mo - 1, d, h, mi, s) / 1000;
+}

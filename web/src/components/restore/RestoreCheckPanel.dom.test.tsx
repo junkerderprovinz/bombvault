@@ -20,6 +20,23 @@ const checks: RestoreCheckResponse["checks"] = [
 
 afterEach(cleanup);
 
+function zvolPlan(counts: { changed?: number }): RestoreCheckResponse["plan"] {
+  return {
+    inPlace: true,
+    added: 0,
+    changed: counts.changed ?? 0,
+    unchanged: 0,
+    extra: 0,
+    files: [],
+    listCapped: false,
+    partial: false,
+    missing: false,
+    definition: [],
+    shared: [],
+    zvols: [{ dataset: "tank/vms/testvm", size: 1073741824, change: "changed", safety: "tank/vms/testvm@bombvault-before-restore-", free: 54760833024 }],
+  };
+}
+
 describe("the restore plan", () => {
   it("counts what changes and lists the files on request", () => {
     show({
@@ -193,9 +210,24 @@ describe("the restore plan", () => {
     expect(screen.getByText("tank/vms/testvm")).toBeTruthy();
     expect(screen.getByText(en["restoreCheck.change.changed"])).toBeTruthy();
     expect(
-      screen.getByText(en["restoreCheck.zvol.safety"].replace("{name}", "tank/vms/testvm@bombvault-before-restore-…")),
+      screen.getByText(
+        `${en["restoreCheck.zvol.safety"].replace("{name}", "tank/vms/testvm@bombvault-before-restore-…")} ${en["restoreCheck.zvol.safetyStamp"]}`,
+      ),
     ).toBeTruthy();
     expect(screen.queryByText(en["restoreCheck.reason.nothing"])).toBeNull();
+  });
+
+  it("shows no file counts for a VM whose disks are all zvols", () => {
+    show({ ok: true, ready: true, checks, plan: zvolPlan({}) });
+    expect(screen.getByText("tank/vms/testvm")).toBeTruthy();
+    expect(screen.queryByText("0 new files")).toBeNull();
+    expect(screen.queryByText("0 files not in the backup")).toBeNull();
+  });
+
+  it("keeps the file counts when a VM has a file disk beside its zvol", () => {
+    show({ ok: true, ready: true, checks, plan: zvolPlan({ changed: 1 }) });
+    expect(screen.getByText("1 file replaced")).toBeTruthy();
+    expect(screen.getByText("0 new files")).toBeTruthy();
   });
 
   it("says the pool a zvol belongs on is missing", () => {

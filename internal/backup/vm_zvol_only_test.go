@@ -9,6 +9,7 @@ import (
 	"slices"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/backup"
 )
@@ -187,6 +188,25 @@ func TestTheRestoreLogSaysHowToRollBackAfterALaterSnapshot(t *testing.T) {
 	m := hint.FindStringSubmatch(out.String())
 	if m == nil || m[1] != m[2] {
 		t.Fatalf("the log has no rollback hint for a later snapshot:\n%s", out.String())
+	}
+}
+
+func TestTheSafetySnapshotIsNamedInUTCAndTheLogSaysSo(t *testing.T) {
+	var out bytes.Buffer
+	log.SetOutput(&out)
+	t.Cleanup(func() { log.SetOutput(os.Stderr) })
+	host := &fakeZFSHost{volumes: map[string]int64{"tank/vms/win10": 1 << 30}}
+
+	if err := backup.RestoreVM(t.Context(), zvolOnlyRestoreDeps(t, &fakeVM{stateVal: "running"}, &fakeRestic{}, &fakeRuns{}, host)); err != nil {
+		t.Fatal(err)
+	}
+	m := regexp.MustCompile(`kept in tank/vms/win10@bombvault-before-restore-([0-9]{14}), whose name ends in the time it was taken in UTC`).FindStringSubmatch(out.String())
+	if m == nil {
+		t.Fatalf("the log does not say the name is in UTC:\n%s", out.String())
+	}
+	at, err := time.ParseInLocation("20060102150405", m[1], time.UTC)
+	if err != nil || time.Since(at).Abs() > time.Minute {
+		t.Fatalf("stamp %s read as UTC is %v, %v; want the time of the restore", m[1], at, err)
 	}
 }
 

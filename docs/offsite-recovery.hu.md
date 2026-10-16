@@ -124,6 +124,8 @@ Ez jobb út, mint a megosztás csatolása Unraidon: a restic nem javasolja, hogy
 
 Kapcsold be a törlés elleni védelmet egy telephelyen kívüli célnál, hogy a zsarolóvírus vagy egy feltört gazdagép ne törölhesse vagy írhassa felül a mentéseidet. A túloldal (egy `--append-only` módban futó `restic/rest-server`) **érvényesíti**. A BombVault csak **ellenőrzi**, és soha nem mutat zöldet pusztán egy beállítási állítás alapján. Az ezen a szerveren lévő mappa nem tagadhatja meg a törlést, mert aki a BombVaultot irányítja, a mappát is irányítja, ezért a helyi célok nem kínálják a kapcsolót.
 
+A kapcsoló a célhoz tartozik: egy szakasz, amely oda másol, a céltól veszi át, ezért a cél oldalán, a **Célok** alatt kell bekapcsolni. Az ütemezett **Törlésvédelem ellenőrzése** csak addig fut, amíg egy szakasz olyan célra másol, amelyen a kapcsoló be van kapcsolva. A másik oldalt `--append-only` kapcsolóval kell indítani; a `restic/rest-server` image esetén ez TrueNAS-on, mint bármely más Docker-gazdán, az `OPTIONS` változóba kerül.
+
 A leggyorsabb út egy append-only másolathoz egy párosított BombVault [fogadószerverrel](#receiving-server): ez helyetted futtatja a rest-servert, append-only módban.
 
 !!! note "A `/locks/` alatti sikeres törlés várható"
@@ -135,6 +137,8 @@ A leggyorsabb út egy append-only másolathoz egy párosított BombVault [fogad�
 ## Manipulációs teszt
 
 A BombVault rendszeresen bizonyítja az append-only garanciát azzal, hogy ténylegesen törlést kísérel meg a telephelyen kívüli tárolón, egy nem létező objektumra célozva. A **Törlés elleni védelem tesztelése most** egy cél oldalán igény szerint lefuttatja, a **Törlésvédelem ellenőrzése** pedig a **Beállítások, Ellenőrzés, Automatikus ellenőrzések** alatt ütemezve futtatja.
+
+A kikapcsolt másolatot nem teszteli, és a cél ezt jelzi. A kapcsolatteszt továbbra is működik rajta, mert csak olvas, így egy másolat bekapcsolás előtt is ellenőrizhető.
 
 - Az **elutasítás** azt jelenti, hogy védett.
 - Az **elfogadás** azt jelenti, hogy nem védett.

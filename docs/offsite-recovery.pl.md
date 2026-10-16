@@ -124,6 +124,8 @@ To lepsza droga niż montowanie udziału na Unraid: restic odradza trzymanie rep
 
 Włącz ochronę przed usunięciem dla miejsca docelowego poza siedzibą, aby ransomware lub przejęty host nie mogły usunąć ani przepisać Twoich kopii zapasowych. Druga strona (`restic/rest-server` działający w trybie `--append-only`) ją **egzekwuje**. BombVault ją tylko **weryfikuje** i nigdy nie pokazuje zieleni na samym zapewnieniu konfiguracji. Folder na tym serwerze nie może odmówić usunięcia, bo kto kontroluje BombVault, kontroluje też folder, więc miejsca lokalne nie oferują tego przełącznika.
 
+Przełącznik należy do miejsca docelowego: sekcja, która tam kopiuje, przejmuje go od miejsca docelowego, więc włącz go na stronie miejsca docelowego w **Miejsca docelowe**. Zaplanowane **Sprawdzaj ochronę przed usunięciem** działa tylko wtedy, gdy jakaś sekcja kopiuje do miejsca docelowego z włączonym przełącznikiem. Druga strona musi być uruchomiona z `--append-only`; w obrazie `restic/rest-server`, na TrueNAS tak jak na każdym innym hoście Dockera, trafia to do zmiennej `OPTIONS`.
+
 Najszybsza droga do kopii append-only to sparowany BombVault z [serwerem odbiorczym](#receiving-server): uruchamia rest-server za Ciebie, w trybie append-only.
 
 !!! note "Udane usunięcie w `/locks/` jest oczekiwane"
@@ -135,6 +137,8 @@ Najszybsza droga do kopii append-only to sparowany BombVault z [serwerem odbiorc
 ## Tamper test
 
 BombVault okresowo dowodzi gwarancji append-only, faktycznie próbując usunąć coś w repozytorium poza siedzibą, na nieistniejącym obiekcie. **Przetestuj ochronę przed usunięciem teraz** na stronie miejsca docelowego uruchamia to na żądanie, a **Sprawdzaj ochronę przed usunięciem** w **Ustawienia, Weryfikacja, Automatyczne kontrole** uruchamia to według harmonogramu.
+
+Wyłączona kopia nie jest testowana, a miejsce docelowe to pokazuje. Test połączenia nadal działa, bo tylko odczytuje, więc kopię można sprawdzić przed jej włączeniem.
 
 - **Odrzucone** oznacza chronione.
 - **Zaakceptowane** oznacza niechronione.

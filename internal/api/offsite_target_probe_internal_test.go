@@ -236,3 +236,19 @@ func TestHandleTestOffsiteTargetEnvelope(t *testing.T) {
 		t.Fatalf("unknown-target envelope = %v, want ok:false with a reason", env)
 	}
 }
+
+// A target is set up and tested before it is switched on, and the probe only
+// reads, so switching it off does not stop the test.
+func TestASwitchedOffTargetCanStillBeTested(t *testing.T) {
+	const repo = "rest:http://nas:8000/containers"
+	svc, st, eng := newProbeSvc(t, map[string]bool{repo: true})
+	off, err := st.UpsertOffsiteTarget(store.OffsiteTarget{Domain: "containers", Name: "NAS", Repo: repo, SortOrder: 1})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	reachable, initialized, err := svc.TestOffsiteTarget(context.Background(), off.ID)
+	if err != nil || !reachable || !initialized || eng.probeCount() == 0 {
+		t.Fatalf("probe of a switched-off target = (%v, %v, %v) after %d probes, want it reachable", reachable, initialized, err, eng.probeCount())
+	}
+}

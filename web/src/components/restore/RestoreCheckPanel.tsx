@@ -178,21 +178,26 @@ function PlanView({ plan, t }: { plan: RestorePlan; t: T }) {
     [plan.changed, "restoreCheck.plan.changed"],
     [plan.unchanged, "restoreCheck.plan.unchanged"],
   ];
+  // A VM whose disks are all zvols restores no files, and four zeros above
+  // the zvol list would only look like a plan that found nothing.
+  const zvolsOnly = (plan.zvols?.length ?? 0) > 0 && plan.added + plan.changed + plan.unchanged + plan.extra === 0;
   return (
     <div className="flex flex-col gap-2 rounded-control bg-carbon-surface2 p-3">
       <div className="flex flex-wrap items-center gap-2">
         <h5 className="text-sm font-semibold text-carbon-text">{t("restoreCheck.plan.title")}</h5>
         <InfoBubble tip={t("restoreCheck.plan.titleHint")} />
       </div>
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-carbon-text">
-        {counts.map(([n, key]) => (
-          <span key={key}>{t(key, n)}</span>
-        ))}
-        <span className="inline-flex items-center gap-1">
-          {t("restoreCheck.plan.extra", plan.extra)}
-          <InfoBubble tip={t("restoreCheck.plan.extraHint")} />
-        </span>
-      </div>
+      {!zvolsOnly && (
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-carbon-text">
+          {counts.map(([n, key]) => (
+            <span key={key}>{t(key, n)}</span>
+          ))}
+          <span className="inline-flex items-center gap-1">
+            {t("restoreCheck.plan.extra", plan.extra)}
+            <InfoBubble tip={t("restoreCheck.plan.extraHint")} />
+          </span>
+        </div>
+      )}
       {plan.partial && <p className="text-caption text-statusWarn">{t("restoreCheck.plan.partial")}</p>}
       {plan.error && (
         <p className="text-caption text-statusWarn">{t("restoreCheck.plan.error").replace("{error}", plan.error)}</p>
@@ -295,7 +300,7 @@ function ZvolList({ zvols, t }: { zvols: PlanZvol[]; t: T }) {
             </span>
             {z.safety && (
               <span className="wrap-break-word text-carbon-textMuted">
-                {t("restoreCheck.zvol.safety").replace("{name}", `${z.safety}…`)}
+                {t("restoreCheck.zvol.safety").replace("{name}", `${z.safety}…`)} {t("restoreCheck.zvol.safetyStamp")}
               </span>
             )}
           </li>

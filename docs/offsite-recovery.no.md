@@ -124,6 +124,8 @@ Dette er den bedre veien enn å montere delingen på Unraid: restic fraråder å
 
 Slå på beskyttelse mot sletting for et eksternt mål slik at løsepengevirus, eller en kompromittert host, ikke kan slette eller skrive om sikkerhetskopiene dine. Den andre siden (en `restic/rest-server` som kjører i `--append-only`-modus) **håndhever** det. BombVault bare **verifiserer** det og viser aldri grønt på en konfigurasjonspåstand alene. En mappe på denne serveren kan ikke avslå sletting, fordi den som kontrollerer BombVault også kontrollerer mappen, så lokale mål tilbyr ikke bryteren.
 
+Bryteren hører til målet: en seksjon som kopierer dit, tar den fra målet, så slå den på på målets side under **Mål**. Den planlagte **Kontroller slettebeskyttelse** kjører bare så lenge en seksjon kopierer til et mål med bryteren slått på. Den andre siden må startes med `--append-only`; med imaget `restic/rest-server`, på TrueNAS som på enhver annen Docker-vert, legges det i variabelen `OPTIONS`.
+
 Den raskeste veien til en append-only-kopi er en paret BombVault med en [mottaksserver](#receiving-server): den kjører rest-serveren for deg, i append-only-modus.
 
 !!! note "En vellykket sletting under `/locks/` er forventet"
@@ -135,6 +137,8 @@ Den raskeste veien til en append-only-kopi er en paret BombVault med en [mottaks
 ## Tamper-test
 
 BombVault beviser append-only-garantien jevnlig ved faktisk å forsøke en sletting mot det eksterne repoet, rettet mot et objekt som ikke finnes. **Test beskyttelsen mot sletting nå** på siden til et mål kjører den på forespørsel, og **Kontroller slettebeskyttelse** under **Innstillinger, Verifisering, Automatiske kontroller** kjører den etter en tidsplan.
+
+En kopi som er slått av, testes ikke, og målet sier det. Tilkoblingstesten virker fortsatt, fordi den bare leser, så en kopi kan kontrolleres før den slås på.
 
 - **Avvist** betyr beskyttet.
 - **Godtatt** betyr ikke beskyttet.

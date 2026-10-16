@@ -124,6 +124,8 @@ Biểu mẫu trả lời bằng vị trí hoàn chỉnh, ví dụ `rclone:nas:ba
 
 Bật bảo vệ chống xóa cho một đích sao lưu off-site để ransomware, hoặc một máy chủ bị xâm nhập, không thể xóa hay ghi lại các bản sao lưu của bạn. Phía xa (một `restic/rest-server` chạy ở chế độ `--append-only`) **thực thi** nó. BombVault chỉ **xác minh** nó và không bao giờ hiện màu xanh chỉ vì một khẳng định cấu hình. Một thư mục trên máy chủ này không thể từ chối xóa, vì ai điều khiển BombVault cũng điều khiển thư mục, nên các đích cục bộ không có công tắc này.
 
+Công tắc thuộc về đích: một phần sao chép tới đó sẽ lấy nó từ đích, nên hãy bật nó trên trang của đích trong **Đích sao lưu**. **Kiểm tra bảo vệ chống xóa** theo lịch chỉ chạy khi có một phần sao chép tới đích đã bật công tắc. Phía bên kia phải được khởi động với `--append-only`; với image `restic/rest-server`, trên TrueNAS cũng như trên mọi máy chủ Docker khác, giá trị này nằm trong biến `OPTIONS`.
+
 Cách nhanh nhất để có một bản sao append-only là một BombVault đã ghép nối với một [máy chủ nhận](#receiving-server): nó chạy rest-server cho bạn, ở chế độ append-only.
 
 !!! note "Xóa thành công dưới `/locks/` là hành vi mong đợi"
@@ -135,6 +137,8 @@ Cách nhanh nhất để có một bản sao append-only là một BombVault đ�
 ## Kiểm tra can thiệp
 
 BombVault định kỳ chứng minh bảo đảm append-only bằng cách thực sự thử xóa trên kho off-site, nhắm vào một đối tượng không tồn tại. **Kiểm tra bảo vệ chống xóa ngay** trên trang của một đích chạy nó theo yêu cầu, và **Kiểm tra bảo vệ chống xóa** dưới **Cài đặt, Xác minh, Kiểm tra tự động** chạy nó theo lịch.
+
+Bản sao đang tắt sẽ không được kiểm tra, và đích sẽ ghi rõ điều đó. Kiểm tra kết nối vẫn chạy được vì nó chỉ đọc, nên có thể kiểm tra một bản sao trước khi bật nó.
 
 - **Bị từ chối** nghĩa là được bảo vệ.
 - **Được chấp nhận** nghĩa là không được bảo vệ.

@@ -124,6 +124,8 @@ Il modulo risponde con la posizione completa, per esempio `rclone:nas:backups`. 
 
 Attiva la protezione dall'eliminazione per una destinazione off-site così ransomware, o un host compromesso, non possano eliminare o riscrivere i tuoi backup. L'altro lato (un `restic/rest-server` in esecuzione in modalità `--append-only`) la **impone**. BombVault la **verifica** soltanto e non mostra mai verde sulla sola affermazione di una configurazione. Una cartella su questo server non può rifiutare l'eliminazione, perché chi controlla BombVault controlla anche la cartella, quindi le destinazioni locali non offrono l'interruttore.
 
+L'interruttore appartiene alla destinazione: una sezione che copia lì lo prende dalla destinazione, quindi si attiva nella pagina della destinazione, in **Destinazioni**. Il controllo pianificato **Controlla la protezione dall'eliminazione** gira solo finché una sezione copia verso una destinazione con l'interruttore attivo. L'altra parte va avviata con `--append-only`; con l'immagine `restic/rest-server`, su TrueNAS come su qualsiasi altro host Docker, va nella variabile `OPTIONS`.
+
 La via più rapida a una copia append-only è un BombVault associato con un [server ricevente](#receiving-server): esegue il rest-server per te, in modalità append-only.
 
 !!! note "Una cancellazione riuscita sotto `/locks/` è prevista"
@@ -135,6 +137,8 @@ La via più rapida a una copia append-only è un BombVault associato con un [ser
 ## Tamper test
 
 BombVault dimostra periodicamente la garanzia append-only tentando effettivamente un'eliminazione contro il repo off-site, mirata a un oggetto inesistente. **Prova subito la protezione dall'eliminazione** nella pagina di una destinazione la esegue su richiesta, e **Controlla la protezione dall'eliminazione** in **Impostazioni, Verifica, Controlli automatici** la esegue secondo una pianificazione.
+
+Una copia disattivata non viene testata, e la destinazione lo dice. Il test di connessione funziona comunque, perché legge soltanto, così una copia si può verificare prima di attivarla.
 
 - **Rifiutata** significa protetto.
 - **Accettata** significa non protetto.

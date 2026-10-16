@@ -260,6 +260,8 @@ func RestoreZvolDisk(ctx context.Context, d RestoreZvolDeps) (string, error) {
 	}
 	var safety string
 	if exists {
+		// UTC, as every snapshot name BombVault makes: a local stamp repeats in
+		// the hour a DST change goes back.
 		snapName := ZvolSafetySnapshotPrefix + time.Now().UTC().Format("20060102150405")
 		if err := d.Host.SnapshotCreate(ctx, d.Dataset, snapName); err != nil {
 			return "", fmt.Errorf("zvol restore: snapshot %s before writing to it: %w", d.Dataset, err)
@@ -315,7 +317,7 @@ func restoreBlockDisksAndLog(ctx context.Context, d VMRestoreDeps) error {
 		if safety != "" {
 			// zfs rollback refuses any snapshot but the newest without -r, and
 			// the next restore of the same disk takes a newer one.
-			log.Printf("vm restore: zvol disk %q: its contents from before the restore are kept in %s. zfs rollback %s undoes the restore while that is the newest snapshot of the zvol; once a newer one exists, such as the next restore's, zfs rollback -r %s does it and destroys the newer snapshots", bd.Dataset, safety, safety, safety)
+			log.Printf("vm restore: zvol disk %q: its contents from before the restore are kept in %s, whose name ends in the time it was taken in UTC. zfs rollback %s undoes the restore while that is the newest snapshot of the zvol; once a newer one exists, such as the next restore's, zfs rollback -r %s does it and destroys the newer snapshots", bd.Dataset, safety, safety, safety)
 		}
 		if err != nil {
 			log.Printf("vm restore: zvol disk %q: %v", bd.Dataset, err)

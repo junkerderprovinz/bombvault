@@ -3,6 +3,7 @@ package api
 import (
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"slices"
 	"strings"
@@ -326,7 +327,19 @@ func (h *Handler) handleCreateOffsiteTarget(w http.ResponseWriter, r *http.Reque
 			return
 		}
 	}
+	h.replanAfterTargetChange()
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"target": offsiteTargetToView(stored)}))
+}
+
+// replanAfterTargetChange reloads the schedule, which plans the tamper job
+// from the append-only targets. The save stands either way.
+func (h *Handler) replanAfterTargetChange() {
+	if h.scheduler == nil {
+		return
+	}
+	if err := h.reloadScheduler(); err != nil {
+		log.Printf("api: off-site target saved, but the schedule could not be reloaded: %v", err)
+	}
 }
 
 // handleUpdateOffsiteTarget replaces the target named in the path, keeping its
@@ -375,6 +388,13 @@ func (h *Handler) handleUpdateOffsiteTarget(w http.ResponseWriter, r *http.Reque
 	if existing.DestinationID != "" {
 		if moved {
 			writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "this target was made from a destination and its location holds the domain's repository, so it cannot move"})
+			return
+		}
+		// The flag is the destination's, and taking it over silently would
+		// answer ok with the protection still off. A body without the flag is
+		// a partial one and keeps it.
+		if t.Immutable && !existing.Immutable {
+			writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "this target takes append-only from its storage location, which has it off: switch on append-only for that location under Storage locations"})
 			return
 		}
 		t.Name, t.CredsRef, t.StorageClass, t.Immutable = existing.Name, existing.CredsRef, existing.StorageClass, existing.Immutable
@@ -428,6 +448,7 @@ func (h *Handler) handleUpdateOffsiteTarget(w http.ResponseWriter, r *http.Reque
 			return
 		}
 	}
+	h.replanAfterTargetChange()
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{
 		"target":   offsiteTargetToView(stored),
 		"warnings": h.svc.targetSaveWarnings(r.Context(), existing, stored),
@@ -490,12 +511,14 @@ func (h *Handler) handleDeleteOffsiteTarget(w http.ResponseWriter, r *http.Reque
 		placementFail(w, errTargetInUse, map[string]any{"use": targetUseView(use)})
 		return
 	}
+	h.replanAfterTargetChange()
 	writeJSON(w, http.StatusOK, okEnvelope(nil))
 }
 
 // handleTestOffsiteTarget reports whether one off-site target is reachable and
 // initialised, in the same shape as handleTestOffsite, which only probes a
-// domain's primary target.
+// domain's primary target. A switched-off target is probed as well, so it can
+// be checked before it is switched on; the probe only reads.
 func (h *Handler) handleTestOffsiteTarget(w http.ResponseWriter, r *http.Request) {
 	reachable, initialized, err := h.svc.TestOffsiteTarget(r.Context(), r.PathValue("id"))
 	if err != nil {

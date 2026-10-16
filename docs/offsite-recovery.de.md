@@ -124,6 +124,8 @@ Das ist der bessere Weg, als die Freigabe auf Unraid einzuhängen: restic rät d
 
 Schalte den Löschschutz für einen Speicherort außer Haus ein, damit Ransomware oder ein kompromittierter Host deine Sicherungen nicht löschen oder überschreiben kann. Die Gegenseite (ein `restic/rest-server` im `--append-only`-Modus) **erzwingt** ihn. BombVault **prüft** ihn nur nach und zeigt nie grün allein auf eine Konfigurationsbehauptung hin. Ein Ordner auf diesem Server kann das Löschen nicht verweigern, weil, wer BombVault steuert, auch den Ordner steuert, deshalb bieten lokale Orte den Schalter nicht an.
 
+Der Schalter gehört zum Speicherort: Ein Bereich, der dorthin kopiert, übernimmt ihn vom Speicherort, also schaltest du ihn auf der Seite des Speicherorts unter **Speicherorte** ein. Das geplante **Löschschutz prüfen** läuft nur, solange ein Bereich an einen Speicherort mit eingeschaltetem Schalter kopiert. Die Gegenseite muss mit `--append-only` gestartet sein; beim Image `restic/rest-server` gehört das, auf TrueNAS wie auf jedem anderen Docker-Host, in die Variable `OPTIONS`.
+
 Der schnellste Weg zu einer Append-only-Kopie ist ein gekoppeltes BombVault mit einem [Empfangsserver](#receiving-server): Es betreibt den rest-server für dich, im Append-only-Modus.
 
 !!! note "Ein erfolgreiches Löschen unter `/locks/` ist zu erwarten"
@@ -135,6 +137,8 @@ Der schnellste Weg zu einer Append-only-Kopie ist ein gekoppeltes BombVault mit 
 ## Manipulationstest
 
 BombVault beweist die Append-only-Garantie regelmäßig, indem es tatsächlich einen Löschversuch gegen das Off-site-Repo unternimmt, gezielt auf ein nicht existierendes Objekt. **Löschschutz jetzt testen** auf der Seite eines Orts führt ihn sofort aus, und **Löschschutz prüfen** unter **Einstellungen, Prüfung, Automatische Prüfungen** nach Plan.
+
+Eine ausgeschaltete Kopie wird nicht getestet, und der Speicherort sagt das. Der Verbindungstest läuft bei ihr trotzdem, weil er nur liest, so kannst du eine Kopie prüfen, bevor du sie einschaltest.
 
 - **Verweigert** heißt geschützt.
 - **Angenommen** heißt nicht geschützt.

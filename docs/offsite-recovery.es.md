@@ -124,6 +124,8 @@ Es mejor vía que montar el recurso compartido en Unraid: restic desaconseja gua
 
 Activa la protección contra borrado en un destino externo para que el ransomware, o un host comprometido, no pueda borrar ni reescribir tus copias. El otro extremo (un `restic/rest-server` en modo `--append-only`) la **hace cumplir**. BombVault solo la **verifica** y nunca muestra verde por una mera declaración de configuración. Una carpeta de este servidor no puede negarse a borrar, porque quien controla BombVault controla también la carpeta, así que los destinos locales no ofrecen el interruptor.
 
+El interruptor es del destino: una sección que copia allí lo toma del destino, así que actívalo en la página del destino, en **Destinos**. La comprobación programada **Comprobar la protección contra borrado** solo se ejecuta mientras una sección copia a un destino con el interruptor activado. El otro lado tiene que arrancar con `--append-only`; con la imagen `restic/rest-server`, en TrueNAS como en cualquier otro host Docker, eso va en la variable `OPTIONS`.
+
 La vía más rápida a una copia append-only es un BombVault emparejado con un [servidor receptor](#receiving-server): ejecuta el rest-server por ti, en modo append-only.
 
 !!! note "Un borrado correcto en `/locks/` es lo esperado"
@@ -135,6 +137,8 @@ La vía más rápida a una copia append-only es un BombVault emparejado con un [
 ## Prueba de manipulación
 
 BombVault demuestra periódicamente la garantía append-only intentando realmente un borrado contra el repo externo, dirigido a un objeto inexistente. **Probar la protección contra borrado ahora** en la página de un destino la ejecuta a demanda, y **Comprobar la protección contra borrado** en **Ajustes, Verificación, Comprobaciones automáticas** la ejecuta según un calendario.
+
+Una copia desactivada no se prueba, y el destino lo indica. La prueba de conexión sigue funcionando con ella, porque solo lee, así que una copia se puede comprobar antes de activarla.
 
 - **Rechazado** significa protegido.
 - **Aceptado** significa no protegido.

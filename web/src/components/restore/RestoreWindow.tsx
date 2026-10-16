@@ -32,7 +32,7 @@ import { useT, type TranslationKey } from "../../lib/i18n";
 import { isolateLtr, tLtr } from "../../lib/ltrFragments";
 import { placementChanged } from "../../lib/placementEvents";
 import { anyActive, busyPhraseKey, useProgress } from "../../lib/progress";
-import { formatRecent } from "../../lib/reltime";
+import { formatRecent, snapshotStamp } from "../../lib/reltime";
 import {
   backsUpFirst,
   defaultWhere,
@@ -540,6 +540,7 @@ function RestoreForm({
   const cancelledRef = useRef(false);
   const retryWithoutRuntime = useRef(false);
   const [ack, setAck] = useState<{ target: string; created?: string; safetySnapshot?: string } | null>(null);
+  const safetyAt = ack?.safetySnapshot ? snapshotStamp(ack.safetySnapshot) : null;
   const [refusalFix, setRefusalFix] = useState<TranslationKey | null>(null);
   // What the restore that runs was asked for, kept apart from the form. The
   // ref is what the start reads, the state what the window draws.
@@ -733,6 +734,7 @@ function RestoreForm({
                   />
                 </p>
               )}
+              {safetyAt !== null && <p>{t("zfs.restore.safetyTakenAt").replace("{time}", formatRecent(safetyAt, lang))}</p>}
             </div>
           )}
           <RestoreProgress

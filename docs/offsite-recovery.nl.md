@@ -124,6 +124,8 @@ Dit is de betere route dan de share op Unraid te mounten: restic raadt af een re
 
 Zet bescherming tegen verwijderen aan voor een off-site bestemming, zodat ransomware of een gecompromitteerde host je back-ups niet kan wissen of herschrijven. De andere kant (een `restic/rest-server` die in `--append-only`-modus draait) **dwingt** het af. BombVault **verifieert** het alleen en toont nooit groen op basis van een configuratieclaim alleen. Een map op deze server kan verwijderen niet weigeren, omdat wie BombVault beheert ook de map beheert, dus lokale bestemmingen bieden de schakelaar niet aan.
 
+De schakelaar hoort bij de bestemming: een onderdeel dat daarheen kopieert, neemt hem over van de bestemming, dus zet je hem aan op de pagina van de bestemming onder **Bestemmingen**. De geplande **Verwijderbeveiliging controleren** draait alleen zolang een onderdeel naar een bestemming kopieert waar de schakelaar aan staat. De andere kant moet met `--append-only` starten; bij de image `restic/rest-server` gaat dat, op TrueNAS net als op elke andere Docker-host, in de variabele `OPTIONS`.
+
 De snelste weg naar een append-only kopie is een gekoppelde BombVault met een [ontvangserver](#receiving-server): die draait de rest-server voor je, in append-only-modus.
 
 !!! note "Een geslaagde verwijdering onder `/locks/` is verwacht"
@@ -135,6 +137,8 @@ De snelste weg naar een append-only kopie is een gekoppelde BombVault met een [o
 ## Tamper-test
 
 BombVault bewijst de append-only-garantie periodiek door daadwerkelijk een verwijdering te proberen tegen de off-site repo, gericht op een niet-bestaand object. **Bescherming tegen verwijderen nu testen** op de pagina van een bestemming draait de test op aanvraag, en **Verwijderbeveiliging controleren** onder **Instellingen, Verificatie, Automatische controles** draait haar volgens een schema.
+
+Een kopie die uit staat wordt niet getest, en de bestemming zegt dat. De verbindingstest werkt er nog wel op, omdat die alleen leest, zodat je een kopie kunt controleren voordat je hem aanzet.
 
 - **Geweigerd** betekent beschermd.
 - **Geaccepteerd** betekent niet beschermd.

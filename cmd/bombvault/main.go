@@ -493,9 +493,10 @@ func run() error {
 		return dErr
 	})
 	scheduler.SetTamperJob(func(domain string) error {
-		_, tErr := svc.RunTamperTest(context.Background(), domain)
+		_, tErr := svc.RunScheduledTamperTest(context.Background(), domain)
 		return tErr
 	})
+	scheduler.SetAppendOnlyDomains(svc.AppendOnlyDomains)
 	scheduler.SetOffsiteInUse(svc.OffsiteInUse)
 	// Weekly digest: one summary message per fire through the notify fan-out.
 	scheduler.SetDigestJob(func() error {
