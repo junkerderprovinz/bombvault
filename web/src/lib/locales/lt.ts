@@ -809,6 +809,7 @@ const lt: Partial<Translations> = {
   "notify.unraid": "Unraid pranešimai",
   "notify.unraidHint": "Siunčia į pačios Unraid pranešimų sistemą (kuri gali persiųsti į Pushover, el. paštą, Discord, …). Vykdoma per SSH ryšį iš Nustatymai, Integracijos, Pagrindinio kompiuterio SSH, todėl raktas ten turi būti autorizuotas, tačiau libvirt/VM nebūtini (ignoruok rezultatą „libvirt not reachable“, jei nekopijuoji VM). Jei nori patikrinti, naudok žemiau esantį Siųsti bandymą.",
   "notify.unraidPlatformMismatch": "BombVault aptiko šį pagrindinį kompiuterį kaip „{platform}“, o ne Unraid. Unraid pranešimai lieka išjungti, net jei šis jungiklis įjungtas. Jei tai tikrai Unraid pagrindinis kompiuteris, patikrink, ar pagrindinio kompiuterio /boot yra prijungtas prie /host/boot konteinerio viduje (žr. BombVault Unraid šabloną), ir iš naujo paleisk konteinerį.",
+  "notify.unraidOffOnPlatformSetting": "PLATFORM nustato šį pagrindinį kompiuterį kaip „{platform}“, todėl Unraid pranešimai lieka išjungti, net jei šis jungiklis įjungtas.",
   "notify.unraidOffOnTrueNAS": "Šis pagrindinis kompiuteris veikia su TrueNAS, todėl Unraid pranešimai lieka išjungti, net jei šis jungiklis įjungtas.",
   "notify.smtp": "El. paštas (SMTP)",
   "notify.smtpHost": "SMTP pagrindinis kompiuteris",

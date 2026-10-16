@@ -936,23 +936,27 @@ func (s *Service) unraidGate(unraidWanted bool) bool {
 }
 
 // warnUnraidPlatformMismatch logs, once per process (platformMismatchOnce),
-// that notify.Config.Unraid is enabled but platform detection did not
-// resolve to Unraid — naming the detected Kind and the most likely fix so an
-// operator can tell "I turned this off" apart from "BombVault misdetected my
-// host" without reading source. See unraidGate's doc comment for why the
-// underlying gate does not just trust the toggle instead.
+// that notify.Config.Unraid is enabled but the platform is not Unraid. When
+// the platform was detected, it names the most likely fix, so an operator can
+// tell "I turned this off" apart from "BombVault misdetected my host" without
+// reading source. See unraidGate's doc comment for why the underlying gate
+// does not just trust the toggle instead.
 func (s *Service) warnUnraidPlatformMismatch() {
 	s.platformMismatchOnce.Do(func() {
-		if s.platformFn().Kind() == platform.KindTrueNAS {
+		kind := s.platformFn().Kind()
+		switch {
+		case kind == platform.KindTrueNAS:
 			log.Printf("platform: notify.Config.Unraid is enabled but this host runs TrueNAS, so the Unraid-only host features stay disabled")
-			return
+		case s.cfg.PlatformOverride != "":
+			log.Printf("platform: notify.Config.Unraid is enabled but PLATFORM sets this host to %q, so the Unraid-only host features stay disabled", kind)
+		default:
+			log.Printf("platform: notify.Config.Unraid is enabled but BombVault detected platform=%q (not %q), so "+
+				"Unraid-only host features (webGUI notifications, the update-status reconcile, the dashboard-tile "+
+				"plugin) stay disabled. If this is an Unraid host, verify the host's /boot is bind-mounted to "+
+				"/host/boot inside the container (see the BombVault Unraid template) and restart the container; "+
+				"detection looks for %s.",
+				kind, platform.KindUnraid, filepath.Join(s.cfg.FlashDir, "config/plugins/dockerMan"))
 		}
-		log.Printf("platform: notify.Config.Unraid is enabled but BombVault detected platform=%q (not %q) — "+
-			"Unraid-only host features (webGUI notifications, the update-status reconcile, the dashboard-tile "+
-			"plugin) stay disabled. If this IS an Unraid host, verify the host's /boot is bind-mounted to "+
-			"/host/boot inside the container (see the BombVault Unraid template) and restart the container — "+
-			"detection looks for %s.",
-			s.platformFn().Kind(), platform.KindUnraid, filepath.Join(s.cfg.FlashDir, "config/plugins/dockerMan"))
 	})
 }
 
@@ -960,15 +964,19 @@ func (s *Service) warnUnraidPlatformMismatch() {
 // (the Unraid notification test, the dashboard plugin, the flash backup) on a
 // host that did not resolve to Unraid. feature names what is refused.
 //
-// A generic host may be Unraid without the /boot mount, so its refusal says
-// how to mount it. The message is a *platformMismatchErr so scrubError keeps
-// /boot and /host/boot, which are BombVault's own documented mount points.
-// TrueNAS is only ever set by the PLATFORM override, never detected, so it
-// gets no mount advice.
+// A detected generic host may be Unraid without the /boot mount, so its
+// refusal says how to mount it. The message is a *platformMismatchErr so
+// scrubError keeps /boot and /host/boot, which are BombVault's own documented
+// mount points. A platform set with the PLATFORM override was not detected at
+// all, so a mount would change nothing and the refusal leaves the advice out.
 func (s *Service) unraidPlatformMismatchError(feature string) error {
 	kind := s.platformFn().Kind()
-	if kind == platform.KindTrueNAS {
+	switch {
+	case kind == platform.KindTrueNAS:
 		return &platformMismatchErr{msg: feature + " is only available on Unraid hosts, and this one runs TrueNAS."}
+	case s.cfg.PlatformOverride != "":
+		return &platformMismatchErr{msg: fmt.Sprintf(
+			"%s is only available on Unraid hosts, and PLATFORM sets this one to %q.", feature, kind)}
 	}
 	return &platformMismatchErr{msg: fmt.Sprintf(
 		"%s is only available on Unraid hosts, and BombVault detected platform=%q. "+

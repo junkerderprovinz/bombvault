@@ -809,6 +809,7 @@ const sl: Partial<Translations> = {
   "notify.unraid": "Unraidova obvestila",
   "notify.unraidHint": "Pošlji Unraidovemu lastnemu obvestilnemu sistemu (ki lahko posreduje na Pushover, e-pošto, Discord …). Teče prek SSH povezave iz Nastavitve, Integracije, SSH gostitelja, zato mora biti ključ tam pooblaščen, libvirt/VM-ji pa niso potrebni (rezultat \"libvirt ni dosegljiv\" prezri, če ne varnostno kopiraš VM-jev). Za preverjanje spodaj uporabi Pošlji preizkus.",
   "notify.unraidPlatformMismatch": "BombVault je zaznal tega gostitelja kot \"{platform}\", ne kot Unraid. Unraidova obvestila ostanejo izklopljena tudi z vklopljenim tem stikalom. Če je to res gostitelj Unraid, preveri, ali je gostiteljev /boot priklopljen (bind-mount) na /host/boot znotraj vsebnika (glej predlogo BombVault za Unraid), in znova zaženi vsebnik.",
+  "notify.unraidOffOnPlatformSetting": "PLATFORM nastavi tega gostitelja na \"{platform}\", zato Unraidova obvestila ostanejo izklopljena tudi z vklopljenim tem stikalom.",
   "notify.unraidOffOnTrueNAS": "Ta gostitelj uporablja TrueNAS, zato Unraidova obvestila ostanejo izklopljena tudi z vklopljenim tem stikalom.",
   "notify.smtp": "E-pošta (SMTP)",
   "notify.smtpHost": "Gostitelj SMTP",

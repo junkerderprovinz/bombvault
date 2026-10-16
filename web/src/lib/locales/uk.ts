@@ -863,6 +863,7 @@ const uk: Partial<Translations> = {
   "notify.unraid": "Сповіщення Unraid",
   "notify.unraidHint": "Надсилати у власну систему сповіщень Unraid (яка може пересилати в Pushover, e-mail, Discord, …). Працює через SSH-з'єднання з Налаштування, Інтеграції, SSH хоста, тож ключ має бути авторизований там — але libvirt/VMs не потрібні (проігноруйте результат «libvirt not reachable», якщо ви не робите резервні копії VMs). Щоб перевірити, натисніть «Надіслати тест» нижче.",
   "notify.unraidPlatformMismatch": "BombVault визначив цей хост як \"{platform}\", а не як Unraid — сповіщення Unraid залишаються вимкненими, навіть якщо цю опцію увімкнено. Якщо це справді хост Unraid, перевірте, що /boot хоста змонтовано (bind-mount) до /host/boot всередині контейнера (див. шаблон Unraid для BombVault), і перезапустіть контейнер.",
+  "notify.unraidOffOnPlatformSetting": "PLATFORM задає для цього хоста платформу \"{platform}\", тому сповіщення Unraid залишаються вимкненими, навіть якщо цю опцію увімкнено.",
   "notify.unraidOffOnTrueNAS": "Цей хост працює на TrueNAS, тому сповіщення Unraid залишаються вимкненими, навіть якщо цю опцію увімкнено.",
   "notify.test": "Надіслати тест",
   "notify.anomaliesWhere": "Які аномалії надсилають сповіщення, ви обираєте у розділі «{page}».",

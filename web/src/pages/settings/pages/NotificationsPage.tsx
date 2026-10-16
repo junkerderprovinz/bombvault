@@ -23,6 +23,7 @@ export function NotificationsPage() {
     settings,
     setSettings,
     platformKind,
+    platformSet,
     save,
     debouncedSave,
     fieldPulse,
@@ -53,6 +54,7 @@ export function NotificationsPage() {
     <NotifyCard
       t={t}
       platformKind={platformKind}
+      platformSet={platformSet}
       hueIndex={firstHue}
       channelsHueIndex={nextHue()}
       healthchecksHueIndex={nextHue()}

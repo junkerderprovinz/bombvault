@@ -809,6 +809,7 @@ const hr: Partial<Translations> = {
   "notify.unraid": "Unraid obavijesti",
   "notify.unraidHint": "Šalje vlastitom sustavu obavijesti Unraida (koji može proslijediti na Pushover, e-poštu, Discord, …). Izvršava se putem SSH veze iz Postavke, Integracije, SSH domaćina, pa ključ tamo mora biti ovlašten, ali libvirt/VM-ovi nisu potrebni (zanemarite rezultat „libvirt not reachable” ako ne izrađujete sigurnosnu kopiju VM-ova). Koristite Pošalji test u nastavku za provjeru.",
   "notify.unraidPlatformMismatch": "BombVault je otkrio ovaj host kao „{platform}”, a ne kao Unraid. Unraid obavijesti ostaju isključene čak i uz ovaj prekidač uključen. Ako je ovo doista Unraid host, provjerite je li hostov /boot montiran na /host/boot unutar kontejnera (pogledajte BombVaultov Unraid predložak) i ponovno pokrenite kontejner.",
+  "notify.unraidOffOnPlatformSetting": "PLATFORM postavlja ovaj host na „{platform}”, pa Unraid obavijesti ostaju isključene čak i uz uključen ovaj prekidač.",
   "notify.unraidOffOnTrueNAS": "Ovaj host radi na TrueNAS-u, pa Unraid obavijesti ostaju isključene čak i uz uključen ovaj prekidač.",
   "notify.smtp": "E-pošta (SMTP)",
   "notify.smtpHost": "SMTP host",

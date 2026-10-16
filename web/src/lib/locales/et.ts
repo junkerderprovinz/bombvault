@@ -809,6 +809,7 @@ const et: Partial<Translations> = {
   "notify.unraid": "Unraidi teavitused",
   "notify.unraidHint": "Saadab Unraidi enda teavitussüsteemi (mis võib edastada Pushoverile, e-postile, Discordile, …). Töötab SSH-ühenduse kaudu jaotisest Seaded, Integratsioonid, Hosti SSH, seega peab võti olema seal lubatud, kuid libvirt/VM-id pole vajalikud (ignoreeri „libvirt not reachable” tulemust, kui VM-e ei varunda). Kasuta kontrollimiseks allpool Saada test.",
   "notify.unraidPlatformMismatch": "BombVault tuvastas selle hosti kui „{platform}”, mitte Unraidi. Unraidi teavitused jäävad väljas isegi selle lülitiga sees. Kui see on Unraidi host, kontrolli, et hosti /boot oleks konteineris seotud kausta /host/boot külge (vaata BombVaulti Unraidi malli), ja käivita konteiner uuesti.",
+  "notify.unraidOffOnPlatformSetting": "PLATFORM määrab selle hosti platvormiks „{platform}”, seega jäävad Unraidi teavitused välja ka selle lülitiga sees.",
   "notify.unraidOffOnTrueNAS": "See host kasutab TrueNAS-i, seega jäävad Unraidi teavitused välja ka selle lülitiga sees.",
   "notify.smtp": "E-post (SMTP)",
   "notify.smtpHost": "SMTP host",

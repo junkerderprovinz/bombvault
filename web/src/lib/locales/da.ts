@@ -866,6 +866,7 @@ const da: Partial<Translations> = {
   "notify.unraid": "Unraid-notifikationer",
   "notify.unraidHint": "Send til Unraids eget notifikationssystem (som kan videresende til Pushover, e-mail, Discord, …). Kører via SSH-forbindelsen fra Indstillinger, Integrationer, Værts-SSH, så nøglen skal være godkendt der, men libvirt/VMs er ikke påkrævet (ignorér et „libvirt not reachable”-resultat, hvis du ikke sikkerhedskopierer VMs). Tjek det med „Send test” nedenfor.",
   "notify.unraidPlatformMismatch": "BombVault har registreret denne vært som \"{platform}\", ikke Unraid. Unraid-notifikationer forbliver slået fra, selvom denne indstilling er slået til. Hvis dette rent faktisk er en Unraid-vært, så tjek at værtens /boot er bind-mountet til /host/boot inde i containeren (se BombVault Unraid-skabelonen), og genstart containeren.",
+  "notify.unraidOffOnPlatformSetting": "PLATFORM sætter denne vært til \"{platform}\", så Unraid-notifikationer forbliver slået fra, selvom denne indstilling er slået til.",
   "notify.unraidOffOnTrueNAS": "Denne vært kører TrueNAS, så Unraid-notifikationer forbliver slået fra, selvom denne indstilling er slået til.",
   "notify.test": "Send test",
   "notify.anomaliesWhere": "Hvilke anomalier der sender en notifikation, vælger du under {page}.",

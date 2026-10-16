@@ -2753,7 +2753,10 @@ func (h *Handler) handleGetSettings(w http.ResponseWriter, r *http.Request) {
 		"hostMountRoot":  h.cfg.HostMountRoot,
 		"hostSourceRoot": h.cfg.HostSourceRoot,
 		"platform":       string(h.svc.platformFn().Kind()),
-		"scheduleZone":   map[string]any{"name": zone, "offsetSeconds": offset},
+		// platformSet says the PLATFORM override chose the platform, so the
+		// page does not suggest the /boot mount that fixes a misdetected Unraid.
+		"platformSet":  h.cfg.PlatformOverride != "",
+		"scheduleZone": map[string]any{"name": zone, "offsetSeconds": offset},
 	})
 }
 

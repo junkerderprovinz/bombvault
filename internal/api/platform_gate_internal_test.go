@@ -349,6 +349,53 @@ func TestUnraidOnlyRefusalOnTrueNASLeavesOutTheMountAdvice(t *testing.T) {
 	}
 }
 
+// With PLATFORM=generic nothing was detected, so a /boot mount would not make
+// the host Unraid and the advice would send the operator the wrong way.
+func TestUnraidOnlyRefusalOnAnExplicitPlatformLeavesOutTheMountAdvice(t *testing.T) {
+	s := unraidNotifyService(t, failIfCalledSSH{t})
+	s.cfg.PlatformOverride = "generic"
+	s.SetPlatform(platform.Generic{})
+
+	_, err := s.StartBackupFlash(context.Background())
+	want := `the flash backup is only available on Unraid hosts, and PLATFORM sets this one to "generic".`
+	if got := scrubError(err); got != want {
+		t.Fatalf("StartBackupFlash with PLATFORM=generic = %q, want %q", got, want)
+	}
+
+	err = s.TestNotify(context.Background(), notify.Config{Unraid: true})
+	want = `unraid: the Unraid notification channel is only available on Unraid hosts, and PLATFORM sets this one to "generic".`
+	if got := scrubError(err); got != want {
+		t.Fatalf("TestNotify with PLATFORM=generic = %q, want %q", got, want)
+	}
+}
+
+func TestUnraidOnlyRefusalOnADetectedGenericHostKeepsTheMountAdvice(t *testing.T) {
+	s := unraidNotifyService(t, failIfCalledSSH{t})
+	s.SetPlatform(platform.Generic{})
+	_, err := s.StartBackupFlash(context.Background())
+	if got := scrubError(err); !strings.Contains(got, "bind-mount the host's /boot to /host/boot") {
+		t.Fatalf("StartBackupFlash on a detected generic host = %q, want the mount advice", got)
+	}
+}
+
+func TestUnraidGateMismatchOnAnExplicitPlatformLogsNoMountAdvice(t *testing.T) {
+	s := unraidNotifyService(t, failIfCalledSSH{t})
+	s.cfg.PlatformOverride = "generic"
+	s.SetPlatform(platform.Generic{})
+
+	var buf strings.Builder
+	prev := log.Writer()
+	log.SetOutput(&buf)
+	defer log.SetOutput(prev)
+
+	if s.unraidGate(true) {
+		t.Fatal("unraidGate must stay closed with PLATFORM=generic")
+	}
+	if out := buf.String(); !strings.Contains(out, `PLATFORM sets this host to "generic"`) || strings.Contains(out, "/boot") {
+		t.Fatalf("log = %q, want it to name the PLATFORM setting without the Unraid mount advice", out)
+	}
+}
+
 func TestUnraidOnlyRefusalEndsAsASentence(t *testing.T) {
 	s := &Service{}
 	s.SetPlatform(platform.Generic{})

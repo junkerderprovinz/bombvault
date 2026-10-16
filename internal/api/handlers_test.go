@@ -1008,6 +1008,22 @@ func TestSettingsGetPlatformField(t *testing.T) {
 	}
 }
 
+func TestSettingsGetSaysWhetherPLATFORMChoseThePlatform(t *testing.T) {
+	h, _, _ := newTestRouterSvc(t, &fakeServiceDocker{}, &fakeResticEngine{})
+	if _, m := doJSON(t, h, http.MethodGet, "/api/settings", ""); m["platformSet"] != false {
+		t.Fatalf("platformSet = %v, want false without PLATFORM", m["platformSet"])
+	}
+
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: t.TempDir(), PlatformOverride: "generic"}
+	st := newMemStore(t)
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, &fakeResticEngine{})
+	sched := schedule.New(func(string) error { return nil }, st.ListTargets)
+	set := api.NewHandler(cfg, st, &fakeServiceDocker{}, svc, sched, spike.DefaultProbes()).Router()
+	if _, m := doJSON(t, set, http.MethodGet, "/api/settings", ""); m["platformSet"] != true {
+		t.Fatalf("platformSet = %v, want true with PLATFORM=generic", m["platformSet"])
+	}
+}
+
 func TestSettingsGetNamesTheClockSchedulesRunOn(t *testing.T) {
 	h, _, _ := newTestRouterSvc(t, &fakeServiceDocker{}, &fakeResticEngine{})
 

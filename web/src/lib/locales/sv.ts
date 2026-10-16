@@ -866,6 +866,7 @@ const sv: Partial<Translations> = {
   "notify.unraid": "Unraid-aviseringar",
   "notify.unraidHint": "Skicka till Unraids eget aviseringssystem (som kan vidarebefordra till Pushover, e-post, Discord, …). Körs via SSH-anslutningen från Inställningar, Integrationer, Värd-SSH, så nyckeln måste vara auktoriserad där, men libvirt/VMs krävs inte (ignorera ett ”libvirt not reachable”-resultat om du inte säkerhetskopierar VMs). Kontrollera med ”Skicka test” nedan.",
   "notify.unraidPlatformMismatch": "BombVault upptäckte den här värden som \"{platform}\", inte Unraid. Unraid-aviseringar förblir avstängda även om detta är påslaget. Om detta faktiskt är en Unraid-värd, kontrollera att värdens /boot är bind-mountad till /host/boot inuti containern (se BombVaults Unraid-mall) och starta om containern.",
+  "notify.unraidOffOnPlatformSetting": "PLATFORM ställer in den här värden på \"{platform}\", så Unraid-aviseringar förblir avstängda även om detta är påslaget.",
   "notify.unraidOffOnTrueNAS": "Den här värden kör TrueNAS, så Unraid-aviseringar förblir avstängda även om detta är påslaget.",
   "notify.test": "Skicka test",
   "notify.anomaliesWhere": "Vilka avvikelser som skickar en avisering ställer du in under {page}.",

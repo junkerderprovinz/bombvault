@@ -15,17 +15,17 @@ vi.mock("../../lib/api", async (importOriginal) => {
 
 const { NotifyCard } = await import("./NotifyCard");
 
-function Harness({ platformKind }: { platformKind: string }) {
+function Harness({ platformKind, platformSet }: { platformKind: string; platformSet: boolean }) {
   const { t } = useT();
-  return <NotifyCard t={t} platformKind={platformKind} sections={[]} />;
+  return <NotifyCard t={t} platformKind={platformKind} platformSet={platformSet} sections={[]} />;
 }
 
-function renderOn(platformKind: string) {
+function renderOn(platformKind: string, platformSet = false) {
   render(
     <MemoryRouter>
       <I18nProvider>
         <ToastProvider>
-          <Harness platformKind={platformKind} />
+          <Harness platformKind={platformKind} platformSet={platformSet} />
         </ToastProvider>
       </I18nProvider>
     </MemoryRouter>
@@ -44,5 +44,11 @@ describe("the Unraid notification banner", () => {
   it("keeps the mount advice on a generic host, which may be Unraid without the mount", async () => {
     renderOn("generic");
     expect(await screen.findByText(/\/host\/boot/)).toBeTruthy();
+  });
+
+  it("names the PLATFORM setting and leaves out the mount advice when PLATFORM chose generic", async () => {
+    renderOn("generic", true);
+    expect(await screen.findByText(/PLATFORM sets this host to "generic"/)).toBeTruthy();
+    expect(screen.queryByText(/\/host\/boot/)).toBeNull();
   });
 });
