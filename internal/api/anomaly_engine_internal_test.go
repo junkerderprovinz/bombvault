@@ -751,8 +751,8 @@ func TestAcknowledgeDuringPassKeepsAcknowledged(t *testing.T) {
 				// The acknowledge must wait for this scope's lock, which the
 				// pass is holding.
 				select {
-				case <-acked:
-					t.Error("the acknowledge did not wait for the pass")
+				case err := <-acked:
+					t.Errorf("the acknowledge did not wait for the pass (err: %v)", err)
 				case <-time.After(50 * time.Millisecond):
 				}
 			}

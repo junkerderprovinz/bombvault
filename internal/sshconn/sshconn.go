@@ -402,8 +402,8 @@ func (c *Conn) ForwardUnix(ctx context.Context, local, remote string) (stop func
 	if err := cmd.Start(); err != nil {
 		return nil, fmt.Errorf("sshconn: start socket forward: %w", err)
 	}
-	exited := make(chan error, 1)
-	go func() { exited <- cmd.Wait() }()
+	exited := make(chan struct{})
+	go func() { _ = cmd.Wait(); close(exited) }()
 	stop = func() {
 		_ = cmd.Process.Kill()
 		<-exited
@@ -416,8 +416,7 @@ func (c *Conn) ForwardUnix(ctx context.Context, local, remote string) (stop func
 	defer tick.Stop()
 	for {
 		select {
-		case err := <-exited:
-			exited <- err
+		case <-exited:
 			stop()
 			return nil, fmt.Errorf("sshconn: socket forward ended: %s", lastLine(stderr.String()))
 		case <-ctx.Done():
