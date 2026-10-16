@@ -60,7 +60,7 @@ services:
     hostname: bombvault
     restart: unless-stopped
     cap_drop: [ALL]
-    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETPCAP, SETUID]
+    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETPCAP, SETUID, SYS_CHROOT]
     environment:
       APP_KEY: ""
       PLATFORM: truenas
@@ -82,7 +82,7 @@ services:
 
 Pak otevři `https://<truenas-ip>:30528/`. Co je uvedeno v [V čem se to liší od Unraidu](#generic-docker-host), platí i tady, a na TrueNAS navíc:
 
-- **Capabilities.** BombVault potřebuje šest výše uvedených. Bez `SETPCAP` zálohy VM selžou.
+- **Capabilities.** BombVault potřebuje sedm výše uvedených. Bez `SETPCAP` zálohy VM selžou a bez `SYS_CHROOT` se každý kontejner zastaví na celou zálohu, místo aby se četl ze snímku.
 - **Host Data** je cesta hostitele na datové sadě, zde `/mnt/tank`, připojená pod stejnou cestou uvnitř aplikace. Proto ji uvádějí `HOST_SOURCE_ROOT` i `HOST_MOUNT_ROOT`. `rslave` předává připojení, která hostitel vytvoří později, a ta potřebují zálohy datových sad ZFS.
 - **Data v ixVolume se nezálohují.** Aplikace, jejímž úložištěm je ixVolume, drží data pod `/mnt/.ix-apps`, mimo Host Data. BombVault uloží jen definici aplikace a běh uvede složky, které vynechal. Pro každou aplikaci, jejíž data chceš zálohovat, zvol úložiště **Host Path** na datové sadě pod Host Data.
 - **Zálohy VM a datových sad ZFS** se k TrueNAS připojují přes SSH jako root. Zapni službu SSH v **System, Services** a přidej veřejný klíč z **Nastavení, Integrace, SSH k hostiteli** uživateli root v **Credentials, Users**. Zálohy VM navíc potřebují `LIBVIRT_URI` jako výše, protože libvirtd na TrueNAS naslouchá na vlastním socketu. Když není nastavena `LIBVIRT_URI` ani `LIBVIRT_HOST`, BombVault použije jako hostitele výchozí bránu aplikace, protože `host.docker.internal` se v aplikaci TrueNAS nepřeloží. Podrobnosti, včetně VM na zvolech, popisuje [průvodce zálohou VM](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md#truenas-scale).

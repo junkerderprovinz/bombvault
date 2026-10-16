@@ -60,7 +60,7 @@ services:
     hostname: bombvault
     restart: unless-stopped
     cap_drop: [ALL]
-    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETPCAP, SETUID]
+    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETPCAP, SETUID, SYS_CHROOT]
     environment:
       APP_KEY: ""
       PLATFORM: truenas
@@ -82,7 +82,7 @@ services:
 
 Sau đó mở `https://<truenas-ip>:30528/`. Những gì liệt kê trong [Khác gì so với Unraid](#generic-docker-host) cũng áp dụng ở đây, và trên TrueNAS còn có:
 
-- **Capabilities.** BombVault cần cả sáu capability ở trên. Sao lưu VM sẽ thất bại nếu thiếu `SETPCAP`.
+- **Capabilities.** BombVault cần cả bảy capability ở trên. Sao lưu VM sẽ thất bại nếu thiếu `SETPCAP`, và nếu thiếu `SYS_CHROOT` thì mọi container đều bị dừng suốt cả lần sao lưu thay vì được đọc từ ảnh chụp.
 - **Host Data** là một đường dẫn máy chủ trên một tập dữ liệu, ở đây là `/mnt/tank`, được gắn kết tại cùng đường dẫn bên trong ứng dụng. Vì vậy `HOST_SOURCE_ROOT` và `HOST_MOUNT_ROOT` đều nêu đường dẫn này. `rslave` chuyển tiếp các lần gắn kết mà máy chủ tạo sau đó, điều mà sao lưu tập dữ liệu ZFS cần.
 - **Dữ liệu trong ixVolume không được sao lưu.** Một ứng dụng dùng ixVolume làm nơi lưu trữ sẽ giữ dữ liệu dưới `/mnt/.ix-apps`, bên ngoài Host Data. BombVault chỉ lưu định nghĩa của ứng dụng, và lần chạy nêu tên các thư mục đã bị bỏ ra. Với mọi ứng dụng mà bạn muốn sao lưu dữ liệu, hãy chọn kiểu lưu trữ **Host Path** trên một tập dữ liệu nằm dưới Host Data.
 - **Sao lưu VM và tập dữ liệu ZFS** kết nối tới TrueNAS qua SSH với quyền root. Bật dịch vụ SSH trong **System, Services**, và thêm khóa công khai từ **Cài đặt, Tích hợp, SSH máy chủ** cho người dùng root trong **Credentials, Users**. Sao lưu VM còn cần `LIBVIRT_URI` như ở trên, vì libvirtd của TrueNAS lắng nghe trên một socket riêng. Khi cả `LIBVIRT_URI` lẫn `LIBVIRT_HOST` đều chưa được đặt, BombVault dùng cổng mặc định (default gateway) của ứng dụng làm máy chủ, vì `host.docker.internal` không phân giải được trong một ứng dụng TrueNAS. [Hướng dẫn sao lưu VM](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md#truenas-scale) trình bày chi tiết, kể cả VM trên zvol.

@@ -60,7 +60,7 @@ services:
     hostname: bombvault
     restart: unless-stopped
     cap_drop: [ALL]
-    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETPCAP, SETUID]
+    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETPCAP, SETUID, SYS_CHROOT]
     environment:
       APP_KEY: ""
       PLATFORM: truenas
@@ -82,7 +82,7 @@ services:
 
 לאחר מכן יש לפתוח את `https://<truenas-ip>:30528/`. מה שמפורט תחת [מה שונה לעומת Unraid](#generic-docker-host) חל גם כאן, וב-TrueNAS בנוסף:
 
-- **הרשאות (capabilities).** ‏BombVault צריכה את כל השש שלמעלה. בלי `SETPCAP` גיבויי VM נכשלים.
+- **הרשאות (capabilities).** ‏BombVault צריכה את כל השבע שלמעלה. בלי `SETPCAP` גיבויי VM נכשלים, ובלי `SYS_CHROOT` כל container נעצר לאורך כל הגיבוי שלו במקום להיקרא מתמונת מצב.
 - ‏**Host Data** הוא נתיב מארח על מערך נתונים, כאן `/mnt/tank`, המעוגן באותו נתיב בתוך האפליקציה. לכן גם `HOST_SOURCE_ROOT` וגם `HOST_MOUNT_ROOT` מציינים אותו. ‏`rslave` מעביר הלאה את העיגונים שהמארח יוצר מאוחר יותר, וגיבויי מערכי נתונים של ZFS צריכים אותם.
 - **נתונים ב-ixVolume אינם מגובים.** אפליקציה שהאחסון שלה הוא ixVolume שומרת את הנתונים שלה תחת `/mnt/.ix-apps`, מחוץ ל-Host Data. ‏BombVault שומרת רק את הגדרת האפליקציה, וההרצה מציינת את התיקיות שהושארו בחוץ. לכל אפליקציה שאת הנתונים שלה רוצים לגבות יש לבחור אחסון **Host Path** על מערך נתונים מתחת ל-Host Data.
 - **גיבויי VM ומערכי נתונים של ZFS** מגיעים ל-TrueNAS דרך SSH כ-root. יש להפעיל את שירות ה-SSH תחת **System, Services**, ולהוסיף את המפתח הציבורי מ**הגדרות, אינטגרציות, SSH למארח** למשתמש root תחת **Credentials, Users**. גיבויי VM צריכים גם את `LIBVIRT_URI` כמו למעלה, כי ה-libvirtd של TrueNAS מאזין על socket משלו. כשלא `LIBVIRT_URI` ולא `LIBVIRT_HOST` מוגדרים, BombVault משתמשת בשער ברירת המחדל של האפליקציה כמארח, כי `host.docker.internal` אינו נפתר באפליקציית TrueNAS. ה[מדריך לגיבוי VM](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md#truenas-scale) מפרט את הפרטים, כולל VMs על zvols.

@@ -60,7 +60,7 @@ services:
     hostname: bombvault
     restart: unless-stopped
     cap_drop: [ALL]
-    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETPCAP, SETUID]
+    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETPCAP, SETUID, SYS_CHROOT]
     environment:
       APP_KEY: ""
       PLATFORM: truenas
@@ -82,7 +82,7 @@ services:
 
 Dann öffne `https://<truenas-ip>:30528/`. Was unter [Was gegenüber Unraid anders ist](#generic-docker-host) steht, gilt auch hier, und auf TrueNAS:
 
-- **Capabilities.** BombVault braucht die sechs oben. VM-Sicherungen schlagen ohne `SETPCAP` fehl.
+- **Capabilities.** BombVault braucht die sieben oben. VM-Sicherungen schlagen ohne `SETPCAP` fehl, und ohne `SYS_CHROOT` wird jeder Container für seine ganze Sicherung gestoppt, statt aus einem Snapshot gelesen zu werden.
 - **Host Data** ist ein Host-Pfad auf einem Dataset, hier `/mnt/tank`, und wird in der App unter demselben Pfad eingehängt. Deshalb nennen `HOST_SOURCE_ROOT` und `HOST_MOUNT_ROOT` beide diesen Pfad. `rslave` reicht die Mounts weiter, die der Host später anlegt, und die brauchen ZFS-Dataset-Backups.
 - **Daten in einem ixVolume werden nicht gesichert.** Eine App, deren Speicher ein ixVolume ist, legt ihre Daten unter `/mnt/.ix-apps` ab, außerhalb von Host Data. BombVault sichert dann nur die Definition der App, und der Lauf nennt die Ordner, die er ausgelassen hat. Wähle für jede App, deren Daten gesichert werden sollen, **Host Path** als Speicher auf einem Dataset unterhalb von Host Data.
 - **VM- und ZFS-Dataset-Backups** erreichen TrueNAS über SSH als root. Schalte den SSH-Dienst unter **System, Services** ein und füge den öffentlichen Schlüssel aus **Einstellungen, Anbindungen, Host-SSH** dem Benutzer root unter **Credentials, Users** hinzu. VM-Sicherungen brauchen außerdem `LIBVIRT_URI` wie oben, weil das libvirtd von TrueNAS an einem eigenen Socket lauscht. Ist weder `LIBVIRT_URI` noch `LIBVIRT_HOST` gesetzt, nimmt BombVault das Standard-Gateway der App als Host, denn `host.docker.internal` löst in einer TrueNAS-App nicht auf. Die [Anleitung zum VM-Backup](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md#truenas-scale) beschreibt die Einzelheiten, auch für VMs auf Zvols.

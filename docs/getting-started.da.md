@@ -60,7 +60,7 @@ services:
     hostname: bombvault
     restart: unless-stopped
     cap_drop: [ALL]
-    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETPCAP, SETUID]
+    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETPCAP, SETUID, SYS_CHROOT]
     environment:
       APP_KEY: ""
       PLATFORM: truenas
@@ -82,7 +82,7 @@ services:
 
 Åbn derefter `https://<truenas-ip>:30528/`. Det, der står under [Hvad der er anderledes end på Unraid](#generic-docker-host), gælder også her, og på TrueNAS:
 
-- **Capabilities.** BombVault skal have de seks ovenfor. VM-sikkerhedskopier fejler uden `SETPCAP`.
+- **Capabilities.** BombVault skal have de syv ovenfor. VM-sikkerhedskopier fejler uden `SETPCAP`, og uden `SYS_CHROOT` stoppes hver container under hele sin sikkerhedskopi i stedet for at blive læst fra et snapshot.
 - **Host Data** er en værtssti på et datasæt, her `/mnt/tank`, monteret på samme sti inde i appen. Derfor angiver `HOST_SOURCE_ROOT` og `HOST_MOUNT_ROOT` begge den sti. `rslave` sender de monteringer videre, som værten laver senere, og dem kræver sikkerhedskopier af ZFS-datasæt.
 - **Data i et ixVolume sikkerhedskopieres ikke.** En app, hvis lager er et ixVolume, gemmer sine data under `/mnt/.ix-apps`, uden for Host Data. BombVault gemmer så kun appens definition, og kørslen nævner de mapper, den udelod. Vælg **Host Path**-lager på et datasæt under Host Data for hver app, hvis data du vil have sikkerhedskopieret.
 - **Sikkerhedskopier af VM'er og ZFS-datasæt** når TrueNAS over SSH som root. Slå SSH-tjenesten til under **System, Services**, og føj den offentlige nøgle fra **Indstillinger, Integrationer, Værts-SSH** til brugeren root under **Credentials, Users**. VM-sikkerhedskopier kræver desuden `LIBVIRT_URI` som ovenfor, fordi TrueNAS' libvirtd lytter på sin egen socket. Er hverken `LIBVIRT_URI` eller `LIBVIRT_HOST` sat, bruger BombVault appens standardgateway som vært, da `host.docker.internal` ikke kan slås op i en TrueNAS-app. [VM backup-guiden](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md#truenas-scale) dækker detaljerne, også VM'er på zvols.

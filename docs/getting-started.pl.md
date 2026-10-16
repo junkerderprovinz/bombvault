@@ -60,7 +60,7 @@ services:
     hostname: bombvault
     restart: unless-stopped
     cap_drop: [ALL]
-    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETPCAP, SETUID]
+    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETPCAP, SETUID, SYS_CHROOT]
     environment:
       APP_KEY: ""
       PLATFORM: truenas
@@ -82,7 +82,7 @@ services:
 
 Następnie otwórz `https://<truenas-ip>:30528/`. To, co wymieniono w [Czym różni się to od Unraida](#generic-docker-host), dotyczy także tego przypadku, a na TrueNAS:
 
-- **Uprawnienia (capabilities).** BombVault potrzebuje sześciu powyższych. Bez `SETPCAP` kopie VM kończą się błędem.
+- **Uprawnienia (capabilities).** BombVault potrzebuje siedmiu powyższych. Bez `SETPCAP` kopie VM kończą się błędem, a bez `SYS_CHROOT` każdy kontener jest zatrzymywany na całą swoją kopię, zamiast być czytany z migawki.
 - **Host Data** to ścieżka hosta na zbiorze danych, tutaj `/mnt/tank`, zamontowana pod tą samą ścieżką wewnątrz aplikacji. Dlatego `HOST_SOURCE_ROOT` i `HOST_MOUNT_ROOT` podają ją obie. `rslave` przekazuje montowania, które host wykonuje później, a tego potrzebują kopie zbiorów danych ZFS.
 - **Dane w ixVolume nie są kopiowane.** Aplikacja, której pamięcią jest ixVolume, trzyma dane pod `/mnt/.ix-apps`, poza Host Data. BombVault zapisuje tylko definicję aplikacji, a przebieg podaje foldery, które pominął. Dla każdej aplikacji, której dane chcesz kopiować, wybierz pamięć **Host Path** na zbiorze danych pod Host Data.
 - **Kopie VM i zbiorów danych ZFS** łączą się z TrueNAS przez SSH jako root. Włącz usługę SSH w **System, Services** i dodaj klucz publiczny z **Ustawienia, Integracje, SSH hosta** do użytkownika root w **Credentials, Users**. Kopie VM potrzebują też `LIBVIRT_URI` jak wyżej, bo libvirtd na TrueNAS nasłuchuje na własnym gnieździe. Gdy nie ustawiono ani `LIBVIRT_URI`, ani `LIBVIRT_HOST`, BombVault używa domyślnej bramy aplikacji jako hosta, bo `host.docker.internal` nie rozwiązuje się w aplikacji TrueNAS. [Poradnik kopii VM](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md#truenas-scale) opisuje szczegóły, także dla VM na zvolach.

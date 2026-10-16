@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"syscall"
 	"testing"
 	"time"
 
@@ -253,11 +254,24 @@ func TestPlanSaysWhyAContainerOnZFSIsStoppedAsBefore(t *testing.T) {
 		}, nil, "zfs-unreachable: ssh-unreachable"},
 		{"snapdir disabled", func(f *snapFixture) { f.host.tree[1].Snapdir = "disabled" }, nil, "snapdir-disabled: cache/appdata"},
 		{"repository in the container's own layer", func(f *snapFixture) { f.repo = "/var/lib/bombvault/repo" }, nil, snapFallbackRepo},
+		{"repository linked into the container's own layer", func(f *snapFixture) {
+			zfsRealPath = func(p string) string {
+				if p == f.repo {
+					return "/var/lib/bombvault/repo"
+				}
+				return p
+			}
+		}, nil, snapFallbackRepo},
 		{"remote repository", func(f *snapFixture) { f.repo = "s3:https://s3.example.com/bucket"; f.svc.zfs = nil }, nil, snapFallbackNoHost},
 		{"no view", func(f *snapFixture) { f.docker.startErr = errors.New("no such image") }, nil, snapFallbackView},
 		{"view cannot be entered", func(*snapFixture) {
 			snapViewEnter = func(string) error { return errors.New("operation not permitted") }
 		}, nil, snapFallbackView},
+		{"chroot not permitted", func(*snapFixture) {
+			snapViewEnter = func(string) error {
+				return &fs.PathError{Op: "fork/exec", Path: "/bin/true", Err: syscall.EPERM}
+			}
+		}, nil, snapFallbackChroot},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {

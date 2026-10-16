@@ -60,7 +60,7 @@ services:
     hostname: bombvault
     restart: unless-stopped
     cap_drop: [ALL]
-    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETPCAP, SETUID]
+    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETPCAP, SETUID, SYS_CHROOT]
     environment:
       APP_KEY: ""
       PLATFORM: truenas
@@ -82,7 +82,7 @@ services:
 
 Ezután nyisd meg a `https://<truenas-ip>:30528/` címet. Ami a [Miben más ez, mint az Unraid](#generic-docker-host) alatt szerepel, itt is érvényes, TrueNAS-on pedig még:
 
-- **Capabilityk.** A BombVaultnak a fenti hatra van szüksége. `SETPCAP` nélkül a VM-mentések meghiúsulnak.
+- **Capabilityk.** A BombVaultnak a fenti hétre van szüksége. `SETPCAP` nélkül a VM-mentések meghiúsulnak, `SYS_CHROOT` nélkül pedig minden konténer a teljes mentése idejére leáll, ahelyett, hogy a BombVault pillanatképből olvasná.
 - **Host Data** egy adatkészleten lévő hoszt-útvonal, itt `/mnt/tank`, az alkalmazáson belül ugyanazon az útvonalon csatolva. Ezért adja meg a `HOST_SOURCE_ROOT` és a `HOST_MOUNT_ROOT` is. Az `rslave` továbbadja a hoszt később létrehozott csatolásait, amelyekre a ZFS-adatkészletek mentésének szüksége van.
 - **Az ixVolume-ban lévő adatok nem kerülnek mentésre.** Az az alkalmazás, amelynek tárolója ixVolume, a `/mnt/.ix-apps` alatt tartja az adatait, a Host Data-n kívül. A BombVault csak az alkalmazás definícióját menti, és a futás megnevezi a kihagyott mappákat. Minden alkalmazáshoz, amelynek adatait menteni szeretnéd, válassz **Host Path** tárolót egy Host Data alatti adatkészleten.
 - **A VM- és ZFS-adatkészlet-mentések** SSH-n keresztül, rootként érik el a TrueNAS-t. Kapcsold be az SSH szolgáltatást a **System, Services** alatt, és add hozzá a nyilvános kulcsot a **Beállítások, Integrációk, Gazdagép SSH** helyről a root felhasználóhoz a **Credentials, Users** alatt. A VM-mentésekhez a fenti `LIBVIRT_URI` is kell, mert a TrueNAS libvirtd-je saját socketen figyel. Ha sem a `LIBVIRT_URI`, sem a `LIBVIRT_HOST` nincs beállítva, a BombVault az alkalmazás alapértelmezett átjáróját használja hosztként, mert a `host.docker.internal` egy TrueNAS-alkalmazásban nem oldható fel. A részleteket, a zvolokon lévő VM-eket is beleértve, a [VM-mentési útmutató](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md#truenas-scale) írja le.

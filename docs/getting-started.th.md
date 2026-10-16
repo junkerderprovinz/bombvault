@@ -60,7 +60,7 @@ services:
     hostname: bombvault
     restart: unless-stopped
     cap_drop: [ALL]
-    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETPCAP, SETUID]
+    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETPCAP, SETUID, SYS_CHROOT]
     environment:
       APP_KEY: ""
       PLATFORM: truenas
@@ -82,7 +82,7 @@ services:
 
 จากนั้นเปิด `https://<truenas-ip>:30528/` สิ่งที่ระบุไว้ใน [อะไรที่ต่างไปจาก Unraid](#generic-docker-host) ใช้กับที่นี่ด้วย และบน TrueNAS ยังมีเรื่องต่อไปนี้:
 
-- **Capabilities** BombVault ต้องการทั้งหกอย่างข้างต้น การสำรอง VM จะล้มเหลวหากไม่มี `SETPCAP`
+- **Capabilities** BombVault ต้องการทั้งเจ็ดอย่างข้างต้น การสำรอง VM จะล้มเหลวหากไม่มี `SETPCAP` และหากไม่มี `SYS_CHROOT` ทุก container จะถูกหยุดตลอดการสำรองแทนที่จะอ่านจากสแนปช็อต
 - **Host Data** คือพาธของโฮสต์บนชุดข้อมูล ในที่นี้คือ `/mnt/tank` ซึ่งเมานต์ที่พาธเดียวกันภายในแอป `HOST_SOURCE_ROOT` และ `HOST_MOUNT_ROOT` จึงระบุพาธนี้ทั้งคู่ `rslave` ส่งต่อการเมานต์ที่โฮสต์ทำภายหลัง ซึ่งการสำรองชุดข้อมูล ZFS ต้องใช้
 - **ข้อมูลใน ixVolume จะไม่ถูกสำรอง** แอปที่ใช้ ixVolume เป็นที่เก็บข้อมูลจะเก็บข้อมูลไว้ใต้ `/mnt/.ix-apps` ซึ่งอยู่นอก Host Data BombVault จะบันทึกเฉพาะคำจำกัดความของแอป และการรันจะระบุโฟลเดอร์ที่ถูกเว้นไว้ สำหรับทุกแอปที่คุณต้องการสำรองข้อมูล ให้เลือกที่เก็บแบบ **Host Path** บนชุดข้อมูลที่อยู่ใต้ Host Data
 - **การสำรอง VM และชุดข้อมูล ZFS** เข้าถึง TrueNAS ผ่าน SSH ในฐานะ root เปิดบริการ SSH ใน **System, Services** แล้วเพิ่มคีย์สาธารณะจาก **การตั้งค่า, การเชื่อมต่อ, SSH ของโฮสต์** ให้ผู้ใช้ root ใน **Credentials, Users** การสำรอง VM ยังต้องใช้ `LIBVIRT_URI` ตามข้างต้น เพราะ libvirtd ของ TrueNAS รอฟังบนซ็อกเก็ตของตัวเอง หากไม่ได้ตั้งทั้ง `LIBVIRT_URI` และ `LIBVIRT_HOST` BombVault จะใช้เกตเวย์เริ่มต้นของแอปเป็นโฮสต์ เพราะ `host.docker.internal` แปลงชื่อไม่ได้ในแอป TrueNAS [คู่มือการสำรอง VM](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md#truenas-scale) อธิบายรายละเอียด รวมถึง VM บน zvol

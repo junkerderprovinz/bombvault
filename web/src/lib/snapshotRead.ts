@@ -13,10 +13,16 @@ const REASON_KEY: Record<string, TranslationKey> = {
   "ssh-missing": "snapshot.reason.sshMissing",
   "zfs-unreachable": "snapshot.reason.hostUnreachable",
   "view-unavailable": "snapshot.reason.viewUnavailable",
+  "chroot-refused": "snapshot.reason.chrootRefused",
   "dataset-unknown": "snapshot.reason.datasetUnknown",
   "snapdir-disabled": "snapshot.reason.snapdirDisabled",
   "key-not-loaded": "snapshot.reason.keyNotLoaded",
   "repo-in-container": "snapshot.reason.repoInContainer",
+};
+
+// A host that refused the key did answer, so it gets a sentence of its own.
+const EXACT_KEY: Record<string, TranslationKey> = {
+  "zfs-unreachable: ssh-auth": "snapshot.reason.hostLoginRefused",
 };
 
 /** The window a snapshot backup held the container down, in whole seconds
@@ -30,7 +36,7 @@ export function snapshotFallbackText(t: Translate, raw: string): string {
   const sep = raw.indexOf(": ");
   const code = sep < 0 ? raw : raw.slice(0, sep);
   const detail = sep < 0 ? "" : raw.slice(sep + 2);
-  const key = REASON_KEY[code];
+  const key = EXACT_KEY[raw] ?? REASON_KEY[code];
   const reason = key
     ? t(key).replace("{path}", detail)
     : t("snapshot.reason.other").replace("{path}", detail).replace("{code}", code);

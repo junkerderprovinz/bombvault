@@ -60,7 +60,7 @@ services:
     hostname: bombvault
     restart: unless-stopped
     cap_drop: [ALL]
-    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETPCAP, SETUID]
+    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETPCAP, SETUID, SYS_CHROOT]
     environment:
       APP_KEY: ""
       PLATFORM: truenas
@@ -82,7 +82,7 @@ services:
 
 Åpne deretter `https://<truenas-ip>:30528/`. Det som står under [Hva som er annerledes enn på Unraid](#generic-docker-host), gjelder også her, og på TrueNAS:
 
-- **Capabilities.** BombVault trenger de seks ovenfor. VM-sikkerhetskopier feiler uten `SETPCAP`.
+- **Capabilities.** BombVault trenger de sju ovenfor. VM-sikkerhetskopier feiler uten `SETPCAP`, og uten `SYS_CHROOT` stoppes hver container under hele sikkerhetskopien sin i stedet for å bli lest fra et øyeblikksbilde.
 - **Host Data** er en vertssti på et datasett, her `/mnt/tank`, montert på samme sti inne i appen. Derfor angir `HOST_SOURCE_ROOT` og `HOST_MOUNT_ROOT` begge den stien. `rslave` sender videre monteringene verten lager senere, og dem trenger sikkerhetskopier av ZFS-datasett.
 - **Data i et ixVolume blir ikke sikkerhetskopiert.** En app som har et ixVolume som lagring, lagrer dataene sine under `/mnt/.ix-apps`, utenfor Host Data. BombVault lagrer da bare definisjonen av appen, og kjøringen nevner mappene den utelot. Velg **Host Path**-lagring på et datasett under Host Data for hver app der du vil ha dataene sikkerhetskopiert.
 - **Sikkerhetskopier av VM-er og ZFS-datasett** når TrueNAS over SSH som root. Slå på SSH-tjenesten under **System, Services**, og legg den offentlige nøkkelen fra **Innstillinger, Integrasjoner, Verts-SSH** til brukeren root under **Credentials, Users**. VM-sikkerhetskopier krever i tillegg `LIBVIRT_URI` som ovenfor, fordi libvirtd i TrueNAS lytter på sin egen socket. Er verken `LIBVIRT_URI` eller `LIBVIRT_HOST` satt, bruker BombVault appens standard-gateway som vert, siden `host.docker.internal` ikke kan slås opp i en TrueNAS-app. [Veiledningen for VM-sikkerhetskopiering](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md#truenas-scale) går gjennom detaljene, også VM-er på zvols.

@@ -60,7 +60,7 @@ services:
     hostname: bombvault
     restart: unless-stopped
     cap_drop: [ALL]
-    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETPCAP, SETUID]
+    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETPCAP, SETUID, SYS_CHROOT]
     environment:
       APP_KEY: ""
       PLATFORM: truenas
@@ -82,7 +82,7 @@ services:
 
 Ouvrez ensuite `https://<truenas-ip>:30528/`. Ce qui figure sous [Ce qui change par rapport à Unraid](#generic-docker-host) vaut aussi ici, et sur TrueNAS :
 
-- **Capacités.** BombVault a besoin des six capacités ci-dessus. Sans `SETPCAP`, les sauvegardes de VM échouent.
+- **Capacités.** BombVault a besoin des sept capacités ci-dessus. Sans `SETPCAP`, les sauvegardes de VM échouent, et sans `SYS_CHROOT`, chaque conteneur est arrêté pendant toute sa sauvegarde au lieu d'être lu depuis un instantané.
 - **Host Data** est un chemin hôte sur un jeu de données, ici `/mnt/tank`, monté au même chemin dans l'application. C'est pourquoi `HOST_SOURCE_ROOT` et `HOST_MOUNT_ROOT` le nomment tous les deux. `rslave` transmet les montages que l'hôte fait plus tard, ce dont les sauvegardes de jeux de données ZFS ont besoin.
 - **Les données d'un ixVolume ne sont pas sauvegardées.** Une application dont le stockage est un ixVolume garde ses données sous `/mnt/.ix-apps`, en dehors de Host Data. BombVault n'enregistre que la définition de l'application, et l'exécution nomme les dossiers qu'elle a laissés de côté. Pour chaque application dont vous voulez sauvegarder les données, choisissez un stockage **Host Path** sur un jeu de données situé sous Host Data.
 - **Les sauvegardes de VM et de jeux de données ZFS** atteignent TrueNAS en SSH en tant que root. Activez le service SSH sous **System, Services** et ajoutez la clé publique de **Paramètres, Intégrations, SSH de l'hôte** à l'utilisateur root sous **Credentials, Users**. Les sauvegardes de VM ont aussi besoin de `LIBVIRT_URI` comme ci-dessus, car le libvirtd de TrueNAS écoute sur un socket qui lui est propre. Si ni `LIBVIRT_URI` ni `LIBVIRT_HOST` n'est défini, BombVault prend la passerelle par défaut de l'application comme hôte, puisque `host.docker.internal` ne se résout pas dans une application TrueNAS. Le [guide de sauvegarde de VM](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md#truenas-scale) donne les détails, VMs sur zvols comprises.

@@ -60,7 +60,7 @@ services:
     hostname: bombvault
     restart: unless-stopped
     cap_drop: [ALL]
-    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETPCAP, SETUID]
+    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETPCAP, SETUID, SYS_CHROOT]
     environment:
       APP_KEY: ""
       PLATFORM: truenas
@@ -82,7 +82,7 @@ services:
 
 Then open `https://<truenas-ip>:30528/`. What is listed under [What's different from Unraid](#generic-docker-host) applies here too, and on TrueNAS:
 
-- **Capabilities.** BombVault needs the six above. VM backups fail without `SETPCAP`.
+- **Capabilities.** BombVault needs the seven above. VM backups fail without `SETPCAP`, and without `SYS_CHROOT` every container is stopped for its whole backup instead of being read from a snapshot.
 - **Host Data** is a host path on a dataset, here `/mnt/tank`, mounted at the same path inside the app. That is why `HOST_SOURCE_ROOT` and `HOST_MOUNT_ROOT` both name it. `rslave` passes on the mounts the host makes later, which ZFS dataset backups need.
 - **Data in an ixVolume is not backed up.** An app whose storage is an ixVolume keeps its data under `/mnt/.ix-apps`, outside Host Data. BombVault saves only the app's definition, and the run names the folders it left out. For every app whose data you want backed up, choose **Host Path** storage on a dataset below Host Data.
 - **VM and ZFS dataset backups** reach TrueNAS over SSH as root. Turn on the SSH service under **System, Services**, and add the public key from **Settings, Integrations, Host SSH** to the root user under **Credentials, Users**. VM backups also need `LIBVIRT_URI` as above, because TrueNAS's libvirtd listens on a socket of its own. With neither `LIBVIRT_URI` nor `LIBVIRT_HOST` set, BombVault uses the app's default gateway as the host, since `host.docker.internal` does not resolve in a TrueNAS app. The [VM backup guide](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md#truenas-scale) covers the details, VMs on zvols included.

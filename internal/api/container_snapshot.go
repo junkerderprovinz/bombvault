@@ -13,6 +13,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/backup"
@@ -69,6 +70,7 @@ const (
 	snapFallbackNoHost      = "ssh-missing"
 	snapFallbackHost        = "zfs-unreachable"
 	snapFallbackView        = "view-unavailable"
+	snapFallbackChroot      = "chroot-refused"
 	snapFallbackNotInListed = "dataset-unknown"
 	snapFallbackRepo        = "repo-in-container"
 )
@@ -116,8 +118,9 @@ func (s *Service) planContainerSnapshot(ctx context.Context, settings store.Sett
 		return nil, unplaced.Code + ": " + s.toHostPath(unplaced.Path)
 	}
 	// restic reads the snapshot inside a view that shares only what is mounted
-	// into this container, so a repository in its own layer is not there.
-	if !restic.IsRemoteRepo(repo) && zfs.InOwnLayer(recs, repo) {
+	// into this container, so a repository in its own layer is not there, also
+	// when a mounted path only links into it.
+	if !restic.IsRemoteRepo(repo) && zfs.InOwnLayer(recs, zfsRealPath(repo)) {
 		return nil, snapFallbackRepo
 	}
 
@@ -144,6 +147,9 @@ func (s *Service) planContainerSnapshot(ctx context.Context, settings store.Sett
 
 	if err := s.probeSnapView(ctx); err != nil {
 		log.Printf("api: a snapshot view cannot be used on this host, containers are stopped for their whole backup: %v", err)
+		if errors.Is(err, errChrootRefused) {
+			return nil, snapFallbackChroot
+		}
 		return nil, snapFallbackView
 	}
 	s.sweepContainerSnapshots(ctx)
@@ -168,6 +174,10 @@ func (s *Service) snapViewHost() dockercli.SnapViewHost {
 	return h
 }
 
+// errChrootRefused marks a view this container may not enter. On a host that
+// drops Docker's default capabilities, as TrueNAS apps do, SYS_CHROOT is missing.
+var errChrootRefused = errors.New("chroot into the snapshot view is not permitted")
+
 // probeSnapView enters an empty view once per process. A host that lets this
 // container create a view but not enter it, through its security profile or
 // missing capabilities, is found out here, before any container goes down.
@@ -189,6 +199,9 @@ func (s *Service) probeSnapView(ctx context.Context) error {
 		return err
 	}
 	if err := snapViewEnter(viewRoot(pid)); err != nil {
+		if errors.Is(err, syscall.EPERM) {
+			return fmt.Errorf("%w: %w", errChrootRefused, err)
+		}
 		return err
 	}
 	s.snapViewOK.Store(true)

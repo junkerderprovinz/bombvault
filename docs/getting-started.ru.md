@@ -60,7 +60,7 @@ services:
     hostname: bombvault
     restart: unless-stopped
     cap_drop: [ALL]
-    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETPCAP, SETUID]
+    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETPCAP, SETUID, SYS_CHROOT]
     environment:
       APP_KEY: ""
       PLATFORM: truenas
@@ -82,7 +82,7 @@ services:
 
 Затем откройте `https://<truenas-ip>:30528/`. Всё, что перечислено в [Чем это отличается от Unraid](#generic-docker-host), действует и здесь, а в TrueNAS ещё:
 
-- **Права (capabilities).** BombVault нужны все шесть, перечисленные выше. Без `SETPCAP` резервное копирование VM завершается ошибкой.
+- **Права (capabilities).** BombVault нужны все семь, перечисленные выше. Без `SETPCAP` резервное копирование VM завершается ошибкой, а без `SYS_CHROOT` каждый контейнер останавливается на всё время своей копии вместо чтения из снимка.
 - **Host Data** это путь хоста на наборе данных, здесь `/mnt/tank`, смонтированный по тому же пути внутри приложения. Поэтому и `HOST_SOURCE_ROOT`, и `HOST_MOUNT_ROOT` называют именно его. `rslave` передаёт дальше монтирования, которые хост делает позже, а они нужны копиям наборов данных ZFS.
 - **Данные в ixVolume не копируются.** Приложение, чьё хранилище это ixVolume, держит свои данные в `/mnt/.ix-apps`, вне Host Data. BombVault сохраняет только определение приложения, и запуск называет папки, которые он пропустил. Для каждого приложения, чьи данные нужно сохранять, выберите хранилище **Host Path** на наборе данных под Host Data.
 - **Копии VM и наборов данных ZFS** обращаются к TrueNAS по SSH от имени root. Включите службу SSH в **System, Services** и добавьте публичный ключ из **Настройки, Интеграции, SSH хоста** пользователю root в **Credentials, Users**. Копиям VM нужен ещё `LIBVIRT_URI`, как показано выше, потому что libvirtd в TrueNAS слушает собственный сокет. Если не задан ни `LIBVIRT_URI`, ни `LIBVIRT_HOST`, BombVault берёт в качестве хоста шлюз по умолчанию приложения, потому что `host.docker.internal` в приложении TrueNAS не разрешается. Подробности, включая VM на zvol, есть в [руководстве по копированию VM](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md#truenas-scale).

@@ -60,7 +60,7 @@ services:
     hostname: bombvault
     restart: unless-stopped
     cap_drop: [ALL]
-    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETPCAP, SETUID]
+    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETPCAP, SETUID, SYS_CHROOT]
     environment:
       APP_KEY: ""
       PLATFORM: truenas
@@ -82,7 +82,7 @@ services:
 
 Después abre `https://<truenas-ip>:30528/`. Lo que aparece en [Qué cambia respecto a Unraid](#generic-docker-host) vale también aquí, y en TrueNAS:
 
-- **Capacidades.** BombVault necesita las seis de arriba. Sin `SETPCAP`, las copias de VM fallan.
+- **Capacidades.** BombVault necesita las siete de arriba. Sin `SETPCAP`, las copias de VM fallan, y sin `SYS_CHROOT` cada contenedor se detiene durante toda su copia en lugar de leerse desde una instantánea.
 - **Host Data** es una ruta del host en un conjunto de datos, aquí `/mnt/tank`, montada en la misma ruta dentro de la aplicación. Por eso `HOST_SOURCE_ROOT` y `HOST_MOUNT_ROOT` la nombran las dos. `rslave` transmite los montajes que el host hace más tarde, que es lo que necesitan las copias de conjuntos de datos ZFS.
 - **Los datos de un ixVolume no se copian.** Una aplicación cuyo almacenamiento es un ixVolume guarda sus datos en `/mnt/.ix-apps`, fuera de Host Data. BombVault guarda solo la definición de la aplicación, y la ejecución nombra las carpetas que dejó fuera. Para cada aplicación cuyos datos quieras copiar, elige almacenamiento **Host Path** en un conjunto de datos por debajo de Host Data.
 - **Las copias de VM y de conjuntos de datos ZFS** llegan a TrueNAS por SSH como root. Activa el servicio SSH en **System, Services** y añade la clave pública de **Ajustes, Integraciones, SSH del host** al usuario root en **Credentials, Users**. Las copias de VM necesitan además `LIBVIRT_URI` como arriba, porque el libvirtd de TrueNAS escucha en un socket propio. Si no están definidas ni `LIBVIRT_URI` ni `LIBVIRT_HOST`, BombVault usa como host la puerta de enlace predeterminada de la aplicación, ya que `host.docker.internal` no se resuelve en una aplicación de TrueNAS. La [guía de copia de VM](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md#truenas-scale) cubre los detalles, incluidas las VMs sobre zvols.
