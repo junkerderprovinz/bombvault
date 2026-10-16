@@ -253,6 +253,14 @@ func TestPlanSaysWhyAContainerOnZFSIsStoppedAsBefore(t *testing.T) {
 		}, nil, "zfs-unreachable: ssh-unreachable"},
 		{"snapdir disabled", func(f *snapFixture) { f.host.tree[1].Snapdir = "disabled" }, nil, "snapdir-disabled: cache/appdata"},
 		{"repository in the container's own layer", func(f *snapFixture) { f.repo = "/var/lib/bombvault/repo" }, nil, snapFallbackRepo},
+		{"repository linked into the container's own layer", func(f *snapFixture) {
+			zfsRealPath = func(p string) string {
+				if p == f.repo {
+					return "/var/lib/bombvault/repo"
+				}
+				return p
+			}
+		}, nil, snapFallbackRepo},
 		{"remote repository", func(f *snapFixture) { f.repo = "s3:https://s3.example.com/bucket"; f.svc.zfs = nil }, nil, snapFallbackNoHost},
 		{"no view", func(f *snapFixture) { f.docker.startErr = errors.New("no such image") }, nil, snapFallbackView},
 		{"view cannot be entered", func(*snapFixture) {

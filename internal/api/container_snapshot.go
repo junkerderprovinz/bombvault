@@ -116,8 +116,9 @@ func (s *Service) planContainerSnapshot(ctx context.Context, settings store.Sett
 		return nil, unplaced.Code + ": " + s.toHostPath(unplaced.Path)
 	}
 	// restic reads the snapshot inside a view that shares only what is mounted
-	// into this container, so a repository in its own layer is not there.
-	if !restic.IsRemoteRepo(repo) && zfs.InOwnLayer(recs, repo) {
+	// into this container, so a repository in its own layer is not there, also
+	// when a mounted path only links into it.
+	if !restic.IsRemoteRepo(repo) && zfs.InOwnLayer(recs, zfsRealPath(repo)) {
 		return nil, snapFallbackRepo
 	}
 
