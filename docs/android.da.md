@@ -61,7 +61,7 @@ Tandhjulet ved siden af plusset åbner appens indstillinger:
 - udseendet, der følger den første server på listen, indtil du vælger dit eget, og animationerne, der har deres egen indstilling,
 - en rapport til at kopiere, når du melder et problem; den indeholder ingen adresse, intet navn og ingen sætning,
 - kortet Om appen med privatlivspolitikken,
-- **Fjern alle servere**, der fjerner alle servere fra appen og forlader gruppen. Intet ændres på selve serverne.
+- **Fjern alle servere**, der fjerner alle servere fra appen og forlader gruppen. Hver server, telefonen stadig når, fjerner den fra sin Instanser-side.
 
 ## Downloads og uploads {#files}
 

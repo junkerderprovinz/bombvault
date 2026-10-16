@@ -56,7 +56,7 @@ class Relay(
     private val keys: GroupKeys,
     private val id: String,
     private val identity: JSONObject,
-    private val serve: (method: String, path: String, sender: String) -> Pair<Int, ByteArray>,
+    private val serve: (method: String, path: String, sender: String, body: ByteArray) -> Pair<Int, ByteArray>,
     private val onChange: () -> Unit,
 ) {
     private val url = connectUrl(url)
@@ -164,7 +164,7 @@ class Relay(
         val plain = open(keys.frameKey, "proxy-request\u0000$rid\u0000$id", unb64(data.optString("sealed"))) ?: return
         val call = runCatching { JSONObject(String(plain)) }.getOrNull() ?: return
         if (call.optString("id") != rid || !admit(rid, call.optLong("sent"))) return
-        val (status, body) = serve(call.optString("method"), call.optString("path"), call.optString("sender"))
+        val (status, body) = serve(call.optString("method"), call.optString("path"), call.optString("sender"), unb64(call.optString("body")))
         val result = JSONObject().put("status", status).put("body", b64(body))
         val sealed = seal(keys.frameKey, "proxy-response\u0000$rid", result.toString().toByteArray())
         ws.send(frame("proxy-response", JSONObject().put("requestId", rid).put("sealed", b64(sealed))))

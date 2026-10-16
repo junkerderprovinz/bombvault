@@ -61,7 +61,7 @@ Plussan vieressä oleva ratas avaa sovelluksen asetukset:
 - ulkoasu, joka seuraa luettelon ensimmäistä palvelinta, kunnes asetat oman, sekä animaatiot, joilla on oma asetuksensa,
 - raportti kopioitavaksi, kun ilmoitat ongelmasta; se ei sisällä osoitetta, nimeä eikä lausetta,
 - Tietoja-kortti tietosuojaselosteineen,
-- **Poista kaikki palvelimet**, joka poistaa sovelluksesta kaikki palvelimet ja eroaa ryhmästä. Itse palvelimilla mikään ei muutu.
+- **Poista kaikki palvelimet**, joka poistaa sovelluksesta kaikki palvelimet ja eroaa ryhmästä. Jokainen palvelin, jonka puhelin vielä tavoittaa, poistaa sen Ilmentymät-sivultaan.
 
 ## Lataukset ja lähetykset {#files}
 

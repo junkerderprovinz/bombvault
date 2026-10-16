@@ -61,7 +61,7 @@ The gear beside the plus opens the app's settings:
 - the look, which follows the first server in the list until you set your own, and animations, which have a setting of their own,
 - a report to copy when you report a problem; it contains no address, name or phrase,
 - the About card with the privacy policy,
-- **Remove all servers**, which removes every server from the app and leaves the group. Nothing changes on the servers themselves.
+- **Remove all servers**, which removes every server from the app and leaves the group. Every server the phone still reaches takes it off its Instances page.
 
 ## Downloads and uploads {#files}
 

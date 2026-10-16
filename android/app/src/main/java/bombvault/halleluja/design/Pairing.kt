@@ -17,6 +17,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.sync.withPermit
+import kotlinx.coroutines.withTimeoutOrNull
 import org.json.JSONException
 import org.json.JSONObject
 import java.io.IOException
@@ -34,7 +35,12 @@ import javax.crypto.spec.GCMParameterSpec
  * the server list and reads their activity through the group, which works
  * without a session and away from home.
  */
-class Pairing(private val context: Context, private val servers: Servers, private val onChange: () -> Unit) {
+class Pairing(
+    private val context: Context,
+    private val servers: Servers,
+    private val onMemberLeft: (String) -> Unit = {},
+    private val onChange: () -> Unit,
+) {
     private val prefs = context.getSharedPreferences("group", Context.MODE_PRIVATE)
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val asked = ConcurrentHashMap.newKeySet<String>()
@@ -99,12 +105,38 @@ class Pairing(private val context: Context, private val servers: Servers, privat
         previewSecret = null
     }
 
+    /**
+     * Leaves the group. The relay stays open a moment longer, so the
+     * instances in reach hear it and take the phone off their Instances page.
+     */
     fun leave() {
+        val r = relay
+        relay = null
         stop()
         prefs.edit().remove(SECRET).remove(RELAY).apply()
         servers.forgetMembers()
         servers.forgetMemberKeys()
         onChange()
+        if (r != null) {
+            scope.launch {
+                tellLeaving(r)
+                r.stop()
+            }
+        }
+    }
+
+    // An instance that does not hear keeps the phone listed until a person
+    // removes it there.
+    private suspend fun tellLeaving(r: Relay) {
+        val me = myId()
+        val seed = signSeed()
+        withTimeoutOrNull(LEAVE_WAIT_MS) {
+            coroutineScope {
+                r.siblings.filter { it.kind.isEmpty() }.map { s ->
+                    async { runCatching { r.call(s.id, "POST", Leave.PATH, Leave.notice(seed, me, s.id, System.currentTimeMillis())) } }
+                }.awaitAll()
+            }
+        }
     }
 
     fun start() {
@@ -299,8 +331,12 @@ class Pairing(private val context: Context, private val servers: Servers, privat
         }
     }
 
-    /** The app answers the hello a probe asks for and names its key to [sender], and nothing else. */
-    private fun serve(method: String, path: String, sender: String): Pair<Int, ByteArray> {
+    /**
+     * The app answers the hello a probe asks for, names its key to [sender]
+     * and hears that an instance left the group, and nothing else.
+     */
+    private fun serve(method: String, path: String, sender: String, body: ByteArray): Pair<Int, ByteArray> {
+        if (method == "POST" && path == Leave.PATH) return heardLeave(sender, body)
         if (method != "GET") return 404 to ByteArray(0)
         return when (path) {
             "/api/group/peer/hello" -> 200 to identity().put("ok", true).put("instanceId", myId()).toString().toByteArray()
@@ -311,6 +347,19 @@ class Pairing(private val context: Context, private val servers: Servers, privat
             }
             else -> 404 to ByteArray(0)
         }
+    }
+
+    /** Takes [sender] off the server list once it says, under the key pinned for it, that it left the group. */
+    private fun heardLeave(sender: String, body: ByteArray): Pair<Int, ByteArray> {
+        if (!Leave.heard(servers.memberKey(sender), sender, myId(), body, System.currentTimeMillis())) {
+            return 403 to JSONObject().put("ok", false).put("error", "the leave is not signed with the key pinned for that instance").toString().toByteArray()
+        }
+        servers.forgetMember(sender)
+        asked.remove(sender)
+        sessions.remove(sender)
+        onMemberLeft(sender)
+        onChange()
+        return 200 to JSONObject().put("ok", true).toString().toByteArray()
     }
 
     private fun myId(): String = prefs.getString(ID, "") ?: ""
@@ -370,6 +419,7 @@ class Pairing(private val context: Context, private val servers: Servers, privat
         private const val NAME = "name"
         private const val SIGN = "sign"
         private const val PAGE_CALLS = 12
+        private const val LEAVE_WAIT_MS = 5_000L
     }
 }
 

@@ -61,7 +61,7 @@ La roue dentée à côté du bouton + ouvre les paramètres de l'application :
 - l'apparence, qui suit le premier serveur de la liste jusqu'à ce que vous définissiez la vôtre, et les animations, qui ont leur propre réglage,
 - un rapport à copier quand vous signalez un problème ; il ne contient ni adresse, ni nom, ni phrase,
 - la carte **À propos** avec la politique de confidentialité,
-- **Supprimer tous les serveurs**, qui retire tous les serveurs de l'application et quitte le groupe. Rien ne change sur les serveurs eux-mêmes.
+- **Supprimer tous les serveurs**, qui retire tous les serveurs de l'application et quitte le groupe. Chaque serveur que le téléphone joint encore le retire de sa page Instances.
 
 ## Téléchargements et envois {#files}
 

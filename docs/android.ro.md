@@ -61,7 +61,7 @@ Rotița de lângă butonul + deschide setările aplicației:
 - aspectul, care urmează primul server din listă până când îl setezi pe al tău, și animațiile, care au o setare proprie,
 - un raport de copiat când raportezi o problemă; nu conține nicio adresă, niciun nume și nicio frază,
 - cardul **Despre** cu politica de confidențialitate,
-- **Elimină toate serverele**, care scoate toate serverele din aplicație și părăsește grupul. Pe servere nu se schimbă nimic.
+- **Elimină toate serverele**, care scoate toate serverele din aplicație și părăsește grupul. Fiecare server la care telefonul mai ajunge îl scoate de pe pagina sa Instanțe.
 
 ## Descărcări și încărcări {#files}
 

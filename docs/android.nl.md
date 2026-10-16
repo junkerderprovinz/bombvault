@@ -60,7 +60,7 @@ Het tandwiel naast het plusteken opent de instellingen van de app:
 - het uiterlijk, dat de eerste server in de lijst volgt tot je zelf iets instelt, en de animaties, die een eigen instelling hebben,
 - een rapport om te kopiëren als je een probleem meldt; het bevat geen adres, naam of frase,
 - de kaart Over deze app met het privacybeleid,
-- **Alle servers verwijderen**, dat elke server uit de app verwijdert en de groep verlaat. Op de servers zelf verandert er niets.
+- **Alle servers verwijderen**, dat elke server uit de app verwijdert en de groep verlaat. Elke server die de telefoon nog bereikt, haalt hem van zijn Instanties-pagina.
 
 ## Downloads en uploads {#files}
 
