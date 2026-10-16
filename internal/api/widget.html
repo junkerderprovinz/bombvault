@@ -58,6 +58,7 @@
   .row { display: flex; gap: 9px; white-space: nowrap; overflow: hidden; }
   .ts { color: #8d8d8d; flex: 0 0 auto; }
   .g  { width: 12px; text-align: center; flex: 0 0 auto; }
+  .dom { color: #8d8d8d; flex: 0 0 auto; }
   .msg { overflow: hidden; text-overflow: ellipsis; }
   /* Line colours — these MIRROR the SPA's ActivityLog.tsx colorFor(), one
      class per LogStatus bucket. This file cannot read web/src/index.css's
@@ -125,14 +126,24 @@
 
   // ---- English label tables (the widget is English-only by design; phrasing
   // mirrors the SPA's activityLog.ts finished-line templates) ----------------
+  // Items carry the singular domain, domain-wide runs the plural one.
   var DOMAIN_LABELS = {
-    containers: "Containers", vms: "VMs", flash: "Flash",
-    config: "Self-Backup", files: "Folders"
+    containers: "Containers", container: "Containers", vms: "VMs", vm: "VMs",
+    flash: "Flash", config: "Self-backup", files: "Folders", zfs: "ZFS",
+    everything: "Full backup"
   };
   var JOB_LABELS = {
     backup: "backup", offsite: "off-site replication",
     drill: "restore-verification drill", tamper: "tamper test",
-    digest: "weekly digest"
+    digest: "weekly digest", watchdog: "overdue-backup check",
+    receiver: "received-repo check", fleet: "instance check",
+    pull: "pull from sources", replica: "ZFS replica"
+  };
+  // What happens to the key of the backups is recorded as a run of its own.
+  var KEY_EVENTS = {
+    keyread: "Key tried", keyadopt: "Key taken over",
+    keysignins: "Sign-ins taken over", keysettings: "Settings taken over",
+    keyundo: "Takeover undone"
   };
 
   function domainLabel(d) { return DOMAIN_LABELS[d] || d; }
@@ -192,26 +203,29 @@
     var dom = domainLabel(r.domain);
     var name = r.target || dom;
     var ok = r.status === "success", failed = r.status === "failed";
+    if (KEY_EVENTS[r.kind]) {
+      return failed ? KEY_EVENTS[r.kind] + " refused: " + r.error : KEY_EVENTS[r.kind];
+    }
     switch (r.kind) {
       case "prune":
-        return ok ? "Retention prune done for " + dom :
-          failed ? "Prune failed for " + dom + ": " + r.error : other(dom, r);
+        return ok ? "Retention prune done: " + dom :
+          failed ? "Prune failed (" + dom + "): " + r.error : other(dom, r);
       case "verify":
-        return ok ? "Verify passed for " + dom :
-          failed ? "Verify failed for " + dom + ": " + r.error : other(dom, r);
+        return ok ? "Verify passed: " + dom :
+          failed ? "Verify failed (" + dom + "): " + r.error : other(dom, r);
       case "offsite":
-        return ok ? "Off-site replication done for " + dom + " (" + dur + ")" :
-          failed ? "Off-site replication failed for " + dom + ": " + r.error : other(dom, r);
+        return ok ? "Off-site replication done: " + dom + " (" + dur + ")" :
+          failed ? "Off-site replication failed (" + dom + "): " + r.error : other(dom, r);
       case "drill":
-        return ok ? "Restore check passed for " + dom :
-          failed ? "Restore check failed for " + dom + ": " + r.error : other(dom, r);
+        return ok ? "Restore check passed: " + dom :
+          failed ? "Restore check failed (" + dom + "): " + r.error : other(dom, r);
       case "drdrill":
-        return ok ? "Off-site DR restore verified for " + dom :
-          failed ? "Off-site DR restore FAILED for " + dom + ": " + r.error : other(dom, r);
+        return ok ? "Off-site DR restore verified: " + dom :
+          failed ? "Off-site DR restore failed (" + dom + "): " + r.error : other(dom, r);
       case "tamper":
-        return ok ? "Tamper test passed for " + dom + " (delete refused)" :
-          failed ? "Tamper test FAILED for " + dom + ", it is not append-only: " + r.error :
-          r.status === "skipped" ? "Tamper test skipped for " + dom + ": " + r.error : other(dom, r);
+        return ok ? "Tamper test passed: " + dom + " (delete refused)" :
+          failed ? "Tamper test failed. " + dom + " is not append-only: " + r.error :
+          r.status === "skipped" ? "Tamper test skipped (" + dom + "): " + r.error : other(dom, r);
       case "export":
         return ok ? "Flash ZIP export done: " + fmtBytes(r.bytes) + " (" + dur + ")" :
           failed ? "Flash ZIP export failed: " + r.error : other(dom, r);
@@ -225,11 +239,17 @@
       case "dbimport":
         return ok ? name + " database imported" :
           failed ? name + " database import failed: " + r.error : other(name, r);
+      case "import":
+        return ok ? name + ": Appdata.Backup archive imported (" + fmtBytes(r.bytes) + ", " + dur + ")" :
+          failed ? name + ": Appdata.Backup import failed: " + r.error : other(name, r);
+      case "replica":
+        return ok ? name + " replicated: " + fmtBytes(r.bytes) + " in " + dur :
+          failed ? name + " replica failed: " + r.error : other(name, r);
       case "restore":
-        return ok ? name + " restored in " + dur :
+        return ok ? name + " restored: " + dur :
           failed ? name + " restore failed: " + r.error : other(name, r);
       case "update":
-        return ok ? name + " updated in " + dur :
+        return ok ? name + " updated: " + dur :
           failed ? name + " update failed: " + r.error : other(name, r);
       default: // backup (and any future kind falls back to the same shape)
         if (ok) return name + " backed up: " + fmtBytes(r.bytes) + " in " + dur;
@@ -240,14 +260,21 @@
   }
 
   // ---- rendering -----------------------------------------------------------
-  function row(ts, g, c, text, extra) {
+  // A container and a folder set can share a name, so a run's line names its
+  // domain, as the SPA log does.
+  function row(ts, g, c, text, extra, dom) {
     var div = document.createElement("div");
     div.className = "row" + (extra ? " " + extra : "");
     var t = document.createElement("span"); t.className = "ts"; t.textContent = ts;
     var gl = document.createElement("span"); gl.className = "g " + c; gl.textContent = g;
     var m = document.createElement("span"); m.className = "msg " + c; m.textContent = text;
     m.title = text; // full text on hover — lines are single-row ellipsized
-    div.appendChild(t); div.appendChild(gl); div.appendChild(m);
+    div.appendChild(t); div.appendChild(gl);
+    if (dom) {
+      var d = document.createElement("span"); d.className = "dom"; d.textContent = dom;
+      div.appendChild(d);
+    }
+    div.appendChild(m);
     return div;
   }
 
@@ -267,7 +294,7 @@
     var frag = document.createDocumentFragment();
     for (var i = 0; i < runs.length; i++) {
       var r = runs[i], b = bucket(r);
-      frag.appendChild(row(fmtTs(r.finishedAt), glyph(b), cls(b), lineText(r)));
+      frag.appendChild(row(fmtTs(r.finishedAt), glyph(b), cls(b), lineText(r), "", domainLabel(r.domain)));
     }
 
     // Trailing idle line: the soonest scheduled fire ("next: …"), or "nothing
