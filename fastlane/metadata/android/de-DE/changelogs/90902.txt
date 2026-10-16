@@ -1,1 +1,0 @@
-Die App selbst ist unverändert. Die Dashboards kommen von deinem Server, und dort kannst du mit BombVault 9.9.2 ein vergessenes Login-Passwort auf der Login-Seite zurücksetzen.

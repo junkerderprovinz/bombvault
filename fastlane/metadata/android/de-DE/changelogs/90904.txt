@@ -1,1 +1,0 @@
-Die App selbst ist unverändert. Die Dashboards kommen von deinem Server, und dort repariert BombVault 9.9.4 das Zurücksetzen des Passworts: Niemand sonst kann dich mehr daran hindern, und ein Zurücksetzen entfernt jetzt auch Passkeys und widerruft Tokens und Schlüssel.

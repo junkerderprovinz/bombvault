@@ -1,1 +1,0 @@
-Die App selbst ist unverändert. Die Dashboards kommen von deinem Server, und dort sagt dir BombVault 9.9.5 vor dem Verschieben eines Off-site-Ziels, ob am neuen Ort deine Backups schon liegen.
