@@ -144,7 +144,7 @@ Stránky a nastavení využívají celou šířku okna. Okno drží svá tlačí
 - **Nastavení** je čtrnáct dlaždic: Obecné, Vzhled, Plán, Cíle, Obnova, Oznámení, Ověření, Zabezpečení, Instance, Párování, Integrace, Aplikace, Systém a Info. Klávesa `/` nebo Ctrl+K prohledá všechny, i podle názvů, které stránky měly v dřívějších verzích. Dlaždice si přetáhni do vlastního pořadí pod **Vzhled**. Kde by sloupec dlaždic vedle stránky stránku zúžil, například v okně širokém asi 1200 pixelů, stanou se dlaždice pruhem nad stránkou, který se posouvá do stran. Telefon ukazuje stejný pruh.
 - **Cíle** a **Instance** jsou dlaždice nastavení s vlastními stránkami. **Zobrazit také v postranním panelu** na jejich dlaždici je připne do postranního panelu.
 
-Nic nemá tlačítko Uložit a nic se nerozbaluje: vzácné věci mají vlastní kartu nebo okno a vysvětlení jsou v bublinách (i). Po aktualizaci se samy otevřou poznámky k vydání a zelené tečky označují, co se změnilo. Klepnutím tečku skryješ. **Novinky** na kartě Verze v **Nastavení, Info** počítají, co jsi ještě neviděl, a otevřou poznámky k vydání a seznam každé změny s **Přejít tam** jako dvě záložky jednoho okna.
+Nic nemá tlačítko Uložit a nic se nerozbaluje: vzácné věci mají vlastní kartu nebo okno a vysvětlení jsou v bublinách (i). Po aktualizaci se samo otevře okno s kartou pro každé vydání od tvé poslední verze a zelené tečky označují, co se změnilo. Klepnutím tečku skryješ. **Novinky** na kartě Verze v **Nastavení, Info** počítají, co jsi ještě neviděl, a znovu otevřou toto okno, s poznámkami ke každému vydání a jeho změnami s **Přejít tam**.
 
 ## Sestavení ze zdrojového kódu {#build-from-source}
 

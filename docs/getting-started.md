@@ -144,7 +144,7 @@ Pages and settings use the whole width of the window. A window keeps its buttons
 - **Settings** are fourteen tiles: General, Look, Schedule, Storage locations, Restore, Notifications, Verify, Security, Instances, Pairing, Integrations, Apps, System and Info. Press `/` or Ctrl+K to search them all, also by the names pages had in earlier versions. Drag the tiles into your own order under **Look**. Where a column of tiles beside the page would squeeze it, as in a window about 1200 pixels wide, the tiles become a strip above the page that scrolls sideways. A phone shows the same strip.
 - **Storage locations** and **Instances** are settings tiles with pages of their own. **Also show in the sidebar** on their tile pins them to the sidebar.
 
-Nothing has a Save button and nothing folds out: rare things have a card of their own or a window, and explanations sit in the (i) bubbles. After an update the release notes open by themselves, and green dots mark what changed. A click hides a dot. **New** in the Version card under **Settings, Info** counts what you have not seen yet and opens the release notes and the list of every change with **Go there**, as two tabs of one window.
+Nothing has a Save button and nothing folds out: rare things have a card of their own or a window, and explanations sit in the (i) bubbles. After an update a window opens by itself with a card for every release since your last version, and green dots mark what changed. A click hides a dot. **New** in the Version card under **Settings, Info** counts what you have not seen yet and opens that window again, with the notes of each release and its changes with **Go there**.
 
 ## Building from source {#build-from-source}
 
