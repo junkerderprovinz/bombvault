@@ -4,7 +4,7 @@
 {% set host_data_path = tpl.funcs.get_host_path(values.storage.host_data) %}
 
 {% do c1.set_user(0, 0) %}
-{% do c1.add_caps(["CHOWN", "DAC_OVERRIDE", "FOWNER", "SETGID", "SETPCAP", "SETUID"]) %}
+{% do c1.add_caps(["CHOWN", "DAC_OVERRIDE", "FOWNER", "SETGID", "SETPCAP", "SETUID", "SYS_CHROOT"]) %}
 {% do c1.healthcheck.set_custom_test(["CMD", "/usr/local/bin/bombvault", "healthcheck"]) %}
 
 {% do c1.environment.add_env("APP_KEY", values.bombvault.app_key) %}

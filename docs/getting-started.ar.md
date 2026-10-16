@@ -60,7 +60,7 @@ services:
     hostname: bombvault
     restart: unless-stopped
     cap_drop: [ALL]
-    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETPCAP, SETUID]
+    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETPCAP, SETUID, SYS_CHROOT]
     environment:
       APP_KEY: ""
       PLATFORM: truenas
@@ -82,7 +82,7 @@ services:
 
 ثم يُفتح `https://<truenas-ip>:30528/`. ما ورد تحت [ما الذي يختلف عن Unraid](#generic-docker-host) ينطبق هنا أيضاً، وعلى TrueNAS:
 
-- **الصلاحيات (capabilities).** يحتاج BombVault الصلاحيات الست المذكورة أعلاه. تفشل نسخ الـ VM الاحتياطية من دون `SETPCAP`.
+- **الصلاحيات (capabilities).** يحتاج BombVault الصلاحيات السبع المذكورة أعلاه. تفشل نسخ الـ VM الاحتياطية من دون `SETPCAP`، ومن دون `SYS_CHROOT` تُوقف كل حاوية طوال نسختها الاحتياطية بدل قراءتها من لقطة.
 - **Host Data** مسار مضيف على مجموعة بيانات، هنا `/mnt/tank`، مركَّب على المسار نفسه داخل التطبيق. لهذا يذكره `HOST_SOURCE_ROOT` و`HOST_MOUNT_ROOT` كلاهما. ويمرر `rslave` عمليات التركيب التي يجريها المضيف لاحقاً، وهذا ما تحتاجه نسخ مجموعات بيانات ZFS.
 - **البيانات في ixVolume لا تُنسخ احتياطياً.** التطبيق الذي تخزينه ixVolume يحفظ بياناته تحت `/mnt/.ix-apps`، خارج Host Data. يحفظ BombVault تعريف التطبيق فقط، ويذكر التشغيل المجلدات التي تركها. لكل تطبيق يُراد نسخ بياناته يُختار تخزين **Host Path** على مجموعة بيانات تحت Host Data.
 - **نسخ الـ VM ومجموعات بيانات ZFS** تصل إلى TrueNAS عبر SSH بصفة root. تُفعَّل خدمة SSH تحت **System, Services**، ويُضاف المفتاح العام من **الإعدادات، التكاملات، SSH المضيف** إلى المستخدم root تحت **Credentials, Users**. وتحتاج نسخ الـ VM أيضاً إلى `LIBVIRT_URI` كما في الأعلى، لأن libvirtd في TrueNAS يستمع على مقبس خاص به. وإذا لم يُضبط `LIBVIRT_URI` ولا `LIBVIRT_HOST`، يستخدم BombVault البوابة الافتراضية للتطبيق كمضيف، لأن `host.docker.internal` لا يُحَلّ في تطبيق TrueNAS. يشرح [دليل نسخ الـ VM](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md#truenas-scale) التفاصيل، بما فيها الـ VMs على zvols.

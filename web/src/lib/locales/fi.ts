@@ -1725,6 +1725,7 @@ const fi: Partial<Translations> = {
   "snapshot.reason.sshMissing": "isäntään ei ole määritetty SSH-yhteyttä",
   "snapshot.reason.hostUnreachable": "isäntä ei vastannut SSH:n kautta",
   "snapshot.reason.viewUnavailable": "tämä isäntä ei salli tilannevedosnäkymää",
+  "snapshot.reason.chrootRefused": "BombVaultin kontti tarvitsee SYS_CHROOT-capabilityn päästäkseen tilannevedosnäkymään",
   "snapshot.reason.datasetUnknown": "isäntä ei listaa tietojoukkoa {path}",
   "snapshot.reason.snapdirDisabled": "tilannevedosten käyttö on pois päältä kohteelle {path}",
   "snapshot.reason.keyNotLoaded": "kohteen {path} avainta ei ole ladattu",

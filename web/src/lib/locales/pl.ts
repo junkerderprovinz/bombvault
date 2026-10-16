@@ -1722,6 +1722,7 @@ const pl: Partial<Translations> = {
   "snapshot.reason.sshMissing": "nie skonfigurowano połączenia SSH z hostem",
   "snapshot.reason.hostUnreachable": "host nie odpowiedział przez SSH",
   "snapshot.reason.viewUnavailable": "ten host nie zezwala na widok migawek",
+  "snapshot.reason.chrootRefused": "kontener BombVault potrzebuje uprawnienia SYS_CHROOT, aby wejść do widoku migawek",
   "snapshot.reason.datasetUnknown": "host nie wymienia zbioru danych {path}",
   "snapshot.reason.snapdirDisabled": "dostęp do migawek jest wyłączony dla {path}",
   "snapshot.reason.keyNotLoaded": "klucz {path} nie jest wczytany",

@@ -1725,6 +1725,7 @@ const he: Partial<Translations> = {
   "snapshot.reason.sshMissing": "לא הוגדר חיבור SSH אל המארח",
   "snapshot.reason.hostUnreachable": "המארח לא ענה דרך SSH",
   "snapshot.reason.viewUnavailable": "המארח הזה לא מאפשר את תצוגת התצלומים",
+  "snapshot.reason.chrootRefused": "המכולה של BombVault צריכה את ההרשאה SYS_CHROOT כדי להיכנס לתצוגת התצלומים",
   "snapshot.reason.datasetUnknown": "המארח לא מציג את מערך הנתונים {path} ברשימה",
   "snapshot.reason.snapdirDisabled": "הגישה לתצלומים כבויה עבור {path}",
   "snapshot.reason.keyNotLoaded": "המפתח של {path} לא נטען",

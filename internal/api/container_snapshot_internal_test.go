@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"syscall"
 	"testing"
 	"time"
 
@@ -266,6 +267,11 @@ func TestPlanSaysWhyAContainerOnZFSIsStoppedAsBefore(t *testing.T) {
 		{"view cannot be entered", func(*snapFixture) {
 			snapViewEnter = func(string) error { return errors.New("operation not permitted") }
 		}, nil, snapFallbackView},
+		{"chroot not permitted", func(*snapFixture) {
+			snapViewEnter = func(string) error {
+				return &fs.PathError{Op: "fork/exec", Path: "/bin/true", Err: syscall.EPERM}
+			}
+		}, nil, snapFallbackChroot},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {

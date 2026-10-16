@@ -60,7 +60,7 @@ services:
     hostname: bombvault
     restart: unless-stopped
     cap_drop: [ALL]
-    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETPCAP, SETUID]
+    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETPCAP, SETUID, SYS_CHROOT]
     environment:
       APP_KEY: ""
       PLATFORM: truenas
@@ -82,7 +82,7 @@ services:
 
 그런 다음 `https://<truenas-ip>:30528/`을 엽니다. [Unraid와 다른 점](#generic-docker-host)에 나온 내용은 여기에도 해당하며, TrueNAS에서는 다음이 더 있습니다.
 
-- **기능(capabilities).** BombVault에는 위의 여섯 가지가 필요합니다. `SETPCAP`이 없으면 VM 백업이 실패합니다.
+- **기능(capabilities).** BombVault에는 위의 일곱 가지가 필요합니다. `SETPCAP`이 없으면 VM 백업이 실패하고, `SYS_CHROOT`가 없으면 모든 컨테이너가 스냅샷에서 읽히지 않고 백업 내내 중지됩니다.
 - **Host Data**는 데이터세트 위의 호스트 경로(여기서는 `/mnt/tank`)이며, 앱 안에서도 같은 경로에 마운트됩니다. 그래서 `HOST_SOURCE_ROOT`와 `HOST_MOUNT_ROOT` 모두 이 경로를 가리킵니다. `rslave`는 호스트가 나중에 만드는 마운트를 전달하며, ZFS 데이터세트 백업에는 이것이 필요합니다.
 - **ixVolume 안의 데이터는 백업되지 않습니다.** 저장소가 ixVolume인 앱은 데이터를 Host Data 바깥인 `/mnt/.ix-apps` 아래에 둡니다. BombVault는 앱의 정의만 저장하고, 실행은 제외한 폴더를 알려 줍니다. 데이터를 백업하려는 모든 앱에는 Host Data 아래 데이터세트의 **Host Path** 저장소를 고르세요.
 - **VM 및 ZFS 데이터세트 백업**은 root로 SSH를 통해 TrueNAS에 접속합니다. **System, Services**에서 SSH 서비스를 켜고, **설정, 연동, 호스트 SSH**의 공개 키를 **Credentials, Users**에서 root 사용자에 추가하세요. TrueNAS의 libvirtd는 자체 소켓에서 대기하므로 VM 백업에는 위와 같이 `LIBVIRT_URI`도 필요합니다. `LIBVIRT_URI`와 `LIBVIRT_HOST`가 모두 설정되지 않으면, TrueNAS 앱에서는 `host.docker.internal`이 확인되지 않으므로 BombVault는 앱의 기본 게이트웨이를 호스트로 사용합니다. zvol 위의 VM을 포함한 자세한 내용은 [VM 백업 가이드](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md#truenas-scale)에 있습니다.

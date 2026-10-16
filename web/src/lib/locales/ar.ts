@@ -1726,6 +1726,7 @@ const ar: Partial<Translations> = {
   "snapshot.reason.sshMissing": "لم يُعدّ اتصال SSH بالمضيف",
   "snapshot.reason.hostUnreachable": "لم يردّ المضيف عبر SSH",
   "snapshot.reason.viewUnavailable": "هذا المضيف لا يسمح بعرض اللقطات",
+  "snapshot.reason.chrootRefused": "تحتاج حاوية BombVault إلى صلاحية SYS_CHROOT للدخول إلى عرض اللقطات",
   "snapshot.reason.datasetUnknown": "المضيف لا يعرض مجموعة البيانات {path} في قائمته",
   "snapshot.reason.snapdirDisabled": "الوصول إلى اللقطات مطفأ لـ {path}",
   "snapshot.reason.keyNotLoaded": "مفتاح {path} غير محمّل",

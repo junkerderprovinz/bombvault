@@ -1726,6 +1726,7 @@ const hu: Partial<Translations> = {
   "snapshot.reason.sshMissing": "nincs beállítva SSH-kapcsolat a hoszthoz",
   "snapshot.reason.hostUnreachable": "a hoszt nem válaszolt SSH-n",
   "snapshot.reason.viewUnavailable": "ez a hoszt nem engedi a pillanatkép-nézetet",
+  "snapshot.reason.chrootRefused": "a BombVault konténerének a SYS_CHROOT capability kell ahhoz, hogy belépjen a pillanatkép-nézetbe",
   "snapshot.reason.datasetUnknown": "a hoszt nem sorolja fel a(z) {path} adatkészletet",
   "snapshot.reason.snapdirDisabled": "a pillanatképek elérése ki van kapcsolva ehhez: {path}",
   "snapshot.reason.keyNotLoaded": "a(z) {path} kulcsa nincs betöltve",

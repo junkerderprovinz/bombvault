@@ -1723,6 +1723,7 @@ const cs: Partial<Translations> = {
   "snapshot.reason.sshMissing": "není nastaveno připojení SSH k hostiteli",
   "snapshot.reason.hostUnreachable": "hostitel neodpověděl přes SSH",
   "snapshot.reason.viewUnavailable": "tento hostitel nepovoluje zobrazení snímků",
+  "snapshot.reason.chrootRefused": "kontejner BombVault potřebuje capability SYS_CHROOT, aby mohl vstoupit do zobrazení snímků",
   "snapshot.reason.datasetUnknown": "hostitel nezná datovou sadu {path}",
   "snapshot.reason.snapdirDisabled": "přístup ke snímkům je pro {path} vypnutý",
   "snapshot.reason.keyNotLoaded": "klíč pro {path} není načtený",

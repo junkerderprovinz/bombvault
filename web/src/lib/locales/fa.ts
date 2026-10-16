@@ -2230,6 +2230,7 @@ const fa: Partial<Translations> = {
   "snapshot.reason.sshMissing": "اتصال SSH به میزبان تنظیم نشده است",
   "snapshot.reason.hostUnreachable": "میزبان از راه SSH پاسخ نداد",
   "snapshot.reason.viewUnavailable": "این میزبان نمای عکس‌های لحظه‌ای را اجازه نمی‌دهد",
+  "snapshot.reason.chrootRefused": "کانتینر BombVault برای ورود به نمای عکس‌های لحظه‌ای به قابلیت SYS_CHROOT نیاز دارد",
   "snapshot.reason.datasetUnknown": "میزبان مجموعه‌داده {path} را فهرست نمی‌کند",
   "snapshot.reason.snapdirDisabled": "دسترسی به عکس‌های لحظه‌ای برای {path} خاموش است",
   "snapshot.reason.keyNotLoaded": "کلید {path} بار نشده است",

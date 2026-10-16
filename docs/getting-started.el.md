@@ -60,7 +60,7 @@ services:
     hostname: bombvault
     restart: unless-stopped
     cap_drop: [ALL]
-    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETPCAP, SETUID]
+    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETPCAP, SETUID, SYS_CHROOT]
     environment:
       APP_KEY: ""
       PLATFORM: truenas
@@ -82,7 +82,7 @@ services:
 
 Μετά ανοίξτε το `https://<truenas-ip>:30528/`. Ό,τι αναφέρεται στο [Τι διαφέρει από το Unraid](#generic-docker-host) ισχύει και εδώ, και στο TrueNAS επιπλέον:
 
-- **Capabilities.** Το BombVault χρειάζεται τις έξι παραπάνω. Χωρίς `SETPCAP` τα αντίγραφα VM αποτυγχάνουν.
+- **Capabilities.** Το BombVault χρειάζεται τις επτά παραπάνω. Χωρίς `SETPCAP` τα αντίγραφα VM αποτυγχάνουν, και χωρίς `SYS_CHROOT` κάθε container σταματά για όλο το αντίγραφό του αντί να διαβάζεται από στιγμιότυπο.
 - **Host Data** είναι μια διαδρομή host σε ένα σύνολο δεδομένων, εδώ `/mnt/tank`, προσαρτημένη στην ίδια διαδρομή μέσα στην εφαρμογή. Γι' αυτό την ορίζουν και το `HOST_SOURCE_ROOT` και το `HOST_MOUNT_ROOT`. Το `rslave` περνά τις προσαρτήσεις που κάνει ο host αργότερα, και αυτές χρειάζονται τα αντίγραφα συνόλων δεδομένων ZFS.
 - **Τα δεδομένα σε ixVolume δεν αντιγράφονται.** Μια εφαρμογή με αποθηκευτικό χώρο ixVolume κρατά τα δεδομένα της κάτω από το `/mnt/.ix-apps`, έξω από το Host Data. Το BombVault αποθηκεύει μόνο τον ορισμό της εφαρμογής, και η εκτέλεση αναφέρει τους φακέλους που άφησε έξω. Για κάθε εφαρμογή της οποίας τα δεδομένα θέλετε να αντιγράφονται, επιλέξτε αποθηκευτικό χώρο **Host Path** σε ένα σύνολο δεδομένων κάτω από το Host Data.
 - **Τα αντίγραφα VM και συνόλων δεδομένων ZFS** συνδέονται στο TrueNAS μέσω SSH ως root. Ενεργοποιήστε την υπηρεσία SSH στο **System, Services** και προσθέστε το δημόσιο κλειδί από τις **Ρυθμίσεις, Ενσωματώσεις, SSH κεντρικού συστήματος** στον χρήστη root στο **Credentials, Users**. Τα αντίγραφα VM χρειάζονται επίσης το `LIBVIRT_URI` όπως παραπάνω, επειδή το libvirtd του TrueNAS ακούει σε δικό του socket. Όταν δεν έχει οριστεί ούτε το `LIBVIRT_URI` ούτε το `LIBVIRT_HOST`, το BombVault χρησιμοποιεί ως host την προεπιλεγμένη πύλη της εφαρμογής, επειδή το `host.docker.internal` δεν επιλύεται σε μια εφαρμογή TrueNAS. Ο [οδηγός αντιγράφων VM](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md#truenas-scale) καλύπτει τις λεπτομέρειες, μαζί με τις VM σε zvols.

@@ -27,6 +27,12 @@ describe("snapshotFallbackText", () => {
     );
   });
 
+  it("names the capability a refused chroot needs", () => {
+    expect(snapshotFallbackText(t, "chroot-refused")).toBe(
+      "Stopped for the whole backup: BombVault's container needs the SYS_CHROOT capability to enter the snapshot view",
+    );
+  });
+
   it("keeps the code of a reason it has no sentence for", () => {
     expect(snapshotFallbackText(t, "canmount-off: cache/appdata")).toBe(
       "Stopped for the whole backup: cache/appdata cannot be read from a snapshot (canmount-off)",

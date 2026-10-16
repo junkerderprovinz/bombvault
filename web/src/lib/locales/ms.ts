@@ -2230,6 +2230,7 @@ const ms: Partial<Translations> = {
   "snapshot.reason.sshMissing": "tiada sambungan SSH ke hos disediakan",
   "snapshot.reason.hostUnreachable": "hos tidak menjawab melalui SSH",
   "snapshot.reason.viewUnavailable": "hos ini tidak membenarkan paparan syot kilat",
+  "snapshot.reason.chrootRefused": "bekas BombVault memerlukan keupayaan SYS_CHROOT untuk memasuki paparan syot kilat",
   "snapshot.reason.datasetUnknown": "hos tidak menyenaraikan set data {path}",
   "snapshot.reason.snapdirDisabled": "capaian syot kilat dimatikan untuk {path}",
   "snapshot.reason.keyNotLoaded": "kunci {path} belum dimuatkan",

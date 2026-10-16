@@ -1716,6 +1716,7 @@ const ko: Partial<Translations> = {
   "snapshot.reason.sshMissing": "호스트로의 SSH 연결이 설정되어 있지 않습니다",
   "snapshot.reason.hostUnreachable": "호스트가 SSH로 응답하지 않았습니다",
   "snapshot.reason.viewUnavailable": "이 호스트는 스냅샷 보기를 허용하지 않습니다",
+  "snapshot.reason.chrootRefused": "스냅샷 보기에 들어가려면 BombVault 컨테이너에 SYS_CHROOT 기능이 필요합니다",
   "snapshot.reason.datasetUnknown": "호스트에 데이터세트 {path}이(가) 없습니다",
   "snapshot.reason.snapdirDisabled": "{path}은(는) 스냅샷 접근이 꺼져 있습니다",
   "snapshot.reason.keyNotLoaded": "{path}의 키가 로드되지 않았습니다",

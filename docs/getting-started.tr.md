@@ -60,7 +60,7 @@ services:
     hostname: bombvault
     restart: unless-stopped
     cap_drop: [ALL]
-    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETPCAP, SETUID]
+    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETPCAP, SETUID, SYS_CHROOT]
     environment:
       APP_KEY: ""
       PLATFORM: truenas
@@ -82,7 +82,7 @@ services:
 
 Ardından `https://<truenas-ip>:30528/` adresini aç. [Unraid'e göre neler değişiyor](#generic-docker-host) altında sayılanlar burada da geçerlidir, TrueNAS'ta ayrıca:
 
-- **Yetkiler (capabilities).** BombVault yukarıdaki altı yetkinin hepsine ihtiyaç duyar. `SETPCAP` olmadan VM yedekleri başarısız olur.
+- **Yetkiler (capabilities).** BombVault yukarıdaki yedi yetkinin hepsine ihtiyaç duyar. `SETPCAP` olmadan VM yedekleri başarısız olur, `SYS_CHROOT` olmadan da her konteyner anlık görüntüden okunmak yerine tüm yedeği boyunca durdurulur.
 - **Host Data** bir veri kümesi üzerindeki ana makine yoludur, burada `/mnt/tank`, ve uygulamanın içinde aynı yola bağlanır. `HOST_SOURCE_ROOT` ve `HOST_MOUNT_ROOT` ikisinin de onu göstermesinin nedeni budur. `rslave`, ana makinenin sonradan yaptığı bağlamaları iletir; ZFS veri kümesi yedeklerinin ihtiyacı da budur.
 - **ixVolume içindeki veri yedeklenmez.** Depolaması ixVolume olan bir uygulama verisini Host Data dışında, `/mnt/.ix-apps` altında tutar. BombVault yalnızca uygulamanın tanımını kaydeder ve çalışma dışarıda bıraktığı klasörleri belirtir. Verisinin yedeklenmesini istediğin her uygulama için Host Data altındaki bir veri kümesinde **Host Path** depolamasını seç.
 - **VM ve ZFS veri kümesi yedekleri** TrueNAS'a SSH üzerinden root olarak ulaşır. **System, Services** altında SSH hizmetini aç ve **Ayarlar, Entegrasyonlar, Ana makine SSH** içindeki genel anahtarı **Credentials, Users** altında root kullanıcısına ekle. VM yedekleri ayrıca yukarıdaki gibi `LIBVIRT_URI` gerektirir, çünkü TrueNAS'ın libvirtd'si kendine ait bir sokette dinler. Ne `LIBVIRT_URI` ne de `LIBVIRT_HOST` ayarlıysa BombVault ana makine olarak uygulamanın varsayılan ağ geçidini kullanır, çünkü bir TrueNAS uygulamasında `host.docker.internal` çözümlenmez. Ayrıntıları, zvol üzerindeki VM'ler dahil, [VM yedekleme kılavuzu](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md#truenas-scale) anlatır.

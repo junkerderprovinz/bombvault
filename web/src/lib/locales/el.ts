@@ -1725,6 +1725,7 @@ const el: Partial<Translations> = {
   "snapshot.reason.sshMissing": "δεν έχει ρυθμιστεί σύνδεση SSH με τον host",
   "snapshot.reason.hostUnreachable": "ο host δεν απάντησε μέσω SSH",
   "snapshot.reason.viewUnavailable": "αυτός ο host δεν επιτρέπει την προβολή στιγμιοτύπων",
+  "snapshot.reason.chrootRefused": "το κοντέινερ του BombVault χρειάζεται το capability SYS_CHROOT για να μπει στην προβολή στιγμιοτύπων",
   "snapshot.reason.datasetUnknown": "ο host δεν έχει στη λίστα του το σύνολο δεδομένων {path}",
   "snapshot.reason.snapdirDisabled": "η πρόσβαση στα στιγμιότυπα είναι κλειστή για το {path}",
   "snapshot.reason.keyNotLoaded": "το κλειδί του {path} δεν έχει φορτωθεί",

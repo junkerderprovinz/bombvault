@@ -2230,6 +2230,7 @@ const bg: Partial<Translations> = {
   "snapshot.reason.sshMissing": "не е настроена SSH връзка към хоста",
   "snapshot.reason.hostUnreachable": "хостът не отговори по SSH",
   "snapshot.reason.viewUnavailable": "този хост не позволява изгледа на снимките",
+  "snapshot.reason.chrootRefused": "контейнерът на BombVault се нуждае от правото SYS_CHROOT, за да влезе в изгледа на снимките",
   "snapshot.reason.datasetUnknown": "хостът не познава набора от данни {path}",
   "snapshot.reason.snapdirDisabled": "достъпът до снимки е изключен за {path}",
   "snapshot.reason.keyNotLoaded": "ключът на {path} не е зареден",

@@ -60,7 +60,7 @@ services:
     hostname: bombvault
     restart: unless-stopped
     cap_drop: [ALL]
-    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETPCAP, SETUID]
+    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETPCAP, SETUID, SYS_CHROOT]
     environment:
       APP_KEY: ""
       PLATFORM: truenas
@@ -82,7 +82,7 @@ services:
 
 然后打开 `https://<truenas-ip>:30528/`。[与 Unraid 的不同之处](#generic-docker-host)中列出的内容在这里同样适用，此外在 TrueNAS 上还有：
 
-- **能力（capabilities）。** BombVault 需要上面这六项。缺少 `SETPCAP` 时虚拟机备份会失败。
+- **能力（capabilities）。** BombVault 需要上面这七项。缺少 `SETPCAP` 时虚拟机备份会失败，缺少 `SYS_CHROOT` 时每个容器都会在整个备份期间停止，而不是从快照读取。
 - **Host Data** 是数据集上的主机路径，这里是 `/mnt/tank`，在应用内挂载到相同路径。因此 `HOST_SOURCE_ROOT` 和 `HOST_MOUNT_ROOT` 都填写它。`rslave` 会把主机之后建立的挂载传递进来，ZFS 数据集备份需要这一点。
 - **ixVolume 中的数据不会被备份。** 存储为 ixVolume 的应用把数据放在 `/mnt/.ix-apps` 下，位于 Host Data 之外。BombVault 只保存该应用的定义，运行记录会列出被排除的文件夹。对每个需要备份数据的应用，请选择 Host Data 之下某个数据集上的 **Host Path** 存储。
 - **虚拟机和 ZFS 数据集备份**以 root 身份通过 SSH 连接 TrueNAS。在 **System, Services** 下开启 SSH 服务，并在 **Credentials, Users** 下把**设置、集成、主机 SSH** 中的公钥添加给 root 用户。虚拟机备份还需要上面的 `LIBVIRT_URI`，因为 TrueNAS 的 libvirtd 监听的是它自己的套接字。如果 `LIBVIRT_URI` 和 `LIBVIRT_HOST` 都未设置，BombVault 会把应用的默认网关当作主机，因为 `host.docker.internal` 在 TrueNAS 应用中无法解析。细节（包括位于 zvol 上的虚拟机）见[虚拟机备份指南](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md#truenas-scale)。

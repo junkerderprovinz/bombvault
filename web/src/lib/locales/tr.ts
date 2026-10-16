@@ -1725,6 +1725,7 @@ const tr: Partial<Translations> = {
   "snapshot.reason.sshMissing": "host ile SSH bağlantısı kurulmamış",
   "snapshot.reason.hostUnreachable": "host SSH üzerinden yanıt vermedi",
   "snapshot.reason.viewUnavailable": "bu host anlık görüntü görünümüne izin vermiyor",
+  "snapshot.reason.chrootRefused": "BombVault'un kapsayıcısı anlık görüntü görünümüne girmek için SYS_CHROOT yetkisine ihtiyaç duyuyor",
   "snapshot.reason.datasetUnknown": "host {path} veri kümesini listelemiyor",
   "snapshot.reason.snapdirDisabled": "{path} için anlık görüntü erişimi kapalı",
   "snapshot.reason.keyNotLoaded": "{path} anahtarı yüklü değil",

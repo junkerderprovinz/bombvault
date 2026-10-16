@@ -1716,6 +1716,7 @@ const ja: Partial<Translations> = {
   "snapshot.reason.sshMissing": "ホストへのSSH接続が設定されていません",
   "snapshot.reason.hostUnreachable": "ホストがSSHで応答しませんでした",
   "snapshot.reason.viewUnavailable": "このホストではスナップショットビューが許可されていません",
+  "snapshot.reason.chrootRefused": "スナップショットビューに入るには、BombVault のコンテナに SYS_CHROOT ケーパビリティが必要です",
   "snapshot.reason.datasetUnknown": "ホストにデータセット {path} がありません",
   "snapshot.reason.snapdirDisabled": "{path} ではスナップショットへのアクセスが無効です",
   "snapshot.reason.keyNotLoaded": "{path} のキーが読み込まれていません",

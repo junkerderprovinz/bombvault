@@ -2230,6 +2230,7 @@ const et: Partial<Translations> = {
   "snapshot.reason.sshMissing": "hostiga pole SSH-ühendust seadistatud",
   "snapshot.reason.hostUnreachable": "host ei vastanud SSH kaudu",
   "snapshot.reason.viewUnavailable": "see host ei luba hetktõmmiste vaadet",
+  "snapshot.reason.chrootRefused": "BombVaulti konteiner vajab hetktõmmiste vaatesse sisenemiseks õigust SYS_CHROOT",
   "snapshot.reason.datasetUnknown": "host ei loetle andmestikku {path}",
   "snapshot.reason.snapdirDisabled": "hetktõmmistele juurdepääs on {path} jaoks välja lülitatud",
   "snapshot.reason.keyNotLoaded": "{path} võti pole laaditud",

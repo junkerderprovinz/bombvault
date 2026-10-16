@@ -1725,6 +1725,7 @@ const no: Partial<Translations> = {
   "snapshot.reason.sshMissing": "det er ikke satt opp noen SSH-forbindelse til hosten",
   "snapshot.reason.hostUnreachable": "hosten svarte ikke over SSH",
   "snapshot.reason.viewUnavailable": "denne hosten tillater ikke visning av øyeblikksbilder",
+  "snapshot.reason.chrootRefused": "BombVaults container trenger capabilityen SYS_CHROOT for å gå inn i visningen av øyeblikksbilder",
   "snapshot.reason.datasetUnknown": "hosten kjenner ikke datasettet {path}",
   "snapshot.reason.snapdirDisabled": "tilgangen til øyeblikksbilder er slått av for {path}",
   "snapshot.reason.keyNotLoaded": "nøkkelen til {path} er ikke lastet",

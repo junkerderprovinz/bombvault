@@ -1725,6 +1725,7 @@ const sv: Partial<Translations> = {
   "snapshot.reason.sshMissing": "ingen SSH-anslutning till värden är inställd",
   "snapshot.reason.hostUnreachable": "värden svarade inte över SSH",
   "snapshot.reason.viewUnavailable": "den här värden tillåter inte vyn över ögonblicksbilder",
+  "snapshot.reason.chrootRefused": "BombVaults container behöver capabilityn SYS_CHROOT för att gå in i vyn över ögonblicksbilder",
   "snapshot.reason.datasetUnknown": "värden listar inte datauppsättningen {path}",
   "snapshot.reason.snapdirDisabled": "åtkomsten till ögonblicksbilder är avstängd för {path}",
   "snapshot.reason.keyNotLoaded": "nyckeln för {path} är inte inläst",

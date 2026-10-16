@@ -13,6 +13,7 @@ const REASON_KEY: Record<string, TranslationKey> = {
   "ssh-missing": "snapshot.reason.sshMissing",
   "zfs-unreachable": "snapshot.reason.hostUnreachable",
   "view-unavailable": "snapshot.reason.viewUnavailable",
+  "chroot-refused": "snapshot.reason.chrootRefused",
   "dataset-unknown": "snapshot.reason.datasetUnknown",
   "snapdir-disabled": "snapshot.reason.snapdirDisabled",
   "key-not-loaded": "snapshot.reason.keyNotLoaded",

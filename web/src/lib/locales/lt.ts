@@ -2230,6 +2230,7 @@ const lt: Partial<Translations> = {
   "snapshot.reason.sshMissing": "nenustatytas SSH ryšys su pagrindiniu kompiuteriu",
   "snapshot.reason.hostUnreachable": "pagrindinis kompiuteris neatsakė per SSH",
   "snapshot.reason.viewUnavailable": "šis pagrindinis kompiuteris neleidžia momentinių kopijų rodinio",
+  "snapshot.reason.chrootRefused": "BombVault konteineriui reikia teisės SYS_CHROOT, kad galėtų įeiti į momentinių kopijų rodinį",
   "snapshot.reason.datasetUnknown": "pagrindinis kompiuteris nenurodo duomenų rinkinio {path}",
   "snapshot.reason.snapdirDisabled": "prieiga prie momentinių kopijų išjungta: {path}",
   "snapshot.reason.keyNotLoaded": "{path} raktas neįkeltas",

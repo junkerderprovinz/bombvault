@@ -1726,6 +1726,7 @@ const th: Partial<Translations> = {
   "snapshot.reason.sshMissing": "ยังไม่ได้ตั้งค่าการเชื่อมต่อ SSH ไปยังโฮสต์",
   "snapshot.reason.hostUnreachable": "โฮสต์ไม่ตอบกลับผ่าน SSH",
   "snapshot.reason.viewUnavailable": "โฮสต์นี้ไม่อนุญาตให้ดูสแนปช็อต",
+  "snapshot.reason.chrootRefused": "คอนเทนเนอร์ของ BombVault ต้องมี capability SYS_CHROOT จึงจะเข้าสู่มุมมองสแนปช็อตได้",
   "snapshot.reason.datasetUnknown": "โฮสต์ไม่แสดงชุดข้อมูล {path} ในรายการ",
   "snapshot.reason.snapdirDisabled": "การเข้าถึงสแนปช็อตของ {path} ถูกปิดไว้",
   "snapshot.reason.keyNotLoaded": "ยังไม่ได้โหลดกุญแจของ {path}",

@@ -2230,6 +2230,7 @@ const is: Partial<Translations> = {
   "snapshot.reason.sshMissing": "engin SSH-tenging við hýsilinn er sett upp",
   "snapshot.reason.hostUnreachable": "hýsillinn svaraði ekki um SSH",
   "snapshot.reason.viewUnavailable": "þessi hýsill leyfir ekki sýn á skyndimyndir",
+  "snapshot.reason.chrootRefused": "gámur BombVault þarf heimildina SYS_CHROOT til að komast inn í sýn á skyndimyndir",
   "snapshot.reason.datasetUnknown": "hýsillinn listar ekki gagnasafnið {path}",
   "snapshot.reason.snapdirDisabled": "aðgangur að skyndimyndum er slökktur fyrir {path}",
   "snapshot.reason.keyNotLoaded": "lykillinn fyrir {path} er ekki hlaðinn",

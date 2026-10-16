@@ -1716,6 +1716,7 @@ const vi: Partial<Translations> = {
   "snapshot.reason.sshMissing": "chưa thiết lập kết nối SSH tới máy chủ",
   "snapshot.reason.hostUnreachable": "máy chủ không phản hồi qua SSH",
   "snapshot.reason.viewUnavailable": "máy chủ này không cho phép xem ảnh chụp",
+  "snapshot.reason.chrootRefused": "container của BombVault cần capability SYS_CHROOT để vào chế độ xem ảnh chụp",
   "snapshot.reason.datasetUnknown": "máy chủ không liệt kê tập dữ liệu {path}",
   "snapshot.reason.snapdirDisabled": "quyền truy cập ảnh chụp đã tắt cho {path}",
   "snapshot.reason.keyNotLoaded": "khóa của {path} chưa được nạp",

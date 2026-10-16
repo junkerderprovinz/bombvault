@@ -1722,6 +1722,7 @@ const uk: Partial<Translations> = {
   "snapshot.reason.sshMissing": "SSH-з'єднання з хостом не налаштовано",
   "snapshot.reason.hostUnreachable": "хост не відповів по SSH",
   "snapshot.reason.viewUnavailable": "цей хост не дозволяє перегляд знімків",
+  "snapshot.reason.chrootRefused": "контейнеру BombVault потрібна capability SYS_CHROOT, щоб увійти в перегляд знімків",
   "snapshot.reason.datasetUnknown": "хост не показує набір даних {path}",
   "snapshot.reason.snapdirDisabled": "доступ до знімків для {path} вимкнено",
   "snapshot.reason.keyNotLoaded": "ключ для {path} не завантажено",

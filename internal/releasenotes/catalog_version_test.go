@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 	"testing"
@@ -77,6 +78,69 @@ func TestAndroidAppTracksLatestRelease(t *testing.T) {
 	}
 	if got, _ := strconv.Atoi(string(code[1])); got != want {
 		t.Errorf("android/gradle.properties: bombvaultVersionCode is %d, %s needs %d", got, latest, want)
+	}
+}
+
+// TestTrueNASAppGrantsTheCapabilitiesBombVaultUses checks the catalog entry and
+// the custom-app YAML of every documentation language against each other and
+// against the two the code cannot do without: SETPCAP for libvirt and
+// SYS_CHROOT for entering a snapshot view.
+func TestTrueNASAppGrantsTheCapabilitiesBombVaultUses(t *testing.T) {
+	repoRoot := filepath.Join("..", "..")
+	read := func(rel string) string {
+		raw, err := os.ReadFile(filepath.Join(repoRoot, rel)) //nolint:gosec // G304: test reads a repo-local file
+		if err != nil {
+			t.Fatal(err)
+		}
+		return string(raw)
+	}
+	split := func(list string) []string {
+		var caps []string
+		for _, c := range strings.Split(list, ",") {
+			caps = append(caps, strings.Trim(strings.TrimSpace(c), `"`))
+		}
+		slices.Sort(caps)
+		return caps
+	}
+
+	section := regexp.MustCompile(`(?ms)^capabilities:\n(.*?)^\w`).FindStringSubmatch(read("truenas-apps/app.yaml"))
+	if section == nil {
+		t.Fatal("truenas-apps/app.yaml: no capabilities list")
+	}
+	var listed []string
+	for _, m := range regexp.MustCompile(`(?m)^  name: (\S+)$`).FindAllStringSubmatch(section[1], -1) {
+		listed = append(listed, m[1])
+	}
+	slices.Sort(listed)
+	for _, need := range []string{"SETPCAP", "SYS_CHROOT"} {
+		if !slices.Contains(listed, need) {
+			t.Errorf("truenas-apps/app.yaml does not list %s", need)
+		}
+	}
+
+	m := regexp.MustCompile(`add_caps\(\[([^\]]*)\]\)`).FindStringSubmatch(read("truenas-apps/templates/docker-compose.yaml"))
+	if m == nil {
+		t.Fatal("truenas-apps/templates/docker-compose.yaml: no add_caps line")
+	}
+	if got := split(m[1]); !slices.Equal(got, listed) {
+		t.Errorf("the compose template adds %v, app.yaml lists %v", got, listed)
+	}
+
+	docs, err := filepath.Glob(filepath.Join(repoRoot, "docs", "getting-started*.md"))
+	if err != nil || len(docs) == 0 {
+		t.Fatalf("no getting-started pages: %v", err)
+	}
+	capAdd := regexp.MustCompile(`(?m)^    cap_add: \[([^\]]*)\]$`)
+	for _, doc := range docs {
+		rel := filepath.Join("docs", filepath.Base(doc))
+		m := capAdd.FindStringSubmatch(read(rel))
+		if m == nil {
+			t.Errorf("%s: no cap_add line in the TrueNAS YAML", rel)
+			continue
+		}
+		if got := split(m[1]); !slices.Equal(got, listed) {
+			t.Errorf("%s adds %v, the catalog entry %v", rel, got, listed)
+		}
 	}
 }
 

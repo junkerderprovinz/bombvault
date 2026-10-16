@@ -2230,6 +2230,7 @@ const lv: Partial<Translations> = {
   "snapshot.reason.sshMissing": "nav iestatīts SSH savienojums ar saimniekdatoru",
   "snapshot.reason.hostUnreachable": "saimniekdators neatbildēja pa SSH",
   "snapshot.reason.viewUnavailable": "šis saimniekdators neatļauj momentuzņēmumu skatu",
+  "snapshot.reason.chrootRefused": "BombVault konteineram vajag spēju SYS_CHROOT, lai ieietu momentuzņēmumu skatā",
   "snapshot.reason.datasetUnknown": "saimniekdators neuzskaita datu kopu {path}",
   "snapshot.reason.snapdirDisabled": "ceļam {path} piekļuve momentuzņēmumiem ir izslēgta",
   "snapshot.reason.keyNotLoaded": "{path} atslēga nav ielādēta",

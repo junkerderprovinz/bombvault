@@ -216,7 +216,8 @@ The app needs the `SETPCAP` capability for VM backups, next to `CHOWN`,
 `DAC_OVERRIDE`, `FOWNER`, `SETGID` and `SETUID`. Without it libvirt stops with
 "cannot apply process capabilities". The YAML under
 [TrueNAS SCALE](https://junkerderprovinz.github.io/bombvault/getting-started/#truenas)
-sets all six.
+sets all six, together with the `SYS_CHROOT` that snapshot instead of stop
+needs.
 
 ### 2. BombVault's key on TrueNAS
 

@@ -2230,6 +2230,7 @@ const id: Partial<Translations> = {
   "snapshot.reason.sshMissing": "koneksi SSH ke host belum diatur",
   "snapshot.reason.hostUnreachable": "host tidak menjawab lewat SSH",
   "snapshot.reason.viewUnavailable": "host ini tidak mengizinkan tampilan snapshot",
+  "snapshot.reason.chrootRefused": "kontainer BombVault memerlukan capability SYS_CHROOT untuk masuk ke tampilan snapshot",
   "snapshot.reason.datasetUnknown": "host tidak mencantumkan set data {path}",
   "snapshot.reason.snapdirDisabled": "akses snapshot dimatikan untuk {path}",
   "snapshot.reason.keyNotLoaded": "kunci {path} belum dimuat",

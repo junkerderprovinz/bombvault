@@ -1716,6 +1716,7 @@ const zh: Partial<Translations> = {
   "snapshot.reason.sshMissing": "尚未设置到主机的 SSH 连接",
   "snapshot.reason.hostUnreachable": "主机没有通过 SSH 响应",
   "snapshot.reason.viewUnavailable": "此主机不允许使用快照视图",
+  "snapshot.reason.chrootRefused": "BombVault 的容器需要 SYS_CHROOT 能力才能进入快照视图",
   "snapshot.reason.datasetUnknown": "主机没有列出数据集 {path}",
   "snapshot.reason.snapdirDisabled": "{path} 的快照访问已关闭",
   "snapshot.reason.keyNotLoaded": "{path} 的密钥未加载",

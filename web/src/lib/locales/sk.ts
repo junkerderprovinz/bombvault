@@ -2230,6 +2230,7 @@ const sk: Partial<Translations> = {
   "snapshot.reason.sshMissing": "nie je nastavené pripojenie SSH k hostiteľovi",
   "snapshot.reason.hostUnreachable": "hostiteľ neodpovedal cez SSH",
   "snapshot.reason.viewUnavailable": "tento hostiteľ nepovoľuje zobrazenie snímok",
+  "snapshot.reason.chrootRefused": "kontajner aplikácie BombVault potrebuje capability SYS_CHROOT, aby mohol vstúpiť do zobrazenia snímok",
   "snapshot.reason.datasetUnknown": "hostiteľ nepozná dátovú sadu {path}",
   "snapshot.reason.snapdirDisabled": "prístup k snímkam je pre {path} vypnutý",
   "snapshot.reason.keyNotLoaded": "kľúč pre {path} nie je načítaný",

@@ -12,6 +12,8 @@ capabilities:
   name: SETPCAP
 - description: BombVault is able to change user ID of processes
   name: SETUID
+- description: BombVault is able to use chroot()
+  name: SYS_CHROOT
 categories:
 - backup
 changelog_url: https://github.com/junkerderprovinz/bombvault/releases

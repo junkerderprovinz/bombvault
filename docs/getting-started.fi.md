@@ -60,7 +60,7 @@ services:
     hostname: bombvault
     restart: unless-stopped
     cap_drop: [ALL]
-    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETPCAP, SETUID]
+    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETPCAP, SETUID, SYS_CHROOT]
     environment:
       APP_KEY: ""
       PLATFORM: truenas
@@ -82,7 +82,7 @@ services:
 
 Avaa sitten `https://<truenas-ip>:30528/`. Se, mitä kohdassa [Mikä poikkeaa Unraidista](#generic-docker-host) luetellaan, pätee myös tässä, ja TrueNASissa lisäksi:
 
-- **Capabilityt.** BombVault tarvitsee yllä olevat kuusi. Ilman `SETPCAP`ia virtuaalikoneiden varmuuskopiot epäonnistuvat.
+- **Capabilityt.** BombVault tarvitsee yllä olevat seitsemän. Ilman `SETPCAP`ia virtuaalikoneiden varmuuskopiot epäonnistuvat, ja ilman `SYS_CHROOT`ia jokainen kontti pysäytetään koko varmuuskopionsa ajaksi sen sijaan, että se luettaisiin tilannevedoksesta.
 - **Host Data** on isäntäpolku tietojoukossa, tässä `/mnt/tank`, ja se liitetään samaan polkuun sovelluksen sisällä. Siksi `HOST_SOURCE_ROOT` ja `HOST_MOUNT_ROOT` nimeävät molemmat sen. `rslave` välittää liitokset, jotka isäntä tekee myöhemmin, ja niitä ZFS-tietojoukkojen varmuuskopiot tarvitsevat.
 - **ixVolumessa olevaa dataa ei varmuuskopioida.** Sovellus, jonka tallennustila on ixVolume, pitää datansa polussa `/mnt/.ix-apps`, Host Datan ulkopuolella. BombVault tallentaa vain sovelluksen määrityksen, ja ajo nimeää pois jättämänsä kansiot. Valitse jokaiselle sovellukselle, jonka datan haluat varmuuskopioida, **Host Path** -tallennustila Host Datan alla olevassa tietojoukossa.
 - **Virtuaalikoneiden ja ZFS-tietojoukkojen varmuuskopiot** ottavat yhteyden TrueNASiin SSH:n yli root-käyttäjänä. Ota SSH-palvelu käyttöön kohdassa **System, Services** ja lisää julkinen avain kohdasta **Asetukset, Integraatiot, Palvelimen SSH** root-käyttäjälle kohdassa **Credentials, Users**. Virtuaalikoneiden varmuuskopiot tarvitsevat lisäksi `LIBVIRT_URI`n kuten yllä, koska TrueNASin libvirtd kuuntelee omaa sokettiaan. Kun kumpaakaan `LIBVIRT_URI`- tai `LIBVIRT_HOST`-muuttujaa ei ole asetettu, BombVault käyttää isäntänä sovelluksen oletusyhdyskäytävää, koska `host.docker.internal` ei ratkea TrueNAS-sovelluksessa. [VM-varmuuskopiointiopas](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md#truenas-scale) kertoo yksityiskohdat, myös zvoleilla olevista virtuaalikoneista.

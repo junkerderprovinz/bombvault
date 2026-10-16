@@ -60,7 +60,7 @@ services:
     hostname: bombvault
     restart: unless-stopped
     cap_drop: [ALL]
-    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETPCAP, SETUID]
+    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETPCAP, SETUID, SYS_CHROOT]
     environment:
       APP_KEY: ""
       PLATFORM: truenas
@@ -82,7 +82,7 @@ services:
 
 Apoi deschide `https://<truenas-ip>:30528/`. Ce este enumerat la [Ce este diferit față de Unraid](#generic-docker-host) se aplică și aici, iar pe TrueNAS:
 
-- **Capabilități.** BombVault are nevoie de cele șase de mai sus. Fără `SETPCAP`, backupurile VM eșuează.
+- **Capabilități.** BombVault are nevoie de cele șapte de mai sus. Fără `SETPCAP`, backupurile VM eșuează, iar fără `SYS_CHROOT` fiecare container este oprit pe toată durata copiei sale în loc să fie citit dintr-un instantaneu.
 - **Host Data** este o cale a gazdei pe un set de date, aici `/mnt/tank`, montată la aceeași cale în aplicație. De aceea `HOST_SOURCE_ROOT` și `HOST_MOUNT_ROOT` o numesc amândouă. `rslave` transmite montările pe care gazda le face mai târziu, de care au nevoie backupurile seturilor de date ZFS.
 - **Datele dintr-un ixVolume nu intră în copie.** O aplicație al cărei spațiu de stocare este un ixVolume își ține datele sub `/mnt/.ix-apps`, în afara Host Data. BombVault salvează doar definiția aplicației, iar rularea numește folderele pe care le-a lăsat deoparte. Pentru fiecare aplicație ale cărei date vrei să le copiezi, alege stocare **Host Path** pe un set de date de sub Host Data.
 - **Backupurile VM și ale seturilor de date ZFS** ajung la TrueNAS prin SSH ca root. Pornește serviciul SSH la **System, Services** și adaugă cheia publică din **Setări, Integrări, SSH al gazdei** la utilizatorul root, la **Credentials, Users**. Backupurile VM au nevoie și de `LIBVIRT_URI` ca mai sus, pentru că libvirtd-ul din TrueNAS ascultă pe un socket propriu. Dacă nu este setat nici `LIBVIRT_URI`, nici `LIBVIRT_HOST`, BombVault folosește ca gazdă gateway-ul implicit al aplicației, pentru că `host.docker.internal` nu se rezolvă într-o aplicație TrueNAS. [Ghidul de backup VM](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md#truenas-scale) acoperă detaliile, inclusiv VM-urile pe zvol-uri.

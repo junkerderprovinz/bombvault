@@ -60,7 +60,7 @@ services:
     hostname: bombvault
     restart: unless-stopped
     cap_drop: [ALL]
-    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETPCAP, SETUID]
+    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETPCAP, SETUID, SYS_CHROOT]
     environment:
       APP_KEY: ""
       PLATFORM: truenas
@@ -82,7 +82,7 @@ services:
 
 その後 `https://<truenas-ip>:30528/` を開きます。[Unraid との違い](#generic-docker-host)に挙げた点はここでも当てはまり、TrueNAS ではさらに次の点があります:
 
-- **ケーパビリティ。** BombVault には上の 6 つが必要です。`SETPCAP` がないと VM バックアップは失敗します。
+- **ケーパビリティ。** BombVault には上の 7 つが必要です。`SETPCAP` がないと VM バックアップは失敗し、`SYS_CHROOT` がないとどのコンテナもスナップショットから読み取られず、バックアップの間ずっと停止されます。
 - **Host Data** はデータセット上のホストパス（ここでは `/mnt/tank`）で、アプリ内でも同じパスにマウントされます。そのため `HOST_SOURCE_ROOT` と `HOST_MOUNT_ROOT` の両方にこのパスを指定します。`rslave` はホストが後から行うマウントを渡し、ZFS データセットのバックアップにはこれが必要です。
 - **ixVolume 内のデータはバックアップされません。** ストレージが ixVolume のアプリは、データを Host Data の外にある `/mnt/.ix-apps` の下に置きます。BombVault が保存するのはアプリの定義だけで、実行は対象外にしたフォルダーを示します。データをバックアップしたいアプリにはすべて、Host Data 配下のデータセット上の **Host Path** ストレージを選んでください。
 - **VM と ZFS データセットのバックアップ** は、root として SSH で TrueNAS に接続します。**System, Services** で SSH サービスをオンにし、**設定、連携、ホスト SSH** の公開鍵を **Credentials, Users** で root ユーザーに追加してください。TrueNAS の libvirtd は独自のソケットで待ち受けるため、VM バックアップには上記の `LIBVIRT_URI` も必要です。`LIBVIRT_URI` も `LIBVIRT_HOST` も設定されていない場合、TrueNAS アプリでは `host.docker.internal` が名前解決できないため、BombVault はアプリのデフォルトゲートウェイをホストとして使います。zvol 上の VM も含めた詳細は [VM バックアップガイド](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md#truenas-scale)にあります。

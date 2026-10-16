@@ -1726,6 +1726,7 @@ const ro: Partial<Translations> = {
   "snapshot.reason.sshMissing": "nu este configurată nicio conexiune SSH la gazdă",
   "snapshot.reason.hostUnreachable": "gazda nu a răspuns prin SSH",
   "snapshot.reason.viewUnavailable": "această gazdă nu permite vizualizarea instantaneelor",
+  "snapshot.reason.chrootRefused": "containerul BombVault are nevoie de capabilitatea SYS_CHROOT ca să intre în vizualizarea instantaneelor",
   "snapshot.reason.datasetUnknown": "gazda nu listează setul de date {path}",
   "snapshot.reason.snapdirDisabled": "accesul la instantanee este oprit pentru {path}",
   "snapshot.reason.keyNotLoaded": "cheia pentru {path} nu este încărcată",

@@ -2214,6 +2214,7 @@ const sr: Partial<Translations> = {
   "snapshot.reason.sshMissing": "није подешена SSH веза са хостом",
   "snapshot.reason.hostUnreachable": "хост није одговорио преко SSH-а",
   "snapshot.reason.viewUnavailable": "овај хост не дозвољава приказ снимака",
+  "snapshot.reason.chrootRefused": "контејнеру апликације BombVault треба могућност SYS_CHROOT да би ушао у приказ снимака",
   "snapshot.reason.datasetUnknown": "хост не наводи скуп података {path}",
   "snapshot.reason.snapdirDisabled": "приступ снимцима је искључен за {path}",
   "snapshot.reason.keyNotLoaded": "кључ за {path} није учитан",

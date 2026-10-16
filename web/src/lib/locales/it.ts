@@ -1725,6 +1725,7 @@ const it: Partial<Translations> = {
   "snapshot.reason.sshMissing": "non è configurata alcuna connessione SSH all'host",
   "snapshot.reason.hostUnreachable": "l'host non ha risposto via SSH",
   "snapshot.reason.viewUnavailable": "questo host non consente la vista degli snapshot",
+  "snapshot.reason.chrootRefused": "il container di BombVault ha bisogno della capability SYS_CHROOT per entrare nella vista degli snapshot",
   "snapshot.reason.datasetUnknown": "l'host non elenca il dataset {path}",
   "snapshot.reason.snapdirDisabled": "l'accesso agli snapshot è disattivato per {path}",
   "snapshot.reason.keyNotLoaded": "la chiave di {path} non è caricata",
