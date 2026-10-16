@@ -232,6 +232,9 @@ type itemInput struct {
 	// Expectations are what a user marked as expected, by family.
 	Expectations map[string]store.AnomalyExpectation
 	Sens         Sensitivity
+	// ChangedAt is when BombVault itself last changed what the series backs
+	// up, 0 when it never did.
+	ChangedAt int64
 	// EvaluateFrom is the newest run start a previous pass judged. Events on
 	// newer runs are judged now, so two runs coalesced into one pass are both
 	// seen.
@@ -326,20 +329,24 @@ func detectNewData(in itemInput, p sensParams) ([]finding, baseline) {
 	}
 
 	measuredOnly := in.Domain == anomalyDomainVM
+	ownChange := ownChangeAt(in.NewData, in.ChangedAt)
+	startsOver := func(i int) bool {
+		return selectionChangedAt(rows, i) || (ownChange != 0 && rows[i].StartedAt == ownChange)
+	}
 	isSample := make([]bool, len(rows))
 	for i, run := range rows {
 		// The oldest row has nothing before it to measure a rate against, which
 		// is also why the series' first backup is never a sample.
 		isSample[i] = i > 0 &&
 			!freshUpload(run) &&
-			!selectionChangedAt(rows, i) &&
+			!startsOver(i) &&
 			(!measuredOnly || run.SourceBytes != nil)
 	}
 	ceiling := in.Expectations[familyNewData].Ceiling
 
 	var found []finding
 	for i, run := range rows {
-		if i == 0 || run.StartedAt <= in.EvaluateFrom || selectionChangedAt(rows, i) {
+		if i == 0 || run.StartedAt <= in.EvaluateFrom || startsOver(i) {
 			continue
 		}
 		samples := newDataSamples(rows, isSample, i)
@@ -569,7 +576,7 @@ func detectSource(in itemInput, p sensParams) ([]finding, []absence, []baseline)
 		return nil, nil, nil
 	}
 	rows := oldestFirst(eligibleRuns(in.Series))
-	rebase := selectionRebaseAt(in.Series)
+	rebase := max(selectionRebaseAt(in.Series), ownChangeAt(in.Series, in.ChangedAt))
 
 	var found []finding
 	var absent []absence
@@ -962,6 +969,26 @@ func selectionRebaseAt(series []store.SeriesRun) int64 {
 		if selectionChangedAt(rows, i) {
 			return rows[i].StartedAt
 		}
+	}
+	return 0
+}
+
+// ownChangeAt is the start of the backup that first saw what BombVault itself
+// changed in the source at changedAt, 0 while none did. The rules treat it like
+// a changed selection. A backup that was still running at that moment may have
+// read either side of the change, so it stands in until one starts after it.
+func ownChangeAt(series []store.SeriesRun, changedAt int64) int64 {
+	if changedAt == 0 {
+		return 0
+	}
+	rows := oldestFirst(eligibleRuns(series))
+	for _, run := range rows {
+		if run.StartedAt >= changedAt {
+			return run.StartedAt
+		}
+	}
+	if n := len(rows); n > 0 && rows[n-1].FinishedAt > changedAt {
+		return rows[n-1].StartedAt
 	}
 	return 0
 }

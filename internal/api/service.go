@@ -1024,11 +1024,17 @@ func (e *zvolRebaseErr) Is(target error) bool { return target == errZvolRebaseFa
 // copyToOffsite's heartbeat briefly disagree with progBegin's own timestamp
 // before this fix.
 func (s *Service) progBegin(ctx context.Context, key, phase string) (context.Context, int64) {
+	return s.progBeginStage(ctx, key, phase, "")
+}
+
+// progBeginStage is progBegin for a run that is a stage of its phase from
+// start to end, such as a database import, and names the stage on every event.
+func (s *Service) progBeginStage(ctx context.Context, key, phase, stage string) (context.Context, int64) {
 	startedAt := time.Now().Unix()
 	if s.progress == nil {
 		return ctx, startedAt
 	}
-	s.progress.Publish(progress.Event{Key: key, Phase: phase, Percent: 0, Active: true, StartedAt: startedAt})
+	s.progress.Publish(progress.Event{Key: key, Phase: phase, Stage: stage, Percent: 0, Active: true, StartedAt: startedAt})
 	last := -1.0
 	return progress.WithSink(ctx, func(pct float64) {
 		// A multi-path restore runs one restic process per path; each restarts at
@@ -1041,7 +1047,7 @@ func (s *Service) progBegin(ctx context.Context, key, phase string) (context.Con
 			return // throttle: only forward ≥1% steps (always forward the final 100)
 		}
 		last = pct
-		s.progress.Publish(progress.Event{Key: key, Phase: phase, Percent: pct, Active: true, StartedAt: startedAt})
+		s.progress.Publish(progress.Event{Key: key, Phase: phase, Stage: stage, Percent: pct, Active: true, StartedAt: startedAt})
 	}), startedAt
 }
 
@@ -1232,6 +1238,11 @@ func (s *Service) progBeginCopySink(ctx context.Context, domain string, startedA
 // web/src/lib/progress.ts's COMPLETE_LINGER_MS / OffsiteIndicator's
 // MIN_VISIBLE_MS). No-op without a progress store.
 func (s *Service) progEnd(key, phase string, ok bool, startedAt int64) {
+	s.progEndStage(key, phase, "", ok, startedAt)
+}
+
+// progEndStage ends a run that progBeginStage began.
+func (s *Service) progEndStage(key, phase, stage string, ok bool, startedAt int64) {
 	if s.progress == nil {
 		return
 	}
@@ -1239,7 +1250,7 @@ func (s *Service) progEnd(key, phase string, ok bool, startedAt int64) {
 	if !ok {
 		pct = 0
 	}
-	s.progress.Publish(progress.Event{Key: key, Phase: phase, Percent: pct, Active: false, StartedAt: startedAt})
+	s.progress.Publish(progress.Event{Key: key, Phase: phase, Stage: stage, Percent: pct, Active: false, StartedAt: startedAt})
 }
 
 // backupStep returns the hook a backup calls at each of its steps, which moves

@@ -1306,9 +1306,9 @@ func (s *Service) StartSaveDBDumpToPath(ctx context.Context, name, source, snaps
 		s.registerCancel(rkey, cancel)
 		defer s.unregisterCancel(rkey)
 		runID = s.beginDBDumpRun(name, "dbdumpsave", "save database dump")
-		pctx, startedAt := s.progBegin(rctx, rkey, "restore")
+		pctx, startedAt := s.progBeginStage(rctx, rkey, "restore", "dbdumpsave")
 		written, serr := s.saveDBDump(pctx, plan, rkey, startedAt)
-		s.progEnd(rkey, "restore", serr == nil, startedAt)
+		s.progEndStage(rkey, "restore", "dbdumpsave", serr == nil, startedAt)
 		s.finishSaveDBDumpRun(runID, plan.dump.ID, written, serr)
 		if serr != nil {
 			log.Printf("api: save database dump of %q failed: %v", name, serr) //nolint:gosec // G706: name is %q-quoted
