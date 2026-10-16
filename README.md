@@ -218,6 +218,7 @@ On any other Docker host or on TrueNAS Scale, take [`deploy/docker-compose.gener
 
 - **Synology:** in Container Manager, create a project from the compose file (DSM 7.2 or newer).
 - **Proxmox:** run it in a VM or an LXC container that has Docker.
+- **MOS:** install BombVault from the [MOS Hub](https://mos-official.net/apps.html?search=BombVault). It runs there as `PLATFORM=generic` with Host Data on `/mnt/cache`.
 
 ### Android app
 
