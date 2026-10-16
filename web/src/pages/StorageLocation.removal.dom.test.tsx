@@ -12,7 +12,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 
-import type { Destination, DestinationErasure, DestinationRemoval, ErasureSection, RemovalSection, Settings, StorageLocation } from "../lib/api";
+import type { Destination, ErasureSection, LocationErasure, LocationRemoval, RemovalSection, Settings, StorageLocation } from "../lib/api";
 import { en, I18nProvider } from "../lib/i18n";
 import { ToastProvider } from "../lib/toast";
 
@@ -32,10 +32,10 @@ vi.mock("../lib/api", async (importOriginal) => {
     getStorageLocation: vi.fn(),
     listOffsiteTargets: vi.fn(),
     listDestinations: vi.fn(),
-    previewDestinationRemoval: vi.fn(),
-    removeDestination: vi.fn(),
-    previewDestinationErasure: vi.fn(),
-    eraseDestination: vi.fn(),
+    previewLocationRemoval: vi.fn(),
+    removeLocation: vi.fn(),
+    previewLocationErasure: vi.fn(),
+    eraseLocation: vi.fn(),
     getSettings: vi.fn(),
     getProviders: vi.fn(),
     getCloud: vi.fn(),
@@ -46,10 +46,10 @@ vi.mock("../lib/api", async (importOriginal) => {
 
 const api = await import("../lib/api");
 const getStorageLocation = vi.mocked(api.getStorageLocation);
-const previewDestinationRemoval = vi.mocked(api.previewDestinationRemoval);
-const removeDestination = vi.mocked(api.removeDestination);
-const previewDestinationErasure = vi.mocked(api.previewDestinationErasure);
-const eraseDestination = vi.mocked(api.eraseDestination);
+const previewLocationRemoval = vi.mocked(api.previewLocationRemoval);
+const removeLocation = vi.mocked(api.removeLocation);
+const previewLocationErasure = vi.mocked(api.previewLocationErasure);
+const eraseLocation = vi.mocked(api.eraseLocation);
 
 const { StorageLocationPage } = await import("./StorageLocation");
 
@@ -77,6 +77,7 @@ const BOX: StorageLocation = {
 function part(over: Partial<RemovalSection>): RemovalSection {
   return {
     domain: "containers",
+    use: "copy",
     targetId: "t-containers",
     repo: "rclone:storagebox:bombvault/containers",
     primary: false,
@@ -89,7 +90,7 @@ function part(over: Partial<RemovalSection>): RemovalSection {
   };
 }
 
-const PREVIEW: DestinationRemoval = {
+const PREVIEW: LocationRemoval = {
   sections: [
     part({ primary: true }),
     part({ domain: "flash", targetId: "t-flash", repo: "rclone:storagebox:bombvault/flash", entries: 1, backups: 1 }),
@@ -109,7 +110,7 @@ function repo(over: Partial<ErasureSection>): ErasureSection {
   return { domain: "containers", targetId: "t-containers", repo: "rclone:storagebox:bombvault/containers", backups: 62, entries: 7, ...over };
 }
 
-const ERASURE: DestinationErasure = {
+const ERASURE: LocationErasure = {
   removal: PREVIEW,
   sections: [
     repo({}),
@@ -153,10 +154,10 @@ async function click(el: HTMLElement) {
   });
 }
 
-async function openRemoval(): Promise<HTMLElement> {
+async function openRemoval(name = "Storage Box"): Promise<HTMLElement> {
   await click(screen.getByRole("button", { name: "More" }));
   await click(screen.getByRole("menuitem", { name: "Remove storage location" }));
-  return screen.getByRole("dialog", { name: "Remove Storage Box?" });
+  return screen.getByRole("dialog", { name: `Remove ${name}?` });
 }
 
 beforeEach(() => {
@@ -169,10 +170,10 @@ beforeEach(() => {
   vi.mocked(api.getCloud).mockResolvedValue({ ok: true });
   vi.mocked(api.getCloudCredSets).mockResolvedValue({ ok: true, sets: [] });
   vi.mocked(api.getRcloneSections).mockResolvedValue({ ok: true, sections: [] });
-  previewDestinationRemoval.mockResolvedValue({ ok: true, removal: PREVIEW });
-  removeDestination.mockResolvedValue({ ok: true });
-  previewDestinationErasure.mockResolvedValue({ ok: true, erasure: ERASURE });
-  eraseDestination.mockResolvedValue({ ok: true, started: true, erasure: ERASURE });
+  previewLocationRemoval.mockResolvedValue({ ok: true, removal: PREVIEW });
+  removeLocation.mockResolvedValue({ ok: true });
+  previewLocationErasure.mockResolvedValue({ ok: true, erasure: ERASURE });
+  eraseLocation.mockResolvedValue({ ok: true, started: true, erasure: ERASURE });
 });
 
 afterEach(() => {
@@ -186,7 +187,7 @@ describe("removing a destination", () => {
     await renderPage();
     const dialog = await openRemoval();
 
-    expect(previewDestinationRemoval).toHaveBeenCalledWith("box");
+    expect(previewLocationRemoval).toHaveBeenCalledWith("destination:box");
     expect(within(dialog).getByText("Remove storage location, keep the backups")).toBeTruthy();
     expect(within(dialog).getByText(/The backups stay where they are/)).toBeTruthy();
     const rows = within(dialog).getAllByRole("listitem");
@@ -207,7 +208,7 @@ describe("removing a destination", () => {
     const ways = within(dialog).getAllByRole("radio");
     expect(ways.map((way) => way.getAttribute("aria-checked"))).toEqual(["true", "false"]);
     expect(ways[1].textContent).toContain("Remove storage location and delete the backups there");
-    expect(previewDestinationErasure).not.toHaveBeenCalled();
+    expect(previewLocationErasure).not.toHaveBeenCalled();
   });
 
   it("leaves the counts out for a section whose repository was never listed", async () => {
@@ -225,7 +226,7 @@ describe("removing a destination", () => {
 
     await click(within(dialog).getByRole("button", { name: "Remove storage location" }));
 
-    expect(removeDestination).toHaveBeenCalledWith("box", PREVIEW);
+    expect(removeLocation).toHaveBeenCalledWith("destination:box", PREVIEW, undefined);
     expect(screen.getByText("the list")).toBeTruthy();
     expect(screen.getByText("Storage Box removed, the backups there stay")).toBeTruthy();
   });
@@ -236,14 +237,14 @@ describe("removing a destination", () => {
 
     await click(within(dialog).getByRole("button", { name: "Cancel" }));
 
-    expect(removeDestination).not.toHaveBeenCalled();
+    expect(removeLocation).not.toHaveBeenCalled();
     expect(screen.queryByRole("dialog")).toBeNull();
     expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("Storage Box");
   });
 
   it("shows the sections as they are when they changed since the preview, and asks again", async () => {
-    const now: DestinationRemoval = { sections: [PREVIEW.sections[0]] };
-    removeDestination.mockResolvedValueOnce({ ok: false, code: "stale", error: "stale", removal: now });
+    const now: LocationRemoval = { sections: [PREVIEW.sections[0]] };
+    removeLocation.mockResolvedValueOnce({ ok: false, code: "stale", error: "stale", removal: now });
     await renderPage();
     const dialog = await openRemoval();
 
@@ -253,12 +254,12 @@ describe("removing a destination", () => {
     expect(within(dialog).getAllByRole("listitem")).toHaveLength(1);
 
     await click(within(dialog).getByRole("button", { name: "Remove storage location" }));
-    expect(removeDestination).toHaveBeenLastCalledWith("box", now);
+    expect(removeLocation).toHaveBeenLastCalledWith("destination:box", now, undefined);
     expect(screen.getByText("the list")).toBeTruthy();
   });
 
   it("says so for a place no section backs up to", async () => {
-    previewDestinationRemoval.mockResolvedValue({ ok: true, removal: { sections: [] } });
+    previewLocationRemoval.mockResolvedValue({ ok: true, removal: { sections: [] } });
     await renderPage();
     const dialog = await openRemoval();
 
@@ -267,7 +268,7 @@ describe("removing a destination", () => {
   });
 
   it("cannot remove while the preview did not load", async () => {
-    previewDestinationRemoval.mockResolvedValue({ ok: false, error: "database is locked" });
+    previewLocationRemoval.mockResolvedValue({ ok: false, error: "database is locked" });
     await renderPage();
     const dialog = await openRemoval();
 
@@ -276,14 +277,14 @@ describe("removing a destination", () => {
   });
 
   it("reads the preview again when its way is picked after a failed one", async () => {
-    previewDestinationRemoval.mockResolvedValueOnce({ ok: false, error: "database is locked" });
+    previewLocationRemoval.mockResolvedValueOnce({ ok: false, error: "database is locked" });
     await renderPage();
     const dialog = await openRemoval();
 
     await click(within(dialog).getAllByRole("radio")[0]);
     await act(async () => {});
 
-    expect(previewDestinationRemoval).toHaveBeenCalledTimes(2);
+    expect(previewLocationRemoval).toHaveBeenCalledTimes(2);
     expect(within(dialog).queryByText("database is locked")).toBeNull();
     expect((within(dialog).getByRole("button", { name: "Remove storage location" }) as HTMLButtonElement).disabled).toBe(false);
   });
@@ -306,8 +307,8 @@ describe("removing a destination and deleting the backups there", () => {
     await renderPage();
     const dialog = await openDeletion();
 
-    expect(previewDestinationErasure).toHaveBeenCalledTimes(1);
-    expect(previewDestinationErasure).toHaveBeenCalledWith("box");
+    expect(previewLocationErasure).toHaveBeenCalledTimes(1);
+    expect(previewLocationErasure).toHaveBeenCalledWith("destination:box");
     expect(within(dialog).getAllByRole("radio").map((way) => way.getAttribute("aria-checked"))).toEqual(["false", "true"]);
     expect(within(dialog).queryByText("These sections stop backing up here")).toBeNull();
   });
@@ -362,7 +363,7 @@ describe("removing a destination and deleting the backups there", () => {
   });
 
   it("needs only the name where no entry loses its only backup", async () => {
-    previewDestinationErasure.mockResolvedValue({ ok: true, erasure: { ...ERASURE, lastCopies: [] } });
+    previewLocationErasure.mockResolvedValue({ ok: true, erasure: { ...ERASURE, lastCopies: [] } });
     await renderPage();
     const dialog = await openDeletion();
 
@@ -379,15 +380,15 @@ describe("removing a destination and deleting the backups there", () => {
 
     await click(erase(dialog));
 
-    expect(eraseDestination).toHaveBeenCalledWith("box", ERASURE.removal, ["container:plex", "zfs:tank/media"]);
-    expect(removeDestination).not.toHaveBeenCalled();
+    expect(eraseLocation).toHaveBeenCalledWith("destination:box", ERASURE.removal, ["container:plex", "zfs:tank/media"], undefined);
+    expect(removeLocation).not.toHaveBeenCalled();
     expect(screen.getByText("the list")).toBeTruthy();
     expect(screen.getByText(/The backups in Storage Box are being deleted in the background/)).toBeTruthy();
   });
 
   it("shows the entries as they are when the server found more of them, and asks again", async () => {
-    const now: DestinationErasure = { ...ERASURE, lastCopies: [...ERASURE.lastCopies, { domain: "vms", identity: "vm:win11", backups: 2 }] };
-    eraseDestination.mockResolvedValueOnce({ ok: false, code: "last-copies", error: "entries would lose their only backup", erasure: now });
+    const now: LocationErasure = { ...ERASURE, lastCopies: [...ERASURE.lastCopies, { domain: "vms", identity: "vm:win11", backups: 2 }] };
+    eraseLocation.mockResolvedValueOnce({ ok: false, code: "last-copies", error: "entries would lose their only backup", erasure: now });
     await renderPage();
     const dialog = await openDeletion();
     await typeName(dialog, "Storage Box");
@@ -402,7 +403,7 @@ describe("removing a destination and deleting the backups there", () => {
   });
 
   it("reads again when the sections changed since the reading", async () => {
-    eraseDestination.mockResolvedValueOnce({ ok: false, code: "stale", error: "stale", removal: { sections: [] } });
+    eraseLocation.mockResolvedValueOnce({ ok: false, code: "stale", error: "stale", removal: { sections: [] } });
     await renderPage();
     const dialog = await openDeletion();
     await typeName(dialog, "Storage Box");
@@ -412,11 +413,11 @@ describe("removing a destination and deleting the backups there", () => {
     await act(async () => {});
 
     expect(within(dialog).getByText("The numbers changed since they were shown. Check them again.")).toBeTruthy();
-    expect(previewDestinationErasure).toHaveBeenCalledTimes(2);
+    expect(previewLocationErasure).toHaveBeenCalledTimes(2);
   });
 
   it("says to wait while a backup of one of the sections runs", async () => {
-    eraseDestination.mockResolvedValueOnce({ ok: false, code: "domain-busy", error: "busy" });
+    eraseLocation.mockResolvedValueOnce({ ok: false, code: "domain-busy", error: "busy" });
     await renderPage();
     const dialog = await openDeletion();
     await typeName(dialog, "Storage Box");
@@ -429,7 +430,7 @@ describe("removing a destination and deleting the backups there", () => {
   });
 
   it("asks for a login password before anything is read or deleted", async () => {
-    previewDestinationErasure.mockResolvedValueOnce({ ok: false, code: "password-not-set", error: "set a login password first" });
+    previewLocationErasure.mockResolvedValueOnce({ ok: false, code: "password-not-set", error: "set a login password first" });
     await renderPage();
     const dialog = await openDeletion();
 
@@ -439,7 +440,7 @@ describe("removing a destination and deleting the backups there", () => {
 
   it("says when a repository stays because another section or location keeps its copies there", async () => {
     const shared: ErasureSection[] = [{ ...ERASURE.sections[1], kept: "shared" }];
-    previewDestinationErasure.mockResolvedValue({ ok: true, erasure: { ...ERASURE, sections: shared, backups: 0, entries: 0, backupsOnlyThere: 0, lastCopies: [] } });
+    previewLocationErasure.mockResolvedValue({ ok: true, erasure: { ...ERASURE, sections: shared, backups: 0, entries: 0, backupsOnlyThere: 0, lastCopies: [] } });
     await renderPage();
     const dialog = await openDeletion();
 
@@ -448,7 +449,7 @@ describe("removing a destination and deleting the backups there", () => {
 
   it("says what to do instead where nothing can be deleted", async () => {
     const kept: ErasureSection[] = [{ ...ERASURE.sections[1] }];
-    previewDestinationErasure.mockResolvedValue({ ok: true, erasure: { ...ERASURE, sections: kept, backups: 0, entries: 0, backupsOnlyThere: 0, lastCopies: [] } });
+    previewLocationErasure.mockResolvedValue({ ok: true, erasure: { ...ERASURE, sections: kept, backups: 0, entries: 0, backupsOnlyThere: 0, lastCopies: [] } });
     await renderPage();
     const dialog = await openDeletion();
 
@@ -458,7 +459,7 @@ describe("removing a destination and deleting the backups there", () => {
   });
 
   it("says why the reading failed and reads again when the way is picked again", async () => {
-    previewDestinationErasure.mockResolvedValueOnce({ ok: false, error: "the remote did not answer" });
+    previewLocationErasure.mockResolvedValueOnce({ ok: false, error: "the remote did not answer" });
     await renderPage();
     const dialog = await openDeletion();
     expect(within(dialog).getByText("the remote did not answer")).toBeTruthy();
@@ -479,15 +480,160 @@ describe("removing a destination and deleting the backups there", () => {
     await click(within(dialog).getAllByRole("radio")[0]);
     await click(within(dialog).getByRole("button", { name: "Remove storage location" }));
 
-    expect(removeDestination).toHaveBeenCalledWith("box", PREVIEW);
-    expect(eraseDestination).not.toHaveBeenCalled();
+    expect(removeLocation).toHaveBeenCalledWith("destination:box", PREVIEW, undefined);
+    expect(eraseLocation).not.toHaveBeenCalled();
   });
 });
 
-describe("a location that is not a destination", () => {
-  it("has no removal", async () => {
-    await renderPage({ ...BOX, id: "path:abc", object: "path", kind: "local", backend: "local", where: "/mnt/user/backups" });
+const TARGET: StorageLocation = { ...BOX, id: "target:t9", object: "target", name: "Offsite NAS" };
+const REPO: StorageLocation = { ...BOX, id: "repo:r1", object: "repo", name: "Media repo" };
+const FOLDER: StorageLocation = {
+  ...BOX,
+  id: "path:9c1e",
+  object: "path",
+  kind: "local",
+  backend: "local",
+  name: "backups",
+  where: "user/backups",
+  offPremises: false,
+};
 
-    expect(screen.queryByRole("button", { name: "More" })).toBeNull();
+describe.each([
+  ["target", TARGET, "Offsite NAS"],
+  ["named repository", REPO, "Media repo"],
+  // The one folder on this host goes by Local.
+  ["folder", FOLDER, "Local"],
+] as const)("removing a %s", (_kind, location, shown) => {
+  it("is offered and reads what it would change under the location's whole id", async () => {
+    await renderPage(location);
+    await openRemoval(shown);
+
+    expect(previewLocationRemoval).toHaveBeenCalledWith(location.id);
+  });
+});
+
+describe("removing a named repository", () => {
+  const FOLLOW: LocationRemoval = {
+    sections: [
+      part({ use: "repo", targetId: "", repo: "/mnt/user/media-repo", items: 3, listedAt: 0 }),
+      part({ domain: "files", use: "repo", targetId: "", repo: "/mnt/user/media-repo", items: 0, default: true, listedAt: 0 }),
+    ],
+  };
+
+  it("lists per section the entries that back up there and whether its default points there", async () => {
+    previewLocationRemoval.mockResolvedValue({ ok: true, removal: FOLLOW });
+    await renderPage(REPO);
+    const dialog = await openRemoval("Media repo");
+
+    expect(within(dialog).getByText("These entries follow their section again")).toBeTruthy();
+    const rows = within(dialog).getAllByRole("listitem");
+    expect(rows[0].textContent).toContain("3 entries back up here");
+    expect(rows[0].textContent).not.toContain("The section's default points here");
+    expect(rows[1].textContent).toContain("The section's default points here");
+    expect(rows[1].textContent).not.toContain("back up here");
+  });
+});
+
+describe("removing the folder the sections keep their backups in", () => {
+  const MOVE: LocationRemoval = {
+    sections: [
+      part({ use: "home", targetId: "", repo: "user/backups/containers", folder: "containers" }),
+      part({ domain: "vms", use: "home", targetId: "", repo: "user/backups/vms", folder: "vms", listedAt: 0 }),
+    ],
+    suggest: "user/vault",
+  };
+  const action = (dialog: HTMLElement, name: string) => within(dialog).getByRole("button", { name }) as HTMLButtonElement;
+  const typeFolder = (dialog: HTMLElement, from: string, to: string) =>
+    act(async () => {
+      fireEvent.change(within(dialog).getByDisplayValue(from), { target: { value: to } });
+    });
+
+  beforeEach(() => {
+    previewLocationRemoval.mockResolvedValue({ ok: true, removal: MOVE });
+  });
+
+  it("offers the suggested folder and shows each section's place now and under it", async () => {
+    await renderPage(FOLDER);
+    const dialog = await openRemoval("Local");
+
+    expect(within(dialog).getByText("New folder for the sections")).toBeTruthy();
+    expect(within(dialog).getByDisplayValue("user/vault")).toBeTruthy();
+    expect(within(dialog).getByText(/The sections write to the new folder from now on/)).toBeTruthy();
+    const rows = within(dialog).getAllByRole("listitem");
+    expect(rows[0].textContent).toContain("user/backups/containers");
+    expect(rows[0].textContent).toContain("user/vault/containers");
+    expect(rows[1].textContent).toContain("user/vault/vms");
+  });
+
+  it("sends the folder the sections move to", async () => {
+    await renderPage(FOLDER);
+    const dialog = await openRemoval("Local");
+    await typeFolder(dialog, "user/vault", "user/elsewhere/");
+
+    expect(within(dialog).getAllByRole("listitem")[0].textContent).toContain("user/elsewhere/containers");
+    await click(action(dialog, "Remove storage location"));
+
+    expect(removeLocation).toHaveBeenCalledWith("path:9c1e", MOVE, "user/elsewhere");
+    expect(screen.getByText("the list")).toBeTruthy();
+  });
+
+  it("waits for a folder that is not the current one", async () => {
+    await renderPage(FOLDER);
+    const dialog = await openRemoval("Local");
+
+    await typeFolder(dialog, "user/vault", "user/backups");
+    expect(action(dialog, "Remove storage location").disabled).toBe(true);
+
+    await typeFolder(dialog, "user/backups", "");
+    expect(action(dialog, "Remove storage location").disabled).toBe(true);
+    expect(within(dialog).queryByText("Then")).toBeNull();
+  });
+
+  it("starts empty without a suggestion", async () => {
+    previewLocationRemoval.mockResolvedValue({ ok: true, removal: { sections: MOVE.sections } });
+    await renderPage(FOLDER);
+    const dialog = await openRemoval("Local");
+
+    expect(action(dialog, "Remove storage location").disabled).toBe(true);
+  });
+
+  it("shows the server's sentence for a folder it refuses", async () => {
+    removeLocation.mockResolvedValueOnce({ ok: false, error: "The folder is inside another storage location." });
+    await renderPage(FOLDER);
+    const dialog = await openRemoval("Local");
+
+    await click(action(dialog, "Remove storage location"));
+
+    expect(within(dialog).getByText("The folder is inside another storage location.")).toBeTruthy();
+    expect(screen.queryByText("the list")).toBeNull();
+  });
+
+  it("deletes the backups there with the folder and marks no home as left behind", async () => {
+    const homes: LocationErasure = {
+      ...ERASURE,
+      removal: MOVE,
+      sections: [
+        repo({ use: "home", targetId: "", repo: "user/backups/containers" }),
+        repo({ domain: "vms", use: "home", targetId: "", repo: "user/backups/vms", backups: 6, entries: 1 }),
+      ],
+      lastCopies: [],
+      key: "erase:9c1e",
+    };
+    previewLocationErasure.mockResolvedValue({ ok: true, erasure: homes });
+    await renderPage(FOLDER);
+    const dialog = await openRemoval("Local");
+    await click(within(dialog).getAllByRole("radio")[1]);
+    await act(async () => {});
+
+    const rows = within(within(dialog).getAllByRole("list")[0]).getAllByRole("listitem");
+    expect(rows).toHaveLength(2);
+    for (const row of rows) expect(within(row).queryByLabelText(/left this repository behind/)).toBeNull();
+
+    await act(async () => {
+      fireEvent.change(within(dialog).getByLabelText("Type Local to confirm"), { target: { value: "Local" } });
+    });
+    await click(action(dialog, "Remove and delete"));
+
+    expect(eraseLocation).toHaveBeenCalledWith("path:9c1e", MOVE, [], "user/vault");
   });
 });

@@ -1,11 +1,12 @@
 import { useEffect, useState, type ReactNode } from "react";
 import {
-  eraseDestination,
-  previewDestinationErasure,
-  previewDestinationRemoval,
-  removeDestination,
-  type DestinationErasure,
-  type DestinationRemoval,
+  eraseLocation,
+  getSettings,
+  previewLocationErasure,
+  previewLocationRemoval,
+  removeLocation,
+  type LocationErasure,
+  type LocationRemoval,
   type OkEnvelope,
   type StorageLocation,
 } from "../../lib/api";
@@ -13,19 +14,20 @@ import { useT, type TranslationKey } from "../../lib/i18n";
 import { placementErrorText } from "../../lib/placementCodes";
 import { placementChanged } from "../../lib/placementEvents";
 import { secretsSentence } from "../../lib/secretsRefusal";
-import { objectId } from "../../lib/storageFlow";
 import { useToast } from "../../lib/toast";
 import { credSetsChanged } from "../../lib/useCloudCredSets";
 import { destinationsChanged } from "../../lib/useDestinations";
+import { reposChanged } from "../../lib/useNamedRepos";
 import { offsiteTargetsChanged } from "../../lib/useOffsiteTargets";
 import { storageLocationsChanged } from "../../lib/useStorageLocations";
 import { InstanceWindow } from "../../pages/instances/InstanceWindow";
 import { Button } from "../Button";
+import { FolderBrowser } from "../FolderBrowser";
 import { RadioMark } from "../RadioMark";
 import { IconClose, IconTrash } from "../navGlyphs";
 import { DetachedList, ErasureDetails, erasable } from "./removalParts";
 
-type Answer = OkEnvelope & { removal?: DestinationRemoval; erasure?: DestinationErasure };
+type Answer = OkEnvelope & { removal?: LocationRemoval; erasure?: LocationErasure };
 
 function failed(e: unknown): Answer {
   return { ok: false, error: e instanceof Error ? e.message : undefined };
@@ -35,6 +37,10 @@ function failed(e: unknown): Answer {
  *  password speaks of keys, so deleting has its own. */
 function refusalSentence(t: (key: TranslationKey) => string, code: string | undefined): string | undefined {
   return code === "password-not-set" ? t("storage.remove.passwordNeeded") : secretsSentence(t, code);
+}
+
+function trimmedFolder(path: string): string {
+  return path.trim().replace(/\/+$/, "");
 }
 
 type How = "keep" | "delete";
@@ -69,11 +75,12 @@ function Way({
 }
 
 /**
- * RemovalWindow takes a destination away in one of two ways: it only detaches
- * the sections and leaves the backups there, or it deletes the backups first.
- * Either way the server acts only on what was shown: when the sections or the
- * entries that lose their only backup changed in between, it answers with
- * them as they are, and the window asks again.
+ * RemovalWindow takes a storage location away in one of two ways: it only
+ * detaches the sections and leaves the backups there, or it deletes the
+ * backups first. A folder is the home of its sections, so either way asks
+ * for the folder they move to. The server acts only on what was shown: when
+ * the sections or the entries that lose their only backup changed in between,
+ * it answers with them as they are, and the window asks again.
  */
 export function RemovalWindow({
   location,
@@ -86,16 +93,19 @@ export function RemovalWindow({
 }) {
   const { t, lang } = useT();
   const { push } = useToast();
-  const id = objectId(location);
+  const id = location.id;
+  const homes = location.object === "path";
   const [how, setHow] = useState<How>("keep");
-  const [removal, setRemoval] = useState<DestinationRemoval | null>(null);
+  const [removal, setRemoval] = useState<LocationRemoval | null>(null);
   // Counts the readings of what would be detached, so a failed one is read
   // again when its way is picked.
   const [removalReads, setRemovalReads] = useState(0);
-  const [erasure, setErasure] = useState<DestinationErasure | null>(null);
+  const [erasure, setErasure] = useState<LocationErasure | null>(null);
   // Counts the readings of what would be deleted. None is taken before the
-  // way is picked, because a reading lists every repository at the destination.
+  // way is picked, because a reading lists every repository at the location.
   const [readings, setReadings] = useState(0);
+  const [home, setHome] = useState("");
+  const [mountRoot, setMountRoot] = useState("");
   const [typed, setTyped] = useState("");
   const [lastToo, setLastToo] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
@@ -103,12 +113,15 @@ export function RemovalWindow({
 
   useEffect(() => {
     let alive = true;
-    void previewDestinationRemoval(id)
+    void previewLocationRemoval(id)
       .catch(failed)
       .then((res) => {
         if (!alive) return;
-        if (res.ok && res.removal) setRemoval(res.removal);
-        else setProblem(res.error ?? t("settings.error"));
+        if (res.ok && res.removal) {
+          const suggest = res.removal.suggest ?? "";
+          setRemoval(res.removal);
+          setHome((typedHome) => typedHome || suggest);
+        } else setProblem(res.error ?? t("settings.error"));
       });
     return () => {
       alive = false;
@@ -119,7 +132,7 @@ export function RemovalWindow({
   useEffect(() => {
     if (readings === 0) return;
     let alive = true;
-    void previewDestinationErasure(id)
+    void previewLocationErasure(id)
       .catch(failed)
       .then((res) => {
         if (!alive) return;
@@ -131,6 +144,19 @@ export function RemovalWindow({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, readings]);
+
+  useEffect(() => {
+    if (!homes) return;
+    let alive = true;
+    void getSettings()
+      .then((res) => {
+        if (alive && res.ok) setMountRoot(res.hostMountRoot);
+      })
+      .catch(() => undefined);
+    return () => {
+      alive = false;
+    };
+  }, [homes]);
 
   function pick(next: How) {
     setHow(next);
@@ -144,15 +170,22 @@ export function RemovalWindow({
     storageLocationsChanged();
     destinationsChanged();
     offsiteTargetsChanged();
+    reposChanged();
     placementChanged();
     credSetsChanged();
+    // A folder's sections and a repository's defaults live in the settings.
+    window.dispatchEvent(new Event("bv:settings-changed"));
     onRemoved();
   }
+
+  const newHome = trimmedFolder(home);
+  const sentHome = homes ? newHome : undefined;
+  const homeReady = !homes || (newHome !== "" && newHome !== trimmedFolder(location.where));
 
   async function remove() {
     if (!removal) return;
     setBusy(true);
-    const res = await removeDestination(id, removal).catch(failed);
+    const res = await removeLocation(id, removal, sentHome).catch(failed);
     setBusy(false);
     if (!res.ok) {
       if (res.removal) setRemoval(res.removal);
@@ -166,7 +199,7 @@ export function RemovalWindow({
     if (!erasure) return;
     setBusy(true);
     const named = lastToo ? erasure.lastCopies.map((entry) => entry.identity) : [];
-    const res = await eraseDestination(id, erasure.removal, named).catch(failed);
+    const res = await eraseLocation(id, erasure.removal, named, sentHome).catch(failed);
     setBusy(false);
     if (!res.ok) {
       setProblem(refusalSentence(t, res.code) ?? placementErrorText(t, lang, res, "settings.error"));
@@ -188,7 +221,7 @@ export function RemovalWindow({
   return (
     <InstanceWindow
       title={t("storage.remove.title").replace("{name}", () => location.name)}
-      facts={t("dest.removeAsk").replace("{name}", () => location.name)}
+      facts={homes ? undefined : t("dest.removeAsk").replace("{name}", () => location.name)}
       onClose={onClose}
       footer={
         <>
@@ -200,7 +233,7 @@ export function RemovalWindow({
               glyph={<IconTrash />}
               tone="accent"
               busy={busy}
-              disabled={busy || !confirmed}
+              disabled={busy || !confirmed || !homeReady}
               onClick={() => void erase()}
             />
           ) : (
@@ -210,16 +243,31 @@ export function RemovalWindow({
               glyph={<IconTrash />}
               tone="accent"
               busy={busy}
-              disabled={busy || !removal}
+              disabled={busy || !removal || !homeReady}
               onClick={() => void remove()}
             />
           )}
         </>
       }
     >
+      {homes && (
+        <FolderBrowser
+          label={t("storage.remove.home")}
+          hint={t("storage.remove.homeTip")}
+          value={home}
+          hostMountRoot={mountRoot}
+          onChange={setHome}
+          inDialog
+        />
+      )}
       <div role="radiogroup" aria-label={t("storage.remove.action")} className="flex flex-col gap-3">
-        <Way title={t("storage.remove.keep")} text={t("storage.remove.keepText")} picked={!deleting} onPick={() => pick("keep")}>
-          {removal ? <DetachedList removal={removal} /> : !problem && <p className="text-sm text-carbon-textSub">{t("dashboard.checking")}</p>}
+        <Way
+          title={t("storage.remove.keep")}
+          text={t(homes ? "storage.remove.keepHome" : "storage.remove.keepText")}
+          picked={!deleting}
+          onPick={() => pick("keep")}
+        >
+          {removal ? <DetachedList removal={removal} home={newHome} /> : !problem && <p className="text-sm text-carbon-textSub">{t("dashboard.checking")}</p>}
         </Way>
         <Way title={t("storage.remove.delete")} text={t("storage.remove.deleteText")} picked={deleting} onPick={() => pick("delete")}>
           {erasure ? (

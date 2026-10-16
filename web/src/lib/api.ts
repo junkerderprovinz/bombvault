@@ -7304,12 +7304,16 @@ export interface RemovalDirect {
   kept: boolean;
 }
 
-/** One section's part of a destination that is about to be removed. `entries`
- *  and `backups` are what the last listing of its repository there found, at
- *  `listedAt` (0 for never). `primary` is the section's built-in off-site
- *  copy, whose settings field is cleared with it. */
+/** One section's part of a storage location that is about to be removed.
+ *  `use` is what the section loses there: a copy, its own folder (`home`), or
+ *  the named repository its entries or its default back up to (`repo`).
+ *  `entries` and `backups` are what the last listing of its repository there
+ *  found, at `listedAt` (0 for never). `primary` is the section's built-in
+ *  off-site copy, whose settings field is cleared with it. */
 export interface RemovalSection {
   domain: OffsiteDomain;
+  use: "copy" | "home" | "repo";
+  /** "" for a home and for a named repository. */
   targetId: string;
   repo: string;
   primary: boolean;
@@ -7319,43 +7323,61 @@ export interface RemovalSection {
   listedAt: number;
   lastCopyAt: number;
   direct?: RemovalDirect;
+  /** For a named repository: the section's entries that back up there, and
+   *  whether the section's default points there. */
+  items?: number;
+  default?: boolean;
+  /** For a home: the last segment of the section's folder, which it keeps
+   *  under the new folder. */
+  folder?: string;
 }
 
-/** What removing a destination detaches. The backups there stay as they are. */
-export interface DestinationRemoval {
+/** What removing a storage location detaches. The backups there stay as they
+ *  are. */
+export interface LocationRemoval {
   sections: RemovalSection[];
   /** Set on the removal an erasure preview carries: a digest of what deleting
    *  the backups there takes, which the request sends back unchanged. */
   erasure?: string;
+  /** For a folder: the new folder to offer first. */
+  suggest?: string;
 }
 
-/** GET /api/offsite/destinations/{id}/removal. */
-export function previewDestinationRemoval(id: string): Promise<OkEnvelope & { removal?: DestinationRemoval }> {
-  return fetchJSON(`/api/offsite/destinations/${encodeURIComponent(id)}/removal`);
+/** GET /api/storage/locations/{id}/removal, where `id` is the location's whole
+ *  id, such as `repo:4f2a`. */
+export function previewLocationRemoval(id: string): Promise<OkEnvelope & { removal?: LocationRemoval }> {
+  return fetchJSON(`/api/storage/locations/${encodeURIComponent(id)}/removal`);
 }
 
-/** POST /api/offsite/destinations/{id}/removal: removes a destination that
- *  sections still copy to and leaves the data there. `expect` is the preview
- *  that was shown; when the sections changed since, the answer has code
- *  "stale" and carries them as they are. */
-export function removeDestination(
+/** POST /api/storage/locations/{id}/removal: removes a storage location that
+ *  sections still use and leaves the data there. `expect` is the preview that
+ *  was shown; when the sections changed since, the answer has code "stale" and
+ *  carries them as they are. A folder needs `home`, the folder its sections
+ *  move to: without one the code is "home-needed", with the folder they are in
+ *  "home-same", and a folder a settings save would refuse comes back with that
+ *  save's error. */
+export function removeLocation(
   id: string,
-  expect: DestinationRemoval
-): Promise<OkEnvelope & { removal?: DestinationRemoval }> {
-  return fetchJSON(`/api/offsite/destinations/${encodeURIComponent(id)}/removal`, {
+  expect: LocationRemoval,
+  home?: string
+): Promise<OkEnvelope & { removal?: LocationRemoval }> {
+  return fetchJSON(`/api/storage/locations/${encodeURIComponent(id)}/removal`, {
     method: "POST",
-    body: JSON.stringify({ expect }),
+    body: JSON.stringify({ expect, home }),
   });
 }
 
-/** One repository at a destination whose backups are to be deleted: the copy
- *  of a section, or the direct repository of its target when `repoId` is set.
- *  An empty `targetId` is what a section left behind when its copy moved to
+/** One repository at a storage location whose backups are to be deleted: the
+ *  copy of a section, the direct repository of its target when `repoId` is
+ *  set, or the section's home or named repository as `use` says. An empty
+ *  `targetId` on a copy is what a section left behind when its copy moved to
  *  another destination. `kept` says why its backups stay: BombVault may only
  *  add to it, entries still back up to it, another section or destination
  *  keeps its copies at the same place, or it could not be listed. */
 export interface ErasureSection {
   domain: OffsiteDomain;
+  /** Absent for a copy and for a direct repository. */
+  use?: "home" | "repo";
   targetId: string;
   repoId?: string;
   repo: string;
@@ -7371,11 +7393,11 @@ export interface ErasureEntry {
   backups: number;
 }
 
-/** What deleting the backups at a destination takes away before the
- *  destination is removed. The totals cover the sections that are emptied. */
-export interface DestinationErasure {
-  /** What removing the destination detaches, sent back with the request. */
-  removal: DestinationRemoval;
+/** What deleting the backups at a storage location takes away before the
+ *  location is removed. The totals cover the sections that are emptied. */
+export interface LocationErasure {
+  /** What removing the location detaches, sent back with the request. */
+  removal: LocationRemoval;
   sections: ErasureSection[];
   backups: number;
   entries: number;
@@ -7387,30 +7409,32 @@ export interface DestinationErasure {
   key: string;
 }
 
-/** GET /api/offsite/destinations/{id}/erasure. It lists every repository at
- *  the destination and the other places of its sections, so it takes as long
- *  as they take to answer. Without a login password, or with the session of a
- *  paired phone, it answers with a SecretsRefusal code. */
-export function previewDestinationErasure(id: string): Promise<OkEnvelope & { erasure?: DestinationErasure }> {
-  return fetchKeyJSON(`/api/offsite/destinations/${encodeURIComponent(id)}/erasure`);
+/** GET /api/storage/locations/{id}/erasure. It lists every repository at the
+ *  location and the other places of its sections, so it takes as long as they
+ *  take to answer. Without a login password, or with the session of a paired
+ *  phone, it answers with a SecretsRefusal code. */
+export function previewLocationErasure(id: string): Promise<OkEnvelope & { erasure?: LocationErasure }> {
+  return fetchKeyJSON(`/api/storage/locations/${encodeURIComponent(id)}/erasure`);
 }
 
-/** POST /api/offsite/destinations/{id}/erasure: deletes the backups at a
- *  destination in the background and removes it once they are gone. `expect`
- *  is `erasure.removal` as it was shown and `lastCopies` the identities of the
+/** POST /api/storage/locations/{id}/erasure: deletes the backups at a storage
+ *  location in the background and removes it once they are gone. `expect` is
+ *  `erasure.removal` as it was shown and `lastCopies` the identities of the
  *  entries that may lose their only backup. A refusal carries the code "stale"
  *  with `removal` or `erasure`, or "last-copies" or "nothing-to-erase" with
  *  `erasure`, each as it stands, "domain-busy" while a section is being backed
- *  up, "move-running" while a section moves to or from here, or a
- *  SecretsRefusal code like the preview. */
-export function eraseDestination(
+ *  up, "move-running" while a section moves to or from here, a SecretsRefusal
+ *  code like the preview, or one of the refusals removeLocation gives a
+ *  folder's `home`. */
+export function eraseLocation(
   id: string,
-  expect: DestinationRemoval,
-  lastCopies: string[]
-): Promise<OkEnvelope & { started?: boolean; removal?: DestinationRemoval; erasure?: DestinationErasure }> {
-  return fetchKeyJSON(`/api/offsite/destinations/${encodeURIComponent(id)}/erasure`, {
+  expect: LocationRemoval,
+  lastCopies: string[],
+  home?: string
+): Promise<OkEnvelope & { started?: boolean; removal?: LocationRemoval; erasure?: LocationErasure }> {
+  return fetchKeyJSON(`/api/storage/locations/${encodeURIComponent(id)}/erasure`, {
     method: "POST",
-    body: JSON.stringify({ expect, lastCopies }),
+    body: JSON.stringify({ expect, lastCopies, home }),
   });
 }
 

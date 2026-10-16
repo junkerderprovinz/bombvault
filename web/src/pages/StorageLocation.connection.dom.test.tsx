@@ -345,6 +345,8 @@ describe("a location without a connection form", () => {
     await renderPage(location({ id: "target:t1", object: "target", provider: "", backend: "rest", where: "rest:https://nas:8000/tower" }));
 
     expect(screen.queryByRole("button", { name: "Change" })).toBeNull();
-    expect(screen.queryByRole("button", { name: "More" })).toBeNull();
+    await click(screen.getByRole("button", { name: "More" }));
+    expect(screen.queryByRole("menuitem", { name: "Change connection" })).toBeNull();
+    expect(screen.getByRole("menuitem", { name: "Remove storage location" })).toBeTruthy();
   });
 });

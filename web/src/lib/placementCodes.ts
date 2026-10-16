@@ -39,6 +39,8 @@ const CODE_KEYS: Record<string, TranslationKey> = {
   "backups-not-there": "placementCode.backupsNotThere",
   "last-copies": "placementCode.lastCopies",
   "nothing-to-erase": "placementCode.nothingToErase",
+  "home-needed": "placementCode.homeNeeded",
+  "home-same": "placementCode.homeSame",
   "move-same-place": "placementCode.moveSamePlace",
   "move-section-there": "placementCode.moveSectionThere",
   "move-direct-repo": "placementCode.moveDirectRepo",

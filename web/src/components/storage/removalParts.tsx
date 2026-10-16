@@ -1,7 +1,7 @@
 // What the two ways to remove a storage location show before anything is
 // removed: the sections that are detached, and the backups that are deleted.
 import { useId } from "react";
-import type { DestinationErasure, DestinationRemoval, ErasureSection } from "../../lib/api";
+import type { ErasureSection, LocationErasure, LocationRemoval, RemovalSection } from "../../lib/api";
 import { useT, type TranslationKey } from "../../lib/i18n";
 import { DOMAIN_LABEL } from "../../lib/storageLocations";
 import { ToggleRow } from "../../pages/settings/shared";
@@ -22,51 +22,96 @@ const KEPT: Record<NonNullable<ErasureSection["kept"]>, TranslationKey> = {
   unreadable: "storage.remove.keptUnreadable",
 };
 
-/** The sections that stop backing up to a destination once it is removed. */
-export function DetachedList({ removal }: { removal: DestinationRemoval }) {
-  const { t } = useT();
-  if (removal.sections.length === 0) return <p className="text-xs text-carbon-textMuted">{t("storage.rules.none")}</p>;
+const USES: { use: RemovalSection["use"]; title: TranslationKey; tip?: TranslationKey }[] = [
+  { use: "copy", title: "storage.remove.detached" },
+  { use: "home", title: "storage.remove.moved" },
+  { use: "repo", title: "storage.remove.follow", tip: "storage.remove.followTip" },
+];
+
+function Place({ label, path }: { label: string; path: string }) {
   return (
-    <div className="flex flex-col gap-2">
-      <span className={HEADING}>{t("storage.remove.detached")}</span>
-      <ul className={ROWS}>
-        {removal.sections.map((section) => (
-          <li key={section.targetId} className={ROW}>
-            <span className="mt-0.5 flex">
-              <DomainGlyph domain={section.domain} />
-            </span>
-            <div className="flex min-w-0 flex-col gap-0.5">
-              <span className="flex items-center gap-1.5 text-sm text-carbon-text">
-                {t(DOMAIN_LABEL[section.domain])}
-                {section.primary && <InfoBubble tip={t("storage.remove.primary")} />}
-              </span>
-              <span dir="ltr" className={REPO}>
-                {section.repo}
-              </span>
-              {section.listedAt > 0 && (
-                <span className="text-xs text-carbon-textMuted">
-                  {t("backups.tile.count", section.entries)} · {t("entry.places.count", section.backups)}
-                </span>
-              )}
-              {section.direct?.kept && <span className="text-xs text-carbon-textSub">{t("storage.remove.directKept")}</span>}
-            </div>
-          </li>
-        ))}
-      </ul>
-    </div>
+    <span className="flex flex-wrap items-baseline gap-x-1.5">
+      <span className="text-xs text-carbon-textSub">{label}</span>
+      <span dir="ltr" className={REPO}>
+        {path}
+      </span>
+    </span>
   );
 }
 
-/** Whether anything at the destination can be deleted at all. */
-export function erasable(erasure: DestinationErasure): boolean {
+function DetachedRow({ section, home }: { section: RemovalSection; home: string }) {
+  const { t } = useT();
+  return (
+    <li className={ROW}>
+      <span className="mt-0.5 flex">
+        <DomainGlyph domain={section.domain} />
+      </span>
+      <div className="flex min-w-0 flex-col gap-0.5">
+        <span className="flex items-center gap-1.5 text-sm text-carbon-text">
+          {t(DOMAIN_LABEL[section.domain])}
+          {section.primary && <InfoBubble tip={t("storage.remove.primary")} />}
+        </span>
+        {section.use === "home" ? (
+          <>
+            <Place label={t("storage.remove.now")} path={section.repo} />
+            {home && <Place label={t("storage.remove.then")} path={`${home}/${section.folder ?? ""}`} />}
+          </>
+        ) : (
+          <span dir="ltr" className={REPO}>
+            {section.repo}
+          </span>
+        )}
+        {section.listedAt > 0 && (
+          <span className="text-xs text-carbon-textMuted">
+            {t("backups.tile.count", section.entries)} · {t("entry.places.count", section.backups)}
+          </span>
+        )}
+        {(section.items ?? 0) > 0 && <span className="text-xs text-carbon-textSub">{t("storage.remove.items", section.items)}</span>}
+        {section.default && <span className="text-xs text-carbon-textSub">{t("storage.remove.defaultHere")}</span>}
+        {section.direct?.kept && <span className="text-xs text-carbon-textSub">{t("storage.remove.directKept")}</span>}
+      </div>
+    </li>
+  );
+}
+
+/**
+ * DetachedList is what removing a storage location changes for each section:
+ * a copy stops, a home moves to the new folder `home` (empty while none is
+ * entered), and entries that back up to a named repository follow their
+ * section again.
+ */
+export function DetachedList({ removal, home }: { removal: LocationRemoval; home: string }) {
+  const { t } = useT();
+  if (removal.sections.length === 0) return <p className="text-xs text-carbon-textMuted">{t("storage.rules.none")}</p>;
+  return USES.map(({ use, title, tip }) => {
+    const sections = removal.sections.filter((section) => section.use === use);
+    if (sections.length === 0) return null;
+    return (
+      <div key={use} className="flex flex-col gap-2">
+        <span className={`flex items-center gap-1.5 ${HEADING}`}>
+          {t(title)}
+          {tip && <InfoBubble tip={t(tip)} />}
+        </span>
+        <ul className={ROWS}>
+          {sections.map((section) => (
+            <DetachedRow key={`${section.domain}:${section.use}:${section.targetId}`} section={section} home={home} />
+          ))}
+        </ul>
+      </div>
+    );
+  });
+}
+
+/** Whether anything at the location can be deleted at all. */
+export function erasable(erasure: LocationErasure): boolean {
   return erasure.sections.some((section) => !section.kept);
 }
 
 /**
- * ErasureDetails lists every repository at a destination with what is deleted
- * from it or why it stays, names the entries that lose their only backup, and
- * asks for the two things the deletion waits for: the switch that includes
- * those entries, and the location's name typed out.
+ * ErasureDetails lists every repository at a storage location with what is
+ * deleted from it or why it stays, names the entries that lose their only
+ * backup, and asks for the two things the deletion waits for: the switch that
+ * includes those entries, and the location's name typed out.
  */
 export function ErasureDetails({
   erasure,
@@ -76,7 +121,7 @@ export function ErasureDetails({
   lastToo,
   onLastToo,
 }: {
-  erasure: DestinationErasure;
+  erasure: LocationErasure;
   /** The location's name, which has to be typed to confirm. */
   name: string;
   typed: string;
@@ -94,14 +139,14 @@ export function ErasureDetails({
           {erasure.sections.map((section) => {
             const domain = t(DOMAIN_LABEL[section.domain]);
             return (
-              <li key={`${section.domain}:${section.targetId}:${section.repoId ?? ""}`} className={ROW}>
+              <li key={`${section.domain}:${section.use ?? ""}:${section.targetId}:${section.repoId ?? ""}`} className={ROW}>
                 <span className="mt-0.5 flex">
                   <DomainGlyph domain={section.domain} />
                 </span>
                 <div className="flex min-w-0 flex-col gap-0.5">
                   <span className="flex items-center gap-1.5 text-sm text-carbon-text">
-                    {section.repoId ? t("storage.remove.directRepo").replace("{domain}", () => domain) : domain}
-                    {!section.targetId && <InfoBubble tip={t("storage.remove.leftBehind")} />}
+                    {section.repoId && !section.use ? t("storage.remove.directRepo").replace("{domain}", () => domain) : domain}
+                    {!section.targetId && !section.use && <InfoBubble tip={t("storage.remove.leftBehind")} />}
                   </span>
                   <span dir="ltr" className={REPO}>
                     {section.repo}

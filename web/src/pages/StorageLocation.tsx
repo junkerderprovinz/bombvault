@@ -98,11 +98,11 @@ function Location({ location, records }: { location: StorageLocation; records: L
   // moves from the menu.
   const own = location.object === "target" ? location.sections.find((section) => section.use === "copy" && section.targetId) : undefined;
   const moveRun = own?.targetId ? liveRun(progress, moveKey(own.targetId)) : null;
-  const erasing = location.object === "destination" && liveRun(progress, eraseKey(objectId(location))) !== null;
+  const erasing = liveRun(progress, eraseKey(objectId(location))) !== null;
   if (own && !moveRun) {
     actions.push({ id: "move", label: t("storage.move.action"), glyph: <IconForward />, onSelect: () => setMoving(true) });
   }
-  if (location.object === "destination" && !erasing) {
+  if (!erasing) {
     actions.push({ id: "remove", label: t("storage.remove.action"), glyph: <IconTrash />, onSelect: () => setRemoving(true) });
   }
 
