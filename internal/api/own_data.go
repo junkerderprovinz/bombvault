@@ -29,6 +29,25 @@ type ownDataGuard struct {
 	s *Service
 }
 
+// guardedBlockEngine is ownDataGuard over an engine that also has the
+// changed-block methods, which pass unchecked since they back up and list and
+// never write into a folder.
+type guardedBlockEngine struct {
+	ownDataGuard
+	vmBlockEngine
+}
+
+// guardOwnData puts eng behind the own-data guard. The result is a
+// vmBlockEngine exactly when eng is one, so the block path still finds out
+// from the engine whether it can run.
+func guardOwnData(eng ResticEngine, s *Service) ResticEngine {
+	g := ownDataGuard{ResticEngine: eng, s: s}
+	if b, ok := eng.(vmBlockEngine); ok {
+		return guardedBlockEngine{ownDataGuard: g, vmBlockEngine: b}
+	}
+	return g
+}
+
 func (g ownDataGuard) RestorePath(ctx context.Context, repo, snapshotID, p string, mode restic.Mode) error {
 	if err := g.s.refuseOwnData(p); err != nil {
 		return err

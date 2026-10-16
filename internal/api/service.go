@@ -676,7 +676,7 @@ func NewService(cfg config.Config, st *store.Repo, d dockercli.Docker, v virshcl
 		suggestFlights:    map[string]*suggestFlight{},
 	}
 	if eng != nil {
-		s.engine = ownDataGuard{ResticEngine: eng, s: s}
+		s.engine = guardOwnData(eng, s)
 	}
 	s.anomalies = newAnomalyEngine(s, time.Now)
 	s.load = hostload.NewSampler(procDir, cgroupDir, loadEvery)
