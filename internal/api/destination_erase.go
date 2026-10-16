@@ -49,8 +49,8 @@ const forgetChunk = 200
 type destinationErasure struct {
 	// Removal is what removing the destination detaches. A request to delete
 	// sends it back, so nothing is deleted for sections that changed since.
-	Removal  destinationRemoval `json:"removal"`
-	Sections []erasureSection   `json:"sections"`
+	Removal  locationRemoval  `json:"removal"`
+	Sections []erasureSection `json:"sections"`
 	// Backups and Entries count what loses a copy over the sections that are
 	// emptied. BackupsOnlyThere are the backups among them that no other place
 	// BombVault could read holds.
@@ -78,6 +78,9 @@ type erasureSection struct {
 	// Kept is one of the erasureKept reasons, empty for a repository that is
 	// emptied.
 	Kept string `json:"kept,omitempty"`
+	// Use is home for a section's own folder and repo for a named repository,
+	// empty for a copy or a direct repository.
+	Use string `json:"use,omitempty"`
 }
 
 // erasureEntry is an entry by the identity its backups carry, such as
@@ -106,6 +109,53 @@ type erasurePlan struct {
 	repos  []erasureRepo
 	places places
 	live   []liveRepo
+	// destination is the destination being emptied, "" for any other kind of
+	// location.
+	destination string
+	contexts    map[string]ownerContext
+	// listed keeps each repository's listing, which the sections of a named
+	// repository share.
+	listed map[string]repoListing
+}
+
+type repoListing struct {
+	snaps []restic.Snapshot
+	err   error
+}
+
+func (s *Service) newErasurePlan(settings store.Settings, removal locationRemoval, objectID, destination string) (erasurePlan, error) {
+	live, err := s.liveRepos(settings)
+	if err != nil {
+		return erasurePlan{}, err
+	}
+	return erasurePlan{
+		destinationErasure: destinationErasure{
+			Removal: removal, Sections: []erasureSection{}, LastCopies: []erasureEntry{}, Key: "erase:" + objectID,
+		},
+		places: s.placesNow(), live: live, destination: destination,
+		contexts: map[string]ownerContext{}, listed: map[string]repoListing{},
+	}, nil
+}
+
+// ownerContext reads the domain's owner rules once per plan.
+func (p *erasurePlan) ownerContext(s *Service, domain string) (ownerContext, error) {
+	if oc, ok := p.contexts[domain]; ok {
+		return oc, nil
+	}
+	oc, err := s.ownerContextFor(domain)
+	if err == nil {
+		p.contexts[domain] = oc
+	}
+	return oc, err
+}
+
+func (p *erasurePlan) list(ctx context.Context, s *Service, loc string, mode restic.Mode) ([]restic.Snapshot, error) {
+	if l, ok := p.listed[loc]; ok {
+		return l.snaps, l.err
+	}
+	snaps, err := s.listRepo(ctx, loc, mode)
+	p.listed[loc] = repoListing{snaps, err}
+	return snaps, err
 }
 
 // sharedBy says why the repository at raw stays when it is, holds or lies
@@ -205,7 +255,7 @@ func (s *Service) heldOutside(ctx context.Context, settings store.Settings, doma
 		log.Printf("api: erase: the other %s targets could not be read and count as empty: %v", domain, err) //nolint:gosec // G706: domain is a fixed literal
 	}
 	for _, t := range targets {
-		if t.DestinationID == destinationID {
+		if destinationID != "" && t.DestinationID == destinationID {
 			continue
 		}
 		if loc, err := s.resolveRepo(t.Repo); err != nil || !elsewhere(loc) {
@@ -236,56 +286,14 @@ func (s *Service) planErasure(ctx context.Context, id string) (erasurePlan, erro
 	if err != nil {
 		return erasurePlan{}, err
 	}
-	live, err := s.liveRepos(settings)
+	plan, err := s.newErasurePlan(settings, removal, id, id)
 	if err != nil {
 		return erasurePlan{}, err
 	}
-	plan := erasurePlan{destinationErasure: destinationErasure{
-		Removal: removal, Sections: []erasureSection{}, LastCopies: []erasureEntry{}, Key: "erase:" + id,
-	}, places: s.placesNow(), live: live}
-	contexts := map[string]ownerContext{}
 	for _, t := range targets {
-		if _, known := contexts[t.Domain]; !known {
-			if contexts[t.Domain], err = s.ownerContextFor(t.Domain); err != nil {
-				return erasurePlan{}, err
-			}
-		}
-		direct, found, err := s.store.CompanionFor(t.ID)
-		if err != nil {
+		if err := plan.addTarget(ctx, s, settings, t); err != nil {
 			return erasurePlan{}, err
 		}
-		// A direct repository in a folder inside its target is a repository of
-		// its own there, which a delete in the target never reaches.
-		inside := found && insideOwnTarget(t, direct.Repo)
-		self := []string{t.ID, id}
-		if inside {
-			self = append(self, direct.ID)
-		}
-		kept := plan.sharedBy(s, t.Repo, self...)
-		if s.refusesDeletes(t) {
-			kept = erasureKeptAppendOnly
-		}
-		plan.add(ctx, s, settings, contexts[t.Domain], t, store.OffsiteTarget{}, kept)
-
-		if !found {
-			continue
-		}
-		use, err := s.namedRepoUse(direct.ID)
-		if err != nil {
-			return erasurePlan{}, err
-		}
-		self = []string{direct.ID, id}
-		if inside {
-			self = append(self, t.ID)
-		}
-		kept = plan.sharedBy(s, direct.Repo, self...)
-		switch {
-		case use.InUse():
-			kept = erasureKeptInUse
-		case kept == "" && direct.Immutable:
-			kept = erasureKeptAppendOnly
-		}
-		plan.add(ctx, s, settings, contexts[t.Domain], t, direct, kept)
 	}
 	// A section that moved to another destination left its repository here,
 	// where no target points at it. One that a repository in use shares is not
@@ -303,7 +311,8 @@ func (s *Service) planErasure(ctx context.Context, id string) (erasurePlan, erro
 		if err != nil || !s.engine.RepoOpens(ctx, loc, s.offsiteModeForTarget(settings, left)) {
 			continue
 		}
-		if contexts[domain], err = s.ownerContextFor(domain); err != nil {
+		oc, err := plan.ownerContext(s, domain)
+		if err != nil {
 			return erasurePlan{}, err
 		}
 		kept := ""
@@ -311,14 +320,65 @@ func (s *Service) planErasure(ctx context.Context, id string) (erasurePlan, erro
 			kept = erasureKeptAppendOnly
 		}
 		at := len(plan.Sections)
-		plan.add(ctx, s, settings, contexts[domain], left, store.OffsiteTarget{}, kept)
+		plan.addCopy(ctx, s, settings, oc, left, store.OffsiteTarget{}, kept)
 		if plan.Sections[at].Backups == 0 {
 			plan.Sections, plan.repos = plan.Sections[:at], plan.repos[:at]
 		}
 	}
-	plan.count(ctx, s, settings, id, contexts)
-	plan.Removal.Erasure = plan.digest()
+	plan.finish(ctx, s, settings)
 	return plan, nil
+}
+
+// addTarget appends a target's copy and, when it has one, its direct
+// repository.
+func (p *erasurePlan) addTarget(ctx context.Context, s *Service, settings store.Settings, t store.OffsiteTarget) error {
+	oc, err := p.ownerContext(s, t.Domain)
+	if err != nil {
+		return err
+	}
+	direct, found, err := s.store.CompanionFor(t.ID)
+	if err != nil {
+		return err
+	}
+	// A direct repository in a folder inside its target is a repository of
+	// its own there, which a delete in the target never reaches.
+	inside := found && insideOwnTarget(t, direct.Repo)
+	self := []string{t.ID, p.destination}
+	if inside {
+		self = append(self, direct.ID)
+	}
+	kept := p.sharedBy(s, t.Repo, self...)
+	if s.refusesDeletes(t) {
+		kept = erasureKeptAppendOnly
+	}
+	p.addCopy(ctx, s, settings, oc, t, store.OffsiteTarget{}, kept)
+
+	if !found {
+		return nil
+	}
+	use, err := s.namedRepoUse(direct.ID)
+	if err != nil {
+		return err
+	}
+	self = []string{direct.ID, p.destination}
+	if inside {
+		self = append(self, t.ID)
+	}
+	kept = p.sharedBy(s, direct.Repo, self...)
+	switch {
+	case use.InUse():
+		kept = erasureKeptInUse
+	case kept == "" && direct.Immutable:
+		kept = erasureKeptAppendOnly
+	}
+	p.addCopy(ctx, s, settings, oc, t, direct, kept)
+	return nil
+}
+
+// finish counts what the erasure takes and seals it with its digest.
+func (p *erasurePlan) finish(ctx context.Context, s *Service, settings store.Settings) {
+	p.count(ctx, s, settings)
+	p.Removal.Erasure = p.digest()
 }
 
 // digest sums up what the erasure takes, down to the snapshot ids of each
@@ -346,24 +406,32 @@ func (s *Service) refusesDeletes(t store.OffsiteTarget) bool {
 	return err != nil || found && test.Protected
 }
 
-// add lists one repository of a target, its copy or its direct repository,
-// and appends it as a section. One that cannot be listed is kept.
-func (p *erasurePlan) add(ctx context.Context, s *Service, settings store.Settings, oc ownerContext, t, direct store.OffsiteTarget, kept string) {
+// addCopy appends one repository of a target, its copy or its direct
+// repository.
+func (p *erasurePlan) addCopy(ctx context.Context, s *Service, settings store.Settings, oc ownerContext, t, direct store.OffsiteTarget, kept string) {
 	raw := t.Repo
 	if direct.ID != "" {
 		raw = direct.Repo
 	}
 	section := erasureSection{Domain: t.Domain, TargetID: t.ID, RepoID: direct.ID, Repo: scrubRepoLocation(raw), Kept: kept}
 	repo := erasureRepo{domain: t.Domain, target: t, direct: direct.ID != ""}
+	p.add(ctx, s, oc, section, repo, raw, func(loc string) restic.Mode {
+		if repo.direct {
+			return s.primaryModeFor(settings, t.Domain, loc)
+		}
+		return s.offsiteModeForTarget(settings, t)
+	})
+}
+
+// add lists the repository at raw and appends it as a section. One that
+// cannot be listed is kept.
+func (p *erasurePlan) add(ctx context.Context, s *Service, oc ownerContext, section erasureSection, repo erasureRepo, raw string, modeOf func(loc string) restic.Mode) {
 	loc, err := s.resolveRepo(raw)
 	if err == nil {
-		repo.loc, repo.mode = loc, s.offsiteModeForTarget(settings, t)
-		if repo.direct {
-			repo.mode = s.primaryModeFor(settings, t.Domain, loc)
-		}
+		repo.loc, repo.mode = loc, modeOf(loc)
 		var all []restic.Snapshot
-		if all, err = s.listRepo(ctx, loc, repo.mode); err == nil {
-			repo.snaps = ofSection(all, t.Domain)
+		if all, err = p.list(ctx, s, loc, repo.mode); err == nil {
+			repo.snaps = ofSection(all, repo.domain)
 			repo.owners = oc.owners(repo.snaps)
 		}
 	}
@@ -381,7 +449,7 @@ func (p *erasurePlan) add(ctx context.Context, s *Service, settings store.Settin
 
 // count fills in the totals over the sections that are emptied and finds the
 // entries nothing else holds a backup of.
-func (p *erasurePlan) count(ctx context.Context, s *Service, settings store.Settings, id string, contexts map[string]ownerContext) {
+func (p *erasurePlan) count(ctx context.Context, s *Service, settings store.Settings) {
 	var emptied []string
 	for i, section := range p.Sections {
 		if section.Kept == "" {
@@ -398,7 +466,7 @@ func (p *erasurePlan) count(ctx context.Context, s *Service, settings store.Sett
 		repo := p.repos[i]
 		held, known := outside[repo.domain]
 		if !known {
-			held = s.heldOutside(ctx, settings, repo.domain, id, contexts[repo.domain], emptied)
+			held = s.heldOutside(ctx, settings, repo.domain, p.destination, p.contexts[repo.domain], emptied)
 			outside[repo.domain] = held
 		}
 		p.Backups += len(repo.snaps)
@@ -433,16 +501,29 @@ type erasureRefused struct {
 func (e *erasureRefused) Error() string { return e.err.Error() }
 func (e *erasureRefused) Unwrap() error { return e.err }
 
-// StartDestinationErasure deletes the backups at a destination and then
-// removes it, in the background. expect is the removal that was shown and
-// named the entries the person agreed to leave without any backup. Every
-// section of the destination stays locked until the run ends, so no copy
-// lands there in between. removed runs once the destination is gone.
-func (s *Service) StartDestinationErasure(ctx context.Context, id string, expect destinationRemoval, named []string, removed func(store.Settings)) (destinationErasure, error) {
-	targets, err := s.store.DestinationTargets(id)
-	if err != nil {
-		return destinationErasure{}, err
+// erasureJob is the deletion of the backups at one storage location: how its
+// plan is made and how the location goes once they are gone.
+type erasureJob struct {
+	// id is the location's object id, which a running move names too.
+	id     string
+	plan   func(ctx context.Context) (erasurePlan, error)
+	remove func(removal locationRemoval) (store.Settings, error)
+}
+
+func (s *Service) destinationErasureJob(id string) erasureJob {
+	return erasureJob{
+		id:     id,
+		plan:   func(ctx context.Context) (erasurePlan, error) { return s.planErasure(ctx, id) },
+		remove: func(removal locationRemoval) (store.Settings, error) { return s.RemoveDestination(id, removal) },
 	}
+}
+
+// StartErasure deletes the backups at a storage location and then removes
+// it, in the background. expect is the removal that was shown and named the
+// entries the person agreed to leave without any backup. Every section of
+// the location stays locked until the run ends, so no backup or copy lands
+// there in between. removed runs once the location is gone.
+func (s *Service) StartErasure(ctx context.Context, job erasureJob, expect locationRemoval, named []string, removed func(store.Settings)) (destinationErasure, error) {
 	var unlocks []func()
 	unlock := func() {
 		for _, u := range unlocks {
@@ -462,22 +543,17 @@ func (s *Service) StartDestinationErasure(ctx context.Context, id string, expect
 		unlocks = append(unlocks, u)
 		return nil
 	}
-	for _, t := range targets {
-		if err := lock(t.Domain); err != nil {
-			unlock()
-			return destinationErasure{}, err
-		}
-	}
-	// Only the plan finds what a moved section left behind, so its domain is
-	// locked after the plan and the plan is made again under that lock.
+	// Which sections a plan touches is known only once it is made, so their
+	// domains are locked after it and the plan is made again under that lock.
 	var plan erasurePlan
+	var err error
 	for {
-		if plan, err = s.planErasure(ctx, id); err != nil {
+		if plan, err = job.plan(ctx); err != nil {
 			break
 		}
 		before := len(locked)
-		for _, sec := range plan.Sections {
-			if err = lock(sec.Domain); err != nil {
+		for _, domain := range plan.domains() {
+			if err = lock(domain); err != nil {
 				break
 			}
 		}
@@ -496,7 +572,7 @@ func (s *Service) StartDestinationErasure(ctx context.Context, id string, expect
 	rctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 24*time.Hour)
 	s.cancelMu.Lock()
 	for _, places := range s.moving {
-		if places[0] == id || places[1] == id {
+		if places[0] == job.id || places[1] == job.id {
 			s.cancelMu.Unlock()
 			cancel()
 			unlock()
@@ -510,7 +586,7 @@ func (s *Service) StartDestinationErasure(ctx context.Context, id string, expect
 	s.cancelMu.Unlock()
 
 	go func() {
-		defer s.recoverOperation("erase destination", nil, nil)
+		defer s.recoverOperation("erase storage location", nil, nil)
 		defer unlock()
 		defer cancel()
 		defer s.unregisterCancel(plan.Key)
@@ -519,20 +595,32 @@ func (s *Service) StartDestinationErasure(ctx context.Context, id string, expect
 		err := s.runErasure(rctx, plan, startedAt)
 		if err == nil {
 			var settings store.Settings
-			if settings, err = s.RemoveDestination(id, plan.Removal); err == nil {
+			if settings, err = job.remove(plan.Removal); err == nil {
 				removed(settings)
 			}
 		}
 		s.progEnd(plan.Key, "maintenance", err == nil, startedAt)
 		if err != nil {
-			log.Printf("api: erase destination: %v", scrubError(err)) //nolint:gosec // G706: the error is scrubbed
+			log.Printf("api: erase storage location: %v", scrubError(err)) //nolint:gosec // G706: the error is scrubbed
 		}
 	}()
 	return plan.destinationErasure, nil
 }
 
+// domains are the sections a plan deletes from or takes the location from.
+func (p erasurePlan) domains() []string {
+	var out []string
+	for _, sec := range p.Sections {
+		out = append(out, sec.Domain)
+	}
+	for _, sec := range p.Removal.Sections {
+		out = append(out, sec.Domain)
+	}
+	return out
+}
+
 // refusal says why a planned deletion must not start, nil when it may.
-func (p erasurePlan) refusal(expect destinationRemoval, named []string) error {
+func (p erasurePlan) refusal(expect locationRemoval, named []string) error {
 	if !p.Removal.same(expect) {
 		return &removalChangedErr{now: p.Removal}
 	}
@@ -649,8 +737,8 @@ func (h *Handler) handleEraseDestination(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	var body struct {
-		Expect     destinationRemoval `json:"expect"`
-		LastCopies []string           `json:"lastCopies"`
+		Expect     locationRemoval `json:"expect"`
+		LastCopies []string        `json:"lastCopies"`
 	}
 	if !decodeBody(w, r, &body) {
 		return
@@ -662,7 +750,7 @@ func (h *Handler) handleEraseDestination(w http.ResponseWriter, r *http.Request)
 			log.Printf("api: erase destination: the scheduler did not reload: %v", err)
 		}
 	}
-	erasure, err := h.svc.StartDestinationErasure(r.Context(), r.PathValue("id"), body.Expect, body.LastCopies, removed)
+	erasure, err := h.svc.StartErasure(r.Context(), h.svc.destinationErasureJob(r.PathValue("id")), body.Expect, body.LastCopies, removed)
 	var changed *removalChangedErr
 	var refused *erasureRefused
 	switch {

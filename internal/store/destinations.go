@@ -656,6 +656,35 @@ func (r *Repo) RemoveDestination(id string, settle func(s *Settings, primaries [
 	return nil
 }
 
+// RemoveOffsiteTarget deletes an off-site target that follows no destination,
+// the way RemoveDestination deletes the targets of one. settle gets the domain
+// when it was the section's primary off-site target.
+func (r *Repo) RemoveOffsiteTarget(id string, settle func(s *Settings, primaries []string)) error {
+	r.settingsMu.Lock()
+	defer r.settingsMu.Unlock()
+	err := r.inTx(func(tx *sql.Tx) error {
+		t, err := scanOffsiteTarget(tx.QueryRow(`SELECT `+offsiteTargetCols+`
+			FROM offsite_targets WHERE id = ? AND role = ? AND destination_id = ''`, id, RoleOffsite))
+		if err != nil {
+			return err
+		}
+		if err := dropUnusedDirectTx(tx, t.ID); err != nil {
+			return err
+		}
+		if err := deleteTargetKeepingDirectTx(tx, t.ID); err != nil {
+			return err
+		}
+		if t.SortOrder != 0 {
+			return nil
+		}
+		return settleTx(tx, func(s *Settings) { settle(s, []string{t.Domain}) })
+	})
+	if err != nil {
+		return fmt.Errorf("RemoveOffsiteTarget: %w", err)
+	}
+	return nil
+}
+
 // dropUnusedDirectTx deletes a target's direct repository when no item and no
 // default backs up to it.
 func dropUnusedDirectTx(tx *sql.Tx, targetID string) error {

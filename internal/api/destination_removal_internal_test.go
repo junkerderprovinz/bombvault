@@ -10,7 +10,7 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-func (f *placementFixture) removalPreview(d store.OffsiteTarget) destinationRemoval {
+func (f *placementFixture) removalPreview(d store.OffsiteTarget) locationRemoval {
 	f.t.Helper()
 	res := f.do("GET", "/api/offsite/destinations/"+d.ID+"/removal", nil)
 	if res["ok"] != true {
@@ -20,14 +20,14 @@ func (f *placementFixture) removalPreview(d store.OffsiteTarget) destinationRemo
 	if err != nil {
 		f.t.Fatal(err)
 	}
-	var out destinationRemoval
+	var out locationRemoval
 	if err := json.Unmarshal(b, &out); err != nil {
 		f.t.Fatal(err)
 	}
 	return out
 }
 
-func (f *placementFixture) remove(d store.OffsiteTarget, expect destinationRemoval) map[string]any {
+func (f *placementFixture) remove(d store.OffsiteTarget, expect locationRemoval) map[string]any {
 	f.t.Helper()
 	return f.do("POST", "/api/offsite/destinations/"+d.ID+"/removal", map[string]any{"expect": expect})
 }
@@ -56,7 +56,7 @@ func TestTheRemovalPreviewCountsWhatEachSectionKeepsAtTheDestination(t *testing.
 	if len(got.Sections) != 2 {
 		t.Fatalf("sections = %+v, want files and vms", got.Sections)
 	}
-	want := removalSection{Domain: "vms", TargetID: vms.ID, Repo: "rest:https://box:8000/bv/vms", Entries: 2, Backups: 10, ListedAt: 1700000000}
+	want := removalSection{Domain: "vms", Use: removalCopy, TargetID: vms.ID, Repo: "rest:https://box:8000/bv/vms", Entries: 2, Backups: 10, ListedAt: 1700000000}
 	if got.Sections[1] != want {
 		t.Fatalf("vms = %+v, want %+v", got.Sections[1], want)
 	}

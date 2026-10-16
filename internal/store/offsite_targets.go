@@ -806,6 +806,71 @@ func (r *Repo) DeleteNamedRepoIfUnused(id string) (NamedRepoUse, error) {
 	return use, nil
 }
 
+// repoItemTables are the item tables whose repo column can name a repository,
+// by the domain they belong to.
+var repoItemTables = []struct{ domain, table string }{
+	{"containers", "targets"}, {"vms", "vms"}, {"files", "file_sets"}, {"zfs", "zfs_datasets"},
+}
+
+// NamedRepoItems counts the items of each domain that back up to a named
+// repository. A domain without any is left out.
+func (r *Repo) NamedRepoItems(id string) (map[string]int, error) {
+	out := map[string]int{}
+	for _, t := range repoItemTables {
+		var n int
+		//nolint:gosec // G202: the table name comes from repoItemTables, never from input.
+		if err := r.db.QueryRow(`SELECT COUNT(*) FROM `+t.table+` WHERE repo = ?`, id).Scan(&n); err != nil {
+			return nil, fmt.Errorf("NamedRepoItems: %w", err)
+		}
+		if n > 0 {
+			out[t.domain] = n
+		}
+	}
+	return out, nil
+}
+
+// RemoveNamedRepo deletes a named repository and sends everything that pointed
+// at it back to its section: items take the section's place at their next
+// backup, and a default that named it falls back to the section's own folder.
+// The repository is dropped from the items' former homes too, since nothing
+// can read it once its row is gone. A direct repository is refused, as in
+// DeleteNamedRepoIfUnused.
+func (r *Repo) RemoveNamedRepo(id string) error {
+	err := r.inTx(func(tx *sql.Tx) error {
+		var companionOf string
+		if err := tx.QueryRow(`SELECT companion_of FROM offsite_targets WHERE id = ? AND role = ?`,
+			id, RoleRepo).Scan(&companionOf); err != nil {
+			return err
+		}
+		if companionOf != "" {
+			return ErrDirectRepo
+		}
+		for _, t := range repoItemTables {
+			set := `repo = '', repo_chosen = ?`
+			args := []any{RepoOpen, id}
+			if t.table == "zfs_datasets" {
+				set, args = `repo = ''`, []any{id}
+			}
+			//nolint:gosec // G202: the table name comes from repoItemTables, never from input.
+			if _, err := tx.Exec(`UPDATE `+t.table+` SET `+set+` WHERE repo = ?`, args...); err != nil {
+				return err
+			}
+		}
+		if _, err := tx.Exec(`UPDATE placement_defaults SET home = '' WHERE home = ?`, id); err != nil {
+			return err
+		}
+		if _, err := tx.Exec(`DELETE FROM former_homes WHERE repo = ?`, id); err != nil {
+			return err
+		}
+		_, err := tx.Exec(`DELETE FROM offsite_targets WHERE id = ? AND role = ?`, id, RoleRepo)
+		return err
+	})
+	if err != nil {
+		return fmt.Errorf("RemoveNamedRepo: %w", err)
+	}
+	return nil
+}
+
 // SetNamedRepoLocationIfUnused moves a named repository's location ONLY while
 // nothing points at it, in one transaction, for the same reason
 // DeleteNamedRepoIfUnused does it that way: everything already written stays

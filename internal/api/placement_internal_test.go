@@ -266,6 +266,8 @@ func TestPlacementRefusalsCarryTheirCodes(t *testing.T) {
 		errSettingsOtherKey:        "settings-other-key",
 		errLastCopiesUnnamed:       "last-copies",
 		errNothingToErase:          "nothing-to-erase",
+		errHomeNeeded:              "home-needed",
+		errHomeSame:                "home-same",
 		errMoveSamePlace:           "move-same-place",
 		errMoveSignIn:              "move-sign-in",
 		errMoveRunning:             "move-running",

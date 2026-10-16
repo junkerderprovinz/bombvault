@@ -37,7 +37,7 @@ func erasureOf(t *testing.T, res map[string]any) destinationErasure {
 	return out
 }
 
-func (f *placementFixture) erase(d store.OffsiteTarget, expect destinationRemoval, lastCopies ...string) map[string]any {
+func (f *placementFixture) erase(d store.OffsiteTarget, expect locationRemoval, lastCopies ...string) map[string]any {
 	f.t.Helper()
 	return f.do("POST", "/api/offsite/destinations/"+d.ID+"/erasure", map[string]any{"expect": expect, "lastCopies": lastCopies})
 }
@@ -573,7 +573,7 @@ func TestDeletingTheBackupsAtADestinationTakesALoginPassword(t *testing.T) {
 		body   any
 	}{
 		{"GET", nil},
-		{"POST", map[string]any{"expect": destinationRemoval{}, "lastCopies": []string{"vm:old"}}},
+		{"POST", map[string]any{"expect": locationRemoval{}, "lastCopies": []string{"vm:old"}}},
 	} {
 		code, res := f.call(req.method, "/api/offsite/destinations/"+box.ID+"/erasure", req.body)
 		if code != http.StatusForbidden || res["code"] != codeNoPassword {

@@ -9,24 +9,42 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// destinationRemoval is what removing a destination means for every section
-// that copies to it. Nothing at the destination is touched: the backups there
-// stay as they are and are no longer copied to, listed or aged.
-type destinationRemoval struct {
+// locationRemoval is what removing a storage location means for every section
+// that uses it. Nothing at the location is touched: the backups there stay as
+// they are and are no longer written to, listed or aged.
+type locationRemoval struct {
 	Sections []removalSection `json:"sections"`
 	// Erasure is set on the removal an erasure preview carries: a digest of
 	// the snapshots deleting the backups there takes, sections left behind
 	// included.
 	Erasure string `json:"erasure,omitempty"`
+	// Suggest is the folder a section folder's removal offers its sections
+	// first.
+	Suggest string `json:"suggest,omitempty"`
 }
 
-// removalSection is one section's part of a destination. Entries and Backups
+// Uses of a location by a section in a removal.
+const (
+	removalCopy = "copy"
+	removalHome = "home"
+	removalRepo = "repo"
+)
+
+// removalSection is one section's part of a location. Entries and Backups
 // are what the last listing of its repository there found, ListedAt when that
 // was, 0 for never.
 type removalSection struct {
 	Domain   string `json:"domain"`
+	Use      string `json:"use"`
 	TargetID string `json:"targetId"`
 	Repo     string `json:"repo"`
+	// Items and Default say what of a section backs up to a named repository:
+	// that many entries, and its default.
+	Items   int  `json:"items,omitempty"`
+	Default bool `json:"default,omitempty"`
+	// Folder is the last segment of a section's own folder, which it keeps
+	// under the folder it moves to.
+	Folder string `json:"folder,omitempty"`
 	// Primary marks the section's built-in off-site copy, whose field in the
 	// settings is cleared with it.
 	Primary    bool  `json:"primary"`
@@ -51,34 +69,36 @@ type removalDirect struct {
 	Kept           bool     `json:"kept"`
 }
 
-// same reports whether two previews name the same sections and keep the same
-// direct repositories for the same number of entries.
-func (r destinationRemoval) same(o destinationRemoval) bool {
+// same reports whether two previews name the same sections, send the same
+// entries elsewhere and keep the same direct repositories for the same number
+// of entries.
+func (r locationRemoval) same(o locationRemoval) bool {
 	return slices.EqualFunc(r.Sections, o.Sections, func(a, b removalSection) bool {
-		if a.TargetID != b.TargetID || (a.Direct == nil) != (b.Direct == nil) {
+		if a.Domain != b.Domain || a.Use != b.Use || a.TargetID != b.TargetID || a.Repo != b.Repo ||
+			a.Items != b.Items || a.Default != b.Default || (a.Direct == nil) != (b.Direct == nil) {
 			return false
 		}
 		return a.Direct == nil || (a.Direct.RepoID == b.Direct.RepoID && a.Direct.Items == b.Direct.Items && a.Direct.Kept == b.Direct.Kept)
 	})
 }
 
-func (s *Service) destinationRemovalPreview(id string) (store.OffsiteTarget, destinationRemoval, error) {
+func (s *Service) destinationRemovalPreview(id string) (store.OffsiteTarget, locationRemoval, error) {
 	d, ok, err := s.store.GetDestination(id)
 	if err != nil {
-		return store.OffsiteTarget{}, destinationRemoval{}, err
+		return store.OffsiteTarget{}, locationRemoval{}, err
 	}
 	if !ok {
-		return store.OffsiteTarget{}, destinationRemoval{}, store.ErrNotDestination
+		return store.OffsiteTarget{}, locationRemoval{}, store.ErrNotDestination
 	}
 	held, err := s.store.DestinationTargets(id)
 	if err != nil {
-		return store.OffsiteTarget{}, destinationRemoval{}, err
+		return store.OffsiteTarget{}, locationRemoval{}, err
 	}
-	out := destinationRemoval{Sections: make([]removalSection, 0, len(held))}
+	out := locationRemoval{Sections: make([]removalSection, 0, len(held))}
 	for _, t := range held {
 		section, err := s.removalSection(t)
 		if err != nil {
-			return store.OffsiteTarget{}, destinationRemoval{}, err
+			return store.OffsiteTarget{}, locationRemoval{}, err
 		}
 		out.Sections = append(out.Sections, section)
 	}
@@ -87,7 +107,7 @@ func (s *Service) destinationRemovalPreview(id string) (store.OffsiteTarget, des
 
 func (s *Service) removalSection(t store.OffsiteTarget) (removalSection, error) {
 	section := removalSection{
-		Domain: t.Domain, TargetID: t.ID, Repo: scrubRepoLocation(t.Repo),
+		Domain: t.Domain, Use: removalCopy, TargetID: t.ID, Repo: scrubRepoLocation(t.Repo),
 		Primary: t.SortOrder == 0, AppendOnly: t.Immutable,
 	}
 	copies, err := s.store.ItemCopiesForDomain(t.Domain)
@@ -131,7 +151,7 @@ func (s *Service) removalSection(t store.OffsiteTarget) (removalSection, error) 
 
 // removalChangedErr is the refusal of a removal whose sections are no longer
 // the ones that were shown. It carries them as they are.
-type removalChangedErr struct{ now destinationRemoval }
+type removalChangedErr struct{ now locationRemoval }
 
 func (e *removalChangedErr) Error() string { return errPlacementStale.Error() }
 
@@ -141,7 +161,7 @@ func (e *removalChangedErr) Is(target error) bool { return target == errPlacemen
 // sections that copy to it, after checking that they are the ones expect
 // lists. The data there stays. The remote or credential set the destination
 // brought along goes too, unless a repository that is kept still needs it.
-func (s *Service) RemoveDestination(id string, expect destinationRemoval) (store.Settings, error) {
+func (s *Service) RemoveDestination(id string, expect locationRemoval) (store.Settings, error) {
 	d, now, err := s.destinationRemovalPreview(id)
 	if err != nil {
 		return store.Settings{}, err
@@ -149,16 +169,20 @@ func (s *Service) RemoveDestination(id string, expect destinationRemoval) (store
 	if !now.same(expect) {
 		return store.Settings{}, &removalChangedErr{now: now}
 	}
-	if err := s.store.RemoveDestination(id, func(st *store.Settings, primaries []string) {
-		for _, domain := range primaries {
-			setOffsiteRepoInSettings(st, domain, "")
-			setOffsiteImmutableInSettings(st, domain, false)
-		}
-	}); err != nil {
+	if err := s.store.RemoveDestination(id, clearOffsiteFields); err != nil {
 		return store.Settings{}, err
 	}
 	s.dropDestinationSignIn(d)
 	return s.store.GetSettings()
+}
+
+// clearOffsiteFields empties the off-site field of each domain whose primary
+// target went, so a settings save cannot bring the copy back.
+func clearOffsiteFields(st *store.Settings, primaries []string) {
+	for _, domain := range primaries {
+		setOffsiteRepoInSettings(st, domain, "")
+		setOffsiteImmutableInSettings(st, domain, false)
+	}
 }
 
 // dropDestinationSignIn removes the rclone remote or the credential set a
@@ -196,7 +220,7 @@ func (h *Handler) handleDestinationRemovalPreview(w http.ResponseWriter, r *http
 // POST /api/offsite/destinations/{id}/removal
 func (h *Handler) handleRemoveDestination(w http.ResponseWriter, r *http.Request) {
 	var body struct {
-		Expect destinationRemoval `json:"expect"`
+		Expect locationRemoval `json:"expect"`
 	}
 	if !decodeBody(w, r, &body) {
 		return

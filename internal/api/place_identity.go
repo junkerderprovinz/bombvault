@@ -82,7 +82,7 @@ func (s *Service) liveRepos(settings store.Settings) ([]liveRepo, error) {
 	var out []liveRepo
 	for _, domain := range offsiteConfigDomains {
 		if loc, err := s.repoFor(settings, domain, "local"); err == nil {
-			out = append(out, liveRepo{loc: loc, kind: liveHome})
+			out = append(out, liveRepo{id: homeID(domain), loc: loc, kind: liveHome})
 		}
 	}
 	for _, list := range []struct {
