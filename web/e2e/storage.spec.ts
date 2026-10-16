@@ -529,10 +529,24 @@ test.describe("on the desktop", () => {
 
   test("the tamper test runs against the location's own target", async ({ page }) => {
     const staged = await stageStorage(page, 1280);
+    // The staged copy is switched off, and the server refuses to test one.
+    const on = { ...REST, sections: REST.sections.map((s) => ({ ...s, enabled: true })) };
+    await page.route(
+      (url) => decodeURIComponent(url.pathname) === `/api/storage/locations/${REST.id}`,
+      (route) => route.fulfill({ json: { ok: true, location: on } }),
+    );
     await page.goto(locationUrl(REST.id));
     await expect(page.getByText("Zuletzt: Löschen verweigert", { exact: false })).toBeVisible();
     await page.getByRole("button", { name: "Testen", exact: true }).click();
     await expect.poll(() => staged.writes.map((w) => w.path)).toEqual(["/api/offsite/targets/t-rest/tamper-test"]);
     await expect(page.getByRole("button", { name: "Bestanden" })).toBeVisible();
+  });
+
+  test("a location whose only copy is switched off offers no tamper test", async ({ page }) => {
+    const staged = await stageStorage(page, 1280);
+    await page.goto(locationUrl(REST.id));
+    await expect(page.getByText("Jede Kopie an diesen Speicherort ist ausgeschaltet", { exact: false })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Testen", exact: true })).toHaveCount(0);
+    expect(staged.writes).toEqual([]);
   });
 });
