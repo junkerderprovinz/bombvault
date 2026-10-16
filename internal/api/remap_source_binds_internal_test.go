@@ -11,7 +11,7 @@ import (
 // plainDockerHost maps /srv/appdata on the host to /host/user, the way the
 // generic compose file is set up.
 func plainDockerHost() *Service {
-	return &Service{cfg: config.Config{HostMountRoot: "/host/user", HostSourceRoot: "/srv/appdata"}}
+	return &Service{cfg: config.Config{HostMountRoot: "/host/user", HostSourceRoot: "/srv/appdata", DataRootSegments: unraidSegments}}
 }
 
 func TestRemapSourceBindsFindsAnUnraidBindOnAPlainDockerHost(t *testing.T) {
@@ -38,6 +38,18 @@ func TestRemapSourceBindsFollowsABindOnTheContainerFolder(t *testing.T) {
 	}
 }
 
+func TestRemapSourceBindsFindsAZimaOSAppDataBind(t *testing.T) {
+	s := plainDockerHost()
+	binds := []string{"/DATA/AppData/web:/config", "/DATA/AppDataBackup/web:/backup"}
+	dirs := []backup.RestoreDir{{Subtree: "/host/user/DATA/AppData/web", Target: "/host/user/restore/web"}}
+
+	got := rewriteBinds(binds, s.remapSourceBinds(binds, dirs, map[string]string{"x": "y"}))
+	want := []string{"/srv/appdata/restore/web:/config", "/DATA/AppDataBackup/web:/backup"}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("binds = %v, want %v", got, want)
+	}
+}
+
 func TestRemapSourceBindsLeavesAnAmbiguousBindAlone(t *testing.T) {
 	s := plainDockerHost()
 	binds := []string{"/mnt/user/appdata/web:/a", "/mnt/cache/appdata/web:/b"}
@@ -50,7 +62,7 @@ func TestRemapSourceBindsLeavesAnAmbiguousBindAlone(t *testing.T) {
 }
 
 func TestRemapSourceBindsKeepsAnExactMatch(t *testing.T) {
-	s := &Service{cfg: config.Config{HostMountRoot: "/host/user", HostSourceRoot: "/mnt"}}
+	s := &Service{cfg: config.Config{HostMountRoot: "/host/user", HostSourceRoot: "/mnt", DataRootSegments: unraidSegments}}
 	binds := []string{"/mnt/user/appdata/web:/config"}
 	dirs := []backup.RestoreDir{{Subtree: "/host/user/user/appdata/web", Target: "/host/user/zfs/appdata/web"}}
 	remap := map[string]string{"/mnt/user/appdata/web": "/mnt/zfs/appdata/web"}

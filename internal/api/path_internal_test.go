@@ -6,6 +6,9 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/config"
 )
 
+// unraidSegments is config.Load's default DATA_ROOT_SEGMENTS.
+var unraidSegments = []string{"appdata"}
+
 // svcWithMount builds a Service with only the host data mount configured,
 // which is all toContainerPath needs.
 func svcWithMount() *Service {
@@ -13,7 +16,7 @@ func svcWithMount() *Service {
 		HostSourceRoot: "/mnt",
 		HostMountRoot:  "/host/user",
 		// config.Load always sets this, so a test that bypasses it has to.
-		DataRootSegments: []string{"appdata"},
+		DataRootSegments: unraidSegments,
 	}}
 }
 

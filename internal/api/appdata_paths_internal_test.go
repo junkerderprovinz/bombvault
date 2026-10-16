@@ -271,3 +271,44 @@ func TestResolveAppdataPathsDefaultSegments(t *testing.T) {
 		t.Fatalf("resolveAppdataPaths = %v, want [%q] (unset DATA_ROOT_SEGMENTS must reproduce pre-Task-3 behavior byte-for-byte)", got, want)
 	}
 }
+
+// TestDataRootSegmentMatchIgnoresCase: ZimaOS keeps app data under
+// /DATA/AppData, so the segment has to match in any case, but only as a
+// whole segment.
+func TestDataRootSegmentMatchIgnoresCase(t *testing.T) {
+	cases := []struct {
+		path     string
+		segments []string
+		want     bool
+	}{
+		{"/DATA/AppData/x", unraidSegments, true},
+		{"/mnt/user/appdata/x", unraidSegments, true},
+		{"/mnt/cache/APPDATA/x", unraidSegments, true},
+		{"/mnt/user/appdata/x", []string{"AppData"}, true},
+		{"/DATA/AppDataBackup/x", unraidSegments, false},
+		{"/DATA/MyAppData/x", unraidSegments, false},
+		{"/DATA/Media/x", unraidSegments, false},
+	}
+	for _, tc := range cases {
+		if got := matchesAnyDataRootSegment(tc.path, tc.segments); got != tc.want {
+			t.Errorf("matchesAnyDataRootSegment(%q, %v) = %v, want %v", tc.path, tc.segments, got, tc.want)
+		}
+	}
+}
+
+func TestResolveAppdataPathsFindsAZimaOSAppDataBindInItsOwnCase(t *testing.T) {
+	s := &Service{cfg: config.Config{
+		HostSourceRoot:   "/DATA",
+		HostMountRoot:    "/host/data",
+		DataRootSegments: unraidSegments,
+	}}
+	in := model.Inspect{Mounts: []model.Mount{
+		{Type: "bind", Source: "/DATA/AppData/arrowloop", Destination: "/config"},
+		{Type: "bind", Source: "/DATA/AppDataBackup/arrowloop", Destination: "/backup"},
+	}}
+	got := s.resolveAppdataPaths("arrowloop", in)
+	want := "/host/data/AppData/arrowloop"
+	if len(got) != 1 || got[0] != want {
+		t.Fatalf("resolveAppdataPaths = %v, want [%q]", got, want)
+	}
+}

@@ -247,10 +247,10 @@ func TestContainerAppdataRemapTargetsAlwaysUnique(t *testing.T) {
 	}
 }
 
-// TestAppdataRelPathSplit: the split is at the first "appdata" segment, so a
-// nested folder called appdata stays under the real share root. A path without
-// that segment, or the appdata root itself, yields an empty rel and the caller
-// falls back to the basename.
+// TestAppdataRelPathSplit: the split is at the first data-root segment in any
+// case, so a nested folder called appdata stays under the real share root and
+// the root keeps its case on disk. A path without that segment, or the data
+// root itself, yields an empty rel and the caller falls back to the basename.
 func TestAppdataRelPathSplit(t *testing.T) {
 	cases := []struct {
 		in, root, rel string
@@ -258,15 +258,47 @@ func TestAppdataRelPathSplit(t *testing.T) {
 		{"/host/user/user/appdata/SnapOtter/conf", "/host/user/user/appdata", "SnapOtter/conf"},
 		{"/host/user/zfs/appdata/nexterm", "/host/user/zfs/appdata", "nexterm"},
 		{"/host/user/user/appdata/foo/appdata", "/host/user/user/appdata", "foo/appdata"},
+		{"/host/data/AppData/arrowloop/conf", "/host/data/AppData", "arrowloop/conf"},
+		{"/host/user/cache/APPDATA/x", "/host/user/cache/APPDATA", "x"},
 		{"/host/user/user/appdata", "", ""},
 		{"/host/user/zfs/other/thing", "", ""},
 		{"/host/user/user/appdataX/thing", "", ""},
+		{"/host/data/AppDataBackup/x", "", ""},
 	}
 	for _, tc := range cases {
-		root, rel := appdataRelPath(tc.in)
+		root, rel := appdataRelPath(tc.in, unraidSegments)
 		if root != tc.root || rel != tc.rel {
 			t.Fatalf("appdataRelPath(%q) = (%q, %q), want (%q, %q)", tc.in, root, rel, tc.root, tc.rel)
 		}
+	}
+}
+
+func TestContainerAppdataRemapKeepsAZimaOSDataRootInItsOwnCase(t *testing.T) {
+	s := vmRestoreSvc(t, &foreignRecordingEngine{})
+	src := []string{
+		"/host/user/DATA/AppData/arrowloop/conf",
+		"/host/user/DATA/AppData/arrowloop/data",
+	}
+
+	dirs, _ := s.containerAppdataRemap("/host/user/DATA/AppData", src)
+	for _, d := range dirs {
+		if d.Target != d.Subtree {
+			t.Fatalf("in-place remap moved %s to %s", d.Subtree, d.Target)
+		}
+	}
+
+	dirs, remap := s.containerAppdataRemap("/host/user/user/appdata", src)
+	want := map[string]string{
+		"/host/user/DATA/AppData/arrowloop/conf": "/host/user/user/appdata/arrowloop/conf",
+		"/host/user/DATA/AppData/arrowloop/data": "/host/user/user/appdata/arrowloop/data",
+	}
+	for _, d := range dirs {
+		if want[d.Subtree] != d.Target {
+			t.Fatalf("dir %+v: want Target %q", d, want[d.Subtree])
+		}
+	}
+	if got := remap["/mnt/DATA/AppData/arrowloop"]; got != "/mnt/user/appdata/arrowloop" {
+		t.Fatalf("bind on the container folder maps to %q, want /mnt/user/appdata/arrowloop (remap=%v)", got, remap)
 	}
 }
 

@@ -5581,10 +5581,11 @@ func (s *Service) dataOutsideHostMount(in model.Inspect) []string {
 }
 
 // hasSegment reports whether slash-separated path p contains seg as a full path
-// segment (so "/mnt/user/appdata/x" matches "appdata" but "/mnt/appdataX" does not).
+// segment, ignoring case, so "/DATA/AppData/x" matches "appdata" but
+// "/mnt/appdataX" does not.
 func hasSegment(p, seg string) bool {
 	for _, s := range strings.Split(p, "/") {
-		if s == seg {
+		if strings.EqualFold(s, seg) {
 			return true
 		}
 	}
@@ -13591,23 +13592,19 @@ func (s *Service) guardContainerRestoreDestination(ctx context.Context, ref repo
 	return nil
 }
 
-// appdataRelPath splits a backed-up container path into the appdata ROOT it lives
-// in and the container-relative remainder below it, e.g.
+// appdataRelPath splits a backed-up container path at its first data-root
+// segment into that root and the container-relative remainder, e.g.
 // /host/user/user/appdata/SnapOtter/conf → ("/host/user/user/appdata",
-// "SnapOtter/conf") and /host/user/zfs/appdata/nexterm → ("/host/user/zfs/appdata",
-// "nexterm"). The split is on the FIRST "appdata" segment — that is the share/pool
-// root every recorded path is selected by (resolveAppdataPaths keeps a bind only
-// when hasSegment(src,"appdata")), and taking the first occurrence keeps a
-// container that happens to own a nested folder called "appdata"
-// (…/appdata/foo/appdata) anchored at the real root.
-//
-// rel is "" when the path has no "appdata" segment at all or IS an appdata root
-// (a container binding /mnt/user/appdata itself); callers then fall back to the
-// plain basename, which is exactly the pre-#125-fix behaviour for those shapes.
-func appdataRelPath(src string) (root, rel string) {
+// "SnapOtter/conf"). It matches segments the way resolveAppdataPaths selects
+// binds, so ZimaOS's /DATA/AppData splits like Unraid's appdata and keeps its
+// case. Splitting at the first occurrence keeps a nested folder called appdata
+// (…/appdata/foo/appdata) under the real root. rel is "" for a path without a
+// data-root segment or for a data root itself; callers then fall back to the
+// basename.
+func appdataRelPath(src string, segments []string) (root, rel string) {
 	segs := strings.Split(src, "/")
 	for i, seg := range segs {
-		if seg == "appdata" && i+1 < len(segs) {
+		if i+1 < len(segs) && matchesAnyDataRootSegment(seg, segments) {
 			return strings.Join(segs[:i+1], "/"), strings.Join(segs[i+1:], "/")
 		}
 	}
@@ -13651,7 +13648,7 @@ func (s *Service) containerAppdataRemap(destBase string, appdataPaths []string) 
 	takenRoot := map[string]bool{}     // dest root names already handed out
 	for _, cp := range appdataPaths {
 		src := path.Clean(cp)
-		root, rel := appdataRelPath(src)
+		root, rel := appdataRelPath(src, s.cfg.DataRootSegments)
 		if rel == "" {
 			root, rel = path.Dir(src), path.Base(src)
 		}
@@ -13694,8 +13691,8 @@ func (s *Service) containerAppdataRemap(destBase string, appdataPaths []string) 
 // another host root to remap. remap is keyed by this server's host path for
 // each appdata folder, which is the source's bind only when both servers map
 // the same root, such as /mnt on two Unraid boxes. A bind it misses is matched
-// by its path from the appdata folder down, such as appdata/web, when exactly
-// one bind ends in it.
+// by its path from the data-root folder down, such as appdata/web or
+// AppData/web, when exactly one bind ends in it.
 func (s *Service) remapSourceBinds(binds []string, dirs []backup.RestoreDir, remap map[string]string) map[string]string {
 	hosts := make([]string, 0, len(binds))
 	for _, b := range binds {
@@ -13707,7 +13704,7 @@ func (s *Service) remapSourceBinds(binds []string, dirs []backup.RestoreDir, rem
 	add := func(rel, dest string) {
 		var match []string
 		for _, h := range hosts {
-			if strings.HasSuffix(h, "/appdata/"+rel) {
+			if parent, ok := strings.CutSuffix(h, "/"+rel); ok && matchesAnyDataRootSegment(path.Base(parent), s.cfg.DataRootSegments) {
 				match = append(match, h)
 			}
 		}
@@ -13716,7 +13713,7 @@ func (s *Service) remapSourceBinds(binds []string, dirs []backup.RestoreDir, rem
 		}
 	}
 	for _, d := range dirs {
-		_, rel := appdataRelPath(path.Clean(d.Subtree))
+		_, rel := appdataRelPath(path.Clean(d.Subtree), s.cfg.DataRootSegments)
 		if rel == "" {
 			continue
 		}

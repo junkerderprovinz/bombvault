@@ -46,10 +46,11 @@ func vmRestoreSvc(t *testing.T, eng ResticEngine) *Service {
 		store:  store.New(db),
 		engine: eng,
 		cfg: config.Config{
-			HostMountRoot:  "/host/user",
-			HostSourceRoot: "/mnt",
-			DataDir:        t.TempDir(),
-			AppKey:         strings.Repeat("a", 64),
+			HostMountRoot:    "/host/user",
+			HostSourceRoot:   "/mnt",
+			DataDir:          t.TempDir(),
+			AppKey:           strings.Repeat("a", 64),
+			DataRootSegments: unraidSegments,
 		},
 	}
 }

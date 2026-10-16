@@ -103,15 +103,17 @@ type BesidePort struct {
 	Copy      string `json:"copy"`
 }
 
-// besideRootOf is the folder of an appdata path that gets a copy next to it:
-// the container's own folder below an appdata share, or else the path itself.
-func besideRootOf(src string) string {
-	root, rel := appdataRelPath(src)
-	if rel == "" {
-		return src
+// besideRootOf names the folder of an appdata path that gets a copy next to
+// it: the container's own folder below a data root, or else the path itself.
+func besideRootOf(segments []string) func(string) string {
+	return func(src string) string {
+		root, rel := appdataRelPath(src, segments)
+		if rel == "" {
+			return src
+		}
+		first, _, _ := strings.Cut(rel, "/")
+		return root + "/" + first
 	}
-	first, _, _ := strings.Cut(rel, "/")
-	return root + "/" + first
 }
 
 // besideLayout turns what a restore in place would write, each snapshot
@@ -295,7 +297,7 @@ func (s *Service) prepareRestoreBeside(ctx context.Context, name, snapshotID, so
 	for i, p := range plan.appdataPaths {
 		inPlace[i] = backup.RestoreDir{Subtree: p, Target: p}
 	}
-	roots, dirs := besideLayout(inPlace, besideRootOf)
+	roots, dirs := besideLayout(inPlace, besideRootOf(s.cfg.DataRootSegments))
 	if err := s.guardBesideRoots(roots); err != nil {
 		return containerRestorePlan{}, err
 	}

@@ -27,7 +27,7 @@ func TestBesideLayoutGivesAContainerFolderOneCopyForAllItsBinds(t *testing.T) {
 		"/host/user/appdata/SnapOtter/conf",
 		"/host/user/appdata/SnapOtter/data",
 		"/host/user/appdata/nexterm",
-	), besideRootOf)
+	), besideRootOf(unraidSegments))
 
 	wantRoots := []besideRoot{
 		{original: "/host/user/appdata/SnapOtter", copy: "/host/user/appdata/SnapOtter-restored"},
@@ -46,8 +46,20 @@ func TestBesideLayoutGivesAContainerFolderOneCopyForAllItsBinds(t *testing.T) {
 	}
 }
 
+func TestBesideLayoutCopiesAZimaOSContainerFolderInItsOwnCase(t *testing.T) {
+	roots, _ := besideLayout(inPlaceDirs(
+		"/host/data/AppData/arrowloop/conf",
+		"/host/data/AppData/arrowloop/data",
+	), besideRootOf(unraidSegments))
+
+	want := []besideRoot{{original: "/host/data/AppData/arrowloop", copy: "/host/data/AppData/arrowloop-restored"}}
+	if !slices.Equal(roots, want) {
+		t.Fatalf("roots = %+v, want %+v", roots, want)
+	}
+}
+
 func TestBesideLayoutNeverPutsACopyInsideAnOriginal(t *testing.T) {
-	roots, dirs := besideLayout(inPlaceDirs("/host/data/app", "/host/data/app/cache"), besideRootOf)
+	roots, dirs := besideLayout(inPlaceDirs("/host/data/app", "/host/data/app/cache"), besideRootOf(unraidSegments))
 
 	if len(roots) != 1 || roots[0].copy != "/host/data/app-restored" {
 		t.Fatalf("roots = %+v, want the outer folder alone", roots)

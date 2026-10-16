@@ -25,7 +25,8 @@ type Config struct {
 	// DataRootSegments (env DATA_ROOT_SEGMENTS) are the path segments that
 	// mark a bind mount's host source as container data, such as "appdata" or
 	// "config". A bind is kept when any of them is a whole segment of its
-	// source. The default is ["appdata"], the Unraid layout.
+	// source, in any case. The default is ["appdata"], the Unraid layout,
+	// which also matches ZimaOS's AppData.
 	DataRootSegments []string
 	// PlatformOverride (env PLATFORM) forces the platform.Kind instead of
 	// detecting it; empty means detect. platform.Detect validates the value
