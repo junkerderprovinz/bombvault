@@ -9,6 +9,8 @@ REPO = "bombvault"
 
 BUTTONS = {
     "unraid": "https://unraid.net/community/apps?q=bombvault",
+    "mos": "https://mos-official.net/apps.html?search=BombVault",
+    "zimaos": "https://github.com/junkerderprovinz/zimaos-apps#install",
     # A browser cannot download an image, so this opens the package page, which
     # carries the pull command and every tag.
     "compose": "https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/deploy/docker-compose.generic.yml",
