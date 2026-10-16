@@ -79,12 +79,14 @@ async function stage(page: Page, { from = "v9.9.1", firstStart = false }: Staged
   });
 }
 
-/** Opens the app on a page and puts away the window the update opens on its release notes. */
+/** Opens the app on a page and puts away the window the update opens, one
+ *  card per release with its notes. Closing it counts the changes no page
+ *  shows as seen. */
 async function openUpdated(page: Page, path: string): Promise<void> {
   await page.goto(path);
-  const notes = page.getByRole("dialog", { name: "New in 10.0.0" });
-  await expect(notes.getByRole("tab", { name: "Release notes" })).toHaveAttribute("aria-selected", "true");
-  await expect(notes.getByText("One list.")).toBeVisible();
+  const notes = page.getByRole("dialog", { name: "New since 9.9.1" });
+  await expect(notes.locator("[data-release]").first()).toBeVisible();
+  await expect(notes.getByText("One list.").first()).toBeVisible();
   await notes.getByRole("button", { name: "Close" }).click();
   await expect(notes).toHaveCount(0);
 }
@@ -93,7 +95,7 @@ const dots = (page: Page) => page.locator("[data-new-dot]");
 const dotOf = (page: Page, id: string) => page.locator(`[data-new-dot="${id}"]`);
 const marked = (page: Page, id: string) => page.locator(`[data-new="${id}"]`).first();
 const absent = (page: Page) =>
-  page.evaluate(() => (JSON.parse(window.localStorage.getItem("bv-whats-new@10.0.0") ?? "{}") as { absent?: string[] }).absent ?? []);
+  page.evaluate(() => (JSON.parse(window.localStorage.getItem("bv-whats-new") ?? "{}") as { absent?: string[] }).absent ?? []);
 
 async function picture(page: Page, name: string): Promise<void> {
   if (!SHOTS) return;
@@ -104,17 +106,13 @@ const markAll = (page: Page, n: number) => page.getByRole("button", { name: `Mar
 const showAll = (page: Page, n: number) => page.getByRole("button", { name: `Show all again · ${n}` });
 const newButton = (page: Page, n?: number) =>
   page.locator("#bv-main").getByRole("button", { name: n === undefined ? /^New( · \d+)?$/ : n > 0 ? `New · ${n}` : "New", exact: true });
-const list = (page: Page) => page.getByRole("dialog", { name: "New in 10.0.0" });
+const list = (page: Page) => page.getByRole("dialog", { name: /^New (since|in) / });
+const unseen = (page: Page) => page.locator("[data-change]:not([data-seen])").count();
 
-/** Opens the list of changes from the Version card. With nothing left to see
- *  the button opens the release notes, and the list is the tab beside them. */
+/** Opens the window of changes from the Version card. */
 async function openList(page: Page, n?: number): Promise<Locator> {
   await newButton(page, n).click();
   await expect(list(page)).toBeVisible();
-  if (n === 0) {
-    await expect(list(page).getByRole("tab", { name: "Release notes" })).toHaveAttribute("aria-selected", "true");
-    await list(page).getByRole("tab", { name: /^Changes/ }).click();
-  }
   return list(page);
 }
 
@@ -181,7 +179,8 @@ test("a dot leads from the navigation over the settings tile to the change, and 
 
   // The Version card's button counts what is left and opens the list.
   await openList(page);
-  const all = await page.locator("[data-change]").count();
+  const total = await page.locator("[data-change]").count();
+  const all = await unseen(page);
   await expect(markAll(page, all)).toBeVisible();
   const line = page.locator('[data-change="settings-version"]');
   await expect(line).not.toHaveAttribute("data-seen", "true");
@@ -205,14 +204,14 @@ test("a dot leads from the navigation over the settings tile to the change, and 
 
   await openList(page, all - 1);
   await markAll(page, all - 1).click();
-  await expect(showAll(page, all)).toBeVisible();
+  await expect(showAll(page, total)).toBeVisible();
   await closeList(page);
   await expect(dots(page)).toHaveCount(0);
   await expect(newButton(page, 0)).toBeVisible();
 
   await openList(page, 0);
-  await showAll(page, all).click();
-  await expect(markAll(page, all)).toBeVisible();
+  await showAll(page, total).click();
+  await expect(markAll(page, total)).toBeVisible();
   // A change's Go there closes the list on the way.
   await line.getByRole("button", { name: "Go there" }).click();
   await expect(list(page)).toHaveCount(0);
@@ -384,7 +383,7 @@ test("a change its page has nothing for is no longer promised, and is back when 
   const line = page.locator('[data-change="overview-decline"]');
   await expect(line).toHaveAttribute("data-absent", "true");
   await expect(line).toContainText("Not on its page at the moment");
-  await expect(markAll(page, await page.locator("[data-change]").count())).toBeVisible();
+  await expect(markAll(page, await unseen(page))).toBeVisible();
   await line.scrollIntoViewIfNeeded();
   await picture(page, "list-absent");
 
