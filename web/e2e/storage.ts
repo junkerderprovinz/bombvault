@@ -350,6 +350,7 @@ const RCLONE_SECTIONS = [
 function part(domain: string, entries: number, backups: number, primary = false) {
   return {
     domain,
+    use: "copy",
     targetId: `t-box-${domain}`,
     repo: `rclone:storagebox:bombvault/${domain === "config" ? "selfbackup" : domain}`,
     primary,
@@ -425,7 +426,15 @@ export async function stageStorage(page: Page, width: number, lang = "de"): Prom
   await page.route(
     (url) => url.pathname.startsWith("/api/storage/locations/"),
     (route) => {
-      const id = decodeURIComponent(new URL(route.request().url()).pathname.slice("/api/storage/locations/".length));
+      const { pathname } = new URL(route.request().url());
+      const post = route.request().method() === "POST";
+      if (pathname.endsWith("/erasure")) {
+        return post ? record(route, { ok: true, started: true, erasure: ERASURE }) : route.fulfill({ json: { ok: true, erasure: ERASURE } });
+      }
+      if (pathname.endsWith("/removal")) {
+        return post ? record(route, { ok: true }) : route.fulfill({ json: { ok: true, removal: REMOVAL } });
+      }
+      const id = decodeURIComponent(pathname.slice("/api/storage/locations/".length));
       const location = LOCATIONS.find((l) => l.id === id);
       if (!location) return route.fulfill({ status: 404, json: { ok: false, error: "no such storage location" } });
       return route.fulfill({ json: { ok: true, location } });
@@ -451,14 +460,6 @@ export async function stageStorage(page: Page, width: number, lang = "de"): Prom
     (route) => {
       const { pathname } = new URL(route.request().url());
       if (pathname.endsWith("/connection")) return record(route, staged.connection);
-      if (pathname.endsWith("/erasure")) {
-        return route.request().method() === "POST"
-          ? record(route, { ok: true, started: true, erasure: ERASURE })
-          : route.fulfill({ json: { ok: true, erasure: ERASURE } });
-      }
-      if (pathname.endsWith("/removal")) {
-        return route.request().method() === "POST" ? record(route, { ok: true }) : route.fulfill({ json: { ok: true, removal: REMOVAL } });
-      }
       if (route.request().method() === "PUT") return record(route, { ok: true, warnings: [] });
       if (pathname.includes("/domains/")) return record(route, { ok: true, created: true, target: target("t-new", pathname.split("/").pop() ?? "", "b2") });
       if (route.request().method() === "POST") return record(route, { ok: true, destination: { ...destination(B2, "new"), name: "Rest server" } });

@@ -389,7 +389,7 @@ test.describe("on the desktop", () => {
 
     await window.getByRole("button", { name: "Speicherort entfernen" }).click();
     await expect(page).toHaveURL(/\/storage$/);
-    expect(staged.writes).toEqual([{ method: "POST", path: "/api/offsite/destinations/box/removal", body: { expect: REMOVAL } }]);
+    expect(staged.writes).toEqual([{ method: "POST", path: "/api/storage/locations/destination%3Abox/removal", body: { expect: REMOVAL } }]);
   });
 
   test("a destination is removed with its backups after the window named what is deleted, kept and lost", async ({ page }) => {
@@ -416,7 +416,7 @@ test.describe("on the desktop", () => {
     await expect(page).toHaveURL(/\/storage$/);
     await expect(page.getByText(`Die Sicherungen in ${STORAGE_BOX.name} werden im Hintergrund gelöscht.`, { exact: false })).toBeVisible();
     expect(staged.writes).toEqual([
-      { method: "POST", path: "/api/offsite/destinations/box/erasure", body: { expect: REMOVAL, lastCopies: ["container:paperless"] } },
+      { method: "POST", path: "/api/storage/locations/destination%3Abox/erasure", body: { expect: REMOVAL, lastCopies: ["container:paperless"] } },
     ]);
   });
 
