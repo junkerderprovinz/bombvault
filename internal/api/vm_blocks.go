@@ -41,7 +41,13 @@ type unixForwarder interface {
 	ForwardUnix(ctx context.Context, local, remote string) (func(), error)
 }
 
-var _ vmBlockEngine = (*restic.Restic)(nil)
+// The service holds the engine behind the own-data guard, so the guarded
+// type has to keep the block methods too.
+var (
+	_ vmBlockEngine = (*restic.Restic)(nil)
+	_ vmBlockEngine = guardedBlockEngine{}
+	_ ResticEngine  = guardedBlockEngine{}
+)
 
 // Reasons a VM with changed-block backups on is still backed up the classic
 // way. The orchestrator adds BlocksReasonJobFailed.
