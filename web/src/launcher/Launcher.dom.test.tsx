@@ -4,10 +4,10 @@ import { afterEach, describe, expect, it } from "vitest";
 import type { Bridge, Fetched, LauncherState, Request } from "./bridge";
 import { Launcher } from "./Launcher";
 
-// A Back from one test arrives as a popstate after it ends, so it is let in
-// before the page goes, and the next test starts on a clean entry.
-afterEach(async () => {
-  await new Promise((resolve) => setTimeout(resolve, 0));
+// jsdom lands a Back a few tasks after it was asked for, so a test that steps
+// back waits for its popstate itself: one that lands in the next test opens
+// the page it went to there.
+afterEach(() => {
   cleanup();
   localStorage.clear();
   window.history.replaceState(null, "");
@@ -183,17 +183,19 @@ describe("Launcher", () => {
     fireEvent.click(await screen.findByRole("button", { name: "Settings" }));
     fireEvent.click(screen.getByRole("button", { name: /Remove all servers/ }));
     expect(sent).not.toContainEqual({ op: "removeAll" });
+    // The closing dialog and the page both step back here. jsdom reads both
+    // steps from the same entry and fires one popstate for them.
+    const back = new Promise((resolve) => window.addEventListener("popstate", resolve, { once: true }));
     await act(async () => fireEvent.click(await screen.findByRole("button", { name: /^Remove all$/ })));
     expect(sent).toContainEqual({ op: "removeAll" });
+    await act(() => back);
   });
 
   it("looks like the first server until a look is set here", async () => {
     const look = { status: 200, body: JSON.stringify({ ok: true, prefs: { "bv-accent": "#ff7eb6", "bv-lang": "fr" }, stored: true }) };
     const { bridge } = fakeBridge({ servers: [server], found: [], group: alone, camera: false, app }, {}, look);
     render(<Launcher bridge={bridge} />);
-    // The list arrives through the async bridge, which a busy runner can hold
-    // past the default second.
-    await screen.findByText("Tower", undefined, { timeout: 5000 });
+    await screen.findByText("Tower");
     await act(async () => undefined);
     expect(localStorage.getItem("bv-accent")).toBe("#ff7eb6");
     // The language stays the phone's own.
@@ -202,7 +204,7 @@ describe("Launcher", () => {
     fireEvent.click(screen.getByRole("button", { name: "Settings" }));
     fireEvent.click(screen.getByRole("switch", { name: "Follow the first server" }));
     expect(screen.getByText(/no longer follows the server/)).toBeTruthy();
-  }, 15000);
+  });
 
   it("offers Dark, Light and System for the theme, and starts on System", async () => {
     const { bridge } = fakeBridge({ servers: [server], found: [], group: alone, camera: false, app });
