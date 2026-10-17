@@ -1,0 +1,1 @@
+The app itself is unchanged. On your server, a running ZFS replica now shows up in the activity log with its progress.
