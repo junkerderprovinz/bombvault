@@ -1802,6 +1802,8 @@ const pt: Partial<Translations> = {
   "zfs.replica.when": "Quando",
   "zfs.replica.whenHint": "Depois de cada backup significa logo a seguir ao backup desta entrada. Um plano próprio corre à parte e nunca atrasa os backups.",
   "zfs.replica.onlyHint": "Esta entrada não tem local de armazenamento para o backup, por isso a execução do backup só envia a réplica. Ative um local de armazenamento para a secção ZFS ou dê à entrada um repositório próprio para que também tenha backup.",
+  "zfs.replica.onlyToggle": "Só réplica, sem backup",
+  "zfs.replica.onlyToggleHint": "Desativa a pasta própria e cada local de armazenamento externo da secção ZFS, por isso uma execução só envia a réplica e não escreve nenhum backup. Isto vale para todas as entradas ZFS. Desative para voltar a fazer backup.",
   "zfs.replica.afterBackup": "Depois de cada backup",
   "zfs.replica.ownPlan": "Plano próprio",
   "zfs.replica.plan": "Agendamento",

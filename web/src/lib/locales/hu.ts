@@ -1803,6 +1803,8 @@ const hu: Partial<Translations> = {
   "zfs.replica.when": "Mikor",
   "zfs.replica.whenHint": "Minden mentés után azt jelenti, hogy közvetlenül ennek az elemnek a mentése után. A saját terv külön fut, és soha nem tartja fel a mentéseket.",
   "zfs.replica.onlyHint": "Ennek a bejegyzésnek nincs tárolóhelye a mentéshez, ezért a mentése csak a replikát küldi el. Kapcsolj be egy tárolóhelyet a ZFS szakaszhoz, vagy adj a bejegyzésnek saját tárolót, hogy mentés is készüljön róla.",
+  "zfs.replica.onlyToggle": "Csak replika, mentés nélkül",
+  "zfs.replica.onlyToggleHint": "Kikapcsolja a saját mappát és a ZFS szakasz minden telephelyen kívüli tárolóhelyét, így a futtatás csak a replikát küldi el, és nem ír mentést. Ez minden ZFS-bejegyzésre érvényes. Kapcsold ki, hogy újra készüljön mentés.",
   "zfs.replica.afterBackup": "Minden mentés után",
   "zfs.replica.ownPlan": "Saját terv",
   "zfs.replica.plan": "Ütemezés",

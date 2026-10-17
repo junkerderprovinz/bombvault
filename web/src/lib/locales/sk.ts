@@ -2307,6 +2307,8 @@ const sk: Partial<Translations> = {
   "zfs.replica.when": "Kedy",
   "zfs.replica.whenHint": "Po každej zálohe znamená hneď po zálohe tejto položky. Vlastný plán beží osobitne a zálohy nikdy nezdržuje.",
   "zfs.replica.onlyHint": "Táto položka nemá úložisko pre zálohu, takže jej záloha iba odošle repliku. Zapnite úložisko pre sekciu ZFS alebo dajte položke vlastný repozitár, aby sa zálohovala aj tam.",
+  "zfs.replica.onlyToggle": "Iba replika, bez zálohy",
+  "zfs.replica.onlyToggleHint": "Vypne vlastný priečinok aj každé externé úložisko v sekcii ZFS, takže beh iba odošle repliku a nezapíše žiadnu zálohu. Platí to pre všetky položky ZFS. Vypnite to, aby sa znova zálohovalo.",
   "zfs.replica.afterBackup": "Po každej zálohe",
   "zfs.replica.ownPlan": "Vlastný plán",
   "zfs.replica.plan": "Plán",

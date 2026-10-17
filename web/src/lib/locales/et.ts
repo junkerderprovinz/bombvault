@@ -2307,6 +2307,8 @@ const et: Partial<Translations> = {
   "zfs.replica.when": "Millal",
   "zfs.replica.whenHint": "Pärast iga varundust tähendab kohe selle kirje varunduse järel. Oma plaan käivitub eraldi ega sega kunagi varundusi.",
   "zfs.replica.onlyHint": "Sellel kirjel pole varunduskohta, seega selle varundus saadab ainult replika. Lülita ZFS-i jaotisele sisse salvestuskoht või anna kirjele oma hoidla, et seda ka varundataks.",
+  "zfs.replica.onlyToggle": "Ainult replika, varundust ei tehta",
+  "zfs.replica.onlyToggleHint": "Lülitab välja oma kausta ja kõik ZFS-i jaotise väised salvestuskohad, nii et käivitus saadab ainult replika ega kirjuta varundust. See kehtib kõigi ZFS-i kirjete kohta. Lülita see välja, et varundada jälle.",
   "zfs.replica.afterBackup": "Pärast iga varundust",
   "zfs.replica.ownPlan": "Oma plaan",
   "zfs.replica.plan": "Ajakava",

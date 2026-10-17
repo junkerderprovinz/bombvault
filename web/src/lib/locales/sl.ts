@@ -2291,6 +2291,8 @@ const sl: Partial<Translations> = {
   "zfs.replica.when": "Kdaj",
   "zfs.replica.whenHint": "Po vsaki varnostni kopiji pomeni takoj po kopiji tega vnosa. Lasten načrt teče ločeno in varnostnih kopij nikoli ne zadržuje.",
   "zfs.replica.onlyHint": "Ta vnos nima mesta za shranjevanje varnostne kopije, zato njegovo kopiranje pošlje samo repliko. Vklopi mesto shranjevanja za razdelek ZFS ali daj vnosu lasten repozitorij, da se kopira tudi on.",
+  "zfs.replica.onlyToggle": "Samo replika, brez varnostne kopije",
+  "zfs.replica.onlyToggleHint": "Izklopi lastno mapo in vsako zunanje mesto shranjevanja v razdelku ZFS, zato zagon pošlje samo repliko in ne zapiše varnostne kopije. To velja za vse vnose ZFS. Izklopi to, da se spet izdelujejo varnostne kopije.",
   "zfs.replica.afterBackup": "Po vsaki varnostni kopiji",
   "zfs.replica.ownPlan": "Lasten načrt",
   "zfs.replica.plan": "Urnik",

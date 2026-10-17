@@ -1802,6 +1802,8 @@ const it: Partial<Translations> = {
   "zfs.replica.when": "Quando",
   "zfs.replica.whenHint": "Dopo ogni backup significa subito dopo il backup di questo elemento. Un piano proprio viene eseguito a parte e non rallenta mai i backup.",
   "zfs.replica.onlyHint": "Questa voce non ha un percorso di archiviazione per il backup, quindi il suo backup invia solo la replica. Attiva una destinazione di archiviazione per la sezione ZFS o assegna alla voce un repository proprio, così viene salvata anche con il backup.",
+  "zfs.replica.onlyToggle": "Solo replica, nessun backup",
+  "zfs.replica.onlyToggleHint": "Disattiva la cartella propria e ogni destinazione di archiviazione off-site della sezione ZFS, quindi un'esecuzione invia solo la replica e non scrive alcun backup. Vale per tutte le voci ZFS. Disattivalo per tornare a fare il backup.",
   "zfs.replica.afterBackup": "Dopo ogni backup",
   "zfs.replica.ownPlan": "Piano proprio",
   "zfs.replica.plan": "Calendario",

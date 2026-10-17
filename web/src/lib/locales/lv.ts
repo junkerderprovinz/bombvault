@@ -2307,6 +2307,8 @@ const lv: Partial<Translations> = {
   "zfs.replica.when": "Kad",
   "zfs.replica.whenHint": "Pēc katras rezerves kopijas nozīmē uzreiz pēc šī ieraksta rezerves kopijas. Savs plāns darbojas atsevišķi un nekad neaizkavē rezerves kopijas.",
   "zfs.replica.onlyHint": "Šim ierakstam nav glabāšanas vietas rezerves kopijai, tāpēc tā dublēšana nosūta tikai repliku. Ieslēdz glabāšanas vietu ZFS sadaļai vai dod ierakstam savu krātuvi, lai tas tiktu dublēts arī.",
+  "zfs.replica.onlyToggle": "Tikai replika, bez rezerves kopijas",
+  "zfs.replica.onlyToggleHint": "Izslēdz atsevišķo mapi un visas attālinātās ZFS sadaļas glabāšanas vietas, tāpēc palaišana nosūta tikai repliku un neraksta rezerves kopiju. Tas attiecas uz visiem ZFS ierakstiem. Izslēdz to, lai atkal veidotu rezerves kopijas.",
   "zfs.replica.afterBackup": "Pēc katras rezerves kopijas",
   "zfs.replica.ownPlan": "Savs plāns",
   "zfs.replica.plan": "Grafiks",

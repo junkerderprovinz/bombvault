@@ -1800,6 +1800,8 @@ const es: Partial<Translations> = {
   "zfs.replica.when": "Cuándo",
   "zfs.replica.whenHint": "Después de cada copia significa justo después de la copia de este elemento. Un plan propio se ejecuta aparte y nunca retrasa las copias.",
   "zfs.replica.onlyHint": "Esta entrada no tiene ubicación de almacenamiento para la copia, así que su copia solo envía la réplica. Activa una ubicación de almacenamiento para la sección ZFS o dale a la entrada un repositorio propio para que también tenga copia.",
+  "zfs.replica.onlyToggle": "Solo réplica, sin copia",
+  "zfs.replica.onlyToggleHint": "Desactiva la carpeta propia y cada ubicación de almacenamiento externa de la sección ZFS, así que una ejecución solo envía la réplica y no escribe ninguna copia. Esto vale para todas las entradas ZFS. Desactívalo para volver a hacer copias.",
   "zfs.replica.afterBackup": "Después de cada copia",
   "zfs.replica.ownPlan": "Plan propio",
   "zfs.replica.plan": "Calendario",

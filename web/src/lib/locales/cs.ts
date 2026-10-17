@@ -1800,6 +1800,8 @@ const cs: Partial<Translations> = {
   "zfs.replica.when": "Kdy",
   "zfs.replica.whenHint": "Po každé záloze znamená hned po záloze této položky. Vlastní plán běží zvlášť a zálohy nikdy nezdržuje.",
   "zfs.replica.onlyHint": "Tato položka nemá úložiště, kam by se zálohovala, takže její záloha jen odešle repliku. Zapněte úložiště pro sekci ZFS nebo dejte položce vlastní repozitář, aby se zálohovala i tam.",
+  "zfs.replica.onlyToggle": "Jen replika, bez zálohy",
+  "zfs.replica.onlyToggleHint": "Vypne vlastní složku i každé úložiště mimo lokalitu v sekci ZFS, takže běh pouze odešle repliku a nezapíše žádnou zálohu. Platí to pro všechny položky ZFS. Vypněte to, aby se znovu zálohovalo.",
   "zfs.replica.afterBackup": "Po každé záloze",
   "zfs.replica.ownPlan": "Vlastní plán",
   "zfs.replica.plan": "Plán",

@@ -1801,6 +1801,8 @@ const nl: Partial<Translations> = {
   "zfs.replica.when": "Wanneer",
   "zfs.replica.whenHint": "Na elke back-up betekent direct na de back-up van dit item. Een eigen plan draait apart en houdt de back-ups nooit op.",
   "zfs.replica.onlyHint": "Dit item heeft geen opslaglocatie voor een back-up, dus de back-up ervan verstuurt alleen de replica. Schakel een opslaglocatie in voor het ZFS-onderdeel of geef het item een eigen repository, dan wordt er ook een back-up van gemaakt.",
+  "zfs.replica.onlyToggle": "Alleen replica, geen back-up",
+  "zfs.replica.onlyToggleHint": "Schakelt de eigen map en elke off-site opslaglocatie van het ZFS-onderdeel uit, dus een run verstuurt alleen de replica en schrijft geen back-up. Dit geldt voor alle ZFS-items. Schakel het uit om weer een back-up te maken.",
   "zfs.replica.afterBackup": "Na elke back-up",
   "zfs.replica.ownPlan": "Eigen plan",
   "zfs.replica.plan": "Planning",

@@ -2307,6 +2307,8 @@ const hr: Partial<Translations> = {
   "zfs.replica.when": "Kada",
   "zfs.replica.whenHint": "Nakon svake sigurnosne kopije znači odmah nakon kopije ove stavke. Vlastiti plan radi zasebno i nikad ne zaustavlja sigurnosne kopije.",
   "zfs.replica.onlyHint": "Ovaj unos nema mjesto za pohranu sigurnosne kopije, pa njegovo kopiranje samo šalje repliku. Uključi mjesto za pohranu za ZFS odjeljak ili daj unosu vlastiti repozitorij da se i on kopira.",
+  "zfs.replica.onlyToggle": "Samo replika, bez sigurnosne kopije",
+  "zfs.replica.onlyToggleHint": "Isključuje vlastitu mapu i svako mjesto za pohranu izvan lokacije u ZFS odjeljku, pa pokretanje samo šalje repliku i ne zapisuje sigurnosnu kopiju. To vrijedi za sve ZFS unose. Isključi to da se ponovno radi sigurnosna kopija.",
   "zfs.replica.afterBackup": "Nakon svake sigurnosne kopije",
   "zfs.replica.ownPlan": "Vlastiti plan",
   "zfs.replica.plan": "Raspored",

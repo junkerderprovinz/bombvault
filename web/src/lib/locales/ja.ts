@@ -1793,6 +1793,8 @@ const ja: Partial<Translations> = {
   "zfs.replica.when": "タイミング",
   "zfs.replica.whenHint": "「バックアップのたび」は、この項目のバックアップの直後を指します。専用のプランは別に実行され、バックアップを待たせることはありません。",
   "zfs.replica.onlyHint": "この項目にはバックアップ先の保存場所がないため、バックアップの実行ではレプリカだけが送られます。ZFSセクションの保存場所を有効にするか、この項目専用のリポジトリを指定すると、バックアップも取られます。",
+  "zfs.replica.onlyToggle": "レプリカのみ、バックアップなし",
+  "zfs.replica.onlyToggleHint": "ZFSセクションの専用フォルダーとすべてのオフサイトの保存場所をオフにするため、実行ではレプリカだけが送られ、バックアップは書き込まれません。すべてのZFS項目に適用されます。再びバックアップを取るにはオフにしてください。",
   "zfs.replica.afterBackup": "バックアップのたび",
   "zfs.replica.ownPlan": "専用プラン",
   "zfs.replica.plan": "スケジュール",

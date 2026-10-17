@@ -1793,6 +1793,8 @@ const vi: Partial<Translations> = {
   "zfs.replica.when": "Khi nào",
   "zfs.replica.whenHint": "Sau mỗi lần sao lưu nghĩa là ngay sau lần sao lưu của mục này. Kế hoạch riêng chạy tách biệt và không bao giờ làm chậm các lần sao lưu.",
   "zfs.replica.onlyHint": "Mục này không có nơi lưu trữ để sao lưu, nên lần sao lưu của nó chỉ gửi bản nhân bản. Hãy bật một nơi lưu trữ cho phần ZFS hoặc cấp cho mục này kho riêng để nó cũng được sao lưu.",
+  "zfs.replica.onlyToggle": "Chỉ bản nhân bản, không sao lưu",
+  "zfs.replica.onlyToggleHint": "Tắt thư mục riêng và mọi nơi lưu trữ ngoài site của phần ZFS, nên mỗi lần chạy chỉ gửi bản nhân bản và không ghi bản sao lưu. Điều này áp dụng cho mọi mục ZFS. Hãy tắt để sao lưu trở lại.",
   "zfs.replica.afterBackup": "Sau mỗi lần sao lưu",
   "zfs.replica.ownPlan": "Kế hoạch riêng",
   "zfs.replica.plan": "Lịch",

@@ -2307,6 +2307,8 @@ const eu: Partial<Translations> = {
   "zfs.replica.when": "Noiz",
   "zfs.replica.whenHint": "Babeskopia bakoitzaren ondoren esan nahi du elementu honen babeskopiaren ondoren berehala. Plan propioa bereizita exekutatzen da eta ez ditu babeskopiak inoiz atzeratzen.",
   "zfs.replica.onlyHint": "Sarrera honek ez du babeskopia gordetzeko lekurik, beraz bere babeskopiak erreplika bakarrik bidaltzen du. Aktibatu biltegiratze-leku bat ZFS atalerako edo eman sarrerari bere biltegia, babeskopia ere izan dezan.",
+  "zfs.replica.onlyToggle": "Erreplika bakarrik, babeskopiarik ez",
+  "zfs.replica.onlyToggleHint": "ZFS ataleko karpeta propioa eta kanpoko biltegiratze-leku guztiak desaktibatzen ditu, beraz exekuzioak erreplika bakarrik bidaltzen du eta ez du babeskopiarik idazten. ZFS sarrera guztietan balio du. Desaktibatu berriro babeskopiak egiteko.",
   "zfs.replica.afterBackup": "Babeskopia bakoitzaren ondoren",
   "zfs.replica.ownPlan": "Plan propioa",
   "zfs.replica.plan": "Egutegia",

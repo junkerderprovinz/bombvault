@@ -1802,6 +1802,8 @@ const sv: Partial<Translations> = {
   "zfs.replica.when": "När",
   "zfs.replica.whenHint": "Efter varje säkerhetskopia betyder direkt efter säkerhetskopian av den här posten. En egen plan körs separat och håller aldrig upp säkerhetskopiorna.",
   "zfs.replica.onlyHint": "Den här posten har ingen lagringsplats för säkerhetskopior, så dess säkerhetskopiering skickar bara repliken. Slå på en lagringsplats för ZFS-avsnittet eller ge posten ett eget arkiv, så säkerhetskopieras den också.",
+  "zfs.replica.onlyToggle": "Bara replik, ingen säkerhetskopia",
+  "zfs.replica.onlyToggleHint": "Stänger av den egna mappen och varje externa lagringsplats i ZFS-avsnittet, så en körning skickar bara repliken och skriver ingen säkerhetskopia. Det gäller alla ZFS-poster. Stäng av det för att säkerhetskopiera igen.",
   "zfs.replica.afterBackup": "Efter varje säkerhetskopia",
   "zfs.replica.ownPlan": "Egen plan",
   "zfs.replica.plan": "Schema",

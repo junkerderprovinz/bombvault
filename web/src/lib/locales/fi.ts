@@ -1802,6 +1802,8 @@ const fi: Partial<Translations> = {
   "zfs.replica.when": "Milloin",
   "zfs.replica.whenHint": "Jokaisen varmuuskopion jälkeen tarkoittaa heti tämän merkinnän varmuuskopion jälkeen. Oma aikataulu ajetaan erikseen, eikä se koskaan hidasta varmuuskopioita.",
   "zfs.replica.onlyHint": "Tällä kohteella ei ole tallennuspaikkaa varmuuskopiolle, joten sen varmuuskopiointi lähettää vain replikan. Ota ZFS-osiolle käyttöön tallennuspaikka tai anna kohteelle oma arkisto, niin siitä otetaan myös varmuuskopio.",
+  "zfs.replica.onlyToggle": "Vain replika, ei varmuuskopiota",
+  "zfs.replica.onlyToggleHint": "Poistaa käytöstä oman kansion ja kaikki ZFS-osion etätallennuspaikat, joten ajo lähettää vain replikan eikä kirjoita varmuuskopiota. Tämä koskee kaikkia ZFS-kohteita. Poista valinta, niin varmuuskopiointi alkaa taas.",
   "zfs.replica.afterBackup": "Jokaisen varmuuskopion jälkeen",
   "zfs.replica.ownPlan": "Oma aikataulu",
   "zfs.replica.plan": "Aikataulu",

@@ -2307,6 +2307,8 @@ const is: Partial<Translations> = {
   "zfs.replica.when": "Hvenær",
   "zfs.replica.whenHint": "Eftir hvert afrit þýðir strax eftir afriti þessarar færslu. Eigin áætlun keyrir sér og tefur aldrei afritin.",
   "zfs.replica.onlyHint": "Þessi færsla hefur engan geymslustað fyrir afrit, svo afritun hennar sendir aðeins eftirmyndina. Kveiktu á geymslustað fyrir ZFS-hlutann eða gefðu færslunni eigin gagnageymslu svo hún verði líka afrituð.",
+  "zfs.replica.onlyToggle": "Aðeins eftirmynd, ekkert afrit",
+  "zfs.replica.onlyToggleHint": "Slekkur á eigin möppu og öllum fjarlægum geymslustöðum í ZFS-hlutanum, svo keyrsla sendir aðeins eftirmyndina og skrifar ekkert afrit. Þetta gildir um allar ZFS-færslur. Slökktu á því til að afrita aftur.",
   "zfs.replica.afterBackup": "Eftir hvert afrit",
   "zfs.replica.ownPlan": "Eigin áætlun",
   "zfs.replica.plan": "Áætlun",

@@ -1802,6 +1802,8 @@ const da: Partial<Translations> = {
   "zfs.replica.when": "Hvornår",
   "zfs.replica.whenHint": "Efter hver sikkerhedskopi betyder lige efter dette elements sikkerhedskopi. En egen plan kører separat og forsinker aldrig sikkerhedskopierne.",
   "zfs.replica.onlyHint": "Denne post har ingen lagerplacering til sikkerhedskopier, så dens sikkerhedskopiering sender kun replikaen. Slå en lagerplacering til for ZFS-sektionen, eller giv posten et eget repository, så den også bliver sikkerhedskopieret.",
+  "zfs.replica.onlyToggle": "Kun replika, ingen sikkerhedskopi",
+  "zfs.replica.onlyToggleHint": "Slår den egne mappe og hver off-site-lagerplacering i ZFS-sektionen fra, så en kørsel kun sender replikaen og ikke skriver nogen sikkerhedskopi. Det gælder for alle ZFS-poster. Slå det fra for at sikkerhedskopiere igen.",
   "zfs.replica.afterBackup": "Efter hver sikkerhedskopi",
   "zfs.replica.ownPlan": "Egen plan",
   "zfs.replica.plan": "Tidsplan",

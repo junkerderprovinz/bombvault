@@ -1793,6 +1793,8 @@ const ko: Partial<Translations> = {
   "zfs.replica.when": "시점",
   "zfs.replica.whenHint": "백업할 때마다는 이 항목의 백업 직후를 뜻합니다. 별도 계획은 따로 실행되며 백업을 지연시키지 않습니다.",
   "zfs.replica.onlyHint": "이 항목에는 백업할 저장 위치가 없어서 백업을 실행하면 복제본만 전송합니다. ZFS 섹션의 저장 위치를 켜거나 이 항목에 전용 저장소를 지정하면 백업도 함께 만들어집니다.",
+  "zfs.replica.onlyToggle": "복제본만, 백업 없음",
+  "zfs.replica.onlyToggleHint": "ZFS 섹션의 전용 폴더와 모든 오프사이트 저장 위치를 끄므로 실행하면 복제본만 전송하고 백업은 만들지 않습니다. 모든 ZFS 항목에 적용됩니다. 다시 백업하려면 끄세요.",
   "zfs.replica.afterBackup": "백업할 때마다",
   "zfs.replica.ownPlan": "별도 계획",
   "zfs.replica.plan": "일정",

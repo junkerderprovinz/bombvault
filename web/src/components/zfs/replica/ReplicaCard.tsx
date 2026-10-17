@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 
-import { patchZFSReplica } from "../../../lib/api";
+import { listOffsiteTargets, patchZFSReplica, setSectionLocal, updateOffsiteTarget } from "../../../lib/api";
 import type {
   ZFSPeerState,
   ZFSReplica,
@@ -17,9 +17,11 @@ import { zfsCodeSentence } from "../../../lib/zfsCodes";
 import { Badge } from "../../Badge";
 import { Button } from "../../Button";
 import { CadenceBuilder, EXACT_CADENCE_MODES } from "../../CadenceBuilder";
+import { offsiteTargetsChanged } from "../../../lib/useOffsiteTargets";
 import { InfoBubble } from "../../InfoBubble";
 import { SelectField } from "../../SelectField";
 import { Selector } from "../../Selector";
+import { Toggle } from "../../Toggle";
 import { Rows, SettingRow } from "../../storage/rows";
 import { IconFleet, IconZFS } from "../../navGlyphs";
 import { AddReplicaServerDialog } from "./AddReplicaServerDialog";
@@ -144,6 +146,28 @@ export function ReplicaCard({ itemId, name }: { itemId: string; name: string }) 
     }
   }
 
+  // The ZFS section has no place to back up to while its own folder and every
+  // off-site target are off, and a run then only sends the replica.
+  async function setReplicaOnly(on: boolean) {
+    try {
+      const local = await setSectionLocal("zfs", !on);
+      if (!local.ok) throw new Error(local.error ?? t("settings.error"));
+      if (on) {
+        const listed = await listOffsiteTargets("zfs");
+        for (const target of listed.targets ?? []) {
+          if (!target.enabled) continue;
+          const res = await updateOffsiteTarget(target.id, { ...target, enabled: false });
+          if (!res.ok) throw new Error(res.error ?? t("settings.error"));
+        }
+        offsiteTargetsChanged();
+      }
+    } catch (err) {
+      push(err instanceof Error ? err.message : t("settings.error"), "fail");
+    } finally {
+      reload();
+    }
+  }
+
   // After a revoke the same target goes out as a new request, which the
   // receiving instance asks about again.
   async function askAgain() {
@@ -218,6 +242,14 @@ export function ReplicaCard({ itemId, name }: { itemId: string; name: string }) 
 
       {hasTarget && (
         <Rows>
+          <SettingRow label={t("zfs.replica.onlyToggle")} hint={t("zfs.replica.onlyToggleHint")}>
+            <Toggle
+              hideLabel
+              label={t("zfs.replica.onlyToggle")}
+              checked={Boolean(view.only)}
+              onChange={(on) => void setReplicaOnly(on)}
+            />
+          </SettingRow>
           <SettingRow
             label={t("zfs.replica.when")}
             hint={view.only ? `${t("zfs.replica.whenHint")} ${t("zfs.replica.onlyHint")}` : t("zfs.replica.whenHint")}

@@ -1802,6 +1802,8 @@ const fr: Partial<Translations> = {
   "zfs.replica.when": "Quand",
   "zfs.replica.whenHint": "Après chaque sauvegarde signifie juste après la sauvegarde de cet élément. Un planning propre s'exécute séparément et ne retarde jamais les sauvegardes.",
   "zfs.replica.onlyHint": "Cet élément n'a aucun emplacement de stockage pour la sauvegarde, donc sa sauvegarde n'envoie que la réplique. Active un emplacement de stockage pour la section ZFS ou donne à l'élément un dépôt à lui pour qu'il soit aussi sauvegardé.",
+  "zfs.replica.onlyToggle": "Réplique seule, sans sauvegarde",
+  "zfs.replica.onlyToggleHint": "Désactive le dossier propre et chaque emplacement de stockage hors site de la section ZFS, donc une exécution n'envoie que la réplique et n'écrit aucune sauvegarde. Cela vaut pour tous les éléments ZFS. Désactive-le pour sauvegarder de nouveau.",
   "zfs.replica.afterBackup": "Après chaque sauvegarde",
   "zfs.replica.ownPlan": "Planning propre",
   "zfs.replica.plan": "Planning",

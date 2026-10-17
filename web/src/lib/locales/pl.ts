@@ -1799,6 +1799,8 @@ const pl: Partial<Translations> = {
   "zfs.replica.when": "Kiedy",
   "zfs.replica.whenHint": "Po każdej kopii zapasowej oznacza zaraz po kopii tej pozycji. Własny plan działa osobno i nigdy nie wstrzymuje kopii zapasowych.",
   "zfs.replica.onlyHint": "Ten wpis nie ma miejsca na kopię zapasową, więc jego kopia wysyła tylko replikę. Włącz miejsce przechowywania dla sekcji ZFS albo nadaj wpisowi własne repozytorium, żeby miał też kopię zapasową.",
+  "zfs.replica.onlyToggle": "Tylko replika, bez kopii zapasowej",
+  "zfs.replica.onlyToggleHint": "Wyłącza własny folder i każde miejsce przechowywania poza siedzibą w sekcji ZFS, więc uruchomienie wysyła tylko replikę i nie zapisuje kopii zapasowej. Dotyczy to wszystkich wpisów ZFS. Wyłącz to, żeby znowu tworzyć kopie zapasowe.",
   "zfs.replica.afterBackup": "Po każdej kopii zapasowej",
   "zfs.replica.ownPlan": "Własny plan",
   "zfs.replica.plan": "Harmonogram",

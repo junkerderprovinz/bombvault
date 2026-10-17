@@ -1802,6 +1802,8 @@ const tr: Partial<Translations> = {
   "zfs.replica.when": "Ne zaman",
   "zfs.replica.whenHint": "Her yedekten sonra, bu ögenin yedeğinden hemen sonra demektir. Kendi planı ayrı çalışır ve yedekleri hiçbir zaman geciktirmez.",
   "zfs.replica.onlyHint": "Bu kaydın yedek için bir depolama konumu yok, bu yüzden yedek çalıştırması yalnızca replikayı gönderir. ZFS bölümü için bir depolama konumu aç ya da kayda kendi deposunu ver, böylece yedeği de alınır.",
+  "zfs.replica.onlyToggle": "Yalnızca replika, yedek yok",
+  "zfs.replica.onlyToggleHint": "ZFS bölümünün kendi klasörünü ve site dışındaki her depolama konumunu kapatır, bu yüzden bir çalıştırma yalnızca replikayı gönderir ve yedek yazmaz. Bu, tüm ZFS kayıtları için geçerlidir. Yeniden yedek almak için kapat.",
   "zfs.replica.afterBackup": "Her yedekten sonra",
   "zfs.replica.ownPlan": "Kendi planı",
   "zfs.replica.plan": "Zamanlama",

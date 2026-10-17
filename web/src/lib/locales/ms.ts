@@ -2307,6 +2307,8 @@ const ms: Partial<Translations> = {
   "zfs.replica.when": "Bila",
   "zfs.replica.whenHint": "Selepas setiap sandaran bermaksud sebaik sahaja sandaran entri ini. Pelan sendiri berjalan secara berasingan dan tidak pernah melambatkan sandaran.",
   "zfs.replica.onlyHint": "Entri ini tiada lokasi storan untuk sandaran, jadi larian sandarannya hanya menghantar replika. Hidupkan lokasi storan untuk bahagian ZFS atau beri entri ini repositori sendiri supaya ia turut disandarkan.",
+  "zfs.replica.onlyToggle": "Replika sahaja, tiada sandaran",
+  "zfs.replica.onlyToggleHint": "Mematikan folder sendiri dan setiap lokasi storan luar tapak bagi bahagian ZFS, jadi satu larian hanya menghantar replika dan tidak menulis sandaran. Ini terpakai untuk semua entri ZFS. Matikan untuk membuat sandaran semula.",
   "zfs.replica.afterBackup": "Selepas setiap sandaran",
   "zfs.replica.ownPlan": "Pelan sendiri",
   "zfs.replica.plan": "Jadual",

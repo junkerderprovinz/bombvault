@@ -2307,6 +2307,8 @@ const lt: Partial<Translations> = {
   "zfs.replica.when": "Kada",
   "zfs.replica.whenHint": "Po kiekvienos atsarginės kopijos reiškia iš karto po šio įrašo atsarginės kopijos. Atskiras planas vykdomas atskirai ir niekada nestabdo atsarginių kopijų.",
   "zfs.replica.onlyHint": "Šis įrašas neturi saugyklos atsarginei kopijai, todėl jo kopijavimas siunčia tik replika. Įjunkite saugyklą ZFS skiltyje arba suteikite įrašui savo saugyklą, kad jis būtų kopijuojamas ir taip.",
+  "zfs.replica.onlyToggle": "Tik replika, be atsarginės kopijos",
+  "zfs.replica.onlyToggleHint": "Išjungia atskirą aplanką ir visas nuotolines ZFS skilties saugyklas, todėl paleidimas siunčia tik repliką ir nerašo atsarginės kopijos. Tai galioja visiems ZFS įrašams. Išjunkite, kad vėl būtų kopijuojama.",
   "zfs.replica.afterBackup": "Po kiekvienos atsarginės kopijos",
   "zfs.replica.ownPlan": "Atskiras planas",
   "zfs.replica.plan": "Tvarkaraštis",

@@ -1803,6 +1803,8 @@ const ro: Partial<Translations> = {
   "zfs.replica.when": "Când",
   "zfs.replica.whenHint": "După fiecare copie de rezervă înseamnă imediat după copia acestui element. Un plan propriu rulează separat și nu întârzie niciodată copiile de rezervă.",
   "zfs.replica.onlyHint": "Această intrare nu are o locație de stocare pentru copia de rezervă, așa că rularea ei trimite doar replica. Pornește o locație de stocare pentru secțiunea ZFS sau dă intrării un depozit propriu, ca să aibă și copie de rezervă.",
+  "zfs.replica.onlyToggle": "Doar replică, fără copie de rezervă",
+  "zfs.replica.onlyToggleHint": "Dezactivează folderul propriu și fiecare locație de stocare externă din secțiunea ZFS, așa că o rulare trimite doar replica și nu scrie nicio copie de rezervă. Se aplică tuturor intrărilor ZFS. Dezactivează opțiunea ca să se facă din nou copii de rezervă.",
   "zfs.replica.afterBackup": "După fiecare copie de rezervă",
   "zfs.replica.ownPlan": "Plan propriu",
   "zfs.replica.plan": "Programare",

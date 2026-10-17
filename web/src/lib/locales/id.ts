@@ -2307,6 +2307,8 @@ const id: Partial<Translations> = {
   "zfs.replica.when": "Kapan",
   "zfs.replica.whenHint": "Setelah setiap pencadangan berarti tepat setelah pencadangan entri ini. Rencana tersendiri berjalan terpisah dan tidak pernah menahan pencadangan.",
   "zfs.replica.onlyHint": "Entri ini tidak punya lokasi penyimpanan untuk pencadangan, jadi proses pencadangannya hanya mengirim replika. Aktifkan lokasi penyimpanan untuk bagian ZFS atau beri entri ini repositori sendiri agar ikut dicadangkan.",
+  "zfs.replica.onlyToggle": "Hanya replika, tanpa cadangan",
+  "zfs.replica.onlyToggleHint": "Mematikan folder sendiri dan setiap lokasi penyimpanan off-site di bagian ZFS, sehingga satu proses hanya mengirim replika dan tidak menulis cadangan. Ini berlaku untuk semua entri ZFS. Matikan agar pencadangan berjalan lagi.",
   "zfs.replica.afterBackup": "Setelah setiap pencadangan",
   "zfs.replica.ownPlan": "Rencana tersendiri",
   "zfs.replica.plan": "Jadwal",
