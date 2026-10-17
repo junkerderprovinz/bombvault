@@ -2029,6 +2029,7 @@ const vi: Partial<Translations> = {
   "activityLog.jobDrill": "diễn tập xác minh khôi phục",
   "activityLog.jobTamper": "kiểm tra giả mạo",
   "activityLog.lineBackingUpItem": "Đang sao lưu {name} … {percent}%",
+  "activityLog.lineReplicatingItem": "Đang nhân bản {name} … {percent}%",
   "activityLog.lineRestoringItem": "Đang khôi phục {name} … {percent}%",
   "activityLog.lineBackingUpBatch": "Đang sao lưu tất cả {domain} … {percent}%",
   "activityLog.lineOffsiteRunning": "Đang tải lên ngoài site: {domain} …",

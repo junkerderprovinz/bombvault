@@ -2029,6 +2029,7 @@ const ja: Partial<Translations> = {
   "activityLog.jobDrill": "復元検証ドリル",
   "activityLog.jobTamper": "改ざんテスト",
   "activityLog.lineBackingUpItem": "{name} をバックアップ中 … {percent}%",
+  "activityLog.lineReplicatingItem": "{name} を複製中 … {percent}%",
   "activityLog.lineRestoringItem": "{name} を復元中 … {percent}%",
   "activityLog.lineBackingUpBatch": "すべての{domain}をバックアップ中 … {percent}%",
   "activityLog.lineOffsiteRunning": "オフサイトへアップロード中：{domain} …",

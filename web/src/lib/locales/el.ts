@@ -2038,6 +2038,7 @@ const el: Partial<Translations> = {
   "activityLog.jobDrill": "δοκιμή επαλήθευσης επαναφοράς",
   "activityLog.jobTamper": "δοκιμή παραποίησης",
   "activityLog.lineBackingUpItem": "Δημιουργία αντιγράφου {name} … {percent}%",
+  "activityLog.lineReplicatingItem": "Αναπαραγωγή {name} … {percent}%",
   "activityLog.lineRestoringItem": "Επαναφορά {name} … {percent}%",
   "activityLog.lineBackingUpBatch": "Δημιουργία αντιγράφου όλων {domain} … {percent}%",
   "activityLog.lineOffsiteRunning": "Μεταφόρτωση εκτός τόπου: {domain} …",

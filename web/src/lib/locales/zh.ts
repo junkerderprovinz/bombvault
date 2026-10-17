@@ -2029,6 +2029,7 @@ const zh: Partial<Translations> = {
   "activityLog.jobDrill": "还原验证演练",
   "activityLog.jobTamper": "篡改测试",
   "activityLog.lineBackingUpItem": "正在备份 {name} … {percent}%",
+  "activityLog.lineReplicatingItem": "正在复制 {name} … {percent}%",
   "activityLog.lineRestoringItem": "正在还原 {name} … {percent}%",
   "activityLog.lineBackingUpBatch": "正在备份所有 {domain} … {percent}%",
   "activityLog.lineOffsiteRunning": "异地上传：{domain} …",

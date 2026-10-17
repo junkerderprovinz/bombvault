@@ -2038,6 +2038,7 @@ const fi: Partial<Translations> = {
   "activityLog.jobDrill": "palautuksen vahvistusharjoitus",
   "activityLog.jobTamper": "peukalointitesti",
   "activityLog.lineBackingUpItem": "Varmuuskopioidaan {name} … {percent}%",
+  "activityLog.lineReplicatingItem": "Replikoidaan {name} … {percent}%",
   "activityLog.lineRestoringItem": "Palautetaan {name} … {percent}%",
   "activityLog.lineBackingUpBatch": "Varmuuskopioidaan kaikki {domain} … {percent}%",
   "activityLog.lineOffsiteRunning": "Etälähetys: {domain} …",

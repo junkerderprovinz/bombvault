@@ -2038,6 +2038,7 @@ const tr: Partial<Translations> = {
   "activityLog.jobDrill": "geri yükleme doğrulama tatbikatı",
   "activityLog.jobTamper": "kurcalama testi",
   "activityLog.lineBackingUpItem": "{name} yedekleniyor … %{percent}",
+  "activityLog.lineReplicatingItem": "{name} çoğaltılıyor … %{percent}",
   "activityLog.lineRestoringItem": "{name} geri yükleniyor … %{percent}",
   "activityLog.lineBackingUpBatch": "Tüm {domain} yedekleniyor … %{percent}",
   "activityLog.lineOffsiteRunning": "Site dışı yükleme: {domain} …",

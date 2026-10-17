@@ -2552,6 +2552,7 @@ const et: Partial<Translations> = {
   "activityLog.jobPull": "tõmbamine allikatest",
   "activityLog.jobReplica": "ZFS-i koopia",
   "activityLog.lineBackingUpItem": "Varundatakse {name} … {percent}%",
+  "activityLog.lineReplicatingItem": "Replikeeritakse {name} … {percent}%",
   "activityLog.lineRestoringItem": "Taastatakse {name} … {percent}%",
   "activityLog.lineBackingUpBatch": "Varundatakse kõik {domain} … {percent}%",
   "activityLog.lineOffsiteRunning": "Väline üleslaadimine: {domain} …",

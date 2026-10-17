@@ -2038,6 +2038,7 @@ const no: Partial<Translations> = {
   "activityLog.jobDrill": "gjenopprettingsøvelse",
   "activityLog.jobTamper": "tukletest",
   "activityLog.lineBackingUpItem": "Sikkerhetskopierer {name} … {percent}%",
+  "activityLog.lineReplicatingItem": "Replikerer {name} … {percent}%",
   "activityLog.lineRestoringItem": "Gjenoppretter {name} … {percent}%",
   "activityLog.lineBackingUpBatch": "Sikkerhetskopierer alle {domain} … {percent}%",
   "activityLog.lineOffsiteRunning": "Off-site-opplasting: {domain} …",

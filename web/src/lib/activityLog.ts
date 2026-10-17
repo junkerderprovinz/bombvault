@@ -150,6 +150,7 @@ function displayPercent(percent: number): number {
 type ParsedKey =
   | { scope: "item"; domain: "container" | "vm" | "files" | "zfs" | "flash" | "config"; name: string }
   | { scope: "batch"; domain: string }
+  | { scope: "replica"; id: string }
   | { scope: "offsite" | "prune" | "verify" | "drill" | "drdrill" | "tamper" | "export" | "import"; domain: string }
   | { scope: "check"; check: "probe" | "start"; domain: string; name: string };
 
@@ -166,6 +167,7 @@ function parseProgressKey(key: string): ParsedKey | null {
   if (key.startsWith("vm:")) return { scope: "item", domain: "vm", name: key.slice("vm:".length) };
   if (key.startsWith("files:")) return { scope: "item", domain: "files", name: key.slice("files:".length) };
   if (key.startsWith("zfs:")) return { scope: "item", domain: "zfs", name: key.slice("zfs:".length) };
+  if (key.startsWith("zfs-replica:")) return { scope: "replica", id: key.slice("zfs-replica:".length) };
   if (key.startsWith("batch:")) return { scope: "batch", domain: key.slice("batch:".length) };
   if (key.startsWith("offsite:")) return { scope: "offsite", domain: key.slice("offsite:".length) };
   if (key.startsWith("prune:")) return { scope: "prune", domain: key.slice("prune:".length) };
@@ -308,7 +310,8 @@ function buildLiveLines(
   resolveName: ResolveName,
   now: number,
   liveNow: number = now,
-  stillRunning: ReadonlyMap<string, string> = new Map()
+  stillRunning: ReadonlyMap<string, string> = new Map(),
+  replicaNames: ReadonlyMap<string, string> = new Map()
 ): LiveResult {
   const lines: LogLine[] = [];
   const signatures = new Map<string, number | undefined>();
@@ -348,6 +351,18 @@ function buildLiveLines(
       if (!keep(sig)) continue;
       signatures.set(sig, state.startedAt);
       lines.push({ id: `live:${key}`, runId: stillRunning.get(sig), atMs: state.lastSeen, status: "running", text, domain, kind: asLogKind(runKind), live: true });
+      continue;
+    }
+
+    // The key carries the item's id, so the name comes from its running run.
+    if (parsed.scope === "replica") {
+      const name = replicaNames.get(parsed.id);
+      if (!name) continue;
+      const sig = itemSignature("replica", "zfs", name);
+      if (!keep(sig)) continue;
+      signatures.set(sig, state.startedAt);
+      const text = resolveName("activityLog.lineReplicatingItem", { name, percent: String(displayPercent(state.percent)) });
+      lines.push({ id: `live:${key}`, runId: stillRunning.get(sig), atMs: state.lastSeen, status: "running", text, domain: "zfs", kind: "backup", live: true });
       continue;
     }
 
@@ -764,12 +779,14 @@ export function buildLogLines(
   // the finished ones, so a stale live line can ask whether
   // its run is still going and a live line carries its run's id.
   const stillRunning = new Map<string, string>();
+  const replicaNames = new Map<string, string>();
   for (const run of runs) {
     if (run.status !== "running") continue;
     stillRunning.set(runSignature(run), run.id);
+    if (run.kind === "replica") replicaNames.set(run.targetId, run.target);
   }
 
-  const { lines: liveLines, signatures } = buildLiveLines(progressMap, resolveName, now, liveNow, stillRunning);
+  const { lines: liveLines, signatures } = buildLiveLines(progressMap, resolveName, now, liveNow, stillRunning, replicaNames);
   const historyLines = buildHistoryLines(runs, resolveName, supersededRuns(runs, signatures, stillRunning));
 
   const orderedHistory = historyLines.slice().sort((a, b) => a.atMs - b.atMs);

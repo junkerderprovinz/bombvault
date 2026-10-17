@@ -2038,6 +2038,7 @@ const he: Partial<Translations> = {
   "activityLog.jobDrill": "תרגיל אימות שחזור",
   "activityLog.jobTamper": "בדיקת חבלה",
   "activityLog.lineBackingUpItem": "מגבה את {name} … {percent}%",
+  "activityLog.lineReplicatingItem": "משכפל את {name} … {percent}%",
   "activityLog.lineRestoringItem": "משחזר את {name} … {percent}%",
   "activityLog.lineBackingUpBatch": "מגבה את כל {domain} … {percent}%",
   "activityLog.lineOffsiteRunning": "העלאה מחוץ לאתר: {domain} …",

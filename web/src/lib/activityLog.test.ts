@@ -80,6 +80,20 @@ describe("buildLogLines", () => {
     expect(live.text).toContain("percent=41"); // clamped + rounded
   });
 
+  it("shows a running replica as a live line named after its item", () => {
+    const running = makeRun({ id: "r-rep", kind: "replica", targetId: "z-1", target: "cache/appdata", domain: "zfs", status: "running", finishedAt: null });
+    const progress: ProgressMap = {
+      "zfs-replica:z-1": { phase: "maintenance", percent: 12.6, active: true, lastSeen: 5_000_000 },
+    };
+    const lines = buildLogLines([running], progress, [], resolveName, 5_000_000);
+    const live = lines.find((l) => l.live);
+    expect(live?.id).toBe("live:zfs-replica:z-1");
+    expect(live?.domain).toBe("zfs");
+    expect(live?.text).toContain("activityLog.lineReplicatingItem");
+    expect(live?.text).toContain("name=cache/appdata");
+    expect(live?.text).toContain("percent=13");
+  });
+
   it("keeps earlier off-site copies of a domain while the next one runs", () => {
     const lastNight = makeRun({ id: "r-old", kind: "offsite", targetId: "containers", target: "", domain: "", startedAt: 1000, finishedAt: 1300 });
     const tonight = makeRun({ id: "r-now", kind: "offsite", targetId: "containers", target: "", domain: "", status: "running", startedAt: 90_000, finishedAt: null });

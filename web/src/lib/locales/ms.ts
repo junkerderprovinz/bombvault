@@ -2552,6 +2552,7 @@ const ms: Partial<Translations> = {
   "activityLog.jobPull": "tarikan dari sumber",
   "activityLog.jobReplica": "replika ZFS",
   "activityLog.lineBackingUpItem": "Menyandarkan {name} … {percent}%",
+  "activityLog.lineReplicatingItem": "Mereplikasi {name} … {percent}%",
   "activityLog.lineRestoringItem": "Memulihkan {name} … {percent}%",
   "activityLog.lineBackingUpBatch": "Menyandarkan semua {domain} … {percent}%",
   "activityLog.lineOffsiteRunning": "Muat naik luar tapak: {domain} …",

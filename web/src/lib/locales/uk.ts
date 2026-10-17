@@ -2035,6 +2035,7 @@ const uk: Partial<Translations> = {
   "activityLog.jobDrill": "перевірка відновлення",
   "activityLog.jobTamper": "тест на втручання",
   "activityLog.lineBackingUpItem": "Резервне копіювання {name} … {percent}%",
+  "activityLog.lineReplicatingItem": "Реплікація {name} … {percent}%",
   "activityLog.lineRestoringItem": "Відновлення {name} … {percent}%",
   "activityLog.lineBackingUpBatch": "Резервне копіювання всіх {domain} … {percent}%",
   "activityLog.lineOffsiteRunning": "Завантаження у зовнішнє місце призначення — {domain} …",

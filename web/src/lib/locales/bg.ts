@@ -2552,6 +2552,7 @@ const bg: Partial<Translations> = {
   "activityLog.jobPull": "изтегляне от източници",
   "activityLog.jobReplica": "ZFS реплика",
   "activityLog.lineBackingUpItem": "Архивиране на {name} … {percent}%",
+  "activityLog.lineReplicatingItem": "Репликиране на {name} … {percent}%",
   "activityLog.lineRestoringItem": "Възстановяване на {name} … {percent}%",
   "activityLog.lineBackingUpBatch": "Архивиране на всички {domain} … {percent}%",
   "activityLog.lineOffsiteRunning": "Качване извън обекта — {domain} …",

@@ -2039,6 +2039,7 @@ const ro: Partial<Translations> = {
   "activityLog.jobDrill": "test de restaurare",
   "activityLog.jobTamper": "test tamper",
   "activityLog.lineBackingUpItem": "Se face backup la {name} … {percent}%",
+  "activityLog.lineReplicatingItem": "Se replică {name} … {percent}%",
   "activityLog.lineRestoringItem": "Se restaurează {name} … {percent}%",
   "activityLog.lineBackingUpBatch": "Se face backup la toate {domain} … {percent}%",
   "activityLog.lineOffsiteRunning": "Încărcare externă: {domain} …",

@@ -2039,6 +2039,7 @@ const hu: Partial<Translations> = {
   "activityLog.jobDrill": "visszaállítás-ellenőrzési próba",
   "activityLog.jobTamper": "manipulációs teszt",
   "activityLog.lineBackingUpItem": "{name} mentése … {percent}%",
+  "activityLog.lineReplicatingItem": "{name} replikálása … {percent}%",
   "activityLog.lineRestoringItem": "{name} visszaállítása … {percent}%",
   "activityLog.lineBackingUpBatch": "Az összes {domain} mentése … {percent}%",
   "activityLog.lineOffsiteRunning": "Telephelyen kívüli feltöltés: {domain} …",

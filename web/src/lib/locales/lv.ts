@@ -2552,6 +2552,7 @@ const lv: Partial<Translations> = {
   "activityLog.jobPull": "ievilkšana no avotiem",
   "activityLog.jobReplica": "ZFS replika",
   "activityLog.lineBackingUpItem": "Dublē {name} … {percent}%",
+  "activityLog.lineReplicatingItem": "Replicē {name} … {percent}%",
   "activityLog.lineRestoringItem": "Atjauno {name} … {percent}%",
   "activityLog.lineBackingUpBatch": "Dublē visus {domain} … {percent}%",
   "activityLog.lineOffsiteRunning": "Attālināta augšupielāde: {domain} …",

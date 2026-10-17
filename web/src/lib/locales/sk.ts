@@ -2552,6 +2552,7 @@ const sk: Partial<Translations> = {
   "activityLog.jobPull": "sťahovanie zo zdrojov",
   "activityLog.jobReplica": "replika ZFS",
   "activityLog.lineBackingUpItem": "Zálohuje sa {name} … {percent} %",
+  "activityLog.lineReplicatingItem": "Replikuje sa {name} … {percent} %",
   "activityLog.lineRestoringItem": "Obnovuje sa {name} … {percent} %",
   "activityLog.lineBackingUpBatch": "Zálohujú sa všetky {domain} … {percent} %",
   "activityLog.lineOffsiteRunning": "Externé nahrávanie: {domain} …",

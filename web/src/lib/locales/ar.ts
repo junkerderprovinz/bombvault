@@ -2039,6 +2039,7 @@ const ar: Partial<Translations> = {
   "activityLog.jobDrill": "تمرين التحقق من الاستعادة",
   "activityLog.jobTamper": "اختبار العبث",
   "activityLog.lineBackingUpItem": "جارٍ نسخ {name} احتياطيًا … {percent}%",
+  "activityLog.lineReplicatingItem": "جارٍ مماثلة {name} … {percent}%",
   "activityLog.lineRestoringItem": "جارٍ استعادة {name} … {percent}%",
   "activityLog.lineBackingUpBatch": "جارٍ نسخ جميع {domain} احتياطيًا … {percent}%",
   "activityLog.lineOffsiteRunning": "رفع خارج الموقع: {domain} …",

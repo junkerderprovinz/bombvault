@@ -2552,6 +2552,7 @@ const fa: Partial<Translations> = {
   "activityLog.jobPull": "کشیدن از منابع",
   "activityLog.jobReplica": "رونوشت ZFS",
   "activityLog.lineBackingUpItem": "در حال پشتیبان‌گیری {name} … {percent}٪",
+  "activityLog.lineReplicatingItem": "در حال ایجاد ریپلیکای {name} … {percent}٪",
   "activityLog.lineRestoringItem": "در حال بازیابی {name} … {percent}٪",
   "activityLog.lineBackingUpBatch": "در حال پشتیبان‌گیری از همه {domain} … {percent}٪",
   "activityLog.lineOffsiteRunning": "آپلود خارج از محل: {domain} …",

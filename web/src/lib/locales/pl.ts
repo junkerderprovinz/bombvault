@@ -2035,6 +2035,7 @@ const pl: Partial<Translations> = {
   "activityLog.jobDrill": "próba weryfikacji przywracania",
   "activityLog.jobTamper": "test manipulacji",
   "activityLog.lineBackingUpItem": "Tworzenie kopii {name} … {percent}%",
+  "activityLog.lineReplicatingItem": "Replikowanie {name} … {percent}%",
   "activityLog.lineRestoringItem": "Przywracanie {name} … {percent}%",
   "activityLog.lineBackingUpBatch": "Tworzenie kopii wszystkich {domain} … {percent}%",
   "activityLog.lineOffsiteRunning": "Wysyłka poza siedzibę: {domain} …",

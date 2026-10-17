@@ -2035,6 +2035,7 @@ const ru: Partial<Translations> = {
   "activityLog.jobDrill": "проверка восстановления",
   "activityLog.jobTamper": "проверка защиты от изменений",
   "activityLog.lineBackingUpItem": "Резервное копирование {name} … {percent}%",
+  "activityLog.lineReplicatingItem": "Репликация {name} … {percent}%",
   "activityLog.lineRestoringItem": "Восстановление {name} … {percent}%",
   "activityLog.lineBackingUpBatch": "Резервное копирование всех {domain} … {percent}%",
   "activityLog.lineOffsiteRunning": "Загрузка во внешнее место назначения — {domain} …",

@@ -2552,6 +2552,7 @@ const gl: Partial<Translations> = {
   "activityLog.jobPull": "recollida de orixes",
   "activityLog.jobReplica": "réplica ZFS",
   "activityLog.lineBackingUpItem": "Copiando {name} … {percent}%",
+  "activityLog.lineReplicatingItem": "Replicando {name} … {percent}%",
   "activityLog.lineRestoringItem": "Restaurando {name} … {percent}%",
   "activityLog.lineBackingUpBatch": "Copiando todos os {domain} … {percent}%",
   "activityLog.lineOffsiteRunning": "Subida externa: {domain} …",

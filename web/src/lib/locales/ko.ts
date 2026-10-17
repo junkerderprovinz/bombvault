@@ -2029,6 +2029,7 @@ const ko: Partial<Translations> = {
   "activityLog.jobDrill": "복원 검증 훈련",
   "activityLog.jobTamper": "변조 테스트",
   "activityLog.lineBackingUpItem": "{name} 백업 중 … {percent}%",
+  "activityLog.lineReplicatingItem": "{name} 복제 중 … {percent}%",
   "activityLog.lineRestoringItem": "{name} 복원 중 … {percent}%",
   "activityLog.lineBackingUpBatch": "모든 {domain} 백업 중 … {percent}%",
   "activityLog.lineOffsiteRunning": "오프사이트 업로드: {domain} …",

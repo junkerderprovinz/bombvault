@@ -2038,6 +2038,7 @@ const it: Partial<Translations> = {
   "activityLog.jobDrill": "prova di verifica del ripristino",
   "activityLog.jobTamper": "test di manomissione",
   "activityLog.lineBackingUpItem": "Backup di {name} in corso … {percent}%",
+  "activityLog.lineReplicatingItem": "Replica di {name} in corso … {percent}%",
   "activityLog.lineRestoringItem": "Ripristino di {name} in corso … {percent}%",
   "activityLog.lineBackingUpBatch": "Backup di tutti i {domain} in corso … {percent}%",
   "activityLog.lineOffsiteRunning": "Caricamento off-site: {domain} …",

@@ -2552,6 +2552,7 @@ const eu: Partial<Translations> = {
   "activityLog.jobPull": "iturburuetatik ekartzea",
   "activityLog.jobReplica": "ZFS erreplika",
   "activityLog.lineBackingUpItem": "{name} babesten… %{percent}",
+  "activityLog.lineReplicatingItem": "{name} erreplikatzen… %{percent}",
   "activityLog.lineRestoringItem": "{name} berrezartzen… %{percent}",
   "activityLog.lineBackingUpBatch": "{domain} guztiak babesten… %{percent}",
   "activityLog.lineOffsiteRunning": "Kanpoko igoera: {domain} …",

@@ -2037,6 +2037,7 @@ const nl: Partial<Translations> = {
   "activityLog.jobDrill": "hersteltest",
   "activityLog.jobTamper": "tamper-test",
   "activityLog.lineBackingUpItem": "Back-up maken van {name} … {percent}%",
+  "activityLog.lineReplicatingItem": "{name} repliceren … {percent}%",
   "activityLog.lineRestoringItem": "{name} herstellen … {percent}%",
   "activityLog.lineBackingUpBatch": "Back-up maken van alle {domain} … {percent}%",
   "activityLog.lineOffsiteRunning": "Off-site upload: {domain} …",

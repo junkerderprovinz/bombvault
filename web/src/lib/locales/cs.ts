@@ -2036,6 +2036,7 @@ const cs: Partial<Translations> = {
   "activityLog.jobDrill": "cvičení ověření obnovy",
   "activityLog.jobTamper": "test manipulace",
   "activityLog.lineBackingUpItem": "Zálohuji {name} … {percent}%",
+  "activityLog.lineReplicatingItem": "Replikuji {name} … {percent}%",
   "activityLog.lineRestoringItem": "Obnovuji {name} … {percent}%",
   "activityLog.lineBackingUpBatch": "Zálohuji všechny {domain} … {percent}%",
   "activityLog.lineOffsiteRunning": "Odesílání mimo lokalitu: {domain} …",

@@ -2552,6 +2552,7 @@ const hr: Partial<Translations> = {
   "activityLog.jobPull": "dohvat iz izvora",
   "activityLog.jobReplica": "ZFS replika",
   "activityLog.lineBackingUpItem": "Izrada sigurnosne kopije {name} … {percent}%",
+  "activityLog.lineReplicatingItem": "Replikacija {name} … {percent}%",
   "activityLog.lineRestoringItem": "Vraćanje {name} … {percent}%",
   "activityLog.lineBackingUpBatch": "Izrada sigurnosne kopije svih {domain} … {percent}%",
   "activityLog.lineOffsiteRunning": "Prijenos izvan lokacije: {domain} …",

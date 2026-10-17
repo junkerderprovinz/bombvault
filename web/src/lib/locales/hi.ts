@@ -2552,6 +2552,7 @@ const hi: Partial<Translations> = {
   "activityLog.jobPull": "स्रोतों से खींचना",
   "activityLog.jobReplica": "ZFS रेप्लिका",
   "activityLog.lineBackingUpItem": "{name} का बैकअप लिया जा रहा है … {percent}%",
+  "activityLog.lineReplicatingItem": "{name} की रेप्लिका बनाई जा रही है … {percent}%",
   "activityLog.lineRestoringItem": "{name} रीस्टोर हो रहा है … {percent}%",
   "activityLog.lineBackingUpBatch": "सभी {domain} का बैकअप लिया जा रहा है … {percent}%",
   "activityLog.lineOffsiteRunning": "ऑफ़-साइट अपलोड: {domain} …",

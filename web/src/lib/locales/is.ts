@@ -2552,6 +2552,7 @@ const is: Partial<Translations> = {
   "activityLog.jobPull": "sókn frá upprunum",
   "activityLog.jobReplica": "ZFS-afrit",
   "activityLog.lineBackingUpItem": "Afrita {name} … {percent}%",
+  "activityLog.lineReplicatingItem": "Býr til eftirmynd af {name} … {percent}%",
   "activityLog.lineRestoringItem": "Endurheimti {name} … {percent}%",
   "activityLog.lineBackingUpBatch": "Afrita öll {domain} … {percent}%",
   "activityLog.lineOffsiteRunning": "Fjarlægt uppstreymi: {domain} …",

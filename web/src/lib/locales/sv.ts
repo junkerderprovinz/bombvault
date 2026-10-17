@@ -2038,6 +2038,7 @@ const sv: Partial<Translations> = {
   "activityLog.jobDrill": "återställningsövning",
   "activityLog.jobTamper": "manipuleringstest",
   "activityLog.lineBackingUpItem": "Säkerhetskopierar {name} … {percent}%",
+  "activityLog.lineReplicatingItem": "Replikerar {name} … {percent}%",
   "activityLog.lineRestoringItem": "Återställer {name} … {percent}%",
   "activityLog.lineBackingUpBatch": "Säkerhetskopierar alla {domain} … {percent}%",
   "activityLog.lineOffsiteRunning": "Off-site-uppladdning: {domain} …",

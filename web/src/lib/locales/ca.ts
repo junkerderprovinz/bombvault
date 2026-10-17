@@ -2552,6 +2552,7 @@ const ca: Partial<Translations> = {
   "activityLog.jobPull": "recollida d'orígens",
   "activityLog.jobReplica": "rèplica ZFS",
   "activityLog.lineBackingUpItem": "Fent còpia de {name} … {percent}%",
+  "activityLog.lineReplicatingItem": "Replicant {name} … {percent}%",
   "activityLog.lineRestoringItem": "Restaurant {name} … {percent}%",
   "activityLog.lineBackingUpBatch": "Fent còpia de tots els {domain} … {percent}%",
   "activityLog.lineOffsiteRunning": "Pujada externa: {domain} …",

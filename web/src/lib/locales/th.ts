@@ -2039,6 +2039,7 @@ const th: Partial<Translations> = {
   "activityLog.jobDrill": "การทดสอบยืนยันการกู้คืน",
   "activityLog.jobTamper": "การทดสอบการงัดแงะ",
   "activityLog.lineBackingUpItem": "กำลังสำรองข้อมูล {name} … {percent}%",
+  "activityLog.lineReplicatingItem": "กำลังทำเรพลิกา {name} … {percent}%",
   "activityLog.lineRestoringItem": "กำลังกู้คืน {name} … {percent}%",
   "activityLog.lineBackingUpBatch": "กำลังสำรองข้อมูลทั้งหมดของ {domain} … {percent}%",
   "activityLog.lineOffsiteRunning": "กำลังอัปโหลดนอกสถานที่ {domain} …",

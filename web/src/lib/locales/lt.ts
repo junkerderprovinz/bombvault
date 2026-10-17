@@ -2552,6 +2552,7 @@ const lt: Partial<Translations> = {
   "activityLog.jobPull": "parsisiuntimas iš šaltinių",
   "activityLog.jobReplica": "ZFS replika",
   "activityLog.lineBackingUpItem": "Kopijuojama {name} … {percent}%",
+  "activityLog.lineReplicatingItem": "Replikuojama {name} … {percent}%",
   "activityLog.lineRestoringItem": "Atkuriama {name} … {percent}%",
   "activityLog.lineBackingUpBatch": "Kopijuojami visi {domain} … {percent}%",
   "activityLog.lineOffsiteRunning": "Nuotolinis siuntimas: {domain} …",
