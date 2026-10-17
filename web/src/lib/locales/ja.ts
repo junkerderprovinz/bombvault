@@ -4635,6 +4635,7 @@ const ja: Partial<Translations> = {
   "whatsNew.zfsReplicateNow": "ZFS 項目のページの操作に「今すぐ複製」があり、レプリカをすぐに送信します。",
   "whatsNew.zfsReplicateAll": "ZFS タイルを選ぶと、バックアップの操作の隣に「今すぐすべて複製」が表示され、すべての ZFS 項目のレプリカを一度に送信します。",
   "whatsNew.zfsReplicaOnly": "ZFS 項目はレプリカだけにもできます。レプリカの送信先があり、セクションに保存先がない場合、実行時にスナップショットを取ってレプリカを送信します。",
+  "whatsNew.zfsReplicaOnlySwitch": "ZFS 項目のレプリカカードには、レプリカのみ、バックアップなしというスイッチがあります。ZFS セクションの保存先をオフにするので、実行時にはレプリカだけを送信します。",
   "whatsNew.zfsServerMount": "「サーバー上で読み取り専用でマウント」を使うと、実行のたびにレプリカがサーバー上にマウントされ、サーバー上でファイルを読んだりコピーしたりできます。",
   "fleet.kindAndroid": "Android アプリ",
   "pairing.qrCaption": "このコードを BombVault アプリで読み取って、端末をペアリングしてください。",

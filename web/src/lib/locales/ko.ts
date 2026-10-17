@@ -4635,6 +4635,7 @@ const ko: Partial<Translations> = {
   "whatsNew.zfsReplicateNow": "ZFS 항목 페이지의 작업에 “지금 복제”가 있으며, 복제본을 바로 보냅니다.",
   "whatsNew.zfsReplicateAll": "ZFS 타일을 고르면 백업 작업 옆에 “지금 모두 복제”가 나타나며, 모든 ZFS 항목의 복제본을 한 번에 보냅니다.",
   "whatsNew.zfsReplicaOnly": "ZFS 항목은 복제본만 둘 수도 있습니다. 복제 대상은 있고 섹션에 대상이 없으면, 실행할 때 스냅샷을 만들고 복제본을 보냅니다.",
+  "whatsNew.zfsReplicaOnlySwitch": "ZFS 항목의 복제 카드에는 복제본만, 백업 없음 스위치가 있습니다. ZFS 섹션의 대상을 끄기 때문에 실행하면 복제본만 보냅니다.",
   "whatsNew.zfsServerMount": "“서버에서 읽기 전용으로 마운트”는 실행할 때마다 복제본을 서버에 마운트하므로, 서버에서 파일을 읽고 복사할 수 있습니다.",
   "fleet.kindAndroid": "Android 앱",
   "pairing.qrCaption": "휴대폰을 페어링하려면 BombVault 앱으로 이 코드를 스캔하세요.",

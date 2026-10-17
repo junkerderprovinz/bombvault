@@ -4644,6 +4644,7 @@ const da: Partial<Translations> = {
   "whatsNew.zfsReplicateNow": "Siden for et ZFS-element har Replikér nu blandt sine handlinger, som sender replikaen med det samme.",
   "whatsNew.zfsReplicateAll": "Når ZFS-flisen er valgt, står Replikér alt nu ved siden af handlingerne for sikkerhedskopi og sender replikaen af alle ZFS-elementer på én gang.",
   "whatsNew.zfsReplicaOnly": "Et ZFS-element kan have kun en replika. Med et replikamål og uden destination for sit område tager dets kørsel snapshottet og sender replikaen.",
+  "whatsNew.zfsReplicaOnlySwitch": "Replikakortet for et ZFS-element har en kontakt, Kun replika, ingen sikkerhedskopi. Den slår destinationerne i ZFS-området fra, så en kørsel sender kun replikaen.",
   "whatsNew.zfsServerMount": "Montér skrivebeskyttet på serveren monterer replikaerne dér efter hver kørsel, så du kan læse og kopiere filerne på serveren.",
   "fleet.kindAndroid": "Android-app",
   "pairing.qrCaption": "Scan denne kode med BombVault-appen for at parre en telefon.",

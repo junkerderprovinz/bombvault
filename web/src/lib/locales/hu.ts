@@ -4645,6 +4645,7 @@ const hu: Partial<Translations> = {
   "whatsNew.zfsReplicateNow": "Egy ZFS-elem oldalán a műveletek között ott a „Replikálás most”, ami azonnal elküldi a replikát.",
   "whatsNew.zfsReplicateAll": "Ha a ZFS csempe van kiválasztva, az „Összes replikálása most” a mentési műveletek mellett áll, és egyszerre elküldi minden ZFS-elem replikáját.",
   "whatsNew.zfsReplicaOnly": "Egy ZFS-elemnek lehet csak replikája. Replikacél mellett, a szakaszához tartozó cél nélkül a futása elkészíti a pillanatképet, és elküldi a replikát.",
+  "whatsNew.zfsReplicaOnlySwitch": "Egy ZFS-elem replikakártyáján van egy kapcsoló, Csak replika, mentés nélkül. Kikapcsolja a ZFS-szakasz céljait, ezért a futás csak a replikát küldi el.",
   "whatsNew.zfsServerMount": "A „Csatolás csak olvashatóként a szerveren” minden futás után odacsatolja a replikákat, így a szerveren olvashatod és másolhatod a fájlokat.",
   "fleet.kindAndroid": "Android-alkalmazás",
   "pairing.qrCaption": "Olvasd be ezt a kódot a BombVault alkalmazással egy telefon párosításához.",

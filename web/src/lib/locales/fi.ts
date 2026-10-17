@@ -4644,6 +4644,7 @@ const fi: Partial<Translations> = {
   "whatsNew.zfsReplicateNow": "ZFS-merkinnän sivulla on toimintojen joukossa Replikoi nyt, joka lähettää replikan heti.",
   "whatsNew.zfsReplicateAll": "Kun ZFS-ruutu on valittuna, Replikoi kaikki nyt on varmuuskopiointitoimintojen vieressä ja lähettää kaikkien ZFS-merkintöjen replikat kerralla.",
   "whatsNew.zfsReplicaOnly": "ZFS-merkinnällä voi olla pelkkä replika. Kun replikointikohde on olemassa mutta osiolla ei ole kohdetta, ajo ottaa tilannevedoksen ja lähettää replikan.",
+  "whatsNew.zfsReplicaOnlySwitch": "ZFS-merkinnän replikakortissa on kytkin, Vain replika, ei varmuuskopiota. Se poistaa ZFS-osion kohteet käytöstä, joten ajo lähettää vain replikan.",
   "whatsNew.zfsServerMount": "Liitä vain luku -tilassa palvelimella liittää replikat sinne jokaisen ajon jälkeen, jotta voit lukea ja kopioida tiedostot palvelimella.",
   "fleet.kindAndroid": "Android-sovellus",
   "pairing.qrCaption": "Skannaa tämä koodi BombVault-sovelluksella pariuttaaksesi puhelimen.",

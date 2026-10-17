@@ -4644,6 +4644,7 @@ const fr: Partial<Translations> = {
   "whatsNew.zfsReplicateNow": "La page d'un élément ZFS propose Répliquer maintenant parmi ses actions, ce qui envoie la réplique tout de suite.",
   "whatsNew.zfsReplicateAll": "Avec la tuile ZFS choisie, Tout répliquer maintenant se place à côté des actions de sauvegarde et envoie d'un coup la réplique de chaque élément ZFS.",
   "whatsNew.zfsReplicaOnly": "Un élément ZFS peut n'avoir qu'une réplique. Avec une cible de réplique et sans destination pour sa section, son exécution prend l'instantané et envoie la réplique.",
+  "whatsNew.zfsReplicaOnlySwitch": "La carte de réplique d'un élément ZFS a un interrupteur, Réplique seule, sans sauvegarde. Il désactive les destinations de la section ZFS, donc une exécution n'envoie que la réplique.",
   "whatsNew.zfsServerMount": "Monter en lecture seule sur le serveur monte les répliques là-bas après chaque exécution, pour que vous puissiez lire et copier les fichiers sur le serveur.",
   "fleet.kindAndroid": "App Android",
   "pairing.qrCaption": "Scannez ce code avec l'app BombVault pour appairer un téléphone.",

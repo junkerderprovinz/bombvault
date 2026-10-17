@@ -4642,6 +4642,7 @@ const cs: Partial<Translations> = {
   "whatsNew.zfsReplicateNow": "Stránka položky ZFS má mezi akcemi Replikovat teď, které odešle repliku hned.",
   "whatsNew.zfsReplicateAll": "S vybranou dlaždicí ZFS stojí Replikovat vše teď vedle akcí zálohování a odešle repliku každé položky ZFS najednou.",
   "whatsNew.zfsReplicaOnly": "Položka ZFS může mít jen repliku. S cílem repliky a bez cíle pro svou sekci její běh pořídí snímek a odešle repliku.",
+  "whatsNew.zfsReplicaOnlySwitch": "Karta repliky položky ZFS má přepínač, Jen replika, bez zálohy. Vypne cíle sekce ZFS, takže běh odešle jen repliku.",
   "whatsNew.zfsServerMount": "Připojit na serveru jen pro čtení po každém běhu připojí repliky tam, takže soubory můžeš číst a kopírovat přímo na serveru.",
   "fleet.kindAndroid": "Aplikace pro Android",
   "pairing.qrCaption": "Naskenuj tento kód aplikací BombVault a spáruj telefon.",

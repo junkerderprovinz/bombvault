@@ -4638,6 +4638,7 @@ const sl: Partial<Translations> = {
   "whatsNew.zfsReplicateNow": "Stran vnosa ZFS ima med dejanji „Repliciraj zdaj“, ki takoj pošlje repliko.",
   "whatsNew.zfsReplicateAll": "Ko je izbrana ploščica ZFS, je „Repliciraj vse zdaj“ ob dejanjih varnostnega kopiranja in naenkrat pošlje repliko vsakega vnosa ZFS.",
   "whatsNew.zfsReplicaOnly": "Vnos ZFS ima lahko samo repliko. S ciljem replike in brez cilja za svoj razdelek njegov zagon naredi posnetek in pošlje repliko.",
+  "whatsNew.zfsReplicaOnlySwitch": "Kartica replike vnosa ZFS ima stikalo, Samo replika, brez varnostne kopije. Izklopi cilje razdelka ZFS, zato zagon pošlje samo repliko.",
   "whatsNew.zfsServerMount": "„Priklopi samo za branje na strežniku“ po vsakem zagonu tam priklopi replike, tako da datoteke lahko bereš in kopiraš kar na strežniku.",
   "fleet.kindAndroid": "Aplikacija za Android",
   "pairing.qrCaption": "Skeniraj to kodo z aplikacijo BombVault, da seznaniš telefon.",

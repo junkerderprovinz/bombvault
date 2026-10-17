@@ -1,0 +1,1 @@
+The app itself is unchanged. On your server, the replica card of a ZFS entry gets a switch, Replica only, no backup, for everyone who wants the replica without a backup next to it.

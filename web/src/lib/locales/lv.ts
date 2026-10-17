@@ -4654,6 +4654,7 @@ const lv: Partial<Translations> = {
   "whatsNew.zfsReplicateNow": "ZFS ieraksta lapā starp darbībām ir “Replicēt tagad”, kas repliku nosūta uzreiz.",
   "whatsNew.zfsReplicateAll": "Kad izvēlēta ZFS flīze, blakus rezerves kopiju darbībām ir “Replicēt visu tagad”, kas vienlaikus nosūta katra ZFS ieraksta repliku.",
   "whatsNew.zfsReplicaOnly": "ZFS ierakstam var būt tikai replika. Ja ir replikas mērķis, bet sadaļai nav mērķa, palaišana izveido momentuzņēmumu un nosūta repliku.",
+  "whatsNew.zfsReplicaOnlySwitch": "ZFS ieraksta replikas kartītei ir slēdzis, Tikai replika, bez rezerves kopijas. Tas izslēdz ZFS sadaļas mērķus, tāpēc palaišana nosūta tikai repliku.",
   "whatsNew.zfsServerMount": "“Pievienot serverī tikai lasīšanai” pēc katras palaišanas pievieno replikas serverī, lai failus varētu lasīt un kopēt pašā serverī.",
   "fleet.kindAndroid": "Android lietotne",
   "pairing.qrCaption": "Noskenējiet šo kodu ar BombVault lietotni, lai sapārotu tālruni.",

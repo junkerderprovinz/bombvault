@@ -4635,6 +4635,7 @@ const vi: Partial<Translations> = {
   "whatsNew.zfsReplicateNow": "Trang của một mục ZFS có “Nhân bản ngay” trong các thao tác, gửi bản nhân bản đi ngay.",
   "whatsNew.zfsReplicateAll": "Khi chọn ô ZFS, “Nhân bản tất cả ngay” nằm cạnh các thao tác sao lưu và gửi bản nhân bản của mọi mục ZFS cùng lúc.",
   "whatsNew.zfsReplicaOnly": "Một mục ZFS có thể chỉ có bản nhân bản. Khi có đích nhân bản mà phần của nó không có đích sao lưu, lần chạy sẽ chụp snapshot và gửi bản nhân bản.",
+  "whatsNew.zfsReplicaOnlySwitch": "Thẻ bản nhân bản của một mục ZFS có một công tắc, Chỉ bản nhân bản, không sao lưu. Công tắc này tắt các đích của phần ZFS, nên một lần chạy chỉ gửi bản nhân bản.",
   "whatsNew.zfsServerMount": "“Gắn chỉ đọc trên máy chủ” gắn các bản nhân bản ở đó sau mỗi lần chạy, nên bạn có thể đọc và sao chép tệp ngay trên máy chủ.",
   "fleet.kindAndroid": "Ứng dụng Android",
   "pairing.qrCaption": "Quét mã này bằng ứng dụng BombVault để ghép nối điện thoại.",

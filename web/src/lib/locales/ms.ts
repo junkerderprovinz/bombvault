@@ -4654,6 +4654,7 @@ const ms: Partial<Translations> = {
   "whatsNew.zfsReplicateNow": "Halaman entri ZFS mempunyai “Replikasi sekarang” antara tindakannya, yang menghantar replika serta-merta.",
   "whatsNew.zfsReplicateAll": "Apabila jubin ZFS dipilih, “Replikasi semua sekarang” terletak di sebelah tindakan sandaran dan menghantar replika setiap entri ZFS serentak.",
   "whatsNew.zfsReplicaOnly": "Entri ZFS boleh mempunyai replika sahaja. Dengan sasaran replika tetapi tanpa destinasi untuk bahagiannya, larian mengambil syot kilat dan menghantar replika.",
+  "whatsNew.zfsReplicaOnlySwitch": "Kad replika bagi entri ZFS mempunyai suis, Replika sahaja, tiada sandaran. Suis ini mematikan destinasi bahagian ZFS, jadi satu larian hanya menghantar replika.",
   "whatsNew.zfsServerMount": "“Lekapkan baca sahaja pada pelayan” melekapkan replika di sana selepas setiap larian, supaya anda boleh membaca dan menyalin fail pada pelayan.",
   "fleet.kindAndroid": "Aplikasi Android",
   "pairing.qrCaption": "Imbas kod ini dengan aplikasi BombVault untuk menggandingkan telefon.",

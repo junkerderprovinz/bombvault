@@ -4654,6 +4654,7 @@ const eu: Partial<Translations> = {
   "whatsNew.zfsReplicateNow": "ZFS elementu baten orriak Erreplikatu orain du bere ekintzen artean, eta erreplika berehala bidaltzen du.",
   "whatsNew.zfsReplicateAll": "ZFS lauza hautatuta dagoenean, Erreplikatu dena orain babeskopia-ekintzen ondoan dago eta ZFS elementu guztien erreplika batera bidaltzen du.",
   "whatsNew.zfsReplicaOnly": "ZFS elementu batek erreplika bakarrik izan dezake. Erreplika-helmuga bat eta bere atalerako helmugarik gabe, bere exekuzioak snapshota egiten du eta erreplika bidaltzen du.",
+  "whatsNew.zfsReplicaOnlySwitch": "ZFS elementu baten erreplika-txartelak etengailu bat dauka, Erreplika bakarrik, babeskopiarik ez. ZFS ataleko helmugak desaktibatzen ditu, beraz exekuzioak erreplika bakarrik bidaltzen du.",
   "whatsNew.zfsServerMount": "Muntatu irakurtzeko soilik zerbitzarian aukerak erreplikak han muntatzen ditu exekuzio bakoitzaren ondoren, fitxategiak zerbitzarian irakurri eta kopiatu ahal izan ditzazun.",
   "fleet.kindAndroid": "Android aplikazioa",
   "pairing.qrCaption": "Eskaneatu kode hau BombVault aplikazioarekin telefono bat parekatzeko.",

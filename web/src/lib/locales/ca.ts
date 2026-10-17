@@ -4654,6 +4654,7 @@ const ca: Partial<Translations> = {
   "whatsNew.zfsReplicateNow": "La pàgina d'un element ZFS té Replica ara entre les accions, que envia la rèplica a l'instant.",
   "whatsNew.zfsReplicateAll": "Amb la rajola ZFS triada, Replica-ho tot ara és al costat de les accions de còpia i envia la rèplica de tots els elements ZFS alhora.",
   "whatsNew.zfsReplicaOnly": "Un element ZFS pot tenir només una rèplica. Amb una destinació de rèplica i cap destinació per a la seva secció, l'execució fa la instantània i envia la rèplica.",
+  "whatsNew.zfsReplicaOnlySwitch": "La targeta de rèplica d'un element ZFS té un interruptor, Només rèplica, sense còpia. Desactiva les destinacions de la secció ZFS, així que l'execució només envia la rèplica.",
   "whatsNew.zfsServerMount": "Muntar només de lectura al servidor munta allà les rèpliques després de cada execució, perquè puguis llegir i copiar els fitxers al servidor.",
   "fleet.kindAndroid": "App d'Android",
   "pairing.qrCaption": "Escaneja aquest codi amb l'app de BombVault per aparellar un telèfon.",

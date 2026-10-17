@@ -4644,6 +4644,7 @@ const no: Partial<Translations> = {
   "whatsNew.zfsReplicateNow": "Siden til et ZFS-element har «Replikér nå» blant handlingene, som sender replikaen med en gang.",
   "whatsNew.zfsReplicateAll": "Når ZFS-flisen er valgt, står «Replikér alt nå» ved siden av sikkerhetskopihandlingene og sender replikaen til alle ZFS-elementer på én gang.",
   "whatsNew.zfsReplicaOnly": "Et ZFS-element kan ha bare en replika. Med et replikamål og uten mål for området tar kjøringen øyeblikksbildet og sender replikaen.",
+  "whatsNew.zfsReplicaOnlySwitch": "Replikakortet til et ZFS-element har en bryter, Bare replika, ingen sikkerhetskopi. Den slår av målene i ZFS-området, så en kjøring sender bare replikaen.",
   "whatsNew.zfsServerMount": "«Monter skrivebeskyttet på serveren» monterer replikaene der etter hver kjøring, slik at du kan lese og kopiere filene på serveren.",
   "fleet.kindAndroid": "Android-app",
   "pairing.qrCaption": "Skann denne koden med BombVault-appen for å pare en telefon.",

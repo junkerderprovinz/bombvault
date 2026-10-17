@@ -4644,6 +4644,7 @@ const sv: Partial<Translations> = {
   "whatsNew.zfsReplicateNow": "En ZFS-posts sida har ”Replikera nu” bland åtgärderna, som skickar repliken direkt.",
   "whatsNew.zfsReplicateAll": "Med ZFS-rutan vald står ”Replikera allt nu” bredvid säkerhetskopieringsåtgärderna och skickar repliken för varje ZFS-post på en gång.",
   "whatsNew.zfsReplicaOnly": "En ZFS-post kan ha bara en replik. Med ett replikmål och inget mål för sitt avsnitt tar dess körning ögonblicksbilden och skickar repliken.",
+  "whatsNew.zfsReplicaOnlySwitch": "Replikakortet för en ZFS-post har en brytare, Bara replik, ingen säkerhetskopia. Den stänger av målen i ZFS-avsnittet, så en körning skickar bara repliken.",
   "whatsNew.zfsServerMount": "”Montera skrivskyddat på servern” monterar replikerna där efter varje körning, så du kan läsa och kopiera filerna på servern.",
   "fleet.kindAndroid": "Android-app",
   "pairing.qrCaption": "Skanna den här koden med BombVault-appen för att parkoppla en telefon.",

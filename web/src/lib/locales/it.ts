@@ -4644,6 +4644,7 @@ const it: Partial<Translations> = {
   "whatsNew.zfsReplicateNow": "La pagina di un elemento ZFS ha Replica ora tra le sue azioni, che invia subito la replica.",
   "whatsNew.zfsReplicateAll": "Con il riquadro ZFS selezionato, Replica tutto ora sta accanto alle azioni di backup e invia subito la replica di ogni elemento ZFS.",
   "whatsNew.zfsReplicaOnly": "Un elemento ZFS può avere solo una replica. Con una destinazione di replica e senza destinazione per la sua sezione, la sua esecuzione crea lo snapshot e invia la replica.",
+  "whatsNew.zfsReplicaOnlySwitch": "La scheda replica di un elemento ZFS ha un interruttore, Solo replica, nessun backup. Disattiva le destinazioni della sezione ZFS, quindi un'esecuzione invia solo la replica.",
   "whatsNew.zfsServerMount": "Monta in sola lettura sul server monta lì le repliche dopo ogni esecuzione, così puoi leggere e copiare i file sul server.",
   "fleet.kindAndroid": "App Android",
   "pairing.qrCaption": "Inquadra questo codice con l'app BombVault per associare un telefono.",

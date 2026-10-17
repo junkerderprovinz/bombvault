@@ -4654,6 +4654,7 @@ const lt: Partial<Translations> = {
   "whatsNew.zfsReplicateNow": "ZFS įrašo puslapyje tarp veiksmų yra „Replikuoti dabar“, kuris iškart išsiunčia repliką.",
   "whatsNew.zfsReplicateAll": "Pasirinkus ZFS plytelę, šalia atsarginių kopijų veiksmų atsiranda „Replikuoti viską dabar“, kuris vienu metu išsiunčia kiekvieno ZFS įrašo repliką.",
   "whatsNew.zfsReplicaOnly": "ZFS įrašas gali turėti tik repliką. Kai yra replikos paskirtis, bet jo sritis neturi paskirties vietos, paleidimas padaro momentinę kopiją ir išsiunčia repliką.",
+  "whatsNew.zfsReplicaOnlySwitch": "ZFS įrašo replikos kortelėje yra jungiklis, Tik replika, be atsarginės kopijos. Jis išjungia ZFS srities paskirties vietas, todėl paleidimas išsiunčia tik repliką.",
   "whatsNew.zfsServerMount": "„Prijungti tik skaitymui serveryje“ po kiekvieno paleidimo prijungia replikas serveryje, tad failus gali skaityti ir kopijuoti pačiame serveryje.",
   "fleet.kindAndroid": "Android programa",
   "pairing.qrCaption": "Nuskaityk šį kodą BombVault programa, kad susietum telefoną.",

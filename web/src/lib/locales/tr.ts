@@ -4644,6 +4644,7 @@ const tr: Partial<Translations> = {
   "whatsNew.zfsReplicateNow": "Bir ZFS ögesinin sayfasında eylemler arasında “Şimdi çoğalt” bulunur, replikayı hemen gönderir.",
   "whatsNew.zfsReplicateAll": "ZFS kutucuğu seçiliyken “Şimdi tümünü çoğalt” yedekleme eylemlerinin yanında durur ve her ZFS ögesinin replikasını bir kerede gönderir.",
   "whatsNew.zfsReplicaOnly": "Bir ZFS ögesinin yalnızca replikası olabilir. Replika hedefi varken bölümü için hedef yoksa çalıştırması anlık görüntüyü alır ve replikayı gönderir.",
+  "whatsNew.zfsReplicaOnlySwitch": "Bir ZFS ögesinin replika kartında Yalnızca replika, yedek yok adlı bir anahtar var. Bu anahtar ZFS bölümünün hedeflerini kapatır, böylece çalıştırma yalnızca replikayı gönderir.",
   "whatsNew.zfsServerMount": "“Sunucuda salt okunur olarak bağla”, her çalıştırmadan sonra replikaları orada bağlar, böylece dosyaları sunucuda okuyup kopyalayabilirsin.",
   "fleet.kindAndroid": "Android uygulaması",
   "pairing.qrCaption": "Bir telefonu eşleştirmek için bu kodu BombVault uygulamasıyla tara.",

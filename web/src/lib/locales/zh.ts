@@ -4635,6 +4635,7 @@ const zh: Partial<Translations> = {
   "whatsNew.zfsReplicateNow": "ZFS 条目的页面在操作里有“立即复制”，会马上发送副本。",
   "whatsNew.zfsReplicateAll": "选中 ZFS 磁贴时，“立即复制全部”就在备份操作旁边，会一次性发送每个 ZFS 条目的副本。",
   "whatsNew.zfsReplicaOnly": "ZFS 条目可以只有副本。有副本目标、其分区没有目标时，运行会创建快照并发送副本。",
+  "whatsNew.zfsReplicaOnlySwitch": "ZFS 条目的副本卡片上有一个开关，仅副本，不备份。它会关闭 ZFS 分区的目标，所以运行时只发送副本。",
   "whatsNew.zfsServerMount": "“在服务器上以只读方式挂载”会在每次运行后把副本挂载到服务器上，这样你可以直接在服务器上读取和复制文件。",
   "fleet.kindAndroid": "Android 应用",
   "pairing.qrCaption": "用 BombVault 应用扫描这个码来配对手机。",

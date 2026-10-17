@@ -56,6 +56,19 @@ const TO_STORAGE: WayStep[] = ["/settings", "/settings/storage", "/storage"];
 /** Every release that brought something new, newest first. */
 export const RELEASES: Release[] = [
   {
+    version: "10.1.4",
+    changes: [
+      {
+        id: "zfs-replica-only-switch",
+        page: ENTRY,
+        go: "/backups",
+        where: ["backups.title", "whatsNew.page.entry"],
+        way: ["/backups", "entry"],
+        text: "whatsNew.zfsReplicaOnlySwitch",
+      },
+    ],
+  },
+  {
     version: "10.1.3",
     changes: [
       { id: "whats-new-cards", text: "whatsNew.releaseCards" },

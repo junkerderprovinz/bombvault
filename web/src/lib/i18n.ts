@@ -4986,6 +4986,7 @@ export const en = {
   "whatsNew.zfsReplicateNow": "A ZFS entry's page has Replicate now among its actions, which sends the replica straight away.",
   "whatsNew.zfsReplicateAll": "With the ZFS tile picked, Replicate all now stands next to the backup actions and sends the replica of every ZFS entry at once.",
   "whatsNew.zfsReplicaOnly": "A ZFS entry can have only a replica. With a replica target and no storage location for its section, its run takes the snapshot and sends the replica.",
+  "whatsNew.zfsReplicaOnlySwitch": "The replica card of a ZFS entry has a switch, Replica only, no backup. It turns off the storage locations of the ZFS section, so a run only sends the replica.",
   "whatsNew.zfsServerMount": "Mount read only on the server mounts the replicas there after each run, so you can read and copy the files on the server.",
 } as const;
 
@@ -9691,6 +9692,7 @@ export const de: Translations = {
   "whatsNew.zfsReplicateNow": "Die Seite eines ZFS-Eintrags hat Jetzt replizieren bei ihren Aktionen. Damit läuft die Replik sofort.",
   "whatsNew.zfsReplicateAll": "Ist die Kachel ZFS gewählt, steht Alle jetzt replizieren neben den Sicherungsaktionen und schickt die Repliken aller ZFS-Einträge auf einmal los.",
   "whatsNew.zfsReplicaOnly": "Ein ZFS-Eintrag kann nur eine Replik haben. Mit einem Replikationsziel und ohne Speicherort für seinen Bereich macht sein Lauf den Snapshot und sendet die Replik.",
+  "whatsNew.zfsReplicaOnlySwitch": "Die Replik-Karte eines ZFS-Eintrags hat einen Schalter, Nur Replik, keine Sicherung. Er schaltet die Speicherorte des ZFS-Bereichs aus, deshalb sendet ein Lauf nur die Replik.",
   "whatsNew.zfsServerMount": "Auf dem Server nur lesend einhängen hängt die Repliken dort nach jedem Lauf ein, damit du die Dateien auf dem Server lesen und kopieren kannst.",
 };
 

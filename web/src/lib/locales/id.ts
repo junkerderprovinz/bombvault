@@ -4654,6 +4654,7 @@ const id: Partial<Translations> = {
   "whatsNew.zfsReplicateNow": "Halaman sebuah entri ZFS punya “Replikasi sekarang” di antara aksinya, yang langsung mengirim replika.",
   "whatsNew.zfsReplicateAll": "Dengan ubin ZFS terpilih, “Replikasi semua sekarang” berada di samping aksi cadangan dan mengirim replika setiap entri ZFS sekaligus.",
   "whatsNew.zfsReplicaOnly": "Entri ZFS bisa hanya punya replika. Dengan target replika dan tanpa tujuan untuk bagiannya, prosesnya mengambil snapshot dan mengirim replika.",
+  "whatsNew.zfsReplicaOnlySwitch": "Kartu replika entri ZFS punya sakelar, Hanya replika, tanpa cadangan. Sakelar ini mematikan tujuan bagian ZFS, sehingga satu proses hanya mengirim replika.",
   "whatsNew.zfsServerMount": "“Mount hanya-baca di server” me-mount replika di sana setelah setiap proses, sehingga Anda bisa membaca dan menyalin file di server.",
   "fleet.kindAndroid": "Aplikasi Android",
   "pairing.qrCaption": "Pindai kode ini dengan aplikasi BombVault untuk memasangkan ponsel.",

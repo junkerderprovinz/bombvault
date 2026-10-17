@@ -4645,6 +4645,7 @@ const ro: Partial<Translations> = {
   "whatsNew.zfsReplicateNow": "Pagina unui element ZFS are „Replicează acum” printre acțiuni, care trimite replica imediat.",
   "whatsNew.zfsReplicateAll": "Cu placa ZFS aleasă, „Replică tot acum” stă lângă acțiunile de copie de rezervă și trimite deodată replica fiecărui element ZFS.",
   "whatsNew.zfsReplicaOnly": "Un element ZFS poate avea doar o replică. Cu o țintă pentru replică și fără destinație pentru secțiunea lui, rularea face instantaneul și trimite replica.",
+  "whatsNew.zfsReplicaOnlySwitch": "Cardul de replică al unui element ZFS are un comutator, Doar replică, fără copie de rezervă. Dezactivează destinațiile secțiunii ZFS, așa că o rulare trimite doar replica.",
   "whatsNew.zfsServerMount": "„Montează doar pentru citire pe server” montează acolo replicile după fiecare rulare, ca să poți citi și copia fișierele pe server.",
   "fleet.kindAndroid": "Aplicație Android",
   "pairing.qrCaption": "Scanează acest cod cu aplicația BombVault pentru a împerechea un telefon.",

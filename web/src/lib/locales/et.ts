@@ -4654,6 +4654,7 @@ const et: Partial<Translations> = {
   "whatsNew.zfsReplicateNow": "ZFS-i kirje lehel on toimingute hulgas Replikeeri kohe, mis saadab replika otsekohe.",
   "whatsNew.zfsReplicateAll": "Kui ZFS-i paan on valitud, on Replikeeri kõik kohe varundustoimingute kõrval ja saadab kõigi ZFS-i kirjete replika korraga.",
   "whatsNew.zfsReplicaOnly": "ZFS-i kirjel võib olla ainult replika. Replika sihtkoha olemasolul ja ilma oma valdkonna sihtkohata teeb selle käivitus hetktõmmise ja saadab replika.",
+  "whatsNew.zfsReplicaOnlySwitch": "ZFS-i kirje replikakaardil on lüliti, Ainult replika, varundust ei tehta. See lülitab välja ZFS-i valdkonna sihtkohad, nii et käivitus saadab ainult replika.",
   "whatsNew.zfsServerMount": "Haakimine serveris ainult lugemiseks haagib replikad seal pärast iga käivitust, et saaksid faile serveris lugeda ja kopeerida.",
   "fleet.kindAndroid": "Androidi rakendus",
   "pairing.qrCaption": "Skanni seda koodi BombVault rakendusega, et siduda telefon.",

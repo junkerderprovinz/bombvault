@@ -243,12 +243,14 @@ export function ReplicaCard({ itemId, name }: { itemId: string; name: string }) 
       {hasTarget && (
         <Rows>
           <SettingRow label={t("zfs.replica.onlyToggle")} hint={t("zfs.replica.onlyToggleHint")}>
-            <Toggle
-              hideLabel
-              label={t("zfs.replica.onlyToggle")}
-              checked={Boolean(view.only)}
-              onChange={(on) => void setReplicaOnly(on)}
-            />
+            <span data-new="zfs-replica-only-switch" className="flex">
+              <Toggle
+                hideLabel
+                label={t("zfs.replica.onlyToggle")}
+                checked={Boolean(view.only)}
+                onChange={(on) => void setReplicaOnly(on)}
+              />
+            </span>
           </SettingRow>
           <SettingRow
             label={t("zfs.replica.when")}

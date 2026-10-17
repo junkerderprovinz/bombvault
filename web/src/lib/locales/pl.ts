@@ -4641,6 +4641,7 @@ const pl: Partial<Translations> = {
   "whatsNew.zfsReplicateNow": "Strona pozycji ZFS ma wśród akcji „Replikuj teraz”, które od razu wysyła replikę.",
   "whatsNew.zfsReplicateAll": "Po wybraniu kafelka ZFS „Replikuj wszystko teraz” stoi obok akcji kopii zapasowych i wysyła repliki wszystkich pozycji ZFS naraz.",
   "whatsNew.zfsReplicaOnly": "Pozycja ZFS może mieć tylko replikę. Z celem repliki i bez miejsca docelowego dla jej sekcji uruchomienie robi migawkę i wysyła replikę.",
+  "whatsNew.zfsReplicaOnlySwitch": "Karta repliki pozycji ZFS ma przełącznik, Tylko replika, bez kopii zapasowej. Wyłącza miejsca docelowe sekcji ZFS, więc uruchomienie wysyła tylko replikę.",
   "whatsNew.zfsServerMount": "„Zamontuj tylko do odczytu na serwerze” montuje repliki na serwerze po każdym uruchomieniu, więc pliki możesz odczytać i skopiować na serwerze.",
   "fleet.kindAndroid": "Aplikacja na Androida",
   "pairing.qrCaption": "Zeskanuj ten kod aplikacją BombVault, aby sparować telefon.",

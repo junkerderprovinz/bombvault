@@ -4654,6 +4654,7 @@ const is: Partial<Translations> = {
   "whatsNew.zfsReplicateNow": "Á síðu ZFS-færslu er „Afrita núna“ meðal aðgerða hennar, sem sendir eftirmyndina strax.",
   "whatsNew.zfsReplicateAll": "Þegar ZFS-flísin er valin stendur „Afrita allt núna“ við hlið afritunaraðgerðanna og sendir eftirmynd hverrar ZFS-færslu í einu.",
   "whatsNew.zfsReplicaOnly": "ZFS-færsla getur haft eingöngu eftirmynd. Með eftirmyndarmarkmiði og án áfangastaðar fyrir svæði hennar tekur keyrslan skyndimynd og sendir eftirmyndina.",
+  "whatsNew.zfsReplicaOnlySwitch": "Eftirmyndarspjald ZFS-færslu er með rofa, Aðeins eftirmynd, ekkert afrit. Hann slekkur á áfangastöðum ZFS-svæðisins, svo keyrsla sendir aðeins eftirmyndina.",
   "whatsNew.zfsServerMount": "„Tengja skrifvarið á netþjóninum“ tengir eftirmyndirnar þar eftir hverja keyrslu, svo þú getir lesið og afritað skrárnar á netþjóninum.",
   "fleet.kindAndroid": "Android app",
   "pairing.qrCaption": "Skannaðu þennan kóða með BombVault appinu til að para síma.",

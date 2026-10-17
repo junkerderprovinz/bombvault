@@ -4644,6 +4644,7 @@ const pt: Partial<Translations> = {
   "whatsNew.zfsReplicateNow": "A página de uma entrada ZFS tem «Replicar agora» entre as ações, que envia a réplica de imediato.",
   "whatsNew.zfsReplicateAll": "Com o mosaico ZFS escolhido, «Replicar tudo agora» fica ao lado das ações de backup e envia de uma vez a réplica de todas as entradas ZFS.",
   "whatsNew.zfsReplicaOnly": "Uma entrada ZFS pode ter só uma réplica. Com um destino de réplica e sem destino para a sua secção, a execução tira o instantâneo e envia a réplica.",
+  "whatsNew.zfsReplicaOnlySwitch": "O cartão de réplica de uma entrada ZFS tem um interruptor, Só réplica, sem backup. Ele desativa os destinos da secção ZFS, por isso a execução só envia a réplica.",
   "whatsNew.zfsServerMount": "«Montar só leitura no servidor» monta lá as réplicas depois de cada execução, para poderes ler e copiar os ficheiros no servidor.",
   "fleet.kindAndroid": "App para Android",
   "pairing.qrCaption": "Digitaliza este código com a app BombVault para emparelhar um telemóvel.",

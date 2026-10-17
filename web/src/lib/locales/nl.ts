@@ -4643,6 +4643,7 @@ const nl: Partial<Translations> = {
   "whatsNew.zfsReplicateNow": "De pagina van een ZFS-item heeft “Nu repliceren” bij de acties, dat de replica meteen verstuurt.",
   "whatsNew.zfsReplicateAll": "Met de ZFS-tegel gekozen staat “Nu alles repliceren” naast de back-upacties en verstuurt het de replica van elk ZFS-item in één keer.",
   "whatsNew.zfsReplicaOnly": "Een ZFS-item kan alleen een replica hebben. Met een replicadoel en zonder bestemming voor zijn onderdeel maakt de run de snapshot en verstuurt de replica.",
+  "whatsNew.zfsReplicaOnlySwitch": "De replicakaart van een ZFS-item heeft een schakelaar, Alleen replica, geen back-up. Die zet de bestemmingen van het ZFS-onderdeel uit, zodat een run alleen de replica verstuurt.",
   "whatsNew.zfsServerMount": "“Alleen-lezen aankoppelen op de server” koppelt de replica's daar aan na elke run, zodat je de bestanden op de server kunt lezen en kopiëren.",
   "fleet.kindAndroid": "Android-app",
   "pairing.qrCaption": "Scan deze code met de BombVault-app om een telefoon te koppelen.",
