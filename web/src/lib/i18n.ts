@@ -2819,7 +2819,7 @@ export const en = {
   "zfs.restore.missingDataset": "This dataset is not available on the server right now. Restore to a folder instead.",
   // ZFS replica: a block-exact copy of a ZFS item on a second ZFS server
   "zfs.replica.title": "Replica",
-  "zfs.replica.hint": "A replica is a block-exact copy of the datasets on a second ZFS server, which you can mount there right away. After the first run BombVault only sends the changed blocks. Older versions, single files and the check still come from the backups, so the replica does not replace them.",
+  "zfs.replica.hint": "A replica is a block-exact copy of the datasets on a second ZFS server, which you can mount there right away. After the first run BombVault only sends the changed blocks. Older versions, single files and the check still come from the backups, so the replica does not replace them. To send only the replica and no backup, switch off every line from ZFS under Storage locations per section.",
   "zfs.replica.target": "Replicates to",
   "zfs.replica.targetHint": "A ZFS server BombVault sends to, or a paired instance that receives into a pool of its own. A paired instance decides there what it keeps, so even someone who takes over this server cannot delete the copies.",
   "zfs.replica.targetNone": "None",
@@ -7542,7 +7542,7 @@ export const de: Translations = {
   "zfs.restore.missingDataset": "Dieses Dataset ist auf dem Server gerade nicht verfügbar. Stelle es stattdessen in einen Ordner wieder her.",
   // ZFS replica: a block-exact copy of a ZFS item on a second ZFS server
   "zfs.replica.title": "Replik",
-  "zfs.replica.hint": "Eine Replik ist eine blockgenaue Kopie der Datasets auf einem zweiten ZFS-Server, die du dort sofort einhängen kannst. Nach dem ersten Lauf überträgt BombVault nur noch die geänderten Blöcke. Ältere Versionen, einzelne Dateien und die Prüfung kommen weiter aus den Sicherungen, deshalb ersetzt die Replik sie nicht.",
+  "zfs.replica.hint": "Eine Replik ist eine blockgenaue Kopie der Datasets auf einem zweiten ZFS-Server, die du dort sofort einhängen kannst. Nach dem ersten Lauf überträgt BombVault nur noch die geänderten Blöcke. Ältere Versionen, einzelne Dateien und die Prüfung kommen weiter aus den Sicherungen, deshalb ersetzt die Replik sie nicht. Soll nur die Replik gehen und keine Sicherung, schalte unter „Speicherorte je Bereich“ alle Linien von ZFS aus.",
   "zfs.replica.target": "Repliziert nach",
   "zfs.replica.targetHint": "Ein ZFS-Server, an den BombVault schickt, oder eine gekoppelte Instanz, die in einen eigenen Pool empfängt. Eine gekoppelte Instanz entscheidet dort selbst, was sie behält, deshalb kann auch jemand, der diesen Server übernimmt, die Kopien nicht löschen.",
   "zfs.replica.targetNone": "Keine",
