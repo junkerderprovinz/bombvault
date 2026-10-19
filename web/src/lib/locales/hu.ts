@@ -674,6 +674,8 @@ const hu: Partial<Translations> = {
   "offsite.copies.title": "Telephelyen kívüli másolatok",
   "rclone.paste": "Konfiguráció beillesztése",
   "whatsNew.signInMakeDefault": "A „Legyen alapértelmezett” egy mentett bejelentkezést tesz azzá, amelyet mindenhol használ a program, ahol nincs kiválasztva másik.",
+  "whatsNew.cardFoot": "Az egész kártyára vonatkozó gombok, például a „Bejelentkezés hozzáadása” és a „Cél hozzáadása”, a végén, a kártya tartalma alatt állnak.",
+  "whatsNew.settingsStorageFlow": "A Célok beállítási oldal azt is mutatja, melyik szakaszról melyik célra készül mentés.",
   "whatsNew.settingsStorageList": "A Célok beállítási oldal az összes célt mutatja. Egy kattintás megnyit egyet.",
   "whatsNew.offsiteCopies": "Minden rész telephelyen kívüli másolata egy sor egyetlen kártyán, a teszttel, a replikálással és a beállítással a sorban. Minden más egy ablakban nyílik meg.",
   "whatsNew.compressionRow": "A tömörítés választója a címkéje mellett áll, és csak olyan széles, mint a három lehetősége.",

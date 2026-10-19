@@ -669,6 +669,8 @@ const zh: Partial<Translations> = {
   "offsite.copies.title": "异地副本",
   "rclone.paste": "粘贴配置",
   "whatsNew.signInMakeDefault": "“设为默认”会让已保存的凭据成为所有未选择凭据之处使用的那一个。",
+  "whatsNew.cardFoot": "整张卡片的按钮，例如“添加凭据”和“添加目标”，位于卡片内容下方的末尾。",
+  "whatsNew.settingsStorageFlow": "设置中的“目标”页面也会显示哪个部分备份到哪个目标。",
   "whatsNew.settingsStorageList": "设置中的“目标”页面列出所有目标，点击即可打开。",
   "whatsNew.offsiteCopies": "每个部分的异地副本是同一张卡片中的一行，测试、复制和设置都在这一行上，其余内容在窗口中打开。",
   "whatsNew.compressionRow": "压缩选择器位于其标签旁边，宽度只够容纳三个选项。",

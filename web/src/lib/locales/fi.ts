@@ -674,6 +674,8 @@ const fi: Partial<Translations> = {
   "offsite.copies.title": "Etäkopiot",
   "rclone.paste": "Liitä määritys",
   "whatsNew.signInMakeDefault": "”Aseta oletukseksi” tekee tallennetuista tunnuksista ne, joita käytetään kaikkialla, missä mitään ei ole valittu.",
+  "whatsNew.cardFoot": "Koko kortin painikkeet, kuten ”Lisää tunnukset” ja ”Lisää kohde”, ovat lopussa kortin sisällön alla.",
+  "whatsNew.settingsStorageFlow": "Asetussivu Kohteet näyttää myös, mikä osio varmuuskopioidaan mihinkin kohteeseen.",
   "whatsNew.settingsStorageList": "Asetussivu Kohteet näyttää kaikki kohteet. Napsautus avaa kohteen.",
   "whatsNew.offsiteCopies": "Jokaisen osion etäkopio on yksi rivi yhdellä kortilla, ja testaus, replikointi ja määritys ovat rivillä. Kaikki muu avautuu ikkunaan.",
   "whatsNew.compressionRow": "Pakkauksen valinta on nimensä vieressä ja vain kolmen vaihtoehtonsa levyinen.",

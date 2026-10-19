@@ -33,7 +33,24 @@ export function OwnFoldersCard({ location, hueIndex }: { location: StorageLocati
   ];
 
   return (
-    <Card title={t("own.card")} hint={t("own.cardHint")} hueIndex={hueIndex} newId="own-folders-card">
+    <Card
+      title={t("own.card")}
+      hint={t("own.cardHint")}
+      hueIndex={hueIndex}
+      newId="own-folders-card"
+      foot={
+        elsewhere.length > 0 && (
+          <Button
+            label={t(own.length > 0 ? "own.addSections" : "own.use")}
+            labelKey={null}
+            glyph={<IconForward />}
+            tone="accent"
+            onClick={() => setMoving({ domains: elsewhere, target: location.id })}
+            className="glim-btn-wrap"
+          />
+        )
+      }
+    >
       {own.length > 0 ? (
         <Rows as="ul">
           {own.map((section) => (
@@ -60,16 +77,6 @@ export function OwnFoldersCard({ location, hueIndex }: { location: StorageLocati
         </Rows>
       ) : (
         <p className="text-sm text-carbon-textSub">{t("own.cardNone")}</p>
-      )}
-      {elsewhere.length > 0 && (
-        <Button
-          label={t(own.length > 0 ? "own.addSections" : "own.use")}
-          labelKey={null}
-          glyph={<IconForward />}
-          tone="accent"
-          onClick={() => setMoving({ domains: elsewhere, target: location.id })}
-          className="glim-btn-wrap self-start"
-        />
       )}
       {moving && <OwnFolderWindow domains={moving.domains} target={moving.target} onClose={() => setMoving(null)} />}
     </Card>

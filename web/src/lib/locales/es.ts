@@ -674,6 +674,8 @@ const es: Partial<Translations> = {
   "offsite.copies.title": "Copias externas",
   "rclone.paste": "Pegar una configuración",
   "whatsNew.signInMakeDefault": "«Usar como predeterminadas» convierte unas credenciales guardadas en las que se usan donde no se elige ninguna.",
+  "whatsNew.cardFoot": "Los botones de toda una tarjeta, como «Añadir credenciales» y «Añadir destino», están al final, bajo el contenido de la tarjeta.",
+  "whatsNew.settingsStorageFlow": "La página de ajustes Destinos también muestra qué sección se copia en qué destino.",
   "whatsNew.settingsStorageList": "La página de ajustes Destinos muestra todos los destinos. Un clic abre uno.",
   "whatsNew.offsiteCopies": "La copia externa de cada sección es una fila en una sola tarjeta, con probar, replicar y configurar en la fila. Todo lo demás se abre en una ventana.",
   "whatsNew.compressionRow": "El selector de compresión está junto a su etiqueta y solo ocupa el ancho de sus tres opciones.",

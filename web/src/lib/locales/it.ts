@@ -674,6 +674,8 @@ const it: Partial<Translations> = {
   "offsite.copies.title": "Copie off-site",
   "rclone.paste": "Incolla una configurazione",
   "whatsNew.signInMakeDefault": "«Imposta come predefinite» rende delle credenziali salvate quelle usate ovunque non ne sia scelta nessuna.",
+  "whatsNew.cardFoot": "I pulsanti di un'intera scheda, come «Aggiungi credenziali» e «Aggiungi destinazione», stanno alla fine sotto il contenuto della scheda.",
+  "whatsNew.settingsStorageFlow": "La pagina delle impostazioni Destinazioni mostra anche quale sezione va in backup su quale destinazione.",
   "whatsNew.settingsStorageList": "La pagina delle impostazioni Destinazioni elenca tutte le destinazioni. Un clic ne apre una.",
   "whatsNew.offsiteCopies": "La copia off-site di ogni sezione è una riga in un'unica scheda, con prova, replica e configurazione sulla riga. Tutto il resto si apre in una finestra.",
   "whatsNew.compressionRow": "La scelta della compressione sta accanto alla sua etichetta ed è larga solo quanto le sue tre opzioni.",

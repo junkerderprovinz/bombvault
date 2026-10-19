@@ -789,6 +789,8 @@ const ca: Partial<Translations> = {
   "offsite.copies.title": "Còpies externes",
   "rclone.paste": "Enganxa una configuració",
   "whatsNew.signInMakeDefault": "«Fes-les per defecte» converteix unes credencials desades en les que s'usen on no se n'ha triat cap.",
+  "whatsNew.cardFoot": "Els botons de tota una targeta, com «Afegeix credencials» i «Afegeix una destinació», són al final, sota el contingut de la targeta.",
+  "whatsNew.settingsStorageFlow": "La pàgina de configuració Destinacions també mostra quina secció es copia a quina destinació.",
   "whatsNew.settingsStorageList": "La pàgina de configuració Destinacions mostra totes les destinacions. Un clic n'obre una.",
   "whatsNew.offsiteCopies": "La còpia externa de cada secció és una fila en una sola targeta, amb provar, replicar i configurar a la fila. La resta s'obre en una finestra.",
   "whatsNew.compressionRow": "El selector de compressió és al costat de la seva etiqueta i només és tan ample com les seves tres opcions.",

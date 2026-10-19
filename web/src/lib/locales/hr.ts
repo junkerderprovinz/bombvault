@@ -789,6 +789,8 @@ const hr: Partial<Translations> = {
   "offsite.copies.title": "Kopije izvan lokacije",
   "rclone.paste": "Zalijepi konfiguraciju",
   "whatsNew.signInMakeDefault": "„Postavi kao zadane” od spremljenih vjerodajnica čini one koje vrijede svugdje gdje nijedne nisu odabrane.",
+  "whatsNew.cardFoot": "Gumbi za cijelu karticu, poput „Dodaj vjerodajnice” i „Dodaj odredište”, stoje na kraju ispod njezina sadržaja.",
+  "whatsNew.settingsStorageFlow": "Stranica postavki Odredišta prikazuje i koji se odjeljak sprema na koje odredište.",
   "whatsNew.settingsStorageList": "Stranica postavki Odredišta prikazuje sva odredišta. Klik otvara jedno.",
   "whatsNew.offsiteCopies": "Kopija izvan lokacije svakog odjeljka jedan je redak na jednoj kartici, s testom, replikacijom i postavljanjem u retku. Sve ostalo otvara se u prozoru.",
   "whatsNew.compressionRow": "Odabir kompresije stoji uz svoju oznaku i širok je samo koliko njegove tri opcije.",

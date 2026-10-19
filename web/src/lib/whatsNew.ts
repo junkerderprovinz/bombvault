@@ -105,6 +105,20 @@ export const RELEASES: Release[] = [
         text: "whatsNew.settingsStorageList",
       },
       {
+        id: "settings-storage-flow",
+        page: "/settings/storage",
+        where: ["nav.settings", "storage.title"],
+        way: ["/settings", "/settings/storage"],
+        text: "whatsNew.settingsStorageFlow",
+      },
+      {
+        id: "card-foot",
+        page: "/settings/storage",
+        where: ["nav.settings", "storage.title"],
+        way: ["/settings", "/settings/storage"],
+        text: "whatsNew.cardFoot",
+      },
+      {
         id: "settings-offsite-copies",
         page: "/settings/storage",
         where: ["nav.settings", "storage.title"],

@@ -789,6 +789,8 @@ const ms: Partial<Translations> = {
   "offsite.copies.title": "Salinan luar tapak",
   "rclone.paste": "Tampal konfigurasi",
   "whatsNew.signInMakeDefault": "“Jadikan lalai” menjadikan log masuk yang disimpan sebagai log masuk yang digunakan di mana-mana sahaja yang tiada pilihan.",
+  "whatsNew.cardFoot": "Butang untuk seluruh kad, seperti “Tambah log masuk” dan “Tambah destinasi”, terletak di hujung di bawah kandungan kad.",
+  "whatsNew.settingsStorageFlow": "Halaman tetapan Destinasi juga menunjukkan bahagian mana disandarkan ke destinasi mana.",
   "whatsNew.settingsStorageList": "Halaman tetapan Destinasi menyenaraikan semua destinasi. Satu klik membuka salah satunya.",
   "whatsNew.offsiteCopies": "Salinan luar tapak setiap bahagian ialah satu baris dalam satu kad, dengan uji, replikasi dan persediaan pada baris itu. Selebihnya dibuka dalam tetingkap.",
   "whatsNew.compressionRow": "Pilihan pemampatan terletak di sebelah labelnya dan hanya selebar tiga pilihannya.",

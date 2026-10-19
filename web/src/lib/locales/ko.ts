@@ -669,6 +669,8 @@ const ko: Partial<Translations> = {
   "offsite.copies.title": "오프사이트 복사본",
   "rclone.paste": "구성 붙여넣기",
   "whatsNew.signInMakeDefault": "“기본값으로 설정”을 누르면 저장된 자격 증명이 아무것도 선택되지 않은 모든 곳에서 쓰입니다.",
+  "whatsNew.cardFoot": "“자격 증명 추가”와 “대상 추가”처럼 카드 전체에 해당하는 버튼은 카드 내용 아래 끝에 있습니다.",
+  "whatsNew.settingsStorageFlow": "설정의 대상 페이지에서 어떤 섹션이 어떤 대상에 백업되는지도 볼 수 있습니다.",
   "whatsNew.settingsStorageList": "설정의 대상 페이지에 모든 대상이 표시됩니다. 클릭하면 열립니다.",
   "whatsNew.offsiteCopies": "각 섹션의 오프사이트 복사본은 카드 하나의 한 줄이며, 테스트, 복제, 설정이 그 줄에 있습니다. 나머지는 창에서 열립니다.",
   "whatsNew.compressionRow": "압축 선택기는 레이블 옆에 있고 세 가지 옵션만큼만 넓습니다.",

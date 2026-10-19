@@ -670,6 +670,8 @@ const nl: Partial<Translations> = {
   "offsite.copies.title": "Offsite-kopieën",
   "rclone.paste": "Configuratie plakken",
   "whatsNew.signInMakeDefault": "Met „Als standaard” worden opgeslagen inloggegevens de gegevens die overal gelden waar er geen gekozen zijn.",
+  "whatsNew.cardFoot": "Knoppen voor een hele kaart, zoals „Inloggegevens toevoegen” en „Bestemming toevoegen”, staan aan het eind onder de inhoud van de kaart.",
+  "whatsNew.settingsStorageFlow": "De instellingenpagina Bestemmingen toont ook welk onderdeel naar welke bestemming wordt geback-upt.",
   "whatsNew.settingsStorageList": "De instellingenpagina Bestemmingen toont alle bestemmingen. Met een klik open je er een.",
   "whatsNew.offsiteCopies": "De offsite-kopie van elk onderdeel is één rij in één kaart, met testen, repliceren en instellen op de rij. De rest opent in een venster.",
   "whatsNew.compressionRow": "De keuze voor compressie staat naast het label en is maar zo breed als de drie opties.",

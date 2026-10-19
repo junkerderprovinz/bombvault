@@ -674,6 +674,8 @@ const da: Partial<Translations> = {
   "offsite.copies.title": "Eksterne kopier",
   "rclone.paste": "Indsæt en konfiguration",
   "whatsNew.signInMakeDefault": "Med »Gør til standard« bliver gemte adgangsoplysninger dem, der bruges overalt, hvor ingen er valgt.",
+  "whatsNew.cardFoot": "Knapper til hele kortet, fx »Tilføj adgangsoplysninger« og »Tilføj destination«, står til sidst under kortets indhold.",
+  "whatsNew.settingsStorageFlow": "Indstillingssiden Destinationer viser også, hvilken sektion der tages backup af til hvilken destination.",
   "whatsNew.settingsStorageList": "Indstillingssiden Destinationer viser alle destinationer. Et klik åbner en.",
   "whatsNew.offsiteCopies": "Hver sektions eksterne kopi er én række i ét kort, med test, replikering og opsætning på rækken. Resten åbner i et vindue.",
   "whatsNew.compressionRow": "Valget af komprimering står ved siden af sin etiket og er kun så bredt som sine tre muligheder.",

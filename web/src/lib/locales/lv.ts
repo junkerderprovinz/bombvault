@@ -789,6 +789,8 @@ const lv: Partial<Translations> = {
   "offsite.copies.title": "Attālinātās kopijas",
   "rclone.paste": "Ielīmēt konfigurāciju",
   "whatsNew.signInMakeDefault": "“Iestatīt kā noklusējumu” padara saglabātu pieteikšanos par to, ko izmanto visur, kur nekas nav izvēlēts.",
+  "whatsNew.cardFoot": "Visas kartes pogas, piemēram, “Pievienot pieteikšanos” un “Pievienot mērķi”, atrodas beigās zem kartes satura.",
+  "whatsNew.settingsStorageFlow": "Iestatījumu lapa Mērķi rāda arī, kura sadaļa tiek dublēta uz kuru mērķi.",
   "whatsNew.settingsStorageList": "Iestatījumu lapa Mērķi parāda visus mērķus. Klikšķis atver vienu.",
   "whatsNew.offsiteCopies": "Katras sadaļas attālinātā kopija ir viena rinda vienā kartītē, ar pārbaudi, replicēšanu un iestatīšanu rindā. Viss pārējais atveras logā.",
   "whatsNew.compressionRow": "Saspiešanas izvēle ir blakus savai etiķetei un ir tikai tik plata kā tās trīs iespējas.",

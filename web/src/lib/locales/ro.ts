@@ -671,6 +671,8 @@ const ro: Partial<Translations> = {
   "offsite.copies.title": "Copii externe",
   "rclone.paste": "Lipește o configurație",
   "whatsNew.signInMakeDefault": "„Fă-o implicită” face dintr-o autentificare salvată pe cea folosită peste tot unde nu e aleasă niciuna.",
+  "whatsNew.cardFoot": "Butoanele pentru tot cardul, ca „Adaugă autentificare” și „Adaugă destinație”, stau la final, sub conținutul cardului.",
+  "whatsNew.settingsStorageFlow": "Pagina de setări Destinații arată și ce secțiune se salvează în ce destinație.",
   "whatsNew.settingsStorageList": "Pagina de setări Destinații arată toate destinațiile. Un clic deschide una.",
   "whatsNew.offsiteCopies": "Copia externă a fiecărei secțiuni este un rând într-un singur card, cu testare, replicare și configurare pe rând. Restul se deschide într-o fereastră.",
   "whatsNew.compressionRow": "Alegerea comprimării stă lângă eticheta ei și e doar cât de lată sunt cele trei opțiuni.",

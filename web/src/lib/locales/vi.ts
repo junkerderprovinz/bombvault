@@ -669,6 +669,8 @@ const vi: Partial<Translations> = {
   "offsite.copies.title": "Bản sao ngoài site",
   "rclone.paste": "Dán cấu hình",
   "whatsNew.signInMakeDefault": "“Đặt làm mặc định” biến thông tin đăng nhập đã lưu thành thông tin được dùng ở mọi nơi chưa chọn thông tin nào.",
+  "whatsNew.cardFoot": "Các nút cho cả thẻ, như “Thêm thông tin đăng nhập” và “Thêm đích”, nằm ở cuối, bên dưới nội dung thẻ.",
+  "whatsNew.settingsStorageFlow": "Trang cài đặt Đích sao lưu cũng cho biết phần nào được sao lưu lên đích nào.",
   "whatsNew.settingsStorageList": "Trang cài đặt Đích sao lưu liệt kê mọi đích sao lưu. Bấm vào một đích để mở nó.",
   "whatsNew.offsiteCopies": "Bản sao ngoài site của mỗi mục là một dòng trong một thẻ, có kiểm tra, sao chép và thiết lập ngay trên dòng. Mọi thứ khác mở trong một cửa sổ.",
   "whatsNew.compressionRow": "Bộ chọn nén nằm cạnh nhãn của nó và chỉ rộng bằng ba lựa chọn.",

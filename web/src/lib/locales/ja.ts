@@ -669,6 +669,8 @@ const ja: Partial<Translations> = {
   "offsite.copies.title": "オフサイトコピー",
   "rclone.paste": "設定を貼り付け",
   "whatsNew.signInMakeDefault": "「既定にする」で、保存済みの認証情報が、何も選ばれていない場所すべてで使われるものになります。",
+  "whatsNew.cardFoot": "「認証情報を追加」や「保存先を追加」など、カード全体のボタンはカードの内容の下、末尾に並びます。",
+  "whatsNew.settingsStorageFlow": "設定の「保存先」ページに、どのセクションがどの保存先にバックアップされるかも表示されます。",
   "whatsNew.settingsStorageList": "設定の「保存先」ページにすべての保存先が並びます。クリックすると開きます。",
   "whatsNew.offsiteCopies": "各セクションのオフサイトコピーは1枚のカードの1行になり、テスト、複製、セットアップは行の上にあります。それ以外はウィンドウで開きます。",
   "whatsNew.compressionRow": "圧縮の選択はラベルの横に置かれ、3つの選択肢の幅しか取りません。",

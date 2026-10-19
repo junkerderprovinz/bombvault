@@ -44,6 +44,7 @@ export function Card({
   nested,
   newId,
   action,
+  foot,
 }: {
   /** Without a title but with a hint the heading badge still renders, so the
    *  card keeps its hue notch. A card with neither renders no heading. */
@@ -65,6 +66,8 @@ export function Card({
   newId?: string;
   /** One button for the whole card, at the end of its heading's row. */
   action?: React.ReactNode;
+  /** The card's own buttons, in one row under its content, at the end. */
+  foot?: React.ReactNode;
 }) {
   return (
     // `relative` anchors the absolutely positioned heading badge; the hint
@@ -92,6 +95,7 @@ export function Card({
       )}
       {action && <div className="flex justify-end">{action}</div>}
       {children}
+      {foot && <div className="flex flex-wrap items-center justify-end gap-2">{foot}</div>}
     </div>
   );
 }

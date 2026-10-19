@@ -789,6 +789,8 @@ const gl: Partial<Translations> = {
   "offsite.copies.title": "Copias externas",
   "rclone.paste": "Pegar unha configuración",
   "whatsNew.signInMakeDefault": "«Facer predeterminadas» converte unhas credenciais gardadas nas que se usan onde non se escolle ningunha.",
+  "whatsNew.cardFoot": "Os botóns de toda unha tarxeta, como «Engadir credenciais» e «Engadir destino», están ao final, baixo o contido da tarxeta.",
+  "whatsNew.settingsStorageFlow": "A páxina de axustes Destinos tamén amosa que sección se copia en que destino.",
   "whatsNew.settingsStorageList": "A páxina de axustes Destinos amosa todos os destinos. Un clic abre un.",
   "whatsNew.offsiteCopies": "A copia externa de cada sección é unha fila nunha soa tarxeta, con probar, replicar e configurar na fila. O resto ábrese nunha xanela.",
   "whatsNew.compressionRow": "O selector de compresión está ao carón da súa etiqueta e só é tan ancho coma as súas tres opcións.",

@@ -674,6 +674,8 @@ const fr: Partial<Translations> = {
   "offsite.copies.title": "Copies hors site",
   "rclone.paste": "Coller une configuration",
   "whatsNew.signInMakeDefault": "« Définir par défaut » fait d'un identifiant enregistré celui qui sert partout où aucun n'est choisi.",
+  "whatsNew.cardFoot": "Les boutons de toute une carte, comme « Ajouter des identifiants » et « Ajouter une destination », se trouvent à la fin, sous le contenu de la carte.",
+  "whatsNew.settingsStorageFlow": "La page de réglages Destinations montre aussi quelle section est sauvegardée vers quelle destination.",
   "whatsNew.settingsStorageList": "La page de réglages Destinations liste toutes les destinations. Un clic en ouvre une.",
   "whatsNew.offsiteCopies": "La copie hors site de chaque section tient sur une ligne d'une seule carte, avec le test, la réplication et la configuration sur la ligne. Le reste s'ouvre dans une fenêtre.",
   "whatsNew.compressionRow": "Le choix de la compression se place à côté de son libellé et n'est pas plus large que ses trois options.",

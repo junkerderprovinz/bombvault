@@ -674,6 +674,8 @@ const sv: Partial<Translations> = {
   "offsite.copies.title": "Externa kopior",
   "rclone.paste": "Klistra in en konfiguration",
   "whatsNew.signInMakeDefault": "Med ”Gör till standard” blir en sparad inloggning den som används överallt där ingen är vald.",
+  "whatsNew.cardFoot": "Knappar för hela kortet, som ”Lägg till inloggning” och ”Lägg till mål”, står sist under kortets innehåll.",
+  "whatsNew.settingsStorageFlow": "Inställningssidan Mål visar också vilken del som säkerhetskopieras till vilket mål.",
   "whatsNew.settingsStorageList": "Inställningssidan Mål listar alla mål. Ett klick öppnar ett.",
   "whatsNew.offsiteCopies": "Varje dels externa kopia är en rad i ett enda kort, med test, replikering och konfiguration på raden. Resten öppnas i ett fönster.",
   "whatsNew.compressionRow": "Valet av komprimering står bredvid sin etikett och är bara så brett som sina tre alternativ.",

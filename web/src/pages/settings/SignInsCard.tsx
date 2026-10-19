@@ -266,7 +266,26 @@ export function SignInsCard({ hueIndex }: { hueIndex?: number }) {
   );
 
   return (
-    <Card title={t("signIns.title")} hint={t("signIns.hint")} hueIndex={hueIndex} newId="settings-sign-ins">
+    <Card
+      title={t("signIns.title")}
+      hint={t("signIns.hint")}
+      hueIndex={hueIndex}
+      newId="settings-sign-ins"
+      foot={
+        !isNew && (
+          <span data-new="card-foot" className="flex">
+            <Button
+              label={t("signIns.add")}
+              labelKey="signIns.add"
+              // Accent: with no editor open this is the card's one primary action.
+              tone="accent"
+              onClick={openNew}
+              className="glim-btn-wrap"
+            />
+          </span>
+        )
+      }
+    >
       {note && (
         <div role="status" className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-card bg-statusOkBg px-3 py-2">
           <span className="inline-flex text-statusOk">
@@ -358,18 +377,7 @@ export function SignInsCard({ hueIndex }: { hueIndex?: number }) {
         </ul>
       )}
 
-      {isNew ? (
-        editor
-      ) : (
-        <Button
-          label={t("signIns.add")}
-          labelKey="signIns.add"
-          // Accent: with no editor open this is the card's one primary action.
-          tone="accent"
-          onClick={openNew}
-          className="glim-btn-wrap self-start"
-        />
-      )}
+      {isNew && editor}
     </Card>
   );
 }

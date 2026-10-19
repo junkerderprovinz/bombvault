@@ -181,7 +181,6 @@ export const SETTINGS_INDEX: Record<SettingsPageId, SearchCard[]> = {
         "storage.copy.title",
         "storage.keep.title",
         "storage.rules.title",
-        "storage.flow.title",
         "storage.streaming.title",
         "streaming.toggle",
         "streaming.servers",
@@ -189,6 +188,12 @@ export const SETTINGS_INDEX: Record<SettingsPageId, SearchCard[]> = {
         "streaming.limit",
         "streaming.hold",
       ],
+    },
+    {
+      title: "storage.flow.title",
+      hint: "storage.flow.hint",
+      rows: [],
+      body: ["storage.flow.graph", "storage.flow.switches"],
     },
     {
       title: "repos.title",

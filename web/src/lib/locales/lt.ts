@@ -789,6 +789,8 @@ const lt: Partial<Translations> = {
   "offsite.copies.title": "Nuotolinės kopijos",
   "rclone.paste": "Įklijuoti konfigūraciją",
   "whatsNew.signInMakeDefault": "„Nustatyti numatytuoju“ paverčia išsaugotą prisijungimą tuo, kuris naudojamas visur, kur nieko nepasirinkta.",
+  "whatsNew.cardFoot": "Visos kortelės mygtukai, pvz., „Pridėti prisijungimą“ ir „Pridėti paskirties vietą“, yra pabaigoje po kortelės turiniu.",
+  "whatsNew.settingsStorageFlow": "Nustatymų puslapis Paskirties vietos taip pat rodo, kuris skyrius į kurią paskirties vietą kopijuojamas.",
   "whatsNew.settingsStorageList": "Nustatymų puslapis Paskirties vietos rodo visas paskirties vietas. Paspaudus atsidaro viena.",
   "whatsNew.offsiteCopies": "Kiekvienos dalies nuotolinė kopija yra viena eilutė vienoje kortelėje, o tikrinimas, replikavimas ir nustatymas yra eilutėje. Visa kita atsidaro lange.",
   "whatsNew.compressionRow": "Glaudinimo pasirinkimas yra šalia savo pavadinimo ir yra tik tokio pločio kaip trys jo parinktys.",

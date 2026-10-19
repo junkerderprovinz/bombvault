@@ -672,6 +672,8 @@ const cs: Partial<Translations> = {
   "offsite.copies.title": "Kopie mimo lokalitu",
   "rclone.paste": "Vložit konfiguraci",
   "whatsNew.signInMakeDefault": "„Nastavit jako výchozí“ udělá z uložených přihlašovacích údajů ty, které platí všude, kde žádné vybrané nejsou.",
+  "whatsNew.cardFoot": "Tlačítka celé karty, třeba „Přidat přihlašovací údaje“ a „Přidat cíl“, jsou na konci pod jejím obsahem.",
+  "whatsNew.settingsStorageFlow": "Stránka nastavení Cíle ukazuje také, která sekce se zálohuje do kterého cíle.",
   "whatsNew.settingsStorageList": "Stránka nastavení Cíle ukazuje všechny cíle. Kliknutím jeden otevřeš.",
   "whatsNew.offsiteCopies": "Kopie mimo lokalitu každé sekce je jeden řádek na jedné kartě, s testem, replikací a nastavením přímo v řádku. Vše ostatní se otevře v okně.",
   "whatsNew.compressionRow": "Výběr komprese stojí vedle svého popisku a je jen tak široký jako jeho tři možnosti.",

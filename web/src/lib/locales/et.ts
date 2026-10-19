@@ -789,6 +789,8 @@ const et: Partial<Translations> = {
   "offsite.copies.title": "Välised koopiad",
   "rclone.paste": "Kleebi seadistus",
   "whatsNew.signInMakeDefault": "„Määra vaikimisi“ teeb salvestatud sisselogimisest selle, mida kasutatakse kõikjal, kus ühtegi pole valitud.",
+  "whatsNew.cardFoot": "Kogu kaardi nupud, näiteks „Lisa sisselogimine“ ja „Lisa sihtkoht“, on lõpus kaardi sisu all.",
+  "whatsNew.settingsStorageFlow": "Seadete leht Sihtkohad näitab ka, millist jaotist millisesse sihtkohta varundatakse.",
   "whatsNew.settingsStorageList": "Seadete leht Sihtkohad näitab kõiki sihtkohti. Klõps avab ühe.",
   "whatsNew.offsiteCopies": "Iga jaotise väline koopia on üks rida ühel kaardil ning test, replitseerimine ja seadistamine on real. Kõik muu avaneb aknas.",
   "whatsNew.compressionRow": "Tihenduse valik on oma sildi kõrval ja ainult nii lai kui selle kolm valikut.",

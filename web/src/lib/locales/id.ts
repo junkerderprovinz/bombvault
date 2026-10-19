@@ -789,6 +789,8 @@ const id: Partial<Translations> = {
   "offsite.copies.title": "Salinan off-site",
   "rclone.paste": "Tempel konfigurasi",
   "whatsNew.signInMakeDefault": "“Jadikan bawaan” membuat login tersimpan menjadi login yang dipakai di mana pun tidak ada yang dipilih.",
+  "whatsNew.cardFoot": "Tombol untuk seluruh kartu, seperti “Tambah login” dan “Tambah tujuan”, ada di akhir di bawah isi kartu.",
+  "whatsNew.settingsStorageFlow": "Halaman pengaturan Tujuan juga menampilkan bagian mana dicadangkan ke tujuan mana.",
   "whatsNew.settingsStorageList": "Halaman pengaturan Tujuan menampilkan semua tujuan. Satu klik membuka salah satunya.",
   "whatsNew.offsiteCopies": "Salinan off-site setiap bagian adalah satu baris dalam satu kartu, dengan uji, replikasi, dan penyiapan di baris itu. Sisanya terbuka di jendela.",
   "whatsNew.compressionRow": "Pilihan kompresi ada di samping labelnya dan hanya selebar tiga opsinya.",

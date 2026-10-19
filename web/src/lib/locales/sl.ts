@@ -789,6 +789,8 @@ const sl: Partial<Translations> = {
   "offsite.copies.title": "Zunanje kopije",
   "rclone.paste": "Prilepi nastavitve",
   "whatsNew.signInMakeDefault": "»Nastavi kot privzete« naredi shranjene poverilnice za tiste, ki veljajo povsod, kjer niso izbrane nobene.",
+  "whatsNew.cardFoot": "Gumbi za celo kartico, na primer »Dodaj poverilnice« in »Dodaj cilj«, so na koncu pod vsebino kartice.",
+  "whatsNew.settingsStorageFlow": "Stran nastavitev Cilji prikaže tudi, kateri razdelek se kopira na kateri cilj.",
   "whatsNew.settingsStorageList": "Stran nastavitev Cilji prikaže vse cilje. Klik odpre enega.",
   "whatsNew.offsiteCopies": "Zunanja kopija vsakega razdelka je ena vrstica na eni kartici, s preizkusom, podvajanjem in nastavitvijo v vrstici. Vse drugo se odpre v oknu.",
   "whatsNew.compressionRow": "Izbira stiskanja stoji ob svoji oznaki in je le tako široka kot njene tri možnosti.",

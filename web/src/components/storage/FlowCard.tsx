@@ -143,11 +143,14 @@ export function FlowCard({
   defaults,
   own,
   hueIndex,
+  newId,
 }: {
   locations: StorageLocation[];
   defaults: PlacementDefaults;
   own: PlacedEntry[];
   hueIndex: number;
+  /** A mark of the card's own, for a page where the card itself is new. */
+  newId?: string;
 }) {
   const { t } = useT();
   const view = useFlowView();
@@ -165,7 +168,12 @@ export function FlowCard({
   return (
     // The dot goes to the entries that differ where there are any, since a
     // page shows it on the first element that carries the change.
-    <Card title={t("storage.flow.title")} hint={t("storage.flow.hint")} hueIndex={hueIndex} newId={own.length > 0 ? undefined : "storage-flow"}>
+    <Card
+      title={t("storage.flow.title")}
+      hint={t("storage.flow.hint")}
+      hueIndex={hueIndex}
+      newId={newId ?? (own.length > 0 ? undefined : "storage-flow")}
+    >
       <div className={`flex justify-end ${graph ? "md:absolute md:end-5 md:top-5 md:z-1" : ""}`}>
         <Selector
           items={[

@@ -668,6 +668,8 @@ const pl: Partial<Translations> = {
   "offsite.copies.title": "Kopie poza siedzibą",
   "rclone.paste": "Wklej konfigurację",
   "whatsNew.signInMakeDefault": "„Ustaw jako domyślne” sprawia, że zapisane dane logowania są używane wszędzie tam, gdzie nie wybrano żadnych.",
+  "whatsNew.cardFoot": "Przyciski całej karty, np. „Dodaj dane logowania” i „Dodaj miejsce docelowe”, stoją na końcu pod jej zawartością.",
+  "whatsNew.settingsStorageFlow": "Strona ustawień Miejsca docelowe pokazuje też, która sekcja trafia do którego miejsca docelowego.",
   "whatsNew.settingsStorageList": "Strona ustawień Miejsca docelowe pokazuje wszystkie miejsca docelowe. Kliknięcie otwiera jedno z nich.",
   "whatsNew.offsiteCopies": "Kopia poza siedzibą każdej sekcji to jeden wiersz na jednej karcie, z testem, replikacją i konfiguracją w wierszu. Wszystko inne otwiera się w oknie.",
   "whatsNew.compressionRow": "Wybór kompresji stoi obok swojej etykiety i jest tylko tak szeroki jak jego trzy opcje.",

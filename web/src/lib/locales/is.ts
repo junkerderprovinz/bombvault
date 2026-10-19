@@ -789,6 +789,8 @@ const is: Partial<Translations> = {
   "offsite.copies.title": "Fjarlæg afrit",
   "rclone.paste": "Líma inn stillingar",
   "whatsNew.signInMakeDefault": "„Gera sjálfgefna“ gerir vistaða innskráningu að þeirri sem er notuð alls staðar þar sem engin er valin.",
+  "whatsNew.cardFoot": "Hnappar fyrir allt spjaldið, eins og „Bæta við innskráningu“ og „Bæta við áfangastað“, eru í lokin undir efni spjaldsins.",
+  "whatsNew.settingsStorageFlow": "Stillingasíðan Áfangastaðir sýnir líka hvaða hluti er afritaður á hvaða áfangastað.",
   "whatsNew.settingsStorageList": "Stillingasíðan Áfangastaðir sýnir alla áfangastaði. Smellur opnar einn.",
   "whatsNew.offsiteCopies": "Fjarlægt afrit hvers hluta er ein lína á einu spjaldi, með prófun, afritun og uppsetningu á línunni. Allt annað opnast í glugga.",
   "whatsNew.compressionRow": "Val á þjöppun er við hlið merkingar sinnar og aðeins jafn breitt og þrír valkostir þess.",

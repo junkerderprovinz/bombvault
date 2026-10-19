@@ -789,6 +789,8 @@ const eu: Partial<Translations> = {
   "offsite.copies.title": "Kanpoko kopiak",
   "rclone.paste": "Itsatsi konfigurazio bat",
   "whatsNew.signInMakeDefault": "«Ezarri lehenetsi gisa» erabiliz, gordetako saio-hasiera bat bihurtzen da bat ere aukeratu ez den lekuetan erabiltzen dena.",
+  "whatsNew.cardFoot": "Txartel osoaren botoiak, «Gehitu saio-hasiera» eta «Gehitu helmuga» kasu, amaieran daude, txartelaren edukiaren azpian.",
+  "whatsNew.settingsStorageFlow": "Helmugak ezarpen-orriak ere erakusten du zein atal zein helmugatan babesten den.",
   "whatsNew.settingsStorageList": "Helmugak ezarpen-orriak helmuga guztiak zerrendatzen ditu. Klik batek bat irekitzen du.",
   "whatsNew.offsiteCopies": "Atal bakoitzaren kanpoko kopia txartel bakar bateko lerro bat da, eta probatu, errepikatu eta konfiguratu lerroan bertan daude. Gainerako guztia leiho batean irekitzen da.",
   "whatsNew.compressionRow": "Konpresio-hautatzailea bere etiketaren ondoan dago, eta bere hiru aukerak bezain zabala baino ez da.",

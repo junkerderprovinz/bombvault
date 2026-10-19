@@ -26,8 +26,9 @@ function sources(dir: string): string[] {
 const CODE = sources(SRC).map((path) => readFileSync(path, "utf8"));
 const found = (pattern: RegExp) => new Set(CODE.flatMap((source) => [...source.matchAll(pattern)].map((m) => m[1])));
 
-// A card takes its mark as a prop, every other element as the attribute.
-const MARKED = found(/(?:data-new|newId)="([^"$]+)"/g);
+// A card takes its mark as a prop, and a group of cards one such prop per
+// card, such as flowNewId; every other element takes the attribute.
+const MARKED = found(/(?:data-new|[nN]ewId)="([^"$]+)"/g);
 // A way that only one of several rows carries is written as a condition.
 const WAYS = found(/data-new-way=(?:\{[^}"]*)?"([^"$]+)"/g);
 // A link on the way is written with the path it leads to.

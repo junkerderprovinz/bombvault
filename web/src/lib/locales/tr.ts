@@ -674,6 +674,8 @@ const tr: Partial<Translations> = {
   "offsite.copies.title": "Site dışı kopyalar",
   "rclone.paste": "Yapılandırma yapıştır",
   "whatsNew.signInMakeDefault": "“Varsayılan yap”, kayıtlı bir oturum açma bilgisini hiçbirinin seçilmediği her yerde kullanılan bilgi yapar.",
+  "whatsNew.cardFoot": "“Oturum açma ekle” ve “Hedef ekle” gibi tüm kartın düğmeleri, kartın içeriğinin altında, sonda durur.",
+  "whatsNew.settingsStorageFlow": "Hedefler ayarlar sayfası hangi bölümün hangi hedefe yedeklendiğini de gösterir.",
   "whatsNew.settingsStorageList": "Hedefler ayarlar sayfası tüm hedefleri listeler. Bir tıklama birini açar.",
   "whatsNew.offsiteCopies": "Her bölümün site dışı kopyası tek bir kartta bir satırdır; test, çoğaltma ve kurulum satırın üzerindedir. Geri kalan her şey bir pencerede açılır.",
   "whatsNew.compressionRow": "Sıkıştırma seçimi etiketinin yanında durur ve yalnızca üç seçeneği kadar geniştir.",

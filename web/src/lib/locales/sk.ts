@@ -789,6 +789,8 @@ const sk: Partial<Translations> = {
   "offsite.copies.title": "Externé kópie",
   "rclone.paste": "Vložiť konfiguráciu",
   "whatsNew.signInMakeDefault": "„Nastaviť ako predvolené“ urobí z uložených prihlasovacích údajov tie, ktoré platia všade, kde nie sú vybrané žiadne.",
+  "whatsNew.cardFoot": "Tlačidlá celej karty, napríklad „Pridať prihlasovacie údaje“ a „Pridať cieľ“, sú na konci pod jej obsahom.",
+  "whatsNew.settingsStorageFlow": "Stránka nastavení Ciele ukazuje aj to, ktorá sekcia sa zálohuje do ktorého cieľa.",
   "whatsNew.settingsStorageList": "Stránka nastavení Ciele zobrazuje všetky ciele. Kliknutím jeden otvoríš.",
   "whatsNew.offsiteCopies": "Externá kópia každej sekcie je jeden riadok na jednej karte, s testom, replikáciou a nastavením priamo v riadku. Všetko ostatné sa otvorí v okne.",
   "whatsNew.compressionRow": "Výber kompresie je vedľa svojho popisu a je len taký široký ako jeho tri možnosti.",
