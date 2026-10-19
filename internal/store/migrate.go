@@ -3274,6 +3274,57 @@ ALTER TABLE runs ADD COLUMN snapshot_fallback TEXT NOT NULL DEFAULT '';`,
  WHERE t.role = 'offsite' AND t.sort_order = 0
    AND EXISTS (SELECT 1 FROM offsite_targets d WHERE d.id = t.destination_id AND d.role = 'destination');`,
 	},
+	{
+		// Rows no storage page lists stand in the way of a location over the
+		// same place. A cleared field's row goes only when nothing ever ran or
+		// was listed against it, and a direct repository an entry or a default
+		// backs up to keeps its row.
+		version: leftoverTargetsMigration,
+		name:    "drop_leftover_offsite_targets",
+		sql:     leftoverTargetsSQL(),
+	},
+}
+
+// offsiteFieldDomains are the domains with an off-site field in the settings,
+// named as the column names them.
+var offsiteFieldDomains = []string{"containers", "vms", "flash", "config", "files", "zfs"}
+
+// leftoverTargetsSQL clears destination ids that name no destination, deletes
+// the switched-off primary rows of cleared off-site fields that hold no
+// history together with their unused direct repositories, and clears every
+// off-site field whose domain has no target row left.
+func leftoverTargetsSQL() string {
+	var field, clear strings.Builder
+	field.WriteString("(SELECT CASE t.domain")
+	for _, d := range offsiteFieldDomains {
+		fmt.Fprintf(&field, " WHEN '%[1]s' THEN %[1]s_offsite", d)
+		fmt.Fprintf(&clear, `UPDATE settings SET %[1]s_offsite = '', %[1]s_offsite_immutable = 0
+ WHERE %[1]s_offsite <> '' AND NOT EXISTS (SELECT 1 FROM offsite_targets WHERE role = 'offsite' AND domain = '%[1]s');
+`, d)
+	}
+	field.WriteString(" END FROM settings WHERE id = 1)")
+	leftover := `t.role = 'offsite' AND t.sort_order = 0 AND t.enabled = 0 AND t.destination_id = ''
+   AND ` + field.String() + ` = ''
+   AND NOT EXISTS (SELECT 1 FROM offsite_runs WHERE offsite_target_id = t.id)
+   AND NOT EXISTS (SELECT 1 FROM tamper_tests WHERE offsite_target_id = t.id)
+   AND NOT EXISTS (SELECT 1 FROM restore_drills WHERE offsite_target_id = t.id)
+   AND NOT EXISTS (SELECT 1 FROM offsite_item_copies WHERE target_id = t.id)
+   AND NOT EXISTS (SELECT 1 FROM offsite_observations WHERE target_id = t.id)`
+	return `UPDATE offsite_targets SET destination_id = '', own_settings = 0
+ WHERE role = 'offsite' AND destination_id <> ''
+   AND destination_id NOT IN (SELECT id FROM offsite_targets WHERE role = 'destination');
+DELETE FROM offsite_targets AS r
+ WHERE r.role = 'repo' AND r.companion_of <> ''
+   AND EXISTS (SELECT 1 FROM offsite_targets t WHERE t.id = r.companion_of AND ` + leftover + `)
+   AND NOT EXISTS (SELECT 1 FROM targets WHERE repo = r.id)
+   AND NOT EXISTS (SELECT 1 FROM vms WHERE repo = r.id)
+   AND NOT EXISTS (SELECT 1 FROM file_sets WHERE repo = r.id)
+   AND NOT EXISTS (SELECT 1 FROM zfs_datasets WHERE repo = r.id)
+   AND NOT EXISTS (SELECT 1 FROM placement_defaults WHERE home = r.id);
+DELETE FROM offsite_targets AS t
+ WHERE ` + leftover + `
+   AND NOT EXISTS (SELECT 1 FROM offsite_targets r WHERE r.role = 'repo' AND r.companion_of = t.id);
+` + clear.String()
 }
 
 // dbDumpMigrationBase numbers the three database-dump columns from one place,
@@ -3443,6 +3494,10 @@ const anomalyRebaseMigration = 390
 // primaryKeepMigration numbers the keep-policy a domain's primary off-site
 // target takes from its storage location.
 const primaryKeepMigration = 400
+
+// leftoverTargetsMigration numbers the clean-up of off-site rows no storage
+// page lists.
+const leftoverTargetsMigration = 410
 
 // oneLineColumns are the names and locations the recovery kit prints.
 var oneLineColumns = []struct {

@@ -159,7 +159,8 @@ func (e *removalChangedErr) Is(target error) bool { return target == errPlacemen
 
 // RemoveDestination takes a destination away together with the targets of the
 // sections that copy to it, after checking that they are the ones expect
-// lists. The data there stays. The remote or credential set the destination
+// lists, and the switched-off rows that cleared off-site fields left on its
+// places, which no page lists. The data there stays. The remote or credential set the destination
 // brought along goes too, unless a repository that is kept still needs it.
 func (s *Service) RemoveDestination(id string, expect locationRemoval) (store.Settings, error) {
 	d, now, err := s.destinationRemovalPreview(id)
@@ -169,7 +170,10 @@ func (s *Service) RemoveDestination(id string, expect locationRemoval) (store.Se
 	if !now.same(expect) {
 		return store.Settings{}, &removalChangedErr{now: now}
 	}
-	if err := s.store.RemoveDestination(id, clearOffsiteFields); err != nil {
+	behind := func(t store.OffsiteTarget, st store.Settings) bool {
+		return t.DestinationID == "" && hiddenTarget(t, st, nil) && (repoUnder(d.Repo, t.Repo) || sameRepoLocation(d.Repo, t.Repo))
+	}
+	if err := s.store.RemoveDestination(id, behind, clearOffsiteFields); err != nil {
 		return store.Settings{}, err
 	}
 	s.dropDestinationSignIn(d)

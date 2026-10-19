@@ -242,8 +242,9 @@ func (s *Service) StorageLocations() ([]storageLocation, error) {
 	for _, d := range destinations {
 		out = append(out, b.destinationLocation(d))
 	}
+	ids := destinationIDs(destinations)
 	for _, t := range b.targets {
-		if t.DestinationID == "" && !b.leftover(t) {
+		if t.DestinationID == "" && !hiddenTarget(t, b.settings, ids) {
 			out = append(out, b.targetLocation(t))
 		}
 	}
@@ -489,11 +490,25 @@ func (b *locationBuilder) targetLocation(t store.OffsiteTarget) storageLocation 
 	return loc
 }
 
-// leftover reports whether t is the row a cleared off-site field leaves
-// behind: switched off in the primary slot, kept only so the next fill finds
-// its id again.
-func (b *locationBuilder) leftover(t store.OffsiteTarget) bool {
-	return t.SortOrder == 0 && !t.Enabled && offsiteRepoFromSettings(t.Domain, b.settings) == ""
+// hiddenTarget reports whether the storage page lists t nowhere: a target
+// whose destination is gone, or one that follows none and is the row a
+// cleared off-site field leaves behind, switched off in the primary slot and
+// kept only so the next fill finds its id again. destinations holds the ids of
+// the destinations there are.
+func hiddenTarget(t store.OffsiteTarget, settings store.Settings, destinations map[string]bool) bool {
+	if t.DestinationID != "" {
+		return !destinations[t.DestinationID]
+	}
+	return t.SortOrder == 0 && !t.Enabled && offsiteRepoFromSettings(t.Domain, settings) == ""
+}
+
+// destinationIDs is the set hiddenTarget takes.
+func destinationIDs(destinations []store.OffsiteTarget) map[string]bool {
+	ids := make(map[string]bool, len(destinations))
+	for _, d := range destinations {
+		ids[d.ID] = true
+	}
+	return ids
 }
 
 // addTarget adds a target's copy to loc and, when the target has a direct

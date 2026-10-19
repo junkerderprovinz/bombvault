@@ -268,10 +268,14 @@ func (r *Repo) DestinationTargets(id string) ([]OffsiteTarget, error) {
 }
 
 func destinationTargetsQ(q queryer, id string) ([]OffsiteTarget, error) {
+	return offsiteTargetsQ(q, `destination_id = ?`, id)
+}
+
+func offsiteTargetsQ(q queryer, where string, args ...any) ([]OffsiteTarget, error) {
 	rows, err := q.Query(`SELECT `+offsiteTargetCols+` FROM offsite_targets
-		WHERE role = ? AND destination_id = ? ORDER BY domain`, RoleOffsite, id)
+		WHERE role = ? AND `+where+` ORDER BY domain`, append([]any{RoleOffsite}, args...)...)
 	if err != nil {
-		return nil, fmt.Errorf("DestinationTargets: %w", err)
+		return nil, fmt.Errorf("offsite targets: %w", err)
 	}
 	defer rows.Close() //nolint:errcheck // read-only rows
 	var out []OffsiteTarget
@@ -616,10 +620,10 @@ func (r *Repo) DetachFromDestination(id string) error {
 // RemoveDestination deletes a destination together with the domain targets
 // derived from it. A direct repository that an item or a default still backs
 // up to stays as a named repository of its own; one nothing uses goes with
-// its target. settle gets the domains whose primary off-site target was among
+// its target. Any other target behind accepts goes the same way. settle gets the domains whose primary off-site target was among
 // them and clears their off-site settings in the same transaction, because a
 // settings save writes the primary slot again from them.
-func (r *Repo) RemoveDestination(id string, settle func(s *Settings, primaries []string)) error {
+func (r *Repo) RemoveDestination(id string, behind func(t OffsiteTarget, s Settings) bool, settle func(s *Settings, primaries []string)) error {
 	r.settingsMu.Lock()
 	defer r.settingsMu.Unlock()
 	err := r.inTx(func(tx *sql.Tx) error {
@@ -629,6 +633,19 @@ func (r *Repo) RemoveDestination(id string, settle func(s *Settings, primaries [
 		derived, err := destinationTargetsQ(tx, id)
 		if err != nil {
 			return err
+		}
+		others, err := offsiteTargetsQ(tx, `destination_id <> ?`, id)
+		if err != nil {
+			return err
+		}
+		settings, err := getSettings(tx)
+		if err != nil {
+			return err
+		}
+		for _, t := range others {
+			if behind(t, settings) {
+				derived = append(derived, t)
+			}
 		}
 		var primaries []string
 		for _, t := range derived {

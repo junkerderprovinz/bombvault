@@ -484,8 +484,10 @@ func (s *Service) SaveNewDestination(ctx context.Context, req draftRequest) (sto
 
 // destinationClash refuses a destination that is, holds or lies inside a
 // repository entries back up to or another destination. Its sections would
-// land on those backups, and deleting the backups there would take them. self
-// names the destination being edited.
+// land on those backups, and deleting the backups there would take them. A
+// direct repository inside is left out: a destination holds the direct
+// repositories of its targets, also those an earlier destination at the same
+// place left behind. self names the destination being edited.
 func (s *Service) destinationClash(repo string, self ...string) error {
 	settings, err := s.store.GetSettings()
 	if err != nil {
@@ -499,7 +501,7 @@ func (s *Service) destinationClash(repo string, self ...string) error {
 	if err != nil {
 		return fmt.Errorf("read the repositories to check this location: %w", err)
 	}
-	live = slices.DeleteFunc(live, func(r liveRepo) bool { return r.kind == liveTarget })
+	live = slices.DeleteFunc(live, func(r liveRepo) bool { return r.kind == liveTarget || r.direct && repoUnder(loc, r.loc) })
 	if overlapsLive(s.placesNow(), loc, live, self...) {
 		return errNestedLocation
 	}
