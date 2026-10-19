@@ -65,7 +65,7 @@ export function FindingChanges({ a, t }: { a: AnomalyView; t: TranslateAnomaly }
   const failed = failure ?? (data?.state === "failed" ? (data.error ?? "") : null);
   const summary = data?.state === "ready" ? data.summary : undefined;
   return (
-    <div className="flex flex-col gap-2 rounded-control bg-carbon-surface2 px-3.5 py-3 text-sm">
+    <div className="flex flex-col gap-2 text-sm">
       <p className="text-caption text-carbon-textSub">
         {data?.fromAt && data.toAt
           ? t("anomaly.changes.span")
@@ -96,7 +96,7 @@ export function FindingChanges({ a, t }: { a: AnomalyView; t: TranslateAnomaly }
             </p>
           )}
           {summary.regenerable && (
-            <p className="rounded-control bg-carbon-surface3 px-3 py-2 text-caption text-carbon-textSub">
+            <p className="rounded-control bg-carbon-surface2 px-3 py-2 text-caption text-carbon-textSub">
               {t("anomaly.changes.regenerable")}
             </p>
           )}
@@ -109,7 +109,7 @@ export function FindingChanges({ a, t }: { a: AnomalyView; t: TranslateAnomaly }
   );
 }
 
-const CELL = "border-t border-carbon-surface3 py-1.5 pe-2 align-top";
+const CELL = "border-t border-carbon-border/60 py-1.5 pe-2 align-top";
 const FIGURE = `${CELL} whitespace-nowrap tabular-nums`;
 
 /** Each folder with what went away, came in and changed. A cell stays empty

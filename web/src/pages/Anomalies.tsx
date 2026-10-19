@@ -14,6 +14,7 @@ import { MonitoringWindow } from "../components/anomalies/MonitoringWindow";
 import { IconAnomalies, IconGear } from "../components/navGlyphs";
 import { PageTitle } from "../components/PageTitle";
 import { Selector } from "../components/Selector";
+import { Rows } from "../components/storage/rows";
 import type { AnomalyGlobals } from "../components/ItemAnomalySettings";
 import { Card } from "./settings/shared";
 import {
@@ -284,7 +285,7 @@ export function Anomalies() {
         ) : shown.length === 0 ? (
           <p className="px-2 py-9 text-center text-sm text-carbon-textMuted">{t(empty)}</p>
         ) : (
-          <ul className="flex flex-col gap-2.5">
+          <Rows as="ul">
             {shown.map((a, i) => {
               const key = anomalyGroupKey(a);
               const first = !seen.has(key);
@@ -304,7 +305,7 @@ export function Anomalies() {
                 />
               );
             })}
-          </ul>
+          </Rows>
         )}
       </Card>
 

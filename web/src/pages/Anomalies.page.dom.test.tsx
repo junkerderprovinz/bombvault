@@ -329,7 +329,7 @@ describe("the list", () => {
 
     const surfaces = findings().map((li) => li.className.split(" ").filter((c) => c.startsWith("bg-")));
     expect(names()).toEqual(["loud", "calm"]);
-    expect(surfaces).toEqual([["bg-carbon-surface2"], ["bg-carbon-surface2"]]);
+    expect(surfaces).toEqual([[], []]);
   });
 
   it("says what happened without repeating the name, and the whole sentence in the window", async () => {
@@ -600,7 +600,7 @@ describe("the way out of a finding", () => {
 
 describe("a finding's window", () => {
   function row(window: HTMLElement, term: string): string | null | undefined {
-    return within(window).getByText(term, { selector: "dt" }).nextElementSibling?.textContent;
+    return within(window).getByText(term).closest("[data-search-row]")?.lastElementChild?.textContent;
   }
 
   it("opens over the page and closes again", async () => {
