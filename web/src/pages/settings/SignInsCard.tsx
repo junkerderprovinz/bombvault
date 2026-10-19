@@ -279,9 +279,11 @@ export function SignInsCard({ hueIndex }: { hueIndex?: number }) {
                     </Badge>
                   )}
                 </span>
-                <span dir="ltr" className="break-all text-start font-mono text-xs text-carbon-textMuted">
-                  {s.s3KeyId || s.restUser || "·"}
-                </span>
+                {(s.s3KeyId || s.restUser) && (
+                  <span dir="ltr" className="break-all text-start font-mono text-xs text-carbon-textMuted">
+                    {s.s3KeyId || s.restUser}
+                  </span>
+                )}
                 <span className="text-xs text-carbon-textSub wrap-break-word">
                   {users.length > 0
                     ? t("signIns.usedBy").replace("{list}", () => formatList(lang, users.map((u) => u.name)))
