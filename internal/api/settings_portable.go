@@ -32,8 +32,11 @@ const settingsExportSchema = 1
 // APP_KEY itself, the derived restic repo passwords, the login password hash, or
 // the session epoch — those are instance-local and are always preserved on import.
 type exportCredentials struct {
-	// Cloud is the S3 / restic-REST backend credentials in cleartext.
+	// Cloud is the default sign-in's keys in cleartext. A file from before
+	// sign-ins were one list carries only this, as its shared credentials.
 	Cloud CloudCreds `json:"cloud"`
+	// SignIns are the saved sign-ins in cleartext, the default marked.
+	SignIns []CloudCredSet `json:"signIns,omitempty"`
 	// Rclone is the full decrypted rclone config (INI text).
 	Rclone string `json:"rclone"`
 	// Notify is the notification config in cleartext (SMTP password / Matrix token
@@ -372,6 +375,10 @@ func (h *Handler) collectCredentials(s store.Settings) (*exportCredentials, erro
 	if err != nil {
 		return nil, fmt.Errorf("read cloud credentials: %w", err)
 	}
+	signIns, err := h.svc.decodeCloudCredSets(s)
+	if err != nil {
+		return nil, fmt.Errorf("read the saved sign-ins: %w", err)
+	}
 	rclone, err := h.svc.decodeRcloneConf(s)
 	if err != nil {
 		return nil, fmt.Errorf("read rclone config: %w", err)
@@ -384,7 +391,7 @@ func (h *Handler) collectCredentials(s store.Settings) (*exportCredentials, erro
 	if err != nil {
 		return nil, err
 	}
-	return &exportCredentials{Cloud: cloud, Rclone: rclone, Notify: notifyConf, MQTTPassword: mqttPassword}, nil
+	return &exportCredentials{Cloud: cloud, SignIns: signIns, Rclone: rclone, Notify: notifyConf, MQTTPassword: mqttPassword}, nil
 }
 
 // importSummary is the preview payload: what an apply WOULD change, without writing.
@@ -881,7 +888,7 @@ func credsPresence(c *exportCredentials) importCredsPresence {
 	}
 	return importCredsPresence{
 		Present: true,
-		Cloud:   cloudCredsMeaningful(c.Cloud),
+		Cloud:   cloudCredsMeaningful(c.Cloud) || len(c.SignIns) > 0,
 		Rclone:  strings.TrimSpace(c.Rclone) != "",
 		Notify:  notifyMeaningful(c.Notify),
 		MQTT:    c.MQTTPassword != "",
@@ -1381,10 +1388,16 @@ func importedLocation(existing, imported string) string {
 }
 
 // applyImportedCredentials re-encrypts and stores each non-empty credential kind
-// with the local APP_KEY. An empty kind is left untouched (no wipe).
+// with the local APP_KEY. An empty kind is left untouched (no wipe). The saved
+// sign-ins carry the default, so Cloud counts only in a file without them.
 func (h *Handler) applyImportedCredentials(c exportCredentials) error {
-	if cloudCredsMeaningful(c.Cloud) {
-		if err := h.svc.SetCloudCreds(c.Cloud); err != nil {
+	switch {
+	case len(c.SignIns) > 0:
+		if err := h.svc.importSignIns(c.SignIns); err != nil {
+			return fmt.Errorf("store the saved sign-ins: %w", err)
+		}
+	case cloudCredsMeaningful(c.Cloud):
+		if err := h.svc.adoptSharedSignIn(c.Cloud); err != nil {
 			return fmt.Errorf("store cloud credentials: %w", err)
 		}
 	}

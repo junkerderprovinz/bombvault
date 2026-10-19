@@ -18102,8 +18102,9 @@ func (s *Service) SetNotifyConfig(c notify.Config) error {
 // ---------------------------------------------------------------------------
 
 // CloudCreds holds the backend credentials restic reads from the environment for
-// off-site repos. Stored AES-256-GCM-encrypted in settings.cloud_conf. The two
-// secret fields (S3Secret, RESTPassword) are write-only over the API.
+// remote repositories. A saved sign-in carries them, sealed with the rest of
+// settings.cloud_cred_sets. The two secret fields (S3Secret, RESTPassword) are
+// write-only over the API.
 type CloudCreds struct {
 	S3KeyID      string `json:"s3KeyId"`
 	S3Secret     string `json:"s3Secret"`
@@ -18113,9 +18114,8 @@ type CloudCreds struct {
 	// S3StorageClass is the S3 storage class for restic writes to a native s3:
 	// off-site backend (empty = the provider default). Unlike the credential
 	// fields it is NOT a secret (a class name), so handleGetCloud returns it. It
-	// rides this same AES-256-GCM-encrypted cloud_conf blob, so it needs no schema
-	// migration. It is validated against restic.AllowedStorageClasses on save
-	// (SetCloudCreds), so only a restore-readable tier is ever stored/emitted.
+	// is validated against restic.AllowedStorageClasses on save, so only a
+	// restore-readable tier is ever stored/emitted.
 	S3StorageClass string `json:"s3StorageClass"`
 }
 
@@ -18136,14 +18136,28 @@ func cloudEnv(c CloudCreds) []string {
 	return env
 }
 
-// decodeCloud decrypts the stored cloud credentials from the given settings (an
-// empty/blank cloud_conf yields a zero CloudCreds, no error).
+// decodeCloud returns the default sign-in, which everything that names no
+// sign-in uses. A database the conversion at start has not reached yet still
+// holds it as the shared blob, which stands in until then.
 func (s *Service) decodeCloud(settings store.Settings) (CloudCreds, error) {
+	sets, err := s.decodeCloudCredSets(settings)
+	if err != nil {
+		return CloudCreds{}, err
+	}
+	if i := defaultSetIndex(sets); i >= 0 {
+		return sets[i].CloudCreds, nil
+	}
+	return s.decodeSharedBlob(settings.CloudConf)
+}
+
+// decodeSharedBlob opens a sealed CloudCreds as cloud_conf held them. A blank
+// one is no sign-in.
+func (s *Service) decodeSharedBlob(blob string) (CloudCreds, error) {
 	var c CloudCreds
-	if strings.TrimSpace(settings.CloudConf) == "" {
+	if strings.TrimSpace(blob) == "" {
 		return c, nil
 	}
-	enc, err := base64.StdEncoding.DecodeString(settings.CloudConf)
+	enc, err := base64.StdEncoding.DecodeString(blob)
 	if err != nil {
 		return c, err
 	}
@@ -18157,8 +18171,24 @@ func (s *Service) decodeCloud(settings store.Settings) (CloudCreds, error) {
 	return c, nil
 }
 
-// CloudConfig returns the stored credentials. (Callers that serve it to the UI
-// must blank the secret fields — see handleGetCloud.)
+// sealSharedBlob is decodeSharedBlob the other way round.
+func (s *Service) sealSharedBlob(c CloudCreds) (string, error) {
+	if c == (CloudCreds{}) {
+		return "", nil
+	}
+	blob, err := json.Marshal(c)
+	if err != nil {
+		return "", fmt.Errorf("marshal sign-in: %w", err)
+	}
+	enc, err := secret.Encrypt(s.cfg.AppKey, blob)
+	if err != nil {
+		return "", fmt.Errorf("encrypt sign-in: %w", err)
+	}
+	return base64.StdEncoding.EncodeToString(enc), nil
+}
+
+// CloudConfig returns the default sign-in. Callers that serve it to the UI
+// must blank the secret fields, as handleGetCloud does.
 func (s *Service) CloudConfig() (CloudCreds, error) {
 	settings, err := s.store.GetSettings()
 	if err != nil {
@@ -18167,14 +18197,9 @@ func (s *Service) CloudConfig() (CloudCreds, error) {
 	return s.decodeCloud(settings)
 }
 
-// SetCloudCreds stores the credentials encrypted. A blank secret field KEEPS the
-// previously stored secret (so the UI can edit non-secret fields without
-// re-entering keys). A config with nothing set clears it.
-func (s *Service) SetCloudCreds(c CloudCreds) error {
-	// Normalize + validate the S3 storage class BEFORE anything is stored: uppercase
-	// it, and reject a non-empty value that is not a whitelisted, restore-readable
-	// tier (see restic.AllowedStorageClasses) so an archival class that would break
-	// restic restore is never silently persisted. Empty = the provider default.
+// validCloudCreds normalizes the storage class and refuses a class that would
+// break restic restore, and any value that spans lines.
+func validCloudCreds(c *CloudCreds) error {
 	c.S3StorageClass = strings.ToUpper(strings.TrimSpace(c.S3StorageClass))
 	if c.S3StorageClass != "" && !restic.StorageClassAllowed(c.S3StorageClass) {
 		return fmt.Errorf("unsupported S3 storage class %q (allowed: %s)", c.S3StorageClass, strings.Join(restic.AllowedStorageClasses, ", "))
@@ -18182,65 +18207,99 @@ func (s *Service) SetCloudCreds(c CloudCreds) error {
 	if spansLines(c.RESTUser, c.RESTPassword, c.S3KeyID, c.S3Secret, c.S3Region) {
 		return errors.New("a user name, a key or a password must be on one line")
 	}
-	// The keep-prior merge below reads the CURRENTLY stored secrets, so it has to
-	// happen in the same transaction as the write. Doing it against a snapshot
-	// taken before the write would re-encrypt a secret that a save landing in
-	// between had already replaced — the blank field would then "keep" a value
-	// that is no longer the stored one.
-	_, err := s.store.MutateSettings(func(settings *store.Settings) error {
-		c := c
-		// A fully-blank request means "clear" — check BEFORE the keep-prior merge,
-		// otherwise the merge would re-fill the secrets and clearing would be
-		// impossible once a secret had been stored.
-		if (CloudCreds{}) == c {
-			settings.CloudConf = ""
-			return nil
-		}
-		// Otherwise keep a previously stored secret when its field is left blank, so
-		// the non-secret fields can be edited without re-entering keys.
-		prev, _ := s.decodeCloud(*settings)
-		if c.S3Secret == "" {
-			c.S3Secret = prev.S3Secret
-		}
-		if c.RESTPassword == "" {
-			c.RESTPassword = prev.RESTPassword
-		}
-		blob, mErr := json.Marshal(c)
-		if mErr != nil {
-			return fmt.Errorf("marshal cloud conf: %w", mErr)
-		}
-		enc, eErr := secret.Encrypt(s.cfg.AppKey, blob)
-		if eErr != nil {
-			return fmt.Errorf("encrypt cloud conf: %w", eErr)
-		}
-		settings.CloudConf = base64.StdEncoding.EncodeToString(enc)
-		return nil
-	})
-	return err
+	return nil
 }
 
-// ---------------------------------------------------------------------------
-// Named credential sets (#141 stage 2): additional S3/restic-REST credentials
-// an off-site target can opt into via OffsiteTarget.CredsRef, instead of every
-// target sharing the one CloudCreds set above. An empty CredsRef keeps using
-// CloudCreds exactly as before, so this is purely additive.
-// ---------------------------------------------------------------------------
+// SetCloudCreds writes c into the default sign-in, or saves it as a new one
+// called Default sign-in when there is none. A blank secret field keeps the
+// stored secret, so the other fields can be edited without typing it again.
+// A c with nothing set removes the default sign-in.
+func (s *Service) SetCloudCreds(c CloudCreds) error {
+	if err := validCloudCreds(&c); err != nil {
+		return err
+	}
+	return s.writeDefaultSignIn(c, true)
+}
 
-// CloudCredSet is one named, additional credential set. Embeds CloudCreds for
-// the actual key/secret/region/storage-class fields so cloudEnv and the
-// storage-class validation in SetCloudCredSets stay shared with the legacy
-// single-set path.
+// errDefaultInUse refuses to remove a default sign-in a storage location
+// names.
+var errDefaultInUse = errors.New("a storage location signs in with the default sign-in, so it stays")
+
+// writeDefaultSignIn stores c as the default sign-in's keys. keep fills blank
+// secrets from the stored ones.
+func (s *Service) writeDefaultSignIn(c CloudCreds, keep bool) error {
+	// Read before the mutation, which must not touch the store itself.
+	inUse, err := s.store.CredsRefsInUse()
+	if err != nil {
+		return err
+	}
+	var refused error
+	err = s.editCloudCredSets(func(sets []CloudCredSet) []CloudCredSet {
+		i := defaultSetIndex(sets)
+		if c == (CloudCreds{}) {
+			if i < 0 {
+				return sets
+			}
+			if inUse[sets[i].ID] {
+				refused = errDefaultInUse
+				return sets
+			}
+			return slices.Delete(sets, i, i+1)
+		}
+		if i < 0 {
+			return append(sets, CloudCredSet{ID: newCredSetID(), Name: freeSetName(sets, defaultSignInName), Default: true, CloudCreds: c})
+		}
+		if keep {
+			if c.S3Secret == "" {
+				c.S3Secret = sets[i].S3Secret
+			}
+			if c.RESTPassword == "" {
+				c.RESTPassword = sets[i].RESTPassword
+			}
+		}
+		sets[i].CloudCreds = c
+		return sets
+	})
+	return cmp.Or(err, refused)
+}
+
+// CloudCredSet is one saved sign-in, the S3 and restic REST keys a storage
+// location picks with its CredsRef. It embeds CloudCreds, so cloudEnv and the
+// storage-class check work on it as on any other sign-in.
 type CloudCredSet struct {
 	ID   string `json:"id"`
 	Name string `json:"name"`
 	// KeptFor is the id of the direct repository this set holds the values
 	// of, from before a save changed them to ones that do not open it.
 	KeptFor string `json:"keptFor,omitempty"`
+	// Default marks the sign-in used wherever nothing names one: an address
+	// typed in by hand and a recovery on a fresh install.
+	Default bool `json:"default,omitempty"`
 	CloudCreds
 }
 
-// decodeCloudCredSets decrypts the stored additional credential sets from the
-// given settings (an empty/blank cloud_cred_sets yields nil, no error).
+// defaultSignInName is what the sign-in made from the shared credentials is
+// called.
+const defaultSignInName = "Default sign-in"
+
+func defaultSetIndex(sets []CloudCredSet) int {
+	return slices.IndexFunc(sets, func(c CloudCredSet) bool { return c.Default })
+}
+
+// freeSetName is name, or name with a number when a set has it already.
+func freeSetName(sets []CloudCredSet, name string) string {
+	taken := func(n string) bool {
+		return slices.ContainsFunc(sets, func(c CloudCredSet) bool { return strings.EqualFold(c.Name, n) })
+	}
+	out := name
+	for i := 2; taken(out); i++ {
+		out = fmt.Sprintf("%s %d", name, i)
+	}
+	return out
+}
+
+// decodeCloudCredSets decrypts the saved sign-ins from the given settings (an
+// empty/blank cloud_cred_sets yields nil, no error).
 func (s *Service) decodeCloudCredSets(settings store.Settings) ([]CloudCredSet, error) {
 	if strings.TrimSpace(settings.CloudCredSets) == "" {
 		return nil, nil
@@ -18260,10 +18319,9 @@ func (s *Service) decodeCloudCredSets(settings store.Settings) ([]CloudCredSet, 
 	return sets, nil
 }
 
-// CloudCredSets returns the additional named credential sets, with every
-// secret field blanked (callers that need the real secrets, e.g. restic env
-// building, must go through decodeCloudFor — this is for serving the list to
-// the UI, same blank-secrets contract as handleGetCloud).
+// CloudCredSets returns the saved sign-ins with every secret field blanked,
+// for serving the list to the UI. Building a restic environment goes through
+// decodeCloudFor instead.
 func (s *Service) CloudCredSets() ([]CloudCredSet, error) {
 	settings, err := s.store.GetSettings()
 	if err != nil {
@@ -18282,64 +18340,74 @@ func (s *Service) CloudCredSets() ([]CloudCredSet, error) {
 	return out, nil
 }
 
-// SetCloudCredSets replaces the whole list of additional named credential
-// sets. Each set's secret fields follow the same keep-prior-if-blank rule as
-// SetCloudCreds (matched by ID against the previously stored set), so the UI
-// can rename a set or edit its non-secret fields without re-entering keys.
-// KeptFor is carried over the same way, since the Settings page never sends
-// it. A set with a blank Name or a duplicate ID is rejected: both would make
-// CredsRef resolution ambiguous or the set unreachable from the UI.
+// SetCloudCredSets replaces the whole list of saved sign-ins. Each set's
+// secret fields follow the keep-prior-if-blank rule of SetCloudCreds, matched
+// by ID, so the UI can rename a set or edit its other fields without typing
+// the keys again. KeptFor is carried over the same way, since the Settings
+// page never sends it.
+//
+// A list that marks no default keeps the stored one, and the stored default
+// stays even when the list leaves it out: it goes only once another sign-in
+// takes its place. A set with a blank Name or a duplicate ID is rejected, as
+// both would make CredsRef ambiguous or the set unreachable from the UI.
 func (s *Service) SetCloudCredSets(sets []CloudCredSet) error {
-	// Same reasoning as SetCloudCreds: the keep-prior-if-blank merge reads the
-	// sets stored right now, so it belongs in the same transaction as the write.
-	// The incoming slice is copied rather than normalized in place, because the
-	// caller's value is theirs and the merged one carries real secrets.
-	_, err := s.store.MutateSettings(func(settings *store.Settings) error {
-		next := make([]CloudCredSet, len(sets))
-		copy(next, sets)
-
-		prev, _ := s.decodeCloudCredSets(*settings)
+	// The caller's slice is copied rather than normalized in place, because
+	// the merged one carries real secrets.
+	next := make([]CloudCredSet, len(sets))
+	copy(next, sets)
+	defaults := 0
+	seen := make(map[string]bool, len(next))
+	for i := range next {
+		next[i].Name = strings.TrimSpace(next[i].Name)
+		if next[i].Name == "" {
+			return fmt.Errorf("credential set name must not be empty")
+		}
+		if next[i].ID == "" {
+			return fmt.Errorf("credential set %q: missing id", next[i].Name)
+		}
+		if seen[next[i].ID] {
+			return fmt.Errorf("duplicate credential set id %q", next[i].ID)
+		}
+		seen[next[i].ID] = true
+		if next[i].Default {
+			defaults++
+		}
+		if err := validCloudCreds(&next[i].CloudCreds); err != nil {
+			return fmt.Errorf("credential set %q: %w", next[i].Name, err)
+		}
+	}
+	if defaults > 1 {
+		return errors.New("only one sign-in can be the default")
+	}
+	return s.editCloudCredSets(func(prev []CloudCredSet) []CloudCredSet {
 		prevByID := make(map[string]CloudCredSet, len(prev))
 		for _, p := range prev {
 			prevByID[p.ID] = p
 		}
-		seen := make(map[string]bool, len(next))
 		for i := range next {
-			next[i].Name = strings.TrimSpace(next[i].Name)
-			if next[i].Name == "" {
-				return fmt.Errorf("credential set name must not be empty")
+			old, ok := prevByID[next[i].ID]
+			if !ok {
+				continue
 			}
-			if next[i].ID == "" {
-				return fmt.Errorf("credential set %q: missing id", next[i].Name)
+			if next[i].S3Secret == "" {
+				next[i].S3Secret = old.S3Secret
 			}
-			if seen[next[i].ID] {
-				return fmt.Errorf("duplicate credential set id %q", next[i].ID)
+			if next[i].RESTPassword == "" {
+				next[i].RESTPassword = old.RESTPassword
 			}
-			seen[next[i].ID] = true
-			next[i].S3StorageClass = strings.ToUpper(strings.TrimSpace(next[i].S3StorageClass))
-			if next[i].S3StorageClass != "" && !restic.StorageClassAllowed(next[i].S3StorageClass) {
-				return fmt.Errorf("credential set %q: unsupported S3 storage class %q (allowed: %s)", next[i].Name, next[i].S3StorageClass, strings.Join(restic.AllowedStorageClasses, ", "))
-			}
-			if old, ok := prevByID[next[i].ID]; ok {
-				if next[i].S3Secret == "" {
-					next[i].S3Secret = old.S3Secret
-				}
-				if next[i].RESTPassword == "" {
-					next[i].RESTPassword = old.RESTPassword
-				}
-				if next[i].KeptFor == "" {
-					next[i].KeptFor = old.KeptFor
-				}
+			if next[i].KeptFor == "" {
+				next[i].KeptFor = old.KeptFor
 			}
 		}
-		enc, err := s.encodeCloudCredSets(next)
-		if err != nil {
-			return err
+		if d := defaultSetIndex(prev); defaults == 0 && d >= 0 {
+			if i := slices.IndexFunc(next, func(c CloudCredSet) bool { return c.ID == prev[d].ID }); i >= 0 {
+				next[i].Default = true
+			} else {
+				next = append(next, prev[d])
+			}
 		}
-		settings.CloudCredSets = enc
-		return nil
+		return next
 	})
-	return err
 }
 
 func (s *Service) encodeCloudCredSets(sets []CloudCredSet) (string, error) {
@@ -18357,16 +18425,27 @@ func (s *Service) encodeCloudCredSets(sets []CloudCredSet) (string, error) {
 	return base64.StdEncoding.EncodeToString(enc), nil
 }
 
-// editCloudCredSets applies edit to the stored credential sets, secrets
-// included, inside one settings mutation. A list that comes back unchanged is
-// not written, since encrypting it again would still change the row.
+// editCloudCredSets applies edit to the saved sign-ins, secrets included,
+// inside one settings mutation. A shared blob that is still stored is folded
+// in first, so no write leaves the default in two places. A list that comes
+// back unchanged is not written, since encrypting it again would still change
+// the row.
 func (s *Service) editCloudCredSets(edit func([]CloudCredSet) []CloudCredSet) error {
 	_, err := s.store.MutateSettings(func(settings *store.Settings) error {
 		sets, err := s.decodeCloudCredSets(*settings)
 		if err != nil {
 			return fmt.Errorf("read the credential sets: %w", err)
 		}
-		next := edit(slices.Clone(sets))
+		folded := slices.Clone(sets)
+		if settings.CloudConf != "" {
+			shared, err := s.decodeSharedBlob(settings.CloudConf)
+			if err != nil {
+				return fmt.Errorf("read the shared sign-in: %w", err)
+			}
+			folded, _, _ = foldShared(folded, shared)
+			settings.CloudConf = ""
+		}
+		next := edit(folded)
 		if slices.Equal(next, sets) {
 			return nil
 		}
@@ -18381,12 +18460,11 @@ func (s *Service) editCloudCredSets(edit func([]CloudCredSet) []CloudCredSet) er
 }
 
 // decodeCloudFor resolves the credentials an off-site target should use: the
-// shared/legacy CloudCreds when credsRef is empty (every existing install,
-// unchanged), or the matching named CloudCredSet otherwise. A credsRef that no
-// longer resolves (the set was deleted, or storage drifted) falls back to the
-// shared creds rather than failing the caller outright — restic then fails
-// loudly on auth if that fallback genuinely has no usable credentials for this
-// target's endpoint, which is a clearer signal than an opaque config error.
+// default sign-in when credsRef is empty, or the saved sign-in it names. A
+// credsRef that no longer resolves falls back to the default rather than
+// failing the caller outright; restic then fails loudly on auth if that is
+// wrong for the target's endpoint, which is a clearer signal than an opaque
+// config error.
 func (s *Service) decodeCloudFor(settings store.Settings, credsRef string) (CloudCreds, error) {
 	if strings.TrimSpace(credsRef) == "" {
 		return s.decodeCloud(settings)
@@ -18400,7 +18478,7 @@ func (s *Service) decodeCloudFor(settings store.Settings, credsRef string) (Clou
 			return set.CloudCreds, nil
 		}
 	}
-	log.Printf("api: off-site target references unknown credential set %q, falling back to shared credentials", credsRef)
+	log.Printf("api: off-site target references unknown credential set %q, falling back to the default sign-in", credsRef)
 	return s.decodeCloud(settings)
 }
 

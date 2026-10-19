@@ -193,6 +193,9 @@ type draftRequest struct {
 	Name         string `json:"name"`
 	StorageClass string `json:"storageClass"`
 	Immutable    bool   `json:"immutable"`
+	// CredsRef names a saved sign-in an S3 service or a rest-server signs in
+	// with instead of keys typed into the wizard.
+	CredsRef string `json:"credsRef"`
 }
 
 var errNotThroughRclone = errors.New("this kind of destination is not reached through rclone")
@@ -442,6 +445,10 @@ func (s *Service) SaveNewDestination(ctx context.Context, req draftRequest) (sto
 			return store.OffsiteTarget{}, err
 		}
 		d.Repo = "s3:" + ep + "/" + dir
+		if req.CredsRef != "" {
+			d.CredsRef = req.CredsRef
+			break
+		}
 		if d.CredsRef, err = s.addCredSet(name, CloudCreds{
 			S3KeyID: strings.TrimSpace(req.Settings["access_key_id"]), S3Secret: req.Settings["secret_access_key"],
 			S3Region: strings.TrimSpace(req.Settings["region"]), S3StorageClass: class,
@@ -456,6 +463,10 @@ func (s *Service) SaveNewDestination(ctx context.Context, req draftRequest) (sto
 			return store.OffsiteTarget{}, errors.New("the address is missing")
 		}
 		d.Repo = "rest:" + url
+		if req.CredsRef != "" {
+			d.CredsRef = req.CredsRef
+			break
+		}
 		if d.CredsRef, err = s.addCredSet(name, CloudCreds{RESTUser: strings.TrimSpace(req.Settings["user"]), RESTPassword: req.Settings["pass"]}); err != nil {
 			return store.OffsiteTarget{}, err
 		}
@@ -517,14 +528,15 @@ func (s *Service) addCredSet(name string, c CloudCreds) (string, error) {
 	return id, err
 }
 
-// removeCredSet drops a credential set nothing refers to any more.
+// removeCredSet drops a credential set nothing refers to any more. The
+// default stays: every location that names no sign-in uses it.
 func (s *Service) removeCredSet(id string) {
 	inUse, err := s.store.CredsRefsInUse()
 	if err != nil || inUse[id] {
 		return
 	}
 	_ = s.editCloudCredSets(func(sets []CloudCredSet) []CloudCredSet {
-		return slices.DeleteFunc(sets, func(c CloudCredSet) bool { return c.ID == id })
+		return slices.DeleteFunc(sets, func(c CloudCredSet) bool { return c.ID == id && !c.Default })
 	})
 }
 
@@ -598,6 +610,10 @@ func (h *Handler) handleCheckDraft(w http.ResponseWriter, r *http.Request) {
 	if !decodeBody(w, r, &req) {
 		return
 	}
+	if err := h.svc.signInFromSaved(&req); err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
 	got, err := h.svc.CheckDraft(r.Context(), req)
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
@@ -611,6 +627,10 @@ func (h *Handler) handleCheckDraft(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) handleDraftFolders(w http.ResponseWriter, r *http.Request) {
 	var req draftRequest
 	if !decodeBody(w, r, &req) {
+		return
+	}
+	if err := h.svc.signInFromSaved(&req); err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
 	folders, free, err := h.svc.DraftFolders(r.Context(), req)
@@ -630,6 +650,10 @@ func (h *Handler) handleDraftFolders(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) handleDraftMakeFolder(w http.ResponseWriter, r *http.Request) {
 	var req draftRequest
 	if !decodeBody(w, r, &req) {
+		return
+	}
+	if err := h.svc.signInFromSaved(&req); err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
 	created, err := h.svc.DraftMakeFolder(r.Context(), req)
@@ -665,6 +689,10 @@ func (h *Handler) handleListDestinations(w http.ResponseWriter, _ *http.Request)
 func (h *Handler) handleCreateDestination(w http.ResponseWriter, r *http.Request) {
 	var req draftRequest
 	if !decodeBody(w, r, &req) {
+		return
+	}
+	if err := h.svc.signInFromSaved(&req); err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
 	d, err := h.svc.SaveNewDestination(r.Context(), req)

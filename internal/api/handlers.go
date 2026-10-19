@@ -3990,8 +3990,9 @@ func (h *Handler) handleSetCloud(w http.ResponseWriter, r *http.Request) {
 	}))
 }
 
-// handleGetCloudCredSets returns the additional named credential sets (#141
-// stage 2) WITHOUT secrets, same is-set-flag contract as handleGetCloud.
+// handleGetCloudCredSets returns the saved sign-ins without their secrets,
+// the same is-set-flag contract as handleGetCloud, with the storage locations
+// that sign in with each and the note on what the conversion at start did.
 // GET /api/cloud/creds-sets
 func (h *Handler) handleGetCloudCredSets(w http.ResponseWriter, _ *http.Request) {
 	sets, err := h.svc.CloudCredSets()
@@ -3999,8 +4000,26 @@ func (h *Handler) handleGetCloudCredSets(w http.ResponseWriter, _ *http.Request)
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
+	defaultID := ""
+	if i := defaultSetIndex(sets); i >= 0 {
+		defaultID = sets[i].ID
+	}
+	users, err := h.svc.signInUsers(defaultID)
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	note, err := h.svc.signInsNote(sets)
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
 	out := make([]map[string]any, len(sets))
 	for i, c := range sets {
+		usedBy := users[c.ID]
+		if usedBy == nil {
+			usedBy = []signInUser{}
+		}
 		out[i] = map[string]any{
 			"id":              c.ID,
 			"name":            c.Name,
@@ -4010,6 +4029,8 @@ func (h *Handler) handleGetCloudCredSets(w http.ResponseWriter, _ *http.Request)
 			"s3StorageClass":  c.S3StorageClass,
 			"s3SecretSet":     c.S3Secret != "",
 			"restPasswordSet": c.RESTPassword != "",
+			"default":         c.Default,
+			"usedBy":          usedBy,
 		}
 		// The interface names a kept set in the reader's language from this.
 		if c.KeptFor == "" {
@@ -4022,13 +4043,14 @@ func (h *Handler) handleGetCloudCredSets(w http.ResponseWriter, _ *http.Request)
 			}
 		}
 	}
-	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"sets": out}))
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"sets": out, "note": note}))
 }
 
-// handleSetCloudCredSets replaces the whole list of additional named
-// credential sets. A blank secret field on a set matched by id (against the
-// previously stored set) keeps the previously stored one, same as
-// handleSetCloud. POST /api/cloud/creds-sets
+// handleSetCloudCredSets replaces the whole list of saved sign-ins. A blank
+// secret field on a set matched by id (against the previously stored set)
+// keeps the previously stored one, same as handleSetCloud. A direct repository
+// on the default is checked when the default's keys changed.
+// POST /api/cloud/creds-sets
 func (h *Handler) handleSetCloudCredSets(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		Sets []CloudCredSet `json:"sets"`
@@ -4045,9 +4067,16 @@ func (h *Handler) handleSetCloudCredSets(w http.ResponseWriter, r *http.Request)
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
+	defaultChanged := false
+	if settings, sErr := h.store.GetSettings(); sErr == nil {
+		h.svc.syncAllPrimaryOffsiteTargets(settings)
+		was, _ := h.svc.decodeCloud(before)
+		now, _ := h.svc.decodeCloud(settings)
+		defaultChanged = was != now
+	}
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{
 		"warnings": h.svc.directCredsWarnings(r.Context(), before, func(direct, target store.OffsiteTarget) bool {
-			return direct.CredsRef != "" || target.CredsRef != ""
+			return direct.CredsRef != "" || target.CredsRef != "" || defaultChanged
 		}),
 	}))
 }

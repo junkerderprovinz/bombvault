@@ -3274,6 +3274,23 @@ ALTER TABLE runs ADD COLUMN snapshot_fallback TEXT NOT NULL DEFAULT '';`,
  WHERE t.role = 'offsite' AND t.sort_order = 0
    AND EXISTS (SELECT 1 FROM offsite_targets d WHERE d.id = t.destination_id AND d.role = 'destination');`,
 	},
+	{
+		// The shared cloud sign-in becomes a saved sign-in at the next start.
+		// It is sealed with APP_KEY, so the API does the conversion and this
+		// row only says that it is due and, afterwards, what it did.
+		version: signInsMigration,
+		name:    "sign_ins_note",
+		sql: `CREATE TABLE IF NOT EXISTS sign_ins_note (
+  id         INTEGER PRIMARY KEY CHECK (id = 1),
+  pending    INTEGER NOT NULL DEFAULT 1,
+  dismissed  INTEGER NOT NULL DEFAULT 0,
+  set_id     TEXT    NOT NULL DEFAULT '',
+  merged     INTEGER NOT NULL DEFAULT 0,
+  duplicates INTEGER NOT NULL DEFAULT 0,
+  linked     TEXT    NOT NULL DEFAULT ''
+);
+INSERT OR IGNORE INTO sign_ins_note (id) VALUES (1);`,
+	},
 }
 
 // dbDumpMigrationBase numbers the three database-dump columns from one place,
@@ -3443,6 +3460,10 @@ const anomalyRebaseMigration = 390
 // primaryKeepMigration numbers the keep-policy a domain's primary off-site
 // target takes from its storage location.
 const primaryKeepMigration = 400
+
+// signInsMigration numbers the record of the shared sign-in turning into a
+// saved one, 420 to 424.
+const signInsMigration = 420
 
 // oneLineColumns are the names and locations the recovery kit prints.
 var oneLineColumns = []struct {

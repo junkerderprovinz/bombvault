@@ -137,8 +137,10 @@ type Settings struct {
 	// NotifyConf is the notification config (webhook / Matrix / Healthchecks) as
 	// an AES-256-GCM-encrypted JSON blob (base64). Empty means notifications off.
 	NotifyConf string
-	// CloudConf is the cloud-backend credentials (S3 keys, restic-REST auth) for
-	// off-site repos, an AES-256-GCM-encrypted JSON blob (base64). Empty = none.
+	// CloudConf is the shared cloud sign-in (S3 keys, restic-REST auth) of a
+	// database from before sign-ins were one list, an AES-256-GCM-encrypted
+	// JSON blob (base64). The first start or write after that moves it into
+	// CloudCredSets as the default and empties it.
 	CloudConf string
 	// RegistryAuths holds private container-registry credentials for the
 	// post-backup update pull, an AES-256-GCM-encrypted JSON array (base64) of
@@ -267,9 +269,9 @@ type Settings struct {
 	// on, an included item with a ScheduleCadence is backed up on that cadence
 	// and the rest follow their domain schedule. Off by default.
 	PerItemSchedules bool
-	// CloudCredSets holds additional named S3 and restic-REST credential sets as
-	// an AES-256-GCM-encrypted JSON array (base64). An off-site target picks one
-	// with its CredsRef; an empty CredsRef uses CloudConf.
+	// CloudCredSets holds the saved S3 and restic-REST sign-ins as an
+	// AES-256-GCM-encrypted JSON array (base64). A target picks one with its
+	// CredsRef; an empty CredsRef uses the one marked default.
 	CloudCredSets string
 	// EverythingSchedule is the cadence of the "Backup Everything" pass, which
 	// runs every domain in sequence alongside the domain schedules. Default

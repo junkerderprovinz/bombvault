@@ -382,9 +382,9 @@ func (s *Service) signInsToReplace(sess *emergencySession) (signInsReplaced, err
 		return signInsReplaced{}, err
 	}
 	var out signInsReplaced
-	if sess.creds != (CloudCreds{}) && settings.CloudConf != "" {
+	if sess.creds != (CloudCreds{}) {
 		own, _ := s.decodeCloud(settings)
-		out.CloudSignIn = own != sess.creds
+		out.CloudSignIn = own != (CloudCreds{}) && own != sess.creds
 	}
 	if kit := strings.TrimSpace(sess.rcloneConf); kit != "" && settings.RcloneConf != "" {
 		own, _ := s.decodeRcloneConf(settings)
@@ -553,14 +553,22 @@ func (s *Service) FinishEmergency(id string) error {
 }
 
 // restoreReplacedSignIns puts back the sign-ins an emergency stored a kit's
-// over.
+// over: the default sign-in's keys, or none when there was no default, and
+// the rclone config.
 func (s *Service) restoreReplacedSignIns() error {
 	before, found, err := s.store.ReplacedSignIns()
 	if err != nil || !found {
 		return err
 	}
+	creds, err := s.decodeSharedBlob(before.CloudConf)
+	if err != nil {
+		return err
+	}
+	if err := s.writeDefaultSignIn(creds, false); err != nil {
+		return err
+	}
 	if _, err := s.store.MutateSettings(func(settings *store.Settings) error {
-		settings.CloudConf, settings.RcloneConf = before.CloudConf, before.RcloneConf
+		settings.RcloneConf = before.RcloneConf
 		return nil
 	}); err != nil {
 		return err
@@ -632,7 +640,15 @@ func (s *Service) StoreEmergencySignIns(ctx context.Context, id string, replace 
 	if err != nil {
 		return err
 	}
-	if err := s.store.KeepReplacedSignIns(store.ReplacedSignIns{CloudConf: settings.CloudConf, RcloneConf: settings.RcloneConf}); err != nil {
+	own, err := s.decodeCloud(settings)
+	if err != nil {
+		return err
+	}
+	sealed, err := s.sealSharedBlob(own)
+	if err != nil {
+		return err
+	}
+	if err := s.store.KeepReplacedSignIns(store.ReplacedSignIns{CloudConf: sealed, RcloneConf: settings.RcloneConf}); err != nil {
 		return err
 	}
 	if sess.creds != (CloudCreds{}) {

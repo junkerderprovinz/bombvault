@@ -345,6 +345,7 @@ var pairedRefused = []string{
 	"PUT /api/receiver/repos/{id}",
 	"PUT /api/zfs/receive/{slot}/members/{member}",
 	// Storage locations, their connections and sign-ins, and where entries are placed.
+	"DELETE /api/cloud/creds-sets/note",
 	"DELETE /api/offsite/destinations/{id}",
 	"DELETE /api/offsite/targets/{id}",
 	"DELETE /api/repos/{id}",

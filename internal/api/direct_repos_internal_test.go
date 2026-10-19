@@ -1410,6 +1410,8 @@ func (f *placementFixture) runsWith(direct store.OffsiteTarget) []string {
 	return f.svc.primaryModeFor(settings, "containers", loc).Env
 }
 
+// storedCredSets returns the saved sign-ins other than the default, which
+// the values these tests post to /api/cloud are.
 func (f *placementFixture) storedCredSets() []CloudCredSet {
 	f.t.Helper()
 	settings, err := f.st.GetSettings()
@@ -1420,7 +1422,7 @@ func (f *placementFixture) storedCredSets() []CloudCredSet {
 	if err != nil {
 		f.t.Fatal(err)
 	}
-	return sets
+	return slices.DeleteFunc(sets, func(c CloudCredSet) bool { return c.Default })
 }
 
 func (f *placementFixture) keptFor(directID string) []CloudCredSet {

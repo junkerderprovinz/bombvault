@@ -116,9 +116,10 @@ func (r *Repo) RepoEstablishedSince(since int64) ([]string, error) {
 	return out, rows.Err()
 }
 
-// ReplacedSignIns are the shared cloud sign-in and the rclone config an
-// install had before an emergency stored a kit's over them, in the form the
-// settings hold them. An empty one is a sign-in the install did not have.
+// ReplacedSignIns are the keys of the default cloud sign-in and the rclone
+// config an install had before an emergency stored a kit's over them, sealed
+// as the settings hold them. An empty one is a sign-in the install did not
+// have.
 type ReplacedSignIns struct {
 	CloudConf  string
 	RcloneConf string

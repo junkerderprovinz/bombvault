@@ -309,6 +309,9 @@ func run() error {
 	if err := svc.RecordKeyCheck(); err != nil {
 		log.Printf("main: recording the check value of APP_KEY: %v", err)
 	}
+	if err := svc.ConvertSharedSignIns(); err != nil {
+		log.Printf("main: turning the shared cloud sign-in into a saved one (tried again at the next start): %v", err)
+	}
 	svc.StartGroup()
 	defer svc.StopGroup()
 	// Detect (or honor cfg.PlatformOverride, i.e. the PLATFORM env var) which
