@@ -80,7 +80,7 @@ function CredSetForm({
   }
 
   return (
-    <div className="my-3 flex flex-col gap-3 rounded-control bg-carbon-surface2 p-3 last:mb-0">
+    <div className="my-3 flex flex-col gap-3 last:mb-0">
       {onCancel && <p className="text-xs text-carbon-textMuted">{t("storage.creds.newSetHint")}</p>}
       <div className="grid gap-3 sm:grid-cols-2">
         <label className={LABEL}>

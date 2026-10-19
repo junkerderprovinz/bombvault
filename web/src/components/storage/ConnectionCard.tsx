@@ -84,28 +84,31 @@ export function ConnectionCard({ edit, onChange, hueIndex }: { edit: LocationEdi
           )}
         </SettingRow>
         {location.object === "path" && (
-          <ul className="my-3 flex flex-col gap-2 rounded-control bg-carbon-surface2 p-3 first:mt-0 last:mb-0">
-            {location.sections.map((section) => (
-              <li key={section.domain} className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-                <span className="flex min-w-0 flex-col gap-0.5">
-                  <span className="flex items-center gap-2 text-sm text-carbon-text">
-                    <DomainGlyph domain={section.domain} />
-                    {t(DOMAIN_LABEL[section.domain])}
-                  </span>
-                  <code dir="ltr" className="break-all text-start font-mono text-xs text-carbon-textMuted">
-                    {section.where}
-                  </code>
-                </span>
-                <Button
-                  label={t("storage.add.change")}
-                  labelKey="storage.add.change"
-                  glyph={<IconPencil />}
-                  tone="neutral"
-                  onClick={() => setMoving([section.domain])}
-                />
-              </li>
-            ))}
-          </ul>
+          <div className="py-3 first:pt-0 last:pb-0">
+            <Rows as="ul">
+              {location.sections.map((section) => (
+                <SettingRow
+                  key={section.domain}
+                  as="li"
+                  label={t(DOMAIN_LABEL[section.domain])}
+                  glyph={<DomainGlyph domain={section.domain} />}
+                  note={
+                    <code dir="ltr" className="break-all text-start font-mono">
+                      {section.where}
+                    </code>
+                  }
+                >
+                  <Button
+                    label={t("storage.add.change")}
+                    labelKey="storage.add.change"
+                    glyph={<IconPencil />}
+                    tone="neutral"
+                    onClick={() => setMoving([section.domain])}
+                  />
+                </SettingRow>
+              ))}
+            </Rows>
+          </div>
         )}
         {location.object === "path" && location.sections.length > 0 && (
           <SettingRow label={t("own.here")} hint={t("own.hint")}>

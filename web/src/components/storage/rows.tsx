@@ -130,31 +130,30 @@ export function Deviations({
   const sections = deviating(location, setting);
   if (sections.length === 0) return null;
   return (
-    <ul className="my-3 flex flex-col gap-2 rounded-control bg-carbon-surface2 p-3 first:mt-0 last:mb-0">
-      {sections.map((section) => (
-        <li key={`${section.domain}:${section.use}`} className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-          <span className="flex min-w-0 flex-col gap-0.5">
-            <span className="flex items-center gap-2 text-sm text-carbon-text">
-              <DomainGlyph domain={section.domain} />
-              {t(DOMAIN_LABEL[section.domain])}
-              {section.primary && <InfoBubble tip={t("storage.own.primary")} />}
-            </span>
-            <span className="text-xs text-carbon-textMuted wrap-break-word">
-              {t("storage.keep.custom")} · {describe(section)}
-            </span>
-          </span>
-          {canFollow(location, section, setting) && (
-            <Button
-              label={t("storage.own.reset")}
-              labelKey="storage.own.reset"
-              glyph={<IconRefresh />}
-              tone="neutral"
-              disabled={busy}
-              onClick={() => onFollow(section, setting)}
-            />
-          )}
-        </li>
-      ))}
-    </ul>
+    <div className="py-3 first:pt-0 last:pb-0">
+      <Rows as="ul">
+        {sections.map((section) => (
+          <SettingRow
+            key={`${section.domain}:${section.use}`}
+            as="li"
+            label={t(DOMAIN_LABEL[section.domain])}
+            glyph={<DomainGlyph domain={section.domain} />}
+            hint={section.primary ? t("storage.own.primary") : undefined}
+            note={`${t("storage.keep.custom")} · ${describe(section)}`}
+          >
+            {canFollow(location, section, setting) && (
+              <Button
+                label={t("storage.own.reset")}
+                labelKey="storage.own.reset"
+                glyph={<IconRefresh />}
+                tone="neutral"
+                disabled={busy}
+                onClick={() => onFollow(section, setting)}
+              />
+            )}
+          </SettingRow>
+        ))}
+      </Rows>
+    </div>
   );
 }

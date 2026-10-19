@@ -8,7 +8,7 @@ import { Button } from "../Button";
 import { IconForward } from "../glyphs";
 import { IconPencil } from "../navGlyphs";
 import { OwnFolderWindow } from "./OwnFolderWindow";
-import { DomainGlyph } from "./rows";
+import { DomainGlyph, Rows, SettingRow } from "./rows";
 
 /** The sections whose own folder is a home of the location: neither a named
  *  repository nor a target's direct one. */
@@ -35,18 +35,19 @@ export function OwnFoldersCard({ location, hueIndex }: { location: StorageLocati
   return (
     <Card title={t("own.card")} hint={t("own.cardHint")} hueIndex={hueIndex} newId="own-folders-card">
       {own.length > 0 ? (
-        <ul className="flex flex-col gap-2 rounded-control bg-carbon-surface2 p-3">
+        <Rows as="ul">
           {own.map((section) => (
-            <li key={section.domain} className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-              <span className="flex min-w-0 flex-col gap-0.5">
-                <span className="flex items-center gap-2 text-sm text-carbon-text">
-                  <DomainGlyph domain={section.domain} />
-                  {t(DOMAIN_LABEL[section.domain])}
-                </span>
-                <code dir="ltr" className="break-all text-start font-mono text-xs text-carbon-textMuted">
+            <SettingRow
+              key={section.domain}
+              as="li"
+              label={t(DOMAIN_LABEL[section.domain])}
+              glyph={<DomainGlyph domain={section.domain} />}
+              note={
+                <code dir="ltr" className="break-all text-start font-mono">
                   {section.where}
                 </code>
-              </span>
+              }
+            >
               <Button
                 label={t("storage.add.change")}
                 labelKey="storage.add.change"
@@ -54,9 +55,9 @@ export function OwnFoldersCard({ location, hueIndex }: { location: StorageLocati
                 tone="neutral"
                 onClick={() => setMoving({ domains: [section.domain] })}
               />
-            </li>
+            </SettingRow>
           ))}
-        </ul>
+        </Rows>
       ) : (
         <p className="text-sm text-carbon-textSub">{t("own.cardNone")}</p>
       )}
