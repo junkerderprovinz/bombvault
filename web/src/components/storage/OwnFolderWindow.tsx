@@ -32,7 +32,7 @@ import { Rows, SettingRow } from "./rows";
 import { SectionPathWindow } from "./SectionPathWindow";
 
 const OTHER = "other";
-const FIELD = "rounded-control bg-carbon-surface3 text-carbon-text text-sm px-3 py-1.5 glim-field-focus-well";
+const FIELD = "rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 glim-field-focus";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -229,15 +229,13 @@ export function OwnFolderWindow({
               {t("own.sections")}
               <InfoBubble tip={t("own.sectionsHint")} />
             </h3>
-            <div className="rounded-card bg-carbon-surface2 px-3">
-              <Rows>
-                {sections.map((domain) => (
-                  <SettingRow key={domain} label={t(DOMAIN_LABEL[domain])} note={t("own.nowIn").replace("{name}", () => homeName(domain))}>
-                    <Toggle hideLabel label={t(DOMAIN_LABEL[domain])} checked={picked.includes(domain)} disabled={busy} onChange={(on) => toggle(domain, on)} />
-                  </SettingRow>
-                ))}
-              </Rows>
-            </div>
+            <Rows>
+              {sections.map((domain) => (
+                <SettingRow key={domain} label={t(DOMAIN_LABEL[domain])} note={t("own.nowIn").replace("{name}", () => homeName(domain))}>
+                  <Toggle hideLabel label={t(DOMAIN_LABEL[domain])} checked={picked.includes(domain)} disabled={busy} onChange={(on) => toggle(domain, on)} />
+                </SettingRow>
+              ))}
+            </Rows>
           </section>
 
           <section className="flex flex-col gap-2">
@@ -298,41 +296,39 @@ export function OwnFolderWindow({
               </button>
             </div>
             {to === OTHER && (
-              <div className="rounded-card bg-carbon-surface2 px-3">
-                <Rows>
-                  <SettingRow label={t("own.address")} hint={t("own.addressHint")} htmlFor={`${uid}-address`}>
-                    <input
-                      id={`${uid}-address`}
-                      value={address}
-                      onChange={(e) => setAddress(e.target.value)}
-                      placeholder="s3:host/bucket/folder"
-                      spellCheck={false}
-                      dir="ltr"
-                      className={`w-72 max-w-full font-mono text-start ${FIELD}`}
-                    />
+              <Rows>
+                <SettingRow label={t("own.address")} hint={t("own.addressHint")} htmlFor={`${uid}-address`}>
+                  <input
+                    id={`${uid}-address`}
+                    value={address}
+                    onChange={(e) => setAddress(e.target.value)}
+                    placeholder="s3:host/bucket/folder"
+                    spellCheck={false}
+                    dir="ltr"
+                    className={`w-72 max-w-full font-mono text-start ${FIELD}`}
+                  />
+                </SettingRow>
+                {remoteAddress && (
+                  <SettingRow label={t("storage.credentials")} hint={t("own.signInHint")}>
+                    {sets.length > 0 ? (
+                      <SelectField
+                        value={signIn}
+                        onChange={setCredsRef}
+                        label={t("storage.credentials")}
+                        options={sets.map((s) => ({ value: s.id, label: signInOption(t, s) }))}
+                        className={FIELD}
+                      />
+                    ) : (
+                      <span className="text-sm text-carbon-textSub">{t("signIns.none")}</span>
+                    )}
                   </SettingRow>
-                  {remoteAddress && (
-                    <SettingRow label={t("storage.credentials")} hint={t("own.signInHint")}>
-                      {sets.length > 0 ? (
-                        <SelectField
-                          value={signIn}
-                          onChange={setCredsRef}
-                          label={t("storage.credentials")}
-                          options={sets.map((s) => ({ value: s.id, label: signInOption(t, s) }))}
-                          className={FIELD}
-                        />
-                      ) : (
-                        <span className="text-sm text-carbon-textSub">{t("signIns.none")}</span>
-                      )}
-                    </SettingRow>
-                  )}
-                  {picked.length === 1 && (
-                    <SettingRow label={t("own.safety")} hint={t("own.safetyHint")}>
-                      <Button label={t("own.open")} labelKey="own.open" glyph={<IconForward />} tone="neutral" onClick={() => setSafety(true)} />
-                    </SettingRow>
-                  )}
-                </Rows>
-              </div>
+                )}
+                {picked.length === 1 && (
+                  <SettingRow label={t("own.safety")} hint={t("own.safetyHint")}>
+                    <Button label={t("own.open")} labelKey="own.open" glyph={<IconForward />} tone="neutral" onClick={() => setSafety(true)} />
+                  </SettingRow>
+                )}
+              </Rows>
             )}
           </section>
 
@@ -352,13 +348,9 @@ export function OwnFolderWindow({
               !problem && <p className="text-sm text-carbon-textSub">{t("dashboard.checking")}</p>
             )}
             {problem && <p className="text-xs text-statusWarn wrap-break-word">{problem}</p>}
-            <div className="rounded-card bg-carbon-surface2 px-3">
-              <Rows>
-                <SettingRow label={t("own.copyOver")} hint={t("own.copyOverHint")}>
-                  <Toggle hideLabel label={t("own.copyOver")} checked={copyOver} disabled={busy} onChange={setCopyOver} />
-                </SettingRow>
-              </Rows>
-            </div>
+            <SettingRow label={t("own.copyOver")} hint={t("own.copyOverHint")}>
+              <Toggle hideLabel label={t("own.copyOver")} checked={copyOver} disabled={busy} onChange={setCopyOver} />
+            </SettingRow>
           </section>
         </div>
       )}
