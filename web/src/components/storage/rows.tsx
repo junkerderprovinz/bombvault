@@ -15,20 +15,9 @@ import { IconConfig, IconContainers, IconFiles, IconFlash, IconVM, IconZFS } fro
  * no filled block behind them. A list of things rather than settings is a `ul`
  * of SettingRows `as="li"`.
  */
-export function Rows({
-  children,
-  as: Tag = "div",
-  label,
-  newId,
-}: {
-  children: ReactNode;
-  as?: "div" | "ul";
-  label?: string;
-  /** The change in lib/whatsNew.ts the list is, which puts its dot on it. */
-  newId?: string;
-}) {
+export function Rows({ children, as: Tag = "div", label }: { children: ReactNode; as?: "div" | "ul"; label?: string }) {
   return (
-    <Tag aria-label={label} data-new={newId} className="flex flex-col divide-y divide-carbon-border/60">
+    <Tag aria-label={label} className="flex flex-col divide-y divide-carbon-border/60">
       {children}
     </Tag>
   );
