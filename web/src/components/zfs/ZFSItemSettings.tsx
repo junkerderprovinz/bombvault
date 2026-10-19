@@ -26,7 +26,7 @@ import { ZFSExcludesEditor } from "./ZFSExcludesEditor";
 
 type T = ReturnType<typeof useT>["t"];
 
-const FIELD = "w-80 max-w-full rounded-control bg-carbon-surface3 px-3 py-1.5 font-mono text-xs text-carbon-text text-start glim-field-focus";
+const FIELD = "w-80 max-w-full rounded-control bg-carbon-surface2 px-3 py-1.5 font-mono text-xs text-carbon-text text-start glim-field-focus";
 
 /** ZFSItemSettings is what can be set about one ZFS entry on its Settings tab. */
 export function ZFSItemSettings({
@@ -225,7 +225,7 @@ export function ZFSItemSettings({
               label={t("zfs.hookContainer")}
               onChange={(name) => void save({ hookContainer: name, preSnapshot: pre, postSnapshot: post })}
               disabled={busy}
-              className="w-80 max-w-full rounded-control bg-carbon-surface3 px-3 py-1.5 text-sm text-carbon-text glim-field-focus"
+              className="w-80 max-w-full rounded-control bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text glim-field-focus"
               options={[
                 { value: "", label: t("zfs.hookContainerNone") },
                 ...containers.filter((c) => !c.self).map((c) => ({ value: c.name, label: c.name })),

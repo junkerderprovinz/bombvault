@@ -62,7 +62,7 @@ export function ZFSExcludesEditor({ item, t, onSaved }: { item: ZFSDatasetView; 
         value={text}
         onChange={(e) => handleChange(e.target.value)}
         aria-label={t("zfs.excludes")}
-        className="rounded-control bg-carbon-surface3 p-2 font-mono text-xs text-carbon-text text-start glim-field-focus"
+        className="rounded-control bg-carbon-surface2 p-2 font-mono text-xs text-carbon-text text-start glim-field-focus"
       />
       {refusal && <p className="text-xs text-statusFail">{refusal}</p>}
       {rows.map((row) => (

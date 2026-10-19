@@ -1,5 +1,6 @@
-// The rows a storage location's cards are made of: a setting with its control,
-// and the sections that hold a setting for themselves.
+// The rows every list and card in the app is made of: a setting with its
+// control, and the sections of a storage location that hold a setting for
+// themselves.
 import type { ReactNode } from "react";
 import type { FollowedSetting, OffsiteDomain, StorageLocation, StorageLocationSection } from "../../lib/api";
 import { useT } from "../../lib/i18n";
@@ -9,42 +10,61 @@ import { IconRefresh } from "../glyphs";
 import { InfoBubble } from "../InfoBubble";
 import { IconConfig, IconContainers, IconFiles, IconFlash, IconVM, IconZFS } from "../navGlyphs";
 
-export function Rows({ children }: { children: ReactNode }) {
-  return <div className="flex flex-col divide-y divide-carbon-border/60">{children}</div>;
+/**
+ * Rows is how every list in the app looks: its rows parted by a hairline, with
+ * no filled block behind them. A list of things rather than settings is a `ul`
+ * of SettingRows `as="li"`.
+ */
+export function Rows({ children, as: Tag = "div", label }: { children: ReactNode; as?: "div" | "ul"; label?: string }) {
+  return (
+    <Tag aria-label={label} className="flex flex-col divide-y divide-carbon-border/60">
+      {children}
+    </Tag>
+  );
 }
 
 export function SettingRow({
   label,
+  name,
+  glyph,
   hint,
   htmlFor,
   note,
+  as: Tag = "div",
   children,
 }: {
   label: string;
+  /** What shows in place of the label, when an entry's name is more than text. */
+  name?: ReactNode;
+  /** An icon before the label. */
+  glyph?: ReactNode;
   /** Explanation in an (i) bubble beside the label. */
   hint?: string;
   /** The id of the field the label names. */
   htmlFor?: string;
   /** What the control cannot say itself, under the label. */
-  note?: string;
+  note?: ReactNode;
+  as?: "div" | "li";
   /** The control. A row without one only says something. */
   children?: ReactNode;
 }) {
   return (
-    <div data-search-row={label} className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 py-3 first:pt-0 last:pb-0">
+    <Tag data-search-row={label} className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 py-3 first:pt-0 last:pb-0">
       {/* A long note wraps beside the control instead of pushing it onto a line of its own. */}
       <div className={`flex min-w-0 flex-col gap-0.5 ${note ? "flex-1 basis-56" : ""}`}>
         <span className="flex items-center gap-1.5 text-sm text-carbon-text">
-          {htmlFor ? (
-            <label htmlFor={htmlFor} className="min-w-0 wrap-break-word">
-              {label}
-            </label>
-          ) : (
-            <span className="min-w-0 wrap-break-word">{label}</span>
-          )}
+          {glyph && <span className="inline-flex flex-none">{glyph}</span>}
+          {name ??
+            (htmlFor ? (
+              <label htmlFor={htmlFor} className="min-w-0 wrap-break-word">
+                {label}
+              </label>
+            ) : (
+              <span className="min-w-0 wrap-break-word">{label}</span>
+            ))}
           {hint && <InfoBubble tip={hint} />}
         </span>
-        {note && <span className="text-xs text-carbon-textMuted wrap-break-word">{note}</span>}
+        {note && <span className="flex flex-col gap-1 text-xs text-carbon-textMuted wrap-break-word">{note}</span>}
       </div>
       {/* A selector wraps by the room this box has, so on a phone the box takes
           all the row leaves it, beside the label or under it. */}
@@ -53,7 +73,7 @@ export function SettingRow({
           {children}
         </div>
       )}
-    </div>
+    </Tag>
   );
 }
 
