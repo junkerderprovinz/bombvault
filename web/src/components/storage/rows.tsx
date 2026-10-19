@@ -15,11 +15,31 @@ import { IconConfig, IconContainers, IconFiles, IconFlash, IconVM, IconZFS } fro
  * no filled block behind them. A list of things rather than settings is a `ul`
  * of SettingRows `as="li"`.
  */
-export function Rows({ children, as: Tag = "div", label }: { children: ReactNode; as?: "div" | "ul"; label?: string }) {
+export function Rows({
+  children,
+  as: Tag = "div",
+  label,
+  newId,
+}: {
+  children: ReactNode;
+  as?: "div" | "ul";
+  label?: string;
+  /** The change in lib/whatsNew.ts the list is, which puts its dot on it. */
+  newId?: string;
+}) {
   return (
-    <Tag aria-label={label} className="flex flex-col divide-y divide-carbon-border/60">
+    <Tag aria-label={label} data-new={newId} className="flex flex-col divide-y divide-carbon-border/60">
       {children}
     </Tag>
+  );
+}
+
+/** RowGlyph is the tile an entry's icon sits on at the start of its row. */
+export function RowGlyph({ children }: { children: ReactNode }) {
+  return (
+    <span className="flex h-9 w-9 flex-none items-center justify-center rounded-control bg-carbon-surface2 text-accentText [&_svg]:h-[18px] [&_svg]:w-[18px]">
+      {children}
+    </span>
   );
 }
 
@@ -31,6 +51,7 @@ export function SettingRow({
   htmlFor,
   note,
   as: Tag = "div",
+  newId,
   children,
 }: {
   label: string;
@@ -45,11 +66,13 @@ export function SettingRow({
   /** What the control cannot say itself, under the label. */
   note?: ReactNode;
   as?: "div" | "li";
+  /** The change in lib/whatsNew.ts the row is, which puts its dot on it. */
+  newId?: string;
   /** The control. A row without one only says something. */
   children?: ReactNode;
 }) {
   return (
-    <Tag data-search-row={label} className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 py-3 first:pt-0 last:pb-0">
+    <Tag data-search-row={label} data-new={newId} className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 py-3 first:pt-0 last:pb-0">
       {/* A long note wraps beside the control instead of pushing it onto a line of its own. */}
       <div className={`flex min-w-0 flex-col gap-0.5 ${note ? "flex-1 basis-56" : ""}`}>
         <span className="flex items-center gap-1.5 text-sm text-carbon-text">
