@@ -55,7 +55,6 @@ function ReplicateNowButton({ domain, t }: { domain: OffsiteDomain; t: T }) {
       label={t("offsite.replicateNow")}
       labelKey="offsite.replicateNow"
       glyph={<IconSync />}
-      glyphOnly
       onClick={() => void go()}
       disabled={busy}
       busy={busy}
@@ -135,7 +134,6 @@ function CopyRow({
                 label={t("offsite.test")}
                 labelKey="offsite.test"
                 glyph={<IconCheck />}
-                glyphOnly
                 test={test}
                 onClick={() => void test.run(async () => offsiteVerdict(await testOffsite(domain), t))}
                 title={more > 0 ? t("offsite.testPrimary") : undefined}
@@ -143,8 +141,8 @@ function CopyRow({
               <ReplicateNowButton domain={domain} t={t} />
             </>
           )}
-          <Button label={t("offsite.wizard.setup")} labelKey="offsite.wizard.setup" glyph={<IconGear />} glyphOnly onClick={onSetup} />
-          <Button label={t("offsite.targets.edit")} labelKey="offsite.targets.edit" glyphOnly onClick={onOpen} />
+          <Button label={t("offsite.wizard.setup")} labelKey="offsite.wizard.setup" glyph={<IconGear />} onClick={onSetup} />
+          <Button label={t("offsite.targets.edit")} labelKey="offsite.targets.edit" onClick={onOpen} />
         </span>
       </div>
       <VerdictLine verdict={test.verdict} />
