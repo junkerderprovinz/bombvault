@@ -19,7 +19,7 @@ import { InfoBubble } from "../InfoBubble";
 import { IconEye } from "../glyphs";
 import { IconAdd, IconContainers } from "../navGlyphs";
 import { SelectField } from "../SelectField";
-import { SettingRow } from "../storage/rows";
+import { Rows, SettingRow } from "../storage/rows";
 import { ZFSMemberList } from "./ZFSMemberList";
 import { failText } from "./failText";
 import { ZFSExcludesEditor } from "./ZFSExcludesEditor";
@@ -218,7 +218,7 @@ export function ZFSItemSettings({
       {overlap.length > 0 && <Note tone="warn">{t("zfs.overlapContainers").replace("{names}", overlap.join(", "))}</Note>}
 
       <SubCard title={t("zfs.commands")}>
-        <div className="flex flex-col divide-y divide-carbon-border/60">
+        <Rows>
           <SettingRow label={t("zfs.hookContainer")} hint={t("zfs.hooksHint")}>
             <SelectField
               value={item.hookContainer}
@@ -258,7 +258,7 @@ export function ZFSItemSettings({
               className={`${FIELD} disabled:opacity-50`}
             />
           </SettingRow>
-        </div>
+        </Rows>
       </SubCard>
 
       <SubCard title={t("zfs.excludes")} hint={tLtr(t, "zfs.excludesHint")}>

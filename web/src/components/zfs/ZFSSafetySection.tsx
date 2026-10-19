@@ -12,6 +12,7 @@ import { Button } from "../Button";
 import { Card } from "../../pages/settings/shared";
 import { Note } from "../entry/Note";
 import { IconTrash } from "../Sidebar";
+import { Rows } from "../storage/rows";
 import { failText } from "./failText";
 
 type T = ReturnType<typeof useT>["t"];
@@ -69,7 +70,7 @@ export function ZFSSafetySection({
   return (
     <Card title={title} hint={t("zfs.safety.hint")} hueIndex={hueIndex}>
       {old && <Note tone="warn">{t("zfs.safety.old")}</Note>}
-      <ul aria-label={title} className="flex flex-col divide-y divide-carbon-border/60">
+      <Rows as="ul" label={title}>
           {snapshots.map((snap) => (
             <li key={`${snap.dataset}@${snap.name}`} className="flex items-center gap-2 py-2 text-xs first:pt-0 last:pb-0">
               <span dir="ltr" className="font-mono text-carbon-textSub text-start truncate max-md:whitespace-normal max-md:wrap-anywhere">
@@ -89,7 +90,7 @@ export function ZFSSafetySection({
               />
             </li>
           ))}
-      </ul>
+      </Rows>
       {confirmDialog}
       {ownLogin.dialog}
     </Card>
