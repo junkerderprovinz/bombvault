@@ -722,6 +722,7 @@ const fr: Partial<Translations> = {
   "whatsNew.ownFolderMove": "Le dossier propre d'une section peut aller dans une de tes destinations et en prendre les identifiants et la protection. Plusieurs sections changent de place en une étape.",
   "whatsNew.ownFoldersCard": "Une destination distante liste les sections qui y gardent leurs propres sauvegardes.",
   "whatsNew.wizardSignIn": "Une nouvelle destination peut se connecter avec des identifiants enregistrés au lieu de nouvelles clés.",
+  "whatsNew.listsAsRows": "Chaque liste affiche ses entrées en lignes séparées par un trait fin, sans encadré gris derrière.",
   "export.encrypt.hint": "Les dépôts restic sont déjà chiffrés. Ceci chiffre en option les artefacts d'export en clair (tar.gz de conteneur et de VM avec leurs fichiers xml, et le zip flash) avec age, afin qu'ils puissent être stockés ou déplacés hors du serveur en toute sécurité.",
   "export.encrypt.ageInfo": "age (age-encryption.org) est un outil de chiffrement de fichiers petit et moderne, une alternative plus simple à GPG pour sceller un fichier pour un ou plusieurs destinataires.",
   "export.encrypt.enable": "Chiffrer les exports avec age",

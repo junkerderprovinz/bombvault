@@ -722,6 +722,7 @@ const da: Partial<Translations> = {
   "whatsNew.ownFolderMove": "En sektions egen mappe kan flytte til en af dine destinationer og tager dens adgangsoplysninger og beskyttelse med. Flere sektioner flytter i ét trin.",
   "whatsNew.ownFoldersCard": "En fjern destination viser de sektioner, der har deres egne sikkerhedskopier der.",
   "whatsNew.wizardSignIn": "En ny destination kan logge ind med gemte adgangsoplysninger i stedet for nye nøgler.",
+  "whatsNew.listsAsRows": "Alle lister viser deres poster som rækker adskilt af en tynd streg, uden en grå boks bagved.",
   "export.encrypt.hint": "restic-repositorierne er allerede krypterede. Dette krypterer valgfrit de almindelige eksportartefakter (container- og VM-tar.gz med deres xml, og flash-zip) med age, så de trygt kan gemmes eller flyttes væk fra serveren.",
   "export.encrypt.ageInfo": "age (age-encryption.org) er et lille, moderne filkrypteringsværktøj, et enklere alternativ til GPG til at forsegle en fil til en eller flere modtagere.",
   "export.encrypt.enable": "Krypter eksporter med age",

@@ -837,6 +837,7 @@ const et: Partial<Translations> = {
   "whatsNew.ownFolderMove": "Jaotise oma kaust võib kolida mõnda sinu sihtkohta ja võtab üle selle sisselogimise ja kaitse. Mitu jaotist kolivad ühe sammuga.",
   "whatsNew.ownFoldersCard": "Kaugsihtkoht näitab jaotisi, mis hoiavad seal oma varukoopiaid.",
   "whatsNew.wizardSignIn": "Uus sihtkoht saab sisse logida salvestatud sisselogimisega uute võtmete asemel.",
+  "whatsNew.listsAsRows": "Iga loend näitab kirjeid ridadena, mida eraldab peen joon, ilma halli kastita taustal.",
   "rclone.save": "Salvesta seadistus",
   "notify.title": "Teavitused",
   "notify.hint": "Saa teavitus, kui varundus lõpeb, ja vali allpool, millised sündmused selle käivitavad.",

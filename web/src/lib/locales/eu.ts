@@ -837,6 +837,7 @@ const eu: Partial<Translations> = {
   "whatsNew.ownFolderMove": "Atal baten karpeta propioa zure helmugetako batera mugi daiteke eta haren saio-hasiera eta babesa hartzen ditu. Hainbat atal urrats bakarrean mugitzen dira.",
   "whatsNew.ownFoldersCard": "Urruneko helmuga batek bertan beren babeskopiak gordetzen dituzten atalak erakusten ditu.",
   "whatsNew.wizardSignIn": "Helmuga berri batek gordetako saio-hasiera batekin has dezake saioa, gako berrien ordez.",
+  "whatsNew.listsAsRows": "Zerrenda bakoitzak bere sarrerak lerro mehe batez bereizitako errenkada gisa erakusten ditu, atzean kutxa grisik gabe.",
   "rclone.save": "Gorde konfigurazioa",
   "notify.title": "Jakinarazpenak",
   "notify.hint": "Jaso jakinarazpena babeskopia bat amaitzean, eta aukeratu behean zein gertaerak abiarazten duten.",

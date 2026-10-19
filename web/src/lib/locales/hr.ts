@@ -837,6 +837,7 @@ const hr: Partial<Translations> = {
   "whatsNew.ownFolderMove": "Vlastita mapa odjeljka može se preseliti u jedno od tvojih odredišta i preuzima njegove vjerodajnice i zaštitu. Više odjeljaka seli se u jednom koraku.",
   "whatsNew.ownFoldersCard": "Udaljeno odredište prikazuje odjeljke koji ondje drže svoje sigurnosne kopije.",
   "whatsNew.wizardSignIn": "Novo odredište može se prijaviti spremljenim vjerodajnicama umjesto novih ključeva.",
+  "whatsNew.listsAsRows": "Svaki popis prikazuje svoje stavke kao retke odvojene tankom crtom, bez sivog okvira iza njih.",
   "rclone.save": "Spremi konfiguraciju",
   "notify.title": "Obavijesti",
   "notify.hint": "Primite obavijest kad sigurnosna kopija završi, a u nastavku odaberite koji je događaji pokreću.",

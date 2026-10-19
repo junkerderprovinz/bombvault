@@ -90,6 +90,14 @@ export const RELEASES: Release[] = [
         text: "whatsNew.ownFoldersCard",
       },
       { id: "wizard-sign-in", text: "whatsNew.wizardSignIn" },
+      {
+        id: "lists-as-rows",
+        page: ENTRY,
+        go: "/backups",
+        where: ["backups.title", "whatsNew.page.entry"],
+        way: ["/backups", "entry"],
+        text: "whatsNew.listsAsRows",
+      },
     ],
   },
   {

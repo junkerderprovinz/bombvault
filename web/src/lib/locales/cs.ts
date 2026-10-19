@@ -720,6 +720,7 @@ const cs: Partial<Translations> = {
   "whatsNew.ownFolderMove": "Vlastní složka sekce se může přesunout do jednoho z tvých cílů a převezme jeho přihlašovací údaje a ochranu. Více sekcí se přesune v jednom kroku.",
   "whatsNew.ownFoldersCard": "Vzdálený cíl ukazuje sekce, které tam mají své zálohy.",
   "whatsNew.wizardSignIn": "Nový cíl se může přihlásit uloženými přihlašovacími údaji místo nových klíčů.",
+  "whatsNew.listsAsRows": "Každý seznam zobrazuje položky jako řádky oddělené tenkou čarou, bez šedého pole v pozadí.",
   "export.encrypt.hint": "Repozitáře restic jsou už šifrované. Toto volitelně šifruje prosté artefakty exportu (tar.gz kontejneru a VM spolu s jejich xml a flash zip) pomocí age, aby je bylo možné bezpečně uložit nebo přesunout mimo server.",
   "export.encrypt.ageInfo": "age (age-encryption.org) je malý, moderní nástroj pro šifrování souborů, jednodušší alternativa k GPG pro zapečetění souboru pro jednoho nebo více příjemců.",
   "export.encrypt.enable": "Šifrovat exporty pomocí age",

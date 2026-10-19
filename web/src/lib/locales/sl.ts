@@ -837,6 +837,7 @@ const sl: Partial<Translations> = {
   "whatsNew.ownFolderMove": "Lastna mapa razdelka se lahko preseli v enega od tvojih ciljev in prevzame njegove poverilnice in zaščito. Več razdelkov se preseli v enem koraku.",
   "whatsNew.ownFoldersCard": "Oddaljen cilj prikaže razdelke, ki tam hranijo svoje varnostne kopije.",
   "whatsNew.wizardSignIn": "Nov cilj se lahko prijavi s shranjenimi poverilnicami namesto z novimi ključi.",
+  "whatsNew.listsAsRows": "Vsak seznam prikaže vnose kot vrstice, ločene s tanko črto, brez sivega okvirja v ozadju.",
   "rclone.save": "Shrani konfiguracijo",
   "notify.title": "Obvestila",
   "notify.hint": "Prejmi obvestilo, ko se varnostno kopiranje konča, in spodaj izberi, kateri dogodki ga sprožijo.",

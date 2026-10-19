@@ -837,6 +837,7 @@ const lv: Partial<Translations> = {
   "whatsNew.ownFolderMove": "Sadaļas paša mape var pārcelties uz kādu no taviem mērķiem un pārņem tā pieteikšanos un aizsardzību. Vairākas sadaļas pārceļas vienā solī.",
   "whatsNew.ownFoldersCard": "Attāls mērķis rāda sadaļas, kas tur glabā savus dublējumus.",
   "whatsNew.wizardSignIn": "Jauns mērķis var pieteikties ar saglabātu pieteikšanos jaunu atslēgu vietā.",
+  "whatsNew.listsAsRows": "Katrs saraksts rāda ierakstus kā rindas, kas atdalītas ar plānu līniju, bez pelēka lodziņa fonā.",
   "rclone.save": "Saglabāt konfigurāciju",
   "notify.title": "Paziņojumi",
   "notify.hint": "Saņemiet paziņojumu, kad pabeigta rezerves kopija, un zemāk izvēlieties, kuri notikumi to izraisa.",

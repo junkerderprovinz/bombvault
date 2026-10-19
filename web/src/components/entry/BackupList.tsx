@@ -255,7 +255,7 @@ export function BackupList({
   };
 
   return (
-    <div className="flex flex-col gap-4">
+    <div data-new="lists-as-rows" className="flex flex-col gap-4">
       {recent.length > 0 && <Group label={t("entry.list.thisWeek")}>{recent.map(line)}</Group>}
       {older.length > 0 && <Group label={t("entry.list.older")}>{older.map(line)}</Group>}
       {unchecked.length > 0 && (
