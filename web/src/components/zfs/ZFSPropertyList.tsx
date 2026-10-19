@@ -1,5 +1,6 @@
 import type { useT } from "../../lib/i18n";
 import { InfoBubble } from "../InfoBubble";
+import { Rows } from "../storage/rows";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -33,17 +34,17 @@ export function ZFSPropertyList({
   const names = Object.keys(properties).sort();
   if (names.length === 0 && !reading) return null;
   return (
-    <div className="flex flex-col gap-1">
+    <div className="flex flex-col gap-1" aria-busy={reading}>
       <span className="flex items-center gap-1 text-xs text-carbon-textSub">
         {t("zfs.restore.propertiesTitle")}
         <InfoBubble tip={t(into === "new" ? "zfs.restore.propertiesNewHint" : "zfs.restore.propertiesExistingHint")} />
       </span>
-      <ul className="flex flex-col gap-0.5 rounded-control bg-carbon-surface2 px-3 py-1.5 text-xs" aria-busy={reading}>
-        {reading && <li className="text-carbon-textMuted">{t("folder.loading")}</li>}
+      <Rows as="ul">
+        {reading && <li className="py-1.5 text-xs text-carbon-textMuted first:pt-0 last:pb-0">{t("folder.loading")}</li>}
         {names.map((name) => {
           const fate = zfsPropertyFate(name, into);
           return (
-            <li key={name} className="flex flex-wrap items-center gap-x-2">
+            <li key={name} className="flex flex-wrap items-center gap-x-2 py-1.5 text-xs first:pt-0 last:pb-0">
               <span dir="ltr" className={`min-w-0 break-all font-mono text-start ${fate === "applied" ? "text-carbon-text" : "text-carbon-textMuted"}`}>
                 {name}={properties[name]}
               </span>
@@ -55,7 +56,7 @@ export function ZFSPropertyList({
             </li>
           );
         })}
-      </ul>
+      </Rows>
     </div>
   );
 }

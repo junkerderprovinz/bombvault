@@ -126,6 +126,14 @@ export const RELEASES: Release[] = [
         text: "whatsNew.rcloneCompact",
       },
       { id: "local-protection-card", text: "whatsNew.localProtection" },
+      {
+        id: "lists-as-rows",
+        page: ENTRY,
+        go: "/backups",
+        where: ["backups.title", "whatsNew.page.entry"],
+        way: ["/backups", "entry"],
+        text: "whatsNew.listsAsRows",
+      },
     ],
   },
   {

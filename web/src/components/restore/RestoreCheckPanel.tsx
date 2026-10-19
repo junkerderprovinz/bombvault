@@ -12,6 +12,7 @@ import { Button } from "../Button";
 import { InfoBubble } from "../InfoBubble";
 import { IconCheck, IconClose } from "../navGlyphs";
 import { IconSync } from "../Sidebar";
+import { Rows, SettingRow } from "../storage/rows";
 import { InstanceWindow } from "../../pages/instances/InstanceWindow";
 
 type T = ReturnType<typeof useT>["t"];
@@ -139,35 +140,44 @@ const PENDING: CheckLine["id"][] = ["repository", "key", "snapshot", "space"];
 
 function PendingLines({ t }: { t: T }) {
   return (
-    <ul className="flex flex-col rounded-control bg-carbon-surface2 px-3 py-1.5" data-testid="restore-check-pending">
-      {PENDING.map((id) => (
-        <li key={id} className="flex items-start gap-2.5 py-1.5 text-sm">
-          <span className="flex h-5 w-4 flex-none items-center justify-center">
-            <span className="h-3 w-3 animate-spin rounded-full border-2 border-carbon-textMuted border-t-transparent" />
-          </span>
-          <span className="text-carbon-textSub">{t(CHECK_LINE_LABEL[id])}</span>
-        </li>
-      ))}
-    </ul>
+    <div data-testid="restore-check-pending">
+      <Rows as="ul">
+        {PENDING.map((id) => (
+          <SettingRow
+            key={id}
+            as="li"
+            label={t(CHECK_LINE_LABEL[id])}
+            glyph={
+              <span className="flex h-5 w-4 items-center justify-center">
+                <span className="h-3 w-3 animate-spin rounded-full border-2 border-carbon-textMuted border-t-transparent" />
+              </span>
+            }
+          />
+        ))}
+      </Rows>
+    </div>
   );
 }
 
 function CheckLines({ lines, t }: { lines: CheckLine[]; t: T }) {
   return (
-    <ul className="flex flex-col rounded-control bg-carbon-surface2 px-3 py-1.5">
+    <Rows as="ul">
       {lines.map((c) => (
-        <li key={c.id} className="flex items-start gap-2.5 py-1.5 text-sm">
-          <span className={`flex h-5 w-4 flex-none items-center justify-center [&_svg]:h-3.5 [&_svg]:w-3.5 ${STATUS_INK[c.status]}`}>
-            {c.status === "ok" ? <IconCheck /> : c.status === "fail" ? <IconClose /> : <span className="h-1.5 w-1.5 rounded-full bg-current" />}
-          </span>
-          <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-            <span className="text-carbon-text">{t(CHECK_LINE_LABEL[c.id])}</span>
-            {lineText(c, t) && <span className="wrap-break-word text-caption text-carbon-textMuted">{lineText(c, t)}</span>}
-          </span>
-          <span className={`flex-none text-caption font-semibold ${STATUS_INK[c.status]}`}>{t(STATUS_LABEL[c.status])}</span>
-        </li>
+        <SettingRow
+          key={c.id}
+          as="li"
+          label={t(CHECK_LINE_LABEL[c.id])}
+          glyph={
+            <span className={`flex h-5 w-4 items-center justify-center [&_svg]:h-3.5 [&_svg]:w-3.5 ${STATUS_INK[c.status]}`}>
+              {c.status === "ok" ? <IconCheck /> : c.status === "fail" ? <IconClose /> : <span className="h-1.5 w-1.5 rounded-full bg-current" />}
+            </span>
+          }
+          note={lineText(c, t) || undefined}
+        >
+          <span className={`text-caption font-semibold ${STATUS_INK[c.status]}`}>{t(STATUS_LABEL[c.status])}</span>
+        </SettingRow>
       ))}
-    </ul>
+    </Rows>
   );
 }
 
@@ -182,7 +192,7 @@ function PlanView({ plan, t }: { plan: RestorePlan; t: T }) {
   // the zvol list would only look like a plan that found nothing.
   const zvolsOnly = (plan.zvols?.length ?? 0) > 0 && plan.added + plan.changed + plan.unchanged + plan.extra === 0;
   return (
-    <div className="flex flex-col gap-2 rounded-control bg-carbon-surface2 p-3">
+    <div className="flex flex-col gap-2 border-t border-carbon-border/60 pt-3">
       <div className="flex flex-wrap items-center gap-2">
         <h5 className="text-sm font-semibold text-carbon-text">{t("restoreCheck.plan.title")}</h5>
         <InfoBubble tip={t("restoreCheck.plan.titleHint")} />

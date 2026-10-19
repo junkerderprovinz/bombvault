@@ -846,6 +846,7 @@ const sk: Partial<Translations> = {
   "whatsNew.ownFolderMove": "Vlastný priečinok sekcie sa môže presunúť do jedného z tvojich cieľov a prevezme jeho prihlasovacie údaje a ochranu. Viac sekcií sa presunie v jednom kroku.",
   "whatsNew.ownFoldersCard": "Vzdialený cieľ ukazuje sekcie, ktoré tam majú svoje zálohy.",
   "whatsNew.wizardSignIn": "Nový cieľ sa môže prihlásiť uloženými prihlasovacími údajmi namiesto nových kľúčov.",
+  "whatsNew.listsAsRows": "Každý zoznam zobrazuje položky ako riadky oddelené tenkou čiarou, bez sivého poľa v pozadí.",
   "rclone.save": "Uložiť konfiguráciu",
   "notify.title": "Upozornenia",
   "notify.hint": "Dostávaj upozornenie po dokončení zálohy a nižšie vyber, ktoré udalosti ho spúšťajú.",

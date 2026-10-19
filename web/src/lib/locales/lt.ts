@@ -846,6 +846,7 @@ const lt: Partial<Translations> = {
   "whatsNew.ownFolderMove": "Skilties savas aplankas gali persikelti į vieną tavo paskirties vietų ir perima jos prisijungimą bei apsaugą. Kelios skiltys persikelia vienu žingsniu.",
   "whatsNew.ownFoldersCard": "Nuotolinė paskirties vieta rodo skiltis, kurios ten laiko savo atsargines kopijas.",
   "whatsNew.wizardSignIn": "Nauja paskirties vieta gali prisijungti su išsaugotu prisijungimu vietoj naujų raktų.",
+  "whatsNew.listsAsRows": "Kiekvienas sąrašas rodo įrašus kaip eilutes, atskirtas plona linija, be pilko langelio fone.",
   "rclone.save": "Išsaugoti konfigūraciją",
   "notify.title": "Pranešimai",
   "notify.hint": "Gauk pranešimą, kai baigsis atsarginė kopija, ir apačioje pasirink, kokie įvykiai jį suaktyvina.",

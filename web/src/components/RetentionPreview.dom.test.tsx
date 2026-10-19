@@ -218,7 +218,7 @@ describe("RetentionPreview", () => {
 
     const paused = await screen.findByText(en["retentionPreview.paused"]);
     expect(paused.className).toContain("text-statusWarn");
-    expect(paused.closest("div.mt-2")?.textContent).toContain("container:plex");
+    expect(paused.closest("span.mt-1")?.textContent).toContain("container:plex");
     expect(screen.getAllByText(en["retentionPreview.paused"])).toHaveLength(1);
   });
 

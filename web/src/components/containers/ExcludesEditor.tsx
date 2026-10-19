@@ -10,6 +10,7 @@ import { useToast } from "../../lib/toast";
 import { useDebouncedSave } from "../../lib/useDebouncedSave";
 import { IconSearch } from "../glyphs";
 import { ExcludePresetPanel } from "../ExcludePresetPanel";
+import { Rows, SettingRow } from "../storage/rows";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -403,14 +404,17 @@ export function ExcludesEditor({
               <p className="text-xs text-carbon-textMuted">{t("excludes.assistNothingFound")}</p>
             )}
             {!scanning && openSuggestions.length > 0 && (
-              <div className="flex flex-col gap-1">
+              <Rows>
                 {openSuggestions.map((sg) => (
-                  <div
+                  <SettingRow
                     key={sg.line}
-                    title={sg.line}
-                    className="flex items-center gap-2 rounded-control bg-carbon-surface2 px-2 py-1.5"
+                    label={sg.path}
+                    name={
+                      <bdi dir="ltr" title={sg.line} className="min-w-0 wrap-anywhere text-start font-mono text-xs">
+                        {sg.path}
+                      </bdi>
+                    }
                   >
-                    <span dir="ltr" className="min-w-0 flex-1 truncate font-mono text-xs text-carbon-text text-start">{sg.path}</span>
                     <span
                       // "Cache" is a category, not an outcome, so it takes the
                       // neutral chip. "Large" is a warning.
@@ -443,9 +447,9 @@ export function ExcludesEditor({
                       onClick={() => void addExclude(sg.line)}
                       disabled={state === "saving"}
                     />
-                  </div>
+                  </SettingRow>
                 ))}
-              </div>
+              </Rows>
             )}
             {/* A snapshot size is exact but as of that backup, and a cache may
                 have grown since, so the line states the date. */}

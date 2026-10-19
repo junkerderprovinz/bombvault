@@ -19,14 +19,14 @@ import { InfoBubble } from "../InfoBubble";
 import { IconEye } from "../glyphs";
 import { IconAdd, IconContainers } from "../navGlyphs";
 import { SelectField } from "../SelectField";
-import { SettingRow } from "../storage/rows";
+import { Rows, SettingRow } from "../storage/rows";
 import { ZFSMemberList } from "./ZFSMemberList";
 import { failText } from "./failText";
 import { ZFSExcludesEditor } from "./ZFSExcludesEditor";
 
 type T = ReturnType<typeof useT>["t"];
 
-const FIELD = "w-80 max-w-full rounded-control bg-carbon-surface3 px-3 py-1.5 font-mono text-xs text-carbon-text text-start glim-field-focus";
+const FIELD = "w-80 max-w-full rounded-control bg-carbon-surface2 px-3 py-1.5 font-mono text-xs text-carbon-text text-start glim-field-focus";
 
 /** ZFSItemSettings is what can be set about one ZFS entry on its Settings tab. */
 export function ZFSItemSettings({
@@ -218,14 +218,14 @@ export function ZFSItemSettings({
       {overlap.length > 0 && <Note tone="warn">{t("zfs.overlapContainers").replace("{names}", overlap.join(", "))}</Note>}
 
       <SubCard title={t("zfs.commands")}>
-        <div className="flex flex-col divide-y divide-carbon-border/60">
+        <Rows>
           <SettingRow label={t("zfs.hookContainer")} hint={t("zfs.hooksHint")}>
             <SelectField
               value={item.hookContainer}
               label={t("zfs.hookContainer")}
               onChange={(name) => void save({ hookContainer: name, preSnapshot: pre, postSnapshot: post })}
               disabled={busy}
-              className="w-80 max-w-full rounded-control bg-carbon-surface3 px-3 py-1.5 text-sm text-carbon-text glim-field-focus"
+              className="w-80 max-w-full rounded-control bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text glim-field-focus"
               options={[
                 { value: "", label: t("zfs.hookContainerNone") },
                 ...containers.filter((c) => !c.self).map((c) => ({ value: c.name, label: c.name })),
@@ -258,7 +258,7 @@ export function ZFSItemSettings({
               className={`${FIELD} disabled:opacity-50`}
             />
           </SettingRow>
-        </div>
+        </Rows>
       </SubCard>
 
       <SubCard title={t("zfs.excludes")} hint={tLtr(t, "zfs.excludesHint")}>

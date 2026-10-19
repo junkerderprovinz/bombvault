@@ -123,7 +123,7 @@ export function FindingLine({
   return (
     <li
       id={`finding-${a.id}`}
-      className={`flex min-w-0 scroll-mt-10 flex-col gap-1.5 rounded-card bg-carbon-surface2 px-4 pb-3.5 pt-3 max-sm:px-3 ${EDGE[a.severity]}`}
+      className={`flex min-w-0 scroll-mt-10 flex-col gap-1.5 py-3 ps-3.5 first:pt-0 last:pb-0 ${EDGE[a.severity]}`}
     >
       <div className="flex flex-wrap items-center gap-2">
         {closed && (

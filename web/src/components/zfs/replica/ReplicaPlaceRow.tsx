@@ -5,6 +5,7 @@ import { useToast } from "../../../lib/toast";
 import { Badge } from "../../Badge";
 import { Button } from "../../Button";
 import { IconFleet, IconZFS } from "../../navGlyphs";
+import { RowGlyph, SettingRow } from "../../storage/rows";
 import { ReplicaSnapshotsSheet } from "./ReplicaSnapshotsSheet";
 import { ReplicaStatePill } from "./ReplicaStatePill";
 import { isRunning, peerHolds, targetName } from "./replicaModel";
@@ -56,30 +57,25 @@ export function ReplicaPlaceRow({ itemId, name }: { itemId: string; name: string
   const count = replica.snapshots.length;
 
   return (
-    <div className="flex items-center gap-3 flex-wrap rounded-card bg-carbon-surface2 px-3 py-2">
-      <span className="text-carbon-textSub" aria-hidden="true">
-        {replica.target.kind === "peer" ? <IconFleet /> : <IconZFS />}
-      </span>
-      <div className="flex-1 min-w-0 flex flex-col">
-        <span className="text-sm text-carbon-text">{shownName}</span>
-        <span className="text-caption text-carbon-textMuted">{t("zfs.replica.place")}</span>
-      </div>
-      <div className="flex items-center gap-2 flex-wrap">
-        {(running || replica.state !== "ok" || peerHolds(replica)) && (
-          <ReplicaStatePill replica={replica} running={running} peerName={shownName} />
-        )}
-        {count > 0 && (
-          <>
-            <Badge tone="muted">{t("zfs.replica.snapshots", count)}</Badge>
-            <Button
-              label={t("zfs.replica.view")}
-              labelKey="zfs.replica.view"
-              tone="neutral"
-              onClick={() => setOpen(true)}
-            />
-          </>
-        )}
-      </div>
+    <SettingRow
+      label={shownName}
+      glyph={<RowGlyph>{replica.target.kind === "peer" ? <IconFleet /> : <IconZFS />}</RowGlyph>}
+      note={t("zfs.replica.place")}
+    >
+      {(running || replica.state !== "ok" || peerHolds(replica)) && (
+        <ReplicaStatePill replica={replica} running={running} peerName={shownName} />
+      )}
+      {count > 0 && (
+        <>
+          <Badge tone="muted">{t("zfs.replica.snapshots", count)}</Badge>
+          <Button
+            label={t("zfs.replica.view")}
+            labelKey="zfs.replica.view"
+            tone="neutral"
+            onClick={() => setOpen(true)}
+          />
+        </>
+      )}
       {open && (
         <ReplicaSnapshotsSheet
           itemId={itemId}
@@ -92,6 +88,6 @@ export function ReplicaPlaceRow({ itemId, name }: { itemId: string; name: string
           }}
         />
       )}
-    </div>
+    </SettingRow>
   );
 }

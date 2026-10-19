@@ -846,6 +846,7 @@ const id: Partial<Translations> = {
   "whatsNew.ownFolderMove": "Folder sendiri sebuah bagian bisa pindah ke salah satu tujuanmu dan memakai login serta perlindungannya. Beberapa bagian pindah dalam satu langkah.",
   "whatsNew.ownFoldersCard": "Tujuan jarak jauh menampilkan bagian yang menyimpan cadangannya sendiri di sana.",
   "whatsNew.wizardSignIn": "Tujuan baru bisa masuk dengan login tersimpan, bukan kunci baru.",
+  "whatsNew.listsAsRows": "Setiap daftar menampilkan entrinya sebagai baris yang dipisahkan garis tipis, tanpa kotak abu-abu di belakangnya.",
   "rclone.save": "Simpan konfigurasi",
   "notify.title": "Notifikasi",
   "notify.hint": "Dapatkan notifikasi saat pencadangan selesai, dan pilih di bawah peristiwa mana yang memicunya.",

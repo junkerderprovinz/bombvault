@@ -1,4 +1,3 @@
-import type { ReactNode } from "react";
 import type { TimelineDomain, TimelinePlace, ZFSDatasetView } from "../../lib/api";
 import { repoDisplayName } from "../../lib/directRepo";
 import { useT } from "../../lib/i18n";
@@ -10,7 +9,7 @@ import { Button } from "../Button";
 import { IconRefresh } from "../glyphs";
 import { InfoBubble } from "../InfoBubble";
 import { IconCheck, IconCloud, IconLocal } from "../navGlyphs";
-import { Rows } from "../storage/rows";
+import { RowGlyph, Rows, SettingRow } from "../storage/rows";
 import { ReplicaPlaceRow } from "../zfs/replica/ReplicaPlaceRow";
 import { ZFSSitesLine } from "../zfs/ZFSSitesLine";
 
@@ -25,18 +24,6 @@ export function usePlaceLabel(places: TimelinePlace[], domain: TimelineDomain): 
     const p = places.find((x) => x.place === place);
     return (p && repoDisplayName(t, p.label, p.directOf)) || local;
   };
-}
-
-function PlaceRow({ glyph, name, children }: { glyph: ReactNode; name: ReactNode; children: ReactNode }) {
-  return (
-    <div className="flex flex-wrap items-center gap-x-3 gap-y-2 py-3 first:pt-0 last:pb-0">
-      <span className="flex h-9 w-9 flex-none items-center justify-center rounded-control bg-carbon-surface2 text-accentText [&_svg]:h-[18px] [&_svg]:w-[18px]">
-        {glyph}
-      </span>
-      <span className="min-w-24 flex-1 text-sm font-semibold text-carbon-text wrap-anywhere">{name}</span>
-      <span className="flex flex-wrap items-center justify-end gap-2">{children}</span>
-    </div>
-  );
 }
 
 
@@ -67,17 +54,11 @@ export function BackupPlaces({
           const count = rows.filter((row) => row.places.some((m) => m.place === p.place)).length;
           const busy = reading.has(p.place);
           return (
-            <PlaceRow
+            <SettingRow
               key={p.place}
-              glyph={p.remote ? <IconCloud /> : <IconLocal />}
-              name={
-                <>
-                  {labelOf(p.place)}
-                  {p.kind === "earlier" && (
-                    <span className="block text-xs font-normal text-carbon-textMuted">{t("entry.places.earlier")}</span>
-                  )}
-                </>
-              }
+              label={labelOf(p.place)}
+              glyph={<RowGlyph>{p.remote ? <IconCloud /> : <IconLocal />}</RowGlyph>}
+              note={p.kind === "earlier" ? t("entry.places.earlier") : undefined}
             >
               {busy ? (
                 <Badge tone="active">{t("entry.places.reading")}</Badge>
@@ -110,16 +91,12 @@ export function BackupPlaces({
                   />
                 </>
               )}
-            </PlaceRow>
+            </SettingRow>
           );
         })}
+        {replicaOf && <ReplicaPlaceRow itemId={replicaOf.id} name={replicaOf.dataset} />}
       </Rows>
-      {replicaOf && (
-        <>
-          <ReplicaPlaceRow itemId={replicaOf.id} name={replicaOf.dataset} />
-          <ZFSSitesLine item={replicaOf} />
-        </>
-      )}
+      {replicaOf && <ZFSSitesLine item={replicaOf} />}
     </Card>
   );
 }

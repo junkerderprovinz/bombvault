@@ -8,6 +8,8 @@ import { Badge } from "../Badge";
 import { Button } from "../Button";
 import { IconCompare, IconEye } from "../glyphs";
 import { IconAnomalies } from "../navGlyphs";
+import { Rows, SettingRow } from "../storage/rows";
+import { SubCard } from "../../pages/settings/shared";
 import {
   ANOMALY_SEVERITY_LABEL,
   ANOMALY_STATE_LABEL,
@@ -31,14 +33,13 @@ import { SeriesCurve } from "./SeriesCurve";
 
 function Figures({ rows }: { rows: AnomalyFigure[] }) {
   return (
-    <dl className="grid grid-cols-[max-content_minmax(0,1fr)] gap-x-6 gap-y-1.5 text-sm max-sm:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] max-sm:gap-x-3">
+    <Rows>
       {rows.map(([term, value]) => (
-        <div key={term} className="contents">
-          <dt className="text-carbon-textMuted">{term}</dt>
-          <dd className="font-semibold tabular-nums text-carbon-text wrap-anywhere">{value}</dd>
-        </div>
+        <SettingRow key={term} label={term}>
+          <span className="text-end text-sm font-semibold tabular-nums text-carbon-text wrap-anywhere">{value}</span>
+        </SettingRow>
       ))}
-    </dl>
+    </Rows>
   );
 }
 
@@ -175,12 +176,9 @@ export function FindingWindow({
       {findingHasCurve(a) && <SeriesCurve targetId={a.targetId} finding={a} t={t} />}
 
       <Figures rows={main} />
-      <div className="flex flex-col gap-2 rounded-card bg-carbon-surface2 px-4 py-3">
-        <h3 className="text-caption font-semibold uppercase tracking-[.12em] text-carbon-textMuted">
-          {t("anomaly.detail.more")}
-        </h3>
+      <SubCard title={t("anomaly.detail.more")}>
         <Figures rows={figures.more} />
-      </div>
+      </SubCard>
 
       {recovered && open && (
         <p className="text-xs text-carbon-textSub">

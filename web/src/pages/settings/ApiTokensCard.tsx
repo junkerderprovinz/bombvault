@@ -6,7 +6,7 @@ import { RevealInput } from "../../components/RevealInput";
 import { Toggle } from "../../components/Toggle";
 import { IconInfo } from "../../components/glyphs";
 import { IconAdd, IconCopy } from "../../components/navGlyphs";
-import { SettingRow } from "../../components/storage/rows";
+import { Rows, SettingRow } from "../../components/storage/rows";
 import { InstanceWindow } from "../instances/InstanceWindow";
 import {
   createApiToken,
@@ -31,7 +31,7 @@ import { McpKeyLog, type KeyLogWording } from "./McpKeyLog";
 import { Card, SubCard, useOpenPasswordField } from "./shared";
 
 // ApiTokensCard hands out the tokens scripts and home automation use for the
-// API under /api/v1. A token is stored like an MCP key, so its tile and its log
+// API under /api/v1. A token is stored like an MCP key, so its row and its log
 // are the MCP card's, told with the word token.
 
 const CODE_MESSAGE: Record<string, TranslationKey> = {
@@ -270,96 +270,80 @@ export function ApiTokensCard({ hueIndex, passwordSet }: { hueIndex?: number; pa
       {/* Outside the load gate: the server keeps no copy of this token, so a
           failed reload must not hide it. */}
       {fresh !== null && (
-        <div className="flex flex-col gap-2 rounded-card bg-carbon-surface2 px-3 py-2.5">
-          <SettingRow label={t("api.newTokenTitle")} hint={t("mcp.showOnce")}>
-            <RevealInput
-              visible={keyVisible}
-              onToggleVisible={() => setKeyVisible((v) => !v)}
-              showLabel={t("common.showValue")}
-              hideLabel={t("common.hideValue")}
-              value={fresh.key}
-              readOnly
-              aria-label={t("api.newTokenTitle")}
-              wrapperClassName="w-80 max-w-full"
-              className="rounded-control bg-carbon-surface px-3 py-1.5 font-mono text-sm text-carbon-text glim-field-focus"
-            />
-          </SettingRow>
-          <div className="flex items-center gap-3">
-            <Button
-              label={t("api.copyToken")}
-              labelKey="common.copy"
-              tone="subtle"
-              onClick={() => void copy(fresh.key)}
-              hueIndex={hueIndex}
-            />
-            <Button
-              label={t("mcp.dismissKey")}
-              labelKey="mcp.dismissKey"
-              tone="accent"
-              onClick={() => setFresh(null)}
-              hueIndex={hueIndex}
-            />
-          </div>
-        </div>
+        <SettingRow label={t("api.newTokenTitle")} hint={t("mcp.showOnce")}>
+          <RevealInput
+            visible={keyVisible}
+            onToggleVisible={() => setKeyVisible((v) => !v)}
+            showLabel={t("common.showValue")}
+            hideLabel={t("common.hideValue")}
+            value={fresh.key}
+            readOnly
+            aria-label={t("api.newTokenTitle")}
+            wrapperClassName="w-80 max-w-full"
+            className="rounded-control bg-carbon-surface2 px-3 py-1.5 font-mono text-sm text-carbon-text glim-field-focus"
+          />
+          <Button label={t("api.copyToken")} labelKey="common.copy" tone="subtle" onClick={() => void copy(fresh.key)} hueIndex={hueIndex} />
+          <Button label={t("mcp.dismissKey")} labelKey="mcp.dismissKey" tone="accent" onClick={() => setFresh(null)} hueIndex={hueIndex} />
+        </SettingRow>
       )}
 
       {data !== null && !failed && tokens.length > 0 && (
-        <ul className="flex flex-col gap-3">
+        <Rows as="ul">
           {tokens.map((k) => (
-            <li key={k.id} className="glim-tile flex flex-col gap-3 rounded-card p-3">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                {/* bv-convention-exception: setting-row-beside-label: the rename input replaces the token name in its list tile, it is not a labelled field */}
-                <div className="flex min-w-0 flex-col gap-1">
-                  <div className="flex min-w-0 items-center gap-2 max-md:flex-wrap">
-                    {renaming === k.id ? (
-                      <input
-                        autoFocus
-                        value={draft}
-                        maxLength={64}
-                        aria-label={t("api.labelLabel")}
-                        onChange={(e) => setDraft(e.target.value)}
-                        onBlur={() => {
-                          if (!busy) void rename(k);
-                        }}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") void rename(k);
-                          if (e.key === "Escape") setRenaming("");
-                        }}
-                        className={`w-64 rounded-control bg-carbon-surface3 px-3 py-1 text-sm text-carbon-text glim-field-focus-well${
-                          shake[`rename:${k.id}`] ? " glim-shake" : ""
-                        }`}
-                      />
-                    ) : (
-                      <>
-                        <span className="truncate text-sm text-carbon-text max-md:min-w-24 max-md:flex-1 max-md:whitespace-normal max-md:wrap-anywhere">
-                          {k.label}
-                        </span>
-                        <Button
-                          label={t("common.edit")}
-                          labelKey="common.edit"
-                          variant="icon"
-                          tone="neutral"
-                          onClick={() => {
-                            setDraft(k.label);
-                            setRenaming(k.id);
-                          }}
-                          hueIndex={hueIndex}
-                        />
-                      </>
-                    )}
-                  </div>
+            <SettingRow
+              key={k.id}
+              as="li"
+              label={k.label}
+              name={
+                renaming === k.id ? (
+                  <input
+                    autoFocus
+                    value={draft}
+                    maxLength={64}
+                    aria-label={t("api.labelLabel")}
+                    onChange={(e) => setDraft(e.target.value)}
+                    onBlur={() => {
+                      if (!busy) void rename(k);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") void rename(k);
+                      if (e.key === "Escape") setRenaming("");
+                    }}
+                    className={`w-64 max-w-full rounded-control bg-carbon-surface2 px-3 py-1 text-sm text-carbon-text glim-field-focus${
+                      shake[`rename:${k.id}`] ? " glim-shake" : ""
+                    }`}
+                  />
+                ) : (
+                  <>
+                    <span className="min-w-0 wrap-anywhere">{k.label}</span>
+                    <Button
+                      label={t("common.edit")}
+                      labelKey="common.edit"
+                      variant="icon"
+                      tone="neutral"
+                      onClick={() => {
+                        setDraft(k.label);
+                        setRenaming(k.id);
+                      }}
+                      hueIndex={hueIndex}
+                    />
+                  </>
+                )
+              }
+              note={
+                <>
                   {k.unusable === "app-key-changed" ? (
-                    <span className="text-xs text-statusWarn">{t("mcp.keyUnusable")}</span>
+                    <span className="text-statusWarn">{t("mcp.keyUnusable")}</span>
                   ) : (
                     <>
-                      <span className="text-xs text-carbon-textMuted">
+                      <span>
                         {t("mcp.keyHint").replace("{hint}", k.hint)}
                         {" · "}
                         {k.rotatedAt > 0
                           ? t("mcp.keyRotated").replace("{date}", formatTs(k.rotatedAt))
                           : t("mcp.keyCreated").replace("{date}", formatTs(k.createdAt))}
                       </span>
-                      <span className="text-xs text-carbon-textMuted max-md:wrap-anywhere">
+                      <span className="max-md:wrap-anywhere">
                         {k.lastUsedAt === 0
                           ? t("mcp.keyNeverUsed")
                           : k.lastUsedFrom === ""
@@ -371,51 +355,48 @@ export function ApiTokensCard({ hueIndex, passwordSet }: { hueIndex?: number; pa
                     </>
                   )}
                   <span className="flex flex-wrap gap-2">
-                    <Badge tone="neutral" size="medium" wrap className="glim-tile-raise">
+                    <Badge tone="neutral" size="medium" wrap>
                       {k.canStartBackups ? t("mcp.canStart") : t("mcp.readOnly")}
                     </Badge>
-                    <Badge tone="neutral" size="medium" wrap className="glim-tile-raise">
+                    <Badge tone="neutral" size="medium" wrap>
                       <span className="glim-num">{t("mcp.callsToday", k.callsToday)}</span>
                     </Badge>
                   </span>
-                </div>
-                <div className="flex min-w-0 flex-wrap items-start gap-2">
-                  <Button label={t("mcp.log")} labelKey="mcp.log" tone="neutral" glyph={<IconInfo />} onClick={() => setLogOf(k)} />
-                  <Button
-                    label={t("mcp.revoke")}
-                    labelKey="mcp.revoke"
-                    tone="neutral"
-                    onClick={() => setPending({ kind: "revoke", item: k })}
+                  <Toggle
+                    key={shake[`start:${k.id}`] ?? 0}
+                    label={t("mcp.allowStart")}
+                    checked={k.canStartBackups}
+                    onChange={(v) => void setCanStart(k, v)}
                     disabled={busy}
-                    className={shake[`revoke:${k.id}`] ? "glim-shake" : ""}
-                    hueIndex={hueIndex}
+                    className={shake[`start:${k.id}`] ? "glim-shake" : ""}
                   />
-                  {canMint && (
-                    <Button
-                      label={t("api.rotate")}
-                      labelKey="api.rotate"
-                      tone="neutral"
-                      onClick={() => setPending({ kind: "rotate", item: k })}
-                      disabled={busy}
-                      className={shake[`rotate:${k.id}`] ? "glim-shake" : ""}
-                      hueIndex={hueIndex}
-                    />
-                  )}
-                </div>
-              </div>
-
-              <Toggle
-                key={shake[`start:${k.id}`] ?? 0}
-                label={t("mcp.allowStart")}
-                checked={k.canStartBackups}
-                onChange={(v) => void setCanStart(k, v)}
+                </>
+              }
+            >
+              <Button label={t("mcp.log")} labelKey="mcp.log" tone="neutral" glyph={<IconInfo />} onClick={() => setLogOf(k)} />
+              <Button
+                label={t("mcp.revoke")}
+                labelKey="mcp.revoke"
+                tone="neutral"
+                onClick={() => setPending({ kind: "revoke", item: k })}
                 disabled={busy}
-                className={shake[`start:${k.id}`] ? "glim-shake" : ""}
+                className={shake[`revoke:${k.id}`] ? "glim-shake" : ""}
+                hueIndex={hueIndex}
               />
-
-            </li>
+              {canMint && (
+                <Button
+                  label={t("api.rotate")}
+                  labelKey="api.rotate"
+                  tone="neutral"
+                  onClick={() => setPending({ kind: "rotate", item: k })}
+                  disabled={busy}
+                  className={shake[`rotate:${k.id}`] ? "glim-shake" : ""}
+                  hueIndex={hueIndex}
+                />
+              )}
+            </SettingRow>
           ))}
-        </ul>
+        </Rows>
       )}
 
       {data !== null && !failed && (
@@ -463,7 +444,7 @@ export function ApiTokensCard({ hueIndex, passwordSet }: { hueIndex?: number; pa
             </>
           }
         >
-          <div className="flex flex-col divide-y divide-carbon-border/60">
+          <Rows>
             <SettingRow label={t("api.labelLabel")}>
               <input
                 id="bv-api-token-label"
@@ -482,42 +463,37 @@ export function ApiTokensCard({ hueIndex, passwordSet }: { hueIndex?: number; pa
             <SettingRow label={t("mcp.allowStart")} hint={allowStartHint}>
               <Toggle hideLabel label={t("mcp.allowStart")} checked={allowStart} onChange={setAllowStart} />
             </SettingRow>
-          </div>
+          </Rows>
         </InstanceWindow>
       )}
 
       {data !== null && !failed && revoked.length > 0 && (
         <SubCard title={t("api.revokedList", revoked.length)}>
-          <ul className="flex flex-col gap-3">
+          <Rows as="ul">
             {revoked.map((k) => (
-              <li key={k.id} className="glim-tile flex flex-col gap-3 rounded-card p-3">
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div className="flex min-w-0 flex-col gap-1">
-                    <span className="truncate text-sm text-carbon-text">{k.label}</span>
-                    <span className="text-xs text-carbon-textMuted">
-                      {t(k.revokedReason === "config-restore" ? "mcp.revokedByRestore" : "mcp.revokedAt").replace(
-                        "{date}",
-                        formatTs(k.revokedAt)
-                      )}
-                    </span>
-                  </div>
-                  <div className="flex min-w-0 flex-wrap items-center gap-2">
-                    <Button label={t("mcp.log")} labelKey="mcp.log" tone="neutral" glyph={<IconInfo />} onClick={() => setLogOf(k)} />
-                    <Button
-                      label={t("common.delete")}
-                      labelKey="common.delete"
-                      tone="neutral"
-                      onClick={() => setPending({ kind: "purge", item: k })}
-                      disabled={busy || k.inUse}
-                      hint={k.inUse ? t("api.inUseTip") : undefined}
-                      className={shake[`purge:${k.id}`] ? "glim-shake" : ""}
-                      hueIndex={hueIndex}
-                    />
-                  </div>
-                </div>
-              </li>
+              <SettingRow
+                key={k.id}
+                as="li"
+                label={k.label}
+                note={t(k.revokedReason === "config-restore" ? "mcp.revokedByRestore" : "mcp.revokedAt").replace(
+                  "{date}",
+                  formatTs(k.revokedAt)
+                )}
+              >
+                <Button label={t("mcp.log")} labelKey="mcp.log" tone="neutral" glyph={<IconInfo />} onClick={() => setLogOf(k)} />
+                <Button
+                  label={t("common.delete")}
+                  labelKey="common.delete"
+                  tone="neutral"
+                  onClick={() => setPending({ kind: "purge", item: k })}
+                  disabled={busy || k.inUse}
+                  hint={k.inUse ? t("api.inUseTip") : undefined}
+                  className={shake[`purge:${k.id}`] ? "glim-shake" : ""}
+                  hueIndex={hueIndex}
+                />
+              </SettingRow>
             ))}
-          </ul>
+          </Rows>
         </SubCard>
       )}
 

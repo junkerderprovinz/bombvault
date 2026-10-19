@@ -971,7 +971,7 @@ function RestoreForm({
           <PlaceChecks timeline={timeline} />
 
           {what === "files" && (
-            <div className="flex flex-col gap-2 rounded-card bg-carbon-surface2 p-3 text-xs">
+            <div className="flex flex-col gap-2 text-xs">
               <SnapshotFileTree
                 files={files}
                 loading={filesLoading}

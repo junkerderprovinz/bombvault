@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Button } from "../../components/Button";
 import { IconSave } from "../../components/glyphs";
-import { SettingRow } from "../../components/storage/rows";
+import { Rows, SettingRow } from "../../components/storage/rows";
 import { Toggle } from "../../components/Toggle";
 import { setMcpOAuth, type McpOAuthView, explainedError } from "../../lib/api";
 import { copyText } from "../../lib/clipboard";
@@ -90,7 +90,7 @@ export function McpOAuthSettings({
   }
 
   return (
-    <div className="flex flex-col divide-y divide-carbon-border/60">
+    <Rows>
       <SettingRow
         label={t("mcp.oauthToggle")}
         hint={t("mcp.oauthHint")}
@@ -140,6 +140,6 @@ export function McpOAuthSettings({
           <CopyField value={connector} label={t("mcp.oauthConnectorLabel")} onCopy={() => void copy(connector)} t={t} />
         </SettingRow>
       )}
-    </div>
+    </Rows>
   );
 }

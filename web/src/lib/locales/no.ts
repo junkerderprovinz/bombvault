@@ -728,6 +728,7 @@ const no: Partial<Translations> = {
   "whatsNew.ownFolderMove": "En seksjons egen mappe kan flytte til et av målene dine og tar med påloggingen og beskyttelsen der. Flere seksjoner flytter i ett steg.",
   "whatsNew.ownFoldersCard": "Et eksternt mål viser seksjonene som har sine egne sikkerhetskopier der.",
   "whatsNew.wizardSignIn": "Et nytt mål kan logge på med en lagret pålogging i stedet for nye nøkler.",
+  "whatsNew.listsAsRows": "Alle lister viser oppføringene sine som rader skilt av en tynn strek, uten en grå boks bak.",
   "export.encrypt.hint": "restic-repositoriene er allerede krypterte. Dette krypterer valgfritt de vanlige eksportartefaktene (container- og VM-tar.gz med deres xml, og flash-zip) med age, slik at de trygt kan lagres eller flyttes bort fra serveren.",
   "export.encrypt.ageInfo": "age (age-encryption.org) er et lite, moderne filkrypteringsverktøy, et enklere alternativ til GPG for å forsegle en fil til én eller flere mottakere.",
   "export.encrypt.enable": "Krypter eksporter med age",

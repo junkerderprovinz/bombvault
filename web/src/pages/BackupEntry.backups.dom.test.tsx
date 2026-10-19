@@ -177,9 +177,9 @@ describe("the backup history", () => {
 
   it("leads from a bar to its backup in the list", async () => {
     await renderPage("/backups/container/immich");
-    expect(rows()[1].className).toContain("bg-carbon-surface2");
+    expect(rows()[1].className).not.toContain("bg-accentSoft");
     await press(bars().at(-2)!.closest("button")!);
-    expect(rows()[1].className).toContain("bg-carbon-surface3");
+    expect(rows()[1].className).toContain("bg-accentSoft");
   });
 
   it("stays away while the two weeks hold no backup", async () => {
@@ -333,7 +333,7 @@ describe("a restore link from a finding", () => {
   it("opens the backup it names", async () => {
     await renderPage(`/backups/container/immich?restore=${RUNS[1].snapshotId}&at=${RUNS[1].finishedAt}`);
     expect(await screen.findByRole("dialog")).toBeTruthy();
-    expect(rows()[1].className).toContain("bg-carbon-surface3");
+    expect(rows()[1].className).toContain("bg-accentSoft");
   });
 
   it("reads the backups while the entry is still read", async () => {
@@ -377,6 +377,6 @@ describe("a ZFS entry", () => {
     expect(bars()).toHaveLength(4);
     expect(rows()).toHaveLength(5);
     await press(bars().at(-2)!.closest("button")!);
-    expect(rows()[1].className).toContain("bg-carbon-surface3");
+    expect(rows()[1].className).toContain("bg-accentSoft");
   });
 });

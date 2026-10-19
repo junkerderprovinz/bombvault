@@ -7,6 +7,7 @@ import { tLtr } from "../../lib/ltrFragments";
 import { zfsCodeSentence, zfsFixKey, zfsMemberKey } from "../../lib/zfsCodes";
 import { Badge } from "../Badge";
 import { InfoBubble } from "../InfoBubble";
+import { Rows } from "../storage/rows";
 import { Toggle } from "../Toggle";
 import { formatNumber } from "../../lib/numberFormat";
 
@@ -61,7 +62,7 @@ export function ZFSMemberList({
   targetId?: string;
 }) {
   return (
-    <ul className="flex flex-col divide-y divide-carbon-border/60">
+    <Rows as="ul">
       {members.map((m) => {
         const off = excluded?.has(m.dataset) ?? false;
         const outcome = off ? "excluded" : m.outcome;
@@ -112,7 +113,7 @@ export function ZFSMemberList({
           </li>
         );
       })}
-    </ul>
+    </Rows>
   );
 }
 

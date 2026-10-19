@@ -846,6 +846,7 @@ const gl: Partial<Translations> = {
   "whatsNew.ownFolderMove": "O cartafol propio dunha sección pode ir a un dos teus destinos e levar as súas credenciais e a súa protección. Varias seccións móvense nun só paso.",
   "whatsNew.ownFoldersCard": "Un destino remoto amosa as seccións que gardan alí as súas propias copias de seguridade.",
   "whatsNew.wizardSignIn": "Un destino novo pode iniciar sesión con credenciais gardadas en vez de chaves novas.",
+  "whatsNew.listsAsRows": "Cada lista mostra as súas entradas como filas separadas por unha liña fina, sen ningún recadro gris detrás.",
   "rclone.save": "Gardar configuración",
   "notify.title": "Notificacións",
   "notify.hint": "Recibe unha notificación cando remate unha copia, e escolle abaixo que eventos a activan.",

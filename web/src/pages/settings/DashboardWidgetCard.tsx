@@ -3,7 +3,7 @@ import { Button } from "../../components/Button";
 import { Note } from "../../components/entry/Note";
 import { IconTipButton } from "../../components/IconTipButton";
 import { IconCopy, IconTrash } from "../../components/navGlyphs";
-import { SettingRow } from "../../components/storage/rows";
+import { Rows, SettingRow } from "../../components/storage/rows";
 import { disableWidgetToken, generateWidgetToken, getDashboardPlugin, installDashboardPlugin, removeDashboardPlugin } from "../../lib/api";
 import { hueVars } from "../../lib/appearance";
 import { copyText } from "../../lib/clipboard";
@@ -254,7 +254,7 @@ export function DashboardWidgetCard({
 
   return (
     <Card title={t("settings.widget")} hint={t("settings.widgetHint")} hueIndex={hueIndex}>
-      <div className="flex flex-col divide-y divide-carbon-border/60">
+      <Rows>
         <SettingRow
           label={t("settings.widgetToken")}
           hint={t("settings.widgetAccess")}
@@ -313,7 +313,7 @@ export function DashboardWidgetCard({
           </div>
         )}
         <DashTileRow t={t} />
-      </div>
+      </Rows>
       <SubCard title={t("settings.widgetSetup")}>
         <ol className="flex list-decimal flex-col gap-1.5 ps-5 text-sm text-carbon-text">
           <li>{t("settings.widgetStep1")}</li>

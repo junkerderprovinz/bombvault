@@ -846,6 +846,7 @@ const ms: Partial<Translations> = {
   "whatsNew.ownFolderMove": "Folder sendiri sesuatu bahagian boleh berpindah ke salah satu destinasi anda dan menggunakan log masuk serta perlindungannya. Beberapa bahagian berpindah dalam satu langkah.",
   "whatsNew.ownFoldersCard": "Destinasi jauh menunjukkan bahagian yang menyimpan sandarannya sendiri di sana.",
   "whatsNew.wizardSignIn": "Destinasi baharu boleh log masuk dengan log masuk yang disimpan dan bukannya kunci baharu.",
+  "whatsNew.listsAsRows": "Setiap senarai memaparkan entrinya sebagai baris yang dipisahkan oleh garis halus, tanpa kotak kelabu di belakangnya.",
   "rclone.save": "Simpan konfigurasi",
   "notify.title": "Pemberitahuan",
   "notify.hint": "Dapatkan pemberitahuan apabila sandaran selesai, dan pilih di bawah acara mana yang mencetuskannya.",

@@ -728,6 +728,7 @@ const ro: Partial<Translations> = {
   "whatsNew.ownFolderMove": "Dosarul propriu al unei secțiuni se poate muta într-una dintre destinațiile tale și preia autentificarea și protecția acesteia. Mai multe secțiuni se mută într-un singur pas.",
   "whatsNew.ownFoldersCard": "O destinație la distanță arată secțiunile care își păstrează acolo copiile de rezervă.",
   "whatsNew.wizardSignIn": "O destinație nouă se poate autentifica cu o autentificare salvată în loc de chei noi.",
+  "whatsNew.listsAsRows": "Fiecare listă își arată intrările ca rânduri despărțite de o linie subțire, fără o casetă gri în spate.",
   "export.encrypt.hint": "Depozitele restic sunt deja criptate. Aceasta criptează opțional artefactele de export în clar (tar.gz de container și VM împreună cu fișierele lor xml, și zip-ul flash) cu age, astfel încât să poată fi stocate sau mutate în siguranță în afara serverului.",
   "export.encrypt.ageInfo": "age (age-encryption.org) este un instrument mic și modern de criptare a fișierelor, o alternativă mai simplă la GPG pentru sigilarea unui fișier către unul sau mai mulți destinatari.",
   "export.encrypt.enable": "Criptează exporturile cu age",

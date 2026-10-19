@@ -12,11 +12,12 @@ import { useConfirm } from "../../../lib/useConfirm";
 import { useTestVerdict } from "../../../lib/useTestVerdict";
 import { useToast } from "../../../lib/toast";
 import { zfsCodeSentence } from "../../../lib/zfsCodes";
-import { ToggleRow } from "../../../pages/settings/shared";
+import { SubCard } from "../../../pages/settings/shared";
 import { Badge } from "../../Badge";
 import { Button } from "../../Button";
-import { InfoBubble } from "../../InfoBubble";
+import { Rows, SettingRow } from "../../storage/rows";
 import { TestButton, VerdictLine } from "../../TestButton";
+import { Toggle } from "../../Toggle";
 import { IconKeyRevoke } from "../../glyphs";
 import { IconZFS } from "../../navGlyphs";
 import { AddReplicaServerDialog } from "./AddReplicaServerDialog";
@@ -32,20 +33,27 @@ function EntryRow({ itemId, dataset }: { itemId: string; dataset: string }) {
   // has the characters ZFS refuses replaced.
   const path = replica ? rootMember(replica, dataset)?.targetPath : undefined;
   return (
-    <li className="flex items-center gap-3 flex-wrap">
-      <span className="text-carbon-textSub" aria-hidden="true">
-        <IconZFS />
-      </span>
-      <div className="flex-1 min-w-0 flex flex-col">
-        <span dir="ltr" className="text-sm text-carbon-text text-start wrap-anywhere">
+    <SettingRow
+      as="li"
+      label={dataset}
+      name={
+        <bdi dir="ltr" className="min-w-0 text-start wrap-anywhere">
           {dataset}
+        </bdi>
+      }
+      glyph={
+        <span className="text-carbon-textSub" aria-hidden="true">
+          <IconZFS />
         </span>
-        {path && (
-          <span dir="ltr" className="font-mono text-caption text-carbon-textMuted text-start wrap-anywhere">
+      }
+      note={
+        path && (
+          <bdi dir="ltr" className="font-mono text-caption text-start wrap-anywhere">
             {path}
-          </span>
-        )}
-      </div>
+          </bdi>
+        )
+      }
+    >
       {replica && (
         <ReplicaStatePill
           replica={replica}
@@ -53,7 +61,7 @@ function EntryRow({ itemId, dataset }: { itemId: string; dataset: string }) {
           peerName={targetName(replica, servers, group?.members ?? [])}
         />
       )}
-    </li>
+    </SettingRow>
   );
 }
 
@@ -176,42 +184,43 @@ export function ReplicaServerPage({ serverId, onBack }: { serverId: string; onBa
         )}
       </div>
 
-      <div className="flex flex-col gap-3 rounded-card bg-carbon-surface2 p-3">
-        <span className="text-xs font-semibold text-carbon-textSub">{t("zfs.replica.server.connection")}</span>
-        <div className="flex items-center justify-between gap-3 flex-wrap text-sm">
-          <span className="text-carbon-textSub">{t("zfs.replica.server.address")}</span>
-          <span dir="ltr" className="font-mono text-xs text-carbon-text">{`${server.user}@${server.host}:${server.port}`}</span>
-        </div>
-        <div className="flex flex-col gap-0.5 text-sm">
-          <div className="flex items-center justify-between gap-3 flex-wrap">
-            <span className="flex items-center gap-1.5 text-carbon-textSub">
-              {t("zfs.replica.server.root")}
-              <InfoBubble tip={t("zfs.replica.server.rootHint")} />
-            </span>
+      <SubCard title={t("zfs.replica.server.connection")}>
+        <Rows>
+          <SettingRow label={t("zfs.replica.server.address")}>
+            <span dir="ltr" className="font-mono text-xs text-carbon-text">{`${server.user}@${server.host}:${server.port}`}</span>
+          </SettingRow>
+          <SettingRow
+            label={t("zfs.replica.server.root")}
+            hint={t("zfs.replica.server.rootHint")}
+            note={
+              <bdi dir="ltr">
+                {t("zfs.replica.server.example").replace("{path}", () => examplePath(server.root, server.folder || ownName))}
+              </bdi>
+            }
+          >
             <span dir="ltr" className="font-mono text-xs text-carbon-text">{server.root}</span>
-          </div>
-          <span className="text-caption text-carbon-textMuted">
-            <bdi dir="ltr">
-              {t("zfs.replica.server.example").replace("{path}", () => examplePath(server.root, server.folder || ownName))}
-            </bdi>
-          </span>
-        </div>
-        <ToggleRow
-          label={t("zfs.replica.server.enabled")}
-          hint={t("zfs.replica.server.enabledHint")}
-          checked={server.enabled}
-          onChange={(next) => void setEnabled(next)}
-          disabled={enabledBusy}
-        />
-        <div data-new="zfs-server-mount">
-          <ToggleRow
-            label={t("zfs.replica.server.mount")}
-            hint={t("zfs.replica.server.mountHint")}
-            checked={server.mountReadOnly}
-            onChange={(next) => void setMountReadOnly(next)}
-            disabled={mountBusy}
-          />
-        </div>
+          </SettingRow>
+          <SettingRow label={t("zfs.replica.server.enabled")} hint={t("zfs.replica.server.enabledHint")}>
+            <Toggle
+              hideLabel
+              label={t("zfs.replica.server.enabled")}
+              checked={server.enabled}
+              onChange={(next) => void setEnabled(next)}
+              disabled={enabledBusy}
+            />
+          </SettingRow>
+          <SettingRow label={t("zfs.replica.server.mount")} hint={t("zfs.replica.server.mountHint")} newId="zfs-server-mount">
+            <Toggle
+              hideLabel
+              label={t("zfs.replica.server.mount")}
+              checked={server.mountReadOnly}
+              onChange={(next) => void setMountReadOnly(next)}
+              disabled={mountBusy}
+            />
+          </SettingRow>
+        </Rows>
+      </SubCard>
+      <div className="flex flex-col gap-3">
         <VerdictLine verdict={check.verdict} />
         <div className="flex flex-wrap items-center justify-end gap-2">
           <Button
@@ -233,18 +242,17 @@ export function ReplicaServerPage({ serverId, onBack }: { serverId: string; onBa
         </div>
       </div>
 
-      <div className="flex flex-col gap-2 rounded-card bg-carbon-surface2 p-3">
-        <span className="text-xs font-semibold text-carbon-textSub">{t("zfs.replica.server.entries")}</span>
+      <SubCard title={t("zfs.replica.server.entries")}>
         {users.length === 0 ? (
           <p className="text-xs text-carbon-textMuted">{t("zfs.replica.server.entriesEmpty")}</p>
         ) : (
-          <ul aria-label={t("zfs.replica.server.entries")} className="flex flex-col gap-2">
+          <Rows as="ul" label={t("zfs.replica.server.entries")}>
             {users.map((u) => (
               <EntryRow key={u.id} itemId={u.id} dataset={u.dataset} />
             ))}
-          </ul>
+          </Rows>
         )}
-      </div>
+      </SubCard>
 
       <div className="flex flex-wrap items-center justify-end gap-2">
         <Button label={t("common.back")} labelKey="common.back" tone="neutral" onClick={onBack} />

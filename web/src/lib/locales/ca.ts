@@ -846,6 +846,7 @@ const ca: Partial<Translations> = {
   "whatsNew.ownFolderMove": "La carpeta pròpia d'una secció pot anar a una de les teves destinacions i prendre'n les credencials i la protecció. Diverses seccions es mouen en un sol pas.",
   "whatsNew.ownFoldersCard": "Una destinació remota mostra les seccions que hi desen les seves còpies de seguretat.",
   "whatsNew.wizardSignIn": "Una destinació nova pot iniciar sessió amb credencials desades en lloc de claus noves.",
+  "whatsNew.listsAsRows": "Cada llista mostra les entrades com a files separades per una línia fina, sense cap requadre gris al darrere.",
   "rclone.save": "Desa la configuració",
   "notify.title": "Notificacions",
   "notify.hint": "Rep una notificació quan acabi una còpia, i tria a sota quins esdeveniments la disparen.",

@@ -80,7 +80,7 @@ export function DumpOnlyRow({
   return (
     <div className="flex flex-col gap-1 py-3 first:pt-0 last:pb-0">
       <div className="flex flex-wrap items-center gap-3">
-        <span className="flex h-9 w-9 flex-none items-center justify-center rounded-control bg-carbon-surface3 text-accentText [&_svg]:h-[18px] [&_svg]:w-[18px]">
+        <span className="flex h-9 w-9 flex-none items-center justify-center rounded-control bg-carbon-surface2 text-accentText [&_svg]:h-[18px] [&_svg]:w-[18px]">
           <IconDatabase />
         </span>
         <span className="min-w-0 flex-1 truncate text-sm font-semibold text-carbon-text">{name}</span>

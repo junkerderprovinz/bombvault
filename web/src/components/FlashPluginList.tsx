@@ -8,6 +8,7 @@ import { useToast } from "../lib/toast";
 import { useConfirm } from "../lib/useConfirm";
 import { Button } from "./Button";
 import { InfoBubble } from "./InfoBubble";
+import { Rows, SettingRow } from "./storage/rows";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -42,26 +43,28 @@ function PluginRow({ plugin, snapshotId, source, t }: { plugin: FlashPlugin; sna
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 py-1 text-xs">
-      {/* On a phone the name keeps a line of its own, so the row's figures
-          and button cannot squeeze it to nothing. */}
-      <span dir="ltr" className="min-w-0 flex-1 basis-40 truncate text-start font-mono text-carbon-text">{plugin.name}</span>
-      <div className="ms-auto flex items-center gap-3">
-        <span dir="ltr" className="text-carbon-textSub">{plugin.version}</span>
-        <span className="w-16 text-end text-carbon-textSub">{humanBytes(plugin.size)}</span>
-        <Button
-          key={shake}
-          label={t("flash.pluginRestore")}
-          labelKey="flash.pluginRestore"
-          tone="accent"
-          onClick={() => void handleRestore()}
-          disabled={isPending}
-          busy={isPending}
-          className={`shrink-0 ${shake ? "glim-shake" : ""}`}
-        />
-      </div>
+    <SettingRow
+      label={plugin.name}
+      name={
+        <bdi dir="ltr" className="min-w-0 wrap-anywhere font-mono">
+          {plugin.name}
+        </bdi>
+      }
+    >
+      <span dir="ltr" className="text-xs text-carbon-textSub">{plugin.version}</span>
+      <span className="w-16 text-end text-xs text-carbon-textSub">{humanBytes(plugin.size)}</span>
+      <Button
+        key={shake}
+        label={t("flash.pluginRestore")}
+        labelKey="flash.pluginRestore"
+        tone="accent"
+        onClick={() => void handleRestore()}
+        disabled={isPending}
+        busy={isPending}
+        className={`shrink-0 ${shake ? "glim-shake" : ""}`}
+      />
       {confirmDialog}
-    </div>
+    </SettingRow>
   );
 }
 
@@ -89,7 +92,7 @@ export function FlashPluginList({ snapshotId, source, t }: { snapshotId: string;
   }, [snapshotId, source]);
 
   return (
-    <div className="ms-4 flex flex-col rounded-control bg-carbon-surface2 px-3 py-2">
+    <div className="ms-4 flex flex-col gap-2">
       <p className="flex items-center gap-1 text-xs text-carbon-textSub">
         {t("flash.pluginsTitle")}
         <InfoBubble tip={t("flash.pluginsHint")} />
@@ -97,9 +100,13 @@ export function FlashPluginList({ snapshotId, source, t }: { snapshotId: string;
       {error && <p className="text-xs text-statusFail">{error}</p>}
       {!error && plugins === null && <p className="text-xs text-carbon-textMuted">{t("dashboard.checking")}</p>}
       {!error && plugins?.length === 0 && <p className="text-xs text-carbon-textMuted">{t("flash.pluginsNone")}</p>}
-      {plugins?.map((p) => (
-        <PluginRow key={p.name} plugin={p} snapshotId={snapshotId} source={source} t={t} />
-      ))}
+      {plugins && plugins.length > 0 && (
+        <Rows>
+          {plugins.map((p) => (
+            <PluginRow key={p.name} plugin={p} snapshotId={snapshotId} source={source} t={t} />
+          ))}
+        </Rows>
+      )}
     </div>
   );
 }

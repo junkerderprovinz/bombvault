@@ -11,7 +11,7 @@ import {
 } from "../../lib/api";
 import { useT } from "../../lib/i18n";
 import { useToast } from "../../lib/toast";
-import { SettingRow } from "../../components/storage/rows";
+import { Rows, SettingRow } from "../../components/storage/rows";
 import { Card } from "./shared";
 
 // PasskeyCard lets the operator sign in with a key on a phone, laptop or
@@ -140,26 +140,22 @@ export function PasskeyCard({
       {/* Every key is listed, including the ones bound to another address:
           hiding those would make a key somebody registered look lost. */}
       {keys.length > 0 && (
-        <ul className="flex flex-col gap-2">
+        <Rows as="ul">
           {keys.map((p) => (
-            // On a phone Remove goes under the name, which beside it is cut
-            // after a word or two, and the name and its facts wrap.
-            <li
+            <SettingRow
               key={p.id}
-              className="flex items-center justify-between gap-3 rounded-control bg-carbon-surface2 px-3 py-2 max-md:flex-col max-md:items-start"
-            >
-              <div className="flex min-w-0 flex-col">
-                <span className="truncate text-sm text-carbon-text max-md:whitespace-normal max-md:wrap-anywhere">{p.name}</span>
-                {/* Two independent facts, joined by a separator. Whether the
-                    second appears depends on the authenticator, so neither
-                    sentence can carry the punctuation itself. */}
-                <span className="truncate text-xs text-carbon-textSub max-md:whitespace-normal max-md:wrap-anywhere">
-                  {p.usableHere
-                    ? t("auth.passkeyUsableHere")
-                    : t("auth.passkeyOtherAddress").replace("{host}", p.rpId)}
+              as="li"
+              label={p.name}
+              // Two independent facts, joined by a separator. Whether the
+              // second appears depends on the authenticator, so neither
+              // sentence can carry the punctuation itself.
+              note={
+                <span>
+                  {p.usableHere ? t("auth.passkeyUsableHere") : t("auth.passkeyOtherAddress").replace("{host}", p.rpId)}
                   {!p.backedUp && <> · {t("auth.passkeyNotSynced")}</>}
                 </span>
-              </div>
+              }
+            >
               <Button
                 label={t("auth.passkeyRemove")}
                 labelKey="auth.passkeyRemove"
@@ -168,9 +164,9 @@ export function PasskeyCard({
                 disabled={busy}
                 hueIndex={hueIndex}
               />
-            </li>
+            </SettingRow>
           ))}
-        </ul>
+        </Rows>
       )}
 
       {/* The name is the operator's own label and means nothing to the

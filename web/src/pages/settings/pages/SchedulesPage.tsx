@@ -13,7 +13,7 @@ import { IconSchedules, IconTrash } from "../../../components/navGlyphs";
 import { NumberField } from "../../../components/NumberField";
 import { PlanButton } from "../../../components/PlanButton";
 import { scheduleStatus } from "../../../components/ScheduleBadge";
-import { SettingRow } from "../../../components/storage/rows";
+import { Rows, SettingRow } from "../../../components/storage/rows";
 import { Toggle } from "../../../components/Toggle";
 import { VMBackupOrderPanel } from "../../../components/vms/VMBackupOrderPanel";
 import { IdleCard } from "../IdleCard";
@@ -187,7 +187,7 @@ export function SchedulesPage() {
           </div>
         </div>
         <SubCard title={t("schedules.hooks")}>
-          <div className="flex flex-col divide-y divide-carbon-border/60">
+          <Rows>
             <HookRow
               label={t("schedules.hookPre")}
               hint={t("schedules.hookPreHint")}
@@ -206,7 +206,7 @@ export function SchedulesPage() {
               onChange={(v) => scheduleUpdate({ everythingPostHook: v })}
               onClear={() => scheduleUpdate({ everythingPostHook: "", everythingPostHookClear: true })}
             />
-          </div>
+          </Rows>
         </SubCard>
       </Card>
 
@@ -250,7 +250,6 @@ export function SchedulesPage() {
                       onChange={(v) => scheduleField(section(kind).offsite, v)}
                       modes={EXACT_CADENCE_MODES}
                       hueIndex={hue}
-                      raised
                     />
                   )}
                   onAdd={(kind) => scheduleField(section(kind).offsite, NEW_COPY_PLAN)}
@@ -262,7 +261,7 @@ export function SchedulesPage() {
         })()}
 
       <Card title={t("schedules.entries")} hint={t("schedules.entriesHint")} hueIndex={nextHue()}>
-        <div className="flex flex-col divide-y divide-carbon-border/60">
+        <Rows>
           <SettingRow label={t("schedules.perItem")} hint={t("schedules.perItemHint")}>
             <Toggle
               hideLabel
@@ -301,7 +300,7 @@ export function SchedulesPage() {
                 </div>
               );
             })}
-        </div>
+        </Rows>
       </Card>
 
       {(settings.containersEnabled || settings.vmsEnabled) && (

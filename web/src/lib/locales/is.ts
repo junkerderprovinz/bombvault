@@ -846,6 +846,7 @@ const is: Partial<Translations> = {
   "whatsNew.ownFolderMove": "Eigin mappa hluta getur flust í einn af áfangastöðum þínum og tekur með innskráningu hans og vernd. Margir hlutar flytja í einu skrefi.",
   "whatsNew.ownFoldersCard": "Fjarlægur áfangastaður sýnir hlutana sem geyma eigin afrit þar.",
   "whatsNew.wizardSignIn": "Nýr áfangastaður getur skráð sig inn með vistaðri innskráningu í stað nýrra lykla.",
+  "whatsNew.listsAsRows": "Allir listar sýna færslur sínar sem línur aðskildar með mjóu striki, án grás kassa á bak við.",
   "rclone.save": "Vista stillingu",
   "notify.title": "Tilkynningar",
   "notify.hint": "Fáðu tilkynningu þegar afritun lýkur, og veldu hér að neðan hvaða atburðir kveikja á henni.",

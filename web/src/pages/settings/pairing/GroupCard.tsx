@@ -5,7 +5,7 @@ import { useState, type ReactNode } from "react";
 import { Card } from "../shared";
 import { Badge } from "../../../components/Badge";
 import { Button } from "../../../components/Button";
-import { InfoBubble } from "../../../components/InfoBubble";
+import { Rows, SettingRow } from "../../../components/storage/rows";
 import { IconLink } from "../../../components/glyphs";
 import { IconFleet, IconZFS } from "../../../components/navGlyphs";
 import { AddReplicaServerDialog } from "../../../components/zfs/replica/AddReplicaServerDialog";
@@ -17,17 +17,13 @@ import { STAGE_BADGE, clock, type PairStage } from "./pairStage";
 
 type T = ReturnType<typeof useT>["t"];
 
-/** Row is one instance of the group: a glyph, its name and what to say about
- *  it. Rows share one height on the desktop, so one without a badge lines up
- *  with the rest. */
+/** Row is one instance of the group: a glyph, its name and what to say about it. */
 function Row({ glyph, name, mark, badge }: { glyph: ReactNode; name: string; mark?: string; badge?: ReactNode }) {
   return (
-    <li className="flex min-h-11 flex-wrap items-center gap-x-2.5 gap-y-0.5 rounded-control bg-carbon-surface2 px-3 py-1.5 md:flex-nowrap">
-      <span className="shrink-0 text-accentText [&>svg]:h-4.5 [&>svg]:w-4.5">{glyph}</span>
-      <span className="min-w-0 flex-1 text-sm font-semibold text-carbon-text wrap-anywhere md:truncate">{name}</span>
-      {mark && <span className="shrink-0 text-caption uppercase tracking-[.12em] text-carbon-textSub">{mark}</span>}
-      {badge && <span className="flex shrink-0 items-center gap-2">{badge}</span>}
-    </li>
+    <SettingRow as="li" label={name} glyph={<span className="text-accentText [&>svg]:h-4.5 [&>svg]:w-4.5">{glyph}</span>}>
+      {mark && <span className="text-caption uppercase tracking-[.12em] text-carbon-textSub">{mark}</span>}
+      {badge}
+    </SettingRow>
   );
 }
 
@@ -64,7 +60,7 @@ function MemberRow({ m, t }: { m: GroupMember; t: T }) {
 
 function WaitRow({ text, seconds }: { text: string; seconds?: number }) {
   return (
-    <div className="flex items-center gap-3 rounded-control bg-carbon-surface2 px-3 py-2.5 text-carbon-textSub">
+    <div className="flex items-center gap-3 border-t border-carbon-border/60 pt-3 text-carbon-textSub">
       <span className="flex shrink-0 gap-1" aria-hidden="true">
         {[0, 1, 2].map((i) => (
           <span key={i} className="glim-wait-dot h-1.5 w-1.5 rounded-full bg-accentText" style={{ animationDelay: `${i * 200}ms` }} />
@@ -99,51 +95,46 @@ export function GroupCard({
   return (
     <Card title={t("instances.title")} hint={t("pairing.group.hint")} hueIndex={hueIndex}>
       <div className="flex min-w-0 flex-col gap-2">
-        <ul className="flex flex-col gap-2" data-testid="members">
-          <Row
-            glyph={<IconFleet />}
-            name={group.name}
-            mark={t("instances.thisInstance")}
-            badge={
-              badge && (
-                <span data-testid="pair-state" className="flex">
-                  {stage === "paired" ? <PairedState t={t} /> : <Badge tone={badge.tone}>{t(badge.key)}</Badge>}
-                </span>
-              )
-            }
-          />
-          {group.members.map((m) => (
-            <MemberRow key={m.id} m={m} t={t} />
-          ))}
-        </ul>
+        <div data-testid="members">
+          <Rows as="ul">
+            <Row
+              glyph={<IconFleet />}
+              name={group.name}
+              mark={t("instances.thisInstance")}
+              badge={
+                badge && (
+                  <span data-testid="pair-state" className="flex">
+                    {stage === "paired" ? <PairedState t={t} /> : <Badge tone={badge.tone}>{t(badge.key)}</Badge>}
+                  </span>
+                )
+              }
+            />
+            {group.members.map((m) => (
+              <MemberRow key={m.id} m={m} t={t} />
+            ))}
+          </Rows>
+        </div>
         {stage === "new" ? (
           <WaitRow text={t("pairing.waitNext")} />
         ) : stage !== "paired" && stage !== "unpaired" ? (
           <WaitRow text={t("pairing.searching")} seconds={stage === "searching" ? joinedAgo : undefined} />
         ) : null}
         {zfs && (
-          <div data-testid="zfs-row" className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-2">
-            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-control bg-carbon-surface2 text-accentText">
-              <IconZFS />
-            </span>
-            <span className="flex min-w-0 flex-[1_1_12rem] flex-col gap-0.5">
-              <span className="text-sm font-semibold text-carbon-text">
-                {t("pairing.group.zfsTitle")}
-                <span className="ms-1.5 inline-flex align-middle">
-                  <InfoBubble tip={t("pairing.group.zfsTip")} />
-                </span>
-              </span>
-              <span className="text-xs text-carbon-textMuted wrap-anywhere">
-                {servers.length > 0 ? servers.map((s) => s.name).join(", ") : t("pairing.group.zfsNone")}
-              </span>
-            </span>
-            <Button
-              label={t("pairing.group.zfsConnect")}
-              labelKey="pairing.group.zfsConnect"
-              glyph={<IconLink />}
-              tone="neutral"
-              onClick={() => setAdding(true)}
-            />
+          <div data-testid="zfs-row" className="border-t border-carbon-border/60 pt-3">
+            <SettingRow
+              label={t("pairing.group.zfsTitle")}
+              glyph={<span className="text-accentText [&>svg]:h-4.5 [&>svg]:w-4.5"><IconZFS /></span>}
+              hint={t("pairing.group.zfsTip")}
+              note={servers.length > 0 ? servers.map((s) => s.name).join(", ") : t("pairing.group.zfsNone")}
+            >
+              <Button
+                label={t("pairing.group.zfsConnect")}
+                labelKey="pairing.group.zfsConnect"
+                glyph={<IconLink />}
+                tone="neutral"
+                onClick={() => setAdding(true)}
+              />
+            </SettingRow>
           </div>
         )}
       </div>

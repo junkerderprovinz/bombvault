@@ -133,7 +133,7 @@ describe("the restore plan", () => {
       en["restoreCheck.status.skip"],
     ]);
     const named = screen.getByText(en["restoreCheck.line.repository"]);
-    expect(named.nextElementSibling?.textContent).toBe("/mnt/user/backups/bombvault/containers");
+    expect(named.parentElement?.nextElementSibling?.textContent).toBe("/mnt/user/backups/bombvault/containers");
   });
 
   it("names the missing dataset a new dataset would go under", () => {

@@ -25,18 +25,18 @@ function Paths({ title, changes }: { title: TranslationKey; changes: BackupChang
       <h3 className="px-1 text-xs font-medium uppercase tracking-wider text-carbon-textMuted">
         {t(title)} · {changes.length}
       </h3>
-      <ul className="flex flex-col gap-1 rounded-control bg-carbon-surface2 px-3 py-2">
+      <Rows as="ul">
         {changes.map((change) => (
           <li
             key={`${change.part ?? ""}:${change.path}`}
             dir="ltr"
-            className="font-mono text-xs text-carbon-text text-start wrap-anywhere"
+            className="py-1.5 font-mono text-xs text-carbon-text text-start wrap-anywhere first:pt-0 last:pb-0"
           >
             {change.part && <span className="text-carbon-textMuted">{change.part} · </span>}
             {change.path}
           </li>
         ))}
-      </ul>
+      </Rows>
     </div>
   );
 }

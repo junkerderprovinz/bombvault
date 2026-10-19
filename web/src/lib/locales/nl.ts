@@ -727,6 +727,7 @@ const nl: Partial<Translations> = {
   "whatsNew.ownFolderMove": "De eigen map van een onderdeel kan naar een van je bestemmingen verhuizen en neemt de inloggegevens en bescherming daarvan over. Meerdere onderdelen verhuizen in één stap.",
   "whatsNew.ownFoldersCard": "Een externe bestemming toont de onderdelen die er hun eigen back-ups bewaren.",
   "whatsNew.wizardSignIn": "Een nieuwe bestemming kan inloggen met opgeslagen inloggegevens in plaats van nieuwe sleutels.",
+  "whatsNew.listsAsRows": "Elke lijst toont zijn items als rijen met een dunne lijn ertussen, zonder grijs vlak erachter.",
   "export.encrypt.hint": "De restic-repositories zijn al versleuteld. Dit versleutelt optioneel de platte export-artefacten (container- en VM-tar.gz met hun xml, en de flash-zip) met age, zodat ze veilig buiten de server kunnen worden bewaard of verplaatst.",
   "export.encrypt.ageInfo": "age (age-encryption.org) is een klein, modern bestandsversleutelingsprogramma, een eenvoudiger alternatief voor GPG om een bestand voor een of meer ontvangers te verzegelen.",
   "export.encrypt.enable": "Exports versleutelen met age",

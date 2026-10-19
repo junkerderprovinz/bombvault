@@ -7,6 +7,7 @@ import { Button } from "../../components/Button";
 import { KIND_LABEL, KIND_SCHEDULE_LABEL, entryName } from "../../components/backups/kinds";
 import { useScheduleSentence } from "../../components/EffectiveScheduleLine";
 import { IconCheck } from "../../components/navGlyphs";
+import { Rows } from "../../components/storage/rows";
 import { Toggle } from "../../components/Toggle";
 import { InstanceWindow } from "../instances/InstanceWindow";
 
@@ -55,7 +56,7 @@ export function ScheduleMembersWindow({
       onClose={onClose}
       footer={<Button label={t("common.done")} labelKey="common.done" glyph={<IconCheck />} tone="accent" onClick={onClose} />}
     >
-      <ul className="flex flex-col divide-y divide-carbon-border/60">
+      <Rows as="ul">
         {items.map((item) => {
           const name = entryName(item, t);
           const said = sentence(item.effectiveSchedule, KIND_SCHEDULE_LABEL[kind]);
@@ -75,7 +76,7 @@ export function ScheduleMembersWindow({
             </li>
           );
         })}
-      </ul>
+      </Rows>
     </InstanceWindow>
   );
 }
