@@ -4,6 +4,7 @@ import type { SpikeCheck } from "../../lib/api";
 import type { useT } from "../../lib/i18n";
 import { statusLabel, statusTone } from "../../lib/runDisplay";
 import { Badge } from "../../components/Badge";
+import { Rows, SettingRow } from "../../components/storage/rows";
 import { Card } from "./Card";
 
 export function SpikeCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hueIndex?: number }) {
@@ -64,21 +65,19 @@ export function SpikeCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hu
       )}
 
       {checks && checks.length > 0 && (
-        // Rows separated by shade (soft tiles), never divider lines.
-        <div className="flex flex-col gap-1">
+        <Rows>
           {checks.map((c) => (
-            <div key={c.Name} className="flex items-center gap-3 rounded-control bg-carbon-surface2 px-2 py-2 text-sm">
+            <SettingRow
+              key={c.Name}
+              label={c.Name}
+              name={<span className="min-w-0 font-mono wrap-anywhere">{c.Name}</span>}
+              note={c.Detail || undefined}
+            >
+              {c.BestEffort && <span className="text-xs text-carbon-textMuted">{t("spike.bestEffort")}</span>}
               <Badge tone={statusTone(chipFor(c))}>{statusLabel(chipFor(c), t)}</Badge>
-              <span className="font-mono text-carbon-text w-32 shrink-0">{c.Name}</span>
-              <span className="text-carbon-textMuted truncate flex-1">{c.Detail}</span>
-              {c.BestEffort && (
-                <span className="text-xs text-carbon-textMuted shrink-0">
-                  {t("spike.bestEffort")}
-                </span>
-              )}
-            </div>
+            </SettingRow>
           ))}
-        </div>
+        </Rows>
       )}
     </Card>
   );

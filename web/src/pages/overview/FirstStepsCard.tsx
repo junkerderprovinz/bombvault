@@ -11,6 +11,7 @@ import { InfoBubble } from "../../components/InfoBubble";
 import { IconAdd, IconPencil } from "../../components/navGlyphs";
 import { StepMark } from "../../components/StepMark";
 import { AddLocationWindow } from "../../components/storage/AddLocationWindow";
+import { Rows } from "../../components/storage/rows";
 import { Toggle } from "../../components/Toggle";
 import { getSettings, putSettings, type Settings, type StorageLocation } from "../../lib/api";
 import { hueVars } from "../../lib/appearance";
@@ -182,7 +183,7 @@ function SectionSwitches({
   };
 
   return (
-    <div className="grid gap-2 md:grid-cols-2">
+    <Rows>
       {SECTIONS.map((section, i) => {
         const choosable =
           settings[section.enabled] && FOUND_KINDS.find((kind) => kind === section.kind && found[kind] > 0);
@@ -191,9 +192,9 @@ function SectionSwitches({
             key={section.kind}
             data-section={section.kind}
             style={hueVars(i) as CSSProperties}
-            className="glim-hue flex items-center gap-3 rounded-control bg-carbon-surface2 px-3 py-2.5"
+            className="glim-hue flex items-center gap-3 py-2.5 first:pt-0 last:pb-0"
           >
-            <span className="glim-row-glyph flex h-[34px] w-[34px] flex-none items-center justify-center rounded-control bg-carbon-surface3 [&_svg]:h-[18px] [&_svg]:w-[18px]">
+            <span className="glim-row-glyph flex h-[34px] w-[34px] flex-none items-center justify-center rounded-control bg-carbon-surface2 [&_svg]:h-[18px] [&_svg]:w-[18px]">
               <KindGlyph kind={section.kind} />
             </span>
             <div className="flex min-w-0 flex-1 flex-col">
@@ -225,7 +226,7 @@ function SectionSwitches({
           </div>
         );
       })}
-    </div>
+    </Rows>
   );
 }
 
@@ -239,7 +240,7 @@ function Waiting({ tally, t }: { tally: Tally; t: T }) {
         {tally.pending > 0 && <span>{t("firstSteps.waiting", tally.pending)}</span>}
         {tally.none > 0 && <span>{t("firstSteps.notProtected", tally.none)}</span>}
       </p>
-      <ul className="flex flex-col divide-y divide-carbon-border/60">
+      <Rows as="ul">
         {left.slice(0, SHOWN_WAITING).map((item, i) => (
           <li
             key={`${item.kind}:${item.key}`}
@@ -263,7 +264,7 @@ function Waiting({ tally, t }: { tally: Tally; t: T }) {
             )}
           </li>
         ))}
-      </ul>
+      </Rows>
       {more > 0 && <p className={HINT}>{t("firstSteps.more", more)}</p>}
     </>
   );
