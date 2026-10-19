@@ -3995,7 +3995,14 @@ func (h *Handler) handleSetCloud(w http.ResponseWriter, r *http.Request) {
 // that sign in with each and the note on what the conversion at start did.
 // GET /api/cloud/creds-sets
 func (h *Handler) handleGetCloudCredSets(w http.ResponseWriter, _ *http.Request) {
-	sets, err := h.svc.CloudCredSets()
+	settings, err := h.store.GetSettings()
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	// The secrets stay in, so the is-set flags below can see them; only the
+	// flags leave this handler.
+	sets, err := h.svc.decodeCloudCredSets(settings)
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return

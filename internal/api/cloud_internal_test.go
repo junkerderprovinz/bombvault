@@ -143,6 +143,39 @@ func TestHandleGetCloudReturnsStorageClass(t *testing.T) {
 	}
 }
 
+func TestTheSignInListReportsWhichSecretsAreSet(t *testing.T) {
+	s := unraidNotifyService(t, nil)
+	if err := s.SetCloudCredSets([]CloudCredSet{
+		{ID: "a", Name: "With key", CloudCreds: CloudCreds{S3KeyID: "AK", S3Secret: "SEC"}},
+		{ID: "b", Name: "Without", CloudCreds: CloudCreds{RESTUser: "bv"}},
+	}); err != nil {
+		t.Fatal(err)
+	}
+	h := &Handler{svc: s, store: s.store}
+	w := httptest.NewRecorder()
+	h.handleGetCloudCredSets(w, httptest.NewRequest(http.MethodGet, "/api/cloud/creds-sets", nil))
+
+	if strings.Contains(w.Body.String(), "SEC") {
+		t.Fatal("a secret left the server")
+	}
+	var env struct {
+		Sets []struct {
+			ID          string `json:"id"`
+			S3SecretSet bool   `json:"s3SecretSet"`
+		} `json:"sets"`
+	}
+	if err := json.NewDecoder(w.Body).Decode(&env); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	got := map[string]bool{}
+	for _, set := range env.Sets {
+		got[set.ID] = set.S3SecretSet
+	}
+	if !got["a"] || got["b"] {
+		t.Fatalf("s3SecretSet by id = %v, want a set and b not", got)
+	}
+}
+
 // TestOffsiteModeForTargetStorageClassFallback: a target without its own
 // storage class inherits the global one. Targets migrated from the single
 // off-site setup all have an empty class, because the SQL migration cannot
