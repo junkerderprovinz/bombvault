@@ -113,17 +113,36 @@ async function renderOffsitePage() {
       </MemoryRouter>
     );
   });
-  await screen.findAllByPlaceholderText(PLACEHOLDER);
 }
 
-// The domain cards come in the order containers, VMs, flash, folders, self-backup.
-function field(i: number): HTMLInputElement {
-  return screen.getAllByPlaceholderText(PLACEHOLDER)[i] as HTMLInputElement;
+/** The card that lists every section's off-site copy. */
+async function copiesCard(): Promise<HTMLElement> {
+  const heading = await screen.findByRole("heading", { name: new RegExp(`^${en["offsite.copies.title"]}`) });
+  return heading.closest("[data-search-card]") as HTMLElement;
 }
 
-async function type(i: number, value: string) {
+/** Opens the window of one section's off-site copy from its row. */
+async function openCopy(section: string) {
+  const card = await copiesCard();
   await act(async () => {
-    fireEvent.change(field(i), { target: { value } });
+    fireEvent.click(within(card).getByRole("button", { name: section }));
+  });
+  await screen.findByPlaceholderText(PLACEHOLDER);
+}
+
+function field(): HTMLInputElement {
+  return screen.getByPlaceholderText(PLACEHOLDER) as HTMLInputElement;
+}
+
+/** The question a new location asks, above the section's window. */
+async function question(): Promise<HTMLElement> {
+  await waitFor(() => expect(screen.getAllByRole("dialog")).toHaveLength(2));
+  return screen.getAllByRole("dialog")[1];
+}
+
+async function type(value: string) {
+  await act(async () => {
+    fireEvent.change(field(), { target: { value } });
   });
   await act(async () => {
     vi.advanceTimersByTime(900);
@@ -164,12 +183,13 @@ describe("the off-site field", () => {
       preview: targetPreview({ formerlyExcluded: [{ identity: "container:plex", skip: ["t-x"] }] }),
     });
     await renderOffsitePage();
-    await type(0, "b2:bucket:containers");
+    await openCopy(en["nav.containers"]);
+    await type("b2:bucket:containers");
     expect(stored.puts).toHaveLength(0);
     await act(async () => {
-      fireEvent.keyDown(field(0), { key: "Enter" });
+      fireEvent.keyDown(field(), { key: "Enter" });
     });
-    const dialog = await screen.findByRole("dialog");
+    const dialog = await question();
     expect(dialog.textContent).toContain("At its first run b2:bucket:containers receives every item not set to Local.");
     fireEvent.click(within(dialog).getByRole("switch", { name: "Leave these out here too" }));
     await act(async () => {
@@ -186,35 +206,38 @@ describe("the off-site field", () => {
 
   it("keeps the typed location when the question is cancelled", async () => {
     await renderOffsitePage();
-    await type(0, "b2:bucket:containers");
+    await openCopy(en["nav.containers"]);
+    await type("b2:bucket:containers");
     await act(async () => {
-      fireEvent.blur(field(0));
+      fireEvent.blur(field());
     });
     await act(async () => {
-      fireEvent.click(within(await screen.findByRole("dialog")).getByRole("button", { name: en["common.cancel"] }));
+      fireEvent.click(within(await question()).getByRole("button", { name: en["common.cancel"] }));
     });
-    expect(field(0).value).toBe("b2:bucket:containers");
+    expect(field().value).toBe("b2:bucket:containers");
     expect(stored.puts).toHaveLength(0);
   });
 
   it("clears a location without asking", async () => {
     stored.containersOffsite = "b2:bucket:containers";
     await renderOffsitePage();
-    await type(0, "");
+    await openCopy(en["nav.containers"]);
+    await type("");
     await act(async () => {
-      fireEvent.click(within(field(0).parentElement as HTMLElement).getByRole("button", { name: en["settings.save"] }));
+      fireEvent.click(within(field().parentElement as HTMLElement).getByRole("button", { name: en["settings.save"] }));
     });
     await waitFor(() => expect(stored.puts).toHaveLength(1));
     expect(stored.puts[0].containersOffsite).toBe("");
-    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(screen.getAllByRole("dialog")).toHaveLength(1);
     expect(fake.callsTo("getNewTargetPreview")).toEqual([]);
   });
 
   it("saves the flash field on Enter without asking", async () => {
     await renderOffsitePage();
-    await type(2, "b2:bucket:flash");
+    await openCopy(en["nav.flash"]);
+    await type("b2:bucket:flash");
     await act(async () => {
-      fireEvent.keyDown(field(2), { key: "Enter" });
+      fireEvent.keyDown(field(), { key: "Enter" });
     });
     await waitFor(() => expect(stored.puts).toHaveLength(1));
     expect(stored.puts[0].flashOffsite).toBe("b2:bucket:flash");
@@ -226,21 +249,34 @@ describe("the off-site field", () => {
 const bare = (text: string) => (label: string) => label.replace(/[\u2066-\u2069]/g, "") === text;
 
 describe("setting up an off-site copy", () => {
-  it("opens the wizard in a window and leaves the field on the card", async () => {
+  it("opens the setup in a window from the section's row", async () => {
     await renderOffsitePage();
+    const card = await copiesCard();
     await act(async () => {
-      fireEvent.click(screen.getAllByRole("button", { name: en["offsite.wizard.setup"] })[0]);
+      fireEvent.click(within(card).getAllByRole("button", { name: en["offsite.wizard.setup"] })[0]);
     });
     const title = en["offsite.copyDomainTitle"].replace("{domain}", en["nav.containers"]);
     const window = screen.getByRole("dialog", { name: title });
     expect(within(window).getByText(en["offsite.wizard.step1"])).toBeTruthy();
-    expect(field(0)).toBeTruthy();
+  });
+
+  it("lists every section on one card and keeps the location in its window", async () => {
+    await renderOffsitePage();
+    const card = await copiesCard();
+    for (const section of ["nav.containers", "nav.vms", "nav.flash", "nav.files", "nav.zfs", "nav.config"] as const) {
+      expect(within(card).getByRole("button", { name: en[section] })).toBeTruthy();
+    }
+    expect(screen.queryByPlaceholderText(PLACEHOLDER)).toBeNull();
+    await openCopy(en["nav.vms"]);
+    expect(screen.getByRole("dialog", { name: en["offsite.copyDomainTitle"].replace("{domain}", en["nav.vms"]) })).toBeTruthy();
   });
 
   it("explains the location's syntax in bubbles instead of lines of text", async () => {
     await renderOffsitePage();
+    await copiesCard();
     expect(screen.queryByText(en["settings.offsiteHint"])).toBeNull();
     expect(screen.getAllByLabelText(en["settings.offsiteHint"]).length).toBeGreaterThan(0);
+    await openCopy(en["nav.containers"]);
     expect(screen.getAllByLabelText(bare(en["offsite.repoLocalHint"])).length).toBeGreaterThan(0);
   });
 });

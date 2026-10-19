@@ -44,7 +44,7 @@ describe("the settings search index", () => {
     const targetRules = [...targetSource.matchAll(grid)].map(([, key, hint]) => ({ key, hint }));
     expect(targetRules.map((r) => r.key)).toContain("settings.retentionYearly");
 
-    for (const card of SETTINGS_INDEX.storage.filter((c) => c.title === "offsite.copyDomainTitle")) {
+    for (const card of SETTINGS_INDEX.storage.filter((c) => c.title === "offsite.copies.title")) {
       for (const rule of targetRules) expect(card.rows).toContainEqual(rule);
     }
   });
@@ -52,8 +52,8 @@ describe("the settings search index", () => {
   it("has the compression choice on every card that draws one", () => {
     const row = { key: "settings.compression", hint: "settings.compressionInfo" };
     expect(pageSource("storage")).toContain("<ReposCard");
-    const cards = SETTINGS_INDEX.storage.filter((c) => c.title === "repos.title" || c.title === "offsite.copyDomainTitle");
-    expect(cards).toHaveLength(7);
+    const cards = SETTINGS_INDEX.storage.filter((c) => c.title === "repos.title" || c.title === "offsite.copies.title");
+    expect(cards).toHaveLength(2);
     for (const card of cards) expect(card.rows).toContainEqual(row);
   });
 

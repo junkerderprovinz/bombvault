@@ -103,7 +103,7 @@ function TargetRow({
 }) {
   const test = useTestVerdict([tgt.repo, tgt.credsRef, tgt.storageClass], t("offsite.testFailed"));
   return (
-    <div className="glim-tile flex items-start justify-between gap-3 rounded-card p-3 max-md:flex-col">
+    <div className="flex items-start justify-between gap-3 py-3 first:pt-0 last:pb-0 max-md:flex-col">
       <div className="flex min-w-0 flex-col gap-1">
         <span className="text-sm text-carbon-text truncate max-md:whitespace-normal max-md:wrap-anywhere">{tgt.name || tgt.repo}</span>
         <span dir="ltr" className="text-xs text-carbon-textMuted font-mono break-all text-start">{tgt.repo}</span>
@@ -114,7 +114,7 @@ function TargetRow({
             to several lines; without `wrap` the tinted background would
             stay one line tall. */}
         <span className="flex flex-wrap gap-2">
-          <Badge tone="neutral" size={ROW_BADGE_SIZE} wrap className="glim-tile-raise">
+          <Badge tone="neutral" size={ROW_BADGE_SIZE} wrap>
             {tgt.storageClass || t("cloud.storageClass.default")}
           </Badge>
           {!tgt.enabled && (
@@ -139,7 +139,6 @@ function TargetRow({
           test={test}
           hueIndex={hueIndex}
           onClick={() => void test.run(async () => offsiteVerdict(await testOffsiteTarget(tgt.id), t))}
-          className="glim-tile-raise"
         />
         {children}
       </div>
@@ -385,7 +384,7 @@ export function OffsiteTargetsSection({
     "rounded-control bg-carbon-surface3 text-carbon-text text-sm px-3 py-1.5 w-full glim-field-focus-well";
 
   return (
-    <div className="mt-2 flex flex-col gap-3">
+    <div className="flex flex-col gap-3">
       {confirmDialog}
       {newTargetDialog}
       <div className="flex flex-col gap-0.5">
@@ -401,44 +400,45 @@ export function OffsiteTargetsSection({
         <span className="text-xs text-carbon-textMuted">{t("offsite.targets.none")}</span>
       )}
 
-      {/* Existing additional targets */}
-      {targets.map((tgt) => (
-        <TargetRow key={tgt.id} tgt={tgt} from={destinationOf(tgt)} t={t} hueIndex={hueIndex}>
-          <Button
-            label={t("offsite.targets.edit")}
-            labelKey="offsite.targets.edit"
-            tone="neutral"
-            hueIndex={hueIndex}
-            onClick={() => openEdit(tgt)}
-            className="glim-tile-raise"
-          />
-          {/* Neutral like Edit, not red. The two-click confirm, whose label
-              changes, is what guards the removal. */}
-          {confirmRemove === tgt.id ? (
-            <Button
-              key={removeShake}
-              label={t("offsite.targets.confirmRemove")}
-              labelKey="offsite.targets.confirmRemove"
-              tone="neutral"
-              hueIndex={hueIndex}
-              onClick={() => void remove(tgt.id)}
-              disabled={removingId === tgt.id}
-              busy={removingId === tgt.id}
-              title={removingId === tgt.id ? t("offsite.targets.removing") : undefined}
-              className={removeShake ? "glim-tile-raise glim-shake" : "glim-tile-raise"}
-            />
-          ) : (
-            <Button
-              label={t("offsite.targets.remove")}
-              labelKey="offsite.targets.remove"
-              tone="neutral"
-              hueIndex={hueIndex}
-              onClick={() => setConfirmRemove(tgt.id)}
-              className="glim-tile-raise"
-            />
-          )}
-        </TargetRow>
-      ))}
+      {targets.length > 0 && (
+        <Rows>
+          {targets.map((tgt) => (
+            <TargetRow key={tgt.id} tgt={tgt} from={destinationOf(tgt)} t={t} hueIndex={hueIndex}>
+              <Button
+                label={t("offsite.targets.edit")}
+                labelKey="offsite.targets.edit"
+                tone="neutral"
+                hueIndex={hueIndex}
+                onClick={() => openEdit(tgt)}
+              />
+              {/* Neutral like Edit, not red. The two-click confirm, whose label
+                  changes, is what guards the removal. */}
+              {confirmRemove === tgt.id ? (
+                <Button
+                  key={removeShake}
+                  label={t("offsite.targets.confirmRemove")}
+                  labelKey="offsite.targets.confirmRemove"
+                  tone="neutral"
+                  hueIndex={hueIndex}
+                  onClick={() => void remove(tgt.id)}
+                  disabled={removingId === tgt.id}
+                  busy={removingId === tgt.id}
+                  title={removingId === tgt.id ? t("offsite.targets.removing") : undefined}
+                  className={removeShake ? "glim-shake" : ""}
+                />
+              ) : (
+                <Button
+                  label={t("offsite.targets.remove")}
+                  labelKey="offsite.targets.remove"
+                  tone="neutral"
+                  hueIndex={hueIndex}
+                  onClick={() => setConfirmRemove(tgt.id)}
+                />
+              )}
+            </TargetRow>
+          ))}
+        </Rows>
+      )}
 
       {/* Editor form (new or edit) */}
       {draft && (
@@ -602,7 +602,7 @@ export function OffsiteTargetsSection({
               glyph={<IconAdd />}
               tone="neutral"
               onClick={() => void addFrom(d)}
-              className="glim-btn-wrap glim-tile-raise"
+              className="glim-btn-wrap"
             />
           ))}
           <InfoBubble tip={t("offsite.targets.addFromTip")} />

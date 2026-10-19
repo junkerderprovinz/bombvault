@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { replicateOffsite, testOffsite } from "../../../lib/api";
-import { useOffsiteTargets, type OffsiteDomain } from "../../../lib/useOffsiteTargets";
+import type { OffsiteDomain } from "../../../lib/useOffsiteTargets";
 import { NumberField } from "../../../components/NumberField";
-import { Rows, SettingRow } from "../../../components/storage/rows";
+import { DomainGlyph, Rows, SettingRow } from "../../../components/storage/rows";
 import { OffsiteWizard } from "../../../components/OffsiteWizard";
 import { OffsiteLocationInput } from "../../../components/placement/OffsiteLocationInput";
 import { CompressionSelector, saveCompression } from "../../../components/CompressionSelector";
@@ -10,6 +10,9 @@ import { OffsiteTargetsSection } from "../../../components/OffsiteTargetsSection
 import { TestButton, VerdictLine } from "../../../components/TestButton";
 import { useTestVerdict } from "../../../lib/useTestVerdict";
 import { offsiteVerdict } from "../../../lib/offsiteVerdict";
+import { offQualifier } from "../../../lib/placement";
+import { DOMAIN_LABEL } from "../../../lib/storageLocations";
+import { Badge } from "../../../components/Badge";
 import { Button } from "../../../components/Button";
 import type { Settings } from "../../../lib/api";
 import { useT } from "../../../lib/i18n";
@@ -21,16 +24,13 @@ import { InstanceWindow } from "../../instances/InstanceWindow";
 import { Card, type SaveState } from "../shared";
 import { useSettings } from "../settingsStore";
 
-function ReplicateNowButton({
-  domain,
-  t,
-  hueIndex,
-}: {
-  domain: OffsiteDomain;
-  t: ReturnType<typeof useT>["t"];
-  /** Hue position of the enclosing domain card, so the button takes its colour. */
-  hueIndex?: number;
-}) {
+type T = ReturnType<typeof useT>["t"];
+
+// Self-backup ("config") is listed with the other sections: the backend gives
+// it its own off-site repository and targets like any other.
+const DOMAINS: OffsiteDomain[] = ["containers", "vms", "flash", "files", "zfs", "config"];
+
+function ReplicateNowButton({ domain, t }: { domain: OffsiteDomain; t: T }) {
   const { push } = useToast();
   const [busy, setBusy] = useState(false);
   async function go() {
@@ -49,16 +49,13 @@ function ReplicateNowButton({
     }
   }
   return (
-    // The label is the stable name; the running state rides in `title` and in
-    // the spinner. A label that changed to "Replicating…" mid-action would
-    // resize the button while you look at it, which is what the width stages
-    // exist to prevent (#178).
+    // The running state rides in `title` and the spinner, so the label never
+    // changes while the button works.
     <Button
       label={t("offsite.replicateNow")}
       labelKey="offsite.replicateNow"
       glyph={<IconSync />}
-      tone="accent"
-      hueIndex={hueIndex}
+      glyphOnly
       onClick={() => void go()}
       disabled={busy}
       busy={busy}
@@ -67,73 +64,95 @@ function ReplicateNowButton({
   );
 }
 
-// OffsiteDomainBar heads a domain's off-site card: the connection test,
-// replicate now and the button that opens the setup, with the test's verdict
-// line above them.
-function OffsiteDomainBar({
+/**
+ * CopyRow is one section's off-site copy on a line: where it goes, and the
+ * test, replicate now and setup it has. A click on the row opens the rest.
+ */
+function CopyRow({
   domain,
-  label,
   repo,
-  wizardOpen,
-  onOpenWizard,
-  t,
-  hueIndex,
+  target,
+  more,
+  setupOpen,
+  onOpen,
+  onSetup,
 }: {
   domain: OffsiteDomain;
-  label: string;
   repo: string;
-  wizardOpen: boolean;
-  onOpenWizard: () => void;
-  t: ReturnType<typeof useT>["t"];
-  hueIndex?: number;
+  /** The off-site field's own target, once the server has one for it. */
+  target?: { name: string; enabled: boolean; destinationId?: string };
+  /** How many more storage locations the section copies to. */
+  more: number;
+  setupOpen: boolean;
+  onOpen: () => void;
+  onSetup: () => void;
 }) {
-  // The test probes the primary target only, and each additional target has
-  // its own Test in OffsiteTargetsSection (#138). With more than one
-  // destination the tooltip says so; as a label it would change the button's
-  // width the moment a second destination is added.
-  const multiTarget = useOffsiteTargets(domain).length > 1;
-  // Opening the wizard counts as a change: credentials edited there are not
-  // part of `repo`.
-  const test = useTestVerdict([repo, wizardOpen], t("offsite.testFailed"));
+  const { t } = useT();
+  // Credentials edited in the setup are not part of `repo`, so opening it
+  // counts as a change too.
+  const test = useTestVerdict([repo, setupOpen], t("offsite.testFailed"));
+  const where = target?.destinationId && target.enabled ? target.name : repo;
   return (
-    <>
-      <VerdictLine verdict={test.verdict} />
-      <div className="flex items-center justify-between">
-        <span className="flex items-center gap-1.5 text-xs text-carbon-textSub">
-          {label}
-          <InfoBubble tip={withLtrIsolates(t("offsite.repoLocalHint"), REPO_LOCAL_HINT_LTR_FRAGMENTS)} />
-        </span>
-        <span className="inline-flex items-center gap-2">
-          {repo && !wizardOpen && (
+    <div className="relative flex flex-col gap-1.5 py-3 first:pt-0 last:pb-0">
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+        <div className="flex min-w-0 flex-1 basis-56 items-center gap-3">
+          <DomainGlyph domain={domain} />
+          <span className="flex min-w-0 flex-col gap-0.5">
+            {/* The button's box is stretched over the row, so a click anywhere
+                beside the actions opens the section's copy. */}
+            <button
+              type="button"
+              onClick={onOpen}
+              className="text-start text-sm font-semibold text-carbon-text after:absolute after:inset-0 after:rounded-control focus-visible:outline-none focus-visible:after:outline-solid focus-visible:after:outline-2 focus-visible:after:outline-(--focus-ring)"
+            >
+              {t(DOMAIN_LABEL[domain])}
+            </button>
+            <span className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-xs text-carbon-textMuted">
+              {repo ? (
+                <span dir="ltr" className="min-w-0 truncate text-start font-mono">
+                  {where}
+                </span>
+              ) : (
+                <span>{t("dashboard.noOffsite")}</span>
+              )}
+              {target && !target.enabled && (
+                <Badge tone="muted" size="small">
+                  {offQualifier(t)}
+                </Badge>
+              )}
+              {more > 0 && (
+                <span>
+                  {t("offsite.targets.title")}: {more}
+                </span>
+              )}
+            </span>
+          </span>
+        </div>
+        <span className="relative z-10 inline-flex flex-wrap items-center gap-2">
+          {repo && !setupOpen && (
             <>
               <TestButton
                 label={t("offsite.test")}
                 labelKey="offsite.test"
                 glyph={<IconCheck />}
-                tone="accent"
-                hueIndex={hueIndex}
+                glyphOnly
                 test={test}
                 onClick={() => void test.run(async () => offsiteVerdict(await testOffsite(domain), t))}
-                title={multiTarget ? t("offsite.testPrimary") : undefined}
+                title={more > 0 ? t("offsite.testPrimary") : undefined}
               />
-              <ReplicateNowButton domain={domain} t={t} hueIndex={hueIndex} />
+              <ReplicateNowButton domain={domain} t={t} />
             </>
           )}
-          <Button
-            label={t("offsite.wizard.setup")}
-            labelKey="offsite.wizard.setup"
-            glyph={<IconGear />}
-            tone="accent"
-            hueIndex={hueIndex}
-            onClick={onOpenWizard}
-          />
+          <Button label={t("offsite.wizard.setup")} labelKey="offsite.wizard.setup" glyph={<IconGear />} glyphOnly onClick={onSetup} />
+          <Button label={t("offsite.targets.edit")} labelKey="offsite.targets.edit" glyphOnly onClick={onOpen} />
         </span>
       </div>
-    </>
+      <VerdictLine verdict={test.verdict} />
+    </div>
   );
 }
 
-/** OffsiteCards are each domain's off-site copy and the limits all copies
+/** OffsiteCards hold every section's off-site copy and the limits all copies
  *  share. */
 export function OffsiteCards({ nextHue }: { nextHue: () => number }) {
   const { t } = useT();
@@ -141,70 +160,35 @@ export function OffsiteCards({ nextHue }: { nextHue: () => number }) {
 
   const [, setOffsiteSaveState] = useState<SaveState>("idle");
   const [, setOffsiteSaveError] = useState<string | null>(null);
-  // The domain whose setup window is open.
-  const [offsiteWizard, setOffsiteWizard] = useState<OffsiteDomain | null>(null);
+  // The section whose window is open, and the one whose setup is.
+  const [details, setDetails] = useState<OffsiteDomain | null>(null);
+  const [wizard, setWizard] = useState<OffsiteDomain | null>(null);
 
   const [, setLimSaveState] = useState<SaveState>("idle");
   const [, setLimSaveError] = useState<string | null>(null);
 
-  return (
-    <>
-      {/* The anchor old /settings/offsite links land on. */}
-      <div id="offsite" className="flex scroll-mt-6 flex-col gap-6">
-      {/* Self-backup ("config") is listed with the other domains (#176): the
-          backend gives it its own off-site repo and targets like any other,
-          so it gets the wizard, the connection test and per-destination
-          credentials too. */}
-      {([
-        ["containersOffsite", "nav.containers", "containers"],
-        ["vmsOffsite", "nav.vms", "vms"],
-        ["flashOffsite", "nav.flash", "flash"],
-        ["filesOffsite", "nav.files", "files"],
-        ["zfsOffsite", "nav.zfs", "zfs"],
-        ["configOffsite", "nav.config", "config"],
-      ] as const).map(([repoKey, label, domain]) => {
-        const wizardOpen = offsiteWizard === domain;
-        // One hue position per domain, shared by the card heading and every
-        // control inside it, so a domain's buttons match its card.
-        const hueIdx = nextHue();
-        const fieldTarget = allTargets.find((x) => x.domain === domain && x.sortOrder === 0);
-        const title = t("offsite.copyDomainTitle").replace("{domain}", t(label));
-        return (
-        <Card key={repoKey} title={title} hint={t("settings.offsiteHint")} hueIndex={hueIdx}>
-          <div className="flex flex-col gap-1">
-            <OffsiteDomainBar
-              domain={domain}
-              label={t(label)}
-              repo={settings[repoKey]}
-              wizardOpen={wizardOpen}
-              onOpenWizard={() => setOffsiteWizard(domain)}
-              t={t}
-              hueIndex={hueIdx}
-            />
-            {wizardOpen && (
-              <InstanceWindow
-                title={title}
-                onClose={() => setOffsiteWizard(null)}
-                footer={
-                  <Button
-                    label={t("offsite.wizard.close")}
-                    labelKey="offsite.wizard.close"
-                    glyph={<IconClose />}
-                    tone="accent"
-                    onClick={() => setOffsiteWizard(null)}
-                  />
-                }
-              >
-                <OffsiteWizard
-                  domain={domain}
-                  settings={settings}
-                  setSettings={setSettings}
-                  save={save}
-                  t={t}
-                  hueIndex={hueIdx}
-                />
-              </InstanceWindow>
-            )}
+  const hue = nextHue();
+  const titleOf = (domain: OffsiteDomain) => t("offsite.copyDomainTitle").replace("{domain}", t(DOMAIN_LABEL[domain]));
+  const primaryOf = (domain: OffsiteDomain) => allTargets.find((x) => x.domain === domain && x.sortOrder === 0);
+
+  function windowFor(domain: OffsiteDomain) {
+    const repoKey = `${domain}Offsite` as const;
+    const fieldTarget = primaryOf(domain);
+    return (
+      <InstanceWindow
+        title={titleOf(domain)}
+        hint={t("settings.offsiteHint")}
+        onClose={() => setDetails(null)}
+        footer={
+          <Button label={t("common.close")} labelKey="common.close" glyph={<IconClose />} tone="accent" onClick={() => setDetails(null)} />
+        }
+      >
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-2">
+            <span className="flex items-center gap-1.5 text-sm text-carbon-text">
+              {t("dest.location")}
+              <InfoBubble tip={withLtrIsolates(t("offsite.repoLocalHint"), REPO_LOCAL_HINT_LTR_FRAGMENTS)} />
+            </span>
             <OffsiteLocationInput
               domain={domain}
               value={settings[repoKey]}
@@ -215,26 +199,64 @@ export function OffsiteCards({ nextHue }: { nextHue: () => number }) {
               className="rounded-control bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono glim-field-focus text-start"
               onSave={(v) => save({ [repoKey]: v } as Partial<Settings>, setOffsiteSaveState, setOffsiteSaveError)}
               onFromDestination={(location, immutable) => {
-                // The server already holds both, so the next save of
-                // another card must not send the old values back.
+                // The server already holds both, so the next save of another
+                // card must not send the old values back.
                 const patch = { [repoKey]: location, [`${domain}OffsiteImmutable`]: immutable } as Partial<Settings>;
                 setSettings((s) => (s ? { ...s, ...patch } : s));
                 if (savedBaseline.current) savedBaseline.current = { ...savedBaseline.current, ...patch };
               }}
             />
-            {settings[repoKey] && (
-              <CompressionSelector
-                value={settings.compression[`offsite:${domain}`]}
-                onChange={(c) => void saveCompression(`offsite:${domain}`, c, settings, setSettings, save)}
-              />
-            )}
-            {/* Extra copies of this domain beyond the primary above, managed
-                through the CRUD API. */}
-            <OffsiteTargetsSection domain={domain} t={t} hueIndex={hueIdx} />
           </div>
+          {settings[repoKey] && (
+            <CompressionSelector
+              value={settings.compression[`offsite:${domain}`]}
+              onChange={(c) => void saveCompression(`offsite:${domain}`, c, settings, setSettings, save)}
+            />
+          )}
+          <OffsiteTargetsSection domain={domain} t={t} hueIndex={hue} />
+        </div>
+      </InstanceWindow>
+    );
+  }
+
+  return (
+    <>
+      {/* The anchor old /settings/offsite links land on. */}
+      <div id="offsite" className="flex scroll-mt-6 flex-col gap-6">
+        <Card title={t("offsite.copies.title")} hint={t("settings.offsiteHint")} hueIndex={hue} newId="settings-offsite-copies">
+          <Rows>
+            {DOMAINS.map((domain) => (
+              <CopyRow
+                key={domain}
+                domain={domain}
+                repo={settings[`${domain}Offsite`]}
+                target={primaryOf(domain)}
+                more={allTargets.filter((x) => x.domain === domain && x.sortOrder > 0 && x.enabled).length}
+                setupOpen={wizard === domain}
+                onOpen={() => setDetails(domain)}
+                onSetup={() => setWizard(domain)}
+              />
+            ))}
+          </Rows>
         </Card>
-        );
-      })}
+        {details && windowFor(details)}
+        {wizard && (
+          <InstanceWindow
+            title={titleOf(wizard)}
+            onClose={() => setWizard(null)}
+            footer={
+              <Button
+                label={t("offsite.wizard.close")}
+                labelKey="offsite.wizard.close"
+                glyph={<IconClose />}
+                tone="accent"
+                onClick={() => setWizard(null)}
+              />
+            }
+          >
+            <OffsiteWizard domain={wizard} settings={settings} setSettings={setSettings} save={save} t={t} hueIndex={hue} />
+          </InstanceWindow>
+        )}
       </div>
 
       <Card title={t("settings.offsiteLimits")} hint={t("settings.limitHint")} hueIndex={nextHue()}>

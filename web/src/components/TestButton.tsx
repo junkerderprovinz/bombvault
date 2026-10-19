@@ -44,6 +44,7 @@ export function TestButton({
   hueIndex,
   disabled = false,
   title,
+  glyphOnly = false,
   className = "",
 }: {
   label: string;
@@ -60,6 +61,8 @@ export function TestButton({
   disabled?: boolean;
   /** Extra explanation at rest. */
   title?: string;
+  /** Shows the glyph alone, as Button's glyphOnly does. */
+  glyphOnly?: boolean;
   className?: string;
 }) {
   const { t } = useT();
@@ -79,6 +82,7 @@ export function TestButton({
       disabled={disabled || running}
       busy={running}
       title={verdict ? label : title}
+      glyphOnly={glyphOnly}
       className={`${shaking ? "glim-shake" : ""} ${className}`.trim()}
     />
   );

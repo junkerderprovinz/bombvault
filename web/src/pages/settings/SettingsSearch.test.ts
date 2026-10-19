@@ -48,11 +48,11 @@ describe("the settings index in English", () => {
     search(items, query)
       .filter((h) => !h.inHint)
       .map((h) => `${h.item.page}: ${h.item.cardName ?? ""}`);
-  const copyCards = (hits: string[]) => hits.filter((h) => h.startsWith("storage: Off-site copy"));
+  const copyCards = (hits: string[]) => hits.filter((h) => h === `storage: ${en["offsite.copies.title"]}`);
 
-  it("leads the yearly rule to each off-site destination", () => {
+  it("leads the yearly rule to the off-site copies", () => {
     const hits = where("keep yearly");
-    expect(copyCards(hits)).toHaveLength(6);
+    expect(copyCards(hits)).toHaveLength(1);
     expect(hits.every((h) => h.startsWith("storage: "))).toBe(true);
   });
 
@@ -62,10 +62,10 @@ describe("the settings index in English", () => {
     expect(where("mark all as seen")).toEqual([`info: ${en["about.version"]}`]);
   });
 
-  it("leads compression to the named repositories and each off-site destination", () => {
+  it("leads compression to the named repositories and the off-site copies", () => {
     const hits = where("compression");
     expect(hits).toContain(`storage: ${en["repos.title"]}`);
-    expect(copyCards(hits)).toHaveLength(6);
+    expect(copyCards(hits)).toHaveLength(1);
   });
 
   it("leads a search for where keep rules are set to the pointer to the storage locations", () => {
