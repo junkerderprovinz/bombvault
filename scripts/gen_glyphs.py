@@ -69,6 +69,7 @@ ACTION = [
     "IconFilter",
     "IconSort",
     "IconArchive",
+    "IconStar",
     # Brand marks. They are passed at the one call site that means them and
     # never wired into glyphFor, where a rule keyed on "coffee" or "repo" would
     # put a company's logo on settings that have nothing to do with it.

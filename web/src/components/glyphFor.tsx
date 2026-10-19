@@ -37,6 +37,7 @@ import {
   IconShieldOn,
   IconSignIn,
   IconSignOut,
+  IconStar,
   IconStop,
   IconUnlock,
   IconUpload,
@@ -62,6 +63,9 @@ const RULES: Rule[] = [
   [/\.(delete|remove)|confirmRemove|removeExclusion|assistRemove|forget/i, () => <IconTrash />],
   [/prune|reclaim/i, () => <IconPrune />],
   [/unlock/i, () => <IconUnlock />],
+
+  // Above the sign-in rule, which every signIns key would otherwise match.
+  [/makeDefault/i, () => <IconStar />],
 
   // Creation and editing.
   [/\.add|addSet|addPreset|addTarget|addTag|credSets\.add|registryAdd|passkeyAdd|passkeyCreate|certAddAddress/i, () => <IconAdd />],

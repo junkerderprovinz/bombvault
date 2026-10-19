@@ -1,6 +1,7 @@
 import { useEffect, useId, useState } from "react";
 import { Badge } from "../../components/Badge";
 import { Button } from "../../components/Button";
+import { IconStar } from "../../components/glyphs";
 import { InfoBubble } from "../../components/InfoBubble";
 import { IconCheck } from "../../components/navGlyphs";
 import { RevealInput } from "../../components/RevealInput";
@@ -300,6 +301,7 @@ export function SignInsCard({ hueIndex }: { hueIndex?: number }) {
                       {s.restUser && <Badge tone="neutral" size="small">restic REST</Badge>}
                       {s.default && (
                         <Badge tone="ok" size="small">
+                          <IconStar />
                           {t("signIns.default")}
                         </Badge>
                       )}

@@ -6,6 +6,7 @@
 //
 // Attribution, required by the licences below:
 //   Free icons from Streamline - https://streamlinehq.com (CC BY 4.0)
+//   Tabler Icons - https://tabler.io/icons (MIT)
 //   Material Design Icons - https://pictogrammers.com/library/mdi/ (Apache 2.0)
 //   Simple Icons - https://simpleicons.org (CC0)
 //
@@ -424,6 +425,15 @@ export function IconArchive() {
   return (
     <G box="0 0 14 14">
       <path fillRule="evenodd" d="M0 2C0 1.17157 0.671573 0.5 1.5 0.5h11c0.8284 0 1.5 0.67157 1.5 1.5v1.5c0 0.82843 -0.6716 1.5 -1.5 1.5h-11C0.671573 5 0 4.32843 0 3.5V2Zm13 4.25H1V12c0 0.8284 0.67157 1.5 1.5 1.5h9c0.8284 0 1.5 -0.6716 1.5 -1.5V6.25ZM5.5 7.875c-0.34518 0 -0.625 0.27982 -0.625 0.625s0.27982 0.625 0.625 0.625h3c0.34518 0 0.625 -0.27982 0.625 -0.625s-0.27982 -0.625 -0.625 -0.625h-3Z" clipRule="evenodd" />
+    </G>
+  );
+}
+
+/** Default, preferred. */
+export function IconStar() {
+  return (
+    <G box="1.007 0.513 21.972 21.972">
+      <path d="M8.243 7.34l-6.38 .925l-.113 .023a1 1 0 0 0 -.44 1.684l4.622 4.499l-1.09 6.355l-.013 .11a1 1 0 0 0 1.464 .944l5.706 -3l5.693 3l.1 .046a1 1 0 0 0 1.352 -1.1l-1.091 -6.355l4.624 -4.5l.078 -.085a1 1 0 0 0 -.633 -1.62l-6.38 -.926l-2.852 -5.78a1 1 0 0 0 -1.794 0l-2.853 5.78z" />
     </G>
   );
 }
