@@ -254,7 +254,7 @@ export function RegistriesCard({ hueIndex }: { hueIndex: number }) {
       {entries.length === 0 ? (
         <p className="text-sm text-carbon-textMuted">{t("settings.registriesEmpty")}</p>
       ) : (
-        <ul className="flex flex-col divide-y divide-carbon-border/60">
+        <Rows as="ul">
           {entries.map((entry, i) => {
             const kind = registryKind(entry.host, entry.kind);
             return (
@@ -291,7 +291,7 @@ export function RegistriesCard({ hueIndex }: { hueIndex: number }) {
               </li>
             );
           })}
-        </ul>
+        </Rows>
       )}
       <div className="flex justify-end">
         <Button

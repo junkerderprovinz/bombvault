@@ -1,5 +1,5 @@
 import type { SaveState } from "./shared";
-import { Card } from "../settings/shared";
+import { Card, SubCard } from "../settings/shared";
 import { RevealInput } from "../../components/RevealInput";
 import { getCloud, setCloud } from "../../lib/api";
 import { useEffect, useId, useRef, useState } from "react";
@@ -109,7 +109,7 @@ export function CloudCard({
   }
 
   const inputCls =
-    "rounded-control bg-carbon-surface3 text-carbon-text text-sm font-mono px-3 py-1.5 glim-field-focus-well";
+    "rounded-control bg-carbon-surface2 text-carbon-text text-sm font-mono px-3 py-1.5 glim-field-focus";
   const textCls = `${inputCls} w-72 max-w-full`;
 
   return (
@@ -118,8 +118,7 @@ export function CloudCard({
           has to be visible. */}
       {loadErr && <span className="text-xs text-statusFail">{t("settings.notLoadedNoSave")}</span>}
 
-      <div className="rounded-card bg-carbon-surface2 p-3">
-        <span className="mb-2 block text-xs font-semibold text-carbon-textSub">Amazon S3</span>
+      <SubCard title="Amazon S3">
         <Rows>
           <SettingRow label="AWS_ACCESS_KEY_ID" htmlFor={`${uid}-s3-key`}>
             <input id={`${uid}-s3-key`} value={c.s3KeyId} onChange={(e) => set("s3KeyId", e.target.value)} spellCheck={false} dir="ltr" className={`${textCls} text-start`} />
@@ -145,10 +144,9 @@ export function CloudCard({
             />
           </SettingRow>
         </Rows>
-      </div>
+      </SubCard>
 
-      <div className="rounded-card bg-carbon-surface2 p-3">
-        <span className="mb-2 block text-xs font-semibold text-carbon-textSub">restic REST server</span>
+      <SubCard title="restic REST server">
         <Rows>
           <SettingRow label="RESTIC_REST_USERNAME" htmlFor={`${uid}-rest-user`}>
             <input id={`${uid}-rest-user`} value={c.restUser} onChange={(e) => set("restUser", e.target.value)} spellCheck={false} dir="ltr" className={`${textCls} text-start`} />
@@ -158,7 +156,7 @@ export function CloudCard({
               placeholder={pwSet ? t("cloud.secretSet") : ""} wrapperClassName="w-72 max-w-full" className={inputCls} />
           </SettingRow>
         </Rows>
-      </div>
+      </SubCard>
     </Card>
   );
 }

@@ -176,111 +176,113 @@ export function ReposCard({ hueIndex }: { hueIndex?: number }) {
           <p className="text-xs text-carbon-textMuted">{t("repos.empty")}</p>
         )}
 
-        {repos.map((r) => (
-          <div
-            key={r.id}
-            className="flex items-center gap-3 flex-wrap rounded-card bg-carbon-surface2 px-3 py-2"
-          >
-            <div className="flex-1 min-w-[min(12rem,100%)] max-md:basis-full">
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-sm text-carbon-text font-semibold truncate max-md:whitespace-normal max-md:wrap-anywhere">
-                  {repoDisplayName(t, r.name, r.directOf)}
-                </span>
-                {/* A negative count means the server could not read it. That is
-                    treated as IN USE everywhere below: an unknown answer must
-                    not be the one that unlocks deleting. A direct repository
-                    shows its target instead of a plain use count. */}
-                {r.companionOf ? (
-                  <Badge tone="neutral" wrap>
-                    {t("repos.directOf")
-                      .replace("{target}", targetOf(r))
-                      .replace("{n}", r.inUse < 0 ? "?" : String(r.inUse))}
-                  </Badge>
-                ) : r.inUse < 0 ? (
-                  <Badge tone="neutral" wrap>
-                    {t("repos.inUseUnknown")}
-                  </Badge>
-                ) : r.inUse > 0 ? (
-                  <Badge tone="neutral" wrap>
-                    {t("repos.inUse").replace("{n}", String(r.inUse))}
-                  </Badge>
-                ) : (
-                  <Badge tone="neutral" wrap>
-                    {t("repos.unused")}
-                  </Badge>
-                )}
-                {r.companionLost && (
-                  <Badge tone="neutral" wrap>
-                    {t("repos.companionLost")}
-                  </Badge>
-                )}
-              </div>
-              {/* On a phone the address wraps: cut to the column, the part
-                  that tells two buckets apart is the part that goes. */}
-              <p className="text-xs text-carbon-textSub font-mono truncate max-md:whitespace-normal max-md:wrap-anywhere" dir="ltr">
-                {r.repo}
-              </p>
-            </div>
-            {/* Append-only. Prune and snapshot delete refuse on a repository
-                marked this way, which is the only thing standing between an
-                on-box credential and an archive somebody meant to keep. It was
-                readable by the engine and settable nowhere, so the refusal its
-                own doc comment promised could not be reached. */}
-            <label className="flex items-center gap-2 text-xs text-carbon-textSub">
-              {t("repos.immutable")}
-              <InfoBubble
-                tip={r.companionOf ? t("repos.mirroredLocked").replace("{target}", targetOf(r)) : t("repos.immutableHint")}
-              />
-              <Toggle
-                checked={r.immutable}
-                onChange={(v) => void setImmutable(r, v)}
-                label={t("repos.immutable")}
-                hideLabel
-                disabled={r.companionOf !== ""}
-              />
-            </label>
-            <CompressionSelector
-              value={r.compression}
-              onChange={(c) => void setCompression(r, c)}
-              lockedReason={r.companionOf ? t("repos.mirroredLocked").replace("{target}", targetOf(r)) : undefined}
-            />
-            {r.companionOf === "" && (
-              <label className="flex items-center gap-2 text-xs text-carbon-textSub">
-                {t("repos.offPremises")}
-                <InfoBubble tip={t("repos.offPremisesHint")} />
-                <Toggle
-                  checked={r.offPremises}
-                  onChange={(v) => void setOffPremises(r, v)}
-                  label={t("repos.offPremises")}
-                  hideLabel
+        {repos.length > 0 && (
+          <Rows as="ul">
+            {repos.map((r) => (
+              <SettingRow
+                key={r.id}
+                as="li"
+                label={repoDisplayName(t, r.name, r.directOf)}
+                note={
+                  <>
+                    <span className="flex flex-wrap items-center gap-2">
+                      {/* A negative count means the server could not read it. That is
+                          treated as IN USE everywhere below: an unknown answer must
+                          not be the one that unlocks deleting. A direct repository
+                          shows its target instead of a plain use count. */}
+                      {r.companionOf ? (
+                        <Badge tone="neutral" wrap>
+                          {t("repos.directOf")
+                            .replace("{target}", targetOf(r))
+                            .replace("{n}", r.inUse < 0 ? "?" : String(r.inUse))}
+                        </Badge>
+                      ) : r.inUse < 0 ? (
+                        <Badge tone="neutral" wrap>
+                          {t("repos.inUseUnknown")}
+                        </Badge>
+                      ) : r.inUse > 0 ? (
+                        <Badge tone="neutral" wrap>
+                          {t("repos.inUse").replace("{n}", String(r.inUse))}
+                        </Badge>
+                      ) : (
+                        <Badge tone="neutral" wrap>
+                          {t("repos.unused")}
+                        </Badge>
+                      )}
+                      {r.companionLost && (
+                        <Badge tone="neutral" wrap>
+                          {t("repos.companionLost")}
+                        </Badge>
+                      )}
+                    </span>
+                    {/* On a phone the address wraps: cut to the column, the part
+                        that tells two buckets apart is the part that goes. */}
+                    <span className="text-carbon-textSub font-mono truncate max-md:whitespace-normal max-md:wrap-anywhere" dir="ltr">
+                      {r.repo}
+                    </span>
+                  </>
+                }
+              >
+                {/* Append-only. Prune and snapshot delete refuse on a repository
+                    marked this way, which is the only thing standing between an
+                    on-box credential and an archive somebody meant to keep. */}
+                <label className="flex items-center gap-2 text-xs text-carbon-textSub">
+                  {t("repos.immutable")}
+                  <InfoBubble
+                    tip={r.companionOf ? t("repos.mirroredLocked").replace("{target}", targetOf(r)) : t("repos.immutableHint")}
+                  />
+                  <Toggle
+                    checked={r.immutable}
+                    onChange={(v) => void setImmutable(r, v)}
+                    label={t("repos.immutable")}
+                    hideLabel
+                    disabled={r.companionOf !== ""}
+                  />
+                </label>
+                <CompressionSelector
+                  value={r.compression}
+                  onChange={(c) => void setCompression(r, c)}
+                  lockedReason={r.companionOf ? t("repos.mirroredLocked").replace("{target}", targetOf(r)) : undefined}
                 />
-              </label>
-            )}
-            <label className="flex items-center gap-2 text-xs text-carbon-textSub">
-              {t("repos.enabled")}
-              <Toggle
-                checked={r.enabled}
-                onChange={(v) => void setEnabled(r, v)}
-                label={t("repos.enabled")}
-                hideLabel
-              />
-            </label>
-            {/* The location is not editable here on purpose - see the card's
-                own note. The tooltip says why rather than leaving a greyed
-                field to puzzle over. */}
-            {r.inUse !== 0 && r.companionOf === "" && <InfoBubble tip={t("repos.locationLocked")} />}
-            {/* A direct repository goes with its target and writes where the
-                target decides, so the button's hint says where to go instead. */}
-            <Button
-              label={t("offsite.targets.remove")}
-              labelKey="offsite.targets.remove"
-              tone="neutral"
-              onClick={() => void remove(r)}
-              disabled={r.inUse !== 0 || r.companionOf !== ""}
-              hint={r.companionOf !== "" ? t("repos.removeWithTarget").replace("{target}", targetOf(r)) : undefined}
-            />
-          </div>
-        ))}
+                {r.companionOf === "" && (
+                  <label className="flex items-center gap-2 text-xs text-carbon-textSub">
+                    {t("repos.offPremises")}
+                    <InfoBubble tip={t("repos.offPremisesHint")} />
+                    <Toggle
+                      checked={r.offPremises}
+                      onChange={(v) => void setOffPremises(r, v)}
+                      label={t("repos.offPremises")}
+                      hideLabel
+                    />
+                  </label>
+                )}
+                <label className="flex items-center gap-2 text-xs text-carbon-textSub">
+                  {t("repos.enabled")}
+                  <Toggle
+                    checked={r.enabled}
+                    onChange={(v) => void setEnabled(r, v)}
+                    label={t("repos.enabled")}
+                    hideLabel
+                  />
+                </label>
+                {/* The location cannot be edited here (the card's own note says
+                    why), and the bubble says so rather than leaving a greyed
+                    field to puzzle over. */}
+                {r.inUse !== 0 && r.companionOf === "" && <InfoBubble tip={t("repos.locationLocked")} />}
+                {/* A direct repository goes with its target and writes where the
+                    target decides, so the button's hint says where to go instead. */}
+                <Button
+                  label={t("offsite.targets.remove")}
+                  labelKey="offsite.targets.remove"
+                  tone="neutral"
+                  onClick={() => void remove(r)}
+                  disabled={r.inUse !== 0 || r.companionOf !== ""}
+                  hint={r.companionOf !== "" ? t("repos.removeWithTarget").replace("{target}", targetOf(r)) : undefined}
+                />
+              </SettingRow>
+            ))}
+          </Rows>
+        )}
 
         <div className="flex flex-col gap-2 pt-1">
           <Rows>

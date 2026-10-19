@@ -56,7 +56,7 @@ async function pickFile(applyImport = vi.fn(async () => ({ ok: true }))) {
 }
 
 function valueOf(label: string): string | null | undefined {
-  return screen.getByText(label).nextElementSibling?.textContent;
+  return screen.getByText(label).closest("[data-search-row]")?.lastElementChild?.textContent;
 }
 
 describe("the import preview and placement", () => {

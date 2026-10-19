@@ -1199,7 +1199,7 @@ describe("the MCP card at phone width", () => {
   it("lets a key's name wrap instead of cutting it", async () => {
     await renderCard(payload({ keys: [key({ label: "Claude Code on the workstation" })] }));
     const name = await screen.findByText("Claude Code on the workstation");
-    expect(name.className).toContain("wrap-anywhere");
+    expect(name.className).toContain("wrap-break-word");
     expect(name.className).not.toContain("truncate");
   });
 

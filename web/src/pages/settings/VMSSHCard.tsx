@@ -1,7 +1,7 @@
 import { Button } from "../../components/Button";
 import { IconInfo } from "../../components/glyphs";
 import { IconCopy } from "../../components/navGlyphs";
-import { SettingRow } from "../../components/storage/rows";
+import { Rows, SettingRow } from "../../components/storage/rows";
 import { getVMSSH, testVMSSH } from "../../lib/api";
 import { copyText } from "../../lib/clipboard";
 import { useT } from "../../lib/i18n";
@@ -53,7 +53,7 @@ export function VMSSHCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hu
 
   return (
     <Card title={t("vm.ssh.title")} hint={t("vm.ssh.cardHint")} hueIndex={hueIndex}>
-      <div className="flex flex-col divide-y divide-carbon-border/60">
+      <Rows>
         <SettingRow label={t("vm.ssh.host")} hint={t("vm.ssh.hostHint")}>
           <code dir="ltr" className="font-mono text-sm font-semibold text-carbon-text">
             {host || "-"}
@@ -68,7 +68,7 @@ export function VMSSHCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hu
           </code>
           <Button label={t("common.copy")} labelKey="common.copy" glyph={<IconCopy />} onClick={() => void copy(pub)} disabled={!pub} />
         </SettingRow>
-      </div>
+      </Rows>
 
       <SubCard title={t("settings.widgetSetup")}>
         <ol className="flex list-decimal flex-col gap-2 ps-5 text-sm text-carbon-text">

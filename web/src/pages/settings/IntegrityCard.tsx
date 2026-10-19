@@ -10,6 +10,7 @@ import { IconPrune, IconShieldOn, IconUnlock } from "../../components/glyphs";
 import { IconCheck } from "../../components/Sidebar";
 import { IconCloud, IconMore, IconRestore } from "../../components/navGlyphs";
 import { ProgressBar } from "../../components/ProgressBar";
+import { Rows } from "../../components/storage/rows";
 import { countProgressText, type ResolveName } from "../../lib/activityLog";
 import { heldTagLabels } from "../../lib/anomalies";
 import {
@@ -243,7 +244,7 @@ export function IntegrityCard({ t, hueIndex }: { t: T; hueIndex?: number }) {
 
   return (
     <Card title={t("integrity.checkTitle")} hint={t("integrity.checkHint")} hueIndex={hueIndex}>
-      <ul className="flex flex-col divide-y divide-carbon-border/60">
+      <Rows as="ul">
         {sections.map((section) => {
           const live = runningOf(section.status.domain);
           const name = t(KIND_LABEL[section.kind]);
@@ -274,7 +275,7 @@ export function IntegrityCard({ t, hueIndex }: { t: T; hueIndex?: number }) {
             </li>
           );
         })}
-      </ul>
+      </Rows>
       {confirmDialog}
       {ownLogin.dialog}
     </Card>

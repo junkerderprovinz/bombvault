@@ -17,7 +17,6 @@ export function PlanButton({
   hueIndex,
   disabled,
   offText,
-  raised = false,
 }: {
   /** What the schedule is for. It names the editor and goes before the
    *  sentence for a screen reader. */
@@ -30,8 +29,6 @@ export function PlanButton({
   /** The sentence for an empty value, where empty means something other than
    *  off. */
   offText?: string;
-  /** For a button on a raised surface, such as a sub-card. */
-  raised?: boolean;
 }) {
   const { t, lang } = useT();
   const text = formatCadence(value, t, lang) || (value.trim() === "" && offText ? offText : t("cadence.off"));
@@ -50,9 +47,7 @@ export function PlanButton({
           <SelectArrow />
         </>
       }
-      triggerClassName={`glim-btn min-w-0 max-w-full gap-2 px-3 text-carbon-text ${
-        raised ? "bg-carbon-surface3 hover:bg-carbon-hoverRaised" : "bg-carbon-surface2 hover:bg-carbon-surface3"
-      }`}
+      triggerClassName="glim-btn min-w-0 max-w-full gap-2 bg-carbon-surface2 px-3 text-carbon-text hover:bg-carbon-surface3"
       panelClassName="p-4 max-w-[min(94vw,36rem)]"
     >
       <CadenceBuilder label={label} value={value} onChange={onChange} modes={modes} hueIndex={hueIndex} />

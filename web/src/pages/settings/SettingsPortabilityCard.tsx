@@ -14,7 +14,8 @@ import {
 } from "../../lib/api";
 import { type TranslationKey, useT } from "../../lib/i18n";
 import { useToast } from "../../lib/toast";
-import { Card, ToggleRow } from "./shared";
+import { Rows, SettingRow } from "../../components/storage/rows";
+import { Card, SubCard, ToggleRow } from "./shared";
 import { NewTargetPreviewLines } from "../../components/placement/NewTargetQuestion";
 import { domainLabel } from "../../lib/placement";
 import { placementErrorText } from "../../lib/placementCodes";
@@ -38,6 +39,9 @@ const IMPORT_GROUP_KEYS: Record<string, TranslationKey> = {
   homeAssistant: "ha.title",
   network: "mdns.title",
 };
+
+const VALUE = "text-end text-sm text-carbon-text wrap-break-word";
+const VALUE_MONO = `${VALUE} font-mono`;
 // SettingsPortabilityCard, lifted out of Settings.tsx ([337]).
 //
 // A move, not a rewrite: the component and its comments are unchanged.
@@ -240,58 +244,48 @@ export function SettingsPortabilityCard({
 
         {/* Preview + confirmation before anything is written. */}
         {preview && (
-          <div className="rounded-card bg-carbon-surface2 p-4 flex flex-col gap-3">
-            <span className="text-xs font-semibold text-carbon-textSub uppercase tracking-widest">
-              {t("settingsIO.previewTitle")}
-            </span>
-            <dl className="flex flex-col gap-1.5 text-xs text-carbon-text">
-              <div className="flex justify-between gap-3">
-                <dt className="text-carbon-textMuted">{t("settingsIO.previewExportedAt")}</dt>
-                <dd className="font-mono text-end wrap-break-word">{preview.exportedAt || "-"}</dd>
-              </div>
-              <div className="flex justify-between gap-3">
-                <dt className="text-carbon-textMuted">{t("settingsIO.previewAppVersion")}</dt>
-                <dd className="font-mono text-end wrap-break-word">{preview.appVersion || "-"}</dd>
-              </div>
-              <div className="flex justify-between gap-3">
-                <dt className="text-carbon-textMuted">{t("settingsIO.previewOffsiteTargets")}</dt>
-                <dd dir="ltr" className="font-mono text-start">{preview.offsiteTargets}</dd>
-              </div>
-              <div className="flex justify-between gap-3">
-                <dt className="text-carbon-textMuted">{t("settingsIO.previewNamedRepos")}</dt>
-                <dd dir="ltr" className="font-mono text-start">{preview.namedRepos ?? 0}</dd>
-              </div>
-              <div className="flex justify-between gap-3">
-                <dt className="text-carbon-textMuted">{t("dest.title")}</dt>
-                <dd className="text-end">{preview.destinations ?? t("settingsIO.previewNotInFile")}</dd>
-              </div>
-              <div className="flex justify-between gap-3">
-                <dt className="text-carbon-textMuted">{t("placementDefaults.title")}</dt>
-                <dd className="text-end">{preview.placementDefaults ?? t("settingsIO.previewNotInFile")}</dd>
-              </div>
-              <div className="flex justify-between gap-3">
-                <dt className="text-carbon-textMuted">{t("settingsIO.previewCopyRules")}</dt>
-                <dd className="text-end">{preview.copyRules ?? t("settingsIO.previewNotInFile")}</dd>
-              </div>
-              <div className="flex justify-between gap-3">
-                <dt className="text-carbon-textMuted">{t("settingsIO.previewCredentials")}</dt>
-                <dd className="text-end">
-                  {preview.credentials.present
-                    ? t("settingsIO.previewCredsIncluded")
-                    : t("settingsIO.previewCredsNotIncluded")}
-                </dd>
-              </div>
-              <div className="flex justify-between gap-3">
-                <dt className="text-carbon-textMuted shrink-0">{t("settingsIO.previewSettingsAreas")}</dt>
-                <dd className="text-end wrap-break-word">
-                  {preview.settingsGroups.length > 0
-                    ? preview.settingsGroups
-                        .map((g) => (IMPORT_GROUP_KEYS[g] ? t(IMPORT_GROUP_KEYS[g]) : g))
-                        .join(", ")
-                    : t("settingsIO.previewNone")}
-                </dd>
-              </div>
-            </dl>
+          <div className="flex flex-col gap-3">
+            <SubCard title={t("settingsIO.previewTitle")}>
+              <Rows>
+                <SettingRow label={t("settingsIO.previewExportedAt")}>
+                  <span className={VALUE_MONO}>{preview.exportedAt || "-"}</span>
+                </SettingRow>
+                <SettingRow label={t("settingsIO.previewAppVersion")}>
+                  <span className={VALUE_MONO}>{preview.appVersion || "-"}</span>
+                </SettingRow>
+                <SettingRow label={t("settingsIO.previewOffsiteTargets")}>
+                  <span dir="ltr" className={VALUE_MONO}>{preview.offsiteTargets}</span>
+                </SettingRow>
+                <SettingRow label={t("settingsIO.previewNamedRepos")}>
+                  <span dir="ltr" className={VALUE_MONO}>{preview.namedRepos ?? 0}</span>
+                </SettingRow>
+                <SettingRow label={t("dest.title")}>
+                  <span className={VALUE}>{preview.destinations ?? t("settingsIO.previewNotInFile")}</span>
+                </SettingRow>
+                <SettingRow label={t("placementDefaults.title")}>
+                  <span className={VALUE}>{preview.placementDefaults ?? t("settingsIO.previewNotInFile")}</span>
+                </SettingRow>
+                <SettingRow label={t("settingsIO.previewCopyRules")}>
+                  <span className={VALUE}>{preview.copyRules ?? t("settingsIO.previewNotInFile")}</span>
+                </SettingRow>
+                <SettingRow label={t("settingsIO.previewCredentials")}>
+                  <span className={VALUE}>
+                    {preview.credentials.present
+                      ? t("settingsIO.previewCredsIncluded")
+                      : t("settingsIO.previewCredsNotIncluded")}
+                  </span>
+                </SettingRow>
+                <SettingRow label={t("settingsIO.previewSettingsAreas")}>
+                  <span className={VALUE}>
+                    {preview.settingsGroups.length > 0
+                      ? preview.settingsGroups
+                          .map((g) => (IMPORT_GROUP_KEYS[g] ? t(IMPORT_GROUP_KEYS[g]) : g))
+                          .join(", ")
+                      : t("settingsIO.previewNone")}
+                  </span>
+                </SettingRow>
+              </Rows>
+            </SubCard>
             {preview.newTargets.map((target) => (
               <div key={target.id} className="flex flex-col gap-1">
                 <span className="text-xs font-semibold text-carbon-textSub">

@@ -299,29 +299,20 @@ export function McpClientDialog({
     let content;
     if (created) {
       content = (
-        <div className="flex flex-col gap-2 rounded-card bg-carbon-surface2 px-3 py-2.5">
-          <SettingRow label={t("mcp.newKeyTitle")} note={t("mcp.showOnce")}>
-            <RevealInput
-              visible={keyVisible}
-              onToggleVisible={() => setKeyVisible((v) => !v)}
-              showLabel={t("common.showValue")}
-              hideLabel={t("common.hideValue")}
-              value={created.key}
-              readOnly
-              aria-label={t("mcp.newKeyTitle")}
-              wrapperClassName="w-80 max-w-full"
-              className="rounded-control bg-carbon-surface px-3 py-1.5 font-mono text-sm text-carbon-text glim-field-focus"
-            />
-          </SettingRow>
-          <Button
-            label={t("mcp.copyKey")}
-            labelKey="mcp.copyKey"
-            glyph={<IconCopy />}
-            tone="subtle"
-            onClick={() => onCopy(created.key)}
-            className="self-start"
+        <SettingRow label={t("mcp.newKeyTitle")} note={t("mcp.showOnce")}>
+          <RevealInput
+            visible={keyVisible}
+            onToggleVisible={() => setKeyVisible((v) => !v)}
+            showLabel={t("common.showValue")}
+            hideLabel={t("common.hideValue")}
+            value={created.key}
+            readOnly
+            aria-label={t("mcp.newKeyTitle")}
+            wrapperClassName="w-80 max-w-full"
+            className="rounded-control bg-carbon-surface2 px-3 py-1.5 font-mono text-sm text-carbon-text glim-field-focus"
           />
-        </div>
+          <Button label={t("mcp.copyKey")} labelKey="mcp.copyKey" glyph={<IconCopy />} tone="subtle" onClick={() => onCopy(created.key)} />
+        </SettingRow>
       );
     } else {
       const items = [];

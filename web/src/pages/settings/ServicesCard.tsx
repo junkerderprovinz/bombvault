@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { RevealInput } from "../../components/RevealInput";
-import { SettingRow } from "../../components/storage/rows";
+import { Rows, SettingRow } from "../../components/storage/rows";
 import { Toggle } from "../../components/Toggle";
 import { useT } from "../../lib/i18n";
 import { tLtr } from "../../lib/ltrFragments";
@@ -21,7 +21,7 @@ export function ServicesCard({ hueIndex }: { hueIndex?: number }) {
 
   return (
     <Card title={t("integrations.services")} hueIndex={hueIndex}>
-      <div className="flex flex-col divide-y divide-carbon-border/60">
+      <Rows>
         <HomeAssistantRows />
         <MdnsRow />
         <SettingRow label={tLtr(t, "settings.metricsEnable")} hint={tLtr(t, "settings.metricsHint")}>
@@ -64,7 +64,7 @@ export function ServicesCard({ hueIndex }: { hueIndex?: number }) {
             </SettingRow>
           </div>
         )}
-      </div>
+      </Rows>
     </Card>
   );
 }

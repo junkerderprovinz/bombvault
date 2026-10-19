@@ -9,7 +9,7 @@ import { PickerGroup, PickerNoMatch } from "../../components/Picker";
 import { RevealInput } from "../../components/RevealInput";
 import { ReadmeButton } from "../../components/ReadmeButton";
 import { IconAdd, IconClose, IconDownload, IconPencil, IconTrash } from "../../components/navGlyphs";
-import { SettingRow } from "../../components/storage/rows";
+import { Rows, SettingRow } from "../../components/storage/rows";
 import { Toggle } from "../../components/Toggle";
 import {
   MCP_CERTIFICATE_URL,
@@ -411,7 +411,7 @@ export function McpServerCard({ hueIndex, passwordSet }: { hueIndex?: number; pa
       {failed && <p className="text-sm text-statusWarn">{t("mcp.loadFailed")}</p>}
 
       {!failed && (
-        <div className="flex flex-col divide-y divide-carbon-border/60">
+        <Rows>
           <SettingRow label={t("mcp.statusLabel")}>
             <span className="flex items-center gap-2 text-sm text-carbon-text">
               <span
@@ -428,7 +428,7 @@ export function McpServerCard({ hueIndex, passwordSet }: { hueIndex?: number; pa
                       : t("mcp.statusOff")}
             </span>
           </SettingRow>
-        </div>
+        </Rows>
       )}
 
       {data !== null && !failed && (
@@ -456,11 +456,11 @@ export function McpServerCard({ hueIndex, passwordSet }: { hueIndex?: number; pa
 
           {keys.some((k) => k.unusable === "app-key-changed") && <Note tone="warn">{t("mcp.appKeyChanged")}</Note>}
 
-          <div className="flex flex-col divide-y divide-carbon-border/60">
+          <Rows>
             <SettingRow label={t("mcp.endpointLabel")} hint={t("mcp.endpointHint")}>
               <CopyField value={endpoint} label={t("mcp.endpointLabel")} onCopy={() => void copy(endpoint)} t={t} />
             </SettingRow>
-          </div>
+          </Rows>
 
           <McpOAuthSettings
             oauth={data.oauth}
@@ -470,7 +470,7 @@ export function McpServerCard({ hueIndex, passwordSet }: { hueIndex?: number; pa
             t={t}
           />
 
-          <div className="flex flex-col divide-y divide-carbon-border/60">
+          <Rows>
             <SettingRow label={t("mcp.snippetsLabel")} hint={t("mcp.connectHint")}>
               <Button
                 label={t("mcp.chooseClient")}
@@ -479,44 +479,28 @@ export function McpServerCard({ hueIndex, passwordSet }: { hueIndex?: number; pa
                 onClick={() => setChoosing(true)}
               />
             </SettingRow>
-          </div>
+          </Rows>
         </>
       )}
 
       {/* Outside the load gate: the server keeps no copy of this key, so a
           failed reload must not hide it. The open setup dialog shows it itself. */}
       {fresh !== null && dialog === null && (
-        <div className="flex flex-col gap-2 rounded-card bg-carbon-surface2 px-3 py-2.5">
-          <SettingRow label={t("mcp.newKeyTitle")} hint={t("mcp.showOnce")}>
-            <RevealInput
-              visible={keyVisible}
-              onToggleVisible={() => setKeyVisible((v) => !v)}
-              showLabel={t("common.showValue")}
-              hideLabel={t("common.hideValue")}
-              value={fresh.key}
-              readOnly
-              aria-label={t("mcp.newKeyTitle")}
-              wrapperClassName="w-80 max-w-full"
-              className="rounded-control bg-carbon-surface px-3 py-1.5 font-mono text-sm text-carbon-text glim-field-focus"
-            />
-          </SettingRow>
-          <div className="flex items-center gap-3">
-            <Button
-              label={t("mcp.copyKey")}
-              labelKey="common.copy"
-              tone="subtle"
-              onClick={() => void copy(fresh.key)}
-              hueIndex={hueIndex}
-            />
-            <Button
-              label={t("mcp.dismissKey")}
-              labelKey="mcp.dismissKey"
-              tone="accent"
-              onClick={() => setFresh(null)}
-              hueIndex={hueIndex}
-            />
-          </div>
-        </div>
+        <SettingRow label={t("mcp.newKeyTitle")} hint={t("mcp.showOnce")}>
+          <RevealInput
+            visible={keyVisible}
+            onToggleVisible={() => setKeyVisible((v) => !v)}
+            showLabel={t("common.showValue")}
+            hideLabel={t("common.hideValue")}
+            value={fresh.key}
+            readOnly
+            aria-label={t("mcp.newKeyTitle")}
+            wrapperClassName="w-80 max-w-full"
+            className="rounded-control bg-carbon-surface2 px-3 py-1.5 font-mono text-sm text-carbon-text glim-field-focus"
+          />
+          <Button label={t("mcp.copyKey")} labelKey="common.copy" tone="subtle" onClick={() => void copy(fresh.key)} hueIndex={hueIndex} />
+          <Button label={t("mcp.dismissKey")} labelKey="mcp.dismissKey" tone="accent" onClick={() => setFresh(null)} hueIndex={hueIndex} />
+        </SettingRow>
       )}
 
       {data !== null && !failed && (
@@ -526,36 +510,32 @@ export function McpServerCard({ hueIndex, passwordSet }: { hueIndex?: number; pa
             {keys.length === 0 ? (
               <p className="text-xs text-carbon-textMuted">{t("mcp.keysEmpty")}</p>
             ) : (
-              <ul className="flex flex-col divide-y divide-carbon-border/60">
+              <Rows as="ul">
                 {keys.map((k) => (
-                  <li key={k.id} className="flex flex-wrap items-center gap-x-3 gap-y-2 py-2.5">
-                    <span className="glim-client-mark" aria-hidden="true">
-                      <ClientMark client={clientById(k.client)} forKey />
-                    </span>
-                    <span className="flex min-w-0 flex-1 basis-48 flex-col gap-0.5">
-                      <span className="text-sm font-semibold text-carbon-text wrap-anywhere">{k.label}</span>
-                      <span className="text-xs text-carbon-textMuted wrap-anywhere">{facts(k)}</span>
-                    </span>
-                    <span className="flex items-center gap-2">
-                      {k.unusable === "app-key-changed" ? (
-                        <Badge tone="fail" size="small">
-                          {t("mcp.invalid")}
-                        </Badge>
-                      ) : (
-                        <Badge tone="neutral" size="small">
-                          {k.canStartBackups ? t("mcp.canStart") : t("mcp.readOnly")}
-                        </Badge>
-                      )}
-                      <Button
-                        label={t("mcp.details")}
-                        labelKey="mcp.details"
-                        glyph={<IconInfo />}
-                        onClick={() => openDetails(k)}
-                      />
-                    </span>
-                  </li>
+                  <SettingRow
+                    key={k.id}
+                    as="li"
+                    label={k.label}
+                    glyph={
+                      <span className="glim-client-mark" aria-hidden="true">
+                        <ClientMark client={clientById(k.client)} forKey />
+                      </span>
+                    }
+                    note={facts(k)}
+                  >
+                    {k.unusable === "app-key-changed" ? (
+                      <Badge tone="fail" size="small">
+                        {t("mcp.invalid")}
+                      </Badge>
+                    ) : (
+                      <Badge tone="neutral" size="small">
+                        {k.canStartBackups ? t("mcp.canStart") : t("mcp.readOnly")}
+                      </Badge>
+                    )}
+                    <Button label={t("mcp.details")} labelKey="mcp.details" glyph={<IconInfo />} onClick={() => openDetails(k)} />
+                  </SettingRow>
                 ))}
-              </ul>
+              </Rows>
             )}
           </div>
 
@@ -596,39 +576,38 @@ export function McpServerCard({ hueIndex, passwordSet }: { hueIndex?: number; pa
 
           {revoked.length > 0 && (
             <SubCard title={t("mcp.revokedList", revoked.length)}>
-              <ul className="flex flex-col divide-y divide-carbon-border/60">
+              <Rows as="ul">
                 {revoked.map((k) => (
-                  <li key={k.id} className="flex flex-wrap items-center gap-x-3 gap-y-2 py-2.5 first:pt-0">
-                    <span aria-hidden="true" className="inline-flex text-carbon-textMuted">
-                      <IconKeyRevoke />
-                    </span>
-                    <span className="flex min-w-0 flex-1 basis-48 flex-col gap-0.5">
-                      <span className="text-sm text-carbon-textSub wrap-anywhere">{k.label}</span>
-                      <span className="text-xs text-carbon-textMuted">
-                        {t(REVOKED_REASON[k.revokedReason] ?? "mcp.revokedAt").replace("{date}", formatTs(k.revokedAt))}
+                  <SettingRow
+                    key={k.id}
+                    as="li"
+                    label={k.label}
+                    glyph={
+                      <span aria-hidden="true" className="inline-flex text-carbon-textMuted">
+                        <IconKeyRevoke />
                       </span>
+                    }
+                    note={t(REVOKED_REASON[k.revokedReason] ?? "mcp.revokedAt").replace("{date}", formatTs(k.revokedAt))}
+                  >
+                    <Button label={t("mcp.log")} labelKey="mcp.log" glyph={<IconInfo />} onClick={() => setLogOf(k)} />
+                    <span className="flex items-center gap-1.5">
+                      <Button
+                        label={t("common.delete")}
+                        labelKey="common.delete"
+                        glyph={<IconTrash />}
+                        variant="icon"
+                        glyphOnly
+                        onClick={() => setPending({ kind: "purge", item: k })}
+                        disabled={busy || k.inUse}
+                        className={shake[`purge:${k.id}`] ? "glim-shake" : ""}
+                      />
+                      {/* A disabled button takes no hover or focus, so the reason
+                          sits beside it. */}
+                      {k.inUse && <InfoBubble tip={t("mcp.inUseTip")} />}
                     </span>
-                    <span className="flex items-center gap-2">
-                      <Button label={t("mcp.log")} labelKey="mcp.log" glyph={<IconInfo />} onClick={() => setLogOf(k)} />
-                      <span className="flex items-center gap-1.5">
-                        <Button
-                          label={t("common.delete")}
-                          labelKey="common.delete"
-                          glyph={<IconTrash />}
-                          variant="icon"
-                          glyphOnly
-                          onClick={() => setPending({ kind: "purge", item: k })}
-                          disabled={busy || k.inUse}
-                          className={shake[`purge:${k.id}`] ? "glim-shake" : ""}
-                        />
-                        {/* A disabled button takes no hover or focus, so the reason
-                            sits beside it. */}
-                        {k.inUse && <InfoBubble tip={t("mcp.inUseTip")} />}
-                      </span>
-                    </span>
-                  </li>
+                  </SettingRow>
                 ))}
-              </ul>
+              </Rows>
             </SubCard>
           )}
         </>
@@ -663,7 +642,7 @@ export function McpServerCard({ hueIndex, passwordSet }: { hueIndex?: number; pa
             </>
           }
         >
-          <div className="flex flex-col divide-y divide-carbon-border/60">
+          <Rows>
             {open.unusable === "app-key-changed" && <Note tone="warn">{t("mcp.keyUnusable")}</Note>}
             {!open.viaOAuth && (
               <SettingRow label={t("mcp.labelLabel")}>
@@ -714,7 +693,7 @@ export function McpServerCard({ hueIndex, passwordSet }: { hueIndex?: number; pa
               </span>
               <McpKeyLog keyId={open.id} used={open.lastUsedAt > 0} t={t} />
             </div>
-          </div>
+          </Rows>
         </InstanceWindow>
       )}
 

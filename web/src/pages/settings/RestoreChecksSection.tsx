@@ -4,7 +4,7 @@ import { Note } from "../../components/entry/Note";
 import { NumberField } from "../../components/NumberField";
 import { PlanButton } from "../../components/PlanButton";
 import { SelectField } from "../../components/SelectField";
-import { SettingRow } from "../../components/storage/rows";
+import { Rows, SettingRow } from "../../components/storage/rows";
 import { useT } from "../../lib/i18n";
 import { PackGrid, SandboxPicture } from "./pictures";
 
@@ -53,7 +53,7 @@ export function RestoreChecksSection({
 
   return (
     <Card title={t("verify.autoChecks")} hueIndex={hueIndex}>
-      <div className="flex flex-col divide-y divide-carbon-border/60">
+      <Rows>
         <SettingRow label={t("verify.trialRestore")} hint={t("verify.trialRestoreHint")}>
           <PlanButton
             label={t("verify.trialRestore")}
@@ -142,7 +142,7 @@ export function RestoreChecksSection({
             hueIndex={hueIndex}
           />
         </SettingRow>
-      </div>
+      </Rows>
       {!tamperActive && settings.tamperTestSchedule !== "off" && <Note tone="warn">{t("settings.tamperScheduleInactive")}</Note>}
     </Card>
   );
