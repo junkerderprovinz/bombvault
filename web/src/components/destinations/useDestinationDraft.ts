@@ -47,12 +47,16 @@ export function formFields(p: Provider, backend: Backend | undefined): FormField
 }
 
 /** Where a destination will sit, as the server will write it. */
-function previewLocation(p: Provider, settings: Record<string, string>, dir: string): string {
+export function previewLocation(p: Provider, settings: Record<string, string>, dir: string): string {
   const d = dir.replace(/^\/+|\/+$/g, "");
   if (p.route === "rest") return `rest:${(settings.url ?? "").replace(/\/+$/, "")}`;
   if (p.route === "path") return (settings.path ?? "").replace(/\/+$/, "");
   if (p.route === "s3") {
-    let ep = (settings.endpoint ?? "").trim().replace(/\/+$/, "");
+    let ep = (settings.endpoint ?? "").trim();
+    // A restic address pasted into the field: the server keeps its scheme and host.
+    const restic = /^s3:([a-z]+:\/\/)?([^/]*)/i.exec(ep);
+    if (restic) ep = (restic[1] ?? "") + restic[2];
+    ep = ep.replace(/\/+$/, "");
     if (!ep && p.id === "aws") ep = settings.region ? `s3.${settings.region}.amazonaws.com` : "s3.amazonaws.com";
     if (ep && !ep.includes("://")) ep = `https://${ep}`;
     return `s3:${ep}/${d}`;
