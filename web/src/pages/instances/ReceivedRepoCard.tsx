@@ -96,22 +96,27 @@ function InventoryPanel({ repo, t }: { repo: ReceivedRepoStatus; t: T }) {
       { ...totals, name: t("receiver.total"), host: "" },
     ];
     return (
-      <ul className="mt-2 flex flex-col gap-1 text-xs">
-        {rows.map((r, i) => (
-          <li key={`${r.host}/${r.name}/${i}`} className="rounded-control bg-carbon-surface2 px-2 py-1.5">
-            <p className="text-carbon-text wrap-anywhere">
-              <span className="font-medium">{r.name}</span>
-              {r.host && <span className="text-carbon-textMuted"> · {r.host}</span>}
-            </p>
-            <p className="text-carbon-textSub">
-              {t("receiver.snapshotsCount", r.snapshotCount)} · <span className="font-mono">{humanBytes(r.totalSize)}</span>
-            </p>
-            <p className="text-carbon-textMuted">
-              {t("receiver.colLastReceived")}: {fmtReceived(r.lastReceived, t)}
-            </p>
-          </li>
-        ))}
-      </ul>
+      <div className="mt-2">
+        <Rows as="ul">
+          {rows.map((r, i) => (
+            <SettingRow
+              key={`${r.host}/${r.name}/${i}`}
+              as="li"
+              label={r.host ? `${r.name} · ${r.host}` : r.name}
+              note={
+                <>
+                  <span className="text-carbon-textSub">
+                    {t("receiver.snapshotsCount", r.snapshotCount)} · <span className="font-mono">{humanBytes(r.totalSize)}</span>
+                  </span>
+                  <span>
+                    {t("receiver.colLastReceived")}: {fmtReceived(r.lastReceived, t)}
+                  </span>
+                </>
+              }
+            />
+          ))}
+        </Rows>
+      </div>
     );
   }
 

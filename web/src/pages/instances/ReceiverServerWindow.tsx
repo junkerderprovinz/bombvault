@@ -204,16 +204,19 @@ export function ReceiverServerWindow({
           {server.check !== "protected" && server.checkDetail && (
             <p className="text-xs text-carbon-textSub wrap-break-word">{server.checkDetail}</p>
           )}
-          <dl className="grid gap-x-4 gap-y-1 text-xs md:grid-cols-[auto_1fr]">
-            <dt className="text-carbon-textMuted">{t("receiver.server.address")}</dt>
-            <dd dir="ltr" className="font-mono text-carbon-text break-all text-start">
-              {server.url || t("receiver.server.noAddress")}
-            </dd>
-            <dt className="text-carbon-textMuted">{t("receiver.server.outsideUser")}</dt>
-            <dd dir="ltr" className="font-mono text-carbon-text text-start">{server.user}</dd>
-            <dt className="text-carbon-textMuted">{t("receiver.server.folder")}</dt>
-            <dd dir="ltr" className="font-mono text-carbon-text break-all text-start">{server.hostPath}</dd>
-          </dl>
+          <Rows>
+            <SettingRow label={t("receiver.server.address")}>
+              <bdi dir="ltr" className="font-mono text-xs text-carbon-text break-all text-start">
+                {server.url || t("receiver.server.noAddress")}
+              </bdi>
+            </SettingRow>
+            <SettingRow label={t("receiver.server.outsideUser")}>
+              <bdi dir="ltr" className="font-mono text-xs text-carbon-text text-start">{server.user}</bdi>
+            </SettingRow>
+            <SettingRow label={t("receiver.server.folder")}>
+              <bdi dir="ltr" className="font-mono text-xs text-carbon-text break-all text-start">{server.hostPath}</bdi>
+            </SettingRow>
+          </Rows>
           <p className="text-xs text-carbon-textMuted">{t("receiver.server.offered")}</p>
 
           <div className="flex flex-col gap-1.5">
@@ -223,22 +226,27 @@ export function ReceiverServerWindow({
             </span>
             {server.logins.length === 0 && <p className="text-xs text-carbon-textMuted">{t("receiver.server.noLogins")}</p>}
             {server.logins.length > 0 && (
-              <ul className="flex flex-col gap-1">
+              <Rows as="ul">
                 {server.logins.map((l) => (
-                  <li key={l.memberId} className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-control bg-carbon-surface2 px-3 py-1.5 text-xs">
-                    <span className="font-semibold text-carbon-text">{l.name}</span>
-                    <span dir="ltr" className="font-mono text-carbon-textSub">{l.user}</span>
-                    <span className="text-carbon-textMuted">{new Date(l.createdAt * 1000).toLocaleDateString()}</span>
+                  <SettingRow
+                    key={l.memberId}
+                    as="li"
+                    label={l.name}
+                    note={
+                      <span>
+                        <bdi dir="ltr" className="font-mono">{l.user}</bdi> · {new Date(l.createdAt * 1000).toLocaleDateString()}
+                      </span>
+                    }
+                  >
                     <Button
                       label={t("receiver.server.revoke")}
                       labelKey="receiver.server.revoke"
                       tone="neutral"
                       onClick={() => void revoke(l)}
-                      className="ms-auto"
                     />
-                  </li>
+                  </SettingRow>
                 ))}
-              </ul>
+              </Rows>
             )}
           </div>
 
