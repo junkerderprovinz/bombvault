@@ -12,9 +12,9 @@ afterEach(() => {
 describe("CompressionSelector", () => {
   it("gives each of the three modes its own glyph", () => {
     render(<CompressionSelector value="auto" onChange={vi.fn()} />);
-    const tabs = within(screen.getByRole("tablist", { name: "Compression" })).getAllByRole("tab");
-    expect(tabs.map((t) => t.textContent)).toEqual(["Off", "Automatic", "Maximum"]);
-    const glyphs = tabs.map((t) => t.querySelector("svg")?.innerHTML);
+    const modes = within(screen.getByRole("radiogroup", { name: "Compression" })).getAllByRole("radio");
+    expect(modes.map((t) => t.textContent)).toEqual(["Off", "Automatic", "Maximum"]);
+    const glyphs = modes.map((t) => t.querySelector("svg")?.innerHTML);
     expect(glyphs.every(Boolean)).toBe(true);
     expect(new Set(glyphs).size).toBe(3);
   });
@@ -22,9 +22,9 @@ describe("CompressionSelector", () => {
   it("keeps the mode names for screen readers when only glyphs show", () => {
     setLabelMode("buttons", "glyph");
     render(<CompressionSelector value="max" onChange={vi.fn()} />);
-    const list = screen.getByRole("tablist", { name: "Compression" });
-    expect(within(list).getByRole("tab", { name: "Maximum" }).getAttribute("aria-selected")).toBe("true");
-    expect(within(list).getByRole("tab", { name: "Off" })).toBeTruthy();
-    expect(within(list).getByRole("tab", { name: "Automatic" })).toBeTruthy();
+    const list = screen.getByRole("radiogroup", { name: "Compression" });
+    expect(within(list).getByRole("radio", { name: "Maximum" }).getAttribute("aria-checked")).toBe("true");
+    expect(within(list).getByRole("radio", { name: "Off" })).toBeTruthy();
+    expect(within(list).getByRole("radio", { name: "Automatic" })).toBeTruthy();
   });
 });

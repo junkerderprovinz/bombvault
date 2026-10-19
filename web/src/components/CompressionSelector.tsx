@@ -1,8 +1,8 @@
 import type { Compression, Settings } from "../lib/api";
 import { useT } from "../lib/i18n";
 import { IconCompressAuto, IconCompressMax, IconCompressOff } from "./glyphs";
-import { InfoBubble } from "./InfoBubble";
 import { Selector } from "./Selector";
+import { SettingRow } from "./storage/rows";
 
 export const COMPRESSION_MODES = [
   { id: "off", labelKey: "settings.compression.off", Glyph: IconCompressOff },
@@ -26,21 +26,23 @@ export function CompressionSelector({
 }) {
   const { t } = useT();
   return (
-    <div className="flex items-center justify-between gap-2 flex-wrap">
-      <span className="flex items-center gap-1 text-xs text-carbon-textSub">
-        {t("settings.compression")}
-        <InfoBubble tip={lockedReason ? `${t("settings.compressionInfo")} ${lockedReason}` : t("settings.compressionInfo")} />
-      </span>
+    <SettingRow
+      label={t("settings.compression")}
+      hint={lockedReason ? `${t("settings.compressionInfo")} ${lockedReason}` : t("settings.compressionInfo")}
+      newId="compression-row"
+    >
       <Selector
         items={COMPRESSION_MODES.map(({ id, labelKey, Glyph }) => ({ id, label: t(labelKey), icon: <Glyph /> }))}
         label={t("settings.compression")}
         size="sm"
+        inline
         select="one"
+        activation="manual"
         active={value}
         onChange={(id) => onChange(id as Compression)}
         disabled={disabled || lockedReason !== undefined}
       />
-    </div>
+    </SettingRow>
   );
 }
 

@@ -117,10 +117,10 @@ describe("PathModeSwitch, Selector integration", () => {
   it("shows the domain repository's compression and saves a new choice", async () => {
     stubSave = vi.fn(async () => true);
     renderSwitch();
-    const modes = screen.getByRole("tablist", { name: "Compression" });
-    expect(within(modes).getByRole("tab", { name: "Maximum" }).getAttribute("aria-selected")).toBe("true");
+    const modes = screen.getByRole("radiogroup", { name: "Compression" });
+    expect(within(modes).getByRole("radio", { name: "Maximum" }).getAttribute("aria-checked")).toBe("true");
     await act(async () => {
-      fireEvent.click(within(modes).getByRole("tab", { name: "Off" }));
+      fireEvent.click(within(modes).getByRole("radio", { name: "Off" }));
     });
     expect(stubSave).toHaveBeenCalledTimes(1);
     expect(stubSave.mock.calls[0][0]).toEqual({ compression: { containers: "off", vms: "auto" } });

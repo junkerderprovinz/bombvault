@@ -175,7 +175,7 @@ describe("the folders of a local location", () => {
     await openTyped(0);
 
     const dialog = screen.getByRole("dialog", { name: "Containers path" });
-    await click(within(dialog).getByRole("tab", { name: "Maximum" }));
+    await click(within(dialog).getByRole("radio", { name: "Maximum" }));
 
     expect(putSettings).toHaveBeenCalledWith(expect.objectContaining({ compression: { containers: "max" } }));
   });

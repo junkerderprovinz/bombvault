@@ -18,6 +18,7 @@ export function SettingRow({
   hint,
   htmlFor,
   note,
+  newId,
   children,
 }: {
   label: string;
@@ -27,11 +28,13 @@ export function SettingRow({
   htmlFor?: string;
   /** What the control cannot say itself, under the label. */
   note?: string;
+  /** The change in lib/whatsNew.ts the row is, which puts its dot on it. */
+  newId?: string;
   /** The control. A row without one only says something. */
   children?: ReactNode;
 }) {
   return (
-    <div data-search-row={label} className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 py-3 first:pt-0 last:pb-0">
+    <div data-search-row={label} data-new={newId} className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 py-3 first:pt-0 last:pb-0">
       {/* A long note wraps beside the control instead of pushing it onto a line of its own. */}
       <div className={`flex min-w-0 flex-col gap-0.5 ${note ? "flex-1 basis-56" : ""}`}>
         <span className="flex items-center gap-1.5 text-sm text-carbon-text">
