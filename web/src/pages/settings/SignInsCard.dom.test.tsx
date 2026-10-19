@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
-import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import type { CloudCredSetInfo } from "../../lib/api";
 import { I18nProvider } from "../../lib/i18n";
 import { ToastProvider } from "../../lib/toast";
@@ -27,12 +27,14 @@ vi.mock("../../lib/api", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../../lib/api")>()),
   getCloudCredSets: vi.fn(),
   setCloudCredSets: vi.fn(),
+  makeDefaultSignIn: vi.fn(),
   dismissSignInsNote: vi.fn(),
 }));
 
 const api = await import("../../lib/api");
 const getCloudCredSets = vi.mocked(api.getCloudCredSets);
 const setCloudCredSets = vi.mocked(api.setCloudCredSets);
+const makeDefaultSignIn = vi.mocked(api.makeDefaultSignIn);
 const dismissSignInsNote = vi.mocked(api.dismissSignInsNote);
 const { SignInsCard } = await import("./SignInsCard");
 
@@ -49,12 +51,13 @@ async function renderCard() {
 }
 
 function row(name: string): HTMLElement {
-  return screen.getByText(name).closest("div.rounded-card") as HTMLElement;
+  return screen.getByText(name).closest("li") as HTMLElement;
 }
 
 beforeEach(() => {
   getCloudCredSets.mockResolvedValue({ ok: true, sets: SETS, note: null });
   setCloudCredSets.mockResolvedValue({ ok: true });
+  makeDefaultSignIn.mockResolvedValue({ ok: true });
   dismissSignInsNote.mockResolvedValue({ ok: true });
 });
 
@@ -125,4 +128,14 @@ it("moves the default mark to a sign-in saved as the default", async () => {
   const sent = setCloudCredSets.mock.calls[0][0];
   expect(sent.filter((s) => s.default).map((s) => s.name)).toEqual(["Garage"]);
   expect(sent.find((s) => s.id === "hetzner")?.default).toBe(false);
+});
+
+it("makes another sign-in the default in one request", async () => {
+  await renderCard();
+  expect(within(row("Hetzner S3")).queryByRole("button", { name: "Make default" })).toBeNull();
+  await act(async () => {
+    fireEvent.click(within(row("Wasabi")).getByRole("button", { name: "Make default" }));
+  });
+  expect(makeDefaultSignIn).toHaveBeenCalledWith("wasabi");
+  expect(setCloudCredSets).not.toHaveBeenCalled();
 });

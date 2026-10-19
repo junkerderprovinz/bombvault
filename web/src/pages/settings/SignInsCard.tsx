@@ -10,6 +10,7 @@ import { Toggle } from "../../components/Toggle";
 import {
   dismissSignInsNote,
   getCloudCredSets,
+  makeDefaultSignIn,
   setCloudCredSets,
   type CloudCredSet,
   type CloudCredSetInfo,
@@ -60,6 +61,7 @@ export function SignInsCard({ hueIndex }: { hueIndex?: number }) {
   const [state, setState] = useState<SaveState>("idle");
   const [confirmRemove, setConfirmRemove] = useState<string | null>(null);
   const [removingId, setRemovingId] = useState<string | null>(null);
+  const [defaultingId, setDefaultingId] = useState<string | null>(null);
   // A failed action shakes the button that caused it. Removal is keyed per
   // row, since several remove buttons can be on screen at once.
   const [shake, setShake] = useState<Record<string, number>>({});
@@ -169,17 +171,38 @@ export function SignInsCard({ hueIndex }: { hueIndex?: number }) {
     }
   }
 
+  async function makeDefault(s: CloudCredSetInfo) {
+    setDefaultingId(s.id);
+    try {
+      const r = await makeDefaultSignIn(s.id);
+      if (!r.ok) {
+        push(r.error ?? t("settings.error"), "fail");
+        bumpShake(`default:${s.id}`);
+        return;
+      }
+      credSetsChanged();
+      push(t("settings.saved"), "success");
+      pushSaveWarnings(push, t, r.warnings);
+    } catch (err) {
+      push(err instanceof Error ? err.message : t("settings.error"), "fail");
+      bumpShake(`default:${s.id}`);
+    } finally {
+      setDefaultingId(null);
+    }
+  }
+
   function dismiss() {
     setNote(null);
     void dismissSignInsNote().catch(() => undefined);
   }
 
-  const inputCls = "rounded-control bg-carbon-surface3 text-carbon-text text-sm font-mono px-3 py-1.5 glim-field-focus-well";
+  const inputCls = "rounded-control bg-carbon-surface2 text-carbon-text text-sm font-mono px-3 py-1.5 glim-field-focus";
   const textCls = `${inputCls} w-72 max-w-full`;
+  const headCls = "text-xs font-semibold uppercase tracking-widest text-carbon-textSub";
   const isNew = editing !== null && !stored;
 
   const editor = editing && (
-    <div className="flex flex-col gap-3 rounded-card bg-carbon-surface2 p-3">
+    <div className="flex flex-col gap-4 pt-4">
       <Rows>
         <SettingRow label={t("cloud.credSets.name")} htmlFor={`${uid}-name`}>
           <input id={`${uid}-name`} value={editing.name} onChange={(e) => setField("name", e.target.value)} className={textCls} />
@@ -188,8 +211,8 @@ export function SignInsCard({ hueIndex }: { hueIndex?: number }) {
           <Toggle hideLabel label={t("signIns.defaultToggle")} checked={!!editing.default} onChange={setDefault} />
         </SettingRow>
       </Rows>
-      <div className="rounded-card bg-carbon-surface3 p-3">
-        <span className="mb-2 block text-xs font-semibold text-carbon-textSub">Amazon S3</span>
+      <div className="flex flex-col gap-2">
+        <span className={headCls}>Amazon S3</span>
         <Rows>
           <SettingRow label="AWS_ACCESS_KEY_ID" htmlFor={`${uid}-s3-key`}>
             <input id={`${uid}-s3-key`} value={editing.s3KeyId} onChange={(e) => setField("s3KeyId", e.target.value)} spellCheck={false} dir="ltr" className={`${textCls} text-start`} />
@@ -213,8 +236,8 @@ export function SignInsCard({ hueIndex }: { hueIndex?: number }) {
           </SettingRow>
         </Rows>
       </div>
-      <div className="rounded-card bg-carbon-surface3 p-3">
-        <span className="mb-2 block text-xs font-semibold text-carbon-textSub">restic REST server</span>
+      <div className="flex flex-col gap-2">
+        <span className={headCls}>restic REST server</span>
         <Rows>
           <SettingRow label="RESTIC_REST_USERNAME" htmlFor={`${uid}-rest-user`}>
             <input id={`${uid}-rest-user`} value={editing.restUser} onChange={(e) => setField("restUser", e.target.value)} spellCheck={false} dir="ltr" className={`${textCls} text-start`} />
@@ -261,60 +284,77 @@ export function SignInsCard({ hueIndex }: { hueIndex?: number }) {
 
       {sets.length === 0 && !editing && <span className="text-xs text-carbon-textMuted">{t("signIns.none")}</span>}
 
-      {sets.map((s) => {
-        const users = s.usedBy ?? [];
-        return (
-          <div key={s.id} className="flex flex-col gap-3">
-            {/* On a phone the actions go under the name, which beside them
-                shrinks to a column one character wide. */}
-            <div className="flex items-start justify-between gap-3 rounded-card bg-carbon-surface2 p-3 max-md:flex-col">
-              <div className="flex min-w-0 flex-col gap-1">
-                <span className="flex flex-wrap items-center gap-2 text-sm text-carbon-text">
-                  <span className="min-w-0 truncate max-md:whitespace-normal max-md:wrap-anywhere">{credSetLabel(t, s)}</span>
-                  {s.s3KeyId && <Badge tone="neutral" size="small">S3</Badge>}
-                  {s.restUser && <Badge tone="neutral" size="small">restic REST</Badge>}
-                  {s.default && (
-                    <Badge tone="ok" size="small">
-                      {t("signIns.default")}
-                    </Badge>
-                  )}
-                </span>
-                {(s.s3KeyId || s.restUser) && (
-                  <span dir="ltr" className="break-all text-start font-mono text-xs text-carbon-textMuted">
-                    {s.s3KeyId || s.restUser}
-                  </span>
-                )}
-                <span className="text-xs text-carbon-textSub wrap-break-word">
-                  {users.length > 0
-                    ? t("signIns.usedBy").replace("{list}", () => formatList(lang, users.map((u) => u.name)))
-                    : t("signIns.unused")}
-                </span>
-                {s.default && <span className="text-xs text-carbon-textSub wrap-break-word">{t("signIns.defaultAlso")}</span>}
-              </div>
-              <div className="flex shrink-0 flex-wrap items-start gap-2">
-                <Button
-                  label={editing?.id === s.id ? t("common.close") : t("offsite.targets.edit")}
-                  labelKey={editing?.id === s.id ? "common.close" : "offsite.targets.edit"}
-                  tone="neutral"
-                  onClick={() => openEdit(s)}
-                />
-                {/* A destructive action gets no red of its own in this app. */}
-                <Button
-                  key={shake[`remove:${s.id}`] || 0}
-                  label={t(confirmRemove === s.id ? "offsite.targets.confirmRemove" : "offsite.targets.remove")}
-                  labelKey={confirmRemove === s.id ? "offsite.targets.confirmRemove" : "offsite.targets.remove"}
-                  tone="neutral"
-                  onClick={() => void remove(s)}
-                  disabled={removingId === s.id}
-                  busy={removingId === s.id}
-                  className={shake[`remove:${s.id}`] ? "glim-shake" : ""}
-                />
-              </div>
-            </div>
-            {editing?.id === s.id && editor}
-          </div>
-        );
-      })}
+      {sets.length > 0 && (
+        <ul className="flex flex-col divide-y divide-carbon-border/60">
+          {sets.map((s) => {
+            const users = s.usedBy ?? [];
+            return (
+              <li key={s.id} className="flex flex-col py-3 first:pt-0 last:pb-0">
+                {/* On a phone the actions go under the name, which beside them
+                    shrinks to a column one character wide. */}
+                <div className="flex items-start justify-between gap-3 max-md:flex-col">
+                  <div className="flex min-w-0 flex-col gap-1">
+                    <span className="flex flex-wrap items-center gap-2 text-sm text-carbon-text">
+                      <span className="min-w-0 truncate max-md:whitespace-normal max-md:wrap-anywhere">{credSetLabel(t, s)}</span>
+                      {s.s3KeyId && <Badge tone="neutral" size="small">S3</Badge>}
+                      {s.restUser && <Badge tone="neutral" size="small">restic REST</Badge>}
+                      {s.default && (
+                        <Badge tone="ok" size="small">
+                          {t("signIns.default")}
+                        </Badge>
+                      )}
+                    </span>
+                    {(s.s3KeyId || s.restUser) && (
+                      <span dir="ltr" className="break-all text-start font-mono text-xs text-carbon-textMuted">
+                        {s.s3KeyId || s.restUser}
+                      </span>
+                    )}
+                    <span className="text-xs text-carbon-textSub wrap-break-word">
+                      {users.length > 0
+                        ? t("signIns.usedBy").replace("{list}", () => formatList(lang, users.map((u) => u.name)))
+                        : t("signIns.unused")}
+                    </span>
+                    {s.default && <span className="text-xs text-carbon-textSub wrap-break-word">{t("signIns.defaultAlso")}</span>}
+                  </div>
+                  <div className="flex shrink-0 flex-wrap items-start gap-2">
+                    {!s.default && (
+                      <span data-new="sign-in-make-default" className="flex">
+                        <Button
+                          key={shake[`default:${s.id}`] || 0}
+                          label={t("signIns.makeDefault")}
+                          labelKey="signIns.makeDefault"
+                          onClick={() => void makeDefault(s)}
+                          disabled={defaultingId !== null}
+                          busy={defaultingId === s.id}
+                          className={shake[`default:${s.id}`] ? "glim-shake" : ""}
+                        />
+                      </span>
+                    )}
+                    <Button
+                      label={editing?.id === s.id ? t("common.close") : t("offsite.targets.edit")}
+                      labelKey={editing?.id === s.id ? "common.close" : "offsite.targets.edit"}
+                      tone="neutral"
+                      onClick={() => openEdit(s)}
+                    />
+                    {/* A destructive action gets no red of its own in this app. */}
+                    <Button
+                      key={shake[`remove:${s.id}`] || 0}
+                      label={t(confirmRemove === s.id ? "offsite.targets.confirmRemove" : "offsite.targets.remove")}
+                      labelKey={confirmRemove === s.id ? "offsite.targets.confirmRemove" : "offsite.targets.remove"}
+                      tone="neutral"
+                      onClick={() => void remove(s)}
+                      disabled={removingId === s.id}
+                      busy={removingId === s.id}
+                      className={shake[`remove:${s.id}`] ? "glim-shake" : ""}
+                    />
+                  </div>
+                </div>
+                {editing?.id === s.id && editor}
+              </li>
+            );
+          })}
+        </ul>
+      )}
 
       {isNew ? (
         editor

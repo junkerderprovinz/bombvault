@@ -1642,6 +1642,12 @@ export function getCloudCredSets(): Promise<OkEnvelope & { sets?: CloudCredSetIn
   return fetchJSON("/api/cloud/creds-sets");
 }
 
+/** POST /api/cloud/creds-sets/{id}/default: makes one saved sign-in the
+ *  default, taking the mark from the one that had it. */
+export function makeDefaultSignIn(id: string): Promise<OkEnvelope & { warnings?: SaveWarning[] }> {
+  return fetchJSON(`/api/cloud/creds-sets/${encodeURIComponent(id)}/default`, { method: "POST" });
+}
+
 /** DELETE /api/cloud/creds-sets/note: stops showing the note. */
 export function dismissSignInsNote(): Promise<OkEnvelope> {
   return fetchJSON("/api/cloud/creds-sets/note", { method: "DELETE" });
