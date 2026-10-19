@@ -189,7 +189,10 @@ type locationBuilder struct {
 	copying map[string]int
 	// localOff holds the sections whose own folder takes no new backups.
 	localOff map[string]bool
-	reader   capacityReader
+	// ownIn is the storage location each section's own folder was put into,
+	// by domain. Such a folder is listed there and not among the paths.
+	ownIn  map[string]string
+	reader capacityReader
 }
 
 // StorageLocations lists every place backups are kept: the domain folders,
@@ -208,6 +211,16 @@ func (s *Service) StorageLocations() ([]storageLocation, error) {
 	}
 	if b.localOff, err = s.store.LocalOff(); err != nil {
 		return nil, err
+	}
+	b.ownIn = map[string]string{}
+	for _, domain := range offsiteConfigDomains {
+		row, ok, err := s.store.PrimaryRemoteTarget(domain)
+		if err != nil {
+			return nil, err
+		}
+		if d, linked := s.ownFolderLocation(row); ok && linked {
+			b.ownIn[domain] = d.ID
+		}
 	}
 	for _, t := range b.targets {
 		if t.Enabled {
@@ -353,7 +366,7 @@ func (b *locationBuilder) pathLocations() []storageLocation {
 	series := map[string][]sizeSeries{}
 	for _, domain := range offsiteConfigDomains {
 		raw := strings.TrimSpace(domainPathRaw(domain, b.settings))
-		if raw == "" {
+		if raw == "" || b.ownIn[domain] != "" {
 			continue
 		}
 		root := scrubRepoLocation(pathRoot(raw))
@@ -462,6 +475,17 @@ func (b *locationBuilder) destinationLocation(d store.OffsiteTarget) storageLoca
 		return cmp.Compare(slices.Index(offsiteConfigDomains, x.Domain), slices.Index(offsiteConfigDomains, y.Domain))
 	})
 	var series []sizeSeries
+	for _, domain := range offsiteConfigDomains {
+		if b.ownIn[domain] != d.ID {
+			continue
+		}
+		sec := b.pathSection(domain, strings.TrimSpace(domainPathRaw(domain, b.settings)))
+		// Its keep rule is the section's local one, which this location's
+		// keep card does not describe.
+		sec.Own = []string{}
+		loc.Sections = append(loc.Sections, sec)
+		series = append(series, sizeSeries{domain, "local"})
+	}
 	for _, t := range derived {
 		b.addTarget(&loc, t)
 		series = append(series, b.seriesOf(t))

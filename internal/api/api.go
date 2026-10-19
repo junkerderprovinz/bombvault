@@ -458,6 +458,8 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("GET /api/storage/locations/{id}/erasure", h.handleLocationErasurePreview)
 	mux.HandleFunc("POST /api/storage/locations/{id}/erasure", h.handleEraseLocation)
 	mux.HandleFunc("PUT /api/storage/sections/{domain}/local", h.handleSetSectionLocal)
+	mux.HandleFunc("POST /api/storage/own-folders/preview", h.handleOwnFolderPreview)
+	mux.HandleFunc("POST /api/storage/own-folders", h.handleMoveOwnFolders)
 	mux.HandleFunc("GET /api/browse", h.handleBrowse)
 	mux.HandleFunc("POST /api/browse/mkdir", h.handleMkdir)
 	mux.HandleFunc("GET /api/progress", h.handleProgress)

@@ -404,6 +404,8 @@ var pairedRefused = []string{
 	"PUT /api/placement/default/{domain}",
 	"PUT /api/settings/primary-remote/{domain}",
 	"PUT /api/storage/sections/{domain}/local",
+	"POST /api/storage/own-folders",
+	"POST /api/storage/own-folders/preview",
 	// Settings, notifications, integrations, discovery and the settings backup.
 	"DELETE /api/anomalies/items/{targetId}/expectations/{family}",
 	"GET /api/config/snapshots",

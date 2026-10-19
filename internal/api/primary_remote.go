@@ -58,7 +58,37 @@ func (s *Service) primaryRemoteTarget(domain string) (store.OffsiteTarget, bool)
 		log.Printf("api: primary-remote %s: read failed (treating as unconfigured): %v", domain, err) //nolint:gosec // G706: domain is a fixed literal
 		return store.OffsiteTarget{}, false
 	}
+	if d, linked := s.ownFolderLocation(t); linked {
+		t = followLocation(t, d)
+	}
 	return t, ok
+}
+
+// ownFolderLocation returns the storage location a section's own folder was
+// put into, while the section's path still is that location's folder for it.
+// A path typed in by hand since then leaves the link without effect.
+func (s *Service) ownFolderLocation(t store.OffsiteTarget) (store.OffsiteTarget, bool) {
+	if t.DestinationID == "" {
+		return store.OffsiteTarget{}, false
+	}
+	d, ok, err := s.store.GetDestination(t.DestinationID)
+	if err != nil || !ok {
+		return store.OffsiteTarget{}, false
+	}
+	settings, err := s.store.GetSettings()
+	if err != nil || !sameRepoLocation(destinationLocation(d.Repo, t.Domain), domainPathRaw(t.Domain, settings)) {
+		return store.OffsiteTarget{}, false
+	}
+	return d, true
+}
+
+// followLocation gives a section's own folder the sign-in, protection and
+// limits of the storage location it lies in, as a copy made from it has.
+func followLocation(t, d store.OffsiteTarget) store.OffsiteTarget {
+	t.CredsRef, t.StorageClass, t.Immutable = d.CredsRef, d.StorageClass, d.Immutable
+	t.LimitUpload, t.LimitDownload, t.GrowthBudgetGB = d.LimitUpload, d.LimitDownload, d.GrowthBudgetGB
+	t.Enabled = true
+	return t
 }
 
 // primaryLimitsFor returns the bandwidth caps for a domain's primary backup:
@@ -198,6 +228,9 @@ func (s *Service) primaryAppendOnly(domain, repo string) appendOnlyFlag {
 	if err != nil {
 		log.Printf("api: could not read the remote-primary safety row for %s; treating %s as append-only until it can be read", domain, shortRepoName(repo)) //nolint:gosec // G706: domain is a fixed literal and the name is shortened
 		return appendOnlyUnreadable
+	}
+	if d, linked := s.ownFolderLocation(t); linked {
+		t = followLocation(t, d)
 	}
 	if ok && t.Enabled && t.Immutable {
 		return appendOnlyPrimaryRemote
