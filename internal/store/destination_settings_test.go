@@ -270,7 +270,7 @@ func TestRemoveDestinationTakesItsTargetsAndNamesThePrimariesItHeld(t *testing.T
 	}
 
 	var primaries []string
-	if err := r.RemoveDestination(d.ID, func(_ *store.Settings, domains []string) { primaries = domains }); err != nil {
+	if err := r.RemoveDestination(d.ID, nothingBehind, func(_ *store.Settings, domains []string) { primaries = domains }); err != nil {
 		t.Fatal(err)
 	}
 
@@ -289,7 +289,9 @@ func TestRemoveDestinationTakesItsTargetsAndNamesThePrimariesItHeld(t *testing.T
 	if _, ok, _ := r.GetOffsiteTarget(stays.ID); !ok {
 		t.Fatal("the removal took a target of another destination")
 	}
-	if err := r.RemoveDestination(d.ID, nil); !errors.Is(err, store.ErrNotDestination) {
+	if err := r.RemoveDestination(d.ID, nothingBehind, nil); !errors.Is(err, store.ErrNotDestination) {
 		t.Fatalf("removing it again: %v, want it reported as unknown", err)
 	}
 }
+
+func nothingBehind(store.OffsiteTarget, store.Settings) bool { return false }

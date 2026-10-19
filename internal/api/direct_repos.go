@@ -165,7 +165,9 @@ func (s *Service) clashCandidate(kind, name, location string) (string, bool) {
 
 // locationClash refuses a location that holds or lies inside a domain
 // repository, an off-site field, an off-site target or a named repository, and
-// a second row over a named repository's place.
+// a second row over a named repository's place. A target the storage page does
+// not list is left out, since nobody could see or remove what stands in the
+// way.
 func (s *Service) locationClash(settings store.Settings, loc string, self locationSelf) error {
 	// Two domains on one destination is a setup people run today, so only
 	// nesting is refused between places that may be shared.
@@ -190,8 +192,13 @@ func (s *Service) locationClash(settings store.Settings, loc string, self locati
 	if err != nil {
 		return fmt.Errorf("read the off-site targets to check this location: %w", err)
 	}
+	destinations, err := s.store.ListDestinations()
+	if err != nil {
+		return fmt.Errorf("read the destinations to check this location: %w", err)
+	}
+	ids := destinationIDs(destinations)
 	for _, t := range targets {
-		if slices.Contains(self.ids, t.ID) {
+		if slices.Contains(self.ids, t.ID) || hiddenTarget(t, settings, ids) {
 			continue
 		}
 		if tLoc, ok := s.clashCandidate("off-site destination", t.Name, t.Repo); ok && clashes(tLoc) {

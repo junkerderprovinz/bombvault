@@ -42,9 +42,10 @@ func validOffsiteDomain(domain string) bool {
 // decoded it stays empty, which offsiteModeForTarget treats as the global
 // class. A primary that follows a destination takes name, storage class,
 // append-only flag and provider from it instead, and stops following it once
-// the field names another location or none. The keep-policy is set on the
-// storage location's page, so an existing primary keeps its own; the off-site
-// settings only seed a new one.
+// the field names another location. A cleared field leaves it switched off
+// on its destination, which still lists it and takes it along on removal. The
+// keep-policy is set on the storage location's page, so an existing primary
+// keeps its own; the off-site settings only seed a new one.
 func (s *Service) syncPrimaryOffsiteTarget(domain string, settings store.Settings) error {
 	if s.store == nil {
 		return nil
@@ -62,7 +63,7 @@ func (s *Service) syncPrimaryOffsiteTarget(domain string, settings store.Setting
 	}
 
 	repo := offsiteRepoFromSettings(domain, settings)
-	if primary != nil && primary.DestinationID != "" && primary.Repo != repo {
+	if primary != nil && primary.DestinationID != "" && repo != "" && primary.Repo != repo {
 		if err := s.store.DetachFromDestination(primary.ID); err != nil {
 			return err
 		}

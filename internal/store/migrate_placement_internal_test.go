@@ -216,9 +216,7 @@ func TestNormalizeOffsiteSortOrderMatchesMigration(t *testing.T) {
 			migrated := OpenMem(t)
 			migrateThrough(t, migrated, slot.version-1)
 			seedSlotCase(t, migrated, c)
-			if err := Migrate(migrated); err != nil {
-				t.Fatalf("Migrate: %v", err)
-			}
+			migrateThrough(t, migrated, slot.version)
 
 			normalized := OpenMem(t)
 			if err := Migrate(normalized); err != nil {

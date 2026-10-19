@@ -59,11 +59,13 @@ func sameDir(a, b string) bool {
 	return err == nil && os.SameFile(ai, bi)
 }
 
-// liveRepo is a repository in use, at its resolved location.
+// liveRepo is a repository in use, at its resolved location. direct marks a
+// target's direct repository, also one that outlived its target.
 type liveRepo struct {
-	id   string
-	loc  string
-	kind liveKind
+	id     string
+	loc    string
+	kind   liveKind
+	direct bool
 }
 
 type liveKind int
@@ -76,8 +78,8 @@ const (
 )
 
 // liveRepos lists every repository in use: each domain's own, every named and
-// direct repository, every off-site target and every destination. One whose
-// location does not resolve is left out.
+// direct repository, every off-site target the storage page lists and every
+// destination. One whose location does not resolve is left out.
 func (s *Service) liveRepos(settings store.Settings) ([]liveRepo, error) {
 	var out []liveRepo
 	for _, domain := range offsiteConfigDomains {
@@ -85,19 +87,34 @@ func (s *Service) liveRepos(settings store.Settings) ([]liveRepo, error) {
 			out = append(out, liveRepo{id: homeID(domain), loc: loc, kind: liveHome})
 		}
 	}
-	for _, list := range []struct {
-		rows func() ([]store.OffsiteTarget, error)
-		kind liveKind
-	}{{s.store.ListNamedRepos, liveHome}, {s.store.ListOffsiteTargets, liveTarget}, {s.store.ListDestinations, liveDestination}} {
-		rows, err := list.rows()
-		if err != nil {
-			return nil, err
+	named, err := s.store.ListNamedRepos()
+	if err != nil {
+		return nil, err
+	}
+	targets, err := s.store.ListOffsiteTargets()
+	if err != nil {
+		return nil, err
+	}
+	destinations, err := s.store.ListDestinations()
+	if err != nil {
+		return nil, err
+	}
+	add := func(r store.OffsiteTarget, kind liveKind) {
+		if loc, err := s.resolveRepo(r.Repo); err == nil {
+			out = append(out, liveRepo{id: r.ID, loc: loc, kind: kind, direct: r.CompanionOf != "" || r.CompanionLost})
 		}
-		for _, r := range rows {
-			if loc, err := s.resolveRepo(r.Repo); err == nil {
-				out = append(out, liveRepo{id: r.ID, loc: loc, kind: list.kind})
-			}
+	}
+	for _, r := range named {
+		add(r, liveHome)
+	}
+	ids := destinationIDs(destinations)
+	for _, t := range targets {
+		if !hiddenTarget(t, settings, ids) {
+			add(t, liveTarget)
 		}
+	}
+	for _, d := range destinations {
+		add(d, liveDestination)
 	}
 	return out, nil
 }
