@@ -64,7 +64,7 @@ export function SettingRow({
             ))}
           {hint && <InfoBubble tip={hint} />}
         </span>
-        {note && <span className="flex flex-col gap-1 text-xs text-carbon-textMuted wrap-break-word">{note}</span>}
+        {note && <div className="flex flex-col gap-1 text-xs text-carbon-textMuted wrap-break-word">{note}</div>}
       </div>
       {/* A selector wraps by the room this box has, so on a phone the box takes
           all the row leaves it, beside the label or under it. */}
