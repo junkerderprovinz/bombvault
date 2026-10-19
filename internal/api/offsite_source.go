@@ -21,21 +21,22 @@ const sourceRemote = "BVSRC"
 // an S3 source is read through an rclone remote defined in the environment, a
 // rest-server source with its login in the address.
 //
-// The domain's own repository and a source without a credential set of its
-// own are read as they are.
-func (s *Service) sourceAccess(settings store.Settings, src domainRepoRef, dest string, destMode restic.Mode) (string, restic.Mode, error) {
-	if src.Own || strings.TrimSpace(src.Named.CredsRef) == "" || !restic.IsRemoteRepo(src.Loc) {
+// The source's credentials are the ones its backups run with, so a remote
+// primary or a named repository on the shared set is read the way it was
+// written. A local source, or one with no credentials stored, is read as it is.
+func (s *Service) sourceAccess(settings store.Settings, domain string, src domainRepoRef, dest string, destMode restic.Mode) (string, restic.Mode, error) {
+	if !restic.IsRemoteRepo(src.Loc) {
 		return src.Loc, destMode, nil
 	}
-	c, err := s.decodeCloudFor(settings, src.Named.CredsRef)
-	if err != nil {
-		return "", restic.Mode{}, fmt.Errorf("read the credentials of %s: %w", shortRepoName(src.Loc), err)
-	}
+	c := credsInEnv(s.primaryModeFor(settings, domain, src.Loc).Env)
 	mode := destMode
 	mode.Env = slices.Clone(destMode.Env)
 	srcScheme, destScheme := repoScheme(src.Loc), repoScheme(dest)
 	switch srcScheme {
 	case "s3":
+		if c.S3KeyID == "" {
+			return src.Loc, mode, nil
+		}
 		if destScheme != "s3" {
 			mode.Env = append(mode.Env, cloudEnv(CloudCreds{S3KeyID: c.S3KeyID, S3Secret: c.S3Secret, S3Region: c.S3Region})...)
 			return src.Loc, mode, nil
@@ -50,6 +51,9 @@ func (s *Service) sourceAccess(settings store.Settings, src domainRepoRef, dest 
 		mode.Env = append(mode.Env, env...)
 		return loc, mode, nil
 	case "rest":
+		if c.RESTUser == "" && c.RESTPassword == "" {
+			return src.Loc, mode, nil
+		}
 		if destScheme != "rest" {
 			mode.Env = append(mode.Env, cloudEnv(CloudCreds{RESTUser: c.RESTUser, RESTPassword: c.RESTPassword})...)
 			return src.Loc, mode, nil
@@ -61,6 +65,17 @@ func (s *Service) sourceAccess(settings store.Settings, src domainRepoRef, dest 
 		return loc, mode, err
 	}
 	return src.Loc, mode, nil
+}
+
+// credsInEnv reads back the credentials cloudEnv put into an environment.
+func credsInEnv(env []string) CloudCreds {
+	return CloudCreds{
+		S3KeyID:      envValue(env, "AWS_ACCESS_KEY_ID"),
+		S3Secret:     envValue(env, "AWS_SECRET_ACCESS_KEY"),
+		S3Region:     envValue(env, "AWS_DEFAULT_REGION"),
+		RESTUser:     envValue(env, "RESTIC_REST_USERNAME"),
+		RESTPassword: envValue(env, "RESTIC_REST_PASSWORD"),
+	}
 }
 
 // repoScheme is the restic backend a location names, "" for a path.

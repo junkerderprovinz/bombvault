@@ -209,7 +209,7 @@ func (s *Service) copySources(ctx context.Context, settings store.Settings, doma
 		if src.Named.CompanionOf != "" && src.Named.CompanionOf == target.ID {
 			continue
 		}
-		loc, srcMode, err := s.sourceAccess(settings, src, dest, mode)
+		loc, srcMode, err := s.sourceAccess(settings, domain, src, dest, mode)
 		if err != nil {
 			out.errs = append(out.errs, err)
 			continue
