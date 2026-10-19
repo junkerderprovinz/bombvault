@@ -4074,6 +4074,28 @@ func (h *Handler) handleSetCloudCredSets(w http.ResponseWriter, r *http.Request)
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
+	h.signInsSaved(w, r, before)
+}
+
+// handleMakeDefaultSignIn makes one saved sign-in the default.
+// POST /api/cloud/creds-sets/{id}/default
+func (h *Handler) handleMakeDefaultSignIn(w http.ResponseWriter, r *http.Request) {
+	before, err := h.store.GetSettings()
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	if err := h.svc.MakeDefaultSignIn(r.PathValue("id")); err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	h.signInsSaved(w, r, before)
+}
+
+// signInsSaved brings the primary off-site rows in line with the saved
+// sign-ins and answers with what a direct repository can no longer open.
+// before is the settings as they were ahead of the write.
+func (h *Handler) signInsSaved(w http.ResponseWriter, r *http.Request, before store.Settings) {
 	defaultChanged := false
 	if settings, sErr := h.store.GetSettings(); sErr == nil {
 		h.svc.syncAllPrimaryOffsiteTargets(settings)

@@ -369,6 +369,7 @@ var pairedRefused = []string{
 	"PATCH /api/repos/{id}",
 	"POST /api/cloud",
 	"POST /api/cloud/creds-sets",
+	"POST /api/cloud/creds-sets/{id}/default",
 	"POST /api/encryption/detect",
 	"POST /api/offsite/destinations",
 	"POST /api/offsite/destinations/{id}/adopt/{target}",

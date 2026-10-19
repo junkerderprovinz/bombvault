@@ -230,6 +230,26 @@ func (s *Service) importSignIns(sets []CloudCredSet) error {
 	})
 }
 
+// MakeDefaultSignIn moves the default mark to the saved sign-in id in one
+// write, so no reader ever sees two defaults or none.
+func (s *Service) MakeDefaultSignIn(id string) error {
+	missing := false
+	err := s.editCloudCredSets(func(sets []CloudCredSet) []CloudCredSet {
+		if !slices.ContainsFunc(sets, func(c CloudCredSet) bool { return c.ID == id }) {
+			missing = true
+			return sets
+		}
+		for i := range sets {
+			sets[i].Default = sets[i].ID == id
+		}
+		return sets
+	})
+	if err == nil && missing {
+		return errUnknownSignIn
+	}
+	return err
+}
+
 // adoptSharedSignIn takes the shared sign-in of a settings file from before
 // sign-ins were one list through the same steps as the conversion at start.
 func (s *Service) adoptSharedSignIn(c CloudCreds) error {

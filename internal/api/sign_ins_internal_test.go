@@ -307,3 +307,62 @@ func TestAWizardSignsInWithASavedSignInItNames(t *testing.T) {
 		t.Fatal("a draft naming a missing sign-in was filled")
 	}
 }
+
+func TestMakingASignInTheDefaultMovesTheMarkAndTheRuns(t *testing.T) {
+	s := unraidNotifyService(t, nil)
+	if err := s.SetCloudCredSets([]CloudCredSet{
+		{ID: "old", Name: "Old", Default: true, CloudCreds: CloudCreds{S3KeyID: "OLD", S3Secret: "os"}},
+		{ID: "new", Name: "New", CloudCreds: CloudCreds{S3KeyID: "NEW", S3Secret: "ns"}},
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if err := s.MakeDefaultSignIn("new"); err != nil {
+		t.Fatal(err)
+	}
+	sets := savedSets(t, s)
+	if len(sets) != 2 || sets[0].Default || !sets[1].Default || sets[1].S3Secret != "ns" {
+		t.Fatalf("sets = %+v, want New alone as the default with its secret", sets)
+	}
+	settings := settingsOf(t, s)
+	if env := strings.Join(s.ModeFor(settings).Env, "\n"); !strings.Contains(env, "AWS_ACCESS_KEY_ID=NEW") {
+		t.Fatalf("a run signs in with %v, want the new default", env)
+	}
+	if c, _ := s.decodeCloudFor(settings, ""); c.S3KeyID != "NEW" {
+		t.Fatalf("a place that names no sign-in uses %q", c.S3KeyID)
+	}
+	if c, _ := s.decodeCloudFor(settings, "old"); c.S3KeyID != "OLD" {
+		t.Fatalf("a place that names the old default uses %q", c.S3KeyID)
+	}
+}
+
+func TestAnUnknownSignInCannotBecomeTheDefault(t *testing.T) {
+	s := unraidNotifyService(t, nil)
+	if err := s.SetCloudCredSets([]CloudCredSet{{ID: "a", Name: "A", Default: true, CloudCreds: CloudCreds{RESTUser: "a"}}}); err != nil {
+		t.Fatal(err)
+	}
+	if err := s.MakeDefaultSignIn("gone"); err == nil {
+		t.Fatal("an unknown sign-in became the default")
+	}
+	if sets := savedSets(t, s); !sets[0].Default {
+		t.Fatalf("sets = %+v, want A kept as the default", sets)
+	}
+}
+
+func TestTheDefaultCanBeMovedOverTheAPI(t *testing.T) {
+	f := newPlacementFixture(t)
+	if err := f.svc.SetCloudCredSets([]CloudCredSet{
+		{ID: "a", Name: "A", Default: true, CloudCreds: CloudCreds{RESTUser: "a", RESTPassword: "1"}},
+		{ID: "b", Name: "B", CloudCreds: CloudCreds{RESTUser: "b", RESTPassword: "2"}},
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if res := f.do("POST", "/api/cloud/creds-sets/b/default", nil); res["ok"] != true {
+		t.Fatalf("answer = %v", res)
+	}
+	if c, _ := f.svc.CloudConfig(); c.RESTUser != "b" {
+		t.Fatalf("the default signs in as %q, want b", c.RESTUser)
+	}
+	if res := f.do("POST", "/api/cloud/creds-sets/gone/default", nil); res["ok"] != false {
+		t.Fatalf("an unknown sign-in was accepted: %v", res)
+	}
+}
