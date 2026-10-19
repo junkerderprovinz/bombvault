@@ -13,6 +13,7 @@ import { Badge } from "../Badge";
 import { RunDetailSheet } from "../mobile/RunDetailSheet";
 import { statusDotClass } from "../RecentRunsList";
 import { RunAnomalyBadge } from "../RunAnomalyBadge";
+import { Rows } from "../storage/rows";
 import { ZFSRunDetailView } from "../zfs/ZFSDatasetRow";
 
 const SHOWN = 8;
@@ -56,7 +57,7 @@ export function EntryRuns({
 
   return (
     <>
-      <ul className="flex flex-col divide-y divide-carbon-border/60">
+      <Rows as="ul">
         {listed.map((run) => (
           <li key={run.id} className="flex items-center gap-2 py-1 first:pt-0 last:pb-0">
             <button
@@ -117,7 +118,7 @@ export function EntryRuns({
             <RunAnomalyBadge findings={byRunId.get(run.id)} t={t} />
           </li>
         ))}
-      </ul>
+      </Rows>
       {open &&
         (dataset ? (
           <AnomalyWindow title={span(open)} onClose={() => setOpenId(null)}>

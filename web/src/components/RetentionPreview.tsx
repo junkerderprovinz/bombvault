@@ -6,7 +6,7 @@ import { useT } from "../lib/i18n";
 
 import { Button } from "./Button";
 import { SelectField } from "./SelectField";
-import { SettingRow } from "./storage/rows";
+import { Rows, SettingRow } from "./storage/rows";
 
 type Domain = OffsiteDomain;
 
@@ -165,49 +165,56 @@ function PartView({ part, t }: { part: Part; t: ReturnType<typeof useT>["t"] }) 
         <p className="text-sm text-carbon-textSub">{t("retentionPreview.nothing")}</p>
       )}
 
-      {preview.repos.map((repo) => (
-        <div key={repo.name} className="rounded-control bg-carbon-surface2 px-3 py-2">
-          <div className="flex flex-wrap items-center justify-between gap-x-2">
-            <span className="text-sm text-carbon-text">{repo.name}</span>
-            {repo.appendOnly && (
-              <span className="text-xs text-carbon-textSub">{t("retentionPreview.appendOnly")}</span>
-            )}
-          </div>
-
-          {repo.error && <p className="text-sm text-statusFail">✗ {repo.error}</p>}
-
-          {repo.items.map((item) => (
-            <div key={item.tag || "__repo"} className="mt-2">
-              <div className="text-xs text-carbon-textSub">
-                {itemLabel(item.tag, t)} · {t("retentionPreview.keeps")}: {item.keep?.length ?? 0}
-              </div>
-              {item.paused && <p className="text-xs text-statusWarn">{t("retentionPreview.paused")}</p>}
-              {(item.remove?.length ?? 0) > 0 && (
-                <ul className="mt-1 flex flex-col gap-0.5">
-                  {item.remove?.map((snap) => (
-                    <li key={snap.id} className="text-sm text-carbon-text">
-                      {snap.id.slice(0, 8)} · {stamp(snap.time)}
-                    </li>
+      <Rows>
+        {preview.repos.map((repo) => (
+          <SettingRow
+            key={repo.name}
+            label={repo.name}
+            note={
+              (repo.error || repo.items.length > 0) && (
+                <>
+                  {repo.error && <span className="text-sm text-statusFail">✗ {repo.error}</span>}
+                  {repo.items.map((item) => (
+                    <span key={item.tag || "__repo"} className="mt-1 flex flex-col gap-0.5">
+                      <span className="text-carbon-textSub">
+                        {itemLabel(item.tag, t)} · {t("retentionPreview.keeps")}: {item.keep?.length ?? 0}
+                      </span>
+                      {item.paused && <span className="text-statusWarn">{t("retentionPreview.paused")}</span>}
+                      {(item.remove?.length ?? 0) > 0 && (
+                        <ul className="flex flex-col gap-0.5">
+                          {item.remove?.map((snap) => (
+                            <li key={snap.id} className="text-sm text-carbon-text">
+                              {snap.id.slice(0, 8)} · {stamp(snap.time)}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </span>
                   ))}
-                </ul>
-              )}
-            </div>
-          ))}
-        </div>
-      ))}
+                </>
+              )
+            }
+          >
+            {repo.appendOnly && <span className="text-xs text-carbon-textSub">{t("retentionPreview.appendOnly")}</span>}
+          </SettingRow>
+        ))}
 
-      {preview.skipped?.length ? (
-        <div className="rounded-control bg-carbon-surface2 px-3 py-2">
-          <p className="text-xs text-statusWarn">{t("retentionPreview.skipped")}</p>
-          <ul className="mt-1 flex flex-col gap-0.5">
-            {preview.skipped.map((s) => (
-              <li key={s} className="text-sm text-carbon-textSub">
-                {s}
-              </li>
-            ))}
-          </ul>
-        </div>
-      ) : null}
+        {preview.skipped?.length ? (
+          <SettingRow
+            label={t("retentionPreview.skipped")}
+            name={<span className="text-statusWarn">{t("retentionPreview.skipped")}</span>}
+            note={
+              <ul className="flex flex-col gap-0.5">
+                {preview.skipped.map((s) => (
+                  <li key={s} className="text-sm text-carbon-textSub">
+                    {s}
+                  </li>
+                ))}
+              </ul>
+            }
+          />
+        ) : null}
+      </Rows>
     </>
   );
 }

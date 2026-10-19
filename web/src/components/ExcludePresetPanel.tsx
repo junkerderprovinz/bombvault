@@ -2,7 +2,7 @@ import { useState } from "react";
 import type { ExcludePreset } from "../lib/api";
 import type { TranslationKey, useT } from "../lib/i18n";
 import { Button } from "./Button";
-import { InfoBubble } from "./InfoBubble";
+import { Rows, SettingRow } from "./storage/rows";
 import { Toggle } from "./Toggle";
 
 type T = ReturnType<typeof useT>["t"];
@@ -88,20 +88,28 @@ export function ExcludePresetPanel({
         }
       />
       {open && (
-        <div id={panelId} className="flex flex-col gap-1.5 rounded-control bg-carbon-surface2 p-2">
-          {entries.map((e) => (
-            <div key={e.line} className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-              <Toggle
-                checked={picked[e.line] ?? false}
-                onChange={(next) => setPicked((p) => ({ ...p, [e.line]: next }))}
+        <div id={panelId} className="flex flex-col gap-3">
+          <Rows>
+            {entries.map((e) => (
+              <SettingRow
+                key={e.line}
                 label={t(KIND_LABEL[e.kind])}
-              />
-              <InfoBubble tip={t(KIND_HINT[e.kind])} />
-              <span dir="ltr" className="min-w-0 basis-full truncate text-start font-mono text-xs text-carbon-textSub sm:basis-0 sm:flex-1" title={e.line}>
-                {e.line}
-              </span>
-            </div>
-          ))}
+                hint={t(KIND_HINT[e.kind])}
+                note={
+                  <bdi dir="ltr" className="text-start font-mono wrap-anywhere">
+                    {e.line}
+                  </bdi>
+                }
+              >
+                <Toggle
+                  hideLabel
+                  checked={picked[e.line] ?? false}
+                  onChange={(next) => setPicked((p) => ({ ...p, [e.line]: next }))}
+                  label={t(KIND_LABEL[e.kind])}
+                />
+              </SettingRow>
+            ))}
+          </Rows>
           <div className="flex justify-end">
             <Button
               label={t("excludes.presetApply")}

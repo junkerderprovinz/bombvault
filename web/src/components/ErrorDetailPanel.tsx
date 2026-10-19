@@ -25,6 +25,7 @@ import { InfoBubble } from "./InfoBubble";
 import { Badge } from "./Badge";
 import { Button } from "./Button";
 import { IconClose } from "./Sidebar";
+import { Rows } from "./storage/rows";
 
 // The domain filter uses the Activity Log's plural values (containers, vms),
 // while a Run carries the singular tag (container, vm). flash, config, files
@@ -220,15 +221,13 @@ export function ErrorDetailPanel({ onClose }: { onClose: () => void }) {
             <p className="text-sm text-carbon-textMuted">{t("errorPanel.empty")}</p>
           )}
           {!loading && groups.length > 0 && (
-            // Rows separated by shade (soft tiles), never divider lines; the
-            // same surface token every other Dashboard list uses.
-            <div className="flex flex-col gap-1">
+            <Rows>
               {groups.map((g) => {
                 // Only a dump failure has advice of ours; everything else in
                 // here is a message from restic, rclone or Docker.
                 const remedy = g.kind === "dbdump" ? remedyKey(g.message) : null;
                 return (
-                <div key={g.key} className="flex flex-col gap-1.5 rounded-control bg-carbon-surface2 px-2 py-2.5">
+                <div key={g.key} className="flex flex-col gap-1.5 py-2.5 first:pt-0 last:pb-0">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex min-w-0 items-start gap-2">
                       <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-statusFailSolid" />
@@ -296,7 +295,7 @@ export function ErrorDetailPanel({ onClose }: { onClose: () => void }) {
                 </div>
                 );
               })}
-            </div>
+            </Rows>
           )}
         </div>
 

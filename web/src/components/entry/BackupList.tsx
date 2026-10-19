@@ -10,6 +10,7 @@ import { Button } from "../Button";
 import { IconCompare } from "../glyphs";
 import { InfoBubble } from "../InfoBubble";
 import { IconAdd, IconCloud, IconDownload, IconLocal, IconMore, IconRestore, IconTrash } from "../navGlyphs";
+import { Rows } from "../storage/rows";
 import { usePlaceLabel, type TimelineState } from "./BackupPlaces";
 
 const WEEK_MS = 7 * 86_400_000;
@@ -120,8 +121,8 @@ function Row({
       id={rowElementId(row.key)}
       data-testid="entry-backup"
       onClick={() => onOpen({ key: row.key })}
-      className={`group flex cursor-pointer flex-wrap items-center gap-x-4 gap-y-1.5 rounded-control px-3 py-2.5 hover:bg-carbon-surface3 ${
-        marked ? "bg-carbon-surface3" : "bg-carbon-surface2"
+      className={`group flex cursor-pointer flex-wrap items-center gap-x-4 gap-y-1.5 rounded-control px-3 py-2.5 ${
+        marked ? "bg-accentSoft" : "hover:bg-carbon-hover"
       }`}
     >
       <span className="flex min-w-0 flex-1 basis-56 flex-wrap items-center gap-2">
@@ -151,7 +152,7 @@ function Row({
               type="button"
               aria-label={t("entry.list.restoreFrom").replace("{place}", () => labelOf(mark.place))}
               onClick={(e) => openAt(e, mark.place)}
-              className="inline-flex items-center gap-1.5 rounded-control bg-carbon-surface3 px-2 py-1 text-xs text-carbon-textSub hover:bg-carbon-hoverRaised hover:text-carbon-text [&_svg]:h-3 [&_svg]:w-3"
+              className="inline-flex items-center gap-1.5 rounded-control bg-carbon-surface2 px-2 py-1 text-xs text-carbon-textSub hover:bg-carbon-surface3 hover:text-carbon-text [&_svg]:h-3 [&_svg]:w-3"
             >
               {places.find((p) => p.place === mark.place)?.remote ? <IconCloud /> : <IconLocal />}
               {labelOf(mark.place)}
@@ -195,7 +196,7 @@ function Group({ label, children }: { label: string; children: React.ReactNode }
   return (
     <div className="flex flex-col gap-1.5">
       <h3 className="px-1 text-xs font-medium uppercase tracking-wider text-carbon-textMuted">{label}</h3>
-      <ul className="flex flex-col gap-1.5">{children}</ul>
+      <Rows as="ul">{children}</Rows>
     </div>
   );
 }
