@@ -169,7 +169,8 @@ function Location({ location, records }: { location: StorageLocation; records: L
       <ConnectionCard edit={edit} onChange={changeable ? () => setChanging(true) : undefined} hueIndex={nextHue()} />
       {kind && <CredentialsCard edit={edit} kind={kind} hueIndex={nextHue()} />}
       {remote && <RcloneConfCard remote={remote} hueIndex={nextHue()} />}
-      {(location.object !== "path" || local) && <ProtectionCard edit={edit} provider={provider} hueIndex={nextHue()} />}
+      {/* A folder on this host can only have an earlier protection switched off. */}
+      {(local ? location.protection.immutable : location.object !== "path") && <ProtectionCard edit={edit} provider={provider} hueIndex={nextHue()} />}
       {takesCopies && <CopyCard edit={edit} hueIndex={nextHue()} />}
       {location.retention && <KeepCard edit={edit} retention={location.retention} hueIndex={nextHue()} />}
       {(records.destination?.adoptable?.length ?? 0) > 0 && <AdoptCard edit={edit} hueIndex={nextHue()} />}

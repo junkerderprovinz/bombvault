@@ -460,19 +460,18 @@ describe("a folder on this host", () => {
   it("has only the cards a folder has", async () => {
     await renderPage("path:abc");
 
-    expect(cardTitles()).toEqual(["Connection", "Delete protection", "How long to keep", "Rules per section"]);
+    expect(cardTitles()).toEqual(["Connection", "How long to keep", "Rules per section"]);
     expect(screen.getByText("Local folder · Used by Containers and VMs")).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Test connection" })).toBeNull();
     expect(getStorageLocation).toHaveBeenCalledTimes(1);
   });
 
-  it("shows delete protection without a switch and says why", async () => {
+  it("shows delete protection once the folder carries one", async () => {
+    stage({ ...LOCAL, protection: { immutable: true, testable: false } }, []);
     await renderPage("path:abc");
 
     const protection = card("Delete protection");
-    expect(within(protection).queryByRole("switch")).toBeNull();
     expect(within(protection).getByText("Delete protection (append-only)")).toBeTruthy();
-    expect(within(protection).getByLabelText(/A folder on this server cannot refuse deletion/)).toBeTruthy();
     expect(within(protection).queryByText("Who prunes")).toBeNull();
   });
 
@@ -513,15 +512,9 @@ describe("a named repository", () => {
   it("shows the rule it ages by without offering to change it", async () => {
     await renderPage("repo:archive");
 
-    expect(cardTitles()).toEqual(["Connection", "Delete protection", "How long to keep", "Rules per section"]);
+    expect(cardTitles()).toEqual(["Connection", "How long to keep", "Rules per section"]);
     expect(screen.queryByRole("radiogroup", { name: "How long to keep" })).toBeNull();
     expect(within(card("How long to keep")).getByText("Balanced")).toBeTruthy();
-  });
-
-  it("has no switch to protect a repository in a folder of this host", async () => {
-    await renderPage("repo:archive");
-
-    expect(within(card("Delete protection")).queryByRole("switch")).toBeNull();
   });
 
   it("can switch off the protection a local repository already carries, through the repository's route", async () => {
