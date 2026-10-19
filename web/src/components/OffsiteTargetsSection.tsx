@@ -172,7 +172,7 @@ export function OffsiteTargetsSection({
   // confirmation can be open at a time.
   const [saveShake, setSaveShake] = useState(0);
   const [removeShake, setRemoveShake] = useState(0);
-  // The shared hook rather than a local copy, because CloudCredSetsCard on the
+  // The shared hook rather than a local copy, because the Sign-ins card on the
   // same page can add a set while this section is mounted.
   const credSets = useCloudCredSets();
   const repos = useNamedRepos();

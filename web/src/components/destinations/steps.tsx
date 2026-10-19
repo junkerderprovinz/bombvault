@@ -12,12 +12,17 @@ import { CopyBlock } from "../CopyBlock";
 import { InfoBubble } from "../InfoBubble";
 import { IconFolder } from "../navGlyphs";
 import { SelectField } from "../SelectField";
+import { Selector } from "../Selector";
 import { Rows, SettingRow } from "../storage/rows";
 import { VerdictLine } from "../TestButton";
 import { Toggle } from "../Toggle";
+import { defaultSignIn, signInOption, signInsFor, useCloudCredSets } from "../../lib/useCloudCredSets";
 import type { DestinationDraftState } from "./useDestinationDraft";
 
 export const FIELD = "rounded-control bg-carbon-surface3 text-carbon-text text-sm px-3 py-1.5 glim-field-focus-well";
+
+// The fields a saved sign-in fills in on the server.
+const SAVED_FIELDS = ["access_key_id", "secret_access_key", "user", "pass"];
 const DOCS_RECOVERY = "https://junkerderprovinz.github.io/bombvault/offsite-recovery/";
 
 const FIELD_LABELS: Record<string, TranslationKey> = {
@@ -140,7 +145,12 @@ export function SignInBody({ draft, providerLabel }: { draft: DestinationDraftSt
   const { t } = useT();
   const { picked, fields } = draft;
   const nameId = useId();
+  const sets = useCloudCredSets();
   if (!picked) return null;
+  const kind = picked.route === "s3" || picked.route === "rest" ? picked.route : null;
+  const saved = kind ? signInsFor(sets, kind) : [];
+  const usingSaved = kind !== null && draft.credsRef !== "";
+  const chosen = saved.find((s) => s.id === draft.credsRef);
   const note = fitNote(t, picked, providerLabel);
   return (
     <>
@@ -165,7 +175,7 @@ export function SignInBody({ draft, providerLabel }: { draft: DestinationDraftSt
           <CopyBlock text={draft.publicKey} />
         </div>
       )}
-      {picked.route === "s3" && <p className="text-xs text-carbon-textMuted">{t("dest.key.note")}</p>}
+      {picked.route === "s3" && !usingSaved && <p className="text-xs text-carbon-textMuted">{t("dest.key.note")}</p>}
       <Rows>
         <SettingRow label={t("dest.name")} hint={t("dest.nameHint")} htmlFor={nameId}>
           <input
@@ -176,9 +186,38 @@ export function SignInBody({ draft, providerLabel }: { draft: DestinationDraftSt
             className={`w-72 max-w-full ${FIELD}`}
           />
         </SettingRow>
-        {fields.main.map((o) => (
-          <DraftField key={o.name} draft={draft} option={o} />
-        ))}
+        {kind && saved.length > 0 && (
+          <SettingRow label={t("storage.credentials")} hint={usingSaved ? t("storage.add.savedHint") : undefined}>
+            <Selector
+              items={[
+                { id: "saved", label: t("storage.add.savedSignIn") },
+                { id: "new", label: t("storage.add.newKeys") },
+              ]}
+              label={t("storage.credentials")}
+              size="sm"
+              inline
+              select="one"
+              active={usingSaved ? "saved" : "new"}
+              onChange={(id) => draft.setCredsRef(id === "saved" ? (defaultSignIn(saved) ?? saved[0]).id : "")}
+            />
+          </SettingRow>
+        )}
+        {usingSaved && kind && (
+          <SettingRow label={t("storage.add.savedSignIn")} note={`${t("storage.add.signsInAs")}: ${(kind === "s3" ? chosen?.s3KeyId : chosen?.restUser) ?? ""}`}>
+            <SelectField
+              value={draft.credsRef}
+              onChange={draft.setCredsRef}
+              label={t("storage.add.savedSignIn")}
+              options={saved.map((s) => ({ value: s.id, label: signInOption(t, s) }))}
+              className={FIELD}
+            />
+          </SettingRow>
+        )}
+        {fields.main
+          .filter((o) => !usingSaved || !SAVED_FIELDS.includes(o.name))
+          .map((o) => (
+            <DraftField key={o.name} draft={draft} option={o} />
+          ))}
       </Rows>
       {fields.more.length > 0 && (
         <MoreSettings>

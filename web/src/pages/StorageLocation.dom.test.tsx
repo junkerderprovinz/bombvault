@@ -262,7 +262,7 @@ describe("a destination", () => {
     expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("Storage Box");
     expect(await screen.findByText("Hetzner Storage Box · Used by Containers and Flash")).toBeTruthy();
     expect(screen.getByText("268.0 GB of 1.0 TB")).toBeTruthy();
-    expect(cardTitles()).toEqual(["Connection", "rclone.conf", "Delete protection", "Copy", "How long to keep", "Rules per section"]);
+    expect(cardTitles()).toEqual(["Own folders", "Connection", "rclone.conf", "Delete protection", "Copy", "How long to keep", "Rules per section"]);
   });
 
   it("shows its section of the rclone.conf without the secret, and nothing to type into", async () => {
@@ -548,7 +548,10 @@ describe("a rest-server set up for one section", () => {
     stage(REST, [OWN]);
     getCloudCredSets.mockResolvedValue({
       ok: true,
-      sets: [{ id: "set-nas", name: "NAS login", s3KeyId: "", s3Region: "", restUser: "backup", s3StorageClass: "", s3SecretSet: false, restPasswordSet: true }],
+      sets: [
+        { id: "set-default", name: "Default sign-in", s3KeyId: "", s3Region: "", restUser: "tower", s3StorageClass: "", s3SecretSet: false, restPasswordSet: true, default: true },
+        { id: "set-nas", name: "NAS login", s3KeyId: "", s3Region: "", restUser: "backup", s3StorageClass: "", s3SecretSet: false, restPasswordSet: true },
+      ],
     });
   });
 
@@ -571,12 +574,13 @@ describe("a rest-server set up for one section", () => {
     expect(within(card("Delete protection")).getByRole("button", { name: "Failed" })).toBeTruthy();
   });
 
-  it("names the credentials in use and points the location at another set", async () => {
+  it("names the default sign-in a location without one uses and points it at another", async () => {
     await renderPage("target:t-rest");
 
-    const credentials = card("Credentials");
-    expect(await within(credentials).findByText("tower")).toBeTruthy();
-    await click(within(credentials).getByRole("combobox", { name: "In use" }));
+    const signIn = card("Sign-in");
+    expect(await within(signIn).findByText("tower")).toBeTruthy();
+    expect(within(signIn).getByRole("combobox", { name: "Signs in with" }).textContent).toContain("Default sign-in (default)");
+    await click(within(signIn).getByRole("combobox", { name: "Signs in with" }));
     await click(screen.getByRole("option", { name: "NAS login" }));
     expect(updateOffsiteTarget).toHaveBeenCalledWith("t-rest", expect.objectContaining({ credsRef: "set-nas", repo: OWN.repo }));
   });

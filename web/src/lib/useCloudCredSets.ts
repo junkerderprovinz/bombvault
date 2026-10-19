@@ -18,7 +18,36 @@ export function credSetsChanged(): void {
 // secret when the posted one is blank (matched by id), so resending untouched
 // sets this way preserves their keys.
 export function credSetDraft(s: CloudCredSetInfo): CloudCredSet {
-  return { id: s.id, name: s.name, s3KeyId: s.s3KeyId, s3Secret: "", s3Region: s.s3Region, restUser: s.restUser, restPassword: "", s3StorageClass: s.s3StorageClass };
+  return {
+    id: s.id,
+    name: s.name,
+    s3KeyId: s.s3KeyId,
+    s3Secret: "",
+    s3Region: s.s3Region,
+    restUser: s.restUser,
+    restPassword: "",
+    s3StorageClass: s.s3StorageClass,
+    default: !!s.default,
+  };
+}
+
+/** The sign-in every place that names none signs in with, if one is the
+ *  default. */
+export function defaultSignIn(sets: CloudCredSetInfo[]): CloudCredSetInfo | undefined {
+  return sets.find((s) => s.default);
+}
+
+/** How a sign-in is offered in a list: its name, marked when it is the
+ *  default. */
+export function signInOption(t: (key: TranslationKey) => string, set: CloudCredSetInfo): string {
+  const label = credSetLabel(t, set);
+  return set.default ? t("signIns.defaultLabel").replace("{name}", () => label) : label;
+}
+
+/** The sign-ins that hold keys of the kind a backend reads, and the one in
+ *  use, which stays on offer whatever it holds. */
+export function signInsFor(sets: CloudCredSetInfo[], kind: "s3" | "rest", current = ""): CloudCredSetInfo[] {
+  return sets.filter((s) => s.id === current || (kind === "s3" ? s.s3KeyId : s.restUser));
 }
 
 /** saveCredSet stores one set among the stored ones and tells the readers.
@@ -41,7 +70,7 @@ export function credSetLabel(t: (key: TranslationKey) => string, set: CloudCredS
 
 /**
  * The stored credential sets, kept current across components. The list is
- * edited in Settings' CloudCredSetsCard and read by each OffsiteTargetsSection
+ * edited on Settings' Sign-ins card and read by each OffsiteTargetsSection
  * picker on the same page, so a per-component copy would hide a newly created
  * set until a reload.
  *

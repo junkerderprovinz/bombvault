@@ -21,7 +21,7 @@ describe("glyphFor", () => {
     // "backupSelected" is a backup, not a selection.
     expect(glyphFor("containers.backupSelected")).toEqual(glyphFor("containers.backupNow"));
     // "unlock" is not "lock"/"key".
-    expect(glyphFor("integrity.unlock")).not.toEqual(glyphFor("cloud.credSets.add"));
+    expect(glyphFor("integrity.unlock")).not.toEqual(glyphFor("signIns.add"));
   });
 
   it("gives a confirmation the symbol of what it confirms", () => {

@@ -272,14 +272,13 @@ export const SETTINGS_INDEX: Record<SettingsPageId, SearchCard[]> = {
       body: ["rclone.pathHint"],
     },
     {
-      title: "cloud.title",
-      rows: [{ key: "cloud.storageClass.label", hint: "cloud.storageClass.hint" }],
-      body: ["cloud.hint"],
-    },
-    {
-      title: "cloud.credSets.title",
-      hint: "cloud.credSets.hint",
-      rows: [{ key: "cloud.credSets.name" }, { key: "cloud.storageClass.label" }],
+      title: "signIns.title",
+      hint: "signIns.hint",
+      rows: [
+        { key: "cloud.credSets.name" },
+        { key: "signIns.defaultToggle", hint: "signIns.defaultToggleHint" },
+        { key: "cloud.storageClass.label", hint: "cloud.storageClass.hint" },
+      ],
     },
   ],
 

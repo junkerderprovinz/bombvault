@@ -74,6 +74,10 @@ export interface DestinationDraftState {
   setSetting: (name: string, value: string) => void;
   name: string;
   setName: (name: string) => void;
+  /** The saved sign-in the draft signs in with instead of typed keys, ""
+   *  for the keys in the form. */
+  credsRef: string;
+  setCredsRef: (id: string) => void;
   publicKey: string;
   fields: FormFields;
   test: TestVerdictState;
@@ -123,6 +127,7 @@ export function useDestinationDraft(): DestinationDraftState {
   const [fromMember, setFromMember] = useState<string | undefined>(undefined);
   const [settings, setSettings] = useState<Record<string, string>>({});
   const [name, setName] = useState("");
+  const [credsRef, setCredsRef] = useState("");
   const [publicKey, setPublicKey] = useState("");
   const [dir, setDir] = useState<string[]>([]);
   const [folders, setFolders] = useState<string[] | null>(null);
@@ -162,13 +167,13 @@ export function useDestinationDraft(): DestinationDraftState {
     () => (picked ? formFields(picked, backends[picked.backend]) : { main: [], more: [] }),
     [picked, backends]
   );
-  const test = useTestVerdict([picked?.id, settings], t("offsite.testFailed"));
+  const test = useTestVerdict([picked?.id, settings, credsRef], t("offsite.testFailed"));
   const reached = test.verdict?.ok === true;
   const browsable = picked !== null && picked.route !== "rest" && picked.route !== "path";
   const dirPath = dir.join("/");
 
   function draft(extra: Partial<DestinationDraft> = {}): DestinationDraft {
-    return { provider: picked?.id ?? "", settings, ...extra };
+    return { provider: picked?.id ?? "", settings, ...(credsRef ? { credsRef } : {}), ...extra };
   }
 
   function failure(e: unknown, fallback: TranslationKey): string {
@@ -179,6 +184,7 @@ export function useDestinationDraft(): DestinationDraftState {
     setFromMember(undefined);
     setPicked(p);
     setSettings({});
+    setCredsRef("");
     setName(providerName(p, t));
     setDir([]);
     setFolders(null);
@@ -283,6 +289,8 @@ export function useDestinationDraft(): DestinationDraftState {
     setSetting: (field, value) => setSettings((s) => ({ ...s, [field]: value })),
     name,
     setName,
+    credsRef,
+    setCredsRef,
     publicKey,
     fields,
     test,

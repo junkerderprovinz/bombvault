@@ -204,7 +204,7 @@ export function OffsiteWizard({
   // Step 3: the credential set of the domain's primary off-site destination.
   // That row carries creds_ref, which syncPrimaryOffsiteTarget preserves and
   // offsiteModeForTarget resolves per destination. The shared hook keeps the
-  // list current when CloudCredSetsCard on the same page adds a set.
+  // list current when the Sign-ins card on the same page adds a set.
   const credSets = useCloudCredSets();
   const [primaryTarget, setPrimaryTarget] = useState<OffsiteTarget | null>(null);
   // Primary and off-site mode keep the choice in different places; the one

@@ -7,13 +7,14 @@ import { storageClassOf } from "../../lib/storageWrites";
 import { Card } from "../../pages/settings/shared";
 import { Button } from "../Button";
 import { COMPRESSION_MODES } from "../CompressionSelector";
+import { IconForward } from "../glyphs";
 import { IconPencil } from "../navGlyphs";
 import { SelectField } from "../SelectField";
 import { Selector } from "../Selector";
 import { Toggle } from "../Toggle";
 import { TextSetting } from "./fields";
 import { Deviations, DomainGlyph, Rows, SettingRow } from "./rows";
-import { SectionPathWindow } from "./SectionPathWindow";
+import { OwnFolderWindow } from "./OwnFolderWindow";
 import type { LocationEdit } from "./useLocationEdit";
 
 // How restic reaches a backend, for the ones the wizard explains as well.
@@ -42,7 +43,7 @@ export function ConnectionCard({ edit, onChange, hueIndex }: { edit: LocationEdi
   const storageClass = storageClassOf(location, records);
   const routeHint = ROUTE_HINT[location.backend];
   const whereHint = local ? (perSection ? t("storage.folderHint") : undefined) : routeHint && t(routeHint);
-  const [pathOf, setPathOf] = useState<OffsiteDomain | null>(null);
+  const [moving, setMoving] = useState<OffsiteDomain[] | null>(null);
 
   return (
     <Card title={t("storage.connection")} hueIndex={hueIndex}>
@@ -100,11 +101,24 @@ export function ConnectionCard({ edit, onChange, hueIndex }: { edit: LocationEdi
                   labelKey="storage.add.change"
                   glyph={<IconPencil />}
                   tone="neutral"
-                  onClick={() => setPathOf(section.domain)}
+                  onClick={() => setMoving([section.domain])}
                 />
               </li>
             ))}
           </ul>
+        )}
+        {location.object === "path" && location.sections.length > 0 && (
+          <SettingRow label={t("own.here")} hint={t("own.hint")}>
+            <span data-new="own-folder-move" className="flex">
+              <Button
+                label={t("own.titleMany")}
+                labelKey="own.titleMany"
+                glyph={<IconForward />}
+                tone="neutral"
+                onClick={() => setMoving(location.sections.map((section) => section.domain))}
+              />
+            </span>
+          </SettingRow>
         )}
 
         {location.compression !== undefined && (
@@ -162,7 +176,7 @@ export function ConnectionCard({ edit, onChange, hueIndex }: { edit: LocationEdi
           </SettingRow>
         )}
       </Rows>
-      {pathOf && <SectionPathWindow domain={pathOf} onClose={() => setPathOf(null)} />}
+      {moving && <OwnFolderWindow domains={moving} onClose={() => setMoving(null)} />}
     </Card>
   );
 }

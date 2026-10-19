@@ -20,14 +20,15 @@ vi.mock("../../lib/api", async (importOriginal) => ({
     }),
   setCloud: () => Promise.resolve({ ok: true, warnings: [credsKept] }),
   setCloudCredSets: () => Promise.resolve({ ok: true, warnings: [credsKept] }),
+  getCloudCredSets: () => Promise.resolve({ ok: true, sets: [], note: null }),
 }));
 
 const { CloudCard } = await import("./CloudCard");
-const { CloudCredSetsCard } = await import("./CloudCredSetsCard");
+const { SignInsCard } = await import("./SignInsCard");
 
 function Harness({ card }: { card: "shared" | "sets" }) {
   const { t } = useT();
-  return card === "shared" ? <CloudCard t={t} hueIndex={0} /> : <CloudCredSetsCard t={t} hueIndex={0} />;
+  return card === "shared" ? <CloudCard t={t} hueIndex={0} /> : <SignInsCard hueIndex={0} />;
 }
 
 async function renderCard(card: "shared" | "sets") {
@@ -47,7 +48,7 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
-it("shows the warnings a save of the shared credentials answered with", async () => {
+it("shows the warnings a save of the default sign-in answered with", async () => {
   vi.useFakeTimers();
   await renderCard("shared");
   fireEvent.change(screen.getByLabelText(/AWS_SECRET_ACCESS_KEY/), { target: { value: "new-secret" } });
@@ -57,9 +58,10 @@ it("shows the warnings a save of the shared credentials answered with", async ()
   expect(screen.getByText(credsKeptText)).toBeTruthy();
 });
 
-it("shows the warnings a save of a credential set answered with", async () => {
+it("shows the warnings a save of a saved sign-in answered with", async () => {
   await renderCard("sets");
-  fireEvent.click(screen.getByRole("button", { name: en["cloud.credSets.add"] }));
+  fireEvent.click(screen.getByRole("button", { name: en["signIns.add"] }));
+  fireEvent.change(screen.getByLabelText(en["cloud.credSets.name"]), { target: { value: "NAS" } });
   await act(async () => {
     fireEvent.click(screen.getByRole("button", { name: en["settings.save"] }));
   });

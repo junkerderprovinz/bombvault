@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
-import { getCloud, type CloudCredSet, type CloudCredSetInfo } from "../../lib/api";
+import { useState } from "react";
+import { type CloudCredSet, type CloudCredSetInfo } from "../../lib/api";
 import { useT } from "../../lib/i18n";
+import { formatList } from "../../lib/placement";
 import { pushSaveWarnings } from "../../lib/placementCodes";
 import { useToast } from "../../lib/toast";
-import { credSetDraft, credSetLabel, saveCredSet, useCloudCredSets } from "../../lib/useCloudCredSets";
+import { credSetDraft, defaultSignIn, saveCredSet, signInOption, signInsFor, useCloudCredSets } from "../../lib/useCloudCredSets";
 import { useReveal } from "../../lib/useReveal";
 import { randomId } from "../../lib/uuid";
 import { Card } from "../../pages/settings/shared";
@@ -150,50 +151,38 @@ function CredSetForm({
 }
 
 /**
- * CredentialsCard shows which stored credentials a location signs in with. A
- * location uses the shared ones or a named set, and a set is edited here for
- * every location that uses it.
+ * CredentialsCard shows which saved sign-in a location signs in with. One
+ * that names none uses the default. A sign-in is edited here for every
+ * location that uses it.
  */
 export function CredentialsCard({ edit, kind, hueIndex }: { edit: LocationEdit; kind: Kind; hueIndex: number }) {
-  const { t } = useT();
+  const { t, lang } = useT();
   const { location, can, save, busy } = edit;
   const sets = useCloudCredSets();
-  const [shared, setShared] = useState<{ s3KeyId?: string; restUser?: string }>({});
   const [adding, setAdding] = useState<CloudCredSet | null>(null);
   const ref = location.credsRef ?? "";
-  const current = sets.find((s) => s.id === ref);
-
-  useEffect(() => {
-    let alive = true;
-    getCloud()
-      .then((res) => {
-        if (alive && res.ok) setShared(res);
-      })
-      .catch(() => undefined);
-    return () => {
-      alive = false;
-    };
-  }, []);
-
-  const name = current ? credSetLabel(t, current) : t("storage.creds.shared");
+  const current = sets.find((s) => s.id === ref) ?? (ref === "" ? defaultSignIn(sets) : undefined);
+  const offered = signInsFor(sets, kind, current?.id);
+  const others = (current?.usedBy ?? []).filter((user) => user.id !== location.id);
 
   return (
-    <Card title={t("storage.credentials")} hint={t("storage.credentialsHint")} hueIndex={hueIndex}>
+    <Card title={t("storage.credentials")} hint={t("storage.credentialsHint")} hueIndex={hueIndex} newId="location-sign-in">
       <Rows>
-        <SettingRow label={t("storage.creds.used")} hint={t("storage.creds.usedHint")} note={identity(kind, current ?? shared)}>
+        <SettingRow label={t("storage.creds.used")} hint={t("storage.creds.usedHint")} note={current ? identity(kind, current) : undefined}>
           {can("credsRef") ? (
             <>
-              <SelectField
-                value={ref}
-                onChange={(next) => void save({ credsRef: next })}
-                label={t("storage.creds.used")}
-                disabled={busy}
-                options={[
-                  { value: "", label: t("storage.creds.shared") },
-                  ...sets.map((s) => ({ value: s.id, label: credSetLabel(t, s) })),
-                ]}
-                className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 glim-field-focus"
-              />
+              {offered.length > 0 ? (
+                <SelectField
+                  value={current?.id ?? ""}
+                  onChange={(next) => next !== current?.id && void save({ credsRef: next })}
+                  label={t("storage.creds.used")}
+                  disabled={busy}
+                  options={offered.map((s) => ({ value: s.id, label: signInOption(t, s) }))}
+                  className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 glim-field-focus"
+                />
+              ) : (
+                <span className="text-sm text-carbon-textSub">{t("signIns.none")}</span>
+              )}
               {!adding && (
                 <Button
                   label={t("storage.creds.newSet")}
@@ -205,9 +194,14 @@ export function CredentialsCard({ edit, kind, hueIndex }: { edit: LocationEdit; 
               )}
             </>
           ) : (
-            <span className="text-sm text-carbon-textSub wrap-anywhere">{name}</span>
+            <span className="text-sm text-carbon-textSub wrap-anywhere">{current ? signInOption(t, current) : t("signIns.none")}</span>
           )}
         </SettingRow>
+        {others.length > 0 && (
+          <SettingRow label={t("storage.creds.alsoUsedBy")}>
+            <span className="text-sm text-carbon-textSub wrap-anywhere">{formatList(lang, others.map((user) => user.name))}</span>
+          </SettingRow>
+        )}
         {adding ? (
           <CredSetForm
             key={adding.id}

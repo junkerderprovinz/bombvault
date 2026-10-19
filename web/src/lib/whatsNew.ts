@@ -56,6 +56,43 @@ const TO_STORAGE: WayStep[] = ["/settings", "/settings/storage", "/storage"];
 /** Every release that brought something new, newest first. */
 export const RELEASES: Release[] = [
   {
+    version: "10.2.0",
+    changes: [
+      {
+        id: "settings-sign-ins",
+        page: "/settings/storage",
+        where: ["nav.settings", "storage.title"],
+        way: ["/settings", "/settings/storage"],
+        text: "whatsNew.signIns",
+      },
+      {
+        id: "location-sign-in",
+        page: LOCATION,
+        go: "/storage",
+        where: ["storage.title", "whatsNew.page.location"],
+        way: [...TO_STORAGE, "location"],
+        text: "whatsNew.locationSignIn",
+      },
+      {
+        id: "own-folder-move",
+        page: LOCATION,
+        go: "/storage",
+        where: ["storage.title", "whatsNew.page.location"],
+        way: [...TO_STORAGE, "location"],
+        text: "whatsNew.ownFolderMove",
+      },
+      {
+        id: "own-folders-card",
+        page: LOCATION,
+        go: "/storage",
+        where: ["storage.title", "whatsNew.page.location"],
+        way: [...TO_STORAGE, "location"],
+        text: "whatsNew.ownFoldersCard",
+      },
+      { id: "wizard-sign-in", text: "whatsNew.wizardSignIn" },
+    ],
+  },
+  {
     version: "10.1.4",
     changes: [
       {

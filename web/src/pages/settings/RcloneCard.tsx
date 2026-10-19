@@ -30,13 +30,7 @@ export function RcloneCard({
   const { remotes, refresh } = useRcloneRemotes();
   const [conf, setConf] = useState("");
   const [state, setState] = useState<SaveState>("idle");
-  // GlimStone standing rule (jdp, live review, emphatic — "Wenn etwas
-  // fehlschlägt soll der Toggle/Button kurz zittern. Systemweit!!"), found by
-  // this same pass's own proactive sweep (not on the original finding list):
-  // this is one of the FOUR documented genuine hold-outs on manual Save (this
-  // Card's own file-header comment), the identical shape as CloudCredSetsCard's
-  // save() — a fail toast already fired here, but nothing ever bumped a shake
-  // nonce for the Save button. Same fix, same mechanism.
+  // A failed save shakes the Save button, as every failed action does.
   const [shake, setShake] = useState(0);
 
   // GlimStone follow-up pass (v8.0.0): the "saved"/"error" 3000ms inline flash

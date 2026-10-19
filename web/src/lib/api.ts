@@ -1586,9 +1586,8 @@ export function setCloud(c: CloudCreds): Promise<OkEnvelope & { warnings?: SaveW
   return fetchJSON("/api/cloud", { method: "POST", body: JSON.stringify(c) });
 }
 
-/** One additional, named credential set (#141 stage 2) — same shape as
- *  CloudCreds plus an id/name, so an off-site target can opt into its own
- *  S3/restic-REST credentials instead of the single shared set above. */
+/** One saved sign-in: CloudCreds with an id and a name, which a storage
+ *  location picks. The default one serves every place that names none. */
 export interface CloudCredSet {
   id: string;
   name: string;
@@ -1598,6 +1597,24 @@ export interface CloudCredSet {
   restUser: string;
   restPassword: string;
   s3StorageClass: string;
+  default?: boolean;
+}
+
+/** A storage location that signs in with a saved sign-in. */
+export interface SignInUser {
+  id: string;
+  name: string;
+}
+
+/** What turning the shared cloud credentials into a saved sign-in did, until
+ *  somebody dismisses it. `setName` is the default it became, empty when there
+ *  was none; `linked` are the sections whose typed own folder follows a
+ *  storage location. */
+export interface SignInsNote {
+  setName: string;
+  merged: boolean;
+  duplicates: number;
+  linked: OffsiteDomain[];
 }
 /** GET response shape: secrets replaced with is-set flags, same contract as CloudInfo. */
 export interface CloudCredSetInfo {
@@ -1614,11 +1631,20 @@ export interface CloudCredSetInfo {
   keptFor?: string;
   /** The target the repository it was kept for goes by, when it has no name of its own. */
   directOf?: string;
+  default?: boolean;
+  /** The storage locations that sign in with it. */
+  usedBy?: SignInUser[];
 }
 
-/** GET /api/cloud/creds-sets — additional named credential sets (no secrets returned). */
-export function getCloudCredSets(): Promise<OkEnvelope & { sets?: CloudCredSetInfo[] }> {
+/** GET /api/cloud/creds-sets: the saved sign-ins without their secrets, and
+ *  the note on what the shared credentials became while it shows. */
+export function getCloudCredSets(): Promise<OkEnvelope & { sets?: CloudCredSetInfo[]; note?: SignInsNote | null }> {
   return fetchJSON("/api/cloud/creds-sets");
+}
+
+/** DELETE /api/cloud/creds-sets/note: stops showing the note. */
+export function dismissSignInsNote(): Promise<OkEnvelope> {
+  return fetchJSON("/api/cloud/creds-sets/note", { method: "DELETE" });
 }
 
 /** POST /api/cloud/creds-sets — replace the whole list. A blank secret on a
@@ -2757,6 +2783,47 @@ type SectionMoveAnswer = Omit<OkEnvelope, "code"> & { code?: SectionMoveRefusal;
  *  destination is a 404. */
 export function previewSectionMove(targetId: string, to: string): Promise<SectionMoveAnswer> {
   return fetchJSON(`/api/offsite/targets/${encodeURIComponent(targetId)}/move?to=${encodeURIComponent(to)}`);
+}
+
+/** Where the own folders of some sections go: a storage location by its id,
+ *  or a typed folder or address with the saved sign-in a remote one uses.
+ *  copyOver copies the backups already made before the switch. */
+export interface OwnFolderRequest {
+  domains: OffsiteDomain[];
+  location?: string;
+  address?: string;
+  credsRef?: string;
+  copyOver: boolean;
+}
+
+/** What moving one section's own folder does. `same` means it is there
+ *  already. `copyAt` is the copy at the new place, which becomes the own
+ *  folder. `backups` is what the old place holds, `pending` what of it the
+ *  new place lacks. `key` is the progress key of a copy before the switch. */
+export interface OwnFolderStep {
+  domain: OffsiteDomain;
+  from: string;
+  to: string;
+  same: boolean;
+  copyAt?: string;
+  copies: string[] | null;
+  backups: number;
+  pending: number;
+  key: string;
+}
+
+type OwnFolderAnswer = OkEnvelope & { steps?: OwnFolderStep[] };
+
+/** POST /api/storage/own-folders/preview: what a move of own folders would do.
+ *  It lists the old and the new places and writes nothing. */
+export function previewOwnFolders(req: OwnFolderRequest): Promise<OwnFolderAnswer> {
+  return fetchJSON("/api/storage/own-folders/preview", { method: "POST", body: JSON.stringify(req) });
+}
+
+/** POST /api/storage/own-folders: switches each section at once, or copies
+ *  its backups first in the background when copyOver asks for it. */
+export function moveOwnFolders(req: OwnFolderRequest): Promise<OwnFolderAnswer> {
+  return fetchJSON("/api/storage/own-folders", { method: "POST", body: JSON.stringify(req) });
 }
 
 /** POST /api/offsite/targets/{id}/move: copies the section's backups to the
@@ -7185,6 +7252,9 @@ export interface DestinationDraft {
   name?: string;
   storageClass?: string;
   immutable?: boolean;
+  /** A saved sign-in an S3 service or a rest-server signs in with instead
+   *  of keys typed into the form. */
+  credsRef?: string;
 }
 
 export function checkDraft(d: DestinationDraft): Promise<OkEnvelope & { reachable?: boolean; initialized?: boolean }> {

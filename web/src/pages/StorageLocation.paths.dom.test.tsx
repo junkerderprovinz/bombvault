@@ -99,6 +99,18 @@ function connection(): HTMLElement {
   return heading!.parentElement!;
 }
 
+// Change opens the window that offers the storage locations first. A path
+// typed by hand, with its compression and safety settings, is one step
+// further, behind Another place.
+async function openTyped(row: number) {
+  await click(within(within(connection()).getAllByRole("listitem")[row]).getByRole("button", { name: "Change" }));
+  await act(async () => {});
+  const window = screen.getByRole("dialog");
+  await click(within(window).getByRole("radio", { name: "Another place" }));
+  await click(within(window).getByRole("button", { name: "Open" }));
+  await act(async () => {});
+}
+
 beforeEach(() => {
   localStorage.clear();
   vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, json: async () => ({ ok: true }) }));
@@ -127,8 +139,7 @@ describe("the folders of a local location", () => {
 
   it("changes one section's folder in a window and saves what was typed when the window closes", async () => {
     await renderPage();
-    await click(within(within(connection()).getAllByRole("listitem")[1]).getByRole("button", { name: "Change" }));
-    await act(async () => {});
+    await openTyped(1);
 
     const dialog = screen.getByRole("dialog", { name: "VMs path" });
     const field = within(dialog).getByDisplayValue("backups/bombvault/vms");
@@ -147,8 +158,7 @@ describe("the folders of a local location", () => {
 
   it("takes a remote address in the same window", async () => {
     await renderPage();
-    await click(within(within(connection()).getAllByRole("listitem")[0]).getByRole("button", { name: "Change" }));
-    await act(async () => {});
+    await openTyped(0);
 
     const dialog = screen.getByRole("dialog", { name: "Containers path" });
     await click(within(dialog).getByRole("tab", { name: "Remote" }));
@@ -162,8 +172,7 @@ describe("the folders of a local location", () => {
 
   it("saves a section's compression from that window at once", async () => {
     await renderPage();
-    await click(within(within(connection()).getAllByRole("listitem")[0]).getByRole("button", { name: "Change" }));
-    await act(async () => {});
+    await openTyped(0);
 
     const dialog = screen.getByRole("dialog", { name: "Containers path" });
     await click(within(dialog).getByRole("tab", { name: "Maximum" }));
@@ -174,8 +183,7 @@ describe("the folders of a local location", () => {
   it("says why the server refused a path and saves nothing more on Done", async () => {
     putSettings.mockResolvedValue({ ok: false, error: "containersPath must be relative" });
     await renderPage();
-    await click(within(within(connection()).getAllByRole("listitem")[0]).getByRole("button", { name: "Change" }));
-    await act(async () => {});
+    await openTyped(0);
 
     const dialog = screen.getByRole("dialog", { name: "Containers path" });
     await act(async () => {

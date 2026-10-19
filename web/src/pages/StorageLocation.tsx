@@ -20,6 +20,7 @@ import { CopyCard } from "../components/storage/CopyCard";
 import { CredentialsCard } from "../components/storage/CredentialsCard";
 import { KeepCard } from "../components/storage/KeepCard";
 import { MoveWindow } from "../components/storage/MoveWindow";
+import { OwnFoldersCard } from "../components/storage/OwnFoldersCard";
 import { LocationMark } from "../components/storage/LocationMark";
 import { ProtectionCard } from "../components/storage/ProtectionCard";
 import { RcloneConfCard } from "../components/storage/RcloneConfCard";
@@ -164,6 +165,7 @@ function Location({ location, records }: { location: StorageLocation; records: L
       )}
       {removing && <RemovalWindow location={location} onClose={() => setRemoving(false)} onRemoved={() => navigate("/storage", { replace: true })} />}
 
+      {location.object === "destination" && <OwnFoldersCard location={location} hueIndex={nextHue()} />}
       <ConnectionCard edit={edit} onChange={changeable ? () => setChanging(true) : undefined} hueIndex={nextHue()} />
       {kind && <CredentialsCard edit={edit} kind={kind} hueIndex={nextHue()} />}
       {remote && <RcloneConfCard remote={remote} hueIndex={nextHue()} />}
