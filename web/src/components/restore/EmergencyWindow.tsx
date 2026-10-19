@@ -122,7 +122,7 @@ function PickRow({
   return (
     <div data-testid="emergency-pick" className="flex flex-col gap-2 py-3 first:pt-0 last:pb-0">
       <div className="flex items-center gap-3">
-        <span className="flex h-9 w-9 flex-none items-center justify-center rounded-control bg-carbon-surface3 text-accentText [&_svg]:h-[18px] [&_svg]:w-[18px]">
+        <span className="flex h-9 w-9 flex-none items-center justify-center rounded-control bg-carbon-surface2 text-accentText [&_svg]:h-[18px] [&_svg]:w-[18px]">
           <KindGlyph kind={kind} />
         </span>
         <span className="min-w-0 flex-1 truncate text-sm font-semibold text-carbon-text">{name}</span>
@@ -631,7 +631,7 @@ export function EmergencyWindow({
                     onChange={(e) => setSettings((prev) => (prev ? { ...prev, configOffsite: e.target.value } : prev))}
                     placeholder="rest:http://host:8000/repo"
                     dir="ltr"
-                    className={`w-72 max-w-full ${EMERGENCY_FIELD.replace("bg-carbon-surface3", "bg-carbon-surface2")}`}
+                    className={`w-72 max-w-full ${EMERGENCY_FIELD}`}
                   />
                 </SettingRow>
               )}

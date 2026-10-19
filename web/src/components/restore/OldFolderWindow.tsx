@@ -57,7 +57,7 @@ const GROUP_LABEL: Record<ForeignDomain, TranslationKey> = {
 };
 
 const FIELD = "rounded-control bg-carbon-surface2 px-3 py-2 font-mono text-sm text-carbon-text glim-field-focus";
-const SELECT = "rounded-control bg-carbon-surface3 px-2 py-1.5 text-xs text-carbon-text glim-field-focus";
+const SELECT = "rounded-control bg-carbon-surface2 px-2 py-1.5 text-xs text-carbon-text glim-field-focus";
 
 /** Whether a restore failed because the session lapsed, which a reconnect fixes. */
 function isSessionGone(err: string | undefined): boolean {
@@ -325,7 +325,7 @@ function ForeignItemRow({
   return (
     <div data-testid="foreign-item" hidden={hidden} className="flex flex-col gap-3 py-3 first:pt-0 last:pb-0">
       <div className="flex flex-wrap items-center gap-3">
-        <span className="flex h-9 w-9 flex-none items-center justify-center rounded-control bg-carbon-surface3 text-accentText [&_svg]:h-[18px] [&_svg]:w-[18px]">
+        <span className="flex h-9 w-9 flex-none items-center justify-center rounded-control bg-carbon-surface2 text-accentText [&_svg]:h-[18px] [&_svg]:w-[18px]">
           <KindGlyph kind={KIND[domain]} />
         </span>
         <span className="min-w-0 flex-1 truncate text-sm font-semibold text-carbon-text">{item.name}</span>
@@ -780,9 +780,9 @@ export function OldFolderWindow({ hostMountRoot, onClose }: { hostMountRoot: str
           {groups.map((g) => {
             const shown = openItem === null || g.items.some((item) => openItem === `${g.domain}:${item.name}`);
             return (
-              <section key={g.domain} hidden={!shown} className="flex flex-col gap-3 rounded-card bg-carbon-surface2 p-4">
+              <section key={g.domain} hidden={!shown} className="flex flex-col gap-3">
                 <h3 className="text-xs font-semibold uppercase tracking-widest text-carbon-textSub">{t(GROUP_LABEL[g.domain])}</h3>
-                <div className="flex flex-col divide-y divide-carbon-border/60">
+                <Rows>
                   {g.items.map((item) => {
                     const id = `${g.domain}:${item.name}`;
                     // Folder sets and dataset trees go into a chosen folder
@@ -808,7 +808,7 @@ export function OldFolderWindow({ hostMountRoot, onClose }: { hostMountRoot: str
                       />
                     );
                   })}
-                </div>
+                </Rows>
               </section>
             );
           })}

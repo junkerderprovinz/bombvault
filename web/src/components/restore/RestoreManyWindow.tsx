@@ -46,7 +46,7 @@ import { Button } from "../Button";
 import { CheckDraw } from "../CheckDraw";
 import { IconPause } from "../glyphs";
 import { InfoBubble } from "../InfoBubble";
-import { SettingRow } from "../storage/rows";
+import { Rows, SettingRow } from "../storage/rows";
 import { IconClose, IconDownload, IconRestore } from "../navGlyphs";
 import { ProgressBar } from "../ProgressBar";
 import { RestoreCancelButton } from "../RestoreCancelButton";
@@ -221,7 +221,7 @@ function EntryLine({
       style={hueVars(kindHue(item.kind)) as CSSProperties}
       className="glim-hue flex flex-wrap items-center gap-x-3 gap-y-2 py-2.5 first:pt-0 last:pb-0"
     >
-      <span className="flex h-9 w-9 flex-none items-center justify-center rounded-control bg-carbon-surface3 text-accentText [&_svg]:h-[18px] [&_svg]:w-[18px]">
+      <span className="flex h-9 w-9 flex-none items-center justify-center rounded-control bg-carbon-surface2 text-accentText [&_svg]:h-[18px] [&_svg]:w-[18px]">
         <KindGlyph kind={item.kind} />
       </span>
       <span className="flex min-w-40 flex-1 flex-col gap-1">
@@ -632,7 +632,7 @@ export function RestoreManyWindow({ items, onClose }: { items: BackupItem[]; onC
             {summary}
           </p>
         )}
-        <ul className="flex flex-col divide-y divide-carbon-border/60 rounded-card bg-carbon-surface2 px-3 py-2.5">
+        <Rows as="ul">
           {items.map((item) => {
             const key = itemProgressKey(item);
             const plan = plans[key];
@@ -656,7 +656,7 @@ export function RestoreManyWindow({ items, onClose }: { items: BackupItem[]; onC
               />
             );
           })}
-        </ul>
+        </Rows>
       </Section>
       {confirmDialog}
     </InstanceWindow>

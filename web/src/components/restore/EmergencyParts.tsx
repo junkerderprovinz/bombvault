@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import { InfoBubble } from "../InfoBubble";
 
 export const EMERGENCY_FIELD =
-  "rounded-control bg-carbon-surface3 px-3 py-2 text-start font-mono text-sm text-carbon-text glim-field-focus";
+  "rounded-control bg-carbon-surface2 px-3 py-2 text-start font-mono text-sm text-carbon-text glim-field-focus";
 
 /** The folder each section keeps its backups in, by the setting that holds it. */
 export const SECTION_PATHS = [
@@ -25,7 +25,7 @@ export const SECTION_OFFSITE = [
 
 export function Section({ title, hint, children }: { title: string; hint?: string; children: ReactNode }) {
   return (
-    <section className="flex flex-col gap-3 rounded-card bg-carbon-surface2 p-4">
+    <section className="flex flex-col gap-3">
       <h3 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest text-carbon-textSub">
         {title}
         {hint && <InfoBubble tip={hint} />}

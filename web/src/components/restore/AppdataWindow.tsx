@@ -11,6 +11,7 @@ import { FolderBrowser } from "../FolderBrowser";
 import { IconBack, IconSearch } from "../glyphs";
 import { IconCheck, IconDownload } from "../navGlyphs";
 import { ProgressBar } from "../ProgressBar";
+import { Rows, SettingRow } from "../storage/rows";
 import { StepBar } from "./StepBar";
 
 /** The progress key the server publishes an import under. */
@@ -194,23 +195,29 @@ export function AppdataWindow({ hostMountRoot, onClose }: { hostMountRoot: strin
           {prog && <ProgressBar percent={prog.percent} active={prog.active} inline label={running ? t("recovery.abImporting") : undefined} />}
           {outcome && <p className={`rounded-card px-3 py-2.5 text-sm leading-relaxed ${OUTCOME[outcome].look}`}>{t(OUTCOME[outcome].key)}</p>}
           {archives.length > 0 && (
-            <ul className="flex flex-col divide-y divide-carbon-border/60 rounded-card bg-carbon-surface2 px-4 py-1">
+            <Rows as="ul">
               {archives.map((a) => (
-                <li key={`${a.folder}/${a.file}`} data-testid="appdata-archive" className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2.5">
-                  <span className="flex min-w-0 flex-1 flex-col">
-                    <span dir="ltr" className="truncate text-start text-sm font-semibold text-carbon-text">
+                <SettingRow
+                  key={`${a.folder}/${a.file}`}
+                  as="li"
+                  label={a.container}
+                  name={
+                    <bdi dir="ltr" className="min-w-0 wrap-break-word">
                       {a.container}
-                    </span>
-                    <span className="text-xs tabular-nums text-carbon-textMuted">
+                    </bdi>
+                  }
+                  note={
+                    <span className="tabular-nums">
                       {new Date(a.time * 1000).toLocaleString()} · {humanBytes(a.size)}
                     </span>
-                  </span>
+                  }
+                >
                   <Badge tone={STATUS[a.status].tone} size="small">
                     {t(STATUS[a.status].key)}
                   </Badge>
-                </li>
+                </SettingRow>
               ))}
-            </ul>
+            </Rows>
           )}
         </>
       )}
