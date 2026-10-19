@@ -3888,7 +3888,6 @@ const fi: Partial<Translations> = {
   "storage.rclone.hidden": "piilotettu",
   "storage.lock.toggle": "Poistosuoja (append-only)",
   "storage.lock.localHint": "Mikään tällä koneella ei saa poistaa tästä arkistosta. Karsinta ja varmuuskopioiden poisto estetään. Tarkoitettu säilytettävälle arkistolle.",
-  "storage.lock.localNone": "Tämän palvelimen kansio ei voi kieltäytyä poistosta, koska se, joka hallitsee BombVaultia, hallitsee myös kansiota.",
   "storage.lock.test": "Testaa poistosuoja nyt",
   "storage.lock.testHint": "Yrittää poistaa testiobjektin. Jos toinen pää kieltäytyy, suoja on todellinen.",
   "storage.lock.testOff": "Jokainen kopio tähän kohteeseen on pois päältä, joten testattavaa ei ole. Ota ensin yksi käyttöön.",
@@ -4156,7 +4155,6 @@ const fi: Partial<Translations> = {
   // The fourteen settings tiles
   "tile.sidebar.show": "Näytä myös sivupalkissa",
   "tile.sidebar.showHint": "Näyttää sivun merkintänä sivupalkissa. Silloin se asetetaan siellä, tänne jäävät vain sen kytkimet ja reitti sivulle.",
-  "tile.storage.sub": "Kohteita: {n}, joista etänä {m}",
   "tile.instances.modules": "Useita palvelimia",
   "tile.instances.modulesHint": "Valinnainen. Kahdella palvelimella saat kopion toiseen paikkaan ilman pilveä.",
   "tile.instances.none": "Mitään ei ole vielä kytketty päälle",

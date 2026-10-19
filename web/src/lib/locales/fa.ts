@@ -3898,7 +3898,6 @@ const fa: Partial<Translations> = {
   "storage.rclone.hidden": "پنهان",
   "storage.lock.toggle": "محافظت در برابر حذف (append-only)",
   "storage.lock.localHint": "هیچ چیز روی این دستگاه اجازه ندارد از این مخزن حذف کند. پاک‌سازی و حذف پشتیبان‌ها رد می‌شود. برای آرشیوی که می‌خواهی نگه داری.",
-  "storage.lock.localNone": "پوشه‌ای روی این سرور نمی‌تواند حذف را رد کند، چون هر کس BombVault را در اختیار دارد، پوشه را هم در اختیار دارد.",
   "storage.lock.test": "آزمایش همین حالا محافظت در برابر حذف",
   "storage.lock.testHint": "تلاش می‌کند یک شیء آزمایشی را حذف کند. اگر طرف مقابل رد کند، محافظت واقعی است.",
   "storage.lock.testOff": "همهٔ نسخه‌ها به این مقصد خاموش‌اند، پس چیزی برای آزمودن نیست. اول یکی را روشن کن.",
@@ -4166,7 +4165,6 @@ const fa: Partial<Translations> = {
   // The fourteen settings tiles
   "tile.sidebar.show": "در نوار کناری هم نشان بده",
   "tile.sidebar.showHint": "صفحه را به‌صورت یک مورد در نوار کناری نشان می‌دهد. سپس تنظیم آن همان‌جا انجام می‌شود؛ اینجا فقط کلیدهای آن و راه رسیدن به صفحه می‌ماند.",
-  "tile.storage.sub": "{n} مقصد، {m} مورد از آن‌ها خارج از محل",
   "tile.instances.modules": "چند سرور",
   "tile.instances.modulesHint": "اختیاری. با دو سرور یک نسخه خارج از محل داری، بدون هیچ ابری.",
   "tile.instances.none": "هنوز چیزی روشن نشده",

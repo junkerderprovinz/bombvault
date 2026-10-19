@@ -3898,7 +3898,6 @@ const is: Partial<Translations> = {
   "storage.rclone.hidden": "falið",
   "storage.lock.toggle": "Vörn gegn eyðingu (append-only)",
   "storage.lock.localHint": "Ekkert á þessari vél má eyða úr þessu safni. Hreinsun og eyðing afrita er hafnað. Ætlað fyrir skjalasafn sem þú vilt halda.",
-  "storage.lock.localNone": "Mappa á þessum netþjóni getur ekki neitað eyðingu, því sá sem stjórnar BombVault stjórnar líka möppunni.",
   "storage.lock.test": "Prófa vörn gegn eyðingu núna",
   "storage.lock.testHint": "Reynir að eyða prufuhlut. Ef hinn endinn hafnar því er vörnin raunveruleg.",
   "storage.lock.testOff": "Öll afrit á þennan áfangastað eru óvirk, svo það er ekkert að prófa. Virkjaðu eitt fyrst.",
@@ -4166,7 +4165,6 @@ const is: Partial<Translations> = {
   // The fourteen settings tiles
   "tile.sidebar.show": "Sýna líka í hliðarstikunni",
   "tile.sidebar.showHint": "Sýnir síðuna sem færslu í hliðarstikunni. Hún er þá stillt þar, hér verða aðeins rofarnir hennar og leiðin á síðuna eftir.",
-  "tile.storage.sub": "{n} áfangastaðir, þar af {m} fjarlægir",
   "tile.instances.modules": "Margir netþjónar",
   "tile.instances.modulesHint": "Valfrjálst. Með tveimur netþjónum áttu fjarlægt afrit án nokkurs skýs.",
   "tile.instances.none": "Ekkert er kveikt enn",

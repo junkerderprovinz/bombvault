@@ -3898,7 +3898,6 @@ const sk: Partial<Translations> = {
   "storage.rclone.hidden": "skryté",
   "storage.lock.toggle": "Ochrana proti zmazaniu (append-only)",
   "storage.lock.localHint": "Nič na tomto stroji nesmie z tohto repozitára mazať. Čistenie a mazanie záloh sa odmieta. Určené pre archív, ktorý má zostať.",
-  "storage.lock.localNone": "Priečinok na tomto serveri nemôže odmietnuť zmazanie, pretože kto ovláda BombVault, ovláda aj priečinok.",
   "storage.lock.test": "Otestovať ochranu proti zmazaniu hneď",
   "storage.lock.testHint": "Skúsi zmazať testovací objekt. Ak to druhá strana odmietne, ochrana je skutočná.",
   "storage.lock.testOff": "Každá kópia do tohto cieľa je vypnutá, takže nie je čo testovať. Najprv jednu zapni.",
@@ -4166,7 +4165,6 @@ const sk: Partial<Translations> = {
   // The fourteen settings tiles
   "tile.sidebar.show": "Zobraziť aj v bočnom paneli",
   "tile.sidebar.showHint": "Zobrazí stránku ako položku v bočnom paneli. Nastavuje sa potom tam; tu zostanú len jej prepínače a cesta na stránku.",
-  "tile.storage.sub": "Cieľov: {n}, z toho off-site: {m}",
   "tile.instances.modules": "Viac serverov",
   "tile.instances.modulesHint": "Voliteľné. Pri dvoch serveroch máš kópiu mimo domu, úplne bez cloudu.",
   "tile.instances.none": "Zatiaľ nie je nič zapnuté",

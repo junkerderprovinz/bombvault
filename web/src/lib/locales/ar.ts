@@ -3889,7 +3889,6 @@ const ar: Partial<Translations> = {
   "storage.rclone.hidden": "مخفي",
   "storage.lock.toggle": "الحماية من الحذف (append-only)",
   "storage.lock.localHint": "لا يُسمح لأي شيء على هذا الجهاز بالحذف من هذا المستودع. يُرفض التقليم وحذف النسخ الاحتياطية. مخصص لأرشيف يُراد الإبقاء عليه.",
-  "storage.lock.localNone": "لا يستطيع مجلد على هذا الخادم رفض الحذف، لأن من يتحكم في BombVault يتحكم في المجلد أيضًا.",
   "storage.lock.test": "اختبار الحماية من الحذف الآن",
   "storage.lock.testHint": "يحاول حذف كائن اختباري. إذا رفض الطرف الآخر فالحماية فعلية.",
   "storage.lock.testOff": "كل النسخ إلى هذه الوجهة متوقفة، فلا يوجد ما يُختبر. شغّل واحدة أولًا.",
@@ -4157,7 +4156,6 @@ const ar: Partial<Translations> = {
   // The fourteen settings tiles
   "tile.sidebar.show": "العرض أيضًا في الشريط الجانبي",
   "tile.sidebar.showHint": "تعرض الصفحة كعنصر في الشريط الجانبي. وتُضبط حينها هناك؛ ولا يبقى هنا سوى مفاتيحها والطريق إلى الصفحة.",
-  "tile.storage.sub": "{n} وجهات، منها {m} خارج الموقع",
   "tile.instances.modules": "عدة خوادم",
   "tile.instances.modulesHint": "اختياري. مع خادمين تتوفر نسخة خارج المنزل، دون أي سحابة.",
   "tile.instances.none": "لم يُفعَّل أي شيء بعد",

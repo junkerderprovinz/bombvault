@@ -3888,7 +3888,6 @@ const he: Partial<Translations> = {
   "storage.rclone.hidden": "מוסתר",
   "storage.lock.toggle": "הגנה מפני מחיקה (append-only)",
   "storage.lock.localHint": "שום דבר במכונה הזאת לא רשאי למחוק מהמאגר הזה. גיזום ומחיקת גיבויים נדחים. מיועד לארכיון שרוצים לשמור.",
-  "storage.lock.localNone": "תיקייה בשרת הזה לא יכולה לסרב למחיקה, כי מי ששולט ב-BombVault שולט גם בתיקייה.",
   "storage.lock.test": "בדיקת ההגנה מפני מחיקה עכשיו",
   "storage.lock.testHint": "מנסה למחוק אובייקט בדיקה. אם הצד השני מסרב, ההגנה אמיתית.",
   "storage.lock.testOff": "כל העותקים ליעד הזה כבויים, כך שאין מה לבדוק. יש להפעיל אחד קודם.",
@@ -4156,7 +4155,6 @@ const he: Partial<Translations> = {
   // The fourteen settings tiles
   "tile.sidebar.show": "הצגה גם בסרגל הצד",
   "tile.sidebar.showHint": "מציג את הדף כפריט בסרגל הצד. אז הוא מוגדר שם; כאן נשארים רק המתגים שלו והדרך אליו.",
-  "tile.storage.sub": "{n} יעדים, {m} מהם מחוץ לאתר",
   "tile.instances.modules": "כמה שרתים",
   "tile.instances.modulesHint": "אופציונלי. עם שני שרתים יש עותק מחוץ לבית, בלי ענן בכלל.",
   "tile.instances.none": "עוד לא הופעל דבר",

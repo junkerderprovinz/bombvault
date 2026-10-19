@@ -3889,7 +3889,6 @@ const hu: Partial<Translations> = {
   "storage.rclone.hidden": "rejtett",
   "storage.lock.toggle": "Törlés elleni védelem (append-only)",
   "storage.lock.localHint": "Erről a gépről semmi sem törölhet ebből a tárolóból. A nyesést és a mentések törlését elutasítja. Megőrzendő archívumhoz való.",
-  "storage.lock.localNone": "A szerveren lévő mappa nem tagadhatja meg a törlést, mert aki a BombVaultot irányítja, a mappát is irányítja.",
   "storage.lock.test": "Törlés elleni védelem tesztelése most",
   "storage.lock.testHint": "Megpróbál törölni egy tesztobjektumot. Ha a másik oldal elutasítja, a védelem valódi.",
   "storage.lock.testOff": "Minden másolat erre a célra ki van kapcsolva, így nincs mit tesztelni. Előbb kapcsolj be egyet.",
@@ -4157,7 +4156,6 @@ const hu: Partial<Translations> = {
   // The fourteen settings tiles
   "tile.sidebar.show": "Mutatás az oldalsávban is",
   "tile.sidebar.showHint": "Az oldalt elemként mutatja az oldalsávban. Ott lehet beállítani, itt csak a kapcsolói és az oda vezető út marad.",
-  "tile.storage.sub": "{n} cél, ebből {m} telephelyen kívüli",
   "tile.instances.modules": "Több szerver",
   "tile.instances.modulesHint": "Opcionális. Két szerverrel telephelyen kívüli másolatod van, felhő nélkül.",
   "tile.instances.none": "Még nincs semmi bekapcsolva",

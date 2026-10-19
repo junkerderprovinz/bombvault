@@ -3898,7 +3898,6 @@ const ms: Partial<Translations> = {
   "storage.rclone.hidden": "tersembunyi",
   "storage.lock.toggle": "Perlindungan daripada pemadaman (append-only)",
   "storage.lock.localHint": "Tiada apa-apa pada mesin ini yang boleh memadam daripada repositori ini. Prune dan pemadaman sandaran ditolak. Bertujuan untuk arkib yang anda mahu kekalkan.",
-  "storage.lock.localNone": "Folder pada pelayan ini tidak boleh menolak pemadaman, kerana sesiapa yang mengawal BombVault turut mengawal folder itu.",
   "storage.lock.test": "Uji perlindungan daripada pemadaman sekarang",
   "storage.lock.testHint": "Cuba memadam objek ujian. Jika pihak sebelah lagi menolak, perlindungan itu benar.",
   "storage.lock.testOff": "Setiap salinan ke destinasi ini dimatikan, jadi tiada apa untuk diuji. Hidupkan satu dahulu.",
@@ -4166,7 +4165,6 @@ const ms: Partial<Translations> = {
   // The fourteen settings tiles
   "tile.sidebar.show": "Papar juga dalam bar sisi",
   "tile.sidebar.showHint": "Memaparkan halaman sebagai entri dalam bar sisi. Ia kemudian ditetapkan di sana; hanya suisnya dan laluan ke halaman kekal di sini.",
-  "tile.storage.sub": "{n} destinasi, {m} daripadanya luar tapak",
   "tile.instances.modules": "Berbilang pelayan",
   "tile.instances.modulesHint": "Pilihan. Dengan dua pelayan, anda mempunyai salinan di luar tapak tanpa awan sama sekali.",
   "tile.instances.none": "Belum ada apa-apa yang dihidupkan",

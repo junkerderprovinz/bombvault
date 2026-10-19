@@ -3879,7 +3879,6 @@ const zh: Partial<Translations> = {
   "storage.rclone.hidden": "已隐藏",
   "storage.lock.toggle": "防删除保护（append-only）",
   "storage.lock.localHint": "这台机器上的任何东西都不能从此仓库删除。清理和删除备份都会被拒绝。适合想长期保留的归档。",
-  "storage.lock.localNone": "这台服务器上的文件夹无法拒绝删除，因为控制 BombVault 的人同样控制该文件夹。",
   "storage.lock.test": "立即测试防删除保护",
   "storage.lock.testHint": "尝试删除一个测试对象。如果对方拒绝，保护就是有效的。",
   "storage.lock.testOff": "到此目标的所有副本都已关闭，没有可测试的内容。请先开启一个。",
@@ -4147,7 +4146,6 @@ const zh: Partial<Translations> = {
   // The fourteen settings tiles
   "tile.sidebar.show": "同时显示在侧边栏",
   "tile.sidebar.showHint": "将该页面作为一项显示在侧边栏。之后在那里设置，这里只保留它的开关和通往该页面的入口。",
-  "tile.storage.sub": "{n} 个目标，其中 {m} 个在异地",
   "tile.instances.modules": "多台服务器",
   "tile.instances.modulesHint": "可选。有两台服务器，就能在异地保留一份副本，完全不需要云。",
   "tile.instances.none": "尚未开启任何内容",

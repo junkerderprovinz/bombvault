@@ -3879,7 +3879,6 @@ const vi: Partial<Translations> = {
   "storage.rclone.hidden": "ẩn",
   "storage.lock.toggle": "Bảo vệ chống xóa (append-only)",
   "storage.lock.localHint": "Không gì trên máy này được phép xóa khỏi kho này. Việc dọn bớt và xóa bản sao lưu đều bị từ chối. Dành cho kho lưu trữ bạn muốn giữ lại.",
-  "storage.lock.localNone": "Thư mục trên máy chủ này không thể từ chối việc xóa, vì ai kiểm soát BombVault thì cũng kiểm soát thư mục.",
   "storage.lock.test": "Kiểm tra bảo vệ chống xóa ngay",
   "storage.lock.testHint": "Thử xóa một đối tượng kiểm tra. Nếu phía bên kia từ chối thì sự bảo vệ là thật.",
   "storage.lock.testOff": "Mọi bản sao tới đích này đều đang tắt, nên không có gì để kiểm tra. Hãy bật một bản trước.",
@@ -4147,7 +4146,6 @@ const vi: Partial<Translations> = {
   // The fourteen settings tiles
   "tile.sidebar.show": "Hiện cả trong thanh bên",
   "tile.sidebar.showHint": "Hiện trang này thành một mục trong thanh bên. Khi đó nó được thiết lập ở đó, ở đây chỉ còn các công tắc của nó và lối dẫn đến trang.",
-  "tile.storage.sub": "{n} đích sao lưu, {m} trong số đó ngoài site",
   "tile.instances.modules": "Nhiều máy chủ",
   "tile.instances.modulesHint": "Tùy chọn. Với hai máy chủ, bạn có một bản sao ở nơi khác mà hoàn toàn không cần đám mây.",
   "tile.instances.none": "Chưa bật gì cả",

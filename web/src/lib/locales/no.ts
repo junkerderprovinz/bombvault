@@ -3888,7 +3888,6 @@ const no: Partial<Translations> = {
   "storage.rclone.hidden": "skjult",
   "storage.lock.toggle": "Beskyttelse mot sletting (append-only)",
   "storage.lock.localHint": "Ingenting på denne maskinen kan slette fra dette repositoryet. Beskjæring og sletting av sikkerhetskopier avvises. Ment for et arkiv du vil beholde.",
-  "storage.lock.localNone": "En mappe på denne serveren kan ikke nekte sletting, for den som styrer BombVault, styrer også mappen.",
   "storage.lock.test": "Test beskyttelsen mot sletting nå",
   "storage.lock.testHint": "Prøver å slette et testobjekt. Avviser den andre siden det, er beskyttelsen ekte.",
   "storage.lock.testOff": "Alle kopier til dette målet er slått av, så det er ingenting å teste. Slå på én først.",
@@ -4156,7 +4155,6 @@ const no: Partial<Translations> = {
   // The fourteen settings tiles
   "tile.sidebar.show": "Vis også i sidefeltet",
   "tile.sidebar.showHint": "Viser siden som en oppføring i sidefeltet. Den stilles da inn der; bare bryterne og veien til siden blir igjen her.",
-  "tile.storage.sub": "{n} mål, {m} av dem off-site",
   "tile.instances.modules": "Flere servere",
   "tile.instances.modulesHint": "Valgfritt. Med to servere har du en kopi utenfor huset, helt uten sky.",
   "tile.instances.none": "Ingenting er slått på ennå",

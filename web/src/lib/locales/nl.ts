@@ -3887,7 +3887,6 @@ const nl: Partial<Translations> = {
   "storage.rclone.hidden": "verborgen",
   "storage.lock.toggle": "Bescherming tegen verwijderen (append-only)",
   "storage.lock.localHint": "Niets op deze machine mag uit deze repository verwijderen. Prunen en het verwijderen van back-ups worden geweigerd. Bedoeld voor een archief dat moet blijven.",
-  "storage.lock.localNone": "Een map op deze server kan verwijderen niet weigeren, want wie BombVault beheert, beheert ook de map.",
   "storage.lock.test": "Bescherming tegen verwijderen nu testen",
   "storage.lock.testHint": "Probeert een testobject te verwijderen. Weigert de andere kant dat, dan is de bescherming echt.",
   "storage.lock.testOff": "Elke kopie naar deze bestemming staat uit, dus er is niets te testen. Zet er eerst een aan.",
@@ -4155,7 +4154,6 @@ const nl: Partial<Translations> = {
   // The fourteen settings tiles
   "tile.sidebar.show": "Ook in de zijbalk tonen",
   "tile.sidebar.showHint": "Toont de pagina als item in de zijbalk. Ze wordt dan daar ingesteld; alleen de schakelaars en de weg naar de pagina blijven hier.",
-  "tile.storage.sub": "{n} bestemmingen, waarvan {m} off-site",
   "tile.instances.modules": "Meerdere servers",
   "tile.instances.modulesHint": "Optioneel. Met twee servers heb je een kopie buitenshuis, helemaal zonder cloud.",
   "tile.instances.none": "Nog niets ingeschakeld",

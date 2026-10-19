@@ -3879,7 +3879,6 @@ const ko: Partial<Translations> = {
   "storage.rclone.hidden": "숨김",
   "storage.lock.toggle": "삭제 방지 (append-only)",
   "storage.lock.localHint": "이 머신의 어떤 것도 이 저장소에서 삭제할 수 없습니다. 정리와 백업 삭제는 거부됩니다. 보관하려는 아카이브용입니다.",
-  "storage.lock.localNone": "이 서버의 폴더는 삭제를 거부할 수 없습니다. BombVault를 제어하는 사람은 폴더도 제어하기 때문입니다.",
   "storage.lock.test": "지금 삭제 방지 테스트",
   "storage.lock.testHint": "테스트 객체를 삭제해 봅니다. 상대편이 거부하면 보호가 실제로 작동하는 것입니다.",
   "storage.lock.testOff": "이 대상으로 가는 사본이 모두 꺼져 있어 테스트할 것이 없습니다. 먼저 하나를 켜세요.",
@@ -4147,7 +4146,6 @@ const ko: Partial<Translations> = {
   // The fourteen settings tiles
   "tile.sidebar.show": "사이드바에도 표시",
   "tile.sidebar.showHint": "이 페이지를 사이드바 항목으로 표시합니다. 설정은 그쪽에서 하고, 여기에는 스위치와 페이지로 가는 길만 남습니다.",
-  "tile.storage.sub": "대상 {n}개, 그중 오프사이트 {m}개",
   "tile.instances.modules": "여러 서버",
   "tile.instances.modulesHint": "선택 사항입니다. 서버가 두 대면 클라우드 없이도 오프사이트 사본을 둘 수 있습니다.",
   "tile.instances.none": "아직 켜진 것이 없습니다",

@@ -3888,7 +3888,6 @@ const pt: Partial<Translations> = {
   "storage.rclone.hidden": "oculto",
   "storage.lock.toggle": "Proteção contra eliminação (append-only)",
   "storage.lock.localHint": "Nada neste equipamento pode eliminar deste repositório. A poda e a eliminação de backups são recusadas. Pensado para um arquivo que se quer manter.",
-  "storage.lock.localNone": "Uma pasta neste servidor não pode recusar a eliminação, porque quem controla o BombVault também controla a pasta.",
   "storage.lock.test": "Testar agora a proteção contra eliminação",
   "storage.lock.testHint": "Tenta eliminar um objeto de teste. Se o outro lado recusar, a proteção é real.",
   "storage.lock.testOff": "Todas as cópias para este destino estão desligadas, por isso não há nada para testar. Liga uma primeiro.",
@@ -4156,7 +4155,6 @@ const pt: Partial<Translations> = {
   // The fourteen settings tiles
   "tile.sidebar.show": "Mostrar também na barra lateral",
   "tile.sidebar.showHint": "Mostra a página como uma entrada na barra lateral. Passa então a ser configurada aí; aqui ficam apenas os seus interruptores e o caminho para a página.",
-  "tile.storage.sub": "{n} destinos, {m} deles externos",
   "tile.instances.modules": "Vários servidores",
   "tile.instances.modulesHint": "Opcional. Com dois servidores, tem uma cópia fora de casa, sem qualquer nuvem.",
   "tile.instances.none": "Ainda nada ligado",

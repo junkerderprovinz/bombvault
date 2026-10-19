@@ -3898,7 +3898,6 @@ const ca: Partial<Translations> = {
   "storage.rclone.hidden": "ocult",
   "storage.lock.toggle": "Protecció contra l'esborrat (append-only)",
   "storage.lock.localHint": "Res d'aquest equip no pot esborrar d'aquest repositori. La neteja i l'esborrat de còpies es rebutgen. Pensat per a un arxiu que vols conservar.",
-  "storage.lock.localNone": "Una carpeta d'aquest servidor no pot rebutjar l'esborrat, perquè qui controla BombVault també controla la carpeta.",
   "storage.lock.test": "Prova ara la protecció contra l'esborrat",
   "storage.lock.testHint": "Intenta esborrar un objecte de prova. Si l'altre costat ho rebutja, la protecció és real.",
   "storage.lock.testOff": "Totes les còpies a aquesta destinació estan desactivades, així que no hi ha res a provar. Activa'n una primer.",
@@ -4166,7 +4165,6 @@ const ca: Partial<Translations> = {
   // The fourteen settings tiles
   "tile.sidebar.show": "Mostra també a la barra lateral",
   "tile.sidebar.showHint": "Mostra la pàgina com a entrada a la barra lateral. Llavors s'hi configura; aquí només queden els seus interruptors i el camí fins a la pàgina.",
-  "tile.storage.sub": "{n} destinacions, {m} d'elles externes",
   "tile.instances.modules": "Diversos servidors",
   "tile.instances.modulesHint": "Opcional. Amb dos servidors tens una còpia fora de casa, sense cap núvol.",
   "tile.instances.none": "Encara no hi ha res activat",

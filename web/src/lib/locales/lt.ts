@@ -3898,7 +3898,6 @@ const lt: Partial<Translations> = {
   "storage.rclone.hidden": "paslėpta",
   "storage.lock.toggle": "Apsauga nuo trynimo (append-only)",
   "storage.lock.localHint": "Niekas šioje mašinoje negali trinti iš šios saugyklos. Valymas ir atsarginių kopijų trynimas atmetami. Skirta archyvui, kurį nori išsaugoti.",
-  "storage.lock.localNone": "Šio serverio aplankas negali atsisakyti ištrynimo, nes kas valdo BombVault, valdo ir aplanką.",
   "storage.lock.test": "Išbandyti apsaugą nuo trynimo dabar",
   "storage.lock.testHint": "Bando ištrinti bandomąjį objektą. Jei kita pusė atsisako, apsauga tikra.",
   "storage.lock.testOff": "Visos kopijos į šią paskirties vietą išjungtos, todėl nėra ko tikrinti. Pirmiausia įjunk vieną.",
@@ -4166,7 +4165,6 @@ const lt: Partial<Translations> = {
   // The fourteen settings tiles
   "tile.sidebar.show": "Rodyti ir šoninėje juostoje",
   "tile.sidebar.showHint": "Rodo puslapį kaip įrašą šoninėje juostoje. Tada jis nustatomas ten, čia lieka tik jo jungikliai ir kelias į puslapį.",
-  "tile.storage.sub": "Paskirties vietų: {n}, iš jų nuotolinių: {m}",
   "tile.instances.modules": "Keli serveriai",
   "tile.instances.modulesHint": "Neprivaloma. Su dviem serveriais turi nuotolinę kopiją be jokio debesies.",
   "tile.instances.none": "Dar nieko neįjungta",

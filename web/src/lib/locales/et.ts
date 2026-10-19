@@ -3898,7 +3898,6 @@ const et: Partial<Translations> = {
   "storage.rclone.hidden": "peidetud",
   "storage.lock.toggle": "Kustutamiskaitse (append-only)",
   "storage.lock.localHint": "Miski sellel masinal ei tohi sellest hoidlast kustutada. Puhastamine ja varunduste kustutamine lükatakse tagasi. Mõeldud arhiivile, mida tahad alles hoida.",
-  "storage.lock.localNone": "Selle serveri kaust ei saa kustutamist keelata, sest kes juhib BombVaulti, juhib ka kausta.",
   "storage.lock.test": "Testi kustutamiskaitset kohe",
   "storage.lock.testHint": "Proovib kustutada testobjekti. Kui teine pool keeldub, on kaitse tõeline.",
   "storage.lock.testOff": "Iga koopia sellesse sihtkohta on välja lülitatud, seega pole midagi testida. Lülita esmalt üks sisse.",
@@ -4166,7 +4165,6 @@ const et: Partial<Translations> = {
   // The fourteen settings tiles
   "tile.sidebar.show": "Näita ka külgribal",
   "tile.sidebar.showHint": "Näitab lehte külgribal kirjena. Seejärel seadistatakse seda seal; siia jäävad ainult selle lülitid ja tee lehele.",
-  "tile.storage.sub": "{n} sihtkohta, neist {m} välised",
   "tile.instances.modules": "Mitu serverit",
   "tile.instances.modulesHint": "Valikuline. Kahe serveriga on sul koopia kodust väljas, ilma pilveta.",
   "tile.instances.none": "Midagi pole veel sisse lülitatud",

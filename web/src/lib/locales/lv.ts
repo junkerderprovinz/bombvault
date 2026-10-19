@@ -3898,7 +3898,6 @@ const lv: Partial<Translations> = {
   "storage.rclone.hidden": "paslēpts",
   "storage.lock.toggle": "Aizsardzība pret dzēšanu (append-only)",
   "storage.lock.localHint": "Nekas šajā ierīcē nedrīkst dzēst no šīs krātuves. Tīrīšana un rezerves kopiju dzēšana tiek noraidīta. Paredzēts arhīvam, ko vēlaties saglabāt.",
-  "storage.lock.localNone": "Šī servera mape nevar atteikt dzēšanu, jo tas, kas kontrolē BombVault, kontrolē arī mapi.",
   "storage.lock.test": "Pārbaudīt aizsardzību pret dzēšanu tagad",
   "storage.lock.testHint": "Mēģina izdzēst testa objektu. Ja otra puse atsakās, aizsardzība ir īsta.",
   "storage.lock.testOff": "Visas kopijas uz šo mērķi ir izslēgtas, tāpēc nav ko testēt. Vispirms ieslēdziet vienu.",
@@ -4166,7 +4165,6 @@ const lv: Partial<Translations> = {
   // The fourteen settings tiles
   "tile.sidebar.show": "Rādīt arī sānjoslā",
   "tile.sidebar.showHint": "Parāda lapu kā ierakstu sānjoslā. Tad tā tiek iestatīta tur, šeit paliek tikai tās slēdži un ceļš uz lapu.",
-  "tile.storage.sub": "Mērķi: {n}, no tiem attālināti: {m}",
   "tile.instances.modules": "Vairāki serveri",
   "tile.instances.modulesHint": "Neobligāti. Ar diviem serveriem jums ir attālināta kopija bez mākoņa.",
   "tile.instances.none": "Vēl nekas nav ieslēgts",

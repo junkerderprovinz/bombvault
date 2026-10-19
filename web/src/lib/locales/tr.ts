@@ -3888,7 +3888,6 @@ const tr: Partial<Translations> = {
   "storage.rclone.hidden": "gizli",
   "storage.lock.toggle": "Silmeye karşı koruma (append-only)",
   "storage.lock.localHint": "Bu makinedeki hiçbir şey bu depodan silemez. Budama ve yedek silme reddedilir. Saklamak istediğin bir arşiv için tasarlanmıştır.",
-  "storage.lock.localNone": "Bu sunucudaki bir klasör silmeyi reddedemez, çünkü BombVault'u kontrol eden klasörü de kontrol eder.",
   "storage.lock.test": "Silmeye karşı korumayı şimdi sına",
   "storage.lock.testHint": "Bir test nesnesini silmeyi dener. Karşı taraf reddederse koruma gerçektir.",
   "storage.lock.testOff": "Bu hedefe giden her kopya kapalı, bu yüzden test edilecek bir şey yok. Önce birini aç.",
@@ -4156,7 +4155,6 @@ const tr: Partial<Translations> = {
   // The fourteen settings tiles
   "tile.sidebar.show": "Kenar çubuğunda da göster",
   "tile.sidebar.showHint": "Sayfayı kenar çubuğunda bir giriş olarak gösterir. Ayarı o zaman orada yapılır; burada yalnızca anahtarları ve sayfaya giden yol kalır.",
-  "tile.storage.sub": "{n} hedef, {m} tanesi site dışı",
   "tile.instances.modules": "Birden çok sunucu",
   "tile.instances.modulesHint": "İsteğe bağlı. İki sunucuyla bulut olmadan da site dışında bir kopyan olur.",
   "tile.instances.none": "Henüz hiçbir şey açık değil",

@@ -3888,7 +3888,6 @@ const fr: Partial<Translations> = {
   "storage.rclone.hidden": "masqué",
   "storage.lock.toggle": "Protection contre la suppression (append-only)",
   "storage.lock.localHint": "Rien sur cette machine ne peut supprimer dans ce dépôt. L'élagage et la suppression de sauvegardes sont refusés. Prévu pour une archive à conserver.",
-  "storage.lock.localNone": "Un dossier de ce serveur ne peut pas refuser la suppression, car celui qui contrôle BombVault contrôle aussi le dossier.",
   "storage.lock.test": "Tester la protection contre la suppression maintenant",
   "storage.lock.testHint": "Tente de supprimer un objet de test. Si l'autre côté refuse, la protection est réelle.",
   "storage.lock.testOff": "Toutes les copies vers cette destination sont désactivées, il n'y a donc rien à tester. Active-en une d'abord.",
@@ -4156,7 +4155,6 @@ const fr: Partial<Translations> = {
   // The fourteen settings tiles
   "tile.sidebar.show": "Afficher aussi dans la barre latérale",
   "tile.sidebar.showHint": "Affiche la page comme une entrée de la barre latérale. Elle se règle alors là-bas ; ici ne restent que ses interrupteurs et le chemin vers la page.",
-  "tile.storage.sub": "{n} destinations, dont {m} hors site",
   "tile.instances.modules": "Plusieurs serveurs",
   "tile.instances.modulesHint": "Facultatif. Avec deux serveurs, vous avez une copie hors site, sans aucun cloud.",
   "tile.instances.none": "Rien n'est encore activé",

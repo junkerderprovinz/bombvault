@@ -3898,7 +3898,6 @@ const eu: Partial<Translations> = {
   "storage.rclone.hidden": "ezkutua",
   "storage.lock.toggle": "Ezabatzearen aurkako babesa (append-only)",
   "storage.lock.localHint": "Makina honetako ezerk ezin du biltegi honetatik ezabatu. Garbiketa eta babeskopiak ezabatzea ukatu egiten dira. Gorde nahi duzun artxibo batentzat pentsatuta.",
-  "storage.lock.localNone": "Zerbitzari honetako karpeta batek ezin du ezabatzea ukatu, BombVault kontrolatzen duenak karpeta ere kontrolatzen baitu.",
   "storage.lock.test": "Probatu orain ezabatzearen aurkako babesa",
   "storage.lock.testHint": "Proba-objektu bat ezabatzen saiatzen da. Beste aldeak ukatzen badu, babesa benetakoa da.",
   "storage.lock.testOff": "Helmuga honetarako kopia guztiak itzalita daude, beraz ez dago probatzeko ezer. Piztu bat lehenik.",
@@ -4166,7 +4165,6 @@ const eu: Partial<Translations> = {
   // The fourteen settings tiles
   "tile.sidebar.show": "Alboko barran ere erakutsi",
   "tile.sidebar.showHint": "Orria alboko barrako sarrera gisa erakusten du. Orduan han konfiguratzen da; hemen haren etengailuak eta orrira doan bidea baino ez dira geratzen.",
-  "tile.storage.sub": "{n} helmuga, horietatik {m} kanpoan",
   "tile.instances.modules": "Zerbitzari anitz",
   "tile.instances.modulesHint": "Aukerakoa. Bi zerbitzarirekin etxetik kanpoko kopia bat duzu, hodeirik gabe.",
   "tile.instances.none": "Oraindik ezer ez dago aktibatuta",

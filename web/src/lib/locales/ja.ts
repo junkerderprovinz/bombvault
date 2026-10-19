@@ -3879,7 +3879,6 @@ const ja: Partial<Translations> = {
   "storage.rclone.hidden": "非表示",
   "storage.lock.toggle": "削除に対する保護(append-only)",
   "storage.lock.localHint": "このマシンからは、このリポジトリのデータを一切削除できません。整理とバックアップの削除は拒否されます。残しておきたいアーカイブ向けです。",
-  "storage.lock.localNone": "このサーバー上のフォルダーは削除を拒否できません。BombVault を操作できる人は、フォルダーも操作できるためです。",
   "storage.lock.test": "削除に対する保護を今すぐテスト",
   "storage.lock.testHint": "テスト用オブジェクトの削除を試みます。相手側が拒否すれば、保護は有効です。",
   "storage.lock.testOff": "この保存先へのコピーはすべてオフなので、テストするものがありません。先に 1 つをオンにしてください。",
@@ -4147,7 +4146,6 @@ const ja: Partial<Translations> = {
   // The fourteen settings tiles
   "tile.sidebar.show": "サイドバーにも表示",
   "tile.sidebar.showHint": "このページをサイドバーの項目として表示します。設定はそちらで行い、ここにはスイッチとページへの導線だけが残ります。",
-  "tile.storage.sub": "保存先 {n} 件（うちオフサイト {m} 件）",
   "tile.instances.modules": "複数のサーバー",
   "tile.instances.modulesHint": "任意です。サーバーを2台使うと、クラウドを使わずにオフサイトのコピーを持てます。",
   "tile.instances.none": "まだ何もオンになっていません",

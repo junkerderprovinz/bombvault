@@ -3888,7 +3888,6 @@ const sv: Partial<Translations> = {
   "storage.rclone.hidden": "dold",
   "storage.lock.toggle": "Skydd mot radering (append-only)",
   "storage.lock.localHint": "Inget på den här maskinen får radera från det här repositoryt. Rensning och radering av säkerhetskopior avvisas. Avsett för ett arkiv du vill behålla.",
-  "storage.lock.localNone": "En mapp på den här servern kan inte vägra radering, eftersom den som styr BombVault också styr mappen.",
   "storage.lock.test": "Testa skyddet mot radering nu",
   "storage.lock.testHint": "Försöker radera ett testobjekt. Om andra sidan avvisar det är skyddet på riktigt.",
   "storage.lock.testOff": "Alla kopior till det här målet är avstängda, så det finns inget att testa. Slå på en först.",
@@ -4156,7 +4155,6 @@ const sv: Partial<Translations> = {
   // The fourteen settings tiles
   "tile.sidebar.show": "Visa även i sidofältet",
   "tile.sidebar.showHint": "Visar sidan som en post i sidofältet. Den ställs då in där, här finns bara dess brytare och vägen till sidan kvar.",
-  "tile.storage.sub": "{n} mål, varav {m} off-site",
   "tile.instances.modules": "Flera servrar",
   "tile.instances.modulesHint": "Valfritt. Med två servrar har du en kopia utanför huset, helt utan moln.",
   "tile.instances.none": "Inget är påslaget än",

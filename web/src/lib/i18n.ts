@@ -4230,7 +4230,6 @@ export const en = {
   "storage.rclone.hidden": "hidden",
   "storage.lock.toggle": "Delete protection (append-only)",
   "storage.lock.localHint": "Nothing on this box may delete from this repository. Pruning and deleting snapshots are refused. Meant for an archive you want to keep.",
-  "storage.lock.localNone": "A folder on this server cannot refuse deletion, because whoever controls BombVault controls the folder too.",
   "storage.lock.test": "Test delete protection now",
   "storage.lock.testHint": "Tries to delete a test object. If the far side refuses, the protection is real.",
   "storage.lock.testOff": "Every copy to this location is switched off, so there is nothing to test. Switch one on first.",
@@ -4498,7 +4497,6 @@ export const en = {
   // The fourteen settings tiles
   "tile.sidebar.show": "Also show in the sidebar",
   "tile.sidebar.showHint": "Shows the page as an entry in the sidebar. It is then set up there; only its switches and the way to the page stay here.",
-  "tile.storage.sub": "{n} storage locations, {m} of them off-site",
   "tile.instances.modules": "Multiple servers",
   "tile.instances.modulesHint": "Optional. With two servers you have a copy off site, with no cloud at all.",
   "tile.instances.none": "Nothing switched on yet",
@@ -9014,7 +9012,6 @@ export const de: Translations = {
   "storage.rclone.hidden": "verborgen",
   "storage.lock.toggle": "Löschschutz (append-only)",
   "storage.lock.localHint": "Von diesem Rechner darf nichts aus diesem Repository gelöscht werden. Aufräumen und das Löschen von Sicherungen werden verweigert. Gedacht für ein Archiv, das bleiben soll.",
-  "storage.lock.localNone": "Ein Ordner auf diesem Server kann das Löschen nicht verweigern, denn wer BombVault in der Hand hat, hat auch den Ordner.",
   "storage.lock.test": "Löschschutz jetzt testen",
   "storage.lock.testHint": "Versucht, ein Testobjekt zu löschen. Verweigert die Gegenseite, ist der Schutz echt.",
   "storage.lock.testOff": "Jede Kopie an diesen Speicherort ist ausgeschaltet, es gibt also nichts zu testen. Schalte zuerst eine ein.",
@@ -9282,7 +9279,6 @@ export const de: Translations = {
   // The fourteen settings tiles
   "tile.sidebar.show": "Auch in der Seitenleiste zeigen",
   "tile.sidebar.showHint": "Zeigt die Seite als Eintrag in der Seitenleiste. Eingestellt wird sie dann dort, hier bleiben nur ihre Schalter und der Weg zur Seite.",
-  "tile.storage.sub": "{n} Speicherorte, davon {m} off-site",
   "tile.instances.modules": "Mehrere Server",
   "tile.instances.modulesHint": "Optional. Mit zwei Servern hast du eine Kopie außer Haus, ganz ohne Cloud.",
   "tile.instances.none": "Noch nichts eingeschaltet",

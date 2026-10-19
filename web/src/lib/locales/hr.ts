@@ -3898,7 +3898,6 @@ const hr: Partial<Translations> = {
   "storage.rclone.hidden": "skriveno",
   "storage.lock.toggle": "Zaštita od brisanja (append-only)",
   "storage.lock.localHint": "Ništa na ovom računalu ne smije brisati iz ovog repozitorija. Čišćenje i brisanje sigurnosnih kopija se odbijaju. Namijenjeno arhivi koju želite zadržati.",
-  "storage.lock.localNone": "Mapa na ovom poslužitelju ne može odbiti brisanje, jer tko kontrolira BombVault, kontrolira i mapu.",
   "storage.lock.test": "Testiraj zaštitu od brisanja sada",
   "storage.lock.testHint": "Pokušava obrisati probni objekt. Ako druga strana odbije, zaštita je stvarna.",
   "storage.lock.testOff": "Svaka kopija na ovo odredište je isključena, pa nema što testirati. Najprije uključite jednu.",
@@ -4166,7 +4165,6 @@ const hr: Partial<Translations> = {
   // The fourteen settings tiles
   "tile.sidebar.show": "Prikaži i u bočnoj traci",
   "tile.sidebar.showHint": "Prikazuje stranicu kao stavku u bočnoj traci. Tada se postavlja ondje; ovdje ostaju samo njezini prekidači i put do stranice.",
-  "tile.storage.sub": "Odredišta: {n}, od toga izvan lokacije: {m}",
   "tile.instances.modules": "Više poslužitelja",
   "tile.instances.modulesHint": "Neobavezno. S dva poslužitelja imate kopiju izvan kuće, bez ikakvog oblaka.",
   "tile.instances.none": "Još ništa nije uključeno",

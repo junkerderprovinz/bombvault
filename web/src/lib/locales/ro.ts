@@ -3889,7 +3889,6 @@ const ro: Partial<Translations> = {
   "storage.rclone.hidden": "ascuns",
   "storage.lock.toggle": "Protecție împotriva ștergerii (append-only)",
   "storage.lock.localHint": "Nimic de pe acest dispozitiv nu poate șterge din acest depozit. Curățarea și ștergerea copiilor de rezervă sunt refuzate. Gândit pentru o arhivă pe care vrei s-o păstrezi.",
-  "storage.lock.localNone": "Un folder de pe acest server nu poate refuza ștergerea, pentru că cine controlează BombVault controlează și folderul.",
   "storage.lock.test": "Testează acum protecția împotriva ștergerii",
   "storage.lock.testHint": "Încearcă să șteargă un obiect de test. Dacă cealaltă parte refuză, protecția este reală.",
   "storage.lock.testOff": "Fiecare copie către această destinație este oprită, deci nu e nimic de testat. Pornește mai întâi una.",
@@ -4157,7 +4156,6 @@ const ro: Partial<Translations> = {
   // The fourteen settings tiles
   "tile.sidebar.show": "Arată și în bara laterală",
   "tile.sidebar.showHint": "Arată pagina ca intrare în bara laterală. Se configurează atunci acolo; aici rămân doar comutatoarele ei și drumul spre pagină.",
-  "tile.storage.sub": "{n} destinații, {m} dintre ele off-site",
   "tile.instances.modules": "Mai multe servere",
   "tile.instances.modulesHint": "Opțional. Cu două servere ai o copie în afara casei, complet fără cloud.",
   "tile.instances.none": "Încă nimic pornit",

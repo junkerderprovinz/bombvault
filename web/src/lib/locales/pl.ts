@@ -3885,7 +3885,6 @@ const pl: Partial<Translations> = {
   "storage.rclone.hidden": "ukryte",
   "storage.lock.toggle": "Ochrona przed usunięciem (append-only)",
   "storage.lock.localHint": "Nic na tej maszynie nie może usuwać z tego repozytorium. Przycinanie i usuwanie kopii zapasowych jest odrzucane. Przeznaczone dla archiwum, które ma zostać.",
-  "storage.lock.localNone": "Folder na tym serwerze nie może odmówić usunięcia, bo kto kontroluje BombVault, kontroluje też folder.",
   "storage.lock.test": "Przetestuj ochronę przed usunięciem teraz",
   "storage.lock.testHint": "Próbuje usunąć obiekt testowy. Jeśli druga strona odmówi, ochrona jest prawdziwa.",
   "storage.lock.testOff": "Każda kopia do tego miejsca docelowego jest wyłączona, więc nie ma czego testować. Najpierw włącz jedną.",
@@ -4153,7 +4152,6 @@ const pl: Partial<Translations> = {
   // The fourteen settings tiles
   "tile.sidebar.show": "Pokaż także na pasku bocznym",
   "tile.sidebar.showHint": "Pokazuje stronę jako wpis na pasku bocznym. Ustawia się ją wtedy tam; tutaj zostają tylko jej przełączniki i droga do strony.",
-  "tile.storage.sub": "Miejsca docelowe: {n}, w tym off-site: {m}",
   "tile.instances.modules": "Wiele serwerów",
   "tile.instances.modulesHint": "Opcjonalnie. Przy dwóch serwerach masz kopię poza domem, całkiem bez chmury.",
   "tile.instances.none": "Nic jeszcze nie jest włączone",

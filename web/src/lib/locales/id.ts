@@ -3898,7 +3898,6 @@ const id: Partial<Translations> = {
   "storage.rclone.hidden": "tersembunyi",
   "storage.lock.toggle": "Perlindungan dari penghapusan (append-only)",
   "storage.lock.localHint": "Tidak ada apa pun di mesin ini yang boleh menghapus dari repositori ini. Prune dan penghapusan cadangan ditolak. Ditujukan untuk arsip yang ingin Anda simpan.",
-  "storage.lock.localNone": "Folder di server ini tidak bisa menolak penghapusan, karena siapa pun yang mengendalikan BombVault juga mengendalikan folder itu.",
   "storage.lock.test": "Uji perlindungan dari penghapusan sekarang",
   "storage.lock.testHint": "Mencoba menghapus objek uji. Jika pihak seberang menolak, perlindungannya nyata.",
   "storage.lock.testOff": "Setiap salinan ke tujuan ini dimatikan, jadi tidak ada yang bisa diuji. Nyalakan satu dulu.",
@@ -4166,7 +4165,6 @@ const id: Partial<Translations> = {
   // The fourteen settings tiles
   "tile.sidebar.show": "Tampilkan juga di bilah samping",
   "tile.sidebar.showHint": "Menampilkan halaman sebagai entri di bilah samping. Pengaturannya lalu dilakukan di sana; di sini hanya tersisa sakelarnya dan jalan menuju halaman itu.",
-  "tile.storage.sub": "{n} tujuan, {m} di antaranya off-site",
   "tile.instances.modules": "Beberapa server",
   "tile.instances.modulesHint": "Opsional. Dengan dua server, Anda punya salinan off-site tanpa cloud sama sekali.",
   "tile.instances.none": "Belum ada yang diaktifkan",
