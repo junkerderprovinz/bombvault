@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useImperativeHandle, useRef, useState, type Ref } from "react";
 import { Button } from "../Button";
 import { InfoBubble } from "../InfoBubble";
 import {
@@ -17,6 +17,13 @@ import { useToast } from "../../lib/toast";
 import { destinationsChanged, useDestinations } from "../../lib/useDestinations";
 import { offsiteTargetsChanged } from "../../lib/useOffsiteTargets";
 import { useNewTargetQuestion } from "./NewTargetQuestion";
+
+/** What a window holding the field can ask of it before it closes. */
+export interface LocationField {
+  /** Saves what was typed, asking first as Enter does. It resolves to false
+   *  when the save failed, so the window can stay open on the error. */
+  commit: () => Promise<boolean>;
+}
 
 /** OffsiteLocationInput edits a domain's off-site field. A change is saved on
  *  Enter, on leaving the field or with Save; a new location asks first, because
@@ -39,6 +46,7 @@ export function OffsiteLocationInput({
   className,
   onSave,
   onFromDestination,
+  ref,
 }: {
   domain: OffsiteDomain;
   value: string;
@@ -49,6 +57,7 @@ export function OffsiteLocationInput({
   className: string;
   onSave: (next: string) => Promise<boolean>;
   onFromDestination?: (location: string, immutable: boolean) => void;
+  ref?: Ref<LocationField>;
 }) {
   const { t, lang } = useT();
   const { push } = useToast();
@@ -61,9 +70,10 @@ export function OffsiteLocationInput({
     setSynced(value);
     if (draft === synced) setDraft(value);
   }
-  // Save takes the focus from the field, and so does the question; both would
-  // start a second save while the first is still asking.
-  const committing = useRef(false);
+  // Save takes the focus from the field, so does the question, and a window's
+  // Close waits for what the field is doing. They all share the run under way
+  // instead of starting a second save while the first is still asking.
+  const running = useRef<Promise<boolean> | null>(null);
   const unused = onFromDestination ? destinations.filter((d) => !d.domains.includes(domain)) : [];
 
   async function excludeToo(alsoExclude: NewTargetExclusion | null) {
@@ -73,48 +83,50 @@ export function OffsiteLocationInput({
     else push(placementErrorText(t, lang, r, "settings.error"), "fail");
   }
 
-  async function commit() {
-    const next = draft.trim();
-    if (committing.current || next === value.trim()) return;
-    committing.current = true;
-    try {
-      let alsoExclude: NewTargetExclusion | null = null;
-      if (next !== "") {
-        const answer = await ask({ domain, location: next, targetId, name: targetName || next, moved: value.trim() !== "" });
-        if (!answer.go) return;
-        alsoExclude = answer.alsoExclude;
-      }
-      if (await onSave(next)) await excludeToo(alsoExclude);
-    } finally {
-      committing.current = false;
-    }
+  function once(run: () => Promise<boolean>): Promise<boolean> {
+    running.current ??= run().finally(() => {
+      running.current = null;
+    });
+    return running.current;
   }
 
-  async function use(d: Destination) {
-    if (committing.current) return;
-    committing.current = true;
-    try {
-      const answer = await ask({ domain, location: destinationFolder(d, domain), targetId, name: d.name, moved: value.trim() !== "" });
-      if (!answer.go) return;
-      const r = await primaryFromDestination(d.id, domain).catch((e: unknown) => ({
-        ok: false,
-        error: e instanceof Error ? e.message : undefined,
-        location: undefined,
-        immutable: undefined,
-      }));
-      if (!r.ok || r.location === undefined) {
-        push(placementErrorText(t, lang, r, "settings.error"), "fail");
-        return;
-      }
-      onFromDestination?.(r.location, r.immutable ?? false);
-      setTyping(false);
-      push(t("offsite.primary.used").replace("{name}", () => d.name), "success");
-      offsiteTargetsChanged();
-      destinationsChanged();
-      await excludeToo(answer.alsoExclude);
-    } finally {
-      committing.current = false;
+  async function save(): Promise<boolean> {
+    const next = draft.trim();
+    if (next === value.trim()) return true;
+    let alsoExclude: NewTargetExclusion | null = null;
+    if (next !== "") {
+      const answer = await ask({ domain, location: next, targetId, name: targetName || next, moved: value.trim() !== "" });
+      if (!answer.go) return true;
+      alsoExclude = answer.alsoExclude;
     }
+    if (!(await onSave(next))) return false;
+    await excludeToo(alsoExclude);
+    return true;
+  }
+
+  const commit = () => once(save);
+  useImperativeHandle(ref, () => ({ commit }));
+
+  async function use(d: Destination): Promise<boolean> {
+    const answer = await ask({ domain, location: destinationFolder(d, domain), targetId, name: d.name, moved: value.trim() !== "" });
+    if (!answer.go) return true;
+    const r = await primaryFromDestination(d.id, domain).catch((e: unknown) => ({
+      ok: false,
+      error: e instanceof Error ? e.message : undefined,
+      location: undefined,
+      immutable: undefined,
+    }));
+    if (!r.ok || r.location === undefined) {
+      push(placementErrorText(t, lang, r, "settings.error"), "fail");
+      return false;
+    }
+    onFromDestination?.(r.location, r.immutable ?? false);
+    setTyping(false);
+    push(t("offsite.primary.used").replace("{name}", () => d.name), "success");
+    offsiteTargetsChanged();
+    destinationsChanged();
+    await excludeToo(answer.alsoExclude);
+    return true;
   }
 
   return (
@@ -167,7 +179,7 @@ export function OffsiteLocationInput({
               label={t("offsite.primary.use").replace("{name}", () => d.name)}
               labelKey="offsite.primary.use"
               tone="neutral"
-              onClick={() => void use(d)}
+              onClick={() => void once(() => use(d))}
               className="glim-btn-wrap glim-tile-raise"
             />
           ))}

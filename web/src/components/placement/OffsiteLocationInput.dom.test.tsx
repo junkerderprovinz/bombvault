@@ -1,11 +1,12 @@
 // @vitest-environment jsdom
 import { MemoryRouter } from "react-router-dom";
-import type { ReactElement } from "react";
+import { createRef, type ReactElement } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { renderWithProviders, targetPreview } from "../../lib/placement.testsupport";
 import { I18nProvider } from "../../lib/i18n";
 import { ToastProvider } from "../../lib/toast";
+import type { LocationField } from "./OffsiteLocationInput";
 
 const fake = await vi.hoisted(async () => (await import("../../lib/placement.testsupport")).createPlacementApi());
 
@@ -85,6 +86,31 @@ describe("OffsiteLocationInput", () => {
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
     expect(screen.getByPlaceholderText<HTMLInputElement>(PLACEHOLDER).value).toBe("b2:bucket:containers");
     expect(onSave).not.toHaveBeenCalled();
+  });
+
+  it("lets a closing window wait for the save the field already started", async () => {
+    const onSave = vi.fn().mockResolvedValue(true);
+    const field = createRef<LocationField>();
+    renderWithProviders(
+      <OffsiteLocationInput
+        ref={field}
+        domain="containers"
+        value=""
+        targetId="t-b2"
+        targetName="B2"
+        placeholder={PLACEHOLDER}
+        className=""
+        onSave={onSave}
+      />
+    );
+    const input = screen.getByPlaceholderText(PLACEHOLDER);
+    fireEvent.change(input, { target: { value: "b2:bucket:containers" } });
+    fireEvent.blur(input);
+    const closing = field.current?.commit();
+    fireEvent.click(within(await screen.findByRole("dialog")).getByRole("button", { name: "Confirm" }));
+    await expect(closing).resolves.toBe(true);
+    expect(onSave).toHaveBeenCalledTimes(1);
+    expect(onSave).toHaveBeenCalledWith("b2:bucket:containers");
   });
 
   it("leaves nothing out and keeps the typed location when the server refuses the save", async () => {

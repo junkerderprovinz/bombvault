@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { replicateOffsite, testOffsite } from "../../../lib/api";
 import type { OffsiteDomain } from "../../../lib/useOffsiteTargets";
 import { NumberField } from "../../../components/NumberField";
 import { DomainGlyph, Rows, SettingRow } from "../../../components/storage/rows";
 import { OffsiteWizard } from "../../../components/OffsiteWizard";
-import { OffsiteLocationInput } from "../../../components/placement/OffsiteLocationInput";
+import { OffsiteLocationInput, type LocationField } from "../../../components/placement/OffsiteLocationInput";
 import { CompressionSelector, saveCompression } from "../../../components/CompressionSelector";
 import { OffsiteTargetsSection } from "../../../components/OffsiteTargetsSection";
 import { TestButton, VerdictLine } from "../../../components/TestButton";
@@ -161,6 +161,7 @@ export function OffsiteCards({ nextHue }: { nextHue: () => number }) {
   // The section whose window is open, and the one whose setup is.
   const [details, setDetails] = useState<OffsiteDomain | null>(null);
   const [wizard, setWizard] = useState<OffsiteDomain | null>(null);
+  const field = useRef<LocationField>(null);
 
   const [, setLimSaveState] = useState<SaveState>("idle");
   const [, setLimSaveError] = useState<string | null>(null);
@@ -169,6 +170,12 @@ export function OffsiteCards({ nextHue }: { nextHue: () => number }) {
   const titleOf = (domain: OffsiteDomain) => t("offsite.copyDomainTitle").replace("{domain}", t(DOMAIN_LABEL[domain]));
   const primaryOf = (domain: OffsiteDomain) => allTargets.find((x) => x.domain === domain && x.sortOrder === 0);
 
+  // A location typed but not yet saved is saved, or asked about, before the
+  // window goes, as it is when the field loses the focus.
+  async function closeDetails() {
+    if ((await field.current?.commit()) !== false) setDetails(null);
+  }
+
   function windowFor(domain: OffsiteDomain) {
     const repoKey = `${domain}Offsite` as const;
     const fieldTarget = primaryOf(domain);
@@ -176,9 +183,9 @@ export function OffsiteCards({ nextHue }: { nextHue: () => number }) {
       <InstanceWindow
         title={titleOf(domain)}
         hint={t("settings.offsiteHint")}
-        onClose={() => setDetails(null)}
+        onClose={() => void closeDetails()}
         footer={
-          <Button label={t("common.close")} labelKey="common.close" glyph={<IconClose />} tone="accent" onClick={() => setDetails(null)} />
+          <Button label={t("common.close")} labelKey="common.close" glyph={<IconClose />} tone="accent" onClick={() => void closeDetails()} />
         }
       >
         <div className="flex flex-col gap-4">
@@ -188,6 +195,7 @@ export function OffsiteCards({ nextHue }: { nextHue: () => number }) {
               <InfoBubble tip={withLtrIsolates(t("offsite.repoLocalHint"), REPO_LOCAL_HINT_LTR_FRAGMENTS)} />
             </span>
             <OffsiteLocationInput
+              ref={field}
               domain={domain}
               value={settings[repoKey]}
               targetId={fieldTarget?.id}
