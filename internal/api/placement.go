@@ -115,6 +115,9 @@ func placementFail(w http.ResponseWriter, err error, extra map[string]any) {
 	if code := placementCode(err); code != "" {
 		env["code"] = code
 	}
+	if nested, ok := errors.AsType[*nestedLocationErr](err); ok {
+		env["at"] = scrubRepoLocation(nested.at)
+	}
 	maps.Copy(env, extra)
 	writeJSON(w, http.StatusOK, env)
 }

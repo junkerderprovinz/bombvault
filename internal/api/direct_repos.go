@@ -21,6 +21,17 @@ import (
 
 var errNestedLocation = errors.New("this location lies inside another repository or target, or contains one")
 
+// nestedLocationErr is errNestedLocation with the place in the way, so the
+// refusal can show which one it is.
+type nestedLocationErr struct {
+	what string
+	at   string
+}
+
+func (e *nestedLocationErr) Error() string { return errNestedLocation.Error() + ": " + e.what }
+
+func (e *nestedLocationErr) Unwrap() error { return errNestedLocation }
+
 var errMirroredField = errors.New("a direct repository takes this value from its target; change it there")
 
 var errForeignDomain = errors.New("that direct repository belongs to a target of another domain")
@@ -167,11 +178,11 @@ func (s *Service) locationClash(settings store.Settings, loc string, self locati
 		case oErr != nil:
 			log.Printf("api: location check: the %s domain's own repository does not resolve, so this location was not held against it: %v", d, oErr) //nolint:gosec // G706: the domain is a fixed literal
 		case d != self.own && clashes(own):
-			return fmt.Errorf("%w: the %s domain's own repository", errNestedLocation, d)
+			return &nestedLocationErr{what: "the " + d + " domain's own repository", at: own}
 		}
 		if off := offsiteRepoFromSettings(d, settings); off != "" && d != self.field {
 			if offLoc, ok := s.clashCandidate("off-site destination of the domain", d, off); ok && clashes(offLoc) {
-				return fmt.Errorf("%w: the %s domain's off-site destination", errNestedLocation, d)
+				return &nestedLocationErr{what: "the " + d + " domain's off-site destination", at: offLoc}
 			}
 		}
 	}
@@ -184,7 +195,7 @@ func (s *Service) locationClash(settings store.Settings, loc string, self locati
 			continue
 		}
 		if tLoc, ok := s.clashCandidate("off-site destination", t.Name, t.Repo); ok && clashes(tLoc) {
-			return fmt.Errorf("%w: the off-site destination %q", errNestedLocation, t.Name)
+			return &nestedLocationErr{what: fmt.Sprintf("the off-site destination %q", t.Name), at: tLoc}
 		}
 	}
 	named, err := s.store.ListNamedRepos()
@@ -196,7 +207,7 @@ func (s *Service) locationClash(settings store.Settings, loc string, self locati
 			continue
 		}
 		if other, ok := s.clashCandidate("repository", s.repoName(r), r.Repo); ok && repoLocationsOverlap(other, loc) {
-			return fmt.Errorf("%w: another repository", errNestedLocation)
+			return &nestedLocationErr{what: "another repository", at: other}
 		}
 	}
 	return nil

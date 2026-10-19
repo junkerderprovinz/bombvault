@@ -375,3 +375,20 @@ func TestATakeoverThatWouldLoseProtectionOrCannotSignInIsRefused(t *testing.T) {
 		t.Fatalf("a refused takeover changed the target: %+v", got)
 	}
 }
+
+func TestASectionRefusedForANestedLocationNamesThePlaceInTheWay(t *testing.T) {
+	f := newPlacementFixture(t)
+	s, _ := f.st.GetSettings()
+	s.FlashOffsite = "s3:http://minio.example:9000/bv"
+	if err := f.st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	d, err := f.st.SaveDestination(store.OffsiteTarget{Name: "MinIO", Repo: "s3:http://minio.example:9000/bv/box", Provider: "minio"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, out := f.call(http.MethodPost, "/api/offsite/destinations/"+d.ID+"/domains/containers", nil)
+	if out["code"] != "nested-location" || out["at"] != "s3:http://minio.example:9000/bv" {
+		t.Fatalf("got %v, want the refusal to name the flash off-site field", out)
+	}
+}

@@ -49,6 +49,13 @@ describe("placementErrorText", () => {
     );
   });
 
+  it("shows the place a nested location runs into", () => {
+    const refusal = { ok: false, error: "x", code: "nested-location", at: "s3:http://minio:9000/bv/vms" };
+    expect(placementErrorText(t, "en", refusal, "settings.error")).toBe(
+      `${en["placementCode.nestedLocation"]} ⁦s3:http://minio:9000/bv/vms⁩`
+    );
+  });
+
   it("falls back to the server's text, then to the given key", () => {
     expect(placementErrorText(t, "en", { ok: false, error: "server text", code: "no-such-code" }, "settings.error")).toBe("server text");
     expect(placementErrorText(t, "en", { ok: false }, "settings.error")).toBe(en["settings.error"]);
