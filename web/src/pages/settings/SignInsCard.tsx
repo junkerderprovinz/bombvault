@@ -9,7 +9,7 @@ import {
   dismissSignInsNote,
   getCloudCredSets,
   makeDefaultSignIn,
-  setCloudCredSets,
+  removeSignIn,
   type CloudCredSetInfo,
   type SignInsNote,
 } from "../../lib/api";
@@ -18,7 +18,7 @@ import { formatList } from "../../lib/placement";
 import { pushSaveWarnings } from "../../lib/placementCodes";
 import { DOMAIN_LABEL } from "../../lib/storageLocations";
 import { useToast } from "../../lib/toast";
-import { credSetDraft, credSetLabel, credSetsChanged, useCloudCredSets } from "../../lib/useCloudCredSets";
+import { credSetLabel, credSetsChanged, useCloudCredSets } from "../../lib/useCloudCredSets";
 import { Card } from "./shared";
 
 /** The note on what the shared cloud credentials became, as one paragraph. */
@@ -39,8 +39,7 @@ function noteText(t: ReturnType<typeof useT>["t"], lang: string, note: SignInsNo
  * SignInsCard lists the saved sign-ins: the keys BombVault signs in to S3
  * services and restic REST servers with. A sign-in comes into being when a
  * storage location is added, and the default serves every place that names
- * none. The list is saved as a whole, which is why every save resends every
- * set.
+ * none.
  */
 export function SignInsCard({ hueIndex }: { hueIndex?: number }) {
   const { t, lang } = useT();
@@ -86,9 +85,10 @@ export function SignInsCard({ hueIndex }: { hueIndex?: number }) {
     }
     setRemovingId(s.id);
     try {
-      const r = await setCloudCredSets(sets.filter((x) => x.id !== s.id).map(credSetDraft));
+      const r = await removeSignIn(s.id);
       if (r.ok) {
         credSetsChanged();
+        pushSaveWarnings(push, t, r.warnings);
       } else {
         push(r.error ?? t("settings.error"), "fail");
         bumpShake(`remove:${s.id}`);

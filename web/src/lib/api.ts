@@ -1664,6 +1664,12 @@ export function testSignIn(set: CloudCredSet): Promise<OkEnvelope & { locations?
   return fetchJSON(`/api/cloud/creds-sets/${encodeURIComponent(set.id)}/test`, { method: "POST", body: JSON.stringify(set) });
 }
 
+/** DELETE /api/cloud/creds-sets/{id}: removes a saved sign-in nothing uses.
+ *  The default goes only as the last one. */
+export function removeSignIn(id: string): Promise<OkEnvelope & { warnings?: SaveWarning[] }> {
+  return fetchJSON(`/api/cloud/creds-sets/${encodeURIComponent(id)}`, { method: "DELETE" });
+}
+
 /** DELETE /api/cloud/creds-sets/note: stops showing the note. */
 export function dismissSignInsNote(): Promise<OkEnvelope> {
   return fetchJSON("/api/cloud/creds-sets/note", { method: "DELETE" });

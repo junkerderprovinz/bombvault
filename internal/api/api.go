@@ -328,6 +328,7 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("DELETE /api/cloud/creds-sets/note", h.handleDismissSignInsNote)
 	mux.HandleFunc("POST /api/cloud/creds-sets/{id}/default", h.handleMakeDefaultSignIn)
 	mux.HandleFunc("POST /api/cloud/creds-sets/{id}/test", h.handleTestSignIn)
+	mux.HandleFunc("DELETE /api/cloud/creds-sets/{id}", h.handleRemoveSignIn)
 	mux.HandleFunc("GET /api/notify", h.handleGetNotify)
 	mux.HandleFunc("POST /api/notify", h.handleSetNotify)
 	mux.HandleFunc("POST /api/notify/test", h.handleTestNotify)

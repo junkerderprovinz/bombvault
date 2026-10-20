@@ -368,16 +368,59 @@ func TestTheDefaultCanBeMovedOverTheAPI(t *testing.T) {
 	}
 }
 
-func TestTheLastSignInCanGoWithTheDefaultMark(t *testing.T) {
+func TestTheDefaultSignInGoesOnlyAsTheLastOne(t *testing.T) {
 	s := unraidNotifyService(t, nil)
-	if err := s.SetCloudCredSets([]CloudCredSet{{ID: "a", Name: "A", Default: true, CloudCreds: CloudCreds{RESTUser: "a"}}}); err != nil {
+	if err := s.SetCloudCredSets([]CloudCredSet{
+		{ID: "a", Name: "A", Default: true, CloudCreds: CloudCreds{RESTUser: "a"}},
+		{ID: "b", Name: "B", CloudCreds: CloudCreds{RESTUser: "b"}},
+	}); err != nil {
 		t.Fatal(err)
 	}
-	if err := s.SetCloudCredSets(nil); err != nil {
+	if err := s.RemoveSignIn("a"); !errors.Is(err, errDefaultSignInStays) {
+		t.Fatalf("the default went while another sign-in was left: %v", err)
+	}
+	if err := s.RemoveSignIn("b"); err != nil {
+		t.Fatal(err)
+	}
+	if err := s.RemoveSignIn("a"); err != nil {
 		t.Fatal(err)
 	}
 	if sets := savedSets(t, s); len(sets) != 0 {
 		t.Fatalf("sets = %+v, want none", sets)
+	}
+	if err := s.RemoveSignIn("a"); !errors.Is(err, errUnknownSignIn) {
+		t.Fatalf("a gone sign-in was removed again: %v", err)
+	}
+}
+
+func TestASignInAStorageLocationUsesStays(t *testing.T) {
+	svc, st, _ := newConnectionSvc(t, opensWithPassword("old"))
+	d, _ := restDestination(t, svc, st, "vms")
+	err := svc.RemoveSignIn(d.CredsRef)
+	if err == nil || !strings.Contains(err.Error(), "Box still signs in with it") {
+		t.Fatalf("err = %v, want the location named", err)
+	}
+	if got := signInOf(t, svc, d); got.RESTPassword != "old" {
+		t.Fatalf("the sign-in of Box is %+v", got)
+	}
+}
+
+func TestASignInCanBeRemovedOverTheAPI(t *testing.T) {
+	f := newPlacementFixture(t)
+	if err := f.svc.SetCloudCredSets([]CloudCredSet{
+		{ID: "a", Name: "A", Default: true, CloudCreds: CloudCreds{RESTUser: "a", RESTPassword: "1"}},
+		{ID: "b", Name: "B", CloudCreds: CloudCreds{RESTUser: "b", RESTPassword: "2"}},
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if res := f.do("DELETE", "/api/cloud/creds-sets/b", nil); res["ok"] != true {
+		t.Fatalf("answer = %v", res)
+	}
+	if sets := savedSets(t, f.svc); len(sets) != 1 || sets[0].ID != "a" {
+		t.Fatalf("sets = %+v, want A alone", sets)
+	}
+	if res := f.do("DELETE", "/api/cloud/creds-sets/a", nil); res["ok"] != true {
+		t.Fatalf("the last sign-in was kept: %v", res)
 	}
 }
 

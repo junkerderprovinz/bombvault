@@ -32,6 +32,7 @@ vi.mock("../../lib/api", async (importOriginal) => ({
   makeDefaultSignIn: vi.fn(),
   dismissSignInsNote: vi.fn(),
   testSignIn: vi.fn(),
+  removeSignIn: vi.fn(),
 }));
 
 const api = await import("../../lib/api");
@@ -40,6 +41,7 @@ const setCloudCredSets = vi.mocked(api.setCloudCredSets);
 const makeDefaultSignIn = vi.mocked(api.makeDefaultSignIn);
 const dismissSignInsNote = vi.mocked(api.dismissSignInsNote);
 const testSignIn = vi.mocked(api.testSignIn);
+const removeSignIn = vi.mocked(api.removeSignIn);
 const { SignInsCard } = await import("./SignInsCard");
 
 async function renderCard() {
@@ -74,6 +76,7 @@ beforeEach(() => {
   getCloudCredSets.mockResolvedValue({ ok: true, sets: SETS, note: null });
   setCloudCredSets.mockResolvedValue({ ok: true });
   makeDefaultSignIn.mockResolvedValue({ ok: true });
+  removeSignIn.mockResolvedValue({ ok: true });
   dismissSignInsNote.mockResolvedValue({ ok: true });
 });
 
@@ -135,7 +138,7 @@ it("lets the last sign-in go with the default mark", async () => {
   await act(async () => {
     fireEvent.click(screen.getByRole("button", { name: "Confirm remove" }));
   });
-  expect(setCloudCredSets).toHaveBeenCalledWith([]);
+  expect(removeSignIn).toHaveBeenCalledWith("hetzner");
 });
 
 it("removes an unused sign-in on the second click", async () => {
@@ -146,7 +149,8 @@ it("removes an unused sign-in on the second click", async () => {
   await act(async () => {
     fireEvent.click(screen.getByRole("button", { name: "Confirm remove" }));
   });
-  expect(setCloudCredSets).toHaveBeenCalledWith(expect.not.arrayContaining([expect.objectContaining({ id: "nas" })]));
+  expect(removeSignIn).toHaveBeenCalledWith("nas");
+  expect(setCloudCredSets).not.toHaveBeenCalled();
 });
 
 it("saves an edited sign-in from its window without a test", async () => {

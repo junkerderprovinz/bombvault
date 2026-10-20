@@ -15,8 +15,9 @@ import (
 )
 
 var (
-	errUnknownSignIn = errors.New("that saved sign-in does not exist any more")
-	errSignInNotHere = errors.New("a saved sign-in serves S3 services and restic REST servers only")
+	errUnknownSignIn      = errors.New("that saved sign-in does not exist any more")
+	errSignInNotHere      = errors.New("a saved sign-in serves S3 services and restic REST servers only")
+	errDefaultSignInStays = errors.New("this is the default sign-in: make another one the default first")
 )
 
 // foldShared makes the shared sign-in the default: the saved sign-in with the
@@ -249,6 +250,60 @@ func (s *Service) MakeDefaultSignIn(id string) error {
 		return errUnknownSignIn
 	}
 	return err
+}
+
+// RemoveSignIn removes a saved sign-in no storage location uses. The default
+// goes only as the last one, since every place that names no sign-in falls
+// back to it.
+func (s *Service) RemoveSignIn(id string) error {
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return err
+	}
+	sets, err := s.decodeCloudCredSets(settings)
+	if err != nil {
+		return err
+	}
+	i := slices.IndexFunc(sets, func(c CloudCredSet) bool { return c.ID == id })
+	if i < 0 {
+		return errUnknownSignIn
+	}
+	if sets[i].Default && len(sets) > 1 {
+		return errDefaultSignInStays
+	}
+	defaultID := ""
+	if d := defaultSetIndex(sets); d >= 0 {
+		defaultID = sets[d].ID
+	}
+	users, err := s.signInUsers(defaultID)
+	if err != nil {
+		return err
+	}
+	if len(users[id]) > 0 {
+		names := make([]string, len(users[id]))
+		for j, u := range users[id] {
+			names[j] = u.Name
+		}
+		return fmt.Errorf("%s still signs in with it", strings.Join(names, ", "))
+	}
+	return s.editCloudCredSets(func(sets []CloudCredSet) []CloudCredSet {
+		return slices.DeleteFunc(sets, func(c CloudCredSet) bool { return c.ID == id })
+	})
+}
+
+// handleRemoveSignIn removes a saved sign-in nothing uses.
+// DELETE /api/cloud/creds-sets/{id}
+func (h *Handler) handleRemoveSignIn(w http.ResponseWriter, r *http.Request) {
+	before, err := h.store.GetSettings()
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	if err := h.svc.RemoveSignIn(r.PathValue("id")); err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	h.signInsSaved(w, r, before)
 }
 
 // adoptSharedSignIn takes the shared sign-in of a settings file from before
