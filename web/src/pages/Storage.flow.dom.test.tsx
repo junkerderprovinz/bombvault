@@ -40,6 +40,8 @@ vi.mock("../lib/api", async (importOriginal) => ({
   groupReceiverLogin: vi.fn(),
   checkDraft: vi.fn(),
   createDestination: vi.fn(),
+  getRclone: vi.fn(),
+  setRclone: vi.fn(),
 }));
 
 const api = await import("../lib/api");
@@ -50,6 +52,8 @@ const getProviders = vi.mocked(api.getProviders);
 const listGroupReceivers = vi.mocked(api.listGroupReceivers);
 const checkDraft = vi.mocked(api.checkDraft);
 const createDestination = vi.mocked(api.createDestination);
+const getRclone = vi.mocked(api.getRclone);
+const setRclone = vi.mocked(api.setRclone);
 
 const { StoragePage } = await import("./Storage");
 
@@ -162,6 +166,7 @@ beforeEach(() => {
   vi.mocked(api.listFileSets).mockResolvedValue({ ok: true, fileSets: [] });
   getProviders.mockResolvedValue({ ok: true, providers: PROVIDERS, backends: {} });
   listGroupReceivers.mockResolvedValue({ ok: true, receivers: [] });
+  getRclone.mockResolvedValue({ ok: true, remotes: [] });
   checkDraft.mockResolvedValue({ ok: true, reachable: true, initialized: false });
   createDestination.mockResolvedValue({ ok: true, destination: { id: "new", name: "Rest server" } as never });
 });
@@ -500,12 +505,41 @@ describe("adding a storage location", () => {
     return [...window.querySelectorAll(".glim-provider-pick button")].map((b) => (b.textContent ?? "").trim());
   }
 
-  it("opens from the page's main action with the providers in their groups, a local folder first", async () => {
+  it("opens from the list's own button with the providers in their groups, a local folder first and an own rclone configuration last", async () => {
     const window = await open();
 
     const groups = within(window).getAllByRole("heading", { level: 3 }).map((h) => h.textContent ?? "");
-    expect(groups.map((g) => g.replace(/(best|good) fit|works, but slower/, ""))).toEqual(["Local", "NAS or server", "S3 service", "Cloud storage"]);
-    expect(tileNames(window)).toEqual(["Local folder", "Rest server", "Backblaze B2", "Google Drive"]);
+    expect(groups.map((g) => g.replace(/(best|good) fit|works, but slower/, ""))).toEqual([
+      "Local",
+      "NAS or server",
+      "S3 service",
+      "Cloud storage",
+      "Own rclone configuration",
+    ]);
+    expect(tileNames(window)).toEqual(["Local folder", "Rest server", "Backblaze B2", "Google Drive", "rclone.conf"]);
+  });
+
+  it("saves a pasted rclone configuration and lists its remotes", async () => {
+    getRclone.mockResolvedValue({ ok: true, remotes: ["b2"] });
+    setRclone.mockResolvedValue({ ok: true });
+    const picker = await open();
+    await waitFor(() => expect(tileNames(picker)).toContain("rclone.confb2"));
+    await click(within(picker).getByRole("button", { name: /^rclone\.conf/ }));
+
+    const window = await screen.findByRole("dialog", { name: "Add storage location" });
+    expect(within(window).getByText("b2")).toBeTruthy();
+    const paste = within(window).getByRole("textbox", { name: "Paste a config" });
+    await act(async () => {
+      fireEvent.change(paste, { target: { value: "[nas]\ntype = smb" } });
+    });
+    getRclone.mockResolvedValue({ ok: true, remotes: ["b2", "nas"] });
+    await click(within(window).getByRole("button", { name: "Save config" }));
+
+    expect(setRclone).toHaveBeenCalledWith("[nas]\ntype = smb");
+    expect(await within(window).findByText("nas")).toBeTruthy();
+    expect((paste as HTMLTextAreaElement).value).toBe("");
+    await click(within(window).getByRole("button", { name: "Back" }));
+    expect(tileNames(await screen.findByRole("dialog", { name: "Add storage location" }))).toContain("rclone.confb2, nas");
   });
 
   it("keeps a storage a paired instance offers as a choice, and fills its sign-in", async () => {

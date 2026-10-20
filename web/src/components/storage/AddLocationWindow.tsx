@@ -1,4 +1,4 @@
-import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   destinationFolder,
@@ -26,6 +26,7 @@ import { destinationsChanged } from "../../lib/useDestinations";
 import { useLocalNames } from "../../lib/useLocalName";
 import { offsiteTargetsChanged } from "../../lib/useOffsiteTargets";
 import { usePlacementOptions } from "../../lib/usePlacementOptions";
+import { useRcloneRemotes } from "../../lib/useRcloneRemotes";
 import { InstanceWindow } from "../../pages/instances/InstanceWindow";
 import { Button } from "../Button";
 import { GroupReceiverPicker } from "../destinations/GroupReceiverPicker";
@@ -34,13 +35,16 @@ import { FolderBody, ProtectBody, RecoveryBody, SignInBody, type DestinationWord
 import { useDestinationDraft } from "../destinations/useDestinationDraft";
 import { IconBack, IconForward, IconSave } from "../glyphs";
 import { InfoBubble } from "../InfoBubble";
-import { IconCheck, IconClose, IconPencil } from "../navGlyphs";
+import { IconCheck, IconClose, IconCloud, IconPencil } from "../navGlyphs";
 import { PickerGroup, PickerNoMatch } from "../Picker";
 import { itemName } from "../placement/NewTargetQuestion";
+import { ReadmeButton } from "../ReadmeButton";
 import { Selector } from "../Selector";
 import { TestButton } from "../TestButton";
 import { Toggle } from "../Toggle";
+import { OwnRcloneWindow } from "./OwnRcloneWindow";
 import { DomainGlyph } from "./rows";
+import { StepCard } from "./StepCard";
 
 const WORDS: DestinationWords = {
   folderTip: "storage.add.folderTip",
@@ -95,18 +99,6 @@ function fold(text: string): string {
   return text.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
 }
 
-function StepCard({ title, tip, children }: { title: string; tip?: string; children: ReactNode }) {
-  return (
-    <section className="flex flex-col gap-3 rounded-card bg-carbon-surface2 p-4">
-      <h3 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest text-carbon-textSub">
-        {title}
-        {tip && <InfoBubble tip={tip} />}
-      </h3>
-      {children}
-    </section>
-  );
-}
-
 interface SectionChoice {
   domain: OffsiteDomain;
   /** Why the new place cannot be switched on for the section. */
@@ -141,6 +133,8 @@ export function AddLocationWindow({
   const [off, setOff] = useState<OffsiteDomain[]>([]);
   const [previews, setPreviews] = useState<Partial<Record<PlacementDomain, TargetPreview>>>({});
   const [placing, setPlacing] = useState(false);
+  const [ownConf, setOwnConf] = useState(false);
+  const rclone = useRcloneRemotes();
   const options: Record<PlacementDomain, PlacementOptions | null> = {
     containers: usePlacementOptions("containers").options,
     vms: usePlacementOptions("vms").options,
@@ -240,6 +234,13 @@ export function AddLocationWindow({
         .sort((a, b) => section.groups.indexOf(a.group) - section.groups.indexOf(b.group)),
     }))
     .filter(({ providers }) => providers.length > 0);
+  const ownShown = matches(t("storage.add.ownRclone")) || matches("rclone.conf");
+
+  if (ownConf) {
+    return (
+      <OwnRcloneWindow remotes={rclone.remotes} onSaved={rclone.refresh} onBack={() => setOwnConf(false)} onClose={onClose} />
+    );
+  }
 
   const cancel = <Button label={t("common.cancel")} labelKey="common.cancel" glyph={<IconClose />} tone="neutral" onClick={onClose} />;
   const back = <Button label={t("common.back")} labelKey="common.back" glyph={<IconBack />} tone="neutral" onClick={() => setStep(shown - 1)} />;
@@ -315,7 +316,21 @@ export function AddLocationWindow({
               <ProviderTiles providers={providers} picked={draft.fromMember ? undefined : picked?.id} onPick={pick} nameOf={nameOf} />
             </PickerGroup>
           ))}
-          <PickerNoMatch shown={tiles.length === 0 && q !== ""} text={t("storage.add.noMatch")} />
+          {ownShown && (
+            <PickerGroup title={t("storage.add.ownRclone")} tip={t("storage.add.ownRcloneTip")}>
+              <ul className="glim-provider-pick">
+                <li data-new="storage-add-own-rclone">
+                  <ReadmeButton
+                    tile="glim-tile-provider"
+                    parts={[{ name: "rclone.conf", sub: rclone.remotes.join(", ") || undefined, onClick: () => setOwnConf(true) }]}
+                    mark={<IconCloud />}
+                    markClass="text-carbon-textSub"
+                  />
+                </li>
+              </ul>
+            </PickerGroup>
+          )}
+          <PickerNoMatch shown={tiles.length === 0 && !ownShown && q !== ""} text={t("storage.add.noMatch")} />
         </>
       ) : (
         <div className="flex flex-col gap-4">

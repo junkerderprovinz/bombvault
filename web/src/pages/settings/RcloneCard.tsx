@@ -73,7 +73,7 @@ export function RcloneCard({
             </span>
           </SettingRow>
         )}
-        <SettingRow label={t("rclone.paste")} newId="settings-rclone-compact">
+        <SettingRow label={t("rclone.paste")}>
           <Button
             label={t(pasting ? "dashboard.hideCard" : "dashboard.showCard")}
             labelKey={pasting ? "dashboard.hideCard" : "dashboard.showCard"}

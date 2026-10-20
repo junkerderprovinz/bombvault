@@ -133,11 +133,11 @@ export const RELEASES: Release[] = [
         text: "whatsNew.compressionRow",
       },
       {
-        id: "settings-rclone-compact",
-        page: "/settings/storage",
-        where: ["nav.settings", "storage.title"],
-        way: ["/settings", "/settings/storage"],
-        text: "whatsNew.rcloneCompact",
+        id: "storage-add-own-rclone",
+        page: "/storage",
+        where: ["storage.title"],
+        way: [...TO_STORAGE, "add-location"],
+        text: "whatsNew.addOwnRclone",
       },
       { id: "local-protection-card", text: "whatsNew.localProtection" },
       {
