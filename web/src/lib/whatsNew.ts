@@ -155,6 +155,13 @@ export const RELEASES: Release[] = [
         way: ["/settings", "/settings/security"],
         text: "whatsNew.cardButtons",
       },
+      {
+        id: "crypt-picture",
+        page: "/settings/security",
+        where: ["nav.settings", "settings.tab.security"],
+        way: ["/settings", "/settings/security"],
+        text: "whatsNew.cryptPicture",
+      },
     ],
   },
   {

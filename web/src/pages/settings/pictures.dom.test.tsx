@@ -206,12 +206,25 @@ describe("the pictures", () => {
   });
 
   it("leaves four sealed packs at the storage location and the key in the recovery kit", () => {
-    show(<CryptScene />);
+    show(<CryptScene sealed />);
     const scene = screen.getByRole("img", { name: en["tile.crypt.sceneAlt"] });
     expect(scene.querySelectorAll(".glim-parcel-fly")).toHaveLength(4);
     expect(scene.textContent).toContain(en["tile.crypt.atHome"]);
     expect(scene.textContent).toContain(en["tile.crypt.location"]);
     expect(scene.textContent).toContain(en["recovery.title"]);
     expect(scene.querySelector(".glim-crypt-key")).not.toBeNull();
+    expect(scene.closest(".glim-crypt-open")).toBeNull();
+  });
+
+  it("leaves readable packs at the storage location when backups are not encrypted", () => {
+    const { rerender } = show(<CryptScene sealed />);
+    rerender(
+      <I18nProvider>
+        <CryptScene sealed={false} />
+      </I18nProvider>
+    );
+    const scene = screen.getByRole("img", { name: en["tile.crypt.sceneAltOpen"] });
+    expect(scene.closest(".glim-crypt-open")).not.toBeNull();
+    expect(scene.querySelectorAll(".glim-parcel-fly .glim-crypt-readable")).toHaveLength(4);
   });
 });

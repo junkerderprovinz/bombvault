@@ -3212,6 +3212,12 @@ body {
     animation: glim-parcel-ring var(--motion-scene-dur, 6s) linear infinite;
     animation-delay: calc(var(--motion-scene-dur, 6s) * var(--parcel-turn, 0) * .13);
   }
+  :root:not([data-motion="off"]) .glim-crypt-sealed,
+  :root:not([data-motion="off"]) .glim-crypt-readable {
+    transition:
+      opacity var(--motion-block-dur, 420ms) ease-out,
+      transform var(--motion-block-dur, 420ms) cubic-bezier(.3, 0, .4, 1.5);
+  }
   :root:not([data-motion="off"]) .glim-lock-hand {
     animation:
       glim-lock-hand var(--motion-scene-dur, 6s) linear infinite,
@@ -4045,6 +4051,22 @@ body {
 }
 .glim-crypt-key { color: var(--pic); }
 .glim-crypt-looker { color: var(--carbon-text-sub); }
+/* An encrypted backup shows the sealed face of each pack and of the eye, an
+   unencrypted one the readable face. */
+.glim-crypt-sealed,
+.glim-crypt-readable {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.glim-crypt-readable,
+.glim-crypt-open .glim-crypt-sealed {
+  opacity: 0;
+  transform: scale(.6);
+}
+.glim-crypt-open .glim-crypt-readable {
+  opacity: 1;
+  transform: none;
+}
 
 /* A registry's logo is an image. It keeps its own colours on a picker tile,
    takes the tile's ink where the tile lights up in the brand's colour, and a

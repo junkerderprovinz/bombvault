@@ -3,7 +3,7 @@
 // motion is off.
 import type { CSSProperties } from "react";
 import { InfoBubble } from "../../components/InfoBubble";
-import { IconEyeOff, IconKey } from "../../components/glyphs";
+import { IconEye, IconEyeOff, IconKey } from "../../components/glyphs";
 import { useT } from "../../lib/i18n";
 
 const PACKS = 100;
@@ -136,14 +136,15 @@ const SEALED: [number, number][] = [
 const DESK_X = 92;
 
 /**
- * CryptScene shows what encryption leaves at a storage location: sealed
- * packs. The key never travels with them and stays in the recovery kit.
+ * CryptScene shows what a backup leaves at a storage location: sealed packs
+ * when it is encrypted, readable ones when it is not. The key never travels
+ * with them and stays in the recovery kit.
  */
-export function CryptScene() {
+export function CryptScene({ sealed }: { sealed: boolean }) {
   const { t } = useT();
   return (
-    <div className="glim-pic glim-scene mx-auto w-full max-w-[520px]">
-      <svg viewBox="0 0 360 172" role="img" aria-label={t("tile.crypt.sceneAlt")}>
+    <div className={`glim-pic glim-scene mx-auto w-full max-w-[520px] ${sealed ? "" : "glim-crypt-open"}`}>
+      <svg viewBox="0 0 360 172" role="img" aria-label={t(sealed ? "tile.crypt.sceneAlt" : "tile.crypt.sceneAltOpen")}>
         <rect className="glim-scene-box" x="8" y="16" width="150" height="128" />
         <text className="glim-sandbox-caption" x="83" y="162" textAnchor="middle">
           {t("tile.crypt.atHome")}
@@ -163,8 +164,15 @@ export function CryptScene() {
         <text className="glim-crypt-kit-word" x="60" y="120">
           {t("recovery.title")}
         </text>
+        {/* Both faces of the eye and of each pack are drawn, so a flip of
+            the toggle fades one into the other. */}
         <g className="glim-crypt-looker" transform="translate(286 34)">
-          <IconEyeOff />
+          <g className="glim-crypt-sealed">
+            <IconEyeOff />
+          </g>
+          <g className="glim-crypt-readable">
+            <IconEye />
+          </g>
         </g>
         {SEALED.map(([x, y], turn) => (
           <g key={turn} transform={`translate(${x} ${y})`}>
@@ -179,9 +187,15 @@ export function CryptScene() {
             >
               <g className="glim-parcel-fly">
                 <g className="glim-parcel-hop">
-                  <rect className="glim-pack glim-scene-seal" x="-7.5" y="-7.5" width="15" height="15" />
-                  <rect className="glim-scene-cut" x="-3.6" y="-1" width="7.2" height="5.8" rx="1.2" />
-                  <path className="glim-scene-cut-line" d="M-2.1 -1v-1.7a2.1 2.1 0 0 1 4.2 0v1.7" />
+                  <g className="glim-crypt-sealed">
+                    <rect className="glim-pack glim-scene-seal" x="-7.5" y="-7.5" width="15" height="15" />
+                    <rect className="glim-scene-cut" x="-3.6" y="-1" width="7.2" height="5.8" rx="1.2" />
+                    <path className="glim-scene-cut-line" d="M-2.1 -1v-1.7a2.1 2.1 0 0 1 4.2 0v1.7" />
+                  </g>
+                  <g className="glim-crypt-readable">
+                    <path className="glim-sandbox-sheet" d="M-6 -7.5h8l4 4v11h-12z" />
+                    <path className="glim-sandbox-line" d="M2 -7.5v4h4M-3.5 -0.5h7M-3.5 2.5h7M-3.5 5.5h4" />
+                  </g>
                 </g>
               </g>
               <circle className="glim-scene-ring glim-parcel-ring" r="8" />

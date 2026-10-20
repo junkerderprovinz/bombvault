@@ -6,7 +6,8 @@ import { Card, ToggleRow, type SaveState } from "./shared";
 import { useSettings } from "./settingsStore";
 
 /** EncryptionCard switches the encryption of the repositories and shows what
- *  it means: the storage location holds sealed packs, the key stays here. */
+ *  the storage location then holds: sealed packs with the key kept here, or
+ *  packs anyone there can read. */
 export function EncryptionCard({ hueIndex }: { hueIndex: number }) {
   const { t } = useT();
   const { settings, fieldPulse, autoSaveField, mergedFieldBusy, mergedFieldShake } = useSettings();
@@ -24,8 +25,10 @@ export function EncryptionCard({ hueIndex }: { hueIndex: number }) {
         shakeNonce={mergedFieldShake.encryptionEnabled}
         pulseNonce={fieldPulse.encryptionEnabled}
       />
-      <CryptScene />
-      <p className="text-center text-sm text-carbon-textSub">{t("tile.crypt.line")}</p>
+      <div data-new="crypt-picture" className="flex flex-col gap-4">
+        <CryptScene sealed={settings.encryptionEnabled} />
+        <p className="text-center text-sm text-carbon-textSub">{t(settings.encryptionEnabled ? "tile.crypt.line" : "tile.crypt.lineOpen")}</p>
+      </div>
       <PageSentence text="tile.crypt.kitLine" page="activityLog.typeRestore" to="/settings/restore" />
     </Card>
   );
