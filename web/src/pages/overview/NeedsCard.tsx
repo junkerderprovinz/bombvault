@@ -1,14 +1,15 @@
-import { useRef, useState, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 import { HeldMark } from "../../components/anomalies/FindingLine";
-import { ActionMenu, type MenuAction } from "../../components/backups/ActionMenu";
+import type { MenuAction } from "../../components/backups/ActionMenu";
+import { MoreMenu } from "../../components/backups/MoreMenu";
 import { KIND_SCHEDULE_LABEL, entryName } from "../../components/backups/kinds";
 import { Badge } from "../../components/Badge";
 import { Button } from "../../components/Button";
 import { useScheduleSentence } from "../../components/EffectiveScheduleLine";
 import { IconClearSelection, IconEye, IconRefresh } from "../../components/glyphs";
-import { IconBackupNow, IconCheck, IconDownload, IconMore, IconRecovery } from "../../components/navGlyphs";
+import { IconBackupNow, IconCheck, IconDownload, IconRecovery } from "../../components/navGlyphs";
 import { anomalyEntryName, anomalySentence } from "../../lib/anomalies";
 import {
   ApiError,
@@ -87,30 +88,6 @@ const TOUCH = "pointer-coarse:[--btn-h:2.75rem]";
 // each keeps the width of its label and the row breaks instead.
 const WRAPPING = `${TOUCH} max-md:basis-auto!`;
 const NAME_LINK = "min-w-0 wrap-anywhere hover:underline";
-
-/** The actions a row needs less often, behind one button. */
-function More({ label, actions }: { label: string; actions: MenuAction[] }) {
-  const { t } = useT();
-  const anchor = useRef<HTMLSpanElement>(null);
-  const [open, setOpen] = useState(false);
-  return (
-    <>
-      <span ref={anchor} className="flex">
-        <Button
-          className={WRAPPING}
-          label={t("nav.more")}
-          labelKey="nav.more"
-          glyph={<IconMore />}
-          ariaExpanded={open}
-          onClick={() => setOpen((was) => !was)}
-        />
-      </span>
-      {open && anchor.current && (
-        <ActionMenu label={label} actions={actions} place={{ anchor: anchor.current }} onClose={() => setOpen(false)} />
-      )}
-    </>
-  );
-}
 
 function FailedRunRow({
   run,
@@ -192,7 +169,7 @@ function FailedRunRow({
               onClick={onErrors}
             />
           )}
-          <More label={name} actions={repeatable ? [resolved, viewErrors] : [resolved]} />
+          <MoreMenu className={WRAPPING} label={name} actions={repeatable ? [resolved, viewErrors] : [resolved]} />
         </>
       }
     >
@@ -260,7 +237,8 @@ function UnprotectedRow({ item, t, onChanged }: { item: BackupItem; t: T; onChan
               onClick={() => navigate(entryTarget(item))}
             />
           )}
-          <More
+          <MoreMenu
+            className={WRAPPING}
             label={entryName(item, t)}
             actions={[
               {
@@ -337,7 +315,8 @@ function FailedCopyRow({ need, t, lang }: { need: Need & { is: "failedCopy" }; t
             onClick={() => navigate(route)}
             busy={busy !== null}
           />
-          <More
+          <MoreMenu
+            className={WRAPPING}
             label={t("overview.needs.copyFailed")}
             actions={[
               { id: "retry", label: t("breakdown.retry"), glyph: <IconRefresh />, onSelect: () => void retry() },
@@ -458,7 +437,8 @@ function RecoveryKitRow({ t }: { t: T }) {
               busy={storing}
             />
           ) : (
-            <More
+            <MoreMenu
+              className={WRAPPING}
               label={t("recovery.nagTitle")}
               actions={[{ id: "stored", label: t("recovery.stored"), glyph: <IconCheck />, onSelect: stored }]}
             />

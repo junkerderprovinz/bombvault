@@ -2,13 +2,13 @@
 // measures it by, and a menu with what can be run on its backups by hand: a
 // check of the repositories here and off site, a trial restore, the test of
 // the delete protection, unlocking and pruning.
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import { ActionMenu, type MenuAction } from "../../components/backups/ActionMenu";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
+import type { MenuAction } from "../../components/backups/ActionMenu";
+import { MoreMenu } from "../../components/backups/MoreMenu";
 import { KIND_LABEL, KindGlyph } from "../../components/backups/kinds";
-import { Button } from "../../components/Button";
 import { IconPrune, IconShieldOn, IconUnlock } from "../../components/glyphs";
 import { IconCheck } from "../../components/Sidebar";
-import { IconCloud, IconMore, IconRestore } from "../../components/navGlyphs";
+import { IconCloud, IconRestore } from "../../components/navGlyphs";
 import { ProgressBar } from "../../components/ProgressBar";
 import { Rows } from "../../components/storage/rows";
 import { countProgressText, type ResolveName } from "../../lib/activityLog";
@@ -64,28 +64,6 @@ function CheckDot({ check, t }: { check: Check; t: T }) {
       </span>
       {tip.bubble}
     </span>
-  );
-}
-
-function RowMenu({ label, actions }: { label: string; actions: MenuAction[] }) {
-  const { t } = useT();
-  const anchor = useRef<HTMLSpanElement>(null);
-  const [open, setOpen] = useState(false);
-  return (
-    <>
-      <span ref={anchor} className="flex">
-        <Button
-          label={t("nav.more")}
-          labelKey="nav.more"
-          glyph={<IconMore />}
-          ariaExpanded={open}
-          onClick={() => setOpen((was) => !was)}
-        />
-      </span>
-      {open && anchor.current && (
-        <ActionMenu label={label} actions={actions} place={{ anchor: anchor.current }} onClose={() => setOpen(false)} />
-      )}
-    </>
   );
 }
 
@@ -262,7 +240,7 @@ export function IntegrityCard({ t, hueIndex }: { t: T; hueIndex?: number }) {
                     <CheckDot key={check.key} check={check} t={t} />
                   ))}
                 </span>
-                <RowMenu label={name} actions={actionsOf(section)} />
+                <MoreMenu label={name} actions={actionsOf(section)} />
               </div>
               {live && (
                 <ProgressBar

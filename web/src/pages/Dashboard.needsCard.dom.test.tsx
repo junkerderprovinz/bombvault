@@ -49,6 +49,11 @@ function fromMore(row: ReturnType<typeof within>, name: string) {
   fireEvent.click(screen.getByRole("menuitem", { name }));
 }
 
+/** Presses an action that stands alone, because its row has no More menu. */
+function press(row: ReturnType<typeof within>, name: string) {
+  fireEvent.click(row.getByRole("button", { name }));
+}
+
 function renderCard(needs: Need[]) {
   render(
     inApp(
@@ -170,7 +175,7 @@ describe("NeedsCard", () => {
     const row = within(screen.getByTestId("need-unprotected"));
     expect(row.getByRole("button", { name: en["overview.needs.include"] })).toBeTruthy();
 
-    fromMore(row, en["backups.decline"]);
+    press(row, en["backups.decline"]);
     await act(async () => {});
 
     expect(called("setBackupDeclined")).toEqual([["container", "gitea", true]]);
@@ -188,7 +193,7 @@ describe("NeedsCard", () => {
     setBackupDeclined.mockResolvedValueOnce({ ok: false, error: "a schedule backs this entry up", code: "scheduled" });
     renderCard([{ is: "unprotected", item: item({ key: "gitea", name: "gitea", ...leftOut }) }]);
 
-    fromMore(within(screen.getByTestId("need-unprotected")), en["backups.decline"]);
+    press(within(screen.getByTestId("need-unprotected")), en["backups.decline"]);
     await act(async () => {});
 
     expect(screen.getByText("a schedule backs this entry up")).toBeTruthy();
@@ -202,8 +207,8 @@ describe("NeedsCard", () => {
 
     const row = within(screen.getByTestId("need-unprotected"));
     expect(row.getByRole("button", { name: en["zfs.replica.view"] })).toBeTruthy();
-    fireEvent.click(row.getByRole("button", { name: en["nav.more"] }));
-    expect(screen.getByRole("menuitem", { name: en["backups.decline"] })).toBeTruthy();
+    expect(row.queryByRole("button", { name: en["nav.more"] })).toBeNull();
+    expect(row.getByRole("button", { name: en["backups.decline"] })).toBeTruthy();
   });
 
   it("leads to the entry where switching it on would change nothing", () => {

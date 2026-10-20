@@ -556,8 +556,7 @@ describe("an entry the person said not to back up", () => {
     await renderPage();
     expect(head().getByText("1 thing needs you")).toBeTruthy();
 
-    fireEvent.click(within(cell("needs")).getByRole("button", { name: en["nav.more"] }));
-    fireEvent.click(screen.getByRole("menuitem", { name: en["backups.decline"] }));
+    fireEvent.click(within(cell("needs")).getByRole("button", { name: en["backups.decline"] }));
     await act(async () => {});
 
     expect(head().getByText(en["overview.head.allGood"])).toBeTruthy();

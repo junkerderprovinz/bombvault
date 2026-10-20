@@ -2,16 +2,17 @@
 // setting that belongs to the place as a whole. A location is read from one of
 // four kinds of object, and a card shows only where its object has something
 // to say.
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
-import { ActionMenu, type MenuAction } from "../components/backups/ActionMenu";
+import type { MenuAction } from "../components/backups/ActionMenu";
+import { MoreMenu } from "../components/backups/MoreMenu";
 import { BackButton } from "../components/BackButton";
 import { Badge } from "../components/Badge";
 import { Button } from "../components/Button";
 import { IconForward } from "../components/glyphs";
 import { InfoBubble } from "../components/InfoBubble";
-import { IconMore, IconPencil, IconTrash } from "../components/navGlyphs";
+import { IconPencil, IconTrash } from "../components/navGlyphs";
 import { PageTitle } from "../components/PageTitle";
 import { providerName } from "../components/destinations/ProviderPicker";
 import { ConnectionCard } from "../components/storage/ConnectionCard";
@@ -79,8 +80,6 @@ function Location({ location, records }: { location: StorageLocation; records: L
   const [removing, setRemoving] = useState(false);
   const [moving, setMoving] = useState(false);
   const progress = useProgress();
-  const [menuOpen, setMenuOpen] = useState(false);
-  const moreButton = useRef<HTMLSpanElement>(null);
   const test = useTestVerdict(location.id, t("offsite.testFailed"));
   const nextHue = hueCounter();
 
@@ -142,8 +141,8 @@ function Location({ location, records }: { location: StorageLocation; records: L
               />
             )}
             {actions.length > 0 && (
-              <span ref={moreButton} data-new="location-remove" className="flex">
-                <Button label={t("nav.more")} labelKey="nav.more" glyph={<IconMore />} tone="neutral" onClick={() => setMenuOpen((was) => !was)} />
+              <span data-new="location-remove" className="flex">
+                <MoreMenu label={location.name} actions={actions} newId="location-single-action" />
               </span>
             )}
           </div>
@@ -156,9 +155,6 @@ function Location({ location, records }: { location: StorageLocation; records: L
         )}
       </div>
 
-      {menuOpen && moreButton.current && (
-        <ActionMenu label={location.name} actions={actions} place={{ anchor: moreButton.current }} onClose={() => setMenuOpen(false)} />
-      )}
       {changing && form && <ConnectionWindow edit={edit} form={form} onClose={() => setChanging(false)} />}
       {moving && own?.targetId && (
         <MoveWindow location={location} domain={own.domain} targetId={own.targetId} onClose={() => setMoving(false)} />

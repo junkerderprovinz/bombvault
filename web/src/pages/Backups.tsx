@@ -6,6 +6,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent } fr
 import { useNavigate, useSearchParams } from "react-router-dom";
 
 import { ActionMenu, type MenuAction, type MenuPlace } from "../components/backups/ActionMenu";
+import { MoreMenu } from "../components/backups/MoreMenu";
 import { AddWindow } from "../components/backups/AddWindow";
 import { BackupRow, LIST_COLUMNS, LIST_SPAN, SelfRow } from "../components/backups/BackupRow";
 import { BarButton, BulkBar } from "../components/backups/BulkBar";
@@ -24,7 +25,7 @@ import { useScheduleSentence } from "../components/EffectiveScheduleLine";
 import { EmptyStateIcon } from "../components/EmptyStateIcon";
 import { IconArchive, IconClearSelection, IconEye, IconPause, IconSearch, IconSelectAll } from "../components/glyphs";
 import { InfoBubble } from "../components/InfoBubble";
-import { IconAdd, IconBackupNow, IconClose, IconMore, IconRestore, IconSchedules, IconSync, IconZFS } from "../components/navGlyphs";
+import { IconAdd, IconBackupNow, IconClose, IconRestore, IconSchedules, IconSync, IconZFS } from "../components/navGlyphs";
 import { PageAction, PageActions } from "../components/PageActions";
 import { PageTitle } from "../components/PageTitle";
 import { zfsReaches } from "../components/zfs/ZFSConnectionCard";
@@ -130,8 +131,6 @@ export function Backups() {
   const [starting, setStarting] = useState(false);
   const [introDismissed, setIntroDismissed] = useState(introSeen);
   const [rowMenu, setRowMenu] = useState<{ place: MenuPlace; id: string } | null>(null);
-  const [moreOpen, setMoreOpen] = useState(false);
-  const moreButton = useRef<HTMLSpanElement>(null);
   const [adding, setAdding] = useState<AddedKind | "choose" | null>(null);
   const [stackOpen, setStackOpen] = useState<string | null>(null);
   const [zfsOpen, setZfsOpen] = useState(false);
@@ -507,9 +506,6 @@ export function Backups() {
           onClose={() => setRowMenu(null)}
         />
       )}
-      {moreOpen && moreButton.current && (
-        <ActionMenu label={t("nav.more")} actions={moreActions} place={{ anchor: moreButton.current }} onClose={() => setMoreOpen(false)} />
-      )}
       {adding && (
         <AddWindow
           start={adding}
@@ -527,15 +523,14 @@ export function Backups() {
 
       {list && !failed && (
         <PageActions>
-          <span ref={moreButton} data-new="backups-actions" className="flex">
-            <PageAction
-              label={t("nav.more")}
-              glyph={<IconMore />}
-              onClick={() => setMoreOpen((was) => !was)}
-              busy={discovering}
-              title={discovering ? t("containers.discovering") : undefined}
-            />
-          </span>
+          <MoreMenu
+            page
+            label={t("nav.more")}
+            actions={moreActions}
+            newId="backups-actions"
+            busy={discovering}
+            title={discovering ? t("containers.discovering") : undefined}
+          />
           {tile === "all" ? (
             <PageAction
               label={t("backups.backUpEverything")}

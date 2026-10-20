@@ -1,15 +1,16 @@
-import { useEffect, useRef, useState, type MouseEvent } from "react";
+import { useEffect, type MouseEvent } from "react";
 import type { Run, TimelineRow } from "../../lib/api";
 import { actionMark, comparable, personTags, rowTags, rowTime, runOfRow } from "../../lib/entry";
 import { humanBytes } from "../../lib/forecast";
 import { useT } from "../../lib/i18n";
 import { formatRecent } from "../../lib/reltime";
-import { ActionMenu, type MenuAction } from "../backups/ActionMenu";
+import type { MenuAction } from "../backups/ActionMenu";
+import { MoreMenu } from "../backups/MoreMenu";
 import { Badge } from "../Badge";
 import { Button } from "../Button";
 import { IconCompare } from "../glyphs";
 import { InfoBubble } from "../InfoBubble";
-import { IconAdd, IconCloud, IconDownload, IconLocal, IconMore, IconRestore, IconTrash } from "../navGlyphs";
+import { IconAdd, IconCloud, IconDownload, IconLocal, IconRestore, IconTrash } from "../navGlyphs";
 import { Rows } from "../storage/rows";
 import { usePlaceLabel, type TimelineState } from "./BackupPlaces";
 
@@ -39,8 +40,6 @@ function RowMenu({
   onAct: (action: RowAction) => void;
 }) {
   const { t, lang } = useT();
-  const anchor = useRef<HTMLSpanElement>(null);
-  const [open, setOpen] = useState(false);
   const { rows, places } = timeline;
   const mark = actionMark(row, places);
   const deletable = row.places.some((m) => places.find((p) => p.place === m.place)?.appendOnly === false);
@@ -62,27 +61,7 @@ function RowMenu({
     actions.push({ id: "delete", label: t("common.delete"), glyph: <IconTrash />, onSelect: () => onAct("delete") });
   }
 
-  return (
-    <>
-      <span ref={anchor} className="flex">
-        <Button
-          label={t("nav.more")}
-          labelKey="nav.more"
-          glyph={<IconMore />}
-          ariaExpanded={open}
-          onClick={() => setOpen((was) => !was)}
-        />
-      </span>
-      {open && anchor.current && (
-        <ActionMenu
-          label={formatRecent(rowTime(row), lang)}
-          actions={actions}
-          place={{ anchor: anchor.current }}
-          onClose={() => setOpen(false)}
-        />
-      )}
-    </>
-  );
+  return <MoreMenu label={formatRecent(rowTime(row), lang)} actions={actions} />;
 }
 
 function Row({

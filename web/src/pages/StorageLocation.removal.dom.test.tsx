@@ -155,8 +155,7 @@ async function click(el: HTMLElement) {
 }
 
 async function openRemoval(name = "Storage Box"): Promise<HTMLElement> {
-  await click(screen.getByRole("button", { name: "More" }));
-  await click(screen.getByRole("menuitem", { name: "Remove storage location" }));
+  await click(screen.getByRole("button", { name: "Remove storage location" }));
   return screen.getByRole("dialog", { name: `Remove ${name}?` });
 }
 
