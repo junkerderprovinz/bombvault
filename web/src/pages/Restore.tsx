@@ -202,7 +202,19 @@ function PickedEntry({
 
   return (
     <div ref={card}>
-      <Card title={name} hueIndex={hueIndex}>
+      <Card
+        title={name}
+        hueIndex={hueIndex}
+        foot={
+          <Button
+            label={t("restorePage.openEntry")}
+            labelKey={null}
+            glyph={<IconArchive />}
+            tone="subtle"
+            onClick={() => navigate(entryTarget(item))}
+          />
+        }
+      >
         {loading && <p className="text-sm text-carbon-textMuted">{t("common.loadingBackups")}</p>}
         {error !== null && <p className="text-sm text-statusFail">{error || t("common.loadBackupsFailed")}</p>}
         {!loading && error === null && rows.length === 0 && (
@@ -219,15 +231,6 @@ function PickedEntry({
           />
         )}
         <PlaceChecks timeline={timeline} />
-        <div className="flex justify-end">
-          <Button
-            label={t("restorePage.openEntry")}
-            labelKey={null}
-            glyph={<IconArchive />}
-            tone="subtle"
-            onClick={() => navigate(entryTarget(item))}
-          />
-        </div>
       </Card>
       {opened && (
         <EntryRestore
