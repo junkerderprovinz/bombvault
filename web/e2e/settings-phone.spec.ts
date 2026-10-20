@@ -3,13 +3,14 @@
 // hides most of the page. On the phones, per page: the 24px card rhythm, the
 // rail of pages as glyphs beside the content, nothing panning or reaching past
 // the viewport or its card, no stray backtick, and every control big enough to
-// hit. Then the arrangements that change on a phone: target and credential
-// rows put their actions under the name, repository and passkey rows wrap
+// hit. Then the arrangements that change on a phone: off-site copy, target and
+// sign-in rows put their actions under the name, repository and passkey rows wrap
 // instead of cutting, the every-N-days field keeps three digits clear of its
 // steppers, and the MCP card's confirmations come up as a sheet. On the
 // desktop: the 40px rhythm and the rail with its names once there is room.
 // German, because its labels run longest.
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
+import { PLACEMENT } from "./placement";
 import { blockServerLook } from "./serverLook";
 
 const MOBILE_PROJECTS = new Set(["mobile-iphone", "mobile-android"]);
@@ -289,6 +290,7 @@ const container = (name: string, scheduleCadence = "") => ({
   lastUpdateResult: "",
   stack: "",
   scheduleCadence,
+  placement: PLACEMENT,
 });
 
 const vm = (name: string, libvirtName: string, scheduleCadence = "") => ({
@@ -300,6 +302,7 @@ const vm = (name: string, libvirtName: string, scheduleCadence = "") => ({
   lastBackup: null,
   lastBackupStarted: null,
   scheduleCadence,
+  placement: PLACEMENT,
 });
 
 const PAGES = [
@@ -505,14 +508,21 @@ for (const width of [320, 360]) {
             })
             .map(describe),
           // WCAG's 24px minimum, except for a link inside a run of text,
-          // which the line height decides.
+          // which the line height decides. A row's name whose ::after is
+          // stretched over the row takes the tap on the whole row.
           tooSmall: controls
             .filter((el) => !(el.tagName === "A" && getComputedStyle(el).display === "inline"))
-            .filter((el) => {
-              const box = el.getBoundingClientRect();
-              return box.width < 23.5 || box.height < 23.5;
+            .map((el) => {
+              const after = getComputedStyle(el, "::after");
+              const stretched =
+                after.position === "absolute" &&
+                [after.top, after.right, after.bottom, after.left].every((side) => side === "0px") &&
+                el instanceof HTMLElement;
+              const box = (stretched && el.offsetParent ? el.offsetParent : el).getBoundingClientRect();
+              return { el, box };
             })
-            .map((el) => `${describe(el)} ${Math.round(el.getBoundingClientRect().width)}x${Math.round(el.getBoundingClientRect().height)}`),
+            .filter(({ box }) => box.width < 23.5 || box.height < 23.5)
+            .map(({ el, box }) => `${describe(el)} ${Math.round(box.width)}x${Math.round(box.height)}`),
         };
       });
       expect(layout, "#bv-main is missing").not.toBeNull();
@@ -540,16 +550,54 @@ test("settings on a phone: the rail is one row of named tiles above the page", a
   expect((await railTiles(page)).belowWindow, "tiles below the window").toBe(0);
 });
 
+/** The innermost element inside `scope` that holds both the name and an Edit button. */
+function rowOf(scope: Locator, name: string): Locator {
+  return scope
+    .locator("div, li")
+    .filter({ has: scope.page().getByText(name, { exact: true }) })
+    .filter({ has: scope.page().getByRole("button", { name: "Bearbeiten" }) })
+    .last();
+}
+
+const OFFSITE_SECTIONS = ["Container", "VMs", "Flash", "Ordner", "ZFS", "Selbstbackup"];
+
 for (const [what, rows] of [
-  ["off-site targets", () => targets("containers").map((t) => t.name)],
-  ["credential sets", () => CRED_SETS.map((c) => c.name)],
+  [
+    "off-site copies",
+    async (page: Page) => ({
+      scope: page.locator('[data-search-card="Off-site-Kopien"]'),
+      names: OFFSITE_SECTIONS,
+    }),
+  ],
+  [
+    "off-site targets",
+    async (page: Page) => {
+      const copies = page.locator('[data-search-card="Off-site-Kopien"]');
+      await rowOf(copies, "Container").getByRole("button", { name: "Bearbeiten" }).click();
+      const window = page.getByRole("dialog", { name: "Off-site-Kopie Container" });
+      await expect(window).toBeVisible();
+      // The sheet slides up from the bottom, so it is measured once it stands.
+      await settle(page);
+      return {
+        scope: window,
+        names: targets("containers").map((t) => t.name),
+      };
+    },
+  ],
+  [
+    "credential sets",
+    async (page: Page) => ({
+      scope: page.locator('[data-search-card="Zugangsdaten"]'),
+      names: CRED_SETS.map((c) => c.name),
+    }),
+  ],
 ] as const) {
   test(`settings storage on a phone: each row of the ${what} puts its actions under the name`, async ({ page }, testInfo) => {
     test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only");
     await openPage(page, 320, "storage", "Speicherorte");
-    for (const rowName of rows()) {
-      const edit = page.getByRole("button", { name: "Bearbeiten" });
-      const row = page.locator(".rounded-card").filter({ hasText: rowName }).filter({ has: edit }).last();
+    const { scope, names } = await rows(page);
+    for (const rowName of names) {
+      const row = rowOf(scope, rowName);
       const nameBox = (await row.getByText(rowName, { exact: true }).first().boundingBox())!;
       const actionBox = (await row.getByRole("button", { name: "Bearbeiten" }).first().boundingBox())!;
       expect(actionBox.y, `the actions of "${rowName}" share the name's row`).toBeGreaterThanOrEqual(nameBox.y + nameBox.height);
@@ -572,7 +620,7 @@ test("settings storage on a phone: a repository shows its whole name and address
       expect(cut, `"${text}" is cut off`).toBe(false);
     }
   }
-  const row = repos.locator("div.rounded-card").filter({ hasText: REPOS[0].name }).last();
+  const row = repos.getByRole("listitem").filter({ hasText: REPOS[0].name });
   await expect(row.getByText("Nur anhängen", { exact: true })).toHaveCount(1);
 });
 
