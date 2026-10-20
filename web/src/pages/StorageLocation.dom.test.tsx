@@ -578,6 +578,18 @@ describe("a rest-server set up for one section", () => {
     expect(updateOffsiteTarget).toHaveBeenCalledWith("t-rest", expect.objectContaining({ credsRef: "set-nas", repo: OWN.repo }));
   });
 
+  it("opens the sign-in it uses in the window the settings page opens too", async () => {
+    await renderPage("target:t-rest");
+
+    const signIn = card("Sign-in");
+    await within(signIn).findByText("tower");
+    expect(within(signIn).queryByRole("button", { name: "New sign-in" })).toBeNull();
+    await click(within(signIn).getByRole("button", { name: "Edit" }));
+    const window = screen.getByRole("dialog", { name: "Default sign-in" });
+    expect((within(window).getByLabelText("User name") as HTMLInputElement).value).toBe("tower");
+    expect(within(window).getByRole("button", { name: /^Test/ })).toBeTruthy();
+  });
+
   it("writes a changed rule back as the target's five columns", async () => {
     localStorage.setItem("bombvault.askKeepLess", "off");
     await renderPage("target:t-rest");
