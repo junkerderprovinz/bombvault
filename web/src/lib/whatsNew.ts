@@ -185,11 +185,6 @@ export const RELEASES: Release[] = [
         way: ["/settings", "/settings/security"],
         text: "whatsNew.cryptPicture",
       },
-    ],
-  },
-  {
-    version: "10.1.4",
-    changes: [
       {
         id: "zfs-replica-only-switch",
         page: ENTRY,
@@ -198,18 +193,8 @@ export const RELEASES: Release[] = [
         way: ["/backups", "entry"],
         text: "whatsNew.zfsReplicaOnlySwitch",
       },
-    ],
-  },
-  {
-    version: "10.1.3",
-    changes: [
       { id: "whats-new-cards", text: "whatsNew.releaseCards" },
       { id: "widget-domains", text: "whatsNew.widgetDomains" },
-    ],
-  },
-  {
-    version: "10.1.2",
-    changes: [
       {
         id: "location-remove",
         page: LOCATION,
@@ -218,11 +203,6 @@ export const RELEASES: Release[] = [
         way: [...TO_STORAGE, "location"],
         text: "whatsNew.locationRemove",
       },
-    ],
-  },
-  {
-    version: "10.1.1",
-    changes: [
       {
         id: "location-rules",
         page: LOCATION,
