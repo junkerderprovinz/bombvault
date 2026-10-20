@@ -320,7 +320,9 @@ export function SignInsCard({ hueIndex }: { hueIndex?: number }) {
                       {s.restUser && <Badge tone="neutral" size="small">restic REST</Badge>}
                       {s.default && (
                         <Badge tone="ok" size="small">
-                          <IconStar />
+                          <span className="flex [&_svg]:h-[1em] [&_svg]:w-[1em]">
+                            <IconStar />
+                          </span>
                           {t("signIns.default")}
                         </Badge>
                       )}
