@@ -169,7 +169,21 @@ export function ReposCard({ hueIndex }: { hueIndex?: number }) {
   }
 
   return (
-    <Card title={t("repos.title")} hint={t("repos.intro")} hueIndex={hueIndex}>
+    <Card
+      title={t("repos.title")}
+      hint={t("repos.intro")}
+      hueIndex={hueIndex}
+      foot={
+        <Button
+          key={shake}
+          label={t("repos.add")}
+          labelKey="repos.add"
+          tone="accent"
+          onClick={() => void add()}
+          disabled={busy || name.trim() === "" || repo.trim() === ""}
+        />
+      }
+    >
       {confirmDialog}
       <div className="flex flex-col gap-3">
         {loaded && repos.length === 0 && (
@@ -310,16 +324,6 @@ export function ReposCard({ hueIndex }: { hueIndex?: number }) {
             />
           </SettingRow>
           </Rows>
-          <div className="flex justify-end">
-            <Button
-              key={shake}
-              label={t("repos.add")}
-              labelKey="repos.add"
-              tone="accent"
-              onClick={() => void add()}
-              disabled={busy || name.trim() === "" || repo.trim() === ""}
-            />
-          </div>
         </div>
       </div>
     </Card>

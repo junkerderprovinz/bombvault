@@ -228,7 +228,25 @@ export function ApiTokensCard({ hueIndex, passwordSet }: { hueIndex?: number; pa
     : "";
 
   return (
-    <Card title={t("api.title")} hint={tLtr(t, "api.hint")} hueIndex={hueIndex}>
+    <Card
+      title={t("api.title")}
+      hint={tLtr(t, "api.hint")}
+      hueIndex={hueIndex}
+      foot={
+        data !== null &&
+        !failed &&
+        canMint && (
+          <Button
+            label={t("api.createToken")}
+            labelKey="api.createToken"
+            glyph={<IconAdd />}
+            onClick={() => setCreating(true)}
+            disabled={busy || tokens.length >= limit}
+            hint={tokens.length >= limit ? t("api.limitReached", limit) : undefined}
+          />
+        )
+      }
+    >
       {failed && <p className="text-sm text-statusWarn">{t("api.loadFailed")}</p>}
       {!failed && data === null && <p className="text-sm text-carbon-textMuted">{t("folder.loading")}</p>}
 
@@ -400,27 +418,13 @@ export function ApiTokensCard({ hueIndex, passwordSet }: { hueIndex?: number; pa
       )}
 
       {data !== null && !failed && (
-        <>
-          {canMint && (
-            <div className="flex justify-end">
-              <Button
-                label={t("api.createToken")}
-                labelKey="api.createToken"
-                glyph={<IconAdd />}
-                onClick={() => setCreating(true)}
-                disabled={busy || tokens.length >= limit}
-                hint={tokens.length >= limit ? t("api.limitReached", limit) : undefined}
-              />
-            </div>
-          )}
-          <SettingRow label={t("api.description")} hint={tLtr(t, "api.descriptionHint")}>
-            <Button
-              label={t("api.viewDescription")}
-              labelKey="api.viewDescription"
-              onClick={() => window.open(data.openapiPath, "_blank", "noopener")}
-            />
-          </SettingRow>
-        </>
+        <SettingRow label={t("api.description")} hint={tLtr(t, "api.descriptionHint")}>
+          <Button
+            label={t("api.viewDescription")}
+            labelKey="api.viewDescription"
+            onClick={() => window.open(data.openapiPath, "_blank", "noopener")}
+          />
+        </SettingRow>
       )}
 
       {creating && (
