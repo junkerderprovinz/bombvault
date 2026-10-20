@@ -118,7 +118,7 @@ it("keeps a sign-in a storage location uses and says who uses it", async () => {
   await renderCard();
   expect(removeButton("Hetzner S3").disabled).toBe(true);
   expect(removeButton("Wasabi").disabled).toBe(true);
-  expect(screen.getAllByLabelText("Wasabi box and Wasabi too still signs in with it. Pick another sign-in there first.").length).toBeGreaterThan(0);
+  expect(screen.getAllByLabelText("Still used by Wasabi box and Wasabi too. Pick another sign-in there first.").length).toBeGreaterThan(0);
   expect(removeButton("Old NAS").disabled).toBe(false);
 });
 
