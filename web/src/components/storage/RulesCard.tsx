@@ -80,7 +80,24 @@ function RulesWindow({ edit, section, onClose }: { edit: LocationEdit; section: 
       title={t("storage.rules.windowTitle").replace("{domain}", () => domain)}
       facts={t("storage.rules.windowHint").replace("{domain}", () => domain).replace("{name}", () => location.name)}
       onClose={onClose}
-      footer={<Button label={t("common.done")} labelKey="common.done" glyph={<IconCheck />} tone="accent" onClick={onClose} />}
+      footer={
+        <>
+          {section.own.length > 0 && canFollow(location, section) && (
+            <Button
+              label={t("storage.own.reset")}
+              labelKey="storage.own.reset"
+              glyph={<IconRefresh />}
+              tone="neutral"
+              disabled={busy}
+              onClick={() => {
+                setCustom(false);
+                edit.followAll(section);
+              }}
+            />
+          )}
+          <Button label={t("common.done")} labelKey="common.done" glyph={<IconCheck />} tone="accent" onClick={onClose} />
+        </>
+      }
     >
       {less.dialog}
       {typing && <SectionPathWindow domain={section.domain} onClose={() => setTyping(false)} />}
@@ -145,21 +162,6 @@ function RulesWindow({ edit, section, onClose }: { edit: LocationEdit; section: 
           </SettingRow>
         )}
       </Rows>
-      {section.own.length > 0 && canFollow(location, section) && (
-        <div className="flex justify-end">
-          <Button
-            label={t("storage.own.reset")}
-            labelKey="storage.own.reset"
-            glyph={<IconRefresh />}
-            tone="neutral"
-            disabled={busy}
-            onClick={() => {
-              setCustom(false);
-              edit.followAll(section);
-            }}
-          />
-        </div>
-      )}
     </InstanceWindow>
   );
 }

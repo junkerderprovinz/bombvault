@@ -7,7 +7,7 @@ import { useToast } from "../../lib/toast";
 import { credSetDraft, defaultSignIn, saveCredSet, signInOption, signInsFor, useCloudCredSets } from "../../lib/useCloudCredSets";
 import { useReveal } from "../../lib/useReveal";
 import { randomId } from "../../lib/uuid";
-import { Card } from "../../pages/settings/shared";
+import { Card, CardFoot } from "../../pages/settings/shared";
 import { Button } from "../Button";
 import { IconAdd } from "../navGlyphs";
 import { RevealInput } from "../RevealInput";
@@ -133,7 +133,7 @@ function CredSetForm({
           </>
         )}
       </div>
-      <div className="flex flex-wrap justify-end gap-2">
+      <CardFoot>
         {onCancel && <Button label={t("common.cancel")} labelKey="common.cancel" tone="neutral" onClick={onCancel} />}
         <Button
           key={shake}
@@ -145,7 +145,7 @@ function CredSetForm({
           busy={saving}
           className={shake ? "glim-shake" : ""}
         />
-      </div>
+      </CardFoot>
     </div>
   );
 }

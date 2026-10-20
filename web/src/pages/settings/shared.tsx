@@ -43,7 +43,6 @@ export function Card({
   hueIndex,
   nested,
   newId,
-  action,
   foot,
 }: {
   /** Without a title but with a hint the heading badge still renders, so the
@@ -64,8 +63,6 @@ export function Card({
   nested?: boolean;
   /** The change in lib/whatsNew.ts the card is, which puts its dot on it. */
   newId?: string;
-  /** One button for the whole card, at the end of its heading's row. */
-  action?: React.ReactNode;
   /** The card's own buttons, in one row under its content, at the end. */
   foot?: React.ReactNode;
 }) {
@@ -93,9 +90,17 @@ export function Card({
           </Badge>
         </h2>
       )}
-      {action && <div className="flex justify-end">{action}</div>}
       {children}
-      {foot && <div className="flex flex-wrap items-center justify-end gap-2">{foot}</div>}
+      {foot && <CardFoot>{foot}</CardFoot>}
+    </div>
+  );
+}
+
+/** CardFoot is the row of a card's own buttons, under its content at the end. */
+export function CardFoot({ children, newId }: { children: React.ReactNode; newId?: string }) {
+  return (
+    <div data-new={newId} className="mt-auto flex flex-wrap items-center justify-end gap-2">
+      {children}
     </div>
   );
 }

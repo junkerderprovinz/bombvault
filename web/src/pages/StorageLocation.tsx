@@ -40,7 +40,7 @@ import { settingsOwned, type LocationRecords } from "../lib/storageWrites";
 import { useProviderForm } from "../lib/useProviders";
 import { useStorageLocation } from "../lib/useStorageLocations";
 import { useTestVerdict } from "../lib/useTestVerdict";
-import { hueCounter } from "./settings/shared";
+import { CardFoot, hueCounter } from "./settings/shared";
 
 type Probe = () => Promise<OkEnvelope & { reachable?: boolean; initialized?: boolean }>;
 
@@ -191,9 +191,11 @@ function LocationView({ id }: { id: string }) {
       {status === "missing" ? (
         <p className="text-sm text-carbon-textSub">{t("storage.gone")}</p>
       ) : status === "failed" ? (
-        <div className="flex flex-col items-start gap-2">
+        <div className="flex flex-col gap-2">
           <p className="text-sm text-statusWarn">{t("storage.loadFailed")}</p>
-          <Button label={t("anomaly.retry")} labelKey="anomaly.retry" onClick={retry} />
+          <CardFoot>
+            <Button label={t("anomaly.retry")} labelKey="anomaly.retry" onClick={retry} />
+          </CardFoot>
         </div>
       ) : (
         <p className="text-sm text-carbon-textSub">{t("dashboard.checking")}</p>

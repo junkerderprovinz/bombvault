@@ -4,6 +4,7 @@ import type { StorageLocation } from "../../lib/api";
 import { useT } from "../../lib/i18n";
 import { locationRoute, usedByText } from "../../lib/storageLocations";
 import type { StorageLocationList } from "../../lib/useStorageLocations";
+import { CardFoot } from "../../pages/settings/shared";
 import { Badge } from "../Badge";
 import { Button } from "../Button";
 import { IconForward } from "../glyphs";
@@ -68,9 +69,11 @@ export function LocationList({ list }: { list: StorageLocationList }) {
     // A list that never arrived says nothing about what is stored where, so
     // it must not look like an empty one.
     return (
-      <div className="flex flex-col items-start gap-2">
+      <div className="flex flex-col gap-2">
         <p className="text-sm text-statusWarn">{t("storage.loadFailed")}</p>
-        <Button label={t("anomaly.retry")} labelKey="anomaly.retry" onClick={retry} />
+        <CardFoot>
+          <Button label={t("anomaly.retry")} labelKey="anomaly.retry" onClick={retry} />
+        </CardFoot>
       </div>
     );
   }

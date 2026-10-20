@@ -20,7 +20,6 @@ export function OwnRcloneWindow({
   onBack,
   onClose,
 }: {
-  /** The remotes BombVault's rclone.conf already holds. */
   remotes: string[];
   onSaved: () => void;
   onBack: () => void;

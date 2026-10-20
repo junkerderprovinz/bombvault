@@ -22,6 +22,7 @@ import { Rows, SettingRow } from "./storage/rows";
 import { InfoBubble } from "./InfoBubble";
 import { CompressionSelector } from "./CompressionSelector";
 import { Badge, type BadgeSize } from "./Badge";
+import { CardFoot } from "../pages/settings/shared";
 import { Button } from "./Button";
 import { IconAdd } from "./Sidebar";
 import { withLtrFragments, REPO_LOCAL_HINT_LTR_FRAGMENTS } from "../lib/ltrFragments";
@@ -609,15 +610,17 @@ export function OffsiteTargetsSection({
         </div>
       )}
       {!draft && (
-        <Button
-          label={t("offsite.targets.add")}
-          labelKey="offsite.targets.add"
-          glyph={<IconAdd />}
-          tone="accent"
-          onClick={openNew}
-          hueIndex={hueIndex}
-          className="glim-btn-wrap self-start"
-        />
+        <CardFoot>
+          <Button
+            label={t("offsite.targets.add")}
+            labelKey="offsite.targets.add"
+            glyph={<IconAdd />}
+            tone="accent"
+            onClick={openNew}
+            hueIndex={hueIndex}
+            className="glim-btn-wrap"
+          />
+        </CardFoot>
       )}
     </div>
   );
