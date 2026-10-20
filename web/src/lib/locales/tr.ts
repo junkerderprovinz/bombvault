@@ -735,6 +735,7 @@ const tr: Partial<Translations> = {
   "whatsNew.locationSignIn": "Bir hedef kaydedilmiş oturum açma bilgilerinden birini seçer; “Düzenle” onu ayarlar sayfasıyla aynı pencerede açar.",
   "whatsNew.ownFolderMove": "Bir bölümün kendi klasörü hedeflerinden birine taşınabilir ve onun oturum açmasını ve korumasını alır. Birden çok bölüm tek adımda taşınır.",
   "whatsNew.ownFoldersCard": "Uzak bir hedef, kendi yedeklerini orada tutan bölümleri gösterir.",
+  "whatsNew.singleAction": "«Diğer» tek bir eylem içerecekse, o eylem kendi düğmesi olarak gösterilir.",
   "whatsNew.wizardSignIn": "Yeni bir hedef, yeni anahtarlar yerine kaydedilmiş bir oturum açma ile oturum açabilir.",
   "whatsNew.listsAsRows": "Her liste girişlerini ince bir çizgiyle ayrılmış satırlar olarak gösterir, arkalarında gri bir kutu olmadan.",
   "whatsNew.cardButtons": "Kartın tamamı için geçerli düğmeler, bir pencerede olduğu gibi sağ altta durur.",

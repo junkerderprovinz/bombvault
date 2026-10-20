@@ -732,6 +732,7 @@ const pt: Partial<Translations> = {
   "whatsNew.locationSignIn": "Um destino escolhe entre as credenciais guardadas, e «Editar» abre-as na mesma janela que a página de definições.",
   "whatsNew.ownFolderMove": "A pasta própria de uma secção pode ir para um dos teus destinos e levar as credenciais e a proteção dele. Várias secções mudam num só passo.",
   "whatsNew.ownFoldersCard": "Um destino remoto lista as secções que guardam lá os próprios backups.",
+  "whatsNew.singleAction": "Quando «Mais» teria apenas uma ação, essa ação aparece como um botão próprio.",
   "whatsNew.wizardSignIn": "Um novo destino pode entrar com credenciais guardadas em vez de novas chaves.",
   "whatsNew.listsAsRows": "Cada lista mostra as entradas como linhas separadas por um traço fino, sem uma caixa cinzenta por trás.",
   "whatsNew.cardButtons": "Os botões que se aplicam a um cartão inteiro ficam no canto inferior direito, como numa janela.",

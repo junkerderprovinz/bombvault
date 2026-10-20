@@ -732,6 +732,7 @@ const no: Partial<Translations> = {
   "whatsNew.locationSignIn": "Et mål velger blant de lagrede påloggingene, og «Rediger» åpner den i samme vindu som innstillingssiden.",
   "whatsNew.ownFolderMove": "En seksjons egen mappe kan flytte til et av målene dine og tar med påloggingen og beskyttelsen der. Flere seksjoner flytter i ett steg.",
   "whatsNew.ownFoldersCard": "Et eksternt mål viser seksjonene som har sine egne sikkerhetskopier der.",
+  "whatsNew.singleAction": "Når «Mer» bare ville rommet én handling, vises den som en egen knapp.",
   "whatsNew.wizardSignIn": "Et nytt mål kan logge på med en lagret pålogging i stedet for nye nøkler.",
   "whatsNew.listsAsRows": "Alle lister viser oppføringene sine som rader skilt av en tynn strek, uten en grå boks bak.",
   "whatsNew.cardButtons": "Knapper som gjelder hele kortet, står nede til høyre, slik som i et vindu.",

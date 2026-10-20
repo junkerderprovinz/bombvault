@@ -850,6 +850,7 @@ const ms: Partial<Translations> = {
   "whatsNew.locationSignIn": "Sesuatu destinasi memilih daripada log masuk yang disimpan, dan “Edit” membukanya dalam tetingkap yang sama dengan halaman tetapan.",
   "whatsNew.ownFolderMove": "Folder sendiri sesuatu bahagian boleh berpindah ke salah satu destinasi anda dan menggunakan log masuk serta perlindungannya. Beberapa bahagian berpindah dalam satu langkah.",
   "whatsNew.ownFoldersCard": "Destinasi jauh menunjukkan bahagian yang menyimpan sandarannya sendiri di sana.",
+  "whatsNew.singleAction": "Jika «Lagi» hanya mengandungi satu tindakan, tindakan itu dipaparkan sebagai butang tersendiri.",
   "whatsNew.wizardSignIn": "Destinasi baharu boleh log masuk dengan log masuk yang disimpan dan bukannya kunci baharu.",
   "whatsNew.listsAsRows": "Setiap senarai memaparkan entrinya sebagai baris yang dipisahkan oleh garis halus, tanpa kotak kelabu di belakangnya.",
   "whatsNew.cardButtons": "Butang yang berkaitan dengan seluruh kad terletak di bahagian bawah kanan, seperti dalam tetingkap.",

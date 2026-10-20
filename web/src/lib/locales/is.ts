@@ -850,6 +850,7 @@ const is: Partial<Translations> = {
   "whatsNew.locationSignIn": "Áfangastaður velur úr vistuðu innskráningunum og „Breyta“ opnar hana í sama glugga og stillingasíðan.",
   "whatsNew.ownFolderMove": "Eigin mappa hluta getur flust í einn af áfangastöðum þínum og tekur með innskráningu hans og vernd. Margir hlutar flytja í einu skrefi.",
   "whatsNew.ownFoldersCard": "Fjarlægur áfangastaður sýnir hlutana sem geyma eigin afrit þar.",
+  "whatsNew.singleAction": "Þegar «Meira» myndi aðeins geyma eina aðgerð birtist sú aðgerð sem sinn eigin hnappur.",
   "whatsNew.wizardSignIn": "Nýr áfangastaður getur skráð sig inn með vistaðri innskráningu í stað nýrra lykla.",
   "whatsNew.listsAsRows": "Allir listar sýna færslur sínar sem línur aðskildar með mjóu striki, án grás kassa á bak við.",
   "whatsNew.cardButtons": "Hnappar sem eiga við allt spjaldið eru neðst til hægri, eins og í glugga.",

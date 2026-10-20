@@ -850,6 +850,7 @@ const et: Partial<Translations> = {
   "whatsNew.locationSignIn": "Sihtkoht valib salvestatud sisselogimiste seast ja „Muuda“ avab selle samas aknas kui seadete leht.",
   "whatsNew.ownFolderMove": "Jaotise oma kaust võib kolida mõnda sinu sihtkohta ja võtab üle selle sisselogimise ja kaitse. Mitu jaotist kolivad ühe sammuga.",
   "whatsNew.ownFoldersCard": "Kaugsihtkoht näitab jaotisi, mis hoiavad seal oma varukoopiaid.",
+  "whatsNew.singleAction": "Kui «Rohkem» sisaldaks ainult ühte toimingut, näidatakse see eraldi nupuna.",
   "whatsNew.wizardSignIn": "Uus sihtkoht saab sisse logida salvestatud sisselogimisega uute võtmete asemel.",
   "whatsNew.listsAsRows": "Iga loend näitab kirjeid ridadena, mida eraldab peen joon, ilma halli kastita taustal.",
   "whatsNew.cardButtons": "Nupud, mis kehtivad terve kaardi kohta, on all paremal, nagu aknas.",

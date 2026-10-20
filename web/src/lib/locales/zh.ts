@@ -730,6 +730,7 @@ const zh: Partial<Translations> = {
   "whatsNew.locationSignIn": "目标从已保存的凭据中选择，“编辑”会在与设置页面相同的窗口中打开它。",
   "whatsNew.ownFolderMove": "部分的专属文件夹可以移到你的某个目标中，并沿用其凭据和保护。多个部分可一步移动。",
   "whatsNew.ownFoldersCard": "远程目标会显示在那里保存自己备份的部分。",
+  "whatsNew.singleAction": "当「更多」只有一个操作时，该操作会直接显示为单独的按钮。",
   "whatsNew.wizardSignIn": "新目标可以用已保存的凭据登录，而不必使用新密钥。",
   "whatsNew.listsAsRows": "每个列表都把条目显示为以细线分隔的行，背后没有灰色方框。",
   "whatsNew.cardButtons": "作用于整张卡片的按钮位于卡片右下角，与窗口中一致。",

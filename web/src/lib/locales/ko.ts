@@ -730,6 +730,7 @@ const ko: Partial<Translations> = {
   "whatsNew.locationSignIn": "대상은 저장된 자격 증명 중에서 고르며, “편집”은 설정 페이지와 같은 창에서 엽니다.",
   "whatsNew.ownFolderMove": "섹션의 전용 폴더를 대상 중 하나로 옮길 수 있으며, 그 자격 증명과 보호를 이어받습니다. 여러 섹션을 한 번에 옮깁니다.",
   "whatsNew.ownFoldersCard": "원격 대상에 그곳에 백업을 보관하는 섹션이 표시됩니다.",
+  "whatsNew.singleAction": "'더보기'에 동작이 하나뿐이면 그 동작이 별도의 버튼으로 표시됩니다.",
   "whatsNew.wizardSignIn": "새 대상은 새 키 대신 저장된 자격 증명으로 로그인할 수 있습니다.",
   "whatsNew.listsAsRows": "모든 목록은 항목을 가는 선으로 구분된 행으로 보여 주며, 뒤에 회색 상자가 없습니다.",
   "whatsNew.cardButtons": "카드 전체에 적용되는 버튼은 창과 마찬가지로 오른쪽 아래에 있습니다.",

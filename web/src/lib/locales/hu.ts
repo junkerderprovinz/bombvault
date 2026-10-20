@@ -735,6 +735,7 @@ const hu: Partial<Translations> = {
   "whatsNew.locationSignIn": "Egy cél a mentett bejelentkezések közül választ, a „Szerkesztés” pedig ugyanabban az ablakban nyitja meg, mint a beállítások oldala.",
   "whatsNew.ownFolderMove": "Egy szakasz saját mappája átköltözhet valamelyik célodba, és átveszi annak bejelentkezését és védelmét. Több szakasz egy lépésben költözik.",
   "whatsNew.ownFoldersCard": "Egy távoli cél megmutatja a szakaszokat, amelyek ott tartják a saját mentéseiket.",
+  "whatsNew.singleAction": "Ha a «Több» csak egy műveletet tartalmazna, az a művelet külön gombként jelenik meg.",
   "whatsNew.wizardSignIn": "Egy új cél mentett bejelentkezéssel is beléphet új kulcsok helyett.",
   "whatsNew.listsAsRows": "Minden lista vékony vonallal elválasztott sorokként mutatja a bejegyzéseit, szürke doboz nélkül a háttérben.",
   "whatsNew.cardButtons": "Az egész kártyára vonatkozó gombok jobb alul vannak, ahogy egy ablakban is.",

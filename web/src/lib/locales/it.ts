@@ -735,6 +735,7 @@ const it: Partial<Translations> = {
   "whatsNew.locationSignIn": "Una destinazione sceglie tra le credenziali salvate, e «Modifica» le apre nella stessa finestra della pagina delle impostazioni.",
   "whatsNew.ownFolderMove": "La cartella propria di una sezione può andare in una delle tue destinazioni e prenderne credenziali e protezione. Più sezioni si spostano in un solo passo.",
   "whatsNew.ownFoldersCard": "Una destinazione remota elenca le sezioni che vi tengono i propri backup.",
+  "whatsNew.singleAction": "Quando «Altro» conterrebbe una sola azione, quell'azione appare come un pulsante a sé.",
   "whatsNew.wizardSignIn": "Una nuova destinazione può accedere con credenziali salvate invece che con nuove chiavi.",
   "whatsNew.listsAsRows": "Ogni elenco mostra le voci come righe separate da una linea sottile, senza un riquadro grigio dietro.",
   "whatsNew.cardButtons": "I pulsanti che riguardano un'intera scheda stanno in basso a destra, come in una finestra.",

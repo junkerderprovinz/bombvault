@@ -89,6 +89,14 @@ export const RELEASES: Release[] = [
         way: [...TO_STORAGE, "location"],
         text: "whatsNew.ownFoldersCard",
       },
+      {
+        id: "location-single-action",
+        page: LOCATION,
+        go: "/storage",
+        where: ["storage.title", "whatsNew.page.location"],
+        way: [...TO_STORAGE, "location"],
+        text: "whatsNew.singleAction",
+      },
       { id: "wizard-sign-in", text: "whatsNew.wizardSignIn" },
       {
         id: "sign-in-make-default",

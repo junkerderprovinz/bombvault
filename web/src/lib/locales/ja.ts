@@ -730,6 +730,7 @@ const ja: Partial<Translations> = {
   "whatsNew.locationSignIn": "保存先は保存済みの認証情報から選び、「編集」で設定ページと同じウィンドウに開きます。",
   "whatsNew.ownFolderMove": "セクションの専用フォルダーを保存先の一つへ移動でき、その認証情報と保護を引き継ぎます。複数のセクションを一度に移動できます。",
   "whatsNew.ownFoldersCard": "リモートの保存先に、そこにバックアップを保存しているセクションが表示されます。",
+  "whatsNew.singleAction": "「その他」に操作が1つしかない場合は、その操作が独立したボタンとして表示されます。",
   "whatsNew.wizardSignIn": "新しい保存先は、新しいキーの代わりに保存済みの認証情報でサインインできます。",
   "whatsNew.listsAsRows": "すべてのリストは項目を細い線で区切った行として表示し、背後に灰色の枠はありません。",
   "whatsNew.cardButtons": "カード全体に関わるボタンは、ウィンドウと同じく右下に並びます。",

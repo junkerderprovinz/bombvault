@@ -735,6 +735,7 @@ const sv: Partial<Translations> = {
   "whatsNew.locationSignIn": "Ett mål väljer bland de sparade inloggningarna, och ”Redigera” öppnar den i samma fönster som inställningssidan.",
   "whatsNew.ownFolderMove": "En sektions egna mapp kan flytta till ett av dina mål och tar med dess inloggning och skydd. Flera sektioner flyttar i ett steg.",
   "whatsNew.ownFoldersCard": "Ett fjärrmål visar sektionerna som har sina egna säkerhetskopior där.",
+  "whatsNew.singleAction": "När «Mer» bara skulle rymma en åtgärd visas den som en egen knapp.",
   "whatsNew.wizardSignIn": "Ett nytt mål kan logga in med en sparad inloggning i stället för nya nycklar.",
   "whatsNew.listsAsRows": "Varje lista visar sina poster som rader åtskilda av ett tunt streck, utan en grå ruta bakom.",
   "whatsNew.cardButtons": "Knappar som gäller hela kortet sitter nere till höger, precis som i ett fönster.",

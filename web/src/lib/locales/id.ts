@@ -850,6 +850,7 @@ const id: Partial<Translations> = {
   "whatsNew.locationSignIn": "Sebuah tujuan memilih dari login yang tersimpan, dan “Edit” membukanya di jendela yang sama dengan halaman pengaturan.",
   "whatsNew.ownFolderMove": "Folder sendiri sebuah bagian bisa pindah ke salah satu tujuanmu dan memakai login serta perlindungannya. Beberapa bagian pindah dalam satu langkah.",
   "whatsNew.ownFoldersCard": "Tujuan jarak jauh menampilkan bagian yang menyimpan cadangannya sendiri di sana.",
+  "whatsNew.singleAction": "Jika «Lainnya» hanya berisi satu tindakan, tindakan itu tampil sebagai tombol tersendiri.",
   "whatsNew.wizardSignIn": "Tujuan baru bisa masuk dengan login tersimpan, bukan kunci baru.",
   "whatsNew.listsAsRows": "Setiap daftar menampilkan entrinya sebagai baris yang dipisahkan garis tipis, tanpa kotak abu-abu di belakangnya.",
   "whatsNew.cardButtons": "Tombol yang berlaku untuk seluruh kartu ada di kanan bawah, seperti di jendela.",

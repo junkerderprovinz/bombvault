@@ -730,6 +730,7 @@ const vi: Partial<Translations> = {
   "whatsNew.locationSignIn": "Một đích chọn từ các thông tin đăng nhập đã lưu, và “Chỉnh sửa” mở nó trong cùng cửa sổ với trang cài đặt.",
   "whatsNew.ownFolderMove": "Thư mục riêng của một phần có thể chuyển đến một trong các đích của bạn và dùng thông tin đăng nhập cùng chế độ bảo vệ của đích đó. Nhiều phần chuyển trong một bước.",
   "whatsNew.ownFoldersCard": "Một đích từ xa hiển thị những phần giữ bản sao lưu của mình ở đó.",
+  "whatsNew.singleAction": "Khi «Thêm» chỉ có một thao tác, thao tác đó hiện thành một nút riêng.",
   "whatsNew.wizardSignIn": "Một đích mới có thể đăng nhập bằng thông tin đăng nhập đã lưu thay vì khóa mới.",
   "whatsNew.listsAsRows": "Mọi danh sách hiển thị các mục dưới dạng hàng, ngăn cách bằng một đường mảnh, không có ô màu xám phía sau.",
   "whatsNew.cardButtons": "Các nút áp dụng cho cả thẻ nằm ở góc dưới bên phải, giống như trong cửa sổ.",

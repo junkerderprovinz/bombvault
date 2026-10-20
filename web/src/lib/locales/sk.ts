@@ -850,6 +850,7 @@ const sk: Partial<Translations> = {
   "whatsNew.locationSignIn": "Cieľ vyberá z uložených prihlasovacích údajov a „Upraviť“ ich otvorí v rovnakom okne ako stránka nastavení.",
   "whatsNew.ownFolderMove": "Vlastný priečinok sekcie sa môže presunúť do jedného z tvojich cieľov a prevezme jeho prihlasovacie údaje a ochranu. Viac sekcií sa presunie v jednom kroku.",
   "whatsNew.ownFoldersCard": "Vzdialený cieľ ukazuje sekcie, ktoré tam majú svoje zálohy.",
+  "whatsNew.singleAction": "Keď by «Viac» obsahovalo len jednu akciu, zobrazí sa táto akcia ako samostatné tlačidlo.",
   "whatsNew.wizardSignIn": "Nový cieľ sa môže prihlásiť uloženými prihlasovacími údajmi namiesto nových kľúčov.",
   "whatsNew.listsAsRows": "Každý zoznam zobrazuje položky ako riadky oddelené tenkou čiarou, bez sivého poľa v pozadí.",
   "whatsNew.cardButtons": "Tlačidlá, ktoré platia pre celú kartu, sú vpravo dole, rovnako ako v okne.",

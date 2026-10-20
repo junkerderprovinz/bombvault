@@ -735,6 +735,7 @@ const da: Partial<Translations> = {
   "whatsNew.locationSignIn": "En destination vælger blandt de gemte adgangsoplysninger, og »Rediger« åbner dem i samme vindue som indstillingssiden.",
   "whatsNew.ownFolderMove": "En sektions egen mappe kan flytte til en af dine destinationer og tager dens adgangsoplysninger og beskyttelse med. Flere sektioner flytter i ét trin.",
   "whatsNew.ownFoldersCard": "En fjern destination viser de sektioner, der har deres egne sikkerhedskopier der.",
+  "whatsNew.singleAction": "Når «Mere» kun ville rumme én handling, vises den som en knap for sig.",
   "whatsNew.wizardSignIn": "En ny destination kan logge ind med gemte adgangsoplysninger i stedet for nye nøgler.",
   "whatsNew.listsAsRows": "Alle lister viser deres poster som rækker adskilt af en tynd streg, uden en grå boks bagved.",
   "whatsNew.cardButtons": "Knapper, der gælder for hele kortet, sidder nederst til højre, ligesom i et vindue.",

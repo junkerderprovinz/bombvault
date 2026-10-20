@@ -850,6 +850,7 @@ const sl: Partial<Translations> = {
   "whatsNew.locationSignIn": "Cilj izbira med shranjenimi poverilnicami, »Uredi« pa jih odpre v istem oknu kot stran z nastavitvami.",
   "whatsNew.ownFolderMove": "Lastna mapa razdelka se lahko preseli v enega od tvojih ciljev in prevzame njegove poverilnice in zaščito. Več razdelkov se preseli v enem koraku.",
   "whatsNew.ownFoldersCard": "Oddaljen cilj prikaže razdelke, ki tam hranijo svoje varnostne kopije.",
+  "whatsNew.singleAction": "Če bi «Več» vsebovalo samo eno dejanje, se to dejanje prikaže kot samostojen gumb.",
   "whatsNew.wizardSignIn": "Nov cilj se lahko prijavi s shranjenimi poverilnicami namesto z novimi ključi.",
   "whatsNew.listsAsRows": "Vsak seznam prikaže vnose kot vrstice, ločene s tanko črto, brez sivega okvirja v ozadju.",
   "whatsNew.cardButtons": "Gumbi, ki veljajo za celo kartico, so spodaj desno, tako kot v oknu.",

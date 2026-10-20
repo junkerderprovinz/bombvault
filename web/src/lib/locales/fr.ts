@@ -735,6 +735,7 @@ const fr: Partial<Translations> = {
   "whatsNew.locationSignIn": "Une destination choisit parmi les identifiants enregistrés, et « Modifier » les ouvre dans la même fenêtre que la page des réglages.",
   "whatsNew.ownFolderMove": "Le dossier propre d'une section peut aller dans une de tes destinations et en prendre les identifiants et la protection. Plusieurs sections changent de place en une étape.",
   "whatsNew.ownFoldersCard": "Une destination distante liste les sections qui y gardent leurs propres sauvegardes.",
+  "whatsNew.singleAction": "Quand «Plus» ne contiendrait qu'une seule action, celle-ci s'affiche comme un bouton à part entière.",
   "whatsNew.wizardSignIn": "Une nouvelle destination peut se connecter avec des identifiants enregistrés au lieu de nouvelles clés.",
   "whatsNew.listsAsRows": "Chaque liste affiche ses entrées en lignes séparées par un trait fin, sans encadré gris derrière.",
   "whatsNew.cardButtons": "Les boutons qui concernent toute une carte se trouvent en bas à droite, comme dans une fenêtre.",

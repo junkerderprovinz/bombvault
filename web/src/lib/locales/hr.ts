@@ -850,6 +850,7 @@ const hr: Partial<Translations> = {
   "whatsNew.locationSignIn": "Odredište bira među spremljenim vjerodajnicama, a „Uredi” ih otvara u istom prozoru kao stranica postavki.",
   "whatsNew.ownFolderMove": "Vlastita mapa odjeljka može se preseliti u jedno od tvojih odredišta i preuzima njegove vjerodajnice i zaštitu. Više odjeljaka seli se u jednom koraku.",
   "whatsNew.ownFoldersCard": "Udaljeno odredište prikazuje odjeljke koji ondje drže svoje sigurnosne kopije.",
+  "whatsNew.singleAction": "Kad bi «Više» sadržavalo samo jednu radnju, ta se radnja prikazuje kao zasebna tipka.",
   "whatsNew.wizardSignIn": "Novo odredište može se prijaviti spremljenim vjerodajnicama umjesto novih ključeva.",
   "whatsNew.listsAsRows": "Svaki popis prikazuje svoje stavke kao retke odvojene tankom crtom, bez sivog okvira iza njih.",
   "whatsNew.cardButtons": "Gumbi koji vrijede za cijelu karticu nalaze se dolje desno, kao u prozoru.",

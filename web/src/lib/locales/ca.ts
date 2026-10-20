@@ -850,6 +850,7 @@ const ca: Partial<Translations> = {
   "whatsNew.locationSignIn": "Una destinació tria entre les credencials desades, i «Edita» les obre a la mateixa finestra que la pàgina de configuració.",
   "whatsNew.ownFolderMove": "La carpeta pròpia d'una secció pot anar a una de les teves destinacions i prendre'n les credencials i la protecció. Diverses seccions es mouen en un sol pas.",
   "whatsNew.ownFoldersCard": "Una destinació remota mostra les seccions que hi desen les seves còpies de seguretat.",
+  "whatsNew.singleAction": "Quan «Més» tindria una sola acció, aquesta acció es mostra com un botó propi.",
   "whatsNew.wizardSignIn": "Una destinació nova pot iniciar sessió amb credencials desades en lloc de claus noves.",
   "whatsNew.listsAsRows": "Cada llista mostra les entrades com a files separades per una línia fina, sense cap requadre gris al darrere.",
   "whatsNew.cardButtons": "Els botons que afecten tota una targeta són a baix a la dreta, com en una finestra.",

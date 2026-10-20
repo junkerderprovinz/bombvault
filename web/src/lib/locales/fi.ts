@@ -735,6 +735,7 @@ const fi: Partial<Translations> = {
   "whatsNew.locationSignIn": "Kohde valitsee tallennetuista tunnuksista, ja ”Muokkaa” avaa ne samaan ikkunaan kuin asetussivu.",
   "whatsNew.ownFolderMove": "Osion oma kansio voi siirtyä johonkin kohteistasi ja ottaa sen tunnukset ja suojauksen. Useampi osio siirtyy yhdellä kertaa.",
   "whatsNew.ownFoldersCard": "Etäkohde näyttää osiot, jotka pitävät siellä omia varmuuskopioitaan.",
+  "whatsNew.singleAction": "Kun «Lisää» sisältäisi vain yhden toiminnon, se näytetään omana painikkeenaan.",
   "whatsNew.wizardSignIn": "Uusi kohde voi kirjautua tallennetuilla tunnuksilla uusien avainten sijaan.",
   "whatsNew.listsAsRows": "Jokainen luettelo näyttää kohteensa riveinä, joita erottaa ohut viiva, ilman harmaata laatikkoa taustalla.",
   "whatsNew.cardButtons": "Koko korttia koskevat painikkeet ovat oikeassa alakulmassa, kuten ikkunassa.",

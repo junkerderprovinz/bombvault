@@ -850,6 +850,7 @@ const lv: Partial<Translations> = {
   "whatsNew.locationSignIn": "Mērķis izvēlas no saglabātajām pieteikšanās, un “Rediģēt” to atver tajā pašā logā kā iestatījumu lapa.",
   "whatsNew.ownFolderMove": "Sadaļas paša mape var pārcelties uz kādu no taviem mērķiem un pārņem tā pieteikšanos un aizsardzību. Vairākas sadaļas pārceļas vienā solī.",
   "whatsNew.ownFoldersCard": "Attāls mērķis rāda sadaļas, kas tur glabā savus dublējumus.",
+  "whatsNew.singleAction": "Ja «Vēl» saturētu tikai vienu darbību, šī darbība tiek rādīta kā atsevišķa poga.",
   "whatsNew.wizardSignIn": "Jauns mērķis var pieteikties ar saglabātu pieteikšanos jaunu atslēgu vietā.",
   "whatsNew.listsAsRows": "Katrs saraksts rāda ierakstus kā rindas, kas atdalītas ar plānu līniju, bez pelēka lodziņa fonā.",
   "whatsNew.cardButtons": "Pogas, kas attiecas uz visu karti, atrodas apakšā pa labi, tāpat kā logā.",

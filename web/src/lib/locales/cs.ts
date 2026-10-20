@@ -733,6 +733,7 @@ const cs: Partial<Translations> = {
   "whatsNew.locationSignIn": "Cíl vybírá z uložených přihlašovacích údajů a „Upravit“ je otevře ve stejném okně jako stránka nastavení.",
   "whatsNew.ownFolderMove": "Vlastní složka sekce se může přesunout do jednoho z tvých cílů a převezme jeho přihlašovací údaje a ochranu. Více sekcí se přesune v jednom kroku.",
   "whatsNew.ownFoldersCard": "Vzdálený cíl ukazuje sekce, které tam mají své zálohy.",
+  "whatsNew.singleAction": "Když by «Více» obsahovalo jen jednu akci, zobrazí se tato akce jako samostatné tlačítko.",
   "whatsNew.wizardSignIn": "Nový cíl se může přihlásit uloženými přihlašovacími údaji místo nových klíčů.",
   "whatsNew.listsAsRows": "Každý seznam zobrazuje položky jako řádky oddělené tenkou čarou, bez šedého pole v pozadí.",
   "whatsNew.cardButtons": "Tlačítka, která platí pro celou kartu, jsou vpravo dole, stejně jako v okně.",

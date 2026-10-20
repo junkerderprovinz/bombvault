@@ -850,6 +850,7 @@ const gl: Partial<Translations> = {
   "whatsNew.locationSignIn": "Un destino escolle entre as credenciais gardadas, e «Editar» ábreas na mesma xanela ca páxina de axustes.",
   "whatsNew.ownFolderMove": "O cartafol propio dunha sección pode ir a un dos teus destinos e levar as súas credenciais e a súa protección. Varias seccións móvense nun só paso.",
   "whatsNew.ownFoldersCard": "Un destino remoto amosa as seccións que gardan alí as súas propias copias de seguridade.",
+  "whatsNew.singleAction": "Cando «Máis» tería só unha acción, esa acción amósase como un botón propio.",
   "whatsNew.wizardSignIn": "Un destino novo pode iniciar sesión con credenciais gardadas en vez de chaves novas.",
   "whatsNew.listsAsRows": "Cada lista mostra as súas entradas como filas separadas por unha liña fina, sen ningún recadro gris detrás.",
   "whatsNew.cardButtons": "Os botóns que afectan a toda unha tarxeta están abaixo á dereita, como nunha xanela.",

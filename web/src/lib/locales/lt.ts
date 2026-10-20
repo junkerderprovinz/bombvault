@@ -850,6 +850,7 @@ const lt: Partial<Translations> = {
   "whatsNew.locationSignIn": "Paskirties vieta renkasi iš išsaugotų prisijungimų, o „Redaguoti“ jį atveria tame pačiame lange kaip nustatymų puslapis.",
   "whatsNew.ownFolderMove": "Skilties savas aplankas gali persikelti į vieną tavo paskirties vietų ir perima jos prisijungimą bei apsaugą. Kelios skiltys persikelia vienu žingsniu.",
   "whatsNew.ownFoldersCard": "Nuotolinė paskirties vieta rodo skiltis, kurios ten laiko savo atsargines kopijas.",
+  "whatsNew.singleAction": "Kai «Daugiau» turėtų tik vieną veiksmą, šis veiksmas rodomas kaip atskiras mygtukas.",
   "whatsNew.wizardSignIn": "Nauja paskirties vieta gali prisijungti su išsaugotu prisijungimu vietoj naujų raktų.",
   "whatsNew.listsAsRows": "Kiekvienas sąrašas rodo įrašus kaip eilutes, atskirtas plona linija, be pilko langelio fone.",
   "whatsNew.cardButtons": "Mygtukai, skirti visai kortelei, yra apačioje dešinėje, kaip lange.",

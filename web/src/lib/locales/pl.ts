@@ -729,6 +729,7 @@ const pl: Partial<Translations> = {
   "whatsNew.locationSignIn": "Miejsce docelowe wybiera spośród zapisanych danych logowania, a „Edytuj” otwiera je w tym samym oknie co strona ustawień.",
   "whatsNew.ownFolderMove": "Własny folder sekcji może przenieść się do jednego z twoich miejsc docelowych i przejmuje jego dane logowania i ochronę. Kilka sekcji przenosi się w jednym kroku.",
   "whatsNew.ownFoldersCard": "Zdalne miejsce docelowe pokazuje sekcje, które trzymają tam swoje kopie zapasowe.",
+  "whatsNew.singleAction": "Gdyby «Więcej» zawierało tylko jedną czynność, jest ona pokazywana jako osobny przycisk.",
   "whatsNew.wizardSignIn": "Nowe miejsce docelowe może logować się zapisanymi danymi logowania zamiast nowych kluczy.",
   "whatsNew.listsAsRows": "Każda lista pokazuje wpisy jako wiersze oddzielone cienką linią, bez szarego pola w tle.",
   "whatsNew.cardButtons": "Przyciski dotyczące całej karty są w prawym dolnym rogu, tak jak w oknie.",

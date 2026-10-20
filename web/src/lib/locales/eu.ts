@@ -850,6 +850,7 @@ const eu: Partial<Translations> = {
   "whatsNew.locationSignIn": "Helmuga batek gordetako saio-hasieren artean aukeratzen du, eta «Editatu»-k ezarpenen orriaren leiho berean irekitzen du.",
   "whatsNew.ownFolderMove": "Atal baten karpeta propioa zure helmugetako batera mugi daiteke eta haren saio-hasiera eta babesa hartzen ditu. Hainbat atal urrats bakarrean mugitzen dira.",
   "whatsNew.ownFoldersCard": "Urruneko helmuga batek bertan beren babeskopiak gordetzen dituzten atalak erakusten ditu.",
+  "whatsNew.singleAction": "«Gehiago»k ekintza bakarra izango balu, ekintza hori botoi bereizi gisa agertzen da.",
   "whatsNew.wizardSignIn": "Helmuga berri batek gordetako saio-hasiera batekin has dezake saioa, gako berrien ordez.",
   "whatsNew.listsAsRows": "Zerrenda bakoitzak bere sarrerak lerro mehe batez bereizitako errenkada gisa erakusten ditu, atzean kutxa grisik gabe.",
   "whatsNew.cardButtons": "Txartel osoari dagozkion botoiak beheko eskuinaldean daude, leiho batean bezala.",
