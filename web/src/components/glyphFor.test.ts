@@ -24,6 +24,10 @@ describe("glyphFor", () => {
     expect(glyphFor("integrity.unlock")).not.toEqual(glyphFor("signIns.add"));
   });
 
+  it("gives every Got it the check of an agreement", () => {
+    expect(glyphFor("common.gotIt")).toEqual(glyphFor("common.confirm"));
+  });
+
   it("gives a confirmation the symbol of what it confirms", () => {
     expect(glyphFor("fleet.confirmRemove")).toEqual(glyphFor("fleet.remove"));
     expect(glyphFor("common.confirm")).toEqual(glyphFor("fleet.mesh.accept"));

@@ -194,6 +194,12 @@ export const SETTINGS_INDEX: Record<SettingsPageId, SearchCard[]> = {
       ],
     },
     {
+      title: "signIns.title",
+      hint: "signIns.hint",
+      rows: [],
+      body: ["signIns.makeDefault", "signIns.test", "cloud.credSets.name", "cloud.storageClass.label"],
+    },
+    {
       title: "storage.flow.title",
       hint: "storage.flow.hint",
       rows: [],
@@ -233,15 +239,6 @@ export const SETTINGS_INDEX: Record<SettingsPageId, SearchCard[]> = {
       title: "settings.offsiteLimits",
       hint: "settings.limitHint",
       rows: [{ key: "settings.limitUpload" }, { key: "settings.limitDownload" }],
-    },
-    {
-      title: "signIns.title",
-      hint: "signIns.hint",
-      rows: [
-        { key: "cloud.credSets.name" },
-        { key: "signIns.defaultToggle", hint: "signIns.defaultToggleHint" },
-        { key: "cloud.storageClass.label", hint: "cloud.storageClass.hint" },
-      ],
     },
   ],
 

@@ -44,6 +44,7 @@ export function TestButton({
   hueIndex,
   disabled = false,
   title,
+  hint,
   className = "",
 }: {
   label: string;
@@ -60,6 +61,8 @@ export function TestButton({
   disabled?: boolean;
   /** Extra explanation at rest. */
   title?: string;
+  /** Why the test cannot run, as the button's (i). */
+  hint?: string;
   className?: string;
 }) {
   const { t } = useT();
@@ -79,6 +82,7 @@ export function TestButton({
       disabled={disabled || running}
       busy={running}
       title={verdict ? label : title}
+      hint={hint}
       className={`${shaking ? "glim-shake" : ""} ${className}`.trim()}
     />
   );

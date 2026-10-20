@@ -98,6 +98,14 @@ export const RELEASES: Release[] = [
         text: "whatsNew.signInMakeDefault",
       },
       {
+        id: "sign-in-edit",
+        page: "/settings/storage",
+        where: ["nav.settings", "storage.title"],
+        way: ["/settings", "/settings/storage"],
+        text: "whatsNew.signInEdit",
+      },
+      { id: "got-it-check", text: "whatsNew.gotItCheck" },
+      {
         id: "settings-storage-list",
         page: "/settings/storage",
         where: ["nav.settings", "storage.title"],

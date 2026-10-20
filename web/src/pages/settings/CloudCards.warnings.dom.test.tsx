@@ -9,7 +9,9 @@ const credsKeptText = "B2 direct cannot be opened with the new key and keeps the
 
 vi.mock("../../lib/useCloudCredSets", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../../lib/useCloudCredSets")>()),
-  useCloudCredSets: () => [],
+  useCloudCredSets: () => [
+    { id: "nas", name: "NAS", s3KeyId: "", s3Region: "", restUser: "u", s3StorageClass: "", s3SecretSet: false, restPasswordSet: true, usedBy: [] },
+  ],
   credSetsChanged: () => {},
 }));
 vi.mock("../../lib/api", async (importOriginal) => ({
@@ -60,8 +62,8 @@ it("shows the warnings a save of the default sign-in answered with", async () =>
 
 it("shows the warnings a save of a saved sign-in answered with", async () => {
   await renderCard("sets");
-  fireEvent.click(screen.getByRole("button", { name: en["signIns.add"] }));
-  fireEvent.change(screen.getByLabelText(en["cloud.credSets.name"]), { target: { value: "NAS" } });
+  fireEvent.click(screen.getByRole("button", { name: en["offsite.targets.edit"] }));
+  fireEvent.change(screen.getByLabelText(en["cloud.credSets.name"]), { target: { value: "Old NAS" } });
   await act(async () => {
     fireEvent.click(screen.getByRole("button", { name: en["settings.save"] }));
   });

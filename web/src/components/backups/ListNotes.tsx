@@ -11,7 +11,6 @@ import { zfsCodeSentence, zfsFixKey } from "../../lib/zfsCodes";
 import { Button } from "../Button";
 import { IconEye } from "../glyphs";
 import { InfoBubble } from "../InfoBubble";
-import { IconCheck } from "../navGlyphs";
 
 type T = (key: TranslationKey, n?: number) => string;
 
@@ -87,7 +86,7 @@ export function DumpIntro({ databases, onDismiss, t }: { databases: BackupItem[]
         </Link>
         {after}
       </p>
-      <Button label={t("dbdump.introDismiss")} labelKey={null} glyph={<IconCheck />} onClick={onDismiss} />
+      <Button label={t("common.gotIt")} labelKey="common.gotIt" onClick={onDismiss} />
     </ListNote>
   );
 }

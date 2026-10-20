@@ -8,6 +8,7 @@ import { useOwnChoices } from "../../lib/useOwnChoices";
 import { usePlacementDefaults } from "../../lib/usePlacementDefaults";
 import { storageLocationsChanged, type StorageLocationList } from "../../lib/useStorageLocations";
 import { Card } from "../../pages/settings/shared";
+import { SignInsCard } from "../../pages/settings/SignInsCard";
 import { Button } from "../Button";
 import { AddLocationWindow } from "./AddLocationWindow";
 import { FlowCard } from "./FlowCard";
@@ -24,11 +25,14 @@ export function LocationCards({
   nextHue,
   newId,
   flowNewId,
+  signIns = false,
 }: {
   list: StorageLocationList;
   nextHue: () => number;
   newId: string;
   flowNewId?: string;
+  /** Shows the saved sign-ins under the list, as the settings page does. */
+  signIns?: boolean;
 }) {
   const { t } = useT();
   const { locations } = list;
@@ -51,13 +55,14 @@ export function LocationCards({
         hueIndex={nextHue()}
         newId={newId}
         foot={
-          <span data-new-way="add-location" className="flex">
+          <span data-new="card-foot" data-new-way="add-location" className="flex">
             <Button label={t("storage.add.title")} labelKey="storage.add.title" tone="accent" onClick={() => setAdding(true)} />
           </span>
         }
       >
         <LocationList list={list} />
       </Card>
+      {signIns && <SignInsCard hueIndex={nextHue()} />}
       {sections.length > 0 && <FlowCard locations={locations} defaults={defaults} own={own} hueIndex={nextHue()} newId={flowNewId} />}
       {adding && <AddLocationWindow domains={sections} defaults={defaults.rows} onClose={() => setAdding(false)} />}
     </>

@@ -1,32 +1,25 @@
-import { useEffect, useId, useState } from "react";
+import { useEffect, useState } from "react";
 import { Badge } from "../../components/Badge";
 import { Button } from "../../components/Button";
 import { IconStar } from "../../components/glyphs";
 import { InfoBubble } from "../../components/InfoBubble";
 import { IconCheck } from "../../components/navGlyphs";
-import { RevealInput } from "../../components/RevealInput";
-import { SelectField } from "../../components/SelectField";
-import { Rows, SettingRow } from "../../components/storage/rows";
-import { Toggle } from "../../components/Toggle";
+import { SignInWindow } from "../../components/storage/SignInWindow";
 import {
   dismissSignInsNote,
   getCloudCredSets,
   makeDefaultSignIn,
   setCloudCredSets,
-  type CloudCredSet,
   type CloudCredSetInfo,
   type SignInsNote,
 } from "../../lib/api";
 import { useT } from "../../lib/i18n";
 import { formatList } from "../../lib/placement";
 import { pushSaveWarnings } from "../../lib/placementCodes";
-import { STORAGE_CLASSES } from "../../lib/storageClasses";
 import { DOMAIN_LABEL } from "../../lib/storageLocations";
 import { useToast } from "../../lib/toast";
-import { credSetDraft, credSetLabel, credSetsChanged, saveCredSet, useCloudCredSets } from "../../lib/useCloudCredSets";
-import { useReveal } from "../../lib/useReveal";
-import { randomId } from "../../lib/uuid";
-import { Card, type SaveState } from "./shared";
+import { credSetDraft, credSetLabel, credSetsChanged, useCloudCredSets } from "../../lib/useCloudCredSets";
+import { Card } from "./shared";
 
 /** The note on what the shared cloud credentials became, as one paragraph. */
 function noteText(t: ReturnType<typeof useT>["t"], lang: string, note: SignInsNote): string {
@@ -44,31 +37,22 @@ function noteText(t: ReturnType<typeof useT>["t"], lang: string, note: SignInsNo
 
 /**
  * SignInsCard lists the saved sign-ins: the keys BombVault signs in to S3
- * services and restic REST servers with. A storage location picks one, and
- * the default serves every place that names none. The list is saved as a
- * whole, which is why every save resends every set.
- *
- * Unlike the rest of the settings page the editor has a Save button: it holds
- * a draft that Close discards, and saving on every keystroke would list a
- * half-filled sign-in as soon as the first letter of its name was typed.
+ * services and restic REST servers with. A sign-in comes into being when a
+ * storage location is added, and the default serves every place that names
+ * none. The list is saved as a whole, which is why every save resends every
+ * set.
  */
 export function SignInsCard({ hueIndex }: { hueIndex?: number }) {
   const { t, lang } = useT();
-  const uid = useId();
   const { push } = useToast();
   const sets = useCloudCredSets();
   const [note, setNote] = useState<SignInsNote | null>(null);
-  const [editing, setEditing] = useState<CloudCredSet | null>(null);
-  const [state, setState] = useState<SaveState>("idle");
+  const [editing, setEditing] = useState<CloudCredSetInfo | null>(null);
   const [confirmRemove, setConfirmRemove] = useState<string | null>(null);
   const [removingId, setRemovingId] = useState<string | null>(null);
   const [defaultingId, setDefaultingId] = useState<string | null>(null);
-  // A failed action shakes the button that caused it. Removal is keyed per
-  // row, since several remove buttons can be on screen at once.
+  // A failed action shakes the button that caused it, keyed per row.
   const [shake, setShake] = useState<Record<string, number>>({});
-  const revealS3Secret = useReveal();
-  const revealRestPassword = useReveal();
-  const stored = editing ? sets.find((s) => s.id === editing.id) : undefined;
 
   useEffect(() => {
     let alive = true;
@@ -86,70 +70,16 @@ export function SignInsCard({ hueIndex }: { hueIndex?: number }) {
     setShake((sh) => ({ ...sh, [key]: (sh[key] ?? 0) + 1 }));
   }
 
-  function openNew() {
-    // Not crypto.randomUUID(): it is undefined outside a secure context, and
-    // BombVault supports plain HTTP.
-    setEditing({ id: randomId(), name: "", s3KeyId: "", s3Secret: "", s3Region: "", restUser: "", restPassword: "", s3StorageClass: "", default: false });
-    setState("idle");
-  }
-  function openEdit(s: CloudCredSetInfo) {
-    setConfirmRemove(null);
-    setEditing(editing?.id === s.id ? null : credSetDraft(s));
-    setState("idle");
-  }
-  function setField<K extends keyof CloudCredSet>(k: K, v: CloudCredSet[K]) {
-    setEditing((p) => (p ? { ...p, [k]: v } : p));
-  }
-
-  function setDefault(on: boolean) {
-    if (!on && stored?.default) {
-      push(t("signIns.removeDefault"), "fail");
-      return;
-    }
-    setField("default", on);
-  }
-
-  async function save() {
-    if (!editing) return;
-    if (!editing.name.trim()) {
-      push(t("storage.creds.nameFirst"), "fail");
-      bumpShake("save");
-      return;
-    }
-    setState("saving");
-    // The default mark moves: saving one as the default takes it from the rest.
-    const others = editing.default ? sets.map((s) => ({ ...s, default: false })) : sets;
-    try {
-      const r = await saveCredSet(others, editing);
-      setState("idle");
-      if (!r.ok) {
-        push(r.error ?? t("settings.error"), "fail");
-        bumpShake("save");
-        return;
-      }
-      setEditing(null);
-      push(t("settings.saved"), "success");
-      pushSaveWarnings(push, t, r.warnings);
-    } catch (err) {
-      setState("idle");
-      push(err instanceof Error ? err.message : t("settings.error"), "fail");
-      bumpShake("save");
-    }
+  /** Why a sign-in cannot go, or null when it can. The default goes last,
+   *  since every place that names no sign-in falls back to it. */
+  function blocker(s: CloudCredSetInfo): string | null {
+    const users = s.usedBy ?? [];
+    if (users.length > 0) return t("signIns.removeUsed").replace("{list}", () => formatList(lang, users.map((u) => u.name)));
+    if (s.default && sets.length > 1) return t("signIns.removeDefault");
+    return null;
   }
 
   async function remove(s: CloudCredSetInfo) {
-    if (s.default) {
-      push(t("signIns.removeDefault"), "fail");
-      bumpShake(`remove:${s.id}`);
-      return;
-    }
-    const users = s.usedBy ?? [];
-    if (users.length > 0) {
-      const list = formatList(lang, users.map((u) => u.name));
-      push(t("signIns.removeUsed").replace("{list}", () => list), "fail");
-      bumpShake(`remove:${s.id}`);
-      return;
-    }
     if (confirmRemove !== s.id) {
       setConfirmRemove(s.id);
       return;
@@ -197,95 +127,8 @@ export function SignInsCard({ hueIndex }: { hueIndex?: number }) {
     void dismissSignInsNote().catch(() => undefined);
   }
 
-  const inputCls = "rounded-control bg-carbon-surface2 text-carbon-text text-sm font-mono px-3 py-1.5 glim-field-focus";
-  const textCls = `${inputCls} w-72 max-w-full`;
-  const headCls = "text-xs font-semibold uppercase tracking-widest text-carbon-textSub";
-  const isNew = editing !== null && !stored;
-
-  const editor = editing && (
-    <div className="flex flex-col gap-4 pt-4">
-      <Rows>
-        <SettingRow label={t("cloud.credSets.name")} htmlFor={`${uid}-name`}>
-          <input id={`${uid}-name`} value={editing.name} onChange={(e) => setField("name", e.target.value)} className={textCls} />
-        </SettingRow>
-        <SettingRow label={t("signIns.defaultToggle")} hint={t("signIns.defaultToggleHint")}>
-          <Toggle hideLabel label={t("signIns.defaultToggle")} checked={!!editing.default} onChange={setDefault} />
-        </SettingRow>
-      </Rows>
-      <div className="flex flex-col gap-2">
-        <span className={headCls}>Amazon S3</span>
-        <Rows>
-          <SettingRow label="AWS_ACCESS_KEY_ID" htmlFor={`${uid}-s3-key`}>
-            <input id={`${uid}-s3-key`} value={editing.s3KeyId} onChange={(e) => setField("s3KeyId", e.target.value)} spellCheck={false} dir="ltr" className={`${textCls} text-start`} />
-          </SettingRow>
-          <SettingRow label="AWS_SECRET_ACCESS_KEY" htmlFor={`${uid}-s3-secret`}>
-            <RevealInput {...revealS3Secret} id={`${uid}-s3-secret`} value={editing.s3Secret} onChange={(e) => setField("s3Secret", e.target.value)} spellCheck={false}
-              placeholder={stored?.s3SecretSet ? t("cloud.secretSet") : ""} wrapperClassName="w-72 max-w-full" className={inputCls} />
-          </SettingRow>
-          <SettingRow label="AWS_DEFAULT_REGION" htmlFor={`${uid}-s3-region`}>
-            <input id={`${uid}-s3-region`} value={editing.s3Region} onChange={(e) => setField("s3Region", e.target.value)} spellCheck={false} placeholder="us-east-1" className={textCls} />
-          </SettingRow>
-          <SettingRow label={t("cloud.storageClass.label")} hint={t("cloud.storageClass.hint")} htmlFor={`${uid}-s3-class`}>
-            <SelectField
-              id={`${uid}-s3-class`}
-              value={editing.s3StorageClass}
-              onChange={(v) => setField("s3StorageClass", v)}
-              label={t("cloud.storageClass.label")}
-              options={[{ value: "", label: t("cloud.storageClass.default") }, ...STORAGE_CLASSES.map((sc) => ({ value: sc, label: sc }))]}
-              className={inputCls}
-            />
-          </SettingRow>
-        </Rows>
-      </div>
-      <div className="flex flex-col gap-2">
-        <span className={headCls}>restic REST server</span>
-        <Rows>
-          <SettingRow label="RESTIC_REST_USERNAME" htmlFor={`${uid}-rest-user`}>
-            <input id={`${uid}-rest-user`} value={editing.restUser} onChange={(e) => setField("restUser", e.target.value)} spellCheck={false} dir="ltr" className={`${textCls} text-start`} />
-          </SettingRow>
-          <SettingRow label="RESTIC_REST_PASSWORD" htmlFor={`${uid}-rest-password`}>
-            <RevealInput {...revealRestPassword} id={`${uid}-rest-password`} value={editing.restPassword} onChange={(e) => setField("restPassword", e.target.value)} spellCheck={false}
-              placeholder={stored?.restPasswordSet ? t("cloud.secretSet") : ""} wrapperClassName="w-72 max-w-full" className={inputCls} />
-          </SettingRow>
-        </Rows>
-      </div>
-      <div className="flex flex-wrap items-center justify-end gap-3">
-        <Button label={t("common.close")} labelKey="common.close" tone="neutral" onClick={() => setEditing(null)} />
-        <Button
-          key={shake.save || 0}
-          label={t("settings.save")}
-          labelKey="settings.save"
-          tone="accent"
-          onClick={() => void save()}
-          disabled={state === "saving"}
-          busy={state === "saving"}
-          className={shake.save ? "glim-shake" : ""}
-        />
-      </div>
-    </div>
-  );
-
   return (
-    <Card
-      title={t("signIns.title")}
-      hint={t("signIns.hint")}
-      hueIndex={hueIndex}
-      newId="settings-sign-ins"
-      foot={
-        !isNew && (
-          <span data-new="card-foot" className="flex">
-            <Button
-              label={t("signIns.add")}
-              labelKey="signIns.add"
-              // Accent: with no editor open this is the card's one primary action.
-              tone="accent"
-              onClick={openNew}
-              className="glim-btn-wrap"
-            />
-          </span>
-        )
-      }
-    >
+    <Card title={t("signIns.title")} hint={t("signIns.hint")} hueIndex={hueIndex} newId="settings-sign-ins">
       {note && (
         <div role="status" className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-card bg-statusOkBg px-3 py-2">
           <span className="inline-flex text-statusOk">
@@ -298,16 +141,17 @@ export function SignInsCard({ hueIndex }: { hueIndex?: number }) {
             </span>
             <span className="text-xs text-carbon-textSub">{t("signIns.note.text")}</span>
           </span>
-          <Button label={t("signIns.note.ok")} labelKey="signIns.note.ok" tone="neutral" onClick={dismiss} />
+          <Button label={t("common.gotIt")} labelKey="common.gotIt" tone="neutral" onClick={dismiss} />
         </div>
       )}
 
-      {sets.length === 0 && !editing && <span className="text-xs text-carbon-textMuted">{t("signIns.none")}</span>}
+      {sets.length === 0 && <span className="text-xs text-carbon-textMuted">{t("signIns.none")}</span>}
 
       {sets.length > 0 && (
         <ul className="flex flex-col divide-y divide-carbon-border/60">
           {sets.map((s) => {
             const users = s.usedBy ?? [];
+            const why = blocker(s);
             return (
               <li key={s.id} className="flex flex-col py-3 first:pt-0 last:pb-0">
                 {/* On a phone the actions go under the name, which beside them
@@ -339,7 +183,7 @@ export function SignInsCard({ hueIndex }: { hueIndex?: number }) {
                     </span>
                     {s.default && <span className="text-xs text-carbon-textSub wrap-break-word">{t("signIns.defaultAlso")}</span>}
                   </div>
-                  <div className="flex shrink-0 flex-wrap items-start gap-2">
+                  <div className="flex shrink-0 flex-wrap items-center gap-2">
                     {!s.default && (
                       <span data-new="sign-in-make-default" className="flex">
                         <Button
@@ -353,12 +197,9 @@ export function SignInsCard({ hueIndex }: { hueIndex?: number }) {
                         />
                       </span>
                     )}
-                    <Button
-                      label={editing?.id === s.id ? t("common.close") : t("offsite.targets.edit")}
-                      labelKey={editing?.id === s.id ? "common.close" : "offsite.targets.edit"}
-                      tone="neutral"
-                      onClick={() => openEdit(s)}
-                    />
+                    <span data-new="sign-in-edit" className="flex">
+                      <Button label={t("offsite.targets.edit")} labelKey="offsite.targets.edit" tone="neutral" onClick={() => setEditing(s)} />
+                    </span>
                     {/* A destructive action gets no red of its own in this app. */}
                     <Button
                       key={shake[`remove:${s.id}`] || 0}
@@ -366,20 +207,20 @@ export function SignInsCard({ hueIndex }: { hueIndex?: number }) {
                       labelKey={confirmRemove === s.id ? "offsite.targets.confirmRemove" : "offsite.targets.remove"}
                       tone="neutral"
                       onClick={() => void remove(s)}
-                      disabled={removingId === s.id}
+                      disabled={why !== null || removingId === s.id}
                       busy={removingId === s.id}
+                      hint={why ?? undefined}
                       className={shake[`remove:${s.id}`] ? "glim-shake" : ""}
                     />
                   </div>
                 </div>
-                {editing?.id === s.id && editor}
               </li>
             );
           })}
         </ul>
       )}
 
-      {isNew && editor}
+      {editing && <SignInWindow set={editing} sets={sets} onClose={() => setEditing(null)} />}
     </Card>
   );
 }

@@ -66,6 +66,9 @@ const RULES: Rule[] = [
 
   // Above the sign-in rule, which every signIns key would otherwise match.
   [/makeDefault/i, () => <IconStar />],
+  // Got it acknowledges what was read, so it takes the check of the other
+  // agreements wherever it stands.
+  [/gotIt/i, () => <IconCheck />],
 
   // Creation and editing.
   [/\.add|addSet|addPreset|addTarget|addTag|credSets\.add|registryAdd|passkeyAdd|passkeyCreate|certAddAddress/i, () => <IconAdd />],

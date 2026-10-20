@@ -1648,6 +1648,22 @@ export function makeDefaultSignIn(id: string): Promise<OkEnvelope & { warnings?:
   return fetchJSON(`/api/cloud/creds-sets/${encodeURIComponent(id)}/default`, { method: "POST" });
 }
 
+/** What a test of an edited sign-in found at one storage location. */
+export interface SignInCheck {
+  id: string;
+  name: string;
+  reachable: boolean;
+  initialized: boolean;
+  error?: string;
+}
+
+/** POST /api/cloud/creds-sets/{id}/test: signs in with the edited values to
+ *  every storage location that uses the saved sign-in, without saving them. A
+ *  blank secret is the stored one. */
+export function testSignIn(set: CloudCredSet): Promise<OkEnvelope & { locations?: SignInCheck[] }> {
+  return fetchJSON(`/api/cloud/creds-sets/${encodeURIComponent(set.id)}/test`, { method: "POST", body: JSON.stringify(set) });
+}
+
 /** DELETE /api/cloud/creds-sets/note: stops showing the note. */
 export function dismissSignInsNote(): Promise<OkEnvelope> {
   return fetchJSON("/api/cloud/creds-sets/note", { method: "DELETE" });

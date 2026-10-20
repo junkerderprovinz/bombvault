@@ -5,7 +5,6 @@ import { SidebarCard } from "../SidebarTile";
 import { OffsiteCards } from "../sections/OffsiteCards";
 import { RetentionCards } from "../sections/RetentionCards";
 import { hueCounter } from "../shared";
-import { SignInsCard } from "../SignInsCard";
 
 export function StoragePage() {
   const list = useStorageLocationsOnDemand();
@@ -14,13 +13,12 @@ export function StoragePage() {
   return (
     <>
       <SidebarCard pin="storage" hueIndex={nextHue()} />
-      <LocationCards list={list} nextHue={nextHue} newId="settings-storage-list" flowNewId="settings-storage-flow" />
+      <LocationCards list={list} nextHue={nextHue} newId="settings-storage-list" flowNewId="settings-storage-flow" signIns />
 
       <ReposCard hueIndex={nextHue()} />
 
       <RetentionCards nextHue={nextHue} />
       <OffsiteCards nextHue={nextHue} />
-      <SignInsCard hueIndex={nextHue()} />
     </>
   );
 }
