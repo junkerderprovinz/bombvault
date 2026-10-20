@@ -430,30 +430,6 @@ export function PhraseCard({
     [t("settings.title"), t("pairing.title"), t("pairing.show")].join(", "),
   );
 
-  const foot = (
-    <div className="flex flex-wrap items-center justify-end gap-2">
-      {stage === "paired" && (
-        <Button
-          label={t("pairing.notFirstButton")}
-          labelKey="pairing.notFirstButton"
-          glyph={<IconPencil />}
-          tone="neutral"
-          onClick={() => setShown("enter")}
-          disabled={busy}
-        />
-      )}
-      <Button
-        label={t("pairing.show")}
-        labelKey="pairing.show"
-        glyph={<IconEye />}
-        tone="neutral"
-        onClick={openWords}
-        disabled={busy}
-      />
-      {leaveButton}
-    </div>
-  );
-
   const relayHint = (stage === "alone" || stage === "gone") && group.relay.mode !== "off" && !group.relay.connected && (
     <RelayDownLine group={group} onRefresh={onRefresh} t={t} />
   );
@@ -546,6 +522,7 @@ export function PhraseCard({
     ) : null;
 
   let body: ReactNode;
+  let foot: ReactNode = null;
   if (stage === "unpaired") {
     body = (
       <>
@@ -593,10 +570,10 @@ export function PhraseCard({
             <strong className="font-semibold text-carbon-text">{t("pairing.otherNetTitle")}</strong> {t("pairing.otherNetBody")}
           </p>
         )}
-        {noRelay && <CantFindIt onProbe={probe} busy={busy} t={t} shake={shake} />}
         {relayHint}
       </>
     );
+    if (noRelay) foot = <CantFindIt onProbe={probe} busy={busy} t={t} shake={shake} />;
   } else {
     body = (
       <>
@@ -621,7 +598,29 @@ export function PhraseCard({
         {stage !== "new" && (
           <p className="text-sm text-carbon-textSub">{t(stage === "paired" ? "pairing.pairedHint" : "pairing.searchingHint")}</p>
         )}
-        {foot}
+      </>
+    );
+    foot = (
+      <>
+        {stage === "paired" && (
+          <Button
+            label={t("pairing.notFirstButton")}
+            labelKey="pairing.notFirstButton"
+            glyph={<IconPencil />}
+            tone="neutral"
+            onClick={() => setShown("enter")}
+            disabled={busy}
+          />
+        )}
+        <Button
+          label={t("pairing.show")}
+          labelKey="pairing.show"
+          glyph={<IconEye />}
+          tone="neutral"
+          onClick={openWords}
+          disabled={busy}
+        />
+        {leaveButton}
       </>
     );
   }
@@ -631,6 +630,7 @@ export function PhraseCard({
       title={t("pairing.phraseTitle")}
       hint={`${t("pairing.phraseTip")} ${t("pairing.lead")} ${t("pairing.keyNote")}`}
       hueIndex={hueIndex}
+      foot={foot}
     >
       <div className="flex flex-col gap-4.5" data-stage={stage}>
         {body}

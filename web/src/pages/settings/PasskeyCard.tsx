@@ -105,7 +105,49 @@ export function PasskeyCard({
   }
 
   return (
-    <Card title={t("auth.passkeys")} hint={t("auth.passkeysHint")} hueIndex={hueIndex}>
+    <Card
+      title={t("auth.passkeys")}
+      hint={t("auth.passkeysHint")}
+      hueIndex={hueIndex}
+      foot={
+        adding ? (
+          <>
+            <Button
+              label={t("common.cancel")}
+              labelKey="common.cancel"
+              tone="neutral"
+              onClick={() => {
+                setAdding(false);
+                setName("");
+              }}
+              hueIndex={hueIndex}
+            />
+            <Button
+              label={t("auth.passkeyCreate")}
+              labelKey="auth.passkeyCreate"
+              tone="accent"
+              onClick={() => void add()}
+              disabled={busy}
+              busy={busy}
+              hueIndex={hueIndex}
+            />
+          </>
+        ) : (
+          passwordSet &&
+          addressOK &&
+          browserOK && (
+            <Button
+              label={t("auth.passkeyAdd")}
+              labelKey="auth.passkeyAdd"
+              tone="accent"
+              onClick={() => setAdding(true)}
+              disabled={busy}
+              hueIndex={hueIndex}
+            />
+          )
+        )
+      }
+    >
       <div className="flex items-center gap-2">
         <span
           className={`inline-block h-2 w-2 rounded-full ${keys.length > 0 ? "bg-statusOkSolid" : "bg-carbon-textMuted"}`}
@@ -171,21 +213,8 @@ export function PasskeyCard({
 
       {/* The name is the operator's own label and means nothing to the
           protocol, so an empty one is filled in rather than refused. */}
-      {passwordSet && addressOK && browserOK && !adding && (
-        <Button
-          label={t("auth.passkeyAdd")}
-          labelKey="auth.passkeyAdd"
-          tone="accent"
-          onClick={() => setAdding(true)}
-          disabled={busy}
-          hueIndex={hueIndex}
-          className="self-start"
-        />
-      )}
-
       {adding && (
-        <div className="flex flex-col gap-2">
-          <SettingRow label={t("auth.passkeyNameLabel")} htmlFor="bv-passkey-name">
+        <SettingRow label={t("auth.passkeyNameLabel")} htmlFor="bv-passkey-name">
           <input
             id="bv-passkey-name"
             value={name}
@@ -193,29 +222,7 @@ export function PasskeyCard({
             placeholder={t("auth.passkeyNamePlaceholder")}
             className="w-72 max-w-full rounded-control bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text glim-field-focus"
           />
-          </SettingRow>
-          <div className="flex items-center gap-3">
-            <Button
-              label={t("common.cancel")}
-              labelKey="common.cancel"
-              tone="neutral"
-              onClick={() => {
-                setAdding(false);
-                setName("");
-              }}
-              hueIndex={hueIndex}
-            />
-            <Button
-              label={t("auth.passkeyCreate")}
-              labelKey="auth.passkeyCreate"
-              tone="accent"
-              onClick={() => void add()}
-              disabled={busy}
-              busy={busy}
-              hueIndex={hueIndex}
-            />
-          </div>
-        </div>
+        </SettingRow>
       )}
 
       {pendingDelete && (

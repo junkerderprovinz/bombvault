@@ -642,7 +642,7 @@ export function FoldersEditor({
       </div>
       {/* Neutral tone: the confirm dialog carries the warning. The key
           remounts the wrapper so the shake replays. */}
-      <div className="pt-1" key={rowShake[RESET_ROW_KEY] ?? 0}>
+      <div className="flex justify-end pt-1" key={rowShake[RESET_ROW_KEY] ?? 0}>
         <Button
           label={t("folders.resetSelection")}
           labelKey="folders.resetSelection"

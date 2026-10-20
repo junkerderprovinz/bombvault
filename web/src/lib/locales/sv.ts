@@ -734,6 +734,7 @@ const sv: Partial<Translations> = {
   "whatsNew.ownFoldersCard": "Ett fjärrmål visar sektionerna som har sina egna säkerhetskopior där.",
   "whatsNew.wizardSignIn": "Ett nytt mål kan logga in med en sparad inloggning i stället för nya nycklar.",
   "whatsNew.listsAsRows": "Varje lista visar sina poster som rader åtskilda av ett tunt streck, utan en grå ruta bakom.",
+  "whatsNew.cardButtons": "Knappar som gäller hela kortet sitter nere till höger, precis som i ett fönster.",
   "export.encrypt.hint": "restic-repositorierna är redan krypterade. Detta krypterar valfritt de oskyddade exportartefakterna (container- och VM-tar.gz med deras xml, och flash-zip) med age, så att de kan lagras eller flyttas utanför servern på ett säkert sätt.",
   "export.encrypt.ageInfo": "age (age-encryption.org) är ett litet, modernt filkrypteringsverktyg, ett enklare alternativ till GPG för att försegla en fil åt en eller flera mottagare.",
   "export.encrypt.enable": "Kryptera exporter med age",

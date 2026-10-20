@@ -216,7 +216,12 @@ export function NotifyCard({
 
   return (
     <>
-    <Card title={t("notify.title")} hint={t("notify.hint")} hueIndex={hueIndex}>
+    <Card
+      title={t("notify.title")}
+      hint={t("notify.hint")}
+      hueIndex={hueIndex}
+      foot={<TestButton label={t("notify.test")} labelKey="notify.test" words="delivery" test={test} onClick={handleTest} />}
+    >
       {/* The card refuses to save until the load succeeds, so a failed load
           has to be on screen. */}
       {loadErr && <span className="text-xs text-statusFail">{t("settings.notLoadedNoSave")}</span>}
@@ -293,15 +298,6 @@ export function NotifyCard({
       <PageSentence text="notify.anomaliesWhere" page="activityLog.typeVerify" to="/settings/integrity#anomalies" />
 
       <VerdictLine verdict={test.verdict} />
-      <div className="flex flex-wrap items-center justify-end gap-3">
-        <TestButton
-          label={t("notify.test")}
-          labelKey="notify.test"
-          words="delivery"
-          test={test}
-          onClick={handleTest}
-        />
-      </div>
     </Card>
 
     <Card title={t("notify.channelsTitle")} hint={t("notify.channelsHint")} hueIndex={channelsHueIndex}>

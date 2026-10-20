@@ -96,7 +96,8 @@ export function Card({
   );
 }
 
-/** CardFoot is the row of a card's own buttons, under its content at the end. */
+/** CardFoot is the row of a card's own buttons, under its content at the end.
+ *  mt-auto keeps it at the bottom of a card stretched to its grid row. */
 export function CardFoot({ children, newId }: { children: React.ReactNode; newId?: string }) {
   return (
     <div data-new={newId} className="mt-auto flex flex-wrap items-center justify-end gap-2">

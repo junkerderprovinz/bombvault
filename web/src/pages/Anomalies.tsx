@@ -274,12 +274,14 @@ export function Anomalies() {
         />
       </div>
 
-      <Card title={t(view === "open" ? "anomaly.list.open" : "anomaly.closedRecent")} hueIndex={TILES.length} newId="anomalies-tiles">
+      <Card
+        title={t(view === "open" ? "anomaly.list.open" : "anomaly.closedRecent")}
+        hueIndex={TILES.length}
+        newId="anomalies-tiles"
+        foot={current.failed && <Button label={t("anomaly.retry")} labelKey="anomaly.retry" onClick={current.retry} />}
+      >
         {current.failed ? (
-          <div className="flex flex-col items-start gap-2">
-            <p className="text-sm text-statusWarn">{t("anomaly.loadFailed")}</p>
-            <Button label={t("anomaly.retry")} labelKey="anomaly.retry" onClick={current.retry} />
-          </div>
+          <p className="text-sm text-statusWarn">{t("anomaly.loadFailed")}</p>
         ) : !current.loaded ? (
           <p className="text-sm text-carbon-textSub">{t("dashboard.checking")}</p>
         ) : shown.length === 0 ? (
@@ -312,13 +314,16 @@ export function Anomalies() {
       {view === "open" &&
         !chosen &&
         (itemsFailed ? (
-          <Card title={t("anomaly.learn.title")} hint={t("anomaly.learn.hint")} hueIndex={TILES.length + 1} newId="anomalies-rings">
+          <Card
+            title={t("anomaly.learn.title")}
+            hint={t("anomaly.learn.hint")}
+            hueIndex={TILES.length + 1}
+            newId="anomalies-rings"
+            foot={<Button label={t("anomaly.retry")} labelKey="anomaly.retry" onClick={retryItems} />}
+          >
             {/* A listing that never arrived says nothing about what is watched,
                 so it must not look like an empty one. */}
-            <div className="flex flex-col items-start gap-2">
-              <p className="text-sm text-statusWarn">{t("anomaly.loadFailed")}</p>
-              <Button label={t("anomaly.retry")} labelKey="anomaly.retry" onClick={retryItems} />
-            </div>
+            <p className="text-sm text-statusWarn">{t("anomaly.loadFailed")}</p>
           </Card>
         ) : (
           !itemsLoading &&

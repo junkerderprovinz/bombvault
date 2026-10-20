@@ -849,6 +849,7 @@ const gl: Partial<Translations> = {
   "whatsNew.ownFoldersCard": "Un destino remoto amosa as seccións que gardan alí as súas propias copias de seguridade.",
   "whatsNew.wizardSignIn": "Un destino novo pode iniciar sesión con credenciais gardadas en vez de chaves novas.",
   "whatsNew.listsAsRows": "Cada lista mostra as súas entradas como filas separadas por unha liña fina, sen ningún recadro gris detrás.",
+  "whatsNew.cardButtons": "Os botóns que afectan a toda unha tarxeta están abaixo á dereita, como nunha xanela.",
   "rclone.save": "Gardar configuración",
   "notify.title": "Notificacións",
   "notify.hint": "Recibe unha notificación cando remate unha copia, e escolle abaixo que eventos a activan.",

@@ -493,7 +493,7 @@ export function SettingsPage({
         >
           {report}
         </pre>
-        <div className="mb-2.5 mt-1.5">
+        <div className="mb-2.5 mt-1.5 flex justify-end">
           <Button
             label={copied ? t("launcher.problemsCopied") : t("launcher.problemsCopy")}
             labelKey={copied ? "launcher.problemsCopied" : "launcher.problemsCopy"}

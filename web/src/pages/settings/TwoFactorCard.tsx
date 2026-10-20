@@ -102,8 +102,101 @@ export function TwoFactorCard({
     }
   }
 
+  let foot: React.ReactNode = null;
+  if (step.kind === "scan") {
+    foot = (
+      <>
+        <Button
+          label={t("common.cancel")}
+          labelKey="common.cancel"
+          tone="neutral"
+          onClick={() => {
+            setStep({ kind: "idle" });
+            setCode("");
+          }}
+          hueIndex={hueIndex}
+        />
+        <Button
+          label={t("auth.twoFactorConfirm")}
+          labelKey="auth.twoFactorConfirm"
+          tone="accent"
+          onClick={() => void confirm()}
+          disabled={busy || code.trim() === ""}
+          busy={busy}
+          hueIndex={hueIndex}
+        />
+      </>
+    );
+  } else if (step.kind === "codes") {
+    foot = (
+      <>
+        <Button
+          label={t("common.copy")}
+          labelKey="common.copy"
+          tone="neutral"
+          glyph={<IconCopy />}
+          onClick={() => void copyText(step.codes.join("\n"))}
+          hueIndex={hueIndex}
+        />
+        <Button
+          label={t("auth.recoverySaved")}
+          labelKey="auth.recoverySaved"
+          tone="accent"
+          onClick={() => setStep({ kind: "idle" })}
+          hueIndex={hueIndex}
+        />
+      </>
+    );
+  } else if (enabled && disarming) {
+    foot = (
+      <>
+        <Button
+          label={t("common.cancel")}
+          labelKey="common.cancel"
+          tone="neutral"
+          onClick={() => {
+            setDisarming(false);
+            setCode("");
+          }}
+          hueIndex={hueIndex}
+        />
+        <Button
+          label={t("auth.twoFactorDisable")}
+          labelKey="auth.twoFactorDisable"
+          tone="accent"
+          onClick={() => void disable()}
+          disabled={busy || code.trim() === ""}
+          busy={busy}
+          hueIndex={hueIndex}
+        />
+      </>
+    );
+  } else if (enabled) {
+    foot = (
+      <Button
+        label={t("auth.twoFactorDisable")}
+        labelKey="auth.twoFactorDisable"
+        tone="neutral"
+        onClick={() => setDisarming(true)}
+        hueIndex={hueIndex}
+      />
+    );
+  } else if (passwordSet) {
+    foot = (
+      <Button
+        label={t("auth.twoFactorEnable")}
+        labelKey="auth.twoFactorEnable"
+        tone="accent"
+        onClick={() => void begin()}
+        disabled={busy}
+        busy={busy}
+        hueIndex={hueIndex}
+      />
+    );
+  }
+
   return (
-    <Card title={t("auth.twoFactor")} hint={t("auth.twoFactorHint")} hueIndex={hueIndex}>
+    <Card title={t("auth.twoFactor")} hint={t("auth.twoFactorHint")} hueIndex={hueIndex} foot={foot}>
       {/* Status line. It reads the server's answer, never the local step, so a
           half-finished enrolment cannot make it claim the factor is armed. */}
       <div className="flex items-center gap-2">
@@ -117,21 +210,6 @@ export function TwoFactorCard({
 
       {!passwordSet && (
         <p className="text-sm text-carbon-textSub">{t("auth.twoFactorNeedsPassword")}</p>
-      )}
-
-      {passwordSet && !enabled && step.kind === "idle" && (
-        // self-start, or the card's flex column stretches the lone button
-        // across the full width.
-        <Button
-          label={t("auth.twoFactorEnable")}
-          labelKey="auth.twoFactorEnable"
-          tone="accent"
-          onClick={() => void begin()}
-          disabled={busy}
-          busy={busy}
-          hueIndex={hueIndex}
-          className="self-start"
-        />
       )}
 
       {/* Step 1 and 2: scan, then prove. Both on screen at once, because the
@@ -167,27 +245,6 @@ export function TwoFactorCard({
               className="w-40 rounded-control bg-carbon-surface2 px-3 py-1.5 text-sm tracking-[0.35em] text-carbon-text glim-field-focus"
             />
           </SettingRow>
-          <div className="flex items-center gap-3">
-            <Button
-              label={t("common.cancel")}
-              labelKey="common.cancel"
-              tone="neutral"
-              onClick={() => {
-                setStep({ kind: "idle" });
-                setCode("");
-              }}
-              hueIndex={hueIndex}
-            />
-            <Button
-              label={t("auth.twoFactorConfirm")}
-              labelKey="auth.twoFactorConfirm"
-              tone="accent"
-              onClick={() => void confirm()}
-              disabled={busy || code.trim() === ""}
-              busy={busy}
-              hueIndex={hueIndex}
-            />
-          </div>
         </div>
       )}
 
@@ -201,80 +258,26 @@ export function TwoFactorCard({
               <li key={c}>{c}</li>
             ))}
           </ul>
-          <div className="flex items-center gap-3">
-            <Button
-              label={t("common.copy")}
-              labelKey="common.copy"
-              tone="neutral"
-              glyph={<IconCopy />}
-              onClick={() => void copyText(step.codes.join("\n"))}
-              hueIndex={hueIndex}
-            />
-            <Button
-              label={t("auth.recoverySaved")}
-              labelKey="auth.recoverySaved"
-              tone="accent"
-              onClick={() => setStep({ kind: "idle" })}
-              hueIndex={hueIndex}
-            />
-          </div>
         </div>
       )}
 
+      {enabled && step.kind === "idle" && recoveryLeft !== undefined && (
+        <p className="text-sm text-carbon-textSub">{t("auth.recoveryLeft", recoveryLeft)}</p>
+      )}
       {/* Turning the factor off needs a live code, so a session somebody
           walked away from cannot remove it. */}
-      {enabled && step.kind === "idle" && (
-        <div className="flex flex-col gap-3">
-          {recoveryLeft !== undefined && (
-            <p className="text-sm text-carbon-textSub">
-              {t("auth.recoveryLeft", recoveryLeft)}
-            </p>
-          )}
-          {!disarming ? (
-            <Button
-              label={t("auth.twoFactorDisable")}
-              labelKey="auth.twoFactorDisable"
-              tone="neutral"
-              onClick={() => setDisarming(true)}
-              hueIndex={hueIndex}
-            />
-          ) : (
-            <div className="flex flex-col gap-2">
-              <SettingRow label={t("auth.disableCodePrompt")} htmlFor="bv-totp-disable">
-              <input
-                id="bv-totp-disable"
-                value={code}
-                onChange={(e) => setCode(e.target.value)}
-                inputMode="numeric"
-                autoComplete="one-time-code"
-                placeholder="000000"
-                className="w-40 rounded-control bg-carbon-surface2 px-3 py-1.5 text-sm tracking-[0.35em] text-carbon-text glim-field-focus"
-              />
-              </SettingRow>
-              <div className="flex items-center gap-3">
-                <Button
-                  label={t("common.cancel")}
-                  labelKey="common.cancel"
-                  tone="neutral"
-                  onClick={() => {
-                    setDisarming(false);
-                    setCode("");
-                  }}
-                  hueIndex={hueIndex}
-                />
-                <Button
-                  label={t("auth.twoFactorDisable")}
-                  labelKey="auth.twoFactorDisable"
-                  tone="accent"
-                  onClick={() => void disable()}
-                  disabled={busy || code.trim() === ""}
-                  busy={busy}
-                  hueIndex={hueIndex}
-                />
-              </div>
-            </div>
-          )}
-        </div>
+      {enabled && step.kind === "idle" && disarming && (
+        <SettingRow label={t("auth.disableCodePrompt")} htmlFor="bv-totp-disable">
+          <input
+            id="bv-totp-disable"
+            value={code}
+            onChange={(e) => setCode(e.target.value)}
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            placeholder="000000"
+            className="w-40 rounded-control bg-carbon-surface2 px-3 py-1.5 text-sm tracking-[0.35em] text-carbon-text glim-field-focus"
+          />
+        </SettingRow>
       )}
     </Card>
   );

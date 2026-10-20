@@ -9,6 +9,7 @@ import { ItemAnomalySettings } from "../ItemAnomalySettings";
 import { Button } from "../Button";
 import { IconFolder } from "../navGlyphs";
 import { InstanceWindow } from "../../pages/instances/InstanceWindow";
+import { CardFoot } from "../../pages/settings/shared";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -201,7 +202,7 @@ export function FileSetFoldersEditor({
   if (noPath) return null;
 
   return (
-    <div className="border-t border-carbon-border pt-3">
+    <CardFoot>
       <Button
         label={t("files.foldersToggle")}
         labelKey="files.foldersToggle"
@@ -240,6 +241,6 @@ export function FileSetFoldersEditor({
           <ItemAnomalySettings item={anomaly} enabled={anomalyEnabled} t={t} />
         </InstanceWindow>
       )}
-    </div>
+    </CardFoot>
   );
 }

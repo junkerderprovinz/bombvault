@@ -849,6 +849,7 @@ const sk: Partial<Translations> = {
   "whatsNew.ownFoldersCard": "Vzdialený cieľ ukazuje sekcie, ktoré tam majú svoje zálohy.",
   "whatsNew.wizardSignIn": "Nový cieľ sa môže prihlásiť uloženými prihlasovacími údajmi namiesto nových kľúčov.",
   "whatsNew.listsAsRows": "Každý zoznam zobrazuje položky ako riadky oddelené tenkou čiarou, bez sivého poľa v pozadí.",
+  "whatsNew.cardButtons": "Tlačidlá, ktoré platia pre celú kartu, sú vpravo dole, rovnako ako v okne.",
   "rclone.save": "Uložiť konfiguráciu",
   "notify.title": "Upozornenia",
   "notify.hint": "Dostávaj upozornenie po dokončení zálohy a nižšie vyber, ktoré udalosti ho spúšťajú.",

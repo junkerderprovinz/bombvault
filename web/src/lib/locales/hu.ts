@@ -734,6 +734,7 @@ const hu: Partial<Translations> = {
   "whatsNew.ownFoldersCard": "Egy távoli cél megmutatja a szakaszokat, amelyek ott tartják a saját mentéseiket.",
   "whatsNew.wizardSignIn": "Egy új cél mentett bejelentkezéssel is beléphet új kulcsok helyett.",
   "whatsNew.listsAsRows": "Minden lista vékony vonallal elválasztott sorokként mutatja a bejegyzéseit, szürke doboz nélkül a háttérben.",
+  "whatsNew.cardButtons": "Az egész kártyára vonatkozó gombok jobb alul vannak, ahogy egy ablakban is.",
   "export.encrypt.hint": "A restic tárolók már titkosítottak. Ez opcionálisan titkosítja a sima exportált fájlokat (konténer és VM tar.gz az xml fájljaikkal, valamint a flash zip) age segítségével, hogy biztonságosan tárolhatók vagy mozgathatók legyenek a szerveren kívülre.",
   "export.encrypt.ageInfo": "Az age (age-encryption.org) egy kicsi, modern fájltitkosító eszköz: egyszerűbb alternatíva a GPG-nek egy fájl egy vagy több címzett számára történő lezárásához.",
   "export.encrypt.enable": "Exportok titkosítása age-dzsel",

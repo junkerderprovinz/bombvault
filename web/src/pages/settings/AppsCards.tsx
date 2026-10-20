@@ -215,7 +215,21 @@ export function ParleyPortCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"
   }, [copied]);
 
   return (
-    <Card title={t("apps.parleyport.title")} hint={t("apps.parleyport.hint")} hueIndex={hueIndex}>
+    <Card
+      title={t("apps.parleyport.title")}
+      hint={t("apps.parleyport.hint")}
+      hueIndex={hueIndex}
+      foot={
+        <Button
+          label={t("apps.parleyport.toRelay")}
+          labelKey="apps.parleyport.toRelay"
+          glyph={<IconLink />}
+          tone="neutral"
+          hueIndex={hueIndex}
+          onClick={() => navigate("/settings/pairing")}
+        />
+      }
+    >
       <div className="flex flex-wrap gap-3">
         <ReadmeButton
           tile="glim-tile-unraid"
@@ -247,15 +261,6 @@ export function ParleyPortCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"
           markClass="glim-github-mark"
         />
       </div>
-      <Button
-        label={t("apps.parleyport.toRelay")}
-        labelKey="apps.parleyport.toRelay"
-        glyph={<IconLink />}
-        tone="neutral"
-        hueIndex={hueIndex}
-        onClick={() => navigate("/settings/pairing")}
-        className="self-start"
-      />
     </Card>
   );
 }
@@ -263,7 +268,21 @@ export function ParleyPortCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"
 export function WidgetAppCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hueIndex?: number }) {
   const navigate = useNavigate();
   return (
-    <Card title={t("apps.widget.title")} hint={t("apps.widget.cardHint")} hueIndex={hueIndex}>
+    <Card
+      title={t("apps.widget.title")}
+      hint={t("apps.widget.cardHint")}
+      hueIndex={hueIndex}
+      foot={
+        <Button
+          label={t("apps.widget.toSettings")}
+          labelKey="apps.widget.toSettings"
+          glyph={<IconLive />}
+          tone="neutral"
+          hueIndex={hueIndex}
+          onClick={() => navigate("/settings/integrations")}
+        />
+      }
+    >
       <div className="flex flex-wrap gap-3">
         <ReadmeButton
           tile="glim-tile-unraid"
@@ -277,15 +296,6 @@ export function WidgetAppCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]
           markClass="glim-github-mark"
         />
       </div>
-      <Button
-        label={t("apps.widget.toSettings")}
-        labelKey="apps.widget.toSettings"
-        glyph={<IconLive />}
-        tone="neutral"
-        hueIndex={hueIndex}
-        onClick={() => navigate("/settings/integrations")}
-        className="self-start"
-      />
     </Card>
   );
 }

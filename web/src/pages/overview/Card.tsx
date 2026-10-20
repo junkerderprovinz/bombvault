@@ -2,12 +2,14 @@ import type { CSSProperties } from "react";
 import { hueVars } from "../../lib/appearance";
 import { Badge } from "../../components/Badge";
 import { InfoBubble } from "../../components/InfoBubble";
+import { CardFoot } from "../settings/shared";
 
 export function Card({
   title,
   hint,
   children,
   hueIndex,
+  foot,
 }: {
   title: string;
   /** One-line explanation of the whole card, shown as an (i) bubble beside
@@ -17,6 +19,8 @@ export function Card({
   /** Rainbow position of the heading notch, handed out by the page in the
    *  order the cards are rendered. Omit it for a card that stands alone. */
   hueIndex?: number;
+  /** Buttons that act on the whole card, set in its CardFoot. */
+  foot?: React.ReactNode;
 }) {
   return (
     // The heading badge straddles the card's top edge, and the surface box
@@ -41,6 +45,7 @@ export function Card({
           as a whole. */}
       <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden rounded-card bg-carbon-surface p-5 [[data-sized]_&]:overflow-y-auto">
         {children}
+        {foot && <CardFoot>{foot}</CardFoot>}
       </div>
     </div>
   );

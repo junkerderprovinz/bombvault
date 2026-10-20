@@ -250,7 +250,19 @@ export function RegistriesCard({ hueIndex }: { hueIndex: number }) {
   }
 
   return (
-    <Card title={t("settings.registriesTitle")} hint={t("settings.registriesHint")} hueIndex={hueIndex}>
+    <Card
+      title={t("settings.registriesTitle")}
+      hint={t("settings.registriesHint")}
+      hueIndex={hueIndex}
+      foot={
+        <Button
+          label={t("settings.registryAdd")}
+          labelKey="settings.registryAdd"
+          glyph={<IconAdd />}
+          onClick={() => setStep({ at: "pick" })}
+        />
+      }
+    >
       {entries.length === 0 ? (
         <p className="text-sm text-carbon-textMuted">{t("settings.registriesEmpty")}</p>
       ) : (
@@ -293,14 +305,6 @@ export function RegistriesCard({ hueIndex }: { hueIndex: number }) {
           })}
         </Rows>
       )}
-      <div className="flex justify-end">
-        <Button
-          label={t("settings.registryAdd")}
-          labelKey="settings.registryAdd"
-          glyph={<IconAdd />}
-          onClick={() => setStep({ at: "pick" })}
-        />
-      </div>
       {step?.at === "pick" && (
         <Picker onPick={(kind) => setStep({ at: "form", kind })} onClose={() => setStep(null)} />
       )}

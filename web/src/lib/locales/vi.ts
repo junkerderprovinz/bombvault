@@ -729,6 +729,7 @@ const vi: Partial<Translations> = {
   "whatsNew.ownFoldersCard": "Một đích từ xa hiển thị những phần giữ bản sao lưu của mình ở đó.",
   "whatsNew.wizardSignIn": "Một đích mới có thể đăng nhập bằng thông tin đăng nhập đã lưu thay vì khóa mới.",
   "whatsNew.listsAsRows": "Mọi danh sách hiển thị các mục dưới dạng hàng, ngăn cách bằng một đường mảnh, không có ô màu xám phía sau.",
+  "whatsNew.cardButtons": "Các nút áp dụng cho cả thẻ nằm ở góc dưới bên phải, giống như trong cửa sổ.",
   "export.encrypt.hint": "Các kho restic đã được mã hóa. Tùy chọn này mã hóa các thành phần xuất dạng thô (tar.gz của container và VM cùng với xml của chúng, và zip flash) bằng age, để có thể lưu trữ hoặc di chuyển ra ngoài máy chủ một cách an toàn.",
   "export.encrypt.ageInfo": "age (age-encryption.org) là một công cụ mã hóa tệp nhỏ gọn, hiện đại, một lựa chọn thay thế đơn giản hơn GPG để niêm phong một tệp cho một hoặc nhiều người nhận.",
   "export.encrypt.enable": "Mã hóa bản xuất bằng age",

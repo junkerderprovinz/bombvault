@@ -124,7 +124,7 @@ function MeshOfferRow({ offer, t, onChanged }: { offer: MeshOffer; t: T; onChang
       </div>
       <p dir="ltr" className="text-xs font-mono text-carbon-textMuted truncate text-start max-md:whitespace-normal max-md:break-all">{offer.repo}</p>
       {pending && (
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex flex-wrap items-center justify-end gap-2">
           <label className="flex items-center gap-1.5 text-xs text-carbon-textSub">
             {t("fleet.mesh.applyTo")}
             <SelectField

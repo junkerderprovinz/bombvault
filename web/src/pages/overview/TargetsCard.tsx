@@ -90,14 +90,16 @@ function LocationRow({ location, t }: { location: StorageLocation; t: T }) {
 export function TargetsCard({ t, list, hueIndex }: { t: T; list: StorageLocationList; hueIndex?: number }) {
   const { locations, loaded, failed, retry } = list;
   return (
-    <Card title={t("storage.title")} hint={t("overview.targets.hint")} hueIndex={hueIndex}>
+    <Card
+      title={t("storage.title")}
+      hint={t("overview.targets.hint")}
+      hueIndex={hueIndex}
+      foot={failed && !loaded && <Button label={t("anomaly.retry")} labelKey="anomaly.retry" onClick={retry} />}
+    >
       {failed && !loaded ? (
         // A list that never arrived says nothing about what is stored where,
         // so it must not look like an empty one.
-        <div className="flex flex-col items-start gap-2">
-          <p className="text-sm text-statusWarn">{t("storage.loadFailed")}</p>
-          <Button label={t("anomaly.retry")} labelKey="anomaly.retry" onClick={retry} />
-        </div>
+        <p className="text-sm text-statusWarn">{t("storage.loadFailed")}</p>
       ) : !loaded ? (
         <p className="text-sm text-carbon-textSub">{t("dashboard.checking")}</p>
       ) : locations.length === 0 ? (

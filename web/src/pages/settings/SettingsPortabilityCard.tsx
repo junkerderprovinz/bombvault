@@ -198,18 +198,16 @@ export function SettingsPortabilityCard({
           key={shake.export || 0}
           label={t("settingsIO.exportButton")}
           labelKey="settingsIO.exportButton"
-          // Accent, and the down-arrow half of the pair ([293]). Streamline
-          // draws download-box-1 and upload-box-1 as one box with the arrow
-          // reversed, which is exactly the "same glyph, opposite arrow" jdp
-          // asked for — no mirroring transform, and no second silhouette to
-          // keep in sync.
+          // The download box is the import button's upload box with the
+          // arrow reversed, so the pair reads as one glyph without a
+          // mirroring transform.
           tone="accent"
           glyph={<IconDownload />}
           onClick={() => void handleExport()}
           disabled={busy}
           busy={exporting}
           title={exporting ? t("settingsIO.exporting") : undefined}
-          className={`glim-btn-wrap self-start ${shake.export ? "glim-shake" : ""}`}
+          className={`glim-btn-wrap self-end ${shake.export ? "glim-shake" : ""}`}
         />
       </div>
 
@@ -239,7 +237,7 @@ export function SettingsPortabilityCard({
           hueIndex={hueIndex}
           busy={importBusy === "reading"}
           title={importBusy === "reading" ? t("settingsIO.reading") : undefined}
-          className={`glim-btn-wrap self-start ${shake.chooseFile ? "glim-shake" : ""}`}
+          className={`glim-btn-wrap self-end ${shake.chooseFile ? "glim-shake" : ""}`}
         />
 
         {/* Preview + confirmation before anything is written. */}
@@ -305,10 +303,10 @@ export function SettingsPortabilityCard({
             <div className="rounded-card bg-statusWarnBg px-3 py-2.5 text-xs text-statusWarn leading-relaxed">
               {t("settingsIO.confirmWarning")}
             </div>
-            <div className="flex flex-wrap items-center gap-3">
+            <div className="flex flex-wrap items-center justify-end gap-2">
               <Button
                 label={t("settingsIO.cancel")}
-          labelKey="settingsIO.cancel"
+                labelKey="settingsIO.cancel"
                 tone="neutral"
                 onClick={resetImport}
                 disabled={busy}

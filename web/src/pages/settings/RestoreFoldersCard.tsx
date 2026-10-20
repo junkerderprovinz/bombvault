@@ -71,7 +71,24 @@ export function RestoreFoldersCard({ hueIndex }: { hueIndex: number }) {
   const [before, after] = t(own.length > 0 ? "tile.restore.others" : "tile.restore.all").split("{where}");
 
   return (
-    <Card title={t("tile.restore.folders")} hint={t("tile.restore.foldersHint")} hueIndex={hueIndex}>
+    <Card
+      title={t("tile.restore.folders")}
+      hint={t("tile.restore.foldersHint")}
+      hueIndex={hueIndex}
+      foot={
+        free.length > 0 && (
+          <span ref={addButton} className="flex">
+            <Button
+              label={t("tile.restore.exception")}
+              labelKey="tile.restore.exception"
+              glyph={<IconAdd />}
+              tone="neutral"
+              onClick={() => setPicking((was) => !was)}
+            />
+          </span>
+        )
+      }
+    >
       <FolderBrowser
         label={t("settings.restoreFolder")}
         value={settings.restoreFolder}
@@ -117,30 +134,15 @@ export function RestoreFoldersCard({ hueIndex }: { hueIndex: number }) {
           />
         </div>
       ))}
-      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+      {base !== "" && (
         <p className="min-w-0 text-xs text-carbon-textMuted">
-          {base !== "" && (
-            <>
-              {before}
-              <code dir="ltr" className="break-all font-mono">
-                {where}
-              </code>
-              {after}
-            </>
-          )}
+          {before}
+          <code dir="ltr" className="break-all font-mono">
+            {where}
+          </code>
+          {after}
         </p>
-        {free.length > 0 && (
-          <span ref={addButton} className="flex">
-            <Button
-              label={t("tile.restore.exception")}
-              labelKey="tile.restore.exception"
-              glyph={<IconAdd />}
-              tone="neutral"
-              onClick={() => setPicking((was) => !was)}
-            />
-          </span>
-        )}
-      </div>
+      )}
       {picking && addButton.current && (
         <ActionMenu
           label={t("tile.restore.exception")}

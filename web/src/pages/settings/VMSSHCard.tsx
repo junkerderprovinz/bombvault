@@ -52,7 +52,20 @@ export function VMSSHCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hu
   }
 
   return (
-    <Card title={t("vm.ssh.title")} hint={t("vm.ssh.cardHint")} hueIndex={hueIndex}>
+    <Card
+      title={t("vm.ssh.title")}
+      hint={t("vm.ssh.cardHint")}
+      hueIndex={hueIndex}
+      foot={
+        <Button
+          label={t("vm.ssh.fullGuide")}
+          labelKey="vm.ssh.fullGuide"
+          glyph={<IconInfo />}
+          className="glim-btn-wrap"
+          onClick={() => window.open(GUIDE_URL, "_blank", "noopener,noreferrer")}
+        />
+      }
+    >
       <Rows>
         <SettingRow label={t("vm.ssh.host")} hint={t("vm.ssh.hostHint")}>
           <code dir="ltr" className="font-mono text-sm font-semibold text-carbon-text">
@@ -103,15 +116,6 @@ export function VMSSHCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hu
             </span>
           </li>
         </ol>
-        <div className="flex justify-end pt-3">
-          <Button
-            label={t("vm.ssh.fullGuide")}
-            labelKey="vm.ssh.fullGuide"
-            glyph={<IconInfo />}
-            className="glim-btn-wrap"
-            onClick={() => window.open(GUIDE_URL, "_blank", "noopener,noreferrer")}
-          />
-        </div>
       </SubCard>
     </Card>
   );
