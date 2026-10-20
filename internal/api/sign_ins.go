@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"log"
@@ -268,37 +269,180 @@ type signInUser struct {
 	Name string `json:"name"`
 }
 
-// signInUsers lists, per saved sign-in, the storage locations that sign in
-// with it. A location that names none signs in with the default.
-func (s *Service) signInUsers(defaultID string) (map[string][]signInUser, error) {
+// signInUse is a storage location that signs in with a saved sign-in, and
+// for a domain path location the section whose folder does.
+type signInUse struct {
+	ref      string
+	location storageLocation
+	domain   string
+}
+
+// signInUses lists who signs in with which saved sign-in. A place that names
+// none signs in with the default.
+func (s *Service) signInUses(defaultID string) ([]signInUse, error) {
 	locations, err := s.StorageLocations()
 	if err != nil {
 		return nil, err
 	}
-	out := map[string][]signInUser{}
-	add := func(ref string, l storageLocation) {
+	var out []signInUse
+	add := func(ref string, l storageLocation, domain string) {
 		if ref == "" {
 			ref = defaultID
 		}
-		if ref == "" || slices.ContainsFunc(out[ref], func(u signInUser) bool { return u.ID == l.ID }) {
-			return
+		if ref != "" {
+			out = append(out, signInUse{ref: ref, location: l, domain: domain})
 		}
-		out[ref] = append(out[ref], signInUser{ID: l.ID, Name: l.Name})
 	}
 	for _, l := range locations {
 		if l.Backend != "s3" && l.Backend != "rest" {
 			continue
 		}
 		if l.Object != locationPath {
-			add(l.CredsRef, l)
+			add(l.CredsRef, l, "")
 			continue
 		}
 		for _, sec := range l.Sections {
 			row, _ := s.primaryRemoteTarget(sec.Domain)
-			add(row.CredsRef, l)
+			add(row.CredsRef, l, sec.Domain)
 		}
 	}
 	return out, nil
+}
+
+// signInUsers lists, per saved sign-in, the storage locations that sign in
+// with it.
+func (s *Service) signInUsers(defaultID string) (map[string][]signInUser, error) {
+	uses, err := s.signInUses(defaultID)
+	if err != nil {
+		return nil, err
+	}
+	out := map[string][]signInUser{}
+	for _, u := range uses {
+		if !slices.ContainsFunc(out[u.ref], func(x signInUser) bool { return x.ID == u.location.ID }) {
+			out[u.ref] = append(out[u.ref], signInUser{ID: u.location.ID, Name: u.location.Name})
+		}
+	}
+	return out, nil
+}
+
+// signInCheck is what a test of an edited sign-in found at one storage
+// location.
+type signInCheck struct {
+	ID          string `json:"id"`
+	Name        string `json:"name"`
+	Reachable   bool   `json:"reachable"`
+	Initialized bool   `json:"initialized"`
+	Error       string `json:"error,omitempty"`
+}
+
+// TestSignIn signs in with an edited saved sign-in, before it is saved, to
+// every storage location that uses it. A secret left blank is the stored one.
+func (s *Service) TestSignIn(ctx context.Context, edited CloudCredSet) ([]signInCheck, error) {
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return nil, err
+	}
+	sets, err := s.decodeCloudCredSets(settings)
+	if err != nil {
+		return nil, err
+	}
+	i := slices.IndexFunc(sets, func(c CloudCredSet) bool { return c.ID == edited.ID })
+	if i < 0 {
+		return nil, errUnknownSignIn
+	}
+	creds := edited.CloudCreds
+	if creds.S3Secret == "" {
+		creds.S3Secret = sets[i].S3Secret
+	}
+	if creds.RESTPassword == "" {
+		creds.RESTPassword = sets[i].RESTPassword
+	}
+	if err := validCloudCreds(&creds); err != nil {
+		return nil, err
+	}
+	defaultID := ""
+	if d := defaultSetIndex(sets); d >= 0 {
+		defaultID = sets[d].ID
+	}
+	uses, err := s.signInUses(defaultID)
+	if err != nil {
+		return nil, err
+	}
+	checks := []signInCheck{}
+	for _, u := range uses {
+		if u.ref != edited.ID || slices.ContainsFunc(checks, func(c signInCheck) bool { return c.ID == u.location.ID }) {
+			continue
+		}
+		check := signInCheck{ID: u.location.ID, Name: u.location.Name}
+		var probeErr error
+		check.Reachable, check.Initialized, probeErr = s.probeSignInUse(ctx, settings, u, creds)
+		check.Error = scrubError(probeErr)
+		checks = append(checks, check)
+	}
+	return checks, nil
+}
+
+// probeSignInUse opens the repository one use of a sign-in reaches, signed
+// in with creds instead of the sign-in's own.
+func (s *Service) probeSignInUse(ctx context.Context, settings store.Settings, u signInUse, creds CloudCreds) (reachable, initialized bool, err error) {
+	loc, row, err := s.signInRepo(u, settings)
+	if err != nil {
+		return false, false, err
+	}
+	repo, err := s.resolveRepo(loc)
+	if err != nil {
+		return false, false, err
+	}
+	mode := s.offsiteModeForTarget(settings, row)
+	mode.Env = cloudEnv(creds)
+	return s.probeOffsiteRepo(ctx, repo, mode)
+}
+
+// signInRepo is the repository a use of a sign-in reaches, and the row whose
+// settings it is opened with. A destination is reached through the folder of
+// one of its sections, since its own folder holds no repository.
+func (s *Service) signInRepo(u signInUse, settings store.Settings) (string, store.OffsiteTarget, error) {
+	_, id, _ := strings.Cut(u.location.ID, ":")
+	switch u.location.Object {
+	case locationPath:
+		row, _ := s.primaryRemoteTarget(u.domain)
+		return domainPathRaw(u.domain, settings), row, nil
+	case locationRepo:
+		r, err := s.store.GetNamedRepo(id)
+		return r.Repo, r, err
+	case locationDestination:
+		i := slices.IndexFunc(u.location.Sections, func(sec locationSection) bool { return sec.Use == useCopy })
+		if i < 0 {
+			d, ok, err := s.store.GetDestination(id)
+			if err == nil && !ok {
+				err = store.ErrNotDestination
+			}
+			return d.Repo, d, err
+		}
+		id = u.location.Sections[i].TargetID
+	}
+	t, ok, err := s.store.GetOffsiteTarget(id)
+	if err == nil && !ok {
+		err = store.ErrNotOffsiteTarget
+	}
+	return t.Repo, t, err
+}
+
+// handleTestSignIn tests an edited saved sign-in at every storage location
+// that uses it, without saving it.
+// POST /api/cloud/creds-sets/{id}/test
+func (h *Handler) handleTestSignIn(w http.ResponseWriter, r *http.Request) {
+	var edited CloudCredSet
+	if !decodeBody(w, r, &edited) {
+		return
+	}
+	edited.ID = r.PathValue("id")
+	checks, err := h.svc.TestSignIn(r.Context(), edited)
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"locations": checks}))
 }
 
 // signInsNoteView is what the note on the Sign-ins card says.

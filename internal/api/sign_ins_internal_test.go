@@ -1,6 +1,7 @@
 package api
 
 import (
+	"errors"
 	"slices"
 	"strings"
 	"testing"
@@ -364,5 +365,73 @@ func TestTheDefaultCanBeMovedOverTheAPI(t *testing.T) {
 	}
 	if res := f.do("POST", "/api/cloud/creds-sets/gone/default", nil); res["ok"] != false {
 		t.Fatalf("an unknown sign-in was accepted: %v", res)
+	}
+}
+
+func TestTheLastSignInCanGoWithTheDefaultMark(t *testing.T) {
+	s := unraidNotifyService(t, nil)
+	if err := s.SetCloudCredSets([]CloudCredSet{{ID: "a", Name: "A", Default: true, CloudCreds: CloudCreds{RESTUser: "a"}}}); err != nil {
+		t.Fatal(err)
+	}
+	if err := s.SetCloudCredSets(nil); err != nil {
+		t.Fatal(err)
+	}
+	if sets := savedSets(t, s); len(sets) != 0 {
+		t.Fatalf("sets = %+v, want none", sets)
+	}
+}
+
+func TestASignInIsTestedWithTheEditedValuesWithoutSavingThem(t *testing.T) {
+	svc, st, eng := newConnectionSvc(t, opensWithPassword("new"))
+	d, _ := restDestination(t, svc, st, "vms", "flash")
+	if d.CredsRef == "" {
+		t.Fatal("the destination saved no sign-in of its own")
+	}
+
+	checks, err := svc.TestSignIn(t.Context(), CloudCredSet{ID: d.CredsRef, CloudCreds: CloudCreds{RESTUser: "bv", RESTPassword: "new"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(checks) != 1 || checks[0].ID != "destination:"+d.ID || !checks[0].Reachable || !checks[0].Initialized {
+		t.Fatalf("checks = %+v, want the destination reached", checks)
+	}
+	if len(eng.probed) != 1 || !strings.HasPrefix(eng.probed[0], "rest:https://box:8000/bv/") {
+		t.Fatalf("probed %v, want the folder of one of the destination's sections", eng.probed)
+	}
+	if got := signInOf(t, svc, d); got.RESTPassword != "old" {
+		t.Fatalf("the test saved the password %q", got.RESTPassword)
+	}
+
+	checks, err = svc.TestSignIn(t.Context(), CloudCredSet{ID: d.CredsRef, CloudCreds: CloudCreds{RESTUser: "bv"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(checks) != 1 || checks[0].Reachable || checks[0].Error == "" {
+		t.Fatalf("checks = %+v, want the stored password tried and refused", checks)
+	}
+}
+
+func TestASignInNothingUsesHasNothingToTest(t *testing.T) {
+	svc, _, eng := newConnectionSvc(t, opensWithPassword("p"))
+	if err := svc.SetCloudCredSets([]CloudCredSet{{ID: "spare", Name: "Spare", CloudCreds: CloudCreds{RESTUser: "u", RESTPassword: "p"}}}); err != nil {
+		t.Fatal(err)
+	}
+	checks, err := svc.TestSignIn(t.Context(), CloudCredSet{ID: "spare"})
+	if err != nil || len(checks) != 0 || len(eng.probed) != 0 {
+		t.Fatalf("checks = %+v (%v), probed %v, want nothing tried", checks, err, eng.probed)
+	}
+	if _, err := svc.TestSignIn(t.Context(), CloudCredSet{ID: "gone"}); !errors.Is(err, errUnknownSignIn) {
+		t.Fatalf("an unknown sign-in was tested: %v", err)
+	}
+}
+
+func TestASignInCanBeTestedOverTheAPI(t *testing.T) {
+	f := newPlacementFixture(t)
+	if err := f.svc.SetCloudCredSets([]CloudCredSet{{ID: "a", Name: "A", CloudCreds: CloudCreds{RESTUser: "a", RESTPassword: "1"}}}); err != nil {
+		t.Fatal(err)
+	}
+	res := f.do("POST", "/api/cloud/creds-sets/a/test", map[string]any{"restUser": "a"})
+	if locations, ok := res["locations"].([]any); res["ok"] != true || !ok || len(locations) != 0 {
+		t.Fatalf("answer = %v", res)
 	}
 }

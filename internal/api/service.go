@@ -18348,7 +18348,7 @@ func (s *Service) CloudCredSets() ([]CloudCredSet, error) {
 //
 // A list that marks no default keeps the stored one, and the stored default
 // stays even when the list leaves it out: it goes only once another sign-in
-// takes its place. A set with a blank Name or a duplicate ID is rejected, as
+// takes its place, or with the last of them. A set with a blank Name or a duplicate ID is rejected, as
 // both would make CredsRef ambiguous or the set unreachable from the UI.
 func (s *Service) SetCloudCredSets(sets []CloudCredSet) error {
 	// The caller's slice is copied rather than normalized in place, because
@@ -18399,7 +18399,7 @@ func (s *Service) SetCloudCredSets(sets []CloudCredSet) error {
 				next[i].KeptFor = old.KeptFor
 			}
 		}
-		if d := defaultSetIndex(prev); defaults == 0 && d >= 0 {
+		if d := defaultSetIndex(prev); defaults == 0 && d >= 0 && len(next) > 0 {
 			if i := slices.IndexFunc(next, func(c CloudCredSet) bool { return c.ID == prev[d].ID }); i >= 0 {
 				next[i].Default = true
 			} else {
