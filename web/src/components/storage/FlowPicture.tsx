@@ -202,7 +202,7 @@ export function FlowPicture({
                 <>
                   <circle className="glim-flow-ring" cx={end[0]} cy={end[1]} r="11" />
                   <circle className="glim-flow-port" cx={end[0]} cy={end[1]} r="6" />
-                  <circle className="glim-flow-reach" cx={end[0]} cy={end[1]} r={Math.min(16, m.bandWidth / 2)} />
+                  <circle className="glim-flow-reach" cx={end[0]} cy={end[1]} r={m.reach} />
                 </>
               )}
               {!near && line.on && <circle className="glim-flow-dock" cx={end[0]} cy={end[1]} r="3.5" />}

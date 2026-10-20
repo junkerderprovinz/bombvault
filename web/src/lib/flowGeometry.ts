@@ -19,10 +19,12 @@ export interface FlowMeasures {
   /** The distance between two lines arriving at the same box. */
   gap: number;
   nodeMin: number;
+  /** The radius of the circle round a band's port that takes a tap. */
+  reach: number;
   narrow: boolean;
 }
 
-const WIDE = { row: 50, top: 46, label: 168, bandWidth: 56, stub: 64, stubLabel: 170, nodeWidth: 220, nodePad: 16, gap: 9, nodeMin: 56 };
+const WIDE = { row: 50, top: 46, label: 168, bandWidth: 56, stub: 64, stubLabel: 170, nodeWidth: 220, nodePad: 16, gap: 9, nodeMin: 56, reach: 16 };
 const NARROW: FlowMeasures = {
   width: 350,
   row: 50,
@@ -37,6 +39,9 @@ const NARROW: FlowMeasures = {
   nodePad: 14,
   gap: 8,
   nodeMin: 74,
+  // The small picture shrinks to 0.7 on a 320px phone, where 18 still makes
+  // a 24px target.
+  reach: 18,
   narrow: true,
 };
 

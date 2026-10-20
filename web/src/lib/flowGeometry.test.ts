@@ -13,6 +13,11 @@ describe("flowMeasures", () => {
   it("switches to the small picture where the wide one has no room", () => {
     expect(flowMeasures(360)).toMatchObject({ narrow: true, width: 350 });
   });
+
+  it("keeps a port 24px across where a 320px phone leaves the picture 240px", () => {
+    const m = flowMeasures(240);
+    expect((2 * m.reach * 240) / m.width).toBeGreaterThanOrEqual(24);
+  });
 });
 
 describe("flowLayout", () => {
