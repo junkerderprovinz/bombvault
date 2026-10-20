@@ -1,1 +1,0 @@
-Die App selbst ist unverändert. Auf deinem Server zeigt das Aktivitätsprotokoll jetzt eine laufende ZFS-Replik mit ihrem Fortschritt.

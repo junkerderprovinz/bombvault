@@ -1,0 +1,1 @@
+Die App hat nur ein bisschen Möbel gerückt: „Bericht kopieren“ im Problembericht steht jetzt rechts. Die schwere Arbeit hat dein Server erledigt: BombVault 10.2.0 führt alle Zugangsdaten in einer Liste mit einem Stern am Standard, und der eigene Ordner eines Bereichs zieht auf Wunsch in einen Speicherort um, den du schon hast.

@@ -1,1 +1,0 @@
-The app itself is unchanged. Your server learned to let go: with BombVault 10.1.2 any storage location can be removed, and the old backups stay or go, your call.

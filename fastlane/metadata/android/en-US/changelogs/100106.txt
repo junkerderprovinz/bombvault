@@ -1,1 +1,0 @@
-The app itself is unchanged. On your server, an off-site copy from one S3 server to another no longer tries the wrong key in the lock: each side now signs in with its own.

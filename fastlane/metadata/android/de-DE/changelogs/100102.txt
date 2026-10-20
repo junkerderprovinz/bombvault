@@ -1,1 +1,0 @@
-Die App selbst ist unverändert. Dein Server hat Loslassen gelernt: Mit BombVault 10.1.2 lässt sich jeder Speicherort entfernen, und die alten Sicherungen bleiben oder gehen, ganz wie du willst.

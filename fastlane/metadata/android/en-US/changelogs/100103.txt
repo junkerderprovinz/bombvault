@@ -1,1 +1,0 @@
-The app itself is unchanged. Your server now keeps a proper diary: after an update, BombVault 10.1.3 shows a card for every release you skipped, and every new feature gets its green dot.

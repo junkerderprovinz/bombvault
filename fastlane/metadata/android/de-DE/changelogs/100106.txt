@@ -1,1 +1,0 @@
-Die App selbst ist unverändert. Auf deinem Server steckt eine Off-site-Kopie von einem S3-Server zum anderen nicht mehr den falschen Schlüssel ins Schloss: Jede Seite meldet sich jetzt mit ihrem eigenen an.

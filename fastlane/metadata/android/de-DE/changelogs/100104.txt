@@ -1,1 +1,0 @@
-Die App selbst ist unverändert. Auf deinem Server hat die Replik-Karte eines ZFS-Eintrags jetzt einen Schalter, Nur Replik, keine Sicherung, für alle, die die Replik ohne Sicherung daneben wollen.

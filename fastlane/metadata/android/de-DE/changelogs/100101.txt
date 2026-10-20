@@ -1,1 +1,0 @@
-Die App selbst ist unverändert. Die Dashboards kommen von deinem Server: Mit BombVault 10.1.1 stehen alle Aufbewahrungsregeln an einer Stelle, statt in den Einstellungen Verstecken zu spielen. Und den AppData-Ordner von ZimaOS findet BombVault jetzt auch, Großbuchstaben hin oder her.

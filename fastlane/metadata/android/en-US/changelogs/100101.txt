@@ -1,1 +1,0 @@
-The app itself is unchanged. Dashboards come from your server, and there BombVault 10.1.1 keeps every keep rule in one place instead of letting them play hide and seek in the settings. It also finds ZimaOS's AppData folder now, capital letters and all.
