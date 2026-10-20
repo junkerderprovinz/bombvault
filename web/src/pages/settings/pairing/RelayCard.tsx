@@ -256,7 +256,20 @@ export function RelayCard({
   const [beforeHost, afterHost] = t("pairing.relayCheckProject").split("{host}");
 
   return (
-    <Card title={t("relay.title")} hint={t("relay.hint")} hueIndex={hueIndex}>
+    <Card
+      title={t("relay.title")}
+      hint={t("relay.hint")}
+      hueIndex={hueIndex}
+      foot={
+        <Button
+          label={t("relay.sees.title")}
+          labelKey="relay.sees.title"
+          glyph={<IconEye />}
+          tone="neutral"
+          onClick={() => setSeesOpen(true)}
+        />
+      }
+    >
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Selector
           items={FORMS.map((f) => ({ id: f, label: t(COPY[f].name), icon: <RouteGlyph kind={COPY[f].glyph} /> }))}
@@ -270,17 +283,10 @@ export function RelayCard({
           inline
           buttonHeight
         />
-        {/* Where the two do not fit beside the picker, they go under it at
-            the end of the row. */}
-        <span className="ms-auto flex flex-wrap items-center justify-end gap-2.5">
-          <Button
-            label={t("relay.sees.title")}
-            labelKey="relay.sees.title"
-            glyph={<IconEye />}
-            tone="neutral"
-            onClick={() => setSeesOpen(true)}
-          />
-          <span data-testid="relay-state">{state}</span>
+        {/* Where the state does not fit beside the picker, it goes under it
+            at the end of the row. */}
+        <span data-testid="relay-state" className="ms-auto flex">
+          {state}
         </span>
       </div>
 
