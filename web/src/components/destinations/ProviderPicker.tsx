@@ -24,6 +24,12 @@ export function ProviderMark({ provider }: { provider: Pick<Provider, "mark"> })
   return <>{(HOUSE[mark] ?? (() => <IconCloud />))()}</>;
 }
 
+/** The colour pair a provider's tile lights up in, its brand's where it has one. */
+export function providerTileStyle(mark: string | undefined): CSSProperties | undefined {
+  const lit = mark ? PROVIDER_TILES[mark] : undefined;
+  return lit && ({ "--provider-tile": lit.tile, "--provider-ink": lit.ink } as CSSProperties);
+}
+
 /** Providers as README buttons, each lighting up in its brand's colour. */
 export function ProviderTiles({
   providers,
@@ -40,19 +46,16 @@ export function ProviderTiles({
   const { t } = useT();
   return (
     <ul className="glim-provider-pick">
-      {providers.map((p) => {
-        const lit = p.mark ? PROVIDER_TILES[p.mark] : undefined;
-        return (
-          <li key={p.id} style={lit && ({ "--provider-tile": lit.tile, "--provider-ink": lit.ink } as CSSProperties)}>
-            <ReadmeButton
-              tile={`glim-tile-provider${picked === p.id ? " glim-provider-picked" : ""}`}
-              parts={[{ name: nameOf ? nameOf(p) : providerName(p, t), onClick: () => onPick(p) }]}
-              mark={<ProviderMark provider={p} />}
-              markClass="text-carbon-textSub"
-            />
-          </li>
-        );
-      })}
+      {providers.map((p) => (
+        <li key={p.id} style={providerTileStyle(p.mark)}>
+          <ReadmeButton
+            tile={`glim-tile-provider${picked === p.id ? " glim-provider-picked" : ""}`}
+            parts={[{ name: nameOf ? nameOf(p) : providerName(p, t), onClick: () => onPick(p) }]}
+            mark={<ProviderMark provider={p} />}
+            markClass="text-carbon-textSub"
+          />
+        </li>
+      ))}
     </ul>
   );
 }

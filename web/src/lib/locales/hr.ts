@@ -793,6 +793,7 @@ const hr: Partial<Translations> = {
   "whatsNew.settingsStorageFlow": "Stranica postavki Odredišta prikazuje i koji se odjeljak sprema na koje odredište.",
   "whatsNew.addOwnRclone": "„Dodaj odredište” nudi vlastitu rclone konfiguraciju, u koju lijepiš remoteove iz rclone.conf.",
   "whatsNew.cryptPicture": "Slika šifriranja prati svoj prekidač: zapečaćeni paketi na odredištu kad su sigurnosne kopije šifrirane, a čitljivi kad nisu.",
+  "whatsNew.providerLogos": "U „Dodaj odredište” Amazon S3, QingStor, Sia, FileLu, Drime i rclone prikazuju svoje logotipe, a svaka pločica pod pokazivačem zasvijetli u boji svoje marke. premiumize.me više nije na popisu jer ne pohranjuje sigurnosne kopije.",
   "whatsNew.settingsStorageList": "Stranica postavki Odredišta prikazuje sva odredišta. Klik otvara jedno.",
   "whatsNew.offsiteCopies": "Kopija izvan lokacije svakog odjeljka jedan je redak na jednoj kartici, s testom, replikacijom i postavljanjem u retku. Sve ostalo otvara se u prozoru.",
   "whatsNew.compressionRow": "Odabir kompresije stoji uz svoju oznaku i širok je samo koliko njegove tri opcije.",

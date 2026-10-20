@@ -678,6 +678,7 @@ const da: Partial<Translations> = {
   "whatsNew.settingsStorageFlow": "Indstillingssiden Destinationer viser også, hvilken sektion der tages backup af til hvilken destination.",
   "whatsNew.addOwnRclone": "»Tilføj destination« har et valg til din egen rclone-konfiguration, hvor du indsætter remotes fra en rclone.conf.",
   "whatsNew.cryptPicture": "Billedet af krypteringen følger sin kontakt: forseglede pakker på destinationen, når sikkerhedskopierne er krypterede, og læsbare, når de ikke er.",
+  "whatsNew.providerLogos": "I »Tilføj destination« viser Amazon S3, QingStor, Sia, FileLu, Drime og rclone deres logoer, og hver flise lyser op i mærkets farve under markøren. premiumize.me er ikke længere på listen, da den ikke gemmer sikkerhedskopier.",
   "whatsNew.settingsStorageList": "Indstillingssiden Destinationer viser alle destinationer. Et klik åbner en.",
   "whatsNew.offsiteCopies": "Hver sektions eksterne kopi er én række i ét kort, med test, replikering og opsætning på rækken. Resten åbner i et vindue.",
   "whatsNew.compressionRow": "Valget af komprimering står ved siden af sin etiket og er kun så bredt som sine tre muligheder.",

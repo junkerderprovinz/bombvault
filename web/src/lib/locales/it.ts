@@ -678,6 +678,7 @@ const it: Partial<Translations> = {
   "whatsNew.settingsStorageFlow": "La pagina delle impostazioni Destinazioni mostra anche quale sezione va in backup su quale destinazione.",
   "whatsNew.addOwnRclone": "«Aggiungi destinazione» offre una configurazione rclone personale, dove incolli i remote da un rclone.conf.",
   "whatsNew.cryptPicture": "L'immagine della crittografia segue il suo interruttore: pacchetti sigillati nella destinazione quando i backup sono cifrati, leggibili quando non lo sono.",
+  "whatsNew.providerLogos": "In «Aggiungi destinazione» Amazon S3, QingStor, Sia, FileLu, Drime e rclone mostrano il loro logo, e ogni riquadro si illumina del colore del proprio marchio sotto il puntatore. premiumize.me non è più nell'elenco, perché non conserva backup.",
   "whatsNew.settingsStorageList": "La pagina delle impostazioni Destinazioni elenca tutte le destinazioni. Un clic ne apre una.",
   "whatsNew.offsiteCopies": "La copia off-site di ogni sezione è una riga in un'unica scheda, con prova, replica e configurazione sulla riga. Tutto il resto si apre in una finestra.",
   "whatsNew.compressionRow": "La scelta della compressione sta accanto alla sua etichetta ed è larga solo quanto le sue tre opzioni.",

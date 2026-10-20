@@ -139,6 +139,13 @@ export const RELEASES: Release[] = [
         way: [...TO_STORAGE, "add-location"],
         text: "whatsNew.addOwnRclone",
       },
+      {
+        id: "provider-logos",
+        page: "/storage",
+        where: ["storage.title"],
+        way: [...TO_STORAGE, "add-location"],
+        text: "whatsNew.providerLogos",
+      },
       { id: "local-protection-card", text: "whatsNew.localProtection" },
       {
         id: "lists-as-rows",

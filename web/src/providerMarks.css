@@ -42,6 +42,9 @@
   --brand-storj-0: #3c7bff;
   --brand-opencloud-0: #e2baff;
   --brand-oracle-cloud-0: #d15f4f;
+  --brand-versity-0: #aab4e0;
+  --brand-sia-0: #c3e500;
+  --brand-rclone-0: #b4e3f9;
 }
 
 @media (prefers-color-scheme: light) {
@@ -83,6 +86,9 @@
     --brand-storj-0: #0052ff;
     --brand-opencloud-0: #20434f;
     --brand-oracle-cloud-0: #C74634;
+    --brand-versity-0: #191b2a;
+    --brand-sia-0: #8fa800;
+    --brand-rclone-0: #4aa8dc;
   }
 }
 
@@ -124,4 +130,7 @@
   --brand-storj-0: #0052ff;
   --brand-opencloud-0: #20434f;
   --brand-oracle-cloud-0: #C74634;
+  --brand-versity-0: #191b2a;
+  --brand-sia-0: #8fa800;
+  --brand-rclone-0: #4aa8dc;
 }

@@ -675,6 +675,7 @@ const ro: Partial<Translations> = {
   "whatsNew.settingsStorageFlow": "Pagina de setări Destinații arată și ce secțiune se salvează în ce destinație.",
   "whatsNew.addOwnRclone": "„Adaugă destinație” oferă o configurație rclone proprie, unde lipești remote-uri dintr-un rclone.conf.",
   "whatsNew.cryptPicture": "Imaginea criptării își urmează comutatorul: pachete sigilate la destinație când copiile de rezervă sunt criptate, lizibile când nu sunt.",
+  "whatsNew.providerLogos": "În „Adaugă destinație”, Amazon S3, QingStor, Sia, FileLu, Drime și rclone își arată logo-ul, iar fiecare dală se aprinde în culoarea mărcii sale sub cursor. premiumize.me nu mai este în listă, pentru că nu stochează copii de rezervă.",
   "whatsNew.settingsStorageList": "Pagina de setări Destinații arată toate destinațiile. Un clic deschide una.",
   "whatsNew.offsiteCopies": "Copia externă a fiecărei secțiuni este un rând într-un singur card, cu testare, replicare și configurare pe rând. Restul se deschide într-o fereastră.",
   "whatsNew.compressionRow": "Alegerea comprimării stă lângă eticheta ei și e doar cât de lată sunt cele trei opțiuni.",

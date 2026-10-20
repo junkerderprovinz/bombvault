@@ -675,6 +675,7 @@ const pt: Partial<Translations> = {
   "whatsNew.settingsStorageFlow": "A página de definições Destinos também mostra que secção é copiada para que destino.",
   "whatsNew.addOwnRclone": "«Adicionar destino» oferece uma configuração própria do rclone, onde cola remotes de um rclone.conf.",
   "whatsNew.cryptPicture": "A imagem da encriptação segue o seu interruptor: pacotes selados no destino quando os backups são encriptados, e legíveis quando não são.",
+  "whatsNew.providerLogos": "Em «Adicionar destino», Amazon S3, QingStor, Sia, FileLu, Drime e rclone mostram o seu logótipo, e cada mosaico acende-se na cor da sua marca sob o ponteiro. O premiumize.me já não está na lista, porque não guarda backups.",
   "whatsNew.settingsStorageList": "A página de definições Destinos lista todos os destinos. Um clique abre um.",
   "whatsNew.offsiteCopies": "A cópia externa de cada secção é uma linha num único cartão, com testar, replicar e configurar na linha. O resto abre numa janela.",
   "whatsNew.compressionRow": "A escolha da compressão fica ao lado do seu rótulo e só é tão larga como as suas três opções.",

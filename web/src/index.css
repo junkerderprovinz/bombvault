@@ -1920,11 +1920,12 @@ body {
 }
 
 /* A provider in the off-site wizard takes its colour pair from its list item,
-   since there are too many brands for a class each. A provider without one
-   lights up in the accent, like the house button. */
+   since there are too many brands for a class each. A kind of storage with no
+   brand, such as SFTP or a folder, lights up in plain black or white rather
+   than the accent, which would pass it off as a brand. */
 .glim-tile-provider {
-  --tile: var(--provider-tile, var(--accent));
-  --tile-ink: var(--provider-ink, var(--accent-contrast));
+  --tile: var(--provider-tile, var(--carbon-text));
+  --tile-ink: var(--provider-ink, var(--carbon-surface));
 }
 
 /* GlimStone's eyebrow label: small, uppercase, quiet. It heads a picker's

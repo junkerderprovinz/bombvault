@@ -675,6 +675,7 @@ const no: Partial<Translations> = {
   "whatsNew.settingsStorageFlow": "Innstillingssiden Mål viser også hvilken del som sikkerhetskopieres til hvilket mål.",
   "whatsNew.addOwnRclone": "«Legg til mål» har et valg for din egen rclone-konfigurasjon, der du limer inn remotes fra en rclone.conf.",
   "whatsNew.cryptPicture": "Bildet av krypteringen følger bryteren sin: forseglede pakker på målet når sikkerhetskopiene er kryptert, og lesbare når de ikke er det.",
+  "whatsNew.providerLogos": "I «Legg til mål» viser Amazon S3, QingStor, Sia, FileLu, Drime og rclone logoene sine, og hver flis lyser opp i merkets farge under pekeren. premiumize.me er ikke lenger på listen, siden den ikke lagrer sikkerhetskopier.",
   "whatsNew.settingsStorageList": "Innstillingssiden Mål viser alle mål. Et klikk åpner ett.",
   "whatsNew.offsiteCopies": "Den eksterne kopien av hver del er én rad i ett kort, med test, replikering og oppsett på raden. Resten åpnes i et vindu.",
   "whatsNew.compressionRow": "Valget av komprimering står ved siden av etiketten og er bare så bredt som de tre valgene.",

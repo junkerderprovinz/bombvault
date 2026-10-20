@@ -30,12 +30,12 @@ import { useRcloneRemotes } from "../../lib/useRcloneRemotes";
 import { InstanceWindow } from "../../pages/instances/InstanceWindow";
 import { Button } from "../Button";
 import { GroupReceiverPicker } from "../destinations/GroupReceiverPicker";
-import { ProviderTiles, providerName } from "../destinations/ProviderPicker";
+import { ProviderMark, ProviderTiles, providerName, providerTileStyle } from "../destinations/ProviderPicker";
 import { FolderBody, ProtectBody, RecoveryBody, SignInBody, type DestinationWords } from "../destinations/steps";
 import { useDestinationDraft } from "../destinations/useDestinationDraft";
 import { IconBack, IconForward, IconSave } from "../glyphs";
 import { InfoBubble } from "../InfoBubble";
-import { IconCheck, IconClose, IconCloud, IconPencil } from "../navGlyphs";
+import { IconCheck, IconClose, IconPencil } from "../navGlyphs";
 import { PickerGroup, PickerNoMatch } from "../Picker";
 import { itemName } from "../placement/NewTargetQuestion";
 import { ReadmeButton } from "../ReadmeButton";
@@ -306,24 +306,28 @@ export function AddLocationWindow({
             matches={matches}
             onPick={(r) => void draft.pickFromGroup(r).then((filled) => filled && go(2))}
           />
-          {tiles.map(({ section, providers }) => (
-            <PickerGroup
-              key={section.id}
-              title={t(section.title)}
-              fit={section.fit && { label: t(section.fit.label), tone: section.fit.tone }}
-              tip={section.tips.map((tip) => t(tip)).join(" ")}
-            >
-              <ProviderTiles providers={providers} picked={draft.fromMember ? undefined : picked?.id} onPick={pick} nameOf={nameOf} />
-            </PickerGroup>
-          ))}
+          {tiles.length > 0 && (
+            <div data-new="provider-logos" className="flex flex-col gap-6">
+              {tiles.map(({ section, providers }) => (
+                <PickerGroup
+                  key={section.id}
+                  title={t(section.title)}
+                  fit={section.fit && { label: t(section.fit.label), tone: section.fit.tone }}
+                  tip={section.tips.map((tip) => t(tip)).join(" ")}
+                >
+                  <ProviderTiles providers={providers} picked={draft.fromMember ? undefined : picked?.id} onPick={pick} nameOf={nameOf} />
+                </PickerGroup>
+              ))}
+            </div>
+          )}
           {ownShown && (
             <PickerGroup title={t("storage.add.ownRclone")} tip={t("storage.add.ownRcloneTip")}>
               <ul className="glim-provider-pick">
-                <li data-new="storage-add-own-rclone">
+                <li data-new="storage-add-own-rclone" style={providerTileStyle("rclone")}>
                   <ReadmeButton
                     tile="glim-tile-provider"
                     parts={[{ name: "rclone.conf", sub: rclone.remotes.join(", ") || undefined, onClick: () => setOwnConf(true) }]}
-                    mark={<IconCloud />}
+                    mark={<ProviderMark provider={{ mark: "rclone" }} />}
                     markClass="text-carbon-textSub"
                   />
                 </li>

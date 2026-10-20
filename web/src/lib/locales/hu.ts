@@ -678,6 +678,7 @@ const hu: Partial<Translations> = {
   "whatsNew.settingsStorageFlow": "A Célok beállítási oldal azt is mutatja, melyik szakaszról melyik célra készül mentés.",
   "whatsNew.addOwnRclone": "A „Cél hozzáadása” saját rclone-konfigurációt is kínál, ahová egy rclone.conf fájlból illesztesz be remote-okat.",
   "whatsNew.cryptPicture": "A titkosítás képe követi a kapcsolóját: lepecsételt csomagok a célnál, ha a mentések titkosítottak, és olvasható csomagok, ha nem.",
+  "whatsNew.providerLogos": "A „Cél hozzáadása” ablakban az Amazon S3, a QingStor, a Sia, a FileLu, a Drime és az rclone a saját logóját mutatja, és minden csempe a márkája színében világít a mutató alatt. A premiumize.me már nincs a listán, mert nem tárol mentéseket.",
   "whatsNew.settingsStorageList": "A Célok beállítási oldal az összes célt mutatja. Egy kattintás megnyit egyet.",
   "whatsNew.offsiteCopies": "Minden rész telephelyen kívüli másolata egy sor egyetlen kártyán, a teszttel, a replikálással és a beállítással a sorban. Minden más egy ablakban nyílik meg.",
   "whatsNew.compressionRow": "A tömörítés választója a címkéje mellett áll, és csak olyan széles, mint a három lehetősége.",

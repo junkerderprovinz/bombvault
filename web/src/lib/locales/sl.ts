@@ -793,6 +793,7 @@ const sl: Partial<Translations> = {
   "whatsNew.settingsStorageFlow": "Stran nastavitev Cilji prikaže tudi, kateri razdelek se kopira na kateri cilj.",
   "whatsNew.addOwnRclone": "»Dodaj cilj« ponuja lastne nastavitve rclone, kamor prilepiš remote iz rclone.conf.",
   "whatsNew.cryptPicture": "Slika šifriranja sledi svojemu stikalu: zapečateni paketi na cilju, ko so varnostne kopije šifrirane, in berljivi, ko niso.",
+  "whatsNew.providerLogos": "V »Dodaj cilj« Amazon S3, QingStor, Sia, FileLu, Drime in rclone pokažejo svoj logotip, vsaka ploščica pa pod kazalcem zasveti v barvi svoje znamke. premiumize.me ni več na seznamu, ker ne hrani varnostnih kopij.",
   "whatsNew.settingsStorageList": "Stran nastavitev Cilji prikaže vse cilje. Klik odpre enega.",
   "whatsNew.offsiteCopies": "Zunanja kopija vsakega razdelka je ena vrstica na eni kartici, s preizkusom, podvajanjem in nastavitvijo v vrstici. Vse drugo se odpre v oknu.",
   "whatsNew.compressionRow": "Izbira stiskanja stoji ob svoji oznaki in je le tako široka kot njene tri možnosti.",

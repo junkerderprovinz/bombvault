@@ -793,6 +793,7 @@ const ms: Partial<Translations> = {
   "whatsNew.settingsStorageFlow": "Halaman tetapan Destinasi juga menunjukkan bahagian mana disandarkan ke destinasi mana.",
   "whatsNew.addOwnRclone": "“Tambah destinasi” ada pilihan konfigurasi rclone sendiri, tempat anda menampal remote daripada rclone.conf.",
   "whatsNew.cryptPicture": "Gambar penyulitan mengikut suisnya: pek yang dimeterai di destinasi apabila sandaran disulitkan, dan pek yang boleh dibaca apabila tidak.",
+  "whatsNew.providerLogos": "Dalam “Tambah destinasi”, Amazon S3, QingStor, Sia, FileLu, Drime dan rclone memaparkan logo masing-masing, dan setiap jubin menyala dalam warna jenamanya di bawah penuding. premiumize.me tiada lagi dalam senarai kerana ia tidak menyimpan sandaran.",
   "whatsNew.settingsStorageList": "Halaman tetapan Destinasi menyenaraikan semua destinasi. Satu klik membuka salah satunya.",
   "whatsNew.offsiteCopies": "Salinan luar tapak setiap bahagian ialah satu baris dalam satu kad, dengan uji, replikasi dan persediaan pada baris itu. Selebihnya dibuka dalam tetingkap.",
   "whatsNew.compressionRow": "Pilihan pemampatan terletak di sebelah labelnya dan hanya selebar tiga pilihannya.",

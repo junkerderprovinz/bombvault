@@ -678,6 +678,7 @@ const ar: Partial<Translations> = {
   "whatsNew.settingsStorageFlow": "تعرض صفحة إعدادات الوجهات أيضًا أي قسم يُنسخ احتياطيًا إلى أي وجهة.",
   "whatsNew.addOwnRclone": "في «إضافة وجهة» خيار لإعداد rclone خاص، تلصق فيه remotes من ملف rclone.conf.",
   "whatsNew.cryptPicture": "صورة التشفير تتبع مفتاحها: حزم مختومة في الوجهة عند تشفير النسخ الاحتياطية، وحزم مقروءة عند عدم تشفيرها.",
+  "whatsNew.providerLogos": "في «إضافة وجهة» تظهر شعارات Amazon S3 وQingStor وSia وFileLu وDrime وrclone، وتضيء كل بطاقة بلون علامتها التجارية تحت المؤشر. لم يعد premiumize.me في القائمة لأنه لا يخزّن النسخ الاحتياطية.",
   "whatsNew.settingsStorageList": "تعرض صفحة إعدادات الوجهات كل الوجهات، ونقرة واحدة تفتح إحداها.",
   "whatsNew.offsiteCopies": "النسخة خارج الموقع لكل قسم سطر واحد في بطاقة واحدة، وعليه الاختبار والنسخ والإعداد. ويُفتح كل ما عدا ذلك في نافذة.",
   "whatsNew.compressionRow": "يقع اختيار الضغط بجانب تسميته ولا يزيد عرضه على خياراته الثلاثة.",
