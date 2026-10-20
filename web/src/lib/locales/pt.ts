@@ -729,6 +729,7 @@ const pt: Partial<Translations> = {
   "whatsNew.ownFoldersCard": "Um destino remoto lista as secções que guardam lá os próprios backups.",
   "whatsNew.wizardSignIn": "Um novo destino pode entrar com credenciais guardadas em vez de novas chaves.",
   "whatsNew.listsAsRows": "Cada lista mostra as entradas como linhas separadas por um traço fino, sem uma caixa cinzenta por trás.",
+  "whatsNew.cardButtons": "Os botões que se aplicam a um cartão inteiro ficam no canto inferior direito, como numa janela.",
   "export.encrypt.hint": "Os repositórios restic já são cifrados. Isto cifra opcionalmente os artefatos de exportação em texto simples (tar.gz de contêiner e VM com os seus xml, e o zip flash) com age, para que possam ser armazenados ou movidos para fora do servidor com segurança.",
   "export.encrypt.ageInfo": "age (age-encryption.org) é uma ferramenta de cifragem de ficheiros pequena e moderna, uma alternativa mais simples ao GPG para selar um ficheiro para um ou mais destinatários.",
   "export.encrypt.enable": "Cifrar exportações com age",

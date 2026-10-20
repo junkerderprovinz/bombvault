@@ -727,6 +727,7 @@ const ko: Partial<Translations> = {
   "whatsNew.ownFoldersCard": "원격 대상에 그곳에 백업을 보관하는 섹션이 표시됩니다.",
   "whatsNew.wizardSignIn": "새 대상은 새 키 대신 저장된 자격 증명으로 로그인할 수 있습니다.",
   "whatsNew.listsAsRows": "모든 목록은 항목을 가는 선으로 구분된 행으로 보여 주며, 뒤에 회색 상자가 없습니다.",
+  "whatsNew.cardButtons": "카드 전체에 적용되는 버튼은 창과 마찬가지로 오른쪽 아래에 있습니다.",
   "export.encrypt.hint": "restic 저장소는 이미 암호화되어 있습니다. 이것은 평문 내보내기 산출물 (컨테이너 및 VM 의 tar.gz 와 그 xml, 그리고 플래시 zip) 을 age 로 선택적으로 암호화하여 서버 밖에 안전하게 저장하거나 옮길 수 있게 합니다.",
   "export.encrypt.ageInfo": "age (age-encryption.org) 는 작고 현대적인 파일 암호화 도구입니다. 하나 이상의 수신자를 위해 파일을 봉인하는, GPG보다 더 간단한 대안입니다.",
   "export.encrypt.enable": "age 로 내보내기 암호화",

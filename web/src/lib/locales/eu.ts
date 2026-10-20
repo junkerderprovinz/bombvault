@@ -847,6 +847,7 @@ const eu: Partial<Translations> = {
   "whatsNew.ownFoldersCard": "Urruneko helmuga batek bertan beren babeskopiak gordetzen dituzten atalak erakusten ditu.",
   "whatsNew.wizardSignIn": "Helmuga berri batek gordetako saio-hasiera batekin has dezake saioa, gako berrien ordez.",
   "whatsNew.listsAsRows": "Zerrenda bakoitzak bere sarrerak lerro mehe batez bereizitako errenkada gisa erakusten ditu, atzean kutxa grisik gabe.",
+  "whatsNew.cardButtons": "Txartel osoari dagozkion botoiak beheko eskuinaldean daude, leiho batean bezala.",
   "rclone.save": "Gorde konfigurazioa",
   "notify.title": "Jakinarazpenak",
   "notify.hint": "Jaso jakinarazpena babeskopia bat amaitzean, eta aukeratu behean zein gertaerak abiarazten duten.",

@@ -847,6 +847,7 @@ const id: Partial<Translations> = {
   "whatsNew.ownFoldersCard": "Tujuan jarak jauh menampilkan bagian yang menyimpan cadangannya sendiri di sana.",
   "whatsNew.wizardSignIn": "Tujuan baru bisa masuk dengan login tersimpan, bukan kunci baru.",
   "whatsNew.listsAsRows": "Setiap daftar menampilkan entrinya sebagai baris yang dipisahkan garis tipis, tanpa kotak abu-abu di belakangnya.",
+  "whatsNew.cardButtons": "Tombol yang berlaku untuk seluruh kartu ada di kanan bawah, seperti di jendela.",
   "rclone.save": "Simpan konfigurasi",
   "notify.title": "Notifikasi",
   "notify.hint": "Dapatkan notifikasi saat pencadangan selesai, dan pilih di bawah peristiwa mana yang memicunya.",

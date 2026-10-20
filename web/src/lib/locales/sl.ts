@@ -847,6 +847,7 @@ const sl: Partial<Translations> = {
   "whatsNew.ownFoldersCard": "Oddaljen cilj prikaže razdelke, ki tam hranijo svoje varnostne kopije.",
   "whatsNew.wizardSignIn": "Nov cilj se lahko prijavi s shranjenimi poverilnicami namesto z novimi ključi.",
   "whatsNew.listsAsRows": "Vsak seznam prikaže vnose kot vrstice, ločene s tanko črto, brez sivega okvirja v ozadju.",
+  "whatsNew.cardButtons": "Gumbi, ki veljajo za celo kartico, so spodaj desno, tako kot v oknu.",
   "rclone.save": "Shrani konfiguracijo",
   "notify.title": "Obvestila",
   "notify.hint": "Prejmi obvestilo, ko se varnostno kopiranje konča, in spodaj izberi, kateri dogodki ga sprožijo.",

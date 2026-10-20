@@ -732,6 +732,7 @@ const fi: Partial<Translations> = {
   "whatsNew.ownFoldersCard": "Etäkohde näyttää osiot, jotka pitävät siellä omia varmuuskopioitaan.",
   "whatsNew.wizardSignIn": "Uusi kohde voi kirjautua tallennetuilla tunnuksilla uusien avainten sijaan.",
   "whatsNew.listsAsRows": "Jokainen luettelo näyttää kohteensa riveinä, joita erottaa ohut viiva, ilman harmaata laatikkoa taustalla.",
+  "whatsNew.cardButtons": "Koko korttia koskevat painikkeet ovat oikeassa alakulmassa, kuten ikkunassa.",
   "export.encrypt.hint": "restic-arkistot ovat jo salattuja. Tämä salaa valinnaisesti selkokieliset vientiartefaktit (kontin ja virtuaalikoneen tar.gz sekä niiden xml, ja flash-zip) age:lla, jotta ne voi tallentaa tai siirtää turvallisesti pois palvelimelta.",
   "export.encrypt.ageInfo": "age (age-encryption.org) on pieni, moderni tiedostojen salaustyökalu, yksinkertaisempi vaihtoehto GPG:lle tiedoston sinetöimiseen yhdelle tai useammalle vastaanottajalle.",
   "export.encrypt.enable": "Salaa viennit age:lla",

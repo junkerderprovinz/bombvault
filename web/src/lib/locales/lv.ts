@@ -847,6 +847,7 @@ const lv: Partial<Translations> = {
   "whatsNew.ownFoldersCard": "Attāls mērķis rāda sadaļas, kas tur glabā savus dublējumus.",
   "whatsNew.wizardSignIn": "Jauns mērķis var pieteikties ar saglabātu pieteikšanos jaunu atslēgu vietā.",
   "whatsNew.listsAsRows": "Katrs saraksts rāda ierakstus kā rindas, kas atdalītas ar plānu līniju, bez pelēka lodziņa fonā.",
+  "whatsNew.cardButtons": "Pogas, kas attiecas uz visu karti, atrodas apakšā pa labi, tāpat kā logā.",
   "rclone.save": "Saglabāt konfigurāciju",
   "notify.title": "Paziņojumi",
   "notify.hint": "Saņemiet paziņojumu, kad pabeigta rezerves kopija, un zemāk izvēlieties, kuri notikumi to izraisa.",

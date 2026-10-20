@@ -732,6 +732,7 @@ const tr: Partial<Translations> = {
   "whatsNew.ownFoldersCard": "Uzak bir hedef, kendi yedeklerini orada tutan bölümleri gösterir.",
   "whatsNew.wizardSignIn": "Yeni bir hedef, yeni anahtarlar yerine kaydedilmiş bir oturum açma ile oturum açabilir.",
   "whatsNew.listsAsRows": "Her liste girişlerini ince bir çizgiyle ayrılmış satırlar olarak gösterir, arkalarında gri bir kutu olmadan.",
+  "whatsNew.cardButtons": "Kartın tamamı için geçerli düğmeler, bir pencerede olduğu gibi sağ altta durur.",
   "export.encrypt.hint": "restic depoları zaten şifrelidir. Bu, düz metin dışa aktarma yapıtlarını (konteyner ve VM tar.gz dosyaları ile xml'leri ve flash zip) isteğe bağlı olarak age ile şifreler; böylece sunucu dışında güvenle saklanabilir veya taşınabilirler.",
   "export.encrypt.ageInfo": "age (age-encryption.org), küçük ve modern bir dosya şifreleme aracıdır. Bir dosyayı bir veya daha fazla alıcı için mühürlemek üzere GPG'ye göre daha basit bir alternatiftir.",
   "export.encrypt.enable": "Dışa aktarmaları age ile şifrele",

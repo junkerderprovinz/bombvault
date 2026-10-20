@@ -134,6 +134,13 @@ export const RELEASES: Release[] = [
         way: ["/backups", "entry"],
         text: "whatsNew.listsAsRows",
       },
+      {
+        id: "card-buttons",
+        page: "/settings/security",
+        where: ["nav.settings", "settings.tab.security"],
+        way: ["/settings", "/settings/security"],
+        text: "whatsNew.cardButtons",
+      },
     ],
   },
   {

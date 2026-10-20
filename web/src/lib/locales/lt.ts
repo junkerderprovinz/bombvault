@@ -847,6 +847,7 @@ const lt: Partial<Translations> = {
   "whatsNew.ownFoldersCard": "Nuotolinė paskirties vieta rodo skiltis, kurios ten laiko savo atsargines kopijas.",
   "whatsNew.wizardSignIn": "Nauja paskirties vieta gali prisijungti su išsaugotu prisijungimu vietoj naujų raktų.",
   "whatsNew.listsAsRows": "Kiekvienas sąrašas rodo įrašus kaip eilutes, atskirtas plona linija, be pilko langelio fone.",
+  "whatsNew.cardButtons": "Mygtukai, skirti visai kortelei, yra apačioje dešinėje, kaip lange.",
   "rclone.save": "Išsaugoti konfigūraciją",
   "notify.title": "Pranešimai",
   "notify.hint": "Gauk pranešimą, kai baigsis atsarginė kopija, ir apačioje pasirink, kokie įvykiai jį suaktyvina.",

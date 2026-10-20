@@ -727,6 +727,7 @@ const zh: Partial<Translations> = {
   "whatsNew.ownFoldersCard": "远程目标会显示在那里保存自己备份的部分。",
   "whatsNew.wizardSignIn": "新目标可以用已保存的凭据登录，而不必使用新密钥。",
   "whatsNew.listsAsRows": "每个列表都把条目显示为以细线分隔的行，背后没有灰色方框。",
+  "whatsNew.cardButtons": "作用于整张卡片的按钮位于卡片右下角，与窗口中一致。",
   "export.encrypt.hint": "restic 仓库已经加密。此项可选地使用 age 加密明文导出产物 (容器和虚拟机的 tar.gz 及其 xml，以及闪存 zip)，以便安全地在服务器外存储或移动。",
   "export.encrypt.ageInfo": "age (age-encryption.org) 是一个小巧的现代文件加密工具：为一个或多个接收者封装文件时，比 GPG 更简单的替代方案。",
   "export.encrypt.enable": "使用 age 加密导出",

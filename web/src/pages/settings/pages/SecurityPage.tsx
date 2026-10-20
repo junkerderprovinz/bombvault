@@ -91,7 +91,27 @@ export function SecurityPage() {
       {(() => {
         const hueIdx = nextHue();
         return (
-      <Card title={t("auth.security")} hint={t("auth.passwordHint")} hueIndex={hueIdx}>
+      <Card
+        title={t("auth.security")}
+        hint={t("auth.passwordHint")}
+        hueIndex={hueIdx}
+        foot={
+          <span data-new="card-buttons" className="flex">
+            <Button
+              key={pwSaveShake || 0}
+              label={t("settings.save")}
+              labelKey="settings.save"
+              tone="accent"
+              onClick={() => void handleSetPassword()}
+              disabled={pwSaveState === "saving"}
+              busy={pwSaveState === "saving"}
+              title={pwSaveState === "saving" ? t("auth.saving") : undefined}
+              className={pwSaveShake ? "glim-shake" : ""}
+              hueIndex={hueIdx}
+            />
+          </span>
+        }
+      >
         <div className="flex items-center gap-2">
           <span
             className={`inline-block h-2 w-2 rounded-full ${authEnabled ? "bg-statusOkSolid" : "bg-carbon-textMuted"}`}
@@ -133,25 +153,9 @@ export function SecurityPage() {
             {t("auth.passwordMinHint", minPasswordLen)}
           </span>
 
-          <div className="flex items-center gap-3 pt-1">
-            <Button
-              key={pwSaveShake || 0}
-              label={t("settings.save")}
-              labelKey="settings.save"
-              tone="accent"
-              onClick={() => void handleSetPassword()}
-              disabled={pwSaveState === "saving"}
-              busy={pwSaveState === "saving"}
-              title={pwSaveState === "saving" ? t("auth.saving") : undefined}
-              className={pwSaveShake ? "glim-shake" : ""}
-              hueIndex={hueIdx}
-            />
-            {/* Only the pre-flight validation errors render here; the save
-                outcome is a toast. */}
-            {pwSaveState === "error" && pwSaveMsg && (
-              <span className="text-sm text-statusFail">{pwSaveMsg}</span>
-            )}
-          </div>
+          {/* Only the pre-flight validation errors render here; the save
+              outcome is a toast. */}
+          {pwSaveState === "error" && pwSaveMsg && <span className="text-sm text-statusFail">{pwSaveMsg}</span>}
         </div>
 
         {/* No sign-out buttons here: a settings card configures and the shell

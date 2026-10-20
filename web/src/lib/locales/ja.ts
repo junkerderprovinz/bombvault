@@ -727,6 +727,7 @@ const ja: Partial<Translations> = {
   "whatsNew.ownFoldersCard": "リモートの保存先に、そこにバックアップを保存しているセクションが表示されます。",
   "whatsNew.wizardSignIn": "新しい保存先は、新しいキーの代わりに保存済みの認証情報でサインインできます。",
   "whatsNew.listsAsRows": "すべてのリストは項目を細い線で区切った行として表示し、背後に灰色の枠はありません。",
+  "whatsNew.cardButtons": "カード全体に関わるボタンは、ウィンドウと同じく右下に並びます。",
   "export.encrypt.hint": "restic リポジトリはすでに暗号化されています。これはオプションで平文のエクスポート成果物 (コンテナと VM の tar.gz とその xml、およびフラッシュ zip) を age で暗号化し、サーバー外に安全に保存または移動できるようにします。",
   "export.encrypt.ageInfo": "age (age-encryption.org) は小さくてモダンなファイル暗号化ツールです。1人以上の受信者に向けてファイルを封印するための、GPGよりシンプルな代替手段です。",
   "export.encrypt.enable": "age でエクスポートを暗号化",

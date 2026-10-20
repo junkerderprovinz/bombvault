@@ -728,6 +728,7 @@ const nl: Partial<Translations> = {
   "whatsNew.ownFoldersCard": "Een externe bestemming toont de onderdelen die er hun eigen back-ups bewaren.",
   "whatsNew.wizardSignIn": "Een nieuwe bestemming kan inloggen met opgeslagen inloggegevens in plaats van nieuwe sleutels.",
   "whatsNew.listsAsRows": "Elke lijst toont zijn items als rijen met een dunne lijn ertussen, zonder grijs vlak erachter.",
+  "whatsNew.cardButtons": "Knoppen die voor een hele kaart gelden, staan rechtsonder, net als in een venster.",
   "export.encrypt.hint": "De restic-repositories zijn al versleuteld. Dit versleutelt optioneel de platte export-artefacten (container- en VM-tar.gz met hun xml, en de flash-zip) met age, zodat ze veilig buiten de server kunnen worden bewaard of verplaatst.",
   "export.encrypt.ageInfo": "age (age-encryption.org) is een klein, modern bestandsversleutelingsprogramma, een eenvoudiger alternatief voor GPG om een bestand voor een of meer ontvangers te verzegelen.",
   "export.encrypt.enable": "Exports versleutelen met age",

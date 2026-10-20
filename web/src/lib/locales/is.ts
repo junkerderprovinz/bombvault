@@ -847,6 +847,7 @@ const is: Partial<Translations> = {
   "whatsNew.ownFoldersCard": "Fjarlægur áfangastaður sýnir hlutana sem geyma eigin afrit þar.",
   "whatsNew.wizardSignIn": "Nýr áfangastaður getur skráð sig inn með vistaðri innskráningu í stað nýrra lykla.",
   "whatsNew.listsAsRows": "Allir listar sýna færslur sínar sem línur aðskildar með mjóu striki, án grás kassa á bak við.",
+  "whatsNew.cardButtons": "Hnappar sem eiga við allt spjaldið eru neðst til hægri, eins og í glugga.",
   "rclone.save": "Vista stillingu",
   "notify.title": "Tilkynningar",
   "notify.hint": "Fáðu tilkynningu þegar afritun lýkur, og veldu hér að neðan hvaða atburðir kveikja á henni.",
