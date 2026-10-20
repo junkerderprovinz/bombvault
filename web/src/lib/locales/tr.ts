@@ -679,7 +679,7 @@ const tr: Partial<Translations> = {
   "whatsNew.settingsStorageFlow": "Hedefler ayarlar sayfası hangi bölümün hangi hedefe yedeklendiğini de gösterir.",
   "whatsNew.addOwnRclone": "“Hedef ekle” içinde kendi rclone yapılandırman için bir Rclone kutucuğu var; orada bir rclone.conf dosyasından remote'ları yapıştırırsın.",
   "whatsNew.cryptPicture": "Şifreleme resmi kendi anahtarını izler: yedekler şifreliyken hedefte mühürlü paketler, değilken okunabilir paketler.",
-  "whatsNew.providerLogos": "“Hedef ekle” içinde Amazon S3, QingStor, Sia, FileLu, Drime ve rclone kendi logolarını gösterir ve her kutucuk işaretçinin altında kendi markasının rengiyle yanar. premiumize.me yedek saklamadığı için artık listede yok.",
+  "whatsNew.providerLogos": "“Hedef ekle” içinde Amazon S3, Synology C2, Shade, 1Fichier, QingStor, Sia, FileLu, Drime ve rclone kendi logolarını gösterir ve her kutucuk işaretçinin altında kendi markasının rengiyle yanar. premiumize.me yedek saklamadığı için artık listede yok.",
   "whatsNew.settingsStorageList": "Hedefler ayarlar sayfası tüm hedefleri listeler. Bir tıklama birini açar.",
   "whatsNew.offsiteCopies": "Her bölümün site dışı kopyası tek bir kartta bir satırdır; test, çoğaltma ve kurulum satırın üzerindedir. Geri kalan her şey bir pencerede açılır.",
   "whatsNew.compressionRow": "Sıkıştırma seçimi etiketinin yanında durur ve yalnızca üç seçeneği kadar geniştir.",

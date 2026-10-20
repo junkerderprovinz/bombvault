@@ -677,7 +677,7 @@ const cs: Partial<Translations> = {
   "whatsNew.settingsStorageFlow": "Stránka nastavení Cíle ukazuje také, která sekce se zálohuje do kterého cíle.",
   "whatsNew.addOwnRclone": "„Přidat cíl“ má dlaždici Rclone pro vlastní konfiguraci rclone, kam vložíš remoty z rclone.conf.",
   "whatsNew.cryptPicture": "Obrázek šifrování sleduje svůj přepínač: zapečetěné balíky v cíli, když jsou zálohy šifrované, a čitelné, když nejsou.",
-  "whatsNew.providerLogos": "V „Přidat cíl“ ukazují Amazon S3, QingStor, Sia, FileLu, Drime a rclone svá loga a každá dlaždice se pod ukazatelem rozsvítí v barvě své značky. premiumize.me už v seznamu není, protože zálohy neukládá.",
+  "whatsNew.providerLogos": "V „Přidat cíl“ ukazují Amazon S3, Synology C2, Shade, 1Fichier, QingStor, Sia, FileLu, Drime a rclone svá loga a každá dlaždice se pod ukazatelem rozsvítí v barvě své značky. premiumize.me už v seznamu není, protože zálohy neukládá.",
   "whatsNew.settingsStorageList": "Stránka nastavení Cíle ukazuje všechny cíle. Kliknutím jeden otevřeš.",
   "whatsNew.offsiteCopies": "Kopie mimo lokalitu každé sekce je jeden řádek na jedné kartě, s testem, replikací a nastavením přímo v řádku. Vše ostatní se otevře v okně.",
   "whatsNew.compressionRow": "Výběr komprese stojí vedle svého popisku a je jen tak široký jako jeho tři možnosti.",

@@ -673,7 +673,7 @@ const pl: Partial<Translations> = {
   "whatsNew.settingsStorageFlow": "Strona ustawień Miejsca docelowe pokazuje też, która sekcja trafia do którego miejsca docelowego.",
   "whatsNew.addOwnRclone": "„Dodaj miejsce docelowe” ma kafelek Rclone na własną konfigurację rclone, do której wklejasz remote'y z pliku rclone.conf.",
   "whatsNew.cryptPicture": "Obrazek szyfrowania podąża za swoim przełącznikiem: zapieczętowane pakiety w miejscu docelowym, gdy kopie są szyfrowane, i czytelne, gdy nie są.",
-  "whatsNew.providerLogos": "W „Dodaj miejsce docelowe” Amazon S3, QingStor, Sia, FileLu, Drime i rclone pokazują swoje logo, a każdy kafelek pod wskaźnikiem podświetla się kolorem swojej marki. premiumize.me nie ma już na liście, bo nie przechowuje kopii zapasowych.",
+  "whatsNew.providerLogos": "W „Dodaj miejsce docelowe” Amazon S3, Synology C2, Shade, 1Fichier, QingStor, Sia, FileLu, Drime i rclone pokazują swoje logo, a każdy kafelek pod wskaźnikiem podświetla się kolorem swojej marki. premiumize.me nie ma już na liście, bo nie przechowuje kopii zapasowych.",
   "whatsNew.settingsStorageList": "Strona ustawień Miejsca docelowe pokazuje wszystkie miejsca docelowe. Kliknięcie otwiera jedno z nich.",
   "whatsNew.offsiteCopies": "Kopia poza siedzibą każdej sekcji to jeden wiersz na jednej karcie, z testem, replikacją i konfiguracją w wierszu. Wszystko inne otwiera się w oknie.",
   "whatsNew.compressionRow": "Wybór kompresji stoi obok swojej etykiety i jest tylko tak szeroki jak jego trzy opcje.",

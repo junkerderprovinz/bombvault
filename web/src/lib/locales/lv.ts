@@ -794,7 +794,7 @@ const lv: Partial<Translations> = {
   "whatsNew.settingsStorageFlow": "Iestatījumu lapa Mērķi rāda arī, kura sadaļa tiek dublēta uz kuru mērķi.",
   "whatsNew.addOwnRclone": "“Pievienot mērķi” piedāvā flīzi Rclone savai rclone konfigurācijai, kur ielīmē remote no rclone.conf.",
   "whatsNew.cryptPicture": "Šifrēšanas attēls seko savam slēdzim: aizzīmogotas pakotnes mērķī, kad rezerves kopijas ir šifrētas, un lasāmas, kad nav.",
-  "whatsNew.providerLogos": "“Pievienot mērķi” rāda Amazon S3, QingStor, Sia, FileLu, Drime un rclone logotipus, un katra flīze zem rādītāja iedegas sava zīmola krāsā. premiumize.me vairs nav sarakstā, jo tas neglabā rezerves kopijas.",
+  "whatsNew.providerLogos": "“Pievienot mērķi” rāda Amazon S3, Synology C2, Shade, 1Fichier, QingStor, Sia, FileLu, Drime un rclone logotipus, un katra flīze zem rādītāja iedegas sava zīmola krāsā. premiumize.me vairs nav sarakstā, jo tas neglabā rezerves kopijas.",
   "whatsNew.settingsStorageList": "Iestatījumu lapa Mērķi parāda visus mērķus. Klikšķis atver vienu.",
   "whatsNew.offsiteCopies": "Katras sadaļas attālinātā kopija ir viena rinda vienā kartītē, ar pārbaudi, replicēšanu un iestatīšanu rindā. Viss pārējais atveras logā.",
   "whatsNew.compressionRow": "Saspiešanas izvēle ir blakus savai etiķetei un ir tikai tik plata kā tās trīs iespējas.",

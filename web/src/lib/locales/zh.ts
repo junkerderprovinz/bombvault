@@ -674,7 +674,7 @@ const zh: Partial<Translations> = {
   "whatsNew.settingsStorageFlow": "设置中的“目标”页面也会显示哪个部分备份到哪个目标。",
   "whatsNew.addOwnRclone": "“添加目标”提供 Rclone 磁贴用于自定义 rclone 配置，可在其中粘贴 rclone.conf 中的远程。",
   "whatsNew.cryptPicture": "加密示意图随开关变化：备份加密时目标里是封好的数据包，未加密时是可读的数据包。",
-  "whatsNew.providerLogos": "在“添加目标”中，Amazon S3、QingStor、Sia、FileLu、Drime 和 rclone 显示各自的徽标，鼠标悬停时每个磁贴会亮起品牌颜色。premiumize.me 不存储备份，已从列表中移除。",
+  "whatsNew.providerLogos": "在“添加目标”中，Amazon S3、Synology C2、Shade、1Fichier、QingStor、Sia、FileLu、Drime 和 rclone 显示各自的徽标，鼠标悬停时每个磁贴会亮起品牌颜色。premiumize.me 不存储备份，已从列表中移除。",
   "whatsNew.settingsStorageList": "设置中的“目标”页面列出所有目标，点击即可打开。",
   "whatsNew.offsiteCopies": "每个部分的异地副本是同一张卡片中的一行，测试、复制和设置都在这一行上，其余内容在窗口中打开。",
   "whatsNew.compressionRow": "压缩选择器位于其标签旁边，宽度只够容纳三个选项。",

@@ -674,7 +674,7 @@ const vi: Partial<Translations> = {
   "whatsNew.settingsStorageFlow": "Trang cài đặt Đích sao lưu cũng cho biết phần nào được sao lưu lên đích nào.",
   "whatsNew.addOwnRclone": "“Thêm đích” có ô Rclone cho cấu hình rclone riêng, nơi bạn dán các remote từ một tệp rclone.conf.",
   "whatsNew.cryptPicture": "Hình minh họa mã hóa đổi theo công tắc của nó: gói được niêm phong ở đích sao lưu khi bản sao lưu được mã hóa, và gói đọc được khi không.",
-  "whatsNew.providerLogos": "Trong “Thêm đích”, Amazon S3, QingStor, Sia, FileLu, Drime và rclone hiển thị logo của mình, và mỗi ô sáng lên theo màu thương hiệu khi rê con trỏ. premiumize.me không còn trong danh sách vì dịch vụ này không lưu bản sao lưu.",
+  "whatsNew.providerLogos": "Trong “Thêm đích”, Amazon S3, Synology C2, Shade, 1Fichier, QingStor, Sia, FileLu, Drime và rclone hiển thị logo của mình, và mỗi ô sáng lên theo màu thương hiệu khi rê con trỏ. premiumize.me không còn trong danh sách vì dịch vụ này không lưu bản sao lưu.",
   "whatsNew.settingsStorageList": "Trang cài đặt Đích sao lưu liệt kê mọi đích sao lưu. Bấm vào một đích để mở nó.",
   "whatsNew.offsiteCopies": "Bản sao ngoài site của mỗi mục là một dòng trong một thẻ, có kiểm tra, sao chép và thiết lập ngay trên dòng. Mọi thứ khác mở trong một cửa sổ.",
   "whatsNew.compressionRow": "Bộ chọn nén nằm cạnh nhãn của nó và chỉ rộng bằng ba lựa chọn.",

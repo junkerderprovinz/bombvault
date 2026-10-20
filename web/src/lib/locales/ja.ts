@@ -674,7 +674,7 @@ const ja: Partial<Translations> = {
   "whatsNew.settingsStorageFlow": "設定の「保存先」ページに、どのセクションがどの保存先にバックアップされるかも表示されます。",
   "whatsNew.addOwnRclone": "「保存先を追加」に独自の rclone 設定用の Rclone タイルがあり、rclone.conf からリモートを貼り付けられます。",
   "whatsNew.cryptPicture": "暗号化の図はスイッチに合わせて変わります。バックアップを暗号化すると保存先には封をしたパックが、暗号化しないと読めるパックが並びます。",
-  "whatsNew.providerLogos": "「保存先を追加」で Amazon S3、QingStor、Sia、FileLu、Drime、rclone のロゴが表示され、各タイルはポインターを重ねるとブランドの色に光ります。premiumize.me はバックアップを保存するサービスではないため、一覧から外しました。",
+  "whatsNew.providerLogos": "「保存先を追加」で Amazon S3、Synology C2、Shade、1Fichier、QingStor、Sia、FileLu、Drime、rclone のロゴが表示され、各タイルはポインターを重ねるとブランドの色に光ります。premiumize.me はバックアップを保存するサービスではないため、一覧から外しました。",
   "whatsNew.settingsStorageList": "設定の「保存先」ページにすべての保存先が並びます。クリックすると開きます。",
   "whatsNew.offsiteCopies": "各セクションのオフサイトコピーは1枚のカードの1行になり、テスト、複製、セットアップは行の上にあります。それ以外はウィンドウで開きます。",
   "whatsNew.compressionRow": "圧縮の選択はラベルの横に置かれ、3つの選択肢の幅しか取りません。",

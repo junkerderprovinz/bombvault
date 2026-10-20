@@ -794,7 +794,7 @@ const eu: Partial<Translations> = {
   "whatsNew.settingsStorageFlow": "Helmugak ezarpen-orriak ere erakusten du zein atal zein helmugatan babesten den.",
   "whatsNew.addOwnRclone": "«Gehitu helmuga» aukerak Rclone lauza bat du rclone konfigurazio propiorako, non rclone.conf bateko remoteak itsasten dituzun.",
   "whatsNew.cryptPicture": "Zifratzearen irudiak bere etengailuari jarraitzen dio: pakete zigilatuak helmugan babeskopiak zifratuta daudenean, eta irakurgarriak zifratu gabe daudenean.",
-  "whatsNew.providerLogos": "«Gehitu helmuga» atalean Amazon S3, QingStor, Sia, FileLu, Drime eta rclone-k beren logoa erakusten dute, eta lauza bakoitza bere markaren kolorez pizten da erakuslearen azpian. premiumize.me ez dago jada zerrendan, ez baitu babeskopiarik gordetzen.",
+  "whatsNew.providerLogos": "«Gehitu helmuga» atalean Amazon S3, Synology C2, Shade, 1Fichier, QingStor, Sia, FileLu, Drime eta rclone-k beren logoa erakusten dute, eta lauza bakoitza bere markaren kolorez pizten da erakuslearen azpian. premiumize.me ez dago jada zerrendan, ez baitu babeskopiarik gordetzen.",
   "whatsNew.settingsStorageList": "Helmugak ezarpen-orriak helmuga guztiak zerrendatzen ditu. Klik batek bat irekitzen du.",
   "whatsNew.offsiteCopies": "Atal bakoitzaren kanpoko kopia txartel bakar bateko lerro bat da, eta probatu, errepikatu eta konfiguratu lerroan bertan daude. Gainerako guztia leiho batean irekitzen da.",
   "whatsNew.compressionRow": "Konpresio-hautatzailea bere etiketaren ondoan dago, eta bere hiru aukerak bezain zabala baino ez da.",

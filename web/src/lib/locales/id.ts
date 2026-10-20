@@ -794,7 +794,7 @@ const id: Partial<Translations> = {
   "whatsNew.settingsStorageFlow": "Halaman pengaturan Tujuan juga menampilkan bagian mana dicadangkan ke tujuan mana.",
   "whatsNew.addOwnRclone": "“Tambah tujuan” punya ubin Rclone untuk konfigurasi rclone sendiri, tempat kamu menempel remote dari rclone.conf.",
   "whatsNew.cryptPicture": "Gambar enkripsi mengikuti sakelarnya: paket tersegel di tujuan saat cadangan dienkripsi, paket yang bisa dibaca saat tidak.",
-  "whatsNew.providerLogos": "Di “Tambah tujuan”, Amazon S3, QingStor, Sia, FileLu, Drime, dan rclone menampilkan logonya, dan setiap ubin menyala dengan warna mereknya di bawah penunjuk. premiumize.me tidak ada lagi di daftar karena tidak menyimpan cadangan.",
+  "whatsNew.providerLogos": "Di “Tambah tujuan”, Amazon S3, Synology C2, Shade, 1Fichier, QingStor, Sia, FileLu, Drime, dan rclone menampilkan logonya, dan setiap ubin menyala dengan warna mereknya di bawah penunjuk. premiumize.me tidak ada lagi di daftar karena tidak menyimpan cadangan.",
   "whatsNew.settingsStorageList": "Halaman pengaturan Tujuan menampilkan semua tujuan. Satu klik membuka salah satunya.",
   "whatsNew.offsiteCopies": "Salinan off-site setiap bagian adalah satu baris dalam satu kartu, dengan uji, replikasi, dan penyiapan di baris itu. Sisanya terbuka di jendela.",
   "whatsNew.compressionRow": "Pilihan kompresi ada di samping labelnya dan hanya selebar tiga opsinya.",

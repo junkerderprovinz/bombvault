@@ -794,7 +794,7 @@ const et: Partial<Translations> = {
   "whatsNew.settingsStorageFlow": "Seadete leht Sihtkohad näitab ka, millist jaotist millisesse sihtkohta varundatakse.",
   "whatsNew.addOwnRclone": "„Lisa sihtkoht“ pakub oma rclone'i seadistuse jaoks paani Rclone, kuhu kleebid remote'id failist rclone.conf.",
   "whatsNew.cryptPicture": "Krüpteerimise pilt järgib oma lülitit: pitseeritud pakid sihtkohas, kui varundused on krüpteeritud, ja loetavad, kui pole.",
-  "whatsNew.providerLogos": "„Lisa sihtkoht“ näitab Amazon S3, QingStori, Sia, FileLu, Drime'i ja rclone'i logosid ning iga paan süttib kursori all oma kaubamärgi värvi. premiumize.me pole enam loendis, sest see ei salvesta varundusi.",
+  "whatsNew.providerLogos": "„Lisa sihtkoht“ näitab Amazon S3, Synology C2, Shade'i, 1Fichieri, QingStori, Sia, FileLu, Drime'i ja rclone'i logosid ning iga paan süttib kursori all oma kaubamärgi värvi. premiumize.me pole enam loendis, sest see ei salvesta varundusi.",
   "whatsNew.settingsStorageList": "Seadete leht Sihtkohad näitab kõiki sihtkohti. Klõps avab ühe.",
   "whatsNew.offsiteCopies": "Iga jaotise väline koopia on üks rida ühel kaardil ning test, replitseerimine ja seadistamine on real. Kõik muu avaneb aknas.",
   "whatsNew.compressionRow": "Tihenduse valik on oma sildi kõrval ja ainult nii lai kui selle kolm valikut.",

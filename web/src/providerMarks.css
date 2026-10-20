@@ -45,6 +45,9 @@
   --brand-versity-0: #aab4e0;
   --brand-sia-0: #c3e500;
   --brand-rclone-0: #b4e3f9;
+  --brand-fichier-0: #e0e0e0;
+  --brand-fichier-1: #a9a9a9;
+  --brand-fichier-2: #8a8a8a;
 }
 
 @media (prefers-color-scheme: light) {
@@ -89,6 +92,9 @@
     --brand-versity-0: #191b2a;
     --brand-sia-0: #8fa800;
     --brand-rclone-0: #4aa8dc;
+    --brand-fichier-0: #5a5a5a;
+    --brand-fichier-1: #222222;
+    --brand-fichier-2: #0f0f0f;
   }
 }
 
@@ -133,4 +139,7 @@
   --brand-versity-0: #191b2a;
   --brand-sia-0: #8fa800;
   --brand-rclone-0: #4aa8dc;
+  --brand-fichier-0: #5a5a5a;
+  --brand-fichier-1: #222222;
+  --brand-fichier-2: #0f0f0f;
 }

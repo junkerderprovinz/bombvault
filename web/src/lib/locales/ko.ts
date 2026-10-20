@@ -674,7 +674,7 @@ const ko: Partial<Translations> = {
   "whatsNew.settingsStorageFlow": "설정의 대상 페이지에서 어떤 섹션이 어떤 대상에 백업되는지도 볼 수 있습니다.",
   "whatsNew.addOwnRclone": "“대상 추가”에 직접 만든 rclone 구성을 위한 Rclone 타일이 있어 rclone.conf의 리모트를 붙여넣을 수 있습니다.",
   "whatsNew.cryptPicture": "암호화 그림이 스위치를 따라 바뀝니다. 백업을 암호화하면 대상에 봉인된 팩이, 암호화하지 않으면 읽을 수 있는 팩이 보입니다.",
-  "whatsNew.providerLogos": "“대상 추가”에서 Amazon S3, QingStor, Sia, FileLu, Drime, rclone의 로고가 표시되고, 각 타일은 포인터를 올리면 브랜드 색으로 빛납니다. premiumize.me는 백업을 저장하지 않으므로 목록에서 빠졌습니다.",
+  "whatsNew.providerLogos": "“대상 추가”에서 Amazon S3, Synology C2, Shade, 1Fichier, QingStor, Sia, FileLu, Drime, rclone의 로고가 표시되고, 각 타일은 포인터를 올리면 브랜드 색으로 빛납니다. premiumize.me는 백업을 저장하지 않으므로 목록에서 빠졌습니다.",
   "whatsNew.settingsStorageList": "설정의 대상 페이지에 모든 대상이 표시됩니다. 클릭하면 열립니다.",
   "whatsNew.offsiteCopies": "각 섹션의 오프사이트 복사본은 카드 하나의 한 줄이며, 테스트, 복제, 설정이 그 줄에 있습니다. 나머지는 창에서 열립니다.",
   "whatsNew.compressionRow": "압축 선택기는 레이블 옆에 있고 세 가지 옵션만큼만 넓습니다.",

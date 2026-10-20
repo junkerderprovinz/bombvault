@@ -679,7 +679,7 @@ const fi: Partial<Translations> = {
   "whatsNew.settingsStorageFlow": "Asetussivu Kohteet näyttää myös, mikä osio varmuuskopioidaan mihinkin kohteeseen.",
   "whatsNew.addOwnRclone": "”Lisää kohde” tarjoaa oman rclone-määrityksen Rclone-ruudussa, johon liität remotet rclone.conf-tiedostosta.",
   "whatsNew.cryptPicture": "Salauksen kuva seuraa kytkintään: sinetöidyt paketit kohteessa, kun varmuuskopiot salataan, ja luettavat, kun ei salata.",
-  "whatsNew.providerLogos": "”Lisää kohde” näyttää Amazon S3:n, QingStorin, Sian, FileLun, Drimen ja rclonen logot, ja jokainen ruutu syttyy osoittimen alla brändinsä värillä. premiumize.me ei ole enää listalla, koska se ei tallenna varmuuskopioita.",
+  "whatsNew.providerLogos": "”Lisää kohde” näyttää Amazon S3:n, Synology C2:n, Shaden, 1Fichierin, QingStorin, Sian, FileLun, Drimen ja rclonen logot, ja jokainen ruutu syttyy osoittimen alla brändinsä värillä. premiumize.me ei ole enää listalla, koska se ei tallenna varmuuskopioita.",
   "whatsNew.settingsStorageList": "Asetussivu Kohteet näyttää kaikki kohteet. Napsautus avaa kohteen.",
   "whatsNew.offsiteCopies": "Jokaisen osion etäkopio on yksi rivi yhdellä kortilla, ja testaus, replikointi ja määritys ovat rivillä. Kaikki muu avautuu ikkunaan.",
   "whatsNew.compressionRow": "Pakkauksen valinta on nimensä vieressä ja vain kolmen vaihtoehtonsa levyinen.",

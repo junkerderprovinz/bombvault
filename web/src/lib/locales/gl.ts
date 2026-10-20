@@ -794,7 +794,7 @@ const gl: Partial<Translations> = {
   "whatsNew.settingsStorageFlow": "A páxina de axustes Destinos tamén amosa que sección se copia en que destino.",
   "whatsNew.addOwnRclone": "«Engadir destino» ten un mosaico Rclone para unha configuración propia de rclone, onde pegas remotes dun rclone.conf.",
   "whatsNew.cryptPicture": "A imaxe do cifrado segue o seu interruptor: paquetes selados no destino cando as copias están cifradas, e lexibles cando non.",
-  "whatsNew.providerLogos": "En «Engadir destino», Amazon S3, QingStor, Sia, FileLu, Drime e rclone amosan o seu logotipo, e cada mosaico ilumínase coa cor da súa marca baixo o punteiro. premiumize.me xa non está na lista, porque non garda copias de seguridade.",
+  "whatsNew.providerLogos": "En «Engadir destino», Amazon S3, Synology C2, Shade, 1Fichier, QingStor, Sia, FileLu, Drime e rclone amosan o seu logotipo, e cada mosaico ilumínase coa cor da súa marca baixo o punteiro. premiumize.me xa non está na lista, porque non garda copias de seguridade.",
   "whatsNew.settingsStorageList": "A páxina de axustes Destinos amosa todos os destinos. Un clic abre un.",
   "whatsNew.offsiteCopies": "A copia externa de cada sección é unha fila nunha soa tarxeta, con probar, replicar e configurar na fila. O resto ábrese nunha xanela.",
   "whatsNew.compressionRow": "O selector de compresión está ao carón da súa etiqueta e só é tan ancho coma as súas tres opcións.",

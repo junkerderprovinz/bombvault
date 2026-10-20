@@ -679,7 +679,7 @@ const he: Partial<Translations> = {
   "whatsNew.settingsStorageFlow": "דף ההגדרות יעדים מראה גם איזה תחום מגובה לאיזה יעד.",
   "whatsNew.addOwnRclone": "ב„הוספת יעד” יש אריח Rclone להגדרת rclone משלך, שבו מדביקים remotes מקובץ rclone.conf.",
   "whatsNew.cryptPicture": "תמונת ההצפנה עוקבת אחרי המתג שלה: חבילות חתומות ביעד כשהגיבויים מוצפנים, וחבילות קריאות כשלא.",
-  "whatsNew.providerLogos": "ב„הוספת יעד” מוצגים הלוגואים של Amazon S3, QingStor, Sia, FileLu, Drime ו-rclone, וכל אריח נדלק בצבע המותג שלו מתחת לסמן. premiumize.me כבר לא ברשימה, כי הוא לא שומר גיבויים.",
+  "whatsNew.providerLogos": "ב„הוספת יעד” מוצגים הלוגואים של Amazon S3, Synology C2, Shade, 1Fichier, QingStor, Sia, FileLu, Drime ו-rclone, וכל אריח נדלק בצבע המותג שלו מתחת לסמן. premiumize.me כבר לא ברשימה, כי הוא לא שומר גיבויים.",
   "whatsNew.settingsStorageList": "דף ההגדרות יעדים מציג את כל היעדים. לחיצה פותחת אחד מהם.",
   "whatsNew.offsiteCopies": "העותק מחוץ לאתר של כל חלק הוא שורה אחת בכרטיס אחד, עם בדיקה, שכפול והגדרה בשורה. כל השאר נפתח בחלון.",
   "whatsNew.compressionRow": "בחירת הדחיסה נמצאת ליד התווית שלה ורחבה רק כמו שלוש האפשרויות שלה.",
