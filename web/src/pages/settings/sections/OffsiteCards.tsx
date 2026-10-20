@@ -162,6 +162,7 @@ export function OffsiteCards({ nextHue }: { nextHue: () => number }) {
   const [details, setDetails] = useState<OffsiteDomain | null>(null);
   const [wizard, setWizard] = useState<OffsiteDomain | null>(null);
   const field = useRef<LocationField>(null);
+  const setupField = useRef<LocationField>(null);
 
   const [, setLimSaveState] = useState<SaveState>("idle");
   const [, setLimSaveError] = useState<string | null>(null);
@@ -170,10 +171,13 @@ export function OffsiteCards({ nextHue }: { nextHue: () => number }) {
   const titleOf = (domain: OffsiteDomain) => t("offsite.copyDomainTitle").replace("{domain}", t(DOMAIN_LABEL[domain]));
   const primaryOf = (domain: OffsiteDomain) => allTargets.find((x) => x.domain === domain && x.sortOrder === 0);
 
-  // A location typed but not yet saved is saved, or asked about, before the
+  // A location typed but not yet saved is saved, or asked about, before either
   // window goes, as it is when the field loses the focus.
   async function closeDetails() {
     if ((await field.current?.commit()) !== false) setDetails(null);
+  }
+  async function closeSetup() {
+    if ((await setupField.current?.commit()) !== false) setWizard(null);
   }
 
   function windowFor(domain: OffsiteDomain) {
@@ -249,18 +253,18 @@ export function OffsiteCards({ nextHue }: { nextHue: () => number }) {
         {wizard && (
           <InstanceWindow
             title={titleOf(wizard)}
-            onClose={() => setWizard(null)}
+            onClose={() => void closeSetup()}
             footer={
               <Button
                 label={t("offsite.wizard.close")}
                 labelKey="offsite.wizard.close"
                 glyph={<IconClose />}
                 tone="accent"
-                onClick={() => setWizard(null)}
+                onClick={() => void closeSetup()}
               />
             }
           >
-            <OffsiteWizard domain={wizard} settings={settings} setSettings={setSettings} save={save} t={t} hueIndex={hue} />
+            <OffsiteWizard ref={setupField} domain={wizard} settings={settings} setSettings={setSettings} save={save} t={t} hueIndex={hue} />
           </InstanceWindow>
         )}
       </div>

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type Ref } from "react";
 import type { Settings, DeploySnippetData, PrimaryRemoteConfig, OffsiteDomain } from "../lib/api";
 import {
   deploySnippet,
@@ -31,7 +31,7 @@ import { useToast } from "../lib/toast";
 import { Button } from "./Button";
 import { Rows, SettingRow } from "./storage/rows";
 import { CopyBlock } from "./CopyBlock";
-import { OffsiteLocationInput } from "./placement/OffsiteLocationInput";
+import { OffsiteLocationInput, type LocationField } from "./placement/OffsiteLocationInput";
 import { TestButton, VerdictLine } from "./TestButton";
 import { useTestVerdict } from "../lib/useTestVerdict";
 import { offsiteVerdict } from "../lib/offsiteVerdict";
@@ -101,6 +101,7 @@ export function OffsiteWizard({
   t,
   primary = false,
   hueIndex,
+  ref,
 }: {
   domain: Domain;
   settings: Settings;
@@ -126,6 +127,9 @@ export function OffsiteWizard({
    *  controls. Callers without a single per-domain hue, such as
    *  PathModeSwitch's remote-mode dialog, leave it out. */
   hueIndex?: number;
+  /** The repository field, for a window that saves what was typed before it
+   *  closes. */
+  ref?: Ref<LocationField>;
 }) {
   const repoKey = REPO_KEY[domain];
   const immKey = IMM_KEY[domain];
@@ -642,6 +646,7 @@ export function OffsiteWizard({
                 <InfoBubble tip={t("offsite.wizard.repoUrlInfo")} />
               </span>
               <OffsiteLocationInput
+                ref={ref}
                 domain={domain}
                 value={repoURL}
                 targetId={primaryTarget?.id}
