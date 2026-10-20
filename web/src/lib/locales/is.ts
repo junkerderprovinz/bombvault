@@ -788,7 +788,7 @@ const is: Partial<Translations> = {
   "signIns.makeDefault": "Gera sjálfgefna",
   "offsite.copies.title": "Fjarlæg afrit",
   "rclone.paste": "Líma inn stillingar",
-  "whatsNew.signInMakeDefault": "„Gera sjálfgefna“ gerir vistaða innskráningu að þeirri sem er notuð alls staðar þar sem engin er valin.",
+  "whatsNew.signInMakeDefault": "Stjarna merkir sjálfgefnu innskráninguna, þá sem er notuð alls staðar þar sem engin er valin. „Gera sjálfgefna“ færir stjörnuna á aðra.",
   "whatsNew.cardFoot": "Hnappar fyrir allt spjaldið, eins og „Bæta við innskráningu“ og „Bæta við áfangastað“, eru í lokin undir efni spjaldsins.",
   "whatsNew.settingsStorageFlow": "Stillingasíðan Áfangastaðir sýnir líka hvaða hluti er afritaður á hvaða áfangastað.",
   "whatsNew.addOwnRclone": "„Bæta við áfangastað“ býður upp á eigin rclone-stillingar, þar sem þú límir inn remotes úr rclone.conf.",

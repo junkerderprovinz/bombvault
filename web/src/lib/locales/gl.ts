@@ -788,7 +788,7 @@ const gl: Partial<Translations> = {
   "signIns.makeDefault": "Facer predeterminadas",
   "offsite.copies.title": "Copias externas",
   "rclone.paste": "Pegar unha configuración",
-  "whatsNew.signInMakeDefault": "«Facer predeterminadas» converte unhas credenciais gardadas nas que se usan onde non se escolle ningunha.",
+  "whatsNew.signInMakeDefault": "Unha estrela marca as credenciais predeterminadas, as que se usan onde non se escolle ningunha. «Facer predeterminadas» pasa a estrela a outras.",
   "whatsNew.cardFoot": "Os botóns de toda unha tarxeta, como «Engadir credenciais» e «Engadir destino», están ao final, baixo o contido da tarxeta.",
   "whatsNew.settingsStorageFlow": "A páxina de axustes Destinos tamén amosa que sección se copia en que destino.",
   "whatsNew.addOwnRclone": "«Engadir destino» ofrece unha configuración propia de rclone, onde pegas remotes dun rclone.conf.",

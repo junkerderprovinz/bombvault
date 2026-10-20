@@ -788,7 +788,7 @@ const ms: Partial<Translations> = {
   "signIns.makeDefault": "Jadikan lalai",
   "offsite.copies.title": "Salinan luar tapak",
   "rclone.paste": "Tampal konfigurasi",
-  "whatsNew.signInMakeDefault": "“Jadikan lalai” menjadikan log masuk yang disimpan sebagai log masuk yang digunakan di mana-mana sahaja yang tiada pilihan.",
+  "whatsNew.signInMakeDefault": "Bintang menandakan log masuk lalai, yang digunakan di mana-mana sahaja yang tiada pilihan. “Jadikan lalai” memindahkan bintang kepada log masuk lain.",
   "whatsNew.cardFoot": "Butang untuk seluruh kad, seperti “Tambah log masuk” dan “Tambah destinasi”, terletak di hujung di bawah kandungan kad.",
   "whatsNew.settingsStorageFlow": "Halaman tetapan Destinasi juga menunjukkan bahagian mana disandarkan ke destinasi mana.",
   "whatsNew.addOwnRclone": "“Tambah destinasi” ada pilihan konfigurasi rclone sendiri, tempat anda menampal remote daripada rclone.conf.",

@@ -673,7 +673,7 @@ const fr: Partial<Translations> = {
   "signIns.makeDefault": "Définir par défaut",
   "offsite.copies.title": "Copies hors site",
   "rclone.paste": "Coller une configuration",
-  "whatsNew.signInMakeDefault": "« Définir par défaut » fait d'un identifiant enregistré celui qui sert partout où aucun n'est choisi.",
+  "whatsNew.signInMakeDefault": "Une étoile marque l'identifiant par défaut, celui qui sert partout où aucun n'est choisi. « Définir par défaut » donne l'étoile à un autre.",
   "whatsNew.cardFoot": "Les boutons de toute une carte, comme « Ajouter des identifiants » et « Ajouter une destination », se trouvent à la fin, sous le contenu de la carte.",
   "whatsNew.settingsStorageFlow": "La page de réglages Destinations montre aussi quelle section est sauvegardée vers quelle destination.",
   "whatsNew.addOwnRclone": "« Ajouter une destination » propose une configuration rclone personnelle, où vous collez des remotes depuis un rclone.conf.",

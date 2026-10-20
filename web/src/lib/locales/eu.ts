@@ -788,7 +788,7 @@ const eu: Partial<Translations> = {
   "signIns.makeDefault": "Ezarri lehenetsi gisa",
   "offsite.copies.title": "Kanpoko kopiak",
   "rclone.paste": "Itsatsi konfigurazio bat",
-  "whatsNew.signInMakeDefault": "«Ezarri lehenetsi gisa» erabiliz, gordetako saio-hasiera bat bihurtzen da bat ere aukeratu ez den lekuetan erabiltzen dena.",
+  "whatsNew.signInMakeDefault": "Izar batek saio-hasiera lehenetsia markatzen du, bat ere aukeratu ez den lekuetan erabiltzen dena. «Ezarri lehenetsi gisa» botoiak izarra beste bati ematen dio.",
   "whatsNew.cardFoot": "Txartel osoaren botoiak, «Gehitu saio-hasiera» eta «Gehitu helmuga» kasu, amaieran daude, txartelaren edukiaren azpian.",
   "whatsNew.settingsStorageFlow": "Helmugak ezarpen-orriak ere erakusten du zein atal zein helmugatan babesten den.",
   "whatsNew.addOwnRclone": "«Gehitu helmuga» aukerak rclone konfigurazio propioa eskaintzen du, non rclone.conf bateko remoteak itsasten dituzun.",

@@ -670,7 +670,7 @@ const ro: Partial<Translations> = {
   "signIns.makeDefault": "Fă-o implicită",
   "offsite.copies.title": "Copii externe",
   "rclone.paste": "Lipește o configurație",
-  "whatsNew.signInMakeDefault": "„Fă-o implicită” face dintr-o autentificare salvată pe cea folosită peste tot unde nu e aleasă niciuna.",
+  "whatsNew.signInMakeDefault": "O stea marchează autentificarea implicită, cea folosită peste tot unde nu e aleasă niciuna. „Fă-o implicită” dă steaua alteia.",
   "whatsNew.cardFoot": "Butoanele pentru tot cardul, ca „Adaugă autentificare” și „Adaugă destinație”, stau la final, sub conținutul cardului.",
   "whatsNew.settingsStorageFlow": "Pagina de setări Destinații arată și ce secțiune se salvează în ce destinație.",
   "whatsNew.addOwnRclone": "„Adaugă destinație” oferă o configurație rclone proprie, unde lipești remote-uri dintr-un rclone.conf.",

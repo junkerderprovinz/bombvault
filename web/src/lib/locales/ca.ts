@@ -788,7 +788,7 @@ const ca: Partial<Translations> = {
   "signIns.makeDefault": "Fes-les per defecte",
   "offsite.copies.title": "Còpies externes",
   "rclone.paste": "Enganxa una configuració",
-  "whatsNew.signInMakeDefault": "«Fes-les per defecte» converteix unes credencials desades en les que s'usen on no se n'ha triat cap.",
+  "whatsNew.signInMakeDefault": "Una estrella marca les credencials per defecte, les que s'usen on no se n'ha triat cap. «Fes-les per defecte» passa l'estrella a unes altres.",
   "whatsNew.cardFoot": "Els botons de tota una targeta, com «Afegeix credencials» i «Afegeix una destinació», són al final, sota el contingut de la targeta.",
   "whatsNew.settingsStorageFlow": "La pàgina de configuració Destinacions també mostra quina secció es copia a quina destinació.",
   "whatsNew.addOwnRclone": "«Afegeix una destinació» ofereix una configuració pròpia de rclone, on enganxes remotes d'un rclone.conf.",

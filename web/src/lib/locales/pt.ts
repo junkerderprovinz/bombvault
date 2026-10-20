@@ -670,7 +670,7 @@ const pt: Partial<Translations> = {
   "signIns.makeDefault": "Tornar padrão",
   "offsite.copies.title": "Cópias externas",
   "rclone.paste": "Colar uma configuração",
-  "whatsNew.signInMakeDefault": "«Tornar padrão» faz de umas credenciais guardadas as que se usam onde nenhumas estão escolhidas.",
+  "whatsNew.signInMakeDefault": "Uma estrela marca as credenciais padrão, as que se usam onde nenhumas estão escolhidas. «Tornar padrão» passa a estrela para outras.",
   "whatsNew.cardFoot": "Os botões de um cartão inteiro, como «Adicionar credenciais» e «Adicionar destino», ficam no fim, por baixo do conteúdo do cartão.",
   "whatsNew.settingsStorageFlow": "A página de definições Destinos também mostra que secção é copiada para que destino.",
   "whatsNew.addOwnRclone": "«Adicionar destino» oferece uma configuração própria do rclone, onde cola remotes de um rclone.conf.",

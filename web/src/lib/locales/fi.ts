@@ -673,7 +673,7 @@ const fi: Partial<Translations> = {
   "signIns.makeDefault": "Aseta oletukseksi",
   "offsite.copies.title": "Etäkopiot",
   "rclone.paste": "Liitä määritys",
-  "whatsNew.signInMakeDefault": "”Aseta oletukseksi” tekee tallennetuista tunnuksista ne, joita käytetään kaikkialla, missä mitään ei ole valittu.",
+  "whatsNew.signInMakeDefault": "Tähti merkitsee oletustunnukset, joita käytetään kaikkialla, missä mitään ei ole valittu. ”Aseta oletukseksi” siirtää tähden toisille.",
   "whatsNew.cardFoot": "Koko kortin painikkeet, kuten ”Lisää tunnukset” ja ”Lisää kohde”, ovat lopussa kortin sisällön alla.",
   "whatsNew.settingsStorageFlow": "Asetussivu Kohteet näyttää myös, mikä osio varmuuskopioidaan mihinkin kohteeseen.",
   "whatsNew.addOwnRclone": "”Lisää kohde” tarjoaa oman rclone-määrityksen, johon liität remotet rclone.conf-tiedostosta.",

@@ -788,7 +788,7 @@ const et: Partial<Translations> = {
   "signIns.makeDefault": "Määra vaikimisi",
   "offsite.copies.title": "Välised koopiad",
   "rclone.paste": "Kleebi seadistus",
-  "whatsNew.signInMakeDefault": "„Määra vaikimisi“ teeb salvestatud sisselogimisest selle, mida kasutatakse kõikjal, kus ühtegi pole valitud.",
+  "whatsNew.signInMakeDefault": "Täht märgib vaikimisi sisselogimist, mida kasutatakse kõikjal, kus ühtegi pole valitud. „Määra vaikimisi“ annab tähe teisele.",
   "whatsNew.cardFoot": "Kogu kaardi nupud, näiteks „Lisa sisselogimine“ ja „Lisa sihtkoht“, on lõpus kaardi sisu all.",
   "whatsNew.settingsStorageFlow": "Seadete leht Sihtkohad näitab ka, millist jaotist millisesse sihtkohta varundatakse.",
   "whatsNew.addOwnRclone": "„Lisa sihtkoht“ pakub oma rclone'i seadistust, kuhu kleebid remote'id failist rclone.conf.",

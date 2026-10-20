@@ -673,7 +673,7 @@ const da: Partial<Translations> = {
   "signIns.makeDefault": "Gør til standard",
   "offsite.copies.title": "Eksterne kopier",
   "rclone.paste": "Indsæt en konfiguration",
-  "whatsNew.signInMakeDefault": "Med »Gør til standard« bliver gemte adgangsoplysninger dem, der bruges overalt, hvor ingen er valgt.",
+  "whatsNew.signInMakeDefault": "En stjerne markerer standard-adgangsoplysningerne, som bruges overalt, hvor ingen er valgt. »Gør til standard« giver stjernen videre.",
   "whatsNew.cardFoot": "Knapper til hele kortet, fx »Tilføj adgangsoplysninger« og »Tilføj destination«, står til sidst under kortets indhold.",
   "whatsNew.settingsStorageFlow": "Indstillingssiden Destinationer viser også, hvilken sektion der tages backup af til hvilken destination.",
   "whatsNew.addOwnRclone": "»Tilføj destination« har et valg til din egen rclone-konfiguration, hvor du indsætter remotes fra en rclone.conf.",

@@ -670,7 +670,7 @@ const no: Partial<Translations> = {
   "signIns.makeDefault": "Gjør til standard",
   "offsite.copies.title": "Eksterne kopier",
   "rclone.paste": "Lim inn en konfigurasjon",
-  "whatsNew.signInMakeDefault": "Med «Gjør til standard» blir lagrede pålogginger de som brukes overalt der ingen er valgt.",
+  "whatsNew.signInMakeDefault": "En stjerne markerer standardpåloggingen, den som brukes overalt der ingen er valgt. «Gjør til standard» gir stjernen til en annen.",
   "whatsNew.cardFoot": "Knapper for hele kortet, som «Legg til pålogging» og «Legg til mål», står til slutt under innholdet i kortet.",
   "whatsNew.settingsStorageFlow": "Innstillingssiden Mål viser også hvilken del som sikkerhetskopieres til hvilket mål.",
   "whatsNew.addOwnRclone": "«Legg til mål» har et valg for din egen rclone-konfigurasjon, der du limer inn remotes fra en rclone.conf.",

@@ -788,7 +788,7 @@ const sk: Partial<Translations> = {
   "signIns.makeDefault": "Nastaviť ako predvolené",
   "offsite.copies.title": "Externé kópie",
   "rclone.paste": "Vložiť konfiguráciu",
-  "whatsNew.signInMakeDefault": "„Nastaviť ako predvolené“ urobí z uložených prihlasovacích údajov tie, ktoré platia všade, kde nie sú vybrané žiadne.",
+  "whatsNew.signInMakeDefault": "Hviezdička označuje predvolené prihlasovacie údaje, ktoré platia všade, kde nie sú vybrané žiadne. „Nastaviť ako predvolené“ ju odovzdá iným.",
   "whatsNew.cardFoot": "Tlačidlá celej karty, napríklad „Pridať prihlasovacie údaje“ a „Pridať cieľ“, sú na konci pod jej obsahom.",
   "whatsNew.settingsStorageFlow": "Stránka nastavení Ciele ukazuje aj to, ktorá sekcia sa zálohuje do ktorého cieľa.",
   "whatsNew.addOwnRclone": "„Pridať cieľ“ ponúka vlastnú konfiguráciu rclone, kam vložíš remoty z rclone.conf.",

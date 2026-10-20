@@ -673,7 +673,7 @@ const ar: Partial<Translations> = {
   "signIns.makeDefault": "اجعلها الافتراضية",
   "offsite.copies.title": "نسخ خارج الموقع",
   "rclone.paste": "لصق إعداد",
-  "whatsNew.signInMakeDefault": "يجعل زر «اجعلها الافتراضية» بيانات الاعتماد المحفوظة هي المستخدمة في كل مكان لم يُختر فيه غيرها.",
+  "whatsNew.signInMakeDefault": "نجمة تميّز بيانات الاعتماد الافتراضية، وهي المستخدمة في كل مكان لم يُختر فيه غيرها. زر «اجعلها الافتراضية» ينقل النجمة إلى غيرها.",
   "whatsNew.cardFoot": "أزرار البطاقة كلها، مثل «إضافة بيانات اعتماد» و«إضافة وجهة»، تقع في النهاية أسفل محتوى البطاقة.",
   "whatsNew.settingsStorageFlow": "تعرض صفحة إعدادات الوجهات أيضًا أي قسم يُنسخ احتياطيًا إلى أي وجهة.",
   "whatsNew.addOwnRclone": "في «إضافة وجهة» خيار لإعداد rclone خاص، تلصق فيه remotes من ملف rclone.conf.",

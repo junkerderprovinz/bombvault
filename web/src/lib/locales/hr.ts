@@ -788,7 +788,7 @@ const hr: Partial<Translations> = {
   "signIns.makeDefault": "Postavi kao zadane",
   "offsite.copies.title": "Kopije izvan lokacije",
   "rclone.paste": "Zalijepi konfiguraciju",
-  "whatsNew.signInMakeDefault": "„Postavi kao zadane” od spremljenih vjerodajnica čini one koje vrijede svugdje gdje nijedne nisu odabrane.",
+  "whatsNew.signInMakeDefault": "Zvjezdica označava zadane vjerodajnice, one koje vrijede svugdje gdje nijedne nisu odabrane. „Postavi kao zadane” daje zvjezdicu drugima.",
   "whatsNew.cardFoot": "Gumbi za cijelu karticu, poput „Dodaj vjerodajnice” i „Dodaj odredište”, stoje na kraju ispod njezina sadržaja.",
   "whatsNew.settingsStorageFlow": "Stranica postavki Odredišta prikazuje i koji se odjeljak sprema na koje odredište.",
   "whatsNew.addOwnRclone": "„Dodaj odredište” nudi vlastitu rclone konfiguraciju, u koju lijepiš remoteove iz rclone.conf.",

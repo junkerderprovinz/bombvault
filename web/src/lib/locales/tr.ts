@@ -673,7 +673,7 @@ const tr: Partial<Translations> = {
   "signIns.makeDefault": "Varsayılan yap",
   "offsite.copies.title": "Site dışı kopyalar",
   "rclone.paste": "Yapılandırma yapıştır",
-  "whatsNew.signInMakeDefault": "“Varsayılan yap”, kayıtlı bir oturum açma bilgisini hiçbirinin seçilmediği her yerde kullanılan bilgi yapar.",
+  "whatsNew.signInMakeDefault": "Bir yıldız, hiçbirinin seçilmediği her yerde kullanılan varsayılan oturum açma bilgisini gösterir. “Varsayılan yap” yıldızı başka birine verir.",
   "whatsNew.cardFoot": "“Oturum açma ekle” ve “Hedef ekle” gibi tüm kartın düğmeleri, kartın içeriğinin altında, sonda durur.",
   "whatsNew.settingsStorageFlow": "Hedefler ayarlar sayfası hangi bölümün hangi hedefe yedeklendiğini de gösterir.",
   "whatsNew.addOwnRclone": "“Hedef ekle” içinde kendi rclone yapılandırman için bir seçenek var; orada bir rclone.conf dosyasından remote'ları yapıştırırsın.",

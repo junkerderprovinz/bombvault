@@ -673,7 +673,7 @@ const hu: Partial<Translations> = {
   "signIns.makeDefault": "Legyen alapértelmezett",
   "offsite.copies.title": "Telephelyen kívüli másolatok",
   "rclone.paste": "Konfiguráció beillesztése",
-  "whatsNew.signInMakeDefault": "A „Legyen alapértelmezett” egy mentett bejelentkezést tesz azzá, amelyet mindenhol használ a program, ahol nincs kiválasztva másik.",
+  "whatsNew.signInMakeDefault": "Csillag jelöli az alapértelmezett bejelentkezést, amelyet mindenhol használ a program, ahol nincs kiválasztva másik. A „Legyen alapértelmezett” egy másiknak adja a csillagot.",
   "whatsNew.cardFoot": "Az egész kártyára vonatkozó gombok, például a „Bejelentkezés hozzáadása” és a „Cél hozzáadása”, a végén, a kártya tartalma alatt állnak.",
   "whatsNew.settingsStorageFlow": "A Célok beállítási oldal azt is mutatja, melyik szakaszról melyik célra készül mentés.",
   "whatsNew.addOwnRclone": "A „Cél hozzáadása” saját rclone-konfigurációt is kínál, ahová egy rclone.conf fájlból illesztesz be remote-okat.",

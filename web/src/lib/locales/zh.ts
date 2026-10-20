@@ -668,7 +668,7 @@ const zh: Partial<Translations> = {
   "signIns.makeDefault": "设为默认",
   "offsite.copies.title": "异地副本",
   "rclone.paste": "粘贴配置",
-  "whatsNew.signInMakeDefault": "“设为默认”会让已保存的凭据成为所有未选择凭据之处使用的那一个。",
+  "whatsNew.signInMakeDefault": "星标表示默认凭据，所有未选择凭据之处都使用它。“设为默认”会把星标移给另一组凭据。",
   "whatsNew.cardFoot": "整张卡片的按钮，例如“添加凭据”和“添加目标”，位于卡片内容下方的末尾。",
   "whatsNew.settingsStorageFlow": "设置中的“目标”页面也会显示哪个部分备份到哪个目标。",
   "whatsNew.addOwnRclone": "“添加目标”提供自定义 rclone 配置选项，可在其中粘贴 rclone.conf 中的远程。",

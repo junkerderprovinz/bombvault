@@ -668,7 +668,7 @@ const ko: Partial<Translations> = {
   "signIns.makeDefault": "기본값으로 설정",
   "offsite.copies.title": "오프사이트 복사본",
   "rclone.paste": "구성 붙여넣기",
-  "whatsNew.signInMakeDefault": "“기본값으로 설정”을 누르면 저장된 자격 증명이 아무것도 선택되지 않은 모든 곳에서 쓰입니다.",
+  "whatsNew.signInMakeDefault": "별은 기본 자격 증명을 표시하며, 아무것도 선택되지 않은 모든 곳에서 쓰입니다. “기본값으로 설정”을 누르면 별이 다른 자격 증명으로 옮겨갑니다.",
   "whatsNew.cardFoot": "“자격 증명 추가”와 “대상 추가”처럼 카드 전체에 해당하는 버튼은 카드 내용 아래 끝에 있습니다.",
   "whatsNew.settingsStorageFlow": "설정의 대상 페이지에서 어떤 섹션이 어떤 대상에 백업되는지도 볼 수 있습니다.",
   "whatsNew.addOwnRclone": "“대상 추가”에 직접 만든 rclone 구성 선택지가 있어 rclone.conf의 리모트를 붙여넣을 수 있습니다.",

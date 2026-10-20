@@ -788,7 +788,7 @@ const sl: Partial<Translations> = {
   "signIns.makeDefault": "Nastavi kot privzete",
   "offsite.copies.title": "Zunanje kopije",
   "rclone.paste": "Prilepi nastavitve",
-  "whatsNew.signInMakeDefault": "»Nastavi kot privzete« naredi shranjene poverilnice za tiste, ki veljajo povsod, kjer niso izbrane nobene.",
+  "whatsNew.signInMakeDefault": "Zvezdica označuje privzete poverilnice, ki veljajo povsod, kjer niso izbrane nobene. »Nastavi kot privzete« preda zvezdico drugim.",
   "whatsNew.cardFoot": "Gumbi za celo kartico, na primer »Dodaj poverilnice« in »Dodaj cilj«, so na koncu pod vsebino kartice.",
   "whatsNew.settingsStorageFlow": "Stran nastavitev Cilji prikaže tudi, kateri razdelek se kopira na kateri cilj.",
   "whatsNew.addOwnRclone": "»Dodaj cilj« ponuja lastne nastavitve rclone, kamor prilepiš remote iz rclone.conf.",

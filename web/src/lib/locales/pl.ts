@@ -667,7 +667,7 @@ const pl: Partial<Translations> = {
   "signIns.makeDefault": "Ustaw jako domyślne",
   "offsite.copies.title": "Kopie poza siedzibą",
   "rclone.paste": "Wklej konfigurację",
-  "whatsNew.signInMakeDefault": "„Ustaw jako domyślne” sprawia, że zapisane dane logowania są używane wszędzie tam, gdzie nie wybrano żadnych.",
+  "whatsNew.signInMakeDefault": "Gwiazdka oznacza domyślne dane logowania, używane wszędzie tam, gdzie nie wybrano żadnych. „Ustaw jako domyślne” przekazuje gwiazdkę innym.",
   "whatsNew.cardFoot": "Przyciski całej karty, np. „Dodaj dane logowania” i „Dodaj miejsce docelowe”, stoją na końcu pod jej zawartością.",
   "whatsNew.settingsStorageFlow": "Strona ustawień Miejsca docelowe pokazuje też, która sekcja trafia do którego miejsca docelowego.",
   "whatsNew.addOwnRclone": "„Dodaj miejsce docelowe” oferuje własną konfigurację rclone, do której wklejasz remote'y z pliku rclone.conf.",

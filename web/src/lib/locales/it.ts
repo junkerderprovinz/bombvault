@@ -673,7 +673,7 @@ const it: Partial<Translations> = {
   "signIns.makeDefault": "Imposta come predefinite",
   "offsite.copies.title": "Copie off-site",
   "rclone.paste": "Incolla una configurazione",
-  "whatsNew.signInMakeDefault": "«Imposta come predefinite» rende delle credenziali salvate quelle usate ovunque non ne sia scelta nessuna.",
+  "whatsNew.signInMakeDefault": "Una stella indica le credenziali predefinite, quelle usate ovunque non ne sia scelta nessuna. «Imposta come predefinite» passa la stella ad altre.",
   "whatsNew.cardFoot": "I pulsanti di un'intera scheda, come «Aggiungi credenziali» e «Aggiungi destinazione», stanno alla fine sotto il contenuto della scheda.",
   "whatsNew.settingsStorageFlow": "La pagina delle impostazioni Destinazioni mostra anche quale sezione va in backup su quale destinazione.",
   "whatsNew.addOwnRclone": "«Aggiungi destinazione» offre una configurazione rclone personale, dove incolli i remote da un rclone.conf.",

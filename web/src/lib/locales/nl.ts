@@ -669,7 +669,7 @@ const nl: Partial<Translations> = {
   "signIns.makeDefault": "Als standaard",
   "offsite.copies.title": "Offsite-kopieën",
   "rclone.paste": "Configuratie plakken",
-  "whatsNew.signInMakeDefault": "Met „Als standaard” worden opgeslagen inloggegevens de gegevens die overal gelden waar er geen gekozen zijn.",
+  "whatsNew.signInMakeDefault": "Een ster markeert de standaard-inloggegevens, die overal gelden waar er geen gekozen zijn. „Als standaard” geeft de ster aan andere.",
   "whatsNew.cardFoot": "Knoppen voor een hele kaart, zoals „Inloggegevens toevoegen” en „Bestemming toevoegen”, staan aan het eind onder de inhoud van de kaart.",
   "whatsNew.settingsStorageFlow": "De instellingenpagina Bestemmingen toont ook welk onderdeel naar welke bestemming wordt geback-upt.",
   "whatsNew.addOwnRclone": "„Bestemming toevoegen” heeft een keuze voor je eigen rclone-configuratie, waar je remotes uit een rclone.conf plakt.",

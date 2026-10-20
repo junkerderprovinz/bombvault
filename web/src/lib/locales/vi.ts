@@ -668,7 +668,7 @@ const vi: Partial<Translations> = {
   "signIns.makeDefault": "Đặt làm mặc định",
   "offsite.copies.title": "Bản sao ngoài site",
   "rclone.paste": "Dán cấu hình",
-  "whatsNew.signInMakeDefault": "“Đặt làm mặc định” biến thông tin đăng nhập đã lưu thành thông tin được dùng ở mọi nơi chưa chọn thông tin nào.",
+  "whatsNew.signInMakeDefault": "Ngôi sao đánh dấu thông tin đăng nhập mặc định, được dùng ở mọi nơi chưa chọn thông tin nào. “Đặt làm mặc định” chuyển ngôi sao sang thông tin khác.",
   "whatsNew.cardFoot": "Các nút cho cả thẻ, như “Thêm thông tin đăng nhập” và “Thêm đích”, nằm ở cuối, bên dưới nội dung thẻ.",
   "whatsNew.settingsStorageFlow": "Trang cài đặt Đích sao lưu cũng cho biết phần nào được sao lưu lên đích nào.",
   "whatsNew.addOwnRclone": "“Thêm đích” có lựa chọn cấu hình rclone riêng, nơi bạn dán các remote từ một tệp rclone.conf.",

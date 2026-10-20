@@ -788,7 +788,7 @@ const lt: Partial<Translations> = {
   "signIns.makeDefault": "Nustatyti numatytuoju",
   "offsite.copies.title": "Nuotolinės kopijos",
   "rclone.paste": "Įklijuoti konfigūraciją",
-  "whatsNew.signInMakeDefault": "„Nustatyti numatytuoju“ paverčia išsaugotą prisijungimą tuo, kuris naudojamas visur, kur nieko nepasirinkta.",
+  "whatsNew.signInMakeDefault": "Žvaigždutė žymi numatytąjį prisijungimą, naudojamą visur, kur nieko nepasirinkta. „Nustatyti numatytuoju“ perduoda žvaigždutę kitam.",
   "whatsNew.cardFoot": "Visos kortelės mygtukai, pvz., „Pridėti prisijungimą“ ir „Pridėti paskirties vietą“, yra pabaigoje po kortelės turiniu.",
   "whatsNew.settingsStorageFlow": "Nustatymų puslapis Paskirties vietos taip pat rodo, kuris skyrius į kurią paskirties vietą kopijuojamas.",
   "whatsNew.addOwnRclone": "„Pridėti paskirties vietą“ siūlo savą rclone konfigūraciją, į kurią įklijuoji remote'us iš rclone.conf.",

@@ -788,7 +788,7 @@ const id: Partial<Translations> = {
   "signIns.makeDefault": "Jadikan bawaan",
   "offsite.copies.title": "Salinan off-site",
   "rclone.paste": "Tempel konfigurasi",
-  "whatsNew.signInMakeDefault": "“Jadikan bawaan” membuat login tersimpan menjadi login yang dipakai di mana pun tidak ada yang dipilih.",
+  "whatsNew.signInMakeDefault": "Bintang menandai login bawaan, yang dipakai di mana pun tidak ada yang dipilih. “Jadikan bawaan” memindahkan bintang ke login lain.",
   "whatsNew.cardFoot": "Tombol untuk seluruh kartu, seperti “Tambah login” dan “Tambah tujuan”, ada di akhir di bawah isi kartu.",
   "whatsNew.settingsStorageFlow": "Halaman pengaturan Tujuan juga menampilkan bagian mana dicadangkan ke tujuan mana.",
   "whatsNew.addOwnRclone": "“Tambah tujuan” punya pilihan konfigurasi rclone sendiri, tempat kamu menempel remote dari rclone.conf.",

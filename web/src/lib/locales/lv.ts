@@ -788,7 +788,7 @@ const lv: Partial<Translations> = {
   "signIns.makeDefault": "Iestatīt kā noklusējumu",
   "offsite.copies.title": "Attālinātās kopijas",
   "rclone.paste": "Ielīmēt konfigurāciju",
-  "whatsNew.signInMakeDefault": "“Iestatīt kā noklusējumu” padara saglabātu pieteikšanos par to, ko izmanto visur, kur nekas nav izvēlēts.",
+  "whatsNew.signInMakeDefault": "Zvaigzne apzīmē noklusējuma pieteikšanos, ko izmanto visur, kur nekas nav izvēlēts. “Iestatīt kā noklusējumu” nodod zvaigzni citai.",
   "whatsNew.cardFoot": "Visas kartes pogas, piemēram, “Pievienot pieteikšanos” un “Pievienot mērķi”, atrodas beigās zem kartes satura.",
   "whatsNew.settingsStorageFlow": "Iestatījumu lapa Mērķi rāda arī, kura sadaļa tiek dublēta uz kuru mērķi.",
   "whatsNew.addOwnRclone": "“Pievienot mērķi” piedāvā savu rclone konfigurāciju, kur ielīmē remote no rclone.conf.",

@@ -673,7 +673,7 @@ const sv: Partial<Translations> = {
   "signIns.makeDefault": "Gör till standard",
   "offsite.copies.title": "Externa kopior",
   "rclone.paste": "Klistra in en konfiguration",
-  "whatsNew.signInMakeDefault": "Med ”Gör till standard” blir en sparad inloggning den som används överallt där ingen är vald.",
+  "whatsNew.signInMakeDefault": "En stjärna markerar standardinloggningen, den som används överallt där ingen är vald. ”Gör till standard” ger stjärnan till en annan.",
   "whatsNew.cardFoot": "Knappar för hela kortet, som ”Lägg till inloggning” och ”Lägg till mål”, står sist under kortets innehåll.",
   "whatsNew.settingsStorageFlow": "Inställningssidan Mål visar också vilken del som säkerhetskopieras till vilket mål.",
   "whatsNew.addOwnRclone": "”Lägg till mål” har ett val för din egen rclone-konfiguration, där du klistrar in remotes från en rclone.conf.",

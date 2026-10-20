@@ -668,7 +668,7 @@ const ja: Partial<Translations> = {
   "signIns.makeDefault": "既定にする",
   "offsite.copies.title": "オフサイトコピー",
   "rclone.paste": "設定を貼り付け",
-  "whatsNew.signInMakeDefault": "「既定にする」で、保存済みの認証情報が、何も選ばれていない場所すべてで使われるものになります。",
+  "whatsNew.signInMakeDefault": "星は既定の認証情報を示し、何も選ばれていない場所すべてで使われます。「既定にする」で星を別の認証情報に移せます。",
   "whatsNew.cardFoot": "「認証情報を追加」や「保存先を追加」など、カード全体のボタンはカードの内容の下、末尾に並びます。",
   "whatsNew.settingsStorageFlow": "設定の「保存先」ページに、どのセクションがどの保存先にバックアップされるかも表示されます。",
   "whatsNew.addOwnRclone": "「保存先を追加」に独自の rclone 設定の選択肢があり、rclone.conf からリモートを貼り付けられます。",

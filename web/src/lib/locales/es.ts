@@ -673,7 +673,7 @@ const es: Partial<Translations> = {
   "signIns.makeDefault": "Usar como predeterminadas",
   "offsite.copies.title": "Copias externas",
   "rclone.paste": "Pegar una configuración",
-  "whatsNew.signInMakeDefault": "«Usar como predeterminadas» convierte unas credenciales guardadas en las que se usan donde no se elige ninguna.",
+  "whatsNew.signInMakeDefault": "Una estrella marca las credenciales predeterminadas, las que se usan donde no se elige ninguna. «Usar como predeterminadas» pasa la estrella a otras.",
   "whatsNew.cardFoot": "Los botones de toda una tarjeta, como «Añadir credenciales» y «Añadir destino», están al final, bajo el contenido de la tarjeta.",
   "whatsNew.settingsStorageFlow": "La página de ajustes Destinos también muestra qué sección se copia en qué destino.",
   "whatsNew.addOwnRclone": "«Añadir destino» ofrece una configuración propia de rclone, donde pegas remotes de un rclone.conf.",

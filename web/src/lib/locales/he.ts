@@ -673,7 +673,7 @@ const he: Partial<Translations> = {
   "signIns.makeDefault": "הגדר כברירת מחדל",
   "offsite.copies.title": "עותקים מחוץ לאתר",
   "rclone.paste": "הדבקת הגדרות",
-  "whatsNew.signInMakeDefault": "„הגדר כברירת מחדל” הופך פרטי גישה שמורים לאלה שמשמשים בכל מקום שבו לא נבחרו אחרים.",
+  "whatsNew.signInMakeDefault": "כוכב מסמן את פרטי הגישה של ברירת המחדל, אלה שמשמשים בכל מקום שבו לא נבחרו אחרים. „הגדר כברירת מחדל” מעביר את הכוכב לאחרים.",
   "whatsNew.cardFoot": "כפתורים של כרטיס שלם, כמו „הוספת פרטי גישה” ו„הוספת יעד”, נמצאים בסוף מתחת לתוכן הכרטיס.",
   "whatsNew.settingsStorageFlow": "דף ההגדרות יעדים מראה גם איזה תחום מגובה לאיזה יעד.",
   "whatsNew.addOwnRclone": "ב„הוספת יעד” יש אפשרות להגדרת rclone משלך, שבה מדביקים remotes מקובץ rclone.conf.",

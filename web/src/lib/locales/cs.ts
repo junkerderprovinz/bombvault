@@ -671,7 +671,7 @@ const cs: Partial<Translations> = {
   "signIns.makeDefault": "Nastavit jako výchozí",
   "offsite.copies.title": "Kopie mimo lokalitu",
   "rclone.paste": "Vložit konfiguraci",
-  "whatsNew.signInMakeDefault": "„Nastavit jako výchozí“ udělá z uložených přihlašovacích údajů ty, které platí všude, kde žádné vybrané nejsou.",
+  "whatsNew.signInMakeDefault": "Hvězdička označuje výchozí přihlašovací údaje, které platí všude, kde žádné vybrané nejsou. „Nastavit jako výchozí“ ji předá jiným.",
   "whatsNew.cardFoot": "Tlačítka celé karty, třeba „Přidat přihlašovací údaje“ a „Přidat cíl“, jsou na konci pod jejím obsahem.",
   "whatsNew.settingsStorageFlow": "Stránka nastavení Cíle ukazuje také, která sekce se zálohuje do kterého cíle.",
   "whatsNew.addOwnRclone": "„Přidat cíl“ nabízí vlastní konfiguraci rclone, kam vložíš remoty z rclone.conf.",
