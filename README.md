@@ -187,7 +187,7 @@ The closest counterpart is [**Vault**](https://github.com/ruaan-deysel/vault) by
 | ZFS datasets as a source | ✅ | ✅ | ❌ | ❌ | ⚠️ via action scripts | ⚠️ via Borgmatic |
 | Deduplication | ✅ | ✅ opt-in | ❌ | ✅ fixed blocks | ✅ | ✅ |
 | Client-side encryption | ✅ on by default | ✅ opt-in | ❌ | ✅ | ✅ | ✅ |
-| Backups readable with a standard open-source CLI | ✅ restic | ⚠️ not with dedup | ✅ tar | ⚠️ Python script | ✅ kopia | ✅ borg |
+| Backups readable with a standard open-source CLI | ✅ restic | ⚠️ not with dedup, own recover tool | ✅ tar | ⚠️ Python script | ✅ kopia | ✅ borg |
 | Append-only or immutable off-site copy | ✅ | ❌ | ❌ | ✅ | ✅ | ✅ |
 | Scheduled backup waits until the app is idle | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
 | Scheduled test restores, not only a checksum read | ✅ | ❌ | ❌ | ❌ | ❌ | ⚠️ via Borgmatic |
@@ -211,7 +211,7 @@ The closest counterpart is [**Vault**](https://github.com/ruaan-deysel/vault) by
 | Android app | ✅ APK, Google Play in closed test | ❌ | ❌ | ❌ | ❌ | ❌ |
 | Track record | ⚠️ since 2026, one maintainer | ⚠️ since 2026, one maintainer | ⚠️ since 2023, feature-frozen | ✅ since 2008 | ✅ since 2019 | ✅ since 2015 |
 
-✅ yes · ⚠️ partly · ❌ no. The BombVault column is v10.0.0. The other tools were checked against their code and docs on 25 September 2026, the start-test row and Vault's cells for idle waiting, mDNS, Home Assistant and changed-block VM backups again on 28 September 2026 against Vault v2026.09.01, and the rows for placement, 3-2-1 and the Android app on 4 October 2026.
+✅ yes · ⚠️ partly · ❌ no. The other tools were checked against their code and docs on 25 September 2026, the start-test row and Vault's cells for idle waiting, mDNS, Home Assistant and changed-block VM backups again on 28 September 2026, the rows for placement, 3-2-1 and the Android app on 4 October 2026, and every Vault cell on 20 October 2026.
 
 <br>
 
