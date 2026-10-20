@@ -1,0 +1,1 @@
+Die App hat diesmal frei. Dein Server hat einen neuen Regler bekommen: BombVault 10.2.1 kann begrenzen, wie viel Speicher jeder Sicherungsprozess nutzen darf, damit eine große Sicherung langsamer wird, statt abgeschossen zu werden.

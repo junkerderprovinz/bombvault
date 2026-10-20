@@ -1,0 +1,1 @@
+The app itself sat this one out. Your server got a new dial: BombVault 10.2.1 can cap how much memory each backup process may use, so a big backup slows down instead of getting killed.
