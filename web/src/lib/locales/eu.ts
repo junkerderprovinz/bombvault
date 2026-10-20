@@ -774,7 +774,7 @@ const eu: Partial<Translations> = {
   "signIns.defaultAlso": "Eskuz idatzitako helbideetarako eta instalazio berri bateko berreskuratzeko ere erabiltzen da",
   "signIns.none": "Oraindik ez dago gordetako saio-hasierarik.",
   "signIns.removeDefault": "Hau da saio-hasiera lehenetsia. Egin lehenik beste bat lehenetsia.",
-  "signIns.removeUsed": "{list} oraindik honekin hasten du saioa. Aukeratu lehenik beste saio-hasiera bat han.",
+  "signIns.removeUsed": "Oraindik erabiltzen da hemen: {list}. Aukeratu lehenik beste saio-hasiera bat han.",
   "signIns.note.title": "Hodeiko kredentzial partekatuak gordetako saio-hasiera bat dira orain.",
   "signIns.note.text": "Ezerk ez du saioa beste modu batera hasten.",
   "signIns.note.merged": "{name}-(r)en gako berberak zituzten, beraz biak bat bihurtu dira, eta {name} da lehenetsia.",

@@ -659,7 +659,7 @@ const it: Partial<Translations> = {
   "signIns.defaultAlso": "Usate anche per gli indirizzi digitati a mano e per un ripristino su un'installazione nuova",
   "signIns.none": "Ancora nessuna credenziale salvata.",
   "signIns.removeDefault": "Queste sono le credenziali predefinite. Rendi prima predefinite delle altre.",
-  "signIns.removeUsed": "{list} accede ancora con queste. Scegli prima altre credenziali lì.",
+  "signIns.removeUsed": "Ancora usate da {list}. Scegli prima altre credenziali lì.",
   "signIns.note.title": "Le credenziali cloud condivise ora sono una voce salvata.",
   "signIns.note.text": "Nessun accesso cambia.",
   "signIns.note.merged": "Avevano le stesse chiavi di {name}, quindi le due sono diventate una, e {name} è quella predefinita.",

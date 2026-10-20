@@ -774,7 +774,7 @@ const gl: Partial<Translations> = {
   "signIns.defaultAlso": "Tamén se usan para enderezos escritos a man e para unha recuperación nunha instalación nova",
   "signIns.none": "Aínda non hai credenciais gardadas.",
   "signIns.removeDefault": "Estas son as credenciais predeterminadas. Fai primeiro predeterminadas outras.",
-  "signIns.removeUsed": "{list} aínda inicia sesión con elas. Escolle primeiro outras credenciais alí.",
+  "signIns.removeUsed": "Aínda se usan en {list}. Escolle primeiro outras credenciais alí.",
   "signIns.note.title": "As credenciais da nube compartidas son agora unha entrada gardada.",
   "signIns.note.text": "Nada inicia sesión doutro xeito.",
   "signIns.note.merged": "Tiñan as mesmas chaves ca {name}, así que as dúas pasaron a ser unha, e {name} é a predeterminada.",

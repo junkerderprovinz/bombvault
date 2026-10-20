@@ -656,7 +656,7 @@ const no: Partial<Translations> = {
   "signIns.defaultAlso": "Brukes også for adresser skrevet for hånd og for en gjenoppretting på en ny installasjon",
   "signIns.none": "Ingen lagrede pålogginger ennå.",
   "signIns.removeDefault": "Dette er standardpåloggingen. Gjør først en annen til standard.",
-  "signIns.removeUsed": "{list} logger fortsatt på med den. Velg først en annen pålogging der.",
+  "signIns.removeUsed": "Brukes fortsatt av {list}. Velg først en annen pålogging der.",
   "signIns.note.title": "Den delte skypåloggingen er nå en lagret pålogging.",
   "signIns.note.text": "Ingenting logger på annerledes.",
   "signIns.note.merged": "Den hadde de samme nøklene som {name}, så de to ble én, og {name} er standarden.",

@@ -654,7 +654,7 @@ const ko: Partial<Translations> = {
   "signIns.defaultAlso": "직접 입력한 주소와 새 설치에서의 복구에도 쓰입니다",
   "signIns.none": "아직 저장된 자격 증명이 없습니다.",
   "signIns.removeDefault": "기본 자격 증명입니다. 먼저 다른 것을 기본값으로 지정하세요.",
-  "signIns.removeUsed": "{list}에서 아직 이것으로 로그인합니다. 먼저 그곳에서 다른 자격 증명을 고르세요.",
+  "signIns.removeUsed": "{list}에서 아직 사용 중입니다. 먼저 그곳에서 다른 자격 증명을 고르세요.",
   "signIns.note.title": "공유 클라우드 자격 증명이 이제 저장된 항목이 되었습니다.",
   "signIns.note.text": "로그인 방식은 달라지지 않습니다.",
   "signIns.note.merged": "{name}와(과) 같은 키라서 둘을 하나로 합쳤고, {name}이(가) 기본값입니다.",

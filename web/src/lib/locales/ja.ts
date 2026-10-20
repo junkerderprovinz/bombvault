@@ -654,7 +654,7 @@ const ja: Partial<Translations> = {
   "signIns.defaultAlso": "手入力したアドレスや、新しいインストールでの復元にも使われます",
   "signIns.none": "保存した認証情報はまだありません。",
   "signIns.removeDefault": "これは既定の認証情報です。先に別のものを既定にしてください。",
-  "signIns.removeUsed": "{list} がまだこれでサインインしています。先にそちらで別の認証情報を選んでください。",
+  "signIns.removeUsed": "{list} でまだ使われています。先にそちらで別の認証情報を選んでください。",
   "signIns.note.title": "共有のクラウド認証情報は、保存済みの項目になりました。",
   "signIns.note.text": "サインインの方法は何も変わりません。",
   "signIns.note.merged": "{name} と同じキーだったため一つにまとめ、{name} を既定にしました。",

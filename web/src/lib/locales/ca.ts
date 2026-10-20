@@ -774,7 +774,7 @@ const ca: Partial<Translations> = {
   "signIns.defaultAlso": "També s'utilitzen per a adreces escrites a mà i per a una recuperació en una instal·lació nova",
   "signIns.none": "Encara no hi ha credencials desades.",
   "signIns.removeDefault": "Són les credencials per defecte. Primer fes-ne unes altres per defecte.",
-  "signIns.removeUsed": "{list} encara hi inicia sessió. Tria primer unes altres credencials allà.",
+  "signIns.removeUsed": "Encara s'utilitzen a {list}. Primer tria-hi unes altres credencials.",
   "signIns.note.title": "Les credencials de núvol compartides ara són una entrada desada.",
   "signIns.note.text": "Res no inicia sessió d'una altra manera.",
   "signIns.note.merged": "Tenien les mateixes claus que {name}, així que totes dues s'han unit en una, i {name} és la per defecte.",

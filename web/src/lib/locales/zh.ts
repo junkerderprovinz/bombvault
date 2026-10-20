@@ -654,7 +654,7 @@ const zh: Partial<Translations> = {
   "signIns.defaultAlso": "也用于手动输入的地址和在新安装上恢复",
   "signIns.none": "还没有保存的凭据。",
   "signIns.removeDefault": "这是默认凭据。请先把其他凭据设为默认。",
-  "signIns.removeUsed": "{list} 仍在用它登录。请先在那里选择其他凭据。",
+  "signIns.removeUsed": "仍被 {list} 使用。请先在那里选择其他凭据。",
   "signIns.note.title": "共享的云凭据现在是一项保存的凭据。",
   "signIns.note.text": "登录方式没有任何变化。",
   "signIns.note.merged": "它们的密钥与 {name} 相同，因此两者合为一项，{name} 为默认。",

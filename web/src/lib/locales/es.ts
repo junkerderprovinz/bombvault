@@ -659,7 +659,7 @@ const es: Partial<Translations> = {
   "signIns.defaultAlso": "También se usan para direcciones escritas a mano y para una recuperación en una instalación nueva",
   "signIns.none": "Aún no hay credenciales guardadas.",
   "signIns.removeDefault": "Son las credenciales predeterminadas. Primero haz predeterminadas otras.",
-  "signIns.removeUsed": "{list} todavía inicia sesión con ellas. Elige primero otras credenciales allí.",
+  "signIns.removeUsed": "Todavía se usan en {list}. Elige primero otras credenciales allí.",
   "signIns.note.title": "Las credenciales de nube compartidas son ahora una entrada guardada.",
   "signIns.note.text": "Nada inicia sesión de otra forma.",
   "signIns.note.merged": "Tenían las mismas claves que {name}, así que ambas se unieron en una, y {name} es la predeterminada.",
