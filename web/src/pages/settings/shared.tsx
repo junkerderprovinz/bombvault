@@ -43,7 +43,7 @@ export function Card({
   hueIndex,
   nested,
   newId,
-  action,
+  foot,
 }: {
   /** Without a title but with a hint the heading badge still renders, so the
    *  card keeps its hue notch. A card with neither renders no heading. */
@@ -63,8 +63,8 @@ export function Card({
   nested?: boolean;
   /** The change in lib/whatsNew.ts the card is, which puts its dot on it. */
   newId?: string;
-  /** One button for the whole card, at the end of its heading's row. */
-  action?: React.ReactNode;
+  /** Buttons that act on the whole card, set in its CardFoot. */
+  foot?: React.ReactNode;
 }) {
   return (
     // `relative` anchors the absolutely positioned heading badge; the hint
@@ -90,7 +90,19 @@ export function Card({
           </Badge>
         </h2>
       )}
-      {action && <div className="flex justify-end">{action}</div>}
+      {children}
+      {foot && <CardFoot>{foot}</CardFoot>}
+    </div>
+  );
+}
+
+/** CardFoot is the row under a card's content that holds the buttons acting
+ *  on the card as a whole. They stand at its end, as in a window's foot, with
+ *  the forward one last. mt-auto keeps the row at the bottom of a card
+ *  stretched to its grid row. */
+export function CardFoot({ children, newId }: { children: React.ReactNode; newId?: string }) {
+  return (
+    <div data-new={newId} className="mt-auto flex flex-wrap items-center justify-end gap-2">
       {children}
     </div>
   );
