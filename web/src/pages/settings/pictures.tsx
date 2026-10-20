@@ -127,13 +127,13 @@ export function SandboxPicture({ startTest }: { startTest: boolean }) {
 }
 
 const SEALED: [number, number][] = [
-  [282, 84],
-  [306, 84],
-  [282, 108],
-  [306, 108],
+  [379, 39],
+  [403, 39],
+  [379, 63],
+  [403, 63],
 ];
 // Where the packs leave from, next to the file they were cut from.
-const DESK_X = 92;
+const DESK_X = 56;
 
 /**
  * CryptScene shows what a backup leaves at a storage location: sealed packs
@@ -143,30 +143,30 @@ const DESK_X = 92;
 export function CryptScene({ sealed }: { sealed: boolean }) {
   const { t } = useT();
   return (
-    <div className={`glim-pic glim-scene mx-auto w-full max-w-[520px] ${sealed ? "" : "glim-crypt-open"}`}>
-      <svg viewBox="0 0 360 172" role="img" aria-label={t(sealed ? "tile.crypt.sceneAlt" : "tile.crypt.sceneAltOpen")}>
-        <rect className="glim-scene-box" x="8" y="16" width="150" height="128" />
-        <text className="glim-sandbox-caption" x="83" y="162" textAnchor="middle">
+    <div className={`glim-pic glim-scene mx-auto w-full max-w-[680px] ${sealed ? "" : "glim-crypt-open"}`}>
+      <svg viewBox="0 0 480 120" role="img" aria-label={t(sealed ? "tile.crypt.sceneAlt" : "tile.crypt.sceneAltOpen")}>
+        <rect className="glim-scene-box" x="8" y="8" width="200" height="86" />
+        <text className="glim-sandbox-caption" x="108" y="112" textAnchor="middle">
           {t("tile.crypt.atHome")}
         </text>
-        <rect className="glim-scene-box" x="236" y="16" width="116" height="128" />
-        <text className="glim-sandbox-caption" x="294" y="162" textAnchor="middle">
+        <rect className="glim-scene-box" x="272" y="8" width="200" height="86" />
+        <text className="glim-sandbox-caption" x="372" y="112" textAnchor="middle">
           {t("tile.crypt.location")}
         </text>
-        <g transform="translate(38 58)">
+        <g transform="translate(36 51)">
           <path className="glim-sandbox-sheet" d="M-10 -14h12l8 8v20h-20z" />
           <path className="glim-sandbox-line" d="M2 -14v8h8M-6 0h12M-6 4h12M-6 8h7" />
         </g>
-        <rect className="glim-crypt-kit" x="22" y="98" width="122" height="36" rx="9" />
-        <g className="glim-crypt-key" transform="translate(32 108)">
+        <rect className="glim-crypt-kit" x="66" y="33" width="130" height="36" rx="9" />
+        <g className="glim-crypt-key" transform="translate(76 43)">
           <IconKey />
         </g>
-        <text className="glim-crypt-kit-word" x="60" y="120">
+        <text className="glim-crypt-kit-word" x="104" y="55">
           {t("recovery.title")}
         </text>
         {/* Both faces of the eye and of each pack are drawn, so a flip of
             the toggle fades one into the other. */}
-        <g className="glim-crypt-looker" transform="translate(286 34)">
+        <g className="glim-crypt-looker" transform="translate(333 43)">
           <g className="glim-crypt-sealed">
             <IconEyeOff />
           </g>
