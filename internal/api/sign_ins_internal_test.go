@@ -203,6 +203,34 @@ func TestTheDefaultStaysWhenASavedListLeavesItOut(t *testing.T) {
 	}
 }
 
+func TestASavedListCannotLeaveOutASignInARowStillUses(t *testing.T) {
+	s := unraidNotifyService(t, nil)
+	storeSets(t, s, []CloudCredSet{
+		{ID: "own", Name: "Own folder", CloudCreds: CloudCreds{S3KeyID: "OWN", S3Secret: "o"}},
+		{ID: "spare", Name: "Spare", CloudCreds: CloudCreds{S3KeyID: "SPARE", S3Secret: "s"}},
+	})
+	if _, err := s.store.UpsertOffsiteTarget(store.OffsiteTarget{
+		Role: store.RolePrimary, Domain: "containers", Repo: "s3:host/b/containers", CredsRef: "own", Enabled: true,
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	err := s.SetCloudCredSets([]CloudCredSet{{ID: "spare", Name: "Spare", CloudCreds: CloudCreds{S3KeyID: "SPARE"}}})
+	if err == nil || !strings.Contains(err.Error(), "Own folder") {
+		t.Fatalf("err = %v, want the save refused naming Own folder", err)
+	}
+	if sets := savedSets(t, s); len(sets) != 2 {
+		t.Fatalf("sets = %+v, want both kept", sets)
+	}
+
+	if err := s.SetCloudCredSets([]CloudCredSet{{ID: "own", Name: "Own folder", CloudCreds: CloudCreds{S3KeyID: "OWN"}}}); err != nil {
+		t.Fatalf("leaving out the unused one: %v", err)
+	}
+	if sets := savedSets(t, s); len(sets) != 1 || sets[0].ID != "own" || sets[0].S3Secret != "o" {
+		t.Fatalf("sets = %+v, want Own folder alone with its secret", sets)
+	}
+}
+
 func TestOnlyOneSignInCanBeTheDefault(t *testing.T) {
 	s := unraidNotifyService(t, nil)
 	err := s.SetCloudCredSets([]CloudCredSet{

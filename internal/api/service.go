@@ -18349,7 +18349,8 @@ func (s *Service) CloudCredSets() ([]CloudCredSet, error) {
 // A list that marks no default keeps the stored one, and the stored default
 // stays even when the list leaves it out: it goes only once another sign-in
 // takes its place. A set with a blank Name or a duplicate ID is rejected, as
-// both would make CredsRef ambiguous or the set unreachable from the UI.
+// both would make CredsRef ambiguous or the set unreachable from the UI, and
+// so is a list that leaves out a set some row still names.
 func (s *Service) SetCloudCredSets(sets []CloudCredSet) error {
 	// The caller's slice is copied rather than normalized in place, because
 	// the merged one carries real secrets.
@@ -18379,7 +18380,15 @@ func (s *Service) SetCloudCredSets(sets []CloudCredSet) error {
 	if defaults > 1 {
 		return errors.New("only one sign-in can be the default")
 	}
-	return s.editCloudCredSets(func(prev []CloudCredSet) []CloudCredSet {
+	// Read before the mutation, which must not touch the store itself. Hidden
+	// rows count too: a row whose set is gone signs in with the default
+	// without a word.
+	inUse, err := s.store.CredsRefsInUse()
+	if err != nil {
+		return err
+	}
+	var dropped *CloudCredSet
+	err = s.editCloudCredSets(func(prev []CloudCredSet) []CloudCredSet {
 		prevByID := make(map[string]CloudCredSet, len(prev))
 		for _, p := range prev {
 			prevByID[p.ID] = p
@@ -18406,8 +18415,31 @@ func (s *Service) SetCloudCredSets(sets []CloudCredSet) error {
 				next = append(next, prev[d])
 			}
 		}
+		for _, p := range prev {
+			if inUse[p.ID] && !slices.ContainsFunc(next, func(c CloudCredSet) bool { return c.ID == p.ID }) {
+				dropped = &p
+				return prev
+			}
+		}
 		return next
 	})
+	if err == nil && dropped != nil {
+		return s.signInStillUsed(*dropped)
+	}
+	return err
+}
+
+// signInStillUsed is the refusal for removing a saved sign-in a row still
+// names, with the storage locations that use it where the list shows them.
+func (s *Service) signInStillUsed(set CloudCredSet) error {
+	if users, err := s.signInUsers(""); err == nil && len(users[set.ID]) > 0 {
+		names := make([]string, len(users[set.ID]))
+		for i, u := range users[set.ID] {
+			names[i] = u.Name
+		}
+		return fmt.Errorf("%s still signs in with %s", strings.Join(names, ", "), set.Name)
+	}
+	return fmt.Errorf("%s is still in use, so it stays", set.Name)
 }
 
 func (s *Service) encodeCloudCredSets(sets []CloudCredSet) (string, error) {
