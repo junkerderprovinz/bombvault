@@ -616,9 +616,13 @@ test("a learning ring is big enough to tap on a phone", async ({ page }, testInf
 
 interface Paint {
   row: string;
+  /** The card's surface, which shows through a row that paints none of its own. */
+  ground: string;
   edge: string;
   badge: { bg: string; ink: string };
 }
+
+const CLEAR = "rgba(0, 0, 0, 0)";
 
 /** A finding's surface, its edge and its severity badge, as the browser paints them. */
 async function paintOf(row: Locator, label: string): Promise<Paint> {
@@ -626,7 +630,12 @@ async function paintOf(row: Locator, label: string): Promise<Paint> {
     const badge = [...li.querySelectorAll<HTMLElement>("span")].find((el) => el.textContent === label)!;
     const style = getComputedStyle(badge);
     const own = getComputedStyle(li);
-    return { row: own.backgroundColor, edge: own.boxShadow, badge: { bg: style.backgroundColor, ink: style.color } };
+    return {
+      row: own.backgroundColor,
+      ground: getComputedStyle(li.closest("[data-search-card]")!).backgroundColor,
+      edge: own.boxShadow,
+      badge: { bg: style.backgroundColor, ink: style.color },
+    };
   }, label);
 }
 
@@ -663,7 +672,7 @@ for (const theme of ["dark", "light"] as const) {
     await expect(page.locator("html")).toHaveAttribute("data-theme", theme);
 
     const want = await resolved(page, {
-      surface: "var(--carbon-surface2)",
+      surface: "var(--carbon-surface)",
       failEdge: "var(--status-fail-solid)",
       warnEdge: "var(--status-warn-solid)",
       noteEdge: "var(--carbon-surface3)",
@@ -681,7 +690,8 @@ for (const theme of ["dark", "light"] as const) {
       info: await paintOf(row("info"), "Hinweis"),
     };
     for (const [severity, paint] of Object.entries(paints)) {
-      expect.soft(paint.row, `a ${severity} finding is tinted`).toBe(want.surface);
+      expect.soft(paint.row, `a ${severity} finding paints no block of its own`).toBe(CLEAR);
+      expect.soft(paint.ground, `a ${severity} finding stands on the card's surface`).toBe(want.surface);
     }
     expect.soft(paints.critical.edge).toContain(want.failEdge);
     expect.soft(paints.warning.edge).toContain(want.warnEdge);
@@ -690,14 +700,14 @@ for (const theme of ["dark", "light"] as const) {
     expect.soft(paints.warning.badge).toEqual({ bg: want.warnBg, ink: want.warnInk });
 
     await critical.hover();
-    expect.soft((await paintOf(critical, "Kritisch")).row, "a critical finding is tinted under the pointer").toBe(want.surface);
+    expect.soft((await paintOf(critical, "Kritisch")).row, "a critical finding paints no block under the pointer").toBe(CLEAR);
     await critical.getByRole("button", { name: "Quittieren", exact: true }).focus();
-    expect.soft((await paintOf(critical, "Kritisch")).row, "a critical finding is tinted under focus").toBe(want.surface);
+    expect.soft((await paintOf(critical, "Kritisch")).row, "a critical finding paints no block under focus").toBe(CLEAR);
 
     await page.getByRole("tab", { name: "Geschlossen in den letzten 30 Tagen" }).click();
     await expect(findings(page)).toHaveCount(CLOSED.length);
     for (const li of await findings(page).all()) {
-      expect.soft(await li.evaluate((el) => getComputedStyle(el).backgroundColor), "a closed finding is tinted").toBe(want.surface);
+      expect.soft(await li.evaluate((el) => getComputedStyle(el).backgroundColor), "a closed finding paints no block of its own").toBe(CLEAR);
     }
   });
 }
