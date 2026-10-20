@@ -83,7 +83,14 @@ export function ZFSServerCards({
             }
             actions={
               <>
-                <span data-new-way="zfs-server" className="flex [&>*]:flex-auto">
+                <Button
+                  label={t("zfs.replica.server.edit")}
+                  labelKey="zfs.replica.server.edit"
+                  glyph={<IconPencil />}
+                  tone="neutral"
+                  onClick={() => setEditing(s)}
+                />
+                <span data-new-way="zfs-server" className="flex">
                   <Button
                     label={t("instances.open")}
                     labelKey="instances.open"
@@ -92,13 +99,6 @@ export function ZFSServerCards({
                     onClick={() => navigate(`/instances/zfs/${encodeURIComponent(s.id)}`)}
                   />
                 </span>
-                <Button
-                  label={t("zfs.replica.server.edit")}
-                  labelKey="zfs.replica.server.edit"
-                  glyph={<IconPencil />}
-                  tone="neutral"
-                  onClick={() => setEditing(s)}
-                />
               </>
             }
             index={firstIndex + i}

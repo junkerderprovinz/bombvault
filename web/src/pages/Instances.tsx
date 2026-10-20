@@ -91,13 +91,6 @@ function SelfCard({
       figures={<ProtectionFigures domains={self.domains} anomalies={anomalies} />}
       actions={
         <>
-          <Button
-            label={t("instances.open")}
-            labelKey="instances.open"
-            glyph={<IconEye />}
-            tone="neutral"
-            onClick={() => navigate("/dashboard")}
-          />
           {receiverServer && (
             <Button
               label={t("receiver.server.title")}
@@ -116,6 +109,13 @@ function SelfCard({
               onClick={onOpenDeposits}
             />
           )}
+          <Button
+            label={t("instances.open")}
+            labelKey="instances.open"
+            glyph={<IconEye />}
+            tone="neutral"
+            onClick={() => navigate("/dashboard")}
+          />
         </>
       }
       index={0}
@@ -213,6 +213,12 @@ function PeerCard({
       figures={peer && !instance.app && <ProtectionFigures domains={peer.lastPollDomains} />}
       actions={
         <>
+          {paired && !instance.app && (
+            <Button label={t("fleet.details")} labelKey="fleet.details" glyph={<IconInfo />} tone="neutral" onClick={onDetails} />
+          )}
+          {/* A phone has no details window, so its card carries the button the window has for an instance. */}
+          {paired && instance.app && <ForgetKeyButton memberId={instance.memberId} />}
+          {modules.fleet && peer && <RemoveInstanceButton peerId={peer.id} onRemoved={() => void state.reloadPeers()} />}
           {address && paired && !instance.app && (
             <Button
               label={t("instances.open")}
@@ -222,12 +228,6 @@ function PeerCard({
               onClick={() => window.open(address, "_blank", "noopener")}
             />
           )}
-          {paired && !instance.app && (
-            <Button label={t("fleet.details")} labelKey="fleet.details" glyph={<IconInfo />} tone="neutral" onClick={onDetails} />
-          )}
-          {/* A phone has no details window, so its card carries the button the window has for an instance. */}
-          {paired && instance.app && <ForgetKeyButton memberId={instance.memberId} />}
-          {modules.fleet && peer && <RemoveInstanceButton peerId={peer.id} onRemoved={() => void state.reloadPeers()} />}
         </>
       }
       index={index}

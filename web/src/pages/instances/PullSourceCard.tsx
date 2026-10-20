@@ -150,31 +150,7 @@ export function PullSourceCard({
 
       <VerdictLine verdict={test.verdict} />
 
-      <div className="flex items-center gap-2 flex-wrap">
-        <Button
-          label={t("pull.pullNow")}
-          labelKey="pull.pullNow"
-          tone="neutral"
-          onClick={() => void handlePull()}
-          disabled={busy || test.running || !source.enabled}
-          busy={busy}
-          hueIndex={index}
-        />
-        <TestButton
-          label={t("offsite.test")}
-          labelKey="offsite.test"
-          test={test}
-          onClick={handleTest}
-          disabled={busy}
-          hueIndex={index}
-        />
-        <Button
-          label={t("common.edit")}
-          labelKey="common.edit"
-          tone="neutral"
-          onClick={onEdit}
-          hueIndex={index}
-        />
+      <div className="flex flex-wrap items-center justify-end gap-2">
         {confirmRemove ? (
           <Button
             label={t("offsite.targets.confirmRemove")}
@@ -192,6 +168,30 @@ export function PullSourceCard({
             hueIndex={index}
           />
         )}
+        <Button
+          label={t("common.edit")}
+          labelKey="common.edit"
+          tone="neutral"
+          onClick={onEdit}
+          hueIndex={index}
+        />
+        <TestButton
+          label={t("offsite.test")}
+          labelKey="offsite.test"
+          test={test}
+          onClick={handleTest}
+          disabled={busy}
+          hueIndex={index}
+        />
+        <Button
+          label={t("pull.pullNow")}
+          labelKey="pull.pullNow"
+          tone="neutral"
+          onClick={() => void handlePull()}
+          disabled={busy || test.running || !source.enabled}
+          busy={busy}
+          hueIndex={index}
+        />
       </div>
     </div>
   );

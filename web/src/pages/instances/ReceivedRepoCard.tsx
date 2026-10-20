@@ -291,62 +291,61 @@ export function ReceivedRepoCard({
         <p className="text-xs text-carbon-textSub wrap-break-word">{t("receiver.checkFailedHelp")}</p>
       )}
 
-      <div className="flex items-center gap-3 flex-wrap">
+      <div className="flex flex-wrap items-center justify-end gap-2">
         <Button
-          key={shakeCheck}
-          label={t("receiver.checkNow")}
-          labelKey="receiver.checkNow"
+          label={t("receiver.details")}
+          labelKey="receiver.details"
           tone="neutral"
-          onClick={() => void handleCheck()}
-          disabled={checking}
-          busy={checking}
-          title={checking ? t("dashboard.checking") : undefined}
-          className={shakeCheck ? "glim-shake" : ""}
+          onClick={() => setOpen(true)}
+          glyph={<IconInfo />}
         />
-        <Toggle
-          checked={deepCheck}
-          onChange={setDeepCheck}
-          disabled={checking}
-          label={t("receiver.deepCheck")}
+        <Button
+          label={t("receiver.edit")}
+          labelKey="receiver.edit"
+          tone="neutral"
+          onClick={onEdit}
         />
-
-        <div className="ms-auto flex items-center gap-2 flex-wrap max-md:w-full max-md:justify-end">
+        {/* A text button rather than an icon: the two-click confirm needs a
+            label to flip. */}
+        {confirmRemove ? (
           <Button
-            label={t("receiver.details")}
-            labelKey="receiver.details"
+            key={shakeRemove}
+            label={t("receiver.confirmRemove")}
+            labelKey="receiver.confirmRemove"
             tone="neutral"
-            onClick={() => setOpen(true)}
-            glyph={<IconInfo />}
+            onClick={() => void handleRemove()}
+            disabled={removing}
+            busy={removing}
+            title={removing ? t("receiver.removing") : undefined}
+            className={shakeRemove ? "glim-shake" : ""}
+          />
+        ) : (
+          <Button
+            label={t("receiver.remove")}
+            labelKey="receiver.remove"
+            tone="neutral"
+            onClick={() => setConfirmRemove(true)}
+          />
+        )}
+        <span className="flex items-center gap-3">
+          <Toggle
+            checked={deepCheck}
+            onChange={setDeepCheck}
+            disabled={checking}
+            label={t("receiver.deepCheck")}
           />
           <Button
-            label={t("receiver.edit")}
-            labelKey="receiver.edit"
+            key={shakeCheck}
+            label={t("receiver.checkNow")}
+            labelKey="receiver.checkNow"
             tone="neutral"
-            onClick={onEdit}
+            onClick={() => void handleCheck()}
+            disabled={checking}
+            busy={checking}
+            title={checking ? t("dashboard.checking") : undefined}
+            className={shakeCheck ? "glim-shake" : ""}
           />
-          {/* A text button rather than an icon: the two-click confirm needs a
-              label to flip. */}
-          {confirmRemove ? (
-            <Button
-              key={shakeRemove}
-              label={t("receiver.confirmRemove")}
-              labelKey="receiver.confirmRemove"
-              tone="neutral"
-              onClick={() => void handleRemove()}
-              disabled={removing}
-              busy={removing}
-              title={removing ? t("receiver.removing") : undefined}
-              className={shakeRemove ? "glim-shake" : ""}
-            />
-          ) : (
-            <Button
-              label={t("receiver.remove")}
-              labelKey="receiver.remove"
-              tone="neutral"
-              onClick={() => setConfirmRemove(true)}
-            />
-          )}
-        </div>
+        </span>
       </div>
 
       {open && (
