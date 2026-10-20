@@ -792,7 +792,7 @@ const et: Partial<Translations> = {
   "whatsNew.gotItCheck": "Igal „Selge“ nupul on linnuke.",
   "whatsNew.cardFoot": "Kogu kaardi nupud, näiteks „Lisa sihtkoht“, on lõpus kaardi sisu all.",
   "whatsNew.settingsStorageFlow": "Seadete leht Sihtkohad näitab ka, millist jaotist millisesse sihtkohta varundatakse.",
-  "whatsNew.addOwnRclone": "„Lisa sihtkoht“ pakub oma rclone'i seadistust, kuhu kleebid remote'id failist rclone.conf.",
+  "whatsNew.addOwnRclone": "„Lisa sihtkoht“ pakub oma rclone'i seadistuse jaoks paani Rclone, kuhu kleebid remote'id failist rclone.conf.",
   "whatsNew.cryptPicture": "Krüpteerimise pilt järgib oma lülitit: pitseeritud pakid sihtkohas, kui varundused on krüpteeritud, ja loetavad, kui pole.",
   "whatsNew.providerLogos": "„Lisa sihtkoht“ näitab Amazon S3, QingStori, Sia, FileLu, Drime'i ja rclone'i logosid ning iga paan süttib kursori all oma kaubamärgi värvi. premiumize.me pole enam loendis, sest see ei salvesta varundusi.",
   "whatsNew.settingsStorageList": "Seadete leht Sihtkohad näitab kõiki sihtkohti. Klõps avab ühe.",

@@ -677,7 +677,7 @@ const it: Partial<Translations> = {
   "whatsNew.gotItCheck": "Ogni pulsante «Capito» ha un segno di spunta.",
   "whatsNew.cardFoot": "I pulsanti di un'intera scheda, come «Aggiungi destinazione», stanno alla fine sotto il contenuto della scheda.",
   "whatsNew.settingsStorageFlow": "La pagina delle impostazioni Destinazioni mostra anche quale sezione va in backup su quale destinazione.",
-  "whatsNew.addOwnRclone": "«Aggiungi destinazione» offre una configurazione rclone personale, dove incolli i remote da un rclone.conf.",
+  "whatsNew.addOwnRclone": "«Aggiungi destinazione» ha un riquadro Rclone per una configurazione rclone personale, dove incolli i remote da un rclone.conf.",
   "whatsNew.cryptPicture": "L'immagine della crittografia segue il suo interruttore: pacchetti sigillati nella destinazione quando i backup sono cifrati, leggibili quando non lo sono.",
   "whatsNew.providerLogos": "In «Aggiungi destinazione» Amazon S3, QingStor, Sia, FileLu, Drime e rclone mostrano il loro logo, e ogni riquadro si illumina del colore del proprio marchio sotto il puntatore. premiumize.me non è più nell'elenco, perché non conserva backup.",
   "whatsNew.settingsStorageList": "La pagina delle impostazioni Destinazioni elenca tutte le destinazioni. Un clic ne apre una.",

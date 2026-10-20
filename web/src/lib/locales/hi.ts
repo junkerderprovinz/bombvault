@@ -792,7 +792,7 @@ const hi: Partial<Translations> = {
   "whatsNew.gotItCheck": "हर “समझ गया” बटन पर सही का निशान है।",
   "whatsNew.cardFoot": "पूरे कार्ड के बटन, जैसे “गंतव्य जोड़ें”, कार्ड की सामग्री के नीचे आख़िर में रहते हैं।",
   "whatsNew.settingsStorageFlow": "सेटिंग्स का गंतव्य पेज यह भी दिखाता है कि कौन-सा सेक्शन किस गंतव्य पर बैकअप होता है।",
-  "whatsNew.addOwnRclone": "“गंतव्य जोड़ें” में अपने rclone कॉन्फ़िगरेशन का विकल्प है, जहाँ आप किसी rclone.conf से remotes चिपकाते हैं।",
+  "whatsNew.addOwnRclone": "“गंतव्य जोड़ें” में अपने rclone कॉन्फ़िगरेशन के लिए Rclone टाइल है, जहाँ आप किसी rclone.conf से remotes चिपकाते हैं।",
   "whatsNew.cryptPicture": "एन्क्रिप्शन की तस्वीर अपने स्विच के साथ बदलती है: बैकअप एन्क्रिप्ट होने पर गंतव्य पर सील किए पैक, न होने पर पढ़े जा सकने वाले पैक।",
   "whatsNew.providerLogos": "“गंतव्य जोड़ें” में Amazon S3, QingStor, Sia, FileLu, Drime और rclone अपने लोगो दिखाते हैं, और हर टाइल पॉइंटर के नीचे अपने ब्रांड के रंग में चमकती है। premiumize.me अब सूची में नहीं है, क्योंकि वह बैकअप नहीं रखता।",
   "whatsNew.settingsStorageList": "सेटिंग्स का गंतव्य पेज सभी गंतव्य दिखाता है। एक क्लिक से कोई भी खुल जाता है।",

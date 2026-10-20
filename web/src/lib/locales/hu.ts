@@ -677,7 +677,7 @@ const hu: Partial<Translations> = {
   "whatsNew.gotItCheck": "Minden „Értem” gombon pipa van.",
   "whatsNew.cardFoot": "Az egész kártyára vonatkozó gombok, például a „Cél hozzáadása”, a végén, a kártya tartalma alatt állnak.",
   "whatsNew.settingsStorageFlow": "A Célok beállítási oldal azt is mutatja, melyik szakaszról melyik célra készül mentés.",
-  "whatsNew.addOwnRclone": "A „Cél hozzáadása” saját rclone-konfigurációt is kínál, ahová egy rclone.conf fájlból illesztesz be remote-okat.",
+  "whatsNew.addOwnRclone": "A „Cél hozzáadása” Rclone csempét kínál a saját rclone-konfigurációhoz, ahová egy rclone.conf fájlból illesztesz be remote-okat.",
   "whatsNew.cryptPicture": "A titkosítás képe követi a kapcsolóját: lepecsételt csomagok a célnál, ha a mentések titkosítottak, és olvasható csomagok, ha nem.",
   "whatsNew.providerLogos": "A „Cél hozzáadása” ablakban az Amazon S3, a QingStor, a Sia, a FileLu, a Drime és az rclone a saját logóját mutatja, és minden csempe a márkája színében világít a mutató alatt. A premiumize.me már nincs a listán, mert nem tárol mentéseket.",
   "whatsNew.settingsStorageList": "A Célok beállítási oldal az összes célt mutatja. Egy kattintás megnyit egyet.",

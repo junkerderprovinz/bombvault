@@ -677,7 +677,7 @@ const es: Partial<Translations> = {
   "whatsNew.gotItCheck": "Cada botón «Entendido» lleva una marca de verificación.",
   "whatsNew.cardFoot": "Los botones de toda una tarjeta, como «Añadir destino», están al final, bajo el contenido de la tarjeta.",
   "whatsNew.settingsStorageFlow": "La página de ajustes Destinos también muestra qué sección se copia en qué destino.",
-  "whatsNew.addOwnRclone": "«Añadir destino» ofrece una configuración propia de rclone, donde pegas remotes de un rclone.conf.",
+  "whatsNew.addOwnRclone": "«Añadir destino» tiene un mosaico Rclone para una configuración propia de rclone, donde pegas remotes de un rclone.conf.",
   "whatsNew.cryptPicture": "La imagen del cifrado sigue a su interruptor: paquetes sellados en el destino cuando las copias están cifradas, y legibles cuando no.",
   "whatsNew.providerLogos": "En «Añadir destino», Amazon S3, QingStor, Sia, FileLu, Drime y rclone muestran su logotipo, y cada mosaico se ilumina con el color de su marca bajo el puntero. premiumize.me ya no está en la lista, porque no guarda copias de seguridad.",
   "whatsNew.settingsStorageList": "La página de ajustes Destinos muestra todos los destinos. Un clic abre uno.",

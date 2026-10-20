@@ -792,7 +792,7 @@ const lv: Partial<Translations> = {
   "whatsNew.gotItCheck": "Katrai pogai “Sapratu” ir ķeksītis.",
   "whatsNew.cardFoot": "Visas kartes pogas, piemēram, “Pievienot mērķi”, atrodas beigās zem kartes satura.",
   "whatsNew.settingsStorageFlow": "Iestatījumu lapa Mērķi rāda arī, kura sadaļa tiek dublēta uz kuru mērķi.",
-  "whatsNew.addOwnRclone": "“Pievienot mērķi” piedāvā savu rclone konfigurāciju, kur ielīmē remote no rclone.conf.",
+  "whatsNew.addOwnRclone": "“Pievienot mērķi” piedāvā flīzi Rclone savai rclone konfigurācijai, kur ielīmē remote no rclone.conf.",
   "whatsNew.cryptPicture": "Šifrēšanas attēls seko savam slēdzim: aizzīmogotas pakotnes mērķī, kad rezerves kopijas ir šifrētas, un lasāmas, kad nav.",
   "whatsNew.providerLogos": "“Pievienot mērķi” rāda Amazon S3, QingStor, Sia, FileLu, Drime un rclone logotipus, un katra flīze zem rādītāja iedegas sava zīmola krāsā. premiumize.me vairs nav sarakstā, jo tas neglabā rezerves kopijas.",
   "whatsNew.settingsStorageList": "Iestatījumu lapa Mērķi parāda visus mērķus. Klikšķis atver vienu.",

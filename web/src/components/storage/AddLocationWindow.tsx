@@ -326,7 +326,7 @@ export function AddLocationWindow({
                 <li data-new="storage-add-own-rclone" style={providerTileStyle("rclone")}>
                   <ReadmeButton
                     tile="glim-tile-provider"
-                    parts={[{ name: "rclone.conf", sub: rclone.remotes.join(", ") || undefined, onClick: () => setOwnConf(true) }]}
+                    parts={[{ name: "Rclone", sub: rclone.remotes.join(", ") || undefined, onClick: () => setOwnConf(true) }]}
                     mark={<ProviderMark provider={{ mark: "rclone" }} />}
                     markClass="text-carbon-textSub"
                   />

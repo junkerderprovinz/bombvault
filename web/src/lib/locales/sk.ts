@@ -792,7 +792,7 @@ const sk: Partial<Translations> = {
   "whatsNew.gotItCheck": "Každé tlačidlo „Rozumiem“ má značku začiarknutia.",
   "whatsNew.cardFoot": "Tlačidlá celej karty, napríklad „Pridať cieľ“, sú na konci pod jej obsahom.",
   "whatsNew.settingsStorageFlow": "Stránka nastavení Ciele ukazuje aj to, ktorá sekcia sa zálohuje do ktorého cieľa.",
-  "whatsNew.addOwnRclone": "„Pridať cieľ“ ponúka vlastnú konfiguráciu rclone, kam vložíš remoty z rclone.conf.",
+  "whatsNew.addOwnRclone": "„Pridať cieľ“ má dlaždicu Rclone pre vlastnú konfiguráciu rclone, kam vložíš remoty z rclone.conf.",
   "whatsNew.cryptPicture": "Obrázok šifrovania sleduje svoj prepínač: zapečatené balíky v cieli, keď sú zálohy šifrované, a čitateľné, keď nie sú.",
   "whatsNew.providerLogos": "V „Pridať cieľ“ ukazujú Amazon S3, QingStor, Sia, FileLu, Drime a rclone svoje logá a každá dlaždica sa pod ukazovateľom rozsvieti vo farbe svojej značky. premiumize.me už v zozname nie je, pretože neukladá zálohy.",
   "whatsNew.settingsStorageList": "Stránka nastavení Ciele zobrazuje všetky ciele. Kliknutím jeden otvoríš.",

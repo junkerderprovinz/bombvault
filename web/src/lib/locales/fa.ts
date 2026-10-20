@@ -792,7 +792,7 @@ const fa: Partial<Translations> = {
   "whatsNew.gotItCheck": "هر دکمهٔ «متوجه شدم» یک تیک دارد.",
   "whatsNew.cardFoot": "دکمه‌های کل کارت، مثل «افزودن مقصد»، در انتها زیر محتوای کارت قرار دارند.",
   "whatsNew.settingsStorageFlow": "صفحه تنظیمات مقصدها همچنین نشان می‌دهد هر بخش روی کدام مقصد پشتیبان‌گیری می‌شود.",
-  "whatsNew.addOwnRclone": "«افزودن مقصد» گزینه‌ای برای پیکربندی rclone خودت دارد که در آن remoteها را از یک rclone.conf می‌چسبانی.",
+  "whatsNew.addOwnRclone": "«افزودن مقصد» کاشی Rclone را برای پیکربندی rclone خودت دارد که در آن remoteها را از یک rclone.conf می‌چسبانی.",
   "whatsNew.cryptPicture": "تصویر رمزنگاری از کلید خودش پیروی می‌کند: بسته‌های مهروموم‌شده در مقصد وقتی پشتیبان‌ها رمزنگاری شده‌اند، و بسته‌های خوانا وقتی نشده‌اند.",
   "whatsNew.providerLogos": "در «افزودن مقصد»، Amazon S3، QingStor، Sia، FileLu، Drime و rclone لوگوی خود را نشان می‌دهند و هر کاشی زیر نشانگر به رنگ برند خودش روشن می‌شود. premiumize.me دیگر در فهرست نیست، چون پشتیبان ذخیره نمی‌کند.",
   "whatsNew.settingsStorageList": "صفحه تنظیمات مقصدها همه مقصدها را نشان می‌دهد. با یک کلیک یکی باز می‌شود.",

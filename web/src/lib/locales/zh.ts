@@ -672,7 +672,7 @@ const zh: Partial<Translations> = {
   "whatsNew.gotItCheck": "每个“知道了”按钮都带有勾号。",
   "whatsNew.cardFoot": "整张卡片的按钮，例如“添加目标”，位于卡片内容下方的末尾。",
   "whatsNew.settingsStorageFlow": "设置中的“目标”页面也会显示哪个部分备份到哪个目标。",
-  "whatsNew.addOwnRclone": "“添加目标”提供自定义 rclone 配置选项，可在其中粘贴 rclone.conf 中的远程。",
+  "whatsNew.addOwnRclone": "“添加目标”提供 Rclone 磁贴用于自定义 rclone 配置，可在其中粘贴 rclone.conf 中的远程。",
   "whatsNew.cryptPicture": "加密示意图随开关变化：备份加密时目标里是封好的数据包，未加密时是可读的数据包。",
   "whatsNew.providerLogos": "在“添加目标”中，Amazon S3、QingStor、Sia、FileLu、Drime 和 rclone 显示各自的徽标，鼠标悬停时每个磁贴会亮起品牌颜色。premiumize.me 不存储备份，已从列表中移除。",
   "whatsNew.settingsStorageList": "设置中的“目标”页面列出所有目标，点击即可打开。",

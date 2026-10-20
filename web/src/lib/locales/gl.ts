@@ -792,7 +792,7 @@ const gl: Partial<Translations> = {
   "whatsNew.gotItCheck": "Cada botón «Entendido» leva unha marca de verificación.",
   "whatsNew.cardFoot": "Os botóns de toda unha tarxeta, como «Engadir destino», están ao final, baixo o contido da tarxeta.",
   "whatsNew.settingsStorageFlow": "A páxina de axustes Destinos tamén amosa que sección se copia en que destino.",
-  "whatsNew.addOwnRclone": "«Engadir destino» ofrece unha configuración propia de rclone, onde pegas remotes dun rclone.conf.",
+  "whatsNew.addOwnRclone": "«Engadir destino» ten un mosaico Rclone para unha configuración propia de rclone, onde pegas remotes dun rclone.conf.",
   "whatsNew.cryptPicture": "A imaxe do cifrado segue o seu interruptor: paquetes selados no destino cando as copias están cifradas, e lexibles cando non.",
   "whatsNew.providerLogos": "En «Engadir destino», Amazon S3, QingStor, Sia, FileLu, Drime e rclone amosan o seu logotipo, e cada mosaico ilumínase coa cor da súa marca baixo o punteiro. premiumize.me xa non está na lista, porque non garda copias de seguridade.",
   "whatsNew.settingsStorageList": "A páxina de axustes Destinos amosa todos os destinos. Un clic abre un.",

@@ -792,7 +792,7 @@ const ca: Partial<Translations> = {
   "whatsNew.gotItCheck": "Cada botó «Entesos» porta una marca de verificació.",
   "whatsNew.cardFoot": "Els botons de tota una targeta, com «Afegeix una destinació», són al final, sota el contingut de la targeta.",
   "whatsNew.settingsStorageFlow": "La pàgina de configuració Destinacions també mostra quina secció es copia a quina destinació.",
-  "whatsNew.addOwnRclone": "«Afegeix una destinació» ofereix una configuració pròpia de rclone, on enganxes remotes d'un rclone.conf.",
+  "whatsNew.addOwnRclone": "«Afegeix una destinació» té una rajola Rclone per a una configuració pròpia de rclone, on enganxes remotes d'un rclone.conf.",
   "whatsNew.cryptPicture": "La imatge del xifratge segueix el seu interruptor: paquets segellats a la destinació quan les còpies estan xifrades, i llegibles quan no ho estan.",
   "whatsNew.providerLogos": "A «Afegeix una destinació», Amazon S3, QingStor, Sia, FileLu, Drime i rclone mostren el seu logotip, i cada rajola s'il·lumina amb el color de la seva marca sota el punter. premiumize.me ja no és a la llista, perquè no desa còpies de seguretat.",
   "whatsNew.settingsStorageList": "La pàgina de configuració Destinacions mostra totes les destinacions. Un clic n'obre una.",

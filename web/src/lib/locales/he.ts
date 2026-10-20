@@ -677,7 +677,7 @@ const he: Partial<Translations> = {
   "whatsNew.gotItCheck": "בכל כפתור „הבנתי” יש סימן וי.",
   "whatsNew.cardFoot": "כפתורים של כרטיס שלם, כמו „הוספת יעד”, נמצאים בסוף מתחת לתוכן הכרטיס.",
   "whatsNew.settingsStorageFlow": "דף ההגדרות יעדים מראה גם איזה תחום מגובה לאיזה יעד.",
-  "whatsNew.addOwnRclone": "ב„הוספת יעד” יש אפשרות להגדרת rclone משלך, שבה מדביקים remotes מקובץ rclone.conf.",
+  "whatsNew.addOwnRclone": "ב„הוספת יעד” יש אריח Rclone להגדרת rclone משלך, שבו מדביקים remotes מקובץ rclone.conf.",
   "whatsNew.cryptPicture": "תמונת ההצפנה עוקבת אחרי המתג שלה: חבילות חתומות ביעד כשהגיבויים מוצפנים, וחבילות קריאות כשלא.",
   "whatsNew.providerLogos": "ב„הוספת יעד” מוצגים הלוגואים של Amazon S3, QingStor, Sia, FileLu, Drime ו-rclone, וכל אריח נדלק בצבע המותג שלו מתחת לסמן. premiumize.me כבר לא ברשימה, כי הוא לא שומר גיבויים.",
   "whatsNew.settingsStorageList": "דף ההגדרות יעדים מציג את כל היעדים. לחיצה פותחת אחד מהם.",

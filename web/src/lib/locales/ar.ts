@@ -677,7 +677,7 @@ const ar: Partial<Translations> = {
   "whatsNew.gotItCheck": "كل زر «فهمت» يحمل علامة صح.",
   "whatsNew.cardFoot": "أزرار البطاقة كلها، مثل «إضافة وجهة»، تقع في النهاية أسفل محتوى البطاقة.",
   "whatsNew.settingsStorageFlow": "تعرض صفحة إعدادات الوجهات أيضًا أي قسم يُنسخ احتياطيًا إلى أي وجهة.",
-  "whatsNew.addOwnRclone": "في «إضافة وجهة» خيار لإعداد rclone خاص، تلصق فيه remotes من ملف rclone.conf.",
+  "whatsNew.addOwnRclone": "في «إضافة وجهة» بلاطة Rclone لإعداد rclone خاص، تلصق فيه remotes من ملف rclone.conf.",
   "whatsNew.cryptPicture": "صورة التشفير تتبع مفتاحها: حزم مختومة في الوجهة عند تشفير النسخ الاحتياطية، وحزم مقروءة عند عدم تشفيرها.",
   "whatsNew.providerLogos": "في «إضافة وجهة» تظهر شعارات Amazon S3 وQingStor وSia وFileLu وDrime وrclone، وتضيء كل بطاقة بلون علامتها التجارية تحت المؤشر. لم يعد premiumize.me في القائمة لأنه لا يخزّن النسخ الاحتياطية.",
   "whatsNew.settingsStorageList": "تعرض صفحة إعدادات الوجهات كل الوجهات، ونقرة واحدة تفتح إحداها.",

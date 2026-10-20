@@ -792,7 +792,7 @@ const lt: Partial<Translations> = {
   "whatsNew.gotItCheck": "Kiekvienas mygtukas „Supratau“ turi varnelę.",
   "whatsNew.cardFoot": "Visos kortelės mygtukai, pvz., „Pridėti paskirties vietą“, yra pabaigoje po kortelės turiniu.",
   "whatsNew.settingsStorageFlow": "Nustatymų puslapis Paskirties vietos taip pat rodo, kuris skyrius į kurią paskirties vietą kopijuojamas.",
-  "whatsNew.addOwnRclone": "„Pridėti paskirties vietą“ siūlo savą rclone konfigūraciją, į kurią įklijuoji remote'us iš rclone.conf.",
+  "whatsNew.addOwnRclone": "„Pridėti paskirties vietą“ turi plytelę Rclone savai rclone konfigūracijai, į kurią įklijuoji remote'us iš rclone.conf.",
   "whatsNew.cryptPicture": "Šifravimo paveikslėlis seka savo jungiklį: užantspauduoti paketai paskirties vietoje, kai atsarginės kopijos šifruojamos, ir skaitomi, kai ne.",
   "whatsNew.providerLogos": "„Pridėti paskirties vietą“ rodo Amazon S3, QingStor, Sia, FileLu, Drime ir rclone logotipus, o kiekviena plytelė po žymekliu nušvinta savo prekės ženklo spalva. premiumize.me nebėra sąraše, nes jis nesaugo atsarginių kopijų.",
   "whatsNew.settingsStorageList": "Nustatymų puslapis Paskirties vietos rodo visas paskirties vietas. Paspaudus atsidaro viena.",

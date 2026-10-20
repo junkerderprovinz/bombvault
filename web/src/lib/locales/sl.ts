@@ -792,7 +792,7 @@ const sl: Partial<Translations> = {
   "whatsNew.gotItCheck": "Vsak gumb »Razumem« ima kljukico.",
   "whatsNew.cardFoot": "Gumbi za celo kartico, na primer »Dodaj cilj«, so na koncu pod vsebino kartice.",
   "whatsNew.settingsStorageFlow": "Stran nastavitev Cilji prikaže tudi, kateri razdelek se kopira na kateri cilj.",
-  "whatsNew.addOwnRclone": "»Dodaj cilj« ponuja lastne nastavitve rclone, kamor prilepiš remote iz rclone.conf.",
+  "whatsNew.addOwnRclone": "»Dodaj cilj« ima ploščico Rclone za lastne nastavitve rclone, kamor prilepiš remote iz rclone.conf.",
   "whatsNew.cryptPicture": "Slika šifriranja sledi svojemu stikalu: zapečateni paketi na cilju, ko so varnostne kopije šifrirane, in berljivi, ko niso.",
   "whatsNew.providerLogos": "V »Dodaj cilj« Amazon S3, QingStor, Sia, FileLu, Drime in rclone pokažejo svoj logotip, vsaka ploščica pa pod kazalcem zasveti v barvi svoje znamke. premiumize.me ni več na seznamu, ker ne hrani varnostnih kopij.",
   "whatsNew.settingsStorageList": "Stran nastavitev Cilji prikaže vse cilje. Klik odpre enega.",

@@ -677,7 +677,7 @@ const fr: Partial<Translations> = {
   "whatsNew.gotItCheck": "Chaque bouton « Compris » porte une coche.",
   "whatsNew.cardFoot": "Les boutons de toute une carte, comme « Ajouter une destination », se trouvent à la fin, sous le contenu de la carte.",
   "whatsNew.settingsStorageFlow": "La page de réglages Destinations montre aussi quelle section est sauvegardée vers quelle destination.",
-  "whatsNew.addOwnRclone": "« Ajouter une destination » propose une configuration rclone personnelle, où vous collez des remotes depuis un rclone.conf.",
+  "whatsNew.addOwnRclone": "« Ajouter une destination » propose une tuile Rclone pour une configuration rclone personnelle, où vous collez des remotes depuis un rclone.conf.",
   "whatsNew.cryptPicture": "L'image du chiffrement suit son interrupteur : des paquets scellés à la destination quand les sauvegardes sont chiffrées, des paquets lisibles sinon.",
   "whatsNew.providerLogos": "Dans « Ajouter une destination », Amazon S3, QingStor, Sia, FileLu, Drime et rclone affichent leur logo, et chaque tuile s'allume à la couleur de sa marque sous le pointeur. premiumize.me ne figure plus dans la liste, car il ne stocke pas de sauvegardes.",
   "whatsNew.settingsStorageList": "La page de réglages Destinations liste toutes les destinations. Un clic en ouvre une.",

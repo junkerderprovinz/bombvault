@@ -516,15 +516,15 @@ describe("adding a storage location", () => {
       "Cloud storage",
       "Own rclone configuration",
     ]);
-    expect(tileNames(window)).toEqual(["Local folder", "Rest server", "Backblaze B2", "Google Drive", "rclone.conf"]);
+    expect(tileNames(window)).toEqual(["Local folder", "Rest server", "Backblaze B2", "Google Drive", "Rclone"]);
   });
 
   it("saves a pasted rclone configuration and lists its remotes", async () => {
     getRclone.mockResolvedValue({ ok: true, remotes: ["b2"] });
     setRclone.mockResolvedValue({ ok: true });
     const picker = await open();
-    await waitFor(() => expect(tileNames(picker)).toContain("rclone.confb2"));
-    await click(within(picker).getByRole("button", { name: /^rclone\.conf/ }));
+    await waitFor(() => expect(tileNames(picker)).toContain("Rcloneb2"));
+    await click(within(picker).getByRole("button", { name: /^Rclone/ }));
 
     const window = await screen.findByRole("dialog", { name: "Add storage location" });
     expect(within(window).getByText("b2")).toBeTruthy();
@@ -539,7 +539,7 @@ describe("adding a storage location", () => {
     expect(await within(window).findByText("nas")).toBeTruthy();
     expect((paste as HTMLTextAreaElement).value).toBe("");
     await click(within(window).getByRole("button", { name: "Back" }));
-    expect(tileNames(await screen.findByRole("dialog", { name: "Add storage location" }))).toContain("rclone.confb2, nas");
+    expect(tileNames(await screen.findByRole("dialog", { name: "Add storage location" }))).toContain("Rcloneb2, nas");
   });
 
   it("keeps a storage a paired instance offers as a choice, and fills its sign-in", async () => {

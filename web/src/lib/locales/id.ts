@@ -792,7 +792,7 @@ const id: Partial<Translations> = {
   "whatsNew.gotItCheck": "Setiap tombol “Mengerti” punya tanda centang.",
   "whatsNew.cardFoot": "Tombol untuk seluruh kartu, seperti “Tambah tujuan”, ada di akhir di bawah isi kartu.",
   "whatsNew.settingsStorageFlow": "Halaman pengaturan Tujuan juga menampilkan bagian mana dicadangkan ke tujuan mana.",
-  "whatsNew.addOwnRclone": "“Tambah tujuan” punya pilihan konfigurasi rclone sendiri, tempat kamu menempel remote dari rclone.conf.",
+  "whatsNew.addOwnRclone": "“Tambah tujuan” punya ubin Rclone untuk konfigurasi rclone sendiri, tempat kamu menempel remote dari rclone.conf.",
   "whatsNew.cryptPicture": "Gambar enkripsi mengikuti sakelarnya: paket tersegel di tujuan saat cadangan dienkripsi, paket yang bisa dibaca saat tidak.",
   "whatsNew.providerLogos": "Di “Tambah tujuan”, Amazon S3, QingStor, Sia, FileLu, Drime, dan rclone menampilkan logonya, dan setiap ubin menyala dengan warna mereknya di bawah penunjuk. premiumize.me tidak ada lagi di daftar karena tidak menyimpan cadangan.",
   "whatsNew.settingsStorageList": "Halaman pengaturan Tujuan menampilkan semua tujuan. Satu klik membuka salah satunya.",

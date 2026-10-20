@@ -677,7 +677,7 @@ const sv: Partial<Translations> = {
   "whatsNew.gotItCheck": "Varje ”Uppfattat”-knapp har en bock.",
   "whatsNew.cardFoot": "Knappar för hela kortet, som ”Lägg till mål”, står sist under kortets innehåll.",
   "whatsNew.settingsStorageFlow": "Inställningssidan Mål visar också vilken del som säkerhetskopieras till vilket mål.",
-  "whatsNew.addOwnRclone": "”Lägg till mål” har ett val för din egen rclone-konfiguration, där du klistrar in remotes från en rclone.conf.",
+  "whatsNew.addOwnRclone": "”Lägg till mål” har en Rclone-ruta för din egen rclone-konfiguration, där du klistrar in remotes från en rclone.conf.",
   "whatsNew.cryptPicture": "Bilden av krypteringen följer sin brytare: förseglade pack på målet när säkerhetskopiorna är krypterade, läsbara när de inte är det.",
   "whatsNew.providerLogos": "I ”Lägg till mål” visar Amazon S3, QingStor, Sia, FileLu, Drime och rclone sina logotyper, och varje ruta lyser upp i sitt varumärkes färg under pekaren. premiumize.me finns inte längre i listan, eftersom den inte lagrar säkerhetskopior.",
   "whatsNew.settingsStorageList": "Inställningssidan Mål listar alla mål. Ett klick öppnar ett.",

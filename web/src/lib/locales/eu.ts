@@ -792,7 +792,7 @@ const eu: Partial<Translations> = {
   "whatsNew.gotItCheck": "«Ulertuta» botoi guztiek egiaztapen-marka bat dute.",
   "whatsNew.cardFoot": "Txartel osoaren botoiak, «Gehitu helmuga» kasu, amaieran daude, txartelaren edukiaren azpian.",
   "whatsNew.settingsStorageFlow": "Helmugak ezarpen-orriak ere erakusten du zein atal zein helmugatan babesten den.",
-  "whatsNew.addOwnRclone": "«Gehitu helmuga» aukerak rclone konfigurazio propioa eskaintzen du, non rclone.conf bateko remoteak itsasten dituzun.",
+  "whatsNew.addOwnRclone": "«Gehitu helmuga» aukerak Rclone lauza bat du rclone konfigurazio propiorako, non rclone.conf bateko remoteak itsasten dituzun.",
   "whatsNew.cryptPicture": "Zifratzearen irudiak bere etengailuari jarraitzen dio: pakete zigilatuak helmugan babeskopiak zifratuta daudenean, eta irakurgarriak zifratu gabe daudenean.",
   "whatsNew.providerLogos": "«Gehitu helmuga» atalean Amazon S3, QingStor, Sia, FileLu, Drime eta rclone-k beren logoa erakusten dute, eta lauza bakoitza bere markaren kolorez pizten da erakuslearen azpian. premiumize.me ez dago jada zerrendan, ez baitu babeskopiarik gordetzen.",
   "whatsNew.settingsStorageList": "Helmugak ezarpen-orriak helmuga guztiak zerrendatzen ditu. Klik batek bat irekitzen du.",

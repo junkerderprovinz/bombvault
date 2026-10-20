@@ -673,7 +673,7 @@ const nl: Partial<Translations> = {
   "whatsNew.gotItCheck": "Elke knop „Begrepen” heeft een vinkje.",
   "whatsNew.cardFoot": "Knoppen voor een hele kaart, zoals „Bestemming toevoegen”, staan aan het eind onder de inhoud van de kaart.",
   "whatsNew.settingsStorageFlow": "De instellingenpagina Bestemmingen toont ook welk onderdeel naar welke bestemming wordt geback-upt.",
-  "whatsNew.addOwnRclone": "„Bestemming toevoegen” heeft een keuze voor je eigen rclone-configuratie, waar je remotes uit een rclone.conf plakt.",
+  "whatsNew.addOwnRclone": "„Bestemming toevoegen” heeft een tegel Rclone voor je eigen rclone-configuratie, waar je remotes uit een rclone.conf plakt.",
   "whatsNew.cryptPicture": "De afbeelding bij versleuteling volgt haar schakelaar: verzegelde pakketten op de bestemming als back-ups versleuteld zijn, leesbare als ze dat niet zijn.",
   "whatsNew.providerLogos": "In „Bestemming toevoegen” tonen Amazon S3, QingStor, Sia, FileLu, Drime en rclone hun logo, en elke tegel licht onder de aanwijzer op in de kleur van zijn merk. premiumize.me staat niet meer in de lijst, omdat het geen back-ups bewaart.",
   "whatsNew.settingsStorageList": "De instellingenpagina Bestemmingen toont alle bestemmingen. Met een klik open je er een.",

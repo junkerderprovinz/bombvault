@@ -672,7 +672,7 @@ const ja: Partial<Translations> = {
   "whatsNew.gotItCheck": "「了解」ボタンにはすべてチェックマークが付きます。",
   "whatsNew.cardFoot": "「保存先を追加」など、カード全体のボタンはカードの内容の下、末尾に並びます。",
   "whatsNew.settingsStorageFlow": "設定の「保存先」ページに、どのセクションがどの保存先にバックアップされるかも表示されます。",
-  "whatsNew.addOwnRclone": "「保存先を追加」に独自の rclone 設定の選択肢があり、rclone.conf からリモートを貼り付けられます。",
+  "whatsNew.addOwnRclone": "「保存先を追加」に独自の rclone 設定用の Rclone タイルがあり、rclone.conf からリモートを貼り付けられます。",
   "whatsNew.cryptPicture": "暗号化の図はスイッチに合わせて変わります。バックアップを暗号化すると保存先には封をしたパックが、暗号化しないと読めるパックが並びます。",
   "whatsNew.providerLogos": "「保存先を追加」で Amazon S3、QingStor、Sia、FileLu、Drime、rclone のロゴが表示され、各タイルはポインターを重ねるとブランドの色に光ります。premiumize.me はバックアップを保存するサービスではないため、一覧から外しました。",
   "whatsNew.settingsStorageList": "設定の「保存先」ページにすべての保存先が並びます。クリックすると開きます。",
