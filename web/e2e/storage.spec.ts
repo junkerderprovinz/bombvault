@@ -141,7 +141,7 @@ test.describe("on the desktop", () => {
     // Anywhere on the row, not only on the name.
     await row.click();
     await expect(page).toHaveURL(new RegExp(`${encodeURIComponent(B2.id)}$`));
-    await expect(page.getByText("Zugangsdaten")).toBeVisible();
+    await expect(page.getByText("Zugangsdaten", { exact: true })).toBeVisible();
 
     await page.goto(locationUrl("destination:gone"));
     await expect(page.getByText("Diesen Speicherort gibt es nicht mehr.")).toBeVisible();
@@ -231,7 +231,7 @@ test.describe("on the desktop", () => {
   test("a storage location is added in one window, from the provider to the sections that use it", async ({ page }) => {
     const staged = await stageStorage(page, 1280);
     await page.goto("/storage");
-    await page.getByTestId("page-actions").getByRole("button", { name: "Speicherort hinzufügen" }).click();
+    await page.locator('[data-search-card="Speicherorte"]').getByRole("button", { name: "Speicherort hinzufügen" }).click();
     const window = page.getByRole("dialog", { name: "Speicherort hinzufügen" });
     await expect(window.getByText("Aus deiner Gruppe")).toBeVisible();
     // A folder on this host comes first among the providers.
@@ -328,17 +328,15 @@ test.describe("on the desktop", () => {
     expect((staged.writes[0].body as { follow: string[] }).follow).toEqual(["retention"]);
   });
 
-  test("a folder on this host has no copies or credentials, and no switch for delete protection", async ({ page }) => {
+  test("a folder on this host without delete protection has no copies, credentials or protection card", async ({ page }) => {
     await stageStorage(page, 1280);
     await page.goto(locationUrl(LOCAL.id));
     await expect(page.getByText("Wie lange aufheben", { exact: true })).toBeVisible();
     await expect(page.getByText("Verbindung", { exact: true })).toBeVisible();
-    for (const absent of ["Kopieren", "Zugangsdaten", "rclone.conf"]) {
+    for (const absent of ["Kopieren", "Zugangsdaten", "rclone.conf", "Löschschutz", "Löschschutz (append-only)"]) {
       await expect(page.getByText(absent, { exact: true })).toHaveCount(0);
     }
-    await expect(page.getByText("Löschschutz (append-only)", { exact: true })).toBeVisible();
     await expect(page.getByRole("switch", { name: "Löschschutz (append-only)" })).toHaveCount(0);
-    await expect(page.getByLabel(/Ein Ordner auf diesem Server kann das Löschen nicht verweigern/)).toBeVisible();
   });
 
   test("a destination's connection is changed in a window that sends what was typed", async ({ page }) => {
@@ -486,6 +484,11 @@ test.describe("on the desktop", () => {
     await page.goto(locationUrl(LOCAL.id));
     const row = page.getByRole("listitem").filter({ hasText: "/mnt/user/backups/bombvault/vms" });
     await row.getByRole("button", { name: "Ändern" }).click();
+    // The window that moves own folders offers the storage locations first; a
+    // typed address leads on to the section's own path window.
+    const move = page.getByRole("dialog", { name: "Eigener Ordner von VMs" });
+    await move.getByRole("radio", { name: "Ein anderer Ort" }).click();
+    await move.getByRole("button", { name: "Öffnen" }).click();
     const window = page.getByRole("dialog", { name: "VMs-Pfad" });
     await window.getByRole("tab", { name: "Remote" }).click();
     await window.getByPlaceholder("s3:bucket/path", { exact: false }).fill("rest:http://nas:8000/tower");
@@ -509,15 +512,17 @@ test.describe("on the desktop", () => {
     await expect(page.locator('input[type="checkbox"]')).toHaveCount(0);
   });
 
-  test("the settings tile keeps only the cards without a place on the storage pages", async ({ page }) => {
+  test("the settings tile lists the storage locations and keeps only the cards without a place on the storage pages", async ({ page }) => {
     await stageStorage(page, 1280);
     await page.goto("/settings/storage");
-    await expect(page.getByRole("heading", { name: "Wie lange aufheben", exact: true })).toBeAttached();
-    for (const moved of ["Backup-Pfade", "Vorgaben für Speicherorte", "Speicherorte", "Streaming", "Lokale Aufbewahrung", "Off-site-Aufbewahrung"]) {
+    for (const shown of ["Wie lange aufheben", "Speicherorte", "Speicherorte je Bereich"]) {
+      await expect(page.locator(`[data-search-card="${shown}"]`)).toBeVisible();
+    }
+    for (const moved of ["Backup-Pfade", "Vorgaben für Speicherorte", "Streaming", "Lokale Aufbewahrung", "Off-site-Aufbewahrung"]) {
       await expect(page.getByRole("heading", { name: moved, exact: true })).toHaveCount(0);
     }
-    await page.getByRole("button", { name: "Öffnen" }).click();
-    await expect(page).toHaveURL(/\/storage$/);
+    await page.getByRole("listitem").filter({ has: page.getByRole("link", { name: B2.name }) }).click();
+    await expect(page).toHaveURL(new RegExp(`${encodeURIComponent(B2.id)}$`));
   });
 
   test("the restore folder gets a subfolder per section and exceptions in the settings", async ({ page }) => {

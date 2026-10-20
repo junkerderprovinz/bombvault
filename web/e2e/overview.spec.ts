@@ -311,8 +311,9 @@ test.describe("the grid of the overview", () => {
     await expect(head).toContainText("7 of 8 protected");
     await expect(row.getByRole("button", { name: "Start backing up" })).toBeVisible();
 
-    await row.getByRole("button", { name: "More" }).click();
-    await page.getByRole("menuitem", { name: "Don't back up" }).click();
+    // Its only other action stands beside it, with no More menu to open.
+    await expect(row.getByRole("button", { name: "More" })).toHaveCount(0);
+    await row.getByRole("button", { name: "Don't back up" }).click();
 
     await expect(row).toHaveCount(0);
     await expect(head).toContainText("4 things need you");

@@ -636,7 +636,7 @@ test("the database dumps are explained once", async ({ page }, testInfo) => {
   await openList(page);
   const note = page.getByTestId("dump-intro");
   await expect(note).toContainText("immich_postgres");
-  await note.getByRole("button", { name: "Alles klar" }).click();
+  await note.getByRole("button", { name: "Verstanden" }).click();
   await expect(note).toBeHidden();
   await page.reload();
   await expect(rows(page).first()).toBeVisible();
