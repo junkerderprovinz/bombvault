@@ -2073,6 +2073,8 @@ const eu: Partial<Translations> = {
   "settings.watchdogToggle": "Jakinarazi atzeratutako babeskopiak",
   "settings.coresLabel": "CPU hariak (0 = denak)",
   "settings.coresHint": "Babeskopia batek zenbat CPU hari erabil ditzakeen. 0 nukleo guztiak esan nahi du. Zenbakiak aldi berean zenbat exekutatzen den mugatzen du, ez top edo btop-ek zenbat hari erakusten dituen: restic-ek beti mugak baino gehiago izaten ditu, eta gehienak diskoaren zain daude, nukleo bat hartu ordez.",
+  "settings.memoryLabel": "Memoria-muga babeskopiako (MiB, 0 = bat ere ez)",
+  "settings.memoryHint": "Babeskopia-prozesu bakoitzaren memoria-muga bigun bat, MiB-tan. 0 esan nahi du mugarik ez dagoela. Mugatik gertu prozesuak memoria maizago askatzen du, eta horrek abiadura apur bat kostatzen du, baina muga gainditzen du gehiago behar duenean. Ezarri edukiontziak erabil dezakeena baino nabarmen txikiagoa, babeskopia handi bat motelagoa izan dadin memoria-faltagatik hil beharrean.",
   "settings.cacheHint": "Babeskopia-motorrak biltegiaren datuen cache bat mantentzen du /config azpian, exekuzio inkrementalak eta kanpokoak azkarrak izaten jarraitu dezaten. Muga hori gaindituz gero, azkenik erabilitako biltegi-cacheak kentzen dira programatutako exekuzioen ondoren.",
   "settings.cacheLimitLabel": "Cachearen tamaina-muga (MB, 0 = mugarik gabe)",
 

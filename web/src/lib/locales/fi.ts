@@ -2528,6 +2528,8 @@ const fi: Partial<Translations> = {
   "settings.watchdogToggle": "Ilmoita myöhässä olevista varmuuskopioista",
   "settings.coresLabel": "CPU-säikeet (0 = kaikki)",
   "settings.coresHint": "Kuinka monta CPU-säiettä varmuuskopiointi saa käyttää. 0 tarkoittaa kaikkia ytimiä. Luku rajoittaa sitä, kuinka paljon ajetaan yhtä aikaa, ei sitä montako säiettä top tai btop listaa: resticillä on aina enemmän kuin raja, ja useimmat odottavat levyä sen sijaan että veisivät ytimen.",
+  "settings.memoryLabel": "Muistiraja varmuuskopiota kohden (MiB, 0 = ei rajaa)",
+  "settings.memoryHint": "Pehmeä muistiraja jokaiselle varmuuskopiointiprosessille, MiB:nä. 0 tarkoittaa, ettei rajaa ole. Rajan lähellä prosessi vapauttaa muistia useammin, mikä maksaa hieman nopeutta, ja se ylittää rajan silti, kun se tarvitsee enemmän. Aseta se reilusti alle sen, mitä kontti saa käyttää, jotta iso varmuuskopio hidastuu sen sijaan, että se tapetaan muistin loppumisen takia.",
   "settings.cacheHint": "Varmuuskopiointimoottori pitää /config-hakemistossa välimuistia repositorion tiedoista, jotta inkrementaaliset ja etäajot pysyvät nopeina. Kun se kasvaa tämän rajan yli, vähiten käytetyt repositoriokohtaiset välimuistit poistetaan ajastettujen ajojen jälkeen.",
   "settings.cacheLimitLabel": "Välimuistin kokoraja (Mt, 0 = rajaton)",
   // Export / import settings (portable config file)

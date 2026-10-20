@@ -2073,6 +2073,8 @@ const hr: Partial<Translations> = {
   "settings.watchdogToggle": "Prijavi zakašnjele sigurnosne kopije",
   "settings.coresLabel": "CPU niti (0 = sve)",
   "settings.coresHint": "Koliko CPU niti kopija smije koristiti. 0 znači sve jezgre. Broj ograničava koliko se izvodi istodobno, a ne koliko niti prikazuje top ili btop: restic ih uvijek drži više od ograničenja, a većina čeka disk umjesto da zauzima jezgru.",
+  "settings.memoryLabel": "Ograničenje memorije po kopiji (MiB, 0 = bez)",
+  "settings.memoryHint": "Meko ograničenje memorije za svaki proces kopije, u MiB. 0 znači bez ograničenja. Blizu ograničenja proces češće oslobađa memoriju, što košta nešto brzine, a ipak prelazi ograničenje kad treba više. Postavite ga znatno ispod onoga što spremnik smije koristiti, tako da se velika kopija uspori umjesto da bude ubijena zbog nedostatka memorije.",
   "settings.cacheHint": "Mehanizam sigurnosne kopije održava predmemoriju podataka repozitorija ispod /config kako bi inkrementalna izvršavanja i ona izvan lokacije ostala brza. Kad premaši ovo ograničenje, najmanje korištene predmemorije po repozitoriju uklanjaju se nakon zakazanih izvršavanja.",
   "settings.cacheLimitLabel": "Ograničenje veličine predmemorije (MB, 0 = bez ograničenja)",
 

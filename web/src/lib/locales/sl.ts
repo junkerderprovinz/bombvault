@@ -2058,6 +2058,8 @@ const sl: Partial<Translations> = {
   "settings.watchdogToggle": "Sporoči zamujene varnostne kopije",
   "settings.coresLabel": "Niti CPU (0 = vse)",
   "settings.coresHint": "Koliko niti CPU lahko uporabi varnostna kopija. 0 pomeni vsa jedra. Število omejuje, koliko teče hkrati, ne koliko niti pokaže top ali btop: restic jih vedno hrani več od omejitve, večina pa čaka na disk, namesto da bi zasedla jedro.",
+  "settings.memoryLabel": "Omejitev pomnilnika na varnostno kopijo (MiB, 0 = brez)",
+  "settings.memoryHint": "Mehka omejitev pomnilnika za vsak postopek varnostne kopije, v MiB. 0 pomeni brez omejitve. Blizu omejitve postopek pogosteje sprošča pomnilnik, kar stane nekaj hitrosti, a omejitev vseeno preseže, kadar potrebuje več. Nastavite jo precej pod tem, kar sme uporabiti vsebnik, da se velika varnostna kopija upočasni, namesto da bi jo ubili zaradi pomanjkanja pomnilnika.",
   "settings.cacheHint": "Pogon za varnostno kopiranje pod /config vodi predpomnilnik podatkov repozitorija, tako da postopni in zunanji zagoni ostajajo hitri. Ko preseže to omejitev, se po načrtovanih zagonih odstranijo najmanj nedavno uporabljeni predpomnilniki posameznih repozitorijev.",
   "settings.cacheLimitLabel": "Omejitev velikosti predpomnilnika (MB, 0 = neomejeno)",
 

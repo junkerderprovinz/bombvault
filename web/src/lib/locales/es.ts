@@ -2526,6 +2526,8 @@ const es: Partial<Translations> = {
   "settings.watchdogToggle": "Avisar de copias atrasadas",
   "settings.coresLabel": "Hilos de CPU (0 = todos)",
   "settings.coresHint": "Cuántos hilos de CPU puede usar una copia. 0 significa todos los núcleos. El número limita cuánto se ejecuta a la vez, no cuántos hilos muestra top o btop: restic siempre mantiene más de los del límite, la mayoría esperando al disco en lugar de ocupar un núcleo.",
+  "settings.memoryLabel": "Límite de memoria por copia (MiB, 0 = ninguno)",
+  "settings.memoryHint": "Un límite de memoria flexible para cada proceso de copia, en MiB. 0 significa ninguno. Cerca del límite el proceso libera memoria con más frecuencia, lo que cuesta algo de velocidad, y aun así lo supera cuando necesita más. Fíjalo bastante por debajo de lo que puede usar el contenedor, para que una copia grande vaya más lenta en vez de ser terminada por falta de memoria.",
   "settings.cacheHint": "El motor de copias mantiene una caché de datos del repositorio en /config para que las ejecuciones incrementales y externas sigan siendo rápidas. Cuando supera este límite, las cachés por repositorio menos usadas recientemente se eliminan tras las ejecuciones programadas.",
   "settings.cacheLimitLabel": "Límite de tamaño de la caché (MB, 0 = ilimitado)",
   // Export / import settings (portable config file)

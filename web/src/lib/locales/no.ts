@@ -2528,6 +2528,8 @@ const no: Partial<Translations> = {
   "settings.watchdogToggle": "Varsle om forsinkede sikkerhetskopier",
   "settings.coresLabel": "CPU-tråder (0 = alle)",
   "settings.coresHint": "Hvor mange CPU-tråder en sikkerhetskopi kan bruke. 0 betyr alle kjerner. Tallet begrenser hvor mye som kjører samtidig, ikke hvor mange tråder top eller btop viser: restic har alltid flere enn grensen, og de fleste venter på disken i stedet for å oppta en kjerne.",
+  "settings.memoryLabel": "Minnegrense per sikkerhetskopi (MiB, 0 = ingen)",
+  "settings.memoryHint": "En myk minnegrense for hver sikkerhetskopiprosess, i MiB. 0 betyr ingen. Nær grensen frigjør prosessen minne oftere, noe som koster litt fart, og den går likevel over grensen når den trenger mer. Sett den godt under det containeren kan bruke, så en stor sikkerhetskopi går tregere i stedet for å bli drept på grunn av minnemangel.",
   "settings.cacheHint": "Backupmotoren holder en hurtigbuffer med repositorydata under /config slik at inkrementelle og off-site-kjøringer forblir raske. Når den vokser forbi denne grensen, fjernes de minst nylig brukte per-repo-bufrene etter planlagte kjøringer.",
   "settings.cacheLimitLabel": "Grense for bufferstørrelse (MB, 0 = ubegrenset)",
   // Export / import settings (portable config file)

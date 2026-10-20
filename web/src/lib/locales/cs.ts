@@ -2526,6 +2526,8 @@ const cs: Partial<Translations> = {
   "settings.watchdogToggle": "Hlásit zálohy po termínu",
   "settings.coresLabel": "Vlákna CPU (0 = vše)",
   "settings.coresHint": "Kolik vláken CPU smí záloha použít. 0 znamená všechna jádra. Číslo omezuje, kolik běží najednou, ne kolik vláken ukáže top nebo btop: restic jich vždy drží víc než limit a většina čeká na disk, místo aby zabírala jádro.",
+  "settings.memoryLabel": "Limit paměti na zálohu (MiB, 0 = žádný)",
+  "settings.memoryHint": "Měkký limit paměti pro každý proces zálohy, v MiB. 0 znamená žádný. Blízko limitu proces uvolňuje paměť častěji, což stojí část rychlosti, a přesto limit překročí, když potřebuje víc. Nastavte ho výrazně pod hodnotu, kterou smí kontejner použít, aby se velká záloha zpomalila, místo aby byla ukončena kvůli nedostatku paměti.",
   "settings.cacheHint": "Zálohovací engine udržuje v /config mezipaměť dat repozitáře, aby přírůstkové běhy a běhy mimo lokalitu zůstaly rychlé. Když překročí tento limit, po plánovaných bězích se odstraní nejdéle nepoužité mezipaměti jednotlivých repozitářů.",
   "settings.cacheLimitLabel": "Limit velikosti mezipaměti (MB, 0 = bez limitu)",
   // Export / import settings (portable config file)

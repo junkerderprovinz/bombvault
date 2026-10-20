@@ -26,7 +26,7 @@ export function SystemPage() {
   const [, setSaveState] = useState<SaveState>("idle");
   const [, setSaveError] = useState<string | null>(null);
 
-  function saveNumber(key: "resticCacheMaxMB" | "backupCores", raw: string) {
+  function saveNumber(key: "resticCacheMaxMB" | "backupCores" | "backupMemoryMB", raw: string) {
     const n = Math.max(0, parseInt(raw, 10) || 0);
     setSettings((prev) => (prev ? { ...prev, [key]: n } : prev));
     debouncedSave(key, () => void save({ [key]: n }, setSaveState, setSaveError));
@@ -93,6 +93,15 @@ export function SystemPage() {
               value={settings.backupCores}
               aria-label={t("settings.coresLabel")}
               onChange={(e) => saveNumber("backupCores", e.target.value)}
+              className={NUMBER}
+            />
+          </SettingRow>
+          <SettingRow label={t("settings.memoryLabel")} hint={t("settings.memoryHint")}>
+            <NumberField
+              min={0}
+              value={settings.backupMemoryMB}
+              aria-label={t("settings.memoryLabel")}
+              onChange={(e) => saveNumber("backupMemoryMB", e.target.value)}
               className={NUMBER}
             />
           </SettingRow>

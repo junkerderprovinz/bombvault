@@ -2073,6 +2073,8 @@ const ca: Partial<Translations> = {
   "settings.watchdogToggle": "Informa de les còpies endarrerides",
   "settings.coresLabel": "Fils de CPU (0 = tots)",
   "settings.coresHint": "Quants fils de CPU pot fer servir una còpia. 0 vol dir tots els nuclis. El número limita quant s'executa alhora, no quants fils mostra el top o el btop: el restic sempre en manté més que el límit, i la majoria esperen el disc en comptes d'ocupar un nucli.",
+  "settings.memoryLabel": "Límit de memòria per còpia (MiB, 0 = cap)",
+  "settings.memoryHint": "Un límit de memòria tou per a cada procés de còpia, en MiB. 0 vol dir que no n'hi ha. Prop del límit el procés allibera memòria més sovint, cosa que costa una mica de velocitat, i tot i així el supera quan en necessita més. Fixa'l ben per sota del que pot fer servir el contenidor, perquè una còpia gran vagi més lenta en comptes de ser matada per falta de memòria.",
   "settings.cacheHint": "El motor de còpies manté una caché de dades de repositori sota /config perquè les execucions incrementals i externes es mantinguin ràpides. Quan supera aquest límit, les cachés de repositori menys usades recentment s'eliminen després de les execucions programades.",
   "settings.cacheLimitLabel": "Límit de mida de la caché (MB, 0 = sense límit)",
 

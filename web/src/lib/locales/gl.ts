@@ -2073,6 +2073,8 @@ const gl: Partial<Translations> = {
   "settings.watchdogToggle": "Avisar das copias atrasadas",
   "settings.coresLabel": "Fíos de CPU (0 = todos)",
   "settings.coresHint": "Cantos fíos de CPU pode usar unha copia. 0 significa todos os núcleos. O número limita canto se executa á vez, non cantos fíos amosa top ou btop: restic mantén sempre máis dos do límite, e a maioría agardan polo disco en vez de ocupar un núcleo.",
+  "settings.memoryLabel": "Límite de memoria por copia (MiB, 0 = ningún)",
+  "settings.memoryHint": "Un límite de memoria flexible para cada proceso de copia, en MiB. 0 significa ningún límite. Preto do límite o proceso libera memoria con máis frecuencia, o que custa algo de velocidade, e aínda así supéraa cando precisa máis. Fíxao ben por debaixo do que pode usar o contedor, para que unha copia grande vaia máis lenta en vez de ser terminada por falta de memoria.",
   "settings.cacheHint": "O motor de copia mantén unha caché de datos de repositorio baixo /config para que as execucións incrementais e externas se manteñan rápidas. Cando supera este límite, elimínanse as cachés de repositorio menos usadas recentemente despois das execucións programadas.",
   "settings.cacheLimitLabel": "Límite de tamaño da caché (MB, 0 = sen límite)",
 

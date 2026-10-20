@@ -749,3 +749,31 @@ func TestSettingsKeepTheRestoreFolderOfEachSection(t *testing.T) {
 		t.Fatalf("an empty set left %q behind (%v)", got.RestoreFolderOverrides, err)
 	}
 }
+
+func TestSettingsBackupMemoryRoundTrip(t *testing.T) {
+	db := store.OpenMem(t)
+	if err := store.Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	r := store.New(db)
+
+	s, err := r.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if s.BackupMemoryMB != 0 {
+		t.Fatalf("default backup_memory_mb wrong: %d", s.BackupMemoryMB)
+	}
+
+	s.BackupMemoryMB = 1536
+	if err := r.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	got, err := r.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.BackupMemoryMB != 1536 {
+		t.Fatalf("backup_memory_mb not round-tripped: %d", got.BackupMemoryMB)
+	}
+}

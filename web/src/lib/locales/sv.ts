@@ -2528,6 +2528,8 @@ const sv: Partial<Translations> = {
   "settings.watchdogToggle": "Rapportera försenade säkerhetskopior",
   "settings.coresLabel": "CPU-trådar (0 = alla)",
   "settings.coresHint": "Hur många CPU-trådar en säkerhetskopiering får använda. 0 betyder alla kärnor. Talet begränsar hur mycket som körs samtidigt, inte hur många trådar top eller btop listar: restic har alltid fler än gränsen, och de flesta väntar på disken i stället för att uppta en kärna.",
+  "settings.memoryLabel": "Minnesgräns per säkerhetskopiering (MiB, 0 = ingen)",
+  "settings.memoryHint": "En mjuk minnesgräns för varje säkerhetskopieringsprocess, i MiB. 0 betyder ingen. Nära gränsen frigör processen minne oftare, vilket kostar lite fart, och den går ändå över gränsen när den behöver mer. Sätt den väl under vad containern får använda, så att en stor säkerhetskopiering går långsammare i stället för att dödas av minnesbrist.",
   "settings.cacheHint": "Backupmotorn håller en cache med repositorydata under /config så att inkrementella och off-site-körningar förblir snabba. När den växer över denna gräns tas de minst nyligen använda per-repo-cacharna bort efter schemalagda körningar.",
   "settings.cacheLimitLabel": "Gräns för cachestorlek (MB, 0 = obegränsat)",
   // Export / import settings (portable config file)

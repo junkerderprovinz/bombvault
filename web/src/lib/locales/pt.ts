@@ -2528,6 +2528,8 @@ const pt: Partial<Translations> = {
   "settings.watchdogToggle": "Comunicar backups em atraso",
   "settings.coresLabel": "Threads de CPU (0 = todos)",
   "settings.coresHint": "Quantos threads de CPU um backup pode usar. 0 significa todos os núcleos. O número limita quanto corre ao mesmo tempo, não quantos fios o top ou o btop mostram: o restic mantém sempre mais do que o limite, a maioria à espera do disco em vez de ocupar um núcleo.",
+  "settings.memoryLabel": "Limite de memória por backup (MiB, 0 = nenhum)",
+  "settings.memoryHint": "Um limite de memória flexível para cada processo de backup, em MiB. 0 significa nenhum. Perto do limite, o processo liberta memória com mais frequência, o que custa alguma velocidade, e mesmo assim ultrapassa o limite quando precisa de mais. Defina-o bem abaixo do que o contentor pode usar, para que um backup grande fique mais lento em vez de ser terminado por falta de memória.",
   "settings.cacheHint": "O motor de backup mantém uma cache de dados do repositório em /config para que as execuções incrementais e externas continuem rápidas. Quando ultrapassa este limite, as caches por repositório menos usadas recentemente são removidas após as execuções agendadas.",
   "settings.cacheLimitLabel": "Limite de tamanho da cache (MB, 0 = ilimitado)",
   // Export / import settings (portable config file)

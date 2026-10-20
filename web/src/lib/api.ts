@@ -328,6 +328,8 @@ export interface Settings {
   /** CPU threads each restic child may use, as GOMAXPROCS. 0 = every core,
    *  restic's own default ([558], issue #189). */
   backupCores: number;
+  /** Soft memory limit in MiB of each restic child, as GOMEMLIMIT. 0 = none. */
+  backupMemoryMB: number;
   offsiteLimitDownload: number;
   metricsEnabled: boolean;
   /** Write-only secret: GET always returns "" (blank-on-save keeps the stored

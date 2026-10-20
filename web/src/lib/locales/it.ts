@@ -2528,6 +2528,8 @@ const it: Partial<Translations> = {
   "settings.watchdogToggle": "Segnala i backup in ritardo",
   "settings.coresLabel": "Thread CPU (0 = tutti)",
   "settings.coresHint": "Quanti thread CPU può usare un backup. 0 significa tutti i core. Il numero limita quanto gira contemporaneamente, non quanti thread mostrano top o btop: restic ne tiene sempre più del limite, e la maggior parte aspetta il disco invece di occupare un core.",
+  "settings.memoryLabel": "Limite di memoria per backup (MiB, 0 = nessuno)",
+  "settings.memoryHint": "Un limite di memoria morbido per ogni processo di backup, in MiB. 0 significa nessuno. Vicino al limite il processo libera memoria più spesso, il che costa un po' di velocità, e supera comunque il limite quando ne ha bisogno di più. Impostalo ben al di sotto di ciò che il container può usare, così un backup grande rallenta invece di essere terminato per mancanza di memoria.",
   "settings.cacheHint": "Il motore di backup mantiene una cache dei dati del repository sotto /config perché le esecuzioni incrementali e off-site restino veloci. Quando supera questo limite, le cache per repository usate meno di recente vengono rimosse dopo le esecuzioni pianificate.",
   "settings.cacheLimitLabel": "Limite dimensione cache (MB, 0 = illimitato)",
   // Export / import settings (portable config file)

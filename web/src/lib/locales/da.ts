@@ -2528,6 +2528,8 @@ const da: Partial<Translations> = {
   "settings.watchdogToggle": "Meld forsinkede sikkerhedskopier",
   "settings.coresLabel": "CPU-tråde (0 = alle)",
   "settings.coresHint": "Hvor mange CPU-tråde en sikkerhedskopi må bruge. 0 betyder alle kerner. Tallet begrænser, hvor meget der kører på én gang, ikke hvor mange tråde top eller btop viser: restic har altid flere end grænsen, og de fleste venter på disken i stedet for at optage en kerne.",
+  "settings.memoryLabel": "Hukommelsesgrænse pr. sikkerhedskopi (MiB, 0 = ingen)",
+  "settings.memoryHint": "En blød hukommelsesgrænse for hver sikkerhedskopieringsproces, i MiB. 0 betyder ingen. Nær grænsen frigiver processen hukommelse oftere, hvilket koster lidt hastighed, og den går stadig over grænsen, når den har brug for mere. Sæt den et godt stykke under det, containeren må bruge, så en stor sikkerhedskopi bliver langsommere i stedet for at blive dræbt på grund af manglende hukommelse.",
   "settings.cacheHint": "Backupmotoren holder en cache med repositorydata under /config, så inkrementelle og off-site-kørsler forbliver hurtige. Når den vokser ud over denne grænse, fjernes de mindst nyligt brugte caches pr. repository efter planlagte kørsler.",
   "settings.cacheLimitLabel": "Grænse for cachestørrelse (MB, 0 = ubegrænset)",
   // Export / import settings (portable config file)

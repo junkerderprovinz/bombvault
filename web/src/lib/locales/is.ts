@@ -2073,6 +2073,8 @@ const is: Partial<Translations> = {
   "settings.watchdogToggle": "Tilkynna um seinkuð afrit",
   "settings.coresLabel": "CPU þræðir (0 = allir)",
   "settings.coresHint": "Hversu marga CPU þræði afritun má nota. 0 þýðir alla kjarna. Talan takmarkar hversu mikið keyrir í einu, ekki hversu marga þræði top eða btop sýnir: restic heldur alltaf fleirum en markinu, og flestir bíða eftir disknum í stað þess að taka kjarna.",
+  "settings.memoryLabel": "Minnismörk á hverja afritun (MiB, 0 = engin)",
+  "settings.memoryHint": "Mjúk minnismörk fyrir hvert afritunarferli, í MiB. 0 þýðir engin mörk. Nálægt mörkunum losar ferlið minni oftar, sem kostar nokkurn hraða, og fer samt yfir mörkin þegar það þarf meira. Stilltu það vel undir því sem gámurinn má nota, svo stór afritun hægist frekar en að vera drepin vegna minnisskorts.",
   "settings.cacheHint": "Afritunarvélin heldur skyndiminni af gögnum geymslusafns undir /config svo að stigvaxandi og fjarlægar keyrslur haldist hraðar. Þegar það fer yfir þessa mörk eru minnst notuðu skyndiminnin fyrir hvert geymslusafn fjarlægð eftir áætlaðar keyrslur.",
   "settings.cacheLimitLabel": "Stærðarmörk skyndiminnis (MB, 0 = ótakmarkað)",
 

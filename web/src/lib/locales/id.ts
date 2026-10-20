@@ -2073,6 +2073,8 @@ const id: Partial<Translations> = {
   "settings.watchdogToggle": "Laporkan cadangan yang terlambat",
   "settings.coresLabel": "Utas CPU (0 = semua)",
   "settings.coresHint": "Berapa utas CPU yang boleh dipakai pencadangan. 0 berarti semua inti. Angka ini membatasi berapa banyak yang berjalan bersamaan, bukan berapa banyak utas yang ditampilkan top atau btop: restic selalu menyimpan lebih banyak dari batas itu, dan sebagian besar menunggu disk alih-alih memakai inti.",
+  "settings.memoryLabel": "Batas memori per pencadangan (MiB, 0 = tanpa batas)",
+  "settings.memoryHint": "Batas memori lunak untuk setiap proses pencadangan, dalam MiB. 0 berarti tanpa batas. Mendekati batas, proses membebaskan memori lebih sering, yang mengorbankan sedikit kecepatan, dan tetap melampaui batas saat butuh lebih banyak. Setel jauh di bawah yang boleh dipakai kontainer, agar pencadangan besar melambat alih-alih dimatikan karena kehabisan memori.",
   "settings.cacheHint": "Mesin pencadangan mempertahankan cache data repositori di bawah /config agar eksekusi inkremental dan off-site tetap cepat. Saat melebihi batas ini, cache per-repositori yang paling jarang digunakan dihapus setelah eksekusi terjadwal.",
   "settings.cacheLimitLabel": "Batas ukuran cache (MB, 0 = tanpa batas)",
 

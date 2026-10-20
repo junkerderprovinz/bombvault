@@ -2073,6 +2073,8 @@ const et: Partial<Translations> = {
   "settings.watchdogToggle": "Teata hilinenud varundustest",
   "settings.coresLabel": "CPU lõimed (0 = kõik)",
   "settings.coresHint": "Mitu CPU lõime võib varundus kasutada. 0 tähendab kõiki tuumasid. Arv piirab seda, kui palju korraga töötab, mitte seda, mitu lõime top või btop näitab: restic hoiab neid alati piirist rohkem ja enamik ootab ketast, mitte ei hõiva tuuma.",
+  "settings.memoryLabel": "Mälupiir varunduse kohta (MiB, 0 = puudub)",
+  "settings.memoryHint": "Pehme mälupiir iga varundusprotsessi jaoks, MiB-des. 0 tähendab, et piiri pole. Piiri lähedal vabastab protsess mälu sagedamini, mis maksab veidi kiirust, ja ületab piiri siiski, kui vajab rohkem. Määra see konteineri lubatud mahust selgelt väiksemaks, et suur varundus aeglustuks, mitte ei lõpetataks mälupuuduse tõttu.",
   "settings.cacheHint": "Varundusmootor hoiab kausta /config all hoidla andmete vahemälu, et järkjärgulised ja välised käivitused püsiksid kiired. Kui see ületab selle piiri, eemaldatakse vähim kasutatud hoidla vahemälud pärast plaanitud käivitusi.",
   "settings.cacheLimitLabel": "Vahemälu suuruse piirang (MB, 0 = piiramatu)",
 

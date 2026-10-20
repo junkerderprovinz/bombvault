@@ -2073,6 +2073,8 @@ const lt: Partial<Translations> = {
   "settings.watchdogToggle": "Pranešti apie vėluojančias atsargines kopijas",
   "settings.coresLabel": "CPU gijos (0 = visos)",
   "settings.coresHint": "Kiek CPU gijų gali naudoti atsarginė kopija. 0 reiškia visus branduolius. Skaičius riboja, kiek dirbama vienu metu, o ne kiek gijų rodo top ar btop: restic visada laiko jų daugiau nei riba, ir dauguma laukia disko, o ne užima branduolį.",
+  "settings.memoryLabel": "Atminties riba vienai kopijai (MiB, 0 = nėra)",
+  "settings.memoryHint": "Minkšta atminties riba kiekvienam atsarginės kopijos procesui, MiB. 0 reiškia, kad ribos nėra. Prie ribos procesas atlaisvina atmintį dažniau, o tai kainuoja šiek tiek greičio, ir vis tiek viršija ribą, kai prireikia daugiau. Nustatykite ją gerokai žemiau, nei gali naudoti konteineris, kad didelė atsarginė kopija sulėtėtų, o ne būtų nutraukta dėl atminties trūkumo.",
   "settings.cacheHint": "Atsarginio kopijavimo variklis palaiko saugyklos duomenų talpyklą po /config, kad prieauginiai ir nuotoliniai vykdymai išliktų greiti. Kai ji viršija šią ribą, po suplanuotų vykdymų pašalinamos mažiausiai naudotos kiekvienos saugyklos talpyklos.",
   "settings.cacheLimitLabel": "Talpyklos dydžio riba (MB, 0 = neribota)",
 

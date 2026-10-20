@@ -38,6 +38,7 @@ function settings(over: Partial<Settings> = {}): Settings {
     registryAuths: [],
     resticCacheMaxMB: 4096,
     backupCores: 0,
+    backupMemoryMB: 0,
     exportEncryptEnabled: false,
     exportAgeRecipients: "",
     ...over,
@@ -425,6 +426,10 @@ describe("the System tile", () => {
     expect(save.mock.calls[0][0]).toEqual({ resticCacheMaxMB: 2048 });
     fireEvent.change(performance.getByLabelText(en["settings.coresLabel"]), { target: { value: "-3" } });
     expect(save.mock.calls[1][0]).toEqual({ backupCores: 0 });
+    fireEvent.change(performance.getByLabelText(en["settings.memoryLabel"]), { target: { value: "1536" } });
+    expect(save.mock.calls[2][0]).toEqual({ backupMemoryMB: 1536 });
+    fireEvent.change(performance.getByLabelText(en["settings.memoryLabel"]), { target: { value: "-8" } });
+    expect(save.mock.calls[3][0]).toEqual({ backupMemoryMB: 0 });
   });
 
   it("protects an export with a key from the export card", async () => {

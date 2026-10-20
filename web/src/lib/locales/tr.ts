@@ -2528,6 +2528,8 @@ const tr: Partial<Translations> = {
   "settings.watchdogToggle": "Geciken yedekleri bildir",
   "settings.coresLabel": "CPU iş parçacığı (0 = tümü)",
   "settings.coresHint": "Bir yedeklemenin kullanabileceği CPU iş parçacığı sayısı. 0 tüm çekirdekler demektir. Bu sayı aynı anda ne kadarının çalıştığını sınırlar, top veya btop'un listelediği iş parçacığı sayısını değil: restic her zaman sınırdan fazlasını tutar ve çoğu çekirdek işgal etmek yerine diski bekler.",
+  "settings.memoryLabel": "Yedekleme başına bellek sınırı (MiB, 0 = yok)",
+  "settings.memoryHint": "Her yedekleme işlemi için MiB cinsinden yumuşak bir bellek sınırı. 0 sınır yok demektir. Sınıra yaklaşınca işlem belleği daha sık serbest bırakır, bu biraz hıza mal olur, ve daha fazlasına ihtiyaç duyduğunda yine de sınırı aşar. Büyük bir yedekleme bellek bittiği için öldürülmek yerine yavaşlasın diye bunu konteynerin kullanabileceği miktarın epey altında ayarlayın.",
   "settings.cacheHint": "Yedekleme motoru, artımlı ve site dışı çalıştırmalar hızlı kalsın diye /config altında depo verilerinin bir önbelleğini tutar. Bu sınırı aşınca, zamanlanmış çalıştırmalardan sonra en uzun süredir kullanılmayan depo önbellekleri kaldırılır.",
   "settings.cacheLimitLabel": "Önbellek boyutu sınırı (MB, 0 = sınırsız)",
   // Export / import settings (portable config file)

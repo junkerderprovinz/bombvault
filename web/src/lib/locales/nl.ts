@@ -2527,6 +2527,8 @@ const nl: Partial<Translations> = {
   "settings.watchdogToggle": "Achterstallige back-ups melden",
   "settings.coresLabel": "CPU-threads (0 = alle)",
   "settings.coresHint": "Hoeveel CPU-threads een back-up mag gebruiken. 0 betekent alle cores. Het getal begrenst hoeveel er tegelijk draait, niet hoeveel threads top of btop toont: restic houdt er altijd meer dan de limiet, de meeste wachtend op de schijf in plaats van een core bezet.",
+  "settings.memoryLabel": "Geheugenlimiet per back-up (MiB, 0 = geen)",
+  "settings.memoryHint": "Een zachte geheugenlimiet voor elk back-upproces, in MiB. 0 betekent geen. Bij de limiet geeft het proces vaker geheugen vrij, wat wat snelheid kost, en het gaat toch over de limiet heen als het meer nodig heeft. Stel hem ruim onder wat de container mag gebruiken, zodat een grote back-up trager wordt in plaats van gedood te worden door geheugentekort.",
   "settings.cacheHint": "De back-upengine houdt onder /config een cache van repositorygegevens bij zodat incrementele en off-site runs snel blijven. Groeit die boven deze limiet, dan worden na geplande runs de minst recent gebruikte caches per repository verwijderd.",
   "settings.cacheLimitLabel": "Cachegroottelimiet (MB, 0 = onbeperkt)",
   // Export / import settings (portable config file)

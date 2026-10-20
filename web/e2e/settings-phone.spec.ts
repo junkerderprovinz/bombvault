@@ -58,6 +58,7 @@ const SETTINGS = {
   offsiteLimitUpload: 20000,
   offsiteLimitDownload: 50000,
   backupCores: 4,
+  backupMemoryMB: 0,
   flashZipExportEnabled: true,
   flashZipExportPath: "user/sicherungen/flash-export/unraid-usb-stick",
   flashZipExportKeep: 5,

@@ -2387,6 +2387,9 @@ type settingsView struct {
 	// BackupCores caps the CPU threads each restic child uses (GOMAXPROCS).
 	// 0 = every core, restic's own default ([558], issue #189).
 	BackupCores int `json:"backupCores"`
+	// BackupMemoryMB is the soft memory limit in MiB of each restic child
+	// (GOMEMLIMIT). 0 sets none.
+	BackupMemoryMB int `json:"backupMemoryMB"`
 	// Opt-in Prometheus /metrics endpoint + its optional bearer scrape token.
 	// The token is a secret and follows the house blank-and-report-is-set
 	// contract (see handleGetNotify/handleGetCloud): GET always returns
@@ -2613,6 +2616,7 @@ func toView(s store.Settings) settingsView {
 		OffsiteLimitUpload:          s.OffsiteLimitUpload,
 		OffsiteLimitDownload:        s.OffsiteLimitDownload,
 		BackupCores:                 s.BackupCores,
+		BackupMemoryMB:              s.BackupMemoryMB,
 		MetricsEnabled:              s.MetricsEnabled,
 		MetricsToken:                "", // secret — never echoed; MetricsTokenSet reports presence
 		MetricsTokenSet:             s.MetricsToken != "",
@@ -3246,6 +3250,7 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		// Clamped to the machine's own thread count: a number above it is not a
 		// cap at all, and a negative one is meaningless. 0 stays 0 (= every core).
 		cur.BackupCores = min(max(0, v.BackupCores), runtime.NumCPU())
+		cur.BackupMemoryMB = min(max(0, v.BackupMemoryMB), maxBackupMemoryMB)
 		cur.MetricsEnabled = v.MetricsEnabled
 		cur.DrillsEnabled = v.DrillsEnabled
 		cur.DrillsSchedule = v.DrillsSchedule
@@ -3366,6 +3371,7 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 	// child it starts ([558]), so applying it here takes effect without a
 	// restart — a backup already in flight keeps the value it began with.
 	restic.SetMaxProcs(s.BackupCores)
+	restic.SetMemLimitMB(s.BackupMemoryMB)
 	if err := h.scheduler.ReloadWithGates(s, h.dueGates()); err != nil {
 		// Settings persisted but the scheduler could not re-register — report it.
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": scrubError(err)})
@@ -4271,6 +4277,10 @@ func (h *Handler) runTargetMaps() (name, domain map[string]string) {
 // returns without a limit: enough for the dashboard's day filter to show
 // several days of history.
 const runsWindow = 500
+
+// maxBackupMemoryMB bounds the memory limit setting at 16 TiB, far above any
+// host and far below what overflows the byte count GOMEMLIMIT is given.
+const maxBackupMemoryMB = 1 << 24
 
 // handleRuns serves GET /api/runs: the newest runs of every item, or with
 // itemKind and itemKey those of one item of GET /api/items. limit lowers the

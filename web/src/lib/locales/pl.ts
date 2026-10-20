@@ -2525,6 +2525,8 @@ const pl: Partial<Translations> = {
   "settings.watchdogToggle": "Zgłaszaj opóźnione kopie zapasowe",
   "settings.coresLabel": "Wątki CPU (0 = wszystkie)",
   "settings.coresHint": "Ile wątków CPU może użyć kopia zapasowa. 0 oznacza wszystkie rdzenie. Liczba ogranicza to, ile pracuje jednocześnie, a nie ile wątków pokazuje top czy btop: restic zawsze trzyma ich więcej niż limit, a większość czeka na dysk zamiast zajmować rdzeń.",
+  "settings.memoryLabel": "Limit pamięci na kopię zapasową (MiB, 0 = brak)",
+  "settings.memoryHint": "Miękki limit pamięci dla każdego procesu kopii zapasowej, w MiB. 0 oznacza brak limitu. Blisko limitu proces częściej zwalnia pamięć, co kosztuje trochę szybkości, a mimo to przekracza limit, gdy potrzebuje więcej. Ustaw go wyraźnie poniżej tego, czego może użyć kontener, aby duża kopia zapasowa zwolniła, zamiast zostać zabita z powodu braku pamięci.",
   "settings.cacheHint": "Silnik kopii zapasowych utrzymuje w /config pamięć podręczną danych repozytorium, aby przyrostowe i zdalne uruchomienia pozostały szybkie. Gdy przekroczy ten limit, po zaplanowanych uruchomieniach usuwane są najdawniej używane pamięci podręczne poszczególnych repozytoriów.",
   "settings.cacheLimitLabel": "Limit rozmiaru pamięci podręcznej (MB, 0 = bez limitu)",
   // Export / import settings (portable config file)

@@ -2358,6 +2358,8 @@ export const en = {
   "settings.watchdogToggle": "Report overdue backups",
   "settings.coresLabel": "CPU threads (0 = all)",
   "settings.coresHint": "How many CPU threads a backup may use. 0 means every core, which is restic's own default. Lower it if backups make the machine hot or sluggish. The number caps how much runs at once, not how many threads top or btop lists: restic always keeps more than the cap, most of them waiting on the disk rather than using a core.",
+  "settings.memoryLabel": "Memory limit per backup (MiB, 0 = none)",
+  "settings.memoryHint": "A soft memory limit for each backup process, in MiB. 0 sets none. Near the limit the process frees memory more often, which costs some speed, and it still goes past the limit when it needs more. Set it well below what the container may use, so a large backup slows down instead of being killed for running out of memory.",
   "settings.cacheHint": "The backup engine keeps a cache of repository data under /config so incremental and off-site runs stay fast. When it grows past this limit, the least-recently-used per-repository caches are removed after scheduled runs.",
   "settings.cacheLimitLabel": "Cache size limit (MB, 0 = unlimited)",
 
@@ -7176,6 +7178,8 @@ export const de: Translations = {
   "settings.watchdogToggle": "Überfällige Sicherungen melden",
   "settings.coresLabel": "CPU-Threads (0 = alle)",
   "settings.coresHint": "Wie viele CPU-Threads eine Sicherung nutzen darf. 0 heißt alle Kerne, so wie restic es selbst vorgibt. Verringere den Wert, wenn Sicherungen die Maschine heiß oder träge machen. Die Zahl deckelt, wie viel gleichzeitig rechnet, nicht wie viele Threads top oder btop anzeigt: restic hält immer mehr davon, die meisten warten auf die Platte, statt einen Kern zu belegen.",
+  "settings.memoryLabel": "Speicherlimit pro Sicherung (MiB, 0 = keins)",
+  "settings.memoryHint": "Ein weiches Speicherlimit für jeden Sicherungsprozess in MiB. 0 setzt keins. Nahe am Limit gibt der Prozess Speicher öfter frei, was etwas Tempo kostet, und er geht trotzdem darüber hinaus, wenn er mehr braucht. Setze es deutlich unter den Speicher, den der Container nutzen darf, damit eine große Sicherung langsamer wird, statt wegen fehlenden Speichers beendet zu werden.",
   "settings.cacheHint": "restic hält unter /config einen Cache mit Repository-Daten, damit inkrementelle und Off-site-Läufe schnell bleiben. Wächst er über dieses Limit, werden nach geplanten Läufen die am längsten ungenutzten Repository-Caches entfernt.",
   "settings.cacheLimitLabel": "Cache-Größenlimit (MB, 0 = unbegrenzt)",
 

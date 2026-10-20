@@ -2519,6 +2519,8 @@ const vi: Partial<Translations> = {
   "settings.watchdogToggle": "Báo cáo bản sao lưu bị trễ",
   "settings.coresLabel": "Luồng CPU (0 = tất cả)",
   "settings.coresHint": "Bản sao lưu được dùng bao nhiêu luồng CPU. 0 nghĩa là mọi nhân. Con số này giới hạn lượng công việc chạy cùng lúc, không phải số luồng mà top hay btop liệt kê: restic luôn giữ nhiều hơn mức giới hạn, và phần lớn đang chờ đĩa chứ không chiếm lõi.",
+  "settings.memoryLabel": "Giới hạn bộ nhớ mỗi bản sao lưu (MiB, 0 = không)",
+  "settings.memoryHint": "Giới hạn bộ nhớ mềm cho mỗi tiến trình sao lưu, tính bằng MiB. 0 nghĩa là không đặt giới hạn. Gần đến giới hạn, tiến trình giải phóng bộ nhớ thường xuyên hơn, việc này làm giảm đôi chút tốc độ, và nó vẫn vượt giới hạn khi cần thêm. Hãy đặt thấp hơn hẳn mức container được dùng, để bản sao lưu lớn chạy chậm lại thay vì bị buộc dừng do hết bộ nhớ.",
   "settings.cacheHint": "Công cụ sao lưu giữ bộ nhớ đệm dữ liệu kho dưới /config để các lần chạy tăng dần và off-site luôn nhanh. Khi vượt quá giới hạn này, các bộ nhớ đệm theo kho ít dùng nhất sẽ bị xóa sau các lần chạy theo lịch.",
   "settings.cacheLimitLabel": "Giới hạn kích thước bộ nhớ đệm (MB, 0 = không giới hạn)",
   // Export / import settings (portable config file)

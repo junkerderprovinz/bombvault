@@ -2528,6 +2528,8 @@ const fr: Partial<Translations> = {
   "settings.watchdogToggle": "Signaler les sauvegardes en retard",
   "settings.coresLabel": "Threads CPU (0 = tous)",
   "settings.coresHint": "Combien de threads CPU une sauvegarde peut utiliser. 0 signifie tous les cœurs. Le nombre limite ce qui tourne en même temps, pas le nombre de fils que top ou btop affiche : restic en garde toujours plus que la limite, la plupart en attente du disque plutôt qu'occupant un cœur.",
+  "settings.memoryLabel": "Limite de mémoire par sauvegarde (MiB, 0 = aucune)",
+  "settings.memoryHint": "Une limite de mémoire souple pour chaque processus de sauvegarde, en MiB. 0 signifie aucune. Près de la limite, le processus libère la mémoire plus souvent, ce qui coûte un peu de vitesse, et il dépasse quand même la limite quand il a besoin de plus. Fixez-la nettement en dessous de ce que le conteneur peut utiliser, pour qu'une grosse sauvegarde ralentisse au lieu d'être tuée faute de mémoire.",
   "settings.cacheHint": "Le moteur de sauvegarde conserve un cache des données du dépôt sous /config afin que les exécutions incrémentales et hors site restent rapides. Quand il dépasse cette limite, les caches par dépôt les moins récemment utilisés sont supprimés après les exécutions planifiées.",
   "settings.cacheLimitLabel": "Limite de taille du cache (Mo, 0 = illimité)",
   // Export / import settings (portable config file)

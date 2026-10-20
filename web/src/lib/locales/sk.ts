@@ -2073,6 +2073,8 @@ const sk: Partial<Translations> = {
   "settings.watchdogToggle": "Hlásiť oneskorené zálohy",
   "settings.coresLabel": "Vlákna CPU (0 = všetky)",
   "settings.coresHint": "Koľko vlákien CPU smie záloha použiť. 0 znamená všetky jadrá. Číslo obmedzuje, koľko beží naraz, nie koľko vlákien ukáže top alebo btop: restic ich vždy drží viac ako limit a väčšina čaká na disk, namiesto toho aby zaberala jadro.",
+  "settings.memoryLabel": "Limit pamäte na zálohu (MiB, 0 = žiadny)",
+  "settings.memoryHint": "Mäkký limit pamäte pre každý proces zálohy, v MiB. 0 znamená žiadny. Blízko limitu proces uvoľňuje pamäť častejšie, čo stojí časť rýchlosti, a napriek tomu limit prekročí, keď potrebuje viac. Nastavte ho výrazne pod hodnotu, ktorú môže kontajner použiť, aby sa veľká záloha spomalila, namiesto toho aby bola ukončená pre nedostatok pamäte.",
   "settings.cacheHint": "Zálohovacia jednotka udržiava vyrovnávaciu pamäť dát repozitára pod /config, aby prírastkové a externé behy zostali rýchle. Keď prekročí tento limit, po naplánovaných behoch sa odstránia najmenej používané vyrovnávacie pamäte pre jednotlivé repozitáre.",
   "settings.cacheLimitLabel": "Limit veľkosti vyrovnávacej pamäte (MB, 0 = bez obmedzenia)",
 

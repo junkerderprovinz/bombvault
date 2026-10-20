@@ -1383,6 +1383,20 @@ func SetMaxProcs(n int) {
 // MaxProcs reports the current cap (0 = every core).
 func MaxProcs() int { return int(maxProcs.Load()) }
 
+// memLimitMB is the soft memory limit in MiB handed to each restic child as
+// GOMEMLIMIT. Zero sets none.
+var memLimitMB atomic.Int64
+
+// SetMemLimitMB sets the soft memory limit of the restic children started from
+// now on. restic collects garbage harder as it nears the limit, and keeps
+// running past it when it needs more.
+func SetMemLimitMB(n int) {
+	memLimitMB.Store(int64(max(n, 0)))
+}
+
+// MemLimitMB reports the current limit in MiB (0 = none).
+func MemLimitMB() int { return int(memLimitMB.Load()) }
+
 func (r Restic) authEnv(m Mode) []string {
 	env := os.Environ()
 	if m.Encrypted {
@@ -1405,6 +1419,9 @@ func (r Restic) authEnv(m Mode) []string {
 	// m.Env so a caller could still override it deliberately.
 	if n := maxProcs.Load(); n > 0 {
 		env = append(env, "GOMAXPROCS="+strconv.FormatInt(n, 10))
+	}
+	if n := memLimitMB.Load(); n > 0 {
+		env = append(env, "GOMEMLIMIT="+strconv.FormatInt(n, 10)+"MiB")
 	}
 	env = append(env, m.Env...)
 	return env

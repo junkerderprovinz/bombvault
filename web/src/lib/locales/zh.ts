@@ -2519,6 +2519,8 @@ const zh: Partial<Translations> = {
   "settings.watchdogToggle": "报告逾期的备份",
   "settings.coresLabel": "CPU 线程数 (0 = 全部)",
   "settings.coresHint": "备份可使用的 CPU 线程数。0 表示使用所有核心。这个数字限制的是同时运行的量，不是 top 或 btop 里列出的线程数：restic 始终保有多于上限的线程，其中大多数在等待磁盘，而不是占用核心。",
+  "settings.memoryLabel": "每次备份的内存上限 (MiB, 0 = 无)",
+  "settings.memoryHint": "每个备份进程的软内存上限，单位为 MiB。0 表示不设上限。接近上限时，进程会更频繁地释放内存，这会损失一些速度；需要更多时它仍会超过上限。请把它设得远低于容器可使用的量，这样大备份会变慢，而不是因内存耗尽被杀掉。",
   "settings.cacheHint": "备份引擎在 /config 下保留仓库数据缓存，使增量和异地运行保持快速。当缓存超过此限制时，计划任务运行后会删除最久未使用的各仓库缓存。",
   "settings.cacheLimitLabel": "缓存大小限制（MB，0 = 不限）",
   // Export / import settings (portable config file)

@@ -3300,6 +3300,13 @@ ALTER TABLE runs ADD COLUMN snapshot_fallback TEXT NOT NULL DEFAULT '';`,
 );
 INSERT OR IGNORE INTO sign_ins_note (id) VALUES (1);`,
 	},
+	{
+		// 0 sets no memory limit, which is how every existing installation ran.
+		version:          backupMemoryMigration,
+		name:             "settings_backup_memory_mb",
+		alreadySatisfied: columnPresent("settings", "backup_memory_mb"),
+		sql:              "ALTER TABLE settings ADD COLUMN backup_memory_mb INTEGER NOT NULL DEFAULT 0;",
+	},
 }
 
 // offsiteFieldDomains are the domains with an off-site field in the settings,
@@ -3519,6 +3526,9 @@ const leftoverTargetsMigration = 410
 // signInsMigration numbers the record of the shared sign-in turning into a
 // saved one, 420 to 424.
 const signInsMigration = 420
+
+// backupMemoryMigration numbers the memory limit of a restic process.
+const backupMemoryMigration = 430
 
 // oneLineColumns are the names and locations the recovery kit prints.
 var oneLineColumns = []struct {

@@ -554,6 +554,7 @@ func run() error {
 	if settings, sErr := st.GetSettings(); sErr == nil {
 		// Apply the saved CPU cap before anything can start a restic child ([558]).
 		restic.SetMaxProcs(settings.BackupCores)
+		restic.SetMemLimitMB(settings.BackupMemoryMB)
 		gates := schedule.DueGates{
 			Containers: containersLastRun, VMs: vmsLastRun, Flash: flashLastRun,
 			Config: configLastRun, Files: filesLastRun, ZFS: zfsLastRun,

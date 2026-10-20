@@ -2529,6 +2529,8 @@ const hu: Partial<Translations> = {
   "settings.watchdogToggle": "Késő mentések jelentése",
   "settings.coresLabel": "CPU szálak (0 = mind)",
   "settings.coresHint": "Hány CPU szálat használhat egy biztonsági mentés. A 0 az összes magot jelenti. A szám azt korlátozza, mennyi fut egyszerre, nem azt, hány szálat mutat a top vagy a btop: a restic mindig többet tart a korlátnál, és a legtöbb a lemezre vár ahelyett, hogy magot foglalna.",
+  "settings.memoryLabel": "Memóriakorlát biztonsági mentésenként (MiB, 0 = nincs)",
+  "settings.memoryHint": "Puha memóriakorlát minden biztonsági mentési folyamathoz, MiB-ban. A 0 azt jelenti, hogy nincs korlát. A korlát közelében a folyamat gyakrabban szabadít fel memóriát, ami némi sebességbe kerül, és ha többre van szüksége, mégis átlépi a korlátot. Érdemes jóval alá állítani annak, amit a konténer használhat, hogy egy nagy biztonsági mentés inkább lelassuljon, minthogy memóriahiány miatt leállítsák.",
   "settings.cacheHint": "A mentőmotor a /config alatt gyorsítótárat tart a tároló adatairól, hogy a növekményes és a telephelyen kívüli futások gyorsak maradjanak. Ha ezt a korlátot túllépi, az ütemezett futások után a legrégebben használt tárolónkénti gyorsítótárak törlődnek.",
   "settings.cacheLimitLabel": "Gyorsítótár-méretkorlát (MB, 0 = korlátlan)",
   // Export / import settings (portable config file)

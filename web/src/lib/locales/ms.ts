@@ -2073,6 +2073,8 @@ const ms: Partial<Translations> = {
   "settings.watchdogToggle": "Laporkan sandaran yang lewat",
   "settings.coresLabel": "Benang CPU (0 = semua)",
   "settings.coresHint": "Berapa banyak benang CPU boleh digunakan sandaran. 0 bermaksud semua teras. Nombor ini mengehadkan berapa banyak yang berjalan serentak, bukan berapa banyak bebenang yang disenaraikan top atau btop: restic sentiasa menyimpan lebih daripada had itu, dan kebanyakannya menunggu cakera dan bukannya menggunakan teras.",
+  "settings.memoryLabel": "Had memori setiap sandaran (MiB, 0 = tiada)",
+  "settings.memoryHint": "Had memori lembut bagi setiap proses sandaran, dalam MiB. 0 bermaksud tiada had. Menghampiri had itu, proses membebaskan memori lebih kerap, yang mengorbankan sedikit kelajuan, dan ia tetap melepasi had apabila memerlukan lebih. Tetapkan jauh di bawah apa yang boleh digunakan oleh kontena, supaya sandaran besar menjadi perlahan dan bukannya dimatikan kerana kehabisan memori.",
   "settings.cacheHint": "Enjin sandaran mengekalkan cache data repositori di bawah /config supaya larian tokokan dan luar tapak kekal pantas. Apabila ia melebihi had ini, cache setiap repositori yang paling kurang digunakan dialih keluar selepas larian berjadual.",
   "settings.cacheLimitLabel": "Had saiz cache (MB, 0 = tanpa had)",
 

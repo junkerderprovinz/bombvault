@@ -2073,6 +2073,8 @@ const lv: Partial<Translations> = {
   "settings.watchdogToggle": "Ziņot par nokavētām rezerves kopijām",
   "settings.coresLabel": "CPU pavedieni (0 = visi)",
   "settings.coresHint": "Cik CPU pavedienus drīkst izmantot dublēšana. 0 nozīmē visus kodolus. Skaitlis ierobežo, cik daudz darbojas vienlaikus, nevis cik pavedienus rāda top vai btop: restic vienmēr tur vairāk par ierobežojumu, un lielākā daļa gaida disku, nevis aizņem kodolu.",
+  "settings.memoryLabel": "Atmiņas ierobežojums vienai dublēšanai (MiB, 0 = nav)",
+  "settings.memoryHint": "Mīksts atmiņas ierobežojums katram dublēšanas procesam, MiB. 0 nozīmē, ka ierobežojuma nav. Pie ierobežojuma process atbrīvo atmiņu biežāk, kas maksā nedaudz ātruma, un tomēr pārsniedz ierobežojumu, kad vajag vairāk. Iestatiet to krietni zem tā, ko drīkst izmantot konteiners, lai liela dublēšana palēninātos, nevis tiktu nogalināta atmiņas trūkuma dēļ.",
   "settings.cacheHint": "Rezerves kopēšanas dzinējs uztur repozitorija datu kešatmiņu zem /config, lai pieaugoši un attālināti izpildījumi paliktu ātri. Kad tā pārsniedz šo ierobežojumu, pēc ieplānotajiem izpildījumiem tiek noņemtas mazāk izmantotās kešatmiņas katram repozitorijam.",
   "settings.cacheLimitLabel": "Kešatmiņas izmēra ierobežojums (MB, 0 = neierobežots)",
 

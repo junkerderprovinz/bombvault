@@ -119,6 +119,9 @@ type Settings struct {
 	// BackupCores caps the CPU threads each restic process may use, passed to
 	// it as GOMAXPROCS. 0 uses every core, restic's own default.
 	BackupCores int
+	// BackupMemoryMB is the soft memory limit in MiB of each restic process,
+	// passed to it as GOMEMLIMIT. 0 sets none.
+	BackupMemoryMB int
 	// DisplayPrefs holds the look of the interface as a JSON object, so it
 	// follows the user across browsers. Only the frontend reads inside it, which
 	// saves a migration per new option. When empty, the first load seeds it
@@ -347,7 +350,7 @@ func getSettings(q settingsQuerier) (Settings, error) {
 		       cloud_cred_sets,
 		       fleet_enabled, pull_enabled, db_dumps_enabled, instance_name,
 		       everything_schedule, everything_pre_hook, everything_post_hook,
-		       backup_cores, display_prefs,
+		       backup_cores, backup_memory_mb, display_prefs,
 		       totp_secret, totp_enabled, totp_recovery,
 		       anomaly_enabled, anomaly_sensitivity, anomaly_notify_min, anomaly_retention_hold,
 		       retention_keep_yearly, offsite_retention_keep_yearly,
@@ -392,7 +395,7 @@ func getSettings(q settingsQuerier) (Settings, error) {
 		&s.CloudCredSets,
 		&fleetEnabled, &pullEnabled, &dbDumpsEnabled, &s.InstanceName,
 		&s.EverythingSchedule, &s.EverythingPreHook, &s.EverythingPostHook,
-		&s.BackupCores, &s.DisplayPrefs,
+		&s.BackupCores, &s.BackupMemoryMB, &s.DisplayPrefs,
 		&s.TOTPSecret, &totpEnabled, &s.TOTPRecovery,
 		&anomalyEnabled, &s.AnomalySensitivity, &s.AnomalyNotifyMin, &anomalyRetentionHold,
 		&s.RetentionKeepYearly, &s.OffsiteRetentionKeepYearly,
@@ -596,6 +599,7 @@ func updateSettings(e settingsExecer, s Settings) error {
 		  everything_pre_hook          = ?,
 		  everything_post_hook         = ?,
 		  backup_cores                 = ?,
+		  backup_memory_mb             = ?,
 		  display_prefs                = ?,
 		  totp_secret                  = ?,
 		  totp_enabled                 = ?,
@@ -654,6 +658,7 @@ func updateSettings(e settingsExecer, s Settings) error {
 		s.EverythingPreHook,
 		s.EverythingPostHook,
 		s.BackupCores,
+		s.BackupMemoryMB,
 		s.DisplayPrefs,
 		s.TOTPSecret,
 		boolInt(s.TOTPEnabled),

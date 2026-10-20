@@ -2529,6 +2529,8 @@ const ro: Partial<Translations> = {
   "settings.watchdogToggle": "Raportează backupurile întârziate",
   "settings.coresLabel": "Fire CPU (0 = toate)",
   "settings.coresHint": "Câte fire CPU poate folosi o copie de rezervă. 0 înseamnă toate nucleele. Numărul limitează cât rulează în același timp, nu câte fire afișează top sau btop: restic ține mereu mai multe decât limita, iar cele mai multe așteaptă discul în loc să ocupe un nucleu.",
+  "settings.memoryLabel": "Limită de memorie per copie (MiB, 0 = fără)",
+  "settings.memoryHint": "O limită de memorie flexibilă pentru fiecare proces de copie de rezervă, în MiB. 0 înseamnă fără limită. Aproape de limită, procesul eliberează memorie mai des, ceea ce costă puțină viteză, și tot depășește limita când are nevoie de mai mult. Setați-o mult sub ce poate folosi containerul, ca o copie de rezervă mare să încetinească în loc să fie oprită forțat din lipsă de memorie.",
   "settings.cacheHint": "Motorul de backup păstrează sub /config un cache cu date din depozit, ca rulările incrementale și externe să rămână rapide. Când depășește această limită, cache-urile per-depozit cel mai demult folosite sunt eliminate după rulările programate.",
   "settings.cacheLimitLabel": "Limita dimensiunii cache-ului (MB, 0 = nelimitat)",
   // Export / import settings (portable config file)

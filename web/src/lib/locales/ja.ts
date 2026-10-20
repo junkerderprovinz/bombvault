@@ -2519,6 +2519,8 @@ const ja: Partial<Translations> = {
   "settings.watchdogToggle": "遅延したバックアップを報告",
   "settings.coresLabel": "CPU スレッド数 (0 = すべて)",
   "settings.coresHint": "バックアップが使用できる CPU スレッド数。0 はすべてのコアを意味します。この数字は同時に走る量の上限であって、top や btop に並ぶスレッド数の上限ではありません。restic は常に上限より多くのスレッドを抱えますが、その大半はコアを使わずディスク待ちです。",
+  "settings.memoryLabel": "バックアップごとのメモリ上限 (MiB, 0 = なし)",
+  "settings.memoryHint": "各バックアッププロセスのソフトなメモリ上限を MiB で指定します。0 は上限なしです。上限に近づくとプロセスはメモリをより頻繁に解放し、その分速度は少し落ちますが、さらに必要になれば上限を超えます。コンテナが使える量より十分低く設定すると、大きなバックアップはメモリ不足で強制終了される代わりに遅くなります。",
   "settings.cacheHint": "バックアップエンジンは、増分実行やオフサイト実行を高速に保つため、/config 配下にリポジトリデータのキャッシュを保持します。この上限を超えると、スケジュール実行後に最も長く使われていないリポジトリ別キャッシュが削除されます。",
   "settings.cacheLimitLabel": "キャッシュサイズ上限（MB、0 = 無制限）",
   // Export / import settings (portable config file)
