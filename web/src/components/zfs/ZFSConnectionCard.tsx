@@ -15,6 +15,7 @@ import { TestButton } from "../TestButton";
 import { useTestVerdict } from "../../lib/useTestVerdict";
 import { IconInfo } from "../glyphs";
 import { InstanceWindow } from "../../pages/instances/InstanceWindow";
+import { CardFoot } from "../../pages/settings/shared";
 import { InfoBubble } from "../InfoBubble";
 import { IconCopy } from "../Sidebar";
 
@@ -50,7 +51,7 @@ export function ZFSConnectionCard() {
 
 /** ZFSConnectionStatus reports whether zfs commands reach the server, and
  *  what to do when they do not. It tests the connection when it appears. In a
- *  window, `foot` is the place in the window's foot for the test button. */
+ *  window, `foot` is the place in the window's foot for its buttons. */
 export function ZFSConnectionStatus({ foot }: { foot?: HTMLElement | null } = {}) {
   const { t } = useT();
   const { push } = useToast();
@@ -101,8 +102,19 @@ export function ZFSConnectionStatus({ foot }: { foot?: HTMLElement | null } = {}
 
   const connected = CONNECTED.has(code);
   const fixKey = zfsFixKey(code);
-  const testAgain = (
-    <TestButton label={t("zfs.connection.test")} labelKey="zfs.connection.test" test={check} onClick={() => test(true)} />
+  const actions = (
+    <>
+      {result?.detail && (
+        <Button
+          label={t("zfs.connection.details")}
+          labelKey="zfs.connection.details"
+          glyph={<IconInfo />}
+          tone="neutral"
+          onClick={() => setDetailsOpen(true)}
+        />
+      )}
+      <TestButton label={t("zfs.connection.test")} labelKey="zfs.connection.test" test={check} onClick={() => test(true)} />
+    </>
   );
   const authorizeCmd = authorizeCommand(publicKey);
 
@@ -110,12 +122,7 @@ export function ZFSConnectionStatus({ foot }: { foot?: HTMLElement | null } = {}
     <>
       {testing && <p className="text-sm text-carbon-textMuted">{t("zfs.connection.testing")}</p>}
 
-      {!testing && !result && (
-        <div className="flex flex-col gap-2">
-          <p className="text-sm text-statusFail">{t("common.networkError")}</p>
-          {foot === undefined && <div className="flex justify-end">{testAgain}</div>}
-        </div>
-      )}
+      {!testing && !result && <p className="text-sm text-statusFail">{t("common.networkError")}</p>}
 
       {!testing && result && (
         <div className="flex flex-col gap-2">
@@ -185,16 +192,6 @@ export function ZFSConnectionStatus({ foot }: { foot?: HTMLElement | null } = {}
             </div>
           )}
 
-          {result.detail && (
-            <Button
-              label={t("zfs.connection.details")}
-              labelKey="zfs.connection.details"
-              glyph={<IconInfo />}
-              tone="neutral"
-              onClick={() => setDetailsOpen(true)}
-              className="self-start"
-            />
-          )}
           {result.detail && detailsOpen && (
             <InstanceWindow
               title={t("zfs.connection.details")}
@@ -206,11 +203,9 @@ export function ZFSConnectionStatus({ foot }: { foot?: HTMLElement | null } = {}
               </pre>
             </InstanceWindow>
           )}
-
-          {foot === undefined && <div className="flex justify-end">{testAgain}</div>}
         </div>
       )}
-      {foot && !testing && createPortal(testAgain, foot)}
+      {!testing && (foot ? createPortal(actions, foot) : foot === undefined && <CardFoot>{actions}</CardFoot>)}
     </>
   );
 }

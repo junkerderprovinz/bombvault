@@ -352,7 +352,7 @@ function DumpRow({
             busy={saving}
             title={saving ? t("dbdump.busySaving") : undefined}
             hint={t("dbdump.saveHint")}
-            className="self-start"
+            className="self-end"
           />
           <RestoreProgress
             state={saveState}
