@@ -164,6 +164,18 @@ func TestAnS3DestinationBringsItsOwnCredentials(t *testing.T) {
 	}
 }
 
+func TestADestinationWhoseProviderLeftThePickerStillShows(t *testing.T) {
+	svc, st, _ := newProbeSvc(t, nil)
+	d, err := st.SaveDestination(store.OffsiteTarget{Name: "Premiumize", Provider: "premiumizeme", Repo: "rclone:premiumize:bv"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	v, err := svc.destinationView(d)
+	if err != nil || v.Name != "Premiumize" || v.Repo != "rclone:premiumize:bv" || v.Mark != "" {
+		t.Fatalf("view = %+v, %v, want the destination as saved, without a mark", v, err)
+	}
+}
+
 func TestTheRecoveryKitListsEachDestinationsRepositories(t *testing.T) {
 	svc, st, _ := newProbeSvc(t, nil)
 	d, err := st.SaveDestination(store.OffsiteTarget{Name: "Backblaze", Repo: "rclone:b2:bv"})

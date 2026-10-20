@@ -92,7 +92,6 @@ var essential = map[string]map[string]bool{
 	"putio":                {"token": true},
 	"sharefile":            {"token": true},
 	"zoho":                 {"token": true, "region": true},
-	"premiumizeme":         {"token": true},
 	"google cloud storage": {"token": true, "project_number": true, "service_account_file": true},
 }
 

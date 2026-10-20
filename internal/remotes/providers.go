@@ -203,7 +203,6 @@ var providers = []Provider{
 	cloud("fichier", "1Fichier", "fichier", "", AuthAPIKey),
 	cloud("filefabric", "Enterprise File Fabric", "filefabric", "", AuthToken),
 	cloud("filelu", "FileLu", "filelu", "", AuthAPIKey),
-	cloud("premiumizeme", "premiumize.me", "premiumizeme", "", AuthToken),
 	cloud("drime", "Drime", "drime", "", AuthAPIKey),
 	cloud("shade", "Shade", "shade", "", AuthAPIKey),
 	webdavCloud("nextcloud", "Nextcloud", "nextcloud", "IconNextcloud", "https://cloud.example.com/remote.php/dav/files/USER/"),
