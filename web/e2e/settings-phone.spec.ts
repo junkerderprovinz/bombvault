@@ -404,6 +404,26 @@ async function scrollRest(page: Page): Promise<void> {
   );
 }
 
+// A sheet's slide can start a frame after it is visible, which settle does not
+// catch, so this waits until neither its place nor its content moves.
+async function standStill(sheet: Locator): Promise<void> {
+  await sheet.evaluate(
+    (el) =>
+      new Promise<void>((done) => {
+        let last = "";
+        let still = 0;
+        const tick = () => {
+          const now = `${el.getBoundingClientRect().top}:${el.scrollHeight}`;
+          still = now === last ? still + 1 : 0;
+          last = now;
+          if (still >= 5) done();
+          else requestAnimationFrame(tick);
+        };
+        requestAnimationFrame(tick);
+      }),
+  );
+}
+
 function rail(page: Page) {
   return page.getByRole("navigation", { name: "Einstellungsseiten" });
 }
@@ -579,6 +599,7 @@ for (const [what, rows] of [
       await expect(window).toBeVisible();
       // The sheet slides up from the bottom, so it is measured once it stands.
       await settle(page);
+      await standStill(window);
       return {
         scope: window,
         names: targets("containers").map((t) => t.name),
