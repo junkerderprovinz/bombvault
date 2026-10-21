@@ -670,6 +670,7 @@ const pl: Partial<Translations> = {
   "whatsNew.signInEdit": "„Edytuj” otwiera dane logowania w oknie, gdzie „Testuj” przed zapisaniem sprawdza je w każdym miejscu docelowym, które ich używa.",
   "whatsNew.gotItCheck": "Każdy przycisk „Rozumiem” ma znacznik wyboru.",
   "whatsNew.cardFoot": "Przyciski całej karty, np. „Dodaj miejsce docelowe”, stoją na końcu pod jej zawartością.",
+  "whatsNew.memoryLimit": "Dzięki limitowi pamięci na kopię zapasową duża kopia zwalnia, zamiast wyczerpać pamięć.",
   "whatsNew.settingsStorageFlow": "Strona ustawień Miejsca docelowe pokazuje też, która sekcja trafia do którego miejsca docelowego.",
   "whatsNew.addOwnRclone": "„Dodaj miejsce docelowe” ma kafelek Rclone na własną konfigurację rclone, do której wklejasz remote'y z pliku rclone.conf.",
   "whatsNew.cryptPicture": "Obrazek szyfrowania podąża za swoim przełącznikiem: zapieczętowane pakiety w miejscu docelowym, gdy kopie są szyfrowane, i czytelne, gdy nie są.",

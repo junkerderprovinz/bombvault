@@ -671,6 +671,7 @@ const vi: Partial<Translations> = {
   "whatsNew.signInEdit": "“Chỉnh sửa” mở thông tin đăng nhập trong một cửa sổ, nơi “Kiểm tra” thử nó trên mọi đích đang dùng trước khi bạn lưu.",
   "whatsNew.gotItCheck": "Mọi nút “Đã hiểu” đều có dấu tích.",
   "whatsNew.cardFoot": "Các nút cho cả thẻ, như “Thêm đích”, nằm ở cuối, bên dưới nội dung thẻ.",
+  "whatsNew.memoryLimit": "Với giới hạn bộ nhớ mỗi bản sao lưu, bản sao lưu lớn sẽ chậm lại thay vì hết bộ nhớ.",
   "whatsNew.settingsStorageFlow": "Trang cài đặt Đích sao lưu cũng cho biết phần nào được sao lưu lên đích nào.",
   "whatsNew.addOwnRclone": "“Thêm đích” có ô Rclone cho cấu hình rclone riêng, nơi bạn dán các remote từ một tệp rclone.conf.",
   "whatsNew.cryptPicture": "Hình minh họa mã hóa đổi theo công tắc của nó: gói được niêm phong ở đích sao lưu khi bản sao lưu được mã hóa, và gói đọc được khi không.",

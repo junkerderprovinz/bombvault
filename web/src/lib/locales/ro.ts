@@ -673,6 +673,7 @@ const ro: Partial<Translations> = {
   "whatsNew.signInEdit": "„Editează” deschide o autentificare într-o fereastră, unde „Testează” o încearcă la fiecare destinație care o folosește înainte să salvezi.",
   "whatsNew.gotItCheck": "Fiecare buton „Am înțeles” are o bifă.",
   "whatsNew.cardFoot": "Butoanele pentru tot cardul, ca „Adaugă destinație”, stau la final, sub conținutul cardului.",
+  "whatsNew.memoryLimit": "Cu o limită de memorie per copie, o copie mare încetinește în loc să rămână fără memorie.",
   "whatsNew.settingsStorageFlow": "Pagina de setări Destinații arată și ce secțiune se salvează în ce destinație.",
   "whatsNew.addOwnRclone": "„Adaugă destinație” are o dală Rclone pentru o configurație rclone proprie, unde lipești remote-uri dintr-un rclone.conf.",
   "whatsNew.cryptPicture": "Imaginea criptării își urmează comutatorul: pachete sigilate la destinație când copiile de rezervă sunt criptate, lizibile când nu sunt.",

@@ -791,6 +791,7 @@ const lt: Partial<Translations> = {
   "whatsNew.signInEdit": "„Redaguoti“ atveria prisijungimą lange, kur „Tikrinti“ prieš išsaugant jį išbando kiekvienoje jį naudojančioje paskirties vietoje.",
   "whatsNew.gotItCheck": "Kiekvienas mygtukas „Supratau“ turi varnelę.",
   "whatsNew.cardFoot": "Visos kortelės mygtukai, pvz., „Pridėti paskirties vietą“, yra pabaigoje po kortelės turiniu.",
+  "whatsNew.memoryLimit": "Su atminties riba vienai kopijai didelė kopija sulėtėja, užuot pritrūkusi atminties.",
   "whatsNew.settingsStorageFlow": "Nustatymų puslapis Paskirties vietos taip pat rodo, kuris skyrius į kurią paskirties vietą kopijuojamas.",
   "whatsNew.addOwnRclone": "„Pridėti paskirties vietą“ turi plytelę Rclone savai rclone konfigūracijai, į kurią įklijuoji remote'us iš rclone.conf.",
   "whatsNew.cryptPicture": "Šifravimo paveikslėlis seka savo jungiklį: užantspauduoti paketai paskirties vietoje, kai atsarginės kopijos šifruojamos, ir skaitomi, kai ne.",

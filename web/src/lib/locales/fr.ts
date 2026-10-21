@@ -676,6 +676,7 @@ const fr: Partial<Translations> = {
   "whatsNew.signInEdit": "« Modifier » ouvre des identifiants dans une fenêtre, où « Tester » les essaie sur chaque destination qui les utilise avant l'enregistrement.",
   "whatsNew.gotItCheck": "Chaque bouton « Compris » porte une coche.",
   "whatsNew.cardFoot": "Les boutons de toute une carte, comme « Ajouter une destination », se trouvent à la fin, sous le contenu de la carte.",
+  "whatsNew.memoryLimit": "Avec une limite de mémoire par sauvegarde, une grosse sauvegarde ralentit au lieu de manquer de mémoire.",
   "whatsNew.settingsStorageFlow": "La page de réglages Destinations montre aussi quelle section est sauvegardée vers quelle destination.",
   "whatsNew.addOwnRclone": "« Ajouter une destination » propose une tuile Rclone pour une configuration rclone personnelle, où vous collez des remotes depuis un rclone.conf.",
   "whatsNew.cryptPicture": "L'image du chiffrement suit son interrupteur : des paquets scellés à la destination quand les sauvegardes sont chiffrées, des paquets lisibles sinon.",

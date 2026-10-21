@@ -791,6 +791,7 @@ const is: Partial<Translations> = {
   "whatsNew.signInEdit": "„Breyta“ opnar innskráningu í glugga, þar sem „Prófa“ reynir hana á hverjum áfangastað sem notar hana áður en þú vistar.",
   "whatsNew.gotItCheck": "Hver „Skilið“-hnappur er með hak.",
   "whatsNew.cardFoot": "Hnappar fyrir allt spjaldið, eins og „Bæta við áfangastað“, eru í lokin undir efni spjaldsins.",
+  "whatsNew.memoryLimit": "Með minnismörkum á hverja afritun hægist á stórri afritun í stað þess að minnið klárist.",
   "whatsNew.settingsStorageFlow": "Stillingasíðan Áfangastaðir sýnir líka hvaða hluti er afritaður á hvaða áfangastað.",
   "whatsNew.addOwnRclone": "„Bæta við áfangastað“ er með Rclone-reit fyrir eigin rclone-stillingar, þar sem þú límir inn remotes úr rclone.conf.",
   "whatsNew.cryptPicture": "Myndin af dulkóðuninni fylgir rofanum sínum: innsiglaðir pakkar á áfangastaðnum þegar afrit eru dulkóðuð, læsilegir þegar þau eru það ekki.",

@@ -791,6 +791,7 @@ const et: Partial<Translations> = {
   "whatsNew.signInEdit": "„Muuda“ avab sisselogimise aknas, kus „Testi“ proovib seda enne salvestamist igas sihtkohas, mis seda kasutab.",
   "whatsNew.gotItCheck": "Igal „Selge“ nupul on linnuke.",
   "whatsNew.cardFoot": "Kogu kaardi nupud, näiteks „Lisa sihtkoht“, on lõpus kaardi sisu all.",
+  "whatsNew.memoryLimit": "Mälupiiriga varunduse kohta muutub suur varundus aeglasemaks, selle asemel et mälu otsa saaks.",
   "whatsNew.settingsStorageFlow": "Seadete leht Sihtkohad näitab ka, millist jaotist millisesse sihtkohta varundatakse.",
   "whatsNew.addOwnRclone": "„Lisa sihtkoht“ pakub oma rclone'i seadistuse jaoks paani Rclone, kuhu kleebid remote'id failist rclone.conf.",
   "whatsNew.cryptPicture": "Krüpteerimise pilt järgib oma lülitit: pitseeritud pakid sihtkohas, kui varundused on krüpteeritud, ja loetavad, kui pole.",

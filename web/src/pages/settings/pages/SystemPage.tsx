@@ -96,7 +96,7 @@ export function SystemPage() {
               className={NUMBER}
             />
           </SettingRow>
-          <SettingRow label={t("settings.memoryLabel")} hint={t("settings.memoryHint")}>
+          <SettingRow label={t("settings.memoryLabel")} hint={t("settings.memoryHint")} newId="backup-memory-limit">
             <NumberField
               min={0}
               value={settings.backupMemoryMB}

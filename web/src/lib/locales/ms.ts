@@ -791,6 +791,7 @@ const ms: Partial<Translations> = {
   "whatsNew.signInEdit": "“Edit” membuka log masuk dalam tetingkap, tempat “Uji” mencubanya pada setiap destinasi yang menggunakannya sebelum anda menyimpan.",
   "whatsNew.gotItCheck": "Setiap butang “Faham” mempunyai tanda semak.",
   "whatsNew.cardFoot": "Butang untuk seluruh kad, seperti “Tambah destinasi”, terletak di hujung di bawah kandungan kad.",
+  "whatsNew.memoryLimit": "Dengan had memori setiap sandaran, sandaran besar menjadi perlahan dan bukannya kehabisan memori.",
   "whatsNew.settingsStorageFlow": "Halaman tetapan Destinasi juga menunjukkan bahagian mana disandarkan ke destinasi mana.",
   "whatsNew.addOwnRclone": "“Tambah destinasi” ada jubin Rclone untuk konfigurasi rclone sendiri, tempat anda menampal remote daripada rclone.conf.",
   "whatsNew.cryptPicture": "Gambar penyulitan mengikut suisnya: pek yang dimeterai di destinasi apabila sandaran disulitkan, dan pek yang boleh dibaca apabila tidak.",

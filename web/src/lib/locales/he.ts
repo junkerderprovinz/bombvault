@@ -676,6 +676,7 @@ const he: Partial<Translations> = {
   "whatsNew.signInEdit": "„עריכה” פותחת פרטי גישה בחלון, ושם „בדיקה” מנסה אותם בכל יעד שמשתמש בהם לפני השמירה.",
   "whatsNew.gotItCheck": "בכל כפתור „הבנתי” יש סימן וי.",
   "whatsNew.cardFoot": "כפתורים של כרטיס שלם, כמו „הוספת יעד”, נמצאים בסוף מתחת לתוכן הכרטיס.",
+  "whatsNew.memoryLimit": "עם מגבלת זיכרון לכל גיבוי, גיבוי גדול מאט במקום שייגמר לו הזיכרון.",
   "whatsNew.settingsStorageFlow": "דף ההגדרות יעדים מראה גם איזה תחום מגובה לאיזה יעד.",
   "whatsNew.addOwnRclone": "ב„הוספת יעד” יש אריח Rclone להגדרת rclone משלך, שבו מדביקים remotes מקובץ rclone.conf.",
   "whatsNew.cryptPicture": "תמונת ההצפנה עוקבת אחרי המתג שלה: חבילות חתומות ביעד כשהגיבויים מוצפנים, וחבילות קריאות כשלא.",

@@ -791,6 +791,7 @@ const id: Partial<Translations> = {
   "whatsNew.signInEdit": "“Edit” membuka login di jendela, tempat “Uji” mencobanya di setiap tujuan yang memakainya sebelum Anda menyimpan.",
   "whatsNew.gotItCheck": "Setiap tombol “Mengerti” punya tanda centang.",
   "whatsNew.cardFoot": "Tombol untuk seluruh kartu, seperti “Tambah tujuan”, ada di akhir di bawah isi kartu.",
+  "whatsNew.memoryLimit": "Dengan batas memori per pencadangan, pencadangan besar melambat alih-alih kehabisan memori.",
   "whatsNew.settingsStorageFlow": "Halaman pengaturan Tujuan juga menampilkan bagian mana dicadangkan ke tujuan mana.",
   "whatsNew.addOwnRclone": "“Tambah tujuan” punya ubin Rclone untuk konfigurasi rclone sendiri, tempat Anda menempel remote dari rclone.conf.",
   "whatsNew.cryptPicture": "Gambar enkripsi mengikuti sakelarnya: paket tersegel di tujuan saat cadangan dienkripsi, paket yang bisa dibaca saat tidak.",

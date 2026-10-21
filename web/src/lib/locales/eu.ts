@@ -791,6 +791,7 @@ const eu: Partial<Translations> = {
   "whatsNew.signInEdit": "«Editatu»-k saio-hasiera leiho batean irekitzen du, eta han «Probatu»-k erabiltzen duen helmuga bakoitzean probatzen du gorde aurretik.",
   "whatsNew.gotItCheck": "«Ulertuta» botoi guztiek egiaztapen-marka bat dute.",
   "whatsNew.cardFoot": "Txartel osoaren botoiak, «Gehitu helmuga» kasu, amaieran daude, txartelaren edukiaren azpian.",
+  "whatsNew.memoryLimit": "Babeskopiako memoria-mugarekin, babeskopia handi bat motelago doa, memoriarik gabe geratu beharrean.",
   "whatsNew.settingsStorageFlow": "Helmugak ezarpen-orriak ere erakusten du zein atal zein helmugatan babesten den.",
   "whatsNew.addOwnRclone": "«Gehitu helmuga» aukerak Rclone lauza bat du rclone konfigurazio propiorako, non rclone.conf bateko remoteak itsasten dituzun.",
   "whatsNew.cryptPicture": "Zifratzearen irudiak bere etengailuari jarraitzen dio: pakete zigilatuak helmugan babeskopiak zifratuta daudenean, eta irakurgarriak zifratu gabe daudenean.",

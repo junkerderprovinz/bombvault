@@ -676,6 +676,7 @@ const sv: Partial<Translations> = {
   "whatsNew.signInEdit": "”Redigera” öppnar en inloggning i ett fönster, där ”Testa” provar den på varje mål som använder den innan du sparar.",
   "whatsNew.gotItCheck": "Varje ”Uppfattat”-knapp har en bock.",
   "whatsNew.cardFoot": "Knappar för hela kortet, som ”Lägg till mål”, står sist under kortets innehåll.",
+  "whatsNew.memoryLimit": "Med en minnesgräns per säkerhetskopiering går en stor säkerhetskopiering långsammare i stället för att få slut på minne.",
   "whatsNew.settingsStorageFlow": "Inställningssidan Mål visar också vilken del som säkerhetskopieras till vilket mål.",
   "whatsNew.addOwnRclone": "”Lägg till mål” har en Rclone-ruta för din egen rclone-konfiguration, där du klistrar in remotes från en rclone.conf.",
   "whatsNew.cryptPicture": "Bilden av krypteringen följer sin brytare: förseglade pack på målet när säkerhetskopiorna är krypterade, läsbara när de inte är det.",

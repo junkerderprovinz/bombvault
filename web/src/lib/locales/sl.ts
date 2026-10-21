@@ -791,6 +791,7 @@ const sl: Partial<Translations> = {
   "whatsNew.signInEdit": "»Uredi« odpre poverilnice v oknu, kjer jih »Preizkusi« pred shranjevanjem preskusi na vsakem cilju, ki jih uporablja.",
   "whatsNew.gotItCheck": "Vsak gumb »Razumem« ima kljukico.",
   "whatsNew.cardFoot": "Gumbi za celo kartico, na primer »Dodaj cilj«, so na koncu pod vsebino kartice.",
+  "whatsNew.memoryLimit": "Z omejitvijo pomnilnika na varnostno kopijo se velika kopija upočasni, namesto da bi ji zmanjkalo pomnilnika.",
   "whatsNew.settingsStorageFlow": "Stran nastavitev Cilji prikaže tudi, kateri razdelek se kopira na kateri cilj.",
   "whatsNew.addOwnRclone": "»Dodaj cilj« ima ploščico Rclone za lastne nastavitve rclone, kamor prilepiš remote iz rclone.conf.",
   "whatsNew.cryptPicture": "Slika šifriranja sledi svojemu stikalu: zapečateni paketi na cilju, ko so varnostne kopije šifrirane, in berljivi, ko niso.",

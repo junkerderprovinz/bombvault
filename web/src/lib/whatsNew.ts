@@ -56,6 +56,18 @@ const TO_STORAGE: WayStep[] = ["/settings", "/settings/storage", "/storage"];
 /** Every release that brought something new, newest first. */
 export const RELEASES: Release[] = [
   {
+    version: "10.2.1",
+    changes: [
+      {
+        id: "backup-memory-limit",
+        page: "/settings/system",
+        where: ["nav.settings", "settings.tab.system"],
+        way: ["/settings", "/settings/system"],
+        text: "whatsNew.memoryLimit",
+      },
+    ],
+  },
+  {
     version: "10.2.0",
     changes: [
       {

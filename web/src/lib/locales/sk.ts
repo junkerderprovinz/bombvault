@@ -791,6 +791,7 @@ const sk: Partial<Translations> = {
   "whatsNew.signInEdit": "„Upraviť“ otvorí prihlasovacie údaje v okne, kde ich „Otestovať“ pred uložením vyskúša pri každom cieli, ktorý ich používa.",
   "whatsNew.gotItCheck": "Každé tlačidlo „Rozumiem“ má značku začiarknutia.",
   "whatsNew.cardFoot": "Tlačidlá celej karty, napríklad „Pridať cieľ“, sú na konci pod jej obsahom.",
+  "whatsNew.memoryLimit": "S limitom pamäte na zálohu sa veľká záloha spomalí namiesto toho, aby jej došla pamäť.",
   "whatsNew.settingsStorageFlow": "Stránka nastavení Ciele ukazuje aj to, ktorá sekcia sa zálohuje do ktorého cieľa.",
   "whatsNew.addOwnRclone": "„Pridať cieľ“ má dlaždicu Rclone pre vlastnú konfiguráciu rclone, kam vložíš remoty z rclone.conf.",
   "whatsNew.cryptPicture": "Obrázok šifrovania sleduje svoj prepínač: zapečatené balíky v cieli, keď sú zálohy šifrované, a čitateľné, keď nie sú.",

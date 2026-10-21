@@ -676,6 +676,7 @@ const it: Partial<Translations> = {
   "whatsNew.signInEdit": "«Modifica» apre le credenziali in una finestra, dove «Prova» le verifica su ogni destinazione che le usa prima di salvare.",
   "whatsNew.gotItCheck": "Ogni pulsante «Capito» ha un segno di spunta.",
   "whatsNew.cardFoot": "I pulsanti di un'intera scheda, come «Aggiungi destinazione», stanno alla fine sotto il contenuto della scheda.",
+  "whatsNew.memoryLimit": "Con un limite di memoria per backup, un backup grande rallenta invece di esaurire la memoria.",
   "whatsNew.settingsStorageFlow": "La pagina delle impostazioni Destinazioni mostra anche quale sezione va in backup su quale destinazione.",
   "whatsNew.addOwnRclone": "«Aggiungi destinazione» ha un riquadro Rclone per una configurazione rclone personale, dove incolli i remote da un rclone.conf.",
   "whatsNew.cryptPicture": "L'immagine della crittografia segue il suo interruttore: pacchetti sigillati nella destinazione quando i backup sono cifrati, leggibili quando non lo sono.",

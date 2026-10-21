@@ -673,6 +673,7 @@ const no: Partial<Translations> = {
   "whatsNew.signInEdit": "«Rediger» åpner en pålogging i et vindu, der «Test» prøver den på hvert mål som bruker den før du lagrer.",
   "whatsNew.gotItCheck": "Hver «Skjønner»-knapp har en hake.",
   "whatsNew.cardFoot": "Knapper for hele kortet, som «Legg til mål», står til slutt under innholdet i kortet.",
+  "whatsNew.memoryLimit": "Med en minnegrense per sikkerhetskopi blir en stor sikkerhetskopi tregere i stedet for å gå tom for minne.",
   "whatsNew.settingsStorageFlow": "Innstillingssiden Mål viser også hvilken del som sikkerhetskopieres til hvilket mål.",
   "whatsNew.addOwnRclone": "«Legg til mål» har en Rclone-flis for din egen rclone-konfigurasjon, der du limer inn remotes fra en rclone.conf.",
   "whatsNew.cryptPicture": "Bildet av krypteringen følger bryteren sin: forseglede pakker på målet når sikkerhetskopiene er kryptert, og lesbare når de ikke er det.",

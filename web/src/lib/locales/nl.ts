@@ -672,6 +672,7 @@ const nl: Partial<Translations> = {
   "whatsNew.signInEdit": "„Bewerken” opent inloggegevens in een venster, waar „Testen” ze vóór het opslaan probeert bij elke bestemming die ze gebruikt.",
   "whatsNew.gotItCheck": "Elke knop „Begrepen” heeft een vinkje.",
   "whatsNew.cardFoot": "Knoppen voor een hele kaart, zoals „Bestemming toevoegen”, staan aan het eind onder de inhoud van de kaart.",
+  "whatsNew.memoryLimit": "Met een geheugenlimiet per back-up wordt een grote back-up trager in plaats van zonder geheugen te raken.",
   "whatsNew.settingsStorageFlow": "De instellingenpagina Bestemmingen toont ook welk onderdeel naar welke bestemming wordt geback-upt.",
   "whatsNew.addOwnRclone": "„Bestemming toevoegen” heeft een tegel Rclone voor je eigen rclone-configuratie, waar je remotes uit een rclone.conf plakt.",
   "whatsNew.cryptPicture": "De afbeelding bij versleuteling volgt haar schakelaar: verzegelde pakketten op de bestemming als back-ups versleuteld zijn, leesbare als ze dat niet zijn.",

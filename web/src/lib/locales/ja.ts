@@ -671,6 +671,7 @@ const ja: Partial<Translations> = {
   "whatsNew.signInEdit": "「編集」で認証情報がウィンドウに開き、保存する前に「テスト」でそれを使う各保存先で試せます。",
   "whatsNew.gotItCheck": "「了解」ボタンにはすべてチェックマークが付きます。",
   "whatsNew.cardFoot": "「保存先を追加」など、カード全体のボタンはカードの内容の下、末尾に並びます。",
+  "whatsNew.memoryLimit": "バックアップごとのメモリ上限があれば、大きなバックアップはメモリ不足にならず、遅くなるだけで済みます。",
   "whatsNew.settingsStorageFlow": "設定の「保存先」ページに、どのセクションがどの保存先にバックアップされるかも表示されます。",
   "whatsNew.addOwnRclone": "「保存先を追加」に独自の rclone 設定用の Rclone タイルがあり、rclone.conf からリモートを貼り付けられます。",
   "whatsNew.cryptPicture": "暗号化の図はスイッチに合わせて変わります。バックアップを暗号化すると保存先には封をしたパックが、暗号化しないと読めるパックが並びます。",

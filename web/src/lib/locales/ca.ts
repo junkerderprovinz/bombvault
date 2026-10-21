@@ -791,6 +791,7 @@ const ca: Partial<Translations> = {
   "whatsNew.signInEdit": "«Edita» obre unes credencials en una finestra, on «Prova» les comprova a cada destinació que les fa servir abans de desar.",
   "whatsNew.gotItCheck": "Cada botó «Entesos» porta una marca de verificació.",
   "whatsNew.cardFoot": "Els botons de tota una targeta, com «Afegeix una destinació», són al final, sota el contingut de la targeta.",
+  "whatsNew.memoryLimit": "Amb un límit de memòria per còpia, una còpia gran va més lenta en lloc de quedar-se sense memòria.",
   "whatsNew.settingsStorageFlow": "La pàgina de configuració Destinacions també mostra quina secció es copia a quina destinació.",
   "whatsNew.addOwnRclone": "«Afegeix una destinació» té una rajola Rclone per a una configuració pròpia de rclone, on enganxes remotes d'un rclone.conf.",
   "whatsNew.cryptPicture": "La imatge del xifratge segueix el seu interruptor: paquets segellats a la destinació quan les còpies estan xifrades, i llegibles quan no ho estan.",

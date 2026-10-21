@@ -791,6 +791,7 @@ const lv: Partial<Translations> = {
   "whatsNew.signInEdit": "“Rediģēt” atver pieteikšanos logā, kur “Pārbaudīt” pirms saglabāšanas to izmēģina katrā mērķī, kas to izmanto.",
   "whatsNew.gotItCheck": "Katrai pogai “Sapratu” ir ķeksītis.",
   "whatsNew.cardFoot": "Visas kartes pogas, piemēram, “Pievienot mērķi”, atrodas beigās zem kartes satura.",
+  "whatsNew.memoryLimit": "Ar atmiņas ierobežojumu vienai dublēšanai liela dublēšana palēninās, nevis paliek bez atmiņas.",
   "whatsNew.settingsStorageFlow": "Iestatījumu lapa Mērķi rāda arī, kura sadaļa tiek dublēta uz kuru mērķi.",
   "whatsNew.addOwnRclone": "“Pievienot mērķi” piedāvā flīzi Rclone savai rclone konfigurācijai, kur ielīmē remote no rclone.conf.",
   "whatsNew.cryptPicture": "Šifrēšanas attēls seko savam slēdzim: aizzīmogotas pakotnes mērķī, kad rezerves kopijas ir šifrētas, un lasāmas, kad nav.",

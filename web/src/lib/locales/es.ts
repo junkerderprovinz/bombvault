@@ -676,6 +676,7 @@ const es: Partial<Translations> = {
   "whatsNew.signInEdit": "«Editar» abre unas credenciales en una ventana, donde «Probar» las comprueba en cada destino que las usa antes de guardar.",
   "whatsNew.gotItCheck": "Cada botón «Entendido» lleva una marca de verificación.",
   "whatsNew.cardFoot": "Los botones de toda una tarjeta, como «Añadir destino», están al final, bajo el contenido de la tarjeta.",
+  "whatsNew.memoryLimit": "Con un límite de memoria por copia, una copia grande va más lenta en vez de quedarse sin memoria.",
   "whatsNew.settingsStorageFlow": "La página de ajustes Destinos también muestra qué sección se copia en qué destino.",
   "whatsNew.addOwnRclone": "«Añadir destino» tiene un mosaico Rclone para una configuración propia de rclone, donde pegas remotes de un rclone.conf.",
   "whatsNew.cryptPicture": "La imagen del cifrado sigue a su interruptor: paquetes sellados en el destino cuando las copias están cifradas, y legibles cuando no.",

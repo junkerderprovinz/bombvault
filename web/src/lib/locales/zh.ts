@@ -671,6 +671,7 @@ const zh: Partial<Translations> = {
   "whatsNew.signInEdit": "“编辑”会在窗口中打开凭据，保存前可在其中用“测试”在每个使用它的目标上试用。",
   "whatsNew.gotItCheck": "每个“知道了”按钮都带有勾号。",
   "whatsNew.cardFoot": "整张卡片的按钮，例如“添加目标”，位于卡片内容下方的末尾。",
+  "whatsNew.memoryLimit": "有了每次备份的内存上限，大型备份会变慢，而不会耗尽内存。",
   "whatsNew.settingsStorageFlow": "设置中的“目标”页面也会显示哪个部分备份到哪个目标。",
   "whatsNew.addOwnRclone": "“添加目标”提供 Rclone 磁贴用于自定义 rclone 配置，可在其中粘贴 rclone.conf 中的远程。",
   "whatsNew.cryptPicture": "加密示意图随开关变化：备份加密时目标里是封好的数据包，未加密时是可读的数据包。",

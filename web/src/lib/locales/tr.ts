@@ -676,6 +676,7 @@ const tr: Partial<Translations> = {
   "whatsNew.signInEdit": "“Düzenle” oturum açma bilgisini bir pencerede açar; orada “Test et” kaydetmeden önce onu kullanan her hedefte dener.",
   "whatsNew.gotItCheck": "Her “Anladım” düğmesinde bir onay işareti var.",
   "whatsNew.cardFoot": "“Hedef ekle” gibi tüm kartın düğmeleri, kartın içeriğinin altında, sonda durur.",
+  "whatsNew.memoryLimit": "Yedekleme başına bellek sınırıyla büyük bir yedekleme, belleği tükenmek yerine yavaşlar.",
   "whatsNew.settingsStorageFlow": "Hedefler ayarlar sayfası hangi bölümün hangi hedefe yedeklendiğini de gösterir.",
   "whatsNew.addOwnRclone": "“Hedef ekle” içinde kendi rclone yapılandırman için bir Rclone kutucuğu var; orada bir rclone.conf dosyasından remote'ları yapıştırırsın.",
   "whatsNew.cryptPicture": "Şifreleme resmi kendi anahtarını izler: yedekler şifreliyken hedefte mühürlü paketler, değilken okunabilir paketler.",

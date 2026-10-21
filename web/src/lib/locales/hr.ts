@@ -791,6 +791,7 @@ const hr: Partial<Translations> = {
   "whatsNew.signInEdit": "„Uredi” otvara vjerodajnice u prozoru, gdje ih „Testiraj” prije spremanja isprobava na svakom odredištu koje ih koristi.",
   "whatsNew.gotItCheck": "Svaki gumb „Razumijem” ima kvačicu.",
   "whatsNew.cardFoot": "Gumbi za cijelu karticu, poput „Dodaj odredište”, stoje na kraju ispod njezina sadržaja.",
+  "whatsNew.memoryLimit": "S ograničenjem memorije po kopiji velika kopija uspori umjesto da ostane bez memorije.",
   "whatsNew.settingsStorageFlow": "Stranica postavki Odredišta prikazuje i koji se odjeljak sprema na koje odredište.",
   "whatsNew.addOwnRclone": "„Dodaj odredište” ima pločicu Rclone za vlastitu rclone konfiguraciju, u koju lijepite remoteove iz rclone.conf.",
   "whatsNew.cryptPicture": "Slika šifriranja prati svoj prekidač: zapečaćeni paketi na odredištu kad su sigurnosne kopije šifrirane, a čitljivi kad nisu.",

@@ -676,6 +676,7 @@ const da: Partial<Translations> = {
   "whatsNew.signInEdit": "»Rediger« åbner adgangsoplysninger i et vindue, hvor »Test« prøver dem på hver destination, der bruger dem, før du gemmer.",
   "whatsNew.gotItCheck": "Alle »Forstået«-knapper har et flueben.",
   "whatsNew.cardFoot": "Knapper til hele kortet, fx »Tilføj destination«, står til sidst under kortets indhold.",
+  "whatsNew.memoryLimit": "Med en hukommelsesgrænse pr. sikkerhedskopi bliver en stor sikkerhedskopi langsommere i stedet for at løbe tør for hukommelse.",
   "whatsNew.settingsStorageFlow": "Indstillingssiden Destinationer viser også, hvilken sektion der tages backup af til hvilken destination.",
   "whatsNew.addOwnRclone": "»Tilføj destination« har en Rclone-flise til din egen rclone-konfiguration, hvor du indsætter remotes fra en rclone.conf.",
   "whatsNew.cryptPicture": "Billedet af krypteringen følger sin kontakt: forseglede pakker på destinationen, når sikkerhedskopierne er krypterede, og læsbare, når de ikke er.",

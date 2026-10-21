@@ -791,6 +791,7 @@ const gl: Partial<Translations> = {
   "whatsNew.signInEdit": "«Editar» abre unhas credenciais nunha xanela, onde «Probar» as comproba en cada destino que as usa antes de gardar.",
   "whatsNew.gotItCheck": "Cada botón «Entendido» leva unha marca de verificación.",
   "whatsNew.cardFoot": "Os botóns de toda unha tarxeta, como «Engadir destino», están ao final, baixo o contido da tarxeta.",
+  "whatsNew.memoryLimit": "Cun límite de memoria por copia, unha copia grande vai máis lenta en vez de quedar sen memoria.",
   "whatsNew.settingsStorageFlow": "A páxina de axustes Destinos tamén amosa que sección se copia en que destino.",
   "whatsNew.addOwnRclone": "«Engadir destino» ten un mosaico Rclone para unha configuración propia de rclone, onde pegas remotes dun rclone.conf.",
   "whatsNew.cryptPicture": "A imaxe do cifrado segue o seu interruptor: paquetes selados no destino cando as copias están cifradas, e lexibles cando non.",

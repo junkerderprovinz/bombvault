@@ -676,6 +676,7 @@ const hu: Partial<Translations> = {
   "whatsNew.signInEdit": "A „Szerkesztés” ablakban nyitja meg a bejelentkezést, ahol a „Teszt” mentés előtt kipróbálja minden célnál, amely használja.",
   "whatsNew.gotItCheck": "Minden „Értem” gombon pipa van.",
   "whatsNew.cardFoot": "Az egész kártyára vonatkozó gombok, például a „Cél hozzáadása”, a végén, a kártya tartalma alatt állnak.",
+  "whatsNew.memoryLimit": "Biztonsági mentésenkénti memóriakorláttal a nagy mentés lelassul ahelyett, hogy kifogyna a memóriából.",
   "whatsNew.settingsStorageFlow": "A Célok beállítási oldal azt is mutatja, melyik szakaszról melyik célra készül mentés.",
   "whatsNew.addOwnRclone": "A „Cél hozzáadása” Rclone csempét kínál a saját rclone-konfigurációhoz, ahová egy rclone.conf fájlból illesztesz be remote-okat.",
   "whatsNew.cryptPicture": "A titkosítás képe követi a kapcsolóját: lepecsételt csomagok a célnál, ha a mentések titkosítottak, és olvasható csomagok, ha nem.",

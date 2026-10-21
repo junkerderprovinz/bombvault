@@ -676,6 +676,7 @@ const fi: Partial<Translations> = {
   "whatsNew.signInEdit": "”Muokkaa” avaa tunnukset ikkunaan, jossa ”Testaa” kokeilee niitä jokaisessa niitä käyttävässä kohteessa ennen tallennusta.",
   "whatsNew.gotItCheck": "Jokaisessa ”Selvä”-painikkeessa on valintamerkki.",
   "whatsNew.cardFoot": "Koko kortin painikkeet, kuten ”Lisää kohde”, ovat lopussa kortin sisällön alla.",
+  "whatsNew.memoryLimit": "Varmuuskopiokohtaisella muistirajalla suuri varmuuskopio hidastuu sen sijaan, että muisti loppuisi.",
   "whatsNew.settingsStorageFlow": "Asetussivu Kohteet näyttää myös, mikä osio varmuuskopioidaan mihinkin kohteeseen.",
   "whatsNew.addOwnRclone": "”Lisää kohde” tarjoaa oman rclone-määrityksen Rclone-ruudussa, johon liität remotet rclone.conf-tiedostosta.",
   "whatsNew.cryptPicture": "Salauksen kuva seuraa kytkintään: sinetöidyt paketit kohteessa, kun varmuuskopiot salataan, ja luettavat, kun ei salata.",
