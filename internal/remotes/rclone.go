@@ -34,9 +34,8 @@ type Rclone struct {
 	Bin    string
 	Config string
 
-	once     sync.Once
+	mu       sync.Mutex
 	backends map[string]Backend
-	loadErr  error
 }
 
 // Draft is a remote described by a form and not saved yet.
@@ -92,18 +91,29 @@ func lastError(stderr string, err error) string {
 	return last
 }
 
-// Backends returns how rclone describes the backends the providers use. It
-// asks the binary once per process; the binary does not change underneath.
+// Backends returns how rclone describes the backends the providers use. The
+// first answer is kept, since the binary does not change underneath; a failed
+// one is not, so the next caller asks again.
 func (r *Rclone) Backends(ctx context.Context) (map[string]Backend, error) {
-	r.once.Do(func() {
-		out, err := r.run(ctx, nil, "", "config", "providers")
-		if err != nil {
-			r.loadErr = fmt.Errorf("rclone config providers: %w", err)
-			return
-		}
-		r.backends, r.loadErr = ParseBackends(out)
-	})
-	return r.backends, r.loadErr
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if r.backends != nil {
+		return r.backends, nil
+	}
+	// Detached from the caller: the page that asks first may be closed while
+	// rclone answers, and the list serves every caller after it.
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), Timeout)
+	defer cancel()
+	out, err := r.run(ctx, nil, "", "config", "providers")
+	if err != nil {
+		return nil, fmt.Errorf("rclone config providers: %w", err)
+	}
+	backends, err := ParseBackends(out)
+	if err != nil {
+		return nil, err
+	}
+	r.backends = backends
+	return backends, nil
 }
 
 // Obscure turns a password into the form rclone reads. It asks rclone

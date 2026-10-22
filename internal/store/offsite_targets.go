@@ -236,11 +236,16 @@ func (r *Repo) UpsertOffsiteTarget(t OffsiteTarget) (OffsiteTarget, error) {
 		return OffsiteTarget{}, fmt.Errorf("UpsertOffsiteTarget: %w", err)
 	}
 	defer tx.Rollback() //nolint:errcheck // rollback after a successful commit is a no-op
-	var companionOf, destinationID string
-	err = tx.QueryRow(`SELECT companion_of, destination_id FROM offsite_targets WHERE id = ? AND role = ?`,
-		t.ID, t.Role).Scan(&companionOf, &destinationID)
+	var companionOf, destinationID, repo string
+	err = tx.QueryRow(`SELECT companion_of, destination_id, repo FROM offsite_targets WHERE id = ? AND role = ?`,
+		t.ID, t.Role).Scan(&companionOf, &destinationID, &repo)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return OffsiteTarget{}, fmt.Errorf("UpsertOffsiteTarget: %w", err)
+	}
+	if err == nil && repo != t.Repo {
+		if err := forgetPlaceTx(tx, t.ID); err != nil {
+			return OffsiteTarget{}, fmt.Errorf("UpsertOffsiteTarget: %w", err)
+		}
 	}
 	if t.DestinationID != "" {
 		destinationID = t.DestinationID

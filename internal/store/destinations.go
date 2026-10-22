@@ -495,10 +495,7 @@ func (r *Repo) MoveTargetToDestination(targetID, destID, location string, settle
 		if out, err = followDestinationTx(tx, t, d); err != nil {
 			return err
 		}
-		if _, err := tx.Exec(`UPDATE offsite_observations SET rules_rev = '', aged_at = 0 WHERE target_id = ?`, t.ID); err != nil {
-			return err
-		}
-		if _, err := tx.Exec(`DELETE FROM tamper_tests WHERE offsite_target_id = ?`, t.ID); err != nil {
+		if err := forgetPlaceTx(tx, t.ID); err != nil {
 			return err
 		}
 		if t.SortOrder == 0 {
@@ -561,6 +558,11 @@ func (r *Repo) PrimaryFromDestination(destID, domain, location string, settle fu
 				return ErrDomainHasDestinationTarget
 			}
 		}
+		if t.Repo != location {
+			if err := forgetPlaceTx(tx, t.ID); err != nil {
+				return err
+			}
+		}
 		if _, err := tx.Exec(`UPDATE offsite_targets SET repo = ?, enabled = 1 WHERE id = ? AND role = ?`,
 			location, t.ID, RoleOffsite); err != nil {
 			return err
@@ -575,6 +577,16 @@ func (r *Repo) PrimaryFromDestination(destID, domain, location string, settle fu
 		return OffsiteTarget{}, fmt.Errorf("PrimaryFromDestination: %w", err)
 	}
 	return out, nil
+}
+
+// forgetPlaceTx drops the aging mark and the tamper verdicts of the target
+// with the id, which spoke about the place it is leaving.
+func forgetPlaceTx(tx *sql.Tx, id string) error {
+	if _, err := tx.Exec(`UPDATE offsite_observations SET rules_rev = '', aged_at = 0 WHERE target_id = ?`, id); err != nil {
+		return err
+	}
+	_, err := tx.Exec(`DELETE FROM tamper_tests WHERE offsite_target_id = ?`, id)
+	return err
 }
 
 // followDestinationTx hangs t on d: it takes d's mirrored fields, and so does

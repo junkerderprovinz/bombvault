@@ -118,23 +118,52 @@ func enableTarget(t *testing.T, st *store.Repo, domain, id string) {
 	}
 }
 
-// Without target rows the domain-wide verdict applies. With several targets
-// the domain is protected only when all are, has no verdict while any target
-// lacks one, and is dated by the oldest verdict.
+// appendOnlyTarget inserts an enabled off-site target flagged append-only.
+func appendOnlyTarget(t *testing.T, st *store.Repo, domain, id, repo string) {
+	t.Helper()
+	if _, err := st.UpsertOffsiteTarget(store.OffsiteTarget{
+		ID: id, Domain: domain, Name: id, Repo: repo, Immutable: true, Enabled: true,
+	}); err != nil {
+		t.Fatal(err)
+	}
+}
+
+// aggregateTamperOf is the scorecard's tamper reading of a domain.
+func aggregateTamperOf(t *testing.T, svc *Service, domain string) (had, protected bool, at int64) {
+	t.Helper()
+	settings, err := svc.store.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	return svc.aggregateTamper(domain, svc.appendOnlyTargets(domain, settings))
+}
+
+// Without target rows the domain-wide verdict applies. With several
+// append-only targets the domain is protected only when all are, has no
+// verdict while any of them lacks one, and is dated by the oldest verdict.
 func TestAggregateTamperWorstOf(t *testing.T) {
 	st := stage4Store(t)
 	svc := &Service{cfg: config.Config{AppKey: strings.Repeat("a", 64)}, store: st}
 
+	settings, err := st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	setOffsiteRepoInSettings(&settings, "containers", "rest:http://host/containers")
+	setOffsiteImmutableInSettings(&settings, "containers", true)
+	if err := st.UpdateSettings(settings); err != nil {
+		t.Fatal(err)
+	}
 	if err := st.RecordTamperTest("containers", true, ""); err != nil {
 		t.Fatal(err)
 	}
-	had, protected, at := svc.aggregateTamper("containers")
+	had, protected, at := aggregateTamperOf(t, svc, "containers")
 	if !had || !protected || at == 0 {
 		t.Fatalf("N=1 aggregate = (had=%v protected=%v at=%d), want protected", had, protected, at)
 	}
 
-	enableTarget(t, st, "vms", "t1")
-	enableTarget(t, st, "vms", "t2")
+	appendOnlyTarget(t, st, "vms", "t1", "rest:http://host/t1")
+	appendOnlyTarget(t, st, "vms", "t2", "rest:http://host/t2")
 	if err := st.RecordTamperTestForTarget("vms", "t1", true, ""); err != nil {
 		t.Fatal(err)
 	}
@@ -142,7 +171,7 @@ func TestAggregateTamperWorstOf(t *testing.T) {
 	if err := st.RecordTamperTestForTarget("vms", "t2", true, ""); err != nil {
 		t.Fatal(err)
 	}
-	had, protected, at = svc.aggregateTamper("vms")
+	had, protected, at = aggregateTamperOf(t, svc, "vms")
 	if !had || !protected {
 		t.Fatalf("both protected → (had=%v protected=%v), want protected", had, protected)
 	}
@@ -153,18 +182,44 @@ func TestAggregateTamperWorstOf(t *testing.T) {
 	if err := st.RecordTamperTestForTarget("vms", "t2", false, "accepted"); err != nil {
 		t.Fatal(err)
 	}
-	if _, protected, _ = svc.aggregateTamper("vms"); protected {
+	if _, protected, _ = aggregateTamperOf(t, svc, "vms"); protected {
 		t.Fatal("one unprotected destination must make the domain UNprotected")
 	}
 
-	enableTarget(t, st, "flash", "f1")
-	enableTarget(t, st, "flash", "f2")
+	appendOnlyTarget(t, st, "flash", "f1", "rest:http://host/f1")
+	appendOnlyTarget(t, st, "flash", "f2", "rest:http://host/f2")
 	if err := st.RecordTamperTestForTarget("flash", "f1", true, ""); err != nil {
 		t.Fatal(err)
 	}
-	had, protected, at = svc.aggregateTamper("flash")
+	had, protected, at = aggregateTamperOf(t, svc, "flash")
 	if had || protected || at != 0 {
 		t.Fatalf("an untested destination → no claim, got (had=%v protected=%v at=%d)", had, protected, at)
+	}
+}
+
+// A second copy that never claimed append-only, on S3 or on a plain
+// rest-server, neither keeps the append-only primary's verdict from counting
+// nor fails it with a delete it was never meant to refuse.
+func TestOnlyAppendOnlyTargetsSpeakForTheTamperVerdict(t *testing.T) {
+	st := stage4Store(t)
+	svc := &Service{cfg: config.Config{AppKey: strings.Repeat("a", 64)}, store: st}
+	appendOnlyTarget(t, st, "containers", "primary", "rest:http://host/containers")
+	if _, err := st.UpsertOffsiteTarget(store.OffsiteTarget{ID: "s3", Domain: "containers", Name: "s3", Repo: "s3:https://s3.example.com/bucket", Enabled: true, SortOrder: 1}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.UpsertOffsiteTarget(store.OffsiteTarget{ID: "plain", Domain: "containers", Name: "plain", Repo: "rest:http://other/containers", Enabled: true, SortOrder: 2}); err != nil {
+		t.Fatal(err)
+	}
+	if err := st.RecordTamperTestForTarget("containers", "primary", true, ""); err != nil {
+		t.Fatal(err)
+	}
+	if err := st.RecordTamperTestForTarget("containers", "plain", false, "accepted"); err != nil {
+		t.Fatal(err)
+	}
+
+	had, protected, at := aggregateTamperOf(t, svc, "containers")
+	if !had || !protected || at == 0 {
+		t.Fatalf("aggregate = (had=%v protected=%v at=%d), want the primary's protected verdict", had, protected, at)
 	}
 }
 

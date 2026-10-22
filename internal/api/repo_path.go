@@ -121,3 +121,14 @@ func (s *Service) requireOwnLocation(settings store.Settings, domain string) err
 	}
 	return &noLocationErr{domain: domain}
 }
+
+// ownRepoFor resolves a domain's own repository, "" for a switched-off own
+// folder without a location: that one has none, and its items' named
+// repositories are still in use.
+func (s *Service) ownRepoFor(settings store.Settings, domain string) (string, error) {
+	own, err := s.repoFor(settings, domain, "local")
+	if errors.Is(err, ErrNoLocation) && s.requireOwnLocation(settings, domain) == nil {
+		return "", nil
+	}
+	return own, err
+}

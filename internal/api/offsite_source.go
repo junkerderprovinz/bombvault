@@ -3,6 +3,7 @@ package api
 import (
 	"fmt"
 	"net/url"
+	"regexp"
 	"slices"
 	"strings"
 
@@ -110,10 +111,29 @@ func s3ThroughRclone(loc string, c CloudCreds) (string, []string, error) {
 		prefix + "SECRET_ACCESS_KEY=" + c.S3Secret,
 		prefix + "ENDPOINT=" + u.Scheme + "://" + u.Host,
 	}
-	if c.S3Region != "" {
-		env = append(env, prefix+"REGION="+c.S3Region)
+	region := c.S3Region
+	if region == "" {
+		region = awsRegionOf(u.Hostname())
+	}
+	if region != "" {
+		env = append(env, prefix+"REGION="+region)
 	}
 	return "rclone:" + sourceRemote + ":" + path, env, nil
+}
+
+// awsRegionHostRe matches a regional AWS S3 endpoint and captures its region:
+// s3.eu-central-1.amazonaws.com, s3-eu-west-1.amazonaws.com, the dualstack form
+// and the .com.cn hosts of the China regions.
+var awsRegionHostRe = regexp.MustCompile(`^(?:[^.]+\.)?s3[.-](?:dualstack\.)?([a-z]{2}(?:-[a-z]+)+-\d+)\.amazonaws\.com(?:\.cn)?$`)
+
+// awsRegionOf is the region a regional AWS S3 endpoint names, "" for any other
+// host. restic finds the region of such a bucket by itself, while rclone signs
+// for us-east-1 without one and AWS refuses every request.
+func awsRegionOf(host string) string {
+	if m := awsRegionHostRe.FindStringSubmatch(strings.ToLower(host)); m != nil {
+		return m[1]
+	}
+	return ""
 }
 
 // restWithLogin puts a login into a rest-server address, which restic reads

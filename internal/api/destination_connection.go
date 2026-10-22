@@ -298,6 +298,11 @@ func (s *Service) heldOpen(ctx context.Context, held []store.OffsiteTarget, at f
 	for _, t := range held {
 		repo, mode := at(t)
 		reachable, initialized, err := s.probeOffsiteRepo(ctx, repo, mode)
+		// The backups are reached either way; their encryption mode is not
+		// what the connection changes.
+		if _, other := errors.AsType[*otherEncryptionErr](err); other {
+			err = nil
+		}
 		if err != nil || !reachable {
 			return fmt.Errorf("%w: %s is not reached (%s)", errBackupsNotThere, t.Domain, scrubError(err))
 		}

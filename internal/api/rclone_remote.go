@@ -226,6 +226,27 @@ func (s *Service) AddRcloneRemote(ctx context.Context, r rcloneRemote, plainPass
 	})
 }
 
+// AddRcloneSections puts the remotes of a pasted config into the stored one.
+// A remote of the same name is replaced and every other one stays: the paste
+// box starts empty, so what it sends is never the whole config.
+func (s *Service) AddRcloneSections(pasted string) error {
+	var sections []rcloneBlock
+	for _, b := range splitRcloneSections(pasted) {
+		if b.name != "" {
+			sections = append(sections, b)
+		}
+	}
+	if len(sections) == 0 {
+		return errors.New("paste at least one remote, starting with its name in square brackets, such as [b2]")
+	}
+	return s.editRcloneConf(func(conf string) (string, error) {
+		for _, b := range sections {
+			conf = replaceRcloneSection(conf, b.name, b.text)
+		}
+		return conf, nil
+	})
+}
+
 // handleAddRcloneRemote stores an SMB or WebDAV destination from a form.
 // POST /api/offsite/rclone-remote
 //

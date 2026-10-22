@@ -135,6 +135,9 @@ func (s *Service) destinationOpens(ctx context.Context, d, t store.OffsiteTarget
 	probe := t
 	probe.CredsRef, probe.StorageClass = d.CredsRef, d.StorageClass
 	reachable, initialized, err := s.probeOffsiteRepo(ctx, t.Repo, s.offsiteModeForTarget(settings, probe))
+	if _, other := errors.AsType[*otherEncryptionErr](err); other {
+		return fmt.Errorf("%s: %w", scrubRepoLocation(t.Repo), err)
+	}
 	if err != nil || !reachable || !initialized {
 		why := fmt.Errorf("the sign-in of %s does not open %s", d.Name, scrubRepoLocation(t.Repo))
 		if err != nil {
@@ -339,7 +342,7 @@ func (s *Service) editRcloneConf(edit func(conf string) (string, error)) error {
 	if next == conf {
 		return nil
 	}
-	return s.SetRcloneConf(next)
+	return s.storeRcloneConf(next)
 }
 
 // freeRemoteName picks a remote name from the provider's id that the config
@@ -578,6 +581,11 @@ func (s *Service) DeleteDestination(id string) error {
 	}
 	if !ok {
 		return nil
+	}
+	if homes, err := s.ownFoldersIn(d); err != nil {
+		return err
+	} else if len(homes) > 0 {
+		return errOwnFolderThere
 	}
 	if err := s.store.DeleteDestinationIfUnused(id); err != nil {
 		return err

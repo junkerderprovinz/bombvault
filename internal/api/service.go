@@ -2113,6 +2113,9 @@ func (s *Service) offsiteModeForTarget(settings store.Settings, target store.Off
 		mode.StorageClass = target.StorageClass
 	}
 	mode.Compression = storedCompression(target.Compression)
+	// The keep-policy's prune at the target repacks over the same line the
+	// copy is capped on.
+	mode.Limits = targetOffsiteLimits(target)
 	return mode
 }
 
@@ -2787,24 +2790,25 @@ func settingsOffsiteTarget(domain string, settings store.Settings, loc string) s
 	}
 }
 
-// aggregateTamper folds a domain's off-site tamper verdicts worst-of across its
-// destinations for the ransomware scorecard: had is true only when EVERY
-// destination has a recorded verdict, protected only when EVERY one refused the
-// delete, and at is the OLDEST verdict timestamp (so the least-recently-checked
-// destination drives the currency/overdue judgement). For a single-destination
-// (N=1) domain — the only shape possible before stage 5 — it is EXACTLY
-// LatestTamperTest(domain), byte-identical to the pre-aggregation read.
-func (s *Service) aggregateTamper(domain string) (had, protected bool, at int64) {
-	targets := s.offsiteTargetsFor(domain)
-	if len(targets) <= 1 {
-		tt, found, err := s.store.LatestTamperTest(domain)
-		if err != nil || !found {
-			return false, false, 0
-		}
-		return true, tt.Protected, tt.At
+// appendOnlyTargets are a domain's switched-on off-site targets flagged
+// append-only. Only they claim to refuse a delete, so only they are probed by
+// the scheduled tamper test and judged by the ransomware scorecard.
+func (s *Service) appendOnlyTargets(domain string, settings store.Settings) []store.OffsiteTarget {
+	return slices.DeleteFunc(s.offsiteReplicationTargets(domain, settings), func(t store.OffsiteTarget) bool { return !t.Immutable })
+}
+
+// aggregateTamper folds the tamper verdicts of a domain's append-only targets
+// worst-of for the ransomware scorecard: had is true only when every one has a
+// recorded verdict, protected only when every one refused the delete, and at
+// is the oldest verdict, so the least recently checked target drives the
+// overdue judgement. A target synthesized from the settings has no id and
+// reads the domain's latest verdict.
+func (s *Service) aggregateTamper(domain string, claims []store.OffsiteTarget) (had, protected bool, at int64) {
+	if len(claims) == 0 {
+		return false, false, 0
 	}
 	protected = true
-	for _, t := range targets {
+	for _, t := range claims {
 		tt, found, err := s.store.LatestTamperTestForTarget(domain, t.ID)
 		if err != nil || !found {
 			return false, false, 0 // an untested destination → no protected claim
@@ -3500,13 +3504,11 @@ func (s *Service) domainStatusFrom(settings store.Settings) ([]DomainStatusEntry
 		} else if offsiteConfigured {
 			offPremisesCovered = s.copiesOffPremises(settings, d.name)
 		}
-		offsiteImmutable := offsiteImmutableFor(d.name, settings)
-
-		// Tamper facts are aggregated worst-of across the domain's off-site
-		// destinations (protected only when EVERY destination is, currency = the
-		// oldest). For a single-destination (N=1) domain this is exactly
-		// LatestTamperTest(domain) — byte-identical.
-		hadTamper, lastTamperOK, lastTamperAt := s.aggregateTamper(d.name)
+		// The append-only claim and its proof come from the same targets: a
+		// second copy that never claimed append-only has no verdict to give.
+		claims := s.appendOnlyTargets(d.name, settings)
+		offsiteImmutable := len(claims) > 0
+		hadTamper, lastTamperOK, lastTamperAt := s.aggregateTamper(d.name, claims)
 		// Currency uses the last SUCCESSFUL replication (mirrors backups' last-SUCCESS):
 		// a perpetually-failing replication then reads as stale → overdue → amber,
 		// rather than staying fresh off a failed attempt's timestamp. Aggregated
@@ -4352,9 +4354,8 @@ func (s *Service) copyToOffsite(ctx context.Context, domain string, settings sto
 	// and logged but must NOT abort the others (moot for N=1). The joined error
 	// surfaces to on-demand/scheduled callers so a failure still reports/notifies.
 	// multiTarget is false for a single-destination (N=1) domain: the budget then
-	// stays on the byte-identical DOMAIN path (source "offsite", the global
-	// OffsiteGrowthBudgetGB, latch keyed by domain). Only with 2+ destinations does
-	// each carry its own growth budget + per-target size sample + latch.
+	// samples under the domain source "offsite" with the latch keyed by domain.
+	// Only with 2+ destinations does each carry its own size sample and latch.
 	//
 	// Counted over the domain's enabled targets, not the (possibly item-narrowed)
 	// targets this pass visits: a hook pass narrowed to one target of a
@@ -4579,30 +4580,25 @@ func (s *Service) copyToOffsiteTarget(ctx context.Context, domain string, settin
 		settled = s.ageTarget(ctx, domain, scope, dest, mode, target, visit, dstSnaps, dstErr, out.landed)
 	}
 	s.noteAged(domain, target, visit, settled, len(out.landed) > 0)
-	// Sample the off-site repo size into the repo_stats time series and evaluate the
-	// growth budget. When a budget is set we sample SYNCHRONOUSLY first so the check
-	// sees THIS replication's fresh size — including the very first replication,
-	// which has no prior sample — rather than a stale one; for an immutable repo
-	// (no far-side prune) the budget is the only growth backstop, so it must not lag
-	// or miss the seed. Without a budget we sample in the background (throttled) just
-	// for the Storage card. The REST protocol can't see the far side's free space —
-	// only BombVault's own growth — so the budget is a detection aid, not a hard cap.
+	// Sample the off-site repo size and check the growth budget. With a budget the
+	// sample is taken first, so the check sees this replication's size, the first
+	// one included: for an append-only repo the budget is the only growth
+	// backstop. Without one the sample runs in the background for the Storage
+	// card. The budget is a detection aid, not a hard cap.
 	//
-	// N=1 (single destination): the budget stays on the DOMAIN path — the size is
-	// sampled under source "offsite", the global OffsiteGrowthBudgetGB drives it, and
-	// the latch is keyed by domain. This is byte-identical to before. Only with 2+
-	// destinations does each carry its OWN budget: the size is sampled under this
-	// destination's per-target source ("offsite:<id>"), the threshold is this
-	// target's GrowthBudgetGB, and the latch is keyed by (domain,targetID).
+	// The threshold is this target's own GrowthBudgetGB; the primary's is the
+	// off-site wizard's value. With one target the size is sampled under the
+	// domain source "offsite", which names that target, and the latch is keyed by
+	// domain. With more, each target has its source "offsite:<id>" and its latch.
 	if !multiTarget {
-		if settings.OffsiteGrowthBudgetGB > 0 {
+		if target.GrowthBudgetGB > 0 {
 			if serr := s.CollectStats(ctx, domain, "offsite"); serr != nil {
 				log.Printf("api: offsite %s: budget size sample failed (replica is safe): %v", domain, serr) //nolint:gosec // G706: domain is a fixed literal
 			}
 		} else {
 			s.CollectStatsAsync(domain, "offsite")
 		}
-		s.checkOffsiteBudget(ctx, domain, settings)
+		s.checkOffsiteBudget(ctx, domain, target.GrowthBudgetGB)
 		if copyErr != nil {
 			err = copyErr
 			return err
@@ -4655,13 +4651,13 @@ func (s *Service) checkOffsiteBudgetForTarget(ctx context.Context, domain string
 }
 
 // checkOffsiteBudget compares the latest sampled off-site repo size for a domain
-// against the configured growth budget (OffsiteGrowthBudgetGB, 0 = off) and fires
+// against the growth budget of its one target (budgetGB, 0 = off) and fires
 // a notification ONCE on each false→true crossing. The latch (offsiteOverBudget)
 // clears when growth drops back under budget so a later breach re-alarms. It reads
 // the newest repo_stats row for domain+source="offsite"; if none exists yet (the
 // async sample hasn't landed on the very first replication) it simply skips.
-func (s *Service) checkOffsiteBudget(ctx context.Context, domain string, settings store.Settings) {
-	s.checkGrowthBudget(ctx, domain, "offsite", domain, settings.OffsiteGrowthBudgetGB, "off-site")
+func (s *Service) checkOffsiteBudget(ctx context.Context, domain string, budgetGB int) {
+	s.checkGrowthBudget(ctx, domain, "offsite", domain, budgetGB, "off-site")
 }
 
 // checkPrimaryRemoteBudget is checkOffsiteBudget's counterpart for a domain's
@@ -5033,12 +5029,15 @@ func (s *Service) ReplicateOffsite(ctx context.Context, domain string) error {
 // scheduled replication. Configuration errors and a busy domain still surface
 // synchronously so the UI can show them.
 func (s *Service) StartReplicateOffsite(domain string) error {
-	settings, _, err := s.domainRepoSource(domain, "local")
+	settings, err := s.store.GetSettings()
 	if err != nil {
-		return err
+		return fmt.Errorf("read settings: %w", err)
 	}
 	if s.offsiteRepoFor(domain, settings) == "" {
 		return s.noOffsiteRepoErr(domain)
+	}
+	if _, err := s.ownRepoFor(settings, domain); err != nil {
+		return err
 	}
 	unlock, ok := s.tryLockDomainFor(domain, "replicate")
 	if !ok {
@@ -5111,8 +5110,8 @@ func (s *Service) notifyReplicationFailed(ctx context.Context, domain, detail st
 // tell the user whether the configured location is a reachable, initialised restic
 // repository BEFORE relying on it. It uses the SAME probe EnsureRepo uses to detect
 // an existing repo — `restic cat config` (ResticEngine.RepoOpensErr) — trying both
-// encryption modes, so a repo created under the opposite Encryption setting still
-// counts as initialised (that mode mismatch is reported by EnsureRepo, not here).
+// encryption modes, so a repo created under the opposite Encryption setting
+// counts as reachable and initialised and comes with otherEncryptionErr.
 //
 // reachable reports the repo could be opened at all; initialized that it is a real
 // restic repository. A REMOTE repo that is reachable but has never been replicated
@@ -5202,11 +5201,11 @@ func (s *Service) probeOffsiteRepo(ctx context.Context, repo string, mode restic
 	if primaryErr == nil {
 		return true, true, nil
 	}
-	// Opens under the opposite encryption mode → the repo exists and is reachable,
-	// just created under the other Encryption setting; still reachable + initialised
-	// for this probe (EnsureRepo surfaces the mismatch on the next backup).
+	// Opens only under the opposite encryption mode: the repo is there, but no
+	// backup or copy can ever be written into it, so a test that answers green
+	// here would be contradicted by every run.
 	if probe(s.oppositeMode(mode)) == nil {
-		return true, true, nil
+		return true, true, &otherEncryptionErr{encrypted: !mode.Encrypted}
 	}
 	// A reachable REMOTE destination that simply has no repository yet (no
 	// replication has run) is not a failure — same signal listSnapshots already
@@ -5235,6 +5234,19 @@ func (s *Service) probeOffsiteRepo(ctx context.Context, repo string, mode restic
 var errRepoWrongKey = errors.New("a restic repository already exists here and this instance's key does not open it; " +
 	"choose an empty location, or the APP_KEY it was created with")
 
+// otherEncryptionErr is a repository that opens only in the encryption mode
+// this instance does not write. The Encryption setting changed since it was
+// made, which setting it back undoes, or another instance made it, where that
+// would only lock out every repository of this one.
+type otherEncryptionErr struct{ encrypted bool }
+
+func (e *otherEncryptionErr) Error() string {
+	return fmt.Sprintf("this repository was created %s and this instance writes %s backups, so restic cannot use it. "+
+		"Point this backup at a new, empty location. If the Encryption setting was changed since the repository "+
+		"was made, setting it back to %s opens it again",
+		encryptionWord(e.encrypted), encryptionWord(!e.encrypted), enabledWord(e.encrypted))
+}
+
 // errRepoUnopened marks a repository restic reported as created that still does
 // not open, so nothing may be pointed at it.
 var errRepoUnopened = errors.New("the repository was set up but does not open")
@@ -5261,9 +5273,8 @@ func isUnreachable(err error) bool {
 // configured encryption mode. It is idempotent and reconciles the mode:
 //
 //   - opens with mode                  → exists and consistent; nothing to do
-//   - opens only with the opposite mode → the Encryption setting was toggled
-//     against an existing repo; return a clear, actionable error instead of
-//     letting every later restic call fail cryptically
+//   - opens only with the opposite mode → otherEncryptionErr, a clear,
+//     actionable error instead of every later restic call failing cryptically
 //   - is there but refuses the key      → errRepoWrongKey, never an init over it
 //   - opens with neither mode          → not initialised yet, so create it
 //
@@ -5287,14 +5298,10 @@ func (s *Service) ensureRepo(ctx context.Context, repo string, mode restic.Mode)
 		s.markRepoEstablished(repo) // remember it for the not-mounted guard (#55)
 		return true, nil
 	}
-	// A repo that opens under the other encryption mode exists and the user
-	// toggled the Encryption setting. Init would only fail on it, and every
-	// later backup with it.
+	// A repo that opens under the other encryption mode exists. Init would only
+	// fail on it, and every later backup with it.
 	if s.engine.RepoOpens(ctx, repo, s.oppositeMode(mode)) {
-		return false, fmt.Errorf("this backup repository was created %s, but the Encryption setting is now %s, so "+
-			"restic cannot open it after the change. Set Encryption back to %s, or point this backup at a "+
-			"new, empty repository location",
-			encryptionWord(!mode.Encrypted), enabledWord(mode.Encrypted), enabledWord(!mode.Encrypted))
+		return false, &otherEncryptionErr{encrypted: !mode.Encrypted}
 	}
 	// Only a location that fails to open is asked why, so the probe costs
 	// nothing on the runs where the repository is there.
@@ -8861,10 +8868,10 @@ func (s *Service) domainReposForOp(domain, source string) (store.Settings, []dom
 }
 
 // domainReposInUse returns every repository a domain's items actually write to:
-// the domain's own, plus each distinct named repository (#204) one of its items
-// points at. Order is deterministic - the domain repo first, then the named ones
-// in the order Settings lists them - so a caller that stops at the first hit
-// prefers the domain repo.
+// the domain's own when it has one, plus each distinct named repository (#204)
+// one of its items points at. Order is deterministic - the domain repo first,
+// then the named ones in the order Settings lists them - so a caller that stops
+// at the first hit prefers the domain repo.
 //
 // A named repository that is switched off or no longer resolves is SKIPPED here
 // rather than failing the call, but it is REPORTED: every skip comes back in the
@@ -8880,11 +8887,14 @@ func (s *Service) domainReposForOp(domain, source string) (store.Settings, []dom
 // a repository nobody opened. A switched-off repository is the ordinary case
 // here: the interface invites exactly that when a share dies.
 func (s *Service) domainReposInUse(settings store.Settings, domain string) ([]domainRepoRef, []repoSkip, error) {
-	own, err := s.repoFor(settings, domain, "local")
+	own, err := s.ownRepoFor(settings, domain)
 	if err != nil {
 		return nil, nil, err
 	}
-	out := []domainRepoRef{ownRef(own)}
+	var out []domainRepoRef
+	if own != "" {
+		out = append(out, ownRef(own))
+	}
 	var skipped []repoSkip
 	ids := map[string]bool{}
 	// A store read that fails is itself a skip: the answer is no longer "the
@@ -18057,10 +18067,18 @@ func (s *Service) writeRcloneFile(encB64 string) error {
 	return nil
 }
 
-// SetRcloneConf encrypts + stores the rclone config and rewrites the on-disk
-// file restic→rclone reads. An empty conf clears both. The stored DB value is
-// AES-256-GCM-encrypted (APP_KEY); the on-disk file is 0600 in /config.
+// SetRcloneConf replaces the stored rclone config as a whole, as a settings
+// restore or a recovery does. An empty conf clears it.
 func (s *Service) SetRcloneConf(conf string) error {
+	s.rcloneConfMu.Lock()
+	defer s.rcloneConfMu.Unlock()
+	return s.storeRcloneConf(conf)
+}
+
+// storeRcloneConf stores the rclone config sealed with APP_KEY and rewrites the
+// 0600 file in /config that rclone reads; an empty conf clears both. The caller
+// holds rcloneConfMu.
+func (s *Service) storeRcloneConf(conf string) error {
 	if breaksKitFence(conf) {
 		return errors.New("an rclone config must not contain a line that starts with three backticks")
 	}
