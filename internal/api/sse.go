@@ -42,10 +42,14 @@ func (h *Handler) handleProgress(w http.ResponseWriter, r *http.Request) {
 	ch, cancel := h.progress.Subscribe()
 	defer cancel()
 
-	// Replay current in-flight bars so a client connecting mid-operation sees them.
+	// Replay current in-flight bars so a client connecting mid-operation sees
+	// them. The synced message, which has no key, closes the replay: a client
+	// that reconnected drops the bars it holds that the replay did not name,
+	// whose end it missed.
 	for _, e := range h.progress.Snapshot() {
 		writeSSEEvent(w, e)
 	}
+	_, _ = io.WriteString(w, "data: {\"synced\":true}\n\n")
 	flusher.Flush()
 
 	ctx := r.Context()
