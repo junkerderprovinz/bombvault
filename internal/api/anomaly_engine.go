@@ -120,6 +120,9 @@ type anomalyEngine struct {
 	// next one's. It cannot be e.mu, which is never held across a store call.
 	rebuildMu   sync.Mutex
 	backfilling atomic.Bool
+	// pushOwed is set while findings wait for a push that reached nobody, so
+	// an idle tick with nothing to evaluate still sends them again.
+	pushOwed atomic.Bool
 
 	debounce     time.Duration
 	idleTick     time.Duration
@@ -489,6 +492,9 @@ func (e *anomalyEngine) passOnce(ctx context.Context) error {
 	dirty, full := e.takeDirty()
 	pruneDue := e.pruneDue(now)
 	if !full && !pruneDue && dirty.empty() {
+		if e.pushOwed.Load() {
+			e.retryOwedPush(ctx)
+		}
 		return nil
 	}
 
@@ -541,6 +547,21 @@ func (e *anomalyEngine) passOnce(ctx context.Context) error {
 		log.Printf("anomaly: send the findings of this pass: %v", nErr)
 	}
 	return e.rebuildCache()
+}
+
+// retryOwedPush sends the findings an earlier push failed to deliver.
+func (e *anomalyEngine) retryOwedPush(ctx context.Context) {
+	settings, err := e.svc.store.GetSettings()
+	if err != nil {
+		log.Printf("anomaly: send the findings again: %v", err)
+		return
+	}
+	if !settings.AnomalyEnabled {
+		return
+	}
+	if err := e.sendNotifications(ctx, settings); err != nil {
+		log.Printf("anomaly: send the findings again: %v", err)
+	}
 }
 
 // scopesToEvaluate turns the dirty sets into the series of this pass, in a

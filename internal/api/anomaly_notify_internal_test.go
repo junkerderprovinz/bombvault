@@ -431,6 +431,37 @@ func TestAnAnomalyPushThatReachedNobodyIsSentAgain(t *testing.T) {
 	}
 }
 
+// The retry comes with the next idle tick, not only with the next pass that
+// has a run to look at, which can be a day away.
+func TestAnAnomalyPushThatReachedNobodyIsSentAgainOnAnIdleTick(t *testing.T) {
+	f := newEngineFixture(t)
+	wh := newPathRecorder(t)
+	wh.status.Store(http.StatusBadGateway)
+	f.collapseRow(t, f.container(t, "nextcloud"))
+	if err := f.svc.SetNotifyConfig(notify.Config{On: "failure", WebhookEnabled: true, WebhookURL: wh.srv.URL}); err != nil {
+		t.Fatal(err)
+	}
+	if err := f.e.sendNotifications(context.Background(), mustEngineSettings(t, f)); err != nil {
+		t.Fatal(err)
+	}
+	for range 3 {
+		if err := f.e.passOnce(context.Background()); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if dirty, full := f.e.takeDirty(); full || !dirty.empty() {
+		t.Fatal("setup: the engine still has work, so the tick below would not be idle")
+	}
+
+	wh.status.Store(http.StatusOK)
+	if err := f.e.passOnce(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	if n := f.pending(t); n != 0 {
+		t.Fatalf("pending = %d after an idle tick with the channel back, want it delivered", n)
+	}
+}
+
 // A mass rewrite on a large share can take days to upload. The finding is
 // raised when the upload ends, and that is when it is news.
 func TestARewriteFoundOnARunThatTookDaysIsPushed(t *testing.T) {

@@ -220,6 +220,7 @@ func (e *anomalyEngine) sendNotifications(ctx context.Context, settings store.Se
 	// is the run a health check watches.
 	delivered, _ := e.svc.sendAlert(notify.WithHealthchecksSuppressed(ctx), cfg, "anomaly",
 		notify.Event{Title: title, Message: body, OK: false}, title, body, level)
+	e.pushOwed.Store(!delivered)
 	if !delivered {
 		return nil
 	}
