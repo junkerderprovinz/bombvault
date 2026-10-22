@@ -549,6 +549,7 @@ describe("the role tiles of a paired instance", () => {
         forMember: roleSide({ zfs: zfsRole("allowed") }),
       }),
     ];
+    destinations = [destination({ id: "d1", repo: "rest:http://192.168.1.21:8000/cellar-login", enabled: true })];
     await renderPage();
     expect(tiles(card("m1"))).toEqual({
       receiver: en["receiver.title"] + en["instances.role.on"],

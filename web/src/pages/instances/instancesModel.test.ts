@@ -240,7 +240,7 @@ describe("the roles an instance plays for this server", () => {
     expect(found({ roles: [roles({ byMember: side({ receiver: request() }) })], destinations: [login] })).toBeUndefined();
   });
 
-  it("knows when an active Receiver has no destination yet, and only when it can tell", () => {
+  it("knows when an active Receiver has no destination yet", () => {
     const offered = [{ memberId: "m1", name: "attic", url: "http://192.168.1.21:8000", needsAddress: false }];
     const login = destination({ id: "d1", repo: "rest:http://192.168.1.21:8000/tower-login" });
     const on = (store: "rest" | "share" = "rest") => [roles({ byMember: side({ receiver: request({ state: "allowed", store }) }) })];
@@ -248,8 +248,20 @@ describe("the roles an instance plays for this server", () => {
     expect(none({ groupReceivers: offered, destinations: [] })).toBe(true);
     expect(none({ groupReceivers: offered, destinations: [login] })).toBe(false);
     expect(none({ groupReceivers: offered, destinations: null })).toBe(false);
-    expect(none({ groupReceivers: [], destinations: [] })).toBe(false);
     expect(none({ groupReceivers: offered, destinations: [], roles: on("share") })).toBe(false);
+  });
+
+  it("says a Receiver just allowed has no destination while it is away or gives no address", () => {
+    const on = [roles({ byMember: side({ receiver: request({ state: "allowed" }) }) })];
+    const none = (over: Partial<InstancesData>) => buildInstances(data({ roles: on, ...over })).instances[0].noDestination ?? false;
+    const relayOnly = [{ memberId: "m1", name: "attic", needsAddress: true }];
+    const needsHost = [{ memberId: "m1", name: "attic", needsHost: true }];
+    const onItsHost = destination({ id: "d1", repo: "rest:http://192.168.1.21:8000/tower-login" });
+    const elsewhere = destination({ id: "d2", repo: "rest:http://192.168.1.210:8000/tower-login" });
+    expect(none({ groupReceivers: [], destinations: [] })).toBe(true);
+    expect(none({ groupReceivers: relayOnly, destinations: [] })).toBe(true);
+    expect(none({ groupReceivers: needsHost, destinations: [elsewhere] })).toBe(true);
+    expect(none({ groupReceivers: [], destinations: [onItsHost] })).toBe(false);
   });
 
   it("finds the destination at an address the server remembers while the member is away or behind the relay", () => {

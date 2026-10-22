@@ -172,6 +172,21 @@ function destinationAt(addresses: string[], destinations: Destination[]): Destin
   return undefined;
 }
 
+function hostOf(location: string): string {
+  try {
+    return new URL(location.replace(/^rest:/, "")).hostname.toLowerCase();
+  } catch {
+    return "";
+  }
+}
+
+/** restOnHost reports whether a rest-server destination lies on the host an
+ *  instance is reached at. */
+function restOnHost(address: string, destinations: Destination[]): boolean {
+  const host = hostOf(address.includes("://") ? address : `https://${address}`);
+  return host !== "" && destinations.some((d) => d.repo.startsWith("rest:") && hostOf(d.repo) === host);
+}
+
 export function buildInstances(data: InstancesData): { instances: Instance[]; unplaced: Unplaced } {
   const byMember = new Map<string, Instance>();
   const legacy: Instance[] = [];
@@ -270,7 +285,9 @@ export function buildInstances(data: InstancesData): { instances: Instance[]; un
         // which still holds while the member is away or behind the relay.
         const addresses = [offered?.url, ...(inst.roles?.receiverLocations ?? [])].filter((a): a is string => !!a);
         inst.destination = destinationAt(addresses, data.destinations);
-        inst.noDestination = !inst.destination && addresses.length > 0;
+        // With no address to go by, a rest-server location on the member's
+        // own host is taken for one there rather than called missing.
+        inst.noDestination = !inst.destination && (addresses.length > 0 || !restOnHost(inst.address, data.destinations));
       }
     }
   }
