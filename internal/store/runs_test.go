@@ -185,6 +185,31 @@ func TestReapInterruptedRuns(t *testing.T) {
 	}
 }
 
+func TestACopyCutOffByARestartCountsAsFailed(t *testing.T) {
+	db := store.OpenMem(t)
+	if err := store.Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	r := store.New(db)
+	done, _ := r.RecordOffsiteRunForTarget("containers", "t1", 100)
+	if err := r.FinishOffsiteRun(done, true, ""); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := r.RecordOffsiteRunForTarget("containers", "t1", 200); err != nil {
+		t.Fatal(err)
+	}
+
+	if n, err := r.ReapInterruptedRuns(); err != nil || n != 1 {
+		t.Fatalf("reaped %d, %v, want the open copy", n, err)
+	}
+	if since, err := r.FirstOffsiteFailureAfter("t1", 100); err != nil || since != 200 {
+		t.Fatalf("failing since %d, %v, want the cut-off copy at 200", since, err)
+	}
+	if run, found, _ := r.LatestSuccessfulOffsiteRunForTarget("containers", "t1"); !found || run.StartedAt != 100 {
+		t.Fatalf("last success = %+v, %v, want the earlier copy kept", run, found)
+	}
+}
+
 func TestAReapedReplicaRunEndsInItsReasonCode(t *testing.T) {
 	db := store.OpenMem(t)
 	if err := store.Migrate(db); err != nil {

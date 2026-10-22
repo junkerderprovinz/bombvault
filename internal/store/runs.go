@@ -370,17 +370,36 @@ const (
 // so such a run was orphaned by a crash or an update. The finished_at it
 // writes is the restart time, not the end of the work. A ZFS replica run's
 // reason ends in the reason code its card reads.
+//
+// An off-site copy left open goes the same way. Every reader of offsite_runs
+// skips an open row, so a copy cut off by a kill would otherwise show
+// neither as running nor as failed.
 func (r *Repo) ReapInterruptedRuns() (int64, error) {
-	res, err := r.db.Exec(`
-		UPDATE runs
-		SET status = 'failed', finished_at = ?,
-			error = CASE WHEN kind = ? THEN ? ELSE ? END
-		WHERE status = 'running'`, time.Now().Unix(),
-		ZFSReplicaRunKind, ReasonInterrupted+" [interrupted]", ReasonInterrupted)
+	now := time.Now().Unix()
+	var n int64
+	err := r.inTx(func(tx *sql.Tx) error {
+		res, err := tx.Exec(`
+			UPDATE runs
+			SET status = 'failed', finished_at = ?,
+				error = CASE WHEN kind = ? THEN ? ELSE ? END
+			WHERE status = 'running'`, now,
+			ZFSReplicaRunKind, ReasonInterrupted+" [interrupted]", ReasonInterrupted)
+		if err != nil {
+			return err
+		}
+		runs, _ := res.RowsAffected()
+		res, err = tx.Exec(`UPDATE offsite_runs SET finished_at = ?, ok = 0, error = ? WHERE finished_at IS NULL`,
+			now, ReasonInterrupted)
+		if err != nil {
+			return err
+		}
+		copies, _ := res.RowsAffected()
+		n = runs + copies
+		return nil
+	})
 	if err != nil {
 		return 0, fmt.Errorf("ReapInterruptedRuns: %w", err)
 	}
-	n, _ := res.RowsAffected()
 	return n, nil
 }
 
