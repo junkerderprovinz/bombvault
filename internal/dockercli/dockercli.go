@@ -11,9 +11,11 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"maps"
 	"os"
 	"regexp"
 	"slices"
+	"strconv"
 	"strings"
 	"time"
 
@@ -778,7 +780,6 @@ func mapPrimaryNetwork(resp container.InspectResponse) model.NetworkEndpoint {
 // mapHostConfig maps the SDK HostConfig into our preserved subset.
 func mapHostConfig(hc *container.HostConfig) model.HostConfig {
 	out := model.HostConfig{
-		Binds:          hc.Binds,
 		CapAdd:         []string(hc.CapAdd),
 		CapDrop:        []string(hc.CapDrop),
 		Privileged:     hc.Privileged,
@@ -790,7 +791,6 @@ func mapHostConfig(hc *container.HostConfig) model.HostConfig {
 		UsernsMode:     string(hc.UsernsMode),
 		GroupAdd:       hc.GroupAdd,
 		Sysctls:        hc.Sysctls,
-		Tmpfs:          hc.Tmpfs,
 		ExtraHosts:     hc.ExtraHosts,
 		CgroupParent:   hc.CgroupParent,
 		RestartPolicy: model.RestartPolicy{
@@ -822,6 +822,7 @@ func mapHostConfig(hc *container.HostConfig) model.HostConfig {
 		BlkioWeight:       hc.BlkioWeight,
 		Runtime:           hc.Runtime,
 	}
+	out.Binds, out.Tmpfs = foldMounts(hc.Binds, hc.Tmpfs, hc.Mounts)
 	for _, r := range hc.DeviceRequests {
 		out.DeviceRequests = append(out.DeviceRequests, model.DeviceRequest{
 			Driver: r.Driver, Count: r.Count, DeviceIDs: r.DeviceIDs, Capabilities: r.Capabilities, Options: r.Options,
@@ -880,6 +881,60 @@ func throttlesFrom(in []model.ThrottleDevice) []*blkiodev.ThrottleDevice {
 		out = append(out, &blkiodev.ThrottleDevice{Path: d.Path, Rate: d.Rate})
 	}
 	return out
+}
+
+// foldMounts adds the mounts made with --mount, or with compose's long volume
+// syntax, to the binds and tmpfs mounts they amount to. Docker keeps those in
+// HostConfig.Mounts and leaves Binds empty, while everything that recreates,
+// relocates or start-tests a container works from Binds.
+func foldMounts(binds []string, tmpfs map[string]string, mounts []mount.Mount) ([]string, map[string]string) {
+	if len(mounts) == 0 {
+		return binds, tmpfs
+	}
+	binds = slices.Clone(binds)
+	tmpfs = maps.Clone(tmpfs)
+	for _, m := range mounts {
+		var opts []string
+		if m.ReadOnly {
+			opts = append(opts, "ro")
+		}
+		switch m.Type {
+		case mount.TypeBind:
+			if m.BindOptions != nil && m.BindOptions.Propagation != "" {
+				opts = append(opts, string(m.BindOptions.Propagation))
+			}
+		case mount.TypeVolume:
+			// An anonymous volume has no name a bind could carry.
+			if m.Source == "" {
+				continue
+			}
+			if m.VolumeOptions != nil && m.VolumeOptions.NoCopy {
+				opts = append(opts, "nocopy")
+			}
+		case mount.TypeTmpfs:
+			if o := m.TmpfsOptions; o != nil {
+				if o.SizeBytes > 0 {
+					opts = append(opts, "size="+strconv.FormatInt(o.SizeBytes, 10))
+				}
+				if o.Mode != 0 {
+					opts = append(opts, fmt.Sprintf("mode=%o", uint32(o.Mode)))
+				}
+			}
+			if tmpfs == nil {
+				tmpfs = map[string]string{}
+			}
+			tmpfs[m.Target] = strings.Join(opts, ",")
+			continue
+		default:
+			continue
+		}
+		b := m.Source + ":" + m.Target
+		if len(opts) > 0 {
+			b += ":" + strings.Join(opts, ",")
+		}
+		binds = append(binds, b)
+	}
+	return binds, tmpfs
 }
 
 // buildCreateConfig builds the SDK create config/hostconfig from our captured

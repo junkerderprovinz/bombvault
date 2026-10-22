@@ -9,6 +9,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
 
@@ -170,7 +171,9 @@ func (s *Service) importedArchives(ctx context.Context, repo string, mode restic
 	if localRepoMissing(repo) {
 		return done, nil
 	}
-	snaps, err := s.engine.Snapshots(ctx, repo, mode)
+	// listSnapshots reads a remote repository that holds nothing yet as empty;
+	// the import creates it.
+	snaps, err := s.listSnapshots(ctx, repo, mode)
 	if err != nil {
 		return nil, fmt.Errorf("list the backups: %w", err)
 	}
@@ -279,7 +282,7 @@ func (s *Service) importAppdataArchive(ctx context.Context, p abPlanned, read fu
 	if err := os.MkdirAll(stagingRoot, 0o700); err != nil {
 		return fmt.Errorf("staging folder: %w", err)
 	}
-	staging, err := os.MkdirTemp(stagingRoot, "import-")
+	staging, err := os.MkdirTemp(stagingRoot, importStagingPrefix(s.instanceID()))
 	if err != nil {
 		return fmt.Errorf("staging folder: %w", err)
 	}
@@ -315,4 +318,79 @@ func (s *Service) appdataImportStaging(repo string) string {
 		return filepath.Join(s.cfg.DataDir, "import-staging")
 	}
 	return filepath.Join(filepath.Dir(repo), ".bombvault-import")
+}
+
+// importStagingPrefix starts the name of a staging folder, naming the
+// instance that made it: next to a local repository on a shared disk the
+// folder of another instance's running import can sit beside our leftovers.
+func importStagingPrefix(instance string) string {
+	if instance == "" {
+		return "import-"
+	}
+	return "import-" + instance + "-"
+}
+
+// namedImportStaging matches a staging folder that names its instance.
+var namedImportStaging = regexp.MustCompile(`^import-[0-9a-f]{32}-`)
+
+// SweepAppdataImportLeftovers removes the staging folders of an import that
+// BombVault stopped in the middle of: the deferred cleanup does not run when
+// the process is killed, and an unpacked archive can take tens of gigabytes.
+// The folders are listed before it returns and removed in the background, so
+// a large tree does not hold up the start and an import started meanwhile
+// keeps its own.
+func (s *Service) SweepAppdataImportLeftovers() {
+	leftovers := s.appdataImportLeftovers()
+	if len(leftovers) == 0 {
+		return
+	}
+	go func() {
+		for _, dir := range leftovers {
+			if err := os.RemoveAll(dir); err != nil {
+				log.Printf("api: import leftovers: %v", err)
+				continue
+			}
+			_ = os.Remove(filepath.Dir(dir))
+		}
+		log.Printf("api: removed %d staging folders of an interrupted import", len(leftovers))
+	}()
+}
+
+// appdataImportLeftovers lists the staging folders this instance left in its
+// own folder and next to the local repositories its containers use. A folder
+// from a build that did not name the instance counts once it is a day old.
+func (s *Service) appdataImportLeftovers() []string {
+	own := filepath.Join(s.cfg.DataDir, "import-staging")
+	roots := map[string]bool{own: true}
+	if settings, err := s.store.GetSettings(); err == nil {
+		targets, _ := s.store.ListTargets()
+		for _, tg := range targets {
+			if repo, err := s.containerRepoPath(settings, tg); err == nil {
+				roots[s.appdataImportStaging(repo)] = true
+			}
+		}
+	}
+	prefix := importStagingPrefix(s.instanceID())
+	var out []string
+	for root := range roots {
+		entries, err := os.ReadDir(root)
+		if err != nil {
+			continue
+		}
+		for _, e := range entries {
+			name := e.Name()
+			if !e.IsDir() || !strings.HasPrefix(name, "import-") {
+				continue
+			}
+			ours := root == own || (prefix != "import-" && strings.HasPrefix(name, prefix))
+			if !ours && !namedImportStaging.MatchString(name) {
+				info, iErr := e.Info()
+				ours = iErr == nil && time.Since(info.ModTime()) > legacySandboxAge
+			}
+			if ours {
+				out = append(out, filepath.Join(root, name))
+			}
+		}
+	}
+	return out
 }

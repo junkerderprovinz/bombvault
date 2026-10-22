@@ -310,27 +310,41 @@ func (s *Service) restoreForStartTest(ctx context.Context, settings store.Settin
 	return nil
 }
 
-// startTestBinds points the recipe's bind mounts at the restored copy of the
-// data. A bind outside the backed-up folders is dropped rather than mounted,
-// so the copy never sees the original's files, and named volumes are dropped
-// for the same reason.
+// startTestBinds points the container's mounts at the restored copy of the
+// data. A mount outside the backed-up folders is dropped rather than mounted,
+// so the copy never sees the original's files. The mounts the container ran
+// with are read next to the recipe's binds: a recipe captured by an older
+// build holds a --mount bind only there, and a named volume has its host
+// folder only there.
 func (s *Service) startTestBinds(def containerDefinition, sandbox string) []string {
 	var out []string
+	mounted := map[string]bool{}
+	add := func(src, dst, rest string) {
+		mounted[path.Clean(dst)] = true
+		cp, reachable := s.toContainerPath(src)
+		if !reachable || !slices.ContainsFunc(def.AppdataPaths, func(p string) bool { return cp == p || strings.HasPrefix(cp, p+"/") }) {
+			return
+		}
+		copied := path.Join(sandbox, cp)
+		if throughSymlink(sandbox, copied) {
+			log.Printf("api: start test: leaving out the bind %s, a symbolic link in the restored data leads it elsewhere", cp) //nolint:gosec // G706: a path of the recipe
+			return
+		}
+		out = append(out, s.toHostPath(copied)+":"+rest)
+	}
 	for _, b := range def.Inspect.HostConfig.Binds {
 		src, rest, ok := strings.Cut(b, ":")
 		if !ok || !strings.HasPrefix(src, "/") {
 			continue
 		}
-		cp, reachable := s.toContainerPath(src)
-		if !reachable || !slices.ContainsFunc(def.AppdataPaths, func(p string) bool { return cp == p || strings.HasPrefix(cp, p+"/") }) {
+		dst, _, _ := strings.Cut(rest, ":")
+		add(src, dst, rest)
+	}
+	for _, m := range def.Inspect.Mounts {
+		if (m.Type != "bind" && m.Type != "volume") || !strings.HasPrefix(m.Source, "/") || mounted[path.Clean(m.Destination)] {
 			continue
 		}
-		copied := path.Join(sandbox, cp)
-		if throughSymlink(sandbox, copied) {
-			log.Printf("api: start test: leaving out the bind %s, a symbolic link in the restored data leads it elsewhere", cp) //nolint:gosec // G706: a path of the recipe
-			continue
-		}
-		out = append(out, s.toHostPath(copied)+":"+rest)
+		add(m.Source, m.Destination, m.Destination)
 	}
 	return out
 }

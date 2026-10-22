@@ -9,7 +9,11 @@ import {
   putSettings,
   type OffsiteTarget,
 } from "../../lib/api";
-import { subscribeOffsiteTargets } from "../../lib/useOffsiteTargets";
+import { offsiteTargetsChanged, subscribeOffsiteTargets } from "../../lib/useOffsiteTargets";
+import { destinationsChanged } from "../../lib/useDestinations";
+import { reposChanged } from "../../lib/useNamedRepos";
+import { storageLocationsChanged } from "../../lib/useStorageLocations";
+import { placementChanged } from "../../lib/placementEvents";
 import { useConfirm } from "../../lib/useConfirm";
 import { pushSaveWarnings } from "../../lib/placementCodes";
 import type { Settings, Container, VM } from "../../lib/api";
@@ -27,6 +31,18 @@ function settleHookClears(s: Settings): Settings {
     everythingPreHookSet: everythingPreHookClear ? false : s.everythingPreHookSet,
     everythingPostHookSet: everythingPostHookClear ? false : s.everythingPostHookSet,
   };
+}
+
+/** adoptChangesFromElsewhere takes over what the server holds differently from
+ *  the state this page last confirmed, in every field without an unsaved edit
+ *  on this page. */
+function adoptChangesFromElsewhere(live: Settings, known: Settings, fresh: Settings): Settings {
+  const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
+  const next: Record<string, unknown> = { ...live };
+  for (const key of Object.keys(fresh) as (keyof Settings)[]) {
+    if (!same(fresh[key], known[key]) && same(live[key], known[key])) next[key] = fresh[key];
+  }
+  return next as unknown as Settings;
 }
 
 // useSettingsStore loads the settings and owns every write to them.
@@ -49,9 +65,11 @@ export function useSettingsStore() {
   }, []);
 
   const [settings, setSettings] = useState<Settings | null>(null);
-  // savedBaseline is the server's last-confirmed state. Every save merges its
-  // own fields onto this baseline rather than the live `settings`, so saving
-  // one field never commits another card's unsaved edits.
+  // savedBaseline is the server's state as this page last confirmed it. A save
+  // merges its own fields onto a fresh read rather than the live `settings`,
+  // so saving one field never commits another card's unsaved edits, and
+  // compares the read with this baseline to tell a write made elsewhere from
+  // an edit this page has not saved yet.
   //
   // It is a ref, not state. The PUT carries the full settings object, so a save
   // has to read the newest confirmed baseline when the request is built. A state
@@ -233,21 +251,33 @@ export function useSettingsStore() {
   ): Promise<boolean> {
     // Read at send time, not at call time: the previous write in the queue has
     // already advanced this ref by the time we get here.
-    const base = savedBaseline.current ?? settings;
-    if (!base) return false;
+    const known = savedBaseline.current ?? settings;
+    if (!known) return false;
     setSaveState("saving");
     setSaveError(null);
-    // Persist only this card's fields, merged onto the server baseline rather
-    // than the live `settings`, which may hold unsaved edits from other cards.
-    const updated: Settings = { ...base, ...patch };
     try {
+      // The PUT replaces the whole row, so the patch goes onto what the server
+      // holds now: another tab, another device or a storage location page may
+      // have written since this page loaded.
+      const fresh = await getSettings();
+      if (!fresh.ok) {
+        setSaveState("idle");
+        push(t("settings.error"), "fail");
+        return false;
+      }
+      const updated: Settings = { ...fresh.settings, ...patch };
       const res = await putSettings(updated);
       if (res.ok) {
-        // Advance the baseline; reflect just the saved fields in the live state so
-        // other cards' in-progress edits are left untouched.
+        // Advance the baseline; reflect the saved fields and what was written
+        // elsewhere in the live state, leaving other cards' in-progress edits
+        // untouched.
         savedBaseline.current = settleHookClears(updated);
         setSettings((prev) =>
-          settleHookClears(prev ? { ...prev, ...patch, ...(echo ? echo(prev) : null) } : updated)
+          settleHookClears(
+            prev
+              ? { ...adoptChangesFromElsewhere(prev, known, fresh.settings), ...patch, ...(echo ? echo(prev) : null) }
+              : updated
+          )
         );
         setSaveState("idle");
         setFieldPulse((p) => {
@@ -452,7 +482,8 @@ export function useSettingsStore() {
   //
   // If the reload fails, the page shows the load error rather than work from a
   // baseline it knows is stale; that unmounts every card, so no stale save can
-  // happen. The import itself has already been applied.
+  // happen. The import itself may have been applied by then, in whole or in
+  // part.
   //
   // Pending debounces are dropped here at the click, not inside the queued
   // body: a save in flight can hold the import back for a round trip, and a
@@ -464,25 +495,35 @@ export function useSettingsStore() {
     cancelAllDebounces();
     return queueSettingsWrite(async () => {
       try {
-        const res = await importSettingsApply(fileText);
-        if (!res.ok) return res;
-        const fresh = await getSettings();
-        if (fresh.ok) {
-          installSettings(fresh.settings);
-          if (fresh.hostMountRoot) setHostMountRoot(fresh.hostMountRoot);
-          if (fresh.platform) setPlatformKind(fresh.platform);
-          setPlatformSet(fresh.platformSet === true);
-        } else {
-          setLoadError("import");
-        }
-        // Domains may have been switched on or off by the import: the sidebar and
-        // layout listen for this and refetch, as they do after a save.
-        window.dispatchEvent(new Event("bv:settings-changed"));
-        return res;
+        return await importSettingsApply(fileText);
       } finally {
+        // Reloaded whatever the answer: an import that fails partway, or whose
+        // answer is lost, has still written part of the file.
+        await reloadAfterImport();
         importing.current = false;
       }
     });
+  }
+
+  async function reloadAfterImport() {
+    const fresh = await getSettings().catch(() => null);
+    if (fresh?.ok) {
+      installSettings(fresh.settings);
+      if (fresh.hostMountRoot) setHostMountRoot(fresh.hostMountRoot);
+      if (fresh.platform) setPlatformKind(fresh.platform);
+      setPlatformSet(fresh.platformSet === true);
+    } else {
+      setLoadError("import");
+    }
+    // Domains may have been switched on or off, and the off-site targets,
+    // destinations, named repositories and placement replaced: whatever shows
+    // them reads again, as after a save of their own.
+    window.dispatchEvent(new Event("bv:settings-changed"));
+    offsiteTargetsChanged();
+    destinationsChanged();
+    reposChanged();
+    storageLocationsChanged();
+    placementChanged();
   }
 
   // Leaving the page commits pending edits rather than discarding them. The

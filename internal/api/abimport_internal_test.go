@@ -307,6 +307,62 @@ func TestAnUnreadableRepositoryMarksItsArchivesAndTheScanGoesOn(t *testing.T) {
 	}
 }
 
+func TestARemoteRepositoryWithNothingInItYetTakesTheImport(t *testing.T) {
+	s, st, eng, src := importFixture(t)
+	settings, err := st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	settings.ContainersPath = "s3:s3.example.com/new-bucket/containers"
+	if err := st.UpdateSettings(settings); err != nil {
+		t.Fatal(err)
+	}
+	eng.snapsErr = errors.New("Fatal: repository does not exist: unable to open config file: Stat: The specified key does not exist.")
+
+	got, err := s.ScanAppdataBackup(context.Background(), src)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, a := range got {
+		if a.Container == "plex" && a.Status != abStatusNew {
+			t.Fatalf("%s/%s = %q, want %q", a.Folder, a.Container, a.Status, abStatusNew)
+		}
+	}
+}
+
+func TestTheStagingFoldersOfAnImportCutShortGoAtTheNextStart(t *testing.T) {
+	s, _, _, _ := importFixture(t)
+	beside := filepath.Join(s.cfg.HostMountRoot, "user", "bombvault", ".bombvault-import")
+	staged := func(root, name string) string {
+		dir := filepath.Join(root, name)
+		if err := os.MkdirAll(filepath.Join(dir, "user", "appdata", "plex"), 0o750); err != nil {
+			t.Fatal(err)
+		}
+		return dir
+	}
+	ours := staged(beside, importStagingPrefix(s.instanceID())+"123")
+	inAppData := staged(filepath.Join(s.cfg.DataDir, "import-staging"), "import-456")
+	oldUnnamed := staged(beside, "import-789")
+	dayAgo := time.Now().Add(-48 * time.Hour)
+	if err := os.Chtimes(oldUnnamed, dayAgo, dayAgo); err != nil {
+		t.Fatal(err)
+	}
+	otherInstance := staged(beside, importStagingPrefix(strings.Repeat("b", 32))+"321")
+	freshUnnamed := staged(beside, "import-654")
+
+	s.SweepAppdataImportLeftovers()
+	gone := func(dir string) bool {
+		_, err := os.Stat(dir)
+		return errors.Is(err, fs.ErrNotExist)
+	}
+	waitFor(t, "the leftovers to go", func() bool { return gone(ours) && gone(inAppData) && gone(oldUnnamed) })
+	for _, dir := range []string{otherInstance, freshUnnamed} {
+		if gone(dir) {
+			t.Errorf("%s was removed, but an import of another instance may still use it", filepath.Base(dir))
+		}
+	}
+}
+
 func TestTheLastImportEventCountsTheArchivesThatFailed(t *testing.T) {
 	s, _, eng, src := importFixture(t)
 	eng.failFor = "plex"

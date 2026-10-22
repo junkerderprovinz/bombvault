@@ -341,6 +341,40 @@ func TestRestoreKeepsLogOptions(t *testing.T) {
 	}
 }
 
+// docker run --mount and compose's long volume syntax leave Binds empty and
+// put the mounts in HostConfig.Mounts; the restored container gets them back.
+func TestRestoreKeepsMountsMadeWithMount(t *testing.T) {
+	src := &container.HostConfig{
+		Binds: []string{"/mnt/user/appdata/app/logs:/logs"},
+		Mounts: []mount.Mount{
+			{Type: mount.TypeBind, Source: "/mnt/user/appdata/app", Target: "/config"},
+			{Type: mount.TypeBind, Source: "/mnt/user/media", Target: "/media", ReadOnly: true, BindOptions: &mount.BindOptions{Propagation: mount.PropagationRSlave}},
+			{Type: mount.TypeVolume, Source: "app-cache", Target: "/cache", VolumeOptions: &mount.VolumeOptions{NoCopy: true}},
+			{Type: mount.TypeVolume, Target: "/scratch"},
+			{Type: mount.TypeTmpfs, Target: "/tmp", TmpfsOptions: &mount.TmpfsOptions{SizeBytes: 65536, Mode: 0o1777}},
+		},
+	}
+	hc := restoredHostConfig(t, container.InspectResponse{
+		ContainerJSONBase: &container.ContainerJSONBase{Name: "/app", HostConfig: src},
+		Config:            &container.Config{Image: "alpine"},
+	})
+	want := []string{
+		"/mnt/user/appdata/app/logs:/logs",
+		"/mnt/user/appdata/app:/config",
+		"/mnt/user/media:/media:ro,rslave",
+		"app-cache:/cache:nocopy",
+	}
+	if !slices.Equal(hc.Binds, want) {
+		t.Fatalf("binds = %q, want %q", hc.Binds, want)
+	}
+	if hc.Tmpfs["/tmp"] != "size=65536,mode=1777" {
+		t.Fatalf("tmpfs = %v", hc.Tmpfs)
+	}
+	if len(src.Binds) != 1 {
+		t.Fatalf("the inspected binds were changed: %q", src.Binds)
+	}
+}
+
 // A definition stored before limits were recorded must restore with Docker's
 // defaults, not with a zero limit or an empty log driver.
 func TestRestoreFromAnOlderDefinitionLeavesLimitsUnset(t *testing.T) {

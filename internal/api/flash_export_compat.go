@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"path"
 	"path/filepath"
@@ -102,19 +103,20 @@ func copyZipEntry(zw *zip.Writer, f *zip.File) error {
 // dumpFlashZipCompat runs engine.DumpZip and passes its output through
 // recompressFlashZip on the way to dst. Reading a zip needs random access,
 // which the HTTP response or an age pipe cannot give, so the dump is staged
-// in a scratch file under DataDir that is removed afterwards.
+// in a scratch file under DataDir that is removed afterwards. Each call gets
+// a scratch file of its own, since two downloads and the export after a
+// flash backup can all run at once.
 func (s *Service) dumpFlashZipCompat(ctx context.Context, repo, snapshotID, subfolder string, dst io.Writer, mode restic.Mode) error {
-	tmp := filepath.Join(s.cfg.DataDir, ".flash-download.tmp.zip")
 	if err := os.MkdirAll(s.cfg.DataDir, 0o700); err != nil { //nolint:gosec // G301: app-private data dir, not shared
-		return fmt.Errorf("flash download: create data dir: %w", err)
+		return fmt.Errorf("flash zip: create data dir: %w", err)
 	}
-	f, err := os.Create(tmp) //nolint:gosec // G304: fixed path under the app's own DataDir, not user input
+	f, err := os.CreateTemp(s.cfg.DataDir, ".flash-download-*.zip")
 	if err != nil {
-		return fmt.Errorf("flash download: create scratch file: %w", err)
+		return fmt.Errorf("flash zip: create scratch file: %w", err)
 	}
 	defer func() {
 		_ = f.Close()
-		_ = os.Remove(tmp) //nolint:gosec // G104: best-effort scratch cleanup, never the deliverable
+		_ = os.Remove(f.Name()) //nolint:gosec // G104: best-effort scratch cleanup, never the deliverable
 	}()
 
 	if err := s.engine.DumpZip(ctx, repo, snapshotID, subfolder, f, mode); err != nil {
@@ -122,10 +124,22 @@ func (s *Service) dumpFlashZipCompat(ctx context.Context, repo, snapshotID, subf
 	}
 	fi, err := f.Stat()
 	if err != nil {
-		return fmt.Errorf("flash download: stat scratch file: %w", err)
+		return fmt.Errorf("flash zip: stat scratch file: %w", err)
 	}
 	if err := recompressFlashZip(f, fi.Size(), dst); err != nil {
-		return fmt.Errorf("flash download: recompress: %w", err)
+		return fmt.Errorf("flash zip: recompress: %w", err)
 	}
 	return nil
+}
+
+// SweepFlashZipScratch removes the scratch files of flash zips that were
+// being built when BombVault stopped. Each has a name of its own, so no later
+// run overwrites one.
+func (s *Service) SweepFlashZipScratch() {
+	left, _ := filepath.Glob(filepath.Join(s.cfg.DataDir, ".flash-download*.zip"))
+	for _, f := range left {
+		if err := os.Remove(f); err != nil {
+			log.Printf("api: flash zip scratch: %v", err)
+		}
+	}
 }

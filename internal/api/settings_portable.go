@@ -938,11 +938,16 @@ func settingsGroups(v settingsView) []string {
 // applyImport writes a validated export: the settings row, a full replace of the
 // off-site targets, and any credentials (re-encrypted with the local APP_KEY). It
 // never touches repos, snapshots or run history.
-func (h *Handler) applyImport(ctx context.Context, exp settingsExport) error {
+func (h *Handler) applyImport(ctx context.Context, exp settingsExport) (err error) {
 	installed, err := h.installedForImport(ctx, exp)
 	if err != nil {
 		return fmt.Errorf("the settings were not imported: %w", err)
 	}
+	writeReplica, releaseReplica, err := h.claimImportedZFSReplica(exp)
+	if err != nil {
+		return fmt.Errorf("the settings were not imported: %w", err)
+	}
+	defer releaseReplica()
 
 	// Map the imported view onto the CURRENT row, PRESERVING the per-instance
 	// fields the file intentionally omits (auth password, session epoch,
@@ -987,6 +992,13 @@ func (h *Handler) applyImport(ctx context.Context, exp settingsExport) error {
 	}); err != nil {
 		return err
 	}
+	// The row is written from here on, so whichever later step fails, the
+	// primary targets and the scheduler still follow what did land.
+	defer func() {
+		if serr := h.settleImport(); err == nil {
+			err = serr
+		}
+	}()
 	if anomalyChanged {
 		h.svc.anomalies.settingsChanged()
 	}
@@ -1059,13 +1071,14 @@ func (h *Handler) applyImport(ctx context.Context, exp settingsExport) error {
 	if err := h.applyImportedIntegrations(exp); err != nil {
 		return err
 	}
-	if err := h.applyImportedZFSReplica(exp); err != nil {
-		return err
-	}
+	return writeReplica()
+}
 
-	// Mirror the imported off-site config into the primary off-site target rows and
-	// re-arm the scheduler, exactly like a settings save, so the imported schedules
-	// take effect. The scheduler may be absent in a stripped test wiring — guard it.
+// settleImport mirrors the imported off-site config into the primary off-site
+// target rows and re-arms the scheduler, exactly like a settings save, so the
+// imported schedules take effect. The scheduler may be absent in a stripped
+// test wiring.
+func (h *Handler) settleImport() error {
 	s, err := h.svc.settleLinkedPrimaries()
 	if err != nil {
 		return err

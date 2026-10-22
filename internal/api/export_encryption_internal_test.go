@@ -123,11 +123,10 @@ func TestWriteExportFileAge(t *testing.T) {
 // decrypts to the DumpZip payload.
 func TestExportFlashZipAgeRoundTrip(t *testing.T) {
 	root := t.TempDir()
-	payload := []byte("PK\x03\x04sealed")
-	fake := &flashZipFakeEngine{dumpBytes: payload}
+	fake := &flashZipFakeEngine{dumpBytes: buildTestStoredZip(t, map[string][]byte{"bzimage": []byte("sealed")})}
 	id, _ := age.GenerateX25519Identity()
 	svc := &Service{
-		cfg:    config.Config{HostMountRoot: root, FlashDir: "/boot"},
+		cfg:    config.Config{HostMountRoot: root, DataDir: t.TempDir(), FlashDir: "/boot"},
 		engine: fake,
 		store:  newFlashExportStore(t),
 	}
@@ -148,8 +147,12 @@ func TestExportFlashZipAgeRoundTrip(t *testing.T) {
 	if err != nil {
 		t.Fatalf("read sealed zip: %v", err)
 	}
-	if got := ageRoundTripDecrypt(t, raw, id); !bytes.Equal(got, payload) {
-		t.Fatalf("decrypted zip = %q, want the DumpZip payload", got)
+	plain := filepath.Join(t.TempDir(), "flash.zip")
+	if err := os.WriteFile(plain, ageRoundTripDecrypt(t, raw, id), 0o600); err != nil { //nolint:gosec // G703: the test's own TempDir
+		t.Fatal(err)
+	}
+	if got := readZipEntry(t, plain, "bzimage"); string(got) != "sealed" {
+		t.Fatalf("decrypted zip holds %q, want the dumped snapshot", got)
 	}
 	// The plaintext temp must be gone.
 	if _, err := os.Stat(filepath.Join(dir, ".flash-export.tmp.zip")); !os.IsNotExist(err) {

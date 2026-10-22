@@ -193,12 +193,15 @@ func zfsReplicaGroups(exp settingsExport) []string {
 	return nil
 }
 
-// applyImportedZFSReplica writes the replica block of a file. A file from a
-// build without it leaves this instance's servers and settings alone.
-func (h *Handler) applyImportedZFSReplica(exp settingsExport) error {
+// claimImportedZFSReplica takes the replica locks the replica block of a file
+// needs and returns the write of that block. The import claims them before
+// it writes anything, so a run in progress refuses the whole import instead
+// of stopping it halfway. A file from a build without the block leaves this
+// instance's servers and settings alone.
+func (h *Handler) claimImportedZFSReplica(exp settingsExport) (write func() error, release func(), err error) {
 	rep := exp.ZFSReplica
 	if rep == nil {
-		return nil
+		return func() error { return nil }, func() {}, nil
 	}
 	in := store.ZFSReplicaImport{Items: map[string]store.ZFSReplica{}}
 	for _, s := range rep.Servers {
@@ -213,20 +216,21 @@ func (h *Handler) applyImportedZFSReplica(exp settingsExport) error {
 			AfterBackup: it.AfterBackup, Cadence: it.Cadence, Keep: it.Keep,
 		}
 	}
-	return h.svc.importZFSReplica(in)
+	return h.svc.claimZFSReplicaImport(in)
 }
 
-// importZFSReplica writes an imported replica block the way the forms would:
-// every item it gives another target, or whose server it drops or moves, has
-// its replica lock taken first, and leaving a target cleans the item's tree.
-func (s *Service) importZFSReplica(in store.ZFSReplicaImport) error {
+// claimZFSReplicaImport takes the replica lock of every item an imported
+// replica block gives another target, or whose server it drops or moves, and
+// returns the write that applies the block the way the forms would: leaving a
+// target cleans the item's tree.
+func (s *Service) claimZFSReplicaImport(in store.ZFSReplicaImport) (write func() error, release func(), err error) {
 	items, err := s.store.ListZFSDatasets()
 	if err != nil {
-		return err
+		return nil, nil, err
 	}
 	servers, err := s.store.ListZFSReplicaServers()
 	if err != nil {
-		return err
+		return nil, nil, err
 	}
 	incoming := make(map[string]store.ZFSReplicaServer, len(in.Servers))
 	for _, srv := range in.Servers {
@@ -254,11 +258,12 @@ func (s *Service) importZFSReplica(in store.ZFSReplicaImport) error {
 	}
 	unlock, ok := s.lockZFSReplicas(touched)
 	if !ok {
-		return errZFSReplicaBusy
+		return nil, nil, errZFSReplicaBusy
 	}
-	defer unlock()
-	for _, d := range leaving {
-		s.cleanZFSReplicaSource(context.Background(), d)
-	}
-	return s.store.ImportZFSReplica(in)
+	return func() error {
+		for _, d := range leaving {
+			s.cleanZFSReplicaSource(context.Background(), d)
+		}
+		return s.store.ImportZFSReplica(in)
+	}, unlock, nil
 }

@@ -228,3 +228,28 @@ func TestAnImportThatDropsAServerCleansItsItemsAndWaitsForTheirRuns(t *testing.T
 		t.Error("the import kept the item's lock")
 	}
 }
+
+func TestAnImportRefusedForAReplicaRunWritesNothingElse(t *testing.T) {
+	src, srcStore := newPortableHandler(t, appKeyA)
+	seedSource(t, src, srcStore)
+	body, _ := doExport(t, src, "")
+
+	dst, dstStore := newPortableHandler(t, appKeyB)
+	_, item := seedReplica(t, dstStore)
+	unlock, _ := dst.svc.lockZFSReplica(item.ID)
+	defer unlock()
+	if env := doImport(t, dst, body, "?apply=true"); env["ok"] != false {
+		t.Fatalf("an import while the item replicates = %v, want it refused", env)
+	}
+
+	s, err := dstStore.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if s.ContainersSchedule == "daily 02:00" || s.ContainersOffsite != "" {
+		t.Errorf("the refused import wrote the settings row: schedule %q, off-site %q", s.ContainersSchedule, s.ContainersOffsite)
+	}
+	if targets, _ := dstStore.ListOffsiteTargets(); len(targets) != 0 {
+		t.Errorf("the refused import wrote %d off-site targets", len(targets))
+	}
+}

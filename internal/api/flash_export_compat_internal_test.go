@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/junkerderprovinz/bombvault/internal/config"
@@ -255,8 +256,92 @@ func TestDumpFlashZipCompatRecompressesAndFilters(t *testing.T) {
 		t.Fatalf("bzfirmware method = %v, want Deflate", zr.File[0].Method)
 	}
 
-	if _, statErr := os.Stat(filepath.Join(dataDir, ".flash-download.tmp.zip")); !os.IsNotExist(statErr) {
-		t.Fatalf("scratch file must be removed, stat err = %v", statErr)
+	if left, _ := os.ReadDir(dataDir); len(left) != 0 {
+		t.Fatalf("scratch file must be removed, data dir holds %v", left)
+	}
+}
+
+func TestTheScratchOfAFlashZipCutShortGoesAtTheNextStart(t *testing.T) {
+	dataDir := t.TempDir()
+	for _, name := range []string{".flash-download-123.zip", ".flash-download.tmp.zip", "bombvault.db"} {
+		if err := os.WriteFile(filepath.Join(dataDir, name), []byte("x"), 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	(&Service{cfg: config.Config{DataDir: dataDir}}).SweepFlashZipScratch()
+	left, _ := os.ReadDir(dataDir)
+	if len(left) != 1 || left[0].Name() != "bombvault.db" {
+		t.Fatalf("data dir holds %v, want only bombvault.db", left)
+	}
+}
+
+// gatedDumpEngine writes the first half of each dump, waits for the gate and
+// writes the rest, so two dumps can be held in flight together.
+type gatedDumpEngine struct {
+	ResticEngine
+	dumps   map[string][]byte
+	started chan string
+	gate    chan struct{}
+}
+
+func (e *gatedDumpEngine) DumpZip(_ context.Context, _, snapshotID, _ string, w io.Writer, _ restic.Mode) error {
+	raw := e.dumps[snapshotID]
+	half := len(raw) / 2
+	if _, err := w.Write(raw[:half]); err != nil {
+		return err
+	}
+	e.started <- snapshotID
+	<-e.gate
+	_, err := w.Write(raw[half:])
+	return err
+}
+
+func TestTwoFlashDownloadsAtOnceEachGetTheirOwnSnapshot(t *testing.T) {
+	type result struct {
+		want []byte
+		out  bytes.Buffer
+		err  error
+	}
+	results := map[string]*result{
+		"yesterday": {want: bytes.Repeat([]byte("yesterday "), 200)},
+		"lastweek":  {want: bytes.Repeat([]byte("last week "), 300)},
+	}
+	eng := &gatedDumpEngine{dumps: map[string][]byte{}, started: make(chan string, 2), gate: make(chan struct{})}
+	for snap, r := range results {
+		eng.dumps[snap] = buildTestStoredZip(t, map[string][]byte{"config/ident.cfg": r.want})
+	}
+	svc := &Service{cfg: config.Config{DataDir: t.TempDir()}, engine: eng}
+
+	var wg sync.WaitGroup
+	for snap, r := range results {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			r.err = svc.dumpFlashZipCompat(context.Background(), "repo", snap, "/boot", &r.out, restic.Mode{})
+		}()
+	}
+	<-eng.started
+	<-eng.started
+	close(eng.gate)
+	wg.Wait()
+
+	for snap, r := range results {
+		if r.err != nil {
+			t.Fatalf("%s: %v", snap, r.err)
+		}
+		zr, err := zip.NewReader(bytes.NewReader(r.out.Bytes()), int64(r.out.Len()))
+		if err != nil {
+			t.Fatalf("%s: not a zip: %v", snap, err)
+		}
+		f, err := zr.Open("config/ident.cfg")
+		if err != nil {
+			t.Fatalf("%s: %v", snap, err)
+		}
+		got, err := io.ReadAll(f)
+		_ = f.Close()
+		if err != nil || !bytes.Equal(got, r.want) {
+			t.Fatalf("%s: ident.cfg = %d bytes (%v), want the %d bytes of its own snapshot", snap, len(got), err, len(r.want))
+		}
 	}
 }
 
@@ -275,7 +360,7 @@ func TestDumpFlashZipCompatDumpErrorCleansUpTempFile(t *testing.T) {
 	if out.Len() != 0 {
 		t.Fatal("no bytes may be written to dst when the dump fails")
 	}
-	if _, statErr := os.Stat(filepath.Join(dataDir, ".flash-download.tmp.zip")); !os.IsNotExist(statErr) {
-		t.Fatalf("scratch file must be removed even on dump error, stat err = %v", statErr)
+	if left, _ := os.ReadDir(dataDir); len(left) != 0 {
+		t.Fatalf("scratch file must be removed even on dump error, data dir holds %v", left)
 	}
 }
