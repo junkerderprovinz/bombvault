@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"slices"
 	"strings"
 
 	"github.com/junkerderprovinz/bombvault/internal/backup"
@@ -577,28 +578,65 @@ func (s *Service) zfsItemSnapshots(ctx context.Context, d store.ZFSDataset, sour
 		}
 		return nil, nil
 	}
+	owns, err := s.zfsOwnsDataset(d)
+	if err != nil {
+		return nil, err
+	}
 	all, err := s.listSnapshots(ctx, repo, s.repoModeFor(settings, zfsDomain, source, repo))
 	if err != nil {
 		return nil, err
 	}
 	out := make([]restic.Snapshot, 0, len(all))
 	for _, snap := range all {
-		if zfsSnapshotInTree(snap, d.Dataset) {
+		if zfsSnapshotInTree(snap, d.Dataset, owns) {
 			out = append(out, snap)
 		}
 	}
 	return out, nil
 }
 
-// zfsSnapshotInTree reports whether a snapshot belongs to the tree under root.
-func zfsSnapshotInTree(snap restic.Snapshot, root string) bool {
+// zfsSnapshotInTree reports whether a snapshot holds a dataset of the tree
+// under root that owns gives to the item.
+func zfsSnapshotInTree(snap restic.Snapshot, root string, owns func(dataset string) bool) bool {
 	for _, tag := range snap.Tags {
 		dataset, ok := strings.CutPrefix(tag, "zfs:")
-		if ok && (dataset == root || zfs.DescendantOf(dataset, root)) {
+		if ok && (dataset == root || zfs.DescendantOf(dataset, root)) && owns(dataset) {
 			return true
 		}
 	}
 	return false
+}
+
+// zfsOwnsDataset returns whether a dataset under d's root holds d's backups.
+// An item can sit inside the tree of another that leaves it out, and both may
+// write to the same repository. A dataset belongs to the item whose newest run
+// recorded it, as ZFSDatasetOwners says; one that no existing item's run
+// recorded belongs to the item whose root lies deepest above it.
+func (s *Service) zfsOwnsDataset(d store.ZFSDataset) (func(dataset string) bool, error) {
+	items, err := s.store.ListZFSDatasets()
+	if err != nil {
+		return nil, err
+	}
+	owners, err := s.store.ZFSDatasetOwners()
+	if err != nil {
+		return nil, err
+	}
+	exists := make(map[string]bool, len(items))
+	var nested []string
+	for _, it := range items {
+		exists[it.ID] = true
+		if it.ID != d.ID && zfs.DescendantOf(it.Dataset, d.Dataset) {
+			nested = append(nested, it.Dataset)
+		}
+	}
+	return func(dataset string) bool {
+		if owner, ok := owners[dataset]; ok && exists[owner] {
+			return owner == d.ID
+		}
+		return !slices.ContainsFunc(nested, func(root string) bool {
+			return dataset == root || zfs.DescendantOf(dataset, root)
+		})
+	}, nil
 }
 
 // zfsDatasetRepoFor resolves where one item's snapshots are for a given source.
