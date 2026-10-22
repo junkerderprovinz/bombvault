@@ -6620,6 +6620,23 @@ func TestRunDRDrillRecordsNothingForAnOffsiteWithoutBackups(t *testing.T) {
 	}
 }
 
+// A bucket that was deleted lists as empty, the way one never copied to does,
+// but a drill restored from it before.
+func TestRunDRDrillRecordsAnOffsiteThatWasEmptied(t *testing.T) {
+	svc, st := drDrillService(t, &fakeResticEngine{}, "containers", "rest:http://192.168.20.9:8000/containers", "plex")
+	if err := st.AddRestoreDrill(store.RestoreDrill{Domain: "containers", Source: "offsite", Kind: "dr", At: time.Now().Unix() - 3600, OK: true, SnapshotID: "aaaa1111"}); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := svc.RunRestoreDrill(context.Background(), "containers", "offsite", "dr", false); err == nil || !strings.Contains(err.Error(), "holds no backups now") {
+		t.Fatalf("err = %v, want the emptied off-site", err)
+	}
+	latest, found, err := st.LatestRestoreDrillKind("containers", "offsite", "dr")
+	if err != nil || !found || latest.OK || !strings.Contains(latest.Detail, "holds no backups now") {
+		t.Fatalf("latest dr drill = %+v, found %v, %v; want a failed row that says the off-site is empty", latest, found, err)
+	}
+}
+
 // TestRunDRDrillFailureNotifiesAndRecords pins the failure path: when the restored
 // sandbox does not match restic's restore-size accounting, the drill fails, is
 // recorded kind='dr' ok=false, surfaces an error, and the sandbox is still cleaned.

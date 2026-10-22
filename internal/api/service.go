@@ -17006,6 +17006,11 @@ var errNothingToDrill = errors.New("no restorable file data in the newest off-si
 // about.
 var errNoDRSnapshots = errors.New("no off-site backups to drill yet")
 
+// errOffsiteEmptied is an off-site that holds nothing although a drill
+// restored from it before: its bucket or repository was deleted or wiped, or
+// its snapshots were forgotten.
+var errOffsiteEmptied = errors.New("the off-site copy a drill restored from before holds no backups now: its bucket or repository may be gone")
+
 // runDRDrill performs a real off-site disaster-recovery drill for a domain: it
 // restores the newest off-site snapshot of the drill target into a marker-guarded
 // sandbox under the restore folder, verifies the restored file count + bytes
@@ -17107,18 +17112,26 @@ func (s *Service) runDRDrill(ctx context.Context, domain, source string, wait bo
 	mode := s.offsiteModeForTarget(settings, target)
 	// A local off-site folder that is missing has never been copied to, unless
 	// it was and its disk is not mounted now.
+	var snapID, item string
 	if localRepoMissing(repo) {
 		if s.repoEstablished(repo) && !s.destinationMounted(repo) {
 			err = ErrBackupPathNotMounted
 			return s.recordDRUnreachable(ctx, domain, source, wait, err), err
 		}
-		return store.RestoreDrill{}, errNoDRSnapshots
+		err = errNoDRSnapshots
+	} else {
+		listCtx, listCancel := context.WithTimeout(drillCtx, drillSnapshotTimeout)
+		snapID, item, err = s.pickDRSnapshot(listCtx, domain, settings, repo, mode)
+		listCancel()
 	}
-	listCtx, listCancel := context.WithTimeout(drillCtx, drillSnapshotTimeout)
-	snapID, item, err := s.pickDRSnapshot(listCtx, domain, settings, repo, mode)
-	listCancel()
 	if unread := (offsiteUnreadable{}); errors.As(err, &unread) {
 		return s.recordDRUnreachable(ctx, domain, source, wait, unread.err), err
+	}
+	if errors.Is(err, errNoDRSnapshots) {
+		if before, bErr := s.store.DrilledSnapshotBefore(domain, source); bErr == nil && before {
+			err = errOffsiteEmptied
+			return s.recordDRUnreachable(ctx, domain, source, wait, err), err
+		}
 	}
 	if err != nil {
 		return store.RestoreDrill{}, err

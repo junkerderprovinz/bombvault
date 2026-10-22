@@ -94,6 +94,18 @@ func (r *Repo) LatestRestoreDrillKind(domain, source, kind string) (RestoreDrill
 	return d, true, nil
 }
 
+// DrilledSnapshotBefore reports whether a DR drill of a domain and source ever
+// restored a snapshot, passed or not.
+func (r *Repo) DrilledSnapshotBefore(domain, source string) (bool, error) {
+	var found bool
+	err := r.db.QueryRow(`SELECT EXISTS (SELECT 1 FROM restore_drills
+		WHERE domain = ? AND source = ? AND kind = 'dr' AND snapshot_id <> '')`, domain, source).Scan(&found)
+	if err != nil {
+		return false, fmt.Errorf("DrilledSnapshotBefore: %w", err)
+	}
+	return found, nil
+}
+
 // ListRestoreDrills returns up to limit drills for a domain and source, newest
 // first. A limit of 0 or less falls back to defaultRestoreDrillLimit.
 func (r *Repo) ListRestoreDrills(domain, source string, limit int) ([]RestoreDrill, error) {
