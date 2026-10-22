@@ -9,7 +9,6 @@ import (
 
 	"github.com/junkerderprovinz/bombvault/internal/backup"
 	"github.com/junkerderprovinz/bombvault/internal/paths"
-	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
 // foreignExtractTarget is the run target of a container's or VM's files
@@ -109,7 +108,7 @@ func (s *Service) StartForeignExtract(ctx context.Context, sessionID, domain, it
 	key := "extract:" + domain + ":" + item
 	var runID string
 	run := func(rctx context.Context) error {
-		id, err := s.store.StartRunWith(plan.setID, "restore", store.RunMeta{Subject: item})
+		id, err := s.startRun(withRunSubject(rctx, item), plan.setID, "restore")
 		if err != nil {
 			log.Printf("api: foreign extract: record the run of %q: %v", item, err) //nolint:gosec // G706: item is %q-quoted
 		}
