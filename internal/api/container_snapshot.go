@@ -535,25 +535,37 @@ func (s *Service) RecoverContainerRestarts(ctx context.Context) {
 	}
 	backup.RestartInOrder(ctx, s.docker, deps, false, 0)
 
+	// One attempt, as a backup's own restart makes. A container that does not
+	// come up is reported and forgotten: kept, it would be started at every
+	// later boot, long after somebody chose to leave it off.
 	started := 0
-	running := forget
+	var failed []string
 	for _, dep := range deps {
+		forget = append(forget, dep.Name)
 		if in, err := s.docker.Inspect(ctx, dep.ID); err == nil && in.Running {
-			running = append(running, dep.Name)
 			started++
+		} else {
+			failed = append(failed, dep.Name)
 		}
 	}
-	if err := s.store.ClearContainersStopped(running); err != nil {
+	if err := s.store.ClearContainersStopped(forget); err != nil {
 		log.Printf("api: clearing the record of the restarted containers failed: %v", err)
 	}
-	if started == 0 {
-		return
+	if started > 0 {
+		s.notifyZFSUnsuppressed(notify.Event{
+			Title:   "BombVault",
+			Message: strconv.Itoa(started) + " containers were left stopped by an interrupted backup and have been started again",
+			OK:      true,
+		})
 	}
-	s.notifyZFSUnsuppressed(notify.Event{
-		Title:   "BombVault",
-		Message: strconv.Itoa(started) + " containers were left stopped by an interrupted backup and have been started again",
-		OK:      true,
-	})
+	if len(failed) > 0 {
+		log.Printf("api: %s, left stopped by an interrupted backup, did not start again", strings.Join(failed, ", ")) //nolint:gosec // G706: container names Docker reported
+		s.notifyZFSUnsuppressed(notify.Event{
+			Title:   "BombVault",
+			Message: "An interrupted backup left these containers stopped, and they did not start again: " + strings.Join(failed, ", "),
+			OK:      false,
+		})
+	}
 }
 
 // runIDRecorder keeps the id of the backup run a container backup started, so

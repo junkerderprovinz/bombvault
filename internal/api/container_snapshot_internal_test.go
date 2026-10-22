@@ -544,20 +544,26 @@ func TestRecoverContainerRestartsStartsWhatABackupLeftStopped(t *testing.T) {
 	}
 }
 
-func TestRecoverContainerRestartsKeepsAContainerThatStaysDown(t *testing.T) {
+// One attempt at boot, as after a backup: kept, a container that does not
+// come up would be started at every later boot, after somebody left it off.
+func TestRecoverContainerRestartsTriesOnceAndSaysWhatStayedDown(t *testing.T) {
 	dock := newZFSFakeDocker("db", "web")
 	dock.containers["db"].running = false
 	dock.containers["web"].running = false
 	dock.containers["web"].startLeavesDown = true
 	s, st := restartFixture(t, dock)
+	messages := zfsCaptureNotifications(t, s)
 	if err := st.MarkContainersStopped([]string{"db", "web"}, 1); err != nil {
 		t.Fatal(err)
 	}
 
 	s.RecoverContainerRestarts(context.Background())
 
-	if left, _ := st.ListContainersStopped(); !slices.Equal(left, []string{"web"}) {
-		t.Fatalf("recorded %v, want web alone for the next boot", left)
+	if left, _ := st.ListContainersStopped(); len(left) != 0 {
+		t.Fatalf("recorded %v, want nothing kept for the next boot", left)
+	}
+	if !zfsAnyMessageContains(messages(), "did not start again: web") {
+		t.Fatalf("notifications = %v, want web named as still down", messages())
 	}
 }
 

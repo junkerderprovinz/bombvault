@@ -3402,6 +3402,14 @@ UPDATE pull_sources SET leftovers_moved = 0;`,
 		alreadySatisfied: columnPresent("passkeys", "user_verified"),
 		sql:              `ALTER TABLE passkeys ADD COLUMN user_verified INTEGER NOT NULL DEFAULT 0;`,
 	},
+	{
+		// Earlier versions kept the record of a container that did not start
+		// after its backup for good, so every boot started it again. A record
+		// a day old is no backup that died just now.
+		version: staleRestartsMigration,
+		name:    "container_restart_pending_stale",
+		sql:     `DELETE FROM container_restart_pending WHERE added_at < CAST(strftime('%s', 'now') AS INTEGER) - 86400;`,
+	},
 }
 
 // offsiteFieldDomains are the domains with an off-site field in the settings,
@@ -3661,6 +3669,10 @@ const removedPhonesMigration = 510
 // passkeyVerifiedMigration numbers whether a passkey checked its holder at
 // registration.
 const passkeyVerifiedMigration = 520
+
+// staleRestartsMigration numbers the clearing of old container restart
+// records.
+const staleRestartsMigration = 530
 
 // oneLineColumns are the names and locations the recovery kit prints.
 var oneLineColumns = []struct {
