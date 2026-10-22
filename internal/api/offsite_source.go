@@ -1,11 +1,14 @@
 package api
 
 import (
+	"context"
 	"fmt"
+	"net/http"
 	"net/url"
 	"regexp"
 	"slices"
 	"strings"
+	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/store"
@@ -115,6 +118,10 @@ func s3ThroughRclone(loc string, c CloudCreds) (string, []string, error) {
 	if region == "" {
 		region = awsRegionOf(u.Hostname())
 	}
+	if region == "" && strings.EqualFold(u.Hostname(), "s3.amazonaws.com") {
+		bucket, _, _ := strings.Cut(path, "/")
+		region = bucketRegion(u.Scheme+"://"+u.Host, bucket)
+	}
 	if region != "" {
 		env = append(env, prefix+"REGION="+region)
 	}
@@ -134,6 +141,26 @@ func awsRegionOf(host string) string {
 		return m[1]
 	}
 	return ""
+}
+
+// bucketRegion asks AWS which region a bucket behind its global endpoint is
+// in, "" when it does not say. A HEAD on the bucket carries the region in a
+// header even when the request may not read the bucket or is sent on to the
+// regional endpoint.
+var bucketRegion = func(endpoint, bucket string) string {
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+	req, err := http.NewRequestWithContext(ctx, http.MethodHead, endpoint+"/"+url.PathEscape(bucket), nil)
+	if err != nil {
+		return ""
+	}
+	client := &http.Client{CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }}
+	resp, err := client.Do(req)
+	if err != nil {
+		return ""
+	}
+	_ = resp.Body.Close()
+	return resp.Header.Get("X-Amz-Bucket-Region")
 }
 
 // restWithLogin puts a login into a rest-server address, which restic reads
