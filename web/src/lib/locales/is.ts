@@ -1224,6 +1224,7 @@ const is: Partial<Translations> = {
   "dashboard.rpoOverdue": "Á gjalddaga",
   "dashboard.rpoOff": "Ekki áætlað",
   "dashboard.rpoViaEverything": "{cadence}, með heildarafritun",
+  "dashboard.rpoEntries": "Hver færsla eftir eigin áætlun",
   "dashboard.domainContainers": "Gámar",
   "dashboard.domainVMs": "Sýndarvélar",
   "dashboard.domainFlash": "Flash",

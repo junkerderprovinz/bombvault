@@ -1224,6 +1224,7 @@ const et: Partial<Translations> = {
   "dashboard.rpoOverdue": "Tähtaeg möödas",
   "dashboard.rpoOff": "Pole plaanitud",
   "dashboard.rpoViaEverything": "{cadence}, täisvarunduse kaudu",
+  "dashboard.rpoEntries": "Iga kirje oma ajakava järgi",
   "dashboard.domainContainers": "Konteinerid",
   "dashboard.domainVMs": "VM-id",
   "dashboard.domainFlash": "Flash",

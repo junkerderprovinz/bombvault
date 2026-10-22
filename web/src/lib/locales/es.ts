@@ -1241,6 +1241,7 @@ const es: Partial<Translations> = {
   "dashboard.rpoOverdue": "Atrasado",
   "dashboard.rpoOff": "Sin programar",
   "dashboard.rpoViaEverything": "{cadence}, mediante la copia total",
+  "dashboard.rpoEntries": "Cada entrada con su propia programación",
   "dashboard.domainContainers": "Contenedores",
   "dashboard.domainVMs": "VMs",
   "dashboard.domainFlash": "Flash",

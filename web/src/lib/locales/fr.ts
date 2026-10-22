@@ -1235,6 +1235,7 @@ const fr: Partial<Translations> = {
   "dashboard.rpoOverdue": "En retard",
   "dashboard.rpoOff": "Non planifié",
   "dashboard.rpoViaEverything": "{cadence}, via la sauvegarde complète",
+  "dashboard.rpoEntries": "Chaque entrée selon sa propre planification",
   "dashboard.domainContainers": "Conteneurs",
   "dashboard.domainVMs": "VMs",
   "dashboard.domainFlash": "Flash",

@@ -1224,6 +1224,7 @@ const lv: Partial<Translations> = {
   "dashboard.rpoOverdue": "Nokavēts",
   "dashboard.rpoOff": "Nav ieplānots",
   "dashboard.rpoViaEverything": "{cadence}, ar pilnu rezerves kopiju",
+  "dashboard.rpoEntries": "Katrs ieraksts pēc sava grafika",
   "dashboard.domainContainers": "Konteineri",
   "dashboard.domainVMs": "VM",
   "dashboard.domainFlash": "Flash",

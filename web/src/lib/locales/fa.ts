@@ -1224,6 +1224,7 @@ const fa: Partial<Translations> = {
   "dashboard.rpoOverdue": "معوق",
   "dashboard.rpoOff": "زمان‌بندی نشده",
   "dashboard.rpoViaEverything": "{cadence}، از طریق پشتیبان‌گیری کامل",
+  "dashboard.rpoEntries": "هر مورد با زمان‌بندی خودش",
   "dashboard.domainContainers": "کانتینرها",
   "dashboard.domainVMs": "ماشین‌های مجازی",
   "dashboard.domainFlash": "فلش",

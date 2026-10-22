@@ -1233,6 +1233,7 @@ const ro: Partial<Translations> = {
   "dashboard.rpoOverdue": "Restant",
   "dashboard.rpoOff": "Neprogramat",
   "dashboard.rpoViaEverything": "{cadence}, prin backupul total",
+  "dashboard.rpoEntries": "Fiecare intrare după propria programare",
   "dashboard.domainContainers": "Containere",
   "dashboard.domainVMs": "VM-uri",
   "dashboard.domainFlash": "Flash",

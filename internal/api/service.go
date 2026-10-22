@@ -3148,6 +3148,9 @@ type DomainStatusEntry struct {
 	// ReplicasEveryItem says every enabled ZFS item replicates, so the
 	// replicas are the whole of the domain's copy away from here.
 	ReplicasEveryItem bool `json:"replicasEveryItem,omitempty"`
+	// EntrySchedules says the section runs on its entries' own schedules,
+	// with no cadence of its own or from the full backup.
+	EntrySchedules bool `json:"entrySchedules,omitempty"`
 }
 
 // rpoStatus is the pure status decision from the inputs, so it can be unit-tested
@@ -3566,6 +3569,8 @@ func (s *Service) domainStatusFrom(settings store.Settings) ([]DomainStatusEntry
 		// collapses to period 0, which reads "off".
 		period, coveredBy := s.domainWindow(d.name, d.schedule, settings)
 		scheduled := d.enabled && period > 0
+		sectionPeriod, _ := domainCoverage(d.schedule, settings.EverythingSchedule)
+		entrySchedules := scheduled && sectionPeriod == 0
 
 		// The latest LOCAL restore-verification drill drives the "last verified
 		// restorable" badge. Best-effort: a read error leaves the badge at "never"
@@ -3721,6 +3726,7 @@ func (s *Service) domainStatusFrom(settings store.Settings) ([]DomainStatusEntry
 			PruneStrategySet:      pruneStrategySet,
 			ReplicaState:          replicaState,
 			ReplicasEveryItem:     replicasEveryItem,
+			EntrySchedules:        entrySchedules,
 		})
 		if d.name == "containers" {
 			out[len(out)-1].LastStartTest = lastStartTest

@@ -1243,6 +1243,7 @@ const el: Partial<Translations> = {
   "dashboard.rpoOverdue": "Εκπρόθεσμο",
   "dashboard.rpoOff": "Μη προγραμματισμένο",
   "dashboard.rpoViaEverything": "{cadence}, μέσω του πλήρους αντιγράφου ασφαλείας",
+  "dashboard.rpoEntries": "Κάθε καταχώριση με το δικό της πρόγραμμα",
   "dashboard.domainContainers": "Containers",
   "dashboard.domainVMs": "VMs",
   "dashboard.domainFlash": "Flash",

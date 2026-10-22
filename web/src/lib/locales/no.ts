@@ -1232,6 +1232,7 @@ const no: Partial<Translations> = {
   "dashboard.rpoOverdue": "Forfalt",
   "dashboard.rpoOff": "Ikke planlagt",
   "dashboard.rpoViaEverything": "{cadence}, via den fulle sikkerhetskopien",
+  "dashboard.rpoEntries": "Hver oppføring etter sin egen tidsplan",
   "dashboard.domainContainers": "Kontainere",
   "dashboard.domainVMs": "VM-er",
   "dashboard.domainFlash": "Flash",

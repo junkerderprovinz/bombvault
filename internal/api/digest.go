@@ -187,7 +187,7 @@ func (s *Service) collectDigestStats(now time.Time) (digestStats, error) {
 			// only by that pass would otherwise have period 0 and never go stale.
 			period := cadencePeriodSeconds(s.offsiteScheduleFor(domain, settings))
 			if period == 0 {
-				period, _ = domainCoverage(digestBackupScheduleFor(domain, settings), settings.EverythingSchedule)
+				period, _ = s.domainWindow(domain, digestBackupScheduleFor(domain, settings), settings)
 			}
 			if period > 0 && stats.Now-line.LastOK > 2*period {
 				line.Stale = true

@@ -1224,6 +1224,7 @@ const lt: Partial<Translations> = {
   "dashboard.rpoOverdue": "Vėluojama",
   "dashboard.rpoOff": "Neplanuota",
   "dashboard.rpoViaEverything": "{cadence}, per pilną atsarginę kopiją",
+  "dashboard.rpoEntries": "Kiekvienas įrašas pagal savo tvarkaraštį",
   "dashboard.domainContainers": "Konteineriai",
   "dashboard.domainVMs": "VM",
   "dashboard.domainFlash": "Flash",

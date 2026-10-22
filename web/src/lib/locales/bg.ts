@@ -1224,6 +1224,7 @@ const bg: Partial<Translations> = {
   "dashboard.rpoOverdue": "Просрочено",
   "dashboard.rpoOff": "Не е планирано",
   "dashboard.rpoViaEverything": "{cadence}, чрез пълния бекъп",
+  "dashboard.rpoEntries": "Всеки запис по собствен график",
   "dashboard.domainContainers": "Контейнери",
   "dashboard.domainVMs": "ВМ",
   "dashboard.domainFlash": "Flash",

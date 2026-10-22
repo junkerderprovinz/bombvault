@@ -1226,6 +1226,7 @@ const ja: Partial<Translations> = {
   "dashboard.rpoOverdue": "期限切れ",
   "dashboard.rpoOff": "スケジュールなし",
   "dashboard.rpoViaEverything": "{cadence}（全体バックアップ経由）",
+  "dashboard.rpoEntries": "各エントリーが独自のスケジュールで実行",
   "dashboard.domainContainers": "コンテナ",
   "dashboard.domainVMs": "VM",
   "dashboard.domainFlash": "フラッシュ",

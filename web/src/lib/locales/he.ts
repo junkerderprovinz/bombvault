@@ -1235,6 +1235,7 @@ const he: Partial<Translations> = {
   "dashboard.rpoOverdue": "באיחור",
   "dashboard.rpoOff": "לא מתוזמן",
   "dashboard.rpoViaEverything": "{cadence}, דרך הגיבוי המלא",
+  "dashboard.rpoEntries": "כל רשומה לפי לוח הזמנים שלה",
   "dashboard.domainContainers": "Containers",
   "dashboard.domainVMs": "VMs",
   "dashboard.domainFlash": "Flash",

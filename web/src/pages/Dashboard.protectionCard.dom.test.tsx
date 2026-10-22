@@ -49,6 +49,13 @@ describe("ProtectionCard", () => {
     expect(screen.queryByTestId("protection-found")).toBeNull();
   });
 
+  it("says a section runs on its entries' own schedules instead of none", () => {
+    renderCard(sections([domain({ schedule: "off", entrySchedules: true }), domain({ domain: "vms", schedule: "off" })]));
+
+    expect(row(en["nav.containers"]).getByText(en["dashboard.rpoEntries"])).toBeTruthy();
+    expect(row(en["nav.vms"]).getByText(en["dashboard.rpoOff"])).toBeTruthy();
+  });
+
   it("gives every section four dots, one per check", () => {
     renderCard(sections([domain(), domain({ domain: "vms" })]));
 

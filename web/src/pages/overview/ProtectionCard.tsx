@@ -66,7 +66,7 @@ function SectionRow({ section, t, lang, onOpen }: { section: Section; t: T; lang
     .join(" ");
   const schedule = status.coveredBy
     ? t("dashboard.rpoViaEverything").replace("{cadence}", formatCadence(status.coveredBy, t, lang))
-    : formatCadence(status.schedule, t, lang) || t("dashboard.rpoOff");
+    : formatCadence(status.schedule, t, lang) || t(status.entrySchedules ? "dashboard.rpoEntries" : "dashboard.rpoOff");
   return (
     <li
       data-testid="protection-row"

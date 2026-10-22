@@ -109,7 +109,7 @@ func (s *Service) statusGrace(settings store.Settings, domain string) int64 {
 	if period := cadencePeriodSeconds(s.offsiteScheduleFor(domain, settings)); period > 0 {
 		return 2 * period
 	}
-	period, _ := domainCoverage(digestBackupScheduleFor(domain, settings), settings.EverythingSchedule)
+	period, _ := s.domainWindow(domain, digestBackupScheduleFor(domain, settings), settings)
 	return 2 * period
 }
 

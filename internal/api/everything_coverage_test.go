@@ -55,6 +55,9 @@ func TestDomainStatusFollowsTheEntriesOwnSchedules(t *testing.T) {
 		if d.Status == "off" || d.PeriodSeconds != 86400 {
 			t.Errorf("containers: status %q, period %d; want scheduled by the daily entry", d.Status, d.PeriodSeconds)
 		}
+		if !d.EntrySchedules {
+			t.Error("containers: the section is not said to run on its entries' schedules")
+		}
 		return
 	}
 	t.Fatal("containers domain not present")

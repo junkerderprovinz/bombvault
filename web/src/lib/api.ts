@@ -623,6 +623,9 @@ export interface DomainStatus {
   /** ZFS: every enabled item replicates, so the replicas are the whole copy
    *  away from here. */
   replicasEveryItem?: boolean;
+  /** The section runs on its entries' own schedules, with no cadence of its
+   *  own or from the full backup. */
+  entrySchedules?: boolean;
 }
 
 /** A recorded restore-verification "drill" from POST/GET /api/verify. */

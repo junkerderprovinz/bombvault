@@ -1240,6 +1240,7 @@ const uk: Partial<Translations> = {
   "dashboard.rpoOverdue": "Прострочено",
   "dashboard.rpoOff": "Без розкладу",
   "dashboard.rpoViaEverything": "{cadence}, через повний бекап",
+  "dashboard.rpoEntries": "Кожен запис за власним розкладом",
   "dashboard.domainContainers": "Контейнери",
   "dashboard.domainVMs": "Віртуальні машини",
   "dashboard.domainFlash": "Flash",

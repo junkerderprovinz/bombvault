@@ -1243,6 +1243,7 @@ const sv: Partial<Translations> = {
   "dashboard.rpoOverdue": "Försenad",
   "dashboard.rpoOff": "Ej schemalagd",
   "dashboard.rpoViaEverything": "{cadence}, via den totala säkerhetskopian",
+  "dashboard.rpoEntries": "Varje post enligt sitt eget schema",
   "dashboard.domainContainers": "Containers",
   "dashboard.domainVMs": "VMs",
   "dashboard.domainFlash": "Flash",
