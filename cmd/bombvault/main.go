@@ -255,7 +255,7 @@ func run() error {
 		log.Printf("main: %s had no storage location and now write to their default folder", strings.Join(filled, ", "))
 	}
 
-	if err := api.RevokeMCPKeysAfterConfigRestore(st, cfg.DataDir, time.Now()); err != nil {
+	if err := api.ResetSignInsAfterConfigRestore(st, cfg.DataDir, time.Now()); err != nil {
 		return err
 	}
 
