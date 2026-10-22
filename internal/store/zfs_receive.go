@@ -267,6 +267,20 @@ func (r *Repo) GetZFSReceiveSlot(id string) (ZFSReceiveSlot, bool, error) {
 	return s, true, nil
 }
 
+// DeleteZFSReceiveSlotsOf drops a peer's slots that let nothing in, the ones
+// waiting for an answer and those refused or revoked, and returns how many
+// are left. What a slot received stays on the pool.
+func (r *Repo) DeleteZFSReceiveSlotsOf(peerID string) (int, error) {
+	if _, err := r.db.Exec(`DELETE FROM zfs_receive_slots WHERE peer_id = ? AND state <> ?`, peerID, ZFSReceiveAllowed); err != nil {
+		return 0, fmt.Errorf("DeleteZFSReceiveSlotsOf: %w", err)
+	}
+	var left int
+	if err := r.db.QueryRow(`SELECT count(*) FROM zfs_receive_slots WHERE peer_id = ?`, peerID).Scan(&left); err != nil {
+		return 0, fmt.Errorf("DeleteZFSReceiveSlotsOf: %w", err)
+	}
+	return left, nil
+}
+
 // ListZFSReceiveSlots returns every slot, oldest request first.
 func (r *Repo) ListZFSReceiveSlots() ([]ZFSReceiveSlot, error) {
 	rows, err := r.db.Query(`SELECT ` + zfsReceiveSlotCols + ` FROM zfs_receive_slots ORDER BY asked_at, id`)

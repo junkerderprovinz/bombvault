@@ -11,8 +11,9 @@ import type { Instance } from "./instancesModel";
  *  Removing never contacts the instance and is undone by pairing it again,
  *  so a confirm on the button itself is enough. Without the Instances module
  *  the page holds no row, and the member goes by its id. The server ends the
- *  Receiver and Fetcher requests of an instance that is away; ZFS replication
- *  and key deposits hold data, so they stay, and the card with them. */
+ *  Receiver and Fetcher requests of an instance that is away, its waiting key
+ *  requests and the ZFS receive slots that let nothing in; ZFS replication and
+ *  key deposits hold data, so they stay, and the card with them. */
 export function RemoveInstanceButton({
   instance,
   onRemoved,
@@ -32,7 +33,9 @@ export function RemoveInstanceButton({
       const res = await (instance.peer ? deleteFleetPeer(instance.peer.id) : removeMember(instance.memberId));
       if (res.ok) {
         const { byMember, forMember } = instance.roles ?? {};
-        if (byMember?.zfs || byMember?.keeper || forMember?.zfs || forMember?.keeper) {
+        // The server drops the receive slots that let nothing in.
+        const receiving = forMember?.zfs?.items.some((i) => i.state === "allowed");
+        if (byMember?.zfs || byMember?.keeper || receiving || forMember?.keeper) {
           push(t("instances.removeKeptByRoles").replaceAll("{peer}", () => instance.name), "warn");
         }
         onRemoved();

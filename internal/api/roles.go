@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"slices"
 	"strings"
+	"time"
 	"unicode/utf8"
 
 	"golang.org/x/mod/semver"
@@ -384,13 +385,29 @@ func (s *Service) retellRoleWithdrawals(ctx context.Context) {
 }
 
 // forgetMemberRoles ends every Receiver and Fetcher request between this
-// instance and a member removed while out of reach, since those requests alone
-// would keep its card, and a server taken out of service keeps no login here.
-// Should the member come back, it hears of the ones this instance sent. One in
-// reach is listed again anyway and keeps its requests.
+// instance and a member removed while out of reach, together with its ZFS
+// receive slots that let nothing in and its waiting key-release requests,
+// since those alone would keep its card, and a server taken out of service
+// keeps no login here. Should the member come back, it hears of the ones this
+// instance sent. One in reach is listed again anyway and keeps its requests.
 func (s *Service) forgetMemberRoles(ctx context.Context, memberID string) error {
 	if _, ok := s.reachableMember(memberID); ok {
 		return nil
+	}
+	if _, err := s.store.DeleteZFSReceiveSlotsOf(memberID); err != nil {
+		return err
+	}
+	releases, err := s.store.KeyReleases(200)
+	if err != nil {
+		return err
+	}
+	for _, k := range releases {
+		if k.RequesterID != memberID || k.State != store.ReleaseAsked {
+			continue
+		}
+		if _, err := s.store.DecideKeyRelease(k.ID, store.ReleaseDeclined, time.Now(), releaseLimits); err != nil && !errors.Is(err, store.ErrReleaseDecided) {
+			return err
+		}
 	}
 	reqs, err := s.store.ListRoleRequests()
 	if err != nil {

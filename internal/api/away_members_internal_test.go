@@ -184,6 +184,37 @@ func TestRemovingAnAwayInstanceEndsItsRoleRequests(t *testing.T) {
 	}
 }
 
+func TestRemovingAnAwayInstanceEndsItsSlotsAndAsksThatLetNothingIn(t *testing.T) {
+	a, b := pairAndClose(t)
+	gone := b.id(t)
+	refused, err := a.st.AskZFSReceive(store.ZFSReceiveSlot{PeerID: gone, PeerName: "attic", ItemID: "i1", Dataset: "tank/a", SourceServer: "attic"}, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := a.st.DecideZFSReceive(refused.ID, store.ZFSReceiveDecision{State: store.ZFSReceiveRefused}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := a.st.AskZFSReceive(store.ZFSReceiveSlot{PeerID: gone, PeerName: "attic", ItemID: "i2", Dataset: "tank/b", SourceServer: "attic"}, false); err != nil {
+		t.Fatal(err)
+	}
+	if _, _, err := a.st.AskKeyRelease("owner1", gone, "attic", true, time.Now(), releaseLimits); err != nil {
+		t.Fatal(err)
+	}
+
+	if code, out := a.do(t, http.MethodDelete, "/api/group/members/"+gone, nil); code != http.StatusOK || out["ok"] != true {
+		t.Fatalf("remove: %d %v", code, out)
+	}
+	members, _, err := a.svc.rolesOverview()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, m := range members {
+		if m.MemberID == gone {
+			t.Fatalf("the roles still name the removed instance: %+v", m)
+		}
+	}
+}
+
 func TestAnInstanceThatComesBackIsListedOnce(t *testing.T) {
 	a := newInstance(t, "cellar", strings.Repeat("a1", 32))
 	b := newInstance(t, "attic", strings.Repeat("b2", 32))
