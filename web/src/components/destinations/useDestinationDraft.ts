@@ -12,6 +12,7 @@ import {
   type Destination,
   type DestinationDraft,
   type GroupReceiver,
+  type HostKey,
   type Provider,
 } from "../../lib/api";
 import { useT, type TranslationKey } from "../../lib/i18n";
@@ -37,7 +38,7 @@ export function formFields(p: Provider, backend: Backend | undefined): FormField
   if (!backend) return { main: [], more: [] };
   const s3Provider = p.preset?.provider;
   const applies = (o: BackendOption) =>
-    !HIDDEN.has(o.name) && !(p.preset && o.name in p.preset) &&
+    !HIDDEN.has(o.name) && !(p.preset && o.name in p.preset) && !p.unasked?.includes(o.name) &&
     (!o.providers || !s3Provider || o.providers.includes(s3Provider));
   const seen = new Set<string>();
   const unique = (o: BackendOption) => !seen.has(o.name) && (seen.add(o.name), true);
@@ -79,6 +80,13 @@ export interface DestinationDraftState {
   credsRef: string;
   setCredsRef: (id: string) => void;
   publicKey: string;
+  /** The share an SMB test opens, for a server that does not list its
+   *  shares; "" lists them. */
+  share: string;
+  setShare: (share: string) => void;
+  /** The key the SFTP server showed at the last test, which the destination
+   *  is pinned to. */
+  hostKey: HostKey | null;
   fields: FormFields;
   test: TestVerdictState;
   /** The connection was tested and stands. */
@@ -96,7 +104,8 @@ export interface DestinationDraftState {
   storageClass: string;
   setStorageClass: (storageClass: string) => void;
   saving: boolean;
-  /** An S3 service is still at its list of buckets. */
+  /** An S3 service is still at its list of buckets, or an SMB server at its
+   *  shares. */
   needsBucket: boolean;
   /** The folder is not settled yet, so the destination cannot be saved. */
   folderOpen: boolean;
@@ -129,6 +138,8 @@ export function useDestinationDraft(): DestinationDraftState {
   const [name, setName] = useState("");
   const [credsRef, setCredsRef] = useState("");
   const [publicKey, setPublicKey] = useState("");
+  const [share, setShare] = useState("");
+  const [hostKey, setHostKey] = useState<HostKey | null>(null);
   const [dir, setDir] = useState<string[]>([]);
   const [folders, setFolders] = useState<string[] | null>(null);
   const [free, setFree] = useState<number | null>(null);
@@ -167,13 +178,14 @@ export function useDestinationDraft(): DestinationDraftState {
     () => (picked ? formFields(picked, backends[picked.backend]) : { main: [], more: [] }),
     [picked, backends]
   );
-  const test = useTestVerdict([picked?.id, settings, credsRef], t("offsite.testFailed"));
+  const test = useTestVerdict([picked?.id, settings, credsRef, share], t("offsite.testFailed"));
   const reached = test.verdict?.ok === true;
   const browsable = picked !== null && picked.route !== "rest" && picked.route !== "path";
   const dirPath = dir.join("/");
 
   function draft(extra: Partial<DestinationDraft> = {}): DestinationDraft {
-    return { provider: picked?.id ?? "", settings, ...(credsRef ? { credsRef } : {}), ...extra };
+    const pinned = hostKey ? { ...settings, host_keys: hostKey.pin } : settings;
+    return { provider: picked?.id ?? "", settings: pinned, ...(credsRef ? { credsRef } : {}), ...extra };
   }
 
   function failure(e: unknown, fallback: TranslationKey): string {
@@ -185,6 +197,8 @@ export function useDestinationDraft(): DestinationDraftState {
     setPicked(p);
     setSettings({});
     setCredsRef("");
+    setShare("");
+    setHostKey(null);
     setName(providerName(p, t));
     setDir([]);
     setFolders(null);
@@ -231,13 +245,20 @@ export function useDestinationDraft(): DestinationDraftState {
   }
 
   async function runTest() {
+    const start = picked?.shares && share.trim() ? [share.trim()] : [];
     const v = await test.run(async () => {
-      const r = await checkDraft(draft()).catch((e: unknown) => ({ ok: false, error: failure(e, "offsite.testFailed"), initialized: false }));
+      const r = await checkDraft(draft({ dir: start.join("/") })).catch((e: unknown) => ({
+        ok: false,
+        error: failure(e, "offsite.testFailed"),
+        initialized: false,
+        hostKey: undefined,
+      }));
+      setHostKey(r.ok ? r.hostKey ?? null : null);
       if (!r.ok) return { ok: false, reason: r.error ?? t("offsite.testFailed") };
       if (picked?.route === "rest") return { ok: true, note: r.initialized ? t("dest.restExisting") : t("dest.restEmpty") };
       return { ok: true, note: t("dest.testOk") };
     });
-    if (v.ok && browsable) void loadFolders([]);
+    if (v.ok && browsable) void loadFolders(start);
     return v.ok;
   }
 
@@ -278,7 +299,7 @@ export function useDestinationDraft(): DestinationDraftState {
     }
   }
 
-  const needsBucket = picked?.route === "s3" && dir.length === 0;
+  const needsBucket = (picked?.route === "s3" || !!picked?.shares) && dir.length === 0;
 
   return {
     providers,
@@ -286,12 +307,19 @@ export function useDestinationDraft(): DestinationDraftState {
     picked,
     fromMember,
     settings,
-    setSetting: (field, value) => setSettings((s) => ({ ...s, [field]: value })),
+    setSetting: (field, value) => {
+      // A changed field can name another server, whose key is read at its test.
+      setHostKey(null);
+      setSettings((s) => ({ ...s, [field]: value }));
+    },
     name,
     setName,
     credsRef,
     setCredsRef,
     publicKey,
+    share,
+    setShare,
+    hostKey,
     fields,
     test,
     reached,

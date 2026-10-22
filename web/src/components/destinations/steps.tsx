@@ -97,7 +97,27 @@ export function DraftField({
   const { picked, settings, setSetting } = draft;
   const o = option;
   const label = FIELD_LABELS[o.name] ? t(FIELD_LABELS[o.name]) : o.name;
-  const tip = o.name === "pass" && picked?.auth === "apppassword" ? t("dest.appPassword.tip") : o.help;
+  if (picked?.backend === "ftp" && o.name === "tls") return <FtpTlsField draft={draft} />;
+  // The TLS choice above sets it along with tls.
+  if (picked?.backend === "ftp" && o.name === "explicit_tls") return null;
+  const tip =
+    o.name === "pass" && picked?.auth === "apppassword"
+      ? t("dest.appPassword.tip")
+      : o.name === "pass" && picked?.auth === "sshkey"
+        ? t("dest.sshPass.tip")
+        : o.help;
+  if (o.type === "bool") {
+    return (
+      <SettingRow label={label} hint={tip || undefined} newId="dest-switches">
+        <Toggle
+          hideLabel
+          label={label}
+          checked={(settings[o.name] ?? o.default) === "true"}
+          onChange={(on) => setSetting(o.name, on ? "true" : "false")}
+        />
+      </SettingRow>
+    );
+  }
   // For an S3 service only the examples rclone ties to it: the untied ones
   // describe signature quirks of unnamed servers.
   const s3Provider = picked?.preset?.provider;
@@ -139,12 +159,46 @@ export function DraftField({
   );
 }
 
+type FtpTls = "none" | "explicit" | "implicit";
+
+/** FtpTlsField is rclone's two FTP switches as the one choice they are:
+ *  rclone refuses both on. Implicit TLS listens on port 990 unless the server
+ *  says otherwise, so the port follows the choice while it is a default. */
+function FtpTlsField({ draft }: { draft: Pick<DestinationDraftState, "settings" | "setSetting"> }) {
+  const { t } = useT();
+  const { settings, setSetting } = draft;
+  const mode: FtpTls = settings.tls === "true" ? "implicit" : settings.explicit_tls === "true" ? "explicit" : "none";
+  function choose(next: FtpTls) {
+    setSetting("tls", next === "implicit" ? "true" : "false");
+    setSetting("explicit_tls", next === "explicit" ? "true" : "false");
+    const port = (settings.port ?? "").trim();
+    if (next === "implicit" && (port === "" || port === "21")) setSetting("port", "990");
+    if (next !== "implicit" && port === "990") setSetting("port", "");
+  }
+  return (
+    <SettingRow label={t("dest.ftpTls")} newId="dest-switches">
+      <SelectField
+        value={mode}
+        onChange={choose}
+        label={t("dest.ftpTls")}
+        options={[
+          { value: "none", label: t("dest.ftpTls.none") },
+          { value: "explicit", label: t("dest.ftpTls.explicit") },
+          { value: "implicit", label: t("dest.ftpTls.implicit") },
+        ]}
+        className={FIELD}
+      />
+    </SettingRow>
+  );
+}
+
 /** How well the provider suits backups, what it needs to sign in, and the
  *  form with the verdict of the last test. */
 export function SignInBody({ draft, providerLabel }: { draft: DestinationDraftState; providerLabel: string }) {
   const { t } = useT();
   const { picked, fields } = draft;
   const nameId = useId();
+  const shareId = useId();
   const sets = useCloudCredSets();
   if (!picked) return null;
   const kind = picked.route === "s3" || picked.route === "rest" ? picked.route : null;
@@ -218,6 +272,19 @@ export function SignInBody({ draft, providerLabel }: { draft: DestinationDraftSt
           .map((o) => (
             <DraftField key={o.name} draft={draft} option={o} />
           ))}
+        {picked.shares && (
+          <SettingRow label={t("dest.field.share_name")} hint={t("dest.share.tip")} htmlFor={shareId} newId="dest-smb-share">
+            <input
+              id={shareId}
+              value={draft.share}
+              onChange={(e) => draft.setShare(e.target.value)}
+              autoComplete="off"
+              spellCheck={false}
+              dir="ltr"
+              className={`w-72 max-w-full ${FIELD} font-mono text-start`}
+            />
+          </SettingRow>
+        )}
       </Rows>
       {fields.more.length > 0 && (
         <MoreSettings>
@@ -227,6 +294,15 @@ export function SignInBody({ draft, providerLabel }: { draft: DestinationDraftSt
         </MoreSettings>
       )}
       <VerdictLine verdict={draft.test.verdict} />
+      {draft.reached && draft.hostKey && (
+        <div data-new="dest-host-key" className="flex flex-col gap-1">
+          <span className="flex items-center gap-1.5 text-xs text-carbon-textSub">
+            {t("dest.hostKey")}
+            <InfoBubble tip={t("dest.hostKey.tip")} />
+          </span>
+          <CopyBlock text={draft.hostKey.fingerprint} />
+        </div>
+      )}
     </>
   );
 }
@@ -251,6 +327,8 @@ export function FolderBody({ draft }: { draft: DestinationDraftState }) {
   const { t } = useT();
   const { picked, dir, folders, free, newFolder } = draft;
   if (!picked) return null;
+  // Only the server makes a share, so its list takes no new folder.
+  const atShares = !!picked.shares && dir.length === 0;
   return (
     <>
       {draft.browsable && (
@@ -273,6 +351,7 @@ export function FolderBody({ draft }: { draft: DestinationDraftState }) {
             <p className="px-2 text-xs text-carbon-textMuted">{t("dest.free").replace("{size}", () => humanBytes(free))}</p>
           )}
           {picked.route === "s3" && dir.length === 0 && <p className="px-2 text-xs text-carbon-textMuted">{t("dest.folder.buckets")}</p>}
+          {atShares && <p className="px-2 text-xs text-carbon-textMuted">{t("dest.folder.shares")}</p>}
           {folders && folders.length === 0 && <p className="px-2 py-1 text-xs text-carbon-textMuted">{t("dest.folder.empty")}</p>}
           {folders?.map((f) => (
             <button
@@ -286,7 +365,7 @@ export function FolderBody({ draft }: { draft: DestinationDraftState }) {
             </button>
           ))}
           {draft.folderError && <p className="px-2 text-xs text-statusFail">{draft.folderError}</p>}
-          {newFolder !== null ? (
+          {atShares ? null : newFolder !== null ? (
             <span className="flex gap-2 p-1">
               <input
                 autoFocus
@@ -303,7 +382,7 @@ export function FolderBody({ draft }: { draft: DestinationDraftState }) {
           )}
         </div>
       )}
-      {draft.needsBucket && <p className="text-xs text-statusWarn">{t("dest.folder.pickBucket")}</p>}
+      {draft.needsBucket && <p className="text-xs text-statusWarn">{t(atShares ? "dest.folder.pickShare" : "dest.folder.pickBucket")}</p>}
       <div className="flex flex-col gap-1">
         <span className="flex items-center gap-1.5 text-xs text-carbon-textSub">
           {t("dest.location")}

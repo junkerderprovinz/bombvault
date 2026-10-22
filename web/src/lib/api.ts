@@ -7401,6 +7401,11 @@ export interface Provider {
   /** Can keep old versions from someone holding the credentials. */
   lock?: boolean;
   selfHosted?: boolean;
+  /** Options the form leaves out, since they would replace BombVault's key. */
+  unasked?: string[];
+  /** The top of the remote lists the server's shares, which only the server
+   *  makes. */
+  shares?: boolean;
 }
 
 export interface BackendOption {
@@ -7411,6 +7416,8 @@ export interface BackendOption {
   password: boolean;
   advanced: boolean;
   essential: boolean;
+  /** rclone's kind of value, such as "string" or "bool". */
+  type?: string;
   default: string;
   examples?: { value: string; help: string; provider?: string }[];
   /** The S3 providers the option applies to; absent means every one. */
@@ -7442,9 +7449,21 @@ export interface DestinationDraft {
   /** A saved sign-in an S3 service or a rest-server signs in with instead
    *  of keys typed into the form. */
   credsRef?: string;
+  /** The saved destination whose connection the form edits: a folder walk
+   *  fills in what the form does not show from its stored remote. */
+  destination?: string;
 }
 
-export function checkDraft(d: DestinationDraft): Promise<OkEnvelope & { reachable?: boolean; initialized?: boolean }> {
+/** The key an SFTP server proved itself with at the test. pin is what the
+ *  remote is pinned to, fingerprint what a provider publishes. */
+export interface HostKey {
+  pin: string;
+  fingerprint: string;
+}
+
+export function checkDraft(
+  d: DestinationDraft
+): Promise<OkEnvelope & { reachable?: boolean; initialized?: boolean; hostKey?: HostKey }> {
   return fetchJSON("/api/offsite/drafts/check", { method: "POST", body: JSON.stringify(d) });
 }
 

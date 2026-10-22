@@ -57,6 +57,14 @@ const TO_INSTANCES: WayStep[] = ["/settings", "/settings/instances", "/instances
 /** Every release that brought something new, newest first. */
 export const RELEASES: Release[] = [
   {
+    version: "10.2.3",
+    changes: [
+      { id: "dest-host-key", page: "/storage", where: ["storage.title"], way: [...TO_STORAGE, "add-location"], text: "whatsNew.serverHostKey" },
+      { id: "dest-switches", page: "/storage", where: ["storage.title"], way: [...TO_STORAGE, "add-location"], text: "whatsNew.serverSwitches" },
+      { id: "dest-smb-share", page: "/storage", where: ["storage.title"], way: [...TO_STORAGE, "add-location"], text: "whatsNew.smbShare" },
+    ],
+  },
+  {
     version: "10.2.1",
     changes: [
       {

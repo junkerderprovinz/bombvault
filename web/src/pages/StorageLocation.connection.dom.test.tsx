@@ -253,6 +253,7 @@ describe("the folder of a destination", () => {
       provider: "storagebox",
       settings: { host: "u123.your-storagebox.de", user: "u123", pass: "hunter2" },
       dir: "bombvault",
+      destination: "box",
     });
     await click(within(picker).getByRole("button", { name: ".." }));
     await click(within(picker).getByRole("button", { name: "archive" }));
@@ -277,14 +278,27 @@ describe("the folder of a destination", () => {
     expect(draftFolders).toHaveBeenLastCalledWith(expect.objectContaining({ dir: "fresh" }));
   });
 
-  it("says to type the saved secret again when the walk is refused", async () => {
+  it("leaves a remote's hidden values to the server, so a refused walk does not ask for them", async () => {
     draftFolders.mockResolvedValue({ ok: false, error: "ssh: unable to authenticate" });
     await renderPage(location());
     const dialog = await openWindow("Storage Box");
 
     await click(within(dialog).getByRole("button", { name: "Browse folders" }));
     const picker = screen.getByRole("dialog", { name: "Folder" });
-    expect(within(picker).getByText(/ssh: unable to authenticate.*type the saved password or secret key again/)).toBeTruthy();
+    expect(draftFolders).toHaveBeenLastCalledWith(expect.objectContaining({ destination: "box" }));
+    expect(within(picker).getByText("ssh: unable to authenticate")).toBeTruthy();
+    expect(within(picker).queryByText(/type the saved password or secret key again/)).toBeNull();
+  });
+
+  it("says to type a bucket's saved secret again when the walk is refused", async () => {
+    draftFolders.mockResolvedValue({ ok: false, error: "403 Forbidden" });
+    await renderPage(B2);
+    const dialog = await openWindow("Backblaze B2");
+
+    await click(within(dialog).getByRole("button", { name: "Browse folders" }));
+    const picker = screen.getByRole("dialog", { name: "Folder" });
+    expect(draftFolders).toHaveBeenLastCalledWith(expect.not.objectContaining({ destination: expect.anything() }));
+    expect(within(picker).getByText(/403 Forbidden.*type the saved password or secret key again/)).toBeTruthy();
   });
 });
 
