@@ -631,7 +631,7 @@ func TestDBDumpFailureNotifiesAfterTheBackup(t *testing.T) {
 		ssh := &fakeHostSSH{}
 		s, targetID := dumpNotifyService(t, ssh, notify.Config{On: "failure", Unraid: true, ScheduledSummary: true})
 
-		ctx := withDBDumpTally(notify.WithMessagesSuppressed(context.Background()))
+		ctx := withRoundTally(notify.WithMessagesSuppressed(context.Background()))
 		runID := recordDumpRun(t, s, targetID, "failed", store.ReasonDBDumpAuth)
 		s.notifyDBDumpFailed(ctx, targetID, "pg", failed(runID, store.ReasonDBDumpAuth), true)
 		if len(ssh.runs) != 0 {
@@ -646,6 +646,28 @@ func TestDBDumpFailureNotifiesAfterTheBackup(t *testing.T) {
 			t.Fatalf("summary = %s", sent)
 		}
 	})
+}
+
+func TestAScheduledSummaryNamesABackupThatMissedFiles(t *testing.T) {
+	ssh := &fakeHostSSH{}
+	s, _ := dumpNotifyService(t, ssh, notify.Config{On: "failure", Unraid: true, ScheduledSummary: true})
+	rounds := NewScheduledRounds()
+
+	rounds.Begin("files")
+	item := notify.WithMessagesSuppressed(rounds.Context("files"))
+	s.notifyBackup(item, "files", "Documents", "", true, backup.Summary{SnapshotID: "abcdef123456", Unreadable: "locked.db"}, nil)
+	if len(ssh.runs) != 0 {
+		t.Fatalf("a per-item message went out in summary mode: %v", ssh.runs)
+	}
+	s.ScheduledNotifyResult(rounds.End("files"), "files", 1, 0, nil)
+
+	if len(ssh.runs) != 1 {
+		t.Fatalf("%d summaries with failures-only alerts, want one", len(ssh.runs))
+	}
+	sent := strings.Join(ssh.runs[0], " ")
+	if !strings.Contains(sent, `1 backup could not read some files`) || !strings.Contains(sent, `files "Documents": locked.db`) || !strings.Contains(sent, "warning") {
+		t.Errorf("summary = %s", sent)
+	}
 }
 
 func TestScheduledRoundNamesAFailedDumpInItsSummary(t *testing.T) {

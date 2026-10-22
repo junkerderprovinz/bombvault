@@ -699,53 +699,78 @@ func (s *Service) forgetDBDumpSeries(ctx context.Context, repo string, settings 
 	}
 }
 
-// dbDumpTally collects the dumps that failed during one scheduled round, so
-// the round's single summary can name them.
-type dbDumpTally struct {
-	mu     sync.Mutex
-	failed []string
+// roundTally collects what one scheduled round has to name in its single
+// summary although no item failed: the dumps that failed, and the backups
+// that could not read some files.
+type roundTally struct {
+	mu         sync.Mutex
+	failed     []string
+	incomplete []string
 }
 
-type dbDumpTallyKey struct{}
+type roundTallyKey struct{}
 
-// withDBDumpTally marks ctx as one scheduled round. It belongs where the round
+// withRoundTally marks ctx as one scheduled round. It belongs where the round
 // suppresses the per-item messages, and the same ctx has to reach
 // ScheduledNotifyResult.
-func withDBDumpTally(ctx context.Context) context.Context {
-	return context.WithValue(ctx, dbDumpTallyKey{}, &dbDumpTally{})
+func withRoundTally(ctx context.Context) context.Context {
+	return context.WithValue(ctx, roundTallyKey{}, &roundTally{})
 }
 
-func dbDumpTallyFrom(ctx context.Context) *dbDumpTally {
-	t, _ := ctx.Value(dbDumpTallyKey{}).(*dbDumpTally)
+func roundTallyFrom(ctx context.Context) *roundTally {
+	t, _ := ctx.Value(roundTallyKey{}).(*roundTally)
 	return t
 }
 
-func (t *dbDumpTally) add(name string) {
+func (t *roundTally) add(name string) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 	t.failed = append(t.failed, name)
 }
 
-// take is what the round's summary appends, empty when every dump went
-// through. It empties the tally, so rounds that overlap and share it name each
-// failure once.
-func (t *dbDumpTally) take() string {
+// addIncomplete records a backup that went through without some files, as
+// the line the summary lists it with.
+func (t *roundTally) addIncomplete(line string) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
-	all := t.failed
-	t.failed = nil
-	if len(all) == 0 {
-		return ""
+	t.incomplete = append(t.incomplete, line)
+}
+
+// take is what the round's summary appends, empty when every dump went
+// through and every backup read all its files. It empties the tally, so
+// rounds that overlap and share it name each one once.
+func (t *roundTally) take() string {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	dumps, incomplete := t.failed, t.incomplete
+	t.failed, t.incomplete = nil, nil
+	var out []string
+	if len(dumps) > 0 {
+		names, tail := dumps, ""
+		if len(names) > maxListedFailures {
+			names, tail = names[:maxListedFailures], fmt.Sprintf(", +%d more", len(names)-maxListedFailures)
+		}
+		what := "database dumps failed"
+		if len(dumps) == 1 {
+			what = "database dump failed"
+		}
+		out = append(out, fmt.Sprintf("%d %s: %s%s", len(dumps), what, strings.Join(names, ", "), tail))
 	}
-	names, tail := all, ""
-	if len(names) > maxListedFailures {
-		names, tail = names[:maxListedFailures], fmt.Sprintf(", +%d more", len(names)-maxListedFailures)
+	if len(incomplete) > 0 {
+		what := "backups could not read some files, which are missing from them:"
+		if len(incomplete) == 1 {
+			what = "backup could not read some files, which are missing from it:"
+		}
+		out = append(out, fmt.Sprintf("%d %s", len(incomplete), what))
+		for i, line := range incomplete {
+			if i == maxListedFailures {
+				out = append(out, fmt.Sprintf("+%d more", len(incomplete)-maxListedFailures))
+				break
+			}
+			out = append(out, line)
+		}
 	}
-	what := "database dumps failed"
-	if len(all) == 1 {
-		what = "database dump failed"
-	}
-	return fmt.Sprintf("%d %s: %s%s", len(all), what, strings.Join(names, ", "), tail)
+	return strings.Join(out, "\n")
 }
 
 // ScheduledRounds hands the scheduler's per-domain rounds the context their
@@ -774,7 +799,7 @@ func (r *ScheduledRounds) Begin(domain string) {
 		round.open++
 		return
 	}
-	r.open[domain] = &scheduledRound{ctx: withDBDumpTally(context.Background()), open: 1}
+	r.open[domain] = &scheduledRound{ctx: withRoundTally(context.Background()), open: 1}
 }
 
 // Context is the base context for an item of domain's open round.
@@ -819,7 +844,7 @@ func (s *Service) notifyDBDumpFailed(ctx context.Context, targetID, name string,
 	if s.dbDumpFailedBefore(targetID, o) {
 		return
 	}
-	if tally := dbDumpTallyFrom(ctx); tally != nil && c.ScheduledSummary && notify.MessagesSuppressed(ctx) {
+	if tally := roundTallyFrom(ctx); tally != nil && c.ScheduledSummary && notify.MessagesSuppressed(ctx) {
 		tally.add(name)
 		return
 	}

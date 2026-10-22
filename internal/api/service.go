@@ -19463,6 +19463,11 @@ func (s *Service) notifyBackup(ctx context.Context, domain, name, cancelKey stri
 	case incomplete:
 		msg = fmt.Sprintf("Backup of %s finished (snapshot %s, %s), but some files could not be read and are missing from it: %s",
 			target, shortID(sum.SnapshotID), humanBytes(sum.Bytes), s.hostPathsIn(sum.Unreadable))
+		// In summary mode this message is folded away, and the round counts
+		// the item as a success, so the summary has to name it.
+		if tally := roundTallyFrom(ctx); tally != nil && c.ScheduledSummary && notify.MessagesSuppressed(ctx) {
+			tally.addIncomplete(fmt.Sprintf("- %s: %s", target, s.hostPathsIn(sum.Unreadable)))
+		}
 	case ok:
 		msg = fmt.Sprintf("Backup of %s succeeded (snapshot %s, %s).", target, shortID(sum.SnapshotID), humanBytes(sum.Bytes))
 	case interrupted:
@@ -19691,9 +19696,10 @@ func (s *Service) ScheduledNotifyResult(ctx context.Context, domain string, atte
 		summary = fmt.Sprintf("Scheduled %s backup: %d of %d items failed.\n%s",
 			domain, failed, attempted, formatItemFailures(failures))
 	}
-	// A dump fails without failing the backup around it, so the round's balance
-	// says nothing about it and the summary has to name it separately.
-	if tally := dbDumpTallyFrom(ctx); tally != nil {
+	// A dump fails without failing the backup around it, and a backup that
+	// could not read some files still succeeds, so the round's balance says
+	// nothing about them and the summary has to name them separately.
+	if tally := roundTallyFrom(ctx); tally != nil {
 		if line := tally.take(); line != "" {
 			summary += "\n" + line
 			ok = false

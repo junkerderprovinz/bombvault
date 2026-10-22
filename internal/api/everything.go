@@ -417,9 +417,10 @@ func (s *Service) everythingRunContainers(ctx context.Context, pass *everythingP
 		return everythingDomainIdle(domain)
 	}
 
-	// The items and the summary below share one tally, so a dump that failed in
-	// summary mode is named in the one message the round sends.
-	ctx = withDBDumpTally(ctx)
+	// The items and the summary below share one tally, so a dump that failed
+	// or a backup that missed files in summary mode is named in the one
+	// message the round sends.
+	ctx = withRoundTally(ctx)
 	runCtx := everythingRunCtx(ctx, pass.runID)
 
 	s.ScheduledHealthchecksStart(ctx, domain)
@@ -467,6 +468,7 @@ func (s *Service) everythingRunVMs(ctx context.Context, pass *everythingPass, se
 		return everythingDomainIdle(domain)
 	}
 
+	ctx = withRoundTally(ctx)
 	runCtx := everythingRunCtx(ctx, pass.runID)
 
 	s.ScheduledHealthchecksStart(ctx, domain)
@@ -508,6 +510,7 @@ func (s *Service) everythingRunFiles(ctx context.Context, pass *everythingPass, 
 		return everythingDomainIdle(domain)
 	}
 
+	ctx = withRoundTally(ctx)
 	runCtx := everythingRunCtx(ctx, pass.runID)
 
 	s.ScheduledHealthchecksStart(ctx, domain)
@@ -547,6 +550,7 @@ func (s *Service) everythingRunZFS(ctx context.Context, pass *everythingPass, se
 		return everythingDomainIdle(zfsDomain)
 	}
 
+	ctx = withRoundTally(ctx)
 	runCtx := everythingRunCtx(ctx, pass.runID)
 
 	s.ScheduledHealthchecksStart(ctx, zfsDomain)

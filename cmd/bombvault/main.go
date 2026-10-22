@@ -382,7 +382,7 @@ func run() error {
 	)
 	scheduler.SetVMJob(
 		func(name string) error {
-			ctx := api.WithBulkReplicateSuppressed(notify.WithMessagesSuppressed(notify.WithHealthchecksSuppressed(context.Background())))
+			ctx := api.WithBulkReplicateSuppressed(notify.WithMessagesSuppressed(notify.WithHealthchecksSuppressed(rounds.Context("vms"))))
 			_, bErr := svc.BackupVM(ctx, name)
 			if errors.Is(bErr, backup.ErrVMNotInstalled) {
 				return nil // VM no longer on the host: a skip (already logged), not a job failure
@@ -417,14 +417,14 @@ func run() error {
 	// aggregate ping (SetHealthchecksAggregator above) represents the whole run.
 	// The scheduler hands over the set's stable ID, not its name.
 	scheduler.SetFilesJob(func(id string) error {
-		ctx := api.WithBulkReplicateSuppressed(notify.WithMessagesSuppressed(notify.WithHealthchecksSuppressed(context.Background())))
+		ctx := api.WithBulkReplicateSuppressed(notify.WithMessagesSuppressed(notify.WithHealthchecksSuppressed(rounds.Context("files"))))
 		_, bErr := svc.BackupFileSet(ctx, id)
 		return roundItemErr(bErr)
 	}, st.ListFileSets)
 	// ZFS datasets are scheduled like file sets: one item at a time, with the
 	// per-item pings suppressed in favour of the aggregate one.
 	scheduler.SetZFSJob(func(id string) error {
-		ctx := api.WithBulkReplicateSuppressed(notify.WithMessagesSuppressed(notify.WithHealthchecksSuppressed(context.Background())))
+		ctx := api.WithBulkReplicateSuppressed(notify.WithMessagesSuppressed(notify.WithHealthchecksSuppressed(rounds.Context("zfs"))))
 		_, bErr := svc.BackupZFSDataset(ctx, id)
 		return roundItemErr(bErr)
 	}, st.ListZFSDatasets)
