@@ -2,6 +2,7 @@ package zfsrepl
 
 import (
 	"context"
+	"fmt"
 	"slices"
 	"strings"
 	"testing"
@@ -786,5 +787,46 @@ func TestBookmarksGoOnceTheTargetPrunedTheirSnapshot(t *testing.T) {
 		if got := r.src.markNames(ds); !slices.Equal(got, want) {
 			t.Errorf("%s bookmarks = %q, want %q", ds, got, want)
 		}
+	}
+}
+
+func TestTheReplicaSnapshotIsTakenWhileTheSourceIsFrozen(t *testing.T) {
+	r := newRig(t)
+	var order []string
+	r.entry.Freeze = func(context.Context) (func(), error) {
+		order = append(order, fmt.Sprintf("freeze after %d snapshots", len(r.src.callsOf("snapshot"))))
+		return func() { order = append(order, fmt.Sprintf("thaw after %d snapshots", len(r.src.callsOf("snapshot")))) }, nil
+	}
+	r.ok(r.run())
+	if want := []string{"freeze after 0 snapshots", "thaw after 1 snapshots"}; !slices.Equal(order, want) {
+		t.Errorf("order = %q, want %q", order, want)
+	}
+}
+
+func TestAFreezeThatFailsTakesNoSnapshot(t *testing.T) {
+	r := newRig(t)
+	r.entry.Freeze = func(context.Context) (func(), error) {
+		return nil, &Refusal{Code: "consistency-stop-failed", Detail: "db"}
+	}
+	_, err := Run(context.Background(), r.src, r.dst, r.entry)
+	if Code(err) != "consistency-stop-failed" {
+		t.Fatalf("err = %v, want the freeze's refusal", err)
+	}
+	if r.src.callsOf("snapshot") != nil {
+		t.Error("the snapshot was taken without the freeze")
+	}
+}
+
+func TestAFailedSnapshotStillThaws(t *testing.T) {
+	r := newRig(t)
+	thawed := false
+	r.entry.Freeze = func(context.Context) (func(), error) { return func() { thawed = true }, nil }
+	r.src.snapshot("cache/appdata", zfs.ReplicaSnapshotName(r.now))
+	_, err := Run(context.Background(), r.src, r.dst, r.entry)
+	if Code(err) != "snapshot-failed" {
+		t.Fatalf("err = %v, want snapshot-failed", err)
+	}
+	if !thawed {
+		t.Error("the source stayed frozen after the snapshot failed")
 	}
 }

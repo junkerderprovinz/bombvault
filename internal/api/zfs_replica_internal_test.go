@@ -464,6 +464,67 @@ func TestASuccessfulBackupStartsTheReplicaOnlyWhenItFollowsBackups(t *testing.T)
 	}
 }
 
+func TestTheReplicaSnapshotHoldsTheItemsContainersAndRunsItsCommands(t *testing.T) {
+	r := newReplicaRig(t)
+	dock := newZFSFakeDocker("db", "dumper")
+	r.s.docker = dock
+	if err := r.st.SetZFSDatasetStopContainers(r.item.ID, []string{"db"}); err != nil {
+		t.Fatal(err)
+	}
+	if err := r.st.SetZFSHooks(r.item.ID, "dumper", "dump", "clean"); err != nil {
+		t.Fatal(err)
+	}
+	var atSnapshot []string
+	r.result = func(e zfsrepl.Entry) (zfsrepl.Result, error) {
+		if e.Freeze == nil {
+			return zfsrepl.Result{}, errors.New("no freeze for an item that stops containers")
+		}
+		thaw, err := e.Freeze(context.Background())
+		if err != nil {
+			return zfsrepl.Result{}, err
+		}
+		atSnapshot = dock.recorded()
+		thaw()
+		return zfsrepl.Result{Snapshot: replicaSnap}, nil
+	}
+	if err := r.s.ReplicateZFSDataset(context.Background(), r.item.ID); err != nil {
+		t.Fatal(err)
+	}
+	acts := func(calls []string) []string {
+		return slices.DeleteFunc(calls, func(c string) bool { return strings.HasPrefix(c, "inspect:") })
+	}
+	if want := []string{"exec:id-dumper", "stop:db"}; !slices.Equal(acts(atSnapshot), want) {
+		t.Errorf("at the snapshot docker did %q, want %q", atSnapshot, want)
+	}
+	if want := []string{"exec:id-dumper", "stop:db", "start:db", "exec:id-dumper"}; !slices.Equal(acts(dock.recorded()), want) {
+		t.Errorf("docker did %q, want %q", dock.recorded(), want)
+	}
+	if dock.execCmds[0] != "sh -c dump" || dock.execCmds[1] != "sh -c clean" {
+		t.Errorf("commands = %q", dock.execCmds)
+	}
+}
+
+func TestAFailingPreCommandFailsTheReplicaBeforeItsSnapshot(t *testing.T) {
+	r := newReplicaRig(t)
+	dock := newZFSFakeDocker("dumper")
+	dock.execErr = errors.New("exit status 1")
+	r.s.docker = dock
+	if err := r.st.SetZFSHooks(r.item.ID, "dumper", "dump", ""); err != nil {
+		t.Fatal(err)
+	}
+	r.result = func(e zfsrepl.Entry) (zfsrepl.Result, error) {
+		_, err := e.Freeze(context.Background())
+		return zfsrepl.Result{}, err
+	}
+	err := r.s.ReplicateZFSDataset(context.Background(), r.item.ID)
+	if code := zfsReplicaCode(err); code != "pre-snapshot-failed" {
+		t.Fatalf("run = %v (%s), want pre-snapshot-failed", err, code)
+	}
+	if run := r.lastRun(); zfsRunCode(run.Error) != "pre-snapshot-failed" {
+		t.Errorf("run error = %q, want the code at its end", run.Error)
+	}
+}
+
 func TestARunToADisabledServerIsRefusedWithoutARunRow(t *testing.T) {
 	r := newReplicaRig(t)
 	r.srv.Enabled = false

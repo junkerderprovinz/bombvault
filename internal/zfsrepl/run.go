@@ -33,7 +33,17 @@ func Run(ctx context.Context, source, target End, e Entry) (Result, error) {
 	if err != nil {
 		return Result{}, err
 	}
-	if _, err := source.Run(ctx, args); err != nil {
+	var thaw func()
+	if e.Freeze != nil {
+		if thaw, err = e.Freeze(ctx); err != nil {
+			return Result{}, err
+		}
+	}
+	_, err = source.Run(ctx, args)
+	if thaw != nil {
+		thaw()
+	}
+	if err != nil {
 		return Result{}, &Refusal{Code: "snapshot-failed", Detail: e.Root + "@" + snap, Err: err}
 	}
 

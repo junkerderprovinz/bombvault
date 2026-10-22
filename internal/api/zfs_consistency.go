@@ -289,6 +289,50 @@ func (h *zfsHooks) exec(ctx context.Context, cmd string) error {
 	return h.svc.docker.Exec(ctx, in.ID, []string{"sh", "-c", cmd})
 }
 
+// zfsReplicaFreeze is the window a backup holds around its snapshot, for the
+// snapshot of a replica run: the pre-snapshot command, the containers down,
+// then both undone in reverse. Without it the copy on the target would miss
+// the dump a pre command writes and catch the applications mid-write. It is
+// nil for an item that stops nothing and runs no command.
+func (s *Service) zfsReplicaFreeze(d store.ZFSDataset, settings store.Settings, wait time.Duration) func(context.Context) (func(), error) {
+	hooks := s.newZFSHooks(d)
+	consistency := s.newZFSConsistency(d, settings, wait)
+	if hooks == nil && consistency == nil {
+		return nil
+	}
+	post := func(ctx context.Context) {
+		if hooks == nil {
+			return
+		}
+		if err := hooks.Post(context.WithoutCancel(ctx)); err != nil {
+			log.Printf("api: zfs replica: post-snapshot command for %s failed: %v", d.Dataset, err)
+		}
+	}
+	return func(ctx context.Context) (func(), error) {
+		if hooks != nil {
+			if err := hooks.Pre(ctx); err != nil {
+				return nil, &backup.ZFSRefusal{Code: "pre-snapshot-failed", Detail: err.Error()}
+			}
+		}
+		var thaw func(context.Context)
+		if consistency != nil {
+			frozen, _, err := consistency.Freeze(ctx)
+			if err != nil {
+				post(ctx)
+				return nil, err
+			}
+			thaw = frozen
+		}
+		return func() {
+			detached := context.WithoutCancel(ctx)
+			if thaw != nil {
+				thaw(detached)
+			}
+			post(detached)
+		}, nil
+	}
+}
+
 // RecoverZFSRestarts starts the containers a consistency window left stopped.
 // It runs at boot before the HTTP server and the scheduler, because a user's
 // applications being down outranks everything else this process has to do.

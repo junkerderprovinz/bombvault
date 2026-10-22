@@ -219,12 +219,17 @@ func (s *Service) runZFSReplica(ctx context.Context, d store.ZFSDataset, runID, 
 	if !ok {
 		return zfsrepl.Result{}, fmt.Errorf("unknown keep preset %q", d.Replica.Keep.Preset)
 	}
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return zfsrepl.Result{}, fmt.Errorf("read settings: %w", err)
+	}
 	entry := zfsrepl.Entry{
 		Root:       d.Dataset,
 		Excluded:   d.ExcludedChildren,
 		TargetBase: tgt.base,
 		Keep:       keep,
 		Now:        time.Now,
+		Freeze:     s.zfsReplicaFreeze(d, settings, zfsLockWait(ctx)),
 		Progress:   s.zfsReplicaProgress(key, startedAt),
 	}
 	// A paired instance creates and marks its folders itself.
