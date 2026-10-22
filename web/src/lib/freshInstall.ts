@@ -1,8 +1,9 @@
 import type { BackupItem } from "./api";
 
-/** isFreshInstall reports a BombVault that holds no backup of anything yet. */
+/** isFreshInstall reports a BombVault that holds no copy of anything yet. A
+ *  replica counts, since for an entry that only replicates it is the copy. */
 export function isFreshInstall(items: BackupItem[]): boolean {
-  return items.every((item) => item.lastBackup === 0);
+  return items.every((item) => item.lastBackup === 0 && (item.replica?.lastAt ?? 0) === 0);
 }
 
 const IN_USE = "bombvault.inUse";

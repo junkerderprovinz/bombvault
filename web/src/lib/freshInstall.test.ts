@@ -27,6 +27,15 @@ describe("isFreshInstall", () => {
   it("is not ended by a run that failed", () => {
     expect(isFreshInstall([entry({ lastRunStatus: "failed" })])).toBe(true);
   });
+
+  it("ends with the first replica of an entry that only replicates", () => {
+    const replicated = entry({ kind: "zfs", key: "tank/media", replica: { lastAt: 1_700_000_000, lastStatus: "success", only: true } });
+    expect(isFreshInstall([replicated])).toBe(false);
+  });
+
+  it("is not ended by a replica that never succeeded", () => {
+    expect(isFreshInstall([entry({ kind: "zfs", key: "tank/media", replica: { lastAt: 0, lastStatus: "failed", only: true } })])).toBe(true);
+  });
 });
 
 describe("seenInUse", () => {
