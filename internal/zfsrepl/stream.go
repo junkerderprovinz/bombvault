@@ -2,7 +2,9 @@ package zfsrepl
 
 import (
 	"context"
+	"errors"
 	"io"
+	"sync"
 	"sync/atomic"
 
 	"github.com/junkerderprovinz/bombvault/internal/zfs"
@@ -28,8 +30,9 @@ func pipe(ctx context.Context, from, to End, sendArgs, recvArgs []string, report
 	if err != nil {
 		return 0, err
 	}
-	counted := &countingReader{r: out, report: report}
+	counted := newRelay(out, report)
 	recvErr := to.Receive(ctx, recvArgs, counted)
+	counted.stop()
 	if recvErr != nil {
 		cancel()
 	}
@@ -63,24 +66,132 @@ func estimate(ctx context.Context, end End, args []string) int64 {
 	return n
 }
 
-// countingReader counts what the receive read. The counter is atomic because
-// the reading goroutine of a transport may outlive the receive.
-type countingReader struct {
-	r      io.Reader
+// relayChunk and relayDepth size the buffer between a send and its receive,
+// which mbuffer is in a plain zfs send | ssh zfs receive pipeline: a receive
+// that stops to write out a transaction group does not stall the send behind
+// it, and the stream reaches the receive in large writes instead of the 64 KiB
+// a pipe holds.
+const (
+	relayChunk = 1 << 20
+	relayDepth = 32
+)
+
+// relay reads a send stream ahead into chunks the receive takes in order, and
+// counts what the receive took. The counter is atomic because the reading
+// goroutine of a transport may outlive the receive.
+type relay struct {
+	chunks chan []byte
+	free   chan []byte
+	done   chan struct{}
+	once   sync.Once
+	// err is the read error that ended the stream, set before chunks closes.
+	err    error
+	cur    []byte
+	held   []byte
 	n      atomic.Int64
 	report func(int64)
 }
 
-func (c *countingReader) Read(p []byte) (int, error) {
-	n, err := c.r.Read(p)
-	if n > 0 {
-		done := c.n.Add(int64(n))
-		if c.report != nil {
-			c.report(done)
+func newRelay(src io.Reader, report func(int64)) *relay {
+	r := &relay{
+		chunks: make(chan []byte, relayDepth),
+		free:   make(chan []byte, relayDepth+1),
+		done:   make(chan struct{}),
+		report: report,
+	}
+	go r.fill(src)
+	return r
+}
+
+func (r *relay) fill(src io.Reader) {
+	defer close(r.chunks)
+	for {
+		var buf []byte
+		select {
+		case buf = <-r.free:
+		default:
+			buf = make([]byte, relayChunk)
+		}
+		n, err := io.ReadFull(src, buf[:cap(buf)])
+		if n > 0 {
+			select {
+			case r.chunks <- buf[:n]:
+			case <-r.done:
+				return
+			}
+		}
+		if errors.Is(err, io.EOF) || errors.Is(err, io.ErrUnexpectedEOF) {
+			return
+		}
+		if err != nil {
+			r.err = err
+			return
 		}
 	}
-	return n, err
 }
+
+// next hands the chunk the receive is done with back for reuse and takes the
+// following one; false at the end of the stream.
+func (r *relay) next() bool {
+	if r.held != nil {
+		select {
+		case r.free <- r.held:
+		default:
+		}
+		r.held = nil
+	}
+	chunk, ok := <-r.chunks
+	if !ok {
+		return false
+	}
+	r.cur, r.held = chunk, chunk
+	return true
+}
+
+func (r *relay) end() error {
+	if r.err != nil {
+		return r.err
+	}
+	return io.EOF
+}
+
+func (r *relay) took(n int) {
+	done := r.n.Add(int64(n))
+	if r.report != nil {
+		r.report(done)
+	}
+}
+
+func (r *relay) Read(p []byte) (int, error) {
+	if len(r.cur) == 0 && !r.next() {
+		return 0, r.end()
+	}
+	n := copy(p, r.cur)
+	r.cur = r.cur[n:]
+	r.took(n)
+	return n, nil
+}
+
+// WriteTo is what io.Copy uses, so the receive gets whole chunks at a time.
+func (r *relay) WriteTo(w io.Writer) (int64, error) {
+	var total int64
+	for len(r.cur) > 0 || r.next() {
+		n, err := w.Write(r.cur)
+		r.cur = r.cur[n:]
+		total += int64(n)
+		r.took(n)
+		if err != nil {
+			return total, err
+		}
+	}
+	if r.err != nil {
+		return total, r.err
+	}
+	return total, nil
+}
+
+// stop lets the reading goroutine go once the receive is over.
+func (r *relay) stop() { r.once.Do(func() { close(r.done) }) }
 
 func listTree(ctx context.Context, end End, root string) ([]zfs.ListEntry, error) {
 	args, err := zfs.TreeArgs(root)
