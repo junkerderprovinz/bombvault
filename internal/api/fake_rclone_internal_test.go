@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -28,12 +29,14 @@ func useFakeRclone(t *testing.T, s *Service) {
 
 // runFakeRclone answers the calls the service makes. It describes the
 // backends of rclone 1.75.1, obscures a password by putting "obscured-" in
-// front of it, and lists no folders. A remote whose host is "down" refuses the
-// listing. Like rclone it writes back what a listing refreshes: a token that
-// starts with "rotate-" is replaced by a new one, and a Mega sign-in without
-// a session opens one. `config update` plays the setup of OneDrive,
-// Jottacloud and Zoho.
+// front of it, and lists no folders in a saved remote. A draft lists its own
+// settings as folders named option=value, so a test sees what rclone was
+// handed. A remote whose host is "down" refuses the listing. Like rclone it
+// writes back what a listing refreshes: a token that starts with "rotate-" is
+// replaced by a new one, and a Mega sign-in without a session opens one.
+// `config update` plays the setup of OneDrive, Jottacloud and Zoho.
 func runFakeRclone(args []string) int {
+	draft := "RCLONE_CONFIG_" + remotes.DraftName + "_"
 	switch {
 	case len(args) >= 2 && args[0] == "config" && args[1] == "providers":
 		raw, err := os.ReadFile("../remotes/testdata/rclone-1.75.1-providers.json")
@@ -64,7 +67,15 @@ func runFakeRclone(args []string) int {
 			fmt.Fprintln(os.Stderr, "2026/01/01 00:00:00 ERROR : error listing: directory not found")
 			return 1
 		}
-		fmt.Print("[]")
+		entries := []map[string]string{}
+		for _, kv := range os.Environ() {
+			if setting, ok := strings.CutPrefix(kv, draft); ok && remote == remotes.DraftName && !strings.HasPrefix(setting, "TYPE=") {
+				name, value, _ := strings.Cut(setting, "=")
+				entries = append(entries, map[string]string{"Name": strings.ToLower(name) + "=" + value})
+			}
+		}
+		out, _ := json.Marshal(entries)
+		_, _ = os.Stdout.Write(out)
 	case len(args) >= 3 && args[0] == "config" && args[1] == "update":
 		return fakeRcloneSetup(args[2], args[3:])
 	default:

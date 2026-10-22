@@ -16,7 +16,9 @@ function split(path: string): string[] {
  * RemoteFolderBrowser is the folder field of a bucket or an rclone remote: the
  * path can be typed, or picked in a window that walks the remote's folders and
  * makes a new one. The remote is reached with the connection as it stands in
- * the form, so a saved secret has to be typed again before the walk works.
+ * the form. For a saved rclone remote the server fills in what the form does
+ * not show; a bucket's saved secret has to be typed again before the walk
+ * works.
  */
 export function RemoteFolderBrowser({
   label,
@@ -25,6 +27,7 @@ export function RemoteFolderBrowser({
   onChange,
   provider,
   settings,
+  destination,
   needsSecret,
 }: {
   label: string;
@@ -33,6 +36,8 @@ export function RemoteFolderBrowser({
   onChange: (next: string) => void;
   provider: string;
   settings: Record<string, string>;
+  /** The saved destination whose remote the server fills the form in from. */
+  destination?: string;
   /** A saved secret is not in the form, so a failed walk says to type it. */
   needsSecret: boolean;
 }) {
@@ -47,7 +52,7 @@ export function RemoteFolderBrowser({
   async function list(path: string[]) {
     setProblem(null);
     setFolders(null);
-    const res = await draftFolders({ provider, settings, dir: path.join("/") }).catch((e: unknown) => ({
+    const res = await draftFolders({ provider, settings, dir: path.join("/"), ...(destination ? { destination } : {}) }).catch((e: unknown) => ({
       ok: false as const,
       error: e instanceof Error ? e.message : undefined,
       folders: undefined,
@@ -71,7 +76,7 @@ export function RemoteFolderBrowser({
     const name = newName.trim();
     if (!name || creating) return;
     setCreating(true);
-    const res = await draftMakeFolder({ provider, settings, dir: dir.join("/"), folder: name }).catch((e: unknown) => ({
+    const res = await draftMakeFolder({ provider, settings, dir: dir.join("/"), folder: name, ...(destination ? { destination } : {}) }).catch((e: unknown) => ({
       ok: false as const,
       error: e instanceof Error ? e.message : undefined,
     }));

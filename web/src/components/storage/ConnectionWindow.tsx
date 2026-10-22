@@ -118,7 +118,10 @@ export function ConnectionWindow({ edit, form, onClose }: { edit: LocationEdit; 
           onChange={setDir}
           provider={provider.id}
           settings={{ ...stored.values, ...typed }}
-          needsSecret={stored.hidden.some((name) => !typed[name])}
+          destination={provider.route === "rclone" ? location.id.replace(/^destination:/, "") : undefined}
+          // The server fills in a remote's hidden values from its config,
+          // but not a sign-in's secret.
+          needsSecret={provider.route !== "rclone" && stored.hidden.some((name) => !typed[name])}
         />
       )}
       {fields.more.length > 0 && <MoreSettings>{fields.more.map(field)}</MoreSettings>}

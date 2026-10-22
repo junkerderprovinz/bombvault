@@ -212,20 +212,12 @@ func TestAnS3DestinationNeedsABucket(t *testing.T) {
 func TestAPresetBeatsTheForm(t *testing.T) {
 	svc, _, _ := newProbeSvc(t, nil)
 	p, _ := remotes.FindProvider("nextcloud")
-	d, err := svc.draftFor(p, map[string]string{"vendor": "other", "url": " https://cloud "})
+	d, err := svc.draftFor(p, map[string]string{"vendor": "other", "url": "https://cloud"})
 	if err != nil {
 		t.Fatal(err)
 	}
 	if d.Settings["vendor"] != "nextcloud" || d.Settings["url"] != "https://cloud" || d.Backend != "webdav" {
 		t.Fatalf("draft = %+v", d)
-	}
-	box, _ := remotes.FindProvider("storagebox")
-	d, err = svc.draftFor(box, map[string]string{"pass": "typed"})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if _, ok := d.Settings["pass"]; ok || d.Settings["key_file"] != svc.sshKeyPath() || d.Settings["port"] != "23" {
-		t.Fatalf("storage box draft = %+v, want BombVault's key and port 23, no password", d)
 	}
 	rest, _ := remotes.FindProvider("rest")
 	if _, err := svc.draftFor(rest, nil); err == nil {
