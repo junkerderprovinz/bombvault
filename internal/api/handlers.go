@@ -4736,7 +4736,10 @@ func (h *Handler) handleAuthStatus(w http.ResponseWriter, r *http.Request) {
 	if on {
 		if c, err := h.sessionCookie(r); err == nil {
 			authed = secret.ValidSessionToken(h.cfg.AppKey, hash, epoch, c.Value)
-			paired = paired || (authed && secret.PairedSessionToken(c.Value))
+			if authed && secret.PairedSessionToken(c.Value) {
+				authed = h.pairedPhoneListed(c.Value)
+				paired = paired || authed
+			}
 		}
 	}
 	out := map[string]any{
@@ -5685,11 +5688,12 @@ func (h *Handler) authGate(next http.Handler) http.Handler {
 			return
 		}
 
-		// The session of a paired phone reaches what pairedRoutes lists. A
-		// path that matches no route is left to the mux to answer, and
+		// The session of a paired phone reaches what pairedRoutes lists, for
+		// as long as the phone keeps its row. A path that matches no route
+		// is left to the mux to answer, and
 		// behind anything but a mux the gate cannot tell, so it refuses.
 		if secret.PairedSessionToken(c.Value) {
-			if on, err := h.store.PhonePairing(); err != nil || !on {
+			if on, err := h.store.PhonePairing(); err != nil || !on || !h.pairedPhoneListed(c.Value) {
 				writeJSON(w, http.StatusUnauthorized, map[string]any{"ok": false, "error": "authentication required"})
 				return
 			}

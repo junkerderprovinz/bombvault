@@ -560,7 +560,7 @@ func requestFor(pattern string) *http.Request {
 func TestAPairedSessionReachesTheListedRoutesAndIsRefusedTheRest(t *testing.T) {
 	in := newInstance(t, "attic", strings.Repeat("b2", 32))
 	hash, epoch, _ := in.h.authEnabled()
-	paired := secret.NewPairedSessionToken(in.appKey, hash, epoch, time.Hour)
+	paired := listedPhoneSession(t, in.st, in.appKey, hash, epoch)
 	full := secret.NewSessionToken(in.appKey, hash, epoch, time.Hour)
 
 	// The gate is what decides, so every route answers from a handler that
@@ -594,7 +594,7 @@ func TestAPairedSessionReachesTheListedRoutesAndIsRefusedTheRest(t *testing.T) {
 func TestAPairedSessionIsRefusedSomethingOfEveryKindItMayNotDo(t *testing.T) {
 	in := newInstance(t, "attic", strings.Repeat("b2", 32))
 	hash, epoch, _ := in.h.authEnabled()
-	in.session = secret.NewPairedSessionToken(in.appKey, hash, epoch, time.Hour)
+	in.session = listedPhoneSession(t, in.st, in.appKey, hash, epoch)
 	for _, route := range []struct {
 		method, path string
 		body         any
@@ -705,7 +705,7 @@ func TestAPairedSessionSeesNoLocationOrHookInWhatItReads(t *testing.T) {
 		}
 	}
 	hash, epoch, _ := in.h.authEnabled()
-	in.session = secret.NewPairedSessionToken(in.appKey, hash, epoch, time.Hour)
+	in.session = listedPhoneSession(t, in.st, in.appKey, hash, epoch)
 	for route, body := range pairedReads(in, fill) {
 		for _, leak := range leaks {
 			if strings.Contains(body, leak) {

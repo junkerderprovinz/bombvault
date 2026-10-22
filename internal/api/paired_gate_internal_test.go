@@ -8,11 +8,28 @@ import (
 	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/secret"
+	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-func pairedCookie(in *instance) *http.Cookie {
+// listedPhoneSession is the session of a phone the instance lists, the only
+// kind of paired session the gate lets through.
+func listedPhoneSession(t *testing.T, st *store.Repo, appKey, hash, epoch string) string {
+	t.Helper()
+	rows, err := st.ListFleetPeers()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !listsPhone(rows, wordsHolderID) {
+		if _, err := st.CreateFleetPeer(store.FleetPeer{MemberID: wordsHolderID, Name: "phone", Kind: "android", Enabled: true}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	return secret.NewPairedSessionToken(appKey, hash, epoch, wordsHolderID, time.Hour)
+}
+
+func pairedCookie(t *testing.T, in *instance) *http.Cookie {
 	hash, epoch, _ := in.h.authEnabled()
-	return &http.Cookie{Name: sessionCookieNameHTTP, Value: secret.NewPairedSessionToken(in.appKey, hash, epoch, time.Hour)} //nolint:gosec // G124: a cookie on a test request
+	return &http.Cookie{Name: sessionCookieNameHTTP, Value: listedPhoneSession(t, in.st, in.appKey, hash, epoch)} //nolint:gosec // G124: a cookie on a test request
 }
 
 func TestOddSpellingsOfARefusedRouteStayRefusedToAPairedSession(t *testing.T) {
@@ -37,7 +54,7 @@ func TestOddSpellingsOfARefusedRouteStayRefusedToAPairedSession(t *testing.T) {
 	} {
 		req := httptest.NewRequest(c.method, c.target, strings.NewReader("{}"))
 		req.Header.Set("Content-Type", "application/json")
-		req.AddCookie(pairedCookie(in))
+		req.AddCookie(pairedCookie(t, in))
 		w := httptest.NewRecorder()
 		in.router.ServeHTTP(w, req)
 		if w.Code < 300 {
@@ -54,7 +71,7 @@ func TestAPairedSessionTeachesNoDirectAddress(t *testing.T) {
 	}
 	req := httptest.NewRequest(http.MethodGet, "/api/status", nil)
 	req.Host = "attacker.example:8443"
-	req.AddCookie(pairedCookie(in))
+	req.AddCookie(pairedCookie(t, in))
 	w := httptest.NewRecorder()
 	in.router.ServeHTTP(w, req)
 	if w.Code != http.StatusOK {
@@ -73,7 +90,7 @@ func TestTheGateRefusesAPairedSessionItCannotRouteFirst(t *testing.T) {
 	in := newInstance(t, "attic", strings.Repeat("b2", 32))
 	wrapped := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusNoContent) })
 	req := httptest.NewRequest(http.MethodGet, "/api/recovery-kit", nil)
-	req.AddCookie(pairedCookie(in))
+	req.AddCookie(pairedCookie(t, in))
 	w := httptest.NewRecorder()
 	in.h.authGate(wrapped).ServeHTTP(w, req)
 	if w.Code != http.StatusForbidden || !strings.Contains(w.Body.String(), codeOwnLoginNeeded) {
@@ -86,7 +103,7 @@ func TestAuthStatusTellsAPairedSessionApart(t *testing.T) {
 	for _, c := range []struct {
 		cookie *http.Cookie
 		want   bool
-	}{{pairedCookie(in), true}, {nil, false}} {
+	}{{pairedCookie(t, in), true}, {nil, false}} {
 		req := httptest.NewRequest(http.MethodGet, "/api/auth", nil)
 		if c.cookie != nil {
 			req.AddCookie(c.cookie)

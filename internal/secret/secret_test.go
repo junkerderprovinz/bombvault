@@ -2,6 +2,7 @@ package secret
 
 import (
 	"bytes"
+	"encoding/hex"
 	"strconv"
 	"strings"
 	"testing"
@@ -95,9 +96,15 @@ func TestSessionTokenRoundtrip(t *testing.T) {
 
 func TestAPairedSessionTokenSignsInAndIsNeverMistakenForASignIn(t *testing.T) {
 	hash := mustHash(t, appKey, "s3cret")
-	paired := NewPairedSessionToken(appKey, hash, "e1", time.Hour)
+	paired := NewPairedSessionToken(appKey, hash, "e1", "phone-1", time.Hour)
 	if !ValidSessionToken(appKey, hash, "e1", paired) || !PairedSessionToken(paired) {
 		t.Fatal("a paired token must be valid and tell what it is")
+	}
+	if phone, ok := PairedSessionPhone(paired); !ok || phone != "phone-1" {
+		t.Fatalf("a paired token names phone %q, %v", phone, ok)
+	}
+	if _, ok := PairedSessionPhone(NewSessionToken(appKey, hash, "e1", time.Hour)); ok {
+		t.Fatal("a sign-in token must name no phone")
 	}
 	full := NewSessionToken(appKey, hash, "e1", time.Hour)
 	if PairedSessionToken(full) {
@@ -111,6 +118,19 @@ func TestAPairedSessionTokenSignsInAndIsNeverMistakenForASignIn(t *testing.T) {
 	}
 	if ValidSessionToken(appKey, hash, "e2", paired) {
 		t.Fatal("a paired token must end with its epoch")
+	}
+}
+
+func TestAPairedTokenCannotBeMovedToAnotherPhone(t *testing.T) {
+	hash := mustHash(t, appKey, "s3cret")
+	paired := NewPairedSessionToken(appKey, hash, "e1", "phone-1", time.Hour)
+	_, rest, _ := strings.Cut(strings.TrimPrefix(paired, "paired."), ".")
+	moved := "paired." + hex.EncodeToString([]byte("phone-2")) + "." + rest
+	if ValidSessionToken(appKey, hash, "e1", moved) {
+		t.Fatal("a paired token renamed to another phone must not be valid")
+	}
+	if ValidSessionToken(appKey, hash, "e1", "paired."+rest) {
+		t.Fatal("a paired token that names no phone must not be valid")
 	}
 }
 

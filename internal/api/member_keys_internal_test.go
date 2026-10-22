@@ -11,7 +11,6 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/keydeposit"
 	"github.com/junkerderprovinz/bombvault/internal/relay"
 	"github.com/junkerderprovinz/bombvault/internal/restickey"
-	"github.com/junkerderprovinz/bombvault/internal/secret"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
@@ -133,7 +132,7 @@ func TestTheOwnerForgetsAMembersKeyAndRemovingOrLeavingDropsIt(t *testing.T) {
 	pin()
 	own := in.session
 	hash, epoch, _ := in.h.authEnabled()
-	in.as(secret.NewPairedSessionToken(in.appKey, hash, epoch, time.Hour), func() {
+	in.as(listedPhoneSession(t, in.st, in.appKey, hash, epoch), func() {
 		if code, out := in.do(t, http.MethodDelete, path, nil); code != http.StatusForbidden || out["code"] != codeOwnLoginNeeded {
 			t.Fatalf("forgetting a key with a paired session: %d %v", code, out)
 		}
