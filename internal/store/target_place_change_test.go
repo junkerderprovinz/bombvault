@@ -140,7 +140,7 @@ func TestATrialRestoreStaysWithTheTargetItReadWhenAnotherComesFirst(t *testing.T
 	if err := r.AddRestoreDrill(store.RestoreDrill{Domain: "vms", Source: "offsite", Kind: "dr", At: 100, OK: true}); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := r.UpsertOffsiteTarget(store.OffsiteTarget{Domain: "vms", Name: "B", Repo: "rest:https://b:8000/vms", Enabled: true}); err != nil {
+	if _, err := r.UpsertOffsiteTarget(store.OffsiteTarget{Domain: "vms", Name: "B", Repo: "rest:https://b:8000/vms", Enabled: true, SortOrder: 1}); err != nil {
 		t.Fatal(err)
 	}
 	a.Enabled = false
