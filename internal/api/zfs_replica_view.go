@@ -31,6 +31,9 @@ type ZFSReplicaView struct {
 	// Only is set while the item has no place for a backup, so its backup
 	// run only sends the replica.
 	Only bool `json:"only"`
+	// SectionPlace is set when the item backs up where its section does, so
+	// the section's replica-only switch applies to it.
+	SectionPlace bool `json:"sectionPlace"`
 }
 
 // ZFSReplicaSnapshotView is one replica snapshot kept on the target.
@@ -80,14 +83,15 @@ func (s *Service) ZFSReplicaView(ctx context.Context, id string) (ZFSReplicaView
 	}
 	rep := d.Replica
 	v := ZFSReplicaView{
-		Target:      zfsReplicaTargetExport{Kind: rep.TargetKind, ID: rep.TargetID},
-		AfterBackup: rep.AfterBackup,
-		Cadence:     rep.Cadence,
-		Keep:        rep.Keep,
-		State:       zfsReplicaNever,
-		Snapshots:   []ZFSReplicaSnapshotView{},
-		Members:     []ZFSReplicaMemberView{},
-		Only:        s.zfsReplicaOnly(d),
+		Target:       zfsReplicaTargetExport{Kind: rep.TargetKind, ID: rep.TargetID},
+		AfterBackup:  rep.AfterBackup,
+		Cadence:      rep.Cadence,
+		Keep:         rep.Keep,
+		State:        zfsReplicaNever,
+		Snapshots:    []ZFSReplicaSnapshotView{},
+		Members:      []ZFSReplicaMemberView{},
+		Only:         s.zfsReplicaOnly(d),
+		SectionPlace: d.Repo == "",
 	}
 	run, hasRun, err := s.store.LatestZFSReplicaRun(id)
 	if err != nil {

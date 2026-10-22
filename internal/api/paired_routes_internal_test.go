@@ -408,6 +408,7 @@ var pairedRefused = []string{
 	"PUT /api/placement/default/{domain}",
 	"PUT /api/settings/primary-remote/{domain}",
 	"PUT /api/storage/sections/{domain}/local",
+	"PUT /api/zfs/replica-only",
 	"POST /api/storage/own-folders",
 	"POST /api/storage/own-folders/preview",
 	// Settings, notifications, integrations, discovery and the settings backup.

@@ -418,3 +418,75 @@ func TestScheduledFlashBackupIsRefusedOnTrueNASWithoutMountAdvice(t *testing.T) 
 		t.Fatalf("refusal = %q, want it to name TrueNAS and leave out the Unraid mount", msg)
 	}
 }
+
+func switchReplicaOnly(t *testing.T, f *placementFixture, on bool) {
+	t.Helper()
+	if code, out := f.call(http.MethodPut, "/api/zfs/replica-only", map[string]bool{"on": on}); code != http.StatusOK || out["ok"] != true {
+		t.Fatalf("switch replica-only to %v = %d %v", on, code, out)
+	}
+}
+
+// zfsPlaces is whether the ZFS section's own folder is on, and which of
+// targets are.
+func zfsPlaces(t *testing.T, f *placementFixture, targets ...store.OffsiteTarget) (local bool, on []bool) {
+	t.Helper()
+	off, err := f.st.LocalOff()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, target := range targets {
+		got, ok, err := f.st.GetOffsiteTarget(target.ID)
+		if err != nil || !ok {
+			t.Fatalf("target %s: %v, %v", target.Name, ok, err)
+		}
+		on = append(on, got.Enabled)
+	}
+	return !off[zfsDomain], on
+}
+
+func TestSwitchingReplicaOnlyOffBringsBackExactlyThePlacesItTurnedOff(t *testing.T) {
+	f := newPlacementFixture(t)
+	s3 := f.target(zfsDomain, "S3", "s3:s3.example.com/bucket/zfs")
+	box := f.target(zfsDomain, "Box", "rclone:box:zfs")
+	box.Enabled = false
+	if _, err := f.st.UpsertOffsiteTarget(box); err != nil {
+		t.Fatal(err)
+	}
+
+	switchReplicaOnly(t, f, true)
+	if local, on := zfsPlaces(t, f, s3, box); local || on[0] || on[1] {
+		t.Fatalf("after switching on: folder %v, targets %v, want every place off", local, on)
+	}
+	if nowhere, err := f.svc.placelessSections(); err != nil || !nowhere[zfsDomain] {
+		t.Fatalf("placeless = %v, %v, want the ZFS section without a place", nowhere, err)
+	}
+
+	switchReplicaOnly(t, f, false)
+	if local, on := zfsPlaces(t, f, s3, box); !local || !on[0] || on[1] {
+		t.Fatalf("after switching off: folder %v, targets %v, want the folder and S3 back and Box left off", local, on)
+	}
+}
+
+func TestReplicaOnlyLeavesAnOffsiteOnlySectionWithoutAFolder(t *testing.T) {
+	f := newPlacementFixture(t)
+	s3 := f.target(zfsDomain, "S3", "s3:s3.example.com/bucket/zfs")
+	switchLocal(t, f, zfsDomain, false)
+
+	switchReplicaOnly(t, f, true)
+	switchReplicaOnly(t, f, false)
+
+	if local, on := zfsPlaces(t, f, s3); local || !on[0] {
+		t.Fatalf("after the round trip: folder %v, S3 %v, want only S3 as before", local, on)
+	}
+}
+
+func TestReplicaOnlySwitchedOffWithNothingRememberedGivesTheFolderBack(t *testing.T) {
+	f := newPlacementFixture(t)
+	switchLocal(t, f, zfsDomain, false)
+
+	switchReplicaOnly(t, f, false)
+
+	if local, _ := zfsPlaces(t, f); !local {
+		t.Fatal("the section was left without a place")
+	}
+}

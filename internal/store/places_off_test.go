@@ -49,3 +49,25 @@ func TestAPrimarySwitchedOffRemembersWhereItPointed(t *testing.T) {
 		t.Fatalf("PrimaryOffAt after switching on = %q, %v", at, err)
 	}
 }
+
+func TestAReplicaOnlySwitchRemembersEachPlaceItTurnedOff(t *testing.T) {
+	r := newRepo(t)
+	for _, id := range []string{"", "t1", "t2"} {
+		if err := r.SetReplicaOnlyOff("zfs", id, true); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := r.SetReplicaOnlyOff("zfs", "t1", false); err != nil {
+		t.Fatal(err)
+	}
+	got, err := r.ReplicaOnlyOff("zfs")
+	if err != nil || len(got) != 2 || got[0] != "" || got[1] != "t2" {
+		t.Fatalf("ReplicaOnlyOff = %q, %v, want the own folder and t2", got, err)
+	}
+	if off, err := r.LocalOff(); err != nil || len(off) != 0 {
+		t.Fatalf("LocalOff = %v, %v, want the remembered places kept apart from the folder switch", off, err)
+	}
+	if got, err := r.ReplicaOnlyOff("flash"); err != nil || len(got) != 0 {
+		t.Fatalf("ReplicaOnlyOff flash = %q, %v, want nothing", got, err)
+	}
+}

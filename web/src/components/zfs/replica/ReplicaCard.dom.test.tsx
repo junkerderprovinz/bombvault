@@ -13,6 +13,7 @@ import { group, replica, server } from "./replica.testsupport";
 let current: ZFSReplica;
 let progress: ProgressMap = {};
 const patches: ZFSReplicaPatch[] = [];
+const replicaOnly: boolean[] = [];
 // What a PATCH answers. The store keeps the change either way, as the server
 // does when only the request to a paired instance fails.
 let patchAnswer: { ok: boolean; code?: string } = { ok: true };
@@ -29,6 +30,13 @@ vi.mock("../../../lib/api", async (importOriginal) => {
       current = { ...current, ...patch };
       return Promise.resolve(patchAnswer);
     },
+    setZFSReplicaOnly: (on: boolean) => {
+      replicaOnly.push(on);
+      current = { ...current, only: on };
+      return Promise.resolve({ ok: true });
+    },
+    setSectionLocal: () => Promise.reject(new Error("the switch went around the server")),
+    updateOffsiteTarget: () => Promise.reject(new Error("the switch went around the server")),
   };
 });
 
@@ -50,6 +58,7 @@ beforeEach(() => {
   current = replica();
   progress = {};
   patches.length = 0;
+  replicaOnly.length = 0;
   patchAnswer = { ok: true };
   localStorage.clear();
 });
@@ -320,6 +329,24 @@ describe("replica card", () => {
     renderCard();
     expect(await screen.findByLabelText(en["zfs.replica.whenHint"])).toBeTruthy();
     expect(screen.queryByLabelText(new RegExp(en["zfs.replica.onlyHint"].slice(0, 30)))).toBeNull();
+  });
+
+  it("leaves the section's places to the server both ways of the replica-only switch", async () => {
+    renderCard();
+    const toggle = await screen.findByRole("switch", { name: en["zfs.replica.onlyToggle"] });
+    fireEvent.click(toggle);
+    await waitFor(() => expect(toggle.getAttribute("aria-checked")).toBe("true"));
+    fireEvent.click(toggle);
+    await waitFor(() => expect(toggle.getAttribute("aria-checked")).toBe("false"));
+    expect(replicaOnly).toEqual([true, false]);
+    expect(screen.queryByText("the switch went around the server")).toBeNull();
+  });
+
+  it("offers no replica-only switch to an entry with a repository of its own", async () => {
+    current = replica({ sectionPlace: false });
+    renderCard();
+    await screen.findByRole("radiogroup", { name: en["zfs.replica.when"] });
+    expect(screen.queryByRole("switch", { name: en["zfs.replica.onlyToggle"] })).toBeNull();
   });
 
   it("hides everything but the picker while there is no target", async () => {

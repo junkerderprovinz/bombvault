@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 
-import { listOffsiteTargets, patchZFSReplica, setSectionLocal, updateOffsiteTarget } from "../../../lib/api";
+import { patchZFSReplica, setZFSReplicaOnly } from "../../../lib/api";
 import type {
   ZFSPeerState,
   ZFSReplica,
@@ -147,23 +147,16 @@ export function ReplicaCard({ itemId, name }: { itemId: string; name: string }) 
   }
 
   // The ZFS section has no place to back up to while its own folder and every
-  // off-site target are off, and a run then only sends the replica.
+  // off-site target are off, and a run then only sends the replica. The
+  // server remembers which places it switched off, so off brings back those.
   async function setReplicaOnly(on: boolean) {
     try {
-      const local = await setSectionLocal("zfs", !on);
-      if (!local.ok) throw new Error(local.error ?? t("settings.error"));
-      if (on) {
-        const listed = await listOffsiteTargets("zfs");
-        for (const target of listed.targets ?? []) {
-          if (!target.enabled) continue;
-          const res = await updateOffsiteTarget(target.id, { ...target, enabled: false });
-          if (!res.ok) throw new Error(res.error ?? t("settings.error"));
-        }
-        offsiteTargetsChanged();
-      }
+      const res = await setZFSReplicaOnly(on);
+      if (!res.ok) throw new Error(res.error ?? t("settings.error"));
     } catch (err) {
       push(err instanceof Error ? err.message : t("settings.error"), "fail");
     } finally {
+      offsiteTargetsChanged();
       reload();
     }
   }
@@ -242,16 +235,20 @@ export function ReplicaCard({ itemId, name }: { itemId: string; name: string }) 
 
       {hasTarget && (
         <Rows>
-          <SettingRow label={t("zfs.replica.onlyToggle")} hint={t("zfs.replica.onlyToggleHint")}>
-            <span data-new="zfs-replica-only-switch" className="flex">
-              <Toggle
-                hideLabel
-                label={t("zfs.replica.onlyToggle")}
-                checked={Boolean(view.only)}
-                onChange={(on) => void setReplicaOnly(on)}
-              />
-            </span>
-          </SettingRow>
+          {/* An item with a repository of its own backs up there whatever the
+              section's places are, so the switch could not change it. */}
+          {view.sectionPlace && (
+            <SettingRow label={t("zfs.replica.onlyToggle")} hint={t("zfs.replica.onlyToggleHint")}>
+              <span data-new="zfs-replica-only-switch" className="flex">
+                <Toggle
+                  hideLabel
+                  label={t("zfs.replica.onlyToggle")}
+                  checked={Boolean(view.only)}
+                  onChange={(on) => void setReplicaOnly(on)}
+                />
+              </span>
+            </SettingRow>
+          )}
           <SettingRow
             label={t("zfs.replica.when")}
             hint={view.only ? `${t("zfs.replica.whenHint")} ${t("zfs.replica.onlyHint")}` : t("zfs.replica.whenHint")}

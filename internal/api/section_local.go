@@ -301,3 +301,116 @@ func (h *Handler) handleSetSectionLocal(w http.ResponseWriter, r *http.Request) 
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(nil))
 }
+
+// SetZFSReplicaOnly switches every place of the ZFS section off, so that its
+// entries with a replica only send that, or brings back the places it turned
+// off. Each place is remembered before it goes off, so a run that stops
+// halfway still restores what it took.
+func (s *Service) SetZFSReplicaOnly(on bool) error {
+	if on {
+		return s.zfsPlacesOff()
+	}
+	return s.zfsPlacesBack()
+}
+
+func (s *Service) zfsPlacesOff() error {
+	off, err := s.localOff(zfsDomain)
+	if err != nil {
+		return err
+	}
+	if !off {
+		if err := s.store.SetReplicaOnlyOff(zfsDomain, "", true); err != nil {
+			return err
+		}
+		if err := s.store.SetLocal(zfsDomain, false); err != nil {
+			return err
+		}
+	}
+	targets, err := s.store.OffsiteTargetsForDomain(zfsDomain)
+	if err != nil {
+		return err
+	}
+	for _, t := range targets {
+		if !t.Enabled {
+			continue
+		}
+		if err := s.store.SetReplicaOnlyOff(zfsDomain, t.ID, true); err != nil {
+			return err
+		}
+		if err := s.setTargetEnabled(t, false); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// zfsPlacesBack switches on the places zfsPlacesOff turned off. A section
+// that has none afterwards, because they were switched off by hand or their
+// targets are gone, gets its own folder back.
+func (s *Service) zfsPlacesBack() error {
+	ids, err := s.store.ReplicaOnlyOff(zfsDomain)
+	if err != nil {
+		return err
+	}
+	for _, id := range ids {
+		if id == "" {
+			err = s.store.SetLocal(zfsDomain, true)
+		} else {
+			err = s.enableTargetByID(id)
+		}
+		if err != nil {
+			return err
+		}
+		if err := s.store.SetReplicaOnlyOff(zfsDomain, id, false); err != nil {
+			return err
+		}
+	}
+	nowhere, err := s.placelessSections()
+	if err != nil {
+		return err
+	}
+	if nowhere[zfsDomain] {
+		return s.store.SetLocal(zfsDomain, true)
+	}
+	return nil
+}
+
+func (s *Service) enableTargetByID(id string) error {
+	t, ok, err := s.store.GetOffsiteTarget(id)
+	if err != nil || !ok || t.Enabled {
+		return err
+	}
+	return s.setTargetEnabled(t, true)
+}
+
+// setTargetEnabled switches a target on or off as handleUpdateOffsiteTarget
+// does, keeping the primary's switch apart from the settings that rewrite it.
+func (s *Service) setTargetEnabled(t store.OffsiteTarget, on bool) error {
+	t.Enabled = on
+	stored, err := s.store.UpsertOffsiteTarget(t)
+	if err != nil {
+		return err
+	}
+	if stored.SortOrder == 0 {
+		return s.store.SetPrimaryOff(stored.Domain, stored.Repo, !on)
+	}
+	return nil
+}
+
+// handleSetZFSReplicaOnly serves PUT /api/zfs/replica-only.
+func (h *Handler) handleSetZFSReplicaOnly(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		On bool `json:"on"`
+	}
+	if !decodeBody(w, r, &body) {
+		return
+	}
+	err := h.svc.SetZFSReplicaOnly(body.On)
+	// A switch that stopped halfway has still changed targets.
+	h.replanAfterTargetChange()
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(nil))
+}

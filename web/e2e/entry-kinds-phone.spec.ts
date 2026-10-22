@@ -156,6 +156,7 @@ const REPLICA = {
   snapshots: [],
   members: [],
   peerState: "",
+  sectionPlace: true,
 };
 
 async function openReplica(page: Page) {

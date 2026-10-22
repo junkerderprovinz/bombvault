@@ -239,6 +239,7 @@ async function stage(page: Page, s: Stage = {}): Promise<{ posts: string[] }> {
         snapshots: [],
         members: [],
         peerState: "",
+        sectionPlace: true,
       },
     }),
   );

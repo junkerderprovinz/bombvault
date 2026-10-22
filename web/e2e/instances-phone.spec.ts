@@ -415,6 +415,7 @@ const REPLICA = {
   snapshots: [],
   members: [],
   peerState: "allowed",
+  sectionPlace: true,
 };
 
 const RECEIVER_SERVER = {

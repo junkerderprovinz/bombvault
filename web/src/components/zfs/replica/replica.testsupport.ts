@@ -36,6 +36,7 @@ export function replica(overrides: Partial<ZFSReplica> = {}): ZFSReplica {
       },
     ],
     peerState: "",
+    sectionPlace: true,
     ...overrides,
   };
 }

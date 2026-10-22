@@ -5342,6 +5342,15 @@ export interface ZFSReplica {
   /** True while the item has no place for a backup, so its backup run only
    *  sends the replica. */
   only?: boolean;
+  /** True when the item backs up where its section does, so the section's
+   *  replica-only switch applies to it. */
+  sectionPlace: boolean;
+}
+
+/** PUT /api/zfs/replica-only switches every place of the ZFS section off, or
+ *  brings back the ones it switched off. */
+export function setZFSReplicaOnly(on: boolean): Promise<OkEnvelope> {
+  return fetchJSON("/api/zfs/replica-only", { method: "PUT", body: JSON.stringify({ on }) });
 }
 
 export interface ZFSReplicaPatch {

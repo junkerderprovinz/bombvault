@@ -91,6 +91,27 @@ func TestAnItemWithItsOwnRepositoryIsNeverReplicaOnly(t *testing.T) {
 	}
 }
 
+func TestTheReplicaOnlySwitchIsOfferedOnlyWhereTheSectionDecides(t *testing.T) {
+	r := replicaOnlyRig(t)
+	sectionPlace := func() bool {
+		t.Helper()
+		v, err := r.s.ZFSReplicaView(context.Background(), r.item.ID)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return v.SectionPlace
+	}
+	if !sectionPlace() {
+		t.Fatal("an item that backs up where its section does is not offered the switch")
+	}
+	if err := r.st.SetZFSDatasetRepo(r.item.ID, "repo-1"); err != nil {
+		t.Fatal(err)
+	}
+	if sectionPlace() {
+		t.Error("an item with a repository of its own is offered the section's switch")
+	}
+}
+
 func TestAReplicaOnlyItemIsProtectedOnceItIsReplicated(t *testing.T) {
 	r := replicaOnlyRig(t)
 	settings, _ := r.st.GetSettings()

@@ -17,6 +17,8 @@ var LocalSwitchDomains = []string{"flash", "config", "zfs"}
 const (
 	placeLocal   = "local"
 	placePrimary = "primary"
+	// The prefix of the places a replica-only switch turned off, one row each.
+	placeReplicaOnly = "replica-only:"
 )
 
 // LocalOff returns the sections whose own folder takes no new backups.
@@ -69,6 +71,35 @@ func (r *Repo) PrimaryOffAt(domain string) (string, error) {
 func (r *Repo) SetPrimaryOff(domain, repo string, off bool) error {
 	if err := r.setPlaceOff(domain, placePrimary, repo, off); err != nil {
 		return fmt.Errorf("SetPrimaryOff %s: %w", domain, err)
+	}
+	return nil
+}
+
+// ReplicaOnlyOff returns the places of a section that its replica-only switch
+// turned off, so that switching it off again brings back those and no others:
+// "" for the own folder, a target's id for a target.
+func (r *Repo) ReplicaOnlyOff(domain string) ([]string, error) {
+	rows, err := r.db.Query(`SELECT repo FROM places_off WHERE domain = ? AND place LIKE ? ORDER BY place`, domain, placeReplicaOnly+"%")
+	if err != nil {
+		return nil, fmt.Errorf("ReplicaOnlyOff %s: %w", domain, err)
+	}
+	defer rows.Close() //nolint:errcheck // rows.Close on a completed query is always nil for SQLite
+	var out []string
+	for rows.Next() {
+		var id string
+		if err := rows.Scan(&id); err != nil {
+			return nil, fmt.Errorf("ReplicaOnlyOff %s: %w", domain, err)
+		}
+		out = append(out, id)
+	}
+	return out, rows.Err()
+}
+
+// SetReplicaOnlyOff remembers that a section's replica-only switch turned off
+// the place id ("" for the own folder), or forgets it.
+func (r *Repo) SetReplicaOnlyOff(domain, id string, off bool) error {
+	if err := r.setPlaceOff(domain, placeReplicaOnly+id, id, off); err != nil {
+		return fmt.Errorf("SetReplicaOnlyOff %s: %w", domain, err)
 	}
 	return nil
 }
