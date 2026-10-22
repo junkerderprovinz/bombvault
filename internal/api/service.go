@@ -12950,6 +12950,7 @@ func (s *Service) BackupVM(ctx context.Context, name string) (_ backup.Summary, 
 		ZFSHost:          sshZFSHost{ssh: s.ssh},
 		ZvolRestic:       &resticZvolAdapter{engine: step.engine, mode: mode, extraTags: withTags(s.directTags(settings, "vms", repo), beforeRestoreTags(ctx))},
 		DomainXML:        defXML,
+		Restarts:         vmRestarts{st: s.store},
 	}
 	// With changed-block backups on, a running VM with qcow2 disks is read
 	// through the libvirt backup API instead; anything else keeps the method.

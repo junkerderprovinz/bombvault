@@ -3315,6 +3315,16 @@ INSERT OR IGNORE INTO sign_ins_note (id) VALUES (1);`,
 		alreadySatisfied: columnPresent("fleet_peers", "last_seen"),
 		sql:              `ALTER TABLE fleet_peers ADD COLUMN last_seen INTEGER NOT NULL DEFAULT 0;`,
 	},
+	{
+		// The VMs a graceful backup shut down, so a process that dies before
+		// starting them again does it at boot.
+		version: vmRestartMigration,
+		name:    "vm_restart_pending",
+		sql: `CREATE TABLE IF NOT EXISTS vm_restart_pending (
+  name     TEXT    PRIMARY KEY,
+  added_at INTEGER NOT NULL
+);`,
+	},
 }
 
 // offsiteFieldDomains are the domains with an off-site field in the settings,
@@ -3540,6 +3550,9 @@ const backupMemoryMigration = 430
 
 // memberSeenMigration numbers when a member was last in reach.
 const memberSeenMigration = 440
+
+// vmRestartMigration numbers the record of the VMs a backup shut down.
+const vmRestartMigration = 450
 
 // oneLineColumns are the names and locations the recovery kit prints.
 var oneLineColumns = []struct {
