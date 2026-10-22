@@ -382,6 +382,7 @@ var pairedRefused = []string{
 	"POST /api/offsite/destinations/{id}/removal",
 	"POST /api/offsite/drafts/check",
 	"POST /api/offsite/drafts/folders",
+	"POST /api/offsite/drafts/install-key",
 	"POST /api/offsite/drafts/mkdir",
 	"POST /api/offsite/rclone-remote",
 	"POST /api/offsite/targets",
