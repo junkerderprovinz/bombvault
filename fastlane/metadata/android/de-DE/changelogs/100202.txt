@@ -1,0 +1,1 @@
+Deine App hat diesmal Pause, BombVault 10.2.2 repariert nur den Server: ZFS-Einträge, die nur replizieren, warten nicht mehr auf eine Sicherung, die nie kommt. Sie warten jetzt auf ihre erste Replik, und ihre Seite listet keine Speicherorte mehr, in die sie nie schreiben.
