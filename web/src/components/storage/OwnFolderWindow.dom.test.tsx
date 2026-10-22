@@ -155,3 +155,27 @@ it("signs a typed remote address in with a saved sign-in", async () => {
   expect(previewOwnFolders).toHaveBeenLastCalledWith({ domains: ["vms"], copyOver: true, address: "rest:http://nas:8000/bv", credsRef: "nas" });
   expect(within(screen.getByRole("dialog")).getByRole("button", { name: "Open" })).toBeTruthy();
 });
+
+it("says under What happens why the switch cannot go ahead and that it can without the copy", async () => {
+  previewOwnFolders.mockImplementation(async (req) =>
+    req.copyOver ? { ok: false, code: "move-sign-in", error: "both places sign in the same way" } : { ok: true, steps: [STEP] }
+  );
+  await open(["containers"], "destination:h");
+  await settle();
+
+  const alert = screen.getByRole("alert");
+  expect(alert.textContent).toContain("The own folder cannot move like this.");
+  expect(alert.textContent).toContain("Both places sign in the same way but with different credentials");
+  expect(alert.textContent).toContain('Switch off "Copy the backups already made"');
+  expect((screen.getByRole("button", { name: "Switch" }) as HTMLButtonElement).disabled).toBe(true);
+
+  await act(async () => {
+    fireEvent.click(screen.getByRole("switch", { name: "Copy the backups already made" }));
+  });
+  await settle();
+
+  expect(previewOwnFolders).toHaveBeenLastCalledWith({ domains: ["containers"], copyOver: false, location: "destination:h" });
+  expect(screen.queryByRole("alert")).toBeNull();
+  expect(screen.getByRole("list").textContent).toContain("The 3 newest backups stay in Local.");
+  expect((screen.getByRole("button", { name: "Switch" }) as HTMLButtonElement).disabled).toBe(false);
+});

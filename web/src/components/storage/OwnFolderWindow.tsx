@@ -1,4 +1,4 @@
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import {
   destinationFolder,
   moveOwnFolders,
@@ -111,7 +111,8 @@ export function OwnFolderWindow({
   const [credsRef, setCredsRef] = useState<string | null>(null);
   const [copyOver, setCopyOver] = useState(true);
   const [steps, setSteps] = useState<OwnFolderStep[] | null>(null);
-  const [problem, setProblem] = useState<string | null>(null);
+  const [problem, setProblem] = useState<{ text: string; code?: string } | null>(null);
+  const stepsFor = useRef<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [safety, setSafety] = useState(false);
 
@@ -134,10 +135,13 @@ export function OwnFolderWindow({
           copyOver,
           ...(place ? { location: place.id } : { address: address.trim(), credsRef: remoteAddress ? signIn : "" }),
         };
-  const key = JSON.stringify(request && { ...request, copyOver: undefined });
+  const key = JSON.stringify(request);
+  // The steps are the same with the copy on or off, so they stay up while the
+  // toggle is checked again. Only the copy itself can be refused.
+  const where = JSON.stringify(request && { ...request, copyOver: undefined });
 
   useEffect(() => {
-    setSteps(null);
+    if (stepsFor.current !== where) setSteps(null);
     setProblem(null);
     if (!request) return;
     let alive = true;
@@ -146,8 +150,14 @@ export function OwnFolderWindow({
         .catch((e: unknown): OkEnvelope => ({ ok: false, error: e instanceof Error ? e.message : undefined }))
         .then((res: OkEnvelope & { steps?: OwnFolderStep[] }) => {
           if (!alive) return;
-          if (res.ok && res.steps) setSteps(res.steps);
-          else setProblem(placementErrorText(t, lang, res, "settings.error"));
+          if (res.ok && res.steps) {
+            stepsFor.current = where;
+            setSteps(res.steps);
+          } else {
+            stepsFor.current = null;
+            setSteps(null);
+            setProblem({ text: placementErrorText(t, lang, res, "settings.error"), code: res.code });
+          }
         });
     }, 400);
     return () => {
@@ -187,7 +197,7 @@ export function OwnFolderWindow({
     }));
     setBusy(false);
     if (!res.ok || !res.steps) {
-      setProblem(placementErrorText(t, lang, res, "settings.error"));
+      setProblem({ text: placementErrorText(t, lang, res, "settings.error"), code: res.code });
       return;
     }
     const names = (list: OwnFolderStep[]) => formatList(lang, list.map((step) => t(DOMAIN_LABEL[step.domain])));
@@ -334,7 +344,13 @@ export function OwnFolderWindow({
 
           <section className="flex flex-col gap-2">
             <h3 className="text-xs font-semibold uppercase tracking-widest text-carbon-textSub">{t("own.what")}</h3>
-            {!request ? (
+            {problem ? (
+              <div role="alert" className="flex flex-col gap-1 rounded-card bg-statusWarnBg px-3 py-2 text-sm leading-relaxed text-statusWarn wrap-break-word">
+                <p className="font-semibold">{t("own.blocked")}</p>
+                <p>{problem.text}</p>
+                {problem.code === "move-sign-in" && copyOver && <p>{t("own.blockedByCopy").replace("{toggle}", () => t("own.copyOver"))}</p>}
+              </div>
+            ) : !request ? (
               <p className="text-sm text-carbon-textSub">{t("own.pick")}</p>
             ) : steps ? (
               <ul className="flex list-disc flex-col gap-1.5 ps-5 text-sm text-carbon-text">
@@ -345,9 +361,8 @@ export function OwnFolderWindow({
                 ))}
               </ul>
             ) : (
-              !problem && <p className="text-sm text-carbon-textSub">{t("dashboard.checking")}</p>
+              <p className="text-sm text-carbon-textSub">{t("dashboard.checking")}</p>
             )}
-            {problem && <p className="text-xs text-statusWarn wrap-break-word">{problem}</p>}
             <SettingRow label={t("own.copyOver")} hint={t("own.copyOverHint")}>
               <Toggle hideLabel label={t("own.copyOver")} checked={copyOver} disabled={busy} onChange={setCopyOver} />
             </SettingRow>
