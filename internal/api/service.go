@@ -14051,6 +14051,12 @@ func (s *Service) BackupFlash(ctx context.Context) (_ backup.Summary, retErr err
 	// Whether this attempt succeeds or not: a backup that failed on a full disk
 	// is the reading the capacity rule most needs.
 	defer s.sampleVolumesFor(ctx, "flash")
+	orchestrated := false
+	defer func() {
+		if retErr != nil && !orchestrated && !errors.Is(retErr, ErrNoPlace) {
+			s.failSingletonPreflight(ctx, "flash", store.FlashTargetID, retErr)
+		}
+	}()
 	settings, err := s.store.GetSettings()
 	if err != nil {
 		return backup.Summary{}, fmt.Errorf("read settings: %w", err)
@@ -14076,6 +14082,7 @@ func (s *Service) BackupFlash(ctx context.Context) (_ backup.Summary, retErr err
 	// Healthchecks /start ping: deferred to here, past the /boot-mounted + EnsureRepo
 	// guards, so the paired done/fail notifyBackup below always follows (no dangling /start).
 	s.notifyBackupStart(ctx, "flash")
+	orchestrated = true
 	fctx, startedAt := s.progBegin(ctx, "flash", "backup")
 	sum, err := backup.BackupFlash(fctx, backup.FlashBackupDeps{
 		SourceDir: s.cfg.FlashDir,
@@ -14272,6 +14279,15 @@ func (s *Service) BackupFileSet(ctx context.Context, id string) (_ backup.Summar
 	// which is worth cancelling.
 	s.registerBackupCancel(ctx, "files:"+set.Name, cancel)
 	defer s.endBackupCancel("files:"+set.Name, &retErr)
+	// Everything down to the orchestrator returns before it records a run, so
+	// a failure there is recorded and sent here, as Backup does.
+	orchestrated := false
+	defer func() {
+		if retErr != nil && !orchestrated && !errors.Is(retErr, ErrNoPlace) {
+			s.recordPreflightFailure(ctx, "BackupFileSet", set.Name, set.ID, retErr)
+			s.notifyBackup(ctx, "files", set.Name, "files:"+set.Name, false, backup.Summary{}, retErr)
+		}
+	}()
 	// A set without a path cannot be backed up (Discover creates path-less,
 	// disabled sets from fileset: tags alone) — say so instead of letting
 	// paths.Resolve report a misleading traversal error for "".
@@ -14283,21 +14299,7 @@ func (s *Service) BackupFileSet(ctx context.Context, id string) (_ backup.Summar
 		return backup.Summary{}, fmt.Errorf("files backup: resolve source path for %q: %w", set.Name, err)
 	}
 	if _, statErr := os.Stat(src); errors.Is(statErr, fs.ErrNotExist) {
-		// Record the miss as a failed run so a scheduled backup of a renamed or
-		// deleted folder shows up in Run History instead of failing invisibly.
-		err := fmt.Errorf("files backup: source path not found for %q (%s does not exist under the host mount)", set.Name, src)
-		if runID, sErr := s.startRun(ctx, set.ID, "backup"); sErr != nil {
-			log.Printf("api: files backup: %q: record missing-path run: %v", set.Name, sErr) //nolint:gosec // G706: name is %q-quoted
-			// truncateRunErr, like every other FinishRun in this file: it is "the one
-			// function that writes runs.error", and this was the only call site
-			// bypassing it. Both halves matter here — the message embeds the resolved
-			// host path (scrub), and a file set's name and path are never
-			// length-validated at creation, so an arbitrarily long string could reach
-			// runs.error uncapped and travel on into the weekly digest.
-		} else if fErr := s.store.FinishRun(runID, "failed", "", 0, truncateRunErr(err)); fErr != nil {
-			log.Printf("api: files backup: %q: finish missing-path run: %v", set.Name, fErr) //nolint:gosec // G706: name is %q-quoted
-		}
-		return backup.Summary{}, err
+		return backup.Summary{}, fmt.Errorf("files backup: source path not found for %q (%s does not exist under the host mount)", set.Name, src)
 	}
 	// The set's OWN repository if it has one (#204), otherwise the domain's.
 	// Everything below takes `repo` as a parameter - EnsureRepo, the run record,
@@ -14331,18 +14333,13 @@ func (s *Service) BackupFileSet(ctx context.Context, id string) (_ backup.Summar
 			if eErr != nil {
 				reason = fmt.Sprintf("source folder for %q could not be read (%s): %v", set.Name, src, eErr)
 			}
-			err := fmt.Errorf("files backup: %s", reason)
-			if runID, sErr := s.startRun(ctx, set.ID, "backup"); sErr != nil {
-				log.Printf("api: files backup: %q: record failed run: %v", set.Name, sErr) //nolint:gosec // G706: name is %q-quoted
-			} else if fErr := s.store.FinishRun(runID, "failed", "", 0, truncateRunErr(err)); fErr != nil {
-				log.Printf("api: files backup: %q: finish failed run: %v", set.Name, fErr) //nolint:gosec // G706: name is %q-quoted
-			}
-			return backup.Summary{}, err
+			return backup.Summary{}, fmt.Errorf("files backup: %s", reason)
 		}
 	}
 	// Healthchecks /start ping: deferred to here, past the source-exists + EnsureRepo
 	// guards, so the paired done/fail notifyBackup below always follows (no dangling /start).
 	s.notifyBackupStart(ctx, "files")
+	orchestrated = true
 	key := "files:" + set.Name
 	fctx, startedAt := s.progBegin(ctx, key, "backup")
 	// The single compile site for the files domain (D-05): the set was read
@@ -15607,6 +15604,12 @@ func (s *Service) BackupConfig(ctx context.Context) (_ backup.Summary, retErr er
 	// Whether this attempt succeeds or not: a backup that failed on a full disk
 	// is the reading the capacity rule most needs.
 	defer s.sampleVolumesFor(ctx, "config")
+	orchestrated := false
+	defer func() {
+		if retErr != nil && !orchestrated && !errors.Is(retErr, ErrNoPlace) {
+			s.failSingletonPreflight(ctx, "config", store.ConfigTargetID, retErr)
+		}
+	}()
 	settings, err := s.store.GetSettings()
 	if err != nil {
 		return backup.Summary{}, fmt.Errorf("read settings: %w", err)
@@ -15636,6 +15639,7 @@ func (s *Service) BackupConfig(ctx context.Context) (_ backup.Summary, retErr er
 	// Healthchecks /start ping: deferred to here, past staging + EnsureRepo guards,
 	// so the paired done/fail notifyBackup below always follows (no dangling /start).
 	s.notifyBackupStart(ctx, "config")
+	orchestrated = true
 	fctx, startedAt := s.progBegin(ctx, "config", "backup")
 	sum, err := backup.BackupConfig(fctx, backup.ConfigBackupDeps{
 		SourceDir: stagingDir,
@@ -19131,6 +19135,15 @@ func (s *Service) recordPreflightFailure(ctx context.Context, kind, name, target
 	if err := s.store.FinishRun(runID, "failed", "", 0, truncateRunErr(cause)); err != nil {
 		log.Printf("api: %s: %q: finish failed run: %v", kind, name, err) //nolint:gosec // G706: see above
 	}
+}
+
+// failSingletonPreflight records and sends a flash or config backup that failed
+// before its run started. Their schedules keep no aggregate result, so without
+// the message a backup that cannot reach its repository fails every night
+// unseen.
+func (s *Service) failSingletonPreflight(ctx context.Context, domain, targetID string, cause error) {
+	s.recordPreflightFailure(ctx, "Backup "+domain, domain, targetID, cause)
+	s.notifyBackup(ctx, domain, "", domain, false, backup.Summary{}, cause)
 }
 
 // notifyBackupStart pings the Healthchecks /start endpoint at the beginning of a
