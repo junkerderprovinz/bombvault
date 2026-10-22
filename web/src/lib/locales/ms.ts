@@ -4657,6 +4657,7 @@ const ms: Partial<Translations> = {
   "apiError.phonePairingOff": "Gandingan telefon dimatikan pada instans ini.",
   "apiError.noPlace": "Tiada tempat untuk menyandarkannya kerana semua destinasi bahagiannya dimatikan. Hidupkan salah satu di Destinasi.",
   "apiError.noLocation": "Bahagian ini belum mempunyai destinasi. Buka Tetapan, Destinasi, dan hidupkan satu garisan untuknya.",
+  "apiError.domainBusy": "Ada perkara lain sedang berjalan dalam bahagian ini, jadi ini tidak dimulakan. Cuba lagi setelah ia selesai.",
   "apiError.relayTooLarge": "Ini terlalu besar untuk melalui relay. Buka instans pada alamatnya sendiri.",
   "apiError.relayRefused": "Ini tidak boleh melalui relay. Buka instans pada alamatnya sendiri.",
   "apiError.refused": "Pelayan menolak ini.",

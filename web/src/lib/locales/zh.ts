@@ -4638,6 +4638,7 @@ const zh: Partial<Translations> = {
   "apiError.phonePairingOff": "此实例已关闭手机配对。",
   "apiError.noPlace": "无处可备份：其所属分区的所有目标都已关闭。请在“目标”中开启一个。",
   "apiError.noLocation": "此分区还没有目标。打开“设置”下的“目标”，为它开启一条线。",
+  "apiError.domainBusy": "此分区正在运行其他任务，因此未能开始。请在它完成后再试。",
   "apiError.relayTooLarge": "内容太大，无法通过中继。请在该实例自己的地址上打开它。",
   "apiError.relayRefused": "这无法通过中继。请在该实例自己的地址上打开它。",
   "apiError.refused": "服务器拒绝了此操作。",

@@ -4647,6 +4647,7 @@ const sv: Partial<Translations> = {
   "apiError.phonePairingOff": "Parkoppling av telefoner är avstängd på den här instansen.",
   "apiError.noPlace": "Det finns ingenstans att säkerhetskopiera till, eftersom alla mål i dess avsnitt är avstängda. Slå på ett under Mål.",
   "apiError.noLocation": "Det här avsnittet har ännu inget mål. Öppna Inställningar, Mål, och slå på en linje för det.",
+  "apiError.domainBusy": "Något annat körs i det här avsnittet, så detta startade inte. Försök igen när det är klart.",
   "apiError.relayTooLarge": "Det här är för stort för att gå via reläet. Öppna instansen på dess egen adress.",
   "apiError.relayRefused": "Det här kan inte gå via reläet. Öppna instansen på dess egen adress.",
   "apiError.refused": "Servern avvisade det här.",

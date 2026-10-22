@@ -822,6 +822,10 @@ function knownSentence(status: number, code: string | undefined): string | undef
       return translate("apiError.noPlace");
     case "no-location":
       return translate("apiError.noLocation");
+    case "domain-busy":
+      return translate("apiError.domainBusy");
+    case "batch-busy":
+      return translate("containers.batchAlreadyRunning");
     case "relay-refused":
       return translate(status === 413 ? "apiError.relayTooLarge" : "apiError.relayRefused");
     default:

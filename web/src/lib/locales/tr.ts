@@ -4647,6 +4647,7 @@ const tr: Partial<Translations> = {
   "apiError.phonePairingOff": "Bu örnekte telefon eşleştirme kapalı.",
   "apiError.noPlace": "Yedeklenecek bir yer yok, çünkü bölümünün tüm hedefleri kapalı. Hedefler bölümünden birini aç.",
   "apiError.noLocation": "Bu bölümün henüz bir hedefi yok. Ayarlar, Hedefler bölümünü aç ve bu bölüm için bir çizgiyi aç.",
+  "apiError.domainBusy": "Bu bölümde şu anda başka bir şey çalışıyor, bu yüzden bu başlamadı. O bittiğinde yeniden dene.",
   "apiError.relayTooLarge": "Bu, röleden geçemeyecek kadar büyük. Örneği kendi adresinde aç.",
   "apiError.relayRefused": "Bu röleden geçemez. Örneği kendi adresinde aç.",
   "apiError.refused": "Sunucu bunu reddetti.",

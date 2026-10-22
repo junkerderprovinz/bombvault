@@ -4641,6 +4641,7 @@ const sl: Partial<Translations> = {
   "apiError.phonePairingOff": "Seznanjanje telefonov je na tem primerku izklopljeno.",
   "apiError.noPlace": "Ni kam varnostno kopirati, ker so vsi cilji njegovega razdelka izklopljeni. Vklopi enega v razdelku Cilji.",
   "apiError.noLocation": "Ta razdelek še nima cilja. Odpri Nastavitve, Cilji, in vklopi zanj eno črto.",
+  "apiError.domainBusy": "V tem razdelku trenutno teče nekaj drugega, zato se to ni začelo. Poskusi znova, ko se konča.",
   "apiError.relayTooLarge": "To je preveliko, da bi šlo prek relaya. Odpri primerek na njegovem lastnem naslovu.",
   "apiError.relayRefused": "To ne more iti prek relaya. Odpri primerek na njegovem lastnem naslovu.",
   "apiError.refused": "Strežnik je to zavrnil.",

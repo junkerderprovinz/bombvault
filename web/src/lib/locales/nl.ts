@@ -4646,6 +4646,7 @@ const nl: Partial<Translations> = {
   "apiError.phonePairingOff": "Telefoons koppelen staat uit op deze instantie.",
   "apiError.noPlace": "Er is geen plek om dit naartoe te back-uppen, want alle bestemmingen van zijn onderdeel staan uit. Schakel er een in onder Bestemmingen.",
   "apiError.noLocation": "Dit onderdeel heeft nog geen bestemming. Open Instellingen, Bestemmingen, en schakel een lijn voor dit onderdeel in.",
+  "apiError.domainBusy": "In dit onderdeel loopt al iets anders, dus dit is niet gestart. Probeer het opnieuw zodra dat klaar is.",
   "apiError.relayTooLarge": "Dit is te groot om via de relay te gaan. Open de instantie op het eigen adres.",
   "apiError.relayRefused": "Dit kan niet via de relay. Open de instantie op het eigen adres.",
   "apiError.refused": "De server heeft dit geweigerd.",

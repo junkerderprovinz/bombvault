@@ -4647,6 +4647,7 @@ const it: Partial<Translations> = {
   "apiError.phonePairingOff": "L'associazione dei telefoni è disattivata su questa istanza.",
   "apiError.noPlace": "Non c'è dove salvarlo, perché tutte le destinazioni della sua sezione sono disattivate. Attivane una in Destinazioni.",
   "apiError.noLocation": "Questa sezione non ha ancora una destinazione. Apri Impostazioni, Destinazioni, e attiva una linea per essa.",
+  "apiError.domainBusy": "In questa sezione è in corso qualcos'altro, quindi questa operazione non è partita. Riprova quando sarà finito.",
   "apiError.relayTooLarge": "È troppo grande per passare dal relay. Apri l'istanza al suo indirizzo.",
   "apiError.relayRefused": "Non può passare dal relay. Apri l'istanza al suo indirizzo.",
   "apiError.refused": "Il server l'ha rifiutato.",

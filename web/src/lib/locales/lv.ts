@@ -4657,6 +4657,7 @@ const lv: Partial<Translations> = {
   "apiError.phonePairingOff": "Šajā instancē tālruņu pārošana ir izslēgta.",
   "apiError.noPlace": "Nav kur dublēt, jo visi tā sadaļas mērķi ir izslēgti. Ieslēdziet kādu sadaļā Mērķi.",
   "apiError.noLocation": "Šai sadaļai vēl nav mērķa. Atver Iestatījumi, Mērķi, un ieslēdz tai vienu līniju.",
+  "apiError.domainBusy": "Šajā sadaļā pašlaik darbojas kas cits, tāpēc tas netika sākts. Mēģini vēlreiz, kad tas būs beidzies.",
   "apiError.relayTooLarge": "Tas ir pārāk liels, lai ietu caur relay. Atveriet instanci tās paša adresē.",
   "apiError.relayRefused": "Tas nevar iet caur relay. Atveriet instanci tās paša adresē.",
   "apiError.refused": "Serveris to noraidīja.",

@@ -4657,6 +4657,7 @@ const id: Partial<Translations> = {
   "apiError.phonePairingOff": "Pemasangan ponsel dimatikan di instance ini.",
   "apiError.noPlace": "Tidak ada tempat untuk mencadangkannya, karena semua tujuan di bagiannya dimatikan. Nyalakan salah satunya di Tujuan.",
   "apiError.noLocation": "Bagian ini belum punya tujuan. Buka Pengaturan, Tujuan, lalu nyalakan satu garis untuknya.",
+  "apiError.domainBusy": "Ada proses lain yang berjalan di bagian ini, jadi ini tidak dimulai. Coba lagi setelah proses itu selesai.",
   "apiError.relayTooLarge": "Ini terlalu besar untuk melewati relay. Buka instance di alamatnya sendiri.",
   "apiError.relayRefused": "Ini tidak bisa melewati relay. Buka instance di alamatnya sendiri.",
   "apiError.refused": "Server menolak ini.",

@@ -4657,6 +4657,7 @@ const et: Partial<Translations> = {
   "apiError.phonePairingOff": "Telefonide sidumine on selles eksemplaris välja lülitatud.",
   "apiError.noPlace": "Seda pole kuhugi varundada, sest kõik tema valdkonna sihtkohad on välja lülitatud. Lülita üks sisse jaotises Sihtkohad.",
   "apiError.noLocation": "Sellel valdkonnal pole veel sihtkohta. Ava Seaded, Sihtkohad, ja lülita selle jaoks sisse üks joon.",
+  "apiError.domainBusy": "Selles valdkonnas töötab praegu midagi muud, seepärast see ei alanud. Proovi uuesti, kui see on lõppenud.",
   "apiError.relayTooLarge": "See on liiga suur, et edastaja kaudu minna. Ava eksemplar selle enda aadressil.",
   "apiError.relayRefused": "See ei saa edastaja kaudu minna. Ava eksemplar selle enda aadressil.",
   "apiError.refused": "Server keeldus sellest.",

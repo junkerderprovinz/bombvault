@@ -1382,11 +1382,11 @@ func (h *Handler) handleBackupAll(w http.ResponseWriter, r *http.Request) {
 	}
 	started, err := h.svc.StartBackupAll(r.Context(), body.Names)
 	if err != nil { // the containers domain is busy with another op → 409 with the reason
-		writeJSON(w, http.StatusConflict, map[string]any{"ok": false, "error": err.Error()})
+		writeJSON(w, http.StatusConflict, startRefusal(err))
 		return
 	}
 	if !started {
-		writeJSON(w, http.StatusConflict, map[string]any{"ok": false, "error": "a batch backup is already running"})
+		writeJSON(w, http.StatusConflict, batchBusyRefusal())
 		return
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"started": len(body.Names)}))
@@ -5850,11 +5850,11 @@ func (h *Handler) handleBackupVMsAll(w http.ResponseWriter, r *http.Request) {
 	}
 	started, err := h.svc.StartBackupVMsAll(r.Context(), body.Names)
 	if err != nil {
-		writeJSON(w, http.StatusConflict, map[string]any{"ok": false, "error": err.Error()})
+		writeJSON(w, http.StatusConflict, startRefusal(err))
 		return
 	}
 	if !started {
-		writeJSON(w, http.StatusConflict, map[string]any{"ok": false, "error": "a batch backup is already running"})
+		writeJSON(w, http.StatusConflict, batchBusyRefusal())
 		return
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"started": len(body.Names)}))
@@ -6888,11 +6888,11 @@ func (h *Handler) handleBackupFilesAll(w http.ResponseWriter, r *http.Request) {
 	}
 	started, err := h.svc.StartBackupFilesAll(r.Context(), body.IDs)
 	if err != nil { // the files domain is busy with another op → 409 with the reason
-		writeJSON(w, http.StatusConflict, map[string]any{"ok": false, "error": err.Error()})
+		writeJSON(w, http.StatusConflict, startRefusal(err))
 		return
 	}
 	if !started {
-		writeJSON(w, http.StatusConflict, map[string]any{"ok": false, "error": "a batch backup is already running"})
+		writeJSON(w, http.StatusConflict, batchBusyRefusal())
 		return
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"started": len(body.IDs)}))

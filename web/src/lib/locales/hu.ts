@@ -4648,6 +4648,7 @@ const hu: Partial<Translations> = {
   "apiError.phonePairingOff": "A telefonok párosítása ki van kapcsolva ezen a példányon.",
   "apiError.noPlace": "Nincs hová menteni, mert a szakaszának minden célja ki van kapcsolva. Kapcsolj be egyet a Célok alatt.",
   "apiError.noLocation": "Ennek a szakasznak még nincs célja. Nyisd meg a Beállítások, Célok részt, és kapcsolj be hozzá egy vonalat.",
+  "apiError.domainBusy": "Ebben a szakaszban éppen valami más fut, ezért ez nem indult el. Próbáld újra, ha az befejeződött.",
   "apiError.relayTooLarge": "Ez túl nagy ahhoz, hogy átmenjen a Relayen. Nyisd meg a példányt a saját címén.",
   "apiError.relayRefused": "Ez nem mehet át a Relayen. Nyisd meg a példányt a saját címén.",
   "apiError.refused": "A szerver elutasította ezt.",

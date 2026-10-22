@@ -4647,6 +4647,7 @@ const da: Partial<Translations> = {
   "apiError.phonePairingOff": "Parring af telefoner er slået fra på denne instans.",
   "apiError.noPlace": "Der er intet sted at sikkerhedskopiere til, fordi alle destinationer i dets område er slået fra. Slå én til under Destinationer.",
   "apiError.noLocation": "Dette område har endnu ingen destination. Åbn Indstillinger, Destinationer, og slå en linje til for det.",
+  "apiError.domainBusy": "Der kører noget andet i dette område, så dette blev ikke startet. Prøv igen, når det er færdigt.",
   "apiError.relayTooLarge": "Det er for stort til at gå gennem videresenderen. Åbn instansen på dens egen adresse.",
   "apiError.relayRefused": "Det kan ikke gå gennem videresenderen. Åbn instansen på dens egen adresse.",
   "apiError.refused": "Serveren afviste det.",

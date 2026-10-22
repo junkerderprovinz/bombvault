@@ -4648,6 +4648,7 @@ const ro: Partial<Translations> = {
   "apiError.phonePairingOff": "Împerecherea telefoanelor este dezactivată pe această instanță.",
   "apiError.noPlace": "Nu există unde să se facă copia, pentru că toate destinațiile secțiunii sale sunt oprite. Pornește una la Destinații.",
   "apiError.noLocation": "Această secțiune nu are încă o destinație. Deschide Setări, Destinații, și pornește o linie pentru ea.",
+  "apiError.domainBusy": "În această secțiune rulează altceva, așa că acțiunea nu a pornit. Încearcă din nou după ce se termină.",
   "apiError.relayTooLarge": "Este prea mare ca să treacă prin relay. Deschide instanța la adresa ei proprie.",
   "apiError.relayRefused": "Nu poate trece prin relay. Deschide instanța la adresa ei proprie.",
   "apiError.refused": "Serverul a refuzat acest lucru.",

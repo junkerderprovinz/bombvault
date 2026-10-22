@@ -4638,6 +4638,7 @@ const ko: Partial<Translations> = {
   "apiError.phonePairingOff": "이 인스턴스에서는 휴대폰 페어링이 꺼져 있습니다.",
   "apiError.noPlace": "해당 섹션의 모든 대상이 꺼져 있어 백업할 곳이 없습니다. 대상 화면에서 하나를 켜 주세요.",
   "apiError.noLocation": "이 섹션에는 아직 대상이 없습니다. 설정의 대상을 열고 이 섹션의 선을 켜 주세요.",
+  "apiError.domainBusy": "이 섹션에서 다른 작업이 실행 중이라 시작되지 않았습니다. 끝난 뒤 다시 시도해 주세요.",
   "apiError.relayTooLarge": "크기가 너무 커서 릴레이를 통과할 수 없습니다. 인스턴스를 자체 주소로 여세요.",
   "apiError.relayRefused": "이것은 릴레이를 통과할 수 없습니다. 인스턴스를 자체 주소로 여세요.",
   "apiError.refused": "서버가 이 요청을 거부했습니다.",

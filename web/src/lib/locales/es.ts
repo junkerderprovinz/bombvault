@@ -4645,6 +4645,7 @@ const es: Partial<Translations> = {
   "apiError.phonePairingOff": "El emparejamiento de teléfonos está desactivado en esta instancia.",
   "apiError.noPlace": "No hay dónde respaldarlo, porque todos los destinos de su sección están desactivados. Activa uno en Destinos.",
   "apiError.noLocation": "Esta sección aún no tiene ningún destino. Abre Ajustes, Destinos, y activa una línea para ella.",
+  "apiError.domainBusy": "Hay otra cosa en marcha en esta sección, así que esto no se ha iniciado. Vuelve a intentarlo cuando haya terminado.",
   "apiError.relayTooLarge": "Esto es demasiado grande para pasar por el repetidor. Abre la instancia en su propia dirección.",
   "apiError.relayRefused": "Esto no puede pasar por el repetidor. Abre la instancia en su propia dirección.",
   "apiError.refused": "El servidor lo ha rechazado.",

@@ -4657,6 +4657,7 @@ const hr: Partial<Translations> = {
   "apiError.phonePairingOff": "Uparivanje telefona isključeno je na ovoj instanci.",
   "apiError.noPlace": "Nema kamo napraviti sigurnosnu kopiju jer su sva odredišta njegova odjeljka isključena. Uključite jedno pod Odredišta.",
   "apiError.noLocation": "Ovaj odjeljak još nema odredište. Otvori Postavke, Odredišta, i uključi liniju za njega.",
+  "apiError.domainBusy": "U ovom odjeljku trenutačno radi nešto drugo, pa ovo nije pokrenuto. Pokušaj ponovno kad završi.",
   "apiError.relayTooLarge": "Ovo je preveliko da bi prošlo kroz relej. Otvorite instancu na njezinoj vlastitoj adresi.",
   "apiError.relayRefused": "Ovo ne može proći kroz relej. Otvorite instancu na njezinoj vlastitoj adresi.",
   "apiError.refused": "Poslužitelj je ovo odbio.",

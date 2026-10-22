@@ -4657,6 +4657,7 @@ const ca: Partial<Translations> = {
   "apiError.phonePairingOff": "L'aparellament de telèfons està desactivat en aquesta instància.",
   "apiError.noPlace": "No hi ha cap lloc on fer-ne còpia de seguretat, perquè totes les destinacions de la seva secció estan desactivades. Activa'n una a Destinacions.",
   "apiError.noLocation": "Aquesta secció encara no té cap destinació. Obre Configuració, Destinacions, i activa una línia per a aquesta secció.",
+  "apiError.domainBusy": "En aquesta secció s'està executant una altra cosa, així que això no ha començat. Torna-ho a provar quan hagi acabat.",
   "apiError.relayTooLarge": "Això és massa gran per passar pel repetidor. Obre la instància a la seva pròpia adreça.",
   "apiError.relayRefused": "Això no pot passar pel repetidor. Obre la instància a la seva pròpia adreça.",
   "apiError.refused": "El servidor ho ha rebutjat.",
