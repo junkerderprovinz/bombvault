@@ -565,6 +565,11 @@ func (r *Repo) PrimaryFromDestination(destID, domain, location string, settle fu
 			location, t.ID, RoleOffsite); err != nil {
 			return err
 		}
+		if t.Repo != "" && t.Repo != location {
+			if err := forgetTargetPlaceTx(tx, t.ID); err != nil {
+				return err
+			}
+		}
 		t.DestinationID, t.Enabled = "", true
 		if out, err = followDestinationTx(tx, t, d); err != nil {
 			return err

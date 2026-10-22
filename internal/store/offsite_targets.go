@@ -219,6 +219,19 @@ const (
 // A target derived from a destination keeps every followed setting it is
 // saved with a different value for, on top of those t.Own names.
 func (r *Repo) UpsertOffsiteTarget(t OffsiteTarget) (OffsiteTarget, error) {
+	return r.upsertOffsiteTarget(t, false)
+}
+
+// MoveOffsiteTarget is UpsertOffsiteTarget for a target whose location
+// changes. What was recorded about the old place goes in the same
+// transaction: its tamper tests, the listing of what it holds and its aging
+// mark. Its copies stay in the history but no longer count toward how
+// current the target is.
+func (r *Repo) MoveOffsiteTarget(t OffsiteTarget) (OffsiteTarget, error) {
+	return r.upsertOffsiteTarget(t, true)
+}
+
+func (r *Repo) upsertOffsiteTarget(t OffsiteTarget, moved bool) (OffsiteTarget, error) {
 	if strings.TrimSpace(t.Repo) == "" {
 		return OffsiteTarget{}, ErrEmptyOffsiteRepo
 	}
@@ -308,7 +321,25 @@ func (r *Repo) UpsertOffsiteTarget(t OffsiteTarget) (OffsiteTarget, error) {
 			return OffsiteTarget{}, fmt.Errorf("UpsertOffsiteTarget mirror: %w", err)
 		}
 	}
+	if moved {
+		if err := forgetTargetPlaceTx(tx, t.ID); err != nil {
+			return OffsiteTarget{}, fmt.Errorf("MoveOffsiteTarget: %w", err)
+		}
+	}
 	return commitStoredTargetTx(tx, t.ID)
+}
+
+// forgetTargetPlaceTx drops what a target's rows say about the place it held
+// before a move. Its successful copies are kept as aging-only runs, so the
+// domain still counts as replicated and no first-listing pause starts.
+func forgetTargetPlaceTx(tx *sql.Tx, targetID string) error {
+	if _, err := tx.Exec(`DELETE FROM tamper_tests WHERE offsite_target_id = ?`, targetID); err != nil {
+		return err
+	}
+	if _, err := tx.Exec(`UPDATE offsite_runs SET aging_only = 1 WHERE offsite_target_id = ? AND ok = 1`, targetID); err != nil {
+		return err
+	}
+	return deleteTargetObservationsTx(tx, targetID)
 }
 
 // CreateOffsiteTarget inserts a replication destination at t.SortOrder, or
