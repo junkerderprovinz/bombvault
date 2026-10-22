@@ -1,10 +1,12 @@
 package api
 
 import (
+	"cmp"
 	"context"
 	"errors"
 	"fmt"
 	"log"
+	"slices"
 	"strings"
 	"time"
 
@@ -590,6 +592,21 @@ func (s *Service) StartBackupZFSDataset(ctx context.Context, id string) (bool, e
 // StartBackupZFSAll runs the given items one after another in one background
 // batch, replicating and pruning once when the loop is done.
 func (s *Service) StartBackupZFSAll(ctx context.Context, ids []string) (bool, error) {
+	queue, replicas := s.splitReplicaOnly(ids)
+	if len(queue) == 0 {
+		// With nothing else to run, a refusal of every replica is the answer.
+		var refusal error
+		replicas = slices.DeleteFunc(replicas, func(d store.ZFSDataset) bool {
+			err := s.zfsReplicaRunRefusal(d)
+			refusal = cmp.Or(refusal, err)
+			return err != nil
+		})
+		if len(replicas) == 0 && refusal != nil {
+			return false, refusal
+		}
+		s.replicateInTurn(ctx, replicas)
+		return len(replicas) > 0, nil
+	}
 	if !s.batchActive.CompareAndSwap(false, true) {
 		return false, nil
 	}
@@ -597,17 +614,12 @@ func (s *Service) StartBackupZFSAll(ctx context.Context, ids []string) (bool, er
 		s.batchActive.Store(false)
 		return false, domainBusyError{op: op, domain: "zfs"}
 	}
+	s.replicateInTurn(ctx, replicas)
 	bctx := WithBulkReplicateSuppressed(context.WithoutCancel(ctx))
 	go func() {
 		defer s.recoverOperation("backup-zfs-all", nil, nil)
 		defer s.batchActive.Store(false)
 
-		queue := make([]string, 0, len(ids))
-		for _, id := range ids {
-			if id != "" {
-				queue = append(queue, id)
-			}
-		}
 		total := len(queue)
 		const key = "batch:zfs"
 		s.publishBatch(key, 0, true)
@@ -631,6 +643,44 @@ func (s *Service) StartBackupZFSAll(ctx context.Context, ids []string) (bool, er
 		log.Printf("api: backup-zfs-all done: %d ok, %d skipped, %d failed (of %d requested %d)", ok, skipped, fail, total, len(ids))
 	}()
 	return true, nil
+}
+
+// splitReplicaOnly sorts the items a bulk backup names into those it backs
+// up and those that only replicate.
+func (s *Service) splitReplicaOnly(ids []string) (backups []string, replicas []store.ZFSDataset) {
+	for _, id := range ids {
+		if id == "" {
+			continue
+		}
+		if d, err := s.store.GetZFSDataset(id); err == nil && s.zfsReplicaOnly(d) {
+			replicas = append(replicas, d)
+			continue
+		}
+		backups = append(backups, id)
+	}
+	return backups, replicas
+}
+
+// replicateInTurn sends the replicas of items that only replicate one after
+// the other in the background. A send can take hours, so it holds none of
+// the backup locks, and each item takes its own replica lock.
+func (s *Service) replicateInTurn(ctx context.Context, items []store.ZFSDataset) {
+	if len(items) == 0 {
+		return
+	}
+	bctx := context.WithoutCancel(ctx)
+	s.replica.work.Add(1)
+	go func() {
+		defer s.replica.work.Done()
+		defer s.recoverOperation("zfs replicas of a bulk backup", nil, nil)
+		for _, d := range items {
+			if refused, err := s.replicateZFSNow(bctx, d); refused {
+				log.Printf("api: backup-zfs-all: the replica of %s was refused: %v", d.Dataset, err)
+			} else if err != nil {
+				log.Printf("api: backup-zfs-all: the replica of %s failed (continuing): %v", d.Dataset, err)
+			}
+		}
+	}()
 }
 
 // backupZFSOneForBatch keeps a panic in one item from aborting the rest of the

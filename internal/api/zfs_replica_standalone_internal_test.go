@@ -427,6 +427,42 @@ func TestBackUpNowOnAReplicaOnlyItemAnswersWhyTheReplicaCannotRun(t *testing.T) 
 	}
 }
 
+func TestBackingUpAllSendsTheReplicasWithoutTheBackupLock(t *testing.T) {
+	r := replicaOnlyRig(t)
+	release := make(chan struct{})
+	started := make(chan struct{})
+	r.result = func(zfsrepl.Entry) (zfsrepl.Result, error) {
+		close(started)
+		<-release
+		return zfsrepl.Result{Snapshot: replicaSnap}, nil
+	}
+	_, m, _ := r.call(http.MethodPost, "/api/zfs/backup-all", `{"ids":["`+r.item.ID+`"]}`)
+	if m["ok"] != true {
+		t.Fatalf("answer = %v, want the start", m)
+	}
+	<-started
+	if r.s.batchActive.Load() {
+		t.Error("the replica of a bulk backup holds the lock every other backup and restore waits for")
+	}
+	close(release)
+	r.s.replica.work.Wait()
+	if got := r.lastRun().Status; got != "success" {
+		t.Errorf("replica run = %s", got)
+	}
+}
+
+func TestBackingUpAllAnswersWhyNoReplicaCanRun(t *testing.T) {
+	r := replicaOnlyRig(t)
+	r.srv.Enabled = false
+	if err := r.st.UpdateZFSReplicaServer(r.srv); err != nil {
+		t.Fatal(err)
+	}
+	code, m, _ := r.call(http.MethodPost, "/api/zfs/backup-all", `{"ids":["`+r.item.ID+`"]}`)
+	if code != http.StatusConflict || m["code"] != "server-disabled" {
+		t.Errorf("answer = %d %v, want the refusal with its code", code, m)
+	}
+}
+
 func TestAReplicaOnlyItemIsReachedByAReplicaOnAPlanOfItsOwn(t *testing.T) {
 	r := replicaOnlyRig(t)
 	if err := r.st.SetZFSReplicaAfterBackup(r.item.ID, false); err != nil {

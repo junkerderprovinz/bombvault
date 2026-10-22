@@ -196,7 +196,9 @@ function ReplicateAction({ id, dataset, primary }: { id: string; dataset: string
  */
 function ZFSCornerActions({ entry, id, dataset, onDone }: { entry: Entry; id: string; dataset: string; onDone: () => void }) {
   const { replica } = useReplica(id);
-  if (replica?.only) return <ReplicateAction id={id} dataset={dataset} primary />;
+  // The entry already knows, while the replica view lists the target over SSH
+  // and can take a while or fail.
+  if (replica?.only ?? entry.item.replica?.only) return <ReplicateAction id={id} dataset={dataset} primary />;
   return (
     <>
       <ReplicateAction id={id} dataset={dataset} />

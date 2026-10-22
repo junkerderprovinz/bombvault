@@ -402,6 +402,16 @@ describe("the replica action of a ZFS entry", () => {
     expect(corner().queryByRole("button", { name: en["containers.backupNow"] })).toBeNull();
   });
 
+  it("offers no backup to an entry that only replicates while its replica view still loads", async () => {
+    vi.mocked(api.getZFSReplica).mockReturnValue(new Promise(() => undefined));
+    serveEntries(mocks, {
+      items: [{ ...TANK, replica: { lastAt: 0, lastStatus: "", only: true } }],
+      datasets: [zfsView()],
+    });
+    await renderPage();
+    expect(corner().queryByRole("button", { name: en["containers.backupNow"] })).toBeNull();
+  });
+
   it("says why a run was refused", async () => {
     vi.mocked(api.getZFSReplica).mockResolvedValue(replica());
     vi.mocked(api.runZFSReplica).mockResolvedValue({ ok: false, code: "domain-off" });
