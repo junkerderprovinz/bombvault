@@ -141,6 +141,35 @@ func TestAnUnscheduledItemWithAReplicaIsNotCalledNeverBackedUp(t *testing.T) {
 	}
 }
 
+func TestAReplicaOnItsOwnPlanProtectsAnItemWithoutABackupSchedule(t *testing.T) {
+	r := replicaOnlyRig(t)
+	if err := r.st.SetZFSReplicaAfterBackup(r.item.ID, false); err != nil {
+		t.Fatal(err)
+	}
+	if err := r.st.SetZFSReplicaCadence(r.item.ID, "daily 03:00"); err != nil {
+		t.Fatal(err)
+	}
+	r.item, _ = r.st.GetZFSDataset(r.item.ID)
+	settings, _ := r.st.GetSettings()
+	settings.ZFSSchedule = ""
+	cover := func() CoverageDomain {
+		nowhere, err := r.s.placelessSections()
+		if err != nil {
+			t.Fatal(err)
+		}
+		return r.s.coverZFSDatasets(settings, declinedBackups{}, nowhere)
+	}
+	if got := cover(); got.Waiting != 1 || len(got.Unprotected) != 0 {
+		t.Errorf("before its first replica: %+v, want the item waiting", got)
+	}
+	if err := r.s.ReplicateZFSDataset(context.Background(), r.item.ID); err != nil {
+		t.Fatal(err)
+	}
+	if got := cover(); got.Protected != 1 || len(got.Unprotected) != 0 {
+		t.Errorf("after a replica: %+v, want the item protected", got)
+	}
+}
+
 func TestAReplicaIsAllTheDomainHasToBeCurrentBy(t *testing.T) {
 	r := replicaOnlyRig(t)
 	settings, _ := r.st.GetSettings()
