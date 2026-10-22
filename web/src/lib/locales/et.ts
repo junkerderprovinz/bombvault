@@ -1381,6 +1381,7 @@ const et: Partial<Translations> = {
   "auth.passkeyRemoveConfirm": "{name} ei logi sind enam sisse. Parool töötab edasi.",
   "auth.signInWithPasskey": "Logi sisse pääsuvõtmega",
   "auth.passkeySignInFailed": "Seda pääsuvõtit ei võetud vastu",
+  "auth.passkeyNeedsVerification": "Kui kaheastmeline autentimine on sees, peab pääsuvõti kontrollima PIN-koodi, sõrmejälge või nägu. Logi selle asemel sisse parooli ja koodiga.",
   "auth.forgotPassword": "Unustasid parooli?",
   "auth.resetCodeLabel": "Kood konteineri logist",
   "auth.resetCodeTip": "BombVault kirjutas koodi oma konteineri logisse. Unraidis: vahekaart Docker, BombVaulti ikoon, Logs. Kood kehtib 10 minutit. Igaüks, kes saab seda logi lugeda, saab parooli lähtestada, ka logivaaturi nagu Dozzle kaudu. Lähtestamine lülitab välja ka kaheastmelise autentimise, eemaldab kõik pääsuvõtmed, tühistab kõik API load ja MCP võtmed, lõpetab kõik teised seansid ning peatab telefonide sidumise, kuni lülitad selle uuesti sisse.",

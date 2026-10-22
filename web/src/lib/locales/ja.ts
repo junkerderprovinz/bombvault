@@ -492,6 +492,7 @@ const ja: Partial<Translations> = {
   "auth.passkeyRemoveConfirm": "{name} ではサインインできなくなります。パスワードは引き続き使えます。",
   "auth.signInWithPasskey": "パスキーでサインイン",
   "auth.passkeySignInFailed": "そのパスキーは受け付けられませんでした",
+  "auth.passkeyNeedsVerification": "二段階認証がオンのときは、パスキーで PIN、指紋、または顔の確認が必要です。代わりにパスワードとコードでサインインしてください。",
   "auth.forgotPassword": "パスワードをお忘れですか？",
   "auth.resetCodeLabel": "コンテナログのコード",
   "auth.resetCodeTip": "BombVault がコンテナのログにコードを書き込みました。Unraid では Docker タブで BombVault のアイコンをクリックし、Logs を開きます。コードの有効時間は 10 分です。このログを読める人は誰でもパスワードをリセットできます。Dozzle のようなログビューアー経由でも同じです。リセットすると、二段階認証がオフになり、すべてのパスキーが削除され、すべての API トークンと MCP キーが失効し、ほかのすべてのセッションが終了し、オンに戻すまでスマートフォンはペアリングできなくなります。",

@@ -34,6 +34,8 @@ import (
 type passkeyCeremony struct {
 	session webauthn.SessionData
 	rpID    string
+	// client is the throttle key of whoever started it.
+	client  string
 	expires time.Time
 }
 
@@ -44,11 +46,15 @@ const (
 	// passkeyCeremonyMax caps the map, because a login ceremony can be started
 	// without a session.
 	passkeyCeremonyMax = 64
+	// passkeyCeremoniesPerClient is one client's share of the map, so a flood
+	// of starts from one address pushes out its own ceremonies and not the
+	// one somebody else is finishing.
+	passkeyCeremoniesPerClient = 8
 )
 
 // beginPasskeyCeremony stores the session data and returns the random,
 // single-use handle the finish call has to present.
-func (h *Handler) beginPasskeyCeremony(s *webauthn.SessionData, rpID string) (string, error) {
+func (h *Handler) beginPasskeyCeremony(s *webauthn.SessionData, rpID, client string) (string, error) {
 	raw := make([]byte, 32)
 	if _, err := rand.Read(raw); err != nil {
 		return "", fmt.Errorf("ceremony handle: %w", err)
@@ -61,24 +67,44 @@ func (h *Handler) beginPasskeyCeremony(s *webauthn.SessionData, rpID string) (st
 		h.passkeyCeremonies = map[string]passkeyCeremony{}
 	}
 	now := time.Now()
+	held := map[string]int{}
 	for k, c := range h.passkeyCeremonies {
 		if now.After(c.expires) {
 			delete(h.passkeyCeremonies, k)
+			continue
 		}
+		held[c.client]++
 	}
-	// Still full: drop the oldest. That costs somebody one more click, while an
-	// unbounded map reachable without a session costs memory.
+	for held[client] >= passkeyCeremoniesPerClient {
+		h.dropOldestCeremony(client, held)
+	}
+	// Still full, from many clients: the one holding the most loses its
+	// oldest. That costs somebody one more click, while an unbounded map
+	// reachable without a session costs memory.
 	for len(h.passkeyCeremonies) >= passkeyCeremonyMax {
-		oldestKey, oldest := "", time.Time{}
-		for k, c := range h.passkeyCeremonies {
-			if oldest.IsZero() || c.expires.Before(oldest) {
-				oldestKey, oldest = k, c.expires
+		busiest := client
+		for c, n := range held {
+			if n > held[busiest] {
+				busiest = c
 			}
 		}
-		delete(h.passkeyCeremonies, oldestKey)
+		h.dropOldestCeremony(busiest, held)
 	}
-	h.passkeyCeremonies[id] = passkeyCeremony{session: *s, rpID: rpID, expires: now.Add(passkeyCeremonyTTL)}
+	h.passkeyCeremonies[id] = passkeyCeremony{session: *s, rpID: rpID, client: client, expires: now.Add(passkeyCeremonyTTL)}
 	return id, nil
+}
+
+// dropOldestCeremony removes the ceremony of client that expires first. The
+// caller holds passkeyMu.
+func (h *Handler) dropOldestCeremony(client string, held map[string]int) {
+	oldestKey, oldest := "", time.Time{}
+	for k, c := range h.passkeyCeremonies {
+		if c.client == client && (oldest.IsZero() || c.expires.Before(oldest)) {
+			oldestKey, oldest = k, c.expires
+		}
+	}
+	delete(h.passkeyCeremonies, oldestKey)
+	held[client]--
 }
 
 // takePasskeyCeremony consumes a handle, so an answered challenge cannot be
@@ -327,6 +353,11 @@ func (h *Handler) handlePasskeyRegisterBegin(w http.ResponseWriter, r *http.Requ
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
+	uv, err := h.passkeyVerification()
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
 	creation, session, err := wa.BeginRegistration(
 		user,
 		// Excluding the keys already registered here lets the browser say so
@@ -337,14 +368,14 @@ func (h *Handler) handlePasskeyRegisterBegin(w http.ResponseWriter, r *http.Requ
 		// still works.
 		webauthn.WithAuthenticatorSelection(protocol.AuthenticatorSelection{
 			ResidentKey:      protocol.ResidentKeyRequirementPreferred,
-			UserVerification: protocol.VerificationPreferred,
+			UserVerification: uv,
 		}),
 	)
 	if err != nil {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": scrubError(err)})
 		return
 	}
-	handle, err := h.beginPasskeyCeremony(session, rpID)
+	handle, err := h.beginPasskeyCeremony(session, rpID, h.loginClientKey(r))
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
@@ -447,11 +478,34 @@ func (h *Handler) handlePasskeyRegisterFinish(w http.ResponseWriter, r *http.Req
 	}))
 }
 
+// codePasskeyNeedsVerification refuses a passkey that only proved somebody
+// touched it while the second factor is armed.
+const codePasskeyNeedsVerification = "passkeyNeedsVerification"
+
+// passkeyVerification is the user verification a passkey ceremony asks for.
+// While the second factor is armed a passkey stands in for the password and
+// the code together, so a touch alone is not enough.
+func (h *Handler) passkeyVerification() (protocol.UserVerificationRequirement, error) {
+	s, err := h.store.GetSettings()
+	if err != nil {
+		return "", err
+	}
+	if s.TOTPEnabled {
+		return protocol.VerificationRequired, nil
+	}
+	return protocol.VerificationPreferred, nil
+}
+
 // handlePasskeyLoginBegin serves POST /api/auth/passkey/login/begin.
 // Public: it is one half of signing in.
 func (h *Handler) handlePasskeyLoginBegin(w http.ResponseWriter, r *http.Request) {
 	if _, _, on := h.authEnabled(); !on {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "no login is set up"})
+		return
+	}
+	key := h.loginClientKey(r)
+	if h.loginThrottled(key) {
+		writeJSON(w, http.StatusTooManyRequests, map[string]any{"ok": false, "error": "too many attempts, wait a moment"})
 		return
 	}
 	wa, rpID, err := h.webAuthnFor(r)
@@ -471,12 +525,17 @@ func (h *Handler) handlePasskeyLoginBegin(w http.ResponseWriter, r *http.Request
 		})
 		return
 	}
-	assertion, session, err := wa.BeginLogin(user)
+	uv, err := h.passkeyVerification()
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	assertion, session, err := wa.BeginLogin(user, webauthn.WithUserVerification(uv))
 	if err != nil {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": scrubError(err)})
 		return
 	}
-	handle, err := h.beginPasskeyCeremony(session, rpID)
+	handle, err := h.beginPasskeyCeremony(session, rpID, key)
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
@@ -499,7 +558,7 @@ func (h *Handler) handlePasskeyLoginFinish(w http.ResponseWriter, r *http.Reques
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "no login is set up"})
 		return
 	}
-	key := loginClientKey(r)
+	key := h.loginClientKey(r)
 	if h.loginThrottled(key) {
 		writeJSON(w, http.StatusTooManyRequests, map[string]any{
 			"ok":    false,
@@ -539,6 +598,23 @@ func (h *Handler) handlePasskeyLoginFinish(w http.ResponseWriter, r *http.Reques
 	if err != nil {
 		h.recordLoginFail(key)
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": scrubError(err)})
+		return
+	}
+	// Checked here as well as asked for at the start, since the second factor
+	// may have been armed in between. ValidateLogin then proves the flag was
+	// signed by the key.
+	uv, err := h.passkeyVerification()
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	if uv == protocol.VerificationRequired && !parsed.Response.AuthenticatorData.Flags.HasUserVerified() {
+		h.recordLoginFail(key)
+		writeJSON(w, http.StatusOK, map[string]any{
+			"ok":    false,
+			"code":  codePasskeyNeedsVerification,
+			"error": "with two-factor authentication on, a passkey has to check your PIN, fingerprint or face. Sign in with the password and code instead",
+		})
 		return
 	}
 	cred, err := wa.ValidateLogin(user, cer.session, parsed)

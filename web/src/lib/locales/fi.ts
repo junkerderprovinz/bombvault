@@ -492,6 +492,7 @@ const fi: Partial<Translations> = {
   "auth.passkeyRemoveConfirm": "{name} ei enää kirjaa sinua sisään. Salasana toimii edelleen.",
   "auth.signInWithPasskey": "Kirjaudu pääsyavaimella",
   "auth.passkeySignInFailed": "Pääsyavainta ei hyväksytty",
+  "auth.passkeyNeedsVerification": "Kun kaksivaiheinen tunnistautuminen on käytössä, pääsyavaimen täytyy tarkistaa PIN-koodisi, sormenjälkesi tai kasvosi. Kirjaudu sen sijaan salasanalla ja koodilla.",
   "auth.forgotPassword": "Unohtuiko salasana?",
   "auth.resetCodeLabel": "Koodi kontin lokista",
   "auth.resetCodeTip": "BombVault kirjoitti koodin konttinsa lokiin. Unraidissa: Docker-välilehti, BombVault-kuvake, Logs. Koodi on voimassa 10 minuuttia. Kuka tahansa, joka voi lukea tätä lokia, voi nollata salasanan, myös Dozzlen kaltaisen lokinäkymän kautta. Nollaus myös poistaa kaksivaiheisen tunnistautumisen käytöstä, poistaa kaikki pääsyavaimet, mitätöi kaikki API-tokenit ja MCP-avaimet, päättää kaikki muut istunnot ja estää puhelimien pariutumisen, kunnes otat sen taas käyttöön.",

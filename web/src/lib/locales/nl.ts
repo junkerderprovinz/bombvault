@@ -488,6 +488,7 @@ const nl: Partial<Translations> = {
   "auth.passkeyRemoveConfirm": "{name} meldt je niet meer aan. Het wachtwoord blijft werken.",
   "auth.signInWithPasskey": "Aanmelden met een passkey",
   "auth.passkeySignInFailed": "Die passkey is niet geaccepteerd",
+  "auth.passkeyNeedsVerification": "Met tweefactorauthenticatie aan moet een passkey je pincode, vingerafdruk of gezicht controleren. Log in plaats daarvan in met het wachtwoord en de code.",
   "auth.forgotPassword": "Wachtwoord vergeten?",
   "auth.resetCodeLabel": "Code uit het containerlog",
   "auth.resetCodeTip": "BombVault heeft een code in het log van zijn container geschreven. In Unraid: tabblad Docker, BombVault-pictogram, Logs. Een code is 10 minuten geldig. Iedereen die dit log kan lezen, kan het wachtwoord opnieuw instellen, ook via een logviewer zoals Dozzle. Het opnieuw instellen schakelt ook tweefactorauthenticatie uit, verwijdert alle passkeys, trekt alle API-tokens en MCP-sleutels in, beëindigt alle andere sessies en laat telefoons niet meer koppelen totdat je dat weer aanzet.",

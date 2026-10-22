@@ -1381,6 +1381,7 @@ const eu: Partial<Translations> = {
   "auth.passkeyRemoveConfirm": "{name} gakoak ez zaitu gehiago sartuko. Pasahitzak funtzionatzen jarraitzen du.",
   "auth.signInWithPasskey": "Hasi saioa sarbide-gako batekin",
   "auth.passkeySignInFailed": "Sarbide-gako hori ez da onartu",
+  "auth.passkeyNeedsVerification": "Bi faktoreko autentifikazioa piztuta dagoenean, sarbide-gakoak PINa, hatz-marka edo aurpegia egiaztatu behar ditu. Hasi saioa pasahitzarekin eta kodearekin.",
   "auth.forgotPassword": "Pasahitza ahaztu duzu?",
   "auth.resetCodeLabel": "Edukiontziaren erregistroko kodea",
   "auth.resetCodeTip": "BombVaultek kode bat idatzi du bere edukiontziaren erregistroan. Unraiden: Docker fitxa, BombVault ikonoa, Logs. Kode batek 10 minutuz balio du. Erregistro hau irakur dezakeen edonork berrezar dezake pasahitza, baita Dozzle bezalako erregistro-ikustaile baten bidez ere. Berrezartzeak bi faktoreko autentifikazioa ere desaktibatzen du, sarbide-gako guztiak kentzen ditu, API token eta MCP gako guztiak baliogabetzen ditu, beste saio guztiak amaitzen ditu eta telefonoak parekatzea geldiarazten du berriro aktibatu arte.",

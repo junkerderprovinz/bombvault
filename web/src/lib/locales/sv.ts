@@ -492,6 +492,7 @@ const sv: Partial<Translations> = {
   "auth.passkeyRemoveConfirm": "{name} loggar inte in dig längre. Lösenordet fungerar fortfarande.",
   "auth.signInWithPasskey": "Logga in med en lösennyckel",
   "auth.passkeySignInFailed": "Den lösennyckeln godtogs inte",
+  "auth.passkeyNeedsVerification": "När tvåfaktorsautentisering är på måste lösennyckeln kontrollera din pinkod, ditt fingeravtryck eller ditt ansikte. Logga in med lösenordet och koden i stället.",
   "auth.forgotPassword": "Glömt lösenordet?",
   "auth.resetCodeLabel": "Kod från containerloggen",
   "auth.resetCodeTip": "BombVault har skrivit en kod i sin containerlogg. I Unraid: fliken Docker, BombVault-ikonen, Logs. En kod gäller i 10 minuter. Alla som kan läsa den här loggen kan återställa lösenordet, även via en loggvisare som Dozzle. Återställningen stänger också av tvåfaktorsautentisering, tar bort alla lösennycklar, återkallar alla API-token och MCP-nycklar, avslutar alla andra sessioner och stoppar parkoppling av telefoner tills du slår på det igen.",

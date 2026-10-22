@@ -1381,6 +1381,7 @@ const hr: Partial<Translations> = {
   "auth.passkeyRemoveConfirm": "{name} vas više neće prijaviti. Lozinka i dalje radi.",
   "auth.signInWithPasskey": "Prijava pristupnim ključem",
   "auth.passkeySignInFailed": "Taj pristupni ključ nije prihvaćen",
+  "auth.passkeyNeedsVerification": "Uz uključenu dvofaktorsku autentifikaciju pristupni ključ mora provjeriti vaš PIN, otisak prsta ili lice. Umjesto toga prijavite se lozinkom i kodom.",
   "auth.forgotPassword": "Zaboravljena lozinka?",
   "auth.resetCodeLabel": "Kod iz zapisnika kontejnera",
   "auth.resetCodeTip": "BombVault je upisao kod u zapisnik svojeg kontejnera. U Unraidu: kartica Docker, ikona BombVault, Logs. Kod vrijedi 10 minuta. Svatko tko može čitati ovaj zapisnik može ponovno postaviti lozinku, i putem preglednika zapisnika kao što je Dozzle. Ponovno postavljanje također isključuje dvofaktorsku autentifikaciju, uklanja sve pristupne ključeve, opoziva sve API tokene i MCP ključeve, završava sve ostale sesije i zaustavlja uparivanje telefona dok to ponovno ne uključite.",

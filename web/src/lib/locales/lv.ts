@@ -1381,6 +1381,7 @@ const lv: Partial<Translations> = {
   "auth.passkeyRemoveConfirm": "{name} vairs jūs nepieteiks. Parole darbojas joprojām.",
   "auth.signInWithPasskey": "Pieteikties ar piekļuves atslēgu",
   "auth.passkeySignInFailed": "Šī piekļuves atslēga netika pieņemta",
+  "auth.passkeyNeedsVerification": "Ja ieslēgta divfaktoru autentifikācija, piekļuves atslēgai jāpārbauda PIN, pirksta nospiedums vai seja. Tā vietā pierakstieties ar paroli un kodu.",
   "auth.forgotPassword": "Aizmirsāt paroli?",
   "auth.resetCodeLabel": "Kods no konteinera žurnāla",
   "auth.resetCodeTip": "BombVault ierakstīja kodu sava konteinera žurnālā. Unraid: cilne Docker, BombVault ikona, Logs. Kods ir derīgs 10 minūtes. Ikviens, kas var lasīt šo žurnālu, var atiestatīt paroli, arī ar žurnālu skatītāju, piemēram, Dozzle. Atiestatīšana arī izslēdz divfaktoru autentifikāciju, noņem visas piekļuves atslēgas, atsauc visus API marķierus un MCP atslēgas, beidz visas pārējās sesijas un aptur tālruņu sapārošanu, kamēr to atkal neieslēdzat.",

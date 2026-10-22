@@ -1381,6 +1381,7 @@ const sk: Partial<Translations> = {
   "auth.passkeyRemoveConfirm": "{name} ťa už neprihlási. Heslo funguje ďalej.",
   "auth.signInWithPasskey": "Prihlásiť sa prístupovým kľúčom",
   "auth.passkeySignInFailed": "Tento prístupový kľúč nebol prijatý",
+  "auth.passkeyNeedsVerification": "Pri zapnutom dvojfaktorovom overení musí prístupový kľúč overiť váš PIN, odtlačok prsta alebo tvár. Prihláste sa radšej heslom a kódom.",
   "auth.forgotPassword": "Zabudnuté heslo?",
   "auth.resetCodeLabel": "Kód z logu kontajnera",
   "auth.resetCodeTip": "BombVault zapísal kód do logu svojho kontajnera. V Unraide: karta Docker, ikona BombVault, Logs. Kód platí 10 minút. Ktokoľvek, kto môže čítať tento log, môže heslo obnoviť, aj cez prehliadač logov, ako je Dozzle. Obnovenie tiež vypne dvojfaktorové overenie, odoberie všetky prístupové kľúče, zruší všetky tokeny API a kľúče MCP, ukončí všetky ostatné relácie a zastaví párovanie telefónov, kým ho znova nezapneš.",

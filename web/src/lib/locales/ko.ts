@@ -492,6 +492,7 @@ const ko: Partial<Translations> = {
   "auth.passkeyRemoveConfirm": "{name}(으)로는 더 이상 로그인되지 않습니다. 비밀번호는 계속 작동합니다.",
   "auth.signInWithPasskey": "패스키로 로그인",
   "auth.passkeySignInFailed": "그 패스키는 받아들여지지 않았습니다",
+  "auth.passkeyNeedsVerification": "2단계 인증이 켜져 있으면 패스키가 PIN, 지문 또는 얼굴을 확인해야 합니다. 대신 비밀번호와 코드로 로그인하세요.",
   "auth.forgotPassword": "비밀번호를 잊으셨나요?",
   "auth.resetCodeLabel": "컨테이너 로그의 코드",
   "auth.resetCodeTip": "BombVault가 컨테이너 로그에 코드를 기록했습니다. Unraid에서는 Docker 탭에서 BombVault 아이콘을 누르고 Logs를 엽니다. 코드는 10분 동안 유효합니다. 이 로그를 읽을 수 있는 사람은 누구나 비밀번호를 재설정할 수 있으며, Dozzle 같은 로그 뷰어를 통해서도 가능합니다. 재설정하면 2단계 인증이 꺼지고, 모든 패스키가 삭제되며, 모든 API 토큰과 MCP 키가 취소되고, 다른 모든 세션이 종료되며, 다시 켜기 전에는 휴대폰을 페어링할 수 없습니다.",

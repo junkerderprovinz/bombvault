@@ -492,6 +492,7 @@ const he: Partial<Translations> = {
   "auth.passkeyRemoveConfirm": "{name} כבר לא ישמש לכניסה. הסיסמה ממשיכה לעבוד.",
   "auth.signInWithPasskey": "כניסה עם מפתח גישה",
   "auth.passkeySignInFailed": "מפתח הגישה הזה לא התקבל",
+  "auth.passkeyNeedsVerification": "כשאימות דו-שלבי פעיל, מפתח הגישה צריך לבדוק את קוד ה-PIN, טביעת האצבע או הפנים. במקום זאת יש להיכנס עם הסיסמה והקוד.",
   "auth.forgotPassword": "שכחת את הסיסמה?",
   "auth.resetCodeLabel": "קוד מיומן הקונטיינר",
   "auth.resetCodeTip": "BombVault כתב קוד ליומן הקונטיינר שלו. ב-Unraid: לשונית Docker, הסמל של BombVault, ואז Logs. קוד תקף ל-10 דקות. כל מי שיכול לקרוא את היומן הזה יכול לאפס את הסיסמה, גם דרך מציג יומנים כמו Dozzle. האיפוס גם מכבה את האימות הדו-שלבי, מסיר את כל מפתחות הגישה, מבטל את כל אסימוני ה-API ומפתחות ה-MCP, מסיים את כל שאר ההפעלות ומפסיק את הצימוד של טלפונים עד שמפעילים אותו מחדש.",

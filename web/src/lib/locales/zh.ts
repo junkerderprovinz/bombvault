@@ -492,6 +492,7 @@ const zh: Partial<Translations> = {
   "auth.passkeyRemoveConfirm": "{name} 将不再为你登录。密码仍然有效。",
   "auth.signInWithPasskey": "用通行密钥登录",
   "auth.passkeySignInFailed": "该通行密钥未被接受",
+  "auth.passkeyNeedsVerification": "开启两步验证后，通行密钥必须验证你的 PIN、指纹或面容。请改用密码和验证码登录。",
   "auth.forgotPassword": "忘记密码？",
   "auth.resetCodeLabel": "容器日志中的验证码",
   "auth.resetCodeTip": "BombVault 已将一个验证码写入它的容器日志。在 Unraid 中：Docker 标签页，BombVault 图标，Logs。验证码 10 分钟内有效。任何能读取此日志的人都可以重置密码，包括通过 Dozzle 这样的日志查看器。重置还会关闭两步验证，移除所有通行密钥，吊销所有 API 令牌和 MCP 密钥，结束所有其他会话，并在你重新打开之前不再允许手机配对。",

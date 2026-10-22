@@ -492,6 +492,7 @@ const fr: Partial<Translations> = {
   "auth.passkeyRemoveConfirm": "{name} ne vous connectera plus. Le mot de passe continue de fonctionner.",
   "auth.signInWithPasskey": "Se connecter avec une clé d'accès",
   "auth.passkeySignInFailed": "Cette clé d'accès a été refusée",
+  "auth.passkeyNeedsVerification": "Avec l'authentification à deux facteurs activée, la clé d'accès doit vérifier votre code PIN, votre empreinte ou votre visage. Connectez-vous plutôt avec le mot de passe et le code.",
   "auth.forgotPassword": "Mot de passe oublié ?",
   "auth.resetCodeLabel": "Code du journal du conteneur",
   "auth.resetCodeTip": "BombVault a écrit un code dans le journal de son conteneur. Sous Unraid : onglet Docker, icône BombVault, Logs. Un code est valable 10 minutes. Quiconque peut lire ce journal peut réinitialiser le mot de passe, y compris au moyen d'un visualiseur de journaux comme Dozzle. La réinitialisation désactive aussi l'authentification à deux facteurs, supprime toutes les clés d'accès, révoque tous les jetons d'API et toutes les clés MCP, ferme toutes les autres sessions et empêche les téléphones de s'appairer jusqu'à ce que vous le réactiviez.",

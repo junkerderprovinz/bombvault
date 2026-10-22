@@ -1381,6 +1381,7 @@ const ms: Partial<Translations> = {
   "auth.passkeyRemoveConfirm": "{name} tidak akan log masuk anda lagi. Kata laluan masih berfungsi.",
   "auth.signInWithPasskey": "Log masuk dengan kunci laluan",
   "auth.passkeySignInFailed": "Kunci laluan itu tidak diterima",
+  "auth.passkeyNeedsVerification": "Apabila pengesahan dua faktor dihidupkan, kunci laluan perlu menyemak PIN, cap jari atau wajah anda. Log masuk dengan kata laluan dan kod sahaja.",
   "auth.forgotPassword": "Lupa kata laluan?",
   "auth.resetCodeLabel": "Kod daripada log kontena",
   "auth.resetCodeTip": "BombVault telah menulis kod ke dalam log kontenanya. Di Unraid: tab Docker, ikon BombVault, Logs. Kod sah selama 10 minit. Sesiapa yang boleh membaca log ini boleh menetapkan semula kata laluan, termasuk melalui pemapar log seperti Dozzle. Tetapan semula turut mematikan pengesahan dua faktor, membuang semua kunci laluan, membatalkan semua token API dan kunci MCP, menamatkan semua sesi lain serta menghentikan telefon daripada digandingkan sehingga anda menghidupkannya semula.",

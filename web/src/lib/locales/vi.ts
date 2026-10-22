@@ -492,6 +492,7 @@ const vi: Partial<Translations> = {
   "auth.passkeyRemoveConfirm": "{name} sẽ không đăng nhập cho bạn nữa. Mật khẩu vẫn hoạt động.",
   "auth.signInWithPasskey": "Đăng nhập bằng khóa truy cập",
   "auth.passkeySignInFailed": "Khóa truy cập đó không được chấp nhận",
+  "auth.passkeyNeedsVerification": "Khi bật xác thực hai yếu tố, khóa truy cập phải kiểm tra mã PIN, vân tay hoặc khuôn mặt của bạn. Hãy đăng nhập bằng mật khẩu và mã.",
   "auth.forgotPassword": "Quên mật khẩu?",
   "auth.resetCodeLabel": "Mã từ nhật ký container",
   "auth.resetCodeTip": "BombVault đã ghi một mã vào nhật ký container của nó. Trên Unraid: thẻ Docker, biểu tượng BombVault, Logs. Mã có hiệu lực trong 10 phút. Bất kỳ ai đọc được nhật ký này đều có thể đặt lại mật khẩu, kể cả qua một trình xem nhật ký như Dozzle. Việc đặt lại cũng tắt xác thực hai yếu tố, gỡ mọi khóa truy cập, thu hồi mọi mã thông báo API và khóa MCP, kết thúc mọi phiên khác và dừng việc ghép nối điện thoại cho đến khi bạn bật lại.",

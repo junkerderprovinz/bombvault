@@ -492,6 +492,7 @@ const es: Partial<Translations> = {
   "auth.passkeyRemoveConfirm": "{name} ya no te iniciará sesión. La contraseña sigue funcionando.",
   "auth.signInWithPasskey": "Iniciar sesión con una clave de acceso",
   "auth.passkeySignInFailed": "Esa clave de acceso no fue aceptada",
+  "auth.passkeyNeedsVerification": "Con la verificación en dos pasos activada, la clave de acceso tiene que comprobar tu PIN, huella o cara. Inicia sesión con la contraseña y el código.",
   "auth.forgotPassword": "¿Has olvidado la contraseña?",
   "auth.resetCodeLabel": "Código del registro del contenedor",
   "auth.resetCodeTip": "BombVault ha escrito un código en el registro de su contenedor. En Unraid: pestaña Docker, icono de BombVault, Logs. Un código es válido durante 10 minutos. Cualquiera que pueda leer este registro puede restablecer la contraseña, también con un visor de registros como Dozzle. El restablecimiento también desactiva la verificación en dos pasos, elimina todas las claves de acceso, revoca todos los tokens de API y claves MCP, cierra todas las demás sesiones e impide que los teléfonos se emparejen hasta que lo vuelvas a activar.",

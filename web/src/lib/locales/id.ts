@@ -1381,6 +1381,7 @@ const id: Partial<Translations> = {
   "auth.passkeyRemoveConfirm": "{name} tidak akan memasukkan Anda lagi. Kata sandi tetap berfungsi.",
   "auth.signInWithPasskey": "Masuk dengan kunci sandi",
   "auth.passkeySignInFailed": "Kunci sandi itu tidak diterima",
+  "auth.passkeyNeedsVerification": "Saat autentikasi dua faktor aktif, kunci sandi harus memeriksa PIN, sidik jari, atau wajah Anda. Masuk dengan kata sandi dan kode saja.",
   "auth.forgotPassword": "Lupa kata sandi?",
   "auth.resetCodeLabel": "Kode dari log kontainer",
   "auth.resetCodeTip": "BombVault telah menulis kode ke log kontainernya. Di Unraid: tab Docker, ikon BombVault, Logs. Kode berlaku selama 10 menit. Siapa pun yang dapat membaca log ini dapat mengatur ulang kata sandi, termasuk melalui penampil log seperti Dozzle. Pengaturan ulang juga mematikan autentikasi dua faktor, menghapus semua kunci sandi, mencabut semua token API dan kunci MCP, mengakhiri semua sesi lain, serta menghentikan pemasangan ponsel sampai Anda mengaktifkannya kembali.",

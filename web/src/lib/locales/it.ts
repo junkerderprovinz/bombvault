@@ -492,6 +492,7 @@ const it: Partial<Translations> = {
   "auth.passkeyRemoveConfirm": "{name} non ti farà più accedere. La password continua a funzionare.",
   "auth.signInWithPasskey": "Accedi con una passkey",
   "auth.passkeySignInFailed": "Quella passkey non è stata accettata",
+  "auth.passkeyNeedsVerification": "Con l'autenticazione a due fattori attiva, la passkey deve verificare PIN, impronta o volto. Accedi invece con password e codice.",
   "auth.forgotPassword": "Password dimenticata?",
   "auth.resetCodeLabel": "Codice dal log del container",
   "auth.resetCodeTip": "BombVault ha scritto un codice nel log del suo container. Su Unraid: scheda Docker, icona di BombVault, Logs. Un codice vale 10 minuti. Chiunque possa leggere questo log può reimpostare la password, anche tramite un visualizzatore di log come Dozzle. Il ripristino disattiva anche l'autenticazione a due fattori, rimuove tutte le passkey, revoca tutti i token API e le chiavi MCP, chiude tutte le altre sessioni e impedisce ai telefoni di associarsi finché non lo riattivi.",

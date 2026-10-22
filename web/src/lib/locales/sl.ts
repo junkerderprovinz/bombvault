@@ -1376,6 +1376,7 @@ const sl: Partial<Translations> = {
   "auth.passkeyRemoveConfirm": "{name} te ne bo več prijavil. Geslo še naprej deluje.",
   "auth.signInWithPasskey": "Prijava s ključem za dostop",
   "auth.passkeySignInFailed": "Ta ključ za dostop ni bil sprejet",
+  "auth.passkeyNeedsVerification": "Ko je dvostopenjsko preverjanje vklopljeno, mora ključ za dostop preveriti PIN, prstni odtis ali obraz. Namesto tega se prijavite z geslom in kodo.",
   "auth.forgotPassword": "Pozabljeno geslo?",
   "auth.resetCodeLabel": "Koda iz dnevnika vsebnika",
   "auth.resetCodeTip": "BombVault je zapisal kodo v dnevnik svojega vsebnika. V Unraidu: zavihek Docker, ikona BombVault, Logs. Koda velja 10 minut. Kdor lahko bere ta dnevnik, lahko ponastavi geslo, tudi prek pregledovalnika dnevnikov, kot je Dozzle. Ponastavitev izklopi tudi dvostopenjsko preverjanje, odstrani vse ključe za dostop, prekliče vse žetone API in ključe MCP, konča vse druge seje ter ustavi seznanjanje telefonov, dokler tega znova ne vklopiš.",

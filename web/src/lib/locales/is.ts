@@ -1381,6 +1381,7 @@ const is: Partial<Translations> = {
   "auth.passkeyRemoveConfirm": "{name} skráir þig ekki lengur inn. Lykilorðið virkar áfram.",
   "auth.signInWithPasskey": "Skrá inn með aðgangslykli",
   "auth.passkeySignInFailed": "Þessi aðgangslykill var ekki samþykktur",
+  "auth.passkeyNeedsVerification": "Þegar tveggja þátta auðkenning er virk þarf aðgangslykillinn að athuga PIN-númer, fingrafar eða andlit. Skráðu þig frekar inn með lykilorðinu og kóðanum.",
   "auth.forgotPassword": "Gleymt lykilorð?",
   "auth.resetCodeLabel": "Kóði úr annál gámsins",
   "auth.resetCodeTip": "BombVault skrifaði kóða í annál gámsins síns. Í Unraid: flipinn Docker, BombVault-táknið, Logs. Kóði gildir í 10 mínútur. Hver sem getur lesið þennan annál getur endurstillt lykilorðið, líka í gegnum annálaskoðara eins og Dozzle. Endurstillingin slekkur líka á tveggja þátta auðkenningu, fjarlægir alla aðgangslykla, afturkallar öll API-tákn og MCP-lykla, lýkur öllum öðrum setum og hættir að leyfa símum að parast þar til þú kveikir aftur á því.",

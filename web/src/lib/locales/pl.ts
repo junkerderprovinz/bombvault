@@ -488,6 +488,7 @@ const pl: Partial<Translations> = {
   "auth.passkeyRemoveConfirm": "{name} nie będzie już logować. Hasło nadal działa.",
   "auth.signInWithPasskey": "Zaloguj się kluczem dostępu",
   "auth.passkeySignInFailed": "Ten klucz dostępu nie został przyjęty",
+  "auth.passkeyNeedsVerification": "Przy włączonym uwierzytelnianiu dwuskładnikowym klucz dostępu musi sprawdzić PIN, odcisk palca lub twarz. Zaloguj się zamiast tego hasłem i kodem.",
   "auth.forgotPassword": "Nie pamiętasz hasła?",
   "auth.resetCodeLabel": "Kod z dziennika kontenera",
   "auth.resetCodeTip": "BombVault zapisał kod w dzienniku swojego kontenera. W Unraid: karta Docker, ikona BombVault, Logs. Kod jest ważny 10 minut. Każdy, kto może czytać ten dziennik, może zresetować hasło, także przez przeglądarkę logów, taką jak Dozzle. Reset wyłącza też uwierzytelnianie dwuskładnikowe, usuwa wszystkie klucze dostępu, unieważnia wszystkie tokeny API i klucze MCP, kończy wszystkie inne sesje oraz wstrzymuje parowanie telefonów, dopóki go nie włączysz z powrotem.",

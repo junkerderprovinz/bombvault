@@ -489,6 +489,7 @@ const no: Partial<Translations> = {
   "auth.passkeyRemoveConfirm": "{name} logger deg ikke inn lenger. Passordet virker fortsatt.",
   "auth.signInWithPasskey": "Logg inn med passnøkkel",
   "auth.passkeySignInFailed": "Den passnøkkelen ble ikke godtatt",
+  "auth.passkeyNeedsVerification": "Med tofaktorautentisering slått på må passnøkkelen sjekke PIN-koden, fingeravtrykket eller ansiktet ditt. Logg heller inn med passordet og koden.",
   "auth.forgotPassword": "Glemt passordet?",
   "auth.resetCodeLabel": "Kode fra containerloggen",
   "auth.resetCodeTip": "BombVault har skrevet en kode i containerloggen sin. I Unraid: fanen Docker, BombVault-ikonet, Logs. En kode er gyldig i 10 minutter. Alle som kan lese denne loggen, kan tilbakestille passordet, også gjennom en loggviser som Dozzle. Tilbakestillingen slår også av tofaktorautentisering, fjerner alle passnøkler, tilbakekaller alle API-tokener og MCP-nøkler, avslutter alle andre økter og stanser paring av telefoner til du slår det på igjen.",

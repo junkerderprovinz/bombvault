@@ -1381,6 +1381,7 @@ const lt: Partial<Translations> = {
   "auth.passkeyRemoveConfirm": "{name} tavo nebeprijungs. Slaptažodis veikia toliau.",
   "auth.signInWithPasskey": "Prisijungti prieigos raktu",
   "auth.passkeySignInFailed": "Šis prieigos raktas nebuvo priimtas",
+  "auth.passkeyNeedsVerification": "Kai įjungtas dviejų veiksnių autentifikavimas, prieigos raktas turi patikrinti PIN kodą, piršto atspaudą arba veidą. Prisijunkite slaptažodžiu ir kodu.",
   "auth.forgotPassword": "Pamiršai slaptažodį?",
   "auth.resetCodeLabel": "Kodas iš konteinerio žurnalo",
   "auth.resetCodeTip": "BombVault įrašė kodą į savo konteinerio žurnalą. Unraid: skirtukas Docker, BombVault piktograma, Logs. Kodas galioja 10 minučių. Bet kas, galintis skaityti šį žurnalą, gali iš naujo nustatyti slaptažodį, taip pat per žurnalų peržiūros programą, pavyzdžiui, Dozzle. Nustatymas iš naujo taip pat išjungia dviejų veiksnių autentifikavimą, pašalina visus prieigos raktus, panaikina visus API žetonus ir MCP raktus, baigia visus kitus seansus ir sustabdo telefonų susiejimą, kol vėl neįjungsi to.",
