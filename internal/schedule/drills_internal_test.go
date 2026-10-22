@@ -26,7 +26,7 @@ func TestDrillTasksIncludeZFSOffsiteDR(t *testing.T) {
 		OffsiteDrillsEnabled: true,
 	}
 
-	tasks := drillTasks(base)
+	tasks := drillTasks(base, nil)
 	if !hasDrillTask(tasks, drillTask{domain: "zfs", source: "local", kind: "subset"}) {
 		t.Fatalf("expected a local subset drill for zfs, got %v", tasks)
 	}
@@ -38,14 +38,14 @@ func TestDrillTasksIncludeZFSOffsiteDR(t *testing.T) {
 
 	withOff := base
 	withOff.ZFSOffsite = "rclone:remote:bombvault-zfs"
-	tasks = drillTasks(withOff)
+	tasks = drillTasks(withOff, nil)
 	if !hasDrillTask(tasks, drillTask{domain: "zfs", source: "offsite", kind: "dr"}) {
 		t.Fatalf("expected an off-site DR drill for zfs, got %v", tasks)
 	}
 
 	optedOut := withOff
 	optedOut.OffsiteDrillsEnabled = false
-	for _, tk := range drillTasks(optedOut) {
+	for _, tk := range drillTasks(optedOut, nil) {
 		if tk.domain == "zfs" && tk.kind == "dr" {
 			t.Fatalf("no off-site DR task expected when off-site drills are off, got %v", tk)
 		}
@@ -92,7 +92,7 @@ func TestDrillTasks(t *testing.T) {
 	}
 
 	t.Run("subset per enabled domain, no dr without off-site", func(t *testing.T) {
-		got := drillTasks(base)
+		got := drillTasks(base, nil)
 		subset := map[string]bool{}
 		for _, tk := range got {
 			if tk.kind == "dr" {
@@ -115,7 +115,7 @@ func TestDrillTasks(t *testing.T) {
 		s.FlashOffsite = "rest:http://192.168.20.9:8000/flash"
 		s.VMsOffsite = "rest:http://192.168.20.9:8000/vms"
 		dr := map[string]bool{}
-		for _, tk := range drillTasks(s) {
+		for _, tk := range drillTasks(s, nil) {
 			if tk.kind != "dr" {
 				continue
 			}
@@ -133,7 +133,7 @@ func TestDrillTasks(t *testing.T) {
 		s := base
 		s.ContainersEnabled = false
 		s.ContainersOffsite = "rest:http://192.168.20.9:8000/containers" // off-site set but domain off
-		for _, tk := range drillTasks(s) {
+		for _, tk := range drillTasks(s, nil) {
 			if tk.domain == "containers" {
 				t.Fatalf("a disabled domain must yield no drill task, got %+v", tk)
 			}
@@ -146,7 +146,7 @@ func TestDrillTasks(t *testing.T) {
 		s.ContainersOffsite = "rest:http://192.168.20.9:8000/containers"
 		s.FlashOffsite = "rest:http://192.168.20.9:8000/flash"
 		subset := map[string]bool{}
-		for _, tk := range drillTasks(s) {
+		for _, tk := range drillTasks(s, nil) {
 			if tk.kind == "dr" {
 				t.Fatalf("no off-site dr task expected when OffsiteDrillsEnabled is false, got %+v", tk)
 			}
@@ -165,15 +165,29 @@ func TestDrillTasks(t *testing.T) {
 func TestDrillTasksAddTheStartTestOnlyWhenSwitchedOn(t *testing.T) {
 	start := drillTask{domain: "containers", source: "local", kind: "start"}
 	settings := store.Settings{ContainersEnabled: true}
-	if hasDrillTask(drillTasks(settings), start) {
+	if hasDrillTask(drillTasks(settings, nil), start) {
 		t.Fatal("a start test starts containers, so it must stay off until switched on")
 	}
 	settings.StartTestEnabled = true
-	if !hasDrillTask(drillTasks(settings), start) {
+	if !hasDrillTask(drillTasks(settings, nil), start) {
 		t.Fatal("the switched-on start test must join the drills")
 	}
 	settings.ContainersEnabled = false
-	if hasDrillTask(drillTasks(settings), start) {
+	if hasDrillTask(drillTasks(settings, nil), start) {
 		t.Fatal("no start test for a switched-off containers domain")
+	}
+}
+
+// A domain whose only off-site targets are additional ones, as a group peer's
+// offer adds, has an empty off-site setting and still gets its trial restore.
+func TestAnOffsiteDrillFollowsTheTargetsNotTheSetting(t *testing.T) {
+	settings := store.Settings{FilesEnabled: true, VMsEnabled: true, OffsiteDrillsEnabled: true}
+	targets := map[string]bool{"files": true}
+	tasks := drillTasks(settings, func(domain string) bool { return targets[domain] })
+	if !hasDrillTask(tasks, drillTask{domain: "files", source: "offsite", kind: "dr"}) {
+		t.Errorf("tasks = %v, want a trial restore of the files from their target", tasks)
+	}
+	if hasDrillTask(tasks, drillTask{domain: "vms", source: "offsite", kind: "dr"}) {
+		t.Errorf("tasks = %v, want none for the VMs, which have no off-site place", tasks)
 	}
 }

@@ -121,7 +121,7 @@ func TestConfigJobScheduledAndExcludedFromDrills(t *testing.T) {
 		OffsiteDrillsEnabled: true,
 	}
 	var haveVMDr bool
-	for _, tk := range drillTasks(drillCfg) {
+	for _, tk := range drillTasks(drillCfg, nil) {
 		if tk.kind == "dr" && tk.domain == "config" {
 			t.Fatal("config must be excluded from DR drills")
 		}
@@ -248,7 +248,7 @@ func TestFilesDrillTasksLocalSubsetAndOffsiteDR(t *testing.T) {
 		DrillsSchedule: "weekly Sun 05:00",
 	}
 
-	tasks := drillTasks(base)
+	tasks := drillTasks(base, nil)
 	if !has(tasks, drillTask{domain: "files", source: "local", kind: "subset"}) {
 		t.Fatalf("expected {files, local, subset} drill task, got %v", tasks)
 	}
@@ -261,7 +261,7 @@ func TestFilesDrillTasksLocalSubsetAndOffsiteDR(t *testing.T) {
 	withOff := base
 	withOff.FilesOffsite = "rclone:remote:bombvault-files"
 	withOff.OffsiteDrillsEnabled = true
-	tasks = drillTasks(withOff)
+	tasks = drillTasks(withOff, nil)
 	if !has(tasks, drillTask{domain: "files", source: "local", kind: "subset"}) {
 		t.Fatalf("expected {files, local, subset} drill task, got %v", tasks)
 	}

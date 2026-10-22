@@ -1460,7 +1460,7 @@ func (s *Scheduler) ReloadWithGates(settings store.Settings, g DueGates) error {
 	)
 
 	if settings.DrillsEnabled {
-		tasks := drillTasks(settings)
+		tasks := drillTasks(settings, s.offsiteInUse)
 		domains = append(domains, domainSpec{
 			cadence: settings.DrillsSchedule,
 			name:    "drills",
@@ -2019,10 +2019,13 @@ type drillTask struct {
 
 // drillTasks returns the scheduled drill tasks: a local "subset" integrity check
 // for every enabled domain, plus an off-site "dr" drill for containers, VMs,
-// flash and files when their off-site repo is configured. Config gets no DR
-// drill, because a sandbox restore of the settings DB proves nothing; its real
-// recovery path is the staged restart.
-func drillTasks(settings store.Settings) []drillTask {
+// flash, files and ZFS when they have an off-site place: the domain's off-site
+// setting, or a target hasOffsite finds, as for a domain whose only targets
+// are additional ones. A drill whose targets are all switched off when it
+// fires is skipped then. Config gets no DR drill, because a sandbox
+// restore of the settings DB proves nothing; its real recovery path is the
+// staged restart.
+func drillTasks(settings store.Settings, hasOffsite func(domain string) bool) []drillTask {
 	var out []drillTask
 	for _, d := range enabledDrillDomains(settings) {
 		out = append(out, drillTask{domain: d, source: "local", kind: "subset"})
@@ -2034,21 +2037,22 @@ func drillTasks(settings store.Settings) []drillTask {
 	}
 	// An off-site DR drill downloads a whole snapshot, which costs egress on
 	// metered clouds, so these have their own switch.
-	if settings.OffsiteDrillsEnabled {
-		if settings.ContainersEnabled && settings.ContainersOffsite != "" {
-			out = append(out, drillTask{domain: "containers", source: "offsite", kind: "dr"})
-		}
-		if settings.VMsEnabled && settings.VMsOffsite != "" {
-			out = append(out, drillTask{domain: "vms", source: "offsite", kind: "dr"})
-		}
-		if settings.FlashEnabled && settings.FlashOffsite != "" {
-			out = append(out, drillTask{domain: "flash", source: "offsite", kind: "dr"})
-		}
-		if settings.FilesEnabled && settings.FilesOffsite != "" {
-			out = append(out, drillTask{domain: "files", source: "offsite", kind: "dr"})
-		}
-		if settings.ZFSEnabled && settings.ZFSOffsite != "" {
-			out = append(out, drillTask{domain: "zfs", source: "offsite", kind: "dr"})
+	if !settings.OffsiteDrillsEnabled {
+		return out
+	}
+	for _, d := range []struct {
+		name    string
+		enabled bool
+		offsite string
+	}{
+		{"containers", settings.ContainersEnabled, settings.ContainersOffsite},
+		{"vms", settings.VMsEnabled, settings.VMsOffsite},
+		{"flash", settings.FlashEnabled, settings.FlashOffsite},
+		{"files", settings.FilesEnabled, settings.FilesOffsite},
+		{"zfs", settings.ZFSEnabled, settings.ZFSOffsite},
+	} {
+		if d.enabled && (d.offsite != "" || hasOffsite != nil && hasOffsite(d.name)) {
+			out = append(out, drillTask{domain: d.name, source: "offsite", kind: "dr"})
 		}
 	}
 	return out
