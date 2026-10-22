@@ -202,7 +202,7 @@ func (s *Service) pullFromSource(ctx context.Context, ps store.PullSource) (int,
 	// The copy carries the destination's mode with the source's credentials
 	// attached. No snapshot ids are passed: restic compares full metadata and
 	// decides what moves, so pending is only for display.
-	copyDest, copySrc, env, err := pullCopyAccess(dest, destMode.Env, src, srcMode.Env)
+	copyDest, copySrc, env, err := copyAccess(dest, destMode.Env, src, srcMode.Env)
 	if err != nil {
 		return 0, err
 	}
@@ -288,13 +288,12 @@ func pullLeftovers(primary, src, landed []restic.Snapshot, own map[string]bool) 
 	return ids
 }
 
-// pullCopyAccess fits the sign-ins of both ends of a pull into the one restic
-// copy process. Each end brings only what its own backend reads. restic hands
-// the S3 and rest-server variables to both repositories, so when both ends are
-// S3 or both are rest-servers and they do not share a sign-in, each signs in
-// through its own address, and this box's login never reaches the other
-// instance.
-func pullCopyAccess(dest string, destEnv []string, src string, srcEnv []string) (copyDest, copySrc string, env []string, err error) {
+// copyAccess fits the sign-ins of both ends of a restic copy into its one
+// process. Each end brings only what its own backend reads. restic hands the
+// S3 and rest-server variables to both repositories, so when both ends are S3
+// or both are rest-servers and they do not share a sign-in, each signs in
+// through its own address, and neither login reaches the other server.
+func copyAccess(dest string, destEnv []string, src string, srcEnv []string) (copyDest, copySrc string, env []string, err error) {
 	destEnv, srcEnv = ownBackendEnv(dest, destEnv), ownBackendEnv(src, srcEnv)
 	if joined, ok := bothSignIns(dest, destEnv, src, srcEnv); ok {
 		return dest, src, joined, nil

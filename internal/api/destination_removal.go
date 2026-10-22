@@ -237,6 +237,25 @@ func (s *Service) RemoveDestination(id string, expect locationRemoval) (store.Se
 	return s.store.GetSettings()
 }
 
+// removeWhileIdle runs remove while it holds the lock of every section expect
+// names, so no backup or copy goes on writing to a place that is taken away
+// under it. A section that is busy refuses the removal.
+func (s *Service) removeWhileIdle(expect locationRemoval, remove func() (store.Settings, error)) (store.Settings, error) {
+	locked := map[string]bool{}
+	for _, sec := range expect.Sections {
+		if locked[sec.Domain] {
+			continue
+		}
+		unlock, ok := s.tryLockDomainFor(sec.Domain, "delete")
+		if !ok {
+			return store.Settings{}, errDomainBusy
+		}
+		defer unlock()
+		locked[sec.Domain] = true
+	}
+	return remove()
+}
+
 // clearOffsiteFields empties the off-site field of each domain whose primary
 // target went, so a settings save cannot bring the copy back.
 func clearOffsiteFields(st *store.Settings, primaries []string) {
@@ -286,7 +305,9 @@ func (h *Handler) handleRemoveDestination(w http.ResponseWriter, r *http.Request
 	if !decodeBody(w, r, &body) {
 		return
 	}
-	settings, err := h.svc.RemoveDestination(r.PathValue("id"), body.Expect)
+	settings, err := h.svc.removeWhileIdle(body.Expect, func() (store.Settings, error) {
+		return h.svc.RemoveDestination(r.PathValue("id"), body.Expect)
+	})
 	var changed *removalChangedErr
 	switch {
 	case errors.Is(err, store.ErrNotDestination):

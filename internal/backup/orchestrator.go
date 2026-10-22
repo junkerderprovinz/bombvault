@@ -1684,16 +1684,40 @@ var runErrRepoLocationRe = regexp.MustCompile(`\b(?:rclone|sftp|rest|s3|b2|azure
 // of the location it started in.
 var runErrRepoUserinfoRe = regexp.MustCompile(`\b(rclone|sftp|rest|s3|b2|azure|gs|swift):((?:[A-Za-z0-9+.-]+:)?//)?[^@\s"']*@`)
 
+// runErrHTTPURLRe matches an http(s) URL inside a sentence, such as the one
+// Go's HTTP client quotes in `Put "http://nas:8333/bucket/data/ab": EOF`,
+// which the path scrubber would leave without its host.
+var runErrHTTPURLRe = regexp.MustCompile(`\bhttps?://[^\s"']*[^\s"').,;:]`)
+
+// runErrKeptRe finds the parts of a message that keep their host and port.
+var runErrKeptRe = regexp.MustCompile(runErrRepoLocationRe.String() + `|` + runErrHTTPURLRe.String())
+
+var (
+	runErrURLQueryRe    = regexp.MustCompile(`[?#].*$`)
+	runErrURLUserinfoRe = regexp.MustCompile(`^(https?://)[^@/]*@`)
+)
+
 func scrubRunErr(s string) string {
 	var b strings.Builder
 	last := 0
-	for _, m := range runErrRepoLocationRe.FindAllStringIndex(s, -1) {
+	for _, m := range runErrKeptRe.FindAllStringIndex(s, -1) {
 		b.WriteString(scrubRunErrOutsideARepoLocation(s[last:m[0]]))
-		b.WriteString(redact.RcloneParams(runErrRepoUserinfoRe.ReplaceAllString(s[m[0]:m[1]], "${1}:${2}[redacted]@")))
+		b.WriteString(scrubRunErrKept(s[m[0]:m[1]]))
 		last = m[1]
 	}
 	b.WriteString(scrubRunErrOutsideARepoLocation(s[last:]))
 	return b.String()
+}
+
+// scrubRunErrKept redacts the secrets inside a location that is otherwise
+// shown as written: the userinfo, the query string of an http(s) URL and the
+// parameters of an rclone connection string.
+func scrubRunErrKept(loc string) string {
+	if strings.HasPrefix(loc, "http://") || strings.HasPrefix(loc, "https://") {
+		loc = runErrURLUserinfoRe.ReplaceAllString(loc, "${1}[redacted]@")
+		return runErrURLQueryRe.ReplaceAllString(loc, "?[redacted]")
+	}
+	return redact.RcloneParams(runErrRepoUserinfoRe.ReplaceAllString(loc, "${1}:${2}[redacted]@"))
 }
 
 // scrubRunErrOutsideARepoLocation is the original scrubbing, applied to the

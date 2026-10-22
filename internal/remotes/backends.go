@@ -25,7 +25,7 @@ type Option struct {
 	// Type is rclone's name for the kind of value, such as string or bool.
 	Type     string    `json:"type,omitempty"`
 	Default  string    `json:"default"`
-	Examples  []Example `json:"examples,omitempty"`
+	Examples []Example `json:"examples,omitempty"`
 	// Providers limits the option to these S3 providers; empty means all.
 	Providers []string `json:"providers,omitempty"`
 }

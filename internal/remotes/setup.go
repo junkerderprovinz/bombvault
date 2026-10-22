@@ -39,7 +39,9 @@ var setupSteps = map[string]setupStep{
 	// Jottacloud signs in with a personal login token, which only its setup
 	// trades for the OAuth token and the client it belongs to.
 	"jottacloud": {
-		due:     func(s map[string]string) bool { return hasToken(s) && !strings.HasPrefix(strings.TrimSpace(s["token"]), "{") },
+		due: func(s map[string]string) bool {
+			return hasToken(s) && !strings.HasPrefix(strings.TrimSpace(s["token"]), "{")
+		},
 		answers: map[string]string{"config_type": "standard", "config_non_standard": "false"},
 		asked:   map[string]string{"config_login_token": "token"},
 	},

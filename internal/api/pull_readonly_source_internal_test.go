@@ -195,12 +195,12 @@ func TestAPullSendsNoLoginOfThisBoxToTheOtherInstance(t *testing.T) {
 	theirs := cloudEnv(CloudCreds{S3KeyID: "THEIRS", S3Secret: "t"})
 	const local = "/host/user/bombvault/containers"
 
-	_, src, env, err := pullCopyAccess(local, ours, "rest:http://tower:8000/bv", nil)
+	_, src, env, err := copyAccess(local, ours, "rest:http://tower:8000/bv", nil)
 	if err != nil || src != "rest:http://tower:8000/bv" || len(env) != 0 {
 		t.Fatalf("into a folder here: src %q env %v err %v, want the address as it is and none of this box's logins", src, env, err)
 	}
 
-	dest, src, env, err := pullCopyAccess("rest:http://nas:8000/bv/containers", ours, "rest:http://tower:8000/bv", nil)
+	dest, src, env, err := copyAccess("rest:http://nas:8000/bv/containers", ours, "rest:http://tower:8000/bv", nil)
 	if err != nil || dest != "rest:http://bv:ours@nas:8000/bv/containers" || src != "rest:http://tower:8000/bv" {
 		t.Fatalf("between two rest-servers: dest %q src %q err %v, want this box's login in its own address only", dest, src, err)
 	}
@@ -209,7 +209,7 @@ func TestAPullSendsNoLoginOfThisBoxToTheOtherInstance(t *testing.T) {
 	}
 
 	for _, srcEnv := range [][]string{theirs, nil} {
-		dest, src, env, err = pullCopyAccess("s3:https://garage/bv/containers", ours, "s3:https://tower/bucket/bv", srcEnv)
+		dest, src, env, err = copyAccess("s3:https://garage/bv/containers", ours, "s3:https://tower/bucket/bv", srcEnv)
 		joined := strings.Join(env, "\n")
 		if err != nil || dest != "s3:https://garage/bv/containers" || !strings.HasPrefix(src, "rclone:"+sourceRemote+":") {
 			t.Fatalf("between two buckets: dest %q src %q err %v, want the source read through its own remote", dest, src, err)

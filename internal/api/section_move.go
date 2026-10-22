@@ -18,13 +18,9 @@ import (
 
 var (
 	errMoveSamePlace = errors.New("the section already keeps its copy at that destination")
-	// errMoveSignIn is two places of the same kind under different sign-ins.
-	// restic copies between two repositories in one process, and that process
-	// takes one sign-in of each kind.
-	errMoveSignIn  = errors.New("both places sign in the same way with different credentials, which one copy cannot do; move through a folder on this server instead")
-	errMoveMissing = errors.New("the new place does not hold every backup of the old one after the copy, so the section stays where it is")
-	errMoveRunning = errors.New("this section is already being moved")
-	errMoveErasing = errors.New("the backups at one of the two places are being deleted; try again once that has finished")
+	errMoveMissing   = errors.New("the new place does not hold every backup of the old one after the copy, so the section stays where it is")
+	errMoveRunning   = errors.New("this section is already being moved")
+	errMoveErasing   = errors.New("the backups at one of the two places are being deleted; try again once that has finished")
 )
 
 // sectionMove is what moving a section's copy to another destination copies.
@@ -49,7 +45,10 @@ type movePlan struct {
 	// srcMode reads the old place and mode the new one, each with its own
 	// sign-in. copyMode carries both: restic copy opens the two repositories in
 	// one process, and their backends read the sign-in from its environment.
+	// copyDst and copySrc are the addresses the copy opens them by, which carry
+	// a sign-in of their own where the two would not fit into one environment.
 	srcMode, mode, copyMode restic.Mode
+	copyDst, copySrc        string
 	lim                     restic.Limits
 }
 
@@ -113,6 +112,18 @@ func bothSignIns(aLoc string, a []string, bLoc string, b []string) (env []string
 		env = append(env, kv)
 	}
 	return env, true
+}
+
+// joinSignIns sets up the copy that reads the old place and writes the new
+// one, each signed in with its own credentials.
+func (p *movePlan) joinSignIns() error {
+	dst, src, env, err := copyAccess(p.dst, p.mode.Env, p.src, p.srcMode.Env)
+	if err != nil {
+		return err
+	}
+	p.copyDst, p.copySrc, p.copyMode = dst, src, p.mode
+	p.copyMode.Env = env
+	return nil
 }
 
 // planMove checks a move and counts what it would copy. Nothing is written.
@@ -183,9 +194,8 @@ func (s *Service) planMove(ctx context.Context, targetID, destID string) (movePl
 	arrived := t
 	arrived.Repo, arrived.CredsRef, arrived.StorageClass = to, d.CredsRef, d.StorageClass
 	plan.srcMode, plan.mode = s.offsiteModeForTarget(settings, t), s.offsiteModeForTarget(settings, arrived)
-	plan.copyMode = plan.mode
-	if plan.copyMode.Env, ok = bothSignIns(plan.dst, plan.mode.Env, plan.src, plan.srcMode.Env); !ok {
-		return movePlan{}, errMoveSignIn
+	if err := plan.joinSignIns(); err != nil {
+		return movePlan{}, err
 	}
 
 	pending, all, err := s.pendingMove(ctx, plan)
@@ -344,7 +354,7 @@ func (s *Service) copyPending(ctx context.Context, plan movePlan, startedAt int6
 			Percent: cp.Percent, SnapshotIndex: cp.SnapshotIndex, SnapshotTotal: len(pending),
 		})
 	})
-	if _, err := s.copyInChunks(ctx, plan.Domain, plan.dst, plan.src, pending, plan.lim, plan.copyMode, 0); err != nil {
+	if _, err := s.copyInChunks(ctx, plan.Domain, plan.copyDst, plan.copySrc, pending, plan.lim, plan.copyMode, 0); err != nil {
 		return fmt.Errorf("copy to %s: %w", plan.To, err)
 	}
 	return nil

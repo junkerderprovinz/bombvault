@@ -75,9 +75,45 @@ func (r *Rclone) run(ctx context.Context, env []string, stdin string, args ...st
 		if ctx.Err() != nil {
 			return nil, errors.New("the remote did not answer in time")
 		}
-		return nil, errors.New(lastError(errBuf.String(), err))
+		return nil, errors.New(explain(lastError(errBuf.String(), err)))
 	}
 	return out.Bytes(), nil
+}
+
+// callPrefixRe is what rclone puts in front of a failure: the remote, which
+// for a draft is a name nobody chose, and the call inside rclone that failed.
+var callPrefixRe = regexp.MustCompile(`^(?:Failed to create file system for "[^"]*": |NewFs: |error in ListJSON: )`)
+
+// hints say what to do about the failures people meet setting a remote up,
+// which rclone words for someone who edits rclone.conf by hand. Without keep
+// rclone's sentence is left out, because it points at commands BombVault
+// does not have.
+var hints = []struct {
+	match, hint string
+	keep        bool
+}{
+	{"unable to authenticate", "the server did not accept BombVault's SSH key. Add the public key the form shows to the authorized keys of this user on the server, then test again", true},
+	{"Non-anonymous sessions must use encryption", "the server only takes encrypted logins. Under More settings set explicit_tls to true, or tls to true for a server that expects FTPS on port 990", true},
+	{"the remote url looks incorrect", "this is not the address Nextcloud keeps files under. Use https://cloud.example.com/remote.php/dav/files/USER/ with your Nextcloud user name in place of USER", false},
+	{"AuthorizationHeaderMalformed", "the server signs for another region than the form names, and an empty region means us-east-1. Fill in the region the server is set up with: for Garage it is s3_region in garage.toml, garage unless it was changed", true},
+}
+
+// explain takes rclone's prefixes off a failure and puts a hint in front of
+// one the form can be changed to get past.
+func explain(msg string) string {
+	for next := callPrefixRe.ReplaceAllString(msg, ""); next != msg; next = callPrefixRe.ReplaceAllString(msg, "") {
+		msg = next
+	}
+	for _, h := range hints {
+		if !strings.Contains(msg, h.match) {
+			continue
+		}
+		if !h.keep {
+			return h.hint
+		}
+		return h.hint + " (" + msg + ")"
+	}
+	return msg
 }
 
 // logPrefix is the time and level rclone puts in front of each line.

@@ -166,6 +166,31 @@ func TestRemovingADestinationClearsTheOffsiteFieldOfAPrimaryItHeld(t *testing.T)
 	}
 }
 
+func TestALocationIsNotRemovedWhileACopyIntoItRuns(t *testing.T) {
+	f := newPlacementFixture(t)
+	box, vms := boxWithVMs(f)
+	preview := f.removalPreview(box)
+	unlock, ok := f.svc.tryLockDomainFor("vms", "replicate")
+	if !ok {
+		t.Fatal("vms is locked already")
+	}
+
+	if res := f.remove(box, preview); res["ok"] != false || res["code"] != "domain-busy" {
+		t.Fatalf("removal during the copy = %v, want it refused as busy", res)
+	}
+	if res := f.removeLocation("destination:"+box.ID, preview, ""); res["ok"] != false || res["code"] != "domain-busy" {
+		t.Fatalf("removal from the storage page during the copy = %v, want it refused as busy", res)
+	}
+	if !f.hasTarget(vms.ID) {
+		t.Fatal("the copy lost its target while it ran")
+	}
+
+	unlock()
+	if res := f.remove(box, preview); res["ok"] != true {
+		t.Fatalf("removal after the copy = %v", res)
+	}
+}
+
 func TestARemovalIsRefusedWhenTheSectionsChangedSinceThePreview(t *testing.T) {
 	f := newPlacementFixture(t)
 	box := f.destination("Box", "rest:https://box:8000/bv")

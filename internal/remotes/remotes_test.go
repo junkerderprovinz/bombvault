@@ -3,6 +3,7 @@ package remotes
 import (
 	"os"
 	"slices"
+	"strings"
 	"testing"
 )
 
@@ -139,6 +140,47 @@ func TestLastErrorKeepsRclonesOwnSentence(t *testing.T) {
 		if got := lastError(c.stderr, os.ErrInvalid); got != c.want {
 			t.Errorf("lastError(%q) = %q, want %q", c.stderr, got, c.want)
 		}
+	}
+}
+
+func TestAFailureSaysWhatToChangeWithoutTheDraftsName(t *testing.T) {
+	for _, c := range []struct{ msg, want string }{
+		{
+			`Failed to create file system for "BVDRAFT:": NewFs: couldn't connect SSH: ssh: handshake failed: ssh: unable to authenticate, attempted methods [none publickey], no supported methods remain`,
+			"the server did not accept BombVault's SSH key. Add the public key the form shows to the authorized keys of this user on the server, then test again " +
+				"(couldn't connect SSH: ssh: handshake failed: ssh: unable to authenticate, attempted methods [none publickey], no supported methods remain)",
+		},
+		{
+			`Failed to create file system for "BVDRAFT:": the remote url looks incorrect. Note that nextcloud chunked uploads require you to use the /dav/files/USER endpoint instead of /webdav. Please check 'rclone config show remotename' to verify that the url field ends in /dav/files/USER`,
+			"this is not the address Nextcloud keeps files under. Use https://cloud.example.com/remote.php/dav/files/USER/ with your Nextcloud user name in place of USER",
+		},
+		{`error in ListJSON: dial tcp 10.0.0.5:9000: connect: connection refused`, "dial tcp 10.0.0.5:9000: connect: connection refused"},
+	} {
+		if got := explain(c.msg); got != c.want {
+			t.Errorf("explain(%q)\n = %q\nwant %q", c.msg, got, c.want)
+		}
+	}
+	for _, msg := range []string{
+		"NewFs: 530 Non-anonymous sessions must use encryption.",
+		"error in ListJSON: operation error S3: ListBuckets, https response error StatusCode: 400, api error AuthorizationHeaderMalformed: Authorization header malformed, unexpected scope",
+	} {
+		if got := explain(msg); !strings.Contains(got, " (") || strings.HasPrefix(got, "NewFs") || strings.HasPrefix(got, "error in") {
+			t.Errorf("explain(%q) = %q, want a hint in front of rclone's own words", msg, got)
+		}
+	}
+}
+
+func TestEveryDefaultIsASettingOfTheBackend(t *testing.T) {
+	backends := fixture(t)
+	for _, p := range providers {
+		for name := range p.Defaults {
+			if !slices.ContainsFunc(backends[p.Backend].Options, func(o Option) bool { return o.Name == name }) {
+				t.Errorf("%s: rclone's %s has no option %q", p.ID, p.Backend, name)
+			}
+		}
+	}
+	if garage, _ := FindProvider("garage"); garage.Defaults["region"] != "garage" {
+		t.Errorf("Garage starts with the region %q, want the one it signs for", garage.Defaults["region"])
 	}
 }
 

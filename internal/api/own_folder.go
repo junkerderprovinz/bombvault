@@ -284,12 +284,9 @@ func (s *Service) planOwnFolder(ctx context.Context, settings store.Settings, do
 	}
 	step.Backups, step.Pending = all, len(pending)
 	if copyOver && step.Pending > 0 {
-		env, ok := bothSignIns(plan.dst, plan.mode.Env, plan.src, plan.srcMode.Env)
-		if !ok {
-			return ownFolderStep{}, errMoveSignIn
+		if err := step.plan.joinSignIns(); err != nil {
+			return ownFolderStep{}, err
 		}
-		step.plan.copyMode = plan.mode
-		step.plan.copyMode.Env = env
 	}
 	return step, nil
 }

@@ -482,3 +482,24 @@ func TestARestDestinationTooDeepForItsSectionsIsRefusedAtTheTest(t *testing.T) {
 		t.Fatalf("two folders deep: %v, want errRestDestinationTooDeep", err)
 	}
 }
+
+func TestARefusedRestLoginInTheWizardSaysToCheckTheLogin(t *testing.T) {
+	f := newPlacementFixture(t)
+	const repo = "rest:http://box:8000"
+	f.eng.opens[repo] = false
+	f.eng.openErr[repo] = errors.New("restic cat failed: Fatal: unable to open config file: unexpected HTTP response (401): 401 Unauthorized")
+
+	for _, c := range []struct {
+		settings map[string]string
+		want     string
+	}{
+		{map[string]string{"url": "http://box:8000/", "user": "tower", "pass": "wrong"}, "refused this user name and password"},
+		{map[string]string{"url": "http://box:8000/"}, "asks for a user name and password"},
+	} {
+		res := f.do("POST", "/api/offsite/drafts/check", map[string]any{"provider": "rest", "settings": c.settings})
+		msg, _ := res["error"].(string)
+		if res["ok"] != false || !strings.Contains(msg, c.want) || strings.Contains(msg, "credential set") {
+			t.Errorf("check with %v = %v, want %q and nothing about saved rows", c.settings, res, c.want)
+		}
+	}
+}

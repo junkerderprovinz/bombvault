@@ -29,6 +29,12 @@ var repoScrubCases = []struct {
 		gone: []string{"[path]"},
 	},
 	{
+		name: "a URL quoted by Go's HTTP client keeps its host",
+		in:   `Fatal: unable to save snapshot: Put "http://192.168.20.190:8333/bv/flash/data/ab?partNumber=1&uploadId=xyz": EOF`,
+		keep: []string{`Put "http://192.168.20.190:8333/bv/flash/data/ab?[redacted]": EOF`},
+		gone: []string{"[path]", "uploadId"},
+	},
+	{
 		name: "a password in the location still goes, the host stays",
 		in:   "unable to open repository at rest:https://backupuser:Tr0ub4dor&3@storage.example.com:8000/containers",
 		keep: []string{"storage.example.com:8000/containers", "[redacted]@"},

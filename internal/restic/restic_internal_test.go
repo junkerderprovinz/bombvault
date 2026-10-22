@@ -115,6 +115,20 @@ Corrupted blobs are either caused by hardware issues or software bugs. Please op
 	}
 }
 
+func TestLastReasonNamesWhatRcloneSaidBehindA500(t *testing.T) {
+	stderr := strings.Join([]string{
+		`2026/10/22 14:02:11 ERROR : data/5c/5c1f0a: Post request put error: 426 Failure reading network stream.`,
+		`Save(<data/5c1f0a>) returned error, retrying after 1.2s: unexpected HTTP response (500): 500 Internal Server Error`,
+		`error while unlocking: context canceledFatal: unexpected HTTP response (500): 500 Internal Server Error`,
+	}, "\n")
+
+	got := lastReason(stderr)
+	want := "Fatal: unexpected HTTP response (500): 500 Internal Server Error (rclone: data/5c/5c1f0a: Post request put error: 426 Failure reading network stream.)"
+	if got != want {
+		t.Fatalf("lastReason = %q, want %q", got, want)
+	}
+}
+
 func TestLastReasonSingleLine(t *testing.T) {
 	got := lastReason("Fatal: repository is already locked")
 	if got != "Fatal: repository is already locked" {

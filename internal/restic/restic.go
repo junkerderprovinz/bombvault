@@ -2158,13 +2158,38 @@ var credentialRe = regexp.MustCompile(`[\w.+%-]*:[^\s@"']+@`)
 func scrubSecrets(s string) string {
 	var b strings.Builder
 	last := 0
-	for _, m := range repoLocationRe.FindAllStringIndex(s, -1) {
+	for _, m := range keptLocationRe.FindAllStringIndex(s, -1) {
 		b.WriteString(scrubOutsideARepoLocation(s[last:m[0]]))
-		b.WriteString(redact.RcloneParams(repoUserinfoRe.ReplaceAllString(s[m[0]:m[1]], "${1}:${2}[redacted]@")))
+		b.WriteString(scrubKeptLocation(s[m[0]:m[1]]))
 		last = m[1]
 	}
 	b.WriteString(scrubOutsideARepoLocation(s[last:]))
 	return b.String()
+}
+
+// httpURLRe matches an http(s) URL inside a sentence, such as the one Go's
+// HTTP client quotes in `Put "http://nas:8333/bucket/data/ab": EOF`. The path
+// scrubber would leave "http:[path]:8333/bucket", which names no server.
+var httpURLRe = regexp.MustCompile(`\bhttps?://[^\s"']*[^\s"').,;:]`)
+
+// keptLocationRe finds the parts of a message that keep their host and port:
+// remote repository locations and http(s) URLs.
+var keptLocationRe = regexp.MustCompile(repoLocationRe.String() + `|` + httpURLRe.String())
+
+var (
+	urlQueryRe    = regexp.MustCompile(`[?#].*$`)
+	urlUserinfoRe = regexp.MustCompile(`^(https?://)[^@/]*@`)
+)
+
+// scrubKeptLocation redacts the secrets inside a location that is otherwise
+// shown as written. An http(s) URL loses its userinfo and its query string,
+// where a presigned request carries its signature.
+func scrubKeptLocation(loc string) string {
+	if strings.HasPrefix(loc, "http://") || strings.HasPrefix(loc, "https://") {
+		loc = urlUserinfoRe.ReplaceAllString(loc, "${1}[redacted]@")
+		return urlQueryRe.ReplaceAllString(loc, "?[redacted]")
+	}
+	return redact.RcloneParams(repoUserinfoRe.ReplaceAllString(loc, "${1}:${2}[redacted]@"))
 }
 
 // scrubOutsideARepoLocation is the original scrubbing, applied to the parts of a
@@ -2214,6 +2239,7 @@ var repoUserinfoRe = regexp.MustCompile(`\b(rclone|sftp|rest|s3|b2|azure|gs|swif
 // actual cause (a "Fatal:" line, "unable to save", "hash mismatch", etc.) and
 // only fall back to the literal last line when nothing better is present.
 func lastReason(stderr string) string {
+	stderr = gluedFatalRe.ReplaceAllString(stderr, "$1\nFatal:")
 	var lines []string
 	for _, line := range strings.Split(stderr, "\n") {
 		if s := strings.TrimSpace(line); s != "" {
@@ -2249,6 +2275,14 @@ func lastReason(stderr string) string {
 		reason = cause
 	}
 
+	// rclone answers restic with a bare 500 whatever went wrong behind it, and
+	// names the cause only on an ERROR line of its own.
+	if strings.Contains(reason, "unexpected HTTP response (500)") {
+		if cause := lastRcloneError(lines); cause != "" {
+			reason += " (rclone: " + cause + ")"
+		}
+	}
+
 	// restic's restore summary "There were N errors" names a count but not a
 	// cause. When that is all we have, append the concrete per-item causes (the
 	// per-file errors restic printed during the run — issue #110: with --json
@@ -2269,6 +2303,24 @@ func lastReason(stderr string) string {
 		reason = reason[:maxReasonLen]
 	}
 	return reason
+}
+
+// gluedFatalRe finds a "Fatal:" that does not start its line: restic prints
+// some warnings without a newline, and the fatal error lands behind them.
+var gluedFatalRe = regexp.MustCompile(`([^\n])Fatal:`)
+
+// rcloneErrorRe is an ERROR line rclone writes into restic's stderr while
+// restic reaches a repository through it, after the date and time rclone puts
+// in front.
+var rcloneErrorRe = regexp.MustCompile(`^(?:\d{4}/\d{2}/\d{2} \d{2}:\d{2}:\d{2}(?:\.\d+)? )?ERROR : (.+)$`)
+
+func lastRcloneError(lines []string) string {
+	for i := len(lines) - 1; i >= 0; i-- {
+		if m := rcloneErrorRe.FindStringSubmatch(lines[i]); m != nil {
+			return m[1]
+		}
+	}
+	return ""
 }
 
 // maxReasonLen caps the surfaced failure reason. It must hold the error-count

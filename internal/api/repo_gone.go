@@ -67,4 +67,3 @@ func (h *Handler) handleStartOverAtLocation(w http.ResponseWriter, r *http.Reque
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(nil))
 }
-

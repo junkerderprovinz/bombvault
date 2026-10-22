@@ -362,6 +362,10 @@ func (h *Handler) moveFolders(move folderMove) (store.Settings, error) {
 // removeLocation takes the location with the id away and leaves its data
 // where it is. home is where the sections of a section folder move to.
 func (h *Handler) removeLocation(id string, expect locationRemoval, home string) (store.Settings, error) {
+	return h.svc.removeWhileIdle(expect, func() (store.Settings, error) { return h.removeIdleLocation(id, expect, home) })
+}
+
+func (h *Handler) removeIdleLocation(id string, expect locationRemoval, home string) (store.Settings, error) {
 	kind, oid, _ := strings.Cut(id, ":")
 	switch kind {
 	case locationDestination:

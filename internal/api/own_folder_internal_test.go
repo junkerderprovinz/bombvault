@@ -309,6 +309,43 @@ func TestABucketThatHeldTheOwnFolderAndHoldsNoRepositoryNowIsNotEmpty(t *testing
 	}
 }
 
+func TestAnOwnFolderMovesWithItsBackupsBetweenTwoS3LocationsWithOtherKeys(t *testing.T) {
+	f := newPlacementFixture(t)
+	if err := f.svc.SetCloudCredSets([]CloudCredSet{
+		{ID: "garage", Name: "Garage", CloudCreds: CloudCreds{S3KeyID: "GARAGE", S3Secret: "g", S3Region: "garage"}},
+		{ID: "rustfs", Name: "RustFS", CloudCreds: CloudCreds{S3KeyID: "RUSTFS", S3Secret: "r"}},
+	}); err != nil {
+		t.Fatal(err)
+	}
+	garage, err := f.st.SaveDestination(store.OffsiteTarget{Name: "Garage", Repo: "s3:http://garage:3900/bv", CredsRef: "garage", Provider: "garage"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	rustfs, err := f.st.SaveDestination(store.OffsiteTarget{Name: "RustFS", Repo: "s3:http://rustfs:9000/bv", CredsRef: "rustfs", Provider: "rustfs"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	ownSteps(t, f.do("POST", "/api/storage/own-folders", map[string]any{
+		"domains": []string{"flash"}, "location": "destination:" + garage.ID,
+	}))
+	f.hold("s3:http://garage:3900/bv/flash", snap("f1", 100, "flash"))
+
+	steps, err := f.svc.planOwnFolders(context.Background(), ownFolderRequest{
+		Domains: []string{"flash"}, Location: "destination:" + rustfs.ID, CopyOver: true,
+	})
+	if err != nil {
+		t.Fatalf("moving back to RustFS with the backups = %v", err)
+	}
+	plan := steps[0].plan
+	if steps[0].Pending != 1 || plan.copySrc != "rclone:"+sourceRemote+":bv/flash" {
+		t.Fatalf("step = %+v, copy from %q, want one backup read through Garage's own remote", steps[0], plan.copySrc)
+	}
+	env := strings.Join(plan.copyMode.Env, "\n")
+	if !strings.Contains(env, "AWS_ACCESS_KEY_ID=RUSTFS") || strings.Contains(env, "AWS_ACCESS_KEY_ID=GARAGE") || !strings.Contains(env, sourceRemote+"_REGION=garage") {
+		t.Fatalf("env %v, want RustFS's keys for RustFS and Garage's only on its remote", env)
+	}
+}
+
 func TestEachPlaceBringsOnlyTheSignInItsBackendReads(t *testing.T) {
 	local := []string{"AWS_ACCESS_KEY_ID=DEF", "AWS_SECRET_ACCESS_KEY=d", "RESTIC_REST_USERNAME=bv"}
 	s3 := []string{"AWS_ACCESS_KEY_ID=GARAGE", "AWS_SECRET_ACCESS_KEY=g"}

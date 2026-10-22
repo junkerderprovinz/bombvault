@@ -290,6 +290,10 @@ func scrubBypassMessage(err error) (string, bool) {
 		// list further down, which would otherwise replace a message naming the
 		// exact difference with one listing the possibilities.
 		return err.Error(), true
+	case errors.Is(err, errDraftRestLogin):
+		// Like errRestPathUser: written for the form, and restAuthHint's list
+		// of causes would replace it with one about saved rows the form has none of.
+		return err.Error(), true
 	}
 	return "", false
 }

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"slices"
+	"strings"
 	"testing"
 	"time"
 
@@ -316,7 +317,7 @@ func TestAMoveOntoARepositoryInUseIsRefused(t *testing.T) {
 	}
 }
 
-func TestTwoPlacesOfOneKindUnderDifferentSignInsCannotBeMovedBetween(t *testing.T) {
+func TestAMoveBetweenTwoRestServersSignsInToEachThroughItsOwnAddress(t *testing.T) {
 	f := newPlacementFixture(t)
 	ctx := context.Background()
 	old, err := f.svc.SaveNewDestination(ctx, draftRequest{
@@ -333,8 +334,16 @@ func TestTwoPlacesOfOneKindUnderDifferentSignInsCannotBeMovedBetween(t *testing.
 	}
 	vms := f.tickDestination(old, "vms")
 
-	if res := f.movePreview(vms, fresh); res["code"] != "move-sign-in" {
-		t.Fatalf("answer = %v, want move-sign-in", res)
+	moveOf(t, f.movePreview(vms, fresh))
+	plan, err := f.svc.planMove(ctx, vms.ID, fresh.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if plan.copySrc != "rest:https://bv:one@old:8000/bv/vms" || plan.copyDst != "rest:https://bv:two@new:8000/bv/vms" {
+		t.Fatalf("the copy opens %q from %q, want each address with its own login", plan.copyDst, plan.copySrc)
+	}
+	if strings.Contains(strings.Join(plan.copyMode.Env, "\n"), "RESTIC_REST_") {
+		t.Fatalf("env %v hands one login to both servers", plan.copyMode.Env)
 	}
 
 	if env, ok := bothSignIns("s3:https://s3.example/bv", []string{"AWS_ACCESS_KEY_ID=a"}, "rest:https://box:8000/bv", []string{"RESTIC_REST_USERNAME=bv", "AWS_ACCESS_KEY_ID=a"}); !ok || len(env) != 2 {
@@ -374,20 +383,29 @@ func TestTheNewPlaceSeesTheOldPlacesLoginOnlyInTheCopy(t *testing.T) {
 	}
 }
 
-func TestAMoveThatWouldLendOnePlaceTheOthersLoginIsRefused(t *testing.T) {
+func TestAMoveFromAnS3PlaceReadsItThroughARemoteWithItsOwnLogin(t *testing.T) {
 	f := newPlacementFixture(t)
-	ref, err := f.svc.addCredSet("Old", CloudCreds{S3KeyID: "old-key", S3Secret: "old-secret"})
+	ref, err := f.svc.addCredSet("Old", CloudCreds{S3KeyID: "old-key", S3Secret: "old-secret", S3Region: "garage"})
 	if err != nil {
 		t.Fatal(err)
 	}
-	old, err := f.st.SaveDestination(store.OffsiteTarget{Name: "Old", Repo: "s3:https://old.example/bv", Provider: "aws", CredsRef: ref})
+	old, err := f.st.SaveDestination(store.OffsiteTarget{Name: "Old", Repo: "s3:https://old.example/bv", Provider: "garage", CredsRef: ref})
 	if err != nil {
 		t.Fatal(err)
 	}
 	vms := f.tickDestination(old, "vms")
 	fresh := f.destination("New", "s3:https://new.example/bv")
 
-	if res := f.movePreview(vms, fresh); res["code"] != "move-sign-in" {
-		t.Fatalf("moving from an S3 place with a login to one without = %v, want move-sign-in", res)
+	moveOf(t, f.movePreview(vms, fresh))
+	plan, err := f.svc.planMove(context.Background(), vms.ID, fresh.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if plan.copySrc != "rclone:"+sourceRemote+":bv/vms" || plan.copyDst != plan.dst {
+		t.Fatalf("the copy opens %q from %q, want the old bucket behind a remote of its own", plan.copyDst, plan.copySrc)
+	}
+	env := strings.Join(plan.copyMode.Env, "\n")
+	if strings.Contains(env, "AWS_ACCESS_KEY_ID=old-key") || !strings.Contains(env, sourceRemote+"_ACCESS_KEY_ID=old-key") || !strings.Contains(env, sourceRemote+"_REGION=garage") {
+		t.Fatalf("env %v, want the old login and region on the old bucket's remote only", env)
 	}
 }
