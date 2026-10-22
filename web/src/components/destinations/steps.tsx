@@ -5,7 +5,6 @@ import { useId, type ReactNode } from "react";
 import type { BackendOption, Provider } from "../../lib/api";
 import { humanBytes } from "../../lib/forecast";
 import { useT, type TranslationKey } from "../../lib/i18n";
-import { STORAGE_CLASSES } from "../../lib/storageClasses";
 import { Badge } from "../Badge";
 import { Button } from "../Button";
 import { CopyBlock } from "../CopyBlock";
@@ -17,7 +16,7 @@ import { Rows, SettingRow } from "../storage/rows";
 import { VerdictLine } from "../TestButton";
 import { Toggle } from "../Toggle";
 import { defaultSignIn, signInOption, signInsFor, useCloudCredSets } from "../../lib/useCloudCredSets";
-import type { DestinationDraftState } from "./useDestinationDraft";
+import { endpointBucket, type DestinationDraftState } from "./useDestinationDraft";
 
 export const FIELD = "rounded-control bg-carbon-surface3 text-carbon-text text-sm px-3 py-1.5 glim-field-focus-well";
 
@@ -48,6 +47,13 @@ const FIELD_LABELS: Record<string, TranslationKey> = {
   library: "dest.field.library",
   share_name: "dest.field.share_name",
   path: "dest.field.path",
+};
+
+// Where a provider's field means something rclone's help does not say, as
+// provider id and field name.
+const OWN_TIPS: Record<string, TranslationKey> = {
+  "garage:region": "dest.region.garage",
+  "idrivee2:endpoint": "dest.endpoint.idrive",
 };
 
 /** The sentences that name the thing being set up, which the card calls a
@@ -97,12 +103,15 @@ export function DraftField({
   const { picked, settings, setSetting } = draft;
   const o = option;
   const label = FIELD_LABELS[o.name] ? t(FIELD_LABELS[o.name]) : o.name;
-  const tip = o.name === "pass" && picked?.auth === "apppassword" ? t("dest.appPassword.tip") : o.help;
+  const ownTip = picked && OWN_TIPS[`${picked.id}:${o.name}`];
+  const tip = ownTip ? t(ownTip) : o.name === "pass" && picked?.auth === "apppassword" ? t("dest.appPassword.tip") : o.help;
   // For an S3 service only the examples rclone ties to it: the untied ones
-  // describe signature quirks of unnamed servers.
+  // describe signature quirks of unnamed servers. A field with a tip of its
+  // own has none: for Garage's region they offer an empty one, which Garage
+  // refuses.
   const s3Provider = picked?.preset?.provider;
   const examples =
-    o.secret || !o.examples
+    o.secret || !o.examples || ownTip
       ? []
       : o.examples
           .filter((e) => (s3Provider ? !!e.provider && e.provider.split(",").includes(s3Provider) : !e.provider))
@@ -145,6 +154,7 @@ export function SignInBody({ draft, providerLabel }: { draft: DestinationDraftSt
   const { t } = useT();
   const { picked, fields } = draft;
   const nameId = useId();
+  const bucketId = useId();
   const sets = useCloudCredSets();
   if (!picked) return null;
   const kind = picked.route === "s3" || picked.route === "rest" ? picked.route : null;
@@ -218,6 +228,20 @@ export function SignInBody({ draft, providerLabel }: { draft: DestinationDraftSt
           .map((o) => (
             <DraftField key={o.name} draft={draft} option={o} />
           ))}
+        {picked.route === "s3" && (
+          <SettingRow label={t("dest.field.bucket")} hint={t("dest.bucketHint")} htmlFor={bucketId} newId="storage-add-bucket">
+            <input
+              id={bucketId}
+              value={draft.bucket}
+              onChange={(e) => draft.setBucket(e.target.value)}
+              placeholder={endpointBucket(draft.settings.endpoint ?? "")}
+              autoComplete="off"
+              spellCheck={false}
+              dir="ltr"
+              className={`w-72 max-w-full ${FIELD} font-mono text-start`}
+            />
+          </SettingRow>
+        )}
       </Rows>
       {fields.more.length > 0 && (
         <MoreSettings>
@@ -313,12 +337,15 @@ export function FolderBody({ draft }: { draft: DestinationDraftState }) {
           {draft.location}
         </p>
       </div>
-      {picked.route === "s3" && (
+      {picked.route === "s3" && (picked.storageClasses?.length ?? 0) > 0 && (
         <SelectField
           label={t("cloud.storageClass.default")}
           value={draft.storageClass}
           onChange={draft.setStorageClass}
-          options={[{ value: "", label: t("cloud.storageClass.default") }, ...STORAGE_CLASSES.map((c) => ({ value: c, label: c }))]}
+          options={[
+            { value: "", label: t("cloud.storageClass.default") },
+            ...(picked.storageClasses ?? []).map((c) => ({ value: c, label: c })),
+          ]}
           className={FIELD}
         />
       )}

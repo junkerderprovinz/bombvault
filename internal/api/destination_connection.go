@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"maps"
 	"net/http"
+	"slices"
 	"strings"
 
 	"github.com/junkerderprovinz/bombvault/internal/remotes"
@@ -97,6 +98,7 @@ func (s *Service) editSignInConnection(ctx context.Context, d store.OffsiteTarge
 	if err != nil {
 		return store.OffsiteTarget{}, nil, err
 	}
+	was := creds
 	repo := d.Repo
 	draft := draftRequest{Provider: p.ID}
 	if p.Route == remotes.RouteRest {
@@ -153,19 +155,29 @@ func (s *Service) editSignInConnection(ctx context.Context, d store.OffsiteTarge
 		}
 	}
 
-	if d.CredsRef == "" {
+	shared, err := s.signInSharedBeyond(before, d)
+	switch {
+	case err != nil:
+		return store.OffsiteTarget{}, nil, err
+	case d.CredsRef != "" && creds == was:
+		// An unchanged sign-in needs no write, and a shared one no copy.
+	case shared:
+		// Only this destination's repositories were tried with the change, so
+		// the others keep the sign-in as it was.
 		if d.CredsRef, err = s.addCredSet(d.Name, creds); err != nil {
 			return store.OffsiteTarget{}, nil, err
 		}
-	} else if err := s.editCloudCredSets(func(sets []CloudCredSet) []CloudCredSet {
-		for i := range sets {
-			if sets[i].ID == d.CredsRef {
-				sets[i].CloudCreds = creds
+	default:
+		if err := s.editCloudCredSets(func(sets []CloudCredSet) []CloudCredSet {
+			for i := range sets {
+				if sets[i].ID == d.CredsRef {
+					sets[i].CloudCreds = creds
+				}
 			}
+			return sets
+		}); err != nil {
+			return store.OffsiteTarget{}, nil, err
 		}
-		return sets
-	}); err != nil {
-		return store.OffsiteTarget{}, nil, err
 	}
 	d.Repo = repo
 	saved, err := s.store.SaveDestination(d)
@@ -174,6 +186,23 @@ func (s *Service) editSignInConnection(ctx context.Context, d store.OffsiteTarge
 	}
 	warnings := s.directCredsWarnings(ctx, before, func(_, target store.OffsiteTarget) bool { return target.DestinationID == d.ID })
 	return saved, warnings, nil
+}
+
+// signInSharedBeyond reports whether the sign-in of d is used by more than d
+// and its domain targets. The default is: every place that names no sign-in
+// signs in with it.
+func (s *Service) signInSharedBeyond(settings store.Settings, d store.OffsiteTarget) (bool, error) {
+	if d.CredsRef == "" {
+		return true, nil
+	}
+	sets, err := s.decodeCloudCredSets(settings)
+	if err != nil {
+		return false, err
+	}
+	if i := slices.IndexFunc(sets, func(c CloudCredSet) bool { return c.ID == d.CredsRef }); i >= 0 && sets[i].Default {
+		return true, nil
+	}
+	return s.store.CredsRefSharedBeyond(d.CredsRef, d.ID)
 }
 
 // patched returns the value a patch sets for key, or stored when the patch

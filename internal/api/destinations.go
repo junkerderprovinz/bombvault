@@ -1,12 +1,14 @@
 package api
 
 import (
+	"cmp"
 	"context"
 	"errors"
 	"fmt"
 	"log"
 	"maps"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"slices"
@@ -19,16 +21,18 @@ import (
 
 // destinationView is a destination as the off-site screens show it.
 type destinationView struct {
-	ID           string   `json:"id"`
-	Name         string   `json:"name"`
-	Provider     string   `json:"provider"`
-	Mark         string   `json:"mark,omitempty"`
-	Repo         string   `json:"repo"`
-	CredsRef     string   `json:"credsRef"`
-	StorageClass string   `json:"storageClass"`
-	Immutable    bool     `json:"immutable"`
-	CreatedAt    int64    `json:"createdAt"`
-	Domains      []string `json:"domains"`
+	ID           string `json:"id"`
+	Name         string `json:"name"`
+	Provider     string `json:"provider"`
+	Mark         string `json:"mark,omitempty"`
+	Repo         string `json:"repo"`
+	CredsRef     string `json:"credsRef"`
+	StorageClass string `json:"storageClass"`
+	// StorageClasses are the classes the destination can be given.
+	StorageClasses []string `json:"storageClasses"`
+	Immutable      bool     `json:"immutable"`
+	CreatedAt      int64    `json:"createdAt"`
+	Domains        []string `json:"domains"`
 	// Retention, Compression, the limits and Enabled are what the domain
 	// targets take that keep none of their own.
 	Retention     store.RetentionKeep `json:"retention"`
@@ -72,9 +76,10 @@ func (s *Service) destinationView(d store.OffsiteTarget) (destinationView, error
 				Repo: scrubRepoLocation(t.Repo), Primary: t.SortOrder == 0})
 		}
 	}
+	classes, _ := storageClassesAt(d.Provider)
 	return destinationView{
 		ID: d.ID, Name: d.Name, Provider: d.Provider, Mark: providerMark(d.Provider), Repo: scrubRepoLocation(d.Repo),
-		CredsRef: d.CredsRef, StorageClass: d.StorageClass, Immutable: d.Immutable,
+		CredsRef: d.CredsRef, StorageClass: d.StorageClass, StorageClasses: append([]string{}, classes...), Immutable: d.Immutable,
 		CreatedAt: d.CreatedAt, Domains: domains, Adoptable: adoptable,
 		Retention: targetKeep(d), Compression: normalizedCompression(d.Compression),
 		LimitUpload: d.LimitUpload, LimitDownload: d.LimitDownload,
@@ -226,8 +231,18 @@ func (s *Service) draftFor(p remotes.Provider, settings map[string]string) (remo
 		merged[k] = strings.TrimSpace(v)
 	}
 	maps.Copy(merged, p.Preset)
-	if p.Route == remotes.RouteS3 && merged["endpoint"] != "" {
-		merged["endpoint"] = s3Host(merged["endpoint"])
+	if p.Route == remotes.RouteS3 {
+		if merged["endpoint"] != "" {
+			merged["endpoint"] = s3Host(merged["endpoint"])
+		}
+		if merged["region"] == "" {
+			merged["region"] = s3RegionOf(endpointHost(merged["endpoint"]))
+		}
+		// rclone creates an AWS bucket in us-east-1 unless it is told
+		// otherwise, and AWS refuses that request at any other region.
+		if merged["provider"] == "AWS" && merged["location_constraint"] == "" && merged["region"] != "us-east-1" {
+			merged["location_constraint"] = merged["region"]
+		}
 	}
 	if p.Auth == remotes.AuthSSHKey {
 		merged["key_file"] = s.sshKeyPath()
@@ -359,15 +374,14 @@ func freeRemoteName(conf, base string) string {
 	return name
 }
 
-// s3Host turns a restic repository address pasted into the endpoint field,
-// such as s3:http://nas:9000/bucket/folder, into the server alone. The AWS
-// SDK reads s3: as a URL scheme and then fails on the region instead.
+// s3Host turns what was pasted into the endpoint field into the server alone:
+// a restic repository address such as s3:http://nas:9000/bucket/folder, or a
+// bucket's address as a console shows it, such as
+// https://<account>.r2.cloudflarestorage.com/bucket. The AWS SDK reads s3: as
+// a URL scheme and puts a path in front of every request, and restic takes
+// the first part of the path for the bucket.
 func s3Host(ep string) string {
-	ep = strings.TrimSpace(ep)
-	rest, ok := strings.CutPrefix(ep, "s3:")
-	if !ok {
-		return ep
-	}
+	rest := strings.TrimPrefix(strings.TrimSpace(ep), "s3:")
 	scheme := ""
 	if before, after, found := strings.Cut(rest, "://"); found {
 		scheme, rest = before+"://", after
@@ -394,6 +408,52 @@ func s3Endpoint(p remotes.Provider, settings map[string]string) (string, error) 
 	return ep, nil
 }
 
+// endpointHost is the host name of an endpoint, with or without its scheme.
+func endpointHost(ep string) string {
+	if !strings.Contains(ep, "://") {
+		ep = "https://" + ep
+	}
+	u, err := url.Parse(ep)
+	if err != nil {
+		return ""
+	}
+	return u.Hostname()
+}
+
+// storageClassesAt lists the storage classes a destination of the provider
+// can be given. known is false for a provider the picker does not offer, which
+// can take any class restic restores from.
+func storageClassesAt(providerID string) (classes []string, known bool) {
+	p, ok := remotes.FindProvider(providerID)
+	if !ok || p.Route != remotes.RouteS3 {
+		return restic.AllowedStorageClasses, false
+	}
+	return p.StorageClasses, true
+}
+
+// storageClassTaken refuses a storage class restic cannot restore from, and
+// one the provider does not take: the save would pass and every upload fail.
+func storageClassTaken(providerID, class string) error {
+	if class == "" {
+		return nil
+	}
+	if !restic.StorageClassAllowed(class) {
+		return fmt.Errorf("unsupported storage class %s (allowed: %s)", class, strings.Join(restic.AllowedStorageClasses, ", "))
+	}
+	classes, known := storageClassesAt(providerID)
+	if !known || slices.Contains(classes, class) {
+		return nil
+	}
+	name := providerID
+	if p, ok := remotes.FindProvider(providerID); ok {
+		name = p.Name
+	}
+	if len(classes) == 0 {
+		return fmt.Errorf("%s has no storage classes to choose from: leave the class at the default", name)
+	}
+	return fmt.Errorf("%s does not take the storage class %s (it takes %s)", name, class, strings.Join(classes, ", "))
+}
+
 // SaveNewDestination stores a destination the wizard checked. A remote's
 // settings go into the rclone config and an S3 or rest-server login into a
 // credential set of its own; either is taken back when the destination
@@ -409,8 +469,8 @@ func (s *Service) SaveNewDestination(ctx context.Context, req draftRequest) (sto
 		name = p.Name
 	}
 	class := strings.ToUpper(strings.TrimSpace(req.StorageClass))
-	if class != "" && !restic.StorageClassAllowed(class) {
-		return store.OffsiteTarget{}, fmt.Errorf("unsupported storage class %s (allowed: %s)", class, strings.Join(restic.AllowedStorageClasses, ", "))
+	if err := storageClassTaken(p.ID, class); err != nil {
+		return store.OffsiteTarget{}, err
 	}
 	d := store.OffsiteTarget{Name: name, Provider: p.ID, Immutable: req.Immutable, StorageClass: class}
 	var undo func()
@@ -452,9 +512,12 @@ func (s *Service) SaveNewDestination(ctx context.Context, req draftRequest) (sto
 			d.CredsRef = req.CredsRef
 			break
 		}
+		// The class stays on the destination alone, so setting it back to the
+		// provider's default there takes effect.
+		region := cmp.Or(strings.TrimSpace(req.Settings["region"]), s3RegionOf(endpointHost(ep)))
 		if d.CredsRef, err = s.addCredSet(name, CloudCreds{
 			S3KeyID: strings.TrimSpace(req.Settings["access_key_id"]), S3Secret: req.Settings["secret_access_key"],
-			S3Region: strings.TrimSpace(req.Settings["region"]), S3StorageClass: class,
+			S3Region: region,
 		}); err != nil {
 			return store.OffsiteTarget{}, err
 		}
@@ -786,9 +849,13 @@ func (h *Handler) handleUpdateDestination(w http.ResponseWriter, r *http.Request
 		return
 	}
 	class := strings.ToUpper(strings.TrimSpace(e.StorageClass))
-	if class != "" && !restic.StorageClassAllowed(class) {
-		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "unsupported storage class " + class})
-		return
+	// A stored class the provider does not take stays while it is left as it
+	// is, so the rest of the destination can still be edited.
+	if class != d.StorageClass {
+		if err := storageClassTaken(d.Provider, class); err != nil {
+			writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": err.Error()})
+			return
+		}
 	}
 	if name := strings.TrimSpace(e.Name); name != "" {
 		d.Name = name

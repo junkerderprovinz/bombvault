@@ -1,6 +1,7 @@
 package api
 
 import (
+	"cmp"
 	"context"
 	"fmt"
 	"net/http"
@@ -45,7 +46,10 @@ func (s *Service) sourceAccess(settings store.Settings, domain string, src domai
 			mode.Env = append(mode.Env, cloudEnv(CloudCreds{S3KeyID: c.S3KeyID, S3Secret: c.S3Secret, S3Region: c.S3Region})...)
 			return src.Loc, mode, nil
 		}
-		if envValue(destMode.Env, "AWS_ACCESS_KEY_ID") == c.S3KeyID && envValue(destMode.Env, "AWS_SECRET_ACCESS_KEY") == c.S3Secret {
+		// restic signs both ends with the one region in the environment, and
+		// AWS refuses a request signed for a region its bucket is not in.
+		if envValue(destMode.Env, "AWS_ACCESS_KEY_ID") == c.S3KeyID && envValue(destMode.Env, "AWS_SECRET_ACCESS_KEY") == c.S3Secret &&
+			envValue(destMode.Env, "AWS_DEFAULT_REGION") == c.S3Region {
 			return src.Loc, mode, nil
 		}
 		loc, env, err := s3ThroughRclone(src.Loc, c)
@@ -107,21 +111,22 @@ func s3ThroughRclone(loc string, c CloudCreds) (string, []string, error) {
 		return "", nil, fmt.Errorf("%s names no bucket", shortRepoName(loc))
 	}
 	prefix := "RCLONE_CONFIG_" + sourceRemote + "_"
-	env := []string{
-		prefix + "TYPE=s3",
-		prefix + "PROVIDER=Other",
-		prefix + "ACCESS_KEY_ID=" + c.S3KeyID,
-		prefix + "SECRET_ACCESS_KEY=" + c.S3Secret,
-		prefix + "ENDPOINT=" + u.Scheme + "://" + u.Host,
-	}
-	region := c.S3Region
-	if region == "" {
-		region = awsRegionOf(u.Hostname())
+	// The source's bucket is there, and a key that may only use one bucket,
+	// such as an object token of Cloudflare R2, cannot ask whether it is.
+	env := []string{prefix + "TYPE=s3", prefix + "NO_CHECK_BUCKET=true"}
+	region := cmp.Or(c.S3Region, s3RegionOf(u.Hostname()))
+	if isAWSHost(u.Hostname()) {
+		// Without an endpoint rclone builds the regional one itself, and
+		// with no region known it follows the bucket's when AWS redirects.
+		env = append(env, prefix+"PROVIDER=AWS")
+	} else {
+		env = append(env, prefix+"PROVIDER=Other", prefix+"ENDPOINT="+u.Scheme+"://"+u.Host)
 	}
 	if region == "" && isGlobalAWSHost(u.Hostname()) {
 		bucket, _, _ := strings.Cut(path, "/")
 		region = bucketRegion(u.Scheme+"://"+u.Host, bucket)
 	}
+	env = append(env, prefix+"ACCESS_KEY_ID="+c.S3KeyID, prefix+"SECRET_ACCESS_KEY="+c.S3Secret)
 	if region != "" {
 		env = append(env, prefix+"REGION="+region)
 	}
@@ -170,6 +175,39 @@ func askBucketRegion(endpoint, bucket string) string {
 	}
 	_ = resp.Body.Close()
 	return resp.Header.Get("X-Amz-Bucket-Region")
+}
+
+// isAWSHost reports whether host is one of the AWS S3 endpoints rclone builds
+// by itself from a region.
+func isAWSHost(host string) bool {
+	host = strings.ToLower(host)
+	return host == "s3.amazonaws.com" || host == "s3-external-1.amazonaws.com" || awsRegionOf(host) != ""
+}
+
+// regionHostRes match the endpoints of S3 services that name their region in
+// the host and check a request's signature against it.
+var regionHostRes = []*regexp.Regexp{
+	regexp.MustCompile(`^s3\.([a-z0-9-]+)\.backblazeb2\.com$`),
+	regexp.MustCompile(`^([a-z0-9]+)\.your-objectstorage\.com$`),
+	regexp.MustCompile(`^s3\.([a-z0-9-]+)\.scw\.cloud$`),
+	regexp.MustCompile(`^s3\.([a-z0-9-]+)\.(?:io\.|perf\.)?cloud\.ovh\.(?:net|us)$`),
+	regexp.MustCompile(`^s3\.([a-z0-9-]+)\.wasabisys\.com$`),
+}
+
+// s3RegionOf is the region an S3 endpoint names, "" where the host does not
+// say. rclone signs for us-east-1 without a region, which these services
+// refuse.
+func s3RegionOf(host string) string {
+	host = strings.ToLower(host)
+	if region := awsRegionOf(host); region != "" {
+		return region
+	}
+	for _, re := range regionHostRes {
+		if m := re.FindStringSubmatch(host); m != nil {
+			return m[1]
+		}
+	}
+	return ""
 }
 
 // restWithLogin puts a login into a rest-server address, which restic reads
