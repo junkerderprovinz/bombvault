@@ -193,6 +193,10 @@ type Event struct {
 	// ItemResult marks the outcome of one item of a run, the message a
 	// scheduled summary replaces.
 	ItemResult bool
+	// Warning marks a success that left something out, which reaches the
+	// message channels of somebody who hears only about failures. A health
+	// check still counts it as the success it is.
+	Warning bool
 }
 
 // Active reports whether notifications are switched on at all. It is an
@@ -319,7 +323,7 @@ func Send(ctx context.Context, c Config, domain string, ev Event) bool {
 	}
 	// In summary mode Service.ScheduledNotifyResult reports the item instead.
 	folded := ev.ItemResult && MessagesSuppressed(ctx) && c.ScheduledSummary
-	if c.shouldSend(ev.OK) && !folded {
+	if c.shouldSend(ev.OK && !ev.Warning) && !folded {
 		chans = append(chans, c.messageChannels(ev)...)
 	}
 	return fanOut(ctx, chans)

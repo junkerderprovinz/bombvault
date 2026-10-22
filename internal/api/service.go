@@ -5834,6 +5834,19 @@ func composeProjectDataDir(labels map[string]string) (string, bool) {
 // under HostMountRoot back to its HOST path under HostSourceRoot (e.g.
 // /host/user/appdata/x → /mnt/appdata/x). Returns the input unchanged when it is
 // not under the mount root.
+// hostPathsIn writes the paths a message names below HostMountRoot as the
+// host knows them.
+func (s *Service) hostPathsIn(msg string) string {
+	if s == nil {
+		return msg
+	}
+	mountRoot, srcRoot := path.Clean(s.cfg.HostMountRoot), path.Clean(s.cfg.HostSourceRoot)
+	if mountRoot == "." || mountRoot == "/" || mountRoot == srcRoot {
+		return msg
+	}
+	return strings.ReplaceAll(msg, mountRoot+"/", srcRoot+"/")
+}
+
 func (s *Service) toHostPath(cp string) string {
 	mountRoot := path.Clean(s.cfg.HostMountRoot)
 	srcRoot := path.Clean(s.cfg.HostSourceRoot)
@@ -12324,11 +12337,11 @@ func stalledReason(ctx context.Context, errMsg string) (string, bool) {
 // backup's notes. The snapshot exists, so the run succeeded, but a restore
 // from it lacks those files. It goes first because the run's tone is read
 // from the first note.
-func withUnreadableNote(status, note string, sum backup.Summary) string {
+func (s *Service) withUnreadableNote(status, note string, sum backup.Summary) string {
 	if status != "success" || sum.Unreadable == "" {
 		return note
 	}
-	skipped := store.NoteFilesUnreadable + ": " + sum.Unreadable
+	skipped := store.NoteFilesUnreadable + ": " + s.hostPathsIn(sum.Unreadable)
 	if note == "" {
 		return skipped
 	}
@@ -12360,7 +12373,7 @@ func (r runsAdapter) Finish(runID, status string, sum backup.Summary, errMsg str
 			status, errMsg = "cancelled", store.ReasonCancelled
 		}
 	}
-	errMsg = withUnreadableNote(status, errMsg, sum)
+	errMsg = r.svc.withUnreadableNote(status, errMsg, sum)
 	return r.st.FinishRunMeasured(runID, status, sum.SnapshotID, sum.Bytes, errMsg, metricsOf(sum), sum.SelectionFP)
 }
 
@@ -12412,7 +12425,7 @@ func (r startedRunsAdapter) Finish(runID, status string, sum backup.Summary, err
 			status, errMsg = "cancelled", store.ReasonCancelled
 		}
 	}
-	errMsg = withUnreadableNote(status, errMsg, sum)
+	errMsg = r.svc.withUnreadableNote(status, errMsg, sum)
 	return r.st.FinishRunMeasured(runID, status, sum.SnapshotID, sum.Bytes, errMsg, metricsOf(sum), sum.SelectionFP)
 }
 
@@ -19433,7 +19446,11 @@ func (s *Service) notifyBackup(ctx context.Context, domain, name, cancelKey stri
 	interrupted := !ok && s.IsShuttingDown()
 	cancelled := !ok && !interrupted && !isStall && s.backupWasCancelled(cancelKey)
 	var msg string
+	incomplete := ok && sum.Unreadable != ""
 	switch {
+	case incomplete:
+		msg = fmt.Sprintf("Backup of %s finished (snapshot %s, %s), but some files could not be read and are missing from it: %s",
+			target, shortID(sum.SnapshotID), humanBytes(sum.Bytes), s.hostPathsIn(sum.Unreadable))
 	case ok:
 		msg = fmt.Sprintf("Backup of %s succeeded (snapshot %s, %s).", target, shortID(sum.SnapshotID), humanBytes(sum.Bytes))
 	case interrupted:
@@ -19448,18 +19465,21 @@ func (s *Service) notifyBackup(ctx context.Context, domain, name, cancelKey stri
 	if o := runOriginFromContext(ctx); o.Via != "" {
 		msg += " " + s.originSentence(o)
 	}
-	notify.Send(ctx, c, domain, notify.Event{Title: "BombVault", Message: msg, OK: ok || cancelled || interrupted, ItemResult: true})
+	notify.Send(ctx, c, domain, notify.Event{Title: "BombVault", Message: msg, OK: ok || cancelled || interrupted, ItemResult: true, Warning: incomplete})
 
 	// Unraid native notification (delivered over SSH; notify.Send is HTTP-only).
 	// Honour the same policy: notifyBackup already returned for "never", so send
 	// on "always" or on any failure. In scheduled summary mode, drop the per-item
 	// Unraid push too — ScheduledNotifyResult sends the one aggregate (#56).
 	failed := !ok && !cancelled && !interrupted
-	if s.unraidGate(c.Unraid) && (c.On == "always" || failed) &&
+	if s.unraidGate(c.Unraid) && (c.On == "always" || failed || incomplete) &&
 		(!notify.MessagesSuppressed(ctx) || !c.ScheduledSummary) {
 		level := "normal"
 		subject := "BombVault: backup OK"
 		switch {
+		case incomplete:
+			level = "warning"
+			subject = "BombVault: backup incomplete"
 		case interrupted:
 			subject = "BombVault: backup interrupted"
 		case cancelled:

@@ -29,6 +29,24 @@ func TestSendRespectsPolicy(t *testing.T) {
 	}
 }
 
+func TestASuccessThatLeftSomethingOutReachesAFailurePolicyAndPingsSuccess(t *testing.T) {
+	var webhookHits int
+	wh := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) { webhookHits++ }))
+	defer wh.Close()
+	var hcPath string
+	hc := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) { hcPath = r.URL.Path }))
+	defer hc.Close()
+
+	cfg := notify.Config{On: "failure", WebhookEnabled: true, WebhookURL: wh.URL, WebhookFormat: "generic", HealthchecksURL: hc.URL}
+	notify.Send(context.Background(), cfg, "", notify.Event{OK: true, Warning: true})
+	if webhookHits != 1 {
+		t.Fatalf("a backup with files missing under failure-policy: webhook hits = %d, want 1", webhookHits)
+	}
+	if hcPath != "/" {
+		t.Fatalf("the health check got %q, want the success ping", hcPath)
+	}
+}
+
 func TestWebhookDiscordPayload(t *testing.T) {
 	var got map[string]any
 	srv := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {

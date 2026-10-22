@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/backup"
+	"github.com/junkerderprovinz/bombvault/internal/config"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
@@ -260,6 +261,14 @@ func (e *parentProbeEngine) Backup(context.Context, string, []string, []string, 
 func (e *parentProbeEngine) SnapshotParent(context.Context, string, string, restic.Mode) (string, error) {
 	e.parentCalls++
 	return e.parent, e.parentErr
+}
+
+func TestTheUnreadableFilesOfARunAreNamedAsTheHostKnowsThem(t *testing.T) {
+	s := &Service{cfg: config.Config{HostMountRoot: "/host/user", HostSourceRoot: "/mnt"}}
+	got := s.withUnreadableNote("success", "", backup.Summary{Unreadable: "open /host/user/appdata/nc/key.pem: permission denied"})
+	if want := store.NoteFilesUnreadable + ": open /mnt/appdata/nc/key.pem: permission denied"; got != want {
+		t.Fatalf("note = %q, want %q", got, want)
+	}
 }
 
 func TestABackupThatLeftOutUnreadableFilesSaysSoOnItsRun(t *testing.T) {

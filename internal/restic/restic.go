@@ -6,6 +6,7 @@ package restic
 import (
 	"bufio"
 	"bytes"
+	"cmp"
 	"context"
 	"encoding/json"
 	"errors"
@@ -1962,10 +1963,46 @@ func backupExit3Err(args []string, err error, stderr string) error {
 	}
 	log.Printf("restic backup: exit 3 (at least one source file could not be read); snapshot created, some files skipped. stderr: %s", stderr)
 	msg := "at least one source file could not be read"
-	if reason := lastReason(stderr); reason != "" {
+	if skipped := unreadableItems(stderr); skipped != "" {
+		msg = skipped
+	} else if reason := lastReason(stderr); reason != "" {
 		msg = reason
 	}
 	return &backupUnreadableErr{msg: msg}
+}
+
+// maxUnreadableItems bounds how many skipped files the reason of an exit 3
+// names; the rest are counted.
+const maxUnreadableItems = 5
+
+// unreadableItems names the files a backup skipped, from the per-item error
+// lines restic --json writes, each with restic's own message, which carries
+// the path. They are what the person has to fix, so the paths stay in.
+func unreadableItems(stderr string) string {
+	var named []string
+	seen := map[string]bool{}
+	more := 0
+	for _, line := range strings.Split(stderr, "\n") {
+		var e restoreJSONError
+		if !strings.HasPrefix(strings.TrimSpace(line), "{") || json.Unmarshal([]byte(strings.TrimSpace(line)), &e) != nil || e.MessageType != "error" {
+			continue
+		}
+		msg := strings.Join(strings.Fields(cmp.Or(e.Error.Message, e.Item)), " ")
+		if msg == "" || seen[msg] {
+			continue
+		}
+		seen[msg] = true
+		if len(named) == maxUnreadableItems {
+			more++
+			continue
+		}
+		named = append(named, msg)
+	}
+	out := strings.Join(named, "; ")
+	if more > 0 {
+		out += fmt.Sprintf(" (+%d more)", more)
+	}
+	return out
 }
 
 // runError logs the full stderr server-side and returns a concise, path-scrubbed

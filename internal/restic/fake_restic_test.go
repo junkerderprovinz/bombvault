@@ -17,7 +17,10 @@ import (
 // builder makes.
 const fakeResticEnv = "BOMBVAULT_FAKE_RESTIC"
 
-const unreadableLine = "error: open /data/private/key.pem: permission denied"
+// unreadableLines are what restic --json writes for two files it could not
+// read: one error object each, then a plain warning.
+const unreadableLines = `{"message_type":"error","error":{"message":"open /data/private/key.pem: permission denied"},"during":"archival","item":"/data/private/key.pem"}
+{"message_type":"error","error":{"message":"open /data/private/db.sqlite: permission denied"},"during":"archival","item":"/data/private/db.sqlite"}`
 
 func TestMain(m *testing.M) {
 	switch os.Getenv(fakeResticEnv) {
@@ -26,7 +29,7 @@ func TestMain(m *testing.M) {
 		os.Exit(1)
 	case "exit3":
 		fmt.Println(`{"message_type":"summary","snapshot_id":"5e1f","files_new":2}`)
-		fmt.Fprintln(os.Stderr, unreadableLine)
+		fmt.Fprintln(os.Stderr, unreadableLines)
 		fmt.Fprintln(os.Stderr, "Warning: at least one source file could not be read")
 		os.Exit(3)
 	}
@@ -59,7 +62,7 @@ func TestABackupThatSkippedUnreadableFilesSaysWhich(t *testing.T) {
 	if err != nil {
 		t.Fatalf("an exit-3 backup with a snapshot failed: %v", err)
 	}
-	if sum.SnapshotID != "5e1f" || !strings.Contains(sum.Unreadable, "permission denied") {
-		t.Fatalf("summary = %+v, want the snapshot and the file restic could not read", sum)
+	if sum.SnapshotID != "5e1f" || !strings.Contains(sum.Unreadable, "/data/private/key.pem") || !strings.Contains(sum.Unreadable, "/data/private/db.sqlite") {
+		t.Fatalf("summary = %+v, want the snapshot and the files restic could not read", sum)
 	}
 }
