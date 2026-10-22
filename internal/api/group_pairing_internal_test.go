@@ -1051,6 +1051,43 @@ func TestAMemberThatLeftWhileTheOtherWasDownIsDroppedWithoutAPoll(t *testing.T) 
 	}
 }
 
+// The same, with b entering another group's phrase while a is down.
+func TestAMemberThatSwitchedGroupsWhileTheOtherWasDownIsDropped(t *testing.T) {
+	a := newInstance(t, "cellar", strings.Repeat("a1", 32))
+	b := newInstance(t, "attic", strings.Repeat("b2", 32))
+	c := newInstance(t, "barn", strings.Repeat("c3", 32))
+	pairThroughRelay(t, a, b)
+	bDirect := httptest.NewTLSServer(b.router)
+	t.Cleanup(bDirect.Close)
+	if code, out := b.do(t, http.MethodPut, "/api/group/address", map[string]any{"url": bDirect.URL}); code != http.StatusOK || out["active"] != true {
+		t.Fatalf("set b's address: %d %v", code, out)
+	}
+	if _, err := a.svc.pairing().Probe(context.Background(), bDirect.URL); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := a.svc.memberKey(context.Background(), b.id(t)); err != nil {
+		t.Fatal(err)
+	}
+	if code, _ := a.do(t, http.MethodGet, "/api/fleet/peers", nil); code != http.StatusOK {
+		t.Fatalf("list: %d", code)
+	}
+	_, created := c.do(t, http.MethodPost, "/api/group/phrase", nil)
+	phrase, _ := created["phrase"].(string)
+
+	a.svc.StopGroup()
+	if code, out := b.do(t, http.MethodPost, "/api/group/join", map[string]any{"phrase": phrase}); code != http.StatusOK || out["ok"] != true {
+		t.Fatalf("join: %d %v", code, out)
+	}
+	restarted := NewService(a.svc.cfg, a.st, nil, nil, a.engine)
+	t.Cleanup(restarted.StopGroup)
+	restarted.applyGroup()
+	restarted.noteMemberAddresses()
+	restarted.askAbsentMembers(context.Background())
+	if rows, err := a.st.ListFleetPeers(); err != nil || len(rows) != 0 {
+		t.Fatalf("a's rows once b, now in another group, said it left = %+v, %v; want none", rows, err)
+	}
+}
+
 func TestPollingAMemberThatLeftSaysItsRowIsGone(t *testing.T) {
 	a := newInstance(t, "cellar", strings.Repeat("a1", 32))
 	b := newInstance(t, "attic", strings.Repeat("b2", 32))

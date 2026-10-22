@@ -1180,6 +1180,32 @@ func TestAnInstanceInNoGroupSaysSoInItsOwnName(t *testing.T) {
 	}
 }
 
+func TestAnInstanceInAnotherGroupTellsAMemberOfTheGroupItLeft(t *testing.T) {
+	a, _ := member(t, "id-a", "Cellar", testSecret, echo)
+	b := NewManager(echo)
+	b.Stranger = func(string, string) []byte { return []byte(`{"signed":true}`) }
+	mux := http.NewServeMux()
+	mux.HandleFunc("POST "+directPath, b.ServeDirect)
+	srv := httptest.NewTLSServer(mux)
+	t.Cleanup(srv.Close)
+	t.Cleanup(b.Close)
+	b.Apply(Config{Secret: []byte("another group 01"), InstanceID: "id-b", Mode: ModeOff, FormerPeerAuth: PeerAuthKey(testSecret)})
+	a.NoteAddress("id-b", srv.URL)
+
+	_, _, err := a.Call(context.Background(), "id-b", http.MethodGet, "/api/group/peer/status", nil)
+	if left, ok := errors.AsType[*LeftError](err); !ok || string(left.Statement) != `{"signed":true}` {
+		t.Fatalf("Call from the group b left = %v, want b's signed word that it left", err)
+	}
+
+	c, _ := member(t, "id-c", "Barn", []byte("a third group 01"), echo)
+	c.NoteAddress("id-b", srv.URL)
+	if _, _, err := c.Call(context.Background(), "id-b", http.MethodGet, "/api/group/peer/status", nil); err == nil {
+		t.Fatal("a call under an unknown key was answered")
+	} else if _, ok := errors.AsType[*LeftError](err); ok {
+		t.Fatalf("a call under an unknown key got b's word that it left: %v", err)
+	}
+}
+
 func TestAMemberThatChangesItsOwnAddressStaysListedOnTheRelay(t *testing.T) {
 	a, b := relayPair(t, echo)
 	b.mu.Lock()

@@ -72,6 +72,10 @@ type Config struct {
 	Mode      Mode
 	// RelayURL is the own relay's address, used in ModeOwn only.
 	RelayURL string
+	// FormerPeerAuth is the peer-auth key of the group this instance last
+	// left. A direct call signed with it can only come from a member of that
+	// group, which is told that this instance is not in it.
+	FormerPeerAuth []byte
 }
 
 // Member is another instance in the group that is reachable now.
@@ -1056,9 +1060,10 @@ func (m *Manager) callDirect(ctx context.Context, k *keys, self string, p discov
 
 // answerAsStranger answers a call that names this instance, while it is in no
 // group, with the Stranger statement, so a former member can drop it from its
-// lists. An instance in another group stays silent: it cannot tell a caller
-// from that group apart from one of its own whose call was tampered with on
-// the way, and its word would let whoever tampered remove a real member.
+// lists. An instance in another group answers only a call signed with the key
+// of the group it left: any other call it cannot tell apart from one of its
+// own members' that was tampered with on the way, and its word would let
+// whoever tampered remove a real member.
 func (m *Manager) answerAsStranger(w http.ResponseWriter, r *http.Request, self string) bool {
 	sender, sig := r.Header.Get(headerPeer), r.Header.Get(headerSignature)
 	if m.Stranger == nil || self == "" || r.Header.Get(headerTarget) != self || sender == "" || len(sender) > maxSenderBytes || len(sig) != 2*sha256.Size {
@@ -1072,6 +1077,15 @@ func (m *Manager) answerAsStranger(w http.ResponseWriter, r *http.Request, self 
 	w.WriteHeader(http.StatusGone)
 	_, _ = w.Write(proof)
 	return true
+}
+
+func (m *Manager) formerPeerAuth() []byte {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if len(m.cfg.FormerPeerAuth) == 0 || (m.keys != nil && hmac.Equal(m.cfg.FormerPeerAuth, m.keys.peerAuth)) {
+		return nil
+	}
+	return m.cfg.FormerPeerAuth
 }
 
 // maxSenderBytes bounds the caller id a Stranger statement signs. Instance ids
@@ -1140,9 +1154,13 @@ func (m *Manager) ServeDirect(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "forbidden", http.StatusForbidden)
 		return
 	}
-	want := directSignature(k.peerAuth, sender, unix, body)
-	if !hmac.Equal([]byte(r.Header.Get(headerSignature)), []byte(want)) {
+	sig := []byte(r.Header.Get(headerSignature))
+	if !hmac.Equal(sig, []byte(directSignature(k.peerAuth, sender, unix, body))) {
 		m.limiter.Fail(addr)
+		if former := m.formerPeerAuth(); former != nil && target == self &&
+			hmac.Equal(sig, []byte(directSignature(former, sender, unix, body))) && m.answerAsStranger(w, r, self) {
+			return
+		}
 		http.Error(w, "forbidden", http.StatusForbidden)
 		return
 	}

@@ -3376,6 +3376,14 @@ UPDATE pull_sources SET leftovers_moved = 0;`,
   PRIMARY KEY (member_id, url)
 );`,
 	},
+	{
+		// The key of the group this instance last left, so a member of it
+		// that missed the leave is told on its next call.
+		version:          formerPeerAuthMigration,
+		name:             "group_state_former_peer_auth",
+		alreadySatisfied: columnPresent("group_state", "former_peer_auth_enc"),
+		sql:              `ALTER TABLE group_state ADD COLUMN former_peer_auth_enc BLOB NOT NULL DEFAULT x'';`,
+	},
 }
 
 // offsiteFieldDomains are the domains with an off-site field in the settings,
@@ -3624,6 +3632,10 @@ const pullLeftoversMigration = 480
 // receiverLocationsMigration numbers the remembered addresses on members'
 // receiving servers.
 const receiverLocationsMigration = 490
+
+// formerPeerAuthMigration numbers the key of the group this instance last
+// left.
+const formerPeerAuthMigration = 500
 
 // oneLineColumns are the names and locations the recovery kit prints.
 var oneLineColumns = []struct {

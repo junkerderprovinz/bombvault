@@ -104,13 +104,14 @@ func (s *Service) applyGroup() {
 		log.Printf("group: %v; pairing is off until the phrase is entered again", err)
 	}
 	s.pairing().Apply(group.Config{
-		Secret:     sec,
-		InstanceID: g.InstanceID,
-		Name:       instanceDisplayName(settings),
-		Version:    Version,
-		DirectURL:  s.directURL(g),
-		Mode:       group.Mode(g.RelayMode),
-		RelayURL:   g.RelayURL,
+		Secret:         sec,
+		InstanceID:     g.InstanceID,
+		Name:           instanceDisplayName(settings),
+		Version:        Version,
+		DirectURL:      s.directURL(g),
+		Mode:           group.Mode(g.RelayMode),
+		RelayURL:       g.RelayURL,
+		FormerPeerAuth: s.formerPeerAuth(),
 	})
 	// Connections admitted under the old key or before the switch went off
 	// would otherwise stay open until they drop.
@@ -379,13 +380,35 @@ func (s *Service) noteMemberAddresses() {
 	}
 }
 
-// strangerProof is this instance's signed word, to a caller from a group it
-// is not in, that it is no member of that group. An instance that still keeps
-// a group's phrase but cannot open it, after an APP_KEY change for example,
-// has not left and says nothing.
-func (s *Service) strangerProof(caller, challenge string) []byte {
-	if g, err := s.store.GetGroupState(); err != nil || len(g.SecretEnc) > 0 {
+// formerPeerAuth opens the key of the group this instance last left, nil for
+// none.
+func (s *Service) formerPeerAuth() []byte {
+	enc, err := s.store.FormerPeerAuth()
+	if err != nil || len(enc) == 0 {
 		return nil
+	}
+	key, err := secret.Decrypt(s.cfg.AppKey, enc)
+	if err != nil {
+		log.Printf("group: open the key of the group this instance left: %v", err)
+		return nil
+	}
+	return key
+}
+
+// strangerProof is this instance's signed word, to a caller from a group it
+// is not in, that it is no member of that group. The group asks for it only
+// outside a group or for a call signed with the key of the one left. An
+// instance that still keeps a group's phrase but cannot open it, after an
+// APP_KEY change for example, has not left and says nothing.
+func (s *Service) strangerProof(caller, challenge string) []byte {
+	g, err := s.store.GetGroupState()
+	if err != nil {
+		return nil
+	}
+	if len(g.SecretEnc) > 0 {
+		if sec, err := s.groupSecret(g); err != nil || sec == nil {
+			return nil
+		}
 	}
 	signer, err := s.nextDepositSigner()
 	if err != nil {
@@ -914,6 +937,9 @@ func (h *Handler) inAnotherGroup(sec []byte) bool {
 // Fleet rows go.
 func (h *Handler) switchGroup(ctx context.Context, sec []byte) error {
 	h.svc.tellMembersLeaving(ctx)
+	if err := h.keepFormerGroup(); err != nil {
+		return err
+	}
 	if err := h.storeGroupSecret(sec); err != nil {
 		return err
 	}
@@ -921,6 +947,24 @@ func (h *Handler) switchGroup(ctx context.Context, sec []byte) error {
 		return err
 	}
 	return h.store.DropMemberFleetPeers("")
+}
+
+// keepFormerGroup keeps the key of the group this instance is leaving, since
+// a member out of reach misses the leave and asks again later.
+func (h *Handler) keepFormerGroup() error {
+	g, err := h.store.GetGroupState()
+	if err != nil {
+		return err
+	}
+	cur, err := h.svc.groupSecret(g)
+	if err != nil || cur == nil {
+		return nil
+	}
+	enc, err := secret.Encrypt(h.cfg.AppKey, group.PeerAuthKey(cur))
+	if err != nil {
+		return err
+	}
+	return h.store.SetFormerPeerAuth(enc)
 }
 
 // leaveNoticeTimeout bounds telling the members about a leave, so a member out

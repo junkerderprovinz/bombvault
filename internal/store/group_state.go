@@ -77,6 +77,27 @@ func (r *Repo) SetGroupSecret(secretEnc []byte, at time.Time) error {
 	return nil
 }
 
+// SetFormerPeerAuth keeps the sealed peer-auth key of the group this
+// instance last left, so a member of it that missed the leave can be told.
+func (r *Repo) SetFormerPeerAuth(enc []byte) error {
+	if enc == nil {
+		enc = []byte{}
+	}
+	if _, err := r.db.Exec(`UPDATE group_state SET former_peer_auth_enc = ? WHERE id = 1`, enc); err != nil {
+		return fmt.Errorf("SetFormerPeerAuth: %w", err)
+	}
+	return nil
+}
+
+// FormerPeerAuth returns what SetFormerPeerAuth kept, empty for none.
+func (r *Repo) FormerPeerAuth() ([]byte, error) {
+	var enc []byte
+	if err := r.db.QueryRow(`SELECT former_peer_auth_enc FROM group_state WHERE id = 1`).Scan(&enc); err != nil {
+		return nil, fmt.Errorf("FormerPeerAuth: %w", err)
+	}
+	return enc, nil
+}
+
 // MarkGroupMemberSeen records the first time another member shows up in the
 // current group. Later calls, and calls outside a group, change nothing.
 func (r *Repo) MarkGroupMemberSeen(at time.Time) error {
