@@ -518,6 +518,16 @@ type RestoreDeps struct {
 	Restic    Restic
 	Templates Templates
 	Runs      Runs
+	// Removals keeps the container the restore removed until it exists again,
+	// so the next boot creates it when the process dies in between. Optional.
+	Removals RemovalMarker
+}
+
+// RemovalMarker records a container a restore removed, with the definition
+// and the old ID it is created again from.
+type RemovalMarker interface {
+	Mark(name string, in model.Inspect, oldID string) error
+	Clear(name string) error
 }
 
 // Images reads and moves the local image tags a restored container is created
@@ -1296,10 +1306,21 @@ func runRestore(ctx context.Context, d RestoreDeps) ([]string, error) {
 	// The containers sharing this one's namespaces are bound to its ID, so
 	// its current ID is what finds them once it is recreated.
 	var oldID string
-	rejoiner, canRejoin := d.Docker.(NamespaceRejoiner)
-	if canRejoin {
+	if rejoiner, ok := d.Docker.(NamespaceRejoiner); ok {
 		if oldID, err = rejoiner.ContainerID(ctx, d.ContainerRef); err != nil {
 			return nil, fmt.Errorf("restore: inspect live container: %w", err)
+		}
+	}
+
+	in := d.Inspect
+	if d.WithoutRuntime {
+		in.HostConfig.Runtime = ""
+		in.HostConfig.DeviceRequests = nil
+	}
+	name := normalizeName(d.ContainerName)
+	if d.Removals != nil {
+		if err := d.Removals.Mark(name, in, oldID); err != nil {
+			return nil, fmt.Errorf("restore: record the container about to be removed: %w", err)
 		}
 	}
 
@@ -1314,34 +1335,72 @@ func runRestore(ctx context.Context, d RestoreDeps) ([]string, error) {
 		// error here means it still exists and could not be removed (e.g. Stop
 		// timed out and it is still running). Abort BEFORE restic overwrites the
 		// appdata — overwriting a live container's data would corrupt it.
+		clearRemoval(d, name)
 		return nil, fmt.Errorf("restore: remove existing container: %w", err)
 	}
 
-	in := d.Inspect
-	if d.WithoutRuntime {
-		in.HostConfig.Runtime = ""
-		in.HostConfig.DeviceRequests = nil
-	}
 	if err := restoreData(ctx, d); err != nil {
-		return nil, recreateStopped(ctx, d.Docker, in, err)
+		return nil, putBack(ctx, d, in, oldID, err)
 	}
 	// Start only if it was running when backed up AND the restore didn't ask to
 	// leave it stopped.
 	if err := d.Docker.CreateAndStart(ctx, in, in.Running && !d.LeaveStopped); err != nil {
 		var missing *model.MissingRuntimeError
 		if errors.As(err, &missing) {
+			clearRemoval(d, name)
 			return nil, &runtimeRefusal{missing}
 		}
-		return nil, fmt.Errorf("restore: recreate container: %w", err)
+		err = fmt.Errorf("restore: recreate container: %w", err)
+		if live, _ := d.Docker.InspectName(context.WithoutCancel(ctx), d.ContainerRef); live == "" {
+			return nil, putBack(ctx, d, in, oldID, err)
+		}
+		clearRemoval(d, name)
+		rejoinShared(context.WithoutCancel(ctx), d, oldID)
+		return nil, err
 	}
-	if oldID == "" {
-		return nil, nil
+	clearRemoval(d, name)
+	return rejoinShared(ctx, d, oldID), nil
+}
+
+// putBack creates the container again, stopped, after its restore stopped
+// with the container removed, and moves the containers sharing its namespaces
+// onto it. While it cannot be created, the record of the removal stays for
+// the next boot.
+func putBack(ctx context.Context, d RestoreDeps, in model.Inspect, oldID string, cause error) error {
+	err := recreateStopped(ctx, d.Docker, in, cause)
+	var half *halfRestored
+	if !errors.As(err, &half) {
+		return err
+	}
+	clearRemoval(d, normalizeName(d.ContainerName))
+	cctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), recreateAfterFailureTimeout)
+	defer cancel()
+	rejoinShared(cctx, d, oldID)
+	return err
+}
+
+// rejoinShared moves the containers that shared the namespaces of the
+// removed container oldID onto the one created in its place, and names those
+// it could not.
+func rejoinShared(ctx context.Context, d RestoreDeps, oldID string) []string {
+	rejoiner, ok := d.Docker.(NamespaceRejoiner)
+	if !ok || oldID == "" {
+		return nil
 	}
 	notBack, err := rejoiner.RejoinNamespace(ctx, oldID, normalizeName(d.ContainerName))
 	if err != nil {
 		log.Printf("restore: containers sharing a namespace with %q: %v", d.ContainerName, err)
 	}
-	return notBack, nil
+	return notBack
+}
+
+func clearRemoval(d RestoreDeps, name string) {
+	if d.Removals == nil {
+		return
+	}
+	if err := d.Removals.Clear(name); err != nil {
+		log.Printf("restore: forget the removal of %q: %v", name, err)
+	}
 }
 
 // restoreImage points the container's image reference back at the image it

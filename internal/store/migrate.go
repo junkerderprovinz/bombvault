@@ -3418,6 +3418,19 @@ UPDATE pull_sources SET leftovers_moved = 0;`,
 		alreadySatisfied: columnPresent("established_repos", "gone_at"),
 		sql:              `ALTER TABLE established_repos ADD COLUMN gone_at INTEGER NOT NULL DEFAULT 0;`,
 	},
+	{
+		// The containers a restore removed and has not created again, with
+		// what to create them from, so a restore cut off by a restart does not
+		// leave the app missing from Docker.
+		version: restoreRemovalsMigration,
+		name:    "container_restore_removals",
+		sql: `CREATE TABLE IF NOT EXISTS container_restore_removals (
+  name       TEXT    PRIMARY KEY,
+  definition TEXT    NOT NULL,
+  old_id     TEXT    NOT NULL DEFAULT '',
+  at         INTEGER NOT NULL
+);`,
+	},
 }
 
 // offsiteFieldDomains are the domains with an off-site field in the settings,
@@ -3684,6 +3697,9 @@ const staleRestartsMigration = 530
 
 // repoGoneMigration numbers the record of remote repositories found gone.
 const repoGoneMigration = 540
+
+// restoreRemovalsMigration numbers the record of containers a restore removed.
+const restoreRemovalsMigration = 550
 
 // oneLineColumns are the names and locations the recovery kit prints.
 var oneLineColumns = []struct {

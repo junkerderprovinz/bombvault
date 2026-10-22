@@ -8683,6 +8683,7 @@ func (s *Service) executeRestore(ctx context.Context, name string, plan containe
 		Restic:            &resticAdapter{engine: s.engine, mode: plan.mode},
 		Templates:         templatesAdapter{},
 		Runs:              runsAdapter{st: s.store, ctx: ctx},
+		Removals:          restoreRemovals{st: s.store},
 	})
 	if rerr == nil {
 		s.healRestoreDirOwnership(rctx, plan.repo, plan.snapshotID, plan.mode, plan.restoreDirs)
