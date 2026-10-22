@@ -93,7 +93,7 @@ var hints = []struct {
 	keep        bool
 }{
 	{"unable to authenticate", "the server did not accept BombVault's SSH key. Add the public key the form shows to the authorized keys of this user on the server, then test again", true},
-	{"Non-anonymous sessions must use encryption", "the server only takes encrypted logins. Under More settings set explicit_tls to true, or tls to true for a server that expects FTPS on port 990", true},
+	{"Non-anonymous sessions must use encryption", "the server only takes encrypted logins. Set Encryption to Explicit TLS, or to Implicit TLS for a server that expects FTPS on port 990", true},
 	{"the remote url looks incorrect", "this is not the address Nextcloud keeps files under. Use https://cloud.example.com/remote.php/dav/files/USER/ with your Nextcloud user name in place of USER", false},
 	{"AuthorizationHeaderMalformed", "the server signs for another region than the form names, and an empty region means us-east-1. Fill in the region the server is set up with: for Garage it is s3_region in garage.toml, garage unless it was changed", true},
 }

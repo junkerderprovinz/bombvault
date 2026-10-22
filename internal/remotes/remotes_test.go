@@ -154,6 +154,11 @@ func TestAFailureSaysWhatToChangeWithoutTheDraftsName(t *testing.T) {
 			`Failed to create file system for "BVDRAFT:": the remote url looks incorrect. Note that nextcloud chunked uploads require you to use the /dav/files/USER endpoint instead of /webdav. Please check 'rclone config show remotename' to verify that the url field ends in /dav/files/USER`,
 			"this is not the address Nextcloud keeps files under. Use https://cloud.example.com/remote.php/dav/files/USER/ with your Nextcloud user name in place of USER",
 		},
+		{
+			"NewFs: 530 Non-anonymous sessions must use encryption.",
+			"the server only takes encrypted logins. Set Encryption to Explicit TLS, or to Implicit TLS for a server that expects FTPS on port 990 " +
+				"(530 Non-anonymous sessions must use encryption.)",
+		},
 		{`error in ListJSON: dial tcp 10.0.0.5:9000: connect: connection refused`, "dial tcp 10.0.0.5:9000: connect: connection refused"},
 	} {
 		if got := explain(c.msg); got != c.want {
