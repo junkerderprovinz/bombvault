@@ -2769,24 +2769,19 @@ func settingsOffsiteTarget(domain string, settings store.Settings, loc string) s
 	}
 }
 
-// aggregateTamper folds a domain's off-site tamper verdicts worst-of across its
-// destinations for the ransomware scorecard: had is true only when EVERY
-// destination has a recorded verdict, protected only when EVERY one refused the
-// delete, and at is the OLDEST verdict timestamp (so the least-recently-checked
-// destination drives the currency/overdue judgement). For a single-destination
-// (N=1) domain — the only shape possible before stage 5 — it is EXACTLY
-// LatestTamperTest(domain), byte-identical to the pre-aggregation read.
-func (s *Service) aggregateTamper(domain string) (had, protected bool, at int64) {
-	targets := s.offsiteTargetsFor(domain)
-	if len(targets) <= 1 {
-		tt, found, err := s.store.LatestTamperTest(domain)
-		if err != nil || !found {
-			return false, false, 0
-		}
-		return true, tt.Protected, tt.At
+// aggregateTamper folds the tamper verdicts of a domain's append-only targets
+// worst-of for the ransomware scorecard: had is true only when every one of
+// them has a recorded verdict, protected only when every one refused the
+// delete, and at is the oldest verdict, so the least recently checked target
+// drives the currency. Each target is read by its own id, so a verdict about
+// another target never stands in for it. A target the setting describes has
+// no id and reads the domain's newest verdict.
+func (s *Service) aggregateTamper(domain string, guarded []store.OffsiteTarget) (had, protected bool, at int64) {
+	if len(guarded) == 0 {
+		return false, false, 0
 	}
 	protected = true
-	for _, t := range targets {
+	for _, t := range guarded {
 		tt, found, err := s.store.LatestTamperTestForTarget(domain, t.ID)
 		if err != nil || !found {
 			return false, false, 0 // an untested destination → no protected claim
@@ -3481,13 +3476,11 @@ func (s *Service) domainStatusFrom(settings store.Settings) ([]DomainStatusEntry
 		} else if offsiteConfigured {
 			offPremisesCovered = s.copiesOffPremises(settings, d.name)
 		}
-		offsiteImmutable := offsiteImmutableFor(d.name, settings)
-
-		// Tamper facts are aggregated worst-of across the domain's off-site
-		// destinations (protected only when EVERY destination is, currency = the
-		// oldest). For a single-destination (N=1) domain this is exactly
-		// LatestTamperTest(domain) — byte-identical.
-		hadTamper, lastTamperOK, lastTamperAt := s.aggregateTamper(d.name)
+		// The append-only claim is any switched-on target's, primary or
+		// additional, and it is proven by those targets alone.
+		guarded := s.appendOnlyTargets(d.name, settings)
+		offsiteImmutable := len(guarded) > 0
+		hadTamper, lastTamperOK, lastTamperAt := s.aggregateTamper(d.name, guarded)
 		// Currency uses the last SUCCESSFUL replication (mirrors backups' last-SUCCESS):
 		// a perpetually-failing replication then reads as stale → overdue → amber,
 		// rather than staying fresh off a failed attempt's timestamp. Aggregated
@@ -3563,7 +3556,7 @@ func (s *Service) domainStatusFrom(settings store.Settings) ([]DomainStatusEntry
 
 		// An off-site retention strategy is "configured" when the far side prunes
 		// (immutable), a growth budget is set, or an off-site keep policy is set.
-		pruneStrategySet := offsiteImmutable ||
+		pruneStrategySet := offsiteImmutableFor(d.name, settings) ||
 			settings.OffsiteGrowthBudgetGB > 0 ||
 			s.offsiteRetentionPolicy(settings, d.name).Any()
 

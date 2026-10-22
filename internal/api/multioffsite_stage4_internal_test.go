@@ -118,23 +118,37 @@ func enableTarget(t *testing.T, st *store.Repo, domain, id string) {
 	}
 }
 
-// Without target rows the domain-wide verdict applies. With several targets
-// the domain is protected only when all are, has no verdict while any target
-// lacks one, and is dated by the oldest verdict.
+// guardTarget inserts an enabled append-only off-site target with a known id.
+func guardTarget(t *testing.T, st *store.Repo, domain, id string) {
+	t.Helper()
+	if _, err := st.UpsertOffsiteTarget(store.OffsiteTarget{
+		ID: id, Domain: domain, Name: id, Repo: "rest:http://host/" + id, Enabled: true, Immutable: true,
+	}); err != nil {
+		t.Fatal(err)
+	}
+}
+
+// Without target rows the domain-wide verdict applies. With several
+// append-only targets the domain is protected only when all are, has no
+// verdict while any of them lacks one, and is dated by the oldest verdict.
+// Targets that are not append-only make no claim and need no verdict.
 func TestAggregateTamperWorstOf(t *testing.T) {
 	st := stage4Store(t)
 	svc := &Service{cfg: config.Config{AppKey: strings.Repeat("a", 64)}, store: st}
+	settings := store.Settings{ContainersOffsite: "rest:http://host/c", ContainersOffsiteImmutable: true}
+	guarded := func(domain string) []store.OffsiteTarget { return svc.appendOnlyTargets(domain, settings) }
 
 	if err := st.RecordTamperTest("containers", true, ""); err != nil {
 		t.Fatal(err)
 	}
-	had, protected, at := svc.aggregateTamper("containers")
+	had, protected, at := svc.aggregateTamper("containers", guarded("containers"))
 	if !had || !protected || at == 0 {
 		t.Fatalf("N=1 aggregate = (had=%v protected=%v at=%d), want protected", had, protected, at)
 	}
 
-	enableTarget(t, st, "vms", "t1")
-	enableTarget(t, st, "vms", "t2")
+	guardTarget(t, st, "vms", "t1")
+	guardTarget(t, st, "vms", "t2")
+	enableTarget(t, st, "vms", "plain")
 	if err := st.RecordTamperTestForTarget("vms", "t1", true, ""); err != nil {
 		t.Fatal(err)
 	}
@@ -142,7 +156,7 @@ func TestAggregateTamperWorstOf(t *testing.T) {
 	if err := st.RecordTamperTestForTarget("vms", "t2", true, ""); err != nil {
 		t.Fatal(err)
 	}
-	had, protected, at = svc.aggregateTamper("vms")
+	had, protected, at = svc.aggregateTamper("vms", guarded("vms"))
 	if !had || !protected {
 		t.Fatalf("both protected → (had=%v protected=%v), want protected", had, protected)
 	}
@@ -153,16 +167,16 @@ func TestAggregateTamperWorstOf(t *testing.T) {
 	if err := st.RecordTamperTestForTarget("vms", "t2", false, "accepted"); err != nil {
 		t.Fatal(err)
 	}
-	if _, protected, _ = svc.aggregateTamper("vms"); protected {
+	if _, protected, _ = svc.aggregateTamper("vms", guarded("vms")); protected {
 		t.Fatal("one unprotected destination must make the domain UNprotected")
 	}
 
-	enableTarget(t, st, "flash", "f1")
-	enableTarget(t, st, "flash", "f2")
+	guardTarget(t, st, "flash", "f1")
+	guardTarget(t, st, "flash", "f2")
 	if err := st.RecordTamperTestForTarget("flash", "f1", true, ""); err != nil {
 		t.Fatal(err)
 	}
-	had, protected, at = svc.aggregateTamper("flash")
+	had, protected, at = svc.aggregateTamper("flash", guarded("flash"))
 	if had || protected || at != 0 {
 		t.Fatalf("an untested destination → no claim, got (had=%v protected=%v at=%d)", had, protected, at)
 	}
@@ -178,10 +192,10 @@ func TestRunTamperTestPerTargetWorstOf(t *testing.T) {
 	defer accept.Close()
 
 	st := stage4Store(t)
-	if _, err := st.UpsertOffsiteTarget(store.OffsiteTarget{ID: "good", Domain: "containers", Name: "good", Repo: "rest:" + refuse.URL, Enabled: true}); err != nil {
+	if _, err := st.UpsertOffsiteTarget(store.OffsiteTarget{ID: "good", Domain: "containers", Name: "good", Repo: "rest:" + refuse.URL, Enabled: true, Immutable: true}); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := st.UpsertOffsiteTarget(store.OffsiteTarget{ID: "bad", Domain: "containers", Name: "bad", Repo: "rest:" + accept.URL, Enabled: true}); err != nil {
+	if _, err := st.UpsertOffsiteTarget(store.OffsiteTarget{ID: "bad", Domain: "containers", Name: "bad", Repo: "rest:" + accept.URL, Enabled: true, Immutable: true}); err != nil {
 		t.Fatal(err)
 	}
 	svc := &Service{cfg: config.Config{AppKey: strings.Repeat("a", 64)}, store: st, ssh: &fakeHostSSH{}}

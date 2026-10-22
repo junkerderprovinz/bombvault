@@ -427,7 +427,7 @@ func TestTamperProbeIDsAreFullLength(t *testing.T) {
 
 	st := stage4Store(t)
 	if _, err := st.UpsertOffsiteTarget(store.OffsiteTarget{
-		ID: "t1", Domain: "containers", Name: "t1", Repo: "rest:" + srv.URL, Enabled: true,
+		ID: "t1", Domain: "containers", Name: "t1", Repo: "rest:" + srv.URL, Enabled: true, Immutable: true,
 	}); err != nil {
 		t.Fatal(err)
 	}

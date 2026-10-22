@@ -38,27 +38,6 @@ var tamperHTTPClient = &http.Client{
 	},
 }
 
-// RunTamperTest checks a domain's off-site destinations: it sends two
-// authenticated HTTP DELETEs for object IDs that cannot exist and reads the
-// status codes. Only rest: repos can be tested this way.
-//
-// A transport error or an ambiguous status is inconclusive: RunTamperTest then
-// returns an error and records no verdict. A recorded flip from protected to
-// unprotected sends a protection-loss notification. Every outcome settles a run
-// row ("success" protected, "failed" not protected, "skipped" no verdict), so a
-// scheduled test against a non-REST off-site still shows up.
-func (s *Service) RunTamperTest(ctx context.Context, domain string) (TamperVerdict, error) {
-	return s.runTamperSweep(ctx, domain, false)
-}
-
-// RunScheduledTamperTest is RunTamperTest for the scheduled check: it probes
-// only the switched-on targets flagged append-only, primary or additional,
-// since BombVault never claimed the others refuse a delete. Each verdict is
-// recorded for its target.
-func (s *Service) RunScheduledTamperTest(ctx context.Context, domain string) (TamperVerdict, error) {
-	return s.runTamperSweep(ctx, domain, true)
-}
-
 // AppendOnlyDomains lists the domains with a switched-on off-site target
 // flagged append-only, the ones the scheduled tamper test has to probe.
 func (s *Service) AppendOnlyDomains() []string {
@@ -69,21 +48,36 @@ func (s *Service) AppendOnlyDomains() []string {
 	}
 	var out []string
 	for _, d := range offsiteConfigDomains {
-		if slices.ContainsFunc(s.offsiteReplicationTargets(d, settings), func(t store.OffsiteTarget) bool { return t.Immutable }) {
+		if len(s.appendOnlyTargets(d, settings)) > 0 {
 			out = append(out, d)
 		}
 	}
 	return out
 }
 
-// errNoAppendOnlyTarget answers a scheduled tamper test of a domain whose
-// append-only targets were all switched off or unflagged since the schedule
-// was planned.
+// appendOnlyTargets is the domain's switched-on off-site targets flagged
+// append-only, primary or additional. Its delete protection stands on these;
+// BombVault never claimed the others refuse a delete.
+func (s *Service) appendOnlyTargets(domain string, settings store.Settings) []store.OffsiteTarget {
+	return slices.DeleteFunc(s.offsiteReplicationTargets(domain, settings), func(t store.OffsiteTarget) bool { return !t.Immutable })
+}
+
+// errNoAppendOnlyTarget answers a tamper test of a domain without a switched-on
+// append-only target, as when all were switched off or unflagged since the
+// schedule was planned.
 var errNoAppendOnlyTarget = errors.New("no switched-on off-site target of this domain is append-only")
 
-// runTamperSweep probes the domain's switched-on targets, or with appendOnly
-// only those flagged append-only.
-func (s *Service) runTamperSweep(ctx context.Context, domain string, appendOnly bool) (verdict TamperVerdict, err error) {
+// RunTamperTest checks a domain's append-only off-site targets, for the button
+// and the schedule alike: for each it sends two authenticated HTTP DELETEs for
+// object IDs that cannot exist and reads the status codes. Only rest: repos can
+// be tested this way. Each verdict is recorded for its target.
+//
+// A transport error or an ambiguous status is inconclusive: RunTamperTest then
+// returns an error and records no verdict. A recorded flip from protected to
+// unprotected sends a protection-loss notification. Every outcome settles a run
+// row ("success" protected, "failed" not protected, "skipped" no verdict), so a
+// scheduled test against a non-REST off-site still shows up.
+func (s *Service) RunTamperTest(ctx context.Context, domain string) (verdict TamperVerdict, err error) {
 	switch domain {
 	case "containers", "vms", "flash", "config", "files", "zfs":
 	default:
@@ -103,17 +97,14 @@ func (s *Service) runTamperSweep(ctx context.Context, domain string, appendOnly 
 	}
 	// Each destination is probed in turn and the verdicts are folded worst-of,
 	// with one run row and progress line per domain, like copyToOffsite.
-	targets := s.offsiteReplicationTargets(domain, settings)
-	if len(targets) == 0 {
+	if len(s.offsiteReplicationTargets(domain, settings)) == 0 {
 		// No run row: a manual caller gets the error, and the scheduler already
 		// logs an immutable flag without a repo.
 		return TamperVerdict{}, s.noOffsiteRepoErr(domain)
 	}
-	if appendOnly {
-		targets = slices.DeleteFunc(targets, func(t store.OffsiteTarget) bool { return !t.Immutable })
-		if len(targets) == 0 {
-			return TamperVerdict{}, errNoAppendOnlyTarget
-		}
+	targets := s.appendOnlyTargets(domain, settings)
+	if len(targets) == 0 {
+		return TamperVerdict{}, errNoAppendOnlyTarget
 	}
 	// Open the run row now and settle it from the named returns, so every
 	// outcome from here on leaves a dated row.

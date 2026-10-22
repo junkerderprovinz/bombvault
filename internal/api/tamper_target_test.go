@@ -189,7 +189,7 @@ func TestTheScheduledTamperTestProbesEverySwitchedOnAppendOnlyTargetAndNoOther(t
 	if got := svc.AppendOnlyDomains(); !slices.Equal(got, []string{"vms"}) {
 		t.Fatalf("append-only domains = %v, want vms for its additional target", got)
 	}
-	v, err := svc.RunScheduledTamperTest(context.Background(), "vms")
+	v, err := svc.RunTamperTest(context.Background(), "vms")
 	if err != nil || !v.Testable || !v.Protected {
 		t.Fatalf("verdict = %+v, %v; want the append-only target protected", v, err)
 	}
@@ -198,5 +198,83 @@ func TestTheScheduledTamperTestProbesEverySwitchedOnAppendOnlyTargetAndNoOther(t
 	}
 	if got, found, _ := st.LatestTamperTestForTarget("vms", extra.ID); !found || !got.Protected {
 		t.Errorf("verdict of the append-only target = %+v, found=%v", got, found)
+	}
+}
+
+// containersStatus is the containers entry of DomainStatus.
+func containersStatus(t *testing.T, svc *Service) DomainStatusEntry {
+	t.Helper()
+	all, err := svc.DomainStatus()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, d := range all {
+		if d.Domain == "containers" {
+			return d
+		}
+	}
+	t.Fatal("no containers status")
+	return DomainStatusEntry{}
+}
+
+func TestAPlainSecondTargetDoesNotHoldBackTheDeleteProtectionOfTheAppendOnlyOne(t *testing.T) {
+	var refusing, accepting []string
+	guarded := httptest.NewServer(deleteRecorder(http.StatusForbidden, &refusing))
+	defer guarded.Close()
+	plain := httptest.NewServer(deleteRecorder(http.StatusOK, &accepting))
+	defer plain.Close()
+
+	svc, st := tamperService(t, "rest:"+guarded.URL, &fakeHostSSH{})
+	if _, err := st.UpsertOffsiteTarget(store.OffsiteTarget{ID: "primary", Domain: "containers", Name: "Primary", Repo: "rest:" + guarded.URL, Enabled: true, Immutable: true}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.CreateOffsiteTarget(store.OffsiteTarget{Domain: "containers", Name: "Cloud", Repo: "rest:" + plain.URL, Enabled: true}); err != nil {
+		t.Fatal(err)
+	}
+
+	if got := containersStatus(t, svc); got.TamperState != "never" {
+		t.Fatalf("before a test the tamper state = %q, want never", got.TamperState)
+	}
+	v, err := svc.RunTamperTest(context.Background(), "containers")
+	if err != nil || !v.Protected {
+		t.Fatalf("verdict = %+v, %v; want protected", v, err)
+	}
+	if len(accepting) != 0 {
+		t.Fatalf("the plain target was probed %d times, want never", len(accepting))
+	}
+	if got := containersStatus(t, svc); !got.OffsiteImmutable || got.TamperState != "ok" || !got.LastTamperOK {
+		t.Fatalf("status = immutable %v, tamper %q, ok %v; want the append-only target's proof", got.OffsiteImmutable, got.TamperState, got.LastTamperOK)
+	}
+}
+
+func TestAnAppendOnlyAdditionalTargetMakesTheDomainClaimDeleteProtection(t *testing.T) {
+	var refusing []string
+	guarded := httptest.NewServer(deleteRecorder(http.StatusForbidden, &refusing))
+	defer guarded.Close()
+
+	svc, st := tamperService(t, "rest:http://plain.invalid/containers", &fakeHostSSH{})
+	settings, err := st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	settings.ContainersOffsiteImmutable = false
+	if err := st.UpdateSettings(settings); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.UpsertOffsiteTarget(store.OffsiteTarget{ID: "primary", Domain: "containers", Name: "Primary", Repo: settings.ContainersOffsite, Enabled: true}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.CreateOffsiteTarget(store.OffsiteTarget{Domain: "containers", Name: "Vault", Repo: "rest:" + guarded.URL, Enabled: true, Immutable: true}); err != nil {
+		t.Fatal(err)
+	}
+
+	if got := containersStatus(t, svc); !got.OffsiteImmutable || got.TamperState != "never" {
+		t.Fatalf("status = immutable %v, tamper %q; want the claim and no proof yet", got.OffsiteImmutable, got.TamperState)
+	}
+	if _, err := svc.RunTamperTest(context.Background(), "containers"); err != nil {
+		t.Fatal(err)
+	}
+	if got := containersStatus(t, svc); got.TamperState != "ok" {
+		t.Fatalf("tamper state = %q, want ok", got.TamperState)
 	}
 }
