@@ -809,6 +809,15 @@ func backupHardCap() time.Duration {
 	return time.Duration(n) * time.Hour
 }
 
+// withBackupCap bounds ctx by backupHardCap, or only makes it cancellable when
+// the cap is off.
+func withBackupCap(ctx context.Context) (context.Context, context.CancelFunc) {
+	if cap := backupHardCap(); cap > 0 {
+		return context.WithTimeout(ctx, cap)
+	}
+	return context.WithCancel(ctx)
+}
+
 // backupHoldCtx detaches ctx from the caller's cancellation (keeping its values)
 // so a backup survives the triggering client disconnecting, and applies the
 // configurable hard cap (backupHardCap). With an unlimited cap
@@ -17588,7 +17597,7 @@ func (s *Service) UnlockDomain(ctx context.Context, domain, source string) ([]st
 }
 
 // PruneDomain reclaims repository space freed by forgotten snapshots
-// (restic prune). Bounded by a generous timeout — pruning a large repo is slow.
+// (restic prune). Bounded by the backup cap, since pruning a large repo is slow.
 // Once the domain lock is held it publishes "maintenance" progress, with
 // restic's counts for each step of the prune, and records a "prune" run, so a
 // manual or scheduled prune shows up on the dashboard activity log and run
@@ -17697,8 +17706,10 @@ func (s *Service) pruneDomain(ctx context.Context, domain, source string, afterB
 		return nil, errDomainBusy
 	}
 	defer unlock()
-	// Per repository, like the other three (see CheckDomain).
-	ctx, cancel := context.WithTimeout(ctx, time.Duration(len(repos))*30*time.Minute)
+	// A prune that repacks a large repository over a slow uplink runs for
+	// hours, and one cut off redoes the same work the next night, so it gets
+	// the backup's own cap rather than a fixed allowance per repository.
+	ctx, cancel := withBackupCap(ctx)
 	defer cancel()
 
 	pkey := "prune:" + domain
