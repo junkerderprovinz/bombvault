@@ -10058,6 +10058,9 @@ func (s *Service) prepareRestoreFiles(ctx context.Context, name, source, snapsho
 		if err != nil {
 			return filesRestorePlan{}, errors.New("invalid target folder: must be a relative subpath under the host mount")
 		}
+		if err := s.guardRestoreFolder(t); err != nil {
+			return filesRestorePlan{}, err
+		}
 		if !isPlanOnly(ctx) {
 			if err := makeRestoreFolder(ctx, t, paths.EnsureDir); err != nil {
 				return filesRestorePlan{}, fmt.Errorf("create target folder: %w", err)
@@ -10387,6 +10390,9 @@ func (s *Service) prepareRestoreToPath(ctx context.Context, name, source, snapsh
 		// paths.Resolve returns ErrTraversal/ErrAbsoluteSub — neither leaks a host
 		// path; keep the message generic (defense-in-depth, mirrors handleBrowse).
 		return toPathRestorePlan{}, errors.New("invalid target folder: must be a relative subpath under the host mount")
+	}
+	if err := s.guardRestoreFolder(target); err != nil {
+		return toPathRestorePlan{}, err
 	}
 
 	// Scope to the named container: the snapshot must be one of ITS snapshots, so
@@ -14994,6 +15000,9 @@ func (s *Service) prepareRestoreFileSet(ctx context.Context, id, snapshotID, sou
 		if rErr != nil {
 			return fileSetRestorePlan{}, errors.New("invalid target folder: must be a relative subpath under the host mount")
 		}
+		if err := s.guardRestoreFolder(t); err != nil {
+			return fileSetRestorePlan{}, err
+		}
 		plan.target = t
 	} else {
 		// In-place: writes over the set's source folder — require the explicit
@@ -15341,6 +15350,9 @@ func (s *Service) buildFileSetFilesPlan(ctx context.Context, snaps []restic.Snap
 		t, rErr := paths.ResolveForWrite(s.cfg.HostMountRoot, sub)
 		if rErr != nil {
 			return fileSetFilesRestorePlan{}, errors.New("invalid target folder: must be a relative subpath under the host mount")
+		}
+		if err := s.guardRestoreFolder(t); err != nil {
+			return fileSetFilesRestorePlan{}, err
 		}
 		// When the snapshot has a backed-up root, every selection must sit within it
 		// — the selection becomes an --include relative to that subtree, so a path

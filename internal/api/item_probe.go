@@ -508,6 +508,9 @@ func (s *Service) newDrillSandbox(settings store.Settings, prefix string) (strin
 	if err != nil {
 		return "", nil, errors.New("invalid restore folder: must be a relative subpath under the host mount")
 	}
+	if err := s.guardRestoreFolder(sandbox); err != nil {
+		return "", nil, err
+	}
 	if err := paths.EnsureDir(filepath.Dir(sandbox)); err != nil {
 		return "", nil, fmt.Errorf("create sandbox parent: %w", err)
 	}

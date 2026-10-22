@@ -1032,6 +1032,9 @@ func (s *Service) prepareForeignFileSetRestore(ctx context.Context, sess foreign
 	if err != nil {
 		return fileSetRestorePlan{}, errors.New("invalid target folder: must be a relative subpath under the host mount")
 	}
+	if err := s.guardRestoreFolder(target); err != nil {
+		return fileSetRestorePlan{}, err
+	}
 
 	// Snapshot ownership: an explicit id must be well-formed hex AND belong to
 	// THIS item's fileset:<Name> tag in the SESSION repo; "latest"/"" resolves

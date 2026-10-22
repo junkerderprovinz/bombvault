@@ -81,6 +81,21 @@ func (s *Service) restoreTargetMounted(p string) bool {
 	return mounted[root] && isStrictSubpath(root, path.Clean(filepath.ToSlash(p)))
 }
 
+// folderOnStorage is the check guardRestoreFolder makes. The test binary
+// swaps it, because its temp folders lie on no mount of their own.
+var folderOnStorage = (*Service).restoreTargetMounted
+
+// guardRestoreFolder refuses a folder a restore writes into that is not on a
+// mounted pool or share. On Unraid such a folder lives in RAM: the restore
+// reports success, a large one runs the host out of memory, and the files are
+// gone after a reboot or hidden under the disk once it is mounted again.
+func (s *Service) guardRestoreFolder(target string) error {
+	if folderOnStorage(s, target) {
+		return nil
+	}
+	return destinationRefusal("%s is not on a mounted pool or share, so a restore there would be written into the host's memory. Pick a folder on real storage", s.toHostPath(target))
+}
+
 // mountPoints reads the mount table; false means it could not be read.
 func mountPoints() (map[string]bool, bool) {
 	f, err := os.Open(mountinfoPath) //nolint:gosec // G304: mountinfoPath is a fixed package var (/proc/self/mountinfo), overridden only by tests
