@@ -131,6 +131,11 @@ describe("protection", () => {
     expect(protection(item({ installed: false }))).toBe("none");
   });
 
+  it("is missing for a database whose dumps are missing, as the coverage counts it", () => {
+    expect(protection(item({ dbDumpGap: "db-dump-failing" }))).toBe("none");
+    expect(protection(item({ dbDumpGap: "db-dump-only-copy-off" }))).toBe("none");
+  });
+
   it("is pending while the first scheduled run is still to come", () => {
     expect(protection(item({ lastBackup: 0 }))).toBe("pending");
   });

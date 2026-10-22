@@ -525,6 +525,31 @@ func TestListItemsCarriesAContainersStackAndDatabase(t *testing.T) {
 	}
 }
 
+// The overview counts a database whose dumps fail as the coverage does, so
+// the entry says so itself.
+func TestListItemsNamesTheDumpGapTheCoverageHoldsAgainstADatabase(t *testing.T) {
+	db := imageContainer("immich_postgres", "postgres:16")
+	docker := &fakeServiceDocker{
+		listOut: []dockercli.ContainerInfo{db},
+		inspects: map[string]model.Inspect{
+			"immich_postgres": {Config: model.Config{Image: "postgres:16", Env: []string{"POSTGRES_PASSWORD=x"}}},
+		},
+	}
+	h, st, _ := newItemsRouter(t, docker, fakeVirsh{})
+	enableEveryKind(t, st, nil)
+	tg := seedTarget(t, st, "immich_postgres")
+
+	rows, _ := listItems(t, h)
+	if gap, present := rows["container/immich_postgres"]["dbDumpGap"]; present {
+		t.Fatalf("a database without a failed dump reports the gap %v", gap)
+	}
+	seedRun(t, st, tg.ID, "dbdump", "failed", store.RunMeta{})
+	rows, _ = listItems(t, h)
+	if gap := rows["container/immich_postgres"]["dbDumpGap"]; gap != api.CoverageDBDumpFailing {
+		t.Fatalf("dbDumpGap = %v, want %q", gap, api.CoverageDBDumpFailing)
+	}
+}
+
 func TestListItemsCarriesAVMsFormerNamesAndRenameHint(t *testing.T) {
 	virsh := &renameSuggestVirsh{
 		vms: []virshcli.VMInfo{{Name: "win11", State: "running"}, {Name: "debian", State: "shut off"}},

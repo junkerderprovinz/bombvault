@@ -155,6 +155,10 @@ type backupItemView struct {
 	DBDumpLabelOff   bool   `json:"dbDumpLabelOff,omitempty"`
 	DBDumpsGlobalOff bool   `json:"dbDumpsGlobalOff,omitempty"`
 	DBDataCoverage   string `json:"dbDataCoverage,omitempty"`
+	// DBDumpGap is what GET /api/coverage holds against a database whose
+	// dumps are missing, one of its reasons, so the entry counts the way the
+	// coverage does.
+	DBDumpGap string `json:"dbDumpGap,omitempty"`
 	// FormerNames are the names a container or VM had before, oldest link first.
 	FormerNames []string `json:"formerNames,omitempty"`
 	// ChangedSinceBackup is how a live container differs from its last good backup.
@@ -570,6 +574,9 @@ func (src containerSources) liveRow(ctx context.Context, svc *Service, hist item
 		v.DBTier, v.DBDumpLabelOff, v.DBDataCoverage = db.Tier, db.LabelOff, db.Coverage
 		v.DBDumpOff = t.DBDumpOff
 		v.DBDumpsGlobalOff = !src.settings.DBDumpsEnabled
+		if stored {
+			v.DBDumpGap = svc.dbDumpGap(src.settings, t, db)
+		}
 	}
 	if stored && !v.Self && (v.LastBackup > 0 || src.shapes[t.ID] != "") {
 		v.ChangedSinceBackup = svc.changesSinceBackup(ctx, c, t, src.shapes[t.ID])

@@ -4027,6 +4027,10 @@ export interface BackupItem {
   dbDumpLabelOff?: boolean;
   dbDumpsGlobalOff?: boolean;
   dbDataCoverage?: DbDataCoverage;
+  /** What GET /api/coverage holds against a database whose dumps are
+   *  missing: its last dump failed, or dumps are off while nothing else
+   *  copies it consistently. */
+  dbDumpGap?: "db-dump-failing" | "db-dump-only-copy-off";
   /** Containers and VMs: the names the entry had before, oldest link first. */
   formerNames?: string[];
   /** Live containers: how they differ from their last good backup. */
