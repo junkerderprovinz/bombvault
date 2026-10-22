@@ -778,6 +778,7 @@ const fi: Partial<Translations> = {
   "integrity.checking": "Tarkistetaan…",
   "integrity.ok": "Kunnossa",
   "integrity.failed": "Tarkistus epäonnistui",
+  "integrity.answerLost": "Vastaus ei palannut ajoissa. Ajo jatkuu palvelimella, ja sen tulos tallennetaan, kun se päättyy.",
   "integrity.unlock": "Avaa lukitus",
   "integrity.prune": "Karsi",
   "integrity.verifyHint": "Suorita restic check rakenteen ja metatietojen tarkistamiseksi.",

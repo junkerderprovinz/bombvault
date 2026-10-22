@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import {
+  answerLost,
   checkDomain,
   listSnapshotFiles,
   listSnapshotFilesFileSet,
@@ -398,7 +399,8 @@ export function RunDetailSheet({ run, open, onClose, windowed = false, onRestore
   }
 
   // --- verify row (checkDomain + inline result, IntegrityCard's vocabulary) -
-  const [verifyState, setVerifyState] = useState<"idle" | "busy" | "ok" | "fail">("idle");
+  // "away" is a check whose answer was lost while the server goes on with it.
+  const [verifyState, setVerifyState] = useState<"idle" | "busy" | "ok" | "fail" | "away">("idle");
   const [verifyError, setVerifyError] = useState<string | null>(null);
   // A check that resolves after the sheet closed must not write its outcome
   // onto whatever run the host shows next: "open a VM run, see the container
@@ -432,6 +434,10 @@ export function RunDetailSheet({ run, open, onClose, windowed = false, onRestore
       }
     } catch (err) {
       if (verifyCancelledRef.current) return;
+      if (answerLost(err)) {
+        setVerifyState("away");
+        return;
+      }
       setVerifyState("fail");
       setVerifyError(err instanceof Error ? err.message : t("verify.failed"));
     } finally {
@@ -727,6 +733,7 @@ export function RunDetailSheet({ run, open, onClose, windowed = false, onRestore
             {t("integrity.ok")}
           </p>
         )}
+        {verifyState === "away" && <p className="text-xs text-carbon-textSub leading-relaxed">{t("integrity.answerLost")}</p>}
         {verifyState === "fail" && verifyError != null && (
           <p className="rounded-card bg-statusFailBgSoft px-4 py-2 text-xs text-statusFail leading-relaxed wrap-break-word">
             {verifyError}

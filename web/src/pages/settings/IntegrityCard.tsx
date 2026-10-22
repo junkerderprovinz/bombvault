@@ -14,6 +14,7 @@ import { Rows } from "../../components/storage/rows";
 import { countProgressText, type ResolveName } from "../../lib/activityLog";
 import { heldTagLabels } from "../../lib/anomalies";
 import {
+  answerLost,
   checkDomain,
   getStatus,
   listItems,
@@ -191,7 +192,10 @@ export function IntegrityCard({ t, hueIndex }: { t: T; hueIndex?: number }) {
         else push(say("integrity.passed"), "success");
       }
     } catch (err) {
-      push(err instanceof Error ? err.message : t("integrity.failed"), "fail");
+      // A check, prune or trial restore goes on without its request, and its
+      // bar and result come back through this card.
+      if (action !== "tamper" && action !== "unlock" && answerLost(err)) push(`${name}: ${t("integrity.answerLost")}`, "warn");
+      else push(err instanceof Error ? err.message : t("integrity.failed"), "fail");
     } finally {
       setBusy((b) => ({ ...b, [key]: false }));
       // The verdicts land in /api/status, which the overview reads too.

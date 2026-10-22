@@ -925,6 +925,7 @@ const is: Partial<Translations> = {
   "integrity.checking": "Staðfesti…",
   "integrity.ok": "Heilbrigt",
   "integrity.failed": "Staðfesting mistókst",
+  "integrity.answerLost": "Svarið barst ekki í tæka tíð. Keyrslan heldur áfram á þjóninum og niðurstaðan er vistuð þegar henni lýkur.",
   "integrity.unlock": "Aflæsa",
   "integrity.prune": "Hreinsa",
   "integrity.verifyHint": "Keyrðu restic check til að staðfesta að uppbygging og lýsigögn séu heil.",

@@ -775,6 +775,7 @@ const no: Partial<Translations> = {
   "integrity.checking": "Sjekker…",
   "integrity.ok": "Sunt",
   "integrity.failed": "Sjekk mislyktes",
+  "integrity.answerLost": "Svaret kom ikke tilbake i tide. Kjøringen fortsetter på serveren, og resultatet lagres når den er ferdig.",
   "integrity.unlock": "Lås opp",
   "integrity.prune": "Beskjær",
   "integrity.verifyHint": "Kjør restic check for å verifisere struktur og metadata.",

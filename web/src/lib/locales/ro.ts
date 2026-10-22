@@ -775,6 +775,7 @@ const ro: Partial<Translations> = {
   "integrity.checking": "Verificare…",
   "integrity.ok": "Sănătos",
   "integrity.failed": "Verificare eșuată",
+  "integrity.answerLost": "Răspunsul nu s-a întors la timp. Rularea continuă pe server, iar rezultatul ei se salvează când se termină.",
   "integrity.unlock": "Deblochează",
   "integrity.prune": "Curăță",
   "integrity.verifyHint": "Rulează restic check pentru a verifica structura și metadatele.",

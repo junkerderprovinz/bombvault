@@ -925,6 +925,7 @@ const fa: Partial<Translations> = {
   "integrity.checking": "در حال بررسی…",
   "integrity.ok": "سالم",
   "integrity.failed": "بررسی ناموفق بود",
+  "integrity.answerLost": "پاسخ به‌موقع برنگشت. اجرا روی سرور ادامه دارد و نتیجه‌اش وقتی تمام شود ذخیره می‌شود.",
   "integrity.unlock": "باز کردن قفل",
   "integrity.prune": "پاک‌سازی",
   "integrity.verifyHint": "restic check را اجرا کن تا سلامت ساختار و ابرداده‌ها تأیید شود.",

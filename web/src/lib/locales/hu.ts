@@ -778,6 +778,7 @@ const hu: Partial<Translations> = {
   "integrity.checking": "Ellenőrzés…",
   "integrity.ok": "Ép",
   "integrity.failed": "Az ellenőrzés sikertelen",
+  "integrity.answerLost": "A válasz nem érkezett vissza időben. A futás a szerveren folytatódik, és az eredménye a végén mentésre kerül.",
   "integrity.unlock": "Feloldás",
   "integrity.prune": "Nyesés",
   "integrity.verifyHint": "restic check futtatása a szerkezet és metaadatok ellenőrzéséhez.",

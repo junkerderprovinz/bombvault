@@ -772,6 +772,7 @@ const zh: Partial<Translations> = {
   "integrity.checking": "检查中…",
   "integrity.ok": "健康",
   "integrity.failed": "检查失败",
+  "integrity.answerLost": "响应未能及时返回。运行仍在服务器上继续，结束后会保存其结果。",
   "integrity.unlock": "解锁",
   "integrity.prune": "清理",
   "integrity.verifyHint": "运行 restic check 以验证结构和元数据的完整性。",

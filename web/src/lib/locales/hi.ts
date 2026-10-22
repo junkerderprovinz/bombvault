@@ -925,6 +925,7 @@ const hi: Partial<Translations> = {
   "integrity.checking": "जाँचा जा रहा है…",
   "integrity.ok": "स्वस्थ",
   "integrity.failed": "जाँच विफल हुई",
+  "integrity.answerLost": "जवाब समय पर वापस नहीं आया। रन सर्वर पर चलता रहता है, और खत्म होने पर उसका नतीजा सहेजा जाता है।",
   "integrity.unlock": "अनलॉक करें",
   "integrity.prune": "प्रून करें",
   "integrity.verifyHint": "संरचना और मेटाडेटा बरकरार हैं यह जाँचने के लिए restic check चलाएँ।",

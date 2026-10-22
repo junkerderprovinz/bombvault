@@ -925,6 +925,7 @@ const lv: Partial<Translations> = {
   "integrity.checking": "Pārbauda…",
   "integrity.ok": "Vesels",
   "integrity.failed": "Pārbaude neizdevās",
+  "integrity.answerLost": "Atbilde neatgriezās laikā. Izpilde serverī turpinās, un tās rezultāts tiks saglabāts, kad tā beigsies.",
   "integrity.unlock": "Atbloķēt",
   "integrity.prune": "Iztīrīt",
   "integrity.verifyHint": "Palaidiet restic check, lai pārbaudītu, vai struktūra un metadati ir neskarti.",

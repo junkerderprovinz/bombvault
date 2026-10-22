@@ -55,15 +55,17 @@ const listingControl = vi.hoisted(() => {
 // Deferreds for the check/restore POSTs; tagged so a test with several in
 // flight can pick the right one.
 const apiControl = vi.hoisted(() => {
-  const pending: { resolve: (value: unknown) => void; kind: string }[] = [];
+  const pending: { resolve: (value: unknown) => void; reject: (err: unknown) => void; kind: string }[] = [];
   return {
     pending,
     deferred(kind: string) {
       let resolve!: (value: unknown) => void;
-      const promise = new Promise((res) => {
+      let reject!: (err: unknown) => void;
+      const promise = new Promise((res, rej) => {
         resolve = res;
+        reject = rej;
       });
-      pending.push({ resolve, kind });
+      pending.push({ resolve, reject, kind });
       return promise;
     },
   };
@@ -624,6 +626,19 @@ describe("RunDetailSheet", () => {
     });
     const reArmed = screen.getByRole("button", { name: en["integrity.verify"] }) as HTMLButtonElement;
     expect(reArmed.disabled).toBe(false);
+  });
+
+  it("verify: a check whose answer the relay dropped says it goes on, not that it failed", async () => {
+    const { ApiError } = await import("../../lib/api");
+    renderSheet(DONE_RUN);
+    fireEvent.click(screen.getByRole("button", { name: en["integrity.verify"] }));
+    await act(async () => {});
+    const check = apiControl.pending.find((e) => e.kind === "check")!;
+    await act(async () => {
+      check.reject(new ApiError(504, en["apiError.timeout"]));
+    });
+    expect(screen.getByText(en["integrity.answerLost"])).toBeTruthy();
+    expect(screen.queryByText(en["apiError.timeout"])).toBeNull();
   });
 
   it("a check that lands after the sheet closed never writes onto the next run", async () => {

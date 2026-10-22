@@ -778,6 +778,7 @@ const es: Partial<Translations> = {
   "integrity.checking": "Comprobando…",
   "integrity.ok": "Saludable",
   "integrity.failed": "Comprobación fallida",
+  "integrity.answerLost": "La respuesta no llegó a tiempo. La ejecución sigue en el servidor y su resultado se guarda cuando termine.",
   "integrity.unlock": "Desbloquear",
   "integrity.prune": "Podar",
   "integrity.verifyHint": "Ejecuta restic check para verificar la estructura y los metadatos.",

@@ -925,6 +925,7 @@ const ca: Partial<Translations> = {
   "integrity.checking": "Verificant…",
   "integrity.ok": "Sa",
   "integrity.failed": "Verificació fallida",
+  "integrity.answerLost": "La resposta no ha tornat a temps. L'execució continua al servidor i el resultat es desa quan acabi.",
   "integrity.unlock": "Desbloqueja",
   "integrity.prune": "Neteja",
   "integrity.verifyHint": "Executa restic check per verificar que l'estructura i les metadades estan intactes.",

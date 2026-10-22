@@ -3518,11 +3518,26 @@ func (h *Handler) handleCheck(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "unknown domain"})
 		return
 	}
-	if err := h.svc.CheckDomain(r.Context(), domain, sourceParam(r)); err != nil {
+	ctx, done := h.maintenanceContext(r)
+	defer done()
+	if err := h.svc.CheckDomain(ctx, domain, sourceParam(r)); err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(nil))
+}
+
+// maintenanceContext keeps a check or prune started by hand going when its
+// request ends first: a closed tab, a proxy that gives up after a minute, or
+// the relay's limit on one call. The run records its outcome, which the page
+// reads back; its own timeouts bound it, and shutdown ends it.
+func (h *Handler) maintenanceContext(r *http.Request) (context.Context, func()) {
+	ctx, cancel := context.WithCancel(context.WithoutCancel(r.Context()))
+	stop := context.AfterFunc(h.svc.StopContext(), cancel)
+	return ctx, func() {
+		stop()
+		cancel()
+	}
 }
 
 // handleRunDrill runs a restore-verification drill for a domain and returns the
@@ -3540,7 +3555,9 @@ func (h *Handler) handleRunDrill(w http.ResponseWriter, r *http.Request) {
 	}
 	// Manual: fail fast with immediate busy feedback (wait=false) so the UI can tell
 	// the user a backup is running rather than blocking the request.
-	drill, err := h.svc.RunRestoreDrill(r.Context(), domain, sourceParam(r), kindParam(r), false)
+	ctx, done := h.maintenanceContext(r)
+	defer done()
+	drill, err := h.svc.RunRestoreDrill(ctx, domain, sourceParam(r), kindParam(r), false)
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
@@ -3628,7 +3645,9 @@ func (h *Handler) handlePrune(w http.ResponseWriter, r *http.Request) {
 	if !h.requireAuthForSecrets(w, r, "pruning backups") {
 		return
 	}
-	paused, err := h.svc.PruneDomain(r.Context(), domain, sourceParam(r))
+	ctx, done := h.maintenanceContext(r)
+	defer done()
+	paused, err := h.svc.PruneDomain(ctx, domain, sourceParam(r))
 	if err != nil {
 		body := failEnvelope(err)
 		if len(paused) > 0 {

@@ -772,6 +772,7 @@ const ja: Partial<Translations> = {
   "integrity.checking": "確認中…",
   "integrity.ok": "正常",
   "integrity.failed": "チェックに失敗しました",
+  "integrity.answerLost": "応答が時間内に戻りませんでした。処理はサーバー上で続いており、終了すると結果が保存されます。",
   "integrity.unlock": "ロック解除",
   "integrity.prune": "整理",
   "integrity.verifyHint": "restic check を実行して構造とメタデータの整合性を検証します。",

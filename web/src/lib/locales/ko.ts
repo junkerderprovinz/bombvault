@@ -772,6 +772,7 @@ const ko: Partial<Translations> = {
   "integrity.checking": "확인 중…",
   "integrity.ok": "정상",
   "integrity.failed": "검사 실패",
+  "integrity.answerLost": "응답이 제시간에 돌아오지 않았습니다. 실행은 서버에서 계속되며 끝나면 결과가 저장됩니다.",
   "integrity.unlock": "잠금 해제",
   "integrity.prune": "정리",
   "integrity.verifyHint": "restic check를 실행하여 구조와 메타데이터 무결성을 확인합니다.",

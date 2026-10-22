@@ -925,6 +925,7 @@ const sr: Partial<Translations> = {
   "integrity.checking": "Проверавање…",
   "integrity.ok": "Здраво",
   "integrity.failed": "Провера није успела",
+  "integrity.answerLost": "Одговор се није вратио на време. Покретање се наставља на серверу, а резултат се чува када се заврши.",
   "integrity.unlock": "Откључај",
   "integrity.prune": "Очисти",
   "integrity.verifyHint": "Покрени restic check да провериш да су структура и метаподаци нетакнути.",

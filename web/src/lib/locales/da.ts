@@ -778,6 +778,7 @@ const da: Partial<Translations> = {
   "integrity.checking": "Tjekker…",
   "integrity.ok": "Sund",
   "integrity.failed": "Tjek mislykkedes",
+  "integrity.answerLost": "Svaret kom ikke tilbage i tide. Kørslen fortsætter på serveren, og resultatet gemmes, når den er færdig.",
   "integrity.unlock": "Lås op",
   "integrity.prune": "Beskær",
   "integrity.verifyHint": "Kør restic check for at verificere struktur og metadata.",

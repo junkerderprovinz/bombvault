@@ -925,6 +925,7 @@ const sk: Partial<Translations> = {
   "integrity.checking": "Overuje sa…",
   "integrity.ok": "V poriadku",
   "integrity.failed": "Overenie zlyhalo",
+  "integrity.answerLost": "Odpoveď sa nevrátila včas. Beh na serveri pokračuje a jeho výsledok sa uloží, keď skončí.",
   "integrity.unlock": "Odomknúť",
   "integrity.prune": "Vyčistiť",
   "integrity.verifyHint": "Spusti restic check na overenie neporušenosti štruktúry a metadát.",

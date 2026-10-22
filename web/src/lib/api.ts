@@ -861,6 +861,13 @@ export function failureOf(status: number, code?: string, said?: string): { messa
   return { message: translate(general), detail: said || undefined };
 }
 
+/** answerLost reports a call whose answer went missing on the way back, as
+ *  when a proxy or the relay gives up waiting, while the server may still be
+ *  at the work. */
+export function answerLost(err: unknown): boolean {
+  return err instanceof ApiError && (err.status === 408 || err.status === 502 || err.status === 504);
+}
+
 /** explainedError is the sentence of a failure this client can explain, for
  *  a caller that otherwise shows a fixed text. */
 export function explainedError(err: unknown): string | undefined {
