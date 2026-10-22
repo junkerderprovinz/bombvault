@@ -87,6 +87,40 @@ func TestBackupRefusesAFolderWhoseDiskDidNotMount(t *testing.T) {
 	}
 }
 
+// Unassigned Devices puts a small tmpfs at /mnt/disks, and a parent folder can
+// be a mount of its own, so a path that is still on some mount after the
+// reboot is not necessarily on its disk.
+func TestBackupRefusesAFolderOffTheMountItWasOn(t *testing.T) {
+	eng := &fakeResticEngine{}
+	svc, root, appdata := appdataService(t, eng)
+	if err := os.WriteFile(filepath.Join(appdata, "db.sqlite3"), []byte("x"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	restore := api.SetMountinfoPath(mountTable(t, "/", root, root+"/disks", root+"/disks/ssd"))
+	defer restore()
+	if _, err := svc.Backup(context.Background(), "vw"); err != nil {
+		t.Fatalf("backup with the disk mounted: %v", err)
+	}
+
+	api.SetMountinfoPath(mountTable(t, "/", root, root+"/disks"))
+	if _, err := svc.Backup(context.Background(), "vw"); err == nil || !strings.Contains(err.Error(), "is that disk mounted") {
+		t.Fatalf("backup with only the folder above the disk mounted = %v, want a refusal", err)
+	}
+
+	placeholder := filepath.Join(t.TempDir(), "mountinfo")
+	table := "1 1 0:1 / / rw - ext4 /dev/x rw\n2 1 0:2 / " + root + " rw - shfs shfs rw\n3 2 0:3 / " + root + "/disks rw - tmpfs tmpfs rw,size=1024k\n"
+	if err := os.WriteFile(placeholder, []byte(table), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	api.SetMountinfoPath(placeholder)
+	if _, err := svc.Backup(context.Background(), "vw"); err == nil || !strings.Contains(err.Error(), "is that disk mounted") {
+		t.Fatalf("backup over the placeholder tmpfs = %v, want a refusal", err)
+	}
+	if len(eng.backedUp) != 1 {
+		t.Fatalf("restic ran %d times, want only the backup with the disk mounted", len(eng.backedUp))
+	}
+}
+
 func TestBackupRefusesAnEmptiedFolderWithDataInEarlierBackups(t *testing.T) {
 	eng := &fakeResticEngine{snaps: []restic.Snapshot{{
 		ID: "aaaa1111", Tags: []string{"container:vw"}, Summary: &restic.SnapshotSummary{TotalBytesProcessed: 4096},

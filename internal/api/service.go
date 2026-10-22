@@ -67,8 +67,11 @@ type containerDefinition struct {
 	Inspect      model.Inspect `json:"inspect"`
 	TemplateXML  string        `json:"template_xml"`
 	AppdataPaths []string      `json:"appdata_paths"`
-	// MountedPaths are the AppdataPaths that sat on a mount of their own below
-	// Host Data when they were backed up.
+	// PathMounts names, for the AppdataPaths that sat on a mount of their own
+	// below Host Data when they were backed up, that mount's point.
+	PathMounts map[string]string `json:"path_mounts,omitempty"`
+	// MountedPaths is what a definition from before PathMounts recorded: the
+	// paths on a mount of their own, not which one.
 	MountedPaths []string `json:"mounted_paths,omitempty"`
 	// Aliases are the links the mirror on the backup storage records, the
 	// only ones Discover rebuilds. The alias rows are what everything else
@@ -6344,7 +6347,7 @@ func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, re
 		s.notifyBackup(ctx, "container", name, "", false, backup.Summary{}, err)
 		return backup.Summary{}, err
 	}
-	mounted, mountsKnown := s.pathsOnTheirOwnMount(effective)
+	mounted, mountsKnown := s.pathMounts(effective)
 	if left := s.offTheirMount(name, effective, mounted, mountsKnown); len(left) > 0 {
 		hostPaths := make([]string, len(left))
 		for i, p := range left {
@@ -6369,7 +6372,7 @@ func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, re
 	// Persist the recreate recipe (self-contained: inspect + template + backup
 	// paths) so restore works even after the container has been deleted.
 	xml, _, _ := template.Read(s.cfg.FlashTemplatesDir, name)
-	defBytes, _ := json.Marshal(containerDefinition{Inspect: in, TemplateXML: xml, AppdataPaths: effective, MountedPaths: mounted})
+	defBytes, _ := json.Marshal(containerDefinition{Inspect: in, TemplateXML: xml, AppdataPaths: effective, PathMounts: mounted})
 	defJSON := string(defBytes)
 
 	tg, err := s.store.UpsertTarget(store.Target{ContainerName: name, AppdataPaths: effective, Definition: defJSON})

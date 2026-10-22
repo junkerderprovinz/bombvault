@@ -5,8 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"path"
-	"path/filepath"
 	"slices"
 
 	"github.com/junkerderprovinz/bombvault/internal/restic"
@@ -19,33 +17,28 @@ import (
 // guards below catch it: one by the mount a folder sat on at its last backup,
 // one by the folder having no files while earlier backups held data.
 
-// pathsOnTheirOwnMount returns the paths that sit on a mount strictly below
-// HostMountRoot, and false when the mount table could not be read.
-func (s *Service) pathsOnTheirOwnMount(paths []string) ([]string, bool) {
-	mounts, ok := mountPoints()
+// pathMounts returns, for each path on storage of its own below HostMountRoot,
+// the mount point it sits on, and false when the mount table could not be
+// read.
+func (s *Service) pathMounts(paths []string) (map[string]string, bool) {
+	mounts, ok := mountTable()
 	if !ok {
 		return nil, false
 	}
-	root := path.Clean(filepath.ToSlash(s.cfg.HostMountRoot))
-	var out []string
+	out := map[string]string{}
 	for _, p := range paths {
-		for q := path.Clean(filepath.ToSlash(p)); ; q = path.Dir(q) {
-			if mounts[q] && isStrictSubpath(root, q) {
-				out = append(out, p)
-				break
-			}
-			if path.Dir(q) == q {
-				break
-			}
+		if point, on := s.storageMountOf(mounts, p); on {
+			out[p] = point
 		}
 	}
 	return out, true
 }
 
 // offTheirMount returns the paths of this backup that the last one recorded
-// on a mount of their own and that are on none now. An unreadable mount table
-// or definition refuses nothing.
-func (s *Service) offTheirMount(name string, effective, mountedNow []string, known bool) []string {
+// on a mount of their own and that are not on that mount now: on none, or on
+// one further up such as the folder a disk is mounted into. An unreadable
+// mount table or definition refuses nothing.
+func (s *Service) offTheirMount(name string, effective []string, mountsNow map[string]string, known bool) []string {
 	if !known {
 		return nil
 	}
@@ -59,7 +52,11 @@ func (s *Service) offTheirMount(name string, effective, mountedNow []string, kno
 	}
 	var left []string
 	for _, p := range effective {
-		if slices.Contains(def.MountedPaths, p) && !slices.Contains(mountedNow, p) {
+		now, on := mountsNow[p]
+		switch was, recorded := def.PathMounts[p]; {
+		case recorded && was != now:
+			left = append(left, p)
+		case !recorded && slices.Contains(def.MountedPaths, p) && !on:
 			left = append(left, p)
 		}
 	}
