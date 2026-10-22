@@ -15,6 +15,7 @@ import (
 	"path"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -131,7 +132,9 @@ type receiverSetupResult struct {
 }
 
 // defaultReceiverUser derives a login from the instance name: lower case, with
-// each run of other characters turned into one dash.
+// each run of other characters turned into one dash. The login is also the
+// first folder of the address, so a name rest-server reserves for a
+// repository's own files gets a prefix.
 func defaultReceiverUser(instanceName string) string {
 	var b strings.Builder
 	dash := false
@@ -152,6 +155,9 @@ func defaultReceiverUser(instanceName string) string {
 	}
 	if user == "" {
 		return "bombvault"
+	}
+	if slices.Contains(restReservedFolders, user) {
+		return "bombvault-" + user
 	}
 	return user
 }

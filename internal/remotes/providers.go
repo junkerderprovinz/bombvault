@@ -163,7 +163,8 @@ var providers = []Provider{
 	ownS3("versity", "Versity S3 Gateway", "Other", "versity", false),
 	ownS3("s3", "S3 compatible", "Other", "IconBuckets", true),
 
-	{ID: "rest", Name: "rest-server", Group: GroupServer, Route: RouteRest, Mark: "IconShield", Auth: AuthLogin, Lock: true},
+	{ID: "rest", Name: "rest-server", Group: GroupServer, Route: RouteRest, Mark: "IconShield", Auth: AuthLogin, Lock: true,
+		URLHint: "http://nas:8000/tower"},
 	{ID: "storagebox", Name: "Hetzner Storage Box", Backend: "sftp", Group: GroupServer, Route: RouteRclone,
 		Mark: "IconHetzner", Auth: AuthSSHKey, Preset: map[string]string{"port": "23"}},
 	{ID: "sftp", Name: "SFTP", Backend: "sftp", Group: GroupServer, Route: RouteRclone, Mark: "IconServer", Auth: AuthSSHKey},

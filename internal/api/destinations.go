@@ -7,10 +7,12 @@ import (
 	"log"
 	"maps"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"slices"
 	"strings"
+	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/remotes"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
@@ -251,12 +253,18 @@ func (s *Service) CheckDraft(ctx context.Context, req draftRequest) (DraftCheck,
 	}
 	switch p.Route {
 	case remotes.RouteRest:
-		repo := "rest:" + strings.TrimSpace(req.Settings["url"])
+		addr, err := restAddress(req.Settings["url"])
+		if err != nil {
+			return DraftCheck{}, err
+		}
 		mode, err := s.draftRestMode(req.Settings)
 		if err != nil {
 			return DraftCheck{}, err
 		}
-		reachable, initialized, err := s.probeOffsiteRepo(ctx, repo, mode)
+		if err := s.checkRestDepth(ctx, addr, req.Settings["user"], req.Settings["pass"]); err != nil {
+			return DraftCheck{}, err
+		}
+		reachable, initialized, err := s.probeOffsiteRepo(ctx, "rest:"+addr, mode)
 		return DraftCheck{Reachable: reachable, Initialized: initialized}, err
 	case remotes.RoutePath:
 		dir, err := s.resolveRepo(strings.TrimSpace(req.Settings["path"]))
@@ -394,6 +402,70 @@ func s3Endpoint(p remotes.Provider, settings map[string]string) (string, error) 
 	return ep, nil
 }
 
+// restReservedFolders are the names rest-server reads as a repository's own
+// files and folders. A path segment named like one ends the repository path
+// there, so neither a login nor a folder of an address can be called that.
+var restReservedFolders = []string{"config", "data", "index", "keys", "locks", "snapshots"}
+
+// errRestDestinationTooDeep refuses a rest-server address that leaves a
+// section's folder under it no room: rest-server serves repositories at most
+// two folders deep.
+var errRestDestinationTooDeep = errors.New("this rest-server serves repositories at most two folders deep, and each section gets a folder of its own under this address, so the address can name one folder at most, such as http://nas:8000/tower")
+
+// restAddress is the URL restic gets after "rest:" for what was typed into a
+// rest-server destination's address field. It takes the rest:http://...
+// form BombVault prints elsewhere, and an address without a scheme as plain
+// http, which rest-server serves unless started with --tls.
+func restAddress(typed string) (string, error) {
+	addr := strings.TrimPrefix(strings.TrimRight(strings.TrimSpace(typed), "/"), "rest:")
+	if addr == "" {
+		return "", errors.New("the address is missing")
+	}
+	if !strings.Contains(addr, "://") {
+		addr = "http://" + addr
+	}
+	u, err := url.Parse(addr)
+	if err != nil || u.Host == "" || (u.Scheme != "http" && u.Scheme != "https") {
+		return "", fmt.Errorf("%q is not a rest-server address, which reads like http://nas:8000/tower", scrubSecrets(typed))
+	}
+	for _, seg := range pathElements(u.Path) {
+		if slices.Contains(restReservedFolders, seg) {
+			return "", fmt.Errorf("rest-server reads a folder called %s as part of a repository, so the address cannot have one; rename it on the server", seg)
+		}
+	}
+	return addr, nil
+}
+
+// checkRestDepth asks the rest-server at addr whether a section's folder under
+// it can hold a repository. Only an address two or more folders deep needs
+// asking. rest-server answers a GET of a repository's root with 405 and a
+// path deeper than it serves with 404, so only a 404 refuses: behind a
+// reverse proxy that adds a path prefix the deeper address works.
+func (s *Service) checkRestDepth(ctx context.Context, addr, user, pass string) error {
+	u, err := url.Parse(addr)
+	if err != nil || len(pathElements(u.Path)) < 2 {
+		return nil
+	}
+	ctx, cancel := context.WithTimeout(ctx, 20*time.Second)
+	defer cancel()
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, addr+"/containers/", nil)
+	if err != nil {
+		return nil
+	}
+	if user != "" || pass != "" {
+		req.SetBasicAuth(user, pass)
+	}
+	resp, err := s.restHTTPClient().Do(req)
+	if err != nil {
+		return nil
+	}
+	_ = resp.Body.Close()
+	if resp.StatusCode == http.StatusNotFound {
+		return errRestDestinationTooDeep
+	}
+	return nil
+}
+
 // SaveNewDestination stores a destination the wizard checked. A remote's
 // settings go into the rclone config and an S3 or rest-server login into a
 // credential set of its own; either is taken back when the destination
@@ -461,11 +533,11 @@ func (s *Service) SaveNewDestination(ctx context.Context, req draftRequest) (sto
 		ref := d.CredsRef
 		undo = func() { s.removeCredSet(ref) }
 	case remotes.RouteRest:
-		url := strings.TrimRight(strings.TrimSpace(req.Settings["url"]), "/")
-		if url == "" {
-			return store.OffsiteTarget{}, errors.New("the address is missing")
+		addr, err := restAddress(req.Settings["url"])
+		if err != nil {
+			return store.OffsiteTarget{}, err
 		}
-		d.Repo = "rest:" + url
+		d.Repo = "rest:" + addr
 		if req.CredsRef != "" {
 			d.CredsRef = req.CredsRef
 			break

@@ -416,6 +416,20 @@ func TestReceiverUserIsDerivedFromTheInstanceName(t *testing.T) {
 	}
 }
 
+func TestAReceiverLoginStaysClearOfTheNamesRestServerReserves(t *testing.T) {
+	for in, want := range map[string]string{
+		"Data":      "bombvault-data",
+		"config":    "bombvault-config",
+		"SNAPSHOTS": "bombvault-snapshots",
+		"keys!":     "bombvault-keys",
+		"data box":  "data-box",
+	} {
+		if got := defaultReceiverUser(in); got != want {
+			t.Errorf("defaultReceiverUser(%q) = %q, want %q", in, got, want)
+		}
+	}
+}
+
 func TestATakenLoginGetsTheFirstFreeNumber(t *testing.T) {
 	taken := map[string]bool{"attic": true, "attic-2": true}
 	if got := uniqueReceiverUser("attic", taken); got != "attic-3" {
