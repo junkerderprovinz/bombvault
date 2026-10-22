@@ -5426,6 +5426,13 @@ export function runZFSReplica(id: string): Promise<ZFSCodedEnvelope & { runId?: 
   return fetchJSON(`/api/zfs/datasets/${encodeURIComponent(id)}/replica/run`, { method: "POST" });
 }
 
+/** POST /api/zfs/datasets/{id}/replica/take-over: marks the entry's folder on
+ *  its ZFS server as this instance's, for a folder an earlier install of this
+ *  BombVault made under an instance id a fresh database no longer has. */
+export function takeOverZFSReplicaFolder(id: string): Promise<ZFSCodedEnvelope> {
+  return fetchJSON(`/api/zfs/datasets/${encodeURIComponent(id)}/replica/take-over`, { method: "POST" });
+}
+
 /** An entry Replicate all now left out, with the reason code of the refusal. */
 export interface ZFSReplicaRefused {
   id: string;

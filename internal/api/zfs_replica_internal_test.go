@@ -55,6 +55,19 @@ func (h *replicaHost) Run(_ context.Context, args []string) (string, error) {
 	}
 	last := args[len(args)-1]
 	switch {
+	case args[1] == "set":
+		if owner, ok := strings.CutPrefix(args[2], zfs.SourceProperty+"="); ok {
+			h.owners[last] = owner
+		}
+		return "", nil
+	case slices.Contains(args, zfs.SourceProperty) && slices.Contains(args, "-r"):
+		var b strings.Builder
+		for name, owner := range h.owners {
+			if name == last || strings.HasPrefix(name, last+"/") {
+				fmt.Fprintf(&b, "%s\t%s\n", name, owner)
+			}
+		}
+		return b.String(), nil
 	case slices.Contains(args, zfs.SourceProperty):
 		owner, ok := h.owners[last]
 		if !ok {
@@ -358,6 +371,49 @@ func TestAFolderAnotherInstanceCreatedIsRefused(t *testing.T) {
 	run := r.lastRun()
 	if run.Status != "failed" || zfsRunCode(run.Error) != "target-owned" {
 		t.Errorf("run = %+v, want failed with the code at the end", run.Run)
+	}
+}
+
+func TestTakingOverTheFolderOfAnEarlierInstallLetsTheReplicaGoOn(t *testing.T) {
+	r := newReplicaRig(t)
+	base := "tank/bombvault-replica/bottich"
+	r.server.owners[base] = "before-the-reinstall"
+	r.server.owners[base+"/cache"] = "before-the-reinstall"
+	r.server.owners[base+"/cache/appdata"] = "before-the-reinstall"
+	r.server.owners["tank/bombvault-replica/other"] = "before-the-reinstall"
+	if err := r.s.ReplicateZFSDataset(context.Background(), r.item.ID); zfsReplicaCode(err) != "target-owned" {
+		t.Fatalf("run = %v, want target-owned", err)
+	}
+
+	_, m, _ := r.call(http.MethodPost, "/api/zfs/datasets/"+r.item.ID+"/replica/take-over", "")
+	if m["ok"] != true {
+		t.Fatalf("take-over = %v", m)
+	}
+	id := r.s.instanceID()
+	for _, ds := range []string{base, base + "/cache", base + "/cache/appdata"} {
+		if r.server.owners[ds] != id {
+			t.Errorf("%s is marked %q, want this instance", ds, r.server.owners[ds])
+		}
+	}
+	if r.server.owners["tank/bombvault-replica/other"] != "before-the-reinstall" {
+		t.Error("a folder beside this instance's changed hands")
+	}
+	if err := r.s.ReplicateZFSDataset(context.Background(), r.item.ID); err != nil {
+		t.Fatalf("the run after the take-over: %v", err)
+	}
+	if got := r.entries[0].Placeholders; !slices.Equal(got, []string{base + "/cache/appdata"}) {
+		t.Errorf("placeholders = %q, want the root that is ours again", got)
+	}
+}
+
+func TestTakingOverAFolderThatIsOursAlreadyChangesNothing(t *testing.T) {
+	r := newReplicaRig(t)
+	r.server.owners["tank/bombvault-replica/bottich"] = r.s.instanceID()
+	if err := r.s.TakeOverZFSReplicaFolder(context.Background(), r.item.ID); err != nil {
+		t.Fatal(err)
+	}
+	if sets := r.server.did("set"); len(sets) != 0 {
+		t.Errorf("the take-over wrote %q", sets)
 	}
 }
 

@@ -26,6 +26,7 @@ func (h *Handler) registerZFSReplicaRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/zfs/datasets/{id}/replica", h.handleGetZFSReplica)
 	mux.HandleFunc("PATCH /api/zfs/datasets/{id}/replica", h.handlePatchZFSReplica)
 	mux.HandleFunc("POST /api/zfs/datasets/{id}/replica/run", h.handleRunZFSReplica)
+	mux.HandleFunc("POST /api/zfs/datasets/{id}/replica/take-over", h.handleTakeOverZFSReplicaFolder)
 	mux.HandleFunc("POST /api/zfs/datasets/{id}/replica/restore", h.handleRestoreZFSReplica)
 }
 
@@ -221,6 +222,21 @@ func (h *Handler) handleRunZFSReplica(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"runId": runID}))
+}
+
+// handleTakeOverZFSReplicaFolder makes the folder another instance id marked
+// on the item's server this instance's own.
+// POST /api/zfs/datasets/{id}/replica/take-over
+func (h *Handler) handleTakeOverZFSReplicaFolder(w http.ResponseWriter, r *http.Request) {
+	id, ok := h.zfsIDParam(w, r)
+	if !ok {
+		return
+	}
+	if err := h.svc.TakeOverZFSReplicaFolder(r.Context(), id); err != nil {
+		zfsReplicaFail(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(nil))
 }
 
 // handleRunZFSReplicaAll starts the replicas of the items one after the

@@ -337,6 +337,39 @@ func ParseSourceProperty(out string) string {
 	return v
 }
 
+// SourcePropertyTreeArgs reads SourceProperty as set on dataset and every
+// dataset below it, one "name<TAB>value" line each.
+func SourcePropertyTreeArgs(dataset string) ([]string, error) {
+	if err := validateNameChars(dataset); err != nil {
+		return nil, err
+	}
+	return []string{zfsBinary, "get", "-r", "-H", "-p", "-s", "local", "-o", "name,value", SourceProperty, dataset}, nil
+}
+
+// ParseSourcePropertyTree reads the output of SourcePropertyTreeArgs into the
+// owner each dataset is marked with.
+func ParseSourcePropertyTree(out string) map[string]string {
+	owners := map[string]string{}
+	for _, line := range strings.Split(out, "\n") {
+		name, value, ok := strings.Cut(strings.TrimSpace(line), "\t")
+		if ok && value != "-" {
+			owners[name] = value
+		}
+	}
+	return owners
+}
+
+// SetSourcePropertyArgs marks dataset as the folder of the instance owner.
+func SetSourcePropertyArgs(dataset, owner string) ([]string, error) {
+	if err := validateNameChars(dataset); err != nil {
+		return nil, err
+	}
+	if !ValidSourceID(owner) {
+		return nil, fmt.Errorf("zfs: not an instance id: %.40q", owner)
+	}
+	return []string{zfsBinary, "set", SourceProperty + "=" + owner, dataset}, nil
+}
+
 // MountArgs mounts a filesystem where its mountpoint property says.
 func MountArgs(dataset string) ([]string, error) {
 	if err := validateNameChars(dataset); err != nil {

@@ -13,6 +13,7 @@ import { group, replica, server } from "./replica.testsupport";
 let current: ZFSReplica;
 let progress: ProgressMap = {};
 const patches: ZFSReplicaPatch[] = [];
+const takeOvers: string[] = [];
 // What a PATCH answers. The store keeps the change either way, as the server
 // does when only the request to a paired instance fails.
 let patchAnswer: { ok: boolean; code?: string } = { ok: true };
@@ -24,6 +25,10 @@ vi.mock("../../../lib/api", async (importOriginal) => {
     getZFSReplica: () => Promise.resolve(current),
     listZFSReplicaServers: () => Promise.resolve([server(), server({ id: "off", name: "Old box", enabled: false })]),
     getGroup: () => Promise.resolve(group()),
+    takeOverZFSReplicaFolder: (id: string) => {
+      takeOvers.push(id);
+      return Promise.resolve({ ok: true });
+    },
     patchZFSReplica: (_id: string, patch: ZFSReplicaPatch) => {
       patches.push(patch);
       current = { ...current, ...patch };
@@ -50,6 +55,7 @@ beforeEach(() => {
   current = replica();
   progress = {};
   patches.length = 0;
+  takeOvers.length = 0;
   patchAnswer = { ok: true };
   localStorage.clear();
 });
@@ -302,6 +308,24 @@ describe("replica card", () => {
     current = replica({ state: "waiting", code: "server-disabled" });
     renderCard();
     expect(await screen.findByLabelText(en["zfs.code.server-disabled"])).toBeTruthy();
+  });
+
+  it("takes over a folder an earlier install of this BombVault left, once asked to", async () => {
+    current = replica({ state: "failed", code: "target-owned" });
+    renderCard();
+    fireEvent.click(await screen.findByRole("button", { name: en["zfs.replica.takeOver"] }));
+    const dialog = await screen.findByRole("dialog");
+    expect(within(dialog).getByText(en["zfs.replica.takeOverConfirm"].replace("{server}", "Backup-NAS"))).toBeTruthy();
+    fireEvent.click(within(dialog).getByRole("button", { name: en["zfs.replica.takeOver"] }));
+    await waitFor(() => expect(takeOvers).toEqual(["zfs1"]));
+    expect(await screen.findByText(en["zfs.replica.takenOver"].replace("{server}", "Backup-NAS"))).toBeTruthy();
+  });
+
+  it("offers no take-over for any other failure", async () => {
+    current = replica({ state: "failed", code: "no-common-base" });
+    renderCard();
+    await screen.findByRole("combobox", { name: en["zfs.replica.target"] });
+    expect(screen.queryByRole("button", { name: en["zfs.replica.takeOver"] })).toBeNull();
   });
 
   it("leaves starting a run to the entry page", async () => {

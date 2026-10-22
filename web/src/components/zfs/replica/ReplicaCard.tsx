@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 
-import { listOffsiteTargets, patchZFSReplica, setSectionLocal, updateOffsiteTarget } from "../../../lib/api";
+import { listOffsiteTargets, patchZFSReplica, setSectionLocal, takeOverZFSReplicaFolder, updateOffsiteTarget } from "../../../lib/api";
 import type {
   ZFSPeerState,
   ZFSReplica,
@@ -11,6 +11,7 @@ import type {
 import { humanBytes } from "../../../lib/forecast";
 import { useT, type TranslationKey } from "../../../lib/i18n";
 import { formatDuration, relativeTime } from "../../../lib/reltime";
+import { useConfirm } from "../../../lib/useConfirm";
 import { useDebouncedSave } from "../../../lib/useDebouncedSave";
 import { useToast } from "../../../lib/toast";
 import { zfsCodeSentence } from "../../../lib/zfsCodes";
@@ -81,6 +82,7 @@ export function ReplicaCard({ itemId, name }: { itemId: string; name: string }) 
   const { replica, reload, running, shownName } = useReplicateNow(itemId, name);
   const { servers, reload: reloadServers } = useReplicaServers();
   const group = useGroup();
+  const { confirm, confirmDialog } = useConfirm();
   const [draft, setDraft] = useState<ZFSReplicaPatch>({});
   const [adding, setAdding] = useState(false);
   const { debouncedSave } = useDebouncedSave();
@@ -168,6 +170,26 @@ export function ReplicaCard({ itemId, name }: { itemId: string; name: string }) 
     }
   }
 
+  // The folder carries the instance id of an earlier install of this
+  // BombVault, which a fresh database does not have any more.
+  async function takeOver() {
+    if (!(await confirm(t("zfs.replica.takeOverConfirm").replace("{server}", () => shownName), { confirmKey: "zfs.replica.takeOver" }))) {
+      return;
+    }
+    try {
+      const res = await takeOverZFSReplicaFolder(itemId);
+      if (!res.ok) {
+        push(res.code ? zfsCodeSentence(t, res.code) : (res.error ?? t("settings.error")), "fail");
+        return;
+      }
+      push(t("zfs.replica.takenOver").replace("{server}", () => shownName), "success");
+    } catch (err) {
+      push(err instanceof Error ? err.message : t("settings.error"), "fail");
+    } finally {
+      reload();
+    }
+  }
+
   // After a revoke the same target goes out as a new request, which the
   // receiving instance asks about again.
   async function askAgain() {
@@ -193,6 +215,7 @@ export function ReplicaCard({ itemId, name }: { itemId: string; name: string }) 
 
   return (
     <div className="relative glim-notch-card flex flex-col gap-4 rounded-card bg-carbon-surface p-4">
+      {confirmDialog}
       <h3 className="flex items-center">
         <Badge tone="heading" size="heading" wrap>
           {t("zfs.replica.title")}
@@ -237,6 +260,15 @@ export function ReplicaCard({ itemId, name }: { itemId: string; name: string }) 
               onClick={() => void askAgain()}
             />
           )}
+        </div>
+      )}
+
+      {view.target.kind === "server" && view.state === "failed" && view.code === "target-owned" && (
+        <div data-new="zfs-replica-take-over" className="flex items-center gap-3 flex-wrap">
+          <p className="flex-1 min-w-0 text-xs text-carbon-textSub">
+            {`${t("zfs.code.target-owned")} ${t("zfs.replica.takeOverText")}`}
+          </p>
+          <Button label={t("zfs.replica.takeOver")} labelKey="zfs.replica.takeOver" tone="neutral" onClick={() => void takeOver()} />
         </div>
       )}
 
