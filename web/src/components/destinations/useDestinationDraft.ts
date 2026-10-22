@@ -74,7 +74,12 @@ export function bucketToOpen(p: Provider, bucket: string, settings: Record<strin
 /** Where a destination will sit, as the server will write it. */
 export function previewLocation(p: Provider, settings: Record<string, string>, dir: string): string {
   const d = dir.replace(/^\/+|\/+$/g, "");
-  if (p.route === "rest") return `rest:${(settings.url ?? "").replace(/\/+$/, "")}`;
+  if (p.route === "rest") {
+    // As the server reads it: a pasted rest: prefix goes, and no scheme is plain http.
+    let url = (settings.url ?? "").trim().replace(/\/+$/, "").replace(/^rest:/, "");
+    if (url && !url.includes("://")) url = `http://${url}`;
+    return `rest:${url}`;
+  }
   if (p.route === "path") return (settings.path ?? "").replace(/\/+$/, "");
   if (p.route === "s3") {
     // The server keeps the scheme and host of what was pasted: a restic

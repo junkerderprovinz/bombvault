@@ -70,7 +70,7 @@ func buildDeploySnippet(domain string) (DeploySnippet, error) {
 	}
 
 	// A placeholder address, never a real one.
-	repoHint := fmt.Sprintf("# repo URL for BombVault: rest:http://192.168.x.x:8000/%s/%s", user, domain)
+	repoHint := "# repo URL for BombVault: " + destinationLocation("rest:http://192.168.x.x:8000/"+user, domain)
 
 	dockerRun := fmt.Sprintf(`# 1) create the append-only credential on the storage box:
 echo '%s' >> /path/on/storage-box/restic/.htpasswd

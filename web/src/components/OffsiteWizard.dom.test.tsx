@@ -70,7 +70,7 @@ vi.mock("../lib/api", async (importOriginal) => {
   };
 });
 
-const { OffsiteWizard } = await import("./OffsiteWizard");
+const { OffsiteWizard, storageBoxRepoPath } = await import("./OffsiteWizard");
 
 // The credential-set selector renders for every remote backend, so the repo
 // URL is a parameter.
@@ -255,6 +255,13 @@ it("renders for the self-backup domain", async () => {
   // Step 3 is only reached if the first render, which runs
   // inferBackend(settings[repoKey]), got through.
   expect(screen.getByLabelText(/Credentials|Zugangsdaten/)).toBeTruthy();
+});
+
+it("points the far-side prune job at the folder the repository is in on the storage box", () => {
+  expect(storageBoxRepoPath("config", "")).toBe("/path/on/storage-box/restic/bombvault-config/selfbackup");
+  expect(storageBoxRepoPath("containers", "rest:http://192.0.2.9:8000/tower/containers/")).toBe(
+    "/path/on/storage-box/restic/tower/containers",
+  );
 });
 
 // With --private-repos each htpasswd user only reaches the tree under its own

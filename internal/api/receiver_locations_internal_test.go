@@ -17,7 +17,7 @@ func TestWithdrawingAReceiverSwitchesOffWhatCopiesToItWithoutAskingIt(t *testing
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := st.NoteReceiverLocation("m1", restAddress("http://192.168.1.21:8000/tower")); err != nil {
+	if err := st.NoteReceiverLocation("m1", bareRestAddress("http://192.168.1.21:8000/tower")); err != nil {
 		t.Fatal(err)
 	}
 

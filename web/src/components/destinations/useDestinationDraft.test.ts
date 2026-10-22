@@ -69,4 +69,11 @@ describe("previewLocation", () => {
       "s3:https://acct.r2.cloudflarestorage.com/backups/bv"
     );
   });
+
+  it("reads a rest-server address the way the server does", () => {
+    const rest: Provider = { id: "rest", name: "rest-server", backend: "", group: "server", route: "rest" };
+    expect(previewLocation(rest, { url: "rest:http://nas:8000/tower/" }, "")).toBe("rest:http://nas:8000/tower");
+    expect(previewLocation(rest, { url: "nas:8000/tower" }, "")).toBe("rest:http://nas:8000/tower");
+    expect(previewLocation(rest, { url: "https://nas/tower" }, "")).toBe("rest:https://nas/tower");
+  });
 });

@@ -15,6 +15,7 @@ import (
 
 	"github.com/junkerderprovinz/bombvault/internal/notify"
 	"github.com/junkerderprovinz/bombvault/internal/store"
+	"github.com/junkerderprovinz/bombvault/internal/trust"
 )
 
 // TamperVerdict is the result of an off-site tamper test, which probes the far
@@ -28,14 +29,11 @@ type TamperVerdict struct {
 	Detail    string `json:"detail"`
 }
 
-// tamperHTTPClient is the bounded HTTP client for tamper probes. Redirects are not
-// followed (a redirect is not a delete verdict) and the timeout backstops the
-// per-request context so a wedged server can't hang the test.
-var tamperHTTPClient = &http.Client{
-	Timeout: 25 * time.Second,
-	CheckRedirect: func(*http.Request, []*http.Request) error {
-		return http.ErrUseLastResponse
-	},
+// restHTTPClient is the client for BombVault's own requests to a rest-server.
+// It trusts what restic trusts, the certs folder included, and follows no
+// redirect, since a redirect is not a delete verdict.
+func (s *Service) restHTTPClient() *http.Client {
+	return trust.Client(trust.Dir(s.cfg.DataDir), 25*time.Second)
 }
 
 // AppendOnlyDomains lists the domains with a switched-on off-site target
@@ -243,7 +241,7 @@ func (s *Service) runTamperTestForTarget(ctx context.Context, domain string, tar
 	// rest:http://host:8000/path becomes http://host:8000/path, without a
 	// trailing slash.
 	base := strings.TrimRight(strings.TrimPrefix(loc, "rest:"), "/")
-	verdict, err := probeAppendOnly(ctx, base, creds.RESTUser, creds.RESTPassword)
+	verdict, err := probeAppendOnly(ctx, s.restHTTPClient(), base, creds.RESTUser, creds.RESTPassword)
 	if err != nil {
 		return TamperVerdict{}, err
 	}
@@ -263,7 +261,7 @@ func (s *Service) runTamperTestForTarget(ctx context.Context, domain string, tar
 // probeAppendOnly sends two authenticated DELETEs for objects that cannot
 // exist to the rest-server repository at base and reads whether it refused
 // them. An answer that is no verdict is returned as an error.
-func probeAppendOnly(ctx context.Context, base, user, pass string) (TamperVerdict, error) {
+func probeAppendOnly(ctx context.Context, client *http.Client, base, user, pass string) (TamperVerdict, error) {
 	// Two random object IDs, which cannot name real repo data. rest-server names
 	// every object by its full 64-hex ID; any other length is not an object path.
 	// Measured with and without --append-only:
@@ -287,7 +285,7 @@ func probeAppendOnly(ctx context.Context, base, user, pass string) (TamperVerdic
 	protected := true
 	var details []string
 	for _, url := range probes {
-		p, detail, perr := tamperProbe(ctx, url, user, pass)
+		p, detail, perr := tamperProbe(ctx, client, url, user, pass)
 		if perr != nil {
 			// An unreachable server is neither protected nor unprotected.
 			return TamperVerdict{}, perr
@@ -319,7 +317,7 @@ func probeAppendOnly(ctx context.Context, base, user, pass string) (TamperVerdic
 // object, so a delete of a missing 64-hex object gets 200 or 403. A 404 means
 // the URL is not an object path. Reading an unknown answer as unprotected would
 // fire the protection-lost alert.
-func tamperProbe(ctx context.Context, url, user, pass string) (protected bool, detail string, err error) {
+func tamperProbe(ctx context.Context, client *http.Client, url, user, pass string) (protected bool, detail string, err error) {
 	ctx, cancel := context.WithTimeout(ctx, 20*time.Second)
 	defer cancel()
 	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, url, nil)
@@ -329,7 +327,7 @@ func tamperProbe(ctx context.Context, url, user, pass string) (protected bool, d
 	if user != "" || pass != "" {
 		req.SetBasicAuth(user, pass)
 	}
-	resp, err := tamperHTTPClient.Do(req)
+	resp, err := client.Do(req)
 	if err != nil {
 		return false, "", err // transport error: inconclusive
 	}

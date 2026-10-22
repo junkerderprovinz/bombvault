@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -394,5 +395,90 @@ func TestASectionRefusedForANestedLocationNamesThePlaceInTheWay(t *testing.T) {
 	_, out := f.call(http.MethodPost, "/api/offsite/destinations/"+d.ID+"/domains/containers", nil)
 	if out["code"] != "nested-location" || out["at"] != "s3:http://minio.example:9000/bv" {
 		t.Fatalf("got %v, want the refusal to name the flash off-site field", out)
+	}
+}
+
+func TestARestAddressIsTakenInTheFormsPeopleTypeIt(t *testing.T) {
+	for typed, want := range map[string]string{
+		"http://nas:8000/tower":          "http://nas:8000/tower",
+		" rest:http://nas:8000/tower/ ":  "http://nas:8000/tower",
+		"rest:https://nas/tower":         "https://nas/tower",
+		"nas:8000/tower":                 "http://nas:8000/tower",
+		"192.168.1.5:8000/tower":         "http://192.168.1.5:8000/tower",
+		"https://bv:pw@nas:8000/tower":   "https://bv:pw@nas:8000/tower",
+		"http://nas:8000/data-box/tower": "http://nas:8000/data-box/tower",
+	} {
+		got, err := restAddress(typed)
+		if err != nil || got != want {
+			t.Errorf("restAddress(%q) = %q, %v; want %q", typed, got, err, want)
+		}
+	}
+}
+
+func TestARestAddressRestServerCannotServeIsRefused(t *testing.T) {
+	for _, typed := range []string{
+		"",
+		"rest:",
+		"ftp://nas/tower",
+		"http:///tower",
+		"http://nas:8000/data",
+		"rest:http://nas:8000/tower/config",
+		"http://nas:8000/tower/snapshots/",
+	} {
+		if got, err := restAddress(typed); err == nil {
+			t.Errorf("restAddress(%q) = %q, want a refusal", typed, got)
+		}
+	}
+}
+
+func TestANewRestDestinationStoresTheAddressResticReads(t *testing.T) {
+	svc, _, _ := newConnectionSvc(t, func(string, []string) error { return nil })
+	d, err := svc.SaveNewDestination(context.Background(), draftRequest{
+		Provider: "rest", Name: "Box", Settings: map[string]string{"url": "rest:http://nas:8000/tower/", "user": "tower", "pass": "pw"},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if d.Repo != "rest:http://nas:8000/tower" {
+		t.Fatalf("repo = %q, want rest:http://nas:8000/tower", d.Repo)
+	}
+}
+
+// fakeRestServer routes like rest-server: a repository is at most two folders
+// deep, and a GET of its root answers 405. prefix is a path a reverse proxy in
+// front of it strips.
+func fakeRestServer(prefix string) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		p, ok := strings.CutPrefix(r.URL.Path, prefix)
+		if !ok {
+			http.NotFound(w, r)
+			return
+		}
+		parts := strings.SplitN(p, "/", 4)
+		if len(parts) == 4 && parts[3] == "" && r.Method == http.MethodGet {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+		http.NotFound(w, r)
+	})
+}
+
+func TestARestDestinationTooDeepForItsSectionsIsRefusedAtTheTest(t *testing.T) {
+	srv := httptest.NewServer(fakeRestServer(""))
+	defer srv.Close()
+	proxied := httptest.NewServer(fakeRestServer("/restic"))
+	defer proxied.Close()
+
+	svc, _, _ := newConnectionSvc(t, func(string, []string) error { return nil })
+	ctx := context.Background()
+	if err := svc.checkRestDepth(ctx, srv.URL+"/tower", "tower", "pw"); err != nil {
+		t.Errorf("one folder deep: %v", err)
+	}
+	if err := svc.checkRestDepth(ctx, proxied.URL+"/restic/tower", "tower", "pw"); err != nil {
+		t.Errorf("two folders behind a proxy prefix: %v", err)
+	}
+	_, err := svc.CheckDraft(ctx, draftRequest{Provider: "rest", Settings: map[string]string{"url": srv.URL + "/tower/bombvault", "user": "tower", "pass": "pw"}})
+	if !errors.Is(err, errRestDestinationTooDeep) {
+		t.Fatalf("two folders deep: %v, want errRestDestinationTooDeep", err)
 	}
 }

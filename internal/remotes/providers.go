@@ -194,7 +194,8 @@ var providers = []Provider{
 	// Whoever picks plain S3 knows the server and what it takes.
 	withClasses(ownS3("s3", "S3 compatible", "Other", "IconBuckets", true), awsClasses...),
 
-	{ID: "rest", Name: "rest-server", Group: GroupServer, Route: RouteRest, Mark: "IconShield", Auth: AuthLogin, Lock: true},
+	{ID: "rest", Name: "rest-server", Group: GroupServer, Route: RouteRest, Mark: "IconShield", Auth: AuthLogin, Lock: true,
+		URLHint: "http://nas:8000/tower"},
 	{ID: "storagebox", Name: "Hetzner Storage Box", Backend: "sftp", Group: GroupServer, Route: RouteRclone,
 		Mark: "IconHetzner", Auth: AuthSSHKey, Preset: map[string]string{"port": "23"}, Unasked: sftpOwnKey},
 	{ID: "sftp", Name: "SFTP", Backend: "sftp", Group: GroupServer, Route: RouteRclone, Mark: "IconServer", Auth: AuthSSHKey,

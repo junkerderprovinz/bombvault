@@ -9,9 +9,9 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// restAddress is a rest-server location without the rest: prefix, a login in
-// the URL or a trailing slash, so two spellings of one place compare equal.
-func restAddress(loc string) string {
+// bareRestAddress is a rest-server location without the rest: prefix, a login
+// in the URL or a trailing slash, so two spellings of one place compare equal.
+func bareRestAddress(loc string) string {
 	loc = strings.TrimPrefix(strings.TrimSpace(loc), "rest:")
 	if u, err := url.Parse(loc); err == nil && u.Host != "" {
 		u.User = nil
@@ -22,7 +22,7 @@ func restAddress(loc string) string {
 
 // restLiesAt reports whether the location repo is base or lies below it.
 func restLiesAt(repo, base string) bool {
-	r, b := restAddress(repo), restAddress(base)
+	r, b := bareRestAddress(repo), bareRestAddress(base)
 	return b != "" && (r == b || strings.HasPrefix(r, b+"/"))
 }
 
@@ -43,7 +43,7 @@ func (s *Service) learnReceiverLocations(found []groupReceiverView) {
 			if !restLiesAt(d.Repo, v.URL) {
 				continue
 			}
-			if err := s.store.NoteReceiverLocation(v.MemberID, restAddress(d.Repo)); err != nil {
+			if err := s.store.NoteReceiverLocation(v.MemberID, bareRestAddress(d.Repo)); err != nil {
 				log.Printf("receiver: %v", err)
 			}
 		}

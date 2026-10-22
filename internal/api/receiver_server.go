@@ -15,6 +15,7 @@ import (
 	"path"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -131,7 +132,9 @@ type receiverSetupResult struct {
 }
 
 // defaultReceiverUser derives a login from the instance name: lower case, with
-// each run of other characters turned into one dash.
+// each run of other characters turned into one dash. The login is also the
+// first folder of the address, so a name rest-server reserves for a
+// repository's own files gets a prefix.
 func defaultReceiverUser(instanceName string) string {
 	var b strings.Builder
 	dash := false
@@ -152,6 +155,9 @@ func defaultReceiverUser(instanceName string) string {
 	}
 	if user == "" {
 		return "bombvault"
+	}
+	if slices.Contains(restReservedFolders, user) {
+		return "bombvault-" + user
 	}
 	return user
 }
@@ -495,7 +501,7 @@ func (s *Service) checkReceiver(ctx context.Context, rs store.ReceiverServer, pa
 probing:
 	for len(bases) > 0 {
 		for _, b := range bases {
-			v, err := probeAppendOnly(ctx, b+"/"+rs.User, rs.User, password)
+			v, err := probeAppendOnly(ctx, s.restHTTPClient(), b+"/"+rs.User, rs.User, password)
 			if err != nil {
 				detail = scrubError(err)
 				continue
@@ -922,7 +928,7 @@ func (s *Service) GroupReceiverLogin(ctx context.Context, memberID string) (grou
 	}
 	v := groupReceiverFor(*member, *r)
 	login := groupReceiverLogin{Name: v.Name, URL: v.URL + "/" + r.User, User: r.User, Password: r.Password}
-	if err := s.store.NoteReceiverLocation(memberID, restAddress(login.URL)); err != nil {
+	if err := s.store.NoteReceiverLocation(memberID, bareRestAddress(login.URL)); err != nil {
 		log.Printf("receiver: %v", err)
 	}
 	return login, nil

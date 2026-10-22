@@ -88,3 +88,10 @@ func TestScrubErrorCarriesTheRestAuthHint(t *testing.T) {
 		t.Fatalf("the APP_KEY mapping lost its precedence: %s", got)
 	}
 }
+
+func TestAnUntrustedCertificateSaysWhereToPutIt(t *testing.T) {
+	err := errors.New(`Fatal: unable to open config file: Head "https://nas:8000/tower/config": tls: failed to verify certificate: x509: certificate signed by unknown authority`)
+	if got := scrubError(err); !strings.Contains(got, "certs folder") {
+		t.Fatalf("scrubError = %s, want the certs folder named", got)
+	}
+}

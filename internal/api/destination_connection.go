@@ -104,8 +104,12 @@ func (s *Service) editSignInConnection(ctx context.Context, d store.OffsiteTarge
 	if p.Route == remotes.RouteRest {
 		creds.RESTUser = patched(e.Settings, "user", creds.RESTUser)
 		creds.RESTPassword = cmp.Or(e.Settings["pass"], creds.RESTPassword)
-		if url := strings.TrimRight(strings.TrimSpace(e.Settings["url"]), "/"); url != "" {
-			repo = "rest:" + url
+		if strings.TrimSpace(e.Settings["url"]) != "" {
+			addr, err := restAddress(e.Settings["url"])
+			if err != nil {
+				return store.OffsiteTarget{}, nil, err
+			}
+			repo = "rest:" + addr
 		}
 		draft.Settings = map[string]string{"url": strings.TrimPrefix(repo, "rest:"), "user": creds.RESTUser, "pass": creds.RESTPassword}
 	} else {
