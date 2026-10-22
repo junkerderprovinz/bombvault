@@ -2018,8 +2018,10 @@ type drillTask struct {
 }
 
 // drillTasks returns the scheduled drill tasks: a local "subset" integrity check
-// for every enabled domain, plus an off-site "dr" drill for containers, VMs,
-// flash and files when their off-site repo is configured. Config gets no DR
+// for every enabled domain, plus an off-site "dr" drill for every enabled
+// domain in DRDrillDomains. Whether a domain has an off-site target to drill is
+// asked when the job fires, by the rule the copy goes by, since its targets
+// can be added rows that leave the off-site setting empty. Config gets no DR
 // drill, because a sandbox restore of the settings DB proves nothing; its real
 // recovery path is the staged restart.
 func drillTasks(settings store.Settings) []drillTask {
@@ -2035,24 +2037,17 @@ func drillTasks(settings store.Settings) []drillTask {
 	// An off-site DR drill downloads a whole snapshot, which costs egress on
 	// metered clouds, so these have their own switch.
 	if settings.OffsiteDrillsEnabled {
-		if settings.ContainersEnabled && settings.ContainersOffsite != "" {
-			out = append(out, drillTask{domain: "containers", source: "offsite", kind: "dr"})
-		}
-		if settings.VMsEnabled && settings.VMsOffsite != "" {
-			out = append(out, drillTask{domain: "vms", source: "offsite", kind: "dr"})
-		}
-		if settings.FlashEnabled && settings.FlashOffsite != "" {
-			out = append(out, drillTask{domain: "flash", source: "offsite", kind: "dr"})
-		}
-		if settings.FilesEnabled && settings.FilesOffsite != "" {
-			out = append(out, drillTask{domain: "files", source: "offsite", kind: "dr"})
-		}
-		if settings.ZFSEnabled && settings.ZFSOffsite != "" {
-			out = append(out, drillTask{domain: "zfs", source: "offsite", kind: "dr"})
+		for _, d := range enabledDrillDomains(settings) {
+			if slices.Contains(DRDrillDomains, d) {
+				out = append(out, drillTask{domain: d, source: "offsite", kind: "dr"})
+			}
 		}
 	}
 	return out
 }
+
+// DRDrillDomains are the domains the scheduled off-site DR drill covers.
+var DRDrillDomains = []string{"containers", "vms", "flash", "files", "zfs"}
 
 // enabledDrillDomains returns each domain switched on in Settings. A disabled
 // domain has no current backups to drill.

@@ -1418,6 +1418,33 @@ func TestDomainStatusOffsiteDrillOptOutNeutralNotRed(t *testing.T) {
 	}
 }
 
+// The scheduler never DR-drills config, so its status must not claim a
+// scheduled drill that could later read overdue.
+func TestDomainStatusClaimsNoScheduledDRDrillForConfig(t *testing.T) {
+	dir := t.TempDir()
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	s.ConfigEnabled = true
+	s.ConfigOffsite = "rest:http://192.168.1.2:8000/config"
+	s.DrillsEnabled = true
+	s.OffsiteDrillsEnabled = true
+	s.DrillsSchedule = "weekly Sun 03:00"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, &fakeResticEngine{})
+	statuses, err := svc.DomainStatus()
+	if err != nil {
+		t.Fatalf("DomainStatus: %v", err)
+	}
+	for _, d := range statuses {
+		if d.Domain == "config" && (d.OffsiteDrillScheduled || d.DrillState != "") {
+			t.Fatalf("config: scheduled %v, drill state %q; want no DR drill claim", d.OffsiteDrillScheduled, d.DrillState)
+		}
+	}
+}
+
 // TestDomainStatusCarriesDrillDetail pins #30: buildStatus must carry the scrubbed
 // failure reason of the last LOCAL subset drill and the last OFF-SITE DR drill into
 // the status entry (VerifiedDetail / DrillDetail) so the dashboard can show WHY +

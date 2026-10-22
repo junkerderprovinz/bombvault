@@ -3072,9 +3072,10 @@ type DomainStatusEntry struct {
 	LastOffsiteSubsetAt int64 `json:"lastOffsiteSubsetAt"`
 	LastOffsiteSubsetOK bool  `json:"lastOffsiteSubsetOK"`
 	// OffsiteDrillScheduled is true only when the scheduler actually runs an
-	// off-site DR drill for this domain (DrillsEnabled AND OffsiteDrillsEnabled AND
-	// an off-site repo configured). When false but the domain has an off-site repo,
-	// the dashboard shows a muted "manual only" pill instead of a red drFailed (#37).
+	// off-site DR drill for this domain: drills and off-site drills on, a domain
+	// the DR drill covers, and an off-site target in use. When false but the
+	// domain has an off-site repo, the dashboard shows a muted "manual only" pill
+	// instead of a red drFailed (#37).
 	OffsiteDrillScheduled bool   `json:"offsiteDrillScheduled"`
 	Protection            string `json:"protection"` // "" (disabled) | "red" | "amber" | "green"
 
@@ -3519,8 +3520,13 @@ func (s *Service) domainStatusFrom(settings store.Settings) ([]DomainStatusEntry
 		// off-site DR drill (#37) thus reuses the proven global-drills-off neutral
 		// path: drillPeriod stays 0, so DrillState is "" (muted) and protectionLevel
 		// ignores DR (both its DR branches are drillPeriod>0-guarded).
+		// The scheduler drills only a domain it covers that has an off-site
+		// target in use, so config and a ZFS domain copied by replicas alone
+		// keep the neutral path too.
+		drScheduled := settings.DrillsEnabled && settings.OffsiteDrillsEnabled && d.enabled &&
+			slices.Contains(schedule.DRDrillDomains, d.name) && s.offsiteRepoFor(d.name, settings) != ""
 		var drillPeriod int64
-		if settings.DrillsEnabled && settings.OffsiteDrillsEnabled {
+		if drScheduled {
 			drillPeriod = cadencePeriodSeconds(settings.DrillsSchedule)
 		}
 
@@ -3591,7 +3597,7 @@ func (s *Service) domainStatusFrom(settings store.Settings) ([]DomainStatusEntry
 			LastDRDrillSnapshot:   drSnapshot,
 			LastOffsiteSubsetAt:   lastOffsiteSubsetAt,
 			LastOffsiteSubsetOK:   lastOffsiteSubsetOK,
-			OffsiteDrillScheduled: settings.DrillsEnabled && settings.OffsiteDrillsEnabled && offsiteConfigured,
+			OffsiteDrillScheduled: drScheduled && offsiteConfigured,
 			DrillDetail:           drDetail,
 			Protection:            protection,
 			TamperState:           checks.Tamper,

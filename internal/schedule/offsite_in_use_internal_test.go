@@ -66,6 +66,25 @@ func TestTheScheduledDrillsLeaveOutADomainWhoseTargetsAreAllOff(t *testing.T) {
 	}
 }
 
+// A group peer's or an added target leaves the off-site setting empty, and the
+// DR drill still goes to it.
+func TestTheScheduledDRDrillRunsForATargetTheOffsiteSettingDoesNotName(t *testing.T) {
+	sc := newOffsiteScheduler(true, newFakeJobRuns())
+	var ran []drillTask
+	sc.SetDrillJob(func(domain, source, kind string) error {
+		ran = append(ran, drillTask{domain: domain, source: source, kind: kind})
+		return nil
+	})
+	settings := drillSettings
+	settings.ContainersOffsite = ""
+
+	fireJob(t, sc, settings, "drill")
+
+	if !hasDrillTask(ran, drillTask{domain: "containers", source: "offsite", kind: "dr"}) {
+		t.Fatalf("drills run %v, want the off-site DR drill", ran)
+	}
+}
+
 func TestATamperSweepWithEveryTargetOffRunsNothingAndRecordsNoRun(t *testing.T) {
 	jobRuns := newFakeJobRuns()
 	sc := newOffsiteScheduler(false, jobRuns)
