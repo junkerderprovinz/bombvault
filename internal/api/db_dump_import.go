@@ -8,6 +8,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -405,19 +406,12 @@ func dependentNames(deps []importDependent) string {
 }
 
 // stopImportDependents stops the running containers the database's backup
-// stops too. An app left running reconnects to the fresh database and can
-// create its own schema there before the dump arrives, and the dump then
-// collides with it.
+// stops too, and the apps whose backup stops the database. An app left
+// running reconnects to the fresh database and can create its own schema
+// there before the dump arrives, and the dump then collides with it.
 func (s *Service) stopImportDependents(ctx context.Context, name string) []importDependent {
-	tg, err := s.store.GetTargetByContainer(name)
-	if err != nil {
-		if !errors.Is(err, sql.ErrNoRows) {
-			log.Printf("api: import database dump into %q: read the containers to stop: %v", name, err) //nolint:gosec // G706: name is %q-quoted
-		}
-		return nil
-	}
 	var stopped []importDependent
-	for _, dep := range tg.StopContainers {
+	for _, dep := range s.importDependentNames(name) {
 		di, err := s.inspectNamed(ctx, dep)
 		if err != nil {
 			log.Printf("api: import database dump into %q: inspect %q: %v (leaving as-is)", name, dep, err) //nolint:gosec // G706: names are %q-quoted
@@ -438,6 +432,33 @@ func (s *Service) stopImportDependents(ctx context.Context, name string) []impor
 		})
 	}
 	return stopped
+}
+
+// importDependentNames lists the containers an import into the database name
+// stops. The list under "Stop other containers" may sit on the database, or
+// on the app with the database in it, as its hint suggests.
+func (s *Service) importDependentNames(name string) []string {
+	targets, err := s.store.ListTargets()
+	if err != nil {
+		log.Printf("api: import database dump into %q: read the containers to stop: %v", name, err) //nolint:gosec // G706: name is %q-quoted
+		return nil
+	}
+	var own, apps []string
+	for _, tg := range targets {
+		switch {
+		case tg.ContainerName == name:
+			own = tg.StopContainers
+		case slices.Contains(tg.StopContainers, name):
+			apps = append(apps, tg.ContainerName)
+		}
+	}
+	var out []string
+	for _, n := range append(slices.Clone(own), apps...) {
+		if n != name && n != "" && !slices.Contains(out, n) {
+			out = append(out, n)
+		}
+	}
+	return out
 }
 
 // startImportDependents brings the stopped containers back in depends_on

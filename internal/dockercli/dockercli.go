@@ -172,7 +172,35 @@ func (c *Client) Inspect(ctx context.Context, name string) (model.Inspect, error
 		return model.Inspect{}, fmt.Errorf("dockercli: inspect: %w", err)
 	}
 	c.fillVolumeMountSources(ctx, name, resp.Mounts)
-	return mapInspect(resp), nil
+	out := mapInspect(resp)
+	// Without the image the values stay as they are, which recreates the
+	// container as it ran.
+	if img, err := c.api.ImageInspect(ctx, out.Image); err == nil && img.Config != nil {
+		withoutImageDefaults(&out.Config, imageDefaults{
+			Entrypoint: img.Config.Entrypoint, Cmd: img.Config.Cmd,
+			WorkingDir: img.Config.WorkingDir, StopSignal: img.Config.StopSignal,
+		})
+	}
+	out.HostConfig.NetworkMode = c.namespaceByName(ctx, out.HostConfig.NetworkMode)
+	out.HostConfig.PidMode = c.namespaceByName(ctx, out.HostConfig.PidMode)
+	out.HostConfig.IpcMode = c.namespaceByName(ctx, out.HostConfig.IpcMode)
+	return out, nil
+}
+
+// namespaceByName turns "container:<id>" into "container:<name>". Docker
+// stores the other container's ID, which a recreate of that container
+// replaces, while its name stays. A mode whose container is gone keeps the
+// ID.
+func (c *Client) namespaceByName(ctx context.Context, mode string) string {
+	ref, ok := strings.CutPrefix(mode, "container:")
+	if !ok || ref == "" {
+		return mode
+	}
+	resp, err := c.api.ContainerInspect(ctx, ref)
+	if err != nil || resp.ContainerJSONBase == nil || resp.Name == "" {
+		return mode
+	}
+	return "container:" + normalizeName(resp.Name)
 }
 
 // needsVolumeMountpoint reports whether a Mounts entry is a named-volume mount
@@ -224,7 +252,9 @@ func (c *Client) VolumeInspect(ctx context.Context, name string) (string, error)
 }
 
 // Stop stops a container, sending SIGKILL after timeout if it has not exited.
-// The Docker API expresses the grace period in whole seconds; a positive
+// A container that set a longer stop timeout of its own gets that one, since
+// a database or game server given one needs it to shut down cleanly. The
+// Docker API expresses the grace period in whole seconds; a positive
 // sub-second timeout is rounded up to 1s so it never collapses to an immediate
 // SIGKILL.
 func (c *Client) Stop(ctx context.Context, name string, timeout time.Duration) error {
@@ -232,10 +262,24 @@ func (c *Client) Stop(ctx context.Context, name string, timeout time.Duration) e
 	if secs == 0 && timeout > 0 {
 		secs = 1
 	}
+	if resp, err := c.api.ContainerInspect(ctx, name); err == nil && resp.Config != nil {
+		secs = stopGrace(secs, resp.Config.StopTimeout)
+	}
 	if err := c.api.ContainerStop(ctx, name, container.StopOptions{Timeout: &secs}); err != nil {
 		return fmt.Errorf("dockercli: stop: %w", err)
 	}
 	return nil
+}
+
+// stopGrace is the grace period in seconds a stop gives: the caller's, or the
+// container's own when that is longer. An own timeout without limit is not
+// taken over, so a backup cannot wait forever on a container that never
+// exits.
+func stopGrace(secs int, own *int) int {
+	if own != nil && *own > secs {
+		return *own
+	}
+	return secs
 }
 
 // Start starts a container by name or ID.
@@ -710,6 +754,13 @@ func mapInspect(resp container.InspectResponse) model.Inspect {
 				Test: hc.Test, Interval: hc.Interval, Timeout: hc.Timeout, StartPeriod: hc.StartPeriod, Retries: hc.Retries,
 			}
 		}
+		out.Config.Entrypoint = []string(resp.Config.Entrypoint)
+		out.Config.WorkingDir = resp.Config.WorkingDir
+		out.Config.StopSignal = resp.Config.StopSignal
+		out.Config.StopTimeout = resp.Config.StopTimeout
+		out.Config.Tty = resp.Config.Tty
+		out.Config.OpenStdin = resp.Config.OpenStdin
+		out.Config.Hostname, out.Config.Domainname = ownHostname(resp)
 	}
 	for _, m := range resp.Mounts {
 		out.Mounts = append(out.Mounts, model.Mount{
@@ -721,6 +772,50 @@ func mapInspect(resp container.InspectResponse) model.Inspect {
 	out.Network = mapPrimaryNetwork(resp)
 	out.Networks = mapAllNetworks(resp)
 	return out
+}
+
+// ownHostname returns the hostname and domain name the container was given.
+// Docker fills in the short ID, the host's name on host networking and the
+// other container's on a shared network or UTS namespace, and it refuses a
+// hostname next to the last two, so none of those is kept.
+func ownHostname(resp container.InspectResponse) (string, string) {
+	if resp.Config == nil {
+		return "", ""
+	}
+	host := resp.Config.Hostname
+	if base := resp.ContainerJSONBase; base != nil {
+		if hc := base.HostConfig; hc != nil && (strings.HasPrefix(string(hc.NetworkMode), "container:") || hc.NetworkMode == "host" || hc.UTSMode == "host") {
+			return "", ""
+		}
+		if len(base.ID) >= 12 && host == base.ID[:12] {
+			host = ""
+		}
+	}
+	return host, resp.Config.Domainname
+}
+
+// imageDefaults is what an image gives a container that sets none of its own.
+type imageDefaults struct {
+	Entrypoint, Cmd        []string
+	WorkingDir, StopSignal string
+}
+
+// withoutImageDefaults clears what the container took over from its image
+// unchanged. A recreate from a newer image then runs that image's entrypoint,
+// working directory and stop signal instead of the old one's. An entrypoint
+// is kept when the container has no command while the image has one: setting
+// the entrypoint is what cleared the command, and leaving it out would bring
+// the image's command back.
+func withoutImageDefaults(cfg *model.Config, img imageDefaults) {
+	if slices.Equal(cfg.Entrypoint, img.Entrypoint) && (len(cfg.Cmd) > 0 || len(img.Cmd) == 0) {
+		cfg.Entrypoint = nil
+	}
+	if cfg.WorkingDir == img.WorkingDir {
+		cfg.WorkingDir = ""
+	}
+	if cfg.StopSignal == img.StopSignal {
+		cfg.StopSignal = ""
+	}
 }
 
 // mapAllNetworks captures every network the container is attached to, so a
@@ -827,6 +922,9 @@ func mapHostConfig(hc *container.HostConfig) model.HostConfig {
 			Driver: r.Driver, Count: r.Count, DeviceIDs: r.DeviceIDs, Capabilities: r.Capabilities, Options: r.Options,
 		})
 	}
+	for _, m := range hc.Mounts {
+		out.Mounts = append(out.Mounts, mountSpecOf(m))
+	}
 	for _, w := range hc.BlkioWeightDevice {
 		if w != nil {
 			out.BlkioWeightDevice = append(out.BlkioWeightDevice, model.WeightDevice{Path: w.Path, Weight: w.Weight})
@@ -864,6 +962,56 @@ func mapHostConfig(hc *container.HostConfig) model.HostConfig {
 	return out
 }
 
+func mountSpecOf(m mount.Mount) model.MountSpec {
+	out := model.MountSpec{
+		Type: string(m.Type), Source: m.Source, Target: m.Target, ReadOnly: m.ReadOnly, Consistency: string(m.Consistency),
+	}
+	if o := m.BindOptions; o != nil {
+		out.BindOptions = &model.BindOptions{
+			Propagation: string(o.Propagation), NonRecursive: o.NonRecursive, CreateMountpoint: o.CreateMountpoint,
+			ReadOnlyNonRecursive: o.ReadOnlyNonRecursive, ReadOnlyForceRecursive: o.ReadOnlyForceRecursive,
+		}
+	}
+	if o := m.VolumeOptions; o != nil {
+		out.VolumeOptions = &model.VolumeOptions{NoCopy: o.NoCopy, Labels: o.Labels, Subpath: o.Subpath}
+		if o.DriverConfig != nil {
+			out.VolumeOptions.DriverName, out.VolumeOptions.DriverOptions = o.DriverConfig.Name, o.DriverConfig.Options
+		}
+	}
+	if o := m.TmpfsOptions; o != nil {
+		out.TmpfsOptions = &model.TmpfsOptions{SizeBytes: o.SizeBytes, Mode: uint32(o.Mode), Options: o.Options}
+	}
+	if m.ImageOptions != nil {
+		out.ImageSubpath = m.ImageOptions.Subpath
+	}
+	return out
+}
+
+func mountOf(m model.MountSpec) mount.Mount {
+	out := mount.Mount{
+		Type: mount.Type(m.Type), Source: m.Source, Target: m.Target, ReadOnly: m.ReadOnly, Consistency: mount.Consistency(m.Consistency),
+	}
+	if o := m.BindOptions; o != nil {
+		out.BindOptions = &mount.BindOptions{
+			Propagation: mount.Propagation(o.Propagation), NonRecursive: o.NonRecursive, CreateMountpoint: o.CreateMountpoint,
+			ReadOnlyNonRecursive: o.ReadOnlyNonRecursive, ReadOnlyForceRecursive: o.ReadOnlyForceRecursive,
+		}
+	}
+	if o := m.VolumeOptions; o != nil {
+		out.VolumeOptions = &mount.VolumeOptions{NoCopy: o.NoCopy, Labels: o.Labels, Subpath: o.Subpath}
+		if o.DriverName != "" || len(o.DriverOptions) > 0 {
+			out.VolumeOptions.DriverConfig = &mount.Driver{Name: o.DriverName, Options: o.DriverOptions}
+		}
+	}
+	if o := m.TmpfsOptions; o != nil {
+		out.TmpfsOptions = &mount.TmpfsOptions{SizeBytes: o.SizeBytes, Mode: os.FileMode(o.Mode), Options: o.Options}
+	}
+	if m.ImageSubpath != "" {
+		out.ImageOptions = &mount.ImageOptions{Subpath: m.ImageSubpath}
+	}
+	return out
+}
+
 func throttlesOf(in []*blkiodev.ThrottleDevice) []model.ThrottleDevice {
 	var out []model.ThrottleDevice
 	for _, d := range in {
@@ -886,11 +1034,19 @@ func throttlesFrom(in []model.ThrottleDevice) []*blkiodev.ThrottleDevice {
 // inspect, preserving the security-relevant fields (SEC parity).
 func buildCreateConfig(in model.Inspect) (*container.Config, *container.HostConfig) {
 	cfg := &container.Config{
-		Image:  in.Config.Image,
-		Env:    in.Config.Env,
-		Cmd:    in.Config.Cmd,
-		User:   in.Config.User,
-		Labels: in.Config.Labels,
+		Image:       in.Config.Image,
+		Env:         in.Config.Env,
+		Cmd:         in.Config.Cmd,
+		User:        in.Config.User,
+		Labels:      in.Config.Labels,
+		Entrypoint:  in.Config.Entrypoint,
+		WorkingDir:  in.Config.WorkingDir,
+		StopSignal:  in.Config.StopSignal,
+		StopTimeout: in.Config.StopTimeout,
+		Hostname:    in.Config.Hostname,
+		Domainname:  in.Config.Domainname,
+		Tty:         in.Config.Tty,
+		OpenStdin:   in.Config.OpenStdin,
 	}
 	if hc := in.Config.Healthcheck; hc != nil {
 		cfg.Healthcheck = &container.HealthConfig{
@@ -963,6 +1119,9 @@ func buildCreateConfig(in model.Inspect) (*container.Config, *container.HostConf
 	}
 	for _, u := range hc.Ulimits {
 		hostCfg.Ulimits = append(hostCfg.Ulimits, &container.Ulimit{Name: u.Name, Soft: u.Soft, Hard: u.Hard})
+	}
+	for _, m := range hc.Mounts {
+		hostCfg.Mounts = append(hostCfg.Mounts, mountOf(m))
 	}
 	if len(hc.PortBindings) > 0 {
 		hostCfg.PortBindings = make(nat.PortMap, len(hc.PortBindings))

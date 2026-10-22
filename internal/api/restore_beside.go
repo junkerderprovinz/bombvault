@@ -312,7 +312,7 @@ func (s *Service) prepareRestoreBeside(ctx context.Context, name, snapshotID, so
 	for i, r := range roots {
 		hostRoots[i] = besideRoot{original: s.toHostPath(r.original), copy: s.toHostPath(r.copy)}
 	}
-	binds, shared, err := besideBinds(in.HostConfig.Binds, hostRoots)
+	binds, shared, err := besideBinds(in.HostConfig.VolumeBinds(), hostRoots)
 	if err != nil {
 		return containerRestorePlan{}, err
 	}
@@ -326,7 +326,7 @@ func (s *Service) prepareRestoreBeside(ctx context.Context, name, snapshotID, so
 	}
 
 	in.Name = copyName
-	in.HostConfig.Binds = binds
+	in.HostConfig = in.HostConfig.WithVolumeBinds(binds)
 	in.Mounts = slices.Clone(in.Mounts)
 	for i, m := range in.Mounts {
 		if moved, ok := besidePath(hostRoots, path.Clean(m.Source)); ok {

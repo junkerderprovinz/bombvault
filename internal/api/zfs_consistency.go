@@ -205,7 +205,13 @@ func (c *zfsConsistency) stop(ctx context.Context, deps []backup.StopContainer) 
 // call is therefore checked against the container itself.
 func (c *zfsConsistency) stopOne(ctx context.Context, dep backup.StopContainer) (bool, error) {
 	detached := context.WithoutCancel(ctx)
-	sctx, cancel := context.WithTimeout(detached, zfsStopTimeout+zfsStopKillMargin)
+	// The stop gives a container its own longer stop timeout, so the call
+	// gets that long too.
+	grace := zfsStopTimeout
+	if in, err := c.svc.docker.Inspect(detached, dep.ID); err == nil && in.Config.StopTimeout != nil {
+		grace = max(grace, time.Duration(*in.Config.StopTimeout)*time.Second)
+	}
+	sctx, cancel := context.WithTimeout(detached, grace+zfsStopKillMargin)
 	defer cancel()
 	err := c.svc.docker.Stop(sctx, dep.ID, zfsStopTimeout)
 	if err == nil {

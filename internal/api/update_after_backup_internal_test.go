@@ -125,6 +125,50 @@ func TestUpdateAfterBackup_RecreatesOnNewerImage(t *testing.T) {
 	}
 }
 
+// rejoiningUpdateDocker recreates the containers sharing a namespace, the way
+// dockercli does, and reports one it could not bring back.
+type rejoiningUpdateDocker struct {
+	*updateFakeDocker
+	notBack []string
+}
+
+func (f *rejoiningUpdateDocker) ContainerID(context.Context, string) (string, error) { return "", nil }
+
+func (f *rejoiningUpdateDocker) RejoinNamespace(_ context.Context, oldID, parent string) ([]string, error) {
+	f.calls = append(f.calls, "rejoin:"+oldID+"->"+parent)
+	return f.notBack, nil
+}
+
+// Updating gluetun gives it a new ID, which the containers routed through it
+// cannot start against. They are recreated onto it, and one that does not
+// come back is named on the update run.
+func TestUpdateAfterBackup_RecreatesTheContainersSharingItsNetwork(t *testing.T) {
+	svc, st := newUpdateTestSvc(t)
+	tg, err := st.UpsertTarget(store.Target{ContainerName: "gluetun"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	f := &rejoiningUpdateDocker{updateFakeDocker: &updateFakeDocker{imageID: "sha256:NEW"}, notBack: []string{"prowlarr"}}
+	svc.docker = f
+
+	in := model.Inspect{ID: "old-gluetun", Name: "/gluetun", Image: "sha256:OLD", Config: model.Config{Image: "qmcgaw/gluetun"}}
+	updateAfterBackup(svc, "gluetun", in, tg.ID)
+
+	calls := strings.Join(f.calls, ",")
+	if !strings.HasSuffix(calls, "createAndStart:/gluetun,rejoin:old-gluetun->gluetun") {
+		t.Fatalf("the sharers must be recreated after gluetun: %v", f.calls)
+	}
+	runs, err := st.ListRuns(10)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, r := range runs {
+		if r.Kind == "update" && (r.Status != "success" || r.Error != store.NoteContainersNotBack+": prowlarr") {
+			t.Fatalf("update run = %+v, want a success naming the container still down", r)
+		}
+	}
+}
+
 // An unchanged image leaves the container alone and records no update run.
 func TestUpdateAfterBackup_SkipsWhenUpToDate(t *testing.T) {
 	svc, st := newUpdateTestSvc(t)

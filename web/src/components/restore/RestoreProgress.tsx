@@ -13,7 +13,7 @@ import type { BackupWatchState } from "../../lib/backupWatch";
 import { humanBytes } from "../../lib/forecast";
 import type { ProgressState } from "../../lib/progress";
 import type { useT } from "../../lib/i18n";
-import { RESTORE_NO_RUNTIME, restoreNotes, RunReasonText } from "../../lib/runReason";
+import { CONTAINERS_NOT_BACK, RESTORE_NO_RUNTIME, restoreNotes, RunReasonText } from "../../lib/runReason";
 import { Button } from "../Button";
 import { InfoBubble } from "../InfoBubble";
 import { ProgressBar } from "../ProgressBar";
@@ -119,6 +119,11 @@ export function RestoreProgress({
       {left && left.unlinked.length > 0 && (
         <p className="text-xs text-statusWarn wrap-break-word">
           {t("restore.withoutLinksDone").replace("{name}", name).replace("{links}", left.unlinked.join(", "))}
+        </p>
+      )}
+      {left && left.notBack.length > 0 && (
+        <p className="text-xs text-statusWarn wrap-break-word">
+          <RunReasonText reason={`${CONTAINERS_NOT_BACK}: ${left.notBack.join(", ")}`} t={t} />
         </p>
       )}
       {state.phase === "cancelled" && (

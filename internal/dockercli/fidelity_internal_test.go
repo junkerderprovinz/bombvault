@@ -3,6 +3,7 @@ package dockercli
 import (
 	"encoding/json"
 	"slices"
+	"strings"
 	"testing"
 
 	"github.com/docker/docker/api/types/blkiodev"
@@ -338,6 +339,111 @@ func TestRestoreKeepsLogOptions(t *testing.T) {
 	})
 	if hc.LogConfig.Type != "json-file" || hc.LogConfig.Config["max-size"] != "50m" || hc.LogConfig.Config["max-file"] != "1" {
 		t.Fatalf("log config = %+v", hc.LogConfig)
+	}
+}
+
+// A Nextcloud cron sidecar runs its own entrypoint without a command, and a
+// compose stack hands volumes with options in the long form. Both, and the
+// container's hostname, stop and terminal settings, come back on a recreate.
+func TestRecreateKeepsEntrypointHostnameStopSettingsAndLongFormVolumes(t *testing.T) {
+	stopAfter := 120
+	src := &container.HostConfig{Mounts: []mount.Mount{
+		{Type: mount.TypeBind, Source: "/mnt/user/appdata/nc", Target: "/var/www/html", BindOptions: &mount.BindOptions{Propagation: mount.PropagationRSlave}},
+		{Type: mount.TypeVolume, Source: "nc_db", Target: "/var/lib/mysql", ReadOnly: true, VolumeOptions: &mount.VolumeOptions{NoCopy: true, Subpath: "data", DriverConfig: &mount.Driver{Name: "local", Options: map[string]string{"o": "bind"}}}},
+		{Type: mount.TypeTmpfs, Target: "/tmp", TmpfsOptions: &mount.TmpfsOptions{SizeBytes: 64 << 20, Mode: 0o1777}},
+	}}
+	resp := container.InspectResponse{
+		ContainerJSONBase: &container.ContainerJSONBase{ID: strings.Repeat("c", 64), Name: "/nextcloud-cron", HostConfig: src},
+		Config: &container.Config{
+			Image: "nextcloud:29", Entrypoint: []string{"/cron.sh"}, Hostname: "cloud", Domainname: "lan",
+			WorkingDir: "/var/www/html", StopSignal: "SIGINT", StopTimeout: &stopAfter, Tty: true, OpenStdin: true,
+		},
+	}
+	raw, err := json.Marshal(mapInspect(resp))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var in model.Inspect
+	if err := json.Unmarshal(raw, &in); err != nil {
+		t.Fatal(err)
+	}
+	cfg, hc := buildCreateConfig(in)
+
+	if !slices.Equal(cfg.Entrypoint, []string{"/cron.sh"}) || cfg.Cmd != nil {
+		t.Fatalf("entrypoint = %v, cmd = %v", cfg.Entrypoint, cfg.Cmd)
+	}
+	if cfg.Hostname != "cloud" || cfg.Domainname != "lan" || cfg.WorkingDir != "/var/www/html" {
+		t.Fatalf("hostname, domain and workdir = %q %q %q", cfg.Hostname, cfg.Domainname, cfg.WorkingDir)
+	}
+	if cfg.StopSignal != "SIGINT" || cfg.StopTimeout == nil || *cfg.StopTimeout != 120 || !cfg.Tty || !cfg.OpenStdin {
+		t.Fatalf("stop and terminal settings = %q %v %v %v", cfg.StopSignal, cfg.StopTimeout, cfg.Tty, cfg.OpenStdin)
+	}
+	if len(hc.Mounts) != 3 {
+		t.Fatalf("mounts = %+v", hc.Mounts)
+	}
+	bind, vol, tmp := hc.Mounts[0], hc.Mounts[1], hc.Mounts[2]
+	if bind.Source != "/mnt/user/appdata/nc" || bind.BindOptions == nil || bind.BindOptions.Propagation != mount.PropagationRSlave {
+		t.Fatalf("bind = %+v", bind)
+	}
+	if vol.Source != "nc_db" || !vol.ReadOnly || vol.VolumeOptions == nil || !vol.VolumeOptions.NoCopy || vol.VolumeOptions.Subpath != "data" ||
+		vol.VolumeOptions.DriverConfig == nil || vol.VolumeOptions.DriverConfig.Options["o"] != "bind" {
+		t.Fatalf("volume = %+v %+v", vol, vol.VolumeOptions)
+	}
+	if tmp.Type != mount.TypeTmpfs || tmp.TmpfsOptions == nil || tmp.TmpfsOptions.SizeBytes != 64<<20 || tmp.TmpfsOptions.Mode != 0o1777 {
+		t.Fatalf("tmpfs = %+v", tmp)
+	}
+}
+
+// Docker fills in a hostname the container never asked for, and refuses one
+// next to a shared network or UTS namespace.
+func TestRecreateLeavesOutTheHostnameDockerChose(t *testing.T) {
+	id := strings.Repeat("d", 64)
+	cases := map[string]container.InspectResponse{
+		"short ID": {
+			ContainerJSONBase: &container.ContainerJSONBase{ID: id, HostConfig: &container.HostConfig{NetworkMode: "bridge"}},
+			Config:            &container.Config{Hostname: id[:12]},
+		},
+		"host network": {
+			ContainerJSONBase: &container.ContainerJSONBase{ID: id, HostConfig: &container.HostConfig{NetworkMode: "host"}},
+			Config:            &container.Config{Hostname: "Tower"},
+		},
+		"shared network": {
+			ContainerJSONBase: &container.ContainerJSONBase{ID: id, HostConfig: &container.HostConfig{NetworkMode: "container:gluetun"}},
+			Config:            &container.Config{Hostname: "gluetun", Domainname: "vpn"},
+		},
+	}
+	for name, resp := range cases {
+		if cfg, _ := buildCreateConfig(mapInspect(resp)); cfg.Hostname != "" || cfg.Domainname != "" {
+			t.Errorf("%s: hostname = %q, domain = %q, want Docker to choose", name, cfg.Hostname, cfg.Domainname)
+		}
+	}
+}
+
+func TestRecreateLeavesTheImagesOwnDefaultsToTheImage(t *testing.T) {
+	img := imageDefaults{Entrypoint: []string{"/init"}, Cmd: []string{"serve"}, WorkingDir: "/app", StopSignal: "SIGQUIT"}
+
+	cfg := model.Config{Entrypoint: []string{"/init"}, Cmd: []string{"serve"}, WorkingDir: "/app", StopSignal: "SIGQUIT"}
+	withoutImageDefaults(&cfg, img)
+	if cfg.Entrypoint != nil || cfg.WorkingDir != "" || cfg.StopSignal != "" {
+		t.Fatalf("the image's own values must be left to a newer image: %+v", cfg)
+	}
+
+	cfg = model.Config{Entrypoint: []string{"/init"}, WorkingDir: "/data", StopSignal: "SIGTERM"}
+	withoutImageDefaults(&cfg, img)
+	if !slices.Equal(cfg.Entrypoint, []string{"/init"}) || cfg.WorkingDir != "/data" || cfg.StopSignal != "SIGTERM" {
+		t.Fatalf("the container's own values must stay, and an entrypoint that cleared the command too: %+v", cfg)
+	}
+}
+
+func TestStopGraceTakesOnlyALongerLimitedOwnTimeout(t *testing.T) {
+	longer, shorter, unlimited := 300, 5, -1
+	for _, c := range []struct {
+		own  *int
+		want int
+	}{{nil, 30}, {&longer, 300}, {&shorter, 30}, {&unlimited, 30}} {
+		if got := stopGrace(30, c.own); got != c.want {
+			t.Errorf("stopGrace(30, %v) = %d, want %d", c.own, got, c.want)
+		}
 	}
 }
 

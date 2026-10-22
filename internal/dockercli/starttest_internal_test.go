@@ -132,6 +132,20 @@ func TestStartTestLeftoversWithoutAnIDTakeNothingLabelledForAnInstance(t *testin
 	}
 }
 
+// A volume given in the long form reaches the original's files just as a bind
+// string does, so only scratch space comes along; the copies are in Binds.
+func TestIsolatedConfigLeavesOutTheOriginalsLongFormVolumes(t *testing.T) {
+	from := model.Inspect{Name: "/nextcloud", Config: model.Config{Image: "nextcloud"}, HostConfig: model.HostConfig{Mounts: []model.MountSpec{
+		{Type: "bind", Source: "/mnt/user/appdata/nextcloud", Target: "/var/www/html"},
+		{Type: "volume", Source: "nextcloud_db", Target: "/var/lib/mysql"},
+		{Type: "tmpfs", Target: "/tmp"},
+	}}}
+	_, hc := isolatedConfig(IsolatedSpec{Name: StartTestPrefix + "nextcloud-1", Network: StartTestPrefix + "net-1", From: from})
+	if len(hc.Mounts) != 1 || hc.Mounts[0].Target != "/tmp" {
+		t.Fatalf("mounts = %+v, want only the tmpfs", hc.Mounts)
+	}
+}
+
 func TestIsolatedConfigNamesTheInstance(t *testing.T) {
 	cfg, _ := isolatedConfig(IsolatedSpec{Name: StartTestPrefix + "aaaa-x-1", Network: StartTestPrefix + "aaaa-net-1", Instance: "aaaa"})
 	if cfg.Labels[StartTestInstanceLabel] != "aaaa" {

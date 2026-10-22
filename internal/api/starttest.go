@@ -316,7 +316,7 @@ func (s *Service) restoreForStartTest(ctx context.Context, settings store.Settin
 // for the same reason.
 func (s *Service) startTestBinds(def containerDefinition, sandbox string) []string {
 	var out []string
-	for _, b := range def.Inspect.HostConfig.Binds {
+	for _, b := range def.Inspect.HostConfig.VolumeBinds() {
 		src, rest, ok := strings.Cut(b, ":")
 		if !ok || !strings.HasPrefix(src, "/") {
 			continue

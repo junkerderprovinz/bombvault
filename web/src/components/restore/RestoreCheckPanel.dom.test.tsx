@@ -168,6 +168,25 @@ describe("the restore plan", () => {
     ).toBeTruthy();
   });
 
+  it("says which container whose network this one shares is missing", () => {
+    show({
+      ok: true,
+      ready: false,
+      checks: [
+        { id: "repository", status: "ok" },
+        { id: "key", status: "ok" },
+        { id: "snapshot", status: "ok" },
+        { id: "network", status: "fail", reason: "shared-network-gone", detail: "gluetun" },
+      ],
+      plan: null,
+    });
+    expect(
+      screen.getByText(
+        "This container uses the network of gluetun, which is not on this server. Restore or create gluetun first, then restore this one.",
+      ),
+    ).toBeTruthy();
+  });
+
   it("says the networks could not be read and shows Docker's error", () => {
     const error = "restore: list networks: Cannot connect to the Docker daemon";
     show({

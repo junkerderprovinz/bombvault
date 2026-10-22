@@ -326,3 +326,25 @@ func (r *Repo) SetVMBackupOrders(orders []VMOrder) error {
 	}
 	return tx.Commit()
 }
+
+// MarkVMStopped remembers a VM a backup is about to shut down.
+func (r *Repo) MarkVMStopped(name string, at int64) error {
+	if _, err := r.db.Exec(`INSERT INTO vm_restart_pending (name, added_at) VALUES (?, ?)
+		ON CONFLICT (name) DO NOTHING`, name, at); err != nil {
+		return fmt.Errorf("MarkVMStopped: %w", err)
+	}
+	return nil
+}
+
+// ClearVMStopped forgets a VM that runs again.
+func (r *Repo) ClearVMStopped(name string) error {
+	if _, err := r.db.Exec(`DELETE FROM vm_restart_pending WHERE name = ?`, name); err != nil {
+		return fmt.Errorf("ClearVMStopped: %w", err)
+	}
+	return nil
+}
+
+// ListVMsStopped returns the VMs a backup left shut down.
+func (r *Repo) ListVMsStopped() ([]string, error) {
+	return r.listStrings(`SELECT name FROM vm_restart_pending ORDER BY added_at, name`, "ListVMsStopped")
+}

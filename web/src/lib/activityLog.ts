@@ -16,7 +16,15 @@ import { KEY_TARGET_ID } from "./runDisplay";
 import { KEY_RUN_KIND } from "./runKind";
 import { humanBytes } from "./forecast";
 import { formatNumber } from "./numberFormat";
-import { isWarningNote, RESTORED_WITHOUT_LINKS, RESTORED_WITHOUT_RUNTIME, restoreNotes, runReason, runReasonParts } from "./runReason";
+import {
+  CONTAINERS_NOT_BACK,
+  isWarningNote,
+  RESTORED_WITHOUT_LINKS,
+  RESTORED_WITHOUT_RUNTIME,
+  restoreNotes,
+  runReason,
+  runReasonParts,
+} from "./runReason";
 
 /** Picks a line's glyph and colour in ActivityLog.tsx. */
 export type LogStatus = "running" | "success" | "failed" | "offsite" | "info";
@@ -561,6 +569,7 @@ function finishedLineText(resolveName: ResolveName, run: Run, domain: LogDomain,
       const parts = [resolveName("activityLog.lineRestoreSuccess", { name, duration })];
       if (left.withoutRuntime) parts.push(reasonText(RESTORED_WITHOUT_RUNTIME, resolveName));
       if (left.unlinked.length > 0) parts.push(reasonText(`${RESTORED_WITHOUT_LINKS}: ${left.unlinked.join(", ")}`, resolveName));
+      if (left.notBack.length > 0) parts.push(reasonText(`${CONTAINERS_NOT_BACK}: ${left.notBack.join(", ")}`, resolveName));
       return { status: "success", text: parts.join("; ") };
     }
     return run.status === "failed"

@@ -47,6 +47,11 @@ export const RESTORED_WITHOUT_RUNTIME = "restored without the GPU or runtime the
  *  ": " and the containers. Keep in step with NoteRestoredWithoutLinks. */
 export const RESTORED_WITHOUT_LINKS = "restored without links to containers that are not running";
 
+/** The note of a backup, update or restore whose other containers did not
+ *  start again, followed by ": " and their names. Keep in step with
+ *  NoteContainersNotBack. */
+export const CONTAINERS_NOT_BACK = "some containers did not start again";
+
 /** The note of a container backup whose data folders sit outside Host Data,
  *  followed by ": " and their host paths. Keep in step with NoteDataOutsideHost. */
 export const DATA_OUTSIDE_HOST = "data folders outside Host Data were not backed up";
@@ -65,11 +70,12 @@ export function isRuntimeRefusal(raw: string | null | undefined): boolean {
 
 /** What a successful container restore left out, read from its notes, which
  *  it joins with "; ". */
-export function restoreNotes(raw: string | null | undefined): { withoutRuntime: boolean; unlinked: string[] } {
-  const out = { withoutRuntime: false, unlinked: [] as string[] };
+export function restoreNotes(raw: string | null | undefined): { withoutRuntime: boolean; unlinked: string[]; notBack: string[] } {
+  const out = { withoutRuntime: false, unlinked: [] as string[], notBack: [] as string[] };
   for (const note of (raw ?? "").split("; ")) {
     if (note === RESTORED_WITHOUT_RUNTIME) out.withoutRuntime = true;
     else if (note.startsWith(RESTORED_WITHOUT_LINKS + ": ")) out.unlinked = note.slice(RESTORED_WITHOUT_LINKS.length + 2).split(", ");
+    else if (note.startsWith(CONTAINERS_NOT_BACK + ": ")) out.notBack = note.slice(CONTAINERS_NOT_BACK.length + 2).split(", ");
   }
   return out;
 }
@@ -112,6 +118,7 @@ export const RUN_REASON_PREFIXES: Record<string, TranslationKey> = {
   [RESTORE_NO_RUNTIME]: "runReason.restoreNoRuntime",
   [RESTORED_WITHOUT_RUNTIME]: "runReason.restoredWithoutRuntime",
   [RESTORED_WITHOUT_LINKS]: "runReason.restoredWithoutLinks",
+  [CONTAINERS_NOT_BACK]: "runReason.containersNotBack",
 };
 
 /**
@@ -178,6 +185,7 @@ const WARNING_NOTES = [
   "database dump skipped: its run could not be recorded",
   "database imported with errors",
   DATA_OUTSIDE_HOST,
+  CONTAINERS_NOT_BACK,
 ];
 
 /** Whether a note of a successful run reports something worth acting on. */

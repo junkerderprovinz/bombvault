@@ -87,12 +87,14 @@ func writeMountFixture(t *testing.T, mountPoints ...string) {
 // consumes without any store read.
 func vmTargetJSON(t *testing.T, name, xml string, diskPaths []string, nvramHost string) store.VMTarget {
 	t.Helper()
+	autostart := true
 	def := vmDefinition{
 		DomainXML:     xml,
 		DiskPaths:     diskPaths,
 		NVRAMHostPath: nvramHost,
 		Method:        "graceful",
 		WasAutostart:  true,
+		Autostart:     &autostart,
 	}
 	raw, err := json.Marshal(def)
 	if err != nil {
@@ -233,7 +235,7 @@ func TestPrepareRestoreVMSameInstanceUnchanged(t *testing.T) {
 	if plan.domainXML != virshcli.EnsureNVRAMTemplate(vmDomainXML) {
 		t.Fatalf("same-instance XML must be verbatim (only EnsureNVRAMTemplate), got %q", plan.domainXML)
 	}
-	if !plan.wasAutostart {
+	if plan.wasAutostart == nil || !*plan.wasAutostart {
 		t.Fatal("same-instance restore must preserve the captured autostart flag")
 	}
 }
@@ -402,6 +404,33 @@ func TestPrepareRestoreVMCrossInstanceZvolRebasesOntoDestPool(t *testing.T) {
 	}
 	if !strings.Contains(plan.domainXML, "<source dev='/dev/zvol/flashpool/vms/zvolvm/disk1'/>") || strings.Contains(plan.domainXML, "/dev/zvol/tank/") {
 		t.Fatalf("domain XML = %s, want the VM pointed at the restored zvol", plan.domainXML)
+	}
+}
+
+// A VM whose disks sit on a pool that is not mounted is refused before it is
+// undefined: on Unraid the restored image would fill the RAM.
+func TestPrepareRestoreVMInPlaceRefusesAnUnmountedPool(t *testing.T) {
+	eng := &foreignRecordingEngine{snaps: []restic.Snapshot{{ID: "deadbeef12345678", Tags: []string{"vm:win10"}, Paths: []string{"/host/user/pool/domains/win10/win10.qcow2"}}}}
+	s := vmRestoreSvc(t, eng)
+	repoDir := filepath.Join(t.TempDir(), "repo")
+	seedResticRepoDir(t, repoDir)
+	tg := vmTargetJSON(t, "win10", vmDomainXML,
+		[]string{"/host/user/pool/domains/win10/win10.qcow2"},
+		"/etc/libvirt/qemu/nvram/win10_VARS.fd")
+	restore := func() error {
+		_, err := s.prepareRestoreVMForTarget(context.Background(),
+			repoRef{repo: repoDir}, "win10", "latest", tg, tagIdentity("vm:win10"), "", "")
+		return err
+	}
+
+	writeMountFixture(t, "/", "/host/user", "/host/user/user")
+	if err := restore(); !isDestinationRefusal(err) || !strings.Contains(err.Error(), "/mnt/pool/domains/win10") {
+		t.Fatalf("want a refusal naming the unmounted disk folder, got %v", err)
+	}
+
+	writeMountFixture(t, "/", "/host/user", "/host/user/pool")
+	if err := restore(); err != nil {
+		t.Fatalf("a mounted pool restores in place: %v", err)
 	}
 }
 

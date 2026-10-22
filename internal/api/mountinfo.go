@@ -81,6 +81,13 @@ func (s *Service) restoreTargetMounted(p string) bool {
 	return mounted[root] && isStrictSubpath(root, path.Clean(filepath.ToSlash(p)))
 }
 
+// hostDataMounted reports whether the Host Data bind at HostMountRoot is in
+// the mount table.
+func (s *Service) hostDataMounted() bool {
+	mounted, ok := mountPoints()
+	return ok && mounted[path.Clean(filepath.ToSlash(s.cfg.HostMountRoot))]
+}
+
 // mountPoints reads the mount table; false means it could not be read.
 func mountPoints() (map[string]bool, bool) {
 	f, err := os.Open(mountinfoPath) //nolint:gosec // G304: mountinfoPath is a fixed package var (/proc/self/mountinfo), overridden only by tests

@@ -72,6 +72,8 @@ function lineText(c: CheckLine, t: T): string {
   if (c.reason === "pool-missing") return t("restoreCheck.reason.poolMissing").replace("{name}", c.detail ?? "");
   if (c.reason === "network-missing") return t("restoreCheck.reason.networkMissing").replace("{name}", c.detail ?? "");
   if (c.reason === "network-gone") return t("restoreCheck.reason.networkGone").replace("{name}", c.detail ?? "");
+  if (c.reason === "shared-network-gone")
+    return t("restoreCheck.reason.sharedNetworkGone").replaceAll("{name}", c.detail ?? "");
   if (c.reason === "network-unreadable")
     return t("restoreCheck.reason.networkUnreadable").replace("{error}", c.detail ?? "");
   if (c.detail)

@@ -969,6 +969,45 @@ func TestForeignContainerRestoreRemapsCrossPool(t *testing.T) {
 	}
 }
 
+// A volume given in the long form moves with the appdata like a bind string,
+// and keeps its options; a named volume stays as it is.
+func TestForeignContainerRestoreRemapsALongFormBind(t *testing.T) {
+	eng := &foreignRecordingEngine{snaps: []restic.Snapshot{{
+		ID:    "abcdef0123456789",
+		Tags:  []string{"container:web"},
+		Paths: []string{"/host/user/zfs/appdata/web"},
+	}}}
+	s := vmRestoreSvc(t, eng)
+	repoDir := filepath.Join(t.TempDir(), "repo")
+	seedResticRepoDir(t, repoDir)
+	writeMountFixture(t, "/", "/host/user", "/host/user/user/appdata")
+
+	tg := containerGuardTarget(t, "/host/user/zfs/appdata/web")
+	defJSON, err := json.Marshal(containerDefinition{Inspect: model.Inspect{
+		Name:   "web",
+		Config: model.Config{Image: "nginx:latest"},
+		HostConfig: model.HostConfig{Mounts: []model.MountSpec{
+			{Type: "bind", Source: "/mnt/zfs/appdata/web", Target: "/config", BindOptions: &model.BindOptions{Propagation: "rslave"}},
+			{Type: "volume", Source: "web_cache", Target: "/cache"},
+		}},
+	}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	tg.Definition = string(defJSON)
+	plan, err := s.prepareRestoreForTarget(context.Background(), repoRef{repo: repoDir}, "web", "latest", tg, tagIdentity("container:web"), "/host/user/user/appdata", false)
+	if err != nil {
+		t.Fatalf("remap: %v", err)
+	}
+	m := plan.inspect.HostConfig.Mounts
+	if len(m) != 2 || m[0].Source != "/mnt/user/appdata/web" || m[0].BindOptions == nil || m[0].BindOptions.Propagation != "rslave" {
+		t.Fatalf("the long-form bind must point at the destination with its options, got %+v", m)
+	}
+	if m[1].Source != "web_cache" {
+		t.Fatalf("the named volume must stay, got %+v", m[1])
+	}
+}
+
 // TestForeignContainerRestoreRewritesNonCanonicalBind pins the review fix: a bind
 // host with a trailing slash (as a user may enter it, differing from the
 // normalized appdata path) is still canonicalized and remapped to the dest — no
@@ -1037,15 +1076,35 @@ func TestLocalContainerRestoreSkipsRemap(t *testing.T) {
 	s := vmRestoreSvc(t, eng)
 	repoDir := filepath.Join(t.TempDir(), "repo")
 	seedResticRepoDir(t, repoDir)
-	writeMountFixture(t, "/", "/host/user") // appdata NOT mounted
+	writeMountFixture(t, "/", "/host/user", "/host/user/appdata")
 
 	tg := containerGuardTarget(t, "/host/user/appdata/web")
 	plan, err := s.prepareRestoreForTarget(context.Background(), repoRef{repo: repoDir}, "web", "latest", tg, tagIdentity("container:web"), "", false)
 	if err != nil {
-		t.Fatalf("local restore must not gain the remap/guard, got %v", err)
+		t.Fatalf("local restore must not gain the remap, got %v", err)
 	}
 	if len(plan.restoreDirs) != 0 || len(plan.appdataPaths) != 1 {
 		t.Fatalf("local plan must be in-place (no restoreDirs), got %+v", plan)
+	}
+}
+
+// On Unraid a folder of a pool that is missing lies in RAM, so an in-place
+// restore into it is refused before the container is touched.
+func TestLocalContainerRestoreRefusesAnUnmountedPool(t *testing.T) {
+	eng := &foreignRecordingEngine{snaps: []restic.Snapshot{{
+		ID:    "abcdef0123456789",
+		Tags:  []string{"container:web"},
+		Paths: []string{"/host/user/ssd/appdata/web"},
+	}}}
+	s := vmRestoreSvc(t, eng)
+	repoDir := filepath.Join(t.TempDir(), "repo")
+	seedResticRepoDir(t, repoDir)
+	writeMountFixture(t, "/", "/host/user", "/host/user/user")
+
+	tg := containerGuardTarget(t, "/host/user/ssd/appdata/web")
+	_, err := s.prepareRestoreForTarget(context.Background(), repoRef{repo: repoDir}, "web", "latest", tg, tagIdentity("container:web"), "", false)
+	if !isDestinationRefusal(err) || !strings.Contains(err.Error(), "/mnt/ssd/appdata/web") {
+		t.Fatalf("want a refusal naming the unmounted folder, got %v", err)
 	}
 }
 

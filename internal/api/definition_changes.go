@@ -35,7 +35,7 @@ func containerChanges(backup, now model.Inspect) []DefinitionChange {
 	}
 	out = append(out, setChanges("port", portList(backup.HostConfig.PortBindings), portList(now.HostConfig.PortBindings))...)
 	out = append(out, envChanges(backup.Config.Env, now.Config.Env)...)
-	out = append(out, setChanges("volume", backup.HostConfig.Binds, now.HostConfig.Binds)...)
+	out = append(out, setChanges("volume", backup.HostConfig.VolumeBinds(), now.HostConfig.VolumeBinds())...)
 	return out
 }
 

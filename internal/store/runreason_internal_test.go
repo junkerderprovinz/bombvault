@@ -54,6 +54,7 @@ func namedReasons() map[string]string {
 		"ReasonRestoreNoRuntime":     ReasonRestoreNoRuntime,
 		"NoteRestoredWithoutRuntime": NoteRestoredWithoutRuntime,
 		"NoteRestoredWithoutLinks":   NoteRestoredWithoutLinks,
+		"NoteContainersNotBack":      NoteContainersNotBack,
 	}
 }
 
