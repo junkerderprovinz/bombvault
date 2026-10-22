@@ -89,6 +89,9 @@ const (
 	// AuthToken is a browser sign-in, done with rclone authorize on a machine
 	// that has a browser and pasted in as a token.
 	AuthToken AuthStyle = "token"
+	// AuthLoginToken is a personal login token made in the account's security
+	// settings, which rclone trades for a sign-in once.
+	AuthLoginToken AuthStyle = "logintoken"
 	// AuthAPIKey is a key created in the service's own console.
 	AuthAPIKey AuthStyle = "apikey"
 	// AuthAccessKey is a key id and a secret, as S3 has them.
@@ -175,10 +178,13 @@ var providers = []Provider{
 	{ID: "path", Name: "Mounted path", Group: GroupServer, Route: RoutePath, Mark: "IconDrive"},
 
 	cloud("onedrive", "OneDrive", "onedrive", "IconOnedrive", AuthToken),
-	cloud("gdrive", "Google Drive", "drive", "IconGoogleDrive", AuthToken),
+	// A pruned pack in the Drive trash keeps counting against the quota for
+	// 30 days.
+	{ID: "gdrive", Name: "Google Drive", Backend: "drive", Group: GroupCloud, Route: RouteRclone, Mark: "IconGoogleDrive",
+		Auth: AuthToken, Preset: map[string]string{"use_trash": "false"}},
 	cloud("dropbox", "Dropbox", "dropbox", "IconDropbox", AuthToken),
 	cloud("pcloud", "pCloud", "pcloud", "IconPcloud", AuthToken),
-	cloud("jottacloud", "Jottacloud", "jottacloud", "IconJottacloud", AuthToken),
+	cloud("jottacloud", "Jottacloud", "jottacloud", "IconJottacloud", AuthLoginToken),
 	cloud("box", "Box", "box", "IconBox", AuthToken),
 	cloud("yandex", "Yandex Disk", "yandex", "IconYandex", AuthToken),
 	cloud("mailru", "Mail.ru Cloud", "mailru", "IconMailru", AuthLogin),
@@ -200,7 +206,7 @@ var providers = []Provider{
 	cloud("linkbox", "Linkbox", "linkbox", "IconLinkbox", AuthAPIKey),
 	cloud("pixeldrain", "Pixeldrain", "pixeldrain", "IconPixeldrain", AuthAPIKey),
 	cloud("koofr", "Koofr", "koofr", "IconKoofr", AuthAppPassword),
-	cloud("icloud", "iCloud Drive", "iclouddrive", "IconICloud", AuthAppPassword),
+	cloud("icloud", "iCloud Drive", "iclouddrive", "IconICloud", AuthLogin),
 	cloud("fichier", "1Fichier", "fichier", "fichier", AuthAPIKey),
 	cloud("filefabric", "Enterprise File Fabric", "filefabric", "", AuthToken),
 	cloud("filelu", "FileLu", "filelu", "filelu", AuthAPIKey),

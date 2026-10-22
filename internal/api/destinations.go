@@ -223,8 +223,11 @@ func (s *Service) draftFor(p remotes.Provider, settings map[string]string) (remo
 	}
 	merged := make(map[string]string, len(settings)+len(p.Preset)+1)
 	for k, v := range settings {
-		merged[k] = strings.TrimSpace(v)
+		if !strings.HasPrefix(k, setupAnswer) {
+			merged[k] = strings.TrimSpace(v)
+		}
 	}
+	remotes.UnpackAuthorize(merged)
 	maps.Copy(merged, p.Preset)
 	if p.Route == remotes.RouteS3 && merged["endpoint"] != "" {
 		merged["endpoint"] = s3Host(merged["endpoint"])
@@ -236,10 +239,24 @@ func (s *Service) draftFor(p remotes.Provider, settings map[string]string) (remo
 	return remotes.Draft{Backend: p.Backend, Settings: merged}, nil
 }
 
-// DraftCheck is what a connection test of a draft found.
+// DraftCheck is what a connection test of a draft found. Question is a choice
+// rclone's setup needs before the remote can be reached.
 type DraftCheck struct {
-	Reachable   bool `json:"reachable"`
-	Initialized bool `json:"initialized"`
+	Reachable   bool              `json:"reachable"`
+	Initialized bool              `json:"initialized"`
+	Question    *remotes.Question `json:"question,omitempty"`
+}
+
+// wizardDraft is the draft of a wizard's fields with what its earlier calls
+// learned, and the name that is kept under.
+func (s *Service) wizardDraft(p remotes.Provider, settings map[string]string) (remotes.Draft, string, error) {
+	d, err := s.draftFor(p, settings)
+	if err != nil {
+		return remotes.Draft{}, "", err
+	}
+	key := draftKey(p.ID, settings)
+	s.drafts.recall(key, &d)
+	return d, key, nil
 }
 
 // CheckDraft reaches a destination that is not saved yet: through rclone for
@@ -268,11 +285,19 @@ func (s *Service) CheckDraft(ctx context.Context, req draftRequest) (DraftCheck,
 		}
 		return DraftCheck{Reachable: true}, nil
 	}
-	d, err := s.draftFor(p, req.Settings)
+	d, key, err := s.wizardDraft(p, req.Settings)
 	if err != nil {
 		return DraftCheck{}, err
 	}
-	if _, err := s.remotes().Folders(ctx, "", &d, req.Dir); err != nil {
+	question, err := s.remotes().Setup(ctx, &d, setupAnswers(req.Settings))
+	if err != nil || question != nil {
+		s.drafts.keep(key, d)
+		return DraftCheck{Question: question}, err
+	}
+	_, err = s.remotes().Folders(ctx, "", &d, req.Dir)
+	dropUsedCode(&d)
+	s.drafts.keep(key, d)
+	if err != nil {
 		return DraftCheck{}, err
 	}
 	return DraftCheck{Reachable: true}, nil
@@ -295,10 +320,11 @@ func (s *Service) DraftFolders(ctx context.Context, req draftRequest) (folders [
 	if err != nil {
 		return nil, nil, err
 	}
-	d, err := s.draftFor(p, req.Settings)
+	d, key, err := s.wizardDraft(p, req.Settings)
 	if err != nil {
 		return nil, nil, err
 	}
+	defer func() { s.drafts.keep(key, d) }()
 	folders, err = s.remotes().Folders(ctx, "", &d, req.Dir)
 	if err != nil || strings.Trim(req.Dir, "/") != "" {
 		return folders, nil, err
@@ -315,15 +341,18 @@ func (s *Service) DraftMakeFolder(ctx context.Context, req draftRequest) (string
 	if err != nil {
 		return "", err
 	}
-	d, err := s.draftFor(p, req.Settings)
+	d, key, err := s.wizardDraft(p, req.Settings)
 	if err != nil {
 		return "", err
 	}
+	defer func() { s.drafts.keep(key, d) }()
 	return s.remotes().MakeFolder(ctx, "", &d, req.Dir, req.Folder)
 }
 
 // editRcloneConf changes the stored rclone config under a lock, so two saves
-// cannot each drop the other's remote.
+// cannot each drop the other's remote. Tokens and sessions rclone has written
+// into its file are taken in first, because the edit rewrites that file from
+// the stored config.
 func (s *Service) editRcloneConf(edit func(conf string) (string, error)) error {
 	s.rcloneConfMu.Lock()
 	defer s.rcloneConfMu.Unlock()
@@ -331,15 +360,15 @@ func (s *Service) editRcloneConf(edit func(conf string) (string, error)) error {
 	if err != nil {
 		return err
 	}
-	conf, err := s.decodeRcloneConf(settings)
+	stored, err := s.decodeRcloneConf(settings)
 	if err != nil {
 		return err
 	}
-	next, err := edit(conf)
+	next, err := edit(withRcloneRefreshes(stored, s.rcloneFile()))
 	if err != nil {
 		return err
 	}
-	if next == conf {
+	if next == stored {
 		return nil
 	}
 	return s.storeRcloneConf(next)
@@ -417,8 +446,11 @@ func (s *Service) SaveNewDestination(ctx context.Context, req draftRequest) (sto
 
 	switch p.Route {
 	case remotes.RouteRclone:
-		draft, err := s.draftFor(p, req.Settings)
+		draft, _, err := s.wizardDraft(p, req.Settings)
 		if err != nil {
+			return store.OffsiteTarget{}, err
+		}
+		if err := finishDraft(&draft); err != nil {
 			return store.OffsiteTarget{}, err
 		}
 		settings, err := s.remotes().Settings(ctx, draft)
@@ -639,7 +671,11 @@ func (h *Handler) handleCheckDraft(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
-	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"reachable": got.Reachable, "initialized": got.Initialized}))
+	answer := map[string]any{"reachable": got.Reachable, "initialized": got.Initialized}
+	if got.Question != nil {
+		answer["question"] = got.Question
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(answer))
 }
 
 // handleDraftFolders lists a folder of a destination before it is saved.

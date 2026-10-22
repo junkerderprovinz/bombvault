@@ -56,7 +56,7 @@ var essential = map[string]map[string]bool{
 	"protondrive":          {"username": true, "password": true, "2fa": true},
 	"seafile":              {"url": true, "user": true, "pass": true, "library": true},
 	"koofr":                {"provider": true, "user": true, "password": true},
-	"iclouddrive":          {"apple_id": true, "password": true},
+	"iclouddrive":          {"apple_id": true, "password": true, "trust_token": true, "cookies": true},
 	"mailru":               {"user": true, "pass": true},
 	"filen":                {"email": true, "password": true, "api_key": true},
 	"internxt":             {"email": true, "pass": true},
@@ -93,6 +93,15 @@ var essential = map[string]map[string]bool{
 	"sharefile":            {"token": true},
 	"zoho":                 {"token": true, "region": true},
 	"google cloud storage": {"token": true, "project_number": true, "service_account_file": true},
+}
+
+// offered lists, per backend, options rclone marks advanced that the form
+// still shows among the further settings: a shared drive is where a company
+// keeps its files, and the ShareFile address is lost when the token is made
+// without a config blob.
+var offered = map[string]map[string]bool{
+	"drive":     {"team_drive": true},
+	"sharefile": {"endpoint": true},
 }
 
 // rcloneOption is one option as `rclone config providers` prints it.
@@ -154,7 +163,7 @@ func toOption(backend string, o rcloneOption) Option {
 		Required:  o.Required,
 		Secret:    secret,
 		Password:  o.IsPassword,
-		Advanced:  o.Advanced,
+		Advanced:  o.Advanced && !offered[backend][o.Name],
 		Essential: essential[backend][o.Name],
 		Default:   defaultText(o.DefaultStr),
 	}

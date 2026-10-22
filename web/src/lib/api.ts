@@ -7385,7 +7385,7 @@ export function addRcloneRemote(
 
 export type ProviderGroup = "storage" | "selfs3" | "server" | "cloud";
 export type ProviderRoute = "s3" | "rest" | "rclone" | "path";
-export type ProviderAuth = "apppassword" | "token" | "apikey" | "accesskey" | "login" | "sshkey";
+export type ProviderAuth = "apppassword" | "token" | "logintoken" | "apikey" | "accesskey" | "login" | "sshkey";
 
 /** A storage product the off-site wizard offers, from internal/remotes. */
 export interface Provider {
@@ -7444,7 +7444,17 @@ export interface DestinationDraft {
   credsRef?: string;
 }
 
-export function checkDraft(d: DestinationDraft): Promise<OkEnvelope & { reachable?: boolean; initialized?: boolean }> {
+/** A choice rclone's own setup leaves to the person setting a destination
+ *  up, such as which of several drives a sign-in opens. The answer goes back
+ *  as the setting `name`. */
+export interface DraftQuestion {
+  name: string;
+  choices: { value: string; help: string }[];
+}
+
+export function checkDraft(
+  d: DestinationDraft
+): Promise<OkEnvelope & { reachable?: boolean; initialized?: boolean; question?: DraftQuestion }> {
   return fetchJSON("/api/offsite/drafts/check", { method: "POST", body: JSON.stringify(d) });
 }
 

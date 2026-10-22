@@ -149,8 +149,9 @@ func replaceRcloneSection(conf, name, section string) string {
 	return strings.Join(kept, "\n\n") + "\n"
 }
 
-// settingKeyRe is what an rclone option name looks like.
-var settingKeyRe = regexp.MustCompile(`^[a-z0-9_]+$`)
+// settingKeyRe is what an rclone option name looks like. rclone's own setup
+// writes a few in camel case, such as the configVersion of Jottacloud.
+var settingKeyRe = regexp.MustCompile(`^[A-Za-z0-9_]+$`)
 
 // settingsSection renders a remote of any backend. A key or value that could
 // end the line is refused: it would add settings, or a whole remote, nobody
