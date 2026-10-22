@@ -194,6 +194,8 @@ Das Einschalten einer Rolle schickt eine Anfrage, und nichts beginnt, bis jemand
 
 **Details** auf einer Karte öffnet den Rest: die empfangenen Repositories und Abholquellen dieses Mitglieds, Speicher-Angebote, die Überwachung, **Entfernen** und **Schlüssel vergessen**.
 
+Ausgeschaltete Instanzen und Handys mit geschlossener App behalten ihre Karte als **Inaktiv** in Grau, mit der Angabe, wann sie zuletzt gesehen wurden, und stehen im Netz abgeblendet, bis du sie mit **Entfernen** wegnimmst. Gleich nach dem Start dieses Servers zeigt so eine Karte **Wird geprüft**, bis die Gruppe wieder da ist.
+
 ## Empfänger und Abholer {#receiver}
 
 ![Eine empfangene Off-site-Kopie in den Details einer Instanz, schreibgeschützt überwacht, mit einer Integritätsprüfung auf dieser Hardware.](assets/screenshots/receiver.png)

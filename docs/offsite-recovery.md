@@ -194,6 +194,8 @@ Switching a role on sends a request, and nothing starts until someone on the oth
 
 **Details** on a card opens the rest: the received repositories and pull sources of that member, storage offers, monitoring, **Remove** and **Forget key**.
 
+Instances that are shut down and phones with the app closed keep their card as **Inactive**, in grey, with when they were last seen, and stand dimmed in the net until you **Remove** them. Right after this server starts, such a card says **Checking** until the group is back.
+
 ## Receiver and fetcher {#receiver}
 
 ![A received off-site copy in an instance's details, watched read-only, with an integrity check run on this hardware.](assets/screenshots/receiver.png)
