@@ -1106,6 +1106,18 @@ describe("the restore", () => {
     expect(after.defaultPrevented).toBe(false);
   });
 
+  it("starts nothing more once it is left inside the app, and keeps what never started", async () => {
+    containersOnServer = [gone(), gone({ name: "radarr" }), gone({ name: "lidarr" })];
+    vi.useFakeTimers();
+    await open("selection");
+    fireEvent.click(button(en["snapshots.restore"]));
+    await act(() => vi.advanceTimersByTimeAsync(0));
+    cleanup();
+    await act(() => vi.advanceTimersByTimeAsync(60_000));
+    expect(restore.mock.calls.map((c) => c[0])).toEqual(["sonarr"]);
+    expect(JSON.parse(localStorage.getItem("bv-restore-many-left") ?? "{}").names).toEqual(["radarr", "lidarr"]);
+  });
+
   it("offers the containers Docker refused again without GPU and runtime", async () => {
     containersOnServer = [gone({ name: "plex" }), gone()];
     needsRuntime = ["plex"];

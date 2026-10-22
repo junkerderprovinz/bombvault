@@ -217,7 +217,16 @@ export function EmergencyWindow({
     window.addEventListener("beforeunload", warn);
     return () => window.removeEventListener("beforeunload", warn);
   }, [restoring]);
-  useEffect(() => () => releaseLock.current(), []);
+  // Leaving the window inside the app stops the queue after the entry that
+  // runs, so the Restore page names what was left, as after a reload.
+  const gone = useRef(false);
+  useEffect(() => {
+    gone.current = false;
+    return () => {
+      gone.current = true;
+      releaseLock.current();
+    };
+  }, []);
 
   useEffect(() => {
     if (step !== "selection" || !offsiteLoading) return;
@@ -497,6 +506,7 @@ export function EmergencyWindow({
       noteNotStarted(list.slice(i + 1).map((next) => next.name));
       setOutcomes((prev) => ({ ...prev, [keyOf(p)]: "running" }));
       const res = await restoreOne(p).catch((err: unknown) => ({ ok: false, error: err instanceof Error ? err.message : String(err) }));
+      if (gone.current) return;
       setOutcomes((prev) => ({ ...prev, [keyOf(p)]: res.ok ? "done" : "failed" }));
       if (p.kind === "container" && isRuntimeRefusal(res.error)) refused.push(p.id);
     }
