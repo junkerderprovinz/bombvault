@@ -5377,6 +5377,13 @@ func (s *Service) repoEstablishmentOf(repo string) repoEstablishment {
 	if restic.IsRemoteRepo(repo) {
 		return repoNeverEstablished
 	}
+	return s.recordedEstablishment(repo)
+}
+
+// recordedEstablishment is what the store remembers about a repository, remote
+// ones included: a bucket restic finds empty but that held backups before is
+// gone, not new.
+func (s *Service) recordedEstablishment(repo string) repoEstablishment {
 	ok, err := s.store.IsRepoEstablished(repo)
 	if err != nil {
 		// ONE retry before giving up. The failure this guards against is a local
@@ -16283,7 +16290,7 @@ func (s *Service) CheckDomain(ctx context.Context, domain, source string) (err e
 	if err != nil {
 		return err
 	}
-	repos, missing, err := s.reposThatExist(repos, "no backups to verify yet")
+	repos, missing, err := s.reposThatExist(ctx, settings, domain, source, repos, "no backups to verify yet")
 	if err != nil {
 		return err
 	}
@@ -16436,7 +16443,7 @@ func (s *Service) runSubsetDrill(ctx context.Context, domain, source string, wai
 	if err != nil {
 		return store.RestoreDrill{}, err
 	}
-	repos, missing, err := s.reposThatExist(repos, "no backups to verify yet")
+	repos, missing, err := s.reposThatExist(ctx, settings, domain, source, repos, "no backups to verify yet")
 	if err != nil {
 		// The all-missing case gets the same treatment as the read-nothing case
 		// below, and for the same reason: returning bare records no row, and the
@@ -17270,6 +17277,13 @@ func (s *Service) requireExistingRepo(repo, notYet string) error {
 	return nil
 }
 
+// remoteRepoAbsent reports whether a remote location answers and holds no
+// repository. A location that cannot be reached counts as present, so the
+// operation reports the real failure.
+func (s *Service) remoteRepoAbsent(ctx context.Context, repo string, mode restic.Mode) bool {
+	return restic.IsRemoteRepo(repo) && isRepoDefinitelyAbsent(s.engine.RepoOpensErr(ctx, repo, mode))
+}
+
 // reposThatExist narrows a domain's repositories (domainReposForOp) to the ones
 // that are actually there, and fails with the caller's "not yet" sentence only
 // when NONE of them is.
@@ -17284,12 +17298,20 @@ func (s *Service) requireExistingRepo(repo, notYet string) error {
 // for the same reason a switched-off one is: "the share was not mounted when the
 // nightly verify ran" and "this repository was never created" are different
 // facts, and only the second one is harmless.
-func (s *Service) reposThatExist(repos []domainRepoRef, notYet string) ([]domainRepoRef, []repoSkip, error) {
+//
+// A remote repository has no marker to stat, so restic is asked: an own folder
+// moved to a bucket before its section ever wrote there holds nothing yet, and
+// every restic command on it fails with "repository does not exist".
+func (s *Service) reposThatExist(ctx context.Context, settings store.Settings, domain, source string, repos []domainRepoRef, notYet string) ([]domainRepoRef, []repoSkip, error) {
 	out := make([]domainRepoRef, 0, len(repos))
 	var skipped []repoSkip
 	var first error
 	for _, r := range repos {
-		if err := s.requireExistingRepo(r.Loc, notYet); err != nil {
+		err := s.requireExistingRepo(r.Loc, notYet)
+		if err == nil && s.remoteRepoAbsent(ctx, r.Loc, s.repoModeFor(settings, domain, source, r.Loc)) {
+			err = errors.New(notYet)
+		}
+		if err != nil {
 			if first == nil {
 				first = err
 			}
@@ -17308,7 +17330,7 @@ func (s *Service) reposThatExist(repos []domainRepoRef, notYet string) ([]domain
 			// unknown rules in this file (an unreadable in-use count counts as in
 			// use; an unreadable domain list counts as shared). Silence is the
 			// answer that loses information, so it is not the one an error gets.
-			switch s.repoEstablishmentOf(r.Loc) {
+			switch s.recordedEstablishment(r.Loc) {
 			case repoWasEstablished:
 				skipped = append(skipped, repoSkip{Name: s.refName(r), Reason: "it was there before and is not reachable now", Unreachable: true})
 			case repoEstablishmentUnknown:
@@ -17525,7 +17547,7 @@ func (s *Service) UnlockDomain(ctx context.Context, domain, source string) ([]st
 	if err != nil {
 		return nil, err
 	}
-	repos, missing, err := s.reposThatExist(repos, "no repository to unlock yet")
+	repos, missing, err := s.reposThatExist(ctx, settings, domain, source, repos, "no repository to unlock yet")
 	if err != nil {
 		return nil, err
 	}
@@ -17670,7 +17692,7 @@ func (s *Service) pruneDomain(ctx context.Context, domain, source string, afterB
 		}
 		return nil, refusal
 	}
-	repos, missing, err := s.reposThatExist(prunable, "no backups to prune yet")
+	repos, missing, err := s.reposThatExist(ctx, settings, domain, source, prunable, "no backups to prune yet")
 	if err != nil {
 		return nil, err
 	}
@@ -17784,7 +17806,7 @@ func (s *Service) DeleteSnapshot(ctx context.Context, domain, snapshotID, source
 	if err != nil {
 		return err
 	}
-	repos, missing, err := s.reposThatExist(repos, "no backups to delete yet")
+	repos, missing, err := s.reposThatExist(ctx, settings, domain, source, repos, "no backups to delete yet")
 	if err != nil {
 		return err
 	}

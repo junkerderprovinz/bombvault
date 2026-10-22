@@ -135,7 +135,7 @@ func (s *Service) PreviewRetention(ctx context.Context, domain, source string) (
 		previewable = append(previewable, r)
 	}
 
-	existing, missing, err := s.reposThatExist(previewable, "no backups yet")
+	existing, missing, err := s.reposThatExist(ctx, settings, domain, source, previewable, "no backups yet")
 	if err != nil && len(out.Repos) == 0 {
 		return RetentionPreview{}, err
 	}
