@@ -1130,6 +1130,34 @@ func (s *Service) progCounted(ctx context.Context, key string, startedAt int64) 
 	}), stop
 }
 
+// maintenanceStall is how long a check or prune may stay silent before it
+// counts as hung. How long one takes on a multi-terabyte remote repository has
+// no bound worth guessing, but restic prints its counters every second while
+// it works, even through a step that takes hours.
+var maintenanceStall = 30 * time.Minute
+
+// stallDeadline returns a context that ends once restic has printed no counter
+// for limit: a long check or prune runs on while restic reports, and one that
+// hangs silently still lets go of the domain lock. The counter sink already in
+// ctx gets every line as before. The cause wraps context.DeadlineExceeded, so
+// the run fails the way a timeout does and names the reason.
+func stallDeadline(ctx context.Context, limit time.Duration) (context.Context, context.CancelFunc) {
+	ctx, cancel := context.WithCancelCause(ctx)
+	stalled := fmt.Errorf("restic reported nothing for %v: %w", limit, context.DeadlineExceeded)
+	timer := time.AfterFunc(limit, func() { cancel(stalled) })
+	next := progress.CountSinkFrom(ctx)
+	ctx = progress.WithCountSink(ctx, func(c progress.CountProgress) {
+		timer.Reset(limit)
+		if next != nil {
+			next(c)
+		}
+	})
+	return ctx, func() {
+		timer.Stop()
+		cancel(context.Canceled)
+	}
+}
+
 // remainingSeconds extrapolates the time left from the units done so far. It
 // gives 0, meaning unknown, until the step has run five seconds and done one
 // unit, because an estimate from less jumps around too much to read.
@@ -16302,13 +16330,6 @@ func (s *Service) CheckDomain(ctx context.Context, domain, source string) (err e
 		return errDomainBusy
 	}
 	defer unlock()
-	// The ceiling is PER REPOSITORY, multiplied up so the whole pass fits. It was
-	// sized for one repository and now covers a domain's list, so a two-repository
-	// domain would otherwise be cut off half way through the second one and report
-	// a timeout naming neither. The multiplication is bounded by the number of
-	// repositories a domain HAS, which is the number of rows an operator created.
-	ctx, cancel := context.WithTimeout(ctx, time.Duration(len(repos))*15*time.Minute)
-	defer cancel()
 	// Publish "maintenance" progress, with restic's pack counts while it reads,
 	// and record a "verify" run, so a manual or scheduled verify shows up on the
 	// dashboard activity log and run history instead of running invisibly.
@@ -16317,6 +16338,10 @@ func (s *Service) CheckDomain(ctx context.Context, domain, source string) (err e
 	defer func() { s.progEnd(vkey, "maintenance", err == nil, startedAt) }()
 	ctx, stopCounting := s.progCounted(ctx, vkey, startedAt)
 	defer stopCounting()
+	// A large remote repository takes as long as it takes; only a check that
+	// goes silent is cut off.
+	ctx, cancel := stallDeadline(ctx, maintenanceStall)
+	defer cancel()
 	runID, rErr := s.startRun(ctx, domainRunTargetID(domain), "verify")
 	if rErr != nil {
 		log.Printf("api: verify %s: could not start run record (continuing): %v", domain, rErr) //nolint:gosec // G706: domain is a fixed literal
@@ -17554,7 +17579,7 @@ func (s *Service) UnlockDomain(ctx context.Context, domain, source string) ([]st
 		return nil, errDomainBusy
 	}
 	defer unlock()
-	// Per repository, like the other three (see CheckDomain).
+	// Per repository, so a domain with several gets the same time for each.
 	ctx, cancel := context.WithTimeout(ctx, time.Duration(len(repos))*2*time.Minute)
 	defer cancel()
 	// removeAll (a FORCE removal, live locks included) is only safe where this
@@ -17703,15 +17728,16 @@ func (s *Service) pruneDomain(ctx context.Context, domain, source string, afterB
 		return nil, errDomainBusy
 	}
 	defer unlock()
-	// Per repository, like the other three (see CheckDomain).
-	ctx, cancel := context.WithTimeout(ctx, time.Duration(len(repos))*30*time.Minute)
-	defer cancel()
 
 	pkey := "prune:" + domain
 	_, startedAt := s.progBegin(ctx, pkey, "maintenance")
 	defer func() { s.progEnd(pkey, "maintenance", err == nil, startedAt) }()
 	ctx, stopCounting := s.progCounted(ctx, pkey, startedAt)
 	defer stopCounting()
+	// Repacking a large remote repository downloads and uploads packs for as
+	// long as it needs; only a prune that goes silent is cut off.
+	ctx, cancel := stallDeadline(ctx, maintenanceStall)
+	defer cancel()
 	runID, rErr := s.startRun(ctx, domainRunTargetID(domain), "prune")
 	if rErr != nil {
 		log.Printf("api: prune %s: could not start run record (continuing): %v", domain, rErr) //nolint:gosec // G706: domain is a fixed literal

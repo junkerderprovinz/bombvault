@@ -1493,9 +1493,10 @@ func (r Restic) runIn(ctx context.Context, dir string, args []string, m Mode) ([
 // ctx.Err() so errors.Is holds. A deadline stays context.DeadlineExceeded (NOT
 // Canceled), so a restore wedged past its 48h cap is still recorded "failed" —
 // correct. When ctx is not done the original (scrubbed) error is returned as-is.
+// A cause the caller gave the cancel is what the error names.
 func ctxCancelErr(ctx context.Context, args []string, err error) error {
 	if err != nil && ctx.Err() != nil {
-		return fmt.Errorf("restic %s cancelled: %w", subcommand(args), ctx.Err())
+		return fmt.Errorf("restic %s cancelled: %w", subcommand(args), context.Cause(ctx))
 	}
 	return err
 }
