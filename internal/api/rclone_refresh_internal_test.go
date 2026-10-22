@@ -125,3 +125,12 @@ func TestARefusedConnectionChangeKeepsTheTokenItsCheckRefreshed(t *testing.T) {
 		t.Fatal("the remote it was tried under is still in the config")
 	}
 }
+
+func TestAFolderWalkOfASavedRemoteWhoseTokenRcloneRefreshesGoesThrough(t *testing.T) {
+	svc, _, _ := newConnectionSvc(t, nil)
+	d, _ := boxDestination(t, svc)
+
+	if _, _, err := svc.DraftFolders(context.Background(), draftRequest{Provider: "box", Destination: d.ID}); err != nil {
+		t.Fatal(err)
+	}
+}
