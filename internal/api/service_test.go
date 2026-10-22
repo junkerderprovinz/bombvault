@@ -13,6 +13,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -8355,7 +8356,7 @@ func TestServiceBackupTagsIncludeAliasFormerNames(t *testing.T) {
 	if _, err := svc.Backup(context.Background(), "radarr"); err != nil {
 		t.Fatalf("backup: %v", err)
 	}
-	want := []string{"container:radarr", "p1", "formerly:radarr-movies"}
+	want := []string{"container:radarr", "p1", "formerly:radarr-movies", "bv:image:radarr:latest"}
 	if len(eng.lastTags) != len(want) {
 		t.Fatalf("tags = %v, want %v", eng.lastTags, want)
 	}
@@ -8367,7 +8368,7 @@ func TestServiceBackupTagsIncludeAliasFormerNames(t *testing.T) {
 }
 
 // TestServiceBackupTagsUnchangedWithoutAlias: an entry that was never renamed
-// reaches restic with only its usual two tags.
+// reaches restic with only its usual tags.
 func TestServiceBackupTagsUnchangedWithoutAlias(t *testing.T) {
 	dir := t.TempDir()
 	root := filepath.ToSlash(dir)
@@ -8398,8 +8399,8 @@ func TestServiceBackupTagsUnchangedWithoutAlias(t *testing.T) {
 	if _, err := svc.Backup(context.Background(), "plex"); err != nil {
 		t.Fatalf("backup: %v", err)
 	}
-	want := []string{"container:plex", "p1"}
-	if len(eng.lastTags) != len(want) || eng.lastTags[0] != want[0] || eng.lastTags[1] != want[1] {
+	want := []string{"container:plex", "p1", "bv:image:plex:latest"}
+	if !slices.Equal(eng.lastTags, want) {
 		t.Fatalf("tags = %v, want %v", eng.lastTags, want)
 	}
 }
