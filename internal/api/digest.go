@@ -51,7 +51,9 @@ type digestStats struct {
 	// Offsite carries one currency line per domain with an off-site repo.
 	Offsite []digestOffsiteLine
 	// Replicas carries one rendered currency line per replicating ZFS item.
-	Replicas []string
+	// ReplicasBehind is set when one of them is not current.
+	Replicas       []string
+	ReplicasBehind bool
 	// Failures are up to digestMaxFailures pre-rendered "kind name: reason"
 	// lines (newest first); MoreFailures counts the collapsed remainder.
 	Failures     []string
@@ -60,6 +62,19 @@ type digestStats struct {
 	// nobody has settled yet, whenever they were raised: the weekly reminder
 	// that a critical is still open and that deleting old backups is waiting.
 	AnomaliesCritical, AnomaliesWarning, AnomaliesHeld int
+}
+
+// needsAttention reports whether the digest names something to act on beyond
+// the failed runs: an off-site copy that is stale or never made, a replica
+// behind, an open critical or deleting that waits on a finding. A schedule
+// that stopped firing fails no run, so only these lines tell of it.
+func (st digestStats) needsAttention() bool {
+	for _, line := range st.Offsite {
+		if line.LastOK == 0 || line.Stale {
+			return true
+		}
+	}
+	return st.ReplicasBehind || st.AnomaliesCritical > 0 || st.AnomaliesHeld > 0
 }
 
 // digestBackupScheduleFor returns a domain's local backup schedule, which sets
@@ -180,7 +195,7 @@ func (s *Service) collectDigestStats(now time.Time) (digestStats, error) {
 		}
 		stats.Offsite = append(stats.Offsite, line)
 	}
-	stats.Replicas = s.zfsReplicaDigestLines(stats.Now, settings)
+	stats.Replicas, stats.ReplicasBehind = s.zfsReplicaDigestLines(stats.Now, settings)
 
 	counts, _, err := s.store.OpenAnomalyCounts()
 	if err != nil {
@@ -276,6 +291,8 @@ func composeDigest(stats digestStats) string {
 		if stats.MoreFailures > 0 {
 			fmt.Fprintf(&b, "(+%d more)\n", stats.MoreFailures)
 		}
+	} else if stats.needsAttention() {
+		b.WriteString("No failed runs, but the lines above need a look.\n")
 	} else {
 		b.WriteString("No failures. All good.\n")
 	}
@@ -285,7 +302,8 @@ func composeDigest(stats digestStats) string {
 // SendDigest sends the weekly digest to the notify channels and the Unraid
 // mirror without recording a run. The Healthchecks ping is suppressed because
 // a summary must not flip a domain check. A muted policy sends nothing, and
-// On="failure" lets notify.Send drop an all-green digest.
+// On="failure" lets notify.Send drop an all-green digest, one with no failed
+// run and nothing that needs attention.
 func (s *Service) SendDigest(ctx context.Context) error {
 	c, err := s.NotifyConfig()
 	if err != nil {
@@ -298,7 +316,7 @@ func (s *Service) SendDigest(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	ok := stats.TotalFailed == 0
+	ok := stats.TotalFailed == 0 && !stats.needsAttention()
 	msg := composeDigest(stats)
 	notify.Send(notify.WithHealthchecksSuppressed(ctx), c, "digest",
 		notify.Event{Title: "BombVault", Message: msg, OK: ok})

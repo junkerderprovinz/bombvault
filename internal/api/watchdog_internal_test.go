@@ -212,3 +212,32 @@ func TestWatchdogStaysQuietWithNothingScheduled(t *testing.T) {
 		t.Fatalf("nothing is scheduled, so nothing is overdue, got %d notifications", n)
 	}
 }
+
+// An overdue alert that no channel took is no episode yet, so the next run
+// tries again.
+func TestWatchdogRetriesAnAlertThatReachedNobody(t *testing.T) {
+	svc, st, _, seeded := watchdogTestService(t)
+	wh := newPathRecorder(t)
+	wh.status.Store(http.StatusServiceUnavailable)
+	if err := svc.SetNotifyConfig(notify.Config{On: "failure", WebhookEnabled: true, WebhookURL: wh.srv.URL}); err != nil {
+		t.Fatal(err)
+	}
+	ctx := context.Background()
+
+	if err := svc.runWatchdogAt(ctx, seeded+3*86400); err != nil {
+		t.Fatal(err)
+	}
+	if _, found, err := st.GetWatchdogState("containers"); err != nil || found {
+		t.Fatalf("an undelivered alert must not be recorded, found=%v err=%v", found, err)
+	}
+	wh.status.Store(http.StatusOK)
+	if err := svc.runWatchdogAt(ctx, seeded+4*86400); err != nil {
+		t.Fatal(err)
+	}
+	if n := len(wh.got()); n != 2 {
+		t.Fatalf("got %d attempts, want the failed one and its retry", n)
+	}
+	if _, found, err := st.GetWatchdogState("containers"); err != nil || !found {
+		t.Fatalf("the delivered alert must be recorded, found=%v err=%v", found, err)
+	}
+}

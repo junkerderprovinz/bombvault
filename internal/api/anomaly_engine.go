@@ -1299,7 +1299,7 @@ func (e *anomalyEngine) rebuildCache() error {
 		UnmeasuredVolumes: unmeasured,
 		// The same gate sendNotifications applies, so the page cannot promise a
 		// message that nothing would deliver.
-		NotifyMuted:   !notifyCfg.Active() || !notifyCfg.Configured(),
+		NotifyMuted:   !e.svc.anomalyAlertsReach(notifyCfg),
 		RetentionHeld: len(held),
 	}
 	for _, row := range open {

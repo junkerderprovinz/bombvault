@@ -211,7 +211,7 @@ func (s *Service) applyRetentionTags(ctx context.Context, settings store.Setting
 		held, why, hErr := s.anomalies.RetentionHeld(ctx, hold)
 		if hErr != nil {
 			log.Printf("api: %s: retention skipped for %s: the anomaly check failed: %v", domain, tag, hErr)
-			s.notifyRetentionFailed(ctx, tag, "the anomaly check could not run, so nothing was deleted: "+scrubError(hErr))
+			s.notifyRetentionFailed(ctx, domain, tag, "the anomaly check could not run, so nothing was deleted: "+scrubError(hErr))
 			continue
 		}
 		if held {
@@ -220,7 +220,7 @@ func (s *Service) applyRetentionTags(ctx context.Context, settings store.Setting
 		}
 		if err := s.forgetWithLockHeal(ctx, repo, p, mode, []string{tag}, false); err != nil {
 			log.Printf("api: retention prune failed (backup is safe): %v", err)
-			s.notifyRetentionFailed(ctx, tag, truncateRunErr(err))
+			s.notifyRetentionFailed(ctx, domain, tag, truncateRunErr(err))
 		}
 	}
 	if bulkReplicateSuppressed(ctx) {

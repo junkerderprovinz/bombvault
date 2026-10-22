@@ -758,9 +758,9 @@ func TestACurrentReplicaIsTheZFSCopyOffThePremisesButNoBackup(t *testing.T) {
 		t.Error("a replica three days old still counts against a daily schedule")
 	}
 
-	lines := r.s.zfsReplicaDigestLines(now, settings)
-	if len(lines) != 1 || !strings.Contains(lines[0], "cache/appdata: current") {
-		t.Errorf("digest lines = %q", lines)
+	lines, behind := r.s.zfsReplicaDigestLines(now, settings)
+	if len(lines) != 1 || !strings.Contains(lines[0], "cache/appdata: current") || behind {
+		t.Errorf("digest lines = %q, behind = %v", lines, behind)
 	}
 }
 
