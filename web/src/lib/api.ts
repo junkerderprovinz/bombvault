@@ -50,7 +50,7 @@ export interface Container {
    *  hours; 0 when it does not wait. */
   idleWaitHours?: number;
   /** When the post-backup update check last completed (unix seconds, 0 = never)
-   *  and its outcome ('' | 'up-to-date' | 'updated' | 'failed') — makes
+   *  and its outcome ('' | 'up-to-date' | 'updated' | 'failed' | 'held') — makes
    *  "checked, up to date" distinguishable from "never reached". */
   lastUpdateCheck: number;
   lastUpdateResult: string;

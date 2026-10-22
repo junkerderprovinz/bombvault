@@ -2589,6 +2589,7 @@ const es: Partial<Translations> = {
   "containers.updateCheckUpToDate": "al día",
   "containers.updateCheckUpdated": "actualizado",
   "containers.updateCheckFailed": "comprobación fallida",
+  "containers.updateCheckHeld": "retenido: la imagen más nueva es la que una restauración dejó atrás",
   "settings.digestHint": "Un mensaje resumen por semana: número de ejecuciones, nuevos datos de copia, actualidad de la copia externa y los principales fallos, enviado por los canales de notificación de arriba.",
   "settings.digestToggle": "Resumen semanal",
   "settings.catchUpMissed": "Recuperar copias perdidas tras el arranque",

@@ -2591,6 +2591,7 @@ const he: Partial<Translations> = {
   "containers.updateCheckUpToDate": "עדכני",
   "containers.updateCheckUpdated": "עודכן",
   "containers.updateCheckFailed": "הבדיקה נכשלה",
+  "containers.updateCheckHeld": "מעוכב: התמונה החדשה ביותר היא זו ששחזור חזר ממנה",
   "settings.digestHint": "הודעת סיכום אחת בשבוע: מספר ריצות, נתוני גיבוי חדשים, עדכניות מחוץ לאתר והכשלים העיקריים, נשלחת דרך ערוצי ההתראות שלמעלה.",
   "settings.digestToggle": "תקציר שבועי",
   "settings.catchUpMissed": "השלם גיבויים שהוחמצו לאחר ההפעלה",

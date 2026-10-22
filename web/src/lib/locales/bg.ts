@@ -147,6 +147,7 @@ const bg: Partial<Translations> = {
   "containers.updateCheckUpToDate": "актуален",
   "containers.updateCheckUpdated": "обновен",
   "containers.updateCheckFailed": "проверката е неуспешна",
+  "containers.updateCheckHeld": "задържано: най-новият образ е този, от който се върна възстановяването",
 
   // Backups (restic snapshots, shown to the user as "Backups")
   "snapshots.restore": "Възстанови",

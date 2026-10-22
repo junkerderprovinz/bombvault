@@ -2591,6 +2591,7 @@ const el: Partial<Translations> = {
   "containers.updateCheckUpToDate": "ενημερωμένο",
   "containers.updateCheckUpdated": "ενημερώθηκε",
   "containers.updateCheckFailed": "ο έλεγχος απέτυχε",
+  "containers.updateCheckHeld": "σε αναμονή: η νεότερη εικόνα είναι αυτή από την οποία γύρισε πίσω μια επαναφορά",
   "settings.digestHint": "Ένα συνοπτικό μήνυμα την εβδομάδα: αριθμός εκτελέσεων, νέα δεδομένα αντιγράφων, επικαιρότητα εκτός τόπου και τα κυριότερα σφάλματα, αποστέλλεται μέσω των παραπάνω καναλιών ειδοποιήσεων.",
   "settings.digestToggle": "Εβδομαδιαία σύνοψη",
   "settings.catchUpMissed": "Αναπλήρωση χαμένων αντιγράφων μετά την εκκίνηση",

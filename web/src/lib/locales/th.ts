@@ -2592,6 +2592,7 @@ const th: Partial<Translations> = {
   "containers.updateCheckUpToDate": "เป็นปัจจุบัน",
   "containers.updateCheckUpdated": "อัปเดตแล้ว",
   "containers.updateCheckFailed": "การตรวจสอบล้มเหลว",
+  "containers.updateCheckHeld": "ระงับไว้: อิมเมจล่าสุดคืออันที่การกู้คืนย้อนกลับมาจาก",
   "settings.digestHint": "ข้อความสรุปสัปดาห์ละหนึ่งฉบับ: จำนวนการทำงาน ข้อมูลสำรองใหม่ ความเป็นปัจจุบันของสำเนานอกสถานที่ และความล้มเหลวหลัก ๆ ส่งผ่านช่องทางแจ้งเตือนด้านบน",
   "settings.digestToggle": "สรุปประจำสัปดาห์",
   "settings.catchUpMissed": "ทำการสำรองข้อมูลที่พลาดไปหลังเริ่มระบบ",

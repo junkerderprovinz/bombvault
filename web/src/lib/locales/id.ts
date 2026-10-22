@@ -147,6 +147,7 @@ const id: Partial<Translations> = {
   "containers.updateCheckUpToDate": "sudah terbaru",
   "containers.updateCheckUpdated": "diperbarui",
   "containers.updateCheckFailed": "pemeriksaan gagal",
+  "containers.updateCheckHeld": "ditahan: image terbaru adalah yang ditinggalkan oleh pemulihan",
 
   // Backups
   "snapshots.restore": "Pulihkan",

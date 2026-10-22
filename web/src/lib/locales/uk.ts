@@ -2588,6 +2588,7 @@ const uk: Partial<Translations> = {
   "containers.updateCheckUpToDate": "актуально",
   "containers.updateCheckUpdated": "оновлено",
   "containers.updateCheckFailed": "перевірка не вдалася",
+  "containers.updateCheckHeld": "затримано: найновіший образ той, від якого відкотило відновлення",
   "settings.digestHint": "Одне підсумкове повідомлення на тиждень: кількість запусків, нові дані резервних копій, актуальність зовнішньої копії та основні збої — надсилається через налаштовані вище канали сповіщень.",
   "settings.digestToggle": "Щотижневий підсумок",
   "settings.catchUpMissed": "Надолужувати пропущені резервні копії після запуску",

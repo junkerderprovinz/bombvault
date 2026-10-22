@@ -2592,6 +2592,7 @@ const hu: Partial<Translations> = {
   "containers.updateCheckUpToDate": "naprakész",
   "containers.updateCheckUpdated": "frissítve",
   "containers.updateCheckFailed": "az ellenőrzés sikertelen",
+  "containers.updateCheckHeld": "visszatartva: a legújabb image az, amelyről egy visszaállítás visszalépett",
   "settings.digestHint": "Heti egy összefoglaló üzenet: futások száma, új biztonsági mentési adatok, a telephelyen kívüli másolat frissessége és a fő hibák, a fenti értesítési csatornákon keresztül.",
   "settings.digestToggle": "Heti összefoglaló",
   "settings.catchUpMissed": "Elmaradt biztonsági mentések pótlása indulás után",

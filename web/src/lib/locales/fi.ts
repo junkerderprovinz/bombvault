@@ -2591,6 +2591,7 @@ const fi: Partial<Translations> = {
   "containers.updateCheckUpToDate": "ajan tasalla",
   "containers.updateCheckUpdated": "päivitetty",
   "containers.updateCheckFailed": "tarkistus epäonnistui",
+  "containers.updateCheckHeld": "pidätetty: uusin levykuva on se, jolta palautus palasi",
   "settings.digestHint": "Yksi yhteenvetoviesti viikossa: ajojen määrät, uudet varmuuskopiotiedot, etäkopion ajantasaisuus ja tärkeimmät virheet. Lähetetään yllä olevien ilmoituskanavien kautta.",
   "settings.digestToggle": "Viikkokooste",
   "settings.catchUpMissed": "Aja väliin jääneet varmuuskopiot käynnistyksen jälkeen",

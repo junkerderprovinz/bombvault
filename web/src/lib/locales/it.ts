@@ -2591,6 +2591,7 @@ const it: Partial<Translations> = {
   "containers.updateCheckUpToDate": "già aggiornato",
   "containers.updateCheckUpdated": "aggiornato",
   "containers.updateCheckFailed": "controllo non riuscito",
+  "containers.updateCheckHeld": "trattenuto: l'immagine più recente è quella da cui un ripristino è tornato indietro",
   "settings.digestHint": "Un messaggio riepilogativo a settimana: numero di esecuzioni, nuovi dati di backup, aggiornamento della copia off-site e i principali errori, inviato tramite i canali di notifica qui sopra.",
   "settings.digestToggle": "Riepilogo settimanale",
   "settings.catchUpMissed": "Recupera i backup mancati dopo l'avvio",

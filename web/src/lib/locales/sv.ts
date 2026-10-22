@@ -2591,6 +2591,7 @@ const sv: Partial<Translations> = {
   "containers.updateCheckUpToDate": "aktuell",
   "containers.updateCheckUpdated": "uppdaterad",
   "containers.updateCheckFailed": "kontrollen misslyckades",
+  "containers.updateCheckHeld": "hålls tillbaka: den nyaste avbildningen är den som en återställning gick tillbaka från",
   "settings.digestHint": "Ett sammanfattande meddelande per vecka: antal körningar, nya backupdata, off-site-aktualitet och de största felen, skickas via aviseringskanalerna ovan.",
   "settings.digestToggle": "Veckosammanfattning",
   "settings.catchUpMissed": "Kör ikapp missade säkerhetskopieringar efter start",

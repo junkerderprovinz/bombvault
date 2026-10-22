@@ -2582,6 +2582,7 @@ const ko: Partial<Translations> = {
   "containers.updateCheckUpToDate": "최신 상태",
   "containers.updateCheckUpdated": "업데이트됨",
   "containers.updateCheckFailed": "확인 실패",
+  "containers.updateCheckHeld": "보류됨: 최신 이미지는 복원이 되돌린 이미지입니다",
   "settings.digestHint": "주 1회 요약 메시지: 실행 횟수, 새 백업 데이터, 오프사이트 최신 상태, 주요 실패. 위의 알림 채널을 통해 전송됩니다.",
   "settings.digestToggle": "주간 요약",
   "settings.catchUpMissed": "시작 후 놓친 백업 따라잡기",

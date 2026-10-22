@@ -147,6 +147,7 @@ const lt: Partial<Translations> = {
   "containers.updateCheckUpToDate": "atnaujinta",
   "containers.updateCheckUpdated": "atnaujinta",
   "containers.updateCheckFailed": "patikra nepavyko",
+  "containers.updateCheckHeld": "sulaikyta: naujausias atvaizdas yra tas, nuo kurio atkūrimas grįžo",
 
   // Backups
   "snapshots.restore": "Atkurti",

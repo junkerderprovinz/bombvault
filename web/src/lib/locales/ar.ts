@@ -2592,6 +2592,7 @@ const ar: Partial<Translations> = {
   "containers.updateCheckUpToDate": "محدَّث",
   "containers.updateCheckUpdated": "تم التحديث",
   "containers.updateCheckFailed": "فشل الفحص",
+  "containers.updateCheckHeld": "مُعلَّق: أحدث صورة هي التي رجعت عنها الاستعادة",
   "settings.digestHint": "رسالة ملخص واحدة أسبوعياً: عدد التشغيلات، بيانات النسخ الجديدة، حداثة النسخ خارج الموقع وأهم الإخفاقات، تُرسل عبر قنوات الإشعارات أعلاه.",
   "settings.digestToggle": "الملخص الأسبوعي",
   "settings.catchUpMissed": "تدارك النسخ الاحتياطية الفائتة بعد التشغيل",

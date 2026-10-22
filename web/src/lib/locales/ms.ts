@@ -147,6 +147,7 @@ const ms: Partial<Translations> = {
   "containers.updateCheckUpToDate": "terkini",
   "containers.updateCheckUpdated": "dikemas kini",
   "containers.updateCheckFailed": "semakan gagal",
+  "containers.updateCheckHeld": "ditahan: imej terbaharu ialah yang ditinggalkan oleh pemulihan",
 
   // Backups
   "snapshots.restore": "Pulihkan",

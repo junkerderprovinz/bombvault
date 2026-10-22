@@ -2582,6 +2582,7 @@ const ja: Partial<Translations> = {
   "containers.updateCheckUpToDate": "最新",
   "containers.updateCheckUpdated": "更新済み",
   "containers.updateCheckFailed": "チェック失敗",
+  "containers.updateCheckHeld": "保留中: 最新のイメージは復元で戻す前のイメージです",
   "settings.digestHint": "週に1通のサマリーメッセージ：実行回数、新しいバックアップデータ、オフサイトの最新状況、主な失敗。上記の通知チャネルで送信されます。",
   "settings.digestToggle": "週次ダイジェスト",
   "settings.catchUpMissed": "起動後に実行されなかったバックアップを実行する",

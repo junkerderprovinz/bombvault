@@ -147,6 +147,7 @@ const hi: Partial<Translations> = {
   "containers.updateCheckUpToDate": "अद्यतन",
   "containers.updateCheckUpdated": "अपडेट हो गया",
   "containers.updateCheckFailed": "जाँच विफल हुई",
+  "containers.updateCheckHeld": "रोका गया: सबसे नया इमेज वही है जिससे रीस्टोर पीछे लौटा",
 
   // Backups
   "snapshots.restore": "रीस्टोर करें",

@@ -147,6 +147,7 @@ const is: Partial<Translations> = {
   "containers.updateCheckUpToDate": "uppfært",
   "containers.updateCheckUpdated": "uppfært",
   "containers.updateCheckFailed": "athugun mistókst",
+  "containers.updateCheckHeld": "haldið aftur: nýjasta myndin er sú sem endurheimt fór aftur frá",
 
   // Backups
   "snapshots.restore": "Endurheimta",

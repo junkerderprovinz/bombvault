@@ -147,6 +147,7 @@ const gl: Partial<Translations> = {
   "containers.updateCheckUpToDate": "ao día",
   "containers.updateCheckUpdated": "actualizado",
   "containers.updateCheckFailed": "a comprobación fallou",
+  "containers.updateCheckHeld": "retido: a imaxe máis nova é a que unha restauración deixou atrás",
 
   // Backups
   "snapshots.restore": "Restaurar",

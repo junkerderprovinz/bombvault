@@ -2588,6 +2588,7 @@ const ru: Partial<Translations> = {
   "containers.updateCheckUpToDate": "актуально",
   "containers.updateCheckUpdated": "обновлено",
   "containers.updateCheckFailed": "проверка не удалась",
+  "containers.updateCheckHeld": "задержано: новейший образ тот, от которого откатило восстановление",
   "settings.digestHint": "Одно сводное сообщение в неделю: число запусков, новые данные резервных копий, актуальность внешней копии и основные сбои — отправляется через настроенные выше каналы уведомлений.",
   "settings.digestToggle": "Еженедельная сводка",
   "settings.catchUpMissed": "Навёрстывать пропущенные резервные копии после запуска",

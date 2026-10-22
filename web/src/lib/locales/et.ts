@@ -147,6 +147,7 @@ const et: Partial<Translations> = {
   "containers.updateCheckUpToDate": "ajakohane",
   "containers.updateCheckUpdated": "uuendatud",
   "containers.updateCheckFailed": "kontroll ebaõnnestus",
+  "containers.updateCheckHeld": "peatatud: uusim tõmmis on see, millelt taastamine tagasi läks",
 
   // Backups
   "snapshots.restore": "Taasta",

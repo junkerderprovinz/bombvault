@@ -6645,6 +6645,24 @@ func (s *Service) checkUpdateAfterBackup(ctx context.Context, name string, in mo
 		s.setUpdateCheck(name, "up-to-date")
 		return nil
 	}
+	if held, hErr := s.store.UpdateHeldFrom(name); hErr != nil {
+		log.Printf("api: update-after-backup: read the hold of %q: %v", name, hErr) //nolint:gosec // G706: name is %q-quoted
+		return nil
+	} else if held != "" {
+		if newID == held {
+			// The pull brought back the image a restore went away from. The
+			// tag goes back to the image the container runs until a newer one
+			// arrives.
+			if tErr := s.docker.ImageTag(ctx, in.Image, ref); tErr != nil {
+				log.Printf("api: update-after-backup: point %s back at the image of %q: %v", ref, name, tErr) //nolint:gosec // G706: name is %q-quoted
+			}
+			s.setUpdateCheck(name, "held")
+			return nil
+		}
+		if err := s.store.SetUpdateHeldFrom(name, ""); err != nil {
+			log.Printf("api: update-after-backup: lift the hold of %q: %v", name, err) //nolint:gosec // G706: name is %q-quoted
+		}
+	}
 	return func() { s.applyUpdateAfterBackup(ctx, name, in, targetID, ref) }
 }
 
@@ -8658,6 +8676,7 @@ func (s *Service) executeRestore(ctx context.Context, name string, plan containe
 	rkey := "container:" + name
 	rctx, startedAt := s.progBegin(ctx, rkey, "restore")
 	docker := s.restoreDocker()
+	leftImage := s.imageARestoreLeaves(rctx, plan.inspect)
 	rerr := backup.RestoreContainer(rctx, backup.RestoreDeps{
 		Confirmed:         true, // prepareRestore rejected unconfirmed requests
 		RecreateOnly:      plan.recreateOnly,
@@ -8682,6 +8701,11 @@ func (s *Service) executeRestore(ctx context.Context, name string, plan containe
 		Removals:          restoreRemovals{st: s.store},
 	})
 	if rerr == nil {
+		if leftImage != "" {
+			if err := s.store.SetUpdateHeldFrom(name, leftImage); err != nil {
+				log.Printf("api: restore: hold the update of %q: %v", name, err) //nolint:gosec // G706: name is %q-quoted
+			}
+		}
 		s.healRestoreDirOwnership(rctx, plan.repo, plan.snapshotID, plan.mode, plan.restoreDirs)
 		// The restored disks carry none of the bitmaps a kept checkpoint
 		// points at.
@@ -8691,6 +8715,24 @@ func (s *Service) executeRestore(ctx context.Context, name string, plan containe
 	}
 	s.progEnd(rkey, "restore", rerr == nil, startedAt)
 	return rerr
+}
+
+// imageARestoreLeaves is the image the container's tag points at now when the
+// restore is about to take it back to the older one it was backed up with,
+// empty when the restore keeps the image the tag names.
+func (s *Service) imageARestoreLeaves(ctx context.Context, in model.Inspect) string {
+	ref, backedUp := cmp.Or(in.Config.Image, in.Image), in.Image
+	if backedUp == "" || backedUp == ref {
+		return ""
+	}
+	if id, err := s.docker.ImageID(ctx, backedUp); err != nil || id == "" {
+		return ""
+	}
+	now, err := s.docker.ImageID(ctx, ref)
+	if err != nil || now == backedUp {
+		return ""
+	}
+	return now
 }
 
 // healRestoreDirOwnership best-effort restores each remapped restore

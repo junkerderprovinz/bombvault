@@ -147,6 +147,7 @@ const lv: Partial<Translations> = {
   "containers.updateCheckUpToDate": "aktuāls",
   "containers.updateCheckUpdated": "atjaunināts",
   "containers.updateCheckFailed": "pārbaude neizdevās",
+  "containers.updateCheckHeld": "aizturēts: jaunākais attēls ir tas, no kura atjaunošana atgriezās",
 
   // Backups
   "snapshots.restore": "Atjaunot",

@@ -147,6 +147,7 @@ const hr: Partial<Translations> = {
   "containers.updateCheckUpToDate": "ažurirano",
   "containers.updateCheckUpdated": "ažurirano",
   "containers.updateCheckFailed": "provjera nije uspjela",
+  "containers.updateCheckHeld": "zadržano: najnovija slika je ona od koje se vraćanje odmaknulo",
 
   // Backups
   "snapshots.restore": "Vrati",

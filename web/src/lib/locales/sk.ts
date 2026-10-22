@@ -147,6 +147,7 @@ const sk: Partial<Translations> = {
   "containers.updateCheckUpToDate": "aktuálne",
   "containers.updateCheckUpdated": "aktualizované",
   "containers.updateCheckFailed": "kontrola zlyhala",
+  "containers.updateCheckHeld": "pozdržané: najnovší image je ten, od ktorého sa obnova vrátila",
 
   // Backups
   "snapshots.restore": "Obnoviť",

@@ -2589,6 +2589,7 @@ const cs: Partial<Translations> = {
   "containers.updateCheckUpToDate": "aktuální",
   "containers.updateCheckUpdated": "aktualizováno",
   "containers.updateCheckFailed": "kontrola selhala",
+  "containers.updateCheckHeld": "pozdrženo: nejnovější image je ten, od kterého se obnova vrátila",
   "settings.digestHint": "Jedna souhrnná zpráva týdně: počty běhů, nová zálohovaná data, aktuálnost kopie mimo lokalitu a hlavní chyby, odesílaná kanály oznámení výše.",
   "settings.digestToggle": "Týdenní souhrn",
   "settings.catchUpMissed": "Dohnat zmeškané zálohy po startu",

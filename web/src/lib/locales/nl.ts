@@ -2590,6 +2590,7 @@ const nl: Partial<Translations> = {
   "containers.updateCheckUpToDate": "up-to-date",
   "containers.updateCheckUpdated": "bijgewerkt",
   "containers.updateCheckFailed": "controle mislukt",
+  "containers.updateCheckHeld": "tegengehouden: de nieuwste image is die waar een herstel van terugging",
   "settings.digestHint": "Eén samenvattend bericht per week: aantal uitvoeringen, nieuwe back-updata, actualiteit van de off-site kopie en de belangrijkste fouten, verzonden via de meldingskanalen hierboven.",
   "settings.digestToggle": "Wekelijkse samenvatting",
   "settings.catchUpMissed": "Gemiste back-ups na de start inhalen",

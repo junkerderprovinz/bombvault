@@ -433,7 +433,7 @@ func (r *Repo) SetDBDumpEngine(containerName, engine string) error {
 
 // SetUpdateCheck records the outcome of a completed post-backup update check
 // for a container: at is the unix time it finished, result is 'up-to-date' |
-// 'updated' | 'failed'. Plain UPDATE (no create-on-miss): the check only ever
+// 'updated' | 'failed' | 'held'. Plain UPDATE (no create-on-miss): the check only ever
 // runs right after a backup, which has already upserted the target row. Owned
 // by this setter; never reset by UpsertTarget.
 func (r *Repo) SetUpdateCheck(containerName string, at int64, result string) error {
@@ -447,6 +447,30 @@ func (r *Repo) SetUpdateCheck(containerName string, at int64, result string) err
 		return fmt.Errorf("SetUpdateCheck: container %q not found", containerName)
 	}
 	return nil
+}
+
+// SetUpdateHeldFrom records the image a restore took the container back from,
+// which the update after a backup then leaves alone. An empty id lifts the
+// hold.
+func (r *Repo) SetUpdateHeldFrom(containerName, imageID string) error {
+	if _, err := r.db.Exec(`UPDATE targets SET update_held_from = ? WHERE container_name = ?`, imageID, containerName); err != nil {
+		return fmt.Errorf("SetUpdateHeldFrom: %w", err)
+	}
+	return nil
+}
+
+// UpdateHeldFrom is the image SetUpdateHeldFrom recorded for the container,
+// empty when there is no hold.
+func (r *Repo) UpdateHeldFrom(containerName string) (string, error) {
+	var id string
+	err := r.db.QueryRow(`SELECT update_held_from FROM targets WHERE container_name = ?`, containerName).Scan(&id)
+	if errors.Is(err, sql.ErrNoRows) {
+		return "", nil
+	}
+	if err != nil {
+		return "", fmt.Errorf("UpdateHeldFrom: %w", err)
+	}
+	return id, nil
 }
 
 // SetBackedUpShape records what the container looked like when its backup

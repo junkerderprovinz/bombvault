@@ -70,6 +70,74 @@ func (f *updateFakeDocker) ImageRemove(_ context.Context, id string) error {
 	return nil
 }
 
+func (f *updateFakeDocker) ImageTag(_ context.Context, id, ref string) error {
+	f.calls = append(f.calls, "tag:"+id+"->"+ref)
+	return nil
+}
+
+// imagesFakeDocker answers ImageID from a table of the images on the host.
+type imagesFakeDocker struct {
+	dockercli.Docker
+	ids map[string]string
+}
+
+func (f imagesFakeDocker) ImageID(_ context.Context, ref string) (string, error) {
+	return f.ids[ref], nil
+}
+
+func TestARestoreToAnOlderImageNamesTheImageItLeaves(t *testing.T) {
+	svc := &Service{docker: imagesFakeDocker{ids: map[string]string{
+		"plex:latest": "sha256:NEW", "sha256:OLD": "sha256:OLD", "sha256:NEW": "sha256:NEW",
+	}}}
+	in := model.Inspect{Image: "sha256:OLD", Config: model.Config{Image: "plex:latest"}}
+	if got := svc.imageARestoreLeaves(context.Background(), in); got != "sha256:NEW" {
+		t.Fatalf("left = %q, want the image the tag points at now", got)
+	}
+	in.Image = "sha256:NEW"
+	if got := svc.imageARestoreLeaves(context.Background(), in); got != "" {
+		t.Fatalf("left = %q for a restore onto the image the tag names", got)
+	}
+	in.Image = "sha256:GONE"
+	if got := svc.imageARestoreLeaves(context.Background(), in); got != "" {
+		t.Fatalf("left = %q for a backup whose image is no longer on the host", got)
+	}
+}
+
+func TestTheUpdateAfterABackupLeavesTheImageARestoreWentBackFrom(t *testing.T) {
+	svc, st := newUpdateTestSvc(t)
+	tg, err := st.UpsertTarget(store.Target{ContainerName: "plex"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := st.SetUpdateHeldFrom("plex", "sha256:BROKEN"); err != nil {
+		t.Fatal(err)
+	}
+	f := &updateFakeDocker{imageID: "sha256:BROKEN"}
+	svc.docker = f
+	in := model.Inspect{Name: "/plex", Image: "sha256:OLD", Config: model.Config{Image: "plex:latest"}}
+
+	updateAfterBackup(svc, "plex", in, tg.ID)
+	calls := strings.Join(f.calls, ",")
+	if strings.Contains(calls, "remove:") || strings.Contains(calls, "createAndStart:") {
+		t.Fatalf("the container went back onto the image it was restored away from: %v", f.calls)
+	}
+	if !strings.Contains(calls, "tag:sha256:OLD->plex:latest") {
+		t.Fatalf("the tag stays on the pulled image: %v", f.calls)
+	}
+	if got, _ := st.GetTargetByContainer("plex"); got.LastUpdateResult != "held" {
+		t.Fatalf("update check = %q, want held", got.LastUpdateResult)
+	}
+
+	f.imageID, f.calls = "sha256:FIXED", nil
+	updateAfterBackup(svc, "plex", in, tg.ID)
+	if !strings.Contains(strings.Join(f.calls, ","), "createAndStart:/plex") {
+		t.Fatalf("a newer image after the hold did not update: %v", f.calls)
+	}
+	if held, _ := st.UpdateHeldFrom("plex"); held != "" {
+		t.Fatalf("the hold %q stayed after a newer image arrived", held)
+	}
+}
+
 func newUpdateTestSvc(t *testing.T) (*Service, *store.Repo) {
 	t.Helper()
 	db, err := store.Open(filepath.Join(t.TempDir(), "test.db"))

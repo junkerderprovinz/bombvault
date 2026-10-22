@@ -2592,6 +2592,7 @@ const ro: Partial<Translations> = {
   "containers.updateCheckUpToDate": "la zi",
   "containers.updateCheckUpdated": "actualizat",
   "containers.updateCheckFailed": "verificarea a eșuat",
+  "containers.updateCheckHeld": "reținut: cea mai nouă imagine este cea de la care o restaurare s-a întors",
   "settings.digestHint": "Un mesaj rezumat pe săptămână: numărul de rulări, date noi de backup, actualitatea copiei externe și principalele erori, trimis prin canalele de notificare de mai sus.",
   "settings.digestToggle": "Rezumat săptămânal",
   "settings.catchUpMissed": "Recuperează backupurile ratate după pornire",

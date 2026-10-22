@@ -147,6 +147,7 @@ const fa: Partial<Translations> = {
   "containers.updateCheckUpToDate": "به‌روز",
   "containers.updateCheckUpdated": "به‌روزرسانی شد",
   "containers.updateCheckFailed": "بررسی ناموفق بود",
+  "containers.updateCheckHeld": "نگه داشته شد: جدیدترین ایمیج همانی است که بازیابی از آن برگشت",
 
   // Backups
   "snapshots.restore": "بازیابی",

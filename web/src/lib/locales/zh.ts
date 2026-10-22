@@ -2582,6 +2582,7 @@ const zh: Partial<Translations> = {
   "containers.updateCheckUpToDate": "已是最新",
   "containers.updateCheckUpdated": "已更新",
   "containers.updateCheckFailed": "检查失败",
+  "containers.updateCheckHeld": "已暂缓：最新的镜像就是恢复时退回之前的那个",
   "settings.digestHint": "每周一条摘要消息：运行次数、新备份数据、异地副本时效性和主要故障，通过上方的通知渠道发送。",
   "settings.digestToggle": "每周摘要",
   "settings.catchUpMissed": "启动后补做错过的备份",

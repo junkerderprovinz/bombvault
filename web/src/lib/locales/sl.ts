@@ -147,6 +147,7 @@ const sl: Partial<Translations> = {
   "containers.updateCheckUpToDate": "posodobljeno",
   "containers.updateCheckUpdated": "posodobljeno",
   "containers.updateCheckFailed": "preverjanje ni uspelo",
+  "containers.updateCheckHeld": "zadržano: najnovejša slika je tista, od katere se je obnovitev vrnila",
 
   // Backups (restic snapshots, shown to the user as "Backups")
   "snapshots.restore": "Obnovi",

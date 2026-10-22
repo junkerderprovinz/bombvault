@@ -203,6 +203,7 @@ export const en = {
   "containers.updateCheckUpToDate": "up to date",
   "containers.updateCheckUpdated": "updated",
   "containers.updateCheckFailed": "check failed",
+  "containers.updateCheckHeld": "held: the newest image is the one a restore went back from",
 
   // Backups (restic snapshots, shown to the user as "Backups")
   "snapshots.restore": "Restore",
@@ -5329,6 +5330,7 @@ export const de: Translations = {
   "containers.updateCheckUpToDate": "aktuell",
   "containers.updateCheckUpdated": "aktualisiert",
   "containers.updateCheckFailed": "Prüfung fehlgeschlagen",
+  "containers.updateCheckHeld": "zurückgehalten: das neueste Image ist das, von dem eine Wiederherstellung zurückgegangen ist",
 
   "snapshots.restore": "Wiederherstellen",
   "snapshots.none": "Keine Sicherungen gefunden",

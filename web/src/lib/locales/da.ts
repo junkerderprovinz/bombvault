@@ -2591,6 +2591,7 @@ const da: Partial<Translations> = {
   "containers.updateCheckUpToDate": "ajour",
   "containers.updateCheckUpdated": "opdateret",
   "containers.updateCheckFailed": "tjek mislykkedes",
+  "containers.updateCheckHeld": "holdt tilbage: det nyeste image er det, en gendannelse gik tilbage fra",
   "settings.digestHint": "Én opsummerende besked om ugen: antal kørsler, nye backupdata, off-site-aktualitet og de vigtigste fejl, sendt via notifikationskanalerne ovenfor.",
   "settings.digestToggle": "Ugentlig oversigt",
   "settings.catchUpMissed": "Indhent forpassede sikkerhedskopieringer efter start",

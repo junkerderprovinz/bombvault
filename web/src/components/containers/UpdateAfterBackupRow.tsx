@@ -127,6 +127,8 @@ function updateCheckResultText(t: T, result: string): string {
       return t("containers.updateCheckUpdated");
     case "failed":
       return t("containers.updateCheckFailed");
+    case "held":
+      return t("containers.updateCheckHeld");
     default:
       return result;
   }

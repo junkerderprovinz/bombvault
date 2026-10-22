@@ -2588,6 +2588,7 @@ const pl: Partial<Translations> = {
   "containers.updateCheckUpToDate": "aktualny",
   "containers.updateCheckUpdated": "zaktualizowano",
   "containers.updateCheckFailed": "sprawdzenie nie powiodło się",
+  "containers.updateCheckHeld": "wstrzymano: najnowszy obraz to ten, od którego przywracanie się cofnęło",
   "settings.digestHint": "Jedna wiadomość podsumowująca tygodniowo: liczba uruchomień, nowe dane kopii, aktualność kopii poza siedzibą i najważniejsze błędy, wysyłana kanałami powiadomień powyżej.",
   "settings.digestToggle": "Cotygodniowe podsumowanie",
   "settings.catchUpMissed": "Nadrabiaj pominięte kopie zapasowe po starcie",

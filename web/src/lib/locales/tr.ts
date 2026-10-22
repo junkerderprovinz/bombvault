@@ -2591,6 +2591,7 @@ const tr: Partial<Translations> = {
   "containers.updateCheckUpToDate": "güncel",
   "containers.updateCheckUpdated": "güncellendi",
   "containers.updateCheckFailed": "denetim başarısız",
+  "containers.updateCheckHeld": "bekletildi: en yeni imaj, bir geri yüklemenin geri döndüğü imajdır",
   "settings.digestHint": "Haftada bir özet mesaj: çalıştırma sayıları, yeni yedek verileri, site dışı güncellik ve başlıca hatalar. Yukarıdaki bildirim kanallarıyla gönderilir.",
   "settings.digestToggle": "Haftalık özet",
   "settings.catchUpMissed": "Başlangıçtan sonra kaçırılan yedeklemeleri telafi et",

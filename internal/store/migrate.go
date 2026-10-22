@@ -3442,6 +3442,14 @@ UPDATE pull_sources SET leftovers_moved = 0;`,
        ORDER BY ot.sort_order, ot.created_at, ot.id LIMIT 1), '')
  WHERE source = 'offsite' AND offsite_target_id = '';`,
 	},
+	{
+		// The image a restore took a container back from, which the update
+		// after a backup does not bring back.
+		version:          updateHoldMigration,
+		name:             "targets_update_held_from",
+		alreadySatisfied: columnPresent("targets", "update_held_from"),
+		sql:              `ALTER TABLE targets ADD COLUMN update_held_from TEXT NOT NULL DEFAULT '';`,
+	},
 }
 
 // offsiteFieldDomains are the domains with an off-site field in the settings,
@@ -3715,6 +3723,10 @@ const restoreRemovalsMigration = 550
 // bareDrillTargetMigration numbers the stamping of bare off-site drills with
 // the target they read.
 const bareDrillTargetMigration = 560
+
+// updateHoldMigration numbers the record of the image a restore went back
+// from.
+const updateHoldMigration = 570
 
 // oneLineColumns are the names and locations the recovery kit prints.
 var oneLineColumns = []struct {

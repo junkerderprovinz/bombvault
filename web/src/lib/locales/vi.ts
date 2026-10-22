@@ -2582,6 +2582,7 @@ const vi: Partial<Translations> = {
   "containers.updateCheckUpToDate": "đã mới nhất",
   "containers.updateCheckUpdated": "đã cập nhật",
   "containers.updateCheckFailed": "kiểm tra thất bại",
+  "containers.updateCheckHeld": "tạm giữ: image mới nhất là image mà lần khôi phục đã quay lại từ đó",
   "settings.digestHint": "Một tin nhắn tóm tắt mỗi tuần: số lần chạy, dữ liệu sao lưu mới, độ mới của bản sao off-site và các lỗi chính, gửi qua các kênh thông báo ở trên.",
   "settings.digestToggle": "Tóm tắt hằng tuần",
   "settings.catchUpMissed": "Chạy bù các bản sao lưu bị bỏ lỡ sau khi khởi động",

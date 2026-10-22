@@ -147,6 +147,7 @@ const eu: Partial<Translations> = {
   "containers.updateCheckUpToDate": "eguneratuta",
   "containers.updateCheckUpdated": "eguneratuta",
   "containers.updateCheckFailed": "egiaztapenak huts egin du",
+  "containers.updateCheckHeld": "atxikita: irudi berriena leheneratze batek atzean utzitakoa da",
 
   // Backups
   "snapshots.restore": "Berrezarri",

@@ -2591,6 +2591,7 @@ const no: Partial<Translations> = {
   "containers.updateCheckUpToDate": "ajour",
   "containers.updateCheckUpdated": "oppdatert",
   "containers.updateCheckFailed": "sjekken mislyktes",
+  "containers.updateCheckHeld": "holdt tilbake: det nyeste imaget er det en gjenoppretting gikk tilbake fra",
   "settings.digestHint": "Én oppsummeringsmelding i uken: antall kjøringer, nye backupdata, off-site-aktualitet og de viktigste feilene, sendt via varslingskanalene ovenfor.",
   "settings.digestToggle": "Ukentlig oppsummering",
   "settings.catchUpMissed": "Ta igjen tapte sikkerhetskopier etter oppstart",

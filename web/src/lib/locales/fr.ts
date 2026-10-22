@@ -2591,6 +2591,7 @@ const fr: Partial<Translations> = {
   "containers.updateCheckUpToDate": "à jour",
   "containers.updateCheckUpdated": "mis à jour",
   "containers.updateCheckFailed": "échec de la vérification",
+  "containers.updateCheckHeld": "retenue : l'image la plus récente est celle qu'une restauration a quittée",
   "settings.digestHint": "Un message récapitulatif par semaine : nombre d'exécutions, nouvelles données sauvegardées, actualité de la copie hors site et principales erreurs, envoyé via les canaux de notification ci-dessus.",
   "settings.digestToggle": "Résumé hebdomadaire",
   "settings.catchUpMissed": "Rattraper les sauvegardes manquées après le démarrage",

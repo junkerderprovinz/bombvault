@@ -147,6 +147,7 @@ const ca: Partial<Translations> = {
   "containers.updateCheckUpToDate": "actualitzat",
   "containers.updateCheckUpdated": "actualitzat",
   "containers.updateCheckFailed": "comprovació fallida",
+  "containers.updateCheckHeld": "retingut: la imatge més nova és la que una restauració va deixar enrere",
 
   // Backups
   "snapshots.restore": "Restaura",
