@@ -16700,6 +16700,11 @@ const drillSnapshotTimeout = 15 * time.Minute
 // and a red a false failure, so the scorecard must green/red neither.
 var errNothingToDrill = errors.New("no restorable file data in the newest off-site snapshot: nothing to drill")
 
+// errNoDRSnapshots is an off-site that holds nothing yet. The drill records no
+// row for it: a domain that was never copied off site has nothing to be red
+// about.
+var errNoDRSnapshots = errors.New("no off-site backups to drill yet")
+
 // runDRDrill performs a real off-site disaster-recovery drill for a domain: it
 // restores the newest off-site snapshot of the drill target into a marker-guarded
 // sandbox under the restore folder, verifies the restored file count + bytes
@@ -16732,7 +16737,7 @@ func (s *Service) runDRDrill(ctx context.Context, domain, source string, wait bo
 	}
 	repo, err := s.resolveRepo(target.Repo)
 	if err != nil {
-		return store.RestoreDrill{}, err
+		return s.recordDRUnreachable(ctx, domain, source, wait, err), err
 	}
 
 	// Serialise with backups/restores on the domain repo — a scheduled backup must
@@ -16799,9 +16804,21 @@ func (s *Service) runDRDrill(ctx context.Context, domain, source string, wait bo
 	// drill with the shared mode means a destination with its own credentials
 	// can be written and never read back, so the drill could not pass.
 	mode := s.offsiteModeForTarget(settings, target)
+	// A local off-site folder that is missing has never been copied to, unless
+	// it was and its disk is not mounted now.
+	if localRepoMissing(repo) {
+		if s.repoEstablished(repo) && !s.destinationMounted(repo) {
+			err = ErrBackupPathNotMounted
+			return s.recordDRUnreachable(ctx, domain, source, wait, err), err
+		}
+		return store.RestoreDrill{}, errNoDRSnapshots
+	}
 	listCtx, listCancel := context.WithTimeout(drillCtx, drillSnapshotTimeout)
 	snapID, item, err := s.pickDRSnapshot(listCtx, domain, settings, repo, mode)
 	listCancel()
+	if unread := (offsiteUnreadable{}); errors.As(err, &unread) {
+		return s.recordDRUnreachable(ctx, domain, source, wait, unread.err), err
+	}
 	if err != nil {
 		return store.RestoreDrill{}, err
 	}
@@ -16847,6 +16864,28 @@ func (s *Service) runDRDrill(ctx context.Context, domain, source string, wait bo
 	return drill, drillErr
 }
 
+// offsiteUnreadable is a DR drill's off-site repository that could not be
+// listed: gone, refusing its keys, or out of reach.
+type offsiteUnreadable struct{ err error }
+
+func (e offsiteUnreadable) Error() string { return e.err.Error() }
+func (e offsiteUnreadable) Unwrap() error { return e.err }
+
+// recordDRUnreachable records a failed DR drill for an off-site it could not
+// read and, on the scheduled run, sends the alert. Without the row the badge
+// keeps the last pass and says restorable over a bucket that is gone.
+func (s *Service) recordDRUnreachable(ctx context.Context, domain, source string, wait bool, cause error) store.RestoreDrill {
+	rec := store.RestoreDrill{Domain: domain, Source: source, Kind: "dr", At: time.Now().Unix(), OK: false, Detail: truncateRunErr(cause)}
+	if err := s.store.AddRestoreDrill(rec); err != nil {
+		log.Printf("api: drill: record unreachable off-site for %q: %v", domain, err) //nolint:gosec // G706: domain is %q-quoted and validated to a fixed allow-list
+	}
+	s.recordDomainRun(domain, "drdrill", false, rec.Detail)
+	if wait {
+		s.notifyDrillFailure(ctx, domain, source, rec.Detail)
+	}
+	return rec
+}
+
 // pickDRSnapshot resolves the newest off-site snapshot to drill for a domain,
 // and the item it holds.
 // containers: the DRDrillTarget container, scoped to its container:<name> tag,
@@ -16864,10 +16903,10 @@ func (s *Service) runDRDrill(ctx context.Context, domain, source string, wait bo
 func (s *Service) pickDRSnapshot(ctx context.Context, domain string, settings store.Settings, repo string, mode restic.Mode) (id, item string, err error) {
 	all, err := s.listSnapshots(ctx, repo, mode)
 	if err != nil {
-		return "", "", err
+		return "", "", offsiteUnreadable{err}
 	}
 	if len(all) == 0 {
-		return "", "", errors.New("no off-site backups to drill yet")
+		return "", "", errNoDRSnapshots
 	}
 	switch domain {
 	case "flash", "files":
