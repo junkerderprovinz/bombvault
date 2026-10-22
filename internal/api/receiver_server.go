@@ -432,11 +432,11 @@ func (s *Service) writeReceiverTemplate(rs store.ReceiverServer, unraid bool) st
 // receiverHost is where members reach the receiver: the address set for it,
 // or the host this instance answers the group on, unless that is a name only
 // learned from a browser (see needsReceiverHost).
-func (s *Service) receiverHost(rs store.ReceiverServer) string {
+func (s *Service) receiverHost(ctx context.Context, rs store.ReceiverServer) string {
 	if rs.Host != "" {
 		return rs.Host
 	}
-	if s.needsReceiverHost(rs) {
+	if s.needsReceiverHost(ctx, rs) {
 		return ""
 	}
 	return urlHost(s.selfDirectURL())
@@ -445,13 +445,48 @@ func (s *Service) receiverHost(rs store.ReceiverServer) string {
 // needsReceiverHost reports whether the receiver needs its address set by
 // hand. A name a browser used can belong to a reverse proxy or a VPN that
 // forwards BombVault's port and no other, so it is no address for the
-// rest-server; an IP address or one a person set is.
-func (s *Service) needsReceiverHost(rs store.ReceiverServer) bool {
+// rest-server; an IP address or one a person set is. On macvlan or ipvlan
+// BombVault has an address of its own, and the rest-server, whose port the
+// Docker host publishes, is not at it either.
+func (s *Service) needsReceiverHost(ctx context.Context, rs store.ReceiverServer) bool {
 	if rs.Host != "" {
 		return false
 	}
 	g, err := s.store.GetGroupState()
-	return err == nil && learnedName(g, s.directURL(g))
+	return (err == nil && learnedName(g, s.directURL(g))) || s.hasOwnAddress(ctx)
+}
+
+// hasOwnAddress reports whether BombVault's container is on a macvlan or
+// ipvlan network, where it answers on an address that is not the Docker
+// host's. Docker's answer is kept once it gave one.
+func (s *Service) hasOwnAddress(ctx context.Context) bool {
+	s.ownAddrMu.Lock()
+	defer s.ownAddrMu.Unlock()
+	if s.ownAddrKnown {
+		return s.ownAddr
+	}
+	drivers, ok := s.docker.(dockercli.NetworkDrivers)
+	if !ok {
+		return false
+	}
+	name := s.selfContainerName(ctx)
+	if name == "" {
+		return false
+	}
+	in, err := s.docker.Inspect(ctx, name)
+	if err != nil {
+		return false
+	}
+	own := false
+	for _, n := range in.Networks {
+		driver, err := drivers.NetworkDriver(ctx, n.Name)
+		if err != nil {
+			return false
+		}
+		own = own || driver == "macvlan" || driver == "ipvlan"
+	}
+	s.ownAddr, s.ownAddrKnown = own, true
+	return own
 }
 
 func learnedName(g store.GroupState, addr string) bool {
@@ -474,19 +509,20 @@ func restBase(host string, port int) string {
 }
 
 // receiverProbeBases are the addresses this instance can try the receiver at:
+// the one members use first, so the check speaks for what they reach, then
 // the container's own on Docker's network, which a BombVault on the bridge
-// network reaches, and the one members use.
+// network reaches when the host does not answer it.
 func (s *Service) receiverProbeBases(ctx context.Context, rs store.ReceiverServer) []string {
 	var out []string
+	if host := s.receiverHost(ctx, rs); host != "" {
+		out = append(out, restBase(host, rs.Port))
+	}
 	if allocs, err := s.docker.Allocations(ctx); err == nil {
 		for _, a := range allocs {
 			if a.Name == rs.ContainerName && a.IPv4 != "" {
 				out = append(out, restBase(a.IPv4, restServerContainerPort))
 			}
 		}
-	}
-	if host := s.receiverHost(rs); host != "" {
-		out = append(out, restBase(host, rs.Port))
 	}
 	return out
 }
@@ -569,10 +605,10 @@ func (s *Service) receiverView(ctx context.Context) (receiverServerView, error) 
 	for _, l := range logins {
 		v.Logins = append(v.Logins, receiverLoginView{MemberID: l.MemberID, Name: l.MemberName, User: l.User, CreatedAt: l.CreatedAt})
 	}
-	if host := s.receiverHost(rs); host != "" {
+	if host := s.receiverHost(ctx, rs); host != "" {
 		v.URL = restBase(host, rs.Port)
 	}
-	v.NeedsHost = s.needsReceiverHost(rs)
+	v.NeedsHost = s.needsReceiverHost(ctx, rs)
 	return v, nil
 }
 
@@ -750,13 +786,13 @@ func (s *Service) handlePeerReceiver(w http.ResponseWriter, r *http.Request) {
 	}
 	// The receiver names its host itself: an address a member saw announced
 	// or probed can be older than the one it answers on now.
-	host := s.receiverHost(rs)
+	host := s.receiverHost(r.Context(), rs)
 	offer := &peerReceiver{
 		InstanceName:  instanceDisplayName(settings),
 		Host:          host,
 		HostFromGroup: rs.Host == "" && host != "",
 		Port:          rs.Port,
-		NeedsHost:     s.needsReceiverHost(rs),
+		NeedsHost:     s.needsReceiverHost(r.Context(), rs),
 	}
 	if in.Login {
 		caller, ok := s.peerCaller(r)

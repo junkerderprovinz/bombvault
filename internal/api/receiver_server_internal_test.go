@@ -11,6 +11,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 	"sync/atomic"
@@ -643,6 +644,52 @@ func TestTheReceiverNamesTheHostItAnswersOnNow(t *testing.T) {
 	}
 }
 
+// networkedDocker is receiverDocker for a BombVault container on one network
+// of the given driver.
+type networkedDocker struct {
+	receiverDocker
+	driver string
+}
+
+func (d *networkedDocker) Self(context.Context) (string, error) { return "bombvault", nil }
+
+func (d *networkedDocker) Inspect(context.Context, string) (model.Inspect, error) {
+	return model.Inspect{Networks: []model.NetworkEndpoint{{Name: "br0"}}}, nil
+}
+
+func (d *networkedDocker) NetworkDriver(context.Context, string) (string, error) {
+	return d.driver, nil
+}
+
+func TestABombVaultWithAnAddressOfItsOwnAsksForTheReceiversHost(t *testing.T) {
+	rs := store.ReceiverServer{Port: 8000}
+	for driver, host := range map[string]string{"macvlan": "", "ipvlan": "", "bridge": "192.168.1.60"} {
+		f := newReceiverFixture(t)
+		f.svc.docker = &networkedDocker{driver: driver}
+		if err := f.st.SetGroupDirectURL("https://192.168.1.60:3443", false); err != nil {
+			t.Fatal(err)
+		}
+		if got := f.svc.receiverHost(context.Background(), rs); got != host {
+			t.Errorf("BombVault on %s: receiver host %q, want %q", driver, got, host)
+		}
+		if got := f.svc.needsReceiverHost(context.Background(), rs); got != (host == "") {
+			t.Errorf("BombVault on %s: needs a host %v", driver, got)
+		}
+	}
+}
+
+func TestTheReceiverCheckTriesTheAddressMembersGetFirst(t *testing.T) {
+	f := newReceiverFixture(t)
+	f.docker.allocs = []model.Allocation{{Name: "rest-server", IPv4: "172.17.0.5"}}
+	if err := f.st.SetGroupDirectURL("https://192.168.1.10:3443", false); err != nil {
+		t.Fatal(err)
+	}
+	got := f.svc.receiverProbeBases(context.Background(), store.ReceiverServer{ContainerName: "rest-server", Port: 8000})
+	if want := []string{"http://192.168.1.10:8000", "http://172.17.0.5:8000"}; !slices.Equal(got, want) {
+		t.Fatalf("bases = %v, want %v", got, want)
+	}
+}
+
 func TestANameLearnedFromABrowserIsNoAddressForTheReceiver(t *testing.T) {
 	f := newReceiverFixture(t)
 	rs := store.ReceiverServer{Port: 8000}
@@ -659,16 +706,16 @@ func TestANameLearnedFromABrowserIsNoAddressForTheReceiver(t *testing.T) {
 		if err := f.st.SetGroupDirectURL(c.url, c.manual); err != nil {
 			t.Fatal(err)
 		}
-		if got := f.svc.receiverHost(rs); got != c.host {
+		if got := f.svc.receiverHost(context.Background(), rs); got != c.host {
 			t.Errorf("%s (set by hand %v): host %q, want %q", c.url, c.manual, got, c.host)
 		}
-		if got, want := f.svc.needsReceiverHost(rs), c.host == ""; got != want {
+		if got, want := f.svc.needsReceiverHost(context.Background(), rs), c.host == ""; got != want {
 			t.Errorf("%s (set by hand %v): needs a host %v, want %v", c.url, c.manual, got, want)
 		}
 	}
 
 	rs.Host = "192.168.1.20"
-	if f.svc.needsReceiverHost(rs) || f.svc.receiverHost(rs) != "192.168.1.20" {
+	if f.svc.needsReceiverHost(context.Background(), rs) || f.svc.receiverHost(context.Background(), rs) != "192.168.1.20" {
 		t.Error("the address set for the receiver is not used")
 	}
 

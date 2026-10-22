@@ -441,6 +441,10 @@ type Service struct {
 	selfMu       sync.Mutex
 	selfName     string
 	selfResolved bool
+	// ownAddr is hasOwnAddress's answer once ownAddrKnown.
+	ownAddrMu    sync.Mutex
+	ownAddr      bool
+	ownAddrKnown bool
 
 	// batchActive is the shared single-flight guard for every server-side
 	// backup AND restore starter (single, batch, VM, flash, restore-in-place,
