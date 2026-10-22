@@ -157,6 +157,10 @@ func (d *rigDocker) Pull(_ context.Context, image string) error {
 	return nil
 }
 
+func (d *rigDocker) PullWithAuth(ctx context.Context, image, _ string) error {
+	return d.Pull(ctx, image)
+}
+
 func (d *rigDocker) ImageID(_ context.Context, ref string) (string, error) {
 	d.mu.Lock()
 	defer d.mu.Unlock()

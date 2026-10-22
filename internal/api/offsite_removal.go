@@ -139,10 +139,11 @@ func (s *Service) forgetAtTarget(ctx context.Context, domain, identity, source s
 		for _, snap := range at.Snaps {
 			ids = append(ids, snap.ID)
 		}
-		forget := func() error { return s.engine.Forget(ctx, at.Repo, ids, true, at.Mode) }
+		forget := func() error { return s.engine.Forget(ctx, at.Repo, ids, false, at.Mode) }
 		if err := s.retryAfterUnlock(ctx, at.Repo, at.Mode, forget); err != nil {
 			return 0, fmt.Errorf("forget snapshots: %w", err)
 		}
+		s.pruneAfterDelete(domain, at.Repo, at.Mode)
 	}
 	// The snapshots are gone by this point and the next listing of the target
 	// writes the row again, so a failure here must not report a delete that
@@ -333,7 +334,9 @@ func (h *Handler) handleOffsiteRemoval(w http.ResponseWriter, r *http.Request) {
 	if !decodeBody(w, r, &body) {
 		return
 	}
-	n, err := h.svc.removeFromTarget(r.Context(), item, targetID, body.OnlyThere, body.TypedName)
+	ctx, done := h.svc.outlastRequest(r.Context())
+	defer done()
+	n, err := h.svc.removeFromTarget(ctx, item, targetID, body.OnlyThere, body.TypedName)
 	if err != nil {
 		var extra map[string]any
 		var changed *removalChanged

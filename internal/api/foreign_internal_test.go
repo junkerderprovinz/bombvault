@@ -662,6 +662,7 @@ func (f *foreignFakeDocker) Remove(context.Context, string) error               
 func (f *foreignFakeDocker) Pull(context.Context, string) error                 { return nil }
 func (f *foreignFakeDocker) PullWithAuth(context.Context, string, string) error { return nil }
 func (f *foreignFakeDocker) ImageID(context.Context, string) (string, error)    { return "", nil }
+func (f *foreignFakeDocker) ImageTag(context.Context, string, string) error     { return nil }
 func (f *foreignFakeDocker) ImageRemove(context.Context, string) error          { return nil }
 
 func (f *foreignFakeDocker) CreateAndStart(_ context.Context, in model.Inspect, start bool) error {

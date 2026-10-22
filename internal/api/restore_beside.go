@@ -492,7 +492,7 @@ func (s *Service) executeRestoreBeside(ctx context.Context, name string, plan co
 		},
 		WithoutRuntime: plan.withoutRuntime,
 		TargetID:       plan.targetID,
-		Docker:         s.docker,
+		Docker:         s.restoreDocker(),
 		ImagePresent: func(ctx context.Context, ref string) bool {
 			id, err := s.docker.ImageID(ctx, ref)
 			return err == nil && id != ""

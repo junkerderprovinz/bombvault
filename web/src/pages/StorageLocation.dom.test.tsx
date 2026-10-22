@@ -47,6 +47,7 @@ vi.mock("../lib/api", async (importOriginal) => {
     getRcloneSections: vi.fn(),
     testOffsiteTarget: vi.fn(),
     tamperTestOffsiteTarget: vi.fn(),
+    startOverAtTarget: vi.fn(),
   };
 });
 
@@ -66,6 +67,7 @@ const getCloudCredSets = vi.mocked(api.getCloudCredSets);
 const getRcloneSections = vi.mocked(api.getRcloneSections);
 const testOffsiteTarget = vi.mocked(api.testOffsiteTarget);
 const tamperTestOffsiteTarget = vi.mocked(api.tamperTestOffsiteTarget);
+const startOverAtTarget = vi.mocked(api.startOverAtTarget);
 
 const { StorageLocationPage } = await import("./StorageLocation");
 
@@ -818,5 +820,37 @@ describe("a location that cannot be shown", () => {
     stage(LOCAL, []);
     await click(screen.getByRole("button", { name: "Try again" }));
     expect(await screen.findByText("Local folder · Used by Containers and VMs")).toBeTruthy();
+  });
+});
+
+describe("a location whose repository went away", () => {
+  beforeEach(() => stage(location()));
+
+  it("offers to start a new repository and tests again once that is confirmed", async () => {
+    testOffsiteTarget.mockResolvedValueOnce({ ok: false, code: "repo-gone", error: "server text" });
+    testOffsiteTarget.mockResolvedValueOnce({ ok: true, reachable: true, initialized: false });
+    startOverAtTarget.mockResolvedValue({ ok: true });
+    await renderPage("destination:box");
+
+    await click(screen.getByRole("button", { name: "Test connection" }));
+    expect(await screen.findByText(/The repository that was here is gone/)).toBeTruthy();
+    expect(startOverAtTarget).not.toHaveBeenCalled();
+
+    await click(screen.getByRole("button", { name: "Start a new repository here" }));
+    const dialog = await screen.findByRole("dialog");
+    await click(within(dialog).getByRole("button", { name: "Start a new repository here" }));
+
+    await waitFor(() => expect(startOverAtTarget).toHaveBeenCalledWith("t-containers"));
+    expect(await screen.findByText("The repository does not exist yet. The first replication creates it.")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Start a new repository here" })).toBeNull();
+  });
+
+  it("offers nothing when a test only finds no repository yet", async () => {
+    testOffsiteTarget.mockResolvedValue({ ok: true, reachable: true, initialized: false });
+    await renderPage("destination:box");
+
+    await click(screen.getByRole("button", { name: "Test connection" }));
+    expect(await screen.findByText("The repository does not exist yet. The first replication creates it.")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Start a new repository here" })).toBeNull();
   });
 });

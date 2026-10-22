@@ -73,6 +73,9 @@ func failEnvelope(err error) map[string]any {
 	if errors.Is(err, errOwnData) {
 		return codedFailEnvelope(err, codeOwnData)
 	}
+	if errors.Is(err, errRemoteRepoGone) {
+		return codedFailEnvelope(err, codeRepoGone)
+	}
 	return map[string]any{"ok": false, "error": scrubError(err)}
 }
 
@@ -1100,7 +1103,9 @@ func (h *Handler) handleDeleteBackups(w http.ResponseWriter, r *http.Request) {
 	if !ok || !h.requireAuthForSecrets(w, r, "deleting backups") {
 		return
 	}
-	if err := h.svc.DeleteBackups(r.Context(), name, sourceParam(r)); err != nil {
+	ctx, done := h.svc.outlastRequest(r.Context())
+	defer done()
+	if err := h.svc.DeleteBackups(ctx, name, sourceParam(r)); err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
@@ -1231,7 +1236,9 @@ func (h *Handler) handleDeleteBackupsVM(w http.ResponseWriter, r *http.Request) 
 	if !ok || !h.requireAuthForSecrets(w, r, "deleting backups") {
 		return
 	}
-	if err := h.svc.DeleteBackupsVM(r.Context(), name, sourceParam(r)); err != nil {
+	ctx, done := h.svc.outlastRequest(r.Context())
+	defer done()
+	if err := h.svc.DeleteBackupsVM(ctx, name, sourceParam(r)); err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
@@ -6834,7 +6841,9 @@ func (h *Handler) handleDeleteBackupsFileSet(w http.ResponseWriter, r *http.Requ
 	if !ok || !h.requireAuthForSecrets(w, r, "deleting backups") {
 		return
 	}
-	if err := h.svc.DeleteBackupsFileSet(r.Context(), id, sourceParam(r)); err != nil {
+	ctx, done := h.svc.outlastRequest(r.Context())
+	defer done()
+	if err := h.svc.DeleteBackupsFileSet(ctx, id, sourceParam(r)); err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}

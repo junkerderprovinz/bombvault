@@ -5,6 +5,7 @@ package api
 // JSON blob (internal/secret with APP_KEY, base64) in settings.registry_auths.
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -98,6 +99,22 @@ func (s *Service) registryAuthFor(ref string) string {
 		return enc
 	}
 	return ""
+}
+
+// authedDocker is the host's Docker for a restore, whose pull signs in to the
+// registry like the update after a backup does: a container on a private
+// image could otherwise never be restored on a host that lacks its image.
+type authedDocker struct {
+	dockercli.Docker
+	auth func(ref string) string
+}
+
+func (d authedDocker) Pull(ctx context.Context, ref string) error {
+	return d.PullWithAuth(ctx, ref, d.auth(ref))
+}
+
+func (s *Service) restoreDocker() authedDocker {
+	return authedDocker{Docker: s.docker, auth: s.registryAuthFor}
 }
 
 // registryHost returns the registry an image ref pulls from. As in docker's

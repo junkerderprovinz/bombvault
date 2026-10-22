@@ -84,6 +84,9 @@ type Docker interface {
 	// reference is not present locally. Used after a Pull to decide whether a
 	// newer image actually arrived before recreating a container (#52).
 	ImageID(ctx context.Context, ref string) (string, error)
+	// ImageTag points ref at the local image id. A restore uses it to bring
+	// back the image a container ran when it was backed up.
+	ImageTag(ctx context.Context, id, ref string) error
 	// ImageRemove removes a local image by ID (sha256:…) with force=false, so the
 	// daemon refuses if another container still references it. Used to prune the
 	// superseded image after an update-after-backup when the user opts in (#56).

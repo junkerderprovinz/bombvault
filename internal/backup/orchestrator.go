@@ -441,9 +441,20 @@ type RestoreDeps struct {
 	TargetID string
 
 	Docker    Docker
+	Images    Images
 	Restic    Restic
 	Templates Templates
 	Runs      Runs
+}
+
+// Images reads and moves the local image tags a restored container is created
+// from.
+type Images interface {
+	// ImageID returns the local image ID ref resolves to, or "" when ref is not
+	// on the host.
+	ImageID(ctx context.Context, ref string) (string, error)
+	// ImageTag points ref at the local image id.
+	ImageTag(ctx context.Context, id, ref string) error
 }
 
 // ---------------------------------------------------------------------------
@@ -462,6 +473,10 @@ const (
 	statusCancelled = "cancelled"
 
 	defaultStopTimeout = 30 * time.Second
+	// recreateAfterFailureTimeout bounds putting a container back after its
+	// restore stopped partway, which runs after the restore's own context may
+	// have ended.
+	recreateAfterFailureTimeout = 2 * time.Minute
 	// runningWaitTimeout bounds how long we wait for a just-restarted backup target
 	// to report Running before restarting its dependents (netns peers need it live).
 	runningWaitTimeout = 60 * time.Second
@@ -1055,9 +1070,11 @@ func waitHealthy(ctx context.Context, d DockerHealth, name string, timeout time.
 //	guard Confirmed==true → validate snapshot id
 //	→ recordRunStart
 //	→ InspectName live re-check (abort on name mismatch, wrong-target guard)
-//	→ pull → stop (ignore absent) → remove (ignore absent)
-//	→ restic restore --target "/" → write template → CreateAndStart
+//	→ image of the backup (pull only when missing) → stop (ignore absent)
+//	→ remove (ignore absent) → restic restore → write template → CreateAndStart
 //	→ recordRunFinish(success|failed)
+//
+// A restore that stops after the remove creates the container again, stopped.
 //
 // Returns an error WITHOUT recording a run when not confirmed or the snapshot
 // id is invalid (nothing destructive has happened yet).
@@ -1166,12 +1183,9 @@ func runRestore(ctx context.Context, d RestoreDeps) error {
 		}
 	}
 
-	// Pull the image before touching the running container. Pull the human
-	// registry REFERENCE (Config.Image), never the inspect's top-level Image —
-	// that is the image ID (sha256:…), which is not pullable from a registry
-	// ("pull access denied for sha256").
-	if err := d.Docker.Pull(ctx, pullRef(d.Inspect)); err != nil {
-		return fmt.Errorf("restore: pull image: %w", err)
+	// The image is settled before the running container is touched.
+	if err := restoreImage(ctx, d); err != nil {
+		return err
 	}
 
 	// Stop & remove the existing container — absent/already-stopped is acceptable.
@@ -1188,11 +1202,66 @@ func runRestore(ctx context.Context, d RestoreDeps) error {
 		return fmt.Errorf("restore: remove existing container: %w", err)
 	}
 
-	// Restore appdata. A REMAPPED restore (RestoreDirs set: cross-instance /
-	// cross-pool) restores each source subtree's CONTENTS into the chosen
-	// destination dir on THIS host; otherwise each backed-up path is restored back
-	// to its own origin as its own subtree. Both are skipped for a recreate-only
-	// restore (no snapshot, no paths) — the container is just recreated below.
+	in := d.Inspect
+	if d.WithoutRuntime {
+		in.HostConfig.Runtime = ""
+		in.HostConfig.DeviceRequests = nil
+	}
+	if err := restoreData(ctx, d); err != nil {
+		return recreateStopped(ctx, d.Docker, in, err)
+	}
+	// Start only if it was running when backed up AND the restore didn't ask to
+	// leave it stopped.
+	if err := d.Docker.CreateAndStart(ctx, in, in.Running && !d.LeaveStopped); err != nil {
+		var missing *model.MissingRuntimeError
+		if errors.As(err, &missing) {
+			return &runtimeRefusal{missing}
+		}
+		return fmt.Errorf("restore: recreate container: %w", err)
+	}
+	return nil
+}
+
+// restoreImage points the container's image reference back at the image it
+// ran when it was backed up. Otherwise a restore after an update starts the
+// restored data on the newer image, usually the one the user is rolling back
+// from. Without that image the reference is used as it is and pulled only when
+// it is missing too, so a locally built image or an offline host still restores.
+func restoreImage(ctx context.Context, d RestoreDeps) error {
+	ref := pullRef(d.Inspect)
+	if backedUp := d.Inspect.Image; backedUp != "" && backedUp != ref && tagReference(ref) {
+		id, err := d.Images.ImageID(ctx, backedUp)
+		if err == nil && id != "" {
+			if now, err := d.Images.ImageID(ctx, ref); err == nil && now == id {
+				return nil
+			}
+			if err := d.Images.ImageTag(ctx, id, ref); err != nil {
+				return fmt.Errorf("restore: point %s at the image of the backup: %w", ref, err)
+			}
+			return nil
+		}
+	}
+	if id, err := d.Images.ImageID(ctx, ref); err == nil && id != "" {
+		return nil
+	}
+	if err := d.Docker.Pull(ctx, ref); err != nil {
+		return fmt.Errorf("restore: pull image: %w", err)
+	}
+	return nil
+}
+
+// tagReference reports whether ref names an image by tag, the only kind of
+// reference Docker can point at another image.
+func tagReference(ref string) bool {
+	return ref != "" && !strings.Contains(ref, "@") && !strings.HasPrefix(ref, "sha256:")
+}
+
+// restoreData writes the snapshot back and the captured template with it. A
+// REMAPPED restore (RestoreDirs set: cross-instance / cross-pool) restores each
+// source subtree's CONTENTS into the chosen destination dir on THIS host;
+// otherwise each backed-up path is restored back to its own origin as its own
+// subtree. A recreate-only restore has neither.
+func restoreData(ctx context.Context, d RestoreDeps) error {
 	if len(d.RestoreDirs) > 0 {
 		for _, rd := range d.RestoreDirs {
 			if err := d.Restic.RestoreSubtreeTo(ctx, d.RepoPath, d.SnapshotID, rd.Subtree, rd.Target); err != nil {
@@ -1204,32 +1273,37 @@ func runRestore(ctx context.Context, d RestoreDeps) error {
 			return fmt.Errorf("restore: restic restore: %w", err)
 		}
 	}
-
-	// Flash the captured template back, then recreate+start the container. Only
-	// write when a template was actually captured: writing an empty placeholder
-	// would make Unraid treat the app as broken/third-party (e.g. for backups
-	// taken before the flash templates dir was mounted).
+	// Only a captured template is written: an empty placeholder would make
+	// Unraid treat the app as broken or third-party (e.g. for backups taken
+	// before the flash templates dir was mounted).
 	if d.TemplateXML != "" {
 		if err := d.Templates.Write(d.FlashTemplatesDir, d.ContainerName, d.TemplateXML); err != nil {
 			return fmt.Errorf("restore: write template: %w", err)
 		}
 	}
-	// Start only if it was running when backed up AND the restore didn't ask to
-	// leave it stopped.
-	in := d.Inspect
-	if d.WithoutRuntime {
-		in.HostConfig.Runtime = ""
-		in.HostConfig.DeviceRequests = nil
-	}
-	if err := d.Docker.CreateAndStart(ctx, in, in.Running && !d.LeaveStopped); err != nil {
-		var missing *model.MissingRuntimeError
-		if errors.As(err, &missing) {
-			return &runtimeRefusal{missing}
-		}
-		return fmt.Errorf("restore: recreate container: %w", err)
-	}
 	return nil
 }
+
+// recreateStopped puts back a container whose restore stopped after it was
+// removed, so the app and the containers sharing its network do not simply
+// vanish from Docker. It stays stopped: its data is only partly restored.
+func recreateStopped(ctx context.Context, docker Docker, in model.Inspect, cause error) error {
+	cctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), recreateAfterFailureTimeout)
+	defer cancel()
+	if err := docker.CreateAndStart(cctx, in, false); err != nil {
+		return fmt.Errorf("%w; the container could not be created again: %w", cause, err)
+	}
+	return &halfRestored{cause}
+}
+
+// halfRestored is a restore that stopped partway and left the container
+// created again but stopped. Its run reason begins with
+// store.ReasonRestoreHalfDone.
+type halfRestored struct{ err error }
+
+func (e *halfRestored) Error() string { return store.ReasonRestoreHalfDone + ": " + e.err.Error() }
+
+func (e *halfRestored) Unwrap() error { return e.err }
 
 // runtimeRefusal is a restore that failed because the host lacks the runtime
 // or GPU driver of the container. Its run reason begins with

@@ -441,9 +441,10 @@ func (s *Service) DeleteBackupsZFSDataset(ctx context.Context, id string, remove
 		ids = append(ids, snap.ID)
 	}
 	if len(ids) > 0 {
-		if err := s.engine.Forget(ctx, repo, ids, true, mode); err != nil {
+		if err := s.engine.Forget(ctx, repo, ids, false, mode); err != nil {
 			return ZFSDeleteResult{}, fmt.Errorf("forget snapshots: %w", err)
 		}
+		s.pruneAfterDelete(zfsDomain, repo, mode)
 	}
 	return s.deleteZFSDatasetLocked(ctx, id, removeSafety)
 }
