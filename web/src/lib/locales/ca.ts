@@ -1339,6 +1339,8 @@ const ca: Partial<Translations> = {
   "auth.setPassword": "Configura contrasenya",
   "auth.changePassword": "Canvia la contrasenya",
   "auth.confirmPassword": "Confirma la contrasenya",
+  "auth.currentPassword": "Contrasenya actual",
+  "auth.currentPasswordWrong": "La contrasenya actual falta o és incorrecta",
   "auth.passwordMismatch": "Les contrasenyes no coincideixen",
   "auth.passwordSaved": "Contrasenya desada",
   "auth.passwordCleared": "Autenticació desactivada",

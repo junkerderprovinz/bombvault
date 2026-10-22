@@ -449,6 +449,8 @@ const hu: Partial<Translations> = {
   "auth.setPassword": "Jelszó beállítása",
   "auth.changePassword": "Jelszó módosítása",
   "auth.confirmPassword": "Jelszó megerősítése",
+  "auth.currentPassword": "Jelenlegi jelszó",
+  "auth.currentPasswordWrong": "A jelenlegi jelszó hiányzik vagy hibás",
   "auth.passwordMismatch": "A jelszavak nem egyeznek",
   "auth.passwordSaved": "Jelszó mentve",
   "auth.passwordCleared": "Hitelesítés letiltva",

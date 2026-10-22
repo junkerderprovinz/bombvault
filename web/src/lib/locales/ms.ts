@@ -1339,6 +1339,8 @@ const ms: Partial<Translations> = {
   "auth.setPassword": "Tetapkan kata laluan",
   "auth.changePassword": "Tukar kata laluan",
   "auth.confirmPassword": "Sahkan kata laluan",
+  "auth.currentPassword": "Kata laluan semasa",
+  "auth.currentPasswordWrong": "Kata laluan semasa tiada atau salah",
   "auth.passwordMismatch": "Kata laluan tidak sepadan",
   "auth.passwordSaved": "Kata laluan disimpan",
   "auth.passwordCleared": "Pengesahan dinyahaktifkan",

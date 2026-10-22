@@ -1339,6 +1339,8 @@ const gl: Partial<Translations> = {
   "auth.setPassword": "Configurar contrasinal",
   "auth.changePassword": "Cambiar contrasinal",
   "auth.confirmPassword": "Confirmar contrasinal",
+  "auth.currentPassword": "Contrasinal actual",
+  "auth.currentPasswordWrong": "Falta o contrasinal actual ou é incorrecto",
   "auth.passwordMismatch": "Os contrasinais non coinciden",
   "auth.passwordSaved": "Contrasinal gardado",
   "auth.passwordCleared": "Autenticación desactivada",

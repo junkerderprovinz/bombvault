@@ -446,6 +446,8 @@ const no: Partial<Translations> = {
   "auth.setPassword": "Angi passord",
   "auth.changePassword": "Endre passord",
   "auth.confirmPassword": "Bekreft passord",
+  "auth.currentPassword": "Nåværende passord",
+  "auth.currentPasswordWrong": "Det nåværende passordet mangler eller er feil",
   "auth.passwordMismatch": "Passordene stemmer ikke overens",
   "auth.passwordSaved": "Passord lagret",
   "auth.passwordCleared": "Autentisering deaktivert",

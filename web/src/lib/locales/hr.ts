@@ -1339,6 +1339,8 @@ const hr: Partial<Translations> = {
   "auth.setPassword": "Postavi lozinku",
   "auth.changePassword": "Promijeni lozinku",
   "auth.confirmPassword": "Potvrdi lozinku",
+  "auth.currentPassword": "Trenutačna lozinka",
+  "auth.currentPasswordWrong": "Trenutačna lozinka nedostaje ili je pogrešna",
   "auth.passwordMismatch": "Lozinke se ne podudaraju",
   "auth.passwordSaved": "Lozinka spremljena",
   "auth.passwordCleared": "Autentifikacija onemogućena",

@@ -1339,6 +1339,8 @@ const et: Partial<Translations> = {
   "auth.setPassword": "Määra parool",
   "auth.changePassword": "Muuda parooli",
   "auth.confirmPassword": "Kinnita parool",
+  "auth.currentPassword": "Praegune parool",
+  "auth.currentPasswordWrong": "Praegune parool puudub või on vale",
   "auth.passwordMismatch": "Paroolid ei kattu",
   "auth.passwordSaved": "Parool salvestatud",
   "auth.passwordCleared": "Autentimine keelatud",

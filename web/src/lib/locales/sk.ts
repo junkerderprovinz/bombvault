@@ -1339,6 +1339,8 @@ const sk: Partial<Translations> = {
   "auth.setPassword": "Nastaviť heslo",
   "auth.changePassword": "Zmeniť heslo",
   "auth.confirmPassword": "Potvrdiť heslo",
+  "auth.currentPassword": "Súčasné heslo",
+  "auth.currentPasswordWrong": "Súčasné heslo chýba alebo je nesprávne",
   "auth.passwordMismatch": "Heslá sa nezhodujú",
   "auth.passwordSaved": "Heslo uložené",
   "auth.passwordCleared": "Overovanie vypnuté",

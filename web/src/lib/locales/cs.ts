@@ -449,6 +449,8 @@ const cs: Partial<Translations> = {
   "auth.setPassword": "Nastavit heslo",
   "auth.changePassword": "Změnit heslo",
   "auth.confirmPassword": "Potvrdit heslo",
+  "auth.currentPassword": "Současné heslo",
+  "auth.currentPasswordWrong": "Současné heslo chybí nebo je špatné",
   "auth.passwordMismatch": "Hesla se neshodují",
   "auth.passwordSaved": "Heslo uloženo",
   "auth.passwordCleared": "Ověřování vypnuto",

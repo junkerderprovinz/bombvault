@@ -449,6 +449,8 @@ const fi: Partial<Translations> = {
   "auth.setPassword": "Aseta salasana",
   "auth.changePassword": "Vaihda salasana",
   "auth.confirmPassword": "Vahvista salasana",
+  "auth.currentPassword": "Nykyinen salasana",
+  "auth.currentPasswordWrong": "Nykyinen salasana puuttuu tai on väärä",
   "auth.passwordMismatch": "Salasanat eivät täsmää",
   "auth.passwordSaved": "Salasana tallennettu",
   "auth.passwordCleared": "Todennus poistettu käytöstä",

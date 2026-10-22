@@ -449,6 +449,8 @@ const zh: Partial<Translations> = {
   "auth.setPassword": "设置密码",
   "auth.changePassword": "更改密码",
   "auth.confirmPassword": "确认密码",
+  "auth.currentPassword": "当前密码",
+  "auth.currentPasswordWrong": "当前密码未填写或不正确",
   "auth.passwordMismatch": "密码不匹配",
   "auth.passwordSaved": "密码已保存",
   "auth.passwordCleared": "身份验证已禁用",

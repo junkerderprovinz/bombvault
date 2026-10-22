@@ -449,6 +449,8 @@ const he: Partial<Translations> = {
   "auth.setPassword": "הגדרת סיסמה",
   "auth.changePassword": "שינוי סיסמה",
   "auth.confirmPassword": "אישור סיסמה",
+  "auth.currentPassword": "הסיסמה הנוכחית",
+  "auth.currentPasswordWrong": "הסיסמה הנוכחית חסרה או שגויה",
   "auth.passwordMismatch": "הסיסמאות אינן תואמות",
   "auth.passwordSaved": "הסיסמה נשמרה",
   "auth.passwordCleared": "האימות הושבת",

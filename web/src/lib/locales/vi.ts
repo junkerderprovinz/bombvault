@@ -449,6 +449,8 @@ const vi: Partial<Translations> = {
   "auth.setPassword": "Đặt mật khẩu",
   "auth.changePassword": "Đổi mật khẩu",
   "auth.confirmPassword": "Xác nhận mật khẩu",
+  "auth.currentPassword": "Mật khẩu hiện tại",
+  "auth.currentPasswordWrong": "Mật khẩu hiện tại bị thiếu hoặc không đúng",
   "auth.passwordMismatch": "Mật khẩu không khớp",
   "auth.passwordSaved": "Đã lưu mật khẩu",
   "auth.passwordCleared": "Đã tắt xác thực",

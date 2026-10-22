@@ -1339,6 +1339,8 @@ const lt: Partial<Translations> = {
   "auth.setPassword": "Nustatyti slaptažodį",
   "auth.changePassword": "Keisti slaptažodį",
   "auth.confirmPassword": "Patvirtinti slaptažodį",
+  "auth.currentPassword": "Dabartinis slaptažodis",
+  "auth.currentPasswordWrong": "Dabartinio slaptažodžio nėra arba jis neteisingas",
   "auth.passwordMismatch": "Slaptažodžiai nesutampa",
   "auth.passwordSaved": "Slaptažodis išsaugotas",
   "auth.passwordCleared": "Autentifikavimas išjungtas",

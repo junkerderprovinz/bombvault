@@ -449,6 +449,8 @@ const es: Partial<Translations> = {
   "auth.setPassword": "Establecer contraseña",
   "auth.changePassword": "Cambiar contraseña",
   "auth.confirmPassword": "Confirmar contraseña",
+  "auth.currentPassword": "Contraseña actual",
+  "auth.currentPasswordWrong": "Falta la contraseña actual o es incorrecta",
   "auth.passwordMismatch": "Las contraseñas no coinciden",
   "auth.passwordSaved": "Contraseña guardada",
   "auth.passwordCleared": "Autenticación deshabilitada",

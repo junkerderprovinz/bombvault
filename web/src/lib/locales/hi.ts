@@ -1339,6 +1339,8 @@ const hi: Partial<Translations> = {
   "auth.setPassword": "पासवर्ड सेट करें",
   "auth.changePassword": "पासवर्ड बदलें",
   "auth.confirmPassword": "पासवर्ड की पुष्टि करें",
+  "auth.currentPassword": "मौजूदा पासवर्ड",
+  "auth.currentPasswordWrong": "मौजूदा पासवर्ड नहीं दिया गया या गलत है",
   "auth.passwordMismatch": "पासवर्ड मेल नहीं खाते",
   "auth.passwordSaved": "पासवर्ड सहेजा गया",
   "auth.passwordCleared": "ऑथेंटिकेशन अक्षम किया गया",

@@ -446,6 +446,8 @@ const pt: Partial<Translations> = {
   "auth.setPassword": "Definir palavra-passe",
   "auth.changePassword": "Alterar palavra-passe",
   "auth.confirmPassword": "Confirmar palavra-passe",
+  "auth.currentPassword": "Palavra-passe atual",
+  "auth.currentPasswordWrong": "A palavra-passe atual está em falta ou errada",
   "auth.passwordMismatch": "As palavras-passe não coincidem",
   "auth.passwordSaved": "Palavra-passe guardada",
   "auth.passwordCleared": "Autenticação desativada",

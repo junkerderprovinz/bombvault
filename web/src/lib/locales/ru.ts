@@ -446,6 +446,8 @@ const ru: Partial<Translations> = {
   "auth.setPassword": "Установить пароль",
   "auth.changePassword": "Изменить пароль",
   "auth.confirmPassword": "Подтвердить пароль",
+  "auth.currentPassword": "Текущий пароль",
+  "auth.currentPasswordWrong": "Текущий пароль не указан или неверен",
   "auth.passwordMismatch": "Пароли не совпадают",
   "auth.passwordSaved": "Пароль сохранён",
   "auth.passwordCleared": "Аутентификация отключена",

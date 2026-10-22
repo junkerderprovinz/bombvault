@@ -1339,6 +1339,8 @@ const is: Partial<Translations> = {
   "auth.setPassword": "Setja lykilorð",
   "auth.changePassword": "Breyta lykilorði",
   "auth.confirmPassword": "Staðfesta lykilorð",
+  "auth.currentPassword": "Núverandi lykilorð",
+  "auth.currentPasswordWrong": "Núverandi lykilorð vantar eða er rangt",
   "auth.passwordMismatch": "Lykilorð stemma ekki",
   "auth.passwordSaved": "Lykilorð vistað",
   "auth.passwordCleared": "Auðkenning óvirkjuð",

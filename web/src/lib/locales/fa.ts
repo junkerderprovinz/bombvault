@@ -1339,6 +1339,8 @@ const fa: Partial<Translations> = {
   "auth.setPassword": "تنظیم رمز عبور",
   "auth.changePassword": "تغییر رمز عبور",
   "auth.confirmPassword": "تأیید رمز عبور",
+  "auth.currentPassword": "رمز عبور فعلی",
+  "auth.currentPasswordWrong": "رمز عبور فعلی وارد نشده یا نادرست است",
   "auth.passwordMismatch": "رمزهای عبور مطابقت ندارند",
   "auth.passwordSaved": "رمز عبور ذخیره شد",
   "auth.passwordCleared": "احراز هویت غیرفعال شد",

@@ -1339,6 +1339,8 @@ const lv: Partial<Translations> = {
   "auth.setPassword": "Iestatīt paroli",
   "auth.changePassword": "Mainīt paroli",
   "auth.confirmPassword": "Apstiprināt paroli",
+  "auth.currentPassword": "Pašreizējā parole",
+  "auth.currentPasswordWrong": "Pašreizējā parole nav ievadīta vai ir nepareiza",
   "auth.passwordMismatch": "Paroles nesakrīt",
   "auth.passwordSaved": "Parole saglabāta",
   "auth.passwordCleared": "Autentifikācija atspējota",

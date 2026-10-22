@@ -449,6 +449,8 @@ const da: Partial<Translations> = {
   "auth.setPassword": "Angiv adgangskode",
   "auth.changePassword": "Skift adgangskode",
   "auth.confirmPassword": "Bekræft adgangskode",
+  "auth.currentPassword": "Nuværende adgangskode",
+  "auth.currentPasswordWrong": "Den nuværende adgangskode mangler eller er forkert",
   "auth.passwordMismatch": "Adgangskoderne stemmer ikke overens",
   "auth.passwordSaved": "Adgangskode gemt",
   "auth.passwordCleared": "Godkendelse deaktiveret",

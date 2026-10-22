@@ -449,6 +449,8 @@ const sv: Partial<Translations> = {
   "auth.setPassword": "Ange lösenord",
   "auth.changePassword": "Byt lösenord",
   "auth.confirmPassword": "Bekräfta lösenord",
+  "auth.currentPassword": "Nuvarande lösenord",
+  "auth.currentPasswordWrong": "Det nuvarande lösenordet saknas eller är fel",
   "auth.passwordMismatch": "Lösenorden matchar inte",
   "auth.passwordSaved": "Lösenord sparat",
   "auth.passwordCleared": "Autentisering inaktiverad",

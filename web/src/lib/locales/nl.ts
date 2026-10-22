@@ -446,6 +446,8 @@ const nl: Partial<Translations> = {
   "auth.setPassword": "Wachtwoord instellen",
   "auth.changePassword": "Wachtwoord wijzigen",
   "auth.confirmPassword": "Wachtwoord bevestigen",
+  "auth.currentPassword": "Huidig wachtwoord",
+  "auth.currentPasswordWrong": "Het huidige wachtwoord ontbreekt of klopt niet",
   "auth.passwordMismatch": "Wachtwoorden komen niet overeen",
   "auth.passwordSaved": "Wachtwoord opgeslagen",
   "auth.passwordCleared": "Verificatie uitgeschakeld",

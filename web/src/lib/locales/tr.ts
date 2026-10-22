@@ -449,6 +449,8 @@ const tr: Partial<Translations> = {
   "auth.setPassword": "Parola belirle",
   "auth.changePassword": "Parolayı değiştir",
   "auth.confirmPassword": "Parolayı onayla",
+  "auth.currentPassword": "Mevcut parola",
+  "auth.currentPasswordWrong": "Mevcut parola eksik ya da yanlış",
   "auth.passwordMismatch": "Parolalar eşleşmiyor",
   "auth.passwordSaved": "Parola kaydedildi",
   "auth.passwordCleared": "Kimlik doğrulama devre dışı",

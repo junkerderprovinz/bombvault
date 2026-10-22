@@ -1334,6 +1334,8 @@ const sl: Partial<Translations> = {
   "auth.setPassword": "Nastavi geslo",
   "auth.changePassword": "Spremeni geslo",
   "auth.confirmPassword": "Potrdi geslo",
+  "auth.currentPassword": "Trenutno geslo",
+  "auth.currentPasswordWrong": "Trenutno geslo manjka ali je napačno",
   "auth.passwordMismatch": "Gesli se ne ujemata",
   "auth.passwordSaved": "Geslo shranjeno",
   "auth.passwordCleared": "Preverjanje pristnosti onemogočeno",

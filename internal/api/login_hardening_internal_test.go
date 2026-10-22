@@ -247,9 +247,14 @@ func TestAnExistingShortPasswordStillSignsIn(t *testing.T) {
 func TestClearingThePasswordAlsoClearsTheSecondFactor(t *testing.T) {
 	h, repo, _ := newAuthGateHandler(t)
 	enableAuth(t, h, repo)
-	storeTOTP(t, h, repo, "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ", []string{"deadbeef"})
+	const totpSecret = "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ"
+	storeTOTP(t, h, repo, totpSecret, []string{"deadbeef"})
+	code, err := secret.TOTPCode(totpSecret, time.Now())
+	if err != nil {
+		t.Fatal(err)
+	}
 
-	_, body := postJSON(t, h.handleSetPassword, "/api/auth/password", `{"password":""}`, "10.0.0.1:1", sessionOf(h))
+	_, body := postJSON(t, h.handleSetPassword, "/api/auth/password", `{"password":"","current":"hunter2","code":"`+code+`"}`, "10.0.0.1:1", sessionOf(h))
 	if body["ok"] != true {
 		t.Fatalf("clearing the password must succeed: %v", body)
 	}
@@ -259,6 +264,55 @@ func TestClearingThePasswordAlsoClearsTheSecondFactor(t *testing.T) {
 	}
 	if s.TOTPEnabled || s.TOTPSecret != "" || s.TOTPRecovery != "" {
 		t.Fatalf("the second factor must be cleared with the password: %+v", s.TOTPEnabled)
+	}
+}
+
+func TestAPasswordChangeNeedsTheCurrentPassword(t *testing.T) {
+	h, repo, _ := newAuthGateHandler(t)
+	before := enableAuth(t, h, repo)
+	pw := strings.Repeat("y", secret.MinPasswordLen)
+	for _, body := range []string{`{"password":"` + pw + `"}`, `{"password":"` + pw + `","current":"wrong"}`, `{"password":""}`} {
+		_, out := postJSON(t, h.handleSetPassword, "/api/auth/password", body, "10.0.0.1:1", sessionOf(h))
+		if out["ok"] != false || out["code"] != codeCurrentPasswordWrong {
+			t.Fatalf("%s: %v", body, out)
+		}
+	}
+	if s, _ := repo.GetSettings(); s.AuthPasswordHash != before {
+		t.Fatal("a change without the current password was stored")
+	}
+	_, out := postJSON(t, h.handleSetPassword, "/api/auth/password", `{"password":"`+pw+`","current":"hunter2"}`, "10.0.0.1:1", sessionOf(h))
+	if out["ok"] != true {
+		t.Fatalf("a change with the current password: %v", out)
+	}
+}
+
+func TestSwitchingTheLoginOffNeedsTheSecondFactor(t *testing.T) {
+	h, repo, _ := newAuthGateHandler(t)
+	enableAuth(t, h, repo)
+	storeTOTP(t, h, repo, "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ", nil)
+	for _, body := range []string{`{"password":"","current":"hunter2"}`, `{"password":"","current":"hunter2","code":"000000"}`} {
+		_, out := postJSON(t, h.handleSetPassword, "/api/auth/password", body, "10.0.0.1:1", sessionOf(h))
+		if out["ok"] != false || out["needCode"] != true {
+			t.Fatalf("%s: %v", body, out)
+		}
+	}
+	if s, _ := repo.GetSettings(); s.AuthPasswordHash == "" || !s.TOTPEnabled {
+		t.Fatal("the login was switched off without the code")
+	}
+}
+
+func TestWrongCurrentPasswordsCountAgainstTheLoginThrottle(t *testing.T) {
+	h, repo, _ := newAuthGateHandler(t)
+	enableAuthLegacyHash(t, h, repo)
+	for range loginMaxFails {
+		postJSON(t, h.handleSetPassword, "/api/auth/password", `{"password":"","current":"wrong"}`, "10.0.0.1:1", sessionOf(h))
+	}
+	code, _ := postJSON(t, h.handleSetPassword, "/api/auth/password", `{"password":"","current":"hunter2"}`, "10.0.0.1:1", sessionOf(h))
+	if code != http.StatusTooManyRequests {
+		t.Fatalf("after %d wrong current passwords: %d", loginMaxFails, code)
+	}
+	if code, _ := postJSON(t, h.handleLogin, "/api/login", `{"password":"hunter2"}`, "10.0.0.1:1", nil); code != http.StatusTooManyRequests {
+		t.Fatalf("the login after them: %d", code)
 	}
 }
 
@@ -668,7 +722,7 @@ func TestClearingThePasswordSendsTheSessionAway(t *testing.T) {
 	h, repo, _ := newAuthGateHandler(t)
 	enableAuth(t, h, repo)
 
-	r := httptest.NewRequest(http.MethodPost, "/api/auth/password", strings.NewReader(`{"password":""}`))
+	r := httptest.NewRequest(http.MethodPost, "/api/auth/password", strings.NewReader(`{"password":"","current":"hunter2"}`))
 	r.Header = sessionOf(h)
 	r.Header.Set("Content-Type", "application/json")
 	r.RemoteAddr = "10.0.0.1:1"
@@ -705,7 +759,7 @@ func TestSetPasswordEndsEveryOtherSession(t *testing.T) {
 	h, repo, _ := newAuthGateHandler(t)
 	pw := strings.Repeat("x", secret.MinPasswordLen)
 
-	first := postPassword(t, h, pw)
+	first := postPassword(t, h, pw, "")
 	before, err := repo.GetSettings()
 	if err != nil {
 		t.Fatal(err)
@@ -714,7 +768,7 @@ func TestSetPasswordEndsEveryOtherSession(t *testing.T) {
 		t.Fatal("the first session is invalid before anything was changed - the test cannot prove what it is here for")
 	}
 
-	second := postPassword(t, h, pw+"2")
+	second := postPassword(t, h, pw+"2", pw)
 	after, err := repo.GetSettings()
 	if err != nil {
 		t.Fatal(err)
@@ -736,10 +790,11 @@ func TestSetPasswordEndsEveryOtherSession(t *testing.T) {
 	}
 }
 
-// postPassword sets a password and returns the session cookie it issued.
-func postPassword(t *testing.T, h *Handler, pw string) string {
+// postPassword sets a password, confirmed with the current one, and returns
+// the session cookie it issued.
+func postPassword(t *testing.T, h *Handler, pw, current string) string {
 	t.Helper()
-	r := httptest.NewRequest(http.MethodPost, "/api/auth/password", strings.NewReader(`{"password":"`+pw+`"}`))
+	r := httptest.NewRequest(http.MethodPost, "/api/auth/password", strings.NewReader(`{"password":"`+pw+`","current":"`+current+`"}`))
 	if signedIn := sessionOf(h); signedIn != nil {
 		r.Header = signedIn
 	}

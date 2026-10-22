@@ -1334,6 +1334,8 @@ const sr: Partial<Translations> = {
   "auth.setPassword": "Подеси лозинку",
   "auth.changePassword": "Промени лозинку",
   "auth.confirmPassword": "Потврди лозинку",
+  "auth.currentPassword": "Тренутна лозинка",
+  "auth.currentPasswordWrong": "Тренутна лозинка недостаје или је погрешна",
   "auth.passwordMismatch": "Лозинке се не поклапају",
   "auth.passwordSaved": "Лозинка сачувана",
   "auth.passwordCleared": "Провера идентитета онемогућена",

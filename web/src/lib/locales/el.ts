@@ -449,6 +449,8 @@ const el: Partial<Translations> = {
   "auth.setPassword": "Ορισμός κωδικού",
   "auth.changePassword": "Αλλαγή κωδικού",
   "auth.confirmPassword": "Επιβεβαίωση κωδικού",
+  "auth.currentPassword": "Τρέχων κωδικός πρόσβασης",
+  "auth.currentPasswordWrong": "Ο τρέχων κωδικός πρόσβασης λείπει ή είναι λάθος",
   "auth.passwordMismatch": "Οι κωδικοί δεν ταιριάζουν",
   "auth.passwordSaved": "Ο κωδικός αποθηκεύτηκε",
   "auth.passwordCleared": "Η αυθεντικοποίηση απενεργοποιήθηκε",

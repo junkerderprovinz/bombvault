@@ -1339,6 +1339,8 @@ const eu: Partial<Translations> = {
   "auth.setPassword": "Ezarri pasahitza",
   "auth.changePassword": "Aldatu pasahitza",
   "auth.confirmPassword": "Berretsi pasahitza",
+  "auth.currentPassword": "Uneko pasahitza",
+  "auth.currentPasswordWrong": "Uneko pasahitza falta da edo okerra da",
   "auth.passwordMismatch": "Pasahitzak ez datoz bat",
   "auth.passwordSaved": "Pasahitza gordeta",
   "auth.passwordCleared": "Autentifikazioa desgaituta",

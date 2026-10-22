@@ -449,6 +449,8 @@ const uk: Partial<Translations> = {
   "auth.setPassword": "Встановити пароль",
   "auth.changePassword": "Змінити пароль",
   "auth.confirmPassword": "Підтвердити пароль",
+  "auth.currentPassword": "Поточний пароль",
+  "auth.currentPasswordWrong": "Поточний пароль не вказано або він неправильний",
   "auth.passwordMismatch": "Паролі не збігаються",
   "auth.passwordSaved": "Пароль збережено",
   "auth.passwordCleared": "Автентифікацію вимкнено",

@@ -1339,6 +1339,8 @@ const id: Partial<Translations> = {
   "auth.setPassword": "Atur kata sandi",
   "auth.changePassword": "Ubah kata sandi",
   "auth.confirmPassword": "Konfirmasi kata sandi",
+  "auth.currentPassword": "Kata sandi saat ini",
+  "auth.currentPasswordWrong": "Kata sandi saat ini kosong atau salah",
   "auth.passwordMismatch": "Kata sandi tidak cocok",
   "auth.passwordSaved": "Kata sandi tersimpan",
   "auth.passwordCleared": "Autentikasi dinonaktifkan",

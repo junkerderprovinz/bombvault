@@ -446,6 +446,8 @@ const ro: Partial<Translations> = {
   "auth.setPassword": "Setare parolă",
   "auth.changePassword": "Schimbare parolă",
   "auth.confirmPassword": "Confirmare parolă",
+  "auth.currentPassword": "Parola actuală",
+  "auth.currentPasswordWrong": "Parola actuală lipsește sau este greșită",
   "auth.passwordMismatch": "Parolele nu coincid",
   "auth.passwordSaved": "Parolă salvată",
   "auth.passwordCleared": "Autentificare dezactivată",

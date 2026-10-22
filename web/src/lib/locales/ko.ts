@@ -449,6 +449,8 @@ const ko: Partial<Translations> = {
   "auth.setPassword": "비밀번호 설정",
   "auth.changePassword": "비밀번호 변경",
   "auth.confirmPassword": "비밀번호 확인",
+  "auth.currentPassword": "현재 비밀번호",
+  "auth.currentPasswordWrong": "현재 비밀번호가 비어 있거나 틀렸습니다",
   "auth.passwordMismatch": "비밀번호가 일치하지 않습니다",
   "auth.passwordSaved": "비밀번호가 저장되었습니다",
   "auth.passwordCleared": "인증이 비활성화되었습니다",

@@ -449,6 +449,8 @@ const th: Partial<Translations> = {
   "auth.setPassword": "ตั้งรหัสผ่าน",
   "auth.changePassword": "เปลี่ยนรหัสผ่าน",
   "auth.confirmPassword": "ยืนยันรหัสผ่าน",
+  "auth.currentPassword": "รหัสผ่านปัจจุบัน",
+  "auth.currentPasswordWrong": "ไม่ได้ใส่รหัสผ่านปัจจุบัน หรือรหัสผ่านไม่ถูกต้อง",
   "auth.passwordMismatch": "รหัสผ่านไม่ตรงกัน",
   "auth.passwordSaved": "บันทึกรหัสผ่านแล้ว",
   "auth.passwordCleared": "ปิดการยืนยันตัวตนแล้ว",

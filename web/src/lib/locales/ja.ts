@@ -449,6 +449,8 @@ const ja: Partial<Translations> = {
   "auth.setPassword": "パスワードを設定",
   "auth.changePassword": "パスワードを変更",
   "auth.confirmPassword": "パスワードを確認",
+  "auth.currentPassword": "現在のパスワード",
+  "auth.currentPasswordWrong": "現在のパスワードが入力されていないか、間違っています",
   "auth.passwordMismatch": "パスワードが一致しません",
   "auth.passwordSaved": "パスワードを保存しました",
   "auth.passwordCleared": "認証を無効にしました",

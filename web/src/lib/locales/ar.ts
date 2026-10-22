@@ -449,6 +449,8 @@ const ar: Partial<Translations> = {
   "auth.setPassword": "تعيين كلمة مرور",
   "auth.changePassword": "تغيير كلمة المرور",
   "auth.confirmPassword": "تأكيد كلمة المرور",
+  "auth.currentPassword": "كلمة المرور الحالية",
+  "auth.currentPasswordWrong": "كلمة المرور الحالية مفقودة أو غير صحيحة",
   "auth.passwordMismatch": "كلمتا المرور غير متطابقتين",
   "auth.passwordSaved": "تم حفظ كلمة المرور",
   "auth.passwordCleared": "تم تعطيل المصادقة",

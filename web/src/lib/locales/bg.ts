@@ -1339,6 +1339,8 @@ const bg: Partial<Translations> = {
   "auth.setPassword": "Задай парола",
   "auth.changePassword": "Смени паролата",
   "auth.confirmPassword": "Потвърди паролата",
+  "auth.currentPassword": "Текуща парола",
+  "auth.currentPasswordWrong": "Текущата парола липсва или е грешна",
   "auth.passwordMismatch": "Паролите не съвпадат",
   "auth.passwordSaved": "Паролата е запазена",
   "auth.passwordCleared": "Удостоверяването е деактивирано",
