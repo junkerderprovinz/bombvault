@@ -272,7 +272,6 @@ func TestPlacementRefusalsCarryTheirCodes(t *testing.T) {
 		errOwnFolderThere:          "own-folder-there",
 		errOwnFolderUnreadable:     "own-folder-unreadable",
 		errMoveSamePlace:           "move-same-place",
-		errMoveSignIn:              "move-sign-in",
 		errMoveRunning:             "move-running",
 		errMoveErasing:             "erase-running",
 

@@ -92,7 +92,6 @@ var placementCodes = []struct {
 	{errHomeNeeded, "home-needed"},
 	{errHomeSame, "home-same"},
 	{errMoveSamePlace, "move-same-place"},
-	{errMoveSignIn, "move-sign-in"},
 	{errMoveRunning, "move-running"},
 	{errMoveErasing, "erase-running"},
 	{store.ErrTargetHasDirectRepo, "move-direct-repo"},
