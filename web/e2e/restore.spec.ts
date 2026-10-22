@@ -429,6 +429,8 @@ async function stageGroup(page: Page): Promise<void> {
           name: "neu",
           passwordSet: true,
           members: [{ id: "m-nas", name: "nas", version: "10.0.0", direct: true, relay: false, address: "" }],
+          away: [],
+          settling: false,
           relay: { mode: "off", url: "", projectUrl: "", connected: false, serve: false, serveClients: 0 },
           joinedAgo: 120,
           memberSeen: true,

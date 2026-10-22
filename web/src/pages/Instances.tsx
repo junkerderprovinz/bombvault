@@ -32,7 +32,7 @@ import { useRoleSwitch } from "./instances/RoleDialogs";
 import { depositStateLabel, RoleTiles } from "./instances/RoleTile";
 import { UnplacedCard } from "./instances/UnplacedCard";
 import { ZFSServerCards } from "./instances/ZFSServerCards";
-import { buildInstances, protectionFigures, ROLE_KINDS, tooOldToKeep, unreachableToKeep, withoutScheme, type Instance, type RoleKind, type RoleState } from "./instances/instancesModel";
+import { buildInstances, protectionFigures, ROLE_KINDS, tooOldToKeep, unreachableToKeep, withoutScheme, type Instance, type Presence, type RoleKind, type RoleState } from "./instances/instancesModel";
 import { groupNodes } from "./instances/netModel";
 import { useInstances, type InstancesState, type Modules, type Self } from "./instances/useInstances";
 
@@ -47,6 +47,36 @@ function ProtectionFigures({ domains, anomalies }: { domains: DomainStatus[]; an
       {anomalies !== undefined && <Figure value={anomalies} label={t("nav.anomalies")} />}
       {lastBackup > 0 && <Figure value={relativeTime(t, lastBackup)} label={t("containers.lastBackup")} />}
     </>
+  );
+}
+
+/** The state of a paired instance. Away is grey rather than red, since a
+ *  server that was shut down or a phone with the app closed is no fault, and
+ *  so is an instance not heard from yet since this server started. */
+function PresenceBadge({ presence }: { presence: Presence }) {
+  const { t } = useT();
+  if (presence === "connected") {
+    return (
+      <Badge tone="ok" size="large">
+        {t("instances.connected")}
+      </Badge>
+    );
+  }
+  if (presence === "checking") {
+    return (
+      <span data-new="instances-checking" className="flex">
+        <Badge tone="neutral" size="large">
+          {t("instances.checking")}
+        </Badge>
+      </span>
+    );
+  }
+  return (
+    <span data-new="instances-inactive" className="flex">
+      <Badge tone="neutral" size="large">
+        {t("instances.inactive")}
+      </Badge>
+    </span>
   );
 }
 
@@ -176,12 +206,11 @@ function PeerCard({
           {t("fleet.monitoringOff")}
         </Badge>
       ) : (
-        <Badge tone={instance.connected ? "ok" : "fail"} size="large">
-          {instance.connected ? t("instances.connected") : t("instances.notConnected")}
-        </Badge>
+        <PresenceBadge presence={instance.presence} />
       )}
     </>
   );
+  const away = paired && instance.presence === "inactive";
 
   return (
     <InstanceCard
@@ -202,6 +231,7 @@ function PeerCard({
             address && <bdi dir="ltr">{withoutScheme(address)}</bdi>,
             // api.Version already starts with "v".
             peer?.lastPollVersion,
+            away && instance.lastSeen > 0 && t("instances.lastSeen").replace("{time}", () => relativeTime(t, instance.lastSeen)),
             peer && peer.lastPollAt > 0 && t("fleet.lastPolled").replace("{time}", relativeTime(t, peer.lastPollAt)),
             peer?.lastPollOk === false && peer.lastPollError && (
               <span className="text-statusFail">{peer.lastPollError}</span>
@@ -218,7 +248,17 @@ function PeerCard({
           )}
           {/* A phone has no details window, so its card carries the button the window has for an instance. */}
           {paired && instance.app && <ForgetKeyButton memberId={instance.memberId} />}
-          {modules.fleet && peer && <RemoveInstanceButton peerId={peer.id} onRemoved={() => void state.reloadPeers()} />}
+          {/* A card that is away stays until it is removed, so it carries
+              Remove whichever modules are on. */}
+          {((modules.fleet && peer) || (instance.memberId && instance.presence !== "connected")) && (
+            <RemoveInstanceButton
+              instance={instance}
+              onRemoved={() => {
+                void state.reloadPeers();
+                void state.reloadGroup();
+              }}
+            />
+          )}
           {address && paired && !instance.app && (
             <Button
               label={t("instances.open")}
@@ -353,34 +393,38 @@ export function Instances() {
       ))}
 
       {modules && !state.loading && (
-        <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,36rem),1fr))] items-stretch gap-4 glim-content-fade" {...handlers}>
+        <div className="flex flex-col gap-4 glim-content-fade" {...handlers}>
           {grouped && state.self && nodes.length > 0 && (
-            <div className="col-span-full rounded-card bg-carbon-surface px-3 py-3 md:px-5 md:py-4 [--net-ground:var(--carbon-surface)]">
+            <div className="rounded-card bg-carbon-surface px-3 py-3 md:px-5 md:py-4 [--net-ground:var(--carbon-surface)]">
               <NetPicture selfName={state.self.name} nodes={nodes} hot={hot} />
             </div>
           )}
-          {grouped && state.self && (
-            <SelfCard
-              self={state.self}
-              served={state.selfRoles}
-              receiverServer={state.receiverServer}
-              hot={hot === "self"}
-              onOpenServer={() => setServerOpen(true)}
-              onOpenDeposits={hasDeposits ? () => setDepositsOpen(true) : undefined}
-            />
-          )}
-          {servers.map((inst, i) => peerCard(inst, i + 1))}
-          {shown.length === 0 && (
-            <div
-              data-instance="none"
-              className="flex flex-col items-center justify-center gap-3 rounded-card border-[1.5px] border-dashed border-carbon-border px-5 py-7 text-center"
-            >
-              <b className="font-semibold text-carbon-text">{t("instances.emptyTitle")}</b>
-              <p className="text-sm text-carbon-textSub">{t("instances.emptyLead")}</p>
-            </div>
-          )}
-          {modules.zfs && <ZFSServerCards replicas={state.data.replicas} firstIndex={servers.length + 1} hot={hot} />}
-          {phones.map((inst, i) => peerCard(inst, servers.length + zfsCards + i + 1))}
+          {/* Every card is as wide and as tall as the tallest of the grid,
+              whatever it holds. A narrow window shows fewer per row. */}
+          <div data-new="instances-card-size" className="grid auto-rows-fr grid-cols-[repeat(auto-fill,minmax(min(100%,36rem),1fr))] gap-4">
+            {grouped && state.self && (
+              <SelfCard
+                self={state.self}
+                served={state.selfRoles}
+                receiverServer={state.receiverServer}
+                hot={hot === "self"}
+                onOpenServer={() => setServerOpen(true)}
+                onOpenDeposits={hasDeposits ? () => setDepositsOpen(true) : undefined}
+              />
+            )}
+            {servers.map((inst, i) => peerCard(inst, i + 1))}
+            {shown.length === 0 && (
+              <div
+                data-instance="none"
+                className="flex flex-col items-center justify-center gap-3 rounded-card border-[1.5px] border-dashed border-carbon-border px-5 py-7 text-center"
+              >
+                <b className="font-semibold text-carbon-text">{t("instances.emptyTitle")}</b>
+                <p className="text-sm text-carbon-textSub">{t("instances.emptyLead")}</p>
+              </div>
+            )}
+            {modules.zfs && <ZFSServerCards replicas={state.data.replicas} firstIndex={servers.length + 1} hot={hot} />}
+            {phones.map((inst, i) => peerCard(inst, servers.length + zfsCards + i + 1))}
+          </div>
         </div>
       )}
 

@@ -56,6 +56,8 @@ function view(f: Instance) {
     name: f.name,
     passwordSet: true,
     members: f.members,
+    away: [],
+    settling: false,
     relay: {
       mode: f.mode,
       url: f.url,

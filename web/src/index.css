@@ -4532,14 +4532,17 @@ body {
   color: var(--carbon-text-muted);
   overflow-wrap: anywhere;
 }
-/* A wide picture keeps a name on one line. A narrow one lets it wrap, since
-   a phone shows no text cut short. */
-.glim-net-wide .glim-net-label :is(b, span) {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+/* A name wraps in its row rather than being cut short, and one longer than
+   its row may reach past it. */
+.glim-net-svg foreignObject { overflow: visible; }
+/* What a node is, in a badge on its logo, drawn like the glyphs on the
+   arrows. The ring of the ground parts it from the logo. */
+.glim-net-kind {
+  fill: var(--pic);
+  stroke: var(--net-ground, var(--carbon-surface2));
+  stroke-width: 2;
 }
-.glim-net-narrow foreignObject { overflow: visible; }
+.glim-net-kind-glyph { color: var(--net-ground, var(--carbon-surface2)); }
 .glim-net-reach {
   fill: none;
   stroke: transparent;

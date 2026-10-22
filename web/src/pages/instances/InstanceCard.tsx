@@ -2,9 +2,13 @@ import type { CSSProperties, ReactNode } from "react";
 
 import { hueVars } from "../../lib/appearance";
 
+/** The box every card's mark fills, the logo or a glyph, so the marks of a
+ *  grid stand the same size. */
+const MARK_BOX = "h-20 w-20 shrink-0 md:h-[104px] md:w-[104px]";
+
 /** InstanceMark is the BombVault logo on the start edge of a card, as in the sidebar. */
 export function InstanceMark() {
-  return <img src="/logo.svg" alt="" aria-hidden="true" draggable={false} className="block h-20 md:h-[104px] w-auto shrink-0" />;
+  return <img src="/logo.svg" alt="" aria-hidden="true" draggable={false} className={`block object-contain ${MARK_BOX}`} />;
 }
 
 /** LogoImage is the same logo inside a picture, in user units. */
@@ -20,7 +24,7 @@ export const PHONE_PATH =
  *  a glyph on the card's accent. */
 export function GlyphMark({ children }: { children: ReactNode }) {
   return (
-    <span className="grid h-[72px] w-[72px] shrink-0 place-items-center rounded-card bg-accent text-accentContrast [&>svg]:h-[34px] [&>svg]:w-[34px]">
+    <span className={`grid place-items-center rounded-card bg-accent text-accentContrast [&>svg]:h-[42%] [&>svg]:w-[42%] ${MARK_BOX}`}>
       {children}
     </span>
   );
@@ -36,9 +40,9 @@ export function Figure({ value, label }: { value: ReactNode; label: string }) {
 }
 
 /** InstanceCard is one tile of the instances grid: the mark beside the name
- *  with its badges, a line of facts and the figures, then what the instance
- *  does, and the actions along the foot. Cards of a row share their height,
- *  so the actions sit on one line across the row. */
+ *  with its badges, what kind it is, a line of facts and the figures, then
+ *  what the instance does, and the actions along the foot. The grid gives
+ *  every card one height, so the actions sit on one line across a row. */
 export function InstanceCard({
   cardKey,
   name,
@@ -76,21 +80,21 @@ export function InstanceCard({
         hot ? " glim-net-entry-hot" : ""
       }`}
     >
-      <div className="flex items-stretch">
-        {/* A card with little beside the mark, such as a phone's, keeps the
-            mark off its edge and its words beside the mark's middle. */}
-        <div className="flex shrink-0 items-center py-5 ps-4 md:py-6">{mark ?? <InstanceMark />}</div>
-        <div className="flex min-w-0 flex-1 flex-col justify-center gap-4 p-5 md:p-7">
+      <div className="flex items-start">
+        {/* Level with the name rather than centred, so the mark stands in one
+            place on every card whatever the card holds. */}
+        <div data-new="instances-card-logo" className="flex shrink-0 ps-4 pt-5 md:pt-7">
+          {mark ?? <InstanceMark />}
+        </div>
+        <div className="flex min-w-0 flex-1 flex-col gap-4 p-5 md:p-7">
           <div className="flex flex-col gap-1">
-            <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5">
-              <span className="min-w-0 truncate font-semibold text-carbon-text max-md:whitespace-normal max-md:wrap-break-word">
-                {name}
-              </span>
-              {eyebrow && (
-                <span className="shrink-0 text-dense uppercase tracking-[.14em] text-carbon-textMuted">{eyebrow}</span>
-              )}
+            {/* The name is never cut short: the badges move under it when the
+                two do not fit one line. */}
+            <div data-new="instances-full-names" className="flex flex-wrap items-start gap-x-2.5 gap-y-1.5">
+              <span className="min-w-0 max-w-full font-semibold text-carbon-text wrap-anywhere">{name}</span>
               {badges && <span className="ms-auto flex flex-wrap items-center gap-2">{badges}</span>}
             </div>
+            {eyebrow && <span className="text-dense uppercase tracking-[.14em] text-carbon-textMuted">{eyebrow}</span>}
             {facts && <p className="text-xs text-carbon-textMuted wrap-anywhere">{facts}</p>}
           </div>
           {figures && <div className="flex flex-wrap items-baseline gap-x-7 gap-y-3 empty:hidden">{figures}</div>}

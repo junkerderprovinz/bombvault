@@ -1,6 +1,7 @@
 // GroupCard lists who is in the group: this instance with where it stands,
-// every paired instance and phone with how it is reached, and the ZFS servers
-// without BombVault, which join over SSH from the same list.
+// every paired instance and phone with how it is reached or when it was last
+// there, and the ZFS servers without BombVault, which join over SSH from the
+// same list.
 import { useState, type ReactNode } from "react";
 import { Card } from "../shared";
 import { Badge } from "../../../components/Badge";
@@ -10,8 +11,9 @@ import { IconLink } from "../../../components/glyphs";
 import { IconFleet, IconZFS } from "../../../components/navGlyphs";
 import { AddReplicaServerDialog } from "../../../components/zfs/replica/AddReplicaServerDialog";
 import { useReplicaServers } from "../../../components/zfs/replica/replicaStore";
-import type { GroupMember, GroupState } from "../../../lib/api";
+import type { AwayMember, GroupMember, GroupState } from "../../../lib/api";
 import type { useT } from "../../../lib/i18n";
+import { relativeTime } from "../../../lib/reltime";
 import { PHONE_PATH } from "../../instances/InstanceCard";
 import { STAGE_BADGE, clock, type PairStage } from "./pairStage";
 
@@ -38,23 +40,45 @@ function PairedState({ via, t }: { via?: string; t: T }) {
   );
 }
 
+function memberGlyph(kind: string | undefined) {
+  if (kind !== "android") return <IconFleet />;
+  return (
+    <svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor" aria-hidden="true">
+      <path fillRule="evenodd" d={PHONE_PATH} />
+    </svg>
+  );
+}
+
 function MemberRow({ m, t }: { m: GroupMember; t: T }) {
-  const phone = m.kind === "android";
   return (
     <Row
-      glyph={
-        phone ? (
-          <svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor" aria-hidden="true">
-            <path fillRule="evenodd" d={PHONE_PATH} />
-          </svg>
-        ) : (
-          <IconFleet />
-        )
-      }
+      glyph={memberGlyph(m.kind)}
       name={m.name || m.id}
-      mark={phone ? t("fleet.kindAndroid") : undefined}
+      mark={m.kind === "android" ? t("fleet.kindAndroid") : undefined}
       badge={<PairedState via={m.direct ? t("pairing.direct") : t("pairing.viaRelay")} t={t} />}
     />
+  );
+}
+
+/** AwayRow is a member that was in the group and is not in reach now, such as
+ *  a server that was shut down or a phone with the app closed. It stays until
+ *  it is removed on the Instances page, grey rather than red, since being away
+ *  is no fault. Right after this instance started it is not known to be away
+ *  yet. */
+function AwayRow({ m, settling, t }: { m: AwayMember; settling: boolean; t: T }) {
+  const seen = m.lastSeen > 0 && !settling ? t("instances.lastSeen").replace("{time}", () => relativeTime(t, m.lastSeen)) : "";
+  return (
+    <SettingRow
+      as="li"
+      label={m.name || m.id}
+      note={seen || undefined}
+      glyph={<span className="text-accentText [&>svg]:h-4.5 [&>svg]:w-4.5">{memberGlyph(m.kind)}</span>}
+    >
+      {m.kind === "android" && <span className="text-caption uppercase tracking-[.12em] text-carbon-textSub">{t("fleet.kindAndroid")}</span>}
+      <span data-new="pairing-inactive" className="flex">
+        <Badge tone="neutral">{t(settling ? "instances.checking" : "instances.inactive")}</Badge>
+      </span>
+    </SettingRow>
   );
 }
 
@@ -111,6 +135,9 @@ export function GroupCard({
             />
             {group.members.map((m) => (
               <MemberRow key={m.id} m={m} t={t} />
+            ))}
+            {group.away.map((m) => (
+              <AwayRow key={m.id} m={m} settling={group.settling} t={t} />
             ))}
           </Rows>
         </div>

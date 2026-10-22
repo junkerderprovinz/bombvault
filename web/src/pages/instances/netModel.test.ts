@@ -46,6 +46,8 @@ describe("the arrows between this server and a member", () => {
 describe("what stands around this server", () => {
   it("lists the paired instances first, then the ZFS servers, then the phones", () => {
     const { instances } = buildInstances({
+      away: [],
+      settling: false,
       members: [groupMember({ id: "phone", name: "Pixel", kind: "android" }), groupMember(), groupMember({ id: "m2", name: "barn", direct: false, relay: true })],
       peers: [fleetPeer({ id: "old", memberId: "", name: "office", needsPairing: true }), fleetPeer({ enabled: false })],
       received: [],
@@ -67,9 +69,14 @@ describe("what stands around this server", () => {
     expect(nodes[3].flows).toEqual([]);
   });
 
-  it("says when a paired instance is not reached", () => {
-    const { instances } = buildInstances({
+  const away = (settling: boolean) =>
+    buildInstances({
       members: [],
+      away: [
+        { id: "m1", name: "attic", address: "", lastSeen: 1 },
+        { id: "phone", name: "Pixel", kind: "android", address: "", lastSeen: 1 },
+      ],
+      settling,
       peers: [fleetPeer({ direct: false, relay: false })],
       received: [],
       pulls: [],
@@ -78,8 +85,20 @@ describe("what stands around this server", () => {
       destinations: null,
       groupReceivers: null,
       replicas: [],
-    });
-    expect(groupNodes(instances, [], t)[0].sub).toBe(en["instances.notConnected"]);
+    }).instances;
+
+  it("dims an instance or a phone that is away and names it inactive", () => {
+    expect(groupNodes(away(false), [], t).map((n) => [n.key, n.kind, n.sub, n.dim])).toEqual([
+      ["m1", "peer", en["instances.inactive"], true],
+      ["phone", "phone", en["instances.inactive"], true],
+    ]);
+  });
+
+  it("dims nothing while the group is still coming back, and says it is being checked", () => {
+    expect(groupNodes(away(true), [], t).map((n) => [n.key, n.sub, n.dim])).toEqual([
+      ["m1", en["instances.checking"], false],
+      ["phone", en["instances.checking"], false],
+    ]);
   });
 });
 
@@ -123,6 +142,25 @@ describe("the arrangement", () => {
           expect(p.label.x + p.label.width).toBeLessThanOrEqual(layout.width);
           expect(p.label.width).toBeGreaterThan(60);
         }
+      }
+    }
+  });
+
+  it("gives every name the height of its row to wrap in, and this server's two lines each", () => {
+    for (const kind of ["wide", "narrow"] as const) {
+      for (const n of [1, 2, 5, 9]) {
+        const layout = netLayout(kind, n);
+        const pitch = kind === "wide" ? 84 : 74;
+        for (const p of layout.points) {
+          expect(p.label.height).toBe(pitch);
+          expect(p.label.y + p.label.height / 2).toBeCloseTo(p.y);
+          expect(p.label.y).toBeGreaterThanOrEqual(0);
+          expect(p.label.y + p.label.height).toBeLessThanOrEqual(layout.height);
+        }
+        const hub = layout.hub.label;
+        expect(hub.height).toBe(70);
+        expect(hub.y).toBeGreaterThan(layout.hub.y + layout.hub.r);
+        expect(hub.y + hub.height).toBeLessThanOrEqual(layout.height);
       }
     }
   });

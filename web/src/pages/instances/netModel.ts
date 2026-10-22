@@ -41,18 +41,28 @@ export function netFlows(roles: MemberRoles | undefined): NetFlow[] {
 /** groupNodes lists what stands around this server in the picture: the
  *  paired instances with their arrows, then the ZFS servers reached over SSH,
  *  then the phones. A row from before pairing belongs to no group and is left
- *  out. */
+ *  out. One that is away stands dimmed until it is removed; one not heard
+ *  from yet since this server started is not dimmed. */
 export function groupNodes(instances: Instance[], servers: ZFSReplicaServer[], t: ReturnType<typeof useT>["t"]): NetNode[] {
   const paired = instances.filter((i) => !i.needsPairing);
-  const reached = (i: Instance) => (i.connected ? t(i.direct ? "pairing.direct" : "pairing.viaRelay") : t("instances.notConnected"));
+  const state = (i: Instance, reached: string) =>
+    i.presence === "connected" ? reached : t(i.presence === "checking" ? "instances.checking" : "instances.inactive");
+  const away = (i: Instance) => i.presence === "inactive";
   return [
-    ...paired
-      .filter((i) => !i.app)
-      .map((i): NetNode => ({ key: i.key, kind: "peer", name: i.name, sub: reached(i), dim: i.peer?.enabled === false, flows: netFlows(i.roles) })),
+    ...paired.filter((i) => !i.app).map(
+      (i): NetNode => ({
+        key: i.key,
+        kind: "peer",
+        name: i.name,
+        sub: state(i, t(i.direct ? "pairing.direct" : "pairing.viaRelay")),
+        dim: i.peer?.enabled === false || away(i),
+        flows: netFlows(i.roles),
+      }),
+    ),
     ...servers.map((s): NetNode => ({ key: `zfs:${s.id}`, kind: "zfs", name: s.name, sub: t("instances.overSsh"), dim: !s.enabled, flows: [] })),
     ...paired
       .filter((i) => i.app)
-      .map((i): NetNode => ({ key: i.key, kind: "phone", name: i.name, sub: t("fleet.kindAndroid"), dim: false, flows: [] })),
+      .map((i): NetNode => ({ key: i.key, kind: "phone", name: i.name, sub: state(i, t("fleet.kindAndroid")), dim: away(i), flows: [] })),
   ];
 }
 
@@ -60,9 +70,10 @@ export type Point = [x: number, y: number];
 
 export interface NetLabel {
   x: number;
-  /** The middle of the label's box. */
+  /** The top of the label's box. */
   y: number;
   width: number;
+  height: number;
   align: "start" | "end" | "mid";
 }
 
@@ -79,9 +90,15 @@ export const NODE_RADIUS: Record<NetNodeKind, number> = { peer: 27, zfs: 25, pho
 /** How far two arrows of one bundle lie apart. */
 const LANE_GAP = 10;
 
+/** How tall the name below this server and the line under it may grow, two
+ *  lines each. */
+const HUB_LABEL = 70;
+
 /** netLayout places n nodes around this server. A wide box stacks them on
  *  both sides with their names on the outside. A narrow one has room for one
- *  side only, so this server moves to the edge. */
+ *  side only, so this server moves to the edge. A name wraps rather than
+ *  being cut short, so every label owns the height of its row and the box
+ *  leaves room under this server for its own. */
 export function netLayout(kind: "wide" | "narrow", n: number): NetLayout {
   const wide = kind === "wide";
   const width = wide ? 720 : 340;
@@ -89,17 +106,23 @@ export function netLayout(kind: "wide" | "narrow", n: number): NetLayout {
   const pitch = wide ? 84 : 74;
   const right = wide ? Math.ceil(n / 2) : n;
   const left = n - right;
-  const height = Math.max(150, right * pitch + 10);
-  const hub = { x: !wide ? 42 : left ? 360 : 220, y: right > 1 ? height / 2 : 63, r: 34 };
+  const top = 63;
+  const below = 40 + HUB_LABEL;
+  const height = Math.max(right > 1 ? 2 * below : top + below, right * pitch + 10);
+  const hub = { x: !wide ? 42 : left ? 360 : 220, y: right > 1 ? height / 2 : top, r: 34 };
   const points = Array.from({ length: n }, (_, j) => {
     const side = wide && j % 2 ? -1 : 1;
     const offset = (wide ? j >> 1 : j) - ((side > 0 ? right : left) - 1) / 2;
     const x = hub.x + side * (reach - 14 * Math.abs(offset));
     const y = hub.y + offset * pitch;
-    const label: NetLabel = side > 0 ? { x: x + 36, y, width: width - x - 40, align: "start" } : { x: 4, y, width: x - 40, align: "end" };
+    const row = { y: y - pitch / 2, height: pitch };
+    const label: NetLabel =
+      side > 0 ? { x: x + 36, ...row, width: width - x - 40, align: "start" } : { x: 4, ...row, width: x - 40, align: "end" };
     return { x, y, label };
   });
-  return { width, height, hub: { ...hub, label: { x: hub.x - 40, y: hub.y + 58, width: 80, align: "mid" } }, points };
+  const hubWidth = wide ? 160 : 80;
+  const hubLabel: NetLabel = { x: hub.x - hubWidth / 2, y: hub.y + 40, width: hubWidth, height: HUB_LABEL, align: "mid" };
+  return { width, height, hub: { ...hub, label: hubLabel }, points };
 }
 
 export interface NetLane extends NetFlow {

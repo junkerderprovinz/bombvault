@@ -197,9 +197,10 @@ export function PeerDetails({
           {paired && !instance.app && <ForgetKeyButton memberId={instance.memberId} />}
           {modules.fleet && peer && (
             <RemoveInstanceButton
-              peerId={peer.id}
+              instance={instance}
               onRemoved={() => {
                 void state.reloadPeers();
+                void state.reloadGroup();
                 onClose();
               }}
             />

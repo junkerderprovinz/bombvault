@@ -234,6 +234,8 @@ const GROUP = {
     { id: MEMBER, name: MEMBER_NAME, version: "v9.2.0", direct: false, relay: true, address: "https://tower-schwiegereltern.familie-hofer.example.at:3443" },
     { id: "member-2", name: "Büro Linz", version: "v9.2.0", direct: true, relay: true, address: "https://10.20.30.40:3443" },
   ],
+  away: [],
+  settling: false,
   relay: {
     mode: "project",
     url: "",
@@ -791,19 +793,17 @@ test("the grid on the desktop keeps the 40px rhythm and cards of one size", asyn
   );
   expect(boxes).toHaveLength(5);
   expect(new Set(boxes.map((b) => b.width)).size, "cards of different widths").toBe(1);
-  for (const top of new Set(boxes.map((b) => b.top))) {
-    const row = boxes.filter((b) => b.top === top);
-    expect(new Set(row.map((b) => b.height)).size, "cards of one row differ in height").toBe(1);
-  }
+  expect(new Set(boxes.map((b) => b.height)).size, "cards of different heights").toBe(1);
   // Where the window leaves room beside the sidebar, a card is a wide
   // rectangle; on a narrower one it fills the column and its content sets
   // the height.
   if (width >= 1024) {
     for (const b of boxes) expect(b.width, "a card is clearly wider than high").toBeGreaterThanOrEqual(b.height * 1.5);
   }
-  // A name stays one line on the desktop, cut with an ellipsis if it must be.
+  // A name is never cut short; a long one wraps.
   const name = card(page, MEMBER).locator("span.font-semibold").first();
-  expect(await name.evaluate((node) => getComputedStyle(node).whiteSpace)).toBe("nowrap");
+  expect(await name.evaluate((node) => getComputedStyle(node).textOverflow)).not.toBe("ellipsis");
+  expect(await name.evaluate((node) => getComputedStyle(node).whiteSpace)).toBe("normal");
 
   // Pairing is the page's own action, in the corner.
   const pair = page.getByTestId("page-actions").getByRole("button", { name: "Kopplung", exact: true });
