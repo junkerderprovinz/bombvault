@@ -563,6 +563,14 @@ func (c *Client) ImageID(ctx context.Context, ref string) (string, error) {
 	return insp.ID, nil
 }
 
+// ImageTag points the reference ref at the local image id, as docker tag does.
+func (c *Client) ImageTag(ctx context.Context, id, ref string) error {
+	if err := c.api.ImageTag(ctx, id, ref); err != nil {
+		return fmt.Errorf("dockercli: image tag: %w", err)
+	}
+	return nil
+}
+
 // ImageRemove removes a local image by ID (sha256:…). force=false, so the daemon
 // refuses if any container still references it — a shared base image is never
 // deleted. Used to prune the superseded image after an update-after-backup (#56).

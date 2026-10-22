@@ -383,3 +383,35 @@ func TestUpdateAfterBackup_RegistryAuthReachesPull(t *testing.T) {
 		t.Fatalf("a Docker Hub ref must NOT receive the ghcr.io credential: %q", f2.pullAuths)
 	}
 }
+
+// A restore pulls a private image with the sign-in stored for its registry,
+// the same one the update after a backup uses.
+func TestRestorePullCarriesTheRegistrySignIn(t *testing.T) {
+	svc, st := newUpdateTestSvc(t)
+	svc.cfg = config.Config{AppKey: strings.Repeat("a", 64)}
+	blob, err := svc.EncodeRegistryAuths([]RegistryAuth{{Host: "ghcr.io", Username: "sponsor", Token: "s3cret"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	settings, err := st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	settings.RegistryAuths = blob
+	if err := st.UpdateSettings(settings); err != nil {
+		t.Fatal(err)
+	}
+	f := &updateFakeDocker{}
+	svc.docker = f
+
+	if err := svc.restoreDocker().Pull(context.Background(), "ghcr.io/owner/tcm-ui:latest"); err != nil {
+		t.Fatal(err)
+	}
+	want, err := dockercli.EncodeRegistryAuth("sponsor", "s3cret", "ghcr.io")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(f.pullAuths) != 1 || f.pullAuths[0] != want {
+		t.Fatalf("restore pull auths = %q, want the stored ghcr.io sign-in", f.pullAuths)
+	}
+}

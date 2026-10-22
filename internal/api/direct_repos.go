@@ -457,6 +457,13 @@ func (s *Service) createDirectRepo(ctx context.Context, targetID, name, location
 	if err != nil {
 		return store.OffsiteTarget{}, err
 	}
+	// Creating a repository here is the user's own say that one which was here
+	// before is gone for good.
+	if restic.IsRemoteRepo(loc) {
+		if err := s.startOverAt(loc); err != nil {
+			return store.OffsiteTarget{}, err
+		}
+	}
 	opened, err := s.ensureRepo(ctx, loc, s.offsiteModeForTarget(settings, target))
 	if err != nil {
 		return store.OffsiteTarget{}, err

@@ -10,6 +10,7 @@ import (
 
 	"github.com/junkerderprovinz/bombvault/internal/backup"
 	"github.com/junkerderprovinz/bombvault/internal/model"
+	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
 // ---------------------------------------------------------------------------
@@ -68,6 +69,25 @@ type fakeDocker struct {
 	// daemon carries that stop through anyway.
 	onStop      func()
 	stopCtxErrs []error
+
+	// images maps a reference or image id to the local image id it resolves
+	// to; one missing from it is not on the host.
+	images map[string]string
+	// createCtxErrs records ctx.Err() at every CreateAndStart.
+	createCtxErrs []error
+}
+
+func (d *fakeDocker) ImageID(_ context.Context, ref string) (string, error) {
+	return d.images[ref], nil
+}
+
+func (d *fakeDocker) ImageTag(_ context.Context, id, ref string) error {
+	d.log = append(d.log, "tag:"+id+"->"+ref)
+	if d.images == nil {
+		d.images = map[string]string{}
+	}
+	d.images[ref] = id
+	return nil
 }
 
 func (d *fakeDocker) Stop(ctx context.Context, name string, _ time.Duration) error {
@@ -127,8 +147,9 @@ func (d *fakeDocker) Pull(_ context.Context, image string) error {
 	return d.pullErr
 }
 
-func (d *fakeDocker) CreateAndStart(_ context.Context, in model.Inspect, start bool) error {
+func (d *fakeDocker) CreateAndStart(ctx context.Context, in model.Inspect, start bool) error {
 	d.log = append(d.log, "createAndStart:"+in.Name)
+	d.createCtxErrs = append(d.createCtxErrs, ctx.Err())
 	d.createdName = in.Name
 	d.createdInspect = in
 	d.createdStart = start
@@ -875,6 +896,7 @@ func restoreDeps(d *fakeDocker, r *fakeRestic, tpl *fakeTemplates, runs *fakeRun
 		Inspect:           sampleInspect(),
 		TargetID:          "target-1",
 		Docker:            d,
+		Images:            d,
 		Restic:            r,
 		Templates:         tpl,
 		Runs:              runs,
@@ -1299,6 +1321,92 @@ func TestRestoreRecordsFailedWhenResticThrows(t *testing.T) {
 		t.Fatalf("run finishes = %v, want [failed]", runs.finishes)
 	}
 	_ = combinedLog(d, r, tpl, runs) // touch helper
+}
+
+func TestRestoreThatFailsAfterTheRemoveCreatesTheContainerAgainStopped(t *testing.T) {
+	d := &fakeDocker{liveName: "/plex"}
+	r := &fakeRestic{restoreErr: errors.New("connection reset by peer")}
+	runs := &fakeRuns{}
+	deps := restoreDeps(d, r, &fakeTemplates{}, runs)
+	deps.Inspect.Running = true
+
+	err := backup.RestoreContainer(t.Context(), deps)
+	if err == nil || !strings.HasPrefix(err.Error(), store.ReasonRestoreHalfDone+": ") {
+		t.Fatalf("err = %v, want it to begin with %q", err, store.ReasonRestoreHalfDone)
+	}
+	if !contains(d.log, "createAndStart:/plex") || d.createdStart {
+		t.Fatalf("the container must be created again and left stopped: log=%v start=%v", d.log, d.createdStart)
+	}
+	if got := runs.finishOf(t, "run-1"); got.status != "failed" || !strings.Contains(got.note, "connection reset by peer") {
+		t.Fatalf("run = %+v, want failed with the restic error", got)
+	}
+}
+
+func TestCancelledRestoreCreatesTheContainerAgainStopped(t *testing.T) {
+	ctx, cancel := context.WithCancel(t.Context())
+	d := &fakeDocker{liveName: "/plex"}
+	r := &fakeRestic{restoreErr: context.Canceled}
+	tpl := &fakeTemplates{}
+	runs := &fakeRuns{}
+	d.onStop = cancel
+
+	err := backup.RestoreContainer(ctx, restoreDeps(d, r, tpl, runs))
+	if !errors.Is(err, context.Canceled) {
+		t.Fatalf("err = %v, want a cancellation", err)
+	}
+	if len(d.createCtxErrs) != 1 || d.createCtxErrs[0] != nil || d.createdStart {
+		t.Fatalf("the container must be created again, stopped, on a live context: %v start=%v", d.createCtxErrs, d.createdStart)
+	}
+	if runs.finishes[0] != "cancelled" {
+		t.Fatalf("run status = %v, want cancelled", runs.finishes)
+	}
+}
+
+func TestRestoreBringsBackTheImageOfTheBackup(t *testing.T) {
+	in := sampleInspect()
+	d := &fakeDocker{liveName: "/plex", images: map[string]string{
+		in.Image:        in.Image,
+		in.Config.Image: "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+	}}
+	if err := backup.RestoreContainer(t.Context(), restoreDeps(d, &fakeRestic{}, &fakeTemplates{}, &fakeRuns{})); err != nil {
+		t.Fatal(err)
+	}
+	if !contains(d.log, "tag:"+in.Image+"->"+in.Config.Image) {
+		t.Fatalf("the tag must point at the backed-up image again: %v", d.log)
+	}
+	if contains(d.log, "pull:") {
+		t.Fatalf("a restore onto the image of the backup must not pull the newer one: %v", d.log)
+	}
+	if d.createdInspect.Config.Image != in.Config.Image {
+		t.Fatalf("created from %q, want the tag %q", d.createdInspect.Config.Image, in.Config.Image)
+	}
+}
+
+func TestRestoreUsesALocalImageWithoutPulling(t *testing.T) {
+	in := sampleInspect()
+	d := &fakeDocker{liveName: "/plex", pullErr: errors.New("pull access denied"), images: map[string]string{
+		in.Config.Image: "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+	}}
+	if err := backup.RestoreContainer(t.Context(), restoreDeps(d, &fakeRestic{}, &fakeTemplates{}, &fakeRuns{})); err != nil {
+		t.Fatalf("a restore must not need the registry for an image on the host: %v", err)
+	}
+	if contains(d.log, "pull:") || contains(d.log, "tag:") {
+		t.Fatalf("no pull and no retag for an image on the host: %v", d.log)
+	}
+}
+
+func TestRestoreLeavesADigestReferenceAlone(t *testing.T) {
+	in := sampleInspect()
+	in.Config.Image = "lscr.io/linuxserver/plex@sha256:3333333333333333333333333333333333333333333333333333333333333333"
+	d := &fakeDocker{liveName: "/plex", images: map[string]string{in.Image: in.Image}}
+	deps := restoreDeps(d, &fakeRestic{}, &fakeTemplates{}, &fakeRuns{})
+	deps.Inspect = in
+	if err := backup.RestoreContainer(t.Context(), deps); err != nil {
+		t.Fatal(err)
+	}
+	if contains(d.log, "tag:") || !contains(d.log, "pull:"+in.Config.Image) {
+		t.Fatalf("a digest reference is pulled as it is, never retagged: %v", d.log)
+	}
 }
 
 // I1 / SEC: an unsafe appdata path (traversal / non-absolute) must be rejected

@@ -4524,7 +4524,7 @@ func TestDeleteBackupsForgetsSnapshotsAndTarget(t *testing.T) {
 
 // TestDeleteBackupsVMForgetsOnlyThatVMAndPrunes pins the one-shot VM bulk delete:
 // it forgets ONLY the target VM's tagged snapshots (not other VMs'), prunes the
-// freed space (Forget prune=true), and drops the store target on the LOCAL source.
+// freed space once it has answered, and drops the store target on the LOCAL source.
 func TestDeleteBackupsVMForgetsOnlyThatVMAndPrunes(t *testing.T) {
 	dir := t.TempDir()
 	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
@@ -4561,8 +4561,9 @@ func TestDeleteBackupsVMForgetsOnlyThatVMAndPrunes(t *testing.T) {
 	if contains(eng.forgotten, "bbbb2222") {
 		t.Fatalf("forgot another VM's snapshot: %v", eng.forgotten)
 	}
-	if !eng.forgetPruned {
-		t.Fatal("bulk delete must forget with prune=true (reclaim space)")
+	svc.WaitForPrunesAfterDelete()
+	if eng.forgetPruned || len(eng.manualPruned) != 1 || filepath.ToSlash(eng.manualPruned[0]) != filepath.ToSlash(repo) {
+		t.Fatalf("bulk delete must forget first and prune %s afterwards (pruned %v)", repo, eng.manualPruned)
 	}
 	if _, err := st.GetVMTargetByName("win11"); err == nil {
 		t.Fatal("local bulk delete must drop the VM target")

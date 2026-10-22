@@ -11,7 +11,7 @@ describe("placementErrorText", () => {
       "placement-unreadable", "invalid-placement", "copies-not-allowed", "unknown-target", "stack-rule",
       "copy-rule-taken", "domain-busy", "has-backups", "stale", "repo-invalid", "default-repo-missing",
       "nested-location", "foreign-domain", "mirrored-field", "companion-taken", "exclusion-unsaved",
-      "home-uncheckable", "rest-path-too-deep", "repo-wrong-key", "repo-unopened",
+      "home-uncheckable", "rest-path-too-deep", "repo-wrong-key", "repo-unopened", "repo-gone",
       "destination-holds-backups", "backups-not-there", "last-copies", "nothing-to-erase",
       "move-same-place", "move-section-there", "move-direct-repo", "move-sign-in", "move-running",
       "own-folder-there",

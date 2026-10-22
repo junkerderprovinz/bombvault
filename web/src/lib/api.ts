@@ -2759,6 +2759,14 @@ export function testOffsiteTarget(
 }
 
 /**
+ * POST /api/offsite/targets/{id}/start-over: lets the next copy create a new
+ * repository at a target whose earlier one is gone (test code "repo-gone").
+ */
+export function startOverAtTarget(id: string): Promise<OkEnvelope> {
+  return fetchJSON(`/api/offsite/targets/${encodeURIComponent(id)}/start-over`, { method: "POST" });
+}
+
+/**
  * A one-time rest-server deployment recipe for a domain's append-only off-site
  * repo. The plaintext `password` is shown ONCE and never persisted server-side;
  * `htpasswd` is its bcrypt line for the far-side .htpasswd file. `dockerRun` and
@@ -3008,6 +3016,14 @@ export function testPrimaryRemote(
   domain: PrimaryRemoteDomain
 ): Promise<OkEnvelope & { reachable?: boolean; initialized?: boolean }> {
   return fetchJSON(`/api/settings/primary-remote/${domain}/test`, { method: "POST" });
+}
+
+/**
+ * POST /api/settings/primary-remote/{domain}/start-over: startOverAtTarget for
+ * a domain's remote backup path.
+ */
+export function startOverAtPrimary(domain: PrimaryRemoteDomain): Promise<OkEnvelope> {
+  return fetchJSON(`/api/settings/primary-remote/${domain}/start-over`, { method: "POST" });
 }
 
 /**

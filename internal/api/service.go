@@ -67,6 +67,9 @@ type containerDefinition struct {
 	Inspect      model.Inspect `json:"inspect"`
 	TemplateXML  string        `json:"template_xml"`
 	AppdataPaths []string      `json:"appdata_paths"`
+	// MountedPaths are the AppdataPaths that sat on a mount of their own below
+	// Host Data when they were backed up.
+	MountedPaths []string `json:"mounted_paths,omitempty"`
 	// Aliases are the links the mirror on the backup storage records, the
 	// only ones Discover rebuilds. The alias rows are what everything else
 	// reads.
@@ -423,6 +426,10 @@ type Service struct {
 	stopOnce   sync.Once
 	stopCtx    context.Context
 	stopCancel context.CancelFunc
+
+	// deletePrunes counts the prunes still running after a delete of backups
+	// has answered.
+	deletePrunes sync.WaitGroup
 
 	// self-container detection (resolved once, cached): the name of BombVault's
 	// OWN container, so a backup never stops the process doing the backing up.
@@ -5310,7 +5317,12 @@ func (s *Service) probeOffsiteRepo(ctx context.Context, repo string, mode restic
 	// replication has run) is not a failure — same signal listSnapshots already
 	// treats as "empty, not fatal" (#117). Report it as the UI's uninitialized
 	// state instead of a fatal error (#130).
+	// One that held a repository before is the exception, which no copy fills
+	// until the user says so.
 	if restic.IsRemoteRepo(repo) && isRepoUninitialized(primaryErr) {
+		if s.recordedEstablishment(repo) == repoWasEstablished {
+			return true, false, errRemoteRepoGone
+		}
 		return true, false, nil
 	}
 	// The same goes for a folder on mounted storage, unless it held a
@@ -5355,6 +5367,11 @@ func (e *otherEncryptionErr) Error() string {
 		"was made, setting it back to %s opens it again",
 		encryptionWord(e.encrypted), encryptionWord(!e.encrypted), enabledWord(e.encrypted))
 }
+
+// errRemoteRepoGone marks a remote location that held a repository and holds
+// none now, which BombVault does not fill with a new, empty one on its own.
+var errRemoteRepoGone = errors.New("the repository that was at this location is gone, or the disk behind it is not mounted on the server, " +
+	"so no new, empty one was created there. Mount it again, or start a new repository there from the storage location's page")
 
 // errRepoUnopened marks a repository restic reported as created that still does
 // not open, so nothing may be pointed at it.
@@ -5423,6 +5440,12 @@ func (s *Service) ensureRepo(ctx context.Context, repo string, mode restic.Mode)
 	if isUnreachable(openErr) {
 		return false, fmt.Errorf("could not reach the repository, so nothing was created there: %w", openErr)
 	}
+	// A remote server answers for a folder whose disk did not mount as if it
+	// were empty, and a new repository there would take the copies until the
+	// disk is back and hides it again. Only the user can say it is gone for good.
+	if restic.IsRemoteRepo(repo) && isRepoUninitialized(openErr) && s.recordedEstablishment(repo) == repoWasEstablished {
+		return false, errRemoteRepoGone
+	}
 	// Opens with neither mode → not initialised (a brand-new location) OR its
 	// backing store vanished. Local repos need their directory; remote backends do not.
 	if !restic.IsRemoteRepo(repo) {
@@ -5487,7 +5510,8 @@ func (s *Service) markRepoEstablished(repo string) {
 
 // clearRepoEstablished removes the established marker for a LOCAL repo, used when
 // the destination is confirmed mounted but the repo legitimately is not there yet
-// (a stale/phantom pre-mount marker, #120). Remote repos have no marker. Best-effort.
+// (a stale/phantom pre-mount marker, #120). A remote one keeps its marker until
+// the user starts over there (startOverAt). Best-effort.
 func (s *Service) clearRepoEstablished(repo string) {
 	if restic.IsRemoteRepo(repo) {
 		return
@@ -6320,16 +6344,32 @@ func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, re
 		s.notifyBackup(ctx, "container", name, "", false, backup.Summary{}, err)
 		return backup.Summary{}, err
 	}
+	mounted, mountsKnown := s.pathsOnTheirOwnMount(effective)
+	if left := s.offTheirMount(name, effective, mounted, mountsKnown); len(left) > 0 {
+		hostPaths := make([]string, len(left))
+		for i, p := range left {
+			hostPaths[i] = s.toHostPath(p)
+		}
+		err := fmt.Errorf("backup %q: %s sat on a disk of its own at the last backup and does not now (is that disk mounted?). "+
+			"Refusing to back up what Docker left in its place", name, strings.Join(hostPaths, ", "))
+		s.notifyBackup(ctx, "container", name, "", false, backup.Summary{}, err)
+		return backup.Summary{}, err
+	}
 
 	if step, err = s.recordHome(ctx, settings, item, step); err != nil {
 		return backup.Summary{}, err
 	}
 	repo, mode := step.repo, step.mode
 
+	if err := s.refuseEmptiedAppdata(ctx, repo, mode, name, effective); err != nil {
+		s.notifyBackup(ctx, "container", name, "", false, backup.Summary{}, err)
+		return backup.Summary{}, err
+	}
+
 	// Persist the recreate recipe (self-contained: inspect + template + backup
 	// paths) so restore works even after the container has been deleted.
 	xml, _, _ := template.Read(s.cfg.FlashTemplatesDir, name)
-	defBytes, _ := json.Marshal(containerDefinition{Inspect: in, TemplateXML: xml, AppdataPaths: effective})
+	defBytes, _ := json.Marshal(containerDefinition{Inspect: in, TemplateXML: xml, AppdataPaths: effective, MountedPaths: mounted})
 	defJSON := string(defBytes)
 
 	tg, err := s.store.UpsertTarget(store.Target{ContainerName: name, AppdataPaths: effective, Definition: defJSON})
@@ -8589,6 +8629,7 @@ func (s *Service) executeRestore(ctx context.Context, name string, plan containe
 	}
 	rkey := "container:" + name
 	rctx, startedAt := s.progBegin(ctx, rkey, "restore")
+	docker := s.restoreDocker()
 	rerr := backup.RestoreContainer(rctx, backup.RestoreDeps{
 		Confirmed:         true, // prepareRestore rejected unconfirmed requests
 		RecreateOnly:      plan.recreateOnly,
@@ -8605,7 +8646,8 @@ func (s *Service) executeRestore(ctx context.Context, name string, plan containe
 		LeaveStopped:      leaveStopped,
 		WithoutRuntime:    plan.withoutRuntime,
 		TargetID:          plan.targetID,
-		Docker:            s.docker,
+		Docker:            docker,
+		Images:            docker,
 		Restic:            &resticAdapter{engine: s.engine, mode: plan.mode},
 		Templates:         templatesAdapter{},
 		Runs:              runsAdapter{st: s.store, ctx: ctx},
@@ -10969,9 +11011,10 @@ func (s *Service) DeleteBackups(ctx context.Context, name, source string) error 
 		if f := s.primaryAppendOnly("containers", repo); f != appendOnlyNone {
 			return appendOnlyRefusal(f)
 		}
-		if err := s.engine.Forget(ctx, repo, ids, true, mode); err != nil {
+		if err := s.engine.Forget(ctx, repo, ids, false, mode); err != nil {
 			return fmt.Errorf("forget snapshots: %w", err)
 		}
+		s.pruneAfterDelete("containers", repo, mode)
 	}
 
 	// Remove the target row + its run history so the container disappears from
@@ -11088,9 +11131,10 @@ func (s *Service) DeleteBackupsVM(ctx context.Context, name, source string) erro
 		ids = append(ids, snap.ID)
 	}
 	if len(ids) > 0 {
-		if err := s.engine.Forget(ctx, repo, ids, true, mode); err != nil {
+		if err := s.engine.Forget(ctx, repo, ids, false, mode); err != nil {
 			return fmt.Errorf("forget snapshots: %w", err)
 		}
+		s.pruneAfterDelete("vms", repo, mode)
 	}
 
 	s.dropBlockCheckpointsIfOn(ctx, name)
@@ -15769,7 +15813,7 @@ func (s *Service) DeleteBackupsFileSet(ctx context.Context, id, source string) e
 	s.unlockStale(ctx, repo, mode)
 
 	// Collect this set's snapshot IDs (tag-filtered fileset:<Name>) and
-	// forget+prune them in one restic call (Forget with prune=true).
+	// forget them; the prune follows once the delete has answered.
 	snaps, err := s.SnapshotsFileSet(ctx, id, "local")
 	if err != nil {
 		return err
@@ -15779,9 +15823,10 @@ func (s *Service) DeleteBackupsFileSet(ctx context.Context, id, source string) e
 		ids = append(ids, snap.ID)
 	}
 	if len(ids) > 0 {
-		if err := s.engine.Forget(ctx, repo, ids, true, mode); err != nil {
+		if err := s.engine.Forget(ctx, repo, ids, false, mode); err != nil {
 			return fmt.Errorf("forget snapshots: %w", err)
 		}
+		s.pruneAfterDelete("files", repo, mode)
 	}
 
 	// Drop the set row + its run history so the set disappears from the list

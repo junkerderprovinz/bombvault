@@ -214,7 +214,9 @@ func (h *Handler) handleDeleteBackupsZFSDataset(w http.ResponseWriter, r *http.R
 	if !ok || !h.requireAuthForSecrets(w, r, "deleting backups") {
 		return
 	}
-	res, err := h.svc.DeleteBackupsZFSDataset(r.Context(), id, r.URL.Query().Get("safety") == "true")
+	ctx, done := h.svc.outlastRequest(r.Context())
+	defer done()
+	res, err := h.svc.DeleteBackupsZFSDataset(ctx, id, r.URL.Query().Get("safety") == "true")
 	if err != nil {
 		if errors.Is(err, errDomainBusy) {
 			writeJSON(w, http.StatusConflict, failEnvelope(err))

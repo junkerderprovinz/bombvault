@@ -322,6 +322,11 @@ const (
 // them, whose run carries NoteRestoredWithoutRuntime.
 const ReasonRestoreNoRuntime = "restore failed: the container used a GPU or runtime this host does not have"
 
+// ReasonRestoreHalfDone begins the reason of a container restore that stopped
+// after the container was removed, failed or cancelled. The container was
+// created again but left stopped, and the detail says why the restore stopped.
+const ReasonRestoreHalfDone = "restore did not finish: the container was created again, stopped, on partly restored data"
+
 // Notes on a successful run, shown in a warning tone: the work was done, but
 // not as completely as the user would expect.
 const (

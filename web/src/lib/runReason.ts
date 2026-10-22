@@ -121,6 +121,7 @@ export const RUN_REASON_PREFIXES: Record<string, TranslationKey> = {
   "database imported; the previous data folder was kept": "runReason.dbimportKeptOld",
   "database imported with errors": "runReason.dbimportErrors",
   [RESTORE_NO_RUNTIME]: "runReason.restoreNoRuntime",
+  "restore did not finish: the container was created again, stopped, on partly restored data": "runReason.restoreHalfDone",
   [RESTORED_WITHOUT_RUNTIME]: "runReason.restoredWithoutRuntime",
   [RESTORED_WITHOUT_LINKS]: "runReason.restoredWithoutLinks",
   [CONTAINERS_NOT_BACK]: "runReason.containersNotBack",

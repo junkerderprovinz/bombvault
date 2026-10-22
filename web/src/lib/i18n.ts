@@ -240,7 +240,7 @@ export const en = {
   "runReason.ownDataFolder": "This would write into BombVault's own data folder or a folder that holds it. Choose another folder.",
   "restore.cancelConfirmSafe": "Cancel the restore? The partial output folder is left as-is.",
   "restore.cancelConfirmInPlace":
-    "{name} is mid-restore. Cancelling leaves this restore partial. You may need to restore it again. Cancel anyway?",
+    "{name} is being restored. If you cancel, its data stays partly restored, and the container is created again but stays stopped until you restore it again. Cancel anyway?",
   "restore.cancelling": "Cancelling…",
   "restore.cancelled": "Restore cancelled",
   "restore.preview": "Preview",
@@ -1343,6 +1343,8 @@ export const en = {
   "runReason.dbimportAppsStopped":
     "one=this app stays stopped until the data folder is sorted out: {apps}|other=these apps stay stopped until the data folder is sorted out: {apps}",
   "runReason.restoreNoRuntime": "the container used a GPU or runtime this host does not have",
+  "runReason.restoreHalfDone":
+    "the restore stopped partway. The container was created again but left stopped on partly restored data. Restore it again before you start it",
   "runReason.restoredWithoutRuntime": "restored without the GPU or runtime the container used",
   "runReason.restoredWithoutLinks": "restored without links to containers that are not running",
   "runReason.containersNotBack": "some containers did not start again",
@@ -2466,6 +2468,8 @@ export const en = {
   "placementCode.restPathTooDeep": "A rest-server creates repositories at most two folders deep, such as /files-direct or /user/files-direct. Choose a shorter path.",
   "placementCode.repoWrongKey": "There is already a restic repository here, and this instance's key does not open it. Choose an empty place, or use the APP_KEY it was created with.",
   "placementCode.repoUnopened": "The repository was set up but does not open, so nothing was saved. Check the place and its login, then try again.",
+  "placementCode.repoGone":
+    "The repository that was here is gone, or its disk is not mounted on the server. BombVault does not put a new, empty one in its place. Mount the disk again, or start a new repository here if you emptied the old one on purpose.",
   "placementCode.destinationHoldsBackups": "The location cannot move while something backs up here: everything written so far would stay behind, and the next backup would run into an empty repository. Add a second storage location and point the entries at it.",
   "placementCode.backupsNotThere": "The backups stored here do not open through the changed connection, so nothing was saved. Check what you entered. If the backups have moved, add a second storage location for the new place.",
   "placementCode.lastCopies": "Entries would lose their only backup, and the list changed since it was shown. Check it again.",
@@ -4408,6 +4412,9 @@ export const en = {
   "storage.conn.title": "Change the connection of {name}",
   "storage.conn.save": "Test and save",
   "storage.remove.action": "Remove storage location",
+  "storage.startOver": "Start a new repository here",
+  "storage.startOverConfirm":
+    "Only do this if you emptied or deleted the old repository on purpose. If its disk is just not mounted on the server, the next copy writes a new repository in its place, and that one is hidden again once the disk is back.",
   "storage.remove.title": "Remove {name}?",
   "storage.remove.keep": "Remove storage location, keep the backups",
   "storage.remove.keepText": "BombVault stops writing here. The backups stay where they are. You can read them later under Restore › From an old backup folder.",
@@ -5307,7 +5314,7 @@ export const de: Translations = {
   "runReason.ownDataFolder": "Das würde in den Datenordner von BombVault schreiben oder in einen Ordner, der ihn enthält. Wähl einen anderen Ordner.",
   "restore.cancelConfirmSafe": "Wiederherstellung abbrechen? Der bereits geschriebene Zielordner bleibt unverändert erhalten.",
   "restore.cancelConfirmInPlace":
-    "{name} wird gerade wiederhergestellt. Ein Abbruch lässt diese Wiederherstellung unvollständig zurück. Möglicherweise musst du sie erneut ausführen. Trotzdem abbrechen?",
+    "{name} wird gerade wiederhergestellt. Brichst du ab, bleiben seine Daten nur teilweise wiederhergestellt, und der Container wird neu angelegt, bleibt aber gestoppt, bis du ihn noch einmal wiederherstellst. Trotzdem abbrechen?",
   "restore.cancelling": "Wird abgebrochen…",
   "restore.cancelled": "Wiederherstellung abgebrochen",
   "restore.preview": "Vorschau",
@@ -6263,6 +6270,8 @@ export const de: Translations = {
   "runReason.dbimportAppsStopped":
     "one=diese App bleibt gestoppt, bis der Datenordner geklärt ist: {apps}|other=diese Apps bleiben gestoppt, bis der Datenordner geklärt ist: {apps}",
   "runReason.restoreNoRuntime": "der Container nutzte eine GPU oder Laufzeit, die dieser Host nicht hat",
+  "runReason.restoreHalfDone":
+    "die Wiederherstellung brach mittendrin ab. Der Container wurde neu angelegt, bleibt aber auf teilweise wiederhergestellten Daten gestoppt. Stell ihn noch einmal wieder her, bevor du ihn startest",
   "runReason.restoredWithoutRuntime": "ohne die GPU oder Laufzeit des Containers wiederhergestellt",
   "runReason.restoredWithoutLinks": "ohne Links zu Containern wiederhergestellt, die nicht laufen",
   "runReason.containersNotBack": "einige Container sind nicht wieder gestartet",
@@ -7326,6 +7335,8 @@ export const de: Translations = {
   "placementCode.restPathTooDeep": "Ein rest-server legt Repositorys höchstens zwei Ordner tief an, etwa /files-direct oder /user/files-direct. Wähle einen kürzeren Pfad.",
   "placementCode.repoWrongKey": "Hier liegt schon ein restic-Repository, und der Schlüssel dieser Instanz öffnet es nicht. Wähle einen leeren Ort oder nimm den APP_KEY, mit dem es angelegt wurde.",
   "placementCode.repoUnopened": "Das Repository wurde angelegt, lässt sich aber nicht öffnen, deshalb wurde nichts gespeichert. Prüfe den Ort und seine Anmeldung und versuch es noch einmal.",
+  "placementCode.repoGone":
+    "Das Repository, das hier lag, ist weg, oder seine Platte ist auf dem Server nicht eingehängt. BombVault legt an seiner Stelle kein neues, leeres an. Häng die Platte wieder ein, oder leg hier ein neues Repository an, wenn du das alte absichtlich geleert hast.",
   "placementCode.destinationHoldsBackups": "Der Ort lässt sich nicht verschieben, solange hierher gesichert wird: alles bisher Geschriebene bliebe liegen, und die nächste Sicherung liefe in ein leeres Repository. Leg einen zweiten Speicherort an und zeig mit den Einträgen dorthin.",
   "placementCode.backupsNotThere": "Die Sicherungen an diesem Ort lassen sich über die geänderte Verbindung nicht öffnen, deshalb wurde nichts gespeichert. Prüf deine Eingaben. Sind die Sicherungen umgezogen, leg für den neuen Ort einen zweiten Speicherort an.",
   "placementCode.lastCopies": "Einträge würden ihre einzige Sicherung verlieren, und die Liste hat sich seit der Anzeige geändert. Sieh sie dir noch einmal an.",
@@ -9245,6 +9256,9 @@ export const de: Translations = {
   "storage.conn.title": "Verbindung von {name} ändern",
   "storage.conn.save": "Testen und speichern",
   "storage.remove.action": "Speicherort entfernen",
+  "storage.startOver": "Hier ein neues Repository anlegen",
+  "storage.startOverConfirm":
+    "Tu das nur, wenn du das alte Repository absichtlich geleert oder gelöscht hast. Ist seine Platte auf dem Server nur nicht eingehängt, schreibt die nächste Kopie ein neues Repository an seine Stelle, und das ist wieder verdeckt, sobald die Platte zurück ist.",
   "storage.remove.title": "{name} entfernen?",
   "storage.remove.keep": "Speicherort entfernen, Sicherungen behalten",
   "storage.remove.keepText": "BombVault schreibt nicht mehr hierher. Die Sicherungen bleiben am Ort liegen. Du liest sie später über Wiederherstellung, Aus einem alten Sicherungsordner.",

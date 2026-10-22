@@ -156,6 +156,11 @@ func (f *fakeServiceDocker) ImageID(_ context.Context, ref string) (string, erro
 	return f.imageID, f.imageIDErr
 }
 
+func (f *fakeServiceDocker) ImageTag(_ context.Context, id, ref string) error {
+	f.calls = append(f.calls, "imageTag:"+id+"->"+ref)
+	return nil
+}
+
 func (f *fakeServiceDocker) ImageRemove(_ context.Context, id string) error {
 	f.calls = append(f.calls, "imageRemove:"+id)
 	return f.imageRemoveErr
