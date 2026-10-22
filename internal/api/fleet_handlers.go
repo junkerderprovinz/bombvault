@@ -146,6 +146,28 @@ func (h *Handler) handleDeleteFleetPeer(w http.ResponseWriter, r *http.Request) 
 	writeJSON(w, http.StatusOK, okEnvelope(nil))
 }
 
+// handleRemoveMember drops a member's row and its pinned key, as DELETE
+// /api/fleet/peers/{id} does, for a card whose page holds no row. A member
+// that is away stays off the lists until it is in reach again.
+// DELETE /api/group/members/{id}
+func (h *Handler) handleRemoveMember(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("id")
+	rows, err := h.store.ListFleetPeers()
+	if err == nil {
+		err = h.store.ForgetMemberKey(id)
+	}
+	for _, p := range rows {
+		if err == nil && p.MemberID == id {
+			err = h.store.DeleteFleetPeer(p.ID)
+		}
+	}
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(nil))
+}
+
 // handleFleetPeerPoll polls one member now and returns the recorded result. A
 // member that answers it left the group takes its row along, which the answer
 // says. POST /api/fleet/peers/{id}/poll

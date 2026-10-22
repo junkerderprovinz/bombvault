@@ -246,6 +246,7 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("POST /api/group/phrase/show", h.handleGroupShow)
 	mux.HandleFunc("POST /api/group/join", h.handleGroupJoin)
 	mux.HandleFunc("DELETE /api/group", h.handleGroupLeave)
+	mux.HandleFunc("DELETE /api/group/members/{id}", h.handleRemoveMember)
 	mux.HandleFunc("DELETE /api/group/members/{id}/key", h.handleForgetMemberKey)
 	mux.HandleFunc("PUT /api/group/relay", h.handleGroupRelay)
 	mux.HandleFunc("PUT /api/group/address", h.handleGroupAddress)
