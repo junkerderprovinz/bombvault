@@ -183,7 +183,7 @@ export function useDestinationDraft(): DestinationDraftState {
   function pick(p: Provider) {
     setFromMember(undefined);
     setPicked(p);
-    setSettings({});
+    setSettings({ ...p.defaults });
     setCredsRef("");
     setName(providerName(p, t));
     setDir([]);

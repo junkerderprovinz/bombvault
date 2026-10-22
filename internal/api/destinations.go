@@ -257,7 +257,7 @@ func (s *Service) CheckDraft(ctx context.Context, req draftRequest) (DraftCheck,
 			return DraftCheck{}, err
 		}
 		reachable, initialized, err := s.probeOffsiteRepo(ctx, repo, mode)
-		return DraftCheck{Reachable: reachable, Initialized: initialized}, err
+		return DraftCheck{Reachable: reachable, Initialized: initialized}, draftRestLoginErr(err, req.Settings)
 	case remotes.RoutePath:
 		dir, err := s.resolveRepo(strings.TrimSpace(req.Settings["path"]))
 		if err != nil {
@@ -276,6 +276,30 @@ func (s *Service) CheckDraft(ctx context.Context, req draftRequest) (DraftCheck,
 		return DraftCheck{}, err
 	}
 	return DraftCheck{Reachable: true}, nil
+}
+
+// errDraftRestLogin is a rest-server that refused the login of the form, which
+// was typed in a moment ago and is the one the test used.
+var errDraftRestLogin = errors.New("the rest-server refused the login")
+
+type draftRestLoginError struct{ msg string }
+
+func (e *draftRestLoginError) Error() string { return e.msg }
+
+func (e *draftRestLoginError) Is(target error) bool { return target == errDraftRestLogin }
+
+// draftRestLoginErr names the likely cause of a 401 on the form: a typo in the
+// user name or password, or none given. A mismatch between the user and the
+// first folder of the address is named by restPathUserMismatch already.
+func draftRestLoginErr(err error, settings map[string]string) error {
+	if err == nil || errors.Is(err, errRestPathUser) || !isAuthRefusal(strings.ToLower(err.Error())) {
+		return err
+	}
+	if strings.TrimSpace(settings["user"]) == "" && settings["pass"] == "" {
+		return &draftRestLoginError{msg: "the rest-server asks for a user name and password (401). Fill in both, as the htpasswd file on the server has them."}
+	}
+	return &draftRestLoginError{msg: "the rest-server refused this user name and password (401). Check both for typos. " +
+		"If the server runs with --private-repos, the address has to go on with the user name, as in https://host:8000/USER/."}
 }
 
 func (s *Service) draftRestMode(settings map[string]string) (restic.Mode, error) {

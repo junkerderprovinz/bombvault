@@ -7395,6 +7395,8 @@ export interface Provider {
   group: ProviderGroup;
   route: ProviderRoute;
   preset?: Record<string, string>;
+  /** What the form starts with where the product differs from rclone. */
+  defaults?: Record<string, string>;
   mark?: string;
   urlHint?: string;
   auth?: ProviderAuth;

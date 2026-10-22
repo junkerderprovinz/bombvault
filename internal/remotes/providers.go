@@ -27,6 +27,11 @@ type Provider struct {
 	// treats an unknown one as plain S3 without saying so.
 	Preset map[string]string `json:"preset,omitempty"`
 
+	// Defaults are what the form fills in when the provider is picked, where
+	// the product's own default differs from rclone's. Unlike a preset they
+	// can be changed.
+	Defaults map[string]string `json:"defaults,omitempty"`
+
 	// Mark names the logo the interface draws. Empty draws a generic glyph,
 	// which beats a mark of the wrong service.
 	Mark string `json:"mark,omitempty"`
@@ -111,6 +116,11 @@ func ownS3(id, name, provider, mark string, lock bool) Provider {
 	return p
 }
 
+func withDefaults(p Provider, defaults map[string]string) Provider {
+	p.Defaults = defaults
+	return p
+}
+
 func cloud(id, name, backend, mark string, auth AuthStyle) Provider {
 	return Provider{ID: id, Name: name, Backend: backend, Group: GroupCloud, Route: RouteRclone, Mark: mark, Auth: auth}
 }
@@ -154,7 +164,9 @@ var providers = []Provider{
 		Mark: "IconAzure", Auth: AuthAccessKey},
 	{ID: "sia", Name: "Sia", Backend: "sia", Group: GroupStorage, Route: RouteRclone, Mark: "sia"},
 
-	ownS3("garage", "Garage", "Other", "IconGarage", false),
+	// Garage signs for the region set as s3_region in its garage.toml, which
+	// its documentation sets to "garage", and refuses us-east-1.
+	withDefaults(ownS3("garage", "Garage", "Other", "IconGarage", false), map[string]string{"region": "garage"}),
 	ownS3("seaweedfs", "SeaweedFS", "SeaweedFS", "IconSeaweedfs", false),
 	ownS3("rustfs", "RustFS", "Other", "rustfs", true),
 	ownS3("silo", "Silo", "Minio", "silo", true),
