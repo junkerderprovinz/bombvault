@@ -1,10 +1,11 @@
 // What each step of setting up a destination shows, without its heading and
 // its buttons: the wizard on a card stacks the steps, the window to add a
 // storage location shows one at a time.
-import { useId, type ReactNode } from "react";
-import type { BackendOption, Provider } from "../../lib/api";
+import { useId, useState, type ReactNode } from "react";
+import { installDraftKey, type BackendOption, type Provider } from "../../lib/api";
 import { humanBytes } from "../../lib/forecast";
 import { useT, type TranslationKey } from "../../lib/i18n";
+import { tLtr } from "../../lib/ltrFragments";
 import { STORAGE_CLASSES } from "../../lib/storageClasses";
 import { Badge } from "../Badge";
 import { Button } from "../Button";
@@ -226,8 +227,111 @@ export function SignInBody({ draft, providerLabel }: { draft: DestinationDraftSt
           ))}
         </MoreSettings>
       )}
+      {picked.auth === "sshkey" && draft.publicKey && <KeyInstall draft={draft} />}
       <VerdictLine verdict={draft.test.verdict} />
     </>
+  );
+}
+
+const KEY_INSTALL_FAILURES: Record<string, TranslationKey> = {
+  "password-refused": "dest.keyInstall.err.password",
+  "no-password-sign-in": "dest.keyInstall.err.noPassword",
+  "session-refused": "dest.keyInstall.err.session",
+  unreachable: "dest.keyInstall.err.unreachable",
+  "host-key-changed": "dest.keyInstall.err.hostKey",
+  "no-way-in": "dest.keyInstall.err.noWayIn",
+};
+
+/** The command that puts the key on the server by hand, for the host, user
+ *  and port in the form. A Storage Box has no shell and takes the key through
+ *  install-ssh-key instead. */
+export function manualKeyCommand(storageBox: boolean, key: string, settings: Record<string, string>, port: string): string {
+  const account = `${settings.user?.trim() || "<user>"}@${settings.host?.trim() || "<host>"}`;
+  if (storageBox) return `echo "${key}" | ssh -p${port} ${account} install-ssh-key`;
+  return `ssh -p${port} ${account} 'umask 077; mkdir -p ~/.ssh && echo "${key}" >> ~/.ssh/authorized_keys'`;
+}
+
+/** Puts BombVault's public key on the server, once with the account's
+ *  password or by hand, and tests the connection after it is there. */
+export function KeyInstall({ draft }: { draft: DestinationDraftState }) {
+  const { t } = useT();
+  const id = useId();
+  const [password, setPassword] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [failure, setFailure] = useState<string | null>(null);
+  const { picked, settings, publicKey } = draft;
+  if (!picked) return null;
+  const provider = picked.id;
+  const storageBox = provider === "storagebox";
+  const port = picked.preset?.port ?? (settings.port?.trim() || "22");
+  const ready = !!settings.host?.trim() && !!settings.user?.trim() && password !== "";
+
+  function explain(code: string | undefined, error: string | undefined): string {
+    if (code === "session-refused" && storageBox) return t("dest.keyInstall.err.sshOff");
+    const key = code ? KEY_INSTALL_FAILURES[code] : undefined;
+    return key ? tLtr(t, key) : error || t("dest.keyInstall.failed");
+  }
+
+  async function install() {
+    setBusy(true);
+    setFailure(null);
+    try {
+      const r = await installDraftKey({ provider, settings, password });
+      if (!r.ok) {
+        setFailure(explain(r.code, r.error));
+        return;
+      }
+      setPassword("");
+      await draft.runTest();
+    } catch (e) {
+      setFailure(explain(undefined, e instanceof Error ? e.message : undefined));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div data-new="storagebox-key-install" className="flex flex-col gap-3 rounded-card bg-carbon-surface2 p-3">
+      <Rows>
+        <SettingRow
+          label={t("dest.keyInstall.password")}
+          hint={t("dest.keyInstall.tip")}
+          htmlFor={id}
+          note={storageBox ? t("dest.keyInstall.subAccount") : undefined}
+        >
+          <span className="flex max-w-full flex-wrap justify-end gap-2">
+            <input
+              id={id}
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && ready && !busy && void install()}
+              autoComplete="new-password"
+              spellCheck={false}
+              dir="ltr"
+              className={`w-56 max-w-full ${FIELD}`}
+            />
+            <Button
+              label={t("dest.keyInstall.add")}
+              labelKey="dest.keyInstall.add"
+              tone="accent"
+              busy={busy}
+              disabled={!ready || busy}
+              onClick={() => void install()}
+            />
+          </span>
+        </SettingRow>
+      </Rows>
+      {failure && (
+        <p role="alert" className="text-xs wrap-break-word text-statusFail">
+          {failure}
+        </p>
+      )}
+      <div className="flex flex-col gap-1">
+        <span className="text-xs text-carbon-textSub">{t("dest.keyInstall.manual")}</span>
+        <CopyBlock text={manualKeyCommand(storageBox, publicKey, settings, port)} />
+      </div>
+    </div>
   );
 }
 

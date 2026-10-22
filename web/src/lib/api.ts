@@ -7343,6 +7343,20 @@ export function draftMakeFolder(d: DestinationDraft): Promise<OkEnvelope & { dir
   return fetchJSON("/api/offsite/drafts/mkdir", { method: "POST", body: JSON.stringify(d) });
 }
 
+/** The server of a destination that signs in with BombVault's SSH key, and
+ *  the account's password, which the server uses for this one sign-in. */
+export interface KeyInstallDraft {
+  provider: string;
+  settings: Record<string, string>;
+  password: string;
+}
+
+/** Signs in once with the password and adds BombVault's public key on the
+ *  server. A failure the wizard explains comes with its code. */
+export function installDraftKey(d: KeyInstallDraft): Promise<OkEnvelope> {
+  return fetchJSON("/api/offsite/drafts/install-key", { method: "POST", body: JSON.stringify(d) });
+}
+
 /** A destination set up once and offered to every domain. */
 export interface Destination {
   id: string;
