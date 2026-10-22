@@ -3418,7 +3418,7 @@ func (s *Service) domainStatusFrom(settings store.Settings) ([]DomainStatusEntry
 		{"flash", settings.FlashEnabled, settings.FlashSchedule, s.store.LastSuccessfulFlashBackup},
 		{"config", settings.ConfigEnabled, settings.ConfigSchedule, s.store.LastSuccessfulConfigBackup},
 		{"files", settings.FilesEnabled, settings.FilesSchedule, s.store.LastSuccessfulFilesBackup},
-		{zfsDomain, settings.ZFSEnabled, settings.ZFSSchedule, s.store.LastSuccessfulZFSBackup},
+		{zfsDomain, settings.ZFSEnabled, settings.ZFSSchedule, s.lastZFSProtected},
 	}
 
 	startTests, err := s.store.LatestStartTests()
@@ -3441,9 +3441,6 @@ func (s *Service) domainStatusFrom(settings store.Settings) ([]DomainStatusEntry
 		var lastUnix int64
 		if !last.IsZero() {
 			lastUnix = last.Unix()
-		}
-		if d.name == zfsDomain {
-			lastUnix = max(lastUnix, s.zfsReplicaOnlyLastSuccess())
 		}
 
 		// A period is only meaningful for an enabled domain that something

@@ -3,6 +3,7 @@ package api
 import (
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/schedule"
@@ -72,6 +73,54 @@ func (s *Service) zfsReplicaOnlyLastSuccess() int64 {
 		}
 	}
 	return newest
+}
+
+// lastZFSProtected is when the zfs domain was last backed up or, for an item
+// that only replicates, replicated. The dashboard and the watchdog both judge
+// the domain by it, so the two cannot disagree.
+func (s *Service) lastZFSProtected() (time.Time, error) {
+	last, err := s.store.LastSuccessfulZFSBackup()
+	if err != nil {
+		return time.Time{}, err
+	}
+	if at := s.zfsReplicaOnlyLastSuccess(); at > 0 && time.Unix(at, 0).After(last) {
+		return time.Unix(at, 0), nil
+	}
+	return last, nil
+}
+
+// ZFSDueGate is schedule.ZFSDueGate with the replicas of the items that only
+// replicate counted: their domain run sends the replica and records no
+// backup, so the gate would find the domain due at every trigger.
+func (s *Service) ZFSDueGate() schedule.LastRunFunc {
+	backups := schedule.ZFSDueGate(s.store)
+	return func() (time.Time, error) {
+		last, err := backups()
+		if err != nil {
+			return time.Time{}, err
+		}
+		settings, err := s.store.GetSettings()
+		if err != nil {
+			return time.Time{}, fmt.Errorf("zfs due-gate: read settings: %w", err)
+		}
+		items, err := s.store.ListZFSDatasets()
+		if err != nil {
+			return time.Time{}, fmt.Errorf("zfs due-gate: list datasets: %w", err)
+		}
+		for _, d := range schedule.DomainRunZFSDatasets(items, settings.PerItemSchedules) {
+			if !d.Enabled || !s.zfsReplicaOnly(d) {
+				continue
+			}
+			at, err := s.store.LastZFSReplicaSuccess(d.ID)
+			if err != nil {
+				return time.Time{}, err
+			}
+			if at > 0 && time.Unix(at, 0).After(last) {
+				last = time.Unix(at, 0)
+			}
+		}
+		return last, nil
+	}
 }
 
 // zfsReplicaCoverage reports whether every enabled ZFS item has a current

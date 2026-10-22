@@ -76,7 +76,7 @@ func (s *Service) runWatchdogAt(ctx context.Context, now int64) error {
 		{"flash", settings.FlashEnabled, settings.FlashSchedule, s.store.LastSuccessfulFlashBackup},
 		{"config", settings.ConfigEnabled, settings.ConfigSchedule, s.store.LastSuccessfulConfigBackup},
 		{"files", settings.FilesEnabled, settings.FilesSchedule, s.store.LastSuccessfulFilesBackup},
-		{"zfs", settings.ZFSEnabled, settings.ZFSSchedule, s.store.LastSuccessfulZFSBackup},
+		{"zfs", settings.ZFSEnabled, settings.ZFSSchedule, s.lastZFSProtected},
 	}
 
 	for _, d := range domains {
