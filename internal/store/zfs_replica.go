@@ -372,10 +372,13 @@ func setZFSReplicaTarget(tx *sql.Tx, label, id, kind, targetID string) error {
 	if err := deleteZFSReplicaRows(tx, id); err != nil {
 		return fmt.Errorf("%s state: %w", label, err)
 	}
+	// Runs are stamped in seconds, so a run that started in the second of the
+	// switch would otherwise still count for the new target.
 	if _, err := tx.Exec(`UPDATE zfs_datasets SET replica_target_kind = ?, replica_target_id = ?,
+		replica_target_since = MAX(?, COALESCE((SELECT MAX(started_at) + 1 FROM runs WHERE target_id = ? AND kind = ?), 0)),
 		replica_peer_state = '', replica_peer_slot = '', replica_peer_token_enc = x'',
 		replica_peer_base = '', replica_peer_url = '', replica_peer_pin = ''
-		WHERE id = ?`, kind, targetID, id); err != nil {
+		WHERE id = ?`, kind, targetID, time.Now().Unix(), id, ZFSReplicaRunKind, id); err != nil {
 		return fmt.Errorf("%s: %w", label, err)
 	}
 	return nil
@@ -631,11 +634,12 @@ func (r *Repo) ListZFSReplicaRunMembers(runID string) ([]ZFSReplicaRunMember, er
 	return out, rows.Err()
 }
 
-// LatestZFSReplicaRun returns the newest replica run of an item, a running one
-// included, or false when it has none.
+// LatestZFSReplicaRun returns the newest replica run of an item to its current
+// target, a running one included, or false when it has none.
 func (r *Repo) LatestZFSReplicaRun(itemID string) (ZFSReplicaRun, bool, error) {
 	run, err := scanRun(r.db.QueryRow(`SELECT `+runCols+` FROM runs
 		WHERE target_id = ? AND kind = ?
+		AND started_at >= COALESCE((SELECT replica_target_since FROM zfs_datasets WHERE id = runs.target_id), 0)
 		ORDER BY started_at DESC, rowid DESC LIMIT 1`, itemID, ZFSReplicaRunKind))
 	if errors.Is(err, sql.ErrNoRows) {
 		return ZFSReplicaRun{}, false, nil

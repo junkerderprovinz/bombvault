@@ -3315,6 +3315,14 @@ INSERT OR IGNORE INTO sign_ins_note (id) VALUES (1);`,
 		alreadySatisfied: columnPresent("fleet_peers", "last_seen"),
 		sql:              `ALTER TABLE fleet_peers ADD COLUMN last_seen INTEGER NOT NULL DEFAULT 0;`,
 	},
+	{
+		// The replica runs started before it went to an earlier target. A row
+		// from before keeps 0, so all its runs stay its own.
+		version:          replicaTargetSinceMigration,
+		name:             "zfs_datasets_replica_target_since",
+		alreadySatisfied: columnPresent("zfs_datasets", "replica_target_since"),
+		sql:              `ALTER TABLE zfs_datasets ADD COLUMN replica_target_since INTEGER NOT NULL DEFAULT 0;`,
+	},
 }
 
 // offsiteFieldDomains are the domains with an off-site field in the settings,
@@ -3540,6 +3548,10 @@ const backupMemoryMigration = 430
 
 // memberSeenMigration numbers when a member was last in reach.
 const memberSeenMigration = 440
+
+// replicaTargetSinceMigration numbers when a ZFS item's replica got its
+// current target.
+const replicaTargetSinceMigration = 450
 
 // oneLineColumns are the names and locations the recovery kit prints.
 var oneLineColumns = []struct {

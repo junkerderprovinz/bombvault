@@ -352,6 +352,40 @@ func TestLatestZFSReplicaRunIsTheNewestReplicaRunEvenWhileItRuns(t *testing.T) {
 	}
 }
 
+func TestTheLatestReplicaRunIsOneToTheCurrentTarget(t *testing.T) {
+	db, r := zfsStore(t)
+	d := aZFSDataset(t, r, "cache/appdata")
+	a, b := aReplicaServer(t, r, "attic"), aReplicaServer(t, r, "barn")
+	if err := r.SetZFSReplicaTarget(d.ID, store.ZFSReplicaTargetServer, a.ID); err != nil {
+		t.Fatal(err)
+	}
+	toA, err := r.StartRun(d.ID, store.ZFSReplicaRunKind)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := r.FinishRun(toA, "success", "", 0, ""); err != nil {
+		t.Fatal(err)
+	}
+	if err := r.SetZFSReplicaTarget(d.ID, store.ZFSReplicaTargetServer, b.ID); err != nil {
+		t.Fatal(err)
+	}
+	if run, ok, err := r.LatestZFSReplicaRun(d.ID); ok || err != nil {
+		t.Fatalf("after the switch the latest run is %s %s (err %v), want none", run.ID, run.Status, err)
+	}
+
+	// A run to the new target, a while after the switch.
+	toB, err := r.StartRun(d.ID, store.ZFSReplicaRunKind)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := db.Exec(`UPDATE runs SET started_at = started_at + 5 WHERE id = ?`, toB); err != nil {
+		t.Fatal(err)
+	}
+	if run, ok, err := r.LatestZFSReplicaRun(d.ID); !ok || err != nil || run.ID != toB {
+		t.Errorf("latest run = %s (ok %v, err %v), want %s", run.ID, ok, err, toB)
+	}
+}
+
 func TestDeleteZFSDatasetRemovesItsReplicaRows(t *testing.T) {
 	db, r := zfsStore(t)
 	doomed, kept := aZFSDataset(t, r, "cache/appdata"), aZFSDataset(t, r, "cache/system")
