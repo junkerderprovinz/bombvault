@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -163,6 +164,7 @@ type leftoverPullRecorder struct {
 
 func (e *leftoverPullRecorder) Forget(_ context.Context, repo string, ids []string, _ bool, _ restic.Mode) error {
 	e.forgot[repo] = append(e.forgot[repo], ids...)
+	e.snaps[repo] = slices.DeleteFunc(e.snaps[repo], func(sn restic.Snapshot) bool { return slices.Contains(ids, sn.ID) })
 	return nil
 }
 
@@ -198,8 +200,11 @@ func TestAPullMovesTheSourcesEarlierSnapshotsOutOfTheDomainsRepository(t *testin
 	if _, err := svc.PullFromSource(context.Background(), ps); err != nil {
 		t.Fatal(err)
 	}
-	if got := eng.forgot[pullDomain]; len(got) != 1 || got[0] != "landed" {
-		t.Fatalf("forgot %v in the domain's repository, want only the pulled snapshot whose copy landed", got)
+	if got := eng.forgot[pullDomain]; !slices.Equal(got, []string{"landed", "notyet"}) {
+		t.Fatalf("forgot %v in the domain's repository, want the pulled snapshots and none of this box's", got)
+	}
+	if !slices.Contains(eng.calls, "Copy dest="+pulledRepo(pullDomain, ps.ID)+" src="+pullDomain+" ") {
+		t.Fatalf("the pulled snapshot not in the source's repository yet was not copied there first: %v", eng.calls)
 	}
 	if moved, _ := st.PullLeftoversMoved(ps.ID); !moved {
 		t.Fatal("the move was not recorded")
@@ -211,6 +216,80 @@ func TestAPullMovesTheSourcesEarlierSnapshotsOutOfTheDomainsRepository(t *testin
 	}
 	if len(eng.forgot) != 0 {
 		t.Fatalf("a second pull forgot %v", eng.forgot)
+	}
+}
+
+// The source's own retention has forgotten what the earlier pulls copied, and
+// the copy here would keep a week, a month or a year of this box's own out of
+// retention.
+func TestEarlierPullsTheSourceNoLongerHoldsLeaveTheDomainsRepository(t *testing.T) {
+	eng := &leftoverPullRecorder{
+		pullRecorder: pullRecorder{snaps: map[string][]restic.Snapshot{
+			pullSrcLoc: {{ID: "a9"}},
+			pullDomain: {{ID: "own"}, {ID: "old", Original: "a1"}},
+		}},
+		forgot: map[string][]string{},
+	}
+	svc, st, ps := pullFixture(t, eng)
+	if err := st.SetPullLeftoversMoved(ps.ID, false); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := svc.PullFromSource(context.Background(), ps); err != nil {
+		t.Fatal(err)
+	}
+	if got := eng.forgot[pullDomain]; !slices.Equal(got, []string{"old"}) {
+		t.Fatalf("forgot %v, want the copy of the snapshot the source let go of", got)
+	}
+	if !slices.Contains(eng.calls, "Copy dest="+pulledRepo(pullDomain, ps.ID)+" src="+pullDomain+" ") {
+		t.Fatalf("it was forgotten without a copy in the source's repository: %v", eng.calls)
+	}
+}
+
+func TestEarlierPullsOfOneOfTwoSourcesWaitForTheirCopy(t *testing.T) {
+	eng := &leftoverPullRecorder{
+		pullRecorder: pullRecorder{snaps: map[string][]restic.Snapshot{
+			pullSrcLoc: {{ID: "a1"}},
+			pullDomain: {{ID: "theirs", Original: "a1"}, {ID: "other", Original: "z1"}},
+		}},
+		forgot: map[string][]string{},
+	}
+	svc, st, ps := pullFixture(t, eng)
+	if _, err := st.CreatePullSource(store.PullSource{Name: "Cellar", Repo: "rest:http://192.168.1.8:8000/c", ResticPasswordEnc: ps.ResticPasswordEnc, Domain: "containers"}); err != nil {
+		t.Fatal(err)
+	}
+	if err := st.SetPullLeftoversMoved(ps.ID, false); err != nil {
+		t.Fatal(err)
+	}
+	eng.snaps[pulledRepo(pullDomain, ps.ID)] = []restic.Snapshot{{ID: "c1", Original: "a1"}}
+	if _, err := svc.PullFromSource(context.Background(), ps); err != nil {
+		t.Fatal(err)
+	}
+	if got := eng.forgot[pullDomain]; !slices.Equal(got, []string{"theirs"}) {
+		t.Fatalf("forgot %v, want only the copy this source's repository holds", got)
+	}
+}
+
+func TestASourceThatIsSwitchedOffStillHasItsEarlierPullsMoved(t *testing.T) {
+	eng := &leftoverPullRecorder{
+		pullRecorder: pullRecorder{snaps: map[string][]restic.Snapshot{pullDomain: {{ID: "old", Original: "a1"}}}},
+		forgot:       map[string][]string{},
+	}
+	svc, st, ps := pullFixture(t, eng)
+	ps.Enabled = false
+	if err := st.UpdatePullSource(ps); err != nil {
+		t.Fatal(err)
+	}
+	if err := st.SetPullLeftoversMoved(ps.ID, false); err != nil {
+		t.Fatal(err)
+	}
+	if err := svc.RunPulls(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	if got := eng.forgot[pullDomain]; !slices.Equal(got, []string{"old"}) {
+		t.Fatalf("forgot %v, want the earlier pull moved without reaching the source", got)
+	}
+	if slices.ContainsFunc(eng.calls, func(c string) bool { return strings.Contains(c, pullSrcLoc) }) {
+		t.Fatalf("the switched-off source was reached: %v", eng.calls)
 	}
 }
 

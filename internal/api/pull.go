@@ -153,6 +153,9 @@ func (s *Service) pullFromSource(ctx context.Context, ps store.PullSource) (int,
 	if domain == "" {
 		return 0, errors.New("this pull source names no domain, so there is nowhere for its snapshots to land")
 	}
+	// Earlier pulls are moved first, so a source that is out of reach or no
+	// longer lets this box fetch still has them taken out.
+	s.settleEarlierPulls(ctx, ps, false)
 	if err := s.fetcherRoleOpen(ps.MemberID, domain); err != nil {
 		return 0, err
 	}
@@ -195,7 +198,7 @@ func (s *Service) pullFromSource(ctx context.Context, ps store.PullSource) (int,
 	}
 	if pending == 0 {
 		// Nothing new is the ordinary outcome between two backups, not a failure.
-		s.movePullLeftovers(ctx, ps, settings, domain, domainRepo, srcSnaps, dest, destMode)
+		s.movePullLeftovers(ctx, ps, settings, domain, domainRepo, dest, destMode, true)
 		return 0, nil
 	}
 
@@ -215,16 +218,43 @@ func (s *Service) pullFromSource(ctx context.Context, ps store.PullSource) (int,
 	if err := s.retryAfterUnlock(ctx, dest, destMode, func() error { return s.engine.Copy(ctx, copyDest, copySrc, nil, lim, copyMode) }); err != nil {
 		return 0, fmt.Errorf("copy from the source: %w", err)
 	}
-	s.movePullLeftovers(ctx, ps, settings, domain, domainRepo, srcSnaps, dest, destMode)
+	s.movePullLeftovers(ctx, ps, settings, domain, domainRepo, dest, destMode, true)
 	return pending, nil
 }
 
+// settleEarlierPulls moves what pulls of ps left in the domain's own
+// repository before the source had one of its own, without reaching the
+// source. Before the source's next copy, a leftover that belongs to one of
+// several sources of the domain cannot be told apart yet, so it waits for
+// that copy.
+func (s *Service) settleEarlierPulls(ctx context.Context, ps store.PullSource, final bool) {
+	if moved, err := s.store.PullLeftoversMoved(ps.ID); err != nil || moved {
+		return
+	}
+	domain := strings.TrimSpace(ps.Domain)
+	settings, domainRepo, err := s.domainRepoSource(domain, "local")
+	if err != nil {
+		log.Printf("api: pull %s: earlier pulls stay in the %s repository for now: %v", ps.ID, domain, err) //nolint:gosec // G706: ps.ID is an opaque store-generated id, domain comes from a fixed set
+		return
+	}
+	dest := pulledRepo(domainRepo, ps.ID)
+	destMode := s.primaryModeFor(settings, domain, dest)
+	if err := s.EnsureRepo(ctx, dest, destMode); err != nil {
+		log.Printf("api: pull %s: earlier pulls stay in the %s repository for now: %v", ps.ID, domain, err) //nolint:gosec // G706: see above
+		return
+	}
+	s.movePullLeftovers(ctx, ps, settings, domain, domainRepo, dest, destMode, final)
+}
+
 // movePullLeftovers takes the snapshots that pulls wrote into the domain's own
-// repository, before a source had one of its own, out of it again once their
-// copy in the source's repository is there. Until then retention ages them with
+// repository, before a source had one of its own, out of it. One whose copy
+// is in the source's repository here is forgotten. One the source has since
+// let go of is copied there first when the source is the domain's only one,
+// since nothing else can tell whose it is. Until then retention ages them with
 // this box's own and the restore lists offer them as this box's. A failure is
-// logged and tried again on the next pull.
-func (s *Service) movePullLeftovers(ctx context.Context, ps store.PullSource, settings store.Settings, domain, domainRepo string, src []restic.Snapshot, dest string, destMode restic.Mode) {
+// logged and tried again on the next pull. final is set once the source's
+// copy has run, after which nothing more of it can land.
+func (s *Service) movePullLeftovers(ctx context.Context, ps store.PullSource, settings store.Settings, domain, domainRepo, dest string, destMode restic.Mode, final bool) {
 	moved, err := s.store.PullLeftoversMoved(ps.ID)
 	if err != nil || moved {
 		return
@@ -237,6 +267,14 @@ func (s *Service) movePullLeftovers(ctx context.Context, ps store.PullSource, se
 		fail("reading this box's runs", err)
 		return
 	}
+	sources, err := s.store.ListPullSources()
+	if err != nil {
+		fail("reading the pull sources", err)
+		return
+	}
+	alone := !slices.ContainsFunc(sources, func(o store.PullSource) bool {
+		return o.ID != ps.ID && strings.TrimSpace(o.Domain) == domain
+	})
 	primaryMode := s.primaryModeFor(settings, domain, domainRepo)
 	primary, err := s.listSnapshots(ctx, domainRepo, primaryMode)
 	if err != nil {
@@ -248,44 +286,63 @@ func (s *Service) movePullLeftovers(ctx context.Context, ps store.PullSource, se
 		fail("listing the source's repository here", err)
 		return
 	}
-	if ids := pullLeftovers(primary, src, landed, own); len(ids) > 0 {
+	forget, unplaced := pullLeftovers(primary, landed, own)
+	if alone && len(unplaced) > 0 {
+		copyMode := destMode
+		copyMode.From = &restic.From{Encrypted: primaryMode.Encrypted, Password: primaryMode.Password, NoLock: true}
+		copyDest, copySrc, env, err := copyAccess(dest, destMode.Env, domainRepo, primaryMode.Env)
+		if err != nil {
+			fail("reaching both repositories", err)
+			return
+		}
+		copyMode.Env = env
+		copyMode.NoAmbientCreds = repoScheme(dest) != "rclone"
+		if err := s.retryAfterUnlock(ctx, dest, destMode, func() error {
+			return s.engine.Copy(ctx, copyDest, copySrc, unplaced, restic.Limits{}, copyMode)
+		}); err != nil {
+			fail("copying them to the source's repository", err)
+			return
+		}
+		forget, unplaced = append(forget, unplaced...), nil
+	}
+	if len(forget) > 0 {
 		if err := s.retryAfterUnlock(ctx, domainRepo, primaryMode, func() error {
-			return s.engine.Forget(ctx, domainRepo, ids, false, primaryMode)
+			return s.engine.Forget(ctx, domainRepo, forget, false, primaryMode)
 		}); err != nil {
 			fail("forgetting them", err)
 			return
 		}
-		log.Printf("api: pull %s: moved %d earlier pulled snapshots out of the %s repository", ps.ID, len(ids), domain) //nolint:gosec // G706: see above
+		log.Printf("api: pull %s: moved %d earlier pulled snapshots out of the %s repository", ps.ID, len(forget), domain) //nolint:gosec // G706: see above
+	}
+	if len(unplaced) > 0 && !final {
+		return
 	}
 	if err := s.store.SetPullLeftoversMoved(ps.ID, true); err != nil {
 		fail("recording it", err)
 	}
 }
 
-// pullLeftovers picks the snapshots of the domain's own repository that an
-// earlier pull brought in: copies (restic gives every copy an original) of a
-// snapshot the source holds, which this box never recorded making itself and
-// which the source's own repository here holds by now. Mutual pulls can put a
-// snapshot of this box into the source, and the run history keeps that one.
-func pullLeftovers(primary, src, landed []restic.Snapshot, own map[string]bool) []string {
-	theirs := make(map[string]bool, len(src))
-	for _, sn := range src {
-		theirs[restic.Identity(sn)] = true
-	}
+// pullLeftovers sorts the snapshots of the domain's own repository that an
+// earlier pull brought in: copies (restic gives every copy an original) this
+// box never recorded making itself. forget are those the source's repository
+// here holds by now, unplaced the rest. Mutual pulls can put a snapshot of
+// this box into the source, and the run history keeps that one.
+func pullLeftovers(primary, landed []restic.Snapshot, own map[string]bool) (forget, unplaced []string) {
 	here := make(map[string]bool, len(landed))
 	for _, sn := range landed {
 		here[restic.Identity(sn)] = true
 	}
-	var ids []string
 	for _, sn := range primary {
 		if sn.Original == "" || own[sn.ID] || own[sn.Original] {
 			continue
 		}
-		if id := restic.Identity(sn); theirs[id] && here[id] {
-			ids = append(ids, sn.ID)
+		if here[restic.Identity(sn)] {
+			forget = append(forget, sn.ID)
+		} else {
+			unplaced = append(unplaced, sn.ID)
 		}
 	}
-	return ids
+	return forget, unplaced
 }
 
 // copyAccess fits the sign-ins of both ends of a restic copy into its one
@@ -319,14 +376,12 @@ func copyAccess(dest string, destEnv []string, src string, srcEnv []string) (cop
 }
 
 // RunPulls is the scheduled sweep: every enabled source whose cadence says it is
-// due gets pulled once. A source that fails does not stop the others.
+// due gets pulled once. A source that fails does not stop the others. One
+// that is not pulled still has its earlier pulls moved.
 func (s *Service) RunPulls(ctx context.Context) error {
 	settings, err := s.store.GetSettings()
 	if err != nil {
 		return fmt.Errorf("read settings: %w", err)
-	}
-	if !settings.PullEnabled {
-		return nil
 	}
 	sources, err := s.store.ListPullSources()
 	if err != nil {
@@ -334,17 +389,16 @@ func (s *Service) RunPulls(ctx context.Context) error {
 	}
 	now := time.Now()
 	for _, ps := range sources {
-		if !ps.Enabled {
-			continue
-		}
 		period := cadencePeriodSeconds(ps.Cadence)
-		if period <= 0 {
-			continue // 'off', or a cadence with no period: only the button runs it
-		}
 		// schedule.PeriodDue rather than "now minus last exceeds the period",
 		// which drifts: each late start pushes the next run later, until a daily
-		// job runs every other day.
-		if !schedule.PeriodDue(time.Unix(ps.LastPullAt, 0), now, period) {
+		// job runs every other day. A period of 0 is 'off', or a cadence with
+		// no period: only the button runs it.
+		if !settings.PullEnabled || !ps.Enabled || period <= 0 || !schedule.PeriodDue(time.Unix(ps.LastPullAt, 0), now, period) {
+			if s.claimPull(ps.ID) {
+				s.settleEarlierPulls(ctx, ps, false)
+				s.releasePull(ps.ID)
+			}
 			continue
 		}
 		if _, pErr := s.PullFromSource(ctx, ps); pErr != nil && !errors.Is(pErr, errPullBusy) {
