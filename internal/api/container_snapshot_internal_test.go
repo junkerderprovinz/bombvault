@@ -561,6 +561,27 @@ func TestRecoverContainerRestartsKeepsAContainerThatStaysDown(t *testing.T) {
 	}
 }
 
+func TestRecoverContainerRestartsForgetsAContainerThatRunsAlready(t *testing.T) {
+	dock := newZFSFakeDocker("web")
+	s, st := restartFixture(t, dock)
+	messages := zfsCaptureNotifications(t, s)
+	if err := st.MarkContainersStopped([]string{"web"}, 1); err != nil {
+		t.Fatal(err)
+	}
+
+	s.RecoverContainerRestarts(context.Background())
+
+	if slices.Contains(dock.recorded(), "start:web") {
+		t.Fatalf("calls = %v, a running container was started again", dock.recorded())
+	}
+	if left, _ := st.ListContainersStopped(); len(left) != 0 {
+		t.Fatalf("still recorded: %v", left)
+	}
+	if got := messages(); len(got) != 0 {
+		t.Fatalf("notifications = %v, nothing was left stopped", got)
+	}
+}
+
 type startOnlyRuns struct {
 	backup.Runs
 	n int

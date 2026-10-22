@@ -500,7 +500,8 @@ func (r containerRestarts) Clear(names []string) error { return r.st.ClearContai
 // RecoverContainerRestarts starts the containers a backup left stopped when
 // BombVault stopped in the middle of it. It runs at boot before the HTTP
 // server and the scheduler, like RecoverZFSRestarts. A container that is gone
-// is forgotten; one that does not start stays recorded for the next boot.
+// is forgotten, and so is one that runs already; one that does not start stays
+// recorded for the next boot.
 func (s *Service) RecoverContainerRestarts(ctx context.Context) {
 	names, err := s.store.ListContainersStopped()
 	if err != nil {
@@ -511,12 +512,16 @@ func (s *Service) RecoverContainerRestarts(ctx context.Context) {
 		return
 	}
 	var deps []backup.StopContainer
-	var gone []string
+	var forget []string
 	for _, name := range names {
 		in, err := s.inspectNamed(ctx, name)
 		if err != nil {
 			log.Printf("api: %q was left stopped by a backup and cannot be inspected, forgetting it: %v", name, err) //nolint:gosec // G706: %q-quoted
-			gone = append(gone, name)
+			forget = append(forget, name)
+			continue
+		}
+		if in.Running {
+			forget = append(forget, name)
 			continue
 		}
 		log.Printf("api: starting %q again, an interrupted backup left it stopped", name) //nolint:gosec // G706: %q-quoted
@@ -531,7 +536,7 @@ func (s *Service) RecoverContainerRestarts(ctx context.Context) {
 	backup.RestartInOrder(ctx, s.docker, deps, false, 0)
 
 	started := 0
-	running := gone
+	running := forget
 	for _, dep := range deps {
 		if in, err := s.docker.Inspect(ctx, dep.ID); err == nil && in.Running {
 			running = append(running, dep.Name)
