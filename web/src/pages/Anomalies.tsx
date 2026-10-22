@@ -30,9 +30,9 @@ import {
 } from "../lib/api";
 import {
   ANOMALY_CHANGED_EVENT,
-  anomalyEntryName,
   anomalyErrorText,
   anomalyGroupKey,
+  anomalyReleaseQuestion,
   sortClosedAnomalies,
   sortOpenAnomalies,
 } from "../lib/anomalies";
@@ -196,10 +196,8 @@ export function Anomalies() {
 
   const settle: SettleFindings = async (list, how) => {
     const confirmKey = how === "expected" ? "anomaly.action.expected" : "anomaly.action.acknowledge";
-    if (list.some((a) => a.retentionHeld)) {
-      const message = t("anomaly.releaseConfirm").replace("{name}", anomalyEntryName(list[0], t));
-      if (!(await confirm(message, { confirmKey }))) return false;
-    }
+    const question = anomalyReleaseQuestion(list, t);
+    if (question && !(await confirm(question, { confirmKey, title: t("anomaly.releaseTitle") }))) return false;
     try {
       const call = how === "expected" ? markAnomaliesExpected : acknowledgeAnomalies;
       const res = await call(list.map((a) => a.id));

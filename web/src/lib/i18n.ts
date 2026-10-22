@@ -3690,7 +3690,11 @@ export const en = {
   "anomaly.stillPresent": "Still present. It is not reported again until the cause has gone away once.",
   "anomaly.closedAt": "Closed on {date}",
   "anomaly.noteLabel": "Note",
-  "anomaly.releaseConfirm": "Old backups of {name} will be deleted again by the next retention run. If data is missing or was encrypted, restore it first. Continue?",
+  "anomaly.releaseTitle": "Stop keeping old backups?",
+  "anomaly.releaseConfirm":
+    "BombVault keeps every old backup of {name} while it has an open anomaly, so you can still restore a copy from before the change. Closing the anomaly ends that hold, and the next cleanup deletes old backups by the usual keep rules again. If files are missing or were encrypted, restore them first.",
+  "anomaly.releaseConfirmMany":
+    "one=BombVault keeps every old backup of {n} item while it has open anomalies, so you can still restore a copy from before the change. Closing the anomalies ends that hold, and the next cleanup deletes old backups by the usual keep rules again. If files are missing or were encrypted, restore them first.|other=BombVault keeps every old backup of {n} items while they have open anomalies, so you can still restore a copy from before the change. Closing the anomalies ends that hold, and the next cleanup deletes old backups by the usual keep rules again. If files are missing or were encrypted, restore them first.",
   "anomaly.dumpOf": "Database dump of {name}",
   "anomaly.occurrences": "Times seen: {n}",
   "anomaly.severity.critical": "Critical",
@@ -8539,7 +8543,11 @@ export const de: Translations = {
   "anomaly.stillPresent": "Weiterhin vorhanden. Es wird erst wieder gemeldet, wenn die Ursache einmal weg war.",
   "anomaly.closedAt": "Geschlossen am {date}",
   "anomaly.noteLabel": "Notiz",
-  "anomaly.releaseConfirm": "Alte Sicherungen von {name} werden beim nächsten Aufräumen wieder gelöscht. Wenn Daten fehlen oder verschlüsselt wurden, stelle sie vorher wieder her. Fortfahren?",
+  "anomaly.releaseTitle": "Alte Sicherungen nicht mehr zurückhalten?",
+  "anomaly.releaseConfirm":
+    "BombVault behält alle alten Sicherungen von {name}, solange eine Anomalie dazu offen ist, damit du einen Stand von vor der Änderung noch wiederherstellen kannst. Schließt du die Anomalie, endet das, und das nächste Aufräumen löscht alte Sicherungen wieder nach den üblichen Aufbewahrungsregeln. Fehlen Dateien oder wurden sie verschlüsselt, stell sie vorher wieder her.",
+  "anomaly.releaseConfirmMany":
+    "one=BombVault behält alle alten Sicherungen von {n} Eintrag, solange eine Anomalie dazu offen ist, damit du einen Stand von vor der Änderung noch wiederherstellen kannst. Schließt du die Anomalien, endet das, und das nächste Aufräumen löscht alte Sicherungen wieder nach den üblichen Aufbewahrungsregeln. Fehlen Dateien oder wurden sie verschlüsselt, stell sie vorher wieder her.|other=BombVault behält alle alten Sicherungen von {n} Einträgen, solange Anomalien dazu offen sind, damit du einen Stand von vor der Änderung noch wiederherstellen kannst. Schließt du die Anomalien, endet das, und das nächste Aufräumen löscht alte Sicherungen wieder nach den üblichen Aufbewahrungsregeln. Fehlen Dateien oder wurden sie verschlüsselt, stell sie vorher wieder her.",
   "anomaly.dumpOf": "Datenbank-Dump von {name}",
   "anomaly.occurrences": "Wie oft gesehen: {n}",
   "anomaly.severity.critical": "Kritisch",
