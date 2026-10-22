@@ -14,6 +14,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/junkerderprovinz/bombvault/internal/backup"
 	"github.com/junkerderprovinz/bombvault/internal/dockercli"
 	"github.com/junkerderprovinz/bombvault/internal/secret"
 	"github.com/junkerderprovinz/bombvault/internal/store"
@@ -113,8 +114,21 @@ func (d authedDocker) Pull(ctx context.Context, ref string) error {
 	return d.PullWithAuth(ctx, ref, d.auth(ref))
 }
 
-func (s *Service) restoreDocker() authedDocker {
-	return authedDocker{Docker: s.docker, auth: s.registryAuthFor}
+// rejoiningDocker is authedDocker for a host Docker that also brings the
+// containers sharing a recreated container's namespace onto the new one. The
+// restore finds that by asserting on the Docker it is given, which an
+// embedded interface alone would hide.
+type rejoiningDocker struct {
+	authedDocker
+	backup.NamespaceRejoiner
+}
+
+func (s *Service) restoreDocker() dockercli.Docker {
+	d := authedDocker{Docker: s.docker, auth: s.registryAuthFor}
+	if r, ok := s.docker.(backup.NamespaceRejoiner); ok {
+		return rejoiningDocker{authedDocker: d, NamespaceRejoiner: r}
+	}
+	return d
 }
 
 // registryHost returns the registry an image ref pulls from. As in docker's
