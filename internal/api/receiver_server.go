@@ -495,7 +495,7 @@ func (s *Service) checkReceiver(ctx context.Context, rs store.ReceiverServer, pa
 probing:
 	for len(bases) > 0 {
 		for _, b := range bases {
-			v, err := probeAppendOnly(ctx, b+"/"+rs.User, rs.User, password)
+			v, err := probeAppendOnly(ctx, s.restHTTPClient(), b+"/"+rs.User, rs.User, password)
 			if err != nil {
 				detail = scrubError(err)
 				continue

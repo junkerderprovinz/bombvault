@@ -317,9 +317,18 @@ func scrubError(err error) string {
 	if hint := restAuthHint(msg); hint != "" {
 		return hint
 	}
+	if strings.Contains(msg, "x509: certificate signed by unknown authority") {
+		return untrustedCertHint
+	}
 	msg = scrubSecrets(msg)
 	return strings.TrimSpace(msg)
 }
+
+// untrustedCertHint answers a server whose certificate no authority BombVault
+// knows has signed, such as a rest-server started with --tls and a
+// self-signed certificate. restic reads the certs folder on each run, so no
+// restart is needed.
+const untrustedCertHint = "BombVault does not trust this server's certificate. Put the certificate of the authority that signed it, or the server's own self-signed certificate, as a PEM file into the certs folder in BombVault's data folder (/config/certs in the container, appdata/bombvault/certs on Unraid) and test again."
 
 // restAuthHint turns a bare "401 Unauthorized" into the two things that
 // actually cause it, or returns "" when the message is not an auth refusal.

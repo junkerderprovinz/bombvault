@@ -2,13 +2,17 @@ package api
 
 import (
 	"context"
+	"encoding/pem"
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"slices"
 	"testing"
 
 	"github.com/junkerderprovinz/bombvault/internal/store"
+	"github.com/junkerderprovinz/bombvault/internal/trust"
 )
 
 func TestATamperTestOfOneTargetLeavesTheOthersAlone(t *testing.T) {
@@ -104,6 +108,34 @@ func TestATargetIsProbedWithItsOwnCredentials(t *testing.T) {
 	}
 	if len(probedAs) != 2 || probedAs[0] != "named" || probedAs[1] != "named" {
 		t.Fatalf("probes signed in as %v, want the target's own login twice", probedAs)
+	}
+}
+
+func TestASelfSignedRestServerIsProbedOnceItsCertificateIsInTheCertsFolder(t *testing.T) {
+	var seen []string
+	srv := httptest.NewTLSServer(deleteRecorder(http.StatusForbidden, &seen))
+	defer srv.Close()
+
+	svc, st := tamperService(t, "", &fakeHostSSH{})
+	svc.cfg.DataDir = t.TempDir()
+	target, err := st.CreateOffsiteTarget(store.OffsiteTarget{Domain: "containers", Name: "Box", Repo: "rest:" + srv.URL, Enabled: true, Immutable: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := svc.RunTamperTestForTarget(context.Background(), target.ID); err == nil {
+		t.Fatal("an untrusted certificate gave a verdict")
+	}
+
+	dir := trust.Dir(svc.cfg.DataDir)
+	if err := os.MkdirAll(dir, 0o750); err != nil {
+		t.Fatal(err)
+	}
+	cert := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: srv.Certificate().Raw})
+	if err := os.WriteFile(filepath.Join(dir, "box.pem"), cert, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if v, err := svc.RunTamperTestForTarget(context.Background(), target.ID); err != nil || !v.Protected {
+		t.Fatalf("verdict = %+v, %v, want the server reached and protected", v, err)
 	}
 }
 

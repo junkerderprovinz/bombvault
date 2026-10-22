@@ -32,6 +32,7 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/spike"
 	"github.com/junkerderprovinz/bombvault/internal/sshconn"
 	"github.com/junkerderprovinz/bombvault/internal/store"
+	"github.com/junkerderprovinz/bombvault/internal/trust"
 	"github.com/junkerderprovinz/bombvault/internal/virshcli"
 	"github.com/junkerderprovinz/bombvault/internal/zfs"
 	web "github.com/junkerderprovinz/bombvault/web"
@@ -224,6 +225,10 @@ func run() error {
 	// layer and settings/targets/password silently reset on every restart.
 	if err := ensureDataDirWritable(cfg.DataDir); err != nil {
 		return err
+	}
+	// Before the first TLS connection, which loads the system pool for good.
+	if err := trust.Add(trust.Dir(cfg.DataDir)); err != nil {
+		log.Printf("main: certs folder: %v", err)
 	}
 
 	// Apply any staged config self-restore BEFORE the DB is opened — the only safe
