@@ -1,10 +1,10 @@
 // @vitest-environment jsdom
 // PUT /api/settings takes the whole settings object, which the page builds by
-// merging one field onto its baseline of what the server last confirmed. Two
+// merging one field onto what the server holds when the write is sent. Two
 // writes inside one round trip therefore have to run in order, the second
-// built on the first, and an import has to refresh the baseline so the next
-// click does not send the old configuration back. The page runs against a
-// mocked client, and the tests decide when each PUT resolves.
+// built on the first, and neither an import nor a write from another tab may
+// be sent back by the next click. The page runs against a mocked client that
+// keeps what a PUT stores, and the tests decide when each PUT resolves.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router-dom";
@@ -68,6 +68,9 @@ const putCalls: Pending[] = [];
 let settingsOnServer = baseSettings();
 let importApplyResult: { ok: boolean; error?: string } = { ok: true, applied: true };
 const importApplyCalls: string[] = [];
+const { listOffsiteTargets } = vi.hoisted(() => ({
+  listOffsiteTargets: vi.fn(() => Promise.resolve({ ok: true, targets: [] })),
+}));
 
 vi.mock("../lib/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../lib/api")>();
@@ -77,8 +80,15 @@ vi.mock("../lib/api", async (importOriginal) => {
       Promise.resolve({ ok: true, settings: settingsOnServer, hostMountRoot: "/host/user", platform: "unraid" }),
     putSettings: (s: Settings) =>
       new Promise((resolve) => {
-        putCalls.push({ body: s, resolve });
+        putCalls.push({
+          body: s,
+          resolve: (v) => {
+            if (v.ok) settingsOnServer = s;
+            resolve(v);
+          },
+        });
       }),
+    listOffsiteTargets,
     getAuth: () => Promise.resolve({ enabled: false, authed: false }),
     listContainers: () => Promise.resolve({ ok: true, containers: [] }),
     listVMs: () => Promise.resolve({ ok: true, vms: [] }),
@@ -281,17 +291,47 @@ describe("a settings import", { timeout: 15000 }, () => {
     });
   });
 
-  it("leaves the baseline alone when the apply itself fails", async () => {
+  it("re-reads the configuration after an apply that failed partway", async () => {
     await renderPage();
-    importApplyResult = { ok: false, error: "unsupported schemaVersion 2" };
+    // The settings row landed before a later step refused the rest.
+    importApplyResult = { ok: false, error: "a replica run or restore of this item is in progress" };
     await importAFile();
 
     await gotoPage("general");
     fireEvent.click(toggle(en["settings.containersEnabled"]));
     await waitFor(() => expect(putCalls.length).toBe(1));
-    // The import did not happen, so the page's own (unchanged) configuration
-    // is the correct thing to send.
-    expect(putCalls[0].body.containersSchedule).toBe("daily 02:00");
+    expect(putCalls[0].body.containersSchedule).toBe("everyN 7 03:00");
+    expect(putCalls[0].body.retentionKeepDaily).toBe(30);
+
+    await act(async () => {
+      putCalls[0].resolve({ ok: true });
+    });
+  });
+
+  it("reads the off-site targets again, which the import replaced", async () => {
+    await renderPage();
+    const before = listOffsiteTargets.mock.calls.length;
+    await importAFile();
+    await waitFor(() => expect(listOffsiteTargets.mock.calls.length).toBeGreaterThan(before));
+  });
+});
+
+describe("a write made in another tab", { timeout: 15000 }, () => {
+  it("is not sent back by the next click on this page", async () => {
+    settingsOnServer = baseSettings({ ownRetention: {} } as Partial<Settings>);
+    await renderPage();
+
+    // Another tab gives the Containers section its own keep policy and moves
+    // its folder.
+    const own = { containers: { keepLast: 3, keepDaily: 0, keepWeekly: 0, keepMonthly: 0, keepYearly: 0 } };
+    settingsOnServer = { ...settingsOnServer, containersPath: "moved/containers", ownRetention: own } as Settings;
+
+    fireEvent.click(toggle(en["settings.flashEnabled"]));
+    await waitFor(() => expect(putCalls.length).toBe(1));
+    const sent = putCalls[0].body;
+    expect(sent.flashEnabled).toBe(true);
+    expect(sent.containersPath).toBe("moved/containers");
+    expect(sent.ownRetention).toEqual(own);
 
     await act(async () => {
       putCalls[0].resolve({ ok: true });
