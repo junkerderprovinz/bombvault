@@ -315,18 +315,36 @@ function handleSynced(): void {
   emit();
 }
 
+// How long a stream the browser gave up on waits before it is opened again.
+export const REOPEN_MS = 5000;
+let reopenTimer: ReturnType<typeof setTimeout> | null = null;
+
 function openSource(): void {
   if (source) return;
-  source = new EventSource("/api/progress");
-  source.onmessage = handleMessage;
-  source.onopen = () => {
+  const es = new EventSource("/api/progress");
+  source = es;
+  es.onmessage = handleMessage;
+  es.onopen = () => {
     replayed = new Set();
   };
-  // No onerror teardown: EventSource reconnects by itself, and closeSource
-  // runs on the last unsubscribe.
+  // EventSource retries a dropped connection by itself, but not one answered
+  // with an error status, which a reverse proxy sends while BombVault restarts.
+  // Such a stream stays closed, and its bars would never be told they ended.
+  es.onerror = () => {
+    if (es.readyState !== EventSource.CLOSED || source !== es || reopenTimer) return;
+    source = null;
+    reopenTimer = setTimeout(() => {
+      reopenTimer = null;
+      if (refCount > 0) openSource();
+    }, REOPEN_MS);
+  };
 }
 
 function closeSource(): void {
+  if (reopenTimer) {
+    clearTimeout(reopenTimer);
+    reopenTimer = null;
+  }
   if (source) {
     source.close();
     source = null;
