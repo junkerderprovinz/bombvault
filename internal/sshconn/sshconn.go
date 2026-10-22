@@ -116,6 +116,12 @@ func (c *Conn) VirshURI() string {
 		c.User, c.Host, c.Port, filepath.ToSlash(c.keyPath()), filepath.ToSlash(c.knownHostsPath()))
 }
 
+// streamCiphers puts AES-GCM ahead of OpenSSH's default chacha20-poly1305.
+// With AES-NI it encrypts several times faster, and a replica stream crosses
+// four ssh processes, the slowest of which sets the pace. The rest of the
+// default list follows for a host that offers no GCM.
+const streamCiphers = "aes128-gcm@openssh.com,aes256-gcm@openssh.com,chacha20-poly1305@openssh.com,aes128-ctr,aes192-ctr,aes256-ctr"
+
 // sshArgs are the common ssh options (key, pinned known_hosts, no prompts).
 // ConnectTimeout fails fast when the host is unreachable, for example from a
 // macvlan/br0 container that cannot route to it.
@@ -131,6 +137,7 @@ func (c *Conn) sshArgs() []string {
 	return append(args,
 		"-i", c.keyPath(),
 		"-p", c.Port,
+		"-o", "Ciphers="+streamCiphers,
 		"-o", "BatchMode=yes",
 		"-o", "StrictHostKeyChecking=accept-new",
 		"-o", "ConnectTimeout=10",
