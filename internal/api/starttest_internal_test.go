@@ -184,8 +184,29 @@ func TestStartTestBlockerNamesWhatCannotRunInIsolation(t *testing.T) {
 func TestStartTestBindsOnlyTheRestoredData(t *testing.T) {
 	s := &Service{cfg: config.Config{HostMountRoot: "/host/user", HostSourceRoot: "/mnt"}}
 	def := containerDefinition{Inspect: whoamiRecipe(), AppdataPaths: []string{"/host/user/appdata/whoami"}}
+	def.Inspect.Mounts = []model.Mount{{Type: "bind", Source: "/mnt/appdata/whoami", Destination: "/data"}}
 	got := s.startTestBinds(def, "/host/user/restore/bombvault-starttest-whoami-1")
 	want := []string{"/mnt/restore/bombvault-starttest-whoami-1/host/user/appdata/whoami:/data:rw"}
+	if !slices.Equal(got, want) {
+		t.Fatalf("binds = %v, want %v", got, want)
+	}
+}
+
+func TestStartTestMountsTheDataOfAMountThatIsNotInBinds(t *testing.T) {
+	s := &Service{cfg: config.Config{HostMountRoot: "/host/user", HostSourceRoot: "/mnt"}}
+	in := whoamiRecipe()
+	in.HostConfig.Binds = nil
+	in.Mounts = []model.Mount{
+		{Type: "bind", Source: "/mnt/appdata/whoami", Destination: "/data"},
+		{Type: "bind", Source: "/mnt/media", Destination: "/media"},
+		{Type: "volume", Source: "/mnt/appdata/whoami-cache", Destination: "/cache"},
+	}
+	def := containerDefinition{Inspect: in, AppdataPaths: []string{"/host/user/appdata/whoami", "/host/user/appdata/whoami-cache"}}
+	got := s.startTestBinds(def, "/host/user/restore/bombvault-starttest-whoami-1")
+	want := []string{
+		"/mnt/restore/bombvault-starttest-whoami-1/host/user/appdata/whoami:/data",
+		"/mnt/restore/bombvault-starttest-whoami-1/host/user/appdata/whoami-cache:/cache",
+	}
 	if !slices.Equal(got, want) {
 		t.Fatalf("binds = %v, want %v", got, want)
 	}
