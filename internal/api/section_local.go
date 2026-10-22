@@ -22,15 +22,22 @@ var ErrNoPlace = errors.New("every storage location of this section is switched 
 // turns into a sentence in its language.
 const codeNoPlace = "no-place"
 
+// codeDomainBusy is the code of a refusal because another task holds the
+// section, the one refusal here that ends without anybody acting on it.
+const codeDomainBusy = "domain-busy"
+
 // startRefusal is the body of the 409 for a backup pressed by hand that did
 // not start.
 func startRefusal(err error) map[string]any {
 	body := map[string]any{"ok": false, "error": err.Error()}
-	if errors.Is(err, ErrNoPlace) {
+	var busy domainBusyError
+	switch {
+	case errors.Is(err, ErrNoPlace):
 		body["code"] = codeNoPlace
-	}
-	if errors.Is(err, ErrNoLocation) {
+	case errors.Is(err, ErrNoLocation):
 		body["code"] = codeNoLocation
+	case errors.As(err, &busy):
+		body["code"] = codeDomainBusy
 	}
 	return body
 }
