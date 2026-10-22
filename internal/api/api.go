@@ -124,7 +124,7 @@ func NewHandler(
 		flashLastRun:      schedule.LastRunFunc(st.LastSuccessfulFlashBackup),
 		configLastRun:     schedule.LastRunFunc(st.LastSuccessfulConfigBackup),
 		filesLastRun:      schedule.FilesDueGate(st),
-		zfsLastRun:        schedule.ZFSDueGate(st),
+		zfsLastRun:        schedule.ZFSDueGate(st, zfsReplicaGate(svc)),
 		everythingLastRun: schedule.LastRunFunc(st.LastEverythingPass),
 		// Initialized explicitly rather than relying on every loginFails call
 		// site happening to only read-or-delete a nil map without ever

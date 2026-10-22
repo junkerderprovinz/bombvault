@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/junkerderprovinz/bombvault/internal/schedule"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 	"github.com/junkerderprovinz/bombvault/internal/zfsrepl"
 )
@@ -266,6 +267,26 @@ func TestTheReplicaViewSaysWhenTheBackupRunOnlySendsIt(t *testing.T) {
 	}
 	if only() != true {
 		t.Error("an item with no place to back up to is not called replica-only")
+	}
+}
+
+func TestTheDueGateSeesTheReplicaOfAnItemThatOnlyReplicates(t *testing.T) {
+	r := replicaOnlyRig(t)
+	gate := schedule.ZFSDueGate(r.st, zfsReplicaGate(r.s))
+	if last, err := gate(); err != nil || !last.IsZero() {
+		t.Fatalf("before any replica: %v (err %v), want never", last, err)
+	}
+	if err := r.s.ReplicateZFSDataset(context.Background(), r.item.ID); err != nil {
+		t.Fatal(err)
+	}
+	if last, err := gate(); err != nil || last.IsZero() {
+		t.Errorf("after a replica: %v (err %v), want its finish", last, err)
+	}
+	if err := r.st.SetLocal(zfsDomain, true); err != nil {
+		t.Fatal(err)
+	}
+	if last, err := gate(); err != nil || !last.IsZero() {
+		t.Errorf("an item that backs up again answers for the round with its replica: %v (err %v)", last, err)
 	}
 }
 
