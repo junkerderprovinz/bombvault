@@ -235,7 +235,7 @@ func (s *Service) editRemoteConnection(ctx context.Context, d store.OffsiteTarge
 	if err != nil {
 		return store.OffsiteTarget{}, err
 	}
-	conf, err := s.decodeRcloneConf(settings)
+	conf, err := s.currentRcloneConf()
 	if err != nil {
 		return store.OffsiteTarget{}, err
 	}
@@ -243,6 +243,7 @@ func (s *Service) editRemoteConnection(ctx context.Context, d store.OffsiteTarge
 	if !found {
 		return store.OffsiteTarget{}, fmt.Errorf("the rclone config has no remote %s", remote)
 	}
+	before := maps.Clone(options)
 	backends, err := s.remotes().Backends(ctx)
 	if err != nil {
 		return store.OffsiteTarget{}, err
@@ -282,11 +283,26 @@ func (s *Service) editRemoteConnection(ctx context.Context, d store.OffsiteTarge
 			return "rclone:" + check + strings.TrimPrefix(t.Repo, "rclone:"+remote), s.offsiteModeForTarget(settings, t)
 		})
 	}
+	// The check may have refreshed the sign-in under its own name, and Box or
+	// Jottacloud void the token it refreshed from. A refused change keeps that
+	// refresh when it tried the remote as it was, so the sign-in is the same.
 	if err != nil {
+		if maps.Equal(options, before) {
+			_ = s.editRcloneConf(func(conf string) (string, error) {
+				return carrySignIn(conf, check, remote), nil
+			})
+		}
 		return store.OffsiteTarget{}, err
 	}
 
 	if err := s.editRcloneConf(func(conf string) (string, error) {
+		if checked, ok := remoteOptions(conf, check); ok {
+			for _, key := range rcloneSignInKeys {
+				if v := checked[key]; v != "" {
+					options[key] = v
+				}
+			}
+		}
 		section, err := settingsSection(remote, draft.Backend, options)
 		if err != nil {
 			return "", err

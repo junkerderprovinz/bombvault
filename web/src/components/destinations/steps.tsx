@@ -77,6 +77,34 @@ export function masked(o: BackendOption): boolean {
   return o.password || (/(secret|token|key|pass)/.test(o.name) && !o.name.endsWith("_id"));
 }
 
+// Where a service hands out the personal login token rclone trades for a
+// sign-in.
+const LOGIN_TOKEN_PAGES: Record<string, string> = {
+  jottacloud: "https://www.jottacloud.com/web/secure",
+};
+
+const QUESTION_LABELS: Record<string, TranslationKey> = {
+  config_driveid: "dest.question.config_driveid",
+  config_workspace: "dest.question.config_workspace",
+  config_team_drive_id: "dest.question.config_team_drive_id",
+};
+
+// rclone's config blob: JSON in unpadded base64.
+const configBlob = (settings: Record<string, string>) => btoa(JSON.stringify(settings)).replace(/=+$/, "");
+
+/** The command that signs in on a computer with a browser, or null while the
+ *  form lacks what it needs. ShareFile and Zoho are given a config blob: with
+ *  one, rclone prints the ShareFile address along with the token, and Zoho
+ *  learns its region before the sign-in. */
+export function authorizeCommand(p: Provider, settings: Record<string, string>): string | null {
+  if (p.backend === "zoho") {
+    const region = settings.region?.trim();
+    return region ? `rclone authorize "zoho" "${configBlob({ region })}"` : null;
+  }
+  if (p.backend === "sharefile") return `rclone authorize "sharefile" "${configBlob({})}"`;
+  return `rclone authorize "${p.backend}"`;
+}
+
 function fitNote(t: ReturnType<typeof useT>["t"], p: Provider, label: string): { text: string; tone: "ok" | "warn" } {
   if (p.group === "cloud" && p.selfHosted) return { text: t("dest.note.selfHosted"), tone: "ok" };
   if (p.group === "cloud") {
@@ -162,18 +190,35 @@ export function SignInBody({ draft, providerLabel }: { draft: DestinationDraftSt
   const usingSaved = kind !== null && draft.credsRef !== "";
   const chosen = saved.find((s) => s.id === draft.credsRef);
   const note = fitNote(t, picked, providerLabel);
+  const command = authorizeCommand(picked, draft.settings);
+  const { question } = draft;
+  const questionLabel = question && (QUESTION_LABELS[question.name] ? t(QUESTION_LABELS[question.name]) : question.name);
   return (
     <>
       <div className={`rounded-card px-3 py-2 text-xs leading-relaxed ${note.tone === "warn" ? "bg-statusWarnBg text-statusWarn" : "bg-statusOkBg text-statusOk"}`}>
         {note.text}
       </div>
+      {picked.id === "icloud" && (
+        <div className="rounded-card bg-statusWarnBg px-3 py-2 text-xs leading-relaxed text-statusWarn">{t("dest.note.icloud")}</div>
+      )}
       {picked.auth === "token" && (
         <div className="flex flex-col gap-1">
           <span className="flex items-center gap-1.5 text-xs text-carbon-textSub">
             {t("dest.token.run")}
             <InfoBubble tip={t("dest.token.tip")} />
           </span>
-          <CopyBlock text={`rclone authorize "${picked.backend}"`} />
+          {command ? <CopyBlock text={command} /> : <p className="text-xs text-carbon-textMuted">{t("dest.token.regionFirst")}</p>}
+        </div>
+      )}
+      {picked.auth === "logintoken" && LOGIN_TOKEN_PAGES[picked.id] && (
+        <div className="flex flex-col gap-1">
+          <span className="flex items-center gap-1.5 text-xs text-carbon-textSub">
+            {t("dest.loginToken.run")}
+            <InfoBubble tip={t("dest.loginToken.tip")} />
+          </span>
+          <a href={LOGIN_TOKEN_PAGES[picked.id]} target="_blank" rel="noreferrer noopener" className="text-xs underline" dir="ltr">
+            {LOGIN_TOKEN_PAGES[picked.id]}
+          </a>
         </div>
       )}
       {picked.auth === "sshkey" && draft.publicKey && (
@@ -239,6 +284,20 @@ export function SignInBody({ draft, providerLabel }: { draft: DestinationDraftSt
               spellCheck={false}
               dir="ltr"
               className={`w-72 max-w-full ${FIELD} font-mono text-start`}
+            />
+          </SettingRow>
+        )}
+        {question && questionLabel && (
+          <SettingRow label={questionLabel} hint={t("dest.question.hint")} newId="wizard-setup-choice">
+            <SelectField
+              value={draft.settings[question.name] ?? ""}
+              onChange={(value) => draft.setSetting(question.name, value)}
+              label={questionLabel}
+              options={[
+                { value: "", label: t("dest.question.pick"), disabled: true },
+                ...question.choices.map((c) => ({ value: c.value, label: c.help || c.value })),
+              ]}
+              className={`w-72 max-w-full ${FIELD}`}
             />
           </SettingRow>
         )}
@@ -399,7 +458,7 @@ export function RecoveryBody({
   return (
     <p className="rounded-card bg-carbon-surface px-3 py-2 text-xs leading-relaxed text-carbon-textSub">
       {t(words.recovery)}
-      {picked.auth === "token" && ` ${t("dest.recovery.token").replace("{name}", () => providerLabel)}`}
+      {(picked.auth === "token" || picked.auth === "logintoken") && ` ${t("dest.recovery.token").replace("{name}", () => providerLabel)}`}
       {picked.auth === "sshkey" && ` ${t("dest.recovery.ssh")}`}{" "}
       <a href={DOCS_RECOVERY} target="_blank" rel="noreferrer noopener" className="underline">
         {t("dest.recovery.link")}

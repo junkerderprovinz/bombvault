@@ -283,6 +283,8 @@ type Service struct {
 	rcloneOnce   sync.Once
 	rclone       *remotes.Rclone
 	rcloneConfMu sync.Mutex
+	// drafts holds what rclone learned about a destination being set up.
+	drafts draftMemory
 	// receiverMu keeps two partners asking for a login at once from
 	// rewriting the receiver's htpasswd file over each other.
 	receiverMu sync.Mutex
@@ -18347,11 +18349,21 @@ func (s *Service) remotes() *remotes.Rclone {
 
 // WriteRcloneConfFile (re)writes the on-disk rclone config from the encrypted
 // value in settings, or removes it when empty. Called at startup so off-site
-// repos work immediately after a restart.
+// repos work immediately after a restart. What rclone refreshed in the file
+// before the restart is kept.
 func (s *Service) WriteRcloneConfFile() error {
+	s.rcloneConfMu.Lock()
+	defer s.rcloneConfMu.Unlock()
 	settings, err := s.store.GetSettings()
 	if err != nil {
 		return err
+	}
+	stored, err := s.decodeRcloneConf(settings)
+	if err != nil {
+		return err
+	}
+	if conf := withRcloneRefreshes(stored, s.rcloneFile()); conf != stored {
+		return s.storeRcloneConf(conf)
 	}
 	return s.writeRcloneFile(settings.RcloneConf)
 }
@@ -19242,7 +19254,7 @@ func (s *Service) RecoveryKit() (string, error) {
 	// fields that are actually set are printed (mirrors cloudEnv), so the section
 	// never shows an empty label.
 	creds, _ := s.decodeCloud(settings)
-	rcloneConf, _ := s.decodeRcloneConf(settings)
+	rcloneConf, _ := s.currentRcloneConf()
 	hasREST := creds.RESTUser != "" || creds.RESTPassword != ""
 	hasS3 := creds.S3KeyID != "" || creds.S3Secret != "" || creds.S3Region != ""
 	hasRclone := strings.TrimSpace(rcloneConf) != ""

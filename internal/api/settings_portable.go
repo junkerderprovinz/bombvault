@@ -379,7 +379,7 @@ func (h *Handler) collectCredentials(s store.Settings) (*exportCredentials, erro
 	if err != nil {
 		return nil, fmt.Errorf("read the saved sign-ins: %w", err)
 	}
-	rclone, err := h.svc.decodeRcloneConf(s)
+	rclone, err := h.svc.currentRcloneConf()
 	if err != nil {
 		return nil, fmt.Errorf("read rclone config: %w", err)
 	}

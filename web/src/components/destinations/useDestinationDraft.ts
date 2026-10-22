@@ -11,6 +11,7 @@ import {
   type BackendOption,
   type Destination,
   type DestinationDraft,
+  type DraftQuestion,
   type GroupReceiver,
   type Provider,
 } from "../../lib/api";
@@ -107,6 +108,8 @@ export interface DestinationDraftState {
   publicKey: string;
   fields: FormFields;
   test: TestVerdictState;
+  /** What the last test left to choose before the connection can stand. */
+  question: DraftQuestion | null;
   /** The connection was tested and stands. */
   reached: boolean;
   /** The provider has folders to walk through. */
@@ -164,6 +167,7 @@ export function useDestinationDraft(): DestinationDraftState {
   const [immutable, setImmutable] = useState(false);
   const [storageClass, setStorageClass] = useState("");
   const [saving, setSaving] = useState(false);
+  const [question, setQuestion] = useState<DraftQuestion | null>(null);
 
   useEffect(() => {
     let alive = true;
@@ -211,6 +215,7 @@ export function useDestinationDraft(): DestinationDraftState {
     setFromMember(undefined);
     setPicked(p);
     setSettings({});
+    setQuestion(null);
     setCredsRef("");
     setBucket("");
     setName(providerName(p, t));
@@ -270,6 +275,10 @@ export function useDestinationDraft(): DestinationDraftState {
         const denied = s3 && !into && /access ?denied|forbidden|\b403\b/i.test(reason);
         return { ok: false, reason: denied ? `${reason} ${t("dest.bucket.denied")}` : reason };
       }
+      if ("question" in r && r.question) {
+        setQuestion(r.question);
+        return { ok: false, reason: t("dest.question.hint") };
+      }
       if (picked?.route === "rest") return { ok: true, note: r.initialized ? t("dest.restExisting") : t("dest.restEmpty") };
       return { ok: true, note: t("dest.testOk") };
     });
@@ -322,7 +331,16 @@ export function useDestinationDraft(): DestinationDraftState {
     picked,
     fromMember,
     settings,
-    setSetting: (field, value) => setSettings((s) => ({ ...s, [field]: value })),
+    setSetting: (field, value) => {
+      // A changed sign-in may open other drives, so the choice is asked again.
+      const stale = question && field !== question.name ? question.name : null;
+      if (stale) setQuestion(null);
+      setSettings((s) => {
+        const next = { ...s, [field]: value };
+        if (stale) delete next[stale];
+        return next;
+      });
+    },
     name,
     setName,
     credsRef,
@@ -332,6 +350,7 @@ export function useDestinationDraft(): DestinationDraftState {
     publicKey,
     fields,
     test,
+    question,
     reached,
     browsable,
     dir,

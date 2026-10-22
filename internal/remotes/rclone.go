@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"path/filepath"
 	"regexp"
 	"sort"
 	"strings"
@@ -42,6 +43,10 @@ type Rclone struct {
 type Draft struct {
 	Backend  string
 	Settings map[string]string
+	// Learned is what rclone wrote into the remote while it reached it: a
+	// refreshed token, the session a sign-in opened, or what its own setup
+	// found.
+	Learned map[string]string
 }
 
 func (r *Rclone) command(ctx context.Context, env []string, args ...string) *exec.Cmd {
@@ -49,7 +54,7 @@ func (r *Rclone) command(ctx context.Context, env []string, args ...string) *exe
 	if bin == "" {
 		bin = "rclone"
 	}
-	cmd := exec.CommandContext(ctx, bin, args...) //nolint:gosec // G204: fixed subcommands; secrets travel in the environment or on stdin
+	cmd := exec.CommandContext(ctx, bin, args...) //nolint:gosec // G204: fixed subcommands; secrets travel in the environment or on stdin, except a login token rclone's setup uses up at once
 	cmd.Env = append(append(os.Environ(), "RCLONE_CONFIG="+r.Config), env...)
 	return cmd
 }
@@ -183,10 +188,11 @@ func (r *Rclone) draftEnv(ctx context.Context, d Draft) ([]string, error) {
 // Folders lists the folders in dir of a saved remote, or of a draft when d is
 // not nil. At the root of a bucket store they are the buckets.
 func (r *Rclone) Folders(ctx context.Context, remote string, d *Draft, dir string) ([]string, error) {
-	env, remote, err := r.target(ctx, remote, d)
+	env, remote, done, err := r.target(ctx, remote, d)
 	if err != nil {
 		return nil, err
 	}
+	defer done()
 	ctx, cancel := context.WithTimeout(ctx, Timeout)
 	defer cancel()
 	// One attempt: a form waits on the answer, and a wrong password does not
@@ -214,10 +220,11 @@ func (r *Rclone) MakeFolder(ctx context.Context, remote string, d *Draft, dir, c
 	if child == "" || strings.ContainsAny(child, "/\\") || child == "." || child == ".." {
 		return "", errors.New("a folder name may not be empty or contain a slash")
 	}
-	env, remote, err := r.target(ctx, remote, d)
+	env, remote, done, err := r.target(ctx, remote, d)
 	if err != nil {
 		return "", err
 	}
+	defer done()
 	ctx, cancel := context.WithTimeout(ctx, Timeout)
 	defer cancel()
 	created := path.Join(dir, child)
@@ -236,10 +243,11 @@ func (r *Rclone) Check(ctx context.Context, remote string, d *Draft) error {
 // Free returns the free space of a remote in bytes. ok is false when the
 // backend does not report it, which most object stores do not.
 func (r *Rclone) Free(ctx context.Context, remote string, d *Draft) (free int64, ok bool) {
-	env, remote, err := r.target(ctx, remote, d)
+	env, remote, done, err := r.target(ctx, remote, d)
 	if err != nil {
 		return 0, false
 	}
+	defer done()
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 	out, err := r.run(ctx, env, "", "about", "--json", "--retries", "1", "--low-level-retries", "1", "--", Join(remote, ""))
@@ -253,15 +261,75 @@ func (r *Rclone) Free(ctx context.Context, remote string, d *Draft) (free int64,
 	return *about.Free, true
 }
 
-func (r *Rclone) target(ctx context.Context, remote string, d *Draft) ([]string, string, error) {
+// target is the remote one call reaches and the environment it needs. A
+// draft gets a config file of its own for the call, so a token rclone
+// refreshes or a session it opens stays with the draft: done hands that to
+// d.Learned and removes the file.
+func (r *Rclone) target(ctx context.Context, remote string, d *Draft) (env []string, name string, done func(), err error) {
 	if d == nil {
 		if !NameRe.MatchString(remote) {
-			return nil, "", errors.New("not a remote name")
+			return nil, "", nil, errors.New("not a remote name")
 		}
-		return nil, remote, nil
+		return nil, remote, func() {}, nil
 	}
-	env, err := r.draftEnv(ctx, *d)
-	return env, DraftName, err
+	env, err = r.draftEnv(ctx, *d)
+	if err != nil {
+		return nil, "", nil, err
+	}
+	dir, err := os.MkdirTemp(filepath.Dir(r.Config), "rclone-draft-")
+	if err != nil {
+		return nil, "", nil, fmt.Errorf("make room for the draft's rclone config: %w", err)
+	}
+	conf := filepath.Join(dir, "rclone.conf")
+	done = func() {
+		d.learn(readFile(conf), nil)
+		_ = os.RemoveAll(dir)
+	}
+	return append(env, "RCLONE_CONFIG="+conf), DraftName, done, nil
+}
+
+// learn takes into the draft what rclone wrote into its section of conf that
+// is not what seed gave it, so the next call starts from there.
+func (d *Draft) learn(conf string, seed map[string]string) {
+	for k, v := range sectionValues(conf, DraftName) {
+		if k == "type" || v == seed[k] {
+			continue
+		}
+		if d.Learned == nil {
+			d.Learned = map[string]string{}
+		}
+		d.Learned[k] = v
+		d.Settings[k] = v
+	}
+}
+
+func readFile(path string) string {
+	raw, err := os.ReadFile(path) //nolint:gosec // G304: a file this package made
+	if err != nil {
+		return ""
+	}
+	return string(raw)
+}
+
+// sectionValues returns the settings of one remote of an rclone config, its
+// type among them.
+func sectionValues(conf, name string) map[string]string {
+	var out map[string]string
+	in := false
+	for line := range strings.SplitSeq(conf, "\n") {
+		line = strings.TrimSpace(line)
+		if m := sectionHeaderRe.FindStringSubmatch(line); m != nil {
+			in = strings.TrimSpace(m[1]) == name
+			if in && out == nil {
+				out = map[string]string{}
+			}
+			continue
+		}
+		if key, value, ok := strings.Cut(line, "="); in && ok {
+			out[strings.TrimSpace(key)] = strings.TrimSpace(value)
+		}
+	}
+	return out
 }
 
 // Join puts a remote and a path together the way rclone reads them.

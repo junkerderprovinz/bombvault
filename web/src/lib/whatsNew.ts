@@ -66,6 +66,13 @@ export const RELEASES: Release[] = [
         way: [...TO_STORAGE, "add-location"],
         text: "whatsNew.bucketField",
       },
+      {
+        id: "wizard-setup-choice",
+        page: "/storage",
+        where: ["storage.title"],
+        way: [...TO_STORAGE, "add-location"],
+        text: "whatsNew.wizardSetupChoice",
+      },
       // Both appear only on a place that refused its folder or lost its
       // repository, so a dot on them would hardly ever show.
       { id: "replica-take-over", text: "whatsNew.replicaTakeOver" },
