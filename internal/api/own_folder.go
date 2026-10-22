@@ -28,6 +28,7 @@ var (
 	// answer: an unmounted disk, a server that is down, a sign-in refused.
 	errOwnFolderUnreadable = errors.New("the backups in the old own folder could not be read, so they cannot be copied")
 	errOwnFolderChanged    = fmt.Errorf("%w: the own folder was set to another place in the meantime and stays there", errPlacementStale)
+	errOwnFolderNewBackup  = fmt.Errorf("%w: a backup reached the old own folder while the move was being planned, so it needs planning again", errPlacementStale)
 )
 
 // ownFolderRequest moves the own folders of one or more sections.
@@ -484,6 +485,16 @@ func (s *Service) MoveOwnFolders(ctx context.Context, req ownFolderRequest, move
 		}
 		unlocks = append(unlocks, unlock)
 	}
+	if req.CopyOver {
+		for _, step := range now {
+			if err := s.nothingNewToCopy(ctx, step); err != nil {
+				for _, c := range claims {
+					s.releaseOwnFolder(c)
+				}
+				return nil, fmt.Errorf("%s: %w", step.Domain, err)
+			}
+		}
+	}
 	for i, step := range now {
 		settings, err := s.switchOwnFolder(step)
 		if err != nil {
@@ -499,6 +510,30 @@ func (s *Service) MoveOwnFolders(ctx context.Context, req ownFolderRequest, move
 		s.startOwnFolderCopy(c, moved)
 	}
 	return steps, nil
+}
+
+// nothingNewToCopy reads the old own folder of a step planned with nothing to
+// copy once more, under the section's lock: a backup that ran while the
+// request was planned wrote there, and a switch would leave it behind.
+func (s *Service) nothingNewToCopy(ctx context.Context, step ownFolderStep) error {
+	if step.Same {
+		return nil
+	}
+	opens, err := s.oldOwnFolderOpens(ctx, step.plan)
+	if err != nil {
+		return fmt.Errorf("%w: %w", errOwnFolderUnreadable, err)
+	}
+	if !opens {
+		return nil
+	}
+	left, _, err := s.pendingMove(ctx, step.plan)
+	if err != nil {
+		return fmt.Errorf("%w: %w", errOwnFolderUnreadable, err)
+	}
+	if len(left) > 0 {
+		return errOwnFolderNewBackup
+	}
+	return nil
 }
 
 // ownFolderClaim holds a section's own folder for one move until it is done.

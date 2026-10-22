@@ -526,6 +526,32 @@ func TestAPathSetWhileTheBackupsAreCopiedStays(t *testing.T) {
 	}
 }
 
+// The read under the lock catches a backup that ran while the request was
+// planned with nothing to copy.
+func TestAnOwnFolderDoesNotSwitchAwayFromABackupMadeWhileItWasPlanned(t *testing.T) {
+	f := newPlacementFixture(t)
+	vault := f.destination("Vault", vaultRepo)
+	f.hold(f.domainPath("containers"), snap("a1", 100, "container:web"))
+	f.hold(vaultRepo+"/containers", snap("a1", 100, "container:web"))
+	steps, err := f.svc.planOwnFolders(context.Background(), ownFolderRequest{
+		Domains: []string{"containers"}, Location: "destination:" + vault.ID, CopyOver: true,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(steps) != 1 || steps[0].Pending != 0 {
+		t.Fatalf("steps = %+v, want one with nothing to copy", steps)
+	}
+	if err := f.svc.nothingNewToCopy(context.Background(), steps[0]); err != nil {
+		t.Fatalf("nothing new: %v", err)
+	}
+
+	f.hold(f.domainPath("containers"), snap("a1", 100, "container:web"), snap("a2", 200, "container:web"))
+	if err := f.svc.nothingNewToCopy(context.Background(), steps[0]); !errors.Is(err, errOwnFolderNewBackup) || !errors.Is(err, errPlacementStale) {
+		t.Fatalf("err = %v, want the new backup named as a stale plan", err)
+	}
+}
+
 func TestAnOwnFolderDoesNotSwitchUnderARunningBackup(t *testing.T) {
 	f := newPlacementFixture(t)
 	vault := f.destination("Vault", vaultRepo)
