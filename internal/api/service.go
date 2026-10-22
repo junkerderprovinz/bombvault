@@ -2131,20 +2131,14 @@ func targetOffsiteLimits(t store.OffsiteTarget) restic.Limits {
 	}
 }
 
-// offsiteModeForTarget builds the restic mode for one off-site DESTINATION: it
-// starts from the global mode (ModeFor already sets Env/StorageClass from the
-// shared CloudCreds), then — stage 2 — resolves this target's OWN credential
-// set via CredsRef and overrides Env (and StorageClass, unless the target sets
-// its own) when it names one. A target with an empty CredsRef therefore keeps
-// using the shared credentials exactly as before (every existing install is
-// unaffected); a target with an empty StorageClass — e.g. the stage-1
-// backfilled N=1 target, which the pure-SQL migration could not populate —
-// PRESERVES whichever class its resolved credential set carries. The class is
-// never unconditionally overwritten, which would wipe it to empty for existing
-// single-off-site installs.
+// offsiteModeForTarget builds the restic mode for one off-site target: the
+// default sign-in, or the credential set the target names. A target of its
+// own with no storage class keeps the class of its sign-in. A destination's
+// target takes the class of its destination, whose empty class means the
+// provider's default.
 func (s *Service) offsiteModeForTarget(settings store.Settings, target store.OffsiteTarget) restic.Mode {
 	mode := s.applyTargetCreds(s.ModeFor(settings), settings, target)
-	if target.StorageClass != "" {
+	if target.StorageClass != "" || target.DestinationID != "" {
 		mode.StorageClass = target.StorageClass
 	}
 	mode.Compression = storedCompression(target.Compression)

@@ -48,7 +48,7 @@ func TestTheS3EndpointGetsAScheme(t *testing.T) {
 		{aws, nil, "https://s3.amazonaws.com"},
 		{wasabi, map[string]string{"endpoint": "s3:http://192.168.2.51:9000/bombvault/dxp6800"}, "http://192.168.2.51:9000"},
 		{wasabi, map[string]string{"endpoint": "s3:s3.eu-central-2.wasabisys.com/bucket"}, "https://s3.eu-central-2.wasabisys.com"},
-		{wasabi, map[string]string{"endpoint": "https://gateway.lan/s3"}, "https://gateway.lan/s3"},
+		{wasabi, map[string]string{"endpoint": "https://acct.r2.cloudflarestorage.com/bucket"}, "https://acct.r2.cloudflarestorage.com"},
 	} {
 		got, err := s3Endpoint(c.p, c.settings)
 		if err != nil || got != c.want {
@@ -139,13 +139,13 @@ func TestAPathDestinationIsDerivedPerDomain(t *testing.T) {
 func TestAnS3DestinationBringsItsOwnCredentials(t *testing.T) {
 	svc, st, _ := newProbeSvc(t, nil)
 	d, err := svc.SaveNewDestination(context.Background(), draftRequest{
-		Provider: "wasabi", Dir: "/bucket/bv/", StorageClass: "standard",
+		Provider: "s3", Dir: "/bucket/bv/", StorageClass: "standard",
 		Settings: map[string]string{"endpoint": "s3.eu-central-2.wasabisys.com", "access_key_id": "AKID", "secret_access_key": "SECRET"},
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if d.Repo != "s3:https://s3.eu-central-2.wasabisys.com/bucket/bv" || d.StorageClass != "STANDARD" || d.Provider != "wasabi" {
+	if d.Repo != "s3:https://s3.eu-central-2.wasabisys.com/bucket/bv" || d.StorageClass != "STANDARD" || d.Provider != "s3" {
 		t.Fatalf("destination = %+v", d)
 	}
 	sets, err := svc.CloudCredSets()

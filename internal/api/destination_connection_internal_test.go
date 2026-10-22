@@ -193,7 +193,7 @@ func TestAnS3DestinationThatHoldsBackupsTakesANewKeyAndKeepsItsBucket(t *testing
 		return &probeFailure{repo: repo}
 	})
 	d, err := svc.SaveNewDestination(context.Background(), draftRequest{
-		Provider: "wasabi", Dir: "bucket/bv", StorageClass: "standard",
+		Provider: "wasabi", Dir: "bucket/bv",
 		Settings: map[string]string{"endpoint": "s3.eu-central-2.wasabisys.com", "access_key_id": "AKID", "secret_access_key": "SECRET", "region": "eu-central-2"},
 	})
 	if err != nil {
@@ -209,8 +209,8 @@ func TestAnS3DestinationThatHoldsBackupsTakesANewKeyAndKeepsItsBucket(t *testing
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got := signInOf(t, svc, saved); got.S3KeyID != "AKID2" || got.S3Secret != "rotated" || got.S3Region != "eu-central-2" || got.S3StorageClass != "STANDARD" {
-		t.Fatalf("sign-in = %+v, want the new key with the region and class it had", got)
+	if got := signInOf(t, svc, saved); got.S3KeyID != "AKID2" || got.S3Secret != "rotated" || got.S3Region != "eu-central-2" {
+		t.Fatalf("sign-in = %+v, want the new key with the region it had", got)
 	}
 	if saved.Repo != d.Repo {
 		t.Fatalf("location = %q, want %q", saved.Repo, d.Repo)

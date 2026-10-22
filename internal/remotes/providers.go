@@ -45,6 +45,11 @@ type Provider struct {
 	// SelfHosted marks a cloud that runs on somebody's own server, which is
 	// as fast as that server rather than throttled like a consumer service.
 	SelfHosted bool `json:"selfHosted,omitempty"`
+
+	// StorageClasses are the S3 storage classes the service takes. A service
+	// that answers a class it does not know with an error gets none: the
+	// destination would save and then every upload would fail.
+	StorageClasses []string `json:"storageClasses,omitempty"`
 }
 
 // Group is the section a provider is listed in.
@@ -105,6 +110,14 @@ func s3(id, name, provider, mark string, lock bool) Provider {
 		Preset: map[string]string{"provider": provider}, Mark: mark, Auth: AuthAccessKey, Lock: lock}
 }
 
+// awsClasses are the classes restic restores from, all of which AWS has.
+var awsClasses = []string{"STANDARD", "STANDARD_IA", "ONEZONE_IA", "INTELLIGENT_TIERING", "GLACIER_IR"}
+
+func withClasses(p Provider, classes ...string) Provider {
+	p.StorageClasses = classes
+	return p
+}
+
 func ownS3(id, name, provider, mark string, lock bool) Provider {
 	p := s3(id, name, provider, mark, lock)
 	p.Group = GroupSelfS3
@@ -128,16 +141,16 @@ var providers = []Provider{
 	s3("b2", "Backblaze B2", "Other", "IconBackblaze", true),
 	s3("wasabi", "Wasabi", "Wasabi", "IconWasabi", true),
 	s3("hetznerobj", "Hetzner Object Storage", "Hetzner", "IconHetzner", true),
-	s3("r2", "Cloudflare R2", "Cloudflare", "IconCloudflare", false),
+	withClasses(s3("r2", "Cloudflare R2", "Cloudflare", "IconCloudflare", false), "STANDARD", "STANDARD_IA"),
 	s3("idrivee2", "IDrive e2", "IDrive", "IconIdrive", true),
-	s3("scaleway", "Scaleway Object Storage", "Scaleway", "IconScaleway", true),
-	s3("ovh", "OVHcloud Object Storage", "OVHcloud", "IconOvh", true),
+	withClasses(s3("scaleway", "Scaleway Object Storage", "Scaleway", "IconScaleway", true), "STANDARD", "ONEZONE_IA"),
+	withClasses(s3("ovh", "OVHcloud Object Storage", "OVHcloud", "IconOvh", true), "STANDARD", "STANDARD_IA"),
 	s3("ionosobj", "IONOS Object Storage", "IONOS", "IconIonos", true),
 	s3("synologyc2", "Synology C2", "Synology", "synologyc2", true),
 	s3("spaces", "DigitalOcean Spaces", "DigitalOcean", "IconDigitalOcean", false),
 	s3("linode", "Linode Object Storage", "Linode", "IconLinode", false),
 	s3("huaweiobs", "Huawei Cloud OBS", "HuaweiOBS", "IconHuaweiCloud", true),
-	s3("aws", "Amazon S3", "AWS", "aws", true),
+	withClasses(s3("aws", "Amazon S3", "AWS", "aws", true), awsClasses...),
 	s3("storj", "Storj", "Storj", "IconStorj", false),
 	{ID: "azureblob", Name: "Azure Blob Storage", Backend: "azureblob", Group: GroupStorage, Route: RouteRclone,
 		Mark: "IconAzure", Auth: AuthAccessKey, Lock: true},
@@ -161,7 +174,8 @@ var providers = []Provider{
 	ownS3("ceph", "Ceph", "Ceph", "IconCeph", true),
 	ownS3("juicefs", "JuiceFS", "Other", "juicefs", false),
 	ownS3("versity", "Versity S3 Gateway", "Other", "versity", false),
-	ownS3("s3", "S3 compatible", "Other", "IconBuckets", true),
+	// Whoever picks plain S3 knows the server and what it takes.
+	withClasses(ownS3("s3", "S3 compatible", "Other", "IconBuckets", true), awsClasses...),
 
 	{ID: "rest", Name: "rest-server", Group: GroupServer, Route: RouteRest, Mark: "IconShield", Auth: AuthLogin, Lock: true},
 	{ID: "storagebox", Name: "Hetzner Storage Box", Backend: "sftp", Group: GroupServer, Route: RouteRclone,
