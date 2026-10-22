@@ -192,7 +192,7 @@ func (h *Handler) handleDeleteZFSDataset(w http.ResponseWriter, r *http.Request)
 	res, err := h.svc.DeleteZFSDataset(r.Context(), id, safety)
 	if err != nil {
 		if errors.Is(err, errDomainBusy) {
-			writeJSON(w, http.StatusConflict, failEnvelope(err))
+			writeJSON(w, http.StatusConflict, codedFailEnvelope(err, codeDomainBusy))
 			return
 		}
 		zfsFail(w, err)
@@ -219,7 +219,7 @@ func (h *Handler) handleDeleteBackupsZFSDataset(w http.ResponseWriter, r *http.R
 	res, err := h.svc.DeleteBackupsZFSDataset(ctx, id, r.URL.Query().Get("safety") == "true")
 	if err != nil {
 		if errors.Is(err, errDomainBusy) {
-			writeJSON(w, http.StatusConflict, failEnvelope(err))
+			writeJSON(w, http.StatusConflict, codedFailEnvelope(err, codeDomainBusy))
 			return
 		}
 		zfsFail(w, err)
@@ -261,7 +261,7 @@ func (h *Handler) handleDeleteZFSSafetySnapshot(w http.ResponseWriter, r *http.R
 	q := r.URL.Query()
 	if err := h.svc.DeleteZFSSafetySnapshot(r.Context(), id, q.Get("dataset"), q.Get("name")); err != nil {
 		if errors.Is(err, errDomainBusy) {
-			writeJSON(w, http.StatusConflict, failEnvelope(err))
+			writeJSON(w, http.StatusConflict, codedFailEnvelope(err, codeDomainBusy))
 			return
 		}
 		zfsFail(w, err)

@@ -75,6 +75,29 @@ func TestAPairedPhoneCannotDeleteBackups(t *testing.T) {
 	}
 }
 
+// The page turns the code into a sentence; without it the person reads only
+// that the server refused.
+func TestAZFSDeleteRefusedWhileARunHoldsTheSectionSaysSo(t *testing.T) {
+	f := newPlacementFixture(t)
+	tank, _ := f.zfsItem("tank/apps")
+	f.svc.zfs = &fakeZFSHost{}
+	f.signIn()
+	unlock, ok := f.svc.tryLockDomainFor(zfsDomain, "backup")
+	if !ok {
+		t.Fatal("zfs is locked already")
+	}
+	defer unlock()
+	for _, path := range []string{
+		"/api/zfs/datasets/" + tank.ID,
+		"/api/zfs/datasets/" + tank.ID + "/backups",
+		"/api/zfs/datasets/" + tank.ID + "/safety-snapshots?dataset=tank/apps&name=bombvault-prerestore-20260101000000",
+	} {
+		if code, out := f.call(http.MethodDelete, path, nil); code != http.StatusConflict || out["code"] != codeDomainBusy {
+			t.Errorf("DELETE %s while a backup runs: %d %v, want the busy code", path, code, out)
+		}
+	}
+}
+
 func TestRemovingAZFSEntryThatKeepsItsSnapshotsNeedsNoPassword(t *testing.T) {
 	f := newPlacementFixture(t)
 	tank, _ := f.zfsItem("tank/apps")
