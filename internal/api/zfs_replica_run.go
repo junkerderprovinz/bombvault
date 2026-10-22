@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -219,12 +220,17 @@ func (s *Service) runZFSReplica(ctx context.Context, d store.ZFSDataset, runID, 
 	if !ok {
 		return zfsrepl.Result{}, fmt.Errorf("unknown keep preset %q", d.Replica.Keep.Preset)
 	}
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return zfsrepl.Result{}, fmt.Errorf("read settings: %w", err)
+	}
 	entry := zfsrepl.Entry{
 		Root:       d.Dataset,
 		Excluded:   d.ExcludedChildren,
 		TargetBase: tgt.base,
 		Keep:       keep,
 		Now:        time.Now,
+		Freeze:     s.zfsReplicaFreeze(d, settings, zfsLockWait(ctx)),
 		Progress:   s.zfsReplicaProgress(key, startedAt),
 	}
 	// A paired instance creates and marks its folders itself.
@@ -283,6 +289,62 @@ func (s *Service) claimZFSReplicaFolder(ctx context.Context, end zfsrepl.End, d 
 		return nil, err
 	}
 	return []string{root}, nil
+}
+
+// TakeOverZFSReplicaFolder marks the folder an item lands in on its ZFS server,
+// and every level below it the old id marked, as this instance's. It is for a
+// folder this BombVault filled before a fresh database gave it a new id, so
+// the next run goes on from the copies in it.
+func (s *Service) TakeOverZFSReplicaFolder(ctx context.Context, id string) error {
+	d, err := s.store.GetZFSDataset(id)
+	if err != nil {
+		return fmt.Errorf("zfs replica: load dataset: %w", err)
+	}
+	if d.Replica.TargetKind != store.ZFSReplicaTargetServer {
+		return zfsRefuse("replica-off", d.Dataset)
+	}
+	unlock, ok := s.lockZFSReplica(id)
+	if !ok {
+		return errZFSReplicaBusy
+	}
+	defer unlock()
+	tgt, err := s.zfsReplicaTargetFor(ctx, d)
+	if err != nil {
+		return err
+	}
+	owner := s.instanceID()
+	was, err := zfsReplicaOwner(ctx, tgt.end, tgt.base)
+	if err != nil || was == "" || was == owner {
+		return err
+	}
+	args, err := zfs.SourcePropertyTreeArgs(tgt.base)
+	if err != nil {
+		return err
+	}
+	out, err := tgt.end.Run(ctx, args)
+	if err != nil {
+		return err
+	}
+	var marked []string
+	for dataset, who := range zfs.ParseSourcePropertyTree(out) {
+		if who == was {
+			marked = append(marked, dataset)
+		}
+	}
+	// The folder itself goes last: a take-over cut short is only tried again
+	// while the folder still carries the old id.
+	slices.SortFunc(marked, func(a, b string) int { return len(b) - len(a) })
+	for _, dataset := range marked {
+		set, err := zfs.SetSourcePropertyArgs(dataset, owner)
+		if err != nil {
+			return err
+		}
+		if _, err := tgt.end.Run(ctx, set); err != nil {
+			return err
+		}
+	}
+	log.Printf("api: zfs replica: %s on %s is now this instance's folder, it was %s's", tgt.base, tgt.server.Name, was)
+	return nil
 }
 
 // zfsReplicaOwner reads who created dataset on a target, "" for a dataset

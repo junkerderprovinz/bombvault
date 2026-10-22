@@ -35,6 +35,7 @@ import { RunDetailSheet } from "../mobile/RunDetailSheet";
 import { IconBackupNow, IconDownload, IconRestore, IconSync, IconTrash, IconZFS } from "../navGlyphs";
 import { PageAction } from "../PageActions";
 import { PauseButton } from "../SchedulePause";
+import { useReplica } from "../zfs/replica/replicaStore";
 import { useReplicateNow } from "../zfs/replica/useReplicateNow";
 import type { TimelineState } from "./BackupPlaces";
 import { ExportWindow, LiveExportWindow } from "./ExportWindow";
@@ -170,13 +171,14 @@ function BackupAction({ entry, onDone }: { entry: Entry; onDone: () => void }) {
  * ReplicateAction runs the replica of a ZFS entry. It is there only while the
  * entry has somewhere to replicate to.
  */
-function ReplicateAction({ id, dataset }: { id: string; dataset: string }) {
+function ReplicateAction({ id, dataset, primary }: { id: string; dataset: string; primary?: boolean }) {
   const { t } = useT();
   const { offered, busy, replicate } = useReplicateNow(id, dataset);
   if (!offered) return null;
   return (
     <span data-new="zfs-replicate-now" className="flex">
       <PageAction
+        primary={primary}
         label={t("zfs.replica.replicateNow")}
         glyph={<IconSync />}
         onClick={() => void replicate()}
@@ -184,6 +186,22 @@ function ReplicateAction({ id, dataset }: { id: string; dataset: string }) {
         busy={busy}
       />
     </span>
+  );
+}
+
+/**
+ * ZFSCornerActions are the run actions of a ZFS entry. An entry that only
+ * replicates has no backup to run, and its backup action would wait on a run
+ * that never comes, so replicating is its one action.
+ */
+function ZFSCornerActions({ entry, id, dataset, onDone }: { entry: Entry; id: string; dataset: string; onDone: () => void }) {
+  const { replica } = useReplica(id);
+  if (replica?.only) return <ReplicateAction id={id} dataset={dataset} primary />;
+  return (
+    <>
+      <ReplicateAction id={id} dataset={dataset} />
+      <BackupAction entry={entry} onDone={onDone} />
+    </>
   );
 }
 
@@ -219,8 +237,11 @@ export function EntryCorner({
           onSaved={onChanged}
         />
       )}
-      {entry.detail.kind === "zfs" && <ReplicateAction id={entry.detail.dataset.id} dataset={entry.detail.dataset.dataset} />}
-      <BackupAction entry={entry} onDone={onChanged} />
+      {entry.detail.kind === "zfs" ? (
+        <ZFSCornerActions entry={entry} id={entry.detail.dataset.id} dataset={entry.detail.dataset.dataset} onDone={onChanged} />
+      ) : (
+        <BackupAction entry={entry} onDone={onChanged} />
+      )}
     </>
   );
 }

@@ -187,7 +187,7 @@ func TestZFSDueGateUsesOnlyDomainRunRows(t *testing.T) {
 		{ID: "paused", Dataset: "tank/old", Enabled: false},
 	}
 	st := &fakeGateStore{zfs: items, settings: store.Settings{PerItemSchedules: true}}
-	if _, err := ZFSDueGate(st)(); err != nil {
+	if _, err := ZFSDueGate(st, nil)(); err != nil {
 		t.Fatalf("due gate: %v", err)
 	}
 	if len(st.askedFor) != 1 || st.askedFor[0] != "nightly" {
@@ -195,11 +195,32 @@ func TestZFSDueGateUsesOnlyDomainRunRows(t *testing.T) {
 	}
 
 	st2 := &fakeGateStore{zfs: items, settings: store.Settings{}}
-	if _, err := ZFSDueGate(st2)(); err != nil {
+	if _, err := ZFSDueGate(st2, nil)(); err != nil {
 		t.Fatalf("due gate (per-item off): %v", err)
 	}
 	if len(st2.askedFor) != 2 {
 		t.Fatalf("per-item off: want both enabled items, got %v", st2.askedFor)
+	}
+}
+
+// A round of items that only replicate writes replica runs and no backup, so
+// without them an every-3-days gate would read "never ran" and fire nightly.
+func TestZFSDueGateCountsTheReplicaOfAnItemThatOnlyReplicates(t *testing.T) {
+	st := &fakeGateStore{zfs: []store.ZFSDataset{{ID: "a", Dataset: "tank/appdata", Enabled: true}}}
+	at := time.Date(2026, 10, 20, 2, 0, 0, 0, time.UTC)
+	var asked []string
+	last, err := ZFSDueGate(st, func(ids []string) (time.Time, error) {
+		asked = ids
+		return at, nil
+	})()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !last.Equal(at) || len(asked) != 1 || asked[0] != "a" {
+		t.Errorf("last = %v asking about %v, want the replica's success for the round's item", last, asked)
+	}
+	if EveryNDue(last, at.Add(24*time.Hour), 3) {
+		t.Error("an every-3-days round is due again the next day")
 	}
 }
 

@@ -237,6 +237,22 @@ func (s *Service) zfsReplicaSnapshotViews(ctx context.Context, d store.ZFSDatase
 	return out
 }
 
+// SetZFSReplicaOnly switches the ZFS section's backups off, so that its items
+// only send their replicas, or on again. The own folder and the off-site
+// targets keep their switches, so switching back brings back the places
+// there were. A section with no place left by the switches alone, the way
+// earlier versions set this up, gets its own folder back.
+func (s *Service) SetZFSReplicaOnly(on bool) error {
+	if err := s.store.SetZFSReplicaOnly(on); err != nil || on {
+		return err
+	}
+	nowhere, err := s.placelessSections()
+	if err != nil || !nowhere[zfsDomain] {
+		return err
+	}
+	return s.store.SetLocal(zfsDomain, true)
+}
+
 // ZFSReplicaPatch carries a replica edit. A nil field keeps its value.
 type ZFSReplicaPatch struct {
 	Target      *zfsReplicaTargetExport `json:"target"`

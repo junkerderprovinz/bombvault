@@ -555,7 +555,15 @@ func (s *Service) recordZFSLeftover(d store.ZFSDataset, root, snap string, err e
 }
 
 // StartBackupZFSDataset runs one item in the background and returns at once.
+// An item that only replicates starts its replica instead, which holds no
+// backup lock however long the send takes and answers a refusal here.
 func (s *Service) StartBackupZFSDataset(ctx context.Context, id string) (bool, error) {
+	if d, err := s.store.GetZFSDataset(id); err == nil && s.zfsReplicaOnly(d) {
+		if _, err := s.StartZFSReplica(ctx, id); err != nil {
+			return false, err
+		}
+		return true, nil
+	}
 	if err := s.refuseNoPlace(zfsDomain, id); err != nil {
 		return false, err
 	}

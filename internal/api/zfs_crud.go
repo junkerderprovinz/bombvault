@@ -411,17 +411,8 @@ func (s *Service) DeleteBackupsZFSDataset(ctx context.Context, id string, remove
 	if err != nil {
 		return ZFSDeleteResult{}, fmt.Errorf("read settings: %w", err)
 	}
-	// The item's own repository, not the domain's: its snapshots live wherever
-	// it backs up, and reading the domain repository would report an empty
-	// history for an item that has one.
-	repo, err := s.zfsDatasetRepoPath(settings, d)
+	homes, err := s.zfsBackupHomes(settings, d)
 	if err != nil {
-		return ZFSDeleteResult{}, err
-	}
-	if f := s.primaryAppendOnly(zfsDomain, repo); f != appendOnlyNone {
-		return ZFSDeleteResult{}, appendOnlyRefusal(f)
-	}
-	if err := s.requireExistingRepo(repo, "no backups to delete yet"); err != nil {
 		return ZFSDeleteResult{}, err
 	}
 	unlock, ok := s.tryLockDomainFor(zfsDomain, "delete")
@@ -429,23 +420,82 @@ func (s *Service) DeleteBackupsZFSDataset(ctx context.Context, id string, remove
 		return ZFSDeleteResult{}, errDomainBusy
 	}
 	defer unlock()
-	mode := s.repoModeFor(settings, zfsDomain, "local", repo)
-	s.unlockStale(ctx, repo, mode)
 
-	snaps, err := s.zfsItemSnapshots(ctx, d, "local")
-	if err != nil {
-		return ZFSDeleteResult{}, err
+	// Every place is listed before anything is forgotten, so a place that
+	// cannot be read leaves all of them, and the entry, as they were.
+	forget := make([][]string, len(homes))
+	found := false
+	for i, h := range homes {
+		if h.own() {
+			s.unlockStale(ctx, h.repo, h.mode)
+		}
+		snaps, err := s.zfsItemSnapshots(ctx, d, h.source())
+		if err != nil {
+			if !h.own() && isRepoDefinitelyAbsent(err) {
+				continue
+			}
+			return ZFSDeleteResult{}, err
+		}
+		for _, snap := range snaps {
+			forget[i] = append(forget[i], snap.ID)
+		}
+		found = true
 	}
-	ids := make([]string, 0, len(snaps))
-	for _, snap := range snaps {
-		ids = append(ids, snap.ID)
+	if !found {
+		return ZFSDeleteResult{}, errors.New("no backups to delete yet")
 	}
-	if len(ids) > 0 {
-		if err := s.engine.Forget(ctx, repo, ids, true, mode); err != nil {
+	for i, h := range homes {
+		if len(forget[i]) == 0 {
+			continue
+		}
+		op := func() error { return s.engine.Forget(ctx, h.repo, forget[i], true, h.mode) }
+		if err := s.retryAfterUnlock(ctx, h.repo, h.mode, op); err != nil {
 			return ZFSDeleteResult{}, fmt.Errorf("forget snapshots: %w", err)
 		}
 	}
 	return s.deleteZFSDatasetLocked(ctx, id, removeSafety)
+}
+
+// zfsBackupHomes is every place an item's backups were written to: its own
+// repository, or the section's folder and, while that folder is switched off,
+// the targets the backups went to straight. A folder that never held a
+// repository is left out, and an append-only place refuses the whole delete.
+func (s *Service) zfsBackupHomes(settings store.Settings, d store.ZFSDataset) ([]sectionPlace, error) {
+	repo, err := s.zfsDatasetRepoPath(settings, d)
+	if err != nil {
+		return nil, err
+	}
+	own := sectionPlace{repo: repo, mode: s.repoModeFor(settings, zfsDomain, "local", repo)}
+	var homes []sectionPlace
+	if s.requireExistingRepo(repo, "") == nil {
+		if f := s.primaryAppendOnly(zfsDomain, repo); f != appendOnlyNone {
+			return nil, appendOnlyRefusal(f)
+		}
+		homes = append(homes, own)
+	}
+	if d.Repo != "" {
+		if len(homes) == 0 {
+			return nil, errors.New("no backups to delete yet")
+		}
+		return homes, nil
+	}
+	places, err := s.sectionPlacesSwitchedOn(settings, zfsDomain, repo)
+	if err != nil && !errors.Is(err, ErrNoPlace) {
+		return nil, err
+	}
+	for _, pl := range places {
+		if pl.own() {
+			continue
+		}
+		if err := s.refuseAppendOnlyTarget(settings, zfsDomain, pl.source()); err != nil {
+			return nil, err
+		}
+		homes = append(homes, pl)
+	}
+	if len(homes) == 0 {
+		return nil, errors.New("no backups to delete yet")
+	}
+	return homes, nil
 }
 
 // DiscoverZFSDatasets rebuilds the item list from the zfs: tags in storage,

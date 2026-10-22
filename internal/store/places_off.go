@@ -13,11 +13,34 @@ import (
 // targets.
 var LocalSwitchDomains = []string{"flash", "config", "zfs"}
 
-// The places a section can be switched off at by hand.
+// The places a section can be switched off at by hand. placeReplicaOnly is
+// all of the ZFS section's places at once, while its items only replicate;
+// the places keep their own switches under it.
 const (
-	placeLocal   = "local"
-	placePrimary = "primary"
+	placeLocal       = "local"
+	placePrimary     = "primary"
+	placeReplicaOnly = "replica-only"
 )
+
+// ZFSReplicaOnly reports whether the ZFS section takes no backups, so that a
+// run of an item with a replica only sends the replica.
+func (r *Repo) ZFSReplicaOnly() (bool, error) {
+	var n int
+	err := r.db.QueryRow(`SELECT COUNT(*) FROM places_off WHERE domain = 'zfs' AND place = ?`, placeReplicaOnly).Scan(&n)
+	if err != nil {
+		return false, fmt.Errorf("ZFSReplicaOnly: %w", err)
+	}
+	return n > 0, nil
+}
+
+// SetZFSReplicaOnly switches the ZFS section's backups off or on again,
+// leaving the switches of its own folder and its off-site targets alone.
+func (r *Repo) SetZFSReplicaOnly(on bool) error {
+	if err := r.setPlaceOff("zfs", placeReplicaOnly, "", on); err != nil {
+		return fmt.Errorf("SetZFSReplicaOnly: %w", err)
+	}
+	return nil
+}
 
 // LocalOff returns the sections whose own folder takes no new backups.
 func (r *Repo) LocalOff() (map[string]bool, error) {

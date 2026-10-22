@@ -461,6 +461,31 @@ func TestSourcePropertyReadsOnlyALocalValue(t *testing.T) {
 	}
 }
 
+func TestTheOwnersOfAFolderTreeAreReadAndRewrittenOneByOne(t *testing.T) {
+	got, err := SourcePropertyTreeArgs("tank/r/bottich")
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := []string{"zfs", "get", "-r", "-H", "-p", "-s", "local", "-o", "name,value", "bombvault:source", "tank/r/bottich"}
+	if !equalArgs(got, want) {
+		t.Fatalf("SourcePropertyTreeArgs = %q, want %q", got, want)
+	}
+	owners := ParseSourcePropertyTree("tank/r/bottich\told\ntank/r/bottich/cache\told\ntank/r/bottich/cache/appdata\t-\n")
+	if len(owners) != 2 || owners["tank/r/bottich/cache"] != "old" {
+		t.Errorf("owners = %v", owners)
+	}
+	set, err := SetSourcePropertyArgs("tank/r/bottich", "4f2a")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := []string{"zfs", "set", "bombvault:source=4f2a", "tank/r/bottich"}; !equalArgs(set, want) {
+		t.Errorf("SetSourcePropertyArgs = %q, want %q", set, want)
+	}
+	if _, err := SetSourcePropertyArgs("tank/r/bottich", "-o x"); err == nil {
+		t.Error("an owner that could be read as an option was taken")
+	}
+}
+
 func TestParsePoolsAddsUsedToFree(t *testing.T) {
 	pools, err := ParsePools("tank\t1000\t3000\nbv95demo\t0\t-\n")
 	if err != nil {

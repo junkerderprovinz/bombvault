@@ -3,6 +3,7 @@ package api
 import (
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/schedule"
@@ -72,6 +73,40 @@ func (s *Service) zfsReplicaOnlyLastSuccess() int64 {
 		}
 	}
 	return newest
+}
+
+// ZFSReplicaOnlySuccessAmong is when the newest replica of the given items
+// that only replicate succeeded, the zero time for none. It is the part of a
+// ZFS round the schedule's due gate cannot see in the backup runs.
+func (s *Service) ZFSReplicaOnlySuccessAmong(ids []string) (time.Time, error) {
+	var newest int64
+	for _, id := range ids {
+		d, err := s.store.GetZFSDataset(id)
+		if err != nil {
+			return time.Time{}, err
+		}
+		if !s.zfsReplicaOnly(d) {
+			continue
+		}
+		at, err := s.store.LastZFSReplicaSuccess(id)
+		if err != nil {
+			return time.Time{}, err
+		}
+		newest = max(newest, at)
+	}
+	if newest == 0 {
+		return time.Time{}, nil
+	}
+	return time.Unix(newest, 0), nil
+}
+
+// zfsReplicaGate is ZFSReplicaOnlySuccessAmong for the due gate, nil for a
+// handler built without a service.
+func zfsReplicaGate(svc *Service) func([]string) (time.Time, error) {
+	if svc == nil {
+		return nil
+	}
+	return svc.ZFSReplicaOnlySuccessAmong
 }
 
 // zfsReplicaCoverage reports whether every enabled ZFS item has a current

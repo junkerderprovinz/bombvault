@@ -3346,6 +3346,14 @@ ALTER TABLE key_deposits_sent ADD COLUMN pending_held_digest TEXT NOT NULL DEFAU
   added_at INTEGER NOT NULL
 );`,
 	},
+	{
+		// The replica runs started before it went to an earlier target. A row
+		// from before keeps 0, so all its runs stay its own.
+		version:          replicaTargetSinceMigration,
+		name:             "zfs_datasets_replica_target_since",
+		alreadySatisfied: columnPresent("zfs_datasets", "replica_target_since"),
+		sql:              `ALTER TABLE zfs_datasets ADD COLUMN replica_target_since INTEGER NOT NULL DEFAULT 0;`,
+	},
 }
 
 // offsiteFieldDomains are the domains with an off-site field in the settings,
@@ -3582,6 +3590,10 @@ const depositPendingMigration = 451
 
 // vmRestartMigration numbers the record of the VMs a backup shut down.
 const vmRestartMigration = 460
+
+// replicaTargetSinceMigration numbers when a ZFS item's replica got its
+// current target.
+const replicaTargetSinceMigration = 470
 
 // oneLineColumns are the names and locations the recovery kit prints.
 var oneLineColumns = []struct {

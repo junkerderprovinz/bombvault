@@ -395,6 +395,13 @@ describe("the replica action of a ZFS entry", () => {
     expect(api.runZFSReplica).toHaveBeenCalledWith(ZFS_ID);
   });
 
+  it("is the only run action of an entry that only replicates", async () => {
+    vi.mocked(api.getZFSReplica).mockResolvedValue(replica({ only: true }));
+    await renderPage();
+    await corner().findByRole("button", { name: en["zfs.replica.replicateNow"] });
+    expect(corner().queryByRole("button", { name: en["containers.backupNow"] })).toBeNull();
+  });
+
   it("says why a run was refused", async () => {
     vi.mocked(api.getZFSReplica).mockResolvedValue(replica());
     vi.mocked(api.runZFSReplica).mockResolvedValue({ ok: false, code: "domain-off" });

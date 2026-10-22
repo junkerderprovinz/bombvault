@@ -55,6 +55,19 @@ func (h *replicaHost) Run(_ context.Context, args []string) (string, error) {
 	}
 	last := args[len(args)-1]
 	switch {
+	case args[1] == "set":
+		if owner, ok := strings.CutPrefix(args[2], zfs.SourceProperty+"="); ok {
+			h.owners[last] = owner
+		}
+		return "", nil
+	case slices.Contains(args, zfs.SourceProperty) && slices.Contains(args, "-r"):
+		var b strings.Builder
+		for name, owner := range h.owners {
+			if name == last || strings.HasPrefix(name, last+"/") {
+				fmt.Fprintf(&b, "%s\t%s\n", name, owner)
+			}
+		}
+		return b.String(), nil
 	case slices.Contains(args, zfs.SourceProperty):
 		owner, ok := h.owners[last]
 		if !ok {
@@ -361,6 +374,49 @@ func TestAFolderAnotherInstanceCreatedIsRefused(t *testing.T) {
 	}
 }
 
+func TestTakingOverTheFolderOfAnEarlierInstallLetsTheReplicaGoOn(t *testing.T) {
+	r := newReplicaRig(t)
+	base := "tank/bombvault-replica/bottich"
+	r.server.owners[base] = "before-the-reinstall"
+	r.server.owners[base+"/cache"] = "before-the-reinstall"
+	r.server.owners[base+"/cache/appdata"] = "before-the-reinstall"
+	r.server.owners["tank/bombvault-replica/other"] = "before-the-reinstall"
+	if err := r.s.ReplicateZFSDataset(context.Background(), r.item.ID); zfsReplicaCode(err) != "target-owned" {
+		t.Fatalf("run = %v, want target-owned", err)
+	}
+
+	_, m, _ := r.call(http.MethodPost, "/api/zfs/datasets/"+r.item.ID+"/replica/take-over", "")
+	if m["ok"] != true {
+		t.Fatalf("take-over = %v", m)
+	}
+	id := r.s.instanceID()
+	for _, ds := range []string{base, base + "/cache", base + "/cache/appdata"} {
+		if r.server.owners[ds] != id {
+			t.Errorf("%s is marked %q, want this instance", ds, r.server.owners[ds])
+		}
+	}
+	if r.server.owners["tank/bombvault-replica/other"] != "before-the-reinstall" {
+		t.Error("a folder beside this instance's changed hands")
+	}
+	if err := r.s.ReplicateZFSDataset(context.Background(), r.item.ID); err != nil {
+		t.Fatalf("the run after the take-over: %v", err)
+	}
+	if got := r.entries[0].Placeholders; !slices.Equal(got, []string{base + "/cache/appdata"}) {
+		t.Errorf("placeholders = %q, want the root that is ours again", got)
+	}
+}
+
+func TestTakingOverAFolderThatIsOursAlreadyChangesNothing(t *testing.T) {
+	r := newReplicaRig(t)
+	r.server.owners["tank/bombvault-replica/bottich"] = r.s.instanceID()
+	if err := r.s.TakeOverZFSReplicaFolder(context.Background(), r.item.ID); err != nil {
+		t.Fatal(err)
+	}
+	if sets := r.server.did("set"); len(sets) != 0 {
+		t.Errorf("the take-over wrote %q", sets)
+	}
+}
+
 func TestAnEmptyParentOfOurOwnIsHandedOnAsPlaceholder(t *testing.T) {
 	r := newReplicaRig(t)
 	id := r.s.instanceID()
@@ -461,6 +517,67 @@ func TestASuccessfulBackupStartsTheReplicaOnlyWhenItFollowsBackups(t *testing.T)
 	r.s.replica.work.Wait()
 	if len(r.entries) != 1 {
 		t.Error("a replica on its own cadence ran after a backup")
+	}
+}
+
+func TestTheReplicaSnapshotHoldsTheItemsContainersAndRunsItsCommands(t *testing.T) {
+	r := newReplicaRig(t)
+	dock := newZFSFakeDocker("db", "dumper")
+	r.s.docker = dock
+	if err := r.st.SetZFSDatasetStopContainers(r.item.ID, []string{"db"}); err != nil {
+		t.Fatal(err)
+	}
+	if err := r.st.SetZFSHooks(r.item.ID, "dumper", "dump", "clean"); err != nil {
+		t.Fatal(err)
+	}
+	var atSnapshot []string
+	r.result = func(e zfsrepl.Entry) (zfsrepl.Result, error) {
+		if e.Freeze == nil {
+			return zfsrepl.Result{}, errors.New("no freeze for an item that stops containers")
+		}
+		thaw, err := e.Freeze(context.Background())
+		if err != nil {
+			return zfsrepl.Result{}, err
+		}
+		atSnapshot = dock.recorded()
+		thaw()
+		return zfsrepl.Result{Snapshot: replicaSnap}, nil
+	}
+	if err := r.s.ReplicateZFSDataset(context.Background(), r.item.ID); err != nil {
+		t.Fatal(err)
+	}
+	acts := func(calls []string) []string {
+		return slices.DeleteFunc(calls, func(c string) bool { return strings.HasPrefix(c, "inspect:") })
+	}
+	if want := []string{"exec:id-dumper", "stop:db"}; !slices.Equal(acts(atSnapshot), want) {
+		t.Errorf("at the snapshot docker did %q, want %q", atSnapshot, want)
+	}
+	if want := []string{"exec:id-dumper", "stop:db", "start:db", "exec:id-dumper"}; !slices.Equal(acts(dock.recorded()), want) {
+		t.Errorf("docker did %q, want %q", dock.recorded(), want)
+	}
+	if dock.execCmds[0] != "sh -c dump" || dock.execCmds[1] != "sh -c clean" {
+		t.Errorf("commands = %q", dock.execCmds)
+	}
+}
+
+func TestAFailingPreCommandFailsTheReplicaBeforeItsSnapshot(t *testing.T) {
+	r := newReplicaRig(t)
+	dock := newZFSFakeDocker("dumper")
+	dock.execErr = errors.New("exit status 1")
+	r.s.docker = dock
+	if err := r.st.SetZFSHooks(r.item.ID, "dumper", "dump", ""); err != nil {
+		t.Fatal(err)
+	}
+	r.result = func(e zfsrepl.Entry) (zfsrepl.Result, error) {
+		_, err := e.Freeze(context.Background())
+		return zfsrepl.Result{}, err
+	}
+	err := r.s.ReplicateZFSDataset(context.Background(), r.item.ID)
+	if code := zfsReplicaCode(err); code != "pre-snapshot-failed" {
+		t.Fatalf("run = %v (%s), want pre-snapshot-failed", err, code)
+	}
+	if run := r.lastRun(); zfsRunCode(run.Error) != "pre-snapshot-failed" {
+		t.Errorf("run error = %q, want the code at its end", run.Error)
 	}
 }
 

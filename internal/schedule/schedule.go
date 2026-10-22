@@ -387,8 +387,10 @@ func FilesDueGate(st DomainGateStore) LastRunFunc {
 	}
 }
 
-// ZFSDueGate is the ZFS counterpart of FilesDueGate.
-func ZFSDueGate(st DomainGateStore) LastRunFunc {
+// ZFSDueGate is the ZFS counterpart of FilesDueGate. An item with no place to
+// back up to only sends its replica in the round, so replicated, when set,
+// says when the newest replica among such items succeeded.
+func ZFSDueGate(st DomainGateStore, replicated func(ids []string) (time.Time, error)) LastRunFunc {
 	return func() (time.Time, error) {
 		settings, err := st.GetSettings()
 		if err != nil {
@@ -404,7 +406,22 @@ func ZFSDueGate(st DomainGateStore) LastRunFunc {
 				ids = append(ids, d.ID)
 			}
 		}
-		return domainPassGate(st, "zfs", ids)
+		at, err := st.LastScheduleJobRun(store.ScheduleJobDomainPass("zfs"))
+		if err != nil || !at.IsZero() {
+			return at, err
+		}
+		last, err := st.LastSuccessfulBackupAmong(ids)
+		if err != nil || replicated == nil {
+			return last, err
+		}
+		rep, err := replicated(ids)
+		if err != nil {
+			return time.Time{}, fmt.Errorf("zfs due-gate: replicas: %w", err)
+		}
+		if rep.After(last) {
+			return rep, nil
+		}
+		return last, nil
 	}
 }
 

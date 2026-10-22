@@ -548,7 +548,7 @@ func run() error {
 	flashLastRun := schedule.LastRunFunc(st.LastSuccessfulFlashBackup)
 	configLastRun := schedule.LastRunFunc(st.LastSuccessfulConfigBackup)
 	filesLastRun := schedule.FilesDueGate(st)
-	zfsLastRun := schedule.ZFSDueGate(st)
+	zfsLastRun := schedule.ZFSDueGate(st, svc.ZFSReplicaOnlySuccessAmong)
 	everythingLastRun := schedule.LastRunFunc(st.LastEverythingPass)
 
 	if settings, sErr := st.GetSettings(); sErr == nil {

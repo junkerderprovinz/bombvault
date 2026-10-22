@@ -67,11 +67,34 @@ type sectionPlace struct {
 
 func (pl sectionPlace) own() bool { return pl.target == nil }
 
+// source names the place the way a snapshot listing asks for it.
+func (pl sectionPlace) source() string {
+	if pl.own() {
+		return "local"
+	}
+	return offsiteSourcePrefix + pl.target.ID
+}
+
 // sectionPlaces is where a backup of a section without placement goes: the
 // repository in its own folder, own, or while that folder is switched off the
 // repository of every target of the section that is switched on, each opened
 // with that target's credentials. A section with neither has no place.
 func (s *Service) sectionPlaces(settings store.Settings, domain, own string) ([]sectionPlace, error) {
+	if domain == zfsDomain {
+		only, err := s.store.ZFSReplicaOnly()
+		if err != nil {
+			return nil, err
+		}
+		if only {
+			return nil, ErrNoPlace
+		}
+	}
+	return s.sectionPlacesSwitchedOn(settings, domain, own)
+}
+
+// sectionPlacesSwitchedOn is sectionPlaces by the switches of the places
+// alone, which is also where a section's backups so far went.
+func (s *Service) sectionPlacesSwitchedOn(settings store.Settings, domain, own string) ([]sectionPlace, error) {
 	off, err := s.localOff(domain)
 	if err != nil {
 		return nil, err
@@ -207,6 +230,13 @@ func (s *Service) placelessSections() (placeless, error) {
 		if d.Home == store.HomeNowhere {
 			out[d.Domain] = true
 		}
+	}
+	only, err := s.store.ZFSReplicaOnly()
+	if err != nil {
+		return nil, err
+	}
+	if only {
+		out[zfsDomain] = true
 	}
 	off, err := s.store.LocalOff()
 	if err != nil {

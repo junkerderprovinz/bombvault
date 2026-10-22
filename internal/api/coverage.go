@@ -387,7 +387,11 @@ func (s *Service) coverZFSDatasets(settings store.Settings, declined declinedBac
 			continue
 		}
 		out.Total++
-		if eff.Kind == schedule.EffectiveNone {
+		// A replica on a plan of its own is what protects an item with no
+		// place to back up to, whether or not a backup schedule is set.
+		replicaOnly := s.zfsReplicaOnly(d)
+		replicaPlan := replicaOnly && schedule.ZFSReplicaOwnSchedule(d, settings)
+		if eff.Kind == schedule.EffectiveNone && !replicaPlan {
 			out.Unprotected = append(out.Unprotected, CoverageItem{
 				Name:          d.Dataset,
 				Reason:        reasonFor(d.Enabled, d.ScheduleCadence, settings.PerItemSchedules),
@@ -399,7 +403,7 @@ func (s *Service) coverZFSDatasets(settings store.Settings, declined declinedBac
 			out.Unprotected = append(out.Unprotected, CoverageItem{Name: d.Dataset, Reason: CoverageNoPlace, NeverBackedUp: s.neverBackedUp(d.ID)})
 			continue
 		}
-		if s.zfsReplicaOnly(d) {
+		if replicaOnly {
 			out.count(!s.zfsReplicated(d.ID))
 			continue
 		}

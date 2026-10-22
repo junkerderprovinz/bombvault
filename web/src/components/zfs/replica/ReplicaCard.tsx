@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 
-import { listOffsiteTargets, patchZFSReplica, setSectionLocal, updateOffsiteTarget } from "../../../lib/api";
+import { patchZFSReplica, setZFSReplicaOnly, takeOverZFSReplicaFolder } from "../../../lib/api";
 import type {
   ZFSPeerState,
   ZFSReplica,
@@ -11,13 +11,13 @@ import type {
 import { humanBytes } from "../../../lib/forecast";
 import { useT, type TranslationKey } from "../../../lib/i18n";
 import { formatDuration, relativeTime } from "../../../lib/reltime";
+import { useConfirm } from "../../../lib/useConfirm";
 import { useDebouncedSave } from "../../../lib/useDebouncedSave";
 import { useToast } from "../../../lib/toast";
 import { zfsCodeSentence } from "../../../lib/zfsCodes";
 import { Badge } from "../../Badge";
 import { Button } from "../../Button";
 import { CadenceBuilder, EXACT_CADENCE_MODES } from "../../CadenceBuilder";
-import { offsiteTargetsChanged } from "../../../lib/useOffsiteTargets";
 import { InfoBubble } from "../../InfoBubble";
 import { SelectField } from "../../SelectField";
 import { Selector } from "../../Selector";
@@ -81,6 +81,7 @@ export function ReplicaCard({ itemId, name }: { itemId: string; name: string }) 
   const { replica, reload, running, shownName } = useReplicateNow(itemId, name);
   const { servers, reload: reloadServers } = useReplicaServers();
   const group = useGroup();
+  const { confirm, confirmDialog } = useConfirm();
   const [draft, setDraft] = useState<ZFSReplicaPatch>({});
   const [adding, setAdding] = useState(false);
   const { debouncedSave } = useDebouncedSave();
@@ -146,21 +147,31 @@ export function ReplicaCard({ itemId, name }: { itemId: string; name: string }) 
     }
   }
 
-  // The ZFS section has no place to back up to while its own folder and every
-  // off-site target are off, and a run then only sends the replica.
+  // While the ZFS section takes no backups a run only sends the replica.
   async function setReplicaOnly(on: boolean) {
     try {
-      const local = await setSectionLocal("zfs", !on);
-      if (!local.ok) throw new Error(local.error ?? t("settings.error"));
-      if (on) {
-        const listed = await listOffsiteTargets("zfs");
-        for (const target of listed.targets ?? []) {
-          if (!target.enabled) continue;
-          const res = await updateOffsiteTarget(target.id, { ...target, enabled: false });
-          if (!res.ok) throw new Error(res.error ?? t("settings.error"));
-        }
-        offsiteTargetsChanged();
+      const res = await setZFSReplicaOnly(on);
+      if (!res.ok) throw new Error(res.error ?? t("settings.error"));
+    } catch (err) {
+      push(err instanceof Error ? err.message : t("settings.error"), "fail");
+    } finally {
+      reload();
+    }
+  }
+
+  // The folder carries the instance id of an earlier install of this
+  // BombVault, which a fresh database does not have any more.
+  async function takeOver() {
+    if (!(await confirm(t("zfs.replica.takeOverConfirm").replace("{server}", () => shownName), { confirmKey: "zfs.replica.takeOver" }))) {
+      return;
+    }
+    try {
+      const res = await takeOverZFSReplicaFolder(itemId);
+      if (!res.ok) {
+        push(res.code ? zfsCodeSentence(t, res.code) : (res.error ?? t("settings.error")), "fail");
+        return;
       }
+      push(t("zfs.replica.takenOver").replace("{server}", () => shownName), "success");
     } catch (err) {
       push(err instanceof Error ? err.message : t("settings.error"), "fail");
     } finally {
@@ -193,6 +204,7 @@ export function ReplicaCard({ itemId, name }: { itemId: string; name: string }) 
 
   return (
     <div className="relative glim-notch-card flex flex-col gap-4 rounded-card bg-carbon-surface p-4">
+      {confirmDialog}
       <h3 className="flex items-center">
         <Badge tone="heading" size="heading" wrap>
           {t("zfs.replica.title")}
@@ -237,6 +249,15 @@ export function ReplicaCard({ itemId, name }: { itemId: string; name: string }) 
               onClick={() => void askAgain()}
             />
           )}
+        </div>
+      )}
+
+      {view.target.kind === "server" && view.state === "failed" && view.code === "target-owned" && (
+        <div className="flex items-center gap-3 flex-wrap">
+          <p className="flex-1 min-w-0 text-xs text-carbon-textSub">
+            {`${t("zfs.code.target-owned")} ${t("zfs.replica.takeOverText")}`}
+          </p>
+          <Button label={t("zfs.replica.takeOver")} labelKey="zfs.replica.takeOver" tone="neutral" onClick={() => void takeOver()} />
         </div>
       )}
 

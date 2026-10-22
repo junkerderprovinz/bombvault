@@ -50,6 +50,12 @@ func TestSSHArgsCarryRequiredOptions(t *testing.T) {
 		t.Errorf("sshArgs does not pass our own key: %v", args)
 	}
 
+	// The client's order decides the cipher, and every hop of a replica stream
+	// is one of these sessions.
+	if !strings.Contains(joined, "Ciphers=aes128-gcm@openssh.com,") {
+		t.Errorf("sshArgs does not offer AES-GCM first: %v", args)
+	}
+
 	// ssh reads anything after the destination as the remote command.
 	if got := args[len(args)-1]; got != "root@nas.local" {
 		t.Errorf("last arg = %q, want the destination", got)

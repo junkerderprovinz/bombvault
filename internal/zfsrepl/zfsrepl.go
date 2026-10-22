@@ -52,6 +52,11 @@ type Entry struct {
 	// keeps every one.
 	Keep store.RetentionKeep
 	Now  func() time.Time
+	// Freeze, when set, readies the source for the replica snapshot, such as
+	// stopping the containers that write to it. Run calls the thaw it returns
+	// once the snapshot is taken or has failed. A Freeze that fails ends the
+	// run before the snapshot, with its error as the run's.
+	Freeze func(ctx context.Context) (thaw func(), err error)
 	// Progress hears how many bytes of a member's stream crossed so far, and
 	// the estimate of its size, which is 0 when the estimate failed. It is
 	// called from the goroutine that feeds the receive.
