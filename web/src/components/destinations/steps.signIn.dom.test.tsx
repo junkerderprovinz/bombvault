@@ -68,3 +68,20 @@ it("hides the key fields while a saved sign-in is picked", async () => {
   expect(picker.textContent).not.toContain("Wasabi");
   expect(screen.getByText("Signs in as: backup")).toBeTruthy();
 });
+
+it("tells how to bring the two-factor sign-in iCloud Drive needs", async () => {
+  const icloud = {
+    ...draft("", vi.fn()),
+    picked: { id: "icloud", name: "iCloud Drive", route: "rclone", group: "cloud", backend: "iclouddrive", auth: "trusttoken" } as Provider,
+    fields: { main: [plain("apple_id"), plain("password", true), plain("trust_token", true), plain("cookies")], more: [] },
+  };
+  await act(async () => {
+    render(
+      <I18nProvider>
+        <SignInBody draft={icloud} providerLabel="iCloud Drive" />
+      </I18nProvider>
+    );
+  });
+  expect(screen.getByText(/trust_token and cookies/)).toBeTruthy();
+  expect(screen.getByText("rclone config")).toBeTruthy();
+});

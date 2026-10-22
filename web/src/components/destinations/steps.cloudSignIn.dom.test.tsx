@@ -64,11 +64,6 @@ it("sends Jottacloud to its login token page instead of rclone authorize", async
   expect(screen.getByRole("link", { name: "https://www.jottacloud.com/web/secure" })).toBeTruthy();
 });
 
-it("says how iCloud Drive gets its trust token", async () => {
-  await show(draft(cloud("icloud", "iclouddrive", "login")));
-  expect(screen.getByText(/copy trust_token and cookies/)).toBeTruthy();
-});
-
 it("lets the drive rclone's setup asks about be picked", async () => {
   const setSetting = vi.fn();
   const question = { name: "config_driveid", choices: [{ value: "a", help: "OneDrive (personal)" }, { value: "b", help: "Team (business)" }] };

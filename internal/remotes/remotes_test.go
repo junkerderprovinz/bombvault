@@ -98,6 +98,38 @@ func TestEndpointExamplesKeepTheirProvider(t *testing.T) {
 	t.Fatal("s3 has no endpoint option")
 }
 
+func TestEveryS3ServiceIsAskedForItsEndpoint(t *testing.T) {
+	s3 := fixture(t)["s3"]
+	i := slices.IndexFunc(s3.Options, func(o Option) bool { return o.Name == "endpoint" })
+	if i < 0 {
+		t.Fatal("s3 has no endpoint option")
+	}
+	endpoint := s3.Options[i]
+	for _, p := range providers {
+		if p.Route != RouteS3 {
+			continue
+		}
+		if len(endpoint.Providers) > 0 && !slices.Contains(endpoint.Providers, p.Preset["provider"]) {
+			t.Errorf("%s: the form has no endpoint field, and restic cannot reach the service without one", p.ID)
+		}
+	}
+}
+
+func TestICloudAsksForTheSessionOfATwoFactorSignIn(t *testing.T) {
+	p, ok := FindProvider("icloud")
+	if !ok {
+		t.Fatal("no iCloud provider")
+	}
+	if p.Auth != AuthTrustToken {
+		t.Fatalf("iCloud signs in by %q, want the trust token of a sign-in done in rclone config", p.Auth)
+	}
+	for _, o := range fixture(t)["iclouddrive"].Options {
+		if (o.Name == "trust_token" || o.Name == "cookies") && !o.Essential {
+			t.Errorf("%s is not asked for, and rclone does not sign in to iCloud without it", o.Name)
+		}
+	}
+}
+
 func TestLastErrorKeepsRclonesOwnSentence(t *testing.T) {
 	for _, c := range []struct{ stderr, want string }{
 		{"2026/10/05 00:10:01 NOTICE: something\n2026/10/05 00:10:02 ERROR : error listing: 401 Unauthorized\n", "error listing: 401 Unauthorized"},

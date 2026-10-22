@@ -159,18 +159,16 @@ func (s *Service) editSignInConnection(ctx context.Context, d store.OffsiteTarge
 		}
 	}
 
-	shared, err := s.signInSharedBeyond(before, d)
+	own, err := s.ownsSignIn(before, d, creds)
 	switch {
 	case err != nil:
 		return store.OffsiteTarget{}, nil, err
-	case d.CredsRef != "" && creds == was:
-		// An unchanged sign-in needs no write, and a shared one no copy.
-	case shared:
-		// Only this destination's repositories were tried with the change, so
-		// the others keep the sign-in as it was.
+	case !own:
 		if d.CredsRef, err = s.addCredSet(d.Name, creds); err != nil {
 			return store.OffsiteTarget{}, nil, err
 		}
+	case creds == was:
+		// An unchanged sign-in needs no write.
 	default:
 		if err := s.editCloudCredSets(func(sets []CloudCredSet) []CloudCredSet {
 			for i := range sets {
@@ -192,21 +190,29 @@ func (s *Service) editSignInConnection(ctx context.Context, d store.OffsiteTarge
 	return saved, warnings, nil
 }
 
-// signInSharedBeyond reports whether the sign-in of d is used by more than d
-// and its domain targets. The default is: every place that names no sign-in
-// signs in with it.
-func (s *Service) signInSharedBeyond(settings store.Settings, d store.OffsiteTarget) (bool, error) {
+// ownsSignIn reports whether creds may be written into the saved sign-in d
+// names. Only d's own repositories were tried with them, so when the default
+// or anything else uses that sign-in, or it is gone, d gets one of its own.
+func (s *Service) ownsSignIn(settings store.Settings, d store.OffsiteTarget, creds CloudCreds) (bool, error) {
 	if d.CredsRef == "" {
-		return true, nil
+		return false, nil
 	}
 	sets, err := s.decodeCloudCredSets(settings)
 	if err != nil {
 		return false, err
 	}
-	if i := slices.IndexFunc(sets, func(c CloudCredSet) bool { return c.ID == d.CredsRef }); i >= 0 && sets[i].Default {
+	i := slices.IndexFunc(sets, func(c CloudCredSet) bool { return c.ID == d.CredsRef })
+	if i < 0 {
+		return false, nil
+	}
+	if sets[i].CloudCreds == creds {
 		return true, nil
 	}
-	return s.store.CredsRefSharedBeyond(d.CredsRef, d.ID)
+	if sets[i].Default {
+		return false, nil
+	}
+	named, err := s.store.CredsRefNamedBeyond(d.CredsRef, d.ID)
+	return !named, err
 }
 
 // patched returns the value a patch sets for key, or stored when the patch

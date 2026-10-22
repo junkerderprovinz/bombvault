@@ -42,14 +42,6 @@ func TestTheFormOffersASharedDriveAndTheShareFileAddress(t *testing.T) {
 	}
 }
 
-func TestICloudAsksForTheTrustTokenItCannotWorkWithout(t *testing.T) {
-	for _, o := range fixture(t)["iclouddrive"].Options {
-		if (o.Name == "trust_token" || o.Name == "cookies") && !o.Essential {
-			t.Errorf("%s is not among the fields everybody fills in", o.Name)
-		}
-	}
-}
-
 func TestOnlyTheBackendsWhoseSetupAFormCannotSkipWaitForIt(t *testing.T) {
 	cases := []struct {
 		draft Draft

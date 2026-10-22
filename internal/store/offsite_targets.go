@@ -779,17 +779,21 @@ func (r *Repo) CredsRefsInUse() (map[string]bool, error) {
 	return out, rows.Err()
 }
 
-// CredsRefSharedBeyond reports whether a row other than the destination
-// destID and its domain targets names the credential set ref.
-func (r *Repo) CredsRefSharedBeyond(ref, destID string) (bool, error) {
-	var n int
-	err := r.db.QueryRow(`SELECT
-		  (SELECT COUNT(*) FROM offsite_targets WHERE creds_ref = ? AND id <> ? AND destination_id <> ?)
-		+ (SELECT COUNT(*) FROM pull_sources WHERE creds_ref = ?)`, ref, destID, destID, ref).Scan(&n)
+// CredsRefNamedBeyond reports whether a row other than the destination
+// destID, its domain targets and their direct repositories, or a pull source,
+// names the credential set ref.
+func (r *Repo) CredsRefNamedBeyond(ref, destID string) (bool, error) {
+	var named bool
+	err := r.db.QueryRow(`SELECT EXISTS (
+		SELECT 1 FROM offsite_targets
+		WHERE creds_ref = ? AND id <> ? AND destination_id <> ?
+		  AND (companion_of = '' OR companion_of NOT IN (SELECT id FROM offsite_targets WHERE destination_id = ?))
+		UNION ALL SELECT 1 FROM pull_sources WHERE creds_ref = ?)`,
+		ref, destID, destID, destID, ref).Scan(&named)
 	if err != nil {
-		return false, fmt.Errorf("CredsRefSharedBeyond: %w", err)
+		return false, fmt.Errorf("CredsRefNamedBeyond: %w", err)
 	}
-	return n > 0, nil
+	return named, nil
 }
 
 // ConnectCompanion makes a named repository the direct repository of a target:

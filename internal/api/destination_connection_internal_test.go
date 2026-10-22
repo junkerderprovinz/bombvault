@@ -410,3 +410,97 @@ func TestAConnectionEditCannotMoveADestinationOntoAHomeOrAnotherDestination(t *t
 		t.Fatalf("the refused edit moved the destination to %q", got.Repo)
 	}
 }
+
+// secondRestDestination saves another rest-server destination that signs in
+// with the saved sign-in ref.
+func secondRestDestination(t *testing.T, svc *Service, ref string) store.OffsiteTarget {
+	t.Helper()
+	d, err := svc.SaveNewDestination(context.Background(), draftRequest{
+		Provider: "rest", Name: "Other box", CredsRef: ref, Settings: map[string]string{"url": "https://other:8000/bv"},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	return d
+}
+
+func TestANewPasswordForASharedSignInStaysWithTheDestinationItWasTypedFor(t *testing.T) {
+	svc, st, _ := newConnectionSvc(t, opensWithPassword("new"))
+	a, _ := restDestination(t, svc, st, "vms")
+	b := secondRestDestination(t, svc, a.CredsRef)
+
+	saved, _, err := svc.EditDestinationConnection(context.Background(), a.ID, connectionEdit{Settings: map[string]string{"pass": "new"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if saved.CredsRef == a.CredsRef {
+		t.Fatal("the changed destination still names the sign-in it shares")
+	}
+	if got := signInOf(t, svc, saved); got.RESTPassword != "new" || got.RESTUser != "bv" {
+		t.Fatalf("changed destination signs in with %+v, want the new password", got)
+	}
+	if got := signInOf(t, svc, b); got.RESTPassword != "old" {
+		t.Fatalf("the other destination signs in with %q, want the password nothing tested away", got.RESTPassword)
+	}
+	targets, err := st.DestinationTargets(a.ID)
+	if err != nil || len(targets) != 1 || targets[0].CredsRef != saved.CredsRef {
+		t.Fatalf("targets = %+v, %v, want the vms target on the new sign-in", targets, err)
+	}
+}
+
+func TestAPasswordForTheDefaultSignInLeavesTheDefaultAsItWas(t *testing.T) {
+	svc, st, _ := newConnectionSvc(t, opensWithPassword("new"))
+	a, _ := restDestination(t, svc, st, "vms")
+	if err := svc.MakeDefaultSignIn(a.CredsRef); err != nil {
+		t.Fatal(err)
+	}
+
+	saved, _, err := svc.EditDestinationConnection(context.Background(), a.ID, connectionEdit{Settings: map[string]string{"pass": "new"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if got := signInOf(t, svc, store.OffsiteTarget{}); got.RESTPassword != "old" {
+		t.Fatalf("the default sign-in took %q, want it unchanged", got.RESTPassword)
+	}
+	if saved.CredsRef == a.CredsRef || signInOf(t, svc, saved).RESTPassword != "new" {
+		t.Fatalf("destination = %+v, want a sign-in of its own with the new password", saved)
+	}
+}
+
+func TestASignInOnlyOneDestinationUsesIsChangedWhereItIs(t *testing.T) {
+	svc, st, _ := newConnectionSvc(t, opensWithPassword("new"))
+	a, _ := restDestination(t, svc, st, "vms")
+
+	saved, _, err := svc.EditDestinationConnection(context.Background(), a.ID, connectionEdit{Settings: map[string]string{"pass": "new"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if saved.CredsRef != a.CredsRef {
+		t.Fatalf("sign-in = %q, want %q changed in place", saved.CredsRef, a.CredsRef)
+	}
+}
+
+func TestANewPasswordForADestinationWhoseSignInIsGoneIsKept(t *testing.T) {
+	svc, st, _ := newConnectionSvc(t, opensWithPassword("new"))
+	a, _ := restDestination(t, svc, st, "vms")
+	a.CredsRef = "gone"
+	if _, err := st.SaveDestination(a); err != nil {
+		t.Fatal(err)
+	}
+
+	saved, _, err := svc.EditDestinationConnection(context.Background(), a.ID, connectionEdit{Settings: map[string]string{"user": "bv", "pass": "new"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	settings, err := svc.store.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, err := svc.savedSignIn(settings, saved.CredsRef); err != nil || got.RESTPassword != "new" {
+		t.Fatalf("sign-in %q = %+v, %v, want one that holds the new password", saved.CredsRef, got, err)
+	}
+}

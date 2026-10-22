@@ -18472,7 +18472,7 @@ func (s *Service) RcloneSections(ctx context.Context) ([]remotes.Section, error)
 
 // decodeRcloneConf returns the decrypted rclone config text stored in settings
 // (an empty/blank rclone_conf yields "", no error). Unlike RcloneRemotes it keeps
-// the full contents — used by the recovery kit, which needs the remote secrets.
+// the full contents: the recovery kit needs the remote secrets.
 func (s *Service) decodeRcloneConf(settings store.Settings) (string, error) {
 	if strings.TrimSpace(settings.RcloneConf) == "" {
 		return "", nil

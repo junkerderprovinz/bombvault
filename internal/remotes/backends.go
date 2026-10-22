@@ -171,7 +171,9 @@ func toOption(backend string, o rcloneOption) Option {
 		Type:      o.Type,
 		Default:   defaultText(o.DefaultStr),
 	}
-	if o.Provider != "" {
+	// restic's S3 backend needs the host of every service but AWS, also where
+	// rclone's interactive setup looks it up, as it does for IDrive e2.
+	if o.Provider != "" && (backend != "s3" || o.Name != "endpoint") {
 		out.Providers = strings.Split(o.Provider, ",")
 	}
 	if !secret {

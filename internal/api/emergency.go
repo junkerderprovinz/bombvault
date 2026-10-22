@@ -636,6 +636,10 @@ func (s *Service) StoreEmergencySignIns(ctx context.Context, id string, replace 
 	if (replaces.CloudSignIn || replaces.RcloneConfig) && !replace {
 		return errSignInsExist
 	}
+	// The copy kept for an undo has to hold the tokens rclone refreshed.
+	if err := s.WriteRcloneConfFile(); err != nil {
+		return err
+	}
 	settings, err := s.store.GetSettings()
 	if err != nil {
 		return err

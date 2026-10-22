@@ -340,6 +340,34 @@ func TestAWizardSignsInWithASavedSignInItNames(t *testing.T) {
 	}
 }
 
+func TestAWizardRefusesARegionTheSavedSignInDoesNotSignFor(t *testing.T) {
+	s := unraidNotifyService(t, nil)
+	if err := s.SetCloudCredSets([]CloudCredSet{{ID: "aws", Name: "AWS", CloudCreds: CloudCreds{S3KeyID: "K", S3Secret: "S", S3Region: "eu-central-1"}}}); err != nil {
+		t.Fatal(err)
+	}
+	other := draftRequest{Provider: "aws", CredsRef: "aws", Dir: "bucket", Settings: map[string]string{"region": "us-east-1"}}
+	if err := s.signInFromSaved(&other); err == nil || !strings.Contains(err.Error(), "eu-central-1") {
+		t.Fatalf("a region the sign-in does not sign for = %v, want a refusal naming the sign-in's region", err)
+	}
+
+	for _, typed := range []string{"", "eu-central-1"} {
+		req := draftRequest{Provider: "aws", CredsRef: "aws", Dir: "bucket", Settings: map[string]string{"region": typed}}
+		if err := s.signInFromSaved(&req); err != nil {
+			t.Fatalf("region %q: %v", typed, err)
+		}
+		d, err := s.SaveNewDestination(t.Context(), req)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if d.Repo != "s3:https://s3.eu-central-1.amazonaws.com/bucket" {
+			t.Fatalf("region %q: location = %q, want the host of the sign-in's region", typed, d.Repo)
+		}
+		if err := s.store.DeleteDestinationIfUnused(d.ID); err != nil {
+			t.Fatal(err)
+		}
+	}
+}
+
 func TestMakingASignInTheDefaultMovesTheMarkAndTheRuns(t *testing.T) {
 	s := unraidNotifyService(t, nil)
 	if err := s.SetCloudCredSets([]CloudCredSet{

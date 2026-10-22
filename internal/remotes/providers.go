@@ -115,6 +115,11 @@ const (
 	// AuthSSHKey is BombVault's own SSH key, put into the server's authorized
 	// keys once.
 	AuthSSHKey AuthStyle = "sshkey"
+	// AuthTrustToken is the login password plus the session of a two-factor
+	// sign-in that only rclone config can run, done on another machine and
+	// pasted in as a trust token and cookies. iCloud Drive ends that session
+	// after 30 days.
+	AuthTrustToken AuthStyle = "trusttoken"
 )
 
 func s3(id, name, provider, mark string, lock bool) Provider {
@@ -237,7 +242,7 @@ var providers = []Provider{
 	cloud("linkbox", "Linkbox", "linkbox", "IconLinkbox", AuthAPIKey),
 	cloud("pixeldrain", "Pixeldrain", "pixeldrain", "IconPixeldrain", AuthAPIKey),
 	cloud("koofr", "Koofr", "koofr", "IconKoofr", AuthAppPassword),
-	cloud("icloud", "iCloud Drive", "iclouddrive", "IconICloud", AuthLogin),
+	cloud("icloud", "iCloud Drive", "iclouddrive", "IconICloud", AuthTrustToken),
 	cloud("fichier", "1Fichier", "fichier", "fichier", AuthAPIKey),
 	cloud("filefabric", "Enterprise File Fabric", "filefabric", "", AuthToken),
 	cloud("filelu", "FileLu", "filelu", "filelu", AuthAPIKey),

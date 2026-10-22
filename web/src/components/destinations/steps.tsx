@@ -253,9 +253,6 @@ export function SignInBody({ draft, providerLabel }: { draft: DestinationDraftSt
       <div className={`rounded-card px-3 py-2 text-xs leading-relaxed ${note.tone === "warn" ? "bg-statusWarnBg text-statusWarn" : "bg-statusOkBg text-statusOk"}`}>
         {note.text}
       </div>
-      {picked.id === "icloud" && (
-        <div className="rounded-card bg-statusWarnBg px-3 py-2 text-xs leading-relaxed text-statusWarn">{t("dest.note.icloud")}</div>
-      )}
       {picked.auth === "token" && (
         <div className="flex flex-col gap-1">
           <span className="flex items-center gap-1.5 text-xs text-carbon-textSub">
@@ -274,6 +271,15 @@ export function SignInBody({ draft, providerLabel }: { draft: DestinationDraftSt
           <a href={LOGIN_TOKEN_PAGES[picked.id]} target="_blank" rel="noreferrer noopener" className="text-xs underline" dir="ltr">
             {LOGIN_TOKEN_PAGES[picked.id]}
           </a>
+        </div>
+      )}
+      {picked.auth === "trusttoken" && (
+        <div className="flex flex-col gap-1">
+          <span className="flex items-center gap-1.5 text-xs text-statusWarn">
+            {t("dest.trustToken.run")}
+            <InfoBubble tip={t("dest.trustToken.tip").replace("{change}", () => t("storage.conn.change"))} />
+          </span>
+          <CopyBlock text="rclone config" />
         </div>
       )}
       {picked.auth === "sshkey" && draft.publicKey && (
