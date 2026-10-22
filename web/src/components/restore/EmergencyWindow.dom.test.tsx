@@ -984,7 +984,7 @@ describe("the selection", () => {
     await open("selection");
     fireEvent.click(button(en["recovery.restoreAndImport"]));
     await act(() => vi.advanceTimersByTimeAsync(10_000));
-    expect(restore.mock.calls[0]).toEqual(["immich_postgres", "latest", true, undefined, undefined, false]);
+    expect(restore.mock.calls[0]).toEqual(["immich_postgres", "definition", true, undefined, undefined, false]);
     expect(importDbDump.mock.calls[0]).toEqual(["immich_postgres", "d1"]);
     expect(screen.getByText(en["dbdump.importDone"])).toBeTruthy();
   });

@@ -1,5 +1,5 @@
 import { useRef } from "react";
-import { restore } from "../../lib/api";
+import { DEFINITION_ONLY, restore } from "../../lib/api";
 import { useBackupWatch } from "../../lib/backupWatch";
 import type { useT } from "../../lib/i18n";
 import { anyActive, busyPhraseKey, useProgress } from "../../lib/progress";
@@ -13,8 +13,8 @@ type T = ReturnType<typeof useT>["t"];
 
 /**
  * RecreateButton recreates a container that is not installed from its saved
- * definition, since a config-only backup has no snapshot to restore. The
- * server turns a restore of "latest" into a recreate.
+ * definition, without any of its data, since a config-only backup has no
+ * snapshot to restore.
  */
 export function RecreateButton({ name, source, t }: { name: string; source: string; t: T }) {
   const cancelledRef = useRef(false);
@@ -22,7 +22,7 @@ export function RecreateButton({ name, source, t }: { name: string; source: stri
   const { state, fire, isPending } = useBackupWatch({
     progressKey: `container:${name}`,
     kind: "restore",
-    start: () => restore(name, "latest", true, source, false, withoutRuntimeRef.current),
+    start: () => restore(name, DEFINITION_ONLY, true, source, false, withoutRuntimeRef.current),
     matchRun: (r) => r.domain === "container" && r.target === name,
     cancelledRef,
   });
@@ -31,7 +31,7 @@ export function RecreateButton({ name, source, t }: { name: string; source: stri
   const running = anyActive(progressMap);
   const blockedByOther = running.active && !isPending;
   const { confirm, confirmDialog } = useConfirm();
-  const check = useRestoreCheck({ kind: "container", name, snapshotId: "latest", source });
+  const check = useRestoreCheck({ kind: "container", name, snapshotId: DEFINITION_ONLY, source });
   const idle = isPending || state.phase === "success";
   async function handle() {
     if (!(await confirm(t("snapshots.recreateConfirm")))) return;

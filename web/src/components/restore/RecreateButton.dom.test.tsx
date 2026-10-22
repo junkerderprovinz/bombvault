@@ -97,7 +97,7 @@ it("recreates again without the GPU and runtime when asked", async () => {
     fireEvent.click(retry);
   });
   await waitFor(() => expect(restore).toHaveBeenCalledTimes(2));
-  expect(restore.mock.calls[1]).toEqual(["plex", "latest", true, "local", false, true]);
+  expect(restore.mock.calls[1]).toEqual(["plex", "definition", true, "local", false, true]);
   expect(
     await screen.findByText(en["restore.withoutRuntimeDone"].replace("{name}", "plex"), undefined, { timeout: 8000 }),
   ).toBeTruthy();

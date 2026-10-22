@@ -8052,6 +8052,10 @@ func (s *Service) DiscoverVMs(ctx context.Context, dryRun bool) (DiscoverResult,
 	return res, readErr
 }
 
+// definitionOnly is the snapshot a restore asks for when it recreates a
+// container from its stored definition and restores no data.
+const definitionOnly = "definition"
+
 // containerRestorePlan carries everything prepareRestore validated and resolved
 // so the long-running execution can run detached from the request that asked
 // for it (StartRestore) while the sync Restore path keeps identical behaviour.
@@ -8113,7 +8117,7 @@ func (s *Service) prepareRestore(ctx context.Context, name, snapshotID string, c
 	if !validResourceName(name) {
 		return containerRestorePlan{}, errors.New("invalid container name")
 	}
-	if snapshotID != "latest" && snapshotID != "" && !backup.ValidSnapshotID(snapshotID) {
+	if snapshotID != "latest" && snapshotID != "" && snapshotID != definitionOnly && !backup.ValidSnapshotID(snapshotID) {
 		return containerRestorePlan{}, backup.ErrInvalidSnapshotID
 	}
 	settings, err := s.store.GetSettings()
@@ -8146,8 +8150,8 @@ func (s *Service) prepareRestoreIn(ctx context.Context, ref repoRef, name, snaps
 	}
 	// An explicit snapshot id must be well-formed hex. The orchestrator re-checks
 	// this, but guarding here makes a bad id fail synchronously (fail-fast for the
-	// async StartRestore path). "latest"/"" resolve below.
-	explicitID := snapshotID != "latest" && snapshotID != ""
+	// async StartRestore path). "latest"/"" and definitionOnly resolve below.
+	explicitID := snapshotID != "latest" && snapshotID != "" && snapshotID != definitionOnly
 	if explicitID && !backup.ValidSnapshotID(snapshotID) {
 		return containerRestorePlan{}, backup.ErrInvalidSnapshotID
 	}
@@ -8179,32 +8183,46 @@ func (s *Service) prepareRestoreIn(ctx context.Context, ref repoRef, name, snaps
 // tag, since this instance's rename history says nothing about a foreign
 // repository.
 func (s *Service) prepareRestoreForTarget(ctx context.Context, ref repoRef, name, snapshotID string, tg store.Target, id entryIdentity, destBase string, overwrite bool) (containerRestorePlan, error) {
-	explicitID := snapshotID != "latest" && snapshotID != ""
+	explicitID := snapshotID != "latest" && snapshotID != "" && snapshotID != definitionOnly
 
 	// "latest" (or empty) resolves to the container's newest snapshot, as the
 	// bulk "restore selected" action needs; restic returns snapshots oldest
 	// first. A definition-only backup (stateless container with no restic
-	// snapshot) is recreated from the stored definition instead. An explicit id
-	// must be one id owns, the same access check the file and to-path restores
-	// make, listed against the caller's repo ref rather than the settings repo.
-	recreateOnly := false
-	snaps, snapErr := s.snapshotsOwnedBy(ctx, ref.repo, ref.mode, id)
-	if snapErr != nil {
-		return containerRestorePlan{}, snapErr
+	// snapshot) is recreated from the stored definition instead. A container
+	// with backup paths and no snapshot here has its data in another place, and
+	// recreating it would bring it up empty while the run says restored. An
+	// explicit id must be one id owns, the same access check the file and
+	// to-path restores make, listed against the caller's repo ref rather than
+	// the settings repo.
+	recreateOnly := snapshotID == definitionOnly
+	var snaps []restic.Snapshot
+	switch {
+	case recreateOnly:
+		if tg.Definition == "" {
+			return containerRestorePlan{}, errors.New("no stored definition to recreate this container from: run a backup once, then recreate it")
+		}
+		snapshotID = ""
+	default:
+		var snapErr error
+		snaps, snapErr = s.snapshotsOwnedBy(ctx, ref.repo, ref.mode, id)
+		if snapErr != nil {
+			return containerRestorePlan{}, snapErr
+		}
 	}
-	if explicitID {
+	switch {
+	case recreateOnly:
+	case explicitID:
 		if !snapshotBelongs(snaps, snapshotID) {
 			return containerRestorePlan{}, notInListing{snapshotID, "container"}
 		}
-	} else {
-		switch {
-		case len(snaps) > 0:
-			snapshotID = snaps[len(snaps)-1].ID
-		case tg.Definition != "":
-			recreateOnly = true
-		default:
-			return containerRestorePlan{}, errors.New("no backups found for this container")
-		}
+	case len(snaps) > 0:
+		snapshotID = snaps[len(snaps)-1].ID
+	case tg.Definition != "" && len(tg.AppdataPaths) == 0:
+		recreateOnly = true
+	case tg.Definition != "":
+		return containerRestorePlan{}, errors.New("this place holds no backup of this container's data: restore it from the place that has one")
+	default:
+		return containerRestorePlan{}, errors.New("no backups found for this container")
 	}
 
 	// Re-validate the stored appdata paths stay within the host mount root before

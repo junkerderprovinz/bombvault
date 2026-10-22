@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { importDbDump, listDbDumps, restore } from "../../lib/api";
+import { DEFINITION_ONLY, importDbDump, listDbDumps, restore } from "../../lib/api";
 import { fireAndWaitRun } from "../../lib/backupWatch";
 import { importRefusedKey } from "../../lib/dbdump";
 import type { useT } from "../../lib/i18n";
@@ -34,7 +34,7 @@ export function DumpOnlyRow({
       const restored = await fireAndWaitRun({
         kind: "restore",
         matchRun: (r) => r.domain === "container" && r.target === name,
-        start: () => restore(name, "latest", true, undefined, undefined, withoutRuntime),
+        start: () => restore(name, DEFINITION_ONLY, true, undefined, undefined, withoutRuntime),
         t,
       });
       if (!restored.ok) {

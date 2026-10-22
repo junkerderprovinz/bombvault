@@ -1070,6 +1070,11 @@ export function listSnapshots(name: string, source?: string): Promise<ListSnapsh
   return fetchJSON(`/api/containers/${encodeURIComponent(name)}/snapshots${srcParam(source)}`);
 }
 
+/** The snapshot id that recreates a container from its stored definition and
+ *  restores none of its data. "latest" refuses a container whose data this
+ *  place does not hold, so a recreate has to ask for it by name. */
+export const DEFINITION_ONLY = "definition";
+
 /**
  * Start an in-place container restore. ASYNC (like backupNow): validation runs
  * synchronously (a bad request still answers ok:false right away), then the
