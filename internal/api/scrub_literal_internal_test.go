@@ -28,8 +28,8 @@ func TestOurOwnSentencesSurviveTheScrubber(t *testing.T) {
 	if strings.Contains(scrubbed, "[path]") {
 		t.Errorf("the scrubber mangled our own sentence: %q", scrubbed)
 	}
-	if !strings.Contains(scrubbed, "BombVault or restic") {
-		t.Errorf("the sentence must name both engines readably, got %q", scrubbed)
+	if scrubbed != err.Error() {
+		t.Errorf("the scrubber changed our own sentence %q into %q", err.Error(), scrubbed)
 	}
 
 	_, _, ferr := svc.OpenForeign(context.Background(), "no-such-repo-here", strings.Repeat("b", 64), nil)
