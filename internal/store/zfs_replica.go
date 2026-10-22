@@ -324,13 +324,20 @@ func detachZFSReplicaServer(tx *sql.Tx, id string) error {
 
 // forgetZFSReplicaServerPlace drops where the items replicating to a server
 // stand there and what their runs there did, for a server that goes away or
-// now points at another place.
+// now points at another place. Their runs from before count for the old place
+// only, as after a switch of the target.
 func forgetZFSReplicaServerPlace(tx *sql.Tx, id string) error {
 	const items = `SELECT id FROM zfs_datasets WHERE replica_target_kind = ? AND replica_target_id = ?`
 	if _, err := tx.Exec(`DELETE FROM zfs_replica_state WHERE item_id IN (`+items+`)`, ZFSReplicaTargetServer, id); err != nil {
 		return err
 	}
-	_, err := tx.Exec(`DELETE FROM zfs_replica_runs WHERE item_id IN (`+items+`)`, ZFSReplicaTargetServer, id)
+	if _, err := tx.Exec(`DELETE FROM zfs_replica_runs WHERE item_id IN (`+items+`)`, ZFSReplicaTargetServer, id); err != nil {
+		return err
+	}
+	_, err := tx.Exec(`UPDATE zfs_datasets SET replica_target_since = MAX(?,
+		COALESCE((SELECT MAX(started_at) + 1 FROM runs WHERE target_id = zfs_datasets.id AND kind = ?), 0))
+		WHERE replica_target_kind = ? AND replica_target_id = ?`,
+		time.Now().Unix(), ZFSReplicaRunKind, ZFSReplicaTargetServer, id)
 	return err
 }
 

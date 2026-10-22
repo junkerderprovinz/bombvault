@@ -386,6 +386,29 @@ func TestTheLatestReplicaRunIsOneToTheCurrentTarget(t *testing.T) {
 	}
 }
 
+func TestTheLatestReplicaRunIsNoneOnceItsServerPointsElsewhere(t *testing.T) {
+	_, r := zfsStore(t)
+	d := aZFSDataset(t, r, "cache/appdata")
+	a := aReplicaServer(t, r, "attic")
+	if err := r.SetZFSReplicaTarget(d.ID, store.ZFSReplicaTargetServer, a.ID); err != nil {
+		t.Fatal(err)
+	}
+	run, err := r.StartRun(d.ID, store.ZFSReplicaRunKind)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := r.FinishRun(run, "success", "", 0, ""); err != nil {
+		t.Fatal(err)
+	}
+	a.Pool = "otherpool"
+	if err := r.UpdateZFSReplicaServer(a); err != nil {
+		t.Fatal(err)
+	}
+	if got, ok, err := r.LatestZFSReplicaRun(d.ID); ok || err != nil {
+		t.Fatalf("after the server moved the latest run is %s %s (err %v), want none", got.ID, got.Status, err)
+	}
+}
+
 func TestDeleteZFSDatasetRemovesItsReplicaRows(t *testing.T) {
 	db, r := zfsStore(t)
 	doomed, kept := aZFSDataset(t, r, "cache/appdata"), aZFSDataset(t, r, "cache/system")
