@@ -3062,6 +3062,7 @@ const ar: Partial<Translations> = {
   "settings.reconcileUnraidStatusHint": "يمسح لافتة التحديث في Unraid بعد أن يحدّث BombVault حاوية في خطوة التحديث بعد النسخ الاحتياطي.",
   "recovery.foreignVMDest": "وجهة أقراص الجهاز الافتراضي",
   "recovery.foreignVMDestHint": "المكان الذي تُكتب فيه أقراص الجهاز الافتراضي. تذهب صور الأقراص إلى <destination>/<vm-name>/، لذا يلزم مجلد على تجمّع مثبّت فعليًا، وليس على قرص الذاكرة العشوائية. يُستعاد الجهاز الافتراضي الخارجي متوقفًا، ويُشغَّل يدويًا بعد فحصه.",
+  "recovery.foreignNoDefinition": "لا تحتوي هذه النسخة على تعريف لـ {name}، لذلك لا يستطيع BombVault إعادة إنشائه من هنا. التعريفات موجودة في نسخة الإعدادات الاحتياطية للخادم القديم. استعدها في معالج الطوارئ، ثم استعد {name} هناك.",
   "folder.newFolder": "مجلد جديد",
   "folder.newFolderPlaceholder": "اسم المجلد الجديد",
   "folder.creating": "جارٍ الإنشاء…",

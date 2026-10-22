@@ -322,6 +322,21 @@ describe("a container", () => {
   });
 });
 
+describe("an entry the repository has no definition of", () => {
+  it("offers no restore and says where the definition is", async () => {
+    inventory = {
+      ...EMPTY,
+      containers: [{ name: "web", snapshots: [], noDefinition: true }],
+      vms: [{ name: "win11", snapshots: [], noDefinition: true }],
+    };
+    await connect();
+    expect(screen.queryByRole("button", { name: en["recovery.foreignRestore"] })).toBeNull();
+    expect(screen.queryByRole("button", { name: en["oldFolder.options"] })).toBeNull();
+    expect(document.body.textContent).toContain(en["recovery.foreignNoDefinition"].replaceAll("{name}", "web"));
+    expect(document.body.textContent).toContain(en["recovery.foreignNoDefinition"].replaceAll("{name}", "win11"));
+  });
+});
+
 describe("a dataset tree", () => {
   beforeEach(() => {
     inventory = {

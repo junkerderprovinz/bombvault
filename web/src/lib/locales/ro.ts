@@ -3062,6 +3062,7 @@ const ro: Partial<Translations> = {
   "settings.reconcileUnraidStatusHint": "Șterge bannerul de actualizare Unraid după ce BombVault actualizează un container în pasul de actualizare de după backup.",
   "recovery.foreignVMDest": "Destinația discurilor VM",
   "recovery.foreignVMDestHint": "Unde sunt scrise discurile mașinii virtuale. Imaginile de disc ajung în <destination>/<vm-name>/, așa că alege un folder pe un pool montat cu adevărat, nu pe discul RAM. O mașină străină este restaurată oprită, deci pornește-o tu însuți după ce ai verificat-o.",
+  "recovery.foreignNoDefinition": "Această copie nu are nicio definiție pentru {name}, așa că BombVault nu îl poate recrea de aici. Definițiile se află în copia de rezervă a setărilor vechiului server. Restaureaz-o în asistentul de urgență, apoi restaurează {name} acolo.",
   "folder.newFolder": "Folder nou",
   "folder.newFolderPlaceholder": "Numele folderului nou",
   "folder.creating": "Se creează…",

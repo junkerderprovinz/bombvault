@@ -5529,6 +5529,9 @@ export function listZFSLocalPools(): Promise<ZFSReplicaPool[]> {
 export interface ForeignItem {
   name: string;
   snapshots: Snapshot[];
+  /** A container or VM the session has no readable definition of, as in a
+   *  remote repository or an off-site copy. It cannot be recreated from here. */
+  noDefinition?: boolean;
 }
 
 /** The foreign repository's contents grouped by domain, as ForeignInventory in

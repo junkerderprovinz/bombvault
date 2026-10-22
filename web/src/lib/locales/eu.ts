@@ -2620,6 +2620,7 @@ const eu: Partial<Translations> = {
   "recovery.foreignReconnect": "Konektatu berriz",
   "recovery.foreignVMDest": "MBren diskoen helmuga",
   "recovery.foreignVMDestHint": "Non idazten diren MBren diskoak. Disko-irudiak <destination>/<vm-name>/ helmugara doaz, beraz aukeratu benetan muntatutako pool bateko karpeta bat, ez RAM diskoa. Kanpoko MB bat gelditurik berrezartzen da, beraz abiarazi zuk zeuk egiaztatu ondoren.",
+  "recovery.foreignNoDefinition": "Kopia honek ez du {name}-ren definiziorik, beraz BombVault-ek ezin du hemendik berriro sortu. Definizioak zerbitzari zaharraren ezarpenen babeskopian daude. Berrezarri hori larrialdi-morroian, eta gero berrezarri {name} han.",
 
   // Dashboard activity log
   "activityLog.title": "Jarduera-erregistroa",

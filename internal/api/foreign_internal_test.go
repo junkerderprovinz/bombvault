@@ -771,6 +771,46 @@ func TestForeignRestoreRefusesAContainerWhoseDataIsNotInTheRepo(t *testing.T) {
 	}
 }
 
+// A container the repository has data of but no definition for, as in an
+// off-site copy, is flagged so the window does not offer a restore that can
+// only fail.
+func TestOpenForeignFlagsEntriesWithoutADefinition(t *testing.T) {
+	eng := &foreignRecordingEngine{opens: opensEncrypted, snaps: []restic.Snapshot{
+		{ID: "aaaa1111", Tags: []string{"container:web"}},
+		{ID: "bbbb2222", Tags: []string{"container:db"}},
+		{ID: "cccc3333", Tags: []string{"vm:win11"}},
+	}}
+	s := newForeignTestService(t, eng)
+	seedForeignContainerDef(t, s, nil)
+
+	_, inv, err := s.OpenForeign(context.Background(), "backups/other", foreignTestKey, nil)
+	if err != nil {
+		t.Fatalf("OpenForeign: %v", err)
+	}
+	flags := map[string]bool{}
+	for _, c := range inv.Containers {
+		flags[c.Name] = c.NoDefinition
+	}
+	if flags["web"] || !flags["db"] {
+		t.Fatalf("no-definition flags = %v; want web readable and db flagged", flags)
+	}
+	if len(inv.VMs) != 1 || !inv.VMs[0].NoDefinition {
+		t.Fatalf("vms = %+v; want win11 flagged", inv.VMs)
+	}
+}
+
+// A remote repository carries no definitions, and its URL is never read as a
+// local folder.
+func TestForeignDefinitionOfARemoteRepositoryIsNotLookedUpOnDisk(t *testing.T) {
+	s := newForeignTestService(t, &foreignRecordingEngine{})
+	if _, err := s.foreignContainerTarget(foreignSession{repo: "s3:host/bucket", key: foreignTestKey}, "web"); err == nil {
+		t.Fatal("a remote session produced a definition")
+	}
+	if _, err := readForeignDef(foreignSession{repo: "s3:host/bucket"}, "def", "bombvault-defs", "web.def"); err == nil || !strings.Contains(err.Error(), "remote") {
+		t.Fatalf("err = %v; want the remote refusal", err)
+	}
+}
+
 // TestForeignRestoreContainerRoundTrip follows the foreign container path end
 // to end: StartForeignRestore decrypts the def from the foreign repo's def dir
 // with the session key (the local APP_KEY could not), a local target row

@@ -3062,6 +3062,7 @@ const th: Partial<Translations> = {
   "settings.reconcileUnraidStatusHint": "ล้างแบนเนอร์การอัปเดตของ Unraid หลังจากที่ BombVault อัปเดตคอนเทนเนอร์ในขั้นตอนการอัปเดตหลังการสำรองข้อมูล",
   "recovery.foreignVMDest": "ปลายทางของดิสก์ VM",
   "recovery.foreignVMDestHint": "ตำแหน่งที่จะเขียนดิสก์ของ VM อิมเมจดิสก์จะไปอยู่ที่ <destination>/<vm-name>/ ดังนั้นให้เลือกโฟลเดอร์บนพูลที่เมานต์จริง ไม่ใช่บน RAM ดิสก์ VM จากภายนอกจะถูกกู้คืนในสถานะหยุดทำงาน ดังนั้นให้คุณเริ่มเองหลังจากตรวจสอบแล้ว",
+  "recovery.foreignNoDefinition": "สำเนานี้ไม่มีคำจำกัดความของ {name} ดังนั้น BombVault จึงสร้างใหม่จากที่นี่ไม่ได้ คำจำกัดความอยู่ในข้อมูลสำรองการตั้งค่าของเซิร์ฟเวอร์เก่า กู้คืนข้อมูลนั้นในตัวช่วยฉุกเฉิน แล้วกู้คืน {name} ที่นั่น",
   "folder.newFolder": "โฟลเดอร์ใหม่",
   "folder.newFolderPlaceholder": "ชื่อโฟลเดอร์ใหม่",
   "folder.creating": "กำลังสร้าง…",

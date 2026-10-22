@@ -2604,6 +2604,7 @@ const sr: Partial<Translations> = {
   "recovery.foreignReconnect": "Поново се повежи",
   "recovery.foreignVMDest": "Одредиште за дискове ВМ-а",
   "recovery.foreignVMDestHint": "Где се уписују дискови ВМ-а. Датотеке диска иду у <odredište>/<naziv-vm>/, зато изабери фасциклу на стварно монтираном скупу, не на RAM диску. Страни ВМ се враћа заустављен, па га сам покрени кад га прегледаш.",
+  "recovery.foreignNoDefinition": "Ова копија нема дефиницију за {name}, па BombVault не може одавде поново да га направи. Дефиниције су у резервној копији подешавања старог сервера. Врати је у хитном чаробњаку, а затим тамо врати {name}.",
 
   // Dashboard activity log (Task 4)
   "activityLog.title": "Дневник активности",

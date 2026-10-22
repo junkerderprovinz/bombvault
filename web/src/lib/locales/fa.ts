@@ -2620,6 +2620,7 @@ const fa: Partial<Translations> = {
   "recovery.foreignReconnect": "اتصال دوباره",
   "recovery.foreignVMDest": "مقصد دیسک‌های ماشین مجازی",
   "recovery.foreignVMDestHint": "محل نوشته‌شدن دیسک‌های ماشین مجازی. فایل‌های دیسک به <destination>/<vm-name>/ می‌روند، پس پوشه‌ای روی یک pool واقعاً متصل انتخاب کن، نه دیسک RAM. یک ماشین مجازی خارجی به‌صورت متوقف بازیابی می‌شود، پس پس از بررسی، خودت آن را اجرا کن.",
+  "recovery.foreignNoDefinition": "این نسخه هیچ تعریفی از {name} ندارد، بنابراین BombVault نمی‌تواند آن را از اینجا دوباره بسازد. تعریف‌ها در پشتیبان تنظیمات سرور قدیمی هستند. آن را در دستیار اضطراری بازیابی کن و سپس {name} را همان‌جا بازیابی کن.",
 
   // Dashboard activity log
   "activityLog.title": "گزارش فعالیت",

@@ -43,6 +43,9 @@ import (
 type ForeignItem struct {
 	Name      string            `json:"name"`
 	Snapshots []restic.Snapshot `json:"snapshots"`
+	// NoDefinition marks a container or VM whose definition the session
+	// cannot read, so it cannot be recreated from this repository.
+	NoDefinition bool `json:"noDefinition,omitempty"`
 }
 
 // ForeignInventory groups a foreign repository's snapshots by the same tag
@@ -64,7 +67,7 @@ type ForeignInventory struct {
 // crucially — persisted. In memory only; expired sessions are swept on access.
 type foreignSession struct {
 	id      string
-	repo    string // resolved repo location (paths.Resolve'd local mounted path; remote backends are rejected)
+	repo    string // resolved repo location: a local mounted path, or a remote URL that brought its own credentials
 	key     string // the OTHER instance's APP_KEY (64 hex) — decrypts foreign defs, never ours
 	mode    restic.Mode
 	expires time.Time
@@ -242,21 +245,38 @@ func (s *Service) OpenForeign(ctx context.Context, location, foreignKey string, 
 		return "", ForeignInventory{}, err
 	}
 	now := time.Now()
-	s.foreignMu.Lock()
-	if s.foreignSessions == nil {
-		s.foreignSessions = map[string]foreignSession{}
-	}
-	s.sweepForeignLocked(now)
-	s.foreignSessions[id] = foreignSession{
+	sess := foreignSession{
 		id:      id,
 		repo:    repo,
 		key:     foreignKey,
 		mode:    mode,
 		expires: now.Add(foreignSessionTTL),
 	}
+	s.markForeignDefinitions(sess, &inv)
+	s.foreignMu.Lock()
+	if s.foreignSessions == nil {
+		s.foreignSessions = map[string]foreignSession{}
+	}
+	s.sweepForeignLocked(now)
+	s.foreignSessions[id] = sess
 	s.startForeignJanitorLocked() // periodic sweep so an abandoned key can't linger
 	s.foreignMu.Unlock()
 	return id, inv, nil
+}
+
+// markForeignDefinitions flags the containers and VMs the session holds no
+// readable definition for. The definitions are mirrored beside a primary
+// local repository only, so a remote repository or an off-site copy offers
+// their data but nothing to recreate them from.
+func (s *Service) markForeignDefinitions(sess foreignSession, inv *ForeignInventory) {
+	for i, c := range inv.Containers {
+		_, err := s.foreignContainerTarget(sess, c.Name)
+		inv.Containers[i].NoDefinition = err != nil
+	}
+	for i, v := range inv.VMs {
+		_, err := s.foreignVMTarget(sess, v.Name)
+		inv.VMs[i].NoDefinition = err != nil
+	}
 }
 
 // CloseForeign drops a session immediately (the UI calls it on leave/unmount).
@@ -922,6 +942,16 @@ func (s *Service) adoptForeignZFSDataset(dataset string) (string, error) {
 	return created.ID, nil
 }
 
+// readForeignDef reads an encrypted definition beside the session's
+// repository. A remote one carries none, and its URL is no local path to look
+// under.
+func readForeignDef(sess foreignSession, dir, legacyDir, fn string) ([]byte, error) {
+	if restic.IsRemoteRepo(sess.repo) {
+		return nil, errors.New("a remote repository carries no definitions")
+	}
+	return readStoredDef(filepath.Join(sess.repo, dir), filepath.Join(filepath.Dir(sess.repo), legacyDir), fn)
+}
+
 // foreignContainerTarget reads the item's encrypted definition from the FOREIGN
 // repo's defs dir (repo/def, with the pre-v5.4.1 sibling fallback), decrypts it
 // with the SESSION's foreign APP_KEY — never s.cfg.AppKey — and returns the LOCAL
@@ -935,7 +965,7 @@ func (s *Service) foreignContainerTarget(sess foreignSession, name string) (stor
 	if err != nil {
 		return store.Target{}, err
 	}
-	enc, err := readStoredDef(filepath.Join(sess.repo, "def"), filepath.Join(filepath.Dir(sess.repo), "bombvault-defs"), fn)
+	enc, err := readForeignDef(sess, "def", "bombvault-defs", fn)
 	if err != nil {
 		return store.Target{}, fmt.Errorf("the foreign repository holds no readable definition for container %q, so it cannot be recreated here", name)
 	}
@@ -964,7 +994,7 @@ func (s *Service) foreignVMTarget(sess foreignSession, name string) (store.VMTar
 	if err != nil {
 		return store.VMTarget{}, err
 	}
-	enc, err := readStoredDef(filepath.Join(sess.repo, "vm-def"), filepath.Join(filepath.Dir(sess.repo), "bombvault-vm-defs"), fn)
+	enc, err := readForeignDef(sess, "vm-def", "bombvault-vm-defs", fn)
 	if err != nil {
 		return store.VMTarget{}, fmt.Errorf("the foreign repository holds no readable definition for vm %q, so it cannot be recreated here", name)
 	}

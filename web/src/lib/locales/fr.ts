@@ -3061,6 +3061,7 @@ const fr: Partial<Translations> = {
   "settings.reconcileUnraidStatusHint": "Efface la bannière de mise à jour d'Unraid après que BombVault a mis à jour un conteneur lors de l'étape de mise à jour suivant la sauvegarde.",
   "recovery.foreignVMDest": "Destination des disques de la VM",
   "recovery.foreignVMDestHint": "Là où les disques de la VM sont écrits. Les images disque vont dans <destination>/<vm-name>/, choisissez donc un dossier sur un pool réellement monté, pas sur le disque RAM. Une VM étrangère est restaurée à l'arrêt, démarrez-la vous-même après l'avoir vérifiée.",
+  "recovery.foreignNoDefinition": "Cette copie ne contient aucune définition de {name}, BombVault ne peut donc pas le recréer d'ici. Les définitions se trouvent dans la sauvegarde des paramètres de l'ancien serveur. Restaurez-la dans l'assistant d'urgence, puis restaurez {name} là-bas.",
   "folder.newFolder": "Nouveau dossier",
   "folder.newFolderPlaceholder": "Nom du nouveau dossier",
   "folder.creating": "Création…",

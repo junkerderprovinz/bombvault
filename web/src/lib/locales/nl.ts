@@ -3060,6 +3060,7 @@ const nl: Partial<Translations> = {
   "settings.reconcileUnraidStatusHint": "Wist de updatemelding van Unraid nadat BombVault een container heeft bijgewerkt in de updatestap na de back-up.",
   "recovery.foreignVMDest": "Bestemming van de VM-schijven",
   "recovery.foreignVMDestHint": "Waar de schijven van de VM worden weggeschreven. De schijfimages komen in <destination>/<vm-name>/, kies dus een map op een echt aangekoppelde pool, niet op de RAM-schijf. Een externe VM wordt gestopt hersteld, start hem dus zelf nadat je hem hebt gecontroleerd.",
+  "recovery.foreignNoDefinition": "Deze kopie bevat geen definitie van {name}, dus BombVault kan het hier niet opnieuw aanmaken. De definities staan in de back-up van de instellingen van de oude server. Zet die terug in de noodassistent en zet {name} daarna daar terug.",
   "folder.newFolder": "Nieuwe map",
   "folder.newFolderPlaceholder": "Naam nieuwe map",
   "folder.creating": "Bezig met maken…",

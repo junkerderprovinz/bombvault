@@ -2620,6 +2620,7 @@ const id: Partial<Translations> = {
   "recovery.foreignReconnect": "Hubungkan kembali",
   "recovery.foreignVMDest": "Tujuan disk VM",
   "recovery.foreignVMDestHint": "Ke mana disk VM ditulis. Image disk masuk ke <destination>/<vm-name>/, jadi pilih folder pada pool yang benar-benar terpasang, bukan RAM disk. VM asing dipulihkan dalam keadaan berhenti, jadi jalankan sendiri setelah Anda memeriksanya.",
+  "recovery.foreignNoDefinition": "Salinan ini tidak memiliki definisi {name}, jadi BombVault tidak dapat membuatnya ulang dari sini. Definisinya ada di cadangan pengaturan server lama. Pulihkan cadangan itu di wizard darurat, lalu pulihkan {name} di sana.",
 
   // Dashboard activity log
   "activityLog.title": "Log aktivitas",

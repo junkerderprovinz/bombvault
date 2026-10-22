@@ -3062,6 +3062,7 @@ const hu: Partial<Translations> = {
   "settings.reconcileUnraidStatusHint": "Törli az Unraid frissítési szalagcímét, miután a BombVault a biztonsági mentés utáni frissítési lépésben frissített egy konténert.",
   "recovery.foreignVMDest": "VM lemezek célhelye",
   "recovery.foreignVMDestHint": "Ahová a VM lemezei íródnak. A lemezképek a <destination>/<vm-name>/ helyre kerülnek, ezért válassz egy mappát egy valóban csatolt poolon, ne a RAM-lemezen. Egy idegen VM leállítva áll vissza, ezért ellenőrzés után magad indítsd el.",
+  "recovery.foreignNoDefinition": "Ebben a másolatban nincs definíció ehhez: {name}, ezért a BombVault innen nem tudja újra létrehozni. A definíciók a régi szerver beállításmentésében vannak. Állítsd vissza azt a vészvarázslóban, majd ott állítsd vissza ezt: {name}.",
   "folder.newFolder": "Új mappa",
   "folder.newFolderPlaceholder": "Új mappa neve",
   "folder.creating": "Létrehozás…",

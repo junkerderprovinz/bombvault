@@ -3052,6 +3052,7 @@ const vi: Partial<Translations> = {
   "settings.reconcileUnraidStatusHint": "Xóa biểu ngữ cập nhật của Unraid sau khi BombVault cập nhật một container trong bước cập nhật sau khi sao lưu.",
   "recovery.foreignVMDest": "Đích của đĩa VM",
   "recovery.foreignVMDestHint": "Nơi ghi các đĩa của VM. Các tệp ảnh đĩa sẽ vào <destination>/<vm-name>/, vì vậy hãy chọn một thư mục trên pool thực sự được gắn kết, không phải trên đĩa RAM. Một VM lạ được khôi phục ở trạng thái dừng, vì vậy hãy tự khởi động sau khi bạn đã kiểm tra.",
+  "recovery.foreignNoDefinition": "Bản sao này không có định nghĩa của {name}, nên BombVault không thể tạo lại nó từ đây. Các định nghĩa nằm trong bản sao lưu cài đặt của máy chủ cũ. Hãy khôi phục bản đó trong trình hướng dẫn khẩn cấp, rồi khôi phục {name} ở đó.",
   "folder.newFolder": "Thư mục mới",
   "folder.newFolderPlaceholder": "Tên thư mục mới",
   "folder.creating": "Đang tạo…",

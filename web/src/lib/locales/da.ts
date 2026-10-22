@@ -3061,6 +3061,7 @@ const da: Partial<Translations> = {
   "settings.reconcileUnraidStatusHint": "Rydder Unraids opdateringsbanner, efter at BombVault har opdateret en container i opdateringstrinnet efter sikkerhedskopieringen.",
   "recovery.foreignVMDest": "Destination for VM-diske",
   "recovery.foreignVMDestHint": "Hvor VM'ens diske skrives. Diskbillederne havner i <destination>/<vm-name>/, så vælg en mappe på en reelt monteret pool, ikke på RAM-disken. En fremmed VM gendannes stoppet, så start den selv, når du har tjekket den.",
+  "recovery.foreignNoDefinition": "Denne kopi har ingen definition af {name}, så BombVault kan ikke genoprette den herfra. Definitionerne ligger i den gamle servers sikkerhedskopi af indstillingerne. Gendan den i nødguiden, og gendan derefter {name} der.",
   "folder.newFolder": "Ny mappe",
   "folder.newFolderPlaceholder": "Navn på ny mappe",
   "folder.creating": "Opretter…",

@@ -3058,6 +3058,7 @@ const pl: Partial<Translations> = {
   "settings.reconcileUnraidStatusHint": "Usuwa baner aktualizacji Unraid po tym, jak BombVault zaktualizuje kontener w kroku aktualizacji po kopii zapasowej.",
   "recovery.foreignVMDest": "Miejsce docelowe dysków VM",
   "recovery.foreignVMDestHint": "Gdzie zapisywane są dyski maszyny wirtualnej. Obrazy dysków trafiają do <destination>/<vm-name>/, więc wybierz folder na rzeczywiście zamontowanej puli, a nie na dysku RAM. Obca maszyna jest przywracana zatrzymana, więc uruchom ją samodzielnie po sprawdzeniu.",
+  "recovery.foreignNoDefinition": "Ta kopia nie zawiera definicji {name}, więc BombVault nie może go stąd odtworzyć. Definicje są w kopii zapasowej ustawień starego serwera. Przywróć ją w kreatorze awaryjnym, a potem przywróć tam {name}.",
   "folder.newFolder": "Nowy folder",
   "folder.newFolderPlaceholder": "Nazwa nowego folderu",
   "folder.creating": "Tworzenie…",

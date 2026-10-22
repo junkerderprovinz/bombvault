@@ -2620,6 +2620,7 @@ const ms: Partial<Translations> = {
   "recovery.foreignReconnect": "Sambung semula",
   "recovery.foreignVMDest": "Destinasi cakera VM",
   "recovery.foreignVMDestHint": "Ke mana cakera VM ditulis. Imej cakera pergi ke <destination>/<vm-name>/, jadi pilih folder pada pool yang benar-benar dimount, bukan cakera RAM. VM asing dipulihkan dalam keadaan berhenti, jadi mulakannya sendiri selepas anda menyemaknya.",
+  "recovery.foreignNoDefinition": "Salinan ini tiada definisi {name}, jadi BombVault tidak dapat mencipta semulanya dari sini. Definisi itu ada dalam sandaran tetapan pelayan lama. Pulihkan sandaran itu dalam wizard kecemasan, kemudian pulihkan {name} di sana.",
 
   // Dashboard activity log
   "activityLog.title": "Log aktiviti",

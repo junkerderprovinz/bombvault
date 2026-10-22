@@ -3153,6 +3153,7 @@ export const en = {
   "recovery.foreignReconnect": "Reconnect",
   "recovery.foreignVMDest": "VM disk destination",
   "recovery.foreignVMDestHint": "Where the VM's disks are written. The disk images go to <destination>/<vm-name>/, so pick a folder on a real mounted pool, not the RAM disk. A foreign VM is restored left stopped, so start it yourself once you have checked it.",
+  "recovery.foreignNoDefinition": "This copy has no definition of {name}, so BombVault cannot recreate it from here. The old server's settings backup holds the definitions. Restore that in the emergency wizard, then restore {name} there.",
 
   // Dashboard activity log (Task 4) — a flat, docker-logs-style merged view of
   // run history + live SSE progress + the next scheduled run.
@@ -7986,6 +7987,7 @@ export const de: Translations = {
   "recovery.foreignReconnect": "Erneut verbinden",
   "recovery.foreignVMDest": "Ziel der VM-Datenträger",
   "recovery.foreignVMDestHint": "Wohin die Datenträger der VM geschrieben werden. Die Abbilder landen in <destination>/<vm-name>/. Wähle daher einen Ordner auf einem echten eingebundenen Pool, nicht auf der RAM-Disk. Eine fremde VM wird gestoppt wiederhergestellt, starte sie also selbst, sobald du sie geprüft hast.",
+  "recovery.foreignNoDefinition": "Diese Kopie hat keine Definition von {name}, deshalb kann BombVault es von hier aus nicht neu anlegen. Die Definitionen liegen in der Einstellungs-Sicherung des alten Servers. Spiel die im Notfall-Assistenten zurück und stell {name} dann dort wieder her.",
 
   // Dashboard activity log (Task 4)
   "activityLog.title": "Aktivitätsprotokoll",
