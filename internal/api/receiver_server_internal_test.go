@@ -595,6 +595,38 @@ func TestAMembersReceiverIsPlacedWhereThisInstanceReachesIt(t *testing.T) {
 	if v := groupReceiverFor(relayed, set); v.NeedsAddress || v.URL != "http://vault.lan:8001" {
 		t.Errorf("an address the member set wins: %+v", v)
 	}
+
+	// The member's own host wins over the address an old announce left here.
+	own := offer
+	own.Host, own.HostFromGroup = "192.168.1.10", true
+	stale := group.Member{ID: "m1", Name: "attic", Direct: true, Address: "https://bv.example.com"}
+	if v := groupReceiverFor(stale, own); v.NeedsAddress || v.URL != "http://192.168.1.10:8001" {
+		t.Errorf("a member placed by an old announce: %+v", v)
+	}
+	if v := groupReceiverFor(relayed, own); !v.NeedsAddress || v.URL != "" {
+		t.Errorf("a member reached through the relay was placed at the host it answers the group on: %+v", v)
+	}
+}
+
+func TestTheReceiverNamesTheHostItAnswersOnNow(t *testing.T) {
+	a := newInstance(t, "cellar", strings.Repeat("a1", 32))
+	b := newInstance(t, "attic", strings.Repeat("b2", 32))
+	pairThroughRelay(t, a, b)
+	b.svc.cfg.HostMountRoot = t.TempDir()
+	if err := b.st.SaveReceiverServer(store.ReceiverServer{ContainerName: "rest-server", Folder: "restic", Port: 8000, User: "attic"}); err != nil {
+		t.Fatal(err)
+	}
+	b.svc.docker = &receiverDocker{live: map[string]bool{"rest-server": true}}
+	if err := b.st.SetGroupDirectURL("https://192.168.1.10:3443", false); err != nil {
+		t.Fatal(err)
+	}
+	r, err := a.svc.askReceiver(context.Background(), b.id(t), false)
+	if err != nil || r == nil {
+		t.Fatalf("ask: %+v, %v", r, err)
+	}
+	if r.Host != "192.168.1.10" || !r.HostFromGroup || r.NeedsHost {
+		t.Fatalf("the receiver answered %+v, want its own host from the group", *r)
+	}
 }
 
 func TestANameLearnedFromABrowserIsNoAddressForTheReceiver(t *testing.T) {

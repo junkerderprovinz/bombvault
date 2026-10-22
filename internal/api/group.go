@@ -88,15 +88,29 @@ func (s *Service) groupSecret(g store.GroupState) ([]byte, error) {
 // applyGroup hands the stored group to the Manager. It runs at boot and after
 // every change to the group, the relay settings or the instance name.
 func (s *Service) applyGroup() {
+	g, ok := s.applyGroupConfig()
+	if !ok {
+		return
+	}
+	// Connections admitted under the old key or before the switch went off
+	// would otherwise stay open until they drop.
+	s.relayServe.Store(g.RelayServe)
+	s.relayServer().Revoke()
+	s.groupApplied.Store(time.Now().UnixNano())
+}
+
+// applyGroupConfig hands the group what it runs on from the store and returns
+// the state it read.
+func (s *Service) applyGroupConfig() (store.GroupState, bool) {
 	g, err := s.store.GetGroupState()
 	if err != nil {
 		log.Printf("group: %v", err)
-		return
+		return g, false
 	}
 	settings, err := s.store.GetSettings()
 	if err != nil {
 		log.Printf("group: %v", err)
-		return
+		return g, false
 	}
 	sec, err := s.groupSecret(g)
 	if err != nil {
@@ -113,11 +127,7 @@ func (s *Service) applyGroup() {
 		RelayURL:       g.RelayURL,
 		FormerPeerAuth: s.formerPeerAuth(),
 	})
-	// Connections admitted under the old key or before the switch went off
-	// would otherwise stay open until they drop.
-	s.relayServe.Store(g.RelayServe)
-	s.relayServer().Revoke()
-	s.groupApplied.Store(time.Now().UnixNano())
+	return g, true
 }
 
 // instanceDisplayName is the name other members show this instance under.
@@ -152,15 +162,23 @@ func (s *Service) directURL(g store.GroupState) string {
 // this instance and stores it as the instance's own direct address, unless a
 // person has set one by hand. localhost, a loopback or a link-local address
 // is ignored: none of those mean anything to another instance on the
-// network, and storing one would silence the real address underneath it.
+// network, and storing one would silence the real address underneath it. A
+// new address goes into the announce at once, or members on the network keep
+// the old one.
 func (s *Service) learnDirectURL(r *http.Request) {
 	addr := directAddressFromRequest(s.cfg.HTTPOnly, r)
 	if addr == "" {
 		return
 	}
+	g, err := s.store.GetGroupState()
+	if err != nil || g.DirectURLManual || g.DirectURL == addr {
+		return
+	}
 	if err := s.store.LearnGroupDirectURL(addr); err != nil {
 		log.Printf("group: learn this instance's direct address: %v", err)
+		return
 	}
+	s.applyGroupConfig()
 }
 
 // directAddressFromRequest rebuilds scheme://host from a request the way

@@ -679,11 +679,16 @@ const peerReceiverBodyMax = 4 << 10
 // for one.
 type peerReceiver struct {
 	InstanceName string `json:"instanceName"`
-	// Host is empty when the receiver answers where the member does.
-	Host     string `json:"host,omitempty"`
-	Port     int    `json:"port"`
-	User     string `json:"user,omitempty"`
-	Password string `json:"password,omitempty"`
+	// Host is where the receiver's server is reached, empty from a receiver
+	// that left that to the member's own address for it.
+	Host string `json:"host,omitempty"`
+	// HostFromGroup says Host is only the address the receiver answers the
+	// group on, set for no one in particular, which a member that reaches it
+	// through the relay alone may not reach.
+	HostFromGroup bool   `json:"hostFromGroup,omitempty"`
+	Port          int    `json:"port"`
+	User          string `json:"user,omitempty"`
+	Password      string `json:"password,omitempty"`
 	// NeedsHost says the receiver knows no address for its server, and the
 	// one the member reaches BombVault at is no address for it either.
 	NeedsHost bool `json:"needsHost,omitempty"`
@@ -737,7 +742,16 @@ func (s *Service) handlePeerReceiver(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
-	offer := &peerReceiver{InstanceName: instanceDisplayName(settings), Host: rs.Host, Port: rs.Port, NeedsHost: s.needsReceiverHost(rs)}
+	// The receiver names its host itself: an address a member saw announced
+	// or probed can be older than the one it answers on now.
+	host := s.receiverHost(rs)
+	offer := &peerReceiver{
+		InstanceName:  instanceDisplayName(settings),
+		Host:          host,
+		HostFromGroup: rs.Host == "" && host != "",
+		Port:          rs.Port,
+		NeedsHost:     s.needsReceiverHost(rs),
+	}
 	if in.Login {
 		caller, ok := s.peerCaller(r)
 		if !ok || caller.ID != in.InstanceID {
@@ -776,8 +790,9 @@ type groupReceiverView struct {
 	NeedsHost bool `json:"needsHost,omitempty"`
 }
 
-// groupReceiverFor places a member's receiver: at the address the member set
-// for it, or at the host this instance reaches the member at directly.
+// groupReceiverFor places a member's receiver at the host the member names
+// for it. A member from before it named one is placed at the host this
+// instance reaches it at directly.
 func groupReceiverFor(m group.Member, r peerReceiver) groupReceiverView {
 	v := groupReceiverView{MemberID: m.ID, Name: r.InstanceName}
 	if v.Name == "" {
@@ -788,7 +803,10 @@ func groupReceiverFor(m group.Member, r peerReceiver) groupReceiverView {
 		return v
 	}
 	host := r.Host
-	if host == "" && m.Direct {
+	switch {
+	case host != "" && r.HostFromGroup && !m.Direct:
+		host = ""
+	case host == "" && m.Direct:
 		host = urlHost(m.Address)
 	}
 	if host == "" {
