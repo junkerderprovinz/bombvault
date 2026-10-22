@@ -68,14 +68,17 @@ func (s *Service) pullOpen(ctx context.Context, ps store.PullSource, settings st
 
 	// The source's own backend credentials, never this box's. Without a
 	// credential set Env stays empty; unlike an off-site target, which is ours,
-	// a source does not borrow the shared ones.
+	// a source does not borrow the shared ones, not even when its own is gone.
 	var env []string
 	if ref := strings.TrimSpace(ps.CredsRef); ref != "" {
-		if c, cErr := s.decodeCloudFor(settings, ref); cErr == nil {
-			env = cloudEnv(c)
-		} else {
-			log.Printf("api: pull source %s: credential set decode failed (continuing without it): %v", ps.ID, cErr) //nolint:gosec // G706: ps.ID is an opaque store-generated id
+		c, err := s.savedSignIn(settings, ref)
+		if errors.Is(err, errUnknownSignIn) {
+			return "", restic.Mode{}, errors.New("the saved sign-in this source used is gone, pick another one for it")
 		}
+		if err != nil {
+			return "", restic.Mode{}, err
+		}
+		env = cloudEnv(c)
 	}
 
 	base := restic.Mode{NoLock: true, NoAmbientCreds: true, Env: env}

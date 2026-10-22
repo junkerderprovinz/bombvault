@@ -18527,17 +18527,27 @@ func (s *Service) decodeCloudFor(settings store.Settings, credsRef string) (Clou
 	if strings.TrimSpace(credsRef) == "" {
 		return s.decodeCloud(settings)
 	}
+	c, err := s.savedSignIn(settings, credsRef)
+	if !errors.Is(err, errUnknownSignIn) {
+		return c, err
+	}
+	log.Printf("api: off-site target references unknown credential set %q, falling back to the default sign-in", credsRef)
+	return s.decodeCloud(settings)
+}
+
+// savedSignIn returns the credentials of the saved sign-in id, or
+// errUnknownSignIn without the default in its place.
+func (s *Service) savedSignIn(settings store.Settings, id string) (CloudCreds, error) {
 	sets, err := s.decodeCloudCredSets(settings)
 	if err != nil {
 		return CloudCreds{}, err
 	}
 	for _, set := range sets {
-		if set.ID == credsRef {
+		if set.ID == id {
 			return set.CloudCreds, nil
 		}
 	}
-	log.Printf("api: off-site target references unknown credential set %q, falling back to the default sign-in", credsRef)
-	return s.decodeCloud(settings)
+	return CloudCreds{}, errUnknownSignIn
 }
 
 // ---------------------------------------------------------------------------
