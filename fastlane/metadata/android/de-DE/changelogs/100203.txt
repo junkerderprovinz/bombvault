@@ -1,1 +1,1 @@
-Deine App macht diesmal blau. BombVault 10.2.3 räumt am Server ordentlich auf: ZFS-Repliken laufen schneller, eine Wiederherstellung kommt auf dem Image von damals zurück, und Sicherungen und Prüfungen geben nicht mehr still auf. Dein Handy meldet sich nach dem Update einmal neu an.
+Deine App macht diesmal blau. BombVault 10.2.3 räumt am Server ordentlich auf: ZFS-Repliken laufen schneller, Speicherorte verbinden sich und bleiben angemeldet, und eine Wiederherstellung kommt auf dem Image von damals zurück. Dein Handy meldet sich nach dem Update einmal neu an.
