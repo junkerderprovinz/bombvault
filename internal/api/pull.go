@@ -7,6 +7,7 @@ import (
 	"log"
 	"path"
 	"path/filepath"
+	"slices"
 	"strings"
 	"time"
 
@@ -71,10 +72,18 @@ func (s *Service) pullOpen(ctx context.Context, ps store.PullSource, settings st
 	// a source does not borrow the shared ones.
 	var env []string
 	if ref := strings.TrimSpace(ps.CredsRef); ref != "" {
-		if c, cErr := s.decodeCloudFor(settings, ref); cErr == nil {
-			env = cloudEnv(c)
-		} else {
+		sets, cErr := s.decodeCloudCredSets(settings)
+		if cErr != nil {
 			log.Printf("api: pull source %s: credential set decode failed (continuing without it): %v", ps.ID, cErr) //nolint:gosec // G706: ps.ID is an opaque store-generated id
+		}
+		i := slices.IndexFunc(sets, func(c CloudCredSet) bool { return c.ID == ref })
+		switch {
+		case i >= 0:
+			env = cloudEnv(sets[i].CloudCreds)
+		case cErr == nil:
+			// Not decodeCloudFor's fallback: the default is this box's
+			// sign-in and must not reach the source's backend.
+			return "", restic.Mode{}, errors.New("the saved sign-in of this pull source does not exist any more, choose another one")
 		}
 	}
 

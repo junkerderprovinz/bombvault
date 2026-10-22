@@ -18456,13 +18456,23 @@ func (s *Service) SetCloudCredSets(sets []CloudCredSet) error {
 }
 
 // signInStillUsed is the refusal for removing a saved sign-in a row still
-// names, with the storage locations that use it where the list shows them.
+// names, with the storage locations and pull sources that use it where the
+// lists show them.
 func (s *Service) signInStillUsed(set CloudCredSet) error {
-	if users, err := s.signInUsers(""); err == nil && len(users[set.ID]) > 0 {
-		names := make([]string, len(users[set.ID]))
-		for i, u := range users[set.ID] {
-			names[i] = u.Name
+	var names []string
+	if users, err := s.signInUsers(""); err == nil {
+		for _, u := range users[set.ID] {
+			names = append(names, u.Name)
 		}
+	}
+	if sources, err := s.store.ListPullSources(); err == nil {
+		for _, ps := range sources {
+			if strings.TrimSpace(ps.CredsRef) == set.ID {
+				names = append(names, "pull source "+ps.Name)
+			}
+		}
+	}
+	if len(names) > 0 {
 		return fmt.Errorf("%s still signs in with %s", strings.Join(names, ", "), set.Name)
 	}
 	return fmt.Errorf("%s is still in use, so it stays", set.Name)

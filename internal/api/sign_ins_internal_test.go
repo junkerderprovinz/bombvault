@@ -1,11 +1,13 @@
 package api
 
 import (
+	"context"
 	"errors"
 	"slices"
 	"strings"
 	"testing"
 
+	"github.com/junkerderprovinz/bombvault/internal/secret"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
@@ -504,5 +506,47 @@ func TestASignInCanBeTestedOverTheAPI(t *testing.T) {
 	res := f.do("POST", "/api/cloud/creds-sets/a/test", map[string]any{"restUser": "a"})
 	if locations, ok := res["locations"].([]any); res["ok"] != true || !ok || len(locations) != 0 {
 		t.Fatalf("answer = %v", res)
+	}
+}
+
+func TestASignInAPullSourceUsesStays(t *testing.T) {
+	s := unraidNotifyService(t, nil)
+	if err := s.SetCloudCredSets([]CloudCredSet{
+		{ID: "a", Name: "A", Default: true, CloudCreds: CloudCreds{RESTUser: "a", RESTPassword: "1"}},
+		{ID: "b", Name: "Peer B", CloudCreds: CloudCreds{RESTUser: "b", RESTPassword: "2"}},
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := s.store.CreatePullSource(store.PullSource{Name: "Tower", Repo: "rest:http://10.0.0.9:8000/c", CredsRef: "b"}); err != nil {
+		t.Fatal(err)
+	}
+	err := s.RemoveSignIn("b")
+	if err == nil || !strings.Contains(err.Error(), "pull source Tower") {
+		t.Fatalf("err = %v, want the pull source named", err)
+	}
+	if sets := savedSets(t, s); len(sets) != 2 {
+		t.Fatalf("sets = %+v, want both kept", sets)
+	}
+}
+
+func TestAPullSourceWhoseSignInIsGoneDoesNotBorrowTheDefault(t *testing.T) {
+	s := unraidNotifyService(t, nil)
+	eng := &pullRecorder{}
+	s.engine = eng
+	if err := s.SetCloudCredSets([]CloudCredSet{
+		{ID: "a", Name: "A", Default: true, CloudCreds: CloudCreds{RESTUser: "ours", RESTPassword: "secret"}},
+	}); err != nil {
+		t.Fatal(err)
+	}
+	enc, err := secret.Encrypt(s.cfg.AppKey, []byte("their password"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	ps := store.PullSource{ID: "p1", Name: "Tower", Repo: "rest:http://10.0.0.9:8000/c", CredsRef: "gone", ResticPasswordEnc: enc}
+	if _, _, err := s.pullOpen(context.Background(), ps, settingsOf(t, s)); err == nil {
+		t.Fatal("a source whose sign-in is gone was opened")
+	}
+	if len(eng.calls) != 0 {
+		t.Fatalf("the source was reached with %v", eng.calls)
 	}
 }

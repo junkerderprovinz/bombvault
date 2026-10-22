@@ -252,7 +252,7 @@ func (s *Service) MakeDefaultSignIn(id string) error {
 	return err
 }
 
-// RemoveSignIn removes a saved sign-in no storage location uses. The default
+// RemoveSignIn removes a saved sign-in nothing uses. The default
 // goes only as the last one, since every place that names no sign-in falls
 // back to it.
 func (s *Service) RemoveSignIn(id string) error {
@@ -285,6 +285,15 @@ func (s *Service) RemoveSignIn(id string) error {
 			names[j] = u.Name
 		}
 		return fmt.Errorf("%s still signs in with it", strings.Join(names, ", "))
+	}
+	// Pull sources and hidden off-site rows are no storage locations, but a
+	// set they name must not go: they would sign in with the default instead.
+	inUse, err := s.store.CredsRefsInUse()
+	if err != nil {
+		return err
+	}
+	if inUse[id] {
+		return s.signInStillUsed(sets[i])
 	}
 	return s.editCloudCredSets(func(sets []CloudCredSet) []CloudCredSet {
 		return slices.DeleteFunc(sets, func(c CloudCredSet) bool { return c.ID == id })
