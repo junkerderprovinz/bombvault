@@ -65,6 +65,21 @@ func (pl sectionPlace) own() bool { return pl.target == nil }
 // repository of every target of the section that is switched on, each opened
 // with that target's credentials. A section with neither has no place.
 func (s *Service) sectionPlaces(settings store.Settings, domain, own string) ([]sectionPlace, error) {
+	if domain == zfsDomain {
+		only, err := s.store.ZFSReplicaOnly()
+		if err != nil {
+			return nil, err
+		}
+		if only {
+			return nil, ErrNoPlace
+		}
+	}
+	return s.sectionPlacesSwitchedOn(settings, domain, own)
+}
+
+// sectionPlacesSwitchedOn is sectionPlaces by the switches of the places
+// alone, which is also where a section's backups so far went.
+func (s *Service) sectionPlacesSwitchedOn(settings store.Settings, domain, own string) ([]sectionPlace, error) {
 	off, err := s.localOff(domain)
 	if err != nil {
 		return nil, err
@@ -200,6 +215,13 @@ func (s *Service) placelessSections() (placeless, error) {
 		if d.Home == store.HomeNowhere {
 			out[d.Domain] = true
 		}
+	}
+	only, err := s.store.ZFSReplicaOnly()
+	if err != nil {
+		return nil, err
+	}
+	if only {
+		out[zfsDomain] = true
 	}
 	off, err := s.store.LocalOff()
 	if err != nil {

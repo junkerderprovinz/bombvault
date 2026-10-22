@@ -27,6 +27,7 @@ func (h *Handler) registerZFSReplicaRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("PATCH /api/zfs/datasets/{id}/replica", h.handlePatchZFSReplica)
 	mux.HandleFunc("POST /api/zfs/datasets/{id}/replica/run", h.handleRunZFSReplica)
 	mux.HandleFunc("POST /api/zfs/datasets/{id}/replica/take-over", h.handleTakeOverZFSReplicaFolder)
+	mux.HandleFunc("PUT /api/zfs/replica/only", h.handleSetZFSReplicaOnly)
 	mux.HandleFunc("POST /api/zfs/datasets/{id}/replica/restore", h.handleRestoreZFSReplica)
 }
 
@@ -222,6 +223,22 @@ func (h *Handler) handleRunZFSReplica(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"runId": runID}))
+}
+
+// handleSetZFSReplicaOnly switches the ZFS section between backing up and only
+// replicating. PUT /api/zfs/replica/only
+func (h *Handler) handleSetZFSReplicaOnly(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		On bool `json:"on"`
+	}
+	if !decodeBody(w, r, &body) {
+		return
+	}
+	if err := h.svc.SetZFSReplicaOnly(body.On); err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(nil))
 }
 
 // handleTakeOverZFSReplicaFolder makes the folder another instance id marked

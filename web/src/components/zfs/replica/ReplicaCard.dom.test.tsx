@@ -14,6 +14,7 @@ let current: ZFSReplica;
 let progress: ProgressMap = {};
 const patches: ZFSReplicaPatch[] = [];
 const takeOvers: string[] = [];
+const onlyCalls: boolean[] = [];
 // What a PATCH answers. The store keeps the change either way, as the server
 // does when only the request to a paired instance fails.
 let patchAnswer: { ok: boolean; code?: string } = { ok: true };
@@ -25,6 +26,12 @@ vi.mock("../../../lib/api", async (importOriginal) => {
     getZFSReplica: () => Promise.resolve(current),
     listZFSReplicaServers: () => Promise.resolve([server(), server({ id: "off", name: "Old box", enabled: false })]),
     getGroup: () => Promise.resolve(group()),
+    setZFSReplicaOnly: (on: boolean) => {
+      onlyCalls.push(on);
+      current = { ...current, only: on };
+      return Promise.resolve({ ok: true });
+    },
+    updateOffsiteTarget: () => Promise.reject(new Error("the switch touched an off-site target")),
     takeOverZFSReplicaFolder: (id: string) => {
       takeOvers.push(id);
       return Promise.resolve({ ok: true });
@@ -56,6 +63,7 @@ beforeEach(() => {
   progress = {};
   patches.length = 0;
   takeOvers.length = 0;
+  onlyCalls.length = 0;
   patchAnswer = { ok: true };
   localStorage.clear();
 });
@@ -319,6 +327,18 @@ describe("replica card", () => {
     fireEvent.click(within(dialog).getByRole("button", { name: en["zfs.replica.takeOver"] }));
     await waitFor(() => expect(takeOvers).toEqual(["zfs1"]));
     expect(await screen.findByText(en["zfs.replica.takenOver"].replace("{server}", "Backup-NAS"))).toBeTruthy();
+  });
+
+  it("switches replica only on and off again as one setting of the section", async () => {
+    renderCard();
+    const toggle = await screen.findByRole("switch", { name: en["zfs.replica.onlyToggle"] });
+    fireEvent.click(toggle);
+    await waitFor(() => expect(onlyCalls).toEqual([true]));
+    const switchOf = () => screen.getByRole("switch", { name: en["zfs.replica.onlyToggle"] });
+    await waitFor(() => expect(switchOf().getAttribute("aria-checked")).toBe("true"));
+    fireEvent.click(switchOf());
+    await waitFor(() => expect(onlyCalls).toEqual([true, false]));
+    expect(screen.queryByText("the switch touched an off-site target")).toBeNull();
   });
 
   it("offers no take-over for any other failure", async () => {

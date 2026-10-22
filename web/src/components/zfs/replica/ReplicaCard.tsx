@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 
-import { listOffsiteTargets, patchZFSReplica, setSectionLocal, takeOverZFSReplicaFolder, updateOffsiteTarget } from "../../../lib/api";
+import { patchZFSReplica, setZFSReplicaOnly, takeOverZFSReplicaFolder } from "../../../lib/api";
 import type {
   ZFSPeerState,
   ZFSReplica,
@@ -18,7 +18,6 @@ import { zfsCodeSentence } from "../../../lib/zfsCodes";
 import { Badge } from "../../Badge";
 import { Button } from "../../Button";
 import { CadenceBuilder, EXACT_CADENCE_MODES } from "../../CadenceBuilder";
-import { offsiteTargetsChanged } from "../../../lib/useOffsiteTargets";
 import { InfoBubble } from "../../InfoBubble";
 import { SelectField } from "../../SelectField";
 import { Selector } from "../../Selector";
@@ -148,21 +147,11 @@ export function ReplicaCard({ itemId, name }: { itemId: string; name: string }) 
     }
   }
 
-  // The ZFS section has no place to back up to while its own folder and every
-  // off-site target are off, and a run then only sends the replica.
+  // While the ZFS section takes no backups a run only sends the replica.
   async function setReplicaOnly(on: boolean) {
     try {
-      const local = await setSectionLocal("zfs", !on);
-      if (!local.ok) throw new Error(local.error ?? t("settings.error"));
-      if (on) {
-        const listed = await listOffsiteTargets("zfs");
-        for (const target of listed.targets ?? []) {
-          if (!target.enabled) continue;
-          const res = await updateOffsiteTarget(target.id, { ...target, enabled: false });
-          if (!res.ok) throw new Error(res.error ?? t("settings.error"));
-        }
-        offsiteTargetsChanged();
-      }
+      const res = await setZFSReplicaOnly(on);
+      if (!res.ok) throw new Error(res.error ?? t("settings.error"));
     } catch (err) {
       push(err instanceof Error ? err.message : t("settings.error"), "fail");
     } finally {

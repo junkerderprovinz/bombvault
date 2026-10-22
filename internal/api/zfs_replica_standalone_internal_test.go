@@ -319,6 +319,49 @@ func TestTheDueGateSeesTheReplicaOfAnItemThatOnlyReplicates(t *testing.T) {
 	}
 }
 
+func TestReplicaOnlyLeavesThePlacesAloneAndSwitchingBackBringsThemBack(t *testing.T) {
+	r := newReplicaRig(t)
+	target, err := r.st.UpsertOffsiteTarget(store.OffsiteTarget{Domain: zfsDomain, Name: "attic", Repo: "rest:http://attic:8000/zfs", Enabled: true, SortOrder: 1})
+	if err != nil {
+		t.Fatal(err)
+	}
+	only := func() any {
+		_, v, _ := r.call(http.MethodGet, "/api/zfs/datasets/"+r.item.ID+"/replica", "")
+		return v["only"]
+	}
+	if _, m, _ := r.call(http.MethodPut, "/api/zfs/replica/only", `{"on":true}`); m["ok"] != true {
+		t.Fatalf("switching on: %v", m)
+	}
+	if only() != true {
+		t.Fatal("the item backs up although the section only replicates")
+	}
+	if !errors.Is(r.s.refuseNoPlace(zfsDomain, zfsSeedItem(t, r.st, "cache/media").ID), ErrNoPlace) {
+		t.Error("an item without a replica has somewhere to back up to")
+	}
+	if _, m, _ := r.call(http.MethodPut, "/api/zfs/replica/only", `{"on":false}`); m["ok"] != true {
+		t.Fatalf("switching off: %v", m)
+	}
+	if only() != false {
+		t.Error("switching back left the item replica-only")
+	}
+	if got, _, _ := r.st.GetOffsiteTarget(target.ID); !got.Enabled {
+		t.Error("the off-site target stayed switched off")
+	}
+	if off, _ := r.st.LocalOff(); off[zfsDomain] {
+		t.Error("the own folder stayed switched off")
+	}
+}
+
+func TestSwitchingReplicaOnlyOffGivesASectionWithoutPlacesItsFolderBack(t *testing.T) {
+	r := replicaOnlyRig(t)
+	if err := r.s.SetZFSReplicaOnly(false); err != nil {
+		t.Fatal(err)
+	}
+	if r.s.zfsReplicaOnly(r.item) {
+		t.Error("the section still has no place to back up to")
+	}
+}
+
 func TestBackUpNowOnAReplicaOnlyItemSendsTheReplicaWithoutTheBackupLock(t *testing.T) {
 	r := replicaOnlyRig(t)
 	release := make(chan struct{})
