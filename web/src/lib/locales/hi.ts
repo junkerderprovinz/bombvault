@@ -2626,6 +2626,7 @@ const hi: Partial<Translations> = {
   "recovery.foreignReconnect": "फिर से कनेक्ट करें",
   "recovery.foreignVMDest": "VM डिस्क का गंतव्य",
   "recovery.foreignVMDestHint": "VM की डिस्क कहाँ लिखी जाती हैं। डिस्क इमेज <destination>/<vm-name>/ में जाती हैं, इसलिए किसी सच में माउंट किए गए पूल पर फ़ोल्डर चुनें, RAM डिस्क नहीं। एक विदेशी VM रुका हुआ रीस्टोर होता है, इसलिए इसे जाँचने के बाद खुद शुरू करें।",
+  "recovery.foreignNoDefinition": "इस कॉपी में {name} की कोई परिभाषा नहीं है, इसलिए BombVault इसे यहाँ से दोबारा नहीं बना सकता। परिभाषाएँ पुराने सर्वर के सेटिंग्स बैकअप में हैं। उसे आपातकालीन विज़ार्ड में रीस्टोर करें, फिर वहाँ {name} रीस्टोर करें।",
 
   // Dashboard activity log
   "activityLog.title": "एक्टिविटी लॉग",
@@ -4421,6 +4422,8 @@ const hi: Partial<Translations> = {
   "emergency.searching": "आपके बैकअप में खोज रहे हैं …",
   "emergency.selectionHint": "हर जगह सबसे नया बैकअप पहले से चुना होता है। दोबारा बनाने के बाद फ़ोल्डर सेट को याद नहीं रहता कि वे कहाँ से आए थे, इसलिए वे आपके चुने फ़ोल्डर में जाते हैं।",
   "emergency.selectionKept": "इस सर्वर पर जो अब भी मौजूद है, वह शुरू में बंद रहता है, क्योंकि रीस्टोर उसे बदल देगा।",
+  "emergency.entrySource": "बैकअप कहाँ हैं?",
+  "emergency.entrySourceHint": "ऑफ़-साइट दिखाता है कि ऑफ़-साइट कॉपियों में क्या है और उन्हीं से रीस्टोर करता है। इसे तब चुनें जब लोकल बैकअप पुराने सर्वर के साथ खो गए हों।",
   "emergency.leaveStoppedHint": "हर कंटेनर और VM को आप तैयार होने पर खुद शुरू करते हैं। पूरा डेटा खो जाने के बाद यह सबसे सुरक्षित है।",
   "emergency.brings": "{list} वापस लाता है।",
   "emergency.count.containers": "{n} कंटेनर",

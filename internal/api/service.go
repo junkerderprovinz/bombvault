@@ -3090,9 +3090,10 @@ type DomainStatusEntry struct {
 	LastOffsiteSubsetAt int64 `json:"lastOffsiteSubsetAt"`
 	LastOffsiteSubsetOK bool  `json:"lastOffsiteSubsetOK"`
 	// OffsiteDrillScheduled is true only when the scheduler actually runs an
-	// off-site DR drill for this domain (DrillsEnabled AND OffsiteDrillsEnabled AND
-	// an off-site repo configured). When false but the domain has an off-site repo,
-	// the dashboard shows a muted "manual only" pill instead of a red drFailed (#37).
+	// off-site DR drill for this domain: drills and off-site drills on, a domain
+	// the DR drill covers, and an off-site target in use. When false but the
+	// domain has an off-site repo, the dashboard shows a muted "manual only" pill
+	// instead of a red drFailed (#37).
 	OffsiteDrillScheduled bool   `json:"offsiteDrillScheduled"`
 	Protection            string `json:"protection"` // "" (disabled) | "red" | "amber" | "green"
 
@@ -3537,8 +3538,13 @@ func (s *Service) domainStatusFrom(settings store.Settings) ([]DomainStatusEntry
 		// off-site DR drill (#37) thus reuses the proven global-drills-off neutral
 		// path: drillPeriod stays 0, so DrillState is "" (muted) and protectionLevel
 		// ignores DR (both its DR branches are drillPeriod>0-guarded).
+		// The scheduler drills only a domain it covers that has an off-site
+		// target in use, so config and a ZFS domain copied by replicas alone
+		// keep the neutral path too.
+		drScheduled := settings.DrillsEnabled && settings.OffsiteDrillsEnabled && d.enabled &&
+			slices.Contains(schedule.DRDrillDomains, d.name) && s.offsiteRepoFor(d.name, settings) != ""
 		var drillPeriod int64
-		if settings.DrillsEnabled && settings.OffsiteDrillsEnabled {
+		if drScheduled {
 			drillPeriod = cadencePeriodSeconds(settings.DrillsSchedule)
 		}
 
@@ -3609,7 +3615,7 @@ func (s *Service) domainStatusFrom(settings store.Settings) ([]DomainStatusEntry
 			LastDRDrillSnapshot:   drSnapshot,
 			LastOffsiteSubsetAt:   lastOffsiteSubsetAt,
 			LastOffsiteSubsetOK:   lastOffsiteSubsetOK,
-			OffsiteDrillScheduled: settings.DrillsEnabled && settings.OffsiteDrillsEnabled && offsiteConfigured,
+			OffsiteDrillScheduled: drScheduled && offsiteConfigured,
 			DrillDetail:           drDetail,
 			Protection:            protection,
 			TamperState:           checks.Tamper,
@@ -8070,6 +8076,10 @@ func (s *Service) DiscoverVMs(ctx context.Context, dryRun bool) (DiscoverResult,
 	return res, readErr
 }
 
+// definitionOnly is the snapshot a restore asks for when it recreates a
+// container from its stored definition and restores no data.
+const definitionOnly = "definition"
+
 // containerRestorePlan carries everything prepareRestore validated and resolved
 // so the long-running execution can run detached from the request that asked
 // for it (StartRestore) while the sync Restore path keeps identical behaviour.
@@ -8131,7 +8141,7 @@ func (s *Service) prepareRestore(ctx context.Context, name, snapshotID string, c
 	if !validResourceName(name) {
 		return containerRestorePlan{}, errors.New("invalid container name")
 	}
-	if snapshotID != "latest" && snapshotID != "" && !backup.ValidSnapshotID(snapshotID) {
+	if snapshotID != "latest" && snapshotID != "" && snapshotID != definitionOnly && !backup.ValidSnapshotID(snapshotID) {
 		return containerRestorePlan{}, backup.ErrInvalidSnapshotID
 	}
 	settings, err := s.store.GetSettings()
@@ -8164,8 +8174,8 @@ func (s *Service) prepareRestoreIn(ctx context.Context, ref repoRef, name, snaps
 	}
 	// An explicit snapshot id must be well-formed hex. The orchestrator re-checks
 	// this, but guarding here makes a bad id fail synchronously (fail-fast for the
-	// async StartRestore path). "latest"/"" resolve below.
-	explicitID := snapshotID != "latest" && snapshotID != ""
+	// async StartRestore path). "latest"/"" and definitionOnly resolve below.
+	explicitID := snapshotID != "latest" && snapshotID != "" && snapshotID != definitionOnly
 	if explicitID && !backup.ValidSnapshotID(snapshotID) {
 		return containerRestorePlan{}, backup.ErrInvalidSnapshotID
 	}
@@ -8197,32 +8207,46 @@ func (s *Service) prepareRestoreIn(ctx context.Context, ref repoRef, name, snaps
 // tag, since this instance's rename history says nothing about a foreign
 // repository.
 func (s *Service) prepareRestoreForTarget(ctx context.Context, ref repoRef, name, snapshotID string, tg store.Target, id entryIdentity, destBase string, overwrite bool) (containerRestorePlan, error) {
-	explicitID := snapshotID != "latest" && snapshotID != ""
+	explicitID := snapshotID != "latest" && snapshotID != "" && snapshotID != definitionOnly
 
 	// "latest" (or empty) resolves to the container's newest snapshot, as the
 	// bulk "restore selected" action needs; restic returns snapshots oldest
 	// first. A definition-only backup (stateless container with no restic
-	// snapshot) is recreated from the stored definition instead. An explicit id
-	// must be one id owns, the same access check the file and to-path restores
-	// make, listed against the caller's repo ref rather than the settings repo.
-	recreateOnly := false
-	snaps, snapErr := s.snapshotsOwnedBy(ctx, ref.repo, ref.mode, id)
-	if snapErr != nil {
-		return containerRestorePlan{}, snapErr
+	// snapshot) is recreated from the stored definition instead. A container
+	// with backup paths and no snapshot here has its data in another place, and
+	// recreating it would bring it up empty while the run says restored. An
+	// explicit id must be one id owns, the same access check the file and
+	// to-path restores make, listed against the caller's repo ref rather than
+	// the settings repo.
+	recreateOnly := snapshotID == definitionOnly
+	var snaps []restic.Snapshot
+	switch {
+	case recreateOnly:
+		if tg.Definition == "" {
+			return containerRestorePlan{}, errors.New("no stored definition to recreate this container from: run a backup once, then recreate it")
+		}
+		snapshotID = ""
+	default:
+		var snapErr error
+		snaps, snapErr = s.snapshotsOwnedBy(ctx, ref.repo, ref.mode, id)
+		if snapErr != nil {
+			return containerRestorePlan{}, snapErr
+		}
 	}
-	if explicitID {
+	switch {
+	case recreateOnly:
+	case explicitID:
 		if !snapshotBelongs(snaps, snapshotID) {
 			return containerRestorePlan{}, notInListing{snapshotID, "container"}
 		}
-	} else {
-		switch {
-		case len(snaps) > 0:
-			snapshotID = snaps[len(snaps)-1].ID
-		case tg.Definition != "":
-			recreateOnly = true
-		default:
-			return containerRestorePlan{}, errors.New("no backups found for this container")
-		}
+	case len(snaps) > 0:
+		snapshotID = snaps[len(snaps)-1].ID
+	case tg.Definition != "" && len(tg.AppdataPaths) == 0:
+		recreateOnly = true
+	case tg.Definition != "":
+		return containerRestorePlan{}, errors.New("this place holds no backup of this container's data: restore it from the place that has one")
+	default:
+		return containerRestorePlan{}, errors.New("no backups found for this container")
 	}
 
 	// Re-validate the stored appdata paths stay within the host mount root before
@@ -10052,6 +10076,9 @@ func (s *Service) prepareRestoreFiles(ctx context.Context, name, source, snapsho
 		if err != nil {
 			return filesRestorePlan{}, errors.New("invalid target folder: must be a relative subpath under the host mount")
 		}
+		if err := s.guardRestoreFolder(t); err != nil {
+			return filesRestorePlan{}, err
+		}
 		if !isPlanOnly(ctx) {
 			if err := makeRestoreFolder(ctx, t, paths.EnsureDir); err != nil {
 				return filesRestorePlan{}, fmt.Errorf("create target folder: %w", err)
@@ -10381,6 +10408,9 @@ func (s *Service) prepareRestoreToPath(ctx context.Context, name, source, snapsh
 		// paths.Resolve returns ErrTraversal/ErrAbsoluteSub — neither leaks a host
 		// path; keep the message generic (defense-in-depth, mirrors handleBrowse).
 		return toPathRestorePlan{}, errors.New("invalid target folder: must be a relative subpath under the host mount")
+	}
+	if err := s.guardRestoreFolder(target); err != nil {
+		return toPathRestorePlan{}, err
 	}
 
 	// Scope to the named container: the snapshot must be one of ITS snapshots, so
@@ -14968,6 +14998,9 @@ func (s *Service) prepareRestoreFileSet(ctx context.Context, id, snapshotID, sou
 		if rErr != nil {
 			return fileSetRestorePlan{}, errors.New("invalid target folder: must be a relative subpath under the host mount")
 		}
+		if err := s.guardRestoreFolder(t); err != nil {
+			return fileSetRestorePlan{}, err
+		}
 		plan.target = t
 	} else {
 		// In-place: writes over the set's source folder — require the explicit
@@ -15315,6 +15348,9 @@ func (s *Service) buildFileSetFilesPlan(ctx context.Context, snaps []restic.Snap
 		t, rErr := paths.ResolveForWrite(s.cfg.HostMountRoot, sub)
 		if rErr != nil {
 			return fileSetFilesRestorePlan{}, errors.New("invalid target folder: must be a relative subpath under the host mount")
+		}
+		if err := s.guardRestoreFolder(t); err != nil {
+			return fileSetFilesRestorePlan{}, err
 		}
 		// When the snapshot has a backed-up root, every selection must sit within it
 		// — the selection becomes an --include relative to that subtree, so a path
@@ -16681,6 +16717,11 @@ const drillSnapshotTimeout = 15 * time.Minute
 // and a red a false failure, so the scorecard must green/red neither.
 var errNothingToDrill = errors.New("no restorable file data in the newest off-site snapshot: nothing to drill")
 
+// errNoDRSnapshots is an off-site that holds nothing yet. The drill records no
+// row for it: a domain that was never copied off site has nothing to be red
+// about.
+var errNoDRSnapshots = errors.New("no off-site backups to drill yet")
+
 // runDRDrill performs a real off-site disaster-recovery drill for a domain: it
 // restores the newest off-site snapshot of the drill target into a marker-guarded
 // sandbox under the restore folder, verifies the restored file count + bytes
@@ -16713,7 +16754,7 @@ func (s *Service) runDRDrill(ctx context.Context, domain, source string, wait bo
 	}
 	repo, err := s.resolveRepo(target.Repo)
 	if err != nil {
-		return store.RestoreDrill{}, err
+		return s.recordDRUnreachable(ctx, domain, source, wait, err), err
 	}
 
 	// Serialise with backups/restores on the domain repo — a scheduled backup must
@@ -16780,9 +16821,21 @@ func (s *Service) runDRDrill(ctx context.Context, domain, source string, wait bo
 	// drill with the shared mode means a destination with its own credentials
 	// can be written and never read back, so the drill could not pass.
 	mode := s.offsiteModeForTarget(settings, target)
+	// A local off-site folder that is missing has never been copied to, unless
+	// it was and its disk is not mounted now.
+	if localRepoMissing(repo) {
+		if s.repoEstablished(repo) && !s.destinationMounted(repo) {
+			err = ErrBackupPathNotMounted
+			return s.recordDRUnreachable(ctx, domain, source, wait, err), err
+		}
+		return store.RestoreDrill{}, errNoDRSnapshots
+	}
 	listCtx, listCancel := context.WithTimeout(drillCtx, drillSnapshotTimeout)
 	snapID, item, err := s.pickDRSnapshot(listCtx, domain, settings, repo, mode)
 	listCancel()
+	if unread := (offsiteUnreadable{}); errors.As(err, &unread) {
+		return s.recordDRUnreachable(ctx, domain, source, wait, unread.err), err
+	}
 	if err != nil {
 		return store.RestoreDrill{}, err
 	}
@@ -16828,6 +16881,28 @@ func (s *Service) runDRDrill(ctx context.Context, domain, source string, wait bo
 	return drill, drillErr
 }
 
+// offsiteUnreadable is a DR drill's off-site repository that could not be
+// listed: gone, refusing its keys, or out of reach.
+type offsiteUnreadable struct{ err error }
+
+func (e offsiteUnreadable) Error() string { return e.err.Error() }
+func (e offsiteUnreadable) Unwrap() error { return e.err }
+
+// recordDRUnreachable records a failed DR drill for an off-site it could not
+// read and, on the scheduled run, sends the alert. Without the row the badge
+// keeps the last pass and says restorable over a bucket that is gone.
+func (s *Service) recordDRUnreachable(ctx context.Context, domain, source string, wait bool, cause error) store.RestoreDrill {
+	rec := store.RestoreDrill{Domain: domain, Source: source, Kind: "dr", At: time.Now().Unix(), OK: false, Detail: truncateRunErr(cause)}
+	if err := s.store.AddRestoreDrill(rec); err != nil {
+		log.Printf("api: drill: record unreachable off-site for %q: %v", domain, err) //nolint:gosec // G706: domain is %q-quoted and validated to a fixed allow-list
+	}
+	s.recordDomainRun(domain, "drdrill", false, rec.Detail)
+	if wait {
+		s.notifyDrillFailure(ctx, domain, source, rec.Detail)
+	}
+	return rec
+}
+
 // pickDRSnapshot resolves the newest off-site snapshot to drill for a domain,
 // and the item it holds.
 // containers: the DRDrillTarget container, scoped to its container:<name> tag,
@@ -16845,10 +16920,10 @@ func (s *Service) runDRDrill(ctx context.Context, domain, source string, wait bo
 func (s *Service) pickDRSnapshot(ctx context.Context, domain string, settings store.Settings, repo string, mode restic.Mode) (id, item string, err error) {
 	all, err := s.listSnapshots(ctx, repo, mode)
 	if err != nil {
-		return "", "", err
+		return "", "", offsiteUnreadable{err}
 	}
 	if len(all) == 0 {
-		return "", "", errors.New("no off-site backups to drill yet")
+		return "", "", errNoDRSnapshots
 	}
 	switch domain {
 	case "flash", "files":

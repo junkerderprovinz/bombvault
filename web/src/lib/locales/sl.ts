@@ -2610,6 +2610,7 @@ const sl: Partial<Translations> = {
   "recovery.foreignReconnect": "Znova se poveži",
   "recovery.foreignVMDest": "Cilj za diske VM-ja",
   "recovery.foreignVMDestHint": "Kamor se zapišejo diski VM-ja. Datoteke diskov gredo v <cilj>/<ime-vm>/, zato izberi mapo na resnično priklopljenem naboru, ne na RAM disku. Tuj VM se obnovi ustavljen, zato ga po pregledu zaženi sam.",
+  "recovery.foreignNoDefinition": "Ta kopija nima definicije za {name}, zato ga BombVault od tu ne more znova ustvariti. Definicije so v varnostni kopiji nastavitev starega strežnika. Obnovi jo v nujnem čarovniku in nato tam obnovi {name}.",
 
   // Dashboard activity log (Task 4)
   "activityLog.title": "Dnevnik dejavnosti",
@@ -4405,6 +4406,8 @@ const sl: Partial<Translations> = {
   "emergency.searching": "Pregledujem tvoje varnostne kopije …",
   "emergency.selectionHint": "Povsod je vnaprej izbrana najnovejša kopija. Po ponovni postavitvi nabori map ne vedo več, od kod so, zato gredo v mapo, ki jo izbereš.",
   "emergency.selectionKept": "Kar ta strežnik še ima, je privzeto izklopljeno, ker bi obnova to zamenjala.",
+  "emergency.entrySource": "Kje so varnostne kopije?",
+  "emergency.entrySourceHint": "Zunanje pokaže, kaj vsebujejo zunanje kopije, in obnavlja iz njih. Izberi to, ko so se lokalne varnostne kopije izgubile skupaj s starim strežnikom.",
   "emergency.leaveStoppedHint": "Vsak vsebnik in VM zaženeš sam, ko si pripravljen. Najvarneje po popolni izgubi.",
   "emergency.brings": "Obnovi: {list}.",
   "emergency.count.containers": "one={n} vsebnik|two={n} vsebnika|few={n} vsebniki|other={n} vsebnikov",

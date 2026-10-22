@@ -2626,6 +2626,7 @@ const et: Partial<Translations> = {
   "recovery.foreignReconnect": "Ühendu uuesti",
   "recovery.foreignVMDest": "VM-i ketaste sihtkoht",
   "recovery.foreignVMDestHint": "Kuhu VM-i kettad kirjutatakse. Kettatõmmised lähevad kausta <destination>/<vm-name>/, seega vali kaust päriselt haagitud poolil, mitte RAM-kettal. Võõras VM taastatakse peatatuna, seega käivita see ise pärast selle kontrollimist.",
+  "recovery.foreignNoDefinition": "Selles koopias pole {name} definitsiooni, seega ei saa BombVault seda siit uuesti luua. Definitsioonid on vana serveri seadete varukoopias. Taasta see hädaabiviisardis ja taasta seejärel seal {name}.",
 
   // Dashboard activity log
   "activityLog.title": "Tegevuslogi",
@@ -4421,6 +4422,8 @@ const et: Partial<Translations> = {
   "emergency.searching": "Otsin sinu varundustest …",
   "emergency.selectionHint": "Uusim varundus on igal pool eelvalitud. Pärast uuesti ülesehitamist ei tea kaustakomplektid enam, kust nad tulid, seepärast lähevad nad sinu valitud kausta.",
   "emergency.selectionKept": "Mis sellel serveril veel on, algab väljalülitatuna, sest taastamine asendaks selle.",
+  "emergency.entrySource": "Kus varukoopiad asuvad?",
+  "emergency.entrySourceHint": "Väline näitab, mida välised koopiad sisaldavad, ja taastab neist. Vali see, kui kohalikud varukoopiad kadusid koos vana serveriga.",
   "emergency.leaveStoppedHint": "Käivitad iga konteineri ja VM-i ise, kui oled valmis. Kõige turvalisem pärast täielikku kaotust.",
   "emergency.brings": "Toob tagasi: {list}.",
   "emergency.count.containers": "one={n} konteiner|other={n} konteinerit",

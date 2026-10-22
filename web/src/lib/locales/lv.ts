@@ -2626,6 +2626,7 @@ const lv: Partial<Translations> = {
   "recovery.foreignReconnect": "Izveidot savienojumu vēlreiz",
   "recovery.foreignVMDest": "VM disku mērķis",
   "recovery.foreignVMDestHint": "Kur tiek ierakstīti VM diski. Diska attēli nonāk <destination>/<vm-name>/, tāpēc izvēlieties mapi reāli piesaistītā fondā, nevis RAM diskā. Sveša VM tiek atjaunota apturēta, tāpēc palaidiet to paši pēc tam, kad esat to pārbaudījuši.",
+  "recovery.foreignNoDefinition": "Šajā kopijā nav {name} definīcijas, tāpēc BombVault to nevar no šejienes izveidot no jauna. Definīcijas ir vecā servera iestatījumu dublējumā. Atjauno to avārijas vednī un pēc tam tur atjauno {name}.",
 
   // Dashboard activity log
   "activityLog.title": "Darbības žurnāls",
@@ -4421,6 +4422,8 @@ const lv: Partial<Translations> = {
   "emergency.searching": "Meklē jūsu rezerves kopijās …",
   "emergency.selectionHint": "Visur iepriekš izvēlēta jaunākā kopija. Pēc atkārtotas izveides mapju kopas vairs nezina, no kurienes cēlušās, tāpēc tās nonāk tevis izvēlētā mapē.",
   "emergency.selectionKept": "Tas, kas šim serverim vēl ir, sākumā ir izslēgts, jo atjaunošana to aizstātu.",
+  "emergency.entrySource": "Kur atrodas dublējumi?",
+  "emergency.entrySourceHint": "Attālināts parāda, kas ir attālinātajās kopijās, un atjauno no tām. Izvēlies to, ja vietējie dublējumi pazuda kopā ar veco serveri.",
   "emergency.leaveStoppedHint": "Katru konteineru un VM palaidiet paši, kad esat gatavi. Drošākais variants pēc pilnīga zaudējuma.",
   "emergency.brings": "Atjauno {list}.",
   "emergency.count.containers": "zero={n} konteineru|one={n} konteineru|other={n} konteinerus",

@@ -17,8 +17,7 @@ func hasDrillTask(tasks []drillTask, want drillTask) bool {
 }
 
 // TestDrillTasksIncludeZFSOffsiteDR checks that an enabled ZFS domain gets the
-// local subset check, plus a DR drill once an off-site repo is set and off-site
-// drills are on.
+// local subset check, plus a DR drill while off-site drills are on.
 func TestDrillTasksIncludeZFSOffsiteDR(t *testing.T) {
 	base := store.Settings{
 		ZFSEnabled:           true,
@@ -30,20 +29,11 @@ func TestDrillTasksIncludeZFSOffsiteDR(t *testing.T) {
 	if !hasDrillTask(tasks, drillTask{domain: "zfs", source: "local", kind: "subset"}) {
 		t.Fatalf("expected a local subset drill for zfs, got %v", tasks)
 	}
-	for _, tk := range tasks {
-		if tk.domain == "zfs" && tk.kind == "dr" {
-			t.Fatalf("zfs must not get a DR task without an off-site repo: %v", tasks)
-		}
-	}
-
-	withOff := base
-	withOff.ZFSOffsite = "rclone:remote:bombvault-zfs"
-	tasks = drillTasks(withOff)
 	if !hasDrillTask(tasks, drillTask{domain: "zfs", source: "offsite", kind: "dr"}) {
 		t.Fatalf("expected an off-site DR drill for zfs, got %v", tasks)
 	}
 
-	optedOut := withOff
+	optedOut := base
 	optedOut.OffsiteDrillsEnabled = false
 	for _, tk := range drillTasks(optedOut) {
 		if tk.domain == "zfs" && tk.kind == "dr" {
@@ -81,8 +71,8 @@ func TestImmutableOffsiteDomainsIncludeZFS(t *testing.T) {
 }
 
 // TestDrillTasks checks the scheduled drills: a local "subset" integrity check
-// per enabled domain, plus an off-site "dr" drill for containers, VMs and flash
-// when off-site is configured.
+// and an off-site "dr" drill per enabled domain. Whether a domain has an
+// off-site to drill is asked when the job fires.
 func TestDrillTasks(t *testing.T) {
 	base := store.Settings{
 		ContainersEnabled:    true,
@@ -91,13 +81,10 @@ func TestDrillTasks(t *testing.T) {
 		OffsiteDrillsEnabled: true, // the default
 	}
 
-	t.Run("subset per enabled domain, no dr without off-site", func(t *testing.T) {
+	t.Run("subset per enabled domain", func(t *testing.T) {
 		got := drillTasks(base)
 		subset := map[string]bool{}
 		for _, tk := range got {
-			if tk.kind == "dr" {
-				t.Fatalf("no dr task expected without an off-site repo, got %+v", tk)
-			}
 			if tk.kind == "subset" && tk.source == "local" {
 				subset[tk.domain] = true
 			}
@@ -110,12 +97,8 @@ func TestDrillTasks(t *testing.T) {
 	})
 
 	t.Run("off-site dr for containers + vms + flash", func(t *testing.T) {
-		s := base
-		s.ContainersOffsite = "rest:http://192.168.20.9:8000/containers"
-		s.FlashOffsite = "rest:http://192.168.20.9:8000/flash"
-		s.VMsOffsite = "rest:http://192.168.20.9:8000/vms"
 		dr := map[string]bool{}
-		for _, tk := range drillTasks(s) {
+		for _, tk := range drillTasks(base) {
 			if tk.kind != "dr" {
 				continue
 			}

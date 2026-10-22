@@ -41,8 +41,8 @@ func TestPrepareRestoreOfAReusedNameNeverPicksTheAliasOwnersSnapshot(t *testing.
 	ctx := context.Background()
 
 	s := &Service{store: st, cfg: config.Config{HostMountRoot: "/host/user"}, engine: aliasRestoreEngine{snaps: []restic.Snapshot{pre, own}}}
-	if plan, err := s.prepareRestoreIn(ctx, ref, "radarr-movies", "latest", true); err != nil || !plan.recreateOnly || plan.snapshotID == pre.ID {
-		t.Fatalf("latest with no snapshot of its own = %+v, %v; want a recreate from the definition alone", plan, err)
+	if plan, err := s.prepareRestoreIn(ctx, ref, "radarr-movies", "latest", true); err == nil || plan.snapshotID == pre.ID {
+		t.Fatalf("latest with no snapshot of its own = %+v, %v; want a refusal, its data is in no snapshot of its own", plan, err)
 	}
 	if _, err := s.prepareRestoreIn(ctx, ref, "radarr-movies", pre.ID, true); err == nil {
 		t.Fatal("radarr's pre-link snapshot must not pass the new machine's ownership check")

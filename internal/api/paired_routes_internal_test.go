@@ -274,6 +274,7 @@ var pairedRefused = []string{
 	"DELETE /api/group/deposits/{owner}",
 	"GET /api/emergency",
 	"GET /api/emergency/deposits",
+	"GET /api/emergency/offsite-entries",
 	"GET /api/group/deposits",
 	"GET /api/recovery-kit",
 	"POST /api/emergency/adopt",

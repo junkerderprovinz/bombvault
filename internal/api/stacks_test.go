@@ -66,8 +66,10 @@ func seedStackTarget(t *testing.T, st *store.Repo, mountRoot, name, project, ser
 	seedStackTargetState(t, st, mountRoot, name, project, service, dependsOn, true)
 }
 
-// stackTestService builds a service and store with an empty local containers
-// repo on disk, so RestoreStack's "latest" resolves the fake engine's snapshots.
+// stackTestService builds a service and store whose containers repo is remote,
+// so RestoreStack's "latest" resolves the fake engine's snapshots. A local repo
+// under the "/host/user" placeholder would resolve as missing, and the mount
+// root stays a Linux path for paths.Within.
 func stackTestService(t *testing.T, eng *fakeResticEngine, d *fakeServiceDocker) (*api.Service, *store.Repo, string) {
 	t.Helper()
 	dir := t.TempDir()
@@ -81,48 +83,29 @@ func stackTestService(t *testing.T, eng *fakeResticEngine, d *fakeServiceDocker)
 	st := newMemStore(t)
 	s := mustSettings(t, st)
 	s.EncryptionEnabled = false
-	s.ContainersPath = "backups/containers"
+	s.ContainersPath = "rest:http://127.0.0.1:8000/containers"
 	if err := st.UpdateSettings(s); err != nil {
-		t.Fatal(err)
-	}
-	repo := filepath.Join(dir, "backups", "containers")
-	if err := os.MkdirAll(repo, 0o700); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(filepath.Join(repo, "config"), []byte("x"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 	return api.NewService(cfg, st, d, fakeVirsh{}, eng), st, mountRoot
 }
 
+// memberSnapshot is a snapshot of a stack member's appdata as seedStackTarget
+// records it.
+func memberSnapshot(id, name string) restic.Snapshot {
+	return restic.Snapshot{ID: id, Tags: []string{"container:" + name}, Paths: []string{"/host/user/appdata/" + name}}
+}
+
 // Members are restored stopped and, with startAfter, started in dependency order.
 func TestRestoreStack(t *testing.T) {
-	dir := t.TempDir()
-	// paths.Within checks appdata paths with forward slashes, so the mount root is
-	// a Linux path while the repo lives in the temp dir.
-	const mountRoot = "/host/user"
-	cfg := config.Config{
-		AppKey:            strings.Repeat("a", 64),
-		DataDir:           dir,
-		HostMountRoot:     mountRoot,
-		FlashTemplatesDir: filepath.Join(dir, "flash"),
-	}
-	st := newMemStore(t)
-	s := mustSettings(t, st)
-	s.EncryptionEnabled = false
-	s.ContainersPath = "backups/containers"
-	if err := st.UpdateSettings(s); err != nil {
-		t.Fatal(err)
-	}
-	// The local repo must exist on disk so Snapshots("latest") resolves the fake
-	// engine's snapshot instead of reporting "no repo yet".
-	repo := filepath.Join(dir, "backups", "containers")
-	if err := os.MkdirAll(repo, 0o700); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(filepath.Join(repo, "config"), []byte("x"), 0o600); err != nil {
-		t.Fatal(err)
-	}
+	d := &fakeServiceDocker{liveName: ""} // no live container: fresh restore
+	eng := &fakeResticEngine{snaps: []restic.Snapshot{
+		memberSnapshot("aaaa1111", "svc-a"),
+		memberSnapshot("bbbb2222", "svc-b"),
+		memberSnapshot("cccc3333", "svc-c"),
+		memberSnapshot("dddd4444", "other-1"),
+	}}
+	svc, st, mountRoot := stackTestService(t, eng, d)
 
 	// a depends on b and b on c, so the start order is c, b, a.
 	seedStackTarget(t, st, mountRoot, "svc-a", "media", "a", "b")
@@ -130,15 +113,6 @@ func TestRestoreStack(t *testing.T) {
 	seedStackTarget(t, st, mountRoot, "svc-c", "media", "c", "")
 	// A target in another project stays untouched.
 	seedStackTarget(t, st, mountRoot, "other-1", "otherstack", "web", "")
-
-	d := &fakeServiceDocker{liveName: ""} // no live container: fresh restore
-	eng := &fakeResticEngine{snaps: []restic.Snapshot{
-		{ID: "aaaa1111", Tags: []string{"container:svc-a"}},
-		{ID: "bbbb2222", Tags: []string{"container:svc-b"}},
-		{ID: "cccc3333", Tags: []string{"container:svc-c"}},
-		{ID: "dddd4444", Tags: []string{"container:other-1"}},
-	}}
-	svc := api.NewService(cfg, st, d, fakeVirsh{}, eng)
 
 	res, err := svc.RestoreStack(context.Background(), "media", "local", "", true, true)
 	if err != nil {
@@ -298,8 +272,8 @@ func TestRestoreStackEmpty(t *testing.T) {
 func TestRestoreStackRespectsRunState(t *testing.T) {
 	d := &fakeServiceDocker{liveName: ""}
 	eng := &fakeResticEngine{snaps: []restic.Snapshot{
-		{ID: "aaaa1111", Tags: []string{"container:web"}},
-		{ID: "bbbb2222", Tags: []string{"container:worker"}},
+		memberSnapshot("aaaa1111", "web"),
+		memberSnapshot("bbbb2222", "worker"),
 	}}
 	svc, st, mountRoot := stackTestService(t, eng, d)
 	seedStackTargetState(t, st, mountRoot, "web", "app", "web", "", true)        // running
@@ -438,7 +412,7 @@ func TestStartRestoreStackValidationFailsFast(t *testing.T) {
 func TestRestoreStackBlocksDependentOnFailedDependency(t *testing.T) {
 	d := &fakeServiceDocker{liveName: "", createErrName: "db"}
 	eng := &fakeResticEngine{snaps: []restic.Snapshot{
-		{ID: "aaaa1111", Tags: []string{"container:app"}},
+		memberSnapshot("aaaa1111", "app"),
 	}}
 	svc, st, mountRoot := stackTestService(t, eng, d)
 	seedStackTarget(t, st, mountRoot, "app", "shop", "app", "db") // app depends_on db
@@ -537,9 +511,9 @@ func TestRestoreStackTakesTheProjectFolderFromTheSourceItIsGiven(t *testing.T) {
 func TestRestoreStackRecreatesDependenciesFirst(t *testing.T) {
 	d := &fakeServiceDocker{}
 	eng := &fakeResticEngine{snaps: []restic.Snapshot{
-		{ID: "aaaa1111", Tags: []string{"container:svc-a"}},
-		{ID: "bbbb2222", Tags: []string{"container:svc-b"}},
-		{ID: "cccc3333", Tags: []string{"container:svc-c"}},
+		memberSnapshot("aaaa1111", "svc-a"),
+		memberSnapshot("bbbb2222", "svc-b"),
+		memberSnapshot("cccc3333", "svc-c"),
 	}}
 	svc, st, mountRoot := stackTestService(t, eng, d)
 	seedStackTarget(t, st, mountRoot, "svc-a", "media", "a", "b")

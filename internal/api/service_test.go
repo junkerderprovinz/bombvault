@@ -1418,6 +1418,33 @@ func TestDomainStatusOffsiteDrillOptOutNeutralNotRed(t *testing.T) {
 	}
 }
 
+// The scheduler never DR-drills config, so its status must not claim a
+// scheduled drill that could later read overdue.
+func TestDomainStatusClaimsNoScheduledDRDrillForConfig(t *testing.T) {
+	dir := t.TempDir()
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	s.ConfigEnabled = true
+	s.ConfigOffsite = "rest:http://192.168.1.2:8000/config"
+	s.DrillsEnabled = true
+	s.OffsiteDrillsEnabled = true
+	s.DrillsSchedule = "weekly Sun 03:00"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, &fakeResticEngine{})
+	statuses, err := svc.DomainStatus()
+	if err != nil {
+		t.Fatalf("DomainStatus: %v", err)
+	}
+	for _, d := range statuses {
+		if d.Domain == "config" && (d.OffsiteDrillScheduled || d.DrillState != "") {
+			t.Fatalf("config: scheduled %v, drill state %q; want no DR drill claim", d.OffsiteDrillScheduled, d.DrillState)
+		}
+	}
+}
+
 // TestDomainStatusCarriesDrillDetail pins #30: buildStatus must carry the scrubbed
 // failure reason of the last LOCAL subset drill and the last OFF-SITE DR drill into
 // the status entry (VerifiedDetail / DrillDetail) so the dashboard can show WHY +
@@ -6551,6 +6578,38 @@ func TestRunDRDrillNoOffsite(t *testing.T) {
 	}
 	if len(eng.restored) != 0 {
 		t.Fatalf("nothing must be restored without an off-site repo, got %v", eng.restored)
+	}
+}
+
+// An off-site that cannot be listed (bucket gone, keys expired, unreachable)
+// records a failed DR drill, so the badge cannot keep last week's pass.
+func TestRunDRDrillRecordsAnOffsiteItCannotRead(t *testing.T) {
+	const off = "rest:http://192.168.20.9:8000/containers"
+	eng := &fakeResticEngine{snapsErrFor: map[string]error{off: errors.New("Fatal: unable to open config file: 403 Forbidden")}}
+	svc, st := drDrillService(t, eng, "containers", off, "plex")
+	if err := st.AddRestoreDrill(store.RestoreDrill{Domain: "containers", Source: "offsite", Kind: "dr", At: time.Now().Unix() - 3600, OK: true}); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := svc.RunRestoreDrill(context.Background(), "containers", "offsite", "dr", false); err == nil {
+		t.Fatal("an unreadable off-site must surface an error")
+	}
+	latest, found, err := st.LatestRestoreDrillKind("containers", "offsite", "dr")
+	if err != nil || !found || latest.OK || !strings.Contains(latest.Detail, "403") {
+		t.Fatalf("latest dr drill = %+v, found %v, %v; want a failed row with the reason", latest, found, err)
+	}
+}
+
+// An off-site that was never copied to holds nothing to drill, which is no
+// failure.
+func TestRunDRDrillRecordsNothingForAnOffsiteWithoutBackups(t *testing.T) {
+	svc, st := drDrillService(t, &fakeResticEngine{}, "containers", "rest:http://192.168.20.9:8000/containers", "plex")
+
+	if _, err := svc.RunRestoreDrill(context.Background(), "containers", "offsite", "dr", false); err == nil {
+		t.Fatal("want the nothing-to-drill-yet error")
+	}
+	if _, found, err := st.LatestRestoreDrillKind("containers", "offsite", "dr"); err != nil || found {
+		t.Fatalf("found %v, %v; an empty off-site must record no drill", found, err)
 	}
 }
 

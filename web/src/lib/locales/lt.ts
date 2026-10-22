@@ -2626,6 +2626,7 @@ const lt: Partial<Translations> = {
   "recovery.foreignReconnect": "Prisijungti iš naujo",
   "recovery.foreignVMDest": "VM diskų paskirtis",
   "recovery.foreignVMDestHint": "Kur įrašomi VM diskai. Diskų atvaizdai patenka į <destination>/<vm-name>/, todėl pasirink aplanką realiai prijungtame telkinyje, o ne RAM diske. Svetimas VM atkuriamas sustabdytas, todėl paleisk jį rankiniu būdu, kai jį patikrinsi.",
+  "recovery.foreignNoDefinition": "Šioje kopijoje nėra {name} apibrėžimo, todėl BombVault negali jo iš čia sukurti iš naujo. Apibrėžimai yra senojo serverio nustatymų atsarginėje kopijoje. Atkurk ją avariniame vedlyje, tada ten atkurk {name}.",
 
   // Dashboard activity log
   "activityLog.title": "Veiklos žurnalas",
@@ -4421,6 +4422,8 @@ const lt: Partial<Translations> = {
   "emergency.searching": "Ieškoma tavo atsarginėse kopijose …",
   "emergency.selectionHint": "Visur iš anksto pasirinkta naujausia kopija. Po atstatymo nuo nulio aplankų rinkiniai nebežino, iš kur atsirado, todėl jie patenka į tavo pasirinktą aplanką.",
   "emergency.selectionKept": "Tai, ką šis serveris dar turi, iš pradžių išjungta, nes atkūrimas tai pakeistų.",
+  "emergency.entrySource": "Kur yra atsarginės kopijos?",
+  "emergency.entrySourceHint": "Nuotolinis rodo, ką turi nuotolinės kopijos, ir atkuria iš jų. Rinkis tai, kai vietinės atsarginės kopijos dingo kartu su senuoju serveriu.",
   "emergency.leaveStoppedHint": "Kiekvieną konteinerį ir VM paleidi pats, kai būsi pasirengęs. Saugiausia po visiško praradimo.",
   "emergency.brings": "Atkuria {list}.",
   "emergency.count.containers": "one={n} konteinerį|few={n} konteinerius|many={n} konteinerio|other={n} konteinerių",

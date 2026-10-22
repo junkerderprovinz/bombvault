@@ -90,6 +90,10 @@ export function snapshotOf(row: TimelineRow, places: TimelinePlace[]): { snapsho
   return { snapshotId: newestId(mark), source: sourceOfPlace(mark.place) };
 }
 
+/** A second click this soon after the start lands on the button that took
+ *  the start button's place, and is not meant for it. */
+export const DOUBLE_CLICK_MS = 500;
+
 const NOT_STARTED_KEY = "bv-restore-many-left";
 
 /** The entries of a running restore of several that have not started yet, kept

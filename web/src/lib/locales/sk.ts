@@ -2626,6 +2626,7 @@ const sk: Partial<Translations> = {
   "recovery.foreignReconnect": "Pripojiť sa znova",
   "recovery.foreignVMDest": "Cieľ diskov VM",
   "recovery.foreignVMDestHint": "Kam sa zapisujú disky VM. Obrazy diskov idú do <destination>/<vm-name>/, preto vyber priečinok na skutočne pripojenom fonde, nie na RAM disku. Cudzí VM sa obnoví zastavený, takže ho spusti sám po tom, čo ho skontroluješ.",
+  "recovery.foreignNoDefinition": "Táto kópia nemá definíciu {name}, preto ju BombVault odtiaľto nemôže znova vytvoriť. Definície sú v zálohe nastavení starého servera. Obnov ju v núdzovom sprievodcovi a potom tam obnov {name}.",
 
   // Dashboard activity log
   "activityLog.title": "Denník aktivít",
@@ -4421,6 +4422,8 @@ const sk: Partial<Translations> = {
   "emergency.searching": "Prehľadávam tvoje zálohy …",
   "emergency.selectionHint": "Všade je vopred vybraná najnovšia záloha. Po novom nasadení servera už sady priečinkov nevedia, odkiaľ pochádzajú, preto idú do priečinka, ktorý vyberieš.",
   "emergency.selectionKept": "To, čo tento server ešte má, začína vypnuté, lebo by to obnova prepísala.",
+  "emergency.entrySource": "Kde sú zálohy?",
+  "emergency.entrySourceHint": "Externý ukáže, čo obsahujú externé kópie, a obnoví z nich. Zvoľ to, keď miestne zálohy zmizli spolu so starým serverom.",
   "emergency.leaveStoppedHint": "Každý kontajner a VM spustíš sám, keď budeš pripravený. Najbezpečnejšie po úplnej strate.",
   "emergency.brings": "Obnoví: {list}.",
   "emergency.count.containers": "one={n} kontajner|few={n} kontajnery|many={n} kontajnera|other={n} kontajnerov",

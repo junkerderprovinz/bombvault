@@ -2626,6 +2626,7 @@ const eu: Partial<Translations> = {
   "recovery.foreignReconnect": "Konektatu berriz",
   "recovery.foreignVMDest": "MBren diskoen helmuga",
   "recovery.foreignVMDestHint": "Non idazten diren MBren diskoak. Disko-irudiak <destination>/<vm-name>/ helmugara doaz, beraz aukeratu benetan muntatutako pool bateko karpeta bat, ez RAM diskoa. Kanpoko MB bat gelditurik berrezartzen da, beraz abiarazi zuk zeuk egiaztatu ondoren.",
+  "recovery.foreignNoDefinition": "Kopia honek ez du {name}-ren definiziorik, beraz BombVault-ek ezin du hemendik berriro sortu. Definizioak zerbitzari zaharraren ezarpenen babeskopian daude. Berrezarri hori larrialdi-morroian, eta gero berrezarri {name} han.",
 
   // Dashboard activity log
   "activityLog.title": "Jarduera-erregistroa",
@@ -4421,6 +4422,8 @@ const eu: Partial<Translations> = {
   "emergency.searching": "Zure babeskopietan bilatzen …",
   "emergency.selectionHint": "Babeskopia berriena aukeratuta dator nonahi. Berreraiki ondoren, karpeta-multzoek ez dakite nondik datozen, beraz zuk aukeratzen duzun karpeta batean amaitzen dute.",
   "emergency.selectionKept": "Zerbitzari honek oraindik dituenak itzalita hasten dira, berrezarpenak ordezkatuko lituzkeelako.",
+  "emergency.entrySource": "Non daude babeskopiak?",
+  "emergency.entrySourceHint": "Kanpokoa aukerak kanpoko kopiek dutena erakusten du eta haietatik berrezartzen du. Aukeratu tokiko babeskopiak zerbitzari zaharrarekin batera galdu direnean.",
   "emergency.leaveStoppedHint": "Edukiontzi eta MB bakoitza zeuk abiarazten duzu prest zaudenean. Galera osoaren ondoren, seguruena.",
   "emergency.brings": "{list} berreskuratzen ditu.",
   "emergency.count.containers": "{n} edukiontzi",

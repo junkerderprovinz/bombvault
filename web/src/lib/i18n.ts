@@ -3159,6 +3159,7 @@ export const en = {
   "recovery.foreignReconnect": "Reconnect",
   "recovery.foreignVMDest": "VM disk destination",
   "recovery.foreignVMDestHint": "Where the VM's disks are written. The disk images go to <destination>/<vm-name>/, so pick a folder on a real mounted pool, not the RAM disk. A foreign VM is restored left stopped, so start it yourself once you have checked it.",
+  "recovery.foreignNoDefinition": "This copy has no definition of {name}, so BombVault cannot recreate it from here. The old server's settings backup holds the definitions. Restore that in the emergency wizard, then restore {name} there.",
 
   // Dashboard activity log (Task 4) — a flat, docker-logs-style merged view of
   // run history + live SSE progress + the next scheduled run.
@@ -4753,6 +4754,8 @@ export const en = {
   "emergency.searching": "Looking through your backups …",
   "emergency.selectionHint": "The newest snapshot is preselected everywhere. After a rebuild, folder sets no longer know where they came from, so they go into a folder you choose.",
   "emergency.selectionKept": "What this server still has starts switched off, because a restore would replace it.",
+  "emergency.entrySource": "Where are the backups?",
+  "emergency.entrySourceHint": "Off-site lists what the off-site copies hold and restores from them. Pick it when the local backups went down with the old server.",
   "emergency.leaveStoppedHint": "You start each container and VM yourself when you are ready. Safest after a total loss.",
   "emergency.brings": "Brings back {list}.",
   "emergency.count.containers": "one={n} container|other={n} containers",
@@ -7999,6 +8002,7 @@ export const de: Translations = {
   "recovery.foreignReconnect": "Erneut verbinden",
   "recovery.foreignVMDest": "Ziel der VM-Datenträger",
   "recovery.foreignVMDestHint": "Wohin die Datenträger der VM geschrieben werden. Die Abbilder landen in <destination>/<vm-name>/. Wähle daher einen Ordner auf einem echten eingebundenen Pool, nicht auf der RAM-Disk. Eine fremde VM wird gestoppt wiederhergestellt, starte sie also selbst, sobald du sie geprüft hast.",
+  "recovery.foreignNoDefinition": "Diese Kopie hat keine Definition von {name}, deshalb kann BombVault es von hier aus nicht neu anlegen. Die Definitionen liegen in der Einstellungs-Sicherung des alten Servers. Spiel die im Notfall-Assistenten zurück und stell {name} dann dort wieder her.",
 
   // Dashboard activity log (Task 4)
   "activityLog.title": "Aktivitätsprotokoll",
@@ -9573,6 +9577,8 @@ export const de: Translations = {
   "emergency.searching": "Sucht in deinen Sicherungen …",
   "emergency.selectionHint": "Vorgewählt ist überall die neueste Sicherung. Ordner-Sets wissen nach einem Neuaufbau nicht mehr, woher sie kamen, deshalb landen sie in einem Ordner deiner Wahl.",
   "emergency.selectionKept": "Was dieser Server noch hat, ist anfangs ausgeschaltet, weil eine Wiederherstellung es ersetzen würde.",
+  "emergency.entrySource": "Wo liegen die Sicherungen?",
+  "emergency.entrySourceHint": "Off-site zeigt, was in den Off-site-Kopien liegt, und stellt daraus wieder her. Nimm das, wenn die lokalen Sicherungen mit dem alten Server verloren gegangen sind.",
   "emergency.leaveStoppedHint": "Du startest jeden Container und jede VM selbst, wenn du so weit bist. Am sichersten nach einem Totalausfall.",
   "emergency.brings": "Holt {list} zurück.",
   "emergency.count.containers": "one={n} Container|other={n} Container",

@@ -716,25 +716,12 @@ func settingsSnapshot(t *testing.T, s *Service) (store.Settings, string) {
 	return st, string(raw)
 }
 
-// TestForeignRestoreContainerRoundTrip pins the Task 10 container path end to
-// end: StartForeignRestore reads the encrypted def from the FOREIGN repo's
-// def dir and decrypts it with the SESSION key (the local APP_KEY differs and
-// could never decrypt it), a local target row appears carrying that
-// definition, the restore preparation lists the SESSION repo — never the
-// settings containers repo — and the EXISTING execute path recreates the
-// container (fake docker) and records a "restore" run against the adopted
-// target. Settings stay untouched and the foreign repo sees no writes.
-func TestForeignRestoreContainerRoundTrip(t *testing.T) {
-	// No container:web snapshots in the repo → the plan is recreate-only (pure
-	// def), which keeps the round trip OS-independent (no appdata paths on disk).
-	eng := &foreignRecordingEngine{opens: opensEncrypted}
-	s := newForeignTestService(t, eng)
-	d := &foreignFakeDocker{}
-	s.docker = d
-
-	// The foreign repo on the mounted share: restic's config marker (so the
-	// local repo counts as present for snapshot listing) + the encrypted def
-	// mirror for container "web", encrypted with the FOREIGN key.
+// seedForeignContainerDef writes a foreign repo on the mounted share at
+// backups/other: restic's config marker, so the local repo counts as present
+// for snapshot listing, and the def mirror for container "web", encrypted
+// with the foreign key.
+func seedForeignContainerDef(t *testing.T, s *Service, appdata []string) {
+	t.Helper()
 	repoDir := filepath.Join(s.cfg.HostMountRoot, "backups", "other")
 	if err := os.MkdirAll(filepath.Join(repoDir, "def"), 0o750); err != nil {
 		t.Fatal(err)
@@ -744,7 +731,7 @@ func TestForeignRestoreContainerRoundTrip(t *testing.T) {
 	}
 	defJSON, err := json.Marshal(containerDefinition{
 		Inspect:      model.Inspect{Name: "web", Config: model.Config{Image: "nginx:latest"}},
-		AppdataPaths: []string{"/host/user/appdata/web"},
+		AppdataPaths: appdata,
 	})
 	if err != nil {
 		t.Fatalf("marshal def: %v", err)
@@ -756,6 +743,90 @@ func TestForeignRestoreContainerRoundTrip(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(repoDir, "def", "web.def"), enc, 0o600); err != nil {
 		t.Fatal(err)
 	}
+}
+
+// A foreign container whose data the opened repo does not hold is refused,
+// not recreated empty, and its definition is not adopted.
+func TestForeignRestoreRefusesAContainerWhoseDataIsNotInTheRepo(t *testing.T) {
+	eng := &foreignRecordingEngine{opens: opensEncrypted}
+	s := newForeignTestService(t, eng)
+	d := &foreignFakeDocker{}
+	s.docker = d
+	seedForeignContainerDef(t, s, []string{"/host/user/appdata/web"})
+	id, _, err := s.OpenForeign(context.Background(), "backups/other", foreignTestKey, nil)
+	if err != nil {
+		t.Fatalf("OpenForeign: %v", err)
+	}
+	started, err := s.StartForeignRestore(context.Background(), id, "containers", "web", "latest", true, "", nil, false, "", "")
+	if err == nil || started {
+		t.Fatalf("StartForeignRestore: started=%v err=%v; want a refusal", started, err)
+	}
+	if _, err := s.store.GetTargetByContainer("web"); err == nil {
+		t.Fatal("a refused foreign restore adopted the definition")
+	}
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	if d.created != 0 {
+		t.Fatalf("created = %d; nothing may be recreated", d.created)
+	}
+}
+
+// A container the repository has data of but no definition for, as in an
+// off-site copy, is flagged so the window does not offer a restore that can
+// only fail.
+func TestOpenForeignFlagsEntriesWithoutADefinition(t *testing.T) {
+	eng := &foreignRecordingEngine{opens: opensEncrypted, snaps: []restic.Snapshot{
+		{ID: "aaaa1111", Tags: []string{"container:web"}},
+		{ID: "bbbb2222", Tags: []string{"container:db"}},
+		{ID: "cccc3333", Tags: []string{"vm:win11"}},
+	}}
+	s := newForeignTestService(t, eng)
+	seedForeignContainerDef(t, s, nil)
+
+	_, inv, err := s.OpenForeign(context.Background(), "backups/other", foreignTestKey, nil)
+	if err != nil {
+		t.Fatalf("OpenForeign: %v", err)
+	}
+	flags := map[string]bool{}
+	for _, c := range inv.Containers {
+		flags[c.Name] = c.NoDefinition
+	}
+	if flags["web"] || !flags["db"] {
+		t.Fatalf("no-definition flags = %v; want web readable and db flagged", flags)
+	}
+	if len(inv.VMs) != 1 || !inv.VMs[0].NoDefinition {
+		t.Fatalf("vms = %+v; want win11 flagged", inv.VMs)
+	}
+}
+
+// A remote repository carries no definitions, and its URL is never read as a
+// local folder.
+func TestForeignDefinitionOfARemoteRepositoryIsNotLookedUpOnDisk(t *testing.T) {
+	s := newForeignTestService(t, &foreignRecordingEngine{})
+	if _, err := s.foreignContainerTarget(foreignSession{repo: "s3:host/bucket", key: foreignTestKey}, "web"); err == nil {
+		t.Fatal("a remote session produced a definition")
+	}
+	if _, err := readForeignDef(foreignSession{repo: "s3:host/bucket"}, "def", "bombvault-defs", "web.def"); err == nil || !strings.Contains(err.Error(), "remote") {
+		t.Fatalf("err = %v; want the remote refusal", err)
+	}
+}
+
+// TestForeignRestoreContainerRoundTrip follows the foreign container path end
+// to end: StartForeignRestore decrypts the def from the foreign repo's def dir
+// with the session key (the local APP_KEY could not), a local target row
+// appears carrying that definition, the preparation lists the session repo
+// and not the settings containers repo, and the usual execute path recreates
+// the container and records a "restore" run against the adopted target.
+// Settings stay untouched and the foreign repo sees no writes.
+func TestForeignRestoreContainerRoundTrip(t *testing.T) {
+	// A stateless container with no container:web snapshots makes the plan
+	// recreate-only (pure def), which keeps the round trip OS-independent (no
+	// appdata paths on disk).
+	eng := &foreignRecordingEngine{opens: opensEncrypted}
+	s := newForeignTestService(t, eng)
+	d := &foreignFakeDocker{}
+	s.docker = d
+	seedForeignContainerDef(t, s, nil)
 
 	before, beforeRaw := settingsSnapshot(t, s)
 	id, _, err := s.OpenForeign(context.Background(), "backups/other", foreignTestKey, nil)
@@ -783,9 +854,6 @@ func TestForeignRestoreContainerRoundTrip(t *testing.T) {
 	}
 	if !strings.Contains(tg.Definition, "nginx:latest") {
 		t.Fatalf("target definition must carry the FOREIGN def (decrypted with the session key), got %q", tg.Definition)
-	}
-	if len(tg.AppdataPaths) != 1 || tg.AppdataPaths[0] != "/host/user/appdata/web" {
-		t.Fatalf("target appdata paths must come from the foreign def, got %v", tg.AppdataPaths)
 	}
 
 	// The EXISTING restore path ran: the container was recreated from the def.

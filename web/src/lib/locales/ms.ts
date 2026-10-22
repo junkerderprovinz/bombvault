@@ -2626,6 +2626,7 @@ const ms: Partial<Translations> = {
   "recovery.foreignReconnect": "Sambung semula",
   "recovery.foreignVMDest": "Destinasi cakera VM",
   "recovery.foreignVMDestHint": "Ke mana cakera VM ditulis. Imej cakera pergi ke <destination>/<vm-name>/, jadi pilih folder pada pool yang benar-benar dimount, bukan cakera RAM. VM asing dipulihkan dalam keadaan berhenti, jadi mulakannya sendiri selepas anda menyemaknya.",
+  "recovery.foreignNoDefinition": "Salinan ini tiada definisi {name}, jadi BombVault tidak dapat mencipta semulanya dari sini. Definisi itu ada dalam sandaran tetapan pelayan lama. Pulihkan sandaran itu dalam wizard kecemasan, kemudian pulihkan {name} di sana.",
 
   // Dashboard activity log
   "activityLog.title": "Log aktiviti",
@@ -4421,6 +4422,8 @@ const ms: Partial<Translations> = {
   "emergency.searching": "Mencari dalam sandaran anda …",
   "emergency.selectionHint": "Sandaran terbaharu dipilih terlebih dahulu di mana-mana. Selepas pembinaan semula, set folder tidak lagi tahu asalnya, jadi ia masuk ke folder pilihan anda.",
   "emergency.selectionKept": "Apa yang masih ada pada pelayan ini pada mulanya dimatikan, kerana pemulihan akan menggantikannya.",
+  "emergency.entrySource": "Di manakah sandaran itu?",
+  "emergency.entrySourceHint": "Luar tapak menunjukkan isi salinan luar tapak dan memulihkan daripadanya. Pilih ini apabila sandaran tempatan hilang bersama pelayan lama.",
   "emergency.leaveStoppedHint": "Anda memulakan setiap bekas dan VM sendiri apabila sudah bersedia. Paling selamat selepas kehilangan menyeluruh.",
   "emergency.brings": "Memulihkan {list}.",
   "emergency.count.containers": "{n} bekas",

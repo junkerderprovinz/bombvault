@@ -2626,6 +2626,7 @@ const ca: Partial<Translations> = {
   "recovery.foreignReconnect": "Torna a connectar",
   "recovery.foreignVMDest": "Destí dels discos de la MV",
   "recovery.foreignVMDestHint": "On s'escriuen els discos de la MV. Les imatges de disc van a <destination>/<vm-name>/, així que tria una carpeta d'un pool realment muntat, no el disc RAM. Una MV externa es restaura aturada, així que engega-la tu mateix un cop l'hagis comprovat.",
+  "recovery.foreignNoDefinition": "Aquesta còpia no té cap definició de {name}, així que BombVault no el pot tornar a crear des d'aquí. Les definicions són a la còpia de seguretat de la configuració del servidor antic. Restaura-la a l'assistent d'emergència i després restaura {name} allà.",
 
   // Dashboard activity log
   "activityLog.title": "Registre d'activitat",
@@ -4421,6 +4422,8 @@ const ca: Partial<Translations> = {
   "emergency.searching": "S'estan mirant les teves còpies …",
   "emergency.selectionHint": "La còpia més recent ve preseleccionada a tot arreu. Després d'una reconstrucció, els conjunts de carpetes ja no saben d'on venien, així que van a una carpeta que triïs.",
   "emergency.selectionKept": "El que aquest servidor encara té comença desactivat, perquè una restauració ho substituiria.",
+  "emergency.entrySource": "On són les còpies de seguretat?",
+  "emergency.entrySourceHint": "Extern mostra el que contenen les còpies externes i restaura des d'elles. Tria-ho quan les còpies locals s'hagin perdut amb el servidor antic.",
   "emergency.leaveStoppedHint": "Tu mateix engeges cada contenidor i cada MV quan estiguis a punt. El més segur després d'una pèrdua total.",
   "emergency.brings": "Recupera {list}.",
   "emergency.count.containers": "one={n} contenidor|many={n} de contenidors|other={n} contenidors",

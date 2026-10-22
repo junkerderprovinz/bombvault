@@ -1072,6 +1072,11 @@ export function listSnapshots(name: string, source?: string): Promise<ListSnapsh
   return fetchJSON(`/api/containers/${encodeURIComponent(name)}/snapshots${srcParam(source)}`);
 }
 
+/** The snapshot id that recreates a container from its stored definition and
+ *  restores none of its data. "latest" refuses a container whose data this
+ *  place does not hold, so a recreate has to ask for it by name. */
+export const DEFINITION_ONLY = "definition";
+
 /**
  * Start an in-place container restore. ASYNC (like backupNow): validation runs
  * synchronously (a bad request still answers ok:false right away), then the
@@ -5549,6 +5554,9 @@ export function listZFSLocalPools(): Promise<ZFSReplicaPool[]> {
 export interface ForeignItem {
   name: string;
   snapshots: Snapshot[];
+  /** A container or VM the session has no readable definition of, as in a
+   *  remote repository or an off-site copy. It cannot be recreated from here. */
+  noDefinition?: boolean;
 }
 
 /** The foreign repository's contents grouped by domain, as ForeignInventory in
@@ -5744,6 +5752,22 @@ type EmergencyAnswer = Omit<OkEnvelope, "code"> & { code?: EmergencyRefusal; eme
 /** GET /api/emergency. */
 export function getEmergency(): Promise<EmergencyAnswer> {
   return fetchJSON("/api/emergency");
+}
+
+/** The newest snapshot (unix seconds) each entry has in its section's
+ *  off-site copy: containers and file sets by name, VMs by libvirt name.
+ *  `unread` names a section whose copy could not be listed, with the reason. */
+export interface OffsiteEntries {
+  containers: Record<string, number>;
+  vms: Record<string, number>;
+  fileSets: Record<string, number>;
+  unread?: Record<string, string>;
+}
+
+/** GET /api/emergency/offsite-entries: what the off-site copies hold, for an
+ *  emergency whose local backups went down with the old server. */
+export function emergencyOffsiteEntries(): Promise<OkEnvelope & { entries?: OffsiteEntries }> {
+  return fetchJSON("/api/emergency/offsite-entries");
 }
 
 /** POST /api/emergency/read with a recovery kit: starts an emergency and

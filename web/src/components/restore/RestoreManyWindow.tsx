@@ -21,6 +21,7 @@ import { formatRecent } from "../../lib/reltime";
 import {
   clearNotStarted,
   commonTimes,
+  DOUBLE_CLICK_MS,
   downloadsOnly,
   holdRunLock,
   noteNotStarted,
@@ -75,10 +76,6 @@ type Verdict = "running" | "ready" | "blocked";
 
 const RECOMMENDED = "recommended";
 const AT = "at";
-
-/** A second click this soon after the start lands on the button that took
- *  the start button's place, and is not meant for it. */
-const DOUBLE_CLICK_MS = 500;
 
 function refusedRuntime(outcome: Outcome | undefined): boolean {
   return outcome?.is === "failed" && isRuntimeRefusal(outcome.error);

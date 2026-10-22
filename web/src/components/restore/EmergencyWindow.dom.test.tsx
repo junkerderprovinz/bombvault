@@ -23,6 +23,7 @@ import type {
   EmergencySession,
   EmergencyState,
   FileSetView,
+  OffsiteEntries,
   Run,
   VM,
 } from "../../lib/api";
@@ -93,6 +94,13 @@ const restoreFileSet = vi.fn((id: string) => {
   runsOnServer = [...runsOnServer, finishedRun("restore", "files", set?.name ?? id)];
   return Promise.resolve({ ok: true, started: true });
 });
+const fileSetSnapshots = vi.fn((id: string, source?: string) => {
+  void id;
+  void source;
+  return Promise.resolve({ ok: true, snapshots: [{ id: "f-old", time: "2026-09-01T03:00:00Z" }, { id: "f-new", time: "2026-09-20T03:00:00Z" }] });
+});
+// What the off-site copies hold, by entry.
+let offsiteOnServer: OffsiteEntries = { containers: {}, vms: {}, fileSets: {} };
 const importDbDump = vi.fn((name: string) => {
   runsOnServer = [...runsOnServer, finishedRun("dbimport", "container", name)];
   return Promise.resolve({ ok: true, started: true });
@@ -280,8 +288,8 @@ vi.mock("../../lib/api", async (importOriginal) => {
     restoreFileSet: (...a: unknown[]) => restoreFileSet(...(a as [string])),
     restoreConfig: (snapshot: string, source?: string, emergency?: string) => restoreConfig(snapshot, source, emergency),
     checkRestore: () => Promise.resolve({ ok: true, ready: true, checks: [], plan: null }),
-    fileSetSnapshots: () =>
-      Promise.resolve({ ok: true, snapshots: [{ id: "f-old", time: "2026-09-01T03:00:00Z" }, { id: "f-new", time: "2026-09-20T03:00:00Z" }] }),
+    fileSetSnapshots: (...a: unknown[]) => fileSetSnapshots(...(a as [string, string?])),
+    emergencyOffsiteEntries: () => Promise.resolve({ ok: true, entries: offsiteOnServer }),
     listDbDumps: () => Promise.resolve({ ok: true, dumps: dumpsOnServer }),
     importDbDump: (...a: unknown[]) => importDbDump(...(a as [string])),
     downloadRecoveryKit: () => Promise.resolve(null),
@@ -329,6 +337,7 @@ beforeEach(() => {
   dumpsOnServer = [];
   runsOnServer = [];
   needsRuntime = [];
+  offsiteOnServer = { containers: {}, vms: {}, fileSets: {} };
   emergencyOnServer = { backupKey: "own", undoable: false };
   inGroup = false;
   localStorage.clear();
@@ -984,7 +993,7 @@ describe("the selection", () => {
     await open("selection");
     fireEvent.click(button(en["recovery.restoreAndImport"]));
     await act(() => vi.advanceTimersByTimeAsync(10_000));
-    expect(restore.mock.calls[0]).toEqual(["immich_postgres", "latest", true, undefined, undefined, false]);
+    expect(restore.mock.calls[0]).toEqual(["immich_postgres", "definition", true, undefined, undefined, false]);
     expect(importDbDump.mock.calls[0]).toEqual(["immich_postgres", "d1"]);
     expect(screen.getByText(en["dbdump.importDone"])).toBeTruthy();
   });
@@ -1016,7 +1025,7 @@ describe("the restore", () => {
     expect(restore.mock.calls.map((c) => c[0])).toEqual(["sonarr"]);
     expect(restore.mock.calls[0]).toEqual(["sonarr", "latest", true, undefined, true]);
     expect(restoreVM.mock.calls[0]).toEqual(["win11", "latest", true, undefined, true]);
-    expect(restoreFileSet.mock.calls[0]).toEqual([setsOnServer[0].id, "f-new", true, "user/bombvault/restore/Photos"]);
+    expect(restoreFileSet.mock.calls[0]).toEqual([setsOnServer[0].id, "f-new", true, "user/bombvault/restore/Photos", undefined]);
     expect(screen.getAllByTestId("emergency-run")).toHaveLength(3);
     expect(screen.getByText(en["emergency.result"].replace("{ok}", "3").replace("{fail}", "0"))).toBeTruthy();
     expect(button(en["recovery.kitDownload"])).toBeTruthy();
@@ -1047,6 +1056,54 @@ describe("the restore", () => {
     fireEvent.click(button(en["snapshots.restore"]));
     await act(() => vi.advanceTimersByTimeAsync(10_000));
     expect(restore.mock.calls[0]).toEqual(["sonarr", "latest", true, undefined, false]);
+  });
+
+  it("lists and restores from the off-site copies when the local backups are gone", async () => {
+    containersOnServer = [gone({ lastBackup: null })];
+    vmsOnServer = [vmView({ state: "not-installed", lastBackup: null })];
+    setsOnServer = [fileSetView({ path: "" })];
+    offsiteOnServer = { containers: { sonarr: 1_790_000_000 }, vms: { win11: 1_790_000_000 }, fileSets: { Photos: 1_790_000_000 } };
+    vi.useFakeTimers();
+    await open("selection");
+    expect(screen.queryByRole("switch", { name: "sonarr" })).toBeNull();
+
+    fireEvent.click(screen.getByRole("tab", { name: en["source.offsite"] }));
+    await act(() => vi.advanceTimersByTimeAsync(100));
+    expect(isOn("sonarr")).toBe(true);
+    fireEvent.click(button(en["snapshots.restore"]));
+    await act(() => vi.advanceTimersByTimeAsync(30_000));
+
+    expect(restore.mock.calls[0]).toEqual(["sonarr", "latest", true, "offsite", true]);
+    expect(restoreVM.mock.calls[0]).toEqual(["win11", "latest", true, "offsite", true]);
+    expect(fileSetSnapshots.mock.calls[0]).toEqual([setsOnServer[0].id, "offsite"]);
+    expect(restoreFileSet.mock.calls[0]).toEqual([setsOnServer[0].id, "f-new", true, "user/bombvault/restore/Photos", "offsite"]);
+  });
+
+  it("holds the page and the window while it runs, keeps what has not started, and can stop", async () => {
+    containersOnServer = [gone(), gone({ name: "radarr" }), gone({ name: "lidarr" })];
+    vi.useFakeTimers();
+    await open("selection");
+    fireEvent.click(button(en["snapshots.restore"]));
+    await act(() => vi.advanceTimersByTimeAsync(0));
+
+    const leaving = new Event("beforeunload", { cancelable: true });
+    window.dispatchEvent(leaving);
+    expect(leaving.defaultPrevented).toBe(true);
+    expect(JSON.parse(localStorage.getItem("bv-restore-many-left") ?? "{}").names).toEqual(["radarr", "lidarr"]);
+
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(document.body.textContent).toContain(en["restoreMany.held"].replace("{stop}", en["restoreMany.stop"]));
+    expect(onClose).not.toHaveBeenCalled();
+
+    await act(() => vi.advanceTimersByTimeAsync(1_000));
+    fireEvent.click(button(en["restoreMany.stop"]));
+    await act(() => vi.advanceTimersByTimeAsync(30_000));
+    expect(restore.mock.calls.length).toBeLessThan(3);
+    expect(document.body.textContent).toContain(countText(en["restoreMany.notStarted"], "en", 3 - restore.mock.calls.length).replace("{n}", String(3 - restore.mock.calls.length)));
+    expect(localStorage.getItem("bv-restore-many-left")).toBeNull();
+    const after = new Event("beforeunload", { cancelable: true });
+    window.dispatchEvent(after);
+    expect(after.defaultPrevented).toBe(false);
   });
 
   it("offers the containers Docker refused again without GPU and runtime", async () => {
