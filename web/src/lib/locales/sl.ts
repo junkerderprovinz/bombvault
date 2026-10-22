@@ -1121,6 +1121,7 @@ const sl: Partial<Translations> = {
   "runReason.dbimportFailed": "orodje za uvoz je javilo napako",
   "runReason.dbimportKeptOld": "prejšnja mapa s podatki je bila ohranjena",
   "runReason.dataOutsideHost": "podatki so zunaj Host Data in niso bili varnostno kopirani",
+  "runReason.filesUnreadable": "nekaterih datotek ni bilo mogoče prebrati in manjkajo v tej varnostni kopiji",
   "runReason.dbimportErrors": "one={n} napaka, prejšnja mapa s podatki je bila ohranjena|two={n} napaki, prejšnja mapa s podatki je bila ohranjena|few={n} napake, prejšnja mapa s podatki je bila ohranjena|other={n} napak, prejšnja mapa s podatki je bila ohranjena",
   "runReason.dbimportAppsDown": "one=te aplikacije ni bilo mogoče znova zagnati: {apps}|two=teh dveh aplikacij ni bilo mogoče znova zagnati: {apps}|few=teh aplikacij ni bilo mogoče znova zagnati: {apps}|other=teh aplikacij ni bilo mogoče znova zagnati: {apps}",
   "runReason.dbimportAppsStopped": "one=ta aplikacija ostane ustavljena, dokler mapa s podatki ni urejena: {apps}|two=ti dve aplikaciji ostaneta ustavljeni, dokler mapa s podatki ni urejena: {apps}|few=te aplikacije ostanejo ustavljene, dokler mapa s podatki ni urejena: {apps}|other=te aplikacije ostanejo ustavljene, dokler mapa s podatki ni urejena: {apps}",
@@ -3130,6 +3131,7 @@ const sl: Partial<Translations> = {
   "placementCode.moveDirectRepo": "Vnosi se varnostno kopirajo neposredno na to mesto, brez kopije doma, zato razdelka ni mogoče premakniti. Najprej preklopi te vnose na Lokalno.",
   "placementCode.moveSignIn": "Obe mesti se prijavljata na enak način, vendar z različnimi poverilnicami, ena kopija pa lahko uporablja le eno od njih. Najprej premakni razdelek v mapo na tem strežniku, od tam pa na novo mesto.",
   "placementCode.moveRunning": "Ta razdelek se že premika. Spremljaš ga lahko v Pregledu.",
+  "placementCode.ownFolderUnread": "Varnostnih kopij v stari lastni mapi trenutno ni mogoče prebrati, na primer ker njena skupna raba ni priklopljena ali njena shramba ne odgovarja, zato jih ni mogoče kopirati.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} neposredno zdaj hrani manj. Vnosi, katerih edina kopija je tam: {n}.",

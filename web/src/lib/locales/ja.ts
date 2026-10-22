@@ -1123,6 +1123,7 @@ const ja: Partial<Translations> = {
   "runReason.dbimportFailed": "インポートツールがエラーを報告しました",
   "runReason.dbimportKeptOld": "以前のデータフォルダーを残しました",
   "runReason.dataOutsideHost": "データは Host Data の外にあり、バックアップされていません",
+  "runReason.filesUnreadable": "一部のファイルを読み取れず、このバックアップに含まれていません",
   "runReason.dbimportErrors": "エラー {n} 件、以前のデータフォルダーを残しました",
   "runReason.dbimportAppsDown": "次のアプリを再び起動できませんでした: {apps}",
   "runReason.dbimportAppsStopped": "データフォルダーが片付くまで、次のアプリは停止したままです: {apps}",
@@ -3127,6 +3128,7 @@ const ja: Partial<Translations> = {
   "placementCode.moveDirectRepo": "項目がこの場所へ直接バックアップしており、元の場所にコピーがないため、セクションは移動できません。先にそれらの項目を「ローカル」に切り替えてください。",
   "placementCode.moveSignIn": "2つの場所は同じ方法でサインインしますが、資格情報が異なり、1つのコピーが使えるのはどちらか一方だけです。先にセクションをこのサーバー上のフォルダーへ移し、そこから新しい場所へ移してください。",
   "placementCode.moveRunning": "このセクションはすでに移動中です。「概要」で確認できます。",
+  "placementCode.ownFolderUnread": "古い専用フォルダーのバックアップを今は読み取れません。共有がマウントされていない、ストレージが応答しないなどの理由が考えられます。そのため、コピーできません。",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} ダイレクトは今、保持量が減りました。唯一のコピーがそこにある項目: {n}。",

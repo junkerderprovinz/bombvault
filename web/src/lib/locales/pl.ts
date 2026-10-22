@@ -1126,6 +1126,7 @@ const pl: Partial<Translations> = {
   "runReason.dbimportFailed": "narzędzie do importu zgłosiło błąd",
   "runReason.dbimportKeptOld": "poprzedni folder z danymi został zachowany",
   "runReason.dataOutsideHost": "dane są poza Host Data i nie zostały zarchiwizowane",
+  "runReason.filesUnreadable": "niektórych plików nie udało się odczytać i brakuje ich w tej kopii zapasowej",
   "runReason.dbimportErrors": "one={n} błąd, poprzedni folder z danymi został zachowany|few={n} błędy, poprzedni folder z danymi został zachowany|many={n} błędów, poprzedni folder z danymi został zachowany|other={n} błędu, poprzedni folder z danymi został zachowany",
   "runReason.dbimportAppsDown": "one=nie udało się ponownie uruchomić tej aplikacji: {apps}|few=nie udało się ponownie uruchomić tych aplikacji: {apps}|many=nie udało się ponownie uruchomić tych aplikacji: {apps}|other=nie udało się ponownie uruchomić tych aplikacji: {apps}",
   "runReason.dbimportAppsStopped": "one=ta aplikacja pozostaje zatrzymana, dopóki folder danych nie zostanie uporządkowany: {apps}|few=te aplikacje pozostają zatrzymane, dopóki folder danych nie zostanie uporządkowany: {apps}|many=te aplikacje pozostają zatrzymane, dopóki folder danych nie zostanie uporządkowany: {apps}|other=te aplikacje pozostają zatrzymane, dopóki folder danych nie zostanie uporządkowany: {apps}",
@@ -3133,6 +3134,7 @@ const pl: Partial<Translations> = {
   "placementCode.moveDirectRepo": "Wpisy tworzą kopie bezpośrednio w tym miejscu, bez kopii w miejscu macierzystym, więc sekcji nie można przenieść. Najpierw przełącz te wpisy na Lokalne.",
   "placementCode.moveSignIn": "Oba miejsca logują się w ten sam sposób, ale innymi danymi logowania, a jedna kopia może użyć tylko jednych z nich. Najpierw przenieś sekcję do folderu na tym serwerze, a stamtąd w nowe miejsce.",
   "placementCode.moveRunning": "Ta sekcja jest już przenoszona. Możesz to śledzić w Przeglądzie.",
+  "placementCode.ownFolderUnread": "Kopii zapasowych w starym własnym folderze nie da się teraz odczytać, na przykład dlatego, że jego udział nie jest zamontowany albo jego magazyn nie odpowiada, więc nie można ich przenieść.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} bezpośrednio przechowuje teraz mniej. Elementy, których jedyna kopia tam jest: {n}.",

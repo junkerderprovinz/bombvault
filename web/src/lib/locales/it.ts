@@ -1122,6 +1122,7 @@ const it: Partial<Translations> = {
   "runReason.dbimportFailed": "lo strumento di importazione ha segnalato un errore",
   "runReason.dbimportKeptOld": "la cartella dati precedente è stata conservata",
   "runReason.dataOutsideHost": "i dati sono fuori da Host Data e non sono stati salvati",
+  "runReason.filesUnreadable": "alcuni file non sono stati letti e mancano da questo backup",
   "runReason.dbimportErrors": "one={n} errore, la cartella dati precedente è stata conservata|other={n} errori, la cartella dati precedente è stata conservata",
   "runReason.dbimportAppsDown": "one=non è stato possibile riavviare questa applicazione: {apps}|many=non è stato possibile riavviare queste applicazioni: {apps}|other=non è stato possibile riavviare queste applicazioni: {apps}",
   "runReason.dbimportAppsStopped": "one=questa applicazione resta ferma finché la cartella dei dati non è sistemata: {apps}|many=queste applicazioni restano ferme finché la cartella dei dati non è sistemata: {apps}|other=queste applicazioni restano ferme finché la cartella dei dati non è sistemata: {apps}",
@@ -3136,6 +3137,7 @@ const it: Partial<Translations> = {
   "placementCode.moveDirectRepo": "Alcuni elementi fanno il backup direttamente in questo posto, senza una copia a casa, quindi la sezione non può essere spostata. Porta prima quegli elementi su Locale.",
   "placementCode.moveSignIn": "In entrambi i posti si accede allo stesso modo ma con credenziali diverse, e una copia può usarne una sola. Sposta prima la sezione in una cartella di questo server e da lì al nuovo posto.",
   "placementCode.moveRunning": "Questa sezione è già in corso di spostamento. Puoi seguirla nella Panoramica.",
+  "placementCode.ownFolderUnread": "I backup nella vecchia cartella propria non si possono leggere in questo momento, ad esempio perché la sua condivisione non è montata o il suo spazio di archiviazione non risponde, quindi non si possono copiare.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} diretto ora conserva meno. Elementi la cui unica copia è lì: {n}.",

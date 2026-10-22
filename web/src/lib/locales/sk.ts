@@ -1123,6 +1123,7 @@ const sk: Partial<Translations> = {
   "runReason.dbimportFailed": "nástroj na import ohlásil chybu",
   "runReason.dbimportKeptOld": "predchádzajúci priečinok s dátami zostal zachovaný",
   "runReason.dataOutsideHost": "dáta sú mimo Host Data a neboli zálohované",
+  "runReason.filesUnreadable": "niektoré súbory sa nepodarilo prečítať a v tejto zálohe chýbajú",
   "runReason.dbimportErrors": "one={n} chyba, predchádzajúci priečinok s dátami zostal zachovaný|few={n} chyby, predchádzajúci priečinok s dátami zostal zachovaný|many={n} chyby, predchádzajúci priečinok s dátami zostal zachovaný|other={n} chýb, predchádzajúci priečinok s dátami zostal zachovaný",
   "runReason.dbimportAppsDown": "one=túto aplikáciu sa nepodarilo znova spustiť: {apps}|few=tieto aplikácie sa nepodarilo znova spustiť: {apps}|many=tieto aplikácie sa nepodarilo znova spustiť: {apps}|other=tieto aplikácie sa nepodarilo znova spustiť: {apps}",
   "runReason.dbimportAppsStopped": "one=táto aplikácia zostane zastavená, kým sa nevyrieši priečinok s dátami: {apps}|few=tieto aplikácie zostanú zastavené, kým sa nevyrieši priečinok s dátami: {apps}|many=tieto aplikácie zostanú zastavené, kým sa nevyrieši priečinok s dátami: {apps}|other=tieto aplikácie zostanú zastavené, kým sa nevyrieši priečinok s dátami: {apps}",
@@ -3146,6 +3147,7 @@ const sk: Partial<Translations> = {
   "placementCode.moveDirectRepo": "Položky sa zálohujú priamo sem, bez kópie doma, takže sa sekcia presunúť nedá. Najprv prepni tieto položky na Lokálny.",
   "placementCode.moveSignIn": "Obe miesta sa prihlasujú rovnakým spôsobom, ale s inými prihlasovacími údajmi, a jedna kópia môže použiť len jedny z nich. Najprv presuň sekciu do priečinka na tomto serveri a odtiaľ na nové miesto.",
   "placementCode.moveRunning": "Táto sekcia sa už presúva. Môžeš to sledovať v Prehľade.",
+  "placementCode.ownFolderUnread": "Zálohy v starom vlastnom priečinku sa teraz nedajú prečítať, napríklad preto, že jeho zdieľaný priečinok nie je pripojený alebo jeho úložisko neodpovedá, takže ich nemožno skopírovať.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} priamo teraz uchováva menej. Položky, ktorých jediná kópia je tam: {n}.",

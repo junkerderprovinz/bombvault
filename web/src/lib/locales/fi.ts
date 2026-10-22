@@ -1140,6 +1140,7 @@ const fi: Partial<Translations> = {
   "runReason.dbimportFailed": "tuontityökalu ilmoitti virheestä",
   "runReason.dbimportKeptOld": "aiempi datakansio säilytettiin",
   "runReason.dataOutsideHost": "tiedot ovat Host Datan ulkopuolella eikä niistä otettu varmuuskopiota",
+  "runReason.filesUnreadable": "joitakin tiedostoja ei voitu lukea, ja ne puuttuvat tästä varmuuskopiosta",
   "runReason.dbimportErrors": "one={n} virhe, aiempi datakansio säilytettiin|other={n} virhettä, aiempi datakansio säilytettiin",
   "runReason.dbimportAppsDown": "one=tätä sovellusta ei saatu käynnistettyä uudelleen: {apps}|other=näitä sovelluksia ei saatu käynnistettyä uudelleen: {apps}",
   "runReason.dbimportAppsStopped": "one=tämä sovellus pysyy pysäytettynä, kunnes datakansio on selvitetty: {apps}|other=nämä sovellukset pysyvät pysäytettyinä, kunnes datakansio on selvitetty: {apps}",
@@ -3136,6 +3137,7 @@ const fi: Partial<Translations> = {
   "placementCode.moveDirectRepo": "Merkinnät varmuuskopioivat suoraan tähän paikkaan ilman kopiota kotipaikassa, joten osiota ei voi siirtää. Vaihda ensin nämä merkinnät asetukseen Paikallinen.",
   "placementCode.moveSignIn": "Molempiin paikkoihin kirjaudutaan samalla tavalla mutta eri tunnuksilla, ja yksi kopio voi käyttää vain toisia niistä. Siirrä osio ensin tämän palvelimen kansioon ja sieltä uuteen paikkaan.",
   "placementCode.moveRunning": "Tätä osiota siirretään jo. Voit seurata sitä kohdassa Yleiskatsaus.",
+  "placementCode.ownFolderUnread": "Vanhan oman kansion varmuuskopioita ei voi lukea juuri nyt, esimerkiksi koska sen jakoa ei ole liitetty tai sen tallennustila ei vastaa, joten niitä ei voi kopioida mukaan.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} suoraan säilyttää nyt vähemmän. Merkinnät, joiden ainoa kopio on siellä: {n}.",

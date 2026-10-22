@@ -5097,7 +5097,8 @@ func (s *Service) notifyReplicationFailed(ctx context.Context, domain, detail st
 // (issue #117) rather than a genuine failure, so TestOffsite applies the same check
 // and reports reachable=true, initialized=false, err=nil for it (the UI's existing
 // "uninitialized" warning state — BombVault creates the repo on the first
-// replication, this is expected, not an error; issue #130). Any OTHER probe failure
+// replication, this is expected, not an error; issue #130). A local folder on
+// mounted storage that holds no repository yet answers the same. Any OTHER probe failure
 // (a bad rclone remote type, wrong credentials, a backend that refuses the
 // connection, ...) is a genuine reachability failure: reported as neither reachable
 // nor initialised, with err carrying the primary mode's probe failure instead of a
@@ -5190,6 +5191,16 @@ func (s *Service) probeOffsiteRepo(ctx context.Context, repo string, mode restic
 	// state instead of a fatal error (#130).
 	if restic.IsRemoteRepo(repo) && isRepoUninitialized(primaryErr) {
 		return true, false, nil
+	}
+	// The same goes for a folder on mounted storage, unless it held a
+	// repository that a share mounting late hides now.
+	if localRepoMissing(repo) {
+		if s.repoEstablished(repo) && !s.destinationMounted(repo) {
+			return false, false, ErrBackupPathNotMounted
+		}
+		if s.restoreTargetMounted(repo) {
+			return true, false, nil
+		}
 	}
 	// Neither mode opened and it's not the uninitialized case — surface the primary
 	// mode's failure (the user's actual configured encryption setting) instead of a
@@ -11876,7 +11887,7 @@ func (a *resticAdapter) Backup(ctx context.Context, repo string, paths, tags []s
 // missing too, and recording them as zeros would read as a source that emptied
 // itself.
 func backupSummaryFrom(sum restic.Summary) backup.Summary {
-	out := backup.Summary{SnapshotID: sum.SnapshotID, Bytes: int64(sum.BytesAdded)}
+	out := backup.Summary{SnapshotID: sum.SnapshotID, Bytes: int64(sum.BytesAdded), Unreadable: sum.Unreadable}
 	if sum.TotalDuration == nil {
 		return out
 	}
@@ -11946,6 +11957,7 @@ func (a *resticAdapter) BackupDir(ctx context.Context, repo, dir string, tags []
 		SourceFiles:     measured.SourceFiles,
 		ResticMS:        measured.ResticMS,
 		HasParent:       a.parentFlag(ctx, repo, measured),
+		Unreadable:      sum.Unreadable,
 	}, nil
 }
 
@@ -12073,6 +12085,21 @@ func stalledReason(ctx context.Context, errMsg string) (string, bool) {
 	return stall.Error(), true
 }
 
+// withUnreadableNote adds the files restic could not read to a successful
+// backup's notes. The snapshot exists, so the run succeeded, but a restore
+// from it lacks those files. It goes first because the run's tone is read
+// from the first note.
+func withUnreadableNote(status, note string, sum backup.Summary) string {
+	if status != "success" || sum.Unreadable == "" {
+		return note
+	}
+	skipped := store.NoteFilesUnreadable + ": " + sum.Unreadable
+	if note == "" {
+		return skipped
+	}
+	return skipped + "; " + note
+}
+
 func (r runsAdapter) Finish(runID, status string, sum backup.Summary, errMsg string) error {
 	if r.svc != nil {
 		stalled, isStall := stalledReason(r.ctx, errMsg)
@@ -12098,6 +12125,7 @@ func (r runsAdapter) Finish(runID, status string, sum backup.Summary, errMsg str
 			status, errMsg = "cancelled", store.ReasonCancelled
 		}
 	}
+	errMsg = withUnreadableNote(status, errMsg, sum)
 	return r.st.FinishRunMeasured(runID, status, sum.SnapshotID, sum.Bytes, errMsg, metricsOf(sum), sum.SelectionFP)
 }
 
@@ -12149,6 +12177,7 @@ func (r startedRunsAdapter) Finish(runID, status string, sum backup.Summary, err
 			status, errMsg = "cancelled", store.ReasonCancelled
 		}
 	}
+	errMsg = withUnreadableNote(status, errMsg, sum)
 	return r.st.FinishRunMeasured(runID, status, sum.SnapshotID, sum.Bytes, errMsg, metricsOf(sum), sum.SelectionFP)
 }
 
@@ -17286,6 +17315,14 @@ func (s *Service) requireExistingRepo(repo, notYet string) error {
 // operation reports the real failure.
 func (s *Service) remoteRepoAbsent(ctx context.Context, repo string, mode restic.Mode) bool {
 	return restic.IsRemoteRepo(repo) && isRepoDefinitelyAbsent(s.engine.RepoOpensErr(ctx, repo, mode))
+}
+
+// remoteRepoGone reports whether a remote location that held a repository
+// before holds none now, such as a rest-server whose disk did not mount. One
+// that was never written to is only empty, and a store that cannot say counts
+// as having held one.
+func (s *Service) remoteRepoGone(ctx context.Context, repo string, mode restic.Mode) bool {
+	return restic.IsRemoteRepo(repo) && s.recordedEstablishment(repo) != repoNeverEstablished && s.remoteRepoAbsent(ctx, repo, mode)
 }
 
 // reposThatExist narrows a domain's repositories (domainReposForOp) to the ones

@@ -1131,6 +1131,7 @@ const zh: Partial<Translations> = {
   "runReason.dbimportFailed": "导入工具报告了一个错误",
   "runReason.dbimportKeptOld": "已保留之前的数据文件夹",
   "runReason.dataOutsideHost": "数据位于 Host Data 之外，未备份",
+  "runReason.filesUnreadable": "部分文件无法读取，本次备份中缺少这些文件",
   "runReason.dbimportErrors": "{n} 个错误，已保留之前的数据文件夹",
   "runReason.dbimportAppsDown": "以下应用未能重新启动：{apps}",
   "runReason.dbimportAppsStopped": "在数据文件夹处理好之前，以下应用保持停止：{apps}",
@@ -3127,6 +3128,7 @@ const zh: Partial<Translations> = {
   "placementCode.moveDirectRepo": "条目直接备份到这个位置，原位置没有副本，因此无法移动该分区。请先把这些条目切换为“本地”。",
   "placementCode.moveSignIn": "两个位置使用相同的登录方式，但凭据不同，而一份副本只能使用其中一种。请先把该分区移到此服务器上的文件夹，再从那里移到新位置。",
   "placementCode.moveRunning": "该分区正在移动。你可以在“概览”中查看进度。",
+  "placementCode.ownFolderUnread": "暂时无法读取旧专属文件夹中的备份，例如其共享未挂载或其存储没有响应，因此无法复制这些备份。",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} 直接现在保留得更少。唯一副本在那里的条目：{n}。",

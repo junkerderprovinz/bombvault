@@ -1129,6 +1129,7 @@ const pt: Partial<Translations> = {
   "runReason.dbimportFailed": "a ferramenta de importação comunicou um erro",
   "runReason.dbimportKeptOld": "a pasta de dados anterior foi mantida",
   "runReason.dataOutsideHost": "os dados estão fora de Host Data e não foram copiados",
+  "runReason.filesUnreadable": "alguns ficheiros não puderam ser lidos e faltam neste backup",
   "runReason.dbimportErrors": "one={n} erro, a pasta de dados anterior foi mantida|other={n} erros, a pasta de dados anterior foi mantida",
   "runReason.dbimportAppsDown": "one=não foi possível voltar a iniciar esta aplicação: {apps}|many=não foi possível voltar a iniciar estas aplicações: {apps}|other=não foi possível voltar a iniciar estas aplicações: {apps}",
   "runReason.dbimportAppsStopped": "one=esta aplicação fica parada até a pasta de dados ser resolvida: {apps}|many=estas aplicações ficam paradas até a pasta de dados ser resolvida: {apps}|other=estas aplicações ficam paradas até a pasta de dados ser resolvida: {apps}",
@@ -3136,6 +3137,7 @@ const pt: Partial<Translations> = {
   "placementCode.moveDirectRepo": "Há entradas que fazem cópia diretamente para este local, sem cópia em casa, por isso a secção não pode ser movida. Muda primeiro essas entradas para Local.",
   "placementCode.moveSignIn": "Os dois locais iniciam sessão da mesma forma, mas com credenciais diferentes, e uma cópia só pode usar uma delas. Move primeiro a secção para uma pasta deste servidor e daí para o novo local.",
   "placementCode.moveRunning": "Esta secção já está a ser movida. Podes acompanhá-la na Visão geral.",
+  "placementCode.ownFolderUnread": "Os backups na pasta própria antiga não podem ser lidos neste momento, por exemplo porque a partilha não está montada ou o armazenamento não responde, por isso não podem ser copiados.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} direto agora conserva menos. Entradas cuja única cópia está lá: {n}.",

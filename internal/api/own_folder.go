@@ -24,6 +24,9 @@ var (
 	errOwnFolderNoSection = errors.New("pick at least one section to move")
 	errOwnFolderNowhere   = errors.New("pick a storage location or type an address")
 	errOwnFolderNotHere   = errors.New("a section's own folder can go to a folder on this host or to a storage location set up once, not to a named repository or a copy")
+	// errOwnFolderUnread is an old own folder whose backups are to be copied
+	// over and that cannot be read. Switching anyway would leave them behind.
+	errOwnFolderUnread = errors.New("the backups in the old own folder cannot be read, so they cannot be copied over")
 )
 
 // ownFolderRequest moves the own folders of one or more sections.
@@ -221,17 +224,25 @@ func (s *Service) planOwnFolder(ctx context.Context, settings store.Settings, do
 	plan.mode = s.ModeFor(settings)
 	if row := step.folder.Row; row != nil && restic.IsRemoteRepo(to) {
 		plan.mode = s.applyTargetCreds(plan.mode, settings, *row)
+		if row.StorageClass != "" {
+			plan.mode.StorageClass = row.StorageClass
+		}
 		plan.lim = restic.Limits{UploadKBps: row.LimitUpload, DownloadKBps: row.LimitDownload}
 		plan.mode.Limits = plan.lim
 	}
 	plan.mode.Compression = storedCompression(settings.CompressionFor(domain))
 	step.plan = plan
-	if !s.engine.RepoOpens(ctx, plan.src, plan.srcMode) {
-		return step, nil
-	}
 	pending, all, err := s.pendingMove(ctx, plan)
+	if err == nil && all == 0 && s.remoteRepoGone(ctx, plan.src, plan.srcMode) {
+		err = errors.New("it held backups before and holds no repository now")
+	}
 	if err != nil {
-		return ownFolderStep{}, err
+		// Without the copy nothing is read from the old place, so a share that
+		// is not mounted or a bucket that does not answer is no reason to stay.
+		if !copyOver {
+			return step, nil
+		}
+		return ownFolderStep{}, fmt.Errorf("%w: %w", errOwnFolderUnread, err)
 	}
 	step.Backups, step.Pending = all, len(pending)
 	if copyOver && step.Pending > 0 {

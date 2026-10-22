@@ -346,6 +346,10 @@ const (
 	// definition only.
 	NoteDataOutsideHost = "data folders outside Host Data were not backed up"
 
+	// NoteFilesUnreadable is followed by ": " and restic's reason, which names
+	// a file it could not read.
+	NoteFilesUnreadable = "some files could not be read and are missing from this backup"
+
 	NoteDBImportKeptOld = "database imported; the previous data folder was kept"
 	NoteDBImportErrors  = "database imported with errors"
 )

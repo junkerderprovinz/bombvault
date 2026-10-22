@@ -313,6 +313,15 @@ func (s *Service) planSource(ctx context.Context, domain string, mode restic.Mod
 		}
 		return c, err
 	}
+	// restic copy cannot open a bucket the section never wrote to, and there
+	// is nothing in it to copy.
+	if len(snaps) == 0 && c.whole && s.remoteRepoAbsent(ctx, loc, mode) {
+		if s.recordedEstablishment(src.Loc) != repoNeverEstablished {
+			return c, errors.New("it was there before and holds no repository now")
+		}
+		c.whole = false
+		return c, nil
+	}
 	if !src.Own {
 		snaps = ofDomain(snaps, domain)
 	}

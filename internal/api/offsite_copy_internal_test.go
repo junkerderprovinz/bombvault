@@ -356,3 +356,48 @@ func TestTheSnapshotIndexCountsOnAcrossCopyCalls(t *testing.T) {
 		t.Fatalf("indices = %v, want [503 4]", got)
 	}
 }
+
+func TestABucketOwnFolderNeverWrittenToIsLeftOutOfTheCopy(t *testing.T) {
+	const own = "s3:https://garage/bv/containers"
+	scene := func(t *testing.T) *placementFixture {
+		f := newPlacementFixture(t)
+		settings := settingsOf(t, f.svc)
+		settings.ContainersPath = own
+		if err := f.st.UpdateSettings(settings); err != nil {
+			t.Fatal(err)
+		}
+		f.eng.opens[own] = false
+		keepLast(t, f, f.target("containers", "B2", "b2:bucket:containers"), 3)
+		nas := f.namedRepo("NAS", "nas")
+		f.container("nginx", nas.ID)
+		f.replicated("containers")
+		f.hold(f.root+"/nas", snap("n1", 100, "container:nginx"))
+		return f
+	}
+
+	t.Run("never written", func(t *testing.T) {
+		f := scene(t)
+		if err := f.svc.ReplicateOffsite(context.Background(), "containers"); err != nil {
+			t.Fatalf("the pass failed over a bucket that holds nothing yet: %v", err)
+		}
+		if slices.ContainsFunc(f.eng.copies, func(c copyCall) bool { return c.Src == own }) {
+			t.Fatalf("copies = %+v, want none from the empty bucket", f.eng.copies)
+		}
+		if !slices.ContainsFunc(f.eng.copies, func(c copyCall) bool { return c.Src == f.root+"/nas" }) {
+			t.Fatalf("copies = %+v, want the named repository copied", f.eng.copies)
+		}
+		if len(forgetLines(f, "b2:bucket:containers")) == 0 {
+			t.Fatal("the keep-policy did not run after a pass that copied everything there was")
+		}
+	})
+
+	t.Run("held backups before", func(t *testing.T) {
+		f := scene(t)
+		if err := f.st.MarkRepoEstablished(own); err != nil {
+			t.Fatal(err)
+		}
+		if err := f.svc.ReplicateOffsite(context.Background(), "containers"); err == nil {
+			t.Fatal("a bucket that held the section's backups and holds no repository now went unreported")
+		}
+	})
+}

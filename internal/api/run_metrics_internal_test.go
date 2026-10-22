@@ -261,3 +261,26 @@ func (e *parentProbeEngine) SnapshotParent(context.Context, string, string, rest
 	e.parentCalls++
 	return e.parent, e.parentErr
 }
+
+func TestABackupThatLeftOutUnreadableFilesSaysSoOnItsRun(t *testing.T) {
+	const reason = "error: open /data/private/key.pem: permission denied"
+	sum := backupSummaryFrom(restic.Summary{SnapshotID: "5e1f", Unreadable: reason})
+	sum = sum.Plus(backup.Summary{Unreadable: "error: a later disk"})
+	if sum.Unreadable != reason {
+		t.Fatalf("summary = %+v, want restic's reason carried to the run", sum)
+	}
+
+	st := newTestStore(t)
+	runID, err := st.StartRun("tg1", "backup")
+	if err != nil {
+		t.Fatal(err)
+	}
+	outside := store.NoteDataOutsideHost + ": /mnt/disks/cold"
+	if err := (runsAdapter{st: st, ctx: context.Background()}).Finish(runID, "success", sum, outside); err != nil {
+		t.Fatal(err)
+	}
+	got := onlyRun(t, st, "tg1")
+	if want := store.NoteFilesUnreadable + ": " + reason + "; " + outside; got.Status != "success" || got.Error != want {
+		t.Fatalf("run = %s %q, want a success that names the unreadable files first", got.Status, got.Error)
+	}
+}

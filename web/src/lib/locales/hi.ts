@@ -1123,6 +1123,7 @@ const hi: Partial<Translations> = {
   "runReason.dbimportFailed": "आयात उपकरण ने एक त्रुटि बताई",
   "runReason.dbimportKeptOld": "पिछला डेटा फ़ोल्डर रखा गया",
   "runReason.dataOutsideHost": "डेटा Host Data के बाहर है और उसका बैकअप नहीं लिया गया",
+  "runReason.filesUnreadable": "कुछ फ़ाइलें पढ़ी नहीं जा सकीं और इस बैकअप में नहीं हैं",
   "runReason.dbimportErrors": "one={n} त्रुटि, पिछला डेटा फ़ोल्डर रखा गया|other={n} त्रुटियाँ, पिछला डेटा फ़ोल्डर रखा गया",
   "runReason.dbimportAppsDown": "one=यह ऐप फिर से शुरू नहीं हो सका: {apps}|other=ये ऐप्स फिर से शुरू नहीं हो सके: {apps}",
   "runReason.dbimportAppsStopped": "one=डेटा फ़ोल्डर ठीक होने तक यह ऐप रुका रहेगा: {apps}|other=डेटा फ़ोल्डर ठीक होने तक ये ऐप्स रुके रहेंगे: {apps}",
@@ -3146,6 +3147,7 @@ const hi: Partial<Translations> = {
   "placementCode.moveDirectRepo": "प्रविष्टियाँ सीधे इसी जगह बैकअप करती हैं, मूल जगह पर कॉपी के बिना, इसलिए सेक्शन स्थानांतरित नहीं हो सकता। पहले उन प्रविष्टियों को लोकल पर कर दें।",
   "placementCode.moveSignIn": "दोनों जगहें एक ही तरह से साइन इन करती हैं, पर अलग क्रेडेंशियल से, और एक कॉपी उनमें से सिर्फ़ एक ही इस्तेमाल कर सकती है। पहले सेक्शन को इस सर्वर के किसी फ़ोल्डर में, और वहाँ से नई जगह पर स्थानांतरित करें।",
   "placementCode.moveRunning": "यह सेक्शन पहले से स्थानांतरित हो रहा है। आप इसे अवलोकन में देख सकते हैं।",
+  "placementCode.ownFolderUnread": "पुराने अपने फ़ोल्डर के बैकअप अभी पढ़े नहीं जा सकते, जैसे इसलिए कि उसका शेयर माउंट नहीं है या उसका स्टोरेज जवाब नहीं दे रहा, इसलिए उनकी कॉपी नहीं हो सकती।",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} डायरेक्ट अब कम रखता है। जिन प्रविष्टियों की एकमात्र कॉपी वहाँ है: {n}।",

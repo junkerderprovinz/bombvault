@@ -1131,6 +1131,7 @@ const vi: Partial<Translations> = {
   "runReason.dbimportFailed": "công cụ nhập báo một lỗi",
   "runReason.dbimportKeptOld": "thư mục dữ liệu trước đó được giữ lại",
   "runReason.dataOutsideHost": "dữ liệu nằm ngoài Host Data và chưa được sao lưu",
+  "runReason.filesUnreadable": "một số tệp không đọc được và không có trong bản sao lưu này",
   "runReason.dbimportErrors": "{n} lỗi, thư mục dữ liệu trước đó được giữ lại",
   "runReason.dbimportAppsDown": "không thể khởi động lại các ứng dụng sau: {apps}",
   "runReason.dbimportAppsStopped": "các ứng dụng sau vẫn dừng cho đến khi thư mục dữ liệu được xử lý xong: {apps}",
@@ -3127,6 +3128,7 @@ const vi: Partial<Translations> = {
   "placementCode.moveDirectRepo": "Các mục đang sao lưu thẳng vào nơi này, không có bản sao ở vị trí gốc, nên không thể di chuyển phần. Hãy chuyển các mục đó sang Cục bộ trước.",
   "placementCode.moveSignIn": "Cả hai nơi đăng nhập theo cùng một cách nhưng bằng thông tin xác thực khác nhau, và một bản sao chỉ dùng được một trong hai. Hãy di chuyển phần vào một thư mục trên máy chủ này trước, rồi từ đó sang nơi mới.",
   "placementCode.moveRunning": "Phần này đang được di chuyển. Bạn có thể theo dõi tại Tổng quan.",
+  "placementCode.ownFolderUnread": "Hiện không đọc được các bản sao lưu trong thư mục riêng cũ, chẳng hạn vì thư mục chia sẻ của nó chưa được gắn hoặc bộ nhớ của nó không phản hồi, nên không sao chép chúng được.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} trực tiếp giờ giữ ít hơn. Các mục có bản sao duy nhất ở đó: {n}.",

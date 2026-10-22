@@ -46,6 +46,7 @@ const CODE_KEYS: Record<string, TranslationKey> = {
   "move-direct-repo": "placementCode.moveDirectRepo",
   "move-sign-in": "placementCode.moveSignIn",
   "move-running": "placementCode.moveRunning",
+  "own-folder-unread": "placementCode.ownFolderUnread",
   "erase-running": "storage.remove.erasingNow",
 };
 

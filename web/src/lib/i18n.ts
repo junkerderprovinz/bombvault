@@ -1333,6 +1333,7 @@ export const en = {
   "runReason.dbimportFailed": "the import tool reported an error",
   "runReason.dbimportKeptOld": "the previous data folder was kept",
   "runReason.dataOutsideHost": "the data sits outside Host Data and was not backed up",
+  "runReason.filesUnreadable": "some files could not be read and are missing from this backup",
   "runReason.dbimportErrors":
     "one={n} error, the previous data folder was kept|other={n} errors, the previous data folder was kept",
   "runReason.dbimportAppsDown":
@@ -2465,6 +2466,7 @@ export const en = {
   "placementCode.moveDirectRepo": "Entries back up straight to this place, without a copy at home, so the section cannot move. Switch those entries to Local first.",
   "placementCode.moveSignIn": "Both places sign in the same way but with different credentials, and one copy can only use one of them. Move the section to a folder on this server first, and from there to the new place.",
   "placementCode.moveRunning": "This section is already moving. You can follow it on the overview.",
+  "placementCode.ownFolderUnread": "The backups in the old own folder cannot be read right now, for example because its share is not mounted or its storage does not answer, so they cannot be copied over.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} direct now keeps less. Items whose only copy is there: {n}.",
@@ -6230,6 +6232,7 @@ export const de: Translations = {
   "runReason.dbimportFailed": "das Import-Werkzeug hat einen Fehler gemeldet",
   "runReason.dbimportKeptOld": "der bisherige Datenordner wurde behalten",
   "runReason.dataOutsideHost": "die Daten liegen außerhalb von Host Data und wurden nicht gesichert",
+  "runReason.filesUnreadable": "einige Dateien ließen sich nicht lesen und fehlen in dieser Sicherung",
   "runReason.dbimportErrors": "{n} Fehler, der bisherige Datenordner wurde behalten",
   "runReason.dbimportAppsDown":
     "one=diese App ließ sich nicht wieder starten: {apps}|other=diese Apps ließen sich nicht wieder starten: {apps}",
@@ -7301,6 +7304,7 @@ export const de: Translations = {
   "placementCode.moveDirectRepo": "Einträge sichern direkt hierher, ohne Kopie zu Hause, deshalb kann der Bereich nicht umziehen. Stell diese Einträge erst auf Lokal um.",
   "placementCode.moveSignIn": "Beide Orte melden sich auf dieselbe Art an, aber mit verschiedenen Zugangsdaten, und eine Kopie kann nur eine davon nutzen. Zieh den Bereich erst in einen Ordner auf diesem Server um und von dort an den neuen Ort.",
   "placementCode.moveRunning": "Dieser Bereich zieht schon um. Du verfolgst das auf der Übersicht.",
+  "placementCode.ownFolderUnread": "Die Sicherungen im alten eigenen Ordner lassen sich gerade nicht lesen, etwa weil seine Freigabe nicht eingehängt ist oder sein Speicher nicht antwortet. Deshalb können sie nicht mitgenommen werden.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} direkt bewahrt jetzt weniger auf. Einträge, deren einzige Kopie dort liegt: {n}.",

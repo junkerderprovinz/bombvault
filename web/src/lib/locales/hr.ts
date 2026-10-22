@@ -1123,6 +1123,7 @@ const hr: Partial<Translations> = {
   "runReason.dbimportFailed": "alat za uvoz prijavio je pogrešku",
   "runReason.dbimportKeptOld": "prethodna mapa s podacima je zadržana",
   "runReason.dataOutsideHost": "podaci su izvan Host Data i nisu sigurnosno kopirani",
+  "runReason.filesUnreadable": "neke datoteke nije bilo moguće pročitati i nedostaju u ovoj sigurnosnoj kopiji",
   "runReason.dbimportErrors": "one={n} pogreška, prethodna mapa s podacima je zadržana|few={n} pogreške, prethodna mapa s podacima je zadržana|other={n} pogrešaka, prethodna mapa s podacima je zadržana",
   "runReason.dbimportAppsDown": "one=ovu aplikaciju nije bilo moguće ponovno pokrenuti: {apps}|few=ove aplikacije nije bilo moguće ponovno pokrenuti: {apps}|other=ove aplikacije nije bilo moguće ponovno pokrenuti: {apps}",
   "runReason.dbimportAppsStopped": "one=ova aplikacija ostaje zaustavljena dok se ne riješi mapa s podacima: {apps}|few=ove aplikacije ostaju zaustavljene dok se ne riješi mapa s podacima: {apps}|other=ove aplikacije ostaju zaustavljene dok se ne riješi mapa s podacima: {apps}",
@@ -3146,6 +3147,7 @@ const hr: Partial<Translations> = {
   "placementCode.moveDirectRepo": "Stavke izravno sigurnosno kopiraju na ovo mjesto, bez kopije kod kuće, pa se odjeljak ne može premjestiti. Prvo prebacite te stavke na Lokalno.",
   "placementCode.moveSignIn": "Oba se mjesta prijavljuju na isti način, ali s različitim vjerodajnicama, a jedna kopija može upotrijebiti samo jedne od njih. Prvo premjestite odjeljak u mapu na ovom poslužitelju, a odande na novo mjesto.",
   "placementCode.moveRunning": "Ovaj se odjeljak već premješta. Možete to pratiti u Pregledu.",
+  "placementCode.ownFolderUnread": "Sigurnosne kopije u staroj vlastitoj mapi trenutačno se ne mogu pročitati, primjerice zato što njezin dijeljeni resurs nije montiran ili njezina pohrana ne odgovara, pa se ne mogu kopirati.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} izravno sada čuva manje. Stavke čija je jedina kopija ondje: {n}.",

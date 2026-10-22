@@ -1123,6 +1123,7 @@ const gl: Partial<Translations> = {
   "runReason.dbimportFailed": "a ferramenta de importación informou dun erro",
   "runReason.dbimportKeptOld": "conservouse o cartafol de datos anterior",
   "runReason.dataOutsideHost": "os datos están fóra de Host Data e non se copiaron",
+  "runReason.filesUnreadable": "algúns ficheiros non se puideron ler e faltan nesta copia de seguridade",
   "runReason.dbimportErrors": "one={n} erro, conservouse o cartafol de datos anterior|other={n} erros, conservouse o cartafol de datos anterior",
   "runReason.dbimportAppsDown": "one=esta aplicación non se puido volver iniciar: {apps}|other=estas aplicacións non se puideron volver iniciar: {apps}",
   "runReason.dbimportAppsStopped": "one=esta aplicación segue detida ata que se resolva o cartafol de datos: {apps}|other=estas aplicacións seguen detidas ata que se resolva o cartafol de datos: {apps}",
@@ -3146,6 +3147,7 @@ const gl: Partial<Translations> = {
   "placementCode.moveDirectRepo": "Hai elementos que fan copia directamente neste lugar, sen copia na casa, así que a sección non se pode mover. Pasa primeiro eses elementos a Local.",
   "placementCode.moveSignIn": "Os dous lugares inician sesión da mesma maneira, pero con credenciais distintas, e unha copia só pode usar unha delas. Move primeiro a sección a un cartafol deste servidor e desde alí ao lugar novo.",
   "placementCode.moveRunning": "Esta sección xa se está movendo. Podes seguila na Vista xeral.",
+  "placementCode.ownFolderUnread": "Agora mesmo non se poden ler as copias de seguridade do cartafol propio antigo, por exemplo porque o seu recurso compartido non está montado ou o seu almacenamento non responde, así que non se poden copiar.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} directo agora conserva menos. Elementos cuxa única copia está aí: {n}.",

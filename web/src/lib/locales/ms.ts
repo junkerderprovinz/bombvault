@@ -1123,6 +1123,7 @@ const ms: Partial<Translations> = {
   "runReason.dbimportFailed": "alat import melaporkan satu ralat",
   "runReason.dbimportKeptOld": "folder data sebelumnya dikekalkan",
   "runReason.dataOutsideHost": "data berada di luar Host Data dan tidak disandarkan",
+  "runReason.filesUnreadable": "sesetengah fail tidak dapat dibaca dan tiada dalam sandaran ini",
   "runReason.dbimportErrors": "{n} ralat, folder data sebelumnya dikekalkan",
   "runReason.dbimportAppsDown": "aplikasi berikut tidak dapat dimulakan semula: {apps}",
   "runReason.dbimportAppsStopped": "aplikasi berikut kekal berhenti sehingga folder data dibereskan: {apps}",
@@ -3146,6 +3147,7 @@ const ms: Partial<Translations> = {
   "placementCode.moveDirectRepo": "Entri membuat sandaran terus ke tempat ini, tanpa salinan di lokasi asal, jadi bahagian tidak boleh dialihkan. Tukar dahulu entri itu kepada Setempat.",
   "placementCode.moveSignIn": "Kedua-dua tempat log masuk dengan cara yang sama tetapi dengan bukti kelayakan berbeza, dan satu salinan hanya boleh menggunakan salah satu. Alihkan bahagian dahulu ke folder di pelayan ini, kemudian dari situ ke tempat baharu.",
   "placementCode.moveRunning": "Bahagian ini sedang dialihkan. Anda boleh mengikutinya di Ikhtisar.",
+  "placementCode.ownFolderUnread": "Sandaran dalam folder sendiri yang lama tidak dapat dibaca sekarang, contohnya kerana perkongsiannya tidak dilekapkan atau storannya tidak menjawab, jadi sandaran itu tidak dapat disalin.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} terus kini menyimpan lebih sedikit. Entri yang satu-satunya salinan ada di situ: {n}.",

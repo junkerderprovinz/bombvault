@@ -1123,6 +1123,7 @@ const is: Partial<Translations> = {
   "runReason.dbimportFailed": "innflutningstólið tilkynnti villu",
   "runReason.dbimportKeptOld": "fyrri gagnamöppunni var haldið",
   "runReason.dataOutsideHost": "gögnin eru utan Host Data og voru ekki afrituð",
+  "runReason.filesUnreadable": "ekki tókst að lesa sumar skrár og þær vantar í þetta afrit",
   "runReason.dbimportErrors": "one={n} villa, fyrri gagnamöppunni var haldið|other={n} villur, fyrri gagnamöppunni var haldið",
   "runReason.dbimportAppsDown": "one=ekki tókst að ræsa þetta forrit aftur: {apps}|other=ekki tókst að ræsa þessi forrit aftur: {apps}",
   "runReason.dbimportAppsStopped": "one=þetta forrit verður áfram stöðvað þar til gengið hefur verið frá gagnamöppunni: {apps}|other=þessi forrit verða áfram stöðvuð þar til gengið hefur verið frá gagnamöppunni: {apps}",
@@ -3146,6 +3147,7 @@ const is: Partial<Translations> = {
   "placementCode.moveDirectRepo": "Færslur afrita beint á þennan stað, án afrits heima, svo svæðið getur ekki flutt sig. Settu þessar færslur fyrst á Staðbundið.",
   "placementCode.moveSignIn": "Báðir staðirnir skrá sig inn á sama hátt en með mismunandi auðkenni, og eitt afrit getur aðeins notað annað þeirra. Færðu svæðið fyrst í möppu á þessum þjóni og þaðan á nýja staðinn.",
   "placementCode.moveRunning": "Þetta svæði er þegar í flutningi. Þú getur fylgst með því í Yfirliti.",
+  "placementCode.ownFolderUnread": "Ekki er hægt að lesa afritin í gömlu eigin möppunni núna, til dæmis af því að deilda drifið hennar er ekki tengt eða geymslan hennar svarar ekki, svo ekki er hægt að afrita þau yfir.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} beint varðveitir nú minna. Færslur sem eiga eina afritið þar: {n}.",

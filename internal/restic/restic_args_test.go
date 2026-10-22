@@ -1292,3 +1292,48 @@ func TestParseCompression(t *testing.T) {
 		t.Error("an unknown mode must be refused")
 	}
 }
+
+func TestAReadOnlySessionListsAndDumpsWithoutALock(t *testing.T) {
+	reads := map[string]func(Mode) []string{
+		"ls":       func(m Mode) []string { return LsArgs("/repo", "abc", m) },
+		"ls path":  func(m Mode) []string { return LsPathArgs("/repo", "abc", "/data", m) },
+		"dump zip": func(m Mode) []string { return DumpZipArgs("/repo", "abc", "/boot", m) },
+		"dump tar": func(m Mode) []string { return DumpTarArgs("/repo", "abc", "/boot", m) },
+		"dump raw": func(m Mode) []string { return DumpRawArgs("/repo", "abc", "/disk.img", m) },
+	}
+	for name, args := range reads {
+		if got := args(Mode{NoLock: true}); !slices.Contains(got[:slices.Index(got, "--")], "--no-lock") {
+			t.Errorf("%s under NoLock: %v, want --no-lock before the ids", name, got)
+		}
+		if got := args(Mode{}); slices.Contains(got, "--no-lock") {
+			t.Errorf("%s of an own repository: %v, want the lock kept", name, got)
+		}
+	}
+}
+
+func TestAPullReadsItsSourceWithoutALock(t *testing.T) {
+	got := CopyArgs("/dest", "/src", nil, Limits{}, Mode{Encrypted: true, From: &From{Encrypted: true, NoLock: true}})
+	if i := slices.Index(got, "--no-lock"); i < 0 || i > slices.Index(got, "copy") {
+		t.Fatalf("got %v, want the global --no-lock before copy", got)
+	}
+	if got := CopyArgs("/dest", "/src", nil, Limits{}, Mode{Encrypted: true}); slices.Contains(got, "--no-lock") {
+		t.Fatalf("an off-site copy between own repositories got %v", got)
+	}
+}
+
+func TestARepackKeepsTheRepositorysStorageClass(t *testing.T) {
+	m := Mode{Encrypted: true, StorageClass: "GLACIER_IR"}
+	const repo = "s3:https://s3.example.com/bucket/vms"
+	for name, got := range map[string][]string{
+		"prune":            PruneArgs(repo, m),
+		"forget by policy": ForgetPolicyArgs(repo, RetentionPolicy{KeepLast: 3}, m, nil, true),
+		"forget by id":     ForgetArgs(repo, []string{"abc"}, true, m),
+	} {
+		if i := slices.Index(got, "-o"); i < 0 || got[i+1] != "s3.storage-class=GLACIER_IR" {
+			t.Errorf("%s: %v, want the storage class on the packs it writes", name, got)
+		}
+	}
+	if got := ForgetPolicyArgs(repo, RetentionPolicy{KeepLast: 3}, m, nil, false); slices.Contains(got, "-o") {
+		t.Errorf("a forget without prune writes no packs, got %v", got)
+	}
+}

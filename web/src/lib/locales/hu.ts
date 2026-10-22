@@ -1133,6 +1133,7 @@ const hu: Partial<Translations> = {
   "runReason.dbimportFailed": "az importáló eszköz hibát jelzett",
   "runReason.dbimportKeptOld": "a korábbi adatmappa megmaradt",
   "runReason.dataOutsideHost": "az adatok a Host Data területén kívül vannak, és nem készült róluk mentés",
+  "runReason.filesUnreadable": "néhány fájlt nem sikerült beolvasni, és hiányoznak ebből a mentésből",
   "runReason.dbimportErrors": "{n} hiba, a korábbi adatmappa megmaradt",
   "runReason.dbimportAppsDown": "one=ezt az alkalmazást nem sikerült újraindítani: {apps}|other=ezeket az alkalmazásokat nem sikerült újraindítani: {apps}",
   "runReason.dbimportAppsStopped": "one=ez az alkalmazás leállítva marad, amíg az adatmappa rendbe nem kerül: {apps}|other=ezek az alkalmazások leállítva maradnak, amíg az adatmappa rendbe nem kerül: {apps}",
@@ -3137,6 +3138,7 @@ const hu: Partial<Translations> = {
   "placementCode.moveDirectRepo": "Az elemek közvetlenül ide mentenek, otthoni másolat nélkül, ezért a szakasz nem költöztethető. Előbb állítsd át ezeket az elemeket Helyi értékre.",
   "placementCode.moveSignIn": "Mindkét helyre ugyanúgy lehet bejelentkezni, de más hitelesítő adatokkal, és egy másolat csak az egyiket használhatja. Előbb költöztesd a szakaszt a szerver egy mappájába, onnan pedig az új helyre.",
   "placementCode.moveRunning": "Ez a szakasz már költözik. Az Áttekintés oldalon követheted.",
+  "placementCode.ownFolderUnread": "A régi saját mappa mentései most nem olvashatók, például mert a megosztása nincs csatolva, vagy a tárhelye nem válaszol, ezért nem lehet átmásolni őket.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} közvetlenül most kevesebbet őriz meg. Elemek, amelyeknek egyetlen másolata ott van: {n}.",

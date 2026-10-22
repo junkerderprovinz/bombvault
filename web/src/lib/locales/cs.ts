@@ -1138,6 +1138,7 @@ const cs: Partial<Translations> = {
   "runReason.dbimportFailed": "nástroj pro import ohlásil chybu",
   "runReason.dbimportKeptOld": "předchozí složka s daty byla ponechána",
   "runReason.dataOutsideHost": "data jsou mimo Host Data a nebyla zálohována",
+  "runReason.filesUnreadable": "některé soubory nešlo přečíst a v této záloze chybí",
   "runReason.dbimportErrors": "one={n} chyba, předchozí složka s daty byla ponechána|few={n} chyby, předchozí složka s daty byla ponechána|many={n} chyby, předchozí složka s daty byla ponechána|other={n} chyb, předchozí složka s daty byla ponechána",
   "runReason.dbimportAppsDown": "one=tuto aplikaci se nepodařilo znovu spustit: {apps}|few=tyto aplikace se nepodařilo znovu spustit: {apps}|many=tyto aplikace se nepodařilo znovu spustit: {apps}|other=tyto aplikace se nepodařilo znovu spustit: {apps}",
   "runReason.dbimportAppsStopped": "one=tato aplikace zůstane zastavená, dokud se nevyřeší složka s daty: {apps}|few=tyto aplikace zůstanou zastavené, dokud se nevyřeší složka s daty: {apps}|many=tyto aplikace zůstanou zastavené, dokud se nevyřeší složka s daty: {apps}|other=tyto aplikace zůstanou zastavené, dokud se nevyřeší složka s daty: {apps}",
@@ -3134,6 +3135,7 @@ const cs: Partial<Translations> = {
   "placementCode.moveDirectRepo": "Položky se zálohují přímo sem, bez kopie doma, takže se sekce přesunout nedá. Nejdřív přepni tyto položky na Místní.",
   "placementCode.moveSignIn": "Obě místa se přihlašují stejným způsobem, ale s jinými přihlašovacími údaji, a jedna kopie může použít jen jedny z nich. Nejdřív přesuň sekci do složky na tomto serveru a odtud na nové místo.",
   "placementCode.moveRunning": "Tato sekce se už přesouvá. Můžeš to sledovat v Přehledu.",
+  "placementCode.ownFolderUnread": "Zálohy ve staré vlastní složce teď nejde přečíst, například protože její sdílená složka není připojená nebo její úložiště neodpovídá, takže je nelze zkopírovat.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} přímo teď uchovává méně. Položky, jejichž jediná kopie je tam: {n}.",

@@ -1140,6 +1140,7 @@ const tr: Partial<Translations> = {
   "runReason.dbimportFailed": "içe aktarma aracı bir hata bildirdi",
   "runReason.dbimportKeptOld": "önceki veri klasörü korundu",
   "runReason.dataOutsideHost": "veriler Host Data dışında ve yedeklenmedi",
+  "runReason.filesUnreadable": "bazı dosyalar okunamadı ve bu yedekte yok",
   "runReason.dbimportErrors": "{n} hata, önceki veri klasörü korundu",
   "runReason.dbimportAppsDown": "one=şu uygulama yeniden başlatılamadı: {apps}|other=şu uygulamalar yeniden başlatılamadı: {apps}",
   "runReason.dbimportAppsStopped": "one=veri klasörü düzene girene kadar şu uygulama durdurulmuş kalır: {apps}|other=veri klasörü düzene girene kadar şu uygulamalar durdurulmuş kalır: {apps}",
@@ -3136,6 +3137,7 @@ const tr: Partial<Translations> = {
   "placementCode.moveDirectRepo": "Ögeler, ana yerde kopya olmadan doğrudan bu yere yedekleniyor, bu yüzden bölüm taşınamaz. Önce bu ögeleri Yerel seçeneğine geçir.",
   "placementCode.moveSignIn": "İki yer de aynı yöntemle oturum açıyor ama kimlik bilgileri farklı, ve bir kopya yalnızca birini kullanabilir. Önce bölümü bu sunucudaki bir klasöre, oradan da yeni yere taşı.",
   "placementCode.moveRunning": "Bu bölüm zaten taşınıyor. Genel bakış sayfasından izleyebilirsin.",
+  "placementCode.ownFolderUnread": "Eski kendi klasöründeki yedekler şu anda okunamıyor, örneğin paylaşımı bağlı olmadığı ya da depolaması yanıt vermediği için, bu yüzden kopyalanamıyorlar.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} doğrudan artık daha az tutuyor. Tek kopyası orada olan ögeler: {n}.",

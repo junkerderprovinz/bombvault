@@ -1123,6 +1123,7 @@ const et: Partial<Translations> = {
   "runReason.dbimportFailed": "imporditööriist teatas veast",
   "runReason.dbimportKeptOld": "varasem andmekaust jäeti alles",
   "runReason.dataOutsideHost": "andmed asuvad väljaspool Host Datat ega ole varundatud",
+  "runReason.filesUnreadable": "mõnda faili ei saanud lugeda ja need puuduvad sellest varukoopiast",
   "runReason.dbimportErrors": "{n} viga, varasem andmekaust jäeti alles",
   "runReason.dbimportAppsDown": "one=seda rakendust ei õnnestunud uuesti käivitada: {apps}|other=neid rakendusi ei õnnestunud uuesti käivitada: {apps}",
   "runReason.dbimportAppsStopped": "one=see rakendus jääb peatatuks, kuni andmekaust on korda tehtud: {apps}|other=need rakendused jäävad peatatuks, kuni andmekaust on korda tehtud: {apps}",
@@ -3146,6 +3147,7 @@ const et: Partial<Translations> = {
   "placementCode.moveDirectRepo": "Kirjed varundavad otse siia, ilma koduse koopiata, seega ei saa valdkonda teisaldada. Lülita need kirjed kõigepealt valikule Kohalik.",
   "placementCode.moveSignIn": "Mõlemasse kohta logitakse sisse samal viisil, kuid erinevate andmetega, ja üks koopia saab kasutada ainult ühte neist. Teisalda valdkond kõigepealt selle serveri kausta ja sealt uude kohta.",
   "placementCode.moveRunning": "See valdkond on juba teisaldamisel. Saad seda jälgida lehel Ülevaade.",
+  "placementCode.ownFolderUnread": "Vana oma kausta varukoopiaid ei saa praegu lugeda, näiteks sest selle ühiskaust pole ühendatud või selle salvestusruum ei vasta, seega ei saa neid kaasa kopeerida.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} otse säilitab nüüd vähem. Kirjed, mille ainus koopia on seal: {n}.",

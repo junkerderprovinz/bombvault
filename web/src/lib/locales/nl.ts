@@ -1128,6 +1128,7 @@ const nl: Partial<Translations> = {
   "runReason.dbimportFailed": "het importgereedschap meldde een fout",
   "runReason.dbimportKeptOld": "de vorige gegevensmap is bewaard",
   "runReason.dataOutsideHost": "de gegevens staan buiten Host Data en zijn niet geback-upt",
+  "runReason.filesUnreadable": "sommige bestanden konden niet worden gelezen en ontbreken in deze back-up",
   "runReason.dbimportErrors": "one={n} fout, de vorige gegevensmap is bewaard|other={n} fouten, de vorige gegevensmap is bewaard",
   "runReason.dbimportAppsDown": "one=deze app kon niet opnieuw starten: {apps}|other=deze apps konden niet opnieuw starten: {apps}",
   "runReason.dbimportAppsStopped": "one=deze app blijft gestopt tot de datamap is uitgezocht: {apps}|other=deze apps blijven gestopt tot de datamap is uitgezocht: {apps}",
@@ -3135,6 +3136,7 @@ const nl: Partial<Translations> = {
   "placementCode.moveDirectRepo": "Items maken rechtstreeks naar deze plek een back-up, zonder kopie thuis, dus het onderdeel kan niet worden verplaatst. Zet die items eerst op Lokaal.",
   "placementCode.moveSignIn": "Beide plekken loggen op dezelfde manier in maar met andere inloggegevens, en één kopie kan er maar één gebruiken. Verplaats het onderdeel eerst naar een map op deze server en vandaar naar de nieuwe plek.",
   "placementCode.moveRunning": "Dit onderdeel wordt al verplaatst. Je kunt het volgen op het Overzicht.",
+  "placementCode.ownFolderUnread": "De back-ups in de oude eigen map kunnen nu niet worden gelezen, bijvoorbeeld omdat de share niet is gekoppeld of de opslag niet antwoordt, dus ze kunnen niet worden meegekopieerd.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} direct bewaart nu minder. Items waarvan de enige kopie daar staat: {n}.",

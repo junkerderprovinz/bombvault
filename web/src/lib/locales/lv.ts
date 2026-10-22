@@ -1123,6 +1123,7 @@ const lv: Partial<Translations> = {
   "runReason.dbimportFailed": "importa rīks ziņoja par kļūdu",
   "runReason.dbimportKeptOld": "iepriekšējā datu mape tika paturēta",
   "runReason.dataOutsideHost": "dati atrodas ārpus Host Data, un tiem nav izveidota rezerves kopija",
+  "runReason.filesUnreadable": "dažus failus neizdevās nolasīt, un tie šajā dublējumā trūkst",
   "runReason.dbimportErrors": "zero={n} kļūdu, iepriekšējā datu mape tika paturēta|one={n} kļūda, iepriekšējā datu mape tika paturēta|other={n} kļūdas, iepriekšējā datu mape tika paturēta",
   "runReason.dbimportAppsDown": "zero=šīs lietotnes neizdevās atkal palaist: {apps}|one=šo lietotni neizdevās atkal palaist: {apps}|other=šīs lietotnes neizdevās atkal palaist: {apps}",
   "runReason.dbimportAppsStopped": "zero=šīs lietotnes paliek apturētas, līdz datu mape būs sakārtota: {apps}|one=šī lietotne paliek apturēta, līdz datu mape būs sakārtota: {apps}|other=šīs lietotnes paliek apturētas, līdz datu mape būs sakārtota: {apps}",
@@ -3146,6 +3147,7 @@ const lv: Partial<Translations> = {
   "placementCode.moveDirectRepo": "Ieraksti dublē tieši uz šo vietu, bez kopijas sākotnējā vietā, tāpēc sadaļu nevar pārvietot. Vispirms pārslēdziet šos ierakstus uz Vietējs.",
   "placementCode.moveSignIn": "Abās vietās pieteikšanās notiek vienādi, bet ar dažādiem akreditācijas datiem, un viena kopija var izmantot tikai vienus no tiem. Vispirms pārvietojiet sadaļu uz mapi šajā serverī un no turienes uz jauno vietu.",
   "placementCode.moveRunning": "Šī sadaļa jau tiek pārvietota. Varat to vērot sadaļā Pārskats.",
+  "placementCode.ownFolderUnread": "Vecās paša mapes dublējumus pašlaik nevar nolasīt, piemēram, tāpēc, ka tās koplietojums nav piemontēts vai tās krātuve neatbild, tāpēc tos nevar pārkopēt.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} tieši tagad saglabā mazāk. Ieraksti, kuru vienīgā kopija ir tur: {n}.",

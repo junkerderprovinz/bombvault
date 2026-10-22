@@ -2,8 +2,11 @@ package api
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 	"testing"
@@ -234,6 +237,43 @@ func TestHandleTestOffsiteTargetEnvelope(t *testing.T) {
 	env = decodeEnvelope(t, rec)
 	if env["ok"] != false || env["error"] == "" {
 		t.Fatalf("unknown-target envelope = %v, want ok:false with a reason", env)
+	}
+}
+
+func TestAFolderOnAMountedShareIsReadyBeforeItsFirstCopy(t *testing.T) {
+	svc, st, _ := newProbeSvc(t, nil)
+	root := filepath.ToSlash(svc.cfg.HostMountRoot)
+	table := filepath.Join(t.TempDir(), "mountinfo")
+	mounts := "30 1 0:28 / / rw - overlay overlay rw\n" +
+		"40 30 0:29 /mnt " + mountinfoEscape(root) + " rw - rootfs rootfs rw\n"
+	nas := "41 40 0:31 / " + mountinfoEscape(root+"/nas") + " rw - cifs //nas/bv rw\n"
+	writeTable := func(lines string) {
+		if err := os.WriteFile(table, []byte(lines), 0o600); err != nil { //nolint:gosec // G703: the path is this test's own temp file
+			t.Fatal(err)
+		}
+	}
+	t.Cleanup(SetMountinfoPath(table))
+	target, err := st.UpsertOffsiteTarget(store.OffsiteTarget{Domain: "containers", Name: "NAS", Repo: "nas/bv/containers", Enabled: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	writeTable(mounts + nas)
+	reachable, initialized, err := svc.TestOffsiteTarget(context.Background(), target.ID)
+	if err != nil || !reachable || initialized {
+		t.Fatalf("probe = (%v, %v, %v), want a mounted folder reachable with no repository yet", reachable, initialized, err)
+	}
+
+	writeTable(mounts)
+	repo, err := svc.resolveRepo(target.Repo)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := st.MarkRepoEstablished(repo); err != nil {
+		t.Fatal(err)
+	}
+	if _, _, err := svc.TestOffsiteTarget(context.Background(), target.ID); !errors.Is(err, ErrBackupPathNotMounted) {
+		t.Fatalf("probe error = %v, want the share that held the copy named as not mounted", err)
 	}
 }
 

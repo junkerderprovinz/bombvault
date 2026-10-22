@@ -1138,6 +1138,7 @@ const es: Partial<Translations> = {
   "runReason.dbimportFailed": "la herramienta de importación informó de un error",
   "runReason.dbimportKeptOld": "se conservó la carpeta de datos anterior",
   "runReason.dataOutsideHost": "los datos están fuera de Host Data y no se copiaron",
+  "runReason.filesUnreadable": "algunos archivos no se pudieron leer y faltan en esta copia de seguridad",
   "runReason.dbimportErrors": "one={n} error, se conservó la carpeta de datos anterior|other={n} errores, se conservó la carpeta de datos anterior",
   "runReason.dbimportAppsDown": "one=esta aplicación no se pudo volver a iniciar: {apps}|many=estas aplicaciones no se pudieron volver a iniciar: {apps}|other=estas aplicaciones no se pudieron volver a iniciar: {apps}",
   "runReason.dbimportAppsStopped": "one=esta aplicación sigue detenida hasta que se resuelva la carpeta de datos: {apps}|many=estas aplicaciones siguen detenidas hasta que se resuelva la carpeta de datos: {apps}|other=estas aplicaciones siguen detenidas hasta que se resuelva la carpeta de datos: {apps}",
@@ -3134,6 +3135,7 @@ const es: Partial<Translations> = {
   "placementCode.moveDirectRepo": "Hay elementos que copian directamente en este lugar, sin una copia en casa, así que la sección no se puede mover. Pasa primero esos elementos a Local.",
   "placementCode.moveSignIn": "Los dos lugares inician sesión de la misma forma, pero con credenciales distintas, y una copia solo puede usar una de ellas. Mueve primero la sección a una carpeta de este servidor y desde ahí al lugar nuevo.",
   "placementCode.moveRunning": "Esta sección ya se está moviendo. Puedes seguirla en el Resumen.",
+  "placementCode.ownFolderUnread": "Ahora mismo no se pueden leer las copias de seguridad de la carpeta propia antigua, por ejemplo porque su recurso compartido no está montado o su almacenamiento no responde, así que no se pueden copiar.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} directo ahora conserva menos. Elementos cuya única copia está ahí: {n}.",

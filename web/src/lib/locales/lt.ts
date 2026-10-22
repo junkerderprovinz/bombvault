@@ -1123,6 +1123,7 @@ const lt: Partial<Translations> = {
   "runReason.dbimportFailed": "importo įrankis pranešė apie klaidą",
   "runReason.dbimportKeptOld": "ankstesnis duomenų aplankas paliktas",
   "runReason.dataOutsideHost": "duomenys yra už Host Data ribų ir nebuvo sukurtos jų atsarginės kopijos",
+  "runReason.filesUnreadable": "kai kurių failų nepavyko perskaityti, todėl jų nėra šioje atsarginėje kopijoje",
   "runReason.dbimportErrors": "one={n} klaida, ankstesnis duomenų aplankas paliktas|few={n} klaidos, ankstesnis duomenų aplankas paliktas|many={n} klaidos, ankstesnis duomenų aplankas paliktas|other={n} klaidų, ankstesnis duomenų aplankas paliktas",
   "runReason.dbimportAppsDown": "one=šios programos nepavyko vėl paleisti: {apps}|few=šių programų nepavyko vėl paleisti: {apps}|many=šių programų nepavyko vėl paleisti: {apps}|other=šių programų nepavyko vėl paleisti: {apps}",
   "runReason.dbimportAppsStopped": "one=ši programa lieka sustabdyta, kol bus sutvarkytas duomenų aplankas: {apps}|few=šios programos lieka sustabdytos, kol bus sutvarkytas duomenų aplankas: {apps}|many=šios programos lieka sustabdytos, kol bus sutvarkytas duomenų aplankas: {apps}|other=šios programos lieka sustabdytos, kol bus sutvarkytas duomenų aplankas: {apps}",
@@ -3146,6 +3147,7 @@ const lt: Partial<Translations> = {
   "placementCode.moveDirectRepo": "Įrašai kuria atsargines kopijas tiesiai šioje vietoje, be kopijos pradinėje vietoje, todėl srities perkelti negalima. Pirmiausia perjunk tuos įrašus į parinktį Vietinis.",
   "placementCode.moveSignIn": "Į abi vietas prisijungiama tuo pačiu būdu, bet skirtingais prisijungimo duomenimis, o viena kopija gali naudoti tik vienus iš jų. Pirmiausia perkelk sritį į šio serverio aplanką, o iš ten į naują vietą.",
   "placementCode.moveRunning": "Ši sritis jau perkeliama. Gali tai sekti skiltyje Apžvalga.",
+  "placementCode.ownFolderUnread": "Senojo savo aplanko atsarginių kopijų dabar nepavyksta perskaityti, pavyzdžiui, nes jo bendrinamas aplankas neprijungtas arba saugykla neatsako, todėl jų negalima nukopijuoti.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} tiesiogiai dabar saugo mažiau. Įrašai, kurių vienintelė kopija yra ten: {n}.",

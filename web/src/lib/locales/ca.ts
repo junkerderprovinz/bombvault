@@ -1123,6 +1123,7 @@ const ca: Partial<Translations> = {
   "runReason.dbimportFailed": "l'eina d'importació ha informat d'un error",
   "runReason.dbimportKeptOld": "s'ha conservat la carpeta de dades anterior",
   "runReason.dataOutsideHost": "les dades són fora de Host Data i no s'han copiat",
+  "runReason.filesUnreadable": "alguns fitxers no s'han pogut llegir i falten en aquesta còpia de seguretat",
   "runReason.dbimportErrors": "one={n} error, s'ha conservat la carpeta de dades anterior|other={n} errors, s'ha conservat la carpeta de dades anterior",
   "runReason.dbimportAppsDown": "one=aquesta aplicació no s'ha pogut tornar a iniciar: {apps}|many=aquestes aplicacions no s'han pogut tornar a iniciar: {apps}|other=aquestes aplicacions no s'han pogut tornar a iniciar: {apps}",
   "runReason.dbimportAppsStopped": "one=aquesta aplicació queda aturada fins que es resolgui la carpeta de dades: {apps}|many=aquestes aplicacions queden aturades fins que es resolgui la carpeta de dades: {apps}|other=aquestes aplicacions queden aturades fins que es resolgui la carpeta de dades: {apps}",
@@ -3146,6 +3147,7 @@ const ca: Partial<Translations> = {
   "placementCode.moveDirectRepo": "Hi ha elements que fan còpia directament en aquest lloc, sense còpia a casa, i per això la secció no es pot moure. Passa primer aquests elements a Local.",
   "placementCode.moveSignIn": "Els dos llocs inicien sessió de la mateixa manera, però amb credencials diferents, i una còpia només en pot fer servir una. Mou primer la secció a una carpeta d'aquest servidor, i des d'allà al lloc nou.",
   "placementCode.moveRunning": "Aquesta secció ja s'està movent. Pots seguir-ho al Resum.",
+  "placementCode.ownFolderUnread": "Ara mateix no es poden llegir les còpies de seguretat de la carpeta pròpia antiga, per exemple perquè la seva unitat compartida no està muntada o el seu emmagatzematge no respon, així que no es poden copiar.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} directe ara conserva menys. Elements l'única còpia dels quals hi és: {n}.",

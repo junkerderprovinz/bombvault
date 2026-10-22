@@ -14,6 +14,7 @@ describe("placementErrorText", () => {
       "home-uncheckable", "rest-path-too-deep", "repo-wrong-key", "repo-unopened",
       "destination-holds-backups", "backups-not-there", "last-copies", "nothing-to-erase",
       "move-same-place", "move-section-there", "move-direct-repo", "move-sign-in", "move-running",
+      "own-folder-unread",
     ];
     for (const code of codes) {
       const text = placementErrorText(t, "en", { ok: false, error: "server text", code }, "settings.error");

@@ -1123,6 +1123,7 @@ const eu: Partial<Translations> = {
   "runReason.dbimportFailed": "inportazio-tresnak errore bat eman du",
   "runReason.dbimportKeptOld": "aurreko datu-karpeta gorde da",
   "runReason.dataOutsideHost": "datuak Host Data-tik kanpo daude eta ez dira babeskopiatu",
+  "runReason.filesUnreadable": "fitxategi batzuk ezin izan dira irakurri eta babeskopia honetatik falta dira",
   "runReason.dbimportErrors": "{n} errore, aurreko datu-karpeta gorde da",
   "runReason.dbimportAppsDown": "one=aplikazio hau ezin izan da berriro abiarazi: {apps}|other=aplikazio hauek ezin izan dira berriro abiarazi: {apps}",
   "runReason.dbimportAppsStopped": "one=aplikazio hau geldituta geratzen da datu-karpeta konpondu arte: {apps}|other=aplikazio hauek geldituta geratzen dira datu-karpeta konpondu arte: {apps}",
@@ -3146,6 +3147,7 @@ const eu: Partial<Translations> = {
   "placementCode.moveDirectRepo": "Elementuek zuzenean toki honetara egiten dute babeskopia, etxeko kopiarik gabe, beraz atala ezin da mugitu. Aldatu lehenik elementu horiek Lokala aukerara.",
   "placementCode.moveSignIn": "Bi tokiek modu berean hasten dute saioa, baina kredentzial desberdinekin, eta kopia batek bietako bat bakarrik erabil dezake. Mugitu lehenik atala zerbitzari honetako karpeta batera, eta handik toki berrira.",
   "placementCode.moveRunning": "Atal hau mugitzen ari da jada. Laburpena orrian jarrai dezakezu.",
+  "placementCode.ownFolderUnread": "Une honetan ezin dira irakurri karpeta propio zaharreko babeskopiak, adibidez haren partekatzea muntatuta ez dagoelako edo haren biltegiak erantzuten ez duelako, beraz ezin dira kopiatu.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} zuzenak orain gutxiago gordetzen du. Kopia bakarra hor duten elementuak: {n}.",

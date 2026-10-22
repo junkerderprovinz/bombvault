@@ -1123,6 +1123,7 @@ const ko: Partial<Translations> = {
   "runReason.dbimportFailed": "가져오기 도구가 오류를 알렸습니다",
   "runReason.dbimportKeptOld": "이전 데이터 폴더를 남겨 두었습니다",
   "runReason.dataOutsideHost": "데이터가 Host Data 밖에 있어 백업되지 않았습니다",
+  "runReason.filesUnreadable": "일부 파일을 읽지 못해 이 백업에서 빠졌습니다",
   "runReason.dbimportErrors": "오류 {n}건, 이전 데이터 폴더를 남겨 두었습니다",
   "runReason.dbimportAppsDown": "다음 앱을 다시 시작하지 못했습니다: {apps}",
   "runReason.dbimportAppsStopped": "데이터 폴더가 정리될 때까지 다음 앱은 중지된 상태로 남습니다: {apps}",
@@ -3127,6 +3128,7 @@ const ko: Partial<Translations> = {
   "placementCode.moveDirectRepo": "항목이 원래 위치의 사본 없이 이 위치로 직접 백업하고 있어서 섹션을 이동할 수 없습니다. 먼저 해당 항목을 '로컬'로 바꾸세요.",
   "placementCode.moveSignIn": "두 위치는 같은 방식으로 로그인하지만 자격 증명이 서로 달라서, 하나의 사본은 둘 중 하나만 사용할 수 있습니다. 먼저 섹션을 이 서버의 폴더로 이동한 다음, 거기서 새 위치로 이동하세요.",
   "placementCode.moveRunning": "이 섹션은 이미 이동 중입니다. '개요'에서 확인할 수 있습니다.",
+  "placementCode.ownFolderUnread": "이전 전용 폴더의 백업을 지금 읽을 수 없습니다. 공유가 마운트되지 않았거나 저장소가 응답하지 않는 경우 등입니다. 그래서 백업을 복사할 수 없습니다.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} 직접은 이제 더 적게 보관합니다. 유일한 사본이 그곳에 있는 항목: {n}개.",

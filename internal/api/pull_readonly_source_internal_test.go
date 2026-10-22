@@ -174,6 +174,45 @@ func TestPullNeverWritesToTheSource(t *testing.T) {
 			"The destination is this box's own repository; if the source's password reached it instead,\n" +
 			"the pull would write nothing and blame the local repository for it.")
 	}
+	if !eng.copyMode.From.NoLock {
+		t.Error("the copy read-locks the source, which writes a lock file into the other instance's repository")
+	}
+	if !eng.copyMode.NoAmbientCreds {
+		t.Error("the copy hands this box's rclone config to a pull into a folder on this server")
+	}
+}
+
+func TestAPullSendsNoLoginOfThisBoxToTheOtherInstance(t *testing.T) {
+	ours := cloudEnv(CloudCreds{S3KeyID: "OURS", S3Secret: "o", RESTUser: "bv", RESTPassword: "ours"})
+	theirs := cloudEnv(CloudCreds{S3KeyID: "THEIRS", S3Secret: "t"})
+	const local = "/host/user/bombvault/containers"
+
+	_, src, env, err := pullCopyAccess(local, ours, "rest:http://tower:8000/bv", nil)
+	if err != nil || src != "rest:http://tower:8000/bv" || len(env) != 0 {
+		t.Fatalf("into a folder here: src %q env %v err %v, want the address as it is and none of this box's logins", src, env, err)
+	}
+
+	dest, src, env, err := pullCopyAccess("rest:http://nas:8000/bv/containers", ours, "rest:http://tower:8000/bv", nil)
+	if err != nil || dest != "rest:http://bv:ours@nas:8000/bv/containers" || src != "rest:http://tower:8000/bv" {
+		t.Fatalf("between two rest-servers: dest %q src %q err %v, want this box's login in its own address only", dest, src, err)
+	}
+	if strings.Contains(strings.Join(env, "\n"), "RESTIC_REST_") {
+		t.Fatalf("env %v reaches the source with this box's rest login", env)
+	}
+
+	for _, srcEnv := range [][]string{theirs, nil} {
+		dest, src, env, err = pullCopyAccess("s3:https://garage/bv/containers", ours, "s3:https://tower/bucket/bv", srcEnv)
+		joined := strings.Join(env, "\n")
+		if err != nil || dest != "s3:https://garage/bv/containers" || !strings.HasPrefix(src, "rclone:"+sourceRemote+":") {
+			t.Fatalf("between two buckets: dest %q src %q err %v, want the source read through its own remote", dest, src, err)
+		}
+		if strings.Count(joined, "AWS_ACCESS_KEY_ID=") != 1 || !strings.Contains(joined, "AWS_ACCESS_KEY_ID=OURS") || strings.Contains(joined, "RESTIC_REST_") {
+			t.Fatalf("env %v, want only this box's S3 keys for its own bucket", env)
+		}
+		if strings.Contains(joined, sourceRemote+"_ACCESS_KEY_ID=OURS") {
+			t.Fatalf("env %v signs the source in with this box's keys", env)
+		}
+	}
 }
 
 func TestAPullIntoARemoteRepositoryUnlocksNothingWithoutALock(t *testing.T) {

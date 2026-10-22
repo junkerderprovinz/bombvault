@@ -1132,6 +1132,7 @@ const fr: Partial<Translations> = {
   "runReason.dbimportFailed": "l'outil d'import a signalé une erreur",
   "runReason.dbimportKeptOld": "le dossier de données précédent a été conservé",
   "runReason.dataOutsideHost": "les données sont hors de Host Data et n'ont pas été sauvegardées",
+  "runReason.filesUnreadable": "certains fichiers n'ont pas pu être lus et manquent dans cette sauvegarde",
   "runReason.dbimportErrors": "one={n} erreur, le dossier de données précédent a été conservé|other={n} erreurs, le dossier de données précédent a été conservé",
   "runReason.dbimportAppsDown": "one=cette application n'a pas pu redémarrer : {apps}|many=ces applications n'ont pas pu redémarrer : {apps}|other=ces applications n'ont pas pu redémarrer : {apps}",
   "runReason.dbimportAppsStopped": "one=cette application reste arrêtée tant que le dossier de données n'est pas réglé : {apps}|many=ces applications restent arrêtées tant que le dossier de données n'est pas réglé : {apps}|other=ces applications restent arrêtées tant que le dossier de données n'est pas réglé : {apps}",
@@ -3136,6 +3137,7 @@ const fr: Partial<Translations> = {
   "placementCode.moveDirectRepo": "Des éléments sauvegardent directement à cet endroit, sans copie à l'emplacement d'origine, donc la section ne peut pas être déplacée. Passez d'abord ces éléments sur Local.",
   "placementCode.moveSignIn": "Les deux endroits se connectent de la même façon mais avec des identifiants différents, et une copie ne peut en utiliser qu'un. Déplacez d'abord la section vers un dossier de ce serveur, puis de là vers le nouvel endroit.",
   "placementCode.moveRunning": "Cette section est déjà en cours de déplacement. Vous pouvez la suivre dans l'Aperçu.",
+  "placementCode.ownFolderUnread": "Les sauvegardes de l'ancien dossier propre ne peuvent pas être lues pour l'instant, par exemple parce que son partage n'est pas monté ou que son stockage ne répond pas, elles ne peuvent donc pas être copiées.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} direct conserve désormais moins. Éléments dont c'est la seule copie : {n}.",

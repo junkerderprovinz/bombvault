@@ -1129,6 +1129,7 @@ const no: Partial<Translations> = {
   "runReason.dbimportFailed": "importverktøyet meldte en feil",
   "runReason.dbimportKeptOld": "den forrige datamappen ble beholdt",
   "runReason.dataOutsideHost": "dataene ligger utenfor Host Data og ble ikke sikkerhetskopiert",
+  "runReason.filesUnreadable": "noen filer kunne ikke leses og mangler i denne sikkerhetskopien",
   "runReason.dbimportErrors": "{n} feil, den forrige datamappen ble beholdt",
   "runReason.dbimportAppsDown": "one=denne appen kunne ikke startes igjen: {apps}|other=disse appene kunne ikke startes igjen: {apps}",
   "runReason.dbimportAppsStopped": "one=denne appen forblir stoppet til datamappen er ordnet: {apps}|other=disse appene forblir stoppet til datamappen er ordnet: {apps}",
@@ -3136,6 +3137,7 @@ const no: Partial<Translations> = {
   "placementCode.moveDirectRepo": "Elementer sikrer direkte til dette stedet, uten kopi hjemme, så området kan ikke flyttes. Sett disse elementene til Lokal først.",
   "placementCode.moveSignIn": "Begge stedene logger inn på samme måte, men med ulike påloggingsdetaljer, og én kopi kan bare bruke én av dem. Flytt først området til en mappe på denne serveren og derfra til det nye stedet.",
   "placementCode.moveRunning": "Dette området flyttes allerede. Du kan følge det i Oversikt.",
+  "placementCode.ownFolderUnread": "Sikkerhetskopiene i den gamle egne mappen kan ikke leses akkurat nå, for eksempel fordi delingen ikke er montert eller lagringen ikke svarer, så de kan ikke kopieres over.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} direkte beholder nå mindre. Elementer der eneste kopi ligger der: {n}.",

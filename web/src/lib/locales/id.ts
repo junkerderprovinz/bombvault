@@ -1123,6 +1123,7 @@ const id: Partial<Translations> = {
   "runReason.dbimportFailed": "alat impor melaporkan sebuah kesalahan",
   "runReason.dbimportKeptOld": "folder data sebelumnya disimpan",
   "runReason.dataOutsideHost": "data berada di luar Host Data dan tidak dicadangkan",
+  "runReason.filesUnreadable": "beberapa file tidak bisa dibaca dan tidak ada di cadangan ini",
   "runReason.dbimportErrors": "{n} kesalahan, folder data sebelumnya disimpan",
   "runReason.dbimportAppsDown": "aplikasi berikut tidak bisa dinyalakan lagi: {apps}",
   "runReason.dbimportAppsStopped": "aplikasi berikut tetap berhenti sampai folder data dibereskan: {apps}",
@@ -3146,6 +3147,7 @@ const id: Partial<Translations> = {
   "placementCode.moveDirectRepo": "Entri mencadangkan langsung ke tempat ini, tanpa salinan di lokasi asal, sehingga bagian tidak bisa dipindahkan. Alihkan dulu entri tersebut ke Lokal.",
   "placementCode.moveSignIn": "Kedua tempat masuk dengan cara yang sama tetapi dengan kredensial berbeda, dan satu salinan hanya bisa memakai salah satunya. Pindahkan dulu bagian ke folder di server ini, lalu dari sana ke tempat baru.",
   "placementCode.moveRunning": "Bagian ini sedang dipindahkan. Anda bisa mengikutinya di Ringkasan.",
+  "placementCode.ownFolderUnread": "Cadangan di folder sendiri yang lama tidak bisa dibaca saat ini, misalnya karena share-nya tidak terpasang atau penyimpanannya tidak menjawab, jadi cadangan itu tidak bisa disalin.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} langsung sekarang menyimpan lebih sedikit. Entri yang satu-satunya salinannya ada di sana: {n}.",

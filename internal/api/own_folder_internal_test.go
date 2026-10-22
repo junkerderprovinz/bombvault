@@ -1,7 +1,10 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
+	"os"
+	"path/filepath"
 	"slices"
 	"strings"
 	"testing"
@@ -158,6 +161,34 @@ func TestAnOwnFolderInALocationSignsInWithTheLocationsSignIn(t *testing.T) {
 	}
 }
 
+func TestAnOwnFolderInALocationWritesInTheLocationsStorageClass(t *testing.T) {
+	f := newPlacementFixture(t)
+	if err := f.svc.SetCloudCredSets([]CloudCredSet{
+		{ID: "garage", Name: "Garage", CloudCreds: CloudCreds{S3KeyID: "GARAGE", S3Secret: "g", S3StorageClass: "STANDARD"}},
+	}); err != nil {
+		t.Fatal(err)
+	}
+	cold, err := f.st.SaveDestination(store.OffsiteTarget{Name: "Cold", Repo: "s3:https://garage/cold", CredsRef: "garage", StorageClass: "GLACIER_IR", Provider: "box"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	req := ownFolderRequest{Domains: []string{"files"}, Location: "destination:" + cold.ID, CopyOver: true}
+	steps, err := f.svc.planOwnFolders(context.Background(), req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := steps[0].plan.mode.StorageClass; got != "GLACIER_IR" {
+		t.Fatalf("the copy over writes in %q, want the location's class", got)
+	}
+
+	req.CopyOver = false
+	ownSteps(t, f.do("POST", "/api/storage/own-folders", req))
+	settings := settingsOf(t, f.svc)
+	if got := f.svc.primaryModeFor(settings, "files", settings.FilesPath).StorageClass; got != "GLACIER_IR" {
+		t.Fatalf("the section backs up in %q, want the location's class over the sign-in's", got)
+	}
+}
+
 func TestATypedOwnFolderSignsInWithTheSavedSignInPicked(t *testing.T) {
 	f := newPlacementFixture(t)
 	if err := f.svc.SetCloudCredSets([]CloudCredSet{{ID: "nas", Name: "NAS", CloudCreds: CloudCreds{RESTUser: "u", RESTPassword: "p"}}}); err != nil {
@@ -223,6 +254,56 @@ func TestAnOwnFolderMovesFromThisServerToAnS3LocationWithItsOwnSignIn(t *testing
 	env := strings.Join(envs[0], "\n")
 	if !strings.Contains(env, "AWS_ACCESS_KEY_ID=GARAGE") || strings.Contains(env, "=DEF") || strings.Contains(env, "=eu-1") {
 		t.Fatalf("the copy signed in with %v, want only Garage's sign-in", env)
+	}
+}
+
+func TestAnOwnFolderOnAShareNotMountedDoesNotSwitchWithoutItsBackups(t *testing.T) {
+	f := newPlacementFixture(t)
+	vault := f.destination("Vault", vaultRepo)
+	old := f.domainPath("containers")
+	if err := f.st.MarkRepoEstablished(old); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Remove(filepath.Join(filepath.FromSlash(old), "config")); err != nil {
+		t.Fatal(err)
+	}
+	f.eng.opens[old] = false
+	move := map[string]any{"domains": []string{"containers"}, "location": "destination:" + vault.ID, "copyOver": true}
+
+	if got := f.do("POST", "/api/storage/own-folders", move); got["ok"] != false || got["code"] != "own-folder-unread" {
+		t.Fatalf("answer = %v, want the move refused because the old backups cannot be read", got)
+	}
+	if settings, _ := f.st.GetSettings(); settings.ContainersPath != "backups/containers" {
+		t.Fatalf("path = %q, want the section left at its old folder", settings.ContainersPath)
+	}
+
+	move["copyOver"] = false
+	ownSteps(t, f.do("POST", "/api/storage/own-folders", move))
+	if settings, _ := f.st.GetSettings(); settings.ContainersPath != vaultRepo+"/containers" {
+		t.Fatalf("path = %q, want a move without the copy to go ahead", settings.ContainersPath)
+	}
+}
+
+func TestABucketThatHeldTheOwnFolderAndHoldsNoRepositoryNowIsNotEmpty(t *testing.T) {
+	f := newPlacementFixture(t)
+	vault := f.destination("Vault", vaultRepo)
+	const old = "rest:http://nas:8000/bv/containers"
+	settings, _ := f.st.GetSettings()
+	settings.ContainersPath = old
+	if err := f.st.UpdateSettings(settings); err != nil {
+		t.Fatal(err)
+	}
+	f.eng.opens[old] = false
+	preview := map[string]any{"domains": []string{"containers"}, "location": "destination:" + vault.ID, "copyOver": true}
+
+	if steps := ownSteps(t, f.do("POST", "/api/storage/own-folders/preview", preview)); steps[0].Pending != 0 {
+		t.Fatalf("step = %+v, want a bucket never written to moved with nothing to copy", steps[0])
+	}
+	if err := f.st.MarkRepoEstablished(old); err != nil {
+		t.Fatal(err)
+	}
+	if got := f.do("POST", "/api/storage/own-folders/preview", preview); got["code"] != "own-folder-unread" {
+		t.Fatalf("answer = %v, want the move refused once the bucket held backups", got)
 	}
 }
 
