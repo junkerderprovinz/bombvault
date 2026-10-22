@@ -14185,7 +14185,9 @@ func (s *Service) exportFlashZip(ctx context.Context, settings store.Settings, s
 	if err != nil {
 		return fmt.Errorf("flash zip export: create temp: %w", err)
 	}
-	dumpErr := s.engine.DumpZip(ctx, repo, snapshotID, s.cfg.FlashDir, f, mode)
+	// The same zip the download gives: restic's own stores every entry, which
+	// the Unraid USB Creator cannot extract (#136).
+	dumpErr := s.dumpFlashZipCompat(ctx, repo, snapshotID, s.cfg.FlashDir, f, mode)
 	closeErr := f.Close()
 	if dumpErr != nil {
 		_ = os.Remove(tmp)

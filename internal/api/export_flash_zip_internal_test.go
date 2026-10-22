@@ -1,9 +1,11 @@
 package api
 
 import (
+	"archive/zip"
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -64,13 +66,40 @@ func latestExportRun(t *testing.T, st *store.Repo) store.Run {
 	return store.Run{}
 }
 
+// readZipEntry returns the content of one entry of the zip at file.
+func readZipEntry(t *testing.T, file, name string) []byte {
+	t.Helper()
+	zr, err := zip.OpenReader(file)
+	if err != nil {
+		t.Fatalf("open %s: %v", file, err)
+	}
+	defer func() { _ = zr.Close() }()
+	for _, f := range zr.File {
+		if f.Name != name {
+			continue
+		}
+		r, err := f.Open()
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer func() { _ = r.Close() }()
+		got, err := io.ReadAll(r)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return got
+	}
+	t.Fatalf("%s has no entry %s", file, name)
+	return nil
+}
+
 // With Keep 0 the export writes flash-latest.zip, removes its temp file and
 // overwrites the same file on the next run.
 func TestExportFlashZipKeep0(t *testing.T) {
 	root := t.TempDir()
-	fake := &flashZipFakeEngine{dumpBytes: []byte("PK\x03\x04first")}
+	fake := &flashZipFakeEngine{dumpBytes: buildTestStoredZip(t, map[string][]byte{"bzimage": []byte("first")})}
 	svc := &Service{
-		cfg:    config.Config{HostMountRoot: root, FlashDir: "/boot"},
+		cfg:    config.Config{HostMountRoot: root, DataDir: t.TempDir(), FlashDir: "/boot"},
 		engine: fake,
 		store:  newFlashExportStore(t),
 	}
@@ -86,27 +115,19 @@ func TestExportFlashZipKeep0(t *testing.T) {
 
 	dir := filepath.Join(root, "export")
 	latest := filepath.Join(dir, "flash-latest.zip")
-	got, err := os.ReadFile(latest) //nolint:gosec // G304: latest is under the test's own TempDir, not user input
-	if err != nil {
-		t.Fatalf("read flash-latest.zip: %v", err)
-	}
-	if !bytes.Equal(got, []byte("PK\x03\x04first")) {
-		t.Fatalf("flash-latest.zip bytes = %q, want the DumpZip payload", got)
+	if got := readZipEntry(t, latest, "bzimage"); string(got) != "first" {
+		t.Fatalf("flash-latest.zip holds %q, want the dumped snapshot", got)
 	}
 	if _, err := os.Stat(filepath.Join(dir, ".flash-export.tmp.zip")); !os.IsNotExist(err) {
 		t.Fatalf("temp file must be gone after a successful export, stat err = %v", err)
 	}
 
-	fake.dumpBytes = []byte("PK\x03\x04second")
+	fake.dumpBytes = buildTestStoredZip(t, map[string][]byte{"bzimage": []byte("second")})
 	if err := svc.exportFlashZip(context.Background(), settings, "cafebabe", restic.Mode{}, "/repo"); err != nil {
 		t.Fatalf("second exportFlashZip: %v", err)
 	}
-	got, err = os.ReadFile(latest) //nolint:gosec // G304: latest is under the test's own TempDir, not user input
-	if err != nil {
-		t.Fatalf("read flash-latest.zip after overwrite: %v", err)
-	}
-	if !bytes.Equal(got, []byte("PK\x03\x04second")) {
-		t.Fatalf("flash-latest.zip not overwritten, bytes = %q", got)
+	if got := readZipEntry(t, latest, "bzimage"); string(got) != "second" {
+		t.Fatalf("flash-latest.zip not overwritten, holds %q", got)
 	}
 	entries, err := os.ReadDir(dir)
 	if err != nil {
@@ -118,6 +139,39 @@ func TestExportFlashZipKeep0(t *testing.T) {
 			names = append(names, e.Name())
 		}
 		t.Fatalf("Keep==0 export dir = %v, want only [flash-latest.zip]", names)
+	}
+}
+
+// The scheduled export is the same zip as the download: every entry deflated
+// and the junk left out.
+func TestTheScheduledExportIsTheZipTheUSBCreatorExtracts(t *testing.T) {
+	root := t.TempDir()
+	fake := &flashZipFakeEngine{dumpBytes: buildTestStoredZip(t, map[string][]byte{
+		"bzfirmware":       bytes.Repeat([]byte("firmware-bytes-"), 100),
+		"previous/bzimage": []byte("old"),
+		".git/config":      []byte("[core]"),
+	})}
+	svc := &Service{
+		cfg:    config.Config{HostMountRoot: root, DataDir: t.TempDir(), FlashDir: "/boot"},
+		engine: fake,
+		store:  newFlashExportStore(t),
+	}
+	settings := store.Settings{FlashZipExportEnabled: true, FlashZipExportPath: "export"}
+
+	if err := svc.exportFlashZip(context.Background(), settings, "deadbeef", restic.Mode{}, "/repo"); err != nil {
+		t.Fatalf("exportFlashZip: %v", err)
+	}
+	zr, err := zip.OpenReader(filepath.Join(root, "export", "flash-latest.zip"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = zr.Close() }()
+	if len(zr.File) != 1 || zr.File[0].Name != "bzfirmware" || zr.File[0].Method != zip.Deflate {
+		var got []string
+		for _, f := range zr.File {
+			got = append(got, fmt.Sprintf("%s (method %d)", f.Name, f.Method))
+		}
+		t.Fatalf("export entries = %v, want only bzfirmware, deflated", got)
 	}
 }
 
@@ -213,7 +267,7 @@ func TestExportFlashZipDumpError(t *testing.T) {
 	fake := &flashZipFakeEngine{dumpErr: errors.New("boom")}
 	st := newFlashExportStore(t)
 	svc := &Service{
-		cfg:    config.Config{HostMountRoot: root, FlashDir: "/boot"},
+		cfg:    config.Config{HostMountRoot: root, DataDir: t.TempDir(), FlashDir: "/boot"},
 		engine: fake,
 		store:  st,
 	}
@@ -292,11 +346,10 @@ func TestExportFlashZipDisabled(t *testing.T) {
 // size as its byte count.
 func TestExportFlashZipRecordsRun(t *testing.T) {
 	root := t.TempDir()
-	payload := []byte("PK\x03\x04digest-me")
-	fake := &flashZipFakeEngine{dumpBytes: payload}
+	fake := &flashZipFakeEngine{dumpBytes: buildTestStoredZip(t, map[string][]byte{"bzimage": []byte("digest-me")})}
 	st := newFlashExportStore(t)
 	svc := &Service{
-		cfg:    config.Config{HostMountRoot: root, FlashDir: "/boot"},
+		cfg:    config.Config{HostMountRoot: root, DataDir: t.TempDir(), FlashDir: "/boot"},
 		engine: fake,
 		store:  st,
 	}
@@ -316,8 +369,12 @@ func TestExportFlashZipRecordsRun(t *testing.T) {
 	if run.Status != "success" || run.FinishedAt == nil {
 		t.Fatalf("a successful export must record a finished success run, got %+v", run)
 	}
-	if run.Bytes != int64(len(payload)) {
-		t.Fatalf("export run bytes = %d, want the zip size %d", run.Bytes, len(payload))
+	fi, err := os.Stat(filepath.Join(root, "export", "flash-latest.zip"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if run.Bytes != fi.Size() {
+		t.Fatalf("export run bytes = %d, want the zip size %d", run.Bytes, fi.Size())
 	}
 }
 
@@ -325,10 +382,10 @@ func TestExportFlashZipRecordsRun(t *testing.T) {
 // and a failed dump still sends the end event.
 func TestExportFlashZipEmitsLiveProgress(t *testing.T) {
 	root := t.TempDir()
-	fake := &flashZipFakeEngine{dumpBytes: []byte("PK\x03\x04live")}
+	fake := &flashZipFakeEngine{dumpBytes: buildTestStoredZip(t, map[string][]byte{"bzimage": []byte("live")})}
 	prog := progress.NewStore()
 	svc := &Service{
-		cfg:      config.Config{HostMountRoot: root, FlashDir: "/boot"},
+		cfg:      config.Config{HostMountRoot: root, DataDir: t.TempDir(), FlashDir: "/boot"},
 		engine:   fake,
 		store:    newFlashExportStore(t),
 		progress: prog,
