@@ -187,7 +187,9 @@ export function StorageCard({
     // status hue. With a repo configured but nothing replicated yet, the
     // replication line's own "not replicated yet" says so; with none
     // configured, the protection card's existing "No off-site copy".
-    const configured = domains.filter((d) => d.offsiteConfigured);
+    // ZFS replicas that cover their section count as its copy, with the
+    // replica's age as the copy's.
+    const configured = domains.filter((d) => d.offsiteConfigured || (d.offPremisesCovered && d.lastReplicationAt > 0));
     const newestReplication = configured.reduce<DomainStatus | null>(
       (newest, d) =>
         d.lastReplicationAt > 0 && (newest === null || d.lastReplicationAt > newest.lastReplicationAt)

@@ -741,8 +741,13 @@ func TestACurrentReplicaIsTheZFSCopyOffThePremisesButNoBackup(t *testing.T) {
 		if e.Domain != zfsDomain {
 			continue
 		}
-		if !e.OffsiteConfigured || !e.OffPremisesCovered || e.ReplicaState != "ok" || e.Protection == "red" {
+		if !e.OffPremisesCovered || e.ReplicaState != "ok" || e.Protection == "red" {
 			t.Errorf("zfs status = %+v, want the replica as the off-site copy", e)
+		}
+		// The replica is no restic repository: nothing may offer to check,
+		// unlock or trial-restore it as one.
+		if e.OffsiteConfigured || e.OffsiteDrillScheduled {
+			t.Errorf("zfs status claims a restic off-site: configured %v, drill scheduled %v", e.OffsiteConfigured, e.OffsiteDrillScheduled)
 		}
 	}
 

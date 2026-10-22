@@ -3610,12 +3610,14 @@ func (s *Service) domainStatusFrom(settings store.Settings) ([]DomainStatusEntry
 		}
 		in.paused, in.byTarget, in.targets = s.placementCurrency(settings, d.name)
 		// Without a restic off-site, current replicas of every ZFS item are the
-		// domain's copy off the premises, and their age is its currency.
+		// domain's copy off the premises, and their age is its currency. They
+		// are no restic repository, so OffsiteConfigured stays false: the off-site
+		// check, unlock and trial restore have nothing to open there.
 		var replicaState string
 		if d.name == zfsDomain {
 			replicaState = s.zfsReplicaDomainState(now, settings)
 			if at, period, ok := s.zfsReplicaCoverage(now, settings); ok && !offsiteConfigured {
-				offsiteConfigured, offPremisesCovered = true, true
+				offPremisesCovered = true
 				lastReplicationAt, lastReplicationOK = at, true
 				in.offsiteConfigured, in.lastReplicationAt, in.offsitePeriod = true, at, period
 			}
