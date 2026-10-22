@@ -1124,6 +1124,7 @@ const lv: Partial<Translations> = {
   "runReason.dbimportFailed": "importa rīks ziņoja par kļūdu",
   "runReason.dbimportKeptOld": "iepriekšējā datu mape tika paturēta",
   "runReason.dataOutsideHost": "dati atrodas ārpus Host Data, un tiem nav izveidota rezerves kopija",
+  "runReason.filesUnreadable": "dažus failus neizdevās nolasīt, un tie šajā dublējumā trūkst",
   "runReason.dbimportErrors": "zero={n} kļūdu, iepriekšējā datu mape tika paturēta|one={n} kļūda, iepriekšējā datu mape tika paturēta|other={n} kļūdas, iepriekšējā datu mape tika paturēta",
   "runReason.dbimportAppsDown": "zero=šīs lietotnes neizdevās atkal palaist: {apps}|one=šo lietotni neizdevās atkal palaist: {apps}|other=šīs lietotnes neizdevās atkal palaist: {apps}",
   "runReason.dbimportAppsStopped": "zero=šīs lietotnes paliek apturētas, līdz datu mape būs sakārtota: {apps}|one=šī lietotne paliek apturēta, līdz datu mape būs sakārtota: {apps}|other=šīs lietotnes paliek apturētas, līdz datu mape būs sakārtota: {apps}",

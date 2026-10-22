@@ -1134,6 +1134,7 @@ const vi: Partial<Translations> = {
   "runReason.dbimportFailed": "công cụ nhập báo một lỗi",
   "runReason.dbimportKeptOld": "thư mục dữ liệu trước đó được giữ lại",
   "runReason.dataOutsideHost": "dữ liệu nằm ngoài Host Data và chưa được sao lưu",
+  "runReason.filesUnreadable": "một số tệp không đọc được và không có trong bản sao lưu này",
   "runReason.dbimportErrors": "{n} lỗi, thư mục dữ liệu trước đó được giữ lại",
   "runReason.dbimportAppsDown": "không thể khởi động lại các ứng dụng sau: {apps}",
   "runReason.dbimportAppsStopped": "các ứng dụng sau vẫn dừng cho đến khi thư mục dữ liệu được xử lý xong: {apps}",

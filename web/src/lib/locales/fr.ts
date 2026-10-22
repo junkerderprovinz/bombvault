@@ -1135,6 +1135,7 @@ const fr: Partial<Translations> = {
   "runReason.dbimportFailed": "l'outil d'import a signalé une erreur",
   "runReason.dbimportKeptOld": "le dossier de données précédent a été conservé",
   "runReason.dataOutsideHost": "les données sont hors de Host Data et n'ont pas été sauvegardées",
+  "runReason.filesUnreadable": "certains fichiers n'ont pas pu être lus et manquent dans cette sauvegarde",
   "runReason.dbimportErrors": "one={n} erreur, le dossier de données précédent a été conservé|other={n} erreurs, le dossier de données précédent a été conservé",
   "runReason.dbimportAppsDown": "one=cette application n'a pas pu redémarrer : {apps}|many=ces applications n'ont pas pu redémarrer : {apps}|other=ces applications n'ont pas pu redémarrer : {apps}",
   "runReason.dbimportAppsStopped": "one=cette application reste arrêtée tant que le dossier de données n'est pas réglé : {apps}|many=ces applications restent arrêtées tant que le dossier de données n'est pas réglé : {apps}|other=ces applications restent arrêtées tant que le dossier de données n'est pas réglé : {apps}",

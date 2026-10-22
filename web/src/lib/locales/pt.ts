@@ -1132,6 +1132,7 @@ const pt: Partial<Translations> = {
   "runReason.dbimportFailed": "a ferramenta de importação comunicou um erro",
   "runReason.dbimportKeptOld": "a pasta de dados anterior foi mantida",
   "runReason.dataOutsideHost": "os dados estão fora de Host Data e não foram copiados",
+  "runReason.filesUnreadable": "alguns ficheiros não puderam ser lidos e faltam neste backup",
   "runReason.dbimportErrors": "one={n} erro, a pasta de dados anterior foi mantida|other={n} erros, a pasta de dados anterior foi mantida",
   "runReason.dbimportAppsDown": "one=não foi possível voltar a iniciar esta aplicação: {apps}|many=não foi possível voltar a iniciar estas aplicações: {apps}|other=não foi possível voltar a iniciar estas aplicações: {apps}",
   "runReason.dbimportAppsStopped": "one=esta aplicação fica parada até a pasta de dados ser resolvida: {apps}|many=estas aplicações ficam paradas até a pasta de dados ser resolvida: {apps}|other=estas aplicações ficam paradas até a pasta de dados ser resolvida: {apps}",

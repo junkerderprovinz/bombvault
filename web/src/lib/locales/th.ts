@@ -1144,6 +1144,7 @@ const th: Partial<Translations> = {
   "runReason.dbimportFailed": "เครื่องมือนำเข้ารายงานข้อผิดพลาด",
   "runReason.dbimportKeptOld": "เก็บโฟลเดอร์ข้อมูลเดิมไว้",
   "runReason.dataOutsideHost": "ข้อมูลอยู่นอก Host Data และไม่ได้สำรองไว้",
+  "runReason.filesUnreadable": "อ่านไฟล์บางไฟล์ไม่ได้ และไฟล์เหล่านั้นไม่อยู่ในข้อมูลสำรองนี้",
   "runReason.dbimportErrors": "ข้อผิดพลาด {n} รายการ เก็บโฟลเดอร์ข้อมูลเดิมไว้",
   "runReason.dbimportAppsDown": "เริ่มแอปเหล่านี้ใหม่ไม่ได้: {apps}",
   "runReason.dbimportAppsStopped": "แอปเหล่านี้จะหยุดอยู่จนกว่าจะจัดการโฟลเดอร์ข้อมูลเรียบร้อย: {apps}",

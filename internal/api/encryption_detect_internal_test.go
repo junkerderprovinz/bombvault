@@ -537,3 +537,21 @@ func TestSectionsWithoutRepositoryStayOutOfTheLog(t *testing.T) {
 		t.Fatalf("want one restic run against the remote and none against the local path, got %q", ran)
 	}
 }
+
+func TestARemoteOwnFolderIsProbedWithItsOwnSignIn(t *testing.T) {
+	s := primaryCredsService(t)
+	if _, err := s.SetPrimaryRemoteConfig("containers", store.OffsiteTarget{CredsRef: "garage"}); err != nil {
+		t.Fatal(err)
+	}
+
+	for _, target := range s.encryptionProbeTargets(settingsOf(t, s)) {
+		if target.domain != "containers" || target.source != "local" {
+			continue
+		}
+		if env := strings.Join(target.mode.Env, "\n"); !strings.Contains(env, "AWS_ACCESS_KEY_ID=GARAGE-KEY") {
+			t.Fatalf("the own folder is probed with %v, want the sign-in its backups use", target.mode.Env)
+		}
+		return
+	}
+	t.Fatal("the containers own folder was not probed")
+}

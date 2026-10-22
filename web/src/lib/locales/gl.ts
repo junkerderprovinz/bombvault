@@ -1124,6 +1124,7 @@ const gl: Partial<Translations> = {
   "runReason.dbimportFailed": "a ferramenta de importación informou dun erro",
   "runReason.dbimportKeptOld": "conservouse o cartafol de datos anterior",
   "runReason.dataOutsideHost": "os datos están fóra de Host Data e non se copiaron",
+  "runReason.filesUnreadable": "algúns ficheiros non se puideron ler e faltan nesta copia de seguridade",
   "runReason.dbimportErrors": "one={n} erro, conservouse o cartafol de datos anterior|other={n} erros, conservouse o cartafol de datos anterior",
   "runReason.dbimportAppsDown": "one=esta aplicación non se puido volver iniciar: {apps}|other=estas aplicacións non se puideron volver iniciar: {apps}",
   "runReason.dbimportAppsStopped": "one=esta aplicación segue detida ata que se resolva o cartafol de datos: {apps}|other=estas aplicacións seguen detidas ata que se resolva o cartafol de datos: {apps}",

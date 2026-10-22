@@ -232,14 +232,13 @@ type encryptionProbeTarget struct {
 // resolves them (target rows, else the legacy Settings column).
 func (s *Service) encryptionProbeTargets(settings store.Settings) []encryptionProbeTarget {
 	var out []encryptionProbeTarget
-	base := s.ModeFor(settings)
-
 	for _, domain := range encryptionDetectDomains {
-		// An empty location is unconfigured, not a repository.
+		// An empty location is unconfigured, not a repository. A remote one
+		// signs in the way the section's backups do.
 		if loc := localRepoLocation(settings, domain); strings.TrimSpace(loc) != "" {
 			repo, rErr := s.resolveRepo(loc)
 			out = append(out, encryptionProbeTarget{
-				domain: domain, source: "local", repo: repo, mode: base, err: rErr,
+				domain: domain, source: "local", repo: repo, mode: s.primaryModeFor(settings, domain, repo), err: rErr,
 			})
 		}
 

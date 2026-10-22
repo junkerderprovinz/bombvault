@@ -1126,6 +1126,7 @@ const ja: Partial<Translations> = {
   "runReason.dbimportFailed": "インポートツールがエラーを報告しました",
   "runReason.dbimportKeptOld": "以前のデータフォルダーを残しました",
   "runReason.dataOutsideHost": "データは Host Data の外にあり、バックアップされていません",
+  "runReason.filesUnreadable": "一部のファイルを読み取れず、このバックアップに含まれていません",
   "runReason.dbimportErrors": "エラー {n} 件、以前のデータフォルダーを残しました",
   "runReason.dbimportAppsDown": "次のアプリを再び起動できませんでした: {apps}",
   "runReason.dbimportAppsStopped": "データフォルダーが片付くまで、次のアプリは停止したままです: {apps}",

@@ -1124,6 +1124,7 @@ const hi: Partial<Translations> = {
   "runReason.dbimportFailed": "आयात उपकरण ने एक त्रुटि बताई",
   "runReason.dbimportKeptOld": "पिछला डेटा फ़ोल्डर रखा गया",
   "runReason.dataOutsideHost": "डेटा Host Data के बाहर है और उसका बैकअप नहीं लिया गया",
+  "runReason.filesUnreadable": "कुछ फ़ाइलें पढ़ी नहीं जा सकीं और इस बैकअप में नहीं हैं",
   "runReason.dbimportErrors": "one={n} त्रुटि, पिछला डेटा फ़ोल्डर रखा गया|other={n} त्रुटियाँ, पिछला डेटा फ़ोल्डर रखा गया",
   "runReason.dbimportAppsDown": "one=यह ऐप फिर से शुरू नहीं हो सका: {apps}|other=ये ऐप्स फिर से शुरू नहीं हो सके: {apps}",
   "runReason.dbimportAppsStopped": "one=डेटा फ़ोल्डर ठीक होने तक यह ऐप रुका रहेगा: {apps}|other=डेटा फ़ोल्डर ठीक होने तक ये ऐप्स रुके रहेंगे: {apps}",

@@ -1135,6 +1135,7 @@ const he: Partial<Translations> = {
   "runReason.dbimportFailed": "כלי הייבוא דיווח על שגיאה",
   "runReason.dbimportKeptOld": "תיקיית הנתונים הקודמת נשמרה",
   "runReason.dataOutsideHost": "הנתונים נמצאים מחוץ ל-Host Data ולא גובו",
+  "runReason.filesUnreadable": "חלק מהקבצים לא היה אפשר לקרוא והם חסרים בגיבוי הזה",
   "runReason.dbimportErrors": "one=שגיאה אחת, תיקיית הנתונים הקודמת נשמרה|two=שתי שגיאות, תיקיית הנתונים הקודמת נשמרה|other={n} שגיאות, תיקיית הנתונים הקודמת נשמרה",
   "runReason.dbimportAppsDown": "one=לא ניתן היה להפעיל מחדש את היישום הזה: {apps}|two=לא ניתן היה להפעיל מחדש את שני היישומים האלה: {apps}|other=לא ניתן היה להפעיל מחדש את היישומים האלה: {apps}",
   "runReason.dbimportAppsStopped": "one=היישום הזה נשאר עצור עד שתיקיית הנתונים תוסדר: {apps}|two=שני היישומים האלה נשארים עצורים עד שתיקיית הנתונים תוסדר: {apps}|other=היישומים האלה נשארים עצורים עד שתיקיית הנתונים תוסדר: {apps}",

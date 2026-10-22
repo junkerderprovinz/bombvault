@@ -1136,6 +1136,7 @@ const hu: Partial<Translations> = {
   "runReason.dbimportFailed": "az importáló eszköz hibát jelzett",
   "runReason.dbimportKeptOld": "a korábbi adatmappa megmaradt",
   "runReason.dataOutsideHost": "az adatok a Host Data területén kívül vannak, és nem készült róluk mentés",
+  "runReason.filesUnreadable": "néhány fájlt nem sikerült beolvasni, és hiányoznak ebből a mentésből",
   "runReason.dbimportErrors": "{n} hiba, a korábbi adatmappa megmaradt",
   "runReason.dbimportAppsDown": "one=ezt az alkalmazást nem sikerült újraindítani: {apps}|other=ezeket az alkalmazásokat nem sikerült újraindítani: {apps}",
   "runReason.dbimportAppsStopped": "one=ez az alkalmazás leállítva marad, amíg az adatmappa rendbe nem kerül: {apps}|other=ezek az alkalmazások leállítva maradnak, amíg az adatmappa rendbe nem kerül: {apps}",

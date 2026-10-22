@@ -137,7 +137,11 @@ func (s *Service) primaryModeFor(settings store.Settings, domain, repo string) r
 	if !ok {
 		return mode
 	}
-	return s.applyTargetCreds(mode, settings, t)
+	mode = s.applyTargetCreds(mode, settings, t)
+	if t.StorageClass != "" {
+		mode.StorageClass = t.StorageClass
+	}
+	return mode
 }
 
 // namedRepoForLocation finds the named repository a resolved location belongs

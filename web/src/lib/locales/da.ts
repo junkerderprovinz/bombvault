@@ -1143,6 +1143,7 @@ const da: Partial<Translations> = {
   "runReason.dbimportFailed": "importværktøjet meldte en fejl",
   "runReason.dbimportKeptOld": "den tidligere datamappe blev beholdt",
   "runReason.dataOutsideHost": "dataene ligger uden for Host Data og blev ikke sikkerhedskopieret",
+  "runReason.filesUnreadable": "nogle filer kunne ikke læses og mangler i denne sikkerhedskopi",
   "runReason.dbimportErrors": "{n} fejl, den tidligere datamappe blev beholdt",
   "runReason.dbimportAppsDown": "one=denne app kunne ikke startes igen: {apps}|other=disse apps kunne ikke startes igen: {apps}",
   "runReason.dbimportAppsStopped": "one=denne app forbliver stoppet, indtil datamappen er bragt i orden: {apps}|other=disse apps forbliver stoppet, indtil datamappen er bragt i orden: {apps}",

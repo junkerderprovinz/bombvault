@@ -224,3 +224,16 @@ it("says under What happens why the switch cannot go ahead and that it can witho
   expect(screen.getByRole("list").textContent).toContain("The 3 newest backups stay in Local.");
   expect((screen.getByRole("button", { name: "Switch" }) as HTMLButtonElement).disabled).toBe(false);
 });
+
+it("says the old backups cannot be read and that the switch can go ahead without them", async () => {
+  previewOwnFolders.mockImplementation(async (req) =>
+    req.copyOver ? { ok: false, code: "own-folder-unreadable", error: "backup path is not mounted yet" } : { ok: true, steps: [STEP] }
+  );
+  await open(["containers"], "destination:h");
+  await settle();
+
+  const alert = screen.getByRole("alert");
+  expect(alert.textContent).toContain("The backups in the old own folder could not be read");
+  expect(alert.textContent).toContain('Switch off "Copy the backups already made"');
+  expect((screen.getByRole("button", { name: "Switch" }) as HTMLButtonElement).disabled).toBe(true);
+});

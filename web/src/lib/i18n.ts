@@ -1334,6 +1334,7 @@ export const en = {
   "runReason.dbimportFailed": "the import tool reported an error",
   "runReason.dbimportKeptOld": "the previous data folder was kept",
   "runReason.dataOutsideHost": "the data sits outside Host Data and was not backed up",
+  "runReason.filesUnreadable": "some files could not be read and are missing from this backup",
   "runReason.dbimportErrors":
     "one={n} error, the previous data folder was kept|other={n} errors, the previous data folder was kept",
   "runReason.dbimportAppsDown":
@@ -6252,6 +6253,7 @@ export const de: Translations = {
   "runReason.dbimportFailed": "das Import-Werkzeug hat einen Fehler gemeldet",
   "runReason.dbimportKeptOld": "der bisherige Datenordner wurde behalten",
   "runReason.dataOutsideHost": "die Daten liegen außerhalb von Host Data und wurden nicht gesichert",
+  "runReason.filesUnreadable": "einige Dateien ließen sich nicht lesen und fehlen in dieser Sicherung",
   "runReason.dbimportErrors": "{n} Fehler, der bisherige Datenordner wurde behalten",
   "runReason.dbimportAppsDown":
     "one=diese App ließ sich nicht wieder starten: {apps}|other=diese Apps ließen sich nicht wieder starten: {apps}",

@@ -1124,6 +1124,7 @@ const lt: Partial<Translations> = {
   "runReason.dbimportFailed": "importo įrankis pranešė apie klaidą",
   "runReason.dbimportKeptOld": "ankstesnis duomenų aplankas paliktas",
   "runReason.dataOutsideHost": "duomenys yra už Host Data ribų ir nebuvo sukurtos jų atsarginės kopijos",
+  "runReason.filesUnreadable": "kai kurių failų nepavyko perskaityti, todėl jų nėra šioje atsarginėje kopijoje",
   "runReason.dbimportErrors": "one={n} klaida, ankstesnis duomenų aplankas paliktas|few={n} klaidos, ankstesnis duomenų aplankas paliktas|many={n} klaidos, ankstesnis duomenų aplankas paliktas|other={n} klaidų, ankstesnis duomenų aplankas paliktas",
   "runReason.dbimportAppsDown": "one=šios programos nepavyko vėl paleisti: {apps}|few=šių programų nepavyko vėl paleisti: {apps}|many=šių programų nepavyko vėl paleisti: {apps}|other=šių programų nepavyko vėl paleisti: {apps}",
   "runReason.dbimportAppsStopped": "one=ši programa lieka sustabdyta, kol bus sutvarkytas duomenų aplankas: {apps}|few=šios programos lieka sustabdytos, kol bus sutvarkytas duomenų aplankas: {apps}|many=šios programos lieka sustabdytos, kol bus sutvarkytas duomenų aplankas: {apps}|other=šios programos lieka sustabdytos, kol bus sutvarkytas duomenų aplankas: {apps}",

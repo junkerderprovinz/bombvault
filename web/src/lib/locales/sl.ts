@@ -1122,6 +1122,7 @@ const sl: Partial<Translations> = {
   "runReason.dbimportFailed": "orodje za uvoz je javilo napako",
   "runReason.dbimportKeptOld": "prejšnja mapa s podatki je bila ohranjena",
   "runReason.dataOutsideHost": "podatki so zunaj Host Data in niso bili varnostno kopirani",
+  "runReason.filesUnreadable": "nekaterih datotek ni bilo mogoče prebrati in manjkajo v tej varnostni kopiji",
   "runReason.dbimportErrors": "one={n} napaka, prejšnja mapa s podatki je bila ohranjena|two={n} napaki, prejšnja mapa s podatki je bila ohranjena|few={n} napake, prejšnja mapa s podatki je bila ohranjena|other={n} napak, prejšnja mapa s podatki je bila ohranjena",
   "runReason.dbimportAppsDown": "one=te aplikacije ni bilo mogoče znova zagnati: {apps}|two=teh dveh aplikacij ni bilo mogoče znova zagnati: {apps}|few=teh aplikacij ni bilo mogoče znova zagnati: {apps}|other=teh aplikacij ni bilo mogoče znova zagnati: {apps}",
   "runReason.dbimportAppsStopped": "one=ta aplikacija ostane ustavljena, dokler mapa s podatki ni urejena: {apps}|two=ti dve aplikaciji ostaneta ustavljeni, dokler mapa s podatki ni urejena: {apps}|few=te aplikacije ostanejo ustavljene, dokler mapa s podatki ni urejena: {apps}|other=te aplikacije ostanejo ustavljene, dokler mapa s podatki ni urejena: {apps}",

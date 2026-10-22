@@ -1126,6 +1126,7 @@ const ko: Partial<Translations> = {
   "runReason.dbimportFailed": "가져오기 도구가 오류를 알렸습니다",
   "runReason.dbimportKeptOld": "이전 데이터 폴더를 남겨 두었습니다",
   "runReason.dataOutsideHost": "데이터가 Host Data 밖에 있어 백업되지 않았습니다",
+  "runReason.filesUnreadable": "일부 파일을 읽지 못해 이 백업에서 빠졌습니다",
   "runReason.dbimportErrors": "오류 {n}건, 이전 데이터 폴더를 남겨 두었습니다",
   "runReason.dbimportAppsDown": "다음 앱을 다시 시작하지 못했습니다: {apps}",
   "runReason.dbimportAppsStopped": "데이터 폴더가 정리될 때까지 다음 앱은 중지된 상태로 남습니다: {apps}",

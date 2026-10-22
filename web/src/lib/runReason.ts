@@ -51,6 +51,10 @@ export const RESTORED_WITHOUT_LINKS = "restored without links to containers that
  *  followed by ": " and their host paths. Keep in step with NoteDataOutsideHost. */
 export const DATA_OUTSIDE_HOST = "data folders outside Host Data were not backed up";
 
+/** The note of a backup that left out files restic could not read, followed by
+ *  ": " and restic's reason. Keep in step with NoteFilesUnreadable. */
+export const FILES_UNREADABLE = "some files could not be read and are missing from this backup";
+
 /** Whether a run's note says the container's data was out of reach. */
 export function dataOutsideHost(raw: string | null | undefined): boolean {
   const text = raw?.trim() ?? "";
@@ -107,6 +111,7 @@ export const RUN_REASON_PREFIXES: Record<string, TranslationKey> = {
   "database import failed and the old data could not be put back": "runReason.dbimportRollback",
   "database import failed: the import tool reported an error": "runReason.dbimportFailed",
   [DATA_OUTSIDE_HOST]: "runReason.dataOutsideHost",
+  [FILES_UNREADABLE]: "runReason.filesUnreadable",
   "database imported; the previous data folder was kept": "runReason.dbimportKeptOld",
   "database imported with errors": "runReason.dbimportErrors",
   [RESTORE_NO_RUNTIME]: "runReason.restoreNoRuntime",
@@ -178,6 +183,7 @@ const WARNING_NOTES = [
   "database dump skipped: its run could not be recorded",
   "database imported with errors",
   DATA_OUTSIDE_HOST,
+  FILES_UNREADABLE,
 ];
 
 /** Whether a note of a successful run reports something worth acting on. */

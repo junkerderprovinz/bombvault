@@ -1131,6 +1131,7 @@ const nl: Partial<Translations> = {
   "runReason.dbimportFailed": "het importgereedschap meldde een fout",
   "runReason.dbimportKeptOld": "de vorige gegevensmap is bewaard",
   "runReason.dataOutsideHost": "de gegevens staan buiten Host Data en zijn niet geback-upt",
+  "runReason.filesUnreadable": "sommige bestanden konden niet worden gelezen en ontbreken in deze back-up",
   "runReason.dbimportErrors": "one={n} fout, de vorige gegevensmap is bewaard|other={n} fouten, de vorige gegevensmap is bewaard",
   "runReason.dbimportAppsDown": "one=deze app kon niet opnieuw starten: {apps}|other=deze apps konden niet opnieuw starten: {apps}",
   "runReason.dbimportAppsStopped": "one=deze app blijft gestopt tot de datamap is uitgezocht: {apps}|other=deze apps blijven gestopt tot de datamap is uitgezocht: {apps}",

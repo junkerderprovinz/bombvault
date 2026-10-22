@@ -257,6 +257,9 @@ func (s *Service) planOwnFolder(ctx context.Context, settings store.Settings, do
 	plan.mode = s.ModeFor(settings)
 	if row := step.folder.Row; row != nil && restic.IsRemoteRepo(to) {
 		plan.mode = s.applyTargetCreds(plan.mode, settings, *row)
+		if row.StorageClass != "" {
+			plan.mode.StorageClass = row.StorageClass
+		}
 		plan.lim = restic.Limits{UploadKBps: row.LimitUpload, DownloadKBps: row.LimitDownload}
 		plan.mode.Limits = plan.lim
 	}
@@ -271,7 +274,12 @@ func (s *Service) planOwnFolder(ctx context.Context, settings store.Settings, do
 	}
 	pending, all, err := s.pendingMove(ctx, plan)
 	if err != nil {
-		return ownFolderStep{}, err
+		// Without the copy nothing is read from the old place, so a share that
+		// is not mounted or a bucket that does not answer is no reason to stay.
+		if !copyOver {
+			return step, nil
+		}
+		return ownFolderStep{}, fmt.Errorf("%w: %w", errOwnFolderUnreadable, err)
 	}
 	step.Backups, step.Pending = all, len(pending)
 	if copyOver && step.Pending > 0 {
@@ -287,13 +295,17 @@ func (s *Service) planOwnFolder(ctx context.Context, settings store.Settings, do
 
 // oldOwnFolderOpens reports whether the old own folder holds a repository.
 // One that was never created holds nothing; one that is there and does not
-// answer is an error, so its backups are not taken for none.
+// answer, or a remote one that held backups and holds no repository now, is an
+// error, so its backups are not taken for none.
 func (s *Service) oldOwnFolderOpens(ctx context.Context, plan movePlan) (bool, error) {
 	err := s.engine.RepoOpensErr(ctx, plan.src, plan.srcMode)
 	switch {
 	case err == nil:
 		return true, nil
 	case restic.IsRemoteRepo(plan.src) && isRepoDefinitelyAbsent(err):
+		if s.recordedEstablishment(plan.src) != repoNeverEstablished {
+			return false, errors.New("it held backups before and holds no repository now")
+		}
 		return false, nil
 	case restic.IsRemoteRepo(plan.src):
 		return false, err

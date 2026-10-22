@@ -15,6 +15,7 @@ describe("placementErrorText", () => {
       "destination-holds-backups", "backups-not-there", "last-copies", "nothing-to-erase",
       "move-same-place", "move-section-there", "move-direct-repo", "move-sign-in", "move-running",
       "own-folder-there",
+      "own-folder-unreadable",
     ];
     for (const code of codes) {
       const text = placementErrorText(t, "en", { ok: false, error: "server text", code }, "settings.error");

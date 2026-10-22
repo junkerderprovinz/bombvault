@@ -7,6 +7,7 @@ import (
 	"log"
 	"path"
 	"path/filepath"
+	"slices"
 	"strings"
 	"time"
 
@@ -200,14 +201,51 @@ func (s *Service) pullFromSource(ctx context.Context, ps store.PullSource) (int,
 	// The copy carries the destination's mode with the source's credentials
 	// attached. No snapshot ids are passed: restic compares full metadata and
 	// decides what moves, so pending is only for display.
+	copyDest, copySrc, env, err := pullCopyAccess(dest, destMode.Env, src, srcMode.Env)
+	if err != nil {
+		return 0, err
+	}
 	copyMode := destMode
-	copyMode.From = &restic.From{Encrypted: srcMode.Encrypted, Password: srcMode.Password}
-	copyMode.Env = append(append([]string{}, destMode.Env...), srcMode.Env...)
+	copyMode.From = &restic.From{Encrypted: srcMode.Encrypted, Password: srcMode.Password, NoLock: true}
+	copyMode.Env = env
+	// Only a destination behind an rclone remote reads this box's rclone config.
+	copyMode.NoAmbientCreds = repoScheme(dest) != "rclone"
 	lim := restic.Limits{DownloadKBps: ps.LimitDownload, UploadKBps: ps.LimitUpload}
-	if err := s.retryAfterUnlock(ctx, dest, destMode, func() error { return s.engine.Copy(ctx, dest, src, nil, lim, copyMode) }); err != nil {
+	if err := s.retryAfterUnlock(ctx, dest, destMode, func() error { return s.engine.Copy(ctx, copyDest, copySrc, nil, lim, copyMode) }); err != nil {
 		return 0, fmt.Errorf("copy from the source: %w", err)
 	}
 	return pending, nil
+}
+
+// pullCopyAccess fits the sign-ins of both ends of a pull into the one restic
+// copy process. Each end brings only what its own backend reads. restic hands
+// the S3 and rest-server variables to both repositories, so when both ends are
+// S3 or both are rest-servers and they do not share a sign-in, each signs in
+// through its own address, and this box's login never reaches the other
+// instance.
+func pullCopyAccess(dest string, destEnv []string, src string, srcEnv []string) (copyDest, copySrc string, env []string, err error) {
+	destEnv, srcEnv = ownBackendEnv(dest, destEnv), ownBackendEnv(src, srcEnv)
+	if joined, ok := bothSignIns(dest, destEnv, src, srcEnv); ok {
+		return dest, src, joined, nil
+	}
+	c := credsInEnv(srcEnv)
+	if repoScheme(src) == "s3" {
+		// An rclone remote without keys reads the bucket anonymously.
+		var rcloneEnv []string
+		if copySrc, rcloneEnv, err = s3ThroughRclone(src, c); err != nil {
+			return "", "", nil, err
+		}
+		return dest, copySrc, append(destEnv, rcloneEnv...), nil
+	}
+	d := credsInEnv(destEnv)
+	if copyDest, err = restWithLogin(dest, d.RESTUser, d.RESTPassword); err != nil {
+		return "", "", nil, err
+	}
+	if copySrc, err = restWithLogin(src, c.RESTUser, c.RESTPassword); err != nil {
+		return "", "", nil, err
+	}
+	env = slices.DeleteFunc(destEnv, func(kv string) bool { return strings.HasPrefix(kv, backendEnvPrefix["rest"]) })
+	return copyDest, copySrc, env, nil
 }
 
 // RunPulls is the scheduled sweep: every enabled source whose cadence says it is

@@ -1124,6 +1124,7 @@ const ms: Partial<Translations> = {
   "runReason.dbimportFailed": "alat import melaporkan satu ralat",
   "runReason.dbimportKeptOld": "folder data sebelumnya dikekalkan",
   "runReason.dataOutsideHost": "data berada di luar Host Data dan tidak disandarkan",
+  "runReason.filesUnreadable": "sesetengah fail tidak dapat dibaca dan tiada dalam sandaran ini",
   "runReason.dbimportErrors": "{n} ralat, folder data sebelumnya dikekalkan",
   "runReason.dbimportAppsDown": "aplikasi berikut tidak dapat dimulakan semula: {apps}",
   "runReason.dbimportAppsStopped": "aplikasi berikut kekal berhenti sehingga folder data dibereskan: {apps}",

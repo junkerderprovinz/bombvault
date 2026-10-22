@@ -50,7 +50,8 @@ type ZFSSnapshotter interface {
 // ZFSBackupSummary is what restic reports for one member. It carries the file
 // counters the run records per member, which the domain's baselines read, and
 // the totals anomaly detection watches each dataset by. Measured says whether
-// restic reported those totals at all, as it does on Summary.
+// restic reported those totals at all and Unreadable what it left out, as they
+// do on Summary.
 type ZFSBackupSummary struct {
 	SnapshotID      string
 	BytesAdded      int64
@@ -62,6 +63,7 @@ type ZFSBackupSummary struct {
 	SourceFiles     int64
 	ResticMS        int64
 	HasParent       *bool
+	Unreadable      string
 }
 
 // ZFSRestic backs up the contents of a snapshot directory as the snapshot's own
@@ -389,7 +391,7 @@ func (d ZFSBackupDeps) backupMember(ctx context.Context, m ZFSMemberPlan, snap s
 	res.FilesUnmodified = sum.FilesUnmodified
 	res.Measured = sum.Measured
 	res.HasParent = sum.HasParent
-	read := Summary{Bytes: sum.BytesAdded, Measured: sum.Measured}
+	read := Summary{Bytes: sum.BytesAdded, Measured: sum.Measured, Unreadable: sum.Unreadable}
 	if sum.Measured {
 		res.SourceBytes, res.SourceFiles = sum.SourceBytes, sum.SourceFiles
 		read.SourceBytes, read.SourceFiles = sum.SourceBytes, sum.SourceFiles

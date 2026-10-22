@@ -1133,6 +1133,7 @@ const ro: Partial<Translations> = {
   "runReason.dbimportFailed": "instrumentul de import a raportat o eroare",
   "runReason.dbimportKeptOld": "dosarul de date anterior a fost păstrat",
   "runReason.dataOutsideHost": "datele sunt în afara Host Data și nu au fost salvate",
+  "runReason.filesUnreadable": "unele fișiere nu au putut fi citite și lipsesc din această copie de rezervă",
   "runReason.dbimportErrors": "one={n} eroare, dosarul de date anterior a fost păstrat|few={n} erori, dosarul de date anterior a fost păstrat|other={n} de erori, dosarul de date anterior a fost păstrat",
   "runReason.dbimportAppsDown": "one=această aplicație nu a putut fi pornită din nou: {apps}|few=aceste aplicații nu au putut fi pornite din nou: {apps}|other=aceste aplicații nu au putut fi pornite din nou: {apps}",
   "runReason.dbimportAppsStopped": "one=această aplicație rămâne oprită până se rezolvă folderul de date: {apps}|few=aceste aplicații rămân oprite până se rezolvă folderul de date: {apps}|other=aceste aplicații rămân oprite până se rezolvă folderul de date: {apps}",

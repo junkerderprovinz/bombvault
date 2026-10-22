@@ -1124,6 +1124,7 @@ const fa: Partial<Translations> = {
   "runReason.dbimportFailed": "ابزار درون‌ریزی خطایی گزارش کرد",
   "runReason.dbimportKeptOld": "پوشه داده پیشین نگه داشته شد",
   "runReason.dataOutsideHost": "داده‌ها خارج از Host Data هستند و پشتیبان‌گیری نشدند",
+  "runReason.filesUnreadable": "برخی فایل‌ها خوانده نشدند و در این پشتیبان نیستند",
   "runReason.dbimportErrors": "{n} خطا، پوشه داده پیشین نگه داشته شد",
   "runReason.dbimportAppsDown": "one=این برنامه دوباره راه‌اندازی نشد: {apps}|other=این برنامه‌ها دوباره راه‌اندازی نشدند: {apps}",
   "runReason.dbimportAppsStopped": "one=این برنامه تا روشن شدن وضعیت پوشهٔ داده متوقف می‌ماند: {apps}|other=این برنامه‌ها تا روشن شدن وضعیت پوشهٔ داده متوقف می‌مانند: {apps}",

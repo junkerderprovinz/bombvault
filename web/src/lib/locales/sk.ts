@@ -1124,6 +1124,7 @@ const sk: Partial<Translations> = {
   "runReason.dbimportFailed": "nástroj na import ohlásil chybu",
   "runReason.dbimportKeptOld": "predchádzajúci priečinok s dátami zostal zachovaný",
   "runReason.dataOutsideHost": "dáta sú mimo Host Data a neboli zálohované",
+  "runReason.filesUnreadable": "niektoré súbory sa nepodarilo prečítať a v tejto zálohe chýbajú",
   "runReason.dbimportErrors": "one={n} chyba, predchádzajúci priečinok s dátami zostal zachovaný|few={n} chyby, predchádzajúci priečinok s dátami zostal zachovaný|many={n} chyby, predchádzajúci priečinok s dátami zostal zachovaný|other={n} chýb, predchádzajúci priečinok s dátami zostal zachovaný",
   "runReason.dbimportAppsDown": "one=túto aplikáciu sa nepodarilo znova spustiť: {apps}|few=tieto aplikácie sa nepodarilo znova spustiť: {apps}|many=tieto aplikácie sa nepodarilo znova spustiť: {apps}|other=tieto aplikácie sa nepodarilo znova spustiť: {apps}",
   "runReason.dbimportAppsStopped": "one=táto aplikácia zostane zastavená, kým sa nevyrieši priečinok s dátami: {apps}|few=tieto aplikácie zostanú zastavené, kým sa nevyrieši priečinok s dátami: {apps}|many=tieto aplikácie zostanú zastavené, kým sa nevyrieši priečinok s dátami: {apps}|other=tieto aplikácie zostanú zastavené, kým sa nevyrieši priečinok s dátami: {apps}",

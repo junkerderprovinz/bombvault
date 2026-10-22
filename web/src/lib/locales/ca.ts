@@ -1124,6 +1124,7 @@ const ca: Partial<Translations> = {
   "runReason.dbimportFailed": "l'eina d'importació ha informat d'un error",
   "runReason.dbimportKeptOld": "s'ha conservat la carpeta de dades anterior",
   "runReason.dataOutsideHost": "les dades són fora de Host Data i no s'han copiat",
+  "runReason.filesUnreadable": "alguns fitxers no s'han pogut llegir i falten en aquesta còpia de seguretat",
   "runReason.dbimportErrors": "one={n} error, s'ha conservat la carpeta de dades anterior|other={n} errors, s'ha conservat la carpeta de dades anterior",
   "runReason.dbimportAppsDown": "one=aquesta aplicació no s'ha pogut tornar a iniciar: {apps}|many=aquestes aplicacions no s'han pogut tornar a iniciar: {apps}|other=aquestes aplicacions no s'han pogut tornar a iniciar: {apps}",
   "runReason.dbimportAppsStopped": "one=aquesta aplicació queda aturada fins que es resolgui la carpeta de dades: {apps}|many=aquestes aplicacions queden aturades fins que es resolgui la carpeta de dades: {apps}|other=aquestes aplicacions queden aturades fins que es resolgui la carpeta de dades: {apps}",

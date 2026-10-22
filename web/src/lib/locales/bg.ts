@@ -1124,6 +1124,7 @@ const bg: Partial<Translations> = {
   "runReason.dbimportFailed": "инструментът за внасяне съобщи за грешка",
   "runReason.dbimportKeptOld": "предишната папка с данни беше запазена",
   "runReason.dataOutsideHost": "данните са извън Host Data и не са архивирани",
+  "runReason.filesUnreadable": "някои файлове не можаха да бъдат прочетени и липсват в този архив",
   "runReason.dbimportErrors": "one={n} грешка, предишната папка с данни беше запазена|other={n} грешки, предишната папка с данни беше запазена",
   "runReason.dbimportAppsDown": "one=това приложение не успя да стартира отново: {apps}|other=тези приложения не успяха да стартират отново: {apps}",
   "runReason.dbimportAppsStopped": "one=това приложение остава спряно, докато въпросът с папката с данни не се реши: {apps}|other=тези приложения остават спрени, докато въпросът с папката с данни не се реши: {apps}",

@@ -1124,6 +1124,7 @@ const et: Partial<Translations> = {
   "runReason.dbimportFailed": "imporditööriist teatas veast",
   "runReason.dbimportKeptOld": "varasem andmekaust jäeti alles",
   "runReason.dataOutsideHost": "andmed asuvad väljaspool Host Datat ega ole varundatud",
+  "runReason.filesUnreadable": "mõnda faili ei saanud lugeda ja need puuduvad sellest varukoopiast",
   "runReason.dbimportErrors": "{n} viga, varasem andmekaust jäeti alles",
   "runReason.dbimportAppsDown": "one=seda rakendust ei õnnestunud uuesti käivitada: {apps}|other=neid rakendusi ei õnnestunud uuesti käivitada: {apps}",
   "runReason.dbimportAppsStopped": "one=see rakendus jääb peatatuks, kuni andmekaust on korda tehtud: {apps}|other=need rakendused jäävad peatatuks, kuni andmekaust on korda tehtud: {apps}",

@@ -1124,6 +1124,7 @@ const is: Partial<Translations> = {
   "runReason.dbimportFailed": "innflutningstólið tilkynnti villu",
   "runReason.dbimportKeptOld": "fyrri gagnamöppunni var haldið",
   "runReason.dataOutsideHost": "gögnin eru utan Host Data og voru ekki afrituð",
+  "runReason.filesUnreadable": "ekki tókst að lesa sumar skrár og þær vantar í þetta afrit",
   "runReason.dbimportErrors": "one={n} villa, fyrri gagnamöppunni var haldið|other={n} villur, fyrri gagnamöppunni var haldið",
   "runReason.dbimportAppsDown": "one=ekki tókst að ræsa þetta forrit aftur: {apps}|other=ekki tókst að ræsa þessi forrit aftur: {apps}",
   "runReason.dbimportAppsStopped": "one=þetta forrit verður áfram stöðvað þar til gengið hefur verið frá gagnamöppunni: {apps}|other=þessi forrit verða áfram stöðvuð þar til gengið hefur verið frá gagnamöppunni: {apps}",

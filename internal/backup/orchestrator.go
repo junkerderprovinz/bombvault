@@ -87,10 +87,14 @@ type Summary struct {
 	// the adapter that produced this summary. It travels with the numbers it
 	// belongs to, so a dump and the container backup around it keep their own.
 	SelectionFP string
+	// Unreadable is restic's reason when it left out files it could not read,
+	// empty when it read everything.
+	Unreadable string
 }
 
 // Plus adds o into s: the file disks of a VM plus each of its zvol disks. The
-// snapshot id, the parent flag and the fingerprint stay s's, and the result
+// snapshot id, the parent flag and the fingerprint stay s's, the first reason
+// for unreadable files is kept, and the result
 // counts as measured only when both sides are, so a partly unmeasured run
 // records nothing instead of an undercount.
 func (s Summary) Plus(o Summary) Summary {
@@ -100,6 +104,9 @@ func (s Summary) Plus(o Summary) Summary {
 	s.FilesNew += o.FilesNew
 	s.ResticMS += o.ResticMS
 	s.Measured = s.Measured && o.Measured
+	if s.Unreadable == "" {
+		s.Unreadable = o.Unreadable
+	}
 	return s
 }
 

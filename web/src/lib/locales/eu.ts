@@ -1124,6 +1124,7 @@ const eu: Partial<Translations> = {
   "runReason.dbimportFailed": "inportazio-tresnak errore bat eman du",
   "runReason.dbimportKeptOld": "aurreko datu-karpeta gorde da",
   "runReason.dataOutsideHost": "datuak Host Data-tik kanpo daude eta ez dira babeskopiatu",
+  "runReason.filesUnreadable": "fitxategi batzuk ezin izan dira irakurri eta babeskopia honetatik falta dira",
   "runReason.dbimportErrors": "{n} errore, aurreko datu-karpeta gorde da",
   "runReason.dbimportAppsDown": "one=aplikazio hau ezin izan da berriro abiarazi: {apps}|other=aplikazio hauek ezin izan dira berriro abiarazi: {apps}",
   "runReason.dbimportAppsStopped": "one=aplikazio hau geldituta geratzen da datu-karpeta konpondu arte: {apps}|other=aplikazio hauek geldituta geratzen dira datu-karpeta konpondu arte: {apps}",

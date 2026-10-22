@@ -1143,6 +1143,7 @@ const tr: Partial<Translations> = {
   "runReason.dbimportFailed": "içe aktarma aracı bir hata bildirdi",
   "runReason.dbimportKeptOld": "önceki veri klasörü korundu",
   "runReason.dataOutsideHost": "veriler Host Data dışında ve yedeklenmedi",
+  "runReason.filesUnreadable": "bazı dosyalar okunamadı ve bu yedekte yok",
   "runReason.dbimportErrors": "{n} hata, önceki veri klasörü korundu",
   "runReason.dbimportAppsDown": "one=şu uygulama yeniden başlatılamadı: {apps}|other=şu uygulamalar yeniden başlatılamadı: {apps}",
   "runReason.dbimportAppsStopped": "one=veri klasörü düzene girene kadar şu uygulama durdurulmuş kalır: {apps}|other=veri klasörü düzene girene kadar şu uygulamalar durdurulmuş kalır: {apps}",

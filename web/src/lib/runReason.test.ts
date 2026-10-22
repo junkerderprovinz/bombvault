@@ -249,6 +249,17 @@ describe("data outside Host Data", () => {
   });
 });
 
+describe("files restic could not read", () => {
+  const note = "some files could not be read and are missing from this backup: error: open /data/key.pem: permission denied";
+
+  it("is a warning on a successful run, translated up to restic's reason", () => {
+    expect(isWarningNote(note)).toBe(true);
+    const parts = runReasonParts(note, t);
+    expect(parts.head).toBe("runReason.filesUnreadable");
+    expect(parts.detail).toBe("error: open /data/key.pem: permission denied");
+  });
+});
+
 describe("isWarningNote", () => {
   it("warns about a successful import that left an app stopped", () => {
     expect(isWarningNote("database imported; the previous data folder was kept: /mnt/pg.old")).toBe(false);

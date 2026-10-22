@@ -1141,6 +1141,7 @@ const cs: Partial<Translations> = {
   "runReason.dbimportFailed": "nástroj pro import ohlásil chybu",
   "runReason.dbimportKeptOld": "předchozí složka s daty byla ponechána",
   "runReason.dataOutsideHost": "data jsou mimo Host Data a nebyla zálohována",
+  "runReason.filesUnreadable": "některé soubory nešlo přečíst a v této záloze chybí",
   "runReason.dbimportErrors": "one={n} chyba, předchozí složka s daty byla ponechána|few={n} chyby, předchozí složka s daty byla ponechána|many={n} chyby, předchozí složka s daty byla ponechána|other={n} chyb, předchozí složka s daty byla ponechána",
   "runReason.dbimportAppsDown": "one=tuto aplikaci se nepodařilo znovu spustit: {apps}|few=tyto aplikace se nepodařilo znovu spustit: {apps}|many=tyto aplikace se nepodařilo znovu spustit: {apps}|other=tyto aplikace se nepodařilo znovu spustit: {apps}",
   "runReason.dbimportAppsStopped": "one=tato aplikace zůstane zastavená, dokud se nevyřeší složka s daty: {apps}|few=tyto aplikace zůstanou zastavené, dokud se nevyřeší složka s daty: {apps}|many=tyto aplikace zůstanou zastavené, dokud se nevyřeší složka s daty: {apps}|other=tyto aplikace zůstanou zastavené, dokud se nevyřeší složka s daty: {apps}",

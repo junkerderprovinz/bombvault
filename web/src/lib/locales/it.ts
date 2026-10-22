@@ -1125,6 +1125,7 @@ const it: Partial<Translations> = {
   "runReason.dbimportFailed": "lo strumento di importazione ha segnalato un errore",
   "runReason.dbimportKeptOld": "la cartella dati precedente è stata conservata",
   "runReason.dataOutsideHost": "i dati sono fuori da Host Data e non sono stati salvati",
+  "runReason.filesUnreadable": "alcuni file non sono stati letti e mancano da questo backup",
   "runReason.dbimportErrors": "one={n} errore, la cartella dati precedente è stata conservata|other={n} errori, la cartella dati precedente è stata conservata",
   "runReason.dbimportAppsDown": "one=non è stato possibile riavviare questa applicazione: {apps}|many=non è stato possibile riavviare queste applicazioni: {apps}|other=non è stato possibile riavviare queste applicazioni: {apps}",
   "runReason.dbimportAppsStopped": "one=questa applicazione resta ferma finché la cartella dei dati non è sistemata: {apps}|many=queste applicazioni restano ferme finché la cartella dei dati non è sistemata: {apps}|other=queste applicazioni restano ferme finché la cartella dei dati non è sistemata: {apps}",

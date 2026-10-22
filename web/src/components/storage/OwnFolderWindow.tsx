@@ -32,6 +32,8 @@ import { Rows, SettingRow } from "./rows";
 import { SectionPathWindow } from "./SectionPathWindow";
 
 const OTHER = "other";
+/** The refusals that only copying the backups already made runs into. */
+const COPY_REFUSALS = new Set(["move-sign-in", "own-folder-unreadable"]);
 const FIELD = "rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 glim-field-focus";
 
 type T = ReturnType<typeof useT>["t"];
@@ -351,9 +353,7 @@ export function OwnFolderWindow({
               <div role="alert" className="flex flex-col gap-1 rounded-card bg-statusWarnBg px-3 py-2 text-sm leading-relaxed text-statusWarn wrap-break-word">
                 <p className="font-semibold">{t("own.blocked")}</p>
                 <p>{problem.text}</p>
-                {(problem.code === "move-sign-in" || problem.code === "own-folder-unreadable") && copyOver && (
-                  <p>{t("own.blockedByCopy").replace("{toggle}", () => t("own.copyOver"))}</p>
-                )}
+                {COPY_REFUSALS.has(problem.code ?? "") && copyOver && <p>{t("own.blockedByCopy").replace("{toggle}", () => t("own.copyOver"))}</p>}
               </div>
             ) : !request ? (
               <p className="text-sm text-carbon-textSub">{t("own.pick")}</p>

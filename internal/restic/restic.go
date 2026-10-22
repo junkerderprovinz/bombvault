@@ -67,8 +67,9 @@ type Mode struct {
 	// Env is extra environment passed to the restic process ("KEY=VALUE"), used
 	// for backend credentials (S3 AWS_*, REST RESTIC_REST_*). Never in argv.
 	Env []string
-	// NoLock, when true, adds --no-lock to the Restore* builders below, so a
-	// restore NEVER writes a lock file into the repository. It is set only for
+	// NoLock, when true, adds --no-lock to the restore, ls, dump and check
+	// builders below, so a read never writes a lock file into the repository.
+	// A copy reads it from From instead, for its source. It is set only for
 	// a foreign read-only session (open another instance's repo without
 	// mutating it, #61); the settings-driven backup/restore paths leave it
 	// false and lock normally, since a local restore coordinating with a
@@ -186,6 +187,9 @@ type From struct {
 	// Password is the source repository's password. Passed as
 	// RESTIC_FROM_PASSWORD, never in argv, exactly like Mode.Password.
 	Password string
+	// NoLock reads the source without a lock, for a repository this instance
+	// may only read.
+	NoLock bool
 }
 
 // fromSide returns the source's credentials, falling back to the destination's
@@ -266,6 +270,9 @@ type Summary struct {
 	// back from the repository has. total_duration covers only a part of that
 	// span, most of a second short on a small backup, so the two do not compare.
 	Elapsed time.Duration `json:"-"`
+	// Unreadable is restic's reason when it skipped files it could not read
+	// (exit 3) and still saved the snapshot without them.
+	Unreadable string `json:"-"`
 }
 
 // SnapshotSummary is the counter set restic stores with a snapshot since 0.17.
@@ -605,6 +612,9 @@ func dumpArchiveArgs(repo, format, snapshotID, subfolder string, m Mode) []strin
 	if !m.Encrypted {
 		args = append(args, insecureFlag)
 	}
+	if m.NoLock {
+		args = append(args, "--no-lock")
+	}
 	args = append(args, "--", snapshotID+":"+subfolder, "/")
 	return args
 }
@@ -682,6 +692,9 @@ func DumpRawArgs(repo, snapshotID, path string, m Mode) []string {
 	if !m.Encrypted {
 		args = append(args, insecureFlag)
 	}
+	if m.NoLock {
+		args = append(args, "--no-lock")
+	}
 	args = append(args, "--", snapshotID, path)
 	return args
 }
@@ -699,6 +712,11 @@ func CopyArgs(destRepo, srcRepo string, snapshotIDs []string, lim Limits, m Mode
 	args = append(args, retryLockFlags()...)
 	args = append(args, limitFlags(lim)...)
 	args = append(args, compressionFlags(m.Compression)...)
+	// restic copy applies --no-lock to the source only; it always locks the
+	// destination it writes.
+	if m.fromSide().NoLock {
+		args = append(args, "--no-lock")
+	}
 	args = append(args, "copy", "--from-repo", srcRepo)
 	// The two ends answer separately. `--insecure-no-password` is about the
 	// DESTINATION and `--from-insecure-no-password` about the SOURCE, and a pull
@@ -785,6 +803,9 @@ func LsArgs(repo, snapshotID string, m Mode) []string {
 	if !m.Encrypted {
 		args = append(args, insecureFlag)
 	}
+	if m.NoLock {
+		args = append(args, "--no-lock")
+	}
 	args = append(args, "--", snapshotID)
 	return args
 }
@@ -800,6 +821,9 @@ func LsPathArgs(repo, snapshotID, dirPath string, m Mode) []string {
 	args = append(args, "ls", "--json")
 	if !m.Encrypted {
 		args = append(args, insecureFlag)
+	}
+	if m.NoLock {
+		args = append(args, "--no-lock")
 	}
 	args = append(args, "--", snapshotID, dirPath)
 	return args
@@ -1061,6 +1085,7 @@ func ForgetArgs(repo string, snapshotIDs []string, prune bool, m Mode) []string 
 	args = append(args, retryLockFlags()...)
 	args = append(args, limitFlags(m.Limits)...)
 	if prune {
+		args = append(args, storageClassFlags(repo, m.StorageClass)...)
 		args = append(args, compressionFlags(m.Compression)...)
 	}
 	args = append(args, "forget")
@@ -1239,6 +1264,7 @@ func ForgetPolicyArgs(repo string, p RetentionPolicy, m Mode, tags []string, pru
 	args = append(args, retryLockFlags()...)
 	args = append(args, limitFlags(m.Limits)...)
 	if prune {
+		args = append(args, storageClassFlags(repo, m.StorageClass)...)
 		args = append(args, compressionFlags(m.Compression)...)
 	}
 	args = append(args, "forget")
@@ -1317,6 +1343,7 @@ func UnlockArgs(repo string, removeAll bool, m Mode) []string {
 // keeps to the repository's bandwidth caps as a backup does.
 func PruneArgs(repo string, m Mode) []string {
 	args := repoFlag(repo)
+	args = append(args, storageClassFlags(repo, m.StorageClass)...)
 	args = append(args, retryLockFlags()...)
 	args = append(args, limitFlags(m.Limits)...)
 	args = append(args, compressionFlags(m.Compression)...)
@@ -2383,11 +2410,12 @@ func (r Restic) Backup(ctx context.Context, repo string, paths []string, tags []
 	out, err := r.run(ctx, BackupArgs(repo, paths, tags, m, excludes...), m)
 	if err != nil {
 		// restic exit 3 (a source file could not be read) still created the snapshot,
-		// so parse its summary and treat the backup as successful; the skipped file is
-		// logged in backupExit3Err. Un-parseable output means it was not a clean
-		// exit-3, so fall through to the real error.
+		// so parse its summary and treat the backup as successful, with the reason in
+		// Unreadable; the skipped files are logged in backupExit3Err. Un-parseable
+		// output means it was not a clean exit-3, so fall through to the real error.
 		if errors.Is(err, ErrBackupSourceUnreadable) {
 			if sum, perr := summarySince(out, start); perr == nil {
+				sum.Unreadable = err.Error()
 				return sum, nil
 			}
 		}
@@ -2415,6 +2443,7 @@ func (r Restic) BackupDir(ctx context.Context, repo, dir string, tags []string, 
 		// the same as in Backup.
 		if errors.Is(err, ErrBackupSourceUnreadable) {
 			if sum, perr := summarySince(out, start); perr == nil {
+				sum.Unreadable = err.Error()
 				return sum, nil
 			}
 		}
@@ -2438,6 +2467,7 @@ func (r Restic) ImportDir(ctx context.Context, repo, dir string, tags []string, 
 	if err != nil {
 		if errors.Is(err, ErrBackupSourceUnreadable) {
 			if sum, perr := summarySince(out, start); perr == nil {
+				sum.Unreadable = err.Error()
 				return sum, nil
 			}
 		}
@@ -2518,6 +2548,7 @@ func (r Restic) BackupStdin(ctx context.Context, repo string, rd io.Reader, path
 		// way) — handle it exactly like Backup does for consistency.
 		if errors.Is(err, ErrBackupSourceUnreadable) {
 			if sum, perr := summarySince(out, start); perr == nil {
+				sum.Unreadable = err.Error()
 				return sum, nil
 			}
 		}
@@ -2668,11 +2699,11 @@ func (r Restic) Copy(ctx context.Context, destRepo, srcRepo string, snapshotIDs 
 		// itself.
 		cmd.Env = append(env, "RESTIC_PROGRESS_FPS=3")
 		_, err := runStreamingCopy(cmd, args, sink)
-		return err
+		return ctxCancelErr(ctx, args, err)
 	}
 	cmd.Env = env
 	_, err := runBuffered(ctx, cmd, args)
-	return err
+	return ctxCancelErr(ctx, args, err)
 }
 
 // RestorePath restores a single backed-up path (p) back to its own location as a

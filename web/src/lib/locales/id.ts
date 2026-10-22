@@ -1124,6 +1124,7 @@ const id: Partial<Translations> = {
   "runReason.dbimportFailed": "alat impor melaporkan sebuah kesalahan",
   "runReason.dbimportKeptOld": "folder data sebelumnya disimpan",
   "runReason.dataOutsideHost": "data berada di luar Host Data dan tidak dicadangkan",
+  "runReason.filesUnreadable": "beberapa file tidak bisa dibaca dan tidak ada di cadangan ini",
   "runReason.dbimportErrors": "{n} kesalahan, folder data sebelumnya disimpan",
   "runReason.dbimportAppsDown": "aplikasi berikut tidak bisa dinyalakan lagi: {apps}",
   "runReason.dbimportAppsStopped": "aplikasi berikut tetap berhenti sampai folder data dibereskan: {apps}",

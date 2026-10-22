@@ -1143,6 +1143,7 @@ const fi: Partial<Translations> = {
   "runReason.dbimportFailed": "tuontityökalu ilmoitti virheestä",
   "runReason.dbimportKeptOld": "aiempi datakansio säilytettiin",
   "runReason.dataOutsideHost": "tiedot ovat Host Datan ulkopuolella eikä niistä otettu varmuuskopiota",
+  "runReason.filesUnreadable": "joitakin tiedostoja ei voitu lukea, ja ne puuttuvat tästä varmuuskopiosta",
   "runReason.dbimportErrors": "one={n} virhe, aiempi datakansio säilytettiin|other={n} virhettä, aiempi datakansio säilytettiin",
   "runReason.dbimportAppsDown": "one=tätä sovellusta ei saatu käynnistettyä uudelleen: {apps}|other=näitä sovelluksia ei saatu käynnistettyä uudelleen: {apps}",
   "runReason.dbimportAppsStopped": "one=tämä sovellus pysyy pysäytettynä, kunnes datakansio on selvitetty: {apps}|other=nämä sovellukset pysyvät pysäytettyinä, kunnes datakansio on selvitetty: {apps}",
