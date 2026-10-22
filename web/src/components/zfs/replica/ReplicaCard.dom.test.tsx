@@ -28,7 +28,7 @@ vi.mock("../../../lib/api", async (importOriginal) => {
     getGroup: () => Promise.resolve(group()),
     setZFSReplicaOnly: (on: boolean) => {
       onlyCalls.push(on);
-      current = { ...current, only: on };
+      current = { ...current, only: on && current.only !== false, sectionOnly: on };
       return Promise.resolve({ ok: true });
     },
     updateOffsiteTarget: () => Promise.reject(new Error("the switch touched an off-site target")),
@@ -339,6 +339,15 @@ describe("replica card", () => {
     fireEvent.click(switchOf());
     await waitFor(() => expect(onlyCalls).toEqual([true, false]));
     expect(screen.queryByText("the switch touched an off-site target")).toBeNull();
+  });
+
+  it("shows the section's switch on an entry with a repository of its own and turns it off there", async () => {
+    current = replica({ only: false, sectionOnly: true });
+    renderCard();
+    const toggle = await screen.findByRole("switch", { name: en["zfs.replica.onlyToggle"] });
+    expect(toggle.getAttribute("aria-checked")).toBe("true");
+    fireEvent.click(toggle);
+    await waitFor(() => expect(onlyCalls).toEqual([false]));
   });
 
   it("offers no take-over for any other failure", async () => {

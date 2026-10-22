@@ -121,6 +121,25 @@ func TestAnItemWithItsOwnRepositoryIsNeverReplicaOnly(t *testing.T) {
 	}
 }
 
+// The card of an item with a repository of its own shows the section's
+// switch as it stands, so it can be switched off there too.
+func TestTheReplicaViewCarriesTheSectionSwitch(t *testing.T) {
+	r := newReplicaRig(t)
+	if err := r.s.SetZFSReplicaOnly(true); err != nil {
+		t.Fatal(err)
+	}
+	if err := r.st.SetZFSDatasetRepo(r.item.ID, "repo-1"); err != nil {
+		t.Fatal(err)
+	}
+	v, err := r.s.ZFSReplicaView(context.Background(), r.item.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !v.SectionOnly || v.Only {
+		t.Fatalf("view only=%v section=%v, want the section's switch on and the item held to its own repository", v.Only, v.SectionOnly)
+	}
+}
+
 func TestAReplicaOnlyItemIsProtectedOnceItIsReplicated(t *testing.T) {
 	r := replicaOnlyRig(t)
 	settings, _ := r.st.GetSettings()

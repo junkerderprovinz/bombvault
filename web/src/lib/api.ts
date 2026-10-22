@@ -5431,6 +5431,9 @@ export interface ZFSReplica {
   /** True while the item has no place for a backup, so its backup run only
    *  sends the replica. */
   only?: boolean;
+  /** The switch that turns the ZFS section's backups off. An item with a
+   *  repository of its own is not held to it. */
+  sectionOnly?: boolean;
 }
 
 export interface ZFSReplicaPatch {

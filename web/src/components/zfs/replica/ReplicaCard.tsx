@@ -268,7 +268,9 @@ export function ReplicaCard({ itemId, name }: { itemId: string; name: string }) 
               <Toggle
                 hideLabel
                 label={t("zfs.replica.onlyToggle")}
-                checked={Boolean(view.only)}
+                // The section's switch, which an entry with a repository of
+                // its own shows but is not held to.
+                checked={view.sectionOnly ?? Boolean(view.only)}
                 onChange={(on) => void setReplicaOnly(on)}
               />
             </span>
