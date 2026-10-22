@@ -979,7 +979,7 @@ const sl: Partial<Translations> = {
   "folders.cachedirToggle": "Preskoči mape predpomnilnika (CACHEDIR.TAG)",
   "folders.cachedirScope": "Velja za celotno varnostno kopijo tega vsebnika, ne samo za to mapo.",
   "stophook.title": "Ustavi druge vsebnike",
-  "stophook.hint": "Med varnostnim kopiranjem tega vsebnika ustavi te druge vsebnike, nato jih znova zaženi. Vsebnik, od katerega je ta v svoji datoteki compose odvisen, na primer njegova baza podatkov, se zažene pred njim. Ostali se zaženejo za njim.",
+  "stophook.hint": "Med varnostnim kopiranjem tega vsebnika ustavi te druge vsebnike, nato jih znova zaženi. Baza podatkov in vsebnik, od katerega je ta v svoji datoteki compose odvisen, se zaženeta pred njim. Ostali se zaženejo za njim.",
   "stophook.noCandidates": "Ni najdenih drugih nameščenih vsebnikov.",
   "stophook.remove": "Odstrani {name}",
   "export.exportedTo": "Izvoženo v:",

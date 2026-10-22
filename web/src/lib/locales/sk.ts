@@ -979,7 +979,7 @@ const sk: Partial<Translations> = {
   "folders.cachedirToggle": "Preskočiť priečinky vyrovnávacej pamäte (CACHEDIR.TAG)",
   "folders.cachedirScope": "Vzťahuje sa na celú zálohu tohto kontajnera, nielen na tento priečinok.",
   "stophook.title": "Zastaviť iné kontajnery",
-  "stophook.hint": "Zastav tieto iné kontajnery, kým sa tento zálohuje, a potom ich znova spusti. Kontajner, od ktorého tento podľa svojho súboru compose závisí, napríklad jeho databáza, sa spustí pred ním. Ostatné po ňom.",
+  "stophook.hint": "Zastav tieto iné kontajnery, kým sa tento zálohuje, a potom ich znova spusti. Databáza a kontajner, od ktorého tento podľa svojho súboru compose závisí, sa spustia pred ním. Ostatné po ňom.",
   "stophook.noCandidates": "Nenašli sa žiadne iné nainštalované kontajnery.",
   "stophook.remove": "Odstrániť {name}",
   "export.exportedTo": "Exportované do:",

@@ -961,7 +961,7 @@ const cs: Partial<Translations> = {
   "notify.test": "Odeslat test",
   "notify.anomaliesWhere": "Které anomálie pošlou oznámení, nastavíš v části „{page}“.",
   "stophook.title": "Zastavit ostatní kontejnery",
-  "stophook.hint": "Zastavit tyto ostatní kontejnery během zálohování tohoto kontejneru a poté je znovu spustit. Kontejner, na kterém tento podle svého souboru compose závisí, třeba jeho databáze, se spustí před ním. Ostatní se spustí po něm.",
+  "stophook.hint": "Zastavit tyto ostatní kontejnery během zálohování tohoto kontejneru a poté je znovu spustit. Databáze a kontejner, na kterém tento podle svého souboru compose závisí, se spustí před ním. Ostatní se spustí po něm.",
   "stophook.noCandidates": "Nebyly nalezeny žádné jiné nainstalované kontejnery.",
   "stophook.remove": "Odebrat {name}",
   "export.exportedTo": "Exportováno do:",

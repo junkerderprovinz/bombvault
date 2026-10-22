@@ -957,7 +957,7 @@ const pl: Partial<Translations> = {
   "notify.test": "Wyślij test",
   "notify.anomaliesWhere": "To, które anomalie wysyłają powiadomienie, ustawiasz w sekcji „{page}”.",
   "stophook.title": "Zatrzymaj inne kontenery",
-  "stophook.hint": "Zatrzymaj te inne kontenery na czas tworzenia kopii zapasowej tego kontenera, a następnie uruchom je ponownie. Kontener, od którego ten zależy w swoim pliku compose, na przykład jego baza danych, uruchamia się przed nim. Pozostałe po nim.",
+  "stophook.hint": "Zatrzymaj te inne kontenery na czas tworzenia kopii zapasowej tego kontenera, a następnie uruchom je ponownie. Baza danych i kontener, od którego ten zależy w swoim pliku compose, uruchamiają się przed nim. Pozostałe po nim.",
   "stophook.noCandidates": "Nie znaleziono innych zainstalowanych kontenerów.",
   "stophook.remove": "Usuń {name}",
   "export.exportedTo": "Wyeksportowano do:",

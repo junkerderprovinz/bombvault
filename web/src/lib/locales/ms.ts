@@ -979,7 +979,7 @@ const ms: Partial<Translations> = {
   "folders.cachedirToggle": "Langkau folder cache (CACHEDIR.TAG)",
   "folders.cachedirScope": "Terpakai kepada keseluruhan sandaran bekas ini, bukan hanya folder ini.",
   "stophook.title": "Hentikan bekas lain",
-  "stophook.hint": "Hentikan bekas lain ini semasa bekas ini disandarkan, kemudian mulakan semula. Bekas yang diperlukan oleh bekas ini dalam fail compose-nya, contohnya pangkalan datanya, bermula sebelumnya. Yang lain bermula selepasnya.",
+  "stophook.hint": "Hentikan bekas lain ini semasa bekas ini disandarkan, kemudian mulakan semula. Pangkalan data dan bekas yang diperlukan oleh bekas ini dalam fail compose-nya bermula sebelumnya. Yang lain bermula selepasnya.",
   "stophook.noCandidates": "Tiada bekas terpasang lain ditemui.",
   "stophook.remove": "Alih keluar {name}",
   "export.exportedTo": "Dieksport ke:",

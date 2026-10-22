@@ -963,7 +963,7 @@ const tr: Partial<Translations> = {
   "notify.test": "Test gönder",
   "notify.anomaliesWhere": "Hangi anormalliklerin bildirim göndereceğini “{page}” bölümünden seçersin.",
   "stophook.title": "Diğer konteynerleri durdur",
-  "stophook.hint": "Bu konteyner yedeklenirken şu diğer konteynerleri durdur ve sonrasında yeniden başlat. Bu konteynerin compose dosyasında bağımlı olduğu konteyner, örneğin veritabanı, ondan önce başlar. Diğerleri ondan sonra başlar.",
+  "stophook.hint": "Bu konteyner yedeklenirken şu diğer konteynerleri durdur ve sonrasında yeniden başlat. Bir veritabanı ve bu konteynerin compose dosyasında bağımlı olduğu konteyner ondan önce başlar. Diğerleri ondan sonra başlar.",
   "stophook.noCandidates": "Başka yüklü konteyner bulunamadı.",
   "stophook.remove": "{name} kaldır",
   "export.exportedTo": "Şuraya aktarıldı:",

@@ -979,7 +979,7 @@ const gl: Partial<Translations> = {
   "folders.cachedirToggle": "Omitir cartafoles da caché (CACHEDIR.TAG)",
   "folders.cachedirScope": "Aplícase a toda a copia de seguranza deste contedor, non só a este cartafol.",
   "stophook.title": "Deter outros contedores",
-  "stophook.hint": "Detén estes outros contedores mentres se copia este e volve inicialos despois. Un contedor do que este depende no seu ficheiro compose, como a súa base de datos, iníciase antes ca el. Os demais inícianse despois.",
+  "stophook.hint": "Detén estes outros contedores mentres se copia este e volve inicialos despois. Unha base de datos e un contedor do que este depende no seu ficheiro compose inícianse antes ca el. Os demais inícianse despois.",
   "stophook.noCandidates": "Non se atoparon outros contedores instalados.",
   "stophook.remove": "Eliminar {name}",
   "export.exportedTo": "Exportado a:",

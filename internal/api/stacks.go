@@ -12,6 +12,7 @@ import (
 
 	"github.com/junkerderprovinz/bombvault/internal/backup"
 	"github.com/junkerderprovinz/bombvault/internal/compose"
+	"github.com/junkerderprovinz/bombvault/internal/dbdump"
 	"github.com/junkerderprovinz/bombvault/internal/model"
 )
 
@@ -27,6 +28,20 @@ func parseDependsOn(labels map[string]string) []string { return compose.ParseDep
 // dependsOnContainer reports whether the container in needs other, named
 // name: its compose file makes other's service a dependency, or a legacy link
 // points at it.
+// startsBefore reports whether a container stopped for in's backup comes up
+// again before in: one in depends on by compose or a link, and a database
+// next to an app that is none. Unraid templates on a custom network reach
+// their database by name, which no label records.
+func startsBefore(in model.Inspect, name string, other model.Inspect) bool {
+	return dependsOnContainer(in, name, other) || (isDatabaseServer(other) && !isDatabaseServer(in))
+}
+
+// isDatabaseServer reports whether a container is recognised as a database
+// server, as the database dumps recognise one.
+func isDatabaseServer(in model.Inspect) bool {
+	return dbdump.Resolve(in.Config.Image, envNames(in.Config.Env), in.Config.Labels, "").Engine != ""
+}
+
 func dependsOnContainer(in model.Inspect, name string, other model.Inspect) bool {
 	project, service := composeProject(in.Config.Labels), composeService(other.Config.Labels)
 	if project != "" && service != "" && composeProject(other.Config.Labels) == project &&

@@ -954,7 +954,7 @@ const zh: Partial<Translations> = {
   "notify.test": "发送测试",
   "notify.anomaliesWhere": "哪些异常会发送通知，你可以在“{page}”中选择。",
   "stophook.title": "停止其他容器",
-  "stophook.hint": "在备份此容器期间停止这些其他容器，之后再重新启动它们。此容器在其 compose 文件中依赖的容器（例如数据库）会先于它启动，其余容器在它之后启动。",
+  "stophook.hint": "在备份此容器期间停止这些其他容器，之后再重新启动它们。数据库以及此容器在其 compose 文件中依赖的容器会先于它启动，其余容器在它之后启动。",
   "stophook.noCandidates": "未找到其他已安装的容器。",
   "stophook.remove": "移除 {name}",
   "export.exportedTo": "已导出到：",

@@ -963,7 +963,7 @@ const it: Partial<Translations> = {
   "notify.test": "Invia test",
   "notify.anomaliesWhere": "Quali anomalie inviano una notifica lo decidi in {page}.",
   "stophook.title": "Arresta altri container",
-  "stophook.hint": "Arresta questi altri container durante il backup di questo e riavviali dopo. Un container da cui questo dipende nel suo file compose, per esempio il suo database, parte prima di lui. Gli altri partono dopo.",
+  "stophook.hint": "Arresta questi altri container durante il backup di questo e riavviali dopo. Un database e un container da cui questo dipende nel suo file compose partono prima di lui. Gli altri partono dopo.",
   "stophook.noCandidates": "Nessun altro container installato trovato.",
   "stophook.remove": "Rimuovi {name}",
   "export.exportedTo": "Esportato in:",

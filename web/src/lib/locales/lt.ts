@@ -979,7 +979,7 @@ const lt: Partial<Translations> = {
   "folders.cachedirToggle": "Praleisti podėlio aplankus (CACHEDIR.TAG)",
   "folders.cachedirScope": "Taikoma visai šio konteinerio atsarginei kopijai, o ne tik šiam aplankui.",
   "stophook.title": "Sustabdyti kitus konteinerius",
-  "stophook.hint": "Sustabdyk šiuos kitus konteinerius, kol kopijuojamas šis, tada vėl juos paleisk. Konteineris, nuo kurio šis priklauso savo compose faile, pvz., jo duomenų bazė, paleidžiamas prieš jį. Kiti paleidžiami po jo.",
+  "stophook.hint": "Sustabdyk šiuos kitus konteinerius, kol kopijuojamas šis, tada vėl juos paleisk. Duomenų bazė ir konteineris, nuo kurio šis priklauso savo compose faile, paleidžiami prieš jį. Kiti paleidžiami po jo.",
   "stophook.noCandidates": "Kitų įdiegtų konteinerių nerasta.",
   "stophook.remove": "Pašalinti {name}",
   "export.exportedTo": "Eksportuota į:",

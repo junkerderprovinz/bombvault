@@ -979,7 +979,7 @@ const is: Partial<Translations> = {
   "folders.cachedirToggle": "Sleppa skyndiminnismöppum (CACHEDIR.TAG)",
   "folders.cachedirScope": "Á við allt afrit þessa gáms, ekki aðeins þessa möppu.",
   "stophook.title": "Stöðva aðra gáma",
-  "stophook.hint": "Stöðvaðu þessa aðra gáma á meðan þessi er afritaður og ræstu þá svo aftur. Gámur sem þessi er háður í compose-skránni sinni, til dæmis gagnagrunnurinn hans, ræsist á undan honum. Hinir ræsast á eftir.",
+  "stophook.hint": "Stöðvaðu þessa aðra gáma á meðan þessi er afritaður og ræstu þá svo aftur. Gagnagrunnur og gámur sem þessi er háður í compose-skránni sinni ræsast á undan honum. Hinir ræsast á eftir.",
   "stophook.noCandidates": "Engir aðrir uppsettir gámar fundust.",
   "stophook.remove": "Fjarlægja {name}",
   "export.exportedTo": "Flutt út í:",

@@ -979,7 +979,7 @@ const lv: Partial<Translations> = {
   "folders.cachedirToggle": "Izlaist kešatmiņas mapes (CACHEDIR.TAG)",
   "folders.cachedirScope": "Attiecas uz visu šī konteinera rezerves kopiju, ne tikai uz šo mapi.",
   "stophook.title": "Apturēt citus konteinerus",
-  "stophook.hint": "Apturiet šos citus konteinerus, kamēr tiek dublēts šis, un pēc tam tos atkal palaidiet. Konteiners, no kura šis savā compose failā ir atkarīgs, piem., tā datubāze, tiek palaists pirms tā. Pārējie tiek palaisti pēc tā.",
+  "stophook.hint": "Apturiet šos citus konteinerus, kamēr tiek dublēts šis, un pēc tam tos atkal palaidiet. Datubāze un konteiners, no kura šis savā compose failā ir atkarīgs, tiek palaisti pirms tā. Pārējie tiek palaisti pēc tā.",
   "stophook.noCandidates": "Citi instalēti konteineri nav atrasti.",
   "stophook.remove": "Noņemt {name}",
   "export.exportedTo": "Eksportēts uz:",

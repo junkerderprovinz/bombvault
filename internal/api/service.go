@@ -6443,7 +6443,7 @@ func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, re
 			WasRunning:   di.Running,
 			Service:      composeService(di.Config.Labels),
 			DependsOn:    parseDependsOn(di.Config.Labels),
-			BeforeTarget: dependsOnContainer(in, dep, di),
+			BeforeTarget: startsBefore(in, dep, di),
 		})
 	}
 

@@ -960,7 +960,7 @@ const pt: Partial<Translations> = {
   "notify.test": "Enviar teste",
   "notify.anomaliesWhere": "As anomalias que enviam uma notificação são definidas em «{page}».",
   "stophook.title": "Parar outros contentores",
-  "stophook.hint": "Parar estes outros contentores enquanto este é copiado e iniciá-los novamente depois. Um contentor de que este depende no seu ficheiro compose, como a sua base de dados, inicia antes dele. Os restantes iniciam depois.",
+  "stophook.hint": "Parar estes outros contentores enquanto este é copiado e iniciá-los novamente depois. Uma base de dados e um contentor de que este depende no seu ficheiro compose iniciam antes dele. Os restantes iniciam depois.",
   "stophook.noCandidates": "Não foram encontrados outros contentores instalados.",
   "stophook.remove": "Remover {name}",
   "export.exportedTo": "Exportado para:",

@@ -954,7 +954,7 @@ const ko: Partial<Translations> = {
   "notify.test": "테스트 보내기",
   "notify.anomaliesWhere": "어떤 이상 징후에 알림을 보낼지는 {page}에서 정합니다.",
   "stophook.title": "다른 컨테이너 중지",
-  "stophook.hint": "이 컨테이너를 백업하는 동안 이러한 다른 컨테이너를 중지한 다음 다시 시작합니다. compose 파일에서 이 컨테이너가 의존하는 컨테이너(예: 데이터베이스)는 이 컨테이너보다 먼저 시작되고, 나머지는 그 뒤에 시작됩니다.",
+  "stophook.hint": "이 컨테이너를 백업하는 동안 이러한 다른 컨테이너를 중지한 다음 다시 시작합니다. 데이터베이스와 compose 파일에서 이 컨테이너가 의존하는 컨테이너는 이 컨테이너보다 먼저 시작되고, 나머지는 그 뒤에 시작됩니다.",
   "stophook.noCandidates": "설치된 다른 컨테이너를 찾을 수 없습니다.",
   "stophook.remove": "{name} 제거",
   "export.exportedTo": "내보낸 위치:",

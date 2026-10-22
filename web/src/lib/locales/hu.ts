@@ -963,7 +963,7 @@ const hu: Partial<Translations> = {
   "notify.test": "Teszt küldése",
   "notify.anomaliesWhere": "Hogy mely anomáliák küldenek értesítést, itt állíthatod be: {page}.",
   "stophook.title": "Más konténerek leállítása",
-  "stophook.hint": "Állítsd le ezeket a többi konténert ennek a konténernek a mentése idejére, majd indítsd el őket újra. Az a konténer, amelytől ez a compose-fájlja szerint függ, például az adatbázisa, előtte indul. A többi utána.",
+  "stophook.hint": "Állítsd le ezeket a többi konténert ennek a konténernek a mentése idejére, majd indítsd el őket újra. Egy adatbázis és az a konténer, amelytől ez a compose-fájlja szerint függ, előtte indul. A többi utána.",
   "stophook.noCandidates": "Nem található más telepített konténer.",
   "stophook.remove": "{name} eltávolítása",
   "export.exportedTo": "Exportálva ide:",

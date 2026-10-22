@@ -979,7 +979,7 @@ const et: Partial<Translations> = {
   "folders.cachedirToggle": "Jäta vahemälu kaustad vahele (CACHEDIR.TAG)",
   "folders.cachedirScope": "Kehtib kogu selle konteineri varunduse kohta, mitte ainult selle kausta kohta.",
   "stophook.title": "Peata teised konteinerid",
-  "stophook.hint": "Peata need teised konteinerid selle konteineri varundamise ajaks ja käivita need seejärel uuesti. Konteiner, millest see oma compose-failis sõltub, näiteks tema andmebaas, käivitub enne seda. Ülejäänud käivituvad pärast.",
+  "stophook.hint": "Peata need teised konteinerid selle konteineri varundamise ajaks ja käivita need seejärel uuesti. Andmebaas ja konteiner, millest see oma compose-failis sõltub, käivituvad enne seda. Ülejäänud käivituvad pärast.",
   "stophook.noCandidates": "Teisi installitud konteinereid ei leitud.",
   "stophook.remove": "Eemalda {name}",
   "export.exportedTo": "Eksporditud asukohta:",

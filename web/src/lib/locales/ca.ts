@@ -979,7 +979,7 @@ const ca: Partial<Translations> = {
   "folders.cachedirToggle": "Omet les carpetes de memòria cau (CACHEDIR.TAG)",
   "folders.cachedirScope": "S'aplica a tota la còpia de seguretat d'aquest contenidor, no només a aquesta carpeta.",
   "stophook.title": "Atura altres contenidors",
-  "stophook.hint": "Atura aquests altres contenidors mentre es copia aquest i torna'ls a iniciar després. Un contenidor del qual aquest depèn al seu fitxer compose, com ara la seva base de dades, s'inicia abans que ell. Els altres s'inicien després.",
+  "stophook.hint": "Atura aquests altres contenidors mentre es copia aquest i torna'ls a iniciar després. Una base de dades i un contenidor del qual aquest depèn al seu fitxer compose s'inicien abans que ell. Els altres s'inicien després.",
   "stophook.noCandidates": "No s'han trobat altres contenidors instal·lats.",
   "stophook.remove": "Elimina {name}",
   "export.exportedTo": "Exportat a:",

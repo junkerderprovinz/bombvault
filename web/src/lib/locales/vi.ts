@@ -954,7 +954,7 @@ const vi: Partial<Translations> = {
   "notify.test": "Gửi thử",
   "notify.anomaliesWhere": "Bạn chọn bất thường nào sẽ gửi thông báo trong mục “{page}”.",
   "stophook.title": "Dừng các container khác",
-  "stophook.hint": "Dừng các container khác này trong khi container này đang được sao lưu, sau đó khởi động lại chúng. Container mà container này phụ thuộc trong tệp compose của nó, ví dụ cơ sở dữ liệu, khởi động trước nó. Các container còn lại khởi động sau.",
+  "stophook.hint": "Dừng các container khác này trong khi container này đang được sao lưu, sau đó khởi động lại chúng. Cơ sở dữ liệu và container mà container này phụ thuộc trong tệp compose của nó khởi động trước nó. Các container còn lại khởi động sau.",
   "stophook.noCandidates": "Không tìm thấy container nào khác đã cài đặt.",
   "stophook.remove": "Xóa {name}",
   "export.exportedTo": "Đã xuất tới:",

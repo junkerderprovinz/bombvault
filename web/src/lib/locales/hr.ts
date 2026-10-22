@@ -979,7 +979,7 @@ const hr: Partial<Translations> = {
   "folders.cachedirToggle": "Preskoči mape predmemorije (CACHEDIR.TAG)",
   "folders.cachedirScope": "Primjenjuje se na cijelu sigurnosnu kopiju ovog kontejnera, ne samo na ovu mapu.",
   "stophook.title": "Zaustavi druge kontejnere",
-  "stophook.hint": "Zaustavite ove druge kontejnere dok se ovaj sigurnosno kopira, zatim ih ponovno pokrenite. Kontejner o kojem ovaj ovisi u svojoj compose datoteci, npr. njegova baza podataka, pokreće se prije njega. Ostali se pokreću nakon njega.",
+  "stophook.hint": "Zaustavite ove druge kontejnere dok se ovaj sigurnosno kopira, zatim ih ponovno pokrenite. Baza podataka i kontejner o kojem ovaj ovisi u svojoj compose datoteci pokreću se prije njega. Ostali se pokreću nakon njega.",
   "stophook.noCandidates": "Nisu pronađeni drugi instalirani kontejneri.",
   "stophook.remove": "Ukloni {name}",
   "export.exportedTo": "Izvezeno u:",

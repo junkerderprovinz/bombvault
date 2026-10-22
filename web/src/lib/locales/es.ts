@@ -971,7 +971,7 @@ const es: Partial<Translations> = {
   "notify.test": "Enviar prueba",
   "notify.anomaliesWhere": "Qué anomalías envían una notificación lo eliges en «{page}».",
   "stophook.title": "Detener otros contenedores",
-  "stophook.hint": "Detener estos otros contenedores mientras se hace la copia de seguridad de este y volver a iniciarlos después. Un contenedor del que este depende en su archivo compose, como su base de datos, se inicia antes que él. Los demás se inician después.",
+  "stophook.hint": "Detener estos otros contenedores mientras se hace la copia de seguridad de este y volver a iniciarlos después. Una base de datos y un contenedor del que este depende en su archivo compose se inician antes que él. Los demás se inician después.",
   "stophook.noCandidates": "No se encontraron otros contenedores instalados.",
   "stophook.remove": "Eliminar {name}",
   "export.exportedTo": "Exportado a:",

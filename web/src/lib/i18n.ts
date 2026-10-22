@@ -1108,7 +1108,7 @@ export const en = {
   // Live count for the mobile Save bar: how many folders the next backup
   // hands restic. Invariant {n}, no plural forms: zero is a real answer.
   "stophook.title": "Stop other containers",
-  "stophook.hint": "Stop these other containers while this one is backed up, then start them again. A container this one depends on in its compose file, such as its database, starts before it. The others start after it.",
+  "stophook.hint": "Stop these other containers while this one is backed up, then start them again. A database, and a container this one depends on in its compose file, start before it. The others start after it.",
   "stophook.noCandidates": "No other installed containers found.",
   "stophook.remove": "Remove {name}",
   "export.exportedTo": "Exported to:",
@@ -6117,7 +6117,7 @@ export const de: Translations = {
   "folders.cachedirToggle": "Cache-Ordner überspringen (CACHEDIR.TAG)",
   "folders.cachedirScope": "Gilt für die gesamte Sicherung dieses Containers, nicht nur für diesen Ordner.",
   "stophook.title": "Andere Container stoppen",
-  "stophook.hint": "Diese anderen Container während der Sicherung dieses Containers stoppen und danach wieder starten. Ein Container, von dem dieser laut seiner Compose-Datei abhängt, etwa seine Datenbank, startet vor ihm. Die anderen starten nach ihm.",
+  "stophook.hint": "Diese anderen Container während der Sicherung dieses Containers stoppen und danach wieder starten. Eine Datenbank und ein Container, von dem dieser laut seiner Compose-Datei abhängt, starten vor ihm. Die anderen starten nach ihm.",
   "stophook.noCandidates": "Keine anderen installierten Container gefunden.",
   "stophook.remove": "{name} entfernen",
   "export.exportedTo": "Exportiert nach:",

@@ -963,7 +963,7 @@ const fi: Partial<Translations> = {
   "notify.test": "Lähetä testi",
   "notify.anomaliesWhere": "Mitkä poikkeamat lähettävät ilmoituksen, valitset kohdassa {page}.",
   "stophook.title": "Pysäytä muut säiliöt",
-  "stophook.hint": "Pysäytä nämä muut säiliöt tämän säiliön varmuuskopioinnin ajaksi ja käynnistä ne sen jälkeen uudelleen. Säiliö, josta tämä riippuu compose-tiedostossaan, esimerkiksi sen tietokanta, käynnistyy ennen sitä. Muut käynnistyvät sen jälkeen.",
+  "stophook.hint": "Pysäytä nämä muut säiliöt tämän säiliön varmuuskopioinnin ajaksi ja käynnistä ne sen jälkeen uudelleen. Tietokanta ja säiliö, josta tämä riippuu compose-tiedostossaan, käynnistyvät ennen sitä. Muut käynnistyvät sen jälkeen.",
   "stophook.noCandidates": "Muita asennettuja säiliöitä ei löytynyt.",
   "stophook.remove": "Poista {name}",
   "export.exportedTo": "Viety kohteeseen:",

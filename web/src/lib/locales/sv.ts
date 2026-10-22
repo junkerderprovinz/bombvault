@@ -963,7 +963,7 @@ const sv: Partial<Translations> = {
   "notify.test": "Skicka test",
   "notify.anomaliesWhere": "Vilka avvikelser som skickar en avisering ställer du in under {page}.",
   "stophook.title": "Stoppa andra containrar",
-  "stophook.hint": "Stoppa dessa andra containrar medan den här säkerhetskopieras och starta dem igen efteråt. En container som den här är beroende av i sin compose-fil, till exempel dess databas, startar före den. De andra startar efter den.",
+  "stophook.hint": "Stoppa dessa andra containrar medan den här säkerhetskopieras och starta dem igen efteråt. En databas och en container som den här är beroende av i sin compose-fil startar före den. De andra startar efter den.",
   "stophook.noCandidates": "Inga andra installerade containrar hittades.",
   "stophook.remove": "Ta bort {name}",
   "export.exportedTo": "Exporterad till:",

@@ -960,7 +960,7 @@ const no: Partial<Translations> = {
   "notify.test": "Send test",
   "notify.anomaliesWhere": "Hvilke avvik som sender et varsel, velger du under {page}.",
   "stophook.title": "Stopp andre containere",
-  "stophook.hint": "Stopp disse andre containerne mens denne sikkerhetskopieres, og start dem igjen etterpå. En container som denne er avhengig av i compose-filen sin, for eksempel databasen, starter før den. De andre starter etter den.",
+  "stophook.hint": "Stopp disse andre containerne mens denne sikkerhetskopieres, og start dem igjen etterpå. En database og en container som denne er avhengig av i compose-filen sin, starter før den. De andre starter etter den.",
   "stophook.noCandidates": "Fant ingen andre installerte containere.",
   "stophook.remove": "Fjern {name}",
   "export.exportedTo": "Eksportert til:",

@@ -959,7 +959,7 @@ const nl: Partial<Translations> = {
   "notify.test": "Test versturen",
   "notify.anomaliesWhere": "Welke anomalieën een melding sturen, stel je in onder {page}.",
   "stophook.title": "Andere containers stoppen",
-  "stophook.hint": "Stop deze andere containers terwijl er een back-up van deze container wordt gemaakt en start ze daarna weer. Een container waarvan deze in zijn compose-bestand afhangt, zoals zijn database, start eerder. De rest start erna.",
+  "stophook.hint": "Stop deze andere containers terwijl er een back-up van deze container wordt gemaakt en start ze daarna weer. Een database en een container waarvan deze in zijn compose-bestand afhangt, starten eerder. De rest start erna.",
   "stophook.noCandidates": "Geen andere geïnstalleerde containers gevonden.",
   "stophook.remove": "{name} verwijderen",
   "export.exportedTo": "Geëxporteerd naar:",

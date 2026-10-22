@@ -963,7 +963,7 @@ const fr: Partial<Translations> = {
   "notify.test": "Envoyer un test",
   "notify.anomaliesWhere": "Vous choisissez sous {page} quelles anomalies envoient une notification.",
   "stophook.title": "Arrêter d'autres conteneurs",
-  "stophook.hint": "Arrêter ces autres conteneurs pendant la sauvegarde de celui-ci, puis les redémarrer. Un conteneur dont celui-ci dépend dans son fichier compose, comme sa base de données, démarre avant lui. Les autres démarrent après.",
+  "stophook.hint": "Arrêter ces autres conteneurs pendant la sauvegarde de celui-ci, puis les redémarrer. Une base de données et un conteneur dont celui-ci dépend dans son fichier compose démarrent avant lui. Les autres démarrent après.",
   "stophook.noCandidates": "Aucun autre conteneur installé trouvé.",
   "stophook.remove": "Supprimer {name}",
   "export.exportedTo": "Exporté vers :",

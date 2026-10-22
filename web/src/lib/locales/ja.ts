@@ -954,7 +954,7 @@ const ja: Partial<Translations> = {
   "notify.test": "テスト送信",
   "notify.anomaliesWhere": "どの異常で通知を送るかは、「{page}」で選べます。",
   "stophook.title": "他のコンテナを停止",
-  "stophook.hint": "このコンテナのバックアップ中に、これらの他のコンテナを停止し、その後に再び起動します。compose ファイルでこのコンテナが依存しているコンテナ（例えばデータベース）はこのコンテナより先に、それ以外は後に起動します。",
+  "stophook.hint": "このコンテナのバックアップ中に、これらの他のコンテナを停止し、その後に再び起動します。データベースと、compose ファイルでこのコンテナが依存しているコンテナはこのコンテナより先に、それ以外は後に起動します。",
   "stophook.noCandidates": "他にインストール済みのコンテナが見つかりません。",
   "stophook.remove": "{name} を削除",
   "export.exportedTo": "エクスポート先:",

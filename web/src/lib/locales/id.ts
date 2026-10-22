@@ -979,7 +979,7 @@ const id: Partial<Translations> = {
   "folders.cachedirToggle": "Lewati folder cache (CACHEDIR.TAG)",
   "folders.cachedirScope": "Berlaku untuk seluruh pencadangan kontainer ini, bukan hanya folder ini.",
   "stophook.title": "Hentikan container lain",
-  "stophook.hint": "Hentikan container lain ini selama container ini dicadangkan, lalu jalankan kembali. Container yang dibutuhkan container ini menurut file compose-nya, misalnya database-nya, dijalankan lebih dulu. Yang lain dijalankan setelahnya.",
+  "stophook.hint": "Hentikan container lain ini selama container ini dicadangkan, lalu jalankan kembali. Database dan container yang dibutuhkan container ini menurut file compose-nya dijalankan lebih dulu. Yang lain dijalankan setelahnya.",
   "stophook.noCandidates": "Tidak ditemukan container lain yang terinstal.",
   "stophook.remove": "Hapus {name}",
   "export.exportedTo": "Diekspor ke:",

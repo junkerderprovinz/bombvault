@@ -39,6 +39,23 @@ func TestDependsOnContainerReadsTheTargetsOwnDependencies(t *testing.T) {
 	}
 }
 
+// Unraid templates on a custom network reach their database by name, which no
+// label records, so a database listed under an app starts before it.
+func TestADatabaseInTheListStartsBeforeTheApp(t *testing.T) {
+	app := model.Inspect{Config: model.Config{Image: "authelia/authelia:latest"}}
+	mariadb := model.Inspect{Config: model.Config{Image: "lscr.io/linuxserver/mariadb:latest"}}
+	adminer := model.Inspect{Config: model.Config{Image: "adminer:latest"}}
+	if !startsBefore(app, "mariadb", mariadb) {
+		t.Fatal("the database of a template app starts after the app")
+	}
+	if startsBefore(app, "adminer", adminer) {
+		t.Fatal("an app that is no database started before the target")
+	}
+	if startsBefore(mariadb, "phpmyadmin", adminer) || startsBefore(mariadb, "other-db", mariadb) {
+		t.Fatal("what a database's own list holds started before the database")
+	}
+}
+
 // The hint suggests listing the database under its app, so an import into the
 // database stops that app as well as the database's own list.
 func TestAnImportStopsTheAppsThatListTheDatabase(t *testing.T) {

@@ -960,7 +960,7 @@ const ro: Partial<Translations> = {
   "notify.test": "Trimite test",
   "notify.anomaliesWhere": "Ce anomalii trimit o notificare stabilești la „{page}”.",
   "stophook.title": "Oprește alte containere",
-  "stophook.hint": "Oprește aceste alte containere în timp ce acesta este copiat de rezervă, apoi pornește-le din nou. Un container de care acesta depinde în fișierul său compose, de exemplu baza sa de date, pornește înaintea lui. Celelalte pornesc după el.",
+  "stophook.hint": "Oprește aceste alte containere în timp ce acesta este copiat de rezervă, apoi pornește-le din nou. O bază de date și un container de care acesta depinde în fișierul său compose pornesc înaintea lui. Celelalte pornesc după el.",
   "stophook.noCandidates": "Nu s-au găsit alte containere instalate.",
   "stophook.remove": "Elimină {name}",
   "export.exportedTo": "Exportat în:",

@@ -979,7 +979,7 @@ const eu: Partial<Translations> = {
   "folders.cachedirToggle": "Saltatu cache karpetak (CACHEDIR.TAG)",
   "folders.cachedirScope": "Edukiontzi honen babeskopia osoari aplikatzen zaio, ez bakarrik karpeta honi.",
   "stophook.title": "Gelditu beste edukiontzi batzuk",
-  "stophook.hint": "Gelditu beste edukiontzi hauek hau babesten den bitartean, eta abiarazi berriz gero. Honek bere compose fitxategian behar duen edukiontzia, adibidez bere datu-basea, haren aurretik abiarazten da. Besteak haren ondoren.",
+  "stophook.hint": "Gelditu beste edukiontzi hauek hau babesten den bitartean, eta abiarazi berriz gero. Datu-base bat eta honek bere compose fitxategian behar duen edukiontzia haren aurretik abiarazten dira. Besteak haren ondoren.",
   "stophook.noCandidates": "Ez da beste edukiontzi instalaturik aurkitu.",
   "stophook.remove": "Kendu {name}",
   "export.exportedTo": "Hona esportatuta:",
