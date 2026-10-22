@@ -115,7 +115,7 @@ beforeEach(() => {
   localStorage.clear();
   vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, json: async () => ({ ok: true }) }));
   getStorageLocation.mockResolvedValue({ ok: true, location: LOCAL });
-  getSettings.mockResolvedValue({ ok: true, settings: SETTINGS, hostMountRoot: "/host/user", platform: "" });
+  getSettings.mockResolvedValue({ ok: true, settings: SETTINGS, hostMountRoot: "/host/user", platform: "", revision: "r1" });
   putSettings.mockResolvedValue({ ok: true });
   vi.mocked(api.getProviders).mockResolvedValue({ ok: true, providers: [] });
 });
@@ -151,7 +151,7 @@ describe("the folders of a local location", () => {
     const reads = getStorageLocation.mock.calls.length;
     await click(within(dialog).getByRole("button", { name: "Done" }));
 
-    expect(putSettings).toHaveBeenCalledWith(expect.objectContaining({ vmsPath: "backups/machines", containersPath: "backups/bombvault/containers" }));
+    expect(putSettings).toHaveBeenCalledWith(expect.objectContaining({ vmsPath: "backups/machines", containersPath: "backups/bombvault/containers" }), "r1");
     expect(screen.queryByRole("dialog")).toBeNull();
     expect(getStorageLocation.mock.calls.length).toBeGreaterThan(reads);
   });
@@ -167,7 +167,7 @@ describe("the folders of a local location", () => {
     });
     await click(within(dialog).getByRole("button", { name: "Done" }));
 
-    expect(putSettings).toHaveBeenCalledWith(expect.objectContaining({ containersPath: "rest:http://nas:8000/tower" }));
+    expect(putSettings).toHaveBeenCalledWith(expect.objectContaining({ containersPath: "rest:http://nas:8000/tower" }), "r1");
   });
 
   it("saves a section's compression from that window at once", async () => {
@@ -177,7 +177,23 @@ describe("the folders of a local location", () => {
     const dialog = screen.getByRole("dialog", { name: "Containers path" });
     await click(within(dialog).getByRole("radio", { name: "Maximum" }));
 
-    expect(putSettings).toHaveBeenCalledWith(expect.objectContaining({ compression: { containers: "max" } }));
+    expect(putSettings).toHaveBeenCalledWith(expect.objectContaining({ compression: { containers: "max" } }), "r1");
+  });
+
+  it("lays the typed folder on the settings as they are now when another window changed them", async () => {
+    await renderPage();
+    await openTyped(1);
+    getSettings.mockResolvedValue({ ok: true, settings: { ...SETTINGS, containersPath: "backups/moved" }, hostMountRoot: "/host/user", platform: "", revision: "r2" });
+    putSettings.mockResolvedValueOnce({ ok: false, code: "settings-stale", error: "stale" });
+
+    const dialog = screen.getByRole("dialog", { name: "VMs path" });
+    await act(async () => {
+      fireEvent.change(within(dialog).getByDisplayValue("backups/bombvault/vms"), { target: { value: "backups/machines" } });
+    });
+    await click(within(dialog).getByRole("button", { name: "Done" }));
+
+    expect(putSettings).toHaveBeenCalledTimes(2);
+    expect(putSettings).toHaveBeenLastCalledWith(expect.objectContaining({ vmsPath: "backups/machines", containersPath: "backups/moved" }), "r2");
   });
 
   it("says why the server refused a path and saves nothing more on Done", async () => {

@@ -6,9 +6,9 @@ import {
   listContainers,
   listOffsiteTargets,
   listVMs,
-  putSettings,
   type OffsiteTarget,
 } from "../../lib/api";
+import { putSettingsPatch } from "../../lib/settingsPatch";
 import { subscribeOffsiteTargets } from "../../lib/useOffsiteTargets";
 import { useConfirm } from "../../lib/useConfirm";
 import { pushSaveWarnings } from "../../lib/placementCodes";
@@ -27,6 +27,16 @@ function settleHookClears(s: Settings): Settings {
     everythingPreHookSet: everythingPreHookClear ? false : s.everythingPreHookSet,
     everythingPostHookSet: everythingPostHookClear ? false : s.everythingPostHookSet,
   };
+}
+
+/** rebaseSettings moves the live settings from base onto fresh: a field the
+ *  page shows as base had it takes the fresh value, an edit of its own stays. */
+export function rebaseSettings(live: Settings, base: Settings, fresh: Settings): Settings {
+  const out: Record<string, unknown> = { ...fresh };
+  for (const key of Object.keys(live) as (keyof Settings)[]) {
+    if (JSON.stringify(live[key]) !== JSON.stringify(base[key])) out[key] = live[key];
+  }
+  return out as unknown as Settings;
 }
 
 // useSettingsStore loads the settings and owns every write to them.
@@ -60,6 +70,10 @@ export function useSettingsStore() {
   // queueSettingsWrite below makes sure the ref is read after the previous
   // write has landed and moved it.
   const savedBaseline = useRef<Settings | null>(null);
+  // savedRevision names the server state savedBaseline was read at. Another
+  // tab or window can change the settings meanwhile, and a PUT of the
+  // baseline would write their old values back.
+  const savedRevision = useRef<string | undefined>(undefined);
   // settingsWrites serializes every settings write on this page (saves and the
   // settings import), so a full-object PUT is never built from a baseline that
   // another in-flight PUT is about to replace. It is a promise chain rather than
@@ -138,9 +152,10 @@ export function useSettingsStore() {
   // state and the confirmed baseline. The mount load and the reload after a
   // settings import both use it, since an import replaces the whole
   // configuration.
-  function installSettings(s: Settings) {
+  function installSettings(s: Settings, revision: string | undefined) {
     setSettings(s);
     savedBaseline.current = s;
+    savedRevision.current = revision;
   }
 
   function loadSettings() {
@@ -148,7 +163,7 @@ export function useSettingsStore() {
     getSettings()
       .then((res) => {
         if (res.ok) {
-          installSettings(res.settings);
+          installSettings(res.settings, res.revision);
           if (res.hostMountRoot) setHostMountRoot(res.hostMountRoot);
           if (res.platform) setPlatformKind(res.platform);
           setPlatformSet(res.platformSet === true);
@@ -239,15 +254,21 @@ export function useSettingsStore() {
     setSaveError(null);
     // Persist only this card's fields, merged onto the server baseline rather
     // than the live `settings`, which may hold unsaved edits from other cards.
-    const updated: Settings = { ...base, ...patch };
     try {
-      const res = await putSettings(updated);
+      const { res, sent, revision, fresh } = await putSettingsPatch(base, savedRevision.current, patch);
+      savedRevision.current = revision;
+      if (fresh) {
+        // What changed elsewhere shows up too, except where a card here
+        // holds an edit of its own.
+        savedBaseline.current = fresh;
+        setSettings((prev) => (prev ? rebaseSettings(prev, base, fresh) : fresh));
+      }
       if (res.ok) {
         // Advance the baseline; reflect just the saved fields in the live state so
         // other cards' in-progress edits are left untouched.
-        savedBaseline.current = settleHookClears(updated);
+        savedBaseline.current = settleHookClears(sent);
         setSettings((prev) =>
-          settleHookClears(prev ? { ...prev, ...patch, ...(echo ? echo(prev) : null) } : updated)
+          settleHookClears(prev ? { ...prev, ...patch, ...(echo ? echo(prev) : null) } : sent)
         );
         setSaveState("idle");
         setFieldPulse((p) => {
@@ -468,7 +489,7 @@ export function useSettingsStore() {
         if (!res.ok) return res;
         const fresh = await getSettings();
         if (fresh.ok) {
-          installSettings(fresh.settings);
+          installSettings(fresh.settings, fresh.revision);
           if (fresh.hostMountRoot) setHostMountRoot(fresh.hostMountRoot);
           if (fresh.platform) setPlatformKind(fresh.platform);
           setPlatformSet(fresh.platformSet === true);

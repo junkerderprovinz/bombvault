@@ -61,11 +61,13 @@ function baseSettings(over: Partial<Settings> = {}): Settings {
 /** One controllable PUT: the test decides when (and how) it resolves. */
 type Pending = {
   body: Settings;
-  resolve: (v: { ok: boolean; error?: string }) => void;
+  revision?: string;
+  resolve: (v: { ok: boolean; error?: string; code?: string }) => void;
 };
 
 const putCalls: Pending[] = [];
 let settingsOnServer = baseSettings();
+let revisionOnServer = "r1";
 let importApplyResult: { ok: boolean; error?: string } = { ok: true, applied: true };
 const importApplyCalls: string[] = [];
 
@@ -74,10 +76,10 @@ vi.mock("../lib/api", async (importOriginal) => {
   return {
     ...actual,
     getSettings: () =>
-      Promise.resolve({ ok: true, settings: settingsOnServer, hostMountRoot: "/host/user", platform: "unraid" }),
-    putSettings: (s: Settings) =>
+      Promise.resolve({ ok: true, settings: settingsOnServer, hostMountRoot: "/host/user", platform: "unraid", revision: revisionOnServer }),
+    putSettings: (s: Settings, revision?: string) =>
       new Promise((resolve) => {
-        putCalls.push({ body: s, resolve });
+        putCalls.push({ body: s, revision, resolve });
       }),
     getAuth: () => Promise.resolve({ enabled: false, authed: false }),
     listContainers: () => Promise.resolve({ ok: true, containers: [] }),
@@ -176,6 +178,7 @@ beforeEach(() => {
   putCalls.length = 0;
   importApplyCalls.length = 0;
   settingsOnServer = baseSettings();
+  revisionOnServer = "r1";
   importApplyResult = { ok: true, applied: true };
 });
 
@@ -295,6 +298,31 @@ describe("a settings import", { timeout: 15000 }, () => {
 
     await act(async () => {
       putCalls[0].resolve({ ok: true });
+    });
+  });
+});
+
+describe("a change made in another tab", { timeout: 15000 }, () => {
+  it("is not written back by the next click here", async () => {
+    await renderPage();
+    // Another tab moved the containers folder after this one loaded.
+    settingsOnServer = baseSettings({ containersPath: "backups/moved" });
+    revisionOnServer = "r2";
+
+    fireEvent.click(toggle(en["settings.containersEnabled"]));
+    await waitFor(() => expect(putCalls.length).toBe(1));
+    expect(putCalls[0].revision).toBe("r1");
+    await act(async () => {
+      putCalls[0].resolve({ ok: false, code: "settings-stale", error: "stale" });
+    });
+
+    await waitFor(() => expect(putCalls.length).toBe(2));
+    expect(putCalls[1].revision).toBe("r2");
+    expect(putCalls[1].body.containersPath).toBe("backups/moved");
+    expect(putCalls[1].body.containersEnabled).toBe(true);
+
+    await act(async () => {
+      putCalls[1].resolve({ ok: true });
     });
   });
 });
