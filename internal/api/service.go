@@ -450,6 +450,11 @@ type Service struct {
 	// (design spec, decision 7).
 	everythingActive atomic.Bool
 
+	// selectionActive is the single-flight guard for a backup of a selection
+	// that spans several kinds (StartBackupSelection). Each kind's batch still
+	// takes batchActive while it runs.
+	selectionActive atomic.Bool
+
 	// suggestMu guards suggestCache, the exclusion assistant's snapshot-aggregate
 	// cache: ONE entry per container, keyed inside on (repo, snapshot id, resolved
 	// excludes), so a rescan is instant until the next backup writes a newer
@@ -811,6 +816,15 @@ func backupHardCap() time.Duration {
 		return 0 // unlimited
 	}
 	return time.Duration(n) * time.Hour
+}
+
+// withBackupCap bounds ctx by backupHardCap, or only makes it cancellable when
+// the cap is off.
+func withBackupCap(ctx context.Context) (context.Context, context.CancelFunc) {
+	if cap := backupHardCap(); cap > 0 {
+		return context.WithTimeout(ctx, cap)
+	}
+	return context.WithCancel(ctx)
 }
 
 // backupHoldCtx detaches ctx from the caller's cancellation (keeping its values)
@@ -12701,26 +12715,6 @@ func (s *Service) removeStrayOverlays(diskPaths []string) {
 	}
 }
 
-// failVMBackup makes a pre-orchestrator VM backup failure visible: it records a
-// failed run against the VM's existing target (so it shows in the dashboard run
-// history) and fires a notification. Used for failures that happen BEFORE the
-// orchestrator starts its own run (overlay recovery, the running-state check) so
-// a destructive/aborted attempt is never silent — especially for scheduled
-// backups where the HTTP error is not seen. Best-effort: any bookkeeping error
-// is ignored (the real cause is already being returned to the caller).
-func (s *Service) failVMBackup(ctx context.Context, name string, cause error) {
-	if tg, err := s.store.GetVMTargetByName(name); err == nil {
-		if runID, sErr := s.startRun(ctx, tg.ID, "backup"); sErr == nil {
-			msg := cause.Error()
-			if len(msg) > 500 {
-				msg = msg[:500]
-			}
-			_ = s.store.FinishRun(runID, "failed", "", 0, msg)
-		}
-	}
-	s.notifyBackup(ctx, "VM", name, "", false, backup.Summary{}, cause)
-}
-
 // vmDiskContainerPaths is where restic reads the file disks of domain through
 // the Host Data mount, the paths a VM definition stores. A domain with no disk
 // at all, or with a file disk outside the mount, is an error: a snapshot of it
@@ -12818,7 +12812,9 @@ func (s *Service) BackupVM(ctx context.Context, name string) (_ backup.Summary, 
 	// and we back up the real base disk (not just the overlay). No-op otherwise.
 	xmlStr, domain, err = s.recoverLeftoverOverlay(ctx, name, xmlStr, domain)
 	if err != nil {
-		s.failVMBackup(ctx, name, err) // attempted/needed a destructive commit — don't fail silently
+		// A VM left on an overlay needs someone to act, so this failure is sent
+		// as a message as well; BackupVM's finisher records the run.
+		s.notifyBackup(ctx, "VM", name, "", false, backup.Summary{}, err)
 		return backup.Summary{}, err
 	}
 
@@ -12972,6 +12968,7 @@ func (s *Service) BackupVM(ctx context.Context, name string) (_ backup.Summary, 
 		ZFSHost:          sshZFSHost{ssh: s.ssh},
 		ZvolRestic:       &resticZvolAdapter{engine: step.engine, mode: mode, extraTags: withTags(s.directTags(settings, "vms", repo), beforeRestoreTags(ctx))},
 		DomainXML:        defXML,
+		Restarts:         vmRestarts{st: s.store},
 	}
 	// With changed-block backups on, a running VM with qcow2 disks is read
 	// through the libvirt backup API instead; anything else keeps the method.
@@ -12994,7 +12991,7 @@ func (s *Service) BackupVM(ctx context.Context, name string) (_ backup.Summary, 
 		running, aerr := s.virsh.IsActive(ctx, name)
 		if aerr != nil {
 			e := fmt.Errorf("backup vm: check running state: %w", aerr)
-			s.failVMBackup(ctx, name, e)
+			s.notifyBackup(ctx, "VM", name, "", false, backup.Summary{}, e)
 			return backup.Summary{}, e
 		}
 		if running {
@@ -14073,6 +14070,12 @@ func (s *Service) BackupFlash(ctx context.Context) (_ backup.Summary, retErr err
 	// Whether this attempt succeeds or not: a backup that failed on a full disk
 	// is the reading the capacity rule most needs.
 	defer s.sampleVolumesFor(ctx, "flash")
+	orchestrated := false
+	defer func() {
+		if retErr != nil && !orchestrated && !errors.Is(retErr, ErrNoPlace) {
+			s.failSingletonPreflight(ctx, "flash", store.FlashTargetID, retErr)
+		}
+	}()
 	settings, err := s.store.GetSettings()
 	if err != nil {
 		return backup.Summary{}, fmt.Errorf("read settings: %w", err)
@@ -14098,6 +14101,7 @@ func (s *Service) BackupFlash(ctx context.Context) (_ backup.Summary, retErr err
 	// Healthchecks /start ping: deferred to here, past the /boot-mounted + EnsureRepo
 	// guards, so the paired done/fail notifyBackup below always follows (no dangling /start).
 	s.notifyBackupStart(ctx, "flash")
+	orchestrated = true
 	fctx, startedAt := s.progBegin(ctx, "flash", "backup")
 	sum, err := backup.BackupFlash(fctx, backup.FlashBackupDeps{
 		SourceDir: s.cfg.FlashDir,
@@ -14294,6 +14298,15 @@ func (s *Service) BackupFileSet(ctx context.Context, id string) (_ backup.Summar
 	// which is worth cancelling.
 	s.registerBackupCancel(ctx, "files:"+set.Name, cancel)
 	defer s.endBackupCancel("files:"+set.Name, &retErr)
+	// Everything down to the orchestrator returns before it records a run, so
+	// a failure there is recorded and sent here, as Backup does.
+	orchestrated := false
+	defer func() {
+		if retErr != nil && !orchestrated && !errors.Is(retErr, ErrNoPlace) {
+			s.recordPreflightFailure(ctx, "BackupFileSet", set.Name, set.ID, retErr)
+			s.notifyBackup(ctx, "files", set.Name, "files:"+set.Name, false, backup.Summary{}, retErr)
+		}
+	}()
 	// A set without a path cannot be backed up (Discover creates path-less,
 	// disabled sets from fileset: tags alone) — say so instead of letting
 	// paths.Resolve report a misleading traversal error for "".
@@ -14305,21 +14318,7 @@ func (s *Service) BackupFileSet(ctx context.Context, id string) (_ backup.Summar
 		return backup.Summary{}, fmt.Errorf("files backup: resolve source path for %q: %w", set.Name, err)
 	}
 	if _, statErr := os.Stat(src); errors.Is(statErr, fs.ErrNotExist) {
-		// Record the miss as a failed run so a scheduled backup of a renamed or
-		// deleted folder shows up in Run History instead of failing invisibly.
-		err := fmt.Errorf("files backup: source path not found for %q (%s does not exist under the host mount)", set.Name, src)
-		if runID, sErr := s.startRun(ctx, set.ID, "backup"); sErr != nil {
-			log.Printf("api: files backup: %q: record missing-path run: %v", set.Name, sErr) //nolint:gosec // G706: name is %q-quoted
-			// truncateRunErr, like every other FinishRun in this file: it is "the one
-			// function that writes runs.error", and this was the only call site
-			// bypassing it. Both halves matter here — the message embeds the resolved
-			// host path (scrub), and a file set's name and path are never
-			// length-validated at creation, so an arbitrarily long string could reach
-			// runs.error uncapped and travel on into the weekly digest.
-		} else if fErr := s.store.FinishRun(runID, "failed", "", 0, truncateRunErr(err)); fErr != nil {
-			log.Printf("api: files backup: %q: finish missing-path run: %v", set.Name, fErr) //nolint:gosec // G706: name is %q-quoted
-		}
-		return backup.Summary{}, err
+		return backup.Summary{}, fmt.Errorf("files backup: source path not found for %q (%s does not exist under the host mount)", set.Name, src)
 	}
 	// The set's OWN repository if it has one (#204), otherwise the domain's.
 	// Everything below takes `repo` as a parameter - EnsureRepo, the run record,
@@ -14353,18 +14352,13 @@ func (s *Service) BackupFileSet(ctx context.Context, id string) (_ backup.Summar
 			if eErr != nil {
 				reason = fmt.Sprintf("source folder for %q could not be read (%s): %v", set.Name, src, eErr)
 			}
-			err := fmt.Errorf("files backup: %s", reason)
-			if runID, sErr := s.startRun(ctx, set.ID, "backup"); sErr != nil {
-				log.Printf("api: files backup: %q: record failed run: %v", set.Name, sErr) //nolint:gosec // G706: name is %q-quoted
-			} else if fErr := s.store.FinishRun(runID, "failed", "", 0, truncateRunErr(err)); fErr != nil {
-				log.Printf("api: files backup: %q: finish failed run: %v", set.Name, fErr) //nolint:gosec // G706: name is %q-quoted
-			}
-			return backup.Summary{}, err
+			return backup.Summary{}, fmt.Errorf("files backup: %s", reason)
 		}
 	}
 	// Healthchecks /start ping: deferred to here, past the source-exists + EnsureRepo
 	// guards, so the paired done/fail notifyBackup below always follows (no dangling /start).
 	s.notifyBackupStart(ctx, "files")
+	orchestrated = true
 	key := "files:" + set.Name
 	fctx, startedAt := s.progBegin(ctx, key, "backup")
 	// The single compile site for the files domain (D-05): the set was read
@@ -15629,6 +15623,12 @@ func (s *Service) BackupConfig(ctx context.Context) (_ backup.Summary, retErr er
 	// Whether this attempt succeeds or not: a backup that failed on a full disk
 	// is the reading the capacity rule most needs.
 	defer s.sampleVolumesFor(ctx, "config")
+	orchestrated := false
+	defer func() {
+		if retErr != nil && !orchestrated && !errors.Is(retErr, ErrNoPlace) {
+			s.failSingletonPreflight(ctx, "config", store.ConfigTargetID, retErr)
+		}
+	}()
 	settings, err := s.store.GetSettings()
 	if err != nil {
 		return backup.Summary{}, fmt.Errorf("read settings: %w", err)
@@ -15658,6 +15658,7 @@ func (s *Service) BackupConfig(ctx context.Context) (_ backup.Summary, retErr er
 	// Healthchecks /start ping: deferred to here, past staging + EnsureRepo guards,
 	// so the paired done/fail notifyBackup below always follows (no dangling /start).
 	s.notifyBackupStart(ctx, "config")
+	orchestrated = true
 	fctx, startedAt := s.progBegin(ctx, "config", "backup")
 	sum, err := backup.BackupConfig(fctx, backup.ConfigBackupDeps{
 		SourceDir: stagingDir,
@@ -17605,7 +17606,7 @@ func (s *Service) UnlockDomain(ctx context.Context, domain, source string) ([]st
 }
 
 // PruneDomain reclaims repository space freed by forgotten snapshots
-// (restic prune). Bounded by a generous timeout — pruning a large repo is slow.
+// (restic prune). Bounded by the backup cap, since pruning a large repo is slow.
 // Once the domain lock is held it publishes "maintenance" progress, with
 // restic's counts for each step of the prune, and records a "prune" run, so a
 // manual or scheduled prune shows up on the dashboard activity log and run
@@ -17714,8 +17715,10 @@ func (s *Service) pruneDomain(ctx context.Context, domain, source string, afterB
 		return nil, errDomainBusy
 	}
 	defer unlock()
-	// Per repository, like the other three (see CheckDomain).
-	ctx, cancel := context.WithTimeout(ctx, time.Duration(len(repos))*30*time.Minute)
+	// A prune that repacks a large repository over a slow uplink runs for
+	// hours, and one cut off redoes the same work the next night, so it gets
+	// the backup's own cap rather than a fixed allowance per repository.
+	ctx, cancel := withBackupCap(ctx)
 	defer cancel()
 
 	pkey := "prune:" + domain
@@ -19153,6 +19156,15 @@ func (s *Service) recordPreflightFailure(ctx context.Context, kind, name, target
 	if err := s.store.FinishRun(runID, "failed", "", 0, truncateRunErr(cause)); err != nil {
 		log.Printf("api: %s: %q: finish failed run: %v", kind, name, err) //nolint:gosec // G706: see above
 	}
+}
+
+// failSingletonPreflight records and sends a flash or config backup that failed
+// before its run started. Their schedules keep no aggregate result, so without
+// the message a backup that cannot reach its repository fails every night
+// unseen.
+func (s *Service) failSingletonPreflight(ctx context.Context, domain, targetID string, cause error) {
+	s.recordPreflightFailure(ctx, "Backup "+domain, domain, targetID, cause)
+	s.notifyBackup(ctx, domain, "", domain, false, backup.Summary{}, cause)
 }
 
 // notifyBackupStart pings the Healthchecks /start endpoint at the beginning of a

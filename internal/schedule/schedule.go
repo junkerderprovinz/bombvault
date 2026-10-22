@@ -303,13 +303,25 @@ type DomainGateStore interface {
 	ListFileSets() ([]store.FileSet, error)
 	ListZFSDatasets() ([]store.ZFSDataset, error)
 	LastSuccessfulBackupAmong(ids []string) (time.Time, error)
+	LastScheduleJobRun(job string) (time.Time, error)
 }
 
-// ContainersDueGate returns the containers everyN due-gate query: the last
-// successful backup among the items the domain run covers, filtered the way the
-// domain job filters them. Counting any container's newest success instead would
-// let one container on its own daily cadence keep the gate closed for all the
-// others. A store error is returned rather than read as a zero time, because the
+// domainPassGate answers with when the domain's scheduled pass last backed
+// something up. Until a pass has recorded that, as on a database from an older
+// version, it falls back to the newest success among ids.
+func domainPassGate(st DomainGateStore, domain string, ids []string) (time.Time, error) {
+	at, err := st.LastScheduleJobRun(store.ScheduleJobDomainPass(domain))
+	if err != nil || !at.IsZero() {
+		return at, err
+	}
+	return st.LastSuccessfulBackupAmong(ids)
+}
+
+// ContainersDueGate returns the containers everyN due-gate query: when the
+// domain's scheduled pass last backed something up. Its fallback counts only
+// the items the domain run covers, filtered the way the domain job filters
+// them; counting any container's newest success instead would let one
+// container on its own daily cadence keep the gate closed for all the others. A store error is returned rather than read as a zero time, because the
 // gate skips a fire it cannot judge and a zero time would mean due.
 func ContainersDueGate(st DomainGateStore) LastRunFunc {
 	return func() (time.Time, error) {
@@ -327,7 +339,7 @@ func ContainersDueGate(st DomainGateStore) LastRunFunc {
 				ids = append(ids, t.ID)
 			}
 		}
-		return st.LastSuccessfulBackupAmong(ids)
+		return domainPassGate(st, "containers", ids)
 	}
 }
 
@@ -348,7 +360,7 @@ func VMsDueGate(st DomainGateStore) LastRunFunc {
 				ids = append(ids, v.ID)
 			}
 		}
-		return st.LastSuccessfulBackupAmong(ids)
+		return domainPassGate(st, "vms", ids)
 	}
 }
 
@@ -371,7 +383,7 @@ func FilesDueGate(st DomainGateStore) LastRunFunc {
 				ids = append(ids, fs.ID)
 			}
 		}
-		return st.LastSuccessfulBackupAmong(ids)
+		return domainPassGate(st, "files", ids)
 	}
 }
 
@@ -392,7 +404,7 @@ func ZFSDueGate(st DomainGateStore) LastRunFunc {
 				ids = append(ids, d.ID)
 			}
 		}
-		return st.LastSuccessfulBackupAmong(ids)
+		return domainPassGate(st, "zfs", ids)
 	}
 }
 
@@ -1100,9 +1112,9 @@ func (s *Scheduler) jobLastRun(job string) LastRunFunc {
 // trigger runs the pass again.
 //
 // The gate cannot see a pass that is still running, since the stamp is written
-// at the end. That is safe while recordJobRun ends a single cron entry, which
-// SkipIfStillRunning serialises, and nothing else calls it. A second caller
-// needs an in-flight guard first, or overlapping passes would each run a DR
+// at the end. That is safe while each job name is stamped by a single cron
+// entry, which SkipIfStillRunning serialises. A second caller for a name needs
+// an in-flight guard first, or overlapping drill passes would each run a DR
 // restore.
 func (s *Scheduler) recordJobRun(job string) {
 	store := s.jobRuns
@@ -1260,7 +1272,7 @@ func (s *Scheduler) ReloadWithGates(settings store.Settings, g DueGates) error {
 					return
 				}
 				defer s.openRun("containers")()
-				s.runAggregatedHC("containers", func() (int, int, []ItemFailure) {
+				s.runDomainPass("containers", func() (int, int, []ItemFailure) {
 					return RunContainersJob(targets, s.backup)
 				})
 				// Compose project directories, once per run and before the prune
@@ -1304,7 +1316,7 @@ func (s *Scheduler) ReloadWithGates(settings store.Settings, g DueGates) error {
 					return
 				}
 				defer s.openRun("vms")()
-				s.runAggregatedHC("vms", func() (int, int, []ItemFailure) {
+				s.runDomainPass("vms", func() (int, int, []ItemFailure) {
 					return RunVMsJob(vms, s.backupVM)
 				})
 				if s.pruneAfterBulkFn != nil {
@@ -1365,7 +1377,7 @@ func (s *Scheduler) ReloadWithGates(settings store.Settings, g DueGates) error {
 					return
 				}
 				defer s.openRun("files")()
-				s.runAggregatedHC("files", func() (int, int, []ItemFailure) {
+				s.runDomainPass("files", func() (int, int, []ItemFailure) {
 					return RunFilesJob(sets, s.backupFiles)
 				})
 				if s.pruneAfterBulkFn != nil {
@@ -1396,7 +1408,7 @@ func (s *Scheduler) ReloadWithGates(settings store.Settings, g DueGates) error {
 					return
 				}
 				defer s.openRun("zfs")()
-				s.runAggregatedHC("zfs", func() (int, int, []ItemFailure) {
+				s.runDomainPass("zfs", func() (int, int, []ItemFailure) {
 					return RunZFSJob(ds, s.backupZFS)
 				})
 				if s.pruneAfterBulkFn != nil {
@@ -2108,13 +2120,23 @@ func immutableOffsiteDomains(settings store.Settings) []string {
 // runAggregatedHC runs a scheduled item loop between one Healthchecks start ping
 // and one result ping, when SetHealthchecksAggregator has wired them. run returns
 // the attempted and failed counts and the failures for the summary notification.
-func (s *Scheduler) runAggregatedHC(domain string, run func() (attempted, failed int, failures []ItemFailure)) {
+func (s *Scheduler) runAggregatedHC(domain string, run func() (attempted, failed int, failures []ItemFailure)) (attempted, failed int) {
 	if s.hcRunStart != nil {
 		s.hcRunStart(domain)
 	}
 	attempted, failed, failures := run()
 	if s.hcRunFinish != nil {
 		s.hcRunFinish(domain, attempted, failed, failures)
+	}
+	return attempted, failed
+}
+
+// runDomainPass is runAggregatedHC for a domain's own scheduled pass. A pass
+// that backed anything up is recorded for the domain's everyN due-gate; one
+// where every item failed is not, so the next fire tries again.
+func (s *Scheduler) runDomainPass(domain string, run func() (int, int, []ItemFailure)) {
+	if attempted, failed := s.runAggregatedHC(domain, run); attempted > failed {
+		s.recordJobRun(store.ScheduleJobDomainPass(domain))
 	}
 }
 

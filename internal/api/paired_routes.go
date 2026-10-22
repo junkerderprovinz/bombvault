@@ -82,6 +82,7 @@ var pairedRoutes = map[string]bool{
 
 	// Starting a backup or a copy, checking one, and stopping a run.
 	"POST /api/backup-everything":             true,
+	"POST /api/backup/selection":              true,
 	"POST /api/containers/backup-all":         true,
 	"POST /api/containers/{name}/backup":      true,
 	"POST /api/vms/backup-all":                true,

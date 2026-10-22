@@ -822,6 +822,8 @@ function knownSentence(status: number, code: string | undefined): string | undef
       return translate("apiError.noPlace");
     case "no-location":
       return translate("apiError.noLocation");
+    case "domain-busy":
+      return translate("apiError.domainBusy");
     case "relay-refused":
       return translate(status === 413 ? "apiError.relayTooLarge" : "apiError.relayRefused");
     default:
@@ -4537,6 +4539,29 @@ export function backupConfigNow(): Promise<BackupResponse> {
  */
 export function backupEverythingNow(): Promise<OkEnvelope & { started?: boolean }> {
   return fetchJSON("/api/backup-everything", { method: "POST" });
+}
+
+/** One kind's share of a selection to back up, in the order the kinds run. */
+export interface SelectionPart {
+  kind: string;
+  keys: string[];
+}
+
+/** A kind POST /api/backup/selection left out before the start, with the code
+ *  of the refusal when it has one. */
+export interface SelectionRefused {
+  kind: string;
+  code?: string;
+  error: string;
+}
+
+/** POST /api/backup/selection: back up entries of several kinds one kind
+ *  after the other on the server, which goes on when the page is left.
+ *  Answers once the first kind has started, with the kinds refused before
+ *  the start; the selection reports on the "backup-selection" progress key.
+ *  Throws ApiError(409) while another backup runs. */
+export function backupSelection(parts: SelectionPart[]): Promise<OkEnvelope & { refused?: SelectionRefused[] }> {
+  return fetchJSON("/api/backup/selection", { method: "POST", body: JSON.stringify({ parts }) });
 }
 
 /**

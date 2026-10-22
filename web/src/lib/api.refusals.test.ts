@@ -117,6 +117,13 @@ describe("a refused settings change", () => {
     expect((err as Error).message).toBe(en["apiError.noLocation"]);
   });
 
+  it("says in the person's language that another task holds the section", async () => {
+    answers(409, { ok: false, error: "prune is running on containers", code: "domain-busy" });
+    const api = await import("./api");
+    const err = await api.backupAll(["plex"]).catch((e: unknown) => e);
+    expect((err as Error).message).toBe(en["apiError.domainBusy"]);
+  });
+
   it("leaves a call its caller stopped as the AbortError it expects", async () => {
     fetchMock.mockRejectedValue(new DOMException("aborted", "AbortError"));
     const api = await import("./api");

@@ -5518,6 +5518,8 @@ type fakeResticEngine struct {
 	unlockedRepos   []string
 	unlockRemoveAll []bool
 	manualPruned    []string
+	// pruneDeadlines is the time each Prune call had left, 0 for none.
+	pruneDeadlines  []time.Duration
 	cacheCleanups   int // CacheCleanup call count (persistent-cache trim)
 	snapshotsCalls  int
 	snapshotsErr    error
@@ -6061,7 +6063,12 @@ func (f *fakeResticEngine) Unlock(_ context.Context, repo string, removeAll bool
 	return f.unlockErr
 }
 
-func (f *fakeResticEngine) Prune(_ context.Context, repo string, m restic.Mode) error {
+func (f *fakeResticEngine) Prune(ctx context.Context, repo string, m restic.Mode) error {
+	var left time.Duration
+	if d, ok := ctx.Deadline(); ok {
+		left = time.Until(d)
+	}
+	f.pruneDeadlines = append(f.pruneDeadlines, left)
 	f.manualPruned = append(f.manualPruned, repo)
 	f.prunedModes = append(f.prunedModes, m)
 	return f.pruneErr

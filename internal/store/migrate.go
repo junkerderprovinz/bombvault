@@ -3336,6 +3336,16 @@ INSERT OR IGNORE INTO sign_ins_note (id) VALUES (1);`,
 		sql: `ALTER TABLE key_deposits_sent ADD COLUMN pending_digest TEXT NOT NULL DEFAULT '';
 ALTER TABLE key_deposits_sent ADD COLUMN pending_held_digest TEXT NOT NULL DEFAULT '';`,
 	},
+	{
+		// The VMs a graceful backup shut down, so a process that dies before
+		// starting them again does it at boot.
+		version: vmRestartMigration,
+		name:    "vm_restart_pending",
+		sql: `CREATE TABLE IF NOT EXISTS vm_restart_pending (
+  name     TEXT    PRIMARY KEY,
+  added_at INTEGER NOT NULL
+);`,
+	},
 }
 
 // offsiteFieldDomains are the domains with an off-site field in the settings,
@@ -3569,6 +3579,9 @@ const roleWithdrawalsMigration = 450
 // depositPendingMigration numbers the deposit a keeper may hold without
 // having answered for it.
 const depositPendingMigration = 451
+
+// vmRestartMigration numbers the record of the VMs a backup shut down.
+const vmRestartMigration = 460
 
 // oneLineColumns are the names and locations the recovery kit prints.
 var oneLineColumns = []struct {

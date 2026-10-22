@@ -215,6 +215,10 @@ async function stage(page: Page, s: Stage = {}): Promise<{ posts: string[] }> {
   for (const kind of ["flash", "config"]) {
     await page.route(`**/api/${kind}/backup`, (route) => route.fulfill({ json: { ok: true, started: true } }));
   }
+  await page.route("**/api/backup/selection", (route) => {
+    posts.push(`/api/backup/selection ${route.request().postData() ?? ""}`);
+    return route.fulfill({ json: { ok: true, refused: [] } });
+  });
   const patched = (route: Route) => {
     const req = route.request();
     if (req.method() !== "PATCH") return route.fallback();
@@ -558,9 +562,11 @@ test("rows are picked like files and acted on together", async ({ page }, testIn
   await page.keyboard.press("ControlOrMeta+a");
   await expect(bar).toContainText(`${ENTRY_COUNT} ausgewählt`);
   await bar.getByRole("button", { name: "Auswahl sichern" }).click();
-  // One batch per kind, and what is gone is left out of them.
-  await expect.poll(() => posts.some((p) => p.startsWith("/api/containers/backup-all"))).toBe(true);
-  expect(posts.find((p) => p.startsWith("/api/containers/backup-all"))).not.toContain("pihole");
+  // Every kind goes to the server in one call, and what is gone is left out.
+  await expect.poll(() => posts.some((p) => p.startsWith("/api/backup/selection"))).toBe(true);
+  const selection = posts.find((p) => p.startsWith("/api/backup/selection"))!;
+  expect(selection).toContain('"kind":"container"');
+  expect(selection).not.toContain("pihole");
 
   await page.keyboard.press("Escape");
   await expect(bar).toBeHidden();

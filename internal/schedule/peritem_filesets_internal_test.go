@@ -14,6 +14,8 @@ type fakeGateStore struct {
 	zfs      []store.ZFSDataset
 	settings store.Settings
 	askedFor []string
+	// passes are the recorded domain passes by job name.
+	passes map[string]time.Time
 }
 
 func (f *fakeGateStore) GetSettings() (store.Settings, error)     { return f.settings, nil }
@@ -26,6 +28,9 @@ func (f *fakeGateStore) ListZFSDatasets() ([]store.ZFSDataset, error) {
 func (f *fakeGateStore) LastSuccessfulBackupAmong(ids []string) (time.Time, error) {
 	f.askedFor = append([]string{}, ids...)
 	return time.Time{}, nil
+}
+func (f *fakeGateStore) LastScheduleJobRun(job string) (time.Time, error) {
+	return f.passes[job], nil
 }
 
 // With PerItemSchedules on, a folder set with its own cadence leaves the domain

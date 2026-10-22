@@ -171,6 +171,10 @@ type VMBackupDeps struct {
 	// instead: the snapshot every listing, restore and retention of the VM
 	// finds the run by.
 	DomainXML string
+	// Restarts remembers a VM the backup shuts down, so a process that dies
+	// before starting it again does it at its next start. Nil remembers
+	// nothing.
+	Restarts RestartMarker
 
 	VM     VM
 	Restic Restic
@@ -365,7 +369,10 @@ func runVMGraceful(ctx context.Context, d VMBackupDeps) (Summary, error) {
 					log.Printf("vm backup: wait for %q to shut off before starting it again: %v", d.Name, err)
 				}
 			}
-			if startErr := d.VM.Start(restartCtx, d.Name); startErr != nil && backupErr == nil {
+			startErr := d.VM.Start(restartCtx, d.Name)
+			if startErr == nil {
+				clearVMDown(d)
+			} else if backupErr == nil {
 				backupErr = fmt.Errorf("vm backup: restart vm: %w", startErr)
 			}
 		}()
@@ -373,7 +380,10 @@ func runVMGraceful(ctx context.Context, d VMBackupDeps) (Summary, error) {
 		// Graceful shutdown + poll until "shut off".
 		if wasRunning {
 			atStep(d.Step, progress.StepStop)
+			markVMDown(d)
 			if backupErr = d.VM.Shutdown(restartCtx, d.Name); backupErr != nil {
+				// The guest never got the request, so it is still up.
+				clearVMDown(d)
 				backupErr = fmt.Errorf("vm backup: shutdown: %w", backupErr)
 				return
 			}
@@ -567,6 +577,27 @@ func backupDomainXML(ctx context.Context, d VMBackupDeps, tags []string) (Summar
 		return Summary{}, fmt.Errorf("domain definition: %w", err)
 	}
 	return sum, nil
+}
+
+// markVMDown records the VM about to shut down. A failed record costs only the
+// restart after a crash, not the backup.
+func markVMDown(d VMBackupDeps) {
+	if d.Restarts == nil {
+		return
+	}
+	if err := d.Restarts.Mark([]string{d.Name}); err != nil {
+		log.Printf("vm backup: recording that %q is about to shut down failed: %v", d.Name, err)
+	}
+}
+
+// clearVMDown drops the record once the VM runs again.
+func clearVMDown(d VMBackupDeps) {
+	if d.Restarts == nil {
+		return
+	}
+	if err := d.Restarts.Clear([]string{d.Name}); err != nil {
+		log.Printf("vm backup: clearing the shutdown record of %q failed: %v", d.Name, err)
+	}
 }
 
 // waitShutOff polls the VM state until it reaches "shut off". On timeout it

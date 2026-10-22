@@ -425,8 +425,10 @@ func (s *Service) everythingRunContainers(ctx context.Context, pass *everythingP
 	s.ScheduledHealthchecksStart(ctx, domain)
 	var attempted, failed int
 	var failures []schedule.ItemFailure
+	names := make([]string, 0, len(targets))
 	for _, t := range targets {
 		attempted++
+		names = append(names, t.ContainerName)
 		_, err := s.Backup(runCtx, t.ContainerName)
 		pass.itemDone()
 		if err != nil {
@@ -440,6 +442,9 @@ func (s *Service) everythingRunContainers(ctx context.Context, pass *everythingP
 	}
 	s.ScheduledHealthchecksResult(ctx, domain, attempted, failed)
 	s.ScheduledNotifyResult(ctx, domain, attempted, failed, failures)
+	// The members skip their compose project folders under the bulk flag, so
+	// the round backs each folder up once, before the prune that covers it.
+	s.BackupStacksAfterBulk(ctx, names)
 	// Pruning first leaves fewer snapshots to copy. Plain ctx, see
 	// everythingRunCtx.
 	s.PruneAfterBulk(ctx, domain)
