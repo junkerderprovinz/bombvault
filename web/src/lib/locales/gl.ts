@@ -4734,6 +4734,8 @@ const gl: Partial<Translations> = {
   "apiError.noPlace": "Non hai onde facer a copia, porque todos os destinos da súa sección están desactivados. Activa un en Destinos.",
   "apiError.noLocation": "Esta sección aínda non ten ningún destino. Abre Configuración, Destinos, e activa unha liña para ela.",
   "apiError.domainBusy": "Agora mesmo outra tarefa, como unha copia programada ou unha limpeza, está a usar esta sección. Téntao de novo cando remate.",
+  "apiError.replicaBusy": "Hai unha réplica ou unha restauración desta entrada en curso. Téntao de novo cando remate.",
+  "apiError.checkBusy": "Xa hai unha comprobación deste repositorio en curso. Téntao de novo cando remate.",
   "apiError.relayTooLarge": "Isto é demasiado grande para pasar polo relé. Abre a instancia no seu propio enderezo.",
   "apiError.relayRefused": "Isto non pode pasar polo relé. Abre a instancia no seu propio enderezo.",
   "apiError.refused": "O servidor rexeitouno.",

@@ -65,6 +65,28 @@ describe("a refused settings change", () => {
     expect(api.explainedError(err)).toBe(sentence);
   });
 
+  it("says a replica run holds a ZFS entry that only replicates", async () => {
+    answers(409, { ok: false, error: "a replica run or restore of this item is in progress", code: "replica-busy" });
+    const api = await import("./api");
+    const err = await api.backupZFSDataset("tank").catch((e: unknown) => e);
+    expect((err as Error).message).toBe(en["apiError.replicaBusy"]);
+  });
+
+  it("says why a ZFS start was refused with a ZFS reason", async () => {
+    answers(409, { ok: false, error: "the replica server is switched off", code: "server-disabled" });
+    const api = await import("./api");
+    const err = await api.backupZFSDataset("tank").catch((e: unknown) => e);
+    expect((err as Error).message).toBe(en["zfs.code.server-disabled"]);
+    expect((err as InstanceType<typeof api.ApiError>).code).toBe("server-disabled");
+  });
+
+  it("says a check already runs on a received repository", async () => {
+    answers(409, { ok: false, error: "a check is already running on this repository", code: "check-busy" });
+    const api = await import("./api");
+    const err = await api.checkReceivedRepo("r1").catch((e: unknown) => e);
+    expect((err as Error).message).toBe(en["apiError.checkBusy"]);
+  });
+
   it("calls a failure on the server one, whatever it said", async () => {
     answers(500, { ok: false, error: "database is locked" });
     const api = await import("./api");

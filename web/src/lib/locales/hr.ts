@@ -4734,6 +4734,8 @@ const hr: Partial<Translations> = {
   "apiError.noPlace": "Nema kamo napraviti sigurnosnu kopiju jer su sva odredišta njegova odjeljka isključena. Uključite jedno pod Odredišta.",
   "apiError.noLocation": "Ovaj odjeljak još nema odredište. Otvori Postavke, Odredišta, i uključi liniju za njega.",
   "apiError.domainBusy": "Drugi zadatak, primjerice zakazana sigurnosna kopija ili čišćenje, upravo koristi ovaj odjeljak. Pokušajte ponovno kad završi.",
+  "apiError.replicaBusy": "Za ovaj unos upravo je u tijeku replika ili vraćanje. Pokušajte ponovno kad završi.",
+  "apiError.checkBusy": "Provjera ovog repozitorija već je u tijeku. Pokušajte ponovno kad završi.",
   "apiError.relayTooLarge": "Ovo je preveliko da bi prošlo kroz relej. Otvorite instancu na njezinoj vlastitoj adresi.",
   "apiError.relayRefused": "Ovo ne može proći kroz relej. Otvorite instancu na njezinoj vlastitoj adresi.",
   "apiError.refused": "Poslužitelj je ovo odbio.",

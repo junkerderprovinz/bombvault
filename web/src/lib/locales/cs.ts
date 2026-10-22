@@ -4722,6 +4722,8 @@ const cs: Partial<Translations> = {
   "apiError.noPlace": "Není kam zálohovat, protože všechny cíle jeho sekce jsou vypnuté. Zapni některý v části Cíle.",
   "apiError.noLocation": "Tato sekce zatím nemá žádný cíl. Otevři Nastavení, Cíle, a zapni pro ni jednu linii.",
   "apiError.domainBusy": "Tuto sekci právě používá jiná úloha, například plánovaná záloha nebo čištění. Zkus to znovu, až skončí.",
+  "apiError.replicaBusy": "U této položky právě běží replika nebo obnova. Zkus to znovu, až skončí.",
+  "apiError.checkBusy": "U tohoto úložiště už běží kontrola. Zkus to znovu, až skončí.",
   "apiError.relayTooLarge": "Je to příliš velké na to, aby to šlo přes přeposílač. Otevři instanci na její vlastní adrese.",
   "apiError.relayRefused": "Přes přeposílač to nejde. Otevři instanci na její vlastní adrese.",
   "apiError.refused": "Server to odmítl.",

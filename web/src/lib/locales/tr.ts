@@ -4724,6 +4724,8 @@ const tr: Partial<Translations> = {
   "apiError.noPlace": "Yedeklenecek bir yer yok, çünkü bölümünün tüm hedefleri kapalı. Hedefler bölümünden birini aç.",
   "apiError.noLocation": "Bu bölümün henüz bir hedefi yok. Ayarlar, Hedefler bölümünü aç ve bu bölüm için bir çizgiyi aç.",
   "apiError.domainBusy": "Şu anda bu bölümü zamanlanmış bir yedekleme ya da budama gibi başka bir iş kullanıyor. Bittiğinde yeniden dene.",
+  "apiError.replicaBusy": "Bu girdinin bir kopyalaması veya geri yüklemesi sürüyor. Bittiğinde yeniden dene.",
+  "apiError.checkBusy": "Bu deponun denetimi zaten çalışıyor. Bittiğinde yeniden dene.",
   "apiError.relayTooLarge": "Bu, röleden geçemeyecek kadar büyük. Örneği kendi adresinde aç.",
   "apiError.relayRefused": "Bu röleden geçemez. Örneği kendi adresinde aç.",
   "apiError.refused": "Sunucu bunu reddetti.",

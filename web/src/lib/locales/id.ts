@@ -4734,6 +4734,8 @@ const id: Partial<Translations> = {
   "apiError.noPlace": "Tidak ada tempat untuk mencadangkannya, karena semua tujuan di bagiannya dimatikan. Nyalakan salah satunya di Tujuan.",
   "apiError.noLocation": "Bagian ini belum punya tujuan. Buka Pengaturan, Tujuan, lalu nyalakan satu garis untuknya.",
   "apiError.domainBusy": "Tugas lain, seperti pencadangan terjadwal atau prune, sedang memakai bagian ini. Coba lagi setelah tugas itu selesai.",
+  "apiError.replicaBusy": "Replika atau pemulihan entri ini sedang berjalan. Coba lagi setelah selesai.",
+  "apiError.checkBusy": "Pemeriksaan repositori ini sudah berjalan. Coba lagi setelah selesai.",
   "apiError.relayTooLarge": "Ini terlalu besar untuk melewati relay. Buka instance di alamatnya sendiri.",
   "apiError.relayRefused": "Ini tidak bisa melewati relay. Buka instance di alamatnya sendiri.",
   "apiError.refused": "Server menolak ini.",

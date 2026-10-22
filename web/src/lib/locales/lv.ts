@@ -4734,6 +4734,8 @@ const lv: Partial<Translations> = {
   "apiError.noPlace": "Nav kur dublēt, jo visi tā sadaļas mērķi ir izslēgti. Ieslēdziet kādu sadaļā Mērķi.",
   "apiError.noLocation": "Šai sadaļai vēl nav mērķa. Atver Iestatījumi, Mērķi, un ieslēdz tai vienu līniju.",
   "apiError.domainBusy": "Šo sadaļu pašlaik izmanto cits uzdevums, piemēram, ieplānota dublēšana vai tīrīšana. Mēģiniet vēlreiz, kad tas būs beidzies.",
+  "apiError.replicaBusy": "Šim ierakstam pašlaik notiek replicēšana vai atjaunošana. Mēģiniet vēlreiz, kad tā būs beigusies.",
+  "apiError.checkBusy": "Šīs krātuves pārbaude jau notiek. Mēģiniet vēlreiz, kad tā būs beigusies.",
   "apiError.relayTooLarge": "Tas ir pārāk liels, lai ietu caur relay. Atveriet instanci tās paša adresē.",
   "apiError.relayRefused": "Tas nevar iet caur relay. Atveriet instanci tās paša adresē.",
   "apiError.refused": "Serveris to noraidīja.",

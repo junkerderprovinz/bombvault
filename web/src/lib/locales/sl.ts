@@ -4718,6 +4718,8 @@ const sl: Partial<Translations> = {
   "apiError.noPlace": "Ni kam varnostno kopirati, ker so vsi cilji njegovega razdelka izklopljeni. Vklopi enega v razdelku Cilji.",
   "apiError.noLocation": "Ta razdelek še nima cilja. Odpri Nastavitve, Cilji, in vklopi zanj eno črto.",
   "apiError.domainBusy": "Ta razdelek trenutno uporablja drugo opravilo, na primer načrtovano varnostno kopiranje ali čiščenje. Poskusi znova, ko se konča.",
+  "apiError.replicaBusy": "Za ta vnos trenutno poteka replika ali obnovitev. Poskusi znova, ko se konča.",
+  "apiError.checkBusy": "Preverjanje tega repozitorija že poteka. Poskusi znova, ko se konča.",
   "apiError.relayTooLarge": "To je preveliko, da bi šlo prek relaya. Odpri primerek na njegovem lastnem naslovu.",
   "apiError.relayRefused": "To ne more iti prek relaya. Odpri primerek na njegovem lastnem naslovu.",
   "apiError.refused": "Strežnik je to zavrnil.",

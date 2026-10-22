@@ -4722,6 +4722,8 @@ const es: Partial<Translations> = {
   "apiError.noPlace": "No hay dónde respaldarlo, porque todos los destinos de su sección están desactivados. Activa uno en Destinos.",
   "apiError.noLocation": "Esta sección aún no tiene ningún destino. Abre Ajustes, Destinos, y activa una línea para ella.",
   "apiError.domainBusy": "Ahora mismo otra tarea, como una copia programada o una poda, está usando esta sección. Vuelve a intentarlo cuando haya terminado.",
+  "apiError.replicaBusy": "Hay una réplica o una restauración de esta entrada en curso. Vuelve a intentarlo cuando haya terminado.",
+  "apiError.checkBusy": "Ya hay una comprobación de este repositorio en curso. Vuelve a intentarlo cuando haya terminado.",
   "apiError.relayTooLarge": "Esto es demasiado grande para pasar por el repetidor. Abre la instancia en su propia dirección.",
   "apiError.relayRefused": "Esto no puede pasar por el repetidor. Abre la instancia en su propia dirección.",
   "apiError.refused": "El servidor lo ha rechazado.",

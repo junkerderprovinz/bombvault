@@ -4734,6 +4734,8 @@ const lt: Partial<Translations> = {
   "apiError.noPlace": "Nėra kur sukurti atsarginės kopijos, nes visos jo srities paskirties vietos yra išjungtos. Įjunk vieną skiltyje Paskirties vietos.",
   "apiError.noLocation": "Ši sritis dar neturi paskirties vietos. Atidaryk Nustatymai, Paskirties vietos, ir įjunk jai vieną liniją.",
   "apiError.domainBusy": "Šią sritį dabar naudoja kita užduotis, pavyzdžiui, suplanuotas kopijavimas ar valymas. Bandyk dar kartą, kai ji baigsis.",
+  "apiError.replicaBusy": "Šio įrašo replikavimas arba atkūrimas dabar vyksta. Bandyk dar kartą, kai baigsis.",
+  "apiError.checkBusy": "Šios saugyklos patikra jau vyksta. Bandyk dar kartą, kai baigsis.",
   "apiError.relayTooLarge": "Tai per didelės apimties, kad praeitų per relay. Atidaryk egzempliorių jo paties adresu.",
   "apiError.relayRefused": "Tai negali praeiti per relay. Atidaryk egzempliorių jo paties adresu.",
   "apiError.refused": "Serveris tai atmetė.",

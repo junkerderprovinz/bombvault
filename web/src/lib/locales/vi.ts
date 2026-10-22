@@ -4715,6 +4715,8 @@ const vi: Partial<Translations> = {
   "apiError.noPlace": "Không có nơi nào để sao lưu, vì mọi đích của phần chứa nó đều đang tắt. Hãy bật một đích trong Đích sao lưu.",
   "apiError.noLocation": "Phần này chưa có đích sao lưu nào. Mở Cài đặt, Đích sao lưu, rồi bật một đường cho phần này.",
   "apiError.domainBusy": "Một tác vụ khác, như bản sao lưu theo lịch hoặc dọn bớt, đang dùng phần này. Hãy thử lại khi tác vụ đó xong.",
+  "apiError.replicaBusy": "Một lần sao chép hoặc khôi phục mục này đang chạy. Hãy thử lại khi nó xong.",
+  "apiError.checkBusy": "Một lần kiểm tra kho này đang chạy. Hãy thử lại khi nó xong.",
   "apiError.relayTooLarge": "Dữ liệu này quá lớn để đi qua relay. Hãy mở phiên bản này tại địa chỉ riêng của nó.",
   "apiError.relayRefused": "Việc này không thể đi qua relay. Hãy mở phiên bản này tại địa chỉ riêng của nó.",
   "apiError.refused": "Máy chủ đã từ chối việc này.",

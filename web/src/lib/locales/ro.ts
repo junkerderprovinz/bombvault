@@ -4725,6 +4725,8 @@ const ro: Partial<Translations> = {
   "apiError.noPlace": "Nu există unde să se facă copia, pentru că toate destinațiile secțiunii sale sunt oprite. Pornește una la Destinații.",
   "apiError.noLocation": "Această secțiune nu are încă o destinație. Deschide Setări, Destinații, și pornește o linie pentru ea.",
   "apiError.domainBusy": "O altă activitate, cum ar fi o copiere programată sau o curățare, folosește acum această secțiune. Încearcă din nou după ce se termină.",
+  "apiError.replicaBusy": "O replicare sau o restaurare a acestei intrări este în curs. Încearcă din nou după ce se termină.",
+  "apiError.checkBusy": "O verificare a acestui depozit rulează deja. Încearcă din nou după ce se termină.",
   "apiError.relayTooLarge": "Este prea mare ca să treacă prin relay. Deschide instanța la adresa ei proprie.",
   "apiError.relayRefused": "Nu poate trece prin relay. Deschide instanța la adresa ei proprie.",
   "apiError.refused": "Serverul a refuzat acest lucru.",

@@ -4725,6 +4725,8 @@ const hu: Partial<Translations> = {
   "apiError.noPlace": "Nincs hová menteni, mert a szakaszának minden célja ki van kapcsolva. Kapcsolj be egyet a Célok alatt.",
   "apiError.noLocation": "Ennek a szakasznak még nincs célja. Nyisd meg a Beállítások, Célok részt, és kapcsolj be hozzá egy vonalat.",
   "apiError.domainBusy": "Egy másik feladat, például egy ütemezett mentés vagy nyesés, éppen ezt a szakaszt használja. Próbáld újra, ha végzett.",
+  "apiError.replicaBusy": "Ennek a bejegyzésnek a replikája vagy visszaállítása éppen fut. Próbáld újra, ha végzett.",
+  "apiError.checkBusy": "Ennek a tárolónak az ellenőrzése már fut. Próbáld újra, ha végzett.",
   "apiError.relayTooLarge": "Ez túl nagy ahhoz, hogy átmenjen a Relayen. Nyisd meg a példányt a saját címén.",
   "apiError.relayRefused": "Ez nem mehet át a Relayen. Nyisd meg a példányt a saját címén.",
   "apiError.refused": "A szerver elutasította ezt.",

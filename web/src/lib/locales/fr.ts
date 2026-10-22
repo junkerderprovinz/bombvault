@@ -4724,6 +4724,8 @@ const fr: Partial<Translations> = {
   "apiError.noPlace": "Il n'y a nulle part où sauvegarder cet élément, car toutes les destinations de sa section sont désactivées. Activez-en une sous Destinations.",
   "apiError.noLocation": "Cette section n'a pas encore de destination. Ouvrez Paramètres, Destinations, et activez une ligne pour elle.",
   "apiError.domainBusy": "Une autre tâche, comme une sauvegarde planifiée ou un élagage, utilise cette section en ce moment. Réessayez une fois qu'elle est terminée.",
+  "apiError.replicaBusy": "Une réplique ou une restauration de cet élément est en cours. Réessayez une fois qu'elle est terminée.",
+  "apiError.checkBusy": "Une vérification de ce dépôt est déjà en cours. Réessayez une fois qu'elle est terminée.",
   "apiError.relayTooLarge": "C'est trop volumineux pour passer par le relais. Ouvrez l'instance à son adresse propre.",
   "apiError.relayRefused": "Cela ne peut pas passer par le relais. Ouvrez l'instance à son adresse propre.",
   "apiError.refused": "Le serveur l'a refusé.",

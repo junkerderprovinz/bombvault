@@ -77,6 +77,9 @@ func failEnvelope(err error) map[string]any {
 	if errors.Is(err, errRemoteRepoGone) {
 		return codedFailEnvelope(err, codeRepoGone)
 	}
+	if code := busyCode(err); code != "" {
+		return codedFailEnvelope(err, code)
+	}
 	return map[string]any{"ok": false, "error": scrubError(err)}
 }
 

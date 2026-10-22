@@ -1,4 +1,5 @@
 import { translate } from "./i18n";
+import { ZFS_CODE_KEY, zfsCodeSentence } from "./zfsCodes";
 
 // ---------------------------------------------------------------------------
 // API types — match the Go JSON shapes exactly
@@ -838,6 +839,10 @@ function knownSentence(status: number, code: string | undefined): string | undef
       return translate("apiError.noLocation");
     case "domain-busy":
       return translate("apiError.domainBusy");
+    case "replica-busy":
+      return translate("apiError.replicaBusy");
+    case "check-busy":
+      return translate("apiError.checkBusy");
     case "batch-busy":
       return translate("containers.batchAlreadyRunning");
     case "relay-refused":
@@ -5189,13 +5194,26 @@ export function deleteBackupsZFSDataset(id: string): Promise<ZFSCodedEnvelope> {
  *  BackupResponse): watch the "zfs:<root>" SSE key and the recorded run for the
  *  outcome. */
 export function backupZFSDataset(id: string): Promise<BackupResponse> {
-  return fetchJSON(`/api/zfs/datasets/${encodeURIComponent(id)}/backup`, { method: "POST" });
+  return startZFS(`/api/zfs/datasets/${encodeURIComponent(id)}/backup`, { method: "POST" });
+}
+
+/** startZFS is fetchJSON for a ZFS start, whose refusal may carry a ZFS
+ *  reason code, such as a replica target that is switched off. */
+async function startZFS<T>(path: string, options: RequestInit): Promise<T> {
+  try {
+    return await fetchJSON<T>(path, options);
+  } catch (err) {
+    if (err instanceof ApiError && err.code && err.code in ZFS_CODE_KEY) {
+      throw new ApiError(err.status, zfsCodeSentence(translate, err.code), err.code, err.detail);
+    }
+    throw err;
+  }
 }
 
 /** POST /api/zfs/backup-all, one detached batch over the given items, watched
  *  through the "batch:zfs" progress key. */
 export function backupZFSAll(ids: string[]): Promise<OkEnvelope & { started?: number }> {
-  return fetchJSON("/api/zfs/backup-all", {
+  return startZFS("/api/zfs/backup-all", {
     method: "POST",
     body: JSON.stringify({ ids }),
   });

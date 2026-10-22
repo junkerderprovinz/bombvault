@@ -4734,6 +4734,8 @@ const ms: Partial<Translations> = {
   "apiError.noPlace": "Tiada tempat untuk menyandarkannya kerana semua destinasi bahagiannya dimatikan. Hidupkan salah satu di Destinasi.",
   "apiError.noLocation": "Bahagian ini belum mempunyai destinasi. Buka Tetapan, Destinasi, dan hidupkan satu garisan untuknya.",
   "apiError.domainBusy": "Tugas lain, seperti sandaran berjadual atau prune, sedang menggunakan bahagian ini. Cuba lagi apabila tugas itu selesai.",
+  "apiError.replicaBusy": "Replika atau pemulihan entri ini sedang berjalan. Cuba lagi apabila ia selesai.",
+  "apiError.checkBusy": "Semakan repositori ini sudah berjalan. Cuba lagi apabila ia selesai.",
   "apiError.relayTooLarge": "Ini terlalu besar untuk melalui relay. Buka instans pada alamatnya sendiri.",
   "apiError.relayRefused": "Ini tidak boleh melalui relay. Buka instans pada alamatnya sendiri.",
   "apiError.refused": "Pelayan menolak ini.",

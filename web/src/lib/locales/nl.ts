@@ -4723,6 +4723,8 @@ const nl: Partial<Translations> = {
   "apiError.noPlace": "Er is geen plek om dit naartoe te back-uppen, want alle bestemmingen van zijn onderdeel staan uit. Schakel er een in onder Bestemmingen.",
   "apiError.noLocation": "Dit onderdeel heeft nog geen bestemming. Open Instellingen, Bestemmingen, en schakel een lijn voor dit onderdeel in.",
   "apiError.domainBusy": "Een andere taak, zoals een geplande back-up of het opschonen, gebruikt dit onderdeel op dit moment. Probeer het opnieuw als die klaar is.",
+  "apiError.replicaBusy": "Er loopt een replica of een herstel van dit item. Probeer het opnieuw als die klaar is.",
+  "apiError.checkBusy": "Er loopt al een controle van deze repository. Probeer het opnieuw als die klaar is.",
   "apiError.relayTooLarge": "Dit is te groot om via de relay te gaan. Open de instantie op het eigen adres.",
   "apiError.relayRefused": "Dit kan niet via de relay. Open de instantie op het eigen adres.",
   "apiError.refused": "De server heeft dit geweigerd.",

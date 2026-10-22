@@ -4724,6 +4724,8 @@ const pt: Partial<Translations> = {
   "apiError.noPlace": "Não há para onde copiar, porque todos os destinos da sua secção estão desligados. Liga um em Destinos.",
   "apiError.noLocation": "Esta secção ainda não tem destino. Abre Definições, Destinos, e liga uma linha para ela.",
   "apiError.domainBusy": "Outra tarefa, como um backup agendado ou uma poda, está a usar esta secção neste momento. Tenta de novo quando terminar.",
+  "apiError.replicaBusy": "Está a decorrer uma réplica ou um restauro desta entrada. Tenta de novo quando terminar.",
+  "apiError.checkBusy": "Já está a decorrer uma verificação deste repositório. Tenta de novo quando terminar.",
   "apiError.relayTooLarge": "Isto é demasiado grande para passar pelo relay. Abre a instância no seu próprio endereço.",
   "apiError.relayRefused": "Isto não pode passar pelo relay. Abre a instância no seu próprio endereço.",
   "apiError.refused": "O servidor recusou isto.",

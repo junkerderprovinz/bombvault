@@ -22,12 +22,29 @@ var ErrNoPlace = errors.New("every storage location of this section is switched 
 // turns into a sentence in its language.
 const codeNoPlace = "no-place"
 
-// The codes of a start refused because another run holds the domain, and
-// because another batch holds the server.
+// The codes of a start refused because another run holds the domain, because
+// another batch holds the server, because a replica run or restore holds the
+// ZFS entry, and because a check holds the received repository.
 const (
-	codeDomainBusy = "domain-busy"
-	codeBatchBusy  = "batch-busy"
+	codeDomainBusy  = "domain-busy"
+	codeBatchBusy   = "batch-busy"
+	codeReplicaBusy = "replica-busy"
+	codeCheckBusy   = "check-busy"
 )
+
+// busyCode is the code of a refusal because something else holds what the
+// call needs, "" for any other error.
+func busyCode(err error) string {
+	switch {
+	case refusedAsBusy(err):
+		return codeDomainBusy
+	case errors.Is(err, errZFSReplicaBusy):
+		return codeReplicaBusy
+	case errors.Is(err, errReceiverCheckBusy):
+		return codeCheckBusy
+	}
+	return ""
+}
 
 // startRefusal is the body of the 409 for an action pressed by hand that did
 // not start.
@@ -38,8 +55,8 @@ func startRefusal(err error) map[string]any {
 		body["code"] = codeNoPlace
 	case errors.Is(err, ErrNoLocation):
 		body["code"] = codeNoLocation
-	case refusedAsBusy(err):
-		body["code"] = codeDomainBusy
+	case busyCode(err) != "":
+		body["code"] = busyCode(err)
 	}
 	return body
 }

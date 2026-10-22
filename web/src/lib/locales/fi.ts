@@ -4724,6 +4724,8 @@ const fi: Partial<Translations> = {
   "apiError.noPlace": "Tätä ei voi varmuuskopioida minnekään, koska kaikki sen osion kohteet on kytketty pois päältä. Kytke jokin päälle kohdassa Kohteet.",
   "apiError.noLocation": "Tällä osiolla ei ole vielä kohdetta. Avaa Asetukset, Kohteet, ja kytke sille päälle yksi linja.",
   "apiError.domainBusy": "Toinen tehtävä, kuten ajastettu varmuuskopiointi tai karsinta, käyttää tätä osiota juuri nyt. Yritä uudelleen, kun se on valmis.",
+  "apiError.replicaBusy": "Tämän kohteen replikointi tai palautus on käynnissä. Yritä uudelleen, kun se on valmis.",
+  "apiError.checkBusy": "Tämän tietovaraston tarkistus on jo käynnissä. Yritä uudelleen, kun se on valmis.",
   "apiError.relayTooLarge": "Tämä on liian suuri kulkemaan releen kautta. Avaa instanssi sen omassa osoitteessa.",
   "apiError.relayRefused": "Tämä ei voi kulkea releen kautta. Avaa instanssi sen omassa osoitteessa.",
   "apiError.refused": "Palvelin hylkäsi tämän.",
