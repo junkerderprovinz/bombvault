@@ -343,10 +343,27 @@ func forgetPlaceVerdictsTx(tx *sql.Tx, id, domain string) error {
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return err
 	}
+	// The domain's bare off-site drills speak for its first switched-on
+	// target. With none switched on they speak for whichever comes on next,
+	// which may be this one.
 	_, err = tx.Exec(`DELETE FROM restore_drills WHERE domain = ?
 		AND (offsite_target_id = ? OR source = ? OR (source = 'offsite' AND ?))`,
-		domain, id, "offsite:"+id, boolInt(first == id))
+		domain, id, "offsite:"+id, boolInt(first == id || first == ""))
 	return err
+}
+
+// forgetDeletedTargetVerdictsTx drops what a target about to be deleted
+// proved, so a target added in its place does not inherit it.
+func forgetDeletedTargetVerdictsTx(tx *sql.Tx, id string) error {
+	var domain string
+	err := tx.QueryRow(`SELECT domain FROM offsite_targets WHERE id = ? AND role = ?`, id, RoleOffsite).Scan(&domain)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	return forgetPlaceVerdictsTx(tx, id, domain)
 }
 
 // forgetTargetPlaceTx drops what a target's rows say about the place it held
@@ -1048,6 +1065,9 @@ func deleteTargetKeepingDirectTx(tx *sql.Tx, id string) error {
 		WHERE role = ? AND companion_of = ? AND companion_of <> ''`, id, RoleOffsite, RoleRepo, id); err != nil {
 		return err
 	}
+	if err := forgetDeletedTargetVerdictsTx(tx, id); err != nil {
+		return err
+	}
 	if _, err := tx.Exec(`DELETE FROM offsite_targets WHERE id = ? AND role = ?`, id, RoleOffsite); err != nil {
 		return err
 	}
@@ -1093,6 +1113,9 @@ func (r *Repo) DeleteOffsiteTargetIfUnused(id string) (TargetUse, error) {
 		if _, err := tx.Exec(`DELETE FROM offsite_targets WHERE id = ? AND role = ?`, c, RoleRepo); err != nil {
 			return use, fmt.Errorf("DeleteOffsiteTargetIfUnused: %w", err)
 		}
+	}
+	if err := forgetDeletedTargetVerdictsTx(tx, id); err != nil {
+		return use, fmt.Errorf("DeleteOffsiteTargetIfUnused: %w", err)
 	}
 	if _, err := tx.Exec(`DELETE FROM offsite_targets WHERE id = ? AND role = ?`, id, RoleOffsite); err != nil {
 		return use, fmt.Errorf("DeleteOffsiteTargetIfUnused: %w", err)

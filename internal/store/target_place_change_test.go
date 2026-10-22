@@ -80,3 +80,53 @@ func TestAPrimaryTakenOverByALocationForgetsItsTamperVerdict(t *testing.T) {
 		t.Fatalf("after the takeover verdict=%v aged=%v, want both gone", verdict, aged)
 	}
 }
+
+func drilled(t *testing.T, r *store.Repo, domain string) bool {
+	t.Helper()
+	_, found, err := r.LatestRestoreDrillKind(domain, "offsite", "dr")
+	if err != nil {
+		t.Fatal(err)
+	}
+	return found
+}
+
+// The bare off-site drills follow the domain's first switched-on target, and
+// a target switched off while it moves becomes that one when it comes on.
+func TestATargetMovedWhileSwitchedOffForgetsTheDomainsTrialRestore(t *testing.T) {
+	r := newRepo(t)
+	target, err := r.UpsertOffsiteTarget(store.OffsiteTarget{Domain: "vms", Name: "A", Repo: "rest:https://a:8000/vms", Enabled: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := r.AddRestoreDrill(store.RestoreDrill{Domain: "vms", Source: "offsite", Kind: "dr", At: 100, OK: true}); err != nil {
+		t.Fatal(err)
+	}
+	target.Enabled = false
+	if _, err := r.UpsertOffsiteTarget(target); err != nil {
+		t.Fatal(err)
+	}
+	target.Repo = "rest:https://b:8000/vms"
+	if _, err := r.MoveOffsiteTarget(target); err != nil {
+		t.Fatal(err)
+	}
+	if drilled(t, r, "vms") {
+		t.Fatal("the old place's trial restore is still there for the new one")
+	}
+}
+
+func TestADeletedTargetTakesTheDomainsTrialRestoreWithIt(t *testing.T) {
+	r := newRepo(t)
+	target, err := r.UpsertOffsiteTarget(store.OffsiteTarget{Domain: "vms", Name: "A", Repo: "rest:https://a:8000/vms", Enabled: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := r.AddRestoreDrill(store.RestoreDrill{Domain: "vms", Source: "offsite", Kind: "dr", At: 100, OK: true}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := r.DeleteOffsiteTargetIfUnused(target.ID); err != nil {
+		t.Fatal(err)
+	}
+	if drilled(t, r, "vms") {
+		t.Fatal("the deleted target's trial restore would speak for the next one")
+	}
+}
