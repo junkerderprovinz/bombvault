@@ -4,6 +4,7 @@ import (
 	"cmp"
 	"context"
 	"crypto/rand"
+	"crypto/sha256"
 	"crypto/subtle"
 	"encoding/hex"
 	"encoding/json"
@@ -2762,7 +2763,24 @@ func (h *Handler) handleGetSettings(w http.ResponseWriter, r *http.Request) {
 		// page does not suggest the /boot mount that fixes a misdetected Unraid.
 		"platformSet":  h.cfg.PlatformOverride != "",
 		"scheduleZone": map[string]any{"name": zone, "offsetSeconds": offset},
+		"revision":     settingsRevision(s),
 	})
+}
+
+// settingsRevisionHeader carries the revision a settings PUT was built on.
+// The body is the whole object, so one built on an older row writes that
+// row's values back over a change made elsewhere meanwhile, such as a removed
+// storage location or a moved section folder. A PUT without it is not checked.
+const settingsRevisionHeader = "X-Settings-Revision"
+
+var errSettingsStale = errors.New("the settings changed elsewhere since this page read them, so nothing was saved: reload the page and try again")
+
+// settingsRevision names the settings as a GET shows them, so a PUT built on
+// another state can be told apart.
+func settingsRevision(s store.Settings) string {
+	blob, _ := json.Marshal(scrubGetSettingsSecrets(toView(s)))
+	sum := sha256.Sum256(blob)
+	return hex.EncodeToString(sum[:16])
 }
 
 // rejectEveryNSchedules reports the user-facing error for a settings view whose
@@ -3106,6 +3124,13 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, failEnvelope(curErr))
 		return
 	}
+	// Checked before the guards below as well, which would otherwise judge the
+	// stale values and refuse with a reason that has nothing to do with the edit.
+	revision := r.Header.Get(settingsRevisionHeader)
+	if revision != "" && settingsRevision(cur) != revision {
+		writeJSON(w, http.StatusOK, codedFailEnvelope(errSettingsStale, "settings-stale"))
+		return
+	}
 	if msg := h.rejectSettingsPathOnNamedRepo(v, cur); msg != "" {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": msg})
 		return
@@ -3212,6 +3237,9 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	s, err := h.store.MutateSettings(func(cur *store.Settings) error {
+		if revision != "" && settingsRevision(*cur) != revision {
+			return errSettingsStale
+		}
 		cur.EncryptionEnabled = v.EncryptionEnabled
 		cur.ContainersEnabled = v.ContainersEnabled
 		cur.VMsEnabled = v.VMsEnabled
@@ -3351,6 +3379,10 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": registryInputErr.Error()})
 		return
 	}
+	if errors.Is(err, errSettingsStale) {
+		writeJSON(w, http.StatusOK, codedFailEnvelope(errSettingsStale, "settings-stale"))
+		return
+	}
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
@@ -3395,7 +3427,7 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 			warnings = append(warnings, h.svc.targetSaveWarnings(r.Context(), b, a)...)
 		}
 	}
-	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"warnings": warnings, "notes": notes}))
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"warnings": warnings, "notes": notes, "revision": settingsRevision(s)}))
 }
 
 // handleDetectEncryption probes the configured repositories and reports which

@@ -109,6 +109,20 @@ func zfsReplicaGate(svc *Service) func([]string) (time.Time, error) {
 	return svc.ZFSReplicaOnlySuccessAmong
 }
 
+// lastZFSProtected is when the zfs domain was last backed up or, for an item
+// that only replicates, replicated. The dashboard and the watchdog both judge
+// the domain by it, so the two cannot disagree.
+func (s *Service) lastZFSProtected() (time.Time, error) {
+	last, err := s.store.LastSuccessfulZFSBackup()
+	if err != nil {
+		return time.Time{}, err
+	}
+	if at := s.zfsReplicaOnlyLastSuccess(); at > 0 && time.Unix(at, 0).After(last) {
+		return time.Unix(at, 0), nil
+	}
+	return last, nil
+}
+
 // zfsReplicaCoverage reports whether every enabled ZFS item has a current
 // replica, which makes the replicas the domain's copy off the premises, with
 // the oldest of their last successes and the longest period among them.

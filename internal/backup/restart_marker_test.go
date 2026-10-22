@@ -78,7 +78,7 @@ func TestBackupRecordsTheStoppedContainersUntilTheyRunAgain(t *testing.T) {
 	}
 }
 
-func TestBackupKeepsTheRecordOfAContainerThatDidNotComeBack(t *testing.T) {
+func TestBackupForgetsAContainerThatDidNotComeBack(t *testing.T) {
 	for _, mode := range []string{"live", "snapshot"} {
 		t.Run(mode, func(t *testing.T) {
 			d := &fakeDocker{healthSeq: map[string][]model.Health{"db": {{Running: false}}}}
@@ -88,8 +88,8 @@ func TestBackupKeepsTheRecordOfAContainerThatDidNotComeBack(t *testing.T) {
 				deps.Snapshot = &fakeSnapshot{d: d}
 			}
 			_, _ = backup.BackupContainer(t.Context(), deps)
-			if !m.marked["db"] || m.marked["app"] {
-				t.Errorf("recorded %v, want db alone, which never ran again", m.marked)
+			if len(m.marked) != 0 {
+				t.Errorf("still recorded %v, so a later boot would start db against the user's wish", m.marked)
 			}
 		})
 	}

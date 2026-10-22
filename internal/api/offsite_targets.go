@@ -115,7 +115,11 @@ func (s *Service) syncPrimaryOffsiteTarget(domain string, settings store.Setting
 	} else if t.Name, err = s.freeTargetName(locationName(repo), t.ID); err != nil {
 		return err
 	}
-	_, err = s.store.UpsertOffsiteTarget(t)
+	if primary != nil && !sameRepoLocation(primary.Repo, repo) {
+		_, err = s.store.MoveOffsiteTarget(t)
+	} else {
+		_, err = s.store.UpsertOffsiteTarget(t)
+	}
 	return err
 }
 

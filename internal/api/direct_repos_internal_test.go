@@ -1064,6 +1064,30 @@ func TestAnImportKeepsWhatAKeptTargetHasObserved(t *testing.T) {
 	}
 }
 
+func TestAnImportThatMovesATargetDropsTheOldPlacesTamperVerdict(t *testing.T) {
+	f := newPlacementFixture(t)
+	moved := f.target("containers", "B2", "b2:bkt:containers")
+	same := f.target("vms", "Hetzner", "sftp:u@box:/vms")
+	for _, tg := range []store.OffsiteTarget{moved, same} {
+		if err := f.st.RecordTamperTestForTarget(tg.Domain, tg.ID, true, ""); err != nil {
+			t.Fatal(err)
+		}
+	}
+	elsewhere := offsiteTargetToView(moved)
+	elsewhere.Repo = "b2:other:containers"
+	respelled := offsiteTargetToView(same)
+	respelled.Repo = "sftp:u@box:/vms/"
+	if err := f.h.replaceOffsiteTargets([]offsiteTargetView{elsewhere, respelled}, settingsView{}, false, targetKeysMissing{}); err != nil {
+		t.Fatal(err)
+	}
+	if _, found, _ := f.st.LatestTamperTestForTarget("containers", moved.ID); found {
+		t.Error("the target the import moved kept the verdict of its old place")
+	}
+	if _, found, _ := f.st.LatestTamperTestForTarget("vms", same.ID); !found {
+		t.Error("another spelling of the same place dropped the verdict")
+	}
+}
+
 func TestAnImportWithoutTargetsLeavesTheDirectRepositoryAsAPlainOne(t *testing.T) {
 	f := newPlacementFixture(t)
 	target := f.target("containers", "B2", "b2:bkt:containers")

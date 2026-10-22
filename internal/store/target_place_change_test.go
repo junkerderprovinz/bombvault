@@ -52,7 +52,7 @@ func TestATargetThatChangesPlaceForgetsItsTamperVerdictAndAgingMark(t *testing.T
 	}
 
 	target.Repo = "rest:https://b:8000/vms"
-	if _, err := r.UpsertOffsiteTarget(target); err != nil {
+	if _, err := r.MoveOffsiteTarget(target); err != nil {
 		t.Fatal(err)
 	}
 	if verdict, aged := remembers(t, r, target); verdict || aged {

@@ -271,7 +271,7 @@ func TestATargetMovedElsewhereLeavesTheOldPlacesProofBehind(t *testing.T) {
 	}
 
 	primary.Repo = "rest:http://b/files"
-	if _, err := r.UpsertOffsiteTarget(primary); err != nil {
+	if _, err := r.MoveOffsiteTarget(primary); err != nil {
 		t.Fatal(err)
 	}
 	if _, found, _ := r.LatestTamperTestForTarget("files", "p"); found {
@@ -285,7 +285,7 @@ func TestATargetMovedElsewhereLeavesTheOldPlacesProofBehind(t *testing.T) {
 	}
 
 	extra.Repo = "rest:http://y/files"
-	if _, err := r.UpsertOffsiteTarget(extra); err != nil {
+	if _, err := r.MoveOffsiteTarget(extra); err != nil {
 		t.Fatal(err)
 	}
 	if _, found, _ := r.LatestTamperTestForTarget("files", "x"); found || drills("offsite:x") != 0 {

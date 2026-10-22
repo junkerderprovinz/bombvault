@@ -1195,7 +1195,11 @@ func (h *Handler) replaceOffsiteTargets(views []offsiteTargetView, fileSettings 
 				}
 			}
 		}
-		saved, err := h.store.UpsertOffsiteTarget(t)
+		save := h.store.UpsertOffsiteTarget
+		if known && !sameRepoLocation(old.Repo, t.Repo) {
+			save = h.store.MoveOffsiteTarget
+		}
+		saved, err := save(t)
 		if err != nil {
 			return err
 		}

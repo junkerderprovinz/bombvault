@@ -455,6 +455,8 @@ export interface GetSettingsResponse {
   platformSet?: boolean;
   /** The clock the server reads every schedule on, and its offset from UTC. */
   scheduleZone?: ScheduleZone;
+  /** Names this state of the settings for putSettings. */
+  revision?: string;
   /** Present only on the graceful failure envelope ({ok:false} at HTTP 200). */
   error?: string;
 }
@@ -2253,16 +2255,20 @@ export function getSettings(): Promise<GetSettingsResponse> {
   return fetchJSON("/api/settings");
 }
 
+export type PutSettingsResponse = OkEnvelope & { warnings?: SaveWarning[]; notes?: string[]; revision?: string };
+
 /**
  * PUT /api/settings: persist the settings object. `warnings` says what the
  * save means for used direct repositories, `notes` carries non-fatal advisories.
+ * With the revision the object was read at, the server refuses it with the
+ * code "settings-stale" once the settings changed since, and `revision` names
+ * the state a save left.
  */
-export function putSettings(
-  settings: Settings
-): Promise<OkEnvelope & { warnings?: SaveWarning[]; notes?: string[] }> {
+export function putSettings(settings: Settings, revision?: string): Promise<PutSettingsResponse> {
   return fetchJSON("/api/settings", {
     method: "PUT",
     body: JSON.stringify(settings),
+    headers: revision ? { "X-Settings-Revision": revision } : undefined,
   });
 }
 

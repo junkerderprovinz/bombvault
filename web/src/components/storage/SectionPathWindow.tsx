@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
-import { getSettings, putSettings, type OffsiteDomain, type OkEnvelope, type SaveWarning, type Settings } from "../../lib/api";
+import { getSettings, type OffsiteDomain, type Settings } from "../../lib/api";
 import { useT, type TranslationKey } from "../../lib/i18n";
 import { pushSaveWarnings } from "../../lib/placementCodes";
+import { putSettingsPatch, type SettingsPatchResult } from "../../lib/settingsPatch";
 import { useToast } from "../../lib/toast";
 import { useDebouncedSave } from "../../lib/useDebouncedSave";
 import { storageLocationsChanged } from "../../lib/useStorageLocations";
@@ -21,8 +22,6 @@ const PATH: Record<OffsiteDomain, { key: PathKey; label: TranslationKey }> = {
   config: { key: "configPath", label: "settings.configPath" },
 };
 
-type Answer = OkEnvelope & { warnings?: SaveWarning[] };
-
 /**
  * SectionPathWindow sets where one section's own backups are written: a
  * folder on this host or the address of a remote repository, with what a
@@ -38,6 +37,7 @@ export function SectionPathWindow({ domain, onClose }: { domain: OffsiteDomain; 
   // The settings as the server holds them. Every save sends them whole, so a
   // path that is still being typed never rides along with another field.
   const stored = useRef<Settings | null>(null);
+  const revision = useRef<string | undefined>(undefined);
   const waiting = useRef<(() => Promise<boolean>) | null>(null);
   const { debouncedSave, cancel } = useDebouncedSave();
 
@@ -47,6 +47,7 @@ export function SectionPathWindow({ domain, onClose }: { domain: OffsiteDomain; 
       .then((res) => {
         if (!alive || !res.ok) return;
         stored.current = res.settings;
+        revision.current = res.revision;
         setSettings(res.settings);
         setRoot(res.hostMountRoot);
       })
@@ -58,15 +59,21 @@ export function SectionPathWindow({ domain, onClose }: { domain: OffsiteDomain; 
 
   async function save(patch: Partial<Settings>): Promise<boolean> {
     if (!stored.current) return false;
-    const next = { ...stored.current, ...patch };
-    const res: Answer = await putSettings(next).catch((e: unknown) => ({ ok: false, error: e instanceof Error ? e.message : undefined }));
-    if (!res.ok) {
-      push(res.error ?? t("settings.error"), "fail");
+    let out: SettingsPatchResult;
+    try {
+      out = await putSettingsPatch(stored.current, revision.current, patch);
+    } catch (e) {
+      push(e instanceof Error ? e.message : t("settings.error"), "fail");
       return false;
     }
-    stored.current = next;
+    revision.current = out.revision;
+    stored.current = out.res.ok ? out.sent : (out.fresh ?? stored.current);
+    if (!out.res.ok) {
+      push(out.res.error ?? t("settings.error"), "fail");
+      return false;
+    }
     push(t("settings.saved"), "success");
-    pushSaveWarnings(push, t, res.warnings);
+    pushSaveWarnings(push, t, out.res.warnings);
     return true;
   }
 

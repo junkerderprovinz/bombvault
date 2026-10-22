@@ -61,11 +61,13 @@ function baseSettings(over: Partial<Settings> = {}): Settings {
 /** One controllable PUT: the test decides when (and how) it resolves. */
 type Pending = {
   body: Settings;
-  resolve: (v: { ok: boolean; error?: string }) => void;
+  revision?: string;
+  resolve: (v: { ok: boolean; error?: string; code?: string }) => void;
 };
 
 const putCalls: Pending[] = [];
 let settingsOnServer = baseSettings();
+let revisionOnServer = "r1";
 let importApplyResult: { ok: boolean; error?: string } = { ok: true, applied: true };
 const importApplyCalls: string[] = [];
 const { listOffsiteTargets } = vi.hoisted(() => ({
@@ -77,11 +79,12 @@ vi.mock("../lib/api", async (importOriginal) => {
   return {
     ...actual,
     getSettings: () =>
-      Promise.resolve({ ok: true, settings: settingsOnServer, hostMountRoot: "/host/user", platform: "unraid" }),
-    putSettings: (s: Settings) =>
+      Promise.resolve({ ok: true, settings: settingsOnServer, hostMountRoot: "/host/user", platform: "unraid", revision: revisionOnServer }),
+    putSettings: (s: Settings, revision?: string) =>
       new Promise((resolve) => {
         putCalls.push({
           body: s,
+          revision,
           resolve: (v) => {
             if (v.ok) settingsOnServer = s;
             resolve(v);
@@ -186,6 +189,7 @@ beforeEach(() => {
   putCalls.length = 0;
   importApplyCalls.length = 0;
   settingsOnServer = baseSettings();
+  revisionOnServer = "r1";
   importApplyResult = { ok: true, applied: true };
 });
 
@@ -325,16 +329,46 @@ describe("a write made in another tab", { timeout: 15000 }, () => {
     // its folder.
     const own = { containers: { keepLast: 3, keepDaily: 0, keepWeekly: 0, keepMonthly: 0, keepYearly: 0 } };
     settingsOnServer = { ...settingsOnServer, containersPath: "moved/containers", ownRetention: own } as Settings;
+    revisionOnServer = "r2";
 
     fireEvent.click(toggle(en["settings.flashEnabled"]));
     await waitFor(() => expect(putCalls.length).toBe(1));
-    const sent = putCalls[0].body;
+    await act(async () => {
+      putCalls[0].resolve({ ok: false, code: "settings-stale", error: "stale" });
+    });
+    await waitFor(() => expect(putCalls.length).toBe(2));
+    const sent = putCalls[1].body;
     expect(sent.flashEnabled).toBe(true);
     expect(sent.containersPath).toBe("moved/containers");
     expect(sent.ownRetention).toEqual(own);
 
     await act(async () => {
-      putCalls[0].resolve({ ok: true });
+      putCalls[1].resolve({ ok: true });
+    });
+  });
+});
+
+describe("a change made in another tab", { timeout: 15000 }, () => {
+  it("is not written back by the next click here", async () => {
+    await renderPage();
+    // Another tab moved the containers folder after this one loaded.
+    settingsOnServer = baseSettings({ containersPath: "backups/moved" });
+    revisionOnServer = "r2";
+
+    fireEvent.click(toggle(en["settings.containersEnabled"]));
+    await waitFor(() => expect(putCalls.length).toBe(1));
+    expect(putCalls[0].revision).toBe("r1");
+    await act(async () => {
+      putCalls[0].resolve({ ok: false, code: "settings-stale", error: "stale" });
+    });
+
+    await waitFor(() => expect(putCalls.length).toBe(2));
+    expect(putCalls[1].revision).toBe("r2");
+    expect(putCalls[1].body.containersPath).toBe("backups/moved");
+    expect(putCalls[1].body.containersEnabled).toBe(true);
+
+    await act(async () => {
+      putCalls[1].resolve({ ok: true });
     });
   });
 });

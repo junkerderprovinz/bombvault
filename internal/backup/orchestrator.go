@@ -335,19 +335,22 @@ func markDown(d BackupDeps, down []StopContainer) {
 	}
 }
 
-// clearRunning drops the record of every container in down that runs again.
-// One that did not come back stays recorded and is started at the next boot.
-func clearRunning(ctx context.Context, d BackupDeps, down []StopContainer) {
+// clearDown drops the record of every container in down once the backup has
+// tried to start them again. The record is only for a process that dies
+// first: one that did not come back is the user's to look at, and starting it
+// at some later boot would override whatever they decided in between.
+func clearDown(ctx context.Context, d BackupDeps, down []StopContainer) {
 	if d.Restarts == nil || len(down) == 0 {
 		return
 	}
-	var up []string
-	for _, c := range down {
-		if h, err := d.Docker.Health(ctx, c.ref()); err == nil && h.Running {
-			up = append(up, c.Name)
+	names := make([]string, len(down))
+	for i, c := range down {
+		names[i] = c.Name
+		if h, err := d.Docker.Health(ctx, c.ref()); err == nil && !h.Running {
+			log.Printf("backup: %q did not come back after the backup", c.Name)
 		}
 	}
-	if err := d.Restarts.Clear(up); err != nil {
+	if err := d.Restarts.Clear(names); err != nil {
 		log.Printf("backup: clearing the record of the restarted containers failed: %v", err)
 	}
 }
@@ -587,7 +590,7 @@ func BackupContainer(ctx context.Context, d BackupDeps) (Summary, error) {
 		// defer below fails or panics. It is the "never leave a dep stopped" guard.
 		defer func() {
 			RestartInOrder(restartCtx, d.Docker, stoppedDeps, d.HealthWait, d.HealthTimeout)
-			clearRunning(restartCtx, d, goingDown(d))
+			clearDown(restartCtx, d, goingDown(d))
 		}()
 
 		// Registered SECOND, so it runs FIRST on unwind. Order matters: bring the
@@ -794,7 +797,7 @@ func backupFromSnapshot(ctx context.Context, d BackupDeps, tags []string, stopTi
 		if d.OnWindow != nil {
 			d.OnWindow(clock().Sub(downSince))
 		}
-		clearRunning(restartCtx, d, goingDown(d))
+		clearDown(restartCtx, d, goingDown(d))
 	}
 	defer restart()
 
@@ -876,7 +879,7 @@ func updateAfterSnapshot(ctx context.Context, d BackupDeps, deps []StopContainer
 	}
 	defer func() {
 		RestartInOrder(ctx, d.Docker, stopped, d.HealthWait, d.HealthTimeout)
-		clearRunning(ctx, d, deps)
+		clearDown(ctx, d, deps)
 	}()
 	apply()
 	if err := d.Docker.WaitRunning(ctx, d.ContainerRef, runningWaitTimeout); err != nil {

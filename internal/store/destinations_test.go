@@ -169,10 +169,16 @@ func TestThePrimaryMovesIntoTheFolderOfADestination(t *testing.T) {
 		t.Fatal(err)
 	}
 	d := saveDestination(t, r, store.OffsiteTarget{Name: "Mani", Repo: "s3:http://nas:9000/bv", CredsRef: "c1", Provider: "s3"})
+	if err := r.RecordTamperTestForTarget("vms", primary.ID, true, ""); err != nil {
+		t.Fatal(err)
+	}
 
 	got, err := r.PrimaryFromDestination(d.ID, "vms", "s3:http://nas:9000/bv/vms", func(s *store.Settings) { s.VMsOffsite = "s3:http://nas:9000/bv/vms" })
 	if err != nil {
 		t.Fatal(err)
+	}
+	if _, found, _ := r.LatestTamperTestForTarget("vms", primary.ID); found {
+		t.Fatal("the destination's folder shows the old place's append-only verdict")
 	}
 	if got.ID != primary.ID || got.SortOrder != 0 || !got.Enabled || got.Repo != "s3:http://nas:9000/bv/vms" || got.RetentionKeepDaily != 9 {
 		t.Fatalf("primary = %+v, want the same row in the primary slot at the destination's folder", got)

@@ -558,14 +558,14 @@ func (r *Repo) PrimaryFromDestination(destID, domain, location string, settle fu
 				return ErrDomainHasDestinationTarget
 			}
 		}
-		if t.Repo != location {
-			if err := forgetPlaceTx(tx, t.ID, domain); err != nil {
-				return err
-			}
-		}
 		if _, err := tx.Exec(`UPDATE offsite_targets SET repo = ?, enabled = 1 WHERE id = ? AND role = ?`,
 			location, t.ID, RoleOffsite); err != nil {
 			return err
+		}
+		if t.Repo != "" && t.Repo != location {
+			if err := forgetTargetPlaceTx(tx, t.ID, domain); err != nil {
+				return err
+			}
 		}
 		t.DestinationID, t.Enabled = "", true
 		if out, err = followDestinationTx(tx, t, d); err != nil {

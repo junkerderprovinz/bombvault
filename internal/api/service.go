@@ -3506,26 +3506,18 @@ func (s *Service) statusDomains(settings store.Settings) []statusDomain {
 		{"flash", settings.FlashEnabled, settings.FlashSchedule, s.store.LastSuccessfulFlashBackup},
 		{"config", settings.ConfigEnabled, settings.ConfigSchedule, s.store.LastSuccessfulConfigBackup},
 		{"files", settings.FilesEnabled, settings.FilesSchedule, s.store.LastSuccessfulFilesBackup},
-		{zfsDomain, settings.ZFSEnabled, settings.ZFSSchedule, s.store.LastSuccessfulZFSBackup},
+		{zfsDomain, settings.ZFSEnabled, settings.ZFSSchedule, s.lastZFSProtected},
 	}
 }
 
 // lastDomainSuccess is when d last had a successful backup in unix seconds, 0
-// for never. A ZFS item that only replicates writes no backup run, so its
-// replica is what keeps the domain current.
+// for never.
 func (s *Service) lastDomainSuccess(d statusDomain) (int64, error) {
 	last, err := d.lastFn()
-	if err != nil {
+	if err != nil || last.IsZero() {
 		return 0, err
 	}
-	var at int64
-	if !last.IsZero() {
-		at = last.Unix()
-	}
-	if d.name == zfsDomain {
-		at = max(at, s.zfsReplicaOnlyLastSuccess())
-	}
-	return at, nil
+	return last.Unix(), nil
 }
 
 // domainStatusFrom is DomainStatus for a caller that already holds the settings
@@ -18665,13 +18657,23 @@ func (s *Service) SetCloudCredSets(sets []CloudCredSet) error {
 }
 
 // signInStillUsed is the refusal for removing a saved sign-in a row still
-// names, with the storage locations that use it where the list shows them.
+// names, with the storage locations and pull sources that use it where the
+// lists show them.
 func (s *Service) signInStillUsed(set CloudCredSet) error {
-	if users, err := s.signInUsers(""); err == nil && len(users[set.ID]) > 0 {
-		names := make([]string, len(users[set.ID]))
-		for i, u := range users[set.ID] {
-			names[i] = u.Name
+	var names []string
+	if users, err := s.signInUsers(""); err == nil {
+		for _, u := range users[set.ID] {
+			names = append(names, u.Name)
 		}
+	}
+	if sources, err := s.store.ListPullSources(); err == nil {
+		for _, ps := range sources {
+			if strings.TrimSpace(ps.CredsRef) == set.ID {
+				names = append(names, "pull source "+ps.Name)
+			}
+		}
+	}
+	if len(names) > 0 {
 		return fmt.Errorf("%s still signs in with %s", strings.Join(names, ", "), set.Name)
 	}
 	return fmt.Errorf("%s is still in use, so it stays", set.Name)

@@ -6,9 +6,9 @@ import {
   listContainers,
   listOffsiteTargets,
   listVMs,
-  putSettings,
   type OffsiteTarget,
 } from "../../lib/api";
+import { putSettingsPatch } from "../../lib/settingsPatch";
 import { offsiteTargetsChanged, subscribeOffsiteTargets } from "../../lib/useOffsiteTargets";
 import { destinationsChanged } from "../../lib/useDestinations";
 import { reposChanged } from "../../lib/useNamedRepos";
@@ -33,16 +33,14 @@ function settleHookClears(s: Settings): Settings {
   };
 }
 
-/** adoptChangesFromElsewhere takes over what the server holds differently from
- *  the state this page last confirmed, in every field without an unsaved edit
- *  on this page. */
-function adoptChangesFromElsewhere(live: Settings, known: Settings, fresh: Settings): Settings {
-  const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
-  const next: Record<string, unknown> = { ...live };
-  for (const key of Object.keys(fresh) as (keyof Settings)[]) {
-    if (!same(fresh[key], known[key]) && same(live[key], known[key])) next[key] = fresh[key];
+/** rebaseSettings moves the live settings from base onto fresh: a field the
+ *  page shows as base had it takes the fresh value, an edit of its own stays. */
+export function rebaseSettings(live: Settings, base: Settings, fresh: Settings): Settings {
+  const out: Record<string, unknown> = { ...fresh };
+  for (const key of Object.keys(live) as (keyof Settings)[]) {
+    if (JSON.stringify(live[key]) !== JSON.stringify(base[key])) out[key] = live[key];
   }
-  return next as unknown as Settings;
+  return out as unknown as Settings;
 }
 
 // useSettingsStore loads the settings and owns every write to them.
@@ -78,6 +76,10 @@ export function useSettingsStore() {
   // queueSettingsWrite below makes sure the ref is read after the previous
   // write has landed and moved it.
   const savedBaseline = useRef<Settings | null>(null);
+  // savedRevision names the server state savedBaseline was read at. Another
+  // tab or window can change the settings meanwhile, and a PUT of the
+  // baseline would write their old values back.
+  const savedRevision = useRef<string | undefined>(undefined);
   // settingsWrites serializes every settings write on this page (saves and the
   // settings import), so a full-object PUT is never built from a baseline that
   // another in-flight PUT is about to replace. It is a promise chain rather than
@@ -156,9 +158,10 @@ export function useSettingsStore() {
   // state and the confirmed baseline. The mount load and the reload after a
   // settings import both use it, since an import replaces the whole
   // configuration.
-  function installSettings(s: Settings) {
+  function installSettings(s: Settings, revision: string | undefined) {
     setSettings(s);
     savedBaseline.current = s;
+    savedRevision.current = revision;
   }
 
   function loadSettings() {
@@ -166,7 +169,7 @@ export function useSettingsStore() {
     getSettings()
       .then((res) => {
         if (res.ok) {
-          installSettings(res.settings);
+          installSettings(res.settings, res.revision);
           if (res.hostMountRoot) setHostMountRoot(res.hostMountRoot);
           if (res.platform) setPlatformKind(res.platform);
           setPlatformSet(res.platformSet === true);
@@ -251,33 +254,27 @@ export function useSettingsStore() {
   ): Promise<boolean> {
     // Read at send time, not at call time: the previous write in the queue has
     // already advanced this ref by the time we get here.
-    const known = savedBaseline.current ?? settings;
-    if (!known) return false;
+    const base = savedBaseline.current ?? settings;
+    if (!base) return false;
     setSaveState("saving");
     setSaveError(null);
+    // Persist only this card's fields, merged onto the server baseline rather
+    // than the live `settings`, which may hold unsaved edits from other cards.
     try {
-      // The PUT replaces the whole row, so the patch goes onto what the server
-      // holds now: another tab, another device or a storage location page may
-      // have written since this page loaded.
-      const fresh = await getSettings();
-      if (!fresh.ok) {
-        setSaveState("idle");
-        push(t("settings.error"), "fail");
-        return false;
+      const { res, sent, revision, fresh } = await putSettingsPatch(base, savedRevision.current, patch);
+      savedRevision.current = revision;
+      if (fresh) {
+        // What changed elsewhere shows up too, except where a card here
+        // holds an edit of its own.
+        savedBaseline.current = fresh;
+        setSettings((prev) => (prev ? rebaseSettings(prev, base, fresh) : fresh));
       }
-      const updated: Settings = { ...fresh.settings, ...patch };
-      const res = await putSettings(updated);
       if (res.ok) {
-        // Advance the baseline; reflect the saved fields and what was written
-        // elsewhere in the live state, leaving other cards' in-progress edits
-        // untouched.
-        savedBaseline.current = settleHookClears(updated);
+        // Advance the baseline; reflect just the saved fields in the live state so
+        // other cards' in-progress edits are left untouched.
+        savedBaseline.current = settleHookClears(sent);
         setSettings((prev) =>
-          settleHookClears(
-            prev
-              ? { ...adoptChangesFromElsewhere(prev, known, fresh.settings), ...patch, ...(echo ? echo(prev) : null) }
-              : updated
-          )
+          settleHookClears(prev ? { ...prev, ...patch, ...(echo ? echo(prev) : null) } : sent)
         );
         setSaveState("idle");
         setFieldPulse((p) => {
@@ -508,7 +505,7 @@ export function useSettingsStore() {
   async function reloadAfterImport() {
     const fresh = await getSettings().catch(() => null);
     if (fresh?.ok) {
-      installSettings(fresh.settings);
+      installSettings(fresh.settings, fresh.revision);
       if (fresh.hostMountRoot) setHostMountRoot(fresh.hostMountRoot);
       if (fresh.platform) setPlatformKind(fresh.platform);
       setPlatformSet(fresh.platformSet === true);

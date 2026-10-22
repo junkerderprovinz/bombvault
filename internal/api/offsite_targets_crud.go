@@ -428,7 +428,11 @@ func (h *Handler) handleUpdateOffsiteTarget(w http.ResponseWriter, r *http.Reque
 	}
 	t.ID = existing.ID
 	t.CreatedAt = existing.CreatedAt
-	stored, err := h.store.UpsertOffsiteTarget(t)
+	save := h.store.UpsertOffsiteTarget
+	if moved {
+		save = h.store.MoveOffsiteTarget
+	}
+	stored, err := save(t)
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
