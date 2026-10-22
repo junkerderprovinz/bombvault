@@ -599,6 +599,8 @@ func run() error {
 		defer cancel()
 		svc.CleanupStartTestLeftovers(cctx)
 	}()
+	svc.SweepAppdataImportLeftovers()
+	svc.SweepFlashZipScratch()
 
 	scheduler.Start()
 	defer scheduler.Stop()
