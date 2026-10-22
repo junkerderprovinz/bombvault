@@ -1,0 +1,1 @@
+The app sits this one out, BombVault 10.2.3 fixes two things on the server: Replicate all now no longer gives up after the first ZFS entry when you wander off, and an own folder on the server can move into an S3 bucket with its own sign-in.
