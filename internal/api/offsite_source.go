@@ -150,11 +150,14 @@ func isGlobalAWSHost(host string) bool {
 	return host == "s3.amazonaws.com" || host == "s3-external-1.amazonaws.com"
 }
 
-// bucketRegion asks AWS where a bucket lives. AWS names the region in the
+// bucketRegion is askBucketRegion, a var so a test answers without the
+// network.
+var bucketRegion = askBucketRegion
+
+// askBucketRegion asks AWS where a bucket lives. AWS names the region in the
 // X-Amz-Bucket-Region header of every answer to a HEAD of the bucket, even one
-// that refuses it, so no sign-in is needed. A var so a test answers without
-// the network.
-var bucketRegion = func(endpoint, bucket string) string {
+// that refuses it, so no sign-in is needed.
+func askBucketRegion(endpoint, bucket string) string {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	req, err := http.NewRequestWithContext(ctx, http.MethodHead, strings.TrimRight(endpoint, "/")+"/"+url.PathEscape(bucket), nil)

@@ -83,7 +83,7 @@ func TestAWSNamesTheRegionOfABucketItRefuses(t *testing.T) {
 		w.WriteHeader(http.StatusForbidden)
 	}))
 	defer srv.Close()
-	if got := bucketRegion(srv.URL, "bucket"); got != "eu-west-2" {
+	if got := askBucketRegion(srv.URL, "bucket"); got != "eu-west-2" {
 		t.Fatalf("region = %q, want eu-west-2", got)
 	}
 }

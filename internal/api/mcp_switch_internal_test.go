@@ -23,6 +23,7 @@ func TestMain(m *testing.M) {
 	// The restores of the other tests write into temp folders, which lie on no
 	// mount; TestRestoreFoldersOffStorageAreRefused checks the real rule.
 	folderOnStorage = func(*Service, string) bool { return true }
+	bucketRegion = func(string, string) string { return "" }
 	os.Exit(m.Run())
 }
 
