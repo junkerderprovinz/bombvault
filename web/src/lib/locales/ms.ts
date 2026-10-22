@@ -926,7 +926,7 @@ const ms: Partial<Translations> = {
   "integrity.checking": "Menyemak…",
   "integrity.ok": "Sihat",
   "integrity.failed": "Pengesahan gagal",
-  "integrity.answerLost": "{section}: jawapan tidak sampai tepat pada masanya. BombVault terus mengerjakannya dan akan menunjukkan hasilnya di sini apabila selesai.",
+  "integrity.answerLost": "Jawapan tidak kembali tepat pada masanya. Larian diteruskan pada pelayan, dan hasilnya disimpan apabila ia selesai.",
   "integrity.unlock": "Buka kunci",
   "integrity.prune": "Prune",
   "integrity.verifyHint": "Jalankan restic check untuk mengesahkan struktur dan metadata utuh.",

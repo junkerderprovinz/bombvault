@@ -775,7 +775,7 @@ const vi: Partial<Translations> = {
   "integrity.checking": "Đang kiểm tra…",
   "integrity.ok": "Khỏe mạnh",
   "integrity.failed": "Kiểm tra thất bại",
-  "integrity.answerLost": "{section}: phản hồi không về kịp. BombVault vẫn tiếp tục và sẽ hiển thị kết quả ở đây khi xong.",
+  "integrity.answerLost": "Phản hồi không quay lại kịp. Lượt chạy vẫn tiếp tục trên máy chủ và kết quả sẽ được lưu khi nó kết thúc.",
   "integrity.unlock": "Mở khóa",
   "integrity.prune": "Dọn bớt",
   "integrity.verifyHint": "Chạy restic check để xác minh cấu trúc và siêu dữ liệu.",

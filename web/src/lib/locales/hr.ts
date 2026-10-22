@@ -926,7 +926,7 @@ const hr: Partial<Translations> = {
   "integrity.checking": "Provjeravanje…",
   "integrity.ok": "Ispravno",
   "integrity.failed": "Provjera nije uspjela",
-  "integrity.answerLost": "{section}: odgovor nije stigao na vrijeme. BombVault nastavlja s radom i prikazat će rezultat ovdje kad završi.",
+  "integrity.answerLost": "Odgovor se nije vratio na vrijeme. Pokretanje se nastavlja na poslužitelju, a rezultat se sprema kad završi.",
   "integrity.unlock": "Otključaj",
   "integrity.prune": "Očisti",
   "integrity.verifyHint": "Pokrenite restic check za provjeru cjelovitosti strukture i metapodataka.",

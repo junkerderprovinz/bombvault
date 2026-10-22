@@ -1020,7 +1020,7 @@ export const en = {
   "integrity.checking": "Checking…",
   "integrity.ok": "Healthy",
   "integrity.failed": "Check failed",
-  "integrity.answerLost": "{section}: no answer came back in time. BombVault keeps working on it and shows the result here when it is done.",
+  "integrity.answerLost": "The answer did not come back in time. The run carries on on the server, and its result is saved when it ends.",
   // Minimal per-button fail glyph (GlimStone standing rule: failures toast,
   // the button itself only shows a brief fixed indicator matching
   // integrity.ok's own visual weight — see IntegrityCard's run()).
@@ -6052,7 +6052,7 @@ export const de: Translations = {
   "integrity.checking": "Prüfe…",
   "integrity.ok": "Intakt",
   "integrity.failed": "Prüfung fehlgeschlagen",
-  "integrity.answerLost": "{section}: Die Antwort kam nicht rechtzeitig zurück. BombVault arbeitet weiter daran und zeigt das Ergebnis hier, sobald es fertig ist.",
+  "integrity.answerLost": "Die Antwort kam nicht rechtzeitig zurück. Der Lauf geht auf dem Server weiter, und sein Ergebnis wird gespeichert, wenn er fertig ist.",
   "integrity.unlock": "Entsperren",
   "integrity.prune": "Aufräumen",
   "integrity.verifyHint": "restic check ausführen, um Struktur und Metadaten zu verifizieren.",

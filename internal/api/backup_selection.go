@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -18,7 +17,7 @@ const selectionKey = "backup-selection"
 
 // selectionRetry is how often the next kind's batch is offered while the one
 // before it still holds the server.
-const selectionRetry = 500 * time.Millisecond
+var selectionRetry = 500 * time.Millisecond
 
 // selectionPart is one kind's share of a selection. The parts run in the
 // order given.
@@ -96,11 +95,10 @@ func (s *Service) awaitSelectionPart(ctx context.Context, p selectionPart) bool 
 	deadline := time.Now().Add(drillWaitCap())
 	for {
 		ok, err := s.startSelectionPart(ctx, p)
-		var busy domainBusyError
 		switch {
 		case ok:
 			return true
-		case err != nil && !errors.As(err, &busy):
+		case err != nil && !refusedAsBusy(err):
 			log.Printf("api: backup selection: %s left out: %v", p.Kind, err) //nolint:gosec // G706: kind is one of the fixed kinds
 			return true
 		case time.Now().After(deadline):
@@ -198,8 +196,12 @@ func (h *Handler) handleBackupSelection(w http.ResponseWriter, r *http.Request) 
 			return
 		}
 		seen[p.Kind] = true
+		valid := validResourceName
+		if p.Kind == "vm" {
+			valid = validVMName
+		}
 		for _, k := range p.Keys {
-			if !validResourceName(k) {
+			if !valid(k) {
 				writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "invalid name"})
 				return
 			}
@@ -211,7 +213,7 @@ func (h *Handler) handleBackupSelection(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	if !started {
-		writeJSON(w, http.StatusConflict, map[string]any{"ok": false, "error": "a batch backup is already running"})
+		writeJSON(w, http.StatusConflict, batchBusyRefusal())
 		return
 	}
 	if refused == nil {

@@ -926,7 +926,7 @@ const sl: Partial<Translations> = {
   "integrity.checking": "Preverjanje…",
   "integrity.ok": "Zdravo",
   "integrity.failed": "Preverjanje ni uspelo",
-  "integrity.answerLost": "{section}: odgovor ni prispel pravočasno. BombVault dela naprej in bo rezultat pokazal tukaj, ko bo končano.",
+  "integrity.answerLost": "Odgovor se ni vrnil pravočasno. Zagon se nadaljuje na strežniku, rezultat pa se shrani, ko se konča.",
   "integrity.unlock": "Odkleni",
   "integrity.prune": "Počisti",
   "integrity.verifyHint": "Zaženi restic check za preverjanje, da sta struktura in metapodatki nedotaknjena.",

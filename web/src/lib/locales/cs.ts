@@ -779,7 +779,7 @@ const cs: Partial<Translations> = {
   "integrity.checking": "Kontroluji…",
   "integrity.ok": "V pořádku",
   "integrity.failed": "Kontrola selhala",
-  "integrity.answerLost": "{section}: odpověď nepřišla včas. BombVault na tom dál pracuje a výsledek zobrazí tady, až skončí.",
+  "integrity.answerLost": "Odpověď nepřišla včas. Běh na serveru pokračuje a jeho výsledek se uloží, až skončí.",
   "integrity.unlock": "Odemknout",
   "integrity.prune": "Vyčistit",
   "integrity.verifyHint": "Spustit restic check k ověření struktury a metadat.",

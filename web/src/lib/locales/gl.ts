@@ -926,7 +926,7 @@ const gl: Partial<Translations> = {
   "integrity.checking": "Verificando…",
   "integrity.ok": "San",
   "integrity.failed": "Verificación fallida",
-  "integrity.answerLost": "{section}: a resposta non chegou a tempo. BombVault segue traballando e amosará o resultado aquí cando remate.",
+  "integrity.answerLost": "A resposta non volveu a tempo. A execución continúa no servidor e o seu resultado gárdase cando remate.",
   "integrity.unlock": "Desbloquear",
   "integrity.prune": "Limpar",
   "integrity.verifyHint": "Executa restic check para verificar que a estrutura e os metadatos están intactos.",

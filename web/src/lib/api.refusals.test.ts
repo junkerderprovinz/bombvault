@@ -54,6 +54,17 @@ describe("a refused settings change", () => {
     expect(api.explainedError(err)).toBeUndefined();
   });
 
+  it.each([
+    ["domain-busy", "prune is running on containers", en["apiError.domainBusy"]],
+    ["batch-busy", "a batch backup is already running", en["containers.batchAlreadyRunning"]],
+  ])("says in its own words why a start was refused as %s", async (code, said, sentence) => {
+    answers(409, { ok: false, error: said, code });
+    const api = await import("./api");
+    const err = await api.backupNow("plex").catch((e: unknown) => e);
+    expect((err as Error).message).toBe(sentence);
+    expect(api.explainedError(err)).toBe(sentence);
+  });
+
   it("calls a failure on the server one, whatever it said", async () => {
     answers(500, { ok: false, error: "database is locked" });
     const api = await import("./api");

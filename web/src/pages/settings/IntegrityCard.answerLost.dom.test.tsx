@@ -50,7 +50,7 @@ it("says a check whose answer a proxy gave up on carries on", async () => {
   render(<IntegrityCard t={t} />);
   await pickAction("containers", en["integrity.checkReadable"]);
   await waitFor(() => expect(push).toHaveBeenCalled());
-  expect(push).toHaveBeenCalledWith(en["integrity.answerLost"].replace("{section}", en["nav.containers"]), "warn");
+  expect(push).toHaveBeenCalledWith(`${en["nav.containers"]}: ${en["integrity.answerLost"]}`, "warn");
   expect(push.mock.calls.some(([, tone]) => tone === "fail")).toBe(false);
 });
 

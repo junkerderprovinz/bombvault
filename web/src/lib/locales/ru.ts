@@ -775,7 +775,7 @@ const ru: Partial<Translations> = {
   "integrity.checking": "Проверка…",
   "integrity.ok": "Исправен",
   "integrity.failed": "Проверка не пройдена",
-  "integrity.answerLost": "{section}: ответ не пришёл вовремя. BombVault продолжает работу и покажет результат здесь, когда закончит.",
+  "integrity.answerLost": "Ответ не пришёл вовремя. Запуск продолжается на сервере, и его результат сохранится, когда он закончится.",
   "integrity.unlock": "Разблокировать",
   "integrity.prune": "Очистить",
   "integrity.verifyHint": "Запустите restic check для проверки структуры и метаданных.",

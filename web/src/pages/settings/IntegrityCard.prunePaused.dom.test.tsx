@@ -11,9 +11,12 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 const pruneDomain = vi.fn();
 const push = vi.fn();
 
-vi.mock("../../lib/api", async () => {
+vi.mock("../../lib/api", async (importOriginal) => {
   const { domain } = await import("../overview/overview.testsupport");
+  const { ApiError, answerLost } = await importOriginal<typeof import("../../lib/api")>();
   return {
+  ApiError,
+  answerLost,
   pruneDomain: (...a: unknown[]) => pruneDomain(...a),
   unlockDomain: vi.fn().mockResolvedValue({ ok: true }),
   checkDomain: vi.fn().mockResolvedValue({ ok: true }),
@@ -96,6 +99,14 @@ it("says that pruning takes a login password when none is set", async () => {
   pruneDomain.mockResolvedValue({ ok: false, code: "password-not-set", error: "set a login password before pruning backups" });
   await prune();
   await waitFor(() => expect(push).toHaveBeenCalledWith(en["secrets.deletePasswordNotSet"], "fail"));
+});
+
+it("says a prune whose answer a proxy dropped goes on on the server", async () => {
+  const { ApiError } = await import("../../lib/api");
+  pruneDomain.mockRejectedValue(new ApiError(504, en["apiError.timeout"]));
+  await prune();
+  await waitFor(() => expect(push).toHaveBeenCalledWith(`Containers: ${en["integrity.answerLost"]}`, "warn"));
+  expect(push.mock.calls.some(([, tone]) => tone === "fail")).toBe(false);
 });
 
 it("offers a paired phone the sign-in instead of a failed prune", async () => {

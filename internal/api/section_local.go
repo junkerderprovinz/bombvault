@@ -22,24 +22,39 @@ var ErrNoPlace = errors.New("every storage location of this section is switched 
 // turns into a sentence in its language.
 const codeNoPlace = "no-place"
 
-// codeDomainBusy is the code of a refusal because another task holds the
-// section, the one refusal here that ends without anybody acting on it.
-const codeDomainBusy = "domain-busy"
+// The codes of a start refused because another run holds the domain, and
+// because another batch holds the server.
+const (
+	codeDomainBusy = "domain-busy"
+	codeBatchBusy  = "batch-busy"
+)
 
-// startRefusal is the body of the 409 for a backup pressed by hand that did
+// startRefusal is the body of the 409 for an action pressed by hand that did
 // not start.
 func startRefusal(err error) map[string]any {
 	body := map[string]any{"ok": false, "error": err.Error()}
-	var busy domainBusyError
 	switch {
 	case errors.Is(err, ErrNoPlace):
 		body["code"] = codeNoPlace
 	case errors.Is(err, ErrNoLocation):
 		body["code"] = codeNoLocation
-	case errors.As(err, &busy):
+	case refusedAsBusy(err):
 		body["code"] = codeDomainBusy
 	}
 	return body
+}
+
+// batchBusyRefusal is the body of the 409 for a batch refused while another
+// one runs.
+func batchBusyRefusal() map[string]any {
+	return map[string]any{"ok": false, "error": "a batch backup is already running", "code": codeBatchBusy}
+}
+
+// refusedAsBusy reports whether a start was refused because another
+// operation holds its domain.
+func refusedAsBusy(err error) bool {
+	_, busy := errors.AsType[domainBusyError](err)
+	return busy || errors.Is(err, errDomainBusy)
 }
 
 // localSwitchDomain reports whether a section's own folder can be switched

@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -27,5 +28,20 @@ func TestAProgressSnapshotEndsAfterTheBarsInFlight(t *testing.T) {
 		}
 	case <-time.After(5 * time.Second):
 		t.Fatal("the snapshot stream did not end")
+	}
+}
+
+func TestTheProgressStreamMarksTheEndOfItsReplay(t *testing.T) {
+	h := &Handler{progress: progress.NewStore()}
+	h.progress.Publish(progress.Event{Key: "container:plex", Phase: "backup", Percent: 40, Active: true})
+	// A reader already gone still gets the replay the stream opens with.
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	w := httptest.NewRecorder()
+	h.handleProgress(w, httptest.NewRequest(http.MethodGet, "/api/progress", nil).WithContext(ctx))
+	body := w.Body.String()
+	plex, synced := strings.Index(body, `"key":"container:plex"`), strings.Index(body, `data: {"synced":true}`)
+	if plex < 0 || synced < plex {
+		t.Fatalf("body %q, want the replay of plex and then the synced message", body)
 	}
 }

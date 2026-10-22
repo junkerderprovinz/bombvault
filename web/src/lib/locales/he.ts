@@ -781,7 +781,7 @@ const he: Partial<Translations> = {
   "integrity.checking": "בודק…",
   "integrity.ok": "תקין",
   "integrity.failed": "הבדיקה נכשלה",
-  "integrity.answerLost": "{section}: התשובה לא הגיעה בזמן. BombVault ממשיך לעבוד ויציג כאן את התוצאה בסיום.",
+  "integrity.answerLost": "התשובה לא חזרה בזמן. ההרצה ממשיכה בשרת, והתוצאה שלה נשמרת כשהיא מסתיימת.",
   "integrity.unlock": "ביטול נעילה",
   "integrity.prune": "גיזום",
   "integrity.verifyHint": "הרצת restic check לאימות המבנה והמטא-נתונים.",

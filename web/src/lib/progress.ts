@@ -280,15 +280,48 @@ export function parseProgressFrame(data: string): ProgressFrame | null {
   };
 }
 
+// The keys the server has replayed since the stream (re)opened, until its
+// synced message says the replay is complete.
+let replayed: Set<string> | null = null;
+const SYNCED = '{"synced":true}';
+
 function handleMessage(e: MessageEvent<string>): void {
+  if (e.data === SYNCED) {
+    handleSynced();
+    return;
+  }
   const frame = parseProgressFrame(e.data);
-  if (frame) applyEvent(frame);
+  if (!frame) return;
+  replayed?.add(frame.key);
+  applyEvent(frame);
+}
+
+// A run that ended while the stream was down, or before a restart, sent its
+// last frame to nobody, so a bar the replay leaves out is dropped. One still
+// lingering after its last frame keeps its timer.
+function handleSynced(): void {
+  if (!replayed) return;
+  const live = replayed;
+  replayed = null;
+  const next = { ...current };
+  let changed = false;
+  for (const key of Object.keys(next)) {
+    if (live.has(key) || dropTimers.has(key)) continue;
+    delete next[key];
+    changed = true;
+  }
+  if (!changed) return;
+  current = next;
+  emit();
 }
 
 function openSource(): void {
   if (source) return;
   source = new EventSource("/api/progress");
   source.onmessage = handleMessage;
+  source.onopen = () => {
+    replayed = new Set();
+  };
   // No onerror teardown: EventSource reconnects by itself, and closeSource
   // runs on the last unsubscribe.
 }
@@ -304,6 +337,7 @@ function closeSource(): void {
   // a frozen bar (no live stream and no completion event to clear it).
   for (const timer of dropTimers.values()) clearTimeout(timer);
   dropTimers.clear();
+  replayed = null;
   current = {};
 }
 

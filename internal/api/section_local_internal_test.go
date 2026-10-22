@@ -184,6 +184,23 @@ func TestAPressRefusedForNoPlaceCarriesACodeThePageCanTranslate(t *testing.T) {
 	}
 }
 
+func TestAPressRefusedWhileTheSectionIsBusySaysSoByCode(t *testing.T) {
+	f, _, _, _ := flashScene(t)
+	unlock := f.svc.lockDomainFor("flash", "prune")
+	code, out := f.call(http.MethodPost, "/api/flash/backup", nil)
+	unlock()
+	if code != http.StatusConflict || out["code"] != codeDomainBusy {
+		t.Fatalf("POST /api/flash/backup = %d %v, want 409 with code %q", code, out, codeDomainBusy)
+	}
+
+	f.svc.batchActive.Store(true)
+	defer f.svc.batchActive.Store(false)
+	code, out = f.call(http.MethodPost, "/api/containers/backup-all", map[string][]string{"names": {"plex"}})
+	if code != http.StatusConflict || out["code"] != codeBatchBusy {
+		t.Fatalf("POST /api/containers/backup-all = %d %v, want 409 with code %q", code, out, codeBatchBusy)
+	}
+}
+
 func TestOnlySectionsWithoutPlacementHaveAFolderSwitch(t *testing.T) {
 	f := newPlacementFixture(t)
 	if code, _ := f.call(http.MethodPut, "/api/storage/sections/containers/local", map[string]bool{"on": false}); code != http.StatusBadRequest {

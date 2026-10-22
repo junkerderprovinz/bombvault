@@ -152,6 +152,51 @@ func TestStoreCancelUnsubscribes(t *testing.T) {
 	}
 }
 
+func TestASubscriberTooSlowForTheEndOfARunIsCutOff(t *testing.T) {
+	s := progress.NewStore()
+	ch, cancel := s.Subscribe()
+	defer cancel()
+	for i := range 40 {
+		s.Publish(progress.Event{Key: "container:plex", Phase: "backup", Percent: float64(i), Active: true})
+	}
+	s.Publish(progress.Event{Key: "container:plex", Phase: "backup", Percent: 100})
+
+	for range 32 {
+		<-ch
+	}
+	select {
+	case e, open := <-ch:
+		if open {
+			t.Fatalf("got %+v after the 32 held events, want the channel closed", e)
+		}
+	default:
+		t.Fatal("the subscriber that missed the end of the run is still subscribed")
+	}
+	s.Publish(progress.Event{Key: "flash", Phase: "backup", Active: true})
+}
+
+func TestASlowSubscriberOnlyMissesUpdatesInARun(t *testing.T) {
+	s := progress.NewStore()
+	ch, cancel := s.Subscribe()
+	defer cancel()
+	for i := range 40 {
+		s.Publish(progress.Event{Key: "container:plex", Phase: "backup", Percent: float64(i), Active: true})
+	}
+	<-ch
+	s.Publish(progress.Event{Key: "container:plex", Phase: "backup", Percent: 100})
+	var last progress.Event
+	for len(ch) > 0 {
+		last = <-ch
+	}
+	if last.Active || last.Percent != 100 {
+		t.Fatalf("last event = %+v, want the end of the run", last)
+	}
+	s.Publish(progress.Event{Key: "flash", Phase: "backup", Active: true})
+	if got, ok := <-ch; !ok || got.Key != "flash" {
+		t.Fatalf("after the run: %+v, %v, want the subscriber still served", got, ok)
+	}
+}
+
 func TestSetStepRepublishesTheLatestEventWithTheStep(t *testing.T) {
 	s := progress.NewStore()
 	s.Publish(progress.Event{Key: "container:plex", Phase: "backup", Percent: 40, Active: true, StartedAt: 7, Stage: "dbdump", Bytes: 512})

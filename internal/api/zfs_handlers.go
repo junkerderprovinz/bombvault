@@ -378,7 +378,7 @@ func (h *Handler) handleProbeZFSDataset(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	if op, busy := h.svc.domainBusy(zfsDomain); busy {
-		writeJSON(w, http.StatusConflict, map[string]any{"ok": false, "error": op + " is running on zfs"})
+		writeJSON(w, http.StatusConflict, startRefusal(domainBusyError{op: op, domain: zfsDomain}))
 		return
 	}
 	check := h.svc.ProbeZFSSnapshotAccess(r.Context(), id)
@@ -393,7 +393,7 @@ func (h *Handler) handleSweepZFSDataset(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	if op, busy := h.svc.domainBusy(zfsDomain); busy {
-		writeJSON(w, http.StatusConflict, map[string]any{"ok": false, "error": op + " is running on zfs"})
+		writeJSON(w, http.StatusConflict, startRefusal(domainBusyError{op: op, domain: zfsDomain}))
 		return
 	}
 	remaining, err := h.svc.SweepZFSLeftovers(r.Context(), id)

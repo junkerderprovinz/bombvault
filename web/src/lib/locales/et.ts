@@ -926,7 +926,7 @@ const et: Partial<Translations> = {
   "integrity.checking": "Kontrollimine…",
   "integrity.ok": "Terve",
   "integrity.failed": "Kontroll ebaõnnestus",
-  "integrity.answerLost": "{section}: vastus ei jõudnud õigel ajal kohale. BombVault töötab edasi ja näitab tulemust siin, kui see on valmis.",
+  "integrity.answerLost": "Vastus ei jõudnud õigel ajal tagasi. Käivitus jätkub serveris ja selle tulemus salvestatakse, kui see lõpeb.",
   "integrity.unlock": "Ava lukk",
   "integrity.prune": "Puhasta",
   "integrity.verifyHint": "Käivita restic check, et kontrollida struktuuri ja metaandmete terviklikkust.",

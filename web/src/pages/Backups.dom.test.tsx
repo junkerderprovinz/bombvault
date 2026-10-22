@@ -31,6 +31,7 @@ vi.mock("../lib/api", async (importOriginal) => {
     discoverAll: vi.fn(),
     backupEverythingNow: vi.fn(),
     backupAll: vi.fn(),
+    backupSelection: vi.fn(),
     backupVMsAll: vi.fn(),
     backupFilesAll: vi.fn(),
     backupZFSAll: vi.fn(),
@@ -82,9 +83,9 @@ const discoverAll = vi.mocked(api.discoverAll);
 const backupEverythingNow = vi.mocked(api.backupEverythingNow);
 const backupAll = vi.mocked(api.backupAll);
 const backupVMsAll = vi.mocked(api.backupVMsAll);
+const backupSelection = vi.mocked(api.backupSelection);
 const backupFilesAll = vi.mocked(api.backupFilesAll);
 const backupFlashNow = vi.mocked(api.backupFlashNow);
-const backupSelection = vi.mocked(api.backupSelection);
 const backupNow = vi.mocked(api.backupNow);
 const backupVMNow = vi.mocked(api.backupVMNow);
 const cancelBackup = vi.mocked(api.cancelBackup);

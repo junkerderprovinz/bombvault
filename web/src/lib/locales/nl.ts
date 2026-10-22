@@ -777,7 +777,7 @@ const nl: Partial<Translations> = {
   "integrity.checking": "Controleren…",
   "integrity.ok": "Gezond",
   "integrity.failed": "Controle mislukt",
-  "integrity.answerLost": "{section}: het antwoord kwam niet op tijd. BombVault werkt eraan door en toont het resultaat hier zodra het klaar is.",
+  "integrity.answerLost": "Het antwoord kwam niet op tijd terug. De run loopt door op de server, en het resultaat wordt opgeslagen als hij klaar is.",
   "integrity.unlock": "Ontgrendelen",
   "integrity.prune": "Opschonen",
   "integrity.verifyHint": "Voer restic check uit om structuur en metadata te verifiëren.",

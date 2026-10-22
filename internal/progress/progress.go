@@ -172,24 +172,29 @@ func NewStore() *Store {
 
 // Subscribe registers a new subscriber and returns its event channel plus a
 // cancel func that unregisters and closes it. The channel is buffered; if a slow
-// subscriber's buffer is full, Publish drops the update (the next one, or the
-// terminal Active:false event, catches it up).
+// subscriber's buffer is full, Publish drops an update, which the next one
+// catches up. One that misses the event ending a run is cut off and its
+// channel closed, so its reader starts again from the Snapshot instead of
+// keeping a bar that never ends.
 func (s *Store) Subscribe() (<-chan Event, func()) {
 	ch := make(chan Event, 32)
 	s.mu.Lock()
 	s.subs[ch] = struct{}{}
 	s.mu.Unlock()
 
-	var once sync.Once
 	cancel := func() {
-		once.Do(func() {
-			s.mu.Lock()
-			delete(s.subs, ch)
-			close(ch)
-			s.mu.Unlock()
-		})
+		s.mu.Lock()
+		defer s.mu.Unlock()
+		s.drop(ch)
 	}
 	return ch, cancel
+}
+
+func (s *Store) drop(ch chan Event) {
+	if _, ok := s.subs[ch]; ok {
+		delete(s.subs, ch)
+		close(ch)
+	}
 }
 
 // Publish fans an Event out to all subscribers and updates the per-key latest
@@ -228,8 +233,10 @@ func (s *Store) publish(e Event) {
 		select {
 		case ch <- e:
 		default:
-			// Drop the update rather than block the backup on a slow
-			// subscriber.
+			// A backup never waits for a slow subscriber.
+			if !e.Active {
+				s.drop(ch)
+			}
 		}
 	}
 }

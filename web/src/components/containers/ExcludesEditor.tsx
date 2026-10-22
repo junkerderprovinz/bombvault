@@ -115,17 +115,28 @@ export function ExcludesEditor({
     .map((s) => s.trim())
     .filter(Boolean);
 
-  async function saveLines(list: string[]) {
+  // A save typed into the field leaves the field alone: writing the list back
+  // would eat a newline just typed and whatever was typed while it was out.
+  // A chip action passes the text it started from. Its list goes into the
+  // field at once, so typing meanwhile builds on it, and back out if the save
+  // fails and nothing was typed since.
+  async function saveLines(list: string[], from?: string) {
+    const shown = list.join("\n");
+    if (from !== undefined) setText(shown);
+    const undo = () => {
+      if (from !== undefined) setText((now) => (now === shown ? from : now));
+    };
     setState("saving");
     try {
       const r = await setContainerExcludes(name, list);
       if (r.ok) {
-        setText(list.join("\n"));
         push(t("excludes.saved"), "success");
       } else {
+        undo();
         push(r.error ?? t("excludes.error"), "fail");
       }
     } catch (err) {
+      undo();
       push(err instanceof Error ? err.message : t("excludes.error"), "fail");
     } finally {
       setState("idle");
@@ -226,19 +237,19 @@ export function ExcludesEditor({
   async function addExclude(line: string) {
     if (currentLines.includes(line)) return;
     cancelPendingSave();
-    await saveLines([...currentLines, line]);
+    await saveLines([...currentLines, line], text);
   }
 
   async function addExcludes(lines: string[]) {
     const fresh = lines.filter((l) => !currentLines.includes(l));
     if (fresh.length === 0) return;
     cancelPendingSave();
-    await saveLines([...currentLines, ...fresh]);
+    await saveLines([...currentLines, ...fresh], text);
   }
 
   async function removeExclude(line: string) {
     cancelPendingSave();
-    await saveLines(currentLines.filter((l) => l !== line));
+    await saveLines(currentLines.filter((l) => l !== line), text);
   }
 
   // A suggestion whose line is already stored disappears from the list (it shows

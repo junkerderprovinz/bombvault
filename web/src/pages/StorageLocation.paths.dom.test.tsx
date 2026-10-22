@@ -99,15 +99,11 @@ function connection(): HTMLElement {
   return heading!.parentElement!;
 }
 
-// Change opens the window that offers the storage locations first. A path
-// typed by hand, with its compression and safety settings, is one step
-// further, behind Another place.
+// A path typed by hand, with its compression and safety settings, is edited
+// in the window a section's rules open under Type a location.
 async function openTyped(row: number) {
-  await click(within(within(connection()).getAllByRole("listitem")[row]).getByRole("button", { name: "Change" }));
-  await act(async () => {});
-  const window = screen.getByRole("dialog");
-  await click(within(window).getByRole("radio", { name: "Another place" }));
-  await click(within(window).getByRole("button", { name: "Open" }));
+  await click(screen.getAllByRole("button", { name: "Change rules" })[row]);
+  await click(within(screen.getByRole("dialog")).getByRole("button", { name: "Type a location" }));
   await act(async () => {});
 }
 
@@ -152,7 +148,7 @@ describe("the folders of a local location", () => {
     await click(within(dialog).getByRole("button", { name: "Done" }));
 
     expect(putSettings).toHaveBeenCalledWith(expect.objectContaining({ vmsPath: "backups/machines", containersPath: "backups/bombvault/containers" }), "r1");
-    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(screen.queryByRole("dialog", { name: "VMs path" })).toBeNull();
     expect(getStorageLocation.mock.calls.length).toBeGreaterThan(reads);
   });
 

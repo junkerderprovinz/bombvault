@@ -781,7 +781,7 @@ const th: Partial<Translations> = {
   "integrity.checking": "กำลังตรวจสอบ…",
   "integrity.ok": "สมบูรณ์",
   "integrity.failed": "การตรวจสอบล้มเหลว",
-  "integrity.answerLost": "{section}: ไม่ได้รับคำตอบทันเวลา BombVault ยังทำงานต่อและจะแสดงผลที่นี่เมื่อเสร็จ",
+  "integrity.answerLost": "คำตอบไม่กลับมาทันเวลา การทำงานยังดำเนินต่อบนเซิร์ฟเวอร์ และผลลัพธ์จะถูกบันทึกเมื่อเสร็จ",
   "integrity.unlock": "ปลดล็อก",
   "integrity.prune": "ตัดทิ้ง",
   "integrity.verifyHint": "รัน restic check เพื่อตรวจสอบโครงสร้างและข้อมูลเมตา",

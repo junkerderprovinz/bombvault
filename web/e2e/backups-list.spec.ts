@@ -206,6 +206,10 @@ async function stage(page: Page, s: Stage = {}): Promise<{ posts: string[] }> {
     posts.push("/api/backup-everything");
     return route.fulfill({ json: { ok: true, started: true } });
   });
+  await page.route("**/api/backup/selection", (route) => {
+    posts.push(`/api/backup/selection ${route.request().postData() ?? ""}`);
+    return route.fulfill({ json: { ok: true, started: true } });
+  });
   for (const kind of ["containers", "vms", "files", "zfs"]) {
     await page.route(`**/api/${kind}/backup-all`, (route) => {
       posts.push(`/api/${kind}/backup-all ${route.request().postData() ?? ""}`);

@@ -87,8 +87,8 @@ func TestBackupSelectionRefusesASecondOne(t *testing.T) {
 		t.Fatalf("first status %d, body %s", w.Code, w.Body.String())
 	}
 	w, m := doJSON(t, router, http.MethodPost, "/api/backup/selection", body)
-	if w.Code != http.StatusConflict || m["code"] != nil {
-		t.Fatalf("second status %d, body %s, want an uncoded 409", w.Code, w.Body.String())
+	if w.Code != http.StatusConflict || m["code"] != "batch-busy" {
+		t.Fatalf("second status %d, body %s, want a batch-busy 409", w.Code, w.Body.String())
 	}
 	close(eng.block)
 	waitForRun(t, st, store.ConfigTargetID)
