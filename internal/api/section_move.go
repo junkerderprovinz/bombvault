@@ -59,11 +59,32 @@ var signInVars = map[string][]string{
 	"rest": {"RESTIC_REST_USERNAME", "RESTIC_REST_PASSWORD"},
 }
 
+// backendEnvPrefix starts the variables a restic backend reads its sign-in
+// and region from.
+var backendEnvPrefix = map[string]string{"s3": "AWS_", "rest": "RESTIC_REST_"}
+
+// ownBackendEnv drops the variables of every backend but the one loc names. A
+// mode carries the default cloud sign-in whatever it opens, and a folder on
+// this server reads none of it.
+func ownBackendEnv(loc string, env []string) []string {
+	own := backendEnvPrefix[repoScheme(loc)]
+	return slices.DeleteFunc(slices.Clone(env), func(kv string) bool {
+		for _, prefix := range backendEnvPrefix {
+			if prefix != own && strings.HasPrefix(kv, prefix) {
+				return true
+			}
+		}
+		return false
+	})
+}
+
 // bothSignIns joins the backend credentials of two places for one restic
-// process. ok is false when they set one variable to different values, or
-// when the backend of one place reads a login variable that only the other
-// sets, which would sign it in with the other's login.
+// process. Each place brings only what its own backend reads. ok is false when
+// they set one variable to different values, or when the backend of one place
+// reads a login variable that only the other sets, which would sign it in with
+// the other's login.
 func bothSignIns(aLoc string, a []string, bLoc string, b []string) (env []string, ok bool) {
+	a, b = ownBackendEnv(aLoc, a), ownBackendEnv(bLoc, b)
 	lacks := func(loc string, own, other []string) bool {
 		for _, name := range signInVars[repoScheme(loc)] {
 			if envValue(own, name) == "" && envValue(other, name) != "" {

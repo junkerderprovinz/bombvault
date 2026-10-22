@@ -187,3 +187,54 @@ func TestAnOwnFolderAlreadyThereIsLeftAlone(t *testing.T) {
 		t.Fatalf("step = %+v, want it marked as already there", steps[0])
 	}
 }
+
+func TestAnOwnFolderMovesFromThisServerToAnS3LocationWithItsOwnSignIn(t *testing.T) {
+	f := newPlacementFixture(t)
+	if err := f.svc.SetCloudCredSets([]CloudCredSet{
+		{ID: "def", Name: "Def", Default: true, CloudCreds: CloudCreds{S3KeyID: "DEF", S3Secret: "d", S3Region: "eu-1"}},
+		{ID: "garage", Name: "Garage", CloudCreds: CloudCreds{S3KeyID: "GARAGE", S3Secret: "g", S3Region: "garage"}},
+	}); err != nil {
+		t.Fatal(err)
+	}
+	garage, err := f.st.SaveDestination(store.OffsiteTarget{Name: "Garage", Repo: "s3:https://garage/bv", CredsRef: "garage", Provider: "box"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	f.hold(f.domainPath("containers"), snap("a1", 100, "container:web"), snap("a2", 200, "container:web"))
+
+	steps := ownSteps(t, f.do("POST", "/api/storage/own-folders", map[string]any{
+		"domains": []string{"containers"}, "location": "destination:" + garage.ID, "copyOver": true,
+	}))
+	if steps[0].Pending != 2 {
+		t.Fatalf("step = %+v, want two backups to copy", steps[0])
+	}
+	f.waitOwnFolder("containers")
+
+	to := "s3:https://garage/bv/containers"
+	if got := f.snapsAt(to); len(got) != 2 {
+		t.Fatalf("the new own folder holds %d backups, want 2", len(got))
+	}
+	f.eng.mu.Lock()
+	envs := f.eng.signIns["copy "+to]
+	f.eng.mu.Unlock()
+	if len(envs) == 0 {
+		t.Fatal("nothing was copied to Garage")
+	}
+	env := strings.Join(envs[0], "\n")
+	if !strings.Contains(env, "AWS_ACCESS_KEY_ID=GARAGE") || strings.Contains(env, "=DEF") || strings.Contains(env, "=eu-1") {
+		t.Fatalf("the copy signed in with %v, want only Garage's sign-in", env)
+	}
+}
+
+func TestEachPlaceBringsOnlyTheSignInItsBackendReads(t *testing.T) {
+	local := []string{"AWS_ACCESS_KEY_ID=DEF", "AWS_SECRET_ACCESS_KEY=d", "RESTIC_REST_USERNAME=bv"}
+	s3 := []string{"AWS_ACCESS_KEY_ID=GARAGE", "AWS_SECRET_ACCESS_KEY=g"}
+
+	env, ok := bothSignIns("s3:https://garage/bv", s3, "/mnt/user/bombvault/flash", local)
+	if !ok || !slices.Equal(env, s3) {
+		t.Fatalf("a folder here and an S3 bucket joined to %v, %v, want only the bucket's keys", env, ok)
+	}
+	if _, ok := bothSignIns("s3:https://garage/bv", s3, "s3:https://aws/bv", local); ok {
+		t.Fatal("two S3 places with different keys joined")
+	}
+}
