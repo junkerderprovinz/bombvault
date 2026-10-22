@@ -3842,7 +3842,6 @@ const th: Partial<Translations> = {
   "backups.restore.alsoVMs": "แต่ละ VM จะถูกปิดและไฟล์ดิสก์จะถูกแทนที่",
   "backups.batch.running": "กำลังสำรองข้อมูลแบบกลุ่ม",
   "backups.batch.nothing": "ไม่มีอะไรให้สำรอง: รายการที่เลือกไม่ได้ติดตั้งอยู่",
-  "backups.batch.startedInTurn": "เริ่มสำรองข้อมูลแล้ว แต่ละส่วนจะทำงานทีละส่วน โปรดเปิดหน้านี้ค้างไว้จนกว่าส่วนสุดท้ายจะเริ่ม",
   "backups.batch.skipped": "ข้าม {n} รายการ",
   "backups.schedule.pausedMany": "หยุดตารางเวลาของ {n} รายการชั่วคราวแล้ว",
   "backups.schedule.resumedMany": "ตารางเวลาของ {n} รายการกลับมาทำงานอีกครั้ง",

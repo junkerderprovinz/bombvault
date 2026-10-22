@@ -8,9 +8,11 @@ import {
   backupConfigNow,
   backupFilesAll,
   backupFlashNow,
+  backupSelection,
   backupVMsAll,
   backupZFSAll,
   cancelBackup as cancelRunning,
+  explainedError,
   type BackupItem,
   type OkEnvelope,
 } from "../../lib/api";
@@ -43,9 +45,8 @@ const BATCH_KEY: Record<EntryKind, string> = {
   config: "config",
 };
 
-// One backup runs at a time on the server. The batch of the next kind is
-// offered again at this pace until the one before it has let go.
-const RETRY_MS = 2000;
+// The key a selection of several kinds reports under while kinds still wait.
+const SELECTION_KEY = "backup-selection";
 
 function refusedAsBusy(err: unknown, res?: OkEnvelope): boolean {
   if (err instanceof ApiError) return err.status === 409;
@@ -101,32 +102,28 @@ export function useBulkActions({
   const live = (key: string) => !!progress[key]?.active && !progress[key].finished;
   const liveBatch = Object.values(BATCH_KEY).find((key) => key.startsWith("batch:") && live(key));
   const liveAt = plan ? plan.parts.findIndex((part) => live(BATCH_KEY[part.kind])) : -1;
+  // Between two kinds of a selection, the selection itself is still live.
+  const waiting = busy || live(SELECTION_KEY);
   useEffect(() => {
     if (!plan) return;
     if (liveAt > plan.seen) setPlan({ ...plan, seen: liveAt });
-    else if (liveAt < 0 && plan.seen >= 0 && !busy) setPlan(null);
-  }, [plan, liveAt, busy]);
+    else if (liveAt < 0 && plan.seen >= 0 && !waiting) setPlan(null);
+  }, [plan, liveAt, waiting]);
 
-  // Starts one kind's batch. `wait` keeps offering it while another backup
-  // holds the server, which is what the batch of the kind before it does.
-  async function startPart(part: BatchPart, wait: boolean): Promise<"ok" | "busy" | "gone" | { error: string }> {
-    for (;;) {
-      let res: OkEnvelope | undefined;
-      let thrown: unknown;
-      try {
-        res = await START[part.kind](part.keys);
-      } catch (err) {
-        thrown = err;
-      }
-      if (res?.ok) return "ok";
-      if (!refusedAsBusy(thrown, res)) {
-        const message = thrown instanceof Error ? thrown.message : res?.error;
-        return { error: message ?? t("containers.backupStartFailed") };
-      }
-      if (!wait) return "busy";
-      await new Promise((done) => setTimeout(done, RETRY_MS));
-      if (gone.current) return "gone";
+  // Several kinds go to the server as one selection, which starts each kind
+  // once the one before it has let go, so leaving the page stops none of them.
+  async function start(parts: BatchPart[]): Promise<"ok" | { busy: string } | { error: string }> {
+    let res: OkEnvelope | undefined;
+    let thrown: unknown;
+    try {
+      res = await (parts.length === 1 ? START[parts[0].kind](parts[0].keys) : backupSelection(parts));
+    } catch (err) {
+      thrown = err;
     }
+    if (res?.ok) return "ok";
+    if (refusedAsBusy(thrown, res)) return { busy: explainedError(thrown) ?? t("containers.batchAlreadyRunning") };
+    const message = thrown instanceof Error ? thrown.message : res?.error;
+    return { error: message ?? t("containers.backupStartFailed") };
   }
 
   async function backUp(items: BackupItem[]) {
@@ -140,24 +137,15 @@ export function useBulkActions({
     setBusy(true);
     setPlan({ parts, seen: -1 });
     try {
-      for (const [i, part] of parts.entries()) {
-        const started = await startPart(part, i > 0);
-        if (started === "gone") return;
-        if (started === "busy") {
-          push(t("containers.batchAlreadyRunning"), "warn");
-          setPlan(null);
-          return;
-        }
-        if (started !== "ok") {
-          push(started.error, "fail");
-          if (i === 0) setPlan(null);
-          return;
-        }
-        if (i === 0) {
-          const said = t(parts.length > 1 ? "backups.batch.startedInTurn" : "containers.batchStarted");
-          push(skipped > 0 ? `${said} ${t("backups.batch.skipped", skipped)}` : said, "success");
-        }
+      const started = await start(parts);
+      if (started === "ok") {
+        const said = t("containers.batchStarted");
+        push(skipped > 0 ? `${said} ${t("backups.batch.skipped", skipped)}` : said, "success");
+        return;
       }
+      setPlan(null);
+      if ("busy" in started) push(started.busy, "warn");
+      else push(started.error, "fail");
     } finally {
       if (!gone.current) setBusy(false);
     }
@@ -209,7 +197,7 @@ export function useBulkActions({
   }
 
   let batch: BatchProgress | null = null;
-  if (plan && (liveAt >= 0 || busy)) {
+  if (plan && (liveAt >= 0 || waiting)) {
     // Between two kinds, the ones that have reported are done.
     const sizes = plan.parts.map((part) => part.keys.length);
     const of = sizes.reduce((sum, n) => sum + n, 0);

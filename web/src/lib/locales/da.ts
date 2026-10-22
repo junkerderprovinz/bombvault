@@ -3841,7 +3841,6 @@ const da: Partial<Translations> = {
   "backups.restore.alsoVMs": "Hver VM slukkes, og dens diskfiler erstattes.",
   "backups.batch.running": "Samlet sikkerhedskopiering kører",
   "backups.batch.nothing": "Intet at sikkerhedskopiere: det valgte er ikke installeret",
-  "backups.batch.startedInTurn": "Sikkerhedskopiering startet. Områderne kører efter hinanden, så lad siden stå åben, til det sidste er startet.",
   "backups.batch.skipped": "{n} sprunget over",
   "backups.schedule.pausedMany": "Tidsplan for {n} elementer sat på pause",
   "backups.schedule.resumedMany": "Tidsplan for {n} elementer kører igen",

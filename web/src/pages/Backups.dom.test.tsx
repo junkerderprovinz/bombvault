@@ -31,6 +31,7 @@ vi.mock("../lib/api", async (importOriginal) => {
     discoverAll: vi.fn(),
     backupEverythingNow: vi.fn(),
     backupAll: vi.fn(),
+    backupSelection: vi.fn(),
     backupVMsAll: vi.fn(),
     backupFilesAll: vi.fn(),
     backupZFSAll: vi.fn(),
@@ -81,6 +82,7 @@ const discoverAll = vi.mocked(api.discoverAll);
 const backupEverythingNow = vi.mocked(api.backupEverythingNow);
 const backupAll = vi.mocked(api.backupAll);
 const backupVMsAll = vi.mocked(api.backupVMsAll);
+const backupSelection = vi.mocked(api.backupSelection);
 const backupFilesAll = vi.mocked(api.backupFilesAll);
 const backupFlashNow = vi.mocked(api.backupFlashNow);
 const backupNow = vi.mocked(api.backupNow);
@@ -1056,33 +1058,39 @@ describe("the bar above picked rows", () => {
     expect(pushed).toEqual([{ message: `${en["containers.batchStarted"]} 1 skipped`, severity: "success" }]);
   });
 
-  it("starts the next kind once the batch before it has let go of the server", async () => {
-    vi.useFakeTimers();
-    try {
-      backupAll.mockResolvedValue({ ok: true });
-      backupVMsAll.mockRejectedValueOnce(new api.ApiError(409, "busy")).mockResolvedValue({ ok: true });
-      await renderPage();
-      await pick("plex", "Windows 11");
-      await press(barButton("Back up selected"));
-      expect(backupVMsAll).toHaveBeenCalledTimes(1);
-      expect(pushed).toEqual([{ message: en["backups.batch.startedInTurn"], severity: "success" }]);
-      expect(screen.getByTestId("batch-note").textContent).toContain("0 of 2");
-      await act(async () => {
-        await vi.advanceTimersByTimeAsync(2100);
-      });
-      expect(backupVMsAll).toHaveBeenCalledTimes(2);
-      expect(backupVMsAll).toHaveBeenLastCalledWith(["win11"]);
-    } finally {
-      vi.useRealTimers();
-    }
-  });
-
-  it("says a backup is already running and starts nothing more", async () => {
-    backupAll.mockRejectedValue(new api.ApiError(409, "busy"));
+  it("hands several kinds to the server, which starts them in turn after the page is left", async () => {
+    backupSelection.mockResolvedValue({ ok: true });
     await renderPage();
     await pick("plex", "Windows 11");
     await press(barButton("Back up selected"));
+    expect(backupSelection).toHaveBeenCalledWith([
+      { kind: "container", keys: ["plex"] },
+      { kind: "vm", keys: ["win11"] },
+    ]);
+    expect(backupAll).not.toHaveBeenCalled();
     expect(backupVMsAll).not.toHaveBeenCalled();
+    expect(pushed).toEqual([{ message: en["containers.batchStarted"], severity: "success" }]);
+  });
+
+  it("keeps counting across the kinds while the selection waits between them", async () => {
+    backupSelection.mockResolvedValue({ ok: true });
+    await renderPage();
+    await pick("plex", "Windows 11");
+    await press(barButton("Back up selected"));
+    progress({ key: "backup-selection", phase: "backup", percent: 50, active: true, done: 1, total: 2 });
+    progress({ key: "batch:containers", phase: "backup", percent: 100, active: true });
+    expect(screen.getByTestId("batch-note").textContent).toContain("1 of 2");
+    progress({ key: "batch:containers", phase: "backup", percent: 100, active: false });
+    expect(screen.getByTestId("batch-note").textContent).toContain("1 of 2");
+    progress({ key: "batch:vms", phase: "backup", percent: 0, active: true });
+    expect(screen.getByTestId("batch-note").textContent).toContain("1 of 2");
+  });
+
+  it("says a backup is already running and starts nothing more", async () => {
+    backupSelection.mockRejectedValue(new api.ApiError(409, "busy"));
+    await renderPage();
+    await pick("plex", "Windows 11");
+    await press(barButton("Back up selected"));
     expect(pushed).toEqual([{ message: en["containers.batchAlreadyRunning"], severity: "warn" }]);
     expect(screen.queryByTestId("batch-note")).toBeNull();
   });
@@ -1231,8 +1239,7 @@ describe("a right click on a row", () => {
   });
 
   it("acts on the whole selection when the row is part of it", async () => {
-    backupAll.mockResolvedValue({ ok: true });
-    backupFilesAll.mockResolvedValue({ ok: true });
+    backupSelection.mockResolvedValue({ ok: true });
     await renderPage();
     await click(row("plex"), { ctrlKey: true });
     await click(row("Documents"), { ctrlKey: true });
@@ -1240,8 +1247,10 @@ describe("a right click on a row", () => {
     expect(screen.getByRole("menu").textContent).toContain("2 selected");
     expect(menuItems()).toEqual(["Back up selected", "Pause schedule", "Clear selection"]);
     await chooseFromMenu("Back up selected");
-    expect(backupAll).toHaveBeenCalledWith(["plex"]);
-    expect(backupFilesAll).toHaveBeenCalledWith(["f1"]);
+    expect(backupSelection).toHaveBeenCalledWith([
+      { kind: "files", keys: ["f1"] },
+      { kind: "container", keys: ["plex"] },
+    ]);
 
     await rightClick(row("Documents"));
     await chooseFromMenu("Clear selection");

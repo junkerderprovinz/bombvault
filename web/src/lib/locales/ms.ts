@@ -3851,7 +3851,6 @@ const ms: Partial<Translations> = {
   "backups.restore.alsoVMs": "Setiap VM dimatikan dan fail cakeranya digantikan.",
   "backups.batch.running": "Sandaran kelompok sedang berjalan",
   "backups.batch.nothing": "Tiada apa untuk disandarkan: pilihan tidak dipasang",
-  "backups.batch.startedInTurn": "Sandaran dimulakan. Bahagian dijalankan satu demi satu, jadi biarkan halaman ini terbuka sehingga yang terakhir bermula.",
   "backups.batch.skipped": "{n} dilangkau",
   "backups.schedule.pausedMany": "Jadual untuk {n} entri dijeda",
   "backups.schedule.resumedMany": "Jadual untuk {n} entri berjalan semula",

@@ -3839,7 +3839,6 @@ const es: Partial<Translations> = {
   "backups.restore.alsoVMs": "Cada VM se apaga y se reemplazan sus archivos de disco.",
   "backups.batch.running": "Copia por lotes en curso",
   "backups.batch.nothing": "Nada que copiar: la selección no está instalada",
-  "backups.batch.startedInTurn": "Copia iniciada. Las secciones se ejecutan una tras otra, así que deja esta página abierta hasta que haya empezado la última.",
   "backups.batch.skipped": "{n} omitidos",
   "backups.schedule.pausedMany": "Calendario de {n} elementos en pausa",
   "backups.schedule.resumedMany": "El calendario de {n} elementos vuelve a ejecutarse",

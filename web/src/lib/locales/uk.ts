@@ -3838,7 +3838,6 @@ const uk: Partial<Translations> = {
   "backups.restore.alsoVMs": "Кожну віртуальну машину буде вимкнено, а файли її дисків замінено.",
   "backups.batch.running": "Триває групове резервне копіювання",
   "backups.batch.nothing": "Нічого копіювати: вибране не встановлено",
-  "backups.batch.startedInTurn": "Резервне копіювання розпочато. Розділи виконуються один за одним, тому не закривайте сторінку, доки не стартує останній.",
   "backups.batch.skipped": "пропущено: {n}",
   "backups.schedule.pausedMany": "Розклад призупинено, записів: {n}",
   "backups.schedule.resumedMany": "Розклад знову працює, записів: {n}",

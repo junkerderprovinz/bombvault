@@ -3851,7 +3851,6 @@ const lv: Partial<Translations> = {
   "backups.restore.alsoVMs": "Katra VM tiks izslēgta, un tās diska faili tiks aizstāti.",
   "backups.batch.running": "Notiek grupas dublēšana",
   "backups.batch.nothing": "Nav ko dublēt: atlase nav instalēta",
-  "backups.batch.startedInTurn": "Dublēšana sākta. Sadaļas darbojas pa vienai, tāpēc atstājiet šo lapu atvērtu, līdz sākusies pēdējā.",
   "backups.batch.skipped": "izlaisti: {n}",
   "backups.schedule.pausedMany": "Grafiks apturēts, ierakstu skaits: {n}",
   "backups.schedule.resumedMany": "Grafiks atkal darbojas, ierakstu skaits: {n}",

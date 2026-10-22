@@ -3851,7 +3851,6 @@ const fa: Partial<Translations> = {
   "backups.restore.alsoVMs": "هر ماشین مجازی خاموش می‌شود و فایل‌های دیسک آن جایگزین می‌شوند.",
   "backups.batch.running": "پشتیبان‌گیری گروهی در حال اجرا است",
   "backups.batch.nothing": "چیزی برای پشتیبان‌گیری نیست: موارد انتخاب‌شده نصب نیستند",
-  "backups.batch.startedInTurn": "پشتیبان‌گیری شروع شد. حوزه‌ها یکی پس از دیگری اجرا می‌شوند، پس صفحه را باز نگه دار تا آخرین حوزه شروع شود.",
   "backups.batch.skipped": "{n} رد شد",
   "backups.schedule.pausedMany": "زمان‌بندی {n} مورد متوقف شد",
   "backups.schedule.resumedMany": "زمان‌بندی {n} مورد دوباره اجرا می‌شود",

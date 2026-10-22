@@ -3851,7 +3851,6 @@ const lt: Partial<Translations> = {
   "backups.restore.alsoVMs": "Kiekviena VM bus išjungta, o jos disko failai pakeisti.",
   "backups.batch.running": "Vykdoma grupinė kopija",
   "backups.batch.nothing": "Nėra ką kopijuoti: pažymėti įrašai neįdiegti",
-  "backups.batch.startedInTurn": "Kopijavimas prasidėjo. Sritys vykdomos viena po kitos, todėl palik šį puslapį atidarytą, kol prasidės paskutinė.",
   "backups.batch.skipped": "praleista: {n}",
   "backups.schedule.pausedMany": "Tvarkaraštis pristabdytas, įrašų: {n}",
   "backups.schedule.resumedMany": "Tvarkaraštis vėl veikia, įrašų: {n}",

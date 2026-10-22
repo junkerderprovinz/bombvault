@@ -3832,7 +3832,6 @@ const zh: Partial<Translations> = {
   "backups.restore.alsoVMs": "每台虚拟机将被关闭，其磁盘文件将被替换。",
   "backups.batch.running": "批量备份运行中",
   "backups.batch.nothing": "没有可备份的内容：所选项目未安装",
-  "backups.batch.startedInTurn": "备份已开始。各分区依次运行，请保持此页面打开，直到最后一个分区启动。",
   "backups.batch.skipped": "已跳过 {n} 项",
   "backups.schedule.pausedMany": "已暂停 {n} 个条目的计划",
   "backups.schedule.resumedMany": "{n} 个条目的计划已恢复运行",

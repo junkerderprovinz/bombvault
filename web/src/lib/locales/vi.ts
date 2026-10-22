@@ -3832,7 +3832,6 @@ const vi: Partial<Translations> = {
   "backups.restore.alsoVMs": "Mỗi VM sẽ bị tắt và các tệp đĩa của nó được thay thế.",
   "backups.batch.running": "Đang sao lưu hàng loạt",
   "backups.batch.nothing": "Không có gì để sao lưu: mục đã chọn chưa được cài đặt",
-  "backups.batch.startedInTurn": "Đã bắt đầu sao lưu. Các phần chạy lần lượt, vì vậy hãy để trang này mở cho đến khi phần cuối cùng bắt đầu.",
   "backups.batch.skipped": "Đã bỏ qua {n}",
   "backups.schedule.pausedMany": "Đã tạm dừng lịch trình của {n} mục",
   "backups.schedule.resumedMany": "Lịch trình của {n} mục chạy lại",

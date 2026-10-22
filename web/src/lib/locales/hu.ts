@@ -3842,7 +3842,6 @@ const hu: Partial<Translations> = {
   "backups.restore.alsoVMs": "Minden VM leáll, és a lemezfájljai kicserélődnek.",
   "backups.batch.running": "Csoportos mentés fut",
   "backups.batch.nothing": "Nincs mit menteni: a kijelölés nincs telepítve",
-  "backups.batch.startedInTurn": "A mentés elindult. A szakaszok egymás után futnak, ezért hagyd nyitva az oldalt, amíg az utolsó el nem indul.",
   "backups.batch.skipped": "{n} kihagyva",
   "backups.schedule.pausedMany": "{n} elem ütemezése szüneteltetve",
   "backups.schedule.resumedMany": "{n} elem ütemezése újra fut",

@@ -3842,7 +3842,6 @@ const ar: Partial<Translations> = {
   "backups.restore.alsoVMs": "سيُطفأ كل VM وتُستبدل ملفات أقراصه.",
   "backups.batch.running": "نسخ احتياطي جماعي قيد التشغيل",
   "backups.batch.nothing": "لا شيء لنسخه احتياطيًا: التحديد غير مثبّت",
-  "backups.batch.startedInTurn": "بدأ النسخ الاحتياطي. تعمل الأقسام واحدًا تلو الآخر، لذا يجب إبقاء هذه الصفحة مفتوحة حتى يبدأ آخرها.",
   "backups.batch.skipped": "تم تخطي {n}",
   "backups.schedule.pausedMany": "الجدول الزمني لـ {n} من العناصر متوقف مؤقتًا",
   "backups.schedule.resumedMany": "الجدول الزمني لـ {n} من العناصر يعمل من جديد",

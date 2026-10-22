@@ -3851,7 +3851,6 @@ const eu: Partial<Translations> = {
   "backups.restore.alsoVMs": "MB bakoitza itzali eta bere diskoko fitxategiak ordezkatzen dira.",
   "backups.batch.running": "Multzoko babeskopia martxan",
   "backups.batch.nothing": "Ez dago babeskopiarik egiteko: hautapena ez dago instalatuta",
-  "backups.batch.startedInTurn": "Babeskopia hasi da. Atalak batzuk besteen ondoren exekutatzen dira, beraz utzi orri hau irekita azkena hasi arte.",
   "backups.batch.skipped": "{n} saltatu dira",
   "backups.schedule.pausedMany": "{n} elementuren egutegia pausatu da",
   "backups.schedule.resumedMany": "{n} elementuren egutegia berriz martxan dago",

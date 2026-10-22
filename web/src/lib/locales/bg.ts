@@ -3851,7 +3851,6 @@ const bg: Partial<Translations> = {
   "backups.restore.alsoVMs": "Всяка ВМ се изключва и дисковите ѝ файлове се заменят.",
   "backups.batch.running": "Груповото архивиране върви",
   "backups.batch.nothing": "Няма какво да се архивира: избраното не е инсталирано",
-  "backups.batch.startedInTurn": "Архивирането започна. Секциите вървят една след друга, затова дръж страницата отворена, докато започне и последната.",
   "backups.batch.skipped": "{n} пропуснати",
   "backups.schedule.pausedMany": "Графикът за {n} записа е на пауза",
   "backups.schedule.resumedMany": "Графикът за {n} записа отново работи",

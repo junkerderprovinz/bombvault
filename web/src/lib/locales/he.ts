@@ -3841,7 +3841,6 @@ const he: Partial<Translations> = {
   "backups.restore.alsoVMs": "כל VM יכובה וקובצי הדיסק שלו יוחלפו.",
   "backups.batch.running": "גיבוי מרוכז פועל",
   "backups.batch.nothing": "אין מה לגבות: הנבחרים אינם מותקנים",
-  "backups.batch.startedInTurn": "הגיבוי התחיל. התחומים פועלים בזה אחר זה, לכן יש להשאיר את הדף פתוח עד שהאחרון יתחיל.",
   "backups.batch.skipped": "{n} דולגו",
   "backups.schedule.pausedMany": "לוח הזמנים של {n} פריטים הושהה",
   "backups.schedule.resumedMany": "לוח הזמנים של {n} פריטים פועל שוב",

@@ -3832,7 +3832,6 @@ const ja: Partial<Translations> = {
   "backups.restore.alsoVMs": "各 VM はシャットダウンされ、ディスクファイルが置き換えられます。",
   "backups.batch.running": "一括バックアップを実行中",
   "backups.batch.nothing": "バックアップするものがありません: 選択はインストールされていません",
-  "backups.batch.startedInTurn": "バックアップを開始しました。セクションは順番に実行されるため、最後の1つが始まるまでこのページを開いたままにしてください。",
   "backups.batch.skipped": "{n} 件をスキップ",
   "backups.schedule.pausedMany": "{n} 件のスケジュールを一時停止しました",
   "backups.schedule.resumedMany": "{n} 件のスケジュールを再開しました",

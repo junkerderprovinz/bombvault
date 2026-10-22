@@ -3840,7 +3840,6 @@ const nl: Partial<Translations> = {
   "backups.restore.alsoVMs": "Elke VM wordt uitgezet en de schijfbestanden worden vervangen.",
   "backups.batch.running": "Gezamenlijke back-up loopt",
   "backups.batch.nothing": "Niets om te back-uppen: de selectie is niet geïnstalleerd",
-  "backups.batch.startedInTurn": "Back-up gestart. De onderdelen draaien na elkaar, dus laat deze pagina open tot het laatste is gestart.",
   "backups.batch.skipped": "{n} overgeslagen",
   "backups.schedule.pausedMany": "Planning voor {n} items gepauzeerd",
   "backups.schedule.resumedMany": "Planning voor {n} items loopt weer",

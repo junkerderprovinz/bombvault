@@ -3841,7 +3841,6 @@ const sv: Partial<Translations> = {
   "backups.restore.alsoVMs": "Varje VM stängs av och dess diskfiler ersätts.",
   "backups.batch.running": "Gemensam säkerhetskopiering pågår",
   "backups.batch.nothing": "Inget att säkerhetskopiera: markeringen är inte installerad",
-  "backups.batch.startedInTurn": "Säkerhetskopieringen har startat. Avsnitten körs efter varandra, så låt sidan vara öppen tills det sista har startat.",
   "backups.batch.skipped": "{n} hoppades över",
   "backups.schedule.pausedMany": "Schemat för {n} poster pausat",
   "backups.schedule.resumedMany": "Schemat för {n} poster körs igen",

@@ -3851,7 +3851,6 @@ const is: Partial<Translations> = {
   "backups.restore.alsoVMs": "Hver sýndarvél er slökkt og diskskrám hennar skipt út.",
   "backups.batch.running": "Hópafritun í gangi",
   "backups.batch.nothing": "Ekkert til að afrita: valið er ekki uppsett",
-  "backups.batch.startedInTurn": "Afritun hafin. Svæðin keyra hvert á eftir öðru, svo hafðu síðuna opna þar til það síðasta er byrjað.",
   "backups.batch.skipped": "{n} sleppt",
   "backups.schedule.pausedMany": "Tímaáætlun {n} færslna sett í hlé",
   "backups.schedule.resumedMany": "Tímaáætlun {n} færslna er aftur í gangi",

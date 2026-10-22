@@ -3851,7 +3851,6 @@ const hr: Partial<Translations> = {
   "backups.restore.alsoVMs": "Svaki se VM isključuje i njegove se datoteke diska zamjenjuju.",
   "backups.batch.running": "Skupna sigurnosna kopija u tijeku",
   "backups.batch.nothing": "Nema ničega za kopiranje: odabir nije instaliran",
-  "backups.batch.startedInTurn": "Sigurnosno kopiranje je započelo. Odjeljci se izvršavaju jedan za drugim, zato ostavite ovu stranicu otvorenom dok ne krene posljednji.",
   "backups.batch.skipped": "preskočeno: {n}",
   "backups.schedule.pausedMany": "Raspored za {n} stavki je pauziran",
   "backups.schedule.resumedMany": "Raspored za {n} stavki ponovno radi",

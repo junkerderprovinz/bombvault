@@ -3851,7 +3851,6 @@ const et: Partial<Translations> = {
   "backups.restore.alsoVMs": "Iga VM lülitatakse välja ja selle kettafailid asendatakse.",
   "backups.batch.running": "Hulgivarundus töötab",
   "backups.batch.nothing": "Pole midagi varundada: valik pole paigaldatud",
-  "backups.batch.startedInTurn": "Varundus algas. Valdkonnad töötavad üksteise järel, seega hoia leht lahti, kuni viimane on alanud.",
   "backups.batch.skipped": "{n} vahele jäetud",
   "backups.schedule.pausedMany": "{n} kirje ajakava peatati",
   "backups.schedule.resumedMany": "{n} kirje ajakava töötab taas",

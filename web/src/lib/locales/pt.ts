@@ -3841,7 +3841,6 @@ const pt: Partial<Translations> = {
   "backups.restore.alsoVMs": "Cada VM é desligada e os seus ficheiros de disco são substituídos.",
   "backups.batch.running": "Backup em lote em curso",
   "backups.batch.nothing": "Nada para fazer backup: a seleção não está instalada",
-  "backups.batch.startedInTurn": "Backup iniciado. As secções correm uma após a outra, por isso mantém esta página aberta até a última ter começado.",
   "backups.batch.skipped": "{n} ignorados",
   "backups.schedule.pausedMany": "Agendamento de {n} entradas em pausa",
   "backups.schedule.resumedMany": "Agendamento de {n} entradas a correr de novo",

@@ -3838,7 +3838,6 @@ const pl: Partial<Translations> = {
   "backups.restore.alsoVMs": "Każda maszyna wirtualna zostanie wyłączona, a jej pliki dysku zastąpione.",
   "backups.batch.running": "Trwa zbiorcza kopia zapasowa",
   "backups.batch.nothing": "Nie ma czego kopiować: zaznaczenie nie jest zainstalowane",
-  "backups.batch.startedInTurn": "Kopia zapasowa rozpoczęta. Sekcje działają jedna po drugiej, więc zostaw tę stronę otwartą, aż ruszy ostatnia.",
   "backups.batch.skipped": "pominięto: {n}",
   "backups.schedule.pausedMany": "Harmonogram wstrzymany dla wpisów: {n}",
   "backups.schedule.resumedMany": "Harmonogram znów działa dla wpisów: {n}",

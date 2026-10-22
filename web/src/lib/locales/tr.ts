@@ -3841,7 +3841,6 @@ const tr: Partial<Translations> = {
   "backups.restore.alsoVMs": "Her VM kapatılır ve disk dosyaları değiştirilir.",
   "backups.batch.running": "Toplu yedekleme çalışıyor",
   "backups.batch.nothing": "Yedeklenecek bir şey yok: seçim kurulu değil",
-  "backups.batch.startedInTurn": "Yedekleme başladı. Bölümler birbiri ardına çalışır, bu yüzden sonuncusu başlayana kadar bu sayfayı açık tut.",
   "backups.batch.skipped": "{n} atlandı",
   "backups.schedule.pausedMany": "{n} ögenin zamanlaması duraklatıldı",
   "backups.schedule.resumedMany": "{n} ögenin zamanlaması yeniden çalışıyor",

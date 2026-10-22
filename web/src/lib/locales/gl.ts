@@ -3851,7 +3851,6 @@ const gl: Partial<Translations> = {
   "backups.restore.alsoVMs": "Cada MV apágase e substitúense os seus ficheiros de disco.",
   "backups.batch.running": "Copia por lotes en curso",
   "backups.batch.nothing": "Nada que copiar: a selección non está instalada",
-  "backups.batch.startedInTurn": "Copia iniciada. As seccións execútanse unha tras outra, así que deixa esta páxina aberta ata que comece a última.",
   "backups.batch.skipped": "{n} omitidos",
   "backups.schedule.pausedMany": "Planificación de {n} elementos en pausa",
   "backups.schedule.resumedMany": "A planificación de {n} elementos volve executarse",

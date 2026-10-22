@@ -3851,7 +3851,6 @@ const hi: Partial<Translations> = {
   "backups.restore.alsoVMs": "हर VM बंद होगी और उसकी डिस्क फ़ाइलें बदली जाएँगी।",
   "backups.batch.running": "सामूहिक बैकअप चल रहा है",
   "backups.batch.nothing": "बैकअप के लिए कुछ नहीं: चयन इंस्टॉल नहीं है",
-  "backups.batch.startedInTurn": "बैकअप शुरू हो गया। सेक्शन एक के बाद एक चलते हैं, इसलिए आख़िरी के शुरू होने तक यह पेज खुला रखें।",
   "backups.batch.skipped": "{n} छोड़े गए",
   "backups.schedule.pausedMany": "{n} प्रविष्टियों का शेड्यूल रोका गया",
   "backups.schedule.resumedMany": "{n} प्रविष्टियों का शेड्यूल फिर चल रहा है",

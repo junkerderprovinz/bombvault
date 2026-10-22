@@ -3832,7 +3832,6 @@ const ko: Partial<Translations> = {
   "backups.restore.alsoVMs": "각 가상 머신은 종료되고 디스크 파일이 교체됩니다.",
   "backups.batch.running": "일괄 백업 실행 중",
   "backups.batch.nothing": "백업할 항목이 없습니다: 선택한 항목이 설치되어 있지 않습니다",
-  "backups.batch.startedInTurn": "백업을 시작했습니다. 섹션이 차례로 실행되므로 마지막 섹션이 시작될 때까지 이 페이지를 열어 두세요.",
   "backups.batch.skipped": "{n}개 건너뜀",
   "backups.schedule.pausedMany": "항목 {n}개의 일정을 일시 중지했습니다",
   "backups.schedule.resumedMany": "항목 {n}개의 일정이 다시 실행 중입니다",

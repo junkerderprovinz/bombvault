@@ -3851,7 +3851,6 @@ const ca: Partial<Translations> = {
   "backups.restore.alsoVMs": "Cada MV s'apaga i se'n substitueixen els fitxers de disc.",
   "backups.batch.running": "Còpia en bloc en curs",
   "backups.batch.nothing": "No hi ha res per copiar: la selecció no està instal·lada",
-  "backups.batch.startedInTurn": "Còpia iniciada. Les seccions s'executen una darrere l'altra, així que deixa aquesta pàgina oberta fins que hagi començat l'última.",
   "backups.batch.skipped": "{n} omesos",
   "backups.schedule.pausedMany": "Planificació de {n} elements en pausa",
   "backups.schedule.resumedMany": "La planificació de {n} elements torna a funcionar",

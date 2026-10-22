@@ -3838,7 +3838,6 @@ const ru: Partial<Translations> = {
   "backups.restore.alsoVMs": "Каждая виртуальная машина будет выключена, а её файлы дисков заменены.",
   "backups.batch.running": "Выполняется групповое резервное копирование",
   "backups.batch.nothing": "Копировать нечего: выбранное не установлено",
-  "backups.batch.startedInTurn": "Резервное копирование запущено. Разделы выполняются один за другим, поэтому не закрывайте страницу, пока не стартует последний.",
   "backups.batch.skipped": "пропущено: {n}",
   "backups.schedule.pausedMany": "Расписание приостановлено, записей: {n}",
   "backups.schedule.resumedMany": "Расписание снова работает, записей: {n}",

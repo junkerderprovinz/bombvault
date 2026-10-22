@@ -499,6 +499,7 @@ func (h *Handler) Router() http.Handler {
 	// internal/api/everything.go). Response shape mirrors POST
 	// /api/containers/backup-all.
 	mux.HandleFunc("POST /api/backup-everything", h.handleBackupEverything)
+	mux.HandleFunc("POST /api/backup/selection", h.handleBackupSelection)
 
 	// Flash endpoints (singleton domain — the Unraid USB).
 	mux.HandleFunc("POST /api/flash/backup", h.handleBackupFlash)

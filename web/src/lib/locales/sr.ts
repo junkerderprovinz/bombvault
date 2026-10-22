@@ -3835,7 +3835,6 @@ const sr: Partial<Translations> = {
   "backups.restore.alsoVMs": "Свака ВМ се искључује и њене датотеке диска се замењују.",
   "backups.batch.running": "Групна резервна копија је у току",
   "backups.batch.nothing": "Нема шта да се копира: избор није инсталиран",
-  "backups.batch.startedInTurn": "Прављење резервне копије је почело. Одељци се извршавају један за другим, зато остави страницу отворену док не крене последњи.",
   "backups.batch.skipped": "прескочено: {n}",
   "backups.schedule.pausedMany": "Распоред је паузиран, ставки: {n}",
   "backups.schedule.resumedMany": "Распоред поново ради, ставки: {n}",

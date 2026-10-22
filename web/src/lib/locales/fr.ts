@@ -3841,7 +3841,6 @@ const fr: Partial<Translations> = {
   "backups.restore.alsoVMs": "Chaque VM est éteinte et ses fichiers de disque sont remplacés.",
   "backups.batch.running": "Sauvegarde groupée en cours",
   "backups.batch.nothing": "Rien à sauvegarder : la sélection n'est pas installée",
-  "backups.batch.startedInTurn": "Sauvegarde lancée. Les sections s'exécutent l'une après l'autre, laissez donc cette page ouverte jusqu'à ce que la dernière ait démarré.",
   "backups.batch.skipped": "{n} ignorés",
   "backups.schedule.pausedMany": "Planning de {n} éléments en pause",
   "backups.schedule.resumedMany": "Le planning de {n} éléments est de nouveau actif",

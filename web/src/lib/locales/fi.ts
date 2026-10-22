@@ -3841,7 +3841,6 @@ const fi: Partial<Translations> = {
   "backups.restore.alsoVMs": "Jokainen VM sammutetaan ja sen levytiedostot korvataan.",
   "backups.batch.running": "Ryhmävarmuuskopiointi käynnissä",
   "backups.batch.nothing": "Ei mitään varmuuskopioitavaa: valintaa ei ole asennettu",
-  "backups.batch.startedInTurn": "Varmuuskopiointi käynnistyi. Osiot ajetaan peräkkäin, joten pidä sivu auki, kunnes viimeinen on käynnistynyt.",
   "backups.batch.skipped": "{n} ohitettu",
   "backups.schedule.pausedMany": "{n} merkinnän aikataulu keskeytetty",
   "backups.schedule.resumedMany": "{n} merkinnän aikataulu on taas käynnissä",

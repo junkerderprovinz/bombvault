@@ -3851,7 +3851,6 @@ const id: Partial<Translations> = {
   "backups.restore.alsoVMs": "Setiap VM dimatikan dan file disknya diganti.",
   "backups.batch.running": "Pencadangan massal berjalan",
   "backups.batch.nothing": "Tidak ada yang dicadangkan: pilihan tidak terpasang",
-  "backups.batch.startedInTurn": "Pencadangan dimulai. Bagian dijalankan satu per satu, jadi biarkan halaman ini terbuka sampai yang terakhir dimulai.",
   "backups.batch.skipped": "{n} dilewati",
   "backups.schedule.pausedMany": "Jadwal untuk {n} entri dijeda",
   "backups.schedule.resumedMany": "Jadwal untuk {n} entri berjalan lagi",

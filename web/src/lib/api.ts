@@ -1052,6 +1052,16 @@ export function backupAll(names: string[]): Promise<OkEnvelope & { started?: num
   });
 }
 
+/** POST /api/backup/selection backs up the entries of several kinds, one
+ *  kind after the other, on the server. Each kind reports on its own batch
+ *  key, and "backup-selection" stays live while kinds still wait. */
+export function backupSelection(parts: { kind: string; keys: string[] }[]): Promise<OkEnvelope> {
+  return fetchJSON("/api/backup/selection", {
+    method: "POST",
+    body: JSON.stringify({ parts }),
+  });
+}
+
 const NAMED_SOURCE = /^(offsite|folder)$|^(offsite|repo):/;
 
 /**

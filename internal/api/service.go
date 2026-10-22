@@ -450,6 +450,10 @@ type Service struct {
 	// (design spec, decision 7).
 	everythingActive atomic.Bool
 
+	// selectionActive is held while a backup of several kinds still has kinds
+	// waiting for their turn.
+	selectionActive atomic.Bool
+
 	// suggestMu guards suggestCache, the exclusion assistant's snapshot-aggregate
 	// cache: ONE entry per container, keyed inside on (repo, snapshot id, resolved
 	// excludes), so a rescan is instant until the next backup writes a newer

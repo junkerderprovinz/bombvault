@@ -3839,7 +3839,6 @@ const cs: Partial<Translations> = {
   "backups.restore.alsoVMs": "Každý virtuální stroj se vypne a jeho diskové soubory se nahradí.",
   "backups.batch.running": "Hromadná záloha běží",
   "backups.batch.nothing": "Není co zálohovat: výběr není nainstalovaný",
-  "backups.batch.startedInTurn": "Záloha byla spuštěna. Sekce běží jedna po druhé, nech tuto stránku otevřenou, dokud nezačne poslední.",
   "backups.batch.skipped": "{n} přeskočeno",
   "backups.schedule.pausedMany": "Plán pozastaven (položek: {n})",
   "backups.schedule.resumedMany": "Plán znovu běží (položek: {n})",

@@ -3842,7 +3842,6 @@ const ro: Partial<Translations> = {
   "backups.restore.alsoVMs": "Fiecare VM este oprit, iar fișierele sale de disc sunt înlocuite.",
   "backups.batch.running": "Copie de rezervă în lot în curs",
   "backups.batch.nothing": "Nimic de salvat: selecția nu este instalată",
-  "backups.batch.startedInTurn": "Copierea de rezervă a început. Secțiunile rulează una după alta, deci lasă pagina deschisă până pornește ultima.",
   "backups.batch.skipped": "{n} omise",
   "backups.schedule.pausedMany": "Programare întreruptă (elemente: {n})",
   "backups.schedule.resumedMany": "Programarea rulează din nou (elemente: {n})",
