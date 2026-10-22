@@ -126,11 +126,36 @@ func TestARefusedConnectionChangeKeepsTheTokenItsCheckRefreshed(t *testing.T) {
 	}
 }
 
+func TestARefusedChangeOfAnotherOptionKeepsTheTokenItsCheckRefreshed(t *testing.T) {
+	svc, _, _ := newConnectionSvc(t, nil)
+	d, remote := boxDestination(t, svc)
+
+	edit := connectionEdit{Dir: folder("missing"), Settings: map[string]string{"token": "", "root_folder_id": "42"}}
+	if _, _, err := svc.EditDestinationConnection(context.Background(), d.ID, edit); err == nil {
+		t.Fatal("a folder that is not there was saved")
+	}
+	if got, _ := storedRemote(t, svc, remote); got["token"] != "rotated-1" {
+		t.Fatalf("token = %q, want the one the check refreshed to", got["token"])
+	}
+}
+
 func TestAFolderWalkOfASavedRemoteWhoseTokenRcloneRefreshesGoesThrough(t *testing.T) {
 	svc, _, _ := newConnectionSvc(t, nil)
 	d, _ := boxDestination(t, svc)
 
 	if _, _, err := svc.DraftFolders(context.Background(), draftRequest{Provider: "box", Destination: d.ID}); err != nil {
 		t.Fatal(err)
+	}
+}
+
+func TestAFolderWalkOfASavedRemoteKeepsTheTokenRcloneRefreshed(t *testing.T) {
+	svc, _, _ := newConnectionSvc(t, nil)
+	d, remote := boxDestination(t, svc)
+
+	if _, _, err := svc.DraftFolders(context.Background(), draftRequest{Provider: "box", Destination: d.ID}); err != nil {
+		t.Fatal(err)
+	}
+	if got, _ := storedRemote(t, svc, remote); got["token"] != "rotated-1" {
+		t.Fatalf("token after the walk = %q, want the one rclone refreshed to", got["token"])
 	}
 }

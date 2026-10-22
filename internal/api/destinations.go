@@ -418,11 +418,11 @@ func (s *Service) DraftFolders(ctx context.Context, req draftRequest) (folders [
 	if err != nil {
 		return nil, nil, err
 	}
-	d, key, err := s.walkDraft(ctx, p, req)
+	d, key, saved, err := s.walkDraft(ctx, p, req)
 	if err != nil {
 		return nil, nil, err
 	}
-	defer func() { s.drafts.keep(key, d) }()
+	defer func() { s.drafts.keep(key, d); s.keepSavedSignIn(saved, d.Learned) }()
 	folders, err = s.remotes().Folders(ctx, "", &d, req.Dir)
 	if err != nil || strings.Trim(req.Dir, "/") != "" {
 		return folders, nil, err
@@ -443,47 +443,52 @@ func (s *Service) DraftMakeFolder(ctx context.Context, req draftRequest) (string
 	if atShares(p, req.Dir) {
 		return "", errShareMaker
 	}
-	d, key, err := s.walkDraft(ctx, p, req)
+	d, key, saved, err := s.walkDraft(ctx, p, req)
 	if err != nil {
 		return "", err
 	}
-	defer func() { s.drafts.keep(key, d) }()
+	defer func() { s.drafts.keep(key, d); s.keepSavedSignIn(saved, d.Learned) }()
 	return s.remotes().MakeFolder(ctx, "", &d, req.Dir, req.Folder)
 }
 
 // walkDraft is the remote a folder walk reaches: the wizard's fields, or the
 // stored remote of the destination being edited with the form laid over it.
-// key names what the walk learns, as wizardDraft does.
-func (s *Service) walkDraft(ctx context.Context, p remotes.Provider, req draftRequest) (d remotes.Draft, key string, err error) {
+// key names what the walk learns, as wizardDraft does. saved is the stored
+// remote when the walk signs in as it, so a sign-in rclone refreshes on the
+// walk goes back there.
+func (s *Service) walkDraft(ctx context.Context, p remotes.Provider, req draftRequest) (d remotes.Draft, key, saved string, err error) {
 	d, key, err = s.wizardDraft(p, req.Settings)
 	if err != nil {
-		return remotes.Draft{}, "", err
+		return remotes.Draft{}, "", "", err
 	}
 	if req.Destination != "" && p.Route == remotes.RouteRclone {
-		saved, ok, err := s.store.GetDestination(req.Destination)
+		dest, ok, err := s.store.GetDestination(req.Destination)
 		if err != nil {
-			return remotes.Draft{}, "", err
+			return remotes.Draft{}, "", "", err
 		}
-		if !ok || saved.Provider != p.ID {
-			return remotes.Draft{}, "", store.ErrNotDestination
+		if !ok || dest.Provider != p.ID {
+			return remotes.Draft{}, "", "", store.ErrNotDestination
 		}
-		remote, _, _ := strings.Cut(strings.TrimPrefix(saved.Repo, "rclone:"), ":")
+		remote, _, _ := strings.Cut(strings.TrimPrefix(dest.Repo, "rclone:"), ":")
 		stored, err := s.savedRemote(remote)
 		if err != nil {
-			return remotes.Draft{}, "", err
+			return remotes.Draft{}, "", "", err
 		}
 		options, err := s.layOver(ctx, stored, d)
 		if err != nil {
-			return remotes.Draft{}, "", err
+			return remotes.Draft{}, "", "", err
+		}
+		if sameSignIn(options, stored) {
+			saved = remote
 		}
 		// Settings stays a map: a token rclone refreshes on the walk is
 		// learned into it.
 		d = remotes.Draft{Backend: d.Backend, Settings: map[string]string{}, Stored: options}
 	}
 	if _, err := pinHostKey(ctx, &d); err != nil {
-		return remotes.Draft{}, "", err
+		return remotes.Draft{}, "", "", err
 	}
-	return d, key, nil
+	return d, key, saved, nil
 }
 
 // editRcloneConf changes the stored rclone config under a lock, so two saves

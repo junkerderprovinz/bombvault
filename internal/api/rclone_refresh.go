@@ -1,6 +1,7 @@
 package api
 
 import (
+	"log"
 	"os"
 	"strings"
 )
@@ -59,12 +60,16 @@ func carrySignIn(conf, from, to string) string {
 	if !ok {
 		return conf
 	}
-	blocks := splitRcloneSections(conf)
+	return withSignIn(conf, to, src)
+}
+
+// withSignIn sets on remote the sign-in keys that values holds.
+func withSignIn(conf, remote string, values map[string]string) string {
 	var b strings.Builder
-	for _, block := range blocks {
-		if block.name == to {
+	for _, block := range splitRcloneSections(conf) {
+		if block.name == remote {
 			for _, key := range rcloneSignInKeys {
-				if v := src[key]; v != "" {
+				if v := values[key]; v != "" {
 					block.text = setSectionOption(block.text, key, v)
 				}
 			}
@@ -72,6 +77,31 @@ func carrySignIn(conf, from, to string) string {
 		b.WriteString(block.text)
 	}
 	return b.String()
+}
+
+// sameSignIn reports whether two sets of a remote's options sign in alike.
+func sameSignIn(a, b map[string]string) bool {
+	for _, key := range rcloneSignInKeys {
+		if a[key] != b[key] {
+			return false
+		}
+	}
+	return true
+}
+
+// keepSavedSignIn writes into a saved remote what rclone refreshed of its
+// sign-in while it was reached under another name, since Box and Jottacloud
+// void the token a refresh used. An empty remote is a walk that did not sign
+// in as the saved remote.
+func (s *Service) keepSavedSignIn(remote string, learned map[string]string) {
+	if remote == "" || sameSignIn(learned, nil) {
+		return
+	}
+	if err := s.editRcloneConf(func(conf string) (string, error) {
+		return withSignIn(conf, remote, learned), nil
+	}); err != nil {
+		log.Printf("api: keep the sign-in rclone refreshed for %s: %v", remote, err)
+	}
 }
 
 // remoteType is the backend of one remote of an rclone config.

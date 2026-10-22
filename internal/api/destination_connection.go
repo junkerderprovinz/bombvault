@@ -260,7 +260,7 @@ func (s *Service) editRemoteConnection(ctx context.Context, d store.OffsiteTarge
 	if err != nil {
 		return store.OffsiteTarget{}, err
 	}
-	unchanged := maps.Equal(options, stored)
+	sameSignInAsSaved := sameSignIn(options, stored)
 	pinned := remotes.Draft{Backend: draft.Backend, Stored: options}
 	if _, err := pinHostKey(ctx, &pinned); err != nil {
 		return store.OffsiteTarget{}, err
@@ -289,9 +289,9 @@ func (s *Service) editRemoteConnection(ctx context.Context, d store.OffsiteTarge
 	}
 	// The check may have refreshed the sign-in under its own name, and Box or
 	// Jottacloud void the token it refreshed from. A refused change keeps that
-	// refresh when it tried the remote as it was, so the sign-in is the same.
+	// refresh when it tried the saved sign-in, whatever else it changed.
 	if err != nil {
-		if unchanged {
+		if sameSignInAsSaved {
 			_ = s.editRcloneConf(func(conf string) (string, error) {
 				return carrySignIn(conf, check, remote), nil
 			})
