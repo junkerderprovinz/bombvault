@@ -12697,26 +12697,6 @@ func (s *Service) removeStrayOverlays(diskPaths []string) {
 	}
 }
 
-// failVMBackup makes a pre-orchestrator VM backup failure visible: it records a
-// failed run against the VM's existing target (so it shows in the dashboard run
-// history) and fires a notification. Used for failures that happen BEFORE the
-// orchestrator starts its own run (overlay recovery, the running-state check) so
-// a destructive/aborted attempt is never silent — especially for scheduled
-// backups where the HTTP error is not seen. Best-effort: any bookkeeping error
-// is ignored (the real cause is already being returned to the caller).
-func (s *Service) failVMBackup(ctx context.Context, name string, cause error) {
-	if tg, err := s.store.GetVMTargetByName(name); err == nil {
-		if runID, sErr := s.startRun(ctx, tg.ID, "backup"); sErr == nil {
-			msg := cause.Error()
-			if len(msg) > 500 {
-				msg = msg[:500]
-			}
-			_ = s.store.FinishRun(runID, "failed", "", 0, msg)
-		}
-	}
-	s.notifyBackup(ctx, "VM", name, "", false, backup.Summary{}, cause)
-}
-
 // vmDiskContainerPaths is where restic reads the file disks of domain through
 // the Host Data mount, the paths a VM definition stores. A domain with no disk
 // at all, or with a file disk outside the mount, is an error: a snapshot of it
@@ -12814,7 +12794,9 @@ func (s *Service) BackupVM(ctx context.Context, name string) (_ backup.Summary, 
 	// and we back up the real base disk (not just the overlay). No-op otherwise.
 	xmlStr, domain, err = s.recoverLeftoverOverlay(ctx, name, xmlStr, domain)
 	if err != nil {
-		s.failVMBackup(ctx, name, err) // attempted/needed a destructive commit — don't fail silently
+		// A VM left on an overlay needs someone to act, so this failure is sent
+		// as a message as well; BackupVM's finisher records the run.
+		s.notifyBackup(ctx, "VM", name, "", false, backup.Summary{}, err)
 		return backup.Summary{}, err
 	}
 
@@ -12990,7 +12972,7 @@ func (s *Service) BackupVM(ctx context.Context, name string) (_ backup.Summary, 
 		running, aerr := s.virsh.IsActive(ctx, name)
 		if aerr != nil {
 			e := fmt.Errorf("backup vm: check running state: %w", aerr)
-			s.failVMBackup(ctx, name, e)
+			s.notifyBackup(ctx, "VM", name, "", false, backup.Summary{}, e)
 			return backup.Summary{}, e
 		}
 		if running {
