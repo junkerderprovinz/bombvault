@@ -107,7 +107,7 @@ func (s *Service) syncFleetPeersWith(members []group.Member, now time.Time) ([]s
 		if adopted {
 			continue
 		}
-		row := store.FleetPeer{MemberID: m.ID, Name: m.Name, Kind: m.Kind, Enabled: !(m.Kind == "android" && removed[m.ID]), SortOrder: len(rows), LastSeen: now.Unix()}
+		row := store.FleetPeer{MemberID: m.ID, Name: m.Name, Kind: m.Kind, Enabled: m.Kind != "android" || !removed[m.ID], SortOrder: len(rows), LastSeen: now.Unix()}
 		if m.Kind == "" {
 			row.MemberURL = m.Address
 		}
