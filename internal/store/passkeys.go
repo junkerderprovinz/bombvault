@@ -40,14 +40,18 @@ type Passkey struct {
 	BackedUp   bool
 	CreatedAt  int64
 	LastUsedAt int64
+	// Verified reports whether the authenticator checked a PIN, fingerprint
+	// or face when the key was registered. A key registered without one can
+	// get a PIN later from whoever holds it.
+	Verified bool
 }
 
-const passkeyCols = `id, name, credential_id, public_key, aaguid, sign_count, transports, rp_id, backed_up, created_at, last_used_at` //nolint:gosec // G101: a SQL column list, and none of these columns holds a secret
+const passkeyCols = `id, name, credential_id, public_key, aaguid, sign_count, transports, rp_id, backed_up, created_at, last_used_at, user_verified` //nolint:gosec // G101: a SQL column list, and none of these columns holds a secret
 
 func scanPasskey(s scanner) (Passkey, error) {
 	var p Passkey
 	err := s.Scan(&p.ID, &p.Name, &p.CredentialID, &p.PublicKey, &p.AAGUID,
-		&p.SignCount, &p.Transports, &p.RPID, &p.BackedUp, &p.CreatedAt, &p.LastUsedAt)
+		&p.SignCount, &p.Transports, &p.RPID, &p.BackedUp, &p.CreatedAt, &p.LastUsedAt, &p.Verified)
 	if err != nil {
 		return Passkey{}, err
 	}
@@ -124,9 +128,9 @@ func (r *Repo) AddPasskey(p Passkey) (Passkey, error) {
 		p.AAGUID = []byte{}
 	}
 	_, err := r.db.Exec(`INSERT INTO passkeys (`+passkeyCols+`)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		p.ID, p.Name, p.CredentialID, p.PublicKey, p.AAGUID,
-		p.SignCount, p.Transports, p.RPID, p.BackedUp, p.CreatedAt, p.LastUsedAt)
+		p.SignCount, p.Transports, p.RPID, p.BackedUp, p.CreatedAt, p.LastUsedAt, p.Verified)
 	if err != nil {
 		// credential_id is unique, so a failed insert for a known credential
 		// means the authenticator is already registered.

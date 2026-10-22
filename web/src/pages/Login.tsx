@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import {
+  finishPasskeyWithCode,
   login,
   loginWithPasskey,
   passkeyStatus,
@@ -30,6 +31,8 @@ export function LoginPage({ onLogin }: LoginPageProps) {
   const [needCode, setNeedCode] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  // Set once a passkey signed in and the server asks for the code on top.
+  const [passkeyHandle, setPasskeyHandle] = useState<string | null>(null);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -37,6 +40,18 @@ export function LoginPage({ onLogin }: LoginPageProps) {
     setBusy(true);
     setError(null);
     try {
+      if (passkeyHandle) {
+        const res = await finishPasskeyWithCode(passkeyHandle, code);
+        if (res.ok) {
+          onLogin();
+          return;
+        }
+        setPasskeyHandle(res.needCode && res.ceremonyId ? res.ceremonyId : null);
+        setNeedCode(!!res.needCode);
+        setCode("");
+        setError(res.error ?? t("auth.codeInvalid"));
+        return;
+      }
       const res = await login(password, needCode ? code : undefined);
       if (res.ok) {
         onLogin();
@@ -85,6 +100,12 @@ export function LoginPage({ onLogin }: LoginPageProps) {
         onLogin();
         return;
       }
+      if (res.needCode && res.ceremonyId) {
+        setPasskeyHandle(res.ceremonyId);
+        setNeedCode(true);
+        setCode("");
+        return;
+      }
       setError(res.code === "passkeyNeedsVerification" ? t("auth.passkeyNeedsVerification") : (res.error ?? t("auth.passkeySignInFailed")));
     } catch (err) {
       // A cancelled prompt lands here too, and its own message says more than
@@ -117,7 +138,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
     }
   }
 
-  const submitDisabled = busy || password === "" || (needCode && code.trim() === "");
+  const submitDisabled = busy || (passkeyHandle ? code.trim() === "" : password === "" || (needCode && code.trim() === ""));
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-carbon-background">
@@ -145,7 +166,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
         ) : (
           <form onSubmit={(e) => void handleSubmit(e)} className="flex flex-col gap-4">
             {/* bv-convention-exception: setting-row-beside-label: a sign-in form is a page of its own; its fields keep the label above them */}
-            <div className="flex flex-col gap-1.5">
+            <div className="flex flex-col gap-1.5" hidden={!!passkeyHandle}>
               <label
                 htmlFor="bv-password"
                 className="text-xs text-carbon-textSub font-medium"

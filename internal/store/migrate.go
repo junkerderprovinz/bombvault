@@ -3394,6 +3394,14 @@ UPDATE pull_sources SET leftovers_moved = 0;`,
   at        INTEGER NOT NULL
 );`,
 	},
+	{
+		// Whether a passkey checked its holder when it was registered. A key
+		// from before is not known to have, which counts as not.
+		version:          passkeyVerifiedMigration,
+		name:             "passkeys_user_verified",
+		alreadySatisfied: columnPresent("passkeys", "user_verified"),
+		sql:              `ALTER TABLE passkeys ADD COLUMN user_verified INTEGER NOT NULL DEFAULT 0;`,
+	},
 }
 
 // offsiteFieldDomains are the domains with an off-site field in the settings,
@@ -3649,6 +3657,10 @@ const formerPeerAuthMigration = 500
 
 // removedPhonesMigration numbers the record of removed phones.
 const removedPhonesMigration = 510
+
+// passkeyVerifiedMigration numbers whether a passkey checked its holder at
+// registration.
+const passkeyVerifiedMigration = 520
 
 // oneLineColumns are the names and locations the recovery kit prints.
 var oneLineColumns = []struct {

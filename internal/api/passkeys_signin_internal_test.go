@@ -15,10 +15,12 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/go-webauthn/webauthn/protocol/webauthncbor"
 	"github.com/go-webauthn/webauthn/protocol/webauthncose"
 
+	"github.com/junkerderprovinz/bombvault/internal/secret"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
@@ -31,7 +33,9 @@ type virtualKey struct {
 	id   []byte
 }
 
-func registerVirtualKey(t *testing.T, repo *store.Repo) virtualKey {
+// registerVirtualKey adds the key as registered with or without its PIN
+// checked.
+func registerVirtualKey(t *testing.T, repo *store.Repo, verified bool) virtualKey {
 	t.Helper()
 	priv, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 	if err != nil {
@@ -52,7 +56,7 @@ func registerVirtualKey(t *testing.T, repo *store.Repo) virtualKey {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := repo.AddPasskey(store.Passkey{Name: "Stick", CredentialID: k.id, PublicKey: cose, RPID: passkeyHost}); err != nil {
+	if _, err := repo.AddPasskey(store.Passkey{Name: "Stick", CredentialID: k.id, PublicKey: cose, RPID: passkeyHost, Verified: verified}); err != nil {
 		t.Fatal(err)
 	}
 	return k
@@ -135,7 +139,7 @@ func TestAPasskeyThatOnlyProvesATouchCannotSkipAnArmedSecondFactor(t *testing.T)
 	h, repo, _ := newAuthGateHandler(t)
 	enableAuth(t, h, repo)
 	storeTOTP(t, h, repo, "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ", nil)
-	key := registerVirtualKey(t, repo)
+	key := registerVirtualKey(t, repo, true)
 
 	id, challenge, uv := beginPasskeyLogin(t, h, "10.0.0.1:1", nil)
 	if uv != "required" {
@@ -153,10 +157,45 @@ func TestAPasskeyThatOnlyProvesATouchCannotSkipAnArmedSecondFactor(t *testing.T)
 	}
 }
 
+// A key registered without its PIN checked can have been given one by
+// whoever found it, so with two-factor on its PIN is no second factor and the
+// code is asked for after the key.
+func TestAPasskeyRegisteredWithoutItsPINAsksForTheCode(t *testing.T) {
+	h, repo, _ := newAuthGateHandler(t)
+	enableAuth(t, h, repo)
+	const totp = "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ"
+	storeTOTP(t, h, repo, totp, nil)
+	key := registerVirtualKey(t, repo, false)
+
+	id, challenge, _ := beginPasskeyLogin(t, h, "10.0.0.1:1", nil)
+	w, out := passkeyCall(t, h.handlePasskeyLoginFinish, map[string]any{"ceremonyId": id, "credential": key.answer(t, challenge, true)}, "10.0.0.1:1", nil)
+	next, _ := out["ceremonyId"].(string)
+	if out["needCode"] != true || next == "" || issuedSession(w) {
+		t.Fatalf("a key with a PIN set after its registration: %v", out)
+	}
+
+	w, out = passkeyCall(t, h.handlePasskeyLoginFinish, map[string]any{"ceremonyId": next, "code": "000000"}, "10.0.0.1:1", nil)
+	next, _ = out["ceremonyId"].(string)
+	if out["needCode"] != true || next == "" || issuedSession(w) {
+		t.Fatalf("a wrong code: %v", out)
+	}
+	code, err := secret.TOTPCode(totp, time.Now())
+	if err != nil {
+		t.Fatal(err)
+	}
+	w, out = passkeyCall(t, h.handlePasskeyLoginFinish, map[string]any{"ceremonyId": next, "code": code}, "10.0.0.1:1", nil)
+	if out["ok"] != true || !issuedSession(w) {
+		t.Fatalf("the right code after the key: %v", out)
+	}
+	if _, out := passkeyCall(t, h.handlePasskeyLoginFinish, map[string]any{"ceremonyId": next, "code": code}, "10.0.0.1:1", nil); out["ok"] == true {
+		t.Fatal("the handle worked twice")
+	}
+}
+
 func TestASecondFactorArmedDuringAPasskeyLoginIsHeldTo(t *testing.T) {
 	h, repo, _ := newAuthGateHandler(t)
 	enableAuth(t, h, repo)
-	key := registerVirtualKey(t, repo)
+	key := registerVirtualKey(t, repo, true)
 
 	id, challenge, _ := beginPasskeyLogin(t, h, "10.0.0.1:1", nil)
 	storeTOTP(t, h, repo, "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ", nil)
@@ -169,7 +208,7 @@ func TestASecondFactorArmedDuringAPasskeyLoginIsHeldTo(t *testing.T) {
 func TestAPasskeyThatOnlyProvesATouchSignsInWithoutASecondFactor(t *testing.T) {
 	h, repo, _ := newAuthGateHandler(t)
 	enableAuth(t, h, repo)
-	key := registerVirtualKey(t, repo)
+	key := registerVirtualKey(t, repo, true)
 
 	id, challenge, _ := beginPasskeyLogin(t, h, "10.0.0.1:1", nil)
 	w, out := passkeyCall(t, h.handlePasskeyLoginFinish, map[string]any{"ceremonyId": id, "credential": key.answer(t, challenge, false)}, "10.0.0.1:1", nil)
@@ -186,7 +225,7 @@ func TestPasskeyFailuresBehindATrustedProxyCountAgainstTheirOwnClient(t *testing
 	}
 	h.cfg.TrustedProxies = []net.IPNet{*proxies}
 	enableAuth(t, h, repo)
-	key := registerVirtualKey(t, repo)
+	key := registerVirtualKey(t, repo, true)
 	attacker := http.Header{"X-Forwarded-For": {"203.0.113.7"}}
 	operator := http.Header{"X-Forwarded-For": {"203.0.113.8"}}
 

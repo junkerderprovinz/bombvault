@@ -1,6 +1,7 @@
 package api
 
 import (
+	"cmp"
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
@@ -37,6 +38,9 @@ type passkeyCeremony struct {
 	// client is the throttle key of whoever started it.
 	client  string
 	expires time.Time
+	// passed names the passkey that signed in and waits for the second
+	// factor's code, for the handle the finish answers with when one is due.
+	passed string
 }
 
 const (
@@ -70,6 +74,12 @@ func (h *Handler) passkeyClientKey(r *http.Request) string {
 // beginPasskeyCeremony stores the session data and returns the random,
 // single-use handle the finish call has to present.
 func (h *Handler) beginPasskeyCeremony(s *webauthn.SessionData, rpID, client string) (string, error) {
+	return h.holdPasskeyCeremony(passkeyCeremony{session: *s, rpID: rpID, client: client})
+}
+
+// holdPasskeyCeremony stores c under a new handle.
+func (h *Handler) holdPasskeyCeremony(c passkeyCeremony) (string, error) {
+	client := c.client
 	raw := make([]byte, 32)
 	if _, err := rand.Read(raw); err != nil {
 		return "", fmt.Errorf("ceremony handle: %w", err)
@@ -110,7 +120,8 @@ func (h *Handler) beginPasskeyCeremony(s *webauthn.SessionData, rpID, client str
 		}
 		h.dropOldestCeremony(busiest, held)
 	}
-	h.passkeyCeremonies[id] = passkeyCeremony{session: *s, rpID: rpID, client: client, expires: now.Add(passkeyCeremonyTTL)}
+	c.expires = now.Add(passkeyCeremonyTTL)
+	h.passkeyCeremonies[id] = c
 	return id, nil
 }
 
@@ -487,6 +498,7 @@ func (h *Handler) handlePasskeyRegisterFinish(w http.ResponseWriter, r *http.Req
 		Transports:   joinTransports(cred.Transport),
 		RPID:         rpID,
 		BackedUp:     cred.Flags.BackupEligible,
+		Verified:     cred.Flags.UserVerified,
 	})
 	if errors.Is(err, store.ErrPasskeyExists) {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": err.Error()})
@@ -597,6 +609,9 @@ func (h *Handler) handlePasskeyLoginFinish(w http.ResponseWriter, r *http.Reques
 	var body struct {
 		CeremonyID string          `json:"ceremonyId"`
 		Credential json.RawMessage `json:"credential"`
+		// Code is the second factor for a passkey that signed in and was
+		// registered without checking its holder.
+		Code string `json:"code"`
 	}
 	if !decodeBody(w, r, &body) {
 		return
@@ -605,6 +620,10 @@ func (h *Handler) handlePasskeyLoginFinish(w http.ResponseWriter, r *http.Reques
 	if !ok {
 		h.recordLoginFail(key)
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "that sign-in has expired, try again"})
+		return
+	}
+	if cer.passed != "" {
+		h.finishPasskeyWithCode(w, cer, key, body.Code, hash, epoch)
 		return
 	}
 	wa, rpID, err := h.webAuthnFor(r)
@@ -665,14 +684,24 @@ func (h *Handler) handlePasskeyLoginFinish(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
+	var used store.Passkey
 	for _, p := range rows {
 		if string(p.CredentialID) == string(cred.ID) {
+			used = p
 			if tErr := h.store.TouchPasskey(p.ID, cred.Authenticator.SignCount, time.Now().Unix()); tErr != nil {
 				log.Printf("api: passkey: recording use: %v", tErr)
 			}
 			log.Printf("api: passkey %q signed in", p.Name) //nolint:gosec // G706: the name is %q-quoted
 			break
 		}
+	}
+
+	// A key registered without checking its holder can have been given a
+	// PIN by whoever picked it up, so the flag it signs now proves nothing
+	// and the second factor is asked for after all.
+	if uv == protocol.VerificationRequired && !used.Verified {
+		h.askPasskeyCode(w, passkeyCeremony{rpID: rpID, client: key, passed: cmp.Or(used.ID, "unknown")}, "")
+		return
 	}
 
 	tok := secret.NewSessionToken(h.cfg.AppKey, hash, epoch, sessionTTL)
@@ -712,5 +741,43 @@ func (h *Handler) handleRenamePasskey(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
+	writeJSON(w, http.StatusOK, okEnvelope(nil))
+}
+
+// askPasskeyCode answers a passkey sign-in that still needs the second
+// factor with the handle the code has to come back with.
+func (h *Handler) askPasskeyCode(w http.ResponseWriter, c passkeyCeremony, why string) {
+	handle, err := h.holdPasskeyCeremony(c)
+	if err != nil {
+		writeJSON(w, http.StatusTooManyRequests, failEnvelope(err))
+		return
+	}
+	answer := map[string]any{"ok": false, "needCode": true, "ceremonyId": handle, "error": "enter the code from your authenticator app"}
+	if why != "" {
+		answer["error"] = why
+	}
+	writeJSON(w, http.StatusOK, answer)
+}
+
+// finishPasskeyWithCode ends a passkey sign-in with the second factor's
+// code. A wrong one counts against the throttle like a wrong password code.
+func (h *Handler) finishPasskeyWithCode(w http.ResponseWriter, cer passkeyCeremony, key, code, hash, epoch string) {
+	s, err := h.store.GetSettings()
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	if strings.TrimSpace(code) == "" {
+		h.askPasskeyCode(w, cer, "")
+		return
+	}
+	if s.TOTPEnabled && !h.secondFactorOK(&s, code) {
+		h.recordLoginFail(key)
+		h.askPasskeyCode(w, cer, "that code is not valid")
+		return
+	}
+	h.recordLoginSuccess(key)
+	tok := secret.NewSessionToken(h.cfg.AppKey, hash, epoch, sessionTTL)
+	http.SetCookie(w, h.newSessionCookie(tok, int(sessionTTL.Seconds())))
 	writeJSON(w, http.StatusOK, okEnvelope(nil))
 }

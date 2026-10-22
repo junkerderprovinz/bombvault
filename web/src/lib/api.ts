@@ -7225,7 +7225,17 @@ export async function registerPasskey(name: string): Promise<OkEnvelope & { pass
 
 /** Sign in with a passkey. Sets the session cookie on success, exactly as the
  *  password login does. */
-export async function loginWithPasskey(): Promise<OkEnvelope> {
+/** What a passkey sign-in answers. needCode with a ceremonyId asks for the
+ *  second factor's code, which finishPasskeyWithCode sends with that id. */
+export type PasskeyLoginAnswer = OkEnvelope & { needCode?: boolean; ceremonyId?: string };
+
+/** POST /api/auth/passkey/login/finish with the code a passkey sign-in asked
+ *  for. */
+export function finishPasskeyWithCode(ceremonyId: string, code: string): Promise<PasskeyLoginAnswer> {
+  return fetchJSON("/api/auth/passkey/login/finish", { method: "POST", body: JSON.stringify({ ceremonyId, code }) });
+}
+
+export async function loginWithPasskey(): Promise<PasskeyLoginAnswer> {
   const begin: CeremonyResponse = await fetchJSON("/api/auth/passkey/login/begin", {
     method: "POST",
     body: "{}",
