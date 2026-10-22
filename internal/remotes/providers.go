@@ -27,6 +27,15 @@ type Provider struct {
 	// treats an unknown one as plain S3 without saying so.
 	Preset map[string]string `json:"preset,omitempty"`
 
+	// Unasked names options the form leaves out and a draft drops, because
+	// they would replace how BombVault signs in: another key or an ssh
+	// command in place of BombVault's own key.
+	Unasked []string `json:"unasked,omitempty"`
+
+	// Shares means the top of the remote lists the server's shares. Only the
+	// server makes them, so a destination has to sit inside one.
+	Shares bool `json:"shares,omitempty"`
+
 	// Mark names the logo the interface draws. Empty draws a generic glyph,
 	// which beats a mark of the wrong service.
 	Mark string `json:"mark,omitempty"`
@@ -120,6 +129,11 @@ func webdavCloud(id, name, vendor, mark, hint string) Provider {
 		Preset: map[string]string{"vendor": vendor}, Mark: mark, URLHint: hint, Auth: AuthAppPassword, SelfHosted: true}
 }
 
+// sftpOwnKey are the sftp options that would sign in with something other
+// than BombVault's key, or leave the host key unchecked: key_pem wins over
+// key_file, and an ssh command does its own sign-in and host check.
+var sftpOwnKey = []string{"key_pem", "key_file_pass", "pubkey", "pubkey_file", "key_use_agent", "ssh"}
+
 // providers is kept by hand, since rclone's registry does not know what
 // products exist or what they are called. It leaves out what cannot hold a
 // restic repository: read-only and media-only backends, rclone's wrappers
@@ -165,9 +179,11 @@ var providers = []Provider{
 
 	{ID: "rest", Name: "rest-server", Group: GroupServer, Route: RouteRest, Mark: "IconShield", Auth: AuthLogin, Lock: true},
 	{ID: "storagebox", Name: "Hetzner Storage Box", Backend: "sftp", Group: GroupServer, Route: RouteRclone,
-		Mark: "IconHetzner", Auth: AuthSSHKey, Preset: map[string]string{"port": "23"}},
-	{ID: "sftp", Name: "SFTP", Backend: "sftp", Group: GroupServer, Route: RouteRclone, Mark: "IconServer", Auth: AuthSSHKey},
-	{ID: "smb", Name: "SMB share", Backend: "smb", Group: GroupServer, Route: RouteRclone, Mark: "IconFolder", Auth: AuthLogin},
+		Mark: "IconHetzner", Auth: AuthSSHKey, Preset: map[string]string{"port": "23"}, Unasked: sftpOwnKey},
+	{ID: "sftp", Name: "SFTP", Backend: "sftp", Group: GroupServer, Route: RouteRclone, Mark: "IconServer", Auth: AuthSSHKey,
+		Unasked: sftpOwnKey},
+	{ID: "smb", Name: "SMB share", Backend: "smb", Group: GroupServer, Route: RouteRclone, Mark: "IconFolder", Auth: AuthLogin,
+		Shares: true},
 	{ID: "webdav", Name: "WebDAV", Backend: "webdav", Group: GroupServer, Route: RouteRclone, Mark: "IconLink",
 		Auth: AuthAppPassword, URLHint: "https://server.example.com/dav/"},
 	{ID: "ftp", Name: "FTP", Backend: "ftp", Group: GroupServer, Route: RouteRclone, Mark: "IconTransfer", Auth: AuthLogin},

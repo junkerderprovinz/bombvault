@@ -121,3 +121,31 @@ func TestJoinNeverDoublesTheSeparator(t *testing.T) {
 		}
 	}
 }
+
+func TestAnOptionKeepsTheKindOfValueRcloneTakes(t *testing.T) {
+	raw := []byte(`[{"Name":"ftp","Options":[
+		{"Name":"tls","Type":"bool","DefaultStr":"false"},
+		{"Name":"host","Type":"string","Required":true}]}]`)
+	backends, err := ParseBackends(raw)
+	if err != nil {
+		t.Fatal(err)
+	}
+	types := map[string]string{}
+	for _, o := range backends["ftp"].Options {
+		types[o.Name] = o.Type
+	}
+	if types["tls"] != "bool" || types["host"] != "string" {
+		t.Fatalf("types = %v, want tls bool and host string", types)
+	}
+}
+
+func TestEveryOptionAProviderLeavesUnaskedExists(t *testing.T) {
+	backends := fixture(t)
+	for _, p := range providers {
+		for _, name := range p.Unasked {
+			if !slices.ContainsFunc(backends[p.Backend].Options, func(o Option) bool { return o.Name == name }) {
+				t.Errorf("%s: rclone's %s has no option %q", p.ID, p.Backend, name)
+			}
+		}
+	}
+}

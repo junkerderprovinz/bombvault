@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 	"os"
 	"os/exec"
 	"path"
@@ -38,10 +39,14 @@ type Rclone struct {
 	backends map[string]Backend
 }
 
-// Draft is a remote described by a form and not saved yet.
+// Draft is a remote described by a form and not saved yet. Stored holds
+// settings as the config keeps them, passwords obscured already, which the
+// form's settings are laid over: a saved remote whose secrets the form does
+// not show.
 type Draft struct {
 	Backend  string
 	Settings map[string]string
+	Stored   map[string]string
 }
 
 func (r *Rclone) command(ctx context.Context, env []string, args ...string) *exec.Cmd {
@@ -135,7 +140,8 @@ func (r *Rclone) Obscure(ctx context.Context, plain string) (string, error) {
 }
 
 // Settings returns a draft's settings as rclone stores them: every password
-// obscured, empty values left out.
+// obscured, empty values left out. A password keeps its spaces, which can
+// belong to it; every other value is trimmed.
 func (r *Rclone) Settings(ctx context.Context, d Draft) (map[string]string, error) {
 	backends, err := r.Backends(ctx)
 	if err != nil {
@@ -145,7 +151,8 @@ func (r *Rclone) Settings(ctx context.Context, d Draft) (map[string]string, erro
 	if !ok {
 		return nil, fmt.Errorf("rclone has no backend %q", d.Backend)
 	}
-	out := make(map[string]string, len(d.Settings))
+	out := make(map[string]string, len(d.Stored)+len(d.Settings))
+	maps.Copy(out, d.Stored)
 	for k, v := range d.Settings {
 		if strings.TrimSpace(v) == "" {
 			continue
@@ -154,6 +161,8 @@ func (r *Rclone) Settings(ctx context.Context, d Draft) (map[string]string, erro
 			if v, err = r.Obscure(ctx, v); err != nil {
 				return nil, err
 			}
+		} else {
+			v = strings.TrimSpace(v)
 		}
 		out[k] = v
 	}

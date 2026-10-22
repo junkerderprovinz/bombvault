@@ -193,6 +193,9 @@ func (s *Service) editRemoteConnection(ctx context.Context, d store.OffsiteTarge
 	if e.Dir != nil {
 		dir = strings.Trim(strings.TrimSpace(*e.Dir), "/")
 	}
+	if atShares(p, dir) {
+		return store.OffsiteTarget{}, errPickShare
+	}
 	repo := "rclone:" + remotes.Join(remote, dir)
 	if repo != d.Repo && len(held) > 0 {
 		return store.OffsiteTarget{}, errDestinationHoldsBackups
@@ -206,15 +209,7 @@ func (s *Service) editRemoteConnection(ctx context.Context, d store.OffsiteTarge
 	if err != nil {
 		return store.OffsiteTarget{}, err
 	}
-	conf, err := s.decodeRcloneConf(settings)
-	if err != nil {
-		return store.OffsiteTarget{}, err
-	}
-	options, found := remoteOptions(conf, remote)
-	if !found {
-		return store.OffsiteTarget{}, fmt.Errorf("the rclone config has no remote %s", remote)
-	}
-	backends, err := s.remotes().Backends(ctx)
+	stored, err := s.savedRemote(remote)
 	if err != nil {
 		return store.OffsiteTarget{}, err
 	}
@@ -222,16 +217,15 @@ func (s *Service) editRemoteConnection(ctx context.Context, d store.OffsiteTarge
 	if err != nil {
 		return store.OffsiteTarget{}, err
 	}
-	set, err := s.remotes().Settings(ctx, draft)
+	options, err := s.layOver(ctx, stored, draft)
 	if err != nil {
 		return store.OffsiteTarget{}, err
 	}
-	for name, value := range draft.Settings {
-		if value == "" && remotes.Shown(backends[draft.Backend], name) {
-			delete(options, name)
-		}
+	pinned := remotes.Draft{Backend: draft.Backend, Stored: options}
+	if _, err := pinHostKey(ctx, &pinned); err != nil {
+		return store.OffsiteTarget{}, err
 	}
-	maps.Copy(options, set)
+	maps.Copy(options, pinned.Settings)
 
 	var check string
 	if err := s.editRcloneConf(func(conf string) (string, error) {
@@ -268,6 +262,50 @@ func (s *Service) editRemoteConnection(ctx context.Context, d store.OffsiteTarge
 	}
 	d.Repo = repo
 	return s.store.SaveDestination(d)
+}
+
+// savedRemote returns the options of a remote of the stored rclone config.
+func (s *Service) savedRemote(remote string) (map[string]string, error) {
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return nil, err
+	}
+	conf, err := s.decodeRcloneConf(settings)
+	if err != nil {
+		return nil, err
+	}
+	options, found := remoteOptions(conf, remote)
+	if !found {
+		return nil, fmt.Errorf("the rclone config has no remote %s", remote)
+	}
+	return options, nil
+}
+
+// layOver returns a remote's stored options with a form's fields laid over
+// them, as the config keeps them. A field the server shows and the form left
+// empty drops its option; a secret left empty keeps the stored one. A pinned
+// host key belongs to the host it was read from, so a new host or port drops
+// it.
+func (s *Service) layOver(ctx context.Context, stored map[string]string, draft remotes.Draft) (map[string]string, error) {
+	backends, err := s.remotes().Backends(ctx)
+	if err != nil {
+		return nil, err
+	}
+	set, err := s.remotes().Settings(ctx, draft)
+	if err != nil {
+		return nil, err
+	}
+	options := maps.Clone(stored)
+	for name, value := range draft.Settings {
+		if strings.TrimSpace(value) == "" && remotes.Shown(backends[draft.Backend], name) {
+			delete(options, name)
+		}
+	}
+	maps.Copy(options, set)
+	if options["host"] != stored["host"] || options["port"] != stored["port"] {
+		delete(options, "host_keys")
+	}
+	return options, nil
 }
 
 // remoteOptions returns the options of one remote of an rclone config as they

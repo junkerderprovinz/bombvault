@@ -21,8 +21,10 @@ type Option struct {
 	// Essential means the remote does not work in practice without it.
 	// rclone's Required describes its interactive setup, which prompts for
 	// everything else with a default: s3 marks none of its options required.
-	Essential bool      `json:"essential"`
-	Default   string    `json:"default"`
+	Essential bool `json:"essential"`
+	// Type is rclone's name for the kind of value, such as string or bool.
+	Type     string    `json:"type,omitempty"`
+	Default  string    `json:"default"`
 	Examples  []Example `json:"examples,omitempty"`
 	// Providers limits the option to these S3 providers; empty means all.
 	Providers []string `json:"providers,omitempty"`
@@ -104,6 +106,7 @@ type rcloneOption struct {
 	IsPassword bool
 	Sensitive  bool
 	Advanced   bool
+	Type       string
 	DefaultStr string
 	Examples   []struct {
 		Value    string
@@ -156,6 +159,7 @@ func toOption(backend string, o rcloneOption) Option {
 		Password:  o.IsPassword,
 		Advanced:  o.Advanced,
 		Essential: essential[backend][o.Name],
+		Type:      o.Type,
 		Default:   defaultText(o.DefaultStr),
 	}
 	if o.Provider != "" {

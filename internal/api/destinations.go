@@ -1,6 +1,7 @@
 package api
 
 import (
+	"cmp"
 	"context"
 	"errors"
 	"fmt"
@@ -199,6 +200,10 @@ type draftRequest struct {
 	// CredsRef names a saved sign-in an S3 service or a rest-server signs in
 	// with instead of keys typed into the wizard.
 	CredsRef string `json:"credsRef"`
+	// Destination names the saved destination whose connection a form edits.
+	// A folder walk then reaches its stored remote with the form laid over it,
+	// since the page is never shown the secrets, hosts and user names in it.
+	Destination string `json:"destination"`
 }
 
 var errNotThroughRclone = errors.New("this kind of destination is not reached through rclone")
@@ -216,30 +221,67 @@ func (s *Service) sshKeyPath() string { return filepath.Join(s.cfg.DataDir, "ssh
 
 // draftFor turns the wizard's fields into an rclone remote. The provider's
 // presets are applied last, so a form cannot talk a Nextcloud remote out of
-// the dialect that makes it work.
+// the dialect that makes it work. Values are trimmed later, where rclone's
+// description says which ones are passwords.
+//
+// An SSH-key provider signs in with BombVault's key. A password typed as
+// well stays: rclone tries the key first and the password after it, which
+// is what a server that takes no keys needs.
 func (s *Service) draftFor(p remotes.Provider, settings map[string]string) (remotes.Draft, error) {
 	if p.Route != remotes.RouteRclone && p.Route != remotes.RouteS3 {
 		return remotes.Draft{}, errNotThroughRclone
 	}
 	merged := make(map[string]string, len(settings)+len(p.Preset)+1)
-	for k, v := range settings {
-		merged[k] = strings.TrimSpace(v)
+	maps.Copy(merged, settings)
+	for _, name := range p.Unasked {
+		delete(merged, name)
 	}
 	maps.Copy(merged, p.Preset)
-	if p.Route == remotes.RouteS3 && merged["endpoint"] != "" {
+	if p.Route == remotes.RouteS3 && strings.TrimSpace(merged["endpoint"]) != "" {
 		merged["endpoint"] = s3Host(merged["endpoint"])
 	}
 	if p.Auth == remotes.AuthSSHKey {
 		merged["key_file"] = s.sshKeyPath()
-		delete(merged, "pass")
 	}
 	return remotes.Draft{Backend: p.Backend, Settings: merged}, nil
 }
 
-// DraftCheck is what a connection test of a draft found.
+// DraftCheck is what a connection test of a draft found. HostKey is the key
+// an SFTP server showed, which the remote is pinned to.
 type DraftCheck struct {
-	Reachable   bool `json:"reachable"`
-	Initialized bool `json:"initialized"`
+	Reachable   bool             `json:"reachable"`
+	Initialized bool             `json:"initialized"`
+	HostKey     *remotes.HostKey `json:"hostKey,omitempty"`
+}
+
+// pinHostKey pins an sftp draft that names no host key to the key its server
+// shows now, so rclone refuses a server that shows another one later. Without
+// a pin rclone checks no host key at all. It returns the key it read.
+func pinHostKey(ctx context.Context, d *remotes.Draft) (*remotes.HostKey, error) {
+	setting := func(name string) string { return cmp.Or(strings.TrimSpace(d.Settings[name]), d.Stored[name]) }
+	if d.Backend != "sftp" || setting("host_keys") != "" || setting("host") == "" {
+		return nil, nil
+	}
+	key, err := remotes.ReadHostKey(ctx, setting("host"), setting("port"))
+	if err != nil {
+		return nil, err
+	}
+	if d.Settings == nil {
+		d.Settings = map[string]string{}
+	}
+	d.Settings["host_keys"] = key.Pin
+	return &key, nil
+}
+
+var (
+	errPickShare  = errors.New("choose a share first: the server makes its shares, and the backups go into one of them")
+	errShareMaker = errors.New("a share is made on the server itself, so pick one of its shares and make the folder in there")
+)
+
+// atShares reports whether dir is the list of a server's shares, where no
+// destination can sit and no folder can be made.
+func atShares(p remotes.Provider, dir string) bool {
+	return p.Shares && strings.Trim(strings.TrimSpace(dir), "/") == ""
 }
 
 // CheckDraft reaches a destination that is not saved yet: through rclone for
@@ -272,10 +314,17 @@ func (s *Service) CheckDraft(ctx context.Context, req draftRequest) (DraftCheck,
 	if err != nil {
 		return DraftCheck{}, err
 	}
+	// The key is read again on every test, so the one the wizard shows is the
+	// one the server has now.
+	delete(d.Settings, "host_keys")
+	key, err := pinHostKey(ctx, &d)
+	if err != nil {
+		return DraftCheck{}, err
+	}
 	if _, err := s.remotes().Folders(ctx, "", &d, req.Dir); err != nil {
 		return DraftCheck{}, err
 	}
-	return DraftCheck{Reachable: true}, nil
+	return DraftCheck{Reachable: true, HostKey: key}, nil
 }
 
 func (s *Service) draftRestMode(settings map[string]string) (restic.Mode, error) {
@@ -295,7 +344,7 @@ func (s *Service) DraftFolders(ctx context.Context, req draftRequest) (folders [
 	if err != nil {
 		return nil, nil, err
 	}
-	d, err := s.draftFor(p, req.Settings)
+	d, err := s.walkDraft(ctx, p, req)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -309,17 +358,53 @@ func (s *Service) DraftFolders(ctx context.Context, req draftRequest) (folders [
 	return folders, free, nil
 }
 
-// DraftMakeFolder creates req.Folder in req.Dir of a draft.
+// DraftMakeFolder creates req.Folder in req.Dir of a draft. Among an SMB
+// server's shares rclone reports a folder as made without making one.
 func (s *Service) DraftMakeFolder(ctx context.Context, req draftRequest) (string, error) {
 	p, err := findProvider(req.Provider)
 	if err != nil {
 		return "", err
 	}
-	d, err := s.draftFor(p, req.Settings)
+	if atShares(p, req.Dir) {
+		return "", errShareMaker
+	}
+	d, err := s.walkDraft(ctx, p, req)
 	if err != nil {
 		return "", err
 	}
 	return s.remotes().MakeFolder(ctx, "", &d, req.Dir, req.Folder)
+}
+
+// walkDraft is the remote a folder walk reaches: the wizard's fields, or the
+// stored remote of the destination being edited with the form laid over it.
+func (s *Service) walkDraft(ctx context.Context, p remotes.Provider, req draftRequest) (remotes.Draft, error) {
+	d, err := s.draftFor(p, req.Settings)
+	if err != nil {
+		return remotes.Draft{}, err
+	}
+	if req.Destination != "" && p.Route == remotes.RouteRclone {
+		saved, ok, err := s.store.GetDestination(req.Destination)
+		if err != nil {
+			return remotes.Draft{}, err
+		}
+		if !ok || saved.Provider != p.ID {
+			return remotes.Draft{}, store.ErrNotDestination
+		}
+		remote, _, _ := strings.Cut(strings.TrimPrefix(saved.Repo, "rclone:"), ":")
+		stored, err := s.savedRemote(remote)
+		if err != nil {
+			return remotes.Draft{}, err
+		}
+		options, err := s.layOver(ctx, stored, d)
+		if err != nil {
+			return remotes.Draft{}, err
+		}
+		d = remotes.Draft{Backend: d.Backend, Stored: options}
+	}
+	if _, err := pinHostKey(ctx, &d); err != nil {
+		return remotes.Draft{}, err
+	}
+	return d, nil
 }
 
 // editRcloneConf changes the stored rclone config under a lock, so two saves
@@ -417,8 +502,14 @@ func (s *Service) SaveNewDestination(ctx context.Context, req draftRequest) (sto
 
 	switch p.Route {
 	case remotes.RouteRclone:
+		if atShares(p, dir) {
+			return store.OffsiteTarget{}, errPickShare
+		}
 		draft, err := s.draftFor(p, req.Settings)
 		if err != nil {
+			return store.OffsiteTarget{}, err
+		}
+		if _, err := pinHostKey(ctx, &draft); err != nil {
 			return store.OffsiteTarget{}, err
 		}
 		settings, err := s.remotes().Settings(ctx, draft)
@@ -639,7 +730,11 @@ func (h *Handler) handleCheckDraft(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
-	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"reachable": got.Reachable, "initialized": got.Initialized}))
+	body := map[string]any{"reachable": got.Reachable, "initialized": got.Initialized}
+	if got.HostKey != nil {
+		body["hostKey"] = got.HostKey
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(body))
 }
 
 // handleDraftFolders lists a folder of a destination before it is saved.
