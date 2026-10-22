@@ -40,11 +40,14 @@ type passwordEngine struct {
 	tried []string
 }
 
-func (e *passwordEngine) RepoOpens(_ context.Context, _ string, m restic.Mode) bool {
+func (e *passwordEngine) RepoOpensErr(_ context.Context, _ string, m restic.Mode) error {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 	e.tried = append(e.tried, m.Password)
-	return m.Encrypted && m.Password == e.want
+	if m.Encrypted && m.Password == e.want {
+		return nil
+	}
+	return errors.New("Fatal: wrong password or no key found")
 }
 
 // testPassword is the login password every instance in these tests has,
@@ -261,6 +264,25 @@ func TestPullPairingDeliversTheResticPassword(t *testing.T) {
 	sources, err := puller.st.ListPullSources()
 	if err != nil || len(sources) != 1 || sources[0].MemberID != source.id(t) {
 		t.Fatalf("pull sources = %+v, %v", sources, err)
+	}
+}
+
+func TestPairingWithAnInstanceWhoseBackupKeyIsLockedSaysSo(t *testing.T) {
+	puller := newInstance(t, "cellar", strings.Repeat("a1", 32))
+	source := newInstance(t, "attic", strings.Repeat("b2", 32))
+	pairThroughRelay(t, puller, source)
+	allowRole(t, source, puller, store.RoleFetcher, "containers")
+	sealed, err := secret.Encrypt(strings.Repeat("e", 64), []byte(strings.Repeat("d", 64)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := source.st.SetAdoptedKey(sealed, store.KeyFromKit, true); err != nil {
+		t.Fatal(err)
+	}
+	source.svc.forgetBackupKey()
+
+	if _, err := puller.svc.pairedPassword(context.Background(), source.id(t), store.RoleFetcher); !errors.Is(err, errPasswordLocked) {
+		t.Fatalf("pairing = %v, want errPasswordLocked rather than a request to ask again", err)
 	}
 }
 

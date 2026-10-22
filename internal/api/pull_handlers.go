@@ -243,10 +243,35 @@ func (h *Handler) handleRunPullSource(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "no such pull source"})
 		return
 	}
-	n, err := h.svc.PullFromSource(r.Context(), ps)
-	if err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
+	type pulled struct {
+		n   int
+		err error
+	}
+	out, waited := runPastRequest(h.svc.StopContext(), r, func(ctx context.Context) pulled {
+		n, err := h.svc.PullFromSource(ctx, ps)
+		return pulled{n, err}
+	})
+	if !waited {
 		return
 	}
-	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"snapshots": n}))
+	if out.err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(out.err))
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"snapshots": out.n}))
+}
+
+// runPastRequest runs work on stop rather than on the request, so a closed tab
+// or a proxy's read timeout does not kill a long restic run halfway, and waits
+// for it while the caller is still there. waited is false when the caller left
+// first; work then finishes and records its result on its own.
+func runPastRequest[T any](stop context.Context, r *http.Request, work func(context.Context) T) (out T, waited bool) {
+	done := make(chan T, 1)
+	go func() { done <- work(stop) }()
+	select {
+	case out = <-done:
+		return out, true
+	case <-r.Context().Done():
+		return out, false
+	}
 }

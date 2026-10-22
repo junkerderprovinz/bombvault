@@ -300,6 +300,60 @@ func (r *Repo) DeleteRoleRequest(direction, memberID, role string) error {
 	return nil
 }
 
+// RoleWithdrawal is a request this instance took back that the member has not
+// heard of yet.
+type RoleWithdrawal struct {
+	MemberID string
+	Role     string
+}
+
+// NoteRoleWithdrawal remembers that the member still has to hear that the
+// request for role is withdrawn.
+func (r *Repo) NoteRoleWithdrawal(memberID, role string) error {
+	if _, err := r.db.Exec(`INSERT INTO role_withdrawals (member_id, role, at) VALUES (?, ?, ?)
+		ON CONFLICT (member_id, role) DO UPDATE SET at = excluded.at`, memberID, role, time.Now().Unix()); err != nil {
+		return fmt.Errorf("NoteRoleWithdrawal: %w", err)
+	}
+	return nil
+}
+
+// RoleWithdrawn reports whether the member still has to hear that the request
+// for role is withdrawn.
+func (r *Repo) RoleWithdrawn(memberID, role string) (bool, error) {
+	var n int
+	if err := r.db.QueryRow(`SELECT COUNT(*) FROM role_withdrawals WHERE member_id = ? AND role = ?`, memberID, role).Scan(&n); err != nil {
+		return false, fmt.Errorf("RoleWithdrawn: %w", err)
+	}
+	return n > 0, nil
+}
+
+// ListRoleWithdrawals returns every withdrawal a member has not heard of yet.
+func (r *Repo) ListRoleWithdrawals() ([]RoleWithdrawal, error) {
+	rows, err := r.db.Query(`SELECT member_id, role FROM role_withdrawals ORDER BY at`)
+	if err != nil {
+		return nil, fmt.Errorf("ListRoleWithdrawals: %w", err)
+	}
+	defer rows.Close() //nolint:errcheck // read-only cursor
+	var out []RoleWithdrawal
+	for rows.Next() {
+		var w RoleWithdrawal
+		if err := rows.Scan(&w.MemberID, &w.Role); err != nil {
+			return nil, fmt.Errorf("ListRoleWithdrawals: %w", err)
+		}
+		out = append(out, w)
+	}
+	return out, rows.Err()
+}
+
+// ForgetRoleWithdrawal drops the note once the member heard, or once a new
+// request for the role replaces the withdrawn one.
+func (r *Repo) ForgetRoleWithdrawal(memberID, role string) error {
+	if _, err := r.db.Exec(`DELETE FROM role_withdrawals WHERE member_id = ? AND role = ?`, memberID, role); err != nil {
+		return fmt.Errorf("ForgetRoleWithdrawal: %w", err)
+	}
+	return nil
+}
+
 // GetRoleRequest returns the request with the given id, or false when there
 // is none.
 func (r *Repo) GetRoleRequest(id string) (RoleRequest, bool, error) {

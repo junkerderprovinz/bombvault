@@ -19,6 +19,8 @@ var errPeerNotAsked = errors.New("this instance has not asked that one to keep o
 
 var errPasswordHeld = errors.New("that instance has not released its restic password to this one: it first has to ask this instance to be its Receiver or Fetcher")
 
+var errPasswordLocked = errors.New("that instance allows this, but cannot read its restic password right now: its backup key is locked there. Unlock it on that instance's Restore page under Emergency, then try again")
+
 // peerCaller names the member behind a call to a route older than role
 // requests. A call that does not name its sender is refused: an old member's
 // call through a relay names none, and nothing tells it from anyone else's.

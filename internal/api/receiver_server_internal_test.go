@@ -597,6 +597,41 @@ func TestAMembersReceiverIsPlacedWhereThisInstanceReachesIt(t *testing.T) {
 	}
 }
 
+func TestANameLearnedFromABrowserIsNoAddressForTheReceiver(t *testing.T) {
+	f := newReceiverFixture(t)
+	rs := store.ReceiverServer{Port: 8000}
+	cases := []struct {
+		url    string
+		manual bool
+		host   string
+	}{
+		{"https://bv.example.com", false, ""},
+		{"https://192.168.1.20:3443", false, "192.168.1.20"},
+		{"https://vault.lan:3443", true, "vault.lan"},
+	}
+	for _, c := range cases {
+		if err := f.st.SetGroupDirectURL(c.url, c.manual); err != nil {
+			t.Fatal(err)
+		}
+		if got := f.svc.receiverHost(rs); got != c.host {
+			t.Errorf("%s (set by hand %v): host %q, want %q", c.url, c.manual, got, c.host)
+		}
+		if got, want := f.svc.needsReceiverHost(rs), c.host == ""; got != want {
+			t.Errorf("%s (set by hand %v): needs a host %v, want %v", c.url, c.manual, got, want)
+		}
+	}
+
+	rs.Host = "192.168.1.20"
+	if f.svc.needsReceiverHost(rs) || f.svc.receiverHost(rs) != "192.168.1.20" {
+		t.Error("the address set for the receiver is not used")
+	}
+
+	member := group.Member{ID: "m1", Name: "attic", Direct: true, Address: "https://bv.example.com"}
+	if v := groupReceiverFor(member, peerReceiver{Port: 8000, NeedsHost: true}); !v.NeedsHost || v.URL != "" {
+		t.Errorf("a member placed the receiver at the proxy's name: %+v", v)
+	}
+}
+
 func TestAPairedMembersReceiverReachesTheDestinationWizard(t *testing.T) {
 	a := newInstance(t, "cellar", strings.Repeat("a1", 32))
 	b := newInstance(t, "attic", strings.Repeat("b2", 32))

@@ -213,6 +213,47 @@ func TestWithdrawingARoleRequestEndsItOnBothSides(t *testing.T) {
 	}
 }
 
+func TestAWithdrawalTheMemberMissedReachesItOnceItIsBack(t *testing.T) {
+	tower := newInstance(t, "tower", strings.Repeat("a1", 32))
+	attic := newInstance(t, "attic", strings.Repeat("b2", 32))
+	pairThroughRelay(t, tower, attic)
+	askForRole(t, tower, attic, store.RoleFetcher, "containers")
+	req, _ := roleWith(t, attic, store.RoleRequestIn, tower, store.RoleFetcher)
+	answerRole(t, attic, req.ID, store.RoleAllowed)
+
+	attic.svc.StopGroup()
+	waitFor(t, "tower to lose attic", func() bool { _, ok := tower.svc.reachableMember(attic.id(t)); return !ok })
+	if told, err := tower.svc.withdrawRole(context.Background(), attic.id(t), store.RoleFetcher); err != nil || told {
+		t.Fatalf("withdraw while attic is away: told %v, %v", told, err)
+	}
+
+	attic.svc.applyGroup()
+	waitFor(t, "tower to reach attic again", func() bool { _, ok := tower.svc.reachableMember(attic.id(t)); return ok })
+	waitFor(t, "attic to reach tower again", func() bool { _, ok := attic.svc.reachableMember(tower.id(t)); return ok })
+	tower.svc.retellRoleWithdrawals(context.Background())
+
+	if ended, _ := roleWith(t, attic, store.RoleRequestIn, tower, store.RoleFetcher); ended.State != store.RoleRevoked {
+		t.Fatalf("attic after it came back = %+v, want the request withdrawn", ended)
+	}
+	if pending, err := tower.st.ListRoleWithdrawals(); err != nil || len(pending) != 0 {
+		t.Fatalf("withdrawals still to tell = %+v, %v", pending, err)
+	}
+}
+
+func TestAskingAgainReplacesAWithdrawalTheMemberMissed(t *testing.T) {
+	tower := newInstance(t, "tower", strings.Repeat("a1", 32))
+	attic := newInstance(t, "attic", strings.Repeat("b2", 32))
+	pairThroughRelay(t, tower, attic)
+	if err := tower.st.NoteRoleWithdrawal(attic.id(t), store.RoleFetcher); err != nil {
+		t.Fatal(err)
+	}
+	askForRole(t, tower, attic, store.RoleFetcher, "containers")
+	tower.svc.retellRoleWithdrawals(context.Background())
+	if req, ok := roleWith(t, attic, store.RoleRequestIn, tower, store.RoleFetcher); !ok || req.State != store.RoleAsked {
+		t.Fatalf("attic = %+v, want the new request still waiting", req)
+	}
+}
+
 func TestAnAnswerTheAskingInstanceMissedArrivesWhenItAsksAgain(t *testing.T) {
 	tower := newInstance(t, "tower", strings.Repeat("a1", 32))
 	attic := newInstance(t, "attic", strings.Repeat("b2", 32))

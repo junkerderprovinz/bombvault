@@ -18,6 +18,7 @@ package api
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"log"
 	"strings"
@@ -224,9 +225,12 @@ func (s *Service) receiverScheduledCheck(ctx context.Context, c notify.Config, a
 	// The gate above cannot see a manual check in flight, since LastCheckAt is
 	// stamped at the end. Skipping leaves the timestamp alone, so the next sweep
 	// tries again if that check never lands.
-	res, ran := s.receiverCheckExclusive(ctx, rr, rr.ReadDataPercent > 0)
-	if !ran {
+	res, err := s.receiverCheckExclusive(ctx, rr, rr.ReadDataPercent > 0)
+	if errors.Is(err, errReceiverCheckBusy) {
 		log.Printf("api: receiver: %q is already being checked, skipping the scheduled one", rr.Name) //nolint:gosec // G706: rr.Name is %q-quoted
+		return
+	}
+	if err != nil {
 		return
 	}
 	if err := s.store.UpdateReceivedRepoCheckResult(rr.ID, res.At, nullCheckOK(res.OK), res.Error, res.RanReadData); err != nil {

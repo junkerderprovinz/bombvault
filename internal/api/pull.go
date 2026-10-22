@@ -82,19 +82,56 @@ func (s *Service) pullOpen(ctx context.Context, ps store.PullSource, settings st
 	encMode := base
 	encMode.Encrypted = true
 	encMode.Password = password
-	switch {
-	case s.engine.RepoOpens(ctx, repo, encMode):
-		return repo, encMode, nil
-	case s.engine.RepoOpens(ctx, repo, base):
-		return repo, base, nil
-	default:
-		return "", restic.Mode{}, errors.New("could not open the pull source: wrong restic password, or the location is not a BombVault or restic repository")
+	mode, err := s.openOthersRepo(ctx, repo, encMode, base, "pull source")
+	if err != nil {
+		return "", restic.Mode{}, err
 	}
+	return repo, mode, nil
+}
+
+// pulledRepo is the repository a source's snapshots land in: one of its own
+// inside the domain's location. restic copy keeps each snapshot's host and
+// tags, so in the domain's own repository a neighbour's container:plex or flash
+// would be the same item as this box's: retention would age the two as one and
+// a restore could pick the neighbour's.
+func pulledRepo(domainRepo, sourceID string) string {
+	if restic.IsRemoteRepo(domainRepo) {
+		return strings.TrimRight(domainRepo, "/") + "/pulled/" + sourceID
+	}
+	return filepath.Join(domainRepo, "pulled", sourceID)
+}
+
+// errPullBusy refuses a second pull of a source while one runs. Both would
+// copy the same snapshots, and each takes the other's locks on dest for stale.
+var errPullBusy = errors.New("this source is being pulled already")
+
+func (s *Service) claimPull(id string) bool {
+	s.pullMu.Lock()
+	defer s.pullMu.Unlock()
+	if s.pulling[id] {
+		return false
+	}
+	if s.pulling == nil {
+		s.pulling = map[string]bool{}
+	}
+	s.pulling[id] = true
+	return true
+}
+
+func (s *Service) releasePull(id string) {
+	s.pullMu.Lock()
+	delete(s.pulling, id)
+	s.pullMu.Unlock()
 }
 
 // PullFromSource runs one pull and records its verdict. It returns how many
-// snapshots the copy was asked to carry.
+// snapshots the copy was asked to carry. A pull refused because another one
+// runs records nothing.
 func (s *Service) PullFromSource(ctx context.Context, ps store.PullSource) (int, error) {
+	if !s.claimPull(ps.ID) {
+		return 0, errPullBusy
+	}
+	defer s.releasePull(ps.ID)
 	n, err := s.pullFromSource(ctx, ps)
 	ok := sql.NullBool{Bool: err == nil, Valid: true}
 	msg := ""
@@ -115,10 +152,11 @@ func (s *Service) pullFromSource(ctx context.Context, ps store.PullSource) (int,
 	if err := s.fetcherRoleOpen(ps.MemberID, domain); err != nil {
 		return 0, err
 	}
-	settings, dest, err := s.domainRepoSource(domain, "local")
+	settings, domainRepo, err := s.domainRepoSource(domain, "local")
 	if err != nil {
 		return 0, fmt.Errorf("resolve the local %s repository: %w", domain, err)
 	}
+	dest := pulledRepo(domainRepo, ps.ID)
 	src, srcMode, err := s.pullOpen(ctx, ps, settings)
 	if err != nil {
 		return 0, err
@@ -130,7 +168,7 @@ func (s *Service) pullFromSource(ctx context.Context, ps store.PullSource) (int,
 	if err := s.EnsureRepo(ctx, dest, destMode); err != nil {
 		return 0, fmt.Errorf("ensure the local %s repository: %w", domain, err)
 	}
-	// BombVault is the only writer of dest, so a lock left behind is stale.
+	// This pull is the only writer of dest, so a lock left behind is stale.
 	// listSnapshots leaves the source's locks alone because its mode sets NoLock.
 	// A remote dest is unlocked only when a lock stops the copy, since every
 	// call to it is billed.
@@ -198,7 +236,7 @@ func (s *Service) RunPulls(ctx context.Context) error {
 		if !schedule.PeriodDue(time.Unix(ps.LastPullAt, 0), now, period) {
 			continue
 		}
-		if _, pErr := s.PullFromSource(ctx, ps); pErr != nil {
+		if _, pErr := s.PullFromSource(ctx, ps); pErr != nil && !errors.Is(pErr, errPullBusy) {
 			log.Printf("api: pull source %s failed: %v", ps.ID, pErr) //nolint:gosec // G706: ps.ID is an opaque store-generated id
 		}
 	}

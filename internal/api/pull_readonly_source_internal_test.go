@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"errors"
 	"strings"
 	"testing"
 
@@ -29,9 +30,16 @@ type pullRecorder struct {
 
 func (e *pullRecorder) note(method, repo string) { e.calls = append(e.calls, method+" "+repo) }
 
-func (e *pullRecorder) RepoOpens(_ context.Context, repo string, m restic.Mode) bool {
+func (e *pullRecorder) RepoOpens(ctx context.Context, repo string, m restic.Mode) bool {
+	return e.RepoOpensErr(ctx, repo, m) == nil
+}
+
+func (e *pullRecorder) RepoOpensErr(_ context.Context, repo string, m restic.Mode) error {
 	e.note("RepoOpens", repo)
-	return m.Encrypted
+	if !m.Encrypted {
+		return errors.New("Fatal: wrong password or no key found")
+	}
+	return nil
 }
 func (e *pullRecorder) Init(_ context.Context, repo string, _ restic.Mode) error {
 	e.note("Init", repo)

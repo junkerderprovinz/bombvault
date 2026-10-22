@@ -278,14 +278,23 @@ func (s *Service) askRole(ctx context.Context, m group.Member, role string, sect
 			}
 		}
 		sent.State, sent.DecidedBy = store.RoleAllowed, store.RoleDecidedAutomatic
-		return s.store.SaveSentRoleRequest(sent)
+	} else {
+		state, err := s.sendRoleAsk(ctx, sent, true)
+		if err != nil {
+			return store.RoleRequest{}, err
+		}
+		sent.State = state
 	}
-	state, err := s.sendRoleAsk(ctx, sent, true)
+	saved, err := s.store.SaveSentRoleRequest(sent)
 	if err != nil {
 		return store.RoleRequest{}, err
 	}
-	sent.State = state
-	return s.store.SaveSentRoleRequest(sent)
+	// The new request replaces one withdrawn while the member was away, so
+	// there is nothing left to tell it.
+	if err := s.store.ForgetRoleWithdrawal(m.ID, role); err != nil {
+		return store.RoleRequest{}, err
+	}
+	return saved, nil
 }
 
 // sendRoleAsk puts a request to the member it is for and returns the state
@@ -309,7 +318,9 @@ func (s *Service) sendRoleAsk(ctx context.Context, req store.RoleRequest, renew 
 // withdrawRole takes back a request this instance sent and reports whether
 // the member was told. The request is forgotten here before anything else,
 // so the member loses what this instance gave it for the role even while it
-// is out of reach or another call to it is under way.
+// is out of reach or another call to it is under way. A member that does not
+// hear still holds the request as allowed, so the withdrawal is noted and
+// told again until it arrives.
 func (s *Service) withdrawRole(ctx context.Context, memberID, role string) (bool, error) {
 	if err := s.store.DeleteRoleRequest(store.RoleRequestOut, memberID, role); err != nil {
 		return false, err
@@ -320,16 +331,91 @@ func (s *Service) withdrawRole(ctx context.Context, memberID, role string) (bool
 	if err := s.store.DeleteRoleRequest(store.RoleRequestOut, memberID, role); err != nil {
 		return false, err
 	}
-	m, ok := s.reachableMember(memberID)
-	if !ok || predatesRoleRequests(m.Version) {
-		return false, nil
-	}
-	proof, err := s.signCall(keydeposit.ProofRoleWithdraw, memberID, callPayload(role))
-	if err != nil {
+	if err := s.store.NoteRoleWithdrawal(memberID, role); err != nil {
 		return false, err
 	}
-	err = s.callMember(ctx, memberID, http.MethodPost, "/api/group/peer/roles/withdraw", peerRoleNote{Role: role, peerProof: proof}, nil)
-	return err == nil, nil
+	return s.tellRoleWithdrawn(ctx, memberID, role), nil
+}
+
+// tellRoleWithdrawn tells the member that the request for role is withdrawn
+// and forgets the note once it heard. The caller holds roleSendMu. A member
+// older than role requests holds no request to take back.
+func (s *Service) tellRoleWithdrawn(ctx context.Context, memberID, role string) bool {
+	m, ok := s.reachableMember(memberID)
+	if !ok {
+		return false
+	}
+	if !predatesRoleRequests(m.Version) {
+		proof, err := s.signCall(keydeposit.ProofRoleWithdraw, memberID, callPayload(role))
+		if err != nil {
+			log.Printf("roles: sign the withdrawal of the %s role for %q: %v", role, memberID, err) //nolint:gosec // G706: a role from a fixed set and an instance id from the store
+			return false
+		}
+		if s.callMember(ctx, memberID, http.MethodPost, "/api/group/peer/roles/withdraw", peerRoleNote{Role: role, peerProof: proof}, nil) != nil {
+			return false
+		}
+	}
+	if err := s.store.ForgetRoleWithdrawal(memberID, role); err != nil {
+		log.Printf("roles: %v", err)
+	}
+	return !predatesRoleRequests(m.Version)
+}
+
+// retellRoleWithdrawals tells every member in reach again about a withdrawal
+// it has not heard of.
+func (s *Service) retellRoleWithdrawals(ctx context.Context) {
+	pending, err := s.store.ListRoleWithdrawals()
+	if err != nil {
+		log.Printf("roles: %v", err)
+		return
+	}
+	for _, w := range pending {
+		if _, ok := s.reachableMember(w.MemberID); !ok {
+			continue
+		}
+		s.roleSendMu.Lock()
+		// Read under the lock, so a request asked for again meanwhile is not
+		// withdrawn after all.
+		if still, err := s.store.RoleWithdrawn(w.MemberID, w.Role); err == nil && still {
+			s.tellRoleWithdrawn(ctx, w.MemberID, w.Role)
+		}
+		s.roleSendMu.Unlock()
+	}
+}
+
+// forgetMemberRoles ends every Receiver and Fetcher request between this
+// instance and a member removed while out of reach, since those requests alone
+// would keep its card, and a server taken out of service keeps no login here.
+// Should the member come back, it hears of the ones this instance sent. One in
+// reach is listed again anyway and keeps its requests.
+func (s *Service) forgetMemberRoles(ctx context.Context, memberID string) error {
+	if _, ok := s.reachableMember(memberID); ok {
+		return nil
+	}
+	reqs, err := s.store.ListRoleRequests()
+	if err != nil {
+		return err
+	}
+	s.roleSendMu.Lock()
+	defer s.roleSendMu.Unlock()
+	for _, req := range reqs {
+		if req.MemberID != memberID {
+			continue
+		}
+		if err := s.store.DeleteRoleRequest(req.Direction, memberID, req.Role); err != nil {
+			return err
+		}
+		switch {
+		case req.Direction == store.RoleRequestOut && (req.State == store.RoleAsked || req.State == store.RoleAllowed):
+			err = s.store.NoteRoleWithdrawal(memberID, req.Role)
+		case req.Role == store.RoleReceiver && req.State == store.RoleAllowed:
+			err = s.dropReceiverLogin(ctx, memberID)
+		}
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // tellRoleAnswer tells the member that sent a request what a person here
@@ -379,10 +465,11 @@ func (s *Service) decideRole(ctx context.Context, id string, d store.RoleDecisio
 }
 
 // refreshSentRoles asks every member again that this instance has a request
-// with, so an answer or a revoke the member could not deliver arrives anyway.
-// It asks as the instance, not as a person, which leaves a revoked request
-// revoked.
+// with, so an answer or a revoke the member could not deliver arrives anyway,
+// and tells the members a withdrawal they missed. It asks as the instance, not
+// as a person, which leaves a revoked request revoked.
 func (s *Service) refreshSentRoles(ctx context.Context) {
+	s.retellRoleWithdrawals(ctx)
 	reqs, err := s.store.ListRoleRequests()
 	if err != nil {
 		log.Printf("roles: %v", err)

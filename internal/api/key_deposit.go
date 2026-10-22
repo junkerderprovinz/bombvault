@@ -302,6 +302,12 @@ func (s *Service) sendDeposit(ctx context.Context, memberID, memberName string, 
 		Name: name, Deposit: sealed, Salt: identity.Salt,
 		Version: keydeposit.Version, Renew: renew, peerProof: signer.prove(keydeposit.ProofKeep, memberID, sealed, identity.Salt),
 	}
+	// The keeper can take the deposit while its answer is lost on the way
+	// back, and a retry over the relay is refused as a replay. Noted first,
+	// those bytes are known as this install's when the keeper names them.
+	if err := s.store.NoteDepositOnItsWay(memberID, digest, heldDigest(sealed)); err != nil {
+		return "", err
+	}
 	var ans peerDepositState
 	if err := s.callMember(ctx, memberID, http.MethodPut, "/api/group/peer/deposit", in, &ans); err != nil {
 		return "", err
@@ -435,6 +441,13 @@ func (s *Service) renewDepositsLocked(ctx context.Context) {
 		if err := s.callMember(ctx, d.MemberID, http.MethodGet, "/api/group/peer/deposits", nil, &held); err != nil {
 			continue
 		}
+		// A deposit whose answer was lost arrived after all.
+		if held.Mine == store.DepositHeld && d.PendingHeldDigest != "" && held.MineDigest == d.PendingHeldDigest {
+			d.State, d.Digest, d.HeldDigest = store.DepositHeld, d.PendingDigest, d.PendingHeldDigest
+			if err := s.store.SaveSentDeposit(d); err != nil {
+				log.Printf("api: deposits: %v", err)
+			}
+		}
 		switch {
 		case held.Mine == store.DepositDeclined:
 			d.State = store.DepositDeclined
@@ -467,13 +480,16 @@ func (s *Service) resendDeposit(ctx context.Context, d store.SentDeposit) {
 	}
 }
 
-// renewDepositsLoop keeps the deposits current while the server runs.
+// renewDepositsLoop keeps the deposits current while the server runs, and
+// tells a member that comes back a role withdrawal it missed, which would
+// otherwise wait for somebody to open the Instances page.
 func (s *Service) renewDepositsLoop() {
 	ctx := s.StopContext()
 	t := time.NewTicker(depositRenewEvery)
 	defer t.Stop()
 	for {
 		s.RenewDeposits(ctx)
+		s.retellRoleWithdrawals(ctx)
 		select {
 		case <-ctx.Done():
 			return
