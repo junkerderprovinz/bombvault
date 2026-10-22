@@ -121,6 +121,23 @@ func TestBackupRefusesAFolderOffTheMountItWasOn(t *testing.T) {
 	}
 }
 
+func TestBackupKeepsAFolderThatGotAMountOfItsOwnBelowItsDisk(t *testing.T) {
+	eng := &fakeResticEngine{}
+	svc, root, appdata := appdataService(t, eng)
+	if err := os.WriteFile(filepath.Join(appdata, "db.sqlite3"), []byte("x"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	restore := api.SetMountinfoPath(mountTable(t, "/", root, root+"/disks/ssd"))
+	defer restore()
+	if _, err := svc.Backup(context.Background(), "vw"); err != nil {
+		t.Fatalf("first backup: %v", err)
+	}
+	api.SetMountinfoPath(mountTable(t, "/", root, root+"/disks/ssd", root+"/disks/ssd/appdata/vw"))
+	if _, err := svc.Backup(context.Background(), "vw"); err != nil {
+		t.Fatalf("backup once the folder became a dataset of its own: %v", err)
+	}
+}
+
 func TestBackupRefusesAnEmptiedFolderWithDataInEarlierBackups(t *testing.T) {
 	eng := &fakeResticEngine{snaps: []restic.Snapshot{{
 		ID: "aaaa1111", Tags: []string{"container:vw"}, Summary: &restic.SnapshotSummary{TotalBytesProcessed: 4096},

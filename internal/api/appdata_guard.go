@@ -36,8 +36,9 @@ func (s *Service) pathMounts(paths []string) (map[string]string, bool) {
 
 // offTheirMount returns the paths of this backup that the last one recorded
 // on a mount of their own and that are not on that mount now: on none, or on
-// one further up such as the folder a disk is mounted into. An unreadable
-// mount table or definition refuses nothing.
+// one further up such as the folder a disk is mounted into. One on a mount
+// further down, a dataset made for the folder for example, is still on its
+// storage. An unreadable mount table or definition refuses nothing.
 func (s *Service) offTheirMount(name string, effective []string, mountsNow map[string]string, known bool) []string {
 	if !known {
 		return nil
@@ -54,7 +55,7 @@ func (s *Service) offTheirMount(name string, effective []string, mountsNow map[s
 	for _, p := range effective {
 		now, on := mountsNow[p]
 		switch was, recorded := def.PathMounts[p]; {
-		case recorded && was != now:
+		case recorded && now != was && !isStrictSubpath(was, now):
 			left = append(left, p)
 		case !recorded && slices.Contains(def.MountedPaths, p) && !on:
 			left = append(left, p)
