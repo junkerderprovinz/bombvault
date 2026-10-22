@@ -8,6 +8,8 @@ import (
 	"encoding/base64"
 	"encoding/binary"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -214,6 +216,43 @@ func TestAFloodOfPasskeyStartsFromOneClientKeepsAnotherClientsCeremony(t *testin
 	}
 	if _, ok := h.takePasskeyCeremony(mine); !ok {
 		t.Fatal("another client's starts pushed out a ceremony somebody was finishing")
+	}
+}
+
+func TestAMapFullOfSingleCeremoniesTurnsTheNextOneAway(t *testing.T) {
+	h := &Handler{}
+	mine, err := h.beginPasskeyCeremony(&webauthnSessionForTest, passkeyHost, "198.51.100.1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for i := 1; i < passkeyCeremonyMax; i++ {
+		if _, err := h.beginPasskeyCeremony(&webauthnSessionForTest, passkeyHost, fmt.Sprintf("2001:db8:%x::/64", i)); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if _, err := h.beginPasskeyCeremony(&webauthnSessionForTest, passkeyHost, "2001:db8:ffff::/64"); !errors.Is(err, errPasskeyBusy) {
+		t.Fatalf("err = %v, want the new ceremony turned away", err)
+	}
+	if _, ok := h.takePasskeyCeremony(mine); !ok {
+		t.Fatal("a start from somebody else ended a ceremony under way")
+	}
+}
+
+func TestAnIPv6ClientCountsByItsPrefix(t *testing.T) {
+	h := &Handler{}
+	key := func(addr string) string {
+		r := httptest.NewRequest(http.MethodPost, "/api/auth/passkey/login/begin", nil)
+		r.RemoteAddr = addr
+		return h.passkeyClientKey(r)
+	}
+	if a, b := key("[2001:db8:1:2:aaaa::1]:443"), key("[2001:db8:1:2:bbbb::9]:443"); a != b || a != "2001:db8:1:2::/64" {
+		t.Fatalf("keys %q and %q, want both the /64", a, b)
+	}
+	if a, b := key("[2001:db8:1:3::1]:443"), key("[2001:db8:1:2::1]:443"); a == b {
+		t.Fatalf("two prefixes share the key %q", a)
+	}
+	if got := key("203.0.113.7:443"); got != "203.0.113.7" {
+		t.Fatalf("IPv4 key = %q", got)
 	}
 }
 

@@ -52,6 +52,21 @@ const (
 	passkeyCeremoniesPerClient = 8
 )
 
+// errPasskeyBusy refuses a ceremony while the map is full of others' single
+// ceremonies.
+var errPasskeyBusy = errors.New("too many passkey sign-ins are under way, try again in a moment")
+
+// passkeyClientKey is the client a ceremony and its throttle count against.
+// An IPv6 client goes by its /64, which one connection usually holds whole,
+// so rotating addresses inside it gives no share of its own.
+func (h *Handler) passkeyClientKey(r *http.Request) string {
+	key := h.loginClientKey(r)
+	if ip := net.ParseIP(key); ip != nil && ip.To4() == nil {
+		return ip.Mask(net.CIDRMask(64, 128)).String() + "/64"
+	}
+	return key
+}
+
 // beginPasskeyCeremony stores the session data and returns the random,
 // single-use handle the finish call has to present.
 func (h *Handler) beginPasskeyCeremony(s *webauthn.SessionData, rpID, client string) (string, error) {
@@ -80,13 +95,18 @@ func (h *Handler) beginPasskeyCeremony(s *webauthn.SessionData, rpID, client str
 	}
 	// Still full, from many clients: the one holding the most loses its
 	// oldest. That costs somebody one more click, while an unbounded map
-	// reachable without a session costs memory.
+	// reachable without a session costs memory. With every client at one,
+	// dropping one would end a sign-in somebody is in the middle of, so the
+	// new one waits instead.
 	for len(h.passkeyCeremonies) >= passkeyCeremonyMax {
 		busiest := client
 		for c, n := range held {
 			if n > held[busiest] {
 				busiest = c
 			}
+		}
+		if held[busiest] < 2 {
+			return "", errPasskeyBusy
 		}
 		h.dropOldestCeremony(busiest, held)
 	}
@@ -375,7 +395,11 @@ func (h *Handler) handlePasskeyRegisterBegin(w http.ResponseWriter, r *http.Requ
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": scrubError(err)})
 		return
 	}
-	handle, err := h.beginPasskeyCeremony(session, rpID, h.loginClientKey(r))
+	handle, err := h.beginPasskeyCeremony(session, rpID, h.passkeyClientKey(r))
+	if errors.Is(err, errPasskeyBusy) {
+		writeJSON(w, http.StatusTooManyRequests, failEnvelope(err))
+		return
+	}
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
@@ -503,7 +527,7 @@ func (h *Handler) handlePasskeyLoginBegin(w http.ResponseWriter, r *http.Request
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "no login is set up"})
 		return
 	}
-	key := h.loginClientKey(r)
+	key := h.passkeyClientKey(r)
 	if h.loginThrottled(key) {
 		writeJSON(w, http.StatusTooManyRequests, map[string]any{"ok": false, "error": "too many attempts, wait a moment"})
 		return
@@ -536,6 +560,10 @@ func (h *Handler) handlePasskeyLoginBegin(w http.ResponseWriter, r *http.Request
 		return
 	}
 	handle, err := h.beginPasskeyCeremony(session, rpID, key)
+	if errors.Is(err, errPasskeyBusy) {
+		writeJSON(w, http.StatusTooManyRequests, failEnvelope(err))
+		return
+	}
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
@@ -558,7 +586,7 @@ func (h *Handler) handlePasskeyLoginFinish(w http.ResponseWriter, r *http.Reques
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "no login is set up"})
 		return
 	}
-	key := h.loginClientKey(r)
+	key := h.passkeyClientKey(r)
 	if h.loginThrottled(key) {
 		writeJSON(w, http.StatusTooManyRequests, map[string]any{
 			"ok":    false,
