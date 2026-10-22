@@ -36,22 +36,36 @@ type DrillKey struct{ Domain, Source, TargetID, Kind string }
 // defaultRestoreDrillLimit caps an unbounded ListRestoreDrills request.
 const defaultRestoreDrillLimit = 365
 
+// firstOffsiteTargetSQL is the id of a domain's first switched-on off-site
+// target, the one a drill of the bare "offsite" source reads, or '' when the
+// settings field is all there is. It takes the domain as its one argument.
+const firstOffsiteTargetSQL = `COALESCE((SELECT id FROM offsite_targets WHERE domain = ? AND role = 'offsite' AND enabled = 1
+	ORDER BY sort_order, created_at, id LIMIT 1), '')`
+
 // AddRestoreDrill records a restore-verification drill result. An empty Kind
-// defaults to "subset", like the column default.
+// defaults to "subset", like the column default. A drill of the bare
+// "offsite" source is stamped with the target it read, so it stops counting
+// once another target comes first.
 func (r *Repo) AddRestoreDrill(d RestoreDrill) error {
 	if d.Kind == "" {
 		d.Kind = "subset"
 	}
+	bare := d.Source == "offsite" && d.OffsiteTargetID == ""
 	_, err := r.db.Exec(`
 		INSERT INTO restore_drills (domain, source, at, ok, detail, kind, offsite_target_id, item, snapshot_id)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-		d.Domain, d.Source, d.At, boolInt(d.OK), d.Detail, d.Kind, d.OffsiteTargetID, d.Item, d.SnapshotID,
+		VALUES (?, ?, ?, ?, ?, ?, CASE WHEN ? THEN `+firstOffsiteTargetSQL+` ELSE ? END, ?, ?)`,
+		d.Domain, d.Source, d.At, boolInt(d.OK), d.Detail, d.Kind, boolInt(bare), d.Domain, d.OffsiteTargetID, d.Item, d.SnapshotID,
 	)
 	if err != nil {
 		return fmt.Errorf("AddRestoreDrill: %w", err)
 	}
 	return nil
 }
+
+// currentDrillSQL leaves out the drills of the bare "offsite" source that
+// another target read than the one that comes first now. It takes the source
+// and the domain.
+const currentDrillSQL = `(? <> 'offsite' OR offsite_target_id = ` + firstOffsiteTargetSQL + `)`
 
 // LatestRestoreDrill returns the most recent drill for a domain and source,
 // regardless of kind. The bool is false (with a zero RestoreDrill) when none
@@ -60,9 +74,9 @@ func (r *Repo) LatestRestoreDrill(domain, source string) (RestoreDrill, bool, er
 	row := r.db.QueryRow(`
 		SELECT domain, source, at, ok, detail, kind, offsite_target_id, item, snapshot_id
 		FROM restore_drills
-		WHERE domain = ? AND source = ?
+		WHERE domain = ? AND source = ? AND `+currentDrillSQL+`
 		ORDER BY at DESC
-		LIMIT 1`, domain, source)
+		LIMIT 1`, domain, source, source, domain)
 	d, err := scanRestoreDrill(row)
 	if errors.Is(err, sql.ErrNoRows) {
 		return RestoreDrill{}, false, nil
@@ -81,9 +95,9 @@ func (r *Repo) LatestRestoreDrillKind(domain, source, kind string) (RestoreDrill
 	row := r.db.QueryRow(`
 		SELECT domain, source, at, ok, detail, kind, offsite_target_id, item, snapshot_id
 		FROM restore_drills
-		WHERE domain = ? AND source = ? AND kind = ?
+		WHERE domain = ? AND source = ? AND kind = ? AND `+currentDrillSQL+`
 		ORDER BY at DESC
-		LIMIT 1`, domain, source, kind)
+		LIMIT 1`, domain, source, kind, source, domain)
 	d, err := scanRestoreDrill(row)
 	if errors.Is(err, sql.ErrNoRows) {
 		return RestoreDrill{}, false, nil

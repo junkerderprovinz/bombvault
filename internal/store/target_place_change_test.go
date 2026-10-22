@@ -130,3 +130,32 @@ func TestADeletedTargetTakesTheDomainsTrialRestoreWithIt(t *testing.T) {
 		t.Fatal("the deleted target's trial restore would speak for the next one")
 	}
 }
+
+func TestATrialRestoreStaysWithTheTargetItReadWhenAnotherComesFirst(t *testing.T) {
+	r := newRepo(t)
+	a, err := r.UpsertOffsiteTarget(store.OffsiteTarget{Domain: "vms", Name: "A", Repo: "rest:https://a:8000/vms", Enabled: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := r.AddRestoreDrill(store.RestoreDrill{Domain: "vms", Source: "offsite", Kind: "dr", At: 100, OK: true}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := r.UpsertOffsiteTarget(store.OffsiteTarget{Domain: "vms", Name: "B", Repo: "rest:https://b:8000/vms", Enabled: true}); err != nil {
+		t.Fatal(err)
+	}
+	a.Enabled = false
+	if _, err := r.UpsertOffsiteTarget(a); err != nil {
+		t.Fatal(err)
+	}
+	if drilled(t, r, "vms") {
+		t.Fatal("B wears the trial restore that read A")
+	}
+
+	a.Enabled = true
+	if _, err := r.UpsertOffsiteTarget(a); err != nil {
+		t.Fatal(err)
+	}
+	if !drilled(t, r, "vms") {
+		t.Fatal("A lost its own trial restore after it came first again")
+	}
+}

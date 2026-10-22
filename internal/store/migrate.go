@@ -3431,6 +3431,17 @@ UPDATE pull_sources SET leftovers_moved = 0;`,
   at         INTEGER NOT NULL
 );`,
 	},
+	{
+		// Drills of the bare off-site source read the domain's first
+		// switched-on target, and count only while it stays first.
+		version: bareDrillTargetMigration,
+		name:    "bare_offsite_drill_target",
+		sql: `UPDATE restore_drills
+   SET offsite_target_id = COALESCE((SELECT ot.id FROM offsite_targets ot
+       WHERE ot.domain = restore_drills.domain AND ot.role = 'offsite' AND ot.enabled = 1
+       ORDER BY ot.sort_order, ot.created_at, ot.id LIMIT 1), '')
+ WHERE source = 'offsite' AND offsite_target_id = '';`,
+	},
 }
 
 // offsiteFieldDomains are the domains with an off-site field in the settings,
@@ -3700,6 +3711,10 @@ const repoGoneMigration = 540
 
 // restoreRemovalsMigration numbers the record of containers a restore removed.
 const restoreRemovalsMigration = 550
+
+// bareDrillTargetMigration numbers the stamping of bare off-site drills with
+// the target they read.
+const bareDrillTargetMigration = 560
 
 // oneLineColumns are the names and locations the recovery kit prints.
 var oneLineColumns = []struct {
