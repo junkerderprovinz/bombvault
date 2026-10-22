@@ -191,7 +191,14 @@ func (s *Service) signInFromSaved(req *draftRequest) error {
 		return nil
 	}
 	req.Settings["access_key_id"], req.Settings["secret_access_key"] = c.S3KeyID, c.S3Secret
-	if strings.TrimSpace(req.Settings["region"]) == "" {
+	// The region belongs to the sign-in, and restic signs every request of
+	// the destination with it, whatever region the form had when it was
+	// tested.
+	typed := strings.TrimSpace(req.Settings["region"])
+	if typed != "" && c.S3Region != "" && typed != c.S3Region {
+		return fmt.Errorf("the saved sign-in %s signs in for the region %s, not %s: use new keys here, or a saved sign-in for %s", sets[i].Name, c.S3Region, typed, typed)
+	}
+	if typed == "" {
 		req.Settings["region"] = c.S3Region
 	}
 	return nil
