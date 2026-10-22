@@ -136,6 +136,11 @@ describe("protection", () => {
     expect(protection(item({ dbDumpGap: "db-dump-only-copy-off" }))).toBe("none");
   });
 
+  it("is missing for a ZFS item whose last run could not read part of its tree", () => {
+    expect(protection(item({ zfsMembersSkipped: ["tank/appdata/plex"] }))).toBe("none");
+    expect(protection(item({ zfsMembersSkipped: [] }))).toBe("ok");
+  });
+
   it("is pending while the first scheduled run is still to come", () => {
     expect(protection(item({ lastBackup: 0 }))).toBe("pending");
   });

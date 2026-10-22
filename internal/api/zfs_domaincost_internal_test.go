@@ -152,6 +152,40 @@ func TestPickDRSnapshotZFSNothingToDrill(t *testing.T) {
 	}
 }
 
+func TestTheEntryOfAZFSItemNamesTheDatasetsItsLastRunSkipped(t *testing.T) {
+	s, st, _ := zfsDomainFixture(t)
+	d, err := st.CreateZFSDataset(store.ZFSDataset{Dataset: "cache/appdata", Enabled: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := st.ReplaceZFSMembers(d.ID, []store.ZFSMember{
+		{ItemID: d.ID, Dataset: "cache/appdata", Outcome: "backed-up"},
+		{ItemID: d.ID, Dataset: "cache/appdata/secret", Outcome: "not-mounted"},
+	}); err != nil {
+		t.Fatal(err)
+	}
+	settings, err := st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	report, err := s.Coverage(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	listed := false
+	for _, dom := range report.Domains {
+		for _, item := range dom.Unprotected {
+			listed = listed || item.Name == "cache/appdata/secret"
+		}
+	}
+	if !listed {
+		t.Fatal("setup: the coverage does not list the skipped dataset")
+	}
+	if got := zfsDatasetRow(s, itemHistory{}, d, settings).ZFSMembersSkipped; len(got) != 1 || got[0] != "cache/appdata/secret" {
+		t.Fatalf("skipped = %v, want the dataset the coverage lists", got)
+	}
+}
+
 func TestCoverageZFSItemsAndSkippedMembers(t *testing.T) {
 	s, st, _ := zfsDomainFixture(t)
 	scheduled, err := st.CreateZFSDataset(store.ZFSDataset{Dataset: "cache/appdata", Enabled: true})

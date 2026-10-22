@@ -159,6 +159,9 @@ type backupItemView struct {
 	// dumps are missing, one of its reasons, so the entry counts the way the
 	// coverage does.
 	DBDumpGap string `json:"dbDumpGap,omitempty"`
+	// ZFSMembersSkipped are the datasets of a scheduled ZFS item that its last
+	// run could not read, which GET /api/coverage lists as unprotected.
+	ZFSMembersSkipped []string `json:"zfsMembersSkipped,omitempty"`
 	// FormerNames are the names a container or VM had before, oldest link first.
 	FormerNames []string `json:"formerNames,omitempty"`
 	// ChangedSinceBackup is how a live container differs from its last good backup.
@@ -369,7 +372,7 @@ func (h *Handler) backupItems(ctx context.Context, settings store.Settings) (ite
 		return nil, nil, err
 	}
 	for _, d := range datasets {
-		items = append(items, zfsDatasetRow(hist, d, settings))
+		items = append(items, zfsDatasetRow(h.svc, hist, d, settings))
 	}
 	if settings.FlashEnabled {
 		items = append(items, flashRow(hist, settings))
@@ -386,11 +389,17 @@ func fileSetRow(hist itemHistory, set store.FileSet, settings store.Settings) ba
 	return v
 }
 
-func zfsDatasetRow(hist itemHistory, d store.ZFSDataset, settings store.Settings) backupItemView {
-	v := hist.row(zfsDomain, d.ID, zfsDatasetFacts(d, settings, hist.replicas[d.ID].Only))
+func zfsDatasetRow(svc *Service, hist itemHistory, d store.ZFSDataset, settings store.Settings) backupItemView {
+	facts := zfsDatasetFacts(d, settings, hist.replicas[d.ID].Only)
+	v := hist.row(zfsDomain, d.ID, facts)
 	v.KindDisabled = !settings.ZFSEnabled
 	if r, ok := hist.replicas[d.ID]; ok {
 		v.Replica = &r
+	}
+	if settings.ZFSEnabled && !hist.replicas[d.ID].Only && facts.Schedule.Kind != schedule.EffectiveNone {
+		for _, m := range svc.zfsSkippedMembers(d) {
+			v.ZFSMembersSkipped = append(v.ZFSMembersSkipped, m.Name)
+		}
 	}
 	return v
 }
@@ -468,7 +477,7 @@ func (h *Handler) backupItem(ctx context.Context, settings store.Settings, kind,
 		if err != nil {
 			return notStored(err)
 		}
-		return withHistory(d.ID, func(hist itemHistory) backupItemView { return zfsDatasetRow(hist, d, settings) })
+		return withHistory(d.ID, func(hist itemHistory) backupItemView { return zfsDatasetRow(h.svc, hist, d, settings) })
 	case "flash":
 		if key != kind || !settings.FlashEnabled {
 			return backupItemView{}, errNoSuchItem

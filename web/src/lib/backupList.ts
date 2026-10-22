@@ -102,11 +102,14 @@ export type Protection = "ok" | "pending" | "none";
  * protection is how an entry stands. It is protected while a schedule reaches
  * it and a backup of it exists. One no schedule reaches is not, whatever old
  * backups it has, and neither is one the person said not to back up, one
- * whose section has every storage location switched off, or a database whose
- * dumps are missing. The server counts by the same rule in GET /api/coverage.
+ * whose section has every storage location switched off, a database whose
+ * dumps are missing, or a ZFS item whose last run could not read part of its
+ * tree. The server counts by the same rule in GET /api/coverage.
  */
 export function protection(item: BackupItem): Protection {
-  if (item.backupDeclined || item.noPlace || isGone(item) || neverRuns(item) || item.dbDumpGap) return "none";
+  if (item.backupDeclined || item.noPlace || isGone(item) || neverRuns(item) || item.dbDumpGap || item.zfsMembersSkipped?.length) {
+    return "none";
+  }
   return item.lastBackup > 0 || replicatedAlone(item) ? "ok" : "pending";
 }
 

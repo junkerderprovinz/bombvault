@@ -186,11 +186,13 @@ function UnprotectedRow({ item, t, onChanged }: { item: BackupItem; t: T; onChan
   const sentence = useScheduleSentence();
   const [saving, setSaving] = useState(false);
   const include = item.included ? undefined : ENTRY_KIND[item.kind].setIncluded;
-  // A schedule reaches a database whose dumps are missing, so the dumps are
-  // what it lacks.
+  // A schedule reaches a database whose dumps are missing, or a ZFS tree with
+  // datasets its last run could not read, so those are what it lacks.
   const why = item.dbDumpGap
     ? { text: t(item.dbDumpGap === "db-dump-failing" ? "coverage.reason.dbDumpFailing" : "coverage.reason.dbDumpOnlyCopyOff") }
-    : sentence(item.effectiveSchedule, KIND_SCHEDULE_LABEL[item.kind]);
+    : item.zfsMembersSkipped?.length
+      ? { text: `${t("coverage.reason.zfsMemberSkipped")}: ${item.zfsMembersSkipped.join(", ")}` }
+      : sentence(item.effectiveSchedule, KIND_SCHEDULE_LABEL[item.kind]);
   const { decline, busy: declining } = useDeclineBackup(onChanged);
 
   async function start(setIncluded: NonNullable<typeof include>) {

@@ -4077,6 +4077,9 @@ export interface BackupItem {
    *  missing: its last dump failed, or dumps are off while nothing else
    *  copies it consistently. */
   dbDumpGap?: "db-dump-failing" | "db-dump-only-copy-off";
+  /** ZFS items: the datasets of the tree the last run could not read, which
+   *  GET /api/coverage lists as unprotected. */
+  zfsMembersSkipped?: string[];
   /** Containers and VMs: the names the entry had before, oldest link first. */
   formerNames?: string[];
   /** Live containers: how they differ from their last good backup. */
