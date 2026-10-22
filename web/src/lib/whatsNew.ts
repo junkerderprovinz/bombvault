@@ -76,6 +76,13 @@ export const RELEASES: Release[] = [
       { id: "dest-host-key", page: "/storage", where: ["storage.title"], way: [...TO_STORAGE, "add-location"], text: "whatsNew.serverHostKey" },
       { id: "dest-switches", page: "/storage", where: ["storage.title"], way: [...TO_STORAGE, "add-location"], text: "whatsNew.serverSwitches" },
       { id: "dest-smb-share", page: "/storage", where: ["storage.title"], way: [...TO_STORAGE, "add-location"], text: "whatsNew.smbShare" },
+      {
+        id: "storagebox-key-install",
+        page: "/storage",
+        where: ["storage.title"],
+        way: [...TO_STORAGE, "add-location"],
+        text: "whatsNew.keyInstall",
+      },
       // Both appear only on a place that refused its folder or lost its
       // repository, so a dot on them would hardly ever show.
       { id: "replica-take-over", text: "whatsNew.replicaTakeOver" },

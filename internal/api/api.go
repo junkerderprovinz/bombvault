@@ -375,6 +375,7 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("POST /api/offsite/drafts/check", h.handleCheckDraft)
 	mux.HandleFunc("POST /api/offsite/drafts/folders", h.handleDraftFolders)
 	mux.HandleFunc("POST /api/offsite/drafts/mkdir", h.handleDraftMakeFolder)
+	mux.HandleFunc("POST /api/offsite/drafts/install-key", h.handleInstallDraftKey)
 	mux.HandleFunc("GET /api/offsite/destinations", h.handleListDestinations)
 	mux.HandleFunc("POST /api/offsite/destinations", h.handleCreateDestination)
 	mux.HandleFunc("PUT /api/offsite/destinations/{id}", h.handleUpdateDestination)

@@ -143,6 +143,10 @@ export const VM_SSH_KEY_PATH_LTR_FRAGMENTS = ["/root/.ssh/authorized_keys"] as c
 /** The key file the replica dialog tells the user to append to on a ZFS server. */
 export const REPLICA_KEY_PATH_LTR_FRAGMENTS = ["~/.ssh/authorized_keys"] as const;
 
+/** The file BombVault pins host keys in, which the destination wizard names
+ *  when a server's host key has changed. */
+export const KNOWN_HOSTS_LTR_FRAGMENTS = ["/config/ssh/known_hosts"] as const;
+
 /** The Unraid user share, which the ZFS texts name as the mapping that hides
  *  snapshots. */
 export const USER_SHARE_LTR_FRAGMENTS = ["/mnt/user"] as const;
@@ -203,6 +207,7 @@ export const LTR_FRAGMENTS_BY_KEY = {
   "settings.metricsHint": METRICS_ENDPOINT_LTR_FRAGMENTS,
   "vm.ssh.publicKey": VM_SSH_KEY_PATH_LTR_FRAGMENTS,
   "zfs.replica.add.authorizeHint": REPLICA_KEY_PATH_LTR_FRAGMENTS,
+  "dest.keyInstall.err.hostKey": KNOWN_HOSTS_LTR_FRAGMENTS,
   "cadence.cronInvalid": CRON_EXAMPLE_LTR_FRAGMENTS,
   "zfs.code.shfs-only": USER_SHARE_LTR_FRAGMENTS,
   "zfs.fix.shfs-only": USER_SHARE_VS_MOUNT_ROOT_LTR_FRAGMENTS,
