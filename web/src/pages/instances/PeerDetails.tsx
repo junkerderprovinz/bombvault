@@ -2,6 +2,7 @@ import { useState, type ReactNode } from "react";
 
 import { Button } from "../../components/Button";
 import { InfoBubble } from "../../components/InfoBubble";
+import { AddLocationWindow } from "../../components/storage/AddLocationWindow";
 import { Toggle } from "../../components/Toggle";
 import { IconPencil } from "../../components/navGlyphs";
 import { ReplicaStatePill } from "../../components/zfs/replica/ReplicaStatePill";
@@ -12,7 +13,10 @@ import { unixOf } from "../../components/zfs/replica/replicaModel";
 import type { KeeperRole, PullSourceView, ReceivedRepoStatus, RoleRequest, RoleSection } from "../../lib/api";
 import { useT, type TranslationKey } from "../../lib/i18n";
 import { relativeTime } from "../../lib/reltime";
+import { flowDomains } from "../../lib/storageFlow";
 import { useToast } from "../../lib/toast";
+import { usePlacementDefaults } from "../../lib/usePlacementDefaults";
+import { useStorageLocations } from "../../lib/useStorageLocations";
 import { hueCounter, ToggleRow } from "../settings/shared";
 import { Facts } from "./InstanceCard";
 import { InstanceWindow, WindowCard } from "./InstanceWindow";
@@ -77,7 +81,16 @@ function RoleRow({
 type Dialog =
   | { kind: "received"; row: ReceivedRepoStatus | null }
   | { kind: "pull"; row: PullSourceView | null }
-  | { kind: "propose" };
+  | { kind: "propose" }
+  | { kind: "location" };
+
+/** AddReceiverLocation opens the window that adds a storage location, whose
+ *  first step offers the receiving servers of the group. */
+function AddReceiverLocation({ onClose }: { onClose: () => void }) {
+  const { locations } = useStorageLocations();
+  const defaults = usePlacementDefaults();
+  return <AddLocationWindow domains={flowDomains(locations)} defaults={defaults.rows} onClose={onClose} />;
+}
 
 /** PeerDetails is the window of one paired instance: what it does for this
  *  server, what this server does for it, how well it is protected, whether
@@ -140,13 +153,26 @@ export function PeerDetails({
         return <Facts items={[named("zfs.replica.peer.asked"), covers]} />;
       case "allowed":
         return (
-          <Facts
-            items={[
-              covers,
-              role === "receiver" && instance.destination && t("instances.role.location").replace("{name}", () => instance.destination!.name),
-              request.decidedBy === "automatic" && named("instances.role.automatic"),
-            ]}
-          />
+          <>
+            <Facts
+              items={[
+                covers,
+                role === "receiver" && instance.destination && t("instances.role.location").replace("{name}", () => instance.destination!.name),
+                role === "receiver" && instance.noDestination && t("instances.role.noDestination"),
+                request.decidedBy === "automatic" && named("instances.role.automatic"),
+              ]}
+            />
+            {role === "receiver" && instance.noDestination && (
+              <span className="mt-2 flex">
+                <Button
+                  label={t("storage.add.title")}
+                  labelKey="storage.add.title"
+                  tone="neutral"
+                  onClick={() => setDialog({ kind: "location" })}
+                />
+              </span>
+            )}
+          </>
         );
       case "refused":
         return named("instances.role.declined");
@@ -201,6 +227,7 @@ export function PeerDetails({
               onRemoved={() => {
                 void state.reloadPeers();
                 void state.reloadGroup();
+                void state.reloadRoles();
                 onClose();
               }}
             />
@@ -347,6 +374,7 @@ export function PeerDetails({
         />
       )}
       {dialog?.kind === "propose" && peer && <ProposeMeshDialog peer={peer} t={t} onClose={() => setDialog(null)} />}
+      {dialog?.kind === "location" && <AddReceiverLocation onClose={() => setDialog(null)} />}
     </InstanceWindow>
   );
 }

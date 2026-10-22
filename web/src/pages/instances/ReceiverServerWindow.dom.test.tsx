@@ -123,6 +123,13 @@ describe("ReceiverServerWindow", () => {
     expect(screen.queryByRole("dialog", { name: en["receiver.server.setUp"] })).toBeNull();
   });
 
+  it("asks for the address when this BombVault is known only by a name a browser used", async () => {
+    initial = { ...server, url: "", needsHost: true };
+    await renderWindow();
+    expect(screen.getByText(en["receiver.server.needsHost"])).toBeTruthy();
+    expect(screen.queryByText(en["receiver.server.noAddress"])).toBeNull();
+  });
+
   it("starts with the form and says why when something needs a receiving server", async () => {
     await renderWindow("This needs a receiving server.");
     const form = screen.getByRole("dialog", { name: en["receiver.server.setUp"] });

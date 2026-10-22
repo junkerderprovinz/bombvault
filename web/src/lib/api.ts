@@ -6128,6 +6128,9 @@ export interface ReceiverServer {
   host: string;
   /** The server's address without a login, empty while this instance does not know its own. */
   url: string;
+  /** This instance knows itself only by a name a browser used, which may lead
+   *  to a proxy rather than the server, so the address has to be set. */
+  needsHost?: boolean;
   createdAt: number;
   /** False once the container is gone from Docker. */
   present: boolean;
@@ -6441,7 +6444,8 @@ export function askRole(
 
 /** DELETE /api/group/members/{id}/roles/{role} - take back a request this
  *  instance sent. `told` is false when the member could not be reached; the
- *  request is gone here either way. */
+ *  request is gone here either way, and the server tells the member once it
+ *  is back. */
 export function withdrawRole(memberId: string, role: RequestedRole): Promise<OkEnvelope & { told?: boolean }> {
   return fetchJSON(`/api/group/members/${encodeURIComponent(memberId)}/roles/${role}`, { method: "DELETE" });
 }
@@ -7595,6 +7599,8 @@ export interface GroupReceiver {
    *  the member only through the relay. */
   url?: string;
   needsAddress: boolean;
+  /** The member has to set the address of its receiving server first. */
+  needsHost?: boolean;
 }
 
 export function listGroupReceivers(): Promise<OkEnvelope & { receivers?: GroupReceiver[] }> {

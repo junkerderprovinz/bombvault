@@ -207,7 +207,7 @@ export function ReceiverServerWindow({
           <Rows>
             <SettingRow label={t("receiver.server.address")}>
               <bdi dir="ltr" className="font-mono text-xs text-carbon-text break-all text-start">
-                {server.url || t("receiver.server.noAddress")}
+                {server.url || t(server.needsHost ? "receiver.server.needsHost" : "receiver.server.noAddress")}
               </bdi>
             </SettingRow>
             <SettingRow label={t("receiver.server.outsideUser")}>
