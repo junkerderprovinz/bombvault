@@ -321,7 +321,11 @@ func (h *Handler) handleBackupZFSDataset(w http.ResponseWriter, r *http.Request)
 	}
 	started, err := h.svc.StartBackupZFSDataset(r.Context(), id)
 	if err != nil {
-		writeJSON(w, http.StatusConflict, startRefusal(err))
+		body := startRefusal(err)
+		if code, ok := zfsRefusalCode(err); ok {
+			body["code"] = code
+		}
+		writeJSON(w, http.StatusConflict, body)
 		return
 	}
 	if !started {
