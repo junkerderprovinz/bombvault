@@ -96,18 +96,10 @@ type Mode struct {
 	// rclone.conf, and for a non-whitelisted value. Not a secret (a class name), so
 	// it may travel in argv unlike the credentials in Env.
 	StorageClass string
-	// Limits caps restic's transfer bandwidth (KiB/s each way) for a BACKUP run
-	// against this repo — the primary-repo counterpart of CopyArgs' separate `lim
-	// Limits` parameter. It travels on Mode (rather than as its own BackupArgs
-	// parameter, CopyArgs' shape) because Mode is already threaded through every
-	// Backup/BackupStdin call site via the per-domain adapter (internal/api's
-	// resticAdapter/resticZvolAdapter); adding a new positional parameter would
-	// mean touching the backup.Restic interface and every Domain struct in
-	// internal/backup for a knob that is zero (unlimited, the default) unless a
-	// domain's PRIMARY repo is both remote and has bandwidth limits configured
-	// (see internal/api's primaryRemoteTarget). A zero Limits is a no-op, so every
-	// local-primary and unconfigured-remote-primary backup is byte-identical to
-	// before this field existed.
+	// Limits caps restic's transfer bandwidth (KiB/s each way) for a backup,
+	// forget or prune run against this repo. It travels on Mode, unlike CopyArgs'
+	// lim parameter, because Mode already reaches every Backup call site through
+	// the per-domain adapters. A zero Limits adds no flags.
 	Limits Limits
 	// ExcludeCaches, when true, adds --exclude-caches to BackupArgs, so restic
 	// skips directories carrying a CACHEDIR.TAG from this item's snapshots
@@ -1067,6 +1059,7 @@ func TagArgs(repo string, snapIDs, add, remove []string, m Mode) []string {
 func ForgetArgs(repo string, snapshotIDs []string, prune bool, m Mode) []string {
 	args := repoFlag(repo)
 	args = append(args, retryLockFlags()...)
+	args = append(args, limitFlags(m.Limits)...)
 	if prune {
 		args = append(args, compressionFlags(m.Compression)...)
 	}
@@ -1244,6 +1237,7 @@ func keepFlags(p RetentionPolicy) []string {
 func ForgetPolicyArgs(repo string, p RetentionPolicy, m Mode, tags []string, prune bool) []string {
 	args := repoFlag(repo)
 	args = append(args, retryLockFlags()...)
+	args = append(args, limitFlags(m.Limits)...)
 	if prune {
 		args = append(args, compressionFlags(m.Compression)...)
 	}
@@ -1319,10 +1313,12 @@ func UnlockArgs(repo string, removeAll bool, m Mode) []string {
 }
 
 // PruneArgs returns the argv slice for `restic prune` (reclaims space from
-// forgotten snapshots).
+// forgotten snapshots). A prune repacks, downloading and uploading data, so it
+// keeps to the repository's bandwidth caps as a backup does.
 func PruneArgs(repo string, m Mode) []string {
 	args := repoFlag(repo)
 	args = append(args, retryLockFlags()...)
+	args = append(args, limitFlags(m.Limits)...)
 	args = append(args, compressionFlags(m.Compression)...)
 	args = append(args, "prune")
 	if !m.Encrypted {
