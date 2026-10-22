@@ -3825,7 +3825,7 @@ const ms: Partial<Translations> = {
   "entry.remove.safety": "Padam juga {n} snapshot keselamatannya di pelayan",
   "entry.remove.safetyHint": "Tanpa suis ini, ia kekal sehingga anda memadamkannya sendiri.",
   "entry.remove.drop": "Padam juga semua sandaran",
-  "entry.remove.dropTextZFS": "Sandaran entri ini dan set datanya dibuang secara kekal dan repositori dibersihkan. Ini tidak boleh dibatalkan.",
+  "entry.remove.dropTextZFS": "Sandaran entri ini dan set datanya dibuang secara kekal dan repositori dibersihkan. Salinan pada destinasi lain kekal, tanpa entri yang mengenalinya. Ini tidak boleh dibatalkan.",
   "entry.remove.dropTextLocal": "Semua sandaran setempat dibuang secara kekal dan repositori setempat dibersihkan. Salinan pada destinasi lain kekal, tanpa entri yang mengenalinya. Ini tidak boleh dibatalkan.",
   "entry.remove.keepGo": "Alih keluar daripada senarai",
   "entry.remove.dropGo": "Padam sandaran",

@@ -3825,7 +3825,7 @@ const et: Partial<Translations> = {
   "entry.remove.safety": "one=Kustuta ka selle turvavarundus serveris|other=Kustuta ka selle {n} turvavarundust serveris",
   "entry.remove.safetyHint": "Ilma selle lülitita jäävad need alles, kuni kustutad need ise.",
   "entry.remove.drop": "Kustuta ka kõik varundused",
-  "entry.remove.dropTextZFS": "Selle kirje ja selle andmestike varundused kustutatakse jäädavalt ja hoidla puhastatakse. Seda ei saa tagasi võtta.",
+  "entry.remove.dropTextZFS": "Selle kirje ja selle andmestike varundused kustutatakse jäädavalt ja hoidla puhastatakse. Koopiad teistes sihtkohtades jäävad alles, ilma kirjeta, mis neid tunneks. Seda ei saa tagasi võtta.",
   "entry.remove.dropTextLocal": "Kõik kohalikud varundused kustutatakse jäädavalt ja kohalik hoidla puhastatakse. Koopiad teistes sihtkohtades jäävad alles, ilma kirjeta, mis neid tunneks. Seda ei saa tagasi võtta.",
   "entry.remove.keepGo": "Eemalda loendist",
   "entry.remove.dropGo": "Kustuta varundused",

@@ -3816,7 +3816,7 @@ const hu: Partial<Translations> = {
   "entry.remove.safety": "A szerveren lévő {n} biztonsági pillanatkép törlése is",
   "entry.remove.safetyHint": "E kapcsoló nélkül addig maradnak, amíg magad nem törlöd őket.",
   "entry.remove.drop": "Az összes mentés törlése is",
-  "entry.remove.dropTextZFS": "Az elem és adatkészleteinek mentései végleg törlődnek, a tároló pedig megtisztul. Ez nem vonható vissza.",
+  "entry.remove.dropTextZFS": "Az elem és adatkészleteinek mentései végleg törlődnek, a tároló pedig megtisztul. A többi célon lévő másolatok megmaradnak, de nincs elem, amely ismerné őket. Ez nem vonható vissza.",
   "entry.remove.dropTextLocal": "Az összes helyi mentés végleg törlődik, a helyi tároló megtisztul. A többi célon lévő másolatok megmaradnak, de nincs elem, amely ismerné őket. Ez nem vonható vissza.",
   "entry.remove.keepGo": "Eltávolítás a listáról",
   "entry.remove.dropGo": "Mentések törlése",

@@ -3825,7 +3825,7 @@ const is: Partial<Translations> = {
   "entry.remove.safety": "one=Eyða líka {n} öryggisskyndimynd hennar á þjóninum|other=Eyða líka {n} öryggisskyndimyndum hennar á þjóninum",
   "entry.remove.safetyHint": "Án þessa rofa haldast þær þar til þeim er eytt handvirkt.",
   "entry.remove.drop": "Eyða líka öllum afritum",
-  "entry.remove.dropTextZFS": "Afritum þessarar færslu og gagnasafna hennar er eytt fyrir fullt og allt og geymslan hreinsuð. Ekki er hægt að afturkalla þetta.",
+  "entry.remove.dropTextZFS": "Afritum þessarar færslu og gagnasafna hennar er eytt fyrir fullt og allt og geymslan hreinsuð. Afrit á hinum áfangastöðunum haldast, án færslu sem þekkir þau. Ekki er hægt að afturkalla þetta.",
   "entry.remove.dropTextLocal": "Öllum staðbundnum afritum er eytt fyrir fullt og allt og staðbundna geymslan hreinsuð. Afrit á hinum áfangastöðunum haldast, án færslu sem þekkir þau. Ekki er hægt að afturkalla þetta.",
   "entry.remove.keepGo": "Fjarlægja af listanum",
   "entry.remove.dropGo": "Eyða afritum",

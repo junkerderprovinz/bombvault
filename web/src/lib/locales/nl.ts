@@ -3814,7 +3814,7 @@ const nl: Partial<Translations> = {
   "entry.remove.safety": "one=Ook de veiligheidssnapshot op de server verwijderen|other=Ook de {n} veiligheidssnapshots op de server verwijderen",
   "entry.remove.safetyHint": "Zonder deze schakelaar blijven ze staan tot je ze zelf verwijdert.",
   "entry.remove.drop": "Ook alle back-ups verwijderen",
-  "entry.remove.dropTextZFS": "De back-ups van dit item en zijn datasets worden definitief verwijderd en de repository wordt opgeschoond. Dit kan niet ongedaan worden gemaakt.",
+  "entry.remove.dropTextZFS": "De back-ups van dit item en zijn datasets worden definitief verwijderd en de repository wordt opgeschoond. Kopieën op de andere bestemmingen blijven staan, zonder item dat ze kent. Dit kan niet ongedaan worden gemaakt.",
   "entry.remove.dropTextLocal": "Alle lokale back-ups worden definitief verwijderd en de lokale repository wordt opgeschoond. Kopieën op de andere bestemmingen blijven staan, zonder item dat ze kent. Dit kan niet ongedaan worden gemaakt.",
   "entry.remove.keepGo": "Uit de lijst halen",
   "entry.remove.dropGo": "Back-ups verwijderen",

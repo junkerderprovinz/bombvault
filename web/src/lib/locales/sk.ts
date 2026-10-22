@@ -3825,7 +3825,7 @@ const sk: Partial<Translations> = {
   "entry.remove.safety": "one=Odstrániť aj jej {n} bezpečnostnú snímku na serveri|few=Odstrániť aj jej {n} bezpečnostné snímky na serveri|many=Odstrániť aj jej {n} bezpečnostnej snímky na serveri|other=Odstrániť aj jej {n} bezpečnostných snímok na serveri",
   "entry.remove.safetyHint": "Bez tohto prepínača zostanú, kým ich sám neodstrániš.",
   "entry.remove.drop": "Odstrániť aj všetky zálohy",
-  "entry.remove.dropTextZFS": "Zálohy tejto položky a jej datasetov sa odstránia natrvalo a repozitár sa vyčistí. Nedá sa to vrátiť.",
+  "entry.remove.dropTextZFS": "Zálohy tejto položky a jej datasetov sa odstránia natrvalo a repozitár sa vyčistí. Kópie na ostatných cieľoch zostanú, bez položky, ktorá by o nich vedela. Nedá sa to vrátiť.",
   "entry.remove.dropTextLocal": "Všetky lokálne zálohy sa odstránia natrvalo a lokálny repozitár sa vyčistí. Kópie na ostatných cieľoch zostanú, bez položky, ktorá by o nich vedela. Nedá sa to vrátiť.",
   "entry.remove.keepGo": "Odobrať zo zoznamu",
   "entry.remove.dropGo": "Odstrániť zálohy",

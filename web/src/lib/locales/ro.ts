@@ -3816,7 +3816,7 @@ const ro: Partial<Translations> = {
   "entry.remove.safety": "one=Șterge și instantaneul lui de siguranță de pe server|few=Șterge și cele {n} instantanee de siguranță ale lui de pe server|other=Șterge și cele {n} de instantanee de siguranță ale lui de pe server",
   "entry.remove.safetyHint": "Fără acest comutator rămân acolo până le ștergi tu.",
   "entry.remove.drop": "Șterge și toate copiile",
-  "entry.remove.dropTextZFS": "Copiile acestui element și ale seturilor lui de date sunt șterse definitiv, iar depozitul este curățat. Acest lucru nu poate fi anulat.",
+  "entry.remove.dropTextZFS": "Copiile acestui element și ale seturilor lui de date sunt șterse definitiv, iar depozitul este curățat. Copiile de pe celelalte destinații rămân, fără un element care să le cunoască. Acest lucru nu poate fi anulat.",
   "entry.remove.dropTextLocal": "Toate copiile locale sunt șterse definitiv, iar depozitul local este curățat. Copiile de pe celelalte destinații rămân, fără un element care să le cunoască. Acest lucru nu poate fi anulat.",
   "entry.remove.keepGo": "Scoate din listă",
   "entry.remove.dropGo": "Șterge copiile",

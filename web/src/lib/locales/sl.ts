@@ -3809,7 +3809,7 @@ const sl: Partial<Translations> = {
   "entry.remove.safety": "one=Izbriši tudi njegov {n} varnostni posnetek na strežniku|two=Izbriši tudi njegova {n} varnostna posnetka na strežniku|few=Izbriši tudi njegove {n} varnostne posnetke na strežniku|other=Izbriši tudi njegovih {n} varnostnih posnetkov na strežniku",
   "entry.remove.safetyHint": "Brez tega stikala ostanejo, dokler jih ne izbrišeš sam.",
   "entry.remove.drop": "Izbriši tudi vse varnostne kopije",
-  "entry.remove.dropTextZFS": "Varnostne kopije tega vnosa in njegovih naborov podatkov se trajno odstranijo, repozitorij se počisti. Tega ni mogoče razveljaviti.",
+  "entry.remove.dropTextZFS": "Varnostne kopije tega vnosa in njegovih naborov podatkov se trajno odstranijo, repozitorij se počisti. Kopije na drugih ciljih ostanejo, brez vnosa, ki bi zanje vedel. Tega ni mogoče razveljaviti.",
   "entry.remove.dropTextLocal": "Vse lokalne varnostne kopije se trajno odstranijo, lokalni repozitorij se počisti. Kopije na drugih ciljih ostanejo, brez vnosa, ki bi zanje vedel. Tega ni mogoče razveljaviti.",
   "entry.remove.keepGo": "Odstrani s seznama",
   "entry.remove.dropGo": "Izbriši kopije",

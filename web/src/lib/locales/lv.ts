@@ -3825,7 +3825,7 @@ const lv: Partial<Translations> = {
   "entry.remove.safety": "zero=Dzēst arī tā {n} drošības momentuzņēmumu serverī|one=Dzēst arī tā {n} drošības momentuzņēmumu serverī|other=Dzēst arī tā {n} drošības momentuzņēmumus serverī",
   "entry.remove.safetyHint": "Ja šis slēdzis nav ieslēgts, tie paliek, kamēr paši tos neizdzēsīsiet.",
   "entry.remove.drop": "Dzēst arī visas rezerves kopijas",
-  "entry.remove.dropTextZFS": "Šī ieraksta un tā datu kopu rezerves kopijas tiek neatgriezeniski noņemtas, un repozitorijs tiek iztīrīts. To nevar atsaukt.",
+  "entry.remove.dropTextZFS": "Šī ieraksta un tā datu kopu rezerves kopijas tiek neatgriezeniski noņemtas, un repozitorijs tiek iztīrīts. Kopijas citos mērķos paliek, bet nav ieraksta, kas par tām zinātu. To nevar atsaukt.",
   "entry.remove.dropTextLocal": "Visas vietējās rezerves kopijas tiek neatgriezeniski noņemtas, un vietējais repozitorijs tiek iztīrīts. Kopijas citos mērķos paliek, bet nav ieraksta, kas par tām zinātu. To nevar atsaukt.",
   "entry.remove.keepGo": "Noņemt no saraksta",
   "entry.remove.dropGo": "Dzēst kopijas",

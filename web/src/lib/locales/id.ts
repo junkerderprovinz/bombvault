@@ -3825,7 +3825,7 @@ const id: Partial<Translations> = {
   "entry.remove.safety": "Hapus juga {n} snapshot pengamannya di server",
   "entry.remove.safetyHint": "Tanpa sakelar ini, semuanya tetap ada sampai Anda menghapusnya sendiri.",
   "entry.remove.drop": "Hapus juga semua cadangan",
-  "entry.remove.dropTextZFS": "Cadangan entri ini dan dataset-nya dihapus permanen, lalu repositori dibersihkan. Ini tidak dapat dibatalkan.",
+  "entry.remove.dropTextZFS": "Cadangan entri ini dan dataset-nya dihapus permanen, lalu repositori dibersihkan. Salinan di tujuan lain tetap ada, tanpa entri yang mengenalinya. Ini tidak dapat dibatalkan.",
   "entry.remove.dropTextLocal": "Semua cadangan lokal dihapus permanen, lalu repositori lokal dibersihkan. Salinan di tujuan lain tetap ada, tanpa entri yang mengenalinya. Ini tidak dapat dibatalkan.",
   "entry.remove.keepGo": "Keluarkan dari daftar",
   "entry.remove.dropGo": "Hapus cadangan",

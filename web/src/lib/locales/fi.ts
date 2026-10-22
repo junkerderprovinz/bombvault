@@ -3815,7 +3815,7 @@ const fi: Partial<Translations> = {
   "entry.remove.safety": "one=Poista myös sen turvatilannevedos palvelimelta|other=Poista myös sen {n} turvatilannevedosta palvelimelta",
   "entry.remove.safetyHint": "Ilman tätä kytkintä ne jäävät, kunnes poistat ne itse.",
   "entry.remove.drop": "Poista myös kaikki varmuuskopiot",
-  "entry.remove.dropTextZFS": "Tämän merkinnän ja sen tietojoukkojen varmuuskopiot poistetaan pysyvästi ja arkisto siivotaan. Tätä ei voi perua.",
+  "entry.remove.dropTextZFS": "Tämän merkinnän ja sen tietojoukkojen varmuuskopiot poistetaan pysyvästi ja arkisto siivotaan. Muissa kohteissa olevat kopiot jäävät, mutta mikään merkintä ei tunne niitä. Tätä ei voi perua.",
   "entry.remove.dropTextLocal": "Kaikki paikalliset varmuuskopiot poistetaan pysyvästi ja paikallinen arkisto siivotaan. Muissa kohteissa olevat kopiot jäävät, mutta mikään merkintä ei tunne niitä. Tätä ei voi perua.",
   "entry.remove.keepGo": "Poista luettelosta",
   "entry.remove.dropGo": "Poista varmuuskopiot",

@@ -558,6 +558,61 @@ func TestDeleteBackupsZFSDatasetForgetsEveryMemberTag(t *testing.T) {
 	}
 }
 
+// zfsFolderOffFixture is the repo fixture with the ZFS folder switched off,
+// so backups go straight to one off-site target, which holds s2.
+func zfsFolderOffFixture(t *testing.T) (*Service, *store.Repo, *zfsFakeEngine, string) {
+	t.Helper()
+	s, st, _, eng := zfsRepoFixture(t)
+	if err := st.SetLocal(zfsDomain, false); err != nil {
+		t.Fatal(err)
+	}
+	const remote = "rest:http://attic:8000/zfs"
+	if _, err := st.UpsertOffsiteTarget(store.OffsiteTarget{Domain: zfsDomain, Name: "attic", Repo: remote, Enabled: true, SortOrder: 1}); err != nil {
+		t.Fatal(err)
+	}
+	settings, err := st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	folder, err := s.zfsRepoPath(settings)
+	if err != nil {
+		t.Fatal(err)
+	}
+	eng.snapsByRepo = map[string][]restic.Snapshot{
+		folder: {{ID: "s1", Tags: []string{"zfs:" + zfsRoot}}},
+		remote: {{ID: "s2", Tags: []string{"zfs:" + zfsRoot}}, {ID: "s3", Tags: []string{"zfs:tank/media"}}},
+	}
+	return s, st, eng, remote
+}
+
+func TestDeleteBackupsZFSDatasetForgetsWhatWentStraightToTheTargets(t *testing.T) {
+	s, st, eng, _ := zfsFolderOffFixture(t)
+	d := zfsSeedItem(t, st, zfsRoot)
+	if _, err := s.DeleteBackupsZFSDataset(context.Background(), d.ID, false); err != nil {
+		t.Fatalf("delete the backups: %v", err)
+	}
+	if got := strings.Join(eng.readForgotten(), ","); got != "s1,s2" {
+		t.Fatalf("forgotten = %q, want the folder's older backup and the target's", got)
+	}
+	if _, err := st.GetZFSDataset(d.ID); err == nil {
+		t.Fatal("the row survived its backups")
+	}
+}
+
+func TestDeleteBackupsZFSDatasetNeedsNoFolderWhenTheBackupsAreOnTheTargets(t *testing.T) {
+	s, st, eng, _ := zfsFolderOffFixture(t)
+	if err := os.Remove(filepath.Join(s.cfg.HostMountRoot, "repo", "config")); err != nil {
+		t.Fatal(err)
+	}
+	d := zfsSeedItem(t, st, zfsRoot)
+	if _, err := s.DeleteBackupsZFSDataset(context.Background(), d.ID, false); err != nil {
+		t.Fatalf("delete the backups: %v", err)
+	}
+	if got := strings.Join(eng.readForgotten(), ","); got != "s2" {
+		t.Fatalf("forgotten = %q, want the target's backup", got)
+	}
+}
+
 func TestDeleteBackupsZFSDatasetAnswersWhatStaysOnThePool(t *testing.T) {
 	for _, removeSafety := range []bool{false, true} {
 		s, st, host, eng := zfsRepoFixture(t)

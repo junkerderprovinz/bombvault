@@ -60,6 +60,14 @@ type sectionPlace struct {
 
 func (pl sectionPlace) own() bool { return pl.target == nil }
 
+// source names the place the way a snapshot listing asks for it.
+func (pl sectionPlace) source() string {
+	if pl.own() {
+		return "local"
+	}
+	return offsiteSourcePrefix + pl.target.ID
+}
+
 // sectionPlaces is where a backup of a section without placement goes: the
 // repository in its own folder, own, or while that folder is switched off the
 // repository of every target of the section that is switched on, each opened

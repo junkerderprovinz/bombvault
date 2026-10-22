@@ -3806,7 +3806,7 @@ const ko: Partial<Translations> = {
   "entry.remove.safety": "이 항목의 안전 스냅샷 {n}개도 서버에서 삭제",
   "entry.remove.safetyHint": "이 스위치를 켜지 않으면 직접 삭제할 때까지 남아 있습니다.",
   "entry.remove.drop": "모든 백업도 삭제",
-  "entry.remove.dropTextZFS": "이 항목과 그 데이터세트의 백업이 영구적으로 삭제되고 저장소가 정리됩니다. 되돌릴 수 없습니다.",
+  "entry.remove.dropTextZFS": "이 항목과 그 데이터세트의 백업이 영구적으로 삭제되고 저장소가 정리됩니다. 다른 대상의 사본은 남지만, 그것을 아는 항목은 없어집니다. 되돌릴 수 없습니다.",
   "entry.remove.dropTextLocal": "로컬 백업이 모두 영구적으로 삭제되고 로컬 저장소가 정리됩니다. 다른 대상의 사본은 남지만, 그것을 아는 항목은 없어집니다. 되돌릴 수 없습니다.",
   "entry.remove.keepGo": "목록에서 제거",
   "entry.remove.dropGo": "백업 삭제",

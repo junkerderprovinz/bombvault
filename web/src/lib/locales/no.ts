@@ -3815,7 +3815,7 @@ const no: Partial<Translations> = {
   "entry.remove.safety": "one=Slett også sikkerhetsøyeblikksbildet på serveren|other=Slett også de {n} sikkerhetsøyeblikksbildene på serveren",
   "entry.remove.safetyHint": "Uten denne bryteren blir de liggende til du sletter dem selv.",
   "entry.remove.drop": "Slett også alle sikkerhetskopier",
-  "entry.remove.dropTextZFS": "Sikkerhetskopiene av dette elementet og datasettene dets fjernes for godt, og repositoriet ryddes. Dette kan ikke angres.",
+  "entry.remove.dropTextZFS": "Sikkerhetskopiene av dette elementet og datasettene dets fjernes for godt, og repositoriet ryddes. Kopier på de andre målene blir liggende, uten et element som kjenner dem. Dette kan ikke angres.",
   "entry.remove.dropTextLocal": "Alle lokale sikkerhetskopier fjernes for godt, og det lokale repositoriet ryddes. Kopier på de andre målene blir liggende, uten et element som kjenner dem. Dette kan ikke angres.",
   "entry.remove.keepGo": "Fjern fra listen",
   "entry.remove.dropGo": "Slett sikkerhetskopier",

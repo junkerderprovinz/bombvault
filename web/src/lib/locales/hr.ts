@@ -3825,7 +3825,7 @@ const hr: Partial<Translations> = {
   "entry.remove.safety": "one=Izbriši i njezinu {n} sigurnosnu snimku na poslužitelju|few=Izbriši i njezine {n} sigurnosne snimke na poslužitelju|other=Izbriši i njezinih {n} sigurnosnih snimaka na poslužitelju",
   "entry.remove.safetyHint": "Bez ovog prekidača ostaju dok ih sami ne izbrišete.",
   "entry.remove.drop": "Izbriši i sve kopije",
-  "entry.remove.dropTextZFS": "Kopije ove stavke i njezinih skupova podataka trajno se uklanjaju, a repozitorij se čisti. To se ne može poništiti.",
+  "entry.remove.dropTextZFS": "Kopije ove stavke i njezinih skupova podataka trajno se uklanjaju, a repozitorij se čisti. Kopije na drugim odredištima ostaju, bez stavke koja ih poznaje. To se ne može poništiti.",
   "entry.remove.dropTextLocal": "Sve lokalne kopije trajno se uklanjaju, a lokalni repozitorij se čisti. Kopije na drugim odredištima ostaju, bez stavke koja ih poznaje. To se ne može poništiti.",
   "entry.remove.keepGo": "Ukloni s popisa",
   "entry.remove.dropGo": "Izbriši kopije",

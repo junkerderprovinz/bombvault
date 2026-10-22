@@ -3825,7 +3825,7 @@ const ca: Partial<Translations> = {
   "entry.remove.safety": "one=Elimina també la seva còpia de salvaguarda al servidor|many=Elimina també les seves {n} de còpies de salvaguarda al servidor|other=Elimina també les seves {n} còpies de salvaguarda al servidor",
   "entry.remove.safetyHint": "Sense aquest interruptor es queden fins que les eliminis tu.",
   "entry.remove.drop": "Elimina també totes les còpies",
-  "entry.remove.dropTextZFS": "Les còpies d'aquest element i dels seus conjunts de dades s'eliminen definitivament i el repositori es neteja. Això no es pot desfer.",
+  "entry.remove.dropTextZFS": "Les còpies d'aquest element i dels seus conjunts de dades s'eliminen definitivament i el repositori es neteja. Les còpies a les altres destinacions es queden, sense cap element que les conegui. Això no es pot desfer.",
   "entry.remove.dropTextLocal": "Totes les còpies locals s'eliminen definitivament i el repositori local es neteja. Les còpies a les altres destinacions es queden, sense cap element que les conegui. Això no es pot desfer.",
   "entry.remove.keepGo": "Treu de la llista",
   "entry.remove.dropGo": "Elimina les còpies",

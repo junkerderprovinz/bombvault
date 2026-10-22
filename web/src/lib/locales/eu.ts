@@ -3825,7 +3825,7 @@ const eu: Partial<Translations> = {
   "entry.remove.safety": "Ezabatu zerbitzariko bere {n} segurtasun-babeskopiak ere",
   "entry.remove.safetyHint": "Etengailu hau gabe, zuk ezabatu arte gelditzen dira.",
   "entry.remove.drop": "Ezabatu babeskopia guztiak ere",
-  "entry.remove.dropTextZFS": "Elementu honen eta bere datu-multzoen babeskopiak betiko ezabatzen dira eta biltegia garbitzen da. Hau ezin da desegin.",
+  "entry.remove.dropTextZFS": "Elementu honen eta bere datu-multzoen babeskopiak betiko ezabatzen dira eta biltegia garbitzen da. Beste helmugetako kopiak gelditzen dira, ezagutzen dituen elementurik gabe. Hau ezin da desegin.",
   "entry.remove.dropTextLocal": "Babeskopia lokal guztiak betiko ezabatzen dira eta biltegi lokala garbitzen da. Beste helmugetako kopiak gelditzen dira, ezagutzen dituen elementurik gabe. Hau ezin da desegin.",
   "entry.remove.keepGo": "Kendu zerrendatik",
   "entry.remove.dropGo": "Ezabatu babeskopiak",

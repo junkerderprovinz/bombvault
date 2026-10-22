@@ -3813,7 +3813,7 @@ const es: Partial<Translations> = {
   "entry.remove.safety": "one=Eliminar también su copia previa en el servidor|many=Eliminar también sus {n} de copias previas en el servidor|other=Eliminar también sus {n} copias previas en el servidor",
   "entry.remove.safetyHint": "Sin este interruptor se quedan ahí hasta que las elimines tú.",
   "entry.remove.drop": "Eliminar también todas las copias",
-  "entry.remove.dropTextZFS": "Las copias de este elemento y de sus conjuntos de datos se eliminan para siempre y el repositorio se limpia. No se puede deshacer.",
+  "entry.remove.dropTextZFS": "Las copias de este elemento y de sus conjuntos de datos se eliminan para siempre y el repositorio se limpia. Las copias en los demás destinos se quedan, sin ningún elemento que las conozca. No se puede deshacer.",
   "entry.remove.dropTextLocal": "Todas las copias locales se eliminan para siempre y el repositorio local se limpia. Las réplicas en los demás destinos se quedan, sin ningún elemento que las conozca. No se puede deshacer.",
   "entry.remove.keepGo": "Quitar de la lista",
   "entry.remove.dropGo": "Eliminar copias",

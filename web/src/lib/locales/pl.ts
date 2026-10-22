@@ -3812,7 +3812,7 @@ const pl: Partial<Translations> = {
   "entry.remove.safety": "one=Usuń też jego migawkę zabezpieczającą na serwerze|few=Usuń też jego {n} migawki zabezpieczające na serwerze|many=Usuń też jego {n} migawek zabezpieczających na serwerze|other=Usuń też jego {n} migawek zabezpieczających na serwerze",
   "entry.remove.safetyHint": "Bez tego przełącznika zostają, dopóki sam ich nie usuniesz.",
   "entry.remove.drop": "Usuń też wszystkie kopie zapasowe",
-  "entry.remove.dropTextZFS": "Kopie zapasowe tego wpisu i jego zbiorów danych zostaną usunięte na zawsze, a repozytorium zostanie uporządkowane. Tego nie można cofnąć.",
+  "entry.remove.dropTextZFS": "Kopie zapasowe tego wpisu i jego zbiorów danych zostaną usunięte na zawsze, a repozytorium zostanie uporządkowane. Kopie w pozostałych miejscach docelowych zostają, bez wpisu, który je zna. Tego nie można cofnąć.",
   "entry.remove.dropTextLocal": "Wszystkie lokalne kopie zapasowe zostaną usunięte na zawsze, a lokalne repozytorium zostanie uporządkowane. Kopie w pozostałych miejscach docelowych zostają, bez wpisu, który je zna. Tego nie można cofnąć.",
   "entry.remove.keepGo": "Usuń z listy",
   "entry.remove.dropGo": "Usuń kopie zapasowe",

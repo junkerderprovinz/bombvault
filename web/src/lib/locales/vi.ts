@@ -3806,7 +3806,7 @@ const vi: Partial<Translations> = {
   "entry.remove.safety": "Xóa luôn {n} ảnh chụp an toàn của nó trên máy chủ",
   "entry.remove.safetyHint": "Nếu không bật công tắc này, chúng sẽ còn đó cho đến khi bạn tự xóa.",
   "entry.remove.drop": "Xóa luôn mọi bản sao lưu",
-  "entry.remove.dropTextZFS": "Các bản sao lưu của mục này và các tập dữ liệu của nó bị xóa vĩnh viễn, và kho được dọn dẹp. Không thể hoàn tác.",
+  "entry.remove.dropTextZFS": "Các bản sao lưu của mục này và các tập dữ liệu của nó bị xóa vĩnh viễn, và kho được dọn dẹp. Các bản sao trên những đích sao lưu khác vẫn còn, nhưng không còn mục nào biết đến chúng. Không thể hoàn tác.",
   "entry.remove.dropTextLocal": "Mọi bản sao lưu cục bộ bị xóa vĩnh viễn và kho cục bộ được dọn dẹp. Các bản sao trên những đích sao lưu khác vẫn còn, nhưng không còn mục nào biết đến chúng. Không thể hoàn tác.",
   "entry.remove.keepGo": "Xóa khỏi danh sách",
   "entry.remove.dropGo": "Xóa bản sao lưu",

@@ -3815,7 +3815,7 @@ const fr: Partial<Translations> = {
   "entry.remove.safety": "one=Supprimer aussi sa sauvegarde de sécurité sur le serveur|many=Supprimer aussi ses {n} sauvegardes de sécurité sur le serveur|other=Supprimer aussi ses {n} sauvegardes de sécurité sur le serveur",
   "entry.remove.safetyHint": "Sans cet interrupteur, elles restent jusqu'à ce que vous les supprimiez vous-même.",
   "entry.remove.drop": "Supprimer aussi toutes les sauvegardes",
-  "entry.remove.dropTextZFS": "Les sauvegardes de cet élément et de ses jeux de données sont supprimées définitivement et le dépôt est nettoyé. Cette action est irréversible.",
+  "entry.remove.dropTextZFS": "Les sauvegardes de cet élément et de ses jeux de données sont supprimées définitivement et le dépôt est nettoyé. Les copies sur les autres destinations restent, sans élément qui les connaisse. Cette action est irréversible.",
   "entry.remove.dropTextLocal": "Toutes les sauvegardes locales sont supprimées définitivement et le dépôt local est nettoyé. Les copies sur les autres destinations restent, sans élément qui les connaisse. Cette action est irréversible.",
   "entry.remove.keepGo": "Retirer de la liste",
   "entry.remove.dropGo": "Supprimer les sauvegardes",

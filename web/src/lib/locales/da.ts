@@ -3815,7 +3815,7 @@ const da: Partial<Translations> = {
   "entry.remove.safety": "one=Slet også dets sikringskopi på serveren|other=Slet også dets {n} sikringskopier på serveren",
   "entry.remove.safetyHint": "Uden denne kontakt bliver de liggende, indtil du selv sletter dem.",
   "entry.remove.drop": "Slet også alle sikkerhedskopier",
-  "entry.remove.dropTextZFS": "Sikkerhedskopierne af dette element og dets datasæt fjernes for altid, og repositoryet ryddes op. Det kan ikke fortrydes.",
+  "entry.remove.dropTextZFS": "Sikkerhedskopierne af dette element og dets datasæt fjernes for altid, og repositoryet ryddes op. Kopier på de andre destinationer bliver, uden et element, der kender dem. Det kan ikke fortrydes.",
   "entry.remove.dropTextLocal": "Alle lokale sikkerhedskopier fjernes for altid, og det lokale repository ryddes op. Kopier på de andre destinationer bliver, uden et element, der kender dem. Det kan ikke fortrydes.",
   "entry.remove.keepGo": "Fjern fra listen",
   "entry.remove.dropGo": "Slet sikkerhedskopier",

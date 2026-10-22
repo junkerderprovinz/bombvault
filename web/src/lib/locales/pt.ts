@@ -3815,7 +3815,7 @@ const pt: Partial<Translations> = {
   "entry.remove.safety": "one=Eliminar também o instantâneo de segurança dela no servidor|many=Eliminar também os {n} de instantâneos de segurança dela no servidor|other=Eliminar também os {n} instantâneos de segurança dela no servidor",
   "entry.remove.safetyHint": "Sem este interruptor ficam onde estão até os eliminares tu mesmo.",
   "entry.remove.drop": "Eliminar também todos os backups",
-  "entry.remove.dropTextZFS": "Os backups desta entrada e dos respetivos conjuntos de dados são removidos em definitivo e o repositório é limpo. Isto não pode ser anulado.",
+  "entry.remove.dropTextZFS": "Os backups desta entrada e dos respetivos conjuntos de dados são removidos em definitivo e o repositório é limpo. As cópias nos outros destinos ficam, sem uma entrada que as conheça. Isto não pode ser anulado.",
   "entry.remove.dropTextLocal": "Todos os backups locais são removidos em definitivo e o repositório local é limpo. As cópias nos outros destinos ficam, sem uma entrada que as conheça. Isto não pode ser anulado.",
   "entry.remove.keepGo": "Remover da lista",
   "entry.remove.dropGo": "Eliminar backups",

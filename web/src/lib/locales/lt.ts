@@ -3825,7 +3825,7 @@ const lt: Partial<Translations> = {
   "entry.remove.safety": "one=Ištrinti ir jo saugos momentinę kopiją serveryje|few=Ištrinti ir jo {n} saugos momentines kopijas serveryje|many=Ištrinti ir jo {n} saugos momentinės kopijos serveryje|other=Ištrinti ir jo {n} saugos momentinių kopijų serveryje",
   "entry.remove.safetyHint": "Neįjungus šio jungiklio, jos lieka, kol pats jų neištrinsi.",
   "entry.remove.drop": "Ištrinti ir visas atsargines kopijas",
-  "entry.remove.dropTextZFS": "Šio įrašo ir jo duomenų rinkinių atsarginės kopijos pašalinamos visam laikui, o saugykla išvaloma. To atšaukti nebus galima.",
+  "entry.remove.dropTextZFS": "Šio įrašo ir jo duomenų rinkinių atsarginės kopijos pašalinamos visam laikui, o saugykla išvaloma. Kopijos kitose paskirties vietose lieka, bet nėra įrašo, kuris apie jas žinotų. To atšaukti nebus galima.",
   "entry.remove.dropTextLocal": "Visos vietinės atsarginės kopijos pašalinamos visam laikui, o vietinė saugykla išvaloma. Kopijos kitose paskirties vietose lieka, bet nėra įrašo, kuris apie jas žinotų. To atšaukti nebus galima.",
   "entry.remove.keepGo": "Pašalinti iš sąrašo",
   "entry.remove.dropGo": "Ištrinti kopijas",

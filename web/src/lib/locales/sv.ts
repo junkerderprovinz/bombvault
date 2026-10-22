@@ -3815,7 +3815,7 @@ const sv: Partial<Translations> = {
   "entry.remove.safety": "one=Ta också bort dess {n} säkerhetsögonblicksbild på servern|other=Ta också bort dess {n} säkerhetsögonblicksbilder på servern",
   "entry.remove.safetyHint": "Utan den här omkopplaren ligger de kvar tills du tar bort dem själv.",
   "entry.remove.drop": "Ta också bort alla säkerhetskopior",
-  "entry.remove.dropTextZFS": "Säkerhetskopiorna av den här posten och dess dataset tas bort för gott och repositoriet städas upp. Det går inte att ångra.",
+  "entry.remove.dropTextZFS": "Säkerhetskopiorna av den här posten och dess dataset tas bort för gott och repositoriet städas upp. Kopior på de andra målen ligger kvar, utan någon post som känner till dem. Det går inte att ångra.",
   "entry.remove.dropTextLocal": "Alla lokala säkerhetskopior tas bort för gott och det lokala repositoriet städas upp. Kopior på de andra målen ligger kvar, utan någon post som känner till dem. Det går inte att ångra.",
   "entry.remove.keepGo": "Ta bort från listan",
   "entry.remove.dropGo": "Ta bort säkerhetskopior",

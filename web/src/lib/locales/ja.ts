@@ -3806,7 +3806,7 @@ const ja: Partial<Translations> = {
   "entry.remove.safety": "この項目の安全用スナップショット {n} 件もサーバーから削除する",
   "entry.remove.safetyHint": "このスイッチをオンにしないと、自分で削除するまで残ります。",
   "entry.remove.drop": "すべてのバックアップも削除",
-  "entry.remove.dropTextZFS": "この項目とそのデータセットのバックアップは完全に削除され、リポジトリは整理されます。この操作は元に戻せません。",
+  "entry.remove.dropTextZFS": "この項目とそのデータセットのバックアップは完全に削除され、リポジトリは整理されます。他の保存先にあるコピーは残りますが、それを把握する項目はなくなります。この操作は元に戻せません。",
   "entry.remove.dropTextLocal": "ローカルのバックアップはすべて完全に削除され、ローカルリポジトリは整理されます。他の保存先にあるコピーは残りますが、それを把握する項目はなくなります。この操作は元に戻せません。",
   "entry.remove.keepGo": "一覧から外す",
   "entry.remove.dropGo": "バックアップを削除",

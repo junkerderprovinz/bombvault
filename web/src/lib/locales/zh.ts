@@ -3806,7 +3806,7 @@ const zh: Partial<Translations> = {
   "entry.remove.safety": "同时删除它在服务器上的 {n} 个安全快照",
   "entry.remove.safetyHint": "不开启此开关，它们会一直保留，直到你自己删除。",
   "entry.remove.drop": "同时删除所有备份",
-  "entry.remove.dropTextZFS": "此条目及其数据集的备份将被永久删除，仓库也会被清理。此操作无法撤销。",
+  "entry.remove.dropTextZFS": "此条目及其数据集的备份将被永久删除，仓库也会被清理。其他目标上的副本会保留，但不再有条目认识它们。此操作无法撤销。",
   "entry.remove.dropTextLocal": "所有本地备份将被永久删除，本地仓库也会被清理。其他目标上的副本会保留，但不再有条目认识它们。此操作无法撤销。",
   "entry.remove.keepGo": "从列表中移除",
   "entry.remove.dropGo": "删除备份",

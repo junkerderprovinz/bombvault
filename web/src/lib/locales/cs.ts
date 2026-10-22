@@ -3813,7 +3813,7 @@ const cs: Partial<Translations> = {
   "entry.remove.safety": "one=Smazat také jeho pojistnou zálohu na serveru|few=Smazat také jeho {n} pojistné zálohy na serveru|many=Smazat také jeho {n} pojistné zálohy na serveru|other=Smazat také jeho {n} pojistných záloh na serveru",
   "entry.remove.safetyHint": "Bez tohoto přepínače zůstanou, dokud je sám nesmažeš.",
   "entry.remove.drop": "Smazat také všechny zálohy",
-  "entry.remove.dropTextZFS": "Zálohy této položky a jejích datových sad se smažou natrvalo a repozitář se uklidí. Nelze to vrátit zpět.",
+  "entry.remove.dropTextZFS": "Zálohy této položky a jejích datových sad se smažou natrvalo a repozitář se uklidí. Kopie v ostatních cílech zůstanou, bez položky, která by je znala. Nelze to vrátit zpět.",
   "entry.remove.dropTextLocal": "Všechny místní zálohy se smažou natrvalo a místní repozitář se uklidí. Kopie v ostatních cílech zůstanou, bez položky, která by je znala. Nelze to vrátit zpět.",
   "entry.remove.keepGo": "Odebrat ze seznamu",
   "entry.remove.dropGo": "Smazat zálohy",

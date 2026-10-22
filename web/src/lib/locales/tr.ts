@@ -3815,7 +3815,7 @@ const tr: Partial<Translations> = {
   "entry.remove.safety": "one=Sunucudaki güvenlik anlık görüntüsünü de sil|other=Sunucudaki {n} güvenlik anlık görüntüsünü de sil",
   "entry.remove.safetyHint": "Bu anahtar kapalıyken sen silene kadar kalırlar.",
   "entry.remove.drop": "Tüm yedekleri de sil",
-  "entry.remove.dropTextZFS": "Bu ögenin ve veri kümelerinin yedekleri kalıcı olarak silinir, depo temizlenir. Bu geri alınamaz.",
+  "entry.remove.dropTextZFS": "Bu ögenin ve veri kümelerinin yedekleri kalıcı olarak silinir, depo temizlenir. Diğer hedeflerdeki kopyalar kalır, ama onları tanıyan bir öge olmaz. Bu geri alınamaz.",
   "entry.remove.dropTextLocal": "Tüm yerel yedekler kalıcı olarak silinir, yerel depo temizlenir. Diğer hedeflerdeki kopyalar kalır, ama onları tanıyan bir öge olmaz. Bu geri alınamaz.",
   "entry.remove.keepGo": "Listeden çıkar",
   "entry.remove.dropGo": "Yedekleri sil",

@@ -3825,7 +3825,7 @@ const gl: Partial<Translations> = {
   "entry.remove.safety": "one=Eliminar tamén a súa instantánea de seguranza no servidor|other=Eliminar tamén as súas {n} instantáneas de seguranza no servidor",
   "entry.remove.safetyHint": "Sen este interruptor quedan ata que as elimines ti.",
   "entry.remove.drop": "Eliminar tamén todas as copias",
-  "entry.remove.dropTextZFS": "As copias deste elemento e dos seus conxuntos de datos elimínanse definitivamente e o repositorio límpase. Isto non se pode desfacer.",
+  "entry.remove.dropTextZFS": "As copias deste elemento e dos seus conxuntos de datos elimínanse definitivamente e o repositorio límpase. As copias dos outros destinos quedan, sen un elemento que as coñeza. Isto non se pode desfacer.",
   "entry.remove.dropTextLocal": "Todas as copias locais elimínanse definitivamente e o repositorio local límpase. As copias dos outros destinos quedan, sen un elemento que as coñeza. Isto non se pode desfacer.",
   "entry.remove.keepGo": "Quitar da lista",
   "entry.remove.dropGo": "Eliminar copias",
