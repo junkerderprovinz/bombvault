@@ -224,8 +224,8 @@ func (r *Repo) UpsertOffsiteTarget(t OffsiteTarget) (OffsiteTarget, error) {
 
 // MoveOffsiteTarget is UpsertOffsiteTarget for a target whose location
 // changes. What was recorded about the old place goes in the same
-// transaction: its tamper tests, the listing of what it holds and its aging
-// mark. Its copies stay in the history but no longer count toward how
+// transaction: its tamper tests and drills, the listing of what it holds and
+// its aging mark. Its copies stay in the history without counting toward how
 // current the target is.
 func (r *Repo) MoveOffsiteTarget(t OffsiteTarget) (OffsiteTarget, error) {
 	return r.upsertOffsiteTarget(t, true)

@@ -1379,10 +1379,10 @@ func tagReference(ref string) bool {
 }
 
 // restoreData writes the snapshot back and the captured template with it. A
-// REMAPPED restore (RestoreDirs set: cross-instance / cross-pool) restores each
-// source subtree's CONTENTS into the chosen destination dir on THIS host;
-// otherwise each backed-up path is restored back to its own origin as its own
-// subtree. A recreate-only restore has neither.
+// remapped restore (RestoreDirs set, from another instance or pool) puts the
+// contents of each source subtree into its destination folder on this host;
+// otherwise each backed-up path goes back to where it came from. A
+// recreate-only restore has neither.
 func restoreData(ctx context.Context, d RestoreDeps) error {
 	if len(d.RestoreDirs) > 0 {
 		for _, rd := range d.RestoreDirs {

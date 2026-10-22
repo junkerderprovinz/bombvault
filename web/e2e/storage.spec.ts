@@ -482,13 +482,9 @@ test.describe("on the desktop", () => {
   test("a section's folder is changed in a window on the page of its location", async ({ page }) => {
     const staged = await stageStorage(page, 1280);
     await page.goto(locationUrl(LOCAL.id));
-    const row = page.getByRole("listitem").filter({ hasText: "/mnt/user/backups/bombvault/vms" });
-    await row.getByRole("button", { name: "Ändern" }).click();
-    // The window that moves own folders offers the storage locations first; a
-    // typed address leads on to the section's own path window.
-    const move = page.getByRole("dialog", { name: "Eigener Ordner von VMs" });
-    await move.getByRole("radio", { name: "Ein anderer Ort" }).click();
-    await move.getByRole("button", { name: "Öffnen" }).click();
+    // A typed path is edited in the window the section's rules open.
+    await sectionRow(page, "VMs").getByRole("button", { name: "Regeln ändern" }).click();
+    await page.getByRole("dialog", { name: "Regeln für VMs" }).getByRole("button", { name: "Ort eintippen" }).click();
     const window = page.getByRole("dialog", { name: "VMs-Pfad" });
     await window.getByRole("tab", { name: "Remote" }).click();
     await window.getByPlaceholder("s3:bucket/path", { exact: false }).fill("rest:http://nas:8000/tower");
