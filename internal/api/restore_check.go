@@ -97,6 +97,7 @@ const (
 	reasonNoNetwork     = "network-missing"
 	reasonNetworkGone   = "network-gone"
 	reasonNetworkUnread = "network-unreadable"
+	reasonSharedGone    = "shared-network-gone"
 	reasonGone          = "gone"
 	reasonEmpty         = "empty"
 )
@@ -208,6 +209,7 @@ func (s *Service) CheckRestore(ctx context.Context, req RestoreCheckRequest) (Re
 
 	scope, err := s.restoreCheckScope(planOnly(ctx), req)
 	var gone *backup.NetworkGoneError
+	var sharedGone *backup.NamespaceGoneError
 	switch {
 	case ctx.Err() != nil:
 		return RestoreCheck{}, ctx.Err()
@@ -225,6 +227,11 @@ func (s *Service) CheckRestore(ctx context.Context, req RestoreCheckRequest) (Re
 		out.Checks = append(out.Checks,
 			CheckLine{ID: lineSnapshot, Status: lineOK},
 			CheckLine{ID: lineNetwork, Status: lineFail, Reason: reasonNetworkGone, Detail: gone.Name})
+		return out, nil
+	case errors.As(err, &sharedGone):
+		out.Checks = append(out.Checks,
+			CheckLine{ID: lineSnapshot, Status: lineOK},
+			CheckLine{ID: lineNetwork, Status: lineFail, Reason: reasonSharedGone, Detail: sharedGone.Container})
 		return out, nil
 	case errors.Is(err, backup.ErrListNetworks):
 		out.Checks = append(out.Checks,

@@ -333,6 +333,10 @@ const (
 	// would not have linked because they were missing or stopped.
 	NoteRestoredWithoutLinks = "restored without links to containers that are not running"
 
+	// NoteContainersNotBack names after ": " the containers a backup, an
+	// update or a restore took down or recreated and that do not run again.
+	NoteContainersNotBack = "some containers did not start again"
+
 	// NoteDBDumpOneDatabase says the credentials in the container reach one
 	// database rather than the whole server.
 	NoteDBDumpOneDatabase = "database dump covers one database only"

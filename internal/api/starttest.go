@@ -332,7 +332,7 @@ func (s *Service) startTestBinds(def containerDefinition, sandbox string) []stri
 		}
 		out = append(out, s.toHostPath(copied)+":"+rest)
 	}
-	for _, b := range def.Inspect.HostConfig.Binds {
+	for _, b := range def.Inspect.HostConfig.VolumeBinds() {
 		src, rest, ok := strings.Cut(b, ":")
 		if !ok || !strings.HasPrefix(src, "/") {
 			continue

@@ -48,7 +48,7 @@ func TestRestartLeftVMsStartsOnlyTheOnesLeftOff(t *testing.T) {
 		t.Fatal(err)
 	}
 	st := store.New(db)
-	names := []string{"off", "stopping", "running", "gone", "unreachable"}
+	names := []string{"off", "stopping", "running", "gone", "unreachable", "updating"}
 	if err := st.MarkVMsStopped(names, 1); err != nil {
 		t.Fatal(err)
 	}
@@ -58,6 +58,7 @@ func TestRestartLeftVMsStartsOnlyTheOnesLeftOff(t *testing.T) {
 			"stopping": {"running", "shut off"},
 			"running":  {"running"},
 			"gone":     {""},
+			"updating": {"in shutdown"},
 		},
 		errs: map[string]error{"unreachable": errors.New("ssh: connect: no route to host")},
 	}
@@ -74,7 +75,7 @@ func TestRestartLeftVMsStartsOnlyTheOnesLeftOff(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !slices.Equal(left, []string{"unreachable"}) {
-		t.Fatalf("still recorded %v, want only the VM whose state could not be read", left)
+	if !slices.Equal(left, []string{"unreachable", "updating"}) {
+		t.Fatalf("still recorded %v, want the VM whose state could not be read and the one still shutting down", left)
 	}
 }

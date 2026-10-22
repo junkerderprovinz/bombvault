@@ -12,6 +12,7 @@ import (
 	cerrdefs "github.com/containerd/errdefs"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
+	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/go-connections/nat"
 
@@ -179,6 +180,9 @@ func isolatedConfig(spec IsolatedSpec) (*container.Config, *container.HostConfig
 	}
 
 	hostCfg.Binds = spec.Binds
+	// The long-form volumes reach the original's files as well; spec.Binds
+	// holds their copies. Only scratch space stays.
+	hostCfg.Mounts = slices.DeleteFunc(hostCfg.Mounts, func(m mount.Mount) bool { return m.Type != mount.TypeTmpfs })
 	hostCfg.PortBindings = nil
 	hostCfg.PublishAllPorts = false
 	hostCfg.NetworkMode = container.NetworkMode(spec.Network)

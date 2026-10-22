@@ -5,6 +5,7 @@ package backup
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -88,10 +89,16 @@ type VM interface {
 // VMBackupDeps / VMRestoreDeps
 // ---------------------------------------------------------------------------
 
+// A Windows guest installing updates while it shuts down can take many
+// minutes, so the wait is generous. It never ends in a forced power-off.
 const (
 	defaultVMShutdownPollInterval = 5 * time.Second
-	defaultVMShutdownMaxPolls     = 18 // 18 × 5s = 90s timeout
+	defaultVMShutdownMaxPolls     = 120 // 120 × 5s = 10 minutes
 )
+
+// ErrVMShutdownTimeout is a graceful VM backup whose guest did not shut down
+// in time. The VM is left to finish on its own and is not backed up.
+var ErrVMShutdownTimeout = errors.New("vm backup: the VM did not shut down in time")
 
 // VMBackupDeps bundles everything BackupVMGraceful needs.
 type VMBackupDeps struct {
@@ -152,7 +159,7 @@ type VMBackupDeps struct {
 	// DataDir is used to write temp files (e.g. the vm-define xml dir).
 	DataDir string
 	// ShutdownTimeout is the maximum number of poll cycles to wait for
-	// "shut off" state before calling Destroy. 0 = use default (18 × 5s = 90s).
+	// "shut off" state. 0 = use default (120 × 5s = 10 minutes).
 	// Set to 1 in tests for instant timeout.
 	ShutdownTimeout int
 	// Step is called with progress.StepStop, StepRead and StepStart as a
@@ -247,8 +254,9 @@ type VMRestoreDeps struct {
 	// passed to virsh define so the VM reappears in the VM Manager.
 	DomainXML string
 	// WasAutostart is the autostart flag captured at backup time; re-applied
-	// after define so the VM has the same boot-on-host-start behaviour.
-	WasAutostart bool
+	// after define so the VM has the same boot-on-host-start behaviour. Nil,
+	// for a backup that did not record it, keeps the VM's current flag.
+	WasAutostart *bool
 	// StartAfter, when true, boots the VM after define (mirrors a running VM).
 	StartAfter bool
 	// PreDefine, when set, runs after restic restore and AFTER the old domain is
@@ -362,10 +370,18 @@ func runVMGraceful(ctx context.Context, d VMBackupDeps) (Summary, error) {
 				return
 			}
 			atStep(d.Step, progress.StepStart)
-			// The guest goes on shutting down after a cancel. Starting it while
-			// it is still up does nothing, and it would then stay off.
+			// The guest goes on shutting down after a cancel or a timeout.
+			// Starting it while it is still up does nothing, and it would then
+			// stay off.
 			if shuttingDown {
-				if err := waitShutOff(restartCtx, d.VM, d.Name, d.ShutdownTimeout); err != nil {
+				err := waitShutOff(restartCtx, d.VM, d.Name, d.ShutdownTimeout)
+				// It stays recorded: a guest that finishes its shutdown later
+				// is started at BombVault's next start.
+				if errors.Is(err, ErrVMShutdownTimeout) {
+					log.Printf("vm backup: %q has not shut off, so it is left running as it is", d.Name)
+					return
+				}
+				if err != nil {
 					log.Printf("vm backup: wait for %q to shut off before starting it again: %v", d.Name, err)
 				}
 			}
@@ -389,6 +405,10 @@ func runVMGraceful(ctx context.Context, d VMBackupDeps) (Summary, error) {
 			}
 			shuttingDown = true
 			if backupErr = waitShutOff(ctx, d.VM, d.Name, d.ShutdownTimeout); backupErr != nil {
+				if errors.Is(backupErr, ErrVMShutdownTimeout) {
+					backupErr = fmt.Errorf("%w: %q is still running after %s, so nothing was backed up and it was not forced off. "+
+						"If the guest ignores the shutdown request, back it up live instead", ErrVMShutdownTimeout, d.Name, shutdownWait(d.ShutdownTimeout))
+				}
 				return
 			}
 			shuttingDown = false
@@ -600,9 +620,11 @@ func clearVMDown(d VMBackupDeps) {
 	}
 }
 
-// waitShutOff polls the VM state until it reaches "shut off". On timeout it
-// calls Destroy (force off) and returns nil (the VM is now off either way).
-// If maxPolls is 0, uses defaultVMShutdownMaxPolls.
+// waitShutOff polls the VM state until it reaches "shut off", and returns
+// ErrVMShutdownTimeout when it does not within maxPolls polls, or
+// defaultVMShutdownMaxPolls for 0. The VM is never forced off: a guest busy
+// with its updates would be cut off halfway, and its disks backed up in that
+// state.
 func waitShutOff(ctx context.Context, vm VM, name string, maxPolls int) error {
 	if maxPolls <= 0 {
 		maxPolls = defaultVMShutdownMaxPolls
@@ -625,12 +647,15 @@ func waitShutOff(ctx context.Context, vm VM, name string, maxPolls int) error {
 			}
 		}
 	}
-	// Timeout reached: force the VM off.
-	log.Printf("vm backup: graceful shutdown timed out for %q; forcing destroy", name)
-	if err := vm.Destroy(ctx, name); err != nil {
-		return fmt.Errorf("vm backup: force destroy after timeout: %w", err)
+	return ErrVMShutdownTimeout
+}
+
+// shutdownWait is how long waitShutOff waits for maxPolls.
+func shutdownWait(maxPolls int) time.Duration {
+	if maxPolls <= 0 {
+		maxPolls = defaultVMShutdownMaxPolls
 	}
-	return nil
+	return time.Duration(maxPolls) * defaultVMShutdownPollInterval
 }
 
 // ---------------------------------------------------------------------------
@@ -644,7 +669,7 @@ func waitShutOff(ctx context.Context, vm VM, name string, maxPolls int) error {
 //	→ if VM exists: Destroy (if running) + Undefine
 //	→ restic RestorePaths (diskPaths + nvram + tpm, per-path back to origin)
 //	→ write DomainXML to DataDir/vm-define/<name>.xml → Define
-//	→ Autostart(wasAutostart) → Start (if StartAfter)
+//	→ Autostart(captured, or the VM's own) → Start (if StartAfter)
 //	→ recordRunFinish(success|failed)
 //
 // Returns an error WITHOUT recording a run when not confirmed or the snapshot
@@ -712,12 +737,24 @@ func runVMRestore(ctx context.Context, d VMRestoreDeps) error {
 	if err != nil {
 		return fmt.Errorf("vm restore: check state: %w", err)
 	}
+	autostart := d.WasAutostart
 	if state != "" {
 		// VM exists on the host.
 		if err := releaseCheckpointsForRestore(ctx, d.VM, d.Name); err != nil {
 			return err
 		}
-		if state == "running" {
+		// Undefining drops the flag, so without one from the backup the
+		// VM's own is carried over.
+		if r, ok := d.VM.(autostartReader); ok && autostart == nil {
+			if on, err := r.AutostartEnabled(ctx, d.Name); err == nil {
+				autostart = &on
+			} else {
+				log.Printf("vm restore: read the autostart setting of %q: %v", d.Name, err)
+			}
+		}
+		// A paused, suspended or shutting-down VM is active too: undefining it
+		// leaves its qemu running on the disks the restore is about to write.
+		if state != "shut off" {
 			if err := d.VM.Destroy(ctx, d.Name); err != nil {
 				return fmt.Errorf("vm restore: destroy running vm: %w", err)
 			}
@@ -784,9 +821,10 @@ func runVMRestore(ctx context.Context, d VMRestoreDeps) error {
 		return fmt.Errorf("vm restore: define: %w", err)
 	}
 
-	// Restore the autostart flag captured at backup time.
-	if err := d.VM.Autostart(ctx, d.Name, d.WasAutostart); err != nil {
-		return fmt.Errorf("vm restore: autostart: %w", err)
+	if autostart != nil {
+		if err := d.VM.Autostart(ctx, d.Name, *autostart); err != nil {
+			return fmt.Errorf("vm restore: autostart: %w", err)
+		}
 	}
 
 	// Optionally boot the VM (e.g. it was running before).
@@ -796,6 +834,11 @@ func runVMRestore(ctx context.Context, d VMRestoreDeps) error {
 		}
 	}
 	return nil
+}
+
+// autostartReader is the part of a VM host that reads the autostart flag.
+type autostartReader interface {
+	AutostartEnabled(ctx context.Context, name string) (bool, error)
 }
 
 // checkpointRecords is the part of CheckpointHost a restore needs. A VM

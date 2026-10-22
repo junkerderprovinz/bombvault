@@ -2,7 +2,11 @@
 // orchestrator and the dockercli adapter, so neither has to import the other.
 package model
 
-import "time"
+import (
+	"slices"
+	"strings"
+	"time"
+)
 
 // PortBinding maps a published host endpoint for a container port.
 type PortBinding struct {
@@ -58,6 +62,20 @@ type Config struct {
 	// definition captured before it was recorded leaves it nil, and the image's
 	// own then applies.
 	Healthcheck *Healthcheck `json:",omitempty"`
+
+	// Entrypoint, WorkingDir and StopSignal hold only what the container set
+	// over its image, so a newer image brings its own. Hostname is empty when
+	// Docker picked it. A definition captured before these were recorded
+	// leaves them empty, which is the image's and Docker's defaults.
+	Entrypoint []string `json:",omitempty"`
+	WorkingDir string   `json:",omitempty"`
+	StopSignal string   `json:",omitempty"`
+	// StopTimeout is the container's own grace period in seconds.
+	StopTimeout *int   `json:",omitempty"`
+	Hostname    string `json:",omitempty"`
+	Domainname  string `json:",omitempty"`
+	Tty         bool   `json:",omitempty"`
+	OpenStdin   bool   `json:",omitempty"`
 }
 
 // Healthcheck mirrors Docker's HealthConfig.
@@ -86,7 +104,10 @@ type NetworkEndpoint struct {
 // dropping one could give the restored container more privilege than the
 // original (PidMode=host, say) or remove a hardening limit.
 type HostConfig struct {
-	Binds          []string
+	Binds []string
+	// Mounts are the volumes given in the long form (--mount, or compose's
+	// long syntax with options a bind string cannot carry).
+	Mounts         []MountSpec `json:",omitempty"`
 	PortBindings   map[string][]PortBinding
 	RestartPolicy  RestartPolicy
 	CapAdd         []string
@@ -147,6 +168,83 @@ type HostConfig struct {
 	// refuses the container with a MissingRuntimeError.
 	Runtime        string          `json:",omitempty"`
 	DeviceRequests []DeviceRequest `json:",omitempty"`
+}
+
+// MountSpec mirrors one HostConfig.Mounts entry.
+type MountSpec struct {
+	Type        string
+	Source      string `json:",omitempty"`
+	Target      string
+	ReadOnly    bool   `json:",omitempty"`
+	Consistency string `json:",omitempty"`
+
+	BindOptions   *BindOptions   `json:",omitempty"`
+	VolumeOptions *VolumeOptions `json:",omitempty"`
+	TmpfsOptions  *TmpfsOptions  `json:",omitempty"`
+	ImageSubpath  string         `json:",omitempty"`
+}
+
+// BindOptions mirrors Docker's options of a bind mount.
+type BindOptions struct {
+	Propagation            string `json:",omitempty"`
+	NonRecursive           bool   `json:",omitempty"`
+	CreateMountpoint       bool   `json:",omitempty"`
+	ReadOnlyNonRecursive   bool   `json:",omitempty"`
+	ReadOnlyForceRecursive bool   `json:",omitempty"`
+}
+
+// VolumeOptions mirrors Docker's options of a volume mount.
+type VolumeOptions struct {
+	NoCopy        bool              `json:",omitempty"`
+	Labels        map[string]string `json:",omitempty"`
+	Subpath       string            `json:",omitempty"`
+	DriverName    string            `json:",omitempty"`
+	DriverOptions map[string]string `json:",omitempty"`
+}
+
+// TmpfsOptions mirrors Docker's options of a tmpfs mount.
+type TmpfsOptions struct {
+	SizeBytes int64      `json:",omitempty"`
+	Mode      uint32     `json:",omitempty"`
+	Options   [][]string `json:",omitempty"`
+}
+
+// VolumeBinds returns Binds followed by the bind and volume entries of
+// Mounts in the same "source:target[:ro]" form, for code that reads a
+// container's volumes from bind strings.
+func (h HostConfig) VolumeBinds() []string {
+	out := slices.Clone(h.Binds)
+	for _, m := range h.Mounts {
+		if (m.Type == "bind" || m.Type == "volume") && m.Source != "" {
+			out = append(out, m.bindString())
+		}
+	}
+	return out
+}
+
+// WithVolumeBinds takes back what VolumeBinds returned after its sources were
+// changed: the leading entries become Binds and the rest the sources of the
+// Mounts they came from.
+func (h HostConfig) WithVolumeBinds(binds []string) HostConfig {
+	n := len(h.Binds)
+	h.Binds = binds[:n:n]
+	h.Mounts = slices.Clone(h.Mounts)
+	k := n
+	for i, m := range h.Mounts {
+		if (m.Type == "bind" || m.Type == "volume") && m.Source != "" {
+			h.Mounts[i].Source, _, _ = strings.Cut(binds[k], ":")
+			k++
+		}
+	}
+	return h
+}
+
+func (m MountSpec) bindString() string {
+	s := m.Source + ":" + m.Target
+	if m.ReadOnly {
+		s += ":ro"
+	}
+	return s
 }
 
 // DeviceRequest mirrors Docker's request for devices from a driver, the form

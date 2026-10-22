@@ -3,6 +3,7 @@ package virshcli
 import (
 	"context"
 	"encoding/xml"
+	"errors"
 	"fmt"
 	"log"
 	"os/exec"
@@ -354,6 +355,33 @@ func (c *Client) Autostart(ctx context.Context, name string, on bool) error {
 	args = append(args, "--", name)
 	_, err := c.run(ctx, args...)
 	return err
+}
+
+// AutostartEnabled reports whether libvirt starts the domain with the host.
+// The flag lives beside the domain XML, so only dominfo tells it.
+func (c *Client) AutostartEnabled(ctx context.Context, name string) (bool, error) {
+	out, err := c.run(ctx, "dominfo", "--", name)
+	if err != nil {
+		return false, err
+	}
+	return parseAutostart(out)
+}
+
+// parseAutostart reads the "Autostart:" line of virsh dominfo.
+func parseAutostart(out string) (bool, error) {
+	for line := range strings.Lines(out) {
+		key, value, ok := strings.Cut(line, ":")
+		if !ok || strings.TrimSpace(key) != "Autostart" {
+			continue
+		}
+		switch strings.TrimSpace(value) {
+		case "enable":
+			return true, nil
+		case "disable":
+			return false, nil
+		}
+	}
+	return false, errors.New("virsh dominfo names no autostart setting")
 }
 
 // IsActive reports whether the domain is currently running.

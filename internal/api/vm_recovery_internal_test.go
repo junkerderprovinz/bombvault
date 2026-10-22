@@ -2,30 +2,32 @@ package api
 
 import (
 	"context"
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
 	"sync"
 	"testing"
 
+	"github.com/junkerderprovinz/bombvault/internal/config"
 	"github.com/junkerderprovinz/bombvault/internal/virshcli"
 )
 
 // A "*.bombvault-tmp" overlay that blockcommit left behind breaks the next
 // snapshot. Only those files are removed.
 func TestRemoveStrayOverlays(t *testing.T) {
-	dir := t.TempDir()
-	base := filepath.Join(dir, "vdisk1.qcow2")
-	overlay := filepath.Join(dir, "vdisk1.bombvault-tmp")
-	other := filepath.Join(dir, "notes.txt")
+	dir := filepath.ToSlash(t.TempDir())
+	base := dir + "/vdisk1.qcow2"
+	overlay := dir + "/vdisk1.bombvault-tmp"
+	other := dir + "/notes.txt"
 	for _, f := range []string{base, overlay, other} {
 		if err := os.WriteFile(f, []byte("x"), 0o600); err != nil {
 			t.Fatal(err)
 		}
 	}
 
-	s := &Service{}
-	s.removeStrayOverlays([]string{base})
+	s := &Service{virsh: &scriptedVirsh{}}
+	s.removeStrayOverlays(context.Background(), []string{base})
 
 	if _, err := os.Stat(overlay); !os.IsNotExist(err) {
 		t.Fatalf("the stray overlay must be deleted, stat err = %v", err)
@@ -35,6 +37,82 @@ func TestRemoveStrayOverlays(t *testing.T) {
 	}
 	if _, err := os.Stat(other); err != nil {
 		t.Fatalf("unrelated files must remain: %v", err)
+	}
+}
+
+// sharedFolderVirsh serves two VMs whose disks share a folder, one of them
+// still running on its live overlay.
+type sharedFolderVirsh struct {
+	scriptedVirsh
+	xml     map[string]string
+	listErr error
+}
+
+func (v *sharedFolderVirsh) List(context.Context) ([]virshcli.VMInfo, error) {
+	var out []virshcli.VMInfo
+	for name := range v.xml {
+		out = append(out, virshcli.VMInfo{Name: name, State: "running"})
+	}
+	return out, v.listErr
+}
+
+func (v *sharedFolderVirsh) DumpXML(_ context.Context, name string) (string, error) {
+	return v.xml[name], nil
+}
+
+func diskXML(source string) string {
+	return "<domain><devices><disk type='file' device='disk'><source file='" + source + "'/><target dev='hdc'/></disk></devices></domain>"
+}
+
+func TestRemoveStrayOverlaysLeavesAnotherVMsOverlayInASharedFolder(t *testing.T) {
+	root := filepath.ToSlash(t.TempDir())
+	host, mount := "/mnt", root
+	dir := mount + "/user/domains/vdisks"
+	if err := os.MkdirAll(dir, 0o750); err != nil {
+		t.Fatal(err)
+	}
+	files := []string{"ha.img", "ha.bombvault-tmp", "win.qcow2", "win.bombvault-tmp", "old.bombvault-tmp"}
+	for _, f := range files {
+		if err := os.WriteFile(dir+"/"+f, []byte("x"), 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	v := &sharedFolderVirsh{xml: map[string]string{
+		"HomeAssistant": diskXML(host + "/user/domains/vdisks/ha.bombvault-tmp"),
+		"Windows":       diskXML(host + "/user/domains/vdisks/win.qcow2"),
+	}}
+	s := &Service{virsh: v, cfg: config.Config{HostSourceRoot: host, HostMountRoot: mount}}
+
+	s.removeStrayOverlays(context.Background(), []string{dir + "/win.qcow2"})
+
+	if _, err := os.Stat(dir + "/win.bombvault-tmp"); !os.IsNotExist(err) {
+		t.Fatalf("the backed-up VM's own stray overlay must go, stat err = %v", err)
+	}
+	for _, kept := range []string{"ha.bombvault-tmp", "old.bombvault-tmp", "ha.img", "win.qcow2"} {
+		if _, err := os.Stat(dir + "/" + kept); err != nil {
+			t.Fatalf("%s must stay: %v", kept, err)
+		}
+	}
+
+	v.listErr = errors.New("ssh: connection reset")
+	if err := os.WriteFile(dir+"/win.bombvault-tmp", []byte("x"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	s.removeStrayOverlays(context.Background(), []string{dir + "/win.qcow2"})
+	if _, err := os.Stat(dir + "/win.bombvault-tmp"); err != nil {
+		t.Fatalf("without the other VMs' disks nothing may be removed: %v", err)
+	}
+}
+
+func TestLiveOverlayPathIsLibvirtsName(t *testing.T) {
+	for base, want := range map[string]string{
+		"/mnt/user/domains/Win/vdisk1.img":    "/mnt/user/domains/Win/vdisk1.bombvault-tmp",
+		"/mnt/user/domains/Win/disk.v2.qcow2": "/mnt/user/domains/Win/disk.v2.bombvault-tmp",
+		"/mnt/user/domains/Win/rawdisk":       "/mnt/user/domains/Win/rawdisk.bombvault-tmp",
+	} {
+		if got := liveOverlayPath(base); got != want {
+			t.Errorf("liveOverlayPath(%q) = %q, want %q", base, got, want)
+		}
 	}
 }
 

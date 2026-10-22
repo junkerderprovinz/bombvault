@@ -653,7 +653,8 @@ func (s *Service) prepareForeignRestore(ctx context.Context, sessionID, domain, 
 		// SOURCE host's domain XML (host-specific devices/paths), so booting it — now
 		// or on host boot — could wedge libvirt. Force autostart off and leave it
 		// stopped; the operator starts it once they have vetted the definition.
-		plan.wasAutostart = false
+		off := false
+		plan.wasAutostart = &off
 		run := func(rctx context.Context) error {
 			return s.executeRestoreVM(rctx, item, plan, true)
 		}
@@ -1218,7 +1219,7 @@ func (s *Service) ForeignContainerBindWarnings(_ context.Context, sessionID, ite
 	if err != nil {
 		return nil, err
 	}
-	return s.foreignBindWarnings(def.Inspect.HostConfig.Binds, tg.AppdataPaths), nil
+	return s.foreignBindWarnings(def.Inspect.HostConfig.VolumeBinds(), tg.AppdataPaths), nil
 }
 
 // foreignContainerDefinition reads the stored definition of a container in an

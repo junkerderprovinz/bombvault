@@ -5704,17 +5704,19 @@ func (s *Service) resolveAppdataPaths(name string, in model.Inspect) []string {
 // creates a missing bind source, so a path it reports that BombVault cannot see
 // lies on storage the host mount does not carry, such as TrueNAS ixVolume data
 // under /mnt/.ix-apps. System mounts (/etc/localtime, the Docker socket) are not
-// data and stay out.
+// data and stay out. A Docker volume is data wherever it lives, and the
+// daemon's own volumes under /var/lib/docker are out of reach of a Host Data
+// at /mnt.
 func (s *Service) dataOutsideHostMount(in model.Inspect) []string {
 	labelOverride := bombvaultDataLabelTruthy(in.Config.Labels)
 	var out []string
 	seen := map[string]bool{}
 	for _, m := range in.Mounts {
-		if m.Type != "bind" || m.Source == "" {
+		if (m.Type != "bind" && m.Type != "volume") || m.Source == "" {
 			continue
 		}
 		src := path.Clean(m.Source)
-		if !labelOverride && !matchesAnyDataRootSegment(src, s.cfg.DataRootSegments) && !strings.HasPrefix(src, "/mnt/") {
+		if m.Type == "bind" && !labelOverride && !matchesAnyDataRootSegment(src, s.cfg.DataRootSegments) && !strings.HasPrefix(src, "/mnt/") {
 			continue
 		}
 		if cp, ok := s.toContainerPath(src); ok {
@@ -6369,11 +6371,12 @@ func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, re
 		// can bring the stopped set back up in depends_on order (dependencies first)
 		// and, when enabled, wait for each to be healthy before its dependents (#119).
 		deps = append(deps, backup.StopContainer{
-			Name:       dep,
-			ID:         di.ID,
-			WasRunning: di.Running,
-			Service:    composeService(di.Config.Labels),
-			DependsOn:  parseDependsOn(di.Config.Labels),
+			Name:         dep,
+			ID:           di.ID,
+			WasRunning:   di.Running,
+			Service:      composeService(di.Config.Labels),
+			DependsOn:    parseDependsOn(di.Config.Labels),
+			BeforeTarget: dependsOnContainer(in, dep, di),
 		})
 	}
 
@@ -6597,13 +6600,18 @@ func (s *Service) applyUpdateAfterBackup(ctx context.Context, name string, in mo
 		log.Printf("api: update-after-backup: start run for %q: %v", name, rErr) //nolint:gosec // G706: name is %q-quoted
 		return
 	}
-	if err := s.recreateForUpdate(ctx, name, in); err != nil {
+	notBack, err := s.recreateForUpdate(ctx, name, in)
+	if err != nil {
 		_ = runsAdapter{st: s.store, ctx: context.Background()}.Finish(runID, "failed", backup.Summary{}, truncateRunErr(err))
 		s.setUpdateCheck(name, "failed")
 		log.Printf("api: update-after-backup: recreate %q failed (backup is safe): %v", name, err) //nolint:gosec // G706: name is %q-quoted
 		return
 	}
-	_ = runsAdapter{st: s.store, ctx: context.Background()}.Finish(runID, "success", backup.Summary{}, "")
+	note := ""
+	if len(notBack) > 0 {
+		note = store.NoteContainersNotBack + ": " + strings.Join(notBack, ", ")
+	}
+	_ = runsAdapter{st: s.store, ctx: context.Background()}.Finish(runID, "success", backup.Summary{}, note)
 	s.setUpdateCheck(name, "updated")
 
 	// #116: BombVault just recreated the container, so its image tag moved to the
@@ -6645,19 +6653,28 @@ func (s *Service) applyUpdateAfterBackup(ctx context.Context, name string, in mo
 // recreateForUpdate stops, removes and recreates+starts the container from its
 // captured inspect — which, after the preceding Pull, resolves to the newer
 // image. Mirrors the restore recreate path minus the appdata restore (the data
-// is already current). Note: containers that share this one's network namespace
-// (network_mode: container:<name>) may need a manual restart afterwards.
-func (s *Service) recreateForUpdate(ctx context.Context, name string, in model.Inspect) error {
+// is already current). The containers that share this one's namespaces are
+// recreated after it, since Docker binds them to its old ID; it returns those
+// that could not be.
+func (s *Service) recreateForUpdate(ctx context.Context, name string, in model.Inspect) ([]string, error) {
 	if err := s.docker.Stop(ctx, name, 30*time.Second); err != nil {
 		_ = err // absent/already-stopped is fine; a real problem surfaces at Remove
 	}
 	if err := s.docker.Remove(ctx, name); err != nil {
-		return fmt.Errorf("remove container: %w", err)
+		return nil, fmt.Errorf("remove container: %w", err)
 	}
 	if err := s.docker.CreateAndStart(ctx, in, true); err != nil {
-		return fmt.Errorf("recreate container: %w", err)
+		return nil, fmt.Errorf("recreate container: %w", err)
 	}
-	return nil
+	r, ok := s.docker.(backup.NamespaceRejoiner)
+	if !ok {
+		return nil, nil
+	}
+	notBack, err := r.RejoinNamespace(ctx, in.ID, name)
+	if err != nil {
+		log.Printf("api: update-after-backup: containers sharing a namespace with %q: %v", name, err) //nolint:gosec // G706: name is %q-quoted
+	}
+	return notBack, nil
 }
 
 // reconcileUnraidUpdateStatus asks the platform to refresh its own cached
@@ -8487,6 +8504,8 @@ func (s *Service) prepareRestoreForTarget(ctx context.Context, ref repoRef, name
 					}
 				}
 			}
+		} else if err := s.guardInPlaceRestore(appdataForRestore); err != nil {
+			return containerRestorePlan{}, err
 		}
 	}
 
@@ -8511,14 +8530,16 @@ func (s *Service) prepareRestoreForTarget(ctx context.Context, ref repoRef, name
 		in = liveIn
 		xml, _, _ = template.Read(s.cfg.FlashTemplatesDir, name)
 	}
+	in.HostConfig = s.namespacesByName(ctx, name, in.HostConfig)
 
 	// Cross-pool remap: point the recreated container's binds + flashed template at
 	// the appdata's new location. ONLY appdata binds are rewritten (exact host-path
 	// match); docker.sock, /etc/localtime, /dev/dri and every non-appdata bind are
 	// left verbatim (they carry no backed-up data). See #125.
 	if len(bindRemap) > 0 {
-		bindRemap = s.remapSourceBinds(in.HostConfig.Binds, restoreDirs, bindRemap)
-		in.HostConfig.Binds = rewriteBinds(in.HostConfig.Binds, bindRemap)
+		volumes := in.HostConfig.VolumeBinds()
+		bindRemap = s.remapSourceBinds(volumes, restoreDirs, bindRemap)
+		in.HostConfig = in.HostConfig.WithVolumeBinds(rewriteBinds(volumes, bindRemap))
 		in.Mounts = rewriteMountSources(in.Mounts, bindRemap)
 		xml = template.RewriteHostPaths(xml, bindRemap)
 	}
@@ -12533,9 +12554,14 @@ type vmDefinition struct {
 	// virshcli.RewriteDiskSources/RewriteNVRAM). Empty for a VM with no vTPM
 	// (DomainInfo.TPMPath == "") or when SSH capture failed — a read failure
 	// is non-fatal, exactly like NVRAM's.
-	TPMBytes     []byte `json:"tpm_bytes,omitempty"`
-	Method       string `json:"method"`
-	WasAutostart bool   `json:"was_autostart"`
+	TPMBytes []byte `json:"tpm_bytes,omitempty"`
+	Method   string `json:"method"`
+	// WasAutostart is what versions that do not read Autostart restore. A
+	// definition without Autostart holds true here whatever the flag was.
+	WasAutostart bool `json:"was_autostart"`
+	// Autostart is the VM's autostart flag at backup time, nil when it could
+	// not be read or the backup is older.
+	Autostart *bool `json:"autostart,omitempty"`
 	// WasRunning is the VM's run state at backup time. A pointer so an OLD backup
 	// (taken before this field existed) reads as nil = unknown, and restore then
 	// falls back to booting the VM (the historical behaviour). A non-nil value is
@@ -12855,31 +12881,75 @@ func (s *Service) recoverLeftoverOverlay(ctx context.Context, name, xmlStr strin
 // "external snapshot file ... already exists". The caller MUST ensure the VM is
 // on its base disks first (post-recovery / post-commit) so these files are never
 // in use. Best-effort: failures are logged, never fatal.
-func (s *Service) removeStrayOverlays(diskPaths []string) {
-	suffix := "." + backup.LiveSnapshotName
-	seen := map[string]bool{}
+//
+// Only the overlay libvirt names after one of these disks is a candidate, and
+// one that any VM lists as a disk stays: VMs that keep their disks in one
+// folder would otherwise lose the overlay another VM still runs on after its
+// own live backup was interrupted.
+func (s *Service) removeStrayOverlays(ctx context.Context, diskPaths []string) {
+	var stray []string
 	for _, dp := range diskPaths {
-		dir := filepath.Dir(dp)
-		if dir == "" || dir == "." || seen[dir] {
+		p := liveOverlayPath(dp)
+		if fi, err := os.Lstat(p); err == nil && fi.Mode().IsRegular() && !slices.Contains(stray, p) { //nolint:gosec // G703: p is derived from a translated VM disk path
+			stray = append(stray, p)
+		}
+	}
+	if len(stray) == 0 {
+		return
+	}
+	inUse, err := s.vmDiskSources(ctx)
+	if err != nil {
+		log.Printf("api: BackupVM: leaving the live-snapshot overlays %v, the disks of the other VMs could not be read: %v", stray, err)
+		return
+	}
+	for _, p := range stray {
+		if inUse[p] {
+			log.Printf("api: BackupVM: keeping the live-snapshot overlay %q, a VM runs on it", path.Base(p)) //nolint:gosec // G706: %q-quoted
 			continue
 		}
-		seen[dir] = true
-		entries, err := os.ReadDir(dir)
+		if rmErr := os.Remove(p); rmErr != nil { //nolint:gosec // G304: derived from a translated VM disk path; name has our fixed suffix
+			log.Printf("api: BackupVM: could not remove stray overlay %q: %v", path.Base(p), rmErr) //nolint:gosec // G706: %q-quoted
+		} else {
+			log.Printf("api: BackupVM: removed stray live-snapshot overlay %q", path.Base(p)) //nolint:gosec // G706: %q-quoted
+		}
+	}
+}
+
+// liveOverlayPath is the file libvirt creates for a disk-only snapshot of the
+// disk base: the file name loses its extension and takes the snapshot's name,
+// so vdisk1.img gets vdisk1.bombvault-tmp beside it.
+func liveOverlayPath(base string) string {
+	dir, file := path.Split(base)
+	if i := strings.LastIndex(file, "."); i >= 0 {
+		file = file[:i]
+	}
+	return dir + file + "." + backup.LiveSnapshotName
+}
+
+// vmDiskSources returns the file disks of every defined VM as container
+// paths, as their current definitions name them.
+func (s *Service) vmDiskSources(ctx context.Context) (map[string]bool, error) {
+	vms, err := s.virsh.List(ctx)
+	if err != nil {
+		return nil, err
+	}
+	out := map[string]bool{}
+	for _, vm := range vms {
+		xmlStr, err := s.virsh.DumpXML(ctx, vm.Name)
 		if err != nil {
-			continue
+			return nil, fmt.Errorf("read the definition of %s: %w", vm.Name, err)
 		}
-		for _, e := range entries {
-			if e.IsDir() || !strings.HasSuffix(e.Name(), suffix) {
-				continue
-			}
-			p := filepath.Join(dir, e.Name())
-			if rmErr := os.Remove(p); rmErr != nil { //nolint:gosec // G304: dir derived from a translated VM disk path; name has our fixed suffix
-				log.Printf("api: BackupVM: could not remove stray overlay %q: %v", e.Name(), rmErr) //nolint:gosec // G706: %q-quoted
-			} else {
-				log.Printf("api: BackupVM: removed stray live-snapshot overlay %q", e.Name()) //nolint:gosec // G706: %q-quoted
+		domain, err := virshcli.ParseDomain(xmlStr)
+		if err != nil {
+			return nil, fmt.Errorf("parse the definition of %s: %w", vm.Name, err)
+		}
+		for _, d := range domain.Disks {
+			if cp, ok := s.toContainerPath(d.Source); ok {
+				out[path.Clean(cp)] = true
 			}
 		}
 	}
+	return out, nil
 }
 
 // vmDiskContainerPaths is where restic reads the file disks of domain through
@@ -12994,7 +13064,7 @@ func (s *Service) BackupVM(ctx context.Context, name string) (_ backup.Summary, 
 	// any overlay). Delete stray "*.bombvault-tmp" overlay files left behind by a
 	// previous live backup, otherwise the next snapshot-create fails "already
 	// exists". This recovers a VM already stuck in that state.
-	s.removeStrayOverlays(diskPaths)
+	s.removeStrayOverlays(ctx, diskPaths)
 
 	// NVRAM (UEFI var store) lives under /etc/libvirt on the host. Read it over
 	// SSH and keep it IN the definition (no mount, no restic staging). On restore
@@ -13044,9 +13114,16 @@ func (s *Service) BackupVM(ctx context.Context, name string) (_ backup.Summary, 
 		return backup.Summary{}, fmt.Errorf("backup vm: %q has block-device (zvol) disks but no SSH host connection is configured, and zvol backup requires SSH", name)
 	}
 
-	// Default autostart to true (safe: most Unraid-managed VMs have autostart on).
-	// TODO: parse virsh dominfo output to capture the real flag in a future wave.
-	wasAutostart := true
+	var autostart *bool
+	if r, ok := s.virsh.(interface {
+		AutostartEnabled(ctx context.Context, name string) (bool, error)
+	}); ok {
+		if on, aErr := r.AutostartEnabled(ctx, name); aErr == nil {
+			autostart = &on
+		} else {
+			log.Printf("api: BackupVM: read the autostart setting of %q: %v", name, aErr) //nolint:gosec // G706: %q-quoted
+		}
+	}
 
 	// Get method from existing target (default graceful).
 	method := "graceful"
@@ -13077,7 +13154,8 @@ func (s *Service) BackupVM(ctx context.Context, name string) (_ backup.Summary, 
 		NVRAMBytes:    nvramBytes,
 		TPMBytes:      tpmBytes,
 		Method:        method,
-		WasAutostart:  wasAutostart,
+		WasAutostart:  autostart == nil || *autostart,
+		Autostart:     autostart,
 		WasRunning:    wasRunning,
 	}
 	defBytes, _ := json.Marshal(def)
@@ -13241,7 +13319,7 @@ func (s *Service) BackupVM(ctx context.Context, name string) (_ backup.Summary, 
 	// the VM onto it, but leaves the orphaned overlay file behind — delete it so
 	// the next snapshot doesn't fail "already exists". No-op after graceful.
 	if live && classic {
-		s.removeStrayOverlays(diskPaths)
+		s.removeStrayOverlays(ctx, diskPaths)
 	}
 	// Mirror the definition (encrypted) onto the backup storage so a freshly
 	// installed BombVault can rebuild this VM via DiscoverVMs after a database
@@ -13288,7 +13366,7 @@ type vmRestorePlan struct {
 	snapshotID   string
 	diskPaths    []string
 	domainXML    string
-	wasAutostart bool
+	wasAutostart *bool
 	// restoreDirs restores each snapshot subtree into a destination dir, for a
 	// cross-instance restore or a snapshot from before a rename moved the disks.
 	// Empty means each disk goes back to its own path.
@@ -13530,6 +13608,14 @@ func (s *Service) prepareRestoreVMForTarget(ctx context.Context, ref repoRef, na
 		if err := s.guardVMRestoreDestination(ctx, ref, snapshotID, destDir); err != nil {
 			return vmRestorePlan{}, err
 		}
+	} else {
+		dirs := make([]string, len(diskPaths))
+		for i, p := range diskPaths {
+			dirs[i] = path.Dir(p)
+		}
+		if err := s.guardInPlaceRestore(dirs); err != nil {
+			return vmRestorePlan{}, err
+		}
 	}
 
 	var images []backup.VMRestoreImage
@@ -13637,7 +13723,7 @@ func (s *Service) prepareRestoreVMForTarget(ctx context.Context, ref repoRef, na
 		snapshotID:   snapshotID,
 		diskPaths:    diskPaths,
 		domainXML:    domainXML,
-		wasAutostart: def.WasAutostart,
+		wasAutostart: def.Autostart,
 		restoreDirs:  restoreDirs,
 		wasRunning:   def.WasRunning,
 		preDefine:    preDefine,
@@ -13732,6 +13818,23 @@ func (s *Service) guardVMRestoreDestination(ctx context.Context, ref repoRef, sn
 	if wantBytes > 0 {
 		if free, ferr := s.diskFreeFn()(nearestExistingDir(destDir)); ferr == nil && free < uint64(wantBytes) {
 			return destinationRefusal("not enough free space to restore this VM: it needs %d bytes but the destination %q has only %d free. Free up space or choose another destination", wantBytes, s.toHostPath(destDir), free)
+		}
+	}
+	return nil
+}
+
+// guardInPlaceRestore refuses a restore back to the folders a backup came
+// from when one of them is not on mounted storage. On Unraid a folder of a
+// pool or disk that failed or is not mounted yet lies in RAM, and a restore
+// into it takes the host down. Elsewhere Host Data is the storage itself. A
+// free-space check would count the data the restore writes over.
+func (s *Service) guardInPlaceRestore(dirs []string) error {
+	if s.platformFn().Kind() != platform.KindUnraid || !s.hostDataMounted() {
+		return nil
+	}
+	for _, p := range dirs {
+		if !s.restoreTargetMounted(p) {
+			return destinationRefusal("%s is not on a mounted pool or share, so a restore there would be written into the host's memory. Mount the pool or disk it was backed up from, then restore again", s.toHostPath(p))
 		}
 	}
 	return nil
@@ -13936,7 +14039,7 @@ func rewriteBinds(binds []string, remap map[string]string) []string {
 
 // rewriteMountSources rewrites the Source of each captured Mount whose source is a
 // remap key, for display fidelity in the recreated definition (the actual recreate
-// binds come from HostConfig.Binds via rewriteBinds). Exact match; empty remap is a
+// volumes come from HostConfig via rewriteBinds). Exact match; empty remap is a
 // no-op.
 func rewriteMountSources(mounts []model.Mount, remap map[string]string) []model.Mount {
 	if len(mounts) == 0 || len(remap) == 0 {

@@ -20,12 +20,12 @@ func (r vmRestarts) Mark(names []string) error {
 func (r vmRestarts) Clear(names []string) error { return r.st.ClearVMsStopped(names) }
 
 // vmRecoveryPolls and vmRecoveryInterval bound the wait for a guest that was
-// still shutting down when BombVault stopped, the same 90 seconds a backup
+// still shutting down when BombVault stopped, the same ten minutes a backup
 // gives it. vmRecoveryBudget leaves room for slow virsh calls over SSH.
 const (
-	vmRecoveryPolls    = 18
+	vmRecoveryPolls    = 120
 	vmRecoveryInterval = 5 * time.Second
-	vmRecoveryBudget   = 5 * time.Minute
+	vmRecoveryBudget   = 15 * time.Minute
 )
 
 // RecoverVMRestarts starts the VMs a graceful backup left shut off when
@@ -52,9 +52,9 @@ func (s *Service) RecoverVMRestarts(ctx context.Context) {
 
 // restartLeftVMs starts each recorded VM once it is shut off, waiting up to
 // polls rounds for guests still on their way down. It never forces a VM off: one
-// still up after the wait was never left off, or someone started it, and is
-// forgotten untouched. One whose state cannot be read stays recorded for the
-// next boot.
+// running after the wait was never left off, or someone started it, and is
+// forgotten untouched. One still shutting down, or whose state cannot be read,
+// stays recorded for the next boot.
 func (s *Service) restartLeftVMs(ctx context.Context, names []string, polls int, interval time.Duration) {
 	if s.ssh != nil {
 		if err := s.ssh.EnsureKnownHost(ctx); err != nil {
@@ -64,6 +64,7 @@ func (s *Service) restartLeftVMs(ctx context.Context, names []string, polls int,
 	started := 0
 	var done []string
 	pending := names
+	stopping := map[string]bool{}
 	for round := 0; len(pending) > 0; round++ {
 		var still []string
 		for _, name := range pending {
@@ -83,6 +84,7 @@ func (s *Service) restartLeftVMs(ctx context.Context, names []string, polls int,
 				done = append(done, name)
 				started++
 			default:
+				stopping[name] = state == "in shutdown"
 				still = append(still, name)
 			}
 		}
@@ -91,7 +93,11 @@ func (s *Service) restartLeftVMs(ctx context.Context, names []string, polls int,
 			break
 		}
 		if round >= polls-1 {
-			done = append(done, pending...)
+			for _, name := range pending {
+				if !stopping[name] {
+					done = append(done, name)
+				}
+			}
 			break
 		}
 		select {

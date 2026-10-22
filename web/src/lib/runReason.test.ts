@@ -10,6 +10,7 @@ import {
   runReasonParts,
   RunReasonText,
   RUN_REASON_PREFIXES,
+  restoreNotes,
 } from "./runReason";
 import type { TranslationKey } from "./i18n";
 
@@ -257,6 +258,24 @@ describe("files restic could not read", () => {
     const parts = runReasonParts(note, t);
     expect(parts.head).toBe("runReason.filesUnreadable");
     expect(parts.detail).toBe("error: open /data/key.pem: permission denied");
+  });
+});
+
+describe("containers that did not start again", () => {
+  const note = "some containers did not start again: qbittorrent, prowlarr";
+
+  it("is a warning, translated up to the names", () => {
+    expect(isWarningNote(note)).toBe(true);
+    const parts = runReasonParts(note, t);
+    expect(parts.head).toBe("runReason.containersNotBack");
+    expect(parts.detail).toBe("qbittorrent, prowlarr");
+  });
+
+  it("is read off a restore's notes", () => {
+    expect(restoreNotes(`restored without the GPU or runtime the container used; ${note}`).notBack).toEqual([
+      "qbittorrent",
+      "prowlarr",
+    ]);
   });
 });
 

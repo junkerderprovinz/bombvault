@@ -7,10 +7,12 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"slices"
 	"strings"
 
 	"github.com/junkerderprovinz/bombvault/internal/backup"
 	"github.com/junkerderprovinz/bombvault/internal/compose"
+	"github.com/junkerderprovinz/bombvault/internal/model"
 )
 
 // composeProject and composeService read the compose project and service labels,
@@ -21,6 +23,23 @@ func composeService(labels map[string]string) string { return compose.Service(la
 
 // parseDependsOn returns the compose service names a container depends on.
 func parseDependsOn(labels map[string]string) []string { return compose.ParseDependsOn(labels) }
+
+// dependsOnContainer reports whether the container in needs other, named
+// name: its compose file makes other's service a dependency, or a legacy link
+// points at it.
+func dependsOnContainer(in model.Inspect, name string, other model.Inspect) bool {
+	project, service := composeProject(in.Config.Labels), composeService(other.Config.Labels)
+	if project != "" && service != "" && composeProject(other.Config.Labels) == project &&
+		slices.Contains(parseDependsOn(in.Config.Labels), service) {
+		return true
+	}
+	for _, l := range in.HostConfig.Links {
+		if linked, _, _ := strings.Cut(strings.TrimPrefix(l, "/"), ":"); linked == name {
+			return true
+		}
+	}
+	return false
+}
 
 // StackMemberResult is the per-container outcome of a stack restore.
 type StackMemberResult struct {

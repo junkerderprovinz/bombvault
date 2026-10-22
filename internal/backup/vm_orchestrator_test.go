@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"os"
+	"slices"
 	"strings"
 	"testing"
 
@@ -230,19 +231,76 @@ func TestBackupVMGracefulDoesNotStartWhenWasNotRunning(t *testing.T) {
 	}
 }
 
-func TestBackupVMGracefulDestroyOnShutdownTimeout(t *testing.T) {
-	// State never transitions to "shut off"; the poll loop gives up and calls Destroy.
-	// ShutdownTimeout=1 means 1 poll cycle before giving up.
+// A guest still busy shutting down, such as Windows installing its updates,
+// is never forced off: the backup fails, reads nothing and leaves it running.
+func TestBackupVMGracefulTimeoutLeavesTheGuestAlone(t *testing.T) {
 	vm := &fakeVM{active: true, stateVal: "running"} // never transitions
 	r := &fakeRestic{summary: backup.Summary{SnapshotID: "abcd1234"}}
 	runs := &fakeRuns{}
+	marks := &fakeVMRestarts{}
 
 	deps := sampleVMBackupDeps(t, vm, r, runs)
 	deps.ShutdownTimeout = 1 // instant timeout in tests
-	_, _ = backup.BackupVMGraceful(t.Context(), deps)
-	// Destroy must have been called after the timeout.
-	if !vmContains(vm.log, "destroy:win10") {
-		t.Fatal("destroy must be called when graceful shutdown times out")
+	deps.Restarts = marks
+	_, err := backup.BackupVMGraceful(t.Context(), deps)
+	if !errors.Is(err, backup.ErrVMShutdownTimeout) {
+		t.Fatalf("err = %v, want the shutdown timeout", err)
+	}
+	if vmContains(vm.log, "destroy:") || vmContains(vm.log, "start:") {
+		t.Fatalf("a guest that did not shut down must be neither forced off nor started: %v", vm.log)
+	}
+	if len(r.log) != 0 {
+		t.Fatalf("nothing may be backed up from a running guest: %v", r.log)
+	}
+	if len(runs.finishes) != 1 || runs.finishes[0] != "failed" {
+		t.Fatalf("run finishes = %v, want [failed]", runs.finishes)
+	}
+	if !slices.Equal(marks.log, []string{"mark:win10"}) {
+		t.Fatalf("a guest that may still shut off stays recorded for the next start: %v", marks.log)
+	}
+}
+
+// fakeVMRestarts records what the backup says about the VMs it holds down.
+type fakeVMRestarts struct{ log []string }
+
+func (f *fakeVMRestarts) Mark(names []string) error {
+	for _, n := range names {
+		f.log = append(f.log, "mark:"+n)
+	}
+	return nil
+}
+
+func (f *fakeVMRestarts) Clear(names []string) error {
+	for _, n := range names {
+		f.log = append(f.log, "clear:"+n)
+	}
+	return nil
+}
+
+// The VM is recorded before it is shut down and forgotten once it runs
+// again, so a BombVault stopped in between starts it at its next start.
+func TestBackupVMGracefulRecordsTheVMWhileItIsDown(t *testing.T) {
+	marks := &fakeVMRestarts{}
+	vm := &fakeVM{active: true, stateVal: "shut off"}
+	vm.onShutdown = func() { marks.log = append(marks.log, "shutdown") }
+	r := &fakeRestic{summary: backup.Summary{SnapshotID: "abcd1234"}}
+	deps := sampleVMBackupDeps(t, vm, r, &fakeRuns{})
+	deps.Restarts = marks
+
+	if _, err := backup.BackupVMGraceful(t.Context(), deps); err != nil {
+		t.Fatal(err)
+	}
+	if !slices.Equal(marks.log, []string{"mark:win10", "shutdown", "clear:win10"}) {
+		t.Fatalf("marks = %v, want the VM recorded before the shutdown and cleared after the start", marks.log)
+	}
+
+	marks.log = nil
+	vm.startErr = errors.New("domain failed to start")
+	if _, err := backup.BackupVMGraceful(t.Context(), deps); err == nil {
+		t.Fatal("a failed start must fail the backup")
+	}
+	if slices.Contains(marks.log, "clear:win10") {
+		t.Fatalf("a VM that did not start again stays recorded: %v", marks.log)
 	}
 }
 
@@ -252,6 +310,7 @@ func TestBackupVMGracefulDestroyOnShutdownTimeout(t *testing.T) {
 
 func sampleVMRestoreDeps(t *testing.T, vm *fakeVM, r *fakeRestic, runs *fakeRuns) backup.VMRestoreDeps {
 	t.Helper()
+	autostart := true
 	return backup.VMRestoreDeps{
 		Confirmed:    true,
 		Name:         "win10",
@@ -259,7 +318,7 @@ func sampleVMRestoreDeps(t *testing.T, vm *fakeVM, r *fakeRestic, runs *fakeRuns
 		DiskPaths:    []string{"/host/domains/win10/win10.qcow2"},
 		NVRAMPath:    "/host/domains/win10/win10_VARS.fd",
 		DomainXML:    "<domain><name>win10</name></domain>",
-		WasAutostart: true,
+		WasAutostart: &autostart,
 		StartAfter:   true,
 		RepoPath:     "/repo/vms",
 		TargetID:     "vmtarget-1",
@@ -431,7 +490,8 @@ func TestRestoreVMRemapsDisksAndLeavesStopped(t *testing.T) {
 	runs := &fakeRuns{}
 
 	deps := sampleVMRestoreDeps(t, vm, r, runs)
-	deps.WasAutostart = false
+	off := false
+	deps.WasAutostart = &off
 	deps.StartAfter = false
 	// The disks END UP under /host/user/user/domains/win10 on the destination; the
 	// snapshot's own subtree is the SOURCE dir.
@@ -463,6 +523,74 @@ func TestRestoreVMRemapsDisksAndLeavesStopped(t *testing.T) {
 		if strings.HasPrefix(e, "start:") {
 			t.Fatalf("a left-stopped restore must NOT start the VM, got %v", vm.log)
 		}
+	}
+}
+
+// A VM that is paused, suspended or shutting down still has its qemu running
+// on the disks, so it is destroyed before they are written.
+func TestRestoreVMDestroysEveryActiveState(t *testing.T) {
+	for _, state := range []string{"paused", "pmsuspended", "in shutdown"} {
+		t.Run(state, func(t *testing.T) {
+			vm := &fakeVM{stateVal: state}
+			r := &fakeRestic{}
+			if err := backup.RestoreVM(t.Context(), sampleVMRestoreDeps(t, vm, r, &fakeRuns{})); err != nil {
+				t.Fatal(err)
+			}
+			destroy, undefine := slices.Index(vm.log, "destroy:win10"), slices.Index(vm.log, "undefine:win10")
+			if destroy < 0 || destroy > undefine {
+				t.Fatalf("a %s VM must be destroyed before it is undefined: %v", state, vm.log)
+			}
+			if !vmContains(r.log, "restore:") {
+				t.Fatalf("restic restore must run: %v", r.log)
+			}
+		})
+	}
+	vm := &fakeVM{stateVal: "shut off"}
+	if err := backup.RestoreVM(t.Context(), sampleVMRestoreDeps(t, vm, &fakeRestic{}, &fakeRuns{})); err != nil {
+		t.Fatal(err)
+	}
+	if vmContains(vm.log, "destroy:") {
+		t.Fatalf("a shut off VM needs no destroy: %v", vm.log)
+	}
+}
+
+// autostartVM is a VM host that reads the autostart flag.
+type autostartVM struct {
+	*fakeVM
+	on bool
+}
+
+func (v autostartVM) AutostartEnabled(context.Context, string) (bool, error) { return v.on, nil }
+
+// A backup that did not record the autostart flag keeps the one the VM has,
+// which undefining it would otherwise drop.
+func TestRestoreVMWithoutARecordedAutostartKeepsTheVMsOwn(t *testing.T) {
+	for _, on := range []bool{false, true} {
+		vm := &fakeVM{stateVal: "shut off"}
+		deps := sampleVMRestoreDeps(t, vm, &fakeRestic{}, &fakeRuns{})
+		deps.WasAutostart = nil
+		deps.VM = autostartVM{fakeVM: vm, on: on}
+		if err := backup.RestoreVM(t.Context(), deps); err != nil {
+			t.Fatal(err)
+		}
+		want := "autostart:win10:off"
+		if on {
+			want = "autostart:win10:on"
+		}
+		if !slices.Contains(vm.log, want) {
+			t.Fatalf("log = %v, want %s", vm.log, want)
+		}
+	}
+
+	vm := &fakeVM{stateVal: ""}
+	deps := sampleVMRestoreDeps(t, vm, &fakeRestic{}, &fakeRuns{})
+	deps.WasAutostart = nil
+	deps.VM = autostartVM{fakeVM: vm, on: true}
+	if err := backup.RestoreVM(t.Context(), deps); err != nil {
+		t.Fatal(err)
+	}
+	if vmContains(vm.log, "autostart:") {
+		t.Fatalf("a VM that is gone has no flag to keep, so none is set: %v", vm.log)
 	}
 }
 
