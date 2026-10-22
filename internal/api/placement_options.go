@@ -37,7 +37,7 @@ type targetOption struct {
 	Enabled    bool   `json:"enabled"`
 	Primary    bool   `json:"primary"` // sort_order 0
 	AppendOnly bool   `json:"appendOnly"`
-	Hint       string `json:"hint"` // "" | "creds-differ": the remote domain path carries other credentials
+	Hint       string `json:"hint"` // "" | "creds-differ": a copy cannot carry the remote domain path's credentials beside the target's
 }
 
 type sendToOption struct {
@@ -108,21 +108,36 @@ func (s *Service) homeOptions(settings store.Settings, domain string, repos []st
 	return homes
 }
 
-// targetOptions lists every target row of the domain. restic copy runs with the
-// target's own credentials only, so a remote domain path whose credentials
-// differ makes that target's copy fail, and the chip says so beforehand.
+// targetOptions lists every target row of the domain. A copy reads a remote
+// domain path with that path's own credentials beside the target's, which
+// fails only where one restic process cannot hold both, and the chip says so
+// beforehand.
 func (s *Service) targetOptions(settings store.Settings, p placementRead, named map[string]store.OffsiteTarget) []targetOption {
 	remote := s.homeKindOf(settings, p.Domain, "", named) == homeDomainRemote
-	primary, _ := s.primaryRemoteTarget(p.Domain)
 	out := make([]targetOption, 0, len(p.Targets))
 	for _, t := range p.Targets {
 		o := targetOption{ID: t.ID, Name: placementTargetName(t), Enabled: t.Enabled, Primary: t.SortOrder == 0, AppendOnly: t.Immutable}
-		if remote && t.CredsRef != primary.CredsRef {
+		if remote && !s.copyReadsDomainPath(settings, p.Domain, t) {
 			o.Hint = "creds-differ"
 		}
 		out = append(out, o)
 	}
 	return out
+}
+
+// copyReadsDomainPath reports whether a copy to t can sign in at the domain's
+// remote path, the way the copy pass reaches it.
+func (s *Service) copyReadsDomainPath(settings store.Settings, domain string, t store.OffsiteTarget) bool {
+	src, err := s.resolveRepo(domainPathRaw(domain, settings))
+	if err != nil {
+		return false
+	}
+	dest, err := s.resolveRepo(t.Repo)
+	if err != nil {
+		return false
+	}
+	_, _, err = s.sourceAccess(settings, domain, ownRef(src), dest, s.offsiteModeForTarget(settings, t))
+	return err == nil
 }
 
 func (s *Service) sendToOptions(settings store.Settings, p placementRead, repos []store.OffsiteTarget, named map[string]store.OffsiteTarget) []sendToOption {
