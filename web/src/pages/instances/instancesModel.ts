@@ -97,6 +97,9 @@ export interface Instance {
   roles?: MemberRoles;
   /** The destination its receiving server became, when that role is on. */
   destination?: Destination;
+  /** The Receiver role is on with its receiving server, and no destination
+   *  points there, so nothing is copied to it yet. */
+  noDestination?: boolean;
   /** This server's ZFS items that replicate to it. */
   replicas: ItemReplica[];
   /** How many requests and offers wait for an answer here. */
@@ -255,6 +258,8 @@ export function buildInstances(data: InstancesData): { instances: Instance[]; un
     const offered = data.groupReceivers?.find((r) => r.memberId === inst.memberId);
     if (offered && data.destinations && roleState(inst.roles?.byMember, "receiver") === "on") {
       inst.destination = destinationAt(offered, data.destinations);
+      // A receiver that keeps the copies on a share is reached another way.
+      inst.noDestination = !inst.destination && inst.roles?.byMember.receiver?.store !== "share";
     }
   }
   return { instances, unplaced };

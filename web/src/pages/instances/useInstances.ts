@@ -249,6 +249,9 @@ export function useInstances(modules: Modules | null): InstancesState {
         setGroupReceivers(recv.ok ? (recv.receivers ?? []) : null);
       })
       .catch(() => undefined);
+    // The received repositories come with a live probe of each, which waits
+    // on their backends, so the page does not wait for them.
+    if (receiver) void reloadReceived();
     void Promise.all([
       loadSelf(),
       loadDestinations,
@@ -256,7 +259,6 @@ export function useInstances(modules: Modules | null): InstancesState {
       zfs ? reloadReplicas() : undefined,
       fleet ? reloadPeers() : undefined,
       fleet ? reloadOffers() : undefined,
-      receiver ? reloadReceived() : undefined,
       receiver ? reloadServer() : undefined,
       pull ? reloadPulls() : undefined,
     ]).finally(() => setLoading(false));

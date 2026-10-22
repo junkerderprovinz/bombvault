@@ -423,6 +423,9 @@ func (r *Repo) SetDepositIdentity(recipientEnc, salt []byte) error {
 			recipientEnc, salt, time.Now().Unix()); err != nil {
 			return err
 		}
+		if _, err := tx.Exec(`UPDATE key_deposits_sent SET pending_digest = '', pending_held_digest = ''`); err != nil {
+			return err
+		}
 		_, err := tx.Exec(`UPDATE key_deposits_sent SET digest = '', state = ? WHERE state = ?`, DepositStale, DepositHeld)
 		return err
 	})
@@ -445,25 +448,41 @@ func (r *Repo) ClearDepositIdentity() error {
 // content that was last sealed for it and HeldDigest of the sealed bytes the
 // member took, which it names again when asked what it holds. ChangedAt is
 // when the member was last found holding something else, zero for never.
+// PendingDigest and PendingHeldDigest name a deposit sent since that the
+// member did not answer for.
 type SentDeposit struct {
-	MemberID   string
-	MemberName string
-	State      string
-	Digest     string
-	HeldDigest string
-	SentAt     int64
-	ChangedAt  int64
+	MemberID          string
+	MemberName        string
+	State             string
+	Digest            string
+	HeldDigest        string
+	SentAt            int64
+	ChangedAt         int64
+	PendingDigest     string
+	PendingHeldDigest string
 }
 
-// SaveSentDeposit records what a member answered to a deposit.
+// SaveSentDeposit records what a member answered to a deposit, which settles
+// the one on its way.
 func (r *Repo) SaveSentDeposit(d SentDeposit) error {
 	_, err := r.db.Exec(`
 		INSERT INTO key_deposits_sent (member_id, member_name, state, digest, held_digest, sent_at, changed_at) VALUES (?, ?, ?, ?, ?, ?, ?)
 		ON CONFLICT (member_id) DO UPDATE SET member_name = excluded.member_name, state = excluded.state,
-			digest = excluded.digest, held_digest = excluded.held_digest, sent_at = excluded.sent_at, changed_at = excluded.changed_at`,
+			digest = excluded.digest, held_digest = excluded.held_digest, sent_at = excluded.sent_at, changed_at = excluded.changed_at,
+			pending_digest = '', pending_held_digest = ''`,
 		d.MemberID, d.MemberName, d.State, d.Digest, d.HeldDigest, d.SentAt, d.ChangedAt)
 	if err != nil {
 		return fmt.Errorf("SaveSentDeposit: %w", err)
+	}
+	return nil
+}
+
+// NoteDepositOnItsWay remembers a deposit just sent to a member it has a
+// record with, until the member answers for it.
+func (r *Repo) NoteDepositOnItsWay(memberID, digest, heldDigest string) error {
+	if _, err := r.db.Exec(`UPDATE key_deposits_sent SET pending_digest = ?, pending_held_digest = ? WHERE member_id = ?`,
+		digest, heldDigest, memberID); err != nil {
+		return fmt.Errorf("NoteDepositOnItsWay: %w", err)
 	}
 	return nil
 }
@@ -478,7 +497,8 @@ func (r *Repo) DeleteSentDeposit(memberID string) error {
 
 // SentDeposits lists this install's deposits by member name.
 func (r *Repo) SentDeposits() ([]SentDeposit, error) {
-	rows, err := r.db.Query(`SELECT member_id, member_name, state, digest, held_digest, sent_at, changed_at FROM key_deposits_sent ORDER BY member_name, member_id`)
+	rows, err := r.db.Query(`SELECT member_id, member_name, state, digest, held_digest, sent_at, changed_at, pending_digest, pending_held_digest
+		FROM key_deposits_sent ORDER BY member_name, member_id`)
 	if err != nil {
 		return nil, fmt.Errorf("SentDeposits: %w", err)
 	}
@@ -486,7 +506,8 @@ func (r *Repo) SentDeposits() ([]SentDeposit, error) {
 	var out []SentDeposit
 	for rows.Next() {
 		var d SentDeposit
-		if err := rows.Scan(&d.MemberID, &d.MemberName, &d.State, &d.Digest, &d.HeldDigest, &d.SentAt, &d.ChangedAt); err != nil {
+		if err := rows.Scan(&d.MemberID, &d.MemberName, &d.State, &d.Digest, &d.HeldDigest, &d.SentAt, &d.ChangedAt,
+			&d.PendingDigest, &d.PendingHeldDigest); err != nil {
 			return nil, fmt.Errorf("SentDeposits: %w", err)
 		}
 		out = append(out, d)

@@ -526,6 +526,10 @@ type Service struct {
 	receiverCheckMu  sync.Mutex
 	receiverChecking map[string]bool
 
+	// pullMu guards pulling, the pull sources a pull runs for.
+	pullMu  sync.Mutex
+	pulling map[string]bool
+
 	// cacheTrimming is TrimResticCache's own one-at-a-time flag. See its comment:
 	// the after-bulk hook it rides fires once per per-item cron entry, not once
 	// per night.

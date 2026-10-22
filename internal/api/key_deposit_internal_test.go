@@ -224,6 +224,48 @@ func TestADepositIsRenewedWithoutTheCode(t *testing.T) {
 	}
 }
 
+func TestADepositWhoseAnswerWasLostIsNoAlarm(t *testing.T) {
+	tower := newInstance(t, "tower", strings.Repeat("a1", 32))
+	attic := newInstance(t, "attic", strings.Repeat("b2", 32))
+	groupOf(t, tower, attic)
+	deposit(t, tower, attic)
+	sent, err := tower.st.SentDeposits()
+	if err != nil || len(sent) != 1 {
+		t.Fatalf("sent = %+v, %v", sent, err)
+	}
+	before := sent[0]
+
+	if _, err := tower.st.MutateSettings(func(s *store.Settings) error {
+		s.VMsOffsite = "rest:https://box:8000/vms"
+		return nil
+	}); err != nil {
+		t.Fatal(err)
+	}
+	tower.svc.RenewDeposits(context.Background())
+	after, _ := tower.st.SentDeposits()
+	if after[0].HeldDigest == before.HeldDigest {
+		t.Fatal("setup: the renewal sent nothing new")
+	}
+	// The keeper took the new deposit, and its answer never came back.
+	if err := tower.st.SaveSentDeposit(before); err != nil {
+		t.Fatal(err)
+	}
+	if err := tower.st.NoteDepositOnItsWay(attic.id(t), after[0].Digest, after[0].HeldDigest); err != nil {
+		t.Fatal(err)
+	}
+	runs := len(keyRunsOf(t, tower))
+
+	tower.svc.RenewDeposits(context.Background())
+	for _, run := range keyRunsOf(t, tower)[runs:] {
+		if strings.HasPrefix(run, keyEventChanged+" ") {
+			t.Fatalf("a deposit that arrived without its answer raised %q", run)
+		}
+	}
+	if now, _ := tower.st.SentDeposits(); now[0].State != store.DepositHeld || now[0].HeldDigest != after[0].HeldDigest {
+		t.Fatalf("the record = %+v, want the deposit the keeper holds", now[0])
+	}
+}
+
 func TestADepositTheKeeperDeletedComesBackOnlyWhenAPersonAsks(t *testing.T) {
 	tower := newInstance(t, "tower", strings.Repeat("a1", 32))
 	attic := newInstance(t, "attic", strings.Repeat("b2", 32))

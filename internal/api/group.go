@@ -518,6 +518,9 @@ type peerPairing struct {
 	ResticPassword string         `json:"resticPassword"`
 	Repos          []pairableRepo `json:"repos"`
 	DirectURL      string         `json:"directUrl,omitempty"`
+	// KeyLocked says the password was granted but cannot be read there,
+	// because that instance's backup key is locked.
+	KeyLocked bool `json:"keyLocked,omitempty"`
 }
 
 // pairableRepo is one repository location a member offers, with any
@@ -572,6 +575,7 @@ func (s *Service) handlePeerPairing(w http.ResponseWriter, r *http.Request) {
 	ans := peerPairing{OK: true, InstanceName: instanceDisplayName(settings), Repos: repos, DirectURL: s.selfDirectURL()}
 	if grant.password {
 		ans.ResticPassword = s.resticPassword()
+		ans.KeyLocked = ans.ResticPassword == ""
 	}
 	writeJSON(w, http.StatusOK, ans)
 }
@@ -868,7 +872,14 @@ func (h *Handler) handleGroupJoin(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
-	if err := h.storeGroupSecret(sec); err != nil {
+	// Another group's phrase leaves this one first. Its members would
+	// otherwise stay away here for good, and keep this instance away there.
+	if h.inAnotherGroup(sec) {
+		err = h.switchGroup(r.Context(), sec)
+	} else {
+		err = h.storeGroupSecret(sec)
+	}
+	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
@@ -880,19 +891,36 @@ func (h *Handler) handleGroupJoin(w http.ResponseWriter, r *http.Request) {
 // pull sources stay, and pair again once this instance joins the group again.
 // DELETE /api/group
 func (h *Handler) handleGroupLeave(w http.ResponseWriter, r *http.Request) {
-	h.svc.tellMembersLeaving(r.Context())
-	err := h.storeGroupSecret(nil)
-	if err == nil {
-		err = h.store.ForgetMemberKeys()
-	}
-	if err == nil {
-		err = h.store.DropMemberFleetPeers("")
-	}
-	if err != nil {
+	if err := h.switchGroup(r.Context(), nil); err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
 	h.writeGroupView(w)
+}
+
+// inAnotherGroup reports whether this instance is in a group other than the
+// one sec opens. A phrase this instance cannot open names no group to leave.
+func (h *Handler) inAnotherGroup(sec []byte) bool {
+	g, err := h.store.GetGroupState()
+	if err != nil {
+		return false
+	}
+	cur, err := h.svc.groupSecret(g)
+	return err == nil && cur != nil && !bytes.Equal(cur, sec)
+}
+
+// switchGroup leaves the group this instance is in for the one sec opens, or
+// for none when sec is nil: the members in reach hear it, and their keys and
+// Fleet rows go.
+func (h *Handler) switchGroup(ctx context.Context, sec []byte) error {
+	h.svc.tellMembersLeaving(ctx)
+	if err := h.storeGroupSecret(sec); err != nil {
+		return err
+	}
+	if err := h.store.ForgetMemberKeys(); err != nil {
+		return err
+	}
+	return h.store.DropMemberFleetPeers("")
 }
 
 // leaveNoticeTimeout bounds telling the members about a leave, so a member out
@@ -1145,7 +1173,10 @@ func (s *Service) pairedPassword(ctx context.Context, memberID, role string) ([]
 	if err := s.askPairing(ctx, memberID, &p); err != nil {
 		return nil, err
 	}
-	if p.ResticPassword == "" {
+	switch {
+	case p.KeyLocked:
+		return nil, errPasswordLocked
+	case p.ResticPassword == "":
 		return nil, errPasswordHeld
 	}
 	if !resticPasswordRe.MatchString(p.ResticPassword) {

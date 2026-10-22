@@ -128,13 +128,17 @@ func (h *Handler) handleUpdateFleetPeer(w http.ResponseWriter, r *http.Request) 
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"peer": fleetPeerToView(p, h.svc.pairing().Members())}))
 }
 
-// handleDeleteFleetPeer removes a row and the key pinned for its member
-// without contacting the member. A member still in the group comes back on
-// the next list. An unknown id is not an error. DELETE /api/fleet/peers/{id}
+// handleDeleteFleetPeer removes a row, the key pinned for its member and, for
+// a member that is away, its role requests, without contacting the member. A
+// member still in the group comes back on the next list. An unknown id is not
+// an error. DELETE /api/fleet/peers/{id}
 func (h *Handler) handleDeleteFleetPeer(w http.ResponseWriter, r *http.Request) {
 	p, found, err := h.store.GetFleetPeer(r.PathValue("id"))
 	if err == nil && found && p.MemberID != "" {
-		err = h.store.ForgetMemberKey(p.MemberID)
+		err = h.svc.forgetMemberRoles(r.Context(), p.MemberID)
+		if err == nil {
+			err = h.store.ForgetMemberKey(p.MemberID)
+		}
 	}
 	if err == nil {
 		err = h.store.DeleteFleetPeer(r.PathValue("id"))
@@ -146,13 +150,18 @@ func (h *Handler) handleDeleteFleetPeer(w http.ResponseWriter, r *http.Request) 
 	writeJSON(w, http.StatusOK, okEnvelope(nil))
 }
 
-// handleRemoveMember drops a member's row and its pinned key, as DELETE
-// /api/fleet/peers/{id} does, for a card whose page holds no row. A member
-// that is away stays off the lists until it is in reach again.
+// handleRemoveMember drops a member's row, its pinned key and the role
+// requests of one that is away, as DELETE /api/fleet/peers/{id} does, for a
+// card whose page holds no row. A member that is away stays off the lists
+// until it is in reach again.
 // DELETE /api/group/members/{id}
 func (h *Handler) handleRemoveMember(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
-	rows, err := h.store.ListFleetPeers()
+	err := h.svc.forgetMemberRoles(r.Context(), id)
+	var rows []store.FleetPeer
+	if err == nil {
+		rows, err = h.store.ListFleetPeers()
+	}
 	if err == nil {
 		err = h.store.ForgetMemberKey(id)
 	}

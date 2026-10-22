@@ -13,6 +13,7 @@ package api
 import (
 	"context"
 	"errors"
+	"fmt"
 	"path"
 	"path/filepath"
 	"sort"
@@ -90,16 +91,33 @@ func (s *Service) receiverOpen(ctx context.Context, rr store.ReceivedRepo) (stri
 	// (append-only) repo. Try the encrypted mode a BombVault sender always uses,
 	// then fall back to a plain repo.
 	encMode := restic.Mode{Encrypted: true, Password: password, NoLock: true}
-	plainMode := restic.Mode{NoLock: true}
+	mode, err := s.openOthersRepo(ctx, repo, encMode, restic.Mode{NoLock: true}, "received repository")
+	if err != nil {
+		return "", restic.Mode{}, err
+	}
+	return repo, mode, nil
+}
+
+// openOthersRepo opens a repository another instance writes, with that
+// instance's password or, when the key is refused, as a plain one. Any other
+// failure would only repeat with the plain mode and double the wait on a
+// backend that does not answer, so it is reported as it is.
+func (s *Service) openOthersRepo(ctx context.Context, repo string, enc, plain restic.Mode, what string) (restic.Mode, error) {
+	err := s.engine.RepoOpensErr(ctx, repo, enc)
 	switch {
-	case s.engine.RepoOpens(ctx, repo, encMode):
-		return repo, encMode, nil
-	case s.engine.RepoOpens(ctx, repo, plainMode):
-		return repo, plainMode, nil
-	default:
+	case err == nil:
+		return enc, nil
+	case isWrongKey(err):
+		if s.engine.RepoOpensErr(ctx, repo, plain) == nil {
+			return plain, nil
+		}
 		// No slash in "BombVault or restic": scrubError would redact "/restic" as
 		// a path.
-		return "", restic.Mode{}, errors.New("could not open the received repository: wrong restic password, or the location is not a BombVault or restic repository")
+		return restic.Mode{}, fmt.Errorf("could not open the %s: wrong restic password, or the location is not a BombVault or restic repository", what)
+	case isRepoDefinitelyAbsent(err):
+		return restic.Mode{}, fmt.Errorf("the %s does not exist yet: it appears with the other instance's first copy there, unless the location is mistyped", what)
+	default:
+		return restic.Mode{}, fmt.Errorf("could not reach the %s: %w", what, err)
 	}
 }
 
@@ -210,16 +228,21 @@ func (s *Service) releaseReceiverCheck(id string) {
 // would re-read the pack data the first one is reading.
 var errReceiverCheckBusy = errors.New("a check is already running on this repository")
 
-// receiverCheckExclusive is receiverCheck behind the in-flight slot; ok is
-// false when another check holds it and nothing ran. The guard sits outside
-// receiverCheck because both callers persist whatever result they get, and a
-// busy refusal recorded as a failed check would fire an integrity alert.
-func (s *Service) receiverCheckExclusive(ctx context.Context, rr store.ReceivedRepo, readData bool) (ReceiverCheckResult, bool) {
+// receiverCheckExclusive is receiverCheck behind the in-flight slot. It
+// returns errReceiverCheckBusy when another check holds the slot, and ctx's
+// error when the check was cut off. Neither is a verdict: both callers persist
+// what they get, and stored as a failed check a refusal would fire an
+// integrity alert, while a check cut off would mute the next real one.
+func (s *Service) receiverCheckExclusive(ctx context.Context, rr store.ReceivedRepo, readData bool) (ReceiverCheckResult, error) {
 	if !s.claimReceiverCheck(rr.ID) {
-		return ReceiverCheckResult{}, false
+		return ReceiverCheckResult{}, errReceiverCheckBusy
 	}
 	defer s.releaseReceiverCheck(rr.ID)
-	return s.receiverCheck(ctx, rr, readData), true
+	res := s.receiverCheck(ctx, rr, readData)
+	if err := ctx.Err(); err != nil && !res.OK {
+		return ReceiverCheckResult{}, err
+	}
+	return res, nil
 }
 
 // receiverCheck runs an independent integrity check of the received repo on

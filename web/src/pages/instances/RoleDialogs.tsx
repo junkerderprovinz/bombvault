@@ -10,7 +10,7 @@ import { IconPlay, IconSave, IconUpload } from "../../components/glyphs";
 import { Selector } from "../../components/Selector";
 import { SettingRow } from "../../components/storage/rows";
 import { useReplicaServers } from "../../components/zfs/replica/replicaStore";
-import { askRole, patchZFSReplica, withdrawKeeper, withdrawRole } from "../../lib/api";
+import { askRole, patchZFSReplica, updateDestination, withdrawKeeper, withdrawRole } from "../../lib/api";
 import type { RequestedRole, RoleSection, RoleStore, ZFSReplicaTarget } from "../../lib/api";
 import type { EntryKind } from "../../lib/backupEntry";
 import { useT, type TranslationKey } from "../../lib/i18n";
@@ -330,6 +330,24 @@ export function useRoleSwitch({
       } else {
         const res = await withdrawRole(instance.memberId, role);
         if (!res.ok) push(res.error ?? t("instances.role.saveError"), "fail");
+        else {
+          // Out of reach, the member holds the role until the server tells
+          // it, and the page cannot see its receiving server.
+          const dest = role === "receiver" ? instance.destination : undefined;
+          if (res.told === false) {
+            const words = [t("instances.role.notTold"), role === "receiver" && !dest && t("instances.role.receiverStillOn")];
+            push(words.filter(Boolean).join(" ").replaceAll("{peer}", () => instance.name), "warn");
+          }
+          if (dest?.enabled) {
+            const off = await updateDestination(dest.id, {
+              name: dest.name,
+              storageClass: dest.storageClass,
+              immutable: dest.immutable,
+              enabled: false,
+            });
+            if (!off.ok) push(off.error ?? t("instances.role.saveError"), "fail");
+          }
+        }
       }
     } catch (err) {
       push(err instanceof Error ? err.message : t("instances.role.saveError"), "fail");

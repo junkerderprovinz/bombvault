@@ -10,8 +10,16 @@ import type { Instance } from "./instancesModel";
 /** RemoveInstanceButton drops an instance's row on the second click.
  *  Removing never contacts the instance and is undone by pairing it again,
  *  so a confirm on the button itself is enough. Without the Instances module
- *  the page holds no row, and the member goes by its id. */
-export function RemoveInstanceButton({ instance, onRemoved }: { instance: Pick<Instance, "memberId" | "peer">; onRemoved: () => void }) {
+ *  the page holds no row, and the member goes by its id. The server ends the
+ *  Receiver and Fetcher requests of an instance that is away; ZFS replication
+ *  and key deposits hold data, so they stay, and the card with them. */
+export function RemoveInstanceButton({
+  instance,
+  onRemoved,
+}: {
+  instance: Pick<Instance, "memberId" | "peer" | "name" | "roles">;
+  onRemoved: () => void;
+}) {
   const { t } = useT();
   const { push } = useToast();
   const [armed, setArmed] = useState(false);
@@ -23,6 +31,10 @@ export function RemoveInstanceButton({ instance, onRemoved }: { instance: Pick<I
     try {
       const res = await (instance.peer ? deleteFleetPeer(instance.peer.id) : removeMember(instance.memberId));
       if (res.ok) {
+        const { byMember, forMember } = instance.roles ?? {};
+        if (byMember?.zfs || byMember?.keeper || forMember?.zfs || forMember?.keeper) {
+          push(t("instances.removeKeptByRoles").replaceAll("{peer}", () => instance.name), "warn");
+        }
         onRemoved();
         return;
       }

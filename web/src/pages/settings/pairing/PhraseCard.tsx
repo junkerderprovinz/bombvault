@@ -179,9 +179,8 @@ function CantFindIt({ onProbe, busy, t, shake }: { onProbe: (url: string) => voi
   );
 }
 
-/** JoinWindow takes the words of another instance's group. Joining from a
- *  group of one replaces it in one step, which is right while nobody else is
- *  in it. */
+/** JoinWindow takes the words of another instance's group. The server leaves
+ *  the group this instance is in first, so its members hear of it. */
 function JoinWindow({
   id,
   title,

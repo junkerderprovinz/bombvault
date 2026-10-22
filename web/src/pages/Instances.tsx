@@ -187,7 +187,9 @@ function PeerCard({
   const deposit = instance.roles?.byMember.keeper?.state;
   const cannotKeep = tooOldToKeep(instance) ? t("keeper.tile.tooOld") : unreachableToKeep(instance) ? t("keeper.tile.unreachable") : undefined;
   const keeperDetail = deposit ? (deposit !== "held" ? depositStateLabel(t, deposit) : undefined) : cannotKeep;
-  const details = keeperDetail ? { keeper: keeperDetail } : undefined;
+  // An allowed Receiver copies nothing until a destination points at it.
+  const receiverDetail = instance.noDestination ? t("instances.role.noDestination") : undefined;
+  const details = { keeper: keeperDetail, receiver: receiverDetail };
 
   const badges = (
     <>
@@ -256,6 +258,7 @@ function PeerCard({
               onRemoved={() => {
                 void state.reloadPeers();
                 void state.reloadGroup();
+                void state.reloadRoles();
               }}
             />
           )}

@@ -3315,6 +3315,27 @@ INSERT OR IGNORE INTO sign_ins_note (id) VALUES (1);`,
 		alreadySatisfied: columnPresent("fleet_peers", "last_seen"),
 		sql:              `ALTER TABLE fleet_peers ADD COLUMN last_seen INTEGER NOT NULL DEFAULT 0;`,
 	},
+	{
+		// A request this instance took back while the member was out of reach,
+		// so the member is told once it is back.
+		version: roleWithdrawalsMigration,
+		name:    "role_withdrawals",
+		sql: `CREATE TABLE IF NOT EXISTS role_withdrawals (
+  member_id TEXT    NOT NULL,
+  role      TEXT    NOT NULL,
+  at        INTEGER NOT NULL,
+  PRIMARY KEY (member_id, role)
+);`,
+	},
+	{
+		// The deposit on its way to a keeper, so one that arrived without
+		// the answer coming back is not taken for somebody else's.
+		version:          depositPendingMigration,
+		name:             "key_deposits_sent_pending",
+		alreadySatisfied: columnPresent("key_deposits_sent", "pending_held_digest"),
+		sql: `ALTER TABLE key_deposits_sent ADD COLUMN pending_digest TEXT NOT NULL DEFAULT '';
+ALTER TABLE key_deposits_sent ADD COLUMN pending_held_digest TEXT NOT NULL DEFAULT '';`,
+	},
 }
 
 // offsiteFieldDomains are the domains with an off-site field in the settings,
@@ -3540,6 +3561,14 @@ const backupMemoryMigration = 430
 
 // memberSeenMigration numbers when a member was last in reach.
 const memberSeenMigration = 440
+
+// roleWithdrawalsMigration numbers the role requests withdrawn while their
+// member was out of reach.
+const roleWithdrawalsMigration = 450
+
+// depositPendingMigration numbers the deposit a keeper may hold without
+// having answered for it.
+const depositPendingMigration = 451
 
 // oneLineColumns are the names and locations the recovery kit prints.
 var oneLineColumns = []struct {

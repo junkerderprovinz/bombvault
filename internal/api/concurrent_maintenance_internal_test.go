@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"errors"
 	"os"
 	"strings"
 	"sync"
@@ -48,9 +49,9 @@ func TestReceiverCheckRefusalIsNotAVerdict(t *testing.T) {
 	}
 	defer svc.releaseReceiverCheck(rr.ID)
 
-	res, ran := svc.receiverCheckExclusive(context.Background(), rr, false)
-	if ran {
-		t.Fatal("receiverCheckExclusive must report that it ran nothing")
+	res, err := svc.receiverCheckExclusive(context.Background(), rr, false)
+	if !errors.Is(err, errReceiverCheckBusy) {
+		t.Fatalf("err = %v, want errReceiverCheckBusy", err)
 	}
 	if res.At != 0 || res.Error != "" || res.OK {
 		t.Fatalf("a refusal must carry no verdict at all, got %+v", res)

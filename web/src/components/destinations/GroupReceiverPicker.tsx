@@ -58,7 +58,7 @@ export function GroupReceiverPicker({
                   : { name: r.name },
               ]}
               soonLabel={t("dest.receiver.needsAddress")}
-              hint={r.url ? undefined : t("dest.receiver.needsAddressTip")}
+              hint={r.url ? undefined : t(r.needsHost ? "dest.receiver.needsHostTip" : "dest.receiver.needsAddressTip")}
               mark={<IconShieldOn />}
               markClass="text-carbon-textSub"
             />

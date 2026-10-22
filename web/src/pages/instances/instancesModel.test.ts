@@ -240,6 +240,18 @@ describe("the roles an instance plays for this server", () => {
     expect(found({ roles: [roles({ byMember: side({ receiver: request() }) })], destinations: [login] })).toBeUndefined();
   });
 
+  it("knows when an active Receiver has no destination yet, and only when it can tell", () => {
+    const offered = [{ memberId: "m1", name: "attic", url: "http://192.168.1.21:8000", needsAddress: false }];
+    const login = destination({ id: "d1", repo: "rest:http://192.168.1.21:8000/tower-login" });
+    const on = (store: "rest" | "share" = "rest") => [roles({ byMember: side({ receiver: request({ state: "allowed", store }) }) })];
+    const none = (over: Partial<InstancesData>) => buildInstances(data({ roles: on(), ...over })).instances[0].noDestination ?? false;
+    expect(none({ groupReceivers: offered, destinations: [] })).toBe(true);
+    expect(none({ groupReceivers: offered, destinations: [login] })).toBe(false);
+    expect(none({ groupReceivers: offered, destinations: null })).toBe(false);
+    expect(none({ groupReceivers: [], destinations: [] })).toBe(false);
+    expect(none({ groupReceivers: offered, destinations: [], roles: on("share") })).toBe(false);
+  });
+
   it("keeps the ZFS items that replicate to it", () => {
     const to = (id: string, itemId: string) => ({ itemId, dataset: `tank/${itemId}`, replica: replicaOf({ target: { kind: "peer", id } }) });
     const { instances } = buildInstances(data({ replicas: [to("m1", "a"), to("m2", "b"), { itemId: "x", dataset: "tank/x", replica: replicaOf() }] }));

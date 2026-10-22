@@ -560,6 +560,17 @@ describe("adding a storage location", () => {
     expect(within(window).getByText("Sign in to Rest server")).toBeTruthy();
   });
 
+  it("says a paired instance known only by a browser's name has to set its receiving server's address", async () => {
+    listGroupReceivers.mockResolvedValue({
+      ok: true,
+      receivers: [{ memberId: "m-tower", name: "tower-2", needsAddress: false, needsHost: true }],
+    });
+    const window = await open();
+
+    expect(within(window).getByLabelText(en["dest.receiver.needsHostTip"])).toBeTruthy();
+    expect(within(window).queryByLabelText(en["dest.receiver.needsAddressTip"])).toBeNull();
+  });
+
   it("narrows the tiles to what the search asks for", async () => {
     const window = await open();
 

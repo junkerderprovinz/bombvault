@@ -2,9 +2,11 @@ package api
 
 import (
 	"context"
+	"errors"
 	"log"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/schedule"
@@ -166,18 +168,30 @@ func (h *Handler) handleListReceiverRepos(w http.ResponseWriter, r *http.Request
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
-	out := make([]receivedRepoStatus, 0, len(repos))
-	for _, rr := range repos {
-		st := receivedRepoStatus{receivedRepoView: receivedRepoToView(rr)}
-		if newest, count, pErr := h.svc.receiverNewest(r.Context(), rr); pErr == nil {
-			st.LastReceived = newest
-			st.SnapshotCount = count
-			st.Reachable = true
-		}
-		out = append(out, st)
+	// Side by side and each within receiverProbeTimeout, so one slow or
+	// unreachable backend costs the list one timeout rather than holding it
+	// for as long as restic retries.
+	out := make([]receivedRepoStatus, len(repos))
+	var wg sync.WaitGroup
+	for i, rr := range repos {
+		out[i] = receivedRepoStatus{receivedRepoView: receivedRepoToView(rr)}
+		wg.Go(func() {
+			ctx, cancel := context.WithTimeout(r.Context(), receiverProbeTimeout)
+			defer cancel()
+			if newest, count, pErr := h.svc.receiverNewest(ctx, rr); pErr == nil {
+				out[i].LastReceived = newest
+				out[i].SnapshotCount = count
+				out[i].Reachable = true
+			}
+		})
 	}
+	wg.Wait()
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"repos": out}))
 }
+
+// receiverProbeTimeout bounds the live probe behind each row of the list. A
+// variable so a test can shorten it.
+var receiverProbeTimeout = 20 * time.Second
 
 // handleCreateReceiverRepo registers a received repo. POST /api/receiver/repos.
 // The repo has to open read-only before the row is saved, so a mistyped
@@ -290,18 +304,30 @@ func (h *Handler) handleReceiverCheck(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	readData := r.URL.Query().Get("readData") == "true"
-	// Refused, not queued, while one is running. Received repos are outside
-	// repoMu, and a second check with --read-data-subset reads the packs again.
-	res, ran := h.svc.receiverCheckExclusive(r.Context(), rr, readData)
-	if !ran {
-		writeJSON(w, http.StatusConflict, failEnvelope(errReceiverCheckBusy))
-		return
+	type checked struct {
+		res ReceiverCheckResult
+		err error
 	}
-	if err := h.store.UpdateReceivedRepoCheckResult(rr.ID, res.At, nullCheckOK(res.OK), res.Error, res.RanReadData); err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
-		return
+	// A deep check outlasts a proxy's read timeout, so it does not run on the
+	// request: the verdict lands even when nobody waits for it.
+	out, waited := runPastRequest(h.svc.StopContext(), r, func(ctx context.Context) checked {
+		// Refused, not queued, while one is running. Received repos are outside
+		// repoMu, and a second check with --read-data-subset reads the packs again.
+		res, err := h.svc.receiverCheckExclusive(ctx, rr, readData)
+		if err == nil {
+			err = h.store.UpdateReceivedRepoCheckResult(rr.ID, res.At, nullCheckOK(res.OK), res.Error, res.RanReadData)
+		}
+		return checked{res, err}
+	})
+	switch {
+	case !waited:
+	case errors.Is(out.err, errReceiverCheckBusy):
+		writeJSON(w, http.StatusConflict, failEnvelope(out.err))
+	case out.err != nil:
+		writeJSON(w, http.StatusOK, failEnvelope(out.err))
+	default:
+		writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"result": out.res}))
 	}
-	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"result": res}))
 }
 
 // receiverProbe opens a received repo read-only and discards the result. It

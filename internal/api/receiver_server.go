@@ -71,6 +71,8 @@ var errNoReceiver = errors.New("no receiver is set up on this instance")
 
 var errNoMemberReceiver = errors.New("that instance runs no receiver")
 
+var errReceiverNeedsHost = errors.New("that instance knows itself only by a name its browser used, which may lead to a proxy rather than its receiving server. Fill in Address for partners on its receiving server first")
+
 var errReceiverNeedsAddress = errors.New("this instance reaches that one only through the relay, which carries no backups. Add that instance's address under Settings, Pairing, or enter the server's address by hand")
 
 // receiverServerInput is the "Set up receiver" form.
@@ -103,6 +105,9 @@ type receiverServerView struct {
 	CheckedAt   int64  `json:"checkedAt"`
 	// Logins are the group members that fetched a login of their own.
 	Logins []receiverLoginView `json:"logins"`
+	// NeedsHost says the address has to be set by hand: this instance knows
+	// itself only by a name a browser used.
+	NeedsHost bool `json:"needsHost"`
 }
 
 // receiverLoginView is a member's login as the Receiver tab lists it.
@@ -419,12 +424,33 @@ func (s *Service) writeReceiverTemplate(rs store.ReceiverServer, unraid bool) st
 }
 
 // receiverHost is where members reach the receiver: the address set for it,
-// or the host this instance answers the group on.
+// or the host this instance answers the group on, unless that is a name only
+// learned from a browser (see needsReceiverHost).
 func (s *Service) receiverHost(rs store.ReceiverServer) string {
 	if rs.Host != "" {
 		return rs.Host
 	}
+	if s.needsReceiverHost(rs) {
+		return ""
+	}
 	return urlHost(s.selfDirectURL())
+}
+
+// needsReceiverHost reports whether the receiver needs its address set by
+// hand. A name a browser used can belong to a reverse proxy or a VPN that
+// forwards BombVault's port and no other, so it is no address for the
+// rest-server; an IP address or one a person set is.
+func (s *Service) needsReceiverHost(rs store.ReceiverServer) bool {
+	if rs.Host != "" {
+		return false
+	}
+	g, err := s.store.GetGroupState()
+	return err == nil && learnedName(g, s.directURL(g))
+}
+
+func learnedName(g store.GroupState, addr string) bool {
+	host := urlHost(addr)
+	return host != "" && !g.DirectURLManual && net.ParseIP(host) == nil
 }
 
 // urlHost is the host of an address, empty when it has none.
@@ -540,6 +566,7 @@ func (s *Service) receiverView(ctx context.Context) (receiverServerView, error) 
 	if host := s.receiverHost(rs); host != "" {
 		v.URL = restBase(host, rs.Port)
 	}
+	v.NeedsHost = s.needsReceiverHost(rs)
 	return v, nil
 }
 
@@ -657,6 +684,9 @@ type peerReceiver struct {
 	Port     int    `json:"port"`
 	User     string `json:"user,omitempty"`
 	Password string `json:"password,omitempty"`
+	// NeedsHost says the receiver knows no address for its server, and the
+	// one the member reaches BombVault at is no address for it either.
+	NeedsHost bool `json:"needsHost,omitempty"`
 }
 
 // peerReceiverAnswer is the answer to POST /api/group/peer/receiver. Receiver
@@ -707,7 +737,7 @@ func (s *Service) handlePeerReceiver(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
-	offer := &peerReceiver{InstanceName: instanceDisplayName(settings), Host: rs.Host, Port: rs.Port}
+	offer := &peerReceiver{InstanceName: instanceDisplayName(settings), Host: rs.Host, Port: rs.Port, NeedsHost: s.needsReceiverHost(rs)}
 	if in.Login {
 		caller, ok := s.peerCaller(r)
 		if !ok || caller.ID != in.InstanceID {
@@ -741,6 +771,9 @@ type groupReceiverView struct {
 	// NeedsAddress is true when this instance reaches the member only through
 	// the relay, which carries no backups to a rest-server.
 	NeedsAddress bool `json:"needsAddress"`
+	// NeedsHost is true when the member has to set the address of its
+	// receiving server first.
+	NeedsHost bool `json:"needsHost,omitempty"`
 }
 
 // groupReceiverFor places a member's receiver: at the address the member set
@@ -749,6 +782,10 @@ func groupReceiverFor(m group.Member, r peerReceiver) groupReceiverView {
 	v := groupReceiverView{MemberID: m.ID, Name: r.InstanceName}
 	if v.Name == "" {
 		v.Name = m.Name
+	}
+	if r.Host == "" && r.NeedsHost {
+		v.NeedsHost = true
+		return v
 	}
 	host := r.Host
 	if host == "" && m.Direct {
@@ -848,7 +885,10 @@ func (s *Service) GroupReceiverLogin(ctx context.Context, memberID string) (grou
 	if r == nil {
 		return groupReceiverLogin{}, errNoMemberReceiver
 	}
-	if groupReceiverFor(*member, *r).NeedsAddress {
+	switch v := groupReceiverFor(*member, *r); {
+	case v.NeedsHost:
+		return groupReceiverLogin{}, errReceiverNeedsHost
+	case v.NeedsAddress:
 		return groupReceiverLogin{}, errReceiverNeedsAddress
 	}
 	if err := s.ensureReceiverRole(ctx, *member); err != nil {

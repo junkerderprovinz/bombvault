@@ -18,8 +18,10 @@ import type {
   AwayMember,
   DepositRefusal,
   Deposits,
+  Destination,
   FleetPeer,
   GroupMember,
+  GroupReceiver,
   MemberRoles,
   MeshOffer,
   PullSourceView,
@@ -46,6 +48,7 @@ import {
   zfsRole,
 } from "./instances/instances.testsupport";
 import { receiveRequest, replica, server } from "../components/zfs/replica/replica.testsupport";
+import { destination } from "../lib/placement.testsupport";
 
 const peer = (over: Partial<FleetPeer>) => fleetPeer({ name: "DXP480T", lastPollVersion: "v8.0.0+main.e3db401", ...over });
 const M1 = groupMember({ name: "DXP480T" });
@@ -65,6 +68,7 @@ let serverRuns: boolean;
 let requests: ZFSReceiveRequest[];
 let servers: ZFSReplicaServer[];
 let received: ReceivedRepoStatus[];
+let receivedHangs: boolean;
 let pulls: PullSourceView[];
 let offers: MeshOffer[];
 let itemReplica: ZFSReplica;
@@ -72,6 +76,10 @@ let askAnswer: Partial<RoleRequest>;
 let depositList: Deposits;
 let keeperRefusal: DepositRefusal | "" | null;
 let keeperTold: boolean;
+let roleTold: boolean;
+let destinations: Destination[];
+let groupReceivers: GroupReceiver[];
+const switchedOff: string[] = [];
 const CODE = "K7QF2-M9XRT-4HPLD-W3NVC";
 const SINCE = new Date(2026, 2, 9, 12).toISOString();
 const keeperAsked: string[] = [];
@@ -122,6 +130,10 @@ vi.mock("../lib/api", async (importOriginal) => {
     removeMember: (memberId: string) => {
       removed.push(memberId);
       away = away.filter((m) => m.id !== memberId);
+      // The server ends the requests and leaves ZFS replication and deposits.
+      roles = roles.filter(
+        (r) => r.memberId !== memberId || r.byMember.zfs || r.byMember.keeper || r.forMember.zfs || r.forMember.keeper,
+      );
       return Promise.resolve({ ok: true });
     },
     listRoles: () => answer("listRoles", rolesOk ? { ok: true, members: roles, self: selfRoles } : { ok: false, error: "the roles are locked" }),
@@ -134,7 +146,11 @@ vi.mock("../lib/api", async (importOriginal) => {
     withdrawRole: (memberId: string, role: "receiver" | "fetcher") => {
       withdrawn.push([memberId, role]);
       roles = roles.map((r) => (r.memberId === memberId ? { ...r, byMember: { ...r.byMember, [role]: null } } : r));
-      return Promise.resolve({ ok: true, told: true });
+      return Promise.resolve({ ok: true, told: roleTold });
+    },
+    updateDestination: (id: string, edit: { enabled?: boolean }) => {
+      if (edit.enabled === false) switchedOff.push(id);
+      return Promise.resolve({ ok: true });
     },
     listDeposits: () => answer("listDeposits", { ok: true, deposits: depositList }),
     askKeeper: (memberId: string) => {
@@ -159,15 +175,16 @@ vi.mock("../lib/api", async (importOriginal) => {
       return Promise.resolve({ ok: true, told: keeperTold, codeGone: depositList.sent.length === 0 });
     },
     listMeshOffers: () => answer("listMeshOffers", { ok: true, offers }),
-    listReceivedRepos: () => answer("listReceivedRepos", { ok: true, repos: received }),
+    listReceivedRepos: () =>
+      receivedHangs ? new Promise<never>(() => undefined) : answer("listReceivedRepos", { ok: true, repos: received }),
     listPullSources: () => answer("listPullSources", { ok: true, sources: pulls }),
     getReceiverServer: () =>
       answer("getReceiverServer", {
         ok: true,
         server: serverRuns ? { logins: [], check: "protected", present: true, checkedAt: 0, url: "", user: "", hostPath: "" } : null,
       }),
-    listDestinations: () => Promise.resolve({ ok: true, destinations: [] }),
-    listGroupReceivers: () => Promise.resolve({ ok: true, receivers: [] }),
+    listDestinations: () => Promise.resolve({ ok: true, destinations }),
+    listGroupReceivers: () => Promise.resolve({ ok: true, receivers: groupReceivers }),
     listZFSDatasets: () => answer("listZFSDatasets", { ok: true, datasets: [{ id: "z1", dataset: "tank/appdata" }] }),
     getZFSReplica: () => Promise.resolve(itemReplica),
     patchZFSReplica: (id: string, patch: ZFSReplicaPatch) => {
@@ -254,6 +271,7 @@ beforeEach(() => {
   requests = [];
   servers = [];
   received = [];
+  receivedHangs = false;
   pulls = [];
   offers = [];
   itemReplica = replica({ target: { kind: "none", id: "" } });
@@ -261,6 +279,10 @@ beforeEach(() => {
   depositList = deposits();
   keeperRefusal = null;
   keeperTold = true;
+  roleTold = true;
+  destinations = [];
+  groupReceivers = [];
+  switchedOff.length = 0;
   keeperAsked.length = 0;
   keeperWithdrawn.length = 0;
   calls.length = 0;
@@ -633,6 +655,33 @@ describe("the role tiles of a paired instance", () => {
     expect(tile("m1", "receiver").getAttribute("data-state")).toBe("off");
   });
 
+  it("say that an instance out of reach has not heard yet, and that its storage location stays on", async () => {
+    roleTold = false;
+    roles = [memberRoles({ name: "DXP480T", byMember: roleSide({ receiver: allowed() }) })];
+    await renderPage();
+    await click(tile("m1", "receiver"));
+    await click(within(question()).getByRole("button", { name: en["instances.role.switchOff"] }));
+    const said = `${en["instances.role.notTold"]} ${en["instances.role.receiverStillOn"]}`.replaceAll("{peer}", "DXP480T");
+    expect(screen.getByText(said)).toBeTruthy();
+  });
+
+  it("switch off the storage location on a Receiver's server along with the role", async () => {
+    groupReceivers = [{ memberId: "m1", name: "DXP480T", url: "http://192.168.1.21:8000", needsAddress: false }];
+    destinations = [destination({ id: "d1", repo: "rest:http://192.168.1.21:8000/cellar-login", enabled: true })];
+    roles = [memberRoles({ name: "DXP480T", byMember: roleSide({ receiver: allowed() }) })];
+    await renderPage();
+    await click(tile("m1", "receiver"));
+    await click(within(question()).getByRole("button", { name: en["instances.role.switchOff"] }));
+    expect(switchedOff).toEqual(["d1"]);
+  });
+
+  it("show that an allowed Receiver copies nothing until a storage location points at it", async () => {
+    groupReceivers = [{ memberId: "m1", name: "DXP480T", url: "http://192.168.1.21:8000", needsAddress: false }];
+    roles = [memberRoles({ name: "DXP480T", byMember: roleSide({ receiver: allowed({ store: "rest" }) }) })];
+    await renderPage();
+    expect(tile("m1", "receiver").textContent).toContain(en["instances.role.noDestination"]);
+  });
+
   it("take back a request that still waits the same way", async () => {
     roles = [memberRoles({ name: "DXP480T", byMember: roleSide({ fetcher: roleRequest() }) })];
     await renderPage();
@@ -997,6 +1046,24 @@ describe("an instance that is away", () => {
     expect(document.querySelector('[data-instance="m1"]')).toBeNull();
   });
 
+  it("goes with Remove when only a role request named it", async () => {
+    flags.fleetEnabled = false;
+    roles = [memberRoles({ name: "DXP480T", reachable: false, byMember: roleSide({ fetcher: allowed() }) })];
+    await renderPage();
+    await click(within(card("m1")).getByRole("button", { name: en["fleet.remove"] }));
+    await click(within(card("m1")).getByRole("button", { name: en["fleet.confirmRemove"] }));
+    expect(document.querySelector('[data-instance="m1"]')).toBeNull();
+  });
+
+  it("says why its card stays when ZFS replication still links it", async () => {
+    flags.fleetEnabled = false;
+    roles = [memberRoles({ name: "DXP480T", reachable: false, byMember: roleSide({ zfs: zfsRole("allowed") }) })];
+    await renderPage();
+    await click(within(card("m1")).getByRole("button", { name: en["fleet.remove"] }));
+    await click(within(card("m1")).getByRole("button", { name: en["fleet.confirmRemove"] }));
+    expect(screen.getByText(en["instances.removeKeptByRoles"].replaceAll("{peer}", "DXP480T"))).toBeTruthy();
+  });
+
   it("is one card once it is back", async () => {
     members = [M1];
     away = [];
@@ -1107,6 +1174,12 @@ describe("rows that belong to no instance", () => {
     received = [receivedRepo()];
     await renderPage();
     expect(screen.queryByText(en["instances.unplaced.title"])).toBeNull();
+  });
+
+  it("do not keep the page waiting while their backends are probed", async () => {
+    receivedHangs = true;
+    await renderPage();
+    expect(cards().map((c) => c.getAttribute("data-instance"))).toEqual(["self", "m1"]);
   });
 });
 
