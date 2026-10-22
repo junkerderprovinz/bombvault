@@ -830,9 +830,6 @@ const eu: Partial<Translations> = {
   "own.address": "Helbidea",
   "own.addressHint": "Adibidez s3:ostalaria/bucket/karpeta edo rest:http://ostalaria:8000/repo. BombVault-ek karpeta bat gehitzen du atal bakoitzeko.",
   "own.signInHint": "Gordetako zure saio-hasieretatik aukeratua. Urruneko helbide batek behar du.",
-  "own.safety": "Segurtasun-ezarpenak",
-  "own.safetyHint": "Banda-zabaleraren mugak, gehitu soilik eta hazkunde-alarma eskuz idatzitako helbide baterako.",
-  "own.open": "Ireki",
   "own.what": "Zer gertatzen da",
   "own.pick": "Aukeratu nora doan karpeta propioa.",
   "own.lineSame": "{section} atalak bere babeskopiak {name} helmugan ditu dagoeneko.",
@@ -844,6 +841,8 @@ const eu: Partial<Translations> = {
   "own.lineStay": "one={from} helmugako babeskopia han geratzen da.|other={from} helmugako {n} babeskopiak han geratzen dira.",
   "own.lineCopies": "Kopiek {list} helmugetara joaten jarraitzen dute.",
   "own.lineProtection": "Babesa, banda-zabaleraren mugak eta hazkunde-alarma {name} helmugatik datoz.",
+  "own.lineKeepWider": "Kopia horrek babeskopia batzuk {section} atalaren mantentze-arauek baino denbora gehiagoz gordetzen ditu. Aldaketatik aurrera, {section} atalak bietako edozein arauk gordetzen duen guztia gordetzen du, beraz babeskopia horietako bat ere ez da galtzen.",
+  "own.lineSwitchOn": "Karpeta propioa desaktibatuta dago, beraz babeskopiak zuzenean kopia horretara doaz. Aldaketak karpeta propioa berriro aktibatzen du.",
   "own.copyOver": "Kopiatu dagoeneko egindako babeskopiak",
   "own.copyOverHint": "Desaktibatuta: dauden lekuan geratzen dira eta ez dira kopiatzen.",
   "own.blocked": "Karpeta propioa ezin da horrela mugitu.",
@@ -3146,6 +3145,8 @@ const eu: Partial<Translations> = {
   "placementCode.moveDirectRepo": "Elementuek zuzenean toki honetara egiten dute babeskopia, etxeko kopiarik gabe, beraz atala ezin da mugitu. Aldatu lehenik elementu horiek Lokala aukerara.",
   "placementCode.moveSignIn": "Bi tokiek modu berean hasten dute saioa, baina kredentzial desberdinekin, eta kopia batek bietako bat bakarrik erabil dezake. Mugitu lehenik atala zerbitzari honetako karpeta batera, eta handik toki berrira.",
   "placementCode.moveRunning": "Atal hau mugitzen ari da jada. Laburpena orrian jarrai dezakezu.",
+  "placementCode.ownFolderUnreadable": "Ezin izan dira irakurri karpeta propio zaharreko babeskopiak, beraz ezin dira kopiatu. Egiaztatu diskoa muntatuta dagoela edo tokiak erantzuten duela, eta saiatu berriro.",
+  "placementCode.ownFolderThere": "Hemen dago atal baten karpeta propioa. Lehenik, eraman beste toki batera orri honetako Karpeta propioak atalean. Ondoren, biltegiratze-kokapena kendu daiteke.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} zuzenak orain gutxiago gordetzen du. Kopia bakarra hor duten elementuak: {n}.",

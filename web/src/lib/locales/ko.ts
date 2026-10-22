@@ -710,9 +710,6 @@ const ko: Partial<Translations> = {
   "own.address": "주소",
   "own.addressHint": "예: s3:host/bucket/folder 또는 rest:http://host:8000/repo. BombVault는 섹션마다 폴더를 하나 추가합니다.",
   "own.signInHint": "저장된 자격 증명에서 고릅니다. 원격 주소에는 필요합니다.",
-  "own.safety": "안전 설정",
-  "own.safetyHint": "직접 입력한 주소의 대역폭 제한, 추가 전용, 증가 경보.",
-  "own.open": "열기",
   "own.what": "진행 내용",
   "own.pick": "전용 폴더를 옮길 곳을 고르세요.",
   "own.lineSame": "{section}은(는) 이미 {name}에 백업을 보관합니다.",
@@ -724,6 +721,8 @@ const ko: Partial<Translations> = {
   "own.lineStay": "{from}에 있는 백업 {n}개는 그대로 남습니다.",
   "own.lineCopies": "복사본은 계속 {list}(으)로 갑니다.",
   "own.lineProtection": "보호, 대역폭 제한, 증가 경보는 {name}의 설정을 따릅니다.",
+  "own.lineKeepWider": "그 복사본에는 {section}의 보존 규칙보다 오래 남겨 둔 백업이 있습니다. 전환 후에는 {section}이(가) 두 규칙 중 하나라도 남기는 것을 모두 남기므로, 그 백업은 하나도 사라지지 않습니다.",
+  "own.lineSwitchOn": "전용 폴더가 꺼져 있어 백업이 그 복사본으로 바로 갑니다. 전환하면 전용 폴더가 다시 켜집니다.",
   "own.copyOver": "이미 만든 백업 복사",
   "own.copyOverHint": "끔: 지금 위치에 남고 복사되지 않습니다.",
   "own.blocked": "이대로는 전용 폴더를 옮길 수 없습니다.",
@@ -3127,6 +3126,8 @@ const ko: Partial<Translations> = {
   "placementCode.moveDirectRepo": "항목이 원래 위치의 사본 없이 이 위치로 직접 백업하고 있어서 섹션을 이동할 수 없습니다. 먼저 해당 항목을 '로컬'로 바꾸세요.",
   "placementCode.moveSignIn": "두 위치는 같은 방식으로 로그인하지만 자격 증명이 서로 달라서, 하나의 사본은 둘 중 하나만 사용할 수 있습니다. 먼저 섹션을 이 서버의 폴더로 이동한 다음, 거기서 새 위치로 이동하세요.",
   "placementCode.moveRunning": "이 섹션은 이미 이동 중입니다. '개요'에서 확인할 수 있습니다.",
+  "placementCode.ownFolderUnreadable": "이전 전용 폴더의 백업을 읽을 수 없어 복사할 수 없습니다. 디스크가 마운트되어 있는지, 그 위치가 응답하는지 확인한 뒤 다시 시도하세요.",
+  "placementCode.ownFolderThere": "여기에 어떤 섹션의 전용 폴더가 있습니다. 먼저 이 페이지의 '전용 폴더'에서 다른 곳으로 옮기세요. 그다음 저장 위치를 제거할 수 있습니다.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} 직접은 이제 더 적게 보관합니다. 유일한 사본이 그곳에 있는 항목: {n}개.",

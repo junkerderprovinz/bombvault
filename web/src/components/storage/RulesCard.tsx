@@ -6,7 +6,7 @@ import { presetOf, type KeepCounts } from "../../lib/keepPlan";
 import { formatList } from "../../lib/placement";
 import { useProgress } from "../../lib/progress";
 import { DOMAIN_LABEL, canFollow, keepCounts, retentionKeep } from "../../lib/storageLocations";
-import { liveRun, moveKey, moveText } from "../../lib/storageRuns";
+import { moveText, sectionMoveRun } from "../../lib/storageRuns";
 import { sectionSettings } from "../../lib/storageWrites";
 import { useToast } from "../../lib/toast";
 import { useConfirm } from "../../lib/useConfirm";
@@ -189,7 +189,7 @@ export function RulesCard({ edit, hueIndex }: { edit: LocationEdit; hueIndex: nu
           {sections.map((section) => {
             const own = section.own.map((setting) => t(OWN_LABEL[setting]));
             const movable = location.object === "destination" && section.use === "copy" && !!section.targetId;
-            const run = section.targetId ? liveRun(progress, moveKey(section.targetId)) : null;
+            const run = sectionMoveRun(progress, section);
             return (
               <div key={section.domain} className="flex flex-wrap items-center gap-x-3 gap-y-2 py-3 first:pt-0 last:pb-0">
                 <DomainGlyph domain={section.domain} />

@@ -1,15 +1,22 @@
 // The runs a storage location starts that are neither a backup nor a copy on
-// schedule: moving a section's copy to another destination, and deleting the
-// backups at a storage location before it is removed.
+// schedule: moving a section's copy or own folder to another place, and
+// deleting the backups at a storage location before it is removed.
 
+import type { OffsiteDomain, StorageLocationSection } from "./api";
 import type { useT } from "./i18n";
-import { MOVE_PREFIX, offsiteRunProgress, type ProgressMap, type ProgressState } from "./progress";
+import { isSectionMove, MOVE_PREFIX, OWN_FOLDER_PREFIX, offsiteRunProgress, type ProgressMap, type ProgressState } from "./progress";
 
 type T = ReturnType<typeof useT>["t"];
 
 /** The progress key a section's move reports under. */
 export function moveKey(targetId: string): string {
   return MOVE_PREFIX + targetId;
+}
+
+/** The progress key the copy before a section's own folder moves reports
+ *  under. */
+export function ownFolderKey(domain: OffsiteDomain): string {
+  return OWN_FOLDER_PREFIX + domain;
 }
 
 const ERASE = "erase:";
@@ -27,11 +34,20 @@ export function liveRun(progress: ProgressMap, key: string): ProgressState | nul
   return state?.active && !state.finished ? state : null;
 }
 
+/** The move a section's row at a storage location follows while it runs: a
+ *  copy's move to another place, or the copy before the section's own folder
+ *  leaves. */
+export function sectionMoveRun(progress: ProgressMap, section: StorageLocationSection): ProgressState | null {
+  if (section.targetId) return liveRun(progress, moveKey(section.targetId));
+  if (section.use === "home" && !section.repoId) return liveRun(progress, ownFolderKey(section.domain));
+  return null;
+}
+
 /** Whether a section is moving or a storage location is being emptied. The busy
  *  hints leave both out, so the readers of the locations ask here to read
  *  again once such a run is gone. */
 export function storageRunning(progress: ProgressMap): boolean {
-  return Object.keys(progress).some((key) => key.startsWith(ERASE) || key.startsWith(MOVE_PREFIX));
+  return Object.keys(progress).some((key) => key.startsWith(ERASE) || isSectionMove(key));
 }
 
 /** What a row says while its section moves: that it does, and which backup

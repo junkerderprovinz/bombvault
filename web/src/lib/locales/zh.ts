@@ -710,9 +710,6 @@ const zh: Partial<Translations> = {
   "own.address": "地址",
   "own.addressHint": "例如 s3:host/bucket/folder 或 rest:http://host:8000/repo。BombVault 会为每个部分添加一个文件夹。",
   "own.signInHint": "从你保存的凭据中选择。远程地址需要凭据。",
-  "own.safety": "安全设置",
-  "own.safetyHint": "手动输入地址的带宽限制、仅追加和增长警报。",
-  "own.open": "打开",
   "own.what": "将会发生什么",
   "own.pick": "选择专属文件夹的去处。",
   "own.lineSame": "{section} 已在 {name} 中保存自己的备份。",
@@ -724,6 +721,8 @@ const zh: Partial<Translations> = {
   "own.lineStay": "{from} 中的 {n} 份备份留在原处。",
   "own.lineCopies": "副本继续发送到 {list}。",
   "own.lineProtection": "保护、带宽限制和增长警报沿用 {name} 的设置。",
+  "own.lineKeepWider": "该副本中有些备份的保留时间比 {section} 的保留规则更长。切换后，{section} 会保留任一规则保留的全部备份，因此这些备份都不会丢失。",
+  "own.lineSwitchOn": "专属文件夹已关闭，所以备份直接写入该副本。切换会重新开启专属文件夹。",
   "own.copyOver": "复制已有的备份",
   "own.copyOverHint": "关闭：它们留在原处，不会被复制。",
   "own.blocked": "专属文件夹无法这样移动。",
@@ -3127,6 +3126,8 @@ const zh: Partial<Translations> = {
   "placementCode.moveDirectRepo": "条目直接备份到这个位置，原位置没有副本，因此无法移动该分区。请先把这些条目切换为“本地”。",
   "placementCode.moveSignIn": "两个位置使用相同的登录方式，但凭据不同，而一份副本只能使用其中一种。请先把该分区移到此服务器上的文件夹，再从那里移到新位置。",
   "placementCode.moveRunning": "该分区正在移动。你可以在“概览”中查看进度。",
+  "placementCode.ownFolderUnreadable": "无法读取旧专属文件夹中的备份，因此无法复制。请检查磁盘是否已挂载或该位置是否有响应，然后重试。",
+  "placementCode.ownFolderThere": "这里有某个分区的专属文件夹。请先在本页的“专属文件夹”中把它移到别处，之后才能移除此存储位置。",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} 直接现在保留得更少。唯一副本在那里的条目：{n}。",

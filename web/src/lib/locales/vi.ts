@@ -710,9 +710,6 @@ const vi: Partial<Translations> = {
   "own.address": "Địa chỉ",
   "own.addressHint": "Ví dụ s3:host/bucket/folder hoặc rest:http://host:8000/repo. BombVault thêm một thư mục cho mỗi phần.",
   "own.signInHint": "Chọn từ thông tin đăng nhập bạn đã lưu. Địa chỉ từ xa cần có một mục.",
-  "own.safety": "Cài đặt an toàn",
-  "own.safetyHint": "Giới hạn băng thông, chỉ thêm và cảnh báo tăng trưởng cho địa chỉ gõ tay.",
-  "own.open": "Mở",
   "own.what": "Điều gì xảy ra",
   "own.pick": "Chọn nơi thư mục riêng sẽ đến.",
   "own.lineSame": "{section} đã giữ bản sao lưu của mình trong {name}.",
@@ -724,6 +721,8 @@ const vi: Partial<Translations> = {
   "own.lineStay": "{n} bản sao lưu trong {from} ở lại đó.",
   "own.lineCopies": "Các bản sao tiếp tục đi đến {list}.",
   "own.lineProtection": "Bảo vệ, giới hạn băng thông và cảnh báo tăng trưởng lấy từ {name}.",
+  "own.lineKeepWider": "Bản sao đó giữ một số bản sao lưu lâu hơn quy tắc lưu giữ của {section}. Từ lúc chuyển, {section} giữ mọi thứ mà một trong hai quy tắc giữ, nên không bản sao lưu nào trong số đó bị mất.",
+  "own.lineSwitchOn": "Thư mục riêng đang tắt, nên các bản sao lưu đi thẳng vào bản sao đó. Việc chuyển sẽ bật lại thư mục riêng.",
   "own.copyOver": "Sao chép các bản sao lưu đã tạo",
   "own.copyOverHint": "Tắt: chúng ở nguyên chỗ cũ và không được sao chép.",
   "own.blocked": "Không thể chuyển thư mục riêng theo cách này.",
@@ -3127,6 +3126,8 @@ const vi: Partial<Translations> = {
   "placementCode.moveDirectRepo": "Các mục đang sao lưu thẳng vào nơi này, không có bản sao ở vị trí gốc, nên không thể di chuyển phần. Hãy chuyển các mục đó sang Cục bộ trước.",
   "placementCode.moveSignIn": "Cả hai nơi đăng nhập theo cùng một cách nhưng bằng thông tin xác thực khác nhau, và một bản sao chỉ dùng được một trong hai. Hãy di chuyển phần vào một thư mục trên máy chủ này trước, rồi từ đó sang nơi mới.",
   "placementCode.moveRunning": "Phần này đang được di chuyển. Bạn có thể theo dõi tại Tổng quan.",
+  "placementCode.ownFolderUnreadable": "Không đọc được các bản sao lưu trong thư mục riêng cũ, nên không thể sao chép chúng. Hãy kiểm tra ổ đĩa đã được gắn hoặc nơi đó có phản hồi, rồi thử lại.",
+  "placementCode.ownFolderThere": "Thư mục riêng của một phần nằm ở đây. Hãy chuyển nó sang nơi khác trước, trong mục Thư mục riêng ở trang này. Sau đó có thể gỡ vị trí lưu trữ.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} trực tiếp giờ giữ ít hơn. Các mục có bản sao duy nhất ở đó: {n}.",

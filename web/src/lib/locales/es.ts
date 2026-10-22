@@ -715,9 +715,6 @@ const es: Partial<Translations> = {
   "own.address": "Dirección",
   "own.addressHint": "Por ejemplo s3:host/bucket/carpeta o rest:http://host:8000/repo. BombVault añade una carpeta por sección.",
   "own.signInHint": "Elegidas de tus credenciales guardadas. Una dirección remota las necesita.",
-  "own.safety": "Ajustes de seguridad",
-  "own.safetyHint": "Límites de ancho de banda, solo anexar y la alarma de crecimiento para una dirección escrita a mano.",
-  "own.open": "Abrir",
   "own.what": "Qué pasa",
   "own.pick": "Elige adónde va la carpeta propia.",
   "own.lineSame": "{section} ya guarda sus propias copias de seguridad en {name}.",
@@ -729,6 +726,8 @@ const es: Partial<Translations> = {
   "own.lineStay": "one=La copia de seguridad de {from} se queda allí.|other=Las {n} copias de seguridad de {from} se quedan allí.",
   "own.lineCopies": "Las copias siguen yendo a {list}.",
   "own.lineProtection": "La protección, los límites de ancho de banda y la alarma de crecimiento vienen de {name}.",
+  "own.lineKeepWider": "Esa copia guarda algunas copias de seguridad más tiempo que las reglas de retención de {section}. Desde el cambio, {section} guarda todo lo que guarde cualquiera de las dos, así que no se pierde ninguna de esas copias.",
+  "own.lineSwitchOn": "La carpeta propia está desactivada, así que las copias de seguridad van directamente a esa copia. El cambio vuelve a activar la carpeta propia.",
   "own.copyOver": "Copiar las copias de seguridad ya hechas",
   "own.copyOverHint": "Desactivado: se quedan donde están y no se copian.",
   "own.blocked": "La carpeta propia no se puede mover así.",
@@ -3134,6 +3133,8 @@ const es: Partial<Translations> = {
   "placementCode.moveDirectRepo": "Hay elementos que copian directamente en este lugar, sin una copia en casa, así que la sección no se puede mover. Pasa primero esos elementos a Local.",
   "placementCode.moveSignIn": "Los dos lugares inician sesión de la misma forma, pero con credenciales distintas, y una copia solo puede usar una de ellas. Mueve primero la sección a una carpeta de este servidor y desde ahí al lugar nuevo.",
   "placementCode.moveRunning": "Esta sección ya se está moviendo. Puedes seguirla en el Resumen.",
+  "placementCode.ownFolderUnreadable": "No se pudieron leer las copias de seguridad de la carpeta propia anterior, así que no se pueden copiar. Comprueba que el disco esté montado o que el lugar responda y vuelve a intentarlo.",
+  "placementCode.ownFolderThere": "Aquí está la carpeta propia de una sección. Muévela primero a otro lugar, en Carpetas propias en esta página. Después se puede quitar la ubicación de almacenamiento.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} directo ahora conserva menos. Elementos cuya única copia está ahí: {n}.",

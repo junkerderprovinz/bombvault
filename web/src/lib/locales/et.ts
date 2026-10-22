@@ -830,9 +830,6 @@ const et: Partial<Translations> = {
   "own.address": "Aadress",
   "own.addressHint": "Näiteks s3:host/bucket/kaust või rest:http://host:8000/repo. BombVault loob iga jaotise jaoks ühe kausta.",
   "own.signInHint": "Valitakse sinu salvestatud sisselogimiste seast. Kaugaadress vajab seda.",
-  "own.safety": "Turvaseaded",
-  "own.safetyHint": "Ribalaiuse piirangud, ainult lisamine ja kasvuhäire käsitsi sisestatud aadressi jaoks.",
-  "own.open": "Ava",
   "own.what": "Mis juhtub",
   "own.pick": "Vali, kuhu oma kaust läheb.",
   "own.lineSame": "{section} hoiab oma varukoopiaid juba asukohas {name}.",
@@ -844,6 +841,8 @@ const et: Partial<Translations> = {
   "own.lineStay": "one=Varukoopia jääb asukohta {from}.|other={n} varukoopiat jäävad asukohta {from}.",
   "own.lineCopies": "Koopiad lähevad edasi asukohta {list}.",
   "own.lineProtection": "Kaitse, ribalaiuse piirangud ja kasvuhäire tulevad asukohast {name}.",
+  "own.lineKeepWider": "See koopia hoiab mõnda varukoopiat kauem kui jaotise {section} säilitusreeglid. Pärast vahetust hoiab {section} alles kõik, mida kumbki reegel hoiab, nii et ükski neist varukoopiatest ei lähe kaotsi.",
+  "own.lineSwitchOn": "Oma kaust on välja lülitatud, seega lähevad varukoopiad otse sellesse koopiasse. Vahetus lülitab oma kausta uuesti sisse.",
   "own.copyOver": "Kopeeri juba tehtud varukoopiad",
   "own.copyOverHint": "Väljas: need jäävad oma kohale ja neid ei kopeerita.",
   "own.blocked": "Oma kausta ei saa nii teisaldada.",
@@ -3146,6 +3145,8 @@ const et: Partial<Translations> = {
   "placementCode.moveDirectRepo": "Kirjed varundavad otse siia, ilma koduse koopiata, seega ei saa valdkonda teisaldada. Lülita need kirjed kõigepealt valikule Kohalik.",
   "placementCode.moveSignIn": "Mõlemasse kohta logitakse sisse samal viisil, kuid erinevate andmetega, ja üks koopia saab kasutada ainult ühte neist. Teisalda valdkond kõigepealt selle serveri kausta ja sealt uude kohta.",
   "placementCode.moveRunning": "See valdkond on juba teisaldamisel. Saad seda jälgida lehel Ülevaade.",
+  "placementCode.ownFolderUnreadable": "Vana oma kausta varukoopiaid ei õnnestunud lugeda, seega ei saa neid kopeerida. Kontrolli, et ketas oleks ühendatud või asukoht vastaks, ja proovi uuesti.",
+  "placementCode.ownFolderThere": "Siin asub ühe jaotise oma kaust. Teisalda see enne mujale, sellel lehel jaotises Oma kaustad. Seejärel saab salvestuskoha eemaldada.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} otse säilitab nüüd vähem. Kirjed, mille ainus koopia on seal: {n}.",

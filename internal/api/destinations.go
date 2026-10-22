@@ -542,9 +542,19 @@ func (s *Service) removeCredSet(id string) {
 	})
 }
 
-// removeRcloneRemote drops a remote no stored location refers to any more.
+// removeRcloneRemote drops a remote no stored location refers to any more,
+// a section's own folder included.
 func (s *Service) removeRcloneRemote(remote string) {
 	prefix := "rclone:" + remote + ":"
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return
+	}
+	for _, domain := range offsiteConfigDomains {
+		if strings.HasPrefix(strings.TrimSpace(domainPathRaw(domain, settings)), prefix) {
+			return
+		}
+	}
 	for _, list := range []func() ([]store.OffsiteTarget, error){s.store.ListOffsiteTargets, s.store.ListNamedRepos, s.store.ListDestinations} {
 		rows, err := list()
 		if err != nil {

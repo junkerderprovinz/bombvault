@@ -830,9 +830,6 @@ const is: Partial<Translations> = {
   "own.address": "Heimilisfang",
   "own.addressHint": "Til dæmis s3:hýsill/bucket/mappa eða rest:http://hýsill:8000/repo. BombVault býr til eina möppu fyrir hvern hluta.",
   "own.signInHint": "Valin úr vistuðu innskráningunum þínum. Fjarlægt heimilisfang þarf eina.",
-  "own.safety": "Öryggisstillingar",
-  "own.safetyHint": "Bandvíddarmörk, aðeins viðbót og vaxtarviðvörun fyrir handslegið heimilisfang.",
-  "own.open": "Opna",
   "own.what": "Hvað gerist",
   "own.pick": "Veldu hvert eigin mappan fer.",
   "own.lineSame": "{section} geymir nú þegar sín eigin afrit í {name}.",
@@ -844,6 +841,8 @@ const is: Partial<Translations> = {
   "own.lineStay": "one=Afritið í {from} verður þar eftir.|other=Þau {n} afrit í {from} verða þar eftir.",
   "own.lineCopies": "Afrit halda áfram að fara í {list}.",
   "own.lineProtection": "Vernd, bandvíddarmörk og vaxtarviðvörun koma frá {name}.",
+  "own.lineKeepWider": "Það afrit geymir sum afrit lengur en varðveislureglur {section}. Frá skiptunum geymir {section} allt sem önnur hvor reglan geymir, svo ekkert þessara afrita glatast.",
+  "own.lineSwitchOn": "Eigin mappan er óvirk, svo afritin fara beint í það afrit. Skiptin kveikja aftur á eigin möppunni.",
   "own.copyOver": "Afrita þau afrit sem þegar eru til",
   "own.copyOverHint": "Af: þau verða þar sem þau eru og eru ekki afrituð.",
   "own.blocked": "Ekki er hægt að færa eigin möppu svona.",
@@ -3146,6 +3145,8 @@ const is: Partial<Translations> = {
   "placementCode.moveDirectRepo": "Færslur afrita beint á þennan stað, án afrits heima, svo svæðið getur ekki flutt sig. Settu þessar færslur fyrst á Staðbundið.",
   "placementCode.moveSignIn": "Báðir staðirnir skrá sig inn á sama hátt en með mismunandi auðkenni, og eitt afrit getur aðeins notað annað þeirra. Færðu svæðið fyrst í möppu á þessum þjóni og þaðan á nýja staðinn.",
   "placementCode.moveRunning": "Þetta svæði er þegar í flutningi. Þú getur fylgst með því í Yfirliti.",
+  "placementCode.ownFolderUnreadable": "Ekki tókst að lesa afritin í gömlu eigin möppunni, svo ekki er hægt að afrita þau. Athugaðu hvort diskurinn sé tengdur eða staðurinn svari og reyndu aftur.",
+  "placementCode.ownFolderThere": "Hér er eigin mappa svæðis. Færðu hana fyrst annað undir Eigin möppur á þessari síðu. Eftir það er hægt að fjarlægja geymslustaðinn.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} beint varðveitir nú minna. Færslur sem eiga eina afritið þar: {n}.",

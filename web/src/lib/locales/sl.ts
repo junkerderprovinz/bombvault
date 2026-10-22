@@ -830,9 +830,6 @@ const sl: Partial<Translations> = {
   "own.address": "Naslov",
   "own.addressHint": "Na primer s3:gostitelj/bucket/mapa ali rest:http://gostitelj:8000/repo. BombVault doda eno mapo na razdelek.",
   "own.signInHint": "Izbrane iz tvojih shranjenih poverilnic. Oddaljen naslov jih potrebuje.",
-  "own.safety": "Varnostne nastavitve",
-  "own.safetyHint": "Omejitve pasovne širine, samo dodajanje in alarm rasti za ročno vpisan naslov.",
-  "own.open": "Odpri",
   "own.what": "Kaj se zgodi",
   "own.pick": "Izberi, kam gre lastna mapa.",
   "own.lineSame": "{section} že hrani svoje varnostne kopije v {name}.",
@@ -844,6 +841,8 @@ const sl: Partial<Translations> = {
   "own.lineStay": "one=Varnostna kopija v {from} ostane tam.|two={n} varnostni kopiji v {from} ostaneta tam.|few={n} varnostne kopije v {from} ostanejo tam.|other={n} varnostnih kopij v {from} ostane tam.",
   "own.lineCopies": "Kopije še naprej gredo v {list}.",
   "own.lineProtection": "Zaščita, omejitve pasovne širine in alarm rasti pridejo iz {name}.",
+  "own.lineKeepWider": "Ta kopija nekatere varnostne kopije hrani dlje, kot določajo pravila hrambe razdelka {section}. Od zamenjave {section} obdrži vse, kar obdrži katero koli od teh pravil, zato se nobena od teh kopij ne izgubi.",
+  "own.lineSwitchOn": "Lastna mapa je izklopljena, zato varnostne kopije gredo neposredno v to kopijo. Zamenjava lastno mapo spet vklopi.",
   "own.copyOver": "Prekopiraj že narejene varnostne kopije",
   "own.copyOverHint": "Izklopljeno: ostanejo, kjer so, in se ne kopirajo.",
   "own.blocked": "Lastne mape ni mogoče premakniti tako.",
@@ -3130,6 +3129,8 @@ const sl: Partial<Translations> = {
   "placementCode.moveDirectRepo": "Vnosi se varnostno kopirajo neposredno na to mesto, brez kopije doma, zato razdelka ni mogoče premakniti. Najprej preklopi te vnose na Lokalno.",
   "placementCode.moveSignIn": "Obe mesti se prijavljata na enak način, vendar z različnimi poverilnicami, ena kopija pa lahko uporablja le eno od njih. Najprej premakni razdelek v mapo na tem strežniku, od tam pa na novo mesto.",
   "placementCode.moveRunning": "Ta razdelek se že premika. Spremljaš ga lahko v Pregledu.",
+  "placementCode.ownFolderUnreadable": "Varnostnih kopij v stari lastni mapi ni bilo mogoče prebrati, zato jih ni mogoče kopirati. Preveri, da je disk priklopljen ali da mesto odgovarja, in poskusi znova.",
+  "placementCode.ownFolderThere": "Tu je lastna mapa enega od razdelkov. Najprej jo premakni drugam pod Lastne mape na tej strani. Nato je mesto shranjevanja mogoče odstraniti.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} neposredno zdaj hrani manj. Vnosi, katerih edina kopija je tam: {n}.",

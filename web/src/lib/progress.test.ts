@@ -177,6 +177,10 @@ describe("anyActive", () => {
     expect(anyActive({ "move:t-box-flash": { phase: "replicate", active: true } })).toEqual({ active: false });
     expect(anyActive({ "offsite:flash": { phase: "replicate", active: true } }).active).toBe(true);
   });
+
+  it("leaves the copy before an own folder moves out too", () => {
+    expect(anyActive({ "own:containers": { phase: "replicate", active: true } })).toEqual({ active: false });
+  });
 });
 
 describe("parseProgressFrame counts", () => {

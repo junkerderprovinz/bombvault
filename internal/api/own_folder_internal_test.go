@@ -1,9 +1,12 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
 	"slices"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -236,5 +239,229 @@ func TestEachPlaceBringsOnlyTheSignInItsBackendReads(t *testing.T) {
 	}
 	if _, ok := bothSignIns("s3:https://garage/bv", s3, "s3:https://aws/bv", local); ok {
 		t.Fatal("two S3 places with different keys joined")
+	}
+}
+
+func TestACopyThatBecomesTheOwnFolderKeepsWhatItsRuleKept(t *testing.T) {
+	f := newPlacementFixture(t)
+	localKeepLast(t, f, 3)
+	box, err := f.st.SaveDestination(store.OffsiteTarget{Name: "Box", Repo: boxRepo, Provider: "box", RetentionKeepMonthly: 24})
+	if err != nil {
+		t.Fatal(err)
+	}
+	f.tickDestination(box, "vms")
+
+	steps := ownSteps(t, f.do("POST", "/api/storage/own-folders/preview", map[string]any{
+		"domains": []string{"vms"}, "location": "destination:" + box.ID,
+	}))
+	if !steps[0].WiderKeep {
+		t.Fatalf("step = %+v, want it to say the copy keeps more", steps[0])
+	}
+	ownSteps(t, f.do("POST", "/api/storage/own-folders", map[string]any{
+		"domains": []string{"vms"}, "location": "destination:" + box.ID,
+	}))
+
+	settings, _ := f.st.GetSettings()
+	if got := localKeep(settings, "vms"); got != (store.RetentionKeep{KeepLast: 3, KeepMonthly: 24}) {
+		t.Fatalf("vms keeps %+v, want both rules", got)
+	}
+	if got := localKeep(settings, "containers"); got != (store.RetentionKeep{KeepLast: 3}) {
+		t.Fatalf("containers keeps %+v, want its rule untouched", got)
+	}
+}
+
+func TestACopyThatKeepsEverythingLeavesTheOwnFolderUnaged(t *testing.T) {
+	if got := widerKeep(store.RetentionKeep{KeepLast: 3}, store.RetentionKeep{}); got != (store.RetentionKeep{}) {
+		t.Fatalf("widerKeep = %+v, want a rule that keeps everything", got)
+	}
+}
+
+func TestATypedOwnFolderOnAnAppendOnlyCopyStaysAppendOnly(t *testing.T) {
+	f := newPlacementFixture(t)
+	nas := f.target("files", "NAS", "rest:http://nas:8000/bv/files")
+	f.appendOnly(nas.ID)
+
+	ownSteps(t, f.do("POST", "/api/storage/own-folders", map[string]any{
+		"domains": []string{"files"}, "address": "rest:http://nas:8000/bv",
+	}))
+
+	row, ok := f.svc.primaryRemoteTarget("files")
+	if !ok || !row.Immutable {
+		t.Fatalf("row = %+v, want it append-only like the copy it took over", row)
+	}
+}
+
+func TestTakingOverTheCopyOfASectionWhoseOwnFolderIsOffSwitchesItOn(t *testing.T) {
+	f := newPlacementFixture(t)
+	box := f.destination("Box", boxRepo)
+	f.tickDestination(box, "flash")
+	if err := f.st.SetLocal("flash", false); err != nil {
+		t.Fatal(err)
+	}
+
+	steps := ownSteps(t, f.do("POST", "/api/storage/own-folders", map[string]any{
+		"domains": []string{"flash"}, "location": "destination:" + box.ID,
+	}))
+	if !steps[0].SwitchesOn {
+		t.Fatalf("step = %+v, want it to say the own folder goes on", steps[0])
+	}
+
+	settings, _ := f.st.GetSettings()
+	places, err := f.svc.sectionPlaces(settings, "flash", settings.FlashPath)
+	if err != nil {
+		t.Fatalf("flash has no place: %v", err)
+	}
+	if len(places) != 1 || !places[0].own() || places[0].repo != boxRepo+"/flash" {
+		t.Fatalf("flash backs up to %+v, want its own folder at Box", places)
+	}
+}
+
+func TestAnOwnFolderThatDoesNotAnswerIsNotCopiedAsIfEmpty(t *testing.T) {
+	f := newPlacementFixture(t)
+	vault := f.destination("Vault", vaultRepo)
+	const old = "rest:https://old:8000/bv/containers"
+	settings, _ := f.st.GetSettings()
+	settings.ContainersPath = old
+	if err := f.st.UpdateSettings(settings); err != nil {
+		t.Fatal(err)
+	}
+	f.eng.opens[old] = false
+	f.eng.openErr[old] = errors.New(`Fatal: unable to open config file: Head "https://old:8000/bv/containers/config": dial tcp: connection refused`)
+	req := map[string]any{"domains": []string{"containers"}, "location": "destination:" + vault.ID, "copyOver": true}
+
+	if res := f.do("POST", "/api/storage/own-folders", req); res["ok"] != false || res["code"] != "own-folder-unreadable" {
+		t.Fatalf("answer = %v, want the old own folder reported unreadable", res)
+	}
+	if settings, _ := f.st.GetSettings(); settings.ContainersPath != old {
+		t.Fatalf("path = %q, want the section left where its backups are", settings.ContainersPath)
+	}
+
+	req["copyOver"] = false
+	ownSteps(t, f.do("POST", "/api/storage/own-folders", req))
+	if settings, _ := f.st.GetSettings(); settings.ContainersPath != vaultRepo+"/containers" {
+		t.Fatalf("path = %q, want the switch without the copy", settings.ContainersPath)
+	}
+}
+
+func TestAnOwnFolderThatWasNeverCreatedMovesAtOnce(t *testing.T) {
+	f := newPlacementFixture(t)
+	vault := f.destination("Vault", vaultRepo)
+	const old = "rest:https://old:8000/bv/containers"
+	settings, _ := f.st.GetSettings()
+	settings.ContainersPath = old
+	if err := f.st.UpdateSettings(settings); err != nil {
+		t.Fatal(err)
+	}
+	f.eng.opens[old] = false
+
+	ownSteps(t, f.do("POST", "/api/storage/own-folders", map[string]any{
+		"domains": []string{"containers"}, "location": "destination:" + vault.ID, "copyOver": true,
+	}))
+	if settings, _ := f.st.GetSettings(); settings.ContainersPath != vaultRepo+"/containers" {
+		t.Fatalf("path = %q", settings.ContainersPath)
+	}
+}
+
+// copyHeld makes every copy wait until the returned func runs.
+func (f *placementFixture) copyHeld() (release func()) {
+	gate := make(chan struct{})
+	f.eng.onCopy = func() { <-gate }
+	var once sync.Once
+	release = func() { once.Do(func() { close(gate) }) }
+	f.t.Cleanup(release)
+	return release
+}
+
+func TestAMoveOfSeveralSectionsSwitchesNoneWhileOneIsStillMoving(t *testing.T) {
+	f := newPlacementFixture(t)
+	vault := f.destination("Vault", vaultRepo)
+	f.hold(f.domainPath("containers"), snap("a1", 100, "container:web"))
+	f.hold(vaultRepo+"/vms", snap("v0", 50, "vm:old"))
+	release := f.copyHeld()
+	ownSteps(t, f.do("POST", "/api/storage/own-folders", map[string]any{
+		"domains": []string{"containers"}, "location": "destination:" + vault.ID, "copyOver": true,
+	}))
+
+	res := f.do("POST", "/api/storage/own-folders", map[string]any{
+		"domains": []string{"containers", "vms"}, "location": "destination:" + vault.ID, "copyOver": true,
+	})
+	if res["ok"] != false || res["code"] != "move-running" {
+		t.Fatalf("answer = %v, want the running move named", res)
+	}
+	if settings, _ := f.st.GetSettings(); settings.VMsPath != "backups/vms" {
+		t.Fatalf("vms moved to %q although the request was refused", settings.VMsPath)
+	}
+
+	job := f.svc.destinationErasureJob(vault.ID)
+	plan, err := job.plan(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	var last []string
+	for _, entry := range plan.LastCopies {
+		last = append(last, entry.Identity)
+	}
+	_, err = f.svc.StartErasure(context.Background(), job, plan.Removal, last, func(store.Settings) {})
+	if !errors.Is(err, errMoveRunning) {
+		t.Fatalf("erasing Vault during the copy: %v, want it refused", err)
+	}
+	release()
+	f.waitOwnFolder("containers")
+}
+
+func TestAnOwnFolderDoesNotMoveIntoALocationBeingEmptied(t *testing.T) {
+	f := newPlacementFixture(t)
+	vault := f.destination("Vault", vaultRepo)
+	f.svc.cancelMu.Lock()
+	f.svc.runCancels["erase:"+vault.ID] = func() {}
+	f.svc.cancelMu.Unlock()
+
+	res := f.do("POST", "/api/storage/own-folders", map[string]any{
+		"domains": []string{"vms"}, "location": "destination:" + vault.ID,
+	})
+	if res["ok"] != false || res["code"] != "erase-running" {
+		t.Fatalf("answer = %v, want the erasure named", res)
+	}
+}
+
+func TestAPathSetWhileTheBackupsAreCopiedStays(t *testing.T) {
+	f := newPlacementFixture(t)
+	vault := f.destination("Vault", vaultRepo)
+	f.hold(f.domainPath("containers"), snap("a1", 100, "container:web"))
+	release := f.copyHeld()
+	ownSteps(t, f.do("POST", "/api/storage/own-folders", map[string]any{
+		"domains": []string{"containers"}, "location": "destination:" + vault.ID, "copyOver": true,
+	}))
+
+	settings, _ := f.st.GetSettings()
+	settings.ContainersPath = "elsewhere/containers"
+	if err := f.st.UpdateSettings(settings); err != nil {
+		t.Fatal(err)
+	}
+	release()
+	f.waitOwnFolder("containers")
+
+	if settings, _ := f.st.GetSettings(); settings.ContainersPath != "elsewhere/containers" {
+		t.Fatalf("path = %q, want the one set during the copy", settings.ContainersPath)
+	}
+}
+
+func TestAnOwnFolderDoesNotSwitchUnderARunningBackup(t *testing.T) {
+	f := newPlacementFixture(t)
+	vault := f.destination("Vault", vaultRepo)
+	unlock, ok := f.svc.tryLockDomainFor("vms", "backup")
+	if !ok {
+		t.Fatal("vms is locked already")
+	}
+	defer unlock()
+
+	res := f.do("POST", "/api/storage/own-folders", map[string]any{
+		"domains": []string{"vms"}, "location": "destination:" + vault.ID,
+	})
+	if res["ok"] != false || res["code"] != "domain-busy" {
+		t.Fatalf("answer = %v, want the running backup named", res)
+	}
+	if settings, _ := f.st.GetSettings(); settings.VMsPath != "backups/vms" {
+		t.Fatalf("path = %q", settings.VMsPath)
 	}
 }

@@ -713,9 +713,6 @@ const cs: Partial<Translations> = {
   "own.address": "Adresa",
   "own.addressHint": "Například s3:host/bucket/složka nebo rest:http://host:8000/repo. BombVault přidá jednu složku na sekci.",
   "own.signInHint": "Vybírá se z tvých uložených přihlašovacích údajů. Vzdálená adresa je potřebuje.",
-  "own.safety": "Bezpečnostní nastavení",
-  "own.safetyHint": "Limity šířky pásma, pouze přidávání a alarm růstu pro ručně zadanou adresu.",
-  "own.open": "Otevřít",
   "own.what": "Co se stane",
   "own.pick": "Vyber, kam půjde vlastní složka.",
   "own.lineSame": "{section} už má své zálohy v {name}.",
@@ -727,6 +724,8 @@ const cs: Partial<Translations> = {
   "own.lineStay": "one=Záloha v {from} tam zůstane.|few={n} zálohy v {from} tam zůstanou.|many={n} zálohy v {from} tam zůstane.|other={n} záloh v {from} tam zůstane.",
   "own.lineCopies": "Kopie dál jdou do {list}.",
   "own.lineProtection": "Ochrana, limity šířky pásma a alarm růstu pocházejí z {name}.",
+  "own.lineKeepWider": "Tato kopie uchovává některé zálohy déle než pravidla uchovávání sekce {section}. Po přepnutí si {section} ponechá vše, co ponechá kterékoli z nich, takže žádná z těchto záloh se neztratí.",
+  "own.lineSwitchOn": "Vlastní složka je vypnutá, takže zálohy jdou rovnou do této kopie. Přepnutí vlastní složku znovu zapne.",
   "own.copyOver": "Zkopírovat už vytvořené zálohy",
   "own.copyOverHint": "Vypnuto: zůstanou, kde jsou, a nezkopírují se.",
   "own.blocked": "Vlastní složku takto přesunout nejde.",
@@ -3134,6 +3133,8 @@ const cs: Partial<Translations> = {
   "placementCode.moveDirectRepo": "Položky se zálohují přímo sem, bez kopie doma, takže se sekce přesunout nedá. Nejdřív přepni tyto položky na Místní.",
   "placementCode.moveSignIn": "Obě místa se přihlašují stejným způsobem, ale s jinými přihlašovacími údaji, a jedna kopie může použít jen jedny z nich. Nejdřív přesuň sekci do složky na tomto serveru a odtud na nové místo.",
   "placementCode.moveRunning": "Tato sekce se už přesouvá. Můžeš to sledovat v Přehledu.",
+  "placementCode.ownFolderUnreadable": "Zálohy ve staré vlastní složce nešlo přečíst, takže je nelze zkopírovat. Zkontroluj, že je disk připojený nebo že místo odpovídá, a zkus to znovu.",
+  "placementCode.ownFolderThere": "Tady leží vlastní složka jedné sekce. Nejdřív ji přesuň jinam, v části Vlastní složky na této stránce. Potom půjde úložiště odebrat.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} přímo teď uchovává méně. Položky, jejichž jediná kopie je tam: {n}.",

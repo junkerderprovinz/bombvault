@@ -715,9 +715,6 @@ const tr: Partial<Translations> = {
   "own.address": "Adres",
   "own.addressHint": "Örneğin s3:sunucu/bucket/klasör veya rest:http://sunucu:8000/repo. BombVault her bölüm için bir klasör ekler.",
   "own.signInHint": "Kaydedilmiş oturum açma bilgilerinden seçilir. Uzak bir adres buna ihtiyaç duyar.",
-  "own.safety": "Güvenlik ayarları",
-  "own.safetyHint": "Elle yazılan bir adres için bant genişliği sınırları, yalnızca ekleme ve büyüme alarmı.",
-  "own.open": "Aç",
   "own.what": "Ne olur",
   "own.pick": "Kendi klasörünün nereye gideceğini seç.",
   "own.lineSame": "{section} kendi yedeklerini zaten {name} içinde tutuyor.",
@@ -729,6 +726,8 @@ const tr: Partial<Translations> = {
   "own.lineStay": "one={from} içindeki yedek orada kalır.|other={from} içindeki {n} yedek orada kalır.",
   "own.lineCopies": "Kopyalar {list} hedefine gitmeye devam eder.",
   "own.lineProtection": "Koruma, bant genişliği sınırları ve büyüme alarmı {name} hedefinden gelir.",
+  "own.lineKeepWider": "Bu kopya bazı yedekleri {section} için saklama kurallarından daha uzun tutuyor. Değişimden sonra {section}, iki kuraldan herhangi birinin tuttuğu her şeyi tutar; böylece bu yedeklerin hiçbiri kaybolmaz.",
+  "own.lineSwitchOn": "Kendi klasörü kapalı, bu yüzden yedekler doğrudan bu kopyaya gidiyor. Değişim kendi klasörünü yeniden açar.",
   "own.copyOver": "Zaten alınmış yedekleri kopyala",
   "own.copyOverHint": "Kapalı: oldukları yerde kalırlar ve kopyalanmazlar.",
   "own.blocked": "Kendi klasörü bu şekilde taşınamaz.",
@@ -3136,6 +3135,8 @@ const tr: Partial<Translations> = {
   "placementCode.moveDirectRepo": "Ögeler, ana yerde kopya olmadan doğrudan bu yere yedekleniyor, bu yüzden bölüm taşınamaz. Önce bu ögeleri Yerel seçeneğine geçir.",
   "placementCode.moveSignIn": "İki yer de aynı yöntemle oturum açıyor ama kimlik bilgileri farklı, ve bir kopya yalnızca birini kullanabilir. Önce bölümü bu sunucudaki bir klasöre, oradan da yeni yere taşı.",
   "placementCode.moveRunning": "Bu bölüm zaten taşınıyor. Genel bakış sayfasından izleyebilirsin.",
+  "placementCode.ownFolderUnreadable": "Eski kendi klasöründeki yedekler okunamadı, bu yüzden kopyalanamıyor. Diskin bağlı olduğunu ya da yerin yanıt verdiğini kontrol et ve yeniden dene.",
+  "placementCode.ownFolderThere": "Burada bir bölümün kendi klasörü var. Önce bu sayfadaki Kendi klasörleri bölümünden başka bir yere taşı. Ardından depolama konumu kaldırılabilir.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} doğrudan artık daha az tutuyor. Tek kopyası orada olan ögeler: {n}.",

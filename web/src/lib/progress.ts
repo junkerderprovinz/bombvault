@@ -87,6 +87,14 @@ const STEPS: BackupStep[] = ["stop", "read", "start"];
 /** What leads the key of a section's move to another place. */
 export const MOVE_PREFIX = "move:";
 
+/** What leads the key of the copy before a section's own folder moves. */
+export const OWN_FOLDER_PREFIX = "own:";
+
+/** Whether a key is the move of a section's copy or of its own folder. */
+export function isSectionMove(key: string): boolean {
+  return key.startsWith(MOVE_PREFIX) || key.startsWith(OWN_FOLDER_PREFIX);
+}
+
 /** The key of a pass over everything. Its entry counts the pass's items in
  *  `done` and `total`. */
 export const EVERYTHING_KEY = "everything";
@@ -307,8 +315,8 @@ function closeSource(): void {
  *
  * "maintenance" is left out: it takes the per-domain lock itself and reports
  * busy cleanly, so it must not disable the start buttons app-wide. So is the
- * move of a section's copy to another place: it runs for hours beside the
- * backups and holds its section only for the last step.
+ * move of a section's copy or own folder to another place: it runs for hours
+ * beside the backups and holds its section only for the last step.
  */
 export function anyActive(
   map: Record<string, { phase: string; active: boolean; lastSeen?: number; stage?: ProgressStage }>
@@ -320,7 +328,7 @@ export function anyActive(
     // not lock the bulk buttons forever. lastSeen is optional only so looser
     // shapes can be passed in; applyEvent always sets it.
     const stale = e.lastSeen !== undefined && now - e.lastSeen > STALE_MS;
-    if (k.startsWith(MOVE_PREFIX)) continue;
+    if (isSectionMove(k)) continue;
     if (e.active && !stale && (e.phase === "backup" || e.phase === "restore" || e.phase === "replicate")) {
       return { active: true, phase: e.phase, stage: e.stage };
     }

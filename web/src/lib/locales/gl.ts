@@ -830,9 +830,6 @@ const gl: Partial<Translations> = {
   "own.address": "Enderezo",
   "own.addressHint": "Por exemplo s3:host/bucket/cartafol ou rest:http://host:8000/repo. BombVault engade un cartafol por sección.",
   "own.signInHint": "Escollidas das túas credenciais gardadas. Un enderezo remoto necesítaas.",
-  "own.safety": "Axustes de seguridade",
-  "own.safetyHint": "Límites de largo de banda, só engadir e a alarma de crecemento para un enderezo escrito a man.",
-  "own.open": "Abrir",
   "own.what": "Que pasa",
   "own.pick": "Escolle a onde vai o cartafol propio.",
   "own.lineSame": "{section} xa garda as súas propias copias de seguridade en {name}.",
@@ -844,6 +841,8 @@ const gl: Partial<Translations> = {
   "own.lineStay": "one=A copia de seguridade de {from} queda alí.|other=As {n} copias de seguridade de {from} quedan alí.",
   "own.lineCopies": "As copias seguen indo a {list}.",
   "own.lineProtection": "A protección, os límites de largo de banda e a alarma de crecemento veñen de {name}.",
+  "own.lineKeepWider": "Esa copia garda algunhas copias de seguridade máis tempo que as regras de retención de {section}. Desde o cambio, {section} garda todo o que garde calquera das dúas, así que non se perde ningunha desas copias.",
+  "own.lineSwitchOn": "O cartafol propio está desactivado, así que as copias de seguridade van directamente a esa copia. O cambio volve activar o cartafol propio.",
   "own.copyOver": "Copiar as copias de seguridade xa feitas",
   "own.copyOverHint": "Desactivado: quedan onde están e non se copian.",
   "own.blocked": "O cartafol propio non se pode mover así.",
@@ -3146,6 +3145,8 @@ const gl: Partial<Translations> = {
   "placementCode.moveDirectRepo": "Hai elementos que fan copia directamente neste lugar, sen copia na casa, así que a sección non se pode mover. Pasa primeiro eses elementos a Local.",
   "placementCode.moveSignIn": "Os dous lugares inician sesión da mesma maneira, pero con credenciais distintas, e unha copia só pode usar unha delas. Move primeiro a sección a un cartafol deste servidor e desde alí ao lugar novo.",
   "placementCode.moveRunning": "Esta sección xa se está movendo. Podes seguila na Vista xeral.",
+  "placementCode.ownFolderUnreadable": "Non se puideron ler as copias de seguridade do cartafol propio antigo, así que non se poden copiar. Comproba que o disco estea montado ou que o lugar responda e téntao de novo.",
+  "placementCode.ownFolderThere": "Aquí está o cartafol propio dunha sección. Móveo primeiro a outro lugar, en Cartafoles propios nesta páxina. Despois pódese quitar a localización de almacenamento.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} directo agora conserva menos. Elementos cuxa única copia está aí: {n}.",

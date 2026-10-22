@@ -282,6 +282,9 @@ func (s *Service) planErasure(ctx context.Context, id string) (erasurePlan, erro
 	if err != nil {
 		return erasurePlan{}, err
 	}
+	if removal.holdsOwnFolder() {
+		return erasurePlan{}, errOwnFolderThere
+	}
 	targets, err := s.store.DestinationTargets(id)
 	if err != nil {
 		return erasurePlan{}, err

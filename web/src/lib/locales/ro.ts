@@ -712,9 +712,6 @@ const ro: Partial<Translations> = {
   "own.address": "Adresă",
   "own.addressHint": "De exemplu s3:gazdă/bucket/dosar sau rest:http://gazdă:8000/repo. BombVault adaugă câte un dosar pentru fiecare secțiune.",
   "own.signInHint": "Aleasă dintre autentificările tale salvate. O adresă la distanță are nevoie de una.",
-  "own.safety": "Setări de siguranță",
-  "own.safetyHint": "Limite de lățime de bandă, doar adăugare și alarma de creștere pentru o adresă scrisă de mână.",
-  "own.open": "Deschide",
   "own.what": "Ce se întâmplă",
   "own.pick": "Alege unde merge dosarul propriu.",
   "own.lineSame": "{section} își păstrează deja copiile de rezervă în {name}.",
@@ -726,6 +723,8 @@ const ro: Partial<Translations> = {
   "own.lineStay": "one=Copia de rezervă din {from} rămâne acolo.|few=Cele {n} copii de rezervă din {from} rămân acolo.|other=Cele {n} de copii de rezervă din {from} rămân acolo.",
   "own.lineCopies": "Copiile merg în continuare în {list}.",
   "own.lineProtection": "Protecția, limitele de lățime de bandă și alarma de creștere vin de la {name}.",
+  "own.lineKeepWider": "Acea copie păstrează unele copii de rezervă mai mult decât regulile de retenție ale {section}. De la schimbare, {section} păstrează tot ce păstrează oricare dintre ele, așa că nu se pierde niciuna dintre acele copii.",
+  "own.lineSwitchOn": "Dosarul propriu este oprit, așa că copiile de rezervă merg direct în acea copie. Schimbarea pornește din nou dosarul propriu.",
   "own.copyOver": "Copiază copiile de rezervă deja făcute",
   "own.copyOverHint": "Dezactivat: rămân unde sunt și nu sunt copiate.",
   "own.blocked": "Dosarul propriu nu poate fi mutat așa.",
@@ -3137,6 +3136,8 @@ const ro: Partial<Translations> = {
   "placementCode.moveDirectRepo": "Unele elemente fac copii direct în acest loc, fără o copie acasă, deci secțiunea nu poate fi mutată. Treci mai întâi acele elemente pe Local.",
   "placementCode.moveSignIn": "Ambele locuri se autentifică la fel, dar cu date de acces diferite, iar o copie poate folosi doar unele dintre ele. Mută mai întâi secțiunea într-un folder de pe acest server, iar de acolo în locul nou.",
   "placementCode.moveRunning": "Această secțiune este deja în curs de mutare. O poți urmări în Prezentare.",
+  "placementCode.ownFolderUnreadable": "Copiile de rezervă din vechiul dosar propriu nu au putut fi citite, așa că nu pot fi copiate. Verifică dacă discul este montat sau dacă locul răspunde, apoi încearcă din nou.",
+  "placementCode.ownFolderThere": "Aici se află dosarul propriu al unei secțiuni. Mută-l mai întâi în alt loc, la Dosare proprii pe această pagină. Apoi locația de stocare poate fi eliminată.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} direct păstrează acum mai puțin. Elemente a căror unică copie este acolo: {n}.",

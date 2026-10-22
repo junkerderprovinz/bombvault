@@ -830,9 +830,6 @@ const ms: Partial<Translations> = {
   "own.address": "Alamat",
   "own.addressHint": "Contohnya s3:host/bucket/folder atau rest:http://host:8000/repo. BombVault menambah satu folder bagi setiap bahagian.",
   "own.signInHint": "Dipilih daripada log masuk yang anda simpan. Alamat jauh memerlukannya.",
-  "own.safety": "Tetapan keselamatan",
-  "own.safetyHint": "Had lebar jalur, tambah sahaja dan penggera pertumbuhan untuk alamat yang ditaip sendiri.",
-  "own.open": "Buka",
   "own.what": "Apa yang berlaku",
   "own.pick": "Pilih ke mana folder sendiri pergi.",
   "own.lineSame": "{section} sudah menyimpan sandarannya sendiri dalam {name}.",
@@ -844,6 +841,8 @@ const ms: Partial<Translations> = {
   "own.lineStay": "{n} sandaran dalam {from} kekal di sana.",
   "own.lineCopies": "Salinan terus pergi ke {list}.",
   "own.lineProtection": "Perlindungan, had lebar jalur dan penggera pertumbuhan datang daripada {name}.",
+  "own.lineKeepWider": "Salinan itu menyimpan sesetengah sandaran lebih lama daripada peraturan pengekalan {section}. Mulai pertukaran, {section} menyimpan apa sahaja yang disimpan oleh mana-mana peraturan itu, jadi tiada sandaran tersebut yang hilang.",
+  "own.lineSwitchOn": "Folder sendiri dimatikan, jadi sandaran terus pergi ke salinan itu. Pertukaran menghidupkan semula folder sendiri.",
   "own.copyOver": "Salin sandaran yang sudah dibuat",
   "own.copyOverHint": "Mati: sandaran kekal di tempatnya dan tidak disalin.",
   "own.blocked": "Folder sendiri tidak boleh dialihkan begini.",
@@ -3146,6 +3145,8 @@ const ms: Partial<Translations> = {
   "placementCode.moveDirectRepo": "Entri membuat sandaran terus ke tempat ini, tanpa salinan di lokasi asal, jadi bahagian tidak boleh dialihkan. Tukar dahulu entri itu kepada Setempat.",
   "placementCode.moveSignIn": "Kedua-dua tempat log masuk dengan cara yang sama tetapi dengan bukti kelayakan berbeza, dan satu salinan hanya boleh menggunakan salah satu. Alihkan bahagian dahulu ke folder di pelayan ini, kemudian dari situ ke tempat baharu.",
   "placementCode.moveRunning": "Bahagian ini sedang dialihkan. Anda boleh mengikutinya di Ikhtisar.",
+  "placementCode.ownFolderUnreadable": "Sandaran dalam folder sendiri yang lama tidak dapat dibaca, jadi ia tidak boleh disalin. Semak sama ada cakera sudah dilekapkan atau tempat itu menjawab, kemudian cuba lagi.",
+  "placementCode.ownFolderThere": "Di sini terletak folder sendiri sesuatu bahagian. Alihkannya dahulu ke tempat lain di Folder sendiri pada halaman ini. Selepas itu lokasi storan boleh dibuang.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} terus kini menyimpan lebih sedikit. Entri yang satu-satunya salinan ada di situ: {n}.",

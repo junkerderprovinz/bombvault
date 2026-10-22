@@ -715,9 +715,6 @@ const fr: Partial<Translations> = {
   "own.address": "Adresse",
   "own.addressHint": "Par exemple s3:hôte/bucket/dossier ou rest:http://hôte:8000/repo. BombVault ajoute un dossier par section.",
   "own.signInHint": "Pris parmi vos identifiants enregistrés. Une adresse distante en a besoin.",
-  "own.safety": "Réglages de sécurité",
-  "own.safetyHint": "Limites de bande passante, ajout seul et alarme de croissance pour une adresse saisie à la main.",
-  "own.open": "Ouvrir",
   "own.what": "Ce qui se passe",
   "own.pick": "Choisissez où va le dossier propre.",
   "own.lineSame": "{section} garde déjà ses propres sauvegardes dans {name}.",
@@ -729,6 +726,8 @@ const fr: Partial<Translations> = {
   "own.lineStay": "one=La sauvegarde de {from} y reste.|other=Les {n} sauvegardes de {from} y restent.",
   "own.lineCopies": "Les copies continuent vers {list}.",
   "own.lineProtection": "La protection, les limites de bande passante et l'alarme de croissance viennent de {name}.",
+  "own.lineKeepWider": "Cette copie conserve certaines sauvegardes plus longtemps que les règles de rétention de {section}. À partir du changement, {section} conserve tout ce que l'une ou l'autre conserve, aucune de ces sauvegardes n'est donc perdue.",
+  "own.lineSwitchOn": "Le dossier propre est désactivé, les sauvegardes vont donc directement vers cette copie. Le changement réactive le dossier propre.",
   "own.copyOver": "Copier les sauvegardes déjà faites",
   "own.copyOverHint": "Désactivé : elles restent où elles sont et ne sont pas copiées.",
   "own.blocked": "Le dossier propre ne peut pas être déplacé ainsi.",
@@ -3136,6 +3135,8 @@ const fr: Partial<Translations> = {
   "placementCode.moveDirectRepo": "Des éléments sauvegardent directement à cet endroit, sans copie à l'emplacement d'origine, donc la section ne peut pas être déplacée. Passez d'abord ces éléments sur Local.",
   "placementCode.moveSignIn": "Les deux endroits se connectent de la même façon mais avec des identifiants différents, et une copie ne peut en utiliser qu'un. Déplacez d'abord la section vers un dossier de ce serveur, puis de là vers le nouvel endroit.",
   "placementCode.moveRunning": "Cette section est déjà en cours de déplacement. Vous pouvez la suivre dans l'Aperçu.",
+  "placementCode.ownFolderUnreadable": "Les sauvegardes de l'ancien dossier propre n'ont pas pu être lues, elles ne peuvent donc pas être copiées. Vérifiez que le disque est monté ou que l'emplacement répond, puis réessayez.",
+  "placementCode.ownFolderThere": "Le dossier propre d'une section se trouve ici. Déplacez-le d'abord ailleurs, sous Dossiers propres sur cette page. L'emplacement de stockage pourra ensuite être supprimé.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} direct conserve désormais moins. Éléments dont c'est la seule copie : {n}.",

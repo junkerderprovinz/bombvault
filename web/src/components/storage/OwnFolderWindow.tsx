@@ -71,6 +71,8 @@ function whatHappens(t: T, lang: string, steps: OwnFolderStep[], copyOver: boole
       if (step.pending > 0) {
         line += ` ${(copyOver ? t("own.lineLacking", step.pending) : t("own.lineNewestStay", step.pending)).replace("{from}", () => from)}`;
       }
+      if (step.widerKeep) line += ` ${t("own.lineKeepWider").replace(/\{section\}/g, () => section)}`;
+      if (step.switchesOn) line += ` ${t("own.lineSwitchOn")}`;
     } else if (copyOver && step.pending > 0) {
       line += ` ${t("own.lineCopyFirst", step.pending).replace("{from}", () => from)}`;
     } else if (!copyOver && step.backups > 0) {
@@ -114,7 +116,7 @@ export function OwnFolderWindow({
   const [problem, setProblem] = useState<{ text: string; code?: string } | null>(null);
   const stepsFor = useRef<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [safety, setSafety] = useState(false);
+  const [safetyFor, setSafetyFor] = useState<OffsiteDomain | null>(null);
 
   const homes = new Map<OffsiteDomain, StorageLocation>();
   for (const location of locations) {
@@ -167,7 +169,7 @@ export function OwnFolderWindow({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key]);
 
-  if (safety && picked.length === 1) return <SectionPathWindow domain={picked[0]} onClose={onClose} />;
+  if (safetyFor) return <SectionPathWindow domain={safetyFor} onClose={onClose} />;
 
   const placeName = place ? place.name : address.trim();
   const homeName = (domain: OffsiteDomain) => homes.get(domain)?.name ?? "";
@@ -206,6 +208,12 @@ export function OwnFolderWindow({
     if (now.length > 0) push(t("own.moved").replace("{name}", () => placeName).replace("{list}", () => names(now)), "success");
     if (later.length > 0) push(t("own.copying").replace("{name}", () => placeName).replace("{list}", () => names(later)), "success");
     storageLocationsChanged();
+    // A typed address keeps safety settings of its own, and they belong to
+    // the path it became, so they open once the section points there.
+    if (remoteAddress && now.length === 1 && later.length === 0) {
+      setSafetyFor(now[0].domain);
+      return;
+    }
     onClose();
   }
 
@@ -333,11 +341,6 @@ export function OwnFolderWindow({
                     )}
                   </SettingRow>
                 )}
-                {picked.length === 1 && (
-                  <SettingRow label={t("own.safety")} hint={t("own.safetyHint")}>
-                    <Button label={t("own.open")} labelKey="own.open" glyph={<IconForward />} tone="neutral" onClick={() => setSafety(true)} />
-                  </SettingRow>
-                )}
               </Rows>
             )}
           </section>
@@ -348,7 +351,9 @@ export function OwnFolderWindow({
               <div role="alert" className="flex flex-col gap-1 rounded-card bg-statusWarnBg px-3 py-2 text-sm leading-relaxed text-statusWarn wrap-break-word">
                 <p className="font-semibold">{t("own.blocked")}</p>
                 <p>{problem.text}</p>
-                {problem.code === "move-sign-in" && copyOver && <p>{t("own.blockedByCopy").replace("{toggle}", () => t("own.copyOver"))}</p>}
+                {(problem.code === "move-sign-in" || problem.code === "own-folder-unreadable") && copyOver && (
+                  <p>{t("own.blockedByCopy").replace("{toggle}", () => t("own.copyOver"))}</p>
+                )}
               </div>
             ) : !request ? (
               <p className="text-sm text-carbon-textSub">{t("own.pick")}</p>

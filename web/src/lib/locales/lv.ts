@@ -830,9 +830,6 @@ const lv: Partial<Translations> = {
   "own.address": "Adrese",
   "own.addressHint": "Piemēram, s3:resursdators/bucket/mape vai rest:http://resursdators:8000/repo. BombVault izveido vienu mapi katrai sadaļai.",
   "own.signInHint": "Izvēlas no jūsu saglabātajām pieteikšanās. Attālai adresei tā ir vajadzīga.",
-  "own.safety": "Drošības iestatījumi",
-  "own.safetyHint": "Joslas platuma ierobežojumi, tikai pievienošana un pieauguma trauksme ar roku ievadītai adresei.",
-  "own.open": "Atvērt",
   "own.what": "Kas notiek",
   "own.pick": "Izvēlieties, kur iet paša mape.",
   "own.lineSame": "{section} jau glabā savus dublējumus vietā {name}.",
@@ -844,6 +841,8 @@ const lv: Partial<Translations> = {
   "own.lineStay": "zero={n} dublējumu paliek vietā {from}.|one={n} dublējums paliek vietā {from}.|other={n} dublējumi paliek vietā {from}.",
   "own.lineCopies": "Kopijas turpina iet uz {list}.",
   "own.lineProtection": "Aizsardzība, joslas platuma ierobežojumi un pieauguma trauksme nāk no {name}.",
+  "own.lineKeepWider": "Šī kopija dažus dublējumus glabā ilgāk nekā {section} saglabāšanas noteikumi. Pēc pārslēgšanas {section} glabā visu, ko glabā jebkurš no tiem, tāpēc neviens no šiem dublējumiem nezūd.",
+  "own.lineSwitchOn": "Paša mape ir izslēgta, tāpēc dublējumi nonāk tieši šajā kopijā. Pārslēgšana paša mapi atkal ieslēdz.",
   "own.copyOver": "Kopēt jau izveidotos dublējumus",
   "own.copyOverHint": "Izslēgts: tie paliek, kur ir, un netiek kopēti.",
   "own.blocked": "Paša mapi šādi nevar pārvietot.",
@@ -3146,6 +3145,8 @@ const lv: Partial<Translations> = {
   "placementCode.moveDirectRepo": "Ieraksti dublē tieši uz šo vietu, bez kopijas sākotnējā vietā, tāpēc sadaļu nevar pārvietot. Vispirms pārslēdziet šos ierakstus uz Vietējs.",
   "placementCode.moveSignIn": "Abās vietās pieteikšanās notiek vienādi, bet ar dažādiem akreditācijas datiem, un viena kopija var izmantot tikai vienus no tiem. Vispirms pārvietojiet sadaļu uz mapi šajā serverī un no turienes uz jauno vietu.",
   "placementCode.moveRunning": "Šī sadaļa jau tiek pārvietota. Varat to vērot sadaļā Pārskats.",
+  "placementCode.ownFolderUnreadable": "Vecās paša mapes dublējumus neizdevās nolasīt, tāpēc tos nevar nokopēt. Pārbaudiet, vai disks ir pievienots vai vieta atbild, un mēģiniet vēlreiz.",
+  "placementCode.ownFolderThere": "Šeit atrodas kādas sadaļas paša mape. Vispirms pārvietojiet to citur šīs lapas sadaļā Pašu mapes. Pēc tam krātuves vietu var noņemt.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} tieši tagad saglabā mazāk. Ieraksti, kuru vienīgā kopija ir tur: {n}.",

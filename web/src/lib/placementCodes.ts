@@ -47,6 +47,8 @@ const CODE_KEYS: Record<string, TranslationKey> = {
   "move-sign-in": "placementCode.moveSignIn",
   "move-running": "placementCode.moveRunning",
   "erase-running": "storage.remove.erasingNow",
+  "own-folder-unreadable": "placementCode.ownFolderUnreadable",
+  "own-folder-there": "placementCode.ownFolderThere",
 };
 
 const WARNING_KEYS: Record<SaveWarning["code"], TranslationKey> = {

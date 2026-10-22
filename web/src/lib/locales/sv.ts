@@ -715,9 +715,6 @@ const sv: Partial<Translations> = {
   "own.address": "Adress",
   "own.addressHint": "Till exempel s3:värd/bucket/mapp eller rest:http://värd:8000/repo. BombVault skapar en mapp per sektion.",
   "own.signInHint": "Väljs bland dina sparade inloggningar. En fjärradress behöver en.",
-  "own.safety": "Säkerhetsinställningar",
-  "own.safetyHint": "Bandbreddsgränser, endast tillägg och tillväxtlarmet för en adress skriven för hand.",
-  "own.open": "Öppna",
   "own.what": "Vad som händer",
   "own.pick": "Välj vart den egna mappen ska.",
   "own.lineSame": "{section} har redan sina egna säkerhetskopior i {name}.",
@@ -729,6 +726,8 @@ const sv: Partial<Translations> = {
   "own.lineStay": "one=Säkerhetskopian i {from} stannar där.|other=De {n} säkerhetskopiorna i {from} stannar där.",
   "own.lineCopies": "Kopior fortsätter att gå till {list}.",
   "own.lineProtection": "Skydd, bandbreddsgränser och tillväxtlarm kommer från {name}.",
+  "own.lineKeepWider": "Den kopian sparar vissa säkerhetskopior längre än lagringsreglerna för {section}. Från bytet sparar {section} allt som någon av dem sparar, så ingen av de säkerhetskopiorna går förlorad.",
+  "own.lineSwitchOn": "Den egna mappen är avstängd, så säkerhetskopiorna går direkt till den kopian. Bytet slår på den egna mappen igen.",
   "own.copyOver": "Kopiera de säkerhetskopior som redan finns",
   "own.copyOverHint": "Av: de stannar där de är och kopieras inte.",
   "own.blocked": "Den egna mappen kan inte flyttas så här.",
@@ -3136,6 +3135,8 @@ const sv: Partial<Translations> = {
   "placementCode.moveDirectRepo": "Poster säkerhetskopierar direkt till den här platsen, utan en kopia hemma, så avsnittet kan inte flyttas. Ställ först om de posterna till Lokal.",
   "placementCode.moveSignIn": "Båda platserna loggar in på samma sätt men med olika inloggningsuppgifter, och en kopia kan bara använda en av dem. Flytta först avsnittet till en mapp på den här servern och därifrån till den nya platsen.",
   "placementCode.moveRunning": "Det här avsnittet flyttas redan. Du kan följa det i Översikt.",
+  "placementCode.ownFolderUnreadable": "Säkerhetskopiorna i den gamla egna mappen gick inte att läsa, så de kan inte kopieras. Kontrollera att disken är monterad eller att platsen svarar och försök igen.",
+  "placementCode.ownFolderThere": "Här ligger ett avsnitts egna mapp. Flytta den först till en annan plats under Egna mappar på den här sidan. Sedan kan lagringsplatsen tas bort.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} direkt behåller nu mindre. Poster vars enda kopia finns där: {n}.",

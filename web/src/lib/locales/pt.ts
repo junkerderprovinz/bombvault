@@ -712,9 +712,6 @@ const pt: Partial<Translations> = {
   "own.address": "Endereço",
   "own.addressHint": "Por exemplo s3:host/bucket/pasta ou rest:http://host:8000/repo. O BombVault adiciona uma pasta por secção.",
   "own.signInHint": "Escolhidas das tuas credenciais guardadas. Um endereço remoto precisa delas.",
-  "own.safety": "Definições de segurança",
-  "own.safetyHint": "Limites de largura de banda, só acrescentar e o alarme de crescimento para um endereço digitado à mão.",
-  "own.open": "Abrir",
   "own.what": "O que acontece",
   "own.pick": "Escolhe para onde vai a pasta própria.",
   "own.lineSame": "{section} já guarda os próprios backups em {name}.",
@@ -726,6 +723,8 @@ const pt: Partial<Translations> = {
   "own.lineStay": "one=O backup em {from} fica lá.|other=Os {n} backups em {from} ficam lá.",
   "own.lineCopies": "As cópias continuam a ir para {list}.",
   "own.lineProtection": "A proteção, os limites de largura de banda e o alarme de crescimento vêm de {name}.",
+  "own.lineKeepWider": "Essa cópia guarda alguns backups durante mais tempo do que as regras de retenção de {section}. A partir da troca, {section} guarda tudo o que qualquer uma delas guardar, por isso nenhum desses backups se perde.",
+  "own.lineSwitchOn": "A pasta própria está desligada, por isso os backups vão diretamente para essa cópia. A troca volta a ligar a pasta própria.",
   "own.copyOver": "Copiar os backups já feitos",
   "own.copyOverHint": "Desligado: ficam onde estão e não são copiados.",
   "own.blocked": "A pasta própria não pode ser movida assim.",
@@ -3136,6 +3135,8 @@ const pt: Partial<Translations> = {
   "placementCode.moveDirectRepo": "Há entradas que fazem cópia diretamente para este local, sem cópia em casa, por isso a secção não pode ser movida. Muda primeiro essas entradas para Local.",
   "placementCode.moveSignIn": "Os dois locais iniciam sessão da mesma forma, mas com credenciais diferentes, e uma cópia só pode usar uma delas. Move primeiro a secção para uma pasta deste servidor e daí para o novo local.",
   "placementCode.moveRunning": "Esta secção já está a ser movida. Podes acompanhá-la na Visão geral.",
+  "placementCode.ownFolderUnreadable": "Não foi possível ler os backups da pasta própria antiga, por isso não podem ser copiados. Verifica se o disco está montado ou se o local responde e tenta de novo.",
+  "placementCode.ownFolderThere": "Aqui está a pasta própria de uma secção. Move-a primeiro para outro sítio, em Pastas próprias nesta página. Depois o local de armazenamento pode ser removido.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} direto agora conserva menos. Entradas cuja única cópia está lá: {n}.",
