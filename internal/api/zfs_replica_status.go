@@ -151,19 +151,24 @@ func (s *Service) zfsReplicaCoverage(now int64, settings store.Settings) (oldest
 
 // zfsReplicaDomainState is the replica line of the ZFS scorecard: "" with no
 // item replicating, "failed" when an item's last run failed, "stale" when one
-// is not current, "ok" otherwise.
-func (s *Service) zfsReplicaDomainState(now int64, settings store.Settings) string {
+// is not current, "ok" otherwise. every says that each enabled item
+// replicates.
+func (s *Service) zfsReplicaDomainState(now int64, settings store.Settings) (state string, every bool) {
 	items, err := s.store.ListZFSDatasets()
 	if err != nil {
-		return ""
+		return "", false
 	}
-	state := ""
+	every, failed := true, false
 	for _, d := range items {
-		if !d.Enabled || d.Replica.TargetKind == store.ZFSReplicaTargetNone {
+		if !d.Enabled {
+			continue
+		}
+		if d.Replica.TargetKind == store.ZFSReplicaTargetNone {
+			every = false
 			continue
 		}
 		if run, ok, err := s.store.LatestZFSReplicaRun(d.ID); err == nil && ok && run.Status == "failed" {
-			return zfsReplicaFailed
+			failed = true
 		}
 		if _, current := s.zfsReplicaCurrency(now, d, settings); !current {
 			state = "stale"
@@ -171,7 +176,10 @@ func (s *Service) zfsReplicaDomainState(now int64, settings store.Settings) stri
 			state = zfsReplicaOK
 		}
 	}
-	return state
+	if failed {
+		state = zfsReplicaFailed
+	}
+	return state, every && state != ""
 }
 
 // zfsItemSites is the 3-2-1 verdict of one ZFS item, scored the way the

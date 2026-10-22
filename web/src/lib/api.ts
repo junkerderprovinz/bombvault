@@ -620,6 +620,9 @@ export interface DomainStatus {
   /** How the ZFS replicas stand: "" with none, "failed" when the last run of
    *  one failed, "stale" when one is not current, "ok" otherwise. */
   replicaState?: string;
+  /** ZFS: every enabled item replicates, so the replicas are the whole copy
+   *  away from here. */
+  replicasEveryItem?: boolean;
 }
 
 /** A recorded restore-verification "drill" from POST/GET /api/verify. */

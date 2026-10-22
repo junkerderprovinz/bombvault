@@ -3145,6 +3145,9 @@ type DomainStatusEntry struct {
 	// ReplicaState is the ZFS replica line of the scorecard: "" with no item
 	// replicating, "ok", "stale" or "failed".
 	ReplicaState string `json:"replicaState,omitempty"`
+	// ReplicasEveryItem says every enabled ZFS item replicates, so the
+	// replicas are the whole of the domain's copy away from here.
+	ReplicasEveryItem bool `json:"replicasEveryItem,omitempty"`
 }
 
 // rpoStatus is the pure status decision from the inputs, so it can be unit-tested
@@ -3660,8 +3663,9 @@ func (s *Service) domainStatusFrom(settings store.Settings) ([]DomainStatusEntry
 		// are no restic repository, so OffsiteConfigured stays false: the off-site
 		// check, unlock and trial restore have nothing to open there.
 		var replicaState string
+		var replicasEveryItem bool
 		if d.name == zfsDomain {
-			replicaState = s.zfsReplicaDomainState(now, settings)
+			replicaState, replicasEveryItem = s.zfsReplicaDomainState(now, settings)
 			if at, period, ok := s.zfsReplicaCoverage(now, settings); ok && !offsiteConfigured {
 				offPremisesCovered = true
 				lastReplicationAt, lastReplicationOK = at, true
@@ -3716,6 +3720,7 @@ func (s *Service) domainStatusFrom(settings store.Settings) ([]DomainStatusEntry
 			EncryptionOn:          settings.EncryptionEnabled,
 			PruneStrategySet:      pruneStrategySet,
 			ReplicaState:          replicaState,
+			ReplicasEveryItem:     replicasEveryItem,
 		})
 		if d.name == "containers" {
 			out[len(out)-1].LastStartTest = lastStartTest

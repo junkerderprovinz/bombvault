@@ -836,6 +836,24 @@ func TestTheLocalPoolsAnswerBare(t *testing.T) {
 	}
 }
 
+func TestReplicasAreNotTheWholeCopyAwayWhileAnItemDoesNotReplicate(t *testing.T) {
+	r := newReplicaRig(t)
+	if err := r.s.ReplicateZFSDataset(context.Background(), r.item.ID); err != nil {
+		t.Fatal(err)
+	}
+	settings, _ := r.st.GetSettings()
+	now := time.Now().Unix()
+	if state, every := r.s.zfsReplicaDomainState(now, settings); state != "ok" || !every {
+		t.Fatalf("state %q, every %v; want ok over the one item", state, every)
+	}
+	if _, err := r.st.CreateZFSDataset(store.ZFSDataset{Dataset: "cache/media", Enabled: true}); err != nil {
+		t.Fatal(err)
+	}
+	if state, every := r.s.zfsReplicaDomainState(now, settings); state != "ok" || every {
+		t.Fatalf("state %q, every %v; want an item without a replica noted", state, every)
+	}
+}
+
 func TestACurrentReplicaIsTheZFSCopyOffThePremisesButNoBackup(t *testing.T) {
 	r := newReplicaRig(t)
 	settings, _ := r.st.GetSettings()
@@ -858,7 +876,7 @@ func TestACurrentReplicaIsTheZFSCopyOffThePremisesButNoBackup(t *testing.T) {
 		if e.Domain != zfsDomain {
 			continue
 		}
-		if !e.OffPremisesCovered || e.ReplicaState != "ok" || e.Protection == "red" {
+		if !e.OffPremisesCovered || e.ReplicaState != "ok" || !e.ReplicasEveryItem || e.Protection == "red" {
 			t.Errorf("zfs status = %+v, want the replica as the off-site copy", e)
 		}
 		// The replica is no restic repository: nothing may offer to check,
