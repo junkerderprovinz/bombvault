@@ -323,17 +323,24 @@ describe("a container", () => {
 });
 
 describe("an entry the repository has no definition of", () => {
-  it("offers no restore and says where the definition is", async () => {
-    inventory = {
-      ...EMPTY,
-      containers: [{ name: "web", snapshots: [], noDefinition: true }],
-      vms: [{ name: "win11", snapshots: [], noDefinition: true }],
-    };
+  it("says where the definition is and restores its files into a folder", async () => {
+    inventory = { ...EMPTY, containers: [{ name: "web", snapshots: [], noDefinition: true }] };
     await connect();
-    expect(screen.queryByRole("button", { name: en["recovery.foreignRestore"] })).toBeNull();
-    expect(screen.queryByRole("button", { name: en["oldFolder.options"] })).toBeNull();
     expect(document.body.textContent).toContain(en["recovery.foreignNoDefinition"].replaceAll("{name}", "web"));
+    expect(button(en["recovery.foreignRestore"]).disabled).toBe(true);
+    const row = await options();
+    expect(within(row).queryByRole("switch", { name: en["recovery.foreignOverwrite"] })).toBeNull();
+    fireEvent.change(within(row).getByLabelText(en["recovery.foreignTargetFolder"]), { target: { value: "restore/web" } });
+    await press(button(en["recovery.foreignRestore"]));
+    expect(lastRestore()).toMatchObject({ domain: "containers", item: "web", target: "restore/web", toFolder: true });
+  });
+
+  it("asks for a folder for a VM too, with none filled in", async () => {
+    inventory = { ...EMPTY, vms: [{ name: "win11", snapshots: [], noDefinition: true }] };
+    await connect();
     expect(document.body.textContent).toContain(en["recovery.foreignNoDefinition"].replaceAll("{name}", "win11"));
+    const row = await options();
+    expect((within(row).getByLabelText(en["recovery.foreignTargetFolder"]) as HTMLInputElement).value).toBe("");
   });
 });
 

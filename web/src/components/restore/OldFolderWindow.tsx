@@ -125,10 +125,12 @@ function ForeignItemRow({
 }) {
   const { t } = useT();
   const [snapshot, setSnapshot] = useState("latest");
-  // A VM starts at the folder the server falls back to anyway.
-  const [target, setTarget] = useState(domain === "vms" ? "user/domains" : "");
-  const needsTarget = domain !== "containers";
-  const recreatable = !((domain === "containers" || domain === "vms") && item.noDefinition);
+  // An item without a definition cannot be recreated, but its files can be
+  // restored into a folder.
+  const extract = (domain === "containers" || domain === "vms") && !!item.noDefinition;
+  const recreatable = !extract;
+  const [target, setTarget] = useState(domain === "vms" && recreatable ? "user/domains" : "");
+  const needsTarget = domain !== "containers" || extract;
   const [busy, setBusy] = useState(false);
   const { push } = useToast();
   const { confirm, confirmDialog } = useConfirm();
@@ -250,6 +252,7 @@ function ForeignItemRow({
       overwrite: domain === "containers" ? overwrite : undefined,
       wholeTree: domain === "zfs" ? zfsDataset === "" : undefined,
       network: chosenNetwork,
+      toFolder: extract || undefined,
     };
     setBusy(true);
     const check = await checkRestoreOnce({
@@ -261,9 +264,11 @@ function ForeignItemRow({
     });
     setBusy(false);
     const refusal = restoreBlockReason(check, t);
-    const collision = existsLocally
-      ? t(collisionKnown ? "recovery.foreignExistsConfirm" : "recovery.foreignUnverifiedConfirm").replace("{name}", item.name)
-      : undefined;
+    // Files restored into a folder replace nothing here.
+    const collision =
+      existsLocally && recreatable
+        ? t(collisionKnown ? "recovery.foreignExistsConfirm" : "recovery.foreignUnverifiedConfirm").replace("{name}", item.name)
+        : undefined;
     const question = collision ?? refusal;
     if (question !== undefined) {
       const extra = <RestoreCheckPanel check={check} t={t} />;
@@ -330,20 +335,18 @@ function ForeignItemRow({
           <KindGlyph kind={KIND[domain]} />
         </span>
         <span className="min-w-0 flex-1 truncate text-sm font-semibold text-carbon-text">{item.name}</span>
-        {recreatable && (
-          <SelectField
-            value={snapshot}
-            onChange={setSnapshot}
-            label={t("recovery.foreignLatest")}
-            disabled={busy}
-            options={[
-              { value: "latest", label: t("recovery.foreignLatest") },
-              ...snaps.map((s) => ({ value: s.id, label: `${new Date(s.time).toLocaleString()}, ${s.id.slice(0, 8)}` })),
-            ]}
-            className={SELECT}
-          />
-        )}
-        {recreatable && !open && (
+        <SelectField
+          value={snapshot}
+          onChange={setSnapshot}
+          label={t("recovery.foreignLatest")}
+          disabled={busy}
+          options={[
+            { value: "latest", label: t("recovery.foreignLatest") },
+            ...snaps.map((s) => ({ value: s.id, label: `${new Date(s.time).toLocaleString()}, ${s.id.slice(0, 8)}` })),
+          ]}
+          className={SELECT}
+        />
+        {!open && (
           <>
             <Button
               label={t("oldFolder.options")}
@@ -358,12 +361,15 @@ function ForeignItemRow({
           </>
         )}
       </div>
-      {!recreatable && (
+      {extract && (
         <p className="text-xs text-carbon-textMuted">
           {withLtrFragments(t("recovery.foreignNoDefinition").replaceAll("{name}", item.name), [item.name])}
         </p>
       )}
 
+      {open && extract && (
+        <FolderBrowser label={t("recovery.foreignTargetFolder")} value={target} hostMountRoot={hostMountRoot} onChange={setTarget} />
+      )}
       {open && recreatable && (
         <div className="flex flex-col gap-3">
           {domain === "files" && (
@@ -465,7 +471,7 @@ function ForeignItemRow({
           )}
         </div>
       )}
-      {open && recreatable && footer && createPortal(restoreButton("accent"), footer)}
+      {open && footer && createPortal(restoreButton("accent"), footer)}
       {confirmDialog}
     </div>
   );

@@ -3079,7 +3079,7 @@ const tr: Partial<Translations> = {
   "settings.reconcileUnraidStatusHint": "BombVault, yedeklemeden sonraki güncelleme adımında bir konteyneri güncelledikten sonra Unraid'in güncelleme afişini temizler.",
   "recovery.foreignVMDest": "VM disk hedefi",
   "recovery.foreignVMDestHint": "VM'nin disklerinin nereye yazılacağı. Disk imajları <destination>/<vm-name>/ konumuna gider, bu yüzden RAM diski yerine gerçekten bağlı bir havuzdaki bir klasör seç. Yabancı bir VM durdurulmuş olarak geri yüklenir, bu yüzden kontrol ettikten sonra kendin başlat.",
-  "recovery.foreignNoDefinition": "Bu kopyada {name} için bir tanım yok, bu yüzden BombVault onu buradan yeniden oluşturamaz. Tanımlar eski sunucunun ayar yedeğinde. Onu acil durum sihirbazında geri yükle, ardından {name} öğesini orada geri yükle.",
+  "recovery.foreignNoDefinition": "Bu kopyada {name} için bir tanım yok, bu yüzden BombVault onu buradan yeniden oluşturamaz, ama dosyalarını bir klasöre geri yükleyebilir. Yeniden oluşturmak için tanımları içeren eski sunucunun ayar yedeğini acil durum sihirbazında geri yükle, ardından {name} öğesini orada geri yükle.",
   "folder.newFolder": "Yeni klasör",
   "folder.newFolderPlaceholder": "Yeni klasör adı",
   "folder.creating": "Oluşturuluyor…",

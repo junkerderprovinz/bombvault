@@ -3079,7 +3079,7 @@ const he: Partial<Translations> = {
   "settings.reconcileUnraidStatusHint": "מנקה את באנר העדכון של Unraid לאחר ש-BombVault מעדכן מכולה בשלב העדכון שלאחר הגיבוי.",
   "recovery.foreignVMDest": "יעד הדיסקים של המכונה הווירטואלית",
   "recovery.foreignVMDestHint": "היכן נכתבים הדיסקים של המכונה הווירטואלית. קובצי הדיסק נכתבים אל <destination>/<vm-name>/, לכן יש לבחור תיקייה במאגר שמחובר באמת, לא בדיסק ה-RAM. מכונה זרה משוחזרת במצב עצור, ומפעילים אותה ידנית לאחר בדיקה.",
-  "recovery.foreignNoDefinition": "בעותק הזה אין הגדרה של {name}, ולכן BombVault לא יכול ליצור אותו מחדש מכאן. ההגדרות נמצאות בגיבוי ההגדרות של השרת הישן. שחזר אותו באשף החירום, ואז שחזר שם את {name}.",
+  "recovery.foreignNoDefinition": "בעותק הזה אין הגדרה של {name}, ולכן BombVault לא יכול ליצור אותו מחדש מכאן, אבל אפשר לשחזר את הקבצים שלו לתיקייה. כדי ליצור אותו מחדש, שחזר באשף החירום את גיבוי ההגדרות של השרת הישן, שבו נמצאות ההגדרות, ואז שחזר שם את {name}.",
   "folder.newFolder": "תיקייה חדשה",
   "folder.newFolderPlaceholder": "שם התיקייה החדשה",
   "folder.creating": "יוצר…",

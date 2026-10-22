@@ -2638,7 +2638,7 @@ const lt: Partial<Translations> = {
   "recovery.foreignReconnect": "Prisijungti iš naujo",
   "recovery.foreignVMDest": "VM diskų paskirtis",
   "recovery.foreignVMDestHint": "Kur įrašomi VM diskai. Diskų atvaizdai patenka į <destination>/<vm-name>/, todėl pasirink aplanką realiai prijungtame telkinyje, o ne RAM diske. Svetimas VM atkuriamas sustabdytas, todėl paleisk jį rankiniu būdu, kai jį patikrinsi.",
-  "recovery.foreignNoDefinition": "Šioje kopijoje nėra {name} apibrėžimo, todėl BombVault negali jo iš čia sukurti iš naujo. Apibrėžimai yra senojo serverio nustatymų atsarginėje kopijoje. Atkurk ją avariniame vedlyje, tada ten atkurk {name}.",
+  "recovery.foreignNoDefinition": "Šioje kopijoje nėra {name} apibrėžimo, todėl BombVault negali jo iš čia sukurti iš naujo, bet gali atkurti jo failus į aplanką. Norėdamas sukurti iš naujo, avariniame vedlyje atkurk senojo serverio nustatymų atsarginę kopiją, kurioje yra apibrėžimai, tada ten atkurk {name}.",
 
   // Dashboard activity log
   "activityLog.title": "Veiklos žurnalas",

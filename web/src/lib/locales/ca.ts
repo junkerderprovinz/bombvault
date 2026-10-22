@@ -2638,7 +2638,7 @@ const ca: Partial<Translations> = {
   "recovery.foreignReconnect": "Torna a connectar",
   "recovery.foreignVMDest": "Destí dels discos de la MV",
   "recovery.foreignVMDestHint": "On s'escriuen els discos de la MV. Les imatges de disc van a <destination>/<vm-name>/, així que tria una carpeta d'un pool realment muntat, no el disc RAM. Una MV externa es restaura aturada, així que engega-la tu mateix un cop l'hagis comprovat.",
-  "recovery.foreignNoDefinition": "Aquesta còpia no té cap definició de {name}, així que BombVault no el pot tornar a crear des d'aquí. Les definicions són a la còpia de seguretat de la configuració del servidor antic. Restaura-la a l'assistent d'emergència i després restaura {name} allà.",
+  "recovery.foreignNoDefinition": "Aquesta còpia no té cap definició de {name}, així que BombVault no el pot tornar a crear des d'aquí, però en pot restaurar els fitxers en una carpeta. Per tornar-lo a crear, restaura a l'assistent d'emergència la còpia de seguretat de la configuració del servidor antic, que conté les definicions, i després restaura {name} allà.",
 
   // Dashboard activity log
   "activityLog.title": "Registre d'activitat",

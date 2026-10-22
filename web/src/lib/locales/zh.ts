@@ -3070,7 +3070,7 @@ const zh: Partial<Translations> = {
   "settings.reconcileUnraidStatusHint": "在备份后更新步骤中 BombVault 更新容器后，清除 Unraid 的更新横幅。",
   "recovery.foreignVMDest": "虚拟机磁盘目标位置",
   "recovery.foreignVMDestHint": "虚拟机磁盘的写入位置。磁盘映像会写入 <destination>/<vm-name>/，因此请选择真正已挂载存储池中的文件夹，而不是内存盘。外部虚拟机以停止状态恢复，请在检查后自行启动。",
-  "recovery.foreignNoDefinition": "此副本没有 {name} 的定义，因此 BombVault 无法从这里重新创建它。定义保存在旧服务器的设置备份中。请先在应急向导中恢复该备份，然后在那里恢复 {name}。",
+  "recovery.foreignNoDefinition": "此副本没有 {name} 的定义，因此 BombVault 无法从这里重新创建它，但可以把它的文件恢复到一个文件夹。要重新创建它，请在应急向导中恢复旧服务器的设置备份（定义保存在其中），然后在那里恢复 {name}。",
   "folder.newFolder": "新建文件夹",
   "folder.newFolderPlaceholder": "新文件夹名称",
   "folder.creating": "正在创建…",

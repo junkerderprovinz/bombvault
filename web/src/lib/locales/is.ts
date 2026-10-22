@@ -2638,7 +2638,7 @@ const is: Partial<Translations> = {
   "recovery.foreignReconnect": "Tengjast aftur",
   "recovery.foreignVMDest": "Áfangastaður diska sýndarvélar",
   "recovery.foreignVMDestHint": "Hvert diskar sýndarvélarinnar eru skrifaðir. Diskaímyndirnar fara í <destination>/<vm-name>/, veldu því möppu á raunverulega tengdu safni, ekki RAM-disk. Aðkomin sýndarvél er endurheimt stöðvuð, svo ræstu hana sjálf/ur eftir að þú hefur athugað hana.",
-  "recovery.foreignNoDefinition": "Þetta afrit hefur enga skilgreiningu á {name}, svo BombVault getur ekki endurskapað það héðan. Skilgreiningarnar eru í stillingaafriti gamla þjónsins. Endurheimtu það í neyðarhjálpinni og endurheimtu síðan {name} þar.",
+  "recovery.foreignNoDefinition": "Þetta afrit hefur enga skilgreiningu á {name}, svo BombVault getur ekki endurskapað það héðan, en skrárnar má endurheimta í möppu. Til að endurskapa það skaltu endurheimta stillingaafrit gamla þjónsins, sem geymir skilgreiningarnar, í neyðarhjálpinni og endurheimta síðan {name} þar.",
 
   // Dashboard activity log
   "activityLog.title": "Virknidagbók",

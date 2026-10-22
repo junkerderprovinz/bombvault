@@ -2638,7 +2638,7 @@ const et: Partial<Translations> = {
   "recovery.foreignReconnect": "Ühendu uuesti",
   "recovery.foreignVMDest": "VM-i ketaste sihtkoht",
   "recovery.foreignVMDestHint": "Kuhu VM-i kettad kirjutatakse. Kettatõmmised lähevad kausta <destination>/<vm-name>/, seega vali kaust päriselt haagitud poolil, mitte RAM-kettal. Võõras VM taastatakse peatatuna, seega käivita see ise pärast selle kontrollimist.",
-  "recovery.foreignNoDefinition": "Selles koopias pole {name} definitsiooni, seega ei saa BombVault seda siit uuesti luua. Definitsioonid on vana serveri seadete varukoopias. Taasta see hädaabiviisardis ja taasta seejärel seal {name}.",
+  "recovery.foreignNoDefinition": "Selles koopias pole {name} definitsiooni, seega ei saa BombVault seda siit uuesti luua, aga selle failid saab taastada kausta. Uuesti loomiseks taasta hädaabiviisardis vana serveri seadete varukoopia, milles on definitsioonid, ja taasta seejärel seal {name}.",
 
   // Dashboard activity log
   "activityLog.title": "Tegevuslogi",

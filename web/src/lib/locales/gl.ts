@@ -2638,7 +2638,7 @@ const gl: Partial<Translations> = {
   "recovery.foreignReconnect": "Conectar de novo",
   "recovery.foreignVMDest": "Destino dos discos da MV",
   "recovery.foreignVMDestHint": "Onde se escriben os discos da MV. As imaxes de disco van a <destination>/<vm-name>/, así que escolle un cartafol nun pool realmente montado, non o disco RAM. Unha MV allea restáurase detida, así que inícia a ti mesmo despois de comprobala.",
-  "recovery.foreignNoDefinition": "Esta copia non ten ningunha definición de {name}, así que BombVault non o pode volver crear desde aquí. As definicións están na copia de seguridade da configuración do servidor antigo. Restáuraa no asistente de emerxencia e despois restaura {name} alí.",
+  "recovery.foreignNoDefinition": "Esta copia non ten ningunha definición de {name}, así que BombVault non o pode volver crear desde aquí, pero pode restaurar os seus ficheiros nun cartafol. Para volvelo crear, restaura no asistente de emerxencia a copia de seguridade da configuración do servidor antigo, que contén as definicións, e despois restaura {name} alí.",
 
   // Dashboard activity log
   "activityLog.title": "Rexistro de actividade",

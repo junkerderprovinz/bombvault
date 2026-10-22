@@ -1190,6 +1190,9 @@ export interface RestoreCheckRequest {
   target?: RestoreTarget;
   /** Kinds "container", "vm" and "fileSet": see RestoreOptions. */
   backupFirst?: boolean;
+  /** Kind "foreign": a container's or VM's files restored into targetPath
+   *  instead of the item recreated. */
+  toFolder?: boolean;
 }
 
 export type CheckLineId = "repository" | "key" | "snapshot" | "space" | "network";
@@ -5929,6 +5932,9 @@ export async function foreignRestore(req: {
   /** containers domain: the network to create the container on when this
    *  host lacks its own. The backend refuses without it in that case. */
   network?: string;
+  /** containers and vms: restore the item's files into `target` instead of
+   *  recreating it, for an item the session has no definition of. */
+  toFolder?: boolean;
 }): Promise<OkEnvelope & { started?: boolean }> {
   const res = await fetch("/api/foreign/restore", {
     method: "POST",

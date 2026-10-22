@@ -2638,7 +2638,7 @@ const hr: Partial<Translations> = {
   "recovery.foreignReconnect": "Ponovno se poveži",
   "recovery.foreignVMDest": "Odredište diskova VM-a",
   "recovery.foreignVMDestHint": "Gdje se pišu diskovi VM-a. Diskovne slike idu u <destination>/<vm-name>/, pa odaberite mapu na stvarno montiranom poolu, ne RAM disk. Strani VM vraća se zaustavljen, pa ga pokrenite sami nakon što ga provjerite.",
-  "recovery.foreignNoDefinition": "Ova kopija nema definiciju za {name}, pa ga BombVault odavde ne može ponovno stvoriti. Definicije su u sigurnosnoj kopiji postavki starog poslužitelja. Vratite je u čarobnjaku za hitne slučajeve, a zatim ondje vratite {name}.",
+  "recovery.foreignNoDefinition": "Ova kopija nema definiciju za {name}, pa ga BombVault odavde ne može ponovno stvoriti, ali njegove datoteke može vratiti u mapu. Da biste ga ponovno stvorili, u čarobnjaku za hitne slučajeve vratite sigurnosnu kopiju postavki starog poslužitelja, u kojoj su definicije, a zatim ondje vratite {name}.",
 
   // Dashboard activity log
   "activityLog.title": "Zapisnik aktivnosti",

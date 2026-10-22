@@ -2638,7 +2638,7 @@ const lv: Partial<Translations> = {
   "recovery.foreignReconnect": "Izveidot savienojumu vēlreiz",
   "recovery.foreignVMDest": "VM disku mērķis",
   "recovery.foreignVMDestHint": "Kur tiek ierakstīti VM diski. Diska attēli nonāk <destination>/<vm-name>/, tāpēc izvēlieties mapi reāli piesaistītā fondā, nevis RAM diskā. Sveša VM tiek atjaunota apturēta, tāpēc palaidiet to paši pēc tam, kad esat to pārbaudījuši.",
-  "recovery.foreignNoDefinition": "Šajā kopijā nav {name} definīcijas, tāpēc BombVault to nevar no šejienes izveidot no jauna. Definīcijas ir vecā servera iestatījumu dublējumā. Atjauno to avārijas vednī un pēc tam tur atjauno {name}.",
+  "recovery.foreignNoDefinition": "Šajā kopijā nav {name} definīcijas, tāpēc BombVault to nevar no šejienes izveidot no jauna, bet tā failus var atjaunot mapē. Lai to izveidotu no jauna, avārijas vednī atjauno vecā servera iestatījumu dublējumu, kurā ir definīcijas, un pēc tam tur atjauno {name}.",
 
   // Dashboard activity log
   "activityLog.title": "Darbības žurnāls",

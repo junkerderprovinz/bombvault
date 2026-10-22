@@ -70,6 +70,9 @@ type RestoreCheckRequest struct {
 	// BackupFirst asks a restore that replaces the original to back up the
 	// current state first.
 	BackupFirst bool `json:"backupFirst"`
+	// ToFolder is a foreign container's or VM's files restored into
+	// TargetPath instead of the item recreated.
+	ToFolder bool `json:"toFolder"`
 }
 
 // Check line ids, statuses and the reasons the page turns into sentences.
@@ -620,6 +623,9 @@ func (s *Service) foreignScope(ctx context.Context, req RestoreCheckRequest) (re
 	sess, err := s.foreignSession(req.Session)
 	if err != nil {
 		return restoreScope{}, err
+	}
+	if req.ToFolder {
+		return s.foreignExtractScope(ctx, sess, req)
 	}
 	ref := repoRef{repo: sess.repo, mode: sess.mode}
 	switch req.Domain {

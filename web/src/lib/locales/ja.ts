@@ -3070,7 +3070,7 @@ const ja: Partial<Translations> = {
   "settings.reconcileUnraidStatusHint": "バックアップ後の更新ステップで BombVault がコンテナを更新した後、Unraid の更新バナーをクリアします。",
   "recovery.foreignVMDest": "VM ディスクの保存先",
   "recovery.foreignVMDestHint": "VM のディスクを書き込む場所です。ディスクイメージは <destination>/<vm-name>/ に置かれるため、RAM ディスクではなく実際にマウントされたプール上のフォルダーを選んでください。外部の VM は停止した状態で復元されるので、確認してから自分で起動してください。",
-  "recovery.foreignNoDefinition": "このコピーには {name} の定義がないため、BombVault はここから再作成できません。定義は旧サーバーの設定バックアップにあります。緊急ウィザードでそれを復元してから、そこで {name} を復元してください。",
+  "recovery.foreignNoDefinition": "このコピーには {name} の定義がないため、BombVault はここから再作成できませんが、そのファイルはフォルダーに復元できます。再作成するには、定義を含む旧サーバーの設定バックアップを緊急ウィザードで復元してから、そこで {name} を復元してください。",
   "folder.newFolder": "新しいフォルダー",
   "folder.newFolderPlaceholder": "新しいフォルダー名",
   "folder.creating": "作成中…",

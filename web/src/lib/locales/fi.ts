@@ -3079,7 +3079,7 @@ const fi: Partial<Translations> = {
   "settings.reconcileUnraidStatusHint": "Tyhjentää Unraidin päivitysbannerin sen jälkeen, kun BombVault on päivittänyt säiliön varmuuskopioinnin jälkeisessä päivitysvaiheessa.",
   "recovery.foreignVMDest": "VM-levyjen kohde",
   "recovery.foreignVMDestHint": "Minne VM:n levyt kirjoitetaan. Levykuvat menevät kohteeseen <destination>/<vm-name>/, joten valitse kansio aidosti liitetystä poolista, ei RAM-levyltä. Vieras VM palautetaan pysäytettynä, joten käynnistä se itse tarkistettuasi sen.",
-  "recovery.foreignNoDefinition": "Tässä kopiossa ei ole kohteen {name} määritelmää, joten BombVault ei voi luoda sitä uudelleen täältä. Määritelmät ovat vanhan palvelimen asetusten varmuuskopiossa. Palauta se hätäohjatussa toiminnossa ja palauta sitten {name} siellä.",
+  "recovery.foreignNoDefinition": "Tässä kopiossa ei ole kohteen {name} määritelmää, joten BombVault ei voi luoda sitä uudelleen täältä, mutta sen tiedostot voi palauttaa kansioon. Luodaksesi sen uudelleen palauta hätäohjatussa toiminnossa vanhan palvelimen asetusten varmuuskopio, jossa määritelmät ovat, ja palauta sitten {name} siellä.",
   "folder.newFolder": "Uusi kansio",
   "folder.newFolderPlaceholder": "Uuden kansion nimi",
   "folder.creating": "Luodaan…",

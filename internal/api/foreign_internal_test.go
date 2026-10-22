@@ -800,6 +800,55 @@ func TestOpenForeignFlagsEntriesWithoutADefinition(t *testing.T) {
 	}
 }
 
+func TestAContainerWithoutADefinitionIsRestoredIntoAFolder(t *testing.T) {
+	location := "backups/other"
+	eng := &foreignRecordingEngine{opens: opensEncrypted, snaps: []restic.Snapshot{
+		{ID: "bbbbbbbb22222222", Time: "2026-07-05T10:00:00Z", Tags: []string{"container:db"}},
+	}}
+	s := newForeignTestService(t, eng)
+	sessionRepo := seedForeignRepoMarker(t, s, location)
+	id, inv, err := s.OpenForeign(context.Background(), location, foreignTestKey, nil)
+	if err != nil {
+		t.Fatalf("OpenForeign: %v", err)
+	}
+	if len(inv.Containers) != 1 || !inv.Containers[0].NoDefinition {
+		t.Fatalf("containers = %+v, want db without a definition", inv.Containers)
+	}
+	if _, err := s.StartForeignExtract(context.Background(), id, "files", "db", "latest", true, "restore-here/db"); err == nil {
+		t.Fatal("a file set went through the container extract")
+	}
+
+	started, err := s.StartForeignExtract(context.Background(), id, "containers", "db", "latest", true, "restore-here/db")
+	if err != nil || !started {
+		t.Fatalf("StartForeignExtract: started=%v err=%v", started, err)
+	}
+	waitForeignIdle(t, s)
+
+	wantTarget, err := paths.Resolve(s.cfg.HostMountRoot, "restore-here/db")
+	if err != nil {
+		t.Fatal(err)
+	}
+	eng.mu.Lock()
+	restores := append([]string(nil), eng.restores...)
+	eng.mu.Unlock()
+	if want := "RestoreInclude|" + sessionRepo + "|bbbbbbbb22222222|/->" + wantTarget; len(restores) != 1 || restores[0] != want {
+		t.Fatalf("restore calls = %v, want exactly [%s]", restores, want)
+	}
+	if bad := eng.calledForbidden(); len(bad) > 0 {
+		t.Fatalf("the extract wrote to the foreign repository: %v", bad)
+	}
+	runs, err := s.store.ListRuns(10)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(runs) != 1 || runs[0].TargetID != foreignExtractTarget("containers") || runs[0].Subject != "db" || runs[0].Status != "success" {
+		t.Fatalf("runs = %+v, want one successful restore of db", runs)
+	}
+	if targets, _ := s.store.ListTargets(); len(targets) != 0 {
+		t.Fatalf("the extract adopted a container: %+v", targets)
+	}
+}
+
 // A remote repository carries no definitions, and its URL is never read as a
 // local folder.
 func TestForeignDefinitionOfARemoteRepositoryIsNotLookedUpOnDisk(t *testing.T) {

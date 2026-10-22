@@ -2638,7 +2638,7 @@ const sk: Partial<Translations> = {
   "recovery.foreignReconnect": "Pripojiť sa znova",
   "recovery.foreignVMDest": "Cieľ diskov VM",
   "recovery.foreignVMDestHint": "Kam sa zapisujú disky VM. Obrazy diskov idú do <destination>/<vm-name>/, preto vyber priečinok na skutočne pripojenom fonde, nie na RAM disku. Cudzí VM sa obnoví zastavený, takže ho spusti sám po tom, čo ho skontroluješ.",
-  "recovery.foreignNoDefinition": "Táto kópia nemá definíciu {name}, preto ju BombVault odtiaľto nemôže znova vytvoriť. Definície sú v zálohe nastavení starého servera. Obnov ju v núdzovom sprievodcovi a potom tam obnov {name}.",
+  "recovery.foreignNoDefinition": "Táto kópia nemá definíciu {name}, preto ju BombVault odtiaľto nemôže znova vytvoriť, ale jej súbory môže obnoviť do priečinka. Ak ju chceš znova vytvoriť, obnov v núdzovom sprievodcovi zálohu nastavení starého servera, v ktorej sú definície, a potom tam obnov {name}.",
 
   // Dashboard activity log
   "activityLog.title": "Denník aktivít",

@@ -3077,7 +3077,7 @@ const cs: Partial<Translations> = {
   "settings.reconcileUnraidStatusHint": "Vymaže banner aktualizace Unraid poté, co BombVault aktualizuje kontejner v kroku aktualizace po záloze.",
   "recovery.foreignVMDest": "Cíl disků VM",
   "recovery.foreignVMDestHint": "Kam se zapíšou disky virtuálního stroje. Obrazy disků jdou do <destination>/<vm-name>/, proto zvol složku na skutečně připojeném poolu, ne na RAM disku. Cizí VM se obnoví zastavená, takže ji po kontrole spusť sám.",
-  "recovery.foreignNoDefinition": "Tato kopie nemá definici {name}, proto ji BombVault odsud nemůže znovu vytvořit. Definice jsou v záloze nastavení starého serveru. Obnov ji v nouzovém průvodci a pak tam obnov {name}.",
+  "recovery.foreignNoDefinition": "Tato kopie nemá definici {name}, proto ji BombVault odsud nemůže znovu vytvořit, ale její soubory může obnovit do složky. Chceš-li ji znovu vytvořit, obnov v nouzovém průvodci zálohu nastavení starého serveru, kde jsou definice, a pak tam obnov {name}.",
   "folder.newFolder": "Nová složka",
   "folder.newFolderPlaceholder": "Název nové složky",
   "folder.creating": "Vytváření…",

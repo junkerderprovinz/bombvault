@@ -3070,7 +3070,7 @@ const ko: Partial<Translations> = {
   "settings.reconcileUnraidStatusHint": "백업 후 업데이트 단계에서 BombVault가 컨테이너를 업데이트한 후 Unraid의 업데이트 배너를 지웁니다.",
   "recovery.foreignVMDest": "VM 디스크 대상 위치",
   "recovery.foreignVMDestHint": "VM 디스크가 기록되는 위치입니다. 디스크 이미지는 <destination>/<vm-name>/ 에 저장되므로 RAM 디스크가 아니라 실제로 마운트된 풀의 폴더를 선택하세요. 외부 VM은 중지된 상태로 복원되므로 확인한 뒤 직접 시작하세요.",
-  "recovery.foreignNoDefinition": "이 사본에는 {name}의 정의가 없어 BombVault가 여기서 다시 만들 수 없습니다. 정의는 이전 서버의 설정 백업에 있습니다. 긴급 마법사에서 그 백업을 복원한 다음 그곳에서 {name}을(를) 복원하세요.",
+  "recovery.foreignNoDefinition": "이 사본에는 {name}의 정의가 없어 BombVault가 여기서 다시 만들 수는 없지만, 파일은 폴더로 복원할 수 있습니다. 다시 만들려면 긴급 마법사에서 정의가 들어 있는 이전 서버의 설정 백업을 복원한 다음 그곳에서 {name}을(를) 복원하세요.",
   "folder.newFolder": "새 폴더",
   "folder.newFolderPlaceholder": "새 폴더 이름",
   "folder.creating": "만드는 중…",

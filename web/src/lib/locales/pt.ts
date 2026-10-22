@@ -3079,7 +3079,7 @@ const pt: Partial<Translations> = {
   "settings.reconcileUnraidStatusHint": "Limpa o aviso de atualização do Unraid depois de o BombVault atualizar um contentor no passo de atualização após o backup.",
   "recovery.foreignVMDest": "Destino dos discos da VM",
   "recovery.foreignVMDestHint": "Onde os discos da VM são gravados. As imagens de disco vão para <destination>/<vm-name>/, portanto escolhe uma pasta em um pool realmente montado, não no disco RAM. Uma VM externa é restaurada desligada, então inicia-a tu mesmo depois de a verificares.",
-  "recovery.foreignNoDefinition": "Esta cópia não tem nenhuma definição de {name}, por isso o BombVault não consegue recriá-lo a partir daqui. As definições estão no backup das configurações do servidor antigo. Restaure-o no assistente de emergência e depois restaure {name} lá.",
+  "recovery.foreignNoDefinition": "Esta cópia não tem nenhuma definição de {name}, por isso o BombVault não consegue recriá-lo a partir daqui, mas pode restaurar os seus ficheiros numa pasta. Para o recriar, restaure no assistente de emergência o backup das configurações do servidor antigo, que contém as definições, e depois restaure {name} lá.",
   "folder.newFolder": "Nova pasta",
   "folder.newFolderPlaceholder": "Nome da nova pasta",
   "folder.creating": "Criando…",

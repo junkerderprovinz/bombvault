@@ -4305,9 +4305,11 @@ func (h *Handler) runTargetMaps() (name, domain map[string]string) {
 		store.EverythingTargetID: "Backup Everything",
 	}
 	domain = map[string]string{
-		store.FlashTargetID:      "flash",
-		store.ConfigTargetID:     "config",
-		store.EverythingTargetID: "everything",
+		store.FlashTargetID:                "flash",
+		store.ConfigTargetID:               "config",
+		store.EverythingTargetID:           "everything",
+		foreignExtractTarget("containers"): "container",
+		foreignExtractTarget("vms"):        "vm",
 	}
 	if cts, lErr := h.store.ListTargets(); lErr == nil {
 		for _, t := range cts {
@@ -7240,6 +7242,9 @@ func (h *Handler) handleForeignRestore(w http.ResponseWriter, r *http.Request) {
 		ZvolPool  string   `json:"zvolPool"`
 		WholeTree bool     `json:"wholeTree"`
 		Network   string   `json:"network"`
+		// ToFolder restores a container's or VM's files into Target instead of
+		// recreating it.
+		ToFolder bool `json:"toFolder"`
 	}
 	if !decodeBody(w, r, &body) {
 		return
@@ -7247,6 +7252,8 @@ func (h *Handler) handleForeignRestore(w http.ResponseWriter, r *http.Request) {
 	var started bool
 	var err error
 	switch {
+	case body.ToFolder:
+		started, err = h.svc.StartForeignExtract(r.Context(), body.Session, body.Domain, body.Item, body.Snapshot, body.Confirm, body.Target)
 	case body.WholeTree && body.Domain != zfsDomain:
 		err = errors.New("only a ZFS tree can be restored whole")
 	case body.WholeTree:
