@@ -344,13 +344,13 @@ test.describe("on the desktop", () => {
     await page.goto(locationUrl(STORAGE_BOX.id));
     await page.getByRole("button", { name: "Ändern", exact: true }).click();
     const window = page.getByRole("dialog", { name: `Verbindung von ${STORAGE_BOX.name} ändern` });
-    await expect(window.getByLabel("Server")).toHaveValue("u123456.your-storagebox.de");
-    await expect(window.getByLabel("Passwort")).toHaveValue("");
+    await expect(window.getByRole("textbox", { name: "Server", exact: true })).toHaveValue("u123456.your-storagebox.de");
+    await expect(window.getByRole("textbox", { name: "Passwort", exact: true })).toHaveValue("");
     await expect(window.getByRole("textbox", { name: /^Ordner/ })).toHaveValue("bombvault");
     const save = window.getByRole("button", { name: "Testen und speichern" });
     await expect(save).toBeDisabled();
 
-    await window.getByLabel("Server").fill("u999999.your-storagebox.de");
+    await window.getByRole("textbox", { name: "Server", exact: true }).fill("u999999.your-storagebox.de");
     await save.click();
     await expect(page.getByRole("dialog")).toHaveCount(0);
     expect(staged.writes).toEqual([
@@ -442,13 +442,13 @@ test.describe("on the desktop", () => {
 
   test("a move the server refuses says what to do instead and cannot be started", async ({ page }) => {
     const staged = await stageStorage(page, 1280);
-    staged.move = { ok: false, code: "move-sign-in", error: "both places sign in the same way" };
+    staged.move = { ok: false, code: "move-direct-repo", error: "entries back up straight to the old place" };
     await page.goto(locationUrl(STORAGE_BOX.id));
     await sectionRow(page, "Flash").getByRole("button", { name: "Umziehen" }).click();
     const window = page.getByRole("dialog", { name: "Kopie von Flash umziehen" });
 
     await window.getByRole("radio", { name: B2.name }).click();
-    await expect(window.getByText("Zieh den Bereich erst in einen Ordner auf diesem Server um", { exact: false })).toBeVisible();
+    await expect(window.getByText("Stell diese Einträge erst auf Lokal um", { exact: false })).toBeVisible();
     await expect(window.getByRole("button", { name: "Umziehen" })).toBeDisabled();
     expect(staged.writes).toEqual([]);
   });
