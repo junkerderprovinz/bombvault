@@ -1,6 +1,7 @@
 package api
 
 import (
+	"crypto/cipher"
 	"io"
 	"net/http"
 	"os"
@@ -65,6 +66,11 @@ type Handler struct {
 	// database; the cost is that a restart cancels a half-finished registration.
 	passkeyMu         sync.Mutex
 	passkeyCeremonies map[string]passkeyCeremony
+	// Login ceremonies travel sealed in their handle instead; passkeySpent
+	// holds the handles that signed somebody in until they expire.
+	passkeySealOnce sync.Once
+	passkeySealer   cipher.AEAD
+	passkeySpent    map[string]time.Time
 
 	// The live password reset code, and where it is written. resetOut is
 	// stdout itself and not the logger: the logger feeds the log ring, the ring

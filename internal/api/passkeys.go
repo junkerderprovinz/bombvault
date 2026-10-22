@@ -2,8 +2,11 @@ package api
 
 import (
 	"cmp"
+	"crypto/aes"
+	"crypto/cipher"
 	"crypto/rand"
 	"crypto/sha256"
+	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -41,14 +44,104 @@ type passkeyCeremony struct {
 	// passed names the passkey that signed in and waits for the second
 	// factor's code, for the handle the finish answers with when one is due.
 	passed string
+	// sealed is the handle of a login ceremony that carries its own session
+	// data, which a signed-in finish spends.
+	sealed string
+}
+
+// sealedPrefix starts the handle of a login ceremony. Its session data is
+// sealed into the handle with a key of this process, so a start holds nothing
+// on the server and no flood of starts, from however many addresses, keeps
+// somebody else from starting one.
+const sealedPrefix = "s."
+
+// sealedLogin is what the handle of a login ceremony carries.
+type sealedLogin struct {
+	Session webauthn.SessionData `json:"session"`
+	RPID    string               `json:"rpId"`
+	Expires int64                `json:"expires"`
+}
+
+// loginSealer is the AEAD that seals login ceremonies. Its key lives in
+// memory, so a restart costs a sign-in under way one more click.
+func (h *Handler) loginSealer() cipher.AEAD {
+	h.passkeySealOnce.Do(func() {
+		key := make([]byte, 32)
+		_, _ = rand.Read(key)
+		block, _ := aes.NewCipher(key)
+		h.passkeySealer, _ = cipher.NewGCM(block)
+	})
+	return h.passkeySealer
+}
+
+// beginLoginCeremony returns the handle of a login ceremony with s sealed in.
+func (h *Handler) beginLoginCeremony(s *webauthn.SessionData, rpID string) (string, error) {
+	plain, err := json.Marshal(sealedLogin{Session: *s, RPID: rpID, Expires: time.Now().Add(passkeyCeremonyTTL).Unix()})
+	if err != nil {
+		return "", fmt.Errorf("ceremony handle: %w", err)
+	}
+	aead := h.loginSealer()
+	nonce := make([]byte, aead.NonceSize())
+	_, _ = rand.Read(nonce)
+	return sealedPrefix + base64.RawURLEncoding.EncodeToString(aead.Seal(nonce, nonce, plain, nil)), nil
+}
+
+// openLoginCeremony reads a login ceremony back from its handle, refusing one
+// that expired or already signed somebody in.
+func (h *Handler) openLoginCeremony(id string) (passkeyCeremony, bool) {
+	raw, err := base64.RawURLEncoding.DecodeString(strings.TrimPrefix(id, sealedPrefix))
+	aead := h.loginSealer()
+	if err != nil || len(raw) < aead.NonceSize() {
+		return passkeyCeremony{}, false
+	}
+	plain, err := aead.Open(nil, raw[:aead.NonceSize()], raw[aead.NonceSize():], nil)
+	if err != nil {
+		return passkeyCeremony{}, false
+	}
+	var s sealedLogin
+	if json.Unmarshal(plain, &s) != nil || time.Now().Unix() > s.Expires {
+		return passkeyCeremony{}, false
+	}
+	h.passkeyMu.Lock()
+	_, spent := h.passkeySpent[id]
+	h.passkeyMu.Unlock()
+	if spent {
+		return passkeyCeremony{}, false
+	}
+	return passkeyCeremony{session: s.Session, rpID: s.RPID, expires: time.Unix(s.Expires, 0), sealed: id}, true
+}
+
+// spendLoginCeremony marks the handle of a login ceremony whose passkey
+// signed in as used, and reports false when another finish was first. Only
+// signed-in finishes are kept, so failed ones cannot fill the list.
+func (h *Handler) spendLoginCeremony(c passkeyCeremony) bool {
+	if c.sealed == "" {
+		return true // a held ceremony went when it was taken
+	}
+	h.passkeyMu.Lock()
+	defer h.passkeyMu.Unlock()
+	now := time.Now()
+	for k, until := range h.passkeySpent {
+		if now.After(until) {
+			delete(h.passkeySpent, k)
+		}
+	}
+	if _, spent := h.passkeySpent[c.sealed]; spent {
+		return false
+	}
+	if h.passkeySpent == nil {
+		h.passkeySpent = map[string]time.Time{}
+	}
+	h.passkeySpent[c.sealed] = c.expires
+	return true
 }
 
 const (
 	// passkeyCeremonyTTL bounds how long a started ceremony can be finished.
 	// The browser prompt usually times out sooner.
 	passkeyCeremonyTTL = 5 * time.Minute
-	// passkeyCeremonyMax caps the map, because a login ceremony can be started
-	// without a session.
+	// passkeyCeremonyMax caps the map of registrations and of sign-ins that
+	// wait for their second factor's code.
 	passkeyCeremonyMax = 64
 	// passkeyCeremoniesPerClient is one client's share of the map, so a flood
 	// of starts from one address pushes out its own ceremonies and not the
@@ -141,6 +234,9 @@ func (h *Handler) dropOldestCeremony(client string, held map[string]int) {
 // takePasskeyCeremony consumes a handle, so an answered challenge cannot be
 // replayed.
 func (h *Handler) takePasskeyCeremony(id string) (passkeyCeremony, bool) {
+	if strings.HasPrefix(id, sealedPrefix) {
+		return h.openLoginCeremony(id)
+	}
 	h.passkeyMu.Lock()
 	defer h.passkeyMu.Unlock()
 	c, ok := h.passkeyCeremonies[id]
@@ -571,11 +667,7 @@ func (h *Handler) handlePasskeyLoginBegin(w http.ResponseWriter, r *http.Request
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": scrubError(err)})
 		return
 	}
-	handle, err := h.beginPasskeyCeremony(session, rpID, key)
-	if errors.Is(err, errPasskeyBusy) {
-		writeJSON(w, http.StatusTooManyRequests, failEnvelope(err))
-		return
-	}
+	handle, err := h.beginLoginCeremony(session, rpID)
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
@@ -681,6 +773,10 @@ func (h *Handler) handlePasskeyLoginFinish(w http.ResponseWriter, r *http.Reques
 			"ok":    false,
 			"error": "that passkey was refused: its counter went backwards, which is how a copied key looks. Remove it and register a new one",
 		})
+		return
+	}
+	if !h.spendLoginCeremony(cer) {
+		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "that sign-in has expired, try again"})
 		return
 	}
 

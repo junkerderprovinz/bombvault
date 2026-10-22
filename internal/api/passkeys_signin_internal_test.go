@@ -317,3 +317,47 @@ func TestAFullCeremonyMapDropsFromTheClientHoldingTheMost(t *testing.T) {
 		t.Fatal("the client holding one ceremony lost it while others held many")
 	}
 }
+
+func TestPasskeyLoginStartsFromManyPrefixesLeaveRoomForAnother(t *testing.T) {
+	h, repo, _ := newAuthGateHandler(t)
+	enableAuth(t, h, repo)
+	key := registerVirtualKey(t, repo, true)
+
+	for i := range passkeyCeremonyMax * 3 {
+		beginPasskeyLogin(t, h, fmt.Sprintf("[2001:db8:%x::1]:443", i), nil)
+	}
+	id, challenge, _ := beginPasskeyLogin(t, h, "198.51.100.1:443", nil)
+	w, out := passkeyCall(t, h.handlePasskeyLoginFinish, map[string]any{"ceremonyId": id, "credential": key.answer(t, challenge, false)}, "198.51.100.1:443", nil)
+	if out["ok"] != true || !issuedSession(w) {
+		t.Fatalf("a sign-in after a flood of starts: %d %v", w.Code, out)
+	}
+	h.passkeyMu.Lock()
+	n := len(h.passkeyCeremonies)
+	h.passkeyMu.Unlock()
+	if n != 0 {
+		t.Fatalf("%d login starts are held on the server", n)
+	}
+}
+
+func TestAPasskeyLoginHandleSignsInOnce(t *testing.T) {
+	h, repo, _ := newAuthGateHandler(t)
+	enableAuth(t, h, repo)
+	key := registerVirtualKey(t, repo, true)
+
+	id, challenge, _ := beginPasskeyLogin(t, h, "10.0.0.1:1", nil)
+	answer := key.answer(t, challenge, false)
+	if _, out := passkeyCall(t, h.handlePasskeyLoginFinish, map[string]any{"ceremonyId": id, "credential": answer}, "10.0.0.1:1", nil); out["ok"] != true {
+		t.Fatalf("first finish: %v", out)
+	}
+	if w, out := passkeyCall(t, h.handlePasskeyLoginFinish, map[string]any{"ceremonyId": id, "credential": answer}, "10.0.0.1:1", nil); out["ok"] == true || issuedSession(w) {
+		t.Fatalf("the answered handle signed in again: %v", out)
+	}
+
+	forged := id[:len(id)-2] + "AA"
+	if forged == id {
+		forged = id[:len(id)-2] + "BB"
+	}
+	if _, ok := h.takePasskeyCeremony(forged); ok {
+		t.Fatal("a changed handle was read as a ceremony")
+	}
+}
