@@ -9,16 +9,25 @@ import java.util.UUID
 /**
  * A BombVault the app opens. [pin] is the SHA-256 of the certificate the
  * person trusted, for a server whose certificate Android cannot verify.
- * [member] is its instance id when the server came from the paired group.
+ * [member] is its instance id when the server came from the paired group,
+ * and [seen] the Unix second the group last had it in reach, 0 when unknown.
  */
-data class Server(val id: String, val name: String, val url: String, val pin: String?, val member: String? = null) {
+data class Server(
+    val id: String,
+    val name: String,
+    val url: String,
+    val pin: String?,
+    val member: String? = null,
+    val seen: Long = 0,
+) {
     val origin: String get() = originOf(url)
 
     /** Whether the app has a way in: the own address, or the relay for a member of the group. */
     val opens: Boolean get() = url.isNotEmpty() || member != null
 
     /** The fields the launcher sees; the pin stays in the app. */
-    fun toJson(): JSONObject = JSONObject().put("id", id).put("name", name).put("url", url).put("member", member != null)
+    fun toJson(): JSONObject =
+        JSONObject().put("id", id).put("name", name).put("url", url).put("member", member != null).put("seen", seen)
 }
 
 /** The scheme, host and port of [url], the way the WebView reports an origin. */
@@ -43,6 +52,7 @@ class Servers(context: Context) {
                 o.getString("url"),
                 o.optString("pin").ifEmpty { null },
                 o.optString("member").ifEmpty { null },
+                o.optLong("seen"),
             )
         }
     }
@@ -63,24 +73,27 @@ class Servers(context: Context) {
         val old = list.firstOrNull { it.id == id }
         // Another address is another certificate, so the trust does not move with it.
         val pin = old?.pin?.takeIf { old.origin == originOf(url) }
-        val server = Server(old?.id ?: UUID.randomUUID().toString(), name, url, pin, old?.member)
+        val server = Server(old?.id ?: UUID.randomUUID().toString(), name, url, pin, old?.member, old?.seen ?: 0)
         write(if (old == null) list + server else list.map { if (it.id == server.id) server else it })
         return server
     }
 
     /**
-     * Puts group member [member] in the list. A server already there under
-     * that member or that address keeps its name and address, which the
-     * person may have changed; one with no address yet takes [url].
+     * Puts group member [member] in the list, last in reach at [seen]. A
+     * server already there under that member or that address keeps its name
+     * and address, which the person may have changed; one with no address
+     * yet takes [url].
      */
     @Synchronized
-    fun adopt(member: String, name: String, url: String) {
+    fun adopt(member: String, name: String, url: String, seen: Long) {
         val list = all()
         val known = list.firstOrNull { it.member == member }
             ?: list.firstOrNull { url.isNotEmpty() && it.url.isNotEmpty() && it.origin == originOf(url) }
         val next = when {
-            known == null -> list + Server(UUID.randomUUID().toString(), name, url, null, member)
-            else -> list.map { if (it.id == known.id) it.copy(member = member, url = it.url.ifEmpty { url }) else it }
+            known == null -> list + Server(UUID.randomUUID().toString(), name, url, null, member, seen)
+            else -> list.map {
+                if (it.id == known.id) it.copy(member = member, url = it.url.ifEmpty { url }, seen = maxOf(it.seen, seen)) else it
+            }
         }
         write(next)
     }

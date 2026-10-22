@@ -9,7 +9,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { RouterProvider, createMemoryRouter } from "react-router-dom";
-import { I18nProvider, en, useT } from "../../../lib/i18n";
+import { I18nProvider, countText, en, useT } from "../../../lib/i18n";
 import type { GroupState, MemberRoles, RelayMode, ZFSReplicaServer } from "../../../lib/api";
 import { server } from "../../../components/zfs/replica/replica.testsupport";
 import { memberRoles, roleRequest, roleSide } from "../../instances/instances.testsupport";
@@ -39,6 +39,8 @@ function makeGroup(over: Partial<GroupState> = {}): GroupState {
     name: "cellar",
     passwordSet: true,
     members: [{ id: "m1", name: "attic", version: "v9.2.0", direct: false, relay: true, address: "https://192.168.1.21:3443" }],
+    away: [],
+    settling: false,
     relay: {
       mode: "project",
       url: "",
@@ -430,6 +432,37 @@ describe("the badge and the members", () => {
     await renderTab();
     const row = within(screen.getByTestId("members")).getAllByRole("listitem")[1];
     expect(row.textContent).toBe(`Pixel 8${en["fleet.kindAndroid"]}${en["pairing.paired"]} · ${en["pairing.viaRelay"]}`);
+  });
+
+  it("keeps a server that is shut down and a phone with the app closed as inactive, with when each was last seen", async () => {
+    const now = Math.floor(Date.now() / 1000);
+    group = makeGroup({
+      away: [
+        { id: "m2", name: "garage", address: "https://192.168.1.22:3443", lastSeen: now - 2 * 3600 },
+        { id: "m3", name: "Pixel 8", kind: "android", address: "", lastSeen: now - 86400 },
+      ],
+    });
+    await renderTab();
+    const rows = within(screen.getByTestId("members")).getAllByRole("listitem");
+    expect(rows).toHaveLength(4);
+    const ago = (key: "time.hoursAgo" | "time.daysAgo", n: number) => en["instances.lastSeen"].replace("{time}", countText(en[key], "en", n));
+    expect(rows[2].textContent).toContain("garage");
+    expect(rows[2].textContent).toContain(ago("time.hoursAgo", 2));
+    expect(rows[3].textContent).toContain(en["fleet.kindAndroid"]);
+    expect(rows[3].textContent).toContain(ago("time.daysAgo", 1));
+    for (const row of rows.slice(2)) {
+      const badge = within(row).getByText(en["instances.inactive"]);
+      expect(badge.closest('[data-new="pairing-inactive"]')).toBeTruthy();
+      expect(row.textContent).not.toContain(en["pairing.paired"]);
+    }
+  });
+
+  it("says a member that is away is being checked while the group is still coming back", async () => {
+    group = makeGroup({ settling: true, away: [{ id: "m2", name: "garage", address: "", lastSeen: 1 }] });
+    await renderTab();
+    const row = within(screen.getByTestId("members")).getAllByRole("listitem")[2];
+    expect(row.textContent).toContain(en["instances.checking"]);
+    expect(row.textContent).not.toContain(en["instances.inactive"]);
   });
 
   it("shows the words again only after the password in a window", async () => {

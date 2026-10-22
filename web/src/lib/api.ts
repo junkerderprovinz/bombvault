@@ -6183,6 +6183,18 @@ export interface GroupMember {
   kind?: string;
 }
 
+/** A member of the group that is not in reach now, as it last said who it is. */
+export interface AwayMember {
+  id: string;
+  name: string;
+  /** "android" for the app; absent for an instance. */
+  kind?: string;
+  /** Where it took direct calls; "" when none is known. */
+  address: string;
+  /** Unix seconds. */
+  lastSeen: number;
+}
+
 export type RelayMode = "project" | "own" | "off";
 
 export interface RelayState {
@@ -6206,6 +6218,12 @@ export interface GroupState extends OkEnvelope {
    *  shown nor entered. */
   passwordSet: boolean;
   members: GroupMember[];
+  /** The members that were in reach once and are not now, kept until they
+   *  are removed. */
+  away: AwayMember[];
+  /** The group may still be coming back after a restart, so a member that is
+   *  away is not known to be gone yet. */
+  settling: boolean;
   relay: RelayState;
   /** Seconds since this instance created or joined its group, by the
    *  server's clock; 0 outside a group. */
@@ -6686,6 +6704,12 @@ export function deleteFleetPeer(id: string): Promise<OkEnvelope> {
  *  member, which names it again on its next signed call. */
 export function forgetMemberKey(memberId: string): Promise<OkEnvelope> {
   return fetchJSON(`/api/group/members/${encodeURIComponent(memberId)}/key`, { method: "DELETE" });
+}
+
+/** DELETE /api/group/members/{id} drops a member's row and its pinned key,
+ *  so one that is away leaves the lists until it is in reach again. */
+export function removeMember(memberId: string): Promise<OkEnvelope> {
+  return fetchJSON(`/api/group/members/${encodeURIComponent(memberId)}`, { method: "DELETE" });
 }
 
 /** POST /api/fleet/peers/{id}/poll - poll this member now. */

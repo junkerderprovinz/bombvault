@@ -15,6 +15,7 @@ import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import { I18nProvider, countText, en } from "../lib/i18n";
 import { ToastProvider } from "../lib/toast";
 import type {
+  AwayMember,
   DepositRefusal,
   Deposits,
   FleetPeer,
@@ -54,6 +55,8 @@ type Flags = { receiverEnabled: boolean; fleetEnabled: boolean; pullEnabled: boo
 let flags: Flags;
 let peers: FleetPeer[];
 let members: GroupMember[];
+let away: AwayMember[];
+let settling: boolean;
 let peersOk: boolean;
 let roles: MemberRoles[];
 let rolesOk: boolean;
@@ -99,7 +102,7 @@ vi.mock("../lib/api", async (importOriginal) => {
         settings: { ...flags, containersEnabled: true, vmsEnabled: false, filesEnabled: false, flashEnabled: true, configEnabled: false },
       }),
     getGroup: () =>
-      answer("getGroup", { ok: true, active: members.length > 0, name: "cellar", selfAddress: "https://192.168.1.20:3443", members }),
+      answer("getGroup", { ok: true, active: members.length > 0, name: "cellar", selfAddress: "https://192.168.1.20:3443", members, away, settling }),
     getHealth: () => Promise.resolve({ ok: true, version: "v9.2.1" }),
     getStatus: () => Promise.resolve({ ok: true, domains: [] }),
     listFleetPeers: () => answer("listFleetPeers", peersOk ? { ok: true, peers } : { ok: false, error: "the list is locked" }),
@@ -114,6 +117,11 @@ vi.mock("../lib/api", async (importOriginal) => {
     },
     forgetMemberKey: (memberId: string) => {
       forgotten.push(memberId);
+      return Promise.resolve({ ok: true });
+    },
+    removeMember: (memberId: string) => {
+      removed.push(memberId);
+      away = away.filter((m) => m.id !== memberId);
       return Promise.resolve({ ok: true });
     },
     listRoles: () => answer("listRoles", rolesOk ? { ok: true, members: roles, self: selfRoles } : { ok: false, error: "the roles are locked" }),
@@ -236,6 +244,8 @@ beforeEach(() => {
   flags = { receiverEnabled: true, fleetEnabled: true, pullEnabled: true, zfsEnabled: false };
   peers = [peer({})];
   members = [M1];
+  away = [];
+  settling = false;
   peersOk = true;
   roles = [memberRoles({ name: "DXP480T" })];
   rolesOk = true;
@@ -282,10 +292,48 @@ describe("the instances grid", () => {
   it("stands on the page with the picture, with no card around the cards", async () => {
     await renderPage();
     const grid = card("self").parentElement as HTMLElement;
+    const page = grid.parentElement as HTMLElement;
     expect(grid.closest(".rounded-card")).toBeNull();
-    expect(grid.parentElement).toBe(screen.getByRole("heading", { level: 1 }).parentElement);
-    expect(screen.getByTestId("net-picture").closest(".rounded-card")?.parentElement).toBe(grid);
+    expect(page.parentElement).toBe(screen.getByRole("heading", { level: 1 }).parentElement);
+    expect(screen.getByTestId("net-picture").closest(".rounded-card")?.parentElement).toBe(page);
     for (const key of ["self", "m1"]) expect(card(key).classList.contains("bg-carbon-surface")).toBe(true);
+  });
+
+  it("gives every card one width and the height of the tallest, the picture standing apart", async () => {
+    await renderPage();
+    const grid = card("self").parentElement as HTMLElement;
+    expect(grid.className).toContain("auto-rows-fr");
+    expect(grid.contains(screen.getByTestId("net-picture"))).toBe(false);
+    for (const key of ["self", "m1"]) expect(card(key).classList.contains("h-full")).toBe(true);
+  });
+
+  it("puts the mark of every card at its top, at one size, whatever the card holds", async () => {
+    flags.zfsEnabled = true;
+    servers = [server()];
+    members = [M1, groupMember({ id: "m3", name: "Pixel 8", kind: "android", address: "", direct: false, relay: true })];
+    await renderPage();
+    const marks = cards().map((c) => c.querySelector('[data-new="instances-card-logo"]') as HTMLElement);
+    expect(marks).toHaveLength(4);
+    for (const mark of marks) {
+      expect(mark.parentElement?.className).toContain("items-start");
+      const shape = mark.querySelector("img, .rounded-card") as HTMLElement;
+      expect(shape.className).toContain("h-20 w-20");
+      expect(shape.className).toContain("md:h-[104px] md:w-[104px]");
+    }
+  });
+
+  it("shows a long name in full, with the kind of instance on a line of its own", async () => {
+    const long = "the-backup-server-in-the-cellar-behind-the-old-boiler";
+    members = [M1, groupMember({ id: "m3", name: long, kind: "android", address: "", direct: false, relay: true })];
+    await renderPage();
+    const names = card("m3").querySelector('[data-new="instances-full-names"]') as HTMLElement;
+    const name = names.firstElementChild as HTMLElement;
+    expect(name.textContent).toBe(long);
+    expect(name.className).not.toContain("truncate");
+    expect(name.className).toContain("wrap-anywhere");
+    expect(names.className).toContain("flex-wrap");
+    expect(names.textContent).not.toContain(en["fleet.kindAndroid"]);
+    expect(card("m3").textContent).toContain(en["fleet.kindAndroid"]);
   });
 
   it("gives every card the next colour of the page, and the rows without an instance the one after the last card", async () => {
@@ -320,7 +368,8 @@ describe("the instances grid", () => {
     await renderPage();
     expect(card("direct").textContent).toContain(en["instances.connected"]);
     expect(card("relayed").textContent).toContain(en["instances.connected"]);
-    expect(card("gone").textContent).toContain(en["instances.notConnected"]);
+    expect(card("gone").textContent).toContain(en["instances.inactive"]);
+    expect(card("gone").textContent).not.toContain(en["instances.notConnected"]);
     for (const key of ["direct", "relayed", "gone"]) {
       expect(card(key).textContent).not.toContain(en["pairing.viaRelay"]);
       expect(card(key).textContent).not.toContain(en["pairing.direct"]);
@@ -884,12 +933,88 @@ describe("a paired phone", () => {
     expect(within(card("m1")).queryByRole("button", { name: en["instances.forgetKey"] })).toBeNull();
   });
 
-  it("stands in the net picture as a phone, with no arrows", async () => {
+  it("stands in the net picture with the logo and a phone badge, with no arrows", async () => {
     await renderPage();
     const node = screen.getByTestId("net-picture").querySelector('.glim-net-wide [data-net="m3"]')!;
     expect(node.textContent).toContain(en["fleet.kindAndroid"]);
-    expect(node.querySelector("image")).toBeNull();
+    expect(node.querySelector('image[href="/logo.svg"]')).toBeTruthy();
+    expect(node.querySelector(".glim-net-kind")).toBeTruthy();
+    expect(node.querySelector(".glim-net-tile")).toBeNull();
     expect(node.querySelectorAll("[data-lane]")).toHaveLength(0);
+  });
+
+  it("is inactive in grey while the app is closed, with when it was last there", async () => {
+    members = [M1];
+    const seen = NOW_S - 3 * 3600;
+    away = [{ id: "m3", name: "Pixel 8", kind: "android", address: "", lastSeen: seen }];
+    peers = [peer({}), peer({ id: "p3", memberId: "m3", name: "Pixel 8", kind: "android", direct: false, relay: false, lastPollDomains: [] })];
+    await renderPage();
+    const phone = card("m3");
+    const badge = within(phone).getByText(en["instances.inactive"]);
+    expect(badge.closest('[data-new="instances-inactive"]')).toBeTruthy();
+    expect(badge.className).not.toMatch(/statusFail|fail/);
+    expect(phone.textContent).toContain(en["instances.lastSeen"].replace("{time}", countText(en["time.hoursAgo"], "en", 3)));
+    expect(cards().filter((c) => c.getAttribute("data-instance") === "m3")).toHaveLength(1);
+    const node = screen.getByTestId("net-picture").querySelector('.glim-net-wide [data-net="m3"]')!;
+    expect(node.classList.contains("glim-net-dim")).toBe(true);
+  });
+});
+
+describe("an instance that is away", () => {
+  const SEEN = NOW_S - 2 * 86400;
+
+  beforeEach(() => {
+    members = [];
+    away = [{ id: "m1", name: "DXP480T", address: "https://192.168.1.21:3443", lastSeen: SEEN }];
+    peers = [peer({ direct: false, relay: false })];
+  });
+
+  it("keeps its card as Inactive, with when it was last seen, and is not red", async () => {
+    await renderPage();
+    const shown = card("m1");
+    expect(shown.textContent).toContain(en["instances.inactive"]);
+    expect(shown.textContent).not.toContain(en["instances.notConnected"]);
+    expect(shown.textContent).toContain(en["instances.lastSeen"].replace("{time}", countText(en["time.daysAgo"], "en", 2)));
+    expect(shown.querySelector(".text-statusFail")).toBeNull();
+  });
+
+  it("stands dimmed in the picture, named as inactive", async () => {
+    await renderPage();
+    const node = screen.getByTestId("net-picture").querySelector('.glim-net-wide [data-net="m1"]')!;
+    expect(node.classList.contains("glim-net-dim")).toBe(true);
+    expect(node.textContent).toContain(en["instances.inactive"]);
+  });
+
+  it("keeps its card and its Remove while the Instances module keeps no rows", async () => {
+    flags.fleetEnabled = false;
+    roles = [];
+    await renderPage();
+    expect(card("m1").textContent).toContain(en["instances.inactive"]);
+    await click(within(card("m1")).getByRole("button", { name: en["fleet.remove"] }));
+    await click(within(card("m1")).getByRole("button", { name: en["fleet.confirmRemove"] }));
+    expect(removed).toEqual(["m1"]);
+    expect(called("getGroup")).toBeGreaterThan(1);
+    expect(document.querySelector('[data-instance="m1"]')).toBeNull();
+  });
+
+  it("is one card once it is back", async () => {
+    members = [M1];
+    away = [];
+    peers = [peer({})];
+    await renderPage();
+    expect(cards().filter((c) => c.getAttribute("data-instance") === "m1")).toHaveLength(1);
+    expect(card("m1").textContent).toContain(en["instances.connected"]);
+  });
+
+  it("says Checking in grey and is not dimmed while the group is still coming back", async () => {
+    settling = true;
+    await renderPage();
+    expect(card("m1").textContent).toContain(en["instances.checking"]);
+    expect(card("m1").textContent).not.toContain(en["instances.inactive"]);
+    expect(card("m1").querySelector('[data-new="instances-checking"]')).toBeTruthy();
+    const node = screen.getByTestId("net-picture").querySelector('.glim-net-wide [data-net="m1"]')!;
+    expect(node.classList.contains("glim-net-dim")).toBe(false);
+    expect(node.textContent).toContain(en["instances.checking"]);
   });
 });
 

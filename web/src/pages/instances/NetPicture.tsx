@@ -1,7 +1,7 @@
 import { useState, type CSSProperties, type FocusEvent, type KeyboardEvent, type PointerEvent, type ReactNode } from "react";
 
 import { InfoBubble } from "../../components/InfoBubble";
-import { IconZFS } from "../../components/navGlyphs";
+import { IconFleet, IconZFS } from "../../components/navGlyphs";
 import { hueVars } from "../../lib/appearance";
 import { useT } from "../../lib/i18n";
 import { LogoImage, PHONE_PATH } from "./InstanceCard";
@@ -31,11 +31,9 @@ function showEntry(key: string) {
   entry?.scrollIntoView({ block: "nearest" });
 }
 
-function Label({ label, name, sub, tall }: { label: NetLabel; name: string; sub: string; tall: boolean }) {
-  const height = tall ? 62 : 36;
-  const top = label.align === "mid" ? label.y - 18 : label.y - height / 2;
+function Label({ label, name, sub }: { label: NetLabel; name: string; sub: string }) {
   return (
-    <foreignObject x={Math.round(label.x)} y={Math.round(top)} width={Math.round(label.width)} height={height}>
+    <foreignObject x={Math.round(label.x)} y={Math.round(label.y)} width={Math.round(label.width)} height={Math.round(label.height)}>
       <div className={`glim-net-label glim-net-label-${label.align}`}>
         <b>{name}</b>
         {sub && <span>{sub}</span>}
@@ -71,16 +69,40 @@ function Lane({ lane, title }: { lane: NetLane; title: string }) {
   );
 }
 
-function Shape({ node, x, y }: { node: Pick<NetNode, "kind">; x: number; y: number }) {
-  if (node.kind === "peer") return <LogoImage x={x - 25} y={y - 25} size={50} />;
-  if (node.kind === "phone") {
+/** The glyph of what a BombVault node is, as the Pairing page's rows show it. */
+function KindGlyph({ kind }: { kind: "peer" | "phone" }) {
+  if (kind === "phone") {
     return (
-      <>
-        <rect className="glim-net-tile" x={x - 14} y={y - 21} width="28" height="42" rx="8" />
-        <path className="glim-net-tile-ink" transform={`translate(${x - 10} ${y - 10}) scale(1.25)`} fillRule="evenodd" d={PHONE_PATH} />
-      </>
+      <svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor" aria-hidden="true">
+        <path fillRule="evenodd" d={PHONE_PATH} />
+      </svg>
     );
   }
+  return <IconFleet />;
+}
+
+/**
+ * Logo is the BombVault mark a node wears when it runs BombVault, this
+ * server, another instance or the app on a phone, with what it is in a round
+ * badge at the mark's lower end corner.
+ */
+function Logo({ kind, x, y, size }: { kind: "peer" | "phone"; x: number; y: number; size: number }) {
+  const r = size * 0.19;
+  const bx = x + size * 0.32;
+  const by = y + size * 0.32;
+  return (
+    <>
+      <LogoImage x={x - size / 2} y={y - size / 2} size={size} />
+      <circle className="glim-net-kind" cx={bx.toFixed(1)} cy={by.toFixed(1)} r={r.toFixed(1)} />
+      <g className="glim-net-kind-glyph" transform={`translate(${(bx - r * 0.62).toFixed(1)} ${(by - r * 0.62).toFixed(1)}) scale(${((r * 1.24) / 16).toFixed(3)})`}>
+        <KindGlyph kind={kind} />
+      </g>
+    </>
+  );
+}
+
+function Shape({ node, x, y }: { node: Pick<NetNode, "kind">; x: number; y: number }) {
+  if (node.kind !== "zfs") return <Logo kind={node.kind} x={x} y={y} size={50} />;
   return (
     <>
       <rect className="glim-net-tile glim-net-tile-zfs" x={x - 20} y={y - 20} width="40" height="40" rx="8" />
@@ -104,7 +126,6 @@ function NetSvg({
 }) {
   const { t } = useT();
   const layout = netLayout(kind, nodes.length);
-  const tall = kind === "narrow";
 
   const button = (key: string, name: string, x: number, y: number, r: number, shape: ReactNode) => (
     <g
@@ -155,13 +176,13 @@ function NetSvg({
               <Lane key={`${lane.dir}:${lane.role}:${lane.waiting}`} lane={lane} title={laneTitle(lane, node.name)} />
             ))}
             {button(node.key, node.name, p.x, p.y, r, <Shape node={node} x={p.x} y={p.y} />)}
-            <Label label={p.label} name={node.name} sub={node.sub} tall={tall} />
+            <Label label={p.label} name={node.name} sub={node.sub} />
           </g>
         );
       })}
       <g data-net="self" className={`glim-net-spoke glim-net-hub${hot === "self" ? " glim-net-hot" : ""}`}>
-        {button("self", selfName, layout.hub.x, layout.hub.y, layout.hub.r, <LogoImage x={layout.hub.x - 32} y={layout.hub.y - 32} size={64} />)}
-        <Label label={layout.hub.label} name={selfName} sub={t("instances.thisInstance")} tall={tall} />
+        {button("self", selfName, layout.hub.x, layout.hub.y, layout.hub.r, <Logo kind="peer" x={layout.hub.x} y={layout.hub.y} size={64} />)}
+        <Label label={layout.hub.label} name={selfName} sub={t("instances.thisInstance")} />
       </g>
     </svg>
   );
@@ -185,9 +206,9 @@ export function NetPicture({
   if (nodes.length === 0) return null;
   const shared = { selfName, nodes, hot };
   return (
-    <div className="glim-pic glim-net-box" data-testid="net-picture">
+    <div className="glim-pic glim-net-box" data-testid="net-picture" data-new="instances-net-logos">
       <div className="glim-net">
-        <div className="glim-net-pics">
+        <div className="glim-net-pics" data-new="instances-net-labels">
           <NetSvg kind="wide" {...shared} />
           <NetSvg kind="narrow" {...shared} />
         </div>

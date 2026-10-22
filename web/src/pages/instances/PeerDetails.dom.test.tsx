@@ -69,7 +69,7 @@ vi.mock("../../lib/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../lib/api")>();
   return {
     ...actual,
-    getGroup: () => Promise.resolve({ ok: true, active: true, name: "cellar", members: [MEMBER] }),
+    getGroup: () => Promise.resolve({ ok: true, active: true, name: "cellar", members: [MEMBER], away: [], settling: false }),
     memberRepos: () => Promise.resolve({ ok: true, repos: [] }),
     listCloudCredSets: () => Promise.resolve({ ok: true, sets: [] }),
     listZFSReceiveRequests: () => Promise.resolve(requests),
@@ -157,6 +157,8 @@ let closed = 0;
 function data(over: Partial<InstancesData> = {}): InstancesData {
   return {
     members: [MEMBER],
+    away: [],
+    settling: false,
     peers: [PEER],
     received: [],
     pulls: [],
@@ -183,6 +185,7 @@ async function open(over: Partial<InstancesData> = {}, modules: Modules = ALL) {
     receiverServer: serverRuns,
     deposits: depositList,
     data: all,
+    reloadGroup: reload("group"),
     reloadPeers: reload("peers"),
     reloadOffers: reload("offers"),
     reloadReceived: reload("received"),
@@ -699,6 +702,7 @@ describe("monitoring and removal", () => {
     expect(removed).toEqual(["p1"]);
     expect(closed).toBe(1);
     expect(reloads).toContain("peers");
+    expect(reloads).toContain("group");
   });
 
   it("has neither while the Instances module is off", async () => {

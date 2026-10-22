@@ -39,6 +39,9 @@ type FleetPeer struct {
 	Kind string
 	// MemberURL is where the member last said it takes direct calls.
 	MemberURL string
+	// LastSeen is the Unix time the member was last in reach, kept to within
+	// a minute; 0 on a row from before it was kept.
+	LastSeen int64
 }
 
 // NeedsPairing reports whether the row predates pairing and has no member to
@@ -46,7 +49,11 @@ type FleetPeer struct {
 func (p FleetPeer) NeedsPairing() bool { return p.MemberID == "" }
 
 const fleetPeerCols = `id, member_id, name, url, enabled, last_poll_at, last_poll_ok, last_poll_error,
-	last_poll_instance_name, last_poll_version, last_poll_domains_json, created_at, sort_order, kind, member_url`
+	last_poll_instance_name, last_poll_version, last_poll_domains_json, created_at, sort_order, kind, member_url, last_seen`
+
+// seenStep is how far a member's last-seen time may lag behind before it is
+// written again, so a page polling the group does not write on every call.
+const seenStep = 60
 
 // CreateFleetPeer inserts a new fleet peer and returns the stored row. An
 // empty ID is assigned and a zero CreatedAt is set to now.
@@ -59,9 +66,9 @@ func (r *Repo) CreateFleetPeer(p FleetPeer) (FleetPeer, error) {
 	}
 	_, err := r.db.Exec(`
 		INSERT INTO fleet_peers (`+fleetPeerCols+`)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		p.ID, p.MemberID, p.Name, p.URL, boolInt(p.Enabled), p.LastPollAt, nullBool(p.LastPollOK), p.LastPollError,
-		p.LastPollInstanceName, p.LastPollVersion, p.LastPollDomainsJSON, p.CreatedAt, p.SortOrder, p.Kind, p.MemberURL,
+		p.LastPollInstanceName, p.LastPollVersion, p.LastPollDomainsJSON, p.CreatedAt, p.SortOrder, p.Kind, p.MemberURL, p.LastSeen,
 	)
 	if err != nil {
 		return FleetPeer{}, fmt.Errorf("CreateFleetPeer: %w", err)
@@ -163,6 +170,16 @@ func (r *Repo) SetFleetPeerMemberURL(memberID, url string) error {
 	return nil
 }
 
+// MarkFleetPeerSeen records at as when the member was last in reach, unless
+// its row says so to within seenStep already.
+func (r *Repo) MarkFleetPeerSeen(memberID string, at int64) error {
+	if _, err := r.db.Exec(`UPDATE fleet_peers SET last_seen = ? WHERE member_id = ? AND member_id != '' AND last_seen <= ?`,
+		at, memberID, at-seenStep); err != nil {
+		return fmt.Errorf("MarkFleetPeerSeen: %w", err)
+	}
+	return nil
+}
+
 // DropMemberFleetPeers removes the rows of group members, the one of memberID
 // or, with an empty memberID, every one. A row from before pairing that a
 // member took over keeps its address and waits for pairing again, as it did
@@ -187,7 +204,7 @@ func scanFleetPeer(s scanner) (FleetPeer, error) {
 	var enabled int
 	err := s.Scan(
 		&p.ID, &p.MemberID, &p.Name, &p.URL, &enabled, &p.LastPollAt, &p.LastPollOK, &p.LastPollError,
-		&p.LastPollInstanceName, &p.LastPollVersion, &p.LastPollDomainsJSON, &p.CreatedAt, &p.SortOrder, &p.Kind, &p.MemberURL,
+		&p.LastPollInstanceName, &p.LastPollVersion, &p.LastPollDomainsJSON, &p.CreatedAt, &p.SortOrder, &p.Kind, &p.MemberURL, &p.LastSeen,
 	)
 	if err != nil {
 		return FleetPeer{}, fmt.Errorf("scanFleetPeer: %w", err)

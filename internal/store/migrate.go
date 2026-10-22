@@ -3307,6 +3307,14 @@ INSERT OR IGNORE INTO sign_ins_note (id) VALUES (1);`,
 		alreadySatisfied: columnPresent("settings", "backup_memory_mb"),
 		sql:              "ALTER TABLE settings ADD COLUMN backup_memory_mb INTEGER NOT NULL DEFAULT 0;",
 	},
+	{
+		// When each member was last in reach, so one that is closed or away
+		// keeps its card with that time. Rows from before say nothing.
+		version:          memberSeenMigration,
+		name:             "fleet_peers_last_seen",
+		alreadySatisfied: columnPresent("fleet_peers", "last_seen"),
+		sql:              `ALTER TABLE fleet_peers ADD COLUMN last_seen INTEGER NOT NULL DEFAULT 0;`,
+	},
 }
 
 // offsiteFieldDomains are the domains with an off-site field in the settings,
@@ -3529,6 +3537,9 @@ const signInsMigration = 420
 
 // backupMemoryMigration numbers the memory limit of a restic process.
 const backupMemoryMigration = 430
+
+// memberSeenMigration numbers when a member was last in reach.
+const memberSeenMigration = 440
 
 // oneLineColumns are the names and locations the recovery kit prints.
 var oneLineColumns = []struct {

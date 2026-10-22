@@ -31,6 +31,8 @@ import {
 function data(over: Partial<InstancesData> = {}): InstancesData {
   return {
     members: [member()],
+    away: [],
+    settling: false,
     peers: [peer()],
     received: [],
     pulls: [],
@@ -54,6 +56,33 @@ describe("the instances of the group", () => {
   it("names an instance the way it last named itself", () => {
     const { instances } = buildInstances(data({ peers: [peer({ lastPollInstanceName: "Attic NAS" })] }));
     expect(instances[0].name).toBe("Attic NAS");
+  });
+
+  it("keeps a member that is away as an inactive record with when it was last seen", () => {
+    const { instances } = buildInstances(
+      data({ members: [], peers: [], away: [{ id: "m1", name: "attic", address: "https://192.168.1.21:3443", lastSeen: 1700 }] }),
+    );
+    expect(instances).toHaveLength(1);
+    expect(instances[0]).toMatchObject({ key: "m1", name: "attic", connected: false, presence: "inactive", lastSeen: 1700 });
+    expect(instances[0].address).toBe("https://192.168.1.21:3443");
+  });
+
+  it("makes one record of the fleet row and the group's word that the member is away", () => {
+    const { instances } = buildInstances(
+      data({ members: [], peers: [peer({ direct: false, relay: false })], away: [{ id: "m1", name: "attic", address: "", lastSeen: 1700 }] }),
+    );
+    expect(instances.map((i) => [i.key, i.presence, i.lastSeen])).toEqual([["m1", "inactive", 1700]]);
+  });
+
+  it("calls a member that is in reach connected, and one away while the group comes back checking", () => {
+    expect(buildInstances(data()).instances[0].presence).toBe("connected");
+    const settling = buildInstances(data({ members: [], peers: [], settling: true, away: [{ id: "m1", name: "attic", address: "", lastSeen: 1 }] }));
+    expect(settling.instances[0].presence).toBe("checking");
+  });
+
+  it("knows a phone that is away for a phone", () => {
+    const { instances } = buildInstances(data({ members: [], peers: [], away: [{ id: "m3", name: "Pixel 8", kind: "android", address: "", lastSeen: 1 }] }));
+    expect(instances[0]).toMatchObject({ app: true, presence: "inactive" });
   });
 
   it("still shows a member while the Instances module keeps no row for it", () => {

@@ -31,7 +31,7 @@ Die App nimmt eine Antwort nur an, wenn der Server sie mit dem Schlüssel signie
 
 ## Server wechseln {#switch}
 
-Ist ein Server offen, steht oben in seiner Übersicht sein Name, davor ein Pfeil zurück. Der Pfeil führt zur Übersicht der App, dem Startbildschirm, der jeden Server, den die App kennt, mit seinem Zustand listet: **Verbunden**, **Nicht verbunden**, **Anmeldung nötig** oder **Zertifikat prüfen**. Tippe dort auf einen anderen, um ihn zu öffnen, zu Hause direkt und sonst über das Relay.
+Ist ein Server offen, steht oben in seiner Übersicht sein Name, davor ein Pfeil zurück. Der Pfeil führt zur Übersicht der App, dem Startbildschirm, der jeden Server, den die App kennt, mit seinem Zustand listet: **Verbunden**, **Nicht verbunden**, **Anmeldung nötig** oder **Zertifikat prüfen**. Ein Server der Gruppe, der nicht antwortet, ist **Inaktiv**, in Grau und mit der Angabe, wann die Gruppe ihn zuletzt gesehen hat, und einer, von dem die App noch nichts gehört hat, zeigt **Wird geprüft**. Bei jeder Verbindung liest die App die Liste der Gruppe bei einer ihrer Instanzen, deshalb steht auch eine Instanz in der Liste, die sie über das Relay nie getroffen hat, etwa eine, die beim Koppeln des Handys ausgeschaltet war. Tippe dort auf einen anderen, um ihn zu öffnen, zu Hause direkt und sonst über das Relay.
 
 ## Angemeldet auf einem gekoppelten Handy {#sign-in}
 

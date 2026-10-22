@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"sort"
 	"strings"
 	"time"
 
@@ -36,6 +37,15 @@ type fleetStatusResponse struct {
 // pairing that reported the member's name is taken over instead of adding a
 // second one, which is how an old peer stops needing to be paired again.
 func (s *Service) syncFleetPeers() ([]store.FleetPeer, error) {
+	return s.syncFleetPeersWith(s.pairing().Members(), time.Now())
+}
+
+// syncFleetPeersWith is syncFleetPeers for the members in reach at now, which
+// it records as seen. The pages and the phones' calls run it side by side,
+// and two runs at once would each add a row for a member new to both.
+func (s *Service) syncFleetPeersWith(members []group.Member, now time.Time) ([]store.FleetPeer, error) {
+	s.fleetSyncMu.Lock()
+	defer s.fleetSyncMu.Unlock()
 	rows, err := s.store.ListFleetPeers()
 	if err != nil {
 		return nil, fmt.Errorf("list fleet peers: %w", err)
@@ -46,8 +56,11 @@ func (s *Service) syncFleetPeers() ([]store.FleetPeer, error) {
 			known[p.MemberID] = i
 		}
 	}
-	for _, m := range s.pairing().Members() {
+	for _, m := range members {
 		if i, ok := known[m.ID]; ok {
+			if err := s.store.MarkFleetPeerSeen(m.ID, now.Unix()); err != nil {
+				return nil, err
+			}
 			// A member found on the network and never polled would otherwise
 			// leave no address to ask after a restart whether it is still in
 			// the group.
@@ -77,6 +90,9 @@ func (s *Service) syncFleetPeers() ([]store.FleetPeer, error) {
 				if err := s.store.UpdateFleetPeer(rows[i]); err != nil {
 					return nil, err
 				}
+				if err := s.store.MarkFleetPeerSeen(m.ID, now.Unix()); err != nil {
+					return nil, err
+				}
 				known[m.ID] = i
 				adopted = true
 				break
@@ -85,7 +101,7 @@ func (s *Service) syncFleetPeers() ([]store.FleetPeer, error) {
 		if adopted {
 			continue
 		}
-		row := store.FleetPeer{MemberID: m.ID, Name: m.Name, Kind: m.Kind, Enabled: true, SortOrder: len(rows)}
+		row := store.FleetPeer{MemberID: m.ID, Name: m.Name, Kind: m.Kind, Enabled: true, SortOrder: len(rows), LastSeen: now.Unix()}
 		if m.Kind == "" {
 			row.MemberURL = m.Address
 		}
@@ -97,6 +113,63 @@ func (s *Service) syncFleetPeers() ([]store.FleetPeer, error) {
 		rows = append(rows, p)
 	}
 	return rows, nil
+}
+
+// awayMember is a member of the group with a row here that is not in reach
+// now, such as an instance that was shut down or a phone with the app closed,
+// as it last said who it is.
+type awayMember struct {
+	ID      string `json:"id"`
+	Name    string `json:"name"`
+	Kind    string `json:"kind,omitempty"`
+	Address string `json:"address"`
+	// LastSeen is Unix seconds.
+	LastSeen int64 `json:"lastSeen"`
+}
+
+// groupRoster returns the members in reach, the ones out of reach that keep
+// their row until somebody removes it, and whether the group may still be
+// coming back after a restart or a change. A member gets its row by being in
+// reach, which only one that proved it holds the group's words can be.
+func (s *Service) groupRoster(now time.Time) (members []group.Member, away []awayMember, settling bool, err error) {
+	members = s.pairing().Members()
+	away = []awayMember{}
+	if !s.pairing().Active() {
+		return members, away, false, nil
+	}
+	rows, err := s.syncFleetPeersWith(members, now)
+	if err != nil {
+		return nil, nil, false, err
+	}
+	present := map[string]bool{}
+	for _, m := range members {
+		present[m.ID] = true
+	}
+	for _, p := range rows {
+		if p.MemberID == "" || present[p.MemberID] {
+			continue
+		}
+		away = append(away, awayMember{ID: p.MemberID, Name: p.Name, Kind: p.Kind, Address: p.MemberURL, LastSeen: lastSeen(p)})
+	}
+	sort.Slice(away, func(i, j int) bool {
+		if away[i].Name != away[j].Name {
+			return away[i].Name < away[j].Name
+		}
+		return away[i].ID < away[j].ID
+	})
+	settling = now.Sub(time.Unix(0, s.groupApplied.Load())) < absentCheckDelay
+	return members, away, settling, nil
+}
+
+// lastSeen is the latest a row knows the member was there. A row older than
+// the last_seen column still knows when it was made and when a poll was
+// answered.
+func lastSeen(p store.FleetPeer) int64 {
+	seen := max(p.LastSeen, p.CreatedAt)
+	if p.LastPollOK.Valid && p.LastPollOK.Bool {
+		seen = max(seen, p.LastPollAt)
+	}
+	return seen
 }
 
 // memberPresent reports whether the member is reachable in the group at the moment.

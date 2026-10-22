@@ -610,7 +610,11 @@ type Service struct {
 	relaySrv  *relay.Server
 	// relayServe mirrors the stored serve switch for relaySrv.Admit, which
 	// runs on every relay handshake.
-	relayServe     atomic.Bool
+	relayServe atomic.Bool
+	// groupApplied is when applyGroup last rebuilt the connections to the
+	// group, in Unix nanoseconds.
+	groupApplied   atomic.Int64
+	fleetSyncMu    sync.Mutex
 	peerMuxOnce    sync.Once
 	peerMuxHandler http.Handler
 	// peerActivity answers a member asking what runs here; NewHandler sets

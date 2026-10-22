@@ -71,13 +71,32 @@ describe("the net picture", () => {
     expect(width(wide())).toBeGreaterThan(width(narrow()));
   });
 
-  it("stands a BombVault as the logo, a ZFS server and a phone as tiles", () => {
+  it("stands every BombVault, this server and a phone too, as the logo with what it is in a badge", () => {
     draw();
-    expect(spoke(wide(), "m1").querySelector('image[href="/logo.svg"]')).toBeTruthy();
-    expect(spoke(wide(), "self").querySelector('image[href="/logo.svg"]')).toBeTruthy();
+    for (const svg of [wide(), narrow()]) {
+      for (const key of ["self", "m1", "m3"]) {
+        const node = spoke(svg, key).querySelector(".glim-net-node")!;
+        expect(node.querySelector('image[href="/logo.svg"]'), key).toBeTruthy();
+        expect(node.querySelector(".glim-net-kind"), key).toBeTruthy();
+        expect(node.querySelector(".glim-net-kind-glyph svg"), key).toBeTruthy();
+        expect(node.querySelector(".glim-net-tile"), key).toBeNull();
+      }
+    }
+    const phone = spoke(wide(), "m3").querySelector(".glim-net-kind-glyph path")!.getAttribute("d");
+    const instance = spoke(wide(), "m1").querySelector(".glim-net-kind-glyph path")!.getAttribute("d");
+    expect(phone).not.toBe(instance);
     expect(spoke(wide(), "zfs:nas").querySelector(".glim-net-tile-zfs")).toBeTruthy();
-    expect(spoke(wide(), "m3").querySelector(".glim-net-tile")).toBeTruthy();
-    expect(spoke(wide(), "m3").querySelector("image")).toBeNull();
+    expect(spoke(wide(), "zfs:nas").querySelector("image")).toBeNull();
+  });
+
+  it("lets a long name wrap in both arrangements rather than cutting it short", () => {
+    const long = "the-backup-server-in-the-cellar-behind-the-old-boiler";
+    draw([{ ...NODES[0], name: long }]);
+    for (const svg of [wide(), narrow()]) {
+      const label = spoke(svg, "m1").querySelector("foreignObject")!;
+      expect(label.textContent).toContain(long);
+      expect(Number(label.getAttribute("height"))).toBeGreaterThanOrEqual(74);
+    }
   });
 
   it("draws one arrow per role, dashed and without a travelling dot while it waits", () => {

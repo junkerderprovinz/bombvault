@@ -52,6 +52,7 @@ export function placed(change: Change): change is PlacedChange {
 const ENTRY = "/backups/:kind/:id";
 const LOCATION = "/storage/:id";
 const TO_STORAGE: WayStep[] = ["/settings", "/settings/storage", "/storage"];
+const TO_INSTANCES: WayStep[] = ["/settings", "/settings/instances", "/instances"];
 
 /** Every release that brought something new, newest first. */
 export const RELEASES: Release[] = [
@@ -64,6 +65,20 @@ export const RELEASES: Release[] = [
         where: ["nav.settings", "settings.tab.system"],
         way: ["/settings", "/settings/system"],
         text: "whatsNew.memoryLimit",
+      },
+      { id: "instances-card-logo", page: "/instances", where: ["instances.title"], way: TO_INSTANCES, text: "whatsNew.instancesCardLogo" },
+      { id: "instances-net-logos", page: "/instances", where: ["instances.title"], way: TO_INSTANCES, text: "whatsNew.instancesNetLogos" },
+      { id: "instances-card-size", page: "/instances", where: ["instances.title"], way: TO_INSTANCES, text: "whatsNew.instancesCardSize" },
+      { id: "instances-full-names", page: "/instances", where: ["instances.title"], way: TO_INSTANCES, text: "whatsNew.instancesFullNames" },
+      { id: "instances-net-labels", page: "/instances", where: ["instances.title"], way: TO_INSTANCES, text: "whatsNew.instancesNetLabels" },
+      { id: "instances-inactive", page: "/instances", where: ["instances.title"], way: TO_INSTANCES, text: "whatsNew.instancesInactive" },
+      { id: "instances-checking", page: "/instances", where: ["instances.title"], way: TO_INSTANCES, text: "whatsNew.instancesChecking" },
+      {
+        id: "pairing-inactive",
+        page: "/settings/pairing",
+        where: ["nav.settings", "pairing.title"],
+        way: ["/settings", "/settings/pairing"],
+        text: "whatsNew.pairingInactive",
       },
     ],
   },

@@ -2,6 +2,7 @@
 // each keyed by the member of the pairing group it belongs to. This file
 // folds them into one record per instance.
 import type {
+  AwayMember,
   Destination,
   DomainStatus,
   FleetPeer,
@@ -16,6 +17,7 @@ import type {
 } from "../../lib/api";
 
 export type RoleKind = "receiver" | "fetcher" | "zfs" | "keeper";
+export type Presence = "connected" | "checking" | "inactive";
 export type RoleState = "on" | "waiting" | "off";
 
 /** The order the tiles and rows stand in everywhere. */
@@ -49,6 +51,11 @@ export interface ItemReplica {
 /** Everything the page loaded. A list a switched-off module owns is empty. */
 export interface InstancesData {
   members: GroupMember[];
+  /** The members that were in reach once and are not now. */
+  away: AwayMember[];
+  /** Right after a restart the group is still coming back, and a member that
+   *  is away is not known to be gone. */
+  settling: boolean;
   peers: FleetPeer[];
   received: ReceivedRepoStatus[];
   pulls: PullSourceView[];
@@ -73,6 +80,11 @@ export interface Instance {
   /** The fleet row, present while the Instances module is on. */
   peer?: FleetPeer;
   connected: boolean;
+  /** How its card names its state: in reach, not heard from yet since the
+   *  group came back, or away until somebody removes it. */
+  presence: Presence;
+  /** Unix seconds of when it was last in reach, 0 when nothing says. */
+  lastSeen: number;
   /** Reached on this network, without the relay. */
   direct: boolean;
   needsPairing: boolean;
@@ -163,6 +175,8 @@ export function buildInstances(data: InstancesData): { instances: Instance[]; un
       address: "",
       app: false,
       connected: false,
+      presence: "inactive",
+      lastSeen: 0,
       direct: false,
       needsPairing: false,
       received: [],
@@ -202,6 +216,14 @@ export function buildInstances(data: InstancesData): { instances: Instance[]; un
     inst.app = inst.app || m.kind === "android";
     if (m.address) inst.address = m.address;
   }
+  // The server keeps one row per member, so a member that came back is in
+  // reach and no longer away, and both lists never name it twice.
+  for (const m of data.away) {
+    const inst = member(m.id, m.name || m.id);
+    inst.app = inst.app || m.kind === "android";
+    inst.lastSeen = m.lastSeen;
+    if (!inst.address && m.address) inst.address = m.address;
+  }
   for (const r of data.roles) member(r.memberId, r.name || r.memberId).roles = r;
 
   const unplaced: Unplaced = { received: [], pulls: [], offers: [] };
@@ -227,6 +249,7 @@ export function buildInstances(data: InstancesData): { instances: Instance[]; un
   }
 
   for (const inst of byMember.values()) {
+    inst.presence = inst.connected ? "connected" : data.settling ? "checking" : "inactive";
     inst.replicas = data.replicas.filter((r) => r.replica.target.kind === "peer" && r.replica.target.id === inst.memberId);
     inst.asks = (inst.roles?.asks ?? 0) + inst.offers.length;
     const offered = data.groupReceivers?.find((r) => r.memberId === inst.memberId);

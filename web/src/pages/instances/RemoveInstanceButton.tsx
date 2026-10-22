@@ -2,14 +2,16 @@ import { useState } from "react";
 
 import { Button } from "../../components/Button";
 import { IconTrash } from "../../components/navGlyphs";
-import { deleteFleetPeer } from "../../lib/api";
+import { deleteFleetPeer, removeMember } from "../../lib/api";
 import { useT } from "../../lib/i18n";
 import { useToast } from "../../lib/toast";
+import type { Instance } from "./instancesModel";
 
 /** RemoveInstanceButton drops an instance's row on the second click.
  *  Removing never contacts the instance and is undone by pairing it again,
- *  so a confirm on the button itself is enough. */
-export function RemoveInstanceButton({ peerId, onRemoved }: { peerId: string; onRemoved: () => void }) {
+ *  so a confirm on the button itself is enough. Without the Instances module
+ *  the page holds no row, and the member goes by its id. */
+export function RemoveInstanceButton({ instance, onRemoved }: { instance: Pick<Instance, "memberId" | "peer">; onRemoved: () => void }) {
   const { t } = useT();
   const { push } = useToast();
   const [armed, setArmed] = useState(false);
@@ -19,7 +21,7 @@ export function RemoveInstanceButton({ peerId, onRemoved }: { peerId: string; on
   async function remove() {
     setRemoving(true);
     try {
-      const res = await deleteFleetPeer(peerId);
+      const res = await (instance.peer ? deleteFleetPeer(instance.peer.id) : removeMember(instance.memberId));
       if (res.ok) {
         onRemoved();
         return;

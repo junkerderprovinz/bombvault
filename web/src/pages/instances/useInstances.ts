@@ -23,6 +23,7 @@ import type {
   Destination,
   DomainStatus,
   FleetPeer,
+  AwayMember,
   GroupMember,
   GroupReceiver,
   MemberRoles,
@@ -62,6 +63,8 @@ export interface InstancesState {
    *  what it keeps for others. */
   deposits: Deposits;
   data: InstancesData;
+  /** Reads who is in the group and who is away. */
+  reloadGroup: () => Promise<void>;
   reloadPeers: () => Promise<void>;
   reloadOffers: () => Promise<void>;
   reloadReceived: () => Promise<void>;
@@ -91,6 +94,8 @@ export function useInstances(modules: Modules | null): InstancesState {
   const [loading, setLoading] = useState(true);
   const [self, setSelf] = useState<Self | null>(null);
   const [members, setMembers] = useState<GroupMember[]>([]);
+  const [away, setAway] = useState<AwayMember[]>([]);
+  const [settling, setSettling] = useState(false);
   const [peers, setPeers] = useState<FleetPeer[]>([]);
   const [received, setReceived] = useState<ReceivedRepoStatus[]>([]);
   const [pulls, setPulls] = useState<PullSourceView[]>([]);
@@ -132,6 +137,8 @@ export function useInstances(modules: Modules | null): InstancesState {
             domains: status.domains ?? [],
           });
           setMembers(group.members);
+          setAway(group.away);
+          setSettling(group.settling);
         })
         .catch(() => undefined),
     [],
@@ -296,6 +303,8 @@ export function useInstances(modules: Modules | null): InstancesState {
   const data = useMemo<InstancesData>(
     () => ({
       members,
+      away,
+      settling,
       peers: fleet ? peers : [],
       received: receiver ? received : [],
       pulls: pull ? pulls : [],
@@ -305,7 +314,7 @@ export function useInstances(modules: Modules | null): InstancesState {
       groupReceivers,
       replicas: zfs ? replicas : [],
     }),
-    [members, peers, received, pulls, offers, roles, destinations, groupReceivers, replicas, fleet, receiver, pull, zfs],
+    [members, away, settling, peers, received, pulls, offers, roles, destinations, groupReceivers, replicas, fleet, receiver, pull, zfs],
   );
 
   const errors = useMemo(() => Object.values(failed), [failed]);
@@ -317,6 +326,7 @@ export function useInstances(modules: Modules | null): InstancesState {
     receiverServer: receiver && receiverServer,
     deposits,
     data,
+    reloadGroup: loadSelf,
     reloadPeers,
     reloadOffers,
     reloadReceived,

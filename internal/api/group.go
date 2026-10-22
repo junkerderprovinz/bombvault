@@ -116,6 +116,7 @@ func (s *Service) applyGroup() {
 	// would otherwise stay open until they drop.
 	s.relayServe.Store(g.RelayServe)
 	s.relayServer().Revoke()
+	s.groupApplied.Store(time.Now().UnixNano())
 }
 
 // instanceDisplayName is the name other members show this instance under.
@@ -232,7 +233,8 @@ type peerRoute struct {
 // peerRoutes is everything a group member can reach on this instance: the
 // Fleet scorecard, a storage offer, the receiver this instance runs for the
 // group and a login on it, what receiver and pull pairing need, the key this
-// instance signs its calls with, starting a check, a request to replicate a
+// instance signs its calls with, who is in the group here and who is away,
+// starting a check, a request to replicate a
 // ZFS item here, asking this instance to be Receiver or Fetcher with the
 // answer and the withdrawal that go with it, what runs here and how it looks
 // for the Android app, a session for a phone of the group and the pages it
@@ -249,6 +251,7 @@ func peerRoutes() []peerRoute {
 		{"POST /api/group/peer/receiver", (*Service).handlePeerReceiver},
 		{"GET /api/group/peer/pairing", (*Service).handlePeerPairing},
 		{"GET /api/group/peer/key", (*Service).handlePeerKey},
+		{"GET /api/group/peer/members", (*Service).handlePeerMembers},
 		{"POST /api/group/peer/check/{domain}", (*Service).handlePeerCheck},
 		{"POST /api/group/peer/zfs-receive", (*Service).handlePeerZFSReceive},
 		{"POST /api/group/peer/roles/ask", (*Service).handlePeerRoleAsk},
@@ -483,6 +486,28 @@ func (s *Service) handlePeerHello(w http.ResponseWriter, _ *http.Request) {
 	})
 }
 
+// peerMembersAnswer is the group as this instance sees it, for a member that
+// reaches only some of it, such as a phone that met the group over the relay
+// while an instance was shut down.
+type peerMembersAnswer struct {
+	OK       bool           `json:"ok"`
+	Members  []group.Member `json:"members"`
+	Away     []awayMember   `json:"away"`
+	Settling bool           `json:"settling"`
+}
+
+// handlePeerMembers answers with the members in reach here and the ones that
+// keep their row while they are away, the same lists GET /api/group gives the
+// page. GET /api/group/peer/members
+func (s *Service) handlePeerMembers(w http.ResponseWriter, _ *http.Request) {
+	members, away, settling, err := s.groupRoster(time.Now())
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	writeJSON(w, http.StatusOK, peerMembersAnswer{OK: true, Members: members, Away: away, Settling: settling})
+}
+
 // peerPairing is what a member hands out so another member can watch or pull
 // its repositories: where they are and, once the request between the two is
 // allowed, the restic password that opens them. The APP_KEY never leaves the
@@ -604,7 +629,12 @@ type groupView struct {
 	Name        string         `json:"name"`
 	PasswordSet bool           `json:"passwordSet"`
 	Members     []group.Member `json:"members"`
-	Relay       relayView      `json:"relay"`
+	// Away is every member with a row here that is not in reach now, and
+	// Settling whether the group may still be coming back after a restart,
+	// in which case one that is away is not known to be gone.
+	Away     []awayMember `json:"away"`
+	Settling bool         `json:"settling"`
+	Relay    relayView    `json:"relay"`
 	// JoinedAgo is how many seconds ago this instance created or joined its
 	// group, and MemberSeen whether another member has shown up since. The
 	// page tells a group waiting for its second instance from one that never
@@ -647,8 +677,11 @@ func (h *Handler) groupViewNow() (groupView, error) {
 	if g.RelayServe {
 		clients = h.svc.relayServer().Len()
 	}
-	members := h.svc.pairing().Members()
 	now := time.Now()
+	members, away, settling, err := h.svc.groupRoster(now)
+	if err != nil {
+		return groupView{}, err
+	}
 	if len(members) > 0 && g.MemberSeenAt.IsZero() {
 		if err := h.store.MarkGroupMemberSeen(now); err != nil {
 			return groupView{}, err
@@ -671,6 +704,8 @@ func (h *Handler) groupViewNow() (groupView, error) {
 		Name:        instanceDisplayName(settings),
 		PasswordSet: settings.AuthPasswordHash != "",
 		Members:     members,
+		Away:        away,
+		Settling:    settling,
 		Relay: relayView{
 			Mode:         g.RelayMode,
 			URL:          g.RelayURL,

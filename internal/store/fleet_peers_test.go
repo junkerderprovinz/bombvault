@@ -210,3 +210,44 @@ func TestDroppingMemberRowsLeavesRowsNobodyPairedAndUnpairsATakenOverOne(t *test
 		t.Fatalf("the row nobody paired = %+v, want it untouched", p)
 	}
 }
+
+func TestAMembersLastSeenTimeIsWrittenAtMostOnceAMinute(t *testing.T) {
+	db := store.OpenMem(t)
+	if err := store.Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	r := store.New(db)
+	p, err := r.CreateFleetPeer(store.FleetPeer{MemberID: "member-a", Name: "tower", Enabled: true, LastSeen: 1000})
+	if err != nil {
+		t.Fatal(err)
+	}
+	seen := func() int64 {
+		t.Helper()
+		got, _, err := r.GetFleetPeer(p.ID)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return got.LastSeen
+	}
+	if got := seen(); got != 1000 {
+		t.Fatalf("last seen after create = %d, want 1000", got)
+	}
+	if err := r.MarkFleetPeerSeen("member-a", 1030); err != nil {
+		t.Fatal(err)
+	}
+	if got := seen(); got != 1000 {
+		t.Fatalf("last seen half a minute on = %d, want 1000 kept", got)
+	}
+	if err := r.MarkFleetPeerSeen("member-a", 1060); err != nil {
+		t.Fatal(err)
+	}
+	if got := seen(); got != 1060 {
+		t.Fatalf("last seen a minute on = %d, want 1060", got)
+	}
+	if err := r.MarkFleetPeerSeen("", 5000); err != nil {
+		t.Fatal(err)
+	}
+	if got := seen(); got != 1060 {
+		t.Fatalf("an empty member id moved last seen to %d", got)
+	}
+}

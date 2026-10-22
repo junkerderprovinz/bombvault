@@ -31,7 +31,7 @@ The app takes an answer only when the server signed it with the key the app pinn
 
 ## Switching servers {#switch}
 
-With a server open, the top of its overview shows the server's name, with a back arrow before it. The arrow leads to the app's overview, the start screen, which lists every server the app knows with its state: **Connected**, **Not connected**, **Sign-in needed** or **Check certificate**. Tap another one there to open it, directly at home and through the relay otherwise.
+With a server open, the top of its overview shows the server's name, with a back arrow before it. The arrow leads to the app's overview, the start screen, which lists every server the app knows with its state: **Connected**, **Not connected**, **Sign-in needed** or **Check certificate**. A server of the group that does not answer is **Inactive**, in grey, with when the group last saw it, and one the app has not heard from yet says **Checking**. Each time it connects, the app reads the group's list from one of its instances, so an instance it never met on the relay, such as one that was shut down when the phone joined, is listed too. Tap another one there to open it, directly at home and through the relay otherwise.
 
 ## Signed in on a paired phone {#sign-in}
 
