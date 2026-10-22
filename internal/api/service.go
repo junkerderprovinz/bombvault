@@ -2266,7 +2266,7 @@ func (s *Service) forgetAt(ctx context.Context, repo string, p restic.RetentionP
 	held, why, err := s.anomalies.RetentionHeld(ctx, hold)
 	if err != nil {
 		log.Printf("api: %s: retention skipped for %s: the anomaly check failed: %v", domain, id.tag, err) //nolint:gosec // G706: domain is a fixed literal and tags are validated names
-		s.notifyRetentionFailed(ctx, id.tag, "the anomaly check could not run, so nothing was deleted: "+scrubError(err))
+		s.notifyRetentionFailed(ctx, domain, id.tag, "the anomaly check could not run, so nothing was deleted: "+scrubError(err))
 		return
 	}
 	if held {
@@ -2281,7 +2281,7 @@ func (s *Service) forgetAt(ctx context.Context, repo string, p restic.RetentionP
 	if err := s.forgetWithLockHeal(ctx, repo, p, mode, tags, prune); err != nil {
 		log.Printf("api: retention prune failed (backup is safe): %v", err)
 		// The current name, the one an operator recognises after a rename.
-		s.notifyRetentionFailed(ctx, id.tag, truncateRunErr(err))
+		s.notifyRetentionFailed(ctx, domain, id.tag, truncateRunErr(err))
 	}
 }
 
@@ -2675,16 +2675,16 @@ func snapshotsTagged(snaps []restic.Snapshot, tag string) []restic.Snapshot {
 }
 
 // notifyRetentionFailed sends a best-effort alert when the post-backup
-// retention prune fails. Mirrors notifyReplicationFailed's policy gate; a no-op
-// when notifications are off.
-func (s *Service) notifyRetentionFailed(ctx context.Context, tag, detail string) {
+// retention prune of tag in domain fails. Mirrors notifyReplicationFailed's
+// policy gate; a no-op when notifications are off.
+func (s *Service) notifyRetentionFailed(ctx context.Context, domain, tag, detail string) {
 	c, err := s.NotifyConfig()
 	if err != nil || !c.Active() {
 		return
 	}
 	subject := "Retention prune FAILED for " + tag
 	msg := fmt.Sprintf("Applying the retention policy for %s failed, so old snapshots are not being pruned (the new backup itself is safe): %s", tag, detail)
-	notify.Send(ctx, c, tag, notify.Event{Title: "BombVault", Message: subject + ". " + msg, OK: false})
+	notify.Send(ctx, c, domain, notify.Event{Title: "BombVault", Message: subject + ". " + msg, OK: false})
 	if s.unraidGate(c.Unraid) {
 		if e := s.sendUnraidNotify(ctx, "BombVault: "+subject, msg, "warning"); e != nil {
 			log.Printf("notify: unraid: %v", e)
@@ -3490,20 +3490,17 @@ func (s *Service) DomainStatus() ([]DomainStatusEntry, error) {
 	return s.domainStatusFrom(settings)
 }
 
-// domainStatusFrom is DomainStatus for a caller that already holds the settings
-// row. Both status endpoints do: /api/status also serves the "Backup Everything"
-// cadence from it, and /api/fleet/status has it from the token gate. Settings is
-// an ~80-column row and nothing caches it, so handing it in saves each of them a
-// second full read of the same row.
-func (s *Service) domainStatusFrom(settings store.Settings) ([]DomainStatusEntry, error) {
-	now := time.Now().Unix()
+// statusDomain is one domain of the dashboard's protection status, which the
+// overdue watchdog judges from the same figures.
+type statusDomain struct {
+	name     string
+	enabled  bool
+	schedule string
+	lastFn   func() (time.Time, error)
+}
 
-	domains := []struct {
-		name     string
-		enabled  bool
-		schedule string
-		lastFn   func() (time.Time, error)
-	}{
+func (s *Service) statusDomains(settings store.Settings) []statusDomain {
+	return []statusDomain{
 		{"containers", settings.ContainersEnabled, settings.ContainersSchedule, s.store.LastSuccessfulContainerBackup},
 		{"vms", settings.VMsEnabled, settings.VMsSchedule, s.store.LastSuccessfulVMBackup},
 		{"flash", settings.FlashEnabled, settings.FlashSchedule, s.store.LastSuccessfulFlashBackup},
@@ -3511,6 +3508,34 @@ func (s *Service) domainStatusFrom(settings store.Settings) ([]DomainStatusEntry
 		{"files", settings.FilesEnabled, settings.FilesSchedule, s.store.LastSuccessfulFilesBackup},
 		{zfsDomain, settings.ZFSEnabled, settings.ZFSSchedule, s.store.LastSuccessfulZFSBackup},
 	}
+}
+
+// lastDomainSuccess is when d last had a successful backup in unix seconds, 0
+// for never. A ZFS item that only replicates writes no backup run, so its
+// replica is what keeps the domain current.
+func (s *Service) lastDomainSuccess(d statusDomain) (int64, error) {
+	last, err := d.lastFn()
+	if err != nil {
+		return 0, err
+	}
+	var at int64
+	if !last.IsZero() {
+		at = last.Unix()
+	}
+	if d.name == zfsDomain {
+		at = max(at, s.zfsReplicaOnlyLastSuccess())
+	}
+	return at, nil
+}
+
+// domainStatusFrom is DomainStatus for a caller that already holds the settings
+// row. Both status endpoints do: /api/status also serves the "Backup Everything"
+// cadence from it, and /api/fleet/status has it from the token gate. Settings is
+// an ~80-column row and nothing caches it, so handing it in saves each of them a
+// second full read of the same row.
+func (s *Service) domainStatusFrom(settings store.Settings) ([]DomainStatusEntry, error) {
+	now := time.Now().Unix()
+	domains := s.statusDomains(settings)
 
 	startTests, err := s.store.LatestStartTests()
 	if err != nil {
@@ -3525,16 +3550,9 @@ func (s *Service) domainStatusFrom(settings store.Settings) ([]DomainStatusEntry
 
 	out := make([]DomainStatusEntry, 0, len(domains))
 	for _, d := range domains {
-		last, lErr := d.lastFn()
+		lastUnix, lErr := s.lastDomainSuccess(d)
 		if lErr != nil {
 			return nil, fmt.Errorf("domain %s last-success: %w", d.name, lErr)
-		}
-		var lastUnix int64
-		if !last.IsZero() {
-			lastUnix = last.Unix()
-		}
-		if d.name == zfsDomain {
-			lastUnix = max(lastUnix, s.zfsReplicaOnlyLastSuccess())
 		}
 
 		// A period is only meaningful for an enabled domain that something
@@ -4839,19 +4857,23 @@ func (s *Service) applyGrowthBudget(ctx context.Context, domain, latchKey string
 	s.offsiteOverBudget[latchKey] = over
 	s.budgetMu.Unlock()
 
-	if over && !prev {
-		s.notifyOverBudget(ctx, domain, rawSize, budgetBytes, kind)
+	if over && !prev && s.notifyOverBudget(ctx, domain, rawSize, budgetBytes, kind) {
+		// Nobody heard of the crossing, so the next check reports it again.
+		s.budgetMu.Lock()
+		s.offsiteOverBudget[latchKey] = false
+		s.budgetMu.Unlock()
 	}
 }
 
 // notifyOverBudget sends a best-effort alert when a domain's off-site repo OR
 // remote primary (kind: "off-site" | "primary") first crosses its growth
 // budget. It mirrors notifyProtectionLost/notifyDrillFailure's policy gate +
-// Unraid fan-out; a no-op when notifications are off.
-func (s *Service) notifyOverBudget(ctx context.Context, domain string, size, budget int64, kind string) {
+// Unraid fan-out; a no-op when notifications are off. It reports whether every
+// channel that could carry the alert failed.
+func (s *Service) notifyOverBudget(ctx context.Context, domain string, size, budget int64, kind string) (undelivered bool) {
 	c, err := s.NotifyConfig()
 	if err != nil || c.On == "" || c.On == "never" {
-		return
+		return false
 	}
 	subject := strings.ToUpper(kind[:1]) + kind[1:] + " backup over budget for " + domain
 	action := "Prune the far side or raise the budget."
@@ -4859,12 +4881,26 @@ func (s *Service) notifyOverBudget(ctx context.Context, domain string, size, bud
 		action = "Adjust the retention policy, prune it, or raise the budget."
 	}
 	msg := fmt.Sprintf("The %s repository for %s has grown to %s, over the configured growth budget of %s. %s", kind, domain, humanBytes(size), humanBytes(budget), action)
-	notify.Send(ctx, c, domain, notify.Event{Title: "BombVault", Message: subject + ". " + msg, OK: false})
-	if s.unraidGate(c.Unraid) {
-		if e := s.sendUnraidNotify(ctx, "BombVault: "+subject, msg, "warning"); e != nil {
+	delivered, reachable := s.sendAlert(ctx, c, domain,
+		notify.Event{Title: "BombVault", Message: subject + ". " + msg, OK: false},
+		"BombVault: "+subject, msg, "warning")
+	return reachable && !delivered
+}
+
+// sendAlert sends an alert to the message channels and the Unraid push.
+// delivered says one of them took it and reachable that one is set up, so an
+// alert sent once per episode knows when to try again.
+func (s *Service) sendAlert(ctx context.Context, c notify.Config, domain string, ev notify.Event, unraidSubject, unraidMsg, unraidLevel string) (delivered, reachable bool) {
+	delivered = notify.Send(ctx, c, domain, ev)
+	unraid := s.unraidGate(c.Unraid)
+	if unraid {
+		if e := s.sendUnraidNotify(ctx, unraidSubject, unraidMsg, unraidLevel); e != nil {
 			log.Printf("notify: unraid: %v", e)
+		} else {
+			delivered = true
 		}
 	}
+	return delivered, unraid || c.HasMessageChannel()
 }
 
 // offsiteReplicatesOnOwnSchedule reports whether a domain's off-site copy is driven
@@ -19204,7 +19240,7 @@ func (s *Service) notifyBackup(ctx context.Context, domain, name, cancelKey stri
 	if o := runOriginFromContext(ctx); o.Via != "" {
 		msg += " " + s.originSentence(o)
 	}
-	notify.Send(ctx, c, domain, notify.Event{Title: "BombVault", Message: msg, OK: ok || cancelled || interrupted})
+	notify.Send(ctx, c, domain, notify.Event{Title: "BombVault", Message: msg, OK: ok || cancelled || interrupted, ItemResult: true})
 
 	// Unraid native notification (delivered over SSH; notify.Send is HTTP-only).
 	// Honour the same policy: notifyBackup already returned for "never", so send

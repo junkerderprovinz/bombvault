@@ -212,7 +212,7 @@ func TestNotificationsCarryNoDashes(t *testing.T) {
 	ctx := context.Background()
 
 	s.notifyReplicationFailed(ctx, "zfs", "boom")
-	s.notifyRetentionFailed(ctx, "zfs", "boom")
+	s.notifyRetentionFailed(ctx, "zfs", "zfs:tank/apps", "boom")
 	s.notifyOverBudget(ctx, "zfs", 100, 50, "off-site")
 	s.notifyDrillFailure(ctx, "zfs", "local", "boom")
 

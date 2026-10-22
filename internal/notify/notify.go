@@ -20,6 +20,8 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/redact"
@@ -36,7 +38,9 @@ func redactErr(err error) error {
 	return err
 }
 
-const sendTimeout = 15 * time.Second
+// sendTimeout bounds each channel of a send on its own. It is a var so tests
+// can reach it without waiting it out.
+var sendTimeout = 15 * time.Second
 
 // hcSuppressKey marks a context in which Send and SendStart skip the
 // Healthchecks ping. A scheduled per-domain run sets it on every item and pings
@@ -54,19 +58,21 @@ func healthchecksSuppressed(ctx context.Context) bool {
 	return v
 }
 
-// msgSuppressKey marks a per-item message of a scheduled run. Send drops it
-// when Config.ScheduledSummary is on, so the run ends in one "N of M" summary.
-// It is separate from hcSuppressKey because a container update notice skips
-// only the Healthchecks ping and must still deliver its message.
+// msgSuppressKey marks the items of a scheduled run. When
+// Config.ScheduledSummary is on, Send drops their result messages, so the run
+// ends in one "N of M" summary. It is separate from hcSuppressKey because a
+// container update notice skips only the Healthchecks ping and must still
+// deliver its message.
 type msgSuppressKey struct{}
 
-// WithMessagesSuppressed marks ctx as a per-item scheduled-backup message,
-// which Send drops when ScheduledSummary is on.
+// WithMessagesSuppressed marks ctx as an item of a scheduled run, whose
+// Event.ItemResult messages Send drops when ScheduledSummary is on. Alerts
+// sent on the same ctx still go out, since the summary does not carry them.
 func WithMessagesSuppressed(ctx context.Context) context.Context {
 	return context.WithValue(ctx, msgSuppressKey{}, true)
 }
 
-// MessagesSuppressed reports whether ctx is a per-item scheduled-backup message.
+// MessagesSuppressed reports whether ctx is an item of a scheduled run.
 // The service layer uses it to drop its own Unraid push in summary mode.
 func MessagesSuppressed(ctx context.Context) bool {
 	v, _ := ctx.Value(msgSuppressKey{}).(bool)
@@ -178,11 +184,15 @@ func (c *Config) decode(data []byte, strict bool) error {
 	return nil
 }
 
-// Event is a completed backup, rendered into each channel's message.
+// Event is a completed backup or an alert, rendered into each channel's
+// message.
 type Event struct {
 	Title   string
 	Message string
 	OK      bool
+	// ItemResult marks the outcome of one item of a run, the message a
+	// scheduled summary replaces.
+	ItemResult bool
 }
 
 // Active reports whether notifications are switched on at all. It is an
@@ -214,6 +224,13 @@ func (c Config) shouldSend(ok bool) bool {
 // the global URL or any per-domain URL is set.
 func (c Config) Configured() bool {
 	return c.webhookReady() || c.matrixReady() || len(c.healthchecksURLs()) > 0 || c.smtpReady() || c.appriseReady()
+}
+
+// HasMessageChannel reports whether a channel that carries a message is set:
+// webhook, Matrix, SMTP or Apprise. Healthchecks only takes pings, and the
+// Unraid push is the service layer's.
+func (c Config) HasMessageChannel() bool {
+	return c.webhookReady() || c.matrixReady() || c.smtpReady() || c.appriseReady()
 }
 
 // healthchecksURLFor returns the domain's own Healthchecks URL, or the global
@@ -280,58 +297,99 @@ func (c Config) appriseReady() bool {
 }
 
 // Send delivers ev to the configured channels and logs each channel's error.
-// The On policy applies to the message channels. Healthchecks is pinged on both
-// outcomes unless notifications are off, because a check needs its success
-// pings to stay green.
-func Send(ctx context.Context, c Config, domain string, ev Event) {
+// It reports whether at least one message channel took the event, so an alert
+// sent once per episode can be tried again when none did. The On policy
+// applies to the message channels. Healthchecks is pinged on both outcomes
+// unless notifications are off, because a check needs its success pings to
+// stay green.
+func Send(ctx context.Context, c Config, domain string, ev Event) bool {
 	if !c.Active() {
-		return
+		return false
 	}
 	// A name in a message can hold a password somebody typed into it.
 	ev.Title, ev.Message = redact.Credentials(ev.Title), redact.Credentials(ev.Message)
-	ctx, cancel := context.WithTimeout(ctx, sendTimeout)
-	defer cancel()
-	client := &http.Client{Timeout: sendTimeout}
 
+	var chans []channel
 	if hcURL := c.healthchecksURLFor(domain); hcURL != "" && !healthchecksSuppressed(ctx) {
 		phase := "success"
 		if !ev.OK {
 			phase = "fail"
 		}
-		if err := pingHealthchecks(ctx, client, hcURL, phase); err != nil {
-			log.Printf("notify: healthchecks: %v", redactErr(err))
-		}
+		chans = append(chans, healthchecksChannel("healthchecks", hcURL, phase))
 	}
-
-	if !c.shouldSend(ev.OK) {
-		return
+	// In summary mode Service.ScheduledNotifyResult reports the item instead.
+	folded := ev.ItemResult && MessagesSuppressed(ctx) && c.ScheduledSummary
+	if c.shouldSend(ev.OK) && !folded {
+		chans = append(chans, c.messageChannels(ev)...)
 	}
+	return fanOut(ctx, chans)
+}
 
-	// In summary mode Service.ScheduledNotifyResult reports the whole run.
-	if MessagesSuppressed(ctx) && c.ScheduledSummary {
-		return
-	}
+// channel is one delivery of an event: a message, or a Healthchecks ping.
+type channel struct {
+	name    string
+	message bool
+	send    func(ctx context.Context, client *http.Client) error
+}
 
+// messageChannels are the ready message channels for ev.
+func (c Config) messageChannels(ev Event) []channel {
+	var out []channel
 	if c.webhookReady() {
-		if err := sendWebhook(ctx, client, c, ev); err != nil {
-			log.Printf("notify: webhook: %v", redactErr(err))
-		}
+		out = append(out, channel{"webhook", true, func(ctx context.Context, client *http.Client) error {
+			return sendWebhook(ctx, client, c, ev)
+		}})
 	}
 	if c.matrixReady() {
-		if err := sendMatrix(ctx, client, c, ev); err != nil {
-			log.Printf("notify: matrix: %v", redactErr(err))
-		}
+		out = append(out, channel{"matrix", true, func(ctx context.Context, client *http.Client) error {
+			return sendMatrix(ctx, client, c, ev)
+		}})
 	}
 	if c.smtpReady() {
-		if err := sendSMTP(ctx, c, ev); err != nil {
-			log.Printf("notify: smtp: %v", err)
-		}
+		out = append(out, channel{"smtp", true, func(ctx context.Context, _ *http.Client) error {
+			return sendSMTP(ctx, c, ev)
+		}})
 	}
 	if c.appriseReady() {
-		if err := sendApprise(ctx, client, c, ev); err != nil {
-			log.Printf("notify: apprise: %v", redactErr(err))
-		}
+		out = append(out, channel{"apprise", true, func(ctx context.Context, client *http.Client) error {
+			return sendApprise(ctx, client, c, ev)
+		}})
 	}
+	return out
+}
+
+func healthchecksChannel(name, base, phase string) channel {
+	return channel{name, false, func(ctx context.Context, client *http.Client) error {
+		return pingHealthchecks(ctx, client, base, phase)
+	}}
+}
+
+// run sends on one channel within a deadline of its own, so a host that never
+// answers cannot use up the time of the other channels.
+func (ch channel) run(ctx context.Context) error {
+	ctx, cancel := context.WithTimeout(ctx, sendTimeout)
+	defer cancel()
+	return ch.send(ctx, &http.Client{Timeout: sendTimeout})
+}
+
+// fanOut runs the channels side by side and logs each failure. It reports
+// whether a message channel took the event.
+func fanOut(ctx context.Context, chans []channel) bool {
+	var wg sync.WaitGroup
+	var delivered atomic.Bool
+	for _, ch := range chans {
+		wg.Go(func() {
+			if err := ch.run(ctx); err != nil {
+				log.Printf("notify: %s: %v", ch.name, redactErr(err))
+				return
+			}
+			if ch.message {
+				delivered.Store(true)
+			}
+		})
+	}
+	wg.Wait()
+	return delivered.Load()
 }
 
 // SendStart marks the start of a backup. It pings the Healthchecks /start
@@ -343,30 +401,20 @@ func SendStart(ctx context.Context, c Config, domain string) {
 	if !c.Active() {
 		return
 	}
-	hcURL := c.healthchecksURLFor(domain)
-	pingHC := hcURL != "" && !healthchecksSuppressed(ctx)
-	postApprise := c.appriseReady() && c.On == "always" &&
-		(!MessagesSuppressed(ctx) || !c.ScheduledSummary)
-	if !pingHC && !postApprise {
-		return
+	var chans []channel
+	if hcURL := c.healthchecksURLFor(domain); hcURL != "" && !healthchecksSuppressed(ctx) {
+		chans = append(chans, healthchecksChannel("healthchecks start", hcURL, "start"))
 	}
-	ctx, cancel := context.WithTimeout(ctx, sendTimeout)
-	defer cancel()
-	client := &http.Client{Timeout: sendTimeout}
-	if pingHC {
-		if err := pingHealthchecks(ctx, client, hcURL, "start"); err != nil {
-			log.Printf("notify: healthchecks start: %v", redactErr(err))
-		}
-	}
-	if postApprise {
+	if c.appriseReady() && c.On == "always" && (!MessagesSuppressed(ctx) || !c.ScheduledSummary) {
 		body := "Backup started"
 		if domain != "" {
 			body = "Backup started (" + domain + ")"
 		}
-		if err := postAppriseJSON(ctx, client, c, "BombVault", body, "info"); err != nil {
-			log.Printf("notify: apprise start: %v", redactErr(err))
-		}
+		chans = append(chans, channel{"apprise start", true, func(ctx context.Context, client *http.Client) error {
+			return postAppriseJSON(ctx, client, c, "BombVault", body, "info")
+		}})
 	}
+	fanOut(ctx, chans)
 }
 
 // PingDomainStart pings /start once for a whole scheduled per-domain run, in
@@ -411,34 +459,14 @@ func SendTest(ctx context.Context, c Config) error {
 	if !c.Configured() {
 		return fmt.Errorf("no notification channel configured")
 	}
-	ctx, cancel := context.WithTimeout(ctx, sendTimeout)
-	defer cancel()
-	client := &http.Client{Timeout: sendTimeout}
 	ev := Event{Title: "BombVault", Message: "Test notification: notifications are working.", OK: true}
-
-	if c.webhookReady() {
-		if err := sendWebhook(ctx, client, c, ev); err != nil {
-			return fmt.Errorf("webhook: %w", err)
-		}
-	}
-	if c.matrixReady() {
-		if err := sendMatrix(ctx, client, c, ev); err != nil {
-			return fmt.Errorf("matrix: %w", err)
-		}
-	}
+	chans := c.messageChannels(ev)
 	for _, u := range c.healthchecksURLs() {
-		if err := pingHealthchecks(ctx, client, u, "success"); err != nil {
-			return fmt.Errorf("healthchecks: %w", err)
-		}
+		chans = append(chans, healthchecksChannel("healthchecks", u, "success"))
 	}
-	if c.smtpReady() {
-		if err := sendSMTP(ctx, c, ev); err != nil {
-			return fmt.Errorf("smtp: %w", err)
-		}
-	}
-	if c.appriseReady() {
-		if err := sendApprise(ctx, client, c, ev); err != nil {
-			return fmt.Errorf("apprise: %w", err)
+	for _, ch := range chans {
+		if err := ch.run(ctx); err != nil {
+			return fmt.Errorf("%s: %w", ch.name, err)
 		}
 	}
 	return nil
@@ -588,8 +616,9 @@ func buildSMTPMessage(c Config, ev Event) []byte {
 //   - "starttls" (default): plain dial, then upgrade with STARTTLS;
 //   - "none": plain dial, no encryption.
 //
-// PLAIN auth is used only when a username is set. The dial is bounded by ctx's
-// deadline, or sendTimeout, so an unreachable server fails fast.
+// PLAIN auth is used only when a username is set. The whole conversation is
+// bounded by ctx's deadline, or sendTimeout: net/smtp takes no context, and a
+// server that accepts the connection but never answers would hold it for good.
 func sendSMTP(ctx context.Context, c Config, ev Event) error {
 	port := c.SMTPPort
 	if port == 0 {
@@ -603,25 +632,33 @@ func sendSMTP(ctx context.Context, c Config, ev Event) error {
 	}
 	dialer := &net.Dialer{Deadline: deadline}
 
-	var (
-		client *smtp.Client
-		err    error
-	)
-	switch strings.ToLower(c.SMTPTLS) {
-	case "tls":
-		conn, dErr := tls.DialWithDialer(dialer, "tcp", addr, &tls.Config{ServerName: c.SMTPHost, MinVersion: tls.VersionTLS12})
+	implicitTLS := strings.EqualFold(c.SMTPTLS, "tls")
+	var conn net.Conn
+	if implicitTLS {
+		tc, dErr := tls.DialWithDialer(dialer, "tcp", addr, &tls.Config{ServerName: c.SMTPHost, MinVersion: tls.VersionTLS12})
 		if dErr != nil {
 			return fmt.Errorf("dial %s: %w", addr, dErr)
 		}
-		client, err = smtp.NewClient(conn, c.SMTPHost)
-	default: // "starttls" (default) and "none" dial plaintext first
-		conn, dErr := dialer.DialContext(ctx, "tcp", addr)
+		conn = tc
+	} else { // "starttls" (default) and "none" dial plaintext first
+		pc, dErr := dialer.DialContext(ctx, "tcp", addr)
 		if dErr != nil {
 			return fmt.Errorf("dial %s: %w", addr, dErr)
 		}
-		client, err = smtp.NewClient(conn, c.SMTPHost)
+		conn = pc
 	}
+	if err := conn.SetDeadline(deadline); err != nil {
+		_ = conn.Close()
+		return err
+	}
+	client, err := smtp.NewClient(conn, c.SMTPHost)
 	if err != nil {
+		_ = conn.Close()
+		// An implicit-TLS server waits for a handshake and never greets a
+		// plaintext client.
+		if port == 465 && !implicitTLS {
+			return fmt.Errorf("no greeting from %s: %w. Port 465 expects Encryption set to TLS (implicit)", addr, err)
+		}
 		return err
 	}
 	defer client.Close() //nolint:errcheck // close error after Quit is not actionable

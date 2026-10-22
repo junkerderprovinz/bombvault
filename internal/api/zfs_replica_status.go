@@ -196,19 +196,19 @@ func (s *Service) zfsItemSites(now int64, d store.ZFSDataset, settings store.Set
 }
 
 // zfsReplicaDigestLines is the replica currency of every replicating ZFS
-// item for the weekly digest.
-func (s *Service) zfsReplicaDigestLines(now int64, settings store.Settings) []string {
+// item for the weekly digest, and whether any of them is not current.
+func (s *Service) zfsReplicaDigestLines(now int64, settings store.Settings) (lines []string, behind bool) {
 	items, err := s.store.ListZFSDatasets()
 	if err != nil {
 		log.Printf("api: digest: listing the ZFS items failed: %v", err)
-		return nil
+		return nil, false
 	}
-	var lines []string
 	for _, d := range items {
 		if !d.Enabled || d.Replica.TargetKind == store.ZFSReplicaTargetNone {
 			continue
 		}
 		lastOK, current := s.zfsReplicaCurrency(now, d, settings)
+		behind = behind || !current
 		switch {
 		case lastOK == 0:
 			lines = append(lines, fmt.Sprintf("- %s: no replica yet", d.Dataset))
@@ -218,5 +218,5 @@ func (s *Service) zfsReplicaDigestLines(now int64, settings store.Settings) []st
 			lines = append(lines, fmt.Sprintf("- %s: current (last replica %s)", d.Dataset, digestAge(now, lastOK)))
 		}
 	}
-	return lines
+	return lines, behind
 }

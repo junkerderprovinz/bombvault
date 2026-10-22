@@ -3,7 +3,6 @@ package api
 import (
 	"context"
 	"fmt"
-	"log"
 	"math"
 	"slices"
 	"strings"
@@ -170,8 +169,8 @@ func anomalyDays(days float64) string {
 
 // sendNotifications pushes the open findings that have not been reported at
 // their current severity yet, as one message per pass. Nothing is stamped
-// while no channel is listening, so switching one on later still delivers what
-// is open.
+// while no channel is listening or none took the message, so a channel
+// switched on or back up later still delivers what is open.
 func (e *anomalyEngine) sendNotifications(ctx context.Context, settings store.Settings) error {
 	rows, err := e.svc.store.PendingAnomalyNotifications()
 	if err != nil {
@@ -194,7 +193,7 @@ func (e *anomalyEngine) sendNotifications(ctx context.Context, settings store.Se
 	var ids []string
 	severities := map[string]string{}
 	for _, row := range rows {
-		if !anomalyNotifiable(row, prefs[row.TargetID].NotifyMin, settings, now) {
+		if !anomalyNotifiable(row, e.eventEndedAt(row), prefs[row.TargetID].NotifyMin, settings, now) {
 			continue
 		}
 		views = append(views, anomalyViewOf(row, items, nil, nil, nil, settings))
@@ -209,34 +208,53 @@ func (e *anomalyEngine) sendNotifications(ctx context.Context, settings store.Se
 	if err != nil {
 		return err
 	}
-	if !cfg.Active() || !cfg.Configured() {
+	if !e.svc.anomalyAlertsReach(cfg) {
 		return nil
 	}
 	title, body := anomalyNotifyText(views)
+	level := "warning"
+	if slices.ContainsFunc(views, func(v AnomalyView) bool { return v.Severity == "critical" }) {
+		level = "alert"
+	}
 	// The findings of one pass can come from several domains, and none of them
 	// is the run a health check watches.
-	notify.Send(notify.WithHealthchecksSuppressed(ctx), cfg, "anomaly",
-		notify.Event{Title: title, Message: body, OK: false})
-	if e.svc.unraidGate(cfg.Unraid) {
-		level := "warning"
-		if slices.ContainsFunc(views, func(v AnomalyView) bool { return v.Severity == "critical" }) {
-			level = "alert"
-		}
-		if uErr := e.svc.sendUnraidNotify(ctx, title, body, level); uErr != nil {
-			log.Printf("notify: unraid: %v", uErr)
-		}
+	delivered, _ := e.svc.sendAlert(notify.WithHealthchecksSuppressed(ctx), cfg, "anomaly",
+		notify.Event{Title: title, Message: body, OK: false}, title, body, level)
+	if !delivered {
+		return nil
 	}
 	return e.svc.store.MarkAnomaliesNotified(ids, severities, now)
 }
 
+// anomalyAlertsReach reports whether an anomaly message has somewhere to go.
+// Healthchecks does not count: the message never pings it.
+func (s *Service) anomalyAlertsReach(c notify.Config) bool {
+	return c.Active() && (c.HasMessageChannel() || s.unraidGate(c.Unraid))
+}
+
+// eventEndedAt is when the run behind a finding ended, the time an event
+// finding ages from. A rewrite found on an upload that took days is news when
+// the upload ends. When the run is gone, its start stands in.
+func (e *anomalyEngine) eventEndedAt(row store.Anomaly) int64 {
+	if !slices.Contains(eventMetrics, row.Metric) || row.LastRunID == "" {
+		return row.LastRunAt
+	}
+	run, err := e.svc.store.GetRun(row.LastRunID)
+	if err != nil || run.FinishedAt == nil {
+		return row.LastRunAt
+	}
+	return *run.FinishedAt
+}
+
 // anomalyNotifiable decides whether one finding is pushed at all: never for a
 // metric whose event already has a message of its own, only while an event's
-// run is recent, and otherwise from the item's own minimum severity upward.
-func anomalyNotifiable(row store.Anomaly, itemMin string, settings store.Settings, now int64) bool {
+// run ended recently, and otherwise from the item's own minimum severity
+// upward.
+func anomalyNotifiable(row store.Anomaly, eventAt int64, itemMin string, settings store.Settings, now int64) bool {
 	if slices.Contains(quietMetrics, row.Metric) {
 		return false
 	}
-	if slices.Contains(eventMetrics, row.Metric) && now-row.LastRunAt > anomalyEventMaxAge {
+	if slices.Contains(eventMetrics, row.Metric) && now-eventAt > anomalyEventMaxAge {
 		return false
 	}
 	min := effectiveNotifyMin(itemMin, settings.AnomalyNotifyMin)

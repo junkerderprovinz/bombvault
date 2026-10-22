@@ -67,6 +67,9 @@ type timelineItem struct {
 	zvolDevs     []string // disks a restore of the VM looks up by their own snapshot
 	diskPrefixes []string // vm:<name>:zvol: for a VM's name and each of its former names
 	zfsRoot      string   // root dataset of a ZFS entry
+	// zfsOwns tells which datasets under zfsRoot hold this entry's backups
+	// rather than those of an entry nested inside its tree.
+	zfsOwns func(dataset string) bool
 	// zfsRuns is what each recorded run of a ZFS entry did to each dataset,
 	// by the run's stamp.
 	zfsRuns map[string]map[string]string
@@ -91,7 +94,11 @@ func (s *Service) timelineItemFor(domain, key string) (timelineItem, error) {
 		if err != nil {
 			return timelineItem{}, fmt.Errorf("load dataset: %w", err)
 		}
-		return timelineItem{domain: domain, homeID: d.Repo, zfsRoot: d.Dataset, zfsRuns: s.zfsRunOutcomes(d.ID)}, nil
+		owns, err := s.zfsOwnsDataset(d)
+		if err != nil {
+			return timelineItem{}, err
+		}
+		return timelineItem{domain: domain, homeID: d.Repo, zfsRoot: d.Dataset, zfsOwns: owns, zfsRuns: s.zfsRunOutcomes(d.ID)}, nil
 	}
 	ref := store.ItemRef{Domain: domain, Key: key}
 	identity, err := s.itemIdentity(ref)
@@ -303,7 +310,7 @@ func (s *Service) ownedAt(ctx context.Context, it timelineItem, p placeRef) ([]r
 	if it.zfsRoot != "" {
 		var own []restic.Snapshot
 		for _, snap := range all {
-			if _, member := zfsSnapshotDataset(snap, it.zfsRoot); member {
+			if dataset, member := zfsSnapshotDataset(snap, it.zfsRoot); member && it.zfsOwns(dataset) {
 				own = append(own, snap)
 			}
 		}

@@ -249,3 +249,36 @@ func TestDigestReportsTheZFSOffsiteCopy(t *testing.T) {
 		t.Fatalf("the digest must say how current the ZFS off-site copy is, got %q", got)
 	}
 }
+
+// A week without a failed run still has something to say when a critical is
+// open, and it must not end by calling that all good.
+func TestDigestWithAnOpenCriticalIsSentOnFailuresOnly(t *testing.T) {
+	svc, st, body := digestTestService(t, "failure")
+	tg, err := st.UpsertTarget(store.Target{ContainerName: "plex"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	seedBackupRun(t, st, tg.ID, "success", "", 1024)
+	if err := svc.SendDigest(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	if got := body(); got != "" {
+		t.Fatalf("an all-green week under On=failure sent %q", got)
+	}
+
+	seedAnomaly(t, st, store.Anomaly{
+		ID: "shrink", Detector: "source", Metric: "source_bytes_shrink", Severity: "critical",
+		ScopeKind: "item", ScopeID: tg.ID, TargetID: tg.ID, Domain: "container", LastSeenAt: time.Now().Unix(),
+	})
+	startAnomalyEngine(t, svc)
+	if err := svc.SendDigest(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	got := body()
+	if !strings.Contains(got, "Anomalies still open: critical 1") || !strings.Contains(got, `"ok":false`) {
+		t.Fatalf("the open critical must go out as a failure, got %q", got)
+	}
+	if strings.Contains(got, "All good") {
+		t.Fatalf("the digest calls an open critical all good: %q", got)
+	}
+}

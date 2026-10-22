@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/restic"
+	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
 // zfsCopy is the copy of a ZFS member snapshot at a target.
@@ -91,6 +92,57 @@ func TestZFSTimelineDeleteTakesEveryDatasetOfTheRun(t *testing.T) {
 	held, _ := f.eng.Snapshots(context.Background(), home, restic.Mode{})
 	if len(held) != 1 || held[0].ID != "b1b1b1b1" {
 		t.Fatalf("left %+v, want the second run", held)
+	}
+}
+
+// An entry inside another entry's tree, which that one leaves out, writes to
+// the same repository. Its backups are its own on every page, the outer
+// entry's delete included.
+func TestAZFSEntryNestedInAnotherKeepsItsBackups(t *testing.T) {
+	const thirdRun = "bombvault-20260103000000"
+	f := newPlacementFixture(t)
+	f.signIn()
+	outer, err := f.st.CreateZFSDataset(store.ZFSDataset{Dataset: "tank/data", ExcludedChildren: []string{"tank/data/vm"}, Enabled: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	inner, home := f.zfsItem("tank/data/vm")
+	f.hold(home,
+		zfsSnap("a1a1a1a1", "tank/data", firstRun),
+		zfsSnap("b1b1b1b1", "tank/data/vm", secondRun),
+		zfsSnap("b2b2b2b2", "tank/data/vm/disk", secondRun),
+		// A run no row records, as from a database older than the snapshots.
+		zfsSnap("c1c1c1c1", "tank/data/vm", thirdRun),
+	)
+	f.zfsRun(outer.ID, firstRun, "tank/data")
+	f.zfsRun(inner.ID, secondRun, "tank/data/vm", "tank/data/vm/disk")
+
+	for _, c := range []struct {
+		id   string
+		want []string
+	}{
+		{outer.ID, []string{firstRun}},
+		{inner.ID, []string{thirdRun, secondRun}},
+	} {
+		tl, err := f.svc.Timeline(context.Background(), zfsDomain, c.id)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if got := rowKeys(tl.Rows); !slices.Equal(got, c.want) {
+			t.Errorf("rows of %s = %v, want %v", c.id, got, c.want)
+		}
+	}
+
+	preview := f.do(http.MethodGet, "/api/items/zfs/"+outer.ID+"/timeline/"+secondRun+"/delete", nil)
+	if del, _ := preview["delete"].([]any); len(del) != 0 {
+		t.Fatalf("the outer entry offers to delete the inner one's run: %v", preview)
+	}
+	snaps, err := f.svc.zfsItemSnapshots(context.Background(), outer, "local")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(snaps) != 1 || snaps[0].ID != "a1a1a1a1" {
+		t.Fatalf("the outer entry's snapshots are %+v, want only its own", snaps)
 	}
 }
 

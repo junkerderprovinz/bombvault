@@ -500,7 +500,7 @@ func TestAppriseScheduledSummarySuppression(t *testing.T) {
 	cfg := notify.Config{On: "always", AppriseEnabled: true, AppriseURL: srv.URL, ScheduledSummary: true}
 	ictx := notify.WithMessagesSuppressed(context.Background())
 
-	notify.Send(ictx, cfg, "container", notify.Event{OK: true})
+	notify.Send(ictx, cfg, "container", notify.Event{OK: true, ItemResult: true})
 	notify.SendStart(ictx, cfg, "container")
 	if hits != 0 {
 		t.Fatalf("summary mode must suppress per-item apprise sends, hits=%d", hits)
@@ -511,7 +511,7 @@ func TestAppriseScheduledSummarySuppression(t *testing.T) {
 		t.Fatalf("a non-marked apprise message must still send, hits=%d", hits)
 	}
 	cfg.ScheduledSummary = false
-	notify.Send(ictx, cfg, "container", notify.Event{OK: true})
+	notify.Send(ictx, cfg, "container", notify.Event{OK: true, ItemResult: true})
 	if hits != 2 {
 		t.Fatalf("with summary off a marked apprise message must send, hits=%d", hits)
 	}
@@ -564,7 +564,7 @@ func TestScheduledSummarySuppressesPerItemMessages(t *testing.T) {
 	defer wh.Close()
 	cfg := notify.Config{On: "always", WebhookEnabled: true, WebhookURL: wh.URL, WebhookFormat: "generic", ScheduledSummary: true}
 
-	notify.Send(notify.WithMessagesSuppressed(context.Background()), cfg, "container", notify.Event{OK: true})
+	notify.Send(notify.WithMessagesSuppressed(context.Background()), cfg, "container", notify.Event{OK: true, ItemResult: true})
 	if hits != 0 {
 		t.Fatalf("summary mode must suppress a per-item message, hits=%d", hits)
 	}
@@ -574,9 +574,23 @@ func TestScheduledSummarySuppressesPerItemMessages(t *testing.T) {
 		t.Fatalf("a non-marked message must still send, hits=%d", hits)
 	}
 	cfg.ScheduledSummary = false
-	notify.Send(notify.WithMessagesSuppressed(context.Background()), cfg, "container", notify.Event{OK: true})
+	notify.Send(notify.WithMessagesSuppressed(context.Background()), cfg, "container", notify.Event{OK: true, ItemResult: true})
 	if hits != 2 {
 		t.Fatalf("with summary off a marked message must send, hits=%d", hits)
+	}
+}
+
+// A guest left frozen or a retention that failed is no item result, and the
+// summary that replaces the item results does not mention it.
+func TestScheduledSummaryKeepsTheAlertsOfAnItem(t *testing.T) {
+	var hits int
+	wh := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) { hits++ }))
+	defer wh.Close()
+	cfg := notify.Config{On: "failure", WebhookEnabled: true, WebhookURL: wh.URL, WebhookFormat: "generic", ScheduledSummary: true}
+
+	item := notify.WithMessagesSuppressed(notify.WithHealthchecksSuppressed(context.Background()))
+	if !notify.Send(item, cfg, "vms", notify.Event{Title: "BombVault", Message: "VM win11 may still be frozen", OK: false}) || hits != 1 {
+		t.Fatalf("an alert on a scheduled item's context must be delivered, hits=%d", hits)
 	}
 }
 

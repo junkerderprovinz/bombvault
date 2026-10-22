@@ -5,7 +5,9 @@ import (
 	"errors"
 	"net/http"
 	"testing"
+	"time"
 
+	"github.com/junkerderprovinz/bombvault/internal/notify"
 	"github.com/junkerderprovinz/bombvault/internal/schedule"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 	"github.com/junkerderprovinz/bombvault/internal/zfsrepl"
@@ -78,6 +80,33 @@ func TestAnItemWithOnlyAReplicaIsNotRefusedForWantingAPlace(t *testing.T) {
 	}
 	if err := r.s.refuseNoPlace(zfsDomain, r.item.ID); !errors.Is(err, ErrNoPlace) {
 		t.Errorf("an item with neither a place nor a replica: %v, want ErrNoPlace", err)
+	}
+}
+
+// An item that only replicates writes no backup run, and the watchdog judges
+// it by its replica the way the dashboard does.
+func TestTheWatchdogJudgesAReplicaOnlyItemByItsReplica(t *testing.T) {
+	r := replicaOnlyRig(t)
+	wh := newPathRecorder(t)
+	if err := r.s.SetNotifyConfig(notify.Config{On: "failure", WebhookEnabled: true, WebhookURL: wh.srv.URL}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := r.s.BackupZFSDataset(context.Background(), r.item.ID); err != nil {
+		t.Fatal(err)
+	}
+	now := time.Now().Unix()
+
+	if err := r.s.runWatchdogAt(context.Background(), now+3600); err != nil {
+		t.Fatal(err)
+	}
+	if n := len(wh.got()); n != 0 {
+		t.Fatalf("a replica an hour old is current, got %d alerts", n)
+	}
+	if err := r.s.runWatchdogAt(context.Background(), now+3*86400); err != nil {
+		t.Fatal(err)
+	}
+	if n := len(wh.got()); n != 1 {
+		t.Fatalf("a replica three days old against a daily schedule is overdue, got %d alerts", n)
 	}
 }
 

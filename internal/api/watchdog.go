@@ -64,30 +64,11 @@ func (s *Service) runWatchdogAt(ctx context.Context, now int64) error {
 		return fmt.Errorf("read settings: %w", err)
 	}
 
-	// The same domains DomainStatus shows on the dashboard.
-	domains := []struct {
-		name     string
-		enabled  bool
-		schedule string
-		lastFn   func() (time.Time, error)
-	}{
-		{"containers", settings.ContainersEnabled, settings.ContainersSchedule, s.store.LastSuccessfulContainerBackup},
-		{"vms", settings.VMsEnabled, settings.VMsSchedule, s.store.LastSuccessfulVMBackup},
-		{"flash", settings.FlashEnabled, settings.FlashSchedule, s.store.LastSuccessfulFlashBackup},
-		{"config", settings.ConfigEnabled, settings.ConfigSchedule, s.store.LastSuccessfulConfigBackup},
-		{"files", settings.FilesEnabled, settings.FilesSchedule, s.store.LastSuccessfulFilesBackup},
-		{"zfs", settings.ZFSEnabled, settings.ZFSSchedule, s.store.LastSuccessfulZFSBackup},
-	}
-
-	for _, d := range domains {
-		last, lErr := d.lastFn()
+	for _, d := range s.statusDomains(settings) {
+		lastUnix, lErr := s.lastDomainSuccess(d)
 		if lErr != nil {
 			log.Printf("api: watchdog: %s last-success query failed (skipping): %v", d.name, lErr) //nolint:gosec // G706: domain is a fixed literal
 			continue
-		}
-		var lastUnix int64
-		if !last.IsZero() {
-			lastUnix = last.Unix()
 		}
 		// A domain backed up only by the Backup Everything pass or by its
 		// entries' own schedules has no cadence of its own, and period 0 would
@@ -108,7 +89,10 @@ func (s *Service) runWatchdogAt(ctx context.Context, now int64) error {
 		if !notifyNeeded {
 			continue
 		}
-		s.notifyBackupOverdue(ctx, c, d.name, lastUnix, period, now)
+		if !s.notifyBackupOverdue(ctx, c, d.name, lastUnix, period, now) {
+			// No channel took it, so the next run tries again.
+			continue
+		}
 		// Recording after the send means a failed record costs one duplicate
 		// alert on the next run instead of a lost one.
 		if uErr := s.store.UpsertWatchdogState(store.WatchdogState{Domain: d.name, NotifiedAt: now, LastSuccessAt: lastUnix}); uErr != nil {
@@ -121,15 +105,12 @@ func (s *Service) runWatchdogAt(ctx context.Context, now int64) error {
 // notifyBackupOverdue sends the overdue alert to the message channels and the
 // Unraid mirror. The Healthchecks ping is suppressed: the alert is about runs
 // that did not happen, and a /fail ping would break the check's start/success
-// pairing.
-func (s *Service) notifyBackupOverdue(ctx context.Context, c notify.Config, domain string, lastSuccess, period, now int64) {
+// pairing. It reports whether a channel took the alert.
+func (s *Service) notifyBackupOverdue(ctx context.Context, c notify.Config, domain string, lastSuccess, period, now int64) bool {
 	msg := fmt.Sprintf("Backups for %s are overdue: last success %s, expected every %s.",
 		domain, digestAge(now, lastSuccess), watchdogPeriod(period))
-	notify.Send(notify.WithHealthchecksSuppressed(ctx), c, domain,
-		notify.Event{Title: "BombVault", Message: msg, OK: false})
-	if s.unraidGate(c.Unraid) {
-		if e := s.sendUnraidNotify(ctx, "BombVault: backups overdue for "+domain, msg, "warning"); e != nil {
-			log.Printf("notify: unraid: %v", e)
-		}
-	}
+	delivered, _ := s.sendAlert(notify.WithHealthchecksSuppressed(ctx), c, domain,
+		notify.Event{Title: "BombVault", Message: msg, OK: false},
+		"BombVault: backups overdue for "+domain, msg, "warning")
+	return delivered
 }

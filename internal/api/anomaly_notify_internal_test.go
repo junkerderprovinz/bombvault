@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/notify"
+	"github.com/junkerderprovinz/bombvault/internal/platform"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
@@ -330,5 +331,134 @@ func TestSummarySaysWhenNothingIsPushed(t *testing.T) {
 	f.e.refresh()
 	if f.e.summary().NotifyMuted {
 		t.Fatal("a configured channel is not muted")
+	}
+}
+
+// collapseRow is an open critical whose push nothing has delivered yet.
+func (f *engineFixture) collapseRow(t *testing.T, id string) {
+	t.Helper()
+	row := store.Anomaly{
+		Fingerprint: "source|item|" + id + "|source_bytes_shrink",
+		Detector:    "source", Metric: metricSourceBytesShrink, Severity: "critical",
+		ScopeKind: anomalyScopeItem, ScopeID: id, TargetID: id, Domain: "container",
+		LastRunAt: f.now - 60, FirstSeenAt: f.now, LastSeenAt: f.now,
+	}
+	if _, err := f.st.ApplyAnomalyChanges(store.AnomalyChanges{Now: f.now, Insert: []store.Anomaly{row}}); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func (f *engineFixture) pending(t *testing.T) int {
+	t.Helper()
+	rows, err := f.st.PendingAnomalyNotifications()
+	if err != nil {
+		t.Fatal(err)
+	}
+	return len(rows)
+}
+
+// Unraid's own notifications are a channel of their own, the one the Test
+// button counts too.
+func TestAnomaliesReachAnUnraidOnlySetup(t *testing.T) {
+	f := newEngineFixture(t)
+	ssh := &fakeHostSSH{}
+	f.svc.ssh = ssh
+	f.svc.SetPlatform(platform.Unraid{})
+	f.collapseRow(t, f.container(t, "nextcloud"))
+	if err := f.svc.SetNotifyConfig(notify.Config{On: "failure", Unraid: true}); err != nil {
+		t.Fatal(err)
+	}
+
+	f.e.refresh()
+	if f.e.summary().NotifyMuted {
+		t.Fatal("the page says nothing is sent although Unraid notifications are on")
+	}
+	if err := f.e.sendNotifications(context.Background(), mustEngineSettings(t, f)); err != nil {
+		t.Fatal(err)
+	}
+	if len(ssh.runs) != 1 {
+		t.Fatalf("Unraid got %d notifications, want the collapse", len(ssh.runs))
+	}
+	if n := f.pending(t); n != 0 {
+		t.Fatalf("%d findings still pending after Unraid took them", n)
+	}
+}
+
+// A health check only takes pings, and the anomaly message never pings it, so
+// with nothing else set up the findings wait for a channel.
+func TestAHealthCheckAloneDoesNotTakeAnomalies(t *testing.T) {
+	f := newEngineFixture(t)
+	hc := newPathRecorder(t)
+	f.collapseRow(t, f.container(t, "nextcloud"))
+	if err := f.svc.SetNotifyConfig(notify.Config{On: "failure", HealthchecksURL: hc.srv.URL}); err != nil {
+		t.Fatal(err)
+	}
+
+	f.e.refresh()
+	if !f.e.summary().NotifyMuted {
+		t.Fatal("the page promises messages that no channel would carry")
+	}
+	if err := f.e.sendNotifications(context.Background(), mustEngineSettings(t, f)); err != nil {
+		t.Fatal(err)
+	}
+	if n := f.pending(t); n != 1 {
+		t.Fatalf("pending = %d, want the critical kept for a channel added later", n)
+	}
+}
+
+func TestAnAnomalyPushThatReachedNobodyIsSentAgain(t *testing.T) {
+	f := newEngineFixture(t)
+	wh := newPathRecorder(t)
+	wh.status.Store(http.StatusBadGateway)
+	f.collapseRow(t, f.container(t, "nextcloud"))
+	if err := f.svc.SetNotifyConfig(notify.Config{On: "failure", WebhookEnabled: true, WebhookURL: wh.srv.URL}); err != nil {
+		t.Fatal(err)
+	}
+	settings := mustEngineSettings(t, f)
+
+	if err := f.e.sendNotifications(context.Background(), settings); err != nil {
+		t.Fatal(err)
+	}
+	if n := f.pending(t); n != 1 {
+		t.Fatalf("pending = %d after a failed push, want the finding kept", n)
+	}
+	wh.status.Store(http.StatusOK)
+	if err := f.e.sendNotifications(context.Background(), settings); err != nil {
+		t.Fatal(err)
+	}
+	if n := f.pending(t); n != 0 || len(wh.got()) != 2 {
+		t.Fatalf("pending = %d after %d attempts, want it delivered on the second", n, len(wh.got()))
+	}
+}
+
+// A mass rewrite on a large share can take days to upload. The finding is
+// raised when the upload ends, and that is when it is news.
+func TestARewriteFoundOnARunThatTookDaysIsPushed(t *testing.T) {
+	f := newEngineFixture(t)
+	id := f.container(t, "nextcloud")
+	started := f.now - 3*86400
+	runID := f.run(t, id, "backup", started, 4<<40)
+	if _, err := f.db.Exec(`UPDATE runs SET finished_at = ? WHERE id = ?`, f.now-600, runID); err != nil {
+		t.Fatal(err)
+	}
+	row := store.Anomaly{
+		Fingerprint: "new_data|item|" + id + "|new_data_rewrite",
+		Detector:    detectorNewData, Metric: metricNewDataRewrite, Severity: "critical",
+		ScopeKind: anomalyScopeItem, ScopeID: id, TargetID: id, Domain: "container",
+		RunID: runID, LastRunID: runID, LastRunAt: started, FirstSeenAt: f.now, LastSeenAt: f.now,
+	}
+	if _, err := f.st.ApplyAnomalyChanges(store.AnomalyChanges{Now: f.now, Insert: []store.Anomaly{row}}); err != nil {
+		t.Fatal(err)
+	}
+	wh := newWebhookRecorder(t)
+	if err := f.svc.SetNotifyConfig(wh.config("failure")); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := f.e.sendNotifications(context.Background(), mustEngineSettings(t, f)); err != nil {
+		t.Fatal(err)
+	}
+	if got := wh.messages(); len(got) != 1 || !strings.Contains(got[0], "nextcloud") {
+		t.Fatalf("want the rewrite pushed when its run ends, got %v", got)
 	}
 }
