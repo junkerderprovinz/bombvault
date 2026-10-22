@@ -4153,6 +4153,8 @@ const hi: Partial<Translations> = {
   "overview.check.offsitePaused": "ऑफ़-साइट: कॉपी रुकी हुई है",
   "overview.check.offsiteNever": "ऑफ़-साइट: अभी तक कॉपी नहीं",
   "overview.check.offsiteCurrent": "ऑफ़-साइट: कॉपी अद्यतन है",
+  "overview.check.offsiteReplicaFailed": "ऑफ़-साइट: रेप्लिका विफल रही",
+  "overview.check.offsiteReplicaOverdue": "ऑफ़-साइट: रेप्लिका में देरी",
   "overview.check.lockNeedsOffsite": "डिलीट से सुरक्षा: ऑफ़-साइट गंतव्य चाहिए",
   "overview.check.lockChecked": "डिलीट से सुरक्षा: जाँचा गया",
   "overview.check.lockFailed": "डिलीट से सुरक्षा: परीक्षण विफल रहा",

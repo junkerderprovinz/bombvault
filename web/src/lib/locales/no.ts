@@ -4143,6 +4143,8 @@ const no: Partial<Translations> = {
   "overview.check.offsitePaused": "Off-site: kopi satt på pause",
   "overview.check.offsiteNever": "Off-site: ingen kopi ennå",
   "overview.check.offsiteCurrent": "Off-site: kopi oppdatert",
+  "overview.check.offsiteReplicaFailed": "Off-site: replikering mislyktes",
+  "overview.check.offsiteReplicaOverdue": "Off-site: replikering forsinket",
   "overview.check.lockNeedsOffsite": "Beskyttelse mot sletting: trenger et off-site-mål",
   "overview.check.lockChecked": "Beskyttelse mot sletting: kontrollert",
   "overview.check.lockFailed": "Beskyttelse mot sletting: testen feilet",

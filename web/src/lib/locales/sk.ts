@@ -4153,6 +4153,8 @@ const sk: Partial<Translations> = {
   "overview.check.offsitePaused": "Externé: kopírovanie je pozastavené",
   "overview.check.offsiteNever": "Externé: zatiaľ žiadna kópia",
   "overview.check.offsiteCurrent": "Externé: kópia je aktuálna",
+  "overview.check.offsiteReplicaFailed": "Externé: replikácia zlyhala",
+  "overview.check.offsiteReplicaOverdue": "Externé: replikácia mešká",
   "overview.check.lockNeedsOffsite": "Ochrana proti zmazaniu: vyžaduje externý cieľ",
   "overview.check.lockChecked": "Ochrana proti zmazaniu: skontrolované",
   "overview.check.lockFailed": "Ochrana proti zmazaniu: test zlyhal",

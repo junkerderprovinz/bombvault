@@ -4140,6 +4140,8 @@ const pl: Partial<Translations> = {
   "overview.check.offsitePaused": "Poza siedzibą: kopiowanie wstrzymane",
   "overview.check.offsiteNever": "Poza siedzibą: jeszcze brak kopii",
   "overview.check.offsiteCurrent": "Poza siedzibą: kopia jest aktualna",
+  "overview.check.offsiteReplicaFailed": "Poza siedzibą: replikacja się nie udała",
+  "overview.check.offsiteReplicaOverdue": "Poza siedzibą: replikacja jest opóźniona",
   "overview.check.lockNeedsOffsite": "Ochrona przed usunięciem: wymaga miejsca docelowego poza siedzibą",
   "overview.check.lockChecked": "Ochrona przed usunięciem: sprawdzono",
   "overview.check.lockFailed": "Ochrona przed usunięciem: test się nie powiódł",

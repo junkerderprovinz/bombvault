@@ -4153,6 +4153,8 @@ const lt: Partial<Translations> = {
   "overview.check.offsitePaused": "Nuotolinis: kopijavimas pristabdytas",
   "overview.check.offsiteNever": "Nuotolinis: dar nėra kopijos",
   "overview.check.offsiteCurrent": "Nuotolinis: kopija naujausia",
+  "overview.check.offsiteReplicaFailed": "Nuotolinis: replikuoti nepavyko",
+  "overview.check.offsiteReplicaOverdue": "Nuotolinis: replikavimas vėluoja",
   "overview.check.lockNeedsOffsite": "Apsauga nuo trynimo: reikia nuotolinės paskirties vietos",
   "overview.check.lockChecked": "Apsauga nuo trynimo: patikrinta",
   "overview.check.lockFailed": "Apsauga nuo trynimo: testas nepavyko",

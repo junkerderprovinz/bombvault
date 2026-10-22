@@ -4140,6 +4140,8 @@ const ru: Partial<Translations> = {
   "overview.check.offsitePaused": "Внешнее: копирование приостановлено",
   "overview.check.offsiteNever": "Внешнее: копий пока нет",
   "overview.check.offsiteCurrent": "Внешнее: копия актуальна",
+  "overview.check.offsiteReplicaFailed": "Внешнее: репликация не удалась",
+  "overview.check.offsiteReplicaOverdue": "Внешнее: репликация просрочена",
   "overview.check.lockNeedsOffsite": "Защита от удаления: нужно внешнее место назначения",
   "overview.check.lockChecked": "Защита от удаления: проверена",
   "overview.check.lockFailed": "Защита от удаления: тест не пройден",

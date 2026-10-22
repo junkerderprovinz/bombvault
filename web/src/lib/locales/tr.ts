@@ -4143,6 +4143,8 @@ const tr: Partial<Translations> = {
   "overview.check.offsitePaused": "Site dışı: kopyalama duraklatıldı",
   "overview.check.offsiteNever": "Site dışı: henüz kopya yok",
   "overview.check.offsiteCurrent": "Site dışı: kopya güncel",
+  "overview.check.offsiteReplicaFailed": "Site dışı: replika başarısız oldu",
+  "overview.check.offsiteReplicaOverdue": "Site dışı: replika gecikti",
   "overview.check.lockNeedsOffsite": "Silmeye karşı koruma: site dışı bir hedef gerekiyor",
   "overview.check.lockChecked": "Silmeye karşı koruma: kontrol edildi",
   "overview.check.lockFailed": "Silmeye karşı koruma: test başarısız",

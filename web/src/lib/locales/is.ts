@@ -4153,6 +4153,8 @@ const is: Partial<Translations> = {
   "overview.check.offsitePaused": "Fjarlægt: afritun er í bið",
   "overview.check.offsiteNever": "Fjarlægt: ekkert afrit enn",
   "overview.check.offsiteCurrent": "Fjarlægt: afrit er uppfært",
+  "overview.check.offsiteReplicaFailed": "Fjarlægt: ZFS-afritun mistókst",
+  "overview.check.offsiteReplicaOverdue": "Fjarlægt: ZFS-afritun er á eftir áætlun",
   "overview.check.lockNeedsOffsite": "Vörn gegn eyðingu: þarf fjarlægan áfangastað",
   "overview.check.lockChecked": "Vörn gegn eyðingu: athugað",
   "overview.check.lockFailed": "Vörn gegn eyðingu: prófun mistókst",

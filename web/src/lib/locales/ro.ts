@@ -4144,6 +4144,8 @@ const ro: Partial<Translations> = {
   "overview.check.offsitePaused": "Extern: copiere în pauză",
   "overview.check.offsiteNever": "Extern: încă nu există copie",
   "overview.check.offsiteCurrent": "Extern: copie la zi",
+  "overview.check.offsiteReplicaFailed": "Extern: replicarea a eșuat",
+  "overview.check.offsiteReplicaOverdue": "Extern: replicare întârziată",
   "overview.check.lockNeedsOffsite": "Protecție împotriva ștergerii: necesită o destinație off-site",
   "overview.check.lockChecked": "Protecție împotriva ștergerii: verificată",
   "overview.check.lockFailed": "Protecție împotriva ștergerii: testul a eșuat",

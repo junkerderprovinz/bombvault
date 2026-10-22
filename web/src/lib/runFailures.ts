@@ -3,13 +3,16 @@ import type { Run } from "./api";
 // The kinds a failure counts for, and the outcome each one can clear. A dump
 // and an import stand apart from the item's backup, so a failed dump does not
 // hide a failed backup of the same container. A saved dump is left out: writing
-// a copy of an old dump into a folder says nothing about the database.
+// a copy of an old dump into a folder says nothing about the database. A ZFS
+// replica is a copy of its own, and for an entry that only replicates the one
+// it has.
 const ERROR_CLASSES: Record<string, string> = {
   backup: "item",
   restore: "item",
   update: "item",
   dbdump: "dbdump",
   dbimport: "dbimport",
+  replica: "replica",
 };
 
 /**

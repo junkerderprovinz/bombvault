@@ -615,6 +615,9 @@ export interface DomainStatus {
   drillState: string; // "" | "never" | "failed" | "overdue" | "ok"
   encryptionOn: boolean; // repo encryption is enabled
   pruneStrategySet: boolean; // an off-site retention strategy is configured
+  /** How the ZFS replicas stand: "" with none, "failed" when the last run of
+   *  one failed, "stale" when one is not current, "ok" otherwise. */
+  replicaState?: string;
 }
 
 /** A recorded restore-verification "drill" from POST/GET /api/verify. */

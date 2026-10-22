@@ -4143,6 +4143,8 @@ const da: Partial<Translations> = {
   "overview.check.offsitePaused": "Off-site: kopi sat på pause",
   "overview.check.offsiteNever": "Off-site: ingen kopi endnu",
   "overview.check.offsiteCurrent": "Off-site: kopi opdateret",
+  "overview.check.offsiteReplicaFailed": "Off-site: replikering mislykkedes",
+  "overview.check.offsiteReplicaOverdue": "Off-site: replikering forsinket",
   "overview.check.lockNeedsOffsite": "Beskyttelse mod sletning: kræver en off-site-destination",
   "overview.check.lockChecked": "Beskyttelse mod sletning: kontrolleret",
   "overview.check.lockFailed": "Beskyttelse mod sletning: testen fejlede",

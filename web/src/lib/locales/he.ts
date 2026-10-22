@@ -4143,6 +4143,8 @@ const he: Partial<Translations> = {
   "overview.check.offsitePaused": "מחוץ לאתר: ההעתקה מושהית",
   "overview.check.offsiteNever": "מחוץ לאתר: עדיין אין עותק",
   "overview.check.offsiteCurrent": "מחוץ לאתר: העותק מעודכן",
+  "overview.check.offsiteReplicaFailed": "מחוץ לאתר: הרפליקה נכשלה",
+  "overview.check.offsiteReplicaOverdue": "מחוץ לאתר: הרפליקה מתעכבת",
   "overview.check.lockNeedsOffsite": "הגנה מפני מחיקה: נדרש יעד מחוץ לאתר",
   "overview.check.lockChecked": "הגנה מפני מחיקה: נבדק",
   "overview.check.lockFailed": "הגנה מפני מחיקה: הבדיקה נכשלה",

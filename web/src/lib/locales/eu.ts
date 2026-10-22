@@ -4153,6 +4153,8 @@ const eu: Partial<Translations> = {
   "overview.check.offsitePaused": "Kanpokoa: kopia pausatuta dago",
   "overview.check.offsiteNever": "Kanpokoa: oraindik ez dago kopiarik",
   "overview.check.offsiteCurrent": "Kanpokoa: kopia eguneratuta dago",
+  "overview.check.offsiteReplicaFailed": "Kanpokoa: erreplikak huts egin du",
+  "overview.check.offsiteReplicaOverdue": "Kanpokoa: erreplika atzeratuta dago",
   "overview.check.lockNeedsOffsite": "Ezabatzearen aurkako babesa: kanpoko helmuga bat behar du",
   "overview.check.lockChecked": "Ezabatzearen aurkako babesa: egiaztatuta",
   "overview.check.lockFailed": "Ezabatzearen aurkako babesa: probak huts egin du",

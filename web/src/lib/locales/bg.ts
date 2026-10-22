@@ -4153,6 +4153,8 @@ const bg: Partial<Translations> = {
   "overview.check.offsitePaused": "Извън обекта: копирането е на пауза",
   "overview.check.offsiteNever": "Извън обекта: още няма копие",
   "overview.check.offsiteCurrent": "Извън обекта: копието е актуално",
+  "overview.check.offsiteReplicaFailed": "Извън обекта: репликата се провали",
+  "overview.check.offsiteReplicaOverdue": "Извън обекта: репликата закъснява",
   "overview.check.lockNeedsOffsite": "Защита срещу изтриване: изисква дестинация извън обекта",
   "overview.check.lockChecked": "Защита срещу изтриване: проверено",
   "overview.check.lockFailed": "Защита срещу изтриване: тестът е неуспешен",

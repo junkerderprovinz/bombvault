@@ -4134,6 +4134,8 @@ const vi: Partial<Translations> = {
   "overview.check.offsitePaused": "Ngoài site: việc sao chép đang tạm dừng",
   "overview.check.offsiteNever": "Ngoài site: chưa có bản sao chép",
   "overview.check.offsiteCurrent": "Ngoài site: bản sao chép đã cập nhật",
+  "overview.check.offsiteReplicaFailed": "Ngoài site: nhân bản thất bại",
+  "overview.check.offsiteReplicaOverdue": "Ngoài site: nhân bản bị trễ",
   "overview.check.lockNeedsOffsite": "Bảo vệ chống xóa: cần một đích ngoài site",
   "overview.check.lockChecked": "Bảo vệ chống xóa: đã kiểm tra",
   "overview.check.lockFailed": "Bảo vệ chống xóa: kiểm thử thất bại",

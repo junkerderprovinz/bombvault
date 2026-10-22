@@ -4153,6 +4153,8 @@ const ms: Partial<Translations> = {
   "overview.check.offsitePaused": "Luar tapak: salinan dijeda",
   "overview.check.offsiteNever": "Luar tapak: belum ada salinan",
   "overview.check.offsiteCurrent": "Luar tapak: salinan terkini",
+  "overview.check.offsiteReplicaFailed": "Luar tapak: replika gagal",
+  "overview.check.offsiteReplicaOverdue": "Luar tapak: replika lewat",
   "overview.check.lockNeedsOffsite": "Perlindungan daripada pemadaman: memerlukan destinasi luar tapak",
   "overview.check.lockChecked": "Perlindungan daripada pemadaman: disemak",
   "overview.check.lockFailed": "Perlindungan daripada pemadaman: ujian gagal",

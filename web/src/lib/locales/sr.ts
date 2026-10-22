@@ -4137,6 +4137,8 @@ const sr: Partial<Translations> = {
   "overview.check.offsitePaused": "Спољно: копирање је паузирано",
   "overview.check.offsiteNever": "Спољно: још нема копије",
   "overview.check.offsiteCurrent": "Спољно: копија је ажурна",
+  "overview.check.offsiteReplicaFailed": "Спољно: репликација није успела",
+  "overview.check.offsiteReplicaOverdue": "Спољно: репликација касни",
   "overview.check.lockNeedsOffsite": "Заштита од брисања: треба спољно одредиште",
   "overview.check.lockChecked": "Заштита од брисања: проверено",
   "overview.check.lockFailed": "Заштита од брисања: тест није успео",

@@ -4140,6 +4140,8 @@ const uk: Partial<Translations> = {
   "overview.check.offsitePaused": "Зовнішнє: копіювання призупинено",
   "overview.check.offsiteNever": "Зовнішнє: копій ще немає",
   "overview.check.offsiteCurrent": "Зовнішнє: копія актуальна",
+  "overview.check.offsiteReplicaFailed": "Зовнішнє: реплікація не вдалася",
+  "overview.check.offsiteReplicaOverdue": "Зовнішнє: реплікація прострочена",
   "overview.check.lockNeedsOffsite": "Захист від видалення: потрібне зовнішнє місце призначення",
   "overview.check.lockChecked": "Захист від видалення: перевірено",
   "overview.check.lockFailed": "Захист від видалення: тест не пройдено",

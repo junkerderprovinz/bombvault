@@ -4134,6 +4134,8 @@ const ko: Partial<Translations> = {
   "overview.check.offsitePaused": "오프사이트: 복사 일시 중지",
   "overview.check.offsiteNever": "오프사이트: 아직 복사본 없음",
   "overview.check.offsiteCurrent": "오프사이트: 복사본 최신 상태",
+  "overview.check.offsiteReplicaFailed": "오프사이트: 복제 실패",
+  "overview.check.offsiteReplicaOverdue": "오프사이트: 복제 지연",
   "overview.check.lockNeedsOffsite": "삭제 방지: 오프사이트 대상 필요",
   "overview.check.lockChecked": "삭제 방지: 확인됨",
   "overview.check.lockFailed": "삭제 방지: 테스트 실패",

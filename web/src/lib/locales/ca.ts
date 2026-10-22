@@ -4153,6 +4153,8 @@ const ca: Partial<Translations> = {
   "overview.check.offsitePaused": "Extern: còpia en pausa",
   "overview.check.offsiteNever": "Extern: encara no hi ha còpia",
   "overview.check.offsiteCurrent": "Extern: còpia al dia",
+  "overview.check.offsiteReplicaFailed": "Extern: la rèplica ha fallat",
+  "overview.check.offsiteReplicaOverdue": "Extern: rèplica endarrerida",
   "overview.check.lockNeedsOffsite": "Protecció contra l'esborrat: cal una destinació externa",
   "overview.check.lockChecked": "Protecció contra l'esborrat: comprovada",
   "overview.check.lockFailed": "Protecció contra l'esborrat: la prova ha fallat",

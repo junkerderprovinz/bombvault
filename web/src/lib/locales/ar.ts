@@ -4144,6 +4144,8 @@ const ar: Partial<Translations> = {
   "overview.check.offsitePaused": "خارج الموقع: النسخ متوقف مؤقتًا",
   "overview.check.offsiteNever": "خارج الموقع: لا نسخة بعد",
   "overview.check.offsiteCurrent": "خارج الموقع: النسخ محدّث",
+  "overview.check.offsiteReplicaFailed": "خارج الموقع: فشلت النسخة المتماثلة",
+  "overview.check.offsiteReplicaOverdue": "خارج الموقع: النسخة المتماثلة متأخرة",
   "overview.check.lockNeedsOffsite": "الحماية من الحذف: يحتاج إلى وجهة خارج الموقع",
   "overview.check.lockChecked": "الحماية من الحذف: تم الفحص",
   "overview.check.lockFailed": "الحماية من الحذف: فشل الاختبار",

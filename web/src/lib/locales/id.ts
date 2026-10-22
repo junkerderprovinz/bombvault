@@ -4153,6 +4153,8 @@ const id: Partial<Translations> = {
   "overview.check.offsitePaused": "Off-site: salinan dijeda",
   "overview.check.offsiteNever": "Off-site: belum ada salinan",
   "overview.check.offsiteCurrent": "Off-site: salinan terbaru",
+  "overview.check.offsiteReplicaFailed": "Off-site: replika gagal",
+  "overview.check.offsiteReplicaOverdue": "Off-site: replika terlambat",
   "overview.check.lockNeedsOffsite": "Perlindungan dari penghapusan: perlu tujuan off-site",
   "overview.check.lockChecked": "Perlindungan dari penghapusan: sudah diperiksa",
   "overview.check.lockFailed": "Perlindungan dari penghapusan: pengujian gagal",

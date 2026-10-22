@@ -4134,6 +4134,8 @@ const zh: Partial<Translations> = {
   "overview.check.offsitePaused": "异地：复制已暂停",
   "overview.check.offsiteNever": "异地：还没有副本",
   "overview.check.offsiteCurrent": "异地：副本已是最新",
+  "overview.check.offsiteReplicaFailed": "异地：副本失败",
+  "overview.check.offsiteReplicaOverdue": "异地：副本已逾期",
   "overview.check.lockNeedsOffsite": "防删除保护：需要一个异地目标",
   "overview.check.lockChecked": "防删除保护：已检查",
   "overview.check.lockFailed": "防删除保护：测试失败",

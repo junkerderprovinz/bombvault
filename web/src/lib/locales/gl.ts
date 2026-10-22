@@ -4153,6 +4153,8 @@ const gl: Partial<Translations> = {
   "overview.check.offsitePaused": "Externa: copia en pausa",
   "overview.check.offsiteNever": "Externa: aínda non hai copia",
   "overview.check.offsiteCurrent": "Externa: copia ao día",
+  "overview.check.offsiteReplicaFailed": "Externa: a réplica fallou",
+  "overview.check.offsiteReplicaOverdue": "Externa: réplica atrasada",
   "overview.check.lockNeedsOffsite": "Protección contra a eliminación: precisa un destino externo",
   "overview.check.lockChecked": "Protección contra a eliminación: comprobada",
   "overview.check.lockFailed": "Protección contra a eliminación: a proba fallou",

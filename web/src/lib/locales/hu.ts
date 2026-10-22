@@ -4144,6 +4144,8 @@ const hu: Partial<Translations> = {
   "overview.check.offsitePaused": "Telephelyen kívüli: a másolás szünetel",
   "overview.check.offsiteNever": "Telephelyen kívüli: még nincs másolat",
   "overview.check.offsiteCurrent": "Telephelyen kívüli: a másolat naprakész",
+  "overview.check.offsiteReplicaFailed": "Telephelyen kívüli: a replikálás nem sikerült",
+  "overview.check.offsiteReplicaOverdue": "Telephelyen kívüli: a replikálás késik",
   "overview.check.lockNeedsOffsite": "Törlés elleni védelem: telephelyen kívüli célt igényel",
   "overview.check.lockChecked": "Törlés elleni védelem: ellenőrizve",
   "overview.check.lockFailed": "Törlés elleni védelem: a teszt meghiúsult",

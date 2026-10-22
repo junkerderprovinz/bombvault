@@ -66,6 +66,14 @@ describe("the off-site check", () => {
     expect(offsite({ offsiteConfigured: false, offPremisesCovered: true }).tone).toBe("ok");
   });
 
+  it("names a ZFS replica that fails or falls behind instead of calling it no copy", () => {
+    const zfs = { domain: "zfs", offsiteConfigured: false };
+    expect(offsite({ ...zfs, offPremisesCovered: true, replicaState: "ok" })).toEqual({ tone: "ok", say: "overview.check.offsiteCurrent" });
+    expect(offsite({ ...zfs, offPremisesCovered: true, replicaState: "failed" })).toEqual({ tone: "warn", say: "overview.check.offsiteReplicaFailed" });
+    expect(offsite({ ...zfs, replicaState: "failed" })).toEqual({ tone: "warn", say: "overview.check.offsiteReplicaFailed" });
+    expect(offsite({ ...zfs, replicaState: "stale" })).toEqual({ tone: "warn", say: "overview.check.offsiteReplicaOverdue" });
+  });
+
   it("shows a copy that is running", () => {
     expect(offsite({ replicationState: "overdue" }, true)).toEqual({ tone: "run", say: "overview.check.offsiteRunning" });
   });

@@ -4143,6 +4143,8 @@ const fi: Partial<Translations> = {
   "overview.check.offsitePaused": "Etä: kopiointi tauolla",
   "overview.check.offsiteNever": "Etä: ei vielä kopiota",
   "overview.check.offsiteCurrent": "Etä: kopio ajan tasalla",
+  "overview.check.offsiteReplicaFailed": "Etä: replikointi epäonnistui",
+  "overview.check.offsiteReplicaOverdue": "Etä: replikointi myöhässä",
   "overview.check.lockNeedsOffsite": "Poistosuoja: tarvitsee etäkohteen",
   "overview.check.lockChecked": "Poistosuoja: tarkistettu",
   "overview.check.lockFailed": "Poistosuoja: testi epäonnistui",

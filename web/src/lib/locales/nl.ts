@@ -4142,6 +4142,8 @@ const nl: Partial<Translations> = {
   "overview.check.offsitePaused": "Off-site: kopie gepauzeerd",
   "overview.check.offsiteNever": "Off-site: nog geen kopie",
   "overview.check.offsiteCurrent": "Off-site: kopie actueel",
+  "overview.check.offsiteReplicaFailed": "Off-site: replica mislukt",
+  "overview.check.offsiteReplicaOverdue": "Off-site: replica te laat",
   "overview.check.lockNeedsOffsite": "Bescherming tegen verwijderen: heeft een off-site-bestemming nodig",
   "overview.check.lockChecked": "Bescherming tegen verwijderen: gecontroleerd",
   "overview.check.lockFailed": "Bescherming tegen verwijderen: test mislukt",

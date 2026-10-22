@@ -4144,6 +4144,8 @@ const th: Partial<Translations> = {
   "overview.check.offsitePaused": "นอกสถานที่: การคัดลอกหยุดชั่วคราว",
   "overview.check.offsiteNever": "นอกสถานที่: ยังไม่มีสำเนา",
   "overview.check.offsiteCurrent": "นอกสถานที่: สำเนาเป็นปัจจุบัน",
+  "overview.check.offsiteReplicaFailed": "นอกสถานที่: เรพลิกาล้มเหลว",
+  "overview.check.offsiteReplicaOverdue": "นอกสถานที่: เรพลิกาล่าช้า",
   "overview.check.lockNeedsOffsite": "การป้องกันการลบ: ต้องมีปลายทางนอกสถานที่",
   "overview.check.lockChecked": "การป้องกันการลบ: ตรวจสอบแล้ว",
   "overview.check.lockFailed": "การป้องกันการลบ: การทดสอบล้มเหลว",

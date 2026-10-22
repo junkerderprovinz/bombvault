@@ -4141,6 +4141,8 @@ const cs: Partial<Translations> = {
   "overview.check.offsitePaused": "Mimo lokalitu: kopie je pozastavená",
   "overview.check.offsiteNever": "Mimo lokalitu: zatím žádná kopie",
   "overview.check.offsiteCurrent": "Mimo lokalitu: kopie je aktuální",
+  "overview.check.offsiteReplicaFailed": "Mimo lokalitu: replikace selhala",
+  "overview.check.offsiteReplicaOverdue": "Mimo lokalitu: replikace je opožděná",
   "overview.check.lockNeedsOffsite": "Ochrana proti smazání: vyžaduje cíl mimo lokalitu",
   "overview.check.lockChecked": "Ochrana proti smazání: zkontrolováno",
   "overview.check.lockFailed": "Ochrana proti smazání: test selhal",

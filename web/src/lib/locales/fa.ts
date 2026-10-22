@@ -4153,6 +4153,8 @@ const fa: Partial<Translations> = {
   "overview.check.offsitePaused": "خارج از محل: کپی متوقف شده",
   "overview.check.offsiteNever": "خارج از محل: هنوز کپی‌ای نیست",
   "overview.check.offsiteCurrent": "خارج از محل: کپی به‌روز است",
+  "overview.check.offsiteReplicaFailed": "خارج از محل: ریپلیکا ناموفق بود",
+  "overview.check.offsiteReplicaOverdue": "خارج از محل: ریپلیکا عقب افتاده",
   "overview.check.lockNeedsOffsite": "محافظت در برابر حذف: به مقصد خارج از محل نیاز دارد",
   "overview.check.lockChecked": "محافظت در برابر حذف: بررسی شد",
   "overview.check.lockFailed": "محافظت در برابر حذف: آزمایش شکست خورد",

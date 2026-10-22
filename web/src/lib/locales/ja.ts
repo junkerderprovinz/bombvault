@@ -4134,6 +4134,8 @@ const ja: Partial<Translations> = {
   "overview.check.offsitePaused": "オフサイト: コピーは一時停止中",
   "overview.check.offsiteNever": "オフサイト: コピーはまだありません",
   "overview.check.offsiteCurrent": "オフサイト: コピーは最新",
+  "overview.check.offsiteReplicaFailed": "オフサイト: レプリカに失敗",
+  "overview.check.offsiteReplicaOverdue": "オフサイト: レプリカが遅延",
   "overview.check.lockNeedsOffsite": "削除に対する保護: オフサイトの保存先が必要",
   "overview.check.lockChecked": "削除に対する保護: 確認済み",
   "overview.check.lockFailed": "削除に対する保護: テスト失敗",

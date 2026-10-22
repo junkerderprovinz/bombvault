@@ -66,7 +66,12 @@ function localCheck(d: DomainStatus, tally: Tally): Verdict {
 
 function offsiteCheck(d: DomainStatus, copying: boolean): Verdict {
   if (!d.offsiteConfigured) {
-    return d.offPremisesCovered ? ["ok", "overview.check.offsiteCurrent"] : ["fail", "overview.check.offsiteNone"];
+    // Without a restic off-site, the ZFS replicas are the copy away from
+    // here, and one that fails or falls behind is named as such.
+    if (d.replicaState === "failed") return ["warn", "overview.check.offsiteReplicaFailed", d.lastReplicationAt];
+    if (d.offPremisesCovered) return ["ok", "overview.check.offsiteCurrent", d.lastReplicationAt];
+    if (d.replicaState === "stale") return ["warn", "overview.check.offsiteReplicaOverdue"];
+    return ["fail", "overview.check.offsiteNone"];
   }
   if (copying) return ["run", "overview.check.offsiteRunning"];
   if (d.replicationState === "overdue") return ["warn", "overview.check.offsiteOverdue", d.lastReplicationAt];

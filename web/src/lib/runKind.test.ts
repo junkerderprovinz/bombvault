@@ -9,6 +9,10 @@ describe("runKindLabel", () => {
     expect(runKindLabel(t, "import")).toBe(en["run.kindImport"]);
   });
 
+  it("names a ZFS replica instead of printing its raw kind", () => {
+    expect(runKindLabel(t, "replica")).toBe(en["zfs.replica.title"]);
+  });
+
   it("names every entry the key deposit writes", () => {
     const kinds = ["keydeposit", "keyrenew", "keywithdraw", "keycode", "keykeep", "keygone", "keydrop", "keyask", "keyallow", "keyrefuse", "keyrelease"];
     const labels = kinds.map((kind) => runKindLabel(t, kind));

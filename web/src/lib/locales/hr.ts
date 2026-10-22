@@ -4153,6 +4153,8 @@ const hr: Partial<Translations> = {
   "overview.check.offsitePaused": "Izvan lokacije: kopiranje je pauzirano",
   "overview.check.offsiteNever": "Izvan lokacije: još nema kopije",
   "overview.check.offsiteCurrent": "Izvan lokacije: kopija je ažurna",
+  "overview.check.offsiteReplicaFailed": "Izvan lokacije: replikacija nije uspjela",
+  "overview.check.offsiteReplicaOverdue": "Izvan lokacije: replikacija kasni",
   "overview.check.lockNeedsOffsite": "Zaštita od brisanja: treba odredište izvan lokacije",
   "overview.check.lockChecked": "Zaštita od brisanja: provjereno",
   "overview.check.lockFailed": "Zaštita od brisanja: test nije uspio",

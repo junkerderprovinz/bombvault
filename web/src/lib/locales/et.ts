@@ -4153,6 +4153,8 @@ const et: Partial<Translations> = {
   "overview.check.offsitePaused": "Väline: koopia on peatatud",
   "overview.check.offsiteNever": "Väline: koopiat pole veel",
   "overview.check.offsiteCurrent": "Väline: koopia on ajakohane",
+  "overview.check.offsiteReplicaFailed": "Väline: replikeerimine ebaõnnestus",
+  "overview.check.offsiteReplicaOverdue": "Väline: replikeerimine hilineb",
   "overview.check.lockNeedsOffsite": "Kustutamiskaitse: vajab välist sihtkohta",
   "overview.check.lockChecked": "Kustutamiskaitse: kontrollitud",
   "overview.check.lockFailed": "Kustutamiskaitse: test ebaõnnestus",

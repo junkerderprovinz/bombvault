@@ -4143,6 +4143,8 @@ const sv: Partial<Translations> = {
   "overview.check.offsitePaused": "Extern: kopieringen är pausad",
   "overview.check.offsiteNever": "Extern: ingen kopia än",
   "overview.check.offsiteCurrent": "Extern: kopian är aktuell",
+  "overview.check.offsiteReplicaFailed": "Extern: replikeringen misslyckades",
+  "overview.check.offsiteReplicaOverdue": "Extern: replikeringen är försenad",
   "overview.check.lockNeedsOffsite": "Skydd mot radering: behöver ett externt mål",
   "overview.check.lockChecked": "Skydd mot radering: kontrollerat",
   "overview.check.lockFailed": "Skydd mot radering: testet misslyckades",

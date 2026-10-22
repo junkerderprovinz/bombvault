@@ -4153,6 +4153,8 @@ const lv: Partial<Translations> = {
   "overview.check.offsitePaused": "Attālināts: kopēšana apturēta",
   "overview.check.offsiteNever": "Attālināts: vēl nav kopijas",
   "overview.check.offsiteCurrent": "Attālināts: kopija ir aktuāla",
+  "overview.check.offsiteReplicaFailed": "Attālināts: replicēšana neizdevās",
+  "overview.check.offsiteReplicaOverdue": "Attālināts: replicēšana kavējas",
   "overview.check.lockNeedsOffsite": "Aizsardzība pret dzēšanu: vajadzīgs attālināts mērķis",
   "overview.check.lockChecked": "Aizsardzība pret dzēšanu: pārbaudīts",
   "overview.check.lockFailed": "Aizsardzība pret dzēšanu: tests neizdevās",

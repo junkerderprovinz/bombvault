@@ -4143,6 +4143,8 @@ const el: Partial<Translations> = {
   "overview.check.offsitePaused": "Εκτός τόπου: αντιγραφή σε παύση",
   "overview.check.offsiteNever": "Εκτός τόπου: δεν υπάρχει ακόμη αντίγραφο",
   "overview.check.offsiteCurrent": "Εκτός τόπου: αντιγραφή ενημερωμένη",
+  "overview.check.offsiteReplicaFailed": "Εκτός τόπου: η ρεπλίκα απέτυχε",
+  "overview.check.offsiteReplicaOverdue": "Εκτός τόπου: καθυστερημένη ρεπλίκα",
   "overview.check.lockNeedsOffsite": "Προστασία από διαγραφή: απαιτεί προορισμό εκτός τόπου",
   "overview.check.lockChecked": "Προστασία από διαγραφή: ελέγχθηκε",
   "overview.check.lockFailed": "Προστασία από διαγραφή: η δοκιμή απέτυχε",

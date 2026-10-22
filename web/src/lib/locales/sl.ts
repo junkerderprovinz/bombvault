@@ -4137,6 +4137,8 @@ const sl: Partial<Translations> = {
   "overview.check.offsitePaused": "Zunanje: kopiranje je začasno ustavljeno",
   "overview.check.offsiteNever": "Zunanje: kopije še ni",
   "overview.check.offsiteCurrent": "Zunanje: kopija je ažurna",
+  "overview.check.offsiteReplicaFailed": "Zunanje: replikacija ni uspela",
+  "overview.check.offsiteReplicaOverdue": "Zunanje: replikacija zamuja",
   "overview.check.lockNeedsOffsite": "Zaščita pred brisanjem: potrebuje zunanji cilj",
   "overview.check.lockChecked": "Zaščita pred brisanjem: preverjeno",
   "overview.check.lockFailed": "Zaščita pred brisanjem: preizkus ni uspel",

@@ -4143,6 +4143,8 @@ const pt: Partial<Translations> = {
   "overview.check.offsitePaused": "Externo: cópia em pausa",
   "overview.check.offsiteNever": "Externo: ainda sem cópia",
   "overview.check.offsiteCurrent": "Externo: cópia atualizada",
+  "overview.check.offsiteReplicaFailed": "Externo: a réplica falhou",
+  "overview.check.offsiteReplicaOverdue": "Externo: réplica em atraso",
   "overview.check.lockNeedsOffsite": "Proteção contra eliminação: precisa de um destino externo",
   "overview.check.lockChecked": "Proteção contra eliminação: verificada",
   "overview.check.lockFailed": "Proteção contra eliminação: o teste falhou",
