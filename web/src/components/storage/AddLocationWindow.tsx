@@ -7,7 +7,6 @@ import {
   previewPlacementDefault,
   putPlacementDefault,
   type DefaultRow,
-  type Destination,
   type OffsiteDomain,
   type PlacementDomain,
   type PlacementOptions,
@@ -19,6 +18,7 @@ import { hueVars } from "../../lib/appearance";
 import { useT, type TranslationKey } from "../../lib/i18n";
 import { defaultChangeOf, defaultView, formatList, isPlacementDomain, lockHint, stepForNewTarget, viewHomeLabel } from "../../lib/placement";
 import { tickDestination } from "../../lib/placementButtons";
+import { placementErrorText, type PlacementRefusal } from "../../lib/placementCodes";
 import { placementChanged } from "../../lib/placementEvents";
 import { DOMAIN_LABEL, locationRoute } from "../../lib/storageLocations";
 import { useToast } from "../../lib/toast";
@@ -106,6 +106,28 @@ interface SectionChoice {
   preview?: TargetPreview;
 }
 
+/** switchOnFor switches a new location on for a section and answers why it
+ *  could not, or null once it is on. */
+export async function switchOnFor(
+  id: string,
+  domain: OffsiteDomain,
+  row: DefaultRow | undefined,
+  offered: PlacementOptions | null,
+  t: ReturnType<typeof useT>["t"],
+  lang: string
+): Promise<string | null> {
+  const why = (res: PlacementRefusal) => (res.ok ? null : placementErrorText(t, lang, res, "settings.error"));
+  if (!isPlacementDomain(domain)) return why(await destinationForDomain(id, domain));
+  if (!row || !offered) return t("placement.unreadable");
+  const ticked = await tickDestination(id, domain);
+  if ("error" in ticked) return why(ticked.error);
+  const change = defaultChangeOf(stepForNewTarget(ticked.targetId, defaultView(row, offered), offered));
+  if (!change) return t("settings.error");
+  const preview = await previewPlacementDefault(domain, change);
+  if (!preview.ok || !preview.impact) return why({ ...preview, ok: false });
+  return why(await putPlacementDefault(domain, change, preview.impact));
+}
+
 /**
  * AddLocationWindow sets up a storage location in one window: the provider,
  * its sign-in, the folder, the delete protection and, last, which sections
@@ -185,36 +207,28 @@ export function AddLocationWindow({
     return { domain, preview: previews[domain] };
   });
 
-  async function place(made: Destination, domain: OffsiteDomain): Promise<boolean> {
-    if (!isPlacementDomain(domain)) return (await destinationForDomain(made.id, domain)).ok;
-    const row = defaults?.find((r) => r.domain === domain);
-    const offered = options[domain];
-    if (!row || !offered) return false;
-    const ticked = await tickDestination(made.id, domain);
-    if ("error" in ticked) return false;
-    const change = defaultChangeOf(stepForNewTarget(ticked.targetId, defaultView(row, offered), offered));
-    if (!change) return false;
-    const preview = await previewPlacementDefault(domain, change);
-    if (!preview.ok || !preview.impact) return false;
-    return (await putPlacementDefault(domain, change, preview.impact)).ok;
-  }
-
   async function finish() {
     setPlacing(true);
     try {
       const made = await draft.save();
       if (!made) return;
-      const failed: OffsiteDomain[] = [];
+      const failed: { domain: OffsiteDomain; why: string }[] = [];
       for (const { domain, locked } of choices) {
         if (locked || off.includes(domain)) continue;
-        if (!(await place(made, domain).catch(() => false))) failed.push(domain);
+        const row = defaults?.find((r) => r.domain === domain);
+        const offered = isPlacementDomain(domain) ? options[domain] : null;
+        const why = await switchOnFor(made.id, domain, row, offered, t, lang).catch((err: unknown) =>
+          err instanceof Error ? err.message : t("settings.error")
+        );
+        if (why !== null) failed.push({ domain, why });
       }
       destinationsChanged();
       offsiteTargetsChanged();
       placementChanged();
       if (failed.length > 0) {
-        const list = formatList(lang, failed.map((domain) => t(DOMAIN_LABEL[domain])));
+        const list = formatList(lang, failed.map(({ domain }) => t(DOMAIN_LABEL[domain])));
         push(t("storage.add.sectionsFailed").replace("{name}", () => made.name).replace("{list}", () => list), "warn");
+        for (const { domain, why } of failed) push(`${t(DOMAIN_LABEL[domain])}: ${why}`, "warn");
       }
       onClose();
       navigate(locationRoute(`destination:${made.id}`), { replace: true });
