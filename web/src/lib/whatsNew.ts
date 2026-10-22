@@ -57,6 +57,18 @@ const TO_INSTANCES: WayStep[] = ["/settings", "/settings/instances", "/instances
 /** Every release that brought something new, newest first. */
 export const RELEASES: Release[] = [
   {
+    version: "10.2.3",
+    changes: [
+      {
+        id: "storage-add-bucket",
+        page: "/storage",
+        where: ["storage.title"],
+        way: [...TO_STORAGE, "add-location"],
+        text: "whatsNew.bucketField",
+      },
+    ],
+  },
+  {
     version: "10.2.1",
     changes: [
       {

@@ -41,6 +41,10 @@ export function ConnectionCard({ edit, onChange, hueIndex }: { edit: LocationEdi
   // repository, which is one.
   const perSection = location.object === "path" || location.object === "destination";
   const storageClass = storageClassOf(location, records);
+  // A destination offers the classes its provider takes, plus the one it
+  // holds, so that one can still be set back to the default.
+  const offered: readonly string[] = records.destination?.storageClasses ?? STORAGE_CLASSES;
+  const classes = storageClass && !offered.includes(storageClass) ? [...offered, storageClass] : offered;
   const routeHint = ROUTE_HINT[location.backend];
   const whereHint = local ? (perSection ? t("storage.folderHint") : undefined) : routeHint && t(routeHint);
   const [moving, setMoving] = useState<OffsiteDomain[] | null>(null);
@@ -151,7 +155,7 @@ export function ConnectionCard({ edit, onChange, hueIndex }: { edit: LocationEdi
           busy={busy}
         />
 
-        {can("storageClass") && storageClass !== undefined && (
+        {can("storageClass") && storageClass !== undefined && classes.length > 0 && (
           <SettingRow label={t("storage.storageClass")} hint={t("storage.storageClassHint")}>
             <SelectField
               value={storageClass}
@@ -160,7 +164,7 @@ export function ConnectionCard({ edit, onChange, hueIndex }: { edit: LocationEdi
               disabled={busy}
               options={[
                 { value: "", label: t("cloud.storageClass.default") },
-                ...STORAGE_CLASSES.map((name) => ({ value: name as string, label: name as string })),
+                ...classes.map((name) => ({ value: name, label: name })),
               ]}
               className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 glim-field-focus"
             />

@@ -7401,6 +7401,8 @@ export interface Provider {
   /** Can keep old versions from someone holding the credentials. */
   lock?: boolean;
   selfHosted?: boolean;
+  /** The S3 storage classes the service takes; none offers no choice. */
+  storageClasses?: string[];
 }
 
 export interface BackendOption {
@@ -7467,6 +7469,8 @@ export interface Destination {
   repo: string;
   credsRef: string;
   storageClass: string;
+  /** The storage classes its provider takes. */
+  storageClasses?: string[];
   immutable: boolean;
   createdAt: number;
   /** The domains with a target under it. */

@@ -22,6 +22,10 @@ import { providerName } from "./ProviderPicker";
 // Settings the provider decides, or BombVault fills in.
 const HIDDEN = new Set(["provider", "vendor", "key_file", "env_auth", "type"]);
 
+// restic's own S3 backend writes the backups, so of rclone's further S3
+// settings only those that shape a bucket the wizard creates take effect.
+const S3_MORE = new Set(["location_constraint", "bucket_object_lock_enabled"]);
+
 export interface FormFields {
   main: BackendOption[];
   more: BackendOption[];
@@ -36,14 +40,33 @@ export function formFields(p: Provider, backend: Backend | undefined): FormField
   if (p.route === "path") return { main: [plain("path")], more: [] };
   if (!backend) return { main: [], more: [] };
   const s3Provider = p.preset?.provider;
+  const s3 = p.route === "s3";
+  // restic needs the endpoint even where rclone finds it by itself, as it
+  // does for IDrive e2 during its own interactive setup.
   const applies = (o: BackendOption) =>
     !HIDDEN.has(o.name) && !(p.preset && o.name in p.preset) &&
-    (!o.providers || !s3Provider || o.providers.includes(s3Provider));
+    (!o.providers || !s3Provider || o.providers.includes(s3Provider) || (s3 && o.name === "endpoint"));
   const seen = new Set<string>();
   const unique = (o: BackendOption) => !seen.has(o.name) && (seen.add(o.name), true);
   const main = backend.options.filter((o) => applies(o) && (o.essential || o.required) && unique(o));
-  const more = backend.options.filter((o) => applies(o) && !o.advanced && !o.essential && !o.required && unique(o));
+  const more = backend.options.filter(
+    (o) => applies(o) && !o.advanced && !o.essential && !o.required && (!s3 || S3_MORE.has(o.name)) && unique(o)
+  );
   return { main, more };
+}
+
+/** The bucket in the path of an S3 endpoint, as a console shows a bucket's
+ *  address or a restic address names it; "" when there is none. */
+export function endpointBucket(endpoint: string): string {
+  const rest = endpoint.trim().replace(/^s3:/i, "").replace(/^[a-z]+:\/\//i, "");
+  return rest.split("/")[1] ?? "";
+}
+
+/** The bucket the test of an S3 draft looks into, "" for the list of all of
+ *  them. A key that may use only its own bucket is refused that list. */
+export function bucketToOpen(p: Provider, bucket: string, settings: Record<string, string>): string {
+  if (p.route !== "s3") return "";
+  return (bucket.trim() || endpointBucket(settings.endpoint ?? "")).replace(/^\/+|\/+$/g, "");
 }
 
 /** Where a destination will sit, as the server will write it. */
@@ -52,11 +75,10 @@ export function previewLocation(p: Provider, settings: Record<string, string>, d
   if (p.route === "rest") return `rest:${(settings.url ?? "").replace(/\/+$/, "")}`;
   if (p.route === "path") return (settings.path ?? "").replace(/\/+$/, "");
   if (p.route === "s3") {
-    let ep = (settings.endpoint ?? "").trim();
-    // A restic address pasted into the field: the server keeps its scheme and host.
-    const restic = /^s3:([a-z]+:\/\/)?([^/]*)/i.exec(ep);
-    if (restic) ep = (restic[1] ?? "") + restic[2];
-    ep = ep.replace(/\/+$/, "");
+    // The server keeps the scheme and host of what was pasted: a restic
+    // address or a bucket's address loses its path.
+    const pasted = /^(?:s3:)?([a-z]+:\/\/)?([^/]*)/i.exec((settings.endpoint ?? "").trim());
+    let ep = pasted ? (pasted[1] ?? "") + pasted[2] : "";
     if (!ep && p.id === "aws") ep = settings.region ? `s3.${settings.region}.amazonaws.com` : "s3.amazonaws.com";
     if (ep && !ep.includes("://")) ep = `https://${ep}`;
     return `s3:${ep}/${d}`;
@@ -78,6 +100,10 @@ export interface DestinationDraftState {
    *  for the keys in the form. */
   credsRef: string;
   setCredsRef: (id: string) => void;
+  /** The bucket typed in for a key that may not list the others, "" to
+   *  pick one from the list. */
+  bucket: string;
+  setBucket: (bucket: string) => void;
   publicKey: string;
   fields: FormFields;
   test: TestVerdictState;
@@ -128,6 +154,7 @@ export function useDestinationDraft(): DestinationDraftState {
   const [settings, setSettings] = useState<Record<string, string>>({});
   const [name, setName] = useState("");
   const [credsRef, setCredsRef] = useState("");
+  const [bucket, setBucket] = useState("");
   const [publicKey, setPublicKey] = useState("");
   const [dir, setDir] = useState<string[]>([]);
   const [folders, setFolders] = useState<string[] | null>(null);
@@ -167,7 +194,7 @@ export function useDestinationDraft(): DestinationDraftState {
     () => (picked ? formFields(picked, backends[picked.backend]) : { main: [], more: [] }),
     [picked, backends]
   );
-  const test = useTestVerdict([picked?.id, settings, credsRef], t("offsite.testFailed"));
+  const test = useTestVerdict([picked?.id, settings, credsRef, bucket], t("offsite.testFailed"));
   const reached = test.verdict?.ok === true;
   const browsable = picked !== null && picked.route !== "rest" && picked.route !== "path";
   const dirPath = dir.join("/");
@@ -185,6 +212,7 @@ export function useDestinationDraft(): DestinationDraftState {
     setPicked(p);
     setSettings({});
     setCredsRef("");
+    setBucket("");
     setName(providerName(p, t));
     setDir([]);
     setFolders(null);
@@ -231,13 +259,21 @@ export function useDestinationDraft(): DestinationDraftState {
   }
 
   async function runTest() {
+    const s3 = picked?.route === "s3";
+    const into = picked ? bucketToOpen(picked, bucket, settings) : "";
     const v = await test.run(async () => {
-      const r = await checkDraft(draft()).catch((e: unknown) => ({ ok: false, error: failure(e, "offsite.testFailed"), initialized: false }));
-      if (!r.ok) return { ok: false, reason: r.error ?? t("offsite.testFailed") };
+      const r = await checkDraft(draft(into ? { dir: into } : {})).catch((e: unknown) => ({
+        ok: false, error: failure(e, "offsite.testFailed"), initialized: false,
+      }));
+      if (!r.ok) {
+        const reason = r.error ?? t("offsite.testFailed");
+        const denied = s3 && !into && /access ?denied|forbidden|\b403\b/i.test(reason);
+        return { ok: false, reason: denied ? `${reason} ${t("dest.bucket.denied")}` : reason };
+      }
       if (picked?.route === "rest") return { ok: true, note: r.initialized ? t("dest.restExisting") : t("dest.restEmpty") };
       return { ok: true, note: t("dest.testOk") };
     });
-    if (v.ok && browsable) void loadFolders([]);
+    if (v.ok && browsable) void loadFolders(into ? into.split("/") : []);
     return v.ok;
   }
 
@@ -291,6 +327,8 @@ export function useDestinationDraft(): DestinationDraftState {
     setName,
     credsRef,
     setCredsRef,
+    bucket,
+    setBucket,
     publicKey,
     fields,
     test,
