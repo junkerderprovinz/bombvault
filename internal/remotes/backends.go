@@ -56,7 +56,7 @@ var essential = map[string]map[string]bool{
 	"protondrive":          {"username": true, "password": true, "2fa": true},
 	"seafile":              {"url": true, "user": true, "pass": true, "library": true},
 	"koofr":                {"provider": true, "user": true, "password": true},
-	"iclouddrive":          {"apple_id": true, "password": true},
+	"iclouddrive":          {"apple_id": true, "password": true, "trust_token": true, "cookies": true},
 	"mailru":               {"user": true, "pass": true},
 	"filen":                {"email": true, "password": true, "api_key": true},
 	"internxt":             {"email": true, "pass": true},
@@ -158,7 +158,9 @@ func toOption(backend string, o rcloneOption) Option {
 		Essential: essential[backend][o.Name],
 		Default:   defaultText(o.DefaultStr),
 	}
-	if o.Provider != "" {
+	// restic's S3 backend needs the host of every service but AWS, also where
+	// rclone's interactive setup looks it up, as it does for IDrive e2.
+	if o.Provider != "" && (backend != "s3" || o.Name != "endpoint") {
 		out.Providers = strings.Split(o.Provider, ",")
 	}
 	if !secret {

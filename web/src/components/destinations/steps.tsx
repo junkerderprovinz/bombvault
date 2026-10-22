@@ -166,6 +166,15 @@ export function SignInBody({ draft, providerLabel }: { draft: DestinationDraftSt
           <CopyBlock text={`rclone authorize "${picked.backend}"`} />
         </div>
       )}
+      {picked.auth === "trusttoken" && (
+        <div className="flex flex-col gap-1">
+          <span className="flex items-center gap-1.5 text-xs text-statusWarn">
+            {t("dest.trustToken.run")}
+            <InfoBubble tip={t("dest.trustToken.tip").replace("{change}", () => t("storage.conn.change"))} />
+          </span>
+          <CopyBlock text="rclone config" />
+        </div>
+      )}
       {picked.auth === "sshkey" && draft.publicKey && (
         <div className="flex flex-col gap-1">
           <span className="flex items-center gap-1.5 text-xs text-carbon-textSub">

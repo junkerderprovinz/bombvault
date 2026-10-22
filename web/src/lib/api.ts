@@ -7385,7 +7385,7 @@ export function addRcloneRemote(
 
 export type ProviderGroup = "storage" | "selfs3" | "server" | "cloud";
 export type ProviderRoute = "s3" | "rest" | "rclone" | "path";
-export type ProviderAuth = "apppassword" | "token" | "apikey" | "accesskey" | "login" | "sshkey";
+export type ProviderAuth = "apppassword" | "token" | "apikey" | "accesskey" | "login" | "sshkey" | "trusttoken";
 
 /** A storage product the off-site wizard offers, from internal/remotes. */
 export interface Provider {
