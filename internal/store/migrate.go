@@ -3384,6 +3384,16 @@ UPDATE pull_sources SET leftovers_moved = 0;`,
 		alreadySatisfied: columnPresent("group_state", "former_peer_auth_enc"),
 		sql:              `ALTER TABLE group_state ADD COLUMN former_peer_auth_enc BLOB NOT NULL DEFAULT x'';`,
 	},
+	{
+		// The phones a person removed, which come back switched off while
+		// they still hold the group's words.
+		version: removedPhonesMigration,
+		name:    "removed_phones",
+		sql: `CREATE TABLE IF NOT EXISTS removed_phones (
+  member_id TEXT    PRIMARY KEY,
+  at        INTEGER NOT NULL
+);`,
+	},
 }
 
 // offsiteFieldDomains are the domains with an off-site field in the settings,
@@ -3636,6 +3646,9 @@ const receiverLocationsMigration = 490
 // formerPeerAuthMigration numbers the key of the group this instance last
 // left.
 const formerPeerAuthMigration = 500
+
+// removedPhonesMigration numbers the record of removed phones.
+const removedPhonesMigration = 510
 
 // oneLineColumns are the names and locations the recovery kit prints.
 var oneLineColumns = []struct {

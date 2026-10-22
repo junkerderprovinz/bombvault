@@ -56,6 +56,12 @@ func (s *Service) syncFleetPeersWith(members []group.Member, now time.Time) ([]s
 			known[p.MemberID] = i
 		}
 	}
+	// A removed phone still holds the group's words, so it is back as soon
+	// as it is in reach, and only a person switches it on again.
+	removed, err := s.store.RemovedPhones()
+	if err != nil {
+		return nil, err
+	}
 	for _, m := range members {
 		if i, ok := known[m.ID]; ok {
 			if err := s.store.MarkFleetPeerSeen(m.ID, now.Unix()); err != nil {
@@ -101,7 +107,7 @@ func (s *Service) syncFleetPeersWith(members []group.Member, now time.Time) ([]s
 		if adopted {
 			continue
 		}
-		row := store.FleetPeer{MemberID: m.ID, Name: m.Name, Kind: m.Kind, Enabled: true, SortOrder: len(rows), LastSeen: now.Unix()}
+		row := store.FleetPeer{MemberID: m.ID, Name: m.Name, Kind: m.Kind, Enabled: !(m.Kind == "android" && removed[m.ID]), SortOrder: len(rows), LastSeen: now.Unix()}
 		if m.Kind == "" {
 			row.MemberURL = m.Address
 		}

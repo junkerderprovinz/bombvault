@@ -139,6 +139,9 @@ func (h *Handler) handleDeleteFleetPeer(w http.ResponseWriter, r *http.Request) 
 		if err == nil {
 			err = h.store.ForgetMemberKey(p.MemberID)
 		}
+		if err == nil && p.Kind == "android" {
+			err = h.store.NotePhoneRemoved(p.MemberID)
+		}
 	}
 	if err == nil {
 		err = h.store.DeleteFleetPeer(r.PathValue("id"))
@@ -153,7 +156,7 @@ func (h *Handler) handleDeleteFleetPeer(w http.ResponseWriter, r *http.Request) 
 // handleRemoveMember drops a member's row, its pinned key and the role
 // requests of one that is away, as DELETE /api/fleet/peers/{id} does, for a
 // card whose page holds no row. A member that is away stays off the lists
-// until it is in reach again.
+// until it is in reach again, and a phone then comes back switched off.
 // DELETE /api/group/members/{id}
 func (h *Handler) handleRemoveMember(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
@@ -165,10 +168,18 @@ func (h *Handler) handleRemoveMember(w http.ResponseWriter, r *http.Request) {
 	if err == nil {
 		err = h.store.ForgetMemberKey(id)
 	}
+	phone := false
+	for _, m := range h.svc.pairing().Members() {
+		phone = phone || m.ID == id && m.Kind == "android"
+	}
 	for _, p := range rows {
 		if err == nil && p.MemberID == id {
+			phone = phone || p.Kind == "android"
 			err = h.store.DeleteFleetPeer(p.ID)
 		}
+	}
+	if err == nil && phone {
+		err = h.store.NotePhoneRemoved(id)
 	}
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))

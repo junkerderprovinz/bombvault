@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/junkerderprovinz/bombvault/internal/group"
 	"github.com/junkerderprovinz/bombvault/internal/secret"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
@@ -95,6 +96,37 @@ func TestTheGateRefusesAPairedSessionItCannotRouteFirst(t *testing.T) {
 	in.h.authGate(wrapped).ServeHTTP(w, req)
 	if w.Code != http.StatusForbidden || !strings.Contains(w.Body.String(), codeOwnLoginNeeded) {
 		t.Fatalf("a paired session behind a wrapped handler: %d %s", w.Code, w.Body.String())
+	}
+}
+
+// A lost phone keeps the group's words and is back in the list as soon as
+// the app opens, so removing its card keeps it switched off from then on.
+func TestARemovedPhoneComesBackSwitchedOff(t *testing.T) {
+	in := newInstance(t, "attic", strings.Repeat("b2", 32))
+	phone := []group.Member{{ID: wordsHolderID, Name: "phone", Kind: "android"}}
+	rows, err := in.svc.syncFleetPeersWith(phone, time.Now())
+	if err != nil || !listsPhone(rows, wordsHolderID) {
+		t.Fatalf("setup: rows %+v, %v; want the phone switched on", rows, err)
+	}
+	if code, out := in.do(t, http.MethodDelete, "/api/fleet/peers/"+rows[0].ID, nil); code != http.StatusOK || out["ok"] != true {
+		t.Fatalf("remove: %d %v", code, out)
+	}
+
+	rows, err = in.svc.syncFleetPeersWith(phone, time.Now())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(rows) != 1 || rows[0].Enabled || listsPhone(rows, wordsHolderID) {
+		t.Fatalf("rows once the phone is back = %+v, want it switched off", rows)
+	}
+	hash, epoch, _ := in.h.authEnabled()
+	if in.h.pairedPhoneListed(secret.NewPairedSessionToken(in.appKey, hash, epoch, wordsHolderID, time.Hour)) {
+		t.Fatal("the removed phone's session still counts")
+	}
+
+	instance := []group.Member{{ID: "fedcba9876543210fedcba9876543210", Name: "cellar"}}
+	if rows, err := in.svc.syncFleetPeersWith(instance, time.Now()); err != nil || !rows[len(rows)-1].Enabled {
+		t.Fatalf("an instance came back switched off: %+v, %v", rows, err)
 	}
 }
 
