@@ -324,7 +324,7 @@ describe("the head of a ZFS entry", () => {
 
 describe("the head of a ZFS entry that replicates", () => {
   const AT = Math.floor(Date.now() / 1000) - 2 * 3600;
-  const replicated = (replica: { lastAt: number; lastStatus: string }) =>
+  const replicated = (replica: { lastAt: number; lastStatus: string; only?: boolean }) =>
     serveEntries(mocks, {
       items: [{ ...TANK, lastBackup: 0, lastRunStatus: "", replica }],
       datasets: [zfsView({ lastBackup: 0, lastRunStatus: "" })],
@@ -341,6 +341,13 @@ describe("the head of a ZFS entry that replicates", () => {
     replicated({ lastAt: 0, lastStatus: "" });
     await renderPage();
     expect(screen.getByText(en["backups.status.waiting"])).toBeTruthy();
+  });
+
+  it("waits for the first replica when the entry only replicates", async () => {
+    replicated({ lastAt: 0, lastStatus: "", only: true });
+    await renderPage();
+    expect(screen.getByText(en["backups.status.waitingReplica"])).toBeTruthy();
+    expect(screen.queryByText(en["backups.status.waiting"])).toBeNull();
   });
 
   it("says when the replica failed", async () => {

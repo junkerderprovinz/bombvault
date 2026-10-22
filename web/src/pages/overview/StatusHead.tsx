@@ -267,7 +267,11 @@ export function StatusHead({
     title = t(failed ? "dashboard.statusLoadFailed" : "dashboard.checking");
     line = null;
   } else {
-    title = headline === "needs" ? t("overview.head.needs", needs) : t(HEADLINE[headline]);
+    const onlyReplicas = headline === "waiting" && tally.pending > 0 && tally.replicaPending === tally.pending;
+    title =
+      headline === "needs"
+        ? t("overview.head.needs", needs)
+        : t(onlyReplicas ? "backups.status.waitingReplica" : HEADLINE[headline]);
     line = [
       t("coverage.ratio").replace("{protected}", String(tally.ok)).replace("{total}", String(tally.total)),
       last > 0 && t("overview.head.last").replace("{when}", formatRecent(last, lang)),

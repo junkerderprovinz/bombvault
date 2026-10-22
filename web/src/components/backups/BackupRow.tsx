@@ -11,6 +11,7 @@ import {
   protection,
   rowStatus,
   runsNow,
+  waitingLabel,
   type RunTone,
 } from "../../lib/backupList";
 import { humanBytes } from "../../lib/forecast";
@@ -310,7 +311,7 @@ export function BackupRow({
   } else if (status.is === "notProtected") {
     cell = <Status tone="warn">{t("backups.status.notProtected")}</Status>;
   } else if (status.is === "waiting") {
-    cell = <Status tone="neutral">{t("backups.status.waiting")}</Status>;
+    cell = <Status tone="neutral">{t(waitingLabel(item))}</Status>;
   } else {
     cell = (
       <Status tone="neutral">

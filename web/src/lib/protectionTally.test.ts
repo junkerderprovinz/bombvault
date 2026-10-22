@@ -111,4 +111,24 @@ describe("lastBackupOf", () => {
   it("is 0 where nothing was backed up", () => {
     expect(lastBackupOf(tallyEntries([]))).toBe(0);
   });
+
+  it("counts the replica of an entry that only replicates, and no other", () => {
+    const zfs = { kind: "zfs", ...never } as const;
+    const tally = tallyEntries([
+      item({ lastBackup: 100 }),
+      item({ ...zfs, key: "only", replica: { lastAt: 300, lastStatus: "success", only: true } }),
+      item({ ...zfs, key: "extra", replica: { lastAt: 900, lastStatus: "success" } }),
+    ]);
+    expect(lastBackupOf(tally)).toBe(300);
+  });
+});
+
+describe("an entry that only replicates", () => {
+  const only = (lastAt: number) =>
+    item({ kind: "zfs", key: `z${lastAt}`, ...never, replica: { lastAt, lastStatus: lastAt ? "success" : "", only: true } });
+
+  it("waits for its replica, not for a backup, and is protected once it has one", () => {
+    const tally = tallyEntries([only(0), only(300), item({ key: "scheduled", ...never })]);
+    expect(tally).toMatchObject({ total: 3, ok: 1, pending: 2, replicaPending: 1 });
+  });
 });

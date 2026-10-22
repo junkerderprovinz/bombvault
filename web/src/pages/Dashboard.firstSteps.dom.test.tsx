@@ -470,6 +470,35 @@ describe("the third step, the first backup", () => {
     expect(within(rows[0]).getByRole("link").getAttribute("href")).toBe("/backups/container/plex");
   });
 
+  it("says an entry that only replicates waits for its replica", async () => {
+    const scheduled = { included: true, effectiveSchedule: { kind: "domain", spec: "daily 03:00" } } as const;
+    server.items = [
+      found("plex", scheduled),
+      found("tank", { ...scheduled, kind: "zfs", replica: { lastAt: 0, lastStatus: "", only: true } }),
+    ];
+    await renderPage();
+
+    const backup = within(steps()[2]);
+    expect(backup.getByText("1 waiting for the first backup")).toBeTruthy();
+    expect(backup.getByText("1 waiting for the first replica")).toBeTruthy();
+    const rows = backup.getAllByTestId("first-steps-entry");
+    expect(within(rows[1]).getByText(en["backups.status.waitingReplica"])).toBeTruthy();
+  });
+
+  it("heads the page with the replica when only replicas are awaited", async () => {
+    server.items = [
+      found("tank", {
+        kind: "zfs",
+        included: true,
+        effectiveSchedule: { kind: "domain", spec: "daily 03:00" },
+        replica: { lastAt: 0, lastStatus: "", only: true },
+      }),
+    ];
+    await renderPage();
+
+    expect(within(screen.getByTestId("status-head")).getByText(en["backups.status.waitingReplica"])).toBeTruthy();
+  });
+
   it("shows four entries and counts the rest", async () => {
     server.items = ["a", "b", "c", "d", "e", "f"].map((key) => found(key));
     await renderPage();

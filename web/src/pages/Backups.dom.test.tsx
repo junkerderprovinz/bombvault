@@ -673,6 +673,13 @@ describe("a ZFS entry that replicates", () => {
     expect(row("cache/appdata").textContent).toContain(en["backups.status.waiting"]);
   });
 
+  it("waits for the first replica of an entry that only replicates", async () => {
+    serve([zfs({ replica: { lastAt: 0, lastStatus: "", only: true } })]);
+    await renderPage();
+    expect(row("cache/appdata").textContent).toContain(en["backups.status.waitingReplica"]);
+    expect(row("cache/appdata").textContent).not.toContain(en["backups.status.waiting"]);
+  });
+
   it("says Replicating while the replica runs, apart from any backup", async () => {
     serve([zfs({ replica: { lastAt: 0, lastStatus: "running" } })]);
     await renderPage();

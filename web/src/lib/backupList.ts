@@ -117,6 +117,17 @@ export function replicatedAlone(item: BackupItem): boolean {
   return item.lastBackup === 0 && (item.replica?.lastAt ?? 0) > 0;
 }
 
+/** waitsForReplica is a pending entry that only replicates. No backup of it
+ *  will come, so what it waits for is its first replica. */
+export function waitsForReplica(item: BackupItem): boolean {
+  return item.replica?.only === true && protection(item) === "pending";
+}
+
+/** waitingLabel says what a pending entry waits for. */
+export function waitingLabel(item: BackupItem): "backups.status.waiting" | "backups.status.waitingReplica" {
+  return item.replica?.only ? "backups.status.waitingReplica" : "backups.status.waiting";
+}
+
 /** itemReplicaKey is the key a replica run of a ZFS item reports under, apart
  *  from the backup's, so a replica never reads as a backup in flight. */
 export function itemReplicaKey(item: BackupItem): string {

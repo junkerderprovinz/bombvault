@@ -51,7 +51,9 @@ export function drilledText(t: (key: TranslationKey) => string, item: string | u
 
 function localCheck(d: DomainStatus, tally: Tally): Verdict {
   if (tally.total === 0) return ["neutral", "overview.check.localNothing"];
-  if (d.status === "never") return ["neutral", "overview.check.localNever"];
+  if (d.status === "never") {
+    return ["neutral", tally.replicaPending === tally.total ? "overview.check.localNeverReplica" : "overview.check.localNever"];
+  }
   if (d.status === "off") return ["neutral", "overview.check.localNoSchedule"];
   if (tally.entries.some((item) => item.lastRunStatus === "failed")) {
     return ["warn", "overview.check.localFailed", d.lastSuccess];

@@ -7,7 +7,7 @@ import { Button } from "../../components/Button";
 import { useScheduleSentence } from "../../components/EffectiveScheduleLine";
 import { IconForward, IconPlay } from "../../components/glyphs";
 import type { BackupItem } from "../../lib/api";
-import { entryTarget, protection, type Protection } from "../../lib/backupList";
+import { entryTarget, protection, waitingLabel, type Protection } from "../../lib/backupList";
 import type { TranslationKey, useT } from "../../lib/i18n";
 import { formatTs, relativeTime } from "../../lib/reltime";
 import { TONE_DOT } from "./ProtectionCard";
@@ -24,9 +24,8 @@ const VERDICT_BADGE: Record<CheckTone, "ok" | "warn" | "fail" | "active" | "neut
   neutral: "neutral",
 };
 
-const ENTRY_STATE: Record<Protection, [tone: "ok" | "warn" | "neutral", label: TranslationKey]> = {
+const ENTRY_STATE: Record<Exclude<Protection, "pending">, [tone: "ok" | "warn", label: TranslationKey]> = {
   ok: ["ok", "ransomware.protGreen"],
-  pending: ["neutral", "backups.status.waiting"],
   none: ["warn", "backups.status.notProtected"],
 };
 
@@ -67,7 +66,8 @@ function CheckLine({ line, t }: { line: Line; t: T }) {
 
 function EntryRow({ item, t }: { item: BackupItem; t: T }) {
   const sentence = useScheduleSentence();
-  const [tone, label] = ENTRY_STATE[protection(item)];
+  const state = protection(item);
+  const [tone, label] = state === "pending" ? (["neutral", waitingLabel(item)] as const) : ENTRY_STATE[state];
   const why = sentence(item.effectiveSchedule, KIND_SCHEDULE_LABEL[item.kind]);
   return (
     <li className="border-t border-carbon-border first:border-t-0">

@@ -31,27 +31,33 @@ export function usePlaceLabel(places: TimelinePlace[], domain: TimelineDomain): 
  * BackupPlaces lists the storage locations that hold the entry's backups and
  * how many each holds. A location off the premises is read only when asked,
  * because listing it takes time, and says so until then. A ZFS entry lists
- * its replica below them, and how many sites the server counts with it.
+ * its replica below them, and how many sites the server counts with it. An
+ * entry that only replicates writes to none of them, so it lists only those
+ * still holding backups of it.
  */
 export function BackupPlaces({
   timeline,
   replicaOf,
+  replicaOnly = false,
   hueIndex,
 }: {
   timeline: TimelineState;
   replicaOf?: ZFSDatasetView;
+  replicaOnly?: boolean;
   hueIndex: number;
 }) {
   const { t } = useT();
   const { places, rows, reading, loadPlace, domain } = timeline;
   const labelOf = usePlaceLabel(places, domain);
-  if (places.length === 0 && !replicaOf) return null;
+  const countAt = (place: string) => rows.filter((row) => row.places.some((m) => m.place === place)).length;
+  const shown = replicaOnly ? places.filter((p) => p.state === "read" && countAt(p.place) > 0) : places;
+  if (shown.length === 0 && !replicaOf) return null;
 
   return (
     <Card title={t("storage.title")} hint={t("entry.places.hint")} hueIndex={hueIndex}>
       <Rows>
-        {places.map((p) => {
-          const count = rows.filter((row) => row.places.some((m) => m.place === p.place)).length;
+        {shown.map((p) => {
+          const count = countAt(p.place);
           const busy = reading.has(p.place);
           return (
             <SettingRow

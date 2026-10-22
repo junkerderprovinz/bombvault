@@ -16,7 +16,7 @@ import { Toggle } from "../../components/Toggle";
 import { getSettings, putSettings, type Settings, type StorageLocation } from "../../lib/api";
 import { hueVars } from "../../lib/appearance";
 import type { EntryKind } from "../../lib/backupEntry";
-import { entryTarget, protection, tilePath } from "../../lib/backupList";
+import { entryTarget, protection, tilePath, waitingLabel } from "../../lib/backupList";
 import {
   FOUND_KINDS,
   INCLUDE_FOUND,
@@ -237,7 +237,10 @@ function Waiting({ tally, t }: { tally: Tally; t: T }) {
   return (
     <>
       <p className={`flex flex-wrap gap-x-3 gap-y-1 ${HINT}`}>
-        {tally.pending > 0 && <span>{t("firstSteps.waiting", tally.pending)}</span>}
+        {tally.pending > tally.replicaPending && (
+          <span>{t("firstSteps.waiting", tally.pending - tally.replicaPending)}</span>
+        )}
+        {tally.replicaPending > 0 && <span>{t("firstSteps.waitingReplica", tally.replicaPending)}</span>}
         {tally.none > 0 && <span>{t("firstSteps.notProtected", tally.none)}</span>}
       </p>
       <Rows as="ul">
@@ -258,7 +261,7 @@ function Waiting({ tally, t }: { tally: Tally; t: T }) {
               {entryName(item, t)}
             </Link>
             {protection(item) === "pending" ? (
-              <Badge tone="neutral">{t("backups.status.waiting")}</Badge>
+              <Badge tone="neutral">{t(waitingLabel(item))}</Badge>
             ) : (
               <Badge tone="warn">{t("backups.status.notProtected")}</Badge>
             )}

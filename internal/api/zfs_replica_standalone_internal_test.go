@@ -114,6 +114,32 @@ func TestAReplicaOnlyItemIsProtectedOnceItIsReplicated(t *testing.T) {
 	}
 }
 
+func TestAnUnscheduledItemWithAReplicaIsNotCalledNeverBackedUp(t *testing.T) {
+	r := replicaOnlyRig(t)
+	settings, _ := r.st.GetSettings()
+	settings.ZFSSchedule = ""
+	unprotected := func() CoverageItem {
+		nowhere, err := r.s.placelessSections()
+		if err != nil {
+			t.Fatal(err)
+		}
+		got := r.s.coverZFSDatasets(settings, declinedBackups{}, nowhere)
+		if len(got.Unprotected) != 1 {
+			t.Fatalf("coverage %+v, want the unscheduled item unprotected", got)
+		}
+		return got.Unprotected[0]
+	}
+	if !unprotected().NeverBackedUp {
+		t.Error("an item with neither a backup nor a replica is not called never backed up")
+	}
+	if err := r.s.ReplicateZFSDataset(context.Background(), r.item.ID); err != nil {
+		t.Fatal(err)
+	}
+	if unprotected().NeverBackedUp {
+		t.Error("an item with a replica is called never backed up")
+	}
+}
+
 func TestAReplicaIsAllTheDomainHasToBeCurrentBy(t *testing.T) {
 	r := replicaOnlyRig(t)
 	settings, _ := r.st.GetSettings()
@@ -171,6 +197,30 @@ func TestTheItemListSaysHowTheReplicaStands(t *testing.T) {
 	}
 	if item()["replica"] != nil {
 		t.Error("an item that replicates nowhere carries a replica")
+	}
+}
+
+func TestTheItemListSaysWhenTheReplicaIsAllAnItemGets(t *testing.T) {
+	r := newReplicaRig(t)
+	h := &Handler{svc: r.s, store: r.st}
+	only := func() (entry any, listed bool) {
+		_, m, _ := r.call(http.MethodGet, "/api/items/zfs/"+r.item.ID, "")
+		it, _ := m["item"].(map[string]any)
+		rep, _ := it["replica"].(map[string]any)
+		hist, err := h.readItemHistory()
+		if err != nil {
+			t.Fatal(err)
+		}
+		return rep["only"], hist.replicas[r.item.ID].Only
+	}
+	if entry, listed := only(); entry != nil || listed {
+		t.Errorf("an item with a place to back up to is called replica-only: entry %v, list %v", entry, listed)
+	}
+	if err := r.st.SetLocal(zfsDomain, false); err != nil {
+		t.Fatal(err)
+	}
+	if entry, listed := only(); entry != true || !listed {
+		t.Errorf("an item with no place to back up to is not called replica-only: entry %v, list %v", entry, listed)
 	}
 }
 

@@ -1,9 +1,9 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it } from "vitest";
 import { cleanup, screen } from "@testing-library/react";
-import type { StorageLocation, TimelinePlace } from "../../lib/api";
+import type { StorageLocation, TimelinePlace, TimelineRow } from "../../lib/api";
 import { LocationsContext } from "../../lib/attention";
-import { en } from "../../lib/i18n";
+import { countText, en } from "../../lib/i18n";
 import { renderWithProviders } from "../../lib/placement.testsupport";
 import { BackupPlaces, type TimelineState } from "./BackupPlaces";
 
@@ -11,8 +11,8 @@ function place(over: Partial<TimelinePlace>): TimelinePlace {
   return { place: "local", label: "", kind: "home", remote: false, enabled: true, appendOnly: false, state: "read", ...over };
 }
 
-function timeline(places: TimelinePlace[]): TimelineState {
-  return { domain: "files", places, rows: [], loading: false, error: null, reading: new Set(), loadPlace: async () => {}, reload: () => {} };
+function timeline(places: TimelinePlace[], rows: TimelineRow[] = []): TimelineState {
+  return { domain: "files", places, rows, loading: false, error: null, reading: new Set(), loadPlace: async () => {}, reload: () => {} };
 }
 
 function folder(name: string, domain: "files" | "containers"): StorageLocation {
@@ -70,5 +70,34 @@ describe("BackupPlaces", () => {
       </LocationsContext.Provider>
     );
     expect(screen.getByText(en["entry.places.earlier"]).parentElement!.firstChild?.textContent).toBe("cache");
+  });
+});
+
+describe("BackupPlaces of an entry that only replicates", () => {
+  afterEach(cleanup);
+
+  // The section's own folder on a bucket, read and empty, and a switched-off
+  // off-site location nobody has checked.
+  const SWITCHED_OFF = [
+    place({ remote: true }),
+    place({ place: "offsite:t1", label: "Wasabi", kind: "target", remote: true, enabled: false, state: "unchecked" }),
+  ];
+  const HELD: TimelineRow = { key: "20261020T030000Z", time: "2026-10-20T03:00:00Z", places: [{ place: "local", snapshotIds: ["a1"], tags: [] }] };
+  const noBackups = countText(en["entry.places.count"], "en", 0);
+
+  it("does not list the places it no longer backs up to", () => {
+    renderWithProviders(<BackupPlaces timeline={timeline(SWITCHED_OFF)} hueIndex={0} />);
+    expect(screen.getByText(noBackups)).toBeTruthy();
+    cleanup();
+    renderWithProviders(<BackupPlaces timeline={timeline(SWITCHED_OFF)} replicaOnly hueIndex={0} />);
+    expect(screen.queryByText(noBackups)).toBeNull();
+    expect(screen.queryByText("Wasabi")).toBeNull();
+    expect(screen.queryByText(en["storage.title"])).toBeNull();
+  });
+
+  it("keeps a place that still holds backups of it", () => {
+    renderWithProviders(<BackupPlaces timeline={timeline(SWITCHED_OFF, [HELD])} replicaOnly hueIndex={0} />);
+    expect(screen.getByText(countText(en["entry.places.count"], "en", 1))).toBeTruthy();
+    expect(screen.queryByText("Wasabi")).toBeNull();
   });
 });

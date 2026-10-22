@@ -168,6 +168,9 @@ type backupItemView struct {
 type itemReplicaView struct {
 	LastAt     int64  `json:"lastAt"`
 	LastStatus string `json:"lastStatus"`
+	// Only is set while the replica is all the item gets: its section has no
+	// place for a backup, so none will come.
+	Only bool `json:"only,omitempty"`
 }
 
 // itemHistory is what the runs table says about the items of one answer, with
@@ -221,7 +224,7 @@ func (h *Handler) readReplicaViews(id string) (map[string]itemReplicaView, error
 		if (id != "" && d.ID != id) || d.Replica.TargetKind == store.ZFSReplicaTargetNone {
 			continue
 		}
-		var v itemReplicaView
+		v := itemReplicaView{Only: h.svc.zfsReplicaOnly(d)}
 		if v.LastAt, err = h.store.LastZFSReplicaSuccess(d.ID); err != nil {
 			return nil, err
 		}

@@ -122,6 +122,7 @@ export function BackupsTab({
       <BackupPlaces
         timeline={timeline}
         replicaOf={detail.kind === "zfs" ? detail.dataset : undefined}
+        replicaOnly={item.replica?.only === true}
         hueIndex={nextHue()}
       />
       <Card

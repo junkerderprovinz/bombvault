@@ -391,7 +391,7 @@ func (s *Service) coverZFSDatasets(settings store.Settings, declined declinedBac
 			out.Unprotected = append(out.Unprotected, CoverageItem{
 				Name:          d.Dataset,
 				Reason:        reasonFor(d.Enabled, d.ScheduleCadence, settings.PerItemSchedules),
-				NeverBackedUp: s.neverBackedUp(d.ID),
+				NeverBackedUp: s.neverBackedUp(d.ID) && !s.zfsReplicated(d.ID),
 			})
 			continue
 		}

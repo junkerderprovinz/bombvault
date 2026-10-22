@@ -3,7 +3,7 @@
 
 import type { BackupItem } from "./api";
 import type { EntryKind } from "./backupEntry";
-import { entriesOf, isGone, protection } from "./backupList";
+import { entriesOf, isGone, protection, waitsForReplica } from "./backupList";
 
 export interface Tally {
   /** What is counted: the installed entries of every switched-on kind, less
@@ -12,6 +12,9 @@ export interface Tally {
   total: number;
   ok: number;
   pending: number;
+  /** The pending entries that only replicate, so they wait for a replica
+   *  and not for a backup. */
+  replicaPending: number;
   none: number;
   /** Entries whose container or VM is gone from the host. They are not counted. */
   gone: number;
@@ -30,13 +33,19 @@ export function tallyEntries(items: BackupItem[], kind?: EntryKind): Tally {
     total: entries.length,
     ok: count("ok"),
     pending: count("pending"),
+    replicaPending: entries.filter(waitsForReplica).length,
     none: count("none"),
     gone: all.length - installed.length,
     declined: installed.filter((item) => item.backupDeclined),
   };
 }
 
-/** The newest successful backup among the counted entries, 0 for none. */
+/** The newest successful backup among the counted entries, 0 for none. An
+ *  entry that only replicates counts with its replica, as the server's
+ *  section status does. */
 export function lastBackupOf(tally: Tally): number {
-  return tally.entries.reduce((last, item) => Math.max(last, item.lastBackup), 0);
+  return tally.entries.reduce(
+    (last, item) => Math.max(last, item.lastBackup, item.replica?.only ? item.replica.lastAt : 0),
+    0
+  );
 }

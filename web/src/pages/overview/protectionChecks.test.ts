@@ -29,6 +29,12 @@ describe("the local check", () => {
     expect(local({ status: "off" })).toEqual({ tone: "neutral", say: "overview.check.localNoSchedule" });
   });
 
+  it("waits for a replica where every entry only replicates", () => {
+    const replica = { lastAt: 0, lastStatus: "", only: true };
+    const onlyReplicas = tallyEntries([item({ kind: "zfs", lastBackup: 0, lastRunStatus: "", replica })]);
+    expect(local({ status: "never" }, onlyReplicas)).toEqual({ tone: "neutral", say: "overview.check.localNeverReplica" });
+  });
+
   it("warns when an entry's last run failed", () => {
     const tally = tallyEntries([item({ lastRunStatus: "failed" })]);
     expect(local({}, tally)).toEqual({ tone: "warn", say: "overview.check.localFailed" });

@@ -4,7 +4,7 @@ import { itemOpenCounts } from "../../lib/anomalies";
 import type { AnomalyItem } from "../../lib/api";
 import { hueVars } from "../../lib/appearance";
 import { ENTRY_KIND } from "../../lib/backupEntry";
-import { inSchedule, isGone, itemProgressKey, protection, runsNow } from "../../lib/backupList";
+import { inSchedule, isGone, itemProgressKey, protection, runsNow, waitingLabel } from "../../lib/backupList";
 import { entryReason, hostSilent, type Entry } from "../../lib/entry";
 import { stateLabel, useT } from "../../lib/i18n";
 import type { ProgressState } from "../../lib/progress";
@@ -91,7 +91,7 @@ function ProtectionBadge({ entry, replicating }: { entry: Entry; replicating: bo
     case "ok":
       return <Badge tone="ok">{t("ransomware.protGreen")}</Badge>;
     case "pending":
-      return <Badge tone="active">{t("backups.status.waiting")}</Badge>;
+      return <Badge tone="active">{t(waitingLabel(entry.item))}</Badge>;
     case "none":
       return <Badge tone="warn">{t("backups.status.notProtected")}</Badge>;
   }
