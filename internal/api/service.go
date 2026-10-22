@@ -450,6 +450,11 @@ type Service struct {
 	// (design spec, decision 7).
 	everythingActive atomic.Bool
 
+	// selectionActive is the single-flight guard for a backup of a selection
+	// that spans several kinds (StartBackupSelection). Each kind's batch still
+	// takes batchActive while it runs.
+	selectionActive atomic.Bool
+
 	// suggestMu guards suggestCache, the exclusion assistant's snapshot-aggregate
 	// cache: ONE entry per container, keyed inside on (repo, snapshot id, resolved
 	// excludes), so a rescan is instant until the next backup writes a newer

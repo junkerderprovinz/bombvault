@@ -35,6 +35,7 @@ vi.mock("../lib/api", async (importOriginal) => {
     backupFilesAll: vi.fn(),
     backupZFSAll: vi.fn(),
     backupFlashNow: vi.fn(),
+    backupSelection: vi.fn(),
     backupNow: vi.fn(),
     backupVMNow: vi.fn(),
     cancelBackup: vi.fn(),
@@ -83,6 +84,7 @@ const backupAll = vi.mocked(api.backupAll);
 const backupVMsAll = vi.mocked(api.backupVMsAll);
 const backupFilesAll = vi.mocked(api.backupFilesAll);
 const backupFlashNow = vi.mocked(api.backupFlashNow);
+const backupSelection = vi.mocked(api.backupSelection);
 const backupNow = vi.mocked(api.backupNow);
 const backupVMNow = vi.mocked(api.backupVMNow);
 const cancelBackup = vi.mocked(api.cancelBackup);
@@ -1056,35 +1058,70 @@ describe("the bar above picked rows", () => {
     expect(pushed).toEqual([{ message: `${en["containers.batchStarted"]} 1 skipped`, severity: "success" }]);
   });
 
-  it("starts the next kind once the batch before it has let go of the server", async () => {
-    vi.useFakeTimers();
-    try {
-      backupAll.mockResolvedValue({ ok: true });
-      backupVMsAll.mockRejectedValueOnce(new api.ApiError(409, "busy")).mockResolvedValue({ ok: true });
-      await renderPage();
-      await pick("plex", "Windows 11");
-      await press(barButton("Back up selected"));
-      expect(backupVMsAll).toHaveBeenCalledTimes(1);
-      expect(pushed).toEqual([{ message: en["backups.batch.startedInTurn"], severity: "success" }]);
-      expect(screen.getByTestId("batch-note").textContent).toContain("0 of 2");
-      await act(async () => {
-        await vi.advanceTimersByTimeAsync(2100);
-      });
-      expect(backupVMsAll).toHaveBeenCalledTimes(2);
-      expect(backupVMsAll).toHaveBeenLastCalledWith(["win11"]);
-    } finally {
-      vi.useRealTimers();
-    }
-  });
-
-  it("says a backup is already running and starts nothing more", async () => {
-    backupAll.mockRejectedValue(new api.ApiError(409, "busy"));
+  it("hands a selection of several kinds to the server, which runs them one after the other", async () => {
+    backupSelection.mockResolvedValue({ ok: true, refused: [] });
     await renderPage();
     await pick("plex", "Windows 11");
     await press(barButton("Back up selected"));
+    expect(backupSelection).toHaveBeenCalledWith([
+      { kind: "container", keys: ["plex"] },
+      { kind: "vm", keys: ["win11"] },
+    ]);
+    expect(backupAll).not.toHaveBeenCalled();
     expect(backupVMsAll).not.toHaveBeenCalled();
+    expect(pushed).toEqual([{ message: en["backups.batch.startedInTurn"], severity: "success" }]);
+    progress({ key: "backup-selection", phase: "backup", percent: 0, active: true, done: 0, total: 2 });
+    expect(screen.getByTestId("batch-note").textContent).toContain("0 of 2");
+    // Between the two kinds the containers count as done.
+    progress({ key: "batch:containers", phase: "backup", percent: 50, active: true });
+    progress({ key: "batch:containers", phase: "backup", percent: 100, active: false });
+    expect(screen.getByTestId("batch-note").textContent).toContain("1 of 2");
+  });
+
+  it("shows a selection the server runs when the page opens again", async () => {
+    await renderPage();
+    progress({ key: "backup-selection", phase: "backup", percent: 60, active: true, done: 3, total: 5 });
+    expect(screen.getByTestId("batch-note").textContent).toBe("Batch backup running60 %3 of 5");
+  });
+
+  it("names a kind the server left out and why", async () => {
+    backupSelection.mockResolvedValue({
+      ok: true,
+      refused: [{ kind: "flash", code: "no-place", error: "every storage location of this section is switched off" }],
+    });
+    await renderPage();
+    await pick("plex", "Unraid flash");
+    await press(barButton("Back up selected"));
+    expect(pushed).toEqual([
+      { message: en["backups.batch.startedInTurn"], severity: "success" },
+      { message: en["apiError.noPlace"], severity: "fail" },
+    ]);
+  });
+
+  it("says a backup is already running and starts nothing", async () => {
+    backupSelection.mockRejectedValue(new api.ApiError(409, "busy"));
+    await renderPage();
+    await pick("plex", "Windows 11");
+    await press(barButton("Back up selected"));
     expect(pushed).toEqual([{ message: en["containers.batchAlreadyRunning"], severity: "warn" }]);
     expect(screen.queryByTestId("batch-note")).toBeNull();
+  });
+
+  it("gives the reason of a refusal with a code instead of calling it busy", async () => {
+    backupFlashNow.mockRejectedValue(new api.ApiError(409, en["apiError.noPlace"], "no-place"));
+    await renderPage();
+    await pick("Unraid flash");
+    await press(barButton("Back up selected"));
+    expect(pushed).toEqual([{ message: en["apiError.noPlace"], severity: "fail" }]);
+    expect(screen.queryByTestId("batch-note")).toBeNull();
+  });
+
+  it("says another task holds the section", async () => {
+    backupAll.mockRejectedValue(new api.ApiError(409, en["apiError.domainBusy"], "domain-busy"));
+    await renderPage();
+    await pick("plex");
+    await press(barButton("Back up selected"));
+    expect(pushed).toEqual([{ message: en["apiError.domainBusy"], severity: "warn" }]);
   });
 
   it("says so when nothing picked can be backed up", async () => {
@@ -1231,8 +1268,7 @@ describe("a right click on a row", () => {
   });
 
   it("acts on the whole selection when the row is part of it", async () => {
-    backupAll.mockResolvedValue({ ok: true });
-    backupFilesAll.mockResolvedValue({ ok: true });
+    backupSelection.mockResolvedValue({ ok: true, refused: [] });
     await renderPage();
     await click(row("plex"), { ctrlKey: true });
     await click(row("Documents"), { ctrlKey: true });
@@ -1240,8 +1276,10 @@ describe("a right click on a row", () => {
     expect(screen.getByRole("menu").textContent).toContain("2 selected");
     expect(menuItems()).toEqual(["Back up selected", "Pause schedule", "Clear selection"]);
     await chooseFromMenu("Back up selected");
-    expect(backupAll).toHaveBeenCalledWith(["plex"]);
-    expect(backupFilesAll).toHaveBeenCalledWith(["f1"]);
+    expect(backupSelection).toHaveBeenCalledWith([
+      { kind: "files", keys: ["f1"] },
+      { kind: "container", keys: ["plex"] },
+    ]);
 
     await rightClick(row("Documents"));
     await chooseFromMenu("Clear selection");
