@@ -6496,7 +6496,7 @@ func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, re
 		Excludes: excludes,
 		Caches:   enabledKeys(tg.ExcludeCaches),
 	})
-	readerTags := withTags(s.directTags(settings, "containers", repo), beforeRestoreTags(ctx))
+	readerTags := withTags(s.directTags(settings, "containers", repo), append(beforeRestoreTags(ctx), imageTags(in)...))
 	reader := func(root string) backup.Restic {
 		m := readMode
 		m.Root = root
@@ -8456,6 +8456,7 @@ func (s *Service) prepareRestoreForTarget(ctx context.Context, ref repoRef, name
 	var restoreDirs []backup.RestoreDir
 	var bindRemap map[string]string
 	var planSkipped []string
+	var snapshotImage string
 	if recreateOnly {
 		appdataForRestore = nil
 	} else {
@@ -8477,6 +8478,7 @@ func (s *Service) prepareRestoreForTarget(ctx context.Context, ref repoRef, name
 		// failure resolution happens here, in the synchronous prepare phase: the
 		// orchestrator only ever receives a list it has checked.
 		chosen := chosenSnapshot(snaps, snapshotID)
+		snapshotImage = taggedImage(chosen.Tags)
 		mapped, skipped, narrowed := mapRestorePaths(tg.AppdataPaths, s.restoreRootsOf(*chosen))
 		// A pass-2 result is a stored path that only an ANCESTOR of it was
 		// recorded for. That proves it lies under a backed-up root; it does NOT
@@ -8596,6 +8598,9 @@ func (s *Service) prepareRestoreForTarget(ctx context.Context, ref repoRef, name
 		}
 		in = liveIn
 		xml, _, _ = template.Read(s.cfg.FlashTemplatesDir, name)
+	}
+	if snapshotImage != "" {
+		in.Image = snapshotImage
 	}
 	in.HostConfig = s.namespacesByName(ctx, name, in.HostConfig)
 
