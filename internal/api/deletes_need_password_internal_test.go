@@ -4,9 +4,6 @@ import (
 	"net/http"
 	"net/url"
 	"testing"
-	"time"
-
-	"github.com/junkerderprovinz/bombvault/internal/secret"
 )
 
 type deleteRoute struct {
@@ -66,7 +63,7 @@ func TestAPairedPhoneCannotDeleteBackups(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	f.session = secret.NewPairedSessionToken(f.svc.cfg.AppKey, settings.AuthPasswordHash, settings.SessionEpoch, time.Hour)
+	f.session = listedPhoneSession(t, f.st, f.svc.cfg.AppKey, settings.AuthPasswordHash, settings.SessionEpoch)
 	for _, r := range routes {
 		code, out := f.call(r.method, r.path, r.body)
 		if code != http.StatusForbidden || out["code"] != codeOwnLoginNeeded {

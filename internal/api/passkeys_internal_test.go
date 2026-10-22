@@ -107,7 +107,7 @@ func TestTheOriginFollowsTheProxysScheme(t *testing.T) {
 // not be answerable again, or a captured answer could be replayed.
 func TestACeremonyHandleWorksOnce(t *testing.T) {
 	h := &Handler{}
-	id, err := h.beginPasskeyCeremony(&webauthnSessionForTest, "bombvault.example.com")
+	id, err := h.beginPasskeyCeremony(&webauthnSessionForTest, "bombvault.example.com", "10.0.0.1")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -125,7 +125,7 @@ func TestACeremonyHandleWorksOnce(t *testing.T) {
 func TestCeremoniesAreBounded(t *testing.T) {
 	h := &Handler{}
 	for i := 0; i < passkeyCeremonyMax*3; i++ {
-		if _, err := h.beginPasskeyCeremony(&webauthnSessionForTest, "bombvault.example.com"); err != nil {
+		if _, err := h.beginPasskeyCeremony(&webauthnSessionForTest, "bombvault.example.com", "10.0.0.1"); err != nil {
 			t.Fatal(err)
 		}
 	}

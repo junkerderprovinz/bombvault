@@ -167,7 +167,7 @@ func (s *Service) handlePeerPage(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusNotFound, map[string]any{"ok": false, "error": "no pages here"})
 		return
 	}
-	cookie, ok := s.pageSession(call.Session)
+	cookie, ok := s.pageSession(sender, call.Session)
 	if !ok {
 		writeJSON(w, http.StatusUnauthorized, map[string]any{"ok": false, "error": "the session has ended", "code": codeSessionEnded})
 		return

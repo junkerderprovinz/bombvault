@@ -1,11 +1,14 @@
 package api
 
 import (
+	"context"
 	"errors"
 	"slices"
 	"strings"
 	"testing"
 
+	"github.com/junkerderprovinz/bombvault/internal/restic"
+	"github.com/junkerderprovinz/bombvault/internal/secret"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
@@ -504,5 +507,83 @@ func TestASignInCanBeTestedOverTheAPI(t *testing.T) {
 	res := f.do("POST", "/api/cloud/creds-sets/a/test", map[string]any{"restUser": "a"})
 	if locations, ok := res["locations"].([]any); res["ok"] != true || !ok || len(locations) != 0 {
 		t.Fatalf("answer = %v", res)
+	}
+}
+
+// envRecorder opens every repository and keeps the environment each open
+// went out with.
+type envRecorder struct {
+	ResticEngine
+	envs [][]string
+}
+
+func (e *envRecorder) RepoOpens(_ context.Context, _ string, m restic.Mode) bool {
+	e.envs = append(e.envs, m.Env)
+	return true
+}
+
+func pullSourceSigningInWith(t *testing.T, s *Service, ref string) store.PullSource {
+	t.Helper()
+	if err := s.SetCloudCredSets([]CloudCredSet{
+		{ID: "ours", Name: "Ours", Default: true, CloudCreds: CloudCreds{RESTUser: "ours", RESTPassword: "our secret"}},
+		{ID: "theirs", Name: "Theirs", CloudCreds: CloudCreds{RESTUser: "theirs", RESTPassword: "their secret"}},
+	}); err != nil {
+		t.Fatal(err)
+	}
+	enc, err := secret.Encrypt(s.cfg.AppKey, []byte("their restic password"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	ps, err := s.store.CreatePullSource(store.PullSource{
+		Name: "Tower next door", Repo: "rest:http://192.168.1.9:8000/containers", ResticPasswordEnc: enc,
+		CredsRef: ref, Domain: "containers", Enabled: true,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	return ps
+}
+
+func TestASignInAPullSourceUsesStaysAndNamesTheSource(t *testing.T) {
+	s := unraidNotifyService(t, nil)
+	pullSourceSigningInWith(t, s, "theirs")
+	err := s.RemoveSignIn("theirs")
+	if err == nil || !strings.Contains(err.Error(), "Tower next door still signs in with it") {
+		t.Fatalf("err = %v, want the pull source named", err)
+	}
+	users, err := s.signInUsers("ours")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(users["theirs"]) != 1 || users["theirs"][0].Name != "Tower next door" {
+		t.Fatalf("users of Theirs = %+v, want the pull source", users["theirs"])
+	}
+}
+
+func TestASignInARowTheListLeavesOutUsesStays(t *testing.T) {
+	s := unraidNotifyService(t, nil)
+	pullSourceSigningInWith(t, s, "")
+	if _, err := s.store.UpsertPrimaryRemoteTarget("containers", store.OffsiteTarget{Name: "Left behind", Repo: "rest:http://192.168.1.9:8000/x", CredsRef: "theirs"}); err != nil {
+		t.Fatal(err)
+	}
+	if err := s.RemoveSignIn("theirs"); err == nil || !strings.Contains(err.Error(), "Theirs is still in use") {
+		t.Fatalf("err = %v, want the sign-in kept", err)
+	}
+}
+
+func TestAPullSourceWhoseSignInIsGoneDoesNotBorrowTheDefault(t *testing.T) {
+	s := unraidNotifyService(t, nil)
+	eng := &envRecorder{}
+	s.engine = eng
+	ps := pullSourceSigningInWith(t, s, "theirs")
+	storeSets(t, s, []CloudCredSet{{ID: "ours", Name: "Ours", Default: true, CloudCreds: CloudCreds{RESTUser: "ours", RESTPassword: "our secret"}}})
+	_, _, err := s.pullOpen(context.Background(), ps, settingsOf(t, s))
+	if err == nil || !strings.Contains(err.Error(), "sign-in this source used is gone") {
+		t.Fatalf("err = %v, want the missing sign-in named", err)
+	}
+	for _, env := range eng.envs {
+		if slices.Contains(env, "RESTIC_REST_PASSWORD=our secret") {
+			t.Fatal("the pull source was opened with this instance's default sign-in")
+		}
 	}
 }

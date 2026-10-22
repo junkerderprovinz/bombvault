@@ -28,11 +28,14 @@ export function SecurityPage() {
     minPasswordLen,
   } = useSettings();
 
+  const [pwCurrent, setPwCurrent] = useState("");
   const [pwNew, setPwNew] = useState("");
   const [pwConfirm, setPwConfirm] = useState("");
+  const [pwCode, setPwCode] = useState("");
   const [pwSaveState, setPwSaveState] = useState<SaveState>("idle");
   const [pwSaveMsg, setPwSaveMsg] = useState<string | null>(null);
   const [pwSaveShake, setPwSaveShake] = useState(0);
+  const revealPwCurrent = useReveal();
   const revealPwNew = useReveal();
   const revealPwConfirm = useReveal();
 
@@ -57,11 +60,24 @@ export function SecurityPage() {
       setPwSaveShake((n) => n + 1);
       return;
     }
+    // A session left open is not enough to change or remove the login.
+    if (authEnabled && pwCurrent === "") {
+      setPwSaveMsg(t("auth.currentPasswordWrong"));
+      setPwSaveState("error");
+      setPwSaveShake((n) => n + 1);
+      return;
+    }
+    if (authEnabled && totpEnabled && pwCode.trim() === "") {
+      setPwSaveMsg(t("auth.codeHint"));
+      setPwSaveState("error");
+      setPwSaveShake((n) => n + 1);
+      return;
+    }
     if (pwNew === "" && authEnabled && !(await confirm(t("auth.turnOffAsk"), { confirmKey: "auth.loginDisable" }))) return;
     setPwSaveState("saving");
     setPwSaveMsg(null);
     try {
-      const res = await setAuthPassword(pwNew);
+      const res = await setAuthPassword(pwNew, pwCurrent, pwCode.trim());
       if (res.ok) {
         setAuthEnabled(res.enabled ?? false);
         // The same response carries the session, so the card can go straight to
@@ -69,11 +85,16 @@ export function SecurityPage() {
         // 401 until a reload, because the new login had issued no session yet.
         setPwSaveState("idle");
         push(pwNew === "" ? t("auth.passwordCleared") : t("auth.passwordSaved"), "success");
+        setPwCurrent("");
         setPwNew("");
         setPwConfirm("");
+        setPwCode("");
+        if (pwNew === "") setTotpEnabled(false);
       } else {
         setPwSaveState("idle");
-        push(res.error ?? t("auth.saveError"), "fail");
+        const said =
+          res.code === "currentPasswordWrong" ? t("auth.currentPasswordWrong") : res.needCode ? t("auth.codeInvalid") : res.error;
+        push(said ?? t("auth.saveError"), "fail");
         setPwSaveShake((n) => n + 1);
       }
     } catch (err) {
@@ -123,6 +144,20 @@ export function SecurityPage() {
 
         <div className="flex flex-col gap-3">
           <Rows>
+          {authEnabled && (
+            <SettingRow label={t("auth.currentPassword")} htmlFor="bv-password-current">
+              <RevealInput
+                {...revealPwCurrent}
+                id="bv-password-current"
+                value={pwCurrent}
+                onChange={(e) => setPwCurrent(e.target.value)}
+                autoComplete="current-password"
+                placeholder="••••••••"
+                wrapperClassName="w-72 max-w-full"
+                className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 glim-field-focus"
+              />
+            </SettingRow>
+          )}
           <SettingRow label={authEnabled ? t("auth.changePassword") : t("auth.setPassword")} htmlFor={LOGIN_PASSWORD_FIELD}>
             <RevealInput
               {...revealPwNew}
@@ -147,6 +182,18 @@ export function SecurityPage() {
               className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 glim-field-focus"
             />
           </SettingRow>
+          {authEnabled && totpEnabled && (
+            <SettingRow label={t("auth.codeLabel")} htmlFor="bv-password-code">
+              <input
+                id="bv-password-code"
+                value={pwCode}
+                onChange={(e) => setPwCode(e.target.value)}
+                autoComplete="one-time-code"
+                placeholder="000000"
+                className="w-40 rounded-control bg-carbon-surface2 px-3 py-1.5 text-sm tracking-[0.35em] text-carbon-text glim-field-focus"
+              />
+            </SettingRow>
+          )}
           </Rows>
           {/* The rule, stated before it is broken rather than after. */}
           <span className="text-xs text-carbon-textSub">

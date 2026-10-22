@@ -4741,7 +4741,10 @@ func (h *Handler) handleAuthStatus(w http.ResponseWriter, r *http.Request) {
 	if on {
 		if c, err := h.sessionCookie(r); err == nil {
 			authed = secret.ValidSessionToken(h.cfg.AppKey, hash, epoch, c.Value)
-			paired = paired || (authed && secret.PairedSessionToken(c.Value))
+			if authed && secret.PairedSessionToken(c.Value) {
+				authed = h.pairedPhoneListed(c.Value)
+				paired = paired || authed
+			}
 		}
 	}
 	out := map[string]any{
@@ -5295,7 +5298,7 @@ func (h *Handler) handleLogoutAll(w http.ResponseWriter, _ *http.Request) {
 }
 
 // handleSetPassword handles POST /api/auth/password.
-// Body: {password string} — empty string disables auth.
+// Body: {password, current, code}. An empty password switches the login off.
 func (h *Handler) handleSetPassword(w http.ResponseWriter, r *http.Request) {
 	// A paired phone's session that could set the password would be a
 	// signed-in one a request later.
@@ -5305,6 +5308,11 @@ func (h *Handler) handleSetPassword(w http.ResponseWriter, r *http.Request) {
 	}
 	var body struct {
 		Password string `json:"password"`
+		// Current is the password in use and Code the second factor while it
+		// is armed. A session someone walked away from must not be enough to
+		// take the login over or switch it off.
+		Current string `json:"current"`
+		Code    string `json:"code"`
 	}
 	if !decodeBody(w, r, &body) {
 		return
@@ -5327,6 +5335,11 @@ func (h *Handler) handleSetPassword(w http.ResponseWriter, r *http.Request) {
 			})
 			return
 		}
+	}
+	if gen.hash != "" && !h.ownerConfirmed(w, r, gen.hash, body.Current, body.Code) {
+		return
+	}
+	if body.Password != "" {
 		var err error
 		if hash, err = secret.HashPassword(h.cfg.AppKey, body.Password); err != nil {
 			writeJSON(w, http.StatusOK, failEnvelope(err))
@@ -5375,6 +5388,44 @@ func (h *Handler) handleSetPassword(w http.ResponseWriter, r *http.Request) {
 		// show the sign-out controls without a round trip or a reload.
 		"authed": hash != "",
 	}))
+}
+
+// codeCurrentPasswordWrong refuses a password change whose current password
+// is not the one in use.
+const codeCurrentPasswordWrong = "currentPasswordWrong"
+
+// ownerConfirmed checks the password in use and, while it is armed, the
+// second factor, under the same throttle as the login. It answers the call
+// itself when either is missing or wrong.
+func (h *Handler) ownerConfirmed(w http.ResponseWriter, r *http.Request, hash, password, code string) bool {
+	key := h.loginClientKey(r)
+	if h.loginThrottled(key) {
+		writeJSON(w, http.StatusTooManyRequests, map[string]any{"ok": false, "error": "too many failed attempts, wait a minute and try again"})
+		return false
+	}
+	if !verifyPassword(h.cfg.AppKey, password, hash) {
+		h.recordLoginFail(key)
+		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "code": codeCurrentPasswordWrong, "error": "the current password is not right"})
+		return false
+	}
+	s, err := h.store.GetSettings()
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return false
+	}
+	if !s.TOTPEnabled {
+		return true
+	}
+	if strings.TrimSpace(code) == "" {
+		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "needCode": true, "error": "enter the code from your authenticator app"})
+		return false
+	}
+	if !h.secondFactorOK(&s, code) {
+		h.recordLoginFail(key)
+		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "needCode": true, "error": "that code is not valid"})
+		return false
+	}
+	return true
 }
 
 // storePassword stores hash as the login password, or switches the login off
@@ -5690,11 +5741,12 @@ func (h *Handler) authGate(next http.Handler) http.Handler {
 			return
 		}
 
-		// The session of a paired phone reaches what pairedRoutes lists. A
-		// path that matches no route is left to the mux to answer, and
+		// The session of a paired phone reaches what pairedRoutes lists, for
+		// as long as the phone keeps its row. A path that matches no route
+		// is left to the mux to answer, and
 		// behind anything but a mux the gate cannot tell, so it refuses.
 		if secret.PairedSessionToken(c.Value) {
-			if on, err := h.store.PhonePairing(); err != nil || !on {
+			if on, err := h.store.PhonePairing(); err != nil || !on || !h.pairedPhoneListed(c.Value) {
 				writeJSON(w, http.StatusUnauthorized, map[string]any{"ok": false, "error": "authentication required"})
 				return
 			}

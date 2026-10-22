@@ -22,28 +22,28 @@ type peerSessionResponse struct {
 	Secure bool   `json:"secure,omitempty"`
 }
 
-// phoneSession mints a session without the password, marked as the one of a
-// paired phone: it opens the pages, and what hands out a key asks for a
-// sign-in on top.
-func (h *Handler) phoneSession() peerSessionResponse {
+// phoneSession mints a session without the password, marked as the one of
+// the paired phone phoneID: it opens the pages, and what hands out a key asks
+// for a sign-in on top.
+func (h *Handler) phoneSession(phoneID string) peerSessionResponse {
 	hash, epoch, on := h.authEnabled()
 	if !on {
 		return peerSessionResponse{OK: true}
 	}
-	c := h.newSessionCookie(secret.NewPairedSessionToken(h.cfg.AppKey, hash, epoch, sessionTTL), int(sessionTTL.Seconds()))
+	c := h.newSessionCookie(secret.NewPairedSessionToken(h.cfg.AppKey, hash, epoch, phoneID, sessionTTL), int(sessionTTL.Seconds()))
 	return peerSessionResponse{OK: true, Needed: true, Name: c.Name, Value: c.Value, MaxAge: c.MaxAge, Secure: c.Secure}
 }
 
-// phoneSessionCookie is the cookie for a page a phone opens through the
+// phoneSessionCookie is the cookie for a page phoneID opens through the
 // relay with the session it holds. Without a login password none is needed.
-// A session that is not a phone's, or that a sign-out everywhere or a reset
-// ended, gives none.
-func (h *Handler) phoneSessionCookie(token string) (*http.Cookie, bool) {
+// A session that is not this phone's, or that a sign-out everywhere or a
+// reset ended, gives none.
+func (h *Handler) phoneSessionCookie(phoneID, token string) (*http.Cookie, bool) {
 	hash, epoch, on := h.authEnabled()
 	if !on {
 		return nil, true
 	}
-	if !secret.PairedSessionToken(token) || !secret.ValidSessionToken(h.cfg.AppKey, hash, epoch, token) {
+	if phone, ok := secret.PairedSessionPhone(token); !ok || phone != phoneID || !secret.ValidSessionToken(h.cfg.AppKey, hash, epoch, token) {
 		return nil, false
 	}
 	return &http.Cookie{Name: h.newSessionCookie("", 0).Name, Value: token}, true //nolint:gosec // G124: a cookie on a request this instance builds for itself
@@ -77,7 +77,7 @@ func (s *Service) handlePeerSession(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusForbidden, map[string]any{"ok": false, "error": errUnsignedCall.Error()})
 		return
 	}
-	writeJSON(w, http.StatusOK, s.peerSession())
+	writeJSON(w, http.StatusOK, s.peerSession(body.InstanceID))
 }
 
 // admitPhone reports whether id is a phone the Instances page lists and lets
@@ -105,6 +105,18 @@ func (s *Service) admitPhone(w http.ResponseWriter, id string) bool {
 	}
 	writeJSON(w, http.StatusForbidden, map[string]any{"ok": false, "error": "no phone of this group by that name"})
 	return false
+}
+
+// pairedPhoneListed reports whether the phone a paired session was made for
+// is still one admitPhone lets in. A phone whose row is gone or switched off
+// is refused at this instance's own address too, not only through the relay.
+func (h *Handler) pairedPhoneListed(token string) bool {
+	id, ok := secret.PairedSessionPhone(token)
+	if !ok {
+		return false
+	}
+	rows, err := h.store.ListFleetPeers()
+	return err == nil && listsPhone(rows, id)
 }
 
 func listsPhone(peers []store.FleetPeer, id string) bool {

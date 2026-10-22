@@ -772,6 +772,9 @@ export interface SetPasswordResponse extends OkEnvelope {
    *  to be reloaded and the password typed again before anything else works -
    *  the second factor above all, which is unreachable without a session. */
   authed?: boolean;
+  /** The current password was right, and the second factor's code is
+   *  missing or wrong. */
+  needCode?: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -6980,13 +6983,14 @@ export function logoutAll(): Promise<OkEnvelope> {
 }
 
 /**
- * POST /api/auth/password — set or change the auth password.
- * Passing an empty string disables authentication.
+ * POST /api/auth/password: set or change the auth password.
+ * Passing an empty string disables authentication. Once a login exists the
+ * server wants the current password, and the code while two-factor is on.
  */
-export function setAuthPassword(password: string): Promise<SetPasswordResponse> {
+export function setAuthPassword(password: string, current = "", code = ""): Promise<SetPasswordResponse> {
   return fetchJSON("/api/auth/password", {
     method: "POST",
-    body: JSON.stringify({ password }),
+    body: JSON.stringify({ password, current, code }),
   });
 }
 

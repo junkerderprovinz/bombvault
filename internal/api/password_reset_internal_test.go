@@ -167,7 +167,7 @@ func TestResetEndsEveryOtherSession(t *testing.T) {
 		t.Fatal(err)
 	}
 	old := secret.NewSessionToken(h.cfg.AppKey, before.AuthPasswordHash, before.SessionEpoch, sessionTTL)
-	phone := secret.NewPairedSessionToken(h.cfg.AppKey, before.AuthPasswordHash, before.SessionEpoch, sessionTTL)
+	phone := secret.NewPairedSessionToken(h.cfg.AppKey, before.AuthPasswordHash, before.SessionEpoch, wordsHolderID, sessionTTL)
 	code := askForResetCode(t, h, out)
 
 	finishReset(t, h, code, resetNewPass)

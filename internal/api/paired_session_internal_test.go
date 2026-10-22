@@ -237,6 +237,54 @@ func TestAPairedSessionOpensThePagesAndStopsAtKeysAndTheLogin(t *testing.T) {
 	}
 }
 
+func TestAPhoneTakenOffTheInstancesPageLosesItsSessionAtTheOwnAddress(t *testing.T) {
+	tower := newInstance(t, "tower", strings.Repeat("a1", 32))
+	attic := newInstance(t, "attic", strings.Repeat("b2", 32))
+	phrase, relayURL := groupOf(t, tower, attic)
+	paired := holdWords(t, relayURL, phrase, wordsHolderID, "android", attic).pairedSession(attic)
+	status := func() int {
+		var code int
+		attic.as(paired, func() { code, _ = attic.do(t, http.MethodGet, "/api/status", nil) })
+		return code
+	}
+	if code := status(); code != http.StatusOK {
+		t.Fatalf("the phone's session before anything changed: %d", code)
+	}
+	rows, err := attic.st.ListFleetPeers()
+	if err != nil {
+		t.Fatal(err)
+	}
+	row := ""
+	for _, p := range rows {
+		if p.MemberID == wordsHolderID {
+			row = p.ID
+		}
+	}
+	if code, out := attic.do(t, http.MethodPut, "/api/fleet/peers/"+row, map[string]any{"enabled": false}); out["ok"] != true {
+		t.Fatalf("switching the phone's row off: %d %v", code, out)
+	}
+	if code := status(); code != http.StatusUnauthorized {
+		t.Fatalf("the session of a phone whose row is off: %d", code)
+	}
+	if code, out := attic.do(t, http.MethodPut, "/api/fleet/peers/"+row, map[string]any{"enabled": true}); out["ok"] != true {
+		t.Fatalf("switching the phone's row on: %d %v", code, out)
+	}
+	if code := status(); code != http.StatusOK {
+		t.Fatalf("the session of a phone switched on again: %d", code)
+	}
+	if code, out := attic.do(t, http.MethodDelete, "/api/group/members/"+wordsHolderID, nil); out["ok"] != true {
+		t.Fatalf("removing the phone: %d %v", code, out)
+	}
+	if code := status(); code != http.StatusUnauthorized {
+		t.Fatalf("the session of a removed phone: %d", code)
+	}
+	attic.as(paired, func() {
+		if _, out := attic.do(t, http.MethodGet, "/api/auth", nil); out["authed"] != false {
+			t.Fatalf("the auth status of a removed phone's session: %v", out)
+		}
+	})
+}
+
 func TestKeyMaterialIsNotMadeOrHandedOutWithoutALoginPassword(t *testing.T) {
 	tower := newInstance(t, "tower", strings.Repeat("a1", 32))
 	attic := newInstance(t, "attic", strings.Repeat("b2", 32))
@@ -324,7 +372,7 @@ func TestAResetKeepsPhonesOutUntilAPersonLetsThemPairAgain(t *testing.T) {
 		t.Fatalf("a phone asking for a session after the reset: %v", out)
 	}
 	hash, epoch, _ := attic.h.authEnabled()
-	attic.as(secret.NewPairedSessionToken(attic.appKey, hash, epoch, time.Hour), func() {
+	attic.as(listedPhoneSession(t, attic.st, attic.appKey, hash, epoch), func() {
 		if code, _ := attic.do(t, http.MethodGet, "/api/status", nil); code != http.StatusUnauthorized {
 			t.Fatalf("a paired session while pairing phones is off: %d", code)
 		}

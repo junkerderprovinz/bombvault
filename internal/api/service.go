@@ -629,17 +629,17 @@ type Service struct {
 	// peerActivity answers a member asking what runs here; NewHandler sets
 	// it, since runs and the schedule are the Handler's to read.
 	peerActivity func() (peerActivityResponse, error)
-	// peerSession mints a session for a paired phone; NewHandler sets it,
-	// since the session cookie is the Handler's.
-	peerSession func() peerSessionResponse
+	// peerSession mints a session for the paired phone phoneID; NewHandler
+	// sets it, since the session cookie is the Handler's.
+	peerSession func(phoneID string) peerSessionResponse
 	// pages is what a page over the relay runs through, and pageParts the
 	// rest of the answers too large for one call.
 	pages     atomic.Pointer[http.Handler]
 	pageParts pageParts
-	// pageSession turns the session a phone names in a page call into the
+	// pageSession turns the session phoneID names in a page call into the
 	// cookie its request carries; NewHandler sets it. ok is false for a
-	// session that is not a phone's or has ended.
-	pageSession func(token string) (cookie *http.Cookie, ok bool)
+	// session that is not this phone's or has ended.
+	pageSession func(phoneID, token string) (cookie *http.Cookie, ok bool)
 	phoneCalls  phoneCalls
 	// probeQueue holds the items waiting for the restore probe after their
 	// first backup, and probeWorking says whether its worker is running. Both
@@ -18698,17 +18698,27 @@ func (s *Service) decodeCloudFor(settings store.Settings, credsRef string) (Clou
 	if strings.TrimSpace(credsRef) == "" {
 		return s.decodeCloud(settings)
 	}
+	c, err := s.savedSignIn(settings, credsRef)
+	if !errors.Is(err, errUnknownSignIn) {
+		return c, err
+	}
+	log.Printf("api: off-site target references unknown credential set %q, falling back to the default sign-in", credsRef)
+	return s.decodeCloud(settings)
+}
+
+// savedSignIn returns the credentials of the saved sign-in id, or
+// errUnknownSignIn without the default in its place.
+func (s *Service) savedSignIn(settings store.Settings, id string) (CloudCreds, error) {
 	sets, err := s.decodeCloudCredSets(settings)
 	if err != nil {
 		return CloudCreds{}, err
 	}
 	for _, set := range sets {
-		if set.ID == credsRef {
+		if set.ID == id {
 			return set.CloudCreds, nil
 		}
 	}
-	log.Printf("api: off-site target references unknown credential set %q, falling back to the default sign-in", credsRef)
-	return s.decodeCloud(settings)
+	return CloudCreds{}, errUnknownSignIn
 }
 
 // ---------------------------------------------------------------------------

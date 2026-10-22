@@ -252,9 +252,8 @@ func (s *Service) MakeDefaultSignIn(id string) error {
 	return err
 }
 
-// RemoveSignIn removes a saved sign-in no storage location uses. The default
-// goes only as the last one, since every place that names no sign-in falls
-// back to it.
+// RemoveSignIn removes a saved sign-in nothing uses. The default goes only as
+// the last one, since every place that names no sign-in falls back to it.
 func (s *Service) RemoveSignIn(id string) error {
 	settings, err := s.store.GetSettings()
 	if err != nil {
@@ -285,6 +284,15 @@ func (s *Service) RemoveSignIn(id string) error {
 			names[j] = u.Name
 		}
 		return fmt.Errorf("%s still signs in with it", strings.Join(names, ", "))
+	}
+	// A row the list leaves out, such as a hidden target, would sign in with
+	// the default without a word.
+	inUse, err := s.store.CredsRefsInUse()
+	if err != nil {
+		return err
+	}
+	if inUse[id] {
+		return fmt.Errorf("%s is still in use, so it stays", sets[i].Name)
 	}
 	return s.editCloudCredSets(func(sets []CloudCredSet) []CloudCredSet {
 		return slices.DeleteFunc(sets, func(c CloudCredSet) bool { return c.ID == id })
@@ -364,8 +372,8 @@ func (s *Service) signInUses(defaultID string) ([]signInUse, error) {
 	return out, nil
 }
 
-// signInUsers lists, per saved sign-in, the storage locations that sign in
-// with it.
+// signInUsers lists, per saved sign-in, the storage locations and the pull
+// sources that sign in with it.
 func (s *Service) signInUsers(defaultID string) (map[string][]signInUser, error) {
 	uses, err := s.signInUses(defaultID)
 	if err != nil {
@@ -375,6 +383,15 @@ func (s *Service) signInUsers(defaultID string) (map[string][]signInUser, error)
 	for _, u := range uses {
 		if !slices.ContainsFunc(out[u.ref], func(x signInUser) bool { return x.ID == u.location.ID }) {
 			out[u.ref] = append(out[u.ref], signInUser{ID: u.location.ID, Name: u.location.Name})
+		}
+	}
+	sources, err := s.store.ListPullSources()
+	if err != nil {
+		return nil, err
+	}
+	for _, ps := range sources {
+		if ref := strings.TrimSpace(ps.CredsRef); ref != "" {
+			out[ref] = append(out[ref], signInUser{ID: "pull:" + ps.ID, Name: ps.Name})
 		}
 	}
 	return out, nil

@@ -6,9 +6,6 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
-	"time"
-
-	"github.com/junkerderprovinz/bombvault/internal/secret"
 )
 
 func TestAPairedSessionBacksUpTheContainerItReplaces(t *testing.T) {
@@ -34,7 +31,7 @@ func TestAPairedSessionBacksUpTheContainerItReplaces(t *testing.T) {
 func TestAPairedSessionIsRefusedARestoreItCouldNotUndo(t *testing.T) {
 	in := newInstance(t, "attic", strings.Repeat("b2", 32))
 	hash, epoch, _ := in.h.authEnabled()
-	in.session = secret.NewPairedSessionToken(in.appKey, hash, epoch, time.Hour)
+	in.session = listedPhoneSession(t, in.st, in.appKey, hash, epoch)
 	for _, route := range []struct {
 		path string
 		body map[string]any
@@ -58,7 +55,7 @@ func TestAPairedSessionIsRefusedWhatReachesPastTheApp(t *testing.T) {
 	if code, out := in.do(t, http.MethodGet, "/api/auth/passkeys", nil); code != http.StatusOK || out["passkeys"] == nil {
 		t.Fatalf("the person's own session gets no passkey list, so this test proves nothing: %d %v", code, out)
 	}
-	in.session = secret.NewPairedSessionToken(in.appKey, hash, epoch, time.Hour)
+	in.session = listedPhoneSession(t, in.st, in.appKey, hash, epoch)
 	for _, route := range []struct {
 		path string
 		body map[string]any

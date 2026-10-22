@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/junkerderprovinz/bombvault/internal/secret"
 	"github.com/junkerderprovinz/bombvault/internal/selfrestore"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
@@ -49,7 +50,7 @@ func TestConfigRestoreRevokesMCPKeys(t *testing.T) {
 	dataDir := t.TempDir()
 	now := time.Unix(1789600000, 0)
 
-	if err := RevokeMCPKeysAfterConfigRestore(st, dataDir, now); err != nil {
+	if err := ResetSignInsAfterConfigRestore(st, dataDir, now); err != nil {
 		t.Fatal(err)
 	}
 	active, err := st.ActiveMCPKeys()
@@ -62,7 +63,7 @@ func TestConfigRestoreRevokesMCPKeys(t *testing.T) {
 
 	markRestoreApplied(t, dataDir)
 	out := captureLog(t, func() {
-		if err := RevokeMCPKeysAfterConfigRestore(st, dataDir, now); err != nil {
+		if err := ResetSignInsAfterConfigRestore(st, dataDir, now); err != nil {
 			t.Fatal(err)
 		}
 	})
@@ -90,6 +91,37 @@ func TestConfigRestoreRevokesMCPKeys(t *testing.T) {
 	}
 }
 
+func TestConfigRestoreEndsTheSessionsAndRemovesThePasskeys(t *testing.T) {
+	st, _ := newStoreWithMCPKeys(t)
+	dataDir := t.TempDir()
+	if _, err := st.MutateSettings(func(s *store.Settings) error {
+		s.AuthPasswordHash, s.SessionEpoch = "argon2id$restored", "epoch-before-the-sign-out"
+		return nil
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.AddPasskey(store.Passkey{Name: "Lost phone", CredentialID: []byte("lost"), PublicKey: []byte("key"), RPID: "bombvault.example.com"}); err != nil {
+		t.Fatal(err)
+	}
+	const appKey = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+	stolen := secret.NewSessionToken(appKey, "argon2id$restored", "epoch-before-the-sign-out", time.Hour)
+
+	markRestoreApplied(t, dataDir)
+	if err := ResetSignInsAfterConfigRestore(st, dataDir, time.Unix(1789600000, 0)); err != nil {
+		t.Fatal(err)
+	}
+	s, err := st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if secret.ValidSessionToken(appKey, s.AuthPasswordHash, s.SessionEpoch, stolen) {
+		t.Fatal("a session from before the restored sign-out everywhere is valid again")
+	}
+	if keys, err := st.ListPasskeys(); err != nil || len(keys) != 0 {
+		t.Fatalf("passkeys after the restore = %d, %v", len(keys), err)
+	}
+}
+
 // A boot that cannot revoke must not come up with the restored keys active, and
 // the next boot has to try again.
 func TestConfigRestoreRevokeFailureStopsTheBoot(t *testing.T) {
@@ -100,7 +132,7 @@ func TestConfigRestoreRevokeFailureStopsTheBoot(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := RevokeMCPKeysAfterConfigRestore(st, dataDir, time.Unix(1789600000, 0)); err == nil {
+	if err := ResetSignInsAfterConfigRestore(st, dataDir, time.Unix(1789600000, 0)); err == nil {
 		t.Fatal("a failed revoke was not reported")
 	}
 	if _, err := os.Stat(selfrestore.AppliedMarkerPath(dataDir)); err != nil {

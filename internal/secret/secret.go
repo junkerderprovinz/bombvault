@@ -113,12 +113,19 @@ func KeyCheck(appKey string) string {
 // group's words. Nobody typed the password for it.
 const pairedPrefix = "paired."
 
-// NewPairedSessionToken creates the session token of a paired phone. It signs
-// in like one from NewSessionToken and PairedSessionToken tells it apart, so
-// a route can ask for a sign-in the words alone do not give.
-func NewPairedSessionToken(appKey, passwordHash, epoch string, ttl time.Duration) string {
+// NewPairedSessionToken creates the session token of the paired phone
+// phoneID. It signs in like one from NewSessionToken and PairedSessionToken
+// tells it apart, so a route can ask for a sign-in the words alone do not
+// give. The token names the phone, so a phone taken off the group can be
+// refused before the token expires.
+func NewPairedSessionToken(appKey, passwordHash, epoch, phoneID string, ttl time.Duration) string {
 	expiry := strconv.FormatInt(time.Now().Add(ttl).Unix(), 10)
-	return pairedPrefix + expiry + "." + hmacHex(appKey, pairedPrefix+sessionMessage(expiry, passwordHash, epoch))
+	phone := hex.EncodeToString([]byte(phoneID))
+	return pairedPrefix + phone + "." + expiry + "." + hmacHex(appKey, pairedMessage(phone, sessionMessage(expiry, passwordHash, epoch)))
+}
+
+func pairedMessage(phone, session string) string {
+	return pairedPrefix + phone + "." + session
 }
 
 // PairedSessionToken reports whether a token is of the kind
@@ -128,12 +135,34 @@ func PairedSessionToken(token string) bool {
 	return strings.HasPrefix(token, pairedPrefix)
 }
 
+// PairedSessionPhone returns the phone a paired session token was made for.
+// Like PairedSessionToken it does not check the token.
+func PairedSessionPhone(token string) (string, bool) {
+	rest, ok := strings.CutPrefix(token, pairedPrefix)
+	if !ok {
+		return "", false
+	}
+	phone, _, ok := strings.Cut(rest, ".")
+	id, err := hex.DecodeString(phone)
+	if !ok || err != nil || len(id) == 0 {
+		return "", false
+	}
+	return string(id), true
+}
+
 // ValidSessionToken verifies a token produced by NewSessionToken or
 // NewPairedSessionToken. It returns
 // false for any parse error, expired token, wrong APP_KEY, wrong epoch or
 // tampered value. It panics on a non-hex appKey.
 func ValidSessionToken(appKey, passwordHash, epoch, token string) bool {
 	token, paired := strings.CutPrefix(token, pairedPrefix)
+	var phone string
+	if paired {
+		var ok bool
+		if phone, token, ok = strings.Cut(token, "."); !ok {
+			return false
+		}
+	}
 	dot := strings.LastIndex(token, ".")
 	if dot < 0 {
 		return false
@@ -150,7 +179,7 @@ func ValidSessionToken(appKey, passwordHash, epoch, token string) bool {
 
 	message := sessionMessage(expStr, passwordHash, epoch)
 	if paired {
-		message = pairedPrefix + message
+		message = pairedMessage(phone, message)
 	}
 	wantSig := hmacHex(appKey, message)
 	a, err1 := hex.DecodeString(gotSig)

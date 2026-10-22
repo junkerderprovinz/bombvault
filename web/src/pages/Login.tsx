@@ -85,7 +85,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
         onLogin();
         return;
       }
-      setError(res.error ?? t("auth.passkeySignInFailed"));
+      setError(res.code === "passkeyNeedsVerification" ? t("auth.passkeyNeedsVerification") : (res.error ?? t("auth.passkeySignInFailed")));
     } catch (err) {
       // A cancelled prompt lands here too, and its own message says more than
       // a generic one.
