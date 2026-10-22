@@ -307,6 +307,31 @@ describe("Launcher", () => {
     expect(await screen.findByRole("heading", { name: "Settings" })).toBeTruthy();
   });
 
+  it("calls a group member that does not answer inactive, with when the group last had it, and not red", async () => {
+    const seen = Math.floor(Date.now() / 1000) - 3 * 3600;
+    const member = { id: "m1", name: "Parents", url: "", member: true, seen };
+    const { bridge } = fakeBridge({ servers: [member], found: [], group: { paired: true, connected: true }, camera: false, app });
+    render(<Launcher bridge={bridge} />);
+    expect(await screen.findByText("Inactive")).toBeTruthy();
+    expect(screen.getByText("Last seen 3 hours ago")).toBeTruthy();
+    expect(screen.queryByText("Not connected")).toBeNull();
+  });
+
+  it("still calls a server added by hand that does not answer not connected", async () => {
+    const { bridge } = fakeBridge({ servers: [server], found: [], group: alone, camera: false, app });
+    render(<Launcher bridge={bridge} />);
+    expect(await screen.findByText("Not connected")).toBeTruthy();
+    expect(screen.queryByText("Inactive")).toBeNull();
+  });
+
+  it("says a server is being checked until its first answer", async () => {
+    const { bridge } = fakeBridge({ servers: [server], found: [], group: alone, camera: false, app });
+    bridge.activity = () => new Promise<Fetched>(() => undefined);
+    render(<Launcher bridge={bridge} />);
+    expect(await screen.findByText("Checking")).toBeTruthy();
+    expect(screen.queryByText("Not connected")).toBeNull();
+  });
+
   it("shows a server that answered while another one is still being asked", async () => {
     const away = { id: "s2", name: "Attic", url: "https://192.168.1.11:3443/" };
     const ok = { status: 200, body: JSON.stringify({ ok: true, runs: [], progress: [], next: [] }) };

@@ -10,6 +10,8 @@ export interface Server {
   url: string;
   /** The server came from the paired group. */
   member?: boolean;
+  /** Unix seconds of when the group last had it in reach, 0 when unknown. */
+  seen?: number;
 }
 
 export interface FoundServer {

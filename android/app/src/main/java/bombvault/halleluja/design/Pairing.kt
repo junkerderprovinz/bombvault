@@ -57,6 +57,9 @@ class Pairing(
 
     @Volatile private var seed: ByteArray? = null
 
+    // Whether the relay connection read the group's roster from an instance.
+    @Volatile private var rosterRead = false
+
     // A group being looked at before it is taken over: its relay, and what
     // joining it would store.
     private var preview: Relay? = null
@@ -147,6 +150,7 @@ class Pairing(
     fun stop() {
         relay?.stop()
         relay = null
+        rosterRead = false
         asked.clear()
         sessions.clear()
     }
@@ -325,11 +329,43 @@ class Pairing(
                     asked.remove(s.id)
                     return@launch
                 }
-                servers.adopt(s.id, s.name, if (url.isEmpty()) "" else url.trimEnd('/') + "/")
+                servers.adopt(s.id, s.name, if (url.isEmpty()) "" else url.trimEnd('/') + "/", nowSeconds())
                 onChange()
             }
         }
+        readRoster(r)
     }
+
+    /**
+     * Reads the group from the first instance on the relay that answers, once
+     * per connection, so the list also holds instances the phone does not
+     * meet there, such as one that was shut down when the phone joined. An
+     * instance too old to answer is passed over for the next one.
+     */
+    private fun readRoster(r: Relay) {
+        if (rosterRead) return
+        val instances = r.siblings.filter { it.kind.isEmpty() }
+        if (instances.isEmpty()) return
+        rosterRead = true
+        scope.launch {
+            for (s in instances) {
+                val entries = try {
+                    val (status, body) = r.call(s.id, "GET", Roster.PATH)
+                    if (status != 200) continue
+                    Roster.parse(String(body))
+                } catch (_: Exception) {
+                    continue
+                }
+                val now = nowSeconds()
+                for (e in entries) servers.adopt(e.id, e.name, e.url, if (e.seen > 0) e.seen else now)
+                onChange()
+                return@launch
+            }
+            rosterRead = false
+        }
+    }
+
+    private fun nowSeconds() = System.currentTimeMillis() / 1000
 
     /**
      * The app answers the hello a probe asks for, names its key to [sender]

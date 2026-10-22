@@ -9,11 +9,11 @@ import { Selector } from "../components/Selector";
 import { IconAdd, IconClose, IconGear, IconPencil } from "../components/navGlyphs";
 import { buildLogLines, domainLabel, type LogLine, type ResolveName } from "../lib/activityLog";
 import type { Run, ScheduleNext } from "../lib/api";
-import { REACH_BADGE, reachOf, type Reach } from "../lib/appServers";
+import { reachOf, serverBadge, type Reach } from "../lib/appServers";
 import { hueVars } from "../lib/appearance";
 import { useT, type TranslationKey } from "../lib/i18n";
 import { parseProgressFrame, progressEntry, type ProgressMap } from "../lib/progress";
-import { formatClockTime } from "../lib/reltime";
+import { formatClockTime, relativeTime } from "../lib/reltime";
 import { useConfirm } from "../lib/useConfirm";
 import {
   displayAddress,
@@ -494,7 +494,8 @@ function ServerCard({
   onOpen: () => void;
   onEdit: () => void;
 }) {
-  const badge = reach && REACH_BADGE[reach];
+  const badge = serverBadge(reach, server.member ?? false);
+  const away = reach === "offline" && server.member && (server.seen ?? 0) > 0;
   return (
     <div style={hueVars(index) as CSSProperties} className="rounded-card bg-carbon-surface glim-hue glim-content-fade">
       <div className="flex items-center gap-1 pe-2">
@@ -508,8 +509,13 @@ function ServerCard({
             <span dir="ltr" className="truncate text-start font-mono text-xs text-carbon-textMuted">
               {server.url ? displayAddress(server.url) : t("launcher.viaGroup")}
             </span>
+            {away && (
+              <span className="text-xs text-carbon-textMuted">
+                {t("instances.lastSeen").replace("{time}", () => relativeTime(t, server.seen ?? 0))}
+              </span>
+            )}
           </span>
-          {badge && <Badge tone={badge.tone}>{t(badge.key)}</Badge>}
+          <Badge tone={badge.tone}>{t(badge.key)}</Badge>
         </button>
         {/* A glyph alone: on a phone the name needs the width a label would take. */}
         <Badge as="button" shape="square" size="icon" tone="neutral" tip={t("common.edit")} onClick={onEdit}>

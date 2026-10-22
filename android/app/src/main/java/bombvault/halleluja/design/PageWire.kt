@@ -30,7 +30,8 @@ fun relayMember(host: String?): String? {
     return h.removeSuffix(".$RELAY_HOST").takeIf { MEMBER.matches(it) }
 }
 
-private val MEMBER = Regex("[0-9a-z][0-9a-z-]{0,62}")
+/** What a member id looks like: one label of a host name. */
+internal val MEMBER = Regex("[0-9a-z][0-9a-z-]{0,62}")
 
 /**
  * Whether a request the WebView makes to [member]'s relay origin may go

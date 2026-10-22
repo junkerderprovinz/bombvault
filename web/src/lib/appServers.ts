@@ -6,13 +6,27 @@ import type { TranslationKey } from "./i18n";
 /** How a server answered the app's last question about what runs there. */
 export type Reach = "connected" | "signIn" | "certificate" | "offline";
 
+interface ReachBadge {
+  tone: "ok" | "fail" | "warn" | "neutral";
+  key: TranslationKey;
+}
+
 /** The badge the app's list shows for each answer. */
-export const REACH_BADGE: Record<Reach, { tone: "ok" | "fail" | "warn"; key: TranslationKey }> = {
+export const REACH_BADGE: Record<Reach, ReachBadge> = {
   connected: { tone: "ok", key: "instances.connected" },
   signIn: { tone: "warn", key: "launcher.signIn" },
   certificate: { tone: "warn", key: "launcher.checkCertificate" },
   offline: { tone: "fail", key: "instances.notConnected" },
 };
+
+/** serverBadge is the badge of one server in the app's list. A member of the
+ *  group that does not answer is away, as on the Instances page, which is no
+ *  fault; a server that has not answered yet is being checked. */
+export function serverBadge(reach: Reach | undefined, member: boolean): ReachBadge {
+  if (reach === undefined) return { tone: "neutral", key: "instances.checking" };
+  if (reach === "offline" && member) return { tone: "neutral", key: "instances.inactive" };
+  return REACH_BADGE[reach];
+}
 
 /** reachOf reads the status the app got: 0 when the server was not reached,
  *  -1 when its certificate is not the one trusted for it. */
