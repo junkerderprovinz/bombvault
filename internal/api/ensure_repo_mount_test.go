@@ -50,16 +50,17 @@ func newDiscriminatorSvc(t *testing.T, mountRoot string) *api.Service {
 	return api.NewService(cfg, newMemStore(t), &fakeServiceDocker{}, fakeVirsh{}, &fakeResticEngine{})
 }
 
-// The parser collects the mount points (field 5) and unescapes octal spaces.
-func TestParseMountedDirs(t *testing.T) {
+// The parser collects the mount points (field 5) with their filesystem types
+// and unescapes octal spaces.
+func TestParseMounts(t *testing.T) {
 	const fixture = "36 1 0:1 / / rw - xfs /dev/sda rw\n" +
 		"41 36 0:2 / /host/user/disks/rolob-dev rw shared:1 - xfs /dev/sdb rw\n" +
-		"42 36 0:3 / /host/user/disks/my\\040disk rw - xfs /dev/sdc rw\n" +
+		"42 36 0:3 / /host/user/disks/my\\040disk rw - tmpfs tmpfs rw\n" +
 		"garbage line too short\n"
-	got := api.ParseMountedDirs(strings.NewReader(fixture))
-	for _, want := range []string{"/", "/host/user/disks/rolob-dev", "/host/user/disks/my disk"} {
-		if !got[want] {
-			t.Errorf("expected mount point %q in set %v", want, got)
+	got := api.ParseMounts(strings.NewReader(fixture))
+	for want, fsType := range map[string]string{"/": "xfs", "/host/user/disks/rolob-dev": "xfs", "/host/user/disks/my disk": "tmpfs"} {
+		if got[want] != fsType {
+			t.Errorf("mount point %q: type %q in %v, want %q", want, got[want], got, fsType)
 		}
 	}
 	if len(got) != 3 {
@@ -99,6 +100,31 @@ func TestDestinationMountedDiscriminator(t *testing.T) {
 	// A sibling without a mount of its own stays unmounted.
 	if svc.DestinationMounted(hostMountRoot + "/disks/Y/container") {
 		t.Error("(b) a sibling share with no per-disk mount must NOT count as mounted")
+	}
+}
+
+// Unassigned Devices keeps a small tmpfs at /mnt/disks, so a disk that did not
+// mount leaves its folder on that tmpfs, which is no storage.
+func TestATmpfsBelowHostDataIsNoMount(t *testing.T) {
+	svc := newDiscriminatorSvc(t, hostMountRoot)
+	path := filepath.Join(t.TempDir(), "mountinfo")
+	fixture := "36 1 0:1 / / rw - xfs /dev/sda rw\n" +
+		"37 36 0:2 / " + hostMountRoot + " rw - shfs shfs rw\n" +
+		"38 37 0:3 / " + hostMountRoot + "/disks rw - tmpfs tmpfs rw,size=1024k\n"
+	if err := os.WriteFile(path, []byte(fixture), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(api.SetMountinfoPath(path))
+	if svc.DestinationMounted(hostMountRoot + "/disks/ssd/restore") {
+		t.Error("a folder on the placeholder tmpfs of a disk that did not mount counts as mounted")
+	}
+
+	fixture += "39 38 0:4 / " + hostMountRoot + "/disks/ssd rw - xfs /dev/sdb1 rw\n"
+	if err := os.WriteFile(path, []byte(fixture), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if !svc.DestinationMounted(hostMountRoot + "/disks/ssd/restore") {
+		t.Error("a folder on the mounted disk does not count as mounted")
 	}
 }
 

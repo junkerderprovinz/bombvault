@@ -23,6 +23,7 @@ func realFolderGuard(t *testing.T, root string) {
 		"30 1 0:28 / / rw,relatime - overlay overlay rw",
 		"40 30 0:29 /mnt " + mountinfoEscape(root) + " rw,relatime master:5 - rootfs rootfs rw",
 		"41 40 0:31 / " + mountinfoEscape(root+"/user") + " rw,relatime master:6 - fuse.shfs shfs rw",
+		"42 40 0:32 / " + mountinfoEscape(root+"/disks") + " rw,relatime master:7 - tmpfs tmpfs rw,size=1024k",
 	}
 	if err := os.WriteFile(file, []byte(strings.Join(lines, "\n")+"\n"), 0o600); err != nil {
 		t.Fatal(err)
@@ -55,8 +56,25 @@ func TestRestoreFoldersOffStorageAreRefused(t *testing.T) {
 	if _, _, err := s.newDrillSandbox(store.Settings{RestoreFolder: gone}, "drill"); !isDestinationRefusal(err) {
 		t.Errorf("drill sandbox: %v; want a destination refusal", err)
 	}
+	if _, err := s.prepareSaveDBDump(ctx, "pg", "local", "aaaa1111", gone, false); !isDestinationRefusal(err) {
+		t.Errorf("database dump to folder: %v; want a destination refusal", err)
+	}
+	// A disk Unassigned Devices did not mount leaves its folder on the small
+	// tmpfs it keeps at /mnt/disks.
+	if _, err := s.prepareRestoreToPath(ctx, "plex", "local", "aaaa1111", "disks/ssd/restores"); !isDestinationRefusal(err) {
+		t.Errorf("container to a folder of an unmounted disk: %v; want a destination refusal", err)
+	}
 	if _, err := os.Stat(filepath.Join(root, "nvme")); !os.IsNotExist(err) {
 		t.Fatalf("a refused restore created %s: %v", gone, err)
+	}
+
+	// An in-place restore of a VM disk or of appdata on that disk is refused
+	// the same way, before the original is taken down.
+	if err := s.guardInPlaceRestore([]string{root + "/disks/ssd/domains/win11"}); !isDestinationRefusal(err) {
+		t.Errorf("in place on an unmounted disk: %v; want a destination refusal", err)
+	}
+	if err := s.guardInPlaceRestore([]string{root + "/user/appdata/plex"}); err != nil {
+		t.Errorf("in place on the mounted share: %v", err)
 	}
 
 	sandbox, cleanup, err := s.newDrillSandbox(store.Settings{RestoreFolder: "user/restore"}, "drill")

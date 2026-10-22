@@ -8,7 +8,7 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 )
 
-func ParseMountedDirs(r io.Reader) map[string]bool { return parseMountedDirs(r) }
+func ParseMounts(r io.Reader) map[string]string { return parseMounts(r) }
 
 // SetMountinfoPath points the mount table at a fixture and returns a function
 // that restores the previous path.

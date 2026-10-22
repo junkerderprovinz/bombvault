@@ -29,6 +29,9 @@ var mountinfoPath = "/proc/self/mountinfo"
 //   - an unmounted share: only "/" and /host/user are listed, so not mounted
 //   - a repo at /host/user/bombvault: the nearest mount is the host bind, so
 //     it is treated as not mounted, which errs on the safe side
+//   - a tmpfs or ramfs, such as the small one Unassigned Devices keeps at
+//     /mnt/disks so that a disk which did not mount cannot fill RAM, is no
+//     storage and does not count
 //
 // Only HostMountRoot is consulted, so this works both when HostSourceRoot is
 // translated (Unraid: /mnt becomes /host/user) and when the two are the same
@@ -40,25 +43,31 @@ func (s *Service) destinationMounted(repo string) bool {
 	if restic.IsRemoteRepo(repo) {
 		return false
 	}
-	mounted, ok := mountPoints()
+	mounts, ok := mountTable()
 	if !ok {
 		return false
 	}
+	_, on := s.storageMountOf(mounts, repo)
+	return on
+}
 
+// storageMountOf returns the deepest mount below HostMountRoot that holds p
+// and is real storage, not a tmpfs or ramfs.
+func (s *Service) storageMountOf(mounts map[string]string, p string) (string, bool) {
 	// Mount records use forward slashes, so both paths are normalised the same
 	// way.
 	root := path.Clean(filepath.ToSlash(s.cfg.HostMountRoot))
-	p := path.Clean(filepath.ToSlash(repo))
-	for {
-		if mounted[p] && isStrictSubpath(root, p) {
-			return true
+	for q := path.Clean(filepath.ToSlash(p)); isStrictSubpath(root, q); q = path.Dir(q) {
+		if fsType, ok := mounts[q]; ok && !inMemoryFS(fsType) {
+			return q, true
 		}
-		parent := path.Dir(p)
-		if parent == p {
-			return false
-		}
-		p = parent
 	}
+	return "", false
+}
+
+// inMemoryFS reports whether a filesystem type keeps its files in RAM.
+func inMemoryFS(fsType string) bool {
+	return fsType == "tmpfs" || fsType == "ramfs"
 }
 
 // restoreTargetMounted is destinationMounted for a folder a cross-instance
@@ -73,12 +82,13 @@ func (s *Service) restoreTargetMounted(p string) bool {
 	if s.platformFn().Kind() != platform.KindGeneric {
 		return false
 	}
-	mounted, ok := mountPoints()
+	mounts, ok := mountTable()
 	if !ok {
 		return false
 	}
 	root := path.Clean(filepath.ToSlash(s.cfg.HostMountRoot))
-	return mounted[root] && isStrictSubpath(root, path.Clean(filepath.ToSlash(p)))
+	_, bound := mounts[root]
+	return bound && isStrictSubpath(root, path.Clean(filepath.ToSlash(p)))
 }
 
 // folderOnStorage is the check guardRestoreFolder makes. The test binary
@@ -99,18 +109,23 @@ func (s *Service) guardRestoreFolder(target string) error {
 // hostDataMounted reports whether the Host Data bind at HostMountRoot is in
 // the mount table.
 func (s *Service) hostDataMounted() bool {
-	mounted, ok := mountPoints()
-	return ok && mounted[path.Clean(filepath.ToSlash(s.cfg.HostMountRoot))]
+	mounts, ok := mountTable()
+	if !ok {
+		return false
+	}
+	_, bound := mounts[path.Clean(filepath.ToSlash(s.cfg.HostMountRoot))]
+	return bound
 }
 
-// mountPoints reads the mount table; false means it could not be read.
-func mountPoints() (map[string]bool, bool) {
+// mountTable reads the mount table as mount point to filesystem type; false
+// means it could not be read.
+func mountTable() (map[string]string, bool) {
 	f, err := os.Open(mountinfoPath) //nolint:gosec // G304: mountinfoPath is a fixed package var (/proc/self/mountinfo), overridden only by tests
 	if err != nil {
 		return nil, false
 	}
 	defer f.Close() //nolint:errcheck // read-only handle
-	return parseMountedDirs(f), true
+	return parseMounts(f), true
 }
 
 // isStrictSubpath reports whether p lies below root and is not root itself.
@@ -126,19 +141,25 @@ func isStrictSubpath(root, p string) bool {
 	return strings.HasPrefix(p, prefix)
 }
 
-// parseMountedDirs returns the set of mount points in mountinfo records read
-// from r. Malformed lines are skipped.
-func parseMountedDirs(r io.Reader) map[string]bool {
-	out := make(map[string]bool)
+// parseMounts returns the mount points in mountinfo records read from r with
+// their filesystem types, empty for a record without one. Malformed lines are
+// skipped.
+func parseMounts(r io.Reader) map[string]string {
+	out := make(map[string]string)
 	sc := bufio.NewScanner(r)
 	sc.Buffer(make([]byte, 0, 64*1024), 1024*1024)
 	for sc.Scan() {
-		fields := strings.Fields(sc.Text())
+		left, right, _ := strings.Cut(sc.Text(), " - ")
+		fields := strings.Fields(left)
 		// id, parent, major:minor, root, mount point, options, ...
 		if len(fields) < 5 {
 			continue
 		}
-		out[path.Clean(unescapeOctal(fields[4]))] = true
+		fsType := ""
+		if rest := strings.Fields(right); len(rest) > 0 {
+			fsType = rest[0]
+		}
+		out[path.Clean(unescapeOctal(fields[4]))] = fsType
 	}
 	return out
 }

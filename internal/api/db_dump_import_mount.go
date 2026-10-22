@@ -21,8 +21,12 @@ var (
 // dataset under /mnt/<pool>. A mount point cannot be renamed, so the import
 // has to empty it instead. An unreadable mount table counts as no mount.
 func isMountPoint(dir string) bool {
-	mounted, ok := mountPoints()
-	return ok && mounted[path.Clean(filepath.ToSlash(dir))]
+	mounts, ok := mountTable()
+	if !ok {
+		return false
+	}
+	_, mounted := mounts[path.Clean(filepath.ToSlash(dir))]
+	return mounted
 }
 
 // checkDataDirAside refuses, before anything is stopped, a data folder that

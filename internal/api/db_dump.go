@@ -1322,6 +1322,9 @@ func (s *Service) prepareSaveDBDump(ctx context.Context, name, source, snapshotI
 	if err != nil {
 		return dbDumpSavePlan{}, errors.New("invalid target folder: must be a relative subpath under the host mount")
 	}
+	if err := s.guardRestoreFolder(target); err != nil {
+		return dbDumpSavePlan{}, err
+	}
 	settings, err := s.store.GetSettings()
 	if err != nil {
 		return dbDumpSavePlan{}, fmt.Errorf("read settings: %w", err)
