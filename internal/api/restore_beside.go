@@ -493,9 +493,9 @@ func (s *Service) executeRestoreBeside(ctx context.Context, name string, plan co
 		WithoutRuntime: plan.withoutRuntime,
 		TargetID:       plan.targetID,
 		Docker:         s.restoreDocker(),
-		ImagePresent: func(ctx context.Context, ref string) bool {
-			id, err := s.docker.ImageID(ctx, ref)
-			return err == nil && id != ""
+		ImageID: func(ctx context.Context, ref string) string {
+			id, _ := s.docker.ImageID(ctx, ref)
+			return id
 		},
 		Restic: &resticAdapter{engine: s.engine, mode: plan.mode},
 		Runs:   runsAdapter{st: s.store, ctx: ctx},

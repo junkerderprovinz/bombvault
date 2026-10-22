@@ -19,17 +19,17 @@ func besideDeps(docker *fakeDocker, restic *fakeRestic, runs *fakeRuns) backup.B
 	in := sampleInspect()
 	in.Name = "plex-restored"
 	return backup.BesideContainerDeps{
-		Original:     "plex",
-		Copy:         in,
-		RepoPath:     "/repo",
-		SnapshotID:   "abcd1234",
-		Dirs:         []backup.RestoreDir{{Subtree: "/appdata/plex", Target: "/appdata/plex-restored"}},
-		MakeDirs:     func() error { return nil },
-		TargetID:     "tg-1",
-		Docker:       docker,
-		ImagePresent: func(context.Context, string) bool { return true },
-		Restic:       restic,
-		Runs:         runs,
+		Original:   "plex",
+		Copy:       in,
+		RepoPath:   "/repo",
+		SnapshotID: "abcd1234",
+		Dirs:       []backup.RestoreDir{{Subtree: "/appdata/plex", Target: "/appdata/plex-restored"}},
+		MakeDirs:   func() error { return nil },
+		TargetID:   "tg-1",
+		Docker:     docker,
+		ImageID:    func(context.Context, string) string { return in.Image },
+		Restic:     restic,
+		Runs:       runs,
 	}
 }
 
@@ -139,13 +139,54 @@ func TestRestoreContainerBesideRefusesTheOriginalsOwnName(t *testing.T) {
 func TestRestoreContainerBesidePullsAnImageTheHostLacks(t *testing.T) {
 	docker, restic, runs := &fakeDocker{}, &fakeRestic{}, &fakeRuns{}
 	d := besideDeps(docker, restic, runs)
-	d.ImagePresent = func(context.Context, string) bool { return false }
+	d.ImageID = func(context.Context, string) string { return "" }
 
 	if err := backup.RestoreContainerBeside(context.Background(), d); err != nil {
 		t.Fatalf("RestoreContainerBeside: %v", err)
 	}
 	if !slices.Contains(docker.log, "pull:"+d.Copy.Config.Image) {
 		t.Fatalf("docker log = %v, want a pull of %s", docker.log, d.Copy.Config.Image)
+	}
+}
+
+func TestACopyBesideStartsOnTheImageOfTheBackupAfterAnUpdate(t *testing.T) {
+	docker, restic, runs := &fakeDocker{}, &fakeRestic{}, &fakeRuns{}
+	d := besideDeps(docker, restic, runs)
+	backedUp, tag := d.Copy.Image, d.Copy.Config.Image
+	d.ImageID = func(_ context.Context, ref string) string {
+		if ref == tag {
+			return "sha256:2222222222222222222222222222222222222222222222222222222222222222"
+		}
+		return ref
+	}
+
+	if err := backup.RestoreContainerBeside(context.Background(), d); err != nil {
+		t.Fatalf("RestoreContainerBeside: %v", err)
+	}
+	if got := docker.createdInspect.Config.Image; got != backedUp {
+		t.Fatalf("the copy was created from %q, want the image of the backup %q", got, backedUp)
+	}
+	if slices.ContainsFunc(docker.log, func(l string) bool { return strings.HasPrefix(l, "pull:") || strings.HasPrefix(l, "tag:") }) {
+		t.Fatalf("the copy moved the tag the original follows: %v", docker.log)
+	}
+}
+
+func TestACopyBesideKeepsTheTagWhenTheImageOfTheBackupIsGone(t *testing.T) {
+	docker, restic, runs := &fakeDocker{}, &fakeRestic{}, &fakeRuns{}
+	d := besideDeps(docker, restic, runs)
+	tag := d.Copy.Config.Image
+	d.ImageID = func(_ context.Context, ref string) string {
+		if ref == tag {
+			return "sha256:2222222222222222222222222222222222222222222222222222222222222222"
+		}
+		return ""
+	}
+
+	if err := backup.RestoreContainerBeside(context.Background(), d); err != nil {
+		t.Fatalf("RestoreContainerBeside: %v", err)
+	}
+	if got := docker.createdInspect.Config.Image; got != tag {
+		t.Fatalf("the copy was created from %q, want %q", got, tag)
 	}
 }
 

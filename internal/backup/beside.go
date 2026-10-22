@@ -36,11 +36,12 @@ type BesideContainerDeps struct {
 	TargetID string
 
 	Docker Docker
-	// ImagePresent reports whether the copy's image is on the host already,
-	// which spares a pull that would move the tag the original runs on.
-	ImagePresent func(ctx context.Context, ref string) bool
-	Restic       Restic
-	Runs         Runs
+	// ImageID is the id of the image ref names on the host, empty when the
+	// host does not have it. An image on the host is not pulled, since a pull
+	// would move the tag the original runs on.
+	ImageID func(ctx context.Context, ref string) string
+	Restic  Restic
+	Runs    Runs
 }
 
 // RestoreContainerBeside restores a snapshot into new folders and creates a
@@ -92,7 +93,15 @@ func runContainerBeside(ctx context.Context, d BesideContainerDeps) error {
 			return fmt.Errorf("restore: snapshot preflight: %w", err)
 		}
 	}
-	if ref := pullRef(d.Copy); !d.ImagePresent(ctx, ref) {
+	in := d.Copy
+	ref := pullRef(d.Copy)
+	now := d.ImageID(ctx, ref)
+	switch backedUp := d.Copy.Image; {
+	case backedUp != "" && backedUp != ref && backedUp != now && d.ImageID(ctx, backedUp) != "":
+		// The tag moved on since the backup. The copy starts on the image the
+		// backup ran, and the tag the original follows stays where it is.
+		in.Config.Image = backedUp
+	case now == "":
 		if err := d.Docker.Pull(ctx, ref); err != nil {
 			return fmt.Errorf("restore: pull image: %w", err)
 		}
@@ -105,7 +114,6 @@ func runContainerBeside(ctx context.Context, d BesideContainerDeps) error {
 			return fmt.Errorf("restore: restic restore: %w", err)
 		}
 	}
-	in := d.Copy
 	in.HostConfig.Links, _ = usableLinks(ctx, d.Docker, in.HostConfig.Links, false)
 	if d.WithoutRuntime {
 		in.HostConfig.Runtime = ""
