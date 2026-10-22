@@ -127,6 +127,16 @@ export function Dashboard() {
   const [statusFailed, setStatusFailed] = useState(false);
   const [coverage, setCoverage] = useState<CoverageReport | null>(null);
   const [coverageLoading, setCoverageLoading] = useState(true);
+  // Every run that ends, a backup, a copy, a replica or a check, changes what
+  // the sections and the coverage say, so both are read again then.
+  const lastEnd = runs.reduce((last, run) => Math.max(last, run.finishedAt ?? 0), 0);
+  const seenEnd = useRef<number | null>(null);
+  const [runsEnded, setRunsEnded] = useState(0);
+  useEffect(() => {
+    if (!runsReady) return;
+    if (seenEnd.current !== null && seenEnd.current !== lastEnd) setRunsEnded((n) => n + 1);
+    seenEnd.current = lastEnd;
+  }, [runsReady, lastEnd]);
   useEffect(() => {
     let active = true;
     const load = () => {
@@ -159,7 +169,7 @@ export function Dashboard() {
       active = false;
       window.removeEventListener("bv:settings-changed", load);
     };
-  }, []);
+  }, [runsEnded]);
 
   // The stream reports the end of a run before the next poll would. Reading
   // the runs then also brings the entries up to date.
