@@ -61,3 +61,22 @@ func TestOpeningAnotherInstancesRepositorySaysWhyItFailed(t *testing.T) {
 		})
 	}
 }
+
+func TestARepositoryTheMemberOffersIsSavedBeforeItsFirstCopy(t *testing.T) {
+	const at = "rest:http://10.0.0.9:8000/x"
+	absent := notThereYetError{what: "pull source"}
+	offered := []pairableRepo{{Domain: "containers", Location: at}}
+	if err := probeRefuses(absent, at+"/", offered, ""); err != nil {
+		t.Fatalf("an offered location was refused before its first copy: %v", err)
+	}
+	if err := probeRefuses(absent, at, nil, at); err != nil {
+		t.Fatalf("the saved location was refused on an edit: %v", err)
+	}
+	if err := probeRefuses(absent, "rest:http://10.0.0.9:8000/typo", offered, ""); err == nil {
+		t.Fatal("a location nobody offered was saved although nothing is there")
+	}
+	wrong := errors.New("could not open the pull source: wrong restic password")
+	if err := probeRefuses(wrong, at, offered, ""); err == nil {
+		t.Fatal("a refused key was saved because the location is offered")
+	}
+}

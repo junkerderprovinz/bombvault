@@ -1205,31 +1205,33 @@ func (s *Service) askPairing(ctx context.Context, memberID string, out *peerPair
 }
 
 // pairedPassword asks a member for its restic password and returns it sealed
-// under this instance's key, ready to store. role is what this instance takes
-// for the member, Receiver or Fetcher: the member gives its password only to
-// an instance it asked for one of them.
-func (s *Service) pairedPassword(ctx context.Context, memberID, role string) ([]byte, error) {
+// under this instance's key, ready to store, with the locations the member
+// offers. role is what this instance takes for the member, Receiver or
+// Fetcher: the member gives its password only to an instance it asked for one
+// of them.
+func (s *Service) pairedPassword(ctx context.Context, memberID, role string) ([]byte, []pairableRepo, error) {
 	if strings.TrimSpace(memberID) == "" {
-		return nil, errors.New("choose the instance this belongs to")
+		return nil, nil, errors.New("choose the instance this belongs to")
 	}
 	s.retellRoleAnswer(ctx, memberID, role)
 	var p peerPairing
 	if err := s.askPairing(ctx, memberID, &p); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	switch {
 	case p.KeyLocked:
-		return nil, errPasswordLocked
+		return nil, nil, errPasswordLocked
 	case p.ResticPassword == "":
-		return nil, errPasswordHeld
+		return nil, nil, errPasswordHeld
 	}
 	if !resticPasswordRe.MatchString(p.ResticPassword) {
-		return nil, errors.New("the other instance sent no usable restic password")
+		return nil, nil, errors.New("the other instance sent no usable restic password")
 	}
 	if err := s.grantOldMember(memberID, role); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	return secret.Encrypt(s.cfg.AppKey, []byte(p.ResticPassword))
+	enc, err := secret.Encrypt(s.cfg.AppKey, []byte(p.ResticPassword))
+	return enc, p.Repos, err
 }
 
 // openResticPassword returns a stored restic password in the clear.

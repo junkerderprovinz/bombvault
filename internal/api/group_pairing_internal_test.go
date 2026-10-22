@@ -281,7 +281,7 @@ func TestPairingWithAnInstanceWhoseBackupKeyIsLockedSaysSo(t *testing.T) {
 	}
 	source.svc.forgetBackupKey()
 
-	if _, err := puller.svc.pairedPassword(context.Background(), source.id(t), store.RoleFetcher); !errors.Is(err, errPasswordLocked) {
+	if _, _, err := puller.svc.pairedPassword(context.Background(), source.id(t), store.RoleFetcher); !errors.Is(err, errPasswordLocked) {
 		t.Fatalf("pairing = %v, want errPasswordLocked rather than a request to ask again", err)
 	}
 }

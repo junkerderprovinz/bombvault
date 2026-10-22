@@ -109,10 +109,10 @@ func validateReceiverCadence(c string) (string, string) {
 // buildReceivedRepo validates in and folds it onto existing (the zero value on
 // create), returning the row to persist or a user-facing error message.
 // Identity and last-check columns come from existing, so an edit keeps them.
-func (h *Handler) buildReceivedRepo(ctx context.Context, in receivedRepoInput, existing store.ReceivedRepo, isCreate bool) (store.ReceivedRepo, string) {
+func (h *Handler) buildReceivedRepo(ctx context.Context, in receivedRepoInput, existing store.ReceivedRepo, isCreate bool) (store.ReceivedRepo, []pairableRepo, string) {
 	repo := strings.TrimSpace(in.Repo)
 	if repo == "" {
-		return store.ReceivedRepo{}, "repo must not be empty"
+		return store.ReceivedRepo{}, nil, "repo must not be empty"
 	}
 
 	rr := existing
@@ -122,20 +122,21 @@ func (h *Handler) buildReceivedRepo(ctx context.Context, in receivedRepoInput, e
 	// Naming a member pairs the row with it: the member's restic password is
 	// fetched over the group now. An edit that names none keeps the password
 	// already stored.
+	var offered []pairableRepo
 	switch memberID := strings.TrimSpace(in.MemberID); {
 	case memberID == "" && isCreate:
-		return store.ReceivedRepo{}, "choose the instance that sends these copies"
+		return store.ReceivedRepo{}, nil, "choose the instance that sends these copies"
 	case memberID != "":
-		enc, err := h.svc.pairedPassword(ctx, memberID, store.RoleReceiver)
+		enc, repos, err := h.svc.pairedPassword(ctx, memberID, store.RoleReceiver)
 		if err != nil {
-			return store.ReceivedRepo{}, scrubError(err)
+			return store.ReceivedRepo{}, nil, scrubError(err)
 		}
-		rr.MemberID, rr.ResticPasswordEnc = memberID, enc
+		rr.MemberID, rr.ResticPasswordEnc, offered = memberID, enc, repos
 	}
 
 	cadence, msg := validateReceiverCadence(in.CheckCadence)
 	if msg != "" {
-		return store.ReceivedRepo{}, msg
+		return store.ReceivedRepo{}, nil, msg
 	}
 	rr.CheckCadence = cadence
 
@@ -157,7 +158,7 @@ func (h *Handler) buildReceivedRepo(ctx context.Context, in receivedRepoInput, e
 	} else if isCreate {
 		rr.Enabled = true
 	}
-	return rr, ""
+	return rr, offered, ""
 }
 
 // handleListReceiverRepos lists every received repo with its last-check status
@@ -195,18 +196,19 @@ var receiverProbeTimeout = 20 * time.Second
 
 // handleCreateReceiverRepo registers a received repo. POST /api/receiver/repos.
 // The repo has to open read-only before the row is saved, so a mistyped
-// location never lands in the dashboard.
+// location never lands in the dashboard. One the sender offers is saved before
+// its first copy is there.
 func (h *Handler) handleCreateReceiverRepo(w http.ResponseWriter, r *http.Request) {
 	var in receivedRepoInput
 	if !decodeBody(w, r, &in) {
 		return
 	}
-	rr, msg := h.buildReceivedRepo(r.Context(), in, store.ReceivedRepo{}, true)
+	rr, offered, msg := h.buildReceivedRepo(r.Context(), in, store.ReceivedRepo{}, true)
 	if msg != "" {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": msg})
 		return
 	}
-	if err := h.svc.receiverProbe(r.Context(), rr); err != nil {
+	if err := probeRefuses(h.svc.receiverProbe(r.Context(), rr), rr.Repo, offered, ""); err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
@@ -236,12 +238,12 @@ func (h *Handler) handleUpdateReceiverRepo(w http.ResponseWriter, r *http.Reques
 	if !decodeBody(w, r, &in) {
 		return
 	}
-	rr, msg := h.buildReceivedRepo(r.Context(), in, existing, false)
+	rr, offered, msg := h.buildReceivedRepo(r.Context(), in, existing, false)
 	if msg != "" {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": msg})
 		return
 	}
-	if err := h.svc.receiverProbe(r.Context(), rr); err != nil {
+	if err := probeRefuses(h.svc.receiverProbe(r.Context(), rr), rr.Repo, offered, existing.Repo); err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}

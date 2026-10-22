@@ -80,17 +80,17 @@ var pullDomains = map[string]bool{"containers": true, "vms": true, "files": true
 
 // buildPullSource validates in and folds it onto existing (the zero value on
 // create), returning the row to persist or a user-facing message.
-func (h *Handler) buildPullSource(ctx context.Context, in pullSourceInput, existing store.PullSource, isCreate bool) (store.PullSource, string) {
+func (h *Handler) buildPullSource(ctx context.Context, in pullSourceInput, existing store.PullSource, isCreate bool) (store.PullSource, []pairableRepo, string) {
 	repo := strings.TrimSpace(in.Repo)
 	if repo == "" {
-		return store.PullSource{}, "the repository location must not be empty"
+		return store.PullSource{}, nil, "the repository location must not be empty"
 	}
 	if isRcloneLocation(repo) {
-		return store.PullSource{}, "an rclone: location cannot be a pull source, because rclone would reach it with THIS instance's remotes. Use the repository's own address (rest:, s3:, sftp: or b2:) and its own credentials"
+		return store.PullSource{}, nil, "an rclone: location cannot be a pull source, because rclone would reach it with THIS instance's remotes. Use the repository's own address (rest:, s3:, sftp: or b2:) and its own credentials"
 	}
 	domain := strings.TrimSpace(in.Domain)
 	if !pullDomains[domain] {
-		return store.PullSource{}, "choose which kind of backup this source holds (containers, vms, files, zfs, flash or config)"
+		return store.PullSource{}, nil, "choose which kind of backup this source holds (containers, vms, files, zfs, flash or config)"
 	}
 
 	ps := existing
@@ -102,20 +102,21 @@ func (h *Handler) buildPullSource(ctx context.Context, in pullSourceInput, exist
 	// Naming a member pairs the source with it: the member's restic password
 	// is fetched over the group now. An edit that names none keeps the
 	// password already stored.
+	var offered []pairableRepo
 	switch memberID := strings.TrimSpace(in.MemberID); {
 	case memberID == "" && isCreate:
-		return store.PullSource{}, "choose the instance whose backups this box pulls"
+		return store.PullSource{}, nil, "choose the instance whose backups this box pulls"
 	case memberID != "":
-		enc, err := h.svc.pairedPassword(ctx, memberID, store.RoleFetcher)
+		enc, repos, err := h.svc.pairedPassword(ctx, memberID, store.RoleFetcher)
 		if err != nil {
-			return store.PullSource{}, scrubError(err)
+			return store.PullSource{}, nil, scrubError(err)
 		}
-		ps.MemberID, ps.ResticPasswordEnc = memberID, enc
+		ps.MemberID, ps.ResticPasswordEnc, offered = memberID, enc, repos
 	}
 
 	cadence, msg := validateReceiverCadence(in.Cadence)
 	if msg != "" {
-		return store.PullSource{}, msg
+		return store.PullSource{}, nil, msg
 	}
 	ps.Cadence = cadence
 	ps.LimitDownload = max(0, in.LimitDownload)
@@ -128,7 +129,7 @@ func (h *Handler) buildPullSource(ctx context.Context, in pullSourceInput, exist
 	if in.SortOrder != nil {
 		ps.SortOrder = *in.SortOrder
 	}
-	return ps, ""
+	return ps, offered, ""
 }
 
 // handleListPullSources returns every configured source. GET /api/pull/sources.
@@ -147,18 +148,19 @@ func (h *Handler) handleListPullSources(w http.ResponseWriter, _ *http.Request) 
 
 // handleCreatePullSource registers a source. POST /api/pull/sources.
 // The source has to open read-only before the row is saved, so a mistyped
-// location is rejected on the form instead of failing every night.
+// location is rejected on the form instead of failing every night. One the
+// member offers is saved before its first copy is there.
 func (h *Handler) handleCreatePullSource(w http.ResponseWriter, r *http.Request) {
 	var in pullSourceInput
 	if !decodeBody(w, r, &in) {
 		return
 	}
-	ps, msg := h.buildPullSource(r.Context(), in, store.PullSource{}, true)
+	ps, offered, msg := h.buildPullSource(r.Context(), in, store.PullSource{}, true)
 	if msg != "" {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": msg})
 		return
 	}
-	if err := h.svc.pullProbe(r.Context(), ps); err != nil {
+	if err := probeRefuses(h.svc.pullProbe(r.Context(), ps), ps.Repo, offered, ""); err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
@@ -186,12 +188,12 @@ func (h *Handler) handleUpdatePullSource(w http.ResponseWriter, r *http.Request)
 	if !decodeBody(w, r, &in) {
 		return
 	}
-	ps, msg := h.buildPullSource(r.Context(), in, existing, false)
+	ps, offered, msg := h.buildPullSource(r.Context(), in, existing, false)
 	if msg != "" {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": msg})
 		return
 	}
-	if err := h.svc.pullProbe(r.Context(), ps); err != nil {
+	if err := probeRefuses(h.svc.pullProbe(r.Context(), ps), ps.Repo, offered, existing.Repo); err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}

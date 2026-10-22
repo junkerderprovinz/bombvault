@@ -16,6 +16,7 @@ import (
 	"fmt"
 	"path"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strings"
 	"time"
@@ -115,10 +116,35 @@ func (s *Service) openOthersRepo(ctx context.Context, repo string, enc, plain re
 		// a path.
 		return restic.Mode{}, fmt.Errorf("could not open the %s: wrong restic password, or the location is not a BombVault or restic repository", what)
 	case isRepoDefinitelyAbsent(err):
-		return restic.Mode{}, fmt.Errorf("the %s does not exist yet: it appears with the other instance's first copy there, unless the location is mistyped", what)
+		return restic.Mode{}, notThereYetError{what: what}
 	default:
 		return restic.Mode{}, fmt.Errorf("could not reach the %s: %w", what, err)
 	}
+}
+
+// notThereYetError is another instance's repository that does not exist yet,
+// before that instance made its first copy there.
+type notThereYetError struct{ what string }
+
+func (e notThereYetError) Error() string {
+	return "the " + e.what + " does not exist yet: it appears with the other instance's first copy there, unless the location is mistyped"
+}
+
+// probeRefuses returns the probe failure that keeps a pull source or received
+// repository from being saved. A repository the other instance has not made
+// yet is saved when it is a location that instance offers or the one already
+// saved, since only its first copy is missing; anything else could be a typo.
+func probeRefuses(err error, loc string, offered []pairableRepo, saved string) error {
+	if !errors.As(err, new(notThereYetError)) {
+		return err
+	}
+	if saved != "" && sameRepoLocation(loc, saved) {
+		return nil
+	}
+	if slices.ContainsFunc(offered, func(p pairableRepo) bool { return sameRepoLocation(scrubRepoLocation(loc), p.Location) }) {
+		return nil
+	}
+	return err
 }
 
 // receiverInventory lists a received repo's snapshots once and groups them by
