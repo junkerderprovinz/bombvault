@@ -310,7 +310,7 @@ func (h *Handler) handleProposeMeshOffer(w http.ResponseWriter, r *http.Request)
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
-	repo := fmt.Sprintf("rest:%s/%s/%s", base, snip.User, in.Domain)
+	repo := destinationLocation("rest:"+base+"/"+snip.User, in.Domain)
 
 	settings, err := h.store.GetSettings()
 	if err != nil {

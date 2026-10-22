@@ -589,6 +589,29 @@ func TestMeshOfferReachesTheMemberOverTheGroup(t *testing.T) {
 	}
 }
 
+func TestASelfBackupMeshOfferKeepsItsRepoOutOfRestServersConfigPath(t *testing.T) {
+	a := newInstance(t, "cellar", strings.Repeat("a1", 32))
+	b := newInstance(t, "attic", strings.Repeat("b2", 32))
+	pairThroughRelay(t, a, b)
+	peers, err := a.svc.syncFleetPeers()
+	if err != nil || len(peers) != 1 {
+		t.Fatalf("fleet rows = %+v, %v", peers, err)
+	}
+	code, out := a.do(t, http.MethodPost, "/api/fleet/peers/"+peers[0].ID+"/mesh-offer", map[string]any{
+		"domain": "config", "baseUrl": "http://192.168.1.9:8000/",
+	})
+	if code != http.StatusOK || out["ok"] != true {
+		t.Fatalf("propose: %d %v", code, out)
+	}
+	offers, err := b.st.ListMeshOffers()
+	if err != nil || len(offers) != 1 {
+		t.Fatalf("offers on the member = %+v, %v", offers, err)
+	}
+	if want := "rest:http://192.168.1.9:8000/bombvault-config/selfbackup"; offers[0].Repo != want {
+		t.Fatalf("offered repo = %q, want %q", offers[0].Repo, want)
+	}
+}
+
 func TestAnOldFleetRowIsTakenOverByTheMemberWithItsName(t *testing.T) {
 	a := newInstance(t, "cellar", strings.Repeat("a1", 32))
 	b := newInstance(t, "attic", strings.Repeat("b2", 32))

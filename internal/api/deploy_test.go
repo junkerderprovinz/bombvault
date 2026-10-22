@@ -71,3 +71,14 @@ func TestBuildDeploySnippetUnknownDomain(t *testing.T) {
 		t.Fatal("expected an error for an unknown domain")
 	}
 }
+
+func TestTheSelfBackupRecipeKeepsItsRepoOutOfRestServersConfigPath(t *testing.T) {
+	snip, err := buildDeploySnippet("config")
+	if err != nil {
+		t.Fatalf("buildDeploySnippet: %v", err)
+	}
+	const want = "rest:http://192.168.x.x:8000/bombvault-config/selfbackup"
+	if !strings.Contains(snip.DockerRun, want) {
+		t.Errorf("recipe = %q, want it to name %s", snip.DockerRun, want)
+	}
+}

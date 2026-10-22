@@ -93,6 +93,18 @@ function inferBackend(url: string): Backend {
   return "other";
 }
 
+/** Where rest-server keeps the repository at repoURL, inside the data folder
+ *  the recipe mounts. While the field is empty the recipe's own address
+ *  stands in, with the self-backup in selfbackup as the server puts it. */
+export function storageBoxRepoPath(domain: string, repoURL: string): string {
+  const path = repoURL
+    .trim()
+    .replace(/^rest:/, "")
+    .replace(/^[a-z]+:\/\/[^/]*/i, "")
+    .replace(/\/+$/, "");
+  return `/path/on/storage-box/restic${path || `/bombvault-${domain}/${domain === "config" ? "selfbackup" : domain}`}`;
+}
+
 export function OffsiteWizard({
   domain,
   settings,
@@ -488,7 +500,7 @@ export function OffsiteWizard({
   const cronHint =
     urlBackend === "rest"
       ? `# Run on the storage box itself, so BombVault stays append-only:
-0 4 * * 0 restic -r /path/on/storage-box/restic/bombvault-${domain}/${domain} forget \\
+0 4 * * 0 restic -r ${storageBoxRepoPath(domain, repoURL)} forget \\
   --keep-within 14d --keep-weekly 8 --keep-monthly 12 --prune
 # note: watch for a sudden snapshot-count drop (retention-policy timestamp attack)`
       : `# Run from a separate machine with this remote configured. BombVault itself
