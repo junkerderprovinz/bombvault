@@ -257,10 +257,7 @@ func (s *Service) planOwnFolder(ctx context.Context, settings store.Settings, do
 	plan.srcMode = s.primaryModeFor(settings, domain, plan.src)
 	plan.mode = s.ModeFor(settings)
 	if row := step.folder.Row; row != nil && restic.IsRemoteRepo(to) {
-		plan.mode = s.applyTargetCreds(plan.mode, settings, *row)
-		if row.StorageClass != "" {
-			plan.mode.StorageClass = row.StorageClass
-		}
+		plan.mode = withRowStorageClass(s.applyTargetCreds(plan.mode, settings, *row), *row)
 		plan.lim = restic.Limits{UploadKBps: row.LimitUpload, DownloadKBps: row.LimitDownload}
 		plan.mode.Limits = plan.lim
 	}

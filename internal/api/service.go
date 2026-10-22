@@ -2142,14 +2142,22 @@ func targetOffsiteLimits(t store.OffsiteTarget) restic.Limits {
 // target takes the class of its destination, whose empty class means the
 // provider's default.
 func (s *Service) offsiteModeForTarget(settings store.Settings, target store.OffsiteTarget) restic.Mode {
-	mode := s.applyTargetCreds(s.ModeFor(settings), settings, target)
-	if target.StorageClass != "" || target.DestinationID != "" {
-		mode.StorageClass = target.StorageClass
-	}
+	mode := withRowStorageClass(s.applyTargetCreds(s.ModeFor(settings), settings, target), target)
 	mode.Compression = storedCompression(target.Compression)
 	// The keep-policy's prune at the target repacks over the same line the
 	// copy is capped on.
 	mode.Limits = targetOffsiteLimits(target)
+	return mode
+}
+
+// withRowStorageClass puts a row's own storage class on mode, after its
+// credentials. A row that follows a storage location carries that location's
+// class, where empty means the provider's default, so it beats the class of
+// the sign-in and of the default sign-in.
+func withRowStorageClass(mode restic.Mode, t store.OffsiteTarget) restic.Mode {
+	if t.StorageClass != "" || t.DestinationID != "" {
+		mode.StorageClass = t.StorageClass
+	}
 	return mode
 }
 

@@ -203,6 +203,37 @@ func TestOffsiteModeForTargetStorageClassFallback(t *testing.T) {
 	}
 }
 
+// A location set back to the provider's default class keeps it as the own
+// folder too, whatever class its sign-in or the default sign-in still hold.
+func TestAPrimaryOnALocationTakesTheLocationsDefaultClass(t *testing.T) {
+	s := unraidNotifyService(t, nil)
+	if err := s.SetCloudCreds(CloudCreds{S3KeyID: "AK", S3StorageClass: "STANDARD_IA"}); err != nil {
+		t.Fatal(err)
+	}
+	if err := s.SetCloudCredSets([]CloudCredSet{{ID: "aws", Name: "AWS", CloudCreds: CloudCreds{S3KeyID: "K", S3Secret: "S", S3StorageClass: "GLACIER_IR"}}}); err != nil {
+		t.Fatal(err)
+	}
+	d, err := s.store.SaveDestination(store.OffsiteTarget{Name: "Bucket", Repo: "s3:https://s3.eu-west-1.amazonaws.com/bucket", Provider: "aws", CredsRef: "aws"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	repo := d.Repo + "/containers"
+	row := followLocation(store.OffsiteTarget{Repo: repo, DestinationID: d.ID}, d)
+	if err := s.store.MoveOwnFolder(store.OwnFolder{Domain: "containers", Row: &row}, func(st *store.Settings) error {
+		st.ContainersPath = repo
+		return nil
+	}); err != nil {
+		t.Fatal(err)
+	}
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := s.primaryModeFor(settings, "containers", repo).StorageClass; got != "" {
+		t.Fatalf("storage class = %q, want the provider's default the location names", got)
+	}
+}
+
 func TestDecodeCloudForEmptyRefUsesSharedCreds(t *testing.T) {
 	s := unraidNotifyService(t, nil)
 	if err := s.SetCloudCreds(CloudCreds{S3KeyID: "SHARED-KEY", S3Secret: "SHARED-SEC"}); err != nil {

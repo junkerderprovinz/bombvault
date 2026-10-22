@@ -119,12 +119,7 @@ func (s *Service) primaryModeFor(settings store.Settings, domain, repo string) r
 		mode.Limits = restic.Limits{UploadKBps: named.LimitUpload, DownloadKBps: named.LimitDownload}
 		mode.Compression = storedCompression(named.Compression)
 		if restic.IsRemoteRepo(repo) {
-			mode = s.applyTargetCreds(mode, settings, named)
-			// As in offsiteModeForTarget, the row's own storage class beats the
-			// credential set's default, which is why it is applied second.
-			if named.StorageClass != "" {
-				mode.StorageClass = named.StorageClass
-			}
+			mode = withRowStorageClass(s.applyTargetCreds(mode, settings, named), named)
 		}
 		return mode
 	}
@@ -137,11 +132,7 @@ func (s *Service) primaryModeFor(settings store.Settings, domain, repo string) r
 	if !ok {
 		return mode
 	}
-	mode = s.applyTargetCreds(mode, settings, t)
-	if t.StorageClass != "" {
-		mode.StorageClass = t.StorageClass
-	}
-	return mode
+	return withRowStorageClass(s.applyTargetCreds(mode, settings, t), t)
 }
 
 // namedRepoForLocation finds the named repository a resolved location belongs
