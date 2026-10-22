@@ -4082,6 +4082,7 @@ const ms: Partial<Translations> = {
   "storage.remove.action": "Alih keluar destinasi",
   "storage.startOver": "Cipta repositori baharu di sini",
   "storage.startOverConfirm": "Lakukan ini hanya jika anda sengaja mengosongkan atau memadam repositori lama. Jika cakeranya cuma tidak dilekapkan pada pelayan, salinan seterusnya menulis repositori baharu di tempatnya, dan repositori itu tersembunyi semula sebaik sahaja cakera kembali.",
+  "storage.startedOver": "Sandaran atau salinan seterusnya di sini mencipta repositori baharu.",
   "storage.remove.title": "Alih keluar {name}?",
   "storage.remove.keep": "Alih keluar destinasi, kekalkan sandaran",
   "storage.remove.keepText": "BombVault berhenti menulis ke sini. Sandaran kekal di tempatnya. Anda boleh membacanya kemudian di Pemulihan › Daripada folder sandaran lama.",

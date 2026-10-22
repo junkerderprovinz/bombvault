@@ -4072,6 +4072,7 @@ const no: Partial<Translations> = {
   "storage.remove.action": "Fjern mål",
   "storage.startOver": "Opprett et nytt depot her",
   "storage.startOverConfirm": "Gjør dette bare hvis du tømte eller slettet det gamle depotet med vilje. Hvis disken bare ikke er montert på serveren, skriver neste kopi et nytt depot i stedet, og det blir skjult igjen så snart disken er tilbake.",
+  "storage.startedOver": "Neste sikkerhetskopi eller kopi her oppretter et nytt depot.",
   "storage.remove.title": "Fjerne {name}?",
   "storage.remove.keep": "Fjern mål, behold sikkerhetskopiene",
   "storage.remove.keepText": "BombVault slutter å skrive hit. Sikkerhetskopiene blir liggende der de er. Du kan lese dem senere under Gjenoppretting › Fra en gammel sikkerhetskopimappe.",

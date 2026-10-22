@@ -4072,6 +4072,7 @@ const fr: Partial<Translations> = {
   "storage.remove.action": "Supprimer la destination",
   "storage.startOver": "Créer un nouveau dépôt ici",
   "storage.startOverConfirm": "Ne le faites que si vous avez vidé ou supprimé l'ancien dépôt volontairement. Si son disque n'est simplement pas monté sur le serveur, la copie suivante écrit un nouveau dépôt à sa place, et celui-ci est de nouveau masqué dès que le disque revient.",
+  "storage.startedOver": "La prochaine sauvegarde ou copie ici crée un nouveau dépôt.",
   "storage.remove.title": "Supprimer {name} ?",
   "storage.remove.keep": "Supprimer la destination, garder les sauvegardes",
   "storage.remove.keepText": "BombVault cesse d'écrire ici. Les sauvegardes restent où elles sont. Vous pourrez les lire plus tard sous Restauration › Depuis un ancien dossier de sauvegardes.",

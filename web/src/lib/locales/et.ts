@@ -4082,6 +4082,7 @@ const et: Partial<Translations> = {
   "storage.remove.action": "Eemalda sihtkoht",
   "storage.startOver": "Loo siia uus hoidla",
   "storage.startOverConfirm": "Tee seda ainult siis, kui tühjendasid või kustutasid vana hoidla meelega. Kui selle ketas lihtsalt pole serveris ühendatud, kirjutab järgmine koopia selle asemele uue hoidla ja see peitub uuesti, kui ketas tagasi on.",
+  "storage.startedOver": "Järgmine varundus või koopia loob siia uue hoidla.",
   "storage.remove.title": "Kas eemaldada {name}?",
   "storage.remove.keep": "Eemalda sihtkoht, jäta varundused alles",
   "storage.remove.keepText": "BombVault lõpetab siia kirjutamise. Varundused jäävad, kuhu nad jäid. Neid saad hiljem lugeda jaotises Taastamine › Vanast varunduste kaustast.",

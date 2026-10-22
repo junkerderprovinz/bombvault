@@ -5335,7 +5335,7 @@ func (s *Service) probeOffsiteRepo(ctx context.Context, repo string, mode restic
 	// until the user says so.
 	if restic.IsRemoteRepo(repo) && isRepoUninitialized(primaryErr) {
 		if s.recordedEstablishment(repo) == repoWasEstablished {
-			return true, false, errRemoteRepoGone
+			return true, false, s.remoteRepoGone(repo)
 		}
 		return true, false, nil
 	}
@@ -5458,7 +5458,7 @@ func (s *Service) ensureRepo(ctx context.Context, repo string, mode restic.Mode)
 	// were empty, and a new repository there would take the copies until the
 	// disk is back and hides it again. Only the user can say it is gone for good.
 	if restic.IsRemoteRepo(repo) && isRepoUninitialized(openErr) && s.recordedEstablishment(repo) == repoWasEstablished {
-		return false, errRemoteRepoGone
+		return false, s.remoteRepoGone(repo)
 	}
 	// Opens with neither mode → not initialised (a brand-new location) OR its
 	// backing store vanished. Local repos need their directory; remote backends do not.

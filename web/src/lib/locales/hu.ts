@@ -4073,6 +4073,7 @@ const hu: Partial<Translations> = {
   "storage.remove.action": "Cél eltávolítása",
   "storage.startOver": "Új tároló létrehozása itt",
   "storage.startOverConfirm": "Csak akkor tedd, ha a régi tárolót szándékosan ürítetted ki vagy törölted. Ha a lemeze csak nincs csatolva a szerveren, a következő másolat új tárolót ír a helyére, és az újra elrejtőzik, amint a lemez visszakerül.",
+  "storage.startedOver": "A következő mentés vagy másolat új tárolót hoz létre itt.",
   "storage.remove.title": "{name} eltávolítása?",
   "storage.remove.keep": "Cél eltávolítása, a mentések megtartása",
   "storage.remove.keepText": "A BombVault nem ír többé ide. A biztonsági mentések ott maradnak, ahol vannak. Később elolvashatod őket a Visszaállítás › Régi mentési mappából alatt.",

@@ -4082,6 +4082,7 @@ const lv: Partial<Translations> = {
   "storage.remove.action": "Noņemt mērķi",
   "storage.startOver": "Izveidot šeit jaunu krātuvi",
   "storage.startOverConfirm": "Dariet to tikai tad, ja veco krātuvi apzināti iztukšojāt vai izdzēsāt. Ja tās disks serverī vienkārši nav pievienots, nākamā kopija tās vietā ieraksta jaunu krātuvi, un tā atkal paslēpjas, tiklīdz disks atgriežas.",
+  "storage.startedOver": "Nākamā dublēšana vai kopija šeit izveidos jaunu krātuvi.",
   "storage.remove.title": "Noņemt {name}?",
   "storage.remove.keep": "Noņemt mērķi, dublējumus paturēt",
   "storage.remove.keepText": "BombVault pārstāj šeit rakstīt. Dublējumi paliek tur, kur ir. Vēlāk tos varat izlasīt sadaļā Atjaunošana › No vecas dublējumu mapes.",

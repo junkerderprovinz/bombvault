@@ -61,10 +61,15 @@ type storageLocation struct {
 	LimitDownload *int                 `json:"limitDownload,omitempty"`
 	Protection    locationProtection   `json:"protection"`
 	Capacity      locationCapacity     `json:"capacity"`
+	// Gone says a remote repository here that held backups was found empty,
+	// and nothing is written there until the user starts over.
+	Gone bool `json:"gone,omitempty"`
 
 	// volumes are the repositories whose volume stands for the location's
 	// room, the first one that can be measured counting.
 	volumes []string
+	// repos are the repositories the location's sections write to.
+	repos []string
 }
 
 // locationSection is one domain's use of a location: the home its backups are
@@ -265,8 +270,17 @@ func (s *Service) StorageLocations() ([]storageLocation, error) {
 		if out[i].Sections == nil {
 			out[i].Sections = []locationSection{}
 		}
+		out[i].Gone = slices.ContainsFunc(out[i].repos, s.repoFoundGone)
 	}
 	return out, nil
+}
+
+func (s *Service) repoFoundGone(repo string) bool {
+	if !restic.IsRemoteRepo(repo) {
+		return false
+	}
+	gone, err := s.store.IsRepoGone(repo)
+	return err == nil && gone
 }
 
 // StorageLocation returns the location with the given id.
@@ -393,6 +407,7 @@ func (b *locationBuilder) pathLocations() []storageLocation {
 		loc.Protection.Immutable = loc.Protection.Immutable && sec.Immutable
 		if repo, err := b.s.resolveRepo(raw); err == nil {
 			loc.volumes = append(loc.volumes, repo)
+			loc.repos = append(loc.repos, repo)
 		}
 		series[root] = append(series[root], sizeSeries{domain, "local"})
 	}
@@ -445,6 +460,7 @@ func (b *locationBuilder) repoLocation(r store.OffsiteTarget, domains []string) 
 	}
 	if repo, err := b.s.resolveRepo(r.Repo); err == nil {
 		loc.volumes = []string{repo}
+		loc.repos = []string{repo}
 	}
 	loc.Capacity = b.capacity(loc.volumes, nil)
 	return loc
@@ -480,7 +496,11 @@ func (b *locationBuilder) destinationLocation(d store.OffsiteTarget) storageLoca
 		if b.ownIn[domain] != d.ID {
 			continue
 		}
-		sec := b.pathSection(domain, strings.TrimSpace(domainPathRaw(domain, b.settings)))
+		raw := strings.TrimSpace(domainPathRaw(domain, b.settings))
+		sec := b.pathSection(domain, raw)
+		if repo, err := b.s.resolveRepo(raw); err == nil {
+			loc.repos = append(loc.repos, repo)
+		}
 		// Its keep rule is the section's local one, which this location's
 		// keep card does not describe.
 		sec.Own = []string{}
@@ -552,6 +572,7 @@ func (b *locationBuilder) addTarget(loc *storageLocation, t store.OffsiteTarget)
 	})
 	if repo, err := b.s.resolveRepo(t.Repo); err == nil {
 		loc.volumes = append(loc.volumes, repo)
+		loc.repos = append(loc.repos, repo)
 	}
 	direct, ok := b.directs[t.ID]
 	if !ok {
@@ -565,6 +586,7 @@ func (b *locationBuilder) addTarget(loc *storageLocation, t store.OffsiteTarget)
 	})
 	if repo, err := b.s.resolveRepo(direct.Repo); err == nil {
 		loc.volumes = append(loc.volumes, repo)
+		loc.repos = append(loc.repos, repo)
 	}
 }
 

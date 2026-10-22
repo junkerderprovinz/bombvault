@@ -47,7 +47,7 @@ vi.mock("../lib/api", async (importOriginal) => {
     getRcloneSections: vi.fn(),
     testOffsiteTarget: vi.fn(),
     tamperTestOffsiteTarget: vi.fn(),
-    startOverAtTarget: vi.fn(),
+    startOverAtLocation: vi.fn(),
   };
 });
 
@@ -67,7 +67,7 @@ const getCloudCredSets = vi.mocked(api.getCloudCredSets);
 const getRcloneSections = vi.mocked(api.getRcloneSections);
 const testOffsiteTarget = vi.mocked(api.testOffsiteTarget);
 const tamperTestOffsiteTarget = vi.mocked(api.tamperTestOffsiteTarget);
-const startOverAtTarget = vi.mocked(api.startOverAtTarget);
+const startOverAtLocation = vi.mocked(api.startOverAtLocation);
 
 const { StorageLocationPage } = await import("./StorageLocation");
 
@@ -829,20 +829,48 @@ describe("a location whose repository went away", () => {
   it("offers to start a new repository and tests again once that is confirmed", async () => {
     testOffsiteTarget.mockResolvedValueOnce({ ok: false, code: "repo-gone", error: "server text" });
     testOffsiteTarget.mockResolvedValueOnce({ ok: true, reachable: true, initialized: false });
-    startOverAtTarget.mockResolvedValue({ ok: true });
+    startOverAtLocation.mockResolvedValue({ ok: true });
     await renderPage("destination:box");
 
     await click(screen.getByRole("button", { name: "Test connection" }));
     expect(await screen.findByText(/The repository that was here is gone/)).toBeTruthy();
-    expect(startOverAtTarget).not.toHaveBeenCalled();
+    expect(startOverAtLocation).not.toHaveBeenCalled();
 
     await click(screen.getByRole("button", { name: "Start a new repository here" }));
     const dialog = await screen.findByRole("dialog");
     await click(within(dialog).getByRole("button", { name: "Start a new repository here" }));
 
-    await waitFor(() => expect(startOverAtTarget).toHaveBeenCalledWith("t-containers"));
+    await waitFor(() => expect(startOverAtLocation).toHaveBeenCalledWith("destination:box"));
     expect(await screen.findByText("The repository does not exist yet. The first replication creates it.")).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Start a new repository here" })).toBeNull();
+  });
+
+  it("says so before any test when a run found it gone, also for a named repository", async () => {
+    const bucket = location({
+      id: "repo:r1",
+      object: "repo",
+      backend: "s3",
+      name: "Bucket",
+      where: "s3:s3.example.com/bucket",
+      sections: [section({ use: "home", repoId: "r1" })],
+      gone: true,
+    });
+    stage(bucket);
+    startOverAtLocation.mockImplementation(async () => {
+      stage({ ...bucket, gone: false });
+      return { ok: true };
+    });
+    await renderPage("repo:r1");
+
+    expect(screen.getByText(/The repository that was here is gone/)).toBeTruthy();
+    await click(screen.getByRole("button", { name: "Start a new repository here" }));
+    const dialog = await screen.findByRole("dialog");
+    await click(within(dialog).getByRole("button", { name: "Start a new repository here" }));
+
+    await waitFor(() => expect(startOverAtLocation).toHaveBeenCalledWith("repo:r1"));
+    expect(await screen.findByText("The next backup or copy here creates a new repository.")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Start a new repository here" })).toBeNull();
+    expect(screen.queryByText(/The repository that was here is gone/)).toBeNull();
   });
 
   it("offers nothing when a test only finds no repository yet", async () => {

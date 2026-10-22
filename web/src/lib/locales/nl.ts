@@ -4071,6 +4071,7 @@ const nl: Partial<Translations> = {
   "storage.remove.action": "Bestemming verwijderen",
   "storage.startOver": "Hier een nieuw repository aanmaken",
   "storage.startOverConfirm": "Doe dit alleen als je het oude repository met opzet hebt geleegd of verwijderd. Is de schijf alleen niet gekoppeld op de server, dan schrijft de volgende kopie een nieuw repository op die plek, en dat raakt weer verborgen zodra de schijf terug is.",
+  "storage.startedOver": "De volgende back-up of kopie maakt hier een nieuw repository aan.",
   "storage.remove.title": "{name} verwijderen?",
   "storage.remove.keep": "Bestemming verwijderen, back-ups bewaren",
   "storage.remove.keepText": "BombVault schrijft hier niet meer naartoe. De back-ups blijven waar ze zijn. Je kunt ze later lezen onder Herstel › Uit een oude back-upmap.",

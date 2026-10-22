@@ -30,8 +30,7 @@ import { AdoptCard, RulesCard } from "../components/storage/RulesCard";
 import { useLocationEdit } from "../components/storage/useLocationEdit";
 import { TestButton, VerdictLine } from "../components/TestButton";
 import {
-  startOverAtPrimary,
-  startOverAtTarget,
+  startOverAtLocation,
   testOffsiteTarget,
   testPrimaryRemote,
   type OkEnvelope,
@@ -47,15 +46,11 @@ import { eraseKey, liveRun, moveKey, moveText } from "../lib/storageRuns";
 import { settingsOwned, type LocationRecords } from "../lib/storageWrites";
 import { useProviderForm } from "../lib/useProviders";
 import { useConfirm } from "../lib/useConfirm";
-import { useStorageLocation } from "../lib/useStorageLocations";
+import { storageLocationsChanged, useStorageLocation } from "../lib/useStorageLocations";
 import { useTestVerdict, type Verdict } from "../lib/useTestVerdict";
 import { CardFoot, hueCounter } from "./settings/shared";
 
-interface Probe {
-  test: () => Promise<OkEnvelope & { reachable?: boolean; initialized?: boolean }>;
-  /** Lets the next run create a new repository where the old one is gone. */
-  startOver: () => Promise<OkEnvelope>;
-}
+type Probe = () => Promise<OkEnvelope & { reachable?: boolean; initialized?: boolean }>;
 
 /**
  * connectionProbe is the test that reaches this location, or null where the
@@ -67,11 +62,11 @@ function connectionProbe(location: StorageLocation): Probe | null {
   const copy = location.sections.find((section) => section.use === "copy" && section.targetId);
   if (copy?.targetId) {
     const id = copy.targetId;
-    return { test: () => testOffsiteTarget(id), startOver: () => startOverAtTarget(id) };
+    return () => testOffsiteTarget(id);
   }
   if (location.object === "path" && location.backend !== "local" && location.sections.length > 0) {
     const { domain } = location.sections[0];
-    return { test: () => testPrimaryRemote(domain), startOver: () => startOverAtPrimary(domain) };
+    return () => testPrimaryRemote(domain);
   }
   return null;
 }
@@ -93,21 +88,30 @@ function Location({ location, records }: { location: StorageLocation; records: L
   const [moving, setMoving] = useState(false);
   const progress = useProgress();
   const test = useTestVerdict(location.id, t("offsite.testFailed"));
-  const [gone, setGone] = useState(false);
+  const [testedGone, setTestedGone] = useState(false);
+  // Holds back what the server said until the location is read again after a
+  // start over.
+  const [startedOver, setStartedOver] = useState(false);
+  if (startedOver && !location.gone) setStartedOver(false);
+  const gone = testedGone || (!!location.gone && !startedOver);
   const { confirm, confirmDialog } = useConfirm();
   const nextHue = hueCounter();
 
   async function check(p: Probe): Promise<Verdict> {
-    const r = await p.test();
-    setGone(r.code === REPO_GONE);
+    const r = await p();
+    setTestedGone(r.code === REPO_GONE);
     return offsiteVerdict(r, t);
   }
 
-  async function startOver(p: Probe) {
+  async function startOver() {
     if (!(await confirm(t("storage.startOverConfirm"), { confirmKey: "storage.startOver" }))) return;
     void test.run(async () => {
-      const r = await p.startOver();
-      return r.ok ? check(p) : { ok: false, reason: r.error ?? t("offsite.testFailed") };
+      const r = await startOverAtLocation(location.id);
+      if (!r.ok) return { ok: false, reason: r.error ?? t("offsite.testFailed") };
+      setTestedGone(false);
+      setStartedOver(true);
+      storageLocationsChanged();
+      return probe ? check(probe) : { ok: true, note: t("storage.startedOver") };
     });
   }
 
@@ -168,8 +172,8 @@ function Location({ location, records }: { location: StorageLocation; records: L
                 onClick={() => void test.run(() => check(probe))}
               />
             )}
-            {probe && gone && test.verdict && !test.running && (
-              <Button label={t("storage.startOver")} labelKey="storage.startOver" onClick={() => void startOver(probe)} />
+            {gone && !test.running && (
+              <Button label={t("storage.startOver")} labelKey="storage.startOver" onClick={() => void startOver()} />
             )}
             {actions.length > 0 && (
               <span data-new="location-remove" className="flex">
@@ -178,7 +182,7 @@ function Location({ location, records }: { location: StorageLocation; records: L
             )}
           </div>
         </div>
-        <VerdictLine verdict={test.verdict} />
+        <VerdictLine verdict={test.verdict ?? (gone ? { ok: false, reason: t("placementCode.repoGone") } : null)} />
         {(erasing || moveRun) && (
           <p className="text-sm text-accentText" role="status">
             {moveRun ? moveText(t, moveRun) : t("storage.remove.erasingNow")}

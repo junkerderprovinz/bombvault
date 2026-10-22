@@ -4063,6 +4063,7 @@ const vi: Partial<Translations> = {
   "storage.remove.action": "Xóa đích sao lưu",
   "storage.startOver": "Tạo kho mới ở đây",
   "storage.startOverConfirm": "Chỉ làm việc này nếu bạn đã cố ý làm trống hoặc xóa kho cũ. Nếu ổ đĩa của nó chỉ đơn giản là chưa được gắn trên máy chủ, bản sao tiếp theo sẽ ghi một kho mới vào chỗ đó, và kho này lại bị che khuất ngay khi ổ đĩa quay lại.",
+  "storage.startedOver": "Lần sao lưu hoặc sao chép tiếp theo ở đây sẽ tạo một kho mới.",
   "storage.remove.title": "Xóa {name}?",
   "storage.remove.keep": "Xóa đích sao lưu, giữ các bản sao lưu",
   "storage.remove.keepText": "BombVault ngừng ghi vào đây. Các bản sao lưu vẫn ở nguyên chỗ. Bạn có thể đọc chúng sau trong Khôi phục › Từ thư mục sao lưu cũ.",

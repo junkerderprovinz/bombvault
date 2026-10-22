@@ -3,6 +3,7 @@ package api
 import (
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/junkerderprovinz/bombvault/internal/restic"
@@ -11,6 +12,15 @@ import (
 // codeRepoGone is the code a refusal by errRemoteRepoGone carries, which the
 // page answers with the offer to start a new repository there.
 const codeRepoGone = "repo-gone"
+
+// remoteRepoGone notes that repo was found gone, so the page of every storage
+// location that holds it offers to start over, and returns errRemoteRepoGone.
+func (s *Service) remoteRepoGone(repo string) error {
+	if err := s.store.MarkRepoGone(repo); err != nil {
+		log.Printf("api: mark repo gone: %v", err)
+	}
+	return errRemoteRepoGone
+}
 
 // startOverAt forgets that the remote location repo held a repository, so the
 // next run creates a new one there. It is the user's answer to
@@ -25,58 +35,36 @@ func (s *Service) startOverAt(repo string) error {
 	return nil
 }
 
-// StartOverAtTarget lets the next copy to the off-site target id create a new
-// repository where the old one is gone.
-func (s *Service) StartOverAtTarget(id string) error {
-	target, ok, err := s.store.GetOffsiteTarget(id)
-	if err != nil {
-		return fmt.Errorf("read off-site target: %w", err)
-	}
-	if !ok {
-		return errors.New("no such off-site target")
-	}
-	repo, err := s.resolveRepo(target.Repo)
+// StartOverAtLocation lets the next run create a new repository in every
+// remote repository of the storage location id that was found gone. A
+// destination holds one per section, and each was emptied with the disk.
+func (s *Service) StartOverAtLocation(id string) error {
+	loc, err := s.StorageLocation(id)
 	if err != nil {
 		return err
 	}
-	return s.startOverAt(repo)
+	for _, repo := range loc.repos {
+		if !s.repoFoundGone(repo) {
+			continue
+		}
+		if err := s.startOverAt(repo); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
-// StartOverAtPrimary does the same for the remote backup path of a domain.
-func (s *Service) StartOverAtPrimary(domain string) error {
-	settings, err := s.store.GetSettings()
+// handleStartOverAtLocation serves POST /api/storage/locations/{id}/start-over.
+func (h *Handler) handleStartOverAtLocation(w http.ResponseWriter, r *http.Request) {
+	err := h.svc.StartOverAtLocation(r.PathValue("id"))
+	if errors.Is(err, errNoSuchLocation) {
+		writeJSON(w, http.StatusNotFound, failEnvelope(err))
+		return
+	}
 	if err != nil {
-		return fmt.Errorf("read settings: %w", err)
-	}
-	loc := domainPathRaw(domain, settings)
-	if loc == "" {
-		return errors.New("no backup path configured for this domain")
-	}
-	repo, err := s.resolveRepo(loc)
-	if err != nil {
-		return err
-	}
-	return s.startOverAt(repo)
-}
-
-// handleStartOverAtTarget serves POST /api/offsite/targets/{id}/start-over.
-func (h *Handler) handleStartOverAtTarget(w http.ResponseWriter, r *http.Request) {
-	if err := h.svc.StartOverAtTarget(r.PathValue("id")); err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(nil))
 }
 
-// handleStartOverAtPrimary serves POST /api/settings/primary-remote/{domain}/start-over.
-func (h *Handler) handleStartOverAtPrimary(w http.ResponseWriter, r *http.Request) {
-	domain, ok := handlePrimaryRemoteDomain(w, r)
-	if !ok {
-		return
-	}
-	if err := h.svc.StartOverAtPrimary(domain); err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
-		return
-	}
-	writeJSON(w, http.StatusOK, okEnvelope(nil))
-}

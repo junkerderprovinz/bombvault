@@ -4082,6 +4082,7 @@ const sk: Partial<Translations> = {
   "storage.remove.action": "Odstrániť cieľ",
   "storage.startOver": "Založiť tu nový repozitár",
   "storage.startOverConfirm": "Urob to len vtedy, ak si starý repozitár zámerne vyprázdnil alebo zmazal. Ak jeho disk len nie je na serveri pripojený, ďalšia kópia zapíše na jeho miesto nový repozitár a ten sa znova skryje, hneď ako sa disk vráti.",
+  "storage.startedOver": "Ďalšia záloha alebo kópia sem založí nový repozitár.",
   "storage.remove.title": "Odstrániť {name}?",
   "storage.remove.keep": "Odstrániť cieľ, zálohy ponechať",
   "storage.remove.keepText": "BombVault sem prestane zapisovať. Zálohy zostanú, kde sú. Neskôr si ich prečítaš v časti Obnova › Zo starého priečinka so zálohami.",

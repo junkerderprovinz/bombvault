@@ -4082,6 +4082,7 @@ const id: Partial<Translations> = {
   "storage.remove.action": "Hapus tujuan",
   "storage.startOver": "Buat repositori baru di sini",
   "storage.startOverConfirm": "Lakukan ini hanya jika Anda sengaja mengosongkan atau menghapus repositori lama. Jika disknya hanya belum terpasang di server, salinan berikutnya menulis repositori baru di tempatnya, dan repositori itu tersembunyi lagi begitu disk kembali.",
+  "storage.startedOver": "Pencadangan atau salinan berikutnya di sini membuat repositori baru.",
   "storage.remove.title": "Hapus {name}?",
   "storage.remove.keep": "Hapus tujuan, pertahankan cadangan",
   "storage.remove.keepText": "BombVault berhenti menulis ke sini. Cadangan tetap di tempatnya. Anda bisa membacanya nanti di Pemulihan › Dari folder cadangan lama.",

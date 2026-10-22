@@ -4063,6 +4063,7 @@ const zh: Partial<Translations> = {
   "storage.remove.action": "移除目标",
   "storage.startOver": "在这里新建存储库",
   "storage.startOverConfirm": "只有在你有意清空或删除了旧存储库时才这样做。如果只是它的磁盘没有在服务器上挂载，下一次复制会在原处写入一个新存储库，磁盘一回来，这个新存储库又会被遮住。",
+  "storage.startedOver": "此处的下一次备份或复制会新建一个存储库。",
   "storage.remove.title": "移除 {name}？",
   "storage.remove.keep": "移除目标，保留备份",
   "storage.remove.keepText": "BombVault 将不再向这里写入。备份会留在原处。之后你可以在“恢复 › 从旧的备份文件夹”中读取它们。",

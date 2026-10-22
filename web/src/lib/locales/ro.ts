@@ -4073,6 +4073,7 @@ const ro: Partial<Translations> = {
   "storage.remove.action": "Elimină destinația",
   "storage.startOver": "Creează aici un depozit nou",
   "storage.startOverConfirm": "Fă asta doar dacă ai golit sau șters intenționat depozitul vechi. Dacă discul lui pur și simplu nu este montat pe server, următoarea copie scrie un depozit nou în locul lui, iar acesta se ascunde din nou imediat ce discul revine.",
+  "storage.startedOver": "Următoarea copie de rezervă sau copiere de aici creează un depozit nou.",
   "storage.remove.title": "Elimini {name}?",
   "storage.remove.keep": "Elimină destinația, păstrează copiile",
   "storage.remove.keepText": "BombVault nu mai scrie aici. Copiile de rezervă rămân unde sunt. Le poți citi mai târziu în Restaurare › Dintr-un folder vechi de copii.",

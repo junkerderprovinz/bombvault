@@ -4082,6 +4082,7 @@ const ca: Partial<Translations> = {
   "storage.remove.action": "Elimina la destinació",
   "storage.startOver": "Crea aquí un repositori nou",
   "storage.startOverConfirm": "Fes-ho només si vas buidar o esborrar l'antic repositori expressament. Si el seu disc simplement no està muntat al servidor, la còpia següent escriu un repositori nou al seu lloc, i aquest torna a quedar amagat quan el disc torna.",
+  "storage.startedOver": "La propera còpia de seguretat o còpia aquí crea un repositori nou.",
   "storage.remove.title": "Vols eliminar {name}?",
   "storage.remove.keep": "Elimina la destinació, conserva les còpies",
   "storage.remove.keepText": "BombVault deixa d'escriure aquí. Les còpies de seguretat es queden on són. Més endavant les pots llegir a Restauració › D'una carpeta de còpies antiga.",

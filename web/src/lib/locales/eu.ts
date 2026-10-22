@@ -4082,6 +4082,7 @@ const eu: Partial<Translations> = {
   "storage.remove.action": "Kendu helmuga",
   "storage.startOver": "Sortu biltegi berri bat hemen",
   "storage.startOverConfirm": "Egin hau biltegi zaharra nahita hustu edo ezabatu baduzu bakarrik. Bere diskoa zerbitzarian muntatuta ez badago besterik gabe, hurrengo kopiak biltegi berri bat idatziko du haren lekuan, eta hori berriro ezkutatuko da diskoa itzultzen denean.",
+  "storage.startedOver": "Hurrengo babeskopiak edo kopiak biltegi berri bat sortuko du hemen.",
   "storage.remove.title": "{name} kendu?",
   "storage.remove.keep": "Kendu helmuga, mantendu babeskopiak",
   "storage.remove.keepText": "BombVaultek hona idazteari uzten dio. Babeskopiak dauden tokian gelditzen dira. Geroago irakur ditzakezu Berrezarpena › Babeskopia-karpeta zahar batetik atalean.",

@@ -4072,6 +4072,7 @@ const he: Partial<Translations> = {
   "storage.remove.action": "הסרת יעד",
   "storage.startOver": "יצירת מאגר חדש כאן",
   "storage.startOverConfirm": "יש לעשות זאת רק אם המאגר הישן רוקן או נמחק בכוונה. אם הדיסק שלו פשוט לא מחובר בשרת, ההעתקה הבאה כותבת מאגר חדש במקומו, והוא מוסתר שוב ברגע שהדיסק חוזר.",
+  "storage.startedOver": "הגיבוי או ההעתקה הבאים כאן ייצרו מאגר חדש.",
   "storage.remove.title": "להסיר את {name}?",
   "storage.remove.keep": "הסרת יעד תוך שמירת הגיבויים",
   "storage.remove.keepText": "BombVault מפסיק לכתוב לכאן. הגיבויים נשארים במקומם. אפשר לקרוא אותם בהמשך תחת שחזור › מתיקיית גיבויים ישנה.",

@@ -3410,6 +3410,14 @@ UPDATE pull_sources SET leftovers_moved = 0;`,
 		name:    "container_restart_pending_stale",
 		sql:     `DELETE FROM container_restart_pending WHERE added_at < CAST(strftime('%s', 'now') AS INTEGER) - 86400;`,
 	},
+	{
+		// When a remote repository that was established was last found gone,
+		// so its storage location can offer to start over there.
+		version:          repoGoneMigration,
+		name:             "established_repos_gone_at",
+		alreadySatisfied: columnPresent("established_repos", "gone_at"),
+		sql:              `ALTER TABLE established_repos ADD COLUMN gone_at INTEGER NOT NULL DEFAULT 0;`,
+	},
 }
 
 // offsiteFieldDomains are the domains with an off-site field in the settings,
@@ -3673,6 +3681,9 @@ const passkeyVerifiedMigration = 520
 // staleRestartsMigration numbers the clearing of old container restart
 // records.
 const staleRestartsMigration = 530
+
+// repoGoneMigration numbers the record of remote repositories found gone.
+const repoGoneMigration = 540
 
 // oneLineColumns are the names and locations the recovery kit prints.
 var oneLineColumns = []struct {

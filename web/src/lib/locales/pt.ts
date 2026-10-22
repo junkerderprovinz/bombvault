@@ -4072,6 +4072,7 @@ const pt: Partial<Translations> = {
   "storage.remove.action": "Remover destino",
   "storage.startOver": "Criar aqui um repositório novo",
   "storage.startOverConfirm": "Faz isto só se esvaziaste ou apagaste o repositório antigo de propósito. Se o disco dele apenas não estiver montado no servidor, a cópia seguinte escreve um repositório novo no lugar dele, e esse volta a ficar escondido assim que o disco regressar.",
+  "storage.startedOver": "O próximo backup ou cópia aqui cria um repositório novo.",
   "storage.remove.title": "Remover {name}?",
   "storage.remove.keep": "Remover destino, manter os backups",
   "storage.remove.keepText": "O BombVault deixa de escrever aqui. Os backups ficam onde estão. Podes lê-los mais tarde em Restauração › De uma pasta de backups antiga.",

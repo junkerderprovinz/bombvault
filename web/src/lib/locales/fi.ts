@@ -4072,6 +4072,7 @@ const fi: Partial<Translations> = {
   "storage.remove.action": "Poista kohde",
   "storage.startOver": "Luo tähän uusi arkisto",
   "storage.startOverConfirm": "Tee tämä vain, jos tyhjensit tai poistit vanhan arkiston tarkoituksella. Jos sen levyä ei vain ole liitetty palvelimella, seuraava kopio kirjoittaa sen tilalle uuden arkiston, ja se piiloutuu taas, kun levy palaa.",
+  "storage.startedOver": "Seuraava varmuuskopio tai kopio luo tänne uuden arkiston.",
   "storage.remove.title": "Poistetaanko {name}?",
   "storage.remove.keep": "Poista kohde, säilytä varmuuskopiot",
   "storage.remove.keepText": "BombVault lopettaa kirjoittamisen tänne. Varmuuskopiot pysyvät paikoillaan. Voit lukea ne myöhemmin kohdasta Palautus › Vanhasta varmuuskopiokansiosta.",

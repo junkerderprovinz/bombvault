@@ -4417,6 +4417,7 @@ export const en = {
   "storage.startOver": "Start a new repository here",
   "storage.startOverConfirm":
     "Only do this if you emptied or deleted the old repository on purpose. If its disk is just not mounted on the server, the next copy writes a new repository in its place, and that one is hidden again once the disk is back.",
+  "storage.startedOver": "The next backup or copy here creates a new repository.",
   "storage.remove.title": "Remove {name}?",
   "storage.remove.keep": "Remove storage location, keep the backups",
   "storage.remove.keepText": "BombVault stops writing here. The backups stay where they are. You can read them later under Restore › From an old backup folder.",
@@ -9263,6 +9264,7 @@ export const de: Translations = {
   "storage.startOver": "Hier ein neues Repository anlegen",
   "storage.startOverConfirm":
     "Tu das nur, wenn du das alte Repository absichtlich geleert oder gelöscht hast. Ist seine Platte auf dem Server nur nicht eingehängt, schreibt die nächste Kopie ein neues Repository an seine Stelle, und das ist wieder verdeckt, sobald die Platte zurück ist.",
+  "storage.startedOver": "Die nächste Sicherung oder Kopie legt hier ein neues Repository an.",
   "storage.remove.title": "{name} entfernen?",
   "storage.remove.keep": "Speicherort entfernen, Sicherungen behalten",
   "storage.remove.keepText": "BombVault schreibt nicht mehr hierher. Die Sicherungen bleiben am Ort liegen. Du liest sie später über Wiederherstellung, Aus einem alten Sicherungsordner.",

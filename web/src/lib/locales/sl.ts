@@ -4066,6 +4066,7 @@ const sl: Partial<Translations> = {
   "storage.remove.action": "Odstrani cilj",
   "storage.startOver": "Tukaj ustvari nov repozitorij",
   "storage.startOverConfirm": "To naredi le, če si stari repozitorij namerno izpraznil ali izbrisal. Če njegov disk na strežniku preprosto ni priklopljen, naslednja kopija na njegovo mesto zapiše nov repozitorij, ta pa se spet skrije, takoj ko se disk vrne.",
+  "storage.startedOver": "Naslednja varnostna kopija ali kopija tukaj ustvari nov repozitorij.",
   "storage.remove.title": "Odstrani {name}?",
   "storage.remove.keep": "Odstrani cilj, ohrani kopije",
   "storage.remove.keepText": "BombVault sem preneha pisati. Varnostne kopije ostanejo, kjer so. Pozneje jih lahko prebereš v razdelku Obnova › Iz stare mape z varnostnimi kopijami.",

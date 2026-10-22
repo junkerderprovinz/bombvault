@@ -4069,6 +4069,7 @@ const pl: Partial<Translations> = {
   "storage.remove.action": "Usuń miejsce docelowe",
   "storage.startOver": "Utwórz tu nowe repozytorium",
   "storage.startOverConfirm": "Zrób to tylko wtedy, gdy celowo opróżniłeś lub usunąłeś stare repozytorium. Jeśli jego dysk po prostu nie jest zamontowany na serwerze, następna kopia zapisze na jego miejscu nowe repozytorium, a ono znów zniknie z widoku, gdy tylko dysk wróci.",
+  "storage.startedOver": "Następna kopia zapasowa lub kopia utworzy tu nowe repozytorium.",
   "storage.remove.title": "Usunąć {name}?",
   "storage.remove.keep": "Usuń miejsce docelowe, zachowaj kopie",
   "storage.remove.keepText": "BombVault przestaje tu zapisywać. Kopie zapasowe zostają tam, gdzie są. Później możesz je odczytać w Przywracanie › Ze starego folderu z kopiami.",

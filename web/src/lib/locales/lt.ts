@@ -4082,6 +4082,7 @@ const lt: Partial<Translations> = {
   "storage.remove.action": "Pašalinti paskirties vietą",
   "storage.startOver": "Sukurti čia naują saugyklą",
   "storage.startOverConfirm": "Daryk tai tik tada, jei senąją saugyklą tyčia ištuštinai ar ištrynei. Jei jos diskas tiesiog neprijungtas serveryje, kita kopija jos vietoje įrašys naują saugyklą, o ši vėl pasislėps, kai tik diskas grįš.",
+  "storage.startedOver": "Kita atsarginė kopija ar kopija sukurs čia naują saugyklą.",
   "storage.remove.title": "Pašalinti {name}?",
   "storage.remove.keep": "Pašalinti paskirties vietą, kopijas palikti",
   "storage.remove.keepText": "BombVault nustoja čia rašyti. Atsarginės kopijos lieka ten, kur yra. Vėliau jas gali perskaityti skiltyje Atkūrimas › Iš seno atsarginių kopijų aplanko.",

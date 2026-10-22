@@ -4082,6 +4082,7 @@ const hr: Partial<Translations> = {
   "storage.remove.action": "Ukloni odredište",
   "storage.startOver": "Stvori ovdje novi repozitorij",
   "storage.startOverConfirm": "Učinite to samo ako ste stari repozitorij namjerno ispraznili ili izbrisali. Ako njegov disk samo nije montiran na poslužitelju, sljedeća kopija na njegovo mjesto zapisuje novi repozitorij, a on se ponovno skriva čim se disk vrati.",
+  "storage.startedOver": "Sljedeća sigurnosna kopija ili kopija ovdje stvara novi repozitorij.",
   "storage.remove.title": "Ukloniti {name}?",
   "storage.remove.keep": "Ukloni odredište, zadrži sigurnosne kopije",
   "storage.remove.keepText": "BombVault prestaje pisati ovamo. Sigurnosne kopije ostaju gdje jesu. Poslije ih možete pročitati u Vraćanje › Iz stare mape sa sigurnosnim kopijama.",

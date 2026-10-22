@@ -4082,6 +4082,7 @@ const is: Partial<Translations> = {
   "storage.remove.action": "Fjarlægja áfangastað",
   "storage.startOver": "Búa til nýja geymslu hér",
   "storage.startOverConfirm": "Gerðu þetta aðeins ef þú tæmdir eða eyddir gömlu geymslunni viljandi. Ef diskurinn hennar er bara ekki tengdur á þjóninum skrifar næsta afrit nýja geymslu í hennar stað, og hún hverfur aftur sjónum um leið og diskurinn kemur aftur.",
+  "storage.startedOver": "Næsta afritun eða afrit hér býr til nýja geymslu.",
   "storage.remove.title": "Fjarlægja {name}?",
   "storage.remove.keep": "Fjarlægja áfangastað, halda afritum",
   "storage.remove.keepText": "BombVault hættir að skrifa hingað. Afritin verða áfram þar sem þau eru. Þú getur lesið þau seinna undir Endurheimt › Úr gamalli afritamöppu.",

@@ -4063,6 +4063,7 @@ const ja: Partial<Translations> = {
   "storage.remove.action": "保存先を削除",
   "storage.startOver": "ここに新しいリポジトリを作成",
   "storage.startOverConfirm": "古いリポジトリを意図的に空にしたか削除した場合にだけ実行してください。ディスクがサーバーにマウントされていないだけの場合、次のコピーがその場所に新しいリポジトリを書き込み、ディスクが戻ると再び見えなくなります。",
+  "storage.startedOver": "次のバックアップまたはコピーで、ここに新しいリポジトリが作成されます。",
   "storage.remove.title": "{name} を削除しますか？",
   "storage.remove.keep": "保存先を削除し、バックアップは残す",
   "storage.remove.keepText": "BombVault はここへの書き込みを止めます。バックアップは今の場所に残ります。あとから「復元」›「古いバックアップフォルダーから」で読み取れます。",

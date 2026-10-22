@@ -4063,6 +4063,7 @@ const ko: Partial<Translations> = {
   "storage.remove.action": "대상 제거",
   "storage.startOver": "여기에 새 저장소 만들기",
   "storage.startOverConfirm": "이전 저장소를 일부러 비우거나 삭제한 경우에만 하세요. 디스크가 서버에 마운트되지 않았을 뿐이라면 다음 복사본이 그 자리에 새 저장소를 쓰고, 디스크가 돌아오면 그 저장소는 다시 가려집니다.",
+  "storage.startedOver": "다음 백업이나 복사가 여기에 새 저장소를 만듭니다.",
   "storage.remove.title": "{name}을(를) 제거할까요?",
   "storage.remove.keep": "대상 제거, 백업은 유지",
   "storage.remove.keepText": "BombVault가 이곳에 더 이상 쓰지 않습니다. 백업은 지금 있는 곳에 그대로 남습니다. 나중에 '복원 › 이전 백업 폴더에서'를 통해 읽을 수 있습니다.",

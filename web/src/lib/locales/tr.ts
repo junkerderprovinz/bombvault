@@ -4072,6 +4072,7 @@ const tr: Partial<Translations> = {
   "storage.remove.action": "Hedefi kaldır",
   "storage.startOver": "Burada yeni bir depo oluştur",
   "storage.startOverConfirm": "Bunu yalnızca eski depoyu bilerek boşalttıysan ya da sildiysen yap. Diski sunucuda yalnızca bağlı değilse, sonraki kopya onun yerine yeni bir depo yazar ve disk geri gelir gelmez bu depo yeniden gizlenir.",
+  "storage.startedOver": "Buradaki bir sonraki yedekleme veya kopya yeni bir depo oluşturur.",
   "storage.remove.title": "{name} kaldırılsın mı?",
   "storage.remove.keep": "Hedefi kaldır, yedekleri koru",
   "storage.remove.keepText": "BombVault buraya yazmayı bırakır. Yedekler olduğu yerde kalır. Onları sonra Geri yükleme › Eski bir yedek klasöründen bölümünden okuyabilirsin.",

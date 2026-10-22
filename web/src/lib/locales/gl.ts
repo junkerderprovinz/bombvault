@@ -4082,6 +4082,7 @@ const gl: Partial<Translations> = {
   "storage.remove.action": "Eliminar destino",
   "storage.startOver": "Crear aquí un repositorio novo",
   "storage.startOverConfirm": "Faino só se baleiraches ou borraches o repositorio antigo a propósito. Se o seu disco simplemente non está montado no servidor, a seguinte copia escribe un repositorio novo no seu lugar, e ese volve quedar oculto en canto o disco regresa.",
+  "storage.startedOver": "A próxima copia de seguranza ou copia aquí crea un repositorio novo.",
   "storage.remove.title": "Eliminar {name}?",
   "storage.remove.keep": "Eliminar destino e manter as copias",
   "storage.remove.keepText": "BombVault deixa de escribir aquí. As copias de seguranza quedan onde están. Máis tarde podes lelas en Restauración › Desde un cartafol de copias antigo.",

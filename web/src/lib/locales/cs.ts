@@ -4070,6 +4070,7 @@ const cs: Partial<Translations> = {
   "storage.remove.action": "Odebrat cíl",
   "storage.startOver": "Založit tu nový repozitář",
   "storage.startOverConfirm": "Udělej to jen tehdy, když jsi starý repozitář záměrně vyprázdnil nebo smazal. Pokud jeho disk jen není na serveru připojený, další kopie zapíše na jeho místo nový repozitář a ten se znovu skryje, jakmile se disk vrátí.",
+  "storage.startedOver": "Příští záloha nebo kopie sem založí nový repozitář.",
   "storage.remove.title": "Odebrat {name}?",
   "storage.remove.keep": "Odebrat cíl, zálohy ponechat",
   "storage.remove.keepText": "BombVault sem přestane zapisovat. Zálohy zůstanou, kde jsou. Později je přečteš v části Obnova › Ze staré složky se zálohami.",

@@ -4072,6 +4072,7 @@ const sv: Partial<Translations> = {
   "storage.remove.action": "Ta bort mål",
   "storage.startOver": "Skapa ett nytt arkiv här",
   "storage.startOverConfirm": "Gör detta bara om du tömde eller raderade det gamla arkivet med flit. Om disken bara inte är monterad på servern skriver nästa kopia ett nytt arkiv i dess ställe, och det blir dolt igen så fort disken är tillbaka.",
+  "storage.startedOver": "Nästa säkerhetskopia eller kopia här skapar ett nytt arkiv.",
   "storage.remove.title": "Ta bort {name}?",
   "storage.remove.keep": "Ta bort mål, behåll säkerhetskopiorna",
   "storage.remove.keepText": "BombVault slutar skriva hit. Säkerhetskopiorna ligger kvar där de är. Du kan läsa dem senare under Återställning › Från en gammal säkerhetskopiemapp.",

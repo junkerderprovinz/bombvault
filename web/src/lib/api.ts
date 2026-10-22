@@ -2768,14 +2768,6 @@ export function testOffsiteTarget(
 }
 
 /**
- * POST /api/offsite/targets/{id}/start-over: lets the next copy create a new
- * repository at a target whose earlier one is gone (test code "repo-gone").
- */
-export function startOverAtTarget(id: string): Promise<OkEnvelope> {
-  return fetchJSON(`/api/offsite/targets/${encodeURIComponent(id)}/start-over`, { method: "POST" });
-}
-
-/**
  * A one-time rest-server deployment recipe for a domain's append-only off-site
  * repo. The plaintext `password` is shown ONCE and never persisted server-side;
  * `htpasswd` is its bcrypt line for the far-side .htpasswd file. `dockerRun` and
@@ -3025,14 +3017,6 @@ export function testPrimaryRemote(
   domain: PrimaryRemoteDomain
 ): Promise<OkEnvelope & { reachable?: boolean; initialized?: boolean }> {
   return fetchJSON(`/api/settings/primary-remote/${domain}/test`, { method: "POST" });
-}
-
-/**
- * POST /api/settings/primary-remote/{domain}/start-over: startOverAtTarget for
- * a domain's remote backup path.
- */
-export function startOverAtPrimary(domain: PrimaryRemoteDomain): Promise<OkEnvelope> {
-  return fetchJSON(`/api/settings/primary-remote/${domain}/start-over`, { method: "POST" });
 }
 
 /**
@@ -7872,6 +7856,17 @@ export interface StorageLocation {
     lastTamper?: { at: number; protected: boolean };
   };
   capacity: StorageLocationCapacity;
+  /** A remote repository here that held backups was found empty, and nothing
+   *  is written there until the user starts over. */
+  gone?: boolean;
+}
+
+/**
+ * POST /api/storage/locations/{id}/start-over: lets the next run create a new
+ * repository in each repository of the location that was found gone.
+ */
+export function startOverAtLocation(id: string): Promise<OkEnvelope> {
+  return fetchJSON(`/api/storage/locations/${encodeURIComponent(id)}/start-over`, { method: "POST" });
 }
 
 /** GET /api/storage/locations: every storage location with the room last
