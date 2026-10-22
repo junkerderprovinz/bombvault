@@ -785,6 +785,27 @@ func (r *Repo) backupSnapshotsOfChunk(ids []string, out map[string]string) error
 	return nil
 }
 
+// RunSnapshotIDs returns every snapshot id a run of this instance recorded.
+func (r *Repo) RunSnapshotIDs() (map[string]bool, error) {
+	rows, err := r.db.Query(`SELECT DISTINCT snapshot_id FROM runs WHERE snapshot_id IS NOT NULL AND snapshot_id <> ''`)
+	if err != nil {
+		return nil, fmt.Errorf("RunSnapshotIDs: %w", err)
+	}
+	defer rows.Close() //nolint:errcheck // rows.Close on a completed query is always nil for SQLite
+	out := map[string]bool{}
+	for rows.Next() {
+		var id string
+		if err := rows.Scan(&id); err != nil {
+			return nil, fmt.Errorf("RunSnapshotIDs: %w", err)
+		}
+		out[id] = true
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("RunSnapshotIDs: %w", err)
+	}
+	return out, nil
+}
+
 // FailedDBDumpSnapshots returns the snapshots a failed dump of this target left
 // behind: restic wrote them and they could not be removed again, so the dump
 // list marks exactly those as damaged.

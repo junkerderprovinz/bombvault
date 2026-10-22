@@ -187,6 +187,30 @@ func (r *Repo) DeletePullSource(id string) error {
 	return nil
 }
 
+// PullLeftoversMoved reports whether the snapshots source id's earlier pulls
+// left in the domain's own repository have been moved out. A missing id
+// counts as moved.
+func (r *Repo) PullLeftoversMoved(id string) (bool, error) {
+	var moved int
+	err := r.db.QueryRow(`SELECT leftovers_moved FROM pull_sources WHERE id = ?`, id).Scan(&moved)
+	if errors.Is(err, sql.ErrNoRows) {
+		return true, nil
+	}
+	if err != nil {
+		return false, fmt.Errorf("PullLeftoversMoved: %w", err)
+	}
+	return moved != 0, nil
+}
+
+// SetPullLeftoversMoved records whether source id's earlier pulls are out of
+// the domain's own repository.
+func (r *Repo) SetPullLeftoversMoved(id string, moved bool) error {
+	if _, err := r.db.Exec(`UPDATE pull_sources SET leftovers_moved = ? WHERE id = ?`, boolInt(moved), id); err != nil {
+		return fmt.Errorf("SetPullLeftoversMoved: %w", err)
+	}
+	return nil
+}
+
 func scanPullSource(s scanner) (PullSource, error) {
 	var ps PullSource
 	var enabled int

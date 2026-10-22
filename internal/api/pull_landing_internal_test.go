@@ -155,3 +155,68 @@ func TestPullNowFinishesAfterThePageIsLeft(t *testing.T) {
 		time.Sleep(5 * time.Millisecond)
 	}
 }
+
+type leftoverPullRecorder struct {
+	pullRecorder
+	forgot map[string][]string
+}
+
+func (e *leftoverPullRecorder) Forget(_ context.Context, repo string, ids []string, _ bool, _ restic.Mode) error {
+	e.forgot[repo] = append(e.forgot[repo], ids...)
+	return nil
+}
+
+func TestAPullMovesTheSourcesEarlierSnapshotsOutOfTheDomainsRepository(t *testing.T) {
+	eng := &leftoverPullRecorder{
+		pullRecorder: pullRecorder{snaps: map[string][]restic.Snapshot{
+			pullSrcLoc: {{ID: "a1"}, {ID: "a2"}, {ID: "b1", Original: "mine"}},
+			pullDomain: {
+				{ID: "own"},
+				{ID: "moved", Original: "old"},
+				{ID: "mutual", Original: "mine"},
+				{ID: "landed", Original: "a1"},
+				{ID: "notyet", Original: "a2"},
+			},
+		}},
+		forgot: map[string][]string{},
+	}
+	svc, st, ps := pullFixture(t, eng)
+	eng.snaps[pulledRepo(pullDomain, ps.ID)] = []restic.Snapshot{{ID: "c1", Original: "a1"}, {ID: "c2", Original: "mine"}}
+	for _, snap := range []string{"old", "mine"} {
+		id, err := st.StartRun("t", "backup")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := st.FinishRun(id, "success", snap, 0, ""); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := st.SetPullLeftoversMoved(ps.ID, false); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := svc.PullFromSource(context.Background(), ps); err != nil {
+		t.Fatal(err)
+	}
+	if got := eng.forgot[pullDomain]; len(got) != 1 || got[0] != "landed" {
+		t.Fatalf("forgot %v in the domain's repository, want only the pulled snapshot whose copy landed", got)
+	}
+	if moved, _ := st.PullLeftoversMoved(ps.ID); !moved {
+		t.Fatal("the move was not recorded")
+	}
+
+	eng.forgot = map[string][]string{}
+	if _, err := svc.PullFromSource(context.Background(), ps); err != nil {
+		t.Fatal(err)
+	}
+	if len(eng.forgot) != 0 {
+		t.Fatalf("a second pull forgot %v", eng.forgot)
+	}
+}
+
+func TestANewPullSourceHasNoEarlierPullsToMove(t *testing.T) {
+	_, st, ps := pullFixture(t, &pullRecorder{})
+	if moved, err := st.PullLeftoversMoved(ps.ID); err != nil || !moved {
+		t.Fatalf("moved = %v, %v; a new source never wrote into the domain's repository", moved, err)
+	}
+}

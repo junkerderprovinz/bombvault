@@ -3354,6 +3354,16 @@ ALTER TABLE key_deposits_sent ADD COLUMN pending_held_digest TEXT NOT NULL DEFAU
 		alreadySatisfied: columnPresent("zfs_datasets", "replica_target_since"),
 		sql:              `ALTER TABLE zfs_datasets ADD COLUMN replica_target_since INTEGER NOT NULL DEFAULT 0;`,
 	},
+	{
+		// Whether a source's earlier pulls, which landed in the domain's own
+		// repository, were moved out of it. A source added later never wrote
+		// there, so the column defaults to done and only the existing rows wait.
+		version:          pullLeftoversMigration,
+		name:             "pull_sources_leftovers_moved",
+		alreadySatisfied: columnPresent("pull_sources", "leftovers_moved"),
+		sql: `ALTER TABLE pull_sources ADD COLUMN leftovers_moved INTEGER NOT NULL DEFAULT 1;
+UPDATE pull_sources SET leftovers_moved = 0;`,
+	},
 }
 
 // offsiteFieldDomains are the domains with an off-site field in the settings,
@@ -3594,6 +3604,10 @@ const vmRestartMigration = 460
 // replicaTargetSinceMigration numbers when a ZFS item's replica got its
 // current target.
 const replicaTargetSinceMigration = 470
+
+// pullLeftoversMigration numbers the move of earlier pulls out of the
+// domain's own repository.
+const pullLeftoversMigration = 480
 
 // oneLineColumns are the names and locations the recovery kit prints.
 var oneLineColumns = []struct {

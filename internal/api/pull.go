@@ -195,6 +195,7 @@ func (s *Service) pullFromSource(ctx context.Context, ps store.PullSource) (int,
 	}
 	if pending == 0 {
 		// Nothing new is the ordinary outcome between two backups, not a failure.
+		s.movePullLeftovers(ctx, ps, settings, domain, domainRepo, srcSnaps, dest, destMode)
 		return 0, nil
 	}
 
@@ -214,7 +215,77 @@ func (s *Service) pullFromSource(ctx context.Context, ps store.PullSource) (int,
 	if err := s.retryAfterUnlock(ctx, dest, destMode, func() error { return s.engine.Copy(ctx, copyDest, copySrc, nil, lim, copyMode) }); err != nil {
 		return 0, fmt.Errorf("copy from the source: %w", err)
 	}
+	s.movePullLeftovers(ctx, ps, settings, domain, domainRepo, srcSnaps, dest, destMode)
 	return pending, nil
+}
+
+// movePullLeftovers takes the snapshots that pulls wrote into the domain's own
+// repository, before a source had one of its own, out of it again once their
+// copy in the source's repository is there. Until then retention ages them with
+// this box's own and the restore lists offer them as this box's. A failure is
+// logged and tried again on the next pull.
+func (s *Service) movePullLeftovers(ctx context.Context, ps store.PullSource, settings store.Settings, domain, domainRepo string, src []restic.Snapshot, dest string, destMode restic.Mode) {
+	moved, err := s.store.PullLeftoversMoved(ps.ID)
+	if err != nil || moved {
+		return
+	}
+	fail := func(what string, err error) {
+		log.Printf("api: pull %s: could not move earlier pulls out of the %s repository, %s: %v", ps.ID, domain, what, err) //nolint:gosec // G706: ps.ID is an opaque store-generated id, domain comes from a fixed set
+	}
+	own, err := s.store.RunSnapshotIDs()
+	if err != nil {
+		fail("reading this box's runs", err)
+		return
+	}
+	primaryMode := s.primaryModeFor(settings, domain, domainRepo)
+	primary, err := s.listSnapshots(ctx, domainRepo, primaryMode)
+	if err != nil {
+		fail("listing it", err)
+		return
+	}
+	landed, err := s.listSnapshots(ctx, dest, destMode)
+	if err != nil {
+		fail("listing the source's repository here", err)
+		return
+	}
+	if ids := pullLeftovers(primary, src, landed, own); len(ids) > 0 {
+		if err := s.retryAfterUnlock(ctx, domainRepo, primaryMode, func() error {
+			return s.engine.Forget(ctx, domainRepo, ids, false, primaryMode)
+		}); err != nil {
+			fail("forgetting them", err)
+			return
+		}
+		log.Printf("api: pull %s: moved %d earlier pulled snapshots out of the %s repository", ps.ID, len(ids), domain) //nolint:gosec // G706: see above
+	}
+	if err := s.store.SetPullLeftoversMoved(ps.ID, true); err != nil {
+		fail("recording it", err)
+	}
+}
+
+// pullLeftovers picks the snapshots of the domain's own repository that an
+// earlier pull brought in: copies (restic gives every copy an original) of a
+// snapshot the source holds, which this box never recorded making itself and
+// which the source's own repository here holds by now. Mutual pulls can put a
+// snapshot of this box into the source, and the run history keeps that one.
+func pullLeftovers(primary, src, landed []restic.Snapshot, own map[string]bool) []string {
+	theirs := make(map[string]bool, len(src))
+	for _, sn := range src {
+		theirs[restic.Identity(sn)] = true
+	}
+	here := make(map[string]bool, len(landed))
+	for _, sn := range landed {
+		here[restic.Identity(sn)] = true
+	}
+	var ids []string
+	for _, sn := range primary {
+		if sn.Original == "" || own[sn.ID] || own[sn.Original] {
+			continue
+		}
+		if id := restic.Identity(sn); theirs[id] && here[id] {
+			ids = append(ids, sn.ID)
+		}
+	}
+	return ids
 }
 
 // pullCopyAccess fits the sign-ins of both ends of a pull into the one restic
