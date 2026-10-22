@@ -1,11 +1,14 @@
 package api
 
 import (
+	"context"
 	"fmt"
+	"net/http"
 	"net/url"
 	"regexp"
 	"slices"
 	"strings"
+	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/store"
@@ -115,6 +118,10 @@ func s3ThroughRclone(loc string, c CloudCreds) (string, []string, error) {
 	if region == "" {
 		region = awsRegionOf(u.Hostname())
 	}
+	if region == "" && isGlobalAWSHost(u.Hostname()) {
+		bucket, _, _ := strings.Cut(path, "/")
+		region = bucketRegion(u.Scheme+"://"+u.Host, bucket)
+	}
 	if region != "" {
 		env = append(env, prefix+"REGION="+region)
 	}
@@ -134,6 +141,32 @@ func awsRegionOf(host string) string {
 		return m[1]
 	}
 	return ""
+}
+
+// isGlobalAWSHost reports whether host is AWS's endpoint without a region,
+// which a location gets when its sign-in names none.
+func isGlobalAWSHost(host string) bool {
+	host = strings.ToLower(host)
+	return host == "s3.amazonaws.com" || host == "s3-external-1.amazonaws.com"
+}
+
+// bucketRegion asks AWS where a bucket lives. AWS names the region in the
+// X-Amz-Bucket-Region header of every answer to a HEAD of the bucket, even one
+// that refuses it, so no sign-in is needed. A var so a test answers without
+// the network.
+var bucketRegion = func(endpoint, bucket string) string {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	req, err := http.NewRequestWithContext(ctx, http.MethodHead, strings.TrimRight(endpoint, "/")+"/"+url.PathEscape(bucket), nil)
+	if err != nil {
+		return ""
+	}
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return ""
+	}
+	_ = resp.Body.Close()
+	return resp.Header.Get("X-Amz-Bucket-Region")
 }
 
 // restWithLogin puts a login into a rest-server address, which restic reads

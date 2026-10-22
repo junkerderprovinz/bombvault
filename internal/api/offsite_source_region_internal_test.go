@@ -1,6 +1,8 @@
 package api
 
 import (
+	"net/http"
+	"net/http/httptest"
 	"slices"
 	"testing"
 
@@ -39,5 +41,49 @@ func TestTheRegionOfAnAWSEndpoint(t *testing.T) {
 		if got := awsRegionOf(host); got != want {
 			t.Errorf("awsRegionOf(%q) = %q, want %q", host, got, want)
 		}
+	}
+}
+
+// The wizard writes s3:https://s3.amazonaws.com/<bucket> for an AWS sign-in
+// without a region, which names none, so AWS is asked where the bucket lives.
+func TestAnAWSSourceOnTheGlobalEndpointTakesTheRegionOfItsBucket(t *testing.T) {
+	prev := bucketRegion
+	t.Cleanup(func() { bucketRegion = prev })
+	var asked []string
+	bucketRegion = func(endpoint, bucket string) string {
+		asked = append(asked, endpoint+" "+bucket)
+		return "eu-central-1"
+	}
+	_, env, err := s3ThroughRclone("s3:https://s3.amazonaws.com/bucket/bv", CloudCreds{S3KeyID: "SRC", S3Secret: "srcsecret"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !slices.Contains(env, "RCLONE_CONFIG_BVSRC_REGION=eu-central-1") {
+		t.Fatalf("env = %v, want the region of the bucket", env)
+	}
+	if len(asked) != 1 || asked[0] != "https://s3.amazonaws.com bucket" {
+		t.Fatalf("asked %v, want the bucket on the endpoint", asked)
+	}
+
+	asked = nil
+	if _, _, err := s3ThroughRclone("s3:https://minio.local/bucket", CloudCreds{S3KeyID: "SRC", S3Secret: "srcsecret"}); err != nil {
+		t.Fatal(err)
+	}
+	if len(asked) != 0 {
+		t.Fatalf("asked %v for a host that is no AWS endpoint", asked)
+	}
+}
+
+func TestAWSNamesTheRegionOfABucketItRefuses(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodHead || r.URL.Path != "/bucket" {
+			t.Errorf("asked %s %s", r.Method, r.URL.Path)
+		}
+		w.Header().Set("X-Amz-Bucket-Region", "eu-west-2")
+		w.WriteHeader(http.StatusForbidden)
+	}))
+	defer srv.Close()
+	if got := bucketRegion(srv.URL, "bucket"); got != "eu-west-2" {
+		t.Fatalf("region = %q, want eu-west-2", got)
 	}
 }
