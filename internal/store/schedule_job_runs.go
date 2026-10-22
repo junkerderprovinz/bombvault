@@ -20,10 +20,17 @@ const (
 	ScheduleJobDigest = "digest"
 )
 
+// ScheduleJobDomainPass names the record of a multi-item domain's scheduled
+// pass, which that domain's everyN due-gate reads. The runs table cannot serve:
+// a backup of one item by hand, or the one before a restore, writes the same
+// kind of row and would postpone the whole pass.
+func ScheduleJobDomainPass(domain string) string { return "domain:" + domain }
+
 // RecordScheduleJobRun stores at as job's last run. The scheduler decides what
 // counts as done: the expensive drill and tamper passes record even when some
 // tasks failed, so a broken repo is not re-drilled every night, while the
-// digest records only on success, so a failed send is retried the next day.
+// digest records only on success, so a failed send is retried the next day,
+// and a domain pass records once it backed anything up.
 func (r *Repo) RecordScheduleJobRun(job string, at time.Time) error {
 	_, err := r.db.Exec(`
 		INSERT INTO schedule_job_runs (job, at) VALUES (?, ?)
