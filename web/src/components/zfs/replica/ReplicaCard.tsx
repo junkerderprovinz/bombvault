@@ -253,7 +253,7 @@ export function ReplicaCard({ itemId, name }: { itemId: string; name: string }) 
       )}
 
       {view.target.kind === "server" && view.state === "failed" && view.code === "target-owned" && (
-        <div data-new="zfs-replica-take-over" className="flex items-center gap-3 flex-wrap">
+        <div className="flex items-center gap-3 flex-wrap">
           <p className="flex-1 min-w-0 text-xs text-carbon-textSub">
             {`${t("zfs.code.target-owned")} ${t("zfs.replica.takeOverText")}`}
           </p>

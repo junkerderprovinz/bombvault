@@ -291,12 +291,10 @@ func (s *Service) claimZFSReplicaFolder(ctx context.Context, end zfsrepl.End, d 
 	return []string{root}, nil
 }
 
-// TakeOverZFSReplicaFolder marks the folder an item lands in on its ZFS server
-// as this instance's, after the user confirmed that the instance it belongs to
-// is this one before a fresh database: the instance id is new then, and the
-// folder with the copies already in it would be refused for good. Every level
-// below the folder the old id marked changes with it, so the runs after this
-// one go on from those copies.
+// TakeOverZFSReplicaFolder marks the folder an item lands in on its ZFS server,
+// and every level below it the old id marked, as this instance's. It is for a
+// folder this BombVault filled before a fresh database gave it a new id, so
+// the next run goes on from the copies in it.
 func (s *Service) TakeOverZFSReplicaFolder(ctx context.Context, id string) error {
 	d, err := s.store.GetZFSDataset(id)
 	if err != nil {
