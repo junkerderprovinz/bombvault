@@ -381,7 +381,8 @@ func (s *Service) coverZFSDatasets(settings store.Settings, declined declinedBac
 		return out
 	}
 	for _, d := range items {
-		eff := schedule.EffectiveZFSDatasetSchedule(d, settings)
+		replicaOnly := s.zfsReplicaOnly(d)
+		eff := zfsItemSchedule(d, settings, replicaOnly)
 		if declined.holds(zfsDomain, d.ID, eff) {
 			out.Declined++
 			continue
@@ -399,7 +400,7 @@ func (s *Service) coverZFSDatasets(settings store.Settings, declined declinedBac
 			out.Unprotected = append(out.Unprotected, CoverageItem{Name: d.Dataset, Reason: CoverageNoPlace, NeverBackedUp: s.neverBackedUp(d.ID)})
 			continue
 		}
-		if s.zfsReplicaOnly(d) {
+		if replicaOnly {
 			out.count(!s.zfsReplicated(d.ID))
 			continue
 		}

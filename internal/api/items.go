@@ -67,13 +67,27 @@ func fileSetFacts(set store.FileSet, s store.Settings) itemFacts {
 	}
 }
 
-func zfsDatasetFacts(d store.ZFSDataset, s store.Settings) itemFacts {
+// zfsItemSchedule is the schedule that reaches a ZFS item. One that only
+// replicates gets no backup, so a replica on a plan of its own reaches it
+// where no backup schedule does.
+func zfsItemSchedule(d store.ZFSDataset, s store.Settings, replicaOnly bool) schedule.EffectiveSchedule {
+	eff := schedule.EffectiveZFSDatasetSchedule(d, s)
+	if eff.Kind != schedule.EffectiveNone || !replicaOnly {
+		return eff
+	}
+	if spec, ok := schedule.ZFSReplicaRunsOnItsOwn(d, s); ok {
+		return schedule.EffectiveSchedule{Kind: schedule.EffectiveOwn, Spec: spec}
+	}
+	return eff
+}
+
+func zfsDatasetFacts(d store.ZFSDataset, s store.Settings, replicaOnly bool) itemFacts {
 	return itemFacts{
 		ID:                d.ID,
 		Name:              d.Dataset,
 		Included:          d.Enabled,
 		Paused:            schedule.PausedByOverride(d.ScheduleCadence, s.PerItemSchedules),
-		Schedule:          schedule.EffectiveZFSDatasetSchedule(d, s),
+		Schedule:          zfsItemSchedule(d, s, replicaOnly),
 		Section:           zfsDomain,
 		TakesSectionPlace: zfsTakesSectionPlace(d),
 	}
@@ -369,7 +383,7 @@ func fileSetRow(hist itemHistory, set store.FileSet, settings store.Settings) ba
 }
 
 func zfsDatasetRow(hist itemHistory, d store.ZFSDataset, settings store.Settings) backupItemView {
-	v := hist.row(zfsDomain, d.ID, zfsDatasetFacts(d, settings))
+	v := hist.row(zfsDomain, d.ID, zfsDatasetFacts(d, settings, hist.replicas[d.ID].Only))
 	v.KindDisabled = !settings.ZFSEnabled
 	if r, ok := hist.replicas[d.ID]; ok {
 		v.Replica = &r

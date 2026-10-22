@@ -626,7 +626,7 @@ func (h *Handler) mcpZFSItems(settings store.Settings, stamps map[string]store.B
 	rows := make([]mcpItemView, 0, len(datasets))
 	for _, d := range datasets {
 		code := d.LastCheckCode
-		view := mcpItemViewOf(zfsDatasetFacts(d, settings))
+		view := mcpItemViewOf(zfsDatasetFacts(d, settings, h.svc.zfsReplicaOnly(d)))
 		view.LastCheckCode = &code
 		view.Stops = mcpStops{Containers: []string{}, Known: true}
 		if len(d.StopContainers) > 0 {

@@ -14,6 +14,19 @@ func (s *Scheduler) SetZFSReplicaJob(replicaFn BackupFunc) {
 	s.replicaZFS = replicaFn
 }
 
+// ZFSReplicaRunsOnItsOwn reports whether the scheduler runs an item's replica
+// on a plan of its own, and on which cadence.
+func ZFSReplicaRunsOnItsOwn(d store.ZFSDataset, settings store.Settings) (string, bool) {
+	rep := d.Replica
+	if !settings.ZFSEnabled || !d.Enabled || rep.TargetKind == store.ZFSReplicaTargetNone || rep.AfterBackup {
+		return "", false
+	}
+	if !classifyItemOverride(rep.Cadence).ownEntry {
+		return "", false
+	}
+	return rep.Cadence, true
+}
+
 // registerZFSReplicaEntries adds an entry for every enabled ZFS item whose
 // replica has a cadence of its own. It does not depend on per-item schedules,
 // which are about backups; with the ZFS domain off nothing replicates.
@@ -27,11 +40,10 @@ func (s *Scheduler) registerZFSReplicaEntries(settings store.Settings) error {
 		return nil
 	}
 	for _, d := range ds {
-		rep := d.Replica
-		if !d.Enabled || rep.TargetKind == store.ZFSReplicaTargetNone || rep.AfterBackup {
+		if _, ok := ZFSReplicaRunsOnItsOwn(d, settings); !ok {
 			continue
 		}
-		sched := classifyItemOverride(rep.Cadence)
+		sched := classifyItemOverride(d.Replica.Cadence)
 		if !sched.ownEntry {
 			continue
 		}

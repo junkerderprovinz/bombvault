@@ -268,3 +268,43 @@ func TestTheReplicaViewSaysWhenTheBackupRunOnlySendsIt(t *testing.T) {
 		t.Error("an item with no place to back up to is not called replica-only")
 	}
 }
+
+func TestAReplicaOnlyItemIsReachedByAReplicaOnAPlanOfItsOwn(t *testing.T) {
+	r := replicaOnlyRig(t)
+	if err := r.st.SetZFSReplicaAfterBackup(r.item.ID, false); err != nil {
+		t.Fatal(err)
+	}
+	if err := r.st.SetZFSReplicaCadence(r.item.ID, "daily 04:00"); err != nil {
+		t.Fatal(err)
+	}
+	settings, err := r.st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	settings.ZFSSchedule, settings.EverythingSchedule = "off", "off"
+	if err := r.st.UpdateSettings(settings); err != nil {
+		t.Fatal(err)
+	}
+
+	_, m, _ := r.call(http.MethodGet, "/api/items/zfs/"+r.item.ID, "")
+	it, _ := m["item"].(map[string]any)
+	eff, _ := it["effectiveSchedule"].(map[string]any)
+	if eff["kind"] != "own" || eff["spec"] != "daily 04:00" {
+		t.Errorf("effective schedule = %v, want the replica's own plan", eff)
+	}
+	nowhere, err := r.s.placelessSections()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := r.s.coverZFSDatasets(settings, declinedBackups{}, nowhere); len(got.Unprotected) != 0 || got.Waiting != 1 {
+		t.Errorf("coverage = %+v, want the item waiting for its first replica", got)
+	}
+
+	// After every backup, with no backup schedule, nothing sends it.
+	if err := r.st.SetZFSReplicaAfterBackup(r.item.ID, true); err != nil {
+		t.Fatal(err)
+	}
+	if got := r.s.coverZFSDatasets(settings, declinedBackups{}, nowhere); len(got.Unprotected) != 1 {
+		t.Errorf("coverage = %+v, want the item unprotected", got)
+	}
+}
