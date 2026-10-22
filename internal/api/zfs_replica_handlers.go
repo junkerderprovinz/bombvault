@@ -22,6 +22,7 @@ func (h *Handler) registerZFSReplicaRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("DELETE /api/zfs/replica/servers/{id}", h.handleDeleteZFSReplicaServer)
 	mux.HandleFunc("POST /api/zfs/replica/servers/{id}/test", h.handleTestZFSReplicaServer)
 	mux.HandleFunc("POST /api/zfs/replica/servers/{id}/forget-host-key", h.handleForgetZFSReplicaHostKey)
+	mux.HandleFunc("POST /api/zfs/replica/run-all", h.handleRunZFSReplicaAll)
 	mux.HandleFunc("GET /api/zfs/datasets/{id}/replica", h.handleGetZFSReplica)
 	mux.HandleFunc("PATCH /api/zfs/datasets/{id}/replica", h.handlePatchZFSReplica)
 	mux.HandleFunc("POST /api/zfs/datasets/{id}/replica/run", h.handleRunZFSReplica)
@@ -220,6 +221,38 @@ func (h *Handler) handleRunZFSReplica(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"runId": runID}))
+}
+
+// handleRunZFSReplicaAll starts the replicas of the items one after the
+// other and answers at once with the items refused before the start. The
+// batch reports on the zfs-replica-all progress key.
+// POST /api/zfs/replica/run-all
+func (h *Handler) handleRunZFSReplicaAll(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		IDs []string `json:"ids"`
+	}
+	if !decodeBody(w, r, &body) {
+		return
+	}
+	if len(body.IDs) == 0 || len(body.IDs) > zfsMaxBackupAllIDs {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "ids must name between 1 and 1000 ZFS items"})
+		return
+	}
+	for _, id := range body.IDs {
+		if !validResourceName(id) {
+			writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "invalid ZFS item id"})
+			return
+		}
+	}
+	queued, refused, started := h.svc.StartZFSReplicaBatch(r.Context(), body.IDs)
+	if !started {
+		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "busy": true, "error": "the replicas of all entries are already running"})
+		return
+	}
+	if refused == nil {
+		refused = []zfsReplicaRefused{}
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"started": queued, "refused": refused}))
 }
 
 // handleRestoreZFSReplica brings a replica snapshot back into a new dataset

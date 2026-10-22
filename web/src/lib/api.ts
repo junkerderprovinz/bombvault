@@ -5426,6 +5426,23 @@ export function runZFSReplica(id: string): Promise<ZFSCodedEnvelope & { runId?: 
   return fetchJSON(`/api/zfs/datasets/${encodeURIComponent(id)}/replica/run`, { method: "POST" });
 }
 
+/** An entry Replicate all now left out, with the reason code of the refusal. */
+export interface ZFSReplicaRefused {
+  id: string;
+  code?: string;
+  error: string;
+}
+
+/** POST /api/zfs/replica/run-all: replicate the entries one after the other
+ *  on the server, which goes on when the page is left. Answers at once with
+ *  the entries refused before the start; the batch reports on the
+ *  "zfs-replica-all" progress key, busy says another batch is running. */
+export function runZFSReplicaAll(
+  ids: string[]
+): Promise<OkEnvelope & { started?: number; refused?: ZFSReplicaRefused[]; busy?: boolean }> {
+  return fetchJSON("/api/zfs/replica/run-all", { method: "POST", body: JSON.stringify({ ids }) });
+}
+
 /** POST /api/zfs/datasets/{id}/replica/restore: send a snapshot back into a
  *  new dataset next to the item's root, never over it, reporting on the
  *  "zfs-replica-restore:<id>" progress key. keyNeeded says the copy arrives

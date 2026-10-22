@@ -46,6 +46,7 @@ vi.mock("../lib/api", async (importOriginal) => {
     zfsConnection: vi.fn(),
     getZFSReplica: vi.fn(),
     runZFSReplica: vi.fn(),
+    runZFSReplicaAll: vi.fn(),
   };
 });
 
@@ -91,6 +92,7 @@ const patchFileSet = vi.mocked(api.patchFileSet);
 const zfsConnection = vi.mocked(api.zfsConnection);
 const getZFSReplica = vi.mocked(api.getZFSReplica);
 const runZFSReplica = vi.mocked(api.runZFSReplica);
+const runZFSReplicaAll = vi.mocked(api.runZFSReplicaAll);
 
 const { Backups } = await import("./Backups");
 
@@ -1343,33 +1345,58 @@ describe("Replicate all now", () => {
     expect(action(REPLICATE)).toBeNull();
   });
 
-  it("runs the entries with a target one after the other", async () => {
+  it("hands the entries with a target to the server, which runs them one after the other", async () => {
     serve(ZFS);
     withTargets("a", "c");
-    runZFSReplica.mockResolvedValue({ ok: true, runId: "r1" });
+    runZFSReplicaAll.mockResolvedValue({ ok: true, started: 2, refused: [] });
     await renderPage("/backups?kind=zfs");
     await waitFor(() => expect(action(REPLICATE)).toBeTruthy());
     await press(action(REPLICATE)!);
-    expect(runZFSReplica.mock.calls).toEqual([["a"]]);
+    expect(runZFSReplicaAll.mock.calls).toEqual([[["a", "c"]]]);
+    expect(runZFSReplica).not.toHaveBeenCalled();
     expect(screen.getByTestId("batch-note").textContent).toContain(en["zfs.replica.batch.running"]);
-    progress({ key: "zfs-replica:a", phase: "replicate", percent: 40, active: true });
-    expect(runZFSReplica.mock.calls).toEqual([["a"]]);
-    progress({ key: "zfs-replica:a", phase: "replicate", percent: 100, active: false });
-    await waitFor(() => expect(runZFSReplica.mock.calls).toEqual([["a"], ["c"]]), { timeout: 3000 });
-    progress({ key: "zfs-replica:c", phase: "replicate", percent: 10, active: true });
-    progress({ key: "zfs-replica:c", phase: "replicate", percent: 100, active: false });
+
+    progress({ key: "zfs-replica-all", phase: "maintenance", percent: 0, active: true, done: 0, total: 2 });
+    progress({ key: "zfs-replica:a", phase: "maintenance", percent: 50, active: true });
+    expect(screen.getByTestId("batch-note").textContent).toContain("25 %");
+    progress({ key: "zfs-replica:a", phase: "maintenance", percent: 100, active: false });
+    progress({ key: "zfs-replica-all", phase: "maintenance", percent: 50, active: true, done: 1, total: 2 });
+    expect(screen.getByTestId("batch-note").textContent).toContain("50 %");
+    progress({ key: "zfs-replica-all", phase: "maintenance", percent: 100, active: false, done: 2, total: 2 });
     await waitFor(() => expect(screen.queryByTestId("batch-note")).toBeNull(), { timeout: 3000 });
   });
 
-  it("names the entry whose run was refused and goes on with the next", async () => {
+  it("shows the batch the server is running when the page opens", async () => {
     serve(ZFS);
     withTargets("a", "c");
-    runZFSReplica.mockResolvedValueOnce({ ok: false, code: "domain-off" }).mockResolvedValue({ ok: true, runId: "r2" });
+    await renderPage("/backups?kind=zfs");
+    await waitFor(() => expect(action(REPLICATE)).toBeTruthy());
+    progress({ key: "zfs-replica-all", phase: "maintenance", percent: 50, active: true, done: 1, total: 2 });
+    expect(screen.getByTestId("batch-note").textContent).toContain("50 %");
+    expect((action(REPLICATE) as HTMLButtonElement).disabled).toBe(true);
+    progress({ key: "zfs-replica-all", phase: "maintenance", percent: 100, active: false, done: 2, total: 2 });
+    await waitFor(() => expect(screen.queryByTestId("batch-note")).toBeNull(), { timeout: 3000 });
+  });
+
+  it("names the entries the server refused", async () => {
+    serve(ZFS);
+    withTargets("a", "c");
+    runZFSReplicaAll.mockResolvedValue({ ok: true, started: 1, refused: [{ id: "a", code: "domain-off", error: "off" }] });
     await renderPage("/backups?kind=zfs");
     await waitFor(() => expect(action(REPLICATE)).toBeTruthy());
     await press(action(REPLICATE)!);
-    await waitFor(() => expect(runZFSReplica.mock.calls).toEqual([["a"], ["c"]]));
     expect(pushed).toContainEqual({ message: `tank/a: ${en["zfs.code.domain-off"]}`, severity: "fail" });
+  });
+
+  it("says so when the server is already replicating all entries", async () => {
+    serve(ZFS);
+    withTargets("a");
+    runZFSReplicaAll.mockResolvedValue({ ok: false, busy: true, error: "busy" });
+    await renderPage("/backups?kind=zfs");
+    await waitFor(() => expect(action(REPLICATE)).toBeTruthy());
+    await press(action(REPLICATE)!);
+    expect(pushed).toContainEqual({ message: en["zfs.replica.allBusy"], severity: "warn" });
+    expect(screen.queryByTestId("batch-note")).toBeNull();
   });
 
   it("sits in the More menu on a phone, where the row has no room", async () => {

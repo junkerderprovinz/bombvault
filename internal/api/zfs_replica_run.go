@@ -117,21 +117,31 @@ func (s *Service) ReplicateZFSDataset(ctx context.Context, id string) error {
 // replicateZFSItem is ReplicateZFSDataset for an item already loaded, whether
 // or not it is switched on.
 func (s *Service) replicateZFSItem(ctx context.Context, d store.ZFSDataset) error {
-	if err := s.zfsReplicaRunRefusal(d); err != nil {
+	refused, err := s.replicateZFSNow(ctx, d)
+	if refused {
 		log.Printf("api: zfs replica: %s skipped: %v", d.Dataset, err)
 		return nil
 	}
+	return err
+}
+
+// replicateZFSNow runs one item's replica and waits for it. refused is true
+// when the item may not replicate or is replicating already, and err says
+// why.
+func (s *Service) replicateZFSNow(ctx context.Context, d store.ZFSDataset) (refused bool, err error) {
+	if err := s.zfsReplicaRunRefusal(d); err != nil {
+		return true, err
+	}
 	unlock, ok := s.lockZFSReplica(d.ID)
 	if !ok {
-		log.Printf("api: zfs replica: %s skipped, it is still replicating", d.Dataset)
-		return nil
+		return true, errZFSReplicaBusy
 	}
 	defer unlock()
 	runID, err := s.startRun(ctx, d.ID, store.ZFSReplicaRunKind)
 	if err != nil {
-		return err
+		return false, err
 	}
-	return s.replicateZFS(ctx, d, runID, unlock)
+	return false, s.replicateZFS(ctx, d, runID, unlock)
 }
 
 // zfsReplicaOnly reports whether an item has a replica and nowhere else to

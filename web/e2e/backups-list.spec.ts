@@ -246,6 +246,10 @@ async function stage(page: Page, s: Stage = {}): Promise<{ posts: string[] }> {
     posts.push(`POST ${new URL(route.request().url()).pathname}`);
     return route.fulfill({ json: { ok: true, runId: "r1" } });
   });
+  await page.route("**/api/zfs/replica/run-all", (route) => {
+    posts.push(`POST ${new URL(route.request().url()).pathname} ${route.request().postData() ?? ""}`);
+    return route.fulfill({ json: { ok: true, started: 1, refused: [] } });
+  });
   await page.route("**/api/zfs/connection", (route) =>
     route.fulfill({
       json: {
@@ -712,7 +716,7 @@ test("Replicate all now stands on the ZFS tile when an entry has a target", asyn
   } else {
     await actions.getByRole("button", { name: "Alle jetzt replizieren" }).click();
   }
-  await expect.poll(() => posts).toContain("POST /api/zfs/datasets/z1/replica/run");
+  await expect.poll(() => posts).toContain('POST /api/zfs/replica/run-all {"ids":["z1"]}');
 });
 
 test("Replicate all now is absent while no ZFS entry has a target", async ({ page }) => {

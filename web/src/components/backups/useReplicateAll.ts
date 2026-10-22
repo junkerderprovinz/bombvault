@@ -1,25 +1,27 @@
-// What the Backups list does to replicate every ZFS entry that has a target:
-// one run after the other, each followed to its end on its own progress key.
+// What the Backups list does to replicate every ZFS entry that has a target.
+// The server runs them one after the other, so the batch goes on when the
+// page is left, and its bar comes back from the batch's progress key.
 
-import { useEffect, useRef, useState } from "react";
-import { getZFSReplica, runZFSReplica, type BackupItem, type ZFSReplica } from "../../lib/api";
+import { useEffect, useState } from "react";
+import { getZFSReplica, runZFSReplicaAll, type BackupItem, type ZFSReplica } from "../../lib/api";
 import type { TranslationKey } from "../../lib/i18n";
-import { anyActive, progressNow, type ProgressState } from "../../lib/progress";
+import { anyActive, type ProgressState } from "../../lib/progress";
 import { zfsCodeSentence } from "../../lib/zfsCodes";
 import { canReplicate, replicaProgressKey } from "../zfs/replica/replicaModel";
 import type { BatchProgress } from "./useBulkActions";
 
 type T = (key: TranslationKey, n?: number) => string;
 
-const POLL_MS = 500;
-// A run that is over before the first look never shows as active, so the wait
-// for it ends after this long.
+const REPLICATE_ALL_KEY = "zfs-replica-all";
+
+// The batch is started before its first frame arrives, so the bar stands in
+// for it until then, but no longer than this.
 const START_GRACE_MS = 5000;
 
 export interface ReplicateAll {
   /** At least one of the entries has a replica that a button can start. */
   available: boolean;
-  /** The runs started here have not all ended. */
+  /** A batch is starting or running on the server. */
   busy: boolean;
   batch: BatchProgress | null;
   start: () => Promise<void>;
@@ -37,14 +39,7 @@ export function useReplicateAll({
   t: T;
 }): ReplicateAll {
   const [replicas, setReplicas] = useState<Record<string, ZFSReplica>>({});
-  const [plan, setPlan] = useState<{ ids: string[]; done: number } | null>(null);
-  const gone = useRef(false);
-  useEffect(
-    () => () => {
-      gone.current = true;
-    },
-    []
-  );
+  const [starting, setStarting] = useState<number | null>(null);
 
   // Read again whenever a run starts or ends, which is when a replica's
   // state changes without the page being told.
@@ -64,57 +59,67 @@ export function useReplicateAll({
     };
   }, [idsKey, working]);
 
+  const state = progress[REPLICATE_ALL_KEY];
+  const running = !!state?.active && !state.finished;
+  useEffect(() => {
+    if (starting === null) return;
+    if (running) {
+      setStarting(null);
+      return;
+    }
+    const timer = setTimeout(() => setStarting(null), START_GRACE_MS);
+    return () => clearTimeout(timer);
+  }, [starting, running]);
+
   const ready = items.filter((item) => replicas[item.key] && canReplicate(replicas[item.key]));
 
-  async function untilEnded(key: string) {
-    const began = Date.now();
-    let seen = false;
-    while (!gone.current) {
-      await new Promise((done) => setTimeout(done, POLL_MS));
-      const state = progressNow(key);
-      if (state) seen = true;
-      if (state?.active && !state.finished) continue;
-      if (seen || Date.now() - began > START_GRACE_MS) return;
-    }
-  }
-
   async function start() {
-    if (plan) return;
-    const picked = ready.map((item) => ({ id: item.key, name: item.name }));
-    if (picked.length === 0) {
+    if (starting !== null || running) return;
+    if (ready.length === 0) {
       push(t("zfs.replica.allNothing"), "warn");
       return;
     }
-    const ids = picked.map((p) => p.id);
-    setPlan({ ids, done: 0 });
+    setStarting(ready.length);
+    const nameOf = (id: string) => ready.find((item) => item.key === id)?.name ?? id;
     try {
-      for (const [i, { id, name }] of picked.entries()) {
-        try {
-          const res = await runZFSReplica(id);
-          if (res.ok) await untilEnded(replicaProgressKey(id));
-          else push(`${name}: ${res.code ? zfsCodeSentence(t, res.code) : (res.error ?? t("settings.error"))}`, "fail");
-        } catch (err) {
-          push(`${name}: ${err instanceof Error ? err.message : t("settings.error")}`, "fail");
-        }
-        if (gone.current) return;
-        setPlan({ ids, done: i + 1 });
+      const res = await runZFSReplicaAll(ready.map((item) => item.key));
+      if (!res.ok) {
+        setStarting(null);
+        push(res.busy ? t("zfs.replica.allBusy") : (res.error ?? t("settings.error")), res.busy ? "warn" : "fail");
+        return;
       }
-    } finally {
-      if (!gone.current) setPlan(null);
+      if (!res.started) setStarting(null);
+      for (const refused of res.refused ?? []) {
+        push(`${nameOf(refused.id)}: ${refused.code ? zfsCodeSentence(t, refused.code) : refused.error}`, "fail");
+      }
+    } catch (err) {
+      setStarting(null);
+      push(err instanceof Error ? err.message : t("settings.error"), "fail");
     }
   }
 
   let batch: BatchProgress | null = null;
-  if (plan) {
-    const current = plan.ids[plan.done];
-    const share = current ? (progress[replicaProgressKey(current)]?.percent ?? 0) / 100 : 0;
+  if (running) {
+    const done = state.done ?? 0;
+    const of = state.total ?? 0;
+    // The entry being sent adds its own share, so the bar moves during a long
+    // first send.
+    const share = Math.max(
+      0,
+      ...items.map((item) => {
+        const run = progress[replicaProgressKey(item.key)];
+        return run?.active && !run.finished ? run.percent / 100 : 0;
+      })
+    );
     batch = {
       label: t("zfs.replica.batch.running"),
-      percent: ((plan.done + share) / plan.ids.length) * 100,
-      done: plan.done,
-      of: plan.ids.length,
+      percent: of > 0 ? (Math.min(done + share, of) / of) * 100 : state.percent,
+      done,
+      of,
     };
+  } else if (starting !== null) {
+    batch = { label: t("zfs.replica.batch.running"), percent: 0, done: 0, of: starting };
   }
 
-  return { available: ready.length > 0, busy: plan !== null, batch, start };
+  return { available: ready.length > 0, busy: starting !== null || running, batch, start };
 }

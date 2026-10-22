@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/sshconn"
@@ -35,6 +36,8 @@ type zfsReplicaRuntime struct {
 	// work counts the runs started in the background, so a test can wait for
 	// them.
 	work sync.WaitGroup
+	// batch is held while a Replicate all now batch runs.
+	batch atomic.Bool
 
 	// The seams a test fills in. Left nil, the ends are reached over SSH and
 	// the engine runs as it is.

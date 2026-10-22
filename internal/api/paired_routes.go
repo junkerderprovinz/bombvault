@@ -94,6 +94,7 @@ var pairedRoutes = map[string]bool{
 	"POST /api/config/backup":                 true,
 	"POST /api/offsite/{domain}":              true,
 	"POST /api/zfs/datasets/{id}/replica/run": true,
+	"POST /api/zfs/replica/run-all":           true,
 	"POST /api/pull/sources/{id}/run":         true,
 	"POST /api/check/{domain}":                true,
 	"POST /api/verify/{domain}":               true,
