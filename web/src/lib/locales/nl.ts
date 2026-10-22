@@ -4405,6 +4405,8 @@ const nl: Partial<Translations> = {
   "emergency.searching": "Bezig met zoeken in je back-ups …",
   "emergency.selectionHint": "De nieuwste back-up is overal voorgeselecteerd. Na een herbouw weten mappensets niet meer waar ze vandaan kwamen, dus ze komen in een map die je zelf kiest.",
   "emergency.selectionKept": "Wat deze server nog heeft, staat eerst uit, omdat een herstel het zou vervangen.",
+  "emergency.entrySource": "Waar staan de back-ups?",
+  "emergency.entrySourceHint": "Off-site toont wat de off-site kopieën bevatten en zet daaruit terug. Kies dit als de lokale back-ups met de oude server verloren zijn gegaan.",
   "emergency.leaveStoppedHint": "Je start elke container en VM zelf wanneer je er klaar voor bent. Het veiligst na een totaal verlies.",
   "emergency.brings": "Haalt {list} terug.",
   "emergency.count.containers": "one={n} container|other={n} containers",

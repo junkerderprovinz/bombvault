@@ -4397,6 +4397,8 @@ const ko: Partial<Translations> = {
   "emergency.searching": "백업을 살펴보는 중 …",
   "emergency.selectionHint": "어디서나 최신 백업이 미리 선택되어 있습니다. 다시 구축한 뒤에는 폴더 세트가 원래 위치를 알지 못하므로, 직접 고른 폴더에 복원됩니다.",
   "emergency.selectionKept": "이 서버에 아직 있는 항목은 복원하면 덮어쓰이므로 처음에는 꺼져 있습니다.",
+  "emergency.entrySource": "백업은 어디에 있나요?",
+  "emergency.entrySourceHint": "오프사이트는 오프사이트 사본에 있는 항목을 보여 주고 그곳에서 복원합니다. 로컬 백업이 이전 서버와 함께 사라졌을 때 선택하세요.",
   "emergency.leaveStoppedHint": "준비가 되면 컨테이너와 VM을 직접 시작합니다. 전체 손실 뒤에는 이 방법이 가장 안전합니다.",
   "emergency.brings": "{list}를 복원합니다.",
   "emergency.count.containers": "컨테이너 {n}개",

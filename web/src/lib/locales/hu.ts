@@ -4407,6 +4407,8 @@ const hu: Partial<Translations> = {
   "emergency.searching": "Keresés a biztonsági mentéseidben …",
   "emergency.selectionHint": "Mindenhol a legújabb mentés van előre kijelölve. Újraépítés után a mappakészletek már nem tudják, honnan jöttek, ezért egy általad választott mappába kerülnek.",
   "emergency.selectionKept": "Ami ezen a szerveren még megvan, az eleinte ki van kapcsolva, mert a visszaállítás lecserélné.",
+  "emergency.entrySource": "Hol vannak a mentések?",
+  "emergency.entrySourceHint": "A telephelyen kívüli lehetőség megmutatja, mi van a telephelyen kívüli másolatokban, és azokból állít vissza. Ezt válaszd, ha a helyi mentések a régi szerverrel együtt elvesztek.",
   "emergency.leaveStoppedHint": "Minden konténert és VM-et te indítasz el, amikor készen állsz. Teljes adatvesztés után ez a legbiztonságosabb.",
   "emergency.brings": "Visszahozza: {list}.",
   "emergency.count.containers": "{n} konténer",

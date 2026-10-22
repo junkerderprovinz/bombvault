@@ -4400,6 +4400,8 @@ const sl: Partial<Translations> = {
   "emergency.searching": "Pregledujem tvoje varnostne kopije …",
   "emergency.selectionHint": "Povsod je vnaprej izbrana najnovejša kopija. Po ponovni postavitvi nabori map ne vedo več, od kod so, zato gredo v mapo, ki jo izbereš.",
   "emergency.selectionKept": "Kar ta strežnik še ima, je privzeto izklopljeno, ker bi obnova to zamenjala.",
+  "emergency.entrySource": "Kje so varnostne kopije?",
+  "emergency.entrySourceHint": "Zunanje pokaže, kaj vsebujejo zunanje kopije, in obnavlja iz njih. Izberi to, ko so se lokalne varnostne kopije izgubile skupaj s starim strežnikom.",
   "emergency.leaveStoppedHint": "Vsak vsebnik in VM zaženeš sam, ko si pripravljen. Najvarneje po popolni izgubi.",
   "emergency.brings": "Obnovi: {list}.",
   "emergency.count.containers": "one={n} vsebnik|two={n} vsebnika|few={n} vsebniki|other={n} vsebnikov",

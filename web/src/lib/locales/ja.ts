@@ -4397,6 +4397,8 @@ const ja: Partial<Translations> = {
   "emergency.searching": "バックアップを調べています …",
   "emergency.selectionHint": "どの項目も最新のバックアップがあらかじめ選ばれています。再構築のあと、フォルダーセットは元の場所を覚えていないため、指定したフォルダーに入ります。",
   "emergency.selectionKept": "このサーバーにまだあるものは、復元すると置き換わってしまうため、最初はオフになっています。",
+  "emergency.entrySource": "バックアップはどこにありますか？",
+  "emergency.entrySourceHint": "オフサイトを選ぶと、オフサイトコピーにあるものを一覧表示し、そこから復元します。ローカルのバックアップが旧サーバーと一緒に失われた場合に選んでください。",
   "emergency.leaveStoppedHint": "準備ができたら、各コンテナと VM を自分で起動します。全損のあとはこれがいちばん安全です。",
   "emergency.brings": "{list} を復元します。",
   "emergency.count.containers": "コンテナ {n} 個",

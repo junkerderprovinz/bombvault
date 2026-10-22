@@ -4416,6 +4416,8 @@ const gl: Partial<Translations> = {
   "emergency.searching": "Buscando nas túas copias …",
   "emergency.selectionHint": "A copia máis recente está preseleccionada en todas partes. Despois dunha reconstrución, os conxuntos de cartafoles xa non saben de onde viñan, así que se restauran nun cartafol que escolles.",
   "emergency.selectionKept": "O que este servidor aínda ten comeza desactivado, porque unha restauración substituiríao.",
+  "emergency.entrySource": "Onde están as copias de seguridade?",
+  "emergency.entrySourceHint": "Externa mostra o que gardan as copias externas e restaura desde elas. Escóllea cando as copias locais se perderon co servidor antigo.",
   "emergency.leaveStoppedHint": "Inicias cada contedor e cada MV ti mesmo, cando esteas preparado. O máis seguro despois dunha perda total.",
   "emergency.brings": "Recupera {list}.",
   "emergency.count.containers": "one={n} contedor|other={n} contedores",

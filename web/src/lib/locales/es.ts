@@ -4404,6 +4404,8 @@ const es: Partial<Translations> = {
   "emergency.searching": "Buscando en tus copias de seguridad …",
   "emergency.selectionHint": "La copia más reciente viene preseleccionada en todas partes. Tras una reconstrucción, los conjuntos de carpetas ya no saben de dónde venían, así que van a una carpeta que eliges tú.",
   "emergency.selectionKept": "Lo que este servidor todavía tiene empieza desactivado, porque una restauración lo reemplazaría.",
+  "emergency.entrySource": "¿Dónde están las copias de seguridad?",
+  "emergency.entrySourceHint": "Externo muestra lo que guardan las copias externas y restaura desde ellas. Elígelo cuando las copias locales se perdieron junto con el servidor antiguo.",
   "emergency.leaveStoppedHint": "Arrancas tú cada contenedor y cada VM cuando estés listo. Es lo más seguro tras una pérdida total.",
   "emergency.brings": "Recupera {list}.",
   "emergency.count.containers": "one={n} contenedor|many={n} de contenedores|other={n} contenedores",

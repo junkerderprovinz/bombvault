@@ -4403,6 +4403,8 @@ const pl: Partial<Translations> = {
   "emergency.searching": "Przeszukiwanie twoich kopii zapasowych …",
   "emergency.selectionHint": "Najnowsza kopia jest wstępnie wybrana wszędzie. Po odbudowie zestawy folderów nie wiedzą już, skąd pochodzą, dlatego trafiają do wybranego przez ciebie folderu.",
   "emergency.selectionKept": "To, co ten serwer nadal ma, jest na początku wyłączone, bo przywracanie by to zastąpiło.",
+  "emergency.entrySource": "Gdzie są kopie zapasowe?",
+  "emergency.entrySourceHint": "Poza siedzibą pokazuje, co zawierają kopie poza siedzibą, i przywraca z nich. Wybierz to, gdy lokalne kopie zapasowe przepadły razem ze starym serwerem.",
   "emergency.leaveStoppedHint": "Każdy kontener i każdą maszynę wirtualną uruchamiasz sam, gdy będziesz gotowy. Najbezpieczniej po całkowitej utracie danych.",
   "emergency.brings": "Przywraca: {list}.",
   "emergency.count.containers": "one={n} kontener|few={n} kontenery|many={n} kontenerów|other={n} kontenera",

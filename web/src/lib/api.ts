@@ -5729,6 +5729,22 @@ export function getEmergency(): Promise<EmergencyAnswer> {
   return fetchJSON("/api/emergency");
 }
 
+/** The newest snapshot (unix seconds) each entry has in its section's
+ *  off-site copy: containers and file sets by name, VMs by libvirt name.
+ *  `unread` names a section whose copy could not be listed, with the reason. */
+export interface OffsiteEntries {
+  containers: Record<string, number>;
+  vms: Record<string, number>;
+  fileSets: Record<string, number>;
+  unread?: Record<string, string>;
+}
+
+/** GET /api/emergency/offsite-entries: what the off-site copies hold, for an
+ *  emergency whose local backups went down with the old server. */
+export function emergencyOffsiteEntries(): Promise<OkEnvelope & { entries?: OffsiteEntries }> {
+  return fetchJSON("/api/emergency/offsite-entries");
+}
+
 /** POST /api/emergency/read with a recovery kit: starts an emergency and
  *  tries the kit's key on every place it names. Nothing is stored. */
 export function readEmergencyKit(kit: string, identity?: string): Promise<EmergencyAnswer> {

@@ -4416,6 +4416,8 @@ const ms: Partial<Translations> = {
   "emergency.searching": "Mencari dalam sandaran anda …",
   "emergency.selectionHint": "Sandaran terbaharu dipilih terlebih dahulu di mana-mana. Selepas pembinaan semula, set folder tidak lagi tahu asalnya, jadi ia masuk ke folder pilihan anda.",
   "emergency.selectionKept": "Apa yang masih ada pada pelayan ini pada mulanya dimatikan, kerana pemulihan akan menggantikannya.",
+  "emergency.entrySource": "Di manakah sandaran itu?",
+  "emergency.entrySourceHint": "Luar tapak menunjukkan isi salinan luar tapak dan memulihkan daripadanya. Pilih ini apabila sandaran tempatan hilang bersama pelayan lama.",
   "emergency.leaveStoppedHint": "Anda memulakan setiap bekas dan VM sendiri apabila sudah bersedia. Paling selamat selepas kehilangan menyeluruh.",
   "emergency.brings": "Memulihkan {list}.",
   "emergency.count.containers": "{n} bekas",

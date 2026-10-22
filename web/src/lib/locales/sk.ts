@@ -4416,6 +4416,8 @@ const sk: Partial<Translations> = {
   "emergency.searching": "Prehľadávam tvoje zálohy …",
   "emergency.selectionHint": "Všade je vopred vybraná najnovšia záloha. Po novom nasadení servera už sady priečinkov nevedia, odkiaľ pochádzajú, preto idú do priečinka, ktorý vyberieš.",
   "emergency.selectionKept": "To, čo tento server ešte má, začína vypnuté, lebo by to obnova prepísala.",
+  "emergency.entrySource": "Kde sú zálohy?",
+  "emergency.entrySourceHint": "Externý ukáže, čo obsahujú externé kópie, a obnoví z nich. Zvoľ to, keď miestne zálohy zmizli spolu so starým serverom.",
   "emergency.leaveStoppedHint": "Každý kontajner a VM spustíš sám, keď budeš pripravený. Najbezpečnejšie po úplnej strate.",
   "emergency.brings": "Obnoví: {list}.",
   "emergency.count.containers": "one={n} kontajner|few={n} kontajnery|many={n} kontajnera|other={n} kontajnerov",

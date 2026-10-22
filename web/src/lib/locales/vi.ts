@@ -4397,6 +4397,8 @@ const vi: Partial<Translations> = {
   "emergency.searching": "Đang tìm trong các bản sao lưu của bạn …",
   "emergency.selectionHint": "Bản sao lưu mới nhất được chọn sẵn ở mọi nơi. Sau khi dựng lại, các bộ thư mục không còn biết mình từ đâu đến, nên chúng được đưa vào một thư mục bạn chọn.",
   "emergency.selectionKept": "Những gì máy chủ này còn đang có sẽ tắt sẵn, vì khôi phục sẽ ghi đè lên chúng.",
+  "emergency.entrySource": "Các bản sao lưu nằm ở đâu?",
+  "emergency.entrySourceHint": "Ngoài site hiển thị những gì có trong các bản sao ngoài site và khôi phục từ đó. Chọn mục này khi các bản sao lưu cục bộ đã mất cùng máy chủ cũ.",
   "emergency.leaveStoppedHint": "Bạn tự khởi động từng container và VM khi sẵn sàng. An toàn nhất sau khi mất toàn bộ.",
   "emergency.brings": "Sẽ khôi phục lại {list}.",
   "emergency.count.containers": "{n} container",

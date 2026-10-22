@@ -4406,6 +4406,8 @@ const fr: Partial<Translations> = {
   "emergency.searching": "Recherche dans vos sauvegardes …",
   "emergency.selectionHint": "La sauvegarde la plus récente est présélectionnée partout. Après une reconstruction, les jeux de dossiers ne savent plus d'où ils viennent : ils sont donc restaurés dans un dossier de votre choix.",
   "emergency.selectionKept": "Ce que ce serveur a encore est désactivé au départ, car une restauration le remplacerait.",
+  "emergency.entrySource": "Où se trouvent les sauvegardes ?",
+  "emergency.entrySourceHint": "Hors site affiche ce que contiennent les copies hors site et restaure à partir d'elles. Choisissez-le lorsque les sauvegardes locales ont disparu avec l'ancien serveur.",
   "emergency.leaveStoppedHint": "Vous démarrez chaque conteneur et chaque VM vous-même, quand vous êtes prêt. Le plus sûr après une perte totale.",
   "emergency.brings": "Restaure {list}.",
   "emergency.count.containers": "one={n} conteneur|many={n} conteneurs|other={n} conteneurs",

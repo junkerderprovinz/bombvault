@@ -6,6 +6,7 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from "react"
 import {
   discoverAll,
   downloadRecoveryKit,
+  emergencyOffsiteEntries,
   fileSetSnapshots,
   cancelEmergency,
   finishEmergency,
@@ -26,6 +27,7 @@ import {
   type Container,
   type EmergencyState,
   type FileSetView,
+  type OffsiteEntries,
   type Settings,
   type VM,
   type ZFSDatasetView,
@@ -35,6 +37,7 @@ import { lossText, refusalText, sessionKeyInUse, settingsOfPlaces, takenOver } f
 import { useT, type TranslationKey } from "../../lib/i18n";
 import { placementChanged } from "../../lib/placementEvents";
 import { anyActive, busyPhraseKey, useProgress } from "../../lib/progress";
+import { clearNotStarted, DOUBLE_CLICK_MS, holdRunLock, noteNotStarted } from "../../lib/restoreMany";
 import { EMERGENCY_STEPS, emergencyPath, restoreFolderFor, type EmergencyStep, type EmergencyWay } from "../../lib/restorePlan";
 import { isRuntimeRefusal } from "../../lib/runReason";
 import { useToast } from "../../lib/toast";
@@ -47,12 +50,12 @@ import { KindGlyph } from "../backups/kinds";
 import { Badge } from "../Badge";
 import { Button } from "../Button";
 import { FolderBrowser } from "../FolderBrowser";
-import { IconBack, IconForward } from "../glyphs";
+import { IconBack, IconForward, IconPause } from "../glyphs";
 import { IconCheck, IconDownload, IconRestore } from "../navGlyphs";
 import { DiscoverFindings } from "../placement/DiscoverFindings";
 import { ProgressBar } from "../ProgressBar";
 import { RadioMark } from "../RadioMark";
-import { SourceToggle, type RepoSource } from "../SourceToggle";
+import { isOffsiteSource, SourceToggle, type RepoSource } from "../SourceToggle";
 import { Rows, SettingRow } from "../storage/rows";
 import { Toggle } from "../Toggle";
 import { DumpOnlyRow } from "./DumpOnlyRow";
@@ -184,16 +187,54 @@ export function EmergencyWindow({
   const [folders, setFolders] = useState<Record<string, string>>({});
   const [keepStopped, setKeepStopped] = useState(true);
   const [vmSsh, setVmSsh] = useState<boolean | null>(null);
+  // The local backups may have gone down with the old server, so the entries
+  // can also come from the off-site copies.
+  const [entrySource, setEntrySource] = useState<RepoSource>("local");
+  const [offsite, setOffsite] = useState<OffsiteEntries | null>(null);
+  const [offsiteError, setOffsiteError] = useState<string | null>(null);
 
   const [queue, setQueue] = useState<Picked[]>([]);
   const [outcomes, setOutcomes] = useState<Record<string, Outcome>>({});
   const [finished, setFinished] = useState(false);
   const [runtimeRefused, setRuntimeRefused] = useState<string[]>([]);
   const [kitError, setKitError] = useState<string | null>(null);
+  const [stopAsked, setStopAsked] = useState(false);
+  const stopping = useRef(false);
+  const startedAt = useRef(0);
+  const releaseLock = useRef(() => {});
 
   const running = anyActive(useProgress());
   const restoring = queue.length > 0 && !finished;
   const searched = useRef(false);
+  const fromOffsite = isOffsiteSource(entrySource);
+  const offsiteLoading = fromOffsite && offsite === null && offsiteError === null;
+
+  // The restores run one after the other from this page, so leaving it drops
+  // the ones that have not started.
+  useEffect(() => {
+    if (!restoring) return;
+    const warn = (e: BeforeUnloadEvent) => e.preventDefault();
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [restoring]);
+  useEffect(() => () => releaseLock.current(), []);
+
+  useEffect(() => {
+    if (step !== "selection" || !offsiteLoading) return;
+    let current = true;
+    emergencyOffsiteEntries()
+      .then((res) => {
+        if (!current) return;
+        if (res.ok && res.entries) setOffsite(res.entries);
+        else setOffsiteError(res.error ?? t("settings.error"));
+      })
+      .catch((err: unknown) => {
+        if (current) setOffsiteError(err instanceof Error ? err.message : String(err));
+      });
+    return () => {
+      current = false;
+    };
+  }, [step, offsiteLoading, t]);
 
   useEffect(() => {
     getSettings()
@@ -371,9 +412,16 @@ export function EmergencyWindow({
     void search();
   }, [step, search]);
 
-  const restorable = containers.filter((c) => !c.dumpOnly && !c.self && c.lastBackup);
-  const dumpOnly = containers.filter((c) => c.dumpOnly);
-  const backedUpVMs = vms.filter((v) => v.lastBackup);
+  // A list dates its entries from the local repositories, so an off-site copy
+  // says for itself what it holds.
+  const inOffsite = (held: Record<string, number> | undefined, name: string) => (held?.[name] ?? 0) > 0;
+  const restorable = containers.filter((c) =>
+    c.self ? false : fromOffsite ? inOffsite(offsite?.containers, c.name) : !c.dumpOnly && c.lastBackup
+  );
+  const dumpOnly = fromOffsite ? [] : containers.filter((c) => c.dumpOnly);
+  const backedUpVMs = vms.filter((v) => (fromOffsite ? inOffsite(offsite?.vms, v.libvirtName) : v.lastBackup));
+  const shownSets = fromOffsite ? fileSets.filter((s) => inOffsite(offsite?.fileSets, s.name)) : fileSets;
+  const source = fromOffsite ? entrySource : undefined;
   const folderOf = (set: FileSetView) =>
     folders[set.id] ?? (settings ? `${restoreFolderFor(settings, "files")}/${set.name}` : "");
 
@@ -385,12 +433,12 @@ export function EmergencyWindow({
     ...backedUpVMs
       .filter((v) => on.has(`vm:${v.libvirtName}`))
       .map((v) => ({ kind: "vm" as const, id: v.libvirtName, name: v.name, runTarget: v.libvirtName })),
-    ...fileSets
+    ...shownSets
       .filter((s) => on.has(`files:${s.id}`))
       .map((s) => ({ kind: "files" as const, id: s.id, name: s.name, runTarget: s.name })),
   ];
   const keyOf = (p: Picked) => `${p.kind}:${p.id}`;
-  const missingFolder = fileSets.some((s) => on.has(`files:${s.id}`) && folderOf(s).trim() === "");
+  const missingFolder = shownSets.some((s) => on.has(`files:${s.id}`) && folderOf(s).trim() === "");
 
   function toggle(key: string, next: boolean) {
     setOn((prev) => {
@@ -404,22 +452,22 @@ export function EmergencyWindow({
   async function restoreOne(p: Picked): Promise<{ ok: boolean; error?: string }> {
     const matchRun = (r: { domain: string; target: string }) => r.domain === p.kind && r.target === p.runTarget;
     if (p.kind === "container") {
-      return fireAndWaitRun({ kind: "restore", matchRun, start: () => restore(p.id, "latest", true, undefined, keepStopped), t });
+      return fireAndWaitRun({ kind: "restore", matchRun, start: () => restore(p.id, "latest", true, source, keepStopped), t });
     }
     if (p.kind === "vm") {
-      return fireAndWaitRun({ kind: "restore", matchRun, start: () => restoreVM(p.id, "latest", true, undefined, keepStopped), t });
+      return fireAndWaitRun({ kind: "restore", matchRun, start: () => restoreVM(p.id, "latest", true, source, keepStopped), t });
     }
     // The files route takes no "latest", so the newest snapshot of the set is
     // looked up when its turn comes.
-    const snaps = await fileSetSnapshots(p.id);
+    const snaps = await fileSetSnapshots(p.id, source);
     const list = snaps.ok ? (snaps.snapshots ?? []) : [];
     if (list.length === 0) return { ok: false, error: snaps.error ?? t("snapshots.none") };
     const latest = list.reduce((a, b) => (new Date(a.time) > new Date(b.time) ? a : b));
     const target = folderOf(fileSets.find((s) => s.id === p.id) as FileSetView).trim();
-    const check = await checkRestoreOnce({ kind: "fileSet", name: p.id, snapshotId: latest.id, targetPath: target });
+    const check = await checkRestoreOnce({ kind: "fileSet", name: p.id, snapshotId: latest.id, targetPath: target, source });
     const blocked = restoreBlockReason(check, t);
     if (blocked !== undefined) return { ok: false, error: blocked };
-    return fireAndWaitRun({ kind: "restore", matchRun, start: () => restoreFileSet(p.id, latest.id, true, target), t });
+    return fireAndWaitRun({ kind: "restore", matchRun, start: () => restoreFileSet(p.id, latest.id, true, target, source), t });
   }
 
   // One at a time: each restore waits for the one before it, so the server
@@ -438,15 +486,28 @@ export function EmergencyWindow({
     setFinished(false);
     setRuntimeRefused([]);
     setStep("restore");
+    stopping.current = false;
+    setStopAsked(false);
+    startedAt.current = Date.now();
+    releaseLock.current = holdRunLock();
     const refused: string[] = [];
-    for (const p of list) {
+    for (const [i, p] of list.entries()) {
+      if (stopping.current) break;
+      // Kept for the Restore page, which names them when this page was left.
+      noteNotStarted(list.slice(i + 1).map((next) => next.name));
       setOutcomes((prev) => ({ ...prev, [keyOf(p)]: "running" }));
       const res = await restoreOne(p).catch((err: unknown) => ({ ok: false, error: err instanceof Error ? err.message : String(err) }));
       setOutcomes((prev) => ({ ...prev, [keyOf(p)]: res.ok ? "done" : "failed" }));
       if (p.kind === "container" && isRuntimeRefusal(res.error)) refused.push(p.id);
     }
+    clearNotStarted();
+    releaseLock.current();
     setRuntimeRefused(refused);
     setFinished(true);
+  }
+
+  function held() {
+    push(t("restoreMany.held").replace("{stop}", t("restoreMany.stop")), "warn");
   }
 
   function downloadKit() {
@@ -461,7 +522,7 @@ export function EmergencyWindow({
   const reloadable = configPhase === "reload" || configPhase === "restarting";
   const at = EMERGENCY_STEPS.indexOf(step) + 1;
   const total = found ? found.containers + found.vms + found.files + found.zfs : 0;
-  const offered = restorable.length + backedUpVMs.length + fileSets.length + zfsItems.length + dumpOnly.length;
+  const offered = restorable.length + backedUpVMs.length + shownSets.length + zfsItems.length + dumpOnly.length;
   const count = (kind: Picked["kind"]) => picked.filter((p) => p.kind === kind).length;
   const words = [
     count("container") > 0 && t("emergency.count.containers", count("container")),
@@ -470,6 +531,7 @@ export function EmergencyWindow({
   ].filter((w): w is string => !!w);
   const doneCount = queue.filter((p) => outcomes[keyOf(p)] === "done" || outcomes[keyOf(p)] === "failed").length;
   const failedCount = queue.filter((p) => outcomes[keyOf(p)] === "failed").length;
+  const leftCount = queue.filter((p) => outcomes[keyOf(p)] === "waiting").length;
   const lost = lossText(t, lang, emergency?.lost);
 
   const cancel = <Button label={t("common.cancel")} labelKey="common.cancel" tone="subtle" onClick={leave} />;
@@ -537,6 +599,22 @@ export function EmergencyWindow({
         />
       </>
     );
+  } else if (restoring) {
+    footer = (
+      <Button
+        label={t("restoreMany.stop")}
+        labelKey={null}
+        glyph={<IconPause />}
+        tone="subtle"
+        disabled={stopAsked}
+        hint={t("restoreMany.stopHint")}
+        onClick={() => {
+          if (Date.now() - startedAt.current < DOUBLE_CLICK_MS) return;
+          stopping.current = true;
+          setStopAsked(true);
+        }}
+      />
+    );
   } else {
     footer = (
       <Button
@@ -559,7 +637,7 @@ export function EmergencyWindow({
   }
 
   return (
-    <InstanceWindow title={t("emergency.title")} onClose={leave} footer={footer}>
+    <InstanceWindow title={t("emergency.title")} onClose={restoring ? held : leave} footer={footer}>
       <StepBar
         steps={EMERGENCY_STEPS.map((s) => t(STEP_LABEL[s]))}
         current={at}
@@ -658,14 +736,31 @@ export function EmergencyWindow({
               {found.zfs > 0 && <> {t("recovery.zfsFound", found.zfs)}</>}
             </Note>
           )}
-          {found && !searching && offered === 0 && <Note tone="warn">{t("recovery.foundNone")}</Note>}
+          {found && !searching && !offsiteLoading && offered === 0 && <Note tone="warn">{t("recovery.foundNone")}</Note>}
           {found && found.skipped.length > 0 && (
             <Note tone="warn">{t("common.discoverSkipped").replace("{list}", found.skipped.join(", "))}</Note>
           )}
           {found && <DiscoverFindings paused={found.paused} leftOpen={found.leftOpen} directRepos={found.directRepos} />}
           {searchError && <Note tone="fail">{searchError}</Note>}
+          {found && (
+            <SettingRow label={t("emergency.entrySource")} hint={t("emergency.entrySourceHint")}>
+              <SourceToggle
+                source={entrySource}
+                onChange={(next) => {
+                  setEntrySource(next);
+                  setOffsite(null);
+                  setOffsiteError(null);
+                }}
+              />
+            </SettingRow>
+          )}
+          {offsiteLoading && <p className="text-sm text-carbon-textMuted">{t("emergency.searching")}</p>}
+          {fromOffsite && offsiteError && <Note tone="fail">{offsiteError}</Note>}
+          {fromOffsite && offsite?.unread && Object.keys(offsite.unread).length > 0 && (
+            <Note tone="fail">{Object.values(offsite.unread).join(" ")}</Note>
+          )}
 
-          {!searching && restorable.length + backedUpVMs.length + fileSets.length > 0 && (
+          {!searching && restorable.length + backedUpVMs.length + shownSets.length > 0 && (
             <p className="text-xs text-carbon-textMuted">
               {t("emergency.selectionHint")} {t("emergency.selectionKept")}
             </p>
@@ -701,10 +796,10 @@ export function EmergencyWindow({
               {vmSsh === false && <Note tone="warn">{t("recovery.vmSshNote")}</Note>}
             </Section>
           )}
-          {fileSets.length > 0 && (
+          {shownSets.length > 0 && (
             <Section title={t("nav.files")} hint={t("recovery.filesRestoreHint")}>
               <Rows>
-                {fileSets.map((s) => (
+                {shownSets.map((s) => (
                   <PickRow key={s.id} kind="files" name={s.name} on={on.has(`files:${s.id}`)} onToggle={(v) => toggle(`files:${s.id}`, v)}>
                     {on.has(`files:${s.id}`) && (
                       <FolderBrowser
@@ -794,8 +889,9 @@ export function EmergencyWindow({
             <>
               <Note tone={failedCount > 0 ? "warn" : "ok"}>
                 {t("emergency.result")
-                  .replace("{ok}", String(queue.length - failedCount))
+                  .replace("{ok}", String(queue.length - failedCount - leftCount))
                   .replace("{fail}", String(failedCount))}
+                {leftCount > 0 && <> {t("restoreMany.notStarted", leftCount)}</>}
               </Note>
               {runtimeRefused.length > 0 && (
                 <RuntimeRetry key={runtimeRefused.join(",")} names={runtimeRefused} leaveStopped={keepStopped} t={t} />

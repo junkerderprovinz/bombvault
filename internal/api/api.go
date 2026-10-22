@@ -313,6 +313,7 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("GET /api/recovery-kit", h.handleRecoveryKit)
 	mux.HandleFunc("POST /api/recovery-kit/read", h.handleReadRecoveryKit)
 	mux.HandleFunc("GET /api/emergency", h.handleEmergencyState)
+	mux.HandleFunc("GET /api/emergency/offsite-entries", h.handleEmergencyOffsiteEntries)
 	mux.HandleFunc("DELETE /api/emergency", h.handleEmergencyCancel)
 	mux.HandleFunc("POST /api/emergency/undo", h.handleEmergencyUndo)
 	mux.HandleFunc("POST /api/emergency/read", h.handleEmergencyRead)

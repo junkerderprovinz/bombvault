@@ -4406,6 +4406,8 @@ const fi: Partial<Translations> = {
   "emergency.searching": "Etsitään varmuuskopioistasi …",
   "emergency.selectionHint": "Uusin varmuuskopio on valittu valmiiksi kaikkialla. Uudelleenrakennuksen jälkeen kansiojoukot eivät enää tiedä, mistä ne tulivat, joten ne palautetaan valitsemaasi kansioon.",
   "emergency.selectionKept": "Se, mikä tällä palvelimella vielä on, on aluksi pois päältä, koska palautus korvaisi sen.",
+  "emergency.entrySource": "Missä varmuuskopiot ovat?",
+  "emergency.entrySourceHint": "Etä näyttää, mitä etäkopiot sisältävät, ja palauttaa niistä. Valitse se, kun paikalliset varmuuskopiot menetettiin vanhan palvelimen mukana.",
   "emergency.leaveStoppedHint": "Käynnistät jokaisen kontin ja VM:n itse, kun olet valmis. Turvallisin vaihtoehto täystuhon jälkeen.",
   "emergency.brings": "Palauttaa {list}.",
   "emergency.count.containers": "one={n} kontti|other={n} konttia",

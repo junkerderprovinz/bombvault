@@ -4416,6 +4416,8 @@ const et: Partial<Translations> = {
   "emergency.searching": "Otsin sinu varundustest …",
   "emergency.selectionHint": "Uusim varundus on igal pool eelvalitud. Pärast uuesti ülesehitamist ei tea kaustakomplektid enam, kust nad tulid, seepärast lähevad nad sinu valitud kausta.",
   "emergency.selectionKept": "Mis sellel serveril veel on, algab väljalülitatuna, sest taastamine asendaks selle.",
+  "emergency.entrySource": "Kus varukoopiad asuvad?",
+  "emergency.entrySourceHint": "Väline näitab, mida välised koopiad sisaldavad, ja taastab neist. Vali see, kui kohalikud varukoopiad kadusid koos vana serveriga.",
   "emergency.leaveStoppedHint": "Käivitad iga konteineri ja VM-i ise, kui oled valmis. Kõige turvalisem pärast täielikku kaotust.",
   "emergency.brings": "Toob tagasi: {list}.",
   "emergency.count.containers": "one={n} konteiner|other={n} konteinerit",

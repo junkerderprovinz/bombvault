@@ -4416,6 +4416,8 @@ const id: Partial<Translations> = {
   "emergency.searching": "Mencari di cadangan Anda …",
   "emergency.selectionHint": "Cadangan terbaru sudah dipilih di mana-mana. Setelah server dibangun ulang, kumpulan folder tidak lagi tahu asalnya, jadi hasilnya masuk ke folder yang Anda pilih.",
   "emergency.selectionKept": "Yang masih ada di server ini awalnya dimatikan, karena pemulihan akan menggantinya.",
+  "emergency.entrySource": "Di mana cadangannya?",
+  "emergency.entrySourceHint": "Off-site menampilkan isi salinan off-site dan memulihkan dari sana. Pilih ini jika cadangan lokal hilang bersama server lama.",
   "emergency.leaveStoppedHint": "Anda menjalankan setiap container dan VM sendiri saat sudah siap. Paling aman setelah kehilangan total.",
   "emergency.brings": "Mengembalikan {list}.",
   "emergency.count.containers": "{n} container",

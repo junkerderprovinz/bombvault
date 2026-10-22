@@ -4406,6 +4406,8 @@ const no: Partial<Translations> = {
   "emergency.searching": "Leter i sikkerhetskopiene dine …",
   "emergency.selectionHint": "Den nyeste sikkerhetskopien er forhåndsvalgt overalt. Etter en gjenoppbygging vet ikke mappesett lenger hvor de kom fra, så de havner i en mappe du velger.",
   "emergency.selectionKept": "Det denne serveren fortsatt har, er slått av til å begynne med, fordi en gjenoppretting ville erstattet det.",
+  "emergency.entrySource": "Hvor ligger sikkerhetskopiene?",
+  "emergency.entrySourceHint": "Off-site viser hva off-site-kopiene inneholder, og gjenoppretter fra dem. Velg det når de lokale sikkerhetskopiene forsvant sammen med den gamle serveren.",
   "emergency.leaveStoppedHint": "Du starter hver container og VM selv når du er klar. Tryggest etter totalt tap.",
   "emergency.brings": "Henter tilbake {list}.",
   "emergency.count.containers": "one={n} container|other={n} containere",

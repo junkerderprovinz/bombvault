@@ -4416,6 +4416,8 @@ const is: Partial<Translations> = {
   "emergency.searching": "Leita í afritunum þínum …",
   "emergency.selectionHint": "Nýjasta afritið er valið fyrirfram alls staðar. Eftir enduruppsetningu vita möppusett ekki lengur hvaðan þau komu, svo þau fara í möppu að þínu vali.",
   "emergency.selectionKept": "Það sem þessi þjónn á enn er slökkt til að byrja með, því endurheimt myndi skipta því út.",
+  "emergency.entrySource": "Hvar eru afritin?",
+  "emergency.entrySourceHint": "Fjarlægt sýnir hvað fjarlægu afritin geyma og endurheimtir úr þeim. Veldu það þegar staðbundnu afritin glötuðust með gamla þjóninum.",
   "emergency.leaveStoppedHint": "Þú ræsir hvern gám og hverja sýndarvél þegar þér hentar. Öruggast eftir algjört tap.",
   "emergency.brings": "Endurheimtir {list}.",
   "emergency.count.containers": "one={n} gámur|other={n} gámar",

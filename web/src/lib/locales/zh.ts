@@ -4397,6 +4397,8 @@ const zh: Partial<Translations> = {
   "emergency.searching": "正在查找你的备份 …",
   "emergency.selectionHint": "默认处处选中最新的备份。重建之后，文件夹集不再知道自己来自哪里，所以它们会放进你选择的文件夹。",
   "emergency.selectionKept": "这台服务器上仍有的内容默认关闭，因为恢复会覆盖它们。",
+  "emergency.entrySource": "备份在哪里？",
+  "emergency.entrySourceHint": "异地会列出异地副本中的内容并从中恢复。当本地备份随旧服务器一起丢失时选择它。",
   "emergency.leaveStoppedHint": "准备好后，由你自己启动每个容器和虚拟机。完全丢失后最稳妥。",
   "emergency.brings": "将恢复 {list}。",
   "emergency.count.containers": "{n} 个容器",

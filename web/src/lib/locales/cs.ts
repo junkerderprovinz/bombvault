@@ -4404,6 +4404,8 @@ const cs: Partial<Translations> = {
   "emergency.searching": "Prohledávám tvé zálohy …",
   "emergency.selectionHint": "Všude je předvybrána nejnovější záloha. Po novém sestavení sady složek už nevědí, odkud pocházely, a proto skončí ve složce, kterou zvolíš.",
   "emergency.selectionKept": "Co tento server ještě má, je zpočátku vypnuté, protože by to obnova nahradila.",
+  "emergency.entrySource": "Kde jsou zálohy?",
+  "emergency.entrySourceHint": "Mimo lokalitu ukáže, co obsahují kopie mimo lokalitu, a obnoví z nich. Zvol to, když místní zálohy zmizely spolu se starým serverem.",
   "emergency.leaveStoppedHint": "Každý kontejner a každý VM spustíš sám, až budeš připraven. Nejbezpečnější po úplné ztrátě.",
   "emergency.brings": "Vrátí {list}.",
   "emergency.count.containers": "one={n} kontejner|few={n} kontejnery|many={n} kontejneru|other={n} kontejnerů",

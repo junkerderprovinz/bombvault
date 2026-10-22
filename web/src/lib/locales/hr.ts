@@ -4416,6 +4416,8 @@ const hr: Partial<Translations> = {
   "emergency.searching": "Traženje po vašim sigurnosnim kopijama …",
   "emergency.selectionHint": "Najnovija sigurnosna kopija unaprijed je odabrana svugdje. Nakon ponovne izgradnje skupovi mapa više ne znaju odakle potječu, pa idu u mapu koju odaberete.",
   "emergency.selectionKept": "Ono što ovaj poslužitelj još ima isprva je isključeno, jer bi ga vraćanje zamijenilo.",
+  "emergency.entrySource": "Gdje su sigurnosne kopije?",
+  "emergency.entrySourceHint": "Izvan lokacije prikazuje što sadrže kopije izvan lokacije i vraća iz njih. Odaberite to kada su lokalne sigurnosne kopije nestale sa starim poslužiteljem.",
   "emergency.leaveStoppedHint": "Svaki kontejner i VM pokrećete sami kad budete spremni. Najsigurnije nakon potpunog gubitka.",
   "emergency.brings": "Vraća {list}.",
   "emergency.count.containers": "one={n} kontejner|few={n} kontejnera|other={n} kontejnera",

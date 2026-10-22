@@ -4407,6 +4407,8 @@ const ro: Partial<Translations> = {
   "emergency.searching": "Se caută în copiile tale …",
   "emergency.selectionHint": "Cea mai nouă copie este preselectată peste tot. După o reconstrucție, seturile de foldere nu mai știu de unde au venit, așa că ajung într-un folder ales de tine.",
   "emergency.selectionKept": "Ce mai are acest server începe dezactivat, pentru că o restaurare l-ar înlocui.",
+  "emergency.entrySource": "Unde sunt copiile de rezervă?",
+  "emergency.entrySourceHint": "Extern arată ce conțin copiile externe și restaurează din ele. Alege-l când copiile de rezervă locale s-au pierdut odată cu vechiul server.",
   "emergency.leaveStoppedHint": "Pornești tu fiecare container și VM când ești gata. Cel mai sigur după o pierdere totală.",
   "emergency.brings": "Readuce {list}.",
   "emergency.count.containers": "one={n} container|few={n} containere|other={n} de containere",

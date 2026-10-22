@@ -4406,6 +4406,8 @@ const da: Partial<Translations> = {
   "emergency.searching": "Leder i dine sikkerhedskopier …",
   "emergency.selectionHint": "Den nyeste sikkerhedskopi er forvalgt overalt. Efter en genopbygning ved mappesæt ikke længere, hvor de kom fra, så de lander i en mappe efter eget valg.",
   "emergency.selectionKept": "Det, som denne server stadig har, starter slået fra, fordi en gendannelse ville erstatte det.",
+  "emergency.entrySource": "Hvor er sikkerhedskopierne?",
+  "emergency.entrySourceHint": "Off-site viser, hvad off-site-kopierne indeholder, og gendanner fra dem. Vælg det, når de lokale sikkerhedskopier forsvandt sammen med den gamle server.",
   "emergency.leaveStoppedHint": "Du starter hver container og hver VM selv, når du er klar. Sikrest efter et totalt tab.",
   "emergency.brings": "Henter {list} tilbage.",
   "emergency.count.containers": "one={n} container|other={n} containers",

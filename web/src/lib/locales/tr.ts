@@ -4406,6 +4406,8 @@ const tr: Partial<Translations> = {
   "emergency.searching": "Yedeklerine bakılıyor …",
   "emergency.selectionHint": "En yeni yedek her yerde önceden seçilidir. Yeniden kurulumdan sonra klasör setleri nereden geldiklerini bilmez, bu yüzden seçtiğin bir klasöre gider.",
   "emergency.selectionKept": "Bu sunucuda hâlâ olanlar kapalı başlar, çünkü geri yükleme onların üzerine yazardı.",
+  "emergency.entrySource": "Yedekler nerede?",
+  "emergency.entrySourceHint": "Site dışı, site dışı kopyalarda ne olduğunu gösterir ve onlardan geri yükler. Yerel yedekler eski sunucuyla birlikte kaybolduysa bunu seç.",
   "emergency.leaveStoppedHint": "Hazır olduğunda her konteyneri ve VM'yi kendin başlatırsın. Toplam kayıptan sonra en güvenlisi.",
   "emergency.brings": "Geri getirilecekler: {list}.",
   "emergency.count.containers": "{n} konteyner",

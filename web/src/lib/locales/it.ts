@@ -4406,6 +4406,8 @@ const it: Partial<Translations> = {
   "emergency.searching": "Ricerca nei tuoi backup …",
   "emergency.selectionHint": "Ovunque è preselezionato il backup più recente. Dopo una ricostruzione i set di cartelle non sanno più da dove arrivano, quindi finiscono in una cartella a tua scelta.",
   "emergency.selectionKept": "Ciò che questo server ha ancora parte disattivato, perché un ripristino lo sostituirebbe.",
+  "emergency.entrySource": "Dove si trovano i backup?",
+  "emergency.entrySourceHint": "Off-site mostra cosa contengono le copie off-site e ripristina da esse. Sceglilo quando i backup locali sono andati persi insieme al vecchio server.",
   "emergency.leaveStoppedHint": "Avvii tu ogni container e ogni VM quando sei pronto. È l'opzione più sicura dopo una perdita totale.",
   "emergency.brings": "Ripristina {list}.",
   "emergency.count.containers": "{n} container",

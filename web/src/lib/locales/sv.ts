@@ -4406,6 +4406,8 @@ const sv: Partial<Translations> = {
   "emergency.searching": "Söker igenom dina säkerhetskopior …",
   "emergency.selectionHint": "Den senaste säkerhetskopian är förvald överallt. Efter en ombyggnad vet mappuppsättningarna inte längre varifrån de kom, så de hamnar i en mapp som du väljer.",
   "emergency.selectionKept": "Det som den här servern fortfarande har är avstängt från början, eftersom en återställning skulle ersätta det.",
+  "emergency.entrySource": "Var finns säkerhetskopiorna?",
+  "emergency.entrySourceHint": "Extern visar vad de externa kopiorna innehåller och återställer från dem. Välj det när de lokala säkerhetskopiorna försvann med den gamla servern.",
   "emergency.leaveStoppedHint": "Du startar varje container och VM själv när du är redo. Säkrast efter en total förlust.",
   "emergency.brings": "Återställer {list}.",
   "emergency.count.containers": "one={n} container|other={n} containrar",
