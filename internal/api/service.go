@@ -18307,11 +18307,21 @@ func (s *Service) remotes() *remotes.Rclone {
 
 // WriteRcloneConfFile (re)writes the on-disk rclone config from the encrypted
 // value in settings, or removes it when empty. Called at startup so off-site
-// repos work immediately after a restart.
+// repos work immediately after a restart. The tokens rclone refreshed in the
+// file are stored first, since the ones in settings may no longer be valid.
 func (s *Service) WriteRcloneConfFile() error {
+	s.rcloneConfMu.Lock()
+	defer s.rcloneConfMu.Unlock()
 	settings, err := s.store.GetSettings()
 	if err != nil {
 		return err
+	}
+	stored, err := s.storedRcloneConf(settings)
+	if err != nil {
+		return err
+	}
+	if conf := withRefreshedTokens(stored, s.rcloneConfOnDisk()); conf != stored {
+		return s.storeRcloneConf(conf)
 	}
 	return s.writeRcloneFile(settings.RcloneConf)
 }
@@ -18419,9 +18429,20 @@ func (s *Service) RcloneSections(ctx context.Context) ([]remotes.Section, error)
 }
 
 // decodeRcloneConf returns the decrypted rclone config text stored in settings
-// (an empty/blank rclone_conf yields "", no error). Unlike RcloneRemotes it keeps
-// the full contents — used by the recovery kit, which needs the remote secrets.
+// (an empty/blank rclone_conf yields "", no error), with the tokens rclone has
+// refreshed in its file since. Unlike RcloneRemotes it keeps the full contents:
+// the recovery kit and an export need the remote secrets, and a token that
+// rclone has replaced no longer signs in.
 func (s *Service) decodeRcloneConf(settings store.Settings) (string, error) {
+	conf, err := s.storedRcloneConf(settings)
+	if err != nil {
+		return "", err
+	}
+	return withRefreshedTokens(conf, s.rcloneConfOnDisk()), nil
+}
+
+// storedRcloneConf is the rclone config as settings hold it.
+func (s *Service) storedRcloneConf(settings store.Settings) (string, error) {
 	if strings.TrimSpace(settings.RcloneConf) == "" {
 		return "", nil
 	}
