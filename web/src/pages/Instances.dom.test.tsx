@@ -131,9 +131,15 @@ vi.mock("../lib/api", async (importOriginal) => {
     removeMember: (memberId: string) => {
       removed.push(memberId);
       away = away.filter((m) => m.id !== memberId);
-      // The server ends the requests and leaves ZFS replication and deposits.
+      // The server ends the requests and the receive slots that let nothing
+      // in, and leaves ZFS replication and deposits.
       roles = roles.filter(
-        (r) => r.memberId !== memberId || r.byMember.zfs || r.byMember.keeper || r.forMember.zfs || r.forMember.keeper,
+        (r) =>
+          r.memberId !== memberId ||
+          r.byMember.zfs ||
+          r.byMember.keeper ||
+          r.forMember.zfs?.items.some((i) => i.state === "allowed") ||
+          r.forMember.keeper,
       );
       return Promise.resolve({ ok: true });
     },
@@ -1068,6 +1074,16 @@ describe("an instance that is away", () => {
     await click(within(card("m1")).getByRole("button", { name: en["fleet.remove"] }));
     await click(within(card("m1")).getByRole("button", { name: en["fleet.confirmRemove"] }));
     expect(document.querySelector('[data-instance="m1"]')).toBeNull();
+  });
+
+  it("goes with Remove when only a receive slot that lets nothing in named it", async () => {
+    flags.fleetEnabled = false;
+    roles = [memberRoles({ name: "DXP480T", reachable: false, forMember: roleSide({ zfs: zfsRole("refused") }) })];
+    await renderPage();
+    await click(within(card("m1")).getByRole("button", { name: en["fleet.remove"] }));
+    await click(within(card("m1")).getByRole("button", { name: en["fleet.confirmRemove"] }));
+    expect(document.querySelector('[data-instance="m1"]')).toBeNull();
+    expect(screen.queryByText(en["instances.removeKeptByRoles"].replaceAll("{peer}", "DXP480T"))).toBeNull();
   });
 
   it("says why its card stays when ZFS replication still links it", async () => {
