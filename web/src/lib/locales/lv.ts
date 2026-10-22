@@ -3141,6 +3141,7 @@ const lv: Partial<Translations> = {
   "placementCode.nothingToErase": "Nevienu no dublējumiem šeit nevar izdzēst. Tā vietā noņemiet mērķi un paturiet dublējumus.",
   "placementCode.homeNeeded": "Izvēlieties mapi, uz kuru pāriet sadaļas.",
   "placementCode.homeSame": "Sadaļas jau ir šajā mapē. Izvēlieties citu.",
+  "placementCode.ownFolderThere": "Kāda sadaļa glabā savus dublējumus šajā mērķī. Vispirms pārvietojiet tās pašu mapi citur sadaļā Pašu mapes.",
   "placementCode.moveSamePlace": "Sadaļai kopija jau ir tur. Izvēlieties citu mērķi.",
   "placementCode.moveSectionThere": "Šim mērķim jau ir sava šīs sadaļas kopija. Izvēlieties citu mērķi.",
   "placementCode.moveDirectRepo": "Ieraksti dublē tieši uz šo vietu, bez kopijas sākotnējā vietā, tāpēc sadaļu nevar pārvietot. Vispirms pārslēdziet šos ierakstus uz Vietējs.",

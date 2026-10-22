@@ -3131,6 +3131,7 @@ const fi: Partial<Translations> = {
   "placementCode.nothingToErase": "Mitään täällä olevista varmuuskopioista ei voi poistaa. Poista sen sijaan kohde ja säilytä varmuuskopiot.",
   "placementCode.homeNeeded": "Valitse kansio, johon osiot siirtyvät.",
   "placementCode.homeSame": "Osiot ovat jo siinä kansiossa. Valitse toinen.",
+  "placementCode.ownFolderThere": "Yksi osio säilyttää omat varmuuskopionsa tässä kohteessa. Siirrä ensin sen oma kansio muualle kohdassa Omat kansiot.",
   "placementCode.moveSamePlace": "Osion kopio on jo siellä. Valitse toinen kohde.",
   "placementCode.moveSectionThere": "Tällä kohteella on jo oma kopio tästä osiosta. Valitse toinen kohde.",
   "placementCode.moveDirectRepo": "Merkinnät varmuuskopioivat suoraan tähän paikkaan ilman kopiota kotipaikassa, joten osiota ei voi siirtää. Vaihda ensin nämä merkinnät asetukseen Paikallinen.",

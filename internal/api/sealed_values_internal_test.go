@@ -42,7 +42,7 @@ var sealSites = map[string]string{
 	"handlePeerMeshOffer":    "mesh_offers.rest_password_enc",
 	"addHtpasswdUser":        "receiver_logins.password_enc",
 	"EncodeRegistryAuths":    "settings.registry_auths",
-	"SetRcloneConf":          "settings.rclone_conf",
+	"storeRcloneConf":        "settings.rclone_conf",
 	"SetNotifyConfig":        "settings.notify_conf",
 	"sealSharedBlob":         "replaced_sign_ins.cloud_conf_enc",
 	"encodeCloudCredSets":    "settings.cloud_cred_sets",

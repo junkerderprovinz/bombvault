@@ -3122,6 +3122,7 @@ const vi: Partial<Translations> = {
   "placementCode.nothingToErase": "Không bản sao lưu nào ở đây có thể xóa được. Thay vào đó, hãy xóa đích sao lưu và giữ lại các bản sao lưu.",
   "placementCode.homeNeeded": "Hãy chọn thư mục mà các phần sẽ chuyển tới.",
   "placementCode.homeSame": "Các phần đã ở trong thư mục đó. Hãy chọn thư mục khác.",
+  "placementCode.ownFolderThere": "Một phần đang giữ bản sao lưu riêng ở đích này. Hãy chuyển thư mục riêng của phần đó sang nơi khác trong Thư mục riêng trước.",
   "placementCode.moveSamePlace": "Phần đã giữ bản sao ở đó rồi. Chọn đích sao lưu khác.",
   "placementCode.moveSectionThere": "Đích sao lưu đó đã có bản sao riêng của phần này. Chọn đích sao lưu khác.",
   "placementCode.moveDirectRepo": "Các mục đang sao lưu thẳng vào nơi này, không có bản sao ở vị trí gốc, nên không thể di chuyển phần. Hãy chuyển các mục đó sang Cục bộ trước.",

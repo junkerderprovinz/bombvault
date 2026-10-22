@@ -3141,6 +3141,7 @@ const eu: Partial<Translations> = {
   "placementCode.nothingToErase": "Hemengo babeskopietatik bat ere ezin da ezabatu. Kendu helmuga horren ordez, eta mantendu babeskopiak.",
   "placementCode.homeNeeded": "Aukeratu atalak eramango diren karpeta.",
   "placementCode.homeSame": "Atalak karpeta horretan daude jada. Aukeratu beste bat.",
+  "placementCode.ownFolderThere": "Atal batek bere babeskopiak helmuga honetan gordetzen ditu. Eraman lehenik bere karpeta propioa beste nonbait Karpeta propioak atalean.",
   "placementCode.moveSamePlace": "Atalak badu bere kopia han. Aukeratu beste helmuga bat.",
   "placementCode.moveSectionThere": "Helmuga horrek badu atal honen kopia propioa. Aukeratu beste helmuga bat.",
   "placementCode.moveDirectRepo": "Elementuek zuzenean toki honetara egiten dute babeskopia, etxeko kopiarik gabe, beraz atala ezin da mugitu. Aldatu lehenik elementu horiek Lokala aukerara.",

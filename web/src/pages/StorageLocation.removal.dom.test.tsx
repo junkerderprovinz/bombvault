@@ -275,6 +275,15 @@ describe("removing a destination", () => {
     expect((within(dialog).getByRole("button", { name: "Remove storage location" }) as HTMLButtonElement).disabled).toBe(true);
   });
 
+  it("says to move a section's own folder that lies there first", async () => {
+    previewLocationRemoval.mockResolvedValue({ ok: false, error: "server text", code: "own-folder-there" });
+    await renderPage();
+    const dialog = await openRemoval();
+
+    expect(within(dialog).getByText(en["placementCode.ownFolderThere"])).toBeTruthy();
+    expect((within(dialog).getByRole("button", { name: "Remove storage location" }) as HTMLButtonElement).disabled).toBe(true);
+  });
+
   it("reads the preview again when its way is picked after a failed one", async () => {
     previewLocationRemoval.mockResolvedValueOnce({ ok: false, error: "database is locked" });
     await renderPage();

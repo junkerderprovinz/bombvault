@@ -90,6 +90,9 @@ func (s *Service) destinationRemovalPreview(id string) (store.OffsiteTarget, loc
 	if !ok {
 		return store.OffsiteTarget{}, locationRemoval{}, store.ErrNotDestination
 	}
+	if err := s.refuseOwnFoldersIn(id); err != nil {
+		return store.OffsiteTarget{}, locationRemoval{}, err
+	}
 	held, err := s.store.DestinationTargets(id)
 	if err != nil {
 		return store.OffsiteTarget{}, locationRemoval{}, err
@@ -103,6 +106,25 @@ func (s *Service) destinationRemovalPreview(id string) (store.OffsiteTarget, loc
 		out.Sections = append(out.Sections, section)
 	}
 	return d, out, nil
+}
+
+// errOwnFolderThere refuses to remove a storage location that a section's own
+// folder lies in. Its backups would go on there with nothing listing the place.
+var errOwnFolderThere = errors.New("a section's own folder lies in this storage location; move it elsewhere first")
+
+// refuseOwnFoldersIn answers errOwnFolderThere while a section's own folder
+// was put into the destination with the id and is still there.
+func (s *Service) refuseOwnFoldersIn(id string) error {
+	for _, domain := range offsiteConfigDomains {
+		row, ok, err := s.store.PrimaryRemoteTarget(domain)
+		if err != nil {
+			return err
+		}
+		if d, linked := s.ownFolderLocation(row); ok && linked && d.ID == id {
+			return errOwnFolderThere
+		}
+	}
+	return nil
 }
 
 func (s *Service) removalSection(t store.OffsiteTarget) (removalSection, error) {

@@ -3141,6 +3141,7 @@ const is: Partial<Translations> = {
   "placementCode.nothingToErase": "Ekki er hægt að eyða neinu af afritunum hér. Fjarlægðu áfangastaðinn í staðinn og haltu afritunum.",
   "placementCode.homeNeeded": "Veldu möppuna sem svæðin flytjast í.",
   "placementCode.homeSame": "Svæðin eru þegar í þessari möppu. Veldu aðra.",
+  "placementCode.ownFolderThere": "Einn hluti geymir eigin afrit á þessum áfangastað. Færðu fyrst eigin möppu hans annað undir Eigin möppur.",
   "placementCode.moveSamePlace": "Svæðið hefur þegar afritið sitt þar. Veldu annan áfangastað.",
   "placementCode.moveSectionThere": "Sá áfangastaður á þegar sitt eigið afrit af þessu svæði. Veldu annan áfangastað.",
   "placementCode.moveDirectRepo": "Færslur afrita beint á þennan stað, án afrits heima, svo svæðið getur ekki flutt sig. Settu þessar færslur fyrst á Staðbundið.",

@@ -85,9 +85,7 @@ func (s *Service) sectionPlaces(settings store.Settings, domain, own string) ([]
 		if err != nil {
 			return nil, fmt.Errorf("%s: %w", placementTargetName(t), err)
 		}
-		mode := s.offsiteModeForTarget(settings, t)
-		mode.Limits = targetOffsiteLimits(t)
-		places = append(places, sectionPlace{repo: repo, mode: mode, target: &t})
+		places = append(places, sectionPlace{repo: repo, mode: s.offsiteModeForTarget(settings, t), target: &t})
 	}
 	if len(places) == 0 {
 		return nil, ErrNoPlace

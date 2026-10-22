@@ -90,6 +90,7 @@ var placementCodes = []struct {
 	{errNothingToErase, "nothing-to-erase"},
 	{errHomeNeeded, "home-needed"},
 	{errHomeSame, "home-same"},
+	{errOwnFolderThere, "own-folder-there"},
 	{errMoveSamePlace, "move-same-place"},
 	{errMoveSignIn, "move-sign-in"},
 	{errMoveRunning, "move-running"},

@@ -3131,6 +3131,7 @@ const no: Partial<Translations> = {
   "placementCode.nothingToErase": "Ingen av sikkerhetskopiene her kan slettes. Fjern i stedet målet og behold sikkerhetskopiene.",
   "placementCode.homeNeeded": "Velg mappen områdene flytter til.",
   "placementCode.homeSame": "Områdene ligger allerede i den mappen. Velg en annen.",
+  "placementCode.ownFolderThere": "En seksjon har sine egne sikkerhetskopier på dette målet. Flytt først dens egen mappe et annet sted under Egne mapper.",
   "placementCode.moveSamePlace": "Området har allerede kopien sin der. Velg et annet mål.",
   "placementCode.moveSectionThere": "Det målet har allerede en egen kopi av dette området. Velg et annet mål.",
   "placementCode.moveDirectRepo": "Elementer sikrer direkte til dette stedet, uten kopi hjemme, så området kan ikke flyttes. Sett disse elementene til Lokal først.",

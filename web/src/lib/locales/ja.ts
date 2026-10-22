@@ -3122,6 +3122,7 @@ const ja: Partial<Translations> = {
   "placementCode.nothingToErase": "ここにあるバックアップはどれも削除できません。代わりに保存先を削除し、バックアップは残してください。",
   "placementCode.homeNeeded": "セクションの移動先フォルダーを選んでください。",
   "placementCode.homeSame": "セクションはすでにそのフォルダーにあります。別のフォルダーを選んでください。",
+  "placementCode.ownFolderThere": "あるセクションがこの保存先に専用のバックアップを置いています。先に専用フォルダーで、そのフォルダーを別の場所へ移してください。",
   "placementCode.moveSamePlace": "セクションのコピーはすでにそこにあります。別の保存先を選んでください。",
   "placementCode.moveSectionThere": "その保存先には、このセクションの専用コピーがすでにあります。別の保存先を選んでください。",
   "placementCode.moveDirectRepo": "項目がこの場所へ直接バックアップしており、元の場所にコピーがないため、セクションは移動できません。先にそれらの項目を「ローカル」に切り替えてください。",

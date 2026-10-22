@@ -56,8 +56,8 @@ func TestCheckOffsiteBudgetFiresOncePerCrossing(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	svc.checkOffsiteBudget(context.Background(), "flash", settings)
-	svc.checkOffsiteBudget(context.Background(), "flash", settings)
+	svc.checkOffsiteBudget(context.Background(), "flash", settings.OffsiteGrowthBudgetGB)
+	svc.checkOffsiteBudget(context.Background(), "flash", settings.OffsiteGrowthBudgetGB)
 
 	if len(ssh.runs) != 1 {
 		t.Fatalf("a budget breach must alarm exactly once per crossing, got %d", len(ssh.runs))
@@ -94,15 +94,9 @@ func TestCheckOffsiteBudgetDisabledAndUnder(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// The default budget of 0 is off.
-	settings, err := st.GetSettings()
-	if err != nil {
-		t.Fatal(err)
-	}
-	svc.checkOffsiteBudget(context.Background(), "flash", settings)
-
-	settings.OffsiteGrowthBudgetGB = 10
-	svc.checkOffsiteBudget(context.Background(), "flash", settings)
+	// A budget of 0 is off.
+	svc.checkOffsiteBudget(context.Background(), "flash", 0)
+	svc.checkOffsiteBudget(context.Background(), "flash", 10)
 
 	if len(ssh.runs) != 0 {
 		t.Fatalf("no alarm expected when budget is off or under budget, got %d", len(ssh.runs))

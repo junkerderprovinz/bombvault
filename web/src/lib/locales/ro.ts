@@ -3132,6 +3132,7 @@ const ro: Partial<Translations> = {
   "placementCode.nothingToErase": "Niciuna dintre copiile de rezervă de aici nu poate fi ștearsă. Elimină în schimb destinația și păstrează copiile.",
   "placementCode.homeNeeded": "Alege folderul în care trec secțiunile.",
   "placementCode.homeSame": "Secțiunile sunt deja în acel folder. Alege altul.",
+  "placementCode.ownFolderThere": "O secțiune își păstrează propriile copii de rezervă în această destinație. Mută mai întâi dosarul ei propriu în altă parte din Dosare proprii.",
   "placementCode.moveSamePlace": "Secțiunea își ține deja copia acolo. Alege altă destinație.",
   "placementCode.moveSectionThere": "Acea destinație are deja o copie proprie a acestei secțiuni. Alege altă destinație.",
   "placementCode.moveDirectRepo": "Unele elemente fac copii direct în acest loc, fără o copie acasă, deci secțiunea nu poate fi mutată. Treci mai întâi acele elemente pe Local.",

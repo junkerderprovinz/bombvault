@@ -3132,6 +3132,7 @@ const hu: Partial<Translations> = {
   "placementCode.nothingToErase": "Az itteni mentések közül egyik sem törölhető. Inkább távolítsd el a célt, és tartsd meg a mentéseket.",
   "placementCode.homeNeeded": "Válaszd ki a mappát, ahová a szakaszok kerülnek.",
   "placementCode.homeSame": "A szakaszok már ebben a mappában vannak. Válassz másikat.",
+  "placementCode.ownFolderThere": "Egy szakasz a saját mentéseit ezen a célon tartja. Előbb helyezd át a saját mappáját máshová a Saját mappák alatt.",
   "placementCode.moveSamePlace": "A szakasz a másolatát már ott tartja. Válassz másik célt.",
   "placementCode.moveSectionThere": "Ennek a célnak már van saját másolata erről a szakaszról. Válassz másik célt.",
   "placementCode.moveDirectRepo": "Az elemek közvetlenül ide mentenek, otthoni másolat nélkül, ezért a szakasz nem költöztethető. Előbb állítsd át ezeket az elemeket Helyi értékre.",

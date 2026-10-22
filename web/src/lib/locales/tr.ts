@@ -3131,6 +3131,7 @@ const tr: Partial<Translations> = {
   "placementCode.nothingToErase": "Buradaki yedeklerin hiçbiri silinemez. Bunun yerine hedefi kaldır ve yedekleri koru.",
   "placementCode.homeNeeded": "Bölümlerin taşınacağı klasörü seç.",
   "placementCode.homeSame": "Bölümler zaten o klasörde. Başka bir klasör seç.",
+  "placementCode.ownFolderThere": "Bir bölüm kendi yedeklerini bu hedefte tutuyor. Önce Kendi klasörleri altında o bölümün kendi klasörünü başka bir yere taşı.",
   "placementCode.moveSamePlace": "Bölüm kopyasını zaten orada tutuyor. Başka bir hedef seç.",
   "placementCode.moveSectionThere": "O hedefin bu bölüme ait kendi kopyası zaten var. Başka bir hedef seç.",
   "placementCode.moveDirectRepo": "Ögeler, ana yerde kopya olmadan doğrudan bu yere yedekleniyor, bu yüzden bölüm taşınamaz. Önce bu ögeleri Yerel seçeneğine geçir.",

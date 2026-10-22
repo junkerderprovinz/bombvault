@@ -3129,6 +3129,7 @@ const cs: Partial<Translations> = {
   "placementCode.nothingToErase": "Žádnou ze záloh tady nejde smazat. Místo toho odeber cíl a zálohy ponech.",
   "placementCode.homeNeeded": "Vyber složku, do které se sekce přesunou.",
   "placementCode.homeSame": "Sekce už v této složce jsou. Vyber jinou.",
+  "placementCode.ownFolderThere": "Jedna sekce má v tomto cíli své vlastní zálohy. Nejdřív přesuň její vlastní složku jinam v části Vlastní složky.",
   "placementCode.moveSamePlace": "Sekce tam svou kopii už má. Zvol jiný cíl.",
   "placementCode.moveSectionThere": "Tento cíl už má vlastní kopii této sekce. Zvol jiný cíl.",
   "placementCode.moveDirectRepo": "Položky se zálohují přímo sem, bez kopie doma, takže se sekce přesunout nedá. Nejdřív přepni tyto položky na Místní.",

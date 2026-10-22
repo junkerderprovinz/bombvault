@@ -3141,6 +3141,7 @@ const ca: Partial<Translations> = {
   "placementCode.nothingToErase": "Cap de les còpies de seguretat d'aquí es pot esborrar. Elimina la destinació i conserva les còpies de seguretat.",
   "placementCode.homeNeeded": "Tria la carpeta on van les seccions.",
   "placementCode.homeSame": "Les seccions ja són en aquesta carpeta. Tria'n una altra.",
+  "placementCode.ownFolderThere": "Una secció desa les seves pròpies còpies de seguretat en aquesta destinació. Primer mou-ne la carpeta pròpia a un altre lloc des de Carpetes pròpies.",
   "placementCode.moveSamePlace": "La secció ja té la seva còpia allà. Tria una altra destinació.",
   "placementCode.moveSectionThere": "Aquesta destinació ja té una còpia pròpia d'aquesta secció. Tria una altra destinació.",
   "placementCode.moveDirectRepo": "Hi ha elements que fan còpia directament en aquest lloc, sense còpia a casa, i per això la secció no es pot moure. Passa primer aquests elements a Local.",

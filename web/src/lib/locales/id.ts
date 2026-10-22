@@ -3141,6 +3141,7 @@ const id: Partial<Translations> = {
   "placementCode.nothingToErase": "Tidak satu pun cadangan di sini yang dapat dihapus. Sebagai gantinya, hapus tujuan dan pertahankan cadangan.",
   "placementCode.homeNeeded": "Pilih folder tujuan bagian.",
   "placementCode.homeSame": "Bagian sudah ada di folder itu. Pilih folder lain.",
+  "placementCode.ownFolderThere": "Satu bagian menyimpan cadangannya sendiri di tujuan ini. Pindahkan dulu folder sendirinya ke tempat lain di Folder sendiri.",
   "placementCode.moveSamePlace": "Bagian sudah menyimpan salinannya di sana. Pilih tujuan lain.",
   "placementCode.moveSectionThere": "Tujuan itu sudah punya salinan sendiri dari bagian ini. Pilih tujuan lain.",
   "placementCode.moveDirectRepo": "Entri mencadangkan langsung ke tempat ini, tanpa salinan di lokasi asal, sehingga bagian tidak bisa dipindahkan. Alihkan dulu entri tersebut ke Lokal.",

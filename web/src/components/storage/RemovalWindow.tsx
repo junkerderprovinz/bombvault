@@ -121,7 +121,7 @@ export function RemovalWindow({
           const suggest = res.removal.suggest ?? "";
           setRemoval(res.removal);
           setHome((typedHome) => typedHome || suggest);
-        } else setProblem(res.error ?? t("settings.error"));
+        } else setProblem(placementErrorText(t, lang, res, "settings.error"));
       });
     return () => {
       alive = false;

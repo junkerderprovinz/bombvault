@@ -3141,6 +3141,7 @@ const ms: Partial<Translations> = {
   "placementCode.nothingToErase": "Tiada satu pun sandaran di sini boleh dipadam. Sebaliknya, alih keluar destinasi dan kekalkan sandaran.",
   "placementCode.homeNeeded": "Pilih folder yang menjadi tempat baharu bahagian.",
   "placementCode.homeSame": "Bahagian sudah berada dalam folder itu. Pilih folder lain.",
+  "placementCode.ownFolderThere": "Satu bahagian menyimpan sandarannya sendiri di destinasi ini. Pindahkan folder sendirinya ke tempat lain di bawah Folder sendiri dahulu.",
   "placementCode.moveSamePlace": "Bahagian sudah menyimpan salinannya di sana. Pilih destinasi lain.",
   "placementCode.moveSectionThere": "Destinasi itu sudah mempunyai salinan sendiri bagi bahagian ini. Pilih destinasi lain.",
   "placementCode.moveDirectRepo": "Entri membuat sandaran terus ke tempat ini, tanpa salinan di lokasi asal, jadi bahagian tidak boleh dialihkan. Tukar dahulu entri itu kepada Setempat.",

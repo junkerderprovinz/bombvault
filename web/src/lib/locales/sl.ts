@@ -3125,6 +3125,7 @@ const sl: Partial<Translations> = {
   "placementCode.nothingToErase": "Nobene od varnostnih kopij tukaj ni mogoče izbrisati. Namesto tega odstrani cilj in ohrani varnostne kopije.",
   "placementCode.homeNeeded": "Izberi mapo, v katero gredo razdelki.",
   "placementCode.homeSame": "Razdelki so že v tej mapi. Izberi drugo.",
+  "placementCode.ownFolderThere": "En razdelek hrani svoje varnostne kopije na tem cilju. Najprej premakni njegovo lastno mapo drugam pod Lastne mape.",
   "placementCode.moveSamePlace": "Razdelek tam že ima svojo kopijo. Izberi drug cilj.",
   "placementCode.moveSectionThere": "Ta cilj že ima lastno kopijo tega razdelka. Izberi drug cilj.",
   "placementCode.moveDirectRepo": "Vnosi se varnostno kopirajo neposredno na to mesto, brez kopije doma, zato razdelka ni mogoče premakniti. Najprej preklopi te vnose na Lokalno.",

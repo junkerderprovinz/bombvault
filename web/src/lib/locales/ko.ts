@@ -3122,6 +3122,7 @@ const ko: Partial<Translations> = {
   "placementCode.nothingToErase": "여기 있는 백업은 하나도 삭제할 수 없습니다. 대신 대상을 제거하고 백업은 유지하세요.",
   "placementCode.homeNeeded": "섹션을 옮길 폴더를 선택하세요.",
   "placementCode.homeSame": "섹션이 이미 그 폴더에 있습니다. 다른 폴더를 선택하세요.",
+  "placementCode.ownFolderThere": "한 섹션이 이 대상에 자체 백업을 두고 있습니다. 먼저 전용 폴더에서 그 폴더를 다른 곳으로 옮기세요.",
   "placementCode.moveSamePlace": "섹션의 사본이 이미 그곳에 있습니다. 다른 대상을 선택하세요.",
   "placementCode.moveSectionThere": "그 대상에는 이 섹션의 자체 사본이 이미 있습니다. 다른 대상을 선택하세요.",
   "placementCode.moveDirectRepo": "항목이 원래 위치의 사본 없이 이 위치로 직접 백업하고 있어서 섹션을 이동할 수 없습니다. 먼저 해당 항목을 '로컬'로 바꾸세요.",

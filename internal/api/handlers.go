@@ -3821,8 +3821,8 @@ func (h *Handler) handleRcloneInfo(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"remotes": remotes, "sections": sections}))
 }
 
-// handleSetRclone stores the rclone config (encrypted) and writes the on-disk
-// file. An empty conf clears it. POST /api/rclone  body {conf}
+// handleSetRclone adds the remotes of a pasted config to the stored one and
+// rewrites the on-disk file. POST /api/rclone  body {conf}
 func (h *Handler) handleSetRclone(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		Conf string `json:"conf"`
@@ -3830,7 +3830,7 @@ func (h *Handler) handleSetRclone(w http.ResponseWriter, r *http.Request) {
 	if !decodeBody(w, r, &body) {
 		return
 	}
-	if err := h.svc.SetRcloneConf(body.Conf); err != nil {
+	if err := h.svc.AddRcloneSections(body.Conf); err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}

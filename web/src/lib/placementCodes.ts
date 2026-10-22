@@ -41,6 +41,7 @@ const CODE_KEYS: Record<string, TranslationKey> = {
   "nothing-to-erase": "placementCode.nothingToErase",
   "home-needed": "placementCode.homeNeeded",
   "home-same": "placementCode.homeSame",
+  "own-folder-there": "placementCode.ownFolderThere",
   "move-same-place": "placementCode.moveSamePlace",
   "move-section-there": "placementCode.moveSectionThere",
   "move-direct-repo": "placementCode.moveDirectRepo",

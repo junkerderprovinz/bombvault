@@ -3131,6 +3131,7 @@ const fr: Partial<Translations> = {
   "placementCode.nothingToErase": "Aucune des sauvegardes ici ne peut être supprimée. Retirez plutôt la destination et gardez les sauvegardes.",
   "placementCode.homeNeeded": "Choisissez le dossier où vont les sections.",
   "placementCode.homeSame": "Les sections sont déjà dans ce dossier. Choisissez-en un autre.",
+  "placementCode.ownFolderThere": "Une section garde ses propres sauvegardes dans cette destination. Déplacez d'abord son dossier propre ailleurs depuis Dossiers propres.",
   "placementCode.moveSamePlace": "La section garde déjà sa copie à cet endroit. Choisissez une autre destination.",
   "placementCode.moveSectionThere": "Cette destination a déjà une copie propre de cette section. Choisissez une autre destination.",
   "placementCode.moveDirectRepo": "Des éléments sauvegardent directement à cet endroit, sans copie à l'emplacement d'origine, donc la section ne peut pas être déplacée. Passez d'abord ces éléments sur Local.",

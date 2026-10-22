@@ -3122,6 +3122,7 @@ const zh: Partial<Translations> = {
   "placementCode.nothingToErase": "这里的备份一个也无法删除。请改为移除目标并保留备份。",
   "placementCode.homeNeeded": "请选择分区要迁往的文件夹。",
   "placementCode.homeSame": "分区已经在这个文件夹里。请选择其他文件夹。",
+  "placementCode.ownFolderThere": "有一个分区把自己的备份保存在此目标中。请先在“专属文件夹”中把它的文件夹移到别处。",
   "placementCode.moveSamePlace": "该分区的副本已经在那里了。请选择其他目标。",
   "placementCode.moveSectionThere": "该目标已有这个分区的专属副本。请选择其他目标。",
   "placementCode.moveDirectRepo": "条目直接备份到这个位置，原位置没有副本，因此无法移动该分区。请先把这些条目切换为“本地”。",

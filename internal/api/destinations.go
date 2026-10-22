@@ -135,6 +135,9 @@ func (s *Service) destinationOpens(ctx context.Context, d, t store.OffsiteTarget
 	probe := t
 	probe.CredsRef, probe.StorageClass = d.CredsRef, d.StorageClass
 	reachable, initialized, err := s.probeOffsiteRepo(ctx, t.Repo, s.offsiteModeForTarget(settings, probe))
+	if _, other := errors.AsType[*otherEncryptionErr](err); other {
+		return fmt.Errorf("%s: %w", scrubRepoLocation(t.Repo), err)
+	}
 	if err != nil || !reachable || !initialized {
 		why := fmt.Errorf("the sign-in of %s does not open %s", d.Name, scrubRepoLocation(t.Repo))
 		if err != nil {
@@ -339,7 +342,7 @@ func (s *Service) editRcloneConf(edit func(conf string) (string, error)) error {
 	if next == conf {
 		return nil
 	}
-	return s.SetRcloneConf(next)
+	return s.storeRcloneConf(next)
 }
 
 // freeRemoteName picks a remote name from the provider's id that the config
@@ -542,7 +545,8 @@ func (s *Service) removeCredSet(id string) {
 	})
 }
 
-// removeRcloneRemote drops a remote no stored location refers to any more.
+// removeRcloneRemote drops a remote no stored location refers to any more,
+// a section's own folder among them.
 func (s *Service) removeRcloneRemote(remote string) {
 	prefix := "rclone:" + remote + ":"
 	for _, list := range []func() ([]store.OffsiteTarget, error){s.store.ListOffsiteTargets, s.store.ListNamedRepos, s.store.ListDestinations} {
@@ -551,6 +555,15 @@ func (s *Service) removeRcloneRemote(remote string) {
 			return
 		}
 		if slices.ContainsFunc(rows, func(t store.OffsiteTarget) bool { return strings.HasPrefix(t.Repo, prefix) }) {
+			return
+		}
+	}
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return
+	}
+	for _, domain := range offsiteConfigDomains {
+		if strings.HasPrefix(strings.TrimSpace(domainPathRaw(domain, settings)), prefix) {
 			return
 		}
 	}
@@ -568,6 +581,9 @@ func (s *Service) DeleteDestination(id string) error {
 	}
 	if !ok {
 		return nil
+	}
+	if err := s.refuseOwnFoldersIn(id); err != nil {
+		return err
 	}
 	if err := s.store.DeleteDestinationIfUnused(id); err != nil {
 		return err

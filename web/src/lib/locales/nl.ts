@@ -3130,6 +3130,7 @@ const nl: Partial<Translations> = {
   "placementCode.nothingToErase": "Geen van de back-ups hier kan worden gewist. Verwijder in plaats daarvan de bestemming en bewaar de back-ups.",
   "placementCode.homeNeeded": "Kies de map waar de onderdelen naartoe gaan.",
   "placementCode.homeSame": "De onderdelen staan al in die map. Kies een andere.",
+  "placementCode.ownFolderThere": "Een onderdeel bewaart zijn eigen back-ups op deze bestemming. Verplaats eerst zijn eigen map ergens anders heen onder Eigen mappen.",
   "placementCode.moveSamePlace": "Het onderdeel heeft zijn kopie daar al. Kies een andere bestemming.",
   "placementCode.moveSectionThere": "Die bestemming heeft al een eigen kopie van dit onderdeel. Kies een andere bestemming.",
   "placementCode.moveDirectRepo": "Items maken rechtstreeks naar deze plek een back-up, zonder kopie thuis, dus het onderdeel kan niet worden verplaatst. Zet die items eerst op Lokaal.",

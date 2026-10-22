@@ -3128,6 +3128,7 @@ const pl: Partial<Translations> = {
   "placementCode.nothingToErase": "Żadnej z kopii zapasowych tutaj nie da się usunąć. Zamiast tego usuń miejsce docelowe i zachowaj kopie.",
   "placementCode.homeNeeded": "Wybierz folder, do którego przechodzą sekcje.",
   "placementCode.homeSame": "Sekcje są już w tym folderze. Wybierz inny.",
+  "placementCode.ownFolderThere": "Jedna sekcja trzyma swoje kopie zapasowe w tym miejscu docelowym. Najpierw przenieś jej własny folder gdzie indziej w sekcji Własne foldery.",
   "placementCode.moveSamePlace": "Sekcja ma już tam swoją kopię. Wybierz inne miejsce docelowe.",
   "placementCode.moveSectionThere": "To miejsce docelowe ma już własną kopię tej sekcji. Wybierz inne miejsce docelowe.",
   "placementCode.moveDirectRepo": "Wpisy tworzą kopie bezpośrednio w tym miejscu, bez kopii w miejscu macierzystym, więc sekcji nie można przenieść. Najpierw przełącz te wpisy na Lokalne.",

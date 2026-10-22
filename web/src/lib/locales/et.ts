@@ -3141,6 +3141,7 @@ const et: Partial<Translations> = {
   "placementCode.nothingToErase": "Ühtegi siinset varundust ei saa kustutada. Eemalda selle asemel sihtkoht ja jäta varundused alles.",
   "placementCode.homeNeeded": "Vali kaust, kuhu valdkonnad kolivad.",
   "placementCode.homeSame": "Valdkonnad on juba selles kaustas. Vali mõni teine.",
+  "placementCode.ownFolderThere": "Üks jaotis hoiab selles sihtkohas oma varukoopiaid. Vii selle oma kaust enne mujale jaotises Oma kaustad.",
   "placementCode.moveSamePlace": "Valdkonna koopia on seal juba olemas. Vali mõni teine sihtkoht.",
   "placementCode.moveSectionThere": "Sellel sihtkohal on selle valdkonna oma koopia juba olemas. Vali mõni teine sihtkoht.",
   "placementCode.moveDirectRepo": "Kirjed varundavad otse siia, ilma koduse koopiata, seega ei saa valdkonda teisaldada. Lülita need kirjed kõigepealt valikule Kohalik.",

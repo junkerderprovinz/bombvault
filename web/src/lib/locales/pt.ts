@@ -3131,6 +3131,7 @@ const pt: Partial<Translations> = {
   "placementCode.nothingToErase": "Nenhum dos backups aqui pode ser excluído. Remove antes o destino e mantém os backups.",
   "placementCode.homeNeeded": "Escolhe a pasta para onde vão as secções.",
   "placementCode.homeSame": "As secções já estão nessa pasta. Escolhe outra.",
+  "placementCode.ownFolderThere": "Uma secção guarda os seus próprios backups neste destino. Move primeiro a sua pasta própria para outro lado em Pastas próprias.",
   "placementCode.moveSamePlace": "A secção já tem lá a sua cópia. Escolhe outro destino.",
   "placementCode.moveSectionThere": "Esse destino já tem uma cópia própria desta secção. Escolhe outro destino.",
   "placementCode.moveDirectRepo": "Há entradas que fazem cópia diretamente para este local, sem cópia em casa, por isso a secção não pode ser movida. Muda primeiro essas entradas para Local.",

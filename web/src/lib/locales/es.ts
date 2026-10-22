@@ -3129,6 +3129,7 @@ const es: Partial<Translations> = {
   "placementCode.nothingToErase": "Ninguna de las copias de seguridad de aquí se puede borrar. Elimina el destino y conserva las copias de seguridad.",
   "placementCode.homeNeeded": "Elige la carpeta a la que pasan las secciones.",
   "placementCode.homeSame": "Las secciones ya están en esa carpeta. Elige otra.",
+  "placementCode.ownFolderThere": "Una sección guarda sus propias copias de seguridad en este destino. Primero mueve su carpeta propia a otro sitio en Carpetas propias.",
   "placementCode.moveSamePlace": "La sección ya tiene ahí su copia. Elige otro destino.",
   "placementCode.moveSectionThere": "Ese destino ya tiene una copia propia de esta sección. Elige otro destino.",
   "placementCode.moveDirectRepo": "Hay elementos que copian directamente en este lugar, sin una copia en casa, así que la sección no se puede mover. Pasa primero esos elementos a Local.",

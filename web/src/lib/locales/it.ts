@@ -3131,6 +3131,7 @@ const it: Partial<Translations> = {
   "placementCode.nothingToErase": "Nessuno dei backup qui può essere eliminato. Rimuovi invece la destinazione e mantieni i backup.",
   "placementCode.homeNeeded": "Scegli la cartella in cui vanno le sezioni.",
   "placementCode.homeSame": "Le sezioni sono già in quella cartella. Scegline un'altra.",
+  "placementCode.ownFolderThere": "Una sezione tiene i propri backup in questa destinazione. Sposta prima la sua cartella propria altrove in Cartelle proprie.",
   "placementCode.moveSamePlace": "La sezione tiene già lì la sua copia. Scegli un'altra destinazione.",
   "placementCode.moveSectionThere": "Quella destinazione ha già una copia propria di questa sezione. Scegli un'altra destinazione.",
   "placementCode.moveDirectRepo": "Alcuni elementi fanno il backup direttamente in questo posto, senza una copia a casa, quindi la sezione non può essere spostata. Porta prima quegli elementi su Locale.",

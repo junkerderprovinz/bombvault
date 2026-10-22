@@ -3141,6 +3141,7 @@ const lt: Partial<Translations> = {
   "placementCode.nothingToErase": "Nė vienos čia esančios atsarginės kopijos negalima ištrinti. Vietoj to pašalink paskirties vietą ir palik atsargines kopijas.",
   "placementCode.homeNeeded": "Pasirink aplanką, į kurį keliasi sritys.",
   "placementCode.homeSame": "Sritys jau yra tame aplanke. Pasirink kitą.",
+  "placementCode.ownFolderThere": "Viena skiltis laiko savo atsargines kopijas šioje paskirties vietoje. Pirmiausia perkelk jos savą aplanką kitur skiltyje Savi aplankai.",
   "placementCode.moveSamePlace": "Sritis savo kopiją jau turi ten. Pasirink kitą paskirties vietą.",
   "placementCode.moveSectionThere": "Ta paskirties vieta jau turi savo šios srities kopiją. Pasirink kitą paskirties vietą.",
   "placementCode.moveDirectRepo": "Įrašai kuria atsargines kopijas tiesiai šioje vietoje, be kopijos pradinėje vietoje, todėl srities perkelti negalima. Pirmiausia perjunk tuos įrašus į parinktį Vietinis.",

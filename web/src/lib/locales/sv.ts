@@ -3131,6 +3131,7 @@ const sv: Partial<Translations> = {
   "placementCode.nothingToErase": "Ingen av säkerhetskopiorna här kan raderas. Ta i stället bort målet och behåll säkerhetskopiorna.",
   "placementCode.homeNeeded": "Välj mappen som avsnitten flyttar till.",
   "placementCode.homeSame": "Avsnitten ligger redan i den mappen. Välj en annan.",
+  "placementCode.ownFolderThere": "En sektion har sina egna säkerhetskopior på det här målet. Flytta först dess egen mapp någon annanstans under Egna mappar.",
   "placementCode.moveSamePlace": "Avsnittet har redan sin kopia där. Välj ett annat mål.",
   "placementCode.moveSectionThere": "Det målet har redan en egen kopia av det här avsnittet. Välj ett annat mål.",
   "placementCode.moveDirectRepo": "Poster säkerhetskopierar direkt till den här platsen, utan en kopia hemma, så avsnittet kan inte flyttas. Ställ först om de posterna till Lokal.",

@@ -3141,6 +3141,7 @@ const sk: Partial<Translations> = {
   "placementCode.nothingToErase": "Žiadnu zo záloh tu nejde zmazať. Namiesto toho odstráň cieľ a zálohy ponechaj.",
   "placementCode.homeNeeded": "Vyber priečinok, do ktorého sa sekcie presunú.",
   "placementCode.homeSame": "Sekcie už v tomto priečinku sú. Vyber iný.",
+  "placementCode.ownFolderThere": "Jedna sekcia má v tomto cieli svoje vlastné zálohy. Najprv presuň jej vlastný priečinok inam v časti Vlastné priečinky.",
   "placementCode.moveSamePlace": "Sekcia tam svoju kópiu už má. Zvoľ iný cieľ.",
   "placementCode.moveSectionThere": "Tento cieľ už má vlastnú kópiu tejto sekcie. Zvoľ iný cieľ.",
   "placementCode.moveDirectRepo": "Položky sa zálohujú priamo sem, bez kópie doma, takže sa sekcia presunúť nedá. Najprv prepni tieto položky na Lokálny.",

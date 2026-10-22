@@ -450,7 +450,12 @@ func (s *Service) probeSignInUse(ctx context.Context, settings store.Settings, u
 	}
 	mode := s.offsiteModeForTarget(settings, row)
 	mode.Env = cloudEnv(creds)
-	return s.probeOffsiteRepo(ctx, repo, mode)
+	reachable, initialized, err = s.probeOffsiteRepo(ctx, repo, mode)
+	// The sign-in opened the repository, which is all this asks.
+	if _, other := errors.AsType[*otherEncryptionErr](err); other {
+		err = nil
+	}
+	return reachable, initialized, err
 }
 
 // signInRepo is the repository a use of a sign-in reaches, and the row whose

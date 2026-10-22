@@ -3141,6 +3141,7 @@ const gl: Partial<Translations> = {
   "placementCode.nothingToErase": "Ningunha das copias de seguranza de aquí se pode borrar. Elimina o destino e mantén as copias de seguranza.",
   "placementCode.homeNeeded": "Escolle o cartafol ao que pasan as seccións.",
   "placementCode.homeSame": "As seccións xa están nese cartafol. Escolle outro.",
+  "placementCode.ownFolderThere": "Unha sección garda as súas propias copias de seguridade neste destino. Primeiro move o seu cartafol propio a outro sitio en Cartafoles propios.",
   "placementCode.moveSamePlace": "A sección xa ten alí a súa copia. Escolle outro destino.",
   "placementCode.moveSectionThere": "Ese destino xa ten unha copia propia desta sección. Escolle outro destino.",
   "placementCode.moveDirectRepo": "Hai elementos que fan copia directamente neste lugar, sen copia na casa, así que a sección non se pode mover. Pasa primeiro eses elementos a Local.",

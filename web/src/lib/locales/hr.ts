@@ -3141,6 +3141,7 @@ const hr: Partial<Translations> = {
   "placementCode.nothingToErase": "Nijednu od sigurnosnih kopija ovdje nije moguće izbrisati. Umjesto toga uklonite odredište i zadržite sigurnosne kopije.",
   "placementCode.homeNeeded": "Odaberite mapu u koju odjeljci prelaze.",
   "placementCode.homeSame": "Odjeljci su već u toj mapi. Odaberite drugu.",
+  "placementCode.ownFolderThere": "Jedan odjeljak drži svoje sigurnosne kopije na ovom odredištu. Najprije premjestite njegovu vlastitu mapu drugamo pod Vlastite mape.",
   "placementCode.moveSamePlace": "Odjeljak ondje već ima svoju kopiju. Odaberite drugo odredište.",
   "placementCode.moveSectionThere": "To odredište već ima vlastitu kopiju ovog odjeljka. Odaberite drugo odredište.",
   "placementCode.moveDirectRepo": "Stavke izravno sigurnosno kopiraju na ovo mjesto, bez kopije kod kuće, pa se odjeljak ne može premjestiti. Prvo prebacite te stavke na Lokalno.",
