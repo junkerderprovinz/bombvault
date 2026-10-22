@@ -794,6 +794,8 @@ const eu: Partial<Translations> = {
   "whatsNew.gotItCheck": "«Ulertuta» botoi guztiek egiaztapen-marka bat dute.",
   "whatsNew.cardFoot": "Txartel osoaren botoiak, «Gehitu helmuga» kasu, amaieran daude, txartelaren edukiaren azpian.",
   "whatsNew.memoryLimit": "Babeskopiako memoria-mugarekin, babeskopia handi bat motelago doa, memoriarik gabe geratu beharrean.",
+  "whatsNew.replicaTakeOver": "BombVault honek berriro konfiguratu aurretik bete zuen ZFS erreplika-karpeta har daiteke, eta hurrengo erreplikak barruko kopietatik jarraitzen du.",
+  "whatsNew.startOver": "Biltegia desagertu zaion urruneko biltegiratze-kokapen batek ez du bere kabuz biltegi berri huts bat jasotzen. Bere orriak hala dio eta bertan biltegi berri bat sortzea eskaintzen du.",
   "whatsNew.instancesCardLogo": "Instantzia-txartel guztiek logoa leku berean eta tamaina berean erakusten dute, izenaren parean.",
   "whatsNew.instancesNetLogos": "Taldearen irudian BombVault bakoitzak logoa erakusten du, zerbitzaria eta telefonoa bereizten dituen txapa txiki batekin.",
   "whatsNew.instancesCardSize": "Instantzia-txartel guztiak zabalera berekoak dira eta altuenaren adinako altuera dute.",

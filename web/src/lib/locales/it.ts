@@ -681,6 +681,8 @@ const it: Partial<Translations> = {
   "whatsNew.gotItCheck": "Ogni pulsante «Capito» ha un segno di spunta.",
   "whatsNew.cardFoot": "I pulsanti di un'intera scheda, come «Aggiungi destinazione», stanno alla fine sotto il contenuto della scheda.",
   "whatsNew.memoryLimit": "Con un limite di memoria per backup, un backup grande rallenta invece di esaurire la memoria.",
+  "whatsNew.replicaTakeOver": "Una cartella di replica ZFS che questo BombVault ha riempito prima di essere configurato di nuovo si può prendere, e la prossima replica riparte dalle copie al suo interno.",
+  "whatsNew.startOver": "Una posizione remota il cui repository è sparito non riceve da sola un nuovo repository vuoto. La sua pagina lo dice e propone di creare lì un nuovo repository.",
   "whatsNew.instancesCardLogo": "Ogni scheda di istanza mostra il logo nello stesso punto e con la stessa dimensione, all'altezza del nome.",
   "whatsNew.instancesNetLogos": "Nell'immagine del gruppo ogni BombVault mostra il logo con un piccolo badge che distingue un server da un telefono.",
   "whatsNew.instancesCardSize": "Tutte le schede delle istanze sono larghe uguali e alte quanto la più alta.",

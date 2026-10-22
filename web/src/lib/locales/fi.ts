@@ -681,6 +681,8 @@ const fi: Partial<Translations> = {
   "whatsNew.gotItCheck": "Jokaisessa ”Selvä”-painikkeessa on valintamerkki.",
   "whatsNew.cardFoot": "Koko kortin painikkeet, kuten ”Lisää kohde”, ovat lopussa kortin sisällön alla.",
   "whatsNew.memoryLimit": "Varmuuskopiokohtaisella muistirajalla suuri varmuuskopio hidastuu sen sijaan, että muisti loppuisi.",
+  "whatsNew.replicaTakeOver": "ZFS-replikan kansion, jonka tämä BombVault täytti ennen kuin se asennettiin uudelleen, voi ottaa haltuun, ja seuraava replika jatkaa sen kopioista.",
+  "whatsNew.startOver": "Etätallennuspaikka, jonka arkisto on kadonnut, ei saa itsestään uutta tyhjää arkistoa. Sen sivu kertoo tästä ja tarjoaa uuden arkiston luomista sinne.",
   "whatsNew.instancesCardLogo": "Jokainen ilmentymän kortti näyttää logon samassa kohdassa ja samassa koossa, nimen tasalla.",
   "whatsNew.instancesNetLogos": "Ryhmän kuvassa jokainen BombVault näyttää logon ja pienen merkin, joka erottaa palvelimen puhelimesta.",
   "whatsNew.instancesCardSize": "Kaikki ilmentymien kortit ovat yhtä leveitä ja yhtä korkeita kuin korkein.",

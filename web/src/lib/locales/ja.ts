@@ -676,6 +676,8 @@ const ja: Partial<Translations> = {
   "whatsNew.gotItCheck": "「了解」ボタンにはすべてチェックマークが付きます。",
   "whatsNew.cardFoot": "「保存先を追加」など、カード全体のボタンはカードの内容の下、末尾に並びます。",
   "whatsNew.memoryLimit": "バックアップごとのメモリ上限があれば、大きなバックアップはメモリ不足にならず、遅くなるだけで済みます。",
+  "whatsNew.replicaTakeOver": "再セットアップ前にこの BombVault が使っていた ZFS レプリカのフォルダーを引き継げるようになり、次のレプリカはその中のコピーから続きます。",
+  "whatsNew.startOver": "リポジトリが消えたリモートの保存先に、新しい空のリポジトリが勝手に作られることはありません。そのページがそれを伝え、そこに新しいリポジトリを作成するよう提案します。",
   "whatsNew.instancesCardLogo": "どのインスタンスカードもロゴを同じ位置、同じ大きさで、名前の高さに表示します。",
   "whatsNew.instancesNetLogos": "グループの図では、どの BombVault もロゴと、サーバーかスマートフォンかを示す小さなバッジを表示します。",
   "whatsNew.instancesCardSize": "インスタンスカードはすべて同じ幅で、いちばん高いカードと同じ高さです。",

@@ -794,6 +794,8 @@ const id: Partial<Translations> = {
   "whatsNew.gotItCheck": "Setiap tombol “Mengerti” punya tanda centang.",
   "whatsNew.cardFoot": "Tombol untuk seluruh kartu, seperti “Tambah tujuan”, ada di akhir di bawah isi kartu.",
   "whatsNew.memoryLimit": "Dengan batas memori per pencadangan, pencadangan besar melambat alih-alih kehabisan memori.",
+  "whatsNew.replicaTakeOver": "Folder replika ZFS yang diisi BombVault ini sebelum disiapkan ulang bisa diambil alih, dan replika berikutnya melanjutkan dari salinan di dalamnya.",
+  "whatsNew.startOver": "Lokasi penyimpanan jarak jauh yang repositorinya hilang tidak otomatis mendapat repositori baru yang kosong. Halamannya memberi tahu hal itu dan menawarkan untuk membuat repositori baru di sana.",
   "whatsNew.instancesCardLogo": "Setiap kartu instansi menampilkan logo di tempat dan ukuran yang sama, sejajar dengan nama.",
   "whatsNew.instancesNetLogos": "Di gambar grup, setiap BombVault menampilkan logo dengan lencana kecil yang membedakan server dari ponsel.",
   "whatsNew.instancesCardSize": "Semua kartu instansi sama lebar dan setinggi kartu yang paling tinggi.",

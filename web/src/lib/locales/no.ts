@@ -678,6 +678,8 @@ const no: Partial<Translations> = {
   "whatsNew.gotItCheck": "Hver «Skjønner»-knapp har en hake.",
   "whatsNew.cardFoot": "Knapper for hele kortet, som «Legg til mål», står til slutt under innholdet i kortet.",
   "whatsNew.memoryLimit": "Med en minnegrense per sikkerhetskopi blir en stor sikkerhetskopi tregere i stedet for å gå tom for minne.",
+  "whatsNew.replicaTakeOver": "En ZFS-replikamappe som denne BombVault fylte før den ble satt opp på nytt, kan overtas, og neste replika fortsetter fra kopiene i den.",
+  "whatsNew.startOver": "Et eksternt lagringssted der depotet er borte, får ikke av seg selv et nytt, tomt depot. Siden viser det og tilbyr å opprette et nytt depot der.",
   "whatsNew.instancesCardLogo": "Hvert instanskort viser logoen på samme sted og i samme størrelse, på høyde med navnet.",
   "whatsNew.instancesNetLogos": "På bildet av gruppen viser hver BombVault logoen med et lite merke som skiller en server fra en telefon.",
   "whatsNew.instancesCardSize": "Alle instanskort er like brede og like høye som det høyeste.",

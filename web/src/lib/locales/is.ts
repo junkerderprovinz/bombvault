@@ -794,6 +794,8 @@ const is: Partial<Translations> = {
   "whatsNew.gotItCheck": "Hver „Skilið“-hnappur er með hak.",
   "whatsNew.cardFoot": "Hnappar fyrir allt spjaldið, eins og „Bæta við áfangastað“, eru í lokin undir efni spjaldsins.",
   "whatsNew.memoryLimit": "Með minnismörkum á hverja afritun hægist á stórri afritun í stað þess að minnið klárist.",
+  "whatsNew.replicaTakeOver": "Hægt er að taka yfir ZFS-eftirmyndamöppu sem þetta BombVault fyllti áður en það var sett upp aftur, og næsta eftirmynd heldur áfram frá afritunum í henni.",
+  "whatsNew.startOver": "Fjargeymslustaður sem hefur misst geymsluna sína fær ekki nýja, tóma geymslu af sjálfu sér. Síðan hans segir frá því og býðst til að búa til nýja geymslu þar.",
   "whatsNew.instancesCardLogo": "Hvert tilviksspjald sýnir merkið á sama stað og í sömu stærð, í hæð við nafnið.",
   "whatsNew.instancesNetLogos": "Á myndinni af hópnum sýnir hvert BombVault merkið með litlu merki sem greinir þjón frá síma.",
   "whatsNew.instancesCardSize": "Öll tilviksspjöld eru jafnbreið og jafnhá og það hæsta.",

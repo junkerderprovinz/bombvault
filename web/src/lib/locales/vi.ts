@@ -676,6 +676,8 @@ const vi: Partial<Translations> = {
   "whatsNew.gotItCheck": "Mọi nút “Đã hiểu” đều có dấu tích.",
   "whatsNew.cardFoot": "Các nút cho cả thẻ, như “Thêm đích”, nằm ở cuối, bên dưới nội dung thẻ.",
   "whatsNew.memoryLimit": "Với giới hạn bộ nhớ mỗi bản sao lưu, bản sao lưu lớn sẽ chậm lại thay vì hết bộ nhớ.",
+  "whatsNew.replicaTakeOver": "Thư mục nhân bản ZFS mà chính BombVault này đã dùng trước khi được thiết lập lại giờ có thể tiếp quản, và bản nhân bản tiếp theo sẽ tiếp tục từ các bản sao trong đó.",
+  "whatsNew.startOver": "Vị trí lưu trữ từ xa có kho đã mất sẽ không tự nhận một kho mới trống. Trang của nó cho biết điều đó và đề nghị tạo kho mới ở đó.",
   "whatsNew.instancesCardLogo": "Mọi thẻ phiên bản đều hiển thị logo ở cùng một chỗ và cùng kích thước, ngang với tên.",
   "whatsNew.instancesNetLogos": "Trong hình của nhóm, mỗi BombVault hiển thị logo cùng một huy hiệu nhỏ cho biết đó là máy chủ hay điện thoại.",
   "whatsNew.instancesCardSize": "Mọi thẻ phiên bản đều rộng bằng nhau và cao bằng thẻ cao nhất.",

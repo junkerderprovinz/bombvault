@@ -679,6 +679,8 @@ const cs: Partial<Translations> = {
   "whatsNew.gotItCheck": "Každé tlačítko „Rozumím“ má značku zaškrtnutí.",
   "whatsNew.cardFoot": "Tlačítka celé karty, třeba „Přidat cíl“, jsou na konci pod jejím obsahem.",
   "whatsNew.memoryLimit": "S limitem paměti na zálohu se velká záloha zpomalí, místo aby jí došla paměť.",
+  "whatsNew.replicaTakeOver": "Složku ZFS repliky, kterou tento BombVault naplnil před novým nastavením, lze převzít a další replika naváže na kopie v ní.",
+  "whatsNew.startOver": "Vzdálené úložiště, jehož repozitář zmizel, nedostane samo od sebe nový prázdný. Jeho stránka to řekne a nabídne tam založit nový repozitář.",
   "whatsNew.instancesCardLogo": "Každá karta instance ukazuje logo na stejném místě a ve stejné velikosti, v úrovni názvu.",
   "whatsNew.instancesNetLogos": "Na obrázku skupiny ukazuje každý BombVault logo s malým odznakem, který odliší server od telefonu.",
   "whatsNew.instancesCardSize": "Všechny karty instancí jsou stejně široké a vysoké jako ta nejvyšší.",

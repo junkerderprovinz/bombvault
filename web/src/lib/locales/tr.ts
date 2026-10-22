@@ -681,6 +681,8 @@ const tr: Partial<Translations> = {
   "whatsNew.gotItCheck": "Her “Anladım” düğmesinde bir onay işareti var.",
   "whatsNew.cardFoot": "“Hedef ekle” gibi tüm kartın düğmeleri, kartın içeriğinin altında, sonda durur.",
   "whatsNew.memoryLimit": "Yedekleme başına bellek sınırıyla büyük bir yedekleme, belleği tükenmek yerine yavaşlar.",
+  "whatsNew.replicaTakeOver": "Bu BombVault'un yeniden kurulmadan önce doldurduğu ZFS replika klasörü devralınabilir ve sonraki replika içindeki kopyalardan devam eder.",
+  "whatsNew.startOver": "Deposu kaybolan uzak bir depolama konumu kendiliğinden yeni, boş bir depo almaz. Sayfası bunu söyler ve oraya yeni bir depo oluşturmayı önerir.",
   "whatsNew.instancesCardLogo": "Her örnek kartı logoyu aynı yerde ve aynı boyutta, adla aynı hizada gösterir.",
   "whatsNew.instancesNetLogos": "Grubun resminde her BombVault, logoyu sunucuyu telefondan ayıran küçük bir rozetle gösterir.",
   "whatsNew.instancesCardSize": "Tüm örnek kartları eşit genişlikte ve en uzunu kadar yüksektir.",

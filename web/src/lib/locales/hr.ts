@@ -794,6 +794,8 @@ const hr: Partial<Translations> = {
   "whatsNew.gotItCheck": "Svaki gumb „Razumijem” ima kvačicu.",
   "whatsNew.cardFoot": "Gumbi za cijelu karticu, poput „Dodaj odredište”, stoje na kraju ispod njezina sadržaja.",
   "whatsNew.memoryLimit": "S ograničenjem memorije po kopiji velika kopija uspori umjesto da ostane bez memorije.",
+  "whatsNew.replicaTakeOver": "Mapu ZFS replike koju je ovaj BombVault napunio prije ponovnog postavljanja moguće je preuzeti, a sljedeća replika nastavlja od kopija u njoj.",
+  "whatsNew.startOver": "Udaljeno mjesto pohrane čiji je repozitorij nestao ne dobiva samo od sebe novi, prazni. Njegova stranica to kaže i nudi da se ondje stvori novi repozitorij.",
   "whatsNew.instancesCardLogo": "Svaka kartica instance prikazuje logotip na istom mjestu i u istoj veličini, u visini naziva.",
   "whatsNew.instancesNetLogos": "Na slici grupe svaki BombVault prikazuje logotip s malom značkom koja razlikuje poslužitelj od telefona.",
   "whatsNew.instancesCardSize": "Sve kartice instanci jednako su široke i visoke kao najviša.",

@@ -677,6 +677,8 @@ const nl: Partial<Translations> = {
   "whatsNew.gotItCheck": "Elke knop „Begrepen” heeft een vinkje.",
   "whatsNew.cardFoot": "Knoppen voor een hele kaart, zoals „Bestemming toevoegen”, staan aan het eind onder de inhoud van de kaart.",
   "whatsNew.memoryLimit": "Met een geheugenlimiet per back-up wordt een grote back-up trager in plaats van zonder geheugen te raken.",
+  "whatsNew.replicaTakeOver": "Een ZFS-replicamap die deze BombVault vulde voordat hij opnieuw is ingericht, kan worden overgenomen, en de volgende replica gaat verder vanaf de kopieën erin.",
+  "whatsNew.startOver": "Een externe opslaglocatie waarvan het repository weg is, krijgt niet vanzelf een nieuw, leeg repository. De pagina ervan zegt dat en biedt aan daar een nieuw repository aan te maken.",
   "whatsNew.instancesCardLogo": "Elke instantiekaart toont het logo op dezelfde plek en in dezelfde grootte, op de hoogte van de naam.",
   "whatsNew.instancesNetLogos": "In de afbeelding van de groep toont elke BombVault het logo met een klein badge dat een server van een telefoon onderscheidt.",
   "whatsNew.instancesCardSize": "Alle instantiekaarten zijn even breed en zo hoog als de hoogste.",

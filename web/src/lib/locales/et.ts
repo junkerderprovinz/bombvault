@@ -794,6 +794,8 @@ const et: Partial<Translations> = {
   "whatsNew.gotItCheck": "Igal „Selge“ nupul on linnuke.",
   "whatsNew.cardFoot": "Kogu kaardi nupud, näiteks „Lisa sihtkoht“, on lõpus kaardi sisu all.",
   "whatsNew.memoryLimit": "Mälupiiriga varunduse kohta muutub suur varundus aeglasemaks, selle asemel et mälu otsa saaks.",
+  "whatsNew.replicaTakeOver": "ZFS-replika kausta, mille see BombVault enne uuesti seadistamist täitis, saab üle võtta, ja järgmine replika jätkab selles olevatest koopiatest.",
+  "whatsNew.startOver": "Kaugsalvestuskoht, mille hoidla on kadunud, ei saa ise uut tühja hoidlat. Selle leht ütleb seda ja pakub sinna uue hoidla loomist.",
   "whatsNew.instancesCardLogo": "Iga eksemplari kaart näitab logo samas kohas ja samas suuruses, nimega ühel kõrgusel.",
   "whatsNew.instancesNetLogos": "Grupi pildil näitab iga BombVault logo koos väikese märgiga, mis eristab serverit telefonist.",
   "whatsNew.instancesCardSize": "Kõik eksemplaride kaardid on ühe laiusega ja sama kõrged kui kõige kõrgem.",

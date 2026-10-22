@@ -681,6 +681,8 @@ const hu: Partial<Translations> = {
   "whatsNew.gotItCheck": "Minden „Értem” gombon pipa van.",
   "whatsNew.cardFoot": "Az egész kártyára vonatkozó gombok, például a „Cél hozzáadása”, a végén, a kártya tartalma alatt állnak.",
   "whatsNew.memoryLimit": "Biztonsági mentésenkénti memóriakorláttal a nagy mentés lelassul ahelyett, hogy kifogyna a memóriából.",
+  "whatsNew.replicaTakeOver": "Az a ZFS-replika mappa, amelyet ez a BombVault az újratelepítés előtt töltött meg, átvehető, és a következő replika a benne lévő másolatokból folytatja.",
+  "whatsNew.startOver": "Egy távoli tárhely, amelynek a tárolója eltűnt, nem kap magától új, üres tárolót. Az oldala ezt jelzi, és felajánlja, hogy ott új tároló jöjjön létre.",
   "whatsNew.instancesCardLogo": "Minden példánykártya ugyanott és ugyanakkora méretben mutatja a logót, a név magasságában.",
   "whatsNew.instancesNetLogos": "A csoport képén minden BombVault a logót mutatja egy kis jelvénnyel, amely megkülönbözteti a szervert a telefontól.",
   "whatsNew.instancesCardSize": "Minden példánykártya egyforma széles, és olyan magas, mint a legmagasabb.",

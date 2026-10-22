@@ -794,6 +794,8 @@ const ms: Partial<Translations> = {
   "whatsNew.gotItCheck": "Setiap butang “Faham” mempunyai tanda semak.",
   "whatsNew.cardFoot": "Butang untuk seluruh kad, seperti “Tambah destinasi”, terletak di hujung di bawah kandungan kad.",
   "whatsNew.memoryLimit": "Dengan had memori setiap sandaran, sandaran besar menjadi perlahan dan bukannya kehabisan memori.",
+  "whatsNew.replicaTakeOver": "Folder replika ZFS yang diisi oleh BombVault ini sebelum ia disediakan semula boleh diambil alih, dan replika seterusnya bersambung daripada salinan di dalamnya.",
+  "whatsNew.startOver": "Lokasi storan jauh yang repositorinya hilang tidak mendapat repositori baharu yang kosong dengan sendirinya. Halamannya memberitahu hal itu dan menawarkan untuk mencipta repositori baharu di sana.",
   "whatsNew.instancesCardLogo": "Setiap kad instans menunjukkan logo di tempat dan saiz yang sama, sejajar dengan nama.",
   "whatsNew.instancesNetLogos": "Dalam gambar kumpulan, setiap BombVault menunjukkan logo dengan lencana kecil yang membezakan pelayan daripada telefon.",
   "whatsNew.instancesCardSize": "Semua kad instans sama lebar dan setinggi kad yang paling tinggi.",

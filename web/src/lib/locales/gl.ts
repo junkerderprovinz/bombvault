@@ -794,6 +794,8 @@ const gl: Partial<Translations> = {
   "whatsNew.gotItCheck": "Cada botón «Entendido» leva unha marca de verificación.",
   "whatsNew.cardFoot": "Os botóns de toda unha tarxeta, como «Engadir destino», están ao final, baixo o contido da tarxeta.",
   "whatsNew.memoryLimit": "Cun límite de memoria por copia, unha copia grande vai máis lenta en vez de quedar sen memoria.",
+  "whatsNew.replicaTakeOver": "Un cartafol de réplica ZFS que este BombVault encheu antes de configuralo de novo pódese tomar, e a seguinte réplica continúa a partir das copias que contén.",
+  "whatsNew.startOver": "Unha localización remota cuxo repositorio desapareceu non recibe un novo e baleiro pola súa conta. A súa páxina dio e ofrece crear alí un repositorio novo.",
   "whatsNew.instancesCardLogo": "Cada tarxeta de instancia mostra o logotipo no mesmo sitio e co mesmo tamaño, á altura do nome.",
   "whatsNew.instancesNetLogos": "Na imaxe do grupo, cada BombVault mostra o logotipo cunha pequena insignia que distingue un servidor dun teléfono.",
   "whatsNew.instancesCardSize": "Todas as tarxetas de instancia son igual de anchas e tan altas como a máis alta.",

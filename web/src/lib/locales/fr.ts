@@ -681,6 +681,8 @@ const fr: Partial<Translations> = {
   "whatsNew.gotItCheck": "Chaque bouton « Compris » porte une coche.",
   "whatsNew.cardFoot": "Les boutons de toute une carte, comme « Ajouter une destination », se trouvent à la fin, sous le contenu de la carte.",
   "whatsNew.memoryLimit": "Avec une limite de mémoire par sauvegarde, une grosse sauvegarde ralentit au lieu de manquer de mémoire.",
+  "whatsNew.replicaTakeOver": "Un dossier de réplique ZFS que ce BombVault a rempli avant sa nouvelle installation peut être repris, et la prochaine réplique repart des copies qu'il contient.",
+  "whatsNew.startOver": "Un emplacement distant dont le dépôt a disparu ne reçoit pas de lui-même un nouveau dépôt vide. Sa page le signale et propose d'y créer un nouveau dépôt.",
   "whatsNew.instancesCardLogo": "Chaque carte d'instance montre le logo au même endroit et à la même taille, à hauteur du nom.",
   "whatsNew.instancesNetLogos": "Dans l'image du groupe, chaque BombVault montre le logo avec un petit badge qui distingue un serveur d'un téléphone.",
   "whatsNew.instancesCardSize": "Toutes les cartes d'instance ont la même largeur et la hauteur de la plus haute.",

@@ -678,6 +678,8 @@ const ro: Partial<Translations> = {
   "whatsNew.gotItCheck": "Fiecare buton „Am înțeles” are o bifă.",
   "whatsNew.cardFoot": "Butoanele pentru tot cardul, ca „Adaugă destinație”, stau la final, sub conținutul cardului.",
   "whatsNew.memoryLimit": "Cu o limită de memorie per copie, o copie mare încetinește în loc să rămână fără memorie.",
+  "whatsNew.replicaTakeOver": "Un dosar de replică ZFS pe care acest BombVault l-a umplut înainte de a fi configurat din nou poate fi preluat, iar următoarea replică continuă de la copiile din el.",
+  "whatsNew.startOver": "O locație de stocare la distanță al cărei depozit a dispărut nu primește de la sine unul nou și gol. Pagina ei spune asta și oferă crearea unui depozit nou acolo.",
   "whatsNew.instancesCardLogo": "Fiecare card de instanță arată sigla în același loc și la aceeași mărime, la înălțimea numelui.",
   "whatsNew.instancesNetLogos": "În imaginea grupului, fiecare BombVault arată sigla cu o insignă mică ce deosebește un server de un telefon.",
   "whatsNew.instancesCardSize": "Toate cardurile de instanță sunt la fel de late și la fel de înalte ca cel mai înalt.",

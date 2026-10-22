@@ -681,6 +681,8 @@ const da: Partial<Translations> = {
   "whatsNew.gotItCheck": "Alle »Forstået«-knapper har et flueben.",
   "whatsNew.cardFoot": "Knapper til hele kortet, fx »Tilføj destination«, står til sidst under kortets indhold.",
   "whatsNew.memoryLimit": "Med en hukommelsesgrænse pr. sikkerhedskopi bliver en stor sikkerhedskopi langsommere i stedet for at løbe tør for hukommelse.",
+  "whatsNew.replicaTakeOver": "En ZFS-replikamappe, som denne BombVault fyldte, før den blev sat op igen, kan overtages, og den næste replika fortsætter fra kopierne i den.",
+  "whatsNew.startOver": "En fjern lagerplacering, hvis depot er væk, får ikke af sig selv et nyt, tomt. Dens side siger det og tilbyder at oprette et nyt depot der.",
   "whatsNew.instancesCardLogo": "Alle instanskort viser logoet samme sted og i samme størrelse, i højde med navnet.",
   "whatsNew.instancesNetLogos": "På billedet af gruppen viser hver BombVault logoet med et lille mærke, der skelner en server fra en telefon.",
   "whatsNew.instancesCardSize": "Alle instanskort er lige brede og lige så høje som det højeste.",

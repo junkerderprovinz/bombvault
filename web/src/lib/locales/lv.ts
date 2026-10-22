@@ -794,6 +794,8 @@ const lv: Partial<Translations> = {
   "whatsNew.gotItCheck": "Katrai pogai “Sapratu” ir ķeksītis.",
   "whatsNew.cardFoot": "Visas kartes pogas, piemēram, “Pievienot mērķi”, atrodas beigās zem kartes satura.",
   "whatsNew.memoryLimit": "Ar atmiņas ierobežojumu vienai dublēšanai liela dublēšana palēninās, nevis paliek bez atmiņas.",
+  "whatsNew.replicaTakeOver": "ZFS replikas mapi, ko šis BombVault aizpildīja pirms atkārtotas iestatīšanas, var pārņemt, un nākamā replika turpina no tajā esošajām kopijām.",
+  "whatsNew.startOver": "Attāla glabāšanas vieta, kuras krātuve ir pazudusi, pati nesaņem jaunu, tukšu krātuvi. Tās lapa to pasaka un piedāvā tur izveidot jaunu krātuvi.",
   "whatsNew.instancesCardLogo": "Katra instances kartīte rāda logotipu tajā pašā vietā un tādā pašā izmērā, nosaukuma augstumā.",
   "whatsNew.instancesNetLogos": "Grupas attēlā katrs BombVault rāda logotipu ar nelielu nozīmīti, kas atšķir serveri no tālruņa.",
   "whatsNew.instancesCardSize": "Visas instanču kartītes ir vienādi platas un tikpat augstas kā augstākā.",

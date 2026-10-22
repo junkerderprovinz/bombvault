@@ -794,6 +794,8 @@ const lt: Partial<Translations> = {
   "whatsNew.gotItCheck": "Kiekvienas mygtukas „Supratau“ turi varnelę.",
   "whatsNew.cardFoot": "Visos kortelės mygtukai, pvz., „Pridėti paskirties vietą“, yra pabaigoje po kortelės turiniu.",
   "whatsNew.memoryLimit": "Su atminties riba vienai kopijai didelė kopija sulėtėja, užuot pritrūkusi atminties.",
+  "whatsNew.replicaTakeOver": "ZFS replikos aplanką, kurį šis BombVault užpildė prieš jį iš naujo nustatant, galima perimti, o kita replika tęsia nuo jame esančių kopijų.",
+  "whatsNew.startOver": "Nuotolinė saugojimo vieta, kurios saugykla dingo, savaime negauna naujos tuščios. Jos puslapis apie tai praneša ir siūlo ten sukurti naują saugyklą.",
   "whatsNew.instancesCardLogo": "Kiekviena egzemplioriaus kortelė rodo logotipą toje pačioje vietoje ir to paties dydžio, pavadinimo aukštyje.",
   "whatsNew.instancesNetLogos": "Grupės paveikslėlyje kiekvienas BombVault rodo logotipą su mažu ženkliuku, kuris atskiria serverį nuo telefono.",
   "whatsNew.instancesCardSize": "Visos egzempliorių kortelės vienodo pločio ir tokio aukščio kaip aukščiausia.",

@@ -794,6 +794,8 @@ const ca: Partial<Translations> = {
   "whatsNew.gotItCheck": "Cada botó «Entesos» porta una marca de verificació.",
   "whatsNew.cardFoot": "Els botons de tota una targeta, com «Afegeix una destinació», són al final, sota el contingut de la targeta.",
   "whatsNew.memoryLimit": "Amb un límit de memòria per còpia, una còpia gran va més lenta en lloc de quedar-se sense memòria.",
+  "whatsNew.replicaTakeOver": "Una carpeta de rèplica ZFS que aquest BombVault va omplir abans de tornar-lo a configurar es pot prendre, i la propera rèplica continua a partir de les còpies que conté.",
+  "whatsNew.startOver": "Una ubicació remota el repositori de la qual ha desaparegut no rep un de nou i buit pel seu compte. La seva pàgina ho diu i ofereix crear-hi un repositori nou.",
   "whatsNew.instancesCardLogo": "Cada targeta d'instància mostra el logotip al mateix lloc i amb la mateixa mida, a l'altura del nom.",
   "whatsNew.instancesNetLogos": "A la imatge del grup, cada BombVault mostra el logotip amb una insígnia petita que distingeix un servidor d'un telèfon.",
   "whatsNew.instancesCardSize": "Totes les targetes d'instància són igual d'amples i tan altes com la més alta.",

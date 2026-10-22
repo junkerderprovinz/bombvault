@@ -676,6 +676,8 @@ const ko: Partial<Translations> = {
   "whatsNew.gotItCheck": "모든 “확인” 버튼에 체크 표시가 있습니다.",
   "whatsNew.cardFoot": "“대상 추가”처럼 카드 전체에 해당하는 버튼은 카드 내용 아래 끝에 있습니다.",
   "whatsNew.memoryLimit": "백업당 메모리 제한이 있으면 큰 백업이 메모리 부족으로 끝나지 않고 느려집니다.",
+  "whatsNew.replicaTakeOver": "다시 설정하기 전에 이 BombVault가 채운 ZFS 복제본 폴더를 넘겨받을 수 있으며, 다음 복제본은 그 안의 복사본에서 이어집니다.",
+  "whatsNew.startOver": "저장소가 사라진 원격 저장 위치에는 새 빈 저장소가 저절로 생기지 않습니다. 해당 페이지가 이를 알리고 그곳에 새 저장소를 만들도록 제안합니다.",
   "whatsNew.instancesCardLogo": "모든 인스턴스 카드는 로고를 같은 위치에 같은 크기로, 이름과 같은 높이에 표시합니다.",
   "whatsNew.instancesNetLogos": "그룹 그림에서 모든 BombVault는 로고와 함께 서버인지 휴대폰인지 알려 주는 작은 배지를 표시합니다.",
   "whatsNew.instancesCardSize": "모든 인스턴스 카드는 너비가 같고 가장 높은 카드만큼 높습니다.",

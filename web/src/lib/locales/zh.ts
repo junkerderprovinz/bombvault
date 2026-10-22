@@ -676,6 +676,8 @@ const zh: Partial<Translations> = {
   "whatsNew.gotItCheck": "每个“知道了”按钮都带有勾号。",
   "whatsNew.cardFoot": "整张卡片的按钮，例如“添加目标”，位于卡片内容下方的末尾。",
   "whatsNew.memoryLimit": "有了每次备份的内存上限，大型备份会变慢，而不会耗尽内存。",
+  "whatsNew.replicaTakeOver": "重新设置之前由这个 BombVault 写入的 ZFS 副本文件夹现在可以接管，下一个副本会在其中的副本基础上继续。",
+  "whatsNew.startOver": "存储库已消失的远程存储位置不会自行得到一个新的空存储库。它的页面会说明这一点，并提供在那里新建存储库的选项。",
   "whatsNew.instancesCardLogo": "每张实例卡片都在同一位置、以同样大小显示徽标，与名称齐平。",
   "whatsNew.instancesNetLogos": "在群组的图中，每个 BombVault 都显示徽标，并带有一个区分服务器和手机的小徽章。",
   "whatsNew.instancesCardSize": "所有实例卡片宽度相同，高度与最高的一张相同。",

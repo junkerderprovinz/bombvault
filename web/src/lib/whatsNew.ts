@@ -57,6 +57,15 @@ const TO_INSTANCES: WayStep[] = ["/settings", "/settings/instances", "/instances
 /** Every release that brought something new, newest first. */
 export const RELEASES: Release[] = [
   {
+    version: "10.2.3",
+    // Both appear only on a place that refused its folder or lost its
+    // repository, so a dot on them would hardly ever show.
+    changes: [
+      { id: "replica-take-over", text: "whatsNew.replicaTakeOver" },
+      { id: "location-start-over", text: "whatsNew.startOver" },
+    ],
+  },
+  {
     version: "10.2.1",
     changes: [
       {

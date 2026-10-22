@@ -681,6 +681,8 @@ const sv: Partial<Translations> = {
   "whatsNew.gotItCheck": "Varje ”Uppfattat”-knapp har en bock.",
   "whatsNew.cardFoot": "Knappar för hela kortet, som ”Lägg till mål”, står sist under kortets innehåll.",
   "whatsNew.memoryLimit": "Med en minnesgräns per säkerhetskopiering går en stor säkerhetskopiering långsammare i stället för att få slut på minne.",
+  "whatsNew.replicaTakeOver": "En ZFS-replikmapp som den här BombVault fyllde innan den sattes upp igen kan tas över, och nästa replik fortsätter från kopiorna i den.",
+  "whatsNew.startOver": "En fjärrlagringsplats vars arkiv är borta får inte ett nytt, tomt arkiv av sig själv. Dess sida säger det och erbjuder att skapa ett nytt arkiv där.",
   "whatsNew.instancesCardLogo": "Varje instanskort visar logotypen på samma plats och i samma storlek, i höjd med namnet.",
   "whatsNew.instancesNetLogos": "På bilden av gruppen visar varje BombVault logotypen med ett litet märke som skiljer en server från en telefon.",
   "whatsNew.instancesCardSize": "Alla instanskort är lika breda och lika höga som det högsta.",

@@ -675,6 +675,8 @@ const pl: Partial<Translations> = {
   "whatsNew.gotItCheck": "Każdy przycisk „Rozumiem” ma znacznik wyboru.",
   "whatsNew.cardFoot": "Przyciski całej karty, np. „Dodaj miejsce docelowe”, stoją na końcu pod jej zawartością.",
   "whatsNew.memoryLimit": "Dzięki limitowi pamięci na kopię zapasową duża kopia zwalnia, zamiast wyczerpać pamięć.",
+  "whatsNew.replicaTakeOver": "Folder repliki ZFS, który ten BombVault zapełnił przed ponowną konfiguracją, można przejąć, a następna replika kontynuuje od kopii w nim.",
+  "whatsNew.startOver": "Zdalne miejsce przechowywania, którego repozytorium zniknęło, nie dostaje samo nowego, pustego. Jego strona to mówi i proponuje utworzenie tam nowego repozytorium.",
   "whatsNew.instancesCardLogo": "Każda karta instancji pokazuje logo w tym samym miejscu i w tym samym rozmiarze, na wysokości nazwy.",
   "whatsNew.instancesNetLogos": "Na obrazie grupy każdy BombVault pokazuje logo z małą plakietką, która odróżnia serwer od telefonu.",
   "whatsNew.instancesCardSize": "Wszystkie karty instancji są równie szerokie i tak wysokie jak najwyższa.",
