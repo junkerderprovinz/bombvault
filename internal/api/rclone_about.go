@@ -44,12 +44,31 @@ func rcloneAbout(ctx context.Context, configPath, remote string) (aboutResult, e
 	out, err := cmd.Output()
 	if err != nil {
 		var exit *exec.ExitError
-		if errors.As(err, &exit) && strings.Contains(strings.ToLower(string(exit.Stderr)), "about") {
-			return aboutResult{}, errAboutUnsupported
+		if errors.As(err, &exit) {
+			return aboutResult{}, aboutFailure(string(exit.Stderr), err)
 		}
 		return aboutResult{}, fmt.Errorf("rclone about: %w", err)
 	}
 	return parseRcloneAbout(out)
+}
+
+// aboutFailure tells a backend without an about call from one that failed to
+// answer. rclone puts "Failed to about:" in front of every error, an expired
+// sign-in included, so only its own wording for a missing call counts.
+func aboutFailure(stderr string, err error) error {
+	if strings.Contains(stderr, "doesn't support about") {
+		return errAboutUnsupported
+	}
+	var last string
+	for line := range strings.SplitSeq(stderr, "\n") {
+		if line = strings.TrimSpace(line); line != "" {
+			last = line
+		}
+	}
+	if last == "" {
+		return fmt.Errorf("rclone about: %w", err)
+	}
+	return fmt.Errorf("rclone about: %s", last)
 }
 
 func parseRcloneAbout(out []byte) (aboutResult, error) {
