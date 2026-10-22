@@ -3201,7 +3201,6 @@ const da: Partial<Translations> = {
   "placementCode.moveSamePlace": "Området har allerede sin kopi dér. Vælg en anden destination.",
   "placementCode.moveSectionThere": "Den destination har allerede en egen kopi af dette område. Vælg en anden destination.",
   "placementCode.moveDirectRepo": "Elementer sikrer direkte til dette sted uden en kopi på hjemstedet, så området kan ikke flytte. Skift først de elementer til Lokal.",
-  "placementCode.moveSignIn": "De to steder logger ind på samme måde, men med forskellige legitimationsoplysninger, og én kopi kan kun bruge den ene. Flyt først området til en mappe på denne server og derfra til det nye sted.",
   "placementCode.moveRunning": "Dette område flyttes allerede. Du kan følge det i Oversigt.",
   "placementCode.ownFolderUnreadable": "Sikkerhedskopierne i den gamle egne mappe kunne ikke læses, så de kan ikke kopieres. Tjek, at disken er monteret, eller at stedet svarer, og prøv igen.",
   "placementCode.ownFolderThere": "Her ligger et områdes egen mappe. Flyt den først et andet sted hen under Egne mapper på denne side. Derefter kan lagerstedet fjernes.",

@@ -3199,7 +3199,6 @@ const cs: Partial<Translations> = {
   "placementCode.moveSamePlace": "Sekce tam svou kopii už má. Zvol jiný cíl.",
   "placementCode.moveSectionThere": "Tento cíl už má vlastní kopii této sekce. Zvol jiný cíl.",
   "placementCode.moveDirectRepo": "Položky se zálohují přímo sem, bez kopie doma, takže se sekce přesunout nedá. Nejdřív přepni tyto položky na Místní.",
-  "placementCode.moveSignIn": "Obě místa se přihlašují stejným způsobem, ale s jinými přihlašovacími údaji, a jedna kopie může použít jen jedny z nich. Nejdřív přesuň sekci do složky na tomto serveru a odtud na nové místo.",
   "placementCode.moveRunning": "Tato sekce se už přesouvá. Můžeš to sledovat v Přehledu.",
   "placementCode.ownFolderUnreadable": "Zálohy ve staré vlastní složce nešlo přečíst, takže je nelze zkopírovat. Zkontroluj, že je disk připojený nebo že místo odpovídá, a zkus to znovu.",
   "placementCode.ownFolderThere": "Tady leží vlastní složka jedné sekce. Nejdřív ji přesuň jinam, v části Vlastní složky na této stránce. Potom půjde úložiště odebrat.",

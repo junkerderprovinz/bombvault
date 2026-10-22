@@ -3211,7 +3211,6 @@ const ca: Partial<Translations> = {
   "placementCode.moveSamePlace": "La secció ja té la seva còpia allà. Tria una altra destinació.",
   "placementCode.moveSectionThere": "Aquesta destinació ja té una còpia pròpia d'aquesta secció. Tria una altra destinació.",
   "placementCode.moveDirectRepo": "Hi ha elements que fan còpia directament en aquest lloc, sense còpia a casa, i per això la secció no es pot moure. Passa primer aquests elements a Local.",
-  "placementCode.moveSignIn": "Els dos llocs inicien sessió de la mateixa manera, però amb credencials diferents, i una còpia només en pot fer servir una. Mou primer la secció a una carpeta d'aquest servidor, i des d'allà al lloc nou.",
   "placementCode.moveRunning": "Aquesta secció ja s'està movent. Pots seguir-ho al Resum.",
   "placementCode.ownFolderUnreadable": "No s'han pogut llegir les còpies de seguretat de la carpeta pròpia antiga, així que no es poden copiar. Comprova que el disc estigui muntat o que el lloc respongui i torna-ho a provar.",
   "placementCode.ownFolderThere": "Aquí hi ha la carpeta pròpia d'una secció. Primer mou-la a un altre lloc, a Carpetes pròpies en aquesta pàgina. Després es pot eliminar la ubicació d'emmagatzematge.",

@@ -3201,7 +3201,6 @@ const sv: Partial<Translations> = {
   "placementCode.moveSamePlace": "Avsnittet har redan sin kopia där. Välj ett annat mål.",
   "placementCode.moveSectionThere": "Det målet har redan en egen kopia av det här avsnittet. Välj ett annat mål.",
   "placementCode.moveDirectRepo": "Poster säkerhetskopierar direkt till den här platsen, utan en kopia hemma, så avsnittet kan inte flyttas. Ställ först om de posterna till Lokal.",
-  "placementCode.moveSignIn": "Båda platserna loggar in på samma sätt men med olika inloggningsuppgifter, och en kopia kan bara använda en av dem. Flytta först avsnittet till en mapp på den här servern och därifrån till den nya platsen.",
   "placementCode.moveRunning": "Det här avsnittet flyttas redan. Du kan följa det i Översikt.",
   "placementCode.ownFolderUnreadable": "Säkerhetskopiorna i den gamla egna mappen gick inte att läsa, så de kan inte kopieras. Kontrollera att disken är monterad eller att platsen svarar och försök igen.",
   "placementCode.ownFolderThere": "Här ligger ett avsnitts egna mapp. Flytta den först till en annan plats under Egna mappar på den här sidan. Sedan kan lagringsplatsen tas bort.",

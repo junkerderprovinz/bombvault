@@ -45,7 +45,6 @@ const CODE_KEYS: Record<string, TranslationKey> = {
   "move-same-place": "placementCode.moveSamePlace",
   "move-section-there": "placementCode.moveSectionThere",
   "move-direct-repo": "placementCode.moveDirectRepo",
-  "move-sign-in": "placementCode.moveSignIn",
   "move-running": "placementCode.moveRunning",
   "erase-running": "storage.remove.erasingNow",
   "own-folder-unreadable": "placementCode.ownFolderUnreadable",

@@ -3211,7 +3211,6 @@ const is: Partial<Translations> = {
   "placementCode.moveSamePlace": "Svæðið hefur þegar afritið sitt þar. Veldu annan áfangastað.",
   "placementCode.moveSectionThere": "Sá áfangastaður á þegar sitt eigið afrit af þessu svæði. Veldu annan áfangastað.",
   "placementCode.moveDirectRepo": "Færslur afrita beint á þennan stað, án afrits heima, svo svæðið getur ekki flutt sig. Settu þessar færslur fyrst á Staðbundið.",
-  "placementCode.moveSignIn": "Báðir staðirnir skrá sig inn á sama hátt en með mismunandi auðkenni, og eitt afrit getur aðeins notað annað þeirra. Færðu svæðið fyrst í möppu á þessum þjóni og þaðan á nýja staðinn.",
   "placementCode.moveRunning": "Þetta svæði er þegar í flutningi. Þú getur fylgst með því í Yfirliti.",
   "placementCode.ownFolderUnreadable": "Ekki tókst að lesa afritin í gömlu eigin möppunni, svo ekki er hægt að afrita þau. Athugaðu hvort diskurinn sé tengdur eða staðurinn svari og reyndu aftur.",
   "placementCode.ownFolderThere": "Hér er eigin mappa svæðis. Færðu hana fyrst annað undir Eigin möppur á þessari síðu. Eftir það er hægt að fjarlægja geymslustaðinn.",

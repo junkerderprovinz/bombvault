@@ -3198,7 +3198,6 @@ const pl: Partial<Translations> = {
   "placementCode.moveSamePlace": "Sekcja ma już tam swoją kopię. Wybierz inne miejsce docelowe.",
   "placementCode.moveSectionThere": "To miejsce docelowe ma już własną kopię tej sekcji. Wybierz inne miejsce docelowe.",
   "placementCode.moveDirectRepo": "Wpisy tworzą kopie bezpośrednio w tym miejscu, bez kopii w miejscu macierzystym, więc sekcji nie można przenieść. Najpierw przełącz te wpisy na Lokalne.",
-  "placementCode.moveSignIn": "Oba miejsca logują się w ten sam sposób, ale innymi danymi logowania, a jedna kopia może użyć tylko jednych z nich. Najpierw przenieś sekcję do folderu na tym serwerze, a stamtąd w nowe miejsce.",
   "placementCode.moveRunning": "Ta sekcja jest już przenoszona. Możesz to śledzić w Przeglądzie.",
   "placementCode.ownFolderUnreadable": "Nie udało się odczytać kopii zapasowych ze starego własnego folderu, więc nie da się ich skopiować. Sprawdź, czy dysk jest zamontowany albo czy miejsce odpowiada, i spróbuj ponownie.",
   "placementCode.ownFolderThere": "Tu leży własny folder jednej z sekcji. Najpierw przenieś go gdzie indziej w części Własne foldery na tej stronie. Potem miejsce przechowywania da się usunąć.",

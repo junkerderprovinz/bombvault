@@ -3192,7 +3192,6 @@ const vi: Partial<Translations> = {
   "placementCode.moveSamePlace": "Phần đã giữ bản sao ở đó rồi. Chọn đích sao lưu khác.",
   "placementCode.moveSectionThere": "Đích sao lưu đó đã có bản sao riêng của phần này. Chọn đích sao lưu khác.",
   "placementCode.moveDirectRepo": "Các mục đang sao lưu thẳng vào nơi này, không có bản sao ở vị trí gốc, nên không thể di chuyển phần. Hãy chuyển các mục đó sang Cục bộ trước.",
-  "placementCode.moveSignIn": "Cả hai nơi đăng nhập theo cùng một cách nhưng bằng thông tin xác thực khác nhau, và một bản sao chỉ dùng được một trong hai. Hãy di chuyển phần vào một thư mục trên máy chủ này trước, rồi từ đó sang nơi mới.",
   "placementCode.moveRunning": "Phần này đang được di chuyển. Bạn có thể theo dõi tại Tổng quan.",
   "placementCode.ownFolderUnreadable": "Không đọc được các bản sao lưu trong thư mục riêng cũ, nên không thể sao chép chúng. Hãy kiểm tra ổ đĩa đã được gắn hoặc nơi đó có phản hồi, rồi thử lại.",
   "placementCode.ownFolderThere": "Thư mục riêng của một phần nằm ở đây. Hãy chuyển nó sang nơi khác trước, trong mục Thư mục riêng ở trang này. Sau đó có thể gỡ vị trí lưu trữ.",

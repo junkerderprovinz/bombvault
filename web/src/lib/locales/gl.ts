@@ -3211,7 +3211,6 @@ const gl: Partial<Translations> = {
   "placementCode.moveSamePlace": "A sección xa ten alí a súa copia. Escolle outro destino.",
   "placementCode.moveSectionThere": "Ese destino xa ten unha copia propia desta sección. Escolle outro destino.",
   "placementCode.moveDirectRepo": "Hai elementos que fan copia directamente neste lugar, sen copia na casa, así que a sección non se pode mover. Pasa primeiro eses elementos a Local.",
-  "placementCode.moveSignIn": "Os dous lugares inician sesión da mesma maneira, pero con credenciais distintas, e unha copia só pode usar unha delas. Move primeiro a sección a un cartafol deste servidor e desde alí ao lugar novo.",
   "placementCode.moveRunning": "Esta sección xa se está movendo. Podes seguila na Vista xeral.",
   "placementCode.ownFolderUnreadable": "Non se puideron ler as copias de seguridade do cartafol propio antigo, así que non se poden copiar. Comproba que o disco estea montado ou que o lugar responda e téntao de novo.",
   "placementCode.ownFolderThere": "Aquí está o cartafol propio dunha sección. Móveo primeiro a outro lugar, en Cartafoles propios nesta páxina. Despois pódese quitar a localización de almacenamento.",

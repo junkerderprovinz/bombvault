@@ -3201,7 +3201,6 @@ const fr: Partial<Translations> = {
   "placementCode.moveSamePlace": "La section garde déjà sa copie à cet endroit. Choisissez une autre destination.",
   "placementCode.moveSectionThere": "Cette destination a déjà une copie propre de cette section. Choisissez une autre destination.",
   "placementCode.moveDirectRepo": "Des éléments sauvegardent directement à cet endroit, sans copie à l'emplacement d'origine, donc la section ne peut pas être déplacée. Passez d'abord ces éléments sur Local.",
-  "placementCode.moveSignIn": "Les deux endroits se connectent de la même façon mais avec des identifiants différents, et une copie ne peut en utiliser qu'un. Déplacez d'abord la section vers un dossier de ce serveur, puis de là vers le nouvel endroit.",
   "placementCode.moveRunning": "Cette section est déjà en cours de déplacement. Vous pouvez la suivre dans l'Aperçu.",
   "placementCode.ownFolderUnreadable": "Les sauvegardes de l'ancien dossier propre n'ont pas pu être lues, elles ne peuvent donc pas être copiées. Vérifiez que le disque est monté ou que l'emplacement répond, puis réessayez.",
   "placementCode.ownFolderThere": "Le dossier propre d'une section se trouve ici. Déplacez-le d'abord ailleurs, sous Dossiers propres sur cette page. L'emplacement de stockage pourra ensuite être supprimé.",

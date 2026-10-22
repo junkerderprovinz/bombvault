@@ -3201,7 +3201,6 @@ const fi: Partial<Translations> = {
   "placementCode.moveSamePlace": "Osion kopio on jo siellä. Valitse toinen kohde.",
   "placementCode.moveSectionThere": "Tällä kohteella on jo oma kopio tästä osiosta. Valitse toinen kohde.",
   "placementCode.moveDirectRepo": "Merkinnät varmuuskopioivat suoraan tähän paikkaan ilman kopiota kotipaikassa, joten osiota ei voi siirtää. Vaihda ensin nämä merkinnät asetukseen Paikallinen.",
-  "placementCode.moveSignIn": "Molempiin paikkoihin kirjaudutaan samalla tavalla mutta eri tunnuksilla, ja yksi kopio voi käyttää vain toisia niistä. Siirrä osio ensin tämän palvelimen kansioon ja sieltä uuteen paikkaan.",
   "placementCode.moveRunning": "Tätä osiota siirretään jo. Voit seurata sitä kohdassa Yleiskatsaus.",
   "placementCode.ownFolderUnreadable": "Vanhan oman kansion varmuuskopioita ei voitu lukea, joten niitä ei voi kopioida. Tarkista, että levy on liitetty tai kohde vastaa, ja yritä uudelleen.",
   "placementCode.ownFolderThere": "Täällä on erään osion oma kansio. Siirrä se ensin muualle tämän sivun kohdassa Omat kansiot. Sen jälkeen tallennuspaikan voi poistaa.",

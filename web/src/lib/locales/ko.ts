@@ -3192,7 +3192,6 @@ const ko: Partial<Translations> = {
   "placementCode.moveSamePlace": "섹션의 사본이 이미 그곳에 있습니다. 다른 대상을 선택하세요.",
   "placementCode.moveSectionThere": "그 대상에는 이 섹션의 자체 사본이 이미 있습니다. 다른 대상을 선택하세요.",
   "placementCode.moveDirectRepo": "항목이 원래 위치의 사본 없이 이 위치로 직접 백업하고 있어서 섹션을 이동할 수 없습니다. 먼저 해당 항목을 '로컬'로 바꾸세요.",
-  "placementCode.moveSignIn": "두 위치는 같은 방식으로 로그인하지만 자격 증명이 서로 달라서, 하나의 사본은 둘 중 하나만 사용할 수 있습니다. 먼저 섹션을 이 서버의 폴더로 이동한 다음, 거기서 새 위치로 이동하세요.",
   "placementCode.moveRunning": "이 섹션은 이미 이동 중입니다. '개요'에서 확인할 수 있습니다.",
   "placementCode.ownFolderUnreadable": "이전 전용 폴더의 백업을 읽을 수 없어 복사할 수 없습니다. 디스크가 마운트되어 있는지, 그 위치가 응답하는지 확인한 뒤 다시 시도하세요.",
   "placementCode.ownFolderThere": "여기에 어떤 섹션의 전용 폴더가 있습니다. 먼저 이 페이지의 '전용 폴더'에서 다른 곳으로 옮기세요. 그다음 저장 위치를 제거할 수 있습니다.",

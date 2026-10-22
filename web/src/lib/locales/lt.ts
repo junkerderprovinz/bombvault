@@ -3211,7 +3211,6 @@ const lt: Partial<Translations> = {
   "placementCode.moveSamePlace": "Sritis savo kopiją jau turi ten. Pasirink kitą paskirties vietą.",
   "placementCode.moveSectionThere": "Ta paskirties vieta jau turi savo šios srities kopiją. Pasirink kitą paskirties vietą.",
   "placementCode.moveDirectRepo": "Įrašai kuria atsargines kopijas tiesiai šioje vietoje, be kopijos pradinėje vietoje, todėl srities perkelti negalima. Pirmiausia perjunk tuos įrašus į parinktį Vietinis.",
-  "placementCode.moveSignIn": "Į abi vietas prisijungiama tuo pačiu būdu, bet skirtingais prisijungimo duomenimis, o viena kopija gali naudoti tik vienus iš jų. Pirmiausia perkelk sritį į šio serverio aplanką, o iš ten į naują vietą.",
   "placementCode.moveRunning": "Ši sritis jau perkeliama. Gali tai sekti skiltyje Apžvalga.",
   "placementCode.ownFolderUnreadable": "Senojo savo aplanko atsarginių kopijų nepavyko perskaityti, todėl jų negalima nukopijuoti. Patikrink, ar diskas prijungtas arba ar vieta atsako, ir bandyk dar kartą.",
   "placementCode.ownFolderThere": "Čia yra vienos srities savas aplankas. Pirmiausia perkelk jį kitur šio puslapio skiltyje Savi aplankai. Tada saugyklos vietą bus galima pašalinti.",

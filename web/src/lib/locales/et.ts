@@ -3211,7 +3211,6 @@ const et: Partial<Translations> = {
   "placementCode.moveSamePlace": "Valdkonna koopia on seal juba olemas. Vali mõni teine sihtkoht.",
   "placementCode.moveSectionThere": "Sellel sihtkohal on selle valdkonna oma koopia juba olemas. Vali mõni teine sihtkoht.",
   "placementCode.moveDirectRepo": "Kirjed varundavad otse siia, ilma koduse koopiata, seega ei saa valdkonda teisaldada. Lülita need kirjed kõigepealt valikule Kohalik.",
-  "placementCode.moveSignIn": "Mõlemasse kohta logitakse sisse samal viisil, kuid erinevate andmetega, ja üks koopia saab kasutada ainult ühte neist. Teisalda valdkond kõigepealt selle serveri kausta ja sealt uude kohta.",
   "placementCode.moveRunning": "See valdkond on juba teisaldamisel. Saad seda jälgida lehel Ülevaade.",
   "placementCode.ownFolderUnreadable": "Vana oma kausta varukoopiaid ei õnnestunud lugeda, seega ei saa neid kopeerida. Kontrolli, et ketas oleks ühendatud või asukoht vastaks, ja proovi uuesti.",
   "placementCode.ownFolderThere": "Siin asub ühe jaotise oma kaust. Teisalda see enne mujale, sellel lehel jaotises Oma kaustad. Seejärel saab salvestuskoha eemaldada.",

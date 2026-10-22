@@ -292,7 +292,7 @@ describe("the window that moves a section", () => {
     await renderPage();
     const dialog = await openMove();
     await click(within(dialog).getByRole("radio", { name: "NAS" }));
-    previewSectionMove.mockResolvedValue({ ok: false, code: "move-sign-in", error: "different credentials" });
+    previewSectionMove.mockResolvedValue({ ok: false, code: "move-section-there", error: "the section is there" });
 
     await click(within(dialog).getByRole("radio", { name: "Backblaze B2" }));
 
@@ -305,7 +305,6 @@ describe("the window that moves a section", () => {
     ["move-same-place", /already keeps its copy there/],
     ["move-section-there", /already has a copy of this section of its own/],
     ["move-direct-repo", /back up straight to this place.*Switch those entries to Local first/],
-    ["move-sign-in", /different credentials.*folder on this server first/],
     ["move-running", /already moving.*overview/],
   ] as const)("says what to do about the refusal %s", async (code, sentence) => {
     previewSectionMove.mockResolvedValue({ ok: false, code, error: "server words" });

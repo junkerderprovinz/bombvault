@@ -3192,7 +3192,6 @@ const zh: Partial<Translations> = {
   "placementCode.moveSamePlace": "该分区的副本已经在那里了。请选择其他目标。",
   "placementCode.moveSectionThere": "该目标已有这个分区的专属副本。请选择其他目标。",
   "placementCode.moveDirectRepo": "条目直接备份到这个位置，原位置没有副本，因此无法移动该分区。请先把这些条目切换为“本地”。",
-  "placementCode.moveSignIn": "两个位置使用相同的登录方式，但凭据不同，而一份副本只能使用其中一种。请先把该分区移到此服务器上的文件夹，再从那里移到新位置。",
   "placementCode.moveRunning": "该分区正在移动。你可以在“概览”中查看进度。",
   "placementCode.ownFolderUnreadable": "无法读取旧专属文件夹中的备份，因此无法复制。请检查磁盘是否已挂载或该位置是否有响应，然后重试。",
   "placementCode.ownFolderThere": "这里有某个分区的专属文件夹。请先在本页的“专属文件夹”中把它移到别处，之后才能移除此存储位置。",

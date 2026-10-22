@@ -3201,7 +3201,6 @@ const pt: Partial<Translations> = {
   "placementCode.moveSamePlace": "A secção já tem lá a sua cópia. Escolhe outro destino.",
   "placementCode.moveSectionThere": "Esse destino já tem uma cópia própria desta secção. Escolhe outro destino.",
   "placementCode.moveDirectRepo": "Há entradas que fazem cópia diretamente para este local, sem cópia em casa, por isso a secção não pode ser movida. Muda primeiro essas entradas para Local.",
-  "placementCode.moveSignIn": "Os dois locais iniciam sessão da mesma forma, mas com credenciais diferentes, e uma cópia só pode usar uma delas. Move primeiro a secção para uma pasta deste servidor e daí para o novo local.",
   "placementCode.moveRunning": "Esta secção já está a ser movida. Podes acompanhá-la na Visão geral.",
   "placementCode.ownFolderUnreadable": "Não foi possível ler os backups da pasta própria antiga, por isso não podem ser copiados. Verifica se o disco está montado ou se o local responde e tenta de novo.",
   "placementCode.ownFolderThere": "Aqui está a pasta própria de uma secção. Move-a primeiro para outro sítio, em Pastas próprias nesta página. Depois o local de armazenamento pode ser removido.",

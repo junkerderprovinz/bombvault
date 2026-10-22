@@ -3195,7 +3195,6 @@ const sl: Partial<Translations> = {
   "placementCode.moveSamePlace": "Razdelek tam že ima svojo kopijo. Izberi drug cilj.",
   "placementCode.moveSectionThere": "Ta cilj že ima lastno kopijo tega razdelka. Izberi drug cilj.",
   "placementCode.moveDirectRepo": "Vnosi se varnostno kopirajo neposredno na to mesto, brez kopije doma, zato razdelka ni mogoče premakniti. Najprej preklopi te vnose na Lokalno.",
-  "placementCode.moveSignIn": "Obe mesti se prijavljata na enak način, vendar z različnimi poverilnicami, ena kopija pa lahko uporablja le eno od njih. Najprej premakni razdelek v mapo na tem strežniku, od tam pa na novo mesto.",
   "placementCode.moveRunning": "Ta razdelek se že premika. Spremljaš ga lahko v Pregledu.",
   "placementCode.ownFolderUnreadable": "Varnostnih kopij v stari lastni mapi ni bilo mogoče prebrati, zato jih ni mogoče kopirati. Preveri, da je disk priklopljen ali da mesto odgovarja, in poskusi znova.",
   "placementCode.ownFolderThere": "Tu je lastna mapa enega od razdelkov. Najprej jo premakni drugam pod Lastne mape na tej strani. Nato je mesto shranjevanja mogoče odstraniti.",

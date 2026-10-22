@@ -203,14 +203,14 @@ it("offers the switch without the copy when the old own folder does not answer",
 
 it("says under What happens why the switch cannot go ahead and that it can without the copy", async () => {
   previewOwnFolders.mockImplementation(async (req) =>
-    req.copyOver ? { ok: false, code: "move-sign-in", error: "both places sign in the same way" } : { ok: true, steps: [STEP] }
+    req.copyOver ? { ok: false, code: "own-folder-unreadable", error: "backup path is not mounted yet" } : { ok: true, steps: [STEP] }
   );
   await open(["containers"], "destination:h");
   await settle();
 
   const alert = screen.getByRole("alert");
   expect(alert.textContent).toContain("The own folder cannot move like this.");
-  expect(alert.textContent).toContain("Both places sign in the same way but with different credentials");
+  expect(alert.textContent).toContain("The backups in the old own folder could not be read");
   expect(alert.textContent).toContain('Switch off "Copy the backups already made"');
   expect((screen.getByRole("button", { name: "Switch" }) as HTMLButtonElement).disabled).toBe(true);
 

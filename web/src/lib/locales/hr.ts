@@ -3211,7 +3211,6 @@ const hr: Partial<Translations> = {
   "placementCode.moveSamePlace": "Odjeljak ondje već ima svoju kopiju. Odaberite drugo odredište.",
   "placementCode.moveSectionThere": "To odredište već ima vlastitu kopiju ovog odjeljka. Odaberite drugo odredište.",
   "placementCode.moveDirectRepo": "Stavke izravno sigurnosno kopiraju na ovo mjesto, bez kopije kod kuće, pa se odjeljak ne može premjestiti. Prvo prebacite te stavke na Lokalno.",
-  "placementCode.moveSignIn": "Oba se mjesta prijavljuju na isti način, ali s različitim vjerodajnicama, a jedna kopija može upotrijebiti samo jedne od njih. Prvo premjestite odjeljak u mapu na ovom poslužitelju, a odande na novo mjesto.",
   "placementCode.moveRunning": "Ovaj se odjeljak već premješta. Možete to pratiti u Pregledu.",
   "placementCode.ownFolderUnreadable": "Sigurnosne kopije u staroj vlastitoj mapi nije bilo moguće pročitati, pa se ne mogu kopirati. Provjerite je li disk montiran ili odgovara li mjesto pa pokušajte ponovno.",
   "placementCode.ownFolderThere": "Ovdje je vlastita mapa jednog odjeljka. Najprije je premjestite drugamo, pod Vlastite mape na ovoj stranici. Nakon toga se mjesto pohrane može ukloniti.",

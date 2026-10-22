@@ -3199,7 +3199,6 @@ const es: Partial<Translations> = {
   "placementCode.moveSamePlace": "La sección ya tiene ahí su copia. Elige otro destino.",
   "placementCode.moveSectionThere": "Ese destino ya tiene una copia propia de esta sección. Elige otro destino.",
   "placementCode.moveDirectRepo": "Hay elementos que copian directamente en este lugar, sin una copia en casa, así que la sección no se puede mover. Pasa primero esos elementos a Local.",
-  "placementCode.moveSignIn": "Los dos lugares inician sesión de la misma forma, pero con credenciales distintas, y una copia solo puede usar una de ellas. Mueve primero la sección a una carpeta de este servidor y desde ahí al lugar nuevo.",
   "placementCode.moveRunning": "Esta sección ya se está moviendo. Puedes seguirla en el Resumen.",
   "placementCode.ownFolderUnreadable": "No se pudieron leer las copias de seguridad de la carpeta propia anterior, así que no se pueden copiar. Comprueba que el disco esté montado o que el lugar responda y vuelve a intentarlo.",
   "placementCode.ownFolderThere": "Aquí está la carpeta propia de una sección. Muévela primero a otro lugar, en Carpetas propias en esta página. Después se puede quitar la ubicación de almacenamiento.",

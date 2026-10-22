@@ -3202,7 +3202,6 @@ const hu: Partial<Translations> = {
   "placementCode.moveSamePlace": "A szakasz a másolatát már ott tartja. Válassz másik célt.",
   "placementCode.moveSectionThere": "Ennek a célnak már van saját másolata erről a szakaszról. Válassz másik célt.",
   "placementCode.moveDirectRepo": "Az elemek közvetlenül ide mentenek, otthoni másolat nélkül, ezért a szakasz nem költöztethető. Előbb állítsd át ezeket az elemeket Helyi értékre.",
-  "placementCode.moveSignIn": "Mindkét helyre ugyanúgy lehet bejelentkezni, de más hitelesítő adatokkal, és egy másolat csak az egyiket használhatja. Előbb költöztesd a szakaszt a szerver egy mappájába, onnan pedig az új helyre.",
   "placementCode.moveRunning": "Ez a szakasz már költözik. Az Áttekintés oldalon követheted.",
   "placementCode.ownFolderUnreadable": "A régi saját mappában lévő mentéseket nem sikerült beolvasni, ezért nem másolhatók. Nézd meg, hogy a lemez csatolva van-e, vagy a hely válaszol-e, aztán próbáld újra.",
   "placementCode.ownFolderThere": "Itt van egy szakasz saját mappája. Előbb költöztesd máshová az oldal Saját mappák részében. Utána a tárolási hely eltávolítható.",

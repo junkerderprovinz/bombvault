@@ -3200,7 +3200,6 @@ const nl: Partial<Translations> = {
   "placementCode.moveSamePlace": "Het onderdeel heeft zijn kopie daar al. Kies een andere bestemming.",
   "placementCode.moveSectionThere": "Die bestemming heeft al een eigen kopie van dit onderdeel. Kies een andere bestemming.",
   "placementCode.moveDirectRepo": "Items maken rechtstreeks naar deze plek een back-up, zonder kopie thuis, dus het onderdeel kan niet worden verplaatst. Zet die items eerst op Lokaal.",
-  "placementCode.moveSignIn": "Beide plekken loggen op dezelfde manier in maar met andere inloggegevens, en één kopie kan er maar één gebruiken. Verplaats het onderdeel eerst naar een map op deze server en vandaar naar de nieuwe plek.",
   "placementCode.moveRunning": "Dit onderdeel wordt al verplaatst. Je kunt het volgen op het Overzicht.",
   "placementCode.ownFolderUnreadable": "De back-ups in de oude eigen map konden niet worden gelezen, dus ze kunnen niet worden gekopieerd. Controleer of de schijf gekoppeld is of de plek antwoordt en probeer het opnieuw.",
   "placementCode.ownFolderThere": "Hier staat de eigen map van een onderdeel. Verplaats die eerst naar een andere plek, onder Eigen mappen op deze pagina. Daarna kan de opslaglocatie weg.",

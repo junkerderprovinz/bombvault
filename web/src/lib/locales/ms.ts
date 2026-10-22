@@ -3211,7 +3211,6 @@ const ms: Partial<Translations> = {
   "placementCode.moveSamePlace": "Bahagian sudah menyimpan salinannya di sana. Pilih destinasi lain.",
   "placementCode.moveSectionThere": "Destinasi itu sudah mempunyai salinan sendiri bagi bahagian ini. Pilih destinasi lain.",
   "placementCode.moveDirectRepo": "Entri membuat sandaran terus ke tempat ini, tanpa salinan di lokasi asal, jadi bahagian tidak boleh dialihkan. Tukar dahulu entri itu kepada Setempat.",
-  "placementCode.moveSignIn": "Kedua-dua tempat log masuk dengan cara yang sama tetapi dengan bukti kelayakan berbeza, dan satu salinan hanya boleh menggunakan salah satu. Alihkan bahagian dahulu ke folder di pelayan ini, kemudian dari situ ke tempat baharu.",
   "placementCode.moveRunning": "Bahagian ini sedang dialihkan. Anda boleh mengikutinya di Ikhtisar.",
   "placementCode.ownFolderUnreadable": "Sandaran dalam folder sendiri yang lama tidak dapat dibaca, jadi ia tidak boleh disalin. Semak sama ada cakera sudah dilekapkan atau tempat itu menjawab, kemudian cuba lagi.",
   "placementCode.ownFolderThere": "Di sini terletak folder sendiri sesuatu bahagian. Alihkannya dahulu ke tempat lain di Folder sendiri pada halaman ini. Selepas itu lokasi storan boleh dibuang.",

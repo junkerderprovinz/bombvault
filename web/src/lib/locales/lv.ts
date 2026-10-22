@@ -3211,7 +3211,6 @@ const lv: Partial<Translations> = {
   "placementCode.moveSamePlace": "Sadaļai kopija jau ir tur. Izvēlieties citu mērķi.",
   "placementCode.moveSectionThere": "Šim mērķim jau ir sava šīs sadaļas kopija. Izvēlieties citu mērķi.",
   "placementCode.moveDirectRepo": "Ieraksti dublē tieši uz šo vietu, bez kopijas sākotnējā vietā, tāpēc sadaļu nevar pārvietot. Vispirms pārslēdziet šos ierakstus uz Vietējs.",
-  "placementCode.moveSignIn": "Abās vietās pieteikšanās notiek vienādi, bet ar dažādiem akreditācijas datiem, un viena kopija var izmantot tikai vienus no tiem. Vispirms pārvietojiet sadaļu uz mapi šajā serverī un no turienes uz jauno vietu.",
   "placementCode.moveRunning": "Šī sadaļa jau tiek pārvietota. Varat to vērot sadaļā Pārskats.",
   "placementCode.ownFolderUnreadable": "Vecās paša mapes dublējumus neizdevās nolasīt, tāpēc tos nevar nokopēt. Pārbaudiet, vai disks ir pievienots vai vieta atbild, un mēģiniet vēlreiz.",
   "placementCode.ownFolderThere": "Šeit atrodas kādas sadaļas paša mape. Vispirms pārvietojiet to citur šīs lapas sadaļā Pašu mapes. Pēc tam krātuves vietu var noņemt.",

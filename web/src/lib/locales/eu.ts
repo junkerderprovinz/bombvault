@@ -3211,7 +3211,6 @@ const eu: Partial<Translations> = {
   "placementCode.moveSamePlace": "Atalak badu bere kopia han. Aukeratu beste helmuga bat.",
   "placementCode.moveSectionThere": "Helmuga horrek badu atal honen kopia propioa. Aukeratu beste helmuga bat.",
   "placementCode.moveDirectRepo": "Elementuek zuzenean toki honetara egiten dute babeskopia, etxeko kopiarik gabe, beraz atala ezin da mugitu. Aldatu lehenik elementu horiek Lokala aukerara.",
-  "placementCode.moveSignIn": "Bi tokiek modu berean hasten dute saioa, baina kredentzial desberdinekin, eta kopia batek bietako bat bakarrik erabil dezake. Mugitu lehenik atala zerbitzari honetako karpeta batera, eta handik toki berrira.",
   "placementCode.moveRunning": "Atal hau mugitzen ari da jada. Laburpena orrian jarrai dezakezu.",
   "placementCode.ownFolderUnreadable": "Ezin izan dira irakurri karpeta propio zaharreko babeskopiak, beraz ezin dira kopiatu. Egiaztatu diskoa muntatuta dagoela edo tokiak erantzuten duela, eta saiatu berriro.",
   "placementCode.ownFolderThere": "Hemen dago atal baten karpeta propioa. Lehenik, eraman beste toki batera orri honetako Karpeta propioak atalean. Ondoren, biltegiratze-kokapena kendu daiteke.",

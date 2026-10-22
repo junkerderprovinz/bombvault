@@ -3211,7 +3211,6 @@ const id: Partial<Translations> = {
   "placementCode.moveSamePlace": "Bagian sudah menyimpan salinannya di sana. Pilih tujuan lain.",
   "placementCode.moveSectionThere": "Tujuan itu sudah punya salinan sendiri dari bagian ini. Pilih tujuan lain.",
   "placementCode.moveDirectRepo": "Entri mencadangkan langsung ke tempat ini, tanpa salinan di lokasi asal, sehingga bagian tidak bisa dipindahkan. Alihkan dulu entri tersebut ke Lokal.",
-  "placementCode.moveSignIn": "Kedua tempat masuk dengan cara yang sama tetapi dengan kredensial berbeda, dan satu salinan hanya bisa memakai salah satunya. Pindahkan dulu bagian ke folder di server ini, lalu dari sana ke tempat baru.",
   "placementCode.moveRunning": "Bagian ini sedang dipindahkan. Anda bisa mengikutinya di Ringkasan.",
   "placementCode.ownFolderUnreadable": "Cadangan di folder sendiri yang lama tidak bisa dibaca, jadi tidak bisa disalin. Periksa apakah disk sudah dipasang atau tempat itu merespons, lalu coba lagi.",
   "placementCode.ownFolderThere": "Di sini ada folder sendiri milik sebuah bagian. Pindahkan dulu ke tempat lain di Folder sendiri pada halaman ini. Setelah itu lokasi penyimpanan bisa dihapus.",

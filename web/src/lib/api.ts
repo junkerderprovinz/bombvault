@@ -2834,14 +2834,8 @@ export interface SectionMove {
 
 /** Why a move cannot be done: the section is there already, the destination
  *  has the section from before, entries back up straight to the old place,
- *  both places need different sign-ins of one kind, or a move of the section
- *  is running. */
-export type SectionMoveRefusal =
-  | "move-same-place"
-  | "move-section-there"
-  | "move-direct-repo"
-  | "move-sign-in"
-  | "move-running";
+ *  or a move of the section is running. */
+export type SectionMoveRefusal = "move-same-place" | "move-section-there" | "move-direct-repo" | "move-running";
 
 type SectionMoveAnswer = Omit<OkEnvelope, "code"> & { code?: SectionMoveRefusal; move?: SectionMove };
 

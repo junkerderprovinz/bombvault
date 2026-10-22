@@ -33,7 +33,7 @@ import { SectionPathWindow } from "./SectionPathWindow";
 
 const OTHER = "other";
 /** The refusals that only copying the backups already made runs into. */
-const COPY_REFUSALS = new Set(["move-sign-in", "own-folder-unreadable"]);
+const COPY_REFUSALS = new Set(["own-folder-unreadable"]);
 const FIELD = "rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 glim-field-focus";
 
 type T = ReturnType<typeof useT>["t"];

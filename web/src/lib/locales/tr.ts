@@ -3201,7 +3201,6 @@ const tr: Partial<Translations> = {
   "placementCode.moveSamePlace": "Bölüm kopyasını zaten orada tutuyor. Başka bir hedef seç.",
   "placementCode.moveSectionThere": "O hedefin bu bölüme ait kendi kopyası zaten var. Başka bir hedef seç.",
   "placementCode.moveDirectRepo": "Ögeler, ana yerde kopya olmadan doğrudan bu yere yedekleniyor, bu yüzden bölüm taşınamaz. Önce bu ögeleri Yerel seçeneğine geçir.",
-  "placementCode.moveSignIn": "İki yer de aynı yöntemle oturum açıyor ama kimlik bilgileri farklı, ve bir kopya yalnızca birini kullanabilir. Önce bölümü bu sunucudaki bir klasöre, oradan da yeni yere taşı.",
   "placementCode.moveRunning": "Bu bölüm zaten taşınıyor. Genel bakış sayfasından izleyebilirsin.",
   "placementCode.ownFolderUnreadable": "Eski kendi klasöründeki yedekler okunamadı, bu yüzden kopyalanamıyor. Diskin bağlı olduğunu ya da yerin yanıt verdiğini kontrol et ve yeniden dene.",
   "placementCode.ownFolderThere": "Burada bir bölümün kendi klasörü var. Önce bu sayfadaki Kendi klasörleri bölümünden başka bir yere taşı. Ardından depolama konumu kaldırılabilir.",

@@ -3201,7 +3201,6 @@ const it: Partial<Translations> = {
   "placementCode.moveSamePlace": "La sezione tiene già lì la sua copia. Scegli un'altra destinazione.",
   "placementCode.moveSectionThere": "Quella destinazione ha già una copia propria di questa sezione. Scegli un'altra destinazione.",
   "placementCode.moveDirectRepo": "Alcuni elementi fanno il backup direttamente in questo posto, senza una copia a casa, quindi la sezione non può essere spostata. Porta prima quegli elementi su Locale.",
-  "placementCode.moveSignIn": "In entrambi i posti si accede allo stesso modo ma con credenziali diverse, e una copia può usarne una sola. Sposta prima la sezione in una cartella di questo server e da lì al nuovo posto.",
   "placementCode.moveRunning": "Questa sezione è già in corso di spostamento. Puoi seguirla nella Panoramica.",
   "placementCode.ownFolderUnreadable": "Non è stato possibile leggere i backup della vecchia cartella propria, quindi non si possono copiare. Controlla che il disco sia montato o che il luogo risponda, poi riprova.",
   "placementCode.ownFolderThere": "Qui si trova la cartella propria di una sezione. Spostala prima altrove, in Cartelle proprie in questa pagina. Poi la posizione di archiviazione si può rimuovere.",

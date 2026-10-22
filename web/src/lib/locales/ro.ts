@@ -3202,7 +3202,6 @@ const ro: Partial<Translations> = {
   "placementCode.moveSamePlace": "Secțiunea își ține deja copia acolo. Alege altă destinație.",
   "placementCode.moveSectionThere": "Acea destinație are deja o copie proprie a acestei secțiuni. Alege altă destinație.",
   "placementCode.moveDirectRepo": "Unele elemente fac copii direct în acest loc, fără o copie acasă, deci secțiunea nu poate fi mutată. Treci mai întâi acele elemente pe Local.",
-  "placementCode.moveSignIn": "Ambele locuri se autentifică la fel, dar cu date de acces diferite, iar o copie poate folosi doar unele dintre ele. Mută mai întâi secțiunea într-un folder de pe acest server, iar de acolo în locul nou.",
   "placementCode.moveRunning": "Această secțiune este deja în curs de mutare. O poți urmări în Prezentare.",
   "placementCode.ownFolderUnreadable": "Copiile de rezervă din vechiul dosar propriu nu au putut fi citite, așa că nu pot fi copiate. Verifică dacă discul este montat sau dacă locul răspunde, apoi încearcă din nou.",
   "placementCode.ownFolderThere": "Aici se află dosarul propriu al unei secțiuni. Mută-l mai întâi în alt loc, la Dosare proprii pe această pagină. Apoi locația de stocare poate fi eliminată.",

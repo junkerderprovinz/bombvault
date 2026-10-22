@@ -3211,7 +3211,6 @@ const sk: Partial<Translations> = {
   "placementCode.moveSamePlace": "Sekcia tam svoju kópiu už má. Zvoľ iný cieľ.",
   "placementCode.moveSectionThere": "Tento cieľ už má vlastnú kópiu tejto sekcie. Zvoľ iný cieľ.",
   "placementCode.moveDirectRepo": "Položky sa zálohujú priamo sem, bez kópie doma, takže sa sekcia presunúť nedá. Najprv prepni tieto položky na Lokálny.",
-  "placementCode.moveSignIn": "Obe miesta sa prihlasujú rovnakým spôsobom, ale s inými prihlasovacími údajmi, a jedna kópia môže použiť len jedny z nich. Najprv presuň sekciu do priečinka na tomto serveri a odtiaľ na nové miesto.",
   "placementCode.moveRunning": "Táto sekcia sa už presúva. Môžeš to sledovať v Prehľade.",
   "placementCode.ownFolderUnreadable": "Zálohy v starom vlastnom priečinku sa nepodarilo prečítať, takže ich nemožno skopírovať. Skontroluj, či je disk pripojený alebo či miesto odpovedá, a skús to znova.",
   "placementCode.ownFolderThere": "Tu leží vlastný priečinok jednej sekcie. Najprv ho presuň inam v časti Vlastné priečinky na tejto stránke. Potom bude možné úložisko odstrániť.",
