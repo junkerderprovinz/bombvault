@@ -831,9 +831,6 @@ const lt: Partial<Translations> = {
   "own.address": "Adresas",
   "own.addressHint": "Pavyzdžiui, s3:host/bucket/aplankas arba rest:http://host:8000/repo. BombVault sukuria po aplanką kiekvienai skilčiai.",
   "own.signInHint": "Pasirenkamas iš tavo išsaugotų prisijungimų. Nuotoliniam adresui jo reikia.",
-  "own.safety": "Saugos nustatymai",
-  "own.safetyHint": "Pralaidumo ribos, tik pridėjimas ir augimo signalas ranka įvestam adresui.",
-  "own.open": "Atidaryti",
   "own.what": "Kas įvyks",
   "own.pick": "Pasirink, kur keliauja savas aplankas.",
   "own.lineSame": "{section} jau laiko savo atsargines kopijas vietoje {name}.",
@@ -845,6 +842,8 @@ const lt: Partial<Translations> = {
   "own.lineStay": "one={n} atsarginė kopija lieka vietoje {from}.|few={n} atsarginės kopijos lieka vietoje {from}.|many={n} atsarginės kopijos lieka vietoje {from}.|other={n} atsarginių kopijų lieka vietoje {from}.",
   "own.lineCopies": "Kopijos toliau keliauja į {list}.",
   "own.lineProtection": "Apsauga, pralaidumo ribos ir augimo signalas ateina iš {name}.",
+  "own.lineKeepWider": "Ta kopija kai kurias atsargines kopijas laiko ilgiau nei {section} saugojimo taisyklės. Nuo perjungimo {section} laiko viską, ką laiko bet kuri iš jų, todėl nė viena iš tų atsarginių kopijų nedingsta.",
+  "own.lineSwitchOn": "Savas aplankas išjungtas, todėl atsarginės kopijos keliauja tiesiai į tą kopiją. Perjungimas savą aplanką vėl įjungia.",
   "own.copyOver": "Kopijuoti jau padarytas atsargines kopijas",
   "own.copyOverHint": "Išjungta: jos lieka ten, kur yra, ir nekopijuojamos.",
   "own.blocked": "Savo aplanko taip perkelti negalima.",
@@ -3157,6 +3156,8 @@ const lt: Partial<Translations> = {
   "placementCode.moveDirectRepo": "Įrašai kuria atsargines kopijas tiesiai šioje vietoje, be kopijos pradinėje vietoje, todėl srities perkelti negalima. Pirmiausia perjunk tuos įrašus į parinktį Vietinis.",
   "placementCode.moveSignIn": "Į abi vietas prisijungiama tuo pačiu būdu, bet skirtingais prisijungimo duomenimis, o viena kopija gali naudoti tik vienus iš jų. Pirmiausia perkelk sritį į šio serverio aplanką, o iš ten į naują vietą.",
   "placementCode.moveRunning": "Ši sritis jau perkeliama. Gali tai sekti skiltyje Apžvalga.",
+  "placementCode.ownFolderUnreadable": "Senojo savo aplanko atsarginių kopijų nepavyko perskaityti, todėl jų negalima nukopijuoti. Patikrink, ar diskas prijungtas arba ar vieta atsako, ir bandyk dar kartą.",
+  "placementCode.ownFolderThere": "Čia yra vienos srities savas aplankas. Pirmiausia perkelk jį kitur šio puslapio skiltyje Savi aplankai. Tada saugyklos vietą bus galima pašalinti.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} tiesiogiai dabar saugo mažiau. Įrašai, kurių vienintelė kopija yra ten: {n}.",

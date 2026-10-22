@@ -709,9 +709,6 @@ const pl: Partial<Translations> = {
   "own.address": "Adres",
   "own.addressHint": "Na przykład s3:host/bucket/folder lub rest:http://host:8000/repo. BombVault dodaje jeden folder na sekcję.",
   "own.signInHint": "Wybierane z twoich zapisanych danych logowania. Adres zdalny ich potrzebuje.",
-  "own.safety": "Ustawienia bezpieczeństwa",
-  "own.safetyHint": "Limity przepustowości, tylko dopisywanie i alarm wzrostu dla adresu wpisanego ręcznie.",
-  "own.open": "Otwórz",
   "own.what": "Co się stanie",
   "own.pick": "Wybierz, dokąd trafi własny folder.",
   "own.lineSame": "{section} trzyma już swoje kopie zapasowe w {name}.",
@@ -723,6 +720,8 @@ const pl: Partial<Translations> = {
   "own.lineStay": "one=Kopia zapasowa w {from} tam zostaje.|few={n} kopie zapasowe w {from} tam zostają.|many={n} kopii zapasowych w {from} tam zostaje.|other={n} kopii zapasowej w {from} tam zostaje.",
   "own.lineCopies": "Kopie nadal trafiają do {list}.",
   "own.lineProtection": "Ochrona, limity przepustowości i alarm wzrostu pochodzą z {name}.",
+  "own.lineKeepWider": "Ta kopia przechowuje niektóre kopie zapasowe dłużej niż reguły przechowywania sekcji {section}. Od przełączenia {section} zachowuje wszystko, co zachowuje którakolwiek z nich, więc żadna z tych kopii nie przepada.",
+  "own.lineSwitchOn": "Własny folder jest wyłączony, więc kopie zapasowe trafiają prosto do tej kopii. Przełączenie z powrotem włącza własny folder.",
   "own.copyOver": "Skopiuj już wykonane kopie zapasowe",
   "own.copyOverHint": "Wyłączone: zostają tam, gdzie są, i nie są kopiowane.",
   "own.blocked": "Własnego folderu nie da się tak przenieść.",
@@ -3144,6 +3143,8 @@ const pl: Partial<Translations> = {
   "placementCode.moveDirectRepo": "Wpisy tworzą kopie bezpośrednio w tym miejscu, bez kopii w miejscu macierzystym, więc sekcji nie można przenieść. Najpierw przełącz te wpisy na Lokalne.",
   "placementCode.moveSignIn": "Oba miejsca logują się w ten sam sposób, ale innymi danymi logowania, a jedna kopia może użyć tylko jednych z nich. Najpierw przenieś sekcję do folderu na tym serwerze, a stamtąd w nowe miejsce.",
   "placementCode.moveRunning": "Ta sekcja jest już przenoszona. Możesz to śledzić w Przeglądzie.",
+  "placementCode.ownFolderUnreadable": "Nie udało się odczytać kopii zapasowych ze starego własnego folderu, więc nie da się ich skopiować. Sprawdź, czy dysk jest zamontowany albo czy miejsce odpowiada, i spróbuj ponownie.",
+  "placementCode.ownFolderThere": "Tu leży własny folder jednej z sekcji. Najpierw przenieś go gdzie indziej w części Własne foldery na tej stronie. Potem miejsce przechowywania da się usunąć.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} bezpośrednio przechowuje teraz mniej. Elementy, których jedyna kopia tam jest: {n}.",

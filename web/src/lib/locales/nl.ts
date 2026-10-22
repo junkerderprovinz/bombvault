@@ -711,9 +711,6 @@ const nl: Partial<Translations> = {
   "own.address": "Adres",
   "own.addressHint": "Bijvoorbeeld s3:host/bucket/map of rest:http://host:8000/repo. BombVault maakt per onderdeel een map aan.",
   "own.signInHint": "Gekozen uit je opgeslagen inloggegevens. Een extern adres heeft ze nodig.",
-  "own.safety": "Veiligheidsinstellingen",
-  "own.safetyHint": "Bandbreedtelimieten, alleen-toevoegen en het groeialarm voor een met de hand getypt adres.",
-  "own.open": "Openen",
   "own.what": "Wat er gebeurt",
   "own.pick": "Kies waar de eigen map heen gaat.",
   "own.lineSame": "{section} bewaart zijn eigen back-ups al in {name}.",
@@ -725,6 +722,8 @@ const nl: Partial<Translations> = {
   "own.lineStay": "one=De back-up in {from} blijft daar.|other=De {n} back-ups in {from} blijven daar.",
   "own.lineCopies": "Kopieën blijven naar {list} gaan.",
   "own.lineProtection": "Bescherming, bandbreedtelimieten en het groeialarm komen van {name}.",
+  "own.lineKeepWider": "Die kopie bewaart sommige back-ups langer dan de bewaarregels van {section}. Vanaf de wissel bewaart {section} alles wat een van beide bewaart, dus geen van die back-ups gaat verloren.",
+  "own.lineSwitchOn": "De eigen map staat uit, dus de back-ups gaan rechtstreeks naar die kopie. De wissel zet de eigen map weer aan.",
   "own.copyOver": "Al gemaakte back-ups meekopiëren",
   "own.copyOverHint": "Uit: ze blijven waar ze zijn en worden niet gekopieerd.",
   "own.blocked": "De eigen map kan zo niet verhuizen.",
@@ -3146,6 +3145,8 @@ const nl: Partial<Translations> = {
   "placementCode.moveDirectRepo": "Items maken rechtstreeks naar deze plek een back-up, zonder kopie thuis, dus het onderdeel kan niet worden verplaatst. Zet die items eerst op Lokaal.",
   "placementCode.moveSignIn": "Beide plekken loggen op dezelfde manier in maar met andere inloggegevens, en één kopie kan er maar één gebruiken. Verplaats het onderdeel eerst naar een map op deze server en vandaar naar de nieuwe plek.",
   "placementCode.moveRunning": "Dit onderdeel wordt al verplaatst. Je kunt het volgen op het Overzicht.",
+  "placementCode.ownFolderUnreadable": "De back-ups in de oude eigen map konden niet worden gelezen, dus ze kunnen niet worden gekopieerd. Controleer of de schijf gekoppeld is of de plek antwoordt en probeer het opnieuw.",
+  "placementCode.ownFolderThere": "Hier staat de eigen map van een onderdeel. Verplaats die eerst naar een andere plek, onder Eigen mappen op deze pagina. Daarna kan de opslaglocatie weg.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} direct bewaart nu minder. Items waarvan de enige kopie daar staat: {n}.",

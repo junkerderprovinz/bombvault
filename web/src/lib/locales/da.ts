@@ -715,9 +715,6 @@ const da: Partial<Translations> = {
   "own.address": "Adresse",
   "own.addressHint": "For eksempel s3:vært/bucket/mappe eller rest:http://vært:8000/repo. BombVault opretter en mappe pr. sektion.",
   "own.signInHint": "Valgt blandt dine gemte adgangsoplysninger. En fjernadresse kræver dem.",
-  "own.safety": "Sikkerhedsindstillinger",
-  "own.safetyHint": "Båndbreddegrænser, kun tilføjelse og vækstalarmen for en adresse skrevet i hånden.",
-  "own.open": "Åbn",
   "own.what": "Hvad der sker",
   "own.pick": "Vælg, hvor den egne mappe skal hen.",
   "own.lineSame": "{section} har allerede sine egne sikkerhedskopier i {name}.",
@@ -729,6 +726,8 @@ const da: Partial<Translations> = {
   "own.lineStay": "one=Sikkerhedskopien i {from} bliver der.|other=De {n} sikkerhedskopier i {from} bliver der.",
   "own.lineCopies": "Kopier går fortsat til {list}.",
   "own.lineProtection": "Beskyttelse, båndbreddegrænser og vækstalarm kommer fra {name}.",
+  "own.lineKeepWider": "Den kopi gemmer nogle sikkerhedskopier længere end opbevaringsreglerne for {section}. Fra skiftet gemmer {section} alt, hvad en af dem gemmer, så ingen af de sikkerhedskopier går tabt.",
+  "own.lineSwitchOn": "Den egne mappe er slået fra, så sikkerhedskopierne går direkte til den kopi. Skiftet slår den egne mappe til igen.",
   "own.copyOver": "Kopiér de allerede lavede sikkerhedskopier",
   "own.copyOverHint": "Fra: de bliver, hvor de er, og kopieres ikke.",
   "own.blocked": "Den egne mappe kan ikke flyttes sådan.",
@@ -3147,6 +3146,8 @@ const da: Partial<Translations> = {
   "placementCode.moveDirectRepo": "Elementer sikrer direkte til dette sted uden en kopi på hjemstedet, så området kan ikke flytte. Skift først de elementer til Lokal.",
   "placementCode.moveSignIn": "De to steder logger ind på samme måde, men med forskellige legitimationsoplysninger, og én kopi kan kun bruge den ene. Flyt først området til en mappe på denne server og derfra til det nye sted.",
   "placementCode.moveRunning": "Dette område flyttes allerede. Du kan følge det i Oversigt.",
+  "placementCode.ownFolderUnreadable": "Sikkerhedskopierne i den gamle egne mappe kunne ikke læses, så de kan ikke kopieres. Tjek, at disken er monteret, eller at stedet svarer, og prøv igen.",
+  "placementCode.ownFolderThere": "Her ligger et områdes egen mappe. Flyt den først et andet sted hen under Egne mapper på denne side. Derefter kan lagerstedet fjernes.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} direkte bevarer nu mindre. Elementer hvis eneste kopi ligger der: {n}.",

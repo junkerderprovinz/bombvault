@@ -213,25 +213,37 @@ func TestOptionsOfferTheDomainPathThenMountedRepositories(t *testing.T) {
 	}
 }
 
-func TestATargetWithOtherCredentialsThanARemoteDomainPathSaysSo(t *testing.T) {
+func TestOnlyATargetACopyCannotSignInBesideARemoteDomainPathSaysSo(t *testing.T) {
 	f := newPlacementFixture(t)
+	if err := f.svc.SetCloudCredSets([]CloudCredSet{
+		{ID: "set-a", Name: "A", Default: true, CloudCreds: CloudCreds{S3KeyID: "A", S3Secret: "a"}},
+		{ID: "set-b", Name: "B", CloudCreds: CloudCreds{S3KeyID: "B", S3Secret: "b"}},
+	}); err != nil {
+		t.Fatal(err)
+	}
 	settings, err := f.st.GetSettings()
 	if err != nil {
 		t.Fatal(err)
 	}
-	settings.ContainersPath = "s3:https://s3.example.com/containers"
+	// No bucket, so the copy cannot read it through an rclone remote of its own.
+	settings.ContainersPath = "s3:https://s3.example.com"
 	if err := f.st.UpdateSettings(settings); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := f.st.UpsertPrimaryRemoteTarget("containers", store.OffsiteTarget{Repo: settings.ContainersPath, CredsRef: "set-a", Enabled: true}); err != nil {
 		t.Fatal(err)
 	}
-	same := f.target("containers", "Same", "b2:bucket:same")
+	same := f.target("containers", "Same", "s3:https://other.example.com/same")
 	same.CredsRef = "set-a"
 	if _, err := f.st.UpsertOffsiteTarget(same); err != nil {
 		t.Fatal(err)
 	}
-	f.target("containers", "Other", "b2:bucket:other")
+	other := f.target("containers", "Other", "s3:https://other.example.com/other")
+	other.CredsRef = "set-b"
+	if _, err := f.st.UpsertOffsiteTarget(other); err != nil {
+		t.Fatal(err)
+	}
+	f.target("containers", "Elsewhere", "b2:bucket:elsewhere")
 
 	opts := f.options("containers")
 	if home := rowsOf(opts["homes"])[0]; home["kind"] != "domain-remote" || home["scheme"] != "s3" {
@@ -241,7 +253,7 @@ func TestATargetWithOtherCredentialsThanARemoteDomainPathSaysSo(t *testing.T) {
 	for _, tg := range rowsOf(opts["targets"]) {
 		hints[tg["name"].(string)] = tg["hint"]
 	}
-	if !reflect.DeepEqual(hints, map[string]any{"Same": "", "Other": "creds-differ"}) {
+	if !reflect.DeepEqual(hints, map[string]any{"Same": "", "Other": "creds-differ", "Elsewhere": ""}) {
 		t.Errorf("hints = %v", hints)
 	}
 }

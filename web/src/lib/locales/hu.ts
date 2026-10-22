@@ -715,9 +715,6 @@ const hu: Partial<Translations> = {
   "own.address": "Cím",
   "own.addressHint": "Például s3:gép/bucket/mappa vagy rest:http://gép:8000/repo. A BombVault szakaszonként egy mappát hoz létre.",
   "own.signInHint": "A mentett bejelentkezéseid közül választva. Egy távoli címhez kell egy.",
-  "own.safety": "Biztonsági beállítások",
-  "own.safetyHint": "Sávszélesség-korlátok, csak hozzáfűzés és a növekedési riasztás egy kézzel beírt címhez.",
-  "own.open": "Megnyitás",
   "own.what": "Mi történik",
   "own.pick": "Válaszd ki, hová kerül a saját mappa.",
   "own.lineSame": "{section} már itt tartja a saját mentéseit: {name}.",
@@ -729,6 +726,8 @@ const hu: Partial<Translations> = {
   "own.lineStay": "one=A mentés ott marad: {from}.|other=A {n} mentés ott marad: {from}.",
   "own.lineCopies": "A másolatok továbbra is ide mennek: {list}.",
   "own.lineProtection": "A védelem, a sávszélesség-korlátok és a növekedési riasztás innen jönnek: {name}.",
+  "own.lineKeepWider": "Ez a másolat egyes mentéseket tovább őriz meg, mint {section} megőrzési szabályai. A váltástól kezdve {section} mindent megtart, amit bármelyik szabály megtart, így egyik ilyen mentés sem vész el.",
+  "own.lineSwitchOn": "A saját mappa ki van kapcsolva, ezért a mentések egyenesen ebbe a másolatba kerülnek. A váltás újra bekapcsolja a saját mappát.",
   "own.copyOver": "A már elkészült mentések másolása",
   "own.copyOverHint": "Ki: ott maradnak, ahol vannak, és nem másolódnak.",
   "own.blocked": "A saját mappa így nem költöztethető.",
@@ -3148,6 +3147,8 @@ const hu: Partial<Translations> = {
   "placementCode.moveDirectRepo": "Az elemek közvetlenül ide mentenek, otthoni másolat nélkül, ezért a szakasz nem költöztethető. Előbb állítsd át ezeket az elemeket Helyi értékre.",
   "placementCode.moveSignIn": "Mindkét helyre ugyanúgy lehet bejelentkezni, de más hitelesítő adatokkal, és egy másolat csak az egyiket használhatja. Előbb költöztesd a szakaszt a szerver egy mappájába, onnan pedig az új helyre.",
   "placementCode.moveRunning": "Ez a szakasz már költözik. Az Áttekintés oldalon követheted.",
+  "placementCode.ownFolderUnreadable": "A régi saját mappában lévő mentéseket nem sikerült beolvasni, ezért nem másolhatók. Nézd meg, hogy a lemez csatolva van-e, vagy a hely válaszol-e, aztán próbáld újra.",
+  "placementCode.ownFolderThere": "Itt van egy szakasz saját mappája. Előbb költöztesd máshová az oldal Saját mappák részében. Utána a tárolási hely eltávolítható.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} közvetlenül most kevesebbet őriz meg. Elemek, amelyeknek egyetlen másolata ott van: {n}.",

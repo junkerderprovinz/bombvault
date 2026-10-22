@@ -1,7 +1,9 @@
 import { useState } from "react";
 import type { OffsiteDomain, StorageLocation } from "../../lib/api";
 import { useT } from "../../lib/i18n";
+import { useProgress } from "../../lib/progress";
 import { DOMAIN_LABEL } from "../../lib/storageLocations";
+import { moveText, sectionMoveRun } from "../../lib/storageRuns";
 import { useStorageLocations } from "../../lib/useStorageLocations";
 import { Card } from "../../pages/settings/shared";
 import { Button } from "../Button";
@@ -18,10 +20,12 @@ export function ownFolderSections(location: StorageLocation) {
 
 /**
  * OwnFoldersCard lists the sections that write their backups to a storage
- * location first, and makes it the own folder of more of them.
+ * location first, and makes it the own folder of more of them. A section whose
+ * backups are being copied to its next own folder says so.
  */
 export function OwnFoldersCard({ location, hueIndex }: { location: StorageLocation; hueIndex: number }) {
   const { t } = useT();
+  const progress = useProgress();
   const { locations } = useStorageLocations();
   const [moving, setMoving] = useState<{ domains: OffsiteDomain[]; target?: string } | null>(null);
   const own = ownFolderSections(location);
@@ -53,27 +57,39 @@ export function OwnFoldersCard({ location, hueIndex }: { location: StorageLocati
     >
       {own.length > 0 ? (
         <Rows as="ul">
-          {own.map((section) => (
-            <SettingRow
-              key={section.domain}
-              as="li"
-              label={t(DOMAIN_LABEL[section.domain])}
-              glyph={<DomainGlyph domain={section.domain} />}
-              note={
-                <code dir="ltr" className="break-all text-start font-mono">
-                  {section.where}
-                </code>
-              }
-            >
-              <Button
-                label={t("storage.add.change")}
-                labelKey="storage.add.change"
-                glyph={<IconPencil />}
-                tone="neutral"
-                onClick={() => setMoving({ domains: [section.domain] })}
-              />
-            </SettingRow>
-          ))}
+          {own.map((section) => {
+            const run = sectionMoveRun(progress, section);
+            return (
+              <SettingRow
+                key={section.domain}
+                as="li"
+                label={t(DOMAIN_LABEL[section.domain])}
+                glyph={<DomainGlyph domain={section.domain} />}
+                note={
+                  <>
+                    <code dir="ltr" className="break-all text-start font-mono">
+                      {section.where}
+                    </code>
+                    {run && (
+                      <span className="block text-accentText" role="status">
+                        {moveText(t, run)}
+                      </span>
+                    )}
+                  </>
+                }
+              >
+                {!run && (
+                  <Button
+                    label={t("storage.add.change")}
+                    labelKey="storage.add.change"
+                    glyph={<IconPencil />}
+                    tone="neutral"
+                    onClick={() => setMoving({ domains: [section.domain] })}
+                  />
+                )}
+              </SettingRow>
+            );
+          })}
         </Rows>
       ) : (
         <p className="text-sm text-carbon-textSub">{t("own.cardNone")}</p>

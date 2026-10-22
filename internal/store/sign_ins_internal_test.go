@@ -1,6 +1,7 @@
 package store
 
 import (
+	"errors"
 	"slices"
 	"testing"
 )
@@ -91,12 +92,16 @@ func TestMoveOwnFolderWritesThePathTheRowAndEndsTheCopyThere(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	garage, err := r.SaveDestination(OffsiteTarget{Name: "Garage", Repo: "s3:garage/bv"})
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	err = r.MoveOwnFolder(OwnFolder{
 		Domain:  "containers",
-		Row:     &OffsiteTarget{Repo: "s3:garage/bv/containers", DestinationID: "dest", CredsRef: "set"},
+		Row:     &OffsiteTarget{Repo: "s3:garage/bv/containers", DestinationID: garage.ID, CredsRef: "set"},
 		EndCopy: copyThere.ID,
-	}, func(s *Settings) { s.ContainersPath = "s3:garage/bv/containers" })
+	}, func(s *Settings) error { s.ContainersPath = "s3:garage/bv/containers"; return nil })
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -106,17 +111,68 @@ func TestMoveOwnFolderWritesThePathTheRowAndEndsTheCopyThere(t *testing.T) {
 		t.Fatalf("path = %q", settings.ContainersPath)
 	}
 	row, ok, err := r.PrimaryRemoteTarget("containers")
-	if err != nil || !ok || row.DestinationID != "dest" || row.CredsRef != "set" || row.Immutable || !row.Enabled {
+	if err != nil || !ok || row.DestinationID != garage.ID || row.CredsRef != "set" || row.Immutable || !row.Enabled {
 		t.Fatalf("row = %+v found=%v (%v), want the new one alone", row, ok, err)
 	}
 	if _, ok, _ := r.GetOffsiteTarget(copyThere.ID); ok {
 		t.Fatal("the copy that became the own folder is still copied to")
 	}
 
-	if err := r.MoveOwnFolder(OwnFolder{Domain: "containers"}, func(s *Settings) { s.ContainersPath = "user/bv/containers" }); err != nil {
+	if err := r.MoveOwnFolder(OwnFolder{Domain: "containers"}, func(s *Settings) error { s.ContainersPath = "user/bv/containers"; return nil }); err != nil {
 		t.Fatal(err)
 	}
 	if _, ok, _ := r.PrimaryRemoteTarget("containers"); ok {
 		t.Fatal("a folder on this host kept a remote-primary row")
+	}
+}
+
+func TestMoveOwnFolderWritesNothingWhenSettleRefuses(t *testing.T) {
+	r := migrated(t)
+	copyThere, err := r.UpsertOffsiteTarget(OffsiteTarget{Domain: "flash", Name: "Garage", Repo: "s3:garage/bv/flash", Enabled: true, SortOrder: 1})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := r.SetLocal("flash", false); err != nil {
+		t.Fatal(err)
+	}
+	refused := errors.New("moved meanwhile")
+
+	err = r.MoveOwnFolder(OwnFolder{Domain: "flash", EndCopy: copyThere.ID, SwitchOn: true}, func(s *Settings) error {
+		s.FlashPath = "s3:garage/bv/flash"
+		return refused
+	})
+	if !errors.Is(err, refused) {
+		t.Fatalf("err = %v, want the refusal", err)
+	}
+	if _, ok, _ := r.GetOffsiteTarget(copyThere.ID); !ok {
+		t.Fatal("the copy ended although the move was refused")
+	}
+	if off, _ := r.LocalOff(); !off["flash"] {
+		t.Fatal("the own folder was switched on although the move was refused")
+	}
+}
+
+func TestMoveOwnFolderRefusesALocationThatIsGone(t *testing.T) {
+	r := migrated(t)
+	err := r.MoveOwnFolder(OwnFolder{Domain: "containers", Row: &OffsiteTarget{Repo: "s3:garage/bv/containers", DestinationID: "gone"}},
+		func(s *Settings) error { s.ContainersPath = "s3:garage/bv/containers"; return nil })
+	if !errors.Is(err, ErrNotDestination) {
+		t.Fatalf("err = %v, want the location reported gone", err)
+	}
+	if settings, _ := r.GetSettings(); settings.ContainersPath == "s3:garage/bv/containers" {
+		t.Fatal("the path points into a storage location that is gone")
+	}
+}
+
+func TestMoveOwnFolderSwitchesTheOwnFolderOnWhenAsked(t *testing.T) {
+	r := migrated(t)
+	if err := r.SetLocal("flash", false); err != nil {
+		t.Fatal(err)
+	}
+	if err := r.MoveOwnFolder(OwnFolder{Domain: "flash", SwitchOn: true}, func(s *Settings) error { s.FlashPath = "s3:garage/bv/flash"; return nil }); err != nil {
+		t.Fatal(err)
+	}
+	if off, _ := r.LocalOff(); off["flash"] {
+		t.Fatal("the own folder is still off")
 	}
 }

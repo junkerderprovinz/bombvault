@@ -11,9 +11,11 @@ import {
   type StorageLocation,
 } from "../../lib/api";
 import { useT, type TranslationKey } from "../../lib/i18n";
+import { formatList } from "../../lib/placement";
 import { placementErrorText } from "../../lib/placementCodes";
 import { placementChanged } from "../../lib/placementEvents";
 import { secretsSentence } from "../../lib/secretsRefusal";
+import { DOMAIN_LABEL } from "../../lib/storageLocations";
 import { useToast } from "../../lib/toast";
 import { credSetsChanged } from "../../lib/useCloudCredSets";
 import { destinationsChanged } from "../../lib/useDestinations";
@@ -181,6 +183,9 @@ export function RemovalWindow({
   const newHome = trimmedFolder(home);
   const sentHome = homes ? newHome : undefined;
   const homeReady = !homes || (newHome !== "" && newHome !== trimmedFolder(location.where));
+  // A section's own folder put into a storage location keeps it until the own
+  // folder moves on, which the location's page does.
+  const ownHere = !homes && removal ? removal.sections.filter((section) => section.use === "home") : [];
 
   async function remove() {
     if (!removal) return;
@@ -234,7 +239,7 @@ export function RemovalWindow({
               glyph={<IconTrash />}
               tone="accent"
               busy={busy}
-              disabled={busy || !confirmed || !homeReady}
+              disabled={busy || !confirmed || !homeReady || ownHere.length > 0}
               onClick={() => void erase()}
             />
           ) : (
@@ -244,7 +249,7 @@ export function RemovalWindow({
               glyph={<IconTrash />}
               tone="accent"
               busy={busy}
-              disabled={busy || !removal || !homeReady}
+              disabled={busy || !removal || !homeReady || ownHere.length > 0}
               onClick={() => void remove()}
             />
           )}
@@ -261,24 +266,31 @@ export function RemovalWindow({
           inDialog
         />
       )}
-      <div role="radiogroup" aria-label={t("storage.remove.action")} className="flex flex-col gap-3">
-        <Way
-          title={t("storage.remove.keep")}
-          text={t(homes ? "storage.remove.keepHome" : "storage.remove.keepText")}
-          picked={!deleting}
-          onPick={() => pick("keep")}
-        >
-          {removal ? <DetachedList removal={removal} home={newHome} /> : !problem && <p className="text-sm text-carbon-textSub">{t("dashboard.checking")}</p>}
-        </Way>
-        <Way title={t("storage.remove.delete")} text={t("storage.remove.deleteText")} picked={deleting} onPick={() => pick("delete")}>
-          {erasure ? (
-            <ErasureDetails erasure={erasure} name={location.name} typed={typed} onType={setTyped} lastToo={lastToo} onLastToo={setLastToo} />
-          ) : (
-            !problem && <p className="text-sm text-carbon-textSub">{t("storage.remove.reading")}</p>
-          )}
-          {erasure && !erasable(erasure) && <p className="text-xs text-statusWarn">{t("placementCode.nothingToErase")}</p>}
-        </Way>
-      </div>
+      {ownHere.length > 0 ? (
+        <div role="alert" className="flex flex-col gap-1 rounded-card bg-statusWarnBg px-3 py-2 text-sm leading-relaxed text-statusWarn wrap-break-word">
+          <p>{t("placementCode.ownFolderThere")}</p>
+          <p className="font-semibold">{formatList(lang, ownHere.map((section) => t(DOMAIN_LABEL[section.domain])))}</p>
+        </div>
+      ) : (
+        <div role="radiogroup" aria-label={t("storage.remove.action")} className="flex flex-col gap-3">
+          <Way
+            title={t("storage.remove.keep")}
+            text={t(homes ? "storage.remove.keepHome" : "storage.remove.keepText")}
+            picked={!deleting}
+            onPick={() => pick("keep")}
+          >
+            {removal ? <DetachedList removal={removal} home={newHome} /> : !problem && <p className="text-sm text-carbon-textSub">{t("dashboard.checking")}</p>}
+          </Way>
+          <Way title={t("storage.remove.delete")} text={t("storage.remove.deleteText")} picked={deleting} onPick={() => pick("delete")}>
+            {erasure ? (
+              <ErasureDetails erasure={erasure} name={location.name} typed={typed} onType={setTyped} lastToo={lastToo} onLastToo={setLastToo} />
+            ) : (
+              !problem && <p className="text-sm text-carbon-textSub">{t("storage.remove.reading")}</p>
+            )}
+            {erasure && !erasable(erasure) && <p className="text-xs text-statusWarn">{t("placementCode.nothingToErase")}</p>}
+          </Way>
+        </div>
+      )}
       {problem && <p className="text-xs text-statusWarn wrap-break-word">{problem}</p>}
     </InstanceWindow>
   );

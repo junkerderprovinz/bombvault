@@ -831,9 +831,6 @@ const ca: Partial<Translations> = {
   "own.address": "Adreça",
   "own.addressHint": "Per exemple s3:host/bucket/carpeta o rest:http://host:8000/repo. BombVault afegeix una carpeta per secció.",
   "own.signInHint": "Triades de les teves credencials desades. Una adreça remota en necessita.",
-  "own.safety": "Configuració de seguretat",
-  "own.safetyHint": "Límits d'amplada de banda, només afegir i l'alarma de creixement per a una adreça escrita a mà.",
-  "own.open": "Obre",
   "own.what": "Què passa",
   "own.pick": "Tria on va la carpeta pròpia.",
   "own.lineSame": "{section} ja desa les seves còpies de seguretat a {name}.",
@@ -845,6 +842,8 @@ const ca: Partial<Translations> = {
   "own.lineStay": "one=La còpia de seguretat de {from} s'hi queda.|other=Les {n} còpies de seguretat de {from} s'hi queden.",
   "own.lineCopies": "Les còpies continuen anant a {list}.",
   "own.lineProtection": "La protecció, els límits d'amplada de banda i l'alarma de creixement venen de {name}.",
+  "own.lineKeepWider": "Aquesta còpia conserva algunes còpies de seguretat més temps que les regles de retenció de {section}. A partir del canvi, {section} conserva tot el que conservi qualsevol de les dues, així que no es perd cap d'aquestes còpies.",
+  "own.lineSwitchOn": "La carpeta pròpia està desactivada, així que les còpies de seguretat van directament a aquesta còpia. El canvi torna a activar la carpeta pròpia.",
   "own.copyOver": "Copia les còpies de seguretat ja fetes",
   "own.copyOverHint": "Desactivat: es queden on són i no es copien.",
   "own.blocked": "La carpeta pròpia no es pot moure així.",
@@ -3157,6 +3156,8 @@ const ca: Partial<Translations> = {
   "placementCode.moveDirectRepo": "Hi ha elements que fan còpia directament en aquest lloc, sense còpia a casa, i per això la secció no es pot moure. Passa primer aquests elements a Local.",
   "placementCode.moveSignIn": "Els dos llocs inicien sessió de la mateixa manera, però amb credencials diferents, i una còpia només en pot fer servir una. Mou primer la secció a una carpeta d'aquest servidor, i des d'allà al lloc nou.",
   "placementCode.moveRunning": "Aquesta secció ja s'està movent. Pots seguir-ho al Resum.",
+  "placementCode.ownFolderUnreadable": "No s'han pogut llegir les còpies de seguretat de la carpeta pròpia antiga, així que no es poden copiar. Comprova que el disc estigui muntat o que el lloc respongui i torna-ho a provar.",
+  "placementCode.ownFolderThere": "Aquí hi ha la carpeta pròpia d'una secció. Primer mou-la a un altre lloc, a Carpetes pròpies en aquesta pàgina. Després es pot eliminar la ubicació d'emmagatzematge.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} directe ara conserva menys. Elements l'única còpia dels quals hi és: {n}.",

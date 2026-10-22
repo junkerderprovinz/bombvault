@@ -831,9 +831,6 @@ const sk: Partial<Translations> = {
   "own.address": "Adresa",
   "own.addressHint": "Napríklad s3:host/bucket/priečinok alebo rest:http://host:8000/repo. BombVault pridá jeden priečinok na sekciu.",
   "own.signInHint": "Vyberá sa z tvojich uložených prihlasovacích údajov. Vzdialená adresa ich potrebuje.",
-  "own.safety": "Bezpečnostné nastavenia",
-  "own.safetyHint": "Limity šírky pásma, iba pridávanie a alarm rastu pre ručne zadanú adresu.",
-  "own.open": "Otvoriť",
   "own.what": "Čo sa stane",
   "own.pick": "Vyber, kam pôjde vlastný priečinok.",
   "own.lineSame": "{section} už má svoje zálohy v {name}.",
@@ -845,6 +842,8 @@ const sk: Partial<Translations> = {
   "own.lineStay": "one=Záloha v {from} tam zostane.|few={n} zálohy v {from} tam zostanú.|many={n} zálohy v {from} tam zostane.|other={n} záloh v {from} tam zostane.",
   "own.lineCopies": "Kópie ďalej idú do {list}.",
   "own.lineProtection": "Ochrana, limity šírky pásma a alarm rastu pochádzajú z {name}.",
+  "own.lineKeepWider": "Táto kópia uchováva niektoré zálohy dlhšie ako pravidlá uchovávania sekcie {section}. Po prepnutí si {section} ponechá všetko, čo ponechá ktorékoľvek z nich, takže žiadna z týchto záloh sa nestratí.",
+  "own.lineSwitchOn": "Vlastný priečinok je vypnutý, takže zálohy idú priamo do tejto kópie. Prepnutie vlastný priečinok znova zapne.",
   "own.copyOver": "Skopírovať už vytvorené zálohy",
   "own.copyOverHint": "Vypnuté: zostanú, kde sú, a neskopírujú sa.",
   "own.blocked": "Vlastný priečinok sa takto presunúť nedá.",
@@ -3157,6 +3156,8 @@ const sk: Partial<Translations> = {
   "placementCode.moveDirectRepo": "Položky sa zálohujú priamo sem, bez kópie doma, takže sa sekcia presunúť nedá. Najprv prepni tieto položky na Lokálny.",
   "placementCode.moveSignIn": "Obe miesta sa prihlasujú rovnakým spôsobom, ale s inými prihlasovacími údajmi, a jedna kópia môže použiť len jedny z nich. Najprv presuň sekciu do priečinka na tomto serveri a odtiaľ na nové miesto.",
   "placementCode.moveRunning": "Táto sekcia sa už presúva. Môžeš to sledovať v Prehľade.",
+  "placementCode.ownFolderUnreadable": "Zálohy v starom vlastnom priečinku sa nepodarilo prečítať, takže ich nemožno skopírovať. Skontroluj, či je disk pripojený alebo či miesto odpovedá, a skús to znova.",
+  "placementCode.ownFolderThere": "Tu leží vlastný priečinok jednej sekcie. Najprv ho presuň inam v časti Vlastné priečinky na tejto stránke. Potom bude možné úložisko odstrániť.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} priamo teraz uchováva menej. Položky, ktorých jediná kópia je tam: {n}.",

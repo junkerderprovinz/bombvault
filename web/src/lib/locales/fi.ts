@@ -715,9 +715,6 @@ const fi: Partial<Translations> = {
   "own.address": "Osoite",
   "own.addressHint": "Esimerkiksi s3:isäntä/bucket/kansio tai rest:http://isäntä:8000/repo. BombVault luo yhden kansion osiota kohden.",
   "own.signInHint": "Valitaan tallennetuista tunnuksistasi. Etäosoite tarvitsee ne.",
-  "own.safety": "Turva-asetukset",
-  "own.safetyHint": "Kaistarajat, pelkkä lisäys ja kasvuhälytys käsin kirjoitetulle osoitteelle.",
-  "own.open": "Avaa",
   "own.what": "Mitä tapahtuu",
   "own.pick": "Valitse, minne oma kansio menee.",
   "own.lineSame": "{section} pitää jo omat varmuuskopionsa kohteessa {name}.",
@@ -729,6 +726,8 @@ const fi: Partial<Translations> = {
   "own.lineStay": "one=Varmuuskopio jää kohteeseen {from}.|other={n} varmuuskopiota jää kohteeseen {from}.",
   "own.lineCopies": "Kopiot menevät edelleen kohteisiin {list}.",
   "own.lineProtection": "Suojaus, kaistarajat ja kasvuhälytys tulevat kohteesta {name}.",
+  "own.lineKeepWider": "Se kopio säilyttää joitakin varmuuskopioita pidempään kuin osion {section} säilytyssäännöt. Vaihdosta alkaen {section} säilyttää kaiken, minkä jompikumpi säännöistä säilyttää, joten yksikään niistä varmuuskopioista ei katoa.",
+  "own.lineSwitchOn": "Oma kansio on pois päältä, joten varmuuskopiot menevät suoraan siihen kopioon. Vaihto kytkee oman kansion takaisin päälle.",
   "own.copyOver": "Kopioi jo tehdyt varmuuskopiot",
   "own.copyOverHint": "Pois: ne jäävät paikalleen eikä niitä kopioida.",
   "own.blocked": "Omaa kansiota ei voi siirtää näin.",
@@ -3147,6 +3146,8 @@ const fi: Partial<Translations> = {
   "placementCode.moveDirectRepo": "Merkinnät varmuuskopioivat suoraan tähän paikkaan ilman kopiota kotipaikassa, joten osiota ei voi siirtää. Vaihda ensin nämä merkinnät asetukseen Paikallinen.",
   "placementCode.moveSignIn": "Molempiin paikkoihin kirjaudutaan samalla tavalla mutta eri tunnuksilla, ja yksi kopio voi käyttää vain toisia niistä. Siirrä osio ensin tämän palvelimen kansioon ja sieltä uuteen paikkaan.",
   "placementCode.moveRunning": "Tätä osiota siirretään jo. Voit seurata sitä kohdassa Yleiskatsaus.",
+  "placementCode.ownFolderUnreadable": "Vanhan oman kansion varmuuskopioita ei voitu lukea, joten niitä ei voi kopioida. Tarkista, että levy on liitetty tai kohde vastaa, ja yritä uudelleen.",
+  "placementCode.ownFolderThere": "Täällä on erään osion oma kansio. Siirrä se ensin muualle tämän sivun kohdassa Omat kansiot. Sen jälkeen tallennuspaikan voi poistaa.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} suoraan säilyttää nyt vähemmän. Merkinnät, joiden ainoa kopio on siellä: {n}.",

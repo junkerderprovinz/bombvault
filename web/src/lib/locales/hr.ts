@@ -831,9 +831,6 @@ const hr: Partial<Translations> = {
   "own.address": "Adresa",
   "own.addressHint": "Na primjer s3:host/bucket/mapa ili rest:http://host:8000/repo. BombVault dodaje jednu mapu po odjeljku.",
   "own.signInHint": "Odabrane iz vaših spremljenih vjerodajnica. Udaljenoj adresi trebaju.",
-  "own.safety": "Sigurnosne postavke",
-  "own.safetyHint": "Ograničenja propusnosti, samo dodavanje i alarm rasta za ručno upisanu adresu.",
-  "own.open": "Otvori",
   "own.what": "Što se događa",
   "own.pick": "Odaberite kamo ide vlastita mapa.",
   "own.lineSame": "{section} već drži svoje sigurnosne kopije u {name}.",
@@ -845,6 +842,8 @@ const hr: Partial<Translations> = {
   "own.lineStay": "one=Sigurnosna kopija u {from} ostaje ondje.|few={n} sigurnosne kopije u {from} ostaju ondje.|other={n} sigurnosnih kopija u {from} ostaje ondje.",
   "own.lineCopies": "Kopije i dalje idu u {list}.",
   "own.lineProtection": "Zaštita, ograničenja propusnosti i alarm rasta dolaze iz {name}.",
+  "own.lineKeepWider": "Ta kopija neke sigurnosne kopije čuva dulje od pravila zadržavanja odjeljka {section}. Od zamjene {section} čuva sve što čuva bilo koje od tih pravila, pa se nijedna od tih kopija ne gubi.",
+  "own.lineSwitchOn": "Vlastita mapa je isključena, pa sigurnosne kopije idu izravno u tu kopiju. Zamjena ponovno uključuje vlastitu mapu.",
   "own.copyOver": "Kopiraj već napravljene sigurnosne kopije",
   "own.copyOverHint": "Isključeno: ostaju gdje jesu i ne kopiraju se.",
   "own.blocked": "Vlastita mapa ne može se ovako premjestiti.",
@@ -3157,6 +3156,8 @@ const hr: Partial<Translations> = {
   "placementCode.moveDirectRepo": "Stavke izravno sigurnosno kopiraju na ovo mjesto, bez kopije kod kuće, pa se odjeljak ne može premjestiti. Prvo prebacite te stavke na Lokalno.",
   "placementCode.moveSignIn": "Oba se mjesta prijavljuju na isti način, ali s različitim vjerodajnicama, a jedna kopija može upotrijebiti samo jedne od njih. Prvo premjestite odjeljak u mapu na ovom poslužitelju, a odande na novo mjesto.",
   "placementCode.moveRunning": "Ovaj se odjeljak već premješta. Možete to pratiti u Pregledu.",
+  "placementCode.ownFolderUnreadable": "Sigurnosne kopije u staroj vlastitoj mapi nije bilo moguće pročitati, pa se ne mogu kopirati. Provjerite je li disk montiran ili odgovara li mjesto pa pokušajte ponovno.",
+  "placementCode.ownFolderThere": "Ovdje je vlastita mapa jednog odjeljka. Najprije je premjestite drugamo, pod Vlastite mape na ovoj stranici. Nakon toga se mjesto pohrane može ukloniti.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} izravno sada čuva manje. Stavke čija je jedina kopija ondje: {n}.",

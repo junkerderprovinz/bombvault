@@ -96,6 +96,8 @@ var placementCodes = []struct {
 	{errMoveErasing, "erase-running"},
 	{store.ErrTargetHasDirectRepo, "move-direct-repo"},
 	{store.ErrDomainHasDestinationTarget, "move-section-there"},
+	{errOwnFolderUnreadable, "own-folder-unreadable"},
+	{errOwnFolderThere, "own-folder-there"},
 }
 
 // placementCode returns the code the interface translates err by, "" for none.

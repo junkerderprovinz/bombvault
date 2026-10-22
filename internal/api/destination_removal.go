@@ -9,6 +9,11 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
+// errOwnFolderThere refuses to take away a storage location a section's own
+// folder lies in: its backups would go on to a place no page lists, and with
+// the location's rclone remote gone they would fail.
+var errOwnFolderThere = errors.New("a section keeps its own folder at this storage location; move it to another place first")
+
 // locationRemoval is what removing a storage location means for every section
 // that uses it. Nothing at the location is touched: the backups there stay as
 // they are and are no longer written to, listed or aged.
@@ -102,7 +107,40 @@ func (s *Service) destinationRemovalPreview(id string) (store.OffsiteTarget, loc
 		}
 		out.Sections = append(out.Sections, section)
 	}
+	homes, err := s.ownFoldersIn(d)
+	if err != nil {
+		return store.OffsiteTarget{}, locationRemoval{}, err
+	}
+	out.Sections = append(out.Sections, homes...)
 	return d, out, nil
+}
+
+// ownFoldersIn lists the sections whose own folder was put into the
+// destination and lies there still.
+func (s *Service) ownFoldersIn(d store.OffsiteTarget) ([]removalSection, error) {
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return nil, err
+	}
+	var out []removalSection
+	for _, domain := range offsiteConfigDomains {
+		row, ok, err := s.store.PrimaryRemoteTarget(domain)
+		if err != nil {
+			return nil, err
+		}
+		raw := strings.TrimSpace(domainPathRaw(domain, settings))
+		if !ok || row.DestinationID != d.ID || !sameRepoLocation(destinationLocation(d.Repo, domain), raw) {
+			continue
+		}
+		out = append(out, removalSection{Domain: domain, Use: removalHome, Repo: scrubRepoLocation(raw), Folder: folderName(raw), AppendOnly: d.Immutable})
+	}
+	return out, nil
+}
+
+// holdsOwnFolder reports whether a section's own folder lies at the location
+// a removal is about.
+func (r locationRemoval) holdsOwnFolder() bool {
+	return slices.ContainsFunc(r.Sections, func(sec removalSection) bool { return sec.Use == removalHome })
 }
 
 func (s *Service) removalSection(t store.OffsiteTarget) (removalSection, error) {
@@ -149,6 +187,19 @@ func (s *Service) removalSection(t store.OffsiteTarget) (removalSection, error) 
 	return section, nil
 }
 
+// movingAt reports whether a section is moving from or to the location with
+// the id.
+func (s *Service) movingAt(id string) bool {
+	s.cancelMu.Lock()
+	defer s.cancelMu.Unlock()
+	for _, places := range s.moving {
+		if places[0] == id || places[1] == id {
+			return true
+		}
+	}
+	return false
+}
+
 // removalChangedErr is the refusal of a removal whose sections are no longer
 // the ones that were shown. It carries them as they are.
 type removalChangedErr struct{ now locationRemoval }
@@ -167,8 +218,14 @@ func (s *Service) RemoveDestination(id string, expect locationRemoval) (store.Se
 	if err != nil {
 		return store.Settings{}, err
 	}
+	if now.holdsOwnFolder() {
+		return store.Settings{}, errOwnFolderThere
+	}
 	if !now.same(expect) {
 		return store.Settings{}, &removalChangedErr{now: now}
+	}
+	if s.movingAt(id) {
+		return store.Settings{}, errMoveRunning
 	}
 	behind := func(t store.OffsiteTarget, st store.Settings) bool {
 		return t.DestinationID == "" && hiddenTarget(t, st, nil) && (repoUnder(d.Repo, t.Repo) || sameRepoLocation(d.Repo, t.Repo))

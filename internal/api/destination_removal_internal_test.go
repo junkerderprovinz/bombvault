@@ -6,6 +6,8 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"slices"
+	"strings"
 	"testing"
 
 	"github.com/junkerderprovinz/bombvault/internal/store"
@@ -319,5 +321,55 @@ func TestADestinationMayHoldADirectRepositoryButNoOtherOne(t *testing.T) {
 	f.namedRepo("Keep", "rest:https://box:8000/bv/keep")
 	if err := f.svc.destinationClash(box.Repo); !errors.Is(err, errNestedLocation) {
 		t.Fatalf("Box again over a repository of its own = %v, want errNestedLocation", err)
+	}
+}
+
+func TestADestinationThatHoldsAnOwnFolderStaysUntilTheOwnFolderMoves(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.signIn()
+	vault := f.destination("Vault", vaultRepo)
+	if err := f.svc.SetRcloneConf("[vault]\ntype = drive\n"); err != nil {
+		t.Fatal(err)
+	}
+	ownSteps(t, f.do("POST", "/api/storage/own-folders", map[string]any{
+		"domains": []string{"containers"}, "location": "destination:" + vault.ID,
+	}))
+
+	preview := f.removalPreview(vault)
+	want := []removalSection{{Domain: "containers", Use: removalHome, Repo: vaultRepo + "/containers", Folder: "containers"}}
+	if !slices.Equal(preview.Sections, want) {
+		t.Fatalf("sections = %+v, want the own folder of containers", preview.Sections)
+	}
+	if res := f.remove(vault, preview); res["ok"] != false || res["code"] != "own-folder-there" {
+		t.Fatalf("removal = %v, want it refused", res)
+	}
+	if res := f.do("GET", "/api/storage/locations/destination:"+vault.ID+"/erasure", nil); res["ok"] != false || res["code"] != "own-folder-there" {
+		t.Fatalf("erasure preview = %v, want it refused", res)
+	}
+	if _, ok, _ := f.st.GetDestination(vault.ID); !ok {
+		t.Fatal("Vault was removed")
+	}
+	settings, _ := f.st.GetSettings()
+	if conf, _ := f.svc.decodeRcloneConf(settings); !strings.Contains(conf, "[vault]") {
+		t.Fatalf("rclone.conf = %q, want the remote containers backs up through", conf)
+	}
+}
+
+func TestAnRcloneRemoteAnOwnFolderUsesStays(t *testing.T) {
+	f := newPlacementFixture(t)
+	if err := f.svc.SetRcloneConf("[vault]\ntype = drive\n"); err != nil {
+		t.Fatal(err)
+	}
+	settings, _ := f.st.GetSettings()
+	settings.ContainersPath = vaultRepo + "/containers"
+	if err := f.st.UpdateSettings(settings); err != nil {
+		t.Fatal(err)
+	}
+
+	f.svc.removeRcloneRemote("vault")
+
+	settings, _ = f.st.GetSettings()
+	if conf, _ := f.svc.decodeRcloneConf(settings); !strings.Contains(conf, "[vault]") {
+		t.Fatalf("rclone.conf = %q, want the remote kept", conf)
 	}
 }

@@ -710,9 +710,6 @@ const ja: Partial<Translations> = {
   "own.address": "アドレス",
   "own.addressHint": "例: s3:host/bucket/folder や rest:http://host:8000/repo。BombVault はセクションごとにフォルダーを一つ追加します。",
   "own.signInHint": "保存済みの認証情報から選びます。リモートのアドレスには必要です。",
-  "own.safety": "安全設定",
-  "own.safetyHint": "手入力したアドレスの帯域制限、追記のみ、増加アラーム。",
-  "own.open": "開く",
   "own.what": "実行される内容",
   "own.pick": "専用フォルダーの移動先を選んでください。",
   "own.lineSame": "{section} はすでに {name} にバックアップを保存しています。",
@@ -724,6 +721,8 @@ const ja: Partial<Translations> = {
   "own.lineStay": "{from} にある {n} 件のバックアップはそのまま残ります。",
   "own.lineCopies": "コピーは引き続き {list} に送られます。",
   "own.lineProtection": "保護、帯域制限、増加アラームは {name} の設定に従います。",
+  "own.lineKeepWider": "このコピーには、{section} の保持ルールより長く残しているバックアップがあります。切り替え後、{section} はどちらかのルールが残すものをすべて残すので、それらのバックアップは失われません。",
+  "own.lineSwitchOn": "専用フォルダーはオフになっているため、バックアップはそのコピーに直接送られています。切り替えると専用フォルダーが再びオンになります。",
   "own.copyOver": "作成済みのバックアップをコピー",
   "own.copyOverHint": "オフ: 今の場所に残り、コピーされません。",
   "own.blocked": "この設定では専用フォルダーを移動できません。",
@@ -3138,6 +3137,8 @@ const ja: Partial<Translations> = {
   "placementCode.moveDirectRepo": "項目がこの場所へ直接バックアップしており、元の場所にコピーがないため、セクションは移動できません。先にそれらの項目を「ローカル」に切り替えてください。",
   "placementCode.moveSignIn": "2つの場所は同じ方法でサインインしますが、資格情報が異なり、1つのコピーが使えるのはどちらか一方だけです。先にセクションをこのサーバー上のフォルダーへ移し、そこから新しい場所へ移してください。",
   "placementCode.moveRunning": "このセクションはすでに移動中です。「概要」で確認できます。",
+  "placementCode.ownFolderUnreadable": "以前の専用フォルダーのバックアップを読み取れなかったため、コピーできません。ディスクがマウントされているか、その場所が応答するかを確認してから、もう一度お試しください。",
+  "placementCode.ownFolderThere": "ここにはあるセクションの専用フォルダーがあります。まずこのページの「専用フォルダー」から別の場所へ移動してください。その後、この保存場所を削除できます。",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} ダイレクトは今、保持量が減りました。唯一のコピーがそこにある項目: {n}。",

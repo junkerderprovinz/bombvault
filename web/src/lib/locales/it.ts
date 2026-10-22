@@ -715,9 +715,6 @@ const it: Partial<Translations> = {
   "own.address": "Indirizzo",
   "own.addressHint": "Per esempio s3:host/bucket/cartella o rest:http://host:8000/repo. BombVault aggiunge una cartella per sezione.",
   "own.signInHint": "Scelte tra le tue credenziali salvate. Un indirizzo remoto ne ha bisogno.",
-  "own.safety": "Impostazioni di sicurezza",
-  "own.safetyHint": "Limiti di banda, solo aggiunta e l'allarme di crescita per un indirizzo digitato a mano.",
-  "own.open": "Apri",
   "own.what": "Cosa succede",
   "own.pick": "Scegli dove va la cartella propria.",
   "own.lineSame": "{section} tiene già i propri backup in {name}.",
@@ -729,6 +726,8 @@ const it: Partial<Translations> = {
   "own.lineStay": "one=Il backup in {from} resta lì.|other=Gli {n} backup in {from} restano lì.",
   "own.lineCopies": "Le copie continuano verso {list}.",
   "own.lineProtection": "Protezione, limiti di banda e allarme di crescita vengono da {name}.",
+  "own.lineKeepWider": "Quella copia conserva alcuni backup più a lungo delle regole di conservazione di {section}. Dal cambio in poi, {section} conserva tutto ciò che conserva l'una o l'altra regola, quindi nessuno di quei backup va perso.",
+  "own.lineSwitchOn": "La cartella propria è spenta, quindi i backup vanno direttamente a quella copia. Il cambio riaccende la cartella propria.",
   "own.copyOver": "Copia i backup già fatti",
   "own.copyOverHint": "Disattivato: restano dove sono e non vengono copiati.",
   "own.blocked": "La cartella propria non può essere spostata così.",
@@ -3147,6 +3146,8 @@ const it: Partial<Translations> = {
   "placementCode.moveDirectRepo": "Alcuni elementi fanno il backup direttamente in questo posto, senza una copia a casa, quindi la sezione non può essere spostata. Porta prima quegli elementi su Locale.",
   "placementCode.moveSignIn": "In entrambi i posti si accede allo stesso modo ma con credenziali diverse, e una copia può usarne una sola. Sposta prima la sezione in una cartella di questo server e da lì al nuovo posto.",
   "placementCode.moveRunning": "Questa sezione è già in corso di spostamento. Puoi seguirla nella Panoramica.",
+  "placementCode.ownFolderUnreadable": "Non è stato possibile leggere i backup della vecchia cartella propria, quindi non si possono copiare. Controlla che il disco sia montato o che il luogo risponda, poi riprova.",
+  "placementCode.ownFolderThere": "Qui si trova la cartella propria di una sezione. Spostala prima altrove, in Cartelle proprie in questa pagina. Poi la posizione di archiviazione si può rimuovere.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} diretto ora conserva meno. Elementi la cui unica copia è lì: {n}.",

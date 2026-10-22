@@ -831,9 +831,6 @@ const id: Partial<Translations> = {
   "own.address": "Alamat",
   "own.addressHint": "Misalnya s3:host/bucket/folder atau rest:http://host:8000/repo. BombVault menambahkan satu folder per bagian.",
   "own.signInHint": "Dipilih dari login tersimpan Anda. Alamat jarak jauh membutuhkannya.",
-  "own.safety": "Pengaturan keamanan",
-  "own.safetyHint": "Batas bandwidth, hanya-tambah dan alarm pertumbuhan untuk alamat yang diketik manual.",
-  "own.open": "Buka",
   "own.what": "Apa yang terjadi",
   "own.pick": "Pilih ke mana folder sendiri pergi.",
   "own.lineSame": "{section} sudah menyimpan cadangannya sendiri di {name}.",
@@ -845,6 +842,8 @@ const id: Partial<Translations> = {
   "own.lineStay": "{n} cadangan di {from} tetap di sana.",
   "own.lineCopies": "Salinan tetap dikirim ke {list}.",
   "own.lineProtection": "Perlindungan, batas bandwidth, dan alarm pertumbuhan berasal dari {name}.",
+  "own.lineKeepWider": "Salinan itu menyimpan sebagian cadangan lebih lama daripada aturan retensi {section}. Sejak pergantian, {section} menyimpan apa pun yang disimpan salah satu aturan itu, jadi tidak ada cadangan tersebut yang hilang.",
+  "own.lineSwitchOn": "Folder sendiri sedang mati, jadi cadangan langsung masuk ke salinan itu. Pergantian menyalakan lagi folder sendiri.",
   "own.copyOver": "Salin cadangan yang sudah dibuat",
   "own.copyOverHint": "Mati: cadangan tetap di tempatnya dan tidak disalin.",
   "own.blocked": "Folder sendiri tidak bisa dipindahkan seperti ini.",
@@ -3157,6 +3156,8 @@ const id: Partial<Translations> = {
   "placementCode.moveDirectRepo": "Entri mencadangkan langsung ke tempat ini, tanpa salinan di lokasi asal, sehingga bagian tidak bisa dipindahkan. Alihkan dulu entri tersebut ke Lokal.",
   "placementCode.moveSignIn": "Kedua tempat masuk dengan cara yang sama tetapi dengan kredensial berbeda, dan satu salinan hanya bisa memakai salah satunya. Pindahkan dulu bagian ke folder di server ini, lalu dari sana ke tempat baru.",
   "placementCode.moveRunning": "Bagian ini sedang dipindahkan. Anda bisa mengikutinya di Ringkasan.",
+  "placementCode.ownFolderUnreadable": "Cadangan di folder sendiri yang lama tidak bisa dibaca, jadi tidak bisa disalin. Periksa apakah disk sudah dipasang atau tempat itu merespons, lalu coba lagi.",
+  "placementCode.ownFolderThere": "Di sini ada folder sendiri milik sebuah bagian. Pindahkan dulu ke tempat lain di Folder sendiri pada halaman ini. Setelah itu lokasi penyimpanan bisa dihapus.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} langsung sekarang menyimpan lebih sedikit. Entri yang satu-satunya salinannya ada di sana: {n}.",

@@ -3,7 +3,7 @@
 
 import type { Run } from "../../lib/api";
 import { ENTRY_KIND, isEntryKind, type EntryKind } from "../../lib/backupEntry";
-import { EVERYTHING_KEY, MOVE_PREFIX, offsiteRunProgress, type ProgressMap, type ProgressState } from "../../lib/progress";
+import { EVERYTHING_KEY, isSectionMove, OWN_FOLDER_PREFIX, offsiteRunProgress, type ProgressMap, type ProgressState } from "../../lib/progress";
 import type { Tally } from "../../lib/protectionTally";
 import type { Section } from "./protectionChecks";
 
@@ -60,8 +60,8 @@ export interface LiveRun {
   /** The kind of the entry being backed up, null for an off-site copy. */
   kind: EntryKind | null;
   /** The entry's name, "" for a kind with one entry. For an off-site copy
-   *  the domain it copies, "" for the copy that moves a section, whose key
-   *  names its target. */
+   *  and the copy before an own folder moves the domain it copies, "" for the
+   *  copy that moves a section's copy, whose key names its target. */
   name: string;
   percent: number;
   station: Station;
@@ -89,7 +89,7 @@ function liveCopy(key: string, state: ProgressState): LiveRun {
   const overall = offsiteRunProgress(state);
   return {
     kind: null,
-    name: key.startsWith(OFFSITE) ? key.slice(OFFSITE.length) : "",
+    name: key.startsWith(OFFSITE) ? key.slice(OFFSITE.length) : key.startsWith(OWN_FOLDER_PREFIX) ? key.slice(OWN_FOLDER_PREFIX.length) : "",
     percent: overall?.percent ?? state.percent,
     station: "copy",
     stops: false,
@@ -106,7 +106,7 @@ export function liveRunOf(progress: ProgressMap): LiveRun | null {
   const live = Object.entries(progress).filter(([key, state]) => key !== EVERYTHING_KEY && state.active && !state.finished);
   const backup = live.find(([key, state]) => state.phase === "backup" && !key.startsWith(OFFSITE));
   if (backup) return liveBackup(...backup);
-  const copy = live.find(([key, state]) => state.phase === "replicate" && (key.startsWith(OFFSITE) || key.startsWith(MOVE_PREFIX)));
+  const copy = live.find(([key, state]) => state.phase === "replicate" && (key.startsWith(OFFSITE) || isSectionMove(key)));
   return copy ? liveCopy(...copy) : null;
 }
 

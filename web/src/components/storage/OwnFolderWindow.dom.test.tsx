@@ -51,6 +51,10 @@ vi.mock("../../lib/api", async (importOriginal) => ({
   moveOwnFolders: vi.fn(),
 }));
 
+vi.mock("./SectionPathWindow", () => ({
+  SectionPathWindow: ({ domain }: { domain: string }) => <div data-testid="path-window">{domain}</div>,
+}));
+
 const api = await import("../../lib/api");
 const previewOwnFolders = vi.mocked(api.previewOwnFolders);
 const moveOwnFolders = vi.mocked(api.moveOwnFolders);
@@ -153,7 +157,48 @@ it("signs a typed remote address in with a saved sign-in", async () => {
   const signIn = screen.getByRole("combobox", { name: "Sign-in" });
   expect(signIn.textContent).toContain("NAS (default)");
   expect(previewOwnFolders).toHaveBeenLastCalledWith({ domains: ["vms"], copyOver: true, address: "rest:http://nas:8000/bv", credsRef: "nas" });
-  expect(within(screen.getByRole("dialog")).getByRole("button", { name: "Open" })).toBeTruthy();
+});
+
+it("opens the safety settings of a typed address once the section points there", async () => {
+  const moved: OwnFolderStep = { ...STEP, domain: "vms", to: "rest:http://nas:8000/bv/vms", copyAt: undefined, copies: [], pending: 0 };
+  previewOwnFolders.mockResolvedValue({ ok: true, steps: [moved] });
+  moveOwnFolders.mockResolvedValue({ ok: true, steps: [moved] });
+  await open(["vms"]);
+  await act(async () => {
+    fireEvent.click(screen.getByRole("radio", { name: "Another place" }));
+  });
+  fireEvent.change(screen.getByLabelText("Address"), { target: { value: "rest:http://nas:8000/bv" } });
+  await settle();
+  expect(within(screen.getByRole("dialog")).queryByRole("button", { name: "Open" })).toBeNull();
+
+  await act(async () => {
+    fireEvent.click(screen.getByRole("button", { name: "Switch" }));
+  });
+
+  expect(screen.getByTestId("path-window").textContent).toBe("vms");
+  expect(closed).toBe(0);
+});
+
+it("says when the copy there keeps more and when the own folder goes on again", async () => {
+  previewOwnFolders.mockResolvedValue({ ok: true, steps: [{ ...STEP, widerKeep: true, switchesOn: true }] });
+  await open(["containers"], "destination:h");
+  await settle();
+
+  const what = screen.getByRole("list").textContent;
+  expect(what).toContain("That copy keeps some backups longer than the keep rules of Containers. From the switch on, Containers keeps");
+  expect(what).toContain("The switch turns the own folder back on.");
+});
+
+it("offers the switch without the copy when the old own folder does not answer", async () => {
+  previewOwnFolders.mockImplementation(async (req) =>
+    req.copyOver ? { ok: false, code: "own-folder-unreadable", error: "unreadable" } : { ok: true, steps: [STEP] }
+  );
+  await open(["containers"], "destination:h");
+  await settle();
+
+  const alert = screen.getByRole("alert");
+  expect(alert.textContent).toContain("The backups in the old own folder could not be read");
+  expect(alert.textContent).toContain('Switch off "Copy the backups already made"');
 });
 
 it("says under What happens why the switch cannot go ahead and that it can without the copy", async () => {

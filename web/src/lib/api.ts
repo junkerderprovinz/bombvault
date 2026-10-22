@@ -2836,7 +2836,11 @@ export interface OwnFolderRequest {
 /** What moving one section's own folder does. `same` means it is there
  *  already. `copyAt` is the copy at the new place, which becomes the own
  *  folder. `backups` is what the old place holds, `pending` what of it the
- *  new place lacks. `key` is the progress key of a copy before the switch. */
+ *  new place lacks. `key` is the progress key of a copy before the switch.
+ *  `widerKeep` says the copy keeps backups the section's own rule would
+ *  forget, so the section keeps by both from then on. `switchesOn` says the
+ *  section's own folder is off and goes on, since its backups went straight
+ *  to that copy. */
 export interface OwnFolderStep {
   domain: OffsiteDomain;
   from: string;
@@ -2847,6 +2851,8 @@ export interface OwnFolderStep {
   backups: number;
   pending: number;
   key: string;
+  widerKeep?: boolean;
+  switchesOn?: boolean;
 }
 
 type OwnFolderAnswer = OkEnvelope & { steps?: OwnFolderStep[] };

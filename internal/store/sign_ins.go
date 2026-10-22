@@ -106,21 +106,41 @@ type OwnFolder struct {
 	// EndCopy is the off-site target that lies where the own folder goes. It
 	// becomes the own folder, so copying there ends.
 	EndCopy string
+	// SwitchOn switches the own folder back on for new backups. A section
+	// whose own folder is off backs up straight to its copies, and the copy
+	// that ends would otherwise stop taking them.
+	SwitchOn bool
 }
 
 // MoveOwnFolder points a section's own folder somewhere else in one
 // transaction: settle writes the path into the settings, the section's
 // remote-primary row is replaced by f.Row, and the copy at the new place is
 // removed. A run that reads the path in between sees either the old place
-// with its sign-in or the new one with its own.
-func (r *Repo) MoveOwnFolder(f OwnFolder, settle func(*Settings)) error {
+// with its sign-in or the new one with its own. An error from settle undoes
+// it all, and so does a row linked to a storage location that is gone.
+func (r *Repo) MoveOwnFolder(f OwnFolder, settle func(*Settings) error) error {
 	r.settingsMu.Lock()
 	defer r.settingsMu.Unlock()
 	err := r.inTx(func(tx *sql.Tx) error {
+		s, err := getSettings(tx)
+		if err != nil {
+			return err
+		}
+		if err := settle(&s); err != nil {
+			return err
+		}
+		if err := updateSettings(tx, s); err != nil {
+			return err
+		}
 		if _, err := tx.Exec(`DELETE FROM offsite_targets WHERE domain = ? AND role = ?`, f.Domain, RolePrimary); err != nil {
 			return err
 		}
 		if f.Row != nil {
+			if f.Row.DestinationID != "" {
+				if _, err := destinationTx(tx, f.Row.DestinationID); err != nil {
+					return err
+				}
+			}
 			if err := insertPrimaryTx(tx, f.Domain, *f.Row); err != nil {
 				return err
 			}
@@ -130,7 +150,12 @@ func (r *Repo) MoveOwnFolder(f OwnFolder, settle func(*Settings)) error {
 				return err
 			}
 		}
-		return settleTx(tx, settle)
+		if f.SwitchOn {
+			if _, err := tx.Exec(`DELETE FROM places_off WHERE domain = ? AND place = ?`, f.Domain, placeLocal); err != nil {
+				return err
+			}
+		}
+		return nil
 	})
 	if err != nil {
 		return fmt.Errorf("MoveOwnFolder: %w", err)
