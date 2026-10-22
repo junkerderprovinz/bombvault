@@ -223,3 +223,72 @@ func TestNamedRepoInUseCountsZFSDatasets(t *testing.T) {
 		t.Fatalf("move saw %d items, want the refusal", use.Items)
 	}
 }
+
+func TestATargetMovedElsewhereLeavesTheOldPlacesProofBehind(t *testing.T) {
+	db := store.OpenMem(t)
+	if err := store.Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	r := store.New(db)
+	primary, err := r.UpsertOffsiteTarget(store.OffsiteTarget{ID: "p", Domain: "files", Name: "A", Repo: "rest:http://a/files", Enabled: true, Immutable: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	extra, err := r.UpsertOffsiteTarget(store.OffsiteTarget{ID: "x", Domain: "files", Name: "X", Repo: "rest:http://x/files", Enabled: true, SortOrder: 1})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, id := range []string{"p", "x"} {
+		if err := r.RecordTamperTestForTarget("files", id, true, ""); err != nil {
+			t.Fatal(err)
+		}
+	}
+	for _, d := range []store.RestoreDrill{
+		{Domain: "files", Source: "offsite", Kind: "dr", At: 100, OK: true},
+		{Domain: "files", Source: "offsite", Kind: "subset", At: 100, OK: true},
+		{Domain: "files", Source: "offsite:x", Kind: "subset", At: 100, OK: true},
+		{Domain: "files", Source: "local", Kind: "subset", At: 100, OK: true},
+	} {
+		if err := r.AddRestoreDrill(d); err != nil {
+			t.Fatal(err)
+		}
+	}
+	drills := func(source string) int {
+		t.Helper()
+		got, err := r.ListRestoreDrills("files", source, 0)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return len(got)
+	}
+
+	extra.Name = "Renamed"
+	if _, err := r.UpsertOffsiteTarget(extra); err != nil {
+		t.Fatal(err)
+	}
+	if _, found, _ := r.LatestTamperTestForTarget("files", "x"); !found || drills("offsite:x") != 1 {
+		t.Fatal("saving a target at its own place dropped its proof")
+	}
+
+	primary.Repo = "rest:http://b/files"
+	if _, err := r.UpsertOffsiteTarget(primary); err != nil {
+		t.Fatal(err)
+	}
+	if _, found, _ := r.LatestTamperTestForTarget("files", "p"); found {
+		t.Error("the moved primary kept the tamper test of its old place")
+	}
+	if n := drills("offsite"); n != 0 {
+		t.Errorf("the moved primary kept %d off-site drills of its old place", n)
+	}
+	if _, found, _ := r.LatestTamperTestForTarget("files", "x"); !found || drills("offsite:x") != 1 || drills("local") != 1 {
+		t.Error("moving the primary dropped the proof of another target or of the local copy")
+	}
+
+	extra.Repo = "rest:http://y/files"
+	if _, err := r.UpsertOffsiteTarget(extra); err != nil {
+		t.Fatal(err)
+	}
+	if _, found, _ := r.LatestTamperTestForTarget("files", "x"); found || drills("offsite:x") != 0 {
+		t.Error("the moved additional target kept the proof of its old place")
+	}
+}

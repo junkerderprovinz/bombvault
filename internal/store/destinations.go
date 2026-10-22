@@ -452,8 +452,8 @@ var ErrTargetHasDirectRepo = errors.New("entries back up straight to this target
 // MoveTargetToDestination points a domain target at location, the folder
 // another destination keeps for the domain, and hangs it on that destination.
 // The target keeps its id, its copy rules and what it was seen holding, which
-// a copy of its repository brought along. Its aging mark and its tamper tests
-// spoke about the old place and go. For the target in the primary slot, settle
+// a copy of its repository brought along. Its aging mark, its tamper tests and
+// its off-site drills spoke about the old place and go. For the target in the primary slot, settle
 // brings the domain's off-site settings in line in the same transaction.
 func (r *Repo) MoveTargetToDestination(targetID, destID, location string, settle func(*Settings)) (OffsiteTarget, error) {
 	if strings.TrimSpace(location) == "" {
@@ -498,7 +498,7 @@ func (r *Repo) MoveTargetToDestination(targetID, destID, location string, settle
 		if _, err := tx.Exec(`UPDATE offsite_observations SET rules_rev = '', aged_at = 0 WHERE target_id = ?`, t.ID); err != nil {
 			return err
 		}
-		if _, err := tx.Exec(`DELETE FROM tamper_tests WHERE offsite_target_id = ?`, t.ID); err != nil {
+		if err := forgetPlaceVerdictsTx(tx, t.ID, t.Domain); err != nil {
 			return err
 		}
 		if t.SortOrder == 0 {
