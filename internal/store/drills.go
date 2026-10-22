@@ -37,8 +37,8 @@ type DrillKey struct{ Domain, Source, TargetID, Kind string }
 const defaultRestoreDrillLimit = 365
 
 // firstOffsiteTargetSQL is the id of a domain's first switched-on off-site
-// target, the one a drill of the bare "offsite" source reads, or '' when the
-// settings field is all there is. It takes the domain as its one argument.
+// target, the one a drill of the bare "offsite" source reads, or empty when
+// the settings field is all there is. It takes the domain as its one argument.
 const firstOffsiteTargetSQL = `COALESCE((SELECT id FROM offsite_targets WHERE domain = ? AND role = 'offsite' AND enabled = 1
 	ORDER BY sort_order, created_at, id LIMIT 1), '')`
 
