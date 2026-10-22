@@ -6518,6 +6518,9 @@ export interface MemberRoles {
   forMember: RoleSide;
   /** How many of the member's requests wait for an answer here. */
   asks: number;
+  /** Addresses on the member's receiving server that this instance's storage
+   *  locations were seen to use, known while the member is out of reach. */
+  receiverLocations?: string[];
 }
 
 export interface RoleHolder {
@@ -6556,7 +6559,12 @@ export function askRole(
  *  instance sent. `told` is false when the member could not be reached; the
  *  request is gone here either way, and the server tells the member once it
  *  is back. */
-export function withdrawRole(memberId: string, role: RequestedRole): Promise<OkEnvelope & { told?: boolean }> {
+/** Withdrawing a Receiver switches off the storage locations the server knows
+ *  to lie on its receiving server, and names them in locationsOff. */
+export function withdrawRole(
+  memberId: string,
+  role: RequestedRole,
+): Promise<OkEnvelope & { told?: boolean; locationsOff?: { id: string; name: string }[] }> {
   return fetchJSON(`/api/group/members/${encodeURIComponent(memberId)}/roles/${role}`, { method: "DELETE" });
 }
 

@@ -2630,6 +2630,7 @@ const hu: Partial<Translations> = {
   "instances.role.location": "Cél: {name}",
   "instances.role.noReplica": "Még egy ZFS-elem sem replikálódik oda",
   "instances.role.noDestination": "Még egy cél sem másol oda",
+  "instances.role.shareLocation": "A(z) {peer} megosztására csak egy általad hozzáadott tárolóhely másol",
   "instances.protection": "Védelem szakaszonként",
   "instances.monitoring": "Felügyelet",
   "instances.pollHint": "Kikapcsolva a BombVault nem kérdezi le többé a védelmi állapotát. A csoportban marad.",

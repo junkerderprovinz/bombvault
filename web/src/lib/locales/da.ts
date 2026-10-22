@@ -2629,6 +2629,7 @@ const da: Partial<Translations> = {
   "instances.role.location": "Destination {name}",
   "instances.role.noReplica": "Intet ZFS-element replikeres dertil endnu",
   "instances.role.noDestination": "Ingen destination kopierer dertil endnu",
+  "instances.role.shareLocation": "Kun en lagerplacering, du tilføjer til delingen på {peer}, kopierer dertil",
   "instances.protection": "Beskyttelse pr. område",
   "instances.monitoring": "Overvågning",
   "instances.pollHint": "Fra betyder, at BombVault holder op med at hente dens beskyttelsesstatus. Den bliver i gruppen.",

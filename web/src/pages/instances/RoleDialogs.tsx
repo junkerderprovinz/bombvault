@@ -331,14 +331,16 @@ export function useRoleSwitch({
         const res = await withdrawRole(instance.memberId, role);
         if (!res.ok) push(res.error ?? t("instances.role.saveError"), "fail");
         else {
-          // Out of reach, the member holds the role until the server tells
-          // it, and the page cannot see its receiving server.
+          // The server switched off the locations it knows on the receiving
+          // server. One the page matched besides goes off here, and only one
+          // neither found stays on.
+          const switchedOff = res.locationsOff ?? [];
           const dest = role === "receiver" ? instance.destination : undefined;
           if (res.told === false) {
-            const words = [t("instances.role.notTold"), role === "receiver" && !dest && t("instances.role.receiverStillOn")];
+            const words = [t("instances.role.notTold"), role === "receiver" && !dest && switchedOff.length === 0 && t("instances.role.receiverStillOn")];
             push(words.filter(Boolean).join(" ").replaceAll("{peer}", () => instance.name), "warn");
           }
-          if (dest?.enabled) {
+          if (dest?.enabled && !switchedOff.some((d) => d.id === dest.id)) {
             const off = await updateDestination(dest.id, {
               name: dest.name,
               storageClass: dest.storageClass,

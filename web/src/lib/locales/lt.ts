@@ -1538,6 +1538,7 @@ const lt: Partial<Translations> = {
   "instances.role.location": "Paskirties vieta {name}",
   "instances.role.noReplica": "Kol kas nė vienas ZFS įrašas ten nereplikuojamas",
   "instances.role.noDestination": "Kol kas jokia paskirties vieta ten nekopijuoja",
+  "instances.role.shareLocation": "Į {peer} bendrinamą aplanką kopijuoja tik saugojimo vieta, kurią jam pridedi",
   "instances.protection": "Apsauga pagal skiltis",
   "instances.monitoring": "Stebėsena",
   "instances.pollHint": "Išjungta reiškia, kad BombVault nustoja tikrinti jo apsaugos būseną. Jis lieka grupėje.",

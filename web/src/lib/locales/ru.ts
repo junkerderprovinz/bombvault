@@ -2626,6 +2626,7 @@ const ru: Partial<Translations> = {
   "instances.role.location": "Место назначения {name}",
   "instances.role.noReplica": "Ни одна запись ZFS пока не реплицируется туда",
   "instances.role.noDestination": "Пока ни одно место назначения не копирует туда",
+  "instances.role.shareLocation": "В общую папку на {peer} копирует только место хранения, которое вы для неё добавите",
   "instances.protection": "Защита по разделам",
   "instances.monitoring": "Мониторинг",
   "instances.pollHint": "Выключено значит, что BombVault перестаёт опрашивать состояние его защиты. Он остаётся в группе.",

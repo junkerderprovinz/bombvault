@@ -1538,6 +1538,7 @@ const et: Partial<Translations> = {
   "instances.role.location": "Sihtkoht {name}",
   "instances.role.noReplica": "Ühtegi ZFS-i kirjet ei replikeerita sinna veel",
   "instances.role.noDestination": "Ükski sihtkoht ei kopeeri sinna veel",
+  "instances.role.shareLocation": "Seadme {peer} jagatud kausta kopeerib ainult salvestuskoht, mille selle jaoks lisad",
   "instances.protection": "Kaitse valdkondade kaupa",
   "instances.monitoring": "Jälgimine",
   "instances.pollHint": "Väljas tähendab, et BombVault lõpetab selle kaitseoleku pärimise. See jääb gruppi.",

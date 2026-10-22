@@ -1538,6 +1538,7 @@ const lv: Partial<Translations> = {
   "instances.role.location": "Mērķis {name}",
   "instances.role.noReplica": "Neviens ZFS ieraksts vēl turp netiek replicēts",
   "instances.role.noDestination": "Neviens mērķis vēl turp nekopē",
+  "instances.role.shareLocation": "Uz {peer} koplietojumu kopē tikai krātuves vieta, ko jūs tam pievienojat",
   "instances.protection": "Aizsardzība pa sadaļām",
   "instances.monitoring": "Uzraudzība",
   "instances.pollHint": "Izslēgts nozīmē, ka BombVault pārstāj vaicāt tās aizsardzības statusu. Tā paliek grupā.",

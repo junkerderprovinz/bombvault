@@ -2628,6 +2628,7 @@ const nl: Partial<Translations> = {
   "instances.role.location": "Bestemming {name}",
   "instances.role.noReplica": "Er repliceert nog geen ZFS-item daarheen",
   "instances.role.noDestination": "Er kopieert nog geen bestemming daarheen",
+  "instances.role.shareLocation": "Alleen een opslaglocatie die je voor de share op {peer} toevoegt, kopieert daarheen",
   "instances.protection": "Bescherming per onderdeel",
   "instances.monitoring": "Bewaking",
   "instances.pollHint": "Uit betekent dat BombVault de beschermingsstatus ervan niet meer opvraagt. De instantie blijft in de groep.",

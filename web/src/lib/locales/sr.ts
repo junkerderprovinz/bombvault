@@ -1532,6 +1532,7 @@ const sr: Partial<Translations> = {
   "instances.role.location": "Одредиште {name}",
   "instances.role.noReplica": "Још се ниједна ZFS ставка не реплицира тамо",
   "instances.role.noDestination": "Још ниједно одредиште не копира тамо",
+  "instances.role.shareLocation": "На дељену фасциклу на {peer} копира само место складиштења које за њу додаш",
   "instances.protection": "Заштита по одељцима",
   "instances.monitoring": "Надзор",
   "instances.pollHint": "Искључено значи да BombVault престаје да проверава њен статус заштите. Остаје у групи.",

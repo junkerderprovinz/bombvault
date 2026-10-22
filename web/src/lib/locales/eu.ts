@@ -1538,6 +1538,7 @@ const eu: Partial<Translations> = {
   "instances.role.location": "Helmuga {name}",
   "instances.role.noReplica": "Oraindik ez dago ZFS elementurik hara erreplikatzen",
   "instances.role.noDestination": "Oraindik ez dago hara kopiatzen duen helmugarik",
+  "instances.role.shareLocation": "{peer}-ko partekatutako karpetara gehitzen duzun biltegiratze-kokaleku batek bakarrik kopiatzen du",
   "instances.protection": "Babesa atalka",
   "instances.monitoring": "Monitorizazioa",
   "instances.pollHint": "Itzalita esan nahi du BombVaultek utzi egiten diola bere babes-egoera kontsultatzeari. Taldean jarraitzen du.",

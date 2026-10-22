@@ -1538,6 +1538,7 @@ const id: Partial<Translations> = {
   "instances.role.location": "Tujuan {name}",
   "instances.role.noReplica": "Belum ada entri ZFS yang direplikasi ke sana",
   "instances.role.noDestination": "Belum ada tujuan yang menyalin ke sana",
+  "instances.role.shareLocation": "Hanya lokasi penyimpanan yang Anda tambahkan untuk share di {peer} yang menyalin ke sana",
   "instances.protection": "Perlindungan per bagian",
   "instances.monitoring": "Pemantauan",
   "instances.pollHint": "Nonaktif berarti BombVault berhenti menanyakan status perlindungannya. Ia tetap berada di grup.",

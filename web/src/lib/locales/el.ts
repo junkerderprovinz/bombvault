@@ -2629,6 +2629,7 @@ const el: Partial<Translations> = {
   "instances.role.location": "Προορισμός {name}",
   "instances.role.noReplica": "Κανένα στοιχείο ZFS δεν στέλνει ακόμη ρεπλίκα εκεί",
   "instances.role.noDestination": "Κανένας προορισμός δεν αντιγράφει ακόμη εκεί",
+  "instances.role.shareLocation": "Στον κοινόχρηστο φάκελο του {peer} αντιγράφει μόνο μια θέση αποθήκευσης που προσθέτετε γι' αυτόν",
   "instances.protection": "Προστασία ανά τομέα",
   "instances.monitoring": "Παρακολούθηση",
   "instances.pollHint": "Ανενεργό σημαίνει ότι το BombVault σταματά να ρωτά για την κατάσταση προστασίας της. Παραμένει στην ομάδα.",

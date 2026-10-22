@@ -849,6 +849,7 @@ func (s *Service) GroupReceivers(ctx context.Context) []groupReceiverView {
 			out = append(out, *v)
 		}
 	}
+	s.learnReceiverLocations(out)
 	return out
 }
 
@@ -902,7 +903,11 @@ func (s *Service) GroupReceiverLogin(ctx context.Context, memberID string) (grou
 		return groupReceiverLogin{}, errNoMemberReceiver
 	}
 	v := groupReceiverFor(*member, *r)
-	return groupReceiverLogin{Name: v.Name, URL: v.URL + "/" + r.User, User: r.User, Password: r.Password}, nil
+	login := groupReceiverLogin{Name: v.Name, URL: v.URL + "/" + r.User, User: r.User, Password: r.Password}
+	if err := s.store.NoteReceiverLocation(memberID, restAddress(login.URL)); err != nil {
+		log.Printf("receiver: %v", err)
+	}
+	return login, nil
 }
 
 // handleGetReceiver answers the Receiver tab: the receiver, when one is set

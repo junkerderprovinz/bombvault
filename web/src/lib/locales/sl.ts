@@ -1532,6 +1532,7 @@ const sl: Partial<Translations> = {
   "instances.role.location": "Cilj {name}",
   "instances.role.noReplica": "Noben vnos ZFS se tja še ne replicira",
   "instances.role.noDestination": "Noben cilj še ne kopira tja",
+  "instances.role.shareLocation": "Na skupno rabo na {peer} kopira samo mesto shranjevanja, ki ga dodaš zanjo",
   "instances.protection": "Zaščita po razdelkih",
   "instances.monitoring": "Nadzor",
   "instances.pollHint": "Izklopljeno pomeni, da BombVault preneha poizvedovati po njenem stanju zaščite. Ostane v skupini.",

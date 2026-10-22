@@ -100,6 +100,9 @@ export interface Instance {
   /** The Receiver role is on with its receiving server, and no destination
    *  points there, so nothing is copied to it yet. */
   noDestination?: boolean;
+  /** The Receiver role is on with a share, which only a storage location the
+   *  user adds copies to, and which the page cannot tie to the member. */
+  shareReceiver?: boolean;
   /** This server's ZFS items that replicate to it. */
   replicas: ItemReplica[];
   /** How many requests and offers wait for an answer here. */
@@ -154,16 +157,19 @@ function restAddress(location: string): string {
   return location.replace(/^rest:/, "").replace(/^(https?:\/\/)[^@/]*@/, "$1").replace(/\/+$/, "");
 }
 
-/** destinationAt finds the destination whose repository lies on a member's
- *  receiving server. A group login points at <server>/<user>, so the server's
- *  address is a prefix of the destination's. */
-function destinationAt(receiver: GroupReceiver, destinations: Destination[]): Destination | undefined {
-  if (!receiver.url) return undefined;
-  const base = restAddress(receiver.url);
-  return destinations.find((d) => {
-    const repo = restAddress(d.repo);
-    return repo === base || repo.startsWith(base + "/");
-  });
+/** destinationAt finds the destination whose repository lies at one of the
+ *  addresses on a member's receiving server. A group login points at
+ *  <server>/<user>, so the address is a prefix of the destination's. */
+function destinationAt(addresses: string[], destinations: Destination[]): Destination | undefined {
+  for (const at of addresses) {
+    const base = restAddress(at);
+    const found = destinations.find((d) => {
+      const repo = restAddress(d.repo);
+      return repo === base || repo.startsWith(base + "/");
+    });
+    if (found) return found;
+  }
+  return undefined;
 }
 
 export function buildInstances(data: InstancesData): { instances: Instance[]; unplaced: Unplaced } {
@@ -256,10 +262,16 @@ export function buildInstances(data: InstancesData): { instances: Instance[]; un
     inst.replicas = data.replicas.filter((r) => r.replica.target.kind === "peer" && r.replica.target.id === inst.memberId);
     inst.asks = (inst.roles?.asks ?? 0) + inst.offers.length;
     const offered = data.groupReceivers?.find((r) => r.memberId === inst.memberId);
-    if (offered && data.destinations && roleState(inst.roles?.byMember, "receiver") === "on") {
-      inst.destination = destinationAt(offered, data.destinations);
-      // A receiver that keeps the copies on a share is reached another way.
-      inst.noDestination = !inst.destination && inst.roles?.byMember.receiver?.store !== "share";
+    if (data.destinations && roleState(inst.roles?.byMember, "receiver") === "on") {
+      if (inst.roles?.byMember.receiver?.store === "share") {
+        inst.shareReceiver = true;
+      } else {
+        // The server remembers where its locations met the receiving server,
+        // which still holds while the member is away or behind the relay.
+        const addresses = [offered?.url, ...(inst.roles?.receiverLocations ?? [])].filter((a): a is string => !!a);
+        inst.destination = destinationAt(addresses, data.destinations);
+        inst.noDestination = !inst.destination && addresses.length > 0;
+      }
     }
   }
   return { instances, unplaced };

@@ -2620,6 +2620,7 @@ const ja: Partial<Translations> = {
   "instances.role.location": "保存先 {name}",
   "instances.role.noReplica": "ここにレプリケートされる ZFS 項目はまだありません",
   "instances.role.noDestination": "ここにコピーする保存先はまだありません",
+  "instances.role.shareLocation": "{peer} の共有フォルダーへは、そのために追加した保存先だけがコピーします",
   "instances.protection": "セクションごとの保護",
   "instances.monitoring": "モニタリング",
   "instances.pollHint": "オフにすると、BombVault はこのインスタンスの保護ステータスの取得を止めます。グループには残ります。",

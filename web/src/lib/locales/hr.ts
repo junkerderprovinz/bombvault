@@ -1538,6 +1538,7 @@ const hr: Partial<Translations> = {
   "instances.role.location": "Odredište {name}",
   "instances.role.noReplica": "Još se nijedna ZFS stavka ne replicira tamo",
   "instances.role.noDestination": "Još nijedno odredište ne kopira tamo",
+  "instances.role.shareLocation": "Na dijeljenu mapu na {peer} kopira samo mjesto pohrane koje za nju dodate",
   "instances.protection": "Zaštita po odjeljcima",
   "instances.monitoring": "Nadzor",
   "instances.pollHint": "Isključeno znači da BombVault prestaje provjeravati njezin status zaštite. Ostaje u skupini.",

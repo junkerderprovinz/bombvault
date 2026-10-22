@@ -2629,6 +2629,7 @@ const it: Partial<Translations> = {
   "instances.role.location": "Destinazione {name}",
   "instances.role.noReplica": "Nessun elemento ZFS viene ancora replicato lì",
   "instances.role.noDestination": "Nessuna destinazione copia ancora lì",
+  "instances.role.shareLocation": "Solo una posizione di archiviazione che aggiungi per la condivisione su {peer} copia lì",
   "instances.protection": "Protezione per sezione",
   "instances.monitoring": "Monitoraggio",
   "instances.pollHint": "Disattivato significa che BombVault smette di interrogare il suo stato di protezione. Resta nel gruppo.",

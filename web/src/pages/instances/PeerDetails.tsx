@@ -159,10 +159,11 @@ export function PeerDetails({
                 covers,
                 role === "receiver" && instance.destination && t("instances.role.location").replace("{name}", () => instance.destination!.name),
                 role === "receiver" && instance.noDestination && t("instances.role.noDestination"),
+                role === "receiver" && instance.shareReceiver && named("instances.role.shareLocation"),
                 request.decidedBy === "automatic" && named("instances.role.automatic"),
               ]}
             />
-            {role === "receiver" && instance.noDestination && (
+            {role === "receiver" && (instance.noDestination || instance.shareReceiver) && (
               <span className="mt-2 flex">
                 <Button
                   label={t("storage.add.title")}

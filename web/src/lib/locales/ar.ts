@@ -2630,6 +2630,7 @@ const ar: Partial<Translations> = {
   "instances.role.location": "الوجهة {name}",
   "instances.role.noReplica": "لا يوجد بعد عنصر ZFS يُنسخ إلى هناك",
   "instances.role.noDestination": "لا توجد بعد وجهة تنسخ إلى هناك",
+  "instances.role.shareLocation": "لا ينسخ إلى المشاركة على {peer} إلا موقع تخزين تضيفه لها",
   "instances.protection": "الحماية لكل قسم",
   "instances.monitoring": "المراقبة",
   "instances.pollHint": "الإيقاف يعني أن BombVault يتوقف عن استعلام حالة حمايته. ويبقى في المجموعة.",

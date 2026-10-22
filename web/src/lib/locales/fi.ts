@@ -2629,6 +2629,7 @@ const fi: Partial<Translations> = {
   "instances.role.location": "Kohde {name}",
   "instances.role.noReplica": "Mikään ZFS-merkintä ei replikoidu sinne vielä",
   "instances.role.noDestination": "Mikään kohde ei kopioi sinne vielä",
+  "instances.role.shareLocation": "Laitteen {peer} jakoon kopioi vain tallennuspaikka, jonka lisäät sitä varten",
   "instances.protection": "Suojaus osioittain",
   "instances.monitoring": "Valvonta",
   "instances.pollHint": "Pois päältä tarkoittaa, että BombVault lopettaa sen suojaustilan kyselyn. Se pysyy ryhmässä.",

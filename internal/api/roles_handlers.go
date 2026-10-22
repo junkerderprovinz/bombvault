@@ -5,6 +5,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"log"
 	"net/http"
 	"slices"
 	"time"
@@ -93,6 +94,9 @@ type memberRolesView struct {
 	ForMember roleSideView `json:"forMember"`
 	// Asks counts the member's requests that wait for an answer here.
 	Asks int `json:"asks"`
+	// ReceiverLocations are the addresses on the member's receiving server
+	// that this instance's storage locations were seen to use.
+	ReceiverLocations []string `json:"receiverLocations,omitempty"`
 }
 
 type roleHolderView struct {
@@ -221,6 +225,16 @@ func (s *Service) rolesOverview() ([]memberRolesView, selfRolesView, error) {
 			e.Name = p.Name
 		}
 	}
+	// What is remembered of a receiving server keeps no card of its own.
+	locs, err := s.store.ReceiverLocations()
+	if err != nil {
+		return nil, selfRolesView{}, err
+	}
+	for id, at := range locs {
+		if e := byID[id]; e != nil {
+			e.ReceiverLocations = at
+		}
+	}
 
 	members := make([]memberRolesView, 0, len(byID))
 	for _, e := range byID {
@@ -328,7 +342,24 @@ func (h *Handler) handleWithdrawRole(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
-	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"told": told}))
+	answer := map[string]any{"told": told}
+	if role == store.RoleReceiver {
+		off, err := h.svc.switchOffReceiverDestinations(r.PathValue("id"))
+		if err != nil {
+			log.Printf("roles: switch off the storage locations on a withdrawn receiver: %v", err)
+		}
+		if len(off) > 0 {
+			s, err := h.svc.settleLinkedPrimaries()
+			if err == nil {
+				err = h.scheduler.ReloadWithGates(s, h.dueGates())
+			}
+			if err != nil {
+				log.Printf("roles: reload the schedule after switching off a storage location: %v", err)
+			}
+		}
+		answer["locationsOff"] = off
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(answer))
 }
 
 // handleDecideRole allows or refuses a member's request, or revokes one that

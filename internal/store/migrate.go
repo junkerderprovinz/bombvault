@@ -3364,6 +3364,18 @@ ALTER TABLE key_deposits_sent ADD COLUMN pending_held_digest TEXT NOT NULL DEFAU
 		sql: `ALTER TABLE pull_sources ADD COLUMN leftovers_moved INTEGER NOT NULL DEFAULT 1;
 UPDATE pull_sources SET leftovers_moved = 0;`,
 	},
+	{
+		// The addresses on a member's receiving server that this instance's
+		// storage locations use, known without asking the member.
+		version: receiverLocationsMigration,
+		name:    "receiver_locations",
+		sql: `CREATE TABLE IF NOT EXISTS receiver_locations (
+  member_id TEXT    NOT NULL,
+  url       TEXT    NOT NULL,
+  at        INTEGER NOT NULL,
+  PRIMARY KEY (member_id, url)
+);`,
+	},
 }
 
 // offsiteFieldDomains are the domains with an off-site field in the settings,
@@ -3608,6 +3620,10 @@ const replicaTargetSinceMigration = 470
 // pullLeftoversMigration numbers the move of earlier pulls out of the
 // domain's own repository.
 const pullLeftoversMigration = 480
+
+// receiverLocationsMigration numbers the remembered addresses on members'
+// receiving servers.
+const receiverLocationsMigration = 490
 
 // oneLineColumns are the names and locations the recovery kit prints.
 var oneLineColumns = []struct {

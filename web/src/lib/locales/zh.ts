@@ -2620,6 +2620,7 @@ const zh: Partial<Translations> = {
   "instances.role.location": "目标 {name}",
   "instances.role.noReplica": "还没有 ZFS 条目复制到这里",
   "instances.role.noDestination": "还没有目标复制到这里",
+  "instances.role.shareLocation": "只有你为 {peer} 上的共享添加的存储位置才会复制到那里",
   "instances.protection": "按分区显示保护",
   "instances.monitoring": "监控",
   "instances.pollHint": "关闭表示 BombVault 不再查询它的保护状态，但它仍留在组里。",

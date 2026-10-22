@@ -1538,6 +1538,7 @@ const ca: Partial<Translations> = {
   "instances.role.location": "Destinació {name}",
   "instances.role.noReplica": "Encara no hi ha cap element ZFS que es repliqui allà",
   "instances.role.noDestination": "Encara no hi ha cap destinació que hi copiï",
+  "instances.role.shareLocation": "Només hi copia una ubicació d'emmagatzematge que afegeixis per a la carpeta compartida de {peer}",
   "instances.protection": "Protecció per secció",
   "instances.monitoring": "Supervisió",
   "instances.pollHint": "Desactivat vol dir que BombVault deixa de consultar el seu estat de protecció. Continua al grup.",

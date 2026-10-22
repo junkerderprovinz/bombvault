@@ -2620,6 +2620,7 @@ const vi: Partial<Translations> = {
   "instances.role.location": "Đích {name}",
   "instances.role.noReplica": "Chưa có mục ZFS nào được nhân bản đến đó",
   "instances.role.noDestination": "Chưa có đích nào sao chép đến đó",
+  "instances.role.shareLocation": "Chỉ một vị trí lưu trữ bạn thêm cho thư mục chia sẻ trên {peer} mới sao chép đến đó",
   "instances.protection": "Bảo vệ theo từng phần",
   "instances.monitoring": "Giám sát",
   "instances.pollHint": "Tắt nghĩa là BombVault ngừng hỏi trạng thái bảo vệ của nó. Nó vẫn ở trong nhóm.",

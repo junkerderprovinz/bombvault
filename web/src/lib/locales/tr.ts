@@ -2629,6 +2629,7 @@ const tr: Partial<Translations> = {
   "instances.role.location": "Hedef {name}",
   "instances.role.noReplica": "Henüz oraya replike edilen bir ZFS ögesi yok",
   "instances.role.noDestination": "Henüz oraya kopyalayan bir hedef yok",
+  "instances.role.shareLocation": "{peer} üzerindeki paylaşıma yalnızca onun için eklediğin bir depolama konumu kopyalar",
   "instances.protection": "Bölüm başına koruma",
   "instances.monitoring": "İzleme",
   "instances.pollHint": "Kapalı, BombVault'un onun koruma durumunu sormayı bıraktığı anlamına gelir. Grupta kalır.",

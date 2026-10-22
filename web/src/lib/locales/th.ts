@@ -2630,6 +2630,7 @@ const th: Partial<Translations> = {
   "instances.role.location": "ปลายทาง {name}",
   "instances.role.noReplica": "ยังไม่มีรายการ ZFS ที่เรพลิเคตไปที่นั่น",
   "instances.role.noDestination": "ยังไม่มีปลายทางที่คัดลอกไปที่นั่น",
+  "instances.role.shareLocation": "มีเพียงตำแหน่งจัดเก็บที่คุณเพิ่มสำหรับโฟลเดอร์แชร์บน {peer} เท่านั้นที่คัดลอกไปที่นั่น",
   "instances.protection": "การป้องกันแยกตามส่วน",
   "instances.monitoring": "การเฝ้าระวัง",
   "instances.pollHint": "ปิดหมายถึง BombVault หยุดสอบถามสถานะการป้องกันของอินสแตนซ์นี้ แต่ยังอยู่ในกลุ่ม",

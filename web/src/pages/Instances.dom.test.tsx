@@ -77,6 +77,7 @@ let depositList: Deposits;
 let keeperRefusal: DepositRefusal | "" | null;
 let keeperTold: boolean;
 let roleTold: boolean;
+let locationsOff: { id: string; name: string }[];
 let destinations: Destination[];
 let groupReceivers: GroupReceiver[];
 const switchedOff: string[] = [];
@@ -146,7 +147,7 @@ vi.mock("../lib/api", async (importOriginal) => {
     withdrawRole: (memberId: string, role: "receiver" | "fetcher") => {
       withdrawn.push([memberId, role]);
       roles = roles.map((r) => (r.memberId === memberId ? { ...r, byMember: { ...r.byMember, [role]: null } } : r));
-      return Promise.resolve({ ok: true, told: roleTold });
+      return Promise.resolve({ ok: true, told: roleTold, locationsOff });
     },
     updateDestination: (id: string, edit: { enabled?: boolean }) => {
       if (edit.enabled === false) switchedOff.push(id);
@@ -280,6 +281,7 @@ beforeEach(() => {
   keeperRefusal = null;
   keeperTold = true;
   roleTold = true;
+  locationsOff = [];
   destinations = [];
   groupReceivers = [];
   switchedOff.length = 0;
@@ -673,6 +675,19 @@ describe("the role tiles of a paired instance", () => {
     await click(tile("m1", "receiver"));
     await click(within(question()).getByRole("button", { name: en["instances.role.switchOff"] }));
     expect(switchedOff).toEqual(["d1"]);
+  });
+
+  it("leave the storage location the server switched off alone and warn of nothing staying on", async () => {
+    roleTold = false;
+    locationsOff = [{ id: "d1", name: "attic" }];
+    groupReceivers = [{ memberId: "m1", name: "DXP480T", url: "http://192.168.1.21:8000", needsAddress: false }];
+    destinations = [destination({ id: "d1", repo: "rest:http://192.168.1.21:8000/cellar-login", enabled: true })];
+    roles = [memberRoles({ name: "DXP480T", byMember: roleSide({ receiver: allowed() }) })];
+    await renderPage();
+    await click(tile("m1", "receiver"));
+    await click(within(question()).getByRole("button", { name: en["instances.role.switchOff"] }));
+    expect(switchedOff).toEqual([]);
+    expect(screen.getByText(en["instances.role.notTold"].replaceAll("{peer}", "DXP480T"))).toBeTruthy();
   });
 
   it("show that an allowed Receiver copies nothing until a storage location points at it", async () => {

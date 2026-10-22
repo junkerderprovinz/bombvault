@@ -252,6 +252,23 @@ describe("the roles an instance plays for this server", () => {
     expect(none({ groupReceivers: offered, destinations: [], roles: on("share") })).toBe(false);
   });
 
+  it("finds the destination at an address the server remembers while the member is away or behind the relay", () => {
+    const login = destination({ id: "d1", repo: "rest:http://192.168.1.21:8000/tower-login" });
+    const on = [roles({ receiverLocations: ["http://192.168.1.21:8000/tower-login"], byMember: side({ receiver: request({ state: "allowed" }) }) })];
+    const relayOnly = [{ memberId: "m1", name: "attic", needsAddress: true }];
+    const of = (over: Partial<InstancesData>) => buildInstances(data({ roles: on, ...over })).instances[0];
+    expect(of({ groupReceivers: [], destinations: [login] }).destination?.id).toBe("d1");
+    expect(of({ groupReceivers: relayOnly, destinations: [login] }).noDestination).toBe(false);
+    expect(of({ groupReceivers: [], destinations: [] }).noDestination).toBe(true);
+  });
+
+  it("says a Receiver on a share copies through a location the user adds", () => {
+    const on = [roles({ byMember: side({ receiver: request({ state: "allowed", store: "share" }) }) })];
+    const inst = buildInstances(data({ roles: on, groupReceivers: [], destinations: [] })).instances[0];
+    expect(inst.shareReceiver).toBe(true);
+    expect(inst.noDestination ?? false).toBe(false);
+  });
+
   it("keeps the ZFS items that replicate to it", () => {
     const to = (id: string, itemId: string) => ({ itemId, dataset: `tank/${itemId}`, replica: replicaOf({ target: { kind: "peer", id } }) });
     const { instances } = buildInstances(data({ replicas: [to("m1", "a"), to("m2", "b"), { itemId: "x", dataset: "tank/x", replica: replicaOf() }] }));

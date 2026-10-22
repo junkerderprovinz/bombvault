@@ -2629,6 +2629,7 @@ const he: Partial<Translations> = {
   "instances.role.location": "יעד {name}",
   "instances.role.noReplica": "עדיין אין פריט ZFS שמשוכפל לשם",
   "instances.role.noDestination": "עדיין אין יעד שמעתיק לשם",
+  "instances.role.shareLocation": "רק מיקום אחסון שתוסיף עבור התיקייה המשותפת ב-{peer} מעתיק לשם",
   "instances.protection": "הגנה לפי תחום",
   "instances.monitoring": "ניטור",
   "instances.pollHint": "כבוי פירושו ש-BombVault מפסיק לבדוק את מצב ההגנה שלו. הוא נשאר בקבוצה.",

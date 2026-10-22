@@ -2629,6 +2629,7 @@ const sv: Partial<Translations> = {
   "instances.role.location": "Mål {name}",
   "instances.role.noReplica": "Ingen ZFS-post replikeras dit ännu",
   "instances.role.noDestination": "Inget mål kopierar dit ännu",
+  "instances.role.shareLocation": "Bara en lagringsplats du lägger till för utdelningen på {peer} kopierar dit",
   "instances.protection": "Skydd per avsnitt",
   "instances.monitoring": "Övervakning",
   "instances.pollHint": "Av betyder att BombVault slutar fråga efter dess skyddsstatus. Den finns kvar i gruppen.",

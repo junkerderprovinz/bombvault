@@ -2630,6 +2630,7 @@ const ro: Partial<Translations> = {
   "instances.role.location": "Destinația {name}",
   "instances.role.noReplica": "Niciun element ZFS nu se replică încă acolo",
   "instances.role.noDestination": "Nicio destinație nu copiază încă acolo",
+  "instances.role.shareLocation": "Doar o locație de stocare pe care o adaugi pentru partajarea de pe {peer} copiază acolo",
   "instances.protection": "Protecție pe secțiuni",
   "instances.monitoring": "Monitorizare",
   "instances.pollHint": "Oprit înseamnă că BombVault nu mai interoghează starea ei de protecție. Rămâne în grup.",

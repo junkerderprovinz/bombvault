@@ -1538,6 +1538,7 @@ const ms: Partial<Translations> = {
   "instances.role.location": "Destinasi {name}",
   "instances.role.noReplica": "Belum ada entri ZFS yang direplikasi ke sana",
   "instances.role.noDestination": "Belum ada destinasi yang menyalin ke sana",
+  "instances.role.shareLocation": "Hanya lokasi storan yang anda tambah untuk perkongsian di {peer} yang menyalin ke sana",
   "instances.protection": "Perlindungan mengikut bahagian",
   "instances.monitoring": "Pemantauan",
   "instances.pollHint": "Mati bermaksud BombVault berhenti menyemak status perlindungannya. Ia kekal dalam kumpulan.",

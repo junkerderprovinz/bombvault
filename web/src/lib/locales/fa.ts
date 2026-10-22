@@ -1538,6 +1538,7 @@ const fa: Partial<Translations> = {
   "instances.role.location": "مقصد {name}",
   "instances.role.noReplica": "هنوز هیچ مورد ZFS به آنجا ریپلیکا نمی‌شود",
   "instances.role.noDestination": "هنوز هیچ مقصدی به آنجا کپی نمی‌کند",
+  "instances.role.shareLocation": "فقط مکان ذخیره‌سازی‌ای که برای پوشهٔ اشتراکی روی {peer} اضافه می‌کنید به آنجا کپی می‌کند",
   "instances.protection": "محافظت به تفکیک حوزه",
   "instances.monitoring": "پایش",
   "instances.pollHint": "خاموش یعنی BombVault دیگر وضعیت محافظت آن را نمی‌پرسد. در گروه می‌ماند.",

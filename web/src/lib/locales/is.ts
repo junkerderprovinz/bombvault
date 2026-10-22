@@ -1538,6 +1538,7 @@ const is: Partial<Translations> = {
   "instances.role.location": "Áfangastaður {name}",
   "instances.role.noReplica": "Engin ZFS-færsla er eftirmynduð þangað enn",
   "instances.role.noDestination": "Enginn áfangastaður afritar þangað enn",
+  "instances.role.shareLocation": "Aðeins geymslustaður sem þú bætir við fyrir deilinguna á {peer} afritar þangað",
   "instances.protection": "Vernd eftir svæðum",
   "instances.monitoring": "Vöktun",
   "instances.pollHint": "Slökkt þýðir að BombVault hættir að spyrja um verndarstöðu þess. Það verður áfram í hópnum.",

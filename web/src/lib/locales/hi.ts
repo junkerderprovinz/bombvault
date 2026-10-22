@@ -1538,6 +1538,7 @@ const hi: Partial<Translations> = {
   "instances.role.location": "गंतव्य {name}",
   "instances.role.noReplica": "अभी कोई ZFS प्रविष्टि वहाँ रेप्लिकेट नहीं होती",
   "instances.role.noDestination": "अभी कोई गंतव्य वहाँ कॉपी नहीं करता",
+  "instances.role.shareLocation": "{peer} के शेयर पर केवल वही स्टोरेज स्थान कॉपी करता है जिसे आप उसके लिए जोड़ते हैं",
   "instances.protection": "सेक्शन के अनुसार सुरक्षा",
   "instances.monitoring": "मॉनिटरिंग",
   "instances.pollHint": "बंद का मतलब है कि BombVault उसकी सुरक्षा स्थिति पूछना बंद कर देता है। वह समूह में बना रहता है।",

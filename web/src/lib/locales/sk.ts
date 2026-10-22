@@ -1538,6 +1538,7 @@ const sk: Partial<Translations> = {
   "instances.role.location": "Cieľ {name}",
   "instances.role.noReplica": "Zatiaľ sa tam nereplikuje žiadna položka ZFS",
   "instances.role.noDestination": "Zatiaľ tam nekopíruje žiadny cieľ",
+  "instances.role.shareLocation": "Na zdieľaný priečinok na {peer} kopíruje len úložisko, ktoré preň pridáš",
   "instances.protection": "Ochrana podľa sekcií",
   "instances.monitoring": "Sledovanie",
   "instances.pollHint": "Vypnuté znamená, že BombVault prestane zisťovať jej stav ochrany. Zostane v skupine.",

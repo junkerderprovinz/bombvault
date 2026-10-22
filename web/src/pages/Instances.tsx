@@ -188,7 +188,11 @@ function PeerCard({
   const cannotKeep = tooOldToKeep(instance) ? t("keeper.tile.tooOld") : unreachableToKeep(instance) ? t("keeper.tile.unreachable") : undefined;
   const keeperDetail = deposit ? (deposit !== "held" ? depositStateLabel(t, deposit) : undefined) : cannotKeep;
   // An allowed Receiver copies nothing until a destination points at it.
-  const receiverDetail = instance.noDestination ? t("instances.role.noDestination") : undefined;
+  const receiverDetail = instance.noDestination
+    ? t("instances.role.noDestination")
+    : instance.shareReceiver
+      ? t("instances.role.shareLocation").replaceAll("{peer}", () => instance.name)
+      : undefined;
   const details = { keeper: keeperDetail, receiver: receiverDetail };
 
   const badges = (

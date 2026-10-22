@@ -2620,6 +2620,7 @@ const ko: Partial<Translations> = {
   "instances.role.location": "대상 {name}",
   "instances.role.noReplica": "이곳으로 복제되는 ZFS 항목이 아직 없습니다",
   "instances.role.noDestination": "그곳으로 복사하는 대상이 아직 없습니다",
+  "instances.role.shareLocation": "{peer}의 공유 폴더에는 그곳을 위해 추가한 저장 위치만 복사합니다",
   "instances.protection": "섹션별 보호",
   "instances.monitoring": "모니터링",
   "instances.pollHint": "끄면 BombVault가 이 인스턴스의 보호 상태 조회를 멈춥니다. 그룹에는 남아 있습니다.",

@@ -2626,6 +2626,7 @@ const uk: Partial<Translations> = {
   "instances.role.location": "Місце призначення {name}",
   "instances.role.noReplica": "Жоден запис ZFS ще не реплікується туди",
   "instances.role.noDestination": "Жодне місце призначення ще не копіює туди",
+  "instances.role.shareLocation": "До спільної папки на {peer} копіює лише місце зберігання, яке ви для неї додасте",
   "instances.protection": "Захист за розділами",
   "instances.monitoring": "Моніторинг",
   "instances.pollHint": "Вимкнено означає, що BombVault припиняє опитувати стан його захисту. Він лишається в групі.",
