@@ -615,6 +615,9 @@ export interface DomainStatus {
   drillState: string; // "" | "never" | "failed" | "overdue" | "ok"
   encryptionOn: boolean; // repo encryption is enabled
   pruneStrategySet: boolean; // an off-site retention strategy is configured
+  /** How the ZFS replicas stand: "" with none, "failed" when the last run of
+   *  one failed, "stale" when one is not current, "ok" otherwise. */
+  replicaState?: string;
 }
 
 /** A recorded restore-verification "drill" from POST/GET /api/verify. */
@@ -863,6 +866,13 @@ export function failureOf(status: number, code?: string, said?: string): { messa
  *  a caller that otherwise shows a fixed text. */
 export function explainedError(err: unknown): string | undefined {
   return err instanceof ApiError && knownSentence(err.status, err.code) !== undefined ? err.message : undefined;
+}
+
+/** answerLost reports a call whose answer never came back: the connection
+ *  dropped, or a proxy in front of BombVault gave up waiting. A check, trial
+ *  restore, unlock or prune keeps running on the server then. */
+export function answerLost(err: unknown): boolean {
+  return err instanceof ApiError && (err.status === 0 || err.status === 502 || err.status === 504);
 }
 
 type Refusal = { code?: string; error?: string } | null;
@@ -4033,6 +4043,10 @@ export interface BackupItem {
   dbDumpLabelOff?: boolean;
   dbDumpsGlobalOff?: boolean;
   dbDataCoverage?: DbDataCoverage;
+  /** What GET /api/coverage holds against a database whose dumps are
+   *  missing: its last dump failed, or dumps are off while nothing else
+   *  copies it consistently. */
+  dbDumpGap?: "db-dump-failing" | "db-dump-only-copy-off";
   /** Containers and VMs: the names the entry had before, oldest link first. */
   formerNames?: string[];
   /** Live containers: how they differ from their last good backup. */

@@ -1148,6 +1148,34 @@ func (s *Service) progCounted(ctx context.Context, key string, startedAt int64) 
 	}), stop
 }
 
+// maintenanceStall is how long a check or prune may stay silent before it
+// counts as hung. How long one takes on a multi-terabyte remote repository has
+// no bound worth guessing, but restic prints its counters every second while
+// it works, even through a step that takes hours.
+var maintenanceStall = 30 * time.Minute
+
+// stallDeadline returns a context that ends once restic has printed no counter
+// for limit: a long check or prune runs on while restic reports, and one that
+// hangs silently still lets go of the domain lock. The counter sink already in
+// ctx gets every line as before. The cause wraps context.DeadlineExceeded, so
+// the run fails the way a timeout does and names the reason.
+func stallDeadline(ctx context.Context, limit time.Duration) (context.Context, context.CancelFunc) {
+	ctx, cancel := context.WithCancelCause(ctx)
+	stalled := fmt.Errorf("restic reported nothing for %v: %w", limit, context.DeadlineExceeded)
+	timer := time.AfterFunc(limit, func() { cancel(stalled) })
+	next := progress.CountSinkFrom(ctx)
+	ctx = progress.WithCountSink(ctx, func(c progress.CountProgress) {
+		timer.Reset(limit)
+		if next != nil {
+			next(c)
+		}
+	})
+	return ctx, func() {
+		timer.Stop()
+		cancel(context.Canceled)
+	}
+}
+
 // remainingSeconds extrapolates the time left from the units done so far. It
 // gives 0, meaning unknown, until the step has run five seconds and done one
 // unit, because an estimate from less jumps around too much to read.
@@ -2790,13 +2818,6 @@ func settingsOffsiteTarget(domain string, settings store.Settings, loc string) s
 	}
 }
 
-// appendOnlyTargets are a domain's switched-on off-site targets flagged
-// append-only. Only they claim to refuse a delete, so only they are probed by
-// the scheduled tamper test and judged by the ransomware scorecard.
-func (s *Service) appendOnlyTargets(domain string, settings store.Settings) []store.OffsiteTarget {
-	return slices.DeleteFunc(s.offsiteReplicationTargets(domain, settings), func(t store.OffsiteTarget) bool { return !t.Immutable })
-}
-
 // aggregateTamper folds the tamper verdicts of a domain's append-only targets
 // worst-of for the ransomware scorecard: had is true only when every one has a
 // recorded verdict, protected only when every one refused the delete, and at
@@ -3169,6 +3190,53 @@ func domainCoverage(ownCadence, everythingCadence string) (period int64, covered
 	return 0, ""
 }
 
+// domainWindow is domainCoverage for a domain whose entries may run on
+// schedules of their own. Without a section or full-backup cadence, the
+// shortest of those is the window, so a section backed up only by per-item
+// schedules still turns overdue when its backups stop.
+func (s *Service) domainWindow(domain, ownCadence string, settings store.Settings) (period int64, coveredBy string) {
+	if period, coveredBy = domainCoverage(ownCadence, settings.EverythingSchedule); period > 0 || !settings.PerItemSchedules {
+		return period, coveredBy
+	}
+	var effs []schedule.EffectiveSchedule
+	var err error
+	switch domain {
+	case "containers":
+		var ts []store.Target
+		ts, err = s.store.ListTargets()
+		for _, t := range ts {
+			effs = append(effs, schedule.EffectiveContainerSchedule(t, settings))
+		}
+	case "vms":
+		var vs []store.VMTarget
+		vs, err = s.store.ListVMTargets()
+		for _, v := range vs {
+			effs = append(effs, schedule.EffectiveVMSchedule(v, settings))
+		}
+	case "files":
+		var sets []store.FileSet
+		sets, err = s.store.ListFileSets()
+		for _, set := range sets {
+			effs = append(effs, schedule.EffectiveFileSetSchedule(set, settings))
+		}
+	case zfsDomain:
+		var ds []store.ZFSDataset
+		ds, err = s.store.ListZFSDatasets()
+		for _, d := range ds {
+			effs = append(effs, schedule.EffectiveZFSDatasetSchedule(d, settings))
+		}
+	}
+	if err != nil {
+		log.Printf("api: status %s: the entries could not be read, so their own schedules set no window: %v", domain, err) //nolint:gosec // G706: domain is a fixed literal
+	}
+	for _, eff := range effs {
+		if p := cadencePeriodSeconds(eff.Spec); eff.Kind == schedule.EffectiveOwn && p > 0 && (period == 0 || p < period) {
+			period = p
+		}
+	}
+	return period, ""
+}
+
 // protInputs carries the facts protectionLevel aggregates, so the decision is a
 // pure function of its inputs (unit-testable without a store) and mirrors
 // rpoStatus's shape.
@@ -3470,10 +3538,10 @@ func (s *Service) domainStatusFrom(settings store.Settings) ([]DomainStatusEntry
 		}
 
 		// A period is only meaningful for an enabled domain that something
-		// actually backs up on a cadence — its own, or the "Backup Everything"
-		// pass (see domainCoverage). An unparseable cadence (defensive — the
-		// settings PUT validates) collapses to period 0 → "off".
-		period, coveredBy := domainCoverage(d.schedule, settings.EverythingSchedule)
+		// backs up on a cadence: its own, the Backup Everything pass or its
+		// entries' own schedules (see domainWindow). An unparseable cadence
+		// collapses to period 0, which reads "off".
+		period, coveredBy := s.domainWindow(d.name, d.schedule, settings)
 		scheduled := d.enabled && period > 0
 
 		// The latest LOCAL restore-verification drill drives the "last verified
@@ -3568,12 +3636,14 @@ func (s *Service) domainStatusFrom(settings store.Settings) ([]DomainStatusEntry
 		}
 		in.paused, in.byTarget, in.targets = s.placementCurrency(settings, d.name)
 		// Without a restic off-site, current replicas of every ZFS item are the
-		// domain's copy off the premises, and their age is its currency.
+		// domain's copy off the premises, and their age is its currency. They
+		// are no restic repository, so OffsiteConfigured stays false: the off-site
+		// check, unlock and trial restore have nothing to open there.
 		var replicaState string
 		if d.name == zfsDomain {
 			replicaState = s.zfsReplicaDomainState(now, settings)
 			if at, period, ok := s.zfsReplicaCoverage(now, settings); ok && !offsiteConfigured {
-				offsiteConfigured, offPremisesCovered = true, true
+				offPremisesCovered = true
 				lastReplicationAt, lastReplicationOK = at, true
 				in.offsiteConfigured, in.lastReplicationAt, in.offsitePeriod = true, at, period
 			}
@@ -3589,7 +3659,7 @@ func (s *Service) domainStatusFrom(settings store.Settings) ([]DomainStatusEntry
 
 		// An off-site retention strategy is "configured" when the far side prunes
 		// (immutable), a growth budget is set, or an off-site keep policy is set.
-		pruneStrategySet := offsiteImmutable ||
+		pruneStrategySet := offsiteImmutableFor(d.name, settings) ||
 			settings.OffsiteGrowthBudgetGB > 0 ||
 			s.offsiteRetentionPolicy(settings, d.name).Any()
 
@@ -16360,13 +16430,6 @@ func (s *Service) CheckDomain(ctx context.Context, domain, source string) (err e
 		return errDomainBusy
 	}
 	defer unlock()
-	// The ceiling is PER REPOSITORY, multiplied up so the whole pass fits. It was
-	// sized for one repository and now covers a domain's list, so a two-repository
-	// domain would otherwise be cut off half way through the second one and report
-	// a timeout naming neither. The multiplication is bounded by the number of
-	// repositories a domain HAS, which is the number of rows an operator created.
-	ctx, cancel := context.WithTimeout(ctx, time.Duration(len(repos))*15*time.Minute)
-	defer cancel()
 	// Publish "maintenance" progress, with restic's pack counts while it reads,
 	// and record a "verify" run, so a manual or scheduled verify shows up on the
 	// dashboard activity log and run history instead of running invisibly.
@@ -16375,6 +16438,10 @@ func (s *Service) CheckDomain(ctx context.Context, domain, source string) (err e
 	defer func() { s.progEnd(vkey, "maintenance", err == nil, startedAt) }()
 	ctx, stopCounting := s.progCounted(ctx, vkey, startedAt)
 	defer stopCounting()
+	// A large remote repository takes as long as it takes; only a check that
+	// goes silent is cut off.
+	ctx, cancel := stallDeadline(ctx, maintenanceStall)
+	defer cancel()
 	runID, rErr := s.startRun(ctx, domainRunTargetID(domain), "verify")
 	if rErr != nil {
 		log.Printf("api: verify %s: could not start run record (continuing): %v", domain, rErr) //nolint:gosec // G706: domain is a fixed literal
@@ -17651,7 +17718,7 @@ func (s *Service) UnlockDomain(ctx context.Context, domain, source string) ([]st
 		return nil, errDomainBusy
 	}
 	defer unlock()
-	// Per repository, like the other three (see CheckDomain).
+	// Per repository, so a domain with several gets the same time for each.
 	ctx, cancel := context.WithTimeout(ctx, time.Duration(len(repos))*2*time.Minute)
 	defer cancel()
 	// removeAll (a FORCE removal, live locks included) is only safe where this
@@ -17811,6 +17878,10 @@ func (s *Service) pruneDomain(ctx context.Context, domain, source string, afterB
 	defer func() { s.progEnd(pkey, "maintenance", err == nil, startedAt) }()
 	ctx, stopCounting := s.progCounted(ctx, pkey, startedAt)
 	defer stopCounting()
+	// Repacking a large remote repository downloads and uploads packs for as
+	// long as it needs; only a prune that goes silent is cut off.
+	ctx, stopStall := stallDeadline(ctx, maintenanceStall)
+	defer stopStall()
 	runID, rErr := s.startRun(ctx, domainRunTargetID(domain), "prune")
 	if rErr != nil {
 		log.Printf("api: prune %s: could not start run record (continuing): %v", domain, rErr) //nolint:gosec // G706: domain is a fixed literal

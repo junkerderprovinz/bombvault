@@ -381,17 +381,14 @@ func (s *Service) coverZFSDatasets(settings store.Settings, declined declinedBac
 		return out
 	}
 	for _, d := range items {
-		eff := schedule.EffectiveZFSDatasetSchedule(d, settings)
+		replicaOnly := s.zfsReplicaOnly(d)
+		eff := zfsItemSchedule(d, settings, replicaOnly)
 		if declined.holds(zfsDomain, d.ID, eff) {
 			out.Declined++
 			continue
 		}
 		out.Total++
-		// A replica on a plan of its own is what protects an item with no
-		// place to back up to, whether or not a backup schedule is set.
-		replicaOnly := s.zfsReplicaOnly(d)
-		replicaPlan := replicaOnly && schedule.ZFSReplicaOwnSchedule(d, settings)
-		if eff.Kind == schedule.EffectiveNone && !replicaPlan {
+		if eff.Kind == schedule.EffectiveNone {
 			out.Unprotected = append(out.Unprotected, CoverageItem{
 				Name:          d.Dataset,
 				Reason:        reasonFor(d.Enabled, d.ScheduleCadence, settings.PerItemSchedules),

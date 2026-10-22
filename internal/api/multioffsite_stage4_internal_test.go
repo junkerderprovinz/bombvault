@@ -141,6 +141,7 @@ func aggregateTamperOf(t *testing.T, svc *Service, domain string) (had, protecte
 // Without target rows the domain-wide verdict applies. With several
 // append-only targets the domain is protected only when all are, has no
 // verdict while any of them lacks one, and is dated by the oldest verdict.
+// Targets that are not append-only make no claim and need no verdict.
 func TestAggregateTamperWorstOf(t *testing.T) {
 	st := stage4Store(t)
 	svc := &Service{cfg: config.Config{AppKey: strings.Repeat("a", 64)}, store: st}
@@ -164,6 +165,7 @@ func TestAggregateTamperWorstOf(t *testing.T) {
 
 	appendOnlyTarget(t, st, "vms", "t1", "rest:http://host/t1")
 	appendOnlyTarget(t, st, "vms", "t2", "rest:http://host/t2")
+	enableTarget(t, st, "vms", "plain")
 	if err := st.RecordTamperTestForTarget("vms", "t1", true, ""); err != nil {
 		t.Fatal(err)
 	}
@@ -233,10 +235,10 @@ func TestRunTamperTestPerTargetWorstOf(t *testing.T) {
 	defer accept.Close()
 
 	st := stage4Store(t)
-	if _, err := st.UpsertOffsiteTarget(store.OffsiteTarget{ID: "good", Domain: "containers", Name: "good", Repo: "rest:" + refuse.URL, Enabled: true}); err != nil {
+	if _, err := st.UpsertOffsiteTarget(store.OffsiteTarget{ID: "good", Domain: "containers", Name: "good", Repo: "rest:" + refuse.URL, Enabled: true, Immutable: true}); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := st.UpsertOffsiteTarget(store.OffsiteTarget{ID: "bad", Domain: "containers", Name: "bad", Repo: "rest:" + accept.URL, Enabled: true}); err != nil {
+	if _, err := st.UpsertOffsiteTarget(store.OffsiteTarget{ID: "bad", Domain: "containers", Name: "bad", Repo: "rest:" + accept.URL, Enabled: true, Immutable: true}); err != nil {
 		t.Fatal(err)
 	}
 	svc := &Service{cfg: config.Config{AppKey: strings.Repeat("a", 64)}, store: st, ssh: &fakeHostSSH{}}

@@ -3510,6 +3510,11 @@ func (h *Handler) handleRecoveryKitAck(w http.ResponseWriter, _ *http.Request) {
 
 // handleCheck verifies the integrity of a domain's restic repo (restic check).
 // POST /api/check/{domain}  domain ∈ {containers, vms, flash, files, zfs}
+//
+// The check, like the drill, unlock and prune below, outlives its request: a
+// proxy that gives up after a minute or a closed tab would otherwise kill
+// restic part way and record a failed run. The card follows the progress key
+// and reads the recorded run when the answer does not come back.
 func (h *Handler) handleCheck(w http.ResponseWriter, r *http.Request) {
 	domain := r.PathValue("domain")
 	switch domain {
@@ -3518,7 +3523,7 @@ func (h *Handler) handleCheck(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "unknown domain"})
 		return
 	}
-	if err := h.svc.CheckDomain(r.Context(), domain, sourceParam(r)); err != nil {
+	if err := h.svc.CheckDomain(context.WithoutCancel(r.Context()), domain, sourceParam(r)); err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
@@ -3540,7 +3545,7 @@ func (h *Handler) handleRunDrill(w http.ResponseWriter, r *http.Request) {
 	}
 	// Manual: fail fast with immediate busy feedback (wait=false) so the UI can tell
 	// the user a backup is running rather than blocking the request.
-	drill, err := h.svc.RunRestoreDrill(r.Context(), domain, sourceParam(r), kindParam(r), false)
+	drill, err := h.svc.RunRestoreDrill(context.WithoutCancel(r.Context()), domain, sourceParam(r), kindParam(r), false)
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
@@ -3600,7 +3605,7 @@ func (h *Handler) handleUnlock(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "unknown domain"})
 		return
 	}
-	skipped, err := h.svc.UnlockDomain(r.Context(), domain, sourceParam(r))
+	skipped, err := h.svc.UnlockDomain(context.WithoutCancel(r.Context()), domain, sourceParam(r))
 	if err != nil {
 		// The skip list rides along on BOTH paths. A repository that only got the
 		// stale-lock clear is a Note - it never becomes the error - so on the
@@ -3628,7 +3633,7 @@ func (h *Handler) handlePrune(w http.ResponseWriter, r *http.Request) {
 	if !h.requireAuthForSecrets(w, r, "pruning backups") {
 		return
 	}
-	paused, err := h.svc.PruneDomain(r.Context(), domain, sourceParam(r))
+	paused, err := h.svc.PruneDomain(context.WithoutCancel(r.Context()), domain, sourceParam(r))
 	if err != nil {
 		body := failEnvelope(err)
 		if len(paused) > 0 {

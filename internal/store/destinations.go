@@ -452,8 +452,8 @@ var ErrTargetHasDirectRepo = errors.New("entries back up straight to this target
 // MoveTargetToDestination points a domain target at location, the folder
 // another destination keeps for the domain, and hangs it on that destination.
 // The target keeps its id, its copy rules and what it was seen holding, which
-// a copy of its repository brought along. Its aging mark and its tamper tests
-// spoke about the old place and go. For the target in the primary slot, settle
+// a copy of its repository brought along. Its aging mark, its tamper tests and
+// its off-site drills spoke about the old place and go. For the target in the primary slot, settle
 // brings the domain's off-site settings in line in the same transaction.
 func (r *Repo) MoveTargetToDestination(targetID, destID, location string, settle func(*Settings)) (OffsiteTarget, error) {
 	if strings.TrimSpace(location) == "" {
@@ -495,7 +495,7 @@ func (r *Repo) MoveTargetToDestination(targetID, destID, location string, settle
 		if out, err = followDestinationTx(tx, t, d); err != nil {
 			return err
 		}
-		if err := forgetPlaceTx(tx, t.ID); err != nil {
+		if err := forgetPlaceTx(tx, t.ID, t.Domain); err != nil {
 			return err
 		}
 		if t.SortOrder == 0 {
@@ -559,7 +559,7 @@ func (r *Repo) PrimaryFromDestination(destID, domain, location string, settle fu
 			}
 		}
 		if t.Repo != location {
-			if err := forgetPlaceTx(tx, t.ID); err != nil {
+			if err := forgetPlaceTx(tx, t.ID, domain); err != nil {
 				return err
 			}
 		}
@@ -579,14 +579,13 @@ func (r *Repo) PrimaryFromDestination(destID, domain, location string, settle fu
 	return out, nil
 }
 
-// forgetPlaceTx drops the aging mark and the tamper verdicts of the target
-// with the id, which spoke about the place it is leaving.
-func forgetPlaceTx(tx *sql.Tx, id string) error {
+// forgetPlaceTx drops the aging mark, the tamper verdicts and the drills of
+// the target with the id, which spoke about the place it is leaving.
+func forgetPlaceTx(tx *sql.Tx, id, domain string) error {
 	if _, err := tx.Exec(`UPDATE offsite_observations SET rules_rev = '', aged_at = 0 WHERE target_id = ?`, id); err != nil {
 		return err
 	}
-	_, err := tx.Exec(`DELETE FROM tamper_tests WHERE offsite_target_id = ?`, id)
-	return err
+	return forgetPlaceVerdictsTx(tx, id, domain)
 }
 
 // followDestinationTx hangs t on d: it takes d's mirrored fields, and so does

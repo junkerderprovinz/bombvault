@@ -241,6 +241,7 @@ func (h *Handler) handleAcceptMeshOffer(w http.ResponseWriter, r *http.Request) 
 		writeJSON(w, http.StatusOK, failEnvelope(h.undoAcceptedOffer(stored.ID, setID, err)))
 		return
 	}
+	h.replanAfterTargetChange()
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"target": offsiteTargetToView(stored)}))
 }
 

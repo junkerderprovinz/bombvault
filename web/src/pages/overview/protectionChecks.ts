@@ -66,7 +66,12 @@ function localCheck(d: DomainStatus, tally: Tally): Verdict {
 
 function offsiteCheck(d: DomainStatus, copying: boolean): Verdict {
   if (!d.offsiteConfigured) {
-    return d.offPremisesCovered ? ["ok", "overview.check.offsiteCurrent"] : ["fail", "overview.check.offsiteNone"];
+    // Without a restic off-site, the ZFS replicas are the copy away from
+    // here, and one that fails or falls behind is named as such.
+    if (d.replicaState === "failed") return ["warn", "overview.check.offsiteReplicaFailed", d.lastReplicationAt];
+    if (d.offPremisesCovered) return ["ok", "overview.check.offsiteCurrent", d.lastReplicationAt];
+    if (d.replicaState === "stale") return ["warn", "overview.check.offsiteReplicaOverdue"];
+    return ["fail", "overview.check.offsiteNone"];
   }
   if (copying) return ["run", "overview.check.offsiteRunning"];
   if (d.replicationState === "overdue") return ["warn", "overview.check.offsiteOverdue", d.lastReplicationAt];
@@ -130,9 +135,14 @@ export interface Section {
   tone: CheckTone;
 }
 
+function isLive(state: ProgressMap[string] | undefined): boolean {
+  return !!state?.active && !state.finished;
+}
+
 /**
  * sectionsOf measures every switched-on section. `drilling` is the domain
- * whose trial restore was started from this page and has not come back yet.
+ * whose trial restore was started from this page and has not come back yet;
+ * one the server is running for any other reason shows by its progress.
  */
 export function sectionsOf(
   domains: DomainStatus[],
@@ -146,7 +156,7 @@ export function sectionsOf(
     const tally = tallyEntries(items, kind);
     const checks = domainChecks(status, tally, {
       copying: !!progress[`offsite:${status.domain}`]?.active,
-      drilling: drilling === status.domain,
+      drilling: drilling === status.domain || isLive(progress[`drdrill:${status.domain}`]),
     });
     return [{ kind, status, tally, checks, tone: worstTone(checks) }];
   });

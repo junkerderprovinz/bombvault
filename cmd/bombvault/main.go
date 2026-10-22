@@ -496,7 +496,7 @@ func run() error {
 		return dErr
 	})
 	scheduler.SetTamperJob(func(domain string) error {
-		_, tErr := svc.RunScheduledTamperTest(context.Background(), domain)
+		_, tErr := svc.RunTamperTest(context.Background(), domain)
 		return tErr
 	})
 	scheduler.SetAppendOnlyDomains(svc.AppendOnlyDomains)

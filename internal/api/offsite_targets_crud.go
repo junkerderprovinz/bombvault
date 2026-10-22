@@ -332,7 +332,8 @@ func (h *Handler) handleCreateOffsiteTarget(w http.ResponseWriter, r *http.Reque
 }
 
 // replanAfterTargetChange reloads the schedule, which plans the tamper job
-// from the append-only targets. The save stands either way.
+// from the append-only targets and the trial restores from the targets in
+// use. The save stands either way.
 func (h *Handler) replanAfterTargetChange() {
 	if h.scheduler == nil {
 		return

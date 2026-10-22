@@ -14,6 +14,7 @@ import { Rows } from "../../components/storage/rows";
 import { countProgressText, type ResolveName } from "../../lib/activityLog";
 import { heldTagLabels } from "../../lib/anomalies";
 import {
+  answerLost,
   checkDomain,
   getStatus,
   listItems,
@@ -111,7 +112,7 @@ export function IntegrityCard({ t, hueIndex }: { t: T; hueIndex?: number }) {
   // dead run sends nothing that would re-render the card.
   const [now, setNow] = useState(() => Date.now());
   const liveKeys = Object.keys(progressMap)
-    .filter((k) => /^(verify|prune|drill):/.test(k) && progressMap[k].active && !progressMap[k].finished)
+    .filter((k) => /^(verify|prune|drill|drdrill):/.test(k) && progressMap[k].active && !progressMap[k].finished)
     .sort()
     .join("|");
   useEffect(() => {
@@ -138,6 +139,7 @@ export function IntegrityCard({ t, hueIndex }: { t: T; hueIndex?: number }) {
       [`verify:${domain}`, "integrity.checking"],
       [`prune:${domain}`, "integrity.pruning"],
       [`drill:${domain}`, "verify.running"],
+      [`drdrill:${domain}`, "overview.check.drillRunning"],
     ];
     for (const [key, labelKey] of ops) {
       const state = progressMap[key];
@@ -191,7 +193,10 @@ export function IntegrityCard({ t, hueIndex }: { t: T; hueIndex?: number }) {
         else push(say("integrity.passed"), "success");
       }
     } catch (err) {
-      push(err instanceof Error ? err.message : t("integrity.failed"), "fail");
+      // The server carries on without the request; its bar and the dots show
+      // how it ends.
+      if (answerLost(err)) push(say("integrity.answerLost"), "warn");
+      else push(err instanceof Error ? err.message : t("integrity.failed"), "fail");
     } finally {
       setBusy((b) => ({ ...b, [key]: false }));
       // The verdicts land in /api/status, which the overview reads too.

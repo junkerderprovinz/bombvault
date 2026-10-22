@@ -186,7 +186,11 @@ function UnprotectedRow({ item, t, onChanged }: { item: BackupItem; t: T; onChan
   const sentence = useScheduleSentence();
   const [saving, setSaving] = useState(false);
   const include = item.included ? undefined : ENTRY_KIND[item.kind].setIncluded;
-  const why = sentence(item.effectiveSchedule, KIND_SCHEDULE_LABEL[item.kind]);
+  // A schedule reaches a database whose dumps are missing, so the dumps are
+  // what it lacks.
+  const why = item.dbDumpGap
+    ? { text: t(item.dbDumpGap === "db-dump-failing" ? "coverage.reason.dbDumpFailing" : "coverage.reason.dbDumpOnlyCopyOff") }
+    : sentence(item.effectiveSchedule, KIND_SCHEDULE_LABEL[item.kind]);
   const { decline, busy: declining } = useDeclineBackup(onChanged);
 
   async function start(setIncluded: NonNullable<typeof include>) {
@@ -254,7 +258,7 @@ function UnprotectedRow({ item, t, onChanged }: { item: BackupItem; t: T; onChan
         </>
       }
     >
-      {why && <p className={SUB}>{why.text}</p>}
+      {why && <p className={`${SUB} first-letter:uppercase`}>{why.text}</p>}
     </Row>
   );
 }

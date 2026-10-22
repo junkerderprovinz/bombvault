@@ -218,6 +218,9 @@ const (
 //
 // A target derived from a destination keeps every followed setting it is
 // saved with a different value for, on top of those t.Own names.
+//
+// A target saved with another location loses the tamper tests and off-site
+// drills of the old one.
 func (r *Repo) UpsertOffsiteTarget(t OffsiteTarget) (OffsiteTarget, error) {
 	if strings.TrimSpace(t.Repo) == "" {
 		return OffsiteTarget{}, ErrEmptyOffsiteRepo
@@ -243,7 +246,7 @@ func (r *Repo) UpsertOffsiteTarget(t OffsiteTarget) (OffsiteTarget, error) {
 		return OffsiteTarget{}, fmt.Errorf("UpsertOffsiteTarget: %w", err)
 	}
 	if err == nil && repo != t.Repo {
-		if err := forgetPlaceTx(tx, t.ID); err != nil {
+		if err := forgetPlaceTx(tx, t.ID, t.Domain); err != nil {
 			return OffsiteTarget{}, fmt.Errorf("UpsertOffsiteTarget: %w", err)
 		}
 	}
@@ -314,6 +317,26 @@ func (r *Repo) UpsertOffsiteTarget(t OffsiteTarget) (OffsiteTarget, error) {
 		}
 	}
 	return commitStoredTargetTx(tx, t.ID)
+}
+
+// forgetPlaceVerdictsTx drops the tamper tests and off-site drills of the
+// place target id points at before it moves, so the new place starts unproven
+// instead of wearing the old one's results. The domain's drills under the bare
+// "offsite" source belong to its first switched-on target.
+func forgetPlaceVerdictsTx(tx *sql.Tx, id, domain string) error {
+	if _, err := tx.Exec(`DELETE FROM tamper_tests WHERE offsite_target_id = ?`, id); err != nil {
+		return err
+	}
+	var first string
+	err := tx.QueryRow(`SELECT id FROM offsite_targets WHERE domain = ? AND role = ? AND enabled = 1
+		ORDER BY sort_order, created_at, id LIMIT 1`, domain, RoleOffsite).Scan(&first)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return err
+	}
+	_, err = tx.Exec(`DELETE FROM restore_drills WHERE domain = ?
+		AND (offsite_target_id = ? OR source = ? OR (source = 'offsite' AND ?))`,
+		domain, id, "offsite:"+id, boolInt(first == id))
+	return err
 }
 
 // CreateOffsiteTarget inserts a replication destination at t.SortOrder, or

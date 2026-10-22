@@ -1,6 +1,20 @@
 package restic
 
-import "testing"
+import (
+	"context"
+	"errors"
+	"strings"
+	"testing"
+)
+
+func TestACancelledRunNamesTheCauseItWasCancelledFor(t *testing.T) {
+	ctx, cancel := context.WithCancelCause(context.Background())
+	cancel(errors.Join(errors.New("restic reported nothing for 30m0s"), context.DeadlineExceeded))
+	err := ctxCancelErr(ctx, []string{"prune"}, errors.New("signal: terminated"))
+	if !strings.Contains(err.Error(), "reported nothing") || !errors.Is(err, context.DeadlineExceeded) {
+		t.Fatalf("err = %v, want the cause named and still a deadline", err)
+	}
+}
 
 func TestParseCounterReadsResticsCounterLines(t *testing.T) {
 	cases := map[string]struct {

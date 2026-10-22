@@ -1019,6 +1019,7 @@ export const en = {
   "integrity.checking": "Checking…",
   "integrity.ok": "Healthy",
   "integrity.failed": "Check failed",
+  "integrity.answerLost": "{section}: no answer came back in time. BombVault keeps working on it and shows the result here when it is done.",
   // Minimal per-button fail glyph (GlimStone standing rule: failures toast,
   // the button itself only shows a brief fixed indicator matching
   // integrity.ok's own visual weight — see IntegrityCard's run()).
@@ -4496,6 +4497,8 @@ export const en = {
   "overview.check.offsitePaused": "Off-site: copy paused",
   "overview.check.offsiteNever": "Off-site: no copy yet",
   "overview.check.offsiteCurrent": "Off-site: copy up to date",
+  "overview.check.offsiteReplicaFailed": "Off-site: replica failed",
+  "overview.check.offsiteReplicaOverdue": "Off-site: replica overdue",
   "overview.check.lockNeedsOffsite": "Delete protection: needs an off-site storage location",
   "overview.check.lockChecked": "Delete protection: checked",
   "overview.check.lockFailed": "Delete protection: test failed",
@@ -6042,6 +6045,7 @@ export const de: Translations = {
   "integrity.checking": "Prüfe…",
   "integrity.ok": "Intakt",
   "integrity.failed": "Prüfung fehlgeschlagen",
+  "integrity.answerLost": "{section}: Die Antwort kam nicht rechtzeitig zurück. BombVault arbeitet weiter daran und zeigt das Ergebnis hier, sobald es fertig ist.",
   "integrity.unlock": "Entsperren",
   "integrity.prune": "Aufräumen",
   "integrity.verifyHint": "restic check ausführen, um Struktur und Metadaten zu verifizieren.",
@@ -9324,6 +9328,8 @@ export const de: Translations = {
   "overview.check.offsitePaused": "Off-site: Kopie pausiert",
   "overview.check.offsiteNever": "Off-site: noch keine Kopie",
   "overview.check.offsiteCurrent": "Off-site: Kopie aktuell",
+  "overview.check.offsiteReplicaFailed": "Off-site: Replik fehlgeschlagen",
+  "overview.check.offsiteReplicaOverdue": "Off-site: Replik überfällig",
   "overview.check.lockNeedsOffsite": "Löschschutz: braucht einen Off-site-Speicherort",
   "overview.check.lockChecked": "Löschschutz: geprüft",
   "overview.check.lockFailed": "Löschschutz: Test fehlgeschlagen",
