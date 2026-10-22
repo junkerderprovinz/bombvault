@@ -778,6 +778,7 @@ const el: Partial<Translations> = {
   "integrity.checking": "Έλεγχος…",
   "integrity.ok": "Υγιές",
   "integrity.failed": "Ο έλεγχος απέτυχε",
+  "integrity.answerLost": "{section}: η απάντηση δεν ήρθε εγκαίρως. Το BombVault συνεχίζει και θα δείξει το αποτέλεσμα εδώ μόλις τελειώσει.",
   "integrity.unlock": "Ξεκλείδωμα",
   "integrity.prune": "Εκκαθάριση",
   "integrity.verifyHint": "Εκτέλεση restic check για επαλήθευση δομής και μεταδεδομένων.",

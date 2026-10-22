@@ -772,6 +772,7 @@ const ko: Partial<Translations> = {
   "integrity.checking": "확인 중…",
   "integrity.ok": "정상",
   "integrity.failed": "검사 실패",
+  "integrity.answerLost": "{section}: 응답이 제때 오지 않았습니다. BombVault가 작업을 계속하며 끝나면 여기에 결과를 표시합니다.",
   "integrity.unlock": "잠금 해제",
   "integrity.prune": "정리",
   "integrity.verifyHint": "restic check를 실행하여 구조와 메타데이터 무결성을 확인합니다.",

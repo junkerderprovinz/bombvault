@@ -772,6 +772,7 @@ const ja: Partial<Translations> = {
   "integrity.checking": "確認中…",
   "integrity.ok": "正常",
   "integrity.failed": "チェックに失敗しました",
+  "integrity.answerLost": "{section}: 応答が時間内に返ってきませんでした。BombVault は処理を続け、終わると結果をここに表示します。",
   "integrity.unlock": "ロック解除",
   "integrity.prune": "整理",
   "integrity.verifyHint": "restic check を実行して構造とメタデータの整合性を検証します。",

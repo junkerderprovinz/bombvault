@@ -182,6 +182,16 @@ describe("sectionsOf", () => {
     expect(section.checks.find((c) => c.key === "drill")!.tone).toBe("run");
     expect(section.tone).toBe("run");
   });
+
+  it("follows a trial restore the server runs whose request is gone", () => {
+    const progress = { "drdrill:containers": { phase: "maintenance" as const, percent: 0, active: true, lastSeen: 0 } };
+    const [running] = sectionsOf([domain()], [item()], progress, null);
+    expect(running.checks.find((c) => c.key === "drill")!.tone).toBe("run");
+
+    const ended = { "drdrill:containers": { ...progress["drdrill:containers"], finished: true } };
+    const [done] = sectionsOf([domain()], [item()], ended, null);
+    expect(done.checks.find((c) => c.key === "drill")!.tone).toBe("ok");
+  });
 });
 
 describe("drilledText", () => {

@@ -778,6 +778,7 @@ const fr: Partial<Translations> = {
   "integrity.checking": "Vérification…",
   "integrity.ok": "Sain",
   "integrity.failed": "Vérification échouée",
+  "integrity.answerLost": "{section} : la réponse n'est pas arrivée à temps. BombVault continue et affichera le résultat ici une fois terminé.",
   "integrity.unlock": "Déverrouiller",
   "integrity.prune": "Élaguer",
   "integrity.verifyHint": "Lancer restic check pour vérifier la structure et les métadonnées.",

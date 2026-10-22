@@ -925,6 +925,7 @@ const hi: Partial<Translations> = {
   "integrity.checking": "जाँचा जा रहा है…",
   "integrity.ok": "स्वस्थ",
   "integrity.failed": "जाँच विफल हुई",
+  "integrity.answerLost": "{section}: जवाब समय पर नहीं आया। BombVault इस पर काम जारी रखता है और पूरा होने पर परिणाम यहाँ दिखाएगा।",
   "integrity.unlock": "अनलॉक करें",
   "integrity.prune": "प्रून करें",
   "integrity.verifyHint": "संरचना और मेटाडेटा बरकरार हैं यह जाँचने के लिए restic check चलाएँ।",

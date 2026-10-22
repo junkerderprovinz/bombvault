@@ -1,6 +1,6 @@
 import { useCallback, useState } from "react";
 
-import { runDrill } from "../../lib/api";
+import { answerLost, runDrill } from "../../lib/api";
 
 export interface TrialRestore {
   /** The domain whose trial restore is under way, or null. */
@@ -14,7 +14,9 @@ export interface TrialRestore {
 /**
  * useTrialRestore restores a section's newest off-site backup into a sandbox
  * on request. The server keeps the outcome, so the status is read again once
- * it is back.
+ * it is back. An answer a proxy gave up on is no refusal: the restore goes on
+ * on the server, its progress shows, and its result comes with the status
+ * read when it ends.
  */
 export function useTrialRestore(fallback: string): TrialRestore {
   const [running, setRunning] = useState<string | null>(null);
@@ -29,6 +31,7 @@ export function useTrialRestore(fallback: string): TrialRestore {
           if (!res.ok && !res.drill) setRefused((prev) => ({ ...prev, [domain]: res.error ?? fallback }));
         })
         .catch((err) => {
+          if (answerLost(err)) return;
           setRefused((prev) => ({ ...prev, [domain]: err instanceof Error ? err.message : fallback }));
         })
         .finally(() => {

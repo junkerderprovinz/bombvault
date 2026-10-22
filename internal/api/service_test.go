@@ -5434,6 +5434,8 @@ type fakeResticEngine struct {
 	inited    []string
 	backedUp  []string
 	lastPaths []string
+	// maintCtxErrs is the context error each check, unlock and prune saw.
+	maintCtxErrs []error
 	// lastDir is the directory of the last BackupDir call, and
 	// restoreAllTargets every whole-snapshot restore, in order.
 	lastDir           string
@@ -6039,13 +6041,15 @@ func (f *fakeResticEngine) RestoreSubtreeInclude(_ context.Context, repo, snapsh
 	return nil
 }
 
-func (f *fakeResticEngine) Check(_ context.Context, repo string, m restic.Mode) error {
+func (f *fakeResticEngine) Check(ctx context.Context, repo string, m restic.Mode) error {
+	f.maintCtxErrs = append(f.maintCtxErrs, ctx.Err())
 	f.checked = append(f.checked, repo)
 	f.checkedModes = append(f.checkedModes, m)
 	return f.checkErr
 }
 
-func (f *fakeResticEngine) CheckData(_ context.Context, repo string, subsetPercent int, m restic.Mode) error {
+func (f *fakeResticEngine) CheckData(ctx context.Context, repo string, subsetPercent int, m restic.Mode) error {
+	f.maintCtxErrs = append(f.maintCtxErrs, ctx.Err())
 	f.checkDataRepos = append(f.checkDataRepos, repo)
 	f.checkDataModes = append(f.checkDataModes, m)
 	f.checkDataPct = append(f.checkDataPct, subsetPercent)
@@ -6053,7 +6057,8 @@ func (f *fakeResticEngine) CheckData(_ context.Context, repo string, subsetPerce
 	return f.checkDataErr
 }
 
-func (f *fakeResticEngine) Unlock(_ context.Context, repo string, removeAll bool, m restic.Mode) error {
+func (f *fakeResticEngine) Unlock(ctx context.Context, repo string, removeAll bool, m restic.Mode) error {
+	f.maintCtxErrs = append(f.maintCtxErrs, ctx.Err())
 	f.unlockedRepos = append(f.unlockedRepos, repo)
 	f.unlockedModes = append(f.unlockedModes, m)
 	f.unlockRemoveAll = append(f.unlockRemoveAll, removeAll)
@@ -6061,7 +6066,8 @@ func (f *fakeResticEngine) Unlock(_ context.Context, repo string, removeAll bool
 	return f.unlockErr
 }
 
-func (f *fakeResticEngine) Prune(_ context.Context, repo string, m restic.Mode) error {
+func (f *fakeResticEngine) Prune(ctx context.Context, repo string, m restic.Mode) error {
+	f.maintCtxErrs = append(f.maintCtxErrs, ctx.Err())
 	f.manualPruned = append(f.manualPruned, repo)
 	f.prunedModes = append(f.prunedModes, m)
 	return f.pruneErr

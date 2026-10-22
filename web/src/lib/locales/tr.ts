@@ -778,6 +778,7 @@ const tr: Partial<Translations> = {
   "integrity.checking": "Denetleniyor…",
   "integrity.ok": "Sağlıklı",
   "integrity.failed": "Denetim başarısız",
+  "integrity.answerLost": "{section}: yanıt zamanında gelmedi. BombVault çalışmaya devam ediyor ve bitince sonucu burada gösterecek.",
   "integrity.unlock": "Kilidi aç",
   "integrity.prune": "Buda",
   "integrity.verifyHint": "Yapı ve meta verileri doğrulamak için restic check çalıştır.",

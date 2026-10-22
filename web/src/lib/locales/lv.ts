@@ -925,6 +925,7 @@ const lv: Partial<Translations> = {
   "integrity.checking": "Pārbauda…",
   "integrity.ok": "Vesels",
   "integrity.failed": "Pārbaude neizdevās",
+  "integrity.answerLost": "{section}: atbilde nepienāca laikā. BombVault turpina darbu un parādīs rezultātu šeit, kad būs pabeigts.",
   "integrity.unlock": "Atbloķēt",
   "integrity.prune": "Iztīrīt",
   "integrity.verifyHint": "Palaidiet restic check, lai pārbaudītu, vai struktūra un metadati ir neskarti.",

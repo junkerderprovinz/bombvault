@@ -772,6 +772,7 @@ const zh: Partial<Translations> = {
   "integrity.checking": "检查中…",
   "integrity.ok": "健康",
   "integrity.failed": "检查失败",
+  "integrity.answerLost": "{section}：未能及时收到回应。BombVault 会继续处理，完成后在这里显示结果。",
   "integrity.unlock": "解锁",
   "integrity.prune": "清理",
   "integrity.verifyHint": "运行 restic check 以验证结构和元数据的完整性。",

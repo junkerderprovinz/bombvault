@@ -775,6 +775,7 @@ const no: Partial<Translations> = {
   "integrity.checking": "Sjekker…",
   "integrity.ok": "Sunt",
   "integrity.failed": "Sjekk mislyktes",
+  "integrity.answerLost": "{section}: svaret kom ikke i tide. BombVault jobber videre og viser resultatet her når det er ferdig.",
   "integrity.unlock": "Lås opp",
   "integrity.prune": "Beskjær",
   "integrity.verifyHint": "Kjør restic check for å verifisere struktur og metadata.",

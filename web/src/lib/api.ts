@@ -863,6 +863,13 @@ export function explainedError(err: unknown): string | undefined {
   return err instanceof ApiError && knownSentence(err.status, err.code) !== undefined ? err.message : undefined;
 }
 
+/** answerLost reports a call whose answer never came back: the connection
+ *  dropped, or a proxy in front of BombVault gave up waiting. A check, trial
+ *  restore, unlock or prune keeps running on the server then. */
+export function answerLost(err: unknown): boolean {
+  return err instanceof ApiError && (err.status === 0 || err.status === 502 || err.status === 504);
+}
+
 type Refusal = { code?: string; error?: string } | null;
 
 async function readRefusal(res: Response): Promise<Refusal> {

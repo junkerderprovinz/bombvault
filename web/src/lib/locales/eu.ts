@@ -925,6 +925,7 @@ const eu: Partial<Translations> = {
   "integrity.checking": "Egiaztatzen…",
   "integrity.ok": "Osasuntsu",
   "integrity.failed": "Egiaztapenak huts egin du",
+  "integrity.answerLost": "{section}: erantzuna ez da garaiz iritsi. BombVault-ek lanean jarraitzen du eta emaitza hemen erakutsiko du amaitzean.",
   "integrity.unlock": "Desblokeatu",
   "integrity.prune": "Garbitu",
   "integrity.verifyHint": "Exekutatu restic check egitura eta metadatuak osorik daudela egiaztatzeko.",

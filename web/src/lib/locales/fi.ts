@@ -778,6 +778,7 @@ const fi: Partial<Translations> = {
   "integrity.checking": "Tarkistetaan…",
   "integrity.ok": "Kunnossa",
   "integrity.failed": "Tarkistus epäonnistui",
+  "integrity.answerLost": "{section}: vastaus ei tullut ajoissa. BombVault jatkaa työtä ja näyttää tuloksen tässä, kun se on valmis.",
   "integrity.unlock": "Avaa lukitus",
   "integrity.prune": "Karsi",
   "integrity.verifyHint": "Suorita restic check rakenteen ja metatietojen tarkistamiseksi.",

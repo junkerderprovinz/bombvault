@@ -778,6 +778,7 @@ const da: Partial<Translations> = {
   "integrity.checking": "Tjekker…",
   "integrity.ok": "Sund",
   "integrity.failed": "Tjek mislykkedes",
+  "integrity.answerLost": "{section}: svaret kom ikke i tide. BombVault arbejder videre og viser resultatet her, når det er færdigt.",
   "integrity.unlock": "Lås op",
   "integrity.prune": "Beskær",
   "integrity.verifyHint": "Kør restic check for at verificere struktur og metadata.",

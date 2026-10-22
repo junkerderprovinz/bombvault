@@ -925,6 +925,7 @@ const lt: Partial<Translations> = {
   "integrity.checking": "Tikrinama…",
   "integrity.ok": "Sveika",
   "integrity.failed": "Patikra nepavyko",
+  "integrity.answerLost": "{section}: atsakymas laiku negrįžo. BombVault dirba toliau ir parodys rezultatą čia, kai baigs.",
   "integrity.unlock": "Atrakinti",
   "integrity.prune": "Valyti",
   "integrity.verifyHint": "Paleisk restic check, kad patikrintum, ar struktūra ir metaduomenys yra nepažeisti.",

@@ -775,6 +775,7 @@ const ro: Partial<Translations> = {
   "integrity.checking": "Verificare…",
   "integrity.ok": "Sănătos",
   "integrity.failed": "Verificare eșuată",
+  "integrity.answerLost": "{section}: răspunsul nu a sosit la timp. BombVault lucrează în continuare și va afișa rezultatul aici când termină.",
   "integrity.unlock": "Deblochează",
   "integrity.prune": "Curăță",
   "integrity.verifyHint": "Rulează restic check pentru a verifica structura și metadatele.",

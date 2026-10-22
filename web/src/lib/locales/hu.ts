@@ -778,6 +778,7 @@ const hu: Partial<Translations> = {
   "integrity.checking": "Ellenőrzés…",
   "integrity.ok": "Ép",
   "integrity.failed": "Az ellenőrzés sikertelen",
+  "integrity.answerLost": "{section}: a válasz nem érkezett meg időben. A BombVault tovább dolgozik rajta, és itt mutatja az eredményt, amikor elkészül.",
   "integrity.unlock": "Feloldás",
   "integrity.prune": "Nyesés",
   "integrity.verifyHint": "restic check futtatása a szerkezet és metaadatok ellenőrzéséhez.",

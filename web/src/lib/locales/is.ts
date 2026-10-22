@@ -925,6 +925,7 @@ const is: Partial<Translations> = {
   "integrity.checking": "Staðfesti…",
   "integrity.ok": "Heilbrigt",
   "integrity.failed": "Staðfesting mistókst",
+  "integrity.answerLost": "{section}: svarið barst ekki í tæka tíð. BombVault heldur áfram og sýnir niðurstöðuna hér þegar því lýkur.",
   "integrity.unlock": "Aflæsa",
   "integrity.prune": "Hreinsa",
   "integrity.verifyHint": "Keyrðu restic check til að staðfesta að uppbygging og lýsigögn séu heil.",

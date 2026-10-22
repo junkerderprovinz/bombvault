@@ -778,6 +778,7 @@ const ar: Partial<Translations> = {
   "integrity.checking": "جارٍ الفحص…",
   "integrity.ok": "سليم",
   "integrity.failed": "فشل الفحص",
+  "integrity.answerLost": "{section}: لم يصل الرد في الوقت المناسب. يواصل BombVault العمل عليه ويعرض النتيجة هنا عند الانتهاء.",
   "integrity.unlock": "إلغاء القفل",
   "integrity.prune": "تقليم",
   "integrity.verifyHint": "تشغيل restic check للتحقق من سلامة البنية والبيانات الوصفية.",
