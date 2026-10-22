@@ -553,6 +553,8 @@ export const en = {
   "dest.nameHint": "Shown on the buttons. It can be changed later.",
   "dest.token.run": "Run this on a computer with a browser and sign in",
   "dest.token.tip": "BombVault runs on a server without a browser. rclone opens the sign-in on your computer and prints a token afterwards, which goes into the field below. rclone for Windows, macOS and Linux is on rclone.org.",
+  "dest.trustToken.run": "Sign in on a computer with rclone, then paste trust_token and cookies from rclone config show below",
+  "dest.trustToken.tip": "iCloud Drive wants your regular Apple ID password, not an app-specific one, and a two-factor code that only rclone config can ask for. Apple ends that sign-in after 30 days, and copies to iCloud Drive fail until you sign in again and paste the new values under {change}.",
   "dest.sshKey": "Add BombVault's public SSH key to the server",
   "dest.sshKey.tip": "The same key BombVault uses for VM backups over SSH. With the key in place no password is needed, and password sign-in can be turned off on the server.",
   "dest.appPassword.tip": "With two-factor sign-in on, the normal password does not work. Create an app password in your account's security settings.",
@@ -4411,6 +4413,7 @@ export const en = {
   "storage.conn.change": "Change connection",
   "storage.conn.title": "Change the connection of {name}",
   "storage.conn.save": "Test and save",
+  "storage.conn.sharedSignIn": "Other places sign in with {name} too. A change here gives this storage location a sign-in of its own. To change {name} everywhere, do it under {signIns}.",
   "storage.remove.action": "Remove storage location",
   "storage.startOver": "Start a new repository here",
   "storage.startOverConfirm":
@@ -5598,6 +5601,8 @@ export const de: Translations = {
   "dest.nameHint": "Steht auf den Knöpfen. Lässt sich später ändern.",
   "dest.token.run": "Auf einem Rechner mit Browser ausführen und anmelden",
   "dest.token.tip": "BombVault läuft auf einem Server ohne Browser. rclone öffnet die Anmeldung deshalb auf deinem Rechner und gibt danach ein Token aus. Das fügst du unten ein. rclone für Windows, macOS und Linux gibt es auf rclone.org.",
+  "dest.trustToken.run": "Melde dich auf einem Rechner mit rclone an und füge danach trust_token und cookies aus rclone config show unten ein",
+  "dest.trustToken.tip": "iCloud Drive will dein normales Apple-ID-Passwort, kein app-spezifisches, und einen Zwei-Faktor-Code, den nur rclone config abfragen kann. Apple beendet diese Anmeldung nach 30 Tagen. Danach schlagen Kopien nach iCloud Drive fehl, bis du dich neu anmeldest und die neuen Werte unter {change} einfügst.",
   "dest.sshKey": "BombVaults öffentlichen SSH-Schlüssel auf dem Server hinterlegen",
   "dest.sshKey.tip": "Derselbe Schlüssel, mit dem BombVault VMs über SSH sichert. Mit dem Schlüssel braucht es kein Passwort, und die Passwort-Anmeldung lässt sich auf dem Server ganz abschalten.",
   "dest.appPassword.tip": "Mit eingeschalteter Zwei-Faktor-Anmeldung geht das normale Passwort nicht. Ein App-Passwort legst du in den Sicherheitseinstellungen deines Kontos an.",
@@ -9255,6 +9260,7 @@ export const de: Translations = {
   "storage.conn.change": "Verbindung ändern",
   "storage.conn.title": "Verbindung von {name} ändern",
   "storage.conn.save": "Testen und speichern",
+  "storage.conn.sharedSignIn": "Auch andere Orte melden sich mit {name} an. Eine Änderung hier gibt diesem Speicherort eigene Zugangsdaten. Willst du {name} überall ändern, tu das unter {signIns}.",
   "storage.remove.action": "Speicherort entfernen",
   "storage.startOver": "Hier ein neues Repository anlegen",
   "storage.startOverConfirm":

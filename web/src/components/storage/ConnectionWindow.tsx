@@ -2,9 +2,9 @@ import { useEffect, useMemo, useState } from "react";
 import { getCloud, getRcloneSections, type BackendOption, type RcloneSection } from "../../lib/api";
 import { useT } from "../../lib/i18n";
 import { placementErrorText } from "../../lib/placementCodes";
-import { connectionPatch, storedConnection, type StoredSignIn } from "../../lib/storageConnection";
+import { connectionPatch, sharedSignIn, storedConnection, type StoredSignIn } from "../../lib/storageConnection";
 import { rcloneRemote } from "../../lib/storageLocations";
-import { useCloudCredSets } from "../../lib/useCloudCredSets";
+import { credSetLabel, useCloudCredSets } from "../../lib/useCloudCredSets";
 import type { ProviderForm } from "../../lib/useProviders";
 import { useTestVerdict } from "../../lib/useTestVerdict";
 import { InstanceWindow } from "../../pages/instances/InstanceWindow";
@@ -56,6 +56,7 @@ export function ConnectionWindow({ edit, form, onClose }: { edit: LocationEdit; 
 
   const fields = useMemo(() => formFields(provider, backend), [provider, backend]);
   const signIn = sets.find((s) => s.id === location.credsRef) ?? shared;
+  const shares = provider.route === "s3" || provider.route === "rest" ? sharedSignIn(sets, location) : undefined;
   const stored = useMemo(() => storedConnection(provider, location.where, signIn, section), [provider, location.where, signIn, section]);
   const shown = [...fields.main, ...fields.more];
   const browsable = provider.route === "s3" || provider.route === "rclone";
@@ -109,6 +110,13 @@ export function ConnectionWindow({ edit, form, onClose }: { edit: LocationEdit; 
         </>
       }
     >
+      {shares && (
+        <p className="text-xs text-carbon-textMuted">
+          {t("storage.conn.sharedSignIn")
+            .replaceAll("{name}", () => credSetLabel(t, shares))
+            .replace("{signIns}", () => t("signIns.title"))}
+        </p>
+      )}
       <Rows>{fields.main.map(field)}</Rows>
       {browsable && (
         <RemoteFolderBrowser

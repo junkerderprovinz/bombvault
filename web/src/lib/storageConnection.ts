@@ -1,7 +1,21 @@
 // How a saved destination is reached, as far as the server shows it, and the
 // patch that changes it.
 
-import type { BackendOption, DestinationConnectionEdit, Provider, RcloneSection } from "./api";
+import type { BackendOption, CloudCredSetInfo, DestinationConnectionEdit, Provider, RcloneSection } from "./api";
+
+/**
+ * sharedSignIn is the saved sign-in a location shares with other places, or
+ * undefined when it has one of its own. A change of its keys in the
+ * connection window gives the location a sign-in of its own, since only its
+ * repositories are tried with them. A location that names none signs in with
+ * the default.
+ */
+export function sharedSignIn(sets: CloudCredSetInfo[], location: { id: string; credsRef?: string }): CloudCredSetInfo | undefined {
+  const set = location.credsRef ? sets.find((s) => s.id === location.credsRef) : sets.find((s) => s.default);
+  if (!set) return undefined;
+  if (!location.credsRef || set.default) return set;
+  return set.usedBy?.some((u) => u.id !== location.id) ? set : undefined;
+}
 
 /** What signs a location in, without the secrets. */
 export interface StoredSignIn {

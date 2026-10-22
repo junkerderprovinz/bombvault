@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import type { BackendOption, Provider } from "./api";
-import { connectionPatch, storedConnection, type StoredConnection } from "./storageConnection";
+import type { BackendOption, CloudCredSetInfo, Provider } from "./api";
+import { connectionPatch, sharedSignIn, storedConnection, type StoredConnection } from "./storageConnection";
 
 function provider(route: Provider["route"]): Provider {
   return { id: route, name: route, backend: "", group: "server", route };
@@ -81,5 +81,28 @@ describe("connectionPatch", () => {
 
   it("ignores what was typed into a field the form no longer shows", () => {
     expect(connectionPatch([option("host")], isSecret, stored, { user: "x" }, "bv")).toEqual({});
+  });
+});
+
+describe("sharedSignIn", () => {
+  function set(id: string, usedBy: string[], isDefault = false): CloudCredSetInfo {
+    return {
+      id, name: id, s3KeyId: "", s3Region: "", restUser: "bv", s3StorageClass: "", s3SecretSet: false, restPasswordSet: true,
+      default: isDefault, usedBy: usedBy.map((u) => ({ id: u, name: u })),
+    };
+  }
+  const here = { id: "destination:a", credsRef: "wasabi" };
+
+  it("names a sign-in another location uses too", () => {
+    expect(sharedSignIn([set("wasabi", ["destination:a", "destination:b"])], here)?.id).toBe("wasabi");
+  });
+
+  it("names the default, which every place that names no sign-in uses", () => {
+    expect(sharedSignIn([set("wasabi", ["destination:a"], true)], here)?.id).toBe("wasabi");
+    expect(sharedSignIn([set("main", [], true)], { id: "destination:a" })?.id).toBe("main");
+  });
+
+  it("leaves out a sign-in only this location uses", () => {
+    expect(sharedSignIn([set("wasabi", ["destination:a"]), set("main", [], true)], here)).toBeUndefined();
   });
 });

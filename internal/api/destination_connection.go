@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"maps"
 	"net/http"
+	"slices"
 	"strings"
 
 	"github.com/junkerderprovinz/bombvault/internal/remotes"
@@ -153,7 +154,11 @@ func (s *Service) editSignInConnection(ctx context.Context, d store.OffsiteTarge
 		}
 	}
 
-	if d.CredsRef == "" {
+	own, err := s.ownsSignIn(before, d, creds)
+	if err != nil {
+		return store.OffsiteTarget{}, nil, err
+	}
+	if !own {
 		if d.CredsRef, err = s.addCredSet(d.Name, creds); err != nil {
 			return store.OffsiteTarget{}, nil, err
 		}
@@ -174,6 +179,31 @@ func (s *Service) editSignInConnection(ctx context.Context, d store.OffsiteTarge
 	}
 	warnings := s.directCredsWarnings(ctx, before, func(_, target store.OffsiteTarget) bool { return target.DestinationID == d.ID })
 	return saved, warnings, nil
+}
+
+// ownsSignIn reports whether creds may be written into the saved sign-in d
+// names. Only d's own repositories were tried with them, so when the default
+// or anything else uses that sign-in, or it is gone, d gets one of its own.
+func (s *Service) ownsSignIn(settings store.Settings, d store.OffsiteTarget, creds CloudCreds) (bool, error) {
+	if d.CredsRef == "" {
+		return false, nil
+	}
+	sets, err := s.decodeCloudCredSets(settings)
+	if err != nil {
+		return false, err
+	}
+	i := slices.IndexFunc(sets, func(c CloudCredSet) bool { return c.ID == d.CredsRef })
+	if i < 0 {
+		return false, nil
+	}
+	if sets[i].CloudCreds == creds {
+		return true, nil
+	}
+	if sets[i].Default {
+		return false, nil
+	}
+	named, err := s.store.CredsRefNamedBeyond(d.CredsRef, d.ID)
+	return !named, err
 }
 
 // patched returns the value a patch sets for key, or stored when the patch
