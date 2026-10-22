@@ -89,9 +89,10 @@ func (s *Service) runWatchdogAt(ctx context.Context, now int64) error {
 		if !last.IsZero() {
 			lastUnix = last.Unix()
 		}
-		// A domain backed up only by the Backup Everything pass has no cadence of
-		// its own, and period 0 would disarm the watchdog for it.
-		period, _ := domainCoverage(d.schedule, settings.EverythingSchedule)
+		// A domain backed up only by the Backup Everything pass or by its
+		// entries' own schedules has no cadence of its own, and period 0 would
+		// disarm the watchdog for it.
+		period, _ := s.domainWindow(d.name, d.schedule, settings)
 
 		state, haveState, sErr := s.store.GetWatchdogState(d.name)
 		if sErr != nil {

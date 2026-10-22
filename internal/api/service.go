@@ -3169,6 +3169,53 @@ func domainCoverage(ownCadence, everythingCadence string) (period int64, covered
 	return 0, ""
 }
 
+// domainWindow is domainCoverage for a domain whose entries may run on
+// schedules of their own. Without a section or full-backup cadence, the
+// shortest of those is the window, so a section backed up only by per-item
+// schedules still turns overdue when its backups stop.
+func (s *Service) domainWindow(domain, ownCadence string, settings store.Settings) (period int64, coveredBy string) {
+	if period, coveredBy = domainCoverage(ownCadence, settings.EverythingSchedule); period > 0 || !settings.PerItemSchedules {
+		return period, coveredBy
+	}
+	var effs []schedule.EffectiveSchedule
+	var err error
+	switch domain {
+	case "containers":
+		var ts []store.Target
+		ts, err = s.store.ListTargets()
+		for _, t := range ts {
+			effs = append(effs, schedule.EffectiveContainerSchedule(t, settings))
+		}
+	case "vms":
+		var vs []store.VMTarget
+		vs, err = s.store.ListVMTargets()
+		for _, v := range vs {
+			effs = append(effs, schedule.EffectiveVMSchedule(v, settings))
+		}
+	case "files":
+		var sets []store.FileSet
+		sets, err = s.store.ListFileSets()
+		for _, set := range sets {
+			effs = append(effs, schedule.EffectiveFileSetSchedule(set, settings))
+		}
+	case zfsDomain:
+		var ds []store.ZFSDataset
+		ds, err = s.store.ListZFSDatasets()
+		for _, d := range ds {
+			effs = append(effs, schedule.EffectiveZFSDatasetSchedule(d, settings))
+		}
+	}
+	if err != nil {
+		log.Printf("api: status %s: the entries could not be read, so their own schedules set no window: %v", domain, err) //nolint:gosec // G706: domain is a fixed literal
+	}
+	for _, eff := range effs {
+		if p := cadencePeriodSeconds(eff.Spec); eff.Kind == schedule.EffectiveOwn && p > 0 && (period == 0 || p < period) {
+			period = p
+		}
+	}
+	return period, ""
+}
+
 // protInputs carries the facts protectionLevel aggregates, so the decision is a
 // pure function of its inputs (unit-testable without a store) and mirrors
 // rpoStatus's shape.
@@ -3470,10 +3517,10 @@ func (s *Service) domainStatusFrom(settings store.Settings) ([]DomainStatusEntry
 		}
 
 		// A period is only meaningful for an enabled domain that something
-		// actually backs up on a cadence — its own, or the "Backup Everything"
-		// pass (see domainCoverage). An unparseable cadence (defensive — the
-		// settings PUT validates) collapses to period 0 → "off".
-		period, coveredBy := domainCoverage(d.schedule, settings.EverythingSchedule)
+		// backs up on a cadence: its own, the Backup Everything pass or its
+		// entries' own schedules (see domainWindow). An unparseable cadence
+		// collapses to period 0, which reads "off".
+		period, coveredBy := s.domainWindow(d.name, d.schedule, settings)
 		scheduled := d.enabled && period > 0
 
 		// The latest LOCAL restore-verification drill drives the "last verified

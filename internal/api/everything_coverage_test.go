@@ -19,6 +19,47 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
+// A section whose entries all run on schedules of their own, with no section
+// schedule and no full backup, is still a scheduled section: its window is the
+// shortest of those schedules, so it turns overdue when the backups stop.
+func TestDomainStatusFollowsTheEntriesOwnSchedules(t *testing.T) {
+	dir := t.TempDir()
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
+	st := newMemStore(t)
+
+	s := mustSettings(t, st)
+	s.ContainersEnabled = true
+	s.ContainersSchedule, s.EverythingSchedule = "off", "off"
+	s.PerItemSchedules = true
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	for name, cadence := range map[string]string{"plex": "weekly Mon 02:00", "sonarr": "daily 03:00"} {
+		if _, err := st.UpsertTarget(store.Target{ContainerName: name, IncludeInSchedule: true}); err != nil {
+			t.Fatal(err)
+		}
+		if err := st.SetScheduleCadence(name, cadence); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, &fakeResticEngine{})
+	statuses, err := svc.DomainStatus()
+	if err != nil {
+		t.Fatalf("DomainStatus: %v", err)
+	}
+	for _, d := range statuses {
+		if d.Domain != "containers" {
+			continue
+		}
+		if d.Status == "off" || d.PeriodSeconds != 86400 {
+			t.Errorf("containers: status %q, period %d; want scheduled by the daily entry", d.Status, d.PeriodSeconds)
+		}
+		return
+	}
+	t.Fatal("containers domain not present")
+}
+
 func TestDomainStatusCoveredByEverything(t *testing.T) {
 	dir := t.TempDir()
 	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
