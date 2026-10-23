@@ -42,7 +42,7 @@ export function StacksCard({ stacks, onRestore, t }: { stacks: StackGroup[]; onR
             <span className="flex h-[34px] w-[34px] flex-none items-center justify-center rounded-control bg-carbon-surface2 text-accentText [&_svg]:h-[18px] [&_svg]:w-[18px]">
               <IconContainers />
             </span>
-            <span className="flex min-w-0 flex-[1_1_14rem] flex-col">
+            <span className="flex min-w-0 flex-[1_1_10rem] flex-col">
               <span className="truncate text-sm font-semibold text-carbon-text">{stack.project}</span>
               <span className="text-xs text-carbon-textMuted wrap-break-word">{membersLine(stack, t)}</span>
             </span>

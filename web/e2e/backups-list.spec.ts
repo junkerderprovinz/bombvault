@@ -895,7 +895,10 @@ for (const width of [320, 360, 390]) {
         const lineHeight = parseFloat(getComputedStyle(members).lineHeight);
         const m = members.getBoundingClientRect();
         const b = li.querySelector("button")!.getBoundingClientRect();
+        const icon = li.querySelector(":scope > span:first-child")!.getBoundingClientRect();
+        const name = li.querySelector(":scope > span:nth-child(2)")!.getBoundingClientRect();
         return {
+          alone: icon.bottom <= name.top + 1,
           lines: Math.round(m.height / lineHeight),
           beside: b.top < m.bottom - 1 && b.bottom > m.top + 1,
           past: b.right > window.innerWidth + 1,
@@ -904,6 +907,7 @@ for (const width of [320, 360, 390]) {
       expect(found.beside && found.lines > 1, "the button squeezes the members into several lines").toBe(false);
       expect(found.lines, "the members line breaks inside its words").toBeLessThanOrEqual(2);
       expect(found.past, "the button runs past the edge").toBe(false);
+      expect(found.alone, "the icon stands in a row of its own").toBe(false);
     });
   }
 }
