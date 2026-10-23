@@ -42,7 +42,7 @@ export function Figure({ value, label }: { value: ReactNode; label: string }) {
 /** InstanceCard is one tile of the instances grid: the mark beside the name
  *  with its badges, what kind it is, a line of facts and the figures, then
  *  what the instance does, and the actions along the foot. The grid gives
- *  every card one height, so the actions sit on one line across a row. */
+ *  cards side by side one height, so the actions sit on one line across a row. */
 export function InstanceCard({
   cardKey,
   name,

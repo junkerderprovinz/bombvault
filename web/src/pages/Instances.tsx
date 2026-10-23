@@ -403,15 +403,20 @@ export function Instances() {
       ))}
 
       {modules && !state.loading && (
-        <div className="flex flex-col gap-4 glim-content-fade" {...handlers}>
+        <div className="@container flex flex-col gap-4 glim-content-fade" {...handlers}>
           {grouped && state.self && nodes.length > 0 && (
             <div className="rounded-card bg-carbon-surface px-3 py-3 md:px-5 md:py-4 [--net-ground:var(--carbon-surface)]">
               <NetPicture selfName={state.self.name} nodes={nodes} hot={hot} />
             </div>
           )}
-          {/* Every card is as wide and as tall as the tallest of the grid,
-              whatever it holds. A narrow window shows fewer per row. */}
-          <div data-new="instances-card-size" className="grid auto-rows-fr grid-cols-[repeat(auto-fill,minmax(min(100%,36rem),1fr))] gap-4">
+          {/* Cards side by side are as tall as the tallest of the grid, so
+              their actions line up. A second column fits from two minimum
+              widths and the gap on, 73rem; in one column each card is as tall
+              as what it holds. */}
+          <div
+            data-new="instances-card-size"
+            className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,36rem),1fr))] gap-4 @min-[73rem]:auto-rows-fr"
+          >
             {grouped && state.self && (
               <SelfCard
                 self={state.self}

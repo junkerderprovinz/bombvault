@@ -5,7 +5,8 @@
 // armed and an instance's window opened with everything in it, no pan, no
 // control past the viewport or its card, no text cut short and no stray
 // backtick, in the net picture, the grid, the window, its dialogs and the
-// empty state. On the desktop: the 40px rhythm, cards of one size, the net
+// empty state, and each card as tall as what it holds. On the desktop: the
+// 40px rhythm, cards side by side of one size, the net
 // picture in the arrangement that fits, a role asked for from its tile, a key
 // deposit made with its recovery code shown once, and the addresses /receiver,
 // /pull and /fleet with their hash forms.
@@ -789,7 +790,28 @@ for (const width of [320, 360, 390]) {
     await expectClearOfPageActions(page, card(page, "self").getByRole("button", { name: "Öffnen", exact: true }));
     await expectPageActionsCoverNothing(page);
   });
+
+  test(`one card per row @ ${width}px: an inactive instance's card is as tall as what it holds`, async ({ page }, testInfo) => {
+    test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only: the phone widths");
+    await openPage(page, width, { away: true });
+    await expect(card(page, AWAY.id)).toContainText("Inaktiv");
+    const slack = await slackAboveActions(page);
+    expect(slack.map((s) => s.key)).toContain(AWAY.id);
+    for (const s of slack) expect(s.gap, `the empty room above the actions of ${s.key}`).toBeLessThanOrEqual(1);
+  });
 }
+
+/** The room between each card's actions and what stands above them, which a
+ *  card stretched past its content fills with nothing. */
+const slackAboveActions = (page: Page) =>
+  page.locator("#bv-main [data-instance]").evaluateAll((cards) =>
+    cards.flatMap((el) => {
+      const actions = el.lastElementChild;
+      const above = actions?.previousElementSibling;
+      if (!actions?.querySelector("button") || !above) return [];
+      return [{ key: el.getAttribute("data-instance"), gap: Math.round(actions.getBoundingClientRect().top - above.getBoundingClientRect().bottom) }];
+    }),
+  );
 
 for (const width of [1000, 1600]) {
   test(`a card without figures @ ${width}px keeps the room above its roles that a card with figures has`, async ({ page }, testInfo) => {
@@ -814,6 +836,21 @@ for (const width of [1000, 1600]) {
   });
 }
 
+test("cards side by side @ 1600px are as tall as the tallest, with their actions along the foot", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop-1280", "a desktop width, set by the test");
+  await openPage(page, 1600, { away: true });
+  const boxes = await page.locator("#bv-main [data-instance]").evaluateAll((cards) =>
+    cards.map((el) => {
+      const r = el.getBoundingClientRect();
+      const actions = el.lastElementChild!.getBoundingClientRect();
+      return { top: Math.round(r.top), height: Math.round(r.height), clearance: Math.round(r.bottom - actions.bottom) };
+    }),
+  );
+  expect(new Set(boxes.map((b) => b.top)).size, "the cards stand one per row").toBeLessThan(boxes.length);
+  expect(new Set(boxes.map((b) => b.height)).size, "cards of different heights").toBe(1);
+  expect(new Set(boxes.map((b) => b.clearance)).size, "actions off the foot of their card").toBe(1);
+});
+
 test("the grid on the desktop keeps the 40px rhythm and cards of one size", async ({ page }, testInfo) => {
   test.skip(MOBILE_PROJECTS.has(testInfo.project.name), "desktop-only");
   const width = testInfo.project.use.viewport!.width;
@@ -832,7 +869,11 @@ test("the grid on the desktop keeps the 40px rhythm and cards of one size", asyn
   );
   expect(boxes).toHaveLength(5);
   expect(new Set(boxes.map((b) => b.width)).size, "cards of different widths").toBe(1);
-  expect(new Set(boxes.map((b) => b.height)).size, "cards of different heights").toBe(1);
+  // Cards side by side share the height of the tallest; in one column each
+  // is as tall as what it holds.
+  const sideBySide = new Set(boxes.map((b) => b.top)).size < boxes.length;
+  if (sideBySide) expect(new Set(boxes.map((b) => b.height)).size, "cards of different heights").toBe(1);
+  else for (const s of await slackAboveActions(page)) expect(s.gap, `the empty room above the actions of ${s.key}`).toBeLessThanOrEqual(1);
   // Where the window leaves room beside the sidebar, a card is a wide
   // rectangle; on a narrower one it fills the column and its content sets
   // the height.

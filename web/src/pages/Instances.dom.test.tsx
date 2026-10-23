@@ -330,10 +330,11 @@ describe("the instances grid", () => {
     for (const key of ["self", "m1"]) expect(card(key).classList.contains("bg-carbon-surface")).toBe(true);
   });
 
-  it("gives every card one width and the height of the tallest, the picture standing apart", async () => {
+  it("gives cards side by side the height of the tallest, the picture standing apart", async () => {
     await renderPage();
     const grid = card("self").parentElement as HTMLElement;
-    expect(grid.className).toContain("auto-rows-fr");
+    expect(grid.classList.contains("@min-[73rem]:auto-rows-fr")).toBe(true);
+    expect(grid.classList.contains("auto-rows-fr")).toBe(false);
     expect(grid.contains(screen.getByTestId("net-picture"))).toBe(false);
     for (const key of ["self", "m1"]) expect(card(key).classList.contains("h-full")).toBe(true);
   });
