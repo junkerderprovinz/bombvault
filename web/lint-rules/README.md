@@ -84,7 +84,7 @@ path data that is not a message at all.
 | `control-reads-engine-tokens` | An interactive control reads its radius from the shape engine and its colour from the colour engine. |
 | `setting-row-beside-label` | A dropdown, segmented selector, number field or one-line text field stands beside its label in a `SettingRow`, never under it. A list, text area or code editor keeps its name above. |
 | `user-message-is-translated` | A string the user reads goes through `t()`, including the fallback on an error path. |
-| `no-em-dash-in-user-text` | No em dash (U+2014) in text a user reads: the translation tables, rendered JSX text, and the four text-bearing attributes. `ru`, `uk`, `bg` and `sr` are exempt. |
+| `no-em-dash-in-user-text` | No em dash (U+2014) in text a user reads: the translation tables, rendered JSX text, the four text-bearing attributes, template literals and `.join()` separators. `ru`, `uk`, `bg` and `sr` are exempt. |
 
 Each rule file opens with the history that made it necessary; read that before
 changing one.
@@ -141,6 +141,12 @@ These are the shapes that made a first draft noisy, and are now pinned as
     `pages/Containers.tsx:667`, `pages/Recovery.tsx:547` and
     `pages/Recovery.tsx:1356`. The four attributes find nothing today and cost
     nothing.
+  * **Template literals and `.join()` separators outside the tables.** A
+    tooltip built as `[label, reason].join(...)` or a line built as
+    `` `${outcome} ... ${detail}` `` never passes through JSX text or an
+    attribute, so the checks above missed three of them (`Button.tsx`,
+    `Selector.tsx`, `OffsiteWizard.tsx`). Comments are not in the AST, and no
+    template literal or join in the tree carries the mark for any other reason.
   * **`ru`, `uk`, `bg`, `sr` are exempt**, by locale code, taken from the
     file's own name. In those four the em dash is ordinary punctuation standing
     in for an absent copula, so removing it breaks the sentence rather than

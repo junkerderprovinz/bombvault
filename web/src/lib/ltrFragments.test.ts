@@ -76,7 +76,7 @@ describe("withLtrFragments", () => {
 
   describe("offsite.repoLocalHint", () => {
     const EN =
-      'Also accepts a plain folder under the "Host Data" mount — enter it relative to that mount, without the leading /mnt: a share at /mnt/remotes/nas/bombvault is entered as remotes/nas/bombvault.';
+      'Also accepts a plain folder under the "Host Data" mount. Enter it relative to that mount, without the leading /mnt: a share at /mnt/remotes/nas/bombvault is entered as remotes/nas/bombvault.';
     const AR =
       'يقبل أيضًا مجلدًا عاديًا داخل نقطة الوصل "Host Data": أدخله بالنسبة إلى نقطة الوصل هذه، بدون /mnt في البداية. المشاركة الموجودة في /mnt/remotes/nas/bombvault تُدخل هكذا: remotes/nas/bombvault.';
     const HE =

@@ -200,7 +200,7 @@ export function Button({
   const tip =
     (showText || reactive
       ? title
-      : [...new Set([label, title].filter(Boolean))].join(" — ")) || undefined;
+      : [...new Set([label, title].filter(Boolean))].join(": ")) || undefined;
   // A disabled reactive button gets no hover, so its label never reveals and it
   // keeps the bubble to say why it is unavailable. The hover reveals no hint
   // either, so a button with one keeps the bubble as well.

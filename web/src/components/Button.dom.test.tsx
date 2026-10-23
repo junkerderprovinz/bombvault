@@ -127,7 +127,7 @@ it("does not repeat the label as a tooltip while the text is visible", () => {
 it("shows the extra explanation in the bubble in every mode, joined to the name once the text is hidden", () => {
   for (const [mode, expected] of [
     ["textGlyph", "Another backup is running"],
-    ["glyph", "Clear — Another backup is running"],
+    ["glyph", "Clear: Another backup is running"],
   ] as const) {
     cleanup();
     setLabelMode("buttons", mode);

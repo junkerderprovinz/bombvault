@@ -998,7 +998,7 @@ describe("Selector glyph mode names its segments", () => {
       />
     );
     fireEvent.mouseEnter(screen.getByRole("tab", { name: "Alpha" }));
-    expect(document.querySelector(".glim-bubble")?.textContent).toBe("Alpha — Busy right now");
+    expect(document.querySelector(".glim-bubble")?.textContent).toBe("Alpha: Busy right now");
   });
 
   // The Settings tab strip passes title: label so a truncated label can still

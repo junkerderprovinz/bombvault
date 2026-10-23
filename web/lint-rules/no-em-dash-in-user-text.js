@@ -32,6 +32,10 @@
 // any string literal there; its fix moves the sentence into the tables, where
 // check 1 covers it.
 //
+// 5. Text put together in a component: the literal chunks of a template
+//    literal, and the separator handed to `.join()`. Both build a sentence out
+//    of parts, which is where a dash between two halves slips in.
+//
 // A sentence assembled at runtime is only partly visible: the literal chunks
 // of a template are checked, but a separator from the server or from a
 // variable the rule cannot resolve is not.
@@ -94,6 +98,8 @@ export default {
         'Em dash in rendered text: "{{text}}". It is on screen, so the house rule applies here exactly as it does in the locale files, and a separator hardcoded in a component is worse: the translators cannot reach it at all. Move the sentence into a t() key, or use the punctuation the two halves actually call for.{{hatch}}',
       inAttribute:
         'Em dash in `{{attr}}`: "{{text}}". A screen reader speaks this and the browser shows it on hover, which makes it user-facing text under the same rule.{{hatch}}',
+      inAssembly:
+        'Em dash in text put together in code: "{{text}}". The parts it joins reach the screen, so use a colon, a full stop or parentheses, whatever the two halves call for.{{hatch}}',
     },
   },
 
@@ -136,6 +142,19 @@ export default {
         report(node, "inAttribute", { attr: name, text: excerpt(offending) });
       },
     };
+
+    if (table === null) {
+      visitors.TemplateLiteral = (node) => {
+        const chunk = node.quasis.map((q) => q.value.cooked ?? "").find((c) => c.includes(EM_DASH));
+        if (chunk !== undefined) report(node, "inAssembly", { text: excerpt(chunk) });
+      };
+      visitors.CallExpression = (node) => {
+        const callee = node.callee;
+        if (callee.type !== "MemberExpression" || callee.computed || callee.property.name !== "join") return;
+        const chunk = literalChunks(node.arguments[0]).find((c) => c.includes(EM_DASH));
+        if (chunk !== undefined) report(node, "inAssembly", { text: excerpt(chunk) });
+      };
+    }
 
     if (checkTable) {
       // Every value in the table except object keys; here every string is a

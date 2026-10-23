@@ -518,7 +518,7 @@ export function OffsiteWizard({
       : verdict.protected
         ? t("offsite.tamperOk")
         : verdict.detail
-          ? `${t("offsite.tamperFail")} — ${verdict.detail}`
+          ? `${t("offsite.tamperFail")}: ${verdict.detail}`
           : t("offsite.tamperFail")
     : "";
   // The glyph is its own node rather than part of the translation, so bidi

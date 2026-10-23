@@ -610,6 +610,10 @@ ruleTester.run("no-em-dash-in-user-text", rules["no-em-dash-in-user-text"], {
     // An attribute that is not one of the four text-bearing ones.
     `<div data-sep="${EM}" className="a ${EM} b" />`,
 
+    // Parts joined in code with the punctuation the halves call for.
+    `const tip = [label, title].filter(Boolean).join(": ");`,
+    "const line = `${t(\"offsite.tamperFail\")}: ${detail}`;",
+
     // The escape hatch, with a real reason.
     `
       {/* bv-convention-exception: no-em-dash-in-user-text -- the empty-value
@@ -676,6 +680,16 @@ ruleTester.run("no-em-dash-in-user-text", rules["no-em-dash-in-user-text"], {
       // The entity spelling, which React decodes at render time.
       code: `<p>Backs everything up &mdash; configuration included.</p>`,
       errors: [{ messageId: "inJsxText" }],
+    },
+    {
+      // A label and its reason joined for a bubble.
+      code: `const tip = [label, title].filter(Boolean).join(" ${EM} ");`,
+      errors: [{ messageId: "inAssembly" }],
+    },
+    {
+      // An outcome and the server's detail put into one line.
+      code: "const line = `${t(\"offsite.tamperFail\")} " + EM + " ${detail}`;",
+      errors: [{ messageId: "inAssembly" }],
     },
     {
       // Spoken by a screen reader, so it is text a user reads.

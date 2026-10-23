@@ -329,7 +329,7 @@ function SelectorTab({
   // collapse because the Settings tab strip passes `title: label` for its
   // truncated labels.
   const explains = item.tip ?? (nameHidden || squeezed ? item.label : undefined);
-  const tip = [...new Set([explains, item.title].filter(Boolean))].join(" — ") || undefined;
+  const tip = [...new Set([explains, item.title].filter(Boolean))].join(": ") || undefined;
   // No bubble in reactive mode, where hovering brings the words back. A
   // disabled segment keeps it: it takes no hover, so its tip is the only thing
   // that says why.
