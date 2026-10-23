@@ -118,6 +118,7 @@ interface Stage {
   items?: typeof ITEMS;
   unlisted?: string[];
   theme?: "dark" | "light";
+  lang?: "de" | "en";
   /** What the ZFS connection test answers, "ok" unless said otherwise. */
   zfsCode?: string;
   /** True when the ZFS entries replicate to a server. */
@@ -319,10 +320,13 @@ async function stage(page: Page, s: Stage = {}): Promise<{ posts: string[] }> {
   });
   // The stored look is the one under test, so the server's must not replace it.
   await blockServerLook(page);
-  await page.addInitScript((theme) => {
-    window.localStorage.setItem("bv-lang", "de");
-    window.localStorage.setItem("bv-theme", theme);
-  }, s.theme ?? "dark");
+  await page.addInitScript(
+    ({ theme, lang }) => {
+      window.localStorage.setItem("bv-lang", lang);
+      window.localStorage.setItem("bv-theme", theme);
+    },
+    { theme: s.theme ?? "dark", lang: s.lang ?? "de" },
+  );
   return { posts };
 }
 
@@ -824,7 +828,89 @@ for (const width of [320, 360, 390]) {
     for (const row of [rows(page).first(), rows(page).last()]) await expectClearOfPageActions(page, row);
     await expectPageActionsCoverNothing(page);
   });
+
+  for (const lang of ["en", "de"] as const) {
+    test(`the names @ ${width}px (${lang}) break between words, and a status without room beside one goes under it`, async ({ page }, testInfo) => {
+      test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "the phone layout lives below 48rem");
+      await stage(page, { lang, items: [...ITEMS, entry({ key: "notes-db" })] });
+      await page.setViewportSize({ width, height: 800 });
+      await page.goto("/backups");
+      await expect(rows(page).first()).toBeVisible();
+      await settle(page);
+
+      const found = await page.locator('[data-testid="backup-row"], [data-testid="backup-self-row"]').evaluateAll((all) =>
+        all.map((row) => {
+          const name = row.querySelector("a") ?? row.querySelector(":scope > span:last-child > span:first-child")!;
+          const text = name.firstChild as Text;
+          const range = document.createRange();
+          const top = (i: number) => {
+            range.setStart(text, i);
+            range.setEnd(text, i + 1);
+            return range.getBoundingClientRect().top;
+          };
+          // A line starts where a character stands lower than the one before it.
+          const cuts: string[] = [];
+          for (let i = 1; i < text.length; i++) {
+            if (top(i) > top(i - 1) + 4 && !/[\s-]/.test(text.data[i - 1]) && !/\s/.test(text.data[i])) {
+              cuts.push(`${text.data.slice(0, i)}|${text.data.slice(i)}`);
+            }
+          }
+          const n = name.getBoundingClientRect();
+          const s = row.querySelector(":scope > span:last-child > :last-child")!.getBoundingClientRect();
+          const beside = s.top < n.bottom - 1 && s.bottom > n.top + 1;
+          return {
+            name: text.data,
+            cuts,
+            overlap: beside && s.left < n.right - 1 && s.right > n.left + 1,
+            past: row.getBoundingClientRect().right > window.innerWidth + 1,
+          };
+        }),
+      );
+      expect(found.map((f) => f.name)).toContain("notes-db");
+      expect(found.flatMap((f) => f.cuts), "a name breaks inside a word").toEqual([]);
+      expect(found.filter((f) => f.overlap).map((f) => f.name), "a status covers its name").toEqual([]);
+      expect(found.filter((f) => f.past).map((f) => f.name), "rows run past the edge").toEqual([]);
+      const pan = await page.evaluate(() => {
+        const main = document.querySelector("#bv-main")!;
+        return Math.max(document.documentElement.scrollWidth - window.innerWidth, main.scrollWidth - main.clientWidth);
+      });
+      expect(pan, "the page scrolls sideways").toBeLessThanOrEqual(1);
+    });
+  }
 }
+
+test("while an off-site copy runs, the backup starts say why they wait", async ({ page }, testInfo) => {
+  await stage(page);
+  const copy = { key: "offsite:containers", phase: "replicate", percent: 12, active: true, startedAt: NOW - 600 };
+  await page.route("**/api/progress", (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "text/event-stream",
+      body: `retry: 500\n\ndata: ${JSON.stringify(copy)}\n\ndata: {"synced":true}\n\n`,
+    }),
+  );
+  await openList(page);
+  const finger = MOBILE_PROJECTS.has(testInfo.project.name);
+  const reason = "Die Off-site-Kopie der letzten Sicherung läuft noch. Versuch es noch einmal, wenn sie fertig ist.";
+  const explained = async (button: Locator) => {
+    await expect(button).toBeDisabled();
+    if (finger) await button.tap({ force: true });
+    else await button.hover({ force: true });
+    await expect(page.getByRole("tooltip")).toContainText(reason);
+    await page.mouse.move(0, 0);
+    await expect(page.getByRole("tooltip")).toHaveCount(0);
+  };
+  await explained(page.getByTestId("page-actions").getByRole("button", { name: "Jetzt alles sichern" }));
+
+  if (finger) {
+    await page.getByTestId("page-actions").getByRole("button", { name: "Mehr" }).click();
+    await page.getByRole("menuitem", { name: "Auswählen" }).click();
+    await rows(page).filter({ hasText: "jellyfin" }).click();
+  } else {
+    await rows(page).filter({ hasText: "jellyfin" }).click({ modifiers: ["ControlOrMeta"] });
+  }
+  await explained(page.getByTestId("bulk-bar").getByRole("button", { name: "Auswahl sichern" }));
+});
 
 test("pictures of the page", async ({ page }, testInfo) => {
   test.skip(!SHOTS || testInfo.project.name !== "desktop-1280", "only when a folder for them is named");

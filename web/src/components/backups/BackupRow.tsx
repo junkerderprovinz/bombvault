@@ -45,7 +45,13 @@ const GLYPH_TILE =
   "flex h-[34px] w-[34px] flex-none items-center justify-center rounded-control bg-carbon-surface2 [&>svg]:h-[18px] [&>svg]:w-[18px]";
 const STATUS = "@min-[36rem]:w-full @min-[36rem]:whitespace-nowrap @max-[36rem]:max-w-[9.5rem]";
 const NAME =
-  "min-w-0 truncate text-sm font-semibold text-carbon-text @max-[36rem]:whitespace-normal @max-[36rem]:wrap-anywhere";
+  "min-w-0 truncate text-sm font-semibold text-carbon-text @max-[36rem]:whitespace-normal @max-[36rem]:wrap-break-word";
+// In a narrow list the name and the status share a line that wraps. The name
+// asks for the room of its longest word, so the status moves under it before
+// a word has to break; only a word wider than the row breaks inside. In a
+// wide list the wrapper gives way and its parts take the list's columns.
+const TEXT = "flex min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-1.5 @min-[36rem]:contents";
+const NAME_ROOM = "@max-[36rem]:basis-auto @max-[36rem]:w-min @max-[36rem]:max-w-full";
 const BEFORE_STATUS = "flex flex-none items-center gap-2 @max-[36rem]:hidden";
 const IP_COLUMN = "min-w-[7.5rem] flex-none text-end text-xs tabular-nums text-carbon-textMuted";
 
@@ -374,41 +380,43 @@ export function BackupRow({
           className="sr-only"
         />
       </span>
-      <span className="flex min-w-0 flex-1 items-center gap-2">
-        <Link
-          to={target}
-          onClick={(e) => {
-            e.stopPropagation();
-            if (taken(e)) e.preventDefault();
-          }}
-          className={NAME}
-        >
-          {name}
-        </Link>
-        {facts.sentences.length > 0 && (
-          <>
-            <span className={`flex ${BUBBLE_TONE[facts.tone]}`} onClick={keepInRow}>
-              <InfoBubble tip={facts.sentences.join(" ")} onAccent={facts.tone !== "plain"} />
-            </span>
-            {/* The bubble's text in the row under a mouse, which has room to
-                spare there. The bubble already names it to a screen reader. */}
-            <span
-              aria-hidden="true"
-              data-testid="backup-row-facts"
-              className={`hidden min-w-0 flex-1 truncate text-xs pointer-fine:group-hover:block ${
-                facts.tone === "plain" ? "text-carbon-textMuted" : BUBBLE_TONE[facts.tone]
-              }`}
-            >
-              {facts.sentences.join(" ")}
-            </span>
-          </>
-        )}
+      <span className={TEXT}>
+        <span className={`flex min-w-0 flex-1 items-center gap-2 ${NAME_ROOM}`}>
+          <Link
+            to={target}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (taken(e)) e.preventDefault();
+            }}
+            className={NAME}
+          >
+            {name}
+          </Link>
+          {facts.sentences.length > 0 && (
+            <>
+              <span className={`flex ${BUBBLE_TONE[facts.tone]}`} onClick={keepInRow}>
+                <InfoBubble tip={facts.sentences.join(" ")} onAccent={facts.tone !== "plain"} />
+              </span>
+              {/* The bubble's text in the row under a mouse, which has room to
+                  spare there. The bubble already names it to a screen reader. */}
+              <span
+                aria-hidden="true"
+                data-testid="backup-row-facts"
+                className={`hidden min-w-0 flex-1 truncate text-xs pointer-fine:group-hover:block @max-[36rem]:w-0 ${
+                  facts.tone === "plain" ? "text-carbon-textMuted" : BUBBLE_TONE[facts.tone]
+                }`}
+              >
+                {facts.sentences.join(" ")}
+              </span>
+            </>
+          )}
+        </span>
+        <span className={BEFORE_STATUS}>
+          {showIp && <span className={IP_COLUMN}>{item.ip}</span>}
+          <RunStrip tones={tones} t={t} />
+        </span>
+        <span className="flex min-w-0 flex-none justify-end">{cell}</span>
       </span>
-      <span className={BEFORE_STATUS}>
-        {showIp && <span className={IP_COLUMN}>{item.ip}</span>}
-        <RunStrip tones={tones} t={t} />
-      </span>
-      <span className="flex min-w-0 flex-none justify-end">{cell}</span>
     </li>
   );
 }
@@ -431,12 +439,14 @@ export function SelfRow({
       <span className={`${GLYPH_TILE} text-carbon-textSub`}>
         <KindGlyph kind={item.kind} />
       </span>
-      <span className={`flex-1 ${NAME}`}>{item.name}</span>
-      <span className={BEFORE_STATUS}>{showIp && <span className={IP_COLUMN}>{item.ip}</span>}</span>
-      <Badge tone="neutral" size="large" className="whitespace-nowrap @min-[36rem]:w-full">
-        {t("backups.status.self")}
-        <InfoBubble tip={t("backups.selfNote")} />
-      </Badge>
+      <span className={TEXT}>
+        <span className={`flex-1 ${NAME} ${NAME_ROOM}`}>{item.name}</span>
+        <span className={BEFORE_STATUS}>{showIp && <span className={IP_COLUMN}>{item.ip}</span>}</span>
+        <Badge tone="neutral" size="large" className="whitespace-nowrap @min-[36rem]:w-full">
+          {t("backups.status.self")}
+          <InfoBubble tip={t("backups.selfNote")} />
+        </Badge>
+      </span>
     </li>
   );
 }
