@@ -127,6 +127,31 @@ for (const width of [320, 390]) {
     await expectNothingPansOrClips(page);
   });
 
+  test(`a location's actions under its name start where the name starts @ ${width}px`, async ({ page }, testInfo) => {
+    test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only: the phone layout lives below 48rem");
+    await stageStorage(page, width);
+    // The folder on this host before it has measured anything, so it has no
+    // amount to show before its actions.
+    await page.route(
+      (url) => decodeURIComponent(url.pathname) === `/api/storage/locations/${LOCAL.id}`,
+      (route) => route.fulfill({ json: { ok: true, location: { ...LOCAL, capacity: {} } } }),
+    );
+    await page.goto(locationUrl(LOCAL.id));
+    await expect(page.getByRole("heading", { level: 1, name: "Lokal" })).toBeAttached();
+    await settle(page);
+    const found = await page.locator("#bv-main span", { hasText: /^Lokal$/ }).first().evaluate((name) => {
+      const row = name.parentElement!.nextElementSibling!;
+      const shown = [...row.children].filter((el) => el.getBoundingClientRect().width > 0);
+      return {
+        name: name.getBoundingClientRect().left,
+        first: shown[0]?.getBoundingClientRect().left,
+        empty: [...row.children].filter((el) => !el.textContent?.trim() && !el.querySelector("button, svg")).length,
+      };
+    });
+    expect(found.empty, "an empty element stands in the row").toBe(0);
+    expect(Math.abs(found.first! - found.name), "the first action is indented against the name").toBeLessThanOrEqual(1);
+  });
+
   test(`the dots of the keep picture stay apart @ ${width}px`, async ({ page }, testInfo) => {
     test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only: the phone layout lives below 48rem");
     await stageStorage(page, width);

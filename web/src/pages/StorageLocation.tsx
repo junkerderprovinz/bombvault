@@ -122,6 +122,7 @@ function Location({ location, records }: { location: StorageLocation; records: L
   const takesCopies = location.object === "destination" || location.object === "target";
   const primary = settingsOwned(location) ? location.sections.find((section) => section.primary) : undefined;
   const changeable = location.object === "destination" && form !== undefined;
+  const amount = amountText(t, location.capacity);
   const actions: MenuAction[] = [];
   if (changeable) {
     actions.push({ id: "connection", label: t("storage.conn.change"), glyph: <IconPencil />, onSelect: () => setChanging(true) });
@@ -159,10 +160,11 @@ function Location({ location, records }: { location: StorageLocation; records: L
             </span>
           </div>
           <div className="flex min-w-0 max-w-full flex-wrap items-center justify-end gap-3 max-md:justify-start">
-            {location.enabled ? (
-              <span className="text-sm tabular-nums text-carbon-textSub">{amountText(t, location.capacity)}</span>
-            ) : (
+            {/* An empty amount would still take a gap and push the row in. */}
+            {!location.enabled ? (
               <Badge tone="neutral">{t("storage.off")}</Badge>
+            ) : (
+              amount && <span className="text-sm tabular-nums text-carbon-textSub">{amount}</span>
             )}
             {probe && (
               <TestButton
