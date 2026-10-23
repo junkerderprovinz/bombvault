@@ -57,7 +57,7 @@ const TO_INSTANCES: WayStep[] = ["/settings", "/settings/instances", "/instances
 /** Every release that brought something new, newest first. */
 export const RELEASES: Release[] = [
   {
-    version: "10.2.3",
+    version: "10.3.0",
     changes: [
       {
         id: "storage-add-bucket",
@@ -87,11 +87,6 @@ export const RELEASES: Release[] = [
       // repository, so a dot on them would hardly ever show.
       { id: "replica-take-over", text: "whatsNew.replicaTakeOver" },
       { id: "location-start-over", text: "whatsNew.startOver" },
-    ],
-  },
-  {
-    version: "10.2.1",
-    changes: [
       {
         id: "backup-memory-limit",
         page: "/settings/system",

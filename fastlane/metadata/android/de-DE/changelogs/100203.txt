@@ -1,1 +1,0 @@
-Deine App macht diesmal blau. BombVault 10.2.3 räumt am Server ordentlich auf: ZFS-Repliken nehmen einen kürzeren Weg zum Server, Speicherorte verbinden sich und bleiben angemeldet, und eine Wiederherstellung kommt auf dem Image von damals zurück. Dein Handy meldet sich nach dem Update einmal neu an.

@@ -1,1 +1,0 @@
-The app sits this one out, BombVault 10.2.2 only fixes the server: ZFS entries that only replicate no longer wait for a backup that is never coming. They wait for their first replica instead, and their page stops listing storage locations they never write to.
