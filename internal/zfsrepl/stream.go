@@ -193,6 +193,14 @@ func (r *relay) WriteTo(w io.Writer) (int64, error) {
 // stop lets the reading goroutine go once the receive is over.
 func (r *relay) stop() { r.once.Do(func() { close(r.done) }) }
 
+// ReadAhead puts the buffer a run keeps between a send and its receive in
+// front of a stream that reaches a receive some other way. stop lets the
+// reading go once the receive is over.
+func ReadAhead(src io.Reader) (ahead io.Reader, stop func()) {
+	r := newRelay(src, nil)
+	return r, r.stop
+}
+
 func listTree(ctx context.Context, end End, root string) ([]zfs.ListEntry, error) {
 	args, err := zfs.TreeArgs(root)
 	if err != nil {

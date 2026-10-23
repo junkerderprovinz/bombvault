@@ -248,7 +248,11 @@ func (s *Service) handleZFSSlotReceive(w http.ResponseWriter, r *http.Request) {
 		zfsSlotFail(w, err)
 		return
 	}
-	one := zfs.NewSnapshotStream(stream)
+	// The read ahead sits below the checks, so they run in the receive's
+	// goroutine and their verdict is final once the receive returns.
+	ahead, stop := zfsrepl.ReadAhead(stream)
+	defer stop()
+	one := zfs.NewSnapshotStream(ahead)
 	counted := &byteCounter{r: one, room: room}
 	err = host.Receive(ctx, args, counted)
 	if refused := one.Refused(); refused != nil {
@@ -566,4 +570,37 @@ func (c *byteCounter) Read(p []byte) (int, error) {
 		return 0, errSlotFull
 	}
 	return n, err
+}
+
+// receiveWrite is how much of the stream byteCounter gathers into one write.
+// The stream comes a record at a time, and io.Copy would hand each header and
+// every 32 KiB of a block to the receive's pipe on its own.
+const receiveWrite = 1 << 20
+
+// WriteTo is what the receive's stdin is copied with.
+func (c *byteCounter) WriteTo(w io.Writer) (int64, error) {
+	buf := make([]byte, receiveWrite)
+	var total int64
+	for {
+		n := 0
+		var err error
+		for n < len(buf) && err == nil {
+			var m int
+			m, err = c.Read(buf[n:])
+			n += m
+		}
+		if n > 0 {
+			m, werr := w.Write(buf[:n])
+			total += int64(m)
+			if werr != nil {
+				return total, werr
+			}
+		}
+		if err == io.EOF {
+			return total, nil
+		}
+		if err != nil {
+			return total, err
+		}
+	}
 }
