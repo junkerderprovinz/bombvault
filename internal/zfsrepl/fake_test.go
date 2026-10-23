@@ -11,7 +11,6 @@ import (
 	"hash/crc32"
 	"io"
 	"sort"
-	"strconv"
 	"strings"
 	"sync"
 
@@ -170,11 +169,6 @@ func (h *fakeHost) resetCalls() {
 	defer h.mu.Unlock()
 	h.calls = nil
 }
-
-type exitStatus int
-
-func (e exitStatus) Error() string { return "exit status " + strconv.Itoa(int(e)) }
-func (e exitStatus) ExitCode() int { return int(e) }
 
 func fail(args []string, exit int, format string, a ...any) error {
 	stderr := fmt.Sprintf(format, a...)

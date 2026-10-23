@@ -309,6 +309,36 @@ func TestStreamsReportTheRemoteExitAndStderr(t *testing.T) {
 	check("RunWithStdin", c.RunWithStdin(context.Background(), strings.NewReader("stream"), "zfs", "receive", "tank/x"))
 }
 
+// TestRunStreamsHandsOverEveryStreamWhole talks like a host pipeline: it
+// reads its stdin, reports on stderr far past what RunCapture keeps, and
+// exits with a status of its own.
+func TestRunStreamsHandsOverEveryStreamWhole(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("needs a POSIX shell")
+	}
+	script := filepath.Join(t.TempDir(), "fake-ssh")
+	body := "#!/bin/sh\ncat\nyes 12:00:00 | head -n 20000 >&2\nexit 3\n"
+	if err := os.WriteFile(script, []byte(body), 0o700); err != nil { //nolint:gosec // G306: an executable stand-in for ssh
+		t.Fatal(err)
+	}
+	old := sshBinary
+	sshBinary = script
+	t.Cleanup(func() { sshBinary = old })
+
+	var stdout, stderr strings.Builder
+	err := testConn(t).RunStreams(context.Background(), strings.NewReader("receive said this"), &stdout, &stderr, "sh", "-c", "pipeline")
+	var exit *exec.ExitError
+	if !errors.As(err, &exit) || exit.ExitCode() != 3 {
+		t.Errorf("err = %v, want the exit status 3", err)
+	}
+	if stdout.String() != "receive said this" {
+		t.Errorf("stdout = %q", stdout.String())
+	}
+	if got := strings.Count(stderr.String(), "12:00:00\n"); got != 20000 {
+		t.Errorf("stderr carried %d of 20000 lines", got)
+	}
+}
+
 func TestIsolatedConnReadsNoConfigAndOffersOnlyItsOwnKey(t *testing.T) {
 	dataDir := t.TempDir()
 	host := New("192.168.1.10", "root", "1004", dataDir, "")

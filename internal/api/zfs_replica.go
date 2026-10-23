@@ -5,6 +5,7 @@ import (
 	"errors"
 	"log"
 	"os"
+	"path"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -119,7 +120,54 @@ func (s *Service) zfsReplicaKeyDir() string { return filepath.Join(s.cfg.DataDir
 // directory of its own below hosts, so whatever a server id says it cannot
 // name the key files and forgetting the pin cannot remove them.
 func (s *Service) zfsReplicaKnownHosts(serverID string) string {
-	return filepath.Join(s.zfsReplicaKeyDir(), "hosts", serverID, "known_hosts")
+	return filepath.Join(s.zfsReplicaKeyDir(), filepath.FromSlash(zfsReplicaPin(serverID)))
+}
+
+// zfsReplicaPin is where a server's pin lies below the key folder.
+func zfsReplicaPin(serverID string) string { return path.Join("hosts", serverID, "known_hosts") }
+
+// zfsReplicaDirect lets the host stream to a ZFS server with an ssh of its
+// own, which spares the stream the two ssh hops through this container. The
+// host reads the replica key and the server's pin where Host Data shows the
+// data folder, and src stays as it is when Host Data shows none.
+func (s *Service) zfsReplicaDirect(src, dst zfsrepl.End, srv store.ZFSReplicaServer) zfsrepl.End {
+	pub, err := s.ZFSReplicaPublicKey()
+	if err != nil {
+		return src
+	}
+	dir := s.zfsReplicaHostKeyDir(pub)
+	if dir == "" {
+		log.Printf("api: zfs replica: Host Data does not show the data folder, so the streams to %s go through BombVault", srv.Name)
+		return src
+	}
+	return zfsrepl.Direct(src, zfsrepl.Hop{
+		Host: srv.Host, User: srv.User, Port: strconv.Itoa(srv.Port),
+		Key: path.Join(dir, "id_ed25519"), KnownHosts: path.Join(dir, zfsReplicaPin(srv.ID)), PublicKey: pub,
+	}, dst)
+}
+
+// zfsReplicaHostKeyDir is the replica key folder as a path on the host, ""
+// when neither the data folder nor any folder below Host Data that shows it
+// holds the key with the public half pub.
+func (s *Service) zfsReplicaHostKeyDir(pub string) string {
+	host := slashClean(s.cfg.HostMountRoot)
+	data := resolvedPath(slashClean(s.cfg.DataDir))
+	seen := []string{data}
+	if f, err := os.Open(mountinfoPath); err == nil {
+		seen = append(seen, dataAliases(f, data, host, listDirs)...)
+		_ = f.Close()
+	}
+	for _, d := range seen {
+		dir := path.Join(d, filepath.Base(s.zfsReplicaKeyDir()))
+		if !isStrictSubpath(host, dir) {
+			continue
+		}
+		b, err := os.ReadFile(filepath.FromSlash(path.Join(dir, "id_ed25519.pub"))) //nolint:gosec // G304: a folder below Host Data that shows the data folder
+		if err == nil && strings.TrimSpace(string(b)) == pub {
+			return s.toHostPath(dir)
+		}
+	}
+	return ""
 }
 
 // ZFSReplicaPublicKey returns the line a ZFS server has to put into

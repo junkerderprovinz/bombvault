@@ -25,6 +25,15 @@ type End interface {
 	Receive(ctx context.Context, args []string, stream io.Reader) error
 }
 
+// Piper is a source End that can pipe a send into the receive on the target
+// by itself, so the stream does not pass through this process.
+type Piper interface {
+	// Pipe streams one send into one receive on to and returns the bytes its
+	// progress showed last. piped is false when it cannot reach to that way,
+	// and then nothing was sent.
+	Pipe(ctx context.Context, sendArgs []string, to End, recvArgs []string, report func(int64)) (n int64, piped bool, err error)
+}
+
 // SelfPruning is an End that applies its own retention after each receive. A
 // run never prunes such a target, whatever Entry.Keep says.
 type SelfPruning interface {

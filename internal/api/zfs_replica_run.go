@@ -235,6 +235,7 @@ func (s *Service) runZFSReplica(ctx context.Context, d store.ZFSDataset, runID, 
 	}
 	// A paired instance creates and marks its folders itself.
 	if tgt.server != nil {
+		src = s.zfsReplicaDirect(src, tgt.end, *tgt.server)
 		entry.Mount = tgt.server.MountReadOnly
 		entry.Owner = s.instanceID()
 		if entry.Placeholders, err = s.claimZFSReplicaFolder(ctx, tgt.end, d, tgt.base, entry.Owner); err != nil {

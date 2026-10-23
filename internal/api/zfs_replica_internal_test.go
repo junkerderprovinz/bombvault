@@ -71,7 +71,7 @@ func (h *replicaHost) Run(_ context.Context, args []string) (string, error) {
 	case slices.Contains(args, zfs.SourceProperty):
 		owner, ok := h.owners[last]
 		if !ok {
-			return "", &zfs.CmdError{Args: args, Code: "not-found"}
+			return "", &zfs.CmdError{Args: args, Code: "not-found", Stderr: "cannot open '" + last + "': dataset does not exist"}
 		}
 		return owner + "\n", nil
 	case args[1] == "get":

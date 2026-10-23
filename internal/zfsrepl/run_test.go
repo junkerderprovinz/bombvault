@@ -20,8 +20,10 @@ const (
 type rig struct {
 	t        *testing.T
 	src, dst *fakeHost
-	now      time.Time
-	entry    Entry
+	// via, when set, is the source the run is handed in place of src.
+	via   *pipingHost
+	now   time.Time
+	entry Entry
 }
 
 // newRig is a source with cache/appdata and one child, and a target that has
@@ -43,7 +45,11 @@ func (r *rig) run() Result {
 	r.t.Helper()
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	res, err := Run(ctx, r.src, r.dst, r.entry)
+	var src End = r.src
+	if r.via != nil {
+		src = r.via
+	}
+	res, err := Run(ctx, src, r.dst, r.entry)
 	if err != nil {
 		r.t.Fatalf("Run: %v", err)
 	}
@@ -828,5 +834,76 @@ func TestAFailedSnapshotStillThaws(t *testing.T) {
 	}
 	if !thawed {
 		t.Error("the source stayed frozen after the snapshot failed")
+	}
+}
+
+// pipingHost is a source that pipes its sends to one target by itself, the
+// way a host with an ssh of its own does. silent leaves out its progress.
+type pipingHost struct {
+	*fakeHost
+	to     End
+	can    bool
+	silent bool
+	asked  int
+	piped  int
+}
+
+func (p *pipingHost) Pipe(ctx context.Context, sendArgs []string, to End, recvArgs []string, report func(int64)) (int64, bool, error) {
+	p.asked++
+	if !p.can || to != p.to {
+		return 0, false, nil
+	}
+	p.piped++
+	if p.silent {
+		report = nil
+	}
+	n, err := pipe(ctx, p.fakeHost, to, sendArgs, recvArgs, report)
+	if p.silent {
+		n = 0
+	}
+	return n, true, err
+}
+
+func TestASourceThatPipesItselfCarriesEveryStreamAndItsResume(t *testing.T) {
+	r := newRig(t)
+	r.via = &pipingHost{fakeHost: r.src, to: r.dst, can: true}
+	r.ok(r.run())
+	r.src.payload["cache/appdata"] = 8192
+	r.src.cutAfter["cache/appdata"] = 3000
+	cut := r.run()
+	if m := member(t, cut, "cache/appdata"); m.Code != "stream-cut" {
+		t.Fatalf("the cut stream: code %q, err %v", m.Code, m.Err)
+	}
+	delete(r.src.cutAfter, "cache/appdata")
+	next := r.run()
+	r.ok(next)
+	if m := member(t, next, "cache/appdata"); !m.Resumed || m.Base != cut.Snapshot {
+		t.Fatalf("resumed %v, base %q, want a resume and then an increment from %s", m.Resumed, m.Base, cut.Snapshot)
+	}
+	if streams := len(streamsOf(r.src)); r.via.piped != streams || streams < 7 {
+		t.Errorf("%d of %d streams went through the pipe", r.via.piped, streams)
+	}
+}
+
+func TestASourceThatCannotPipeLeavesItsStreamsToTheRelay(t *testing.T) {
+	r := newRig(t)
+	r.via = &pipingHost{fakeHost: r.src, to: r.dst}
+	r.ok(r.run())
+	if r.via.asked == 0 || r.via.piped != 0 {
+		t.Fatalf("asked %d, piped %d, want the pipe asked and the relay streaming", r.via.asked, r.via.piped)
+	}
+	if got := r.dst.snapNames(rootTarget + "/plex"); len(got) != 1 {
+		t.Errorf("the relay landed %q", got)
+	}
+}
+
+func TestAPipedStreamThatShowedNoProgressCountsItsEstimate(t *testing.T) {
+	r := newRig(t)
+	r.via = &pipingHost{fakeHost: r.src, to: r.dst, can: true, silent: true}
+	r.src.payload["cache/appdata"] = 10000
+	res := r.run()
+	r.ok(res)
+	if got := member(t, res, "cache/appdata").Bytes; got != 10000 {
+		t.Errorf("bytes = %d, want the estimate of 10000", got)
 	}
 }

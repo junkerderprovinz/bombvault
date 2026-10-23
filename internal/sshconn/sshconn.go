@@ -116,11 +116,11 @@ func (c *Conn) VirshURI() string {
 		c.User, c.Host, c.Port, filepath.ToSlash(c.keyPath()), filepath.ToSlash(c.knownHostsPath()))
 }
 
-// streamCiphers puts AES-GCM ahead of OpenSSH's default chacha20-poly1305.
+// StreamCiphers puts AES-GCM ahead of OpenSSH's default chacha20-poly1305.
 // With AES-NI it encrypts several times faster, and a replica stream crosses
-// four ssh processes, the slowest of which sets the pace. The rest of the
-// default list follows for a host that offers no GCM.
-const streamCiphers = "aes128-gcm@openssh.com,aes256-gcm@openssh.com,chacha20-poly1305@openssh.com,aes128-ctr,aes192-ctr,aes256-ctr"
+// up to four ssh processes, the slowest of which sets the pace. The rest of
+// the default list follows for a host that offers no GCM.
+const StreamCiphers = "aes128-gcm@openssh.com,aes256-gcm@openssh.com,chacha20-poly1305@openssh.com,aes128-ctr,aes192-ctr,aes256-ctr"
 
 // sshArgs are the common ssh options (key, pinned known_hosts, no prompts).
 // ConnectTimeout fails fast when the host is unreachable, for example from a
@@ -137,7 +137,7 @@ func (c *Conn) sshArgs() []string {
 	return append(args,
 		"-i", c.keyPath(),
 		"-p", c.Port,
-		"-o", "Ciphers="+streamCiphers,
+		"-o", "Ciphers="+StreamCiphers,
 		"-o", "BatchMode=yes",
 		"-o", "StrictHostKeyChecking=accept-new",
 		"-o", "ConnectTimeout=10",
@@ -152,6 +152,16 @@ func (c *Conn) sshArgs() []string {
 // embedded ' is closed, escaped and reopened.
 func shellQuote(s string) string {
 	return "'" + strings.ReplaceAll(s, "'", `'\''`) + "'"
+}
+
+// RemoteCommand is the command line ssh sends to run args on a host, every
+// token quoted for its shell.
+func RemoteCommand(args ...string) string {
+	quoted := make([]string, len(args))
+	for i, a := range args {
+		quoted[i] = shellQuote(a)
+	}
+	return strings.Join(quoted, " ")
 }
 
 // sshExec builds the full ssh argv: the connection options, "--", then the
@@ -355,6 +365,19 @@ func (c *Conn) RunWithStdin(ctx context.Context, rd io.Reader, args ...string) e
 	cmd.Stderr = stderr
 	if err := cmd.Run(); err != nil { // stdout is discarded
 		return &RemoteError{Cmd: args[0], Stderr: strings.TrimSpace(stderr.buf.String()), Err: err}
+	}
+	return nil
+}
+
+// RunStreams runs a command on the host over SSH with its three streams wired
+// to the caller's and nothing kept back, for a command that reports on both
+// outputs for as long as it runs. It blocks until the remote command exits.
+func (c *Conn) RunStreams(ctx context.Context, stdin io.Reader, stdout, stderr io.Writer, args ...string) error {
+	cmd := exec.CommandContext(ctx, sshBinary, c.sshExec(args...)...) //nolint:gosec // remote args shell-quoted
+	cmd.Stdin, cmd.Stdout, cmd.Stderr = stdin, stdout, stderr
+	cmd.WaitDelay = stdinWaitDelay
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("sshconn: run %q: %w", args[0], err)
 	}
 	return nil
 }

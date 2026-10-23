@@ -15,14 +15,22 @@ func (r *run) stream(ctx context.Context, member string, sendArgs, recvArgs []st
 	if r.e.Progress != nil {
 		report = func(done int64) { r.e.Progress(member, done, total) }
 	}
+	if p, ok := r.src.(Piper); ok {
+		if n, piped, err := p.Pipe(ctx, sendArgs, r.dst, recvArgs, report); piped {
+			// Its progress lags behind the stream, and a short one shows
+			// none, so a stream that arrived counts at least its estimate.
+			if err == nil {
+				n = max(n, total)
+			}
+			return n, err
+		}
+	}
 	return pipe(ctx, r.src, r.dst, sendArgs, recvArgs, report)
 }
 
 // pipe streams one send into one receive and returns the bytes that crossed.
 // When the receive gives up first, nothing drains the send any more and it
-// would block on its pipe for good, so it is cancelled before its wait. Both
-// sides have to succeed: a receive that ended cleanly on a send that failed
-// took a stream that may be short.
+// would block on its pipe for good, so it is cancelled before its wait.
 func pipe(ctx context.Context, from, to End, sendArgs, recvArgs []string, report func(int64)) (int64, error) {
 	sendCtx, cancel := context.WithCancel(ctx)
 	defer cancel()
@@ -38,17 +46,22 @@ func pipe(ctx context.Context, from, to End, sendArgs, recvArgs []string, report
 	}
 	sendErr := wait()
 	_ = out.Close()
-	n := counted.n.Load()
+	return counted.n.Load(), settle(sendErr, recvErr)
+}
 
+// settle is the error of a send and the receive it fed. Both sides have to
+// succeed: a receive that ended cleanly on a send that failed took a stream
+// that may be short.
+func settle(sendErr, recvErr error) error {
 	switch {
 	case recvErr == nil:
-		return n, sendErr
+		return sendErr
 	// A receive fails too when the send died first, and then the send knows
-	// why. A send that was only cancelled here says nothing specific.
+	// why. A send that was only stopped says nothing specific.
 	case sendErr != nil && Code(sendErr) != "zfs-error":
-		return n, sendErr
+		return sendErr
 	}
-	return n, recvErr
+	return recvErr
 }
 
 // estimate asks the source how large a stream will be. It is only for the
