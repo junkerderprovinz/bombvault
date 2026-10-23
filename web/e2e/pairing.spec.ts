@@ -258,11 +258,25 @@ for (const width of [1280, 390]) {
     expect(await page.locator(".glim-step-pic").first().evaluate((svg) => svg.getAnimations({ subtree: true }).length)).toBe(0);
     await page.emulateMedia({ reducedMotion: "no-preference" });
 
-    // The three cards sit side by side on the desktop and stack on a phone.
-    // A title that wraps makes its heading taller, so the pictures are measured.
+    // The cards stack on a phone. On the desktop they stand side by side as
+    // far as their titles fit on one line, and the rest moves to the next row.
     const tops = await page.locator("[data-step-frame]").evaluateAll((frames) => frames.map((f) => Math.round(f.getBoundingClientRect().top)));
     expect(tops).toHaveLength(3);
-    expect(new Set(tops).size).toBe(width === 1280 ? 1 : 3);
+    if (width === 1280) {
+      const grid = await page.locator("section[data-new='pairing-steps'] > div").evaluate((el) => ({
+        width: el.clientWidth,
+        gap: parseFloat(getComputedStyle(el).columnGap),
+        min: parseFloat(el.style.getPropertyValue("--step-min")),
+        heads: [...el.querySelectorAll("h2")].map((h2) => Math.round(h2.getBoundingClientRect().height)),
+      }));
+      const track = Math.min(grid.width, Math.max(grid.min, grid.width * 0.3));
+      const across = Math.min(3, Math.max(1, Math.floor((grid.width + grid.gap) / (track + grid.gap))));
+      expect(across, "not even two cards fit side by side").toBeGreaterThanOrEqual(2);
+      expect(new Set(tops).size).toBe(Math.ceil(3 / across));
+      expect(grid.heads, "a step title wraps").toEqual([22, 22, 22]);
+    } else {
+      expect(new Set(tops).size).toBe(3);
+    }
 
     // The relay in its four forms, each with its picture.
     await expect(page.getByRole("radio")).toHaveText(["Projekt-Relay", "Eigenes Relay", "BombVault-Instanz", "Kein Relay"]);
@@ -308,6 +322,42 @@ for (const width of [1280, 390]) {
     await expect(page.getByRole("textbox", { name: "Die zwölf Wörter deiner ersten Instanz" })).toBeVisible();
     await settle(page);
     await expectFits(page);
+  });
+}
+
+for (const width of [1000, 1600]) {
+  test(`the step titles @ ${width}px keep to one line in the languages with the longest words`, async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== "desktop-1280", "desktop widths, set by the test");
+    const f = instance("Tower Linz", { active: true, members: [attic, cellar], memberSeen: true, joinedAgo: 600 });
+    for (const lang of ["de", "en", "fi", "hu", "el"]) {
+      await stage(page, f);
+      await page.addInitScript((code) => window.localStorage.setItem("bv-lang", code), lang);
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto("/settings/pairing");
+      await expect(page.locator("[data-step-frame]")).toHaveCount(3);
+      await page.evaluate(() => document.fonts.ready);
+      await settle(page);
+      const heads = await page.locator("section[data-new='pairing-steps'] h2").evaluateAll((all) =>
+        all.map((h2) => {
+          const card = h2.parentElement!.getBoundingClientRect();
+          const r = h2.getBoundingClientRect();
+          const title = h2.lastElementChild as HTMLElement;
+          return {
+            text: title.textContent,
+            height: Math.round(r.height),
+            cut: title.scrollWidth > title.clientWidth + 1,
+            past: r.right > card.right + 1 || r.left < card.left - 1,
+          };
+        }),
+      );
+      expect(heads, lang).toHaveLength(3);
+      for (const head of heads) {
+        expect(head.height, `${lang}: "${head.text}" wraps`).toBe(22);
+        expect(head.cut, `${lang}: "${head.text}" runs past its badge`).toBe(false);
+        expect(head.past, `${lang}: "${head.text}" runs past its card`).toBe(false);
+      }
+      await page.unrouteAll({ behavior: "ignoreErrors" });
+    }
   });
 }
 

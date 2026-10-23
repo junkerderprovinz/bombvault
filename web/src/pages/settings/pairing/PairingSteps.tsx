@@ -43,14 +43,29 @@ function placeWithin(el: HTMLElement, root: HTMLElement): [number, number] {
   return [x, y];
 }
 
+/** How wide a card has to be for its heading to stay on one line: the badges
+ *  at their full width and the room StepCard leaves beside its heading. */
+function stepWidth(root: HTMLElement): number {
+  const rem = parseFloat(getComputedStyle(document.documentElement).fontSize);
+  const widths = Array.from(root.querySelectorAll<HTMLElement>("h2")).map((head) => {
+    const badges = Array.from(head.children as HTMLCollectionOf<HTMLElement>);
+    const gap = parseFloat(getComputedStyle(head).columnGap) || 0;
+    return badges.reduce((sum, badge) => sum + badge.scrollWidth, 0) + gap * (badges.length - 1);
+  });
+  return Math.ceil(Math.max(0, ...widths) + 3.25 * rem);
+}
+
 /** useSceneStops measures the pointer's stops in the grid's own pixels and
- *  hands them to the stylesheet. */
-function useSceneStops() {
+ *  hands them to the stylesheet, with the width a card needs for its heading
+ *  to stay on one line. Measured again when the words change. */
+function useSceneStops(words: string) {
   const grid = useRef<HTMLDivElement>(null);
   const [stops, setStops] = useState<CSSProperties>({});
+  const [stepMin, setStepMin] = useState(0);
   useLayoutEffect(() => {
     const root = grid.current!;
     const measure = () => {
+      setStepMin(stepWidth(root));
       const frames = Array.from(root.querySelectorAll<HTMLElement>("[data-step-frame]"));
       const next: Record<string, string> = {};
       for (const [name, [card, x, y]] of Object.entries(STOPS)) {
@@ -63,15 +78,16 @@ function useSceneStops() {
       setStops((prev) => (JSON.stringify(prev) === JSON.stringify(next) ? prev : (next as CSSProperties)));
     };
     measure();
+    // The badges are measured in the page's font, which can arrive later.
+    void document.fonts?.ready.then(measure);
     const watch = new ResizeObserver(measure);
     watch.observe(root);
     return () => watch.disconnect();
-  }, []);
-  return { grid, stops };
+  }, [words]);
+  return { grid, stops, stepMin };
 }
 
 export function PairingSteps({ t, hues }: { t: T; hues: [number, number, number] }) {
-  const { grid, stops } = useSceneStops();
   const steps = [
     {
       title: t("pairing.step1Title"),
@@ -86,11 +102,18 @@ export function PairingSteps({ t, hues }: { t: T; hues: [number, number, number]
       body: t("pairing.step3Body"),
     },
   ];
+  const { grid, stops, stepMin } = useSceneStops(steps.map((s) => s.title).join("\n"));
   return (
     <section aria-label={t("pairing.howTitle")} data-new="pairing-steps">
       {/* The step cards' number badges straddle their top edge, so stacked
-          cards keep more room between them than a card gap. */}
-      <div ref={grid} className="relative grid grid-cols-1 gap-10 md:grid-cols-3 md:gap-6">
+          cards keep more room between them than a card gap. On a wider
+          screen a title keeps to one line, and a card that would cut it
+          short moves to the next row instead. */}
+      <div
+        ref={grid}
+        style={{ "--step-min": `${stepMin}px` } as CSSProperties}
+        className="relative grid grid-cols-1 gap-10 md:grid-cols-[repeat(auto-fit,minmax(min(100%,max(var(--step-min),30%)),1fr))] md:gap-6 md:[&_h2>*]:whitespace-nowrap"
+      >
         {steps.map((s, i) => (
           <StepCard key={i} n={i + 1} title={s.title} hueIndex={hues[i]}>
             {/* On a phone the picture moves beside the words, so three cards
