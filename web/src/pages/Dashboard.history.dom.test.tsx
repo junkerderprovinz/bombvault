@@ -81,6 +81,16 @@ describe("the runs of the history card", () => {
     expect(within(rows[1]).getByText(en["run.kindDbDump"])).toBeTruthy();
   });
 
+  it("names a failed replica by the sentence of its code", async () => {
+    const error = "zfs replica: tank/docs: zfs: zfs-not-found: bash: line 1: [path]: No such file or directory [zfs-not-found]";
+    server.runs = [run({ id: "r1", kind: "replica", target: "tank/docs", status: "failed", error })];
+    await renderPage();
+
+    const row = within(within(historyCard()).getByRole("listitem"));
+    expect(row.getByText(en["zfs.code.zfs-not-found"]).className).toContain("text-statusFail");
+    expect(row.queryByText(/No such file or directory/)).toBeNull();
+  });
+
   it("opens a run in its window", async () => {
     server.runs = [run({ id: "r1", target: "immich" })];
     await renderPage();

@@ -37,6 +37,7 @@ import { DOMAIN_LABEL, locationRoute } from "../../lib/storageLocations";
 import { useToast } from "../../lib/toast";
 import { useIsDesktop } from "../../lib/useMediaQuery";
 import { useDeclineBackup } from "../../lib/useDeclineBackup";
+import { replicaRunSentence } from "../../lib/zfsCodes";
 import { Card } from "./Card";
 
 type T = ReturnType<typeof useT>["t"];
@@ -104,6 +105,8 @@ function FailedRunRow({
   const [starting, setStarting] = useState(false);
   const name = runTargetText(t, run);
   const repeatable = !!item && REPEATABLE.has(run.kind);
+  // The server's own output stays in the window that lists the errors.
+  const replicaSentence = replicaRunSentence(t, run);
 
   function resolve() {
     ackRuns({ ids: [run.id] })
@@ -173,9 +176,13 @@ function FailedRunRow({
         </>
       }
     >
-      <p dir={isOwnReason(run.error) ? undefined : "ltr"} className={`${SUB} text-start`}>
-        {run.error ? <RunReasonText reason={run.error} t={t} /> : t("run.statusFailed")}
-      </p>
+      {replicaSentence ? (
+        <p className={SUB}>{replicaSentence}</p>
+      ) : (
+        <p dir={isOwnReason(run.error) ? undefined : "ltr"} className={`${SUB} text-start`}>
+          {run.error ? <RunReasonText reason={run.error} t={t} /> : t("run.statusFailed")}
+        </p>
+      )}
     </Row>
   );
 }

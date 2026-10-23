@@ -324,7 +324,7 @@ describe("the head of a ZFS entry", () => {
 
 describe("the head of a ZFS entry that replicates", () => {
   const AT = Math.floor(Date.now() / 1000) - 2 * 3600;
-  const replicated = (replica: { lastAt: number; lastStatus: string; only?: boolean }) =>
+  const replicated = (replica: { lastAt: number; lastStatus: string; code?: string; only?: boolean }) =>
     serveEntries(mocks, {
       items: [{ ...TANK, lastBackup: 0, lastRunStatus: "", replica }],
       datasets: [zfsView({ lastBackup: 0, lastRunStatus: "" })],
@@ -354,6 +354,12 @@ describe("the head of a ZFS entry that replicates", () => {
     replicated({ lastAt: AT, lastStatus: "failed" });
     await renderPage();
     expect(screen.getByText(en["zfs.replica.state.failed"])).toBeTruthy();
+  });
+
+  it("explains a failed replica by the sentence of its code", async () => {
+    replicated({ lastAt: AT, lastStatus: "failed", code: "zfs-not-found" });
+    await renderPage();
+    expect(screen.getByRole("img", { name: en["zfs.code.zfs-not-found"] })).toBeTruthy();
   });
 
   it("says Replicating while the replica runs and reads the entry again when it ends", async () => {

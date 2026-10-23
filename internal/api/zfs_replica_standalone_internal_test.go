@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/junkerderprovinz/bombvault/internal/backup"
 	"github.com/junkerderprovinz/bombvault/internal/notify"
 	"github.com/junkerderprovinz/bombvault/internal/schedule"
 	"github.com/junkerderprovinz/bombvault/internal/store"
@@ -275,6 +276,32 @@ func TestTheItemListSaysHowTheReplicaStands(t *testing.T) {
 	}
 	if item()["replica"] != nil {
 		t.Error("an item that replicates nowhere carries a replica")
+	}
+}
+
+// The page explains a failed replica by its code, so the list carries the
+// code and leaves the server's output to the run.
+func TestTheItemListNamesTheCodeAReplicaFailedWith(t *testing.T) {
+	r := newReplicaRig(t)
+	code := func() any {
+		_, m, _ := r.call(http.MethodGet, "/api/items/zfs/"+r.item.ID, "")
+		it, _ := m["item"].(map[string]any)
+		rep, _ := it["replica"].(map[string]any)
+		return rep["code"]
+	}
+	r.result = func(e zfsrepl.Entry) (zfsrepl.Result, error) {
+		return zfsrepl.Result{}, &backup.ZFSRefusal{Code: "zfs-not-found", Detail: "bash: line 1: zfs: command not found"}
+	}
+	_ = r.s.ReplicateZFSDataset(context.Background(), r.item.ID)
+	if got := code(); got != "zfs-not-found" {
+		t.Errorf("after a failed run the code is %v, want zfs-not-found", got)
+	}
+	r.result = func(e zfsrepl.Entry) (zfsrepl.Result, error) { return zfsrepl.Result{}, nil }
+	if err := r.s.ReplicateZFSDataset(context.Background(), r.item.ID); err != nil {
+		t.Fatal(err)
+	}
+	if got := code(); got != nil {
+		t.Errorf("a replica that worked still carries the code %v", got)
 	}
 }
 

@@ -21,6 +21,7 @@ import { formatRecent, relativeTime } from "../../lib/reltime";
 import { runReason } from "../../lib/runReason";
 import { useLongPress } from "../../lib/useLongPress";
 import { useTipBubble } from "../../lib/useTipBubble";
+import { zfsReplicaFailure } from "../../lib/zfsCodes";
 import { BackupCancelButton } from "../BackupCancelButton";
 import { Badge } from "../Badge";
 import { changeLines } from "../ContainerChangeNotice";
@@ -161,6 +162,8 @@ function rowFacts({
     facts.push(`${t("backups.fact.lastGood").replace("{when}", formatRecent(item.lastBackup, lang))}.`);
   }
   if (failed && item.lastRunError) facts.push(runReason(item.lastRunError, t));
+  const replicaFailure = item.replica?.lastStatus === "failed" ? zfsReplicaFailure(t, item.replica.code) : null;
+  if (replicaFailure) facts.push(replicaFailure);
   if (failed && loudAnomalies(anomaly) > 0) facts.push(t("backups.fact.anomalyOpen"));
   if (state === "pending" && !item.renameFrom) facts.push(`${t("backups.fact.nextRun")}.`);
   if (item.backupDeclined) facts.push(`${t("entry.reason.declined")}.`);

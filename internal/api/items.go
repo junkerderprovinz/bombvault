@@ -189,6 +189,9 @@ type backupItemView struct {
 type itemReplicaView struct {
 	LastAt     int64  `json:"lastAt"`
 	LastStatus string `json:"lastStatus"`
+	// Code is the reason code of a failed last run, which the page turns into
+	// its sentence.
+	Code string `json:"code,omitempty"`
 	// Only is set while the replica is all the item gets: its section has no
 	// place for a backup, so none will come.
 	Only bool `json:"only,omitempty"`
@@ -255,6 +258,9 @@ func (h *Handler) readReplicaViews(id string) (map[string]itemReplicaView, error
 		}
 		if ok {
 			v.LastStatus = run.Status
+			if run.Status == "failed" {
+				v.Code = zfsRunCode(run.Error)
+			}
 		}
 		out[d.ID] = v
 	}

@@ -110,6 +110,27 @@ describe("NeedsCard", () => {
     expect(screen.queryByText(en["containers.batchAlreadyRunning"])).toBeNull();
   });
 
+  it("says why a retry is refused while the last backup is copied off site", async () => {
+    vi.spyOn(api, "backupNow").mockRejectedValueOnce(new api.ApiError(409, en["apiError.offsiteBusy"], "offsite-busy"));
+    renderCard([{ is: "failedRun", run: run({ id: "r1", status: "failed" }), item: item() }]);
+
+    fireEvent.click(within(screen.getByTestId("need-failed-run")).getByRole("button", { name: en["breakdown.retry"] }));
+    await act(async () => {});
+
+    expect(screen.getByText(en["apiError.offsiteBusy"])).toBeTruthy();
+    expect(screen.queryByText(en["containers.batchAlreadyRunning"])).toBeNull();
+  });
+
+  it("names a failed replica by the sentence of its code and leaves the server's output to the errors", () => {
+    const error = "zfs replica: tank/docs: zfs: zfs-not-found: bash: line 1: [path]: No such file or directory [zfs-not-found]";
+    renderCard([{ is: "failedRun", run: run({ id: "r1", kind: "replica", status: "failed", error }) }]);
+
+    const row = within(screen.getByTestId("need-failed-run"));
+    expect(row.getByText(en["zfs.code.zfs-not-found"])).toBeTruthy();
+    expect(row.queryByText(/No such file or directory/)).toBeNull();
+    expect(row.getByRole("button", { name: en["overview.needs.viewErrors"] })).toBeTruthy();
+  });
+
   it("opens the failures from a failed run", () => {
     renderCard([{ is: "failedRun", run: run({ id: "r1", status: "failed" }), item: item() }]);
     const row = within(screen.getByTestId("need-failed-run"));

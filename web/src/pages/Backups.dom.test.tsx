@@ -700,6 +700,13 @@ describe("a ZFS entry that replicates", () => {
     expect(row("cache/appdata").textContent).toContain(en["zfs.replica.state.failed"]);
   });
 
+  it("says in its bubble why the replica failed, by the sentence of its code", async () => {
+    serve([zfs({ lastBackup: NOW - HOUR, lastRunStatus: "success", replica: { lastAt: 0, lastStatus: "failed", code: "zfs-not-found" } })]);
+    await renderPage();
+    const said = within(row("cache/appdata")).getByLabelText(new RegExp(en["zfs.code.zfs-not-found"]));
+    expect(said.getAttribute("aria-label")).not.toMatch(/zfs-not-found/);
+  });
+
   it("reads the list again when the replica ends", async () => {
     vi.useFakeTimers();
     try {

@@ -201,6 +201,21 @@ export function zfsCodeSentence(t: Translate, code: string, vars: ZFSCodeVars = 
   return text;
 }
 
+/** The sentence for the code a replica failed with, or null where the stored
+ *  text has to stand: no code, one this client does not know, or one whose
+ *  sentence needs names the code alone does not carry. */
+export function zfsReplicaFailure(t: Translate, code: string | undefined): string | null {
+  if (!code || !isReasonCode(code) || ZFS_CODE_VARS[code]) return null;
+  return zfsCodeSentence(t, code);
+}
+
+/** zfsReplicaFailure for a failed replica run, whose error ends in its code.
+ *  Any other run gets null. */
+export function replicaRunSentence(t: Translate, run: { kind: string; error?: string | null }): string | null {
+  if (run.kind !== "replica" || !run.error) return null;
+  return zfsReplicaFailure(t, zfsRunReasonCode(run.error)?.code);
+}
+
 /**
  * zfsRunReasonCode reads the reason code out of a ZFS run's error. The
  * orchestrator writes "code: detail", a refusal before the run began ends in

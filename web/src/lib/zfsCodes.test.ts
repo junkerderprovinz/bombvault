@@ -12,7 +12,9 @@ import {
   ZFS_CODE_VARS,
   ZFS_FIX_KEY,
   ZFS_MEMBER_KEY,
+  replicaRunSentence,
   zfsCodeSentence,
+  zfsReplicaFailure,
   zfsRunReasonCode,
 } from "./zfsCodes";
 
@@ -104,5 +106,25 @@ describe("a run's error", () => {
     expect(zfsRunReasonCode("cancelled by the user")).toBeNull();
     expect(zfsRunReasonCode("restic backup failed: Fatal: wrong password")).toBeNull();
     expect(zfsRunReasonCode("stopped by the stall guard after 1 hour without progress while reading tank/app")).toBeNull();
+  });
+});
+
+describe("a failed replica", () => {
+  const t = (key: string) => en[key as keyof typeof en];
+  const raw =
+    "zfs replica: bv95demo/docs: zfs: zfs-not-found: bash: line 1: [path]: No such file or directory [zfs-not-found]";
+
+  it("is told by the sentence of its code, not by what the server printed", () => {
+    expect(replicaRunSentence(t, { kind: "replica", error: raw })).toBe(en["zfs.code.zfs-not-found"]);
+    expect(zfsReplicaFailure(t, "zfs-not-found")).toBe(en["zfs.code.zfs-not-found"]);
+  });
+
+  it("keeps the stored text where the code alone cannot say it", () => {
+    expect(replicaRunSentence(t, { kind: "backup", error: raw })).toBeNull();
+    expect(replicaRunSentence(t, { kind: "replica", error: "link down" })).toBeNull();
+    expect(zfsReplicaFailure(t, undefined)).toBeNull();
+    expect(zfsReplicaFailure(t, "pool-on-fire")).toBeNull();
+    // Its sentence names the address, which the code does not carry.
+    expect(zfsReplicaFailure(t, "ssh-unreachable")).toBeNull();
   });
 });

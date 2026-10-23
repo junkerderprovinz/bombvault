@@ -9,6 +9,7 @@ import { entryReason, hostSilent, type Entry } from "../../lib/entry";
 import { stateLabel, useT } from "../../lib/i18n";
 import type { ProgressState } from "../../lib/progress";
 import { formatRecent } from "../../lib/reltime";
+import { zfsReplicaFailure } from "../../lib/zfsCodes";
 import { BackupCancelButton } from "../BackupCancelButton";
 import { runningLabel } from "../backups/BackupRow";
 import { KIND_SCHEDULE_LABEL, KindGlyph, kindHue } from "../backups/kinds";
@@ -86,7 +87,15 @@ function ProtectionBadge({ entry, replicating }: { entry: Entry; replicating: bo
   const { t } = useT();
   if (isGone(entry.item)) return <Badge tone="neutral">{t("containers.notInstalled")}</Badge>;
   if (replicating) return <Badge tone="active">{t("zfs.replica.state.running")}</Badge>;
-  if (entry.item.replica?.lastStatus === "failed") return <Badge tone="fail">{t("zfs.replica.state.failed")}</Badge>;
+  if (entry.item.replica?.lastStatus === "failed") {
+    const why = zfsReplicaFailure(t, entry.item.replica.code);
+    return (
+      <span className="inline-flex items-center gap-1">
+        <Badge tone="fail">{t("zfs.replica.state.failed")}</Badge>
+        {why && <InfoBubble tip={why} />}
+      </span>
+    );
+  }
   switch (protection(entry.item)) {
     case "ok":
       return <Badge tone="ok">{t("ransomware.protGreen")}</Badge>;

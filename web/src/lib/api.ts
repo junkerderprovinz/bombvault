@@ -4090,9 +4090,10 @@ export interface BackupItem {
   noPlace?: boolean;
   /** ZFS items that replicate: when the replica last succeeded and what its
    *  newest run did ("success", "failed", "running", "cancelled", "" before
-   *  the first). `only` is set while the replica is all the item gets, because
-   *  its section has no place for a backup. */
-  replica?: { lastAt: number; lastStatus: string; only?: boolean };
+   *  the first). `code` is the reason a failed one gave. `only` is set while
+   *  the replica is all the item gets, because its section has no place for
+   *  a backup. */
+  replica?: { lastAt: number; lastStatus: string; code?: string; only?: boolean };
   /** The newest fourteen backups, imports and restores, newest first. */
   runs: BackupItemRun[];
 }
