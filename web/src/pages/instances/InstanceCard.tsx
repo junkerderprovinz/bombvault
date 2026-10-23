@@ -82,8 +82,10 @@ export function InstanceCard({
     >
       <div className="flex items-start">
         {/* Level with the name rather than centred, so the mark stands in one
-            place on every card whatever the card holds. */}
-        <div data-new="instances-card-logo" className="flex shrink-0 ps-4 pt-5 md:pt-7">
+            place on every card whatever the card holds. Its padding below
+            matches the text's, so a card without figures keeps the same room
+            above what follows. */}
+        <div data-new="instances-card-logo" className="flex shrink-0 ps-4 py-5 md:py-7">
           {mark ?? <InstanceMark />}
         </div>
         <div className="flex min-w-0 flex-1 flex-col gap-4 p-5 md:p-7">
