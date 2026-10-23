@@ -38,6 +38,7 @@ function RoleRow({
   state,
   onToggle,
   onChange,
+  action,
   children,
 }: {
   role: RoleKind;
@@ -45,6 +46,8 @@ function RoleRow({
   onToggle: () => void;
   /** Opens what the role covers. A role that covers nothing has none. */
   onChange?: () => void;
+  /** A button under the row, which gets the row's whole width. */
+  action?: ReactNode;
   children: ReactNode;
 }) {
   const { t } = useT();
@@ -74,6 +77,7 @@ function RoleRow({
         )}
         <Toggle checked={state !== "off"} onChange={onToggle} label={t(label)} hideLabel />
       </span>
+      {action && <span className="flex basis-full justify-end">{action}</span>}
     </li>
   );
 }
@@ -153,27 +157,15 @@ export function PeerDetails({
         return <Facts items={[named("zfs.replica.peer.asked"), covers]} />;
       case "allowed":
         return (
-          <>
-            <Facts
-              items={[
-                covers,
-                role === "receiver" && instance.destination && t("instances.role.location").replace("{name}", () => instance.destination!.name),
-                role === "receiver" && instance.noDestination && t("instances.role.noDestination"),
-                role === "receiver" && instance.shareReceiver && named("instances.role.shareLocation"),
-                request.decidedBy === "automatic" && named("instances.role.automatic"),
-              ]}
-            />
-            {role === "receiver" && (instance.noDestination || instance.shareReceiver) && (
-              <span className="mt-2 flex">
-                <Button
-                  label={t("storage.add.title")}
-                  labelKey="storage.add.title"
-                  tone="neutral"
-                  onClick={() => setDialog({ kind: "location" })}
-                />
-              </span>
-            )}
-          </>
+          <Facts
+            items={[
+              covers,
+              role === "receiver" && instance.destination && t("instances.role.location").replace("{name}", () => instance.destination!.name),
+              role === "receiver" && instance.noDestination && t("instances.role.noDestination"),
+              role === "receiver" && instance.shareReceiver && named("instances.role.shareLocation"),
+              request.decidedBy === "automatic" && named("instances.role.automatic"),
+            ]}
+          />
         );
       case "refused":
         return named("instances.role.declined");
@@ -248,6 +240,18 @@ export function PeerDetails({
                 state={roles.states[k]}
                 onToggle={() => roles.toggle(k)}
                 onChange={k === "keeper" ? undefined : () => roles.change(k)}
+                action={
+                  k === "receiver" &&
+                  instance.roles?.byMember.receiver?.state === "allowed" &&
+                  (instance.noDestination || instance.shareReceiver) && (
+                    <Button
+                      label={t("storage.add.title")}
+                      labelKey="storage.add.title"
+                      tone="neutral"
+                      onClick={() => setDialog({ kind: "location" })}
+                    />
+                  )
+                }
               >
                 {(k === "receiver" || k === "fetcher") && (
                   <span className="text-xs text-carbon-textMuted wrap-anywhere">{requestLine(instance.roles?.byMember[k], k)}</span>
