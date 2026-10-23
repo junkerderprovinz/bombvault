@@ -139,7 +139,7 @@ func (s *Service) destinationOpens(ctx context.Context, d, t store.OffsiteTarget
 		return err
 	}
 	probe := t
-	probe.CredsRef, probe.StorageClass = d.CredsRef, d.StorageClass
+	probe.CredsRef, probe.StorageClass, probe.DestinationID = d.CredsRef, d.StorageClass, d.ID
 	reachable, initialized, err := s.probeOffsiteRepo(ctx, t.Repo, s.offsiteModeForTarget(settings, probe))
 	if _, other := errors.AsType[*otherEncryptionErr](err); other {
 		return fmt.Errorf("%s: %w", scrubRepoLocation(t.Repo), err)

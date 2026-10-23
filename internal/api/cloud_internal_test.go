@@ -234,6 +234,38 @@ func TestAPrimaryOnALocationTakesTheLocationsDefaultClass(t *testing.T) {
 	}
 }
 
+func TestADirectRepositoryOnALocationTakesTheLocationsDefaultClass(t *testing.T) {
+	s := unraidNotifyService(t, nil)
+	if err := s.SetCloudCreds(CloudCreds{S3KeyID: "AK", S3StorageClass: "STANDARD_IA"}); err != nil {
+		t.Fatal(err)
+	}
+	if err := s.SetCloudCredSets([]CloudCredSet{{ID: "aws", Name: "AWS", CloudCreds: CloudCreds{S3KeyID: "K", S3Secret: "S", S3StorageClass: "GLACIER_IR"}}}); err != nil {
+		t.Fatal(err)
+	}
+	d, err := s.store.SaveDestination(store.OffsiteTarget{Name: "Bucket", Repo: "s3:https://s3.eu-west-1.amazonaws.com/bucket", Provider: "aws", CredsRef: "aws"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	target, _, err := s.store.EnsureDestinationTarget(d.ID, "containers", d.Repo+"/containers")
+	if err != nil {
+		t.Fatal(err)
+	}
+	direct, err := s.store.CreateCompanionRepo(target.ID, "", d.Repo+"/direct")
+	if err != nil {
+		t.Fatal(err)
+	}
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := s.primaryModeFor(settings, "containers", direct.Repo).StorageClass; got != "" {
+		t.Errorf("backup storage class = %q, want the provider's default the location names", got)
+	}
+	if got := s.offsiteModeForTarget(settings, direct).StorageClass; got != "" {
+		t.Errorf("storage class = %q, want the provider's default the location names", got)
+	}
+}
+
 func TestDecodeCloudForEmptyRefUsesSharedCreds(t *testing.T) {
 	s := unraidNotifyService(t, nil)
 	if err := s.SetCloudCreds(CloudCreds{S3KeyID: "SHARED-KEY", S3Secret: "SHARED-SEC"}); err != nil {

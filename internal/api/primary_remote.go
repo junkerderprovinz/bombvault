@@ -119,7 +119,7 @@ func (s *Service) primaryModeFor(settings store.Settings, domain, repo string) r
 		mode.Limits = restic.Limits{UploadKBps: named.LimitUpload, DownloadKBps: named.LimitDownload}
 		mode.Compression = storedCompression(named.Compression)
 		if restic.IsRemoteRepo(repo) {
-			mode = withRowStorageClass(s.applyTargetCreds(mode, settings, named), named)
+			mode = s.withRowStorageClass(s.applyTargetCreds(mode, settings, named), named)
 		}
 		return mode
 	}
@@ -132,7 +132,7 @@ func (s *Service) primaryModeFor(settings store.Settings, domain, repo string) r
 	if !ok {
 		return mode
 	}
-	return withRowStorageClass(s.applyTargetCreds(mode, settings, t), t)
+	return s.withRowStorageClass(s.applyTargetCreds(mode, settings, t), t)
 }
 
 // namedRepoForLocation finds the named repository a resolved location belongs

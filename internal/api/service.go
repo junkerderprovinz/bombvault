@@ -2146,7 +2146,7 @@ func targetOffsiteLimits(t store.OffsiteTarget) restic.Limits {
 // target takes the class of its destination, whose empty class means the
 // provider's default.
 func (s *Service) offsiteModeForTarget(settings store.Settings, target store.OffsiteTarget) restic.Mode {
-	mode := withRowStorageClass(s.applyTargetCreds(s.ModeFor(settings), settings, target), target)
+	mode := s.withRowStorageClass(s.applyTargetCreds(s.ModeFor(settings), settings, target), target)
 	mode.Compression = storedCompression(target.Compression)
 	// The keep-policy's prune at the target repacks over the same line the
 	// copy is capped on.
@@ -2157,12 +2157,26 @@ func (s *Service) offsiteModeForTarget(settings store.Settings, target store.Off
 // withRowStorageClass puts a row's own storage class on mode, after its
 // credentials. A row that follows a storage location carries that location's
 // class, where empty means the provider's default, so it beats the class of
-// the sign-in and of the default sign-in.
-func withRowStorageClass(mode restic.Mode, t store.OffsiteTarget) restic.Mode {
-	if t.StorageClass != "" || t.DestinationID != "" {
+// the sign-in and of the default sign-in. A direct repository follows the
+// location its target follows.
+func (s *Service) withRowStorageClass(mode restic.Mode, t store.OffsiteTarget) restic.Mode {
+	if t.StorageClass != "" || t.DestinationID != "" || s.targetFollowsLocation(t.CompanionOf) {
 		mode.StorageClass = t.StorageClass
 	}
 	return mode
+}
+
+// targetFollowsLocation reports whether the off-site target id was derived
+// from a storage location. An empty id names no target.
+func (s *Service) targetFollowsLocation(id string) bool {
+	if id == "" {
+		return false
+	}
+	t, ok, err := s.store.GetOffsiteTarget(id)
+	if err != nil {
+		log.Printf("api: target %s: %v", id, err) //nolint:gosec // G706: id is an opaque store-generated id
+	}
+	return ok && t.DestinationID != ""
 }
 
 // applyTargetCreds overrides mode's Env (and storage class) with the credential

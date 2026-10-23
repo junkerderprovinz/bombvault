@@ -181,6 +181,39 @@ func TestANewS3DestinationKeepsItsClassOutOfItsSignIn(t *testing.T) {
 	}
 }
 
+// classEngine opens every repository and records the storage class each
+// probe carried.
+type classEngine struct {
+	ResticEngine
+	classes []string
+}
+
+func (e *classEngine) RepoOpensErr(_ context.Context, _ string, mode restic.Mode) error {
+	e.classes = append(e.classes, mode.StorageClass)
+	return nil
+}
+
+func TestATargetIsTriedOnALocationInTheLocationsDefaultClass(t *testing.T) {
+	svc, st, _ := newProbeSvc(t, nil)
+	eng := &classEngine{}
+	svc.engine = eng
+	if err := svc.SetCloudCreds(CloudCreds{S3KeyID: "AK", S3StorageClass: "STANDARD_IA"}); err != nil {
+		t.Fatal(err)
+	}
+	d, err := st.SaveDestination(store.OffsiteTarget{Name: "Bucket", Repo: "s3:https://s3.eu-west-1.amazonaws.com/bucket", Provider: "aws"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	typed := store.OffsiteTarget{Domain: "containers", Name: "Typed", Repo: d.Repo + "/containers", Enabled: true, SortOrder: 1}
+
+	if err := svc.destinationOpens(context.Background(), d, typed); err != nil {
+		t.Fatal(err)
+	}
+	if len(eng.classes) == 0 || eng.classes[0] != "" {
+		t.Fatalf("probe classes = %q, want the provider's default the location names", eng.classes)
+	}
+}
+
 func TestASavedSignInDoesNotSignInForAnotherRegion(t *testing.T) {
 	s := unraidNotifyService(t, nil)
 	if err := s.SetCloudCredSets([]CloudCredSet{{ID: "aws", Name: "AWS", CloudCreds: CloudCreds{S3KeyID: "K", S3Secret: "S", S3Region: "us-east-1"}}}); err != nil {
