@@ -222,6 +222,25 @@ func TestAMoveThatFailsItsCheckLeavesTheSectionWhereItIs(t *testing.T) {
 	}
 }
 
+func TestAMoveClearsAStaleLockAtTheNewPlaceForItsCheck(t *testing.T) {
+	f := newPlacementFixture(t)
+	_, vms := boxWithVMs(f)
+	vault := f.destination("Vault", vaultRepo)
+	at := vaultRepo + "/vms"
+	f.eng.checkErr = map[string]error{at: errors.New("unable to create lock in backend: repository is already locked by PID 2498 on BV-950 by root")}
+	f.eng.onUnlock = func() {
+		f.eng.mu.Lock()
+		delete(f.eng.checkErr, at)
+		f.eng.mu.Unlock()
+	}
+
+	f.move(vms, vault)
+
+	if got := f.stored(vms.ID); got.Repo != at || got.DestinationID != vault.ID {
+		t.Fatalf("the target reads %+v, want it moved to Vault", got)
+	}
+}
+
 func TestAMoveStartedAgainCopiesOnlyWhatIsStillMissing(t *testing.T) {
 	f := newPlacementFixture(t)
 	box, vms := boxWithVMs(f)

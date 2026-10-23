@@ -69,6 +69,10 @@ type ownFolderStep struct {
 	// SwitchesOn says the section's own folder is switched off and its
 	// backups go straight to CopyAt, so the switch turns the own folder on.
 	SwitchesOn bool `json:"switchesOn,omitempty"`
+	// Verify says the new place, which is no copy of the section, holds every
+	// backup already, so a move that copies them checks it before the switch
+	// as it would after copying them itself.
+	Verify bool `json:"verify,omitempty"`
 
 	plan   movePlan
 	folder store.OwnFolder
@@ -280,6 +284,7 @@ func (s *Service) planOwnFolder(ctx context.Context, settings store.Settings, do
 		return ownFolderStep{}, fmt.Errorf("%w: %w", errOwnFolderUnreadable, err)
 	}
 	step.Backups, step.Pending = all, len(pending)
+	step.Verify = copyOver && step.CopyAt == "" && step.Pending == 0 && step.Backups > 0
 	if copyOver && step.Pending > 0 {
 		if err := step.plan.joinSignIns(); err != nil {
 			return ownFolderStep{}, err
@@ -433,8 +438,8 @@ func (s *Service) copyThenSwitch(ctx context.Context, step ownFolderStep, starte
 	if err := s.alignCopies(ctx, plan); err != nil {
 		return store.Settings{}, err
 	}
-	if err := s.engine.Check(ctx, plan.dst, plan.mode); err != nil {
-		return store.Settings{}, fmt.Errorf("check %s: %w", plan.To, err)
+	if err := s.checkNewPlace(ctx, plan); err != nil {
+		return store.Settings{}, err
 	}
 	return s.switchOwnFolder(step)
 }
@@ -453,7 +458,7 @@ func (s *Service) MoveOwnFolders(ctx context.Context, req ownFolderRequest, move
 	for _, step := range steps {
 		switch {
 		case step.Same:
-		case req.CopyOver && step.Pending > 0:
+		case req.CopyOver && (step.Pending > 0 || step.Verify):
 			later = append(later, step)
 		default:
 			now = append(now, step)

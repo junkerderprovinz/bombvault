@@ -258,8 +258,8 @@ func (s *Service) MoveSection(ctx context.Context, plan movePlan, startedAt int6
 	if err := s.alignCopies(ctx, plan); err != nil {
 		return store.Settings{}, err
 	}
-	if err := s.engine.Check(ctx, plan.dst, plan.mode); err != nil {
-		return store.Settings{}, fmt.Errorf("check %s: %w", plan.To, err)
+	if err := s.checkNewPlace(ctx, plan); err != nil {
+		return store.Settings{}, err
 	}
 
 	to := destinationLocation(plan.dest.Repo, plan.Domain)
@@ -281,6 +281,17 @@ func (s *Service) MoveSection(ctx context.Context, plan movePlan, startedAt int6
 		}
 	}
 	return settings, nil
+}
+
+// checkNewPlace checks the new place before a move switches to it. A stale
+// lock in the way is cleared here, since the section's unlock does not reach a
+// place the section does not use yet.
+func (s *Service) checkNewPlace(ctx context.Context, plan movePlan) error {
+	err := s.retryAfterUnlock(ctx, plan.dst, plan.mode, func() error { return s.engine.Check(ctx, plan.dst, plan.mode) })
+	if err != nil {
+		return fmt.Errorf("check %s: %w", plan.To, err)
+	}
+	return nil
 }
 
 // alignCopies gives each copy at the new place the tags its original carries.

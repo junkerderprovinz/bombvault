@@ -608,3 +608,52 @@ func TestAnOwnFolderDoesNotSwitchUnderARunningBackup(t *testing.T) {
 		t.Fatalf("path = %q", settings.VMsPath)
 	}
 }
+
+func TestAnOwnFolderMoveClearsAStaleLockAtTheNewPlaceForItsCheck(t *testing.T) {
+	f := newPlacementFixture(t)
+	vault := f.destination("Vault", vaultRepo)
+	f.hold(f.domainPath("containers"), snap("a1", 100, "container:web"))
+	at := vaultRepo + "/containers"
+	f.eng.checkErr = map[string]error{at: errors.New("unable to create lock in backend: repository is already locked by PID 2498 on BV-950 by root")}
+	f.eng.onUnlock = func() {
+		f.eng.mu.Lock()
+		delete(f.eng.checkErr, at)
+		f.eng.mu.Unlock()
+	}
+
+	ownSteps(t, f.do("POST", "/api/storage/own-folders", map[string]any{
+		"domains": []string{"containers"}, "location": "destination:" + vault.ID, "copyOver": true,
+	}))
+	f.waitOwnFolder("containers")
+
+	if settings, _ := f.st.GetSettings(); settings.ContainersPath != at {
+		t.Fatalf("path = %q, want the move done once the stale lock was cleared", settings.ContainersPath)
+	}
+}
+
+func TestAnOwnFolderMoveChecksANewPlaceThatHoldsEveryBackupAlready(t *testing.T) {
+	f := newPlacementFixture(t)
+	vault := f.destination("Vault", vaultRepo)
+	f.hold(f.domainPath("containers"), snap("a1", 100, "container:web"))
+	at := vaultRepo + "/containers"
+	// What a move whose check failed leaves there: every backup, unchecked.
+	f.hold(at, copied("v1", "a1", 100, "container:web"))
+	f.eng.checkErr = map[string]error{at: errors.New("pack 1a2b: not found in the index")}
+
+	steps := ownSteps(t, f.do("POST", "/api/storage/own-folders", map[string]any{
+		"domains": []string{"containers"}, "location": "destination:" + vault.ID, "copyOver": true,
+	}))
+	if len(steps) != 1 || steps[0].Pending != 0 || !steps[0].Verify {
+		t.Fatalf("steps = %+v, want one with nothing to copy and a check before the switch", steps)
+	}
+	f.waitOwnFolder("containers")
+
+	if settings, _ := f.st.GetSettings(); settings.ContainersPath == at {
+		t.Fatal("the section switched onto a place whose check failed")
+	}
+	f.eng.mu.Lock()
+	defer f.eng.mu.Unlock()
+	if !slices.Contains(f.eng.checks, at) {
+		t.Fatalf("checks = %v, want the new place checked", f.eng.checks)
+	}
+}

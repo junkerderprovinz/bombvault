@@ -179,6 +179,22 @@ it("opens the safety settings of a typed address once the section points there",
   expect(closed).toBe(0);
 });
 
+it("checks a place that holds every backup already before the switch, and says so", async () => {
+  const there: OwnFolderStep = { ...STEP, copyAt: undefined, copies: [], backups: 2, pending: 0, verify: true };
+  previewOwnFolders.mockResolvedValue({ ok: true, steps: [there] });
+  moveOwnFolders.mockResolvedValue({ ok: true, steps: [there] });
+  await open(["containers"], "destination:h");
+  await settle();
+  expect(screen.getByRole("list").textContent).toContain("The backups are there already, so BombVault checks them before the switch.");
+
+  await act(async () => {
+    fireEvent.click(screen.getByRole("button", { name: "Switch" }));
+  });
+
+  expect(document.body.textContent).toContain("Containers: BombVault first checks the backups already in Hetzner S3, then switches the own folder.");
+  expect(document.body.textContent).not.toContain("Own folder moved to");
+});
+
 it("says when the copy there keeps more and when the own folder goes on again", async () => {
   previewOwnFolders.mockResolvedValue({ ok: true, steps: [{ ...STEP, widerKeep: true, switchesOn: true }] });
   await open(["containers"], "destination:h");

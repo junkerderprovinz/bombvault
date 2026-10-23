@@ -2882,6 +2882,9 @@ export interface OwnFolderStep {
   key: string;
   widerKeep?: boolean;
   switchesOn?: boolean;
+  /** The new place, no copy of the section, holds every backup already, and a
+   *  move that copies them checks it before the switch. */
+  verify?: boolean;
 }
 
 type OwnFolderAnswer = OkEnvelope & { steps?: OwnFolderStep[] };

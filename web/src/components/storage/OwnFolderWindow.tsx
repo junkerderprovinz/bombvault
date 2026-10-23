@@ -77,6 +77,8 @@ function whatHappens(t: T, lang: string, steps: OwnFolderStep[], copyOver: boole
       if (step.switchesOn) line += ` ${t("own.lineSwitchOn")}`;
     } else if (copyOver && step.pending > 0) {
       line += ` ${t("own.lineCopyFirst", step.pending).replace("{from}", () => from)}`;
+    } else if (copyOver && step.verify) {
+      line += ` ${t("own.lineCheckFirst")}`;
     } else if (!copyOver && step.backups > 0) {
       line += ` ${t("own.lineStay", step.backups).replace("{from}", () => from)}`;
     }
@@ -205,10 +207,13 @@ export function OwnFolderWindow({
       return;
     }
     const names = (list: OwnFolderStep[]) => formatList(lang, list.map((step) => t(DOMAIN_LABEL[step.domain])));
-    const later = res.steps.filter((step) => !step.same && copyOver && step.pending > 0);
-    const now = res.steps.filter((step) => !step.same && !later.includes(step));
+    const copying = res.steps.filter((step) => !step.same && copyOver && step.pending > 0);
+    const checking = res.steps.filter((step) => !step.same && copyOver && step.pending === 0 && step.verify);
+    const now = res.steps.filter((step) => !step.same && !copying.includes(step) && !checking.includes(step));
+    const later = [...copying, ...checking];
     if (now.length > 0) push(t("own.moved").replace("{name}", () => placeName).replace("{list}", () => names(now)), "success");
-    if (later.length > 0) push(t("own.copying").replace("{name}", () => placeName).replace("{list}", () => names(later)), "success");
+    if (copying.length > 0) push(t("own.copying").replace("{name}", () => placeName).replace("{list}", () => names(copying)), "success");
+    if (checking.length > 0) push(t("own.checking").replace("{name}", () => placeName).replace("{list}", () => names(checking)), "success");
     storageLocationsChanged();
     // A typed address keeps safety settings of its own, and they belong to
     // the path it became, so they open once the section points there.
