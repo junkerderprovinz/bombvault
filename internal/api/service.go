@@ -550,6 +550,8 @@ type Service struct {
 	// pullMu guards pulling, the pull sources a pull runs for.
 	pullMu  sync.Mutex
 	pulling map[string]bool
+	// pullReached is when each source was last read for its earlier pulls.
+	pullReached map[string]time.Time
 
 	// cacheTrimming is TrimResticCache's own one-at-a-time flag. See its comment:
 	// the after-bulk hook it rides fires once per per-item cron entry, not once
@@ -2305,6 +2307,7 @@ func (s *Service) forgetAt(ctx context.Context, repo string, p restic.RetentionP
 		log.Printf("api: %s: retention paused for %s: %s", domain, id.tag, why) //nolint:gosec // G706: domain is a fixed literal and tags are validated names
 		return
 	}
+	s.settlePullsBefore(ctx, domain, repo)
 	prune := !bulkReplicateSuppressed(ctx) // bulk run: one batched prune after the loop
 	tags, ok := s.retentionTagsFor(ctx, repo, mode, id)
 	if !ok {
@@ -2475,6 +2478,7 @@ func (s *Service) applyRetentionPerIdentity(ctx context.Context, repo, domain st
 	if err != nil {
 		return nil, fmt.Errorf("read which items are paused: %w", err)
 	}
+	s.settlePullsBefore(ctx, domain, repo)
 	snaps, sErr := s.engine.Snapshots(ctx, repo, mode)
 	tags := identityTags(snaps)
 	if sErr != nil || len(tags) == 0 {

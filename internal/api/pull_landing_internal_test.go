@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"path/filepath"
 	"slices"
 	"strings"
 	"testing"
@@ -219,14 +220,15 @@ func TestAPullMovesTheSourcesEarlierSnapshotsOutOfTheDomainsRepository(t *testin
 	}
 }
 
-// The source's own retention has forgotten what the earlier pulls copied, and
-// the copy here would keep a week, a month or a year of this box's own out of
-// retention.
-func TestEarlierPullsTheSourceNoLongerHoldsLeaveTheDomainsRepository(t *testing.T) {
+// A copy whose original the source has let go of cannot be told from a backup
+// of this box that was tagged and whose entry, and with it its runs, was
+// removed since. Moving it would take this box's own backup out of its restore
+// lists.
+func TestACopyNoSourceCanBeTiedToStaysInTheDomainsRepository(t *testing.T) {
 	eng := &leftoverPullRecorder{
 		pullRecorder: pullRecorder{snaps: map[string][]restic.Snapshot{
 			pullSrcLoc: {{ID: "a9"}},
-			pullDomain: {{ID: "own"}, {ID: "old", Original: "a1"}},
+			pullDomain: {{ID: "own"}, {ID: "old", Original: "a1"}, {ID: "tagged", Original: "x0"}},
 		}},
 		forgot: map[string][]string{},
 	}
@@ -237,8 +239,37 @@ func TestEarlierPullsTheSourceNoLongerHoldsLeaveTheDomainsRepository(t *testing.
 	if _, err := svc.PullFromSource(context.Background(), ps); err != nil {
 		t.Fatal(err)
 	}
-	if got := eng.forgot[pullDomain]; !slices.Equal(got, []string{"old"}) {
-		t.Fatalf("forgot %v, want the copy of the snapshot the source let go of", got)
+	if got := eng.forgot[pullDomain]; len(got) != 0 {
+		t.Fatalf("forgot %v in the domain's repository, want nothing no source holds moved", got)
+	}
+	if slices.Contains(eng.calls, "Copy dest="+pulledRepo(pullDomain, ps.ID)+" src="+pullDomain+" ") {
+		t.Fatalf("copied out of the domain's repository: %v", eng.calls)
+	}
+	if moved, _ := st.PullLeftoversMoved(ps.ID); !moved {
+		t.Fatal("the source's earlier pulls were not recorded as settled once its copy ran")
+	}
+}
+
+func TestEarlierPullsOfOneOfTwoSourcesAreToldApartByWhatTheSourceHolds(t *testing.T) {
+	eng := &leftoverPullRecorder{
+		pullRecorder: pullRecorder{snaps: map[string][]restic.Snapshot{
+			pullSrcLoc: {{ID: "a1"}},
+			pullDomain: {{ID: "theirs", Original: "a1"}, {ID: "other", Original: "z1"}},
+		}},
+		forgot: map[string][]string{},
+	}
+	svc, st, ps := pullFixture(t, eng)
+	if _, err := st.CreatePullSource(store.PullSource{Name: "Cellar", Repo: "rest:http://192.168.1.8:8000/c", ResticPasswordEnc: ps.ResticPasswordEnc, Domain: "containers"}); err != nil {
+		t.Fatal(err)
+	}
+	if err := st.SetPullLeftoversMoved(ps.ID, false); err != nil {
+		t.Fatal(err)
+	}
+
+	svc.settleAllEarlierPulls(context.Background())
+
+	if got := eng.forgot[pullDomain]; !slices.Equal(got, []string{"theirs"}) {
+		t.Fatalf("forgot %v, want the one the source holds and not the other source's", got)
 	}
 	if !slices.Contains(eng.calls, "Copy dest="+pulledRepo(pullDomain, ps.ID)+" src="+pullDomain+" ") {
 		t.Fatalf("it was forgotten without a copy in the source's repository: %v", eng.calls)
@@ -271,8 +302,11 @@ func TestEarlierPullsOfOneOfTwoSourcesWaitForTheirCopy(t *testing.T) {
 
 func TestASourceThatIsSwitchedOffStillHasItsEarlierPullsMoved(t *testing.T) {
 	eng := &leftoverPullRecorder{
-		pullRecorder: pullRecorder{snaps: map[string][]restic.Snapshot{pullDomain: {{ID: "old", Original: "a1"}}}},
-		forgot:       map[string][]string{},
+		pullRecorder: pullRecorder{snaps: map[string][]restic.Snapshot{
+			pullSrcLoc: {{ID: "a1"}},
+			pullDomain: {{ID: "old", Original: "a1"}},
+		}},
+		forgot: map[string][]string{},
 	}
 	svc, st, ps := pullFixture(t, eng)
 	ps.Enabled = false
@@ -286,10 +320,20 @@ func TestASourceThatIsSwitchedOffStillHasItsEarlierPullsMoved(t *testing.T) {
 		t.Fatal(err)
 	}
 	if got := eng.forgot[pullDomain]; !slices.Equal(got, []string{"old"}) {
-		t.Fatalf("forgot %v, want the earlier pull moved without reaching the source", got)
+		t.Fatalf("forgot %v, want the earlier pull moved", got)
 	}
-	if slices.ContainsFunc(eng.calls, func(c string) bool { return strings.Contains(c, pullSrcLoc) }) {
-		t.Fatalf("the switched-off source was reached: %v", eng.calls)
+	if slices.ContainsFunc(eng.calls, func(c string) bool { return strings.HasPrefix(c, "Copy ") && strings.Contains(c, pullSrcLoc) }) {
+		t.Fatalf("the switched-off source was pulled from: %v", eng.calls)
+	}
+}
+
+func TestASourceIsReadForItsEarlierPullsAtMostOnceADay(t *testing.T) {
+	svc, _, ps := pullFixture(t, &pullRecorder{})
+	if !svc.pullReachDue(ps.ID) {
+		t.Fatal("the first read was not due")
+	}
+	if svc.pullReachDue(ps.ID) {
+		t.Fatal("a second read on the same day was due")
 	}
 }
 
@@ -297,5 +341,41 @@ func TestANewPullSourceHasNoEarlierPullsToMove(t *testing.T) {
 	_, st, ps := pullFixture(t, &pullRecorder{})
 	if moved, err := st.PullLeftoversMoved(ps.ID); err != nil || !moved {
 		t.Fatalf("moved = %v, %v; a new source never wrote into the domain's repository", moved, err)
+	}
+}
+
+// Pull is off, so no pull job runs, and the neighbour's newer snapshot would
+// push this box's own out of a keep-last of one.
+func TestRetentionTakesEarlierPullsOutBeforeItAgesThisBoxsOwnBackups(t *testing.T) {
+	f := newPlacementFixture(t)
+	settings, repo, err := f.svc.domainRepoSource("containers", "local")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if settings.PullEnabled {
+		t.Fatal("the fixture has Pull on")
+	}
+	f.hold(repo, snap("own", 200, "container:plex"), copied("theirs", "a1", 300, "container:plex"))
+	f.hold(pullSrcLoc, snap("a1", 300, "container:plex"))
+	enc, err := secret.Encrypt(f.svc.cfg.AppKey, []byte(restickey.Derive(pullTheirKey)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	ps, err := f.st.CreatePullSource(store.PullSource{Name: "Tower", Repo: pullSrcLoc, ResticPasswordEnc: enc, Domain: "containers", Enabled: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := f.st.SetPullLeftoversMoved(ps.ID, false); err != nil {
+		t.Fatal(err)
+	}
+
+	mode := f.svc.primaryModeFor(settings, "containers", repo)
+	f.svc.forgetAt(context.Background(), repo, restic.RetentionPolicy{KeepLast: 1}, false, mode, tagIdentity("container:plex"), "containers", anomalyScope{})
+
+	if got := f.snapsAt(repo); len(got) != 1 || got[0].ID != "own" {
+		t.Fatalf("the own repository holds %+v, want only this box's backup", got)
+	}
+	if got := f.snapsAt(filepath.ToSlash(pulledRepo(repo, ps.ID))); len(got) != 1 || restic.Identity(got[0]) != "a1" {
+		t.Fatalf("the source's repository here holds %+v, want the neighbour's backup", got)
 	}
 }
