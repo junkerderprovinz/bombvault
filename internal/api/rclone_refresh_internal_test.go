@@ -82,13 +82,13 @@ func TestOnlyTheSignInOfTheSameRemoteIsTakenFromTheFile(t *testing.T) {
 	}
 }
 
-// boxDestination saves a Box destination whose token rclone replaces on the
-// first listing.
-func boxDestination(t *testing.T, svc *Service) (store.OffsiteTarget, string) {
+// boxDestination saves a Box destination signed in with token, which rclone
+// replaces on the first listing when it starts with "rotate-".
+func boxDestination(t *testing.T, svc *Service, token string) (store.OffsiteTarget, string) {
 	t.Helper()
 	useFakeRclone(t, svc)
 	d, err := svc.SaveNewDestination(context.Background(), draftRequest{
-		Provider: "box", Name: "Box", Dir: "bv", Settings: map[string]string{"token": "rotate-1"},
+		Provider: "box", Name: "Box", Dir: "bv-" + token, Settings: map[string]string{"token": token},
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -99,7 +99,7 @@ func boxDestination(t *testing.T, svc *Service) (store.OffsiteTarget, string) {
 
 func TestAConnectionCheckThatRefreshedTheTokenSavesTheNewOne(t *testing.T) {
 	svc, _, _ := newConnectionSvc(t, nil)
-	d, remote := boxDestination(t, svc)
+	d, remote := boxDestination(t, svc, "rotate-1")
 
 	if _, _, err := svc.EditDestinationConnection(context.Background(), d.ID, connectionEdit{Dir: folder("bv2")}); err != nil {
 		t.Fatal(err)
@@ -112,7 +112,7 @@ func TestAConnectionCheckThatRefreshedTheTokenSavesTheNewOne(t *testing.T) {
 
 func TestARefusedConnectionChangeKeepsTheTokenItsCheckRefreshed(t *testing.T) {
 	svc, _, _ := newConnectionSvc(t, nil)
-	d, remote := boxDestination(t, svc)
+	d, remote := boxDestination(t, svc, "rotate-1")
 
 	if _, _, err := svc.EditDestinationConnection(context.Background(), d.ID, connectionEdit{Dir: folder("missing")}); err == nil {
 		t.Fatal("a folder that is not there was saved")
@@ -128,7 +128,7 @@ func TestARefusedConnectionChangeKeepsTheTokenItsCheckRefreshed(t *testing.T) {
 
 func TestARefusedChangeOfAnotherOptionKeepsTheTokenItsCheckRefreshed(t *testing.T) {
 	svc, _, _ := newConnectionSvc(t, nil)
-	d, remote := boxDestination(t, svc)
+	d, remote := boxDestination(t, svc, "rotate-1")
 
 	edit := connectionEdit{Dir: folder("missing"), Settings: map[string]string{"token": "", "root_folder_id": "42"}}
 	if _, _, err := svc.EditDestinationConnection(context.Background(), d.ID, edit); err == nil {
@@ -141,7 +141,7 @@ func TestARefusedChangeOfAnotherOptionKeepsTheTokenItsCheckRefreshed(t *testing.
 
 func TestAFolderWalkOfASavedRemoteWhoseTokenRcloneRefreshesGoesThrough(t *testing.T) {
 	svc, _, _ := newConnectionSvc(t, nil)
-	d, _ := boxDestination(t, svc)
+	d, _ := boxDestination(t, svc, "rotate-1")
 
 	if _, _, err := svc.DraftFolders(context.Background(), draftRequest{Provider: "box", Destination: d.ID}); err != nil {
 		t.Fatal(err)
@@ -150,12 +150,46 @@ func TestAFolderWalkOfASavedRemoteWhoseTokenRcloneRefreshesGoesThrough(t *testin
 
 func TestAFolderWalkOfASavedRemoteKeepsTheTokenRcloneRefreshed(t *testing.T) {
 	svc, _, _ := newConnectionSvc(t, nil)
-	d, remote := boxDestination(t, svc)
+	d, remote := boxDestination(t, svc, "rotate-1")
 
 	if _, _, err := svc.DraftFolders(context.Background(), draftRequest{Provider: "box", Destination: d.ID}); err != nil {
 		t.Fatal(err)
 	}
 	if got, _ := storedRemote(t, svc, remote); got["token"] != "rotated-1" {
 		t.Fatalf("token after the walk = %q, want the one rclone refreshed to", got["token"])
+	}
+}
+
+func TestAFolderWalkStartsFromTheTokenABackupRefreshedSinceTheLastWalk(t *testing.T) {
+	svc, _, _ := newConnectionSvc(t, nil)
+	d, remote := boxDestination(t, svc, "rotate-1")
+	walk := draftRequest{Provider: "box", Destination: d.ID}
+	if _, _, err := svc.DraftFolders(context.Background(), walk); err != nil {
+		t.Fatal(err)
+	}
+	rcloneRefreshed(t, svc, "["+remote+"]\ntype = box\ntoken = rotate-2\n")
+
+	if _, _, err := svc.DraftFolders(context.Background(), walk); err != nil {
+		t.Fatal(err)
+	}
+	if got, _ := storedRemote(t, svc, remote); got["token"] != "rotated-2" {
+		t.Fatalf("token after the second walk = %q, want the backup's token refreshed", got["token"])
+	}
+}
+
+func TestAFolderWalkSignsInAsItsOwnDestinationAfterAWalkOfAnotherOfTheSameProvider(t *testing.T) {
+	svc, _, _ := newConnectionSvc(t, nil)
+	a, remoteA := boxDestination(t, svc, "rotate-a")
+	b, remoteB := boxDestination(t, svc, "rotate-b")
+
+	for _, d := range []store.OffsiteTarget{a, b} {
+		if _, _, err := svc.DraftFolders(context.Background(), draftRequest{Provider: "box", Destination: d.ID}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	for remote, want := range map[string]string{remoteA: "rotated-a", remoteB: "rotated-b"} {
+		if got, _ := storedRemote(t, svc, remote); got["token"] != want {
+			t.Errorf("%s token = %q, want %q", remote, got["token"], want)
+		}
 	}
 }

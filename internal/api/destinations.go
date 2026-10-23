@@ -285,7 +285,7 @@ func (s *Service) wizardDraft(p remotes.Provider, settings map[string]string) (r
 	if err != nil {
 		return remotes.Draft{}, "", err
 	}
-	key := draftKey(p.ID, settings)
+	key := draftKey(p.ID, "", settings)
 	s.drafts.recall(key, &d)
 	return d, key, nil
 }
@@ -457,38 +457,58 @@ func (s *Service) DraftMakeFolder(ctx context.Context, req draftRequest) (string
 // remote when the walk signs in as it, so a sign-in rclone refreshes on the
 // walk goes back there.
 func (s *Service) walkDraft(ctx context.Context, p remotes.Provider, req draftRequest) (d remotes.Draft, key, saved string, err error) {
-	d, key, err = s.wizardDraft(p, req.Settings)
+	if req.Destination != "" && p.Route == remotes.RouteRclone {
+		d, key, saved, err = s.savedDraft(ctx, p, req)
+	} else {
+		d, key, err = s.wizardDraft(p, req.Settings)
+	}
 	if err != nil {
 		return remotes.Draft{}, "", "", err
-	}
-	if req.Destination != "" && p.Route == remotes.RouteRclone {
-		dest, ok, err := s.store.GetDestination(req.Destination)
-		if err != nil {
-			return remotes.Draft{}, "", "", err
-		}
-		if !ok || dest.Provider != p.ID {
-			return remotes.Draft{}, "", "", store.ErrNotDestination
-		}
-		remote, _, _ := strings.Cut(strings.TrimPrefix(dest.Repo, "rclone:"), ":")
-		stored, err := s.savedRemote(remote)
-		if err != nil {
-			return remotes.Draft{}, "", "", err
-		}
-		options, err := s.layOver(ctx, stored, d)
-		if err != nil {
-			return remotes.Draft{}, "", "", err
-		}
-		if sameSignIn(options, stored) {
-			saved = remote
-		}
-		// Settings stays a map: a token rclone refreshes on the walk is
-		// learned into it.
-		d = remotes.Draft{Backend: d.Backend, Settings: map[string]string{}, Stored: options}
 	}
 	if _, err := pinHostKey(ctx, &d); err != nil {
 		return remotes.Draft{}, "", "", err
 	}
 	return d, key, saved, nil
+}
+
+// savedDraft is the stored remote of the destination req edits with the form
+// laid over it. A walk that signs in as the stored remote starts from its
+// current sign-in, since a backup may have used up a token an earlier walk
+// learned; only a sign-in the form changes is remembered, under the
+// destination.
+func (s *Service) savedDraft(ctx context.Context, p remotes.Provider, req draftRequest) (d remotes.Draft, key, saved string, err error) {
+	dest, ok, err := s.store.GetDestination(req.Destination)
+	if err != nil {
+		return remotes.Draft{}, "", "", err
+	}
+	if !ok || dest.Provider != p.ID {
+		return remotes.Draft{}, "", "", store.ErrNotDestination
+	}
+	remote, _, _ := strings.Cut(strings.TrimPrefix(dest.Repo, "rclone:"), ":")
+	stored, err := s.savedRemote(remote)
+	if err != nil {
+		return remotes.Draft{}, "", "", err
+	}
+	form, err := s.draftFor(p, req.Settings)
+	if err != nil {
+		return remotes.Draft{}, "", "", err
+	}
+	options, err := s.layOver(ctx, stored, form)
+	if err != nil {
+		return remotes.Draft{}, "", "", err
+	}
+	if sameSignIn(options, stored) {
+		saved = remote
+	} else {
+		key = draftKey(p.ID, dest.ID, req.Settings)
+		s.drafts.recall(key, &form)
+		if options, err = s.layOver(ctx, stored, form); err != nil {
+			return remotes.Draft{}, "", "", err
+		}
+	}
+	// Settings stays a map: a token rclone refreshes on the walk is learned
+	// into it.
+	return remotes.Draft{Backend: form.Backend, Settings: map[string]string{}, Stored: options}, key, saved, nil
 }
 
 // editRcloneConf changes the stored rclone config under a lock, so two saves

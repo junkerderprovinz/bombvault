@@ -40,10 +40,11 @@ const (
 // instead of setting the remote.
 const setupAnswer = "config_"
 
-// draftKey names a draft by its provider and the fields the form sent.
-func draftKey(provider string, settings map[string]string) string {
+// draftKey names a draft by its provider, the saved destination it reaches
+// (empty in the wizard) and the fields the form sent.
+func draftKey(provider, destination string, settings map[string]string) string {
 	h := sha256.New()
-	_, _ = fmt.Fprintf(h, "%q", provider)
+	_, _ = fmt.Fprintf(h, "%q %q", provider, destination)
 	for _, k := range slices.Sorted(maps.Keys(settings)) {
 		_, _ = fmt.Fprintf(h, "\x00%q=%q", k, settings[k])
 	}
@@ -67,9 +68,9 @@ func (m *draftMemory) recall(key string, d *remotes.Draft) {
 	}
 }
 
-// keep remembers what d learned under key.
+// keep remembers what d learned under key. An empty key keeps nothing.
 func (m *draftMemory) keep(key string, d remotes.Draft) {
-	if len(d.Learned) == 0 {
+	if key == "" || len(d.Learned) == 0 {
 		return
 	}
 	m.mu.Lock()
