@@ -10,6 +10,7 @@ import {
   anomalyFigures,
   anomalyGroupKey,
   anomalyItemLabel,
+  anomalyReleaseQuestion,
   anomalySentence,
   anomalyShortLine,
   anomalySeverityTone,
@@ -19,7 +20,7 @@ import {
   sortOpenAnomalies,
   worstSeverity,
 } from "./anomalies";
-import { en } from "./i18n";
+import { countText, en } from "./i18n";
 import { isolateLtr } from "./ltrFragments";
 import type { TranslationKey } from "./i18n";
 import type { AnomalyView } from "./api";
@@ -561,6 +562,35 @@ describe("anomalyEntryName", () => {
 
   it("falls back to the backup type for an item without a name", () => {
     expect(anomalyEntryName(view({ name: "", domain: "flash" }), t)).toBe(en["dashboard.domainFlash"]);
+  });
+});
+
+describe("anomalyReleaseQuestion", () => {
+  const counted = (key: TranslationKey, n?: number) => countText(en[key], "en", n);
+
+  it("asks nothing when no finding keeps old backups", () => {
+    expect(anomalyReleaseQuestion([view({}), view({ metric: "duration_slower" })], counted)).toBeNull();
+  });
+
+  it("names the one item that keeps old backups, not the first finding", () => {
+    const list = [
+      view({ targetId: "tg-sonarr", name: "sonarr" }),
+      view({ targetId: "tg-plex", name: "plex", retentionHeld: true }),
+      view({ targetId: "tg-plex", name: "plex", metric: "duration_slower", retentionHeld: true }),
+    ];
+    expect(anomalyReleaseQuestion(list, counted)).toBe(en["anomaly.releaseConfirm"].replace("{name}", "plex"));
+  });
+
+  it("counts the items when several keep old backups", () => {
+    const list = [
+      view({ targetId: "tg-plex", name: "plex", retentionHeld: true }),
+      view({ targetId: "tg-plex", name: "plex", metric: "duration_slower", retentionHeld: true }),
+      view({ targetId: "tg-immich", name: "immich", retentionHeld: true }),
+    ];
+    const question = anomalyReleaseQuestion(list, counted);
+    expect(question).toBe(countText(en["anomaly.releaseConfirmMany"], "en", 2));
+    expect(question).toContain("2 items");
+    expect(question).not.toContain("plex");
   });
 });
 

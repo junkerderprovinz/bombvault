@@ -49,7 +49,7 @@ export function AnomalyRow({
   async function run(action: AnomalyAction, confirmKey: TranslationKey) {
     if (a.retentionHeld) {
       const message = t("anomaly.releaseConfirm").replace("{name}", anomalyItemLabel(a, t));
-      if (!(await confirm(message, { confirmKey }))) return;
+      if (!(await confirm(message, { confirmKey, title: t("anomaly.releaseTitle") }))) return;
     }
     setBusy(true);
     try {

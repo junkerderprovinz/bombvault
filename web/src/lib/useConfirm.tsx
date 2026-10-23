@@ -24,6 +24,8 @@ import { useIsDesktop } from "./useMediaQuery";
 // One pending request per instance is enough: the dialog is modal, so a second
 // confirm() cannot be triggered while one is open.
 export interface ConfirmOptions {
+  /** A title that names the question, in place of the generic "Confirm". */
+  title?: string;
   /** The key of the button that asked, so the answer repeats its words and
    *  glyph ("Delete") rather than a bare "Confirm". */
   confirmKey?: TranslationKey;
@@ -137,7 +139,7 @@ export function useConfirm() {
   // sheet gets no dialogRef because BottomSheet traps Tab itself; Escape
   // reaches both listeners, and settle() ignores the second call.
   const surface = pending && {
-    title: t("confirmDialog.title"),
+    title: pending.title ?? t("confirmDialog.title"),
     message: pending.message,
     confirmLabel: pending.confirmLabel ?? t(pending.confirmKey ?? "common.confirm"),
     confirmLabelKey: pending.confirmLabelKey ?? pending.confirmKey ?? "common.confirm",

@@ -573,6 +573,17 @@ export function anomalyEntryName(a: AnomalyView, t: TranslateAnomaly): string {
   return a.name || anomalyDomainsLabel(a.domain, t);
 }
 
+/** What closing these findings means for the old backups they keep, naming
+ *  the item when only one holds any, or null when none of them does. */
+export function anomalyReleaseQuestion(list: AnomalyView[], t: TranslateAnomaly): string | null {
+  const held = new Map<string, AnomalyView>();
+  for (const a of list) if (a.retentionHeld) held.set(anomalyGroupKey(a), a);
+  const [only] = held.values();
+  if (!only) return null;
+  if (held.size === 1) return t("anomaly.releaseConfirm").replace("{name}", anomalyEntryName(only, t));
+  return t("anomaly.releaseConfirmMany", held.size);
+}
+
 /** Which backup type a finding belongs to, and for a restore check which
  *  copy it read. */
 export function anomalyWhere(a: AnomalyView, t: TranslateAnomaly): string {

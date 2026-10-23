@@ -425,11 +425,28 @@ describe("settling findings", () => {
 
     expect(within(findings()[0]!).getByLabelText(en["anomaly.retentionPaused"])).toBeTruthy();
     fireEvent.click(within(findings()[0]!).getByRole("button", { name: en["anomaly.action.acknowledge"] }));
-    expect(screen.getByText(en["anomaly.releaseConfirm"].replace("{name}", "plex"))).toBeTruthy();
+    const dialog = screen.getByRole("dialog");
+    expect(within(dialog).getByRole("heading", { name: en["anomaly.releaseTitle"] })).toBeTruthy();
+    expect(within(dialog).getByText(en["anomaly.releaseConfirm"].replace("{name}", "plex"))).toBeTruthy();
     expect(acknowledgeAnomalies).not.toHaveBeenCalled();
 
-    await press(within(screen.getByRole("dialog")).getByRole("button", { name: en["anomaly.action.acknowledge"] }));
+    await press(within(dialog).getByRole("button", { name: en["anomaly.action.acknowledge"] }));
     expect(acknowledgeAnomalies).toHaveBeenCalledWith(["an-1"]);
+  });
+
+  it("names the item when acknowledging all of its findings releases its old backups", async () => {
+    serve([
+      finding({ targetId: "tg-plex", name: "plex", severity: "warning" }),
+      finding({ targetId: "tg-plex", name: "plex", severity: "warning", metric: "duration_slower", retentionHeld: true }),
+    ]);
+    acknowledgeAnomalies.mockResolvedValue({ ok: true, changed: 2, skipped: 0, released: 1 });
+    await renderPage();
+
+    fireEvent.click(screen.getByRole("button", { name: en["anomaly.action.acknowledgeAll"].replace("{n}", "2") }));
+    const dialog = screen.getByRole("dialog");
+    expect(within(dialog).getByText(en["anomaly.releaseConfirm"].replace("{name}", "plex"))).toBeTruthy();
+    await press(within(dialog).getByRole("button", { name: en["anomaly.action.acknowledge"] }));
+    expect(acknowledgeAnomalies.mock.calls[0]![0]).toHaveLength(2);
   });
 
   it("marks one finding as expected from its line, without a note", async () => {

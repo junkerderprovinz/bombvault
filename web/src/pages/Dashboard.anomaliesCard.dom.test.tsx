@@ -214,13 +214,11 @@ describe("AnomaliesCard", () => {
     });
 
     fireEvent.click(screen.getByRole("button", { name: en["anomaly.action.acknowledge"] }));
-    expect(screen.getByRole("dialog")).toBeTruthy();
-    expect(
-      screen.getByText(en["anomaly.releaseConfirm"].replace("{name}", "plex"))
-    ).toBeTruthy();
+    const dialog = screen.getByRole("dialog");
+    expect(within(dialog).getByRole("heading", { name: en["anomaly.releaseTitle"] })).toBeTruthy();
+    expect(within(dialog).getByText(en["anomaly.releaseConfirm"].replace("{name}", "plex"))).toBeTruthy();
     expect(onAcknowledge).not.toHaveBeenCalled();
 
-    const dialog = screen.getByRole("dialog");
     await act(async () => {
       fireEvent.click(within(dialog).getByRole("button", { name: en["anomaly.action.acknowledge"] }));
     });
