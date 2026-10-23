@@ -61,7 +61,7 @@ jobs:
     # contracts across Chromium + WebKit, phone and desktop projects. The
     # binary is built after the web build, because it embeds web/dist.
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     defaults: { run: { working-directory: web } }
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
