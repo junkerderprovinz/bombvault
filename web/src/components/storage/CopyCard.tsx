@@ -28,6 +28,8 @@ export function CopyCard({ edit, hueIndex }: { edit: LocationEdit; hueIndex: num
   const { location, can, save, follow, busy } = edit;
   const [settings, setSettings] = useState<Settings | null>(null);
   const copies = location.sections.filter((section) => section.use === "copy");
+  // Own folders alone take no copy, but the limits hold for their backups.
+  const ownOnly = location.sections.length > 0 && copies.length === 0;
 
   useEffect(() => {
     let alive = true;
@@ -52,8 +54,12 @@ export function CopyCard({ edit, hueIndex }: { edit: LocationEdit; hueIndex: num
   ];
 
   return (
-    <Card title={t("storage.copy.title")} hint={t("storage.copy.hint")} hueIndex={hueIndex}>
-      <CopyScene target={location} />
+    <Card
+      title={t(ownOnly ? "storage.limits.title" : "storage.copy.title")}
+      hint={t(ownOnly ? "storage.limits.hint" : "storage.copy.hint")}
+      hueIndex={hueIndex}
+    >
+      {!ownOnly && <CopyScene target={location} />}
       <Rows>
         {settings && copies.length > 0 && (
           <SettingRow label={t("storage.copy.when")} hint={t("storage.copy.whenHint")}>

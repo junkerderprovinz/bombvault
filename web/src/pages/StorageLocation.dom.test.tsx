@@ -456,6 +456,35 @@ describe("a destination", () => {
   });
 });
 
+describe("a destination that holds own folders", () => {
+  const own = (domain: StorageLocationSection["domain"]) =>
+    section({ domain, use: "home", where: `rclone:storagebox:bombvault/${domain}`, retention: BALANCED });
+  const NONE = { keepLast: 0, keepDaily: 0, keepWeekly: 0, keepMonthly: 0, keepYearly: 0 };
+
+  it("describes no copy when it holds only own folders, and says the sections' own rules prune them", async () => {
+    stage(location({ sections: [own("containers"), own("flash")], retention: NONE }), []);
+    await renderPage("destination:box");
+
+    expect(cardTitles()).toEqual(["Own folders", "Connection", "rclone.conf", "Delete protection", "Bandwidth", "How long to keep", "Rules per section"]);
+    expect(screen.queryByText("The first copy brings everything along, each later one only what is new.")).toBeNull();
+    const prunes = card("Delete protection").textContent ?? "";
+    expect(prunes).toContain(
+      "BombVault prunes the own folders of Containers and Flash after each backup, each by the keep rules of its section.",
+    );
+    expect(prunes).not.toContain("Nothing prunes this copy");
+  });
+
+  it("describes its copies and its own folders apart when it holds both", async () => {
+    stage(location({ sections: [own("vms"), section({ domain: "containers", targetId: "t-containers" })], retention: NONE }), []);
+    await renderPage("destination:box");
+
+    expect(cardTitles()).toContain("Copy");
+    const prunes = card("Delete protection").textContent ?? "";
+    expect(prunes).toContain("Nothing prunes this copy.");
+    expect(prunes).toContain("BombVault prunes the own folder of VMs after each backup, by the keep rules of that section.");
+  });
+});
+
 describe("a folder on this host", () => {
   beforeEach(() => stage(LOCAL, []));
 

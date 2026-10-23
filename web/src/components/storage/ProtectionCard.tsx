@@ -1,4 +1,4 @@
-import { tamperTestOffsiteTarget, type Provider } from "../../lib/api";
+import { tamperTestOffsiteTarget, type Provider, type RetentionKeep } from "../../lib/api";
 import { useT, type TranslationKey } from "../../lib/i18n";
 import { formatList } from "../../lib/placement";
 import { relativeTime } from "../../lib/reltime";
@@ -9,6 +9,7 @@ import { Card } from "../../pages/settings/shared";
 import { providerName } from "../destinations/ProviderPicker";
 import { TestButton, VerdictLine } from "../TestButton";
 import { Toggle } from "../Toggle";
+import { ownFolderSections } from "./OwnFoldersCard";
 import { Rows, SettingRow } from "./rows";
 import { LockScene } from "./scenes";
 import type { LocationEdit } from "./useLocationEdit";
@@ -21,11 +22,27 @@ const NOTE_TONE = {
   neutral: "bg-carbon-surface2 text-carbon-textSub",
 } as const;
 
-/** Who clears old backups out of a copy, and whether anyone does. */
-function pruner(immutable: boolean, keepsAll: boolean): { tone: keyof typeof NOTE_TONE; text: TranslationKey } {
-  if (immutable) return { tone: "neutral", text: "storage.lock.pruneFar" };
-  if (keepsAll) return { tone: "warn", text: "storage.lock.pruneNone" };
-  return { tone: "ok", text: "storage.lock.pruneHere" };
+type Pruner = "far" | "none" | "here";
+
+const PRUNER_TONE: Record<Pruner, keyof typeof NOTE_TONE> = { far: "neutral", none: "warn", here: "ok" };
+
+const COPY_PRUNER: Record<Pruner, TranslationKey> = {
+  far: "storage.lock.pruneFar",
+  none: "storage.lock.pruneNone",
+  here: "storage.lock.pruneHere",
+};
+
+const OWN_PRUNER: Record<Pruner, TranslationKey> = {
+  far: "storage.lock.ownPruneFar",
+  none: "storage.lock.ownPruneNone",
+  here: "storage.lock.ownPruneHere",
+};
+
+/** Who clears old backups out of a repository, and whether anyone does. */
+function pruner(immutable: boolean, keep: RetentionKeep | undefined): Pruner {
+  if (immutable) return "far";
+  if (!keep || Object.values(keep).every((n) => n <= 0)) return "none";
+  return "here";
 }
 
 /**
@@ -46,8 +63,14 @@ export function ProtectionCard({ edit, provider, hueIndex }: { edit: LocationEdi
   const targets = copies.flatMap((section) => (section.enabled && section.targetId ? [section.targetId] : []));
   const tamper = useTestVerdict(location.id, t("offsite.tamperError"));
   const takesCopies = location.object === "destination" || location.object === "target";
-  const keepsAll = !location.retention || Object.values(location.retention).every((n) => n <= 0);
-  const prunes = pruner(immutable, keepsAll);
+  const prunes = pruner(immutable, location.retention);
+  // An own folder ages by its section's keep rule after each backup, not by
+  // this location's rule for copies.
+  const own = new Map<Pruner, string[]>();
+  for (const section of ownFolderSections(location)) {
+    const by = pruner(section.immutable, section.retention);
+    own.set(by, [...(own.get(by) ?? []), t(DOMAIN_LABEL[section.domain])]);
+  }
   const name = provider ? providerName(provider, t) : "";
 
   function toggle(next: boolean) {
@@ -124,7 +147,12 @@ export function ProtectionCard({ edit, provider, hueIndex }: { edit: LocationEdi
       {takesCopies && (
         <div className="flex flex-col gap-2">
           <span className="text-xs font-semibold uppercase tracking-widest text-carbon-textSub">{t("storage.lock.whoPrunes")}</span>
-          <p className={`${NOTE} ${NOTE_TONE[prunes.tone]}`}>{t(prunes.text)}</p>
+          {(copies.length > 0 || own.size === 0) && <p className={`${NOTE} ${NOTE_TONE[PRUNER_TONE[prunes]]}`}>{t(COPY_PRUNER[prunes])}</p>}
+          {[...own].map(([by, domains]) => (
+            <p key={by} className={`${NOTE} ${NOTE_TONE[PRUNER_TONE[by]]}`}>
+              {t(OWN_PRUNER[by], domains.length).replace("{domains}", () => formatList(lang, domains))}
+            </p>
+          ))}
         </div>
       )}
     </Card>
