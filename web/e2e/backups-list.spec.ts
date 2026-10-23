@@ -879,6 +879,32 @@ for (const width of [320, 360, 390]) {
       });
       expect(pan, "the page scrolls sideways").toBeLessThanOrEqual(1);
     });
+
+    test(`a stack @ ${width}px (${lang}) keeps its members readable and moves its button under them`, async ({ page }, testInfo) => {
+      test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "the phone layout lives below 48rem");
+      await stage(page, { lang });
+      await page.setViewportSize({ width, height: 800 });
+      await page.goto("/backups?kind=container");
+      const stacks = page.getByTestId("stacks");
+      await expect(stacks).toContainText("immich_postgres");
+      await settle(page);
+
+      const row = stacks.getByRole("listitem").first();
+      const found = await row.evaluate((li) => {
+        const members = li.querySelector(":scope > span:nth-child(2) > span:last-child")!;
+        const lineHeight = parseFloat(getComputedStyle(members).lineHeight);
+        const m = members.getBoundingClientRect();
+        const b = li.querySelector("button")!.getBoundingClientRect();
+        return {
+          lines: Math.round(m.height / lineHeight),
+          beside: b.top < m.bottom - 1 && b.bottom > m.top + 1,
+          past: b.right > window.innerWidth + 1,
+        };
+      });
+      expect(found.beside && found.lines > 1, "the button squeezes the members into several lines").toBe(false);
+      expect(found.lines, "the members line breaks inside its words").toBeLessThanOrEqual(2);
+      expect(found.past, "the button runs past the edge").toBe(false);
+    });
   }
 }
 
