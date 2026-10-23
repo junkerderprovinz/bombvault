@@ -50,8 +50,8 @@ export interface Container {
    *  hours; 0 when it does not wait. */
   idleWaitHours?: number;
   /** When the post-backup update check last completed (unix seconds, 0 = never)
-   *  and its outcome ('' | 'up-to-date' | 'updated' | 'failed' | 'held') — makes
-   *  "checked, up to date" distinguishable from "never reached". */
+   *  and its outcome ('' | 'up-to-date' | 'updated' | 'failed' | 'held'), so
+   *  "checked, up to date" reads apart from "never reached". */
   lastUpdateCheck: number;
   lastUpdateResult: string;
   /** Compose project (com.docker.compose.project label) this container belongs to,
