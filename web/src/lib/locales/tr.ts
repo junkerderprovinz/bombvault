@@ -882,7 +882,6 @@ const tr: Partial<Translations> = {
   "common.saving": "Kaydediliyor…",
   "common.restoreRunning": "Bir geri yükleme çalışıyor…",
   "common.backupRunning": "Bir yedekleme çalışıyor…",
-  "common.replicateRunning": "Bir çoğaltma çalışıyor…",
   "common.showValue": "Değeri göster",
   "common.hideValue": "Değeri gizle",
   "confirmDialog.title": "Onayla",

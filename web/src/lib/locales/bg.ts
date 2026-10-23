@@ -1484,7 +1484,6 @@ const bg: Partial<Translations> = {
   "common.saving": "Запазване…",
   "common.restoreRunning": "Изпълнява се възстановяване…",
   "common.backupRunning": "Изпълнява се архивиране…",
-  "common.replicateRunning": "Изпълнява се репликация…",
   "common.showValue": "Покажи стойността",
   "common.hideValue": "Скрий стойността",
   "confirmDialog.title": "Потвърди",

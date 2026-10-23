@@ -394,21 +394,22 @@ export type BusyPhraseKey =
   | "dbdump.busySaving"
   | "dbdump.busyImporting"
   | "common.restoreRunning"
-  | "common.replicateRunning"
+  | "apiError.offsiteBusy"
   | "common.backupRunning";
 
 /**
  * busyPhraseKey maps an anyActive() phase to the i18n key for the busy hint, so
- * every hint (bulk bars, per-item buttons) words it the same way, including the
- * off-site "replication is running" case. A stage names the step inside the
- * phase, so an hour of "a backup is running" reads as the dump it is.
+ * every hint (bulk bars, per-item buttons) words it the same way. A stage names
+ * the step inside the phase, so an hour of "a backup is running" reads as the
+ * dump it is. The only replication anyActive counts is an off-site copy, and
+ * the hint says so in the words the server's refusal uses.
  */
 export function busyPhraseKey(phase?: string, stage?: ProgressStage): BusyPhraseKey {
   if (stage === "dbdump") return "dbdump.busyDumping";
   if (stage === "dbdumpsave") return "dbdump.busySaving";
   if (stage === "dbimport") return "dbdump.busyImporting";
   if (phase === "restore") return "common.restoreRunning";
-  if (phase === "replicate") return "common.replicateRunning";
+  if (phase === "replicate") return "apiError.offsiteBusy";
   return "common.backupRunning";
 }
 

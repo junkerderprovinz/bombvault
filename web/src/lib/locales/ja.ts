@@ -873,7 +873,6 @@ const ja: Partial<Translations> = {
   "common.saving": "保存中…",
   "common.restoreRunning": "復元を実行中です…",
   "common.backupRunning": "バックアップを実行中です…",
-  "common.replicateRunning": "複製を実行中です…",
   "common.showValue": "値を表示",
   "common.hideValue": "値を非表示",
   "confirmDialog.title": "確認",

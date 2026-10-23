@@ -1484,7 +1484,6 @@ const ca: Partial<Translations> = {
   "common.saving": "Desant…",
   "common.restoreRunning": "S'està executant una restauració…",
   "common.backupRunning": "S'està executant una còpia…",
-  "common.replicateRunning": "S'està executant una replicació…",
   "common.showValue": "Mostra el valor",
   "common.hideValue": "Amaga el valor",
   "confirmDialog.title": "Confirma",

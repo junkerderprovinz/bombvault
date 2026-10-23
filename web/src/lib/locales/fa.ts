@@ -1484,7 +1484,6 @@ const fa: Partial<Translations> = {
   "common.saving": "در حال ذخیره…",
   "common.restoreRunning": "یک بازیابی در حال اجراست…",
   "common.backupRunning": "یک پشتیبان‌گیری در حال اجراست…",
-  "common.replicateRunning": "یک همانندسازی در حال اجراست…",
   "common.showValue": "نمایش مقدار",
   "common.hideValue": "پنهان کردن مقدار",
   "confirmDialog.title": "تأیید",

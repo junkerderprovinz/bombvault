@@ -882,7 +882,6 @@ const ar: Partial<Translations> = {
   "common.saving": "جارٍ الحفظ…",
   "common.restoreRunning": "جارٍ تنفيذ استعادة…",
   "common.backupRunning": "جارٍ تنفيذ نسخ احتياطي…",
-  "common.replicateRunning": "جارٍ تنفيذ نسخ متماثل…",
   "common.showValue": "إظهار القيمة",
   "common.hideValue": "إخفاء القيمة",
   "confirmDialog.title": "تأكيد",

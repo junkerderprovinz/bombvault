@@ -882,7 +882,6 @@ const fi: Partial<Translations> = {
   "common.saving": "Tallennetaan…",
   "common.restoreRunning": "Palautus on käynnissä…",
   "common.backupRunning": "Varmuuskopiointi on käynnissä…",
-  "common.replicateRunning": "Replikointi on käynnissä…",
   "common.showValue": "Näytä arvo",
   "common.hideValue": "Piilota arvo",
   "confirmDialog.title": "Vahvista",

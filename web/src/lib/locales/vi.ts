@@ -873,7 +873,6 @@ const vi: Partial<Translations> = {
   "common.saving": "Đang lưu…",
   "common.restoreRunning": "Một tiến trình khôi phục đang chạy…",
   "common.backupRunning": "Một tiến trình sao lưu đang chạy…",
-  "common.replicateRunning": "Một tiến trình sao chép đang chạy…",
   "common.showValue": "Hiện giá trị",
   "common.hideValue": "Ẩn giá trị",
   "confirmDialog.title": "Xác nhận",

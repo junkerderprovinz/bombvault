@@ -1722,7 +1722,6 @@ export const en = {
   "common.saving": "Saving…",
   "common.restoreRunning": "A restore is running…",
   "common.backupRunning": "A backup is running…",
-  "common.replicateRunning": "A replication is running…",
   // Reveal eye (form-engine Task 6): aria-label for the show/hide toggle on
   // every secret/token field.
   "common.showValue": "Show value",
@@ -6696,7 +6695,6 @@ export const de: Translations = {
   "common.saving": "Speichern…",
   "common.restoreRunning": "Eine Wiederherstellung läuft…",
   "common.backupRunning": "Eine Sicherung läuft…",
-  "common.replicateRunning": "Eine Replikation läuft…",
   "common.showValue": "Wert anzeigen",
   "common.hideValue": "Wert verbergen",
   "confirmDialog.title": "Bestätigen",

@@ -876,7 +876,6 @@ const ru: Partial<Translations> = {
   "common.saving": "Сохранение…",
   "common.restoreRunning": "Выполняется восстановление…",
   "common.backupRunning": "Выполняется резервное копирование…",
-  "common.replicateRunning": "Выполняется репликация…",
   "common.showValue": "Показать значение",
   "common.hideValue": "Скрыть значение",
   "confirmDialog.title": "Подтвердить",

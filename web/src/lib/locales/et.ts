@@ -1484,7 +1484,6 @@ const et: Partial<Translations> = {
   "common.saving": "Salvestamine…",
   "common.restoreRunning": "Taastamine töötab…",
   "common.backupRunning": "Varundus töötab…",
-  "common.replicateRunning": "Replitseerimine töötab…",
   "common.showValue": "Näita väärtust",
   "common.hideValue": "Peida väärtus",
   "confirmDialog.title": "Kinnita",

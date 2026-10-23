@@ -1484,7 +1484,6 @@ const ms: Partial<Translations> = {
   "common.saving": "Menyimpan…",
   "common.restoreRunning": "Pemulihan sedang berjalan…",
   "common.backupRunning": "Sandaran sedang berjalan…",
-  "common.replicateRunning": "Replikasi sedang berjalan…",
   "common.showValue": "Tunjukkan nilai",
   "common.hideValue": "Sembunyikan nilai",
   "confirmDialog.title": "Sahkan",

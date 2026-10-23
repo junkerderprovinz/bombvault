@@ -882,7 +882,6 @@ const el: Partial<Translations> = {
   "common.saving": "Αποθήκευση…",
   "common.restoreRunning": "Εκτελείται μια επαναφορά…",
   "common.backupRunning": "Εκτελείται ένα αντίγραφο ασφαλείας…",
-  "common.replicateRunning": "Εκτελείται μια αναπαραγωγή…",
   "common.showValue": "Εμφάνιση τιμής",
   "common.hideValue": "Απόκρυψη τιμής",
   "confirmDialog.title": "Επιβεβαίωση",

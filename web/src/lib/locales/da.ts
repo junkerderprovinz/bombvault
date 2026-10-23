@@ -882,7 +882,6 @@ const da: Partial<Translations> = {
   "common.saving": "Gemmer…",
   "common.restoreRunning": "En gendannelse kører…",
   "common.backupRunning": "En sikkerhedskopiering kører…",
-  "common.replicateRunning": "En replikering kører…",
   "common.showValue": "Vis værdi",
   "common.hideValue": "Skjul værdi",
   "confirmDialog.title": "Bekræft",

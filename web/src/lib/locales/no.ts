@@ -879,7 +879,6 @@ const no: Partial<Translations> = {
   "common.saving": "Lagrer…",
   "common.restoreRunning": "En gjenoppretting kjører…",
   "common.backupRunning": "En sikkerhetskopiering kjører…",
-  "common.replicateRunning": "En replikering kjører…",
   "common.showValue": "Vis verdi",
   "common.hideValue": "Skjul verdi",
   "confirmDialog.title": "Bekreft",

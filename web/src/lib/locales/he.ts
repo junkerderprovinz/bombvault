@@ -882,7 +882,6 @@ const he: Partial<Translations> = {
   "common.saving": "שומר…",
   "common.restoreRunning": "מתבצע שחזור…",
   "common.backupRunning": "מתבצע גיבוי…",
-  "common.replicateRunning": "מתבצע שכפול…",
   "common.showValue": "הצגת ערך",
   "common.hideValue": "הסתרת ערך",
   "confirmDialog.title": "אישור",

@@ -1484,7 +1484,6 @@ const eu: Partial<Translations> = {
   "common.saving": "Gordetzen…",
   "common.restoreRunning": "Berrezarpen bat exekutatzen ari da…",
   "common.backupRunning": "Babeskopia bat exekutatzen ari da…",
-  "common.replicateRunning": "Errepikapen bat exekutatzen ari da…",
   "common.showValue": "Erakutsi balioa",
   "common.hideValue": "Ezkutatu balioa",
   "confirmDialog.title": "Berretsi",

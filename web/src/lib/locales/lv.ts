@@ -1484,7 +1484,6 @@ const lv: Partial<Translations> = {
   "common.saving": "Saglabā…",
   "common.restoreRunning": "Notiek atjaunošana…",
   "common.backupRunning": "Notiek rezerves kopēšana…",
-  "common.replicateRunning": "Notiek replicēšana…",
   "common.showValue": "Rādīt vērtību",
   "common.hideValue": "Paslēpt vērtību",
   "confirmDialog.title": "Apstiprināt",

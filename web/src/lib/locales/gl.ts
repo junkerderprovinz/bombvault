@@ -1484,7 +1484,6 @@ const gl: Partial<Translations> = {
   "common.saving": "Gardando…",
   "common.restoreRunning": "Hai unha restauración en execución…",
   "common.backupRunning": "Hai unha copia en execución…",
-  "common.replicateRunning": "Hai unha replicación en execución…",
   "common.showValue": "Mostrar valor",
   "common.hideValue": "Ocultar valor",
   "confirmDialog.title": "Confirmar",

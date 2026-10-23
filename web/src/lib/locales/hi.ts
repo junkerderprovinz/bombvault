@@ -1484,7 +1484,6 @@ const hi: Partial<Translations> = {
   "common.saving": "सहेजा जा रहा है…",
   "common.restoreRunning": "एक रीस्टोर चल रहा है…",
   "common.backupRunning": "एक बैकअप चल रहा है…",
-  "common.replicateRunning": "एक रेप्लिकेशन चल रहा है…",
   "common.showValue": "मान दिखाएँ",
   "common.hideValue": "मान छिपाएँ",
   "confirmDialog.title": "पुष्टि करें",

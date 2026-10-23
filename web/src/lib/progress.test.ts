@@ -154,7 +154,7 @@ describe("busyPhraseKey", () => {
   it("words the phase when nothing more precise is running", () => {
     expect(busyPhraseKey("backup")).toBe("common.backupRunning");
     expect(busyPhraseKey("restore")).toBe("common.restoreRunning");
-    expect(busyPhraseKey("replicate")).toBe("common.replicateRunning");
+    expect(busyPhraseKey("replicate")).toBe("apiError.offsiteBusy");
   });
 
   it("names the database step instead of the phase around it", () => {

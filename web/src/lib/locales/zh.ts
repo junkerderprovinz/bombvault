@@ -873,7 +873,6 @@ const zh: Partial<Translations> = {
   "common.saving": "保存中…",
   "common.restoreRunning": "正在进行还原…",
   "common.backupRunning": "正在进行备份…",
-  "common.replicateRunning": "正在进行复制…",
   "common.showValue": "显示值",
   "common.hideValue": "隐藏值",
   "confirmDialog.title": "确认",

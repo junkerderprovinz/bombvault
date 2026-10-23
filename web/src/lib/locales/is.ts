@@ -1484,7 +1484,6 @@ const is: Partial<Translations> = {
   "common.saving": "Vista…",
   "common.restoreRunning": "Endurheimt er í gangi…",
   "common.backupRunning": "Afritun er í gangi…",
-  "common.replicateRunning": "Fjarafritun er í gangi…",
   "common.showValue": "Sýna gildi",
   "common.hideValue": "Fela gildi",
   "confirmDialog.title": "Staðfesta",

@@ -876,7 +876,6 @@ const pl: Partial<Translations> = {
   "common.saving": "Zapisywanie…",
   "common.restoreRunning": "Trwa przywracanie…",
   "common.backupRunning": "Trwa tworzenie kopii zapasowej…",
-  "common.replicateRunning": "Trwa replikacja…",
   "common.showValue": "Pokaż wartość",
   "common.hideValue": "Ukryj wartość",
   "confirmDialog.title": "Potwierdź",

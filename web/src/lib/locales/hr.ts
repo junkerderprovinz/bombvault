@@ -1484,7 +1484,6 @@ const hr: Partial<Translations> = {
   "common.saving": "Spremanje…",
   "common.restoreRunning": "Vraćanje je u tijeku…",
   "common.backupRunning": "Sigurnosna kopija je u tijeku…",
-  "common.replicateRunning": "Repliciranje je u tijeku…",
   "common.showValue": "Prikaži vrijednost",
   "common.hideValue": "Sakrij vrijednost",
   "confirmDialog.title": "Potvrdi",

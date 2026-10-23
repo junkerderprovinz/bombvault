@@ -882,7 +882,6 @@ const it: Partial<Translations> = {
   "common.saving": "Salvataggio…",
   "common.restoreRunning": "È in corso un ripristino…",
   "common.backupRunning": "È in corso un backup…",
-  "common.replicateRunning": "È in corso una replica…",
   "common.showValue": "Mostra valore",
   "common.hideValue": "Nascondi valore",
   "confirmDialog.title": "Conferma",

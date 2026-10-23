@@ -880,7 +880,6 @@ const cs: Partial<Translations> = {
   "common.saving": "Ukládám…",
   "common.restoreRunning": "Probíhá obnova…",
   "common.backupRunning": "Probíhá zálohování…",
-  "common.replicateRunning": "Probíhá replikace…",
   "common.showValue": "Zobrazit hodnotu",
   "common.hideValue": "Skrýt hodnotu",
   "confirmDialog.title": "Potvrdit",

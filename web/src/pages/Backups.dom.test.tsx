@@ -882,6 +882,15 @@ describe("the page actions", () => {
     expect((action("Back up everything now") as HTMLButtonElement).disabled).toBe(true);
   });
 
+  it("hold the start back while an off-site copy runs and say so on a pointer over it", async () => {
+    await renderPage();
+    progress({ key: "offsite:containers", phase: "replicate", percent: 12, active: true });
+    const everything = action("Back up everything now") as HTMLButtonElement;
+    expect(everything.disabled).toBe(true);
+    fireEvent.mouseEnter(everything.parentElement!);
+    expect(screen.getByRole("tooltip").textContent).toBe(en["apiError.offsiteBusy"]);
+  });
+
   it("open the add window on the chosen kind, under the kind's own word, and on the choice elsewhere", async () => {
     await renderPage();
     await press(action("Add")!);
@@ -1179,6 +1188,16 @@ describe("the bar above picked rows", () => {
     progress({ key: "vm:win11", phase: "backup", percent: 5, active: true });
     expect((barButton("Back up selected") as HTMLButtonElement).disabled).toBe(true);
     expect((barButton("Pause schedule") as HTMLButtonElement).disabled).toBe(false);
+  });
+
+  it("holds a backup back while an off-site copy runs, and says so on a pointer over it", async () => {
+    await renderPage();
+    await pick("plex");
+    progress({ key: "offsite:vms", phase: "replicate", percent: 40, active: true });
+    const selected = barButton("Back up selected") as HTMLButtonElement;
+    expect(selected.disabled).toBe(true);
+    fireEvent.mouseEnter(selected.parentElement!);
+    expect(screen.getByRole("tooltip").textContent).toBe(en["apiError.offsiteBusy"]);
   });
 
   it("ends the picking with Done", async () => {

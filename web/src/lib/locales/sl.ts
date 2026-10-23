@@ -1479,7 +1479,6 @@ const sl: Partial<Translations> = {
   "common.saving": "Shranjevanje…",
   "common.restoreRunning": "Obnovitev teče…",
   "common.backupRunning": "Varnostno kopiranje teče…",
-  "common.replicateRunning": "Podvajanje teče…",
   "common.showValue": "Pokaži vrednost",
   "common.hideValue": "Skrij vrednost",
   "confirmDialog.title": "Potrdi",

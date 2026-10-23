@@ -1484,7 +1484,6 @@ const sk: Partial<Translations> = {
   "common.saving": "Ukladá sa…",
   "common.restoreRunning": "Prebieha obnovenie…",
   "common.backupRunning": "Prebieha zálohovanie…",
-  "common.replicateRunning": "Prebieha replikácia…",
   "common.showValue": "Zobraziť hodnotu",
   "common.hideValue": "Skryť hodnotu",
   "confirmDialog.title": "Potvrdiť",

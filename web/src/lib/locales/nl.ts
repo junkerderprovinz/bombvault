@@ -878,7 +878,6 @@ const nl: Partial<Translations> = {
   "common.saving": "Opslaan…",
   "common.restoreRunning": "Er wordt een herstel uitgevoerd…",
   "common.backupRunning": "Er wordt een back-up uitgevoerd…",
-  "common.replicateRunning": "Er wordt een replicatie uitgevoerd…",
   "common.showValue": "Waarde tonen",
   "common.hideValue": "Waarde verbergen",
   "confirmDialog.title": "Bevestigen",

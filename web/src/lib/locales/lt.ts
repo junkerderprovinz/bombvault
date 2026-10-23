@@ -1484,7 +1484,6 @@ const lt: Partial<Translations> = {
   "common.saving": "Saugoma…",
   "common.restoreRunning": "Vykdomas atkūrimas…",
   "common.backupRunning": "Vykdomas atsarginis kopijavimas…",
-  "common.replicateRunning": "Vykdomas replikavimas…",
   "common.showValue": "Rodyti reikšmę",
   "common.hideValue": "Slėpti reikšmę",
   "confirmDialog.title": "Patvirtinti",
