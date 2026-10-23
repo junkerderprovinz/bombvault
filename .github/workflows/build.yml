@@ -9,10 +9,13 @@ on:
   push:
     branches: ["**"]
     tags: ["v[0-9]+.[0-9]+.[0-9]+"]
-    paths-ignore:
-      - "**.md"
-      - "LICENSE"
-      - "docs/**"
+    # The release notes are Markdown but embedded in the binary, so they build.
+    paths:
+      - "**"
+      - "!**.md"
+      - "!LICENSE"
+      - "!docs/**"
+      - "internal/releasenotes/notes/**"
   pull_request:
     branches: [main]
   workflow_dispatch:
