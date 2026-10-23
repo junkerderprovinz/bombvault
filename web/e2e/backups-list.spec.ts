@@ -1021,6 +1021,8 @@ const WAIT_WORDS = {
 for (const lang of ["de", "en"] as const) {
   test(`every tap on a waiting backup start explains it on a phone (${lang})`, async ({ page }, testInfo) => {
     test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "a finger");
+    // Thirty taps, each with its pause to read.
+    test.setTimeout(120_000);
     const words = WAIT_WORDS[lang];
     await page.setViewportSize({ width: 390, height: 844 });
     await stage(page, { lang });
@@ -1046,15 +1048,20 @@ for (const lang of ["de", "en"] as const) {
     const tooltip = page.getByRole("tooltip").filter({ hasText: words.reason });
     const tappedTenTimes = async (button: Locator) => {
       await expect(button).toBeDisabled();
-      await button.scrollIntoViewIfNeeded();
+      // At the end of the list both bars stick to their edge.
+      await page.evaluate(() => {
+        const main = document.querySelector("main")!;
+        main.scrollTop = main.scrollHeight;
+      });
+      await settle(page);
       for (let i = 0; i < 10; i++) {
         await button.tap({ force: true });
         await expect(tooltip, `tap ${i + 1}`).toContainText(words.reason);
-        // The bars stick to the edge of the list, so the rows passing under
-        // them leave the button where it was, and the bubble with it.
-        await page.evaluate((down) => {
+        // The rows passing under a bar leave its button where it was, and the
+        // bubble with it.
+        await page.evaluate((up) => {
           const main = document.querySelector("main")!;
-          main.scrollTop += down ? 30 : -30;
+          main.scrollTop += up ? -30 : 30;
         }, i % 2 === 0);
         // The bubble is meant to be read, so it waits for the next tap.
         await page.waitForTimeout(400);
@@ -1073,7 +1080,6 @@ for (const lang of ["de", "en"] as const) {
     await page.getByRole("menuitem", { name: words.select }).tap();
     await rows(page).first().tap();
     await settle(page);
-    await page.evaluate(() => (document.querySelector("main")!.scrollTop = 300));
     await tappedTenTimes(page.getByTestId("bulk-bar").getByRole("button", { name: words.selected }));
   });
 }
