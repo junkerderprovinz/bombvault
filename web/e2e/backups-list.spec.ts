@@ -9,6 +9,7 @@
 import { expect, test, type Locator, type Page, type Route } from "@playwright/test";
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
+import { expectClearOfPageActions, expectPageActionsCoverNothing } from "./pageActions";
 import { blockServerLook } from "./serverLook";
 
 const MOBILE_PROJECTS = new Set(["mobile-iphone", "mobile-android"]);
@@ -810,6 +811,18 @@ for (const width of [320, 390]) {
       all.filter((el) => el.getBoundingClientRect().right > window.innerWidth + 1).map((el) => el.textContent),
     );
     expect(past, "rows run past the edge").toEqual([]);
+  });
+}
+
+for (const width of [320, 360, 390]) {
+  test(`the page actions @ ${width}px cover no part of a row, and every row comes clear of them`, async ({ page }, testInfo) => {
+    test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "the band lives below 48rem");
+    await stage(page);
+    await page.setViewportSize({ width, height: 800 });
+    await openList(page);
+    await expectPageActionsCoverNothing(page);
+    for (const row of [rows(page).first(), rows(page).last()]) await expectClearOfPageActions(page, row);
+    await expectPageActionsCoverNothing(page);
   });
 }
 

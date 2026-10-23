@@ -15,6 +15,11 @@ const CLEARANCE = "--page-actions-clearance";
  * At the end of the page it takes its place in the flow below the last row and
  * covers nothing. index.css lets the page's root fill the scroller, which
  * keeps the corner at the bottom of a page shorter than the window.
+ *
+ * A phone's column has no room beside the buttons, so a row passing under
+ * them would show in pieces around them. There the corner stands on a band of
+ * the page's colour, as StickyActionBar does, no taller than the scroll padding
+ * Layout keeps for such a bar.
  */
 export function PageActions({ children }: { children: ReactNode }) {
   const bar = useRef<HTMLDivElement>(null);
@@ -46,7 +51,7 @@ export function PageActions({ children }: { children: ReactNode }) {
     <div
       ref={bar}
       data-testid="page-actions"
-      className="glim-page-actions pointer-events-none sticky bottom-0 z-10 mt-auto flex justify-end pb-4 max-md:pb-3"
+      className="glim-page-actions pointer-events-none sticky bottom-0 z-10 mt-auto flex justify-end pb-4 max-md:pointer-events-auto max-md:bg-carbon-background max-md:py-3"
     >
       <div className="pointer-events-auto flex flex-wrap items-center justify-end gap-2.5">{children}</div>
     </div>

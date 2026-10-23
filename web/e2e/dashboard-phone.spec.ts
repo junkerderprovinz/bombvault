@@ -7,6 +7,7 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
 import { FAIL_REASON, LONG_NAME, openOverview, stageOverview } from "./overview";
+import { expectClearOfPageActions, expectPageActionsCoverNothing } from "./pageActions";
 
 const MOBILE_PROJECTS = new Set(["mobile-iphone", "mobile-android"]);
 
@@ -96,17 +97,18 @@ test("what needs the person on a phone: every action is big enough to tap", asyn
   }
 });
 
-test("the page action floats over the rows on the page colour, without a band of its own", async ({ page }, testInfo) => {
+test("the page action stands on a band of the page colour that no row shows through", async ({ page }, testInfo) => {
   test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only: the corner is under the thumb here");
   await stageOverview(page, 360);
   await openOverview(page);
 
   const corner = page.getByTestId("page-actions");
-  const background = await corner.evaluate((el) => getComputedStyle(el).backgroundColor);
-  expect(background).toBe("rgba(0, 0, 0, 0)");
-  // The corner is as wide as the column, and a tap beside its button reaches
-  // the row underneath.
-  await expect(corner).toHaveCSS("pointer-events", "none");
+  const ground = await page.locator("#bv-main").locator("..").evaluate((el) => getComputedStyle(el).backgroundColor);
+  expect(await corner.evaluate((el) => getComputedStyle(el).backgroundColor)).toBe(ground);
+  // A row under the band is hidden whole instead of showing in pieces beside
+  // the button, and comes clear of the band when it is scrolled into view.
+  await expectPageActionsCoverNothing(page);
+  await expectClearOfPageActions(page, page.getByTestId("target-row").last());
 });
 
 test("the overview on the desktop keeps its grid, each card once and no phone block", async ({ page }, testInfo) => {

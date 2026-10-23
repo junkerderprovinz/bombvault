@@ -11,6 +11,7 @@
 // /pull and /fleet with their hash forms.
 // German, because its labels run longest.
 import { expect, test, type Locator, type Page } from "@playwright/test";
+import { expectClearOfPageActions, expectPageActionsCoverNothing } from "./pageActions";
 import { blockServerLook } from "./serverLook";
 
 const MOBILE_PROJECTS = new Set(["mobile-iphone", "mobile-android"]);
@@ -433,9 +434,13 @@ const RECEIVER_SERVER = {
   logins: [{ memberId: MEMBER, name: MEMBER_NAME, user: "schwiegereltern-tower-gmunden-keller", createdAt: now - 30 * 86400 }],
 };
 
-type Staged = { empty?: boolean };
+// An instance that was in the group and is out of reach now. It has no peer
+// row, so its card has no figures.
+const AWAY = { id: "member-3", name: "Büro-Server", lastSeen: now - 180, address: "https://192.168.20.187:3443" };
 
-async function stage(page: Page, { empty = false }: Staged = {}): Promise<void> {
+type Staged = { empty?: boolean; away?: boolean };
+
+async function stage(page: Page, { empty = false, away = false }: Staged = {}): Promise<void> {
   await page.route("**/api/settings", async (route) => {
     if (route.request().method() !== "GET") return route.fallback();
     const res = await route.fetch();
@@ -451,7 +456,7 @@ async function stage(page: Page, { empty = false }: Staged = {}): Promise<void> 
   await json("**/api/fleet/peers/*/mesh-offer", { ok: true, snippet: SNIPPET });
   await json("**/api/fleet/mesh-offers", { ok: true, offers: empty ? [] : OFFERS });
   await json("**/api/pull/sources", { ok: true, sources: empty ? [] : PULLS });
-  await json("**/api/group", empty ? { ...GROUP, active: false, members: [] } : GROUP);
+  await json("**/api/group", empty ? { ...GROUP, active: false, members: [] } : { ...GROUP, away: away ? [AWAY] : [] });
   await json("**/api/group/roles", {
     ok: true,
     members: empty ? [] : ROLES,
@@ -772,6 +777,40 @@ for (const width of [320, 360]) {
     await expectOnPage(page);
     await page.getByRole("button", { name: "Kopplung", exact: true }).click();
     await expect(page).toHaveURL(/\/settings\/pairing$/);
+  });
+}
+
+for (const width of [320, 360, 390]) {
+  test(`the page actions @ ${width}px cover no part of a card, and its last button comes clear of them`, async ({ page }, testInfo) => {
+    test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only: the band lives below 48rem");
+    await openPage(page, width);
+    await expect(page.getByTestId("page-actions").getByRole("button", { name: "Kopplung", exact: true })).toBeVisible();
+    await expectPageActionsCoverNothing(page);
+    await expectClearOfPageActions(page, card(page, "self").getByRole("button", { name: "Öffnen", exact: true }));
+    await expectPageActionsCoverNothing(page);
+  });
+}
+
+for (const width of [1000, 1600]) {
+  test(`a card without figures @ ${width}px keeps the room above its roles that a card with figures has`, async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== "desktop-1280", "desktop widths, set by the test");
+    await openPage(page, width, { away: true });
+    await expect(card(page, AWAY.id)).toContainText("Inaktiv");
+    // The room between the roles' heading and whatever of the head reaches
+    // lowest, the mark or the text with its figures.
+    const gaps = await page.locator("#bv-main [data-instance]").evaluateAll((cards) =>
+      cards.flatMap((el) => {
+        const heading = [...el.querySelectorAll("p, span, h3")].find((node) => /^Was .* (für diesen Server|für andere) tut$/.test(node.textContent?.trim() ?? ""));
+        if (!heading) return [];
+        const head = el.firstElementChild!;
+        const lowest = Math.max(...[...head.children].flatMap((part) => [...part.children].map((child) => child.getBoundingClientRect().bottom)));
+        return [{ key: el.getAttribute("data-instance"), gap: Math.round(heading.getBoundingClientRect().top - lowest) }];
+      }),
+    );
+    expect(gaps.map((g) => g.key)).toContain(AWAY.id);
+    expect(gaps.map((g) => g.key)).toContain("self");
+    const self = gaps.find((g) => g.key === "self")!.gap;
+    for (const g of gaps) expect(Math.abs(g.gap - self), `the room above the roles of ${g.key}`).toBeLessThanOrEqual(1);
   });
 }
 

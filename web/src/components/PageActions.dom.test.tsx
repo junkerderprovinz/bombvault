@@ -84,6 +84,11 @@ describe("PageActions", () => {
     expect(corner.firstElementChild?.className).toContain("pointer-events-auto");
   });
 
+  it("stands on a band of the page's colour on a phone, which the rows pass under whole", () => {
+    const classes = renderCorner().className.split(/\s+/);
+    expect(classes).toEqual(expect.arrayContaining(["max-md:bg-carbon-background", "max-md:pointer-events-auto", "max-md:py-3"]));
+  });
+
   it("fills only the action the page exists for", () => {
     renderCorner();
     expect(screen.getByRole("button", { name: "Add" }).className).toContain("bg-accent");
