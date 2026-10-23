@@ -850,10 +850,11 @@ for (const width of [320, 360, 390]) {
           };
           // A line starts where a character stands lower than the one before it.
           const cuts: string[] = [];
+          let lines = 1;
           for (let i = 1; i < text.length; i++) {
-            if (top(i) > top(i - 1) + 4 && !/[\s-]/.test(text.data[i - 1]) && !/\s/.test(text.data[i])) {
-              cuts.push(`${text.data.slice(0, i)}|${text.data.slice(i)}`);
-            }
+            if (top(i) <= top(i - 1) + 4) continue;
+            lines++;
+            if (!/[\s-]/.test(text.data[i - 1]) && !/\s/.test(text.data[i])) cuts.push(`${text.data.slice(0, i)}|${text.data.slice(i)}`);
           }
           const n = name.getBoundingClientRect();
           const s = row.querySelector(":scope > span:last-child > :last-child")!.getBoundingClientRect();
@@ -861,6 +862,7 @@ for (const width of [320, 360, 390]) {
           return {
             name: text.data,
             cuts,
+            squeezed: beside && lines > 1,
             overlap: beside && s.left < n.right - 1 && s.right > n.left + 1,
             past: row.getBoundingClientRect().right > window.innerWidth + 1,
           };
@@ -868,6 +870,7 @@ for (const width of [320, 360, 390]) {
       );
       expect(found.map((f) => f.name)).toContain("notes-db");
       expect(found.flatMap((f) => f.cuts), "a name breaks inside a word").toEqual([]);
+      expect(found.filter((f) => f.squeezed).map((f) => f.name), "a status beside its name makes the name wrap").toEqual([]);
       expect(found.filter((f) => f.overlap).map((f) => f.name), "a status covers its name").toEqual([]);
       expect(found.filter((f) => f.past).map((f) => f.name), "rows run past the edge").toEqual([]);
       const pan = await page.evaluate(() => {
@@ -882,20 +885,41 @@ for (const width of [320, 360, 390]) {
 test("while an off-site copy runs, the backup starts say why they wait", async ({ page }, testInfo) => {
   await stage(page);
   const copy = { key: "offsite:containers", phase: "replicate", percent: 12, active: true, startedAt: NOW - 600 };
+  // The answer ends where a live stream stays open, so the stream is told to
+  // wait out the test before it asks again and replays the copy.
   await page.route("**/api/progress", (route) =>
     route.fulfill({
       status: 200,
       contentType: "text/event-stream",
-      body: `retry: 500\n\ndata: ${JSON.stringify(copy)}\n\ndata: {"synced":true}\n\n`,
+      body: `retry: 60000\n\ndata: ${JSON.stringify(copy)}\n\ndata: {"synced":true}\n\n`,
     }),
   );
   await openList(page);
   const finger = MOBILE_PROJECTS.has(testInfo.project.name);
   const reason = "Die Off-site-Kopie der letzten Sicherung läuft noch. Versuch es noch einmal, wenn sie fertig ist.";
+  // The bubble closes when the page scrolls, so the list has to stand still
+  // before the pointer arrives.
+  const atRest = () =>
+    page.evaluate(
+      () =>
+        new Promise<void>((done) => {
+          const main = document.querySelector("main")!;
+          let last = main.scrollTop;
+          let still = 0;
+          const tick = () => {
+            still = main.scrollTop === last ? still + 1 : 0;
+            last = main.scrollTop;
+            if (still >= 5) done();
+            else requestAnimationFrame(tick);
+          };
+          requestAnimationFrame(tick);
+        }),
+    );
   const explained = async (button: Locator) => {
     await expect(button).toBeDisabled();
-    if (finger) await button.tap({ force: true });
-    else await button.hover({ force: true });
+    await button.scrollIntoViewIfNeeded();
+    await atRest();
+    await button.hover({ force: true });
     await expect(page.getByRole("tooltip")).toContainText(reason);
     await page.mouse.move(0, 0);
     await expect(page.getByRole("tooltip")).toHaveCount(0);
@@ -909,6 +933,8 @@ test("while an off-site copy runs, the backup starts say why they wait", async (
   } else {
     await rows(page).filter({ hasText: "jellyfin" }).click({ modifiers: ["ControlOrMeta"] });
   }
+  // The bar slides in, and a pointer that arrives during that misses the button.
+  await settle(page);
   await explained(page.getByTestId("bulk-bar").getByRole("button", { name: "Auswahl sichern" }));
 });
 

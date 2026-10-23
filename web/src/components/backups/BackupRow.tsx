@@ -47,11 +47,12 @@ const STATUS = "@min-[36rem]:w-full @min-[36rem]:whitespace-nowrap @max-[36rem]:
 const NAME =
   "min-w-0 truncate text-sm font-semibold text-carbon-text @max-[36rem]:whitespace-normal @max-[36rem]:wrap-break-word";
 // In a narrow list the name and the status share a line that wraps. The name
-// asks for the room of its longest word, so the status moves under it before
-// a word has to break; only a word wider than the row breaks inside. In a
-// wide list the wrapper gives way and its parts take the list's columns.
+// asks for the room of all its words, so the status moves under it before the
+// name has to break; a name wider than the row then breaks between words, and
+// only a word wider than the row breaks inside. In a wide list the wrapper
+// gives way and its parts take the list's columns.
 const TEXT = "flex min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-1.5 @min-[36rem]:contents";
-const NAME_ROOM = "@max-[36rem]:basis-auto @max-[36rem]:w-min @max-[36rem]:max-w-full";
+const NAME_ROOM = "@max-[36rem]:basis-auto @max-[36rem]:w-max @max-[36rem]:max-w-full";
 const BEFORE_STATUS = "flex flex-none items-center gap-2 @max-[36rem]:hidden";
 const IP_COLUMN = "min-w-[7.5rem] flex-none text-end text-xs tabular-nums text-carbon-textMuted";
 
