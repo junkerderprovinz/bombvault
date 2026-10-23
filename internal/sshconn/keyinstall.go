@@ -107,12 +107,19 @@ func passwordPrompt(password string) ssh.KeyboardInteractiveChallenge {
 	}
 }
 
+// keyboardInteractiveRefused is how x/crypto words a USERAUTH_FAILURE (51)
+// that arrives where a keyboard-interactive round expects its first
+// INFO_REQUEST (60). OpenSSH answers that way once the password has failed.
+const keyboardInteractiveRefused = "unexpected message type 51 (expected 60)"
+
 func handshakeError(err error) error {
 	msg := err.Error()
 	var netErr net.Error
 	switch {
 	case errors.Is(err, ErrHostKeyChanged):
 		return ErrHostKeyChanged
+	case strings.Contains(msg, keyboardInteractiveRefused):
+		return ErrPasswordRefused
 	case strings.Contains(msg, "unable to authenticate"):
 		if strings.Contains(msg, "password") || strings.Contains(msg, "keyboard-interactive") {
 			return ErrPasswordRefused

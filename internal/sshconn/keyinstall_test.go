@@ -208,6 +208,27 @@ func TestInstallKeyTellsAWrongPasswordApart(t *testing.T) {
 	}
 }
 
+// OpenSSH offers keyboard-interactive after a wrong password and then refuses
+// it without asking anything.
+func TestInstallKeyTellsAWrongPasswordApartWhenKeyboardInteractiveAsksNothing(t *testing.T) {
+	srv := startFakeServer(t, func(f *fakeServer) {
+		f.cfg.KeyboardInteractiveCallback = func(ssh.ConnMetadata, ssh.KeyboardInteractiveChallenge) (*ssh.Permissions, error) {
+			return nil, errors.New("no more tries")
+		}
+	})
+	err := install(t, srv.target(t, true), "not it", newPublicKey(t))
+	if !errors.Is(err, ErrPasswordRefused) {
+		t.Fatalf("err = %v, want ErrPasswordRefused", err)
+	}
+}
+
+func TestHandshakeErrorKeepsOtherUnexpectedMessagesAsTheyAre(t *testing.T) {
+	err := handshakeError(errors.New("ssh: handshake failed: ssh: unexpected message type 3 (expected 60)"))
+	if errors.Is(err, ErrPasswordRefused) || !strings.Contains(err.Error(), "message type 3") {
+		t.Fatalf("err = %v, want the protocol error itself", err)
+	}
+}
+
 func TestInstallKeyTellsAServerWithoutPasswordSignInApart(t *testing.T) {
 	srv := startFakeServer(t, func(f *fakeServer) {
 		f.cfg.PasswordCallback = nil
