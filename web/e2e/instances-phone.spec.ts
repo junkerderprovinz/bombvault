@@ -990,7 +990,8 @@ test("a role is asked for from its tile, and an older instance takes it at once"
   await expect(dialog).toHaveCount(0);
   expect(sent).toHaveLength(1);
   expect(sent[0].url).toBe("/api/group/members/member-2/roles/receiver");
-  await expect(page.getByText("Büro Linz ist jetzt dein Empfänger.")).toBeVisible();
+  // No storage location copies to the member yet, and the toast says so.
+  await expect(page.getByText("Büro Linz ist jetzt dein Empfänger, aber noch kopiert kein Speicherort dorthin.")).toBeVisible();
 
   // Switching one off says what stops before anything is sent.
   await card(page, MEMBER).locator('button[data-role="receiver"]').click();
