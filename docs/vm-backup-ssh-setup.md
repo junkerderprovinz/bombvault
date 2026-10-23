@@ -106,7 +106,9 @@ docker exec BombVault timeout 6 bash -c 'echo > /dev/tcp/192.168.x.x/<port>' && 
 Each VM has a **Method** in the **VM** card on its page's Settings tab (open the VM
 under **Backups**):
 - **Graceful (shutdown)**: default; shuts the VM down, backs up the disks,
-  restarts it. Always consistent.
+  restarts it. Always consistent. It waits up to ten minutes for the guest to
+  shut down and never forces it off; a guest still running after that is left
+  alone, and that backup fails with the reason.
 - **Live snapshot**: backs up a running VM via an external snapshot +
   `blockcommit`. Requirements: the **qemu guest agent** installed in the VM
   (for a quiesced, app-consistent snapshot) and the disk on **`/mnt/cache`** or

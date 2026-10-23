@@ -24,7 +24,7 @@ This server took over another server's backup key in the Emergency wizard, and `
 
 ## A phone lands on the login page
 
-A paired phone gets its session over the group only while **Phones can pair with the group's twelve words** is on under **Settings, Security**. A password reset turns it off. An app older than the server also gets no session until it is updated. A server added by its address always asks for the password.
+A paired phone gets its session over the group only while **Phones can pair with the group's twelve words** is on under **Settings, Security**. A password reset turns it off. An app older than the server also gets no session until it is updated. A server added by its address always asks for the password. A phone removed from the Instances page comes back switched off when its app opens again; switch on **Poll this instance** under **Monitoring** in its details to let it in.
 
 ## VM backup will not connect
 
@@ -38,7 +38,7 @@ VM backup talks to libvirt over SSH, never a mount.
 
 ## A live VM snapshot did not run
 
-Live snapshots need the qemu guest agent installed in the VM and the disk on `/mnt/cache` (or `/mnt/diskX`), not `/mnt/user`. On a shut-off VM, live automatically falls back to graceful. A graceful backup shuts the VM down, backs up the disks, then restarts it, so it is always consistent.
+Live snapshots need the qemu guest agent installed in the VM and the disk on `/mnt/cache` (or `/mnt/diskX`), not `/mnt/user`. On a shut-off VM, live automatically falls back to graceful. A graceful backup shuts the VM down, backs up the disks, then restarts it, so it is always consistent. It waits up to ten minutes for the guest to shut down and never forces it off, so a Windows guest installing updates is not cut off halfway. A guest that still runs after that is left alone, and that backup fails with the reason.
 
 ## A backup failed with "repository is already locked"
 
@@ -47,6 +47,14 @@ This is usually an orphaned restic lock left behind when the container was updat
 ## My off-site copy did not happen after a backup
 
 Off-site replication is best-effort by design, so an off-site hiccup never fails the local backup. Check when the storage location copies: its **Copy** card says **After every backup** or names a plan of its own, and **Settings, Schedule, Off-site copies per section** can give a section its own plan. Use **Replicate now** in the section's **Off-site copy** card under **Settings, Storage locations** for an on-demand run, and watch the status head of the overview, which says **Off-site copy running** while it runs. A failed copy shows under **Needs you**.
+
+## A rest-server's certificate is not trusted
+
+restic refuses a certificate it does not know, and the error says where to put it. Copy the rest-server's self-signed certificate, or the one of the authority that signed it, as a PEM file into the `certs` folder of BombVault's data folder (`/config/certs` in the container, `appdata/bombvault/certs` on Unraid) and test again. No restart is needed.
+
+## A large backup was killed for running out of memory
+
+Set **Memory limit per backup (MiB, 0 = none)** in the **Performance** card under **Settings, System**, well below what the container may use. Near the limit restic frees memory more often, which costs some speed, so the backup slows down instead of being killed.
 
 ## A restore aborted before it started
 

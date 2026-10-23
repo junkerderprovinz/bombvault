@@ -29,6 +29,15 @@ A storage location is a place backups go: a local folder, a share, a server of y
 3. **Protection.** The window says plainly what the service can do. A rest-server in append-only mode refuses deletion, and the tamper test checks that. An S3 bucket can keep old versions with versioning and object lock, which BombVault cannot check yet. A cloud drive cannot refuse deletion at all: whoever gets into the server gets into that copy too. Switch **Delete protection (append-only)** on only where the far side really refuses deletion; BombVault then never prunes there. **For an emergency** says what the recovery kit holds for this location.
 4. **For which sections.** Pick the sections that back up here. The first copy brings the whole history along. Entries that chose their own storage locations do not get the new one on their own, and the window names them.
 
+Some services ask for a little more at the sign-in:
+
+- **SFTP and the Storage Box.** **Add key** puts BombVault's public key on the server with the **Account password**, which is used for that one sign-in and kept nowhere. The command for doing it by hand is shown below it. The test shows the **Server key** with its fingerprint; BombVault remembers it and refuses the server if it later shows a different one.
+- **S3 keys for a single bucket**, such as a Cloudflare R2 object token or a scoped AWS key, may not list the other buckets. Type the bucket into **Bucket**, and the test and the folder list open that bucket.
+- **SMB servers that do not list their shares** take the name of one under **Share**, and the test opens that share directly.
+- **FTP** asks for its **Encryption**: **None**, **Explicit TLS (FTPES)** or **Implicit TLS (FTPS, port 990)**.
+- **OneDrive and Zoho WorkDrive.** When a sign-in opens several drives or workspaces, the window asks which one the backups go to.
+- **A rest-server with a self-signed certificate.** Put the certificate as a PEM file into the `certs` folder of BombVault's data folder (`/config/certs` in the container, `appdata/bombvault/certs` on Unraid). Backups, copies and the delete protection test trust it without a restart.
+
 S3 services run through restic's own S3 backend, which is what lets a storage class and object lock apply. Every other service runs through the rclone BombVault ships, and its remote then appears in the **Off-site (rclone)** card under **Settings, Storage locations**. A settings export carries the storage locations; with credentials included it carries their sign-in as well.
 
 The folder on this server is called **Local** everywhere: on the storage pages, in the flow, on an entry and on Restore. With several folders on this server, each goes by its own name. A storage location that a section's off-site field sets up is named after its place, the last folder of its address or, without one, its server, and gets a number when another location already goes by that name. A name you give it on its page stays. Where two locations with the same name stand side by side, each carries its server or folder.
@@ -43,6 +52,8 @@ Every storage location has a page of its own:
 - **Rules per section**: one section's own repository, retention or compression at this location. **Change rules** opens them, and **Reset to the storage location** brings a section back.
 - **Already under this storage location**: sections whose hand-typed address lies in a folder of this location. Taking one over leaves the repository where it is; sign-in, storage class and delete protection then come from the location. BombVault first checks that the location's sign-in opens the repository, and it refuses to put an append-only repository under a location that is not append-only.
 - A vessel that shows how full the location is, with the mark where it is full and how many weeks are left at the growth of the last weeks. A location that does not report its size says **Size unknown**.
+
+A remote storage location that held backups and suddenly holds no repository, such as a rest-server whose disk did not mount, does not get a new, empty one on its own. Its page says so as soon as a backup or copy finds the repository gone. Mount the disk again. If you emptied the old repository on purpose, **Start a new repository here** starts over, for every section of the location and its named repositories at once.
 
 A receiving server that another instance of your group runs appears among the providers as **From your group**; see [Receiving server](#receiving-server).
 
@@ -194,7 +205,7 @@ Switching a role on sends a request, and nothing starts until someone on the oth
 
 **Details** on a card opens the rest: the received repositories and pull sources of that member, storage offers, monitoring, **Remove** and **Forget key**.
 
-Instances that are shut down and phones with the app closed keep their card as **Inactive**, in grey, with when they were last seen, and stand dimmed in the net until you **Remove** them. Right after this server starts, such a card says **Checking** until the group is back.
+Instances that are shut down and phones with the app closed keep their card as **Inactive**, in grey, with when they were last seen, and stand dimmed in the net until you **Remove** them. Right after this server starts, such a card says **Checking** until the group is back. **Remove** works on such a card whichever parts are switched on, and it also ends the member's open requests, its idle ZFS receive slots and its waiting key requests. The **Instances** card on the pairing page lists these members as **Inactive** too.
 
 ## Receiver and fetcher {#receiver}
 
@@ -212,7 +223,7 @@ On the box that **receives** append-only copies from another BombVault, the rece
 
 The receiver is strictly read-only. It never writes to the received repository, so it can never break the append-only guarantee the sender relies on.
 
-A fetcher works the other way round: with **Pull** switched on, an instance reads another member's backups into its own repository on its own schedule. Its sources stand in that member's details as well.
+A fetcher works the other way round: with **Pull** switched on, an instance reads another member's backups on its own schedule, into a repository of its own for each source, so they never count as this box's own backups. Its sources stand in that member's details as well.
 
 ### Receiving server {#receiving-server}
 
@@ -268,7 +279,7 @@ The **Emergency wizard** brings back a server that is gone or was set up again. 
     - **Type the key**: the old server's `APP_KEY`, and where its backups are.
 
     BombVault then tries the key on every storage location and says for each one whether it is readable, not found, locked with another key, not reachable or still missing its sign-in. Nothing has been saved yet, and the key stays in memory for a limited time. **Take the key over** makes this server write its backups with that key from now on; **Undo the takeover** goes back to its own key until the first backup has run. A server that already has backups of its own refuses the takeover and points to [From an old backup folder](#restore-from-another-bombvault-repo) instead. **Save sign-ins** stores the sign-ins the kit carries for remote storage locations, and asks before it replaces sign-ins this server already has.
-2. **Settings.** **Bring back settings** restores BombVault's own settings from the newest self-backup: storage locations, credentials, schedules and rules. BombVault restarts to apply them, through the Docker socket, so the live settings database is never overwritten under an open handle, and the wizard carries on by itself afterwards. This server's login stays: you keep signing in with the password you use now. Secrets the old server had stored that cannot be taken over are listed, so you can enter them again.
+2. **Settings.** **Bring back settings** restores BombVault's own settings from the newest self-backup: storage locations, credentials, schedules and rules. BombVault restarts to apply them, through the Docker socket, so the live settings database is never overwritten under an open handle, and the wizard carries on by itself afterwards. This server's login stays: you keep signing in with the password you use now. Secrets the old server had stored that cannot be taken over are listed, so you can enter them again. The restore ends every session and removes the passkeys, so set them up again afterwards.
 3. **Selection.** BombVault looks through your backups and lists the containers, VMs, folder sets and ZFS datasets it finds. The newest snapshot is preselected everywhere. What this server still has starts switched off, because a restore would replace it. Folder sets no longer know where they came from after a rebuild, so they go into a folder you choose.
 4. **Restore.** Everything selected comes back in one go, left stopped if you want to start each container and VM yourself, which is safest after a total loss. Afterwards download a new recovery kit: the old one belongs to the previous install.
 

@@ -49,7 +49,7 @@ The switch for this is **Phones can pair with the group's twelve words** on the 
 
 ## The phone on the Instances page {#instances}
 
-The phone gets its own card on the Instances page of every server in the group, marked as an Android app and named after the name you gave the phone. It has no scorecard because it backs nothing up, and **Remove** takes it off the page. A phone that knows the words can pair again at any time, so for a lost phone switch **Phones can pair with the group's twelve words** off under **Settings, Security**, or let every instance **Leave group** and pair them again with new words.
+The phone gets its own card on the Instances page of every server in the group, marked as an Android app and named after the name you gave the phone. It has no scorecard because it backs nothing up. **Remove** takes it off the page and ends its session at once, as does switching off **Poll this instance** under **Monitoring** in its details. The phone still knows the words, so it shows up again when its app opens, but switched off, and it gets no session until someone switches it on. For a lost phone remove its card on every server, or switch **Phones can pair with the group's twelve words** off under **Settings, Security**, or let every instance **Leave group** and pair them again with new words.
 
 A phone paired before 10.0.0 starts signing its calls on its first visit after the update, and each server keeps the first key it gets for the phone. If someone else who knows the group's words gets there first while the phone is offline, that server turns the phone away from then on, and the app can no longer open it over the relay. To fix this, sign in to that server in a browser, choose **Forget key** on the phone's card on the Instances page and then **Confirm forget**, and open the app again. The server takes the phone's own key on its next call. If the phone is turned away again, someone else has the words: let every instance **Leave group** and pair them again with new words, as for a lost phone.
 
@@ -69,7 +69,7 @@ Exports, recovery kits, flash ZIPs and database dumps land in the phone's Downlo
 
 ## On a touch screen {#touch}
 
-Nothing hovers under a finger, so a control dims while it is held, and a button with a brand logo lights up in its brand colour until the finger lifts. A long press on a button counts as a slow tap and opens no link menu.
+Nothing hovers under a finger, so a control dims while it is held, and a button with a brand logo lights up in its brand colour until the finger lifts. A long press on a button counts as a slow tap and opens no link menu. A tap on a greyed-out button shows why it is greyed out, until you tap somewhere else.
 
 ## In a browser instead {#browser}
 

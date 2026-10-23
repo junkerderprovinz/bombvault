@@ -24,7 +24,7 @@ Dieser Server hat im Notfall-Assistenten den Sicherungsschlüssel eines anderen 
 
 ## Ein Handy landet auf der Login-Seite
 
-Ein gekoppeltes Handy bekommt seine Sitzung über die Gruppe nur, solange **Handys können sich mit den zwölf Wörtern der Gruppe koppeln** unter **Einstellungen, Sicherheit** an ist. Ein Zurücksetzen des Passworts schaltet das aus. Auch eine App, die älter ist als der Server, bekommt keine Sitzung, bis sie aktualisiert ist. Ein Server, den du über seine Adresse hinzugefügt hast, fragt immer nach dem Passwort.
+Ein gekoppeltes Handy bekommt seine Sitzung über die Gruppe nur, solange **Handys können sich mit den zwölf Wörtern der Gruppe koppeln** unter **Einstellungen, Sicherheit** an ist. Ein Zurücksetzen des Passworts schaltet das aus. Auch eine App, die älter ist als der Server, bekommt keine Sitzung, bis sie aktualisiert ist. Ein Server, den du über seine Adresse hinzugefügt hast, fragt immer nach dem Passwort. Ein Handy, das von der Seite Instanzen entfernt wurde, kommt ausgeschaltet zurück, wenn seine App wieder öffnet; schalte in seinen Details unter **Überwachung** **Diese Instanz abfragen** ein, um es hereinzulassen.
 
 ## Das VM-Backup verbindet sich nicht
 
@@ -38,7 +38,7 @@ Das VM-Backup spricht über SSH mit libvirt, nie über einen Mount.
 
 ## Ein Live-VM-Snapshot lief nicht
 
-Live-Snapshots benötigen den in der VM installierten qemu-Gast-Agenten und den Datenträger auf `/mnt/cache` (oder `/mnt/diskX`), nicht `/mnt/user`. Bei einer ausgeschalteten VM fällt Live automatisch auf geordnet zurück. Eine geordnete Sicherung fährt die VM herunter, sichert die Datenträger und startet sie dann neu, sodass sie immer konsistent ist.
+Live-Snapshots benötigen den in der VM installierten qemu-Gast-Agenten und den Datenträger auf `/mnt/cache` (oder `/mnt/diskX`), nicht `/mnt/user`. Bei einer ausgeschalteten VM fällt Live automatisch auf geordnet zurück. Eine geordnete Sicherung fährt die VM herunter, sichert die Datenträger und startet sie dann neu, sodass sie immer konsistent ist. Sie wartet bis zu zehn Minuten, bis der Gast heruntergefahren ist, und schaltet ihn nie hart aus, damit ein Windows-Gast, der gerade Updates installiert, nicht mittendrin abbricht. Ein Gast, der danach noch läuft, bleibt in Ruhe, und diese Sicherung schlägt mit dem Grund fehl.
 
 ## Eine Sicherung schlug mit "repository is already locked" fehl
 
@@ -47,6 +47,14 @@ Das ist meist ein verwaister restic-Lock, der zurückblieb, als der Container mi
 ## Meine Off-site-Kopie lief nach einer Sicherung nicht
 
 Off-site-Kopien sind absichtlich Best-Effort, sodass ein Off-site-Aussetzer die lokale Sicherung nie fehlschlagen lässt. Prüfe, wann der Speicherort kopiert: Seine Karte **Kopieren** sagt **Nach jeder Sicherung** oder nennt einen eigenen Plan, und **Einstellungen, Zeitplan, Off-site-Kopien pro Bereich** kann einem Bereich einen eigenen Plan geben. **Jetzt replizieren** in der Karte **Off-site-Kopie** des Bereichs unter **Einstellungen, Speicherorte** startet eine Kopie sofort, und der Statuskopf der Übersicht sagt **Off-site-Kopie läuft**, solange sie läuft. Eine fehlgeschlagene Kopie steht unter **Braucht dich**.
+
+## Dem Zertifikat eines rest-servers wird nicht vertraut
+
+restic lehnt ein Zertifikat ab, das es nicht kennt, und die Fehlermeldung sagt, wohin es gehört. Kopier das selbstsignierte Zertifikat des rest-servers, oder das der Stelle, die es signiert hat, als PEM-Datei in den Ordner `certs` in BombVaults Datenordner (`/config/certs` im Container, `appdata/bombvault/certs` unter Unraid) und teste noch einmal. Ein Neustart ist nicht nötig.
+
+## Eine große Sicherung wurde wegen fehlenden Speichers beendet
+
+Setz **Speicherlimit pro Sicherung (MiB, 0 = keins)** auf der Karte **Leistung** unter **Einstellungen, System**, deutlich unter den Speicher, den der Container nutzen darf. Nahe am Limit gibt restic öfter Speicher frei, was etwas Tempo kostet, sodass die Sicherung langsamer wird, statt beendet zu werden.
 
 ## Eine Wiederherstellung brach ab, bevor sie startete
 

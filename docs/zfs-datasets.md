@@ -109,7 +109,11 @@ A replica never replaces the backup. Older versions, single files and the check 
 
 The replica does not wait for the backup. **After every backup** means after the entry's backup run, whether that run worked, failed or found nothing to do. When the ZFS section has no storage location switched on and the entry has no repository of its own, a backup run of the entry only sends the replica, and the Replica card says so in the bubble beside **When**. The Backups list, the entry's header and the run history show the replica: **Replicating** while it runs, and **Replicated** with the time once it has.
 
+**Replica only, no backup** on the Replica card makes the whole ZFS section send replicas and take no backups. The own folder and the off-site storage locations keep their switches, so turning it off backs up to them again, and every ZFS entry's card shows the section's switch as it stands. Such an entry waits for its first replica instead of a backup, **Back up now** is offered as **Replicate now**, and the entry's containers stop and its commands run around the snapshot as for a backup. Its replicas count for an every-few-days schedule, the overdue alert and the coverage.
+
 Switch it on in the **Replica** card on the entry's Settings tab. There you pick where the replica goes, when it runs (**After every backup** or **Own plan**) and how many snapshots stay on the target. The card lists every dataset and volume with its state, and **Replicate now** starts a run. A replica run has a lock of its own, so a long first transfer never holds up the backups.
+
+**Replicate all now**, beside the backup actions when the ZFS tile is picked on the Backups page, sends the replica of every ZFS entry, one after the other. The server runs the batch, so it goes on when you leave the page, and an entry that cannot replicate is named and skipped.
 
 ### Push to a ZFS server {#replica-push}
 
@@ -136,6 +140,8 @@ In this direction the BombVault that holds the entry also holds a key that can w
 
 BombVault pins the host key the server shows on the first connection and refuses a different one later. If the server was reinstalled, press **Forget host key** on the server's page, and the next connection pins the new key.
 
+When this server's host can reach the ZFS server itself, it pipes `zfs send` straight into its own ssh to the server, with the replica key and the pinned host key, so the stream does not pass through BombVault. Otherwise the stream goes through BombVault.
+
 ### Send to a paired instance {#replica-receive}
 
 A paired BombVault can receive the replica itself. Nobody gets SSH access to the other host, and no key goes into an `authorized_keys` file.
@@ -153,6 +159,8 @@ The receiving instance has to answer over HTTPS. The source sends nothing to a p
 ### Where the data lands {#replica-target}
 
 Each dataset lands at `<root>/<server>/<pool>/<path>`. The server folder is the name of the source instance, fixed at the first transfer, so two servers with the same pool name never get in each other's way. For example, `cache/appdata` of a server called `tower` ends up at `backup/bombvault-replica/tower/cache/appdata`.
+
+After BombVault is set up again, the target refuses the folder this BombVault filled before. The Replica card then offers **Take over the folder**, and the next replica carries on from the copies in it. Take it over only when no other BombVault still replicates into that folder.
 
 The copy on the target is read-only and not mounted, so it never covers anything on that server. ZFS properties travel along, except the mountpoint and `sharenfs` and `sharesmb`. The reservations `reservation` and `refreservation` stay behind as well, so the copy only takes the space its data needs.
 

@@ -29,6 +29,15 @@ Ein Speicherort ist ein Ort, an den Sicherungen gehen: ein lokaler Ordner, eine 
 3. **Schutz.** Das Fenster sagt offen, was der Dienst kann. Ein rest-server im Append-only-Modus verweigert das Löschen, und der Manipulationstest prüft das. Ein S3-Bucket kann mit Versionierung und Object Lock alte Versionen halten, was BombVault noch nicht prüfen kann. Ein Cloud-Laufwerk kann das Löschen gar nicht verweigern: Wer in den Server kommt, kommt auch an diese Kopie. Schalte **Löschschutz (append-only)** nur ein, wo die Gegenseite das Löschen wirklich verweigert; BombVault räumt dort dann nie auf. **Für den Ernstfall** sagt, was das Recovery-Kit zu diesem Ort enthält.
 4. **Für welche Bereiche.** Wähl die Bereiche, die hier sichern. Die erste Kopie bringt den ganzen Verlauf mit. Einträge, die ihre Speicherorte selbst gewählt haben, bekommen den neuen nicht von selbst, und das Fenster nennt sie.
 
+Manche Dienste brauchen bei der Anmeldung etwas mehr:
+
+- **SFTP und die Storage Box.** **Schlüssel hinterlegen** legt BombVaults öffentlichen Schlüssel mit dem **Passwort des Kontos** auf dem Server ab. Das Passwort dient nur dieser einen Anmeldung und wird nirgends gespeichert. Darunter steht der Befehl, um es von Hand zu erledigen. Der Test zeigt den **Serverschlüssel** mit seinem Fingerabdruck; BombVault merkt ihn sich und lehnt den Server ab, wenn er später einen anderen zeigt.
+- **S3-Schlüssel für einen einzelnen Bucket**, etwa ein Objekt-Token von Cloudflare R2 oder ein eingeschränkter AWS-Schlüssel, dürfen die anderen Buckets nicht auflisten. Trag den Bucket unter **Bucket** ein, dann öffnen der Test und die Ordnerliste genau diesen Bucket.
+- **SMB-Server, die ihre Freigaben nicht auflisten,** bekommen unter **Freigabe** den Namen einer Freigabe, und der Test öffnet sie direkt.
+- **FTP** fragt nach der **Verschlüsselung**: **Keine**, **Explizites TLS (FTPES)** oder **Implizites TLS (FTPS, Port 990)**.
+- **OneDrive und Zoho WorkDrive.** Öffnet eine Anmeldung mehrere Laufwerke oder Arbeitsbereiche, fragt das Fenster, wohin die Sicherungen gehen.
+- **Ein rest-server mit selbstsigniertem Zertifikat.** Leg das Zertifikat als PEM-Datei in den Ordner `certs` in BombVaults Datenordner (`/config/certs` im Container, `appdata/bombvault/certs` unter Unraid). Sicherungen, Kopien und der Test des Löschschutzes vertrauen ihm ohne Neustart.
+
 S3-Dienste laufen über restics eigenes S3-Backend, und nur damit greifen Speicherklasse und Object Lock. Jeder andere Dienst läuft über das rclone, das BombVault mitbringt, und sein Remote erscheint dann in der Karte **Off-site (rclone)** unter **Einstellungen, Speicherorte**. Ein Einstellungsexport enthält die Speicherorte; mit Zugangsdaten enthält er auch ihre Anmeldung.
 
 Der Ordner auf diesem Server heißt überall **Lokal**: auf den Seiten der Speicherorte, im Fluss, an einem Eintrag und unter Wiederherstellen. Gibt es auf diesem Server mehrere Ordner, trägt jeder seinen eigenen Namen. Ein Speicherort, den das Off-site-Feld eines Bereichs anlegt, heißt nach seinem Ort, also nach dem letzten Ordner seiner Adresse oder, wenn sie keinen hat, nach seinem Server, und bekommt eine Nummer, wenn schon ein anderer Ort so heißt. Ein Name, den du ihm auf seiner Seite gibst, bleibt. Stehen zwei Orte mit gleichem Namen nebeneinander, trägt jeder seinen Server oder Ordner dazu.
@@ -43,6 +52,8 @@ Jeder Speicherort hat eine eigene Seite:
 - **Regeln je Bereich**: das eigene Repository, die eigene Aufbewahrung oder Kompression eines Bereichs an diesem Ort. **Regeln ändern** öffnet sie, und **Auf den Speicherort zurücksetzen** holt einen Bereich zurück.
 - **Liegt schon unter diesem Speicherort**: Bereiche, deren von Hand eingetippte Adresse in einem Ordner dieses Orts liegt. Eine Übernahme lässt das Repository, wo es ist; Anmeldung, Speicherklasse und Löschschutz kommen dann vom Ort. BombVault prüft vorher, ob die Anmeldung des Orts das Repository öffnet, und hängt ein Append-only-Repository nie unter einen Ort, der nicht append-only ist.
 - Ein Gefäß, das zeigt, wie voll der Ort ist, mit der Marke, wo er voll ist, und wie viele Wochen beim Wachstum der letzten Wochen bleiben. Ein Ort, der seine Größe nicht meldet, zeigt **Größe unbekannt**.
+
+Ein entfernter Speicherort, der Sicherungen hatte und plötzlich kein Repository mehr hat, etwa ein rest-server, dessen Platte nicht eingehängt ist, bekommt nicht von selbst ein neues, leeres. Seine Seite sagt das, sobald eine Sicherung oder Kopie das Repository vermisst. Häng die Platte wieder ein. Hast du das alte Repository absichtlich geleert, fängt **Hier ein neues Repository anlegen** neu an, für alle Bereiche des Orts und seine benannten Repositorys auf einmal.
 
 Ein Empfangsserver, den eine andere Instanz deiner Gruppe betreibt, erscheint unter den Anbietern als **Aus deiner Gruppe**; siehe [Empfangsserver](#receiving-server).
 
@@ -194,7 +205,7 @@ Das Einschalten einer Rolle schickt eine Anfrage, und nichts beginnt, bis jemand
 
 **Details** auf einer Karte öffnet den Rest: die empfangenen Repositories und Abholquellen dieses Mitglieds, Speicher-Angebote, die Überwachung, **Entfernen** und **Schlüssel vergessen**.
 
-Ausgeschaltete Instanzen und Handys mit geschlossener App behalten ihre Karte als **Inaktiv** in Grau, mit der Angabe, wann sie zuletzt gesehen wurden, und stehen im Netz abgeblendet, bis du sie mit **Entfernen** wegnimmst. Gleich nach dem Start dieses Servers zeigt so eine Karte **Wird geprüft**, bis die Gruppe wieder da ist.
+Ausgeschaltete Instanzen und Handys mit geschlossener App behalten ihre Karte als **Inaktiv** in Grau, mit der Angabe, wann sie zuletzt gesehen wurden, und stehen im Netz abgeblendet, bis du sie mit **Entfernen** wegnimmst. Gleich nach dem Start dieses Servers zeigt so eine Karte **Wird geprüft**, bis die Gruppe wieder da ist. **Entfernen** geht auf so einer Karte unabhängig davon, welche Teile eingeschaltet sind, und beendet auch die offenen Anfragen des Mitglieds, seine ungenutzten ZFS-Empfangsplätze und seine wartenden Schlüsselanfragen. Die Karte **Instanzen** auf der Kopplungsseite führt diese Mitglieder ebenfalls als **Inaktiv**.
 
 ## Empfänger und Abholer {#receiver}
 
@@ -212,7 +223,7 @@ Auf der Box, die Append-only-Kopien von einem anderen BombVault **empfängt**, g
 
 Der Empfänger ist strikt schreibgeschützt. Er schreibt nie in das empfangene Repository und kann so die Append-only-Garantie, auf die sich der Sender verlässt, nie brechen.
 
-Ein Abholer arbeitet andersherum: Mit eingeschaltetem **Holen** liest eine Instanz die Sicherungen eines anderen Mitglieds nach eigenem Zeitplan in ihr eigenes Repository. Seine Quellen stehen ebenfalls in den Details dieses Mitglieds.
+Ein Abholer arbeitet andersherum: Mit eingeschaltetem **Holen** liest eine Instanz die Sicherungen eines anderen Mitglieds nach eigenem Zeitplan, in ein eigenes Repository für jede Quelle, sodass sie nie als Sicherungen dieser Box zählen. Seine Quellen stehen ebenfalls in den Details dieses Mitglieds.
 
 ### Empfangsserver {#receiving-server}
 
@@ -268,7 +279,7 @@ Der **Notfall-Assistent** holt einen Server zurück, der weg ist oder neu aufges
     - **Schlüssel eintippen**: den `APP_KEY` des alten Servers und wo seine Sicherungen liegen.
 
     BombVault probiert den Schlüssel dann an jedem Speicherort und sagt für jeden, ob er lesbar ist, nicht gefunden wurde, mit einem anderen Schlüssel gesperrt ist, nicht erreichbar ist oder noch seine Anmeldung braucht. Gespeichert ist noch nichts, und der Schlüssel bleibt eine begrenzte Zeit im Speicher. **Schlüssel übernehmen** lässt diesen Server ab jetzt mit diesem Schlüssel sichern; **Übernahme rückgängig machen** geht zurück zum eigenen Schlüssel, bis die erste Sicherung gelaufen ist. Ein Server, der schon eigene Sicherungen hat, lehnt die Übernahme ab und verweist auf [Aus einem alten Sicherungsordner](#restore-from-another-bombvault-repo). **Zugangsdaten speichern** übernimmt die Zugangsdaten, die das Kit für entfernte Speicherorte mitbringt, und fragt, bevor es Zugangsdaten ersetzt, die dieser Server schon hat.
-2. **Einstellungen.** **Einstellungen zurückholen** stellt BombVaults eigene Einstellungen aus dem neuesten Selbstbackup wieder her: Speicherorte, Zugangsdaten, Zeitpläne und Regeln. BombVault startet dafür neu, über den Docker-Socket, sodass die laufende Einstellungsdatenbank nie unter einem offenen Handle überschrieben wird, und der Assistent macht danach von selbst weiter. Die Anmeldung dieses Servers bleibt: Du meldest dich weiter mit dem Passwort an, das du jetzt nutzt. Geheimnisse des alten Servers, die sich nicht übernehmen lassen, werden aufgelistet, damit du sie neu eingeben kannst.
+2. **Einstellungen.** **Einstellungen zurückholen** stellt BombVaults eigene Einstellungen aus dem neuesten Selbstbackup wieder her: Speicherorte, Zugangsdaten, Zeitpläne und Regeln. BombVault startet dafür neu, über den Docker-Socket, sodass die laufende Einstellungsdatenbank nie unter einem offenen Handle überschrieben wird, und der Assistent macht danach von selbst weiter. Die Anmeldung dieses Servers bleibt: Du meldest dich weiter mit dem Passwort an, das du jetzt nutzt. Geheimnisse des alten Servers, die sich nicht übernehmen lassen, werden aufgelistet, damit du sie neu eingeben kannst. Die Wiederherstellung beendet jede Sitzung und entfernt die Passkeys, richte sie danach also neu ein.
 3. **Auswahl.** BombVault sieht deine Sicherungen durch und listet die Container, VMs, Ordnersätze und ZFS-Datasets, die es findet. Überall ist der neueste Snapshot vorgewählt. Was dieser Server noch hat, startet ausgeschaltet, weil eine Wiederherstellung es ersetzen würde. Ordnersätze wissen nach einem Neuaufbau nicht mehr, woher sie kamen, und gehen deshalb in einen Ordner, den du wählst.
 4. **Wiederherstellen.** Alles Gewählte kommt in einem Rutsch zurück, auf Wunsch gestoppt, damit du jeden Container und jede VM selbst startest, was nach einem Totalverlust am sichersten ist. Lade danach ein neues Recovery-Kit herunter: Das alte gehört zur vorigen Installation.
 
