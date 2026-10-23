@@ -919,9 +919,11 @@ test("while an off-site copy runs, the backup starts say why they wait", async (
     await expect(button).toBeDisabled();
     await button.scrollIntoViewIfNeeded();
     await atRest();
-    await button.hover({ force: true });
+    if (finger) await button.tap({ force: true });
+    else await button.hover({ force: true });
     await expect(page.getByRole("tooltip")).toContainText(reason);
-    await page.mouse.move(0, 0);
+    if (finger) await page.touchscreen.tap(1, 1);
+    else await page.mouse.move(0, 0);
     await expect(page.getByRole("tooltip")).toHaveCount(0);
   };
   await explained(page.getByTestId("page-actions").getByRole("button", { name: "Jetzt alles sichern" }));

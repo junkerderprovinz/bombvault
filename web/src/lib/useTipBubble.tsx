@@ -5,6 +5,7 @@ import {
   useRef,
   useState,
   type CSSProperties,
+  type PointerEvent as ReactPointerEvent,
   type ReactNode,
 } from "react";
 import { createPortal } from "react-dom";
@@ -58,7 +59,9 @@ export interface TipBubble {
 export function useTipBubble(tip?: string, disabled = false, readOnTap = false): TipBubble {
   const [open, setOpen] = useState(false);
   const [tapped, setTapped] = useState(false);
+  const [readByTap, setReadByTap] = useState(false);
   const triggerRef = useRef<HTMLElement | null>(null);
+  const wrapRef = useRef<HTMLSpanElement | null>(null);
   const bubbleRef = useRef<HTMLDivElement | null>(null);
   const tooltipId = useId();
 
@@ -83,18 +86,40 @@ export function useTipBubble(tip?: string, disabled = false, readOnTap = false):
   }
   function hide() {
     setOpen(false);
+    setReadByTap(false);
   }
   // A tap reaches the trigger as a mouseenter with no mouseleave to follow,
   // so without this the bubble would stay up after the tap did its work.
   function showOnEnter() {
     show();
-    if (touchWasLast && !readOnTap) setTapped(true);
+    if (touchWasLast && !readOnTap && !readByTap) setTapped(true);
   }
   useEffect(() => {
     if (!shown || !tapped) return;
     const timer = window.setTimeout(hide, TAP_TIP_MS);
     return () => window.clearTimeout(timer);
   }, [shown, tapped]);
+  // In Chrome a tap on a disabled control does not reliably arrive as a
+  // mouseenter, and the mouse events that follow it can land beside the
+  // control. The tap can do nothing but ask why, so the wrapper opens the
+  // bubble on the touch itself and keeps it until a tap elsewhere.
+  function readOnTouch(e: ReactPointerEvent) {
+    if (e.pointerType === "mouse" || !tip) return;
+    setOpen(true);
+    setTapped(false);
+    setReadByTap(true);
+  }
+  function leave() {
+    if (!readByTap) hide();
+  }
+  useEffect(() => {
+    if (!shown || !readByTap) return;
+    const away = (e: PointerEvent) => {
+      if (!wrapRef.current?.contains(e.target as Node)) hide();
+    };
+    document.addEventListener("pointerdown", away, true);
+    return () => document.removeEventListener("pointerdown", away, true);
+  }, [shown, readByTap]);
   // Focus opens the bubble only when the keyboard was used last. Opening on
   // focus is for Tab users. A mouse user gets focus as a side effect, from a
   // click or from a dialog handing it back to its opener (useConfirm), and a
@@ -147,7 +172,7 @@ export function useTipBubble(tip?: string, disabled = false, readOnTap = false):
     },
     handlers: {
       onMouseEnter: showOnEnter,
-      onMouseLeave: hide,
+      onMouseLeave: leave,
       onFocus: showOnFocus,
       onBlur: hide,
     },
@@ -167,7 +192,14 @@ export function useTipBubble(tip?: string, disabled = false, readOnTap = false):
       : null,
     wrap: (node: ReactNode, style?: CSSProperties) =>
       disabled && tip ? (
-        <span className="inline-flex" style={style} onMouseEnter={show} onMouseLeave={hide}>
+        <span
+          ref={wrapRef}
+          className="inline-flex"
+          style={style}
+          onMouseEnter={show}
+          onMouseLeave={leave}
+          onPointerDown={readOnTouch}
+        >
           {node}
         </span>
       ) : (

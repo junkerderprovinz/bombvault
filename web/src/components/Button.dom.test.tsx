@@ -152,6 +152,20 @@ it("reaches a disabled button's explanation through a wrapping span", () => {
   expect(document.querySelector(".glim-bubble")?.textContent).toBe("Pick a snapshot first");
 });
 
+it("opens a disabled button's explanation on a tap and keeps it until a tap elsewhere", () => {
+  setLabelMode("buttons", "text");
+  const { container } = render(
+    <Button label="Restore" title="Pick a snapshot first" disabled onClick={() => {}} />
+  );
+  const wrapper = container.firstElementChild as HTMLElement;
+  fireEvent.pointerDown(wrapper, { pointerType: "touch" });
+  expect(screen.getByRole("tooltip").textContent).toBe("Pick a snapshot first");
+  fireEvent.mouseLeave(wrapper);
+  expect(screen.queryByRole("tooltip")).not.toBeNull();
+  fireEvent.pointerDown(document.body, { pointerType: "touch" });
+  expect(screen.queryByRole("tooltip")).toBeNull();
+});
+
 // A wrapper would break a `w-full` button such as FolderBrowser's rows, which
 // are never disabled.
 it("wraps nothing when the button is enabled, or when a disabled one has nothing to say", () => {
