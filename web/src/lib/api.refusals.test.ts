@@ -56,6 +56,7 @@ describe("a refused settings change", () => {
 
   it.each([
     ["domain-busy", "prune is running on containers", en["apiError.domainBusy"]],
+    ["offsite-busy", "offsite is running on containers", en["apiError.offsiteBusy"]],
     ["batch-busy", "a batch backup is already running", en["containers.batchAlreadyRunning"]],
   ])("says in its own words why a start was refused as %s", async (code, said, sentence) => {
     answers(409, { ok: false, error: said, code });

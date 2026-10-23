@@ -4737,6 +4737,7 @@ const da: Partial<Translations> = {
   "apiError.noPlace": "Der er intet sted at sikkerhedskopiere til, fordi alle destinationer i dets område er slået fra. Slå én til under Destinationer.",
   "apiError.noLocation": "Dette område har endnu ingen destination. Åbn Indstillinger, Destinationer, og slå en linje til for det.",
   "apiError.domainBusy": "En anden opgave, fx en planlagt sikkerhedskopiering eller en beskæring, bruger dette område lige nu. Prøv igen, når den er færdig.",
+  "apiError.offsiteBusy": "Off-site-kopien af den seneste sikkerhedskopi kører stadig. Prøv igen, når den er færdig.",
   "apiError.replicaBusy": "En replikering eller gendannelse af denne post er i gang. Prøv igen, når den er færdig.",
   "apiError.checkBusy": "En kontrol af dette lager kører allerede. Prøv igen, når den er færdig.",
   "apiError.relayTooLarge": "Det er for stort til at gå gennem videresenderen. Åbn instansen på dens egen adresse.",

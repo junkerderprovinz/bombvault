@@ -4734,6 +4734,7 @@ const pl: Partial<Translations> = {
   "apiError.noPlace": "Nie ma gdzie utworzyć kopii zapasowej, bo wszystkie miejsca docelowe jego sekcji są wyłączone. Włącz jedno w sekcji Miejsca docelowe.",
   "apiError.noLocation": "Ta sekcja nie ma jeszcze miejsca docelowego. Otwórz Ustawienia, Miejsca docelowe, i włącz dla niej jedną linię.",
   "apiError.domainBusy": "Z tej sekcji korzysta teraz inne zadanie, na przykład zaplanowana kopia lub przycinanie. Spróbuj ponownie, gdy się zakończy.",
+  "apiError.offsiteBusy": "Kopiowanie ostatniej kopii zapasowej poza siedzibę wciąż trwa. Spróbuj ponownie, gdy się zakończy.",
   "apiError.replicaBusy": "Trwa replikacja lub przywracanie tego wpisu. Spróbuj ponownie, gdy się zakończy.",
   "apiError.checkBusy": "Sprawdzanie tego repozytorium już trwa. Spróbuj ponownie, gdy się zakończy.",
   "apiError.relayTooLarge": "To zbyt duże, żeby przejść przez relay. Otwórz instancję pod jej własnym adresem.",

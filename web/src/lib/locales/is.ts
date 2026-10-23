@@ -4747,6 +4747,7 @@ const is: Partial<Translations> = {
   "apiError.noPlace": "Hvergi er hægt að afrita þetta, því allir áfangastaðir svæðisins eru slökktir. Kveiktu á einum undir Áfangastaðir.",
   "apiError.noLocation": "Þetta svæði á sér ekki áfangastað enn. Opnaðu Stillingar, Áfangastaðir, og kveiktu á línu fyrir það.",
   "apiError.domainBusy": "Annað verk, til dæmis tímasett afritun eða hreinsun, notar þetta svæði núna. Reyndu aftur þegar því er lokið.",
+  "apiError.offsiteBusy": "Fjarafritun síðasta öryggisafrits er enn í gangi. Reyndu aftur þegar henni er lokið.",
   "apiError.replicaBusy": "Afritun eða endurheimt þessarar færslu er í gangi. Reyndu aftur þegar henni er lokið.",
   "apiError.checkBusy": "Athugun á þessu safni er þegar í gangi. Reyndu aftur þegar henni er lokið.",
   "apiError.relayTooLarge": "Þetta er of stórt til að fara í gegnum relay. Opnaðu tilvikið á eigin heimilisfangi.",

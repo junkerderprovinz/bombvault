@@ -4737,6 +4737,7 @@ const it: Partial<Translations> = {
   "apiError.noPlace": "Non c'è dove salvarlo, perché tutte le destinazioni della sua sezione sono disattivate. Attivane una in Destinazioni.",
   "apiError.noLocation": "Questa sezione non ha ancora una destinazione. Apri Impostazioni, Destinazioni, e attiva una linea per essa.",
   "apiError.domainBusy": "Un'altra attività, come un backup pianificato o una potatura, sta usando questa sezione in questo momento. Riprova quando è terminata.",
+  "apiError.offsiteBusy": "La copia off-site dell'ultimo backup è ancora in corso. Riprova quando è terminata.",
   "apiError.replicaBusy": "È in corso una replica o un ripristino di questa voce. Riprova quando è terminato.",
   "apiError.checkBusy": "È già in corso un controllo di questo repository. Riprova quando è terminato.",
   "apiError.relayTooLarge": "È troppo grande per passare dal relay. Apri l'istanza al suo indirizzo.",

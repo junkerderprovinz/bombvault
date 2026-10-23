@@ -54,7 +54,7 @@ const SELECTION_KEY = "backup-selection";
 // section another task holds, which ends by itself like a running batch.
 function refusedAsBusy(err: unknown, res?: OkEnvelope): boolean {
   if (err instanceof ApiError) {
-    return err.status === 409 && (!err.code || err.code === "domain-busy" || err.code === "batch-busy" || err.code === "replica-busy");
+    return err.status === 409 && (!err.code || err.code === "domain-busy" || err.code === "offsite-busy" || err.code === "batch-busy" || err.code === "replica-busy");
   }
   return !!res && !res.ok && (res.error ?? "").toLowerCase().includes("already running");
 }

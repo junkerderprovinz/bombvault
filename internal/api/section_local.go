@@ -23,10 +23,12 @@ var ErrNoPlace = errors.New("every storage location of this section is switched 
 const codeNoPlace = "no-place"
 
 // The codes of a start refused because another run holds the domain, because
-// another batch holds the server, because a replica run or restore holds the
-// ZFS entry, and because a check holds the received repository.
+// a backup is being copied off site, because another batch holds the server,
+// because a replica run or restore holds the ZFS entry, and because a check
+// holds the received repository.
 const (
 	codeDomainBusy  = "domain-busy"
+	codeOffsiteBusy = "offsite-busy"
 	codeBatchBusy   = "batch-busy"
 	codeReplicaBusy = "replica-busy"
 	codeCheckBusy   = "check-busy"
@@ -37,6 +39,9 @@ const (
 func busyCode(err error) string {
 	switch {
 	case refusedAsBusy(err):
+		if busy, ok := errors.AsType[domainBusyError](err); ok && busy.op == offsiteLockReason {
+			return codeOffsiteBusy
+		}
 		return codeDomainBusy
 	case errors.Is(err, errZFSReplicaBusy):
 		return codeReplicaBusy

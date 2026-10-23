@@ -4747,6 +4747,7 @@ const sk: Partial<Translations> = {
   "apiError.noPlace": "Nie je kam zálohovať, pretože všetky ciele jeho sekcie sú vypnuté. Zapni niektorý v časti Ciele.",
   "apiError.noLocation": "Táto sekcia zatiaľ nemá cieľ. Otvor Nastavenia, Ciele, a zapni pre ňu jednu líniu.",
   "apiError.domainBusy": "Túto sekciu práve používa iná úloha, napríklad plánovaná záloha alebo čistenie. Skús to znova, keď skončí.",
+  "apiError.offsiteBusy": "Kopírovanie poslednej zálohy mimo lokality ešte beží. Skús to znova, keď skončí.",
   "apiError.replicaBusy": "Pri tejto položke práve beží replika alebo obnova. Skús to znova, keď skončí.",
   "apiError.checkBusy": "Pri tomto úložisku už beží kontrola. Skús to znova, keď skončí.",
   "apiError.relayTooLarge": "Je to príliš veľké na to, aby to prešlo cez relay. Otvor inštanciu na jej vlastnej adrese.",

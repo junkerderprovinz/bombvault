@@ -4747,6 +4747,7 @@ const eu: Partial<Translations> = {
   "apiError.noPlace": "Ez dago non babestu, bere ataleko helmuga guztiak desaktibatuta daudelako. Aktibatu bat Helmugak atalean.",
   "apiError.noLocation": "Atal honek ez du oraindik helmugarik. Ireki Ezarpenak, Helmugak, eta aktibatu lerro bat atal horretarako.",
   "apiError.domainBusy": "Beste zeregin bat, adibidez programatutako babeskopia bat edo garbiketa bat, atal hau erabiltzen ari da orain. Saiatu berriro amaitzen denean.",
+  "apiError.offsiteBusy": "Azken babeskopiaren kanpoko kopia oraindik egiten ari da. Saiatu berriro amaitzen denean.",
   "apiError.replicaBusy": "Sarrera honen erreplika edo leheneratze bat abian da. Saiatu berriro amaitzen denean.",
   "apiError.checkBusy": "Biltegi honen egiaztapen bat abian da jada. Saiatu berriro amaitzen denean.",
   "apiError.relayTooLarge": "Hau handiegia da bitartekariaren bidez joateko. Ireki instantzia bere helbidean.",

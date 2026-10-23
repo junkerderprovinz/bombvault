@@ -807,6 +807,38 @@ func (s *Service) tryLockDomain(domain string) (func(), bool) {
 	return s.tryLockDomainFor(domain, "maintenance")
 }
 
+// offsiteLockReason labels a domain lock held while a backup is copied off
+// site, the copy after a backup included.
+const offsiteLockReason = "offsite"
+
+// relabelDomain names another operation for a domain lock the caller holds
+// and returns the call that names the old one again.
+func (s *Service) relabelDomain(domain, reason string) func() {
+	s.activityMu.Lock()
+	defer s.activityMu.Unlock()
+	prev, held := s.domainActivity[domain]
+	if !held {
+		return func() {}
+	}
+	s.domainActivity[domain] = reason
+	return func() { s.setDomainActivity(domain, prev) }
+}
+
+// batchRefusal is the answer to a backup start that finds batchActive taken.
+// A backup that has written its snapshot keeps the guard while it copies the
+// snapshot off site, and the page that saw its bar end would otherwise be
+// told a backup is still running.
+func (s *Service) batchRefusal() error {
+	s.activityMu.Lock()
+	defer s.activityMu.Unlock()
+	for domain, op := range s.domainActivity {
+		if op == offsiteLockReason {
+			return domainBusyError{op: op, domain: domain}
+		}
+	}
+	return nil
+}
+
 // backupHardCap returns the maximum wall-clock time a single backup run may hold
 // its domain lock before being force-cancelled — a guard so a wedged run cannot
 // hold the lock forever. It is configurable via the BACKUP_MAX_HOURS env var:
@@ -5124,6 +5156,7 @@ func (s *Service) replicateOffsite(ctx context.Context, domain string, settings 
 	// backup of an install with one switched-off repository.
 	_, allSkips := s.offsiteReplicationSources(settings, domain)
 	skipped := unreachableSkips(allSkips)
+	defer s.relabelDomain(domain, offsiteLockReason)()
 	if err := s.copyToOffsite(ctx, domain, settings, item, []domainRepoRef{ref}, skipped); err != nil {
 		// domain is a fixed literal; the error is already path-scrubbed by restic.
 		log.Printf("api: offsite %s: copy failed (local backup is safe): %v", domain, err)
@@ -5156,7 +5189,7 @@ func (s *Service) ReplicateOffsite(ctx context.Context, domain string) error {
 	if err := s.requireOwnLocation(settings, domain); err != nil {
 		return err
 	}
-	defer s.lockDomainFor(domain, "replicate")()
+	defer s.lockDomainFor(domain, offsiteLockReason)()
 	// The skip list goes IN, so the run row this opens records it too rather than
 	// being stamped a success the caller then contradicts.
 	sources, skipped := s.offsiteReplicationSources(settings, domain)
@@ -5184,7 +5217,7 @@ func (s *Service) StartReplicateOffsite(domain string) error {
 	if _, err := s.ownRepoFor(settings, domain); err != nil {
 		return err
 	}
-	unlock, ok := s.tryLockDomainFor(domain, "replicate")
+	unlock, ok := s.tryLockDomainFor(domain, offsiteLockReason)
 	if !ok {
 		return errDomainBusy
 	}
@@ -6855,7 +6888,7 @@ func (s *Service) recordUpdateFailure(name, targetID string, cause error) {
 // mask a genuinely overdue scheduled backup. Each item therefore pings as normal.
 func (s *Service) StartBackupAll(ctx context.Context, names []string) (bool, error) {
 	if !s.batchActive.CompareAndSwap(false, true) {
-		return false, nil
+		return false, s.batchRefusal()
 	}
 	if op, busy := s.domainBusy("containers"); busy {
 		s.batchActive.Store(false)
@@ -6986,7 +7019,7 @@ func (s *Service) StartBackup(ctx context.Context, name string) (bool, error) {
 		return false, err
 	}
 	if !s.batchActive.CompareAndSwap(false, true) {
-		return false, nil
+		return false, s.batchRefusal()
 	}
 	if op, busy := s.domainBusy("containers"); busy {
 		s.batchActive.Store(false)
@@ -7023,7 +7056,7 @@ func (s *Service) StartBackupVM(ctx context.Context, name string) (bool, error) 
 		return false, err
 	}
 	if !s.batchActive.CompareAndSwap(false, true) {
-		return false, nil
+		return false, s.batchRefusal()
 	}
 	if op, busy := s.domainBusy("vms"); busy {
 		s.batchActive.Store(false)
@@ -7056,7 +7089,7 @@ func (s *Service) StartBackupFlash(ctx context.Context) (bool, error) {
 		return false, err
 	}
 	if !s.batchActive.CompareAndSwap(false, true) {
-		return false, nil
+		return false, s.batchRefusal()
 	}
 	if op, busy := s.domainBusy("flash"); busy {
 		s.batchActive.Store(false)
@@ -7085,7 +7118,7 @@ func (s *Service) StartBackupConfig(ctx context.Context) (bool, error) {
 		return false, err
 	}
 	if !s.batchActive.CompareAndSwap(false, true) {
-		return false, nil
+		return false, s.batchRefusal()
 	}
 	if op, busy := s.domainBusy("config"); busy {
 		s.batchActive.Store(false)
@@ -7115,7 +7148,7 @@ func (s *Service) StartBackupFileSet(ctx context.Context, id string) (bool, erro
 		return false, err
 	}
 	if !s.batchActive.CompareAndSwap(false, true) {
-		return false, nil
+		return false, s.batchRefusal()
 	}
 	if op, busy := s.domainBusy("files"); busy {
 		s.batchActive.Store(false)
@@ -7144,7 +7177,7 @@ func (s *Service) StartBackupFileSet(ctx context.Context, id string) (bool, erro
 // (false, err) if the files domain is already busy with another op.
 func (s *Service) StartBackupFilesAll(ctx context.Context, ids []string) (bool, error) {
 	if !s.batchActive.CompareAndSwap(false, true) {
-		return false, nil
+		return false, s.batchRefusal()
 	}
 	if op, busy := s.domainBusy("files"); busy {
 		s.batchActive.Store(false)
@@ -7259,7 +7292,7 @@ func (s *Service) orderVMNamesForRun(names []string) []string {
 // busy with another op.
 func (s *Service) StartBackupVMsAll(ctx context.Context, names []string) (bool, error) {
 	if !s.batchActive.CompareAndSwap(false, true) {
-		return false, nil
+		return false, s.batchRefusal()
 	}
 	if op, busy := s.domainBusy("vms"); busy {
 		s.batchActive.Store(false)

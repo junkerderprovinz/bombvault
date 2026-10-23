@@ -839,6 +839,8 @@ function knownSentence(status: number, code: string | undefined): string | undef
       return translate("apiError.noLocation");
     case "domain-busy":
       return translate("apiError.domainBusy");
+    case "offsite-busy":
+      return translate("apiError.offsiteBusy");
     case "replica-busy":
       return translate("apiError.replicaBusy");
     case "check-busy":

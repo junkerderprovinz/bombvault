@@ -4737,6 +4737,7 @@ const no: Partial<Translations> = {
   "apiError.noPlace": "Det finnes ikke noe sted å sikkerhetskopiere til, fordi alle mål i området er slått av. Slå på ett under Mål.",
   "apiError.noLocation": "Dette området har ikke noe mål ennå. Åpne Innstillinger, Mål, og slå på en linje for det.",
   "apiError.domainBusy": "En annen oppgave, for eksempel en planlagt sikkerhetskopiering eller en beskjæring, bruker dette området akkurat nå. Prøv igjen når den er ferdig.",
+  "apiError.offsiteBusy": "Off-site-kopien av den siste sikkerhetskopien kjører fortsatt. Prøv igjen når den er ferdig.",
   "apiError.replicaBusy": "En replikering eller gjenoppretting av denne oppføringen pågår. Prøv igjen når den er ferdig.",
   "apiError.checkBusy": "En kontroll av dette lageret kjører allerede. Prøv igjen når den er ferdig.",
   "apiError.relayTooLarge": "Dette er for stort til å gå gjennom relay. Åpne instansen på sin egen adresse.",

@@ -4728,6 +4728,7 @@ const ko: Partial<Translations> = {
   "apiError.noPlace": "해당 섹션의 모든 대상이 꺼져 있어 백업할 곳이 없습니다. 대상 화면에서 하나를 켜 주세요.",
   "apiError.noLocation": "이 섹션에는 아직 대상이 없습니다. 설정의 대상을 열고 이 섹션의 선을 켜 주세요.",
   "apiError.domainBusy": "예약된 백업이나 정리 같은 다른 작업이 지금 이 섹션을 사용하고 있습니다. 작업이 끝난 뒤 다시 시도하세요.",
+  "apiError.offsiteBusy": "마지막 백업의 오프사이트 복사가 아직 진행 중입니다. 복사가 끝난 뒤 다시 시도하세요.",
   "apiError.replicaBusy": "이 항목의 복제 또는 복원이 진행 중입니다. 끝난 뒤 다시 시도하세요.",
   "apiError.checkBusy": "이 저장소의 검사가 이미 실행 중입니다. 끝난 뒤 다시 시도하세요.",
   "apiError.relayTooLarge": "크기가 너무 커서 릴레이를 통과할 수 없습니다. 인스턴스를 자체 주소로 여세요.",

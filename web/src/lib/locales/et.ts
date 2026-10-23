@@ -4747,6 +4747,7 @@ const et: Partial<Translations> = {
   "apiError.noPlace": "Seda pole kuhugi varundada, sest kõik tema valdkonna sihtkohad on välja lülitatud. Lülita üks sisse jaotises Sihtkohad.",
   "apiError.noLocation": "Sellel valdkonnal pole veel sihtkohta. Ava Seaded, Sihtkohad, ja lülita selle jaoks sisse üks joon.",
   "apiError.domainBusy": "Seda valdkonda kasutab praegu teine töö, näiteks ajastatud varundus või puhastus. Proovi uuesti, kui see on lõppenud.",
+  "apiError.offsiteBusy": "Viimase varunduse väline koopia on veel pooleli. Proovi uuesti, kui see on lõppenud.",
   "apiError.replicaBusy": "Selle kirje replikeerimine või taastamine on praegu käimas. Proovi uuesti, kui see on lõppenud.",
   "apiError.checkBusy": "Selle hoidla kontroll juba käib. Proovi uuesti, kui see on lõppenud.",
   "apiError.relayTooLarge": "See on liiga suur, et edastaja kaudu minna. Ava eksemplar selle enda aadressil.",

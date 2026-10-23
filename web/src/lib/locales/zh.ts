@@ -4728,6 +4728,7 @@ const zh: Partial<Translations> = {
   "apiError.noPlace": "无处可备份：其所属分区的所有目标都已关闭。请在“目标”中开启一个。",
   "apiError.noLocation": "此分区还没有目标。打开“设置”下的“目标”，为它开启一条线。",
   "apiError.domainBusy": "另一项任务（例如计划备份或清理）正在使用此分区。请在它完成后重试。",
+  "apiError.offsiteBusy": "上一次备份的异地复制仍在进行。请在它完成后重试。",
   "apiError.replicaBusy": "此条目的副本发送或恢复正在进行中。完成后再试一次。",
   "apiError.checkBusy": "此仓库的检查已在运行。完成后再试一次。",
   "apiError.relayTooLarge": "内容太大，无法通过中继。请在该实例自己的地址上打开它。",

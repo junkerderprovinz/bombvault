@@ -4737,6 +4737,7 @@ const sv: Partial<Translations> = {
   "apiError.noPlace": "Det finns ingenstans att säkerhetskopiera till, eftersom alla mål i dess avsnitt är avstängda. Slå på ett under Mål.",
   "apiError.noLocation": "Det här avsnittet har ännu inget mål. Öppna Inställningar, Mål, och slå på en linje för det.",
   "apiError.domainBusy": "En annan uppgift, till exempel en schemalagd säkerhetskopiering eller en rensning, använder det här avsnittet just nu. Försök igen när den är klar.",
+  "apiError.offsiteBusy": "Den externa kopieringen av den senaste säkerhetskopian pågår fortfarande. Försök igen när den är klar.",
   "apiError.replicaBusy": "En replikering eller återställning av den här posten pågår. Försök igen när den är klar.",
   "apiError.checkBusy": "En kontroll av det här förrådet körs redan. Försök igen när den är klar.",
   "apiError.relayTooLarge": "Det här är för stort för att gå via reläet. Öppna instansen på dess egen adress.",
