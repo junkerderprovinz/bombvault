@@ -3711,18 +3711,18 @@ body {
   justify-items: center;
   height: 28px;
 }
+/* The ring is painted inside the dot's own box, so a long row on a narrow card
+   shrinks the dots instead of running their rings into each other. */
 .glim-keep-dot {
-  width: min(8px, 62%);
+  width: min(15px, 90%);
   aspect-ratio: 1;
   border-radius: var(--radius-pill);
-  background: var(--carbon-text-sub);
-  box-shadow: 0 0 0 2px var(--carbon-surface), 0 0 0 3.5px var(--band, transparent);
+  background: radial-gradient(closest-side, var(--carbon-text-sub) 52%, transparent 56% 76%, var(--band, transparent) 80%);
 }
 .glim-keep-dot.glim-keep-gone {
-  background: var(--carbon-text-muted);
+  background: radial-gradient(closest-side, var(--carbon-text-muted) 52%, transparent 56%);
   opacity: .2;
   transform: translateY(10px) scale(.6);
-  box-shadow: none;
 }
 .glim-keep-band-last { --band: var(--pic); }
 .glim-keep-band-daily { --band: var(--keep-band-daily); }
@@ -3763,7 +3763,9 @@ body {
   }
   .glim-keep-gap { display: none; }
   .glim-keep-label { margin-top: 4px; }
-  .glim-keep-dot { box-shadow: 0 0 0 1px var(--carbon-surface), 0 0 0 2.5px var(--band, transparent); }
+  .glim-keep-dot:not(.glim-keep-gone) {
+    background: radial-gradient(closest-side, var(--carbon-text-sub) 58%, transparent 62% 70%, var(--band, transparent) 74%);
+  }
 }
 
 .glim-scene > svg {

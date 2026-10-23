@@ -187,6 +187,29 @@ export const ARCHIVE = {
   capacity: { at: NOW, usedBytes: 7.6 * TB, freeBytes: 0.4 * TB, totalBytes: 8 * TB, source: "statfs", weeksToFull: 3 },
 };
 
+/** A destination that holds the own folders of four sections and no copy. It
+ *  is reached only by its address, so the list stays as the specs count it. */
+export const OWN_ONLY = {
+  id: "destination:rustfs",
+  object: "destination",
+  kind: "offsite",
+  provider: "minio",
+  backend: "s3",
+  name: "RustFS Probe",
+  where: "s3:http://192.168.20.187:9000/bombvault",
+  enabled: true,
+  offPremises: false,
+  sections: ["containers", "flash", "config", "zfs"].map((domain) =>
+    section({ domain, use: "home", where: `s3:http://192.168.20.187:9000/bombvault/${domain}`, retention: KEEP_BALANCED }),
+  ),
+  retention: { keepLast: 0, keepDaily: 0, keepWeekly: 0, keepMonthly: 0, keepYearly: 0 },
+  compression: "auto",
+  limitUpload: 0,
+  limitDownload: 0,
+  protection: { immutable: false, testable: false },
+  capacity: { unsupported: true, storedBytes: 1.1 * GB },
+};
+
 export const LOCATIONS = [LOCAL, ARCHIVE, STORAGE_BOX, B2, REST];
 
 function target(id: string, domain: string, destinationId: string, over: Record<string, unknown> = {}) {
@@ -435,7 +458,7 @@ export async function stageStorage(page: Page, width: number, lang = "de"): Prom
         return post ? record(route, { ok: true }) : route.fulfill({ json: { ok: true, removal: REMOVAL } });
       }
       const id = decodeURIComponent(pathname.slice("/api/storage/locations/".length));
-      const location = LOCATIONS.find((l) => l.id === id);
+      const location = [...LOCATIONS, OWN_ONLY].find((l) => l.id === id);
       if (!location) return route.fulfill({ status: 404, json: { ok: false, error: "no such storage location" } });
       return route.fulfill({ json: { ok: true, location } });
     },

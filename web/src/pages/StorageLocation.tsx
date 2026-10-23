@@ -147,8 +147,8 @@ function Location({ location, records }: { location: StorageLocation; records: L
             <Back />
             <LocationMark location={location} size="head" />
           </span>
-          <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-            <span className="truncate text-status font-semibold text-carbon-text">{location.name}</span>
+          <div className="flex min-w-0 flex-1 basis-64 flex-col gap-0.5">
+            <span className="min-w-0 text-status font-semibold text-carbon-text text-start wrap-anywhere">{location.name}</span>
             <span className="flex flex-wrap items-center gap-x-1.5 text-sm text-carbon-textMuted">
               <span>
                 {what} · {usedByText(t, lang, location)}
@@ -158,7 +158,7 @@ function Location({ location, records }: { location: StorageLocation; records: L
               )}
             </span>
           </div>
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex min-w-0 max-w-full flex-wrap items-center justify-end gap-3 max-md:justify-start">
             {location.enabled ? (
               <span className="text-sm tabular-nums text-carbon-textSub">{amountText(t, location.capacity)}</span>
             ) : (

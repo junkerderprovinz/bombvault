@@ -10,7 +10,7 @@
 // without the backups there, a section's copy moves to another location, and
 // a section's folder is set. German, because its labels run longest.
 import { expect, test, type Locator, type Page } from "@playwright/test";
-import { B2, IMPACT, LOCAL, LOCATIONS, MOVE, OWN_ENTRY, REMOVAL, REST, STORAGE_BOX, measureLayout, settle, stageStorage } from "./storage";
+import { B2, IMPACT, LOCAL, LOCATIONS, MOVE, OWN_ENTRY, OWN_ONLY, REMOVAL, REST, STORAGE_BOX, measureLayout, settle, stageStorage } from "./storage";
 
 const MOBILE_PROJECTS = new Set(["mobile-iphone", "mobile-android"]);
 
@@ -109,6 +109,43 @@ for (const width of [320, 390]) {
     await settle(page);
     expect(await pastTheEdge(window), "runs past the edge of the window").toEqual([]);
     await expect(window.getByRole("button", { name: "Umziehen" })).toBeInViewport();
+  });
+
+  test(`a location's head wraps under the way back instead of cutting its name @ ${width}px`, async ({ page }, testInfo) => {
+    test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only: the phone layout lives below 48rem");
+    await stageStorage(page, width);
+    await page.goto(locationUrl(OWN_ONLY.id));
+    await expect(page.getByRole("heading", { level: 1, name: OWN_ONLY.name })).toBeAttached();
+    const name = page.locator("#bv-main span", { hasText: new RegExp(`^${OWN_ONLY.name}$`) }).first();
+    await expect(name).toBeVisible();
+    const cut = await name.evaluate((el) => el.scrollWidth > el.clientWidth);
+    expect(cut, "the name is cut").toBe(false);
+    // The line under the name gets the width of the page, not a sliver beside
+    // the size and the menu.
+    const box = await name.boundingBox();
+    expect(box!.width).toBeGreaterThan(width / 2);
+    await expectNothingPansOrClips(page);
+  });
+
+  test(`the dots of the keep picture stay apart @ ${width}px`, async ({ page }, testInfo) => {
+    test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only: the phone layout lives below 48rem");
+    await stageStorage(page, width);
+    await page.goto(locationUrl(OWN_ONLY.id));
+    await expect(page.getByText("Wie lange aufheben", { exact: true })).toBeVisible();
+    await settle(page);
+    // A ring drawn as a box shadow paints past the dot's box, so it counts.
+    const overlaps = await page.locator(".glim-keep-dot").evaluateAll((dots) => {
+      const painted = dots.map((dot) => {
+        const r = dot.getBoundingClientRect();
+        const spreads = getComputedStyle(dot)
+          .boxShadow.split(/,(?![^(]*\))/)
+          .map((shadow) => parseFloat(shadow.match(/(-?[\d.]+)px/g)?.[3] ?? "0"));
+        const ring = Math.max(0, ...spreads);
+        return { left: r.left - ring, right: r.right + ring };
+      });
+      return painted.slice(1).filter((dot, i) => dot.left < painted[i].right - 0.5).length;
+    });
+    expect(overlaps, "dots run into each other").toBe(0);
   });
 
   for (const location of LOCATIONS) {
