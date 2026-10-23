@@ -10,6 +10,7 @@ import {
   forgetReceiverServer,
   getReceiverServer,
   revokeReceiverLogin,
+  setReceiverServerHost,
   setUpReceiverServer,
   type ReceiverLogin,
   type ReceiverServer,
@@ -72,6 +73,9 @@ export function ReceiverServerWindow({
   const [formOpen, setFormOpen] = useState(false);
   const [fresh, setFresh] = useState<Fresh | null>(null);
   const [checking, setChecking] = useState(false);
+  // null while the address field shows what the server has.
+  const [hostDraft, setHostDraft] = useState<string | null>(null);
+  const [savingHost, setSavingHost] = useState(false);
 
   useEffect(() => {
     let alive = true;
@@ -109,6 +113,21 @@ export function ReceiverServerWindow({
       push(e instanceof Error ? e.message : t("receiver.server.loadError"), "fail");
     } finally {
       setChecking(false);
+    }
+  }
+
+  async function saveHost(host: string) {
+    setSavingHost(true);
+    try {
+      const r = await setReceiverServerHost(host.trim());
+      if (r.ok && r.server) {
+        setServer(r.server);
+        setHostDraft(null);
+      } else push(r.error ?? t("settings.error"), "fail");
+    } catch (e) {
+      push(e instanceof Error ? e.message : t("settings.error"), "fail");
+    } finally {
+      setSavingHost(false);
     }
   }
 
@@ -209,6 +228,29 @@ export function ReceiverServerWindow({
               <bdi dir="ltr" className="font-mono text-xs text-carbon-text break-all text-start">
                 {server.url || t(server.needsHost ? "receiver.server.needsHost" : "receiver.server.noAddress")}
               </bdi>
+            </SettingRow>
+            <SettingRow label={t("receiver.server.host")} hint={t("receiver.server.hostTip")} htmlFor="bv-receiver-server-set-host">
+              <div className="flex flex-wrap items-center gap-2">
+                <input
+                  id="bv-receiver-server-set-host"
+                  type="text"
+                  value={hostDraft ?? server.host}
+                  onChange={(e) => setHostDraft(e.target.value)}
+                  placeholder={t("receiver.server.hostPlaceholder")}
+                  spellCheck={false}
+                  autoComplete="off"
+                  dir="ltr"
+                  className={`${INPUT} w-56 max-w-full font-mono text-start`}
+                />
+                <Button
+                  label={t("settings.save")}
+                  labelKey="settings.save"
+                  tone="neutral"
+                  onClick={() => void saveHost(hostDraft ?? "")}
+                  busy={savingHost}
+                  disabled={savingHost || hostDraft === null || hostDraft.trim() === server.host}
+                />
+              </div>
             </SettingRow>
             <SettingRow label={t("receiver.server.outsideUser")}>
               <bdi dir="ltr" className="font-mono text-xs text-carbon-text text-start">{server.user}</bdi>

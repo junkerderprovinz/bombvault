@@ -21,8 +21,8 @@ type ReceiverServer struct {
 	// key (internal/secret). It is never logged or returned in the clear
 	// outside the group.
 	PasswordEnc []byte
-	// Host is the address members reach the server at, empty when it is the
-	// address they reach this instance at.
+	// Host is the address a person set for members to reach the server at,
+	// empty when the check finds it.
 	Host      string
 	CreatedAt int64
 	// Check is the last append-only check: "protected", "unprotected",
@@ -30,9 +30,12 @@ type ReceiverServer struct {
 	Check       string
 	CheckDetail string
 	CheckedAt   int64
+	// ReachedHost is the host the last check that reached the server found it
+	// at, which members get while Host is empty.
+	ReachedHost string
 }
 
-const receiverServerCols = `container_name, folder, host_path, port, rest_user, password_enc, host, created_at, check_verdict, check_detail, checked_at`
+const receiverServerCols = `container_name, folder, host_path, port, rest_user, password_enc, host, created_at, check_verdict, check_detail, checked_at, reached_host`
 
 // GetReceiverServer returns the receiving server, and false when none is set
 // up.
@@ -40,7 +43,7 @@ func (r *Repo) GetReceiverServer() (ReceiverServer, bool, error) {
 	var s ReceiverServer
 	err := r.db.QueryRow(`SELECT `+receiverServerCols+` FROM receiver_server WHERE id = 1`).Scan(
 		&s.ContainerName, &s.Folder, &s.HostPath, &s.Port, &s.User, &s.PasswordEnc, &s.Host,
-		&s.CreatedAt, &s.Check, &s.CheckDetail, &s.CheckedAt,
+		&s.CreatedAt, &s.Check, &s.CheckDetail, &s.CheckedAt, &s.ReachedHost,
 	)
 	if errors.Is(err, sql.ErrNoRows) {
 		return ReceiverServer{}, false, nil
@@ -61,9 +64,9 @@ func (r *Repo) SaveReceiverServer(s ReceiverServer) error {
 		s.PasswordEnc = []byte{}
 	}
 	_, err := r.db.Exec(`INSERT OR REPLACE INTO receiver_server (id, `+receiverServerCols+`)
-		VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		s.ContainerName, s.Folder, s.HostPath, s.Port, s.User, s.PasswordEnc, s.Host,
-		s.CreatedAt, s.Check, s.CheckDetail, s.CheckedAt,
+		s.CreatedAt, s.Check, s.CheckDetail, s.CheckedAt, s.ReachedHost,
 	)
 	if err != nil {
 		return fmt.Errorf("SaveReceiverServer: %w", err)
@@ -71,12 +74,22 @@ func (r *Repo) SaveReceiverServer(s ReceiverServer) error {
 	return nil
 }
 
-// RecordReceiverServerCheck stores the outcome of an append-only check.
-func (r *Repo) RecordReceiverServerCheck(verdict, detail string) error {
-	_, err := r.db.Exec(`UPDATE receiver_server SET check_verdict = ?, check_detail = ?, checked_at = ? WHERE id = 1`,
-		verdict, detail, time.Now().Unix())
+// RecordReceiverServerCheck stores the outcome of an append-only check and the
+// host it reached the server at.
+func (r *Repo) RecordReceiverServerCheck(verdict, detail, reachedHost string) error {
+	_, err := r.db.Exec(`UPDATE receiver_server SET check_verdict = ?, check_detail = ?, checked_at = ?, reached_host = ? WHERE id = 1`,
+		verdict, detail, time.Now().Unix(), reachedHost)
 	if err != nil {
 		return fmt.Errorf("RecordReceiverServerCheck: %w", err)
+	}
+	return nil
+}
+
+// SetReceiverServerHost stores the address members reach the server at, empty
+// to leave that to the check.
+func (r *Repo) SetReceiverServerHost(host string) error {
+	if _, err := r.db.Exec(`UPDATE receiver_server SET host = ? WHERE id = 1`, host); err != nil {
+		return fmt.Errorf("SetReceiverServerHost: %w", err)
 	}
 	return nil
 }

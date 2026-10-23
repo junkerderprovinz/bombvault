@@ -10,6 +10,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"net/netip"
 	"net/url"
 	"os"
 	"path"
@@ -66,13 +67,15 @@ const groupReceiverWait = 8 * time.Second
 
 var receiverHostRe = regexp.MustCompile(`^[A-Za-z0-9]([A-Za-z0-9.-]*[A-Za-z0-9])?$`)
 
+var errReceiverHostForm = errors.New("enter the address as a host name or an IP address, without http:// or a port")
+
 var errReceiverExists = errors.New("this instance runs a receiver already")
 
 var errNoReceiver = errors.New("no receiver is set up on this instance")
 
 var errNoMemberReceiver = errors.New("that instance runs no receiver")
 
-var errReceiverNeedsHost = errors.New("that instance knows itself only by a name its browser used, which may lead to a proxy rather than its receiving server. Fill in Address for partners on its receiving server first")
+var errReceiverNeedsHost = errors.New("that instance has not found its receiving server at an IP address it can hand out. Fill in Address for partners there first")
 
 var errReceiverNeedsAddress = errors.New("this instance reaches that one only through the relay, which carries no backups. Add that instance's address under Settings, Pairing, or enter the server's address by hand")
 
@@ -80,8 +83,8 @@ var errReceiverNeedsAddress = errors.New("this instance reaches that one only th
 type receiverServerInput struct {
 	Folder string `json:"folder"`
 	Port   int    `json:"port"`
-	// Host is the address members reach the server at, empty to use the one
-	// they reach this instance at.
+	// Host is the address members reach the server at, empty to leave it to
+	// the check.
 	Host string `json:"host"`
 }
 
@@ -95,8 +98,7 @@ type receiverServerView struct {
 	// User is the login for someone outside the group.
 	User string `json:"user"`
 	Host string `json:"host"`
-	// URL is the server's address without a login, empty when this instance
-	// does not know its own address.
+	// URL is the server's address without a login, empty while NeedsHost.
 	URL       string `json:"url"`
 	CreatedAt int64  `json:"createdAt"`
 	// Present is false once the container is gone from Docker.
@@ -106,8 +108,8 @@ type receiverServerView struct {
 	CheckedAt   int64  `json:"checkedAt"`
 	// Logins are the group members that fetched a login of their own.
 	Logins []receiverLoginView `json:"logins"`
-	// NeedsHost says the address has to be set by hand: this instance knows
-	// itself only by a name a browser used.
+	// NeedsHost says the address has to be set by hand: no check found the
+	// server at an IP address members can be given.
 	NeedsHost bool `json:"needsHost"`
 }
 
@@ -278,7 +280,7 @@ func (s *Service) checkReceiverInput(in receiverServerInput) (receiverServerInpu
 		return in, "", errors.New("the port has to be between 1 and 65535")
 	}
 	if in.Host != "" && !receiverHostRe.MatchString(in.Host) {
-		return in, "", errors.New("enter the address as a host name or an IP address, without http:// or a port")
+		return in, "", errReceiverHostForm
 	}
 	return in, path.Join(s.cfg.HostSourceRoot, in.Folder), nil
 }
@@ -429,31 +431,34 @@ func (s *Service) writeReceiverTemplate(rs store.ReceiverServer, unraid bool) st
 	return "written"
 }
 
-// receiverHost is where members reach the receiver: the address set for it,
-// or the host this instance answers the group on, unless that is a name only
-// learned from a browser (see needsReceiverHost).
+// receiverHost is where members reach the receiver: the address a person
+// decided on (see setReceiverHost), or else the host a check found its server
+// at.
 func (s *Service) receiverHost(ctx context.Context, rs store.ReceiverServer) string {
-	if rs.Host != "" {
-		return rs.Host
+	if host, set := s.setReceiverHost(ctx, rs); set {
+		return host
 	}
-	if s.needsReceiverHost(ctx, rs) {
-		return ""
-	}
-	return urlHost(s.selfDirectURL())
+	return rs.ReachedHost
 }
 
-// needsReceiverHost reports whether the receiver needs its address set by
-// hand. A name a browser used can belong to a reverse proxy or a VPN that
-// forwards BombVault's port and no other, so it is no address for the
-// rest-server; an IP address or one a person set is. On macvlan or ipvlan
-// BombVault has an address of its own, and the rest-server, whose port the
-// Docker host publishes, is not at it either.
-func (s *Service) needsReceiverHost(ctx context.Context, rs store.ReceiverServer) bool {
+// setReceiverHost is the receiver's address when a person decided on it: the
+// one set for the receiver, or the one this instance's own address was set to
+// by hand. On macvlan or ipvlan BombVault has an address of its own, and the
+// rest-server, whose port the Docker host publishes, is not at it, so there
+// the answer is empty unless the receiver has an address set.
+func (s *Service) setReceiverHost(ctx context.Context, rs store.ReceiverServer) (host string, set bool) {
 	if rs.Host != "" {
-		return false
+		return rs.Host, true
+	}
+	if s.hasOwnAddress(ctx) {
+		return "", true
 	}
 	g, err := s.store.GetGroupState()
-	return (err == nil && learnedName(g, s.directURL(g))) || s.hasOwnAddress(ctx)
+	if err != nil {
+		return "", true
+	}
+	host = urlHost(g.DirectURL)
+	return host, g.DirectURLManual && host != ""
 }
 
 // hasOwnAddress reports whether BombVault's container is on a macvlan or
@@ -489,9 +494,25 @@ func (s *Service) hasOwnAddress(ctx context.Context) bool {
 	return own
 }
 
-func learnedName(g store.GroupState, addr string) bool {
-	host := urlHost(addr)
-	return host != "" && !g.DirectURLManual && net.ParseIP(host) == nil
+// vpnPrefixes are the carrier-grade NAT range, where Tailscale and other
+// overlay networks give out addresses, and Tailscale's IPv6 range. Members
+// on the local network are not on them.
+var vpnPrefixes = []netip.Prefix{
+	netip.MustParsePrefix("100.64.0.0/10"),
+	netip.MustParsePrefix("fd7a:115c:a1e0::/48"),
+}
+
+// offerableIP reports whether a check may find the receiver at host for
+// members. A name a browser used can belong to a reverse proxy or a VPN that
+// forwards BombVault's port and no other, so only an IP address is tried, and
+// the check proves the rest-server answers there.
+func offerableIP(host string) bool {
+	ip, err := netip.ParseAddr(host)
+	if err != nil {
+		return false
+	}
+	ip = ip.Unmap()
+	return !slices.ContainsFunc(vpnPrefixes, func(p netip.Prefix) bool { return p.Contains(ip) })
 }
 
 // urlHost is the host of an address, empty when it has none.
@@ -508,35 +529,61 @@ func restBase(host string, port int) string {
 	return "http://" + net.JoinHostPort(host, strconv.Itoa(port))
 }
 
-// receiverProbeBases are the addresses this instance can try the receiver at:
-// the one members use first, so the check speaks for what they reach, then
-// the container's own on Docker's network, which a BombVault on the bridge
-// network reaches when the host does not answer it.
-func (s *Service) receiverProbeBases(ctx context.Context, rs store.ReceiverServer) []string {
-	var out []string
-	if host := s.receiverHost(ctx, rs); host != "" {
-		out = append(out, restBase(host, rs.Port))
+// receiverProbeHosts are the hosts a check tries the receiver at before the
+// container's own address, and whether the first of them to answer becomes
+// the host members get. Without an address a person decided on, those are
+// the host the last check found and the IP address this instance answers the
+// group on, so a browser that signs in at another address changes nothing
+// while the server still answers at the old one.
+func (s *Service) receiverProbeHosts(ctx context.Context, rs store.ReceiverServer) (hosts []string, locate bool) {
+	if host, set := s.setReceiverHost(ctx, rs); set {
+		if host == "" {
+			return nil, false
+		}
+		return []string{host}, false
 	}
-	if allocs, err := s.docker.Allocations(ctx); err == nil {
-		for _, a := range allocs {
-			if a.Name == rs.ContainerName && a.IPv4 != "" {
-				out = append(out, restBase(a.IPv4, restServerContainerPort))
-			}
+	for _, h := range []string{rs.ReachedHost, urlHost(s.selfDirectURL())} {
+		if offerableIP(h) && !slices.Contains(hosts, h) {
+			hosts = append(hosts, h)
+		}
+	}
+	return hosts, true
+}
+
+// receiverContainerBases are the receiver container's own addresses on
+// Docker's network, which a BombVault on the bridge network reaches when the
+// host does not answer it.
+func (s *Service) receiverContainerBases(ctx context.Context, rs store.ReceiverServer) []string {
+	allocs, err := s.docker.Allocations(ctx)
+	if err != nil {
+		return nil
+	}
+	var out []string
+	for _, a := range allocs {
+		if a.Name == rs.ContainerName && a.IPv4 != "" {
+			out = append(out, restBase(a.IPv4, restServerContainerPort))
 		}
 	}
 	return out
 }
 
 // checkReceiver runs the tamper test's probe against the receiver and records
-// the outcome. A server that has just started gets receiverStartWait to
-// answer.
+// the outcome, and where it reached the server when that is the receiver's
+// host to find (see receiverProbeHosts). A server that has just started gets
+// receiverStartWait to answer.
 func (s *Service) checkReceiver(ctx context.Context, rs store.ReceiverServer, password string) {
-	bases := s.receiverProbeBases(ctx, rs)
+	hosts, locate := s.receiverProbeHosts(ctx, rs)
+	var bases []string
+	for _, h := range hosts {
+		bases = append(bases, restBase(h, rs.Port))
+	}
+	bases = append(bases, s.receiverContainerBases(ctx, rs)...)
+	reached := rs.ReachedHost
 	verdict, detail := receiverInconclusive, "BombVault cannot reach the server from here"
 	deadline := time.Now().Add(receiverStartWait)
 probing:
 	for len(bases) > 0 {
-		for _, b := range bases {
+		for i, b := range bases {
 			v, err := probeAppendOnly(ctx, s.restHTTPClient(), b+"/"+rs.User, rs.User, password)
 			if err != nil {
 				detail = scrubError(err)
@@ -545,6 +592,12 @@ probing:
 			verdict, detail = receiverUnprotected, v.Detail
 			if v.Protected {
 				verdict = receiverProtected
+			}
+			if locate {
+				reached = ""
+				if i < len(hosts) {
+					reached = hosts[i]
+				}
 			}
 			break probing
 		}
@@ -557,7 +610,7 @@ probing:
 		case <-time.After(receiverRetry):
 		}
 	}
-	if err := s.store.RecordReceiverServerCheck(verdict, detail); err != nil {
+	if err := s.store.RecordReceiverServerCheck(verdict, detail, reached); err != nil {
 		log.Printf("receiver: record the append-only check: %v", err)
 	}
 }
@@ -577,6 +630,33 @@ func (s *Service) CheckReceiver(ctx context.Context) (receiverServerView, error)
 	}
 	s.checkReceiver(ctx, rs, string(password))
 	return s.receiverView(ctx)
+}
+
+// SetReceiverAddress stores the address members reach the receiver at, empty
+// to leave it to the check, and runs the check again.
+func (s *Service) SetReceiverAddress(ctx context.Context, host string) (receiverServerView, error) {
+	host = strings.TrimSpace(host)
+	if host != "" && !receiverHostRe.MatchString(host) {
+		return receiverServerView{}, errReceiverHostForm
+	}
+	if err := s.store.SetReceiverServerHost(host); err != nil {
+		return receiverServerView{}, err
+	}
+	return s.CheckReceiver(ctx)
+}
+
+// locateReceiver runs the receiver's check once at start while members get
+// no address for it, so a receiver set up before checks looked for one does
+// not wait for a person to check it again.
+func (s *Service) locateReceiver() {
+	ctx := context.Background()
+	rs, ok, err := s.store.GetReceiverServer()
+	if err != nil || !ok || s.receiverHost(ctx, rs) != "" {
+		return
+	}
+	if _, err := s.CheckReceiver(ctx); err != nil {
+		log.Printf("receiver: check at start: %v", err)
+	}
 }
 
 // receiverView reads the receiver back as the Receiver tab shows it.
@@ -608,7 +688,7 @@ func (s *Service) receiverView(ctx context.Context) (receiverServerView, error) 
 	if host := s.receiverHost(ctx, rs); host != "" {
 		v.URL = restBase(host, rs.Port)
 	}
-	v.NeedsHost = s.needsReceiverHost(ctx, rs)
+	v.NeedsHost = v.URL == ""
 	return v, nil
 }
 
@@ -724,15 +804,15 @@ type peerReceiver struct {
 	// Host is where the receiver's server is reached, empty from a receiver
 	// that left that to the member's own address for it.
 	Host string `json:"host,omitempty"`
-	// HostFromGroup says Host is only the address the receiver answers the
-	// group on, set for no one in particular, which a member that reaches it
-	// through the relay alone may not reach.
+	// HostFromGroup says Host was not set for the receiver's server itself,
+	// and a member that reaches the receiver through the relay alone may not
+	// reach it.
 	HostFromGroup bool   `json:"hostFromGroup,omitempty"`
 	Port          int    `json:"port"`
 	User          string `json:"user,omitempty"`
 	Password      string `json:"password,omitempty"`
-	// NeedsHost says the receiver knows no address for its server, and the
-	// one the member reaches BombVault at is no address for it either.
+	// NeedsHost says the receiver knows no address for its server that it
+	// can hand out.
 	NeedsHost bool `json:"needsHost,omitempty"`
 }
 
@@ -792,9 +872,16 @@ func (s *Service) handlePeerReceiver(w http.ResponseWriter, r *http.Request) {
 		Host:          host,
 		HostFromGroup: rs.Host == "" && host != "",
 		Port:          rs.Port,
-		NeedsHost:     s.needsReceiverHost(r.Context(), rs),
+		NeedsHost:     host == "",
 	}
 	if in.Login {
+		// A member from before NeedsHost places a receiver without a host at
+		// the address it reaches this instance at, which can be a proxy's, and
+		// would write that into its storage location.
+		if offer.NeedsHost {
+			writeJSON(w, http.StatusOK, failEnvelope(errReceiverNeedsHost))
+			return
+		}
 		caller, ok := s.peerCaller(r)
 		if !ok || caller.ID != in.InstanceID {
 			writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "the asking instance is not the one the group names for this call"})
@@ -1010,6 +1097,23 @@ func (h *Handler) handleSetUpReceiver(w http.ResponseWriter, r *http.Request) {
 // POST /api/receiver/server/check
 func (h *Handler) handleCheckReceiver(w http.ResponseWriter, r *http.Request) {
 	v, err := h.svc.CheckReceiver(r.Context())
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"server": v}))
+}
+
+// handleSetReceiverAddress sets the address members reach the receiver at.
+// PUT /api/receiver/server/host
+func (h *Handler) handleSetReceiverAddress(w http.ResponseWriter, r *http.Request) {
+	var in struct {
+		Host string `json:"host"`
+	}
+	if !decodeBody(w, r, &in) {
+		return
+	}
+	v, err := h.svc.SetReceiverAddress(r.Context(), in.Host)
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return

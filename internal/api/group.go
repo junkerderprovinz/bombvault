@@ -65,6 +65,7 @@ func (s *Service) StartGroup() {
 	s.pairing().Start()
 	go s.renewDepositsLoop()
 	go s.absentMembersLoop()
+	go s.locateReceiver()
 }
 
 // StopGroup closes the relay connection and the discovery service.

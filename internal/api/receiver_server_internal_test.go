@@ -443,14 +443,15 @@ func TestATakenLoginGetsTheFirstFreeNumber(t *testing.T) {
 }
 
 // receiverWithOutsider sets up a receiver record in the fixture's mount with
-// a running container and an htpasswd file holding the outsider's login.
+// a running container that a check found at 192.168.1.20, and an htpasswd
+// file holding the outsider's login.
 func receiverWithOutsider(t *testing.T, f *receiverFixture) store.ReceiverServer {
 	t.Helper()
 	pw, enc, err := f.svc.addHtpasswdUser("user/restic", "vault-box")
 	if err != nil {
 		t.Fatal(err)
 	}
-	rs := store.ReceiverServer{ContainerName: "rest-server", Folder: "user/restic", Port: 8001, User: "vault-box", PasswordEnc: enc}
+	rs := store.ReceiverServer{ContainerName: "rest-server", Folder: "user/restic", Port: 8001, User: "vault-box", PasswordEnc: enc, ReachedHost: "192.168.1.20"}
 	if err := f.st.SaveReceiverServer(rs); err != nil {
 		t.Fatal(err)
 	}
@@ -482,9 +483,21 @@ func htpasswdLineOf(t *testing.T, f *receiverFixture, user string) string {
 // askCounter numbers the signed asks of askPeerReceiver.
 var askCounter atomic.Int64
 
-// askPeerReceiver asks f the way member req.InstanceID does. A login is asked
-// for in a call signed with a key f has pinned for that member.
+// askPeerReceiver asks f the way member req.InstanceID does and expects an
+// answer.
 func askPeerReceiver(t *testing.T, f *receiverFixture, req peerReceiverRequest) peerReceiverAnswer {
+	t.Helper()
+	w := answerPeerReceiver(t, f, req)
+	var ans peerReceiverAnswer
+	if err := json.Unmarshal(w.Body.Bytes(), &ans); err != nil || !ans.OK {
+		t.Fatalf("answer %s: %v", w.Body.String(), err)
+	}
+	return ans
+}
+
+// answerPeerReceiver is f's answer to member req.InstanceID. A login is asked
+// for in a call signed with a key f has pinned for that member.
+func answerPeerReceiver(t *testing.T, f *receiverFixture, req peerReceiverRequest) *httptest.ResponseRecorder {
 	t.Helper()
 	if req.Login {
 		seed := sha256.Sum256([]byte(req.InstanceID))
@@ -508,11 +521,7 @@ func askPeerReceiver(t *testing.T, f *receiverFixture, req peerReceiverRequest) 
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest(http.MethodPost, "/api/group/peer/receiver", strings.NewReader(string(body)))
 	f.svc.handlePeerReceiver(w, r.WithContext(context.WithValue(r.Context(), peerSenderKey{}, req.InstanceID)))
-	var ans peerReceiverAnswer
-	if err := json.Unmarshal(w.Body.Bytes(), &ans); err != nil || !ans.OK {
-		t.Fatalf("answer %s: %v", w.Body.String(), err)
-	}
-	return ans
+	return w
 }
 
 func TestAMemberOffersItsReceiverOnlyWhileTheContainerIsThere(t *testing.T) {
@@ -623,16 +632,17 @@ func TestAMembersReceiverIsPlacedWhereThisInstanceReachesIt(t *testing.T) {
 	}
 }
 
-func TestTheReceiverNamesTheHostItAnswersOnNow(t *testing.T) {
+func TestTheReceiverNamesTheHostItsCheckFound(t *testing.T) {
 	a := newInstance(t, "cellar", strings.Repeat("a1", 32))
 	b := newInstance(t, "attic", strings.Repeat("b2", 32))
 	pairThroughRelay(t, a, b)
 	b.svc.cfg.HostMountRoot = t.TempDir()
-	if err := b.st.SaveReceiverServer(store.ReceiverServer{ContainerName: "rest-server", Folder: "restic", Port: 8000, User: "attic"}); err != nil {
+	rs := store.ReceiverServer{ContainerName: "rest-server", Folder: "restic", Port: 8000, User: "attic", ReachedHost: "192.168.1.10"}
+	if err := b.st.SaveReceiverServer(rs); err != nil {
 		t.Fatal(err)
 	}
 	b.svc.docker = &receiverDocker{live: map[string]bool{"rest-server": true}}
-	if err := b.st.SetGroupDirectURL("https://192.168.1.10:3443", false); err != nil {
+	if err := b.st.SetGroupDirectURL("https://bv.example.com", false); err != nil {
 		t.Fatal(err)
 	}
 	r, err := a.svc.askReceiver(context.Background(), b.id(t), false)
@@ -640,7 +650,7 @@ func TestTheReceiverNamesTheHostItAnswersOnNow(t *testing.T) {
 		t.Fatalf("ask: %+v, %v", r, err)
 	}
 	if r.Host != "192.168.1.10" || !r.HostFromGroup || r.NeedsHost {
-		t.Fatalf("the receiver answered %+v, want its own host from the group", *r)
+		t.Fatalf("the receiver answered %+v, want the host its check found", *r)
 	}
 }
 
@@ -662,35 +672,49 @@ func (d *networkedDocker) NetworkDriver(context.Context, string) (string, error)
 }
 
 func TestABombVaultWithAnAddressOfItsOwnAsksForTheReceiversHost(t *testing.T) {
-	rs := store.ReceiverServer{Port: 8000}
+	rs := store.ReceiverServer{Port: 8000, ReachedHost: "192.168.1.60"}
 	for driver, host := range map[string]string{"macvlan": "", "ipvlan": "", "bridge": "192.168.1.60"} {
 		f := newReceiverFixture(t)
 		f.svc.docker = &networkedDocker{driver: driver}
-		if err := f.st.SetGroupDirectURL("https://192.168.1.60:3443", false); err != nil {
+		if err := f.st.SetGroupDirectURL("https://192.168.1.60:3443", true); err != nil {
 			t.Fatal(err)
 		}
 		if got := f.svc.receiverHost(context.Background(), rs); got != host {
 			t.Errorf("BombVault on %s: receiver host %q, want %q", driver, got, host)
 		}
-		if got := f.svc.needsReceiverHost(context.Background(), rs); got != (host == "") {
-			t.Errorf("BombVault on %s: needs a host %v", driver, got)
+	}
+}
+
+func TestTheReceiverCheckTriesTheHostItFoundBeforeTheOneABrowserUsed(t *testing.T) {
+	f := newReceiverFixture(t)
+	rs := store.ReceiverServer{ContainerName: "rest-server", Port: 8000, ReachedHost: "192.168.1.10"}
+	cases := []struct {
+		url  string
+		want []string
+	}{
+		{"https://192.168.1.20:3443", []string{"192.168.1.10", "192.168.1.20"}},
+		{"https://192.168.1.10:3443", []string{"192.168.1.10"}},
+		{"https://bv.example.com", []string{"192.168.1.10"}},
+		{"https://100.101.102.103:3443", []string{"192.168.1.10"}},
+		{"https://[fd7a:115c:a1e0::1]:3443", []string{"192.168.1.10"}},
+	}
+	for _, c := range cases {
+		if err := f.st.SetGroupDirectURL(c.url, false); err != nil {
+			t.Fatal(err)
+		}
+		if got, locate := f.svc.receiverProbeHosts(context.Background(), rs); !locate || !slices.Equal(got, c.want) {
+			t.Errorf("answering at %s: hosts %v (locate %v), want %v", c.url, got, locate, c.want)
 		}
 	}
-}
-
-func TestTheReceiverCheckTriesTheAddressMembersGetFirst(t *testing.T) {
-	f := newReceiverFixture(t)
-	f.docker.allocs = []model.Allocation{{Name: "rest-server", IPv4: "172.17.0.5"}}
-	if err := f.st.SetGroupDirectURL("https://192.168.1.10:3443", false); err != nil {
+	if err := f.st.SetGroupDirectURL("https://vault.lan:3443", true); err != nil {
 		t.Fatal(err)
 	}
-	got := f.svc.receiverProbeBases(context.Background(), store.ReceiverServer{ContainerName: "rest-server", Port: 8000})
-	if want := []string{"http://192.168.1.10:8000", "http://172.17.0.5:8000"}; !slices.Equal(got, want) {
-		t.Fatalf("bases = %v, want %v", got, want)
+	if got, locate := f.svc.receiverProbeHosts(context.Background(), rs); locate || !slices.Equal(got, []string{"vault.lan"}) {
+		t.Errorf("an address set by hand: hosts %v (locate %v), want it alone", got, locate)
 	}
 }
 
-func TestANameLearnedFromABrowserIsNoAddressForTheReceiver(t *testing.T) {
+func TestAnAddressABrowserUsedIsNoReceiverAddressUntilACheckReachesIt(t *testing.T) {
 	f := newReceiverFixture(t)
 	rs := store.ReceiverServer{Port: 8000}
 	cases := []struct {
@@ -699,7 +723,8 @@ func TestANameLearnedFromABrowserIsNoAddressForTheReceiver(t *testing.T) {
 		host   string
 	}{
 		{"https://bv.example.com", false, ""},
-		{"https://192.168.1.20:3443", false, "192.168.1.20"},
+		{"https://192.168.1.20:3443", false, ""},
+		{"https://100.101.102.103:3443", false, ""},
 		{"https://vault.lan:3443", true, "vault.lan"},
 	}
 	for _, c := range cases {
@@ -709,19 +734,128 @@ func TestANameLearnedFromABrowserIsNoAddressForTheReceiver(t *testing.T) {
 		if got := f.svc.receiverHost(context.Background(), rs); got != c.host {
 			t.Errorf("%s (set by hand %v): host %q, want %q", c.url, c.manual, got, c.host)
 		}
-		if got, want := f.svc.needsReceiverHost(context.Background(), rs), c.host == ""; got != want {
-			t.Errorf("%s (set by hand %v): needs a host %v, want %v", c.url, c.manual, got, want)
-		}
 	}
 
 	rs.Host = "192.168.1.20"
-	if f.svc.needsReceiverHost(context.Background(), rs) || f.svc.receiverHost(context.Background(), rs) != "192.168.1.20" {
+	if f.svc.receiverHost(context.Background(), rs) != "192.168.1.20" {
 		t.Error("the address set for the receiver is not used")
 	}
 
 	member := group.Member{ID: "m1", Name: "attic", Direct: true, Address: "https://bv.example.com"}
 	if v := groupReceiverFor(member, peerReceiver{Port: 8000, NeedsHost: true}); !v.NeedsHost || v.URL != "" {
 		t.Errorf("a member placed the receiver at the proxy's name: %+v", v)
+	}
+}
+
+func TestAReceiverIsOfferedOnlyWhereItsCheckReachedIt(t *testing.T) {
+	f := newReceiverFixture(t)
+	restore := receiverStartWait
+	receiverStartWait = 0
+	t.Cleanup(func() { receiverStartWait = restore })
+
+	// Until ours is set, the port answers like another service on a reverse
+	// proxy's box.
+	var ours atomic.Bool
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		if !ours.Load() {
+			w.WriteHeader(http.StatusBadGateway)
+			return
+		}
+		w.WriteHeader(http.StatusForbidden)
+	}))
+	t.Cleanup(srv.Close)
+	_, ps, _ := net.SplitHostPort(strings.TrimPrefix(srv.URL, "http://"))
+	port, _ := strconv.Atoi(ps)
+	if err := f.st.SaveReceiverServer(store.ReceiverServer{ContainerName: "rest-server", Port: port, User: "vault"}); err != nil {
+		t.Fatal(err)
+	}
+	hostAfterCheck := func(directURL string) string {
+		t.Helper()
+		if err := f.st.SetGroupDirectURL(directURL, false); err != nil {
+			t.Fatal(err)
+		}
+		rs, _, _ := f.st.GetReceiverServer()
+		f.svc.checkReceiver(context.Background(), rs, "pw")
+		rs, _, _ = f.st.GetReceiverServer()
+		return f.svc.receiverHost(context.Background(), rs)
+	}
+
+	if got := hostAfterCheck("https://127.0.0.1:3443"); got != "" {
+		t.Fatalf("an address where the check did not reach the server is offered as %q", got)
+	}
+	ours.Store(true)
+	if got := hostAfterCheck("https://127.0.0.1:3443"); got != "127.0.0.1" {
+		t.Fatalf("host %q, want the address the check reached the server at", got)
+	}
+	for _, url := range []string{"https://bv.example.com", "https://100.101.102.103:3443", "https://192.168.1.20:3443"} {
+		if got := hostAfterCheck(url); got != "127.0.0.1" {
+			t.Errorf("a browser at %s moved the receiver to %q", url, got)
+		}
+	}
+}
+
+func TestAReceiverWithoutAnAddressHandsOutNoLogin(t *testing.T) {
+	f := newReceiverFixture(t)
+	rs := receiverWithOutsider(t, f)
+	rs.ReachedHost = ""
+	if err := f.st.SaveReceiverServer(rs); err != nil {
+		t.Fatal(err)
+	}
+	if err := f.st.SetGroupDirectURL("https://bv.example.com", false); err != nil {
+		t.Fatal(err)
+	}
+	grant := store.RoleRequest{Direction: store.RoleRequestIn, MemberID: "m-attic", Role: store.RoleReceiver, Sections: allRoleSections}
+	if err := f.st.GrantRoleRequest(grant); err != nil {
+		t.Fatal(err)
+	}
+
+	// An instance from before NeedsHost asks for its login right after the
+	// listing, whatever that said.
+	w := answerPeerReceiver(t, f, peerReceiverRequest{InstanceID: "m-attic", Name: "attic", Login: true})
+	var ans struct {
+		OK       bool          `json:"ok"`
+		Receiver *peerReceiver `json:"receiver"`
+	}
+	if err := json.Unmarshal(w.Body.Bytes(), &ans); err != nil || ans.OK || ans.Receiver != nil {
+		t.Fatalf("answer %s, want a refusal", w.Body.String())
+	}
+	if logins, _ := f.st.ListReceiverLogins(); len(logins) != 0 || htpasswdLineOf(t, f, "attic") != "" {
+		t.Fatalf("a receiver without an address handed out a login: %+v", logins)
+	}
+}
+
+func TestAnAddressSetForTheReceiverLaterIsWhatMembersGet(t *testing.T) {
+	f := newReceiverFixture(t)
+	restore := receiverStartWait
+	receiverStartWait = 0
+	t.Cleanup(func() { receiverStartWait = restore })
+	host, port := appendOnlyServer(t, "vault", "pw", true)
+	enc, err := secret.Encrypt(f.svc.cfg.AppKey, []byte("pw"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := f.st.SaveReceiverServer(store.ReceiverServer{ContainerName: "rest-server", Port: port, User: "vault", PasswordEnc: enc}); err != nil {
+		t.Fatal(err)
+	}
+	f.docker.live = map[string]bool{"rest-server": true}
+	if err := f.st.SetGroupDirectURL("https://bv.example.com", false); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := f.svc.SetReceiverAddress(context.Background(), "http://"+host); err == nil {
+		t.Fatal("an address with a scheme was taken")
+	}
+	v, err := f.svc.SetReceiverAddress(context.Background(), " "+host+" ")
+	if err != nil || v.NeedsHost || v.URL != "http://"+net.JoinHostPort(host, strconv.Itoa(port)) || v.Check != receiverProtected {
+		t.Fatalf("view %+v, %v; want the address checked and offered", v, err)
+	}
+	ans := askPeerReceiver(t, f, peerReceiverRequest{InstanceID: "m-attic", Name: "attic"})
+	if ans.Receiver == nil || ans.Receiver.Host != host || ans.Receiver.HostFromGroup || ans.Receiver.NeedsHost {
+		t.Fatalf("a member got %+v, want the address set for the receiver", ans.Receiver)
+	}
+
+	if v, err = f.svc.SetReceiverAddress(context.Background(), ""); err != nil || !v.NeedsHost {
+		t.Fatalf("view %+v, %v; want the address asked for again", v, err)
 	}
 }
 
@@ -735,7 +869,7 @@ func TestAPairedMembersReceiverReachesTheDestinationWizard(t *testing.T) {
 	}
 
 	b.svc.cfg.HostMountRoot = t.TempDir()
-	rs := store.ReceiverServer{ContainerName: "rest-server", Folder: "restic", Port: 8001, User: "attic"}
+	rs := store.ReceiverServer{ContainerName: "rest-server", Folder: "restic", Port: 8001, User: "attic", ReachedHost: "192.168.1.30"}
 	if err := b.st.SaveReceiverServer(rs); err != nil {
 		t.Fatal(err)
 	}

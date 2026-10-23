@@ -609,6 +609,7 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("GET /api/receiver/server", h.handleGetReceiver)
 	mux.HandleFunc("POST /api/receiver/server", h.handleSetUpReceiver)
 	mux.HandleFunc("POST /api/receiver/server/check", h.handleCheckReceiver)
+	mux.HandleFunc("PUT /api/receiver/server/host", h.handleSetReceiverAddress)
 	mux.HandleFunc("DELETE /api/receiver/server", h.handleForgetReceiver)
 	mux.HandleFunc("DELETE /api/receiver/server/logins/{id}", h.handleRevokeReceiverLogin)
 	mux.HandleFunc("GET /api/receiver/server/template", h.handleReceiverTemplate)

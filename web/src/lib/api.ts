@@ -6248,12 +6248,12 @@ export interface ReceiverServer {
   port: number;
   /** The login for someone outside the group. */
   user: string;
-  /** The address members reach it at, empty for this instance's own. */
+  /** The address set for members to reach it at, empty to leave it to the check. */
   host: string;
-  /** The server's address without a login, empty while this instance does not know its own. */
+  /** The server's address without a login, empty while needsHost. */
   url: string;
-  /** This instance knows itself only by a name a browser used, which may lead
-   *  to a proxy rather than the server, so the address has to be set. */
+  /** No check found the server at an IP address members can be given, so the
+   *  address has to be set. */
   needsHost?: boolean;
   createdAt: number;
   /** False once the container is gone from Docker. */
@@ -6295,6 +6295,12 @@ export function setUpReceiverServer(
 
 export function checkReceiverServer(): Promise<OkEnvelope & { server?: ReceiverServer }> {
   return fetchJSON("/api/receiver/server/check", { method: "POST" });
+}
+
+/** Sets the address members reach the server at, empty to leave it to the
+ *  check, and checks the server again. */
+export function setReceiverServerHost(host: string): Promise<OkEnvelope & { server?: ReceiverServer }> {
+  return fetchJSON("/api/receiver/server/host", { method: "PUT", body: JSON.stringify({ host }) });
 }
 
 /** Stops offering the server to the group. The container and its data stay. */

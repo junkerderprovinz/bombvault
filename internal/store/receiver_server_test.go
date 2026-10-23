@@ -36,12 +36,18 @@ func TestReceiverServerRoundTripsAndForgets(t *testing.T) {
 		t.Fatalf("read back %+v, want %+v", got, in)
 	}
 
-	if err := r.RecordReceiverServerCheck("protected", ""); err != nil {
+	if err := r.RecordReceiverServerCheck("protected", "", "192.168.1.30"); err != nil {
 		t.Fatal(err)
 	}
 	got, _, _ = r.GetReceiverServer()
-	if got.Check != "protected" || got.CheckedAt == 0 {
-		t.Fatalf("check = %q at %d, want protected with a time", got.Check, got.CheckedAt)
+	if got.Check != "protected" || got.CheckedAt == 0 || got.ReachedHost != "192.168.1.30" {
+		t.Fatalf("check = %q at %d reached %q, want protected with a time and the host", got.Check, got.CheckedAt, got.ReachedHost)
+	}
+	if err := r.SetReceiverServerHost(""); err != nil {
+		t.Fatal(err)
+	}
+	if got, _, _ = r.GetReceiverServer(); got.Host != "" || got.Check != "protected" {
+		t.Fatalf("clearing the address left %+v", got)
 	}
 
 	if err := r.DeleteReceiverServer(); err != nil {

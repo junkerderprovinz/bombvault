@@ -36,6 +36,7 @@ const withPartners: ReceiverServer = {
 let initial: ReceiverServer | null = null;
 const sent: ReceiverServerInput[] = [];
 const revoked: string[] = [];
+const hosts: string[] = [];
 let forgotten = 0;
 
 vi.mock("../../lib/api", async (importOriginal) => {
@@ -50,6 +51,10 @@ vi.mock("../../lib/api", async (importOriginal) => {
     forgetReceiverServer: () => {
       forgotten++;
       return Promise.resolve({ ok: true });
+    },
+    setReceiverServerHost: (host: string) => {
+      hosts.push(host);
+      return Promise.resolve({ ok: true, server: { ...server, host, url: `http://${host}:8001`, needsHost: false } });
     },
     revokeReceiverLogin: (memberId: string) => {
       revoked.push(memberId);
@@ -84,6 +89,7 @@ afterEach(() => {
   initial = null;
   sent.length = 0;
   revoked.length = 0;
+  hosts.length = 0;
   closed.length = 0;
   forgotten = 0;
 });
@@ -123,11 +129,21 @@ describe("ReceiverServerWindow", () => {
     expect(screen.queryByRole("dialog", { name: en["receiver.server.setUp"] })).toBeNull();
   });
 
-  it("asks for the address when this BombVault is known only by a name a browser used", async () => {
+  it("asks for the address when no check found the server at one, and takes it", async () => {
     initial = { ...server, url: "", needsHost: true };
     await renderWindow();
     expect(screen.getByText(en["receiver.server.needsHost"])).toBeTruthy();
     expect(screen.queryByText(en["receiver.server.noAddress"])).toBeNull();
+
+    const save = screen.getByRole("button", { name: en["settings.save"] }) as HTMLButtonElement;
+    expect(save.disabled).toBe(true);
+    fireEvent.change(screen.getByLabelText(en["receiver.server.host"]), { target: { value: " 192.168.1.30 " } });
+    await act(async () => {
+      fireEvent.click(save);
+    });
+    expect(hosts).toEqual(["192.168.1.30"]);
+    expect(screen.getByText("http://192.168.1.30:8001")).toBeTruthy();
+    expect(screen.queryByText(en["receiver.server.needsHost"])).toBeNull();
   });
 
   it("starts with the form and says why when something needs a receiving server", async () => {

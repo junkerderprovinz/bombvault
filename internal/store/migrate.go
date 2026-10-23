@@ -3450,6 +3450,14 @@ UPDATE pull_sources SET leftovers_moved = 0;`,
 		alreadySatisfied: columnPresent("targets", "update_held_from"),
 		sql:              `ALTER TABLE targets ADD COLUMN update_held_from TEXT NOT NULL DEFAULT '';`,
 	},
+	{
+		// The host the receiver's check last found its server at, which
+		// members get when nobody set one.
+		version:          receiverReachedMigration,
+		name:             "receiver_server_reached_host",
+		alreadySatisfied: columnPresent("receiver_server", "reached_host"),
+		sql:              `ALTER TABLE receiver_server ADD COLUMN reached_host TEXT NOT NULL DEFAULT '';`,
+	},
 }
 
 // offsiteFieldDomains are the domains with an off-site field in the settings,
@@ -3727,6 +3735,9 @@ const bareDrillTargetMigration = 560
 // updateHoldMigration numbers the record of the image a restore went back
 // from.
 const updateHoldMigration = 570
+
+// receiverReachedMigration numbers the host the receiver's check found.
+const receiverReachedMigration = 580
 
 // oneLineColumns are the names and locations the recovery kit prints.
 var oneLineColumns = []struct {
