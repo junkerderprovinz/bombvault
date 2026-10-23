@@ -74,6 +74,8 @@ export interface InstancesState {
   reloadDeposits: () => Promise<void>;
   reloadReplicas: () => Promise<void>;
   reloadServer: () => Promise<void>;
+  /** Reads the storage locations and the receiving servers they may point at. */
+  reloadDestinations: () => Promise<void>;
 }
 
 const NO_ROLES: SelfRoles = { receiver: [], fetcher: [], zfs: [], keeper: [] };
@@ -224,6 +226,17 @@ export function useInstances(modules: Modules | null): InstancesState {
     [reloadRoles],
   );
 
+  const reloadDestinations = useCallback(
+    (): Promise<void> =>
+      Promise.all([listDestinations(), listGroupReceivers()])
+        .then(([dest, recv]) => {
+          setDestinations(dest.ok ? (dest.destinations ?? []) : null);
+          setGroupReceivers(recv.ok ? (recv.receivers ?? []) : null);
+        })
+        .catch(() => undefined),
+    [],
+  );
+
   const reloadReplicas = useCallback(
     (): Promise<void> =>
       listZFSDatasets()
@@ -243,18 +256,12 @@ export function useInstances(modules: Modules | null): InstancesState {
 
   useEffect(() => {
     if (!ready) return;
-    const loadDestinations = Promise.all([listDestinations(), listGroupReceivers()])
-      .then(([dest, recv]) => {
-        setDestinations(dest.ok ? (dest.destinations ?? []) : null);
-        setGroupReceivers(recv.ok ? (recv.receivers ?? []) : null);
-      })
-      .catch(() => undefined);
     // The received repositories come with a live probe of each, which waits
     // on their backends, so the page does not wait for them.
     if (receiver) void reloadReceived();
     void Promise.all([
       loadSelf(),
-      loadDestinations,
+      reloadDestinations(),
       reloadDeposits(),
       zfs ? reloadReplicas() : undefined,
       fleet ? reloadPeers() : undefined,
@@ -275,7 +282,7 @@ export function useInstances(modules: Modules | null): InstancesState {
       clearInterval(id);
       document.removeEventListener("visibilitychange", refresh);
     };
-  }, [ready, fleet, receiver, pull, zfs, loadSelf, reloadPeers, reloadOffers, reloadReceived, reloadServer, reloadPulls, reloadDeposits, reloadReplicas]);
+  }, [ready, fleet, receiver, pull, zfs, loadSelf, reloadPeers, reloadOffers, reloadReceived, reloadServer, reloadPulls, reloadDeposits, reloadReplicas, reloadDestinations]);
 
   // An answer to a ZFS request changes the roles the server reports.
   const answers = requests.map((r) => `${r.id}:${r.state}`).join(" ");
@@ -337,5 +344,6 @@ export function useInstances(modules: Modules | null): InstancesState {
     reloadDeposits,
     reloadReplicas,
     reloadServer,
+    reloadDestinations,
   };
 }

@@ -64,6 +64,7 @@ const removed: string[] = [];
 const createdRepos: ReceivedRepoInput[] = [];
 const createdSources: PullSourceInput[] = [];
 const offered: [string, string, string][] = [];
+const locationCalls: unknown[][] = [];
 
 vi.mock("../../lib/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../lib/api")>();
@@ -141,6 +142,21 @@ vi.mock("../../lib/api", async (importOriginal) => {
       createdSources.push(input);
       return Promise.resolve({ ok: true });
     },
+    groupReceiverLogin: (memberId: string) => {
+      locationCalls.push(["login", memberId]);
+      return Promise.resolve({
+        ok: true,
+        login: { name: "attic", url: "http://192.168.1.21:8000/cellar-login", user: "cellar-login", password: "n3w-pass" },
+      });
+    },
+    updateDestinationConnection: (id: string, edit: unknown) => {
+      locationCalls.push(["connection", id, edit]);
+      return Promise.resolve({ ok: true });
+    },
+    updateDestination: (id: string, edit: unknown) => {
+      locationCalls.push(["destination", id, edit]);
+      return Promise.resolve({ ok: true });
+    },
     proposeMeshOffer: (peerId: string, d: string, baseUrl: string) => {
       offered.push([peerId, d, baseUrl]);
       return Promise.resolve({ ok: true, snippet: { dockerRun: "docker run rest", compose: "services:", repo: "rest:x" } });
@@ -194,6 +210,7 @@ async function open(over: Partial<InstancesData> = {}, modules: Modules = ALL) {
     reloadDeposits: reload("deposits"),
     reloadReplicas: reload("replicas"),
     reloadServer: reload("server"),
+    reloadDestinations: reload("destinations"),
   };
   const instance = buildInstances(all).instances[0];
   await act(async () => {
@@ -251,6 +268,7 @@ beforeEach(() => {
   createdRepos.length = 0;
   createdSources.length = 0;
   offered.length = 0;
+  locationCalls.length = 0;
   reloads.length = 0;
   closed = 0;
   localStorage.clear();
@@ -319,6 +337,23 @@ describe("what the instance does for this server", () => {
       destinations: [destination({ name: "Attic off-site", repo: "rest:http://192.168.1.21:8000/cellar-login" })],
     });
     expect(row("receiver").textContent).toContain("Storage location Attic off-site");
+  });
+
+  it("says when that storage location is switched off and switches it on with the member's new login", async () => {
+    await open({
+      roles: by({ receiver: allowed() }),
+      groupReceivers: [{ memberId: "m1", name: "attic", url: "http://192.168.1.21:8000", needsAddress: false }],
+      destinations: [destination({ id: "d1", name: "Attic off-site", repo: "rest:http://192.168.1.21:8000/cellar-login", enabled: false })],
+    });
+    expect(row("receiver").textContent).toContain("Storage location Attic off-site is switched off");
+    expect(within(row("receiver")).queryByRole("button", { name: en["storage.add.title"] })).toBeNull();
+    await click(within(row("receiver")).getByRole("button", { name: en["instances.role.locationOn"] }));
+    expect(locationCalls).toEqual([
+      ["login", "m1"],
+      ["connection", "d1", { settings: { url: "http://192.168.1.21:8000/cellar-login", user: "cellar-login", pass: "n3w-pass" } }],
+      ["destination", "d1", expect.objectContaining({ enabled: true })],
+    ]);
+    expect(reloads).toContain("destinations");
   });
 
   it("lists the ZFS items that replicate to it, each with where it stands", async () => {

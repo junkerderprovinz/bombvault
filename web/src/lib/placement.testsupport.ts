@@ -71,6 +71,7 @@ export function destination(over?: Partial<Destination>): Destination {
     immutable: false,
     createdAt: 1_758_170_400,
     domains: [],
+    enabled: true,
     ...over,
   };
 }

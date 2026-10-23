@@ -24,7 +24,7 @@ import { KeeperDialog } from "./KeeperDialogs";
 import { domainLabelKey } from "./PeerScorecard";
 import { RoleDialog } from "./RoleDialog";
 import { ROLES } from "./RoleTile";
-import { roleStates, type Instance, type ItemReplica, type RoleKind, type RoleState } from "./instancesModel";
+import { receiverDestination, roleStates, type Instance, type ItemReplica, type RoleKind, type RoleState } from "./instancesModel";
 import type { InstancesState } from "./useInstances";
 
 const SECTION_KIND: Record<RoleSection, EntryKind> = {
@@ -43,6 +43,7 @@ export function RoleAskDialog({
   instance,
   role,
   sections,
+  uncopied = false,
   onClose,
   onSent,
 }: {
@@ -50,6 +51,8 @@ export function RoleAskDialog({
   role: RequestedRole;
   /** The sections this server backs up. */
   sections: RoleSection[];
+  /** No storage location that is on copies to its receiving server. */
+  uncopied?: boolean;
   onClose: () => void;
   onSent: () => void;
 }) {
@@ -84,7 +87,10 @@ export function RoleAskDialog({
       const done = editing
         ? t("folders.saved")
         : res.request?.state === "allowed"
-          ? named("instances.role.activeNow").replace("{role}", t(ROLES[role].label))
+          ? named(role === "receiver" && store !== "share" && uncopied ? "instances.role.activeUncopied" : "instances.role.activeNow").replace(
+              "{role}",
+              t(ROLES[role].label),
+            )
           : named("instances.role.asked");
       push(done, "success");
       onSent();
@@ -298,6 +304,8 @@ export function useRoleSwitch({
   const [asking, setAsking] = useState<RoleKind | null>(null);
   const ownLogin = useOwnLogin();
   const states = roleStates(instance);
+  const reached = state.data.destinations && receiverDestination(instance, state.data.destinations, state.data.groupReceivers);
+  const uncopied = !!(reached && (reached.noDestination || reached.destinationOff));
 
   async function switchOff(role: RoleKind) {
     // The last keeper takes the recovery code with it.
@@ -354,7 +362,8 @@ export function useRoleSwitch({
     } catch (err) {
       push(err instanceof Error ? err.message : t("instances.role.saveError"), "fail");
     }
-    await state.reloadRoles();
+    // Asked again later, the Receiver shows the locations that went off here.
+    await Promise.all([state.reloadRoles(), role === "receiver" && state.reloadDestinations()]);
   }
 
   function sent() {
@@ -374,7 +383,14 @@ export function useRoleSwitch({
         <KeeperDialog instance={instance} hasCode={state.deposits.codeSince !== ""} onClose={() => setAsking(null)} onDone={sent} />
       )}
       {(asking === "receiver" || asking === "fetcher") && (
-        <RoleAskDialog instance={instance} role={asking} sections={sections} onClose={() => setAsking(null)} onSent={sent} />
+        <RoleAskDialog
+          instance={instance}
+          role={asking}
+          sections={sections}
+          uncopied={uncopied}
+          onClose={() => setAsking(null)}
+          onSent={sent}
+        />
       )}
     </>
   );

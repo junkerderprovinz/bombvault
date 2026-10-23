@@ -100,6 +100,9 @@ export interface Instance {
   /** The Receiver role is on with its receiving server, and no destination
    *  points there, so nothing is copied to it yet. */
   noDestination?: boolean;
+  /** The destination its receiving server became is switched off, as
+   *  switching the role off leaves it, so nothing is copied there. */
+  destinationOff?: boolean;
   /** The Receiver role is on with a share, which only a storage location the
    *  user adds copies to, and which the page cannot tie to the member. */
   shareReceiver?: boolean;
@@ -158,18 +161,37 @@ function restAddress(location: string): string {
 }
 
 /** destinationAt finds the destination whose repository lies at one of the
- *  addresses on a member's receiving server. A group login points at
- *  <server>/<user>, so the address is a prefix of the destination's. */
+ *  addresses on a member's receiving server, one that is on before one that
+ *  is off. A group login points at <server>/<user>, so the address is a
+ *  prefix of the destination's. */
 function destinationAt(addresses: string[], destinations: Destination[]): Destination | undefined {
-  for (const at of addresses) {
-    const base = restAddress(at);
-    const found = destinations.find((d) => {
-      const repo = restAddress(d.repo);
-      return repo === base || repo.startsWith(base + "/");
-    });
-    if (found) return found;
-  }
-  return undefined;
+  const bases = addresses.map(restAddress);
+  const found = destinations.filter((d) => {
+    const repo = restAddress(d.repo);
+    return bases.some((base) => repo === base || repo.startsWith(base + "/"));
+  });
+  return found.find((d) => d.enabled) ?? found[0];
+}
+
+/** receiverDestination is where this server's copies land on a member that
+ *  is its Receiver with its receiving server. */
+export function receiverDestination(
+  inst: Instance,
+  destinations: Destination[],
+  groupReceivers: GroupReceiver[] | null,
+): Pick<Instance, "destination" | "noDestination" | "destinationOff"> {
+  const offered = groupReceivers?.find((r) => r.memberId === inst.memberId);
+  // The server remembers where its locations met the receiving server,
+  // which still holds while the member is away or behind the relay.
+  const addresses = [offered?.url, ...(inst.roles?.receiverLocations ?? [])].filter((a): a is string => !!a);
+  const destination = destinationAt(addresses, destinations);
+  return {
+    destination,
+    // With no address to go by, a rest-server location on the member's own
+    // host is taken for one there rather than called missing.
+    noDestination: !destination && (addresses.length > 0 || !restOnHost(inst.address, destinations)),
+    destinationOff: destination?.enabled === false,
+  };
 }
 
 function hostOf(location: string): string {
@@ -276,19 +298,9 @@ export function buildInstances(data: InstancesData): { instances: Instance[]; un
     inst.presence = inst.connected ? "connected" : data.settling ? "checking" : "inactive";
     inst.replicas = data.replicas.filter((r) => r.replica.target.kind === "peer" && r.replica.target.id === inst.memberId);
     inst.asks = (inst.roles?.asks ?? 0) + inst.offers.length;
-    const offered = data.groupReceivers?.find((r) => r.memberId === inst.memberId);
     if (data.destinations && roleState(inst.roles?.byMember, "receiver") === "on") {
-      if (inst.roles?.byMember.receiver?.store === "share") {
-        inst.shareReceiver = true;
-      } else {
-        // The server remembers where its locations met the receiving server,
-        // which still holds while the member is away or behind the relay.
-        const addresses = [offered?.url, ...(inst.roles?.receiverLocations ?? [])].filter((a): a is string => !!a);
-        inst.destination = destinationAt(addresses, data.destinations);
-        // With no address to go by, a rest-server location on the member's
-        // own host is taken for one there rather than called missing.
-        inst.noDestination = !inst.destination && (addresses.length > 0 || !restOnHost(inst.address, data.destinations));
-      }
+      if (inst.roles?.byMember.receiver?.store === "share") inst.shareReceiver = true;
+      else Object.assign(inst, receiverDestination(inst, data.destinations, data.groupReceivers));
     }
   }
   return { instances, unplaced };

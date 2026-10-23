@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from "react";
 
 import { Button } from "../../components/Button";
+import { IconPlay } from "../../components/glyphs";
 import { InfoBubble } from "../../components/InfoBubble";
 import { AddLocationWindow } from "../../components/storage/AddLocationWindow";
 import { Toggle } from "../../components/Toggle";
@@ -8,9 +9,9 @@ import { IconPencil } from "../../components/navGlyphs";
 import { ReplicaStatePill } from "../../components/zfs/replica/ReplicaStatePill";
 import { ZFSReceiveRequests } from "../../components/zfs/replica/ZFSReceiveRequests";
 import { isRunning } from "../../components/zfs/replica/replicaModel";
-import { checkFleetPeer, updateFleetPeer } from "../../lib/api";
+import { checkFleetPeer, groupReceiverLogin, updateDestination, updateDestinationConnection, updateFleetPeer } from "../../lib/api";
 import { unixOf } from "../../components/zfs/replica/replicaModel";
-import type { KeeperRole, PullSourceView, ReceivedRepoStatus, RoleRequest, RoleSection } from "../../lib/api";
+import type { Destination, KeeperRole, PullSourceView, ReceivedRepoStatus, RoleRequest, RoleSection } from "../../lib/api";
 import { useT, type TranslationKey } from "../../lib/i18n";
 import { relativeTime } from "../../lib/reltime";
 import { flowDomains } from "../../lib/storageFlow";
@@ -119,6 +120,7 @@ export function PeerDetails({
   const { t } = useT();
   const { push } = useToast();
   const [dialog, setDialog] = useState<Dialog | null>(null);
+  const [switchingOn, setSwitchingOn] = useState(false);
   const { peer, name, memberId } = instance;
   const paired = memberId !== "" && !instance.needsPairing;
   const nextHue = hueCounter();
@@ -135,6 +137,26 @@ export function PeerDetails({
       else push(res.error ?? t("fleet.saveError"), "fail");
     } catch (err) {
       push(err instanceof Error ? err.message : t("fleet.saveError"), "fail");
+    }
+  }
+
+  // The member made a new login when it allowed this server again, so the
+  // location signs in with that one before it goes back on.
+  async function switchLocationOn(dest: Destination) {
+    setSwitchingOn(true);
+    try {
+      const login = await groupReceiverLogin(memberId);
+      if (!login.ok || !login.login) return push(login.error ?? t("instances.role.saveError"), "fail");
+      const { url, user, password } = login.login;
+      const signedIn = await updateDestinationConnection(dest.id, { settings: { url, user, pass: password } });
+      if (!signedIn.ok) return push(signedIn.error ?? t("instances.role.saveError"), "fail");
+      const on = await updateDestination(dest.id, { name: dest.name, storageClass: dest.storageClass, immutable: dest.immutable, enabled: true });
+      if (!on.ok) push(on.error ?? t("instances.role.saveError"), "fail");
+    } catch (err) {
+      push(err instanceof Error ? err.message : t("instances.role.saveError"), "fail");
+    } finally {
+      setSwitchingOn(false);
+      void state.reloadDestinations();
     }
   }
 
@@ -160,7 +182,9 @@ export function PeerDetails({
           <Facts
             items={[
               covers,
-              role === "receiver" && instance.destination && t("instances.role.location").replace("{name}", () => instance.destination!.name),
+              role === "receiver" &&
+                instance.destination &&
+                t(instance.destinationOff ? "instances.role.locationOff" : "instances.role.location").replace("{name}", () => instance.destination!.name),
               role === "receiver" && instance.noDestination && t("instances.role.noDestination"),
               role === "receiver" && instance.shareReceiver && named("instances.role.shareLocation"),
               request.decidedBy === "automatic" && named("instances.role.automatic"),
@@ -195,6 +219,7 @@ export function PeerDetails({
     );
   }
 
+  const offLocation = instance.destinationOff ? instance.destination : undefined;
   const shownRoles = ROLE_KINDS.filter((k) => k !== "zfs" || modules.zfs || instance.roles?.byMember.zfs);
   const canOffer = modules.fleet && peer !== undefined && paired;
 
@@ -243,14 +268,26 @@ export function PeerDetails({
                 action={
                   k === "receiver" &&
                   instance.roles?.byMember.receiver?.state === "allowed" &&
-                  (instance.noDestination || instance.shareReceiver) && (
+                  (offLocation ? (
                     <Button
-                      label={t("storage.add.title")}
-                      labelKey="storage.add.title"
+                      label={t("instances.role.locationOn")}
+                      labelKey="instances.role.locationOn"
+                      glyph={<IconPlay />}
                       tone="neutral"
-                      onClick={() => setDialog({ kind: "location" })}
+                      onClick={() => void switchLocationOn(offLocation)}
+                      disabled={switchingOn}
+                      busy={switchingOn}
                     />
-                  )
+                  ) : (
+                    (instance.noDestination || instance.shareReceiver) && (
+                      <Button
+                        label={t("storage.add.title")}
+                        labelKey="storage.add.title"
+                        tone="neutral"
+                        onClick={() => setDialog({ kind: "location" })}
+                      />
+                    )
+                  ))
                 }
               >
                 {(k === "receiver" || k === "fetcher") && (

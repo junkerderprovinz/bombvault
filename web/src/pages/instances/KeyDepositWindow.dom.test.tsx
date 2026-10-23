@@ -80,6 +80,7 @@ async function open(list: Partial<Deposits>) {
     },
     reloadReplicas: reload,
     reloadServer: reload,
+    reloadDestinations: reload,
   };
   await act(async () => {
     render(

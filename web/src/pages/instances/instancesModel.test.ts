@@ -274,6 +274,17 @@ describe("the roles an instance plays for this server", () => {
     expect(of({ groupReceivers: [], destinations: [] }).noDestination).toBe(true);
   });
 
+  it("says the destination of a Receiver switched off and allowed again is off", () => {
+    const offered = [{ memberId: "m1", name: "attic", url: "http://192.168.1.21:8000", needsAddress: false }];
+    const on = [roles({ byMember: side({ receiver: request({ state: "allowed" }) }) })];
+    const off = destination({ id: "d1", repo: "rest:http://192.168.1.21:8000/tower-login", enabled: false });
+    const of = (destinations: InstancesData["destinations"]) =>
+      buildInstances(data({ roles: on, groupReceivers: offered, destinations })).instances[0];
+    expect(of([off])).toMatchObject({ destination: { id: "d1" }, destinationOff: true, noDestination: false });
+    const again = destination({ id: "d2", repo: "rest:http://192.168.1.21:8000/tower-login2" });
+    expect(of([off, again])).toMatchObject({ destination: { id: "d2" }, destinationOff: false });
+  });
+
   it("says a Receiver on a share copies through a location the user adds", () => {
     const on = [roles({ byMember: side({ receiver: request({ state: "allowed", store: "share" }) }) })];
     const inst = buildInstances(data({ roles: on, groupReceivers: [], destinations: [] })).instances[0];

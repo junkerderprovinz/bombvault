@@ -157,6 +157,7 @@ vi.mock("../lib/api", async (importOriginal) => {
     },
     updateDestination: (id: string, edit: { enabled?: boolean }) => {
       if (edit.enabled === false) switchedOff.push(id);
+      destinations = destinations.map((d) => (d.id === id ? { ...d, enabled: edit.enabled ?? d.enabled } : d));
       return Promise.resolve({ ok: true });
     },
     listDeposits: () => answer("listDeposits", { ok: true, deposits: depositList }),
@@ -924,8 +925,32 @@ describe("an instance from before role requests", () => {
     expect(within(dialog).queryByRole("button", { name: en["instances.role.send"] })).toBeNull();
     await click(within(dialog).getByRole("button", { name: en["instances.role.switchOn"] }));
     expect(asked).toHaveLength(1);
-    expect(screen.getByText("DXP480T is your Receiver now.")).toBeTruthy();
+    expect(screen.getByText("DXP480T is your Receiver now, but no storage location copies there yet.")).toBeTruthy();
     expect(tile("m1", "receiver").getAttribute("data-state")).toBe("on");
+  });
+
+  it("says it is the Receiver now without more when a storage location copies there", async () => {
+    destinations = [destination({ id: "d1", repo: "rest:http://192.168.1.21:8000/cellar-login", enabled: true })];
+    await renderPage();
+    await click(tile("m1", "receiver"));
+    const dialog = screen.getByRole("dialog", { name: "DXP480T as Receiver" });
+    await click(within(dialog).getByRole("button", { name: en["instances.role.switchOn"] }));
+    expect(screen.getByText("DXP480T is your Receiver now.")).toBeTruthy();
+  });
+
+  it("shows the storage location as off after the Receiver was switched off and on again", async () => {
+    groupReceivers = [{ memberId: "m1", name: "DXP480T", url: "http://192.168.1.21:8000", needsAddress: false }];
+    destinations = [destination({ id: "d1", name: "attic", repo: "rest:http://192.168.1.21:8000/cellar-login", enabled: true })];
+    roles = [memberRoles({ name: "DXP480T", answers: false, byMember: roleSide({ receiver: allowed() }) })];
+    await renderPage();
+    await click(tile("m1", "receiver"));
+    await click(within(question()).getByRole("button", { name: en["instances.role.switchOff"] }));
+    expect(switchedOff).toEqual(["d1"]);
+    await click(tile("m1", "receiver"));
+    const dialog = screen.getByRole("dialog", { name: "DXP480T as Receiver" });
+    await click(within(dialog).getByRole("button", { name: en["instances.role.switchOn"] }));
+    expect(screen.getByText("DXP480T is your Receiver now, but no storage location copies there yet.")).toBeTruthy();
+    expect(tile("m1", "receiver").textContent).toContain("Storage location attic is switched off");
   });
 
   it("cannot take ZFS replicas, which the dialog explains instead of asking", async () => {
