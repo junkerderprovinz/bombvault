@@ -93,11 +93,16 @@ export function BulkBar({
       className="sticky top-0 z-[3] flex flex-wrap items-center gap-2.5 rounded-card bg-accent py-2 pe-2.5 ps-4 text-sm font-semibold text-accentContrast"
     >
       <SelectMark checked={allPicked} label={t("containers.selectAll")} onChange={onAll} onAccent />
-      <span role="status" className="min-w-0 flex-1">
+      {/* The count is a few words that read wrong when broken, so it keeps one
+          line and the buttons move to a row of their own when it needs the
+          room. The hint is a sentence and wraps beside them. */}
+      <span role="status" className={count > 0 ? "flex-1 whitespace-nowrap" : "min-w-0 flex-1"}>
         {count > 0 ? t("zfs.add.selected", count) : t(isDesktop ? "backups.select.hint" : "backups.select.hintTouch")}
       </span>
-      {count > 0 && children}
-      <BarButton label={t("common.done")} glyph={<IconCheck />} onClick={onDone} wide />
+      <div className="ms-auto flex flex-wrap items-center justify-end gap-2.5">
+        {count > 0 && children}
+        <BarButton label={t("common.done")} glyph={<IconCheck />} onClick={onDone} wide />
+      </div>
     </div>
   );
 }

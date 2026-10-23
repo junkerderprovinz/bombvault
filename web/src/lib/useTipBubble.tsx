@@ -63,6 +63,7 @@ export function useTipBubble(tip?: string, disabled = false, readOnTap = false):
   const triggerRef = useRef<HTMLElement | null>(null);
   const wrapRef = useRef<HTMLSpanElement | null>(null);
   const bubbleRef = useRef<HTMLDivElement | null>(null);
+  const placedAt = useRef<DOMRect | null>(null);
   const tooltipId = useId();
 
   // Flipping `disabled` replaces the trigger element: `wrap` boxes a disabled
@@ -138,6 +139,7 @@ export function useTipBubble(tip?: string, disabled = false, readOnTap = false):
     const bubble = bubbleRef.current;
     if (!trigger || !bubble) return;
     const r = trigger.getBoundingClientRect();
+    placedAt.current = r;
     const viewport = {
       width: document.documentElement.clientWidth || window.innerWidth,
       height: document.documentElement.clientHeight || window.innerHeight,
@@ -151,10 +153,17 @@ export function useTipBubble(tip?: string, disabled = false, readOnTap = false):
     bubble.style.top = `${top}px`;
   }, [shown]);
 
-  // Close on scroll so the bubble never drifts away from its trigger.
+  // Close when a scroll moves the trigger, so the bubble never drifts away from
+  // it. A scroll that leaves the trigger where it was keeps the bubble: the list
+  // passing under a sticky bar, or the scroll event that arrives a frame after
+  // the tap it preceded.
   useEffect(() => {
     if (!shown) return;
-    const onScroll = () => hide();
+    const onScroll = () => {
+      const was = placedAt.current;
+      const now = triggerRef.current?.getBoundingClientRect();
+      if (!was || !now || Math.abs(now.left - was.left) > 1 || Math.abs(now.top - was.top) > 1) hide();
+    };
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") hide();
     };
@@ -192,9 +201,12 @@ export function useTipBubble(tip?: string, disabled = false, readOnTap = false):
       : null,
     wrap: (node: ReactNode, style?: CSSProperties) =>
       disabled && tip ? (
+        // The trigger takes no pointer events of its own, so every touch and
+        // every mouse event lands on the box, whichever events a browser lets
+        // through to a disabled control.
         <span
           ref={wrapRef}
-          className="inline-flex"
+          className="inline-flex *:pointer-events-none"
           style={style}
           onMouseEnter={show}
           onMouseLeave={leave}

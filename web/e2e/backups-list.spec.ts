@@ -358,8 +358,8 @@ async function rightClick(page: Page, row: Locator, position?: { x: number; y: n
   await page.evaluate(() => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done))));
   await row.click({ button: "right", position });
 }
-const tile = (page: Page, name: RegExp) =>
-  page.getByRole("group", { name: "Was die Liste zeigt" }).getByRole("button", { name });
+const tile = (page: Page, name: RegExp, lang: "de" | "en" = "de") =>
+  page.getByRole("group", { name: lang === "de" ? "Was die Liste zeigt" : "What the list shows" }).getByRole("button", { name });
 
 test("the list shows every kind with its count, its last runs and one status", async ({ page }, testInfo) => {
   test.skip(MOBILE_PROJECTS.has(testInfo.project.name), "the desktop list");
@@ -939,6 +939,144 @@ test("while an off-site copy runs, the backup starts say why they wait", async (
   await settle(page);
   await explained(page.getByTestId("bulk-bar").getByRole("button", { name: "Auswahl sichern" }));
 });
+
+for (const lang of ["de", "en"] as const) {
+  test(`the bulk bar keeps its count on one line and clear of its buttons (${lang})`, async ({ page }, testInfo) => {
+    const phone = testInfo.project.name === "mobile-android";
+    test.skip(!phone && testInfo.project.name !== "desktop-1280", "a desktop window and a phone resized through its widths");
+    const widths = phone ? [390, 360, 320] : [1000];
+    await stage(page, { lang });
+    await page.setViewportSize({ width: widths[0], height: 900 });
+    await page.goto("/backups");
+    await expect(rows(page).first()).toBeVisible();
+    await settle(page);
+    const bar = page.getByTestId("bulk-bar");
+    if (phone) {
+      await page.getByTestId("page-actions").getByRole("button", { name: WAIT_WORDS[lang].more }).tap();
+      await page.getByRole("menuitem", { name: WAIT_WORDS[lang].select }).tap();
+      await rows(page).first().tap();
+    } else {
+      await rows(page).first().click({ modifiers: ["ControlOrMeta"] });
+    }
+    for (const picked of [1, 3]) {
+      if (picked === 3) {
+        await page.setViewportSize({ width: widths[0], height: 900 });
+        if (phone) {
+          // On the kind glyph, away from a name's (i).
+          await rows(page).nth(1).tap({ position: { x: 30, y: 20 } });
+          await rows(page).nth(2).tap({ position: { x: 30, y: 20 } });
+        } else {
+          await rows(page).nth(2).click({ modifiers: ["Shift"] });
+        }
+      }
+      await expect(bar.getByRole("status")).toHaveText(lang === "de" ? `${picked} ausgewählt` : `${picked} selected`);
+      for (const width of widths) {
+        await page.setViewportSize({ width, height: 900 });
+        await settle(page);
+        const found = await bar.evaluate((el) => {
+          const status = el.querySelector('[role="status"]')!;
+          const range = document.createRange();
+          range.selectNodeContents(status);
+          const text = range.getBoundingClientRect();
+          const lines = new Set([...range.getClientRects()].map((r) => Math.round(r.top))).size;
+          // The mark before the count reaches past its circle to be easy to tap.
+          const covered = [...el.querySelectorAll('button:not([role="checkbox"])')]
+            .filter((b) => {
+              const r = b.getBoundingClientRect();
+              return r.left < text.right - 1 && r.right > text.left + 1 && r.top < text.bottom - 1 && r.bottom > text.top + 1;
+            })
+            .map((b) => b.textContent);
+          return { lines, covered, past: el.getBoundingClientRect().right > window.innerWidth + 1 };
+        });
+        const at = `${picked} picked at ${width}px`;
+        expect(found.lines, `${at}: the count wraps`).toBe(1);
+        expect(found.covered, `${at}: a button lies on the count`).toEqual([]);
+        expect(found.past, `${at}: the bar runs past the edge`).toBe(false);
+      }
+    }
+  });
+}
+
+const WAIT_WORDS = {
+  de: {
+    title: "Sicherungen",
+    everything: "Jetzt alles sichern",
+    all: "Alle jetzt sichern",
+    selected: "Auswahl sichern",
+    more: "Mehr",
+    select: "Auswählen",
+    reason: "Die Off-site-Kopie der letzten Sicherung läuft noch. Versuch es noch einmal, wenn sie fertig ist.",
+  },
+  en: {
+    title: "Backups",
+    everything: "Back up everything now",
+    all: "Back up all now",
+    selected: "Back up selected",
+    more: "More",
+    select: "Select",
+    reason: "The off-site copy of the last backup is still running. Try again when it has finished.",
+  },
+} as const;
+
+for (const lang of ["de", "en"] as const) {
+  test(`every tap on a waiting backup start explains it on a phone (${lang})`, async ({ page }, testInfo) => {
+    test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "a finger");
+    const words = WAIT_WORDS[lang];
+    await page.setViewportSize({ width: 390, height: 844 });
+    await stage(page, { lang });
+    // A running copy reports every few seconds, and every report renders the
+    // page again. The stream closes after each one and comes back quickly, so
+    // the reports keep arriving while the buttons are tapped.
+    let frame = 0;
+    await page.route("**/api/progress", (route) => {
+      frame++;
+      const copy = { key: "offsite:containers", phase: "replicate", percent: 10 + (frame % 80), active: true, startedAt: NOW - 600 };
+      return route.fulfill({
+        status: 200,
+        contentType: "text/event-stream",
+        body: `retry: 200\n\ndata: ${JSON.stringify(copy)}\n\ndata: {"synced":true}\n\n`,
+      });
+    });
+    await page.goto("/backups");
+    await expect(page.getByRole("heading", { level: 1, name: words.title })).toBeAttached();
+    await expect(rows(page).first()).toBeVisible();
+    await settle(page);
+
+    // The tap that picks a row can leave that row's own bubble up in WebKit.
+    const tooltip = page.getByRole("tooltip").filter({ hasText: words.reason });
+    const tappedTenTimes = async (button: Locator) => {
+      await expect(button).toBeDisabled();
+      await button.scrollIntoViewIfNeeded();
+      for (let i = 0; i < 10; i++) {
+        await button.tap({ force: true });
+        await expect(tooltip, `tap ${i + 1}`).toContainText(words.reason);
+        // The bars stick to the edge of the list, so the rows passing under
+        // them leave the button where it was, and the bubble with it.
+        await page.evaluate((down) => {
+          const main = document.querySelector("main")!;
+          main.scrollTop += down ? 30 : -30;
+        }, i % 2 === 0);
+        // The bubble is meant to be read, so it waits for the next tap.
+        await page.waitForTimeout(400);
+        await expect(tooltip, `tap ${i + 1}, a moment later`).toContainText(words.reason);
+        await page.touchscreen.tap(1, 1);
+        await expect(tooltip).toHaveCount(0);
+      }
+    };
+    const actions = page.getByTestId("page-actions");
+    await tappedTenTimes(actions.getByRole("button", { name: words.everything }));
+
+    await tile(page, /^Container/, lang).tap();
+    await tappedTenTimes(actions.getByRole("button", { name: words.all }));
+
+    await actions.getByRole("button", { name: words.more }).tap();
+    await page.getByRole("menuitem", { name: words.select }).tap();
+    await rows(page).first().tap();
+    await settle(page);
+    await page.evaluate(() => (document.querySelector("main")!.scrollTop = 300));
+    await tappedTenTimes(page.getByTestId("bulk-bar").getByRole("button", { name: words.selected }));
+  });
+}
 
 test("pictures of the page", async ({ page }, testInfo) => {
   test.skip(!SHOTS || testInfo.project.name !== "desktop-1280", "only when a folder for them is named");
