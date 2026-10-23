@@ -29,6 +29,15 @@ Une destination est un endroit où vont les sauvegardes : un dossier local, un p
 3. **Protection.** La fenêtre dit clairement ce que le service peut faire. Un rest-server en mode append-only refuse la suppression, et le test de sabotage le vérifie. Un bucket S3 peut garder d'anciennes versions avec le versionnage et le verrouillage d'objets, ce que BombVault ne peut pas encore vérifier. Un disque cloud ne peut pas du tout refuser la suppression : quiconque entre sur le serveur entre aussi dans cette copie. N'activez **Protection contre la suppression (append-only)** que là où l'autre côté refuse vraiment la suppression ; BombVault n'y élague alors jamais. **En cas d'urgence** dit ce que le kit de récupération contient pour cette destination.
 4. **Pour quelles sections.** Choisissez les sections qui sauvegardent ici. La première copie apporte tout l'historique. Les éléments qui ont choisi leurs propres destinations ne reçoivent pas la nouvelle d'eux-mêmes, et la fenêtre les nomme.
 
+Certains services demandent un peu plus à la connexion :
+
+- **SFTP et la Storage Box.** **Ajouter la clé** place la clé publique de BombVault sur le serveur avec le **Mot de passe du compte**, qui sert pour cette seule connexion et n'est conservé nulle part. La commande pour le faire à la main s'affiche en dessous. Le test affiche la **Clé du serveur** avec son empreinte ; BombVault la retient et refuse le serveur s'il en présente une autre plus tard.
+- **Les clés S3 limitées à un seul bucket**, comme un jeton d'objet Cloudflare R2 ou une clé AWS restreinte, n'ont parfois pas le droit de lister les autres buckets. Saisissez le bucket dans **Bucket**, et le test comme la liste des dossiers ouvrent ce bucket.
+- **Les serveurs SMB qui ne listent pas leurs partages** prennent le nom de l'un d'eux sous **Partage**, et le test ouvre directement ce partage.
+- **FTP** demande son **Chiffrement** : **Aucun**, **TLS explicite (FTPES)** ou **TLS implicite (FTPS, port 990)**.
+- **OneDrive et Zoho WorkDrive.** Quand une connexion ouvre plusieurs disques ou espaces de travail, la fenêtre demande vers lequel vont les sauvegardes.
+- **Un rest-server avec un certificat auto-signé.** Placez le certificat sous forme de fichier PEM dans le dossier `certs` du dossier de données de BombVault (`/config/certs` dans le conteneur, `appdata/bombvault/certs` sous Unraid). Les sauvegardes, les copies et le test de protection contre la suppression lui font confiance sans redémarrage.
+
 Les services S3 passent par le backend S3 propre de restic, ce qui permet d'appliquer une classe de stockage et le verrouillage d'objets. Tous les autres services passent par le rclone livré avec BombVault, et son remote apparaît alors dans la carte **Hors site (rclone)** sous **Paramètres, Destinations**. Un export des réglages contient les destinations ; avec les identifiants inclus, il contient aussi leur connexion.
 
 Le dossier de ce serveur s'appelle **Local** partout : sur les pages des destinations, dans le flux, sur un élément et dans Restauration. Si ce serveur a plusieurs dossiers, chacun porte son propre nom. Une destination créée par le champ hors site d'une section porte le nom de son lieu, le dernier dossier de son adresse ou, à défaut, son serveur, et reçoit un numéro quand une autre destination porte déjà ce nom. Un nom que vous lui donnez sur sa page est conservé. Quand deux destinations de même nom se côtoient, chacune porte son serveur ou son dossier.
@@ -43,6 +52,8 @@ Chaque destination a sa propre page :
 - **Règles par section** : le dépôt, la rétention ou la compression propres à une section sur cette destination. **Modifier les règles** les ouvre, et **Revenir à la destination** ramène une section.
 - **Déjà sous cette destination** : sections dont l'adresse saisie à la main se trouve dans un dossier de cette destination. En reprendre une laisse le dépôt où il est ; la connexion, la classe de stockage et la protection contre la suppression viennent alors de la destination. BombVault vérifie d'abord que la connexion de la destination ouvre le dépôt, et refuse de placer un dépôt append-only sous une destination qui ne l'est pas.
 - Une cuve qui montre le remplissage de la destination, avec le repère de son plein et le nombre de semaines restantes au rythme de croissance des dernières semaines. Une destination qui ne signale pas sa taille indique **Taille inconnue**.
+
+Une destination distante qui contenait des sauvegardes et n'a soudain plus de dépôt, comme un rest-server dont le disque n'a pas été monté, ne reçoit pas d'elle-même un nouveau dépôt vide. Sa page le signale dès qu'une sauvegarde ou une copie constate que le dépôt a disparu. Remontez le disque. Si vous avez vidé l'ancien dépôt exprès, **Créer un nouveau dépôt ici** repart de zéro, pour toutes les sections de la destination et ses dépôts nommés à la fois.
 
 Un serveur récepteur qu'une autre instance de votre groupe exécute apparaît parmi les fournisseurs sous **Depuis votre groupe** ; voir [Serveur récepteur](#receiving-server).
 
@@ -194,6 +205,8 @@ Activer un rôle envoie une demande, et rien ne démarre tant que quelqu'un sur 
 
 **Détails** sur une carte ouvre le reste : les dépôts reçus et les sources de rapatriement de ce membre, les offres de destination, la surveillance, **Supprimer** et **Oublier la clé**.
 
+Les instances éteintes et les téléphones dont l'application est fermée gardent leur carte avec la mention **Inactive**, en gris, avec le moment où on les a vus pour la dernière fois, et restent estompés dans le réseau jusqu'à ce que vous les retiriez avec **Supprimer**. Juste après le démarrage de ce serveur, une telle carte affiche **Vérification** jusqu'au retour du groupe. **Supprimer** fonctionne sur une telle carte quelles que soient les parties activées, et met fin aussi aux demandes en cours du membre, à ses emplacements de réception ZFS inutilisés et à ses demandes de clé en attente. La carte **Instances** de la page d'appairage liste aussi ces membres comme **Inactive**.
+
 ## Récepteur et rapatrieur {#receiver}
 
 ![Une copie hors site reçue dans les détails d'une instance, surveillée en lecture seule, avec un contrôle d'intégrité exécuté sur ce matériel.](assets/screenshots/receiver.png)
@@ -210,7 +223,7 @@ Sur la machine qui **reçoit** des copies append-only d'un autre BombVault, les 
 
 Le récepteur est strictement en lecture seule. Il n'écrit jamais dans le dépôt reçu, donc il ne peut jamais rompre la garantie append-only sur laquelle compte l'émetteur.
 
-Un rapatrieur fonctionne dans l'autre sens : avec **Rapatriement** activé, une instance lit les sauvegardes d'un autre membre dans son propre dépôt selon son propre planning. Ses sources figurent aussi dans les détails de ce membre.
+Un rapatrieur fonctionne dans l'autre sens : avec **Rapatriement** activé, une instance lit les sauvegardes d'un autre membre selon son propre planning, dans un dépôt à elle pour chaque source, si bien qu'elles ne comptent jamais comme les sauvegardes propres de cette machine. Ses sources figurent aussi dans les détails de ce membre.
 
 ### Serveur récepteur {#receiving-server}
 
@@ -266,7 +279,7 @@ L'**Assistant d'urgence** ramène un serveur disparu ou réinstallé. Il démarr
     - **Saisir la clé** : l'`APP_KEY` de l'ancien serveur, et l'endroit où se trouvent ses sauvegardes.
 
     BombVault essaie ensuite la clé sur chaque destination et dit pour chacune si elle est lisible, introuvable, verrouillée par une autre clé, injoignable ou s'il lui manque encore la connexion. Rien n'a encore été enregistré, et la clé reste en mémoire un temps limité. **Reprendre la clé** fait écrire à ce serveur ses sauvegardes avec cette clé désormais ; **Annuler la reprise** revient à sa propre clé jusqu'à ce que la première sauvegarde ait tourné. Un serveur qui a déjà ses propres sauvegardes refuse la reprise et renvoie vers [Depuis un ancien dossier de sauvegarde](#restore-from-another-bombvault-repo). **Enregistrer les identifiants** stocke les identifiants que porte le kit pour les destinations distantes, et demande avant de remplacer des identifiants que ce serveur a déjà.
-2. **Paramètres.** **Restaurer les réglages** restaure les réglages propres de BombVault depuis l'auto-sauvegarde la plus récente : destinations, identifiants, plannings et règles. BombVault redémarre pour les appliquer, via le socket Docker, de sorte que la base de réglages en service n'est jamais écrasée sous un descripteur ouvert, et l'assistant continue de lui-même ensuite. La connexion de ce serveur reste : vous continuez à vous connecter avec le mot de passe que vous utilisez maintenant. Les secrets que l'ancien serveur avait stockés et qui ne peuvent pas être repris sont listés, pour que vous puissiez les saisir de nouveau.
+2. **Paramètres.** **Restaurer les réglages** restaure les réglages propres de BombVault depuis l'auto-sauvegarde la plus récente : destinations, identifiants, plannings et règles. BombVault redémarre pour les appliquer, via le socket Docker, de sorte que la base de réglages en service n'est jamais écrasée sous un descripteur ouvert, et l'assistant continue de lui-même ensuite. La connexion de ce serveur reste : vous continuez à vous connecter avec le mot de passe que vous utilisez maintenant. Les secrets que l'ancien serveur avait stockés et qui ne peuvent pas être repris sont listés, pour que vous puissiez les saisir de nouveau. La restauration ferme toutes les sessions et supprime les clés d'accès : configurez-les donc de nouveau ensuite.
 3. **Sélection.** BombVault parcourt vos sauvegardes et liste les conteneurs, VMs, jeux de dossiers et jeux de données ZFS qu'il trouve. La sauvegarde la plus récente est présélectionnée partout. Ce que ce serveur a encore commence désactivé, car une restauration le remplacerait. Les jeux de dossiers ne savent plus d'où ils venaient après une reconstruction, donc ils vont dans un dossier que vous choisissez.
 4. **Restauration.** Tout ce qui est sélectionné revient d'un coup, laissé arrêté si vous voulez démarrer vous-même chaque conteneur et VM, ce qui est le plus sûr après une perte totale. Téléchargez ensuite un nouveau kit de récupération : l'ancien appartient à l'installation précédente.
 

@@ -24,7 +24,7 @@ Denne server overtog en anden servers sikkerhedskopinøgle i Nødguiden, og `APP
 
 ## En telefon havner på loginsiden
 
-En parret telefon får kun sin session via gruppen, så længe **Telefoner kan parre med gruppens tolv ord** er slået til under **Indstillinger, Sikkerhed**. En nulstilling af adgangskoden slår det fra. En app, der er ældre end serveren, får heller ingen session, før den er opdateret. En server, der er tilføjet med sin adresse, beder altid om adgangskoden.
+En parret telefon får kun sin session via gruppen, så længe **Telefoner kan parre med gruppens tolv ord** er slået til under **Indstillinger, Sikkerhed**. En nulstilling af adgangskoden slår det fra. En app, der er ældre end serveren, får heller ingen session, før den er opdateret. En server, der er tilføjet med sin adresse, beder altid om adgangskoden. En telefon, der er fjernet fra siden Instanser, kommer tilbage slået fra, når dens app åbner igen; slå **Forespørg denne instans** til under **Overvågning** i dens detaljer for at lukke den ind.
 
 ## VM-sikkerhedskopiering vil ikke oprette forbindelse
 
@@ -38,7 +38,7 @@ VM-sikkerhedskopiering taler med libvirt over SSH, aldrig en montering.
 
 ## Et live-VM-snapshot kørte ikke
 
-Live-snapshots kræver qemu guest agent installeret i VM'en og disken på `/mnt/cache` (eller `/mnt/diskX`), ikke `/mnt/user`. På en slukket VM falder live automatisk tilbage til yndefuld. En yndefuld sikkerhedskopi lukker VM'en ned, sikkerhedskopierer diskene og genstarter den så, så den altid er konsistent.
+Live-snapshots kræver qemu guest agent installeret i VM'en og disken på `/mnt/cache` (eller `/mnt/diskX`), ikke `/mnt/user`. På en slukket VM falder live automatisk tilbage til yndefuld. En yndefuld sikkerhedskopi lukker VM'en ned, sikkerhedskopierer diskene og genstarter den så, så den altid er konsistent. Den venter op til ti minutter på, at gæsten lukker ned, og slukker den aldrig med magt, så en Windows-gæst, der installerer opdateringer, ikke bliver afbrudt halvvejs. En gæst, der stadig kører efter det, lades i fred, og den sikkerhedskopi fejler med årsagen.
 
 ## En sikkerhedskopi fejlede med "repository is already locked"
 
@@ -47,6 +47,14 @@ Dette er som regel en forældreløs restic-lås efterladt, da containeren blev o
 ## Min off-site-kopi skete ikke efter en sikkerhedskopi
 
 Off-site-replikering er best-effort af design, så et off-site-hikke aldrig får den lokale sikkerhedskopi til at fejle. Tjek, hvornår destinationen kopierer: dens kort **Kopier** siger **Efter hver sikkerhedskopi** eller nævner en egen plan, og **Indstillinger, Tidsplan, Off-site-kopier pr. område** kan give et område sin egen plan. Brug **Replikér nu** i områdets kort **Off-site-kopi** under **Indstillinger, Destinationer** for en on-demand-kørsel, og hold øje med statushovedet på oversigten, som siger **Off-site-kopi kører**, mens den kører. En mislykket kopi vises under **Kræver opmærksomhed**.
+
+## En rest-servers certifikat er ikke betroet
+
+restic afviser et certifikat, det ikke kender, og fejlen siger, hvor det skal ligge. Kopiér rest-serverens selvsignerede certifikat, eller certifikatet fra den udsteder, der har signeret det, som PEM-fil til mappen `certs` i BombVaults datamappe (`/config/certs` i containeren, `appdata/bombvault/certs` på Unraid), og test igen. Der kræves ingen genstart.
+
+## En stor sikkerhedskopi blev dræbt, fordi hukommelsen slap op
+
+Sæt **Hukommelsesgrænse pr. sikkerhedskopi (MiB, 0 = ingen)** i kortet **Ydeevne** under **Indstillinger, System** et godt stykke under det, containeren må bruge. Tæt på grænsen frigiver restic hukommelse oftere, hvilket koster lidt fart, så sikkerhedskopien bliver langsommere i stedet for at blive dræbt.
 
 ## En gendannelse blev afbrudt, før den startede
 

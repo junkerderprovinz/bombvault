@@ -31,7 +31,7 @@ L'app accetta una risposta solo se il server l'ha firmata con la chiave che l'ap
 
 ## Cambiare server {#switch}
 
-Con un server aperto, in cima alla sua panoramica compare il nome del server, preceduto da una freccia per tornare indietro. La freccia porta alla panoramica dell'app, la schermata iniziale, che elenca ogni server che l'app conosce con il suo stato: **Connessa**, **Non connessa**, **Accesso necessario** o **Verifica certificato**. Lì tocca un altro server per aprirlo, direttamente a casa e altrimenti tramite il relay.
+Con un server aperto, in cima alla sua panoramica compare il nome del server, preceduto da una freccia per tornare indietro. La freccia porta alla panoramica dell'app, la schermata iniziale, che elenca ogni server che l'app conosce con il suo stato: **Connessa**, **Non connessa**, **Accesso necessario** o **Verifica certificato**. Un server del gruppo che non risponde compare come **Inattiva**, in grigio, con il momento in cui il gruppo l'ha visto l'ultima volta, e uno di cui l'app non ha ancora avuto notizie mostra **Verifica in corso**. A ogni connessione l'app legge l'elenco del gruppo da una delle sue istanze, quindi compare anche un'istanza che non ha mai incontrato tramite il relay, per esempio una che era spenta quando il telefono si è unito. Lì tocca un altro server per aprirlo, direttamente a casa e altrimenti tramite il relay.
 
 ## Accesso già eseguito su un telefono associato {#sign-in}
 
@@ -45,7 +45,7 @@ Un telefono associato al tuo gruppo apre ciascuno dei suoi server con l'accesso 
 
 ## Il telefono nella pagina Istanze {#instances}
 
-Il telefono riceve una scheda propria nella pagina Istanze di ogni server del gruppo, contrassegnata come app Android e con il nome che hai dato al telefono. Non ha una scorecard perché non esegue backup, e **Rimuovi** la toglie dalla pagina. Un telefono che conosce le parole può associarsi di nuovo in qualsiasi momento, quindi per un telefono smarrito disattiva **I telefoni possono associarsi con le dodici parole del gruppo** in **Impostazioni, Sicurezza**, oppure fai usare a ogni istanza **Lascia il gruppo** e associale di nuovo con parole nuove.
+Il telefono riceve una scheda propria nella pagina Istanze di ogni server del gruppo, contrassegnata come app Android e con il nome che hai dato al telefono. Non ha una scorecard perché non esegue backup. **Rimuovi** la toglie dalla pagina e chiude subito la sua sessione, come fa anche disattivare **Interroga questa istanza** sotto **Monitoraggio** nei suoi dettagli. Il telefono conosce ancora le parole, quindi ricompare quando si apre la sua app, ma disattivato, e non riceve una sessione finché qualcuno non lo attiva. Per un telefono smarrito rimuovi la sua scheda su ogni server, oppure disattiva **I telefoni possono associarsi con le dodici parole del gruppo** in **Impostazioni, Sicurezza**, oppure fai usare a ogni istanza **Lascia il gruppo** e associale di nuovo con parole nuove.
 
 Un telefono associato prima della 10.0.0 inizia a firmare le sue chiamate alla prima visita dopo l'aggiornamento, e ogni server conserva la prima chiave che riceve per il telefono. Se qualcun altro che conosce le parole del gruppo arriva prima mentre il telefono è offline, quel server da quel momento rifiuta il telefono, e l'app non può più aprirlo tramite il relay. Per risolvere, accedi a quel server da un browser, scegli **Dimentica la chiave** sulla scheda del telefono nella pagina Istanze e poi **Conferma di dimenticare**, e apri di nuovo l'app. Il server prende la chiave propria del telefono alla chiamata successiva. Se il telefono viene rifiutato di nuovo, qualcun altro ha le parole: fai usare a ogni istanza **Lascia il gruppo** e associale di nuovo con parole nuove, come per un telefono smarrito.
 
@@ -65,7 +65,7 @@ Esportazioni, kit di ripristino, ZIP del flash e dump dei database finiscono nel
 
 ## Su un touch screen {#touch}
 
-Sotto un dito non c'è hover, quindi un controllo si scurisce mentre lo tieni premuto, e un pulsante con il logo di un marchio si accende nel colore di quel marchio finché non sollevi il dito. Una pressione prolungata su un pulsante conta come un tocco lento e non apre nessun menu dei link.
+Sotto un dito non c'è hover, quindi un controllo si scurisce mentre lo tieni premuto, e un pulsante con il logo di un marchio si accende nel colore di quel marchio finché non sollevi il dito. Una pressione prolungata su un pulsante conta come un tocco lento e non apre nessun menu dei link. Un tocco su un pulsante disattivato mostra perché è disattivato, finché non tocchi da un'altra parte.
 
 ## Oppure in un browser {#browser}
 

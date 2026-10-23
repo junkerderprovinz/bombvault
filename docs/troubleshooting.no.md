@@ -24,7 +24,7 @@ Denne serveren overtok en annen servers sikkerhetskopinøkkel i Nødveiviser, og
 
 ## En telefon havner på påloggingssiden
 
-En paret telefon får økten sin over gruppen bare så lenge **Telefoner kan pare med gruppens tolv ord** er på under **Innstillinger, Sikkerhet**. En tilbakestilling av passordet slår det av. En app som er eldre enn serveren, får heller ingen økt før den er oppdatert. En server som er lagt til med adressen sin, spør alltid etter passordet.
+En paret telefon får økten sin over gruppen bare så lenge **Telefoner kan pare med gruppens tolv ord** er på under **Innstillinger, Sikkerhet**. En tilbakestilling av passordet slår det av. En app som er eldre enn serveren, får heller ingen økt før den er oppdatert. En server som er lagt til med adressen sin, spør alltid etter passordet. En telefon som er fjernet fra Instanser-siden, kommer tilbake slått av når appen åpnes igjen; slå på **Spør ut denne instansen** under **Overvåking** i detaljene for å slippe den inn.
 
 ## VM-sikkerhetskopiering vil ikke koble til
 
@@ -38,7 +38,7 @@ VM-sikkerhetskopiering snakker med libvirt over SSH, aldri en montering.
 
 ## Et live-VM-øyeblikksbilde kjørte ikke
 
-Live-øyeblikksbilder trenger qemu guest agent installert i VM-en og disken på `/mnt/cache` (eller `/mnt/diskX`), ikke `/mnt/user`. På en avslått VM faller live automatisk tilbake til pen. En pen sikkerhetskopi slår VM-en av, sikkerhetskopierer diskene og starter den så på nytt, så den er alltid konsistent.
+Live-øyeblikksbilder trenger qemu guest agent installert i VM-en og disken på `/mnt/cache` (eller `/mnt/diskX`), ikke `/mnt/user`. På en avslått VM faller live automatisk tilbake til pen. En pen sikkerhetskopi slår VM-en av, sikkerhetskopierer diskene og starter den så på nytt, så den er alltid konsistent. Den venter opptil ti minutter på at gjesten slår seg av, og tvinger den aldri av, så en Windows-gjest som installerer oppdateringer, ikke blir avbrutt halvveis. En gjest som fortsatt kjører etter det, får være i fred, og den sikkerhetskopien feiler med årsaken.
 
 ## En sikkerhetskopi feilet med "repository is already locked"
 
@@ -47,6 +47,14 @@ Dette er vanligvis en foreldreløs restic-lås etterlatt da containeren ble oppd
 ## Min eksterne kopi skjedde ikke etter en sikkerhetskopi
 
 Ekstern replikering er best-effort av design, så en ekstern hikke feiler aldri den lokale sikkerhetskopien. Sjekk når målet kopierer: kortet **Kopier** sier **Etter hver sikkerhetskopi** eller nevner en egen plan, og **Innstillinger, Tidsplan, Off-site-kopier per område** kan gi et område en egen plan. Bruk **Replikér nå** i kortet **Off-site-kopi** til området under **Innstillinger, Mål** for en på-forespørsel-kjøring, og følg med på statushodet på oversikten, som sier **Off-site-kopi pågår** mens den kjører. En mislykket kopi vises under **Krever oppmerksomhet**.
+
+## Sertifikatet til en rest-server blir ikke godtatt
+
+restic avviser et sertifikat det ikke kjenner, og feilmeldingen sier hvor det skal ligge. Kopier det selvsignerte sertifikatet til rest-serveren, eller sertifikatet til utstederen som signerte det, som PEM-fil til mappen `certs` i BombVaults datamappe (`/config/certs` i containeren, `appdata/bombvault/certs` på Unraid), og test på nytt. Omstart trengs ikke.
+
+## En stor sikkerhetskopi ble drept fordi minnet tok slutt
+
+Sett **Minnegrense per sikkerhetskopi (MiB, 0 = ingen)** i kortet **Ytelse** under **Innstillinger, System** godt under det containeren får bruke. Nær grensen frigjør restic minne oftere, noe som koster litt fart, så sikkerhetskopien går tregere i stedet for å bli drept.
 
 ## En gjenoppretting avbrøt før den startet
 

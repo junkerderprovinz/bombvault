@@ -24,7 +24,7 @@ Máy chủ này đã tiếp nhận khóa sao lưu của một máy chủ khác t
 
 ## Điện thoại bị đưa tới trang đăng nhập
 
-Một điện thoại đã ghép nối chỉ nhận phiên qua nhóm khi **Điện thoại có thể ghép nối bằng mười hai từ của nhóm** đang bật trong **Cài đặt, Bảo mật**. Việc đặt lại mật khẩu sẽ tắt nó. Một ứng dụng cũ hơn máy chủ cũng không nhận được phiên cho đến khi được cập nhật. Máy chủ được thêm bằng địa chỉ luôn hỏi mật khẩu.
+Một điện thoại đã ghép nối chỉ nhận phiên qua nhóm khi **Điện thoại có thể ghép nối bằng mười hai từ của nhóm** đang bật trong **Cài đặt, Bảo mật**. Việc đặt lại mật khẩu sẽ tắt nó. Một ứng dụng cũ hơn máy chủ cũng không nhận được phiên cho đến khi được cập nhật. Máy chủ được thêm bằng địa chỉ luôn hỏi mật khẩu. Một điện thoại đã bị xóa khỏi trang Phiên bản sẽ quay lại ở trạng thái tắt khi ứng dụng của nó mở lại; để cho nó vào, hãy bật **Truy vấn phiên bản này** trong **Giám sát** ở phần chi tiết của nó.
 
 ## Sao lưu VM không kết nối được
 
@@ -38,7 +38,7 @@ Sao lưu VM kết nối libvirt qua SSH, không bao giờ qua một điểm gắ
 
 ## Một snapshot VM trực tiếp đã không chạy
 
-Snapshot trực tiếp cần qemu guest agent được cài đặt trong VM và đĩa nằm trên `/mnt/cache` (hoặc `/mnt/diskX`), không phải `/mnt/user`. Trên một VM đã tắt, trực tiếp tự động rơi về êm ái. Một lần sao lưu êm ái tắt VM xuống, sao lưu các đĩa, rồi khởi động lại nó, nên nó luôn nhất quán.
+Snapshot trực tiếp cần qemu guest agent được cài đặt trong VM và đĩa nằm trên `/mnt/cache` (hoặc `/mnt/diskX`), không phải `/mnt/user`. Trên một VM đã tắt, trực tiếp tự động rơi về êm ái. Một lần sao lưu êm ái tắt VM xuống, sao lưu các đĩa, rồi khởi động lại nó, nên nó luôn nhất quán. Nó chờ tối đa mười phút để máy khách tắt và không bao giờ buộc tắt máy khách, nên một máy khách Windows đang cài bản cập nhật không bị cắt ngang giữa chừng. Một máy khách vẫn còn chạy sau thời gian đó sẽ được để yên, và lần sao lưu đó thất bại kèm lý do.
 
 ## Một lần sao lưu thất bại với "repository is already locked"
 
@@ -47,6 +47,14 @@ Snapshot trực tiếp cần qemu guest agent được cài đặt trong VM và 
 ## Bản sao off-site của tôi đã không diễn ra sau một lần sao lưu
 
 Nhân bản off-site vốn được thiết kế theo kiểu hết sức có thể, nên một trục trặc ở off-site không bao giờ làm hỏng bản sao lưu cục bộ. Hãy kiểm tra khi nào đích sao lưu sao chép: thẻ **Sao chép** của nó ghi **Sau mỗi bản sao lưu** hoặc nêu một kế hoạch riêng, và **Cài đặt, Lịch trình, Bản sao ngoài site theo phần** có thể cho một phần kế hoạch riêng. Hãy dùng **Sao chép ngay** trong thẻ **Bản sao ngoài site** của phần đó dưới **Cài đặt, Đích sao lưu** để chạy theo yêu cầu, và theo dõi phần đầu trạng thái của Tổng quan, nơi ghi **Đang sao chép ra ngoài site** khi đang chạy. Một bản sao thất bại hiện dưới **Cần chú ý**.
+
+## Chứng chỉ của rest-server không được tin cậy
+
+restic từ chối một chứng chỉ mà nó không biết, và thông báo lỗi cho biết nên đặt chứng chỉ ở đâu. Sao chép chứng chỉ tự ký của rest-server, hoặc chứng chỉ của tổ chức đã ký nó, dưới dạng tệp PEM vào thư mục `certs` trong thư mục dữ liệu của BombVault (`/config/certs` trong container, `appdata/bombvault/certs` trên Unraid) rồi kiểm tra lại. Không cần khởi động lại.
+
+## Một bản sao lưu lớn bị dừng vì hết bộ nhớ
+
+Đặt **Giới hạn bộ nhớ mỗi bản sao lưu (MiB, 0 = không)** trong thẻ **Hiệu năng** dưới **Cài đặt, Hệ thống** ở mức thấp hơn hẳn lượng bộ nhớ mà container được phép dùng. Khi gần tới giới hạn, restic giải phóng bộ nhớ thường xuyên hơn, việc này làm chậm đi một chút, nên bản sao lưu chạy chậm lại thay vì bị dừng.
 
 ## Một lần khôi phục đã hủy trước khi nó bắt đầu
 

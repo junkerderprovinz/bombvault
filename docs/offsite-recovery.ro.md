@@ -29,6 +29,15 @@ O destinație este un loc unde ajung copiile de rezervă: un folder local, o par
 3. **Protecție.** Fereastra spune clar ce poate face serviciul. Un rest-server în mod append-only refuză ștergerea, iar testul de manipulare verifică asta. Un bucket S3 poate păstra versiuni vechi prin versionare și object lock, ceea ce BombVault nu poate verifica încă. O unitate cloud nu poate refuza deloc ștergerea: cine ajunge în server ajunge și la acea copie. Pornește **Protecție împotriva ștergerii (append-only)** doar acolo unde partea îndepărtată chiar refuză ștergerea; BombVault nu mai curăță atunci niciodată acolo. **Pentru urgențe** spune ce conține kitul de recuperare pentru această destinație.
 4. **Pentru ce secțiuni.** Alege secțiunile care se salvează aici. Prima copiere aduce tot istoricul. Elementele care și-au ales propriile destinații nu o primesc singure pe cea nouă, iar fereastra le numește.
 
+Unele servicii cer ceva în plus la autentificare:
+
+- **SFTP și Storage Box.** **Adaugă cheia** pune cheia publică a BombVault pe server cu **Parola contului**, care este folosită pentru acea singură autentificare și nu este păstrată nicăieri. Dedesubt apare comanda pentru a face asta manual. Testul arată **Cheia serverului** cu amprenta ei; BombVault o reține și refuză serverul dacă mai târziu arată alta.
+- **Cheile S3 pentru un singur bucket**, cum ar fi un token de obiect Cloudflare R2 sau o cheie AWS restrânsă, s-ar putea să nu aibă voie să listeze celelalte bucket-uri. Tastează bucket-ul la **Bucket**, iar testul și lista de foldere deschid acel bucket.
+- **Serverele SMB care nu își listează partajările** primesc numele uneia la **Partajare**, iar testul deschide direct acea partajare.
+- **FTP** cere **Criptare**: **Fără**, **TLS explicit (FTPES)** sau **TLS implicit (FTPS, portul 990)**.
+- **OneDrive și Zoho WorkDrive.** Când o autentificare deschide mai multe unități sau spații de lucru, fereastra întreabă în care ajung copiile de rezervă.
+- **Un rest-server cu certificat autosemnat.** Pune certificatul ca fișier PEM în folderul `certs` din folderul de date al BombVault (`/config/certs` în container, `appdata/bombvault/certs` pe Unraid). Copiile de rezervă, copiile off-site și testul protecției la ștergere au încredere în el fără repornire.
+
 Serviciile S3 rulează prin backendul S3 propriu al restic, ceea ce permite aplicarea unei clase de stocare și a object lock. Orice alt serviciu rulează prin rclone-ul livrat cu BombVault, iar remote-ul lui apare apoi în cardul **În afara sitului (rclone)** de la **Setări, Destinații**. Un export de setări poartă destinațiile; cu credențialele incluse poartă și autentificarea lor.
 
 Folderul de pe acest server se numește **Local** peste tot: pe paginile destinațiilor, în flux, la un element și la Restaurare. Dacă pe acest server există mai multe foldere, fiecare poartă numele lui propriu. O destinație pe care o creează câmpul off-site al unei secțiuni se numește după locul ei, adică ultimul folder din adresa ei sau, dacă nu are unul, după serverul ei, și primește un număr când o altă destinație are deja acest nume. Un nume pe care i-l dai tu pe pagina ei rămâne. Când două destinații cu același nume stau una lângă alta, fiecare poartă și serverul sau folderul ei.
@@ -43,6 +52,8 @@ Fiecare destinație are o pagină proprie:
 - **Reguli pe secțiuni**: depozitul, retenția sau compresia proprie a unei secțiuni la această destinație. **Schimbă regulile** le deschide, iar **Revino la destinație** readuce o secțiune.
 - **Deja sub această destinație**: secțiuni a căror adresă tastată manual se află într-un folder al acestei destinații. Preluarea uneia lasă depozitul unde este; autentificarea, clasa de stocare și protecția la ștergere vin apoi de la destinație. BombVault verifică întâi dacă autentificarea destinației deschide depozitul și refuză să pună un depozit append-only sub o destinație care nu este append-only.
 - Un vas care arată cât de plină este destinația, cu marcajul unde se umple și câte săptămâni mai sunt la ritmul de creștere din ultimele săptămâni. O destinație care nu își raportează dimensiunea spune **Dimensiune necunoscută**.
+
+O destinație la distanță care a avut copii de rezervă și dintr-odată nu mai are niciun depozit, cum ar fi un rest-server al cărui disc nu s-a montat, nu primește singură unul nou și gol. Pagina ei spune asta de îndată ce o copie de rezervă sau o copiere constată că depozitul lipsește. Montează din nou discul. Dacă ai golit intenționat depozitul vechi, **Creează aici un depozit nou** o ia de la capăt, pentru toate secțiunile destinației și depozitele ei denumite deodată.
 
 Un server receptor pe care îl rulează altă instanță a grupului tău apare printre furnizori ca **Din grupul tău**; vezi [Server receptor](#receiving-server).
 
@@ -194,6 +205,8 @@ Pornirea unui rol trimite o cerere, și nimic nu începe până când cineva de 
 
 **Detalii** pe un card deschide restul: depozitele primite și sursele de preluare ale acelui membru, ofertele de stocare, monitorizarea, **Elimină** și **Uită cheia**.
 
+Instanțele oprite și telefoanele cu aplicația închisă își păstrează cardul ca **Inactivă**, în gri, cu momentul în care au fost văzute ultima dată, și stau estompate în rețea până când le elimini cu **Elimină**. Imediat după pornirea acestui server, un astfel de card arată **Se verifică** până când grupul revine. **Elimină** funcționează pe un astfel de card indiferent ce părți sunt pornite și încheie și cererile deschise ale membrului, locurile lui de recepție ZFS nefolosite și cererile lui de chei în așteptare. Cardul **Instanțe** de pe pagina de împerechere listează și el acești membri ca **Inactivă**.
+
 ## Receptor și preluator {#receiver}
 
 ![O copie off-site primită, în detaliile unei instanțe, urmărită doar în citire, cu o verificare de integritate rulată pe acest hardware.](assets/screenshots/receiver.png)
@@ -210,7 +223,7 @@ Pe stația care **primește** copii append-only de la alt BombVault, depozitele 
 
 Receptorul este strict doar în citire. Nu scrie niciodată în depozitul primit, deci nu poate strica niciodată garanția append-only pe care se bazează expeditorul.
 
-Un preluator lucrează invers: cu **Preluare** pornită, o instanță citește copiile altui membru în propriul depozit după un program propriu. Sursele lui stau și ele în detaliile acelui membru.
+Un preluator lucrează invers: cu **Preluare** pornită, o instanță citește copiile altui membru după un program propriu, într-un depozit propriu pentru fiecare sursă, așa că ele nu contează niciodată drept copiile acestei stații. Sursele lui stau și ele în detaliile acelui membru.
 
 ### Server receptor {#receiving-server}
 
@@ -266,7 +279,7 @@ Un rest-server pe care îl rulezi manual funcționează și el: adaugă-l cu **A
     - **Introdu cheia**: `APP_KEY` al vechiului server și unde sunt copiile lui.
 
     BombVault încearcă apoi cheia pe fiecare destinație și spune pentru fiecare dacă este lizibilă, negăsită, blocată cu altă cheie, inaccesibilă sau încă fără autentificare. Încă nu s-a salvat nimic, iar cheia rămâne în memorie un timp limitat. **Preia cheia** face ca acest server să-și scrie de acum copiile cu acea cheie; **Anulează preluarea** revine la propria cheie până rulează prima copie. Un server care are deja copii proprii refuză preluarea și trimite la [Dintr-un folder vechi de copii](#restore-from-another-bombvault-repo). **Salvează credențialele** stochează autentificările pe care le poartă kitul pentru destinațiile la distanță și întreabă înainte să le înlocuiască pe cele pe care le are deja acest server.
-2. **Setări.** **Readu setările** restaurează propriile setări ale BombVault din cea mai nouă copie Auto-backup: destinații, credențiale, programări și reguli. BombVault repornește ca să le aplice, prin socketul Docker, deci baza de date activă de setări nu este niciodată suprascrisă sub un handle deschis, iar asistentul continuă singur după aceea. Autentificarea acestui server rămâne: continui să te autentifici cu parola pe care o folosești acum. Secretele stocate de vechiul server care nu pot fi preluate sunt listate, ca să le poți introduce din nou.
+2. **Setări.** **Readu setările** restaurează propriile setări ale BombVault din cea mai nouă copie Auto-backup: destinații, credențiale, programări și reguli. BombVault repornește ca să le aplice, prin socketul Docker, deci baza de date activă de setări nu este niciodată suprascrisă sub un handle deschis, iar asistentul continuă singur după aceea. Autentificarea acestui server rămâne: continui să te autentifici cu parola pe care o folosești acum. Secretele stocate de vechiul server care nu pot fi preluate sunt listate, ca să le poți introduce din nou. Restaurarea încheie toate sesiunile și elimină cheile de acces, așa că configurează-le din nou după aceea.
 3. **Selecție.** BombVault caută prin copiile tale și listează containerele, VM-urile, seturile de foldere și seturile de date ZFS pe care le găsește. Cea mai nouă copie de rezervă este preselectată peste tot. Ce are încă acest server pornește oprit, pentru că o restaurare l-ar înlocui. Seturile de foldere nu mai știu de unde au venit după o reconstruire, așa că merg într-un folder ales de tine.
 4. **Restaurare.** Tot ce este selectat revine dintr-o dată, lăsat oprit dacă vrei să pornești tu fiecare container și VM, ceea ce este cel mai sigur după o pierdere totală. După aceea descarcă un kit de recuperare nou: cel vechi aparține instalării anterioare.
 

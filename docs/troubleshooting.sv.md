@@ -24,7 +24,7 @@ Den här servern tog över en annan servers säkerhetskopienyckel i Nödguiden, 
 
 ## En telefon hamnar på inloggningssidan
 
-En parkopplad telefon får sin session via gruppen bara så länge **Telefoner kan parkopplas med gruppens tolv ord** är på under **Inställningar, Säkerhet**. En återställning av lösenordet stänger av det. En app som är äldre än servern får heller ingen session förrän den uppdaterats. En server som lagts till med sin adress frågar alltid efter lösenordet.
+En parkopplad telefon får sin session via gruppen bara så länge **Telefoner kan parkopplas med gruppens tolv ord** är på under **Inställningar, Säkerhet**. En återställning av lösenordet stänger av det. En app som är äldre än servern får heller ingen session förrän den uppdaterats. En server som lagts till med sin adress frågar alltid efter lösenordet. En telefon som har tagits bort från sidan Instanser kommer tillbaka avstängd när dess app öppnas igen; slå på **Fråga av den här instansen** under **Övervakning** i dess detaljer för att släppa in den.
 
 ## VM-säkerhetskopiering ansluter inte
 
@@ -38,7 +38,7 @@ VM-säkerhetskopiering pratar med libvirt över SSH, aldrig en montering.
 
 ## En live-VM-ögonblicksbild kördes inte
 
-Live-ögonblicksbilder behöver qemu-gästagenten installerad i VM:en och disken på `/mnt/cache` (eller `/mnt/diskX`), inte `/mnt/user`. På en avstängd VM faller live automatiskt tillbaka till mjuk. En mjuk säkerhetskopiering stänger av VM:en, säkerhetskopierar diskarna och startar sedan om den, så den är alltid konsekvent.
+Live-ögonblicksbilder behöver qemu-gästagenten installerad i VM:en och disken på `/mnt/cache` (eller `/mnt/diskX`), inte `/mnt/user`. På en avstängd VM faller live automatiskt tillbaka till mjuk. En mjuk säkerhetskopiering stänger av VM:en, säkerhetskopierar diskarna och startar sedan om den, så den är alltid konsekvent. Den väntar upp till tio minuter på att gästen stängs av och tvingar aldrig av den, så att en Windows-gäst som installerar uppdateringar inte avbryts halvvägs. En gäst som fortfarande körs efter det lämnas ifred, och den säkerhetskopieringen misslyckas med orsaken.
 
 ## En säkerhetskopiering misslyckades med "repository is already locked"
 
@@ -47,6 +47,14 @@ Det här är oftast ett föräldralöst restic-lås som blev kvar när container
 ## Min off-site-kopia hände inte efter en säkerhetskopiering
 
 Off-site-replikering är best-effort av design, så ett off-site-hickande får aldrig den lokala säkerhetskopian att misslyckas. Kontrollera när målet kopierar: dess kort **Kopiera** säger **Efter varje säkerhetskopia** eller namnger en egen plan, och **Inställningar, Schema, Externa kopior per avsnitt** kan ge ett avsnitt en egen plan. Använd **Replikera nu** i avsnittets off-site-kopiakort under **Inställningar, Mål** för en körning på begäran, och titta på översiktens statushuvud, som säger **Extern kopiering pågår** medan den körs. En misslyckad kopiering syns under **Behöver uppmärksamhet**.
+
+## En rest-servers certifikat betros inte
+
+restic vägrar ett certifikat det inte känner till, och felet säger var det ska ligga. Kopiera rest-serverns självsignerade certifikat, eller certifikatet från utfärdaren som signerade det, som PEM-fil till mappen `certs` i BombVaults datamapp (`/config/certs` i containern, `appdata/bombvault/certs` i Unraid) och testa igen. Ingen omstart behövs.
+
+## En stor säkerhetskopiering avbröts för att minnet tog slut
+
+Ställ in **Minnesgräns per säkerhetskopiering (MiB, 0 = ingen)** i kortet **Prestanda** under **Inställningar, System** en bra bit under det som containern får använda. Nära gränsen frigör restic minne oftare, vilket kostar lite fart, så säkerhetskopieringen blir långsammare i stället för att avbrytas.
 
 ## En återställning avbröts innan den startade
 

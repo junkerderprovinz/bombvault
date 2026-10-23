@@ -29,6 +29,15 @@ Een bestemming is een plek waar back-ups heen gaan: een lokale map, een share, e
 3. **Bescherming.** Het venster zegt zonder omwegen wat de dienst kan. Een rest-server in append-only-modus weigert verwijderen, en de tamper-test controleert dat. Een S3-bucket kan oude versies bewaren met versiebeheer en objectvergrendeling, wat BombVault nog niet kan controleren. Een clouddrive kan verwijderen helemaal niet weigeren: wie in de server komt, komt ook bij die kopie. Zet **Bescherming tegen verwijderen (append-only)** alleen aan waar de andere kant verwijderen echt weigert; BombVault schoont daar dan nooit op. **Voor noodgevallen** zegt wat de herstelkit voor deze bestemming bevat.
 4. **Voor welke onderdelen.** Kies de onderdelen die hier heen back-uppen. De eerste kopie neemt de hele geschiedenis mee. Items die hun eigen bestemmingen hebben gekozen, krijgen de nieuwe niet vanzelf, en het venster noemt ze.
 
+Sommige diensten vragen bij de aanmelding iets meer:
+
+- **SFTP en de Storage Box.** **Sleutel toevoegen** zet de publieke sleutel van BombVault op de server met het **Wachtwoord van het account**, dat alleen voor die ene aanmelding wordt gebruikt en nergens wordt bewaard. Daaronder staat het commando om het met de hand te doen. De test toont de **Serversleutel** met zijn vingerafdruk; BombVault onthoudt hem en weigert de server als die later een andere toont.
+- **S3-sleutels voor één bucket**, zoals een objecttoken van Cloudflare R2 of een beperkte AWS-sleutel, mogen de andere buckets soms niet opsommen. Vul de bucket in bij **Bucket**, dan openen de test en de mappenlijst die bucket.
+- **SMB-servers die hun shares niet opsommen** krijgen de naam van een share bij **Share**, en de test opent die share rechtstreeks.
+- **FTP** vraagt om de **Versleuteling**: **Geen**, **Expliciete TLS (FTPES)** of **Impliciete TLS (FTPS, poort 990)**.
+- **OneDrive en Zoho WorkDrive.** Opent een aanmelding meerdere schijven of werkruimtes, dan vraagt het venster naar welke de back-ups gaan.
+- **Een rest-server met een zelfondertekend certificaat.** Zet het certificaat als PEM-bestand in de map `certs` in de datamap van BombVault (`/config/certs` in de container, `appdata/bombvault/certs` in Unraid). Back-ups, kopieën en de test van de bescherming tegen verwijderen vertrouwen het zonder herstart.
+
 S3-diensten lopen via restic's eigen S3-backend, en daardoor kunnen een opslagklasse en objectvergrendeling gelden. Elke andere dienst loopt via de rclone die met BombVault wordt meegeleverd, en haar remote verschijnt dan in de kaart **Off-site (rclone)** onder **Instellingen, Bestemmingen**. Een export van instellingen bevat de bestemmingen; met inloggegevens erbij bevat hij ook hun aanmelding.
 
 De map op deze server heet overal **Lokaal**: op de bestemmingspagina's, in de flow, bij een item en onder Terugzetten. Zijn er meerdere mappen op deze server, dan heeft elke een eigen naam. Een bestemming die het off-site-veld van een onderdeel aanmaakt, is genoemd naar haar plek: de laatste map van haar adres of, zonder map, haar server. Ze krijgt een nummer als een andere bestemming al zo heet. Een naam die je haar op haar pagina geeft, blijft staan. Staan twee bestemmingen met dezelfde naam naast elkaar, dan draagt elke haar server of map erbij.
@@ -43,6 +52,8 @@ Elke bestemming heeft een eigen pagina:
 - **Regels per onderdeel**: de eigen repository, het eigen bewaarbeleid of de eigen compressie van één onderdeel bij deze bestemming. **Regels wijzigen** opent ze, en **Terug naar de bestemming** zet een onderdeel terug.
 - **Staat al onder deze bestemming**: onderdelen waarvan het met de hand getypte adres in een map van deze bestemming ligt. Er een overnemen laat de repository waar hij is; aanmelding, opslagklasse en bescherming tegen verwijderen komen dan van de bestemming. BombVault controleert eerst of de aanmelding van de bestemming de repository opent, en weigert een append-only repository onder een bestemming te zetten die niet append-only is.
 - Een vat dat laat zien hoe vol de bestemming is, met de markering waar ze vol is en hoeveel weken er nog zijn bij de groei van de laatste weken. Een bestemming die haar grootte niet meldt, zegt **Grootte onbekend**.
+
+Een externe bestemming die back-ups had en plotseling geen repository meer heeft, zoals een rest-server waarvan de schijf niet is aangekoppeld, krijgt niet vanzelf een nieuwe, lege. Haar pagina meldt dat zodra een back-up of kopie merkt dat de repository weg is. Koppel de schijf opnieuw aan. Heb je de oude repository met opzet leeggemaakt, dan begint **Hier een nieuw repository aanmaken** opnieuw, voor alle onderdelen van de bestemming en haar benoemde repository's tegelijk.
 
 Een ontvangserver die een andere instantie van je groep draait, verschijnt onder de aanbieders als **Uit je groep**; zie [Ontvangserver](#receiving-server).
 
@@ -194,6 +205,8 @@ Een rol inschakelen verstuurt een verzoek, en er begint niets totdat iemand op d
 
 **Details** op een kaart opent de rest: de ontvangen repository's en pull-bronnen van dat lid, aangeboden bestemmingen, bewaking, **Verwijderen** en **Sleutel vergeten**.
 
+Uitgeschakelde instanties en telefoons met de app gesloten houden hun kaart als **Inactief**, in grijs, met wanneer ze voor het laatst gezien zijn, en staan gedimd in het net tot je ze met **Verwijderen** weghaalt. Direct na het starten van deze server toont zo'n kaart **Controleren** tot de groep terug is. **Verwijderen** werkt op zo'n kaart ongeacht welke onderdelen aanstaan, en beëindigt ook de open verzoeken van het lid, zijn ongebruikte ZFS-ontvangstplaatsen en zijn wachtende sleutelverzoeken. De kaart **Instanties** op de koppelingspagina toont deze leden ook als **Inactief**.
+
 ## Ontvanger en ophaler {#receiver}
 
 ![Een ontvangen off-site kopie in de details van een instantie, alleen-lezen bewaakt, met een integriteitscontrole op deze hardware.](assets/screenshots/receiver.png)
@@ -210,7 +223,7 @@ Op de machine die append-only kopieën van een andere BombVault **ontvangt**, ge
 
 De ontvanger is strikt alleen-lezen. Hij schrijft nooit naar de ontvangen repository, dus hij kan de append-only-garantie waarop de afzender rekent nooit breken.
 
-Een ophaler werkt andersom: met **Ophalen** ingeschakeld leest een instantie de back-ups van een ander lid volgens haar eigen schema in haar eigen repository. De bronnen ervan staan ook in de details van dat lid.
+Een ophaler werkt andersom: met **Ophalen** ingeschakeld leest een instantie de back-ups van een ander lid volgens haar eigen schema, in een eigen repository per bron, zodat ze nooit meetellen als back-ups van deze machine. De bronnen ervan staan ook in de details van dat lid.
 
 ### Ontvangserver {#receiving-server}
 
@@ -266,7 +279,7 @@ De **Noodassistent** haalt een server terug die weg is of opnieuw is ingesteld. 
     - **Sleutel intypen**: de `APP_KEY` van de oude server, en waar zijn back-ups staan.
 
     BombVault probeert de sleutel dan op elke bestemming en zegt voor elke of ze leesbaar is, niet gevonden, met een andere sleutel vergrendeld, niet bereikbaar of nog zonder aanmelding. Er is nog niets opgeslagen, en de sleutel blijft beperkte tijd in het geheugen. **Sleutel overnemen** laat deze server voortaan zijn back-ups met die sleutel schrijven; **Overname ongedaan maken** gaat terug naar zijn eigen sleutel totdat de eerste back-up heeft gedraaid. Een server die al eigen back-ups heeft, weigert de overname en verwijst in plaats daarvan naar [Uit een oude back-upmap](#restore-from-another-bombvault-repo). **Inloggegevens opslaan** bewaart de aanmeldingen die de kit voor externe bestemmingen bevat, en vraagt bevestiging voordat het aanmeldingen vervangt die deze server al heeft.
-2. **Instellingen.** **Instellingen terughalen** herstelt de eigen instellingen van BombVault uit de nieuwste zelf-back-up: bestemmingen, inloggegevens, schema's en regels. BombVault herstart om ze toe te passen, via de Docker-socket, zodat de live instellingendatabase nooit onder een open handle wordt overschreven, en de assistent gaat daarna vanzelf verder. De login van deze server blijft: je blijft aanmelden met het wachtwoord dat je nu gebruikt. Geheimen die de oude server had opgeslagen en die niet kunnen worden overgenomen, worden vermeld, zodat je ze opnieuw kunt invoeren.
+2. **Instellingen.** **Instellingen terughalen** herstelt de eigen instellingen van BombVault uit de nieuwste zelf-back-up: bestemmingen, inloggegevens, schema's en regels. BombVault herstart om ze toe te passen, via de Docker-socket, zodat de live instellingendatabase nooit onder een open handle wordt overschreven, en de assistent gaat daarna vanzelf verder. De login van deze server blijft: je blijft aanmelden met het wachtwoord dat je nu gebruikt. Geheimen die de oude server had opgeslagen en die niet kunnen worden overgenomen, worden vermeld, zodat je ze opnieuw kunt invoeren. Het herstel beëindigt elke sessie en verwijdert de passkeys, stel ze daarna dus opnieuw in.
 3. **Selectie.** BombVault doorzoekt je back-ups en toont de containers, VM's, mappensets en ZFS-datasets die het vindt. De nieuwste back-up is overal voorgeselecteerd. Wat deze server nog heeft, staat uit, omdat een herstel het zou vervangen. Mappensets weten na een rebuild niet meer waar ze vandaan kwamen, dus ze gaan in een map die je kiest.
 4. **Herstel.** Alles wat is geselecteerd komt in één keer terug, gestopt gelaten als je elke container en VM zelf wilt starten, wat na een totaalverlies het veiligst is. Download daarna een nieuwe herstelkit: de oude hoort bij de vorige installatie.
 

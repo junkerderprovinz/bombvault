@@ -107,7 +107,11 @@ Replika je kopie datových sad položky na druhém serveru ZFS. BombVault ji udr
 
 Replika nikdy nenahrazuje zálohu. Starší verze, jednotlivé soubory i kontrola se dál berou ze záloh a replika drží jen tolik snímků, kolik nastavíš. Aktuální replika se počítá jako kopie mimo lokalitu, ale položka s replikou a bez zálohy zůstává oranžová.
 
+**Jen replika, bez zálohy** na kartě Replika způsobí, že celá sekce ZFS posílá repliky a nedělá zálohy. Vlastní složka a cíle mimo lokalitu si nechají své přepínače, takže po vypnutí se sekce do nich zase zálohuje, a karta každé položky ZFS ukazuje přepínač sekce tak, jak stojí. Taková položka čeká místo zálohy na svou první repliku, **Zálohovat nyní** se u ní nabízí jako **Replikovat teď** a kolem snímku se zastaví její kontejnery a spustí její příkazy jako u zálohy. Její repliky se počítají pro plán jednou za několik dní, upozornění na zpoždění i pokrytí.
+
 Zapneš ji na kartě **Replika** na záložce Nastavení položky. Tam vybereš, kam replika půjde, kdy se spouští (**Po každé záloze** nebo **Vlastní plán**) a kolik snímků zůstane na cíli. Karta vypisuje každou datovou sadu a každý svazek s jeho stavem a **Replikovat teď** spustí běh. Běh repliky má vlastní zámek, takže dlouhý první přenos nikdy nezdrží zálohy.
+
+**Replikovat vše teď**, vedle akcí zálohy, když je na stránce Zálohy vybraná dlaždice ZFS, pošle repliku každé položky ZFS, jednu po druhé. Dávku spouští server, takže pokračuje, i když stránku opustíš, a položka, která replikovat nemůže, se jmenovitě uvede a přeskočí.
 
 ### Odeslání na server ZFS {#replica-push}
 
@@ -134,6 +138,8 @@ V tomto směru drží BombVault, který položku vlastní, také klíč, který 
 
 BombVault si při prvním připojení uloží klíč hostitele, který server ukáže, a jiný později odmítne. Pokud byl server přeinstalován, stiskni na stránce serveru **Zapomenout klíč hostitele** a příští připojení uloží nový klíč.
 
+Když hostitel tohoto serveru dosáhne na server ZFS sám, pošle `zfs send` rovnou do vlastního ssh k tomu serveru, s klíčem repliky a uloženým klíčem hostitele, takže proud neprochází BombVaultem. Jinak jde proud přes BombVault.
+
 ### Odeslání spárované instanci {#replica-receive}
 
 Spárovaný BombVault umí repliku přijmout sám. Nikdo nedostane přístup SSH k druhému hostiteli a do souboru `authorized_keys` se nepřidává žádný klíč.
@@ -151,6 +157,8 @@ Přijímající instance musí odpovídat přes HTTPS. Na prostou adresu http zd
 ### Kam data přijdou {#replica-target}
 
 Každá datová sada skončí v `<root>/<server>/<pool>/<path>`. Složka serveru je název zdrojové instance, ustálený při prvním přenosu, takže si dva servery se stejným názvem poolu nikdy nepřekážejí. Například `cache/appdata` serveru s názvem `tower` skončí v `backup/bombvault-replica/tower/cache/appdata`.
+
+Po novém nastavení BombVaultu cíl odmítne složku, kterou tento BombVault dřív naplnil. Karta Replika pak nabídne **Převzít složku** a další replika naváže na kopie v ní. Převezmi ji jen tehdy, když do této složky nereplikuje žádný jiný BombVault.
 
 Kopie na cíli je jen pro čtení a není připojená, takže nikdy nic na tom serveru nepřekryje. Vlastnosti ZFS putují s ní, kromě přípojného bodu, `sharenfs` a `sharesmb`. Rezervace `reservation` a `refreservation` také zůstávají, kopie tak zabere jen místo, které potřebují její data.
 

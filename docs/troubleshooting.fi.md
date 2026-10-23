@@ -24,7 +24,7 @@ Tämä palvelin otti Hätäohjatussa toiminnossa haltuun toisen palvelimen varmu
 
 ## Puhelin päätyy kirjautumissivulle
 
-Pariliitetty puhelin saa istuntonsa ryhmän kautta vain niin kauan kuin **Puhelimet voivat pariutua ryhmän kahdentoista sanan avulla** on päällä kohdassa **Asetukset, Turvallisuus**. Salasanan nollaus kytkee sen pois. Palvelinta vanhempi sovellus ei myöskään saa istuntoa, ennen kuin se päivitetään. Osoitteella lisätty palvelin kysyy aina salasanaa.
+Pariliitetty puhelin saa istuntonsa ryhmän kautta vain niin kauan kuin **Puhelimet voivat pariutua ryhmän kahdentoista sanan avulla** on päällä kohdassa **Asetukset, Turvallisuus**. Salasanan nollaus kytkee sen pois. Palvelinta vanhempi sovellus ei myöskään saa istuntoa, ennen kuin se päivitetään. Osoitteella lisätty palvelin kysyy aina salasanaa. Ilmentymät-sivulta poistettu puhelin palaa pois kytkettynä, kun sen sovellus avataan uudelleen; päästä se sisään kytkemällä sen tiedoissa kohdassa **Valvonta** päälle **Kysele tätä instanssia**.
 
 ## VM-varmuuskopiointi ei muodosta yhteyttä
 
@@ -38,7 +38,7 @@ VM-varmuuskopiointi keskustelee libvirtin kanssa SSH:n yli, ei koskaan liitoksen
 
 ## Live-VM-tilannevedos ei ajautunut
 
-Live-tilannevedokset tarvitsevat qemu guest agentin asennettuna VM:ään ja levyn sijainniksi `/mnt/cache` (tai `/mnt/diskX`), ei `/mnt/user`. Sammutetussa VM:ssä live palautuu automaattisesti hallittuun. Hallittu varmuuskopio sammuttaa VM:n, varmuuskopioi levyt ja käynnistää sen sitten uudelleen, joten se on aina eheä.
+Live-tilannevedokset tarvitsevat qemu guest agentin asennettuna VM:ään ja levyn sijainniksi `/mnt/cache` (tai `/mnt/diskX`), ei `/mnt/user`. Sammutetussa VM:ssä live palautuu automaattisesti hallittuun. Hallittu varmuuskopio sammuttaa VM:n, varmuuskopioi levyt ja käynnistää sen sitten uudelleen, joten se on aina eheä. Se odottaa enintään kymmenen minuuttia, että vieras sammuu, eikä koskaan pakota sitä pois päältä, joten päivityksiä asentava Windows-vieras ei katkea kesken. Vieras, joka on sen jälkeen yhä käynnissä, jätetään rauhaan, ja varmuuskopio epäonnistuu syyn kertoen.
 
 ## Varmuuskopio epäonnistui virheeseen "repository is already locked"
 
@@ -47,6 +47,14 @@ Tämä on yleensä orpo restic-lukko, joka jäi jälkeen kun kontti päivitettii
 ## Etäkopiotani ei tapahtunut varmuuskopion jälkeen
 
 Etäreplikointi on suunnitellusti parhaan yrityksen mukaista, joten etäsijainnin nikottelu ei koskaan kaada paikallista varmuuskopiota. Tarkista, milloin kohde kopioi: sen **Kopioi**-kortti sanoo **Jokaisen varmuuskopion jälkeen** tai nimeää oman aikataulun, ja **Asetukset, Aikataulu, Etäkopiot osioittain** voi antaa osiolle oman aikataulun. Käytä **Replikoi nyt** osion **Etäkopio**-kortissa kohdassa **Asetukset, Kohteet** pyydettäessä tehtävään ajoon, ja tarkkaile yleiskatsauksen tilariviä, joka kertoo **Etäkopiointi käynnissä**, kun kopiointi on käynnissä. Epäonnistunut kopio näkyy kohdassa **Vaatii huomiota**.
+
+## rest-serverin varmenteeseen ei luoteta
+
+restic hylkää varmenteen, jota se ei tunne, ja virheilmoitus kertoo, minne varmenne kuuluu. Kopioi rest-serverin itse allekirjoitettu varmenne, tai sen allekirjoittaneen varmentajan varmenne, PEM-tiedostona BombVaultin datakansion kansioon `certs` (`/config/certs` kontissa, `appdata/bombvault/certs` Unraidissa) ja testaa uudelleen. Uudelleenkäynnistystä ei tarvita.
+
+## Suuri varmuuskopio lopetettiin muistin loppumisen vuoksi
+
+Aseta **Muistiraja varmuuskopiota kohden (MiB, 0 = ei rajaa)** kortissa **Suorituskyky** kohdassa **Asetukset, Järjestelmä** selvästi pienemmäksi kuin muisti, jota kontti saa käyttää. Rajan lähellä restic vapauttaa muistia useammin, mikä maksaa hieman nopeutta, joten varmuuskopio hidastuu sen sijaan, että se lopetettaisiin.
 
 ## Palautus keskeytyi ennen kuin se alkoi
 

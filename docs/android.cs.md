@@ -31,7 +31,7 @@ Aplikace přijme odpověď jen tehdy, když ji server podepsal klíčem, který 
 
 ## Přepínání serverů {#switch}
 
-Když je server otevřený, nahoře v jeho přehledu stojí jeho název a před ním šipka zpět. Šipka vede do přehledu aplikace, na úvodní obrazovku, která vypíše každý server, který aplikace zná, s jeho stavem: **Připojeno**, **Nepřipojeno**, **Je nutné přihlášení** nebo **Zkontrolovat certifikát**. Klepnutím na jiný ho tam otevřeš, doma přímo a jinak přes relay.
+Když je server otevřený, nahoře v jeho přehledu stojí jeho název a před ním šipka zpět. Šipka vede do přehledu aplikace, na úvodní obrazovku, která vypíše každý server, který aplikace zná, s jeho stavem: **Připojeno**, **Nepřipojeno**, **Je nutné přihlášení** nebo **Zkontrolovat certifikát**. Server skupiny, který neodpovídá, je **Neaktivní**, šedý a s údajem, kdy ho skupina viděla naposledy, a server, od kterého aplikace ještě nic neslyšela, ukazuje **Ověřuje se**. Při každém připojení aplikace načte seznam skupiny z jedné z jejích instancí, takže v seznamu je i instance, kterou přes relay nikdy nepotkala, třeba taková, která byla vypnutá, když se telefon ke skupině připojoval. Klepnutím na jiný ho tam otevřeš, doma přímo a jinak přes relay.
 
 ## Přihlášení na spárovaném telefonu {#sign-in}
 
@@ -49,7 +49,7 @@ Přepínač je **Telefony se mohou spárovat s dvanácti slovy skupiny** v kart�
 
 ## Telefon na stránce Instance {#instances}
 
-Telefon dostane na stránce Instance každého serveru ve skupině vlastní kartu, označenou jako aplikace pro Android a pojmenovanou podle názvu, který jsi telefonu dal. Nemá vysvědčení, protože nic nezálohuje, a **Odebrat** ho ze stránky odstraní. Telefon, který zná slova, se může kdykoli znovu spárovat, takže u ztraceného telefonu vypni **Telefony se mohou spárovat s dvanácti slovy skupiny** v části **Nastavení, Zabezpečení** nebo nech každou instanci opustit skupinu přes **Opustit skupinu** a spáruj je znovu s novými slovy.
+Telefon dostane na stránce Instance každého serveru ve skupině vlastní kartu, označenou jako aplikace pro Android a pojmenovanou podle názvu, který jsi telefonu dal. Nemá vysvědčení, protože nic nezálohuje. **Odebrat** ho ze stránky odstraní a hned ukončí jeho relaci, stejně jako vypnutí **Dotázat se na tuto instanci** v části **Sledování** v jeho podrobnostech. Telefon slova dál zná, takže se znovu objeví, když se jeho aplikace otevře, ale vypnutý, a relaci nedostane, dokud ho někdo nezapne. U ztraceného telefonu odeber jeho kartu na každém serveru, vypni **Telefony se mohou spárovat s dvanácti slovy skupiny** v části **Nastavení, Zabezpečení** nebo nech každou instanci opustit skupinu přes **Opustit skupinu** a spáruj je znovu s novými slovy.
 
 Telefon spárovaný před verzí 10.0.0 začne své požadavky podepisovat při první návštěvě po aktualizaci a každý server si ponechá první klíč, který pro telefon dostane. Pokud je mu někdo jiný, kdo zná slova skupiny, v patách a telefon je offline, takový server telefon od té chvíle odmítá a aplikace ho už nemůže otevřít přes relay. Oprava: přihlas se k tomu serveru v prohlížeči, na kartě telefonu na stránce Instance zvol **Zapomenout klíč**, potom **Potvrdit zapomenutí** a aplikaci otevři znovu. Server si při dalším požadavku převezme vlastní klíč telefonu. Pokud je telefon odmítnut znovu, slova má někdo jiný: nech každou instanci **Opustit skupinu** a spáruj je znovu s novými slovy, stejně jako u ztraceného telefonu.
 
@@ -69,7 +69,7 @@ Exporty, sady pro obnovu, ZIPy flashe a dumpy databází se ukládají do složk
 
 ## Na dotykové obrazovce {#touch}
 
-Pod prstem nic nereaguje na najetí, takže ovládací prvek při podržení zeslábne a tlačítko s logem značky se rozsvítí barvou značky, dokud prst nezvedneš. Dlouhý stisk tlačítka se počítá jako pomalé klepnutí a neotevře nabídku odkazu.
+Pod prstem nic nereaguje na najetí, takže ovládací prvek při podržení zeslábne a tlačítko s logem značky se rozsvítí barvou značky, dokud prst nezvedneš. Dlouhý stisk tlačítka se počítá jako pomalé klepnutí a neotevře nabídku odkazu. Klepnutí na zašedlé tlačítko ukáže, proč je zašedlé, dokud neklepneš jinam.
 
 ## Místo toho v prohlížeči {#browser}
 

@@ -29,6 +29,15 @@ Um destino é um lugar para onde vão os backups: uma pasta local, uma partilha,
 3. **Proteção.** A janela diz claramente o que o serviço consegue. Um rest-server em modo append-only recusa a eliminação, e o teste de adulteração verifica-o. Um bucket S3 pode manter versões antigas com versionamento e bloqueio de objetos, o que o BombVault ainda não consegue verificar. Uma unidade na nuvem não consegue recusar a eliminação de todo: quem entra no servidor entra também nessa cópia. Liga **Proteção contra eliminação (append-only)** apenas onde o outro lado recusa mesmo a eliminação; o BombVault nunca poda aí. **Para uma emergência** diz o que o kit de recuperação guarda para este destino.
 4. **Para que secções.** Escolhe as secções que fazem backup para aqui. A primeira cópia leva o histórico todo. As entradas que escolheram destinos próprios não recebem o novo por si, e a janela nomeia-as.
 
+Alguns serviços pedem um pouco mais no início de sessão:
+
+- **SFTP e a Storage Box.** **Adicionar chave** coloca a chave pública do BombVault no servidor com a **Palavra-passe da conta**, que serve só para esse início de sessão e não fica guardada em lado nenhum. Por baixo aparece o comando para o fazer à mão. O teste mostra a **Chave do servidor** com a sua impressão digital; o BombVault memoriza-a e recusa o servidor se mais tarde ele mostrar outra.
+- **As chaves S3 para um único bucket**, como um token de objetos do Cloudflare R2 ou uma chave AWS restrita, podem não ter permissão para listar os outros buckets. Escreve o bucket em **Bucket**, e o teste e a lista de pastas abrem esse bucket.
+- **Os servidores SMB que não listam as suas partilhas** recebem o nome de uma em **Partilha**, e o teste abre essa partilha diretamente.
+- **FTP** pede a sua **Encriptação**: **Nenhuma**, **TLS explícito (FTPES)** ou **TLS implícito (FTPS, porta 990)**.
+- **OneDrive e Zoho WorkDrive.** Quando um início de sessão abre várias unidades ou espaços de trabalho, a janela pergunta para qual vão os backups.
+- **Um rest-server com um certificado autoassinado.** Coloca o certificado como ficheiro PEM na pasta `certs` da pasta de dados do BombVault (`/config/certs` no container, `appdata/bombvault/certs` no Unraid). Os backups, as cópias e o teste da proteção contra eliminação confiam nele sem reiniciar.
+
 Os serviços S3 correm pelo backend S3 próprio do restic, o que permite aplicar uma classe de armazenamento e o bloqueio de objetos. Todos os outros serviços correm pelo rclone que acompanha o BombVault, e o seu remoto aparece depois no cartão **Externo (rclone)** em **Definições, Destinos**. Uma exportação de definições leva os destinos; com as credenciais incluídas leva também o início de sessão deles.
 
 A pasta neste servidor chama-se **Local** em todo o lado: nas páginas de destinos, no fluxo, numa entrada e em Restauração. Se houver várias pastas neste servidor, cada uma tem o seu próprio nome. Um destino criado pelo campo externo de uma secção recebe o nome do seu lugar, a última pasta do endereço ou, sem pasta, o seu servidor, e ganha um número quando outro destino já tem esse nome. Um nome que lhe dês na sua página mantém-se. Quando dois destinos com o mesmo nome estão lado a lado, cada um leva o seu servidor ou pasta.
@@ -43,6 +52,8 @@ Cada destino tem uma página própria:
 - **Regras por secção**: o repositório, a retenção ou a compressão próprios de uma secção neste destino. **Alterar regras** abre-as, e **Repor o do destino** devolve uma secção ao destino.
 - **Já está sob este destino**: secções cujo endereço escrito à mão está numa pasta deste destino. Assumir uma deixa o repositório onde está; o início de sessão, a classe de armazenamento e a proteção contra eliminação passam então a vir do destino. O BombVault verifica primeiro que o início de sessão do destino abre o repositório, e recusa pôr um repositório append-only sob um destino que não seja append-only.
 - Um vaso que mostra quão cheio está o destino, com a marca onde fica cheio e quantas semanas restam ao ritmo de crescimento das últimas semanas. Um destino que não indica o seu tamanho diz **Tamanho desconhecido**.
+
+Um destino remoto que tinha backups e de repente não tem repositório nenhum, como um rest-server cujo disco não foi montado, não recebe por si um repositório novo e vazio. A sua página avisa disso assim que um backup ou uma cópia dá pela falta do repositório. Volta a montar o disco. Se esvaziaste o repositório antigo de propósito, **Criar aqui um repositório novo** recomeça do zero, para todas as secções do destino e os seus repositórios com nome de uma só vez.
 
 Um servidor recetor que outra instância do teu grupo executa aparece entre os fornecedores como **Do teu grupo**; consulta [Servidor recetor](#receiving-server).
 
@@ -194,6 +205,8 @@ Ligar uma função envia um pedido, e nada começa até alguém na outra instân
 
 **Detalhes** num cartão abre o resto: os repositórios recebidos e as origens de recolha desse membro, ofertas de destino, monitorização, **Remover** e **Esquecer a chave**.
 
+As instâncias desligadas e os telemóveis com a aplicação fechada mantêm o seu cartão como **Inativa**, a cinzento, com a última vez que foram vistos, e ficam esbatidos na rede até os retirares com **Remover**. Logo após o arranque deste servidor, um cartão assim mostra **A verificar** até o grupo voltar. **Remover** funciona num cartão assim sejam quais forem as partes ligadas, e termina também os pedidos abertos do membro, os seus lugares de receção ZFS sem uso e os seus pedidos de chave em espera. O cartão **Instâncias** na página de emparelhamento também lista estes membros como **Inativa**.
+
 ## Recetor e recolhedor {#receiver}
 
 ![Uma cópia externa recebida nos detalhes de uma instância, vigiada só para leitura, com uma verificação de integridade corrida neste hardware.](assets/screenshots/receiver.png)
@@ -210,7 +223,7 @@ Na máquina que **recebe** cópias append-only de outro BombVault, os repositór
 
 O recetor é estritamente só de leitura. Nunca escreve no repositório recebido, por isso nunca pode quebrar a garantia append-only em que o emissor confia.
 
-Um recolhedor funciona ao contrário: com **Recolha** ligada, uma instância lê os backups de outro membro para o seu próprio repositório segundo o seu próprio agendamento. As suas origens ficam também nos detalhes desse membro.
+Um recolhedor funciona ao contrário: com **Recolha** ligada, uma instância lê os backups de outro membro segundo o seu próprio agendamento, para um repositório próprio por cada origem, para que nunca contem como backups desta máquina. As suas origens ficam também nos detalhes desse membro.
 
 ### Servidor recetor {#receiving-server}
 
@@ -266,7 +279,7 @@ O **Assistente de emergência** traz de volta um servidor que desapareceu ou foi
     - **Escrever a chave**: a `APP_KEY` do servidor antigo e onde estão os seus backups.
 
     O BombVault experimenta então a chave em cada destino e diz para cada um se é legível, não encontrado, bloqueado com outra chave, inacessível ou ainda sem início de sessão. Ainda nada foi guardado, e a chave fica na memória por um tempo limitado. **Adotar a chave** faz este servidor escrever daqui em diante os seus backups com essa chave; **Anular a adoção** volta à chave própria até o primeiro backup ter corrido. Um servidor que já tem backups próprios recusa a adoção e aponta antes para [De uma pasta de backups antiga](#restore-from-another-bombvault-repo). **Guardar credenciais** guarda os inícios de sessão que o kit traz para destinos remotos, e pergunta antes de substituir os inícios de sessão que este servidor já tem.
-2. **Definições.** **Trazer de volta as definições** restaura as definições do próprio BombVault a partir do Auto-backup mais recente: destinos, credenciais, agendamentos e regras. O BombVault reinicia para as aplicar, através do socket do Docker, para que a base de dados de definições em uso nunca seja sobrescrita com um handle aberto, e o assistente continua depois por si. O início de sessão deste servidor mantém-se: continuas a entrar com a palavra-passe que usas agora. Os segredos que o servidor antigo tinha guardado e que não podem ser assumidos são listados, para os poderes introduzir de novo.
+2. **Definições.** **Trazer de volta as definições** restaura as definições do próprio BombVault a partir do Auto-backup mais recente: destinos, credenciais, agendamentos e regras. O BombVault reinicia para as aplicar, através do socket do Docker, para que a base de dados de definições em uso nunca seja sobrescrita com um handle aberto, e o assistente continua depois por si. O início de sessão deste servidor mantém-se: continuas a entrar com a palavra-passe que usas agora. Os segredos que o servidor antigo tinha guardado e que não podem ser assumidos são listados, para os poderes introduzir de novo. A reposição termina todas as sessões e remove as chaves de acesso, por isso volta a configurá-las depois.
 3. **Seleção.** O BombVault percorre os teus backups e lista os containers, as VMs, os conjuntos de pastas e os conjuntos de dados ZFS que encontra. O backup mais recente vem pré-selecionado em todo o lado. O que este servidor ainda tem começa desligado, porque um restauro o substituiria. Os conjuntos de pastas já não sabem de onde vieram depois de uma reconstrução, por isso vão para uma pasta que escolhes.
 4. **Restauro.** Tudo o que foi selecionado volta de uma vez, deixado parado se quiseres arrancar cada container e VM tu próprio, o que é o mais seguro depois de uma perda total. Depois descarrega um kit de recuperação novo: o antigo pertence à instalação anterior.
 

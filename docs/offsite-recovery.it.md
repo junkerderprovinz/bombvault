@@ -29,6 +29,15 @@ Una destinazione è un posto in cui vanno i backup: una cartella locale, una con
 3. **Protezione.** La finestra dice senza giri di parole cosa può fare il servizio. Un rest-server in modalità append-only rifiuta l'eliminazione, e il tamper test lo verifica. Un bucket S3 può conservare le vecchie versioni con versioning e object lock, cosa che BombVault non sa ancora verificare. Un cloud drive non può rifiutare l'eliminazione in nessun caso: chi entra nel server entra anche in quella copia. Attiva **Protezione dall'eliminazione (append-only)** solo dove il lato remoto rifiuta davvero l'eliminazione; BombVault allora non pota mai lì. **Per le emergenze** dice cosa contiene il kit di ripristino per questa destinazione.
 4. **Per quali sezioni.** Scegli le sezioni che salvano qui. La prima copia porta con sé tutta la cronologia. Gli elementi che hanno scelto destinazioni proprie non ricevono quella nuova da soli, e la finestra li nomina.
 
+Alcuni servizi chiedono qualcosa in più all'accesso:
+
+- **SFTP e la Storage Box.** **Aggiungi chiave** mette la chiave pubblica di BombVault sul server con la **Password dell'account**, che serve solo per quell'accesso e non viene conservata da nessuna parte. Sotto compare il comando per farlo a mano. Il test mostra la **Chiave del server** con la sua impronta; BombVault la memorizza e rifiuta il server se in seguito ne mostra un'altra.
+- **Le chiavi S3 per un solo bucket**, come un token di oggetti di Cloudflare R2 o una chiave AWS limitata, potrebbero non poter elencare gli altri bucket. Scrivi il bucket in **Bucket**, e il test e l'elenco delle cartelle aprono quel bucket.
+- **I server SMB che non elencano le loro condivisioni** ricevono il nome di una in **Condivisione**, e il test apre direttamente quella condivisione.
+- **FTP** chiede la sua **Crittografia**: **Nessuna**, **TLS esplicito (FTPES)** o **TLS implicito (FTPS, porta 990)**.
+- **OneDrive e Zoho WorkDrive.** Quando un accesso apre più drive o spazi di lavoro, la finestra chiede in quale vanno i backup.
+- **Un rest-server con un certificato autofirmato.** Metti il certificato come file PEM nella cartella `certs` della cartella dati di BombVault (`/config/certs` nel container, `appdata/bombvault/certs` su Unraid). Backup, copie e il test della protezione dall'eliminazione se ne fidano senza riavvio.
+
 I servizi S3 passano dal backend S3 di restic, ed è questo che permette di applicare una classe di archiviazione e l'object lock. Ogni altro servizio passa dal rclone fornito con BombVault, e il suo remote compare poi nella scheda **Off-site (rclone)** in **Impostazioni, Destinazioni**. Un'esportazione delle impostazioni include le destinazioni; con le credenziali incluse porta con sé anche il loro accesso.
 
 La cartella su questo server si chiama ovunque **Locale**: nelle pagine delle destinazioni, nel flusso, su un elemento e in Ripristino. Con più cartelle su questo server, ciascuna ha il proprio nome. Una destinazione creata dal campo off-site di una sezione prende il nome dal suo luogo, cioè l'ultima cartella del suo indirizzo o, se non ne ha, il suo server, e riceve un numero quando un'altra destinazione ha già quel nome. Un nome che le dai nella sua pagina resta. Dove due destinazioni con lo stesso nome stanno una accanto all'altra, ciascuna porta il suo server o la sua cartella.
@@ -43,6 +52,8 @@ Ogni destinazione ha una pagina propria:
 - **Regole per sezione**: il repository, la conservazione o la compressione propri di una sezione in questa destinazione. **Modifica le regole** le apre, e **Torna alla destinazione** riporta una sezione ai valori della destinazione.
 - **Già sotto questa destinazione**: sezioni il cui indirizzo scritto a mano si trova in una cartella di questa destinazione. Prenderne una in carico lascia il repository dov'è; accesso, classe di archiviazione e protezione dall'eliminazione vengono poi dalla destinazione. BombVault controlla prima che l'accesso della destinazione apra il repository, e rifiuta di mettere un repository append-only sotto una destinazione che non lo è.
 - Un recipiente che mostra quanto è piena la destinazione, con il segno di quando è piena e quante settimane restano alla crescita delle ultime settimane. Una destinazione che non riporta la propria dimensione dice **Dimensione sconosciuta**.
+
+Una destinazione remota che conteneva backup e all'improvviso non ha più alcun repository, come un rest-server il cui disco non è stato montato, non ne riceve da sola uno nuovo e vuoto. La sua pagina lo segnala non appena un backup o una copia trova il repository sparito. Monta di nuovo il disco. Se hai svuotato apposta il vecchio repository, **Crea qui un nuovo repository** ricomincia da capo, per tutte le sezioni della destinazione e i suoi repository con nome in una volta sola.
 
 Un server ricevente gestito da un'altra istanza del tuo gruppo compare tra i fornitori come **Dal tuo gruppo**; vedi [Server ricevente](#receiving-server).
 
@@ -194,6 +205,8 @@ Attivare un ruolo invia una richiesta, e non parte nulla finché qualcuno sull'a
 
 **Dettagli** su una scheda apre il resto: i repository ricevuti e le fonti di prelievo di quel membro, le offerte di destinazione, il monitoraggio, **Rimuovi** e **Dimentica la chiave**.
 
+Le istanze spente e i telefoni con l'app chiusa mantengono la loro scheda come **Inattiva**, in grigio, con il momento in cui sono stati visti l'ultima volta, e restano attenuati nella rete finché non li togli con **Rimuovi**. Subito dopo l'avvio di questo server, una scheda così mostra **Verifica in corso** finché il gruppo non torna. **Rimuovi** funziona su una scheda così qualunque siano le parti attive, e chiude anche le richieste aperte del membro, i suoi slot di ricezione ZFS inutilizzati e le sue richieste di chiave in attesa. Anche la scheda **Istanze** nella pagina di associazione elenca questi membri come **Inattiva**.
+
 ## Ricevente e prelevatore {#receiver}
 
 ![Una copia off-site ricevuta nei dettagli di un'istanza, osservata in sola lettura, con un controllo di integrità eseguito su questa macchina.](assets/screenshots/receiver.png)
@@ -210,7 +223,7 @@ Sulla macchina che **riceve** copie append-only da un altro BombVault, i reposit
 
 Il ricevente è rigorosamente in sola lettura. Non scrive mai nel repository ricevuto, così non può mai rompere la garanzia append-only su cui il mittente fa affidamento.
 
-Un prelevatore lavora al contrario: con **Prelievo** attivo, un'istanza legge i backup di un altro membro nel proprio repository secondo una pianificazione propria. Le sue sorgenti stanno anch'esse nei dettagli di quel membro.
+Un prelevatore lavora al contrario: con **Prelievo** attivo, un'istanza legge i backup di un altro membro secondo una pianificazione propria, in un repository proprio per ogni sorgente, così non contano mai come backup di questa macchina. Le sue sorgenti stanno anch'esse nei dettagli di quel membro.
 
 ### Server ricevente {#receiving-server}
 
@@ -266,7 +279,7 @@ La **Procedura guidata di emergenza** riporta in vita un server perso o configur
     - **Digita la chiave**: l'`APP_KEY` del vecchio server, e dove si trovano i suoi backup.
 
     BombVault prova poi la chiave su ogni destinazione e dice per ciascuna se è leggibile, non trovata, bloccata con un'altra chiave, non raggiungibile o ancora priva del suo accesso. Non è stato ancora salvato nulla, e la chiave resta in memoria per un tempo limitato. **Adotta la chiave** fa scrivere a questo server i suoi backup con quella chiave da ora in poi; **Annulla l'adozione** torna alla chiave propria finché non è stato eseguito il primo backup. Un server che ha già backup propri rifiuta l'adozione e rimanda a [Da una vecchia cartella di backup](#restore-from-another-bombvault-repo). **Salva le credenziali** memorizza gli accessi che il kit porta per le destinazioni remote, e chiede conferma prima di sostituire gli accessi che questo server ha già.
-2. **Impostazioni.** **Ripristina le impostazioni** ripristina le impostazioni di BombVault stesso dall'Auto-backup più recente: destinazioni, credenziali, pianificazioni e regole. BombVault si riavvia per applicarle, tramite il socket Docker, così il database delle impostazioni in esecuzione non viene mai sovrascritto sotto un handle aperto, e poi la procedura guidata prosegue da sola. L'accesso di questo server resta: continui ad accedere con la password che usi ora. I segreti che il vecchio server aveva memorizzato e che non si possono riprendere vengono elencati, così puoi inserirli di nuovo.
+2. **Impostazioni.** **Ripristina le impostazioni** ripristina le impostazioni di BombVault stesso dall'Auto-backup più recente: destinazioni, credenziali, pianificazioni e regole. BombVault si riavvia per applicarle, tramite il socket Docker, così il database delle impostazioni in esecuzione non viene mai sovrascritto sotto un handle aperto, e poi la procedura guidata prosegue da sola. L'accesso di questo server resta: continui ad accedere con la password che usi ora. I segreti che il vecchio server aveva memorizzato e che non si possono riprendere vengono elencati, così puoi inserirli di nuovo. Il ripristino chiude tutte le sessioni e rimuove le passkey, quindi configurale di nuovo dopo.
 3. **Selezione.** BombVault passa in rassegna i tuoi backup ed elenca i container, le VM, i set di cartelle e i dataset ZFS che trova. Il backup più recente è preselezionato ovunque. Ciò che questo server ha ancora parte disattivato, perché un ripristino lo sostituirebbe. Dopo una ricostruzione i set di cartelle non sanno più da dove venivano, quindi vanno in una cartella che scegli.
 4. **Ripristino.** Tutto ciò che è selezionato torna in un colpo solo, lasciato fermo se vuoi avviare tu ogni container e VM, il che è la scelta più sicura dopo una perdita totale. Poi scarica un nuovo kit di ripristino: quello vecchio appartiene all'installazione precedente.
 

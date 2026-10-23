@@ -31,7 +31,7 @@ Appen tager kun imod et svar, hvis serveren har signeret det med den nøgle, app
 
 ## Skift af server {#switch}
 
-Når en server er åben, viser toppen af dens oversigt serverens navn med en tilbagepil foran. Pilen fører til appens oversigt, startskærmen, som viser hver server, appen kender, med sin tilstand: **Forbundet**, **Ikke forbundet**, **Login påkrævet** eller **Tjek certifikat**. Tryk der på en anden for at åbne den, direkte hjemme og ellers gennem relayet.
+Når en server er åben, viser toppen af dens oversigt serverens navn med en tilbagepil foran. Pilen fører til appens oversigt, startskærmen, som viser hver server, appen kender, med sin tilstand: **Forbundet**, **Ikke forbundet**, **Login påkrævet** eller **Tjek certifikat**. En server i gruppen, der ikke svarer, er **Inaktiv**, i gråt, med hvornår gruppen sidst så den, og en, appen endnu ikke har hørt fra, viser **Kontrollerer**. Hver gang appen forbinder, læser den gruppens liste fra en af instanserne, så en instans, den aldrig har mødt på relayet, for eksempel en, der var slukket, da telefonen blev parret, står også på listen. Tryk der på en anden for at åbne den, direkte hjemme og ellers gennem relayet.
 
 ## Logget ind på en parret telefon {#sign-in}
 
@@ -49,7 +49,7 @@ Kontakten hedder **Telefoner kan parre med gruppens tolv ord** og sidder i korte
 
 ## Telefonen på Instanser-siden {#instances}
 
-Telefonen får sit eget kort på Instanser-siden på hver server i gruppen, markeret som Android-app og med det navn, du har givet telefonen. Den har intet scorekort, fordi den ikke tager sikkerhedskopier, og **Fjern** tager den af siden. En telefon, der kender ordene, kan til enhver tid parre igen, så for en mistet telefon slår du **Telefoner kan parre med gruppens tolv ord** fra under **Indstillinger, Sikkerhed**, eller du lader hver instans forlade gruppen med **Forlad gruppen** og parrer dem igen med nye ord.
+Telefonen får sit eget kort på Instanser-siden på hver server i gruppen, markeret som Android-app og med det navn, du har givet telefonen. Den har intet scorekort, fordi den ikke tager sikkerhedskopier. **Fjern** tager den af siden og afslutter straks dens session, ligesom når du slår **Forespørg denne instans** fra under **Overvågning** i dens detaljer. Telefonen kender stadig ordene, så den dukker op igen, når dens app åbner, men slået fra, og den får ingen session, før nogen slår den til. For en mistet telefon fjerner du dens kort på hver server, slår **Telefoner kan parre med gruppens tolv ord** fra under **Indstillinger, Sikkerhed**, eller du lader hver instans forlade gruppen med **Forlad gruppen** og parrer dem igen med nye ord.
 
 En telefon, der blev parret før 10.0.0, begynder at signere sine kald ved det første besøg efter opdateringen, og hver server beholder den første nøgle, den får til telefonen. Hvis en anden, der kender gruppens ord, kommer først, mens telefonen er offline, afviser den server telefonen fra da af, og appen kan ikke længere åbne den over relayet. Sådan løser du det: log ind på den server i en browser, vælg **Glem nøglen** på telefonens kort på Instanser-siden og derefter **Bekræft at glemme**, og åbn appen igen. Serveren tager telefonens egen nøgle ved næste kald. Bliver telefonen afvist igen, har en anden ordene: lad hver instans **Forlad gruppen** og par dem igen med nye ord, som ved en mistet telefon.
 
@@ -69,7 +69,7 @@ Eksporter, gendannelseskit, flash-ZIP'er og databasedumps havner i telefonens ma
 
 ## På en touchskærm {#touch}
 
-Intet svæver under en finger, så en kontrol dæmpes, mens den holdes nede, og en knap med et brandlogo lyser i sin brandfarve, indtil fingeren slipper. Et langt tryk på en knap tæller som et langsomt tryk og åbner ingen linkmenu.
+Intet svæver under en finger, så en kontrol dæmpes, mens den holdes nede, og en knap med et brandlogo lyser i sin brandfarve, indtil fingeren slipper. Et langt tryk på en knap tæller som et langsomt tryk og åbner ingen linkmenu. Et tryk på en gråtonet knap viser, hvorfor den er gråtonet, indtil du trykker et andet sted.
 
 ## I en browser i stedet {#browser}
 

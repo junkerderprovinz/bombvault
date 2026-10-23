@@ -31,7 +31,7 @@ Aplikacja przyjmuje odpowiedź tylko wtedy, gdy serwer podpisał ją kluczem, kt
 
 ## Przełączanie serwerów {#switch}
 
-Gdy serwer jest otwarty, u góry jego przeglądu widnieje nazwa serwera, a przed nią strzałka powrotu. Strzałka prowadzi do przeglądu aplikacji, czyli ekranu startowego, który wyświetla wszystkie serwery znane aplikacji wraz z ich stanem: **Połączono**, **Brak połączenia**, **Wymagane logowanie** lub **Sprawdź certyfikat**. Dotknij tam innego, aby go otworzyć, w domu bezpośrednio, a poza domem przez przekaźnik.
+Gdy serwer jest otwarty, u góry jego przeglądu widnieje nazwa serwera, a przed nią strzałka powrotu. Strzałka prowadzi do przeglądu aplikacji, czyli ekranu startowego, który wyświetla wszystkie serwery znane aplikacji wraz z ich stanem: **Połączono**, **Brak połączenia**, **Wymagane logowanie** lub **Sprawdź certyfikat**. Serwer z grupy, który nie odpowiada, ma stan **Nieaktywne**, jest szary i pokazuje, kiedy grupa widziała go ostatnio, a serwer, od którego aplikacja jeszcze nic nie usłyszała, pokazuje **Sprawdzanie**. Przy każdym połączeniu aplikacja odczytuje listę grupy z jednej z jej instancji, więc na liście jest też instancja, której nigdy nie spotkała przez przekaźnik, na przykład taka, która była wyłączona, gdy telefon dołączał do grupy. Dotknij tam innego, aby go otworzyć, w domu bezpośrednio, a poza domem przez przekaźnik.
 
 ## Logowanie na sparowanym telefonie {#sign-in}
 
@@ -48,7 +48,7 @@ Przełącznik tego ustawienia to **Telefony mogą się sparować z dwunastoma s�
 
 ## Telefon na stronie Instancje {#instances}
 
-Telefon dostaje własną kartę na stronie Instancje każdego serwera w grupie, oznaczoną jako aplikacja na Androida i z nazwą nadaną telefonowi. Nie ma karty wyników, bo niczego nie kopiuje, a **Usuń** zdejmuje go ze strony. Telefon, który zna słowa, może w każdej chwili sparować się ponownie, więc w razie zgubienia telefonu wyłącz **Telefony mogą się sparować z dwunastoma słowami grupy** w **Ustawienia, Bezpieczeństwo** albo na każdej instancji wybierz **Opuść grupę** i sparuj je ponownie z nowymi słowami.
+Telefon dostaje własną kartę na stronie Instancje każdego serwera w grupie, oznaczoną jako aplikacja na Androida i z nazwą nadaną telefonowi. Nie ma karty wyników, bo niczego nie kopiuje. **Usuń** zdejmuje go ze strony i od razu kończy jego sesję, podobnie jak wyłączenie **Odpytuj tę instancję** w sekcji **Monitorowanie** w jego szczegółach. Telefon nadal zna słowa, więc pojawia się znowu, gdy otworzy się jego aplikacja, ale wyłączony, i nie dostaje sesji, dopóki ktoś go nie włączy. W razie zgubienia telefonu usuń jego kartę na każdym serwerze, wyłącz **Telefony mogą się sparować z dwunastoma słowami grupy** w **Ustawienia, Bezpieczeństwo** albo na każdej instancji wybierz **Opuść grupę** i sparuj je ponownie z nowymi słowami.
 
 Telefon sparowany przed wersją 10.0.0 zaczyna podpisywać swoje wywołania przy pierwszej wizycie po aktualizacji, a każdy serwer zachowuje pierwszy klucz, jaki dostanie dla telefonu. Jeśli ktoś inny, kto zna słowa grupy, zdąży pierwszy, gdy telefon jest offline, ten serwer od tej pory odrzuca telefon, a aplikacja nie może go już otworzyć przez relay. Aby to naprawić, zaloguj się na ten serwer w przeglądarce, wybierz **Zapomnij klucz** na karcie telefonu na stronie Instancje, potem **Potwierdź zapomnienie** i otwórz aplikację ponownie. Serwer przejmie własny klucz telefonu przy następnym wywołaniu. Jeśli telefon zostanie odrzucony ponownie, słowa ma ktoś inny: na każdej instancji wybierz **Opuść grupę** i sparuj je ponownie z nowymi słowami, tak jak w przypadku zgubionego telefonu.
 
@@ -68,7 +68,7 @@ Eksporty, zestawy odzyskiwania, pliki ZIP z flasha i zrzuty baz danych trafiają
 
 ## Na ekranie dotykowym {#touch}
 
-Pod palcem nic nie reaguje na najechanie, więc kontrolka przygasa, dopóki jest przytrzymana, a przycisk z logo marki świeci w kolorze marki, dopóki nie podniesiesz palca. Długie przytrzymanie przycisku liczy się jako powolne stuknięcie i nie otwiera menu linku.
+Pod palcem nic nie reaguje na najechanie, więc kontrolka przygasa, dopóki jest przytrzymana, a przycisk z logo marki świeci w kolorze marki, dopóki nie podniesiesz palca. Długie przytrzymanie przycisku liczy się jako powolne stuknięcie i nie otwiera menu linku. Stuknięcie wyszarzonego przycisku pokazuje, dlaczego jest wyszarzony, dopóki nie stukniesz w inne miejsce.
 
 ## W przeglądarce zamiast aplikacji {#browser}
 

@@ -107,7 +107,11 @@ O replică este o copie a seturilor de date ale unui element pe un al doilea ser
 
 O replică nu înlocuiește niciodată copia de rezervă. Versiunile mai vechi, fișierele individuale și verificarea vin tot din copii, iar replica păstrează doar atâtea instantanee câte stabilești. O replică actuală contează ca o copie în afara sediului, dar un element cu replică și fără copie de rezervă rămâne portocaliu.
 
+**Doar replică, fără copie de rezervă** din cardul Replică face ca întreaga secțiune ZFS să trimită replici și să nu mai facă nicio copie de rezervă. Folderul propriu și destinațiile off-site își păstrează comutatoarele, așa că dezactivarea lui face din nou copii de rezervă acolo, iar cardul fiecărui element ZFS arată comutatorul secțiunii așa cum este. Un astfel de element așteaptă prima replică în loc de o copie de rezervă, **Copiază acum** apare ca **Replicează acum**, iar containerele elementului se opresc și comenzile lui rulează în jurul instantaneului ca la o copie de rezervă. Replicile lui contează pentru o programare la câteva zile, alerta de întârziere și acoperire.
+
 Pornește-o în cardul **Replică** din fila Setări a elementului. Acolo alegi unde merge replica, când rulează (**După fiecare copie de rezervă** sau **Plan propriu**) și câte instantanee rămân pe țintă. Cardul listează fiecare set de date și volum cu starea lui, iar **Replică acum** pornește o rulare. O rulare de replică are un lock propriu, așa că un prim transfer lung nu oprește niciodată copiile de rezervă.
+
+**Replică tot acum**, lângă acțiunile de copiere când placa ZFS este aleasă pe pagina Copii de rezervă, trimite replica fiecărui element ZFS, unul după altul. Serverul rulează lotul, așa că acesta continuă când părăsești pagina, iar un element care nu poate fi replicat este numit și sărit.
 
 ### Trimitere către un server ZFS {#replica-push}
 
@@ -134,6 +138,8 @@ zfs allow <user> send,snapshot,hold,release,bookmark,destroy <dataset>
 
 BombVault reține cheia de gazdă pe care serverul o arată la prima conexiune și mai târziu refuză orice altă cheie. Dacă serverul a fost reinstalat, apasă **Uită cheia de gazdă** pe pagina serverului, iar conexiunea următoare va reține cheia nouă.
 
+Când gazda acestui server poate ajunge ea însăși la serverul ZFS, trimite `zfs send` direct în propriul ssh către server, cu cheia replicii și cheia de gazdă reținută, așa că fluxul nu trece prin BombVault. Altfel fluxul trece prin BombVault.
+
 ### Trimitere către o instanță împerecheată {#replica-receive}
 
 Un BombVault împerecheat poate primi singur replica. Nimeni nu primește acces SSH la celălalt host și nicio cheie nu ajunge într-un fișier `authorized_keys`.
@@ -151,6 +157,8 @@ Instanța care primește trebuie să răspundă prin HTTPS. La o adresă http si
 ### Unde ajung datele {#replica-target}
 
 Fiecare set de date ajunge la `<root>/<server>/<pool>/<path>`. Dosarul serverului este numele instanței sursă, fixat la primul transfer, deci două servere cu același nume de pool nu se încurcă niciodată. De exemplu, `cache/appdata` al unui server numit `tower` ajunge la `backup/bombvault-replica/tower/cache/appdata`.
+
+După ce BombVault este configurat din nou, ținta refuză dosarul pe care acest BombVault l-a umplut înainte. Cardul Replică oferă atunci **Preia dosarul**, iar următoarea replică continuă de la copiile din el. Preia-l doar când niciun alt BombVault nu mai replică în acel dosar.
 
 Copia de pe țintă este doar în citire și nu este montată, deci nu acoperă niciodată nimic pe acel server. Proprietățile ZFS merg cu ea, cu excepția punctului de montare, `sharenfs` și `sharesmb`. Nici rezervările `reservation` și `refreservation` nu sunt preluate, așa că copia ocupă doar spațiul de care au nevoie datele ei.
 

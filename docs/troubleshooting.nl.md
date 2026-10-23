@@ -24,7 +24,7 @@ Deze server heeft in de Noodassistent de back-upsleutel van een andere server ov
 
 ## Een telefoon belandt op de loginpagina
 
-Een gekoppelde telefoon krijgt zijn sessie via de groep alleen zolang **Telefoons kunnen koppelen met de twaalf woorden van de groep** aanstaat onder **Instellingen, Beveiliging**. Een wachtwoordreset zet het uit. Een app die ouder is dan de server krijgt ook geen sessie totdat hij is bijgewerkt. Een server die je via zijn adres hebt toegevoegd vraagt altijd om het wachtwoord.
+Een gekoppelde telefoon krijgt zijn sessie via de groep alleen zolang **Telefoons kunnen koppelen met de twaalf woorden van de groep** aanstaat onder **Instellingen, Beveiliging**. Een wachtwoordreset zet het uit. Een app die ouder is dan de server krijgt ook geen sessie totdat hij is bijgewerkt. Een server die je via zijn adres hebt toegevoegd vraagt altijd om het wachtwoord. Een telefoon die van de pagina Instanties is verwijderd, komt uitgeschakeld terug wanneer zijn app weer opent; zet **Deze instantie bevragen** aan onder **Bewaking** in zijn details om hem binnen te laten.
 
 ## VM-back-up wil geen verbinding maken
 
@@ -38,7 +38,7 @@ VM-back-up praat met libvirt via SSH, nooit een mount.
 
 ## Een live VM-snapshot is niet gedraaid
 
-Live snapshots hebben de qemu guest agent geïnstalleerd in de VM nodig en de schijf op `/mnt/cache` (of `/mnt/diskX`), niet `/mnt/user`. Op een uitgeschakelde VM valt live automatisch terug op net afsluiten. Een nette back-up sluit de VM af, maakt een back-up van de schijven en herstart hem daarna, dus hij is altijd consistent.
+Live snapshots hebben de qemu guest agent geïnstalleerd in de VM nodig en de schijf op `/mnt/cache` (of `/mnt/diskX`), niet `/mnt/user`. Op een uitgeschakelde VM valt live automatisch terug op net afsluiten. Een nette back-up sluit de VM af, maakt een back-up van de schijven en herstart hem daarna, dus hij is altijd consistent. Hij wacht tot tien minuten tot de gast is afgesloten en zet hem nooit geforceerd uit, zodat een Windows-gast die updates installeert niet halverwege wordt onderbroken. Een gast die daarna nog draait, blijft met rust, en die back-up mislukt met de reden.
 
 ## Een back-up mislukte met "repository is already locked"
 
@@ -47,6 +47,14 @@ Dit is meestal een verweesde restic-lock die achterblijft wanneer de container w
 ## Mijn off-site kopie is niet gemaakt na een back-up
 
 Off-site replicatie is opzettelijk best-effort, dus een off-site hapering laat de lokale back-up nooit mislukken. Controleer wanneer de bestemming kopieert: de kaart **Kopiëren** zegt **Na elke back-up** of noemt een eigen plan, en **Instellingen, Planning, Off-site-kopieën per onderdeel** kan een onderdeel een eigen plan geven. Gebruik **Nu repliceren** in de kaart **Off-site kopie** van het onderdeel onder **Instellingen, Bestemmingen** voor een run op aanvraag, en let op de statuskop van het overzicht, die **Off-site-kopie loopt** zegt zolang het loopt. Een mislukte kopie staat onder **Aandacht nodig**.
+
+## Het certificaat van een rest-server wordt niet vertrouwd
+
+restic weigert een certificaat dat het niet kent, en de foutmelding zegt waar het moet komen. Kopieer het zelfondertekende certificaat van de rest-server, of dat van de certificaatautoriteit die het heeft ondertekend, als PEM-bestand naar de map `certs` in de datamap van BombVault (`/config/certs` in de container, `appdata/bombvault/certs` in Unraid) en test opnieuw. Een herstart is niet nodig.
+
+## Een grote back-up werd afgebroken wegens geheugengebrek
+
+Stel **Geheugenlimiet per back-up (MiB, 0 = geen)** in de kaart **Prestaties** onder **Instellingen, Systeem** ruim onder wat de container mag gebruiken. Dicht bij de limiet geeft restic vaker geheugen vrij. Dat kost wat snelheid, maar de back-up wordt dan trager in plaats van te worden afgebroken.
 
 ## Een herstel brak af voordat het begon
 

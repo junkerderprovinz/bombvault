@@ -29,6 +29,15 @@ En destination er et sted, sikkerhedskopier havner: en lokal mappe, en share, en
 3. **Beskyttelse.** Vinduet siger ligeud, hvad tjenesten kan. En rest-server i append-only-tilstand afviser sletning, og tamper-testen tjekker det. En S3-bucket kan beholde gamle versioner med versionering og objektlås, hvilket BombVault endnu ikke kan tjekke. Et cloud-drev kan slet ikke afvise sletning: den, der kommer ind på serveren, kommer også ind på den kopi. Slå **Beskyttelse mod sletning (append-only)** til kun, hvor den anden side virkelig afviser sletning; BombVault trimmer så aldrig dér. **Til en nødsituation** siger, hvad gendannelseskittet rummer for denne destination.
 4. **Til hvilke områder.** Vælg de områder, der sikkerhedskopierer her. Den første kopi tager hele historikken med. Elementer, der har valgt egne destinationer, får ikke den nye af sig selv, og vinduet navngiver dem.
 
+Nogle tjenester beder om lidt mere ved login:
+
+- **SFTP og Storage Box.** **Tilføj nøgle** lægger BombVaults offentlige nøgle på serveren med **Kontoens adgangskode**, som kun bruges til det ene login og ikke gemmes nogen steder. Kommandoen til at gøre det i hånden står nedenunder. Testen viser **Servernøgle** med dens fingeraftryk; BombVault husker den og afviser serveren, hvis den senere viser en anden.
+- **S3-nøgler til en enkelt bucket**, for eksempel et objekttoken fra Cloudflare R2 eller en afgrænset AWS-nøgle, må muligvis ikke liste de andre buckets. Skriv bucketten i **Bucket**, så åbner testen og mappelisten den bucket.
+- **SMB-servere, der ikke viser deres delinger,** får navnet på en af dem under **Deling**, og testen åbner den deling direkte.
+- **FTP** spørger om **Kryptering**: **Ingen**, **Eksplicit TLS (FTPES)** eller **Implicit TLS (FTPS, port 990)**.
+- **OneDrive og Zoho WorkDrive.** Når et login åbner flere drev eller arbejdsområder, spørger vinduet, hvilket sikkerhedskopierne skal til.
+- **En rest-server med et selvsigneret certifikat.** Læg certifikatet som PEM-fil i mappen `certs` i BombVaults datamappe (`/config/certs` i containeren, `appdata/bombvault/certs` på Unraid). Sikkerhedskopier, kopier og testen af beskyttelsen mod sletning stoler på det uden genstart.
+
 S3-tjenester kører gennem restics eget S3-backend, hvilket er det, der lader en lagerklasse og objektlås gælde. Enhver anden tjeneste kører gennem den rclone, BombVault leverer, og dens remote vises så i kortet **Off-site (rclone)** under **Indstillinger, Destinationer**. En indstillingseksport bærer destinationerne; med legitimationsoplysninger inkluderet bærer den også deres login.
 
 Mappen på denne server hedder **Lokal** overalt: på destinationssiderne, i flowet, på et element og under Gendan. Er der flere mapper på denne server, bærer hver sit eget navn. En destination, som et områdes off-site-felt opretter, opkaldes efter sit sted, altså den sidste mappe i adressen eller, uden en mappe, efter sin server, og får et nummer, hvis en anden destination allerede hedder det. Et navn, du giver den på dens side, bliver stående. Står to destinationer med samme navn side om side, bærer hver sin server eller mappe.
@@ -43,6 +52,8 @@ Hver destination har en side for sig:
 - **Regler pr. område**: ét områdes eget repository, egen opbevaring eller komprimering på denne destination. **Ændr regler** åbner dem, og **Tilbage til destinationen** henter et område tilbage.
 - **Ligger allerede under denne destination**: områder, hvis håndskrevne adresse ligger i en mappe på denne destination. At overtage ét lader repositoriet blive, hvor det er; login, lagerklasse og beskyttelse mod sletning kommer så fra destinationen. BombVault tjekker først, at destinationens login åbner repositoriet, og nægter at lægge et append-only-repository under en destination, der ikke er append-only.
 - Et kar, der viser, hvor fuld destinationen er, med mærket for, hvor den er fuld, og hvor mange uger der er tilbage ved de seneste ugers vækst. En destination, der ikke rapporterer sin størrelse, siger **Størrelse ukendt**.
+
+En fjern destination, der havde sikkerhedskopier og pludselig ikke har noget repository, for eksempel en rest-server, hvis disk ikke blev monteret, får ikke af sig selv et nyt, tomt. Dens side siger det, så snart en sikkerhedskopi eller kopi opdager, at repositoriet er væk. Montér disken igen. Har du tømt det gamle repository med vilje, starter **Opret et nyt depot her** forfra, for alle områder på destinationen og dens navngivne repositories på én gang.
 
 En modtagerserver, som en anden instans i din gruppe kører, vises blandt udbyderne som **Fra din gruppe**; se [Modtageserver](#receiving-server).
 
@@ -194,6 +205,8 @@ At slå en rolle til sender en anmodning, og intet starter, før nogen på den a
 
 **Detaljer** på et kort åbner resten: det medlems modtagne repositories og hentekilder, destinationstilbud, overvågning, **Fjern** og **Glem nøglen**.
 
+Instanser, der er lukket ned, og telefoner med appen lukket beholder deres kort som **Inaktiv**, i gråt, med hvornår de sidst blev set, og står dæmpet i nettet, indtil du fjerner dem med **Fjern**. Lige efter at denne server er startet, viser sådan et kort **Kontrollerer**, indtil gruppen er tilbage. **Fjern** virker på sådan et kort, uanset hvilke dele der er slået til, og afslutter også medlemmets åbne anmodninger, dets ubrugte ZFS-modtagepladser og dets ventende nøgleanmodninger. Kortet **Instanser** på parringssiden viser også disse medlemmer som **Inaktiv**.
+
 ## Modtager og henter {#receiver}
 
 ![En modtaget off-site-kopi i en instans' detaljer, overvåget skrivebeskyttet, med et integritetstjek kørt på denne hardware.](assets/screenshots/receiver.png)
@@ -210,7 +223,7 @@ På den boks, der **modtager** append-only-kopier fra en anden BombVault, giver 
 
 Modtageren er strengt skrivebeskyttet. Den skriver aldrig til det modtagne repository, så den kan aldrig bryde den append-only-garanti, afsenderen støtter sig til.
 
-En henter virker den anden vej: med **Hentning** slået til læser en instans et andet medlems sikkerhedskopier ind i sit eget repository efter sin egen tidsplan. Dens kilder står også i det medlems detaljer.
+En henter virker den anden vej: med **Hentning** slået til læser en instans et andet medlems sikkerhedskopier efter sin egen tidsplan, ind i et eget repository for hver kilde, så de aldrig tæller som denne boks' egne sikkerhedskopier. Dens kilder står også i det medlems detaljer.
 
 ### Modtageserver {#receiving-server}
 
@@ -266,7 +279,7 @@ En rest-server, du kører i hånden, virker også: tilføj den med **Tilføj des
     - **Indtast nøglen**: den gamle servers `APP_KEY` og hvor dens sikkerhedskopier er.
 
     BombVault prøver så nøglen på hver destination og siger for hver, om den er læsbar, ikke fundet, låst med en anden nøgle, ikke til at nå eller stadig mangler sit login. Intet er gemt endnu, og nøglen bliver i hukommelsen i en begrænset tid. **Overtag nøglen** får denne server til at skrive sine sikkerhedskopier med den nøgle fra nu af; **Fortryd overtagelsen** går tilbage til dens egen nøgle, indtil den første sikkerhedskopi har kørt. En server, der allerede har sikkerhedskopier af sig selv, afviser overtagelsen og henviser til [Fra en gammel sikkerhedskopimappe](#restore-from-another-bombvault-repo) i stedet. **Gem adgangsoplysninger** gemmer de logins, kittet bærer til fjerne destinationer, og spørger, før det erstatter logins, denne server allerede har.
-2. **Indstillinger.** **Hent indstillinger tilbage** gendanner BombVaults egne indstillinger fra den nyeste auto-sikkerhedskopi: destinationer, legitimationsoplysninger, tidsplaner og regler. BombVault genstarter for at anvende dem, gennem Docker-socket'en, så den levende indstillingsdatabase aldrig overskrives under et åbent håndtag, og guiden fortsætter af sig selv bagefter. Denne servers login bliver: du bliver ved med at logge ind med den adgangskode, du bruger nu. Hemmeligheder, den gamle server havde gemt, som ikke kan overtages, oplistes, så du kan indtaste dem igen.
+2. **Indstillinger.** **Hent indstillinger tilbage** gendanner BombVaults egne indstillinger fra den nyeste auto-sikkerhedskopi: destinationer, legitimationsoplysninger, tidsplaner og regler. BombVault genstarter for at anvende dem, gennem Docker-socket'en, så den levende indstillingsdatabase aldrig overskrives under et åbent håndtag, og guiden fortsætter af sig selv bagefter. Denne servers login bliver: du bliver ved med at logge ind med den adgangskode, du bruger nu. Hemmeligheder, den gamle server havde gemt, som ikke kan overtages, oplistes, så du kan indtaste dem igen. Gendannelsen afslutter alle sessioner og fjerner adgangsnøglerne, så sæt dem op igen bagefter.
 3. **Valg.** BombVault gennemgår dine sikkerhedskopier og oplister de containere, VM'er, mappesæt og ZFS-datasæt, den finder. Den nyeste sikkerhedskopi er forvalgt overalt. Det, denne server stadig har, starter slået fra, fordi en gendannelse ville erstatte det. Mappesæt ved ikke længere, hvor de kom fra efter en genopbygning, så de går i en mappe, du vælger.
 4. **Gendannelse.** Alt valgt kommer tilbage på én gang, efterladt stoppet, hvis du selv vil starte hver container og VM, hvilket er sikrest efter et totalt tab. Download bagefter et nyt gendannelseskit: det gamle hører til den forrige installation.
 

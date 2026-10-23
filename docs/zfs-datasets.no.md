@@ -107,7 +107,11 @@ En replika er en kopi av datasettene til et element på en andre ZFS-server. Bom
 
 En replika erstatter aldri sikkerhetskopien. Eldre versjoner, enkeltfiler og sjekken kommer fortsatt fra sikkerhetskopiene, og replikaen beholder bare så mange øyeblikksbilder som du stiller inn. En oppdatert replika teller som en kopi utenfor stedet, men et element med replika og uten sikkerhetskopi forblir oransje.
 
+**Bare replika, ingen sikkerhetskopi** på kortet Replica får hele ZFS-området til å sende replikaer og ikke ta sikkerhetskopier. Den lokale mappen og de eksterne målene beholder bryterne sine, så når du slår det av, sikkerhetskopierer området til dem igjen, og kortet til hvert ZFS-element viser bryteren til området slik den står. Et slikt element venter på sin første replika i stedet for en sikkerhetskopi, **Sikkerhetskopier nå** tilbys som **Replikér nå**, og containerne til elementet stoppes og kommandoene kjører rundt øyeblikksbildet som ved en sikkerhetskopi. Replikaene teller for en tidsplan med noen dagers mellomrom, varselet om forsinkelse og dekningen.
+
 Slå den på i kortet **Replica** på fanen Innstillinger til elementet. Der velger du hvor replikaen går, når den kjører (**Etter hver sikkerhetskopi** eller **Egen plan**) og hvor mange øyeblikksbilder som blir på målet. Kortet lister hvert datasett og volum med tilstanden, og **Replikér nå** starter en kjøring. En replikakjøring har sin egen lås, så en lang første overføring aldri holder opp sikkerhetskopiene.
+
+**Replikér alt nå**, ved siden av sikkerhetskopihandlingene når ZFS-flisen er valgt på siden Sikkerhetskopier, sender replikaen for hvert ZFS-element, ett etter ett. Serveren kjører batchen, så den fortsetter når du forlater siden, og et element som ikke kan replikere, nevnes og hoppes over.
 
 ### Send til en ZFS-server {#replica-push}
 
@@ -134,6 +138,8 @@ I denne retningen har BombVault-en som eier elementet også en nøkkel som kan s
 
 BombVault lagrer vertsnøkkelen serveren viser ved første tilkobling, og avviser senere alle andre. Hvis serveren er installert på nytt, trykk **Glem vertsnøkkel** på serverens side, så lagrer neste tilkobling den nye nøkkelen.
 
+Når verten til denne serveren selv når ZFS-serveren, sender den `zfs send` rett inn i sin egen ssh til serveren, med replikanøkkelen og den lagrede vertsnøkkelen, så strømmen ikke går gjennom BombVault. Ellers går strømmen gjennom BombVault.
+
 ### Sending til en paret instans {#replica-receive}
 
 En paret BombVault kan ta imot replikaen selv. Ingen får SSH-tilgang til den andre verten, og ingen nøkkel havner i en `authorized_keys`-fil.
@@ -151,6 +157,8 @@ Den mottakende instansen må svare over HTTPS. Til en vanlig http-adresse sender
 ### Hvor dataene havner {#replica-target}
 
 Hvert datasett havner i `<root>/<server>/<pool>/<path>`. Servermappen er navnet på kildeinstansen, fastsatt ved første overføring, så to servere med samme poolnavn aldri kommer i veien for hverandre. For eksempel havner `cache/appdata` fra en server som heter `tower` i `backup/bombvault-replica/tower/cache/appdata`.
+
+Når BombVault er satt opp på nytt, avviser målet mappen som denne BombVault-en fylte før. Kortet Replica tilbyr da **Overta mappen**, og neste replika fortsetter fra kopiene i den. Overta den bare når ingen annen BombVault fortsatt replikerer til den mappen.
 
 Kopien på målet er skrivebeskyttet og ikke montert, så den dekker aldri noe på den serveren. ZFS-egenskaper følger med, bortsett fra monteringspunktet og `sharenfs` og `sharesmb`. Reservasjonene `reservation` og `refreservation` blir også igjen, så kopien tar bare den plassen dataene trenger.
 

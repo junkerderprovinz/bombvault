@@ -31,7 +31,7 @@ Uygulama bir yanıtı yalnızca sunucu onu, uygulamanın bu sunucuyla ilk karş�
 
 ## Sunucu değiştirme {#switch}
 
-Bir sunucu açıkken genel bakışının üstünde sunucunun adı, önünde de bir geri oku görünür. Ok, uygulamanın genel bakışına, yani başlangıç ekranına götürür; orada uygulamanın bildiği her sunucu durumuyla listelenir: **Bağlı**, **Bağlı değil**, **Oturum açma gerekiyor** ya da **Sertifikayı kontrol et**. Açmak için orada başka birine dokun; evde doğrudan, aksi halde röle üzerinden açılır.
+Bir sunucu açıkken genel bakışının üstünde sunucunun adı, önünde de bir geri oku görünür. Ok, uygulamanın genel bakışına, yani başlangıç ekranına götürür; orada uygulamanın bildiği her sunucu durumuyla listelenir: **Bağlı**, **Bağlı değil**, **Oturum açma gerekiyor** ya da **Sertifikayı kontrol et**. Grubun yanıt vermeyen bir sunucusu gri renkte **Etkin değil** olarak görünür ve grubun onu en son ne zaman gördüğünü gösterir; uygulamanın henüz hiç haber almadığı bir sunucu ise **Denetleniyor** der. Uygulama her bağlandığında grubun listesini örneklerinden birinden okur, bu yüzden röle üzerinden hiç karşılaşmadığı bir örnek de, örneğin telefon gruba katıldığında kapalı olan bir örnek, listede yer alır. Açmak için orada başka birine dokun; evde doğrudan, aksi halde röle üzerinden açılır.
 
 ## Eşleştirilmiş telefonda oturum {#sign-in}
 
@@ -50,7 +50,7 @@ Bunun anahtarı, **Ayarlar, Güvenlik** altındaki **Android uygulaması** kart�
 
 ## Örnekler sayfasında telefon {#instances}
 
-Telefon, gruptaki her sunucunun Örnekler sayfasında kendi kartını alır; kart Android uygulaması olarak işaretlenir ve telefona verdiğin adı taşır. Hiçbir şeyi yedeklemediği için karnesi yoktur ve **Kaldır** onu sayfadan çıkarır. Kelimeleri bilen bir telefon istediği zaman yeniden eşleşebilir; bu yüzden kaybolan bir telefon için **Ayarlar, Güvenlik** altındaki **Telefonlar grubun on iki kelimesiyle eşleşebilir** anahtarını kapat ya da her örnekte **Gruptan ayrıl** seçeneğini kullan ve onları yeni kelimelerle yeniden eşleştir.
+Telefon, gruptaki her sunucunun Örnekler sayfasında kendi kartını alır; kart Android uygulaması olarak işaretlenir ve telefona verdiğin adı taşır. Hiçbir şeyi yedeklemediği için karnesi yoktur. **Kaldır** onu sayfadan çıkarır ve oturumunu hemen sonlandırır; ayrıntılarındaki **İzleme** altında **Bu örneği sorgula** anahtarını kapatmak da aynısını yapar. Telefon kelimeleri hâlâ bildiği için uygulaması açıldığında yeniden görünür, ama kapalı olarak, ve biri onu açana kadar oturum almaz. Kaybolan bir telefon için kartını her sunucuda kaldır, **Ayarlar, Güvenlik** altındaki **Telefonlar grubun on iki kelimesiyle eşleşebilir** anahtarını kapat ya da her örnekte **Gruptan ayrıl** seçeneğini kullan ve onları yeni kelimelerle yeniden eşleştir.
 
 10.0.0 sürümünden önce eşleştirilmiş bir telefon, güncellemeden sonraki ilk ziyaretinde çağrılarını imzalamaya başlar ve her sunucu telefon için aldığı ilk anahtarı saklar. Telefon çevrimdışıyken grubun kelimelerini bilen başka biri önce davranırsa, o sunucu o andan itibaren telefonu geri çevirir ve uygulama onu artık röle üzerinden açamaz. Düzeltmek için o sunucuda bir tarayıcıdan oturum aç, Örnekler sayfasında telefonun kartında **Anahtarı unut** seçeneğini, ardından **Unutmayı onayla** seçeneğini seç ve uygulamayı yeniden aç. Sunucu, bir sonraki çağrıda telefonun kendi anahtarını alır. Telefon yine geri çevrilirse kelimeler başkasındadır: her örnekte **Gruptan ayrıl** seçeneğini kullan ve onları yeni kelimelerle yeniden eşleştir, tıpkı kaybolan bir telefonda olduğu gibi.
 
@@ -70,7 +70,7 @@ Dışa aktarmalar, kurtarma kitleri, flash ZIP'leri ve veritabanı dökümleri, 
 
 ## Dokunmatik ekranda {#touch}
 
-Parmağın altında üzerine gelme diye bir şey yoktur, bu yüzden bir denetim basılı tutulduğu sürece soluklaşır ve marka logosu taşıyan bir düğme, parmak kalkana kadar markasının renginde yanar. Bir düğmeye uzun basmak yavaş bir dokunuş sayılır ve bağlantı menüsü açmaz.
+Parmağın altında üzerine gelme diye bir şey yoktur, bu yüzden bir denetim basılı tutulduğu sürece soluklaşır ve marka logosu taşıyan bir düğme, parmak kalkana kadar markasının renginde yanar. Bir düğmeye uzun basmak yavaş bir dokunuş sayılır ve bağlantı menüsü açmaz. Gri görünen bir düğmeye dokunmak, başka bir yere dokunana kadar neden gri olduğunu gösterir.
 
 ## Bunun yerine tarayıcıda {#browser}
 

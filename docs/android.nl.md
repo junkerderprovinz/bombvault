@@ -31,7 +31,7 @@ De app neemt een antwoord alleen aan als de server het heeft ondertekend met de 
 
 ## Van server wisselen {#switch}
 
-Is een server open, dan staat bovenaan zijn overzicht zijn naam, met een pijl terug ervoor. De pijl leidt naar het overzicht van de app, het startscherm, dat elke server die de app kent met zijn status toont: **Verbonden**, **Niet verbonden**, **Aanmelden nodig** of **Certificaat controleren**. Tik daar op een andere om hem te openen, thuis rechtstreeks en anders via de relay.
+Is een server open, dan staat bovenaan zijn overzicht zijn naam, met een pijl terug ervoor. De pijl leidt naar het overzicht van de app, het startscherm, dat elke server die de app kent met zijn status toont: **Verbonden**, **Niet verbonden**, **Aanmelden nodig** of **Certificaat controleren**. Een server van de groep die niet antwoordt, staat op **Inactief**, in grijs, met wanneer de groep hem voor het laatst zag, en een server waarvan de app nog niets heeft gehoord, toont **Controleren**. Bij elke verbinding leest de app de lijst van de groep bij een van de instanties, dus staat ook een instantie die de app nooit via de relay heeft gezien in de lijst, zoals een die uit stond toen de telefoon koppelde. Tik daar op een andere om hem te openen, thuis rechtstreeks en anders via de relay.
 
 ## Aangemeld op een gekoppelde telefoon {#sign-in}
 
@@ -48,7 +48,7 @@ De schakelaar hiervoor is **Telefoons kunnen koppelen met de twaalf woorden van 
 
 ## De telefoon op de Instanties-pagina {#instances}
 
-De telefoon krijgt een eigen kaart op de Instanties-pagina van elke server in de groep, gemarkeerd als Android-app en met de naam die je de telefoon hebt gegeven. Hij heeft geen scorecard omdat hij geen back-ups maakt, en **Verwijderen** haalt hem van de pagina. Een telefoon die de woorden kent, kan op elk moment opnieuw koppelen. Zet voor een verloren telefoon daarom **Telefoons kunnen koppelen met de twaalf woorden van de groep** uit onder **Instellingen, Beveiliging**, of laat elke instantie **Groep verlaten** en koppel ze opnieuw met nieuwe woorden.
+De telefoon krijgt een eigen kaart op de Instanties-pagina van elke server in de groep, gemarkeerd als Android-app en met de naam die je de telefoon hebt gegeven. Hij heeft geen scorecard omdat hij geen back-ups maakt. **Verwijderen** haalt hem van de pagina en beëindigt meteen zijn sessie, net als het uitzetten van **Deze instantie bevragen** onder **Bewaking** in zijn details. De telefoon kent de woorden nog, dus hij verschijnt weer zodra zijn app opent, maar uitgeschakeld, en hij krijgt geen sessie tot iemand hem aanzet. Verwijder voor een verloren telefoon zijn kaart op elke server, zet **Telefoons kunnen koppelen met de twaalf woorden van de groep** uit onder **Instellingen, Beveiliging**, of laat elke instantie **Groep verlaten** en koppel ze opnieuw met nieuwe woorden.
 
 Een telefoon die voor 10.0.0 is gekoppeld, gaat zijn aanroepen ondertekenen bij het eerste bezoek na de update, en elke server bewaart de eerste sleutel die hij voor de telefoon krijgt. Als iemand anders die de woorden van de groep kent er eerder bij is terwijl de telefoon offline is, wijst die server de telefoon vanaf dat moment af, en kan de app hem niet meer openen via de relay. Los dit op door in een browser in te loggen op die server, op de kaart van de telefoon op de Instanties-pagina **Sleutel vergeten** te kiezen en daarna **Vergeten bevestigen**, en de app opnieuw te openen. De server neemt bij de volgende aanroep de eigen sleutel van de telefoon over. Wordt de telefoon opnieuw afgewezen, dan heeft iemand anders de woorden: laat elke instantie **Groep verlaten** en koppel ze opnieuw met nieuwe woorden, net als bij een verloren telefoon.
 
@@ -68,7 +68,7 @@ Exports, herstelkits, flash-ZIP's en databasedumps komen in de map Downloads van
 
 ## Op een touchscreen {#touch}
 
-Onder een vinger zweeft niets, dus een bedieningselement wordt gedimd zolang je het vasthoudt, en een knop met een merklogo licht op in zijn merkkleur tot je je vinger optilt. Lang drukken op een knop telt als een trage tik en opent geen linkmenu.
+Onder een vinger zweeft niets, dus een bedieningselement wordt gedimd zolang je het vasthoudt, en een knop met een merklogo licht op in zijn merkkleur tot je je vinger optilt. Lang drukken op een knop telt als een trage tik en opent geen linkmenu. Een tik op een grijze knop toont waarom hij grijs is, tot je ergens anders tikt.
 
 ## In plaats daarvan in een browser {#browser}
 

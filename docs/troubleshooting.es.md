@@ -24,7 +24,7 @@ Este servidor adoptó la clave de copias de otro servidor en el Asistente de eme
 
 ## Un móvil llega a la página de inicio de sesión
 
-Un móvil emparejado recibe su sesión a través del grupo solo mientras **Los teléfonos pueden emparejarse con las doce palabras del grupo** esté activado en **Ajustes, Seguridad**. Un restablecimiento de la contraseña lo desactiva. Una app más antigua que el servidor tampoco recibe sesión hasta que se actualiza. Un servidor añadido por su dirección siempre pide la contraseña.
+Un móvil emparejado recibe su sesión a través del grupo solo mientras **Los teléfonos pueden emparejarse con las doce palabras del grupo** esté activado en **Ajustes, Seguridad**. Un restablecimiento de la contraseña lo desactiva. Una app más antigua que el servidor tampoco recibe sesión hasta que se actualiza. Un servidor añadido por su dirección siempre pide la contraseña. Un móvil eliminado de la página de Instancias regresa desactivado cuando su app vuelve a abrirse; activa **Consultar esta instancia** en **Supervisión** dentro de sus detalles para dejarlo entrar.
 
 ## La copia de VM no conecta
 
@@ -38,7 +38,7 @@ La copia de VM habla con libvirt por SSH, nunca con un montaje.
 
 ## Una instantánea de VM en vivo no se ejecutó
 
-Las instantáneas en vivo necesitan el agente invitado de qemu instalado en la VM y el disco en `/mnt/cache` (o `/mnt/diskX`), no en `/mnt/user`. En una VM apagada, la modalidad en vivo recurre automáticamente a la ordenada. Una copia ordenada apaga la VM, copia los discos y luego la reinicia, de modo que siempre es consistente.
+Las instantáneas en vivo necesitan el agente invitado de qemu instalado en la VM y el disco en `/mnt/cache` (o `/mnt/diskX`), no en `/mnt/user`. En una VM apagada, la modalidad en vivo recurre automáticamente a la ordenada. Una copia ordenada apaga la VM, copia los discos y luego la reinicia, de modo que siempre es consistente. Espera hasta diez minutos a que el invitado se apague y nunca lo fuerza a apagarse, para que un invitado Windows que está instalando actualizaciones no se corte a medias. Un invitado que sigue en marcha después de ese tiempo se deja tranquilo, y esa copia falla con el motivo.
 
 ## Una copia falló con "repository is already locked"
 
@@ -47,6 +47,14 @@ Suele tratarse de un bloqueo de restic huérfano dejado atrás cuando el contene
 ## Mi copia externa no ocurrió tras una copia
 
 La replicación externa es de mejor esfuerzo por diseño, de modo que un contratiempo externo nunca hace fallar la copia local. Comprueba cuándo copia el destino: su tarjeta **Copiar** dice **Después de cada copia** o nombra un plan propio, y **Ajustes, Calendario, Copias externas por sección** puede dar a una sección su propio plan. Usa **Replicar ahora** en la tarjeta **Copia externa** de la sección, en **Ajustes, Destinos**, para una ejecución bajo demanda, y observa la cabecera de estado del resumen, que dice **Copia externa en curso** mientras dura. Una copia fallida aparece en **Necesita atención**.
+
+## No se confía en el certificado de un rest-server
+
+restic rechaza un certificado que no conoce, y el error dice dónde ponerlo. Copia el certificado autofirmado del rest-server, o el de la autoridad que lo firmó, como archivo PEM en la carpeta `certs` de la carpeta de datos de BombVault (`/config/certs` en el contenedor, `appdata/bombvault/certs` en Unraid) y vuelve a probar. No hace falta reiniciar.
+
+## Una copia grande se terminó por quedarse sin memoria
+
+Ajusta **Límite de memoria por copia (MiB, 0 = ninguno)** en la tarjeta **Rendimiento** de **Ajustes, Sistema**, bastante por debajo de lo que puede usar el contenedor. Cerca del límite restic libera memoria más a menudo, lo que cuesta algo de velocidad, así que la copia va más lenta en lugar de terminarse.
 
 ## Una restauración se abortó antes de empezar
 

@@ -107,7 +107,11 @@ Eine Replik ist eine Kopie der Datasets eines Eintrags auf einem zweiten ZFS-Ser
 
 Eine Replik ersetzt die Sicherung nie. Ältere Versionen, einzelne Dateien und die Prüfung kommen weiter aus den Sicherungen, und die Replik behält nur so viele Snapshots, wie du einstellst. Eine aktuelle Replik zählt als Kopie außer Haus, aber ein Eintrag mit Replik und ohne Sicherung bleibt orange.
 
+**Nur Replik, keine Sicherung** in der Karte Replik lässt den ganzen ZFS-Bereich Repliken senden und keine Sicherungen machen. Der eigene Ordner und die Speicherorte außer Haus behalten ihre Schalter, ausgeschaltet sichert der Bereich also wieder dorthin, und die Karte jedes ZFS-Eintrags zeigt den Schalter des Bereichs so, wie er steht. So ein Eintrag wartet auf seine erste Replik statt auf eine Sicherung, **Jetzt sichern** heißt bei ihm **Jetzt replizieren**, und rund um den Snapshot stoppen seine Container und laufen seine Befehle wie bei einer Sicherung. Seine Repliken zählen für einen Zeitplan alle paar Tage, die Warnung bei Überfälligkeit und die Abdeckung.
+
 Schalte sie in der Karte **Replik** im Reiter Einstellungen des Eintrags ein. Dort wählst du, wohin die Replik geht, wann sie läuft (**Nach jeder Sicherung** oder **Eigener Plan**) und wie viele Snapshots auf dem Ziel bleiben. Die Karte listet jedes Dataset und jedes Volume mit seinem Zustand, und **Jetzt replizieren** startet einen Lauf. Ein Replik-Lauf hat eine eigene Sperre, deshalb hält eine lange erste Übertragung die Sicherungen nie auf.
+
+**Alle jetzt replizieren** steht neben den Sicherungsaktionen, wenn auf der Seite Sicherungen die Kachel ZFS gewählt ist, und sendet die Replik jedes ZFS-Eintrags, einen nach dem anderen. Der Server führt den Stapel aus, er läuft also weiter, wenn du die Seite verlässt, und ein Eintrag, der nicht replizieren kann, wird genannt und übersprungen.
 
 ### Auf einen ZFS-Server schicken {#replica-push}
 
@@ -134,6 +138,8 @@ In dieser Richtung hält das BombVault, das den Eintrag besitzt, auch einen Schl
 
 BombVault speichert beim ersten Verbinden den Host-Schlüssel des Servers und lehnt später einen anderen ab. Wurde der Server neu aufgesetzt, drück auf der Seite des Servers **Host-Schlüssel vergessen**, dann speichert die nächste Verbindung den neuen Schlüssel.
 
+Erreicht der Host dieses Servers den ZFS-Server selbst, leitet er `zfs send` direkt in sein eigenes ssh zum Server, mit dem Replik-Schlüssel und dem gespeicherten Host-Schlüssel, sodass der Datenstrom nicht durch BombVault läuft. Sonst geht der Strom durch BombVault.
+
 ### An eine gekoppelte Instanz senden {#replica-receive}
 
 Ein gekoppeltes BombVault kann die Replik selbst empfangen. Niemand bekommt SSH-Zugang zum anderen Host, und es landet kein Schlüssel in einer Datei `authorized_keys`.
@@ -151,6 +157,8 @@ Die empfangende Instanz muss über HTTPS antworten. An eine reine http-Adresse s
 ### Wo die Daten landen {#replica-target}
 
 Jedes Dataset landet unter `<Wurzel>/<Server>/<Pool>/<Pfad>`. Der Serverordner ist der Name der Quell-Instanz, festgelegt bei der ersten Übertragung. So kommen sich zwei Server mit gleichem Pool-Namen nie in die Quere. Zum Beispiel liegt `cache/appdata` eines Servers namens `tower` unter `backup/bombvault-replica/tower/cache/appdata`.
+
+Wurde BombVault neu aufgesetzt, lehnt das Ziel den Ordner ab, den dieses BombVault vorher gefüllt hat. Die Karte Replik bietet dann **Ordner übernehmen** an, und die nächste Replik macht bei den Kopien darin weiter. Übernimm ihn nur, wenn kein anderes BombVault mehr in diesen Ordner repliziert.
 
 Die Kopie auf dem Ziel ist schreibgeschützt und nicht eingehängt, damit sie dort nichts überdeckt. ZFS-Eigenschaften werden mitgenommen, außer dem Einhängepunkt sowie `sharenfs` und `sharesmb`. Auch die Reservierungen `reservation` und `refreservation` bleiben zurück, die Kopie belegt also nur den Platz, den ihre Daten brauchen.
 

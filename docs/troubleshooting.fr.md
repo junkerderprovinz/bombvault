@@ -24,7 +24,7 @@ Ce serveur a repris la clé de sauvegarde d'un autre serveur dans l'Assistant d'
 
 ## Un téléphone arrive sur la page de connexion
 
-Un téléphone appairé reçoit sa session via le groupe seulement tant que **Les téléphones peuvent s'appairer avec les douze mots du groupe** est activé sous **Paramètres, Sécurité**. Une réinitialisation du mot de passe le désactive. Une application plus ancienne que le serveur ne reçoit pas non plus de session avant d'être mise à jour. Un serveur ajouté par son adresse demande toujours le mot de passe.
+Un téléphone appairé reçoit sa session via le groupe seulement tant que **Les téléphones peuvent s'appairer avec les douze mots du groupe** est activé sous **Paramètres, Sécurité**. Une réinitialisation du mot de passe le désactive. Une application plus ancienne que le serveur ne reçoit pas non plus de session avant d'être mise à jour. Un serveur ajouté par son adresse demande toujours le mot de passe. Un téléphone supprimé de la page Instances revient désactivé quand son application s'ouvre de nouveau ; activez **Interroger cette instance** sous **Surveillance** dans ses détails pour le laisser entrer.
 
 ## La sauvegarde de VM ne se connecte pas
 
@@ -38,7 +38,7 @@ La sauvegarde de VM dialogue avec libvirt via SSH, jamais un montage.
 
 ## Un instantané de VM à chaud ne s'est pas exécuté
 
-Les instantanés à chaud nécessitent l'agent invité qemu installé dans la VM et le disque sur `/mnt/cache` (ou `/mnt/diskX`), pas `/mnt/user`. Sur une VM éteinte, le mode à chaud se rabat automatiquement sur le mode propre. Une sauvegarde propre arrête la VM, sauvegarde les disques, puis la redémarre, elle est donc toujours cohérente.
+Les instantanés à chaud nécessitent l'agent invité qemu installé dans la VM et le disque sur `/mnt/cache` (ou `/mnt/diskX`), pas `/mnt/user`. Sur une VM éteinte, le mode à chaud se rabat automatiquement sur le mode propre. Une sauvegarde propre arrête la VM, sauvegarde les disques, puis la redémarre, elle est donc toujours cohérente. Elle attend jusqu'à dix minutes que l'invité s'arrête et ne le force jamais à s'éteindre, pour qu'un invité Windows en train d'installer des mises à jour ne soit pas coupé en plein milieu. Un invité qui tourne encore après ce délai est laissé tranquille, et cette sauvegarde échoue en indiquant la raison.
 
 ## Une sauvegarde a échoué avec « repository is already locked »
 
@@ -47,6 +47,14 @@ C'est généralement un verrou restic orphelin laissé lorsque le conteneur a é
 ## Ma copie hors site n'a pas eu lieu après une sauvegarde
 
 La réplication hors site est au mieux par conception, de sorte qu'un accroc hors site ne fait jamais échouer la sauvegarde locale. Vérifiez quand la destination copie : sa carte **Copier** indique **Après chaque sauvegarde** ou nomme un planning propre, et **Paramètres, Planning, Copies hors site par section** peut donner à une section son propre planning. Utilisez **Répliquer maintenant** dans la carte **Copie hors site** de la section sous **Paramètres, Destinations** pour une exécution à la demande, et surveillez l'en-tête d'état de l'aperçu, qui affiche **Copie hors site en cours** pendant l'exécution. Une copie échouée apparaît sous **À traiter**.
+
+## Le certificat d'un rest-server n'est pas reconnu
+
+restic refuse un certificat qu'il ne connaît pas, et le message d'erreur indique où le placer. Copiez le certificat auto-signé du rest-server, ou celui de l'autorité qui l'a signé, sous forme de fichier PEM dans le dossier `certs` du dossier de données de BombVault (`/config/certs` dans le conteneur, `appdata/bombvault/certs` sous Unraid), puis testez de nouveau. Aucun redémarrage n'est nécessaire.
+
+## Une grosse sauvegarde a été tuée faute de mémoire
+
+Réglez **Limite de mémoire par sauvegarde (MiB, 0 = aucune)** dans la carte **Performances** sous **Paramètres, Système**, bien en dessous de ce que le conteneur peut utiliser. À l'approche de la limite, restic libère la mémoire plus souvent, ce qui coûte un peu de vitesse : la sauvegarde ralentit au lieu d'être tuée.
 
 ## Une restauration s'est interrompue avant de démarrer
 

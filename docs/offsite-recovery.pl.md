@@ -29,6 +29,15 @@ Miejsce docelowe to miejsce, do którego trafiają kopie zapasowe: folder lokaln
 3. **Ochrona.** Okno mówi wprost, co usługa potrafi. Rest-server w trybie append-only odmawia usuwania, a test manipulacji to sprawdza. Koszyk S3 może zachowywać stare wersje dzięki wersjonowaniu i blokadzie obiektów, czego BombVault jeszcze nie umie sprawdzić. Dysk w chmurze nie potrafi odmówić usunięcia wcale: kto wejdzie na serwer, wejdzie też do tej kopii. Włącz **Ochrona przed usunięciem (append-only)** tylko tam, gdzie druga strona naprawdę odmawia usuwania; BombVault nigdy wtedy tam nie przycina. **Na wypadek awarii** mówi, co zestaw odzyskiwania zawiera dla tego miejsca.
 4. **Dla których sekcji.** Wybierz sekcje, które tworzą tu kopie. Pierwsze kopiowanie zabiera całą historię. Elementy, które wybrały własne miejsca docelowe, nie dostają nowego same z siebie, a okno je wymienia.
 
+Niektóre usługi przy logowaniu proszą o trochę więcej:
+
+- **SFTP i Storage Box.** **Dodaj klucz** umieszcza publiczny klucz BombVault na serwerze za pomocą hasła z pola **Hasło konta**, które służy tylko do tego jednego logowania i nie jest nigdzie zapisywane. Pod spodem widać polecenie, którym można to zrobić ręcznie. Test pokazuje **Klucz serwera** z jego odciskiem; BombVault go zapamiętuje i odrzuca serwer, jeśli później pokaże inny.
+- **Klucze S3 dla pojedynczego koszyka**, takie jak token obiektowy Cloudflare R2 albo ograniczony klucz AWS, mogą nie mieć prawa wyświetlać innych koszyków. Wpisz koszyk w pole **Bucket**, a test i lista folderów otworzą właśnie ten koszyk.
+- **Serwery SMB, które nie wyświetlają swoich udziałów,** dostają w polu **Udział** nazwę jednego z nich, a test otwiera ten udział bezpośrednio.
+- **FTP** pyta o **Szyfrowanie**: **Brak**, **Jawne TLS (FTPES)** albo **Niejawne TLS (FTPS, port 990)**.
+- **OneDrive i Zoho WorkDrive.** Gdy logowanie otwiera kilka dysków lub obszarów roboczych, okno pyta, na który mają trafiać kopie zapasowe.
+- **rest-server z certyfikatem samopodpisanym.** Umieść certyfikat jako plik PEM w folderze `certs` w folderze danych BombVault (`/config/certs` w kontenerze, `appdata/bombvault/certs` w Unraid). Kopie zapasowe, kopie i test ochrony przed usunięciem ufają mu bez restartu.
+
 Usługi S3 działają przez własny backend S3 restic, dzięki czemu mogą obowiązywać klasa pamięci i blokada obiektów. Każda inna usługa działa przez rclone dołączone do BombVault, a jej zdalny zasób pojawia się potem w karcie **Off-site (rclone)** w **Ustawienia, Miejsca docelowe**. Eksport ustawień zawiera miejsca docelowe; z dołączonymi danymi logowania zawiera także ich logowanie.
 
 Folder na tym serwerze nazywa się wszędzie **Lokalne**: na stronach miejsc docelowych, w przepływie, przy elemencie i w Przywracaniu. Jeśli na tym serwerze jest kilka folderów, każdy ma własną nazwę. Miejsce docelowe, które tworzy pole poza siedzibą sekcji, nosi nazwę swojego miejsca, czyli ostatniego folderu adresu albo, gdy go brak, swojego serwera, i dostaje numer, gdy inne miejsce ma już taką nazwę. Nazwa, którą nadasz mu na jego stronie, zostaje. Gdy obok siebie stoją dwa miejsca o tej samej nazwie, każde ma dopisany swój serwer lub folder.
@@ -43,6 +52,8 @@ Każde miejsce docelowe ma własną stronę:
 - **Reguły według sekcji**: własne repozytorium, przechowywanie lub kompresja jednej sekcji w tym miejscu docelowym. **Zmień reguły** je otwiera, a **Przywróć ustawienia miejsca docelowego** przywraca sekcję.
 - **Już pod tym miejscem docelowym**: sekcje, których wpisany ręcznie adres leży w folderze tego miejsca. Przejęcie jednej zostawia repozytorium tam, gdzie jest; logowanie, klasa pamięci i ochrona przed usunięciem pochodzą wtedy z miejsca docelowego. BombVault najpierw sprawdza, czy logowanie miejsca docelowego otwiera repozytorium, i odmawia umieszczenia repozytorium append-only pod miejscem, które nie jest append-only.
 - Naczynie pokazujące, jak pełne jest miejsce docelowe, ze znacznikiem, gdzie jest pełne, i liczbą tygodni, które zostały przy przyroście z ostatnich tygodni. Miejsce, które nie zgłasza rozmiaru, mówi **Rozmiar nieznany**.
+
+Zdalne miejsce docelowe, które miało kopie zapasowe i nagle nie ma repozytorium, na przykład rest-server, którego dysk się nie zamontował, nie dostaje samo z siebie nowego, pustego. Jego strona mówi o tym, gdy tylko kopia zapasowa lub kopiowanie zauważy brak repozytorium. Zamontuj dysk ponownie. Jeśli celowo opróżniłeś stare repozytorium, **Utwórz tu nowe repozytorium** zaczyna od nowa, dla wszystkich sekcji tego miejsca i jego nazwanych repozytoriów naraz.
 
 Serwer odbiorczy, który uruchamia inna instancja Twojej grupy, pojawia się wśród dostawców jako **Z twojej grupy**; zobacz [Serwer odbiorczy](#receiving-server).
 
@@ -194,6 +205,8 @@ Włączenie roli wysyła prośbę, a nic się nie zaczyna, dopóki ktoś na drug
 
 **Szczegóły** na karcie otwierają resztę: otrzymane repozytoria i źródła pobierania tego członka, oferty pamięci, monitorowanie, **Usuń** i **Zapomnij klucz**.
 
+Wyłączone instancje i telefony z zamkniętą aplikacją zachowują swoją kartę jako **Nieaktywne**, na szaro, z informacją, kiedy były ostatnio widziane, i są przygaszone w sieci, dopóki nie usuniesz ich przyciskiem **Usuń**. Zaraz po starcie tego serwera taka karta pokazuje **Sprawdzanie**, dopóki grupa znowu nie będzie dostępna. **Usuń** działa na takiej karcie niezależnie od tego, które części są włączone, i kończy też otwarte prośby członka, jego nieużywane miejsca odbioru ZFS i jego oczekujące prośby o klucz. Karta **Instancje** na stronie parowania też pokazuje tych członków jako **Nieaktywne**.
+
 ## Odbiornik i pobierający {#receiver}
 
 ![Otrzymana kopia poza siedzibą w szczegółach instancji, obserwowana tylko do odczytu, z kontrolą spójności uruchomioną na tym sprzęcie.](assets/screenshots/receiver.png)
@@ -210,7 +223,7 @@ Na maszynie, która **odbiera** kopie append-only od innego BombVault, otrzymane
 
 Odbiornik jest ściśle tylko do odczytu. Nigdy nie zapisuje do otrzymanego repozytorium, więc nigdy nie może złamać gwarancji append-only, na której polega nadawca.
 
-Pobierający działa w drugą stronę: przy włączonym **Pobieranie** instancja wczytuje kopie zapasowe innego członka do własnego repozytorium według własnego harmonogramu. Jej źródła stoją też w szczegółach tego członka.
+Pobierający działa w drugą stronę: przy włączonym **Pobieranie** instancja wczytuje kopie zapasowe innego członka według własnego harmonogramu, do osobnego repozytorium dla każdego źródła, więc nigdy nie liczą się one jako kopie zapasowe tej maszyny. Jej źródła stoją też w szczegółach tego członka.
 
 ### Serwer odbiorczy {#receiving-server}
 
@@ -266,7 +279,7 @@ Rest-server uruchomiony ręcznie też działa: dodaj go przez **Dodaj miejsce do
     - **Wpisz klucz**: `APP_KEY` starego serwera i miejsce, gdzie są jego kopie.
 
     BombVault próbuje potem klucza na każdym miejscu docelowym i mówi dla każdego, czy jest czytelne, nie znalezione, zablokowane innym kluczem, nieosiągalne albo nadal bez logowania. Nic nie zostało jeszcze zapisane, a klucz zostaje w pamięci przez ograniczony czas. **Przejmij klucz** sprawia, że ten serwer odtąd zapisuje kopie tym kluczem; **Cofnij przejęcie** wraca do jego własnego klucza, dopóki nie zadziała pierwsza kopia zapasowa. Serwer, który ma już własne kopie, odmawia przejęcia i odsyła do [Ze starego folderu z kopiami](#restore-from-another-bombvault-repo). **Zapisz dane dostępowe** zapisuje logowania, które zestaw niesie dla zdalnych miejsc docelowych, i pyta przed zastąpieniem logowań, które ten serwer już ma.
-2. **Ustawienia.** **Przywróć ustawienia** odtwarza własne ustawienia BombVault z najnowszej autokopii: miejsca docelowe, dane logowania, harmonogramy i reguły. BombVault uruchamia się ponownie, aby je zastosować, przez gniazdo Docker, więc żywa baza ustawień nigdy nie jest nadpisywana przy otwartym uchwycie, a kreator potem sam idzie dalej. Logowanie tego serwera zostaje: nadal logujesz się hasłem, którego używasz teraz. Sekrety zapisane przez stary serwer, których nie da się przejąć, są wymienione, żeby wpisać je ponownie.
+2. **Ustawienia.** **Przywróć ustawienia** odtwarza własne ustawienia BombVault z najnowszej autokopii: miejsca docelowe, dane logowania, harmonogramy i reguły. BombVault uruchamia się ponownie, aby je zastosować, przez gniazdo Docker, więc żywa baza ustawień nigdy nie jest nadpisywana przy otwartym uchwycie, a kreator potem sam idzie dalej. Logowanie tego serwera zostaje: nadal logujesz się hasłem, którego używasz teraz. Sekrety zapisane przez stary serwer, których nie da się przejąć, są wymienione, żeby wpisać je ponownie. Przywrócenie kończy wszystkie sesje i usuwa klucze dostępu, więc skonfiguruj je potem ponownie.
 3. **Wybór.** BombVault przegląda Twoje kopie zapasowe i wymienia znalezione kontenery, maszyny wirtualne, zestawy folderów i zbiory danych ZFS. Najnowsza kopia jest wstępnie wybrana wszędzie. To, co ten serwer nadal ma, startuje wyłączone, bo przywracanie by to zastąpiło. Zestawy folderów po odbudowie nie wiedzą już, skąd pochodziły, więc trafiają do wybranego folderu.
 4. **Przywracanie.** Wszystko wybrane wraca naraz, zatrzymane, jeśli chcesz uruchomić każdy kontener i maszynę samodzielnie, co jest najbezpieczniejsze po całkowitej utracie. Potem pobierz nowy zestaw odzyskiwania: stary należy do poprzedniej instalacji.
 

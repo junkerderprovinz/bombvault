@@ -24,7 +24,7 @@ Bu sunucu, Acil durum sihirbazında başka bir sunucunun yedek anahtarını devr
 
 ## Bir telefon giriş sayfasına düşüyor
 
-Eşleştirilmiş bir telefon oturumunu grup üzerinden yalnızca **Ayarlar, Güvenlik** altında **Telefonlar grubun on iki kelimesiyle eşleşebilir** açıkken alır. Parola sıfırlama bunu kapatır. Sunucudan eski bir uygulama da güncellenene kadar oturum alamaz. Adresiyle eklenen bir sunucu her zaman parola ister.
+Eşleştirilmiş bir telefon oturumunu grup üzerinden yalnızca **Ayarlar, Güvenlik** altında **Telefonlar grubun on iki kelimesiyle eşleşebilir** açıkken alır. Parola sıfırlama bunu kapatır. Sunucudan eski bir uygulama da güncellenene kadar oturum alamaz. Adresiyle eklenen bir sunucu her zaman parola ister. Örnekler sayfasından kaldırılan bir telefon, uygulaması yeniden açıldığında kapalı olarak geri gelir; içeri almak için ayrıntılarındaki **İzleme** altında **Bu örneği sorgula**'yı aç.
 
 ## VM yedeklemesi bağlanmıyor
 
@@ -38,7 +38,7 @@ VM yedeklemesi, bir bağlamayla değil, SSH üzerinden libvirt ile konuşur.
 
 ## Bir canlı VM anlık görüntüsü çalışmadı
 
-Canlı anlık görüntüler, VM'de qemu guest agent'ın kurulu olmasını ve diskin `/mnt/user` değil `/mnt/cache` (ya da `/mnt/diskX`) üzerinde olmasını gerektirir. Kapalı bir VM'de, canlı otomatik olarak düzgüne geri düşer. Düzgün bir yedekleme VM'yi kapatır, diskleri yedekler, ardından yeniden başlatır, böylece her zaman tutarlıdır.
+Canlı anlık görüntüler, VM'de qemu guest agent'ın kurulu olmasını ve diskin `/mnt/user` değil `/mnt/cache` (ya da `/mnt/diskX`) üzerinde olmasını gerektirir. Kapalı bir VM'de, canlı otomatik olarak düzgüne geri düşer. Düzgün bir yedekleme VM'yi kapatır, diskleri yedekler, ardından yeniden başlatır, böylece her zaman tutarlıdır. Konuğun kapanması için on dakikaya kadar bekler ve onu asla zorla kapatmaz; böylece güncelleme kuran bir Windows konuğu yarıda kesilmez. Bundan sonra hâlâ çalışan bir konuğa dokunulmaz ve o yedekleme nedeniyle birlikte başarısız olur.
 
 ## Bir yedekleme "repository is already locked" ile başarısız oldu
 
@@ -47,6 +47,14 @@ Bu genellikle konteyner bir işlemin ortasında güncellendiğinde ya da yeniden
 ## Bir yedeklemeden sonra site dışı kopyam gerçekleşmedi
 
 Site dışı çoğaltma tasarım gereği en iyi çabayla çalışır, bu yüzden site dışında yaşanan bir aksaklık yerel yedeği asla başarısız kılmaz. Hedefin ne zaman kopyaladığına bak: **Kopyala** kartı **Her yedekten sonra** der ya da kendi planını adıyla belirtir, **Ayarlar, Zamanlama, Bölüm başına site dışı kopyalar** ise bir bölüme kendi planını verebilir. İsteğe bağlı bir çalıştırma için **Ayarlar, Hedefler** altında bölümün **Site dışı kopya** kartındaki **Şimdi çoğalt**'ı kullan ve çalışırken **Site dışı kopyalama sürüyor** diyen genel bakışın durum başlığını izle. Başarısız bir kopya **İlgi bekliyor** altında görünür.
+
+## Bir rest-server'ın sertifikasına güvenilmiyor
+
+restic tanımadığı bir sertifikayı reddeder ve hata onu nereye koyacağını söyler. rest-server'ın kendinden imzalı sertifikasını ya da onu imzalayan yetkilinin sertifikasını PEM dosyası olarak BombVault'un veri klasöründeki `certs` klasörüne kopyala (konteynerde `/config/certs`, Unraid'de `appdata/bombvault/certs`) ve yeniden test et. Yeniden başlatma gerekmez.
+
+## Büyük bir yedekleme belleği tükendiği için sonlandırıldı
+
+**Ayarlar, Sistem** altındaki **Performans** kartında **Yedekleme başına bellek sınırı (MiB, 0 = yok)** değerini, konteynerin kullanabileceği belleğin epey altına ayarla. restic sınıra yaklaştıkça belleği daha sık boşaltır; bu biraz hıza mal olur, ama yedekleme sonlandırılmak yerine yavaşlar.
 
 ## Bir geri yükleme başlamadan iptal oldu
 

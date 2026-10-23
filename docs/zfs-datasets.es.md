@@ -107,7 +107,11 @@ Una réplica es una copia de los conjuntos de datos de un elemento en un segundo
 
 Una réplica nunca sustituye a la copia de seguridad. Las versiones antiguas, los archivos sueltos y la comprobación siguen saliendo de las copias, y la réplica conserva solo tantas instantáneas como fijes. Una réplica actual cuenta como copia fuera del local, pero un elemento con réplica y sin copia sigue en naranja.
 
+**Solo réplica, sin copia** en la tarjeta Réplica hace que toda la sección ZFS envíe réplicas y no haga copias. La carpeta propia y los destinos externos conservan sus interruptores, así que al desactivarlo la sección vuelve a copiar en ellos, y la tarjeta de cada elemento ZFS muestra el interruptor de la sección tal como está. Un elemento así espera su primera réplica en lugar de una copia, **Copiar ahora** aparece como **Replicar ahora**, y alrededor de la instantánea sus contenedores se detienen y sus comandos se ejecutan como en una copia. Sus réplicas cuentan para un calendario de cada pocos días, el aviso de retraso y la cobertura.
+
 Actívala en la tarjeta **Réplica** de la pestaña Ajustes del elemento. Allí eliges adónde va la réplica, cuándo se ejecuta (**Después de cada copia** o **Plan propio**) y cuántas instantáneas se quedan en el destino. La tarjeta lista cada conjunto de datos y volumen con su estado, y **Replicar ahora** inicia una ejecución. Una ejecución de réplica tiene un bloqueo propio, así que una primera transferencia larga nunca retiene las copias.
+
+**Replicar todo ahora**, junto a las acciones de copia cuando el mosaico ZFS está elegido en la página Copias de seguridad, envía la réplica de cada elemento ZFS, uno tras otro. El servidor ejecuta el lote, así que sigue aunque salgas de la página, y un elemento que no puede replicarse se nombra y se omite.
 
 ### Envío a un servidor ZFS {#replica-push}
 
@@ -134,6 +138,8 @@ En esta dirección, el BombVault que tiene el elemento tiene también una clave 
 
 BombVault guarda la clave de host que el servidor muestra en la primera conexión y después rechaza cualquier otra. Si el servidor se reinstaló, pulsa **Forget host key** en la página del servidor y la siguiente conexión guardará la clave nueva.
 
+Cuando el host de este servidor puede llegar por sí mismo al servidor ZFS, pasa `zfs send` directamente a su propio ssh hacia el servidor, con la clave de la réplica y la clave de host guardada, de modo que el flujo no pasa por BombVault. Si no, el flujo pasa por BombVault.
+
 ### Envío a una instancia emparejada {#replica-receive}
 
 Un BombVault emparejado puede recibir la réplica él mismo. Nadie obtiene acceso SSH al otro host y ninguna clave entra en un archivo `authorized_keys`.
@@ -151,6 +157,8 @@ La instancia receptora tiene que responder por HTTPS. A una dirección http simp
 ### Dónde acaban los datos {#replica-target}
 
 Cada conjunto de datos acaba en `<root>/<server>/<pool>/<path>`. La carpeta del servidor es el nombre de la instancia de origen, fijado en la primera transferencia, así que dos servidores con el mismo nombre de pool nunca se estorban. Por ejemplo, `cache/appdata` de un servidor llamado `tower` acaba en `backup/bombvault-replica/tower/cache/appdata`.
+
+Después de volver a instalar BombVault, el destino rechaza la carpeta que este BombVault llenaba antes. La tarjeta Réplica ofrece entonces **Tomar la carpeta**, y la siguiente réplica continúa a partir de las copias que contiene. Tómala solo si ningún otro BombVault sigue replicando en esa carpeta.
 
 La copia en el destino es de solo lectura y no está montada, así que nunca tapa nada de ese servidor. Las propiedades de ZFS viajan con ella, salvo el punto de montaje, `sharenfs` y `sharesmb`. Las reservas `reservation` y `refreservation` tampoco viajan, así que la copia solo ocupa el espacio que necesitan sus datos.
 

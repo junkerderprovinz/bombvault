@@ -107,7 +107,11 @@ A replika egy elem adatkészleteinek másolata egy második ZFS-kiszolgálón. A
 
 A replika soha nem helyettesíti a mentést. A régebbi verziók, az egyes fájlok és az ellenőrzés továbbra is a mentésekből származnak, a replika pedig csak annyi pillanatképet tart meg, amennyit beállítasz. Egy naprakész replika telephelyen kívüli másolatnak számít, de a replikával rendelkező, mentés nélküli elem narancssárga marad.
 
+A Replika kártyán a **Csak replika, mentés nélkül** azt eredményezi, hogy az egész ZFS-szakasz replikákat küld, és nem készít mentéseket. A saját mappa és a telephelyen kívüli célok megtartják a kapcsolóikat, így kikapcsolás után a szakasz újra oda ment, és minden ZFS-elem kártyája a szakasz kapcsolóját a tényleges állása szerint mutatja. Egy ilyen elem mentés helyett az első replikájára vár, a **Biztonsági mentés most** nála **Replikálás most** néven jelenik meg, és a pillanatkép körül leállnak a konténerei és lefutnak a parancsai, mint egy mentésnél. A replikái beleszámítanak a néhány naponkénti ütemezésbe, a késési riasztásba és a lefedettségbe.
+
 Kapcsold be az elem Beállítások lapján a **Replika** kártyán. Ott választod ki, hová kerüljön a replika, mikor fusson (**Minden mentés után** vagy **Saját terv**), és hány pillanatkép maradjon a célon. A kártya felsorolja az összes adatkészletet és kötetet az állapotukkal, a **Replikálás most** pedig elindít egy futást. A replikafutásnak saját zárja van, így egy hosszú első átvitel soha nem tartja fel a mentéseket.
+
+Az **Összes replikálása most**, amely a mentési műveletek mellett áll, ha a Biztonsági mentések oldalon a ZFS csempe van kiválasztva, egymás után elküldi minden ZFS-elem replikáját. A köteget a kiszolgáló futtatja, így akkor is halad, ha elhagyod az oldalt, és az az elem, amely nem tud replikálni, név szerint megjelenik és kimarad.
 
 ### Küldés ZFS-kiszolgálóra {#replica-push}
 
@@ -134,6 +138,8 @@ Ebben az irányban az elemet tároló BombVault olyan kulcsot is tárol, amellye
 
 A BombVault az első kapcsolódáskor elmenti a kiszolgáló által mutatott gazdagépkulcsot, és később minden mást elutasít. Ha a kiszolgálót újratelepítették, nyomd meg a kiszolgáló oldalán a **Gazdagépkulcs elfelejtése** gombot, és a következő kapcsolat elmenti az új kulcsot.
 
+Ha ennek a kiszolgálónak a gazdája maga is eléri a ZFS-kiszolgálót, a `zfs send` kimenetét közvetlenül a saját ssh-jába vezeti a kiszolgáló felé, a replika kulcsával és az elmentett gazdakulccsal, így az adatfolyam nem halad át a BombVaulton. Egyébként az adatfolyam a BombVaulton át megy.
+
 ### Küldés párosított példányra {#replica-receive}
 
 Egy párosított BombVault maga is fogadhatja a replikát. Senki nem kap SSH-hozzáférést a másik gazdához, és egyetlen kulcs sem kerül egy `authorized_keys` fájlba.
@@ -151,6 +157,8 @@ A fogadó példánynak HTTPS-en kell válaszolnia. Sima http-címre a forrás se
 ### Hová kerülnek az adatok {#replica-target}
 
 Minden adatkészlet ide kerül: `<root>/<server>/<pool>/<path>`. A kiszolgálómappa a forráspéldány neve, amely az első átvitelkor rögzül, így két azonos poolnevű kiszolgáló soha nem kerül egymás útjába. Például egy `tower` nevű kiszolgáló `cache/appdata` adatkészlete a `backup/bombvault-replica/tower/cache/appdata` helyre kerül.
+
+Miután a BombVaultot újra beállították, a cél elutasítja azt a mappát, amelyet ez a BombVault korábban feltöltött. A Replika kártya ekkor felajánlja a **Mappa átvétele** lehetőséget, és a következő replika a benne lévő másolatoktól folytatja. Csak akkor vedd át, ha egyetlen másik BombVault sem replikál már abba a mappába.
 
 A másolat a célon csak olvasható és nincs csatolva, így soha nem takar el semmit azon a kiszolgálón. A ZFS-tulajdonságok vele utaznak, kivéve a csatolási pontot, a `sharenfs`-t és a `sharesmb`-t. A foglalások (`reservation` és `refreservation`) sem mennek át, így a másolat csak annyi helyet foglal, amennyit az adatai igényelnek.
 

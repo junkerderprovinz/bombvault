@@ -31,7 +31,7 @@ Aplicația acceptă un răspuns doar dacă serverul l-a semnat cu cheia pe care 
 
 ## Schimbarea serverului {#switch}
 
-Cu un server deschis, partea de sus a prezentării lui arată numele serverului, cu o săgeată înapoi în fața lui. Săgeata duce la prezentarea generală a aplicației, ecranul de pornire, care listează fiecare server pe care îl cunoaște aplicația, cu starea lui: **Conectată**, **Neconectată**, **Este nevoie de autentificare** sau **Verifică certificatul**. Atinge acolo altul ca să-l deschizi, direct acasă și altfel prin releu.
+Cu un server deschis, partea de sus a prezentării lui arată numele serverului, cu o săgeată înapoi în fața lui. Săgeata duce la prezentarea generală a aplicației, ecranul de pornire, care listează fiecare server pe care îl cunoaște aplicația, cu starea lui: **Conectată**, **Neconectată**, **Este nevoie de autentificare** sau **Verifică certificatul**. Un server al grupului care nu răspunde apare ca **Inactivă**, în gri, cu momentul în care grupul l-a văzut ultima dată, iar unul de la care aplicația nu a primit încă nimic arată **Se verifică**. La fiecare conectare, aplicația citește lista grupului de la una dintre instanțele lui, așa că apare și o instanță pe care nu a întâlnit-o niciodată prin releu, de exemplu una care era oprită când telefonul a intrat în grup. Atinge acolo altul ca să-l deschizi, direct acasă și altfel prin releu.
 
 ## Autentificat pe un telefon împerecheat {#sign-in}
 
@@ -49,7 +49,7 @@ Comutatorul pentru asta este **Telefoanele se pot împerechea cu cele douăsprez
 
 ## Telefonul pe pagina Instanțe {#instances}
 
-Telefonul primește propriul card pe pagina Instanțe a fiecărui server din grup, marcat ca aplicație Android și numit după numele pe care l-ai dat telefonului. Nu are fișă de evaluare, pentru că nu face backup la nimic, iar **Elimină** îl scoate de pe pagină. Un telefon care cunoaște cuvintele se poate împerechea din nou oricând, așa că pentru un telefon pierdut dezactivează **Telefoanele se pot împerechea cu cele douăsprezece cuvinte ale grupului** la **Setări, Securitate** sau lasă fiecare instanță să aleagă **Părăsește grupul** și împerechează-le din nou cu cuvinte noi.
+Telefonul primește propriul card pe pagina Instanțe a fiecărui server din grup, marcat ca aplicație Android și numit după numele pe care l-ai dat telefonului. Nu are fișă de evaluare, pentru că nu face backup la nimic. **Elimină** îl scoate de pe pagină și îi încheie imediat sesiunea, la fel ca dezactivarea lui **Interoghează această instanță** la **Monitorizare** în detaliile lui. Telefonul cunoaște în continuare cuvintele, așa că reapare când i se deschide aplicația, dar dezactivat, și nu primește nicio sesiune până când cineva îl activează. Pentru un telefon pierdut elimină-i cardul pe fiecare server, dezactivează **Telefoanele se pot împerechea cu cele douăsprezece cuvinte ale grupului** la **Setări, Securitate** sau lasă fiecare instanță să aleagă **Părăsește grupul** și împerechează-le din nou cu cuvinte noi.
 
 Un telefon împerecheat înainte de 10.0.0 începe să-și semneze apelurile la prima vizită după actualizare, iar fiecare server păstrează prima cheie pe care o primește pentru telefon. Dacă altcineva care cunoaște cuvintele grupului ajunge primul în timp ce telefonul este offline, serverul acela respinge telefonul din acel moment, iar aplicația nu-l mai poate deschide prin relay. Ca să rezolvi, autentifică-te pe serverul respectiv într-un browser, alege **Uită cheia** pe cardul telefonului din pagina Instanțe, apoi **Confirmă uitarea**, și deschide din nou aplicația. Serverul preia cheia proprie a telefonului la următorul apel. Dacă telefonul este respins din nou, altcineva are cuvintele: lasă fiecare instanță să aleagă **Părăsește grupul** și împerechează-le din nou cu cuvinte noi, ca în cazul unui telefon pierdut.
 
@@ -69,7 +69,7 @@ Exporturile, kiturile de recuperare, arhivele ZIP ale flash-ului și dumpurile d
 
 ## Pe un ecran tactil {#touch}
 
-Sub un deget nu există hover, așa că un control se estompează cât timp este ținut apăsat, iar un buton cu logoul unei mărci se aprinde în culoarea acelei mărci până când degetul se ridică. O apăsare lungă pe un buton contează ca o atingere lentă și nu deschide niciun meniu de link.
+Sub un deget nu există hover, așa că un control se estompează cât timp este ținut apăsat, iar un buton cu logoul unei mărci se aprinde în culoarea acelei mărci până când degetul se ridică. O apăsare lungă pe un buton contează ca o atingere lentă și nu deschide niciun meniu de link. O atingere pe un buton estompat arată de ce este estompat, până când atingi în altă parte.
 
 ## Sau într-un browser {#browser}
 

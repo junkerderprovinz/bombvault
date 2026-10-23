@@ -24,7 +24,7 @@ Ez a szerver a Vészvarázslóban átvette egy másik szerver mentési kulcsát,
 
 ## Egy telefon a bejelentkezési oldalra érkezik
 
-Egy párosított telefon csak addig kapja meg a munkamenetét a csoporton át, amíg a **Beállítások, Biztonság** alatt be van kapcsolva ez: **A telefonok párosíthatók a csoport tizenkét szavával**. A jelszó visszaállítása kikapcsolja. A szervernél régebbi alkalmazás sem kap munkamenetet, amíg nem frissül. A cím szerint hozzáadott szerver mindig jelszót kér.
+Egy párosított telefon csak addig kapja meg a munkamenetét a csoporton át, amíg a **Beállítások, Biztonság** alatt be van kapcsolva ez: **A telefonok párosíthatók a csoport tizenkét szavával**. A jelszó visszaállítása kikapcsolja. A szervernél régebbi alkalmazás sem kap munkamenetet, amíg nem frissül. A cím szerint hozzáadott szerver mindig jelszót kér. A Példányok oldalról eltávolított telefon kikapcsolva tér vissza, amikor újra megnyílik az alkalmazása; hogy beengedd, kapcsold be a részleteiben a **Felügyelet** alatt az **Ennek a példánynak a lekérdezése** kapcsolót.
 
 ## A VM-mentés nem csatlakozik
 
@@ -38,7 +38,7 @@ A VM-mentés SSH-n keresztül kommunikál a libvirttel, soha nem egy csatoláson
 
 ## Egy élő VM-pillanatkép nem futott le
 
-Az élő pillanatképekhez szükség van a qemu guest agent telepítésére a VM-ben, és arra, hogy a lemez a `/mnt/cache`-en (vagy a `/mnt/diskX`-en) legyen, ne a `/mnt/user`-en. Egy kikapcsolt VM-en az élő automatikusan visszaesik szabályosra. Egy szabályos mentés leállítja a VM-et, menti a lemezeket, majd újraindítja, így mindig konzisztens.
+Az élő pillanatképekhez szükség van a qemu guest agent telepítésére a VM-ben, és arra, hogy a lemez a `/mnt/cache`-en (vagy a `/mnt/diskX`-en) legyen, ne a `/mnt/user`-en. Egy kikapcsolt VM-en az élő automatikusan visszaesik szabályosra. Egy szabályos mentés leállítja a VM-et, menti a lemezeket, majd újraindítja, így mindig konzisztens. Legfeljebb tíz percig vár, hogy a vendég leálljon, és soha nem kapcsolja ki erőszakkal, így egy frissítéseket telepítő Windows-vendég nem szakad meg félúton. Az a vendég, amely ezután is fut, érintetlen marad, és az a mentés az okkal együtt hiúsul meg.
 
 ## Egy mentés a "repository is already locked" hibával hiúsult meg
 
@@ -47,6 +47,14 @@ Ez általában egy árva restic zárolás, amely akkor maradt hátra, amikor a k
 ## A telephelyen kívüli másolatom nem történt meg egy mentés után
 
 A telephelyen kívüli replikáció szándékosan legjobb szándék szerinti, így egy telephelyen kívüli zökkenő soha nem hibáztatja el a helyi mentést. Ellenőrizd, mikor másol a cél: a **Másolás** kártyáján az áll, hogy **Minden biztonsági mentés után**, vagy saját tervet nevez meg, és a **Beállítások, Ütemezés, Telephelyen kívüli másolatok szakaszonként** saját tervet adhat egy szakasznak. Használd a **Replikálás most** gombot a szakasz **Külső másolat** kártyáján a **Beállítások, Célok** alatt egy igény szerinti futáshoz, és figyeld az áttekintés állapotfejlécét, amely futás közben azt írja: **Telephelyen kívüli másolás folyamatban**. A sikertelen másolat a **Figyelmet igényel** alatt jelenik meg.
+
+## Egy rest-server tanúsítványa nem megbízható
+
+A restic elutasítja az általa nem ismert tanúsítványt, és a hibaüzenet megmondja, hová kell tenni. Másold a rest-server önaláírt tanúsítványát, vagy az őt aláíró hitelesítésszolgáltatóét, PEM-fájlként a BombVault adatmappájának `certs` mappájába (`/config/certs` a konténerben, `appdata/bombvault/certs` Unraidben), és teszteld újra. Újraindításra nincs szükség.
+
+## Egy nagy mentést memóriahiány miatt leállítottak
+
+Állítsd a **Memóriakorlát biztonsági mentésenként (MiB, 0 = nincs)** értékét a **Teljesítmény** kártyán a **Beállítások, Rendszer** alatt jóval az alá, amennyit a konténer használhat. A korlát közelében a restic gyakrabban szabadít fel memóriát, ami némi sebességbe kerül, így a mentés lelassul ahelyett, hogy leállítanák.
 
 ## Egy visszaállítás megszakadt, mielőtt elindult volna
 
