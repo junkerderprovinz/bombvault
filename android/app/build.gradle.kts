@@ -70,10 +70,10 @@ android {
 dependencies {
     implementation("androidx.core:core-ktx:1.19.1")
     implementation("androidx.activity:activity-ktx:1.13.0")
-    implementation("androidx.webkit:webkit:1.17.1")
+    implementation("androidx.webkit:webkit:1.18.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.11.0")
     // The relay is a WebSocket, which the platform has no client for.
-    implementation("com.squareup.okhttp3:okhttp:5.5.0")
+    implementation("com.squareup.okhttp3:okhttp:5.5.1")
     // Ed25519, which the members of a group sign with, from Android 10 on.
     implementation("org.bouncycastle:bcprov-jdk18on:1.86")
 
