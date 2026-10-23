@@ -107,7 +107,11 @@ Replika to kopia zbiorów danych elementu na drugim serwerze ZFS. BombVault aktu
 
 Replika nigdy nie zastępuje kopii zapasowej. Starsze wersje, pojedyncze pliki i sprawdzanie nadal pochodzą z kopii zapasowych, a replika zachowuje tylko tyle migawek, ile ustawisz. Aktualna replika liczy się jako kopia poza siedzibą, ale element z repliką i bez kopii zapasowej pozostaje pomarańczowy.
 
+**Tylko replika, bez kopii zapasowej** w karcie Replika sprawia, że cała sekcja ZFS wysyła repliki i nie tworzy kopii zapasowych. Własny folder i miejsca docelowe poza siedzibą zachowują swoje przełączniki, więc po wyłączeniu tej opcji sekcja znowu tworzy do nich kopie, a karta każdego elementu ZFS pokazuje przełącznik sekcji w jego bieżącym stanie. Taki element czeka na pierwszą replikę zamiast na kopię zapasową, **Utwórz kopię teraz** jest u niego oferowane jako **Replikuj teraz**, a jego kontenery zatrzymują się i jego polecenia uruchamiają się wokół migawki tak jak przy kopii zapasowej. Jego repliki liczą się do harmonogramu co kilka dni, alertu o zaległości i pokrycia.
+
 Włącz ją w karcie **Replika** na karcie Ustawienia elementu. Tam wybierasz, dokąd idzie replika, kiedy działa (**Po każdej kopii zapasowej** albo **Własny plan**) i ile migawek zostaje na celu. Karta wymienia każdy zbiór danych i wolumen z jego stanem, a **Replikuj teraz** uruchamia przebieg. Przebieg repliki ma własną blokadę, więc długi pierwszy transfer nigdy nie wstrzymuje kopii zapasowych.
+
+**Replikuj wszystko teraz**, obok akcji kopii zapasowej, gdy na stronie Kopie zapasowe wybrany jest kafelek ZFS, wysyła replikę każdego elementu ZFS, jeden po drugim. Partię wykonuje serwer, więc trwa dalej, gdy opuścisz stronę, a element, który nie może się replikować, zostaje wymieniony i pominięty.
 
 ### Wysyłanie na serwer ZFS {#replica-push}
 
@@ -134,6 +138,8 @@ W tym kierunku BombVault, który przechowuje element, ma też klucz pozwalający
 
 BombVault zapamiętuje klucz hosta, który serwer pokazuje przy pierwszym połączeniu, a później odrzuca każdy inny. Jeśli serwer został zainstalowany na nowo, naciśnij **Zapomnij klucz hosta** na stronie serwera, a następne połączenie zapamięta nowy klucz.
 
+Gdy host tego serwera sam dosięga serwera ZFS, przekierowuje `zfs send` prosto do własnego ssh do tego serwera, z kluczem repliki i zapamiętanym kluczem hosta, więc strumień nie przechodzi przez BombVault. W przeciwnym razie strumień idzie przez BombVault.
+
 ### Wysyłanie do sparowanej instancji {#replica-receive}
 
 Sparowany BombVault może sam odebrać replikę. Nikt nie dostaje dostępu SSH do drugiego hosta i żaden klucz nie trafia do pliku `authorized_keys`.
@@ -151,6 +157,8 @@ Instancja odbierająca musi odpowiadać przez HTTPS. Na zwykły adres http źró
 ### Gdzie trafiają dane {#replica-target}
 
 Każdy zbiór danych trafia do `<root>/<server>/<pool>/<path>`. Folder serwera to nazwa instancji źródłowej, ustalona przy pierwszym transferze, więc dwa serwery z taką samą nazwą puli nigdy sobie nie przeszkadzają. Na przykład `cache/appdata` serwera o nazwie `tower` trafia do `backup/bombvault-replica/tower/cache/appdata`.
+
+Po ponownym skonfigurowaniu BombVault cel odrzuca folder, który ten BombVault wcześniej zapełnił. Karta Replika oferuje wtedy **Przejmij folder**, a następna replika kontynuuje od kopii, które w nim są. Przejmij go tylko wtedy, gdy żaden inny BombVault już do tego folderu nie replikuje.
 
 Kopia na celu jest tylko do odczytu i nie jest zamontowana, więc niczego na tym serwerze nie przykrywa. Właściwości ZFS są przesyłane razem z danymi, z wyjątkiem punktu montowania oraz `sharenfs` i `sharesmb`. Rezerwacje `reservation` i `refreservation` również zostają po stronie źródła, więc kopia zajmuje tylko tyle miejsca, ile potrzebują jej dane.
 

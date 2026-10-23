@@ -107,7 +107,11 @@ Une réplique est une copie des jeux de données d'un élément sur un second se
 
 Une réplique ne remplace jamais la sauvegarde. Les anciennes versions, les fichiers isolés et le contrôle viennent toujours des sauvegardes, et la réplique ne garde que le nombre d'instantanés que vous fixez. Une réplique à jour compte comme une copie hors des locaux, mais un élément avec une réplique et sans sauvegarde reste orange.
 
+**Réplique seule, sans sauvegarde** dans la carte Réplique fait que toute la section ZFS envoie des répliques et ne fait aucune sauvegarde. Le dossier propre et les destinations hors site gardent leurs interrupteurs, si bien qu'en le désactivant la section sauvegarde de nouveau vers eux, et la carte de chaque élément ZFS montre l'interrupteur de la section tel qu'il est. Un tel élément attend sa première réplique au lieu d'une sauvegarde, **Sauvegarder maintenant** y devient **Répliquer maintenant**, et autour de l'instantané ses conteneurs s'arrêtent et ses commandes s'exécutent comme pour une sauvegarde. Ses répliques comptent pour un planning tous les quelques jours, l'alerte de retard et la couverture.
+
 Activez-la dans la carte **Réplique** de l'onglet Paramètres de l'élément. Vous y choisissez où va la réplique, quand elle s'exécute (**Après chaque sauvegarde** ou **Planning propre**) et combien d'instantanés restent sur la cible. La carte liste chaque jeu de données et volume avec son état, et **Répliquer maintenant** lance une exécution. Une exécution de réplique a son propre verrou, si bien qu'un long premier transfert ne retient jamais les sauvegardes.
+
+**Tout répliquer maintenant**, à côté des actions de sauvegarde quand la tuile ZFS est choisie sur la page Sauvegardes, envoie la réplique de chaque élément ZFS, l'une après l'autre. Le serveur exécute le lot, il continue donc quand vous quittez la page, et un élément qui ne peut pas être répliqué est nommé et ignoré.
 
 ### Envoi vers un serveur ZFS {#replica-push}
 
@@ -134,6 +138,8 @@ Dans ce sens, le BombVault qui détient l'élément détient aussi une clé qui 
 
 BombVault enregistre la clé d'hôte que le serveur présente à la première connexion et en refuse ensuite toute autre. Si le serveur a été réinstallé, cliquez sur **Forget host key** sur la page du serveur, et la connexion suivante enregistrera la nouvelle clé.
 
+Quand l'hôte de ce serveur peut joindre lui-même le serveur ZFS, il envoie `zfs send` directement dans son propre ssh vers le serveur, avec la clé du réplica et la clé d'hôte enregistrée, si bien que le flux ne passe pas par BombVault. Sinon, le flux passe par BombVault.
+
 ### Envoi vers une instance appairée {#replica-receive}
 
 Un BombVault appairé peut recevoir lui-même le réplica. Personne n'obtient d'accès SSH à l'autre hôte, et aucune clé n'entre dans un fichier `authorized_keys`.
@@ -151,6 +157,8 @@ L'instance qui reçoit doit répondre en HTTPS. La source n'envoie rien à une a
 ### Où atterrissent les données {#replica-target}
 
 Chaque jeu de données atterrit dans `<root>/<server>/<pool>/<path>`. Le dossier du serveur est le nom de l'instance source, fixé au premier transfert, si bien que deux serveurs avec le même nom de pool ne se gênent jamais. Par exemple, `cache/appdata` d'un serveur nommé `tower` aboutit dans `backup/bombvault-replica/tower/cache/appdata`.
+
+Après une réinstallation de BombVault, la cible refuse le dossier que ce BombVault remplissait auparavant. La carte Réplique propose alors **Reprendre le dossier**, et la réplique suivante reprend à partir des copies qu'il contient. Ne le reprenez que si aucun autre BombVault ne réplique encore dans ce dossier.
 
 La copie sur la cible est en lecture seule et non montée, donc elle ne recouvre jamais rien sur ce serveur. Les propriétés ZFS suivent, sauf le point de montage, `sharenfs` et `sharesmb`. Les réservations `reservation` et `refreservation` restent aussi en place, la copie n'occupe donc que l'espace dont ses données ont besoin.
 

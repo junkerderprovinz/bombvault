@@ -31,7 +31,7 @@ La app solo acepta una respuesta si el servidor la firmó con la clave que la ap
 
 ## Cambiar de servidor {#switch}
 
-Con un servidor abierto, la parte superior de su resumen muestra el nombre del servidor, con una flecha para volver delante. La flecha lleva al resumen de la app, la pantalla de inicio, que lista todos los servidores que la app conoce con su estado: **Conectada**, **No conectada**, **Inicio de sesión necesario** o **Comprobar certificado**. Toca allí otro para abrirlo, directamente en casa y a través del relay en los demás casos.
+Con un servidor abierto, la parte superior de su resumen muestra el nombre del servidor, con una flecha para volver delante. La flecha lleva al resumen de la app, la pantalla de inicio, que lista todos los servidores que la app conoce con su estado: **Conectada**, **No conectada**, **Inicio de sesión necesario** o **Comprobar certificado**. Un servidor del grupo que no responde aparece como **Inactiva**, en gris, con la última vez que el grupo lo vio, y uno del que la app aún no ha recibido nada muestra **Comprobando**. Cada vez que se conecta, la app lee la lista del grupo en una de sus instancias, así que también aparece una instancia que nunca encontró a través del relay, por ejemplo una que estaba apagada cuando el móvil se unió. Toca allí otro para abrirlo, directamente en casa y a través del relay en los demás casos.
 
 ## Sesión iniciada en un móvil emparejado {#sign-in}
 
@@ -49,7 +49,7 @@ El interruptor es **Los teléfonos pueden emparejarse con las doce palabras del 
 
 ## El móvil en la página de Instancias {#instances}
 
-El móvil recibe su propia tarjeta en la página de Instancias de cada servidor del grupo, marcada como app de Android y con el nombre que le diste al móvil. No tiene cuadro de mando porque no hace copias, y **Eliminar** la quita de la página. Un móvil que conoce las palabras puede volver a emparejarse en cualquier momento, así que para un móvil perdido desactiva **Los teléfonos pueden emparejarse con las doce palabras del grupo** en **Ajustes, Seguridad**, o haz que cada instancia use **Salir del grupo** y vuelve a emparejarlas con palabras nuevas.
+El móvil recibe su propia tarjeta en la página de Instancias de cada servidor del grupo, marcada como app de Android y con el nombre que le diste al móvil. No tiene cuadro de mando porque no hace copias. **Eliminar** la quita de la página y cierra su sesión al instante, igual que desactivar **Consultar esta instancia** en **Supervisión** dentro de sus detalles. El móvil sigue conociendo las palabras, así que vuelve a aparecer cuando se abre su app, pero desactivado, y no recibe sesión hasta que alguien lo active. Para un móvil perdido, elimina su tarjeta en cada servidor, o desactiva **Los teléfonos pueden emparejarse con las doce palabras del grupo** en **Ajustes, Seguridad**, o haz que cada instancia use **Salir del grupo** y vuelve a emparejarlas con palabras nuevas.
 
 Un móvil emparejado antes de la versión 10.0.0 empieza a firmar sus llamadas en su primera visita tras la actualización, y cada servidor se queda con la primera clave que recibe para ese móvil. Si otra persona que conoce las palabras del grupo llega antes mientras el móvil está sin conexión, ese servidor rechaza el móvil a partir de entonces y la app ya no puede abrirlo a través del relay. Para solucionarlo, inicia sesión en ese servidor desde un navegador, elige **Olvidar la clave** en la tarjeta del móvil en la página de Instancias y después **Confirmar olvido**, y abre la app de nuevo. El servidor toma la clave propia del móvil en su siguiente llamada. Si el móvil vuelve a ser rechazado, otra persona tiene las palabras: haz que cada instancia use **Salir del grupo** y vuelve a emparejarlas con palabras nuevas, como con un móvil perdido.
 
@@ -69,7 +69,7 @@ Las exportaciones, los kits de recuperación, los ZIP del flash y los volcados d
 
 ## En una pantalla táctil {#touch}
 
-Bajo un dedo no hay nada que pasar por encima, así que un control se atenúa mientras se mantiene pulsado, y un botón con el logotipo de una marca se ilumina en el color de esa marca hasta que se levanta el dedo. Una pulsación larga en un botón cuenta como un toque lento y no abre ningún menú de enlace.
+Bajo un dedo no hay nada que pasar por encima, así que un control se atenúa mientras se mantiene pulsado, y un botón con el logotipo de una marca se ilumina en el color de esa marca hasta que se levanta el dedo. Una pulsación larga en un botón cuenta como un toque lento y no abre ningún menú de enlace. Un toque en un botón atenuado muestra por qué está atenuado, hasta que toques en otro sitio.
 
 ## O en un navegador {#browser}
 

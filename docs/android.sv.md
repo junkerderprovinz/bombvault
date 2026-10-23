@@ -31,7 +31,7 @@ Appen tar bara emot ett svar om servern har signerat det med nyckeln som appen f
 
 ## Byta server {#switch}
 
-När en server är öppen visar översikten överst serverns namn, med en bakåtpil före. Pilen leder till appens översikt, startskärmen, som listar varje server som appen känner till med sitt tillstånd: **Ansluten**, **Inte ansluten**, **Inloggning behövs** eller **Kontrollera certifikat**. Tryck där på en annan för att öppna den, direkt hemma och annars via reläet.
+När en server är öppen visar översikten överst serverns namn, med en bakåtpil före. Pilen leder till appens översikt, startskärmen, som listar varje server som appen känner till med sitt tillstånd: **Ansluten**, **Inte ansluten**, **Inloggning behövs** eller **Kontrollera certifikat**. En server i gruppen som inte svarar är **Inaktiv**, i grått, med när gruppen senast såg den, och en som appen ännu inte har hört av visar **Kontrollerar**. Varje gång appen ansluter läser den gruppens lista från en av instanserna, så även en instans som den aldrig har mött via reläet, till exempel en som var avstängd när telefonen parkopplades, finns med i listan. Tryck där på en annan för att öppna den, direkt hemma och annars via reläet.
 
 ## Inloggad på en parkopplad telefon {#sign-in}
 
@@ -49,7 +49,7 @@ Reglaget för detta är **Telefoner kan parkopplas med gruppens tolv ord** på k
 
 ## Telefonen på Instanser-sidan {#instances}
 
-Telefonen får ett eget kort på Instanser-sidan på varje server i gruppen, markerat som Android-app och med det namn du har gett telefonen. Den har inget poängkort eftersom den inte säkerhetskopierar något, och **Ta bort** tar bort den från sidan. En telefon som kan orden kan parkopplas igen när som helst, så för en borttappad telefon stänger du av **Telefoner kan parkopplas med gruppens tolv ord** under **Inställningar, Säkerhet**, eller låter varje instans välja **Lämna gruppen** och parkopplar dem på nytt med nya ord.
+Telefonen får ett eget kort på Instanser-sidan på varje server i gruppen, markerat som Android-app och med det namn du har gett telefonen. Den har inget poängkort eftersom den inte säkerhetskopierar något. **Ta bort** tar bort den från sidan och avslutar dess session direkt, precis som när du stänger av **Fråga av den här instansen** under **Övervakning** i dess detaljer. Telefonen kan fortfarande orden, så den dyker upp igen när dess app öppnas, men avstängd, och den får ingen session förrän någon slår på den. För en borttappad telefon tar du bort dess kort på varje server, stänger av **Telefoner kan parkopplas med gruppens tolv ord** under **Inställningar, Säkerhet**, eller låter varje instans välja **Lämna gruppen** och parkopplar dem på nytt med nya ord.
 
 En telefon som parkopplades före 10.0.0 börjar signera sina anrop vid första besöket efter uppdateringen, och varje server behåller den första nyckeln den får för telefonen. Om någon annan som kan gruppens ord hinner först medan telefonen är offline, avvisar den servern telefonen från och med då, och appen kan inte längre öppna den via reläet. Så här åtgärdar du det: logga in på den servern i en webbläsare, välj **Glöm nyckeln** på telefonens kort på Instanser-sidan och sedan **Bekräfta att glömma**, och öppna appen igen. Servern tar telefonens egen nyckel vid nästa anrop. Avvisas telefonen igen har någon annan orden: låt varje instans välja **Lämna gruppen** och parkoppla dem på nytt med nya ord, som för en borttappad telefon.
 
@@ -69,7 +69,7 @@ Exporter, återställningskit, flash-ZIP-filer och databasdumpar hamnar i telefo
 
 ## På en pekskärm {#touch}
 
-Ingenting svävar under ett finger, så en kontroll tonas ner medan den hålls nere, och en knapp med en varumärkeslogotyp lyser i sin varumärkesfärg tills fingret lyfts. En lång tryckning på en knapp räknas som ett långsamt tryck och öppnar ingen länkmeny.
+Ingenting svävar under ett finger, så en kontroll tonas ner medan den hålls nere, och en knapp med en varumärkeslogotyp lyser i sin varumärkesfärg tills fingret lyfts. En lång tryckning på en knapp räknas som ett långsamt tryck och öppnar ingen länkmeny. Ett tryck på en gråtonad knapp visar varför den är gråtonad, tills du trycker någon annanstans.
 
 ## I en webbläsare i stället {#browser}
 

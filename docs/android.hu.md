@@ -31,7 +31,7 @@ Az alkalmazás csak akkor fogad el választ, ha a szerver azt azzal a kulccsal �
 
 ## Szerverváltás {#switch}
 
-Ha egy szerver meg van nyitva, az áttekintése tetején a szerver neve áll, előtte egy vissza nyíllal. A nyíl az alkalmazás áttekintéséhez, a kezdőképernyőre visz, amely felsorolja az összes szervert, amelyet az alkalmazás ismer, az állapotukkal: **Csatlakozva**, **Nincs csatlakozva**, **Bejelentkezés szükséges** vagy **Tanúsítvány ellenőrzése**. Ott koppints egy másikra a megnyitásához, otthon közvetlenül, egyébként a relayen át.
+Ha egy szerver meg van nyitva, az áttekintése tetején a szerver neve áll, előtte egy vissza nyíllal. A nyíl az alkalmazás áttekintéséhez, a kezdőképernyőre visz, amely felsorolja az összes szervert, amelyet az alkalmazás ismer, az állapotukkal: **Csatlakozva**, **Nincs csatlakozva**, **Bejelentkezés szükséges** vagy **Tanúsítvány ellenőrzése**. A csoport olyan szervere, amely nem válaszol, **Inaktív**, szürkén, azzal együtt, hogy a csoport mikor látta utoljára, az pedig, amelyről az alkalmazás még nem hallott, **Ellenőrzés** állapotot mutat. Az alkalmazás minden csatlakozáskor beolvassa a csoport listáját az egyik példányától, így olyan példány is szerepel a listán, amellyel a relayen át soha nem találkozott, például egy olyan, amely ki volt kapcsolva, amikor a telefon csatlakozott a csoporthoz. Ott koppints egy másikra a megnyitásához, otthon közvetlenül, egyébként a relayen át.
 
 ## Bejelentkezve a párosított telefonon {#sign-in}
 
@@ -45,7 +45,7 @@ A csoportoddal párosított telefon a csoport minden szerverét eleve bejelentke
 
 ## A telefon a Példányok oldalon {#instances}
 
-A telefon saját kártyát kap a csoport minden szerverének Példányok oldalán, Android-alkalmazásként megjelölve, és azon a néven, amelyet a telefonnak adtál. Nincs eredménytáblája, mert semmit sem ment, és az **Eltávolítás** leveszi az oldalról. A szavakat ismerő telefon bármikor újra párosítható, ezért elveszett telefonnál kapcsold ki a **A telefonok párosíthatók a csoport tizenkét szavával** kapcsolót a **Beállítások, Biztonság** alatt, vagy válaszd minden példánynál a **Csoport elhagyása** lehetőséget, és párosítsd őket újra új szavakkal.
+A telefon saját kártyát kap a csoport minden szerverének Példányok oldalán, Android-alkalmazásként megjelölve, és azon a néven, amelyet a telefonnak adtál. Nincs eredménytáblája, mert semmit sem ment. Az **Eltávolítás** leveszi az oldalról, és azonnal lezárja a munkamenetét, ahogy az is, ha a részleteiben a **Felügyelet** alatt kikapcsolod az **Ennek a példánynak a lekérdezése** kapcsolót. A telefon továbbra is ismeri a szavakat, így újra megjelenik, amikor megnyílik az alkalmazása, de kikapcsolva, és addig nem kap munkamenetet, amíg valaki be nem kapcsolja. Elveszett telefonnál távolítsd el a kártyáját minden szerveren, kapcsold ki a **A telefonok párosíthatók a csoport tizenkét szavával** kapcsolót a **Beállítások, Biztonság** alatt, vagy válaszd minden példánynál a **Csoport elhagyása** lehetőséget, és párosítsd őket újra új szavakkal.
 
 A 10.0.0 előtt párosított telefon a frissítés utáni első látogatásakor kezdi aláírni a hívásait, és minden szerver megtartja az első kulcsot, amelyet a telefonhoz kap. Ha a telefon offline állapota alatt valaki más, aki ismeri a csoport szavait, előbb ér oda, az a szerver attól kezdve elutasítja a telefont, és az alkalmazás már nem tudja megnyitni a relayen keresztül. A javításhoz jelentkezz be arra a szerverre böngészőből, válaszd a **Kulcs elfelejtése** gombot a telefon kártyáján a Példányok oldalon, majd az **Elfelejtés megerősítése** gombot, és nyisd meg újra az alkalmazást. A szerver a következő híváskor a telefon saját kulcsát veszi át. Ha a telefont újra elutasítják, valaki másnak megvannak a szavak: válaszd minden példánynál a **Csoport elhagyása** lehetőséget, és párosítsd őket újra új szavakkal, mint elveszett telefon esetén.
 
@@ -65,7 +65,7 @@ Az exportok, a helyreállítási csomagok, a flash ZIP-ek és az adatbázis-ment
 
 ## Érintőképernyőn {#touch}
 
-Az ujj alatt nincs rámutatás (hover), ezért egy vezérlő elhalványul, amíg nyomva tartod, egy márkalogós gomb pedig a márka színében világít, amíg fel nem emeled az ujjad. Egy gomb hosszú megnyomása lassú koppintásnak számít, és nem nyit hivatkozásmenüt.
+Az ujj alatt nincs rámutatás (hover), ezért egy vezérlő elhalványul, amíg nyomva tartod, egy márkalogós gomb pedig a márka színében világít, amíg fel nem emeled az ujjad. Egy gomb hosszú megnyomása lassú koppintásnak számít, és nem nyit hivatkozásmenüt. Ha egy kiszürkített gombra koppintasz, megmutatja, miért szürke, amíg máshová nem koppintasz.
 
 ## Inkább böngészőben {#browser}
 

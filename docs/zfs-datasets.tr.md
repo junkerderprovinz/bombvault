@@ -107,7 +107,11 @@ Replika, bir ögenin veri kümelerinin ikinci bir ZFS sunucusundaki kopyasıdır
 
 Bir replika yedeğin yerini asla almaz. Eski sürümler, tek tek dosyalar ve denetim yine yedeklerden gelir ve replika yalnızca belirlediğin kadar anlık görüntü tutar. Güncel bir replika bina dışında bir kopya sayılır, ama replikası olan ve yedeği olmayan bir öge turuncu kalır.
 
+Replika kartındaki **Yalnızca replika, yedek yok**, tüm ZFS bölümünün replika göndermesini ve yedek almamasını sağlar. Kendi klasörü ve bina dışındaki hedefler anahtarlarını korur; bu yüzden kapatıldığında bölüm yeniden oraya yedekler ve her ZFS ögesinin kartı bölümün anahtarını olduğu gibi gösterir. Böyle bir öge yedek yerine ilk replikasını bekler, **Şimdi yedekle** onda **Şimdi çoğalt** olarak sunulur ve ögenin konteynerleri, bir yedeklemedeki gibi anlık görüntünün çevresinde durur, komutları da çalışır. Replikaları birkaç günde bir çalışan bir zamanlama, gecikme uyarısı ve kapsam için sayılır.
+
 Bunu ögenin Ayarlar sekmesindeki **Replika** kartında aç. Orada replikanın nereye gideceğini, ne zaman çalışacağını (**Her yedekten sonra** ya da **Kendi planı**) ve hedefte kaç anlık görüntünün kalacağını seçersin. Kart her veri kümesini ve birimi durumuyla listeler ve **Şimdi çoğalt** bir çalışma başlatır. Bir replika çalışmasının kendi kilidi vardır; bu yüzden uzun bir ilk aktarım yedekleri asla geciktirmez.
+
+Yedekler sayfasında ZFS kutucuğu seçiliyken yedekleme eylemlerinin yanında duran **Şimdi tümünü çoğalt**, her ZFS ögesinin replikasını birbiri ardına gönderir. Toplu işi sunucu çalıştırır; bu yüzden sayfadan ayrılsan da sürer ve çoğaltılamayan bir öge adıyla belirtilip atlanır.
 
 ### Bir ZFS sunucusuna gönderme {#replica-push}
 
@@ -134,6 +138,8 @@ Bu yönde ögeyi tutan BombVault, sunucuya yazabilen bir anahtarı da tutar.
 
 BombVault, sunucunun ilk bağlantıda gösterdiği ana makine anahtarını kaydeder ve sonra başka her anahtarı reddeder. Sunucu yeniden kurulduysa sunucunun sayfasında **Ana makine anahtarını unut** düğmesine bas; sonraki bağlantı yeni anahtarı kaydeder.
 
+Bu sunucunun ana makinesi ZFS sunucusuna kendisi ulaşabiliyorsa `zfs send` çıktısını, replika anahtarı ve kaydedilmiş ana makine anahtarıyla doğrudan sunucuya giden kendi ssh'ına aktarır; böylece akış BombVault'un içinden geçmez. Aksi halde akış BombVault üzerinden geçer.
+
 ### Eşleştirilmiş bir örneğe gönderme {#replica-receive}
 
 Eşleştirilmiş bir BombVault replikayı kendisi alabilir. Kimse diğer ana makineye SSH erişimi kazanmaz ve hiçbir anahtar `authorized_keys` dosyasına girmez.
@@ -151,6 +157,8 @@ Alan örnek HTTPS üzerinden yanıt vermelidir. Kaynak düz bir http adresine hi
 ### Verinin indiği yer {#replica-target}
 
 Her veri kümesi `<root>/<server>/<pool>/<path>` konumuna iner. Sunucu klasörü kaynak örneğin adıdır ve ilk aktarımda sabitlenir, bu yüzden havuz adı aynı olan iki sunucu birbirine karışmaz. Örneğin `tower` adlı bir sunucunun `cache/appdata` veri kümesi `backup/bombvault-replica/tower/cache/appdata` konumunda biter.
+
+BombVault yeniden kurulduktan sonra hedef, bu BombVault'un daha önce doldurduğu klasörü reddeder. Replika kartı o zaman **Klasörü devral**'ı sunar ve sonraki replika içindeki kopyalardan devam eder. Klasörü yalnızca başka hiçbir BombVault artık o klasöre çoğaltma yapmıyorsa devral.
 
 Hedefteki kopya salt okunurdur ve bağlanmaz, bu yüzden o sunucuda hiçbir şeyi örtmez. ZFS özellikleri, bağlama noktası ile `sharenfs` ve `sharesmb` dışında birlikte gider. `reservation` ve `refreservation` ayırmaları da gitmez, bu yüzden kopya yalnızca verilerinin ihtiyaç duyduğu yeri kaplar.
 

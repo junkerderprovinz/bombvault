@@ -31,7 +31,7 @@ L'application n'accepte une réponse que si le serveur l'a signée avec la clé 
 
 ## Changer de serveur {#switch}
 
-Quand un serveur est ouvert, le haut de son aperçu affiche le nom du serveur, précédé d'une flèche de retour. La flèche mène à l'aperçu de l'application, l'écran d'accueil, qui liste tous les serveurs que l'application connaît avec leur état : **Connectée**, **Non connectée**, **Connexion nécessaire** ou **Vérifier le certificat**. Touchez-y un autre serveur pour l'ouvrir, directement à la maison et via le relais sinon.
+Quand un serveur est ouvert, le haut de son aperçu affiche le nom du serveur, précédé d'une flèche de retour. La flèche mène à l'aperçu de l'application, l'écran d'accueil, qui liste tous les serveurs que l'application connaît avec leur état : **Connectée**, **Non connectée**, **Connexion nécessaire** ou **Vérifier le certificat**. Un serveur du groupe qui ne répond pas porte la mention **Inactive**, en gris, avec le moment où le groupe l'a vu pour la dernière fois, et un serveur dont l'application n'a encore rien reçu affiche **Vérification**. À chaque connexion, l'application lit la liste du groupe auprès de l'une de ses instances, si bien qu'une instance qu'elle n'a jamais rencontrée via le relais, par exemple une instance éteinte au moment où le téléphone a rejoint le groupe, figure aussi dans la liste. Touchez-y un autre serveur pour l'ouvrir, directement à la maison et via le relais sinon.
 
 ## Connecté d'office sur un téléphone appairé {#sign-in}
 
@@ -49,7 +49,7 @@ Le réglage correspondant est **Les téléphones peuvent s'appairer avec les dou
 
 ## Le téléphone sur la page Instances {#instances}
 
-Le téléphone obtient sa propre carte sur la page Instances de chaque serveur du groupe, marquée comme application Android et portant le nom que vous avez donné au téléphone. Elle n'a pas de fiche de protection, puisque le téléphone ne sauvegarde rien, et **Supprimer** la retire de la page. Un téléphone qui connaît les mots peut s'appairer de nouveau à tout moment. Pour un téléphone perdu, désactivez donc **Les téléphones peuvent s'appairer avec les douze mots du groupe** sous **Paramètres, Sécurité**, ou faites **Quitter le groupe** sur chaque instance et appairez-les de nouveau avec de nouveaux mots.
+Le téléphone obtient sa propre carte sur la page Instances de chaque serveur du groupe, marquée comme application Android et portant le nom que vous avez donné au téléphone. Elle n'a pas de fiche de protection, puisque le téléphone ne sauvegarde rien. **Supprimer** la retire de la page et met fin à sa session sur-le-champ, tout comme la désactivation de **Interroger cette instance** sous **Surveillance** dans ses détails. Le téléphone connaît toujours les mots, il réapparaît donc quand son application s'ouvre, mais désactivé, et il n'obtient aucune session tant que personne ne l'active. Pour un téléphone perdu, supprimez sa carte sur chaque serveur, ou désactivez **Les téléphones peuvent s'appairer avec les douze mots du groupe** sous **Paramètres, Sécurité**, ou faites **Quitter le groupe** sur chaque instance et appairez-les de nouveau avec de nouveaux mots.
 
 Un téléphone appairé avant la version 10.0.0 commence à signer ses appels lors de sa première visite après la mise à jour, et chaque serveur garde la première clé qu'il reçoit pour ce téléphone. Si quelqu'un d'autre qui connaît les mots du groupe arrive le premier pendant que le téléphone est hors ligne, ce serveur refuse alors le téléphone, et l'application ne peut plus l'ouvrir via le relais. Pour y remédier, connectez-vous à ce serveur dans un navigateur, choisissez **Oublier la clé** sur la carte du téléphone dans la page Instances, puis **Confirmer l'oubli**, et rouvrez l'application. Le serveur prend la clé propre du téléphone à son prochain appel. Si le téléphone est de nouveau refusé, quelqu'un d'autre a les mots : faites **Quitter le groupe** sur chaque instance et appairez-les de nouveau avec de nouveaux mots, comme pour un téléphone perdu.
 
@@ -69,7 +69,7 @@ Les exports, les kits de récupération, les ZIP de la flash et les dumps de bas
 
 ## Sur un écran tactile {#touch}
 
-Rien ne se survole avec un doigt : un contrôle s'assombrit donc tant qu'il est maintenu, et un bouton portant le logo d'une marque s'allume dans la couleur de cette marque jusqu'à ce que le doigt se lève. Un appui long sur un bouton compte comme un toucher lent et n'ouvre aucun menu de lien.
+Rien ne se survole avec un doigt : un contrôle s'assombrit donc tant qu'il est maintenu, et un bouton portant le logo d'une marque s'allume dans la couleur de cette marque jusqu'à ce que le doigt se lève. Un appui long sur un bouton compte comme un toucher lent et n'ouvre aucun menu de lien. Toucher un bouton grisé affiche la raison pour laquelle il est grisé, jusqu'à ce que vous touchiez ailleurs.
 
 ## Ou dans un navigateur {#browser}
 

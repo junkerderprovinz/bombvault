@@ -31,7 +31,7 @@ Sovellus hyväksyy vastauksen vain, jos palvelin on allekirjoittanut sen avaimel
 
 ## Palvelimen vaihtaminen {#switch}
 
-Kun palvelin on auki, sen yleiskatsauksen yläreunassa näkyy palvelimen nimi ja sen edessä paluunuoli. Nuoli vie sovelluksen yleiskatsaukseen eli aloitusnäyttöön, joka luettelee kaikki sovelluksen tuntemat palvelimet tiloineen: **Yhdistetty**, **Ei yhteyttä**, **Kirjautuminen tarvitaan** tai **Tarkista varmenne**. Napauta siellä toista avataksesi sen, kotona suoraan ja muulloin releen kautta.
+Kun palvelin on auki, sen yleiskatsauksen yläreunassa näkyy palvelimen nimi ja sen edessä paluunuoli. Nuoli vie sovelluksen yleiskatsaukseen eli aloitusnäyttöön, joka luettelee kaikki sovelluksen tuntemat palvelimet tiloineen: **Yhdistetty**, **Ei yhteyttä**, **Kirjautuminen tarvitaan** tai **Tarkista varmenne**. Ryhmän palvelin, joka ei vastaa, on **Ei aktiivinen**, harmaana, ja sen kohdalla lukee, milloin ryhmä näki sen viimeksi, ja palvelin, josta sovellus ei ole vielä kuullut, näyttää **Tarkistetaan**. Joka kerta yhdistäessään sovellus lukee ryhmän luettelon yhdeltä sen ilmentymistä, joten luettelossa on myös ilmentymä, jota sovellus ei ole koskaan tavannut releen kautta, esimerkiksi sellainen, joka oli sammutettuna, kun puhelin liittyi ryhmään. Napauta siellä toista avataksesi sen, kotona suoraan ja muulloin releen kautta.
 
 ## Kirjautuneena pariliitetyllä puhelimella {#sign-in}
 
@@ -49,7 +49,7 @@ Kytkin tähän on **Puhelimet voivat pariutua ryhmän kahdentoista sanan avulla*
 
 ## Puhelin Ilmentymät-sivulla {#instances}
 
-Puhelin saa oman korttinsa ryhmän jokaisen palvelimen Ilmentymät-sivulle, merkittynä Android-sovellukseksi ja nimettynä puhelimelle antamasi nimen mukaan. Sillä ei ole tuloskorttia, koska se ei varmuuskopioi mitään, ja **Poista** poistaa sen sivulta. Puhelin, joka tuntee sanat, voi pariutua uudelleen milloin tahansa, joten kadonneen puhelimen kohdalla kytke **Puhelimet voivat pariutua ryhmän kahdentoista sanan avulla** pois kohdassa **Asetukset, Turvallisuus** tai anna jokaisen ilmentymän valita **Poistu ryhmästä** ja pariuta ne uudelleen uusilla sanoilla.
+Puhelin saa oman korttinsa ryhmän jokaisen palvelimen Ilmentymät-sivulle, merkittynä Android-sovellukseksi ja nimettynä puhelimelle antamasi nimen mukaan. Sillä ei ole tuloskorttia, koska se ei varmuuskopioi mitään. **Poista** poistaa sen sivulta ja päättää sen istunnon heti, samoin kuin **Kysele tätä instanssia** -kohdan kytkeminen pois sen tietojen kohdassa **Valvonta**. Puhelin tuntee yhä sanat, joten se ilmestyy takaisin, kun sen sovellus avataan, mutta pois kytkettynä, eikä se saa istuntoa ennen kuin joku kytkee sen päälle. Kadonneen puhelimen kohdalla poista sen kortti jokaiselta palvelimelta, kytke **Puhelimet voivat pariutua ryhmän kahdentoista sanan avulla** pois kohdassa **Asetukset, Turvallisuus** tai anna jokaisen ilmentymän valita **Poistu ryhmästä** ja pariuta ne uudelleen uusilla sanoilla.
 
 Ennen versiota 10.0.0 pariutettu puhelin alkaa allekirjoittaa kutsunsa ensimmäisellä käynnillä päivityksen jälkeen, ja jokainen palvelin pitää ensimmäisen puhelimelle saamansa avaimen. Jos joku muu, joka tuntee ryhmän sanat, ehtii ensin puhelimen ollessa offline-tilassa, palvelin hylkää puhelimen siitä lähtien, eikä sovellus enää voi avata sitä releen kautta. Korjaa tämä kirjautumalla kyseiselle palvelimelle selaimella, valitsemalla puhelimen kortista Ilmentymät-sivulla **Unohda avain** ja sitten **Vahvista unohtaminen**, ja avaamalla sovellus uudelleen. Palvelin ottaa puhelimen oman avaimen seuraavassa kutsussa. Jos puhelin hylätään uudelleen, joku muu tuntee sanat: anna jokaisen ilmentymän valita **Poistu ryhmästä** ja pariuta ne uudelleen uusilla sanoilla, kuten kadonneen puhelimen kohdalla.
 
@@ -69,7 +69,7 @@ Viennit, palautuspaketit, flashin ZIP-tiedostot ja tietokantavedokset tallentuva
 
 ## Kosketusnäytöllä {#touch}
 
-Sormen alla mikään ei saa hover-tilaa, joten säädin himmenee, kun sitä pidetään painettuna, ja brändilogollinen painike hehkuu brändin värissä, kunnes nostat sormen. Pitkä painallus painikkeeseen lasketaan hitaaksi napautukseksi eikä avaa linkkivalikkoa.
+Sormen alla mikään ei saa hover-tilaa, joten säädin himmenee, kun sitä pidetään painettuna, ja brändilogollinen painike hehkuu brändin värissä, kunnes nostat sormen. Pitkä painallus painikkeeseen lasketaan hitaaksi napautukseksi eikä avaa linkkivalikkoa. Harmaana olevan painikkeen napautus näyttää, miksi se on harmaana, kunnes napautat jotain muuta kohtaa.
 
 ## Selaimessa sovelluksen sijaan {#browser}
 

@@ -24,7 +24,7 @@ Tento server převzal v Nouzovém průvodci zálohovací klíč jiného serveru 
 
 ## Telefon skončí na přihlašovací stránce
 
-Spárovaný telefon dostane relaci přes skupinu jen tehdy, když je v **Nastavení, Zabezpečení** zapnuto **Telefony se mohou spárovat s dvanácti slovy skupiny**. Reset hesla ho vypne. Aplikace starší než server také nedostane relaci, dokud se neaktualizuje. Server přidaný podle adresy se na heslo ptá vždy.
+Spárovaný telefon dostane relaci přes skupinu jen tehdy, když je v **Nastavení, Zabezpečení** zapnuto **Telefony se mohou spárovat s dvanácti slovy skupiny**. Reset hesla ho vypne. Aplikace starší než server také nedostane relaci, dokud se neaktualizuje. Server přidaný podle adresy se na heslo ptá vždy. Telefon odebraný ze stránky Instance se po dalším otevření aplikace vrátí vypnutý; abys ho pustil dovnitř, zapni v jeho podrobnostech v části **Sledování** volbu **Dotázat se na tuto instanci**.
 
 ## Záloha VM se nepřipojí
 
@@ -38,7 +38,7 @@ Záloha VM komunikuje s libvirt přes SSH, nikdy přes připojení.
 
 ## Živý snímek VM neproběhl
 
-Živé snímky potřebují qemu guest agent nainstalovaný ve VM a disk na `/mnt/cache` (nebo `/mnt/diskX`), nikoli `/mnt/user`. Na vypnuté VM se živý automaticky vrátí k šetrnému. Šetrná záloha VM vypne, zálohuje disky, poté ji znovu spustí, takže je vždy konzistentní.
+Živé snímky potřebují qemu guest agent nainstalovaný ve VM a disk na `/mnt/cache` (nebo `/mnt/diskX`), nikoli `/mnt/user`. Na vypnuté VM se živý automaticky vrátí k šetrnému. Šetrná záloha VM vypne, zálohuje disky, poté ji znovu spustí, takže je vždy konzistentní. Čeká až deset minut, než se host vypne, a nikdy ho nevypíná násilím, takže host s Windows, který zrovna instaluje aktualizace, se nepřeruší v půlce. Host, který potom stále běží, zůstane nedotčen a tato záloha selže s uvedením důvodu.
 
 ## Záloha selhala s "repository is already locked"
 
@@ -47,6 +47,14 @@ Toto je obvykle osiřelý restic zámek zanechaný, když byl kontejner aktualiz
 ## Moje kopie mimo lokalitu neproběhla po záloze
 
 Replikace mimo lokalitu je na základě nejlepší snahy záměrně, takže zádrhel mimo lokalitu nikdy nezhatí místní zálohu. Zkontroluj, kdy cíl kopíruje: jeho karta **Kopírovat** říká **Po každé záloze** nebo uvádí vlastní plán a **Nastavení, Plán, Kopie mimo lokalitu podle sekcí** může dát sekci vlastní plán. Použij **Replikovat nyní** na kartě sekce **Kopie mimo lokalitu** v **Nastavení, Cíle** pro běh na vyžádání a sleduj hlavičku stavu v Přehledu, která za běhu říká **Probíhá kopie mimo lokalitu**. Neúspěšná kopie se ukáže pod **Vyžaduje pozornost**.
+
+## Certifikátu rest-serveru se nedůvěřuje
+
+restic odmítne certifikát, který nezná, a chybová zpráva řekne, kam ho dát. Zkopíruj samopodepsaný certifikát rest-serveru, nebo certifikát autority, která ho podepsala, jako soubor PEM do složky `certs` v datové složce BombVaultu (`/config/certs` v kontejneru, `appdata/bombvault/certs` na Unraidu) a otestuj znovu. Restart není potřeba.
+
+## Velká záloha byla ukončena kvůli nedostatku paměti
+
+Nastav **Limit paměti na zálohu (MiB, 0 = žádný)** v kartě **Výkon** v **Nastavení, Systém** výrazně pod to, co smí kontejner použít. Blízko limitu restic častěji uvolňuje paměť, což stojí trochu rychlosti, takže záloha zpomalí, místo aby byla ukončena.
 
 ## Obnova se přerušila dříve, než začala
 

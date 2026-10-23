@@ -107,7 +107,11 @@ Replika on merkinnän tietojoukkojen kopio toisella ZFS-palvelimella. BombVault 
 
 Replika ei koskaan korvaa varmuuskopiota. Vanhemmat versiot, yksittäiset tiedostot ja tarkistus tulevat yhä varmuuskopioista, ja replika säilyttää vain niin monta tilannevedosta kuin asetat. Ajantasainen replika lasketaan kopioksi tilojen ulkopuolella, mutta merkintä, jolla on replika mutta ei varmuuskopiota, pysyy oranssina.
 
+**Vain replika, ei varmuuskopiota** Replika-kortissa saa koko ZFS-osion lähettämään replikoita eikä ottamaan varmuuskopioita. Oma kansio ja etäkohteet säilyttävät kytkimensä, joten kun asetuksen kytkee pois, osio varmuuskopioi taas niihin, ja jokaisen ZFS-merkinnän kortti näyttää osion kytkimen sellaisena kuin se on. Tällainen merkintä odottaa ensimmäistä replikaansa varmuuskopion sijaan, **Varmuuskopioi nyt** näkyy sillä muodossa **Replikoi nyt**, ja merkinnän kontit pysähtyvät ja sen komennot ajetaan tilannevedoksen ympärillä kuten varmuuskopiossa. Sen replikat lasketaan muutaman päivän välein ajettavaan aikatauluun, myöhästymishälytykseen ja kattavuuteen.
+
 Kytke se päälle merkinnän Asetukset-välilehden kortissa **Replika**. Siellä valitset, minne replika menee, milloin se ajetaan (**Jokaisen varmuuskopion jälkeen** tai **Oma aikataulu**) ja kuinka monta tilannevedosta kohteelle jää. Kortti listaa jokaisen tietojoukon ja taltion tiloineen, ja **Replikoi nyt** käynnistää ajon. Replikaajolla on oma lukkonsa, joten pitkä ensimmäinen siirto ei koskaan pidätä varmuuskopioita.
+
+**Replikoi kaikki nyt**, joka on varmuuskopiotoimintojen vieressä, kun Varmuuskopiot-sivulla on valittu ZFS-ruutu, lähettää jokaisen ZFS-merkinnän replikan yksi kerrallaan. Palvelin ajaa erän, joten se jatkuu, kun poistut sivulta, ja merkintä, joka ei voi replikoida, nimetään ja ohitetaan.
 
 ### Lähetys ZFS-palvelimelle {#replica-push}
 
@@ -134,6 +138,8 @@ Tässä suunnassa BombVault, jolla merkintä on, pitää myös avainta, joka voi
 
 BombVault tallentaa isäntäavaimen, jonka palvelin näyttää ensimmäisellä yhteydellä, ja hylkää myöhemmin muut. Jos palvelin on asennettu uudelleen, paina palvelimen sivulla **Forget host key**, niin seuraava yhteys tallentaa uuden avaimen.
 
+Kun tämän palvelimen isäntä tavoittaa ZFS-palvelimen itse, se ohjaa `zfs send` -komennon suoraan omaan ssh-yhteyteensä palvelimelle replikan avaimella ja tallennetulla isäntäavaimella, joten virta ei kulje BombVaultin kautta. Muuten virta kulkee BombVaultin kautta.
+
 ### Lähetys pariliitetylle instanssille {#replica-receive}
 
 Pariliitetty BombVault voi vastaanottaa replikan itse. Kukaan ei saa SSH-pääsyä toiselle isännälle, eikä mikään avain mene `authorized_keys`-tiedostoon.
@@ -151,6 +157,8 @@ Vastaanottavan instanssin on vastattava HTTPS:n kautta. Pelkkään http-osoittee
 ### Mihin data päätyy {#replica-target}
 
 Jokainen tietojoukko päätyy polkuun `<root>/<server>/<pool>/<path>`. Palvelinkansio on lähdeinstanssin nimi, joka lukitaan ensimmäisessä siirrossa, joten kaksi palvelinta, joilla on sama poolin nimi, eivät koskaan joudu toistensa tielle. Esimerkiksi palvelimen `tower` tietojoukko `cache/appdata` päätyy polkuun `backup/bombvault-replica/tower/cache/appdata`.
+
+Kun BombVault on asennettu uudelleen, kohde hylkää kansion, jonka tämä BombVault täytti aiemmin. Replika-kortti tarjoaa silloin toiminnon **Ota kansio haltuun**, ja seuraava replika jatkaa sen sisältämistä kopioista. Ota kansio haltuun vain, jos mikään toinen BombVault ei enää replikoi siihen kansioon.
 
 Kopio kohdepalvelimella on vain luettavissa eikä liitettynä, joten se ei koskaan peitä mitään kyseisellä palvelimella. ZFS-ominaisuudet siirtyvät mukana, paitsi liitospiste sekä `sharenfs` ja `sharesmb`. Myös varaukset `reservation` ja `refreservation` jäävät pois, joten kopio vie vain sen tilan, jonka sen data tarvitsee.
 

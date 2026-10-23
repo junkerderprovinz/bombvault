@@ -24,7 +24,7 @@ Acest server a preluat cheia de copii a altui server în Asistentul de urgență
 
 ## Un telefon ajunge pe pagina de autentificare
 
-Un telefon împerecheat primește sesiunea prin grup doar cât timp **Telefoanele se pot împerechea cu cele douăsprezece cuvinte ale grupului** este pornit la **Setări, Securitate**. O resetare a parolei îl oprește. O aplicație mai veche decât serverul nu primește nici ea sesiune până se actualizează. Un server adăugat după adresă cere mereu parola.
+Un telefon împerecheat primește sesiunea prin grup doar cât timp **Telefoanele se pot împerechea cu cele douăsprezece cuvinte ale grupului** este pornit la **Setări, Securitate**. O resetare a parolei îl oprește. O aplicație mai veche decât serverul nu primește nici ea sesiune până se actualizează. Un server adăugat după adresă cere mereu parola. Un telefon eliminat de pe pagina Instanțe revine dezactivat când i se deschide din nou aplicația; pornește **Interoghează această instanță** la **Monitorizare** în detaliile lui ca să-l lași să intre.
 
 ## Backupul VM nu se conectează
 
@@ -38,7 +38,7 @@ Backupul VM comunică cu libvirt prin SSH, niciodată o montare.
 
 ## Un instantaneu VM live nu a rulat
 
-Instantaneele live au nevoie de qemu guest agent instalat în VM și de discul pe `/mnt/cache` (sau `/mnt/diskX`), nu `/mnt/user`. Pe o VM oprită, live revine automat la controlat. Un backup controlat oprește VM-ul, face backup discurilor, apoi îl repornește, așa că este mereu consistent.
+Instantaneele live au nevoie de qemu guest agent instalat în VM și de discul pe `/mnt/cache` (sau `/mnt/diskX`), nu `/mnt/user`. Pe o VM oprită, live revine automat la controlat. Un backup controlat oprește VM-ul, face backup discurilor, apoi îl repornește, așa că este mereu consistent. Așteaptă până la zece minute ca oaspetele să se oprească și nu îl oprește niciodată forțat, așa că un oaspete Windows care instalează actualizări nu este întrerupt la jumătate. Un oaspete care încă rulează după aceea este lăsat în pace, iar acel backup eșuează cu motivul.
 
 ## Un backup a eșuat cu "repository is already locked"
 
@@ -47,6 +47,14 @@ De obicei este un lock restic orfan rămas când containerul a fost actualizat s
 ## Copia mea off-site nu s-a întâmplat după un backup
 
 Replicarea off-site este best-effort prin concepție, așa că un sughiț off-site nu face niciodată să eșueze copia locală. Verifică când copiază destinația: cardul ei **Copiază** spune **După fiecare copie de rezervă** sau numește un plan propriu, iar **Setări, Programare, Copii externe pe secțiuni** poate da unei secțiuni un plan propriu. Folosește **Replică acum** în cardul de copie off-site al secțiunii de la **Setări, Destinații** pentru o rulare la cerere și urmărește antetul de stare din prezentare, care spune **Copierea off-site rulează** cât timp rulează. O copiere eșuată apare la **Necesită atenție**.
+
+## Certificatul unui rest-server nu este de încredere
+
+restic refuză un certificat pe care nu îl cunoaște, iar eroarea spune unde să-l pui. Copiază certificatul autosemnat al rest-server-ului, sau pe cel al autorității care l-a semnat, ca fișier PEM în folderul `certs` din folderul de date al BombVault (`/config/certs` în container, `appdata/bombvault/certs` pe Unraid) și testează din nou. Nu este nevoie de repornire.
+
+## Un backup mare a fost oprit din lipsă de memorie
+
+Setează **Limită de memorie per copie (MiB, 0 = fără)** în cardul **Performanță** de la **Setări, Sistem**, cu mult sub cât are voie să folosească containerul. Aproape de limită, restic eliberează memorie mai des, ceea ce costă puțină viteză, așa că backupul încetinește în loc să fie oprit.
 
 ## O restaurare s-a oprit înainte de a începe
 

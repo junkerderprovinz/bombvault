@@ -107,7 +107,11 @@ Una replica è una copia dei dataset di un elemento su un secondo server ZFS. Bo
 
 Una replica non sostituisce mai il backup. Le versioni più vecchie, i singoli file e il controllo arrivano sempre dai backup, e la replica tiene solo tanti snapshot quanti ne imposti. Una replica aggiornata conta come copia off-site, ma un elemento con una replica e senza backup resta arancione.
 
+**Solo replica, nessun backup** nella scheda Replica fa sì che l'intera sezione ZFS invii repliche e non faccia backup. La cartella propria e le destinazioni off-site mantengono i loro interruttori, quindi disattivandolo la sezione torna a fare il backup lì, e la scheda di ogni elemento ZFS mostra l'interruttore della sezione così com'è. Un elemento così aspetta la sua prima replica invece di un backup, **Esegui backup ora** diventa **Replica ora**, e attorno allo snapshot i suoi container si fermano e i suoi comandi vengono eseguiti come per un backup. Le sue repliche contano per una pianificazione ogni pochi giorni, l'avviso di ritardo e la copertura.
+
 Attivala nella scheda **Replica** nella scheda Impostazioni dell'elemento. Lì scegli dove va la replica, quando viene eseguita (**Dopo ogni backup** o **Piano proprio**) e quanti snapshot restano sulla destinazione. La scheda elenca ogni dataset e ogni volume con il suo stato, e **Replica ora** avvia un'esecuzione. Un'esecuzione di replica ha un lock proprio, così un primo trasferimento lungo non blocca mai i backup.
+
+**Replica tutto ora**, accanto alle azioni di backup quando nella pagina Backup è scelto il riquadro ZFS, invia la replica di ogni elemento ZFS, uno dopo l'altro. Il server esegue il lotto, quindi prosegue anche se lasci la pagina, e un elemento che non può essere replicato viene indicato e saltato.
 
 ### Invio a un server ZFS {#replica-push}
 
@@ -134,6 +138,8 @@ In questa direzione il BombVault che tiene l'elemento tiene anche una chiave che
 
 BombVault memorizza la chiave host che il server mostra alla prima connessione e in seguito ne rifiuta qualsiasi altra. Se il server è stato reinstallato, premi **Dimentica chiave host** nella pagina del server e la connessione successiva memorizza la nuova chiave.
 
+Quando l'host di questo server raggiunge da solo il server ZFS, passa `zfs send` direttamente al proprio ssh verso il server, con la chiave della replica e la chiave host memorizzata, così il flusso non passa da BombVault. Altrimenti il flusso passa da BombVault.
+
 ### Invio a un'istanza abbinata {#replica-receive}
 
 Un BombVault abbinato può ricevere la replica da sé. Nessuno ottiene accesso SSH all'altro host e nessuna chiave finisce in un file `authorized_keys`.
@@ -151,6 +157,8 @@ L'istanza che riceve deve rispondere in HTTPS. A un indirizzo http semplice la s
 ### Dove finiscono i dati {#replica-target}
 
 Ogni dataset finisce in `<root>/<server>/<pool>/<path>`. La cartella del server è il nome dell'istanza sorgente, fissato al primo trasferimento, così due server con lo stesso nome di pool non si ostacolano mai. Per esempio, `cache/appdata` di un server chiamato `tower` finisce in `backup/bombvault-replica/tower/cache/appdata`.
+
+Dopo una reinstallazione di BombVault, la destinazione rifiuta la cartella che questo BombVault riempiva prima. La scheda Replica offre allora **Prendi la cartella**, e la replica successiva riprende dalle copie che contiene. Prendila solo se nessun altro BombVault replica ancora in quella cartella.
 
 La copia sulla destinazione è di sola lettura e non montata, quindi non copre mai nulla su quel server. Le proprietà ZFS viaggiano con essa, tranne il mountpoint e `sharenfs` e `sharesmb`. Anche le riserve `reservation` e `refreservation` restano indietro, quindi la copia occupa solo lo spazio di cui hanno bisogno i suoi dati.
 

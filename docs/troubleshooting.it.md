@@ -24,7 +24,7 @@ Questo server ha rilevato la chiave dei backup di un altro server nella Procedur
 
 ## Un telefono finisce nella pagina di accesso
 
-Un telefono associato riceve la sessione tramite il gruppo solo finché **I telefoni possono associarsi con le dodici parole del gruppo** è attivo in **Impostazioni, Sicurezza**. Un ripristino della password lo disattiva. Anche un'app più vecchia del server non riceve una sessione finché non viene aggiornata. Un server aggiunto con il suo indirizzo chiede sempre la password.
+Un telefono associato riceve la sessione tramite il gruppo solo finché **I telefoni possono associarsi con le dodici parole del gruppo** è attivo in **Impostazioni, Sicurezza**. Un ripristino della password lo disattiva. Anche un'app più vecchia del server non riceve una sessione finché non viene aggiornata. Un server aggiunto con il suo indirizzo chiede sempre la password. Un telefono rimosso dalla pagina Istanze torna disattivato quando la sua app si riapre; attiva **Interroga questa istanza** sotto **Monitoraggio** nei suoi dettagli per farlo entrare.
 
 ## Il backup delle VM non si connette
 
@@ -38,7 +38,7 @@ Il backup delle VM comunica con libvirt via SSH, mai un mount.
 
 ## Uno snapshot a caldo di una VM non è stato eseguito
 
-Gli snapshot a caldo necessitano del qemu guest agent installato nella VM e del disco su `/mnt/cache` (o `/mnt/diskX`), non `/mnt/user`. Su una VM spenta, il metodo a caldo ripiega automaticamente su quello ordinato. Un backup ordinato spegne la VM, esegue il backup dei dischi, poi la riavvia, così è sempre consistente.
+Gli snapshot a caldo necessitano del qemu guest agent installato nella VM e del disco su `/mnt/cache` (o `/mnt/diskX`), non `/mnt/user`. Su una VM spenta, il metodo a caldo ripiega automaticamente su quello ordinato. Un backup ordinato spegne la VM, esegue il backup dei dischi, poi la riavvia, così è sempre consistente. Aspetta fino a dieci minuti che il guest si spenga e non lo spegne mai a forza, così un guest Windows che sta installando aggiornamenti non viene interrotto a metà. Un guest ancora acceso dopo quel tempo viene lasciato stare, e quel backup fallisce indicando il motivo.
 
 ## Un backup è fallito con "repository is already locked"
 
@@ -47,6 +47,14 @@ Di solito è un lock restic orfano lasciato quando il container è stato aggiorn
 ## La mia copia off-site non è avvenuta dopo un backup
 
 La replica off-site è best-effort per progettazione, così un intoppo off-site non fa mai fallire il backup locale. Controlla quando copia la destinazione: la sua scheda **Copia** dice **Dopo ogni backup** o indica un piano proprio, e **Impostazioni, Calendario, Copie off-site per sezione** può dare a una sezione un piano suo. Usa **Replica ora** nella scheda **Copia off-site** della sezione in **Impostazioni, Destinazioni** per un'esecuzione su richiesta, e osserva la testata di stato della panoramica, che dice **Copia off-site in corso** mentre gira. Una copia fallita compare sotto **Richiede attenzione**.
+
+## Il certificato di un rest-server non è considerato attendibile
+
+restic rifiuta un certificato che non conosce, e l'errore dice dove metterlo. Copia il certificato autofirmato del rest-server, o quello dell'autorità che lo ha firmato, come file PEM nella cartella `certs` della cartella dati di BombVault (`/config/certs` nel container, `appdata/bombvault/certs` su Unraid) e prova di nuovo. Non serve riavviare.
+
+## Un backup grande è stato terminato per mancanza di memoria
+
+Imposta **Limite di memoria per backup (MiB, 0 = nessuno)** nella scheda **Prestazioni** in **Impostazioni, Sistema**, ben al di sotto di quanto il container può usare. Vicino al limite restic libera memoria più spesso, il che costa un po' di velocità, così il backup rallenta invece di essere terminato.
 
 ## Un ripristino si è interrotto prima di iniziare
 

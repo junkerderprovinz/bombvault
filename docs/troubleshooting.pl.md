@@ -24,7 +24,7 @@ Ten serwer przejął w Kreatorze awaryjnym klucz kopii innego serwera, a potem z
 
 ## Telefon trafia na stronę logowania
 
-Sparowany telefon dostaje sesję przez grupę tylko wtedy, gdy w **Ustawienia, Bezpieczeństwo** włączone jest **Telefony mogą się sparować z dwunastoma słowami grupy**. Reset hasła je wyłącza. Aplikacja starsza niż serwer też nie dostaje sesji, dopóki nie zostanie zaktualizowana. Serwer dodany po adresie zawsze pyta o hasło.
+Sparowany telefon dostaje sesję przez grupę tylko wtedy, gdy w **Ustawienia, Bezpieczeństwo** włączone jest **Telefony mogą się sparować z dwunastoma słowami grupy**. Reset hasła je wyłącza. Aplikacja starsza niż serwer też nie dostaje sesji, dopóki nie zostanie zaktualizowana. Serwer dodany po adresie zawsze pyta o hasło. Telefon usunięty ze strony Instancje wraca wyłączony, gdy jego aplikacja znowu się otworzy; aby go wpuścić, włącz **Odpytuj tę instancję** w sekcji **Monitorowanie** w jego szczegółach.
 
 ## Kopia VM nie łączy się
 
@@ -38,7 +38,7 @@ Kopia VM komunikuje się z libvirt przez SSH, nigdy przez montaż.
 
 ## Migawka VM na żywo nie została uruchomiona
 
-Migawki na żywo wymagają agenta gościa qemu zainstalowanego w VM oraz dysku na `/mnt/cache` (lub `/mnt/diskX`), nie `/mnt/user`. Na wyłączonej VM tryb na żywo automatycznie wraca do płynnego. Płynna kopia wyłącza VM, tworzy kopię dysków, a następnie ją restartuje, więc jest zawsze spójna.
+Migawki na żywo wymagają agenta gościa qemu zainstalowanego w VM oraz dysku na `/mnt/cache` (lub `/mnt/diskX`), nie `/mnt/user`. Na wyłączonej VM tryb na żywo automatycznie wraca do płynnego. Płynna kopia wyłącza VM, tworzy kopię dysków, a następnie ją restartuje, więc jest zawsze spójna. Czeka do dziesięciu minut, aż gość się wyłączy, i nigdy nie wyłącza go siłą, więc gość Windows instalujący aktualizacje nie zostaje przerwany w połowie. Gość, który po tym czasie wciąż działa, nie jest ruszany, a ta kopia kończy się błędem z podaniem przyczyny.
 
 ## Kopia zapasowa zawiodła z "repository is already locked"
 
@@ -47,6 +47,14 @@ To zwykle osierocona blokada restic pozostawiona, gdy kontener został zaktualiz
 ## Moja kopia poza siedzibą nie zdarzyła się po kopii
 
 Replikacja poza siedzibą jest z założenia best-effort, więc potknięcie poza siedzibą nigdy nie powoduje niepowodzenia kopii lokalnej. Sprawdź, kiedy miejsce docelowe kopiuje: jego karta **Kopiuj** mówi **Po każdej kopii zapasowej** albo wymienia własny plan, a **Ustawienia, Harmonogram, Kopie poza siedzibą według sekcji** może dać sekcji własny plan. Użyj **Replikuj teraz** w karcie **Kopia off-site** sekcji w **Ustawienia, Miejsca docelowe** do uruchomienia na żądanie i obserwuj nagłówek stanu przeglądu, który w trakcie pisze **Trwa kopiowanie poza siedzibę**. Nieudana kopia pojawia się pod **Wymaga uwagi**.
+
+## Certyfikat rest-servera nie jest zaufany
+
+restic odrzuca certyfikat, którego nie zna, a komunikat błędu mówi, gdzie go umieścić. Skopiuj samopodpisany certyfikat rest-servera, albo certyfikat urzędu, który go podpisał, jako plik PEM do folderu `certs` w folderze danych BombVault (`/config/certs` w kontenerze, `appdata/bombvault/certs` w Unraid) i przetestuj ponownie. Restart nie jest potrzebny.
+
+## Duża kopia zapasowa została zabita z braku pamięci
+
+Ustaw **Limit pamięci na kopię zapasową (MiB, 0 = brak)** w karcie **Wydajność** w **Ustawienia, System** wyraźnie poniżej tego, ile pamięci może używać kontener. W pobliżu limitu restic częściej zwalnia pamięć, co kosztuje trochę szybkości, więc kopia działa wolniej, zamiast zostać zabita.
 
 ## Przywracanie przerwane, zanim się zaczęło
 

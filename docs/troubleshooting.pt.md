@@ -24,7 +24,7 @@ Este servidor assumiu a chave de backup de outro servidor no Assistente de emerg
 
 ## Um telemóvel vai parar à página de início de sessão
 
-Um telemóvel emparelhado só recebe a sessão através do grupo enquanto **Os telemóveis podem emparelhar com as doze palavras do grupo** estiver ligado em **Definições, Segurança**. Uma reposição da palavra-passe desliga-o. Uma aplicação mais antiga do que o servidor também não recebe sessão até ser atualizada. Um servidor adicionado pelo endereço pede sempre a palavra-passe.
+Um telemóvel emparelhado só recebe a sessão através do grupo enquanto **Os telemóveis podem emparelhar com as doze palavras do grupo** estiver ligado em **Definições, Segurança**. Uma reposição da palavra-passe desliga-o. Uma aplicação mais antiga do que o servidor também não recebe sessão até ser atualizada. Um servidor adicionado pelo endereço pede sempre a palavra-passe. Um telemóvel removido da página Instâncias regressa desligado quando a sua aplicação volta a abrir; liga **Consultar esta instância** em **Monitorização** nos seus detalhes para o deixar entrar.
 
 ## O backup de VM não se liga
 
@@ -38,7 +38,7 @@ O backup de VM comunica com o libvirt por SSH, nunca por uma montagem.
 
 ## Um instantâneo a quente de VM não correu
 
-Os instantâneos a quente precisam do agente convidado qemu instalado na VM e do disco em `/mnt/cache` (ou `/mnt/diskX`), não em `/mnt/user`. Numa VM desligada, o a quente recorre automaticamente ao ordenado. Um backup ordenado desliga a VM, faz backup dos discos, e depois reinicia-a, por isso é sempre consistente.
+Os instantâneos a quente precisam do agente convidado qemu instalado na VM e do disco em `/mnt/cache` (ou `/mnt/diskX`), não em `/mnt/user`. Numa VM desligada, o a quente recorre automaticamente ao ordenado. Um backup ordenado desliga a VM, faz backup dos discos, e depois reinicia-a, por isso é sempre consistente. Espera até dez minutos que o convidado se desligue e nunca o força a desligar, para que um convidado Windows a instalar atualizações não seja cortado a meio. Um convidado que ainda esteja a correr depois disso fica em paz, e esse backup falha com o motivo.
 
 ## Um backup falhou com "repository is already locked"
 
@@ -47,6 +47,14 @@ Isto é geralmente um bloqueio restic órfão deixado para trás quando o contai
 ## A minha cópia externa não aconteceu após um backup
 
 A replicação externa é de melhor esforço por conceção, por isso um percalço externo nunca faz o backup local falhar. Verifica quando o destino copia: o cartão **Copiar** diz **Depois de cada backup** ou indica um plano próprio, e **Definições, Agendamento, Cópias externas por secção** pode dar a uma secção um plano próprio. Usa **Replicar agora** no cartão **Cópia externa** da secção em **Definições, Destinos** para uma execução a pedido, e observa o cabeçalho de estado da visão geral, que diz **Cópia externa em curso** enquanto corre. Uma cópia falhada aparece em **Precisa de atenção**.
+
+## O certificado de um rest-server não é de confiança
+
+O restic recusa um certificado que não conhece, e o erro diz onde o colocar. Copia o certificado autoassinado do rest-server, ou o da autoridade que o assinou, como ficheiro PEM para a pasta `certs` da pasta de dados do BombVault (`/config/certs` no container, `appdata/bombvault/certs` no Unraid) e testa de novo. Não é preciso reiniciar.
+
+## Um backup grande foi terminado por falta de memória
+
+Define **Limite de memória por backup (MiB, 0 = nenhum)** no cartão **Desempenho** em **Definições, Sistema**, bem abaixo do que o container pode usar. Perto do limite, o restic liberta memória mais vezes, o que custa alguma velocidade, por isso o backup abranda em vez de ser terminado.
 
 ## Um restauro abortou antes de começar
 

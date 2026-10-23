@@ -31,7 +31,7 @@ Qua relay, trang chạm tới những gì một điện thoại đã ghép nối
 
 ## Chuyển máy chủ {#switch}
 
-Khi một máy chủ đang mở, đầu trang Tổng quan của nó hiển thị tên máy chủ, với một mũi tên quay lại phía trước. Mũi tên dẫn về tổng quan của ứng dụng, tức màn hình chính, nơi liệt kê mọi máy chủ mà ứng dụng biết kèm trạng thái: **Đã kết nối**, **Chưa kết nối**, **Cần đăng nhập** hoặc **Kiểm tra chứng chỉ**. Chạm vào máy chủ khác ở đó để mở nó, trực tiếp khi ở nhà và qua relay trong các trường hợp còn lại.
+Khi một máy chủ đang mở, đầu trang Tổng quan của nó hiển thị tên máy chủ, với một mũi tên quay lại phía trước. Mũi tên dẫn về tổng quan của ứng dụng, tức màn hình chính, nơi liệt kê mọi máy chủ mà ứng dụng biết kèm trạng thái: **Đã kết nối**, **Chưa kết nối**, **Cần đăng nhập** hoặc **Kiểm tra chứng chỉ**. Một máy chủ của nhóm không phản hồi sẽ hiện **Không hoạt động**, màu xám, kèm thời điểm nhóm thấy nó lần cuối, còn máy chủ mà ứng dụng chưa nhận được tin gì sẽ hiện **Đang kiểm tra**. Mỗi lần kết nối, ứng dụng đọc danh sách của nhóm từ một trong các phiên bản của nhóm, nên danh sách có cả phiên bản mà ứng dụng chưa từng gặp qua relay, chẳng hạn một phiên bản đang tắt lúc điện thoại ghép nối. Chạm vào máy chủ khác ở đó để mở nó, trực tiếp khi ở nhà và qua relay trong các trường hợp còn lại.
 
 ## Đăng nhập trên điện thoại đã ghép nối {#sign-in}
 
@@ -50,7 +50,7 @@ Công tắc cho việc này là **Điện thoại có thể ghép nối bằng m
 
 ## Điện thoại trên trang Phiên bản {#instances}
 
-Điện thoại có thẻ riêng trên trang Phiên bản của mọi máy chủ trong nhóm, được đánh dấu là ứng dụng Android và mang tên bạn đặt cho điện thoại. Thẻ này không có bảng điểm vì điện thoại không sao lưu gì, và **Xóa** sẽ gỡ nó khỏi trang. Điện thoại biết các từ có thể ghép nối lại bất cứ lúc nào, nên với điện thoại bị mất, hãy tắt **Điện thoại có thể ghép nối bằng mười hai từ của nhóm** trong **Cài đặt, Bảo mật**, hoặc cho từng phiên bản chọn **Rời nhóm** rồi ghép nối lại bằng các từ mới.
+Điện thoại có thẻ riêng trên trang Phiên bản của mọi máy chủ trong nhóm, được đánh dấu là ứng dụng Android và mang tên bạn đặt cho điện thoại. Thẻ này không có bảng điểm vì điện thoại không sao lưu gì. **Xóa** gỡ nó khỏi trang và kết thúc phiên của nó ngay lập tức, giống như khi tắt **Truy vấn phiên bản này** trong **Giám sát** ở phần chi tiết của nó. Điện thoại vẫn biết các từ, nên nó xuất hiện lại khi ứng dụng của nó mở ra, nhưng ở trạng thái tắt, và không nhận được phiên nào cho đến khi có người bật nó lên. Với điện thoại bị mất, hãy xóa thẻ của nó trên mọi máy chủ, hoặc tắt **Điện thoại có thể ghép nối bằng mười hai từ của nhóm** trong **Cài đặt, Bảo mật**, hoặc cho từng phiên bản chọn **Rời nhóm** rồi ghép nối lại bằng các từ mới.
 
 Điện thoại đã ghép nối trước 10.0.0 sẽ bắt đầu ký các lệnh gọi của mình ở lần truy cập đầu tiên sau khi cập nhật, và mỗi máy chủ giữ khóa đầu tiên nhận được cho điện thoại đó. Nếu một người khác biết các từ của nhóm đến trước khi điện thoại đang ngoại tuyến, máy chủ đó sẽ từ chối điện thoại kể từ lúc ấy, và ứng dụng không còn mở được nó qua relay. Để khắc phục, hãy đăng nhập vào máy chủ đó bằng trình duyệt, chọn **Quên khóa** trên thẻ của điện thoại ở trang Phiên bản rồi chọn **Xác nhận quên**, sau đó mở lại ứng dụng. Máy chủ sẽ lấy khóa riêng của điện thoại ở lệnh gọi tiếp theo. Nếu điện thoại lại bị từ chối, nghĩa là người khác có các từ: hãy cho từng phiên bản chọn **Rời nhóm** rồi ghép nối lại bằng các từ mới, như với điện thoại bị mất.
 
@@ -70,7 +70,7 @@ Các bản xuất, bộ khôi phục, tệp ZIP của flash và bản dump cơ s
 
 ## Trên màn hình cảm ứng {#touch}
 
-Ngón tay không thể di chuột qua thứ gì, nên một điều khiển sẽ tối đi khi đang được giữ, và nút có logo thương hiệu sẽ sáng lên bằng màu của thương hiệu đó cho đến khi nhấc ngón tay. Nhấn giữ một nút được tính là một lần chạm chậm và không mở menu liên kết.
+Ngón tay không thể di chuột qua thứ gì, nên một điều khiển sẽ tối đi khi đang được giữ, và nút có logo thương hiệu sẽ sáng lên bằng màu của thương hiệu đó cho đến khi nhấc ngón tay. Nhấn giữ một nút được tính là một lần chạm chậm và không mở menu liên kết. Chạm vào một nút bị làm mờ sẽ hiện lý do nó bị mờ, cho đến khi bạn chạm vào chỗ khác.
 
 ## Dùng trong trình duyệt {#browser}
 

@@ -29,6 +29,15 @@ A **Cél hozzáadása** négylépéses ablakot nyit:
 3. **Védelem.** Az ablak nyíltan megmondja, mit tud a szolgáltatás. Az append-only módban futó rest-server megtagadja a törlést, és a manipulációs teszt ezt ellenőrzi. Egy S3-bucket meg tudja őrizni a régi verziókat verziókezeléssel és object lockkal, ezt a BombVault még nem tudja ellenőrizni. A felhőmeghajtó egyáltalán nem tudja megtagadni a törlést: aki bejut a szerverre, bejut abba a másolatba is. A **Törlés elleni védelem (append-only)** kapcsolót csak ott kapcsold be, ahol a túloldal valóban megtagadja a törlést; a BombVault ott soha nem metsz. A **Vészhelyzetre** megmondja, mit tartalmaz a helyreállítási csomag ehhez a célhoz.
 4. **Mely szakaszokhoz.** Válaszd ki a szakaszokat, amelyek ide mentenek. Az első másolat az egész előzményt magával viszi. Azok az elemek, amelyek saját célokat választottak, nem kapják meg az újat maguktól, és az ablak név szerint felsorolja őket.
 
+Egyes szolgáltatások a bejelentkezésnél kicsit többet kérnek:
+
+- **SFTP és a Storage Box.** A **Kulcs hozzáadása** felteszi a BombVault nyilvános kulcsát a szerverre az **A fiók jelszava** mezőben megadott jelszóval, amelyet csak ehhez az egy bejelentkezéshez használ, és sehol nem tárol. Alatta látható a parancs, amellyel kézzel is elvégezheted. A teszt megmutatja a **Szerverkulcs** értékét az ujjlenyomatával; a BombVault megjegyzi, és elutasítja a szervert, ha később másikat mutat.
+- **Egyetlen bucketre szóló S3-kulcsok**, például egy Cloudflare R2 objektumtoken vagy egy szűkített AWS-kulcs, nem feltétlenül listázhatják a többi bucketet. Írd be a bucketet a **Bucket** mezőbe, és a teszt meg a mappalista ezt a bucketet nyitja meg.
+- **Azok az SMB-szerverek, amelyek nem listázzák a megosztásaikat,** a **Megosztás** mezőben kapják meg az egyik nevét, és a teszt közvetlenül azt a megosztást nyitja meg.
+- **Az FTP** a **Titkosítás** módját kérdezi: **Nincs**, **Explicit TLS (FTPES)** vagy **Implicit TLS (FTPS, 990-es port)**.
+- **OneDrive és Zoho WorkDrive.** Ha egy bejelentkezés több meghajtót vagy munkaterületet nyit meg, az ablak megkérdezi, melyikre menjenek a mentések.
+- **Önaláírt tanúsítványú rest-server.** Tedd a tanúsítványt PEM-fájlként a BombVault adatmappájának `certs` mappájába (`/config/certs` a konténerben, `appdata/bombvault/certs` Unraidben). A mentések, a másolatok és a törlés elleni védelem tesztje újraindítás nélkül megbíznak benne.
+
 Az S3-szolgáltatások a restic saját S3-háttérrendszerén futnak, ez teszi lehetővé a tárolási osztály és az object lock alkalmazását. Minden más szolgáltatás a BombVault mellé csomagolt rclone-on fut, és a távoli eleme ezután a **Külső helyszín (rclone)** kártyán jelenik meg a **Beállítások, Célok** alatt. A beállítások exportja tartalmazza a célokat; a hitelesítő adatokkal együtt a bejelentkezésüket is.
 
 A mappát ezen a szerveren mindenhol **Helyi** néven hívják: a tárolási oldalakon, az ábrán, egy elemen és a Visszaállításnál. Ha ezen a szerveren több mappa van, mindegyik a saját nevén szerepel. Az a cél, amelyet egy szakasz telephelyen kívüli mezője hoz létre, a helyéről kapja a nevét, vagyis a címe utolsó mappájáról, ennek híján a szerveréről, és számot kap, ha már van ilyen nevű cél. Az a név, amelyet az oldalán adsz neki, megmarad. Ha két azonos nevű cél áll egymás mellett, mindegyik mellé kerül a szervere vagy a mappája.
@@ -43,6 +52,8 @@ Minden célnak saját oldala van:
 - **Szabályok szakaszonként**: egy szakasz saját tárolója, megőrzése vagy tömörítése ennél a célnál. A **Szabályok módosítása** megnyitja őket, a **Vissza a cél értékeihez** pedig visszaviszi a szakaszt a cél értékeihez.
 - **Már ennek a célnak az alatt van**: szakaszok, amelyek kézzel beírt címe ennek a célnak egy mappájában van. Az átvétel a tárolót ott hagyja, ahol van; a bejelentkezés, a tárolási osztály és a törlés elleni védelem ezután a céltól jön. A BombVault előbb ellenőrzi, hogy a cél bejelentkezése megnyitja-e a tárolót, és megtagadja, hogy egy append-only tárolót olyan cél alá tegyen, amely nem append-only.
 - Egy edény, amely mutatja, mennyire tele van a cél, a jelöléssel, hogy hol telik meg, és hogy az utolsó hetek növekedése mellett hány hét van hátra. Az a cél, amely nem jelenti a méretét, ezt írja: **A méret ismeretlen**.
+
+Az a távoli cél, amelyen mentések voltak, és hirtelen nincs rajta tároló, például egy rest-server, amelynek a lemeze nem csatolódott fel, nem kap magától új, üres tárolót. Az oldala ezt jelzi, amint egy mentés vagy másolás észreveszi, hogy a tároló eltűnt. Csatold fel újra a lemezt. Ha szándékosan ürítetted ki a régi tárolót, az **Új tároló létrehozása itt** elölről kezdi, a cél összes szakaszára és a megnevezett tárolóira egyszerre.
 
 A csoportod egy másik példánya által üzemeltetett fogadószerver a szolgáltatók között **A csoportodból** néven jelenik meg; lásd: [Fogadószerver](#receiving-server).
 
@@ -194,6 +205,8 @@ Egy szerep bekapcsolása kérést küld, és semmi sem indul el, amíg valaki a 
 
 Egy kártya **Részletek** gombja megnyitja a többit: a tag fogadott tárolóit és lehívási forrásait, a célajánlatokat, a felügyeletet, az **Eltávolítás** és a **Kulcs elfelejtése** gombot.
 
+A leállított példányok és a bezárt alkalmazású telefonok **Inaktív** állapotban, szürkén megtartják a kártyájukat, azzal együtt, hogy mikor látták őket utoljára, és a hálóban halványítva állnak, amíg az **Eltávolítás** gombbal el nem távolítod őket. Közvetlenül ennek a szervernek az indulása után egy ilyen kártya **Ellenőrzés** állapotot mutat, amíg a csoport újra elérhető nem lesz. Az **Eltávolítás** egy ilyen kártyán attól függetlenül működik, hogy mely részek vannak bekapcsolva, és a tag nyitott kéréseit, kihasználatlan ZFS-fogadóhelyeit és várakozó kulcskéréseit is lezárja. A párosítási oldal **Példányok** kártyája ezeket a tagokat szintén **Inaktív** állapotban sorolja fel.
+
 ## Fogadó és lehívó {#receiver}
 
 ![Egy fogadott telephelyen kívüli másolat egy példány részleteiben, csak olvashatóan figyelve, a fogadó hardveren futtatott integritásellenőrzéssel.](assets/screenshots/receiver.png)
@@ -210,7 +223,7 @@ Azon a gépen, amely egy másik BombVaulttól append-only másolatokat **fogad**
 
 A fogadó szigorúan csak olvas. Soha nem ír a fogadott tárolóba, így soha nem törheti meg az append-only garanciát, amelyre a küldő támaszkodik.
 
-A lehívó fordítva dolgozik: bekapcsolt **Lehívással** egy példány saját ütemezés szerint beolvassa egy másik tag mentéseit a saját tárolójába. A forrásai szintén annak a tagnak a részleteiben állnak.
+A lehívó fordítva dolgozik: bekapcsolt **Lehívással** egy példány saját ütemezés szerint beolvassa egy másik tag mentéseit, forrásonként egy saját tárolóba, így ezek soha nem számítanak ennek a gépnek a saját mentéseinek. A forrásai szintén annak a tagnak a részleteiben állnak.
 
 ### Fogadószerver {#receiving-server}
 
@@ -266,7 +279,7 @@ A **Vészvarázsló** visszahoz egy elveszett vagy újra felállított szervert.
     - **Kulcs beírása**: a régi szerver `APP_KEY` értéke, és hogy hol vannak a mentései.
 
     A BombVault ezután kipróbálja a kulcsot minden célon, és mindegyikről megmondja, hogy olvasható, nem található, másik kulccsal zárolt, nem elérhető, vagy még hiányzik hozzá a bejelentkezés. Még semmi sincs elmentve, és a kulcs korlátozott ideig a memóriában marad. A **Kulcs átvétele** azt éri el, hogy ez a szerver ezután ezzel a kulccsal írja a mentéseit; az **Átvétel visszavonása** visszatér a saját kulcshoz, amíg az első mentés le nem futott. Az a szerver, amelynek már vannak saját mentései, megtagadja az átvételt, és a [Régi mentési mappából](#restore-from-another-bombvault-repo) opcióhoz irányít. A **Hozzáférési adatok mentése** eltárolja azokat a bejelentkezéseket, amelyeket a csomag a távoli célokhoz hoz, és rákérdez, mielőtt felülírná azokat, amelyek már megvannak ezen a szerveren.
-2. **Beállítások.** A **Beállítások visszahozása** a BombVault saját beállításait állítja vissza a legfrissebb Önmentésből: célokat, hitelesítő adatokat, ütemezéseket és szabályokat. A BombVault újraindul, hogy alkalmazza őket, a Docker-socketen át, így az éles beállítási adatbázist soha nem írják felül nyitott kezelő alatt, és a varázsló ezután magától folytatja. Ennek a szervernek a bejelentkezése megmarad: a mostani jelszavaddal jelentkezel be tovább. A régi szerveren tárolt, át nem vehető titkok fel vannak sorolva, hogy újra megadhasd őket.
+2. **Beállítások.** A **Beállítások visszahozása** a BombVault saját beállításait állítja vissza a legfrissebb Önmentésből: célokat, hitelesítő adatokat, ütemezéseket és szabályokat. A BombVault újraindul, hogy alkalmazza őket, a Docker-socketen át, így az éles beállítási adatbázist soha nem írják felül nyitott kezelő alatt, és a varázsló ezután magától folytatja. Ennek a szervernek a bejelentkezése megmarad: a mostani jelszavaddal jelentkezel be tovább. A régi szerveren tárolt, át nem vehető titkok fel vannak sorolva, hogy újra megadhasd őket. A visszaállítás lezár minden munkamenetet, és eltávolítja a hozzáférési kulcsokat, ezért utána állítsd be őket újra.
 3. **Kijelölés.** A BombVault végignézi a mentéseidet, és felsorolja a talált konténereket, VM-eket, mappakészleteket és ZFS-adatkészleteket. A legfrissebb mentés mindenhol előre ki van jelölve. Ami ezen a szerveren még megvan, kikapcsolva indul, mert a visszaállítás lecserélné. A mappakészletek az újraépítés után már nem tudják, honnan jöttek, ezért egy általad választott mappába kerülnek.
 4. **Visszaállítás.** Minden kijelölt egyszerre visszajön, megállítva hagyva, ha minden konténert és VM-et magad akarsz elindítani, ami teljes elvesztés után a legbiztonságosabb. Utána tölts le egy új helyreállítási csomagot: a régi az előző telepítéshez tartozik.
 

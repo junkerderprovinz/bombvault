@@ -107,7 +107,11 @@ Bản nhân bản là một bản sao các tập dữ liệu của một mục t
 
 Bản nhân bản không bao giờ thay thế bản sao lưu. Phiên bản cũ hơn, từng tệp và việc kiểm tra vẫn đến từ các bản sao lưu, và bản nhân bản chỉ giữ số snapshot bạn đặt. Một bản nhân bản cập nhật được tính là bản sao ngoài cơ sở, nhưng một mục có bản nhân bản mà không có bản sao lưu vẫn ở màu cam.
 
+**Chỉ bản nhân bản, không sao lưu** trong thẻ **Bản nhân bản** khiến cả phần ZFS gửi bản nhân bản và không tạo bản sao lưu. Thư mục riêng và các đích sao lưu off-site vẫn giữ công tắc của chúng, nên khi tắt tùy chọn này, phần đó lại sao lưu tới những nơi ấy, và thẻ của mọi mục ZFS hiển thị công tắc của phần đúng như trạng thái hiện tại. Một mục như vậy chờ bản nhân bản đầu tiên thay vì bản sao lưu, **Sao lưu ngay** được thay bằng **Nhân bản ngay**, và các container của mục dừng lại cùng các lệnh của nó chạy quanh snapshot như khi sao lưu. Các bản nhân bản của nó được tính cho lịch vài ngày một lần, cảnh báo quá hạn và độ bao phủ.
+
 Bật nó trong thẻ **Bản nhân bản** ở tab Cài đặt của mục. Ở đó bạn chọn bản nhân bản đi đâu, khi nào chạy (**Sau mỗi bản sao lưu** hoặc **Kế hoạch riêng**) và bao nhiêu snapshot ở lại trên đích. Thẻ liệt kê mọi tập dữ liệu và volume cùng trạng thái, và **Nhân bản ngay** bắt đầu một lần chạy. Một lần chạy nhân bản có khóa riêng, nên lần truyền đầu tiên dài không bao giờ làm chậm các bản sao lưu.
+
+**Nhân bản tất cả ngay**, nằm cạnh các thao tác sao lưu khi ô ZFS được chọn trên trang Bản sao lưu, gửi bản nhân bản của mọi mục ZFS, lần lượt từng mục. Máy chủ chạy cả lô, nên nó vẫn tiếp tục khi bạn rời trang, và mục nào không nhân bản được sẽ được nêu tên và bỏ qua.
 
 ### Đẩy sang máy chủ ZFS {#replica-push}
 
@@ -134,6 +138,8 @@ Theo chiều này, BombVault đang giữ mục cũng giữ một khóa có thể
 
 BombVault lưu khóa host mà máy chủ đưa ra ở lần kết nối đầu tiên và về sau từ chối mọi khóa khác. Nếu máy chủ được cài lại, hãy bấm **Quên khóa host** trên trang của máy chủ, lần kết nối tiếp theo sẽ lưu khóa mới.
 
+Khi host của máy chủ này tự kết nối được tới máy chủ ZFS, nó chuyển `zfs send` thẳng vào ssh riêng của nó tới máy chủ đó, với khóa của bản sao và khóa host đã lưu, nên luồng dữ liệu không đi qua BombVault. Nếu không, luồng đi qua BombVault.
+
 ### Gửi sang phiên bản đã ghép đôi {#replica-receive}
 
 Một BombVault đã ghép đôi có thể tự nhận bản nhân bản. Không ai được truy cập SSH vào máy chủ kia và không có khóa nào được thêm vào tệp `authorized_keys`.
@@ -151,6 +157,8 @@ Phiên bản nhận phải trả lời qua HTTPS. Nguồn không gửi gì đế
 ### Dữ liệu nằm ở đâu {#replica-target}
 
 Mỗi tập dữ liệu nằm tại `<root>/<server>/<pool>/<path>`. Thư mục máy chủ là tên của phiên bản nguồn, được cố định ở lần truyền đầu, nên hai máy chủ có cùng tên pool không bao giờ lẫn vào nhau. Ví dụ, `cache/appdata` của máy chủ tên `tower` kết thúc tại `backup/bombvault-replica/tower/cache/appdata`.
+
+Sau khi BombVault được thiết lập lại, đích từ chối thư mục mà BombVault này đã ghi vào trước đó. Khi đó thẻ **Bản nhân bản** đưa ra **Tiếp quản thư mục**, và bản nhân bản tiếp theo tiếp tục từ các bản sao trong đó. Chỉ tiếp quản khi không còn BombVault nào khác nhân bản vào thư mục đó.
 
 Bản sao trên đích ở chế độ chỉ đọc và không được gắn kết, nên nó không che phủ gì trên máy chủ đó. Các thuộc tính ZFS được mang theo, trừ điểm gắn kết, `sharenfs` và `sharesmb`. Các phần đặt trước `reservation` và `refreservation` cũng không được mang theo, nên bản sao chỉ chiếm dung lượng mà dữ liệu của nó cần.
 

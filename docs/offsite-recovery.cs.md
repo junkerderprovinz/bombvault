@@ -29,6 +29,15 @@ Cíl je místo, kam zálohy jdou: místní složka, sdílená složka, tvůj vla
 3. **Ochrana.** Okno říká jasně, co služba umí. Rest-server v režimu append-only mazání odmítá a tamper test to ověřuje. Bucket S3 může držet staré verze pomocí verzování a zámku objektů, což BombVault zatím ověřit neumí. Cloudový disk mazání odmítnout vůbec neumí: kdo se dostane na server, dostane se i na tu kopii. **Ochrana proti smazání (append-only)** zapni jen tam, kde druhá strana mazání opravdu odmítá; BombVault tam pak nikdy neořezává. **Pro případ nouze** říká, co sada pro obnovu pro tento cíl obsahuje.
 4. **Pro které sekce.** Vyber sekce, které se tam zálohují. První kopie přenese celou historii. Položky, které si zvolily vlastní cíle, nový nedostanou samy a okno je jmenuje.
 
+Některé služby chtějí při přihlášení trochu víc:
+
+- **SFTP a Storage Box.** **Přidat klíč** uloží veřejný klíč BombVaultu na server s heslem z pole **Heslo účtu**, které poslouží jen pro to jedno přihlášení a nikde se neuloží. Pod ním je příkaz, jak to udělat ručně. Test ukáže **Klíč serveru** s jeho otiskem; BombVault si ho zapamatuje a server odmítne, pokud později ukáže jiný.
+- **Klíče S3 pro jediný bucket**, třeba objektový token Cloudflare R2 nebo omezený klíč AWS, nemusí smět vypsat ostatní buckety. Zadej bucket do pole **Bucket** a test i seznam složek otevřou právě tento bucket.
+- **Servery SMB, které své sdílené složky nevypisují,** dostanou do pole **Sdílená složka** název jedné z nich a test ji otevře přímo.
+- **FTP** se ptá na **Šifrování**: **Žádné**, **Explicitní TLS (FTPES)** nebo **Implicitní TLS (FTPS, port 990)**.
+- **OneDrive a Zoho WorkDrive.** Když přihlášení otevře více disků nebo pracovních prostorů, okno se zeptá, na který mají jít zálohy.
+- **rest-server se samopodepsaným certifikátem.** Ulož certifikát jako soubor PEM do složky `certs` v datové složce BombVaultu (`/config/certs` v kontejneru, `appdata/bombvault/certs` na Unraidu). Zálohy, kopie i test ochrany proti smazání mu důvěřují bez restartu.
+
 Služby S3 běží přes vlastní backend S3 resticu, díky čemuž lze použít třídu úložiště a zámek objektů. Každá další služba běží přes rclone, který BombVault dodává, a její remote se pak objeví v kartě **Off-site (rclone)** v **Nastavení, Cíle**. Export nastavení nese cíle; s přihlašovacími údaji nese i jejich přihlášení.
 
 Složka na tomto serveru se všude jmenuje **Místní**: na stránkách cílů, v toku, u položky i v Obnově. Je-li na tomto serveru složek víc, nese každá svůj vlastní název. Cíl, který založí pole mimo lokalitu u sekce, se jmenuje podle svého místa, tedy podle poslední složky své adresy, nebo když žádnou nemá, podle svého serveru, a dostane číslo, pokud už takto jmenovaný cíl existuje. Název, který mu dáš na jeho stránce, zůstane. Stojí-li vedle sebe dva cíle se stejným názvem, nese každý navíc svůj server nebo složku.
@@ -43,6 +52,8 @@ Každý cíl má vlastní stránku:
 - **Pravidla podle sekcí**: vlastní repozitář, uchovávání nebo komprese jedné sekce na tomto cíli. **Změnit pravidla** je otevře a **Vrátit na hodnoty cíle** sekci vrátí.
 - **Už pod tímto cílem**: sekce, jejichž ručně zadaná adresa leží ve složce tohoto cíle. Převzetí jedné nechá repozitář, kde je; přihlášení, třída úložiště a ochrana proti smazání pak pocházejí z cíle. BombVault nejdřív zkontroluje, že přihlášení cíle repozitář otevře, a odmítne dát repozitář append-only pod cíl, který append-only není.
 - Nádoba, která ukazuje, jak je cíl plný, se značkou, kde je plný, a kolik týdnů zbývá při růstu posledních týdnů. Cíl, který svou velikost nehlásí, říká **Velikost neznámá**.
+
+Vzdálený cíl, který měl zálohy a najednou nemá žádný repozitář, třeba rest-server, jehož disk se nepřipojil, nedostane sám od sebe nový, prázdný. Jeho stránka to řekne, jakmile záloha nebo kopie zjistí, že repozitář chybí. Připoj disk znovu. Pokud jsi starý repozitář vyprázdnil záměrně, **Založit tu nový repozitář** začne znovu, pro všechny sekce cíle a jeho pojmenované repozitáře najednou.
 
 Přijímací server, který provozuje jiná instance tvé skupiny, se objeví mezi poskytovateli jako **Z tvé skupiny**; viz [Přijímací server](#receiving-server).
 
@@ -194,6 +205,8 @@ Zapnutí role pošle žádost a nic nezačne, dokud někdo na druhé instanci ne
 
 **Podrobnosti** na kartě otevřou zbytek: přijaté repozitáře a zdroje stahování toho člena, nabídky cílů, sledování, **Odebrat** a **Zapomenout klíč**.
 
+Vypnuté instance a telefony se zavřenou aplikací si nechají svou kartu jako **Neaktivní**, šedě, s údajem, kdy byly naposledy vidět, a v síti stojí ztlumené, dokud je přes **Odebrat** neodebereš. Hned po startu tohoto serveru ukazuje taková karta **Ověřuje se**, dokud skupina není zase dostupná. **Odebrat** na takové kartě funguje bez ohledu na to, které části jsou zapnuté, a ukončí také otevřené žádosti člena, jeho nevyužité přijímací sloty ZFS a jeho čekající žádosti o klíč. Karta **Instance** na stránce párování vede tyto členy také jako **Neaktivní**.
+
 ## Přijímač a stahovač {#receiver}
 
 ![Přijatá kopie mimo lokalitu v podrobnostech instance, sledovaná jen pro čtení, s kontrolou integrity spuštěnou na tomto hardwaru.](assets/screenshots/receiver.png)
@@ -210,7 +223,7 @@ Na stroji, který **přijímá** kopie append-only od jiného BombVaultu, ti př
 
 Přijímač je striktně jen pro čtení. Nikdy nezapisuje do přijatého repozitáře, takže nikdy nemůže porušit záruku append-only, na které odesílatel stojí.
 
-Stahovač funguje opačně: se zapnutým **Stažení** instance čte zálohy jiného člena do svého vlastního repozitáře podle vlastního plánu. Jeho zdroje stojí také v podrobnostech toho člena.
+Stahovač funguje opačně: se zapnutým **Stažení** instance čte zálohy jiného člena podle vlastního plánu, do vlastního repozitáře pro každý zdroj, takže se nikdy nepočítají jako vlastní zálohy tohoto stroje. Jeho zdroje stojí také v podrobnostech toho člena.
 
 ### Přijímací server {#receiving-server}
 
@@ -266,7 +279,7 @@ Funguje i rest-server, který provozuješ ručně: přidej ho přes **Přidat c�
     - **Zadat klíč**: `APP_KEY` starého serveru a kde jsou jeho zálohy.
 
     BombVault pak klíč vyzkouší na každém cíli a pro každý řekne, zda je čitelný, nenalezen, zamčený jiným klíčem, nedosažitelný, nebo mu ještě chybí přihlášení. Nic se zatím neuložilo a klíč zůstává v paměti omezenou dobu. **Převzít klíč** způsobí, že tento server odteď píše zálohy tímto klíčem; **Vrátit převzetí** se vrátí k jeho vlastnímu klíči, dokud neproběhne první záloha. Server, který už má vlastní zálohy, převzetí odmítne a odkáže na [Ze staré složky se zálohami](#restore-from-another-bombvault-repo). **Uložit přihlašovací údaje** uloží přihlášení, která sada nese pro vzdálené cíle, a zeptá se před nahrazením přihlášení, která tento server už má.
-2. **Nastavení.** **Vrátit nastavení** obnoví vlastní nastavení BombVaultu z nejnovější autozálohy: cíle, přihlašovací údaje, plány a pravidla. BombVault se restartuje, aby je použil, přes Docker socket, takže živá databáze nastavení se nikdy nepřepíše pod otevřeným handlem, a průvodce poté pokračuje sám. Přihlášení tohoto serveru zůstává: dál se přihlašuješ heslem, které používáš teď. Tajemství, která starý server uložil a nelze je převzít, jsou vypsána, takže je můžeš zadat znovu.
+2. **Nastavení.** **Vrátit nastavení** obnoví vlastní nastavení BombVaultu z nejnovější autozálohy: cíle, přihlašovací údaje, plány a pravidla. BombVault se restartuje, aby je použil, přes Docker socket, takže živá databáze nastavení se nikdy nepřepíše pod otevřeným handlem, a průvodce poté pokračuje sám. Přihlášení tohoto serveru zůstává: dál se přihlašuješ heslem, které používáš teď. Tajemství, která starý server uložil a nelze je převzít, jsou vypsána, takže je můžeš zadat znovu. Obnova ukončí všechny relace a odstraní přístupové klíče, takže si je potom znovu nastav.
 3. **Výběr.** BombVault projde tvé zálohy a vypíše kontejnery, VM, sady složek a datové sady ZFS, které najde. Všude je předvybrána nejnovější záloha. Co tento server ještě má, začíná vypnuté, protože by to obnova nahradila. Sady složek po opětovném sestavení nevědí, odkud pocházely, takže jdou do složky, kterou zvolíš.
 4. **Obnova.** Vše vybrané se vrátí najednou, ponechané zastavené, pokud chceš každý kontejner a VM spustit sám, což je po úplné ztrátě nejbezpečnější. Poté stáhni novou sadu pro obnovu: stará patří předchozí instalaci.
 

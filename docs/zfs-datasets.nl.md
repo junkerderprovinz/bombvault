@@ -107,7 +107,11 @@ Een replica is een kopie van de datasets van een item op een tweede ZFS-server. 
 
 Een replica vervangt de back-up nooit. Oudere versies, losse bestanden en de controle komen nog steeds uit de back-ups, en de replica bewaart maar zoveel snapshots als je instelt. Een actuele replica telt als kopie buiten de locatie, maar een item met een replica en zonder back-up blijft oranje.
 
+**Alleen replica, geen back-up** op de kaart Replica laat het hele ZFS-onderdeel replica's versturen en geen back-ups maken. De lokale map en de off-site bestemmingen houden hun schakelaars, dus zet je het uit, dan maakt het onderdeel weer back-ups naar die plekken, en de kaart van elk ZFS-item toont de schakelaar van het onderdeel zoals hij staat. Zo'n item wacht op zijn eerste replica in plaats van een back-up, **Nu back-up maken** wordt aangeboden als **Nu repliceren**, en rond de snapshot stoppen de containers van het item en draaien zijn commando's zoals bij een back-up. Zijn replica's tellen mee voor een schema van om de paar dagen, de melding bij achterstand en de dekking.
+
 Zet het aan in de kaart **Replica** op het tabblad Instellingen van het item. Daar kies je waar de replica heen gaat, wanneer ze draait (**Na elke back-up** of **Eigen plan**) en hoeveel snapshots op het doel blijven. De kaart toont elke dataset en elk volume met zijn status, en **Nu repliceren** start een run. Een replica-run heeft een eigen lock, zodat een lange eerste overdracht de back-ups nooit ophoudt.
+
+**Nu alles repliceren**, naast de back-upacties wanneer de ZFS-tegel op de pagina Back-ups is gekozen, verstuurt de replica van elk ZFS-item, het ene na het andere. De server voert de batch uit, dus die gaat door als je de pagina verlaat, en een item dat niet kan repliceren, wordt genoemd en overgeslagen.
 
 ### Naar een ZFS-server sturen {#replica-push}
 
@@ -134,6 +138,8 @@ In deze richting heeft de BombVault die het item beheert ook een sleutel waarmee
 
 BombVault legt bij de eerste verbinding de hostsleutel vast die de server laat zien en weigert later elke andere. Is de server opnieuw geïnstalleerd, druk dan op de pagina van de server op **Hostsleutel vergeten**; de volgende verbinding legt de nieuwe sleutel vast.
 
+Kan de host van deze server de ZFS-server zelf bereiken, dan stuurt hij `zfs send` rechtstreeks in zijn eigen ssh naar de server, met de replicasleutel en de vastgelegde hostsleutel, zodat de stroom niet door BombVault gaat. Anders gaat de stroom door BombVault.
+
 ### Versturen naar een gekoppelde instantie {#replica-receive}
 
 Een gekoppelde BombVault kan de replica zelf ontvangen. Niemand krijgt SSH-toegang tot de andere host en er komt geen sleutel in een `authorized_keys`-bestand.
@@ -151,6 +157,8 @@ De ontvangende instantie moet via HTTPS antwoorden. Naar een gewoon http-adres s
 ### Waar de data terechtkomt {#replica-target}
 
 Elke dataset komt terecht op `<root>/<server>/<pool>/<path>`. De servermap is de naam van de broninstantie, vastgelegd bij de eerste overdracht, zodat twee servers met dezelfde poolnaam elkaar nooit in de weg zitten. `cache/appdata` van een server met de naam `tower` komt bijvoorbeeld terecht op `backup/bombvault-replica/tower/cache/appdata`.
+
+Na een nieuwe installatie van BombVault weigert het doel de map die deze BombVault eerder heeft gevuld. De kaart Replica biedt dan **Map overnemen** aan, en de volgende replica gaat verder vanaf de kopieën erin. Neem de map alleen over als geen andere BombVault nog naar die map repliceert.
 
 De kopie op het doel is alleen-lezen en niet gemount, dus ze bedekt nooit iets op die server. ZFS-eigenschappen reizen mee, behalve het mountpoint en `sharenfs` en `sharesmb`. Ook de reserveringen `reservation` en `refreservation` blijven achter, zodat de kopie alleen de ruimte inneemt die haar data nodig heeft.
 
