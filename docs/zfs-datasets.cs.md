@@ -172,15 +172,31 @@ Na cíli drží nová replika 7 denních a 3 týdenní snímky. Místo toho vybe
 
 Na zdroji drží BombVault poslední snímek repliky a k tomu záložku pro každý odeslaný stav. Záložky nezabírají místo. Další přenos od nich vychází.
 
-Chceš-li i na zdroji držet víc, nastav na kartě Replika **Ponechat na tomto serveru**, třeba na 7. Tolik nejnovějších snímků repliky pak po každé replice zůstane na tomto serveru, vedle toho, co drží cíl, a návrat k některému z nich je tady jen `zfs rollback`, bez jakéhokoli přenosu. 0 nebo 1 ponechá jen poslední. Poslední nese hold, aby se základ dalšího přenosu omylem nesmazal. Starší ho nemají, takže se k nim můžeš vrátit nebo je smazat ručně. Každý snímek drží bloky, které se po něm změnily, takže každý, který ponecháš, zabírá místo v poolu. Když repliku vypneš nebo přepneš na jiný cíl, nebo položku smažeš, zmizí z tohoto serveru i ony.
+Chceš-li i na zdroji držet víc, nastav na kartě Replika **Ponechat na tomto serveru**, třeba na 7. Tolik nejnovějších snímků repliky pak po každé replice zůstane na tomto serveru, vedle toho, co drží cíl. 0 nebo 1 ponechá jen poslední. Poslední nese hold, aby se základ dalšího přenosu omylem nesmazal. Starší ho nemají. Každý snímek drží bloky, které se po něm změnily, takže každý, který ponecháš, zabírá místo v poolu. Když repliku vypneš nebo přepneš na jiný cíl, nebo položku smažeš, zmizí z tohoto serveru i ony.
 
-K poslednímu snímku repliky se vrátíš tak, že na něj datovou sadu vrátíš zpět:
+Soubory ponechaného snímku můžeš hned číst nebo kopírovat, ze složky `.zfs/snapshot` uvnitř datové sady nebo z klonu, bez zásahu do datové sady nebo repliky:
 
 ```
-zfs rollback cache/appdata@bombvault-replica-20261006014100
+ls /mnt/cache/appdata/.zfs/snapshot/bombvault-replica-20261006014100
+zfs clone cache/appdata@bombvault-replica-20261006014100 cache/appdata-20261006
 ```
 
-`zfs rollback` působí na jednu datovou sadu, takže stejně vrať zpět každou podřízenou datovou sadu, kterou chceš mít zpátky. Návrat ke staršímu snímku smaže ty novější, proto nejdřív sundej hold z posledního pomocí `zfs release -r bombvault-replica cache/appdata@<poslední>` a pak použij `zfs rollback -r`. Kopie na cíli novější snímky pořád má a další replika této datové sady selže, dokud tam kopii nevrátíš na stejný snímek pomocí `zfs rollback -r`.
+Klon nezabírá místo, dokud se v něm něco nezmění. Až skončíš, smaž ho pomocí `zfs destroy cache/appdata-20261006`, protože snímek, který má klon, nejde odstranit.
+
+K poslednímu snímku repliky se tady vrátíš jen pomocí `zfs rollback cache/appdata@<poslední>` a na cíli nemusíš dělat nic. Vrácení celé datové sady ke staršímu snímku smaže každý snímek po něm, na tomto serveru i na cíli. Poslední nese hold, takže ho nejdřív sundej a pak tady datovou sadu vrať zpět:
+
+```
+zfs release -r bombvault-replica cache/appdata@bombvault-replica-20261008014200
+zfs rollback -r cache/appdata@bombvault-replica-20261006014100
+```
+
+Potom vrať kopii na stejný snímek na serveru ZFS, nebo na hostiteli spárované instance, která repliku přijímá. Jinak se další replika této datové sady zastaví, protože cíl má novější snímky:
+
+```
+zfs rollback -r backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261006014100
+```
+
+`zfs rollback` působí na jednu datovou sadu, takže oba návraty zopakuj pro každou podřízenou datovou sadu, kterou chceš mít také zpátky. Další replika pak naváže na tento snímek.
 
 ### Šifrované datové sady v replice {#replica-encryption}
 

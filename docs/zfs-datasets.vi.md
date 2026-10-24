@@ -172,15 +172,31 @@ Mọi thứ mục sao lưu đều vào, và các volume bên dưới nó cũng v
 
 Ở nguồn, BombVault giữ ảnh chụp nhân bản mới nhất, cùng một bookmark cho mỗi trạng thái đã gửi. Bookmark không tốn dung lượng. Lần truyền tiếp theo bắt đầu từ chúng.
 
-Để giữ nhiều hơn cả ở nguồn, hãy đặt **Giữ trên máy chủ này** trong thẻ **Bản nhân bản**, ví dụ thành 7. Khi đó, sau mỗi lần nhân bản, chừng ấy ảnh chụp nhân bản mới nhất sẽ ở lại trên máy chủ này, bên cạnh những gì đích giữ, và muốn quay lại một trong số chúng thì chỉ cần một lệnh `zfs rollback` tại đây, không phải truyền gì. 0 hoặc 1 chỉ giữ ảnh chụp mới nhất. Ảnh chụp mới nhất mang một hold, để cơ sở của lần truyền tiếp theo không bị xóa nhầm. Các ảnh chụp cũ hơn không có hold, nên bạn có thể tự tay hoàn nguyên về chúng hoặc xóa chúng. Mỗi ảnh chụp giữ lại các khối đã thay đổi sau nó, nên mỗi ảnh chụp bạn giữ đều chiếm dung lượng trong pool. Tắt bản nhân bản, chuyển nó sang đích khác hoặc xóa mục cũng sẽ xóa chúng khỏi máy chủ này.
+Để giữ nhiều hơn cả ở nguồn, hãy đặt **Giữ trên máy chủ này** trong thẻ **Bản nhân bản**, ví dụ thành 7. Khi đó, sau mỗi lần nhân bản, chừng ấy ảnh chụp nhân bản mới nhất sẽ ở lại trên máy chủ này, bên cạnh những gì đích giữ. 0 hoặc 1 chỉ giữ ảnh chụp mới nhất. Ảnh chụp mới nhất mang một hold, để cơ sở của lần truyền tiếp theo không bị xóa nhầm. Các ảnh chụp cũ hơn không có hold. Mỗi ảnh chụp giữ lại các khối đã thay đổi sau nó, nên mỗi ảnh chụp bạn giữ đều chiếm dung lượng trong pool. Tắt bản nhân bản, chuyển nó sang đích khác hoặc xóa mục cũng sẽ xóa chúng khỏi máy chủ này.
 
-Để quay lại ảnh chụp nhân bản mới nhất, hãy hoàn nguyên tập dữ liệu:
+Bạn có thể đọc hoặc sao chép ngay các tệp của một ảnh chụp đã giữ, từ thư mục `.zfs/snapshot` bên trong tập dữ liệu hoặc từ một bản clone, mà không đụng tới tập dữ liệu hay bản nhân bản:
 
 ```
-zfs rollback cache/appdata@bombvault-replica-20261006014100
+ls /mnt/cache/appdata/.zfs/snapshot/bombvault-replica-20261006014100
+zfs clone cache/appdata@bombvault-replica-20261006014100 cache/appdata-20261006
 ```
 
-`zfs rollback` chỉ tác động lên một tập dữ liệu, nên hãy hoàn nguyên cả từng tập dữ liệu con mà bạn muốn lấy lại. Quay lại một ảnh chụp cũ hơn sẽ xóa các ảnh chụp mới hơn, nên trước tiên hãy gỡ hold khỏi ảnh chụp mới nhất bằng `zfs release -r bombvault-replica cache/appdata@<mới-nhất>`, rồi dùng `zfs rollback -r`. Bản sao trên đích vẫn còn các ảnh chụp mới hơn, và lần nhân bản tiếp theo của tập dữ liệu đó sẽ thất bại cho đến khi bạn hoàn nguyên bản sao ở đó về cùng ảnh chụp ấy bằng `zfs rollback -r`.
+Bản clone không chiếm dung lượng cho đến khi có gì đó trong nó thay đổi. Khi xong việc, hãy xóa nó bằng `zfs destroy cache/appdata-20261006`, vì không thể xóa một ảnh chụp đang có bản clone.
+
+Muốn quay lại ảnh chụp nhân bản mới nhất thì ở đây chỉ cần `zfs rollback cache/appdata@<mới-nhất>`, và không phải làm gì trên đích. Hoàn nguyên cả tập dữ liệu về một ảnh chụp cũ hơn sẽ xóa mọi ảnh chụp sau nó, cả trên máy chủ này lẫn trên đích. Ảnh chụp mới nhất có hold, nên trước tiên hãy gỡ hold, rồi hoàn nguyên tập dữ liệu tại đây:
+
+```
+zfs release -r bombvault-replica cache/appdata@bombvault-replica-20261008014200
+zfs rollback -r cache/appdata@bombvault-replica-20261006014100
+```
+
+Sau đó hoàn nguyên bản sao về cùng ảnh chụp ấy trên máy chủ ZFS, hoặc trên host của phiên bản đã ghép đôi đang nhận bản nhân bản. Nếu không, lần nhân bản tiếp theo của tập dữ liệu đó sẽ dừng lại, vì đích có các ảnh chụp mới hơn:
+
+```
+zfs rollback -r backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261006014100
+```
+
+`zfs rollback` chỉ tác động lên một tập dữ liệu, nên hãy lặp lại cả hai lần hoàn nguyên cho từng tập dữ liệu con mà bạn cũng muốn lấy lại. Lần nhân bản tiếp theo sẽ tiếp tục từ ảnh chụp đó.
 
 ### Tập dữ liệu mã hóa trong bản nhân bản {#replica-encryption}
 

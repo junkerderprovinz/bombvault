@@ -172,15 +172,31 @@ BombVault 重新设置后，目标会拒绝这个 BombVault 之前填充的文�
 
 在源端，BombVault 保留最新的副本快照，外加每个已发送状态的一个书签。书签不占用空间。下一次传输从它们开始。
 
-若想在源端也多保留一些，请在副本卡片上设置**在这台服务器上保留**，例如设为 7。这样每次副本之后，这么多个最新的副本快照会留在这台服务器上，与目标保留的快照并存；要回到其中某一个，只需在这里执行 `zfs rollback`，无需任何传输。0 或 1 只保留最新的一个。最新的那个带有 hold，这样下一次传输的基础就不会被误删。较旧的没有 hold，所以你可以手动回滚到它们或删除它们。每个快照都会占住它之后发生变化的块，所以你保留的每一个都会占用存储池的空间。关闭副本、把副本换到另一个目标或删除条目时，这些快照也会从这台服务器上移除。
+若想在源端也多保留一些，请在副本卡片上设置**在这台服务器上保留**，例如设为 7。这样每次副本之后，这么多个最新的副本快照会留在这台服务器上，与目标保留的快照并存。0 或 1 只保留最新的一个。最新的那个带有 hold，这样下一次传输的基础就不会被误删。较旧的没有 hold。每个快照都会占住它之后发生变化的块，所以你保留的每一个都会占用存储池的空间。关闭副本、把副本换到另一个目标或删除条目时，这些快照也会从这台服务器上移除。
 
-要回到最新的副本快照，请这样回滚数据集：
+你可以从数据集内的 `.zfs/snapshot` 文件夹或从克隆中，直接读取或复制保留快照里的文件，无需改动数据集或副本：
 
 ```
-zfs rollback cache/appdata@bombvault-replica-20261006014100
+ls /mnt/cache/appdata/.zfs/snapshot/bombvault-replica-20261006014100
+zfs clone cache/appdata@bombvault-replica-20261006014100 cache/appdata-20261006
 ```
 
-`zfs rollback` 只作用于一个数据集，所以你想恢复的每个子数据集也要分别回滚。回到较旧的快照会删除更新的快照，所以请先用 `zfs release -r bombvault-replica cache/appdata@<最新>` 解除最新快照上的 hold，再使用 `zfs rollback -r`。目标上的拷贝仍保留着那些更新的快照，在你用 `zfs rollback -r` 把那里的拷贝回滚到同一个快照之前，该数据集的下一次副本都会失败。
+克隆在其中有内容变化之前不占用空间。用完后请用 `zfs destroy cache/appdata-20261006` 删除它，因为带有克隆的快照无法移除。
+
+要回到最新的副本快照，只需在这里执行 `zfs rollback cache/appdata@<最新>`，目标上无需任何操作。把整个数据集回滚到较旧的快照，会删除它之后的每个快照，这台服务器上和目标上都会删除。最新的快照带有 hold，所以请先解除它的 hold，再在这里回滚数据集：
+
+```
+zfs release -r bombvault-replica cache/appdata@bombvault-replica-20261008014200
+zfs rollback -r cache/appdata@bombvault-replica-20261006014100
+```
+
+然后在 ZFS 服务器上，或在接收副本的已配对实例的主机上，把拷贝回滚到同一个快照。否则该数据集的下一次副本会停下来，因为目标上有更新的快照：
+
+```
+zfs rollback -r backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261006014100
+```
+
+`zfs rollback` 只作用于一个数据集，所以对你也想恢复的每个子数据集，都要重复这两次回滚。下一次副本会从该快照继续。
 
 ### 副本中的加密数据集 {#replica-encryption}
 

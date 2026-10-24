@@ -172,15 +172,31 @@ Auf dem Ziel behält eine neue Replik 7 tägliche und 3 wöchentliche Snapshots.
 
 Auf der Quelle behält BombVault den letzten Replik-Snapshot, dazu ein Bookmark für jeden gesendeten Stand. Bookmarks brauchen keinen Platz. Die nächste Übertragung setzt dort an.
 
-Um auch auf der Quelle mehr zu behalten, stell in der Karte Replik **Auf diesem Server behalten** ein, zum Beispiel auf 7. Dann bleiben nach jeder Replik so viele der neuesten Replik-Snapshots auf diesem Server, zusätzlich zu dem, was das Ziel behält, und zu einem davon kommst du hier mit `zfs rollback` zurück, ganz ohne Übertragung. 0 oder 1 behält nur den letzten. Der letzte trägt einen Hold, damit niemand die Basis der nächsten Übertragung aus Versehen löscht. Die älteren haben keinen, du kannst also von Hand zu ihnen zurückgehen oder sie löschen. Jeder Snapshot hält die Blöcke fest, die sich danach geändert haben, also braucht jeder, den du behältst, Platz im Pool. Schaltest du die Replik ab oder auf ein anderes Ziel um oder löschst du den Eintrag, verschwinden auch sie von diesem Server.
+Um auch auf der Quelle mehr zu behalten, stell in der Karte Replik **Auf diesem Server behalten** ein, zum Beispiel auf 7. Dann bleiben nach jeder Replik so viele der neuesten Replik-Snapshots auf diesem Server, zusätzlich zu dem, was das Ziel behält. 0 oder 1 behält nur den letzten. Der letzte trägt einen Hold, damit niemand die Basis der nächsten Übertragung aus Versehen löscht. Die älteren haben keinen. Jeder Snapshot hält die Blöcke fest, die sich danach geändert haben, also braucht jeder, den du behältst, Platz im Pool. Schaltest du die Replik ab oder auf ein anderes Ziel um oder löschst du den Eintrag, verschwinden auch sie von diesem Server.
 
-Zum letzten Replik-Snapshot setzt du das Dataset so zurück:
+Die Dateien eines behaltenen Snapshots kannst du sofort lesen oder kopieren, aus dem Ordner `.zfs/snapshot` im Dataset oder aus einem Klon, ohne das Dataset oder die Replik anzufassen:
 
 ```
-zfs rollback cache/appdata@bombvault-replica-20261006014100
+ls /mnt/cache/appdata/.zfs/snapshot/bombvault-replica-20261006014100
+zfs clone cache/appdata@bombvault-replica-20261006014100 cache/appdata-20261006
 ```
 
-`zfs rollback` wirkt auf ein einzelnes Dataset, setz also jedes Unter-Dataset, das du zurückhaben willst, ebenso zurück. Der Weg zu einem älteren Snapshot löscht die neueren, nimm deshalb zuerst mit `zfs release -r bombvault-replica cache/appdata@<letzter>` den Hold vom letzten und dann `zfs rollback -r`. Die Kopie auf dem Ziel hat die neueren Snapshots noch, und die nächste Replik dieses Datasets schlägt fehl, bis du die Kopie dort mit `zfs rollback -r` auf denselben Snapshot zurücksetzt.
+Ein Klon braucht keinen Platz, bis sich darin etwas ändert. Lösch ihn mit `zfs destroy cache/appdata-20261006`, wenn du fertig bist, denn ein Snapshot mit Klon lässt sich nicht entfernen.
+
+Zurück zum letzten Replik-Snapshot reicht hier `zfs rollback cache/appdata@<letzter>`, und auf dem Ziel ist nichts zu tun. Wer das ganze Dataset auf einen älteren zurücksetzt, löscht jeden Snapshot danach, auf diesem Server und auf dem Ziel. Der letzte hat einen Hold, nimm ihn also zuerst weg und setz dann das Dataset hier zurück:
+
+```
+zfs release -r bombvault-replica cache/appdata@bombvault-replica-20261008014200
+zfs rollback -r cache/appdata@bombvault-replica-20261006014100
+```
+
+Setz danach die Kopie auf dem ZFS-Server, oder auf dem Host der gekoppelten Instanz, die die Replik empfängt, auf denselben Snapshot zurück. Sonst bleibt die nächste Replik dieses Datasets stehen, weil das Ziel neuere Snapshots hat:
+
+```
+zfs rollback -r backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261006014100
+```
+
+`zfs rollback` wirkt auf ein einzelnes Dataset, wiederhol also beide Rollbacks für jedes Unter-Dataset, das du ebenso zurückhaben willst. Die nächste Replik macht dann bei diesem Snapshot weiter.
 
 ### Verschlüsselte Datasets in einer Replik {#replica-encryption}
 

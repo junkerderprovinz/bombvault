@@ -620,6 +620,9 @@ func TestAChangedTargetIsReportedAndKeepsItsSnapshots(t *testing.T) {
 	if m.Code != "target-changed" {
 		t.Fatalf("code = %q, err %v, want target-changed", m.Code, m.Err)
 	}
+	if want := vault + "@" + m.Base; m.Base == "" || !strings.Contains(m.Err.Error(), want) {
+		t.Errorf("err = %v, want it to name %s, the snapshot to roll the target back to", m.Err, want)
+	}
 	if !slices.Contains(r.dst.snapNames(vault), "manual") {
 		t.Error("the snapshot on the target was destroyed")
 	}

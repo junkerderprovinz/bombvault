@@ -172,15 +172,31 @@ Hedefte yeni bir replika 7 günlük ve 3 haftalık anlık görüntü tutar. Bunu
 
 Kaynakta BombVault en son replika anlık görüntüsünü ve gönderdiği her durum için bir yer imi tutar. Yer imleri alan harcamaz. Sonraki aktarım onlardan başlar.
 
-Kaynakta da daha fazlasını tutmak için Replika kartında **Bu sunucuda sakla**'yı ayarla, örneğin 7'ye. O zaman her replikadan sonra en yeni replika anlık görüntülerinden o kadarı, hedefin tuttuklarına ek olarak bu sunucuda kalır ve birine geri dönmek için burada bir `zfs rollback` yeter, aktarılacak bir şey yoktur. 0 veya 1 yalnızca en sonuncuyu tutar. En sonuncunun üzerinde bir hold vardır, böylece sonraki aktarımın tabanı yanlışlıkla kaldırılmaz. Eskilerinde hold yoktur, bu yüzden onlara elle geri sarabilir ya da onları elle kaldırabilirsin. Her anlık görüntü kendisinden sonra değişen blokları tutar, bu yüzden tuttuğun her biri havuzda yer kaplar. Replikayı kapatmak, başka bir hedefe geçirmek ya da ögeyi silmek onları da bu sunucudan kaldırır.
+Kaynakta da daha fazlasını tutmak için Replika kartında **Bu sunucuda sakla**'yı ayarla, örneğin 7'ye. O zaman her replikadan sonra en yeni replika anlık görüntülerinden o kadarı, hedefin tuttuklarına ek olarak bu sunucuda kalır. 0 veya 1 yalnızca en sonuncuyu tutar. En sonuncunun üzerinde bir hold vardır, böylece sonraki aktarımın tabanı yanlışlıkla kaldırılmaz. Eskilerinde hold yoktur. Her anlık görüntü kendisinden sonra değişen blokları tutar, bu yüzden tuttuğun her biri havuzda yer kaplar. Replikayı kapatmak, başka bir hedefe geçirmek ya da ögeyi silmek onları da bu sunucudan kaldırır.
 
-En son replika anlık görüntüsüne geri dönmek için veri kümesini geri sar:
+Saklanan bir anlık görüntünün dosyalarını, veri kümesine ya da replikaya dokunmadan, veri kümesinin içindeki `.zfs/snapshot` klasöründen ya da bir klondan hemen okuyabilir veya kopyalayabilirsin:
 
 ```
-zfs rollback cache/appdata@bombvault-replica-20261006014100
+ls /mnt/cache/appdata/.zfs/snapshot/bombvault-replica-20261006014100
+zfs clone cache/appdata@bombvault-replica-20261006014100 cache/appdata-20261006
 ```
 
-`zfs rollback` tek bir veri kümesinde çalışır, bu yüzden geri istediğin her alt veri kümesini de geri sar. Daha eski bir anlık görüntüye dönmek daha yenilerini kaldırır, bu yüzden önce `zfs release -r bombvault-replica cache/appdata@<son>` ile en sonuncudaki hold'u kaldır, sonra `zfs rollback -r` kullan. Hedefteki kopyada daha yeni anlık görüntüler hâlâ durur ve o veri kümesinin sonraki replikası, oradaki kopyayı `zfs rollback -r` ile aynı anlık görüntüye geri sarana kadar başarısız olur.
+Bir klon, içinde bir şey değişene kadar yer kaplamaz. İşin bitince onu `zfs destroy cache/appdata-20261006` ile kaldır, çünkü klonu olan bir anlık görüntü kaldırılamaz.
+
+En son replika anlık görüntüsüne geri dönmek için burada yalnızca `zfs rollback cache/appdata@<son>` yeter, hedefte bir şey yapman gerekmez. Tüm veri kümesini daha eski bir anlık görüntüye geri sarmak, ondan sonraki her anlık görüntüyü hem bu sunucuda hem hedefte kaldırır. En sonuncunun üzerinde hold var, bu yüzden önce hold'u kaldır, sonra veri kümesini burada geri sar:
+
+```
+zfs release -r bombvault-replica cache/appdata@bombvault-replica-20261008014200
+zfs rollback -r cache/appdata@bombvault-replica-20261006014100
+```
+
+Ardından kopyayı ZFS sunucusunda ya da replikayı alan eşleştirilmiş örneğin ana makinesinde aynı anlık görüntüye geri sar. Aksi halde o veri kümesinin sonraki replikası durur, çünkü hedefte daha yeni anlık görüntüler vardır:
+
+```
+zfs rollback -r backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261006014100
+```
+
+`zfs rollback` tek bir veri kümesinde çalışır, bu yüzden geri istediğin her alt veri kümesi için iki geri sarmayı da tekrarla. Sonraki replika o anlık görüntüden devam eder.
 
 ### Replikada şifreli veri kümeleri {#replica-encryption}
 

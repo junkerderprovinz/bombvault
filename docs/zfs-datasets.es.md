@@ -172,15 +172,31 @@ En el destino, una réplica nueva conserva 7 instantáneas diarias y 3 semanales
 
 En el origen, BombVault conserva la última instantánea de réplica, más un marcador por cada estado que ha enviado. Los marcadores no ocupan espacio. La siguiente transferencia parte de ellos.
 
-Para conservar más también en el origen, ajusta **Conservar en este servidor** en la tarjeta Réplica, por ejemplo a 7. Entonces esa cantidad de las instantáneas de réplica más recientes se queda en este servidor después de cada réplica, además de lo que conserva el destino, y volver a una de ellas es un `zfs rollback` aquí, sin nada que transferir. 0 o 1 conserva solo la última. La última lleva un hold, para que la base de la siguiente transferencia no se borre por accidente. Las anteriores no lo llevan, así que puedes volver a ellas o borrarlas a mano. Cada instantánea retiene los bloques que cambiaron después de ella, así que cada una que conservas ocupa espacio en el pool. Si desactivas la réplica o la cambias a otro destino, o eliminas el elemento, también desaparecen de este servidor.
+Para conservar más también en el origen, ajusta **Conservar en este servidor** en la tarjeta Réplica, por ejemplo a 7. Entonces esa cantidad de las instantáneas de réplica más recientes se queda en este servidor después de cada réplica, además de lo que conserva el destino. 0 o 1 conserva solo la última. La última lleva un hold, para que la base de la siguiente transferencia no se borre por accidente. Las anteriores no lo llevan. Cada instantánea retiene los bloques que cambiaron después de ella, así que cada una que conservas ocupa espacio en el pool. Si desactivas la réplica o la cambias a otro destino, o eliminas el elemento, también desaparecen de este servidor.
 
-Para volver a la última instantánea de réplica, revierte el conjunto de datos:
+Los archivos de una instantánea conservada se pueden leer o copiar en el acto, desde la carpeta `.zfs/snapshot` dentro del conjunto de datos o desde un clon, sin tocar el conjunto de datos ni la réplica:
 
 ```
-zfs rollback cache/appdata@bombvault-replica-20261006014100
+ls /mnt/cache/appdata/.zfs/snapshot/bombvault-replica-20261006014100
+zfs clone cache/appdata@bombvault-replica-20261006014100 cache/appdata-20261006
 ```
 
-`zfs rollback` actúa sobre un solo conjunto de datos, así que revierte también cada conjunto hijo que quieras recuperar. Volver a una instantánea más antigua borra las más recientes, así que primero quita el hold de la última con `zfs release -r bombvault-replica cache/appdata@<última>` y luego usa `zfs rollback -r`. La copia en el destino sigue teniendo las instantáneas más recientes, y la siguiente réplica de ese conjunto de datos falla hasta que reviertas allí la copia a la misma instantánea con `zfs rollback -r`.
+Un clon no ocupa espacio hasta que algo cambia en él. Bórralo con `zfs destroy cache/appdata-20261006` cuando termines, porque una instantánea que tiene un clon no se puede eliminar.
+
+Para volver a la última instantánea de réplica basta con `zfs rollback cache/appdata@<última>` aquí, y en el destino no hay que hacer nada. Revertir el conjunto de datos entero a una más antigua borra todas las instantáneas posteriores, en este servidor y en el destino. La última lleva un hold, así que quítaselo primero y luego revierte aquí el conjunto de datos:
+
+```
+zfs release -r bombvault-replica cache/appdata@bombvault-replica-20261008014200
+zfs rollback -r cache/appdata@bombvault-replica-20261006014100
+```
+
+Después revierte la copia a la misma instantánea en el servidor ZFS, o en el host de la instancia emparejada que recibe la réplica. Si no, la siguiente réplica de ese conjunto de datos se detiene, porque el destino tiene instantáneas más recientes:
+
+```
+zfs rollback -r backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261006014100
+```
+
+`zfs rollback` actúa sobre un solo conjunto de datos, así que repite las dos reversiones para cada conjunto hijo que quieras recuperar también. La siguiente réplica continúa a partir de esa instantánea.
 
 ### Conjuntos de datos cifrados en una réplica {#replica-encryption}
 

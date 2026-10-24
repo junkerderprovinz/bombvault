@@ -172,15 +172,31 @@ På målet beholder en ny replika 7 daglige og 3 ugentlige snapshots. Vælg i st
 
 På kilden beholder BombVault det seneste replika-snapshot plus et bogmærke for hver tilstand, det har sendt. Bogmærker koster ingen plads. Næste overførsel starter fra dem.
 
-Vil du også beholde flere på kilden, så sæt **Behold på denne server** på kortet Replika, for eksempel til 7. Så mange af de nyeste replika-snapshots bliver så på denne server efter hver replika, ud over dem, målet beholder, og at gå tilbage til et af dem er en `zfs rollback` her, uden noget at overføre. 0 eller 1 beholder kun det seneste. Det seneste har et hold, så grundlaget for næste overførsel ikke slettes ved et uheld. De ældre har intet, så du kan rulle tilbage til dem eller slette dem i hånden. Hvert snapshot holder fast i de blokke, der er ændret efter det, så hvert snapshot, du beholder, optager plads i poolen. Slår du replikaen fra eller over på et andet mål, eller sletter du elementet, forsvinder de også fra denne server.
+Vil du også beholde flere på kilden, så sæt **Behold på denne server** på kortet Replika, for eksempel til 7. Så mange af de nyeste replika-snapshots bliver så på denne server efter hver replika, ud over dem, målet beholder. 0 eller 1 beholder kun det seneste. Det seneste har et hold, så grundlaget for næste overførsel ikke slettes ved et uheld. De ældre har intet. Hvert snapshot holder fast i de blokke, der er ændret efter det, så hvert snapshot, du beholder, optager plads i poolen. Slår du replikaen fra eller over på et andet mål, eller sletter du elementet, forsvinder de også fra denne server.
 
-For at komme tilbage til det seneste replika-snapshot ruller du datasættet tilbage:
+Filerne i et beholdt snapshot kan du læse eller kopiere med det samme, fra mappen `.zfs/snapshot` inde i datasættet eller fra en klon, uden at røre datasættet eller replikaen:
 
 ```
-zfs rollback cache/appdata@bombvault-replica-20261006014100
+ls /mnt/cache/appdata/.zfs/snapshot/bombvault-replica-20261006014100
+zfs clone cache/appdata@bombvault-replica-20261006014100 cache/appdata-20261006
 ```
 
-`zfs rollback` virker på ét datasæt, så rul også hvert underdatasæt tilbage, som du vil have tilbage. At gå tilbage til et ældre snapshot sletter de nyere, så fjern først holdet fra det seneste med `zfs release -r bombvault-replica cache/appdata@<seneste>`, og brug derefter `zfs rollback -r`. Kopien på målet har stadig de nyere snapshots, og den næste replika af det datasæt fejler, indtil du ruller kopien dér tilbage til samme snapshot med `zfs rollback -r`.
+En klon fylder intet, før noget i den ændres. Slet den med `zfs destroy cache/appdata-20261006`, når du er færdig, for et snapshot med en klon kan ikke fjernes.
+
+Tilbage til det seneste replika-snapshot kræver kun `zfs rollback cache/appdata@<seneste>` her, og intet på målet. Ruller du hele datasættet tilbage til et ældre, slettes alle snapshots efter det, på denne server og på målet. Det seneste har et hold, så fjern først holdet, og rul derefter datasættet tilbage her:
+
+```
+zfs release -r bombvault-replica cache/appdata@bombvault-replica-20261008014200
+zfs rollback -r cache/appdata@bombvault-replica-20261006014100
+```
+
+Rul derefter kopien tilbage til samme snapshot på ZFS-serveren, eller på værten for den parrede instans, der modtager replikaen. Ellers går den næste replika af det datasæt i stå, fordi målet har nyere snapshots:
+
+```
+zfs rollback -r backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261006014100
+```
+
+`zfs rollback` virker på ét datasæt, så gentag begge tilbagerulninger for hvert underdatasæt, som du også vil have tilbage. Den næste replika fortsætter så fra det snapshot.
 
 ### Krypterede datasæt i en replika {#replica-encryption}
 

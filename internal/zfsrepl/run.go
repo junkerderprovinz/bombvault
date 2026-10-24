@@ -194,6 +194,11 @@ func (r *run) replicate(ctx context.Context, m *MemberResult) (src, tgt []zfs.Re
 	n, err := r.stream(ctx, m.Dataset, sendArgs, recvArgs, estimate(ctx, r.src, estArgs))
 	m.Bytes += n
 	if err != nil {
+		// The way out is rolling the target back to the base, so the error
+		// names it.
+		if send.Base != "" && Code(err) == "target-changed" {
+			err = &Refusal{Code: "target-changed", Detail: m.Target + " holds snapshots newer than " + m.Target + "@" + send.Base, Err: err}
+		}
 		return nil, nil, true, err
 	}
 

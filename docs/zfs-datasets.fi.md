@@ -172,15 +172,31 @@ Kohdepalvelimella uusi replika säilyttää 7 päivittäistä ja 3 viikoittaista
 
 Lähteellä BombVault säilyttää viimeisimmän replika-tilannevedoksen sekä kirjanmerkin jokaiselle lähettämälleen tilalle. Kirjanmerkit eivät vie tilaa. Seuraava siirto alkaa niistä.
 
-Jos haluat säilyttää enemmän myös lähteellä, aseta Replika-kortissa **Säilytä tällä palvelimella**, esimerkiksi arvoon 7. Silloin niin monta uusinta replika-tilannevedosta jää tälle palvelimelle jokaisen replikan jälkeen, sen lisäksi mitä kohde säilyttää, ja paluu johonkin niistä on täällä pelkkä `zfs rollback` ilman mitään siirrettävää. 0 tai 1 säilyttää vain viimeisimmän. Viimeisimmässä on hold, jotta seuraavan siirron pohjaa ei poisteta vahingossa. Vanhemmissa sitä ei ole, joten voit palata niihin tai poistaa ne käsin. Jokainen tilannevedos pitää kiinni lohkoista, jotka muuttuivat sen jälkeen, joten jokainen säilyttämäsi vie tilaa poolissa. Jos kytket replikan pois tai vaihdat sen toiseen kohteeseen tai poistat merkinnän, nekin poistuvat tältä palvelimelta.
+Jos haluat säilyttää enemmän myös lähteellä, aseta Replika-kortissa **Säilytä tällä palvelimella**, esimerkiksi arvoon 7. Silloin niin monta uusinta replika-tilannevedosta jää tälle palvelimelle jokaisen replikan jälkeen, sen lisäksi mitä kohde säilyttää. 0 tai 1 säilyttää vain viimeisimmän. Viimeisimmässä on hold, jotta seuraavan siirron pohjaa ei poisteta vahingossa. Vanhemmissa sitä ei ole. Jokainen tilannevedos pitää kiinni lohkoista, jotka muuttuivat sen jälkeen, joten jokainen säilyttämäsi vie tilaa poolissa. Jos kytket replikan pois tai vaihdat sen toiseen kohteeseen tai poistat merkinnän, nekin poistuvat tältä palvelimelta.
 
-Viimeisimpään replika-tilannevedokseen palaat palauttamalla tietojoukon siihen:
+Säilytetyn tilannevedoksen tiedostoja voit lukea tai kopioida heti, tietojoukon sisällä olevasta `.zfs/snapshot`-kansiosta tai kloonista, koskematta tietojoukkoon tai replikaan:
 
 ```
-zfs rollback cache/appdata@bombvault-replica-20261006014100
+ls /mnt/cache/appdata/.zfs/snapshot/bombvault-replica-20261006014100
+zfs clone cache/appdata@bombvault-replica-20261006014100 cache/appdata-20261006
 ```
 
-`zfs rollback` toimii yhdelle tietojoukolle, joten palauta samalla tavalla jokainen alatietojoukko, jonka haluat takaisin. Paluu vanhempaan tilannevedokseen poistaa uudemmat, joten poista ensin hold viimeisimmästä komennolla `zfs release -r bombvault-replica cache/appdata@<viimeisin>` ja käytä sitten `zfs rollback -r`. Kohteen kopiossa on yhä uudemmat tilannevedokset, ja tämän tietojoukon seuraava replika epäonnistuu, kunnes palautat siellä kopion samaan tilannevedokseen komennolla `zfs rollback -r`.
+Klooni ei vie tilaa ennen kuin jokin siinä muuttuu. Poista se komennolla `zfs destroy cache/appdata-20261006`, kun olet valmis, sillä tilannevedosta, jolla on klooni, ei voi poistaa.
+
+Viimeisimpään replika-tilannevedokseen palaamiseen riittää täällä `zfs rollback cache/appdata@<viimeisin>`, eikä kohteessa tarvitse tehdä mitään. Jos palautat koko tietojoukon vanhempaan, jokainen sen jälkeinen tilannevedos poistuu, sekä tällä palvelimella että kohteessa. Viimeisimmässä on hold, joten poista hold ensin ja palauta sitten tietojoukko täällä:
+
+```
+zfs release -r bombvault-replica cache/appdata@bombvault-replica-20261008014200
+zfs rollback -r cache/appdata@bombvault-replica-20261006014100
+```
+
+Palauta sen jälkeen kopio samaan tilannevedokseen ZFS-palvelimella tai sen pariliitetyn instanssin isännällä, joka vastaanottaa replikan. Muuten tämän tietojoukon seuraava replika pysähtyy, koska kohteessa on uudempia tilannevedoksia:
+
+```
+zfs rollback -r backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261006014100
+```
+
+`zfs rollback` toimii yhdelle tietojoukolle, joten toista molemmat palautukset jokaiselle alatietojoukolle, jonka haluat myös takaisin. Seuraava replika jatkaa sitten siitä tilannevedoksesta.
 
 ### Salatut tietojoukot replikassa {#replica-encryption}
 

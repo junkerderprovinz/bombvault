@@ -172,15 +172,31 @@ Sur la cible, un nouveau réplica garde 7 instantanés quotidiens et 3 hebdomada
 
 Sur la source, BombVault garde le dernier instantané de réplica, plus un signet pour chaque état envoyé. Les signets ne coûtent pas d'espace. Le transfert suivant part de là.
 
-Pour en garder davantage sur la source aussi, réglez **Conserver sur ce serveur** dans la carte Réplique, par exemple sur 7. Après chaque réplica, ce nombre d'instantanés de réplica parmi les plus récents reste alors sur ce serveur, en plus de ce que garde la cible, et revenir à l'un d'eux se fait ici avec un `zfs rollback`, sans rien transférer. 0 ou 1 ne garde que le dernier. Le dernier porte un hold, pour que la base du prochain transfert ne soit pas détruite par erreur. Les plus anciens n'en ont pas, vous pouvez donc revenir à eux ou les détruire à la main. Chaque instantané retient les blocs modifiés après lui, chaque instantané gardé prend donc de la place sur le pool. Désactiver la réplique, la faire passer à une autre cible ou supprimer l'élément les retire aussi de ce serveur.
+Pour en garder davantage sur la source aussi, réglez **Conserver sur ce serveur** dans la carte Réplique, par exemple sur 7. Après chaque réplica, ce nombre d'instantanés de réplica parmi les plus récents reste alors sur ce serveur, en plus de ce que garde la cible. 0 ou 1 ne garde que le dernier. Le dernier porte un hold, pour que la base du prochain transfert ne soit pas détruite par erreur. Les plus anciens n'en ont pas. Chaque instantané retient les blocs modifiés après lui, chaque instantané gardé prend donc de la place sur le pool. Désactiver la réplique, la faire passer à une autre cible ou supprimer l'élément les retire aussi de ce serveur.
 
-Pour revenir au dernier instantané de réplica, ramenez le jeu de données en arrière :
+Les fichiers d'un instantané conservé se lisent ou se copient tout de suite, depuis le dossier `.zfs/snapshot` dans le jeu de données ou depuis un clone, sans toucher au jeu de données ni au réplica :
 
 ```
-zfs rollback cache/appdata@bombvault-replica-20261006014100
+ls /mnt/cache/appdata/.zfs/snapshot/bombvault-replica-20261006014100
+zfs clone cache/appdata@bombvault-replica-20261006014100 cache/appdata-20261006
 ```
 
-`zfs rollback` agit sur un seul jeu de données, ramenez donc aussi en arrière chaque jeu enfant que vous voulez récupérer. Revenir à un instantané plus ancien détruit les plus récents, alors levez d'abord le hold du dernier avec `zfs release -r bombvault-replica cache/appdata@<dernier>`, puis utilisez `zfs rollback -r`. La copie sur la cible a toujours les instantanés plus récents, et le réplica suivant de ce jeu de données échoue tant que vous n'avez pas ramené la copie là-bas au même instantané avec `zfs rollback -r`.
+Un clone ne prend aucune place tant que rien n'y change. Détruisez-le avec `zfs destroy cache/appdata-20261006` quand vous avez terminé, car un instantané qui a un clone ne peut pas être supprimé.
+
+Pour revenir au dernier instantané de réplica, `zfs rollback cache/appdata@<dernier>` suffit ici, et il n'y a rien à faire sur la cible. Ramener tout le jeu de données à un instantané plus ancien détruit tous les instantanés qui le suivent, sur ce serveur et sur la cible. Le dernier porte un hold, levez-le donc d'abord, puis ramenez le jeu de données en arrière ici :
+
+```
+zfs release -r bombvault-replica cache/appdata@bombvault-replica-20261008014200
+zfs rollback -r cache/appdata@bombvault-replica-20261006014100
+```
+
+Ramenez ensuite la copie au même instantané sur le serveur ZFS, ou sur l'hôte de l'instance appairée qui reçoit le réplica. Sinon, le réplica suivant de ce jeu de données s'arrête, car la cible a des instantanés plus récents :
+
+```
+zfs rollback -r backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261006014100
+```
+
+`zfs rollback` agit sur un seul jeu de données, répétez donc les deux rollbacks pour chaque jeu enfant que vous voulez aussi récupérer. Le réplica suivant reprend ensuite à partir de cet instantané.
 
 ### Jeux de données chiffrés dans un réplica {#replica-encryption}
 

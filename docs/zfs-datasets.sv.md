@@ -172,15 +172,31 @@ På målet behåller en ny replik 7 dagliga och 3 veckovisa ögonblicksbilder. V
 
 På källan behåller BombVault den senaste replikögonblicksbilden, plus ett bokmärke för varje tillstånd som har skickats. Bokmärken tar ingen plats. Nästa överföring utgår från dem.
 
-För att behålla fler även på källan anger du **Behåll på den här servern** på kortet Replik, till exempel 7. Så många av de nyaste replikögonblicksbilderna blir då kvar på den här servern efter varje replik, utöver det som målet behåller, och för att gå tillbaka till en av dem räcker en `zfs rollback` här, utan något att överföra. 0 eller 1 behåller bara den senaste. Den senaste har ett hold, så att basen för nästa överföring inte tas bort av misstag. De äldre har inget, så du kan rulla tillbaka till dem eller ta bort dem för hand. Varje ögonblicksbild håller kvar de block som ändrats efter den, så varje ögonblicksbild du behåller tar plats i poolen. Stänger du av repliken, byter till ett annat mål eller raderar posten försvinner de också från den här servern.
+För att behålla fler även på källan anger du **Behåll på den här servern** på kortet Replik, till exempel 7. Så många av de nyaste replikögonblicksbilderna blir då kvar på den här servern efter varje replik, utöver det som målet behåller. 0 eller 1 behåller bara den senaste. Den senaste har ett hold, så att basen för nästa överföring inte tas bort av misstag. De äldre har inget. Varje ögonblicksbild håller kvar de block som ändrats efter den, så varje ögonblicksbild du behåller tar plats i poolen. Stänger du av repliken, byter till ett annat mål eller raderar posten försvinner de också från den här servern.
 
-För att gå tillbaka till den senaste replikögonblicksbilden rullar du tillbaka datauppsättningen:
+Filerna i en behållen ögonblicksbild kan du läsa eller kopiera direkt, från mappen `.zfs/snapshot` i datauppsättningen eller från en klon, utan att röra datauppsättningen eller repliken:
 
 ```
-zfs rollback cache/appdata@bombvault-replica-20261006014100
+ls /mnt/cache/appdata/.zfs/snapshot/bombvault-replica-20261006014100
+zfs clone cache/appdata@bombvault-replica-20261006014100 cache/appdata-20261006
 ```
 
-`zfs rollback` verkar på en datauppsättning i taget, så rulla också tillbaka varje underordnad datauppsättning du vill ha tillbaka. Att gå tillbaka till en äldre ögonblicksbild tar bort de nyare, så lyft först holdet från den senaste med `zfs release -r bombvault-replica cache/appdata@<senaste>` och använd sedan `zfs rollback -r`. Kopian på målet har fortfarande de nyare ögonblicksbilderna, och nästa replik av den datauppsättningen misslyckas tills du rullar tillbaka kopian där till samma ögonblicksbild med `zfs rollback -r`.
+En klon tar ingen plats förrän något i den ändras. Ta bort den med `zfs destroy cache/appdata-20261006` när du är klar, eftersom en ögonblicksbild som har en klon inte går att ta bort.
+
+För att gå tillbaka till den senaste replikögonblicksbilden räcker det med `zfs rollback cache/appdata@<senaste>` här, och på målet behöver du inte göra något. Rullar du tillbaka hela datauppsättningen till en äldre tas varje ögonblicksbild efter den bort, både på den här servern och på målet. Den senaste har ett hold, så lyft först holdet och rulla sedan tillbaka datauppsättningen här:
+
+```
+zfs release -r bombvault-replica cache/appdata@bombvault-replica-20261008014200
+zfs rollback -r cache/appdata@bombvault-replica-20261006014100
+```
+
+Rulla sedan tillbaka kopian till samma ögonblicksbild på ZFS-servern, eller på värden för den parkopplade instansen som tar emot repliken. Annars stannar nästa replik av den datauppsättningen, eftersom målet har nyare ögonblicksbilder:
+
+```
+zfs rollback -r backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261006014100
+```
+
+`zfs rollback` verkar på en datauppsättning i taget, så rulla tillbaka på båda sidorna även för varje underordnad datauppsättning du vill ha tillbaka. Nästa replik fortsätter sedan från den ögonblicksbilden.
 
 ### Krypterade datauppsättningar i en replik {#replica-encryption}
 

@@ -172,15 +172,31 @@ A célon egy új replika 7 napi és 3 heti pillanatképet tart meg. Válaszd ink
 
 A forráson a BombVault a legutóbbi replika-pillanatképet tartja meg, plusz egy könyvjelzőt minden elküldött állapothoz. A könyvjelzők nem foglalnak helyet. A következő átvitel ezekből indul.
 
-Ha a forráson is többet szeretnél megtartani, állítsd be a Replika kártyán a **Megőrzés ezen a kiszolgálón** értékét, például 7-re. Ekkor minden replika után ennyi marad a legújabb replika-pillanatképek közül ezen a kiszolgálón, a célon megtartottak mellett, és bármelyikükhöz itt egy `zfs rollback` paranccsal visszatérhetsz, átvitel nélkül. A 0 vagy az 1 csak a legutóbbit tartja meg. A legutóbbin zárolás (hold) van, hogy a következő átvitel alapját senki ne törölje véletlenül. A régebbieken nincs, így kézzel visszatérhetsz hozzájuk, vagy törölheted őket. Minden pillanatkép megtartja az utána megváltozott blokkokat, ezért minden megtartott pillanatkép helyet foglal a poolban. Ha kikapcsolod a replikát, másik célra váltasz, vagy törlöd az elemet, ezek is eltűnnek erről a kiszolgálóról.
+Ha a forráson is többet szeretnél megtartani, állítsd be a Replika kártyán a **Megőrzés ezen a kiszolgálón** értékét, például 7-re. Ekkor minden replika után ennyi marad a legújabb replika-pillanatképek közül ezen a kiszolgálón, a célon megtartottak mellett. A 0 vagy az 1 csak a legutóbbit tartja meg. A legutóbbin zárolás (hold) van, hogy a következő átvitel alapját senki ne törölje véletlenül. A régebbieken nincs. Minden pillanatkép megtartja az utána megváltozott blokkokat, ezért minden megtartott pillanatkép helyet foglal a poolban. Ha kikapcsolod a replikát, másik célra váltasz, vagy törlöd az elemet, ezek is eltűnnek erről a kiszolgálóról.
 
-A legutóbbi replika-pillanatképhez így görgetheted vissza az adatkészletet:
+Egy megtartott pillanatkép fájljait azonnal olvashatod vagy másolhatod, az adatkészletben lévő `.zfs/snapshot` mappából vagy egy klónból, anélkül hogy az adatkészlethez vagy a replikához nyúlnál:
 
 ```
-zfs rollback cache/appdata@bombvault-replica-20261006014100
+ls /mnt/cache/appdata/.zfs/snapshot/bombvault-replica-20261006014100
+zfs clone cache/appdata@bombvault-replica-20261006014100 cache/appdata-20261006
 ```
 
-A `zfs rollback` egyetlen adatkészletre hat, ezért minden gyermek-adatkészletet, amelyet vissza szeretnél kapni, ugyanígy görgess vissza. Egy régebbi pillanatképhez való visszatérés törli az újabbakat, ezért előbb vedd le a zárolást a legutóbbiról a `zfs release -r bombvault-replica cache/appdata@<legutóbbi>` paranccsal, majd használd a `zfs rollback -r` parancsot. A célon lévő másolatban még megvannak az újabb pillanatképek, és az adatkészlet következő replikája addig sikertelen, amíg az ottani másolatot a `zfs rollback -r` paranccsal ugyanarra a pillanatképre vissza nem görgeted.
+A klón addig nem foglal helyet, amíg valami meg nem változik benne. Ha végeztél, töröld a `zfs destroy cache/appdata-20261006` paranccsal, mert egy klónnal rendelkező pillanatképet nem lehet eltávolítani.
+
+A legutóbbi replika-pillanatképhez való visszatéréshez itt elég a `zfs rollback cache/appdata@<legutóbbi>` parancs, a célon pedig nincs teendő. Ha a teljes adatkészletet egy régebbihez görgeted vissza, az minden utána következő pillanatképet töröl, ezen a kiszolgálón és a célon is. A legutóbbin zárolás van, ezért előbb vedd le róla, majd itt görgesd vissza az adatkészletet:
+
+```
+zfs release -r bombvault-replica cache/appdata@bombvault-replica-20261008014200
+zfs rollback -r cache/appdata@bombvault-replica-20261006014100
+```
+
+Ezután görgesd vissza a másolatot ugyanarra a pillanatképre a ZFS-kiszolgálón, vagy annak a párosított példánynak a gazdagépén, amely a replikát fogadja. Különben az adatkészlet következő replikája megáll, mert a célon újabb pillanatképek vannak:
+
+```
+zfs rollback -r backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261006014100
+```
+
+A `zfs rollback` egyetlen adatkészletre hat, ezért ismételd meg mindkét visszagörgetést minden gyermek-adatkészletnél, amelyet szintén vissza szeretnél kapni. A következő replika ezután attól a pillanatképtől folytatja.
 
 ### Titkosított adatkészletek replikában {#replica-encryption}
 

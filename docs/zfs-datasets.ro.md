@@ -172,15 +172,31 @@ Pe țintă, o replică nouă păstrează 7 instantanee zilnice și 3 săptămân
 
 Pe sursă, BombVault păstrează ultimul instantaneu de replică, plus un semn de carte pentru fiecare stare trimisă. Semnele de carte nu ocupă spațiu. Următorul transfer pornește de la ele.
 
-Ca să păstrezi mai multe și pe sursă, setează **Păstrează pe acest server** în cardul Replică, de exemplu la 7. După fiecare replică rămân atunci pe acest server atâtea dintre cele mai noi instantanee de replică, pe lângă ce păstrează ținta, iar întoarcerea la unul dintre ele este aici un `zfs rollback`, fără nimic de transferat. 0 sau 1 păstrează doar ultimul. Ultimul are un hold, ca baza următorului transfer să nu fie ștearsă din greșeală. Cele mai vechi nu au, așa că poți reveni la ele sau le poți șterge de mână. Fiecare instantaneu ține blocurile care s-au schimbat după el, așa că fiecare pe care îl păstrezi ocupă spațiu în pool. Dacă oprești replica sau o muți pe altă țintă, ori ștergi elementul, dispar și ele de pe acest server.
+Ca să păstrezi mai multe și pe sursă, setează **Păstrează pe acest server** în cardul Replică, de exemplu la 7. După fiecare replică rămân atunci pe acest server atâtea dintre cele mai noi instantanee de replică, pe lângă ce păstrează ținta. 0 sau 1 păstrează doar ultimul. Ultimul are un hold, ca baza următorului transfer să nu fie ștearsă din greșeală. Cele mai vechi nu au. Fiecare instantaneu ține blocurile care s-au schimbat după el, așa că fiecare pe care îl păstrezi ocupă spațiu în pool. Dacă oprești replica sau o muți pe altă țintă, ori ștergi elementul, dispar și ele de pe acest server.
 
-Ca să revii la ultimul instantaneu de replică, derulează înapoi setul de date:
+Poți citi sau copia imediat fișierele unui instantaneu păstrat, din dosarul `.zfs/snapshot` din interiorul setului de date sau dintr-o clonă, fără să atingi setul de date sau replica:
 
 ```
-zfs rollback cache/appdata@bombvault-replica-20261006014100
+ls /mnt/cache/appdata/.zfs/snapshot/bombvault-replica-20261006014100
+zfs clone cache/appdata@bombvault-replica-20261006014100 cache/appdata-20261006
 ```
 
-`zfs rollback` acționează asupra unui singur set de date, așa că derulează înapoi și fiecare set de date copil pe care vrei să-l readuci. Întoarcerea la un instantaneu mai vechi le șterge pe cele mai noi, așa că scoate întâi hold-ul de pe ultimul cu `zfs release -r bombvault-replica cache/appdata@<ultimul>`, apoi folosește `zfs rollback -r`. Copia de pe țintă are încă instantaneele mai noi, iar următoarea replică a acelui set de date eșuează până când derulezi copia de acolo înapoi la același instantaneu cu `zfs rollback -r`.
+O clonă nu ocupă spațiu până nu se schimbă ceva în ea. Șterge-o cu `zfs destroy cache/appdata-20261006` când ai terminat, pentru că un instantaneu care are o clonă nu poate fi eliminat.
+
+Ca să revii la ultimul instantaneu de replică, aici ajunge `zfs rollback cache/appdata@<ultimul>`, iar pe țintă nu e nimic de făcut. Dacă derulezi înapoi tot setul de date la unul mai vechi, ștergi fiecare instantaneu de după el, pe acest server și pe țintă. Ultimul are un hold, așa că scoate-l întâi, apoi derulează aici setul de date înapoi:
+
+```
+zfs release -r bombvault-replica cache/appdata@bombvault-replica-20261008014200
+zfs rollback -r cache/appdata@bombvault-replica-20261006014100
+```
+
+Apoi derulează copia înapoi la același instantaneu pe serverul ZFS sau pe gazda instanței împerecheate care primește replica. Altfel următoarea replică a acelui set de date se oprește, pentru că ținta are instantanee mai noi:
+
+```
+zfs rollback -r backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261006014100
+```
+
+`zfs rollback` acționează asupra unui singur set de date, așa că repetă ambele derulări pentru fiecare set de date copil pe care vrei să-l readuci și pe el. Următoarea replică continuă apoi de la acel instantaneu.
 
 ### Seturi de date criptate într-o replică {#replica-encryption}
 

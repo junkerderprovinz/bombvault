@@ -172,15 +172,31 @@ Op het doel bewaart een nieuwe replica 7 dagelijkse en 3 wekelijkse snapshots. K
 
 Aan de bronkant bewaart BombVault de laatste replica-snapshot, plus een bookmark voor elke verstuurde stand. Bookmarks kosten geen ruimte. De volgende overdracht begint daarvandaan.
 
-Wil je ook aan de bronkant meer bewaren, stel dan op de kaart Replica **Bewaren op deze server** in, bijvoorbeeld op 7. Zoveel van de nieuwste replica-snapshots blijven dan na elke replica op deze server staan, naast wat het doel bewaart, en teruggaan naar een ervan is hier een `zfs rollback`, zonder dat er iets verstuurd hoeft te worden. 0 of 1 bewaart alleen de laatste. De laatste krijgt een hold, zodat de basis van de volgende overdracht niet per ongeluk wordt verwijderd. De oudere hebben er geen, dus je kunt er met de hand naar terugdraaien of ze verwijderen. Elke snapshot houdt de blokken vast die daarna zijn veranderd, dus elke snapshot die je bewaart, neemt ruimte in op de pool. Zet je de replica uit of op een ander doel, of verwijder je het item, dan verdwijnen ook die snapshots van deze server.
+Wil je ook aan de bronkant meer bewaren, stel dan op de kaart Replica **Bewaren op deze server** in, bijvoorbeeld op 7. Zoveel van de nieuwste replica-snapshots blijven dan na elke replica op deze server staan, naast wat het doel bewaart. 0 of 1 bewaart alleen de laatste. De laatste krijgt een hold, zodat de basis van de volgende overdracht niet per ongeluk wordt verwijderd. De oudere hebben er geen. Elke snapshot houdt de blokken vast die daarna zijn veranderd, dus elke snapshot die je bewaart, neemt ruimte in op de pool. Zet je de replica uit of op een ander doel, of verwijder je het item, dan verdwijnen ook die snapshots van deze server.
 
-Om terug te gaan naar de laatste replica-snapshot, draai je de dataset terug:
+De bestanden van een bewaarde snapshot kun je meteen lezen of kopiëren, uit de map `.zfs/snapshot` in de dataset of uit een kloon, zonder de dataset of de replica aan te raken:
 
 ```
-zfs rollback cache/appdata@bombvault-replica-20261006014100
+ls /mnt/cache/appdata/.zfs/snapshot/bombvault-replica-20261006014100
+zfs clone cache/appdata@bombvault-replica-20261006014100 cache/appdata-20261006
 ```
 
-`zfs rollback` werkt op één dataset, draai dus ook elke onderliggende dataset terug die je terug wilt hebben. Teruggaan naar een oudere snapshot verwijdert de nieuwere, haal daarom eerst de hold van de laatste af met `zfs release -r bombvault-replica cache/appdata@<laatste>` en gebruik daarna `zfs rollback -r`. De kopie op het doel heeft de nieuwere snapshots nog, en de volgende replica van die dataset mislukt totdat je de kopie daar met `zfs rollback -r` naar dezelfde snapshot terugdraait.
+Een kloon neemt geen ruimte in totdat er iets in verandert. Verwijder hem met `zfs destroy cache/appdata-20261006` als je klaar bent, want een snapshot met een kloon kan niet worden verwijderd.
+
+Om terug te gaan naar de laatste replica-snapshot is hier alleen `zfs rollback cache/appdata@<laatste>` nodig, en op het doel hoeft niets te gebeuren. Draai je de hele dataset terug naar een oudere, dan verwijder je elke snapshot daarna, op deze server en op het doel. De laatste heeft een hold, haal die dus eerst weg en draai daarna de dataset hier terug:
+
+```
+zfs release -r bombvault-replica cache/appdata@bombvault-replica-20261008014200
+zfs rollback -r cache/appdata@bombvault-replica-20261006014100
+```
+
+Draai daarna de kopie terug naar dezelfde snapshot op de ZFS-server, of op de host van de gekoppelde instantie die de replica ontvangt. Anders blijft de volgende replica van die dataset steken, omdat het doel nieuwere snapshots heeft:
+
+```
+zfs rollback -r backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261006014100
+```
+
+`zfs rollback` werkt op één dataset, herhaal dus beide rollbacks voor elke onderliggende dataset die je ook terug wilt hebben. De volgende replica gaat dan verder vanaf die snapshot.
 
 ### Versleutelde datasets in een replica {#replica-encryption}
 

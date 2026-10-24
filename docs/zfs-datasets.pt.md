@@ -172,15 +172,31 @@ No destino, uma réplica nova guarda 7 instantâneos diários e 3 semanais. Esco
 
 Na origem, o BombVault guarda o instantâneo de réplica mais recente, mais um marcador para cada estado que enviou. Os marcadores não ocupam espaço. A transferência seguinte parte deles.
 
-Para guardares mais também na origem, define **Manter neste servidor** no cartão Réplica, por exemplo para 7. Depois de cada réplica ficam então neste servidor tantos dos instantâneos de réplica mais recentes quantos indicares, além do que o alvo guarda, e voltar a um deles é aqui um simples `zfs rollback`, sem nada para transferir. 0 ou 1 guarda só o mais recente. O mais recente tem um hold, para que a base da transferência seguinte não seja apagada por engano. Os mais antigos não têm nenhum, por isso podes voltar a eles ou apagá-los à mão. Cada instantâneo prende os blocos que mudaram depois dele, por isso cada um que guardas ocupa espaço no pool. Desligar a réplica ou mudá-la para outro alvo, ou apagar a entrada, também os remove deste servidor.
+Para guardares mais também na origem, define **Manter neste servidor** no cartão Réplica, por exemplo para 7. Depois de cada réplica ficam então neste servidor tantos dos instantâneos de réplica mais recentes quantos indicares, além do que o alvo guarda. 0 ou 1 guarda só o mais recente. O mais recente tem um hold, para que a base da transferência seguinte não seja apagada por engano. Os mais antigos não têm nenhum. Cada instantâneo prende os blocos que mudaram depois dele, por isso cada um que guardas ocupa espaço no pool. Desligar a réplica ou mudá-la para outro alvo, ou apagar a entrada, também os remove deste servidor.
 
-Para voltar ao instantâneo de réplica mais recente, reverte o conjunto de dados:
+Podes ler ou copiar de imediato os ficheiros de um instantâneo guardado, a partir da pasta `.zfs/snapshot` dentro do conjunto de dados ou de um clone, sem tocar no conjunto de dados nem na réplica:
 
 ```
-zfs rollback cache/appdata@bombvault-replica-20261006014100
+ls /mnt/cache/appdata/.zfs/snapshot/bombvault-replica-20261006014100
+zfs clone cache/appdata@bombvault-replica-20261006014100 cache/appdata-20261006
 ```
 
-`zfs rollback` atua num só conjunto de dados, por isso reverte também cada conjunto de dados filho que queiras recuperar. Voltar a um instantâneo mais antigo apaga os mais recentes, por isso tira primeiro o hold do mais recente com `zfs release -r bombvault-replica cache/appdata@<último>` e depois usa `zfs rollback -r`. A cópia no alvo ainda tem os instantâneos mais recentes, e a réplica seguinte desse conjunto de dados falha até reverteres lá a cópia para o mesmo instantâneo com `zfs rollback -r`.
+Um clone não ocupa espaço até algo nele mudar. Apaga-o com `zfs destroy cache/appdata-20261006` quando terminares, porque um instantâneo que tem um clone não pode ser removido.
+
+Para voltar ao instantâneo de réplica mais recente basta aqui `zfs rollback cache/appdata@<último>`, e no alvo não há nada a fazer. Reverter o conjunto de dados inteiro para um mais antigo apaga todos os instantâneos posteriores, neste servidor e no alvo. O mais recente tem um hold, por isso tira-o primeiro e depois reverte aqui o conjunto de dados:
+
+```
+zfs release -r bombvault-replica cache/appdata@bombvault-replica-20261008014200
+zfs rollback -r cache/appdata@bombvault-replica-20261006014100
+```
+
+Depois reverte a cópia para o mesmo instantâneo no servidor ZFS, ou no anfitrião da instância emparelhada que recebe a réplica. Caso contrário, a réplica seguinte desse conjunto de dados fica parada, porque o alvo tem instantâneos mais recentes:
+
+```
+zfs rollback -r backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261006014100
+```
+
+`zfs rollback` atua num só conjunto de dados, por isso repete as duas reversões para cada conjunto de dados filho que também queiras recuperar. A réplica seguinte continua então a partir desse instantâneo.
 
 ### Conjuntos de dados encriptados numa réplica {#replica-encryption}
 

@@ -172,15 +172,31 @@ Na celu nowa replika zachowuje 7 migawek dziennych i 3 tygodniowe. Możesz zamia
 
 Na źródle BombVault zachowuje najnowszą migawkę repliki oraz zakładkę (bookmark) dla każdego wysłanego stanu. Zakładki nie zajmują miejsca. Następny transfer zaczyna się od nich.
 
-Aby zachować więcej także na źródle, ustaw **Zachowaj na tym serwerze** w karcie Replika, na przykład na 7. Tyle najnowszych migawek repliki zostaje wtedy na tym serwerze po każdej replice, obok tego, co zachowuje cel, a powrót do jednej z nich to tutaj zwykły `zfs rollback`, bez żadnego transferu. 0 lub 1 zachowuje tylko najnowszą. Na najnowszej założony jest hold, żeby nikt przypadkiem nie usunął podstawy następnego transferu. Starsze go nie mają, więc możesz ręcznie do nich wrócić albo je usunąć. Każda migawka trzyma bloki, które zmieniły się po niej, więc każda, którą zachowujesz, zajmuje miejsce w puli. Wyłączenie repliki, przełączenie jej na inny cel albo usunięcie elementu usuwa je również z tego serwera.
+Aby zachować więcej także na źródle, ustaw **Zachowaj na tym serwerze** w karcie Replika, na przykład na 7. Tyle najnowszych migawek repliki zostaje wtedy na tym serwerze po każdej replice, obok tego, co zachowuje cel. 0 lub 1 zachowuje tylko najnowszą. Na najnowszej założony jest hold, żeby nikt przypadkiem nie usunął podstawy następnego transferu. Starsze go nie mają. Każda migawka trzyma bloki, które zmieniły się po niej, więc każda, którą zachowujesz, zajmuje miejsce w puli. Wyłączenie repliki, przełączenie jej na inny cel albo usunięcie elementu usuwa je również z tego serwera.
 
-Aby wrócić do najnowszej migawki repliki, cofnij zbiór danych:
+Pliki zachowanej migawki możesz od razu odczytać lub skopiować z folderu `.zfs/snapshot` w zbiorze danych albo z klonu, bez dotykania zbioru danych i repliki:
 
 ```
-zfs rollback cache/appdata@bombvault-replica-20261006014100
+ls /mnt/cache/appdata/.zfs/snapshot/bombvault-replica-20261006014100
+zfs clone cache/appdata@bombvault-replica-20261006014100 cache/appdata-20261006
 ```
 
-`zfs rollback` działa na jednym zbiorze danych, więc cofnij też każdy zbiór podrzędny, który chcesz odzyskać. Powrót do starszej migawki usuwa nowsze, więc najpierw zdejmij hold z najnowszej poleceniem `zfs release -r bombvault-replica cache/appdata@<najnowsza>`, a potem użyj `zfs rollback -r`. Kopia na celu nadal ma nowsze migawki, a następna replika tego zbioru danych kończy się błędem, dopóki nie cofniesz tam kopii do tej samej migawki poleceniem `zfs rollback -r`.
+Klon nie zajmuje miejsca, dopóki coś się w nim nie zmieni. Gdy skończysz, usuń go poleceniem `zfs destroy cache/appdata-20261006`, bo migawki, która ma klon, nie da się usunąć.
+
+Aby wrócić do najnowszej migawki repliki, wystarczy tutaj `zfs rollback cache/appdata@<najnowsza>`, a na celu nie trzeba nic robić. Cofnięcie całego zbioru danych do starszej migawki usuwa każdą migawkę po niej, na tym serwerze i na celu. Na najnowszej jest hold, więc najpierw go zdejmij, a potem cofnij zbiór danych tutaj:
+
+```
+zfs release -r bombvault-replica cache/appdata@bombvault-replica-20261008014200
+zfs rollback -r cache/appdata@bombvault-replica-20261006014100
+```
+
+Potem cofnij kopię do tej samej migawki na serwerze ZFS albo na hoście sparowanej instancji, która odbiera replikę. Inaczej następna replika tego zbioru danych stanie, bo cel ma nowsze migawki:
+
+```
+zfs rollback -r backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261006014100
+```
+
+`zfs rollback` działa na jednym zbiorze danych, więc powtórz oba cofnięcia dla każdego zbioru podrzędnego, który też chcesz odzyskać. Następna replika kontynuuje wtedy od tej migawki.
 
 ### Zaszyfrowane zbiory danych w replice {#replica-encryption}
 
