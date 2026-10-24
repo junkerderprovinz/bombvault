@@ -7,8 +7,10 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/backup"
+	"github.com/junkerderprovinz/bombvault/internal/zfs"
 )
 
 const (
@@ -46,14 +48,22 @@ func (s *Service) PreviewZFSExcludes(ctx context.Context, id string, patterns []
 		return nil, fmt.Errorf("zfs excludes preview: load the tree: %w", err)
 	}
 	dirs := make(map[string]string, len(members))
+	// mounts are the members' directories, where the walk of the dataset
+	// above stops: each member is counted by its own walk.
+	mounts := make(map[string]bool, len(members))
 	relPaths := make([]string, 0, len(members))
 	for _, m := range members {
 		rel := zfsRelPath(d.Dataset, m.Dataset)
 		relPaths = append(relPaths, rel)
 		if cpath, ok := s.toContainerPath(m.HostMountpoint); ok {
 			dirs[rel] = cpath
+			mounts[filepath.Clean(filepath.FromSlash(cpath))] = true
 		}
 	}
+	// The backup reads each member from a snapshot directory and ignores a
+	// line that leaves that directory out whole, also one that names a part
+	// of its path such as .zfs or the snapshot's name.
+	snap := zfs.SnapshotName(time.Now())
 
 	out := make([]ZFSExcludePreviewRow, 0, len(patterns))
 	for _, pattern := range patterns {
@@ -63,11 +73,11 @@ func (s *Service) PreviewZFSExcludes(ctx context.Context, id string, patterns []
 		row := ZFSExcludePreviewRow{Pattern: pattern, Sample: []string{}, Everything: backup.ExcludesEverything(pattern)}
 		for rel, rerooted := range backup.SplitExcludes([]string{pattern}, relPaths) {
 			for _, p := range rerooted {
-				if dirs[rel] != "" && backup.LeavesMemberOut(dirs[rel], p) {
+				if dirs[rel] != "" && backup.LeavesMemberOut(dirs[rel]+"/.zfs/snapshot/"+snap, p) {
 					row.Root = true
 					continue
 				}
-				countZFSMatches(ctx, dirs[rel], rel, p, &row)
+				countZFSMatches(ctx, dirs[rel], rel, p, mounts, &row)
 			}
 		}
 		out = append(out, row)
@@ -78,12 +88,14 @@ func (s *Service) PreviewZFSExcludes(ctx context.Context, id string, patterns []
 // countZFSMatches walks one member's live directory and adds every entry the
 // pattern hits to the row. A directory that cannot be read contributes
 // nothing: the preview is guidance, and a permission error on one folder must
-// not turn into a refusal for the whole line.
-func countZFSMatches(ctx context.Context, dir, rel, pattern string, row *ZFSExcludePreviewRow) {
+// not turn into a refusal for the whole line. The walk leaves out the
+// directories in mounts below dir, which are members of their own.
+func countZFSMatches(ctx context.Context, dir, rel, pattern string, mounts map[string]bool, row *ZFSExcludePreviewRow) {
 	if dir == "" {
 		return
 	}
 	anchored := strings.HasPrefix(pattern, "/")
+	top := filepath.Clean(filepath.FromSlash(dir))
 	seen := 0
 	_ = filepath.WalkDir(dir, func(p string, entry fs.DirEntry, err error) error {
 		if err != nil {
@@ -94,6 +106,9 @@ func countZFSMatches(ctx context.Context, dir, rel, pattern string, row *ZFSExcl
 		}
 		if ctx.Err() != nil {
 			return ctx.Err()
+		}
+		if entry.IsDir() && filepath.Clean(p) != top && mounts[filepath.Clean(p)] {
+			return fs.SkipDir
 		}
 		seen++
 		if seen > zfsPreviewWalkCap {

@@ -301,12 +301,15 @@ export function ExcludesEditor({
             const good = row.matches || row.status === "outside";
             const msg = t(previewKey(row));
             return (
+              // On a phone the note goes under a long line instead of being
+              // squeezed into a column beside it.
               <div
                 key={i}
-                className="text-xs wrap-break-word leading-snug flex items-baseline gap-1.5"
+                data-testid="exclude-preview-row"
+                className="text-xs wrap-break-word leading-snug flex flex-col gap-0.5 md:flex-row md:items-baseline md:gap-1.5"
                 title={row.status === "translated" ? row.resolved : undefined}
               >
-                <span dir="ltr" className="font-mono text-carbon-textSub text-start">{row.raw}</span>
+                <span dir="ltr" className="min-w-0 font-mono text-carbon-textSub text-start wrap-anywhere">{row.raw}</span>
                 <span className={good ? "text-statusOk" : "text-statusFail"}>
                   {good ? "✓" : "⚠"} {msg}
                 </span>

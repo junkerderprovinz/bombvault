@@ -134,6 +134,20 @@ describe("exclusions editor", () => {
     expect(screen.queryByText(en["excludes.noMatch"], { exact: false })).toBeNull();
   });
 
+  it("puts the warning under a long line on a phone instead of beside it", async () => {
+    const long = "/config/Library/Application Support/Plex Media Server/Cache/PhotoTranscoder";
+    const preview: ExcludePreview = (_name, lines) =>
+      Promise.resolve(lines.map((raw) => ({ raw, resolved: raw, status: "root", matches: false })));
+    renderEditor([long], preview);
+    await settle();
+    const row = screen.getByTestId("exclude-preview-row");
+    const classes = row.className.split(" ");
+    expect(classes).toContain("flex-col");
+    expect(classes).toContain("md:flex-row");
+    expect(classes).not.toContain("items-baseline");
+    expect((row.firstElementChild as HTMLElement).className).toContain("wrap-anywhere");
+  });
+
   it("warns that a line which would exclude everything is ignored", async () => {
     const preview: ExcludePreview = (_name, lines) =>
       Promise.resolve(lines.map((raw) => ({ raw, resolved: raw, status: "everything", matches: false })));
