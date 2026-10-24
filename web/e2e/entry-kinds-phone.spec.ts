@@ -201,6 +201,21 @@ test("the Replica card puts each control on the row of its label on the desktop"
   }
 });
 
+// A number field is narrow, so it stays at the end of its label's row on a
+// phone and a long German label wraps beside it instead.
+test("the Replica card keeps its number fields beside their labels @ 390px", async ({ page }, testInfo) => {
+  test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "the phone layout lives below 48rem");
+  await page.setViewportSize({ width: 390, height: 844 });
+  const rows = await rowBoxes(await openReplica(page));
+  for (const name of ["Tage", "Wochen", "Auf diesem Server behalten"]) {
+    const r = rows.find((row) => row.name === name);
+    expect(r?.label && r.control && r.row, `${name}: row, label and field`).toBeTruthy();
+    if (!r?.label || !r.control || !r.row) continue;
+    expect(r.control.top, `${name}: field beside its label, not below it`).toBeLessThan(r.label.bottom);
+    expect(r.control.right, `${name}: field at the row's end`).toBeGreaterThan(r.row.right - 4);
+  }
+});
+
 for (const width of [320, 360]) {
   test(`the Replica card moves each control under its label and keeps the row end @ ${width}px`, async ({ page }, testInfo) => {
     test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "the phone layout lives below 48rem");

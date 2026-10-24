@@ -39,6 +39,7 @@ export function SettingRow({
   hint,
   htmlFor,
   note,
+  narrow,
   as: Tag = "div",
   newId,
   children,
@@ -54,6 +55,8 @@ export function SettingRow({
   htmlFor?: string;
   /** What the control cannot say itself, under the label. */
   note?: ReactNode;
+  /** The control is small enough to stay beside any label, which wraps instead. */
+  narrow?: boolean;
   as?: "div" | "li";
   /** The change in lib/whatsNew.ts the row is, which puts its dot on it. */
   newId?: string;
@@ -63,7 +66,7 @@ export function SettingRow({
   return (
     <Tag data-search-row={label} data-new={newId} className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 py-3 first:pt-0 last:pb-0">
       {/* A long note wraps beside the control instead of pushing it onto a line of its own. */}
-      <div className={`flex min-w-0 flex-col gap-0.5 ${note ? "flex-1 basis-56" : ""}`}>
+      <div className={`flex min-w-0 flex-col gap-0.5 ${note ? "flex-1 basis-56" : narrow ? "flex-1 basis-0" : ""}`}>
         <span className="flex items-center gap-1.5 text-sm text-carbon-text">
           {glyph && <span className="inline-flex flex-none">{glyph}</span>}
           {name ??

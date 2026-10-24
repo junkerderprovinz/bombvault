@@ -42,7 +42,7 @@ export function ReplicaKeepField({
       </SettingRow>
       {keep.preset === "own" &&
         KEEP_FIELD_KEYS.map((key, i) => (
-          <SettingRow key={key} label={t(key)} htmlFor={`${id}-${i}`}>
+          <SettingRow key={key} label={t(key)} htmlFor={`${id}-${i}`} narrow>
             <NumberField
               id={`${id}-${i}`}
               wrapperClassName="w-28"

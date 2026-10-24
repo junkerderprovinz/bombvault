@@ -319,6 +319,7 @@ export function ReplicaCard({ itemId, name }: { itemId: string; name: string }) 
             hint={t("zfs.replica.keepSourceHint")}
             htmlFor={keepOnSourceId}
             newId="zfs-replica-source-keep"
+            narrow
           >
             <NumberField
               id={keepOnSourceId}
