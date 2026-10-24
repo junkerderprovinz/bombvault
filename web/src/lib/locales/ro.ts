@@ -1554,6 +1554,7 @@ const ro: Partial<Translations> = {
   "excludes.nameMatchesNothing": "Nimic din acest backup nu are acest nume, așa că această linie nu exclude nimic.",
   "excludes.pathMissing": "Această cale nu există în backup, așa că această linie nu exclude nimic.",
   "excludes.outsideHostData": "Acest dosar este în afara Host Data, așa că BombVault nu îl poate salva. Această linie oprește avertismentul că nu a fost salvat.",
+  "excludes.excludesEverything": "Această linie ar exclude totul, așa că BombVault o ignoră.",
   // Exclude preview status (#38)
   "excludes.willExclude": "va fi exclus din backup",
   "excludes.matchesAnywhere": "va fi exclus oriunde apare",

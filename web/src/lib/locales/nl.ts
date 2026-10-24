@@ -1552,6 +1552,7 @@ const nl: Partial<Translations> = {
   "excludes.nameMatchesNothing": "Niets in deze back-up heeft deze naam, dus deze regel sluit niets uit.",
   "excludes.pathMissing": "Dit pad bestaat niet in de back-up, dus deze regel sluit niets uit.",
   "excludes.outsideHostData": "Deze map staat buiten Host Data, dus BombVault kan hem niet back-uppen. Deze regel zet de waarschuwing uit dat hij niet is geback-upt.",
+  "excludes.excludesEverything": "Deze regel zou alles uitsluiten, dus BombVault negeert hem.",
   // Exclude preview status (#38)
   "excludes.willExclude": "wordt uitgesloten van de back-up",
   "excludes.matchesAnywhere": "wordt overal uitgesloten waar het voorkomt",

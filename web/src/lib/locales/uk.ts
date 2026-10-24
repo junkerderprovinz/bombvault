@@ -1550,6 +1550,7 @@ const uk: Partial<Translations> = {
   "excludes.nameMatchesNothing": "У цій резервній копії немає нічого з такою назвою, тож цей рядок нічого не виключає.",
   "excludes.pathMissing": "Цього шляху немає в резервній копії, тож цей рядок нічого не виключає.",
   "excludes.outsideHostData": "Ця тека розташована поза Host Data, тому BombVault не може її скопіювати. Цей рядок вимикає попередження про те, що її не скопійовано.",
+  "excludes.excludesEverything": "Цей рядок виключив би все, тому BombVault його ігнорує.",
   // Exclude preview status (#38)
   "excludes.willExclude": "буде виключено з резервної копії",
   "excludes.matchesAnywhere": "буде виключено всюди, де трапляється",

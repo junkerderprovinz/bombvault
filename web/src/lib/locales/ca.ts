@@ -1047,6 +1047,7 @@ const ca: Partial<Translations> = {
   "excludes.nameMatchesNothing": "Res d'aquesta còpia no té aquest nom, així que aquesta línia no exclou res.",
   "excludes.pathMissing": "Aquest camí no existeix a la còpia, així que aquesta línia no exclou res.",
   "excludes.outsideHostData": "Aquesta carpeta és fora de Host Data, així que BombVault no la pot copiar. Aquesta línia treu l'avís que no s'ha copiat.",
+  "excludes.excludesEverything": "Aquesta línia ho exclouria tot, així que BombVault la ignora.",
   // Exclude preview status
   "excludes.willExclude": "s'exclourà de la còpia",
   "excludes.matchesAnywhere": "s'exclourà arreu on aparegui",

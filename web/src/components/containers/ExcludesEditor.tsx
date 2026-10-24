@@ -53,6 +53,18 @@ function liveSourceKey(reason: "no-snapshot" | "requested" | "not-in-snapshot"):
 
 export type ExcludePreviewRow = { raw: string; resolved: string; status: string; matches: boolean; missing?: boolean };
 
+// previewKey picks the sentence under a line. An "outside" line excludes
+// nothing, yet it does what it was written for: it turns off the warning about
+// a folder BombVault cannot reach.
+function previewKey(row: ExcludePreviewRow): TranslationKey {
+  if (row.status === "outside") return "excludes.outsideHostData";
+  if (row.matches) return row.status === "basename" ? "excludes.matchesAnywhere" : "excludes.willExclude";
+  if (row.status === "everything") return "excludes.excludesEverything";
+  if (row.status === "passthrough") return "excludes.noMatch";
+  if (row.status === "basename") return "excludes.nameMatchesNothing";
+  return row.missing ? "excludes.pathMissing" : "excludes.excludesNothing";
+}
+
 // How a caller resolves candidate lines. Each domain has its own endpoint and
 // its own answer shape, so the adapter rather than the raw call is the prop.
 export type ExcludePreview = (name: string, lines: string[]) => Promise<ExcludePreviewRow[]>;
@@ -284,24 +296,9 @@ export function ExcludesEditor({
           {preview.map((row, i) => {
             // A plain confirmation and not the internal restic path, whose
             // rebased host-mount form looks like an invalid path (#38). The
-            // exact pattern is in the title. An "outside" line excludes
-            // nothing, yet it does what it was written for: it turns off the
-            // warning about a folder BombVault cannot reach.
-            const outside = row.status === "outside";
-            const good = row.matches || outside;
-            const msg = outside
-              ? t("excludes.outsideHostData")
-              : good
-                ? row.status === "basename"
-                  ? t("excludes.matchesAnywhere")
-                  : t("excludes.willExclude")
-                : row.status === "passthrough"
-                  ? t("excludes.noMatch")
-                  : row.status === "basename"
-                    ? t("excludes.nameMatchesNothing")
-                    : row.missing
-                      ? t("excludes.pathMissing")
-                      : t("excludes.excludesNothing");
+            // exact pattern is in the title.
+            const good = row.matches || row.status === "outside";
+            const msg = t(previewKey(row));
             return (
               <div
                 key={i}

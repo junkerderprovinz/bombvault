@@ -1544,6 +1544,7 @@ const ja: Partial<Translations> = {
   "excludes.nameMatchesNothing": "このバックアップにはこの名前のものがないため、この行は何も除外しません。",
   "excludes.pathMissing": "このパスはバックアップ内に存在しないため、この行は何も除外しません。",
   "excludes.outsideHostData": "このフォルダーは Host Data の外にあるため、BombVault はバックアップできません。この行で、バックアップされていないという警告が出なくなります。",
+  "excludes.excludesEverything": "この行はすべてを除外してしまうため、BombVault はこの行を無視します。",
   // Exclude preview status (#38)
   "excludes.willExclude": "バックアップから除外されます",
   "excludes.matchesAnywhere": "出現する場所すべてで除外されます",

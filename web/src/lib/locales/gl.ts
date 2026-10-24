@@ -1047,6 +1047,7 @@ const gl: Partial<Translations> = {
   "excludes.nameMatchesNothing": "Nada nesta copia ten este nome, así que esta liña non exclúe nada.",
   "excludes.pathMissing": "Esta ruta non existe na copia, así que esta liña non exclúe nada.",
   "excludes.outsideHostData": "Este cartafol está fóra de Host Data, así que BombVault non pode copialo. Esta liña quita o aviso de que non se copiou.",
+  "excludes.excludesEverything": "Esta liña excluiríao todo, así que BombVault ignóraa.",
   // Exclude preview status
   "excludes.willExclude": "excluirase da copia",
   "excludes.matchesAnywhere": "excluirase en calquera lugar onde apareza",

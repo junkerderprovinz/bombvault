@@ -111,7 +111,7 @@ func TestPreviewExcludesMarksALineThatSilencesDataOutsideHostData(t *testing.T) 
 		{"/other", "outside"},
 		{"/other/anything", "translated"},
 		{"/cache/transcodes", "passthrough"},
-		{"/", "passthrough"},
+		{"/", "everything"},
 		{"Cache", "basename"},
 		{"/config/Transcode", "translated"},
 	}
@@ -120,6 +120,39 @@ func TestPreviewExcludesMarksALineThatSilencesDataOutsideHostData(t *testing.T) 
 			got := s.previewExcludes(context.Background(), []string{tc.line}, in, effective)
 			if len(got) != 1 || got[0].Status != tc.status || got[0].Missing {
 				t.Fatalf("preview of %q = %+v, want status %s", tc.line, got, tc.status)
+			}
+		})
+	}
+}
+
+func TestPreviewExcludesWarnsAboutALineThatWouldExcludeEverything(t *testing.T) {
+	s, in, effective := mountedExcludeSvc(t)
+	cases := []struct{ line, status string }{
+		{"/", "everything"},
+		{" // ", "everything"},
+		{"/.", "everything"},
+		{"/config/..", "everything"},
+		{"*", "everything"},
+		{"**", "everything"},
+		{"*/", "everything"},
+		{"/*", "everything"},
+		{"/**", "everything"},
+		{"**/*", "everything"},
+		{"*.log", "basename"},
+		{"/config/*", "translated"},
+		{"/data/*", "passthrough"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.line, func(t *testing.T) {
+			got := s.previewExcludes(context.Background(), []string{tc.line}, in, effective)
+			if len(got) != 1 || got[0].Status != tc.status {
+				t.Fatalf("preview of %q = %+v, want status %s", tc.line, got, tc.status)
+			}
+			if tc.status == "everything" && (got[0].Matches || got[0].Missing) {
+				t.Fatalf("preview of %q = %+v, want neither a match nor a missing path", tc.line, got)
+			}
+			if kept := s.resolveExcludePatterns([]string{tc.line}, in); (tc.status == "everything") != (len(kept) == 0) {
+				t.Fatalf("resolveExcludePatterns(%q) = %q", tc.line, kept)
 			}
 		})
 	}

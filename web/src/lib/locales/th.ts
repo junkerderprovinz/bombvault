@@ -1554,6 +1554,7 @@ const th: Partial<Translations> = {
   "excludes.nameMatchesNothing": "ไม่มีสิ่งใดในข้อมูลสำรองนี้ที่มีชื่อนี้ ดังนั้นบรรทัดนี้จึงไม่ยกเว้นอะไรเลย",
   "excludes.pathMissing": "ไม่มีพาธนี้ในข้อมูลสำรอง ดังนั้นบรรทัดนี้จึงไม่ยกเว้นอะไรเลย",
   "excludes.outsideHostData": "โฟลเดอร์นี้อยู่นอก Host Data ดังนั้น BombVault จึงสำรองไว้ไม่ได้ บรรทัดนี้ปิดคำเตือนว่าไม่ได้สำรองไว้",
+  "excludes.excludesEverything": "บรรทัดนี้จะยกเว้นทุกอย่าง BombVault จึงไม่ใช้บรรทัดนี้",
   // Exclude preview status (#38)
   "excludes.willExclude": "จะถูกยกเว้นจากข้อมูลสำรอง",
   "excludes.matchesAnywhere": "จะถูกยกเว้นทุกที่ที่ปรากฏ",

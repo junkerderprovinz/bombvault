@@ -1047,6 +1047,7 @@ const hr: Partial<Translations> = {
   "excludes.nameMatchesNothing": "Ništa u ovoj sigurnosnoj kopiji nema ovaj naziv, pa ovaj redak ništa ne izuzima.",
   "excludes.pathMissing": "Ova putanja ne postoji u sigurnosnoj kopiji, pa ovaj redak ništa ne izuzima.",
   "excludes.outsideHostData": "Ova mapa je izvan Host Data, pa je BombVault ne može sigurnosno kopirati. Ovaj redak isključuje upozorenje da nije sigurnosno kopirana.",
+  "excludes.excludesEverything": "Ovaj bi redak izuzeo sve, pa ga BombVault zanemaruje.",
   // Exclude preview status
   "excludes.willExclude": "bit će izuzeto iz sigurnosne kopije",
   "excludes.matchesAnywhere": "bit će izuzeto gdje god se pojavi",

@@ -1176,6 +1176,7 @@ export const en = {
   "excludes.nameMatchesNothing": "Nothing in this backup has this name, so this line excludes nothing.",
   "excludes.pathMissing": "This path does not exist in the backup, so this line excludes nothing.",
   "excludes.outsideHostData": "This folder sits outside Host Data, so BombVault cannot back it up. This line turns off the warning that it was not backed up.",
+  "excludes.excludesEverything": "This line would exclude everything, so BombVault ignores it.",
   // Exclude preview status (#38)
   "excludes.willExclude": "will be excluded from the backup",
   "excludes.matchesAnywhere": "will be excluded wherever it appears",
@@ -6254,6 +6255,7 @@ export const de: Translations = {
   "excludes.nameMatchesNothing": "Nichts in dieser Sicherung trägt diesen Namen, diese Zeile schließt also nichts aus.",
   "excludes.pathMissing": "Diesen Pfad gibt es in der Sicherung nicht, diese Zeile schließt also nichts aus.",
   "excludes.outsideHostData": "Dieser Ordner liegt außerhalb von Host Data, BombVault kann ihn also nicht sichern. Diese Zeile schaltet die Warnung ab, dass er nicht gesichert wurde.",
+  "excludes.excludesEverything": "Diese Zeile würde alles ausschließen, BombVault ignoriert sie deshalb.",
   // Exclude preview status (#38)
   "excludes.willExclude": "wird von der Sicherung ausgeschlossen",
   "excludes.matchesAnywhere": "wird überall ausgeschlossen, wo es vorkommt",

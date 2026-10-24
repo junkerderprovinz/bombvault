@@ -1047,6 +1047,7 @@ const fa: Partial<Translations> = {
   "excludes.nameMatchesNothing": "هیچ چیزی در این پشتیبان این نام را ندارد، پس این خط چیزی را مستثنی نمی‌کند.",
   "excludes.pathMissing": "این مسیر در پشتیبان وجود ندارد، پس این خط چیزی را مستثنی نمی‌کند.",
   "excludes.outsideHostData": "این پوشه خارج از Host Data است، پس BombVault نمی‌تواند از آن پشتیبان بگیرد. این خط هشدارِ پشتیبان‌گیری‌نشدنِ آن را خاموش می‌کند.",
+  "excludes.excludesEverything": "این خط همه‌چیز را مستثنی می‌کرد، پس BombVault آن را نادیده می‌گیرد.",
   // Exclude preview status
   "excludes.willExclude": "از پشتیبان‌گیری مستثنی خواهد شد",
   "excludes.matchesAnywhere": "هرجا که ظاهر شود مستثنی خواهد شد",

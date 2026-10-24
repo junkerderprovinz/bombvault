@@ -1544,6 +1544,7 @@ const vi: Partial<Translations> = {
   "excludes.nameMatchesNothing": "Không có gì trong bản sao lưu này mang tên này, nên dòng này không loại trừ gì cả.",
   "excludes.pathMissing": "Đường dẫn này không tồn tại trong bản sao lưu, nên dòng này không loại trừ gì cả.",
   "excludes.outsideHostData": "Thư mục này nằm ngoài Host Data, nên BombVault không thể sao lưu nó. Dòng này tắt cảnh báo rằng nó chưa được sao lưu.",
+  "excludes.excludesEverything": "Dòng này sẽ loại trừ mọi thứ, nên BombVault bỏ qua nó.",
   // Exclude preview status (#38)
   "excludes.willExclude": "sẽ bị loại trừ khỏi bản sao lưu",
   "excludes.matchesAnywhere": "sẽ bị loại trừ ở bất kỳ nơi nào xuất hiện",

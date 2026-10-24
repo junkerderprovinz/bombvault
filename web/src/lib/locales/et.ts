@@ -1047,6 +1047,7 @@ const et: Partial<Translations> = {
   "excludes.nameMatchesNothing": "Selles varunduses pole midagi selle nimega, seega see rida ei jäta midagi välja.",
   "excludes.pathMissing": "Seda teed varunduses pole, seega see rida ei jäta midagi välja.",
   "excludes.outsideHostData": "See kaust asub väljaspool Host Datat, seega BombVault ei saa seda varundada. See rida lülitab välja hoiatuse, et seda ei varundatud.",
+  "excludes.excludesEverything": "See rida jätaks kõik välja, seega BombVault eirab seda.",
   // Exclude preview status
   "excludes.willExclude": "jäetakse varundusest välja",
   "excludes.matchesAnywhere": "jäetakse välja kõikjal, kus see esineb",

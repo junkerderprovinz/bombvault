@@ -1808,7 +1808,7 @@ func (s *Service) toContainerPath(host string) (string, bool) {
 type ExcludePreview struct {
 	Raw      string `json:"raw"`
 	Resolved string `json:"resolved"`
-	Status   string `json:"status"` // "basename" | "translated" | "passthrough" | "outside"
+	Status   string `json:"status"` // "basename" | "translated" | "passthrough" | "outside" | "everything"
 	Matches  bool   `json:"matches"`
 	Missing  bool   `json:"missing,omitempty"`
 }
@@ -1817,11 +1817,15 @@ type ExcludePreview struct {
 // No slash → verbatim (restic matches a bare name at any depth). A line under a
 // container mount Destination → translated through that mount's Source +
 // toContainerPath into the exact anchored path restic stored. Anything else →
-// verbatim (advanced host/glob patterns), never silently dropped.
+// verbatim (advanced host/glob patterns), never silently dropped. A line that
+// would exclude everything has status "everything" and never reaches restic.
 func (s *Service) resolveExcludeLine(line string, in model.Inspect) (pattern, status string) {
 	line = strings.TrimSpace(line)
 	if line == "" {
 		return "", ""
+	}
+	if excludesEverything(line) {
+		return line, "everything"
 	}
 	if !strings.Contains(line, "/") {
 		return line, "basename"
@@ -1863,15 +1867,29 @@ func (s *Service) resolveExcludeLine(line string, in model.Inspect) (pattern, st
 	return line, "passthrough"
 }
 
+// excludesEverything reports whether restic would leave the whole backup out
+// for line: "/" in any spelling, or a glob of only "*" and "**" segments,
+// which matches every path. restic still reports such a run as a success,
+// with a snapshot of empty folders.
+func excludesEverything(line string) bool {
+	for _, seg := range strings.Split(path.Clean(line), "/") {
+		if seg != "" && seg != "*" && seg != "**" {
+			return false
+		}
+	}
+	return true
+}
+
 // resolveExcludePatterns maps each raw user line through resolveExcludeLine and
-// returns the resolved restic --exclude patterns (empty lines dropped). This is
-// what feeds BackupDeps.Excludes for a container backup.
+// returns the resolved restic --exclude patterns, without blank lines and lines
+// that would exclude everything. This is what feeds BackupDeps.Excludes for a
+// container backup.
 func (s *Service) resolveExcludePatterns(raw []string, in model.Inspect) []string {
 	var out []string
 	for _, line := range raw {
 		pattern, status := s.resolveExcludeLine(line, in)
-		if status == "" || pattern == "" {
-			continue // blank line
+		if status == "" || status == "everything" {
+			continue
 		}
 		out = append(out, pattern)
 	}

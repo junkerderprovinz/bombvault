@@ -1047,6 +1047,7 @@ const sr: Partial<Translations> = {
   "excludes.nameMatchesNothing": "Ништа у овој резервној копији нема овај назив, па овај ред ништа не изузима.",
   "excludes.pathMissing": "Ова путања не постоји у резервној копији, па овај ред ништа не изузима.",
   "excludes.outsideHostData": "Ова фасцикла је изван Host Data, па је BombVault не може резервно копирати. Овај ред искључује упозорење да није резервно копирана.",
+  "excludes.excludesEverything": "Овај ред би изузео све, па га BombVault занемарује.",
   "excludes.willExclude": "биће изузето из резервне копије",
   "excludes.matchesAnywhere": "биће изузето где год се појави",
   "excludes.assistTitle": "Помоћник за изузимања",

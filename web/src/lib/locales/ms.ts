@@ -1047,6 +1047,7 @@ const ms: Partial<Translations> = {
   "excludes.nameMatchesNothing": "Tiada apa-apa dalam sandaran ini yang bernama ini, jadi baris ini tidak mengecualikan apa-apa.",
   "excludes.pathMissing": "Laluan ini tiada dalam sandaran, jadi baris ini tidak mengecualikan apa-apa.",
   "excludes.outsideHostData": "Folder ini berada di luar Host Data, jadi BombVault tidak dapat menyandarkannya. Baris ini mematikan amaran bahawa ia tidak disandarkan.",
+  "excludes.excludesEverything": "Baris ini akan mengecualikan semuanya, jadi BombVault mengabaikannya.",
   // Exclude preview status
   "excludes.willExclude": "akan dikecualikan daripada sandaran",
   "excludes.matchesAnywhere": "akan dikecualikan di mana-mana ia muncul",

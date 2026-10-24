@@ -1047,6 +1047,7 @@ const eu: Partial<Translations> = {
   "excludes.nameMatchesNothing": "Babeskopia honetan ez dago izen hau duen ezer, beraz lerro honek ez du ezer baztertzen.",
   "excludes.pathMissing": "Bide hau ez dago babeskopian, beraz lerro honek ez du ezer baztertzen.",
   "excludes.outsideHostData": "Karpeta hau Host Data-tik kanpo dago, beraz BombVault-ek ezin du babeskopiatu. Lerro honek babeskopiatu ez delako abisua kentzen du.",
+  "excludes.excludesEverything": "Lerro honek dena baztertuko luke, beraz BombVault-ek ez dio jaramonik egiten.",
   // Exclude preview status
   "excludes.willExclude": "babeskopiatik baztertuko da",
   "excludes.matchesAnywhere": "agertzen den edonon baztertuko da",

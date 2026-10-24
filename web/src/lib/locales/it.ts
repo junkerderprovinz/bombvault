@@ -1553,6 +1553,7 @@ const it: Partial<Translations> = {
   "excludes.nameMatchesNothing": "Nulla in questo backup ha questo nome, quindi questa riga non esclude nulla.",
   "excludes.pathMissing": "Questo percorso non esiste nel backup, quindi questa riga non esclude nulla.",
   "excludes.outsideHostData": "Questa cartella è fuori da Host Data, quindi BombVault non può salvarla. Questa riga spegne l'avviso che non è stata salvata.",
+  "excludes.excludesEverything": "Questa riga escluderebbe tutto, quindi BombVault la ignora.",
   // Exclude preview status (#38)
   "excludes.willExclude": "sarà escluso dal backup",
   "excludes.matchesAnywhere": "sarà escluso ovunque compaia",

@@ -1551,6 +1551,7 @@ const es: Partial<Translations> = {
   "excludes.nameMatchesNothing": "Nada en esta copia tiene este nombre, por lo que esta línea no excluye nada.",
   "excludes.pathMissing": "Esta ruta no existe en la copia, por lo que esta línea no excluye nada.",
   "excludes.outsideHostData": "Esta carpeta está fuera de Host Data, así que BombVault no puede copiarla. Esta línea quita el aviso de que no se copió.",
+  "excludes.excludesEverything": "Esta línea lo excluiría todo, así que BombVault la ignora.",
   // Exclude preview status (#38)
   "excludes.willExclude": "se excluirá de la copia de seguridad",
   "excludes.matchesAnywhere": "se excluirá dondequiera que aparezca",

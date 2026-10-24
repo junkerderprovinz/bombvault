@@ -1544,6 +1544,7 @@ const ko: Partial<Translations> = {
   "excludes.nameMatchesNothing": "이 백업에는 이 이름을 가진 항목이 없으므로 이 줄은 아무것도 제외하지 않습니다.",
   "excludes.pathMissing": "이 경로는 백업에 없으므로 이 줄은 아무것도 제외하지 않습니다.",
   "excludes.outsideHostData": "이 폴더는 Host Data 밖에 있어 BombVault가 백업할 수 없습니다. 이 줄은 백업되지 않았다는 경고를 끕니다.",
+  "excludes.excludesEverything": "이 줄은 모든 것을 제외하므로 BombVault가 무시합니다.",
   // Exclude preview status (#38)
   "excludes.willExclude": "백업에서 제외됩니다",
   "excludes.matchesAnywhere": "나타나는 모든 위치에서 제외됩니다",

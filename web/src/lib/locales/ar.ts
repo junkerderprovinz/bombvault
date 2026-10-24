@@ -1554,6 +1554,7 @@ const ar: Partial<Translations> = {
   "excludes.nameMatchesNothing": "لا يوجد في هذه النسخة الاحتياطية شيء بهذا الاسم، لذا لا يستبعد هذا السطر أي شيء.",
   "excludes.pathMissing": "هذا المسار غير موجود في النسخة الاحتياطية، لذا لا يستبعد هذا السطر أي شيء.",
   "excludes.outsideHostData": "يقع هذا المجلد خارج Host Data، لذا لا يستطيع BombVault نسخه احتياطيًا. يوقف هذا السطر التحذير بأنه لم يُنسخ احتياطيًا.",
+  "excludes.excludesEverything": "هذا السطر سيستبعد كل شيء، لذا يتجاهله BombVault.",
   // Exclude preview status (#38)
   "excludes.willExclude": "سيتم استبعاده من النسخة الاحتياطية",
   "excludes.matchesAnywhere": "سيتم استبعاده أينما ظهر",

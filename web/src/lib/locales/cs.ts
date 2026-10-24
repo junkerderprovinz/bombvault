@@ -1551,6 +1551,7 @@ const cs: Partial<Translations> = {
   "excludes.nameMatchesNothing": "Nic v této záloze nemá tento název, takže tento řádek nic nevylučuje.",
   "excludes.pathMissing": "Tato cesta v záloze neexistuje, takže tento řádek nic nevylučuje.",
   "excludes.outsideHostData": "Tato složka je mimo Host Data, takže ji BombVault nemůže zálohovat. Tento řádek vypne upozornění, že nebyla zálohována.",
+  "excludes.excludesEverything": "Tento řádek by vyloučil všechno, takže ho BombVault ignoruje.",
   // Exclude preview status (#38)
   "excludes.willExclude": "bude vyloučeno ze zálohy",
   "excludes.matchesAnywhere": "bude vyloučeno všude, kde se vyskytuje",

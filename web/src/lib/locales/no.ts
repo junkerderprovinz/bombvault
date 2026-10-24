@@ -1553,6 +1553,7 @@ const no: Partial<Translations> = {
   "excludes.nameMatchesNothing": "Ingenting i denne sikkerhetskopien har dette navnet, så denne linjen ekskluderer ingenting.",
   "excludes.pathMissing": "Denne stien finnes ikke i sikkerhetskopien, så denne linjen ekskluderer ingenting.",
   "excludes.outsideHostData": "Denne mappen ligger utenfor Host Data, så BombVault kan ikke sikkerhetskopiere den. Denne linjen slår av varselet om at den ikke ble sikkerhetskopiert.",
+  "excludes.excludesEverything": "Denne linjen ville ekskludert alt, så BombVault ignorerer den.",
   // Exclude preview status (#38)
   "excludes.willExclude": "utelukkes fra sikkerhetskopien",
   "excludes.matchesAnywhere": "utelukkes overalt der det forekommer",

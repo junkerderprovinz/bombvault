@@ -1047,6 +1047,7 @@ const lt: Partial<Translations> = {
   "excludes.nameMatchesNothing": "Šioje atsarginėje kopijoje nėra nieko šiuo pavadinimu, todėl ši eilutė nieko neišskiria.",
   "excludes.pathMissing": "Šio kelio atsarginėje kopijoje nėra, todėl ši eilutė nieko neišskiria.",
   "excludes.outsideHostData": "Šis aplankas yra už Host Data ribų, todėl BombVault negali sukurti jo atsarginės kopijos. Ši eilutė išjungia įspėjimą, kad jo atsarginė kopija nesukurta.",
+  "excludes.excludesEverything": "Ši eilutė išskirtų viską, todėl BombVault jos nepaiso.",
   // Exclude preview status
   "excludes.willExclude": "bus išskirta iš atsarginės kopijos",
   "excludes.matchesAnywhere": "bus išskirta bet kur, kur pasirodo",

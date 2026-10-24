@@ -1047,6 +1047,7 @@ const bg: Partial<Translations> = {
   "excludes.nameMatchesNothing": "Нищо в това архивиране няма това име, така че този ред не изключва нищо.",
   "excludes.pathMissing": "Този път не съществува в архивирането, така че този ред не изключва нищо.",
   "excludes.outsideHostData": "Тази папка е извън Host Data, затова BombVault не може да я архивира. Този ред изключва предупреждението, че не е архивирана.",
+  "excludes.excludesEverything": "Този ред би изключил всичко, затова BombVault го пренебрегва.",
   // Exclude preview status
   "excludes.willExclude": "ще бъде изключено от архивирането",
   "excludes.matchesAnywhere": "ще бъде изключено навсякъде, където се появи",

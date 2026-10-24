@@ -1553,6 +1553,7 @@ const he: Partial<Translations> = {
   "excludes.nameMatchesNothing": "שום דבר בגיבוי הזה אינו נושא את השם הזה, כך שהשורה הזו אינה מחריגה דבר.",
   "excludes.pathMissing": "הנתיב הזה אינו קיים בגיבוי, כך שהשורה הזו אינה מחריגה דבר.",
   "excludes.outsideHostData": "התיקייה הזו נמצאת מחוץ ל-Host Data, ולכן BombVault לא יכול לגבות אותה. השורה הזו מכבה את האזהרה שהיא לא גובתה.",
+  "excludes.excludesEverything": "השורה הזו הייתה מחריגה הכול, ולכן BombVault מתעלם ממנה.",
   // Exclude preview status (#38)
   "excludes.willExclude": "יוחרג מהגיבוי",
   "excludes.matchesAnywhere": "יוחרג בכל מקום שבו הוא מופיע",

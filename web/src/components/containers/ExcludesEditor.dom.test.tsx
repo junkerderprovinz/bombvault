@@ -115,6 +115,14 @@ describe("exclusions editor", () => {
     expect(screen.getByText(en["excludes.noMatch"], { exact: false }).textContent).toContain("⚠");
   });
 
+  it("warns that a line which would exclude everything is ignored", async () => {
+    const preview: ExcludePreview = (_name, lines) =>
+      Promise.resolve(lines.map((raw) => ({ raw, resolved: raw, status: "everything", matches: false })));
+    renderEditor(["/"], preview);
+    await settle();
+    expect(screen.getByText(en["excludes.excludesEverything"], { exact: false }).textContent).toContain("⚠");
+  });
+
   it("puts the field back when removing a chip is refused", async () => {
     answer = { ok: false, error: "refused" };
     renderEditor(["/config/cache", "*.log"]);

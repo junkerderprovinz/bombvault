@@ -1553,6 +1553,7 @@ const el: Partial<Translations> = {
   "excludes.nameMatchesNothing": "Τίποτα σε αυτό το αντίγραφο ασφαλείας δεν έχει αυτό το όνομα, επομένως αυτή η γραμμή δεν εξαιρεί τίποτα.",
   "excludes.pathMissing": "Αυτή η διαδρομή δεν υπάρχει στο αντίγραφο ασφαλείας, επομένως αυτή η γραμμή δεν εξαιρεί τίποτα.",
   "excludes.outsideHostData": "Αυτός ο φάκελος βρίσκεται εκτός του Host Data, οπότε το BombVault δεν μπορεί να τον αντιγράψει. Αυτή η γραμμή απενεργοποιεί την προειδοποίηση ότι δεν αντιγράφηκε.",
+  "excludes.excludesEverything": "Αυτή η γραμμή θα εξαιρούσε τα πάντα, οπότε το BombVault την αγνοεί.",
   // Exclude preview status (#38)
   "excludes.willExclude": "θα εξαιρεθεί από το αντίγραφο ασφαλείας",
   "excludes.matchesAnywhere": "θα εξαιρείται όπου κι αν εμφανίζεται",
