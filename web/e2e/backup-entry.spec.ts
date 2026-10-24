@@ -539,6 +539,29 @@ test("the Settings tab gives a container the cards of its kind", async ({ page }
   await expect(card(page, "Zeitplan und Speicherort").getByRole("switch", { name: "Im Zeitplan" })).toBeChecked();
 });
 
+test("the card for a busy app saves its whole policy", async ({ page }, testInfo) => {
+  test.skip(MOBILE_PROJECTS.has(testInfo.project.name), "the desktop layout");
+  await stage(page);
+  const saved: unknown[] = [];
+  await page.route(
+    (url) => url.pathname === "/api/containers/immich",
+    (route) => {
+      if (route.request().method() !== "PATCH") return route.continue();
+      saved.push(route.request().postDataJSON());
+      return route.fulfill({ json: { ok: true } });
+    },
+  );
+  await openEntry(page, "/backups/container/immich?tab=settings", "immich");
+
+  const busy = card(page, "Wenn die App beschäftigt ist");
+  await expect(busy).toBeVisible();
+  await expect(busy).toContainText("Erneut versuchen alle (Min.)");
+  await busy.getByRole("switch", { name: "Warten, solange der Container Daten sendet" }).click();
+  await expect(busy).toContainText("Beschäftigt ab (KiB/s)");
+  await expect.poll(() => saved.length, { timeout: 5000 }).toBeGreaterThan(0);
+  expect(saved[saved.length - 1]).toMatchObject({ deferral: { netKiB: 100, netMin: 5, retryMin: 30, maxHours: 12, atDeadline: "give-up" } });
+});
+
 test("the Verify tab shows the checks, the runs and the size, and opens a run in a window", async ({ page }, testInfo) => {
   test.skip(MOBILE_PROJECTS.has(testInfo.project.name), "the desktop layout");
   await stage(page);
