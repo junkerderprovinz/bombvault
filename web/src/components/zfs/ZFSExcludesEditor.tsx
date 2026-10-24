@@ -65,14 +65,22 @@ export function ZFSExcludesEditor({ item, t, onSaved }: { item: ZFSDatasetView; 
         className="rounded-control bg-carbon-surface2 p-2 font-mono text-xs text-carbon-text text-start glim-field-focus"
       />
       {refusal && <p className="text-xs text-statusFail">{refusal}</p>}
-      {rows.map((row) => (
-        <p key={row.pattern} className="text-caption text-carbon-textMuted">
-          <span dir="ltr" className="font-mono text-start">{row.pattern}</span>
-          {": "}
-          {t("zfs.excludeMatches", row.matches)}
-          {row.sample.length > 0 && ` (${row.sample.join(", ")})`}
-        </p>
-      ))}
+      {rows.map((row) =>
+        row.everything ? (
+          <p key={row.pattern} className="text-caption text-statusFail">
+            <span dir="ltr" className="font-mono text-start">{row.pattern}</span>
+            {": ⚠ "}
+            {t("excludes.excludesEverything")}
+          </p>
+        ) : (
+          <p key={row.pattern} className="text-caption text-carbon-textMuted">
+            <span dir="ltr" className="font-mono text-start">{row.pattern}</span>
+            {": "}
+            {t("zfs.excludeMatches", row.matches)}
+            {row.sample.length > 0 && ` (${row.sample.join(", ")})`}
+          </p>
+        ),
+      )}
     </div>
   );
 }

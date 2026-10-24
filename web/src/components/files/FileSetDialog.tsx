@@ -8,6 +8,7 @@ import { FolderBrowser } from "../FolderBrowser";
 import { useT } from "../../lib/i18n";
 import { Button } from "../Button";
 import { InfoBubble } from "../InfoBubble";
+import { ExcludesEverythingNote } from "../ExcludesEverythingNote";
 import { SettingRow } from "../storage/rows";
 import { ToggleRow } from "../../pages/settings/shared";
 import { useToast } from "../../lib/toast";
@@ -159,6 +160,7 @@ export function FileSetDialog({
           dir="ltr"
           className="rounded-control bg-carbon-surface2 text-carbon-text text-sm font-mono px-3 py-1.5 glim-field-focus text-start"
         />
+        <ExcludesEverythingNote text={excludesText} />
       </div>
 
       {/* A new set has no card yet, so its placement is chosen here; an

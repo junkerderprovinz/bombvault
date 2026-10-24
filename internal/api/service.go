@@ -1824,7 +1824,7 @@ func (s *Service) resolveExcludeLine(line string, in model.Inspect) (pattern, st
 	if line == "" {
 		return "", ""
 	}
-	if excludesEverything(line) {
+	if backup.ExcludesEverything(line) {
 		return line, "everything"
 	}
 	if !strings.Contains(line, "/") {
@@ -1865,19 +1865,6 @@ func (s *Service) resolveExcludeLine(line string, in model.Inspect) (pattern, st
 		}
 	}
 	return line, "passthrough"
-}
-
-// excludesEverything reports whether restic would leave the whole backup out
-// for line: "/" in any spelling, or a glob of only "*" and "**" segments,
-// which matches every path. restic still reports such a run as a success,
-// with a snapshot of empty folders.
-func excludesEverything(line string) bool {
-	for _, seg := range strings.Split(path.Clean(line), "/") {
-		if seg != "" && seg != "*" && seg != "**" {
-			return false
-		}
-	}
-	return true
 }
 
 // resolveExcludePatterns maps each raw user line through resolveExcludeLine and

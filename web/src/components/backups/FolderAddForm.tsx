@@ -6,6 +6,7 @@ import { useToast } from "../../lib/toast";
 import { ToggleRow } from "../../pages/settings/shared";
 import { Badge } from "../Badge";
 import { Button } from "../Button";
+import { ExcludesEverythingNote } from "../ExcludesEverythingNote";
 import { createPlacedFileSet } from "../files/createPlacedFileSet";
 import { FolderBrowser } from "../FolderBrowser";
 import { InfoBubble } from "../InfoBubble";
@@ -217,6 +218,7 @@ export function FolderAddForm({
             className={`font-mono text-start ${FIELD}`}
           />
         </label>
+        <ExcludesEverythingNote text={excludes} />
       </div>
     </>
   );

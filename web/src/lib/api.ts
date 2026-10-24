@@ -5136,6 +5136,8 @@ export interface ZFSExcludePreviewRow {
   pattern: string;
   matches: number;
   sample: string[];
+  /** The line would exclude the whole tree, so the backup ignores it. */
+  everything?: boolean;
 }
 
 /** GET /api/zfs. Served from the database alone, so the list still renders

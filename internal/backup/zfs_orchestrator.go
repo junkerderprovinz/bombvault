@@ -472,7 +472,7 @@ func SplitExcludes(excludes []string, relPaths []string) map[string][]string {
 	}
 	for _, pattern := range excludes {
 		p := strings.TrimSuffix(pattern, "/")
-		if p == "" {
+		if p == "" || ExcludesEverything(p) {
 			log.Printf("zfs backup: exclude %q would exclude the whole tree, ignoring it", pattern)
 			continue
 		}
