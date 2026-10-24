@@ -1553,6 +1553,8 @@ const cs: Partial<Translations> = {
   "excludes.pathMissing": "Tato cesta v záloze neexistuje, takže tento řádek nic nevylučuje.",
   "excludes.outsideHostData": "Tato složka je mimo Host Data, takže ji BombVault nemůže zálohovat. Tento řádek vypne upozornění, že nebyla zálohována.",
   "excludes.excludesEverything": "Tento řádek by vyloučil všechno, takže ho BombVault ignoruje.",
+  "excludes.excludesRoot": "Tento řádek by vynechal celou zálohovanou složku, takže ho BombVault ignoruje. Pokud ji nechceš zálohovat, zruš její zaškrtnutí v Zálohovaných složkách.",
+  "excludes.excludesDataset": "Tento řádek by vynechal celou datovou sadu, takže ho BombVault ignoruje.",
   // Exclude preview status (#38)
   "excludes.willExclude": "bude vyloučeno ze zálohy",
   "excludes.matchesAnywhere": "bude vyloučeno všude, kde se vyskytuje",

@@ -1555,6 +1555,8 @@ const he: Partial<Translations> = {
   "excludes.pathMissing": "הנתיב הזה אינו קיים בגיבוי, כך שהשורה הזו אינה מחריגה דבר.",
   "excludes.outsideHostData": "התיקייה הזו נמצאת מחוץ ל-Host Data, ולכן BombVault לא יכול לגבות אותה. השורה הזו מכבה את האזהרה שהיא לא גובתה.",
   "excludes.excludesEverything": "השורה הזו הייתה מחריגה הכול, ולכן BombVault מתעלם ממנה.",
+  "excludes.excludesRoot": "השורה הזו הייתה משמיטה תיקייה שלמה מהגיבוי, ולכן BombVault מתעלם ממנה. כדי לדלג על התיקייה, יש לבטל את הסימון שלה בתיקיות לגיבוי.",
+  "excludes.excludesDataset": "השורה הזו הייתה משמיטה מערך נתונים שלם, ולכן BombVault מתעלם ממנה.",
   // Exclude preview status (#38)
   "excludes.willExclude": "יוחרג מהגיבוי",
   "excludes.matchesAnywhere": "יוחרג בכל מקום שבו הוא מופיע",

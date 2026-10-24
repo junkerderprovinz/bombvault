@@ -1555,6 +1555,8 @@ const tr: Partial<Translations> = {
   "excludes.pathMissing": "Bu yol yedekte yok, bu yüzden bu satır hiçbir şeyi hariç tutmaz.",
   "excludes.outsideHostData": "Bu klasör Host Data dışında, bu yüzden BombVault onu yedekleyemez. Bu satır, yedeklenmediği uyarısını kapatır.",
   "excludes.excludesEverything": "Bu satır her şeyi hariç tutardı, bu yüzden BombVault onu yok sayar.",
+  "excludes.excludesRoot": "Bu satır yedeklenen bir klasörün tamamını dışarıda bırakırdı, bu yüzden BombVault onu yok sayar. Klasörü atlamak için Yedeklenecek klasörler altında işaretini kaldır.",
+  "excludes.excludesDataset": "Bu satır bir veri kümesinin tamamını dışarıda bırakırdı, bu yüzden BombVault onu yok sayar.",
   // Exclude preview status (#38)
   "excludes.willExclude": "yedekten hariç tutulacak",
   "excludes.matchesAnywhere": "göründüğü her yerde hariç tutulacak",

@@ -1552,6 +1552,8 @@ const pl: Partial<Translations> = {
   "excludes.pathMissing": "Ta ścieżka nie istnieje w kopii zapasowej, więc ten wiersz niczego nie wyklucza.",
   "excludes.outsideHostData": "Ten folder jest poza Host Data, więc BombVault nie może go zarchiwizować. Ten wiersz wyłącza ostrzeżenie, że nie został zarchiwizowany.",
   "excludes.excludesEverything": "Ten wiersz wykluczyłby wszystko, więc BombVault go pomija.",
+  "excludes.excludesRoot": "Ten wiersz pominąłby cały folder kopii, więc BombVault go pomija. Aby nie kopiować tego folderu, odznacz go w Folderach do kopii.",
+  "excludes.excludesDataset": "Ten wiersz pominąłby cały zbiór danych, więc BombVault go pomija.",
   // Exclude preview status (#38)
   "excludes.willExclude": "zostanie wykluczony z kopii zapasowej",
   "excludes.matchesAnywhere": "zostanie wykluczony wszędzie, gdzie występuje",

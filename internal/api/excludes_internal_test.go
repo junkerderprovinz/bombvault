@@ -146,7 +146,7 @@ func TestPreviewExcludesWarnsAboutALineThatWouldExcludeEverything(t *testing.T) 
 		{"/**", "everything"},
 		{"**/*", "everything"},
 		{"*.log", "basename"},
-		{"/config/*", "translated"},
+		{"/config/Logs/*", "translated"},
 		{"/data/*", "passthrough"},
 	}
 	for _, tc := range cases {
@@ -158,7 +158,40 @@ func TestPreviewExcludesWarnsAboutALineThatWouldExcludeEverything(t *testing.T) 
 			if tc.status == "everything" && (got[0].Matches || got[0].Missing) {
 				t.Fatalf("preview of %q = %+v, want neither a match nor a missing path", tc.line, got)
 			}
-			if kept := s.resolveExcludePatterns([]string{tc.line}, in); (tc.status == "everything") != (len(kept) == 0) {
+			if kept := s.resolveExcludePatterns([]string{tc.line}, in, effective); (tc.status == "everything") != (len(kept) == 0) {
+				t.Fatalf("resolveExcludePatterns(%q) = %q", tc.line, kept)
+			}
+		})
+	}
+}
+
+func TestPreviewExcludesWarnsAboutALineThatWouldLeaveABackupFolderOut(t *testing.T) {
+	s, in, effective := mountedExcludeSvc(t)
+	root := s.cfg.HostMountRoot
+	cases := []struct{ line, status string }{
+		{root, "root"},
+		{root + "/user", "root"},
+		{root + "/user/appdata", "root"},
+		{root + "/user/appdata/plex", "root"},
+		{"/config", "root"},
+		{"/config/", "root"},
+		{"/config/*", "root"},
+		{"/media", "root"},
+		{"appdata", "root"},
+		{"/config/Transcode", "translated"},
+		{"/config/Logs/*.log", "translated"},
+		{root + "/user/appdata/plex/Logs", "passthrough"},
+		{"Cache", "basename"},
+		{"/", "everything"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.line, func(t *testing.T) {
+			got := s.previewExcludes(context.Background(), []string{tc.line}, in, effective)
+			if len(got) != 1 || got[0].Status != tc.status {
+				t.Fatalf("preview of %q = %+v, want status %s", tc.line, got, tc.status)
+			}
+			kept := s.resolveExcludePatterns([]string{tc.line}, in, effective)
+			if refused := tc.status == "root" || tc.status == "everything"; refused != (len(kept) == 0) {
 				t.Fatalf("resolveExcludePatterns(%q) = %q", tc.line, kept)
 			}
 		})

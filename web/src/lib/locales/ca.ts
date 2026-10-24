@@ -1049,6 +1049,8 @@ const ca: Partial<Translations> = {
   "excludes.pathMissing": "Aquest camí no existeix a la còpia, així que aquesta línia no exclou res.",
   "excludes.outsideHostData": "Aquesta carpeta és fora de Host Data, així que BombVault no la pot copiar. Aquesta línia treu l'avís que no s'ha copiat.",
   "excludes.excludesEverything": "Aquesta línia ho exclouria tot, així que BombVault la ignora.",
+  "excludes.excludesRoot": "Aquesta línia deixaria fora una carpeta sencera de la còpia, així que BombVault la ignora. Per saltar-te la carpeta, desmarca-la a Carpetes de la còpia.",
+  "excludes.excludesDataset": "Aquesta línia deixaria fora un conjunt de dades sencer, així que BombVault la ignora.",
   // Exclude preview status
   "excludes.willExclude": "s'exclourà de la còpia",
   "excludes.matchesAnywhere": "s'exclourà arreu on aparegui",

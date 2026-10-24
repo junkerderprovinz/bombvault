@@ -1808,7 +1808,7 @@ func (s *Service) toContainerPath(host string) (string, bool) {
 type ExcludePreview struct {
 	Raw      string `json:"raw"`
 	Resolved string `json:"resolved"`
-	Status   string `json:"status"` // "basename" | "translated" | "passthrough" | "outside" | "everything"
+	Status   string `json:"status"` // "basename" | "translated" | "passthrough" | "outside" | "everything" | "root"
 	Matches  bool   `json:"matches"`
 	Missing  bool   `json:"missing,omitempty"`
 }
@@ -1874,13 +1874,13 @@ func (s *Service) resolveExcludeLine(line string, in model.Inspect) (pattern, st
 
 // resolveExcludePatterns maps each raw user line through resolveExcludeLine and
 // returns the resolved restic --exclude patterns, without blank lines, lines
-// that would exclude everything and host paths outside Host Data. This is what
-// feeds BackupDeps.Excludes for a container backup.
-func (s *Service) resolveExcludePatterns(raw []string, in model.Inspect) []string {
+// that would exclude everything or the whole of one of roots, and host paths
+// outside Host Data. This is what feeds BackupDeps.Excludes for a container backup.
+func (s *Service) resolveExcludePatterns(raw []string, in model.Inspect, roots []string) []string {
 	var out []string
 	for _, line := range raw {
 		pattern, status := s.resolveExcludeLine(line, in)
-		if status == "" || status == "everything" || status == "outside" {
+		if status == "" || status == "everything" || status == "outside" || backup.ExcludesARoot(pattern, roots) {
 			continue
 		}
 		out = append(out, pattern)
@@ -1905,8 +1905,9 @@ func isUnderAny(p string, roots []string) bool {
 // name; a translated path matches when it is under a backed-up volume and
 // something there exists; a passthrough is reported as matching nothing. A line
 // that excludes nothing but covers a data mount outside Host Data is "outside":
-// it keeps that mount out of the backup's warning. The user's original text
-// round-trips in Raw.
+// it keeps that mount out of the backup's warning. A line that would leave a
+// whole backed-up volume out is "root", and the backup ignores it. The user's
+// original text round-trips in Raw.
 func (s *Service) previewExcludes(ctx context.Context, raw []string, in model.Inspect, effective []string) []ExcludePreview {
 	unreachable := s.unreachableDataMounts(in)
 	ctx, cancel := context.WithTimeout(ctx, excludeSearchBudget)
@@ -1919,6 +1920,9 @@ func (s *Service) previewExcludes(ctx context.Context, raw []string, in model.In
 			continue
 		}
 		pattern, status := s.resolveExcludeLine(line, in)
+		if status != "everything" && status != "outside" && backup.ExcludesARoot(pattern, effective) {
+			status = "root"
+		}
 		lines = append(lines, resolved{line, pattern, status})
 		if status == "basename" {
 			names = append(names, pattern)
@@ -1938,7 +1942,7 @@ func (s *Service) previewExcludes(ctx context.Context, raw []string, in model.In
 				p.Missing = !p.Matches
 			}
 		}
-		if !p.Matches && slices.ContainsFunc(unreachable, func(m model.Mount) bool { return excludeCoversMount(l.line, m.Destination) }) {
+		if !p.Matches && p.Status != "root" && slices.ContainsFunc(unreachable, func(m model.Mount) bool { return excludeCoversMount(l.line, m.Destination) }) {
 			p.Status, p.Missing = "outside", false
 		}
 		out = append(out, p)
@@ -6633,7 +6637,7 @@ func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, re
 			extraTags: withTags(s.directTags(settings, "containers", repo), beforeRestoreTags(ctx)),
 		}
 	}
-	excludes := append(s.resolveExcludePatterns(tg.Excludes, in), excludedBranches(selection)...)
+	excludes := append(s.resolveExcludePatterns(tg.Excludes, in, effective), excludedBranches(selection)...)
 	// The fingerprint covers the configured folders, not the ones that resolved
 	// on disk just now: an unmounted share must look like the selection it has
 	// always been, so the detectors report the collapse instead of writing it

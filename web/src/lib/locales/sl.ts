@@ -1049,6 +1049,8 @@ const sl: Partial<Translations> = {
   "excludes.pathMissing": "Ta pot v varnostni kopiji ne obstaja, zato ta vrstica ne izključi ničesar.",
   "excludes.outsideHostData": "Ta mapa je zunaj Host Data, zato je BombVault ne more varnostno kopirati. Ta vrstica izklopi opozorilo, da ni bila varnostno kopirana.",
   "excludes.excludesEverything": "Ta vrstica bi izključila vse, zato jo BombVault prezre.",
+  "excludes.excludesRoot": "Ta vrstica bi izpustila celo mapo varnostne kopije, zato jo BombVault prezre. Če želiš mapo preskočiti, ji odstrani kljukico v Mapah za varnostno kopiranje.",
+  "excludes.excludesDataset": "Ta vrstica bi izpustila celo zbirko podatkov, zato jo BombVault prezre.",
   "excludes.willExclude": "bo izključeno iz varnostne kopije",
   "excludes.matchesAnywhere": "bo izključeno, kjer koli se pojavi",
   "excludes.assistTitle": "Pomočnik za izključitve",

@@ -1546,6 +1546,8 @@ const zh: Partial<Translations> = {
   "excludes.pathMissing": "备份中不存在此路径，因此此行不会排除任何内容。",
   "excludes.outsideHostData": "此文件夹位于 Host Data 之外，BombVault 无法备份它。此行会关闭它未被备份的警告。",
   "excludes.excludesEverything": "此行会排除所有内容，因此 BombVault 会忽略它。",
+  "excludes.excludesRoot": "此行会排除整个备份文件夹，因此 BombVault 会忽略它。要跳过该文件夹，请在备份文件夹中取消勾选它。",
+  "excludes.excludesDataset": "此行会排除整个数据集，因此 BombVault 会忽略它。",
   // Exclude preview status (#38)
   "excludes.willExclude": "将从备份中排除",
   "excludes.matchesAnywhere": "将在其出现的任何位置被排除",

@@ -1552,6 +1552,8 @@ const ru: Partial<Translations> = {
   "excludes.pathMissing": "Этого пути нет в резервной копии, поэтому эта строка ничего не исключает.",
   "excludes.outsideHostData": "Эта папка находится вне Host Data, поэтому BombVault не может её скопировать. Эта строка отключает предупреждение о том, что она не скопирована.",
   "excludes.excludesEverything": "Эта строка исключила бы всё, поэтому BombVault её игнорирует.",
+  "excludes.excludesRoot": "Эта строка исключила бы целую папку резервной копии, поэтому BombVault её игнорирует. Чтобы не копировать папку, снимите с неё отметку в разделе «Папки для резервного копирования».",
+  "excludes.excludesDataset": "Эта строка исключила бы целый набор данных, поэтому BombVault её игнорирует.",
   // Exclude preview status (#38)
   "excludes.willExclude": "будет исключён из резервной копии",
   "excludes.matchesAnywhere": "будет исключён везде, где встречается",

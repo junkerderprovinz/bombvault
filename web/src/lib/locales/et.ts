@@ -1049,6 +1049,8 @@ const et: Partial<Translations> = {
   "excludes.pathMissing": "Seda teed varunduses pole, seega see rida ei jäta midagi välja.",
   "excludes.outsideHostData": "See kaust asub väljaspool Host Datat, seega BombVault ei saa seda varundada. See rida lülitab välja hoiatuse, et seda ei varundatud.",
   "excludes.excludesEverything": "See rida jätaks kõik välja, seega BombVault eirab seda.",
+  "excludes.excludesRoot": "See rida jätaks välja terve varundatava kausta, seega BombVault eirab seda. Kausta vahelejätmiseks eemalda selle linnuke jaotises Varundatavad kaustad.",
+  "excludes.excludesDataset": "See rida jätaks välja terve andmestiku, seega BombVault eirab seda.",
   // Exclude preview status
   "excludes.willExclude": "jäetakse varundusest välja",
   "excludes.matchesAnywhere": "jäetakse välja kõikjal, kus see esineb",

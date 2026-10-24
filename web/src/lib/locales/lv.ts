@@ -1049,6 +1049,8 @@ const lv: Partial<Translations> = {
   "excludes.pathMissing": "Šis ceļš rezerves kopijā nepastāv, tāpēc šī rinda neko neizslēdz.",
   "excludes.outsideHostData": "Šī mape atrodas ārpus Host Data, tāpēc BombVault nevar to dublēt. Šī rinda izslēdz brīdinājumu, ka tai nav izveidota rezerves kopija.",
   "excludes.excludesEverything": "Šī rinda izslēgtu visu, tāpēc BombVault to ignorē.",
+  "excludes.excludesRoot": "Šī rinda izlaistu veselu dublējamo mapi, tāpēc BombVault to ignorē. Lai mapi izlaistu, noņemiet tās atzīmi sadaļā Rezerves kopēšanas mapes.",
+  "excludes.excludesDataset": "Šī rinda izlaistu veselu datu kopu, tāpēc BombVault to ignorē.",
   // Exclude preview status
   "excludes.willExclude": "tiks izslēgts no rezerves kopijas",
   "excludes.matchesAnywhere": "tiks izslēgts jebkur, kur tas parādās",

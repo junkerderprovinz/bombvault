@@ -1049,6 +1049,8 @@ const sr: Partial<Translations> = {
   "excludes.pathMissing": "Ова путања не постоји у резервној копији, па овај ред ништа не изузима.",
   "excludes.outsideHostData": "Ова фасцикла је изван Host Data, па је BombVault не може резервно копирати. Овај ред искључује упозорење да није резервно копирана.",
   "excludes.excludesEverything": "Овај ред би изузео све, па га BombVault занемарује.",
+  "excludes.excludesRoot": "Овај ред би изоставио целу фасциклу резервне копије, па га BombVault занемарује. Да прескочиш фасциклу, уклони јој ознаку у Фасциклама за резервну копију.",
+  "excludes.excludesDataset": "Овај ред би изоставио цео скуп података, па га BombVault занемарује.",
   "excludes.willExclude": "биће изузето из резервне копије",
   "excludes.matchesAnywhere": "биће изузето где год се појави",
   "excludes.assistTitle": "Помоћник за изузимања",

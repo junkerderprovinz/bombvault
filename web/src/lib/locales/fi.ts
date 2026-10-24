@@ -1555,6 +1555,8 @@ const fi: Partial<Translations> = {
   "excludes.pathMissing": "Tätä polkua ei ole varmuuskopiossa, joten tämä rivi ei sulje pois mitään.",
   "excludes.outsideHostData": "Tämä kansio on Host Datan ulkopuolella, joten BombVault ei voi varmuuskopioida sitä. Tämä rivi poistaa varoituksen siitä, ettei sitä varmuuskopioitu.",
   "excludes.excludesEverything": "Tämä rivi sulkisi pois kaiken, joten BombVault jättää sen huomiotta.",
+  "excludes.excludesRoot": "Tämä rivi jättäisi pois kokonaisen varmuuskopioitavan kansion, joten BombVault jättää sen huomiotta. Jos haluat ohittaa kansion, poista sen valinta kohdassa Varmuuskopioitavat kansiot.",
+  "excludes.excludesDataset": "Tämä rivi jättäisi pois kokonaisen tietojoukon, joten BombVault jättää sen huomiotta.",
   // Exclude preview status (#38)
   "excludes.willExclude": "suljetaan pois varmuuskopiosta",
   "excludes.matchesAnywhere": "suljetaan pois kaikkialta, missä se esiintyy",

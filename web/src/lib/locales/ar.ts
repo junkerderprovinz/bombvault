@@ -1556,6 +1556,8 @@ const ar: Partial<Translations> = {
   "excludes.pathMissing": "هذا المسار غير موجود في النسخة الاحتياطية، لذا لا يستبعد هذا السطر أي شيء.",
   "excludes.outsideHostData": "يقع هذا المجلد خارج Host Data، لذا لا يستطيع BombVault نسخه احتياطيًا. يوقف هذا السطر التحذير بأنه لم يُنسخ احتياطيًا.",
   "excludes.excludesEverything": "هذا السطر سيستبعد كل شيء، لذا يتجاهله BombVault.",
+  "excludes.excludesRoot": "هذا السطر سيستبعد مجلدًا كاملًا من النسخ الاحتياطي، لذا يتجاهله BombVault. لتخطي المجلد، ألغِ تحديده في مجلدات النسخ الاحتياطي.",
+  "excludes.excludesDataset": "هذا السطر سيستبعد مجموعة بيانات كاملة، لذا يتجاهله BombVault.",
   // Exclude preview status (#38)
   "excludes.willExclude": "سيتم استبعاده من النسخة الاحتياطية",
   "excludes.matchesAnywhere": "سيتم استبعاده أينما ظهر",

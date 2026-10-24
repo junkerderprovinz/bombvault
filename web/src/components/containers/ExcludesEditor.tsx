@@ -60,6 +60,7 @@ function previewKey(row: ExcludePreviewRow): TranslationKey {
   if (row.status === "outside") return "excludes.outsideHostData";
   if (row.matches) return row.status === "basename" ? "excludes.matchesAnywhere" : "excludes.willExclude";
   if (row.status === "everything") return "excludes.excludesEverything";
+  if (row.status === "root") return "excludes.excludesRoot";
   if (row.status === "passthrough") return "excludes.noMatch";
   if (row.status === "basename") return "excludes.nameMatchesNothing";
   return row.missing ? "excludes.pathMissing" : "excludes.excludesNothing";

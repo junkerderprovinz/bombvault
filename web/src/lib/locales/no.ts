@@ -1555,6 +1555,8 @@ const no: Partial<Translations> = {
   "excludes.pathMissing": "Denne stien finnes ikke i sikkerhetskopien, så denne linjen ekskluderer ingenting.",
   "excludes.outsideHostData": "Denne mappen ligger utenfor Host Data, så BombVault kan ikke sikkerhetskopiere den. Denne linjen slår av varselet om at den ikke ble sikkerhetskopiert.",
   "excludes.excludesEverything": "Denne linjen ville ekskludert alt, så BombVault ignorerer den.",
+  "excludes.excludesRoot": "Denne linjen ville utelatt en hel sikkerhetskopiert mappe, så BombVault ignorerer den. Vil du hoppe over mappen, fjerner du haken ved den under Sikkerhetskopierte mapper.",
+  "excludes.excludesDataset": "Denne linjen ville utelatt et helt datasett, så BombVault ignorerer den.",
   // Exclude preview status (#38)
   "excludes.willExclude": "utelukkes fra sikkerhetskopien",
   "excludes.matchesAnywhere": "utelukkes overalt der det forekommer",

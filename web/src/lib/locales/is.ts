@@ -1049,6 +1049,8 @@ const is: Partial<Translations> = {
   "excludes.pathMissing": "Þessi slóð er ekki til í afrituninni, svo þessi lína útilokar ekkert.",
   "excludes.outsideHostData": "Þessi mappa er utan Host Data, svo BombVault getur ekki afritað hana. Þessi lína slekkur á viðvöruninni um að hún hafi ekki verið afrituð.",
   "excludes.excludesEverything": "Þessi lína myndi útiloka allt, svo BombVault hunsar hana.",
+  "excludes.excludesRoot": "Þessi lína myndi sleppa heilli afritaðri möppu, svo BombVault hunsar hana. Til að sleppa möppunni skaltu taka hakið af henni undir Afritaðar möppur.",
+  "excludes.excludesDataset": "Þessi lína myndi sleppa heilu gagnasafni, svo BombVault hunsar hana.",
   // Exclude preview status
   "excludes.willExclude": "verður útilokað úr afrituninni",
   "excludes.matchesAnywhere": "verður útilokað hvar sem það birtist",

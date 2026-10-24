@@ -502,21 +502,34 @@ func longestMemberPrefix(pattern string, relPaths []string) string {
 
 // AnchorExcludes re-roots a member's anchored patterns at the snapshot directory
 // restic reads, because restic matches an anchored pattern against the absolute
-// path and that path carries the run's snapshot name.
+// path and that path carries the run's snapshot name. A pattern that would
+// then leave the whole snapshot directory out is dropped.
 func AnchorExcludes(snapDir string, excludes []string) []string {
 	if len(excludes) == 0 {
 		return nil
 	}
-	prefix := excludeMetaEscaper.Replace(snapDir)
 	anchored := make([]string, 0, len(excludes))
 	for _, p := range excludes {
-		if strings.HasPrefix(p, "/") {
-			anchored = append(anchored, prefix+p)
+		if LeavesMemberOut(snapDir, p) {
+			log.Printf("zfs backup: exclude %q would leave %s out whole, ignoring it", p, snapDir)
 			continue
 		}
-		anchored = append(anchored, p)
+		anchored = append(anchored, anchorExclude(snapDir, p))
 	}
 	return anchored
+}
+
+// LeavesMemberOut reports whether a member's pattern, anchored at dir, would
+// leave the whole of dir out.
+func LeavesMemberOut(dir, pattern string) bool {
+	return ExcludesARoot(anchorExclude(dir, pattern), []string{dir})
+}
+
+func anchorExclude(dir, pattern string) string {
+	if strings.HasPrefix(pattern, "/") {
+		return excludeMetaEscaper.Replace(dir) + pattern
+	}
+	return pattern
 }
 
 // DestroyRecursiveWithRetry removes the run's snapshot from the whole tree. A

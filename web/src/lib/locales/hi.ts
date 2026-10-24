@@ -1049,6 +1049,8 @@ const hi: Partial<Translations> = {
   "excludes.pathMissing": "यह पथ बैकअप में मौजूद नहीं है, इसलिए यह पंक्ति कुछ भी एक्सक्लूड नहीं करती।",
   "excludes.outsideHostData": "यह फ़ोल्डर Host Data के बाहर है, इसलिए BombVault इसका बैकअप नहीं ले सकता। यह पंक्ति उस चेतावनी को बंद करती है कि इसका बैकअप नहीं लिया गया।",
   "excludes.excludesEverything": "यह पंक्ति सब कुछ एक्सक्लूड कर देती, इसलिए BombVault इसे अनदेखा करता है।",
+  "excludes.excludesRoot": "यह पंक्ति बैकअप का पूरा फ़ोल्डर छोड़ देती, इसलिए BombVault इसे अनदेखा करता है। फ़ोल्डर छोड़ना हो तो बैकअप फ़ोल्डर में उसका निशान हटाएँ।",
+  "excludes.excludesDataset": "यह पंक्ति पूरा डेटासेट छोड़ देती, इसलिए BombVault इसे अनदेखा करता है।",
   // Exclude preview status
   "excludes.willExclude": "बैकअप से एक्सक्लूड कर दिया जाएगा",
   "excludes.matchesAnywhere": "यह जहाँ भी दिखेगा वहाँ एक्सक्लूड कर दिया जाएगा",

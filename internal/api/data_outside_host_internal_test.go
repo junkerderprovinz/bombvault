@@ -166,7 +166,7 @@ func TestResolveExcludePatternsLeavesAHostPathOutsideHostDataOut(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.line, func(t *testing.T) {
-			if got := s.resolveExcludePatterns([]string{tc.line}, in); !reflect.DeepEqual(got, tc.want) {
+			if got := s.resolveExcludePatterns([]string{tc.line}, in, nil); !reflect.DeepEqual(got, tc.want) {
 				t.Fatalf("resolveExcludePatterns(%q) = %q, want %q", tc.line, got, tc.want)
 			}
 		})

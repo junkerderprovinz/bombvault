@@ -1894,12 +1894,13 @@ export function setContainerExcludes(name: string, excludes: string[]): Promise<
  * POST /api/containers/{name}/excludes/preview — resolve candidate exclude lines
  * against the container's live mounts WITHOUT saving them. Each preview entry
  * reports the resolved `--exclude` pattern, how it was derived (`status`:
- * "basename" | "translated" | "passthrough" | "outside" | "everything"), and
- * whether it would exclude anything in this container's backup (`matches`) so
- * the UI can warn on a line that matches nothing. "outside" is a line that
+ * "basename" | "translated" | "passthrough" | "outside" | "everything" | "root"),
+ * and whether it would exclude anything in this container's backup (`matches`)
+ * so the UI can warn on a line that matches nothing. "outside" is a line that
  * covers a folder outside Host Data and turns off the backup's warning about
- * it; "everything" is a line that would exclude the whole backup, which the
- * backup ignores.
+ * it; "everything" is a line that would exclude the whole backup and "root"
+ * one that would leave out a whole backed-up folder, both ignored by the
+ * backup.
  */
 export function previewContainerExcludes(
   name: string,
@@ -5139,6 +5140,8 @@ export interface ZFSExcludePreviewRow {
   sample: string[];
   /** The line would exclude the whole tree, so the backup ignores it. */
   everything?: boolean;
+  /** The line would leave a whole dataset out, so the backup ignores it. */
+  root?: boolean;
 }
 
 /** GET /api/zfs. Served from the database alone, so the list still renders

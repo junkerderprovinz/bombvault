@@ -1556,6 +1556,8 @@ const hu: Partial<Translations> = {
   "excludes.pathMissing": "Ez az útvonal nem létezik a biztonsági mentésben, ezért ez a sor semmit sem zár ki.",
   "excludes.outsideHostData": "Ez a mappa a Host Data területén kívül van, ezért a BombVault nem tud mentést készíteni róla. Ez a sor kikapcsolja a figyelmeztetést, hogy nem készült róla mentés.",
   "excludes.excludesEverything": "Ez a sor mindent kizárna, ezért a BombVault figyelmen kívül hagyja.",
+  "excludes.excludesRoot": "Ez a sor kihagyna egy teljes mentett mappát, ezért a BombVault figyelmen kívül hagyja. Ha ki akarod hagyni a mappát, vedd ki a jelölését a Mentett mappák alatt.",
+  "excludes.excludesDataset": "Ez a sor kihagyna egy teljes adatkészletet, ezért a BombVault figyelmen kívül hagyja.",
   // Exclude preview status (#38)
   "excludes.willExclude": "ki lesz zárva a biztonsági mentésből",
   "excludes.matchesAnywhere": "mindenhol ki lesz zárva, ahol előfordul",

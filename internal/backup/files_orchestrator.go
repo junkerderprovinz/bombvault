@@ -3,7 +3,6 @@ package backup
 import (
 	"context"
 	"fmt"
-	"slices"
 )
 
 // FilesRestic is the restic surface the files domain needs. The fileset:<Name>
@@ -29,7 +28,8 @@ type FileSetBackupDeps struct {
 	// SetName is the set's name; the snapshot is tagged fileset:<SetName>.
 	SetName string
 	// Excludes are the set's restic --exclude patterns, passed through verbatim
-	// apart from a line that would exclude everything, which is dropped.
+	// apart from a line that would leave a whole backup root out, which is
+	// dropped.
 	Excludes []string
 	Restic   FilesRestic
 	Runs     Runs
@@ -45,7 +45,7 @@ func BackupFileSetDir(ctx context.Context, d FileSetBackupDeps) (Summary, error)
 	if len(d.SourcePaths) > 0 {
 		paths = d.SourcePaths
 	}
-	excludes := slices.DeleteFunc(slices.Clone(d.Excludes), ExcludesEverything)
+	excludes := DropRootExcludes(d.Excludes, paths)
 	summary, err := d.Restic.Backup(ctx, d.Repo, paths, []string{"fileset:" + d.SetName}, excludes...)
 	if err != nil {
 		_ = d.Runs.Finish(runID, statusFailed, Summary{}, truncateErr(err))

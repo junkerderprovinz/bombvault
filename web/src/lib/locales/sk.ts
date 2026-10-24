@@ -1049,6 +1049,8 @@ const sk: Partial<Translations> = {
   "excludes.pathMissing": "Táto cesta v zálohe neexistuje, takže tento riadok nič nevylučuje.",
   "excludes.outsideHostData": "Tento priečinok je mimo Host Data, takže ho BombVault nemôže zálohovať. Tento riadok vypne upozornenie, že nebol zálohovaný.",
   "excludes.excludesEverything": "Tento riadok by vylúčil všetko, takže ho BombVault ignoruje.",
+  "excludes.excludesRoot": "Tento riadok by vynechal celý zálohovaný priečinok, takže ho BombVault ignoruje. Ak ho nechceš zálohovať, zruš jeho označenie v Zálohovaných priečinkoch.",
+  "excludes.excludesDataset": "Tento riadok by vynechal celú dátovú sadu, takže ho BombVault ignoruje.",
   // Exclude preview status
   "excludes.willExclude": "bude vylúčené zo zálohy",
   "excludes.matchesAnywhere": "bude vylúčené všade, kde sa objaví",

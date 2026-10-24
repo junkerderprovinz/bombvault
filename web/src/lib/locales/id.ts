@@ -1049,6 +1049,8 @@ const id: Partial<Translations> = {
   "excludes.pathMissing": "Jalur ini tidak ada dalam pencadangan, jadi baris ini tidak mengecualikan apa pun.",
   "excludes.outsideHostData": "Folder ini berada di luar Host Data, jadi BombVault tidak bisa mencadangkannya. Baris ini mematikan peringatan bahwa folder ini tidak dicadangkan.",
   "excludes.excludesEverything": "Baris ini akan mengecualikan semuanya, jadi BombVault mengabaikannya.",
+  "excludes.excludesRoot": "Baris ini akan melewatkan seluruh folder pencadangan, jadi BombVault mengabaikannya. Untuk melewati folder itu, hapus centangnya di Folder pencadangan.",
+  "excludes.excludesDataset": "Baris ini akan melewatkan seluruh set data, jadi BombVault mengabaikannya.",
   // Exclude preview status
   "excludes.willExclude": "akan dikecualikan dari pencadangan",
   "excludes.matchesAnywhere": "akan dikecualikan di mana pun muncul",

@@ -66,11 +66,11 @@ export function ZFSExcludesEditor({ item, t, onSaved }: { item: ZFSDatasetView; 
       />
       {refusal && <p className="text-xs text-statusFail">{refusal}</p>}
       {rows.map((row) =>
-        row.everything ? (
+        row.everything || row.root ? (
           <p key={row.pattern} className="text-caption text-statusFail">
             <span dir="ltr" className="font-mono text-start">{row.pattern}</span>
             {": ⚠ "}
-            {t("excludes.excludesEverything")}
+            {t(row.everything ? "excludes.excludesEverything" : "excludes.excludesDataset")}
           </p>
         ) : (
           <p key={row.pattern} className="text-caption text-carbon-textMuted">

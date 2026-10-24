@@ -125,6 +125,15 @@ describe("exclusions editor", () => {
     expect(screen.queryByText(en["excludes.noMatch"], { exact: false })).toBeNull();
   });
 
+  it("warns that a line which would leave out a whole backup folder is ignored", async () => {
+    const preview: ExcludePreview = (_name, lines) =>
+      Promise.resolve(lines.map((raw) => ({ raw, resolved: raw, status: "root", matches: false })));
+    renderEditor(["/host/user"], preview);
+    await settle();
+    expect(screen.getByText(en["excludes.excludesRoot"], { exact: false }).textContent).toContain("⚠");
+    expect(screen.queryByText(en["excludes.noMatch"], { exact: false })).toBeNull();
+  });
+
   it("warns that a line which would exclude everything is ignored", async () => {
     const preview: ExcludePreview = (_name, lines) =>
       Promise.resolve(lines.map((raw) => ({ raw, resolved: raw, status: "everything", matches: false })));

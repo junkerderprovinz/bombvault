@@ -15,7 +15,9 @@ vi.mock("../../lib/api", async (importOriginal) => {
         rows: lines.map((pattern) =>
           pattern === "*.tmp"
             ? { pattern, matches: 2, sample: ["/a.tmp", "/b.tmp"] }
-            : { pattern, matches: 0, sample: [], everything: true },
+            : pattern === "/plex/*"
+              ? { pattern, matches: 0, sample: [], root: true }
+              : { pattern, matches: 0, sample: [], everything: true },
         ),
       }),
     patchZFSDataset: () => Promise.resolve({ ok: true }),
@@ -26,7 +28,7 @@ const { ZFSExcludesEditor } = await import("./ZFSExcludesEditor");
 
 function Harness() {
   const { t } = useT();
-  const item = { id: "zfs-1", excludes: ["/", "*.tmp"] } as unknown as ZFSDatasetView;
+  const item = { id: "zfs-1", excludes: ["/", "*.tmp", "/plex/*"] } as unknown as ZFSDatasetView;
   return <ZFSExcludesEditor item={item} t={t} onSaved={() => undefined} />;
 }
 
@@ -57,5 +59,22 @@ describe("ZFS exclude editor", () => {
     const warning = screen.getByText(en["excludes.excludesEverything"], { exact: false });
     expect(warning.textContent).toContain("/");
     expect(screen.getAllByText(en["excludes.excludesEverything"], { exact: false })).toHaveLength(1);
+  });
+
+  it("warns that a line which would leave a whole dataset out is ignored", async () => {
+    render(
+      <I18nProvider>
+        <ToastProvider>
+          <Harness />
+        </ToastProvider>
+      </I18nProvider>,
+    );
+    await act(async () => {
+      vi.advanceTimersByTime(1000);
+      await Promise.resolve();
+    });
+    const warning = screen.getByText(en["excludes.excludesDataset"], { exact: false });
+    expect(warning.textContent).toContain("/plex/*");
+    expect(warning.textContent).toContain("⚠");
   });
 });

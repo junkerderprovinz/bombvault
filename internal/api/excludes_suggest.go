@@ -1045,7 +1045,7 @@ func (s *Service) SuggestExcludes(ctx context.Context, name, source string) (out
 	var resolved, stored []string
 	if tg, gErr := s.store.GetTargetByContainer(name); gErr == nil {
 		stored = tg.Excludes
-		resolved = s.resolveExcludePatterns(tg.Excludes, in)
+		resolved = s.resolveExcludePatterns(tg.Excludes, in, configured)
 	}
 	preset = s.excludePresetFor(image, in, configured, stored)
 	opts := suggestOpts{maxDepth: suggestMaxDepth, largeBytes: suggestLargeBytes}

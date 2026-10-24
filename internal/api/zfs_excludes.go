@@ -22,12 +22,14 @@ const (
 
 // ZFSExcludePreviewRow is what one exclude line would leave out of the next
 // backup, with a few of the paths it hits. Everything marks a line that would
-// exclude the whole tree, which the backup ignores.
+// exclude the whole tree and Root one that would leave a whole dataset out.
+// The backup ignores both.
 type ZFSExcludePreviewRow struct {
 	Pattern    string   `json:"pattern"`
 	Matches    int      `json:"matches"`
 	Sample     []string `json:"sample"`
 	Everything bool     `json:"everything,omitempty"`
+	Root       bool     `json:"root,omitempty"`
 }
 
 // PreviewZFSExcludes resolves each exclude line against the item's live
@@ -61,6 +63,10 @@ func (s *Service) PreviewZFSExcludes(ctx context.Context, id string, patterns []
 		row := ZFSExcludePreviewRow{Pattern: pattern, Sample: []string{}, Everything: backup.ExcludesEverything(pattern)}
 		for rel, rerooted := range backup.SplitExcludes([]string{pattern}, relPaths) {
 			for _, p := range rerooted {
+				if dirs[rel] != "" && backup.LeavesMemberOut(dirs[rel], p) {
+					row.Root = true
+					continue
+				}
 				countZFSMatches(ctx, dirs[rel], rel, p, &row)
 			}
 		}
