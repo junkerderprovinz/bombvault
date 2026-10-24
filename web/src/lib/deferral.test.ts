@@ -132,13 +132,13 @@ describe("why a backup waits", () => {
     expect(runReason("Jellyfin did not answer", tDe)).toBe("Jellyfin hat nicht geantwortet");
     expect(runReason("Jellyfin has no API key set", tDe)).toBe("für Jellyfin ist kein API-Schlüssel eingetragen");
     expect(runReason("the container sent 100 KiB/s or more within the last 1 minute", tEn)).toBe(
-      "the container sent 100 KiB/s or more within the last 1 minute"
+      "the container sent 100 KiB/s or more within the last minute"
     );
     expect(runReason("the container sent 100 KiB/s or more within the last 5 minutes", tDe)).toBe(
       "der Container hat in den letzten 5 Minuten 100 KiB/s oder mehr gesendet"
     );
     expect(runReason("BombVault has watched the container's traffic for less than 1 minute", tDe)).toBe(
-      "BombVault beobachtet den Verkehr des Containers seit weniger als 1 Minute"
+      "BombVault beobachtet den Verkehr des Containers seit weniger als einer Minute"
     );
     expect(runReason("the pre-backup command says the app is busy: 2 streams", tDe)).toBe(
       "der Befehl vor der Sicherung meldet, dass die App beschäftigt ist: 2 streams"
