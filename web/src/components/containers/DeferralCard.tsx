@@ -272,7 +272,7 @@ export function DeferralCard({
             className={FIELD}
           />
         </SettingRow>
-        <SettingRow label={t("deferral.atDeadline")} hint={t("deferral.atDeadlineHint")} narrow>
+        <SettingRow label={t("deferral.atDeadline")} hint={t("deferral.atDeadlineHint")}>
           <Selector
             items={[
               { id: "give-up", label: t("deferral.giveUp") },
