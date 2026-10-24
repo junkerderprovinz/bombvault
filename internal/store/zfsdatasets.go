@@ -122,7 +122,7 @@ const zfsDatasetColumns = `id, dataset, enabled, excludes, excluded_children, sc
 	leftover_count, leftover_checked_at, created_at,
 	replica_target_kind, replica_target_id, replica_after_backup, replica_cadence, replica_keep,
 	replica_peer_state, replica_peer_slot, replica_peer_token_enc, replica_peer_base, replica_peer_url, replica_peer_pin,
-	replica_folder`
+	replica_folder, replica_keep_source`
 
 // CreateZFSDataset inserts a new item. An empty ID is assigned via newID(); a
 // dataset that is already an item fails (dataset is UNIQUE). A new item does
@@ -928,7 +928,7 @@ func scanZFSDataset(s scanner) (ZFSDataset, error) {
 		&d.LeftoverCount, &d.LeftoverCheckedAt, &d.CreatedAt,
 		&d.Replica.TargetKind, &d.Replica.TargetID, &afterBackup, &d.Replica.Cadence, &keep,
 		&d.Replica.Peer.State, &d.Replica.Peer.Slot, &peerToken, &d.Replica.Peer.Base, &d.Replica.Peer.URL, &d.Replica.Peer.Pin,
-		&d.Replica.Folder)
+		&d.Replica.Folder, &d.Replica.KeepOnSource)
 	if err != nil {
 		return ZFSDataset{}, fmt.Errorf("scanZFSDataset: %w", err)
 	}

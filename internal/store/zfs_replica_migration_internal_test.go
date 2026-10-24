@@ -174,3 +174,30 @@ func TestTheMountSettingAndNoteSurviveASave(t *testing.T) {
 		t.Fatalf("mount note = %q, want locked", got.Mount)
 	}
 }
+
+// An item stored before the setting keeps only the newest replica snapshot on
+// this server.
+func TestSourceKeepMigrationLeavesExistingItemsKeepingOnlyTheNewest(t *testing.T) {
+	db := OpenMem(t)
+	bootAs(t, db, replicaSourceKeepMigration-1)
+	if _, err := db.Exec(`INSERT INTO zfs_datasets (id, dataset, created_at) VALUES ('z1', 'cache/appdata', 1700000000)`); err != nil {
+		t.Fatalf("seed: %v", err)
+	}
+	if err := Migrate(db); err != nil {
+		t.Fatalf("Migrate: %v", err)
+	}
+	repo := New(db)
+	d, err := repo.GetZFSDataset("z1")
+	if err != nil || d.Replica.KeepOnSource != 0 {
+		t.Fatalf("item after the upgrade = %+v, %v; want 0 kept on the source", d.Replica, err)
+	}
+	if err := repo.SetZFSReplicaKeepOnSource("z1", 5); err != nil {
+		t.Fatal(err)
+	}
+	if d, _ := repo.GetZFSDataset("z1"); d.Replica.KeepOnSource != 5 {
+		t.Fatalf("kept on the source after the save = %d, want 5", d.Replica.KeepOnSource)
+	}
+	if applied := appliedVersions(t, db); applied[replicaSourceKeepMigration] != "zfs_datasets_replica_keep_source" {
+		t.Fatalf("migration %d = %q", replicaSourceKeepMigration, applied[replicaSourceKeepMigration])
+	}
+}

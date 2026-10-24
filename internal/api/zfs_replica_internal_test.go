@@ -667,6 +667,7 @@ func TestPatchValidatesBeforeItWrites(t *testing.T) {
 		`{"cadence":"everyN 3 03:00"}`,
 		`{"keep":{"preset":"forever","own":[0,0,0,0,0]}}`,
 		`{"keep":{"preset":"own","own":[0,-1,0,0,0]}}`,
+		`{"keepOnSource":-1}`,
 	} {
 		_, m, _ := r.call(http.MethodPatch, "/api/zfs/datasets/"+r.item.ID+"/replica", body)
 		if m["ok"] != false {
@@ -674,19 +675,35 @@ func TestPatchValidatesBeforeItWrites(t *testing.T) {
 		}
 	}
 	d, _ := r.st.GetZFSDataset(r.item.ID)
-	if d.Replica.TargetID != r.srv.ID || d.Replica.Keep != store.DefaultZFSReplicaKeep {
+	if d.Replica.TargetID != r.srv.ID || d.Replica.Keep != store.DefaultZFSReplicaKeep || d.Replica.KeepOnSource != 0 {
 		t.Errorf("a refused patch changed the item: %+v", d.Replica)
 	}
 
 	_, m, _ := r.call(http.MethodPatch, "/api/zfs/datasets/"+r.item.ID+"/replica",
-		`{"afterBackup":false,"cadence":"daily 05:00","keep":{"preset":"long","own":[0,0,0,0,0]}}`)
+		`{"afterBackup":false,"cadence":"daily 05:00","keep":{"preset":"long","own":[0,0,0,0,0]},"keepOnSource":5}`)
 	if m["ok"] != true {
 		t.Fatalf("patch = %v", m)
 	}
 	_, v, _ := r.call(http.MethodGet, "/api/zfs/datasets/"+r.item.ID+"/replica", "")
 	keep, _ := v["keep"].(map[string]any)
-	if v["afterBackup"] != false || v["cadence"] != "daily 05:00" || keep["preset"] != "long" || v["peerState"] != "" {
+	if v["afterBackup"] != false || v["cadence"] != "daily 05:00" || keep["preset"] != "long" || v["keepOnSource"] != 5.0 || v["peerState"] != "" {
 		t.Errorf("view after the patch = %v", v)
+	}
+}
+
+func TestTheSnapshotsKeptOnTheSourceReachTheEngine(t *testing.T) {
+	r := newReplicaRig(t)
+	if _, m, _ := r.call(http.MethodPatch, "/api/zfs/datasets/"+r.item.ID+"/replica", `{"keepOnSource":3}`); m["ok"] != true {
+		t.Fatalf("patch = %v", m)
+	}
+	if _, m, _ := r.call(http.MethodPatch, "/api/zfs/datasets/"+r.item.ID+"/replica", `{"cadence":"daily 05:00"}`); m["ok"] != true {
+		t.Fatalf("patch = %v", m)
+	}
+	if err := r.s.ReplicateZFSDataset(context.Background(), r.item.ID); err != nil {
+		t.Fatal(err)
+	}
+	if len(r.entries) != 1 || r.entries[0].KeepOnSource != 3 {
+		t.Fatalf("entries = %+v, want one that keeps 3 on the source", r.entries)
 	}
 }
 

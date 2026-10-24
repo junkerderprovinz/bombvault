@@ -109,7 +109,7 @@ Replika ei koskaan korvaa varmuuskopiota. Vanhemmat versiot, yksittäiset tiedos
 
 **Vain replika, ei varmuuskopiota** Replika-kortissa saa koko ZFS-osion lähettämään replikoita eikä ottamaan varmuuskopioita. Oma kansio ja etäkohteet säilyttävät kytkimensä, joten kun asetuksen kytkee pois, osio varmuuskopioi taas niihin, ja jokaisen ZFS-merkinnän kortti näyttää osion kytkimen sellaisena kuin se on. Tällainen merkintä odottaa ensimmäistä replikaansa varmuuskopion sijaan, **Varmuuskopioi nyt** näkyy sillä muodossa **Replikoi nyt**, ja merkinnän kontit pysähtyvät ja sen komennot ajetaan tilannevedoksen ympärillä kuten varmuuskopiossa. Sen replikat lasketaan muutaman päivän välein ajettavaan aikatauluun, myöhästymishälytykseen ja kattavuuteen.
 
-Kytke se päälle merkinnän Asetukset-välilehden kortissa **Replika**. Siellä valitset, minne replika menee, milloin se ajetaan (**Jokaisen varmuuskopion jälkeen** tai **Oma aikataulu**) ja kuinka monta tilannevedosta kohteelle jää. Kortti listaa jokaisen tietojoukon ja taltion tiloineen, ja **Replikoi nyt** käynnistää ajon. Replikaajolla on oma lukkonsa, joten pitkä ensimmäinen siirto ei koskaan pidätä varmuuskopioita.
+Kytke se päälle merkinnän Asetukset-välilehden kortissa **Replika**. Siellä valitset, minne replika menee, milloin se ajetaan (**Jokaisen varmuuskopion jälkeen** tai **Oma aikataulu**) ja kuinka monta tilannevedosta kohteelle ja tälle palvelimelle jää. Kortti listaa jokaisen tietojoukon ja taltion tiloineen, ja **Replikoi nyt** käynnistää ajon. Replikaajolla on oma lukkonsa, joten pitkä ensimmäinen siirto ei koskaan pidätä varmuuskopioita.
 
 **Replikoi kaikki nyt**, joka on varmuuskopiotoimintojen vieressä, kun Varmuuskopiot-sivulla on valittu ZFS-ruutu, lähettää jokaisen ZFS-merkinnän replikan yksi kerrallaan. Palvelin ajaa erän, joten se jatkuu, kun poistut sivulta, ja merkintä, joka ei voi replikoida, nimetään ja ohitetaan.
 
@@ -170,7 +170,17 @@ Mukaan tulee kaikki, minkä merkintä varmuuskopioi, ja sen alapuoliset taltiot 
 
 Kohdepalvelimella uusi replika säilyttää 7 päivittäistä ja 3 viikoittaista tilannevedosta. Valitse sen sijaan **Short**, **Balanced** tai **Long**, tai aseta **Custom values**. Siellä poistetaan vain tilannevedoksia, joiden nimi on `bombvault-replica-<14 numeroa>`, eikä koskaan uusinta, jonka molemmat puolet jakavat.
 
-Lähteellä BombVault säilyttää vain viimeisimmän replika-tilannevedoksen sekä kirjanmerkin jokaiselle lähettämälleen tilalle. Kirjanmerkit eivät vie tilaa. Seuraava siirto alkaa niistä.
+Lähteellä BombVault säilyttää viimeisimmän replika-tilannevedoksen sekä kirjanmerkin jokaiselle lähettämälleen tilalle. Kirjanmerkit eivät vie tilaa. Seuraava siirto alkaa niistä.
+
+Jos haluat säilyttää enemmän myös lähteellä, aseta Replika-kortissa **Säilytä tällä palvelimella**, esimerkiksi arvoon 7. Silloin niin monta uusinta replika-tilannevedosta jää tälle palvelimelle jokaisen replikan jälkeen, sen lisäksi mitä kohde säilyttää, ja paluu johonkin niistä on täällä pelkkä `zfs rollback` ilman mitään siirrettävää. 0 tai 1 säilyttää vain viimeisimmän. Viimeisimmässä on hold, jotta seuraavan siirron pohjaa ei poisteta vahingossa. Vanhemmissa sitä ei ole, joten voit palata niihin tai poistaa ne käsin. Jokainen tilannevedos pitää kiinni lohkoista, jotka muuttuivat sen jälkeen, joten jokainen säilyttämäsi vie tilaa poolissa. Jos kytket replikan pois tai vaihdat sen toiseen kohteeseen tai poistat merkinnän, nekin poistuvat tältä palvelimelta.
+
+Viimeisimpään replika-tilannevedokseen palaat palauttamalla tietojoukon siihen:
+
+```
+zfs rollback cache/appdata@bombvault-replica-20261006014100
+```
+
+`zfs rollback` toimii yhdelle tietojoukolle, joten palauta samalla tavalla jokainen alatietojoukko, jonka haluat takaisin. Paluu vanhempaan tilannevedokseen poistaa uudemmat, joten poista ensin hold viimeisimmästä komennolla `zfs release -r bombvault-replica cache/appdata@<viimeisin>` ja käytä sitten `zfs rollback -r`. Kohteen kopiossa on yhä uudemmat tilannevedokset, ja tämän tietojoukon seuraava replika epäonnistuu, kunnes palautat siellä kopion samaan tilannevedokseen komennolla `zfs rollback -r`.
 
 ### Salatut tietojoukot replikassa {#replica-encryption}
 
@@ -211,7 +221,7 @@ Vain nimet, jotka ovat täsmälleen `bombvault-` ja 14 numeroa, poistetaan. Turv
 zfs destroy -r cache/appdata@bombvault-20260924021500
 ```
 
-Replikan tilannevedoksen nimi on `<dataset>@bombvault-replica-<14 numeroa>`, eikä se ole jäännös. Se pysyy lähteellä, kunnes seuraava replika-ajo korvaa sen, ja kohdepalvelimella niin kauan kuin säilytys pitää sen. Siivooja ei koskaan koske siihen, koska se vastaa vain nimiä, joissa `bombvault-` seuraa täsmälleen 14 numeroa.
+Replikan tilannevedoksen nimi on `<dataset>@bombvault-replica-<14 numeroa>`, eikä se ole jäännös. Se pysyy lähteellä, kunnes uudempi replika-ajo korvaa sen tai niin kauan kuin **Säilytä tällä palvelimella** pitää sen, ja kohdepalvelimella niin kauan kuin säilytys pitää sen. Siivooja ei koskaan koske siihen, koska se vastaa vain nimiä, joissa `bombvault-` seuraa täsmälleen 14 numeroa.
 
 ## Poikkeamat {#anomalies}
 

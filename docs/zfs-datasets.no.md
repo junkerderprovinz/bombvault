@@ -109,7 +109,7 @@ En replika erstatter aldri sikkerhetskopien. Eldre versjoner, enkeltfiler og sje
 
 **Bare replika, ingen sikkerhetskopi** på kortet Replica får hele ZFS-området til å sende replikaer og ikke ta sikkerhetskopier. Den lokale mappen og de eksterne målene beholder bryterne sine, så når du slår det av, sikkerhetskopierer området til dem igjen, og kortet til hvert ZFS-element viser bryteren til området slik den står. Et slikt element venter på sin første replika i stedet for en sikkerhetskopi, **Sikkerhetskopier nå** tilbys som **Replikér nå**, og containerne til elementet stoppes og kommandoene kjører rundt øyeblikksbildet som ved en sikkerhetskopi. Replikaene teller for en tidsplan med noen dagers mellomrom, varselet om forsinkelse og dekningen.
 
-Slå den på i kortet **Replica** på fanen Innstillinger til elementet. Der velger du hvor replikaen går, når den kjører (**Etter hver sikkerhetskopi** eller **Egen plan**) og hvor mange øyeblikksbilder som blir på målet. Kortet lister hvert datasett og volum med tilstanden, og **Replikér nå** starter en kjøring. En replikakjøring har sin egen lås, så en lang første overføring aldri holder opp sikkerhetskopiene.
+Slå den på i kortet **Replica** på fanen Innstillinger til elementet. Der velger du hvor replikaen går, når den kjører (**Etter hver sikkerhetskopi** eller **Egen plan**) og hvor mange øyeblikksbilder som blir på målet og på denne serveren. Kortet lister hvert datasett og volum med tilstanden, og **Replikér nå** starter en kjøring. En replikakjøring har sin egen lås, så en lang første overføring aldri holder opp sikkerhetskopiene.
 
 **Replikér alt nå**, ved siden av sikkerhetskopihandlingene når ZFS-flisen er valgt på siden Sikkerhetskopier, sender replikaen for hvert ZFS-element, ett etter ett. Serveren kjører batchen, så den fortsetter når du forlater siden, og et element som ikke kan replikere, nevnes og hoppes over.
 
@@ -170,7 +170,17 @@ Alt elementet sikkerhetskopierer tas med, og volumene under det også, som sikke
 
 På målet beholder en ny replika 7 daglige og 3 ukentlige øyeblikksbilder. Velg heller **Short**, **Balanced** eller **Long**, eller angi **Custom values**. Bare øyeblikksbilder som heter `bombvault-replica-<14 digits>` blir noen gang fjernet der, og aldri det nyeste som begge sider deler.
 
-På kilden beholder BombVault bare det siste replika-øyeblikksbildet, pluss et bokmerke for hver tilstand det har sendt. Bokmerker koster ingen plass. Neste overføring starter fra dem.
+På kilden beholder BombVault det siste replika-øyeblikksbildet, pluss et bokmerke for hver tilstand det har sendt. Bokmerker koster ingen plass. Neste overføring starter fra dem.
+
+Vil du beholde flere på kilden også, stiller du inn **Behold på denne serveren** på kortet Replica, for eksempel til 7. Så mange av de nyeste replika-øyeblikksbildene blir da liggende på denne serveren etter hver replika, i tillegg til det målet beholder, og å gå tilbake til ett av dem er en `zfs rollback` her, uten at noe må overføres. 0 eller 1 beholder bare det siste. Det siste har en hold, så grunnlaget for neste overføring ikke blir slettet ved et uhell. De eldre har ingen, så du kan rulle tilbake til dem eller slette dem for hånd. Hvert øyeblikksbilde holder på blokkene som endret seg etter det, så alle du beholder, tar plass i poolen. Slår du av replikaen eller bytter til et annet mål, eller sletter du elementet, forsvinner de også fra denne serveren.
+
+For å gå tilbake til det siste replika-øyeblikksbildet ruller du datasettet tilbake:
+
+```
+zfs rollback cache/appdata@bombvault-replica-20261006014100
+```
+
+`zfs rollback` virker på ett datasett, så rull også tilbake hvert underdatasett du vil ha tilbake. Å gå tilbake til et eldre øyeblikksbilde sletter de nyere, så fjern først holden fra det siste med `zfs release -r bombvault-replica cache/appdata@<siste>`, og bruk deretter `zfs rollback -r`. Kopien på målet har fortsatt de nyere øyeblikksbildene, og neste replika av det datasettet mislykkes til du ruller kopien der tilbake til samme øyeblikksbilde med `zfs rollback -r`.
 
 ### Krypterte datasett i en replika {#replica-encryption}
 
@@ -211,7 +221,7 @@ Bare navn som er nøyaktig `bombvault-` pluss 14 sifre, fjernes. Sikkerhetsøyeb
 zfs destroy -r cache/appdata@bombvault-20260924021500
 ```
 
-Øyeblikksbildet til en replika heter `<dataset>@bombvault-replica-<14 digits>` og er ikke en rest. Det blir liggende på kilden til neste replikakjøring erstatter det, og på målet så lenge oppbevaringen beholder det. Ryddeprosessen rører det aldri, fordi den bare treffer `bombvault-` etterfulgt av nøyaktig 14 sifre.
+Øyeblikksbildet til en replika heter `<dataset>@bombvault-replica-<14 digits>` og er ikke en rest. Det blir liggende på kilden til en nyere replikakjøring erstatter det, eller så lenge **Behold på denne serveren** beholder det, og på målet så lenge oppbevaringen beholder det. Ryddeprosessen rører det aldri, fordi den bare treffer `bombvault-` etterfulgt av nøyaktig 14 sifre.
 
 ## Avvik {#anomalies}
 

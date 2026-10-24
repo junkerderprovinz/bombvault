@@ -109,7 +109,7 @@ En replik ersätter aldrig säkerhetskopian. Äldre versioner, enskilda filer oc
 
 **Bara replik, ingen säkerhetskopia** på kortet Replik får hela ZFS-avsnittet att skicka repliker och inte ta några säkerhetskopior. Den lokala mappen och off-site-målen behåller sina reglage, så när du stänger av det säkerhetskopierar avsnittet till dem igen, och kortet för varje ZFS-post visar avsnittets reglage som det står. En sådan post väntar på sin första replik i stället för en säkerhetskopia, **Säkerhetskopiera nu** erbjuds som **Replikera nu**, och postens containrar stoppas och dess kommandon körs runt ögonblicksbilden som vid en säkerhetskopiering. Dess repliker räknas för ett schema med några dagars mellanrum, varningen för försenade säkerhetskopior och täckningen.
 
-Slå på det i kortet **Replik** på postens flik Inställningar. Där väljer du vart repliken går, när den körs (**Efter varje säkerhetskopia** eller **Egen plan**) och hur många ögonblicksbilder som blir kvar på målet. Kortet listar varje datauppsättning och volym med dess tillstånd, och **Replikera nu** startar en körning. En replikkörning har ett eget lås, så en lång första överföring håller aldrig upp säkerhetskopiorna.
+Slå på det i kortet **Replik** på postens flik Inställningar. Där väljer du vart repliken går, när den körs (**Efter varje säkerhetskopia** eller **Egen plan**) och hur många ögonblicksbilder som blir kvar på målet och på den här servern. Kortet listar varje datauppsättning och volym med dess tillstånd, och **Replikera nu** startar en körning. En replikkörning har ett eget lås, så en lång första överföring håller aldrig upp säkerhetskopiorna.
 
 **Replikera allt nu**, bredvid säkerhetskopieringsåtgärderna när ZFS-brickan är vald på sidan Säkerhetskopior, skickar repliken för varje ZFS-post, en i taget. Servern kör satsen, så den fortsätter när du lämnar sidan, och en post som inte kan replikera namnges och hoppas över.
 
@@ -170,7 +170,17 @@ Allt posten säkerhetskopierar går med, och volymerna under den också, som sä
 
 På målet behåller en ny replik 7 dagliga och 3 veckovisa ögonblicksbilder. Välj i stället **Short**, **Balanced** eller **Long**, eller ange **Custom values**. Bara ögonblicksbilder med namnet `bombvault-replica-<14 digits>` tas någonsin bort där, och aldrig den nyaste som båda sidor delar.
 
-På källan behåller BombVault bara den senaste replikögonblicksbilden, plus ett bokmärke för varje tillstånd som har skickats. Bokmärken tar ingen plats. Nästa överföring utgår från dem.
+På källan behåller BombVault den senaste replikögonblicksbilden, plus ett bokmärke för varje tillstånd som har skickats. Bokmärken tar ingen plats. Nästa överföring utgår från dem.
+
+För att behålla fler även på källan anger du **Behåll på den här servern** på kortet Replik, till exempel 7. Så många av de nyaste replikögonblicksbilderna blir då kvar på den här servern efter varje replik, utöver det som målet behåller, och för att gå tillbaka till en av dem räcker en `zfs rollback` här, utan något att överföra. 0 eller 1 behåller bara den senaste. Den senaste har ett hold, så att basen för nästa överföring inte tas bort av misstag. De äldre har inget, så du kan rulla tillbaka till dem eller ta bort dem för hand. Varje ögonblicksbild håller kvar de block som ändrats efter den, så varje ögonblicksbild du behåller tar plats i poolen. Stänger du av repliken, byter till ett annat mål eller raderar posten försvinner de också från den här servern.
+
+För att gå tillbaka till den senaste replikögonblicksbilden rullar du tillbaka datauppsättningen:
+
+```
+zfs rollback cache/appdata@bombvault-replica-20261006014100
+```
+
+`zfs rollback` verkar på en datauppsättning i taget, så rulla också tillbaka varje underordnad datauppsättning du vill ha tillbaka. Att gå tillbaka till en äldre ögonblicksbild tar bort de nyare, så lyft först holdet från den senaste med `zfs release -r bombvault-replica cache/appdata@<senaste>` och använd sedan `zfs rollback -r`. Kopian på målet har fortfarande de nyare ögonblicksbilderna, och nästa replik av den datauppsättningen misslyckas tills du rullar tillbaka kopian där till samma ögonblicksbild med `zfs rollback -r`.
 
 ### Krypterade datauppsättningar i en replik {#replica-encryption}
 
@@ -211,7 +221,7 @@ Bara namn som exakt är `bombvault-` plus 14 siffror tas bort. Säkerhetsögonbl
 zfs destroy -r cache/appdata@bombvault-20260924021500
 ```
 
-Ögonblicksbilden av en replik heter `<dataset>@bombvault-replica-<14 digits>` och är ingen kvarlämning. Den blir kvar på källan tills nästa replikkörning ersätter den, och på målet så länge lagringstiden behåller den. Städaren rör den aldrig, eftersom den bara matchar `bombvault-` följt av exakt 14 siffror.
+Ögonblicksbilden av en replik heter `<dataset>@bombvault-replica-<14 digits>` och är ingen kvarlämning. Den blir kvar på källan tills en nyare replikkörning ersätter den, eller så länge **Behåll på den här servern** behåller den, och på målet så länge lagringstiden behåller den. Städaren rör den aldrig, eftersom den bara matchar `bombvault-` följt av exakt 14 siffror.
 
 ## Avvikelser {#anomalies}
 

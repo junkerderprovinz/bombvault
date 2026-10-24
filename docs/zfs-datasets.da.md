@@ -109,7 +109,7 @@ En replika erstatter aldrig sikkerhedskopien. Ældre versioner, enkelte filer og
 
 **Kun replika, ingen sikkerhedskopi** på kortet Replika får hele ZFS-området til at sende replikaer og ikke tage sikkerhedskopier. Den lokale mappe og off-site-destinationerne beholder deres kontakter, så når du slår det fra, sikkerhedskopierer området til dem igen, og kortet på hvert ZFS-element viser områdets kontakt, som den står. Sådan et element venter på sin første replika i stedet for en sikkerhedskopi, **Sikkerhedskopier nu** tilbydes som **Replikér nu**, og elementets containere stopper og dets kommandoer kører omkring snapshottet som ved en sikkerhedskopi. Dets replikaer tæller med for en tidsplan med få dages mellemrum, advarslen om forsinkelse og dækningen.
 
-Slå den til på kortet **Replika** under elementets fane Indstillinger. Der vælger du, hvor replikaen skal hen, hvornår den kører (**Efter hver sikkerhedskopi** eller **Egen plan**), og hvor mange snapshots der bliver på målet. Kortet oplister hvert datasæt og hvert volumen med dets tilstand, og **Replikér nu** starter en kørsel. En replikakørsel har sin egen lås, så en lang første overførsel aldrig holder sikkerhedskopierne tilbage.
+Slå den til på kortet **Replika** under elementets fane Indstillinger. Der vælger du, hvor replikaen skal hen, hvornår den kører (**Efter hver sikkerhedskopi** eller **Egen plan**), og hvor mange snapshots der bliver på målet og på denne server. Kortet oplister hvert datasæt og hvert volumen med dets tilstand, og **Replikér nu** starter en kørsel. En replikakørsel har sin egen lås, så en lang første overførsel aldrig holder sikkerhedskopierne tilbage.
 
 **Replikér alt nu**, ved siden af sikkerhedskopihandlingerne, når ZFS-feltet er valgt på siden Sikkerhedskopier, sender replikaen for hvert ZFS-element, det ene efter det andet. Serveren kører batchen, så den fortsætter, når du forlader siden, og et element, der ikke kan replikere, nævnes og springes over.
 
@@ -170,7 +170,17 @@ Alt, hvad elementet sikkerhedskopierer, kommer med, og volumenerne under det ogs
 
 På målet beholder en ny replika 7 daglige og 3 ugentlige snapshots. Vælg i stedet **Short**, **Balanced** eller **Long**, eller angiv **Custom values**. Kun snapshots med navnet `bombvault-replica-<14 digits>` fjernes dér, og aldrig det nyeste, som begge sider deler.
 
-På kilden beholder BombVault kun det seneste replika-snapshot plus et bogmærke for hver tilstand, det har sendt. Bogmærker koster ingen plads. Næste overførsel starter fra dem.
+På kilden beholder BombVault det seneste replika-snapshot plus et bogmærke for hver tilstand, det har sendt. Bogmærker koster ingen plads. Næste overførsel starter fra dem.
+
+Vil du også beholde flere på kilden, så sæt **Behold på denne server** på kortet Replika, for eksempel til 7. Så mange af de nyeste replika-snapshots bliver så på denne server efter hver replika, ud over dem, målet beholder, og at gå tilbage til et af dem er en `zfs rollback` her, uden noget at overføre. 0 eller 1 beholder kun det seneste. Det seneste har et hold, så grundlaget for næste overførsel ikke slettes ved et uheld. De ældre har intet, så du kan rulle tilbage til dem eller slette dem i hånden. Hvert snapshot holder fast i de blokke, der er ændret efter det, så hvert snapshot, du beholder, optager plads i poolen. Slår du replikaen fra eller over på et andet mål, eller sletter du elementet, forsvinder de også fra denne server.
+
+For at komme tilbage til det seneste replika-snapshot ruller du datasættet tilbage:
+
+```
+zfs rollback cache/appdata@bombvault-replica-20261006014100
+```
+
+`zfs rollback` virker på ét datasæt, så rul også hvert underdatasæt tilbage, som du vil have tilbage. At gå tilbage til et ældre snapshot sletter de nyere, så fjern først holdet fra det seneste med `zfs release -r bombvault-replica cache/appdata@<seneste>`, og brug derefter `zfs rollback -r`. Kopien på målet har stadig de nyere snapshots, og den næste replika af det datasæt fejler, indtil du ruller kopien dér tilbage til samme snapshot med `zfs rollback -r`.
 
 ### Krypterede datasæt i en replika {#replica-encryption}
 
@@ -211,7 +221,7 @@ Kun navne, der præcis er `bombvault-` plus 14 cifre, fjernes. Sikkerhedssnapsho
 zfs destroy -r cache/appdata@bombvault-20260924021500
 ```
 
-En replikas snapshot hedder `<dataset>@bombvault-replica-<14 digits>` og er ikke en rest. Det bliver på kilden, indtil næste replikakørsel erstatter det, og på målet, så længe opbevaringen beholder det. Oprydningen rører det aldrig, fordi den kun matcher `bombvault-` efterfulgt af præcis 14 cifre.
+En replikas snapshot hedder `<dataset>@bombvault-replica-<14 digits>` og er ikke en rest. Det bliver på kilden, indtil en nyere replikakørsel erstatter det, eller så længe **Behold på denne server** beholder det, og på målet, så længe opbevaringen beholder det. Oprydningen rører det aldrig, fordi den kun matcher `bombvault-` efterfulgt af præcis 14 cifre.
 
 ## Afvigelser {#anomalies}
 

@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 	"unicode"
 
@@ -44,6 +45,9 @@ type zfsReplicaItemExport struct {
 	AfterBackup bool                   `json:"afterBackup"`
 	Cadence     string                 `json:"cadence"`
 	Keep        store.ZFSReplicaKeep   `json:"keep"`
+	// KeepOnSource is absent from a file of an older build, which reads as
+	// keeping only the newest.
+	KeepOnSource int `json:"keepOnSource"`
 }
 
 // exportZFSReplica adds the ZFS servers and every item's replica settings to
@@ -66,11 +70,12 @@ func (h *Handler) exportZFSReplica(exp *settingsExport) error {
 	for _, d := range items {
 		rep := d.Replica
 		out.Items = append(out.Items, zfsReplicaItemExport{
-			Dataset:     d.Dataset,
-			Target:      zfsReplicaTargetExport{Kind: rep.TargetKind, ID: rep.TargetID},
-			AfterBackup: rep.AfterBackup,
-			Cadence:     rep.Cadence,
-			Keep:        rep.Keep,
+			Dataset:      d.Dataset,
+			Target:       zfsReplicaTargetExport{Kind: rep.TargetKind, ID: rep.TargetID},
+			AfterBackup:  rep.AfterBackup,
+			Cadence:      rep.Cadence,
+			Keep:         rep.Keep,
+			KeepOnSource: rep.KeepOnSource,
 		})
 	}
 	exp.ZFSReplica = out
@@ -111,7 +116,7 @@ func argvSafe(s string) bool {
 
 // zfsReplicaItemRefusal checks one item's replica settings. servers holds
 // the ids a server target may name.
-func zfsReplicaItemRefusal(target zfsReplicaTargetExport, cadence string, keep store.ZFSReplicaKeep, servers map[string]bool) string {
+func zfsReplicaItemRefusal(target zfsReplicaTargetExport, cadence string, keep store.ZFSReplicaKeep, keepOnSource int, servers map[string]bool) string {
 	switch target.Kind {
 	case store.ZFSReplicaTargetNone:
 		if target.ID != "" {
@@ -131,10 +136,8 @@ func zfsReplicaItemRefusal(target zfsReplicaTargetExport, cadence string, keep s
 	if _, ok := keep.Counts(); !ok {
 		return fmt.Sprintf("unknown keep preset %q", keep.Preset)
 	}
-	for _, n := range keep.Own {
-		if n < 0 {
-			return "a keep count is negative"
-		}
+	if keepOnSource < 0 || slices.ContainsFunc(keep.Own[:], func(n int) bool { return n < 0 }) {
+		return "a keep count is negative"
 	}
 	// The scheduler gives an item no entry of its own for everyN, so such a
 	// replica would never run.
@@ -168,7 +171,7 @@ func zfsReplicaRefusal(exp settingsExport) string {
 			return fmt.Sprintf("ZFS replica #%d: needs a dataset of its own", i+1)
 		}
 		seen[it.Dataset] = true
-		if msg := zfsReplicaItemRefusal(it.Target, it.Cadence, it.Keep, ids); msg != "" {
+		if msg := zfsReplicaItemRefusal(it.Target, it.Cadence, it.Keep, it.KeepOnSource, ids); msg != "" {
 			return fmt.Sprintf("ZFS replica of %s: %s", it.Dataset, msg)
 		}
 	}
@@ -213,7 +216,7 @@ func (h *Handler) claimImportedZFSReplica(exp settingsExport) (write func() erro
 	for _, it := range rep.Items {
 		in.Items[it.Dataset] = store.ZFSReplica{
 			TargetKind: it.Target.Kind, TargetID: it.Target.ID,
-			AfterBackup: it.AfterBackup, Cadence: it.Cadence, Keep: it.Keep,
+			AfterBackup: it.AfterBackup, Cadence: it.Cadence, Keep: it.Keep, KeepOnSource: it.KeepOnSource,
 		}
 	}
 	return h.svc.claimZFSReplicaImport(in)

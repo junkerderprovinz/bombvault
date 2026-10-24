@@ -276,6 +276,90 @@ func TestIncrementalStartsFromTheNewestCommonSnapshot(t *testing.T) {
 	}
 }
 
+func TestTheSourceKeepsOnlyTheNewestReplicaSnapshotBelowTwo(t *testing.T) {
+	for _, n := range []int{0, 1} {
+		t.Run(fmt.Sprint(n), func(t *testing.T) {
+			r := newRig(t)
+			r.entry.KeepOnSource = n
+			var last Result
+			for range 3 {
+				last = r.run()
+				r.ok(last)
+			}
+			for _, ds := range []string{"cache/appdata", "cache/appdata/plex"} {
+				if got := r.src.snapNames(ds); !slices.Equal(got, []string{last.Snapshot}) {
+					t.Errorf("%s: source snapshots = %q, want only the newest", ds, got)
+				}
+				if holds := r.src.get(ds).holds; len(holds) != 1 || !holds[last.Snapshot] {
+					t.Errorf("%s: holds = %v", ds, holds)
+				}
+			}
+		})
+	}
+}
+
+func TestTheSourceKeepsTheNewestReplicaSnapshotsAndHoldsOnlyTheBase(t *testing.T) {
+	r := newRig(t)
+	r.entry.KeepOnSource = 3
+	var runs []Result
+	for range 5 {
+		res := r.run()
+		r.ok(res)
+		runs = append(runs, res)
+	}
+	want := []string{runs[2].Snapshot, runs[3].Snapshot, runs[4].Snapshot}
+	for _, ds := range []string{"cache/appdata", "cache/appdata/plex"} {
+		if got := r.src.snapNames(ds); !slices.Equal(got, want) {
+			t.Errorf("%s: source snapshots = %q, want %q", ds, got, want)
+		}
+		if holds := r.src.get(ds).holds; len(holds) != 1 || !holds[runs[4].Snapshot] {
+			t.Errorf("%s: holds = %v, want only the newest held", ds, holds)
+		}
+	}
+	if got := r.dst.snapNames(rootTarget); len(got) != 5 {
+		t.Errorf("target snapshots = %q, want all five", got)
+	}
+
+	r.src.resetCalls()
+	next := r.run()
+	r.ok(next)
+	if m := member(t, next, "cache/appdata"); m.Base != runs[4].Snapshot || m.FromBookmark {
+		t.Errorf("base = %q (bookmark %v), want the newest snapshot", m.Base, m.FromBookmark)
+	}
+}
+
+func TestSnapshotsKeptOnTheSourceLeaveForeignOnesAlone(t *testing.T) {
+	r := newRig(t)
+	r.entry.KeepOnSource = 2
+	first := r.run()
+	r.ok(first)
+	r.src.snapshot("cache/appdata", "autosnap_daily")
+	r.src.snapshot("cache/appdata", "manual")
+	second := r.run()
+	r.ok(second)
+	third := r.run()
+	r.ok(third)
+
+	want := []string{"autosnap_daily", "manual", second.Snapshot, third.Snapshot}
+	if got := r.src.snapNames("cache/appdata"); !slices.Equal(got, want) {
+		t.Errorf("source snapshots = %q, want %q", got, want)
+	}
+}
+
+func TestLoweringTheSourceKeepThinsTheSourceOnTheNextRun(t *testing.T) {
+	r := newRig(t)
+	r.entry.KeepOnSource = 3
+	for range 3 {
+		r.ok(r.run())
+	}
+	r.entry.KeepOnSource = 1
+	last := r.run()
+	r.ok(last)
+	if got := r.src.snapNames("cache/appdata"); !slices.Equal(got, []string{last.Snapshot}) {
+		t.Errorf("source snapshots = %q, want only the newest", got)
+	}
+}
+
 func TestIncrementalStartsFromTheBookmarkOnceTheSnapshotIsGone(t *testing.T) {
 	r := newRig(t)
 	first := r.run()

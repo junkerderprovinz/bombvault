@@ -109,7 +109,7 @@ Eine Replik ersetzt die Sicherung nie. Ältere Versionen, einzelne Dateien und d
 
 **Nur Replik, keine Sicherung** in der Karte Replik lässt den ganzen ZFS-Bereich Repliken senden und keine Sicherungen machen. Der eigene Ordner und die Speicherorte außer Haus behalten ihre Schalter, ausgeschaltet sichert der Bereich also wieder dorthin, und die Karte jedes ZFS-Eintrags zeigt den Schalter des Bereichs so, wie er steht. So ein Eintrag wartet auf seine erste Replik statt auf eine Sicherung, **Jetzt sichern** heißt bei ihm **Jetzt replizieren**, und rund um den Snapshot stoppen seine Container und laufen seine Befehle wie bei einer Sicherung. Seine Repliken zählen für einen Zeitplan alle paar Tage, die Warnung bei Überfälligkeit und die Abdeckung.
 
-Schalte sie in der Karte **Replik** im Reiter Einstellungen des Eintrags ein. Dort wählst du, wohin die Replik geht, wann sie läuft (**Nach jeder Sicherung** oder **Eigener Plan**) und wie viele Snapshots auf dem Ziel bleiben. Die Karte listet jedes Dataset und jedes Volume mit seinem Zustand, und **Jetzt replizieren** startet einen Lauf. Ein Replik-Lauf hat eine eigene Sperre, deshalb hält eine lange erste Übertragung die Sicherungen nie auf.
+Schalte sie in der Karte **Replik** im Reiter Einstellungen des Eintrags ein. Dort wählst du, wohin die Replik geht, wann sie läuft (**Nach jeder Sicherung** oder **Eigener Plan**) und wie viele Snapshots auf dem Ziel und auf diesem Server bleiben. Die Karte listet jedes Dataset und jedes Volume mit seinem Zustand, und **Jetzt replizieren** startet einen Lauf. Ein Replik-Lauf hat eine eigene Sperre, deshalb hält eine lange erste Übertragung die Sicherungen nie auf.
 
 **Alle jetzt replizieren** steht neben den Sicherungsaktionen, wenn auf der Seite Sicherungen die Kachel ZFS gewählt ist, und sendet die Replik jedes ZFS-Eintrags, einen nach dem anderen. Der Server führt den Stapel aus, er läuft also weiter, wenn du die Seite verlässt, und ein Eintrag, der nicht replizieren kann, wird genannt und übersprungen.
 
@@ -170,7 +170,17 @@ Hinein kommt alles, was der Eintrag sichert, und auch die Volumes darunter, die 
 
 Auf dem Ziel behält eine neue Replik 7 tägliche und 3 wöchentliche Snapshots. Wähl stattdessen **Kurz**, **Ausgewogen** oder **Lang**, oder stell **Eigene Werte** ein. Dort werden nur Snapshots mit dem Namen `bombvault-replica-<14 Ziffern>` entfernt, und nie der neueste, den beide Seiten teilen.
 
-Auf der Quelle behält BombVault nur den letzten Replik-Snapshot, dazu ein Bookmark für jeden gesendeten Stand. Bookmarks brauchen keinen Platz. Die nächste Übertragung setzt dort an.
+Auf der Quelle behält BombVault den letzten Replik-Snapshot, dazu ein Bookmark für jeden gesendeten Stand. Bookmarks brauchen keinen Platz. Die nächste Übertragung setzt dort an.
+
+Um auch auf der Quelle mehr zu behalten, stell in der Karte Replik **Auf diesem Server behalten** ein, zum Beispiel auf 7. Dann bleiben nach jeder Replik so viele der neuesten Replik-Snapshots auf diesem Server, zusätzlich zu dem, was das Ziel behält, und zu einem davon kommst du hier mit `zfs rollback` zurück, ganz ohne Übertragung. 0 oder 1 behält nur den letzten. Der letzte trägt einen Hold, damit niemand die Basis der nächsten Übertragung aus Versehen löscht. Die älteren haben keinen, du kannst also von Hand zu ihnen zurückgehen oder sie löschen. Jeder Snapshot hält die Blöcke fest, die sich danach geändert haben, also braucht jeder, den du behältst, Platz im Pool. Schaltest du die Replik ab oder auf ein anderes Ziel um oder löschst du den Eintrag, verschwinden auch sie von diesem Server.
+
+Zum letzten Replik-Snapshot setzt du das Dataset so zurück:
+
+```
+zfs rollback cache/appdata@bombvault-replica-20261006014100
+```
+
+`zfs rollback` wirkt auf ein einzelnes Dataset, setz also jedes Unter-Dataset, das du zurückhaben willst, ebenso zurück. Der Weg zu einem älteren Snapshot löscht die neueren, nimm deshalb zuerst mit `zfs release -r bombvault-replica cache/appdata@<letzter>` den Hold vom letzten und dann `zfs rollback -r`. Die Kopie auf dem Ziel hat die neueren Snapshots noch, und die nächste Replik dieses Datasets schlägt fehl, bis du die Kopie dort mit `zfs rollback -r` auf denselben Snapshot zurücksetzt.
 
 ### Verschlüsselte Datasets in einer Replik {#replica-encryption}
 
@@ -211,7 +221,7 @@ Entfernt werden nur Namen, die genau `bombvault-` plus 14 Ziffern lauten. Sicher
 zfs destroy -r cache/appdata@bombvault-20260924021500
 ```
 
-Der Snapshot einer Replik heißt `<dataset>@bombvault-replica-<14 Ziffern>` und ist kein Überrest. Er bleibt auf der Quelle, bis der nächste Replik-Lauf ihn ersetzt, und auf dem Ziel, solange die Aufbewahrung ihn behält. Der Aufräumer fasst ihn nie an, weil er nur `bombvault-` mit genau 14 Ziffern erkennt.
+Der Snapshot einer Replik heißt `<dataset>@bombvault-replica-<14 Ziffern>` und ist kein Überrest. Er bleibt auf der Quelle, bis ein neuerer Replik-Lauf ihn ersetzt oder solange **Auf diesem Server behalten** ihn behält, und auf dem Ziel, solange die Aufbewahrung ihn behält. Der Aufräumer fasst ihn nie an, weil er nur `bombvault-` mit genau 14 Ziffern erkennt.
 
 ## Anomalien {#anomalies}
 

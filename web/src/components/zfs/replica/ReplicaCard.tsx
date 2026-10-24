@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 
 import { patchZFSReplica, setZFSReplicaOnly, takeOverZFSReplicaFolder } from "../../../lib/api";
 import type {
@@ -19,6 +19,7 @@ import { Badge } from "../../Badge";
 import { Button } from "../../Button";
 import { CadenceBuilder, EXACT_CADENCE_MODES } from "../../CadenceBuilder";
 import { InfoBubble } from "../../InfoBubble";
+import { NumberField } from "../../NumberField";
 import { SelectField } from "../../SelectField";
 import { Selector } from "../../Selector";
 import { Toggle } from "../../Toggle";
@@ -27,7 +28,7 @@ import { IconFleet, IconZFS } from "../../navGlyphs";
 import { AddReplicaServerDialog } from "./AddReplicaServerDialog";
 import { ReplicaKeepField } from "./ReplicaKeepField";
 import { ReplicaStatePill } from "./ReplicaStatePill";
-import { unixOf } from "./replicaModel";
+import { keepCount, unixOf } from "./replicaModel";
 import { useGroup, useReplicaServers } from "./replicaStore";
 import { useReplicateNow } from "./useReplicateNow";
 
@@ -86,6 +87,7 @@ export function ReplicaCard({ itemId, name }: { itemId: string; name: string }) 
   const [adding, setAdding] = useState(false);
   const { debouncedSave } = useDebouncedSave();
   const pending = useRef<ZFSReplicaPatch>({});
+  const keepOnSourceId = useId();
 
   // A fresh answer from the server replaces whatever was shown ahead of it,
   // apart from the edits still waiting to be sent.
@@ -312,6 +314,21 @@ export function ReplicaCard({ itemId, name }: { itemId: string; name: string }) 
               onChange={(keep) => changeSoon({ keep })}
             />
           )}
+          <SettingRow
+            label={t("zfs.replica.keepSource")}
+            hint={t("zfs.replica.keepSourceHint")}
+            htmlFor={keepOnSourceId}
+            newId="zfs-replica-source-keep"
+          >
+            <NumberField
+              id={keepOnSourceId}
+              wrapperClassName="w-28"
+              min={0}
+              value={view.keepOnSource}
+              onChange={(e) => changeSoon({ keepOnSource: keepCount(e.target.value) })}
+              className={`w-full ${FIELD}`}
+            />
+          </SettingRow>
         </Rows>
       )}
 

@@ -109,7 +109,7 @@ Replika nikdy nenahrazuje zálohu. Starší verze, jednotlivé soubory i kontrol
 
 **Jen replika, bez zálohy** na kartě Replika způsobí, že celá sekce ZFS posílá repliky a nedělá zálohy. Vlastní složka a cíle mimo lokalitu si nechají své přepínače, takže po vypnutí se sekce do nich zase zálohuje, a karta každé položky ZFS ukazuje přepínač sekce tak, jak stojí. Taková položka čeká místo zálohy na svou první repliku, **Zálohovat nyní** se u ní nabízí jako **Replikovat teď** a kolem snímku se zastaví její kontejnery a spustí její příkazy jako u zálohy. Její repliky se počítají pro plán jednou za několik dní, upozornění na zpoždění i pokrytí.
 
-Zapneš ji na kartě **Replika** na záložce Nastavení položky. Tam vybereš, kam replika půjde, kdy se spouští (**Po každé záloze** nebo **Vlastní plán**) a kolik snímků zůstane na cíli. Karta vypisuje každou datovou sadu a každý svazek s jeho stavem a **Replikovat teď** spustí běh. Běh repliky má vlastní zámek, takže dlouhý první přenos nikdy nezdrží zálohy.
+Zapneš ji na kartě **Replika** na záložce Nastavení položky. Tam vybereš, kam replika půjde, kdy se spouští (**Po každé záloze** nebo **Vlastní plán**) a kolik snímků zůstane na cíli a na tomto serveru. Karta vypisuje každou datovou sadu a každý svazek s jeho stavem a **Replikovat teď** spustí běh. Běh repliky má vlastní zámek, takže dlouhý první přenos nikdy nezdrží zálohy.
 
 **Replikovat vše teď**, vedle akcí zálohy, když je na stránce Zálohy vybraná dlaždice ZFS, pošle repliku každé položky ZFS, jednu po druhé. Dávku spouští server, takže pokračuje, i když stránku opustíš, a položka, která replikovat nemůže, se jmenovitě uvede a přeskočí.
 
@@ -170,7 +170,17 @@ Zahrnuje se všechno, co položka zálohuje, a také svazky pod ní, které zál
 
 Na cíli drží nová replika 7 denních a 3 týdenní snímky. Místo toho vyber **Krátké**, **Vyvážené** nebo **Dlouhé**, nebo nastav **Vlastní hodnoty**. Odstraňují se tam jen snímky pojmenované `bombvault-replica-<14 digits>`, a nikdy ne nejnovější, který mají obě strany společný.
 
-Na zdroji drží BombVault jen poslední snímek repliky a k tomu záložku pro každý odeslaný stav. Záložky nezabírají místo. Další přenos od nich vychází.
+Na zdroji drží BombVault poslední snímek repliky a k tomu záložku pro každý odeslaný stav. Záložky nezabírají místo. Další přenos od nich vychází.
+
+Chceš-li i na zdroji držet víc, nastav na kartě Replika **Ponechat na tomto serveru**, třeba na 7. Tolik nejnovějších snímků repliky pak po každé replice zůstane na tomto serveru, vedle toho, co drží cíl, a návrat k některému z nich je tady jen `zfs rollback`, bez jakéhokoli přenosu. 0 nebo 1 ponechá jen poslední. Poslední nese hold, aby se základ dalšího přenosu omylem nesmazal. Starší ho nemají, takže se k nim můžeš vrátit nebo je smazat ručně. Každý snímek drží bloky, které se po něm změnily, takže každý, který ponecháš, zabírá místo v poolu. Když repliku vypneš nebo přepneš na jiný cíl, nebo položku smažeš, zmizí z tohoto serveru i ony.
+
+K poslednímu snímku repliky se vrátíš tak, že na něj datovou sadu vrátíš zpět:
+
+```
+zfs rollback cache/appdata@bombvault-replica-20261006014100
+```
+
+`zfs rollback` působí na jednu datovou sadu, takže stejně vrať zpět každou podřízenou datovou sadu, kterou chceš mít zpátky. Návrat ke staršímu snímku smaže ty novější, proto nejdřív sundej hold z posledního pomocí `zfs release -r bombvault-replica cache/appdata@<poslední>` a pak použij `zfs rollback -r`. Kopie na cíli novější snímky pořád má a další replika této datové sady selže, dokud tam kopii nevrátíš na stejný snímek pomocí `zfs rollback -r`.
 
 ### Šifrované datové sady v replice {#replica-encryption}
 
@@ -211,7 +221,7 @@ Odstraňují se jen názvy, které přesně odpovídají `bombvault-` plus 14 č
 zfs destroy -r cache/appdata@bombvault-20260924021500
 ```
 
-Snímek repliky se jmenuje `<dataset>@bombvault-replica-<14 digits>` a není zbytkem. Zůstává na zdroji, dokud ho další běh repliky nenahradí, a na cíli, dokud ho uchovávání drží. Úklid se ho nikdy nedotkne, protože odpovídá jen `bombvault-` následovanému přesně 14 číslicemi.
+Snímek repliky se jmenuje `<dataset>@bombvault-replica-<14 digits>` a není zbytkem. Zůstává na zdroji, dokud ho nenahradí novější běh repliky nebo dokud ho drží **Ponechat na tomto serveru**, a na cíli, dokud ho uchovávání drží. Úklid se ho nikdy nedotkne, protože odpovídá jen `bombvault-` následovanému přesně 14 číslicemi.
 
 ## Anomálie {#anomalies}
 

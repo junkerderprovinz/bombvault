@@ -109,7 +109,7 @@ Una replica non sostituisce mai il backup. Le versioni più vecchie, i singoli f
 
 **Solo replica, nessun backup** nella scheda Replica fa sì che l'intera sezione ZFS invii repliche e non faccia backup. La cartella propria e le destinazioni off-site mantengono i loro interruttori, quindi disattivandolo la sezione torna a fare il backup lì, e la scheda di ogni elemento ZFS mostra l'interruttore della sezione così com'è. Un elemento così aspetta la sua prima replica invece di un backup, **Esegui backup ora** diventa **Replica ora**, e attorno allo snapshot i suoi container si fermano e i suoi comandi vengono eseguiti come per un backup. Le sue repliche contano per una pianificazione ogni pochi giorni, l'avviso di ritardo e la copertura.
 
-Attivala nella scheda **Replica** nella scheda Impostazioni dell'elemento. Lì scegli dove va la replica, quando viene eseguita (**Dopo ogni backup** o **Piano proprio**) e quanti snapshot restano sulla destinazione. La scheda elenca ogni dataset e ogni volume con il suo stato, e **Replica ora** avvia un'esecuzione. Un'esecuzione di replica ha un lock proprio, così un primo trasferimento lungo non blocca mai i backup.
+Attivala nella scheda **Replica** nella scheda Impostazioni dell'elemento. Lì scegli dove va la replica, quando viene eseguita (**Dopo ogni backup** o **Piano proprio**) e quanti snapshot restano sulla destinazione e su questo server. La scheda elenca ogni dataset e ogni volume con il suo stato, e **Replica ora** avvia un'esecuzione. Un'esecuzione di replica ha un lock proprio, così un primo trasferimento lungo non blocca mai i backup.
 
 **Replica tutto ora**, accanto alle azioni di backup quando nella pagina Backup è scelto il riquadro ZFS, invia la replica di ogni elemento ZFS, uno dopo l'altro. Il server esegue il lotto, quindi prosegue anche se lasci la pagina, e un elemento che non può essere replicato viene indicato e saltato.
 
@@ -170,7 +170,17 @@ Entra tutto ciò che l'elemento salva, e anche i volumi sotto di esso, che il ba
 
 Sulla destinazione una nuova replica tiene 7 snapshot giornalieri e 3 settimanali. Scegli invece **Breve**, **Equilibrato** o **Lungo**, oppure imposta **Valori personalizzati**. Lì vengono rimossi solo gli snapshot chiamati `bombvault-replica-<14 cifre>`, e mai il più recente che i due lati condividono.
 
-Sulla sorgente BombVault tiene solo l'ultimo snapshot di replica, più un bookmark per ogni stato inviato. I bookmark non occupano spazio. Il trasferimento successivo parte da quelli.
+Sulla sorgente BombVault tiene l'ultimo snapshot di replica, più un bookmark per ogni stato inviato. I bookmark non occupano spazio. Il trasferimento successivo parte da quelli.
+
+Per tenerne di più anche sulla sorgente, imposta **Conserva su questo server** nella scheda Replica, per esempio a 7. Dopo ogni replica restano allora su questo server altrettanti snapshot di replica tra i più recenti, oltre a quelli che tiene la destinazione, e per tornare a uno di loro basta un `zfs rollback` qui, senza trasferire nulla. 0 o 1 tiene solo l'ultimo. L'ultimo ha un hold, così la base del prossimo trasferimento non viene distrutta per sbaglio. Quelli più vecchi non ce l'hanno, quindi puoi tornarci o distruggerli a mano. Ogni snapshot trattiene i blocchi cambiati dopo di lui, quindi ognuno che tieni occupa spazio nel pool. Disattivare la replica, spostarla su un'altra destinazione o eliminare l'elemento li rimuove anche da questo server.
+
+Per tornare all'ultimo snapshot di replica, riporta indietro il dataset:
+
+```
+zfs rollback cache/appdata@bombvault-replica-20261006014100
+```
+
+`zfs rollback` agisce su un solo dataset, quindi riporta indietro allo stesso modo ogni dataset figlio che vuoi recuperare. Tornare a uno snapshot più vecchio distrugge quelli più recenti, quindi prima togli l'hold dall'ultimo con `zfs release -r bombvault-replica cache/appdata@<ultimo>`, poi usa `zfs rollback -r`. La copia sulla destinazione ha ancora gli snapshot più recenti, e la replica successiva di quel dataset fallisce finché non riporti la copia lì allo stesso snapshot con `zfs rollback -r`.
 
 ### Dataset cifrati in una replica {#replica-encryption}
 
@@ -211,7 +221,7 @@ Vengono rimossi solo i nomi che corrispondono esattamente a `bombvault-` più 14
 zfs destroy -r cache/appdata@bombvault-20260924021500
 ```
 
-Lo snapshot di una replica si chiama `<dataset>@bombvault-replica-<14 cifre>` e non è un residuo. Resta sulla sorgente finché la prossima esecuzione di replica non lo sostituisce, e sulla destinazione finché la conservazione lo tiene. Lo spazzino non lo tocca mai, perché corrisponde solo a `bombvault-` seguito da esattamente 14 cifre.
+Lo snapshot di una replica si chiama `<dataset>@bombvault-replica-<14 cifre>` e non è un residuo. Resta sulla sorgente finché un'esecuzione di replica più recente non lo sostituisce, o finché **Conserva su questo server** lo tiene, e sulla destinazione finché la conservazione lo tiene. Lo spazzino non lo tocca mai, perché corrisponde solo a `bombvault-` seguito da esattamente 14 cifre.
 
 ## Anomalie {#anomalies}
 

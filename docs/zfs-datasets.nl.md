@@ -109,7 +109,7 @@ Een replica vervangt de back-up nooit. Oudere versies, losse bestanden en de con
 
 **Alleen replica, geen back-up** op de kaart Replica laat het hele ZFS-onderdeel replica's versturen en geen back-ups maken. De lokale map en de off-site bestemmingen houden hun schakelaars, dus zet je het uit, dan maakt het onderdeel weer back-ups naar die plekken, en de kaart van elk ZFS-item toont de schakelaar van het onderdeel zoals hij staat. Zo'n item wacht op zijn eerste replica in plaats van een back-up, **Nu back-up maken** wordt aangeboden als **Nu repliceren**, en rond de snapshot stoppen de containers van het item en draaien zijn commando's zoals bij een back-up. Zijn replica's tellen mee voor een schema van om de paar dagen, de melding bij achterstand en de dekking.
 
-Zet het aan in de kaart **Replica** op het tabblad Instellingen van het item. Daar kies je waar de replica heen gaat, wanneer ze draait (**Na elke back-up** of **Eigen plan**) en hoeveel snapshots op het doel blijven. De kaart toont elke dataset en elk volume met zijn status, en **Nu repliceren** start een run. Een replica-run heeft een eigen lock, zodat een lange eerste overdracht de back-ups nooit ophoudt.
+Zet het aan in de kaart **Replica** op het tabblad Instellingen van het item. Daar kies je waar de replica heen gaat, wanneer ze draait (**Na elke back-up** of **Eigen plan**) en hoeveel snapshots op het doel en op deze server blijven. De kaart toont elke dataset en elk volume met zijn status, en **Nu repliceren** start een run. Een replica-run heeft een eigen lock, zodat een lange eerste overdracht de back-ups nooit ophoudt.
 
 **Nu alles repliceren**, naast de back-upacties wanneer de ZFS-tegel op de pagina Back-ups is gekozen, verstuurt de replica van elk ZFS-item, het ene na het andere. De server voert de batch uit, dus die gaat door als je de pagina verlaat, en een item dat niet kan repliceren, wordt genoemd en overgeslagen.
 
@@ -170,7 +170,17 @@ Alles wat het item back-upt, gaat erin, en ook de volumes eronder, die de back-u
 
 Op het doel bewaart een nieuwe replica 7 dagelijkse en 3 wekelijkse snapshots. Kies in plaats daarvan **Short**, **Balanced** of **Long**, of stel **Custom values** in. Alleen snapshots met de naam `bombvault-replica-<14 digits>` worden daar ooit verwijderd, en nooit de nieuwste die beide kanten delen.
 
-Aan de bronkant bewaart BombVault alleen de laatste replica-snapshot, plus een bookmark voor elke verstuurde stand. Bookmarks kosten geen ruimte. De volgende overdracht begint daarvandaan.
+Aan de bronkant bewaart BombVault de laatste replica-snapshot, plus een bookmark voor elke verstuurde stand. Bookmarks kosten geen ruimte. De volgende overdracht begint daarvandaan.
+
+Wil je ook aan de bronkant meer bewaren, stel dan op de kaart Replica **Bewaren op deze server** in, bijvoorbeeld op 7. Zoveel van de nieuwste replica-snapshots blijven dan na elke replica op deze server staan, naast wat het doel bewaart, en teruggaan naar een ervan is hier een `zfs rollback`, zonder dat er iets verstuurd hoeft te worden. 0 of 1 bewaart alleen de laatste. De laatste krijgt een hold, zodat de basis van de volgende overdracht niet per ongeluk wordt verwijderd. De oudere hebben er geen, dus je kunt er met de hand naar terugdraaien of ze verwijderen. Elke snapshot houdt de blokken vast die daarna zijn veranderd, dus elke snapshot die je bewaart, neemt ruimte in op de pool. Zet je de replica uit of op een ander doel, of verwijder je het item, dan verdwijnen ook die snapshots van deze server.
+
+Om terug te gaan naar de laatste replica-snapshot, draai je de dataset terug:
+
+```
+zfs rollback cache/appdata@bombvault-replica-20261006014100
+```
+
+`zfs rollback` werkt op één dataset, draai dus ook elke onderliggende dataset terug die je terug wilt hebben. Teruggaan naar een oudere snapshot verwijdert de nieuwere, haal daarom eerst de hold van de laatste af met `zfs release -r bombvault-replica cache/appdata@<laatste>` en gebruik daarna `zfs rollback -r`. De kopie op het doel heeft de nieuwere snapshots nog, en de volgende replica van die dataset mislukt totdat je de kopie daar met `zfs rollback -r` naar dezelfde snapshot terugdraait.
 
 ### Versleutelde datasets in een replica {#replica-encryption}
 
@@ -211,7 +221,7 @@ Alleen namen die precies `bombvault-` plus 14 cijfers zijn, worden verwijderd. V
 zfs destroy -r cache/appdata@bombvault-20260924021500
 ```
 
-De snapshot van een replica heet `<dataset>@bombvault-replica-<14 digits>` en is geen restant. Hij blijft op de bron staan totdat de volgende replica-run hem vervangt, en op het doel zolang de retentie hem bewaart. De opruimer raakt hem nooit aan, omdat die alleen `bombvault-` gevolgd door precies 14 cijfers herkent.
+De snapshot van een replica heet `<dataset>@bombvault-replica-<14 digits>` en is geen restant. Hij blijft op de bron staan totdat een nieuwere replica-run hem vervangt, of zolang **Bewaren op deze server** hem bewaart, en op het doel zolang de retentie hem bewaart. De opruimer raakt hem nooit aan, omdat die alleen `bombvault-` gevolgd door precies 14 cijfers herkent.
 
 ## Anomalieën {#anomalies}
 

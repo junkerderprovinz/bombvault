@@ -52,6 +52,31 @@ func TestCleanLeavesOnlyTheNewestBookmarkAndKeepsTheTarget(t *testing.T) {
 	}
 }
 
+func TestCleanRemovesTheSnapshotsKeptOnTheSourceToo(t *testing.T) {
+	r := newRig(t)
+	r.entry.KeepOnSource = 3
+	var last Result
+	for range 3 {
+		last = r.run()
+		r.ok(last)
+	}
+	if got := replicaNames(r.src.snapNames("cache/appdata")); len(got) != 3 {
+		t.Fatalf("source snapshots before the clean = %q, want three", got)
+	}
+
+	if err := Clean(context.Background(), r.src, "cache/appdata", nil); err != nil {
+		t.Fatal(err)
+	}
+	for _, ds := range []string{"cache/appdata", "cache/appdata/plex"} {
+		if got := replicaNames(r.src.snapNames(ds)); got != nil {
+			t.Errorf("%s still has the replica snapshots %q", ds, got)
+		}
+		if got := r.src.markNames(ds); !slices.Equal(got, []string{last.Snapshot}) {
+			t.Errorf("%s bookmarks = %q, want only the newest", ds, got)
+		}
+	}
+}
+
 func TestCleanKeepsTheNewestBookmarkAndBookmarksTheSnapshotsAfterIt(t *testing.T) {
 	r := newRig(t)
 	first := r.run()

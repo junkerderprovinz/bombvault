@@ -148,6 +148,7 @@ const REPLICA = {
   afterBackup: true,
   cadence: "",
   keep: { preset: "own", own: [0, 7, 3, 0, 0] },
+  keepOnSource: 3,
   state: "never",
   code: "",
   lastRun: "",
@@ -191,7 +192,7 @@ test("the Replica card puts each control on the row of its label on the desktop"
   await page.setViewportSize({ width: 1280, height: 900 });
   const rows = await rowBoxes(await openReplica(page));
   expect(rows.map((r) => r.name)).toEqual(
-    expect.arrayContaining(["Repliziert nach", "Wann", "Auf dem Ziel behalten", "Tage"]),
+    expect.arrayContaining(["Repliziert nach", "Wann", "Auf dem Ziel behalten", "Tage", "Auf diesem Server behalten"]),
   );
   for (const r of rows) {
     if (!r.label || !r.control || !r.row) continue;

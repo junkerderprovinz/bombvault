@@ -6,6 +6,7 @@ export function replica(overrides: Partial<ZFSReplica> = {}): ZFSReplica {
     afterBackup: true,
     cadence: "",
     keep: { preset: "own", own: [0, 7, 3, 0, 0] },
+    keepOnSource: 0,
     state: "ok",
     code: "",
     lastRun: new Date(Date.now() - 2 * 3600 * 1000).toISOString(),

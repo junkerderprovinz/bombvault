@@ -109,7 +109,7 @@ Uma réplica nunca substitui o backup. As versões antigas, os ficheiros individ
 
 **Só réplica, sem backup** no cartão Réplica faz com que toda a secção ZFS envie réplicas e não faça backups. A pasta própria e os destinos externos mantêm os seus interruptores, por isso ao desligá-lo a secção volta a fazer backup para eles, e o cartão de cada entrada ZFS mostra o interruptor da secção tal como está. Uma entrada assim espera pela primeira réplica em vez de um backup, **Fazer backup agora** passa a **Replicar agora**, e à volta do instantâneo os seus containers param e os seus comandos correm como num backup. As suas réplicas contam para um agendamento de poucos em poucos dias, para o alerta de atraso e para a cobertura.
 
-Ativa-a no cartão **Réplica** do separador Definições da entrada. Aí escolhes para onde vai a réplica, quando corre (**Depois de cada backup** ou **Plano próprio**) e quantos instantâneos ficam no alvo. O cartão lista cada conjunto de dados e volume com o seu estado, e **Replicar agora** inicia uma execução. Uma execução de réplica tem um bloqueio próprio, por isso uma primeira transferência longa nunca atrasa os backups.
+Ativa-a no cartão **Réplica** do separador Definições da entrada. Aí escolhes para onde vai a réplica, quando corre (**Depois de cada backup** ou **Plano próprio**) e quantos instantâneos ficam no alvo e neste servidor. O cartão lista cada conjunto de dados e volume com o seu estado, e **Replicar agora** inicia uma execução. Uma execução de réplica tem um bloqueio próprio, por isso uma primeira transferência longa nunca atrasa os backups.
 
 **Replicar tudo agora**, ao lado das ações de backup quando o mosaico ZFS está escolhido na página Backups, envia a réplica de cada entrada ZFS, uma a seguir à outra. O servidor executa o lote, por isso continua quando sais da página, e uma entrada que não consegue replicar é indicada e saltada.
 
@@ -170,7 +170,17 @@ Entra tudo o que a entrada guarda no backup, e também os volumes abaixo dele, q
 
 No destino, uma réplica nova guarda 7 instantâneos diários e 3 semanais. Escolhe antes **Short**, **Balanced** ou **Long**, ou define **Custom values**. Só são removidos aí os instantâneos com o nome `bombvault-replica-<14 digits>`, e nunca o mais recente que os dois lados partilham.
 
-Na origem, o BombVault guarda apenas o instantâneo de réplica mais recente, mais um marcador para cada estado que enviou. Os marcadores não ocupam espaço. A transferência seguinte parte deles.
+Na origem, o BombVault guarda o instantâneo de réplica mais recente, mais um marcador para cada estado que enviou. Os marcadores não ocupam espaço. A transferência seguinte parte deles.
+
+Para guardares mais também na origem, define **Manter neste servidor** no cartão Réplica, por exemplo para 7. Depois de cada réplica ficam então neste servidor tantos dos instantâneos de réplica mais recentes quantos indicares, além do que o alvo guarda, e voltar a um deles é aqui um simples `zfs rollback`, sem nada para transferir. 0 ou 1 guarda só o mais recente. O mais recente tem um hold, para que a base da transferência seguinte não seja apagada por engano. Os mais antigos não têm nenhum, por isso podes voltar a eles ou apagá-los à mão. Cada instantâneo prende os blocos que mudaram depois dele, por isso cada um que guardas ocupa espaço no pool. Desligar a réplica ou mudá-la para outro alvo, ou apagar a entrada, também os remove deste servidor.
+
+Para voltar ao instantâneo de réplica mais recente, reverte o conjunto de dados:
+
+```
+zfs rollback cache/appdata@bombvault-replica-20261006014100
+```
+
+`zfs rollback` atua num só conjunto de dados, por isso reverte também cada conjunto de dados filho que queiras recuperar. Voltar a um instantâneo mais antigo apaga os mais recentes, por isso tira primeiro o hold do mais recente com `zfs release -r bombvault-replica cache/appdata@<último>` e depois usa `zfs rollback -r`. A cópia no alvo ainda tem os instantâneos mais recentes, e a réplica seguinte desse conjunto de dados falha até reverteres lá a cópia para o mesmo instantâneo com `zfs rollback -r`.
 
 ### Conjuntos de dados encriptados numa réplica {#replica-encryption}
 
@@ -211,7 +221,7 @@ Só são removidos os nomes que correspondem exatamente a `bombvault-` mais 14 d
 zfs destroy -r cache/appdata@bombvault-20260924021500
 ```
 
-O instantâneo de uma réplica chama-se `<dataset>@bombvault-replica-<14 digits>` e não é um resto. Fica na origem até a execução de réplica seguinte o substituir, e no destino enquanto a retenção o mantiver. O limpador nunca lhe toca, porque só corresponde a `bombvault-` seguido de exatamente 14 dígitos.
+O instantâneo de uma réplica chama-se `<dataset>@bombvault-replica-<14 digits>` e não é um resto. Fica na origem até uma execução de réplica mais recente o substituir, ou enquanto **Manter neste servidor** o mantiver, e no destino enquanto a retenção o mantiver. O limpador nunca lhe toca, porque só corresponde a `bombvault-` seguido de exatamente 14 dígitos.
 
 ## Anomalias {#anomalies}
 

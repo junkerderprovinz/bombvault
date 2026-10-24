@@ -60,7 +60,11 @@ type Entry struct {
 	// Keep is the target's retention over the replica snapshots. All zero
 	// keeps every one.
 	Keep store.RetentionKeep
-	Now  func() time.Time
+	// KeepOnSource is how many replica snapshots of each member stay on the
+	// source after a run, the run's own among them. Below 2 only the run's
+	// own stays.
+	KeepOnSource int
+	Now          func() time.Time
 	// Freeze, when set, readies the source for the replica snapshot, such as
 	// stopping the containers that write to it. Run calls the thaw it returns
 	// once the snapshot is taken or has failed. A Freeze that fails ends the

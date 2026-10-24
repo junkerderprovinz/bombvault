@@ -225,13 +225,14 @@ func (s *Service) runZFSReplica(ctx context.Context, d store.ZFSDataset, runID, 
 		return zfsrepl.Result{}, fmt.Errorf("read settings: %w", err)
 	}
 	entry := zfsrepl.Entry{
-		Root:       d.Dataset,
-		Excluded:   d.ExcludedChildren,
-		TargetBase: tgt.base,
-		Keep:       keep,
-		Now:        time.Now,
-		Freeze:     s.zfsReplicaFreeze(d, settings, zfsLockWait(ctx)),
-		Progress:   s.zfsReplicaProgress(key, startedAt),
+		Root:         d.Dataset,
+		Excluded:     d.ExcludedChildren,
+		TargetBase:   tgt.base,
+		Keep:         keep,
+		KeepOnSource: d.Replica.KeepOnSource,
+		Now:          time.Now,
+		Freeze:       s.zfsReplicaFreeze(d, settings, zfsLockWait(ctx)),
+		Progress:     s.zfsReplicaProgress(key, startedAt),
 	}
 	// A paired instance creates and marks its folders itself.
 	if tgt.server != nil {

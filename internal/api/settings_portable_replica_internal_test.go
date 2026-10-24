@@ -39,6 +39,9 @@ func seedReplica(t *testing.T, st *store.Repo) (store.ZFSReplicaServer, store.ZF
 	if err := st.SetZFSReplicaKeep(item.ID, store.ZFSReplicaKeep{Preset: "short"}); err != nil {
 		t.Fatal(err)
 	}
+	if err := st.SetZFSReplicaKeepOnSource(item.ID, 4); err != nil {
+		t.Fatal(err)
+	}
 	slot, err := st.AskZFSReceive(store.ZFSReceiveSlot{
 		PeerID: "peer-b", PeerName: "barn", ItemID: "their-item", Dataset: "tank/photos", SourceServer: "barn",
 		Members: []string{"tank/photos"},
@@ -108,7 +111,7 @@ func TestExportImportCarriesZFSServersAndReplicaSettingsButNoKeysOrSlots(t *test
 		t.Fatal(err)
 	}
 	want := store.ZFSReplica{TargetKind: store.ZFSReplicaTargetServer, TargetID: server.ID, Cadence: "daily 05:00",
-		Keep: store.ZFSReplicaKeep{Preset: "short"}}
+		Keep: store.ZFSReplicaKeep{Preset: "short"}, KeepOnSource: 4}
 	if !reflect.DeepEqual(d.Replica, want) {
 		t.Fatalf("imported replica = %+v, want %+v", d.Replica, want)
 	}

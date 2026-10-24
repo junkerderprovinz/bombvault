@@ -109,7 +109,7 @@ Replika nigdy nie zastępuje kopii zapasowej. Starsze wersje, pojedyncze pliki i
 
 **Tylko replika, bez kopii zapasowej** w karcie Replika sprawia, że cała sekcja ZFS wysyła repliki i nie tworzy kopii zapasowych. Własny folder i miejsca docelowe poza siedzibą zachowują swoje przełączniki, więc po wyłączeniu tej opcji sekcja znowu tworzy do nich kopie, a karta każdego elementu ZFS pokazuje przełącznik sekcji w jego bieżącym stanie. Taki element czeka na pierwszą replikę zamiast na kopię zapasową, **Utwórz kopię teraz** jest u niego oferowane jako **Replikuj teraz**, a jego kontenery zatrzymują się i jego polecenia uruchamiają się wokół migawki tak jak przy kopii zapasowej. Jego repliki liczą się do harmonogramu co kilka dni, alertu o zaległości i pokrycia.
 
-Włącz ją w karcie **Replika** na karcie Ustawienia elementu. Tam wybierasz, dokąd idzie replika, kiedy działa (**Po każdej kopii zapasowej** albo **Własny plan**) i ile migawek zostaje na celu. Karta wymienia każdy zbiór danych i wolumen z jego stanem, a **Replikuj teraz** uruchamia przebieg. Przebieg repliki ma własną blokadę, więc długi pierwszy transfer nigdy nie wstrzymuje kopii zapasowych.
+Włącz ją w karcie **Replika** na karcie Ustawienia elementu. Tam wybierasz, dokąd idzie replika, kiedy działa (**Po każdej kopii zapasowej** albo **Własny plan**) i ile migawek zostaje na celu i na tym serwerze. Karta wymienia każdy zbiór danych i wolumen z jego stanem, a **Replikuj teraz** uruchamia przebieg. Przebieg repliki ma własną blokadę, więc długi pierwszy transfer nigdy nie wstrzymuje kopii zapasowych.
 
 **Replikuj wszystko teraz**, obok akcji kopii zapasowej, gdy na stronie Kopie zapasowe wybrany jest kafelek ZFS, wysyła replikę każdego elementu ZFS, jeden po drugim. Partię wykonuje serwer, więc trwa dalej, gdy opuścisz stronę, a element, który nie może się replikować, zostaje wymieniony i pominięty.
 
@@ -170,7 +170,17 @@ Uwzględnione jest wszystko, co element kopiuje, a także znajdujące się pod n
 
 Na celu nowa replika zachowuje 7 migawek dziennych i 3 tygodniowe. Możesz zamiast tego wybrać **Krótko**, **Zrównoważone** albo **Długo**, albo ustawić **Własne wartości**. Usuwane są tam wyłącznie migawki o nazwie `bombvault-replica-<14 digits>`, i nigdy najnowsza, którą obie strony mają wspólną.
 
-Na źródle BombVault zachowuje tylko najnowszą migawkę repliki oraz zakładkę (bookmark) dla każdego wysłanego stanu. Zakładki nie zajmują miejsca. Następny transfer zaczyna się od nich.
+Na źródle BombVault zachowuje najnowszą migawkę repliki oraz zakładkę (bookmark) dla każdego wysłanego stanu. Zakładki nie zajmują miejsca. Następny transfer zaczyna się od nich.
+
+Aby zachować więcej także na źródle, ustaw **Zachowaj na tym serwerze** w karcie Replika, na przykład na 7. Tyle najnowszych migawek repliki zostaje wtedy na tym serwerze po każdej replice, obok tego, co zachowuje cel, a powrót do jednej z nich to tutaj zwykły `zfs rollback`, bez żadnego transferu. 0 lub 1 zachowuje tylko najnowszą. Na najnowszej założony jest hold, żeby nikt przypadkiem nie usunął podstawy następnego transferu. Starsze go nie mają, więc możesz ręcznie do nich wrócić albo je usunąć. Każda migawka trzyma bloki, które zmieniły się po niej, więc każda, którą zachowujesz, zajmuje miejsce w puli. Wyłączenie repliki, przełączenie jej na inny cel albo usunięcie elementu usuwa je również z tego serwera.
+
+Aby wrócić do najnowszej migawki repliki, cofnij zbiór danych:
+
+```
+zfs rollback cache/appdata@bombvault-replica-20261006014100
+```
+
+`zfs rollback` działa na jednym zbiorze danych, więc cofnij też każdy zbiór podrzędny, który chcesz odzyskać. Powrót do starszej migawki usuwa nowsze, więc najpierw zdejmij hold z najnowszej poleceniem `zfs release -r bombvault-replica cache/appdata@<najnowsza>`, a potem użyj `zfs rollback -r`. Kopia na celu nadal ma nowsze migawki, a następna replika tego zbioru danych kończy się błędem, dopóki nie cofniesz tam kopii do tej samej migawki poleceniem `zfs rollback -r`.
 
 ### Zaszyfrowane zbiory danych w replice {#replica-encryption}
 
@@ -211,7 +221,7 @@ Usuwane są tylko nazwy, które dokładnie odpowiadają `bombvault-` plus 14 cyf
 zfs destroy -r cache/appdata@bombvault-20260924021500
 ```
 
-Migawka repliki nazywa się `<dataset>@bombvault-replica-<14 digits>` i nie jest pozostałością. Zostaje na źródle, dopóki następny przebieg repliki jej nie zastąpi, a na celu tak długo, jak trzyma ją retencja. Sprzątanie nigdy jej nie rusza, bo pasuje tylko do `bombvault-` z dokładnie 14 cyframi.
+Migawka repliki nazywa się `<dataset>@bombvault-replica-<14 digits>` i nie jest pozostałością. Zostaje na źródle, dopóki nowszy przebieg repliki jej nie zastąpi albo dopóki trzyma ją **Zachowaj na tym serwerze**, a na celu tak długo, jak trzyma ją retencja. Sprzątanie nigdy jej nie rusza, bo pasuje tylko do `bombvault-` z dokładnie 14 cyframi.
 
 ## Anomalie {#anomalies}
 

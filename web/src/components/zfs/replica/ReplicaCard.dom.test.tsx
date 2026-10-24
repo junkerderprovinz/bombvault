@@ -235,6 +235,36 @@ describe("replica card", () => {
     await waitFor(() => expect(patches).toEqual([{ keep: { preset: "own", own: [0, 14, 3, 0, 0] } }]));
   });
 
+  it("sends how many snapshots stay on this server once the typing stops", async () => {
+    renderCard();
+    const field = (await screen.findByLabelText(en["zfs.replica.keepSource"])) as HTMLInputElement;
+    expect(field.value).toBe("0");
+    vi.useFakeTimers();
+    try {
+      fireEvent.change(field, { target: { value: "-2" } });
+      fireEvent.change(field, { target: { value: "7" } });
+      await act(async () => vi.advanceTimersByTime(1000));
+    } finally {
+      vi.useRealTimers();
+    }
+    await waitFor(() => expect(patches).toEqual([{ keepOnSource: 7 }]));
+  });
+
+  it("explains in a bubble what the snapshots on this server are for", async () => {
+    renderCard();
+    const field = await screen.findByLabelText(en["zfs.replica.keepSource"]);
+    const row = field.closest("[data-search-row]") as HTMLElement;
+    expect(row.getAttribute("data-search-row")).toBe(en["zfs.replica.keepSource"]);
+    expect(within(row).getByRole("img", { name: en["zfs.replica.keepSourceHint"] })).toBeTruthy();
+  });
+
+  it("keeps the snapshots on this server editable for a paired instance that allowed the replica", async () => {
+    current = replica({ target: { kind: "peer", id: "peer-1" }, peerState: "allowed", keepOnSource: 3 });
+    renderCard();
+    const field = (await screen.findByLabelText(en["zfs.replica.keepSource"])) as HTMLInputElement;
+    expect(field.value).toBe("3");
+  });
+
   it("switches to an own plan and shows the schedule editor", async () => {
     renderCard();
     const when = await screen.findByRole("radiogroup", { name: en["zfs.replica.when"] });

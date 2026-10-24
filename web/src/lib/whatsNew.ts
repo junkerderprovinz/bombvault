@@ -57,6 +57,19 @@ const TO_INSTANCES: WayStep[] = ["/settings", "/settings/instances", "/instances
 /** Every release that brought something new, newest first. */
 export const RELEASES: Release[] = [
   {
+    version: "10.3.1",
+    changes: [
+      {
+        id: "zfs-replica-source-keep",
+        page: ENTRY,
+        go: "/backups",
+        where: ["backups.title", "whatsNew.page.entry"],
+        way: ["/backups", "entry"],
+        text: "whatsNew.replicaSourceKeep",
+      },
+    ],
+  },
+  {
     version: "10.3.0",
     changes: [
       {

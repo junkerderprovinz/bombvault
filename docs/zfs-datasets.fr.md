@@ -109,7 +109,7 @@ Une réplique ne remplace jamais la sauvegarde. Les anciennes versions, les fich
 
 **Réplique seule, sans sauvegarde** dans la carte Réplique fait que toute la section ZFS envoie des répliques et ne fait aucune sauvegarde. Le dossier propre et les destinations hors site gardent leurs interrupteurs, si bien qu'en le désactivant la section sauvegarde de nouveau vers eux, et la carte de chaque élément ZFS montre l'interrupteur de la section tel qu'il est. Un tel élément attend sa première réplique au lieu d'une sauvegarde, **Sauvegarder maintenant** y devient **Répliquer maintenant**, et autour de l'instantané ses conteneurs s'arrêtent et ses commandes s'exécutent comme pour une sauvegarde. Ses répliques comptent pour un planning tous les quelques jours, l'alerte de retard et la couverture.
 
-Activez-la dans la carte **Réplique** de l'onglet Paramètres de l'élément. Vous y choisissez où va la réplique, quand elle s'exécute (**Après chaque sauvegarde** ou **Planning propre**) et combien d'instantanés restent sur la cible. La carte liste chaque jeu de données et volume avec son état, et **Répliquer maintenant** lance une exécution. Une exécution de réplique a son propre verrou, si bien qu'un long premier transfert ne retient jamais les sauvegardes.
+Activez-la dans la carte **Réplique** de l'onglet Paramètres de l'élément. Vous y choisissez où va la réplique, quand elle s'exécute (**Après chaque sauvegarde** ou **Planning propre**) et combien d'instantanés restent sur la cible et sur ce serveur. La carte liste chaque jeu de données et volume avec son état, et **Répliquer maintenant** lance une exécution. Une exécution de réplique a son propre verrou, si bien qu'un long premier transfert ne retient jamais les sauvegardes.
 
 **Tout répliquer maintenant**, à côté des actions de sauvegarde quand la tuile ZFS est choisie sur la page Sauvegardes, envoie la réplique de chaque élément ZFS, l'une après l'autre. Le serveur exécute le lot, il continue donc quand vous quittez la page, et un élément qui ne peut pas être répliqué est nommé et ignoré.
 
@@ -170,7 +170,17 @@ Tout ce que l'élément sauvegarde y entre, et les volumes en dessous aussi, que
 
 Sur la cible, un nouveau réplica garde 7 instantanés quotidiens et 3 hebdomadaires. Choisissez plutôt **Short**, **Balanced** ou **Long**, ou réglez **Custom values**. Seuls les instantanés nommés `bombvault-replica-<14 chiffres>` y sont supprimés, et jamais le plus récent que les deux côtés partagent.
 
-Sur la source, BombVault ne garde que le dernier instantané de réplica, plus un signet pour chaque état envoyé. Les signets ne coûtent pas d'espace. Le transfert suivant part de là.
+Sur la source, BombVault garde le dernier instantané de réplica, plus un signet pour chaque état envoyé. Les signets ne coûtent pas d'espace. Le transfert suivant part de là.
+
+Pour en garder davantage sur la source aussi, réglez **Conserver sur ce serveur** dans la carte Réplique, par exemple sur 7. Après chaque réplica, ce nombre d'instantanés de réplica parmi les plus récents reste alors sur ce serveur, en plus de ce que garde la cible, et revenir à l'un d'eux se fait ici avec un `zfs rollback`, sans rien transférer. 0 ou 1 ne garde que le dernier. Le dernier porte un hold, pour que la base du prochain transfert ne soit pas détruite par erreur. Les plus anciens n'en ont pas, vous pouvez donc revenir à eux ou les détruire à la main. Chaque instantané retient les blocs modifiés après lui, chaque instantané gardé prend donc de la place sur le pool. Désactiver la réplique, la faire passer à une autre cible ou supprimer l'élément les retire aussi de ce serveur.
+
+Pour revenir au dernier instantané de réplica, ramenez le jeu de données en arrière :
+
+```
+zfs rollback cache/appdata@bombvault-replica-20261006014100
+```
+
+`zfs rollback` agit sur un seul jeu de données, ramenez donc aussi en arrière chaque jeu enfant que vous voulez récupérer. Revenir à un instantané plus ancien détruit les plus récents, alors levez d'abord le hold du dernier avec `zfs release -r bombvault-replica cache/appdata@<dernier>`, puis utilisez `zfs rollback -r`. La copie sur la cible a toujours les instantanés plus récents, et le réplica suivant de ce jeu de données échoue tant que vous n'avez pas ramené la copie là-bas au même instantané avec `zfs rollback -r`.
 
 ### Jeux de données chiffrés dans un réplica {#replica-encryption}
 
@@ -211,7 +221,7 @@ Seuls les noms qui correspondent exactement à `bombvault-` suivi de 14 chiffres
 zfs destroy -r cache/appdata@bombvault-20260924021500
 ```
 
-L'instantané d'un réplica s'appelle `<dataset>@bombvault-replica-<14 chiffres>` et n'est pas un reste. Il reste sur la source jusqu'à ce que l'exécution de réplica suivante le remplace, et sur la cible tant que la rétention le garde. Le nettoyeur n'y touche jamais, car il ne correspond qu'à `bombvault-` suivi d'exactement 14 chiffres.
+L'instantané d'un réplica s'appelle `<dataset>@bombvault-replica-<14 chiffres>` et n'est pas un reste. Il reste sur la source jusqu'à ce qu'une exécution de réplica plus récente le remplace, ou tant que **Conserver sur ce serveur** le garde, et sur la cible tant que la rétention le garde. Le nettoyeur n'y touche jamais, car il ne correspond qu'à `bombvault-` suivi d'exactement 14 chiffres.
 
 ## Anomalies {#anomalies}
 

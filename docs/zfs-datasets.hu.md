@@ -109,7 +109,7 @@ A replika soha nem helyettesíti a mentést. A régebbi verziók, az egyes fájl
 
 A Replika kártyán a **Csak replika, mentés nélkül** azt eredményezi, hogy az egész ZFS-szakasz replikákat küld, és nem készít mentéseket. A saját mappa és a telephelyen kívüli célok megtartják a kapcsolóikat, így kikapcsolás után a szakasz újra oda ment, és minden ZFS-elem kártyája a szakasz kapcsolóját a tényleges állása szerint mutatja. Egy ilyen elem mentés helyett az első replikájára vár, a **Biztonsági mentés most** nála **Replikálás most** néven jelenik meg, és a pillanatkép körül leállnak a konténerei és lefutnak a parancsai, mint egy mentésnél. A replikái beleszámítanak a néhány naponkénti ütemezésbe, a késési riasztásba és a lefedettségbe.
 
-Kapcsold be az elem Beállítások lapján a **Replika** kártyán. Ott választod ki, hová kerüljön a replika, mikor fusson (**Minden mentés után** vagy **Saját terv**), és hány pillanatkép maradjon a célon. A kártya felsorolja az összes adatkészletet és kötetet az állapotukkal, a **Replikálás most** pedig elindít egy futást. A replikafutásnak saját zárja van, így egy hosszú első átvitel soha nem tartja fel a mentéseket.
+Kapcsold be az elem Beállítások lapján a **Replika** kártyán. Ott választod ki, hová kerüljön a replika, mikor fusson (**Minden mentés után** vagy **Saját terv**), és hány pillanatkép maradjon a célon és ezen a kiszolgálón. A kártya felsorolja az összes adatkészletet és kötetet az állapotukkal, a **Replikálás most** pedig elindít egy futást. A replikafutásnak saját zárja van, így egy hosszú első átvitel soha nem tartja fel a mentéseket.
 
 Az **Összes replikálása most**, amely a mentési műveletek mellett áll, ha a Biztonsági mentések oldalon a ZFS csempe van kiválasztva, egymás után elküldi minden ZFS-elem replikáját. A köteget a kiszolgáló futtatja, így akkor is halad, ha elhagyod az oldalt, és az az elem, amely nem tud replikálni, név szerint megjelenik és kimarad.
 
@@ -170,7 +170,17 @@ Minden bekerül, amit az elem ment, és az alatta lévő kötetek is, amelyeket 
 
 A célon egy új replika 7 napi és 3 heti pillanatképet tart meg. Válaszd inkább a **Rövid**, **Kiegyensúlyozott** vagy **Hosszú** lehetőséget, vagy állítsd be a **Saját értékek** értékeket. Ott csak a `bombvault-replica-<14 számjegy>` nevű pillanatképek törlődnek, és soha nem a legújabb, amelyen mindkét oldal osztozik.
 
-A forráson a BombVault csak a legutóbbi replika-pillanatképet tartja meg, plusz egy könyvjelzőt minden elküldött állapothoz. A könyvjelzők nem foglalnak helyet. A következő átvitel ezekből indul.
+A forráson a BombVault a legutóbbi replika-pillanatképet tartja meg, plusz egy könyvjelzőt minden elküldött állapothoz. A könyvjelzők nem foglalnak helyet. A következő átvitel ezekből indul.
+
+Ha a forráson is többet szeretnél megtartani, állítsd be a Replika kártyán a **Megőrzés ezen a kiszolgálón** értékét, például 7-re. Ekkor minden replika után ennyi marad a legújabb replika-pillanatképek közül ezen a kiszolgálón, a célon megtartottak mellett, és bármelyikükhöz itt egy `zfs rollback` paranccsal visszatérhetsz, átvitel nélkül. A 0 vagy az 1 csak a legutóbbit tartja meg. A legutóbbin zárolás (hold) van, hogy a következő átvitel alapját senki ne törölje véletlenül. A régebbieken nincs, így kézzel visszatérhetsz hozzájuk, vagy törölheted őket. Minden pillanatkép megtartja az utána megváltozott blokkokat, ezért minden megtartott pillanatkép helyet foglal a poolban. Ha kikapcsolod a replikát, másik célra váltasz, vagy törlöd az elemet, ezek is eltűnnek erről a kiszolgálóról.
+
+A legutóbbi replika-pillanatképhez így görgetheted vissza az adatkészletet:
+
+```
+zfs rollback cache/appdata@bombvault-replica-20261006014100
+```
+
+A `zfs rollback` egyetlen adatkészletre hat, ezért minden gyermek-adatkészletet, amelyet vissza szeretnél kapni, ugyanígy görgess vissza. Egy régebbi pillanatképhez való visszatérés törli az újabbakat, ezért előbb vedd le a zárolást a legutóbbiról a `zfs release -r bombvault-replica cache/appdata@<legutóbbi>` paranccsal, majd használd a `zfs rollback -r` parancsot. A célon lévő másolatban még megvannak az újabb pillanatképek, és az adatkészlet következő replikája addig sikertelen, amíg az ottani másolatot a `zfs rollback -r` paranccsal ugyanarra a pillanatképre vissza nem görgeted.
 
 ### Titkosított adatkészletek replikában {#replica-encryption}
 
@@ -211,7 +221,7 @@ Csak azok a nevek törlődnek, amelyek pontosan `bombvault-` és 14 számjegy. A
 zfs destroy -r cache/appdata@bombvault-20260924021500
 ```
 
-A replika pillanatképének neve `<dataset>@bombvault-replica-<14 számjegy>`, és nem maradék. A forráson addig marad, amíg a következő replikafutás le nem cseréli, a célon pedig addig, amíg a megőrzés tartja. A takarító soha nem nyúl hozzá, mert csak a `bombvault-` utáni pontosan 14 számjegyre illeszkedik.
+A replika pillanatképének neve `<dataset>@bombvault-replica-<14 számjegy>`, és nem maradék. A forráson addig marad, amíg egy újabb replikafutás le nem cseréli, vagy amíg a **Megőrzés ezen a kiszolgálón** megtartja, a célon pedig addig, amíg a megőrzés tartja. A takarító soha nem nyúl hozzá, mert csak a `bombvault-` utáni pontosan 14 számjegyre illeszkedik.
 
 ## Anomáliák {#anomalies}
 

@@ -5420,6 +5420,8 @@ export interface ZFSReplica {
   afterBackup: boolean;
   cadence: string;
   keep: ZFSReplicaKeep;
+  /** How many replica snapshots stay on this server; below 2 only the latest. */
+  keepOnSource: number;
   state: ZFSReplicaState;
   code: string;
   lastRun: string;
@@ -5443,6 +5445,7 @@ export interface ZFSReplicaPatch {
   afterBackup?: boolean;
   cadence?: string;
   keep?: ZFSReplicaKeep;
+  keepOnSource?: number;
 }
 
 /** GET /api/zfs/replica/servers. */

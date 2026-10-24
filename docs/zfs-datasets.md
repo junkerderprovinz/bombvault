@@ -111,7 +111,7 @@ The replica does not wait for the backup. **After every backup** means after the
 
 **Replica only, no backup** on the Replica card makes the whole ZFS section send replicas and take no backups. The own folder and the off-site storage locations keep their switches, so turning it off backs up to them again, and every ZFS entry's card shows the section's switch as it stands. Such an entry waits for its first replica instead of a backup, **Back up now** is offered as **Replicate now**, and the entry's containers stop and its commands run around the snapshot as for a backup. Its replicas count for an every-few-days schedule, the overdue alert and the coverage.
 
-Switch it on in the **Replica** card on the entry's Settings tab. There you pick where the replica goes, when it runs (**After every backup** or **Own plan**) and how many snapshots stay on the target. The card lists every dataset and volume with its state, and **Replicate now** starts a run. A replica run has a lock of its own, so a long first transfer never holds up the backups.
+Switch it on in the **Replica** card on the entry's Settings tab. There you pick where the replica goes, when it runs (**After every backup** or **Own plan**) and how many snapshots stay on the target and on this server. The card lists every dataset and volume with its state, and **Replicate now** starts a run. A replica run has a lock of its own, so a long first transfer never holds up the backups.
 
 **Replicate all now**, beside the backup actions when the ZFS tile is picked on the Backups page, sends the replica of every ZFS entry, one after the other. The server runs the batch, so it goes on when you leave the page, and an entry that cannot replicate is named and skipped.
 
@@ -172,7 +172,17 @@ Everything the entry backs up goes in, and the volumes below it too, which the b
 
 On the target, a new replica keeps 7 daily and 3 weekly snapshots. Pick **Short**, **Balanced** or **Long** instead, or set **Custom values**. Only snapshots named `bombvault-replica-<14 digits>` are ever removed there, and never the newest one that both sides share.
 
-On the source, BombVault keeps only the latest replica snapshot, plus a bookmark for every state it has sent. Bookmarks cost no space. The next transfer starts from them.
+On the source, BombVault keeps the latest replica snapshot, plus a bookmark for every state it has sent. Bookmarks cost no space. The next transfer starts from them.
+
+To keep more on the source as well, set **Keep on this server** on the Replica card, for example to 7. That many of the newest replica snapshots then stay on this server after every replica, next to what the target keeps, and going back to one of them is a `zfs rollback` here, with nothing to transfer. 0 or 1 keeps only the latest. The latest carries a hold, so the base of the next transfer is not destroyed by accident. The older ones have none, so you can roll back to them or destroy them by hand. Each snapshot holds on to the blocks that changed after it, so every one you keep takes space on the pool. Switching the replica off or to another target, or deleting the entry, removes them from this server too.
+
+To go back to the latest replica snapshot, roll the dataset back:
+
+```
+zfs rollback cache/appdata@bombvault-replica-20261006014100
+```
+
+`zfs rollback` works on one dataset, so roll back each child dataset you want back as well. Going back to an older snapshot destroys the newer ones, so first lift the hold from the latest with `zfs release -r bombvault-replica cache/appdata@<latest>`, then use `zfs rollback -r`. The copy on the target still holds the newer snapshots, and the next replica of that dataset fails until you roll the copy there back to the same snapshot with `zfs rollback -r`.
 
 ### Encrypted datasets in a replica {#replica-encryption}
 
@@ -213,7 +223,7 @@ Only names that match exactly `bombvault-` plus 14 digits are removed. Safety sn
 zfs destroy -r cache/appdata@bombvault-20260924021500
 ```
 
-The snapshot of a replica is named `<dataset>@bombvault-replica-<14 digits>` and is not a leftover. It stays on the source until the next replica run replaces it, and on the target as long as the retention keeps it. The sweeper never touches it, because it only matches `bombvault-` followed by exactly 14 digits.
+The snapshot of a replica is named `<dataset>@bombvault-replica-<14 digits>` and is not a leftover. It stays on the source until a newer replica run replaces it, or as long as **Keep on this server** keeps it, and on the target as long as the retention keeps it. The sweeper never touches it, because it only matches `bombvault-` followed by exactly 14 digits.
 
 ## Anomalies {#anomalies}
 

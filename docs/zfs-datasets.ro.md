@@ -109,7 +109,7 @@ O replică nu înlocuiește niciodată copia de rezervă. Versiunile mai vechi, 
 
 **Doar replică, fără copie de rezervă** din cardul Replică face ca întreaga secțiune ZFS să trimită replici și să nu mai facă nicio copie de rezervă. Folderul propriu și destinațiile off-site își păstrează comutatoarele, așa că dezactivarea lui face din nou copii de rezervă acolo, iar cardul fiecărui element ZFS arată comutatorul secțiunii așa cum este. Un astfel de element așteaptă prima replică în loc de o copie de rezervă, **Copiază acum** apare ca **Replicează acum**, iar containerele elementului se opresc și comenzile lui rulează în jurul instantaneului ca la o copie de rezervă. Replicile lui contează pentru o programare la câteva zile, alerta de întârziere și acoperire.
 
-Pornește-o în cardul **Replică** din fila Setări a elementului. Acolo alegi unde merge replica, când rulează (**După fiecare copie de rezervă** sau **Plan propriu**) și câte instantanee rămân pe țintă. Cardul listează fiecare set de date și volum cu starea lui, iar **Replică acum** pornește o rulare. O rulare de replică are un lock propriu, așa că un prim transfer lung nu oprește niciodată copiile de rezervă.
+Pornește-o în cardul **Replică** din fila Setări a elementului. Acolo alegi unde merge replica, când rulează (**După fiecare copie de rezervă** sau **Plan propriu**) și câte instantanee rămân pe țintă și pe acest server. Cardul listează fiecare set de date și volum cu starea lui, iar **Replică acum** pornește o rulare. O rulare de replică are un lock propriu, așa că un prim transfer lung nu oprește niciodată copiile de rezervă.
 
 **Replică tot acum**, lângă acțiunile de copiere când placa ZFS este aleasă pe pagina Copii de rezervă, trimite replica fiecărui element ZFS, unul după altul. Serverul rulează lotul, așa că acesta continuă când părăsești pagina, iar un element care nu poate fi replicat este numit și sărit.
 
@@ -170,7 +170,17 @@ Tot ce salvează elementul intră, iar și volumele de sub el, pe care copia de 
 
 Pe țintă, o replică nouă păstrează 7 instantanee zilnice și 3 săptămânale. Alege în loc **Short**, **Balanced** sau **Long**, sau setează **Custom values**. Acolo se șterg doar instantaneele numite `bombvault-replica-<14 digits>`, și niciodată cel mai nou pe care îl au în comun ambele părți.
 
-Pe sursă, BombVault păstrează doar ultimul instantaneu de replică, plus un semn de carte pentru fiecare stare trimisă. Semnele de carte nu ocupă spațiu. Următorul transfer pornește de la ele.
+Pe sursă, BombVault păstrează ultimul instantaneu de replică, plus un semn de carte pentru fiecare stare trimisă. Semnele de carte nu ocupă spațiu. Următorul transfer pornește de la ele.
+
+Ca să păstrezi mai multe și pe sursă, setează **Păstrează pe acest server** în cardul Replică, de exemplu la 7. După fiecare replică rămân atunci pe acest server atâtea dintre cele mai noi instantanee de replică, pe lângă ce păstrează ținta, iar întoarcerea la unul dintre ele este aici un `zfs rollback`, fără nimic de transferat. 0 sau 1 păstrează doar ultimul. Ultimul are un hold, ca baza următorului transfer să nu fie ștearsă din greșeală. Cele mai vechi nu au, așa că poți reveni la ele sau le poți șterge de mână. Fiecare instantaneu ține blocurile care s-au schimbat după el, așa că fiecare pe care îl păstrezi ocupă spațiu în pool. Dacă oprești replica sau o muți pe altă țintă, ori ștergi elementul, dispar și ele de pe acest server.
+
+Ca să revii la ultimul instantaneu de replică, derulează înapoi setul de date:
+
+```
+zfs rollback cache/appdata@bombvault-replica-20261006014100
+```
+
+`zfs rollback` acționează asupra unui singur set de date, așa că derulează înapoi și fiecare set de date copil pe care vrei să-l readuci. Întoarcerea la un instantaneu mai vechi le șterge pe cele mai noi, așa că scoate întâi hold-ul de pe ultimul cu `zfs release -r bombvault-replica cache/appdata@<ultimul>`, apoi folosește `zfs rollback -r`. Copia de pe țintă are încă instantaneele mai noi, iar următoarea replică a acelui set de date eșuează până când derulezi copia de acolo înapoi la același instantaneu cu `zfs rollback -r`.
 
 ### Seturi de date criptate într-o replică {#replica-encryption}
 
@@ -211,7 +221,7 @@ Sunt eliminate doar numele care corespund exact cu `bombvault-` plus 14 cifre. I
 zfs destroy -r cache/appdata@bombvault-20260924021500
 ```
 
-Instantaneul unei replici se numește `<dataset>@bombvault-replica-<14 digits>` și nu este o rămășiță. Rămâne pe sursă până când următoarea rulare de replică îl înlocuiește, iar pe țintă cât timp îl păstrează retenția. Curățătorul nu îl atinge niciodată, pentru că se potrivește doar cu `bombvault-` urmat de exact 14 cifre.
+Instantaneul unei replici se numește `<dataset>@bombvault-replica-<14 digits>` și nu este o rămășiță. Rămâne pe sursă până când o rulare de replică mai nouă îl înlocuiește, sau cât timp îl păstrează **Păstrează pe acest server**, iar pe țintă cât timp îl păstrează retenția. Curățătorul nu îl atinge niciodată, pentru că se potrivește doar cu `bombvault-` urmat de exact 14 cifre.
 
 ## Anomalii {#anomalies}
 

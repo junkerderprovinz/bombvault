@@ -55,9 +55,14 @@ export function keepSummary(t: Translate, keep: ZFSReplicaKeep): string {
     .join(", ");
 }
 
+/** keepCount reads a typed count as a whole number of snapshots. */
+export function keepCount(raw: string): number {
+  return Math.max(0, Math.floor(Number(raw)) || 0);
+}
+
 /** withOwnCount sets one of the five numbers, clamped to a whole count. */
 export function withOwnCount(counts: ZFSReplicaKeepCounts, index: number, raw: string): ZFSReplicaKeepCounts {
-  const value = Math.max(0, Math.floor(Number(raw)) || 0);
+  const value = keepCount(raw);
   return counts.map((n, i) => (i === index ? value : n)) as ZFSReplicaKeepCounts;
 }
 

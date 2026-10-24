@@ -109,7 +109,7 @@ Bir replika yedeğin yerini asla almaz. Eski sürümler, tek tek dosyalar ve den
 
 Replika kartındaki **Yalnızca replika, yedek yok**, tüm ZFS bölümünün replika göndermesini ve yedek almamasını sağlar. Kendi klasörü ve bina dışındaki hedefler anahtarlarını korur; bu yüzden kapatıldığında bölüm yeniden oraya yedekler ve her ZFS ögesinin kartı bölümün anahtarını olduğu gibi gösterir. Böyle bir öge yedek yerine ilk replikasını bekler, **Şimdi yedekle** onda **Şimdi çoğalt** olarak sunulur ve ögenin konteynerleri, bir yedeklemedeki gibi anlık görüntünün çevresinde durur, komutları da çalışır. Replikaları birkaç günde bir çalışan bir zamanlama, gecikme uyarısı ve kapsam için sayılır.
 
-Bunu ögenin Ayarlar sekmesindeki **Replika** kartında aç. Orada replikanın nereye gideceğini, ne zaman çalışacağını (**Her yedekten sonra** ya da **Kendi planı**) ve hedefte kaç anlık görüntünün kalacağını seçersin. Kart her veri kümesini ve birimi durumuyla listeler ve **Şimdi çoğalt** bir çalışma başlatır. Bir replika çalışmasının kendi kilidi vardır; bu yüzden uzun bir ilk aktarım yedekleri asla geciktirmez.
+Bunu ögenin Ayarlar sekmesindeki **Replika** kartında aç. Orada replikanın nereye gideceğini, ne zaman çalışacağını (**Her yedekten sonra** ya da **Kendi planı**) ve hedefte ve bu sunucuda kaç anlık görüntünün kalacağını seçersin. Kart her veri kümesini ve birimi durumuyla listeler ve **Şimdi çoğalt** bir çalışma başlatır. Bir replika çalışmasının kendi kilidi vardır; bu yüzden uzun bir ilk aktarım yedekleri asla geciktirmez.
 
 Yedekler sayfasında ZFS kutucuğu seçiliyken yedekleme eylemlerinin yanında duran **Şimdi tümünü çoğalt**, her ZFS ögesinin replikasını birbiri ardına gönderir. Toplu işi sunucu çalıştırır; bu yüzden sayfadan ayrılsan da sürer ve çoğaltılamayan bir öge adıyla belirtilip atlanır.
 
@@ -170,7 +170,17 @@ Hedefteki kopya salt okunurdur ve bağlanmaz, bu yüzden o sunucuda hiçbir şey
 
 Hedefte yeni bir replika 7 günlük ve 3 haftalık anlık görüntü tutar. Bunun yerine **Short**, **Dengeli** veya **Long**'u seç ya da **Custom values**'ı ayarla. Orada yalnızca `bombvault-replica-<14 digits>` adlı anlık görüntüler kaldırılır ve iki tarafın da paylaştığı en yeni olan asla kaldırılmaz.
 
-Kaynakta BombVault yalnızca en son replika anlık görüntüsünü ve gönderdiği her durum için bir yer imi tutar. Yer imleri alan harcamaz. Sonraki aktarım onlardan başlar.
+Kaynakta BombVault en son replika anlık görüntüsünü ve gönderdiği her durum için bir yer imi tutar. Yer imleri alan harcamaz. Sonraki aktarım onlardan başlar.
+
+Kaynakta da daha fazlasını tutmak için Replika kartında **Bu sunucuda sakla**'yı ayarla, örneğin 7'ye. O zaman her replikadan sonra en yeni replika anlık görüntülerinden o kadarı, hedefin tuttuklarına ek olarak bu sunucuda kalır ve birine geri dönmek için burada bir `zfs rollback` yeter, aktarılacak bir şey yoktur. 0 veya 1 yalnızca en sonuncuyu tutar. En sonuncunun üzerinde bir hold vardır, böylece sonraki aktarımın tabanı yanlışlıkla kaldırılmaz. Eskilerinde hold yoktur, bu yüzden onlara elle geri sarabilir ya da onları elle kaldırabilirsin. Her anlık görüntü kendisinden sonra değişen blokları tutar, bu yüzden tuttuğun her biri havuzda yer kaplar. Replikayı kapatmak, başka bir hedefe geçirmek ya da ögeyi silmek onları da bu sunucudan kaldırır.
+
+En son replika anlık görüntüsüne geri dönmek için veri kümesini geri sar:
+
+```
+zfs rollback cache/appdata@bombvault-replica-20261006014100
+```
+
+`zfs rollback` tek bir veri kümesinde çalışır, bu yüzden geri istediğin her alt veri kümesini de geri sar. Daha eski bir anlık görüntüye dönmek daha yenilerini kaldırır, bu yüzden önce `zfs release -r bombvault-replica cache/appdata@<son>` ile en sonuncudaki hold'u kaldır, sonra `zfs rollback -r` kullan. Hedefteki kopyada daha yeni anlık görüntüler hâlâ durur ve o veri kümesinin sonraki replikası, oradaki kopyayı `zfs rollback -r` ile aynı anlık görüntüye geri sarana kadar başarısız olur.
 
 ### Replikada şifreli veri kümeleri {#replica-encryption}
 
@@ -211,7 +221,7 @@ Yalnızca tam olarak `bombvault-` artı 14 rakamdan oluşan adlar kaldırılır.
 zfs destroy -r cache/appdata@bombvault-20260924021500
 ```
 
-Bir replikanın anlık görüntüsü `<dataset>@bombvault-replica-<14 digits>` olarak adlandırılır ve kalıntı değildir. Kaynakta sonraki replika çalıştırması onun yerini alana kadar, hedefte ise saklama onu tuttuğu sürece kalır. Temizleyici ona hiçbir zaman dokunmaz, çünkü yalnızca `bombvault-` ve ardından tam olarak 14 rakam olan adlarla eşleşir.
+Bir replikanın anlık görüntüsü `<dataset>@bombvault-replica-<14 digits>` olarak adlandırılır ve kalıntı değildir. Kaynakta daha yeni bir replika çalıştırması onun yerini alana kadar ya da **Bu sunucuda sakla** onu tuttuğu sürece, hedefte ise saklama onu tuttuğu sürece kalır. Temizleyici ona hiçbir zaman dokunmaz, çünkü yalnızca `bombvault-` ve ardından tam olarak 14 rakam olan adlarla eşleşir.
 
 ## Anormallikler {#anomalies}
 

@@ -14,17 +14,18 @@ import (
 
 // ZFSReplicaView is one item's replica as its card shows it.
 type ZFSReplicaView struct {
-	Target      zfsReplicaTargetExport   `json:"target"`
-	AfterBackup bool                     `json:"afterBackup"`
-	Cadence     string                   `json:"cadence"`
-	Keep        store.ZFSReplicaKeep     `json:"keep"`
-	State       string                   `json:"state"`
-	Code        string                   `json:"code"`
-	LastRun     string                   `json:"lastRun"`
-	LastBytes   int64                    `json:"lastBytes"`
-	LastSeconds int64                    `json:"lastSeconds"`
-	Snapshots   []ZFSReplicaSnapshotView `json:"snapshots"`
-	Members     []ZFSReplicaMemberView   `json:"members"`
+	Target       zfsReplicaTargetExport   `json:"target"`
+	AfterBackup  bool                     `json:"afterBackup"`
+	Cadence      string                   `json:"cadence"`
+	Keep         store.ZFSReplicaKeep     `json:"keep"`
+	KeepOnSource int                      `json:"keepOnSource"`
+	State        string                   `json:"state"`
+	Code         string                   `json:"code"`
+	LastRun      string                   `json:"lastRun"`
+	LastBytes    int64                    `json:"lastBytes"`
+	LastSeconds  int64                    `json:"lastSeconds"`
+	Snapshots    []ZFSReplicaSnapshotView `json:"snapshots"`
+	Members      []ZFSReplicaMemberView   `json:"members"`
 	// PeerState is what a paired instance answered, empty for any other
 	// target.
 	PeerState string `json:"peerState"`
@@ -83,14 +84,15 @@ func (s *Service) ZFSReplicaView(ctx context.Context, id string) (ZFSReplicaView
 	}
 	rep := d.Replica
 	v := ZFSReplicaView{
-		Target:      zfsReplicaTargetExport{Kind: rep.TargetKind, ID: rep.TargetID},
-		AfterBackup: rep.AfterBackup,
-		Cadence:     rep.Cadence,
-		Keep:        rep.Keep,
-		State:       zfsReplicaNever,
-		Snapshots:   []ZFSReplicaSnapshotView{},
-		Members:     []ZFSReplicaMemberView{},
-		Only:        s.zfsReplicaOnly(d),
+		Target:       zfsReplicaTargetExport{Kind: rep.TargetKind, ID: rep.TargetID},
+		AfterBackup:  rep.AfterBackup,
+		Cadence:      rep.Cadence,
+		Keep:         rep.Keep,
+		KeepOnSource: rep.KeepOnSource,
+		State:        zfsReplicaNever,
+		Snapshots:    []ZFSReplicaSnapshotView{},
+		Members:      []ZFSReplicaMemberView{},
+		Only:         s.zfsReplicaOnly(d),
 	}
 	if v.SectionOnly, err = s.store.ZFSReplicaOnly(); err != nil {
 		return ZFSReplicaView{}, err
@@ -261,10 +263,11 @@ func (s *Service) SetZFSReplicaOnly(on bool) error {
 
 // ZFSReplicaPatch carries a replica edit. A nil field keeps its value.
 type ZFSReplicaPatch struct {
-	Target      *zfsReplicaTargetExport `json:"target"`
-	AfterBackup *bool                   `json:"afterBackup"`
-	Cadence     *string                 `json:"cadence"`
-	Keep        *store.ZFSReplicaKeep   `json:"keep"`
+	Target       *zfsReplicaTargetExport `json:"target"`
+	AfterBackup  *bool                   `json:"afterBackup"`
+	Cadence      *string                 `json:"cadence"`
+	Keep         *store.ZFSReplicaKeep   `json:"keep"`
+	KeepOnSource *int                    `json:"keepOnSource"`
 }
 
 // PatchZFSReplica changes how an item replicates. Everything is checked
@@ -284,12 +287,15 @@ func (s *Service) PatchZFSReplica(ctx context.Context, id string, p ZFSReplicaPa
 			target.ID = ""
 		}
 	}
-	cadence, keep := rep.Cadence, rep.Keep
+	cadence, keep, onSource := rep.Cadence, rep.Keep, rep.KeepOnSource
 	if p.Cadence != nil {
 		cadence = strings.TrimSpace(*p.Cadence)
 	}
 	if p.Keep != nil {
 		keep = *p.Keep
+	}
+	if p.KeepOnSource != nil {
+		onSource = *p.KeepOnSource
 	}
 	servers, err := s.store.ListZFSReplicaServers()
 	if err != nil {
@@ -299,7 +305,7 @@ func (s *Service) PatchZFSReplica(ctx context.Context, id string, p ZFSReplicaPa
 	for _, srv := range servers {
 		ids[srv.ID] = true
 	}
-	if msg := zfsReplicaItemRefusal(target, cadence, keep, ids); msg != "" {
+	if msg := zfsReplicaItemRefusal(target, cadence, keep, onSource, ids); msg != "" {
 		return fmt.Errorf("the replica %s", msg)
 	}
 
@@ -329,6 +335,11 @@ func (s *Service) PatchZFSReplica(ctx context.Context, id string, p ZFSReplicaPa
 	}
 	if p.Keep != nil {
 		if err := s.store.SetZFSReplicaKeep(id, keep); err != nil {
+			return err
+		}
+	}
+	if p.KeepOnSource != nil {
+		if err := s.store.SetZFSReplicaKeepOnSource(id, onSource); err != nil {
 			return err
 		}
 	}

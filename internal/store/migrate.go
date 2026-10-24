@@ -3458,6 +3458,14 @@ UPDATE pull_sources SET leftovers_moved = 0;`,
 		alreadySatisfied: columnPresent("receiver_server", "reached_host"),
 		sql:              `ALTER TABLE receiver_server ADD COLUMN reached_host TEXT NOT NULL DEFAULT '';`,
 	},
+	{
+		// How many replica snapshots a ZFS item keeps on this server. A row
+		// from before keeps 0, so it goes on keeping only the newest.
+		version:          replicaSourceKeepMigration,
+		name:             "zfs_datasets_replica_keep_source",
+		alreadySatisfied: columnPresent("zfs_datasets", "replica_keep_source"),
+		sql:              `ALTER TABLE zfs_datasets ADD COLUMN replica_keep_source INTEGER NOT NULL DEFAULT 0;`,
+	},
 }
 
 // offsiteFieldDomains are the domains with an off-site field in the settings,
@@ -3738,6 +3746,10 @@ const updateHoldMigration = 570
 
 // receiverReachedMigration numbers the host the receiver's check found.
 const receiverReachedMigration = 580
+
+// replicaSourceKeepMigration numbers how many replica snapshots a ZFS item
+// keeps on this server.
+const replicaSourceKeepMigration = 590
 
 // oneLineColumns are the names and locations the recovery kit prints.
 var oneLineColumns = []struct {

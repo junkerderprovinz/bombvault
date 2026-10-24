@@ -62,6 +62,9 @@ type ZFSReplica struct {
 	AfterBackup bool
 	Cadence     string
 	Keep        ZFSReplicaKeep
+	// KeepOnSource is how many of the newest replica snapshots stay on this
+	// server after a run. Below 2 only the newest stays.
+	KeepOnSource int
 	// Peer is what the receiving instance of a peer target answered. Only
 	// SetZFSReplicaPeer writes it, and a new target clears it.
 	Peer ZFSReplicaPeer
@@ -432,6 +435,13 @@ func (r *Repo) SetZFSReplicaKeep(id string, keep ZFSReplicaKeep) error {
 		`UPDATE zfs_datasets SET replica_keep = ? WHERE id = ?`, string(raw), id)
 }
 
+// SetZFSReplicaKeepOnSource writes how many replica snapshots the item keeps
+// on this server.
+func (r *Repo) SetZFSReplicaKeepOnSource(id string, n int) error {
+	return r.updateZFSDataset("SetZFSReplicaKeepOnSource", id,
+		`UPDATE zfs_datasets SET replica_keep_source = ? WHERE id = ?`, n, id)
+}
+
 // ImportZFSReplica writes the replica part of a settings file in one
 // transaction. Servers keep this instance's key directory, a server that moved
 // is treated as UpdateZFSReplicaServer treats it, servers the file does not
@@ -501,8 +511,8 @@ func (r *Repo) ImportZFSReplica(in ZFSReplicaImport) error {
 				return fmt.Errorf("ImportZFSReplica %s keep: %w", dataset, err)
 			}
 			if _, err := tx.Exec(`UPDATE zfs_datasets
-				SET replica_after_backup = ?, replica_cadence = ?, replica_keep = ? WHERE id = ?`,
-				boolInt(rep.AfterBackup), rep.Cadence, string(raw), id); err != nil {
+				SET replica_after_backup = ?, replica_cadence = ?, replica_keep = ?, replica_keep_source = ? WHERE id = ?`,
+				boolInt(rep.AfterBackup), rep.Cadence, string(raw), rep.KeepOnSource, id); err != nil {
 				return fmt.Errorf("ImportZFSReplica %s: %w", dataset, err)
 			}
 		}

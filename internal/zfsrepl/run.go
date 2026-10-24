@@ -1,6 +1,7 @@
 package zfsrepl
 
 import (
+	"cmp"
 	"context"
 	"log"
 	"path"
@@ -437,16 +438,25 @@ func (r *run) destroyNew(ctx context.Context, dataset string) {
 	}
 }
 
-// clear releases and destroys every replica snapshot of a member on the source
-// but the run's own, which the target holds too. Bookmarks stay: they cost
+// clear thins the replica snapshots of a member on the source down to the
+// newest Entry.KeepOnSource, the run's own among them. The run's own keeps its
+// hold as the base of the next run; the older ones that stay lose theirs, so
+// they can be rolled back to or destroyed by hand. Bookmarks stay: they cost
 // nothing and are the base once a snapshot is gone.
 func (r *run) clear(ctx context.Context, dataset string, pts []zfs.ReplicaPoint) {
+	var older []zfs.ReplicaPoint
 	for _, p := range snapshots(pts) {
-		if p.Name == r.snap || !zfs.IsReplicaSnapshot(p.Name) {
-			continue
+		if p.Name != r.snap && zfs.IsReplicaSnapshot(p.Name) {
+			older = append(older, p)
 		}
+	}
+	slices.SortStableFunc(older, func(a, b zfs.ReplicaPoint) int { return cmp.Compare(b.CreateTxg, a.CreateTxg) })
+	for i, p := range older {
 		if err := release(ctx, r.src, dataset, p.Name); err != nil {
 			log.Printf("zfs replica: releasing %s@%s failed: %v", dataset, p.Name, err)
+			continue
+		}
+		if i < r.e.KeepOnSource-1 {
 			continue
 		}
 		args, err := zfs.DestroyReplicaArgs(dataset, p.Name)

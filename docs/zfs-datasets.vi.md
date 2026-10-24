@@ -109,7 +109,7 @@ Bản nhân bản không bao giờ thay thế bản sao lưu. Phiên bản cũ h
 
 **Chỉ bản nhân bản, không sao lưu** trong thẻ **Bản nhân bản** khiến cả phần ZFS gửi bản nhân bản và không tạo bản sao lưu. Thư mục riêng và các đích sao lưu off-site vẫn giữ công tắc của chúng, nên khi tắt tùy chọn này, phần đó lại sao lưu tới những nơi ấy, và thẻ của mọi mục ZFS hiển thị công tắc của phần đúng như trạng thái hiện tại. Một mục như vậy chờ bản nhân bản đầu tiên thay vì bản sao lưu, **Sao lưu ngay** được thay bằng **Nhân bản ngay**, và các container của mục dừng lại cùng các lệnh của nó chạy quanh snapshot như khi sao lưu. Các bản nhân bản của nó được tính cho lịch vài ngày một lần, cảnh báo quá hạn và độ bao phủ.
 
-Bật nó trong thẻ **Bản nhân bản** ở tab Cài đặt của mục. Ở đó bạn chọn bản nhân bản đi đâu, khi nào chạy (**Sau mỗi bản sao lưu** hoặc **Kế hoạch riêng**) và bao nhiêu snapshot ở lại trên đích. Thẻ liệt kê mọi tập dữ liệu và volume cùng trạng thái, và **Nhân bản ngay** bắt đầu một lần chạy. Một lần chạy nhân bản có khóa riêng, nên lần truyền đầu tiên dài không bao giờ làm chậm các bản sao lưu.
+Bật nó trong thẻ **Bản nhân bản** ở tab Cài đặt của mục. Ở đó bạn chọn bản nhân bản đi đâu, khi nào chạy (**Sau mỗi bản sao lưu** hoặc **Kế hoạch riêng**) và bao nhiêu snapshot ở lại trên đích và trên máy chủ này. Thẻ liệt kê mọi tập dữ liệu và volume cùng trạng thái, và **Nhân bản ngay** bắt đầu một lần chạy. Một lần chạy nhân bản có khóa riêng, nên lần truyền đầu tiên dài không bao giờ làm chậm các bản sao lưu.
 
 **Nhân bản tất cả ngay**, nằm cạnh các thao tác sao lưu khi ô ZFS được chọn trên trang Bản sao lưu, gửi bản nhân bản của mọi mục ZFS, lần lượt từng mục. Máy chủ chạy cả lô, nên nó vẫn tiếp tục khi bạn rời trang, và mục nào không nhân bản được sẽ được nêu tên và bỏ qua.
 
@@ -170,7 +170,17 @@ Mọi thứ mục sao lưu đều vào, và các volume bên dưới nó cũng v
 
 Ở đích, một bản nhân bản mới giữ 7 ảnh chụp hằng ngày và 3 ảnh chụp hằng tuần. Hãy chọn **Short**, **Cân bằng** hoặc **Long**, hoặc đặt **Custom values**. Chỉ các ảnh chụp tên `bombvault-replica-<14 digits>` mới bị xóa ở đó, và không bao giờ xóa ảnh chụp mới nhất mà cả hai phía cùng có.
 
-Ở nguồn, BombVault chỉ giữ ảnh chụp nhân bản mới nhất, cùng một bookmark cho mỗi trạng thái đã gửi. Bookmark không tốn dung lượng. Lần truyền tiếp theo bắt đầu từ chúng.
+Ở nguồn, BombVault giữ ảnh chụp nhân bản mới nhất, cùng một bookmark cho mỗi trạng thái đã gửi. Bookmark không tốn dung lượng. Lần truyền tiếp theo bắt đầu từ chúng.
+
+Để giữ nhiều hơn cả ở nguồn, hãy đặt **Giữ trên máy chủ này** trong thẻ **Bản nhân bản**, ví dụ thành 7. Khi đó, sau mỗi lần nhân bản, chừng ấy ảnh chụp nhân bản mới nhất sẽ ở lại trên máy chủ này, bên cạnh những gì đích giữ, và muốn quay lại một trong số chúng thì chỉ cần một lệnh `zfs rollback` tại đây, không phải truyền gì. 0 hoặc 1 chỉ giữ ảnh chụp mới nhất. Ảnh chụp mới nhất mang một hold, để cơ sở của lần truyền tiếp theo không bị xóa nhầm. Các ảnh chụp cũ hơn không có hold, nên bạn có thể tự tay hoàn nguyên về chúng hoặc xóa chúng. Mỗi ảnh chụp giữ lại các khối đã thay đổi sau nó, nên mỗi ảnh chụp bạn giữ đều chiếm dung lượng trong pool. Tắt bản nhân bản, chuyển nó sang đích khác hoặc xóa mục cũng sẽ xóa chúng khỏi máy chủ này.
+
+Để quay lại ảnh chụp nhân bản mới nhất, hãy hoàn nguyên tập dữ liệu:
+
+```
+zfs rollback cache/appdata@bombvault-replica-20261006014100
+```
+
+`zfs rollback` chỉ tác động lên một tập dữ liệu, nên hãy hoàn nguyên cả từng tập dữ liệu con mà bạn muốn lấy lại. Quay lại một ảnh chụp cũ hơn sẽ xóa các ảnh chụp mới hơn, nên trước tiên hãy gỡ hold khỏi ảnh chụp mới nhất bằng `zfs release -r bombvault-replica cache/appdata@<mới-nhất>`, rồi dùng `zfs rollback -r`. Bản sao trên đích vẫn còn các ảnh chụp mới hơn, và lần nhân bản tiếp theo của tập dữ liệu đó sẽ thất bại cho đến khi bạn hoàn nguyên bản sao ở đó về cùng ảnh chụp ấy bằng `zfs rollback -r`.
 
 ### Tập dữ liệu mã hóa trong bản nhân bản {#replica-encryption}
 
@@ -211,7 +221,7 @@ Chỉ những tên khớp chính xác với `bombvault-` cộng 14 chữ số m�
 zfs destroy -r cache/appdata@bombvault-20260924021500
 ```
 
-Ảnh chụp của một bản nhân bản có tên `<dataset>@bombvault-replica-<14 digits>` và không phải là ảnh chụp còn sót lại. Nó ở lại trên nguồn cho đến khi lần chạy nhân bản tiếp theo thay thế nó, và ở đích chừng nào việc lưu giữ còn giữ nó. Trình dọn dẹp không bao giờ động đến nó, vì nó chỉ khớp với `bombvault-` theo sau là đúng 14 chữ số.
+Ảnh chụp của một bản nhân bản có tên `<dataset>@bombvault-replica-<14 digits>` và không phải là ảnh chụp còn sót lại. Nó ở lại trên nguồn cho đến khi một lần chạy nhân bản mới hơn thay thế nó, hoặc chừng nào **Giữ trên máy chủ này** còn giữ nó, và ở đích chừng nào việc lưu giữ còn giữ nó. Trình dọn dẹp không bao giờ động đến nó, vì nó chỉ khớp với `bombvault-` theo sau là đúng 14 chữ số.
 
 ## Bất thường {#anomalies}
 
