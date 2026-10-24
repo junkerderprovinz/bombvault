@@ -1038,7 +1038,7 @@ const et: Partial<Translations> = {
 
   // Per-container exclude patterns
   "excludes.title": "Väljajätumustrid",
-  "excludes.hint": "Üks muster rea kohta. Konteineri rada (nt /config/Library/.../Cache) võrreldakse varundatud köitega; pelk nimi nagu .git sobib igal sügavusel. Loogeliste sulgude loendeid nagu {a,b} ei toetata; kasuta ühte rida iga jaoks.",
+  "excludes.hint": "Üks muster rea kohta. Konteineri rada (nt /config/Library/.../Cache) võrreldakse varundatud köitega; pelk nimi nagu .git sobib igal sügavusel. Loogeliste sulgude loendeid nagu {a,b} ei toetata; kasuta ühte rida iga jaoks. Rida kausta jaoks väljaspool Host Datat lülitab välja hoiatuse, et seda ei varundatud.",
   "excludes.placeholder": "/config/Library/Application Support/Plex Media Server/Cache\n/config/Library/Application Support/Plex Media Server/Metadata\n.git",
   "excludes.saved": "Väljajätud salvestatud",
   "excludes.error": "Väljajätte ei õnnestunud salvestada",
@@ -1046,6 +1046,7 @@ const et: Partial<Translations> = {
   "excludes.excludesNothing": "Selle kausta köide pole varunduses, seega see rida ei jäta midagi välja.",
   "excludes.nameMatchesNothing": "Selles varunduses pole midagi selle nimega, seega see rida ei jäta midagi välja.",
   "excludes.pathMissing": "Seda teed varunduses pole, seega see rida ei jäta midagi välja.",
+  "excludes.outsideHostData": "See kaust asub väljaspool Host Datat, seega BombVault ei saa seda varundada. See rida lülitab välja hoiatuse, et seda ei varundatud.",
   // Exclude preview status
   "excludes.willExclude": "jäetakse varundusest välja",
   "excludes.matchesAnywhere": "jäetakse välja kõikjal, kus see esineb",

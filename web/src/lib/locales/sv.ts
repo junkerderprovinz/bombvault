@@ -1544,7 +1544,7 @@ const sv: Partial<Translations> = {
 
   // Per-container exclude patterns (#36)
   "excludes.title": "Uteslutningsmönster",
-  "excludes.hint": "Ett mönster per rad. En containersökväg (t.ex. /config/Library/.../Cache) matchas mot den säkerhetskopierade volymen; ett rent namn som .git matchar på valfritt djup. Listor med klammerparenteser som {a,b} stöds inte; använd en rad per styck.",
+  "excludes.hint": "Ett mönster per rad. En containersökväg (t.ex. /config/Library/.../Cache) matchas mot den säkerhetskopierade volymen; ett rent namn som .git matchar på valfritt djup. Listor med klammerparenteser som {a,b} stöds inte; använd en rad per styck. En rad för en mapp utanför Host Data stänger av varningen om att den inte säkerhetskopierades.",
   "excludes.placeholder": "/config/Library/Application Support/Plex Media Server/Cache\n/config/Library/Application Support/Plex Media Server/Metadata\n.git",
   "excludes.saved": "Uteslutningar sparade",
   "excludes.error": "Det gick inte att spara uteslutningarna",
@@ -1552,6 +1552,7 @@ const sv: Partial<Translations> = {
   "excludes.excludesNothing": "Den här mappens volym finns inte i säkerhetskopian, så den här raden utesluter ingenting.",
   "excludes.nameMatchesNothing": "Inget i den här säkerhetskopian har det här namnet, så den här raden utesluter ingenting.",
   "excludes.pathMissing": "Den här sökvägen finns inte i säkerhetskopian, så den här raden utesluter ingenting.",
+  "excludes.outsideHostData": "Den här mappen ligger utanför Host Data, så BombVault kan inte säkerhetskopiera den. Den här raden stänger av varningen om att den inte säkerhetskopierades.",
   // Exclude preview status (#38)
   "excludes.willExclude": "utesluts från säkerhetskopian",
   "excludes.matchesAnywhere": "utesluts överallt där det förekommer",

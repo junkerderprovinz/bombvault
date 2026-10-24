@@ -1038,7 +1038,7 @@ const bg: Partial<Translations> = {
 
   // Per-container exclude patterns
   "excludes.title": "Модели за изключване",
-  "excludes.hint": "По един модел на ред. Път в контейнера (напр. /config/Library/.../Cache) се сравнява спрямо архивирания том; голо име като .git съвпада на всяко ниво. Списъци с фигурни скоби като {a,b} не се поддържат; използвай по един ред за всеки.",
+  "excludes.hint": "По един модел на ред. Път в контейнера (напр. /config/Library/.../Cache) се сравнява спрямо архивирания том; голо име като .git съвпада на всяко ниво. Списъци с фигурни скоби като {a,b} не се поддържат; използвай по един ред за всеки. Ред за папка извън Host Data изключва предупреждението, че тя не е архивирана.",
   "excludes.placeholder": "/config/Library/Application Support/Plex Media Server/Cache\n/config/Library/Application Support/Plex Media Server/Metadata\n.git",
   "excludes.saved": "Изключванията са запазени",
   "excludes.error": "Изключванията не можаха да бъдат запазени",
@@ -1046,6 +1046,7 @@ const bg: Partial<Translations> = {
   "excludes.excludesNothing": "Томът на тази папка не е в архивирането, така че този ред не изключва нищо.",
   "excludes.nameMatchesNothing": "Нищо в това архивиране няма това име, така че този ред не изключва нищо.",
   "excludes.pathMissing": "Този път не съществува в архивирането, така че този ред не изключва нищо.",
+  "excludes.outsideHostData": "Тази папка е извън Host Data, затова BombVault не може да я архивира. Този ред изключва предупреждението, че не е архивирана.",
   // Exclude preview status
   "excludes.willExclude": "ще бъде изключено от архивирането",
   "excludes.matchesAnywhere": "ще бъде изключено навсякъде, където се появи",

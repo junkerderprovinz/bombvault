@@ -1544,7 +1544,7 @@ const it: Partial<Translations> = {
 
   // Per-container exclude patterns (#36)
   "excludes.title": "Pattern di esclusione",
-  "excludes.hint": "Un pattern per riga. Un percorso del contenitore (es. /config/Library/.../Cache) viene confrontato con il volume di cui si esegue il backup; un nome semplice come .git corrisponde a qualsiasi profondità. Gli elenchi tra parentesi graffe come {a,b} non sono supportati; usa una riga ciascuno.",
+  "excludes.hint": "Un pattern per riga. Un percorso del contenitore (es. /config/Library/.../Cache) viene confrontato con il volume di cui si esegue il backup; un nome semplice come .git corrisponde a qualsiasi profondità. Gli elenchi tra parentesi graffe come {a,b} non sono supportati; usa una riga ciascuno. Una riga per una cartella fuori da Host Data spegne l'avviso che non è stata salvata.",
   "excludes.placeholder": "/config/Library/Application Support/Plex Media Server/Cache\n/config/Library/Application Support/Plex Media Server/Metadata\n.git",
   "excludes.saved": "Esclusioni salvate",
   "excludes.error": "Impossibile salvare le esclusioni",
@@ -1552,6 +1552,7 @@ const it: Partial<Translations> = {
   "excludes.excludesNothing": "Il volume di questa cartella non è nel backup, quindi questa riga non esclude nulla.",
   "excludes.nameMatchesNothing": "Nulla in questo backup ha questo nome, quindi questa riga non esclude nulla.",
   "excludes.pathMissing": "Questo percorso non esiste nel backup, quindi questa riga non esclude nulla.",
+  "excludes.outsideHostData": "Questa cartella è fuori da Host Data, quindi BombVault non può salvarla. Questa riga spegne l'avviso che non è stata salvata.",
   // Exclude preview status (#38)
   "excludes.willExclude": "sarà escluso dal backup",
   "excludes.matchesAnywhere": "sarà escluso ovunque compaia",

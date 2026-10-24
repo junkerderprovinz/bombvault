@@ -1038,7 +1038,7 @@ const fa: Partial<Translations> = {
 
   // Per-container exclude patterns
   "excludes.title": "الگوهای مستثنی‌سازی",
-  "excludes.hint": "یک الگو در هر خط. یک مسیر کانتینر (مثلاً /config/Library/.../Cache) با volume پشتیبان‌گیری‌شده مقایسه می‌شود؛ نامی ساده مانند .git در هر عمقی مطابقت می‌کند. لیست‌های آکولادی مانند {a,b} پشتیبانی نمی‌شوند؛ برای هرکدام یک خط بنویس.",
+  "excludes.hint": "یک الگو در هر خط. یک مسیر کانتینر (مثلاً /config/Library/.../Cache) با volume پشتیبان‌گیری‌شده مقایسه می‌شود؛ نامی ساده مانند .git در هر عمقی مطابقت می‌کند. لیست‌های آکولادی مانند {a,b} پشتیبانی نمی‌شوند؛ برای هرکدام یک خط بنویس. خطی برای پوشه‌ای خارج از Host Data هشدارِ پشتیبان‌گیری‌نشدنِ آن را خاموش می‌کند.",
   "excludes.placeholder": "/config/Library/Application Support/Plex Media Server/Cache\n/config/Library/Application Support/Plex Media Server/Metadata\n.git",
   "excludes.saved": "مستثنی‌ها ذخیره شد",
   "excludes.error": "ذخیره مستثنی‌ها ناموفق بود",
@@ -1046,6 +1046,7 @@ const fa: Partial<Translations> = {
   "excludes.excludesNothing": "volume این پوشه در پشتیبان‌گیری نیست، پس این خط چیزی را مستثنی نمی‌کند.",
   "excludes.nameMatchesNothing": "هیچ چیزی در این پشتیبان این نام را ندارد، پس این خط چیزی را مستثنی نمی‌کند.",
   "excludes.pathMissing": "این مسیر در پشتیبان وجود ندارد، پس این خط چیزی را مستثنی نمی‌کند.",
+  "excludes.outsideHostData": "این پوشه خارج از Host Data است، پس BombVault نمی‌تواند از آن پشتیبان بگیرد. این خط هشدارِ پشتیبان‌گیری‌نشدنِ آن را خاموش می‌کند.",
   // Exclude preview status
   "excludes.willExclude": "از پشتیبان‌گیری مستثنی خواهد شد",
   "excludes.matchesAnywhere": "هرجا که ظاهر شود مستثنی خواهد شد",

@@ -1038,7 +1038,7 @@ const ms: Partial<Translations> = {
 
   // Per-container exclude patterns
   "excludes.title": "Corak pengecualian",
-  "excludes.hint": "Satu corak setiap baris. Laluan bekas (cth. /config/Library/.../Cache) dipadankan dengan volum yang disandarkan; nama biasa seperti .git sepadan pada mana-mana kedalaman. Senarai kurungan dakap seperti {a,b} tidak disokong; gunakan satu baris bagi setiap satu.",
+  "excludes.hint": "Satu corak setiap baris. Laluan bekas (cth. /config/Library/.../Cache) dipadankan dengan volum yang disandarkan; nama biasa seperti .git sepadan pada mana-mana kedalaman. Senarai kurungan dakap seperti {a,b} tidak disokong; gunakan satu baris bagi setiap satu. Baris untuk folder di luar Host Data mematikan amaran bahawa ia tidak disandarkan.",
   "excludes.placeholder": "/config/Library/Application Support/Plex Media Server/Cache\n/config/Library/Application Support/Plex Media Server/Metadata\n.git",
   "excludes.saved": "Pengecualian disimpan",
   "excludes.error": "Pengecualian gagal disimpan",
@@ -1046,6 +1046,7 @@ const ms: Partial<Translations> = {
   "excludes.excludesNothing": "Volum folder ini tiada dalam sandaran, jadi baris ini tidak mengecualikan apa-apa.",
   "excludes.nameMatchesNothing": "Tiada apa-apa dalam sandaran ini yang bernama ini, jadi baris ini tidak mengecualikan apa-apa.",
   "excludes.pathMissing": "Laluan ini tiada dalam sandaran, jadi baris ini tidak mengecualikan apa-apa.",
+  "excludes.outsideHostData": "Folder ini berada di luar Host Data, jadi BombVault tidak dapat menyandarkannya. Baris ini mematikan amaran bahawa ia tidak disandarkan.",
   // Exclude preview status
   "excludes.willExclude": "akan dikecualikan daripada sandaran",
   "excludes.matchesAnywhere": "akan dikecualikan di mana-mana ia muncul",

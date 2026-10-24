@@ -1542,7 +1542,7 @@ const cs: Partial<Translations> = {
 
   // Per-container exclude patterns (#36)
   "excludes.title": "Vzory vyloučení",
-  "excludes.hint": "Jeden vzor na řádek. Cesta kontejneru (např. /config/Library/.../Cache) se porovnává se zálohovaným svazkem; samotný název jako .git odpovídá v jakékoli hloubce. Seznamy ve složených závorkách jako {a,b} nejsou podporovány; použij jeden řádek pro každý.",
+  "excludes.hint": "Jeden vzor na řádek. Cesta kontejneru (např. /config/Library/.../Cache) se porovnává se zálohovaným svazkem; samotný název jako .git odpovídá v jakékoli hloubce. Seznamy ve složených závorkách jako {a,b} nejsou podporovány; použij jeden řádek pro každý. Řádek pro složku mimo Host Data vypne upozornění, že nebyla zálohována.",
   "excludes.placeholder": "/config/Library/Application Support/Plex Media Server/Cache\n/config/Library/Application Support/Plex Media Server/Metadata\n.git",
   "excludes.saved": "Vyloučení uložena",
   "excludes.error": "Vyloučení se nepodařilo uložit",
@@ -1550,6 +1550,7 @@ const cs: Partial<Translations> = {
   "excludes.excludesNothing": "Svazek této složky není v záloze, takže tento řádek nic nevylučuje.",
   "excludes.nameMatchesNothing": "Nic v této záloze nemá tento název, takže tento řádek nic nevylučuje.",
   "excludes.pathMissing": "Tato cesta v záloze neexistuje, takže tento řádek nic nevylučuje.",
+  "excludes.outsideHostData": "Tato složka je mimo Host Data, takže ji BombVault nemůže zálohovat. Tento řádek vypne upozornění, že nebyla zálohována.",
   // Exclude preview status (#38)
   "excludes.willExclude": "bude vyloučeno ze zálohy",
   "excludes.matchesAnywhere": "bude vyloučeno všude, kde se vyskytuje",

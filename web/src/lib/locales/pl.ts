@@ -1541,7 +1541,7 @@ const pl: Partial<Translations> = {
 
   // Per-container exclude patterns (#36)
   "excludes.title": "Wzorce wykluczeń",
-  "excludes.hint": "Jeden wzorzec na wiersz. Ścieżka kontenera (np. /config/Library/.../Cache) jest dopasowywana do kopii zapasowej woluminu; sama nazwa jak .git pasuje na dowolnej głębokości. Listy w nawiasach klamrowych jak {a,b} nie są obsługiwane; użyj po jednym wierszu dla każdego.",
+  "excludes.hint": "Jeden wzorzec na wiersz. Ścieżka kontenera (np. /config/Library/.../Cache) jest dopasowywana do kopii zapasowej woluminu; sama nazwa jak .git pasuje na dowolnej głębokości. Listy w nawiasach klamrowych jak {a,b} nie są obsługiwane; użyj po jednym wierszu dla każdego. Wiersz dla folderu poza Host Data wyłącza ostrzeżenie, że nie został zarchiwizowany.",
   "excludes.placeholder": "/config/Library/Application Support/Plex Media Server/Cache\n/config/Library/Application Support/Plex Media Server/Metadata\n.git",
   "excludes.saved": "Wykluczenia zapisane",
   "excludes.error": "Nie udało się zapisać wykluczeń",
@@ -1549,6 +1549,7 @@ const pl: Partial<Translations> = {
   "excludes.excludesNothing": "Wolumin tego folderu nie jest w kopii zapasowej, więc ten wiersz niczego nie wyklucza.",
   "excludes.nameMatchesNothing": "Nic w tej kopii zapasowej nie ma tej nazwy, więc ten wiersz niczego nie wyklucza.",
   "excludes.pathMissing": "Ta ścieżka nie istnieje w kopii zapasowej, więc ten wiersz niczego nie wyklucza.",
+  "excludes.outsideHostData": "Ten folder jest poza Host Data, więc BombVault nie może go zarchiwizować. Ten wiersz wyłącza ostrzeżenie, że nie został zarchiwizowany.",
   // Exclude preview status (#38)
   "excludes.willExclude": "zostanie wykluczony z kopii zapasowej",
   "excludes.matchesAnywhere": "zostanie wykluczony wszędzie, gdzie występuje",

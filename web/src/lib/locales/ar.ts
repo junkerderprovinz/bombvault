@@ -1545,7 +1545,7 @@ const ar: Partial<Translations> = {
 
   // Per-container exclude patterns (#36)
   "excludes.title": "أنماط الاستبعاد",
-  "excludes.hint": "نمط واحد لكل سطر. يُطابَق مسار الحاوية (مثل /config/Library/.../Cache) مع وحدة التخزين المنسوخة احتياطياً؛ أما اسم مجرد مثل .git فيطابق على أي عمق. لا تُدعم قوائم الأقواس المعقوفة مثل {a,b}؛ يلزم سطر لكل واحدة.",
+  "excludes.hint": "نمط واحد لكل سطر. يُطابَق مسار الحاوية (مثل /config/Library/.../Cache) مع وحدة التخزين المنسوخة احتياطياً؛ أما اسم مجرد مثل .git فيطابق على أي عمق. لا تُدعم قوائم الأقواس المعقوفة مثل {a,b}؛ يلزم سطر لكل واحدة. سطر لمجلد خارج Host Data يوقف التحذير بأنه لم يُنسخ احتياطيًا.",
   "excludes.placeholder": "/config/Library/Application Support/Plex Media Server/Cache\n/config/Library/Application Support/Plex Media Server/Metadata\n.git",
   "excludes.saved": "تم حفظ الاستبعادات",
   "excludes.error": "تعذّر حفظ الاستبعادات",
@@ -1553,6 +1553,7 @@ const ar: Partial<Translations> = {
   "excludes.excludesNothing": "وحدة تخزين هذا المجلد ليست ضمن النسخة الاحتياطية، لذا لا يستبعد هذا السطر أي شيء.",
   "excludes.nameMatchesNothing": "لا يوجد في هذه النسخة الاحتياطية شيء بهذا الاسم، لذا لا يستبعد هذا السطر أي شيء.",
   "excludes.pathMissing": "هذا المسار غير موجود في النسخة الاحتياطية، لذا لا يستبعد هذا السطر أي شيء.",
+  "excludes.outsideHostData": "يقع هذا المجلد خارج Host Data، لذا لا يستطيع BombVault نسخه احتياطيًا. يوقف هذا السطر التحذير بأنه لم يُنسخ احتياطيًا.",
   // Exclude preview status (#38)
   "excludes.willExclude": "سيتم استبعاده من النسخة الاحتياطية",
   "excludes.matchesAnywhere": "سيتم استبعاده أينما ظهر",

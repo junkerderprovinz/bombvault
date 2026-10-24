@@ -1,8 +1,9 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { I18nProvider, useT } from "../../lib/i18n";
+import { en, I18nProvider, useT } from "../../lib/i18n";
 import { ToastProvider } from "../../lib/toast";
+import type { ExcludePreview } from "./ExcludesEditor";
 
 const saved: string[][] = [];
 let answer: { ok: boolean; error?: string } = { ok: true };
@@ -22,16 +23,16 @@ vi.mock("../../lib/api", async (importOriginal) => {
 
 const { ExcludesEditor } = await import("./ExcludesEditor");
 
-function Harness({ initial }: { initial: string[] }) {
+function Harness({ initial, preview }: { initial: string[]; preview?: ExcludePreview }) {
   const { t } = useT();
-  return <ExcludesEditor name="plex" initial={initial} open t={t} />;
+  return <ExcludesEditor name="plex" initial={initial} open t={t} preview={preview} />;
 }
 
-function renderEditor(initial: string[] = []) {
+function renderEditor(initial: string[] = [], preview?: ExcludePreview) {
   render(
     <I18nProvider>
       <ToastProvider>
-        <Harness initial={initial} />
+        <Harness initial={initial} preview={preview} />
       </ToastProvider>
     </I18nProvider>,
   );
@@ -97,6 +98,21 @@ describe("exclusions editor", () => {
     await removeChip("/config/cache");
     expect(saved).toEqual([["*.log"]]);
     expect(field().value).toBe("*.log");
+  });
+
+  it("says a line for a folder outside Host Data turns off its warning", async () => {
+    const preview: ExcludePreview = (_name, lines) =>
+      Promise.resolve(
+        lines.map((raw) =>
+          raw === "/cache"
+            ? { raw, resolved: raw, status: "outside", matches: false }
+            : { raw, resolved: raw, status: "passthrough", matches: false },
+        ),
+      );
+    renderEditor(["/cache", "/elsewhere"], preview);
+    await settle();
+    expect(screen.getByText(en["excludes.outsideHostData"], { exact: false }).textContent).toContain("✓");
+    expect(screen.getByText(en["excludes.noMatch"], { exact: false }).textContent).toContain("⚠");
   });
 
   it("puts the field back when removing a chip is refused", async () => {

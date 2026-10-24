@@ -1535,7 +1535,7 @@ const zh: Partial<Translations> = {
 
   // Per-container exclude patterns (#36)
   "excludes.title": "排除模式",
-  "excludes.hint": "每行一个模式。容器路径（例如 /config/Library/.../Cache）会与已备份的卷进行匹配；像 .git 这样的纯名称可在任意深度匹配。不支持像 {a,b} 这样的花括号列表；请每项单独一行。",
+  "excludes.hint": "每行一个模式。容器路径（例如 /config/Library/.../Cache）会与已备份的卷进行匹配；像 .git 这样的纯名称可在任意深度匹配。不支持像 {a,b} 这样的花括号列表；请每项单独一行。为 Host Data 之外的文件夹写一行，即可关闭它未被备份的警告。",
   "excludes.placeholder": "/config/Library/Application Support/Plex Media Server/Cache\n/config/Library/Application Support/Plex Media Server/Metadata\n.git",
   "excludes.saved": "排除项已保存",
   "excludes.error": "无法保存排除项",
@@ -1543,6 +1543,7 @@ const zh: Partial<Translations> = {
   "excludes.excludesNothing": "此文件夹的卷不在备份中，因此此行不会排除任何内容。",
   "excludes.nameMatchesNothing": "此备份中没有任何内容使用这个名称，因此此行不会排除任何内容。",
   "excludes.pathMissing": "备份中不存在此路径，因此此行不会排除任何内容。",
+  "excludes.outsideHostData": "此文件夹位于 Host Data 之外，BombVault 无法备份它。此行会关闭它未被备份的警告。",
   // Exclude preview status (#38)
   "excludes.willExclude": "将从备份中排除",
   "excludes.matchesAnywhere": "将在其出现的任何位置被排除",

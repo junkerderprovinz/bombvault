@@ -1038,7 +1038,7 @@ const hi: Partial<Translations> = {
 
   // Per-container exclude patterns
   "excludes.title": "एक्सक्लूड पैटर्न",
-  "excludes.hint": "प्रति पंक्ति एक पैटर्न। कोई कंटेनर पथ (जैसे /config/Library/.../Cache) बैकअप किए गए वॉल्यूम से मिलाया जाता है; .git जैसा सादा नाम किसी भी गहराई में मेल खाता है। {a,b} जैसी ब्रेस सूचियाँ समर्थित नहीं हैं; हर एक के लिए एक पंक्ति उपयोग करें।",
+  "excludes.hint": "प्रति पंक्ति एक पैटर्न। कोई कंटेनर पथ (जैसे /config/Library/.../Cache) बैकअप किए गए वॉल्यूम से मिलाया जाता है; .git जैसा सादा नाम किसी भी गहराई में मेल खाता है। {a,b} जैसी ब्रेस सूचियाँ समर्थित नहीं हैं; हर एक के लिए एक पंक्ति उपयोग करें। Host Data के बाहर के किसी फ़ोल्डर की पंक्ति उस चेतावनी को बंद करती है कि उसका बैकअप नहीं लिया गया।",
   "excludes.placeholder": "/config/Library/Application Support/Plex Media Server/Cache\n/config/Library/Application Support/Plex Media Server/Metadata\n.git",
   "excludes.saved": "एक्सक्लूड सहेज लिए गए",
   "excludes.error": "एक्सक्लूड सहेजे नहीं जा सके",
@@ -1046,6 +1046,7 @@ const hi: Partial<Translations> = {
   "excludes.excludesNothing": "इस फ़ोल्डर का वॉल्यूम बैकअप में नहीं है, इसलिए यह पंक्ति कुछ भी एक्सक्लूड नहीं करती।",
   "excludes.nameMatchesNothing": "इस बैकअप में इस नाम का कुछ भी नहीं है, इसलिए यह पंक्ति कुछ भी एक्सक्लूड नहीं करती।",
   "excludes.pathMissing": "यह पथ बैकअप में मौजूद नहीं है, इसलिए यह पंक्ति कुछ भी एक्सक्लूड नहीं करती।",
+  "excludes.outsideHostData": "यह फ़ोल्डर Host Data के बाहर है, इसलिए BombVault इसका बैकअप नहीं ले सकता। यह पंक्ति उस चेतावनी को बंद करती है कि इसका बैकअप नहीं लिया गया।",
   // Exclude preview status
   "excludes.willExclude": "बैकअप से एक्सक्लूड कर दिया जाएगा",
   "excludes.matchesAnywhere": "यह जहाँ भी दिखेगा वहाँ एक्सक्लूड कर दिया जाएगा",

@@ -1541,7 +1541,7 @@ const uk: Partial<Translations> = {
 
   // Per-container exclude patterns (#36)
   "excludes.title": "Шаблони виключень",
-  "excludes.hint": "По одному шаблону в рядку. Шлях контейнера (наприклад /config/Library/.../Cache) зіставляється зі збереженим у резервній копії томом; проста назва на кшталт .git збігається на будь-якій глибині. Списки у фігурних дужках на кшталт {a,b} не підтримуються; використовуйте по одному рядку для кожного.",
+  "excludes.hint": "По одному шаблону в рядку. Шлях контейнера (наприклад /config/Library/.../Cache) зіставляється зі збереженим у резервній копії томом; проста назва на кшталт .git збігається на будь-якій глибині. Списки у фігурних дужках на кшталт {a,b} не підтримуються; використовуйте по одному рядку для кожного. Рядок для теки поза Host Data вимикає попередження про те, що її не скопійовано.",
   "excludes.placeholder": "/config/Library/Application Support/Plex Media Server/Cache\n/config/Library/Application Support/Plex Media Server/Metadata\n.git",
   "excludes.saved": "Виключення збережено",
   "excludes.error": "Не вдалося зберегти виключення",
@@ -1549,6 +1549,7 @@ const uk: Partial<Translations> = {
   "excludes.excludesNothing": "Том цієї папки не входить у резервну копію, тож цей рядок нічого не виключає.",
   "excludes.nameMatchesNothing": "У цій резервній копії немає нічого з такою назвою, тож цей рядок нічого не виключає.",
   "excludes.pathMissing": "Цього шляху немає в резервній копії, тож цей рядок нічого не виключає.",
+  "excludes.outsideHostData": "Ця тека розташована поза Host Data, тому BombVault не може її скопіювати. Цей рядок вимикає попередження про те, що її не скопійовано.",
   // Exclude preview status (#38)
   "excludes.willExclude": "буде виключено з резервної копії",
   "excludes.matchesAnywhere": "буде виключено всюди, де трапляється",

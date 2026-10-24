@@ -1545,7 +1545,7 @@ const hu: Partial<Translations> = {
 
   // Per-container exclude patterns (#36)
   "excludes.title": "Kizárási minták",
-  "excludes.hint": "Soronként egy minta. Egy konténer-útvonal (pl. /config/Library/.../Cache) a mentett kötethez lesz illesztve; egy önálló név, mint a .git, bármilyen mélységben illeszkedik. A kapcsos zárójeles listák, mint a {a,b}, nem támogatottak; használj soronként egyet.",
+  "excludes.hint": "Soronként egy minta. Egy konténer-útvonal (pl. /config/Library/.../Cache) a mentett kötethez lesz illesztve; egy önálló név, mint a .git, bármilyen mélységben illeszkedik. A kapcsos zárójeles listák, mint a {a,b}, nem támogatottak; használj soronként egyet. Egy Host Data területén kívüli mappa sora kikapcsolja a figyelmeztetést, hogy nem készült róla mentés.",
   "excludes.placeholder": "/config/Library/Application Support/Plex Media Server/Cache\n/config/Library/Application Support/Plex Media Server/Metadata\n.git",
   "excludes.saved": "Kizárások mentve",
   "excludes.error": "A kizárásokat nem sikerült menteni",
@@ -1553,6 +1553,7 @@ const hu: Partial<Translations> = {
   "excludes.excludesNothing": "Ennek a mappának a kötete nincs a biztonsági mentésben, ezért ez a sor semmit sem zár ki.",
   "excludes.nameMatchesNothing": "Ebben a biztonsági mentésben semmi sem viseli ezt a nevet, ezért ez a sor semmit sem zár ki.",
   "excludes.pathMissing": "Ez az útvonal nem létezik a biztonsági mentésben, ezért ez a sor semmit sem zár ki.",
+  "excludes.outsideHostData": "Ez a mappa a Host Data területén kívül van, ezért a BombVault nem tud mentést készíteni róla. Ez a sor kikapcsolja a figyelmeztetést, hogy nem készült róla mentés.",
   // Exclude preview status (#38)
   "excludes.willExclude": "ki lesz zárva a biztonsági mentésből",
   "excludes.matchesAnywhere": "mindenhol ki lesz zárva, ahol előfordul",

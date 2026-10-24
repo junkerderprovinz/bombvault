@@ -1038,7 +1038,7 @@ const is: Partial<Translations> = {
 
   // Per-container exclude patterns
   "excludes.title": "Undanskilningarmynstur",
-  "excludes.hint": "Eitt mynstur á línu. Slóð gáms (t.d. /config/Library/.../Cache) er borin saman við afritaða gagnahirslu; einfalt nafn eins og .git passar á hvaða dýpt sem er. Listar í slaufusviga eins og {a,b} eru ekki studdir; notaðu eina línu fyrir hvert.",
+  "excludes.hint": "Eitt mynstur á línu. Slóð gáms (t.d. /config/Library/.../Cache) er borin saman við afritaða gagnahirslu; einfalt nafn eins og .git passar á hvaða dýpt sem er. Listar í slaufusviga eins og {a,b} eru ekki studdir; notaðu eina línu fyrir hvert. Lína fyrir möppu utan Host Data slekkur á viðvöruninni um að hún hafi ekki verið afrituð.",
   "excludes.placeholder": "/config/Library/Application Support/Plex Media Server/Cache\n/config/Library/Application Support/Plex Media Server/Metadata\n.git",
   "excludes.saved": "Undanskilningar vistaðir",
   "excludes.error": "Ekki tókst að vista undanskilningana",
@@ -1046,6 +1046,7 @@ const is: Partial<Translations> = {
   "excludes.excludesNothing": "Gagnahirsla þessarar möppu er ekki í afrituninni, svo þessi lína útilokar ekkert.",
   "excludes.nameMatchesNothing": "Ekkert í þessari afritun ber þetta nafn, svo þessi lína útilokar ekkert.",
   "excludes.pathMissing": "Þessi slóð er ekki til í afrituninni, svo þessi lína útilokar ekkert.",
+  "excludes.outsideHostData": "Þessi mappa er utan Host Data, svo BombVault getur ekki afritað hana. Þessi lína slekkur á viðvöruninni um að hún hafi ekki verið afrituð.",
   // Exclude preview status
   "excludes.willExclude": "verður útilokað úr afrituninni",
   "excludes.matchesAnywhere": "verður útilokað hvar sem það birtist",

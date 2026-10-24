@@ -1038,7 +1038,7 @@ const hr: Partial<Translations> = {
 
   // Per-container exclude patterns
   "excludes.title": "Obrasci izuzimanja",
-  "excludes.hint": "Jedan obrazac po retku. Putanja kontejnera (npr. /config/Library/.../Cache) uspoređuje se sa sigurnosno kopiranim volumenom; obično ime poput .git podudara se na bilo kojoj dubini. Popisi u vitičastim zagradama poput {a,b} nisu podržani; koristite jedan redak za svaki.",
+  "excludes.hint": "Jedan obrazac po retku. Putanja kontejnera (npr. /config/Library/.../Cache) uspoređuje se sa sigurnosno kopiranim volumenom; obično ime poput .git podudara se na bilo kojoj dubini. Popisi u vitičastim zagradama poput {a,b} nisu podržani; koristite jedan redak za svaki. Redak za mapu izvan Host Data isključuje upozorenje da nije sigurnosno kopirana.",
   "excludes.placeholder": "/config/Library/Application Support/Plex Media Server/Cache\n/config/Library/Application Support/Plex Media Server/Metadata\n.git",
   "excludes.saved": "Izuzimanja spremljena",
   "excludes.error": "Izuzimanja se nisu mogla spremiti",
@@ -1046,6 +1046,7 @@ const hr: Partial<Translations> = {
   "excludes.excludesNothing": "Volumen ove mape nije u sigurnosnoj kopiji, pa ovaj redak ništa ne izuzima.",
   "excludes.nameMatchesNothing": "Ništa u ovoj sigurnosnoj kopiji nema ovaj naziv, pa ovaj redak ništa ne izuzima.",
   "excludes.pathMissing": "Ova putanja ne postoji u sigurnosnoj kopiji, pa ovaj redak ništa ne izuzima.",
+  "excludes.outsideHostData": "Ova mapa je izvan Host Data, pa je BombVault ne može sigurnosno kopirati. Ovaj redak isključuje upozorenje da nije sigurnosno kopirana.",
   // Exclude preview status
   "excludes.willExclude": "bit će izuzeto iz sigurnosne kopije",
   "excludes.matchesAnywhere": "bit će izuzeto gdje god se pojavi",

@@ -1535,7 +1535,7 @@ const ko: Partial<Translations> = {
 
   // Per-container exclude patterns (#36)
   "excludes.title": "제외 패턴",
-  "excludes.hint": "한 줄에 하나의 패턴. 컨테이너 경로(예: /config/Library/.../Cache)는 백업된 볼륨과 대조됩니다. .git 같은 단순 이름은 임의의 깊이에서 일치합니다. {a,b} 같은 중괄호 목록은 지원되지 않으므로 각각 한 줄씩 사용하세요.",
+  "excludes.hint": "한 줄에 하나의 패턴. 컨테이너 경로(예: /config/Library/.../Cache)는 백업된 볼륨과 대조됩니다. .git 같은 단순 이름은 임의의 깊이에서 일치합니다. {a,b} 같은 중괄호 목록은 지원되지 않으므로 각각 한 줄씩 사용하세요. Host Data 밖에 있는 폴더의 줄은 백업되지 않았다는 경고를 끕니다.",
   "excludes.placeholder": "/config/Library/Application Support/Plex Media Server/Cache\n/config/Library/Application Support/Plex Media Server/Metadata\n.git",
   "excludes.saved": "제외가 저장됨",
   "excludes.error": "제외를 저장할 수 없습니다",
@@ -1543,6 +1543,7 @@ const ko: Partial<Translations> = {
   "excludes.excludesNothing": "이 폴더의 볼륨이 백업에 없으므로 이 줄은 아무것도 제외하지 않습니다.",
   "excludes.nameMatchesNothing": "이 백업에는 이 이름을 가진 항목이 없으므로 이 줄은 아무것도 제외하지 않습니다.",
   "excludes.pathMissing": "이 경로는 백업에 없으므로 이 줄은 아무것도 제외하지 않습니다.",
+  "excludes.outsideHostData": "이 폴더는 Host Data 밖에 있어 BombVault가 백업할 수 없습니다. 이 줄은 백업되지 않았다는 경고를 끕니다.",
   // Exclude preview status (#38)
   "excludes.willExclude": "백업에서 제외됩니다",
   "excludes.matchesAnywhere": "나타나는 모든 위치에서 제외됩니다",

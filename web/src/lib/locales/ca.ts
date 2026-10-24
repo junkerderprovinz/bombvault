@@ -1038,7 +1038,7 @@ const ca: Partial<Translations> = {
 
   // Per-container exclude patterns
   "excludes.title": "Patrons d'exclusió",
-  "excludes.hint": "Un patró per línia. Un camí de contenidor (p. ex. /config/Library/.../Cache) es compara amb el volum copiat; un nom sol com .git coincideix a qualsevol profunditat. Les llistes amb claus com {a,b} no s'admeten; fes servir una línia per cadascuna.",
+  "excludes.hint": "Un patró per línia. Un camí de contenidor (p. ex. /config/Library/.../Cache) es compara amb el volum copiat; un nom sol com .git coincideix a qualsevol profunditat. Les llistes amb claus com {a,b} no s'admeten; fes servir una línia per cadascuna. Una línia per a una carpeta fora de Host Data treu l'avís que no s'ha copiat.",
   "excludes.placeholder": "/config/Library/Application Support/Plex Media Server/Cache\n/config/Library/Application Support/Plex Media Server/Metadata\n.git",
   "excludes.saved": "Exclusions desades",
   "excludes.error": "No s'han pogut desar les exclusions",
@@ -1046,6 +1046,7 @@ const ca: Partial<Translations> = {
   "excludes.excludesNothing": "El volum d'aquesta carpeta no és a la còpia, així que aquesta línia no exclou res.",
   "excludes.nameMatchesNothing": "Res d'aquesta còpia no té aquest nom, així que aquesta línia no exclou res.",
   "excludes.pathMissing": "Aquest camí no existeix a la còpia, així que aquesta línia no exclou res.",
+  "excludes.outsideHostData": "Aquesta carpeta és fora de Host Data, així que BombVault no la pot copiar. Aquesta línia treu l'avís que no s'ha copiat.",
   // Exclude preview status
   "excludes.willExclude": "s'exclourà de la còpia",
   "excludes.matchesAnywhere": "s'exclourà arreu on aparegui",

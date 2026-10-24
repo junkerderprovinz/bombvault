@@ -1038,7 +1038,7 @@ const lt: Partial<Translations> = {
 
   // Per-container exclude patterns
   "excludes.title": "Išskyrimo šablonai",
-  "excludes.hint": "Vienas šablonas eilutėje. Konteinerio kelias (pvz., /config/Library/.../Cache) lyginamas su kopijuojamu tomu; paprastas pavadinimas, pvz., .git, atitinka bet kuriame gylyje. Sąrašai su riestiniais skliaustais, pvz., {a,b}, nepalaikomi; naudok po vieną eilutę kiekvienam.",
+  "excludes.hint": "Vienas šablonas eilutėje. Konteinerio kelias (pvz., /config/Library/.../Cache) lyginamas su kopijuojamu tomu; paprastas pavadinimas, pvz., .git, atitinka bet kuriame gylyje. Sąrašai su riestiniais skliaustais, pvz., {a,b}, nepalaikomi; naudok po vieną eilutę kiekvienam. Eilutė aplankui už Host Data ribų išjungia įspėjimą, kad jo atsarginė kopija nesukurta.",
   "excludes.placeholder": "/config/Library/Application Support/Plex Media Server/Cache\n/config/Library/Application Support/Plex Media Server/Metadata\n.git",
   "excludes.saved": "Išskyrimai išsaugoti",
   "excludes.error": "Nepavyko išsaugoti išskyrimų",
@@ -1046,6 +1046,7 @@ const lt: Partial<Translations> = {
   "excludes.excludesNothing": "Šio aplanko tomas nėra atsarginėje kopijoje, todėl ši eilutė nieko neišskiria.",
   "excludes.nameMatchesNothing": "Šioje atsarginėje kopijoje nėra nieko šiuo pavadinimu, todėl ši eilutė nieko neišskiria.",
   "excludes.pathMissing": "Šio kelio atsarginėje kopijoje nėra, todėl ši eilutė nieko neišskiria.",
+  "excludes.outsideHostData": "Šis aplankas yra už Host Data ribų, todėl BombVault negali sukurti jo atsarginės kopijos. Ši eilutė išjungia įspėjimą, kad jo atsarginė kopija nesukurta.",
   // Exclude preview status
   "excludes.willExclude": "bus išskirta iš atsarginės kopijos",
   "excludes.matchesAnywhere": "bus išskirta bet kur, kur pasirodo",

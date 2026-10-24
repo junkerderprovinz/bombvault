@@ -1544,7 +1544,7 @@ const tr: Partial<Translations> = {
 
   // Per-container exclude patterns (#36)
   "excludes.title": "Hariç tutma desenleri",
-  "excludes.hint": "Her satıra bir desen. Bir kapsayıcı yolu (ör. /config/Library/.../Cache) yedeklenen birimle eşleştirilir; .git gibi düz bir ad her derinlikte eşleşir. {a,b} gibi süslü parantez listeleri desteklenmez; her biri için bir satır kullan.",
+  "excludes.hint": "Her satıra bir desen. Bir kapsayıcı yolu (ör. /config/Library/.../Cache) yedeklenen birimle eşleştirilir; .git gibi düz bir ad her derinlikte eşleşir. {a,b} gibi süslü parantez listeleri desteklenmez; her biri için bir satır kullan. Host Data dışındaki bir klasör için yazılan satır, yedeklenmediği uyarısını kapatır.",
   "excludes.placeholder": "/config/Library/Application Support/Plex Media Server/Cache\n/config/Library/Application Support/Plex Media Server/Metadata\n.git",
   "excludes.saved": "Hariç tutmalar kaydedildi",
   "excludes.error": "Hariç tutmalar kaydedilemedi",
@@ -1552,6 +1552,7 @@ const tr: Partial<Translations> = {
   "excludes.excludesNothing": "Bu klasörün birimi yedeğe dahil değil, bu yüzden bu satır hiçbir şeyi hariç tutmaz.",
   "excludes.nameMatchesNothing": "Bu yedekte bu ada sahip hiçbir şey yok, bu yüzden bu satır hiçbir şeyi hariç tutmaz.",
   "excludes.pathMissing": "Bu yol yedekte yok, bu yüzden bu satır hiçbir şeyi hariç tutmaz.",
+  "excludes.outsideHostData": "Bu klasör Host Data dışında, bu yüzden BombVault onu yedekleyemez. Bu satır, yedeklenmediği uyarısını kapatır.",
   // Exclude preview status (#38)
   "excludes.willExclude": "yedekten hariç tutulacak",
   "excludes.matchesAnywhere": "göründüğü her yerde hariç tutulacak",

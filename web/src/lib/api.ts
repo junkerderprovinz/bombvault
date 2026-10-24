@@ -1893,9 +1893,10 @@ export function setContainerExcludes(name: string, excludes: string[]): Promise<
  * POST /api/containers/{name}/excludes/preview — resolve candidate exclude lines
  * against the container's live mounts WITHOUT saving them. Each preview entry
  * reports the resolved `--exclude` pattern, how it was derived (`status`:
- * "basename" | "translated" | "passthrough"), and whether it would exclude
- * anything in this container's backup (`matches`) so the UI can warn on a line
- * that matches nothing.
+ * "basename" | "translated" | "passthrough" | "outside"), and whether it would
+ * exclude anything in this container's backup (`matches`) so the UI can warn on
+ * a line that matches nothing. "outside" is a line that covers a folder outside
+ * Host Data and turns off the backup's warning about it.
  */
 export function previewContainerExcludes(
   name: string,

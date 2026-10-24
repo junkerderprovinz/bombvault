@@ -1038,7 +1038,7 @@ const lv: Partial<Translations> = {
 
   // Per-container exclude patterns
   "excludes.title": "Izslēgšanas modeļi",
-  "excludes.hint": "Viens modelis vienā rindā. Konteinera ceļš (piem., /config/Library/.../Cache) tiek salīdzināts ar dublēto sējumu; vienkāršs nosaukums, piem., .git, atbilst jebkurā dziļumā. Saraksti ar figūriekavām, piem., {a,b}, netiek atbalstīti; izmantojiet vienu rindu katram.",
+  "excludes.hint": "Viens modelis vienā rindā. Konteinera ceļš (piem., /config/Library/.../Cache) tiek salīdzināts ar dublēto sējumu; vienkāršs nosaukums, piem., .git, atbilst jebkurā dziļumā. Saraksti ar figūriekavām, piem., {a,b}, netiek atbalstīti; izmantojiet vienu rindu katram. Rinda mapei ārpus Host Data izslēdz brīdinājumu, ka tai nav izveidota rezerves kopija.",
   "excludes.placeholder": "/config/Library/Application Support/Plex Media Server/Cache\n/config/Library/Application Support/Plex Media Server/Metadata\n.git",
   "excludes.saved": "Izslēgšanas saglabātas",
   "excludes.error": "Neizdevās saglabāt izslēgšanas",
@@ -1046,6 +1046,7 @@ const lv: Partial<Translations> = {
   "excludes.excludesNothing": "Šīs mapes sējums nav rezerves kopijā, tāpēc šī rinda neko neizslēdz.",
   "excludes.nameMatchesNothing": "Šajā rezerves kopijā nekam nav šāda nosaukuma, tāpēc šī rinda neko neizslēdz.",
   "excludes.pathMissing": "Šis ceļš rezerves kopijā nepastāv, tāpēc šī rinda neko neizslēdz.",
+  "excludes.outsideHostData": "Šī mape atrodas ārpus Host Data, tāpēc BombVault nevar to dublēt. Šī rinda izslēdz brīdinājumu, ka tai nav izveidota rezerves kopija.",
   // Exclude preview status
   "excludes.willExclude": "tiks izslēgts no rezerves kopijas",
   "excludes.matchesAnywhere": "tiks izslēgts jebkur, kur tas parādās",

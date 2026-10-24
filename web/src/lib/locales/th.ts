@@ -1545,7 +1545,7 @@ const th: Partial<Translations> = {
 
   // Per-container exclude patterns (#36)
   "excludes.title": "รูปแบบการยกเว้น",
-  "excludes.hint": "หนึ่งรูปแบบต่อบรรทัด พาธคอนเทนเนอร์ (เช่น /config/Library/.../Cache) จะถูกจับคู่กับวอลุ่มที่สำรองไว้ ส่วนชื่อล้วน ๆ อย่าง .git จะจับคู่ที่ระดับความลึกใดก็ได้ ไม่รองรับรายการในวงเล็บปีกกาอย่าง {a,b} ให้ใช้บรรทัดละหนึ่งรายการ",
+  "excludes.hint": "หนึ่งรูปแบบต่อบรรทัด พาธคอนเทนเนอร์ (เช่น /config/Library/.../Cache) จะถูกจับคู่กับวอลุ่มที่สำรองไว้ ส่วนชื่อล้วน ๆ อย่าง .git จะจับคู่ที่ระดับความลึกใดก็ได้ ไม่รองรับรายการในวงเล็บปีกกาอย่าง {a,b} ให้ใช้บรรทัดละหนึ่งรายการ บรรทัดของโฟลเดอร์ที่อยู่นอก Host Data จะปิดคำเตือนว่าไม่ได้สำรองไว้",
   "excludes.placeholder": "/config/Library/Application Support/Plex Media Server/Cache\n/config/Library/Application Support/Plex Media Server/Metadata\n.git",
   "excludes.saved": "บันทึกการยกเว้นแล้ว",
   "excludes.error": "ไม่สามารถบันทึกการยกเว้นได้",
@@ -1553,6 +1553,7 @@ const th: Partial<Translations> = {
   "excludes.excludesNothing": "วอลุ่มของโฟลเดอร์นี้ไม่ได้อยู่ในข้อมูลสำรอง ดังนั้นบรรทัดนี้จึงไม่ยกเว้นสิ่งใด",
   "excludes.nameMatchesNothing": "ไม่มีสิ่งใดในข้อมูลสำรองนี้ที่มีชื่อนี้ ดังนั้นบรรทัดนี้จึงไม่ยกเว้นอะไรเลย",
   "excludes.pathMissing": "ไม่มีพาธนี้ในข้อมูลสำรอง ดังนั้นบรรทัดนี้จึงไม่ยกเว้นอะไรเลย",
+  "excludes.outsideHostData": "โฟลเดอร์นี้อยู่นอก Host Data ดังนั้น BombVault จึงสำรองไว้ไม่ได้ บรรทัดนี้ปิดคำเตือนว่าไม่ได้สำรองไว้",
   // Exclude preview status (#38)
   "excludes.willExclude": "จะถูกยกเว้นจากข้อมูลสำรอง",
   "excludes.matchesAnywhere": "จะถูกยกเว้นทุกที่ที่ปรากฏ",

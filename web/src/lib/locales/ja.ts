@@ -1535,7 +1535,7 @@ const ja: Partial<Translations> = {
 
   // Per-container exclude patterns (#36)
   "excludes.title": "除外パターン",
-  "excludes.hint": "1 行に 1 パターン。コンテナパス（例: /config/Library/.../Cache）はバックアップ対象のボリュームと照合されます。.git のような単純な名前は任意の深さで一致します。{a,b} のような波かっこリストはサポートされていません。それぞれ 1 行ずつ記述してください。",
+  "excludes.hint": "1 行に 1 パターン。コンテナパス（例: /config/Library/.../Cache）はバックアップ対象のボリュームと照合されます。.git のような単純な名前は任意の深さで一致します。{a,b} のような波かっこリストはサポートされていません。それぞれ 1 行ずつ記述してください。Host Data の外にあるフォルダーの行を書くと、バックアップされていないという警告が出なくなります。",
   "excludes.placeholder": "/config/Library/Application Support/Plex Media Server/Cache\n/config/Library/Application Support/Plex Media Server/Metadata\n.git",
   "excludes.saved": "除外を保存しました",
   "excludes.error": "除外を保存できませんでした",
@@ -1543,6 +1543,7 @@ const ja: Partial<Translations> = {
   "excludes.excludesNothing": "このフォルダのボリュームはバックアップに含まれていないため、この行は何も除外しません。",
   "excludes.nameMatchesNothing": "このバックアップにはこの名前のものがないため、この行は何も除外しません。",
   "excludes.pathMissing": "このパスはバックアップ内に存在しないため、この行は何も除外しません。",
+  "excludes.outsideHostData": "このフォルダーは Host Data の外にあるため、BombVault はバックアップできません。この行で、バックアップされていないという警告が出なくなります。",
   // Exclude preview status (#38)
   "excludes.willExclude": "バックアップから除外されます",
   "excludes.matchesAnywhere": "出現する場所すべてで除外されます",

@@ -1167,7 +1167,7 @@ export const en = {
 
   // Per-container exclude patterns (#36)
   "excludes.title": "Exclude patterns",
-  "excludes.hint": "One pattern per line. A container path (e.g. /config/Library/.../Cache) is matched against the backed-up volume; a bare name like .git matches at any depth. Brace lists like {a,b} are not supported; use one line each.",
+  "excludes.hint": "One pattern per line. A container path (e.g. /config/Library/.../Cache) is matched against the backed-up volume; a bare name like .git matches at any depth. Brace lists like {a,b} are not supported; use one line each. A line naming a folder outside Host Data turns off the warning that it was not backed up.",
   "excludes.placeholder": "/config/Library/Application Support/Plex Media Server/Cache\n/config/Library/Application Support/Plex Media Server/Metadata\n.git",
   "excludes.saved": "Excludes saved",
   "excludes.error": "Could not save excludes",
@@ -1175,6 +1175,7 @@ export const en = {
   "excludes.excludesNothing": "This folder's volume is not in the backup, so this line excludes nothing.",
   "excludes.nameMatchesNothing": "Nothing in this backup has this name, so this line excludes nothing.",
   "excludes.pathMissing": "This path does not exist in the backup, so this line excludes nothing.",
+  "excludes.outsideHostData": "This folder sits outside Host Data, so BombVault cannot back it up. This line turns off the warning that it was not backed up.",
   // Exclude preview status (#38)
   "excludes.willExclude": "will be excluded from the backup",
   "excludes.matchesAnywhere": "will be excluded wherever it appears",
@@ -6244,7 +6245,7 @@ export const de: Translations = {
 
   // Per-container exclude patterns (#36)
   "excludes.title": "Ausschlussmuster",
-  "excludes.hint": "Ein Muster pro Zeile. Ein Container-Pfad (z. B. /config/Library/.../Cache) wird gegen das gesicherte Volume abgeglichen; ein reiner Name wie .git passt in jeder Tiefe. Klammerlisten wie {a,b} werden nicht unterstützt; nutze je eine Zeile.",
+  "excludes.hint": "Ein Muster pro Zeile. Ein Container-Pfad (z. B. /config/Library/.../Cache) wird gegen das gesicherte Volume abgeglichen; ein reiner Name wie .git passt in jeder Tiefe. Klammerlisten wie {a,b} werden nicht unterstützt; nutze je eine Zeile. Eine Zeile für einen Ordner außerhalb von Host Data schaltet die Warnung ab, dass er nicht gesichert wurde.",
   "excludes.placeholder": "/config/Library/Application Support/Plex Media Server/Cache\n/config/Library/Application Support/Plex Media Server/Metadata\n.git",
   "excludes.saved": "Ausschlüsse gespeichert",
   "excludes.error": "Ausschlüsse konnten nicht gespeichert werden",
@@ -6252,6 +6253,7 @@ export const de: Translations = {
   "excludes.excludesNothing": "Das Volume dieses Ordners ist nicht in der Sicherung, diese Zeile schließt also nichts aus.",
   "excludes.nameMatchesNothing": "Nichts in dieser Sicherung trägt diesen Namen, diese Zeile schließt also nichts aus.",
   "excludes.pathMissing": "Diesen Pfad gibt es in der Sicherung nicht, diese Zeile schließt also nichts aus.",
+  "excludes.outsideHostData": "Dieser Ordner liegt außerhalb von Host Data, BombVault kann ihn also nicht sichern. Diese Zeile schaltet die Warnung ab, dass er nicht gesichert wurde.",
   // Exclude preview status (#38)
   "excludes.willExclude": "wird von der Sicherung ausgeschlossen",
   "excludes.matchesAnywhere": "wird überall ausgeschlossen, wo es vorkommt",

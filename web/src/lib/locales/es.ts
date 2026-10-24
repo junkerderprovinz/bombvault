@@ -1542,7 +1542,7 @@ const es: Partial<Translations> = {
 
   // Per-container exclude patterns (#36)
   "excludes.title": "Patrones de exclusión",
-  "excludes.hint": "Un patrón por línea. Una ruta de contenedor (p. ej. /config/Library/.../Cache) se compara con el volumen incluido en la copia; un nombre simple como .git coincide a cualquier profundidad. Las listas entre llaves como {a,b} no se admiten; usa una línea para cada uno.",
+  "excludes.hint": "Un patrón por línea. Una ruta de contenedor (p. ej. /config/Library/.../Cache) se compara con el volumen incluido en la copia; un nombre simple como .git coincide a cualquier profundidad. Las listas entre llaves como {a,b} no se admiten; usa una línea para cada uno. Una línea para una carpeta fuera de Host Data quita el aviso de que no se copió.",
   "excludes.placeholder": "/config/Library/Application Support/Plex Media Server/Cache\n/config/Library/Application Support/Plex Media Server/Metadata\n.git",
   "excludes.saved": "Exclusiones guardadas",
   "excludes.error": "No se pudieron guardar las exclusiones",
@@ -1550,6 +1550,7 @@ const es: Partial<Translations> = {
   "excludes.excludesNothing": "El volumen de esta carpeta no está en la copia, por lo que esta línea no excluye nada.",
   "excludes.nameMatchesNothing": "Nada en esta copia tiene este nombre, por lo que esta línea no excluye nada.",
   "excludes.pathMissing": "Esta ruta no existe en la copia, por lo que esta línea no excluye nada.",
+  "excludes.outsideHostData": "Esta carpeta está fuera de Host Data, así que BombVault no puede copiarla. Esta línea quita el aviso de que no se copió.",
   // Exclude preview status (#38)
   "excludes.willExclude": "se excluirá de la copia de seguridad",
   "excludes.matchesAnywhere": "se excluirá dondequiera que aparezca",

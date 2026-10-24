@@ -1541,7 +1541,7 @@ const ru: Partial<Translations> = {
 
   // Per-container exclude patterns (#36)
   "excludes.title": "Шаблоны исключений",
-  "excludes.hint": "По одному шаблону в строке. Путь контейнера (например /config/Library/.../Cache) сопоставляется с сохранённым в резервной копии томом; простое имя вроде .git совпадает на любой глубине. Списки в фигурных скобках вроде {a,b} не поддерживаются; используйте по одной строке для каждого.",
+  "excludes.hint": "По одному шаблону в строке. Путь контейнера (например /config/Library/.../Cache) сопоставляется с сохранённым в резервной копии томом; простое имя вроде .git совпадает на любой глубине. Списки в фигурных скобках вроде {a,b} не поддерживаются; используйте по одной строке для каждого. Строка для папки вне Host Data отключает предупреждение о том, что она не скопирована.",
   "excludes.placeholder": "/config/Library/Application Support/Plex Media Server/Cache\n/config/Library/Application Support/Plex Media Server/Metadata\n.git",
   "excludes.saved": "Исключения сохранены",
   "excludes.error": "Не удалось сохранить исключения",
@@ -1549,6 +1549,7 @@ const ru: Partial<Translations> = {
   "excludes.excludesNothing": "Том этой папки не входит в резервную копию, поэтому эта строка ничего не исключает.",
   "excludes.nameMatchesNothing": "В этой резервной копии нет ничего с таким именем, поэтому эта строка ничего не исключает.",
   "excludes.pathMissing": "Этого пути нет в резервной копии, поэтому эта строка ничего не исключает.",
+  "excludes.outsideHostData": "Эта папка находится вне Host Data, поэтому BombVault не может её скопировать. Эта строка отключает предупреждение о том, что она не скопирована.",
   // Exclude preview status (#38)
   "excludes.willExclude": "будет исключён из резервной копии",
   "excludes.matchesAnywhere": "будет исключён везде, где встречается",

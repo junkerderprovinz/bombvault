@@ -1544,7 +1544,7 @@ const pt: Partial<Translations> = {
 
   // Per-container exclude patterns (#36)
   "excludes.title": "Padrões de exclusão",
-  "excludes.hint": "Um padrão por linha. Um caminho do contentor (p. ex. /config/Library/.../Cache) é comparado com o volume incluído na cópia; um nome simples como .git corresponde a qualquer profundidade. Listas entre chavetas como {a,b} não são suportadas; usa uma linha para cada.",
+  "excludes.hint": "Um padrão por linha. Um caminho do contentor (p. ex. /config/Library/.../Cache) é comparado com o volume incluído na cópia; um nome simples como .git corresponde a qualquer profundidade. Listas entre chavetas como {a,b} não são suportadas; usa uma linha para cada. Uma linha para uma pasta fora de Host Data desliga o aviso de que não foi copiada.",
   "excludes.placeholder": "/config/Library/Application Support/Plex Media Server/Cache\n/config/Library/Application Support/Plex Media Server/Metadata\n.git",
   "excludes.saved": "Exclusões guardadas",
   "excludes.error": "Não foi possível guardar as exclusões",
@@ -1552,6 +1552,7 @@ const pt: Partial<Translations> = {
   "excludes.excludesNothing": "O volume desta pasta não está no backup, por isso esta linha não exclui nada.",
   "excludes.nameMatchesNothing": "Nada neste backup tem este nome, por isso esta linha não exclui nada.",
   "excludes.pathMissing": "Este caminho não existe no backup, por isso esta linha não exclui nada.",
+  "excludes.outsideHostData": "Esta pasta está fora de Host Data, por isso o BombVault não a pode copiar. Esta linha desliga o aviso de que não foi copiada.",
   // Exclude preview status (#38)
   "excludes.willExclude": "será excluído do backup",
   "excludes.matchesAnywhere": "será excluído onde quer que apareça",

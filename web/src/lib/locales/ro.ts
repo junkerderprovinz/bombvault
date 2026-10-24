@@ -1545,7 +1545,7 @@ const ro: Partial<Translations> = {
 
   // Per-container exclude patterns (#36)
   "excludes.title": "Modele de excludere",
-  "excludes.hint": "Un model pe linie. O cale de container (ex. /config/Library/.../Cache) este comparată cu volumul inclus în backup; un nume simplu precum .git se potrivește la orice adâncime. Listele între acolade precum {a,b} nu sunt acceptate; folosește câte o linie pentru fiecare.",
+  "excludes.hint": "Un model pe linie. O cale de container (ex. /config/Library/.../Cache) este comparată cu volumul inclus în backup; un nume simplu precum .git se potrivește la orice adâncime. Listele între acolade precum {a,b} nu sunt acceptate; folosește câte o linie pentru fiecare. O linie pentru un dosar din afara Host Data oprește avertismentul că nu a fost salvat.",
   "excludes.placeholder": "/config/Library/Application Support/Plex Media Server/Cache\n/config/Library/Application Support/Plex Media Server/Metadata\n.git",
   "excludes.saved": "Excluderile au fost salvate",
   "excludes.error": "Excluderile nu au putut fi salvate",
@@ -1553,6 +1553,7 @@ const ro: Partial<Translations> = {
   "excludes.excludesNothing": "Volumul acestui folder nu este în backup, așa că această linie nu exclude nimic.",
   "excludes.nameMatchesNothing": "Nimic din acest backup nu are acest nume, așa că această linie nu exclude nimic.",
   "excludes.pathMissing": "Această cale nu există în backup, așa că această linie nu exclude nimic.",
+  "excludes.outsideHostData": "Acest dosar este în afara Host Data, așa că BombVault nu îl poate salva. Această linie oprește avertismentul că nu a fost salvat.",
   // Exclude preview status (#38)
   "excludes.willExclude": "va fi exclus din backup",
   "excludes.matchesAnywhere": "va fi exclus oriunde apare",

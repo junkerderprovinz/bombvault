@@ -1038,7 +1038,7 @@ const id: Partial<Translations> = {
 
   // Per-container exclude patterns
   "excludes.title": "Pola pengecualian",
-  "excludes.hint": "Satu pola per baris. Jalur container (mis. /config/Library/.../Cache) dicocokkan dengan volume yang dicadangkan; nama polos seperti .git cocok di kedalaman mana pun. Daftar kurung kurawal seperti {a,b} tidak didukung; gunakan satu baris untuk masing-masing.",
+  "excludes.hint": "Satu pola per baris. Jalur container (mis. /config/Library/.../Cache) dicocokkan dengan volume yang dicadangkan; nama polos seperti .git cocok di kedalaman mana pun. Daftar kurung kurawal seperti {a,b} tidak didukung; gunakan satu baris untuk masing-masing. Baris untuk folder di luar Host Data mematikan peringatan bahwa folder itu tidak dicadangkan.",
   "excludes.placeholder": "/config/Library/Application Support/Plex Media Server/Cache\n/config/Library/Application Support/Plex Media Server/Metadata\n.git",
   "excludes.saved": "Pengecualian tersimpan",
   "excludes.error": "Pengecualian gagal disimpan",
@@ -1046,6 +1046,7 @@ const id: Partial<Translations> = {
   "excludes.excludesNothing": "Volume folder ini tidak ada dalam pencadangan, jadi baris ini tidak mengecualikan apa pun.",
   "excludes.nameMatchesNothing": "Tidak ada apa pun dalam pencadangan ini yang bernama ini, jadi baris ini tidak mengecualikan apa pun.",
   "excludes.pathMissing": "Jalur ini tidak ada dalam pencadangan, jadi baris ini tidak mengecualikan apa pun.",
+  "excludes.outsideHostData": "Folder ini berada di luar Host Data, jadi BombVault tidak bisa mencadangkannya. Baris ini mematikan peringatan bahwa folder ini tidak dicadangkan.",
   // Exclude preview status
   "excludes.willExclude": "akan dikecualikan dari pencadangan",
   "excludes.matchesAnywhere": "akan dikecualikan di mana pun muncul",

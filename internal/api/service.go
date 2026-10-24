@@ -1808,7 +1808,7 @@ func (s *Service) toContainerPath(host string) (string, bool) {
 type ExcludePreview struct {
 	Raw      string `json:"raw"`
 	Resolved string `json:"resolved"`
-	Status   string `json:"status"` // "basename" | "translated" | "passthrough"
+	Status   string `json:"status"` // "basename" | "translated" | "passthrough" | "outside"
 	Matches  bool   `json:"matches"`
 	Missing  bool   `json:"missing,omitempty"`
 }
@@ -1893,9 +1893,12 @@ func isUnderAny(p string, roots []string) bool {
 // anything in this container's backup (effective = the volumes actually backed
 // up). A basename matches when some file or folder in those volumes has that
 // name; a translated path matches when it is under a backed-up volume and
-// something there exists; a passthrough is reported as matching nothing. The
-// user's original text round-trips in Raw.
+// something there exists; a passthrough is reported as matching nothing. A line
+// that excludes nothing but covers a data mount outside Host Data is "outside":
+// it keeps that mount out of the backup's warning. The user's original text
+// round-trips in Raw.
 func (s *Service) previewExcludes(ctx context.Context, raw []string, in model.Inspect, effective []string) []ExcludePreview {
+	unreachable := s.unreachableDataMounts(in)
 	ctx, cancel := context.WithTimeout(ctx, excludeSearchBudget)
 	defer cancel()
 	type resolved struct{ line, pattern, status string }
@@ -1924,6 +1927,9 @@ func (s *Service) previewExcludes(ctx context.Context, raw []string, in model.In
 				p.Matches = excludePathFound(ctx, l.pattern)
 				p.Missing = !p.Matches
 			}
+		}
+		if !p.Matches && slices.ContainsFunc(unreachable, func(m model.Mount) bool { return excludeCoversMount(l.line, m.Destination) }) {
+			p.Status, p.Missing = "outside", false
 		}
 		out = append(out, p)
 	}
@@ -5803,11 +5809,30 @@ func (s *Service) resolveAppdataPaths(name string, in model.Inspect) []string {
 // under /mnt/.ix-apps. System mounts (/etc/localtime, the Docker socket) are not
 // data and stay out. A Docker volume is data wherever it lives, and the
 // daemon's own volumes under /var/lib/docker are out of reach of a Host Data
-// at /mnt.
-func (s *Service) dataOutsideHostMount(in model.Inspect) []string {
-	labelOverride := bombvaultDataLabelTruthy(in.Config.Labels)
+// at /mnt. A mount that one of the container's exclude lines covers stays out
+// too: the user has said that folder need not be backed up.
+func (s *Service) dataOutsideHostMount(in model.Inspect, excludes []string) []string {
 	var out []string
 	seen := map[string]bool{}
+	for _, m := range s.unreachableDataMounts(in) {
+		if slices.ContainsFunc(excludes, func(line string) bool { return excludeCoversMount(line, m.Destination) }) {
+			continue
+		}
+		src := path.Clean(m.Source)
+		if !seen[src] {
+			seen[src] = true
+			out = append(out, src)
+		}
+	}
+	sort.Strings(out)
+	return out
+}
+
+// unreachableDataMounts returns the mounts behind dataOutsideHostMount before
+// any exclude line is applied.
+func (s *Service) unreachableDataMounts(in model.Inspect) []model.Mount {
+	labelOverride := bombvaultDataLabelTruthy(in.Config.Labels)
+	var out []model.Mount
 	for _, m := range in.Mounts {
 		if (m.Type != "bind" && m.Type != "volume") || m.Source == "" {
 			continue
@@ -5821,13 +5846,21 @@ func (s *Service) dataOutsideHostMount(in model.Inspect) []string {
 				continue
 			}
 		}
-		if !seen[src] {
-			seen[src] = true
-			out = append(out, src)
-		}
+		out = append(out, m)
 	}
-	sort.Strings(out)
 	return out
+}
+
+// excludeCoversMount reports whether an exclude line names the mount at dest,
+// or a folder above it, as a path inside the container. A bare name or "/"
+// would cover every mount there is, so neither counts.
+func excludeCoversMount(line, dest string) bool {
+	clean := path.Clean(strings.TrimSpace(line))
+	if !strings.HasPrefix(clean, "/") || clean == "/" {
+		return false
+	}
+	d := path.Clean(dest)
+	return d == clean || strings.HasPrefix(d, clean+"/")
 }
 
 // hasSegment reports whether slash-separated path p contains seg as a full path
@@ -6573,7 +6606,7 @@ func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, re
 		ContainerName:        name,
 		RepoPath:             repo,
 		AppdataPaths:         effective,
-		UnreachableData:      s.dataOutsideHostMount(in),
+		UnreachableData:      s.dataOutsideHostMount(in, tg.Excludes),
 		StopTimeout:          30 * time.Second,
 		TargetID:             tg.ID,
 		SnapshotTemplatesDir: filepath.Join(s.cfg.DataDir, "templates"),

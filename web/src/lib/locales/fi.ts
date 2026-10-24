@@ -1544,7 +1544,7 @@ const fi: Partial<Translations> = {
 
   // Per-container exclude patterns (#36)
   "excludes.title": "Poissulkumallit",
-  "excludes.hint": "Yksi malli riviä kohti. Kontin polku (esim. /config/Library/.../Cache) täsmätään varmuuskopioituun taltioon; pelkkä nimi kuten .git täsmää millä tahansa syvyydellä. Aaltosulkulistoja kuten {a,b} ei tueta; käytä yhtä riviä kullekin.",
+  "excludes.hint": "Yksi malli riviä kohti. Kontin polku (esim. /config/Library/.../Cache) täsmätään varmuuskopioituun taltioon; pelkkä nimi kuten .git täsmää millä tahansa syvyydellä. Aaltosulkulistoja kuten {a,b} ei tueta; käytä yhtä riviä kullekin. Rivi Host Datan ulkopuoliselle kansiolle poistaa varoituksen siitä, ettei sitä varmuuskopioitu.",
   "excludes.placeholder": "/config/Library/Application Support/Plex Media Server/Cache\n/config/Library/Application Support/Plex Media Server/Metadata\n.git",
   "excludes.saved": "Poissulkemiset tallennettu",
   "excludes.error": "Poissulkemisia ei voitu tallentaa",
@@ -1552,6 +1552,7 @@ const fi: Partial<Translations> = {
   "excludes.excludesNothing": "Tämän kansion taltio ei ole varmuuskopiossa, joten tämä rivi ei sulje pois mitään.",
   "excludes.nameMatchesNothing": "Mikään tässä varmuuskopiossa ei ole tämänniminen, joten tämä rivi ei sulje pois mitään.",
   "excludes.pathMissing": "Tätä polkua ei ole varmuuskopiossa, joten tämä rivi ei sulje pois mitään.",
+  "excludes.outsideHostData": "Tämä kansio on Host Datan ulkopuolella, joten BombVault ei voi varmuuskopioida sitä. Tämä rivi poistaa varoituksen siitä, ettei sitä varmuuskopioitu.",
   // Exclude preview status (#38)
   "excludes.willExclude": "suljetaan pois varmuuskopiosta",
   "excludes.matchesAnywhere": "suljetaan pois kaikkialta, missä se esiintyy",

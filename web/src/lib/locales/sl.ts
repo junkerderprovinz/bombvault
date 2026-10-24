@@ -1038,7 +1038,7 @@ const sl: Partial<Translations> = {
 
   // Per-container exclude patterns (#36)
   "excludes.title": "Vzorci za izključitev",
-  "excludes.hint": "En vzorec na vrstico. Pot vsebnika (npr. /config/Library/.../Cache) se ujema z varnostno kopiranim nosilcem; golo ime, kot je .git, se ujema na kateri koli globini. Seznami v zavitih oklepajih, kot {a,b}, niso podprti; vsakega napiši v svojo vrstico.",
+  "excludes.hint": "En vzorec na vrstico. Pot vsebnika (npr. /config/Library/.../Cache) se ujema z varnostno kopiranim nosilcem; golo ime, kot je .git, se ujema na kateri koli globini. Seznami v zavitih oklepajih, kot {a,b}, niso podprti; vsakega napiši v svojo vrstico. Vrstica za mapo zunaj Host Data izklopi opozorilo, da ni bila varnostno kopirana.",
   "excludes.placeholder": "/config/Library/Application Support/Plex Media Server/Cache\n/config/Library/Application Support/Plex Media Server/Metadata\n.git",
   "excludes.saved": "Izključitve shranjene",
   "excludes.error": "Izključitev ni bilo mogoče shraniti",
@@ -1046,6 +1046,7 @@ const sl: Partial<Translations> = {
   "excludes.excludesNothing": "Nosilec te mape ni v varnostni kopiji, zato ta vrstica ne izključi ničesar.",
   "excludes.nameMatchesNothing": "Nič v tej varnostni kopiji nima tega imena, zato ta vrstica ne izključi ničesar.",
   "excludes.pathMissing": "Ta pot v varnostni kopiji ne obstaja, zato ta vrstica ne izključi ničesar.",
+  "excludes.outsideHostData": "Ta mapa je zunaj Host Data, zato je BombVault ne more varnostno kopirati. Ta vrstica izklopi opozorilo, da ni bila varnostno kopirana.",
   "excludes.willExclude": "bo izključeno iz varnostne kopije",
   "excludes.matchesAnywhere": "bo izključeno, kjer koli se pojavi",
   "excludes.assistTitle": "Pomočnik za izključitve",

@@ -284,19 +284,24 @@ export function ExcludesEditor({
           {preview.map((row, i) => {
             // A plain confirmation and not the internal restic path, whose
             // rebased host-mount form looks like an invalid path (#38). The
-            // exact pattern is in the title.
-            const good = row.matches;
-            const msg = good
-              ? row.status === "basename"
-                ? t("excludes.matchesAnywhere")
-                : t("excludes.willExclude")
-              : row.status === "passthrough"
-                ? t("excludes.noMatch")
-                : row.status === "basename"
-                  ? t("excludes.nameMatchesNothing")
-                  : row.missing
-                    ? t("excludes.pathMissing")
-                    : t("excludes.excludesNothing");
+            // exact pattern is in the title. An "outside" line excludes
+            // nothing, yet it does what it was written for: it turns off the
+            // warning about a folder BombVault cannot reach.
+            const outside = row.status === "outside";
+            const good = row.matches || outside;
+            const msg = outside
+              ? t("excludes.outsideHostData")
+              : good
+                ? row.status === "basename"
+                  ? t("excludes.matchesAnywhere")
+                  : t("excludes.willExclude")
+                : row.status === "passthrough"
+                  ? t("excludes.noMatch")
+                  : row.status === "basename"
+                    ? t("excludes.nameMatchesNothing")
+                    : row.missing
+                      ? t("excludes.pathMissing")
+                      : t("excludes.excludesNothing");
             return (
               <div
                 key={i}

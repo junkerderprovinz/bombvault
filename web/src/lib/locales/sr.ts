@@ -1038,7 +1038,7 @@ const sr: Partial<Translations> = {
 
   // Per-container exclude patterns (#36)
   "excludes.title": "Обрасци за изузимање",
-  "excludes.hint": "По један образац у реду. Путања контејнера (нпр. /config/Library/.../Cache) се пореди са резервно копираним диском; голо име као .git одговара на било којој дубини. Листе у витичастим заградама као {a,b} нису подржане; сваку напиши у посебном реду.",
+  "excludes.hint": "По један образац у реду. Путања контејнера (нпр. /config/Library/.../Cache) се пореди са резервно копираним диском; голо име као .git одговара на било којој дубини. Листе у витичастим заградама као {a,b} нису подржане; сваку напиши у посебном реду. Ред за фасциклу изван Host Data искључује упозорење да није резервно копирана.",
   "excludes.placeholder": "/config/Library/Application Support/Plex Media Server/Cache\n/config/Library/Application Support/Plex Media Server/Metadata\n.git",
   "excludes.saved": "Изузимања сачувана",
   "excludes.error": "Изузимања нису могла да се сачувају",
@@ -1046,6 +1046,7 @@ const sr: Partial<Translations> = {
   "excludes.excludesNothing": "Диск ове фасцикле није у резервној копији, па овај ред ништа не изузима.",
   "excludes.nameMatchesNothing": "Ништа у овој резервној копији нема овај назив, па овај ред ништа не изузима.",
   "excludes.pathMissing": "Ова путања не постоји у резервној копији, па овај ред ништа не изузима.",
+  "excludes.outsideHostData": "Ова фасцикла је изван Host Data, па је BombVault не може резервно копирати. Овај ред искључује упозорење да није резервно копирана.",
   "excludes.willExclude": "биће изузето из резервне копије",
   "excludes.matchesAnywhere": "биће изузето где год се појави",
   "excludes.assistTitle": "Помоћник за изузимања",

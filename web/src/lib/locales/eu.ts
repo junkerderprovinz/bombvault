@@ -1038,7 +1038,7 @@ const eu: Partial<Translations> = {
 
   // Per-container exclude patterns
   "excludes.title": "Baztertze-ereduak",
-  "excludes.hint": "Eredu bat lerroko. Edukiontzi-bide bat (adib. /config/Library/.../Cache) babestutako bolumenarekin alderatzen da; .git bezalako izen soil bat edozein sakoneratan bat dator. {a,b} bezalako giltza-zerrendak ez daude onartuta; erabili lerro bat bakoitzarentzat.",
+  "excludes.hint": "Eredu bat lerroko. Edukiontzi-bide bat (adib. /config/Library/.../Cache) babestutako bolumenarekin alderatzen da; .git bezalako izen soil bat edozein sakoneratan bat dator. {a,b} bezalako giltza-zerrendak ez daude onartuta; erabili lerro bat bakoitzarentzat. Host Data-tik kanpoko karpeta baten lerroak babeskopiatu ez delako abisua kentzen du.",
   "excludes.placeholder": "/config/Library/Application Support/Plex Media Server/Cache\n/config/Library/Application Support/Plex Media Server/Metadata\n.git",
   "excludes.saved": "Baztertzeak gordeta",
   "excludes.error": "Ezin izan dira baztertzeak gorde",
@@ -1046,6 +1046,7 @@ const eu: Partial<Translations> = {
   "excludes.excludesNothing": "Karpeta honen bolumena ez dago babeskopian, beraz lerro honek ez du ezer baztertzen.",
   "excludes.nameMatchesNothing": "Babeskopia honetan ez dago izen hau duen ezer, beraz lerro honek ez du ezer baztertzen.",
   "excludes.pathMissing": "Bide hau ez dago babeskopian, beraz lerro honek ez du ezer baztertzen.",
+  "excludes.outsideHostData": "Karpeta hau Host Data-tik kanpo dago, beraz BombVault-ek ezin du babeskopiatu. Lerro honek babeskopiatu ez delako abisua kentzen du.",
   // Exclude preview status
   "excludes.willExclude": "babeskopiatik baztertuko da",
   "excludes.matchesAnywhere": "agertzen den edonon baztertuko da",

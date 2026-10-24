@@ -1038,7 +1038,7 @@ const gl: Partial<Translations> = {
 
   // Per-container exclude patterns
   "excludes.title": "Patróns de exclusión",
-  "excludes.hint": "Un patrón por liña. Un camiño de contedor (p. ex. /config/Library/.../Cache) compárase co volume copiado; un nome só como .git coincide en calquera profundidade. As listas con chaves como {a,b} non se admiten; usa unha liña para cada unha.",
+  "excludes.hint": "Un patrón por liña. Un camiño de contedor (p. ex. /config/Library/.../Cache) compárase co volume copiado; un nome só como .git coincide en calquera profundidade. As listas con chaves como {a,b} non se admiten; usa unha liña para cada unha. Unha liña para un cartafol fóra de Host Data quita o aviso de que non se copiou.",
   "excludes.placeholder": "/config/Library/Application Support/Plex Media Server/Cache\n/config/Library/Application Support/Plex Media Server/Metadata\n.git",
   "excludes.saved": "Exclusións gardadas",
   "excludes.error": "Non se puideron gardar as exclusións",
@@ -1046,6 +1046,7 @@ const gl: Partial<Translations> = {
   "excludes.excludesNothing": "O volume deste cartafol non está na copia, así que esta liña non exclúe nada.",
   "excludes.nameMatchesNothing": "Nada nesta copia ten este nome, así que esta liña non exclúe nada.",
   "excludes.pathMissing": "Esta ruta non existe na copia, así que esta liña non exclúe nada.",
+  "excludes.outsideHostData": "Este cartafol está fóra de Host Data, así que BombVault non pode copialo. Esta liña quita o aviso de que non se copiou.",
   // Exclude preview status
   "excludes.willExclude": "excluirase da copia",
   "excludes.matchesAnywhere": "excluirase en calquera lugar onde apareza",

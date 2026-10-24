@@ -98,6 +98,33 @@ func TestPreviewExcludesChecksAContainerPathOnDisk(t *testing.T) {
 	}
 }
 
+func TestPreviewExcludesMarksALineThatSilencesDataOutsideHostData(t *testing.T) {
+	s, in, effective := mountedExcludeSvc(t)
+	in.Mounts = append(in.Mounts,
+		model.Mount{Type: "volume", Source: anonVolume, Destination: "/var/lib/beszel-agent"},
+		model.Mount{Type: "volume", Source: namedVolume, Destination: "/cache"},
+	)
+	cases := []struct{ line, status string }{
+		{"/var/lib/beszel-agent", "outside"},
+		{"/var/lib", "outside"},
+		{"/cache/", "outside"},
+		{"/other", "outside"},
+		{"/other/anything", "translated"},
+		{"/cache/transcodes", "passthrough"},
+		{"/", "passthrough"},
+		{"Cache", "basename"},
+		{"/config/Transcode", "translated"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.line, func(t *testing.T) {
+			got := s.previewExcludes(context.Background(), []string{tc.line}, in, effective)
+			if len(got) != 1 || got[0].Status != tc.status || got[0].Missing {
+				t.Fatalf("preview of %q = %+v, want status %s", tc.line, got, tc.status)
+			}
+		})
+	}
+}
+
 func TestPreviewExcludesDoesNotCallAPathMissingWhenTheSearchCannotFinish(t *testing.T) {
 	s, in, effective := mountedExcludeSvc(t)
 	ctx, cancel := context.WithCancel(context.Background())

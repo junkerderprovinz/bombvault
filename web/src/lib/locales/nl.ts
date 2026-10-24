@@ -1543,7 +1543,7 @@ const nl: Partial<Translations> = {
 
   // Per-container exclude patterns (#36)
   "excludes.title": "Uitsluitpatronen",
-  "excludes.hint": "Eén patroon per regel. Een containerpad (bijv. /config/Library/.../Cache) wordt vergeleken met het geback-upte volume; een kale naam zoals .git komt op elke diepte overeen. Accolade-lijsten zoals {a,b} worden niet ondersteund; gebruik één regel per stuk.",
+  "excludes.hint": "Eén patroon per regel. Een containerpad (bijv. /config/Library/.../Cache) wordt vergeleken met het geback-upte volume; een kale naam zoals .git komt op elke diepte overeen. Accolade-lijsten zoals {a,b} worden niet ondersteund; gebruik één regel per stuk. Een regel voor een map buiten Host Data zet de waarschuwing uit dat hij niet is geback-upt.",
   "excludes.placeholder": "/config/Library/Application Support/Plex Media Server/Cache\n/config/Library/Application Support/Plex Media Server/Metadata\n.git",
   "excludes.saved": "Uitsluitingen opgeslagen",
   "excludes.error": "Kon uitsluitingen niet opslaan",
@@ -1551,6 +1551,7 @@ const nl: Partial<Translations> = {
   "excludes.excludesNothing": "Het volume van deze map zit niet in de back-up, dus deze regel sluit niets uit.",
   "excludes.nameMatchesNothing": "Niets in deze back-up heeft deze naam, dus deze regel sluit niets uit.",
   "excludes.pathMissing": "Dit pad bestaat niet in de back-up, dus deze regel sluit niets uit.",
+  "excludes.outsideHostData": "Deze map staat buiten Host Data, dus BombVault kan hem niet back-uppen. Deze regel zet de waarschuwing uit dat hij niet is geback-upt.",
   // Exclude preview status (#38)
   "excludes.willExclude": "wordt uitgesloten van de back-up",
   "excludes.matchesAnywhere": "wordt overal uitgesloten waar het voorkomt",

@@ -1544,7 +1544,7 @@ const fr: Partial<Translations> = {
 
   // Per-container exclude patterns (#36)
   "excludes.title": "Motifs d'exclusion",
-  "excludes.hint": "Un motif par ligne. Un chemin de conteneur (p. ex. /config/Library/.../Cache) est comparé au volume sauvegardé ; un nom simple comme .git correspond à n'importe quelle profondeur. Les listes entre accolades comme {a,b} ne sont pas prises en charge ; utilisez une ligne par motif.",
+  "excludes.hint": "Un motif par ligne. Un chemin de conteneur (p. ex. /config/Library/.../Cache) est comparé au volume sauvegardé ; un nom simple comme .git correspond à n'importe quelle profondeur. Les listes entre accolades comme {a,b} ne sont pas prises en charge ; utilisez une ligne par motif. Une ligne pour un dossier hors de Host Data coupe l'avertissement indiquant qu'il n'a pas été sauvegardé.",
   "excludes.placeholder": "/config/Library/Application Support/Plex Media Server/Cache\n/config/Library/Application Support/Plex Media Server/Metadata\n.git",
   "excludes.saved": "Exclusions enregistrées",
   "excludes.error": "Impossible d'enregistrer les exclusions",
@@ -1552,6 +1552,7 @@ const fr: Partial<Translations> = {
   "excludes.excludesNothing": "Le volume de ce dossier n'est pas dans la sauvegarde, cette ligne n'exclut donc rien.",
   "excludes.nameMatchesNothing": "Rien dans cette sauvegarde ne porte ce nom, cette ligne n'exclut donc rien.",
   "excludes.pathMissing": "Ce chemin n'existe pas dans la sauvegarde, cette ligne n'exclut donc rien.",
+  "excludes.outsideHostData": "Ce dossier est hors de Host Data, BombVault ne peut donc pas le sauvegarder. Cette ligne coupe l'avertissement indiquant qu'il n'a pas été sauvegardé.",
   // Exclude preview status (#38)
   "excludes.willExclude": "sera exclu de la sauvegarde",
   "excludes.matchesAnywhere": "sera exclu partout où il apparaît",

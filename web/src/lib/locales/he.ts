@@ -1544,7 +1544,7 @@ const he: Partial<Translations> = {
 
   // Per-container exclude patterns (#36)
   "excludes.title": "תבניות החרגה",
-  "excludes.hint": "תבנית אחת בכל שורה. נתיב מכל (למשל /config/Library/.../Cache) מושווה אל אמצעי האחסון המגובה; שם פשוט כמו .git תואם בכל עומק. רשימות בסוגריים מסולסלים כמו {a,b} אינן נתמכות; יש לכתוב שורה אחת לכל אחת.",
+  "excludes.hint": "תבנית אחת בכל שורה. נתיב מכל (למשל /config/Library/.../Cache) מושווה אל אמצעי האחסון המגובה; שם פשוט כמו .git תואם בכל עומק. רשימות בסוגריים מסולסלים כמו {a,b} אינן נתמכות; יש לכתוב שורה אחת לכל אחת. שורה לתיקייה מחוץ ל-Host Data מכבה את האזהרה שהיא לא גובתה.",
   "excludes.placeholder": "/config/Library/Application Support/Plex Media Server/Cache\n/config/Library/Application Support/Plex Media Server/Metadata\n.git",
   "excludes.saved": "ההחרגות נשמרו",
   "excludes.error": "לא ניתן היה לשמור את ההחרגות",
@@ -1552,6 +1552,7 @@ const he: Partial<Translations> = {
   "excludes.excludesNothing": "אמצעי האחסון של תיקייה זו אינו בגיבוי, כך שהשורה הזו אינה מחריגה דבר.",
   "excludes.nameMatchesNothing": "שום דבר בגיבוי הזה אינו נושא את השם הזה, כך שהשורה הזו אינה מחריגה דבר.",
   "excludes.pathMissing": "הנתיב הזה אינו קיים בגיבוי, כך שהשורה הזו אינה מחריגה דבר.",
+  "excludes.outsideHostData": "התיקייה הזו נמצאת מחוץ ל-Host Data, ולכן BombVault לא יכול לגבות אותה. השורה הזו מכבה את האזהרה שהיא לא גובתה.",
   // Exclude preview status (#38)
   "excludes.willExclude": "יוחרג מהגיבוי",
   "excludes.matchesAnywhere": "יוחרג בכל מקום שבו הוא מופיע",

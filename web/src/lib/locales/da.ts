@@ -1544,7 +1544,7 @@ const da: Partial<Translations> = {
 
   // Per-container exclude patterns (#36)
   "excludes.title": "Udelukkelsesmønstre",
-  "excludes.hint": "Ét mønster pr. linje. En containersti (f.eks. /config/Library/.../Cache) matches mod den sikkerhedskopierede volumen; et rent navn som .git matcher i enhver dybde. Lister med tuborgparenteser som {a,b} understøttes ikke; brug én linje til hver.",
+  "excludes.hint": "Ét mønster pr. linje. En containersti (f.eks. /config/Library/.../Cache) matches mod den sikkerhedskopierede volumen; et rent navn som .git matcher i enhver dybde. Lister med tuborgparenteser som {a,b} understøttes ikke; brug én linje til hver. En linje for en mappe uden for Host Data slår advarslen om, at den ikke blev sikkerhedskopieret, fra.",
   "excludes.placeholder": "/config/Library/Application Support/Plex Media Server/Cache\n/config/Library/Application Support/Plex Media Server/Metadata\n.git",
   "excludes.saved": "Udelukkelser gemt",
   "excludes.error": "Kunne ikke gemme udelukkelserne",
@@ -1552,6 +1552,7 @@ const da: Partial<Translations> = {
   "excludes.excludesNothing": "Denne mappes volumen er ikke med i sikkerhedskopien, så denne linje udelukker intet.",
   "excludes.nameMatchesNothing": "Intet i denne sikkerhedskopi har dette navn, så denne linje udelukker intet.",
   "excludes.pathMissing": "Denne sti findes ikke i sikkerhedskopien, så denne linje udelukker intet.",
+  "excludes.outsideHostData": "Denne mappe ligger uden for Host Data, så BombVault kan ikke sikkerhedskopiere den. Denne linje slår advarslen om, at den ikke blev sikkerhedskopieret, fra.",
   // Exclude preview status (#38)
   "excludes.willExclude": "udelukkes fra sikkerhedskopien",
   "excludes.matchesAnywhere": "udelukkes overalt hvor det forekommer",

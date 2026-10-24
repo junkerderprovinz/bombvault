@@ -1535,7 +1535,7 @@ const vi: Partial<Translations> = {
 
   // Per-container exclude patterns (#36)
   "excludes.title": "Mẫu loại trừ",
-  "excludes.hint": "Mỗi dòng một mẫu. Một đường dẫn container (ví dụ /config/Library/.../Cache) được so khớp với ổ đĩa đã sao lưu; một tên đơn giản như .git khớp ở mọi độ sâu. Không hỗ trợ danh sách trong ngoặc nhọn như {a,b}; hãy dùng mỗi mục một dòng.",
+  "excludes.hint": "Mỗi dòng một mẫu. Một đường dẫn container (ví dụ /config/Library/.../Cache) được so khớp với ổ đĩa đã sao lưu; một tên đơn giản như .git khớp ở mọi độ sâu. Không hỗ trợ danh sách trong ngoặc nhọn như {a,b}; hãy dùng mỗi mục một dòng. Một dòng cho thư mục nằm ngoài Host Data sẽ tắt cảnh báo rằng nó chưa được sao lưu.",
   "excludes.placeholder": "/config/Library/Application Support/Plex Media Server/Cache\n/config/Library/Application Support/Plex Media Server/Metadata\n.git",
   "excludes.saved": "Đã lưu loại trừ",
   "excludes.error": "Không thể lưu loại trừ",
@@ -1543,6 +1543,7 @@ const vi: Partial<Translations> = {
   "excludes.excludesNothing": "Ổ đĩa của thư mục này không nằm trong bản sao lưu, nên dòng này không loại trừ gì cả.",
   "excludes.nameMatchesNothing": "Không có gì trong bản sao lưu này mang tên này, nên dòng này không loại trừ gì cả.",
   "excludes.pathMissing": "Đường dẫn này không tồn tại trong bản sao lưu, nên dòng này không loại trừ gì cả.",
+  "excludes.outsideHostData": "Thư mục này nằm ngoài Host Data, nên BombVault không thể sao lưu nó. Dòng này tắt cảnh báo rằng nó chưa được sao lưu.",
   // Exclude preview status (#38)
   "excludes.willExclude": "sẽ bị loại trừ khỏi bản sao lưu",
   "excludes.matchesAnywhere": "sẽ bị loại trừ ở bất kỳ nơi nào xuất hiện",
