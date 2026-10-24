@@ -52,6 +52,13 @@ Replikace mimo lokalitu je na základě nejlepší snahy záměrně, takže zád
 
 restic odmítne certifikát, který nezná, a chybová zpráva řekne, kam ho dát. Zkopíruj samopodepsaný certifikát rest-serveru, nebo certifikát autority, která ho podepsala, jako soubor PEM do složky `certs` v datové složce BombVaultu (`/config/certs` v kontejneru, `appdata/bombvault/certs` na Unraidu) a otestuj znovu. Restart není potřeba.
 
+## Záloha hlásí, že data mimo Host Data nebyla zálohována {#data-outside-host-data}
+
+Kontejner má data ve složce, kterou BombVault přes Host Data nepřečte. Záloha uloží definici a každou složku, ke které se dostane, obarví svůj řádek v protokolu aktivit oranžově a vyjmenuje složky, které vynechala. Dva případy jsou běžné: ixVolume na TrueNAS pod `/mnt/.ix-apps` a anonymní svazek Dockeru pod `/var/lib/docker/volumes`, který Docker sám vytvoří pro složku, kterou image deklaruje a nikdo ji nenamapoval, například data monitorovacího agenta nebo mezipaměť mediálního serveru.
+
+- **Chceš ta data zálohovat.** Namapuj složku na cestu na hostiteli pod Host Data, třeba na složku ve sdílení appdata, a další záloha ji zahrne.
+- **Nepotřebuješ je.** Přidej cestu ke složce uvnitř kontejneru, třeba `/var/lib/beszel-agent` nebo `/cache`, jako řádek do karty **Vzory vyloučení** na kartě **Nastavení** kontejneru. Od další zálohy varování tuto složku vynechá a náhled pod polem řekne proč. Řádek pro nadřazenou složku funguje také, samotný název ne.
+
 ## Velká záloha byla ukončena kvůli nedostatku paměti
 
 Nastav **Limit paměti na zálohu (MiB, 0 = žádný)** v kartě **Výkon** v **Nastavení, Systém** výrazně pod to, co smí kontejner použít. Blízko limitu restic častěji uvolňuje paměť, což stojí trochu rychlosti, takže záloha zpomalí, místo aby byla ukončena.

@@ -52,6 +52,13 @@ Replicarea off-site este best-effort prin concepție, așa că un sughiț off-si
 
 restic refuză un certificat pe care nu îl cunoaște, iar eroarea spune unde să-l pui. Copiază certificatul autosemnat al rest-server-ului, sau pe cel al autorității care l-a semnat, ca fișier PEM în folderul `certs` din folderul de date al BombVault (`/config/certs` în container, `appdata/bombvault/certs` pe Unraid) și testează din nou. Nu este nevoie de repornire.
 
+## Un backup spune că datele din afara Host Data nu au fost salvate {#data-outside-host-data}
+
+Containerul ține date într-un dosar pe care BombVault nu îl poate citi prin Host Data. Backupul salvează definiția și fiecare dosar la care ajunge, își colorează linia din jurnalul de activitate în portocaliu și numește dosarele lăsate pe dinafară. Două cazuri sunt frecvente: un ixVolume pe TrueNAS sub `/mnt/.ix-apps` și un volum Docker anonim sub `/var/lib/docker/volumes`, pe care Docker îl creează singur pentru un dosar declarat de imagine și pe care nu l-a mapat nimeni, de exemplu datele unui agent de monitorizare sau cache-ul unui server media.
+
+- **Vrei să salvezi aceste date.** Mapează dosarul pe o cale a gazdei sub Host Data, de exemplu un dosar din partajarea appdata, iar următorul backup îl include.
+- **Nu ai nevoie de ele.** Adaugă calea dosarului din interiorul containerului, de exemplu `/var/lib/beszel-agent` sau `/cache`, ca linie în cardul **Modele de excludere** din fila **Setări** a containerului. De la următorul backup, avertismentul lasă dosarul deoparte, iar previzualizarea de sub câmp spune de ce. Merge și o linie pentru un dosar de deasupra, un nume simplu nu.
+
 ## Un backup mare a fost oprit din lipsă de memorie
 
 Setează **Limită de memorie per copie (MiB, 0 = fără)** în cardul **Performanță** de la **Setări, Sistem**, cu mult sub cât are voie să folosească containerul. Aproape de limită, restic eliberează memorie mai des, ceea ce costă puțină viteză, așa că backupul încetinește în loc să fie oprit.

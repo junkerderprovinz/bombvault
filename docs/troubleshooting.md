@@ -52,6 +52,13 @@ Off-site replication is best-effort by design, so an off-site hiccup never fails
 
 restic refuses a certificate it does not know, and the error says where to put it. Copy the rest-server's self-signed certificate, or the one of the authority that signed it, as a PEM file into the `certs` folder of BombVault's data folder (`/config/certs` in the container, `appdata/bombvault/certs` on Unraid) and test again. No restart is needed.
 
+## A backup says data outside Host Data was not backed up {#data-outside-host-data}
+
+The container keeps data in a folder BombVault cannot read through Host Data. The backup saves the definition and every folder it can reach, turns its line in the activity log orange and names the folders it left out. Two cases are common: an ixVolume on TrueNAS under `/mnt/.ix-apps`, and an anonymous Docker volume under `/var/lib/docker/volumes`, which Docker creates by itself for a folder the image declares and nobody mapped, such as the data of a monitoring agent or the cache of a media server.
+
+- **You want that data backed up.** Map the folder to a host path below Host Data, for example a folder in your appdata share, and the next backup includes it.
+- **You do not need it.** Add the folder's path inside the container, such as `/var/lib/beszel-agent` or `/cache`, as a line in the **Exclude patterns** card on the container's **Settings** tab. From the next backup on, the warning leaves that folder out, and the preview under the field says why. A line for a folder above it works too, a bare name does not.
+
 ## A large backup was killed for running out of memory
 
 Set **Memory limit per backup (MiB, 0 = none)** in the **Performance** card under **Settings, System**, well below what the container may use. Near the limit restic frees memory more often, which costs some speed, so the backup slows down instead of being killed.

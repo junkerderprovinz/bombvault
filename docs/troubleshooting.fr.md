@@ -52,6 +52,13 @@ La réplication hors site est au mieux par conception, de sorte qu'un accroc hor
 
 restic refuse un certificat qu'il ne connaît pas, et le message d'erreur indique où le placer. Copiez le certificat auto-signé du rest-server, ou celui de l'autorité qui l'a signé, sous forme de fichier PEM dans le dossier `certs` du dossier de données de BombVault (`/config/certs` dans le conteneur, `appdata/bombvault/certs` sous Unraid), puis testez de nouveau. Aucun redémarrage n'est nécessaire.
 
+## Une sauvegarde indique que des données hors de Host Data n'ont pas été sauvegardées {#data-outside-host-data}
+
+Le conteneur garde des données dans un dossier que BombVault ne peut pas lire via Host Data. La sauvegarde enregistre la définition et chaque dossier qu'elle atteint, colore sa ligne en orange dans le journal d'activité et nomme les dossiers laissés de côté. Deux cas sont fréquents : un ixVolume sur TrueNAS sous `/mnt/.ix-apps`, et un volume Docker anonyme sous `/var/lib/docker/volumes`, que Docker crée de lui-même pour un dossier déclaré par l'image et que personne n'a mappé, comme les données d'un agent de supervision ou le cache d'un serveur multimédia.
+
+- **Vous voulez sauvegarder ces données.** Mappez le dossier sur un chemin de l'hôte sous Host Data, par exemple un dossier de votre partage appdata, et la prochaine sauvegarde l'inclut.
+- **Vous n'en avez pas besoin.** Ajoutez le chemin du dossier dans le conteneur, comme `/var/lib/beszel-agent` ou `/cache`, comme ligne dans la carte **Motifs d'exclusion** de l'onglet **Paramètres** du conteneur. À partir de la prochaine sauvegarde, l'avertissement laisse ce dossier de côté, et l'aperçu sous le champ dit pourquoi. Une ligne pour un dossier au-dessus fonctionne aussi, un nom simple non.
+
 ## Une grosse sauvegarde a été tuée faute de mémoire
 
 Réglez **Limite de mémoire par sauvegarde (MiB, 0 = aucune)** dans la carte **Performances** sous **Paramètres, Système**, bien en dessous de ce que le conteneur peut utiliser. À l'approche de la limite, restic libère la mémoire plus souvent, ce qui coûte un peu de vitesse : la sauvegarde ralentit au lieu d'être tuée.

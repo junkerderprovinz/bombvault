@@ -52,6 +52,13 @@ Etäreplikointi on suunnitellusti parhaan yrityksen mukaista, joten etäsijainni
 
 restic hylkää varmenteen, jota se ei tunne, ja virheilmoitus kertoo, minne varmenne kuuluu. Kopioi rest-serverin itse allekirjoitettu varmenne, tai sen allekirjoittaneen varmentajan varmenne, PEM-tiedostona BombVaultin datakansion kansioon `certs` (`/config/certs` kontissa, `appdata/bombvault/certs` Unraidissa) ja testaa uudelleen. Uudelleenkäynnistystä ei tarvita.
 
+## Varmuuskopio kertoo, ettei Host Datan ulkopuolisia tietoja varmuuskopioitu {#data-outside-host-data}
+
+Kontti pitää tietoja kansiossa, jota BombVault ei voi lukea Host Datan kautta. Varmuuskopio tallentaa määrittelyn ja jokaisen kansion, johon se ylettyy, värittää rivinsä tapahtumalokissa oranssiksi ja nimeää kansiot, jotka se jätti pois. Kaksi tapausta on yleisiä: ixVolume TrueNASissa polussa `/mnt/.ix-apps` ja nimetön Docker-taltio polussa `/var/lib/docker/volumes`, jonka Docker luo itse kansiolle, jonka image määrittelee eikä kukaan ole liittänyt, kuten valvonta-agentin tiedot tai mediapalvelimen välimuisti.
+
+- **Haluat varmuuskopioida nuo tiedot.** Liitä kansio isännän polkuun Host Datan alla, esimerkiksi appdata-jaon kansioon, niin seuraava varmuuskopio ottaa sen mukaan.
+- **Et tarvitse niitä.** Lisää kansion polku kontin sisällä, kuten `/var/lib/beszel-agent` tai `/cache`, riviksi kortille **Poissulkumallit** kontin välilehdellä **Asetukset**. Seuraavasta varmuuskopiosta alkaen varoitus jättää kansion pois, ja kentän alla oleva esikatselu kertoo miksi. Myös rivi yläpuoliselle kansiolle toimii, pelkkä nimi ei.
+
 ## Suuri varmuuskopio lopetettiin muistin loppumisen vuoksi
 
 Aseta **Muistiraja varmuuskopiota kohden (MiB, 0 = ei rajaa)** kortissa **Suorituskyky** kohdassa **Asetukset, Järjestelmä** selvästi pienemmäksi kuin muisti, jota kontti saa käyttää. Rajan lähellä restic vapauttaa muistia useammin, mikä maksaa hieman nopeutta, joten varmuuskopio hidastuu sen sijaan, että se lopetettaisiin.

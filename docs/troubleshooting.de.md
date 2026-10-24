@@ -52,6 +52,13 @@ Off-site-Kopien sind absichtlich Best-Effort, sodass ein Off-site-Aussetzer die 
 
 restic lehnt ein Zertifikat ab, das es nicht kennt, und die Fehlermeldung sagt, wohin es gehört. Kopier das selbstsignierte Zertifikat des rest-servers, oder das der Stelle, die es signiert hat, als PEM-Datei in den Ordner `certs` in BombVaults Datenordner (`/config/certs` im Container, `appdata/bombvault/certs` unter Unraid) und teste noch einmal. Ein Neustart ist nicht nötig.
 
+## Eine Sicherung meldet, dass Daten außerhalb von Host Data nicht gesichert wurden {#data-outside-host-data}
+
+Der Container hält Daten in einem Ordner, den BombVault über Host Data nicht lesen kann. Die Sicherung speichert die Definition und jeden Ordner, den sie erreicht, färbt ihre Zeile im Aktivitätsprotokoll orange und nennt die Ordner, die sie ausgelassen hat. Zwei Fälle sind häufig: ein ixVolume unter TrueNAS in `/mnt/.ix-apps` und ein anonymes Docker-Volume in `/var/lib/docker/volumes`, das Docker von selbst für einen Ordner anlegt, den das Image vorsieht und niemand zugeordnet hat, etwa die Daten eines Monitoring-Agenten oder den Cache eines Medienservers.
+
+- **Du willst diese Daten gesichert haben.** Ordne den Ordner einem Host-Pfad unterhalb von Host Data zu, etwa einem Ordner in deiner appdata-Freigabe, dann nimmt ihn die nächste Sicherung mit.
+- **Du brauchst sie nicht.** Trag den Pfad des Ordners im Container, etwa `/var/lib/beszel-agent` oder `/cache`, als Zeile in der Karte **Ausschlussmuster** auf dem Reiter **Einstellungen** des Containers ein. Ab der nächsten Sicherung lässt die Warnung diesen Ordner weg, und die Vorschau unter dem Feld sagt, warum. Eine Zeile für einen Ordner darüber wirkt genauso, ein reiner Name nicht.
+
 ## Eine große Sicherung wurde wegen fehlenden Speichers beendet
 
 Setz **Speicherlimit pro Sicherung (MiB, 0 = keins)** auf der Karte **Leistung** unter **Einstellungen, System**, deutlich unter den Speicher, den der Container nutzen darf. Nahe am Limit gibt restic öfter Speicher frei, was etwas Tempo kostet, sodass die Sicherung langsamer wird, statt beendet zu werden.

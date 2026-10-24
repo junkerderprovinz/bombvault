@@ -52,6 +52,13 @@ La replicación externa es de mejor esfuerzo por diseño, de modo que un contrat
 
 restic rechaza un certificado que no conoce, y el error dice dónde ponerlo. Copia el certificado autofirmado del rest-server, o el de la autoridad que lo firmó, como archivo PEM en la carpeta `certs` de la carpeta de datos de BombVault (`/config/certs` en el contenedor, `appdata/bombvault/certs` en Unraid) y vuelve a probar. No hace falta reiniciar.
 
+## Una copia dice que los datos fuera de Host Data no se copiaron {#data-outside-host-data}
+
+El contenedor guarda datos en una carpeta que BombVault no puede leer a través de Host Data. La copia guarda la definición y cada carpeta a la que llega, pinta de naranja su línea en el registro de actividad y nombra las carpetas que dejó fuera. Hay dos casos habituales: un ixVolume en TrueNAS bajo `/mnt/.ix-apps` y un volumen anónimo de Docker bajo `/var/lib/docker/volumes`, que Docker crea por su cuenta para una carpeta que la imagen declara y que nadie ha mapeado, como los datos de un agente de monitorización o la caché de un servidor multimedia.
+
+- **Quieres copiar esos datos.** Mapea la carpeta a una ruta del host bajo Host Data, por ejemplo una carpeta de tu recurso appdata, y la próxima copia la incluye.
+- **No los necesitas.** Añade la ruta de la carpeta dentro del contenedor, como `/var/lib/beszel-agent` o `/cache`, como una línea en la tarjeta **Patrones de exclusión** de la pestaña **Ajustes** del contenedor. A partir de la próxima copia el aviso deja fuera esa carpeta, y la vista previa bajo el campo dice por qué. Una línea para una carpeta superior también sirve, un nombre simple no.
+
 ## Una copia grande se terminó por quedarse sin memoria
 
 Ajusta **Límite de memoria por copia (MiB, 0 = ninguno)** en la tarjeta **Rendimiento** de **Ajustes, Sistema**, bastante por debajo de lo que puede usar el contenedor. Cerca del límite restic libera memoria más a menudo, lo que cuesta algo de velocidad, así que la copia va más lenta en lugar de terminarse.

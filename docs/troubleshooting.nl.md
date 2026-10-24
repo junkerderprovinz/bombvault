@@ -52,6 +52,13 @@ Off-site replicatie is opzettelijk best-effort, dus een off-site hapering laat d
 
 restic weigert een certificaat dat het niet kent, en de foutmelding zegt waar het moet komen. Kopieer het zelfondertekende certificaat van de rest-server, of dat van de certificaatautoriteit die het heeft ondertekend, als PEM-bestand naar de map `certs` in de datamap van BombVault (`/config/certs` in de container, `appdata/bombvault/certs` in Unraid) en test opnieuw. Een herstart is niet nodig.
 
+## Een back-up meldt dat gegevens buiten Host Data niet zijn geback-upt {#data-outside-host-data}
+
+De container bewaart gegevens in een map die BombVault niet via Host Data kan lezen. De back-up slaat de definitie op en elke map die hij kan bereiken, kleurt zijn regel in het activiteitenlogboek oranje en noemt de mappen die hij heeft overgeslagen. Twee gevallen komen vaak voor: een ixVolume op TrueNAS onder `/mnt/.ix-apps` en een anoniem Docker-volume onder `/var/lib/docker/volumes`, dat Docker zelf aanmaakt voor een map die het image declareert en die niemand heeft gekoppeld, zoals de gegevens van een monitoringagent of de cache van een mediaserver.
+
+- **Je wilt die gegevens geback-upt hebben.** Koppel de map aan een hostpad onder Host Data, bijvoorbeeld een map in je appdata-share, dan neemt de volgende back-up hem mee.
+- **Je hebt ze niet nodig.** Voeg het pad van de map binnen de container toe, zoals `/var/lib/beszel-agent` of `/cache`, als regel in de kaart **Uitsluitpatronen** op het tabblad **Instellingen** van de container. Vanaf de volgende back-up laat de waarschuwing die map weg, en het voorbeeld onder het veld zegt waarom. Een regel voor een map erboven werkt ook, een kale naam niet.
+
 ## Een grote back-up werd afgebroken wegens geheugengebrek
 
 Stel **Geheugenlimiet per back-up (MiB, 0 = geen)** in de kaart **Prestaties** onder **Instellingen, Systeem** ruim onder wat de container mag gebruiken. Dicht bij de limiet geeft restic vaker geheugen vrij. Dat kost wat snelheid, maar de back-up wordt dan trager in plaats van te worden afgebroken.

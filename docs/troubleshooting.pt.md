@@ -52,6 +52,13 @@ A replicação externa é de melhor esforço por conceção, por isso um percal�
 
 O restic recusa um certificado que não conhece, e o erro diz onde o colocar. Copia o certificado autoassinado do rest-server, ou o da autoridade que o assinou, como ficheiro PEM para a pasta `certs` da pasta de dados do BombVault (`/config/certs` no container, `appdata/bombvault/certs` no Unraid) e testa de novo. Não é preciso reiniciar.
 
+## Um backup diz que os dados fora de Host Data não foram copiados {#data-outside-host-data}
+
+O container guarda dados numa pasta que o BombVault não consegue ler através de Host Data. O backup guarda a definição e todas as pastas a que chega, pinta de laranja a sua linha no registo de atividade e indica as pastas que deixou de fora. Há dois casos comuns: um ixVolume no TrueNAS em `/mnt/.ix-apps` e um volume anónimo do Docker em `/var/lib/docker/volumes`, que o Docker cria sozinho para uma pasta que a imagem declara e que ninguém mapeou, como os dados de um agente de monitorização ou a cache de um servidor multimédia.
+
+- **Queres copiar esses dados.** Mapeia a pasta para um caminho do host abaixo de Host Data, por exemplo uma pasta da tua partilha appdata, e o próximo backup inclui-a.
+- **Não precisas deles.** Adiciona o caminho da pasta dentro do container, como `/var/lib/beszel-agent` ou `/cache`, como uma linha no cartão **Padrões de exclusão** do separador **Definições** do container. A partir do próximo backup, o aviso deixa essa pasta de fora, e a pré-visualização por baixo do campo diz porquê. Uma linha para uma pasta acima também serve, um nome simples não.
+
 ## Um backup grande foi terminado por falta de memória
 
 Define **Limite de memória por backup (MiB, 0 = nenhum)** no cartão **Desempenho** em **Definições, Sistema**, bem abaixo do que o container pode usar. Perto do limite, o restic liberta memória mais vezes, o que custa alguma velocidade, por isso o backup abranda em vez de ser terminado.

@@ -52,6 +52,13 @@ Nhân bản off-site vốn được thiết kế theo kiểu hết sức có th�
 
 restic từ chối một chứng chỉ mà nó không biết, và thông báo lỗi cho biết nên đặt chứng chỉ ở đâu. Sao chép chứng chỉ tự ký của rest-server, hoặc chứng chỉ của tổ chức đã ký nó, dưới dạng tệp PEM vào thư mục `certs` trong thư mục dữ liệu của BombVault (`/config/certs` trong container, `appdata/bombvault/certs` trên Unraid) rồi kiểm tra lại. Không cần khởi động lại.
 
+## Bản sao lưu báo rằng dữ liệu ngoài Host Data chưa được sao lưu {#data-outside-host-data}
+
+Container giữ dữ liệu trong một thư mục mà BombVault không đọc được qua Host Data. Bản sao lưu lưu định nghĩa và mọi thư mục nó với tới, tô cam dòng của nó trong nhật ký hoạt động và nêu tên các thư mục đã bỏ qua. Có hai trường hợp thường gặp: một ixVolume trên TrueNAS dưới `/mnt/.ix-apps`, và một volume Docker ẩn danh dưới `/var/lib/docker/volumes` mà Docker tự tạo cho một thư mục do image khai báo nhưng chưa ai ánh xạ, chẳng hạn dữ liệu của một agent giám sát hay bộ nhớ đệm của một máy chủ media.
+
+- **Bạn muốn sao lưu dữ liệu đó.** Ánh xạ thư mục tới một đường dẫn trên host bên dưới Host Data, ví dụ một thư mục trong share appdata của bạn, và lần sao lưu tiếp theo sẽ bao gồm nó.
+- **Bạn không cần nó.** Thêm đường dẫn của thư mục bên trong container, như `/var/lib/beszel-agent` hoặc `/cache`, thành một dòng trong thẻ **Mẫu loại trừ** trên tab **Cài đặt** của container. Từ lần sao lưu tiếp theo, cảnh báo sẽ bỏ thư mục đó ra, và bản xem trước bên dưới ô nhập cho biết lý do. Một dòng cho thư mục cha cũng có tác dụng, một tên đơn giản thì không.
+
 ## Một bản sao lưu lớn bị dừng vì hết bộ nhớ
 
 Đặt **Giới hạn bộ nhớ mỗi bản sao lưu (MiB, 0 = không)** trong thẻ **Hiệu năng** dưới **Cài đặt, Hệ thống** ở mức thấp hơn hẳn lượng bộ nhớ mà container được phép dùng. Khi gần tới giới hạn, restic giải phóng bộ nhớ thường xuyên hơn, việc này làm chậm đi một chút, nên bản sao lưu chạy chậm lại thay vì bị dừng.

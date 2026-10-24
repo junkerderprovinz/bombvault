@@ -52,6 +52,13 @@ Replikacja poza siedzibą jest z założenia best-effort, więc potknięcie poza
 
 restic odrzuca certyfikat, którego nie zna, a komunikat błędu mówi, gdzie go umieścić. Skopiuj samopodpisany certyfikat rest-servera, albo certyfikat urzędu, który go podpisał, jako plik PEM do folderu `certs` w folderze danych BombVault (`/config/certs` w kontenerze, `appdata/bombvault/certs` w Unraid) i przetestuj ponownie. Restart nie jest potrzebny.
 
+## Kopia zapasowa zgłasza, że dane poza Host Data nie zostały zarchiwizowane {#data-outside-host-data}
+
+Kontener trzyma dane w folderze, którego BombVault nie może odczytać przez Host Data. Kopia zapisuje definicję i każdy folder, do którego sięga, barwi swój wiersz w dzienniku aktywności na pomarańczowo i wymienia foldery, które pominęła. Dwa przypadki są częste: ixVolume na TrueNAS pod `/mnt/.ix-apps` oraz anonimowy wolumen Dockera pod `/var/lib/docker/volumes`, który Docker sam tworzy dla folderu zadeklarowanego przez obraz, którego nikt nie zmapował, na przykład dla danych agenta monitorującego albo pamięci podręcznej serwera multimediów.
+
+- **Chcesz archiwizować te dane.** Zmapuj folder na ścieżkę hosta pod Host Data, na przykład na folder w udziale appdata, a następna kopia go obejmie.
+- **Nie potrzebujesz ich.** Dodaj ścieżkę folderu wewnątrz kontenera, na przykład `/var/lib/beszel-agent` albo `/cache`, jako wiersz w karcie **Wzorce wykluczeń** na karcie **Ustawienia** kontenera. Od następnej kopii ostrzeżenie pomija ten folder, a podgląd pod polem mówi dlaczego. Wiersz dla folderu nadrzędnego też działa, sama nazwa nie.
+
 ## Duża kopia zapasowa została zabita z braku pamięci
 
 Ustaw **Limit pamięci na kopię zapasową (MiB, 0 = brak)** w karcie **Wydajność** w **Ustawienia, System** wyraźnie poniżej tego, ile pamięci może używać kontener. W pobliżu limitu restic częściej zwalnia pamięć, co kosztuje trochę szybkości, więc kopia działa wolniej, zamiast zostać zabita.

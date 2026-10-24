@@ -52,6 +52,13 @@ Ekstern replikering er best-effort av design, så en ekstern hikke feiler aldri 
 
 restic avviser et sertifikat det ikke kjenner, og feilmeldingen sier hvor det skal ligge. Kopier det selvsignerte sertifikatet til rest-serveren, eller sertifikatet til utstederen som signerte det, som PEM-fil til mappen `certs` i BombVaults datamappe (`/config/certs` i containeren, `appdata/bombvault/certs` på Unraid), og test på nytt. Omstart trengs ikke.
 
+## En sikkerhetskopi sier at data utenfor Host Data ikke ble sikkerhetskopiert {#data-outside-host-data}
+
+Containeren har data i en mappe BombVault ikke kan lese gjennom Host Data. Sikkerhetskopien lagrer definisjonen og hver mappe den når, farger linjen sin i aktivitetsloggen oransje og navngir mappene den utelot. To tilfeller er vanlige: et ixVolume på TrueNAS under `/mnt/.ix-apps` og et anonymt Docker-volum under `/var/lib/docker/volumes`, som Docker lager selv for en mappe imaget oppgir og ingen har koblet til, for eksempel dataene til en overvåkingsagent eller hurtigbufferen til en medieserver.
+
+- **Du vil ha de dataene sikkerhetskopiert.** Koble mappen til en vertssti under Host Data, for eksempel en mappe i appdata-delingen din, så tar neste sikkerhetskopi den med.
+- **Du trenger dem ikke.** Legg til mappens sti inne i containeren, for eksempel `/var/lib/beszel-agent` eller `/cache`, som en linje i kortet **Ekskluderingsmønstre** på fanen **Innstillinger** for containeren. Fra neste sikkerhetskopi utelater varselet den mappen, og forhåndsvisningen under feltet sier hvorfor. En linje for en mappe over den virker også, et rent navn gjør ikke.
+
 ## En stor sikkerhetskopi ble drept fordi minnet tok slutt
 
 Sett **Minnegrense per sikkerhetskopi (MiB, 0 = ingen)** i kortet **Ytelse** under **Innstillinger, System** godt under det containeren får bruke. Nær grensen frigjør restic minne oftere, noe som koster litt fart, så sikkerhetskopien går tregere i stedet for å bli drept.

@@ -52,6 +52,13 @@ Site dışı çoğaltma tasarım gereği en iyi çabayla çalışır, bu yüzden
 
 restic tanımadığı bir sertifikayı reddeder ve hata onu nereye koyacağını söyler. rest-server'ın kendinden imzalı sertifikasını ya da onu imzalayan yetkilinin sertifikasını PEM dosyası olarak BombVault'un veri klasöründeki `certs` klasörüne kopyala (konteynerde `/config/certs`, Unraid'de `appdata/bombvault/certs`) ve yeniden test et. Yeniden başlatma gerekmez.
 
+## Bir yedek, Host Data dışındaki verilerin yedeklenmediğini söylüyor {#data-outside-host-data}
+
+Konteyner, BombVault'un Host Data üzerinden okuyamadığı bir klasörde veri tutuyor. Yedek, tanımı ve ulaşabildiği her klasörü kaydeder, etkinlik günlüğündeki satırını turuncuya boyar ve dışarıda bıraktığı klasörleri adlandırır. İki durum sık görülür: TrueNAS'ta `/mnt/.ix-apps` altındaki bir ixVolume ve `/var/lib/docker/volumes` altındaki anonim bir Docker birimi. İkincisini Docker, image'in tanımladığı ama kimsenin eşlemediği bir klasör için kendiliğinden oluşturur; bir izleme ajanının verileri ya da bir medya sunucusunun önbelleği buna örnektir.
+
+- **Bu verilerin yedeklenmesini istiyorsun.** Klasörü Host Data altındaki bir ana makine yoluna, örneğin appdata paylaşımındaki bir klasöre eşle; bir sonraki yedek onu da alır.
+- **Onlara ihtiyacın yok.** Klasörün konteyner içindeki yolunu, örneğin `/var/lib/beszel-agent` ya da `/cache`, konteynerin **Ayarlar** sekmesindeki **Hariç tutma desenleri** kartına bir satır olarak ekle. Bir sonraki yedekten itibaren uyarı o klasörü dışarıda bırakır ve alanın altındaki önizleme nedenini söyler. Üstteki bir klasör için yazılan satır da işe yarar, düz bir ad yaramaz.
+
 ## Büyük bir yedekleme belleği tükendiği için sonlandırıldı
 
 **Ayarlar, Sistem** altındaki **Performans** kartında **Yedekleme başına bellek sınırı (MiB, 0 = yok)** değerini, konteynerin kullanabileceği belleğin epey altına ayarla. restic sınıra yaklaştıkça belleği daha sık boşaltır; bu biraz hıza mal olur, ama yedekleme sonlandırılmak yerine yavaşlar.

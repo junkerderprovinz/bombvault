@@ -52,6 +52,13 @@ La replica off-site è best-effort per progettazione, così un intoppo off-site 
 
 restic rifiuta un certificato che non conosce, e l'errore dice dove metterlo. Copia il certificato autofirmato del rest-server, o quello dell'autorità che lo ha firmato, come file PEM nella cartella `certs` della cartella dati di BombVault (`/config/certs` nel container, `appdata/bombvault/certs` su Unraid) e prova di nuovo. Non serve riavviare.
 
+## Un backup dice che i dati fuori da Host Data non sono stati salvati {#data-outside-host-data}
+
+Il container tiene dati in una cartella che BombVault non può leggere tramite Host Data. Il backup salva la definizione e ogni cartella che raggiunge, colora di arancione la sua riga nel registro attività e nomina le cartelle lasciate fuori. Due casi sono frequenti: un ixVolume su TrueNAS sotto `/mnt/.ix-apps` e un volume Docker anonimo sotto `/var/lib/docker/volumes`, che Docker crea da solo per una cartella dichiarata dall'immagine e che nessuno ha mappato, come i dati di un agente di monitoraggio o la cache di un media server.
+
+- **Vuoi salvare quei dati.** Mappa la cartella su un percorso dell'host sotto Host Data, per esempio una cartella della tua condivisione appdata, e il prossimo backup la include.
+- **Non ti servono.** Aggiungi il percorso della cartella dentro il container, come `/var/lib/beszel-agent` o `/cache`, come riga nella scheda **Pattern di esclusione** della scheda **Impostazioni** del container. Dal prossimo backup l'avviso lascia fuori quella cartella, e l'anteprima sotto il campo dice perché. Funziona anche una riga per una cartella superiore, un nome semplice no.
+
 ## Un backup grande è stato terminato per mancanza di memoria
 
 Imposta **Limite di memoria per backup (MiB, 0 = nessuno)** nella scheda **Prestazioni** in **Impostazioni, Sistema**, ben al di sotto di quanto il container può usare. Vicino al limite restic libera memoria più spesso, il che costa un po' di velocità, così il backup rallenta invece di essere terminato.

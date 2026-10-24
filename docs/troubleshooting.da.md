@@ -52,6 +52,13 @@ Off-site-replikering er best-effort af design, så et off-site-hikke aldrig får
 
 restic afviser et certifikat, det ikke kender, og fejlen siger, hvor det skal ligge. Kopiér rest-serverens selvsignerede certifikat, eller certifikatet fra den udsteder, der har signeret det, som PEM-fil til mappen `certs` i BombVaults datamappe (`/config/certs` i containeren, `appdata/bombvault/certs` på Unraid), og test igen. Der kræves ingen genstart.
 
+## En sikkerhedskopi siger, at data uden for Host Data ikke blev sikkerhedskopieret {#data-outside-host-data}
+
+Containeren har data i en mappe, som BombVault ikke kan læse via Host Data. Sikkerhedskopien gemmer definitionen og hver mappe, den kan nå, farver sin linje i aktivitetsloggen orange og nævner de mapper, den udelod. To tilfælde er almindelige: et ixVolume på TrueNAS under `/mnt/.ix-apps` og en anonym Docker-volumen under `/var/lib/docker/volumes`, som Docker selv opretter til en mappe, imaget angiver, og som ingen har tilknyttet, for eksempel dataene fra en overvågningsagent eller cachen fra en medieserver.
+
+- **Du vil have de data sikkerhedskopieret.** Tilknyt mappen til en værtssti under Host Data, for eksempel en mappe i din appdata-share, så kommer den med i næste sikkerhedskopi.
+- **Du har ikke brug for dem.** Tilføj mappens sti inde i containeren, for eksempel `/var/lib/beszel-agent` eller `/cache`, som en linje i kortet **Udelukkelsesmønstre** på containerens fane **Indstillinger**. Fra næste sikkerhedskopi udelader advarslen den mappe, og forhåndsvisningen under feltet siger hvorfor. En linje for en mappe over den virker også, et rent navn gør ikke.
+
 ## En stor sikkerhedskopi blev dræbt, fordi hukommelsen slap op
 
 Sæt **Hukommelsesgrænse pr. sikkerhedskopi (MiB, 0 = ingen)** i kortet **Ydeevne** under **Indstillinger, System** et godt stykke under det, containeren må bruge. Tæt på grænsen frigiver restic hukommelse oftere, hvilket koster lidt fart, så sikkerhedskopien bliver langsommere i stedet for at blive dræbt.
