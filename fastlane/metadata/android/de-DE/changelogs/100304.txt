@@ -1,0 +1,1 @@
+Die App macht weiter Pause und hätte das auch gern. BombVault 10.3.4 lernt am Server Manieren: Eine Sicherung wartet, solange jemand auf Plex, Jellyfin oder Emby schaut oder ein Spieleserver beschäftigt ist, und versucht es später still von selbst noch einmal. Eine Nachricht, wenn sie wartet, eine, wenn sie fertig ist. Kein Filmabend wird mehr für eine Sicherung angehalten.
