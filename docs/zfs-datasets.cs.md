@@ -190,13 +190,13 @@ zfs release -r bombvault-replica cache/appdata@bombvault-replica-20261008014200
 zfs rollback -r cache/appdata@bombvault-replica-20261006014100
 ```
 
-Potom vrať kopii na stejný snímek na serveru ZFS, nebo na hostiteli spárované instance, která repliku přijímá. Jinak se další replika této datové sady zastaví, protože cíl má novější snímky:
+Kopii na cíli je potřeba vrátit také, ale ne vždy na stejný snímek, protože ho vlastní uchovávání cíle už mohlo odstranit. Spusť repliku jednou. U této datové sady se zastaví, protože cíl má novější snímky, a karta Replika a historie běhů uvedou snímek, na který je třeba cíl vrátit: nejnovější, který mají obě strany ještě společný. Vrať na něj kopii na serveru ZFS, nebo na hostiteli spárované instance, která repliku přijímá, například:
 
 ```
-zfs rollback -r backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261006014100
+zfs rollback -r backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261005014000
 ```
 
-`zfs rollback` působí na jednu datovou sadu, takže oba návraty zopakuj pro každou podřízenou datovou sadu, kterou chceš mít také zpátky. Další replika pak naváže na tento snímek.
+`zfs rollback` působí na jednu datovou sadu, takže návraty zopakuj pro každou podřízenou datovou sadu, kterou chceš mít také zpátky. Potom **Replikovat teď** naváže na společný snímek.
 
 ### Šifrované datové sady v replice {#replica-encryption}
 

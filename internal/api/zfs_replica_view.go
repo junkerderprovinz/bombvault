@@ -56,6 +56,11 @@ type ZFSReplicaMemberView struct {
 	// locked, no-mountpoint or failed. It is empty when the server is not asked
 	// to mount.
 	Mount string `json:"mount"`
+	// RollbackTo is the snapshot to roll the copy back to after the target
+	// turned out to hold newer ones: the newest the last run found on both
+	// sides. It is the full path on a ZFS server and the snapshot alone on a
+	// paired instance.
+	RollbackTo string `json:"rollbackTo,omitempty"`
 }
 
 // The states a replica and each of its members can be in.
@@ -143,6 +148,7 @@ func (s *Service) zfsReplicaMemberViews(d store.ZFSDataset, run store.ZFSReplica
 		return nil, err
 	}
 	byName := map[string]*ZFSReplicaMemberView{}
+	rollback := map[string]string{}
 	add := func(dataset string) *ZFSReplicaMemberView {
 		if m, ok := byName[dataset]; ok {
 			return m
@@ -163,6 +169,9 @@ func (s *Service) zfsReplicaMemberViews(d store.ZFSDataset, run store.ZFSReplica
 			m.State = zfsReplicaOK
 			if rm.Code != "" {
 				m.State = zfsReplicaFailed
+			}
+			if rm.Code == "target-changed" && rm.Base != "" {
+				rollback[rm.Dataset] = rm.Base
 			}
 		}
 	}
@@ -204,6 +213,12 @@ func (s *Service) zfsReplicaMemberViews(d store.ZFSDataset, run store.ZFSReplica
 	for _, m := range byName {
 		if m.TargetPath == "" && base != "" {
 			m.TargetPath = base + "/" + m.Dataset
+		}
+		if snap, ok := rollback[m.Dataset]; ok {
+			m.RollbackTo = snap
+			if d.Replica.TargetKind == store.ZFSReplicaTargetServer && m.TargetPath != "" {
+				m.RollbackTo = m.TargetPath + "@" + snap
+			}
 		}
 		if running {
 			m.State = zfsReplicaRunning

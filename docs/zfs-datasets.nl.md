@@ -190,13 +190,13 @@ zfs release -r bombvault-replica cache/appdata@bombvault-replica-20261008014200
 zfs rollback -r cache/appdata@bombvault-replica-20261006014100
 ```
 
-Draai daarna de kopie terug naar dezelfde snapshot op de ZFS-server, of op de host van de gekoppelde instantie die de replica ontvangt. Anders blijft de volgende replica van die dataset steken, omdat het doel nieuwere snapshots heeft:
+De kopie op het doel moet ook terug, maar niet altijd naar dezelfde snapshot, want de eigen retentie van het doel heeft die misschien al verwijderd. Laat de replica één keer draaien. Ze blijft bij die dataset steken omdat het doel nieuwere snapshots heeft, en de kaart Replica en de runhistorie noemen de snapshot waarnaar je het doel terugdraait: de nieuwste die beide kanten nog delen. Draai de kopie daarnaar terug op de ZFS-server, of op de host van de gekoppelde instantie die de replica ontvangt, bijvoorbeeld:
 
 ```
-zfs rollback -r backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261006014100
+zfs rollback -r backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261005014000
 ```
 
-`zfs rollback` werkt op één dataset, herhaal dus beide rollbacks voor elke onderliggende dataset die je ook terug wilt hebben. De volgende replica gaat dan verder vanaf die snapshot.
+`zfs rollback` werkt op één dataset, herhaal de rollbacks dus voor elke onderliggende dataset die je ook terug wilt hebben. Daarna gaat **Nu repliceren** verder vanaf de gedeelde snapshot.
 
 ### Versleutelde datasets in een replica {#replica-encryption}
 

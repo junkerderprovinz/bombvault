@@ -6,9 +6,10 @@ import { humanBytes } from "../../lib/forecast";
 import { useT } from "../../lib/i18n";
 import { tLtr } from "../../lib/ltrFragments";
 import { RunReasonText } from "../../lib/runReason";
-import { ZFS_CODE_VARS, zfsCodeSentence, zfsFixKey, zfsMemberKey, zfsRunReasonCode } from "../../lib/zfsCodes";
+import { ZFS_CODE_VARS, zfsCodeSentence, zfsFixKey, zfsMemberKey, zfsRollbackTargets, zfsRunReasonCode } from "../../lib/zfsCodes";
 import { Badge } from "../Badge";
 import { InfoBubble } from "../InfoBubble";
+import { RollbackLine } from "./replica/RollbackLine";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -31,6 +32,17 @@ function zfsRunReason(t: T, raw: string, hookDetail: string): ReactNode {
   const parsed = zfsRunReasonCode(raw);
   if (!parsed || ZFS_CODE_VARS[parsed.code]) return <RunReasonText reason={raw} t={t} />;
   const sentence = zfsCodeSentence(t, parsed.code);
+  const rollback = zfsRollbackTargets(raw);
+  if (rollback.length > 0) {
+    return (
+      <>
+        {sentence}
+        {rollback.map((snapshot) => (
+          <RollbackLine key={snapshot} snapshot={snapshot} />
+        ))}
+      </>
+    );
+  }
   if (!parsed.detail || parsed.detail === hookDetail) return sentence;
   return (
     <>

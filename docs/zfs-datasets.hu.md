@@ -190,13 +190,13 @@ zfs release -r bombvault-replica cache/appdata@bombvault-replica-20261008014200
 zfs rollback -r cache/appdata@bombvault-replica-20261006014100
 ```
 
-Ezután görgesd vissza a másolatot ugyanarra a pillanatképre a ZFS-kiszolgálón, vagy annak a párosított példánynak a gazdagépén, amely a replikát fogadja. Különben az adatkészlet következő replikája megáll, mert a célon újabb pillanatképek vannak:
+A célon lévő másolatnak is vissza kell állnia, de nem mindig ugyanarra a pillanatképre, mert a cél saját megőrzési szabályai azt már törölhették. Futtasd le egyszer a replikát. Ennél az adatkészletnél megáll, mert a célon újabb pillanatképek vannak, és a Replika kártya meg a futási előzmények megnevezik azt a pillanatképet, amelyre a célt vissza kell görgetni: a legújabbat, amelyen mindkét oldal még osztozik. Görgesd vissza erre a másolatot a ZFS-kiszolgálón, vagy annak a párosított példánynak a gazdagépén, amely a replikát fogadja, például:
 
 ```
-zfs rollback -r backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261006014100
+zfs rollback -r backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261005014000
 ```
 
-A `zfs rollback` egyetlen adatkészletre hat, ezért ismételd meg mindkét visszagörgetést minden gyermek-adatkészletnél, amelyet szintén vissza szeretnél kapni. A következő replika ezután attól a pillanatképtől folytatja.
+A `zfs rollback` egyetlen adatkészletre hat, ezért ismételd meg a visszagörgetéseket minden gyermek-adatkészletnél, amelyet szintén vissza szeretnél kapni. Ezután a **Replikálás most** a közös pillanatképtől folytatja.
 
 ### Titkosított adatkészletek replikában {#replica-encryption}
 

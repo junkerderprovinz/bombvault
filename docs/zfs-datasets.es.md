@@ -190,13 +190,13 @@ zfs release -r bombvault-replica cache/appdata@bombvault-replica-20261008014200
 zfs rollback -r cache/appdata@bombvault-replica-20261006014100
 ```
 
-Después revierte la copia a la misma instantánea en el servidor ZFS, o en el host de la instancia emparejada que recibe la réplica. Si no, la siguiente réplica de ese conjunto de datos se detiene, porque el destino tiene instantáneas más recientes:
+La copia en el destino también tiene que volver atrás, pero no siempre a la misma instantánea, porque su propia retención puede haberla eliminado ya. Ejecuta la réplica una vez. Se detiene en ese conjunto de datos porque el destino tiene instantáneas más recientes, y la tarjeta Réplica y el historial de ejecuciones nombran la instantánea a la que hay que revertir el destino: la más reciente que ambos lados todavía comparten. Revierte la copia a esa instantánea en el servidor ZFS, o en el host de la instancia emparejada que recibe la réplica, por ejemplo:
 
 ```
-zfs rollback -r backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261006014100
+zfs rollback -r backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261005014000
 ```
 
-`zfs rollback` actúa sobre un solo conjunto de datos, así que repite las dos reversiones para cada conjunto hijo que quieras recuperar también. La siguiente réplica continúa a partir de esa instantánea.
+`zfs rollback` actúa sobre un solo conjunto de datos, así que repite las reversiones para cada conjunto hijo que quieras recuperar también. Después, **Replicar ahora** continúa a partir de la instantánea compartida.
 
 ### Conjuntos de datos cifrados en una réplica {#replica-encryption}
 

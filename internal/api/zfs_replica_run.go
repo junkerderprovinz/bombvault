@@ -268,7 +268,7 @@ func (s *Service) runZFSReplica(ctx context.Context, d store.ZFSDataset, runID, 
 		log.Printf("api: zfs replica: created %s on the target for %s", strings.Join(res.Created, ", "), d.Dataset)
 	}
 	s.forgetGoneZFSReplicaMembers(d, res)
-	return res, zfsReplicaMembersFailed(res)
+	return res, zfsReplicaMembersFailed(res, tgt.server != nil)
 }
 
 // claimZFSReplicaFolder checks, before an item's first full stream, that the
@@ -448,8 +448,10 @@ func (s *Service) forgetGoneZFSReplicaMembers(d store.ZFSDataset, res zfsrepl.Re
 
 // zfsReplicaMembersFailed turns the members that did not make it into the
 // run's verdict, nil when every one did. The first failure's code is the
-// run's.
-func zfsReplicaMembersFailed(res zfsrepl.Result) error {
+// run's and closes the stored error, so only a member that failed otherwise
+// carries one of its own; a target with newer snapshots names, in
+// parentheses, the snapshot to roll it back to.
+func zfsReplicaMembersFailed(res zfsrepl.Result, onServer bool) error {
 	var failed []string
 	code := ""
 	for _, m := range res.Members {
@@ -459,7 +461,18 @@ func zfsReplicaMembersFailed(res zfsrepl.Result) error {
 		if code == "" {
 			code = m.Code
 		}
-		failed = append(failed, m.Dataset+" ["+m.Code+"]")
+		entry := m.Dataset
+		if m.Code == "target-changed" && m.Base != "" {
+			at := m.Base
+			if onServer {
+				at = m.Target + "@" + m.Base
+			}
+			entry += " (" + at + ")"
+		}
+		if m.Code != code {
+			entry += " [" + m.Code + "]"
+		}
+		failed = append(failed, entry)
 	}
 	if code == "" {
 		return nil

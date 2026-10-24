@@ -124,6 +124,22 @@ describe("replica card", () => {
     expect(screen.getByText(en["zfs.code.no-common-base"])).toBeTruthy();
   });
 
+  it("names the snapshot to roll the target back to beside the reason", async () => {
+    const snapshot = "backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261024115616";
+    current = replica({
+      state: "failed",
+      code: "target-changed",
+      members: [{ ...replica().members[0], state: "failed", code: "target-changed", rollbackTo: snapshot }, replica().members[1]],
+    });
+    renderCard();
+    expect(await screen.findByText(en["zfs.code.target-changed"])).toBeTruthy();
+    const name = screen.getByText(snapshot);
+    expect(name.tagName).toBe("BDI");
+    expect(name.getAttribute("dir")).toBe("ltr");
+    expect(name.parentElement?.textContent).toBe(en["zfs.replica.rollbackTo"].replace("{snapshot}", snapshot));
+    expect(screen.getAllByText(/bombvault-replica-20261024115616/)).toHaveLength(1);
+  });
+
   it("sends nothing to a paired instance that has not allowed it yet", async () => {
     current = replica({ target: { kind: "peer", id: "peer-1" }, state: "never", peerState: "asked" });
     renderCard();

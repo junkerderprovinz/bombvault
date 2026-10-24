@@ -190,13 +190,13 @@ zfs release -r bombvault-replica cache/appdata@bombvault-replica-20261008014200
 zfs rollback -r cache/appdata@bombvault-replica-20261006014100
 ```
 
-그다음 ZFS 서버에서, 또는 복제본을 받는 페어링된 인스턴스의 호스트에서 사본을 같은 스냅샷으로 롤백합니다. 그러지 않으면 대상 서버에 더 새로운 스냅샷이 있어서 이 데이터세트의 다음 복제가 멈춥니다.
+대상 서버의 사본도 되돌려야 하지만, 항상 같은 스냅샷으로 되돌릴 수 있는 것은 아닙니다. 대상 서버 자체의 보존 규칙이 그 스냅샷을 이미 지웠을 수 있기 때문입니다. 복제본을 한 번 실행하세요. 대상 서버에 더 새로운 스냅샷이 있어서 이 데이터세트에서 복제가 멈추고, 복제본 카드와 실행 기록에 대상 서버를 되돌릴 스냅샷이 표시됩니다. 양쪽이 아직 함께 가진 가장 최근 스냅샷입니다. ZFS 서버에서, 또는 복제본을 받는 페어링된 인스턴스의 호스트에서 사본을 그 스냅샷으로 롤백합니다. 예를 들면 다음과 같습니다.
 
 ```
-zfs rollback -r backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261006014100
+zfs rollback -r backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261005014000
 ```
 
-`zfs rollback`은 데이터세트 하나에만 적용되므로, 함께 되돌리고 싶은 하위 데이터세트마다 두 롤백을 모두 반복하세요. 다음 복제는 그 스냅샷부터 이어집니다.
+`zfs rollback`은 데이터세트 하나에만 적용되므로, 함께 되돌리고 싶은 하위 데이터세트마다 롤백을 반복하세요. 그러면 **지금 복제**가 양쪽이 함께 가진 스냅샷부터 이어서 보냅니다.
 
 ### 복제본 안의 암호화된 데이터세트 {#replica-encryption}
 

@@ -190,13 +190,13 @@ zfs release -r bombvault-replica cache/appdata@bombvault-replica-20261008014200
 zfs rollback -r cache/appdata@bombvault-replica-20261006014100
 ```
 
-Poi riporta la copia allo stesso snapshot sul server ZFS, o sull'host dell'istanza abbinata che riceve la replica. Altrimenti la replica successiva di quel dataset si ferma, perché la destinazione ha snapshot più recenti:
+Anche la copia sulla destinazione deve tornare indietro, ma non sempre allo stesso snapshot, perché le regole di conservazione della destinazione stessa potrebbero averlo già rimosso. Esegui la replica una volta. Si ferma per quel dataset perché la destinazione ha snapshot più recenti, e la scheda Replica e la cronologia delle esecuzioni indicano lo snapshot a cui riportare la destinazione: il più recente che i due lati condividono ancora. Riporta la copia a quello snapshot sul server ZFS, o sull'host dell'istanza abbinata che riceve la replica, per esempio:
 
 ```
-zfs rollback -r backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261006014100
+zfs rollback -r backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261005014000
 ```
 
-`zfs rollback` agisce su un solo dataset, quindi ripeti entrambi i rollback per ogni dataset figlio che vuoi recuperare allo stesso modo. La replica successiva riparte poi da quello snapshot.
+`zfs rollback` agisce su un solo dataset, quindi ripeti i rollback per ogni dataset figlio che vuoi recuperare allo stesso modo. Dopo, **Replica ora** riparte dallo snapshot condiviso.
 
 ### Dataset cifrati in una replica {#replica-encryption}
 

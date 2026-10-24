@@ -190,13 +190,13 @@ zfs release -r bombvault-replica cache/appdata@bombvault-replica-20261008014200
 zfs rollback -r cache/appdata@bombvault-replica-20261006014100
 ```
 
-Ardından kopyayı ZFS sunucusunda ya da replikayı alan eşleştirilmiş örneğin ana makinesinde aynı anlık görüntüye geri sar. Aksi halde o veri kümesinin sonraki replikası durur, çünkü hedefte daha yeni anlık görüntüler vardır:
+Hedefteki kopyanın da geri dönmesi gerekir, ama her zaman aynı anlık görüntüye değil, çünkü hedefin kendi saklama kuralları onu kaldırmış olabilir. Replikayı bir kez çalıştır. Hedefte daha yeni anlık görüntüler olduğu için o veri kümesinde durur ve Replika kartı ile çalışma geçmişi, hedefin geri sarılacağı anlık görüntüyü adlandırır: iki tarafın da hâlâ paylaştığı en yenisi. Kopyayı ZFS sunucusunda ya da replikayı alan eşleştirilmiş örneğin ana makinesinde ona geri sar, örneğin:
 
 ```
-zfs rollback -r backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261006014100
+zfs rollback -r backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261005014000
 ```
 
-`zfs rollback` tek bir veri kümesinde çalışır, bu yüzden geri istediğin her alt veri kümesi için iki geri sarmayı da tekrarla. Sonraki replika o anlık görüntüden devam eder.
+`zfs rollback` tek bir veri kümesinde çalışır, bu yüzden geri istediğin her alt veri kümesi için geri sarmaları tekrarla. Ardından **Şimdi çoğalt** paylaşılan anlık görüntüden devam eder.
 
 ### Replikada şifreli veri kümeleri {#replica-encryption}
 

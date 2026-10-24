@@ -190,13 +190,13 @@ zfs release -r bombvault-replica cache/appdata@bombvault-replica-20261008014200
 zfs rollback -r cache/appdata@bombvault-replica-20261006014100
 ```
 
-Potem cofnij kopię do tej samej migawki na serwerze ZFS albo na hoście sparowanej instancji, która odbiera replikę. Inaczej następna replika tego zbioru danych stanie, bo cel ma nowsze migawki:
+Kopia na celu też musi wrócić, ale nie zawsze do tej samej migawki, bo własna retencja celu mogła ją już usunąć. Uruchom replikę raz. Zatrzyma się na tym zbiorze danych, bo cel ma nowsze migawki, a karta Replika i historia przebiegów podadzą migawkę, do której trzeba cofnąć cel: najnowszą, którą obie strony nadal mają wspólną. Cofnij do niej kopię na serwerze ZFS albo na hoście sparowanej instancji, która odbiera replikę, na przykład:
 
 ```
-zfs rollback -r backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261006014100
+zfs rollback -r backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261005014000
 ```
 
-`zfs rollback` działa na jednym zbiorze danych, więc powtórz oba cofnięcia dla każdego zbioru podrzędnego, który też chcesz odzyskać. Następna replika kontynuuje wtedy od tej migawki.
+`zfs rollback` działa na jednym zbiorze danych, więc powtórz cofnięcia dla każdego zbioru podrzędnego, który też chcesz odzyskać. Potem **Replikuj teraz** kontynuuje od wspólnej migawki.
 
 ### Zaszyfrowane zbiory danych w replice {#replica-encryption}
 

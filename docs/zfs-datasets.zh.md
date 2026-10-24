@@ -190,13 +190,13 @@ zfs release -r bombvault-replica cache/appdata@bombvault-replica-20261008014200
 zfs rollback -r cache/appdata@bombvault-replica-20261006014100
 ```
 
-然后在 ZFS 服务器上，或在接收副本的已配对实例的主机上，把拷贝回滚到同一个快照。否则该数据集的下一次副本会停下来，因为目标上有更新的快照：
+目标上的拷贝也要回滚，但不一定回到同一个快照，因为目标自己的保留规则可能已经删除了它。先运行一次副本。它会在该数据集上停下来，因为目标上有更新的快照，副本卡片和运行历史会指出目标应回滚到的快照：双方仍然共有的最新一个。然后在 ZFS 服务器上，或在接收副本的已配对实例的主机上，把拷贝回滚到这个快照，例如：
 
 ```
-zfs rollback -r backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261006014100
+zfs rollback -r backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261005014000
 ```
 
-`zfs rollback` 只作用于一个数据集，所以对你也想恢复的每个子数据集，都要重复这两次回滚。下一次副本会从该快照继续。
+`zfs rollback` 只作用于一个数据集，所以对你也想恢复的每个子数据集，都要重复这些回滚。之后，**立即复制**会从共有的快照继续。
 
 ### 副本中的加密数据集 {#replica-encryption}
 

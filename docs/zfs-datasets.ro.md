@@ -190,13 +190,13 @@ zfs release -r bombvault-replica cache/appdata@bombvault-replica-20261008014200
 zfs rollback -r cache/appdata@bombvault-replica-20261006014100
 ```
 
-Apoi derulează copia înapoi la același instantaneu pe serverul ZFS sau pe gazda instanței împerecheate care primește replica. Altfel următoarea replică a acelui set de date se oprește, pentru că ținta are instantanee mai noi:
+Și copia de pe țintă trebuie să se întoarcă, dar nu mereu la același instantaneu, pentru că propria retenție a țintei poate să-l fi eliminat deja. Rulează replica o dată. Se oprește la acel set de date pentru că ținta are instantanee mai noi, iar cardul Replică și istoricul rulărilor numesc instantaneul la care trebuie derulată înapoi ținta: cel mai nou pe care ambele părți încă îl au în comun. Derulează copia înapoi la el pe serverul ZFS sau pe gazda instanței împerecheate care primește replica, de exemplu:
 
 ```
-zfs rollback -r backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261006014100
+zfs rollback -r backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261005014000
 ```
 
-`zfs rollback` acționează asupra unui singur set de date, așa că repetă ambele derulări pentru fiecare set de date copil pe care vrei să-l readuci și pe el. Următoarea replică continuă apoi de la acel instantaneu.
+`zfs rollback` acționează asupra unui singur set de date, așa că repetă derulările pentru fiecare set de date copil pe care vrei să-l readuci și pe el. După aceea, **Replică acum** continuă de la instantaneul comun.
 
 ### Seturi de date criptate într-o replică {#replica-encryption}
 

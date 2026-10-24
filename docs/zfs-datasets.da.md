@@ -190,13 +190,13 @@ zfs release -r bombvault-replica cache/appdata@bombvault-replica-20261008014200
 zfs rollback -r cache/appdata@bombvault-replica-20261006014100
 ```
 
-Rul derefter kopien tilbage til samme snapshot på ZFS-serveren, eller på værten for den parrede instans, der modtager replikaen. Ellers går den næste replika af det datasæt i stå, fordi målet har nyere snapshots:
+Kopien på målet skal også rulles tilbage, men ikke altid til samme snapshot, for målets egen opbevaring kan have fjernet det. Kør replikaen én gang. Den går i stå for det datasæt, fordi målet har nyere snapshots, og kortet Replika og kørselshistorikken nævner det snapshot, målet skal rulles tilbage til: det nyeste, som begge sider stadig deler. Rul kopien tilbage til det på ZFS-serveren, eller på værten for den parrede instans, der modtager replikaen, for eksempel:
 
 ```
-zfs rollback -r backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261006014100
+zfs rollback -r backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261005014000
 ```
 
-`zfs rollback` virker på ét datasæt, så gentag begge tilbagerulninger for hvert underdatasæt, som du også vil have tilbage. Den næste replika fortsætter så fra det snapshot.
+`zfs rollback` virker på ét datasæt, så gentag tilbagerulningerne for hvert underdatasæt, som du også vil have tilbage. Derefter fortsætter **Replikér nu** fra det fælles snapshot.
 
 ### Krypterede datasæt i en replika {#replica-encryption}
 

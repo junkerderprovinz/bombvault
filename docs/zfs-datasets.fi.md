@@ -190,13 +190,13 @@ zfs release -r bombvault-replica cache/appdata@bombvault-replica-20261008014200
 zfs rollback -r cache/appdata@bombvault-replica-20261006014100
 ```
 
-Palauta sen jälkeen kopio samaan tilannevedokseen ZFS-palvelimella tai sen pariliitetyn instanssin isännällä, joka vastaanottaa replikan. Muuten tämän tietojoukon seuraava replika pysähtyy, koska kohteessa on uudempia tilannevedoksia:
+Myös kohteen kopio on palautettava, mutta ei aina samaan tilannevedokseen, koska kohteen oma säilytys on voinut jo poistaa sen. Aja replika kerran. Se pysähtyy tämän tietojoukon kohdalla, koska kohteessa on uudempia tilannevedoksia, ja Replika-kortti ja ajohistoria nimeävät tilannevedoksen, johon kohde palautetaan: uusimman, jonka molemmat puolet vielä jakavat. Palauta kopio siihen ZFS-palvelimella tai sen pariliitetyn instanssin isännällä, joka vastaanottaa replikan, esimerkiksi:
 
 ```
-zfs rollback -r backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261006014100
+zfs rollback -r backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261005014000
 ```
 
-`zfs rollback` toimii yhdelle tietojoukolle, joten toista molemmat palautukset jokaiselle alatietojoukolle, jonka haluat myös takaisin. Seuraava replika jatkaa sitten siitä tilannevedoksesta.
+`zfs rollback` toimii yhdelle tietojoukolle, joten toista palautukset jokaiselle alatietojoukolle, jonka haluat myös takaisin. Sen jälkeen **Replikoi nyt** jatkaa yhteisestä tilannevedoksesta.
 
 ### Salatut tietojoukot replikassa {#replica-encryption}
 

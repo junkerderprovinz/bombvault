@@ -190,13 +190,13 @@ zfs release -r bombvault-replica cache/appdata@bombvault-replica-20261008014200
 zfs rollback -r cache/appdata@bombvault-replica-20261006014100
 ```
 
-Sau đó hoàn nguyên bản sao về cùng ảnh chụp ấy trên máy chủ ZFS, hoặc trên host của phiên bản đã ghép đôi đang nhận bản nhân bản. Nếu không, lần nhân bản tiếp theo của tập dữ liệu đó sẽ dừng lại, vì đích có các ảnh chụp mới hơn:
+Bản sao trên đích cũng phải quay lại, nhưng không phải lúc nào cũng về cùng ảnh chụp ấy, vì quy tắc lưu giữ riêng của đích có thể đã xóa nó. Hãy chạy bản nhân bản một lần. Nó dừng lại ở tập dữ liệu đó vì đích có các ảnh chụp mới hơn, và thẻ **Bản nhân bản** cùng lịch sử chạy sẽ nêu ảnh chụp cần hoàn nguyên đích về: ảnh chụp mới nhất mà cả hai phía vẫn cùng có. Hoàn nguyên bản sao về ảnh chụp đó trên máy chủ ZFS, hoặc trên host của phiên bản đã ghép đôi đang nhận bản nhân bản, ví dụ:
 
 ```
-zfs rollback -r backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261006014100
+zfs rollback -r backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261005014000
 ```
 
-`zfs rollback` chỉ tác động lên một tập dữ liệu, nên hãy lặp lại cả hai lần hoàn nguyên cho từng tập dữ liệu con mà bạn cũng muốn lấy lại. Lần nhân bản tiếp theo sẽ tiếp tục từ ảnh chụp đó.
+`zfs rollback` chỉ tác động lên một tập dữ liệu, nên hãy lặp lại các lần hoàn nguyên cho từng tập dữ liệu con mà bạn cũng muốn lấy lại. Sau đó, **Nhân bản ngay** sẽ tiếp tục từ ảnh chụp chung.
 
 ### Tập dữ liệu mã hóa trong bản nhân bản {#replica-encryption}
 

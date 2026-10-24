@@ -190,13 +190,13 @@ zfs release -r bombvault-replica cache/appdata@bombvault-replica-20261008014200
 zfs rollback -r cache/appdata@bombvault-replica-20261006014100
 ```
 
-Setz danach die Kopie auf dem ZFS-Server, oder auf dem Host der gekoppelten Instanz, die die Replik empfängt, auf denselben Snapshot zurück. Sonst bleibt die nächste Replik dieses Datasets stehen, weil das Ziel neuere Snapshots hat:
+Die Kopie auf dem Ziel muss auch zurück, aber nicht immer auf denselben Snapshot, denn ihre eigenen Aufbewahrungsregeln haben ihn vielleicht schon entfernt. Lass die Replik einmal laufen. Sie bleibt bei diesem Dataset stehen, weil das Ziel neuere Snapshots hat, und die Karte Replik und der Laufverlauf nennen den Snapshot, auf den das Ziel zurück muss: den neuesten, den beide Seiten noch teilen. Setz die Kopie auf dem ZFS-Server, oder auf dem Host der gekoppelten Instanz, die die Replik empfängt, darauf zurück, zum Beispiel:
 
 ```
-zfs rollback -r backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261006014100
+zfs rollback -r backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261005014000
 ```
 
-`zfs rollback` wirkt auf ein einzelnes Dataset, wiederhol also beide Rollbacks für jedes Unter-Dataset, das du ebenso zurückhaben willst. Die nächste Replik macht dann bei diesem Snapshot weiter.
+`zfs rollback` wirkt auf ein einzelnes Dataset, wiederhol die Rollbacks also für jedes Unter-Dataset, das du ebenso zurückhaben willst. Danach macht **Jetzt replizieren** beim gemeinsamen Snapshot weiter.
 
 ### Verschlüsselte Datasets in einer Replik {#replica-encryption}
 

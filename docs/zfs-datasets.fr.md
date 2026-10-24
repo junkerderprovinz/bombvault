@@ -190,13 +190,13 @@ zfs release -r bombvault-replica cache/appdata@bombvault-replica-20261008014200
 zfs rollback -r cache/appdata@bombvault-replica-20261006014100
 ```
 
-Ramenez ensuite la copie au même instantané sur le serveur ZFS, ou sur l'hôte de l'instance appairée qui reçoit le réplica. Sinon, le réplica suivant de ce jeu de données s'arrête, car la cible a des instantanés plus récents :
+La copie sur la cible doit revenir en arrière elle aussi, mais pas toujours au même instantané, car ses propres règles de conservation l'ont peut-être déjà supprimé. Lancez le réplica une fois. Il s'arrête pour ce jeu de données parce que la cible a des instantanés plus récents, et la carte Réplique et l'historique des exécutions nomment l'instantané sur lequel ramener la cible : le plus récent que les deux côtés partagent encore. Ramenez la copie à cet instantané sur le serveur ZFS, ou sur l'hôte de l'instance appairée qui reçoit le réplica, par exemple :
 
 ```
-zfs rollback -r backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261006014100
+zfs rollback -r backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261005014000
 ```
 
-`zfs rollback` agit sur un seul jeu de données, répétez donc les deux rollbacks pour chaque jeu enfant que vous voulez aussi récupérer. Le réplica suivant reprend ensuite à partir de cet instantané.
+`zfs rollback` agit sur un seul jeu de données, répétez donc les rollbacks pour chaque jeu enfant que vous voulez aussi récupérer. Ensuite, **Répliquer maintenant** reprend à partir de l'instantané commun.
 
 ### Jeux de données chiffrés dans un réplica {#replica-encryption}
 

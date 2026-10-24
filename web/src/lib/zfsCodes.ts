@@ -209,6 +209,12 @@ export function zfsReplicaFailure(t: Translate, code: string | undefined): strin
   return zfsCodeSentence(t, code);
 }
 
+/** The snapshots a replica run's error names in parentheses for its targets
+ *  to be rolled back to, in the order of their datasets. */
+export function zfsRollbackTargets(raw: string | null | undefined): string[] {
+  return [...(raw ?? "").matchAll(/\(([^()]*bombvault-replica-\d{14})\)/g)].map((m) => m[1]);
+}
+
 /** zfsReplicaFailure for a failed replica run, whose error ends in its code.
  *  Any other run gets null. */
 export function replicaRunSentence(t: Translate, run: { kind: string; error?: string | null }): string | null {

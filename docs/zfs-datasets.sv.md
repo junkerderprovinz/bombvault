@@ -190,13 +190,13 @@ zfs release -r bombvault-replica cache/appdata@bombvault-replica-20261008014200
 zfs rollback -r cache/appdata@bombvault-replica-20261006014100
 ```
 
-Rulla sedan tillbaka kopian till samma ögonblicksbild på ZFS-servern, eller på värden för den parkopplade instansen som tar emot repliken. Annars stannar nästa replik av den datauppsättningen, eftersom målet har nyare ögonblicksbilder:
+Kopian på målet måste också tillbaka, men inte alltid till samma ögonblicksbild, eftersom målets egna lagringsregler kan ha tagit bort den. Kör repliken en gång. Den stannar för den datauppsättningen eftersom målet har nyare ögonblicksbilder, och kortet Replik och körhistoriken namnger ögonblicksbilden som målet ska rullas tillbaka till: den nyaste som båda sidor fortfarande delar. Rulla tillbaka kopian till den på ZFS-servern, eller på värden för den parkopplade instansen som tar emot repliken, till exempel:
 
 ```
-zfs rollback -r backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261006014100
+zfs rollback -r backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261005014000
 ```
 
-`zfs rollback` verkar på en datauppsättning i taget, så rulla tillbaka på båda sidorna även för varje underordnad datauppsättning du vill ha tillbaka. Nästa replik fortsätter sedan från den ögonblicksbilden.
+`zfs rollback` verkar på en datauppsättning i taget, så upprepa återrullningarna för varje underordnad datauppsättning du också vill ha tillbaka. Därefter fortsätter **Replikera nu** från den gemensamma ögonblicksbilden.
 
 ### Krypterade datauppsättningar i en replik {#replica-encryption}
 

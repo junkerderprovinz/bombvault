@@ -15,6 +15,7 @@ import {
   replicaRunSentence,
   zfsCodeSentence,
   zfsReplicaFailure,
+  zfsRollbackTargets,
   zfsRunReasonCode,
 } from "./zfsCodes";
 
@@ -126,5 +127,18 @@ describe("a failed replica", () => {
     expect(zfsReplicaFailure(t, "pool-on-fire")).toBeNull();
     // Its sentence names the address, which the code does not carry.
     expect(zfsReplicaFailure(t, "ssh-unreachable")).toBeNull();
+  });
+
+  it("names the snapshot each target is to be rolled back to", () => {
+    const changed =
+      "zfs replica: cache/appdata: 2 of 3 datasets failed: cache/appdata/Media Files " +
+      "(tank/r/tower/cache/appdata/Media Files@bombvault-replica-20261024115616), cache/appdata/vm (bombvault-replica-20261023030000) [target-changed]";
+    expect(zfsRollbackTargets(changed)).toEqual([
+      "tank/r/tower/cache/appdata/Media Files@bombvault-replica-20261024115616",
+      "bombvault-replica-20261023030000",
+    ]);
+    expect(replicaRunSentence(t, { kind: "replica", error: changed })).toBe(en["zfs.code.target-changed"]);
+    expect(zfsRollbackTargets(raw)).toEqual([]);
+    expect(zfsRollbackTargets(null)).toEqual([]);
   });
 });

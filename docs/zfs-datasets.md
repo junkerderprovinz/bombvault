@@ -192,13 +192,13 @@ zfs release -r bombvault-replica cache/appdata@bombvault-replica-20261008014200
 zfs rollback -r cache/appdata@bombvault-replica-20261006014100
 ```
 
-Then roll the copy back to the same snapshot on the ZFS server, or on the host of the paired instance that receives the replica. Otherwise the next replica of that dataset stops, because the target holds newer snapshots:
+The copy on the target has to go back too, but not always to the same snapshot, since its own keep rules may have dropped that one. Run the replica once. It stops for that dataset because the target holds newer snapshots, and the Replica card and the run history name the snapshot to roll the target back to: the newest one both sides still share. Roll the copy back to it on the ZFS server, or on the host of the paired instance that receives the replica, for example:
 
 ```
-zfs rollback -r backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261006014100
+zfs rollback -r backup/bombvault-replica/tower/cache/appdata@bombvault-replica-20261005014000
 ```
 
-`zfs rollback` works on one dataset, so repeat both rollbacks for each child dataset you want back as well. The next replica carries on from that snapshot.
+`zfs rollback` works on one dataset, so repeat the rollbacks for each child dataset you want back as well. After that, **Replicate now** carries on from the shared snapshot.
 
 ### Encrypted datasets in a replica {#replica-encryption}
 

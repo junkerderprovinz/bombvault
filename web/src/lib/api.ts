@@ -5405,6 +5405,9 @@ export interface ZFSReplicaMember {
   /** How mounting the copy went: mounted, locked, no-mountpoint or failed.
    *  Empty when the server is not asked to mount. */
   mount: "" | "mounted" | "locked" | "no-mountpoint" | "failed";
+  /** The snapshot to roll the copy back to after the target held newer ones:
+   *  the full path on a ZFS server, the snapshot alone on a paired instance. */
+  rollbackTo?: string;
 }
 
 /** Where a request to receive a replica stands on the receiving instance. */

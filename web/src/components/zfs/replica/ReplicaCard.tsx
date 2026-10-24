@@ -28,6 +28,7 @@ import { IconFleet, IconZFS } from "../../navGlyphs";
 import { AddReplicaServerDialog } from "./AddReplicaServerDialog";
 import { ReplicaKeepField } from "./ReplicaKeepField";
 import { ReplicaStatePill } from "./ReplicaStatePill";
+import { RollbackLine } from "./RollbackLine";
 import { keepCount, unixOf } from "./replicaModel";
 import { useGroup, useReplicaServers } from "./replicaStore";
 import { useReplicateNow } from "./useReplicateNow";
@@ -380,6 +381,9 @@ export function ReplicaCard({ itemId, name }: { itemId: string; name: string }) 
                   </span>
                 </div>
                 <MemberState member={m} replica={view} running={running} t={t} />
+                {!running && m.state === "failed" && m.rollbackTo && (
+                  <RollbackLine snapshot={m.rollbackTo} className="w-full text-caption text-carbon-textMuted" />
+                )}
               </li>
             ))}
           </ul>

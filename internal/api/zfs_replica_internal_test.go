@@ -471,6 +471,57 @@ func TestFailedMembersFailTheRunAndKeepTheirState(t *testing.T) {
 	}
 }
 
+func TestATargetWithNewerSnapshotsNamesTheSnapshotToRollBackTo(t *testing.T) {
+	r := newReplicaRig(t)
+	if err := r.s.ReplicateZFSDataset(context.Background(), r.item.ID); err != nil {
+		t.Fatal(err)
+	}
+	r.result = func(e zfsrepl.Entry) (zfsrepl.Result, error) {
+		res := zfsrepl.Result{Snapshot: "bombvault-replica-20261010030000"}
+		for _, m := range []zfsrepl.MemberResult{
+			{Dataset: e.Root, Target: e.TargetBase + "/" + e.Root, Snapshot: res.Snapshot, GUID: 1},
+			{Dataset: e.Root + "/plex", Target: e.TargetBase + "/" + e.Root + "/plex", Base: replicaSnap, Code: "target-changed"},
+		} {
+			e.Finished(m)
+			res.Members = append(res.Members, m)
+		}
+		return res, nil
+	}
+	if err := r.s.ReplicateZFSDataset(context.Background(), r.item.ID); zfsReplicaCode(err) != "target-changed" {
+		t.Fatalf("run = %v, want target-changed", err)
+	}
+	snap := "tank/bombvault-replica/bottich/cache/appdata/plex@" + replicaSnap
+	run := r.lastRun()
+	if !strings.Contains(run.Error, "cache/appdata/plex ("+snap+")") {
+		t.Errorf("run error = %q, want it to name %s", run.Error, snap)
+	}
+	if strings.Count(run.Error, "[target-changed]") != 1 || zfsRunCode(run.Error) != "target-changed" {
+		t.Errorf("run error = %q, want the code once at its end", run.Error)
+	}
+
+	_, v, _ := r.call(http.MethodGet, "/api/zfs/datasets/"+r.item.ID+"/replica", "")
+	members, _ := v["members"].([]any)
+	got := map[string]any{}
+	for _, raw := range members {
+		m, _ := raw.(map[string]any)
+		got[m["dataset"].(string)] = m["rollbackTo"]
+	}
+	if got["cache/appdata/plex"] != snap || got["cache/appdata"] != nil {
+		t.Errorf("rollbackTo per member = %v, want %s on the failed one only", got, snap)
+	}
+}
+
+func TestAMemberFailingOtherwiseKeepsItsOwnCodeInTheRunError(t *testing.T) {
+	err := zfsReplicaMembersFailed(zfsrepl.Result{Members: []zfsrepl.MemberResult{
+		{Dataset: "a", Code: "no-common-base"},
+		{Dataset: "b", Code: "stream-cut"},
+		{Dataset: "c", Code: "no-common-base"},
+	}}, true)
+	if got := err.Error(); got != "no-common-base: 3 of 3 datasets failed: a, b [stream-cut], c" {
+		t.Errorf("error = %q", got)
+	}
+}
+
 func TestOnlyOneRunPerItemAndItDoesNotTakeTheDomainLock(t *testing.T) {
 	r := newReplicaRig(t)
 	release := make(chan struct{})

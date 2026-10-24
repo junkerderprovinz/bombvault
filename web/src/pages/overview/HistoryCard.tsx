@@ -12,7 +12,8 @@ import { runTargetText, statusLabel, statusTone } from "../../lib/runDisplay";
 import { runKindLabel } from "../../lib/runKind";
 import { isOwnReason, isWarningNote, RunReasonText } from "../../lib/runReason";
 import { useOpenAnomalies } from "../../lib/useAnomalies";
-import { replicaRunSentence } from "../../lib/zfsCodes";
+import { replicaRunSentence, zfsRollbackTargets } from "../../lib/zfsCodes";
+import { RollbackLine } from "../../components/zfs/replica/RollbackLine";
 import { Card } from "./Card";
 
 type T = ReturnType<typeof useT>["t"];
@@ -42,7 +43,16 @@ function RunReasonLine({ t, run }: { t: T; run: Run }) {
   else if (run.status === "success") tone = isWarningNote(run.error) ? "text-statusWarn" : "text-carbon-textMuted";
   else return null;
   const replicaSentence = run.status === "failed" ? replicaRunSentence(t, run) : null;
-  if (replicaSentence) return <span className={`block text-xs wrap-break-word ${tone}`}>{replicaSentence}</span>;
+  if (replicaSentence) {
+    return (
+      <span className={`block text-xs wrap-break-word ${tone}`}>
+        {replicaSentence}
+        {zfsRollbackTargets(run.error).map((snapshot) => (
+          <RollbackLine key={snapshot} snapshot={snapshot} />
+        ))}
+      </span>
+    );
+  }
   return (
     <span dir={isOwnReason(run.error) ? undefined : "ltr"} className={`block text-xs wrap-break-word text-start ${tone}`}>
       <RunReasonText reason={run.error} t={t} />
