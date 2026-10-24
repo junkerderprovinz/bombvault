@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 
@@ -13,8 +14,9 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-func TestBackupLeavesAnExcludedFolderOutsideHostDataOutOfItsNote(t *testing.T) {
-	const anon = "/var/lib/docker/volumes/3f9c2a7e1b4d6058a9e7c3b1f2d4e6a8b0c2d4e6f8a0b2c4d6e8f0a2b4c6d8e0/_data"
+func TestBackupNoteLeavesOutAnonymousVolumesAndExcludedFolders(t *testing.T) {
+	const anonName = "3f9c2a7e1b4d6058a9e7c3b1f2d4e6a8b0c2d4e6f8a0b2c4d6e8f0a2b4c6d8e0"
+	const anon = "/var/lib/docker/volumes/" + anonName + "/_data"
 	const named = "/var/lib/docker/volumes/beszel_cache/_data"
 	dir := t.TempDir()
 	root := filepath.ToSlash(dir)
@@ -47,11 +49,12 @@ func TestBackupLeavesAnExcludedFolderOutsideHostDataOutOfItsNote(t *testing.T) {
 		Name: "/beszel-agent", Image: "henrygd/beszel-agent:latest", Running: true,
 		Mounts: []model.Mount{
 			{Type: "bind", Source: appdata, Destination: "/config"},
-			{Type: "volume", Source: anon, Destination: "/var/lib/beszel-agent"},
-			{Type: "volume", Source: named, Destination: "/cache"},
+			{Type: "volume", Name: anonName, Source: anon, Destination: "/var/lib/beszel-agent"},
+			{Type: "volume", Name: "beszel_cache", Source: named, Destination: "/cache"},
 		},
 	}}
-	svc := api.NewService(cfg, st, d, fakeVirsh{}, &fakeResticEngine{})
+	eng := &fakeResticEngine{}
+	svc := api.NewService(cfg, st, d, fakeVirsh{}, eng)
 
 	note := func(excludes ...string) string {
 		t.Helper()
@@ -72,13 +75,60 @@ func TestBackupLeavesAnExcludedFolderOutsideHostDataOutOfItsNote(t *testing.T) {
 		return run.Error
 	}
 
-	if got, want := note(), store.NoteDataOutsideHost+": "+anon+", "+named; got != want {
+	if got, want := note(), store.NoteDataOutsideHost+": "+named; got != want {
 		t.Fatalf("note without excludes = %q, want %q", got, want)
 	}
-	if got, want := note("/var/lib/beszel-agent"), store.NoteDataOutsideHost+": "+named; got != want {
-		t.Fatalf("note with the anonymous volume excluded = %q, want %q", got, want)
+	if got := note("/cache"); strings.Contains(got, store.NoteDataOutsideHost) {
+		t.Fatalf("note with the named volume excluded = %q, want no word about data outside Host Data", got)
 	}
-	if got := note("/var/lib/beszel-agent", "/cache"); strings.Contains(got, store.NoteDataOutsideHost) {
-		t.Fatalf("note with both volumes excluded = %q, want no word about data outside Host Data", got)
+	if got := note(named); strings.Contains(got, store.NoteDataOutsideHost) {
+		t.Fatalf("note with the named volume's host path excluded = %q, want no word about data outside Host Data", got)
+	}
+	if slices.Contains(eng.lastExcludes, named) {
+		t.Fatalf("restic excludes = %q, want no host path outside Host Data", eng.lastExcludes)
+	}
+}
+
+func TestContainerMountsListsTheVolumesBombVaultCannotReach(t *testing.T) {
+	const anonName = "3f9c2a7e1b4d6058a9e7c3b1f2d4e6a8b0c2d4e6f8a0b2c4d6e8f0a2b4c6d8e0"
+	const anon = "/var/lib/docker/volumes/" + anonName + "/_data"
+	const named = "/var/lib/docker/volumes/jellyfin_cache/_data"
+	dir := t.TempDir()
+	root := filepath.ToSlash(dir)
+	for _, sub := range []string{"user/appdata/jellyfin", "user/volumes/reached/_data"} {
+		if err := os.MkdirAll(filepath.Join(dir, sub), 0o750); err != nil {
+			t.Fatal(err)
+		}
+	}
+	cfg := config.Config{
+		AppKey: strings.Repeat("a", 64), DataDir: dir,
+		HostMountRoot: root, HostSourceRoot: "/mnt", DataRootSegments: []string{"appdata"},
+	}
+	st := newMemStore(t)
+	mustSettings(t, st)
+	d := &fakeServiceDocker{inspect: model.Inspect{
+		Name: "/jellyfin", Image: "jellyfin/jellyfin:latest",
+		Mounts: []model.Mount{
+			{Type: "bind", Source: "/mnt/user/appdata/jellyfin", Destination: "/config"},
+			{Type: "bind", Source: "/dev/shm", Destination: "/transcode"},
+			{Type: "volume", Name: anonName, Source: anon, Destination: "/cache"},
+			{Type: "volume", Name: "jellyfin_cache", Source: named, Destination: "/metadata"},
+			{Type: "volume", Name: "reached", Source: "/mnt/user/volumes/reached/_data", Destination: "/reached"},
+		},
+	}}
+	svc := api.NewService(cfg, st, d, fakeVirsh{}, &fakeResticEngine{})
+
+	mounts, _, _, _, err := svc.ContainerMounts(context.Background(), "jellyfin")
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := []api.MountInfo{
+		{Source: "/mnt/user/appdata/jellyfin", Dest: "/config", Selected: true, IsAppdata: true, Reachable: true},
+		{Source: "/dev/shm", Dest: "/transcode"},
+		{Source: anon, Dest: "/cache", Anonymous: true},
+		{Source: named, Dest: "/metadata"},
+	}
+	if !slices.Equal(mounts, want) {
+		t.Fatalf("mounts = %+v, want %+v", mounts, want)
 	}
 }

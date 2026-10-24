@@ -1111,6 +1111,7 @@ export const en = {
   "folders.stackNote":
     "This container belongs to the Compose stack {stack}. Its project folder is backed up once for the whole stack, not once per service, so it is not listed here.",
   "folders.notReachable": "not under the host mount, can't be backed up",
+  "folders.anonymousVolume": "an anonymous Docker volume, so the backup doesn't warn about it",
   "folders.customMissing": "no data folder detected (nothing to back up here)",
   "folders.addCustom": "Add a folder path",
   "folders.add": "Add",
@@ -6217,6 +6218,7 @@ export const de: Translations = {
   "folders.stackNote":
     "Dieser Container gehört zum Compose-Stack {stack}. Sein Projektordner wird einmal für den ganzen Stack gesichert, nicht einmal je Dienst, und steht deshalb nicht in dieser Liste.",
   "folders.notReachable": "nicht unter dem Host-Mount, kann nicht gesichert werden",
+  "folders.anonymousVolume": "ein anonymes Docker-Volume, die Sicherung warnt deshalb nicht davor",
   "folders.customMissing": "kein Datenordner gefunden (hier gibt es nichts zu sichern)",
   "folders.addCustom": "Ordnerpfad hinzufügen",
   "folders.add": "Hinzufügen",

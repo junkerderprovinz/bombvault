@@ -925,6 +925,7 @@ const sv: Partial<Translations> = {
   "folders.stackNote":
     "Den här containern hör till Compose-stacken {stack}. Projektmappen säkerhetskopieras en gång för hela stacken, inte en gång per tjänst, och listas därför inte här.",
   "folders.notReachable": "ligger inte under host-monteringen, kan inte säkerhetskopieras",
+  "folders.anonymousVolume": "en anonym Docker-volym, så säkerhetskopian varnar inte för den",
   "folders.customMissing": "ingen datamapp hittades (inget att säkerhetskopiera här)",
   "folders.addCustom": "Lägg till en mappsökväg",
   "folders.add": "Lägg till",

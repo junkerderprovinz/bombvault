@@ -916,6 +916,7 @@ const ko: Partial<Translations> = {
   "folders.stackNote":
     "이 컨테이너는 Compose 스택 {stack}에 속합니다. 프로젝트 폴더는 서비스마다가 아니라 스택 전체에 대해 한 번만 백업되므로 여기에는 나오지 않습니다.",
   "folders.notReachable": "호스트 마운트 아래에 없어 백업할 수 없습니다",
+  "folders.anonymousVolume": "익명 Docker 볼륨이므로 백업에서 경고하지 않습니다",
   "folders.customMissing": "데이터 폴더를 찾을 수 없습니다 (백업할 항목 없음)",
   "folders.addCustom": "폴더 경로 추가",
   "folders.add": "추가",

@@ -1481,6 +1481,7 @@ export interface MountInfo {
   selected: boolean; // currently included in the backup
   isAppdata: boolean; // auto-detected appdata default
   reachable: boolean; // reachable under the host mount (backable)
+  anonymous?: boolean; // an anonymous Docker volume, which the backup does not warn about
 }
 
 /** A selected backup folder with no matching current mount (manual/phantom path). */

@@ -916,6 +916,7 @@ const zh: Partial<Translations> = {
   "folders.stackNote":
     "此容器属于 Compose 堆栈 {stack}。项目文件夹按整个堆栈备份一次，而不是每个服务各备份一次，因此不在此列表中。",
   "folders.notReachable": "不在主机挂载范围内，无法备份",
+  "folders.anonymousVolume": "匿名 Docker 卷，因此备份不会对此发出警告",
   "folders.customMissing": "未检测到数据文件夹 (这里没有可备份的内容)",
   "folders.addCustom": "添加文件夹路径",
   "folders.add": "添加",

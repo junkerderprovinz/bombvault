@@ -922,6 +922,7 @@ const pt: Partial<Translations> = {
   "folders.stackNote":
     "Este contentor pertence à pilha Compose {stack}. A pasta do projeto é copiada uma vez para toda a pilha, não uma vez por serviço, por isso não aparece aqui.",
   "folders.notReachable": "não está dentro do mount do host, não pode ser copiada",
+  "folders.anonymousVolume": "um volume anônimo do Docker, por isso o backup não avisa sobre ele",
   "folders.customMissing": "nenhuma pasta de dados detectada (nada para fazer backup aqui)",
   "folders.addCustom": "Adicionar um caminho de pasta",
   "folders.add": "Adicionar",

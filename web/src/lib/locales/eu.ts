@@ -1012,6 +1012,7 @@ const eu: Partial<Translations> = {
   "folders.stackNote":
     "Edukiontzi hau {stack} Compose pilakoa da. Proiektuaren karpeta pila osorako behin egiten da babeskopia, ez zerbitzu bakoitzeko, eta horregatik ez da hemen agertzen.",
   "folders.notReachable": "ez dago ostalariaren muntaketaren azpian, ezin da babestu",
+  "folders.anonymousVolume": "Docker bolumen anonimo bat da, beraz babeskopiak ez du horri buruz ohartarazten",
   "folders.customMissing": "ez da daturik duen karpetarik detektatu (hemen ez dago babesteko ezer)",
   "folders.addCustom": "Gehitu karpeta-bide bat",
   "folders.add": "Gehitu",

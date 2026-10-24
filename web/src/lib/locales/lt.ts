@@ -1012,6 +1012,7 @@ const lt: Partial<Translations> = {
   "folders.stackNote":
     "Šis konteineris priklauso Compose kaminui {stack}. Projekto katalogas kopijuojamas kartą visam kaminui, o ne po kartą kiekvienai tarnybai, todėl čia nerodomas.",
   "folders.notReachable": "nėra po pagrindinio kompiuterio prijungimu, negalima kopijuoti",
+  "folders.anonymousVolume": "anoniminis Docker tomas, todėl atsarginė kopija dėl jo neįspėja",
   "folders.customMissing": "duomenų aplankas neaptiktas (čia nėra ko kopijuoti)",
   "folders.addCustom": "Pridėti aplanko kelią",
   "folders.add": "Pridėti",

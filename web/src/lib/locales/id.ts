@@ -1012,6 +1012,7 @@ const id: Partial<Translations> = {
   "folders.stackNote":
     "Kontainer ini termasuk stack Compose {stack}. Folder proyeknya dicadangkan sekali untuk seluruh stack, bukan sekali per layanan, jadi tidak tercantum di sini.",
   "folders.notReachable": "tidak di bawah mount host, tidak dapat dicadangkan",
+  "folders.anonymousVolume": "volume Docker anonim, jadi pencadangan tidak memberi peringatan tentangnya",
   "folders.customMissing": "tidak ada folder data yang terdeteksi (tidak ada yang bisa dicadangkan di sini)",
   "folders.addCustom": "Tambah jalur folder",
   "folders.add": "Tambah",

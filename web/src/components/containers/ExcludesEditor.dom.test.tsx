@@ -115,6 +115,16 @@ describe("exclusions editor", () => {
     expect(screen.getByText(en["excludes.noMatch"], { exact: false }).textContent).toContain("⚠");
   });
 
+  it("says a host path outside Host Data turns off its warning instead of going to restic", async () => {
+    const host = "/var/lib/docker/volumes/jellyfin_cache/_data";
+    const preview: ExcludePreview = (_name, lines) =>
+      Promise.resolve(lines.map((raw) => ({ raw, resolved: raw, status: "outside", matches: false })));
+    renderEditor([host], preview);
+    await settle();
+    expect(screen.getByText(en["excludes.outsideHostData"], { exact: false }).textContent).toContain("✓");
+    expect(screen.queryByText(en["excludes.noMatch"], { exact: false })).toBeNull();
+  });
+
   it("warns that a line which would exclude everything is ignored", async () => {
     const preview: ExcludePreview = (_name, lines) =>
       Promise.resolve(lines.map((raw) => ({ raw, resolved: raw, status: "everything", matches: false })));

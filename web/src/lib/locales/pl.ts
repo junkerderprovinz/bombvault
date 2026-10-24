@@ -919,6 +919,7 @@ const pl: Partial<Translations> = {
   "folders.stackNote":
     "Ten kontener należy do stosu Compose {stack}. Katalog projektu jest kopiowany raz dla całego stosu, a nie raz na usługę, dlatego nie ma go na tej liście.",
   "folders.notReachable": "nie znajduje się w montowaniu hosta, nie można utworzyć kopii",
+  "folders.anonymousVolume": "anonimowy wolumin Dockera, więc kopia zapasowa nie ostrzega o nim",
   "folders.customMissing": "nie wykryto folderu danych (nie ma czego kopiować)",
   "folders.addCustom": "Dodaj ścieżkę folderu",
   "folders.add": "Dodaj",

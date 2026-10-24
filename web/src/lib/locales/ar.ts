@@ -925,6 +925,7 @@ const ar: Partial<Translations> = {
   "folders.stackNote":
     "تنتمي هذه الحاوية إلى حزمة Compose ‏{stack}. يُنسخ مجلد المشروع مرة واحدة للحزمة كلها، لا مرة لكل خدمة، ولذلك لا يظهر هنا.",
   "folders.notReachable": "ليس ضمن نقطة تركيب المضيف، لا يمكن نسخه احتياطياً",
+  "folders.anonymousVolume": "وحدة تخزين Docker مجهولة، لذلك لا تحذّر النسخة الاحتياطية بشأنها",
   "folders.customMissing": "لم يتم العثور على مجلد بيانات (لا شيء للنسخ الاحتياطي هنا)",
   "folders.addCustom": "إضافة مسار مجلد",
   "folders.add": "إضافة",

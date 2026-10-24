@@ -282,6 +282,7 @@ export function SelectionTree({
           </span>
           {m.isAppdata && <span className="text-statusOk">{t("folders.appdataDefault")}</span>}
           {!m.reachable && <span className="text-statusFail">{t("folders.notReachable")}</span>}
+          {m.anonymous && <span className="text-xs text-carbon-textMuted">{t("folders.anonymousVolume")}</span>}
           {/* Counted from the includes alone, so it matches what the next
               save sends. Shown on every root, zero included. */}
           <span className="text-xs text-carbon-textMuted">

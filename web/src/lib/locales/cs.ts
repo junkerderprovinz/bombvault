@@ -923,6 +923,7 @@ const cs: Partial<Translations> = {
   "folders.stackNote":
     "Tento kontejner patří do Compose stacku {stack}. Adresář projektu se zálohuje jednou pro celý stack, ne jednou za službu, proto zde není uveden.",
   "folders.notReachable": "není v rámci připojení hostitele, nelze zálohovat",
+  "folders.anonymousVolume": "anonymní svazek Dockeru, záloha na něj proto neupozorňuje",
   "folders.customMissing": "nenalezena žádná datová složka (není co zálohovat)",
   "folders.addCustom": "Přidat cestu ke složce",
   "folders.add": "Přidat",

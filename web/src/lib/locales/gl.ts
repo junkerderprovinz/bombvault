@@ -1012,6 +1012,7 @@ const gl: Partial<Translations> = {
   "folders.stackNote":
     "Este contedor pertence á pila Compose {stack}. O cartafol do proxecto cópiase unha vez para toda a pila, non unha vez por servizo, polo que non aparece aquí.",
   "folders.notReachable": "non está baixo a montaxe do host, non se pode copiar",
+  "folders.anonymousVolume": "un volume anónimo de Docker, así que a copia non avisa del",
   "folders.customMissing": "non se detectou ningún cartafol de datos (aquí non hai nada que copiar)",
   "folders.addCustom": "Engadir un camiño de cartafol",
   "folders.add": "Engadir",

@@ -925,6 +925,7 @@ const it: Partial<Translations> = {
   "folders.stackNote":
     "Questo contenitore appartiene allo stack Compose {stack}. La cartella del progetto viene salvata una volta per l'intero stack, non una per servizio, quindi non compare qui.",
   "folders.notReachable": "non si trova sotto il mount dell'host, non può essere salvata",
+  "folders.anonymousVolume": "un volume Docker anonimo, quindi il backup non lo segnala",
   "folders.customMissing": "nessuna cartella dati rilevata (niente da salvare qui)",
   "folders.addCustom": "Aggiungi un percorso di cartella",
   "folders.add": "Aggiungi",

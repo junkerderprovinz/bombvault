@@ -1012,6 +1012,7 @@ const ca: Partial<Translations> = {
   "folders.stackNote":
     "Aquest contenidor pertany a la pila Compose {stack}. La carpeta del projecte es còpia un cop per a tota la pila, no un cop per servei, i per això no apareix aquí.",
   "folders.notReachable": "no està sota el muntatge de l'amfitrió, no es pot copiar",
+  "folders.anonymousVolume": "un volum anònim de Docker, així que la còpia no n'avisa",
   "folders.customMissing": "no s'ha detectat cap carpeta de dades (aquí no hi ha res a copiar)",
   "folders.addCustom": "Afegeix un camí de carpeta",
   "folders.add": "Afegeix",

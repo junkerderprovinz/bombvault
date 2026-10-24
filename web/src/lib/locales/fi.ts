@@ -925,6 +925,7 @@ const fi: Partial<Translations> = {
   "folders.stackNote":
     "Tämä kontti kuuluu Compose-pinoon {stack}. Projektikansio varmuuskopioidaan kerran koko pinolle, ei kerran per palvelu, joten sitä ei näy tässä.",
   "folders.notReachable": "ei ole host-liitoksen alla, ei voida varmuuskopioida",
+  "folders.anonymousVolume": "nimetön Docker-taltio, joten varmuuskopio ei varoita siitä",
   "folders.customMissing": "datakansiota ei löytynyt (ei mitään varmuuskopioitavaa)",
   "folders.addCustom": "Lisää kansiopolku",
   "folders.add": "Lisää",

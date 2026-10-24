@@ -922,6 +922,7 @@ const no: Partial<Translations> = {
   "folders.stackNote":
     "Denne containeren hører til Compose-stakken {stack}. Prosjektmappen sikkerhetskopieres én gang for hele stakken, ikke én gang per tjeneste, og står derfor ikke her.",
   "folders.notReachable": "ligger ikke under host-monteringen, kan ikke sikkerhetskopieres",
+  "folders.anonymousVolume": "et anonymt Docker-volum, så sikkerhetskopien advarer ikke om det",
   "folders.customMissing": "ingen datamappe funnet (ingenting å sikkerhetskopiere her)",
   "folders.addCustom": "Legg til en mappesti",
   "folders.add": "Legg til",

@@ -925,6 +925,7 @@ const hu: Partial<Translations> = {
   "folders.stackNote":
     "Ez a konténer a(z) {stack} Compose veremhez tartozik. A projektmappa az egész veremhez egyszer kerül mentésre, nem szolgáltatásonként, ezért nem szerepel itt.",
   "folders.notReachable": "nincs a gazdagép csatolásán belül, nem menthető",
+  "folders.anonymousVolume": "névtelen Docker-kötet, ezért a biztonsági mentés nem figyelmeztet rá",
   "folders.customMissing": "nem található adatmappa (nincs mit menteni)",
   "folders.addCustom": "Mappaútvonal hozzáadása",
   "folders.add": "Hozzáadás",

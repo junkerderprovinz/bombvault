@@ -925,6 +925,7 @@ const es: Partial<Translations> = {
   "folders.stackNote":
     "Este contenedor pertenece a la pila Compose {stack}. Su carpeta de proyecto se copia una vez para toda la pila, no una vez por servicio, por eso no aparece aquí.",
   "folders.notReachable": "no está dentro del montaje del host, no se puede copiar",
+  "folders.anonymousVolume": "un volumen anónimo de Docker, así que la copia no avisa de él",
   "folders.customMissing": "no se detectó ninguna carpeta de datos (nada que respaldar aquí)",
   "folders.addCustom": "Añadir una ruta de carpeta",
   "folders.add": "Añadir",

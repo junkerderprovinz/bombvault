@@ -925,6 +925,7 @@ const he: Partial<Translations> = {
   "folders.stackNote":
     "מכולה זו שייכת למקבץ Compose ‏{stack}. תיקיית הפרויקט מגובה פעם אחת עבור כל המקבץ, לא פעם לכל שירות, ולכן אינה מופיעה כאן.",
   "folders.notReachable": "אינו תחת נקודת העיגון של המארח, לא ניתן לגבות",
+  "folders.anonymousVolume": "אמצעי אחסון אנונימי של Docker, ולכן הגיבוי לא מזהיר עליו",
   "folders.customMissing": "לא נמצאה תיקיית נתונים (אין מה לגבות כאן)",
   "folders.addCustom": "הוספת נתיב תיקייה",
   "folders.add": "הוספה",

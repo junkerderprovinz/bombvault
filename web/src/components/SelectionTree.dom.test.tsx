@@ -182,6 +182,31 @@ describe("SelectionTree lazy expansion", () => {
   });
 });
 
+describe("SelectionTree unreachable mounts", () => {
+  const ANON = "/var/lib/docker/volumes/3f9c2a7e1b4d6058a9e7c3b1f2d4e6a8b0c2d4e6f8a0b2c4d6e8f0a2b4c6d8e0/_data";
+  const NAMED = "/var/lib/docker/volumes/jellyfin_cache/_data";
+
+  it("lists a volume it cannot reach with both paths, and calls an anonymous one out as no warning", async () => {
+    mountsReply = mountsResponse({
+      mounts: [
+        { source: MOUNT, dest: "/config", selected: true, isAppdata: true, reachable: true },
+        { source: ANON, dest: "/cache", selected: false, isAppdata: false, reachable: false, anonymous: true },
+        { source: NAMED, dest: "/metadata", selected: false, isAppdata: false, reachable: false },
+      ],
+    });
+    await renderEditor();
+
+    const anon = screen.getByRole("treeitem", { name: /\/cache ← \/var\/lib\/docker\/volumes\/3f9c/ });
+    expect(within(anon).getByText("not under the host mount, can't be backed up")).toBeTruthy();
+    expect(within(anon).getByText("an anonymous Docker volume, so the backup doesn't warn about it")).toBeTruthy();
+    expect(anon.getAttribute("aria-expanded")).toBeNull();
+
+    const named = screen.getByRole("treeitem", { name: /\/metadata ← \/var\/lib\/docker\/volumes\/jellyfin_cache/ });
+    expect(within(named).getByText("not under the host mount, can't be backed up")).toBeTruthy();
+    expect(within(named).queryByText(/anonymous Docker volume/)).toBeNull();
+  });
+});
+
 describe("SelectionTree toggle save", () => {
   it("unchecking a subfolder saves the mount plus a !child exclusion and leaves the root mixed", async () => {
     browseReplies = [listing()];

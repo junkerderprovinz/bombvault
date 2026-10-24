@@ -1819,6 +1819,8 @@ type ExcludePreview struct {
 // toContainerPath into the exact anchored path restic stored. Anything else →
 // verbatim (advanced host/glob patterns), never silently dropped. A line that
 // would exclude everything has status "everything" and never reaches restic.
+// Neither does an "outside" line, the host path of a mount BombVault cannot
+// reach: nothing in the backup lies under it.
 func (s *Service) resolveExcludeLine(line string, in model.Inspect) (pattern, status string) {
 	line = strings.TrimSpace(line)
 	if line == "" {
@@ -1864,18 +1866,21 @@ func (s *Service) resolveExcludeLine(line string, in model.Inspect) (pattern, st
 			return cp, "translated"
 		}
 	}
+	if slices.ContainsFunc(s.unreachableDataMounts(in), func(m model.Mount) bool { return s.excludeNamesHostSource(line, m.Source) }) {
+		return clean, "outside"
+	}
 	return line, "passthrough"
 }
 
 // resolveExcludePatterns maps each raw user line through resolveExcludeLine and
-// returns the resolved restic --exclude patterns, without blank lines and lines
-// that would exclude everything. This is what feeds BackupDeps.Excludes for a
-// container backup.
+// returns the resolved restic --exclude patterns, without blank lines, lines
+// that would exclude everything and host paths outside Host Data. This is what
+// feeds BackupDeps.Excludes for a container backup.
 func (s *Service) resolveExcludePatterns(raw []string, in model.Inspect) []string {
 	var out []string
 	for _, line := range raw {
 		pattern, status := s.resolveExcludeLine(line, in)
-		if status == "" || status == "everything" {
+		if status == "" || status == "everything" || status == "outside" {
 			continue
 		}
 		out = append(out, pattern)
@@ -5814,13 +5819,16 @@ func (s *Service) resolveAppdataPaths(name string, in model.Inspect) []string {
 // under /mnt/.ix-apps. System mounts (/etc/localtime, the Docker socket) are not
 // data and stay out. A Docker volume is data wherever it lives, and the
 // daemon's own volumes under /var/lib/docker are out of reach of a Host Data
-// at /mnt. A mount that one of the container's exclude lines covers stays out
-// too: the user has said that folder need not be backed up.
+// at /mnt. An anonymous volume stays out, and so does a mount that one of the
+// container's exclude lines covers by either of its paths: the user has said
+// that folder need not be backed up.
 func (s *Service) dataOutsideHostMount(in model.Inspect, excludes []string) []string {
 	var out []string
 	seen := map[string]bool{}
 	for _, m := range s.unreachableDataMounts(in) {
-		if slices.ContainsFunc(excludes, func(line string) bool { return excludeCoversMount(line, m.Destination) }) {
+		if isAnonymousVolume(m) || slices.ContainsFunc(excludes, func(line string) bool {
+			return excludeCoversMount(line, m.Destination) || s.excludeNamesHostSource(line, m.Source)
+		}) {
 			continue
 		}
 		src := path.Clean(m.Source)
@@ -5866,6 +5874,36 @@ func excludeCoversMount(line, dest string) bool {
 	}
 	d := path.Clean(dest)
 	return d == clean || strings.HasPrefix(d, clean+"/")
+}
+
+// excludeNamesHostSource reports whether an exclude line names src, the host
+// path of a mount BombVault cannot reach, or a folder above it. The line must
+// not reach anything restic could match: "/", a folder at or above Host Data
+// or its mount point, a path inside the mount point, and a path under Host
+// Data that exists here all name more than that mount.
+func (s *Service) excludeNamesHostSource(line, src string) bool {
+	clean := path.Clean(strings.TrimSpace(line))
+	if !strings.HasPrefix(clean, "/") || clean == "/" || !isUnderAny(path.Clean(src), []string{clean}) {
+		return false
+	}
+	mountRoot, srcRoot := path.Clean(s.cfg.HostMountRoot), path.Clean(s.cfg.HostSourceRoot)
+	if isUnderAny(mountRoot, []string{clean}) || isUnderAny(srcRoot, []string{clean}) || isUnderAny(clean, []string{mountRoot}) {
+		return false
+	}
+	if cp, ok := s.toContainerPath(clean); ok {
+		if _, err := os.Stat(cp); !errors.Is(err, fs.ErrNotExist) { //nolint:gosec // G703: cp is the line translated under the host mount and only checked for existence
+			return false
+		}
+	}
+	return true
+}
+
+// isAnonymousVolume reports whether m is a volume Docker named itself, with
+// the 64 hex digits it gives a folder the image declares and nothing mapped.
+// Such a folder is the image's scratch space far more often than data someone
+// keeps, so the backup does not warn about it.
+func isAnonymousVolume(m model.Mount) bool {
+	return m.Type == "volume" && len(m.Name) == 64 && strings.Trim(m.Name, "0123456789abcdef") == ""
 }
 
 // hasSegment reports whether slash-separated path p contains seg as a full path
@@ -5957,14 +5995,15 @@ func (s *Service) toHostPath(cp string) string {
 	return cp
 }
 
-// MountInfo describes one of a container's bind mounts for the backup-folder
-// selector in the UI.
+// MountInfo describes one of a container's bind mounts, or a volume BombVault
+// cannot reach, for the backup-folder selector in the UI.
 type MountInfo struct {
-	Source    string `json:"source"`    // host path (shown to the user)
-	Dest      string `json:"dest"`      // in-container mount point
-	Selected  bool   `json:"selected"`  // currently included in the backup
-	IsAppdata bool   `json:"isAppdata"` // auto-detected appdata default
-	Reachable bool   `json:"reachable"` // reachable under the host mount (backable)
+	Source    string `json:"source"`              // host path (shown to the user)
+	Dest      string `json:"dest"`                // in-container mount point
+	Selected  bool   `json:"selected"`            // currently included in the backup
+	IsAppdata bool   `json:"isAppdata"`           // auto-detected appdata default
+	Reachable bool   `json:"reachable"`           // reachable under the host mount (backable)
+	Anonymous bool   `json:"anonymous,omitempty"` // an anonymous Docker volume, which the backup does not warn about
 }
 
 // CustomPath is a selected backup folder that does not correspond to a current
@@ -5977,13 +6016,12 @@ type CustomPath struct {
 	Exists bool   `json:"exists"` // still present under the host mount
 }
 
-// ContainerMounts returns the container's bind mounts annotated for the folder
-// selector, plus any selected custom paths (in host form) that do not match a
-// current mount, each flagged with whether it still exists, plus the stored
-// exclusions in host form, plus the stored per-root CACHEDIR.TAG toggles
-// (RESTIC-01; host-form keys, nil when never set — the handler normalizes to {}
-// on the wire). The selection is the stored explicit choice, or the automatic
-// appdata default when none is configured.
+// ContainerMounts returns the container's bind mounts and the volumes it cannot
+// reach, annotated for the folder selector, the selected custom paths that
+// match no mount with whether each still exists, the stored exclusions, and
+// the per-root CACHEDIR.TAG toggles (nil when never set), all in host form.
+// The selection is the stored explicit choice, or the automatic appdata
+// default when none is configured.
 func (s *Service) ContainerMounts(ctx context.Context, name string) ([]MountInfo, []CustomPath, []string, map[string]bool, error) {
 	in, err := s.docker.Inspect(ctx, name)
 	if err != nil {
@@ -6019,8 +6057,21 @@ func (s *Service) ContainerMounts(ctx context.Context, name string) ([]MountInfo
 
 	matched := map[string]bool{}
 	var mounts []MountInfo
+	unreachable := s.unreachableDataMounts(in)
 	for _, m := range in.Mounts {
-		if m.Type != "bind" || m.Source == "" {
+		if m.Source == "" {
+			continue
+		}
+		if m.Type == "volume" {
+			// A volume Host Data cannot reach is listed so the user can see the
+			// folder a warning names. One it reaches is backed up like a custom
+			// path.
+			if slices.Contains(unreachable, m) {
+				mounts = append(mounts, MountInfo{Source: m.Source, Dest: m.Destination, Anonymous: isAnonymousVolume(m)})
+			}
+			continue
+		}
+		if m.Type != "bind" {
 			continue
 		}
 		cp, reachable := s.toContainerPath(m.Source)

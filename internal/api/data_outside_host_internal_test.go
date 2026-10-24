@@ -4,6 +4,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/junkerderprovinz/bombvault/internal/config"
@@ -60,13 +61,42 @@ func TestDataOutsideHostMountNamesAVolumeItCannotReach(t *testing.T) {
 }
 
 const (
-	anonVolume  = "/var/lib/docker/volumes/3f9c2a7e1b4d6058a9e7c3b1f2d4e6a8b0c2d4e6f8a0b2c4d6e8f0a2b4c6d8e0/_data"
+	anonName    = "3f9c2a7e1b4d6058a9e7c3b1f2d4e6a8b0c2d4e6f8a0b2c4d6e8f0a2b4c6d8e0"
+	anonVolume  = "/var/lib/docker/volumes/" + anonName + "/_data"
 	namedVolume = "/var/lib/docker/volumes/jellyfin_cache/_data"
 	ixVolume    = "/mnt/.ix-apps/app_mounts/nextcloud/data"
 )
 
-// An exclude line written as a path inside the container turns the warning off
-// for the mount it names or a folder above it, and for nothing else.
+func TestDataOutsideHostMountKeepsQuietAboutAnAnonymousVolume(t *testing.T) {
+	s := &Service{cfg: config.Config{
+		HostSourceRoot:   "/mnt",
+		HostMountRoot:    filepath.ToSlash(t.TempDir()),
+		DataRootSegments: []string{"appdata"},
+	}}
+	cases := []struct {
+		name  string
+		mount model.Mount
+		warns bool
+	}{
+		{"an anonymous volume", model.Mount{Type: "volume", Name: anonName, Source: anonVolume, Destination: "/cache"}, false},
+		{"a named volume", model.Mount{Type: "volume", Name: "jellyfin_cache", Source: namedVolume, Destination: "/cache"}, true},
+		{"a volume named with upper-case hex", model.Mount{Type: "volume", Name: strings.ToUpper(anonName), Source: anonVolume, Destination: "/cache"}, true},
+		{"a volume named with 63 hex digits", model.Mount{Type: "volume", Name: anonName[1:], Source: anonVolume, Destination: "/cache"}, true},
+		{"a bind outside Host Data", model.Mount{Type: "bind", Source: ixVolume, Destination: "/data"}, true},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			got := s.dataOutsideHostMount(model.Inspect{Mounts: []model.Mount{tc.mount}}, nil)
+			if warns := len(got) > 0; warns != tc.warns {
+				t.Fatalf("dataOutsideHostMount = %v, want a warning: %v", got, tc.warns)
+			}
+		})
+	}
+}
+
+// An exclude line written as the mount's path inside the container or on the
+// host turns the warning off for the mount it names or a folder above it, and
+// for nothing else.
 func TestDataOutsideHostMountLeavesOutAMountAnExcludeCovers(t *testing.T) {
 	s := &Service{cfg: config.Config{
 		HostSourceRoot:   "/mnt",
@@ -74,34 +104,70 @@ func TestDataOutsideHostMountLeavesOutAMountAnExcludeCovers(t *testing.T) {
 		DataRootSegments: []string{"appdata"},
 	}}
 	in := model.Inspect{Mounts: []model.Mount{
-		{Type: "volume", Source: anonVolume, Destination: "/var/lib/beszel-agent"},
-		{Type: "volume", Source: namedVolume, Destination: "/cache"},
+		{Type: "volume", Name: anonName, Source: anonVolume, Destination: "/var/lib/beszel-agent"},
+		{Type: "volume", Name: "jellyfin_cache", Source: namedVolume, Destination: "/cache"},
 		{Type: "bind", Source: ixVolume, Destination: "/data"},
 	}}
-	all := []string{ixVolume, anonVolume, namedVolume}
+	all := []string{ixVolume, namedVolume}
 	cases := []struct {
 		name     string
 		excludes []string
 		want     []string
 	}{
 		{"no exclude", nil, all},
-		{"the mount's own path", []string{"/var/lib/beszel-agent"}, []string{ixVolume, namedVolume}},
-		{"a folder above the mount", []string{"/var/lib"}, []string{ixVolume, namedVolume}},
-		{"a trailing slash and spaces", []string{"  /cache/ "}, []string{ixVolume, anonVolume}},
-		{"a bind mount outside Host Data", []string{"/data"}, []string{anonVolume, namedVolume}},
-		{"every mount", []string{"/var/lib/beszel-agent", "/cache", "/data"}, nil},
+		{"the mount's own path", []string{"/cache"}, []string{ixVolume}},
+		{"a trailing slash and spaces", []string{"  /cache/ "}, []string{ixVolume}},
+		{"a bind mount outside Host Data", []string{"/data"}, []string{namedVolume}},
+		{"every mount", []string{"/cache", "/data"}, nil},
+		{"the volume's host path", []string{namedVolume}, []string{ixVolume}},
+		{"a folder above the volume's host path", []string{"/var/lib/docker/volumes"}, []string{ixVolume}},
+		{"a host path with a trailing slash and spaces", []string{" " + namedVolume + "/ "}, []string{ixVolume}},
+		{"the bind's host path", []string{ixVolume}, []string{namedVolume}},
+		{"a folder above the bind's host path", []string{"/mnt/.ix-apps"}, []string{namedVolume}},
+		{"every host path", []string{namedVolume, ixVolume}, nil},
+		{"Host Data itself", []string{"/mnt"}, all},
+		{"a folder inside the host path", []string{namedVolume + "/transcodes"}, all},
+		{"a host path sibling that shares a prefix", []string{"/var/lib/docker/volumes/jellyfin"}, all},
 		{"a folder inside the mount", []string{"/cache/transcodes"}, all},
-		{"a sibling that shares a prefix", []string{"/var/lib/beszel"}, all},
+		{"a sibling that shares a prefix", []string{"/cach"}, all},
 		{"an unrelated path", []string{"/config"}, all},
 		{"the root", []string{"/"}, all},
-		{"bare names", []string{"cache", "data", "beszel-agent"}, all},
-		{"a relative path", []string{"var/lib/beszel-agent"}, all},
+		{"bare names", []string{"cache", "data", "_data"}, all},
+		{"a relative path", []string{"var/lib/docker/volumes"}, all},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			got := s.dataOutsideHostMount(in, tc.excludes)
 			if !reflect.DeepEqual(got, tc.want) {
 				t.Fatalf("dataOutsideHostMount(%q) = %v, want %v", tc.excludes, got, tc.want)
+			}
+		})
+	}
+}
+
+// A host path stands for nothing restic could match once the mount behind it
+// is out of reach, so the line never becomes an --exclude.
+func TestResolveExcludePatternsLeavesAHostPathOutsideHostDataOut(t *testing.T) {
+	s := &Service{cfg: config.Config{HostSourceRoot: "/mnt", HostMountRoot: filepath.ToSlash(t.TempDir())}}
+	in := model.Inspect{Mounts: []model.Mount{
+		{Type: "volume", Name: anonName, Source: anonVolume, Destination: "/cache"},
+		{Type: "volume", Name: "jellyfin_cache", Source: namedVolume, Destination: "/transcode"},
+	}}
+	cases := []struct {
+		line string
+		want []string
+	}{
+		{anonVolume, nil},
+		{namedVolume, nil},
+		{"/var/lib/docker/volumes", nil},
+		{"/var/lib/docker/other", []string{"/var/lib/docker/other"}},
+		{"/", nil},
+		{"/mnt", []string{"/mnt"}},
+	}
+	for _, tc := range cases {
+		t.Run(tc.line, func(t *testing.T) {
+			if got := s.resolveExcludePatterns([]string{tc.line}, in); !reflect.DeepEqual(got, tc.want) {
+				t.Fatalf("resolveExcludePatterns(%q) = %q, want %q", tc.line, got, tc.want)
 			}
 		})
 	}

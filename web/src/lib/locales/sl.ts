@@ -1012,6 +1012,7 @@ const sl: Partial<Translations> = {
   "folders.stackNote":
     "Ta vsebnik pripada skladu Compose {stack}. Mapa projekta se varnostno kopira enkrat za ves sklad, ne enkrat na storitev, zato je tu ni.",
   "folders.notReachable": "ni pod priklopno točko gostitelja, ni je mogoče varnostno kopirati",
+  "folders.anonymousVolume": "anonimni nosilec Docker, zato varnostna kopija ne opozarja nanj",
   "folders.customMissing": "ni zaznane podatkovne mape (tukaj ni ničesar za kopiranje)",
   "folders.addCustom": "Dodaj pot do mape",
   "folders.add": "Dodaj",

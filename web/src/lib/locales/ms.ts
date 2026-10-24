@@ -1012,6 +1012,7 @@ const ms: Partial<Translations> = {
   "folders.stackNote":
     "Bekas ini tergolong dalam tindanan Compose {stack}. Folder projeknya disandarkan sekali untuk keseluruhan tindanan, bukan sekali bagi setiap perkhidmatan, jadi ia tidak disenaraikan di sini.",
   "folders.notReachable": "tidak di bawah mount hos, tidak boleh disandarkan",
+  "folders.anonymousVolume": "volum Docker tanpa nama, jadi sandaran tidak memberi amaran tentangnya",
   "folders.customMissing": "tiada folder data dikesan (tiada apa untuk disandarkan di sini)",
   "folders.addCustom": "Tambah laluan folder",
   "folders.add": "Tambah",

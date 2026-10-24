@@ -916,6 +916,7 @@ const ja: Partial<Translations> = {
   "folders.stackNote":
     "このコンテナは Compose スタック {stack} に属します。プロジェクトフォルダーはサービスごとではなくスタック全体で一度だけバックアップされるため、ここには表示されません。",
   "folders.notReachable": "ホストマウント配下にないため、バックアップできません",
+  "folders.anonymousVolume": "匿名の Docker ボリュームのため、バックアップは警告しません",
   "folders.customMissing": "データフォルダーが見つかりません (バックアップ対象なし)",
   "folders.addCustom": "フォルダパスを追加",
   "folders.add": "追加",

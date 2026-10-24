@@ -1012,6 +1012,7 @@ const sk: Partial<Translations> = {
   "folders.stackNote":
     "Tento kontajner patrí do Compose stacku {stack}. Priečinok projektu sa zálohuje raz pre celý stack, nie raz na službu, preto tu nie je uvedený.",
   "folders.notReachable": "nie je pod pripojením hostiteľa, nemožno zálohovať",
+  "folders.anonymousVolume": "anonymný zväzok Dockeru, záloha naň preto neupozorňuje",
   "folders.customMissing": "nezistil sa žiadny dátový priečinok (tu nie je čo zálohovať)",
   "folders.addCustom": "Pridať cestu priečinka",
   "folders.add": "Pridať",

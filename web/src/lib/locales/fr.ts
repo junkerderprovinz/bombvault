@@ -925,6 +925,7 @@ const fr: Partial<Translations> = {
   "folders.stackNote":
     "Ce conteneur appartient à la pile Compose {stack}. Son dossier de projet est sauvegardé une fois pour toute la pile, et non une fois par service, il n'apparaît donc pas ici.",
   "folders.notReachable": "n'est pas sous le montage de l'hôte, ne peut pas être sauvegardé",
+  "folders.anonymousVolume": "un volume Docker anonyme, la sauvegarde ne le signale donc pas",
   "folders.customMissing": "aucun dossier de données détecté (rien à sauvegarder ici)",
   "folders.addCustom": "Ajouter un chemin de dossier",
   "folders.add": "Ajouter",

@@ -1012,6 +1012,7 @@ const is: Partial<Translations> = {
   "folders.stackNote":
     "Þessi gámur tilheyrir Compose-staflanum {stack}. Verkefnamappan er afrituð einu sinni fyrir allan staflann, ekki einu sinni fyrir hverja þjónustu, og birtist því ekki hér.",
   "folders.notReachable": "er ekki undir tengipunkti hýsilsins, ekki hægt að afrita",
+  "folders.anonymousVolume": "nafnlaus Docker-gagnahirsla, svo afritunin varar ekki við henni",
   "folders.customMissing": "engin gagnamappa fannst (ekkert að afrita hér)",
   "folders.addCustom": "Bæta við möppuslóð",
   "folders.add": "Bæta við",

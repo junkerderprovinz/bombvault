@@ -45,6 +45,8 @@ type Mount struct {
 	Type        string
 	Source      string
 	Destination string
+	// Name is the volume's name, empty for a bind.
+	Name string `json:",omitempty"`
 }
 
 // Config holds the portable container configuration we preserve.

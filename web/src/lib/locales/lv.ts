@@ -1012,6 +1012,7 @@ const lv: Partial<Translations> = {
   "folders.stackNote":
     "Šis konteiners pieder Compose kaudzei {stack}. Projekta mape tiek dublēta vienreiz visai kaudzei, nevis vienreiz katram pakalpojumam, tāpēc tā šeit nav norādīta.",
   "folders.notReachable": "nav zem saimniekdatora piesaistes, nevar dublēt",
+  "folders.anonymousVolume": "anonīms Docker sējums, tāpēc rezerves kopija par to nebrīdina",
   "folders.customMissing": "nav atklāta datu mape (šeit nav ko dublēt)",
   "folders.addCustom": "Pievienot mapes ceļu",
   "folders.add": "Pievienot",

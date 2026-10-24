@@ -916,6 +916,7 @@ const vi: Partial<Translations> = {
   "folders.stackNote":
     "Container này thuộc stack Compose {stack}. Thư mục dự án được sao lưu một lần cho cả stack, không phải mỗi dịch vụ một lần, nên không có trong danh sách này.",
   "folders.notReachable": "không nằm trong điểm gắn kết của host, không thể sao lưu",
+  "folders.anonymousVolume": "một volume Docker ẩn danh, nên bản sao lưu không cảnh báo về nó",
   "folders.customMissing": "không tìm thấy thư mục dữ liệu (không có gì để sao lưu ở đây)",
   "folders.addCustom": "Thêm đường dẫn thư mục",
   "folders.add": "Thêm",

@@ -775,6 +775,7 @@ func mapInspect(resp container.InspectResponse) model.Inspect {
 			Type:        string(m.Type),
 			Source:      m.Source,
 			Destination: m.Destination,
+			Name:        m.Name,
 		})
 	}
 	out.Network = mapPrimaryNetwork(resp)

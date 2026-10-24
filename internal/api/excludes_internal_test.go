@@ -101,14 +101,21 @@ func TestPreviewExcludesChecksAContainerPathOnDisk(t *testing.T) {
 func TestPreviewExcludesMarksALineThatSilencesDataOutsideHostData(t *testing.T) {
 	s, in, effective := mountedExcludeSvc(t)
 	in.Mounts = append(in.Mounts,
-		model.Mount{Type: "volume", Source: anonVolume, Destination: "/var/lib/beszel-agent"},
-		model.Mount{Type: "volume", Source: namedVolume, Destination: "/cache"},
+		model.Mount{Type: "volume", Name: anonName, Source: anonVolume, Destination: "/var/lib/beszel-agent"},
+		model.Mount{Type: "volume", Name: "jellyfin_cache", Source: namedVolume, Destination: "/cache"},
 	)
 	cases := []struct{ line, status string }{
 		{"/var/lib/beszel-agent", "outside"},
 		{"/var/lib", "outside"},
 		{"/cache/", "outside"},
 		{"/other", "outside"},
+		{anonVolume, "outside"},
+		{namedVolume + "/", "outside"},
+		{"/var/lib/docker/volumes", "outside"},
+		{"/mnt/user/other", "outside"},
+		{namedVolume + "/transcodes", "passthrough"},
+		{"/mnt/user", "passthrough"},
+		{"/mnt", "passthrough"},
 		{"/other/anything", "translated"},
 		{"/cache/transcodes", "passthrough"},
 		{"/", "everything"},

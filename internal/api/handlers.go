@@ -2256,10 +2256,10 @@ func (h *Handler) handleSetVmBackupOrder(w http.ResponseWriter, r *http.Request)
 	writeJSON(w, http.StatusOK, okEnvelope(nil))
 }
 
-// handleContainerMounts lists a container's bind mounts (annotated with the
-// current selection) for the backup-folder selector. Stored exclusions come
-// back additively in a top-level excluded array (host form) — never mixed into
-// custom as stale paths (INTEG-04 read side).
+// handleContainerMounts lists a container's bind mounts and unreachable volumes,
+// annotated with the current selection, for the backup-folder selector. Stored
+// exclusions come back in their own excluded array in host form, so they never
+// read as stale custom paths.
 // GET /api/containers/{name}/mounts
 func (h *Handler) handleContainerMounts(w http.ResponseWriter, r *http.Request) {
 	name, ok := h.nameParam(w, r)

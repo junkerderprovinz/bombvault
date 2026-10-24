@@ -1012,6 +1012,7 @@ const fa: Partial<Translations> = {
   "folders.stackNote":
     "این کانتینر به پشتهٔ Compose ‏{stack} تعلق دارد. پوشهٔ پروژه یک بار برای کل پشته پشتیبان‌گیری می‌شود، نه به ازای هر سرویس، بنابراین اینجا فهرست نشده است.",
   "folders.notReachable": "زیر اتصال میزبان نیست، قابل پشتیبان‌گیری نیست",
+  "folders.anonymousVolume": "یک volume ناشناس Docker است، پس پشتیبان‌گیری درباره‌اش هشدار نمی‌دهد",
   "folders.customMissing": "هیچ پوشه داده‌ای شناسایی نشد (اینجا چیزی برای پشتیبان‌گیری نیست)",
   "folders.addCustom": "افزودن مسیر پوشه",
   "folders.add": "افزودن",

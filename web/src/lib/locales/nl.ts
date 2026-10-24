@@ -921,6 +921,7 @@ const nl: Partial<Translations> = {
   "folders.stackNote":
     "Deze container hoort bij de Compose-stack {stack}. De projectmap wordt één keer voor de hele stack geback-upt, niet per service, en staat daarom niet in deze lijst.",
   "folders.notReachable": "valt niet onder de host-mount, kan niet worden geback-upt",
+  "folders.anonymousVolume": "een anoniem Docker-volume, dus de back-up waarschuwt er niet voor",
   "folders.customMissing": "geen datamap gevonden (hier valt niets te back-uppen)",
   "folders.addCustom": "Een mappad toevoegen",
   "folders.add": "Toevoegen",

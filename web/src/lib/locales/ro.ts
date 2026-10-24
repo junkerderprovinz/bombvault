@@ -922,6 +922,7 @@ const ro: Partial<Translations> = {
   "folders.stackNote":
     "Acest container aparține stivei Compose {stack}. Dosarul proiectului este copiat o dată pentru toată stiva, nu o dată per serviciu, de aceea nu apare aici.",
   "folders.notReachable": "nu se află sub montarea gazdei, nu poate fi salvat",
+  "folders.anonymousVolume": "un volum Docker anonim, așa că backupul nu avertizează despre el",
   "folders.customMissing": "niciun folder de date detectat (nimic de salvat aici)",
   "folders.addCustom": "Adaugă o cale de folder",
   "folders.add": "Adaugă",

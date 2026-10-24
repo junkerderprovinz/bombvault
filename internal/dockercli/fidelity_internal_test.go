@@ -228,6 +228,24 @@ func TestRecreateKeepsTheContainersOwnHealthcheck(t *testing.T) {
 	}
 }
 
+func TestInspectKeepsTheVolumeName(t *testing.T) {
+	resp := container.InspectResponse{
+		ContainerJSONBase: &container.ContainerJSONBase{ID: "abc", Name: "/jellyfin"},
+		Mounts: []container.MountPoint{
+			{Type: mount.TypeVolume, Name: "jellyfin_cache", Source: "/var/lib/docker/volumes/jellyfin_cache/_data", Destination: "/cache"},
+			{Type: mount.TypeBind, Source: "/mnt/user/appdata/jellyfin", Destination: "/config"},
+		},
+	}
+	got := mapInspect(resp).Mounts
+	want := []model.Mount{
+		{Type: "volume", Name: "jellyfin_cache", Source: "/var/lib/docker/volumes/jellyfin_cache/_data", Destination: "/cache"},
+		{Type: "bind", Source: "/mnt/user/appdata/jellyfin", Destination: "/config"},
+	}
+	if !slices.Equal(got, want) {
+		t.Fatalf("mounts = %+v, want %+v", got, want)
+	}
+}
+
 // restoredHostConfig takes inspect data the way a backup stores it and a
 // restore reads it back: through the definition's JSON.
 func restoredHostConfig(t *testing.T, resp container.InspectResponse) *container.HostConfig {

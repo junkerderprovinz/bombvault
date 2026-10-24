@@ -925,6 +925,7 @@ const tr: Partial<Translations> = {
   "folders.stackNote":
     "Bu kapsayıcı {stack} Compose yığınına aittir. Proje klasörü her hizmet için değil, tüm yığın için bir kez yedeklenir, bu yüzden burada listelenmez.",
   "folders.notReachable": "host bağlama noktası altında değil, yedeklenemez",
+  "folders.anonymousVolume": "anonim bir Docker birimi, bu yüzden yedekleme bunun için uyarı vermez",
   "folders.customMissing": "veri klasörü bulunamadı (burada yedeklenecek bir şey yok)",
   "folders.addCustom": "Klasör yolu ekle",
   "folders.add": "Ekle",

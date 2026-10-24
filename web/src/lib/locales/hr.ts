@@ -1012,6 +1012,7 @@ const hr: Partial<Translations> = {
   "folders.stackNote":
     "Ovaj spremnik pripada Compose stogu {stack}. Mapa projekta sigurnosno se kopira jednom za cijeli stog, a ne jednom po usluzi, pa nije navedena ovdje.",
   "folders.notReachable": "nije ispod montiranja hosta, ne može se sigurnosno kopirati",
+  "folders.anonymousVolume": "anonimni Docker volumen, pa sigurnosna kopija ne upozorava na njega",
   "folders.customMissing": "nije otkrivena mapa s podacima (ovdje nema što sigurnosno kopirati)",
   "folders.addCustom": "Dodaj putanju mape",
   "folders.add": "Dodaj",

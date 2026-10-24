@@ -1012,6 +1012,7 @@ const et: Partial<Translations> = {
   "folders.stackNote":
     "See konteiner kuulub Compose'i virna {stack}. Projektikaust varundatakse korra kogu virna jaoks, mitte korra teenuse kohta, seetõttu seda siin ei ole.",
   "folders.notReachable": "pole hosti haakepunkti all, ei saa varundada",
+  "folders.anonymousVolume": "anonüümne Dockeri köide, seepärast varundus selle pärast ei hoiata",
   "folders.customMissing": "andmekausta ei leitud (siin pole midagi varundada)",
   "folders.addCustom": "Lisa kausta rada",
   "folders.add": "Lisa",
