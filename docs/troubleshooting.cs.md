@@ -63,7 +63,7 @@ Anonymní svazek Dockeru se nehlásí. Docker ho sám vytvoří pro složku, kte
 
 ## Záloha hlásí Odloženo {#deferred-backups}
 
-Aplikace kontejneru byla zaneprázdněná, takže jeho záloha čeká a sama se zkusí znovu. Řádek v protokolu aktivit říká proč a kdy přijde další pokus; karta **Když je aplikace zaneprázdněná** na kartě **Nastavení** kontejneru říká totéž a navíc, kdy čekání skončí. Nemusíš nic dělat. Chceš-li zálohovat hned, použij **Zálohovat nyní**, jakmile je aplikace volná.
+Aplikace kontejneru byla zaneprázdněná, takže jeho záloha čeká a sama se zkusí znovu. Řádek v protokolu aktivit říká proč a kdy přijde další pokus; karta **Když je aplikace zaneprázdněná** na kartě **Nastavení** kontejneru říká totéž a navíc, kdy čekání skončí. Nemusíš nic dělat. Chceš-li zálohovat hned, použij **Zálohovat nyní**: záloha, kterou spustíš sám, nikdy nečeká, ani při návratovém kódu 75.
 
 - **Vlastní kontrola.** Nech **Příkaz před zálohou** skončit s kódem 75, dokud je aplikace zaneprázdněná, například `[ "$(cat /tmp/players)" = 0 ] || exit 75`. Jakýkoli jiný kód než 0 nechá zálohu selhat jako dosud, takže rozbitý skript se dál ukáže v **Vyžaduje pozornost**.
 - **Na Plex, Jellyfin ani Emby nikdy nepřijde dotaz.** BombVault se nejdřív zeptá serveru na vlastní adrese kontejneru, a když tam nic neodpoví, spustí curl nebo wget uvnitř kontejneru. Image bez obou se přes sebe samu zeptat nedá; protokol to pak uvede. Se zapnutým **Zálohovat, když server neodpovídá** taková záloha stejně proběhne, s vypnutým čeká.

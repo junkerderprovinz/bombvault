@@ -63,7 +63,7 @@ Un volume Docker anonimo non viene segnalato. Docker lo crea da solo per una car
 
 ## Un backup è segnato come Rinviato {#deferred-backups}
 
-L'app del container era occupata, quindi il suo backup aspetta e viene riprovato da solo. La riga nel registro attività dice perché e quando arriva il prossimo tentativo; la scheda **Quando l'app è occupata** nella scheda **Impostazioni** del container dice lo stesso e quando finisce l'attesa. Non serve fare nulla. Per fare il backup subito, usa **Esegui backup ora** quando l'app è libera.
+L'app del container era occupata, quindi il suo backup aspetta e viene riprovato da solo. La riga nel registro attività dice perché e quando arriva il prossimo tentativo; la scheda **Quando l'app è occupata** nella scheda **Impostazioni** del container dice lo stesso e quando finisce l'attesa. Non serve fare nulla. Per fare il backup subito, usa **Esegui backup ora**: un backup che avvii tu non aspetta mai, nemmeno per un codice di uscita 75.
 
 - **Un controllo tuo.** Fai uscire il **Comando pre-backup** con codice 75 mentre l'app è occupata, per esempio `[ "$(cat /tmp/players)" = 0 ] || exit 75`. Qualsiasi altro codice diverso da 0 fa fallire il backup come sempre, quindi uno script rotto compare ancora in **Richiede attenzione**.
 - **Plex, Jellyfin o Emby non vengono mai interrogati.** BombVault chiede prima al server all'indirizzo del container e, se lì non risponde, esegue curl o wget dentro il container. Un'immagine che non ha né l'uno né l'altro non si può interrogare tramite sé stessa; in quel caso il log lo dice. Con **Esegui il backup quando il server non risponde** attivo un backup del genere parte comunque, con l'opzione disattivata aspetta.

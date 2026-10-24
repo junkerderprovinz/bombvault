@@ -63,7 +63,7 @@ Anonim bir Docker birimi bildirilmez. Docker onu, image'in tanımladığı ama k
 
 ## Bir yedek Ertelendi gösteriyor {#deferred-backups}
 
-Konteynerin uygulaması meşguldü, bu yüzden yedeklemesi bekliyor ve kendiliğinden yeniden denenecek. Etkinlik günlüğündeki satır nedenini ve bir sonraki denemenin ne zaman olacağını söyler; konteynerin **Ayarlar** sekmesindeki **Uygulama meşgulken** kartı da aynısını ve beklemenin ne zaman biteceğini söyler. Bir şey yapman gerekmez. Hemen yedeklemek için uygulama boşalınca **Şimdi yedekle**'yi kullan.
+Konteynerin uygulaması meşguldü, bu yüzden yedeklemesi bekliyor ve kendiliğinden yeniden denenecek. Etkinlik günlüğündeki satır nedenini ve bir sonraki denemenin ne zaman olacağını söyler; konteynerin **Ayarlar** sekmesindeki **Uygulama meşgulken** kartı da aynısını ve beklemenin ne zaman biteceğini söyler. Bir şey yapman gerekmez. Hemen yedeklemek için **Şimdi yedekle**'yi kullan: kendin başlattığın bir yedekleme asla beklemez, 75 çıkış kodunda bile.
 
 - **Kendi denetimin.** Uygulama meşgulken **Yedekleme öncesi komut** 75 koduyla çıksın, örneğin `[ "$(cat /tmp/players)" = 0 ] || exit 75`. 0 olmayan başka her kod yedeklemeyi eskisi gibi başarısız kılar, bu yüzden bozuk bir betik yine **İlgi bekliyor** altında görünür.
 - **Plex, Jellyfin ya da Emby'ye hiç sorulmuyor.** BombVault önce sunucuya konteynerin kendi adresinden sorar, oradan yanıt gelmezse konteynerin içinde curl ya da wget çalıştırır. İkisi de olmayan bir image kendi üzerinden sorgulanamaz; günlük bunu o zaman belirtir. **Sunucu yanıt vermezse yedekle** açıksa böyle bir yedekleme yine de çalışır, kapalıysa bekler.

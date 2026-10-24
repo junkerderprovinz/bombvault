@@ -63,7 +63,7 @@ Un volum Docker anonim nu este raportat. Docker îl creează singur pentru un do
 
 ## O copie de rezervă arată Amânat {#deferred-backups}
 
-Aplicația containerului era ocupată, așa că copia lui așteaptă și este încercată din nou de la sine. Linia din jurnalul de activitate spune de ce și când are loc următoarea încercare; cardul **Când aplicația e ocupată** din fila **Setări** a containerului spune același lucru și când se termină așteptarea. Nu trebuie să faci nimic. Ca să faci copia imediat, folosește **Copiază acum** după ce aplicația s-a eliberat.
+Aplicația containerului era ocupată, așa că copia lui așteaptă și este încercată din nou de la sine. Linia din jurnalul de activitate spune de ce și când are loc următoarea încercare; cardul **Când aplicația e ocupată** din fila **Setări** a containerului spune același lucru și când se termină așteptarea. Nu trebuie să faci nimic. Ca să faci copia imediat, folosește **Copiază acum**: o copie pornită de tine nu așteaptă niciodată, nici la un cod de ieșire 75.
 
 - **Propria ta verificare.** Fă ca **Comandă pre-backup** să se încheie cu codul 75 cât timp aplicația e ocupată, de exemplu `[ "$(cat /tmp/players)" = 0 ] || exit 75`. Orice alt cod diferit de 0 face copia să eșueze ca înainte, așa că un script stricat apare tot la **Necesită atenție**.
 - **Plex, Jellyfin sau Emby nu este întrebat niciodată.** BombVault întreabă întâi serverul la adresa proprie a containerului și, când acolo nu răspunde nimic, rulează curl sau wget în interiorul containerului. O imagine fără niciunul dintre ele nu poate fi întrebată prin ea însăși; jurnalul spune atunci asta. Cu **Fă copia când serverul nu răspunde** pornit, o astfel de copie rulează oricum; cu el oprit, așteaptă.

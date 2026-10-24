@@ -63,7 +63,7 @@ Een anoniem Docker-volume wordt niet gemeld. Docker maakt het zelf aan voor een 
 
 ## Een back-up staat op Uitgesteld {#deferred-backups}
 
-De app van de container was bezig, dus zijn back-up wacht en wordt vanzelf opnieuw geprobeerd. De regel in het activiteitenlogboek zegt waarom en wanneer de volgende poging is; de kaart **Als de app bezig is** op het tabblad **Instellingen** van de container zegt hetzelfde, en wanneer het wachten afloopt. Je hoeft niets te doen. Wil je meteen een back-up, gebruik dan **Nu back-up maken** zodra de app vrij is.
+De app van de container was bezig, dus zijn back-up wacht en wordt vanzelf opnieuw geprobeerd. De regel in het activiteitenlogboek zegt waarom en wanneer de volgende poging is; de kaart **Als de app bezig is** op het tabblad **Instellingen** van de container zegt hetzelfde, en wanneer het wachten afloopt. Je hoeft niets te doen. Wil je meteen een back-up, gebruik dan **Nu back-up maken**: een back-up die je zelf start, wacht nooit, ook niet bij een exitcode 75.
 
 - **Je eigen controle.** Laat het **Pre-back-upcommando** eindigen met code 75 zolang de app bezig is, bijvoorbeeld `[ "$(cat /tmp/players)" = 0 ] || exit 75`. Elke andere code dan 0 laat de back-up gewoon mislukken, dus een kapot script verschijnt nog steeds onder **Aandacht nodig**.
 - **Plex, Jellyfin of Emby wordt nooit gevraagd.** BombVault vraagt de server eerst op het eigen adres van de container en draait, als daar geen antwoord komt, curl of wget in de container. Een image met geen van beide kan niet via zichzelf worden gevraagd; het logboek noemt dat dan. Met **Back-up maken als de server niet antwoordt** aan draait zo'n back-up toch, met de optie uit wacht hij.

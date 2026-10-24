@@ -63,7 +63,7 @@ Et anonymt Docker-volum blir ikke meldt. Docker lager det selv for en mappe imag
 
 ## En sikkerhetskopi står som Utsatt {#deferred-backups}
 
-Appen i containeren var opptatt, så sikkerhetskopien venter og prøves igjen av seg selv. Linjen i aktivitetsloggen sier hvorfor og når neste forsøk er; kortet **Når appen er opptatt** på fanen **Innstillinger** til containeren sier det samme og når ventetiden er over. Du trenger ikke gjøre noe. Vil du ta sikkerhetskopi med en gang, bruker du **Sikkerhetskopier nå** når appen er ledig.
+Appen i containeren var opptatt, så sikkerhetskopien venter og prøves igjen av seg selv. Linjen i aktivitetsloggen sier hvorfor og når neste forsøk er; kortet **Når appen er opptatt** på fanen **Innstillinger** til containeren sier det samme og når ventetiden er over. Du trenger ikke gjøre noe. Vil du ta sikkerhetskopi med en gang, bruker du **Sikkerhetskopier nå**: en sikkerhetskopi du starter selv, venter aldri, heller ikke ved en avslutningskode 75.
 
 - **Din egen sjekk.** La **Pre-sikkerhetskopikommando** avslutte med kode 75 mens appen er opptatt, for eksempel `[ "$(cat /tmp/players)" = 0 ] || exit 75`. Enhver annen kode enn 0 får sikkerhetskopien til å feile som før, så et ødelagt skript dukker fortsatt opp under **Krever oppmerksomhet**.
 - **Plex, Jellyfin eller Emby blir aldri spurt.** BombVault spør først serveren på containerens egen adresse og kjører, når det ikke kommer noe svar der, curl eller wget inne i containeren. Et image med ingen av dem kan ikke spørres gjennom seg selv; loggen sier det da. Med **Ta sikkerhetskopi når serveren ikke svarer** på kjører en slik sikkerhetskopi likevel, med den av venter den.

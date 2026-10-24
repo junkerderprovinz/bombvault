@@ -63,7 +63,7 @@ An anonymous Docker volume is not reported. Docker creates one by itself for a f
 
 ## A backup says Deferred {#deferred-backups}
 
-The container's app was busy, so its backup waits and is tried again on its own. The line in the activity log says why and when the next try is; the **When the app is busy** card on the container's **Settings** tab says the same and when the wait ends. Nothing has to be done. To back up right away, use **Back up now** once the app is free.
+The container's app was busy, so its backup waits and is tried again on its own. The line in the activity log says why and when the next try is; the **When the app is busy** card on the container's **Settings** tab says the same and when the wait ends. Nothing has to be done. To back up right away, use **Back up now**: a backup you start yourself never waits, also not for an exit code of 75.
 
 - **Your own check.** Make the **Pre-backup command** exit with code 75 while the app is busy, for example `[ "$(cat /tmp/players)" = 0 ] || exit 75`. Any other code that is not 0 fails the backup as before, so a broken script still shows up under **Needs you**.
 - **Plex, Jellyfin or Emby is never asked.** BombVault first asks the server at the container's own address and, when that does not answer, runs curl or wget inside the container. An image with neither cannot be asked through itself; the log then names that. With **Back up when the server does not answer** on, such a backup runs anyway, with it off it waits.

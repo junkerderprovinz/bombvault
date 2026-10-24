@@ -63,7 +63,7 @@ Volume Docker ẩn danh không bị báo. Docker tự tạo nó cho một thư m
 
 ## Một bản sao lưu báo Đã hoãn {#deferred-backups}
 
-Ứng dụng của container đang bận, nên bản sao lưu của nó chờ và được tự động thử lại. Dòng trong nhật ký hoạt động cho biết lý do và khi nào có lần thử tiếp theo; thẻ **Khi ứng dụng đang bận** trên tab **Cài đặt** của container cũng cho biết như vậy và khi nào việc chờ kết thúc. Bạn không cần làm gì. Để sao lưu ngay, hãy dùng **Sao lưu ngay** khi ứng dụng đã rảnh.
+Ứng dụng của container đang bận, nên bản sao lưu của nó chờ và được tự động thử lại. Dòng trong nhật ký hoạt động cho biết lý do và khi nào có lần thử tiếp theo; thẻ **Khi ứng dụng đang bận** trên tab **Cài đặt** của container cũng cho biết như vậy và khi nào việc chờ kết thúc. Bạn không cần làm gì. Để sao lưu ngay, hãy dùng **Sao lưu ngay**: một lần sao lưu do bạn tự bắt đầu không bao giờ chờ, kể cả với mã thoát 75.
 
 - **Kiểm tra của riêng bạn.** Cho **Lệnh trước sao lưu** thoát với mã 75 khi ứng dụng đang bận, ví dụ `[ "$(cat /tmp/players)" = 0 ] || exit 75`. Mọi mã khác không phải 0 vẫn làm bản sao lưu thất bại như trước, nên một script hỏng vẫn hiện dưới **Cần chú ý**.
 - **Plex, Jellyfin hoặc Emby không bao giờ được hỏi.** BombVault trước tiên hỏi máy chủ ở chính địa chỉ của container và, khi ở đó không có trả lời, chạy curl hoặc wget bên trong container. Một image không có cả hai thì không thể được hỏi thông qua chính nó; khi đó nhật ký sẽ nêu điều này. Khi bật **Sao lưu khi máy chủ không trả lời**, bản sao lưu như vậy vẫn chạy, khi tắt thì nó chờ.

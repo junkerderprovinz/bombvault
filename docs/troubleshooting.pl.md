@@ -63,7 +63,7 @@ Anonimowy wolumen Dockera nie jest zgłaszany. Docker sam go tworzy dla folderu 
 
 ## Kopia zapasowa ma stan Odroczono {#deferred-backups}
 
-Aplikacja kontenera była zajęta, więc jego kopia czeka i jest ponawiana samoczynnie. Wiersz w dzienniku aktywności mówi, dlaczego i kiedy będzie następna próba; karta **Gdy aplikacja jest zajęta** na karcie **Ustawienia** kontenera mówi to samo oraz kiedy kończy się oczekiwanie. Nie trzeba nic robić. Aby zrobić kopię od razu, użyj **Utwórz kopię teraz**, gdy aplikacja będzie wolna.
+Aplikacja kontenera była zajęta, więc jego kopia czeka i jest ponawiana samoczynnie. Wiersz w dzienniku aktywności mówi, dlaczego i kiedy będzie następna próba; karta **Gdy aplikacja jest zajęta** na karcie **Ustawienia** kontenera mówi to samo oraz kiedy kończy się oczekiwanie. Nie trzeba nic robić. Aby zrobić kopię od razu, użyj **Utwórz kopię teraz**: kopia uruchomiona przez ciebie nigdy nie czeka, także przy kodzie wyjścia 75.
 
 - **Własna kontrola.** Spraw, by **Polecenie przed kopią** kończyło się kodem 75, gdy aplikacja jest zajęta, na przykład `[ "$(cat /tmp/players)" = 0 ] || exit 75`. Każdy inny kod różny od 0 nadal powoduje niepowodzenie kopii, więc zepsuty skrypt wciąż pokazuje się w **Wymaga uwagi**.
 - **Plex, Jellyfin albo Emby nigdy nie dostaje pytania.** BombVault najpierw pyta serwer pod własnym adresem kontenera, a gdy tam nie ma odpowiedzi, uruchamia curl albo wget wewnątrz kontenera. Obrazu bez żadnego z nich nie da się zapytać przez niego samego; dziennik wtedy to podaje. Przy włączonym **Twórz kopię, gdy serwer nie odpowiada** taka kopia i tak się wykonuje, przy wyłączonym czeka.

@@ -63,7 +63,7 @@ Nimettömästä Docker-taltiosta ei varoiteta. Docker luo sen itse kansiolle, jo
 
 ## Varmuuskopio näyttää tilaa Lykätty {#deferred-backups}
 
-Kontin sovellus oli kiireinen, joten sen varmuuskopio odottaa ja sitä yritetään uudelleen itsestään. Tapahtumalokin rivi kertoo syyn ja sen, milloin seuraava yritys on; kontin **Asetukset**-välilehden kortti **Kun sovellus on kiireinen** kertoo saman ja lisäksi, milloin odotus päättyy. Sinun ei tarvitse tehdä mitään. Jos haluat varmuuskopioida heti, käytä painiketta **Varmuuskopioi nyt**, kun sovellus on vapaa.
+Kontin sovellus oli kiireinen, joten sen varmuuskopio odottaa ja sitä yritetään uudelleen itsestään. Tapahtumalokin rivi kertoo syyn ja sen, milloin seuraava yritys on; kontin **Asetukset**-välilehden kortti **Kun sovellus on kiireinen** kertoo saman ja lisäksi, milloin odotus päättyy. Sinun ei tarvitse tehdä mitään. Jos haluat varmuuskopioida heti, käytä painiketta **Varmuuskopioi nyt**: itse käynnistämäsi varmuuskopio ei koskaan odota, ei edes paluukoodin 75 takia.
 
 - **Oma tarkistus.** Anna komennon **Varmuuskopiota edeltävä komento** päättyä koodiin 75, kun sovellus on kiireinen, esimerkiksi `[ "$(cat /tmp/players)" = 0 ] || exit 75`. Mikä tahansa muu koodi kuin 0 kaataa varmuuskopion kuten ennenkin, joten rikkinäinen skripti näkyy yhä kohdassa **Vaatii huomiota**.
 - **Plexiltä, Jellyfiniltä tai Embyltä ei koskaan kysytä.** BombVault kysyy ensin palvelimelta kontin omasta osoitteesta ja, jos sieltä ei vastata, ajaa kontin sisällä komennon curl tai wget. Imagelta, jossa ei ole kumpaakaan, ei voi kysyä sen itsensä kautta; loki mainitsee silloin sen. Kun **Varmuuskopioi, kun palvelin ei vastaa** on päällä, tällainen varmuuskopio ajetaan silti; pois päältä se odottaa.

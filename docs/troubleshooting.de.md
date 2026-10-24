@@ -63,7 +63,7 @@ Ein anonymes Docker-Volume wird nicht gemeldet. Docker legt es von selbst für e
 
 ## Eine Sicherung steht auf Zurückgestellt {#deferred-backups}
 
-Die App des Containers war beschäftigt, deshalb wartet seine Sicherung und wird von selbst erneut versucht. Die Zeile im Aktivitätsprotokoll sagt, warum, und wann der nächste Versuch kommt; die Karte **Wenn die App beschäftigt ist** auf dem Tab **Einstellungen** des Containers sagt dasselbe und dazu, wann das Warten endet. Du musst nichts tun. Um sofort zu sichern, nimm **Jetzt sichern**, sobald die App frei ist.
+Die App des Containers war beschäftigt, deshalb wartet seine Sicherung und wird von selbst erneut versucht. Die Zeile im Aktivitätsprotokoll sagt, warum, und wann der nächste Versuch kommt; die Karte **Wenn die App beschäftigt ist** auf dem Tab **Einstellungen** des Containers sagt dasselbe und dazu, wann das Warten endet. Du musst nichts tun. Um sofort zu sichern, nimm **Jetzt sichern**: Eine Sicherung, die du selbst startest, wartet nie, auch nicht bei einem Exit-Code 75.
 
 - **Eine eigene Prüfung.** Lass den **Befehl vor der Sicherung** mit Code 75 enden, solange die App beschäftigt ist, zum Beispiel `[ "$(cat /tmp/players)" = 0 ] || exit 75`. Jeder andere Code außer 0 lässt die Sicherung wie bisher fehlschlagen, ein kaputtes Skript taucht also weiterhin unter **Braucht dich** auf.
 - **Plex, Jellyfin oder Emby wird nie gefragt.** BombVault fragt den Server zuerst unter der Adresse des Containers und führt, wenn dort nichts antwortet, curl oder wget im Container aus. Ein Image ohne beides lässt sich nicht über sich selbst fragen; das Log nennt das dann. Mit **Sichern, wenn der Server nicht antwortet** läuft so eine Sicherung trotzdem, ohne wartet sie.

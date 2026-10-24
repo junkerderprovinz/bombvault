@@ -63,7 +63,7 @@ De un volumen anónimo de Docker no se avisa. Docker lo crea por su cuenta para 
 
 ## Una copia dice Aplazado {#deferred-backups}
 
-La app del contenedor estaba ocupada, así que su copia espera y se reintenta sola. La línea del registro de actividad dice por qué y cuándo es el próximo intento; la tarjeta **Cuando la app está ocupada** de la pestaña **Ajustes** del contenedor dice lo mismo y cuándo termina la espera. No tienes que hacer nada. Para copiar ya, usa **Copiar ahora** en cuanto la app quede libre.
+La app del contenedor estaba ocupada, así que su copia espera y se reintenta sola. La línea del registro de actividad dice por qué y cuándo es el próximo intento; la tarjeta **Cuando la app está ocupada** de la pestaña **Ajustes** del contenedor dice lo mismo y cuándo termina la espera. No tienes que hacer nada. Para copiar ya, usa **Copiar ahora**: una copia que inicias tú nunca espera, tampoco por un código de salida 75.
 
 - **Tu propia comprobación.** Haz que el **Comando pre-copia** termine con el código 75 mientras la app está ocupada, por ejemplo `[ "$(cat /tmp/players)" = 0 ] || exit 75`. Cualquier otro código distinto de 0 hace fallar la copia como siempre, así que un script roto sigue apareciendo en **Necesita atención**.
 - **A Plex, Jellyfin o Emby nunca se les pregunta.** BombVault pregunta primero al servidor en la dirección del propio contenedor y, si ahí no responde nada, ejecuta curl o wget dentro del contenedor. Una imagen sin ninguno de los dos no se puede consultar a través de sí misma; el registro lo dice entonces. Con **Copiar cuando el servidor no responde** activado, esa copia se hace igualmente; desactivado, espera.
