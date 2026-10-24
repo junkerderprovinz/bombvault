@@ -54,10 +54,12 @@ restic rechaza un certificado que no conoce, y el error dice dónde ponerlo. Cop
 
 ## Una copia dice que los datos fuera de Host Data no se copiaron {#data-outside-host-data}
 
-El contenedor guarda datos en una carpeta que BombVault no puede leer a través de Host Data. La copia guarda la definición y cada carpeta a la que llega, pinta de naranja su línea en el registro de actividad y nombra las carpetas que dejó fuera. Hay dos casos habituales: un ixVolume en TrueNAS bajo `/mnt/.ix-apps` y un volumen anónimo de Docker bajo `/var/lib/docker/volumes`, que Docker crea por su cuenta para una carpeta que la imagen declara y que nadie ha mapeado, como los datos de un agente de monitorización o la caché de un servidor multimedia.
+El contenedor guarda datos en una carpeta que BombVault no puede leer a través de Host Data. La copia guarda la definición y cada carpeta a la que llega, pinta de naranja su línea en el registro de actividad y nombra las carpetas que dejó fuera. Hay dos casos habituales: un ixVolume en TrueNAS bajo `/mnt/.ix-apps` y un volumen con nombre de Docker bajo `/var/lib/docker/volumes`, como el volumen de la base de datos de un stack de compose. La tarjeta **Carpetas a copiar** de la pestaña **Ajustes** del contenedor muestra cada una de esas carpetas con su ruta dentro del contenedor y su ruta en el host, marcada en rojo.
+
+De un volumen anónimo de Docker no se avisa. Docker lo crea por su cuenta para una carpeta que la imagen declara y que nadie ha mapeado, le da un nombre de 64 dígitos hexadecimales y lo guarda bajo `/var/lib/docker/volumes`. Suele contener una caché, así que la copia sigue en verde y la tarjeta solo lo muestra, con una nota de que es anónimo.
 
 - **Quieres copiar esos datos.** Mapea la carpeta a una ruta del host bajo Host Data, por ejemplo una carpeta de tu recurso appdata, y la próxima copia la incluye.
-- **No los necesitas.** Añade la ruta de la carpeta dentro del contenedor, como `/var/lib/beszel-agent` o `/cache`, como una línea en la tarjeta **Patrones de exclusión** de la pestaña **Ajustes** del contenedor. A partir de la próxima copia el aviso deja fuera esa carpeta, y la vista previa bajo el campo dice por qué. Una línea para una carpeta superior también sirve, un nombre simple no.
+- **No los necesitas.** Añade una de sus dos rutas como una línea en la tarjeta **Patrones de exclusión** de la misma pestaña: la ruta dentro del contenedor, como `/cache`, o la ruta del host que nombra el aviso, como `/var/lib/docker/volumes/jellyfin_cache/_data`. A partir de la próxima copia el aviso deja fuera esa carpeta, y la vista previa bajo el campo dice por qué. Una línea para una carpeta superior también sirve, un nombre simple o `/` no.
 
 ## Una copia grande se terminó por quedarse sin memoria
 

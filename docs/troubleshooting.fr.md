@@ -54,10 +54,12 @@ restic refuse un certificat qu'il ne connaît pas, et le message d'erreur indiqu
 
 ## Une sauvegarde indique que des données hors de Host Data n'ont pas été sauvegardées {#data-outside-host-data}
 
-Le conteneur garde des données dans un dossier que BombVault ne peut pas lire via Host Data. La sauvegarde enregistre la définition et chaque dossier qu'elle atteint, colore sa ligne en orange dans le journal d'activité et nomme les dossiers laissés de côté. Deux cas sont fréquents : un ixVolume sur TrueNAS sous `/mnt/.ix-apps`, et un volume Docker anonyme sous `/var/lib/docker/volumes`, que Docker crée de lui-même pour un dossier déclaré par l'image et que personne n'a mappé, comme les données d'un agent de supervision ou le cache d'un serveur multimédia.
+Le conteneur garde des données dans un dossier que BombVault ne peut pas lire via Host Data. La sauvegarde enregistre la définition et chaque dossier qu'elle atteint, colore sa ligne en orange dans le journal d'activité et nomme les dossiers laissés de côté. Deux cas sont fréquents : un ixVolume sur TrueNAS sous `/mnt/.ix-apps`, et un volume Docker nommé sous `/var/lib/docker/volumes`, comme le volume de base de données d'une stack compose. La carte **Dossiers à sauvegarder** de l'onglet **Paramètres** du conteneur affiche chacun de ces dossiers avec son chemin dans le conteneur et son chemin sur l'hôte, marqué en rouge.
+
+Un volume Docker anonyme n'est pas signalé. Docker le crée de lui-même pour un dossier déclaré par l'image et que personne n'a mappé, lui donne un nom de 64 chiffres hexadécimaux et le range sous `/var/lib/docker/volumes`. Il contient le plus souvent un cache, la sauvegarde reste donc verte et la carte se contente de l'afficher, avec une note indiquant qu'il est anonyme.
 
 - **Vous voulez sauvegarder ces données.** Mappez le dossier sur un chemin de l'hôte sous Host Data, par exemple un dossier de votre partage appdata, et la prochaine sauvegarde l'inclut.
-- **Vous n'en avez pas besoin.** Ajoutez le chemin du dossier dans le conteneur, comme `/var/lib/beszel-agent` ou `/cache`, comme ligne dans la carte **Motifs d'exclusion** de l'onglet **Paramètres** du conteneur. À partir de la prochaine sauvegarde, l'avertissement laisse ce dossier de côté, et l'aperçu sous le champ dit pourquoi. Une ligne pour un dossier au-dessus fonctionne aussi, un nom simple non.
+- **Vous n'en avez pas besoin.** Ajoutez l'un de ses deux chemins comme ligne dans la carte **Motifs d'exclusion** du même onglet : le chemin dans le conteneur, comme `/cache`, ou le chemin sur l'hôte que nomme l'avertissement, comme `/var/lib/docker/volumes/jellyfin_cache/_data`. À partir de la prochaine sauvegarde, l'avertissement laisse ce dossier de côté, et l'aperçu sous le champ dit pourquoi. Une ligne pour un dossier au-dessus fonctionne aussi, un nom simple ou `/` non.
 
 ## Une grosse sauvegarde a été tuée faute de mémoire
 

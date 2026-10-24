@@ -54,10 +54,12 @@ restic tanımadığı bir sertifikayı reddeder ve hata onu nereye koyacağını
 
 ## Bir yedek, Host Data dışındaki verilerin yedeklenmediğini söylüyor {#data-outside-host-data}
 
-Konteyner, BombVault'un Host Data üzerinden okuyamadığı bir klasörde veri tutuyor. Yedek, tanımı ve ulaşabildiği her klasörü kaydeder, etkinlik günlüğündeki satırını turuncuya boyar ve dışarıda bıraktığı klasörleri adlandırır. İki durum sık görülür: TrueNAS'ta `/mnt/.ix-apps` altındaki bir ixVolume ve `/var/lib/docker/volumes` altındaki anonim bir Docker birimi. İkincisini Docker, image'in tanımladığı ama kimsenin eşlemediği bir klasör için kendiliğinden oluşturur; bir izleme ajanının verileri ya da bir medya sunucusunun önbelleği buna örnektir.
+Konteyner, BombVault'un Host Data üzerinden okuyamadığı bir klasörde veri tutuyor. Yedek, tanımı ve ulaşabildiği her klasörü kaydeder, etkinlik günlüğündeki satırını turuncuya boyar ve dışarıda bıraktığı klasörleri adlandırır. İki durum sık görülür: TrueNAS'ta `/mnt/.ix-apps` altındaki bir ixVolume ve `/var/lib/docker/volumes` altındaki adlandırılmış bir Docker birimi, örneğin bir compose yığınının veritabanı birimi. Konteynerin **Ayarlar** sekmesindeki **Yedeklenecek klasörler** kartı bu tür her klasörü konteyner içindeki yolu ve ana makinedeki yoluyla, kırmızıyla işaretli olarak gösterir.
+
+Anonim bir Docker birimi bildirilmez. Docker onu, image'in tanımladığı ama kimsenin eşlemediği bir klasör için kendiliğinden oluşturur, 64 onaltılık basamaktan oluşan bir ad verir ve `/var/lib/docker/volumes` altında tutar. İçinde genellikle önbellek bulunur, bu yüzden yedek yeşil kalır ve kart onu yalnızca anonim olduğunu belirten bir notla gösterir.
 
 - **Bu verilerin yedeklenmesini istiyorsun.** Klasörü Host Data altındaki bir ana makine yoluna, örneğin appdata paylaşımındaki bir klasöre eşle; bir sonraki yedek onu da alır.
-- **Onlara ihtiyacın yok.** Klasörün konteyner içindeki yolunu, örneğin `/var/lib/beszel-agent` ya da `/cache`, konteynerin **Ayarlar** sekmesindeki **Hariç tutma desenleri** kartına bir satır olarak ekle. Bir sonraki yedekten itibaren uyarı o klasörü dışarıda bırakır ve alanın altındaki önizleme nedenini söyler. Üstteki bir klasör için yazılan satır da işe yarar, düz bir ad yaramaz.
+- **Onlara ihtiyacın yok.** İki yolundan birini aynı sekmedeki **Hariç tutma desenleri** kartına bir satır olarak ekle: konteyner içindeki yolu, örneğin `/cache`, ya da uyarının adını verdiği ana makine yolunu, örneğin `/var/lib/docker/volumes/jellyfin_cache/_data`. Bir sonraki yedekten itibaren uyarı o klasörü dışarıda bırakır ve alanın altındaki önizleme nedenini söyler. Üstteki bir klasör için yazılan satır da işe yarar, düz bir ad ya da `/` yaramaz.
 
 ## Büyük bir yedekleme belleği tükendiği için sonlandırıldı
 

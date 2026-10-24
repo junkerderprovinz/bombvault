@@ -54,10 +54,12 @@ restic weigert een certificaat dat het niet kent, en de foutmelding zegt waar he
 
 ## Een back-up meldt dat gegevens buiten Host Data niet zijn geback-upt {#data-outside-host-data}
 
-De container bewaart gegevens in een map die BombVault niet via Host Data kan lezen. De back-up slaat de definitie op en elke map die hij kan bereiken, kleurt zijn regel in het activiteitenlogboek oranje en noemt de mappen die hij heeft overgeslagen. Twee gevallen komen vaak voor: een ixVolume op TrueNAS onder `/mnt/.ix-apps` en een anoniem Docker-volume onder `/var/lib/docker/volumes`, dat Docker zelf aanmaakt voor een map die het image declareert en die niemand heeft gekoppeld, zoals de gegevens van een monitoringagent of de cache van een mediaserver.
+De container bewaart gegevens in een map die BombVault niet via Host Data kan lezen. De back-up slaat de definitie op en elke map die hij kan bereiken, kleurt zijn regel in het activiteitenlogboek oranje en noemt de mappen die hij heeft overgeslagen. Twee gevallen komen vaak voor: een ixVolume op TrueNAS onder `/mnt/.ix-apps` en een benoemd Docker-volume onder `/var/lib/docker/volumes`, zoals het databasevolume van een compose-stack. De kaart **Back-upmappen** op het tabblad **Instellingen** van de container toont elke map van dat soort met zijn pad binnen de container en zijn hostpad, rood gemarkeerd.
+
+Een anoniem Docker-volume wordt niet gemeld. Docker maakt het zelf aan voor een map die het image declareert en die niemand heeft gekoppeld, geeft het een naam van 64 hexadecimale cijfers en bewaart het onder `/var/lib/docker/volumes`. Meestal zit er een cache in, dus de back-up blijft groen en de kaart toont het alleen, met een opmerking dat het anoniem is.
 
 - **Je wilt die gegevens geback-upt hebben.** Koppel de map aan een hostpad onder Host Data, bijvoorbeeld een map in je appdata-share, dan neemt de volgende back-up hem mee.
-- **Je hebt ze niet nodig.** Voeg het pad van de map binnen de container toe, zoals `/var/lib/beszel-agent` of `/cache`, als regel in de kaart **Uitsluitpatronen** op het tabblad **Instellingen** van de container. Vanaf de volgende back-up laat de waarschuwing die map weg, en het voorbeeld onder het veld zegt waarom. Een regel voor een map erboven werkt ook, een kale naam niet.
+- **Je hebt ze niet nodig.** Voeg een van de twee paden toe als regel in de kaart **Uitsluitpatronen** op hetzelfde tabblad: het pad binnen de container, zoals `/cache`, of het hostpad dat de waarschuwing noemt, zoals `/var/lib/docker/volumes/jellyfin_cache/_data`. Vanaf de volgende back-up laat de waarschuwing die map weg, en het voorbeeld onder het veld zegt waarom. Een regel voor een map erboven werkt ook, een kale naam of `/` niet.
 
 ## Een grote back-up werd afgebroken wegens geheugengebrek
 

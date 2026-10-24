@@ -54,10 +54,12 @@ restic odmítne certifikát, který nezná, a chybová zpráva řekne, kam ho d�
 
 ## Záloha hlásí, že data mimo Host Data nebyla zálohována {#data-outside-host-data}
 
-Kontejner má data ve složce, kterou BombVault přes Host Data nepřečte. Záloha uloží definici a každou složku, ke které se dostane, obarví svůj řádek v protokolu aktivit oranžově a vyjmenuje složky, které vynechala. Dva případy jsou běžné: ixVolume na TrueNAS pod `/mnt/.ix-apps` a anonymní svazek Dockeru pod `/var/lib/docker/volumes`, který Docker sám vytvoří pro složku, kterou image deklaruje a nikdo ji nenamapoval, například data monitorovacího agenta nebo mezipaměť mediálního serveru.
+Kontejner má data ve složce, kterou BombVault přes Host Data nepřečte. Záloha uloží definici a každou složku, ke které se dostane, obarví svůj řádek v protokolu aktivit oranžově a vyjmenuje složky, které vynechala. Dva případy jsou běžné: ixVolume na TrueNAS pod `/mnt/.ix-apps` a pojmenovaný svazek Dockeru pod `/var/lib/docker/volumes`, třeba svazek s databází ze stacku compose. Karta **Zálohované složky** na kartě **Nastavení** kontejneru ukazuje každou takovou složku s její cestou uvnitř kontejneru a cestou na hostiteli, označenou červeně.
+
+Anonymní svazek Dockeru se nehlásí. Docker ho sám vytvoří pro složku, kterou image deklaruje a nikdo ji nenamapoval, pojmenuje ho 64 šestnáctkovými číslicemi a uloží pod `/var/lib/docker/volumes`. Většinou v něm je mezipaměť, proto záloha zůstane zelená a karta ho jen uvede s poznámkou, že je anonymní.
 
 - **Chceš ta data zálohovat.** Namapuj složku na cestu na hostiteli pod Host Data, třeba na složku ve sdílení appdata, a další záloha ji zahrne.
-- **Nepotřebuješ je.** Přidej cestu ke složce uvnitř kontejneru, třeba `/var/lib/beszel-agent` nebo `/cache`, jako řádek do karty **Vzory vyloučení** na kartě **Nastavení** kontejneru. Od další zálohy varování tuto složku vynechá a náhled pod polem řekne proč. Řádek pro nadřazenou složku funguje také, samotný název ne.
+- **Nepotřebuješ je.** Přidej jednu z jejích dvou cest jako řádek do karty **Vzory vyloučení** na stejné kartě: cestu uvnitř kontejneru, třeba `/cache`, nebo cestu na hostiteli, kterou varování uvádí, třeba `/var/lib/docker/volumes/jellyfin_cache/_data`. Od další zálohy varování tuto složku vynechá a náhled pod polem řekne proč. Řádek pro nadřazenou složku funguje také, samotný název nebo `/` ne.
 
 ## Velká záloha byla ukončena kvůli nedostatku paměti
 

@@ -54,10 +54,12 @@ O restic recusa um certificado que não conhece, e o erro diz onde o colocar. Co
 
 ## Um backup diz que os dados fora de Host Data não foram copiados {#data-outside-host-data}
 
-O container guarda dados numa pasta que o BombVault não consegue ler através de Host Data. O backup guarda a definição e todas as pastas a que chega, pinta de laranja a sua linha no registo de atividade e indica as pastas que deixou de fora. Há dois casos comuns: um ixVolume no TrueNAS em `/mnt/.ix-apps` e um volume anónimo do Docker em `/var/lib/docker/volumes`, que o Docker cria sozinho para uma pasta que a imagem declara e que ninguém mapeou, como os dados de um agente de monitorização ou a cache de um servidor multimédia.
+O container guarda dados numa pasta que o BombVault não consegue ler através de Host Data. O backup guarda a definição e todas as pastas a que chega, pinta de laranja a sua linha no registo de atividade e indica as pastas que deixou de fora. Há dois casos comuns: um ixVolume no TrueNAS em `/mnt/.ix-apps` e um volume do Docker com nome em `/var/lib/docker/volumes`, como o volume da base de dados de uma stack compose. O cartão **Pastas a copiar** do separador **Definições** do container mostra cada uma dessas pastas com o caminho dentro do container e o caminho no host, marcada a vermelho.
+
+Um volume anónimo do Docker não é reportado. O Docker cria-o sozinho para uma pasta que a imagem declara e que ninguém mapeou, dá-lhe um nome de 64 dígitos hexadecimais e guarda-o em `/var/lib/docker/volumes`. Normalmente contém uma cache, por isso o backup fica verde e o cartão apenas o mostra, com uma nota de que é anónimo.
 
 - **Queres copiar esses dados.** Mapeia a pasta para um caminho do host abaixo de Host Data, por exemplo uma pasta da tua partilha appdata, e o próximo backup inclui-a.
-- **Não precisas deles.** Adiciona o caminho da pasta dentro do container, como `/var/lib/beszel-agent` ou `/cache`, como uma linha no cartão **Padrões de exclusão** do separador **Definições** do container. A partir do próximo backup, o aviso deixa essa pasta de fora, e a pré-visualização por baixo do campo diz porquê. Uma linha para uma pasta acima também serve, um nome simples não.
+- **Não precisas deles.** Adiciona um dos seus dois caminhos como uma linha no cartão **Padrões de exclusão** do mesmo separador: o caminho dentro do container, como `/cache`, ou o caminho no host que o aviso indica, como `/var/lib/docker/volumes/jellyfin_cache/_data`. A partir do próximo backup, o aviso deixa essa pasta de fora, e a pré-visualização por baixo do campo diz porquê. Uma linha para uma pasta acima também serve, um nome simples ou `/` não.
 
 ## Um backup grande foi terminado por falta de memória
 

@@ -54,10 +54,12 @@ restic afviser et certifikat, det ikke kender, og fejlen siger, hvor det skal li
 
 ## En sikkerhedskopi siger, at data uden for Host Data ikke blev sikkerhedskopieret {#data-outside-host-data}
 
-Containeren har data i en mappe, som BombVault ikke kan læse via Host Data. Sikkerhedskopien gemmer definitionen og hver mappe, den kan nå, farver sin linje i aktivitetsloggen orange og nævner de mapper, den udelod. To tilfælde er almindelige: et ixVolume på TrueNAS under `/mnt/.ix-apps` og en anonym Docker-volumen under `/var/lib/docker/volumes`, som Docker selv opretter til en mappe, imaget angiver, og som ingen har tilknyttet, for eksempel dataene fra en overvågningsagent eller cachen fra en medieserver.
+Containeren har data i en mappe, som BombVault ikke kan læse via Host Data. Sikkerhedskopien gemmer definitionen og hver mappe, den kan nå, farver sin linje i aktivitetsloggen orange og nævner de mapper, den udelod. To tilfælde er almindelige: et ixVolume på TrueNAS under `/mnt/.ix-apps` og en navngiven Docker-volumen under `/var/lib/docker/volumes`, for eksempel databasevolumen i en compose-stak. Kortet **Sikkerhedskopierede mapper** på containerens fane **Indstillinger** viser hver sådan mappe med dens sti inde i containeren og dens værtssti, markeret med rødt.
+
+En anonym Docker-volumen bliver ikke meldt. Docker opretter den selv til en mappe, imaget angiver, og som ingen har tilknyttet, giver den et navn på 64 hexcifre og lægger den under `/var/lib/docker/volumes`. Som regel indeholder den en cache, så sikkerhedskopien forbliver grøn, og kortet viser den kun med en note om, at den er anonym.
 
 - **Du vil have de data sikkerhedskopieret.** Tilknyt mappen til en værtssti under Host Data, for eksempel en mappe i din appdata-share, så kommer den med i næste sikkerhedskopi.
-- **Du har ikke brug for dem.** Tilføj mappens sti inde i containeren, for eksempel `/var/lib/beszel-agent` eller `/cache`, som en linje i kortet **Udelukkelsesmønstre** på containerens fane **Indstillinger**. Fra næste sikkerhedskopi udelader advarslen den mappe, og forhåndsvisningen under feltet siger hvorfor. En linje for en mappe over den virker også, et rent navn gør ikke.
+- **Du har ikke brug for dem.** Tilføj en af dens to stier som en linje i kortet **Udelukkelsesmønstre** på samme fane: stien inde i containeren, for eksempel `/cache`, eller værtsstien, som advarslen nævner, for eksempel `/var/lib/docker/volumes/jellyfin_cache/_data`. Fra næste sikkerhedskopi udelader advarslen den mappe, og forhåndsvisningen under feltet siger hvorfor. En linje for en mappe over den virker også, et rent navn eller `/` gør ikke.
 
 ## En stor sikkerhedskopi blev dræbt, fordi hukommelsen slap op
 

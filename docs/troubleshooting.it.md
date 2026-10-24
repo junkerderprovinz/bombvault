@@ -54,10 +54,12 @@ restic rifiuta un certificato che non conosce, e l'errore dice dove metterlo. Co
 
 ## Un backup dice che i dati fuori da Host Data non sono stati salvati {#data-outside-host-data}
 
-Il container tiene dati in una cartella che BombVault non può leggere tramite Host Data. Il backup salva la definizione e ogni cartella che raggiunge, colora di arancione la sua riga nel registro attività e nomina le cartelle lasciate fuori. Due casi sono frequenti: un ixVolume su TrueNAS sotto `/mnt/.ix-apps` e un volume Docker anonimo sotto `/var/lib/docker/volumes`, che Docker crea da solo per una cartella dichiarata dall'immagine e che nessuno ha mappato, come i dati di un agente di monitoraggio o la cache di un media server.
+Il container tiene dati in una cartella che BombVault non può leggere tramite Host Data. Il backup salva la definizione e ogni cartella che raggiunge, colora di arancione la sua riga nel registro attività e nomina le cartelle lasciate fuori. Due casi sono frequenti: un ixVolume su TrueNAS sotto `/mnt/.ix-apps` e un volume Docker con nome sotto `/var/lib/docker/volumes`, come il volume del database di uno stack compose. La scheda **Cartelle da salvare** nella scheda **Impostazioni** del container mostra ognuna di queste cartelle con il suo percorso dentro il container e il suo percorso sull'host, segnata in rosso.
+
+Un volume Docker anonimo non viene segnalato. Docker lo crea da solo per una cartella dichiarata dall'immagine e che nessuno ha mappato, gli dà un nome di 64 cifre esadecimali e lo tiene sotto `/var/lib/docker/volumes`. Di solito contiene una cache, quindi il backup resta verde e la scheda si limita a mostrarlo, con una nota che è anonimo.
 
 - **Vuoi salvare quei dati.** Mappa la cartella su un percorso dell'host sotto Host Data, per esempio una cartella della tua condivisione appdata, e il prossimo backup la include.
-- **Non ti servono.** Aggiungi il percorso della cartella dentro il container, come `/var/lib/beszel-agent` o `/cache`, come riga nella scheda **Pattern di esclusione** della scheda **Impostazioni** del container. Dal prossimo backup l'avviso lascia fuori quella cartella, e l'anteprima sotto il campo dice perché. Funziona anche una riga per una cartella superiore, un nome semplice no.
+- **Non ti servono.** Aggiungi uno dei suoi due percorsi come riga nella scheda **Pattern di esclusione** della stessa scheda: il percorso dentro il container, come `/cache`, o il percorso sull'host che l'avviso nomina, come `/var/lib/docker/volumes/jellyfin_cache/_data`. Dal prossimo backup l'avviso lascia fuori quella cartella, e l'anteprima sotto il campo dice perché. Funziona anche una riga per una cartella superiore, un nome semplice o `/` no.
 
 ## Un backup grande è stato terminato per mancanza di memoria
 

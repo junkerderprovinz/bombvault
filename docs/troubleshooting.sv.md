@@ -54,10 +54,12 @@ restic vägrar ett certifikat det inte känner till, och felet säger var det sk
 
 ## En säkerhetskopia säger att data utanför Host Data inte säkerhetskopierades {#data-outside-host-data}
 
-Containern har data i en mapp som BombVault inte kan läsa via Host Data. Säkerhetskopian sparar definitionen och varje mapp den når, färgar sin rad i aktivitetsloggen orange och namnger mapparna den hoppade över. Två fall är vanliga: en ixVolume på TrueNAS under `/mnt/.ix-apps` och en anonym Docker-volym under `/var/lib/docker/volumes`, som Docker skapar själv för en mapp som imagen anger och som ingen har mappat, till exempel data från en övervakningsagent eller cachen för en mediaserver.
+Containern har data i en mapp som BombVault inte kan läsa via Host Data. Säkerhetskopian sparar definitionen och varje mapp den når, färgar sin rad i aktivitetsloggen orange och namnger mapparna den hoppade över. Två fall är vanliga: en ixVolume på TrueNAS under `/mnt/.ix-apps` och en namngiven Docker-volym under `/var/lib/docker/volumes`, till exempel databasvolymen i en compose-stack. Kortet **Säkerhetskopierade mappar** på containerns flik **Inställningar** visar varje sådan mapp med dess sökväg inuti containern och dess värdsökväg, markerad med rött.
+
+En anonym Docker-volym rapporteras inte. Docker skapar den själv för en mapp som imagen anger och som ingen har mappat, ger den ett namn på 64 hexadecimala siffror och lägger den under `/var/lib/docker/volumes`. Oftast innehåller den en cache, så säkerhetskopian förblir grön och kortet visar den bara, med en notis om att den är anonym.
 
 - **Du vill säkerhetskopiera de data.** Mappa mappen till en värdsökväg under Host Data, till exempel en mapp i din appdata-delning, så tar nästa säkerhetskopia med den.
-- **Du behöver dem inte.** Lägg till mappens sökväg inuti containern, till exempel `/var/lib/beszel-agent` eller `/cache`, som en rad i kortet **Uteslutningsmönster** på containerns flik **Inställningar**. Från nästa säkerhetskopia utelämnar varningen den mappen, och förhandsgranskningen under fältet säger varför. En rad för en mapp ovanför fungerar också, ett rent namn gör det inte.
+- **Du behöver dem inte.** Lägg till en av dess två sökvägar som en rad i kortet **Uteslutningsmönster** på samma flik: sökvägen inuti containern, till exempel `/cache`, eller värdsökvägen som varningen nämner, till exempel `/var/lib/docker/volumes/jellyfin_cache/_data`. Från nästa säkerhetskopia utelämnar varningen den mappen, och förhandsgranskningen under fältet säger varför. En rad för en mapp ovanför fungerar också, ett rent namn eller `/` gör det inte.
 
 ## En stor säkerhetskopiering avbröts för att minnet tog slut
 

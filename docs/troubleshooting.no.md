@@ -54,10 +54,12 @@ restic avviser et sertifikat det ikke kjenner, og feilmeldingen sier hvor det sk
 
 ## En sikkerhetskopi sier at data utenfor Host Data ikke ble sikkerhetskopiert {#data-outside-host-data}
 
-Containeren har data i en mappe BombVault ikke kan lese gjennom Host Data. Sikkerhetskopien lagrer definisjonen og hver mappe den når, farger linjen sin i aktivitetsloggen oransje og navngir mappene den utelot. To tilfeller er vanlige: et ixVolume på TrueNAS under `/mnt/.ix-apps` og et anonymt Docker-volum under `/var/lib/docker/volumes`, som Docker lager selv for en mappe imaget oppgir og ingen har koblet til, for eksempel dataene til en overvåkingsagent eller hurtigbufferen til en medieserver.
+Containeren har data i en mappe BombVault ikke kan lese gjennom Host Data. Sikkerhetskopien lagrer definisjonen og hver mappe den når, farger linjen sin i aktivitetsloggen oransje og navngir mappene den utelot. To tilfeller er vanlige: et ixVolume på TrueNAS under `/mnt/.ix-apps` og et navngitt Docker-volum under `/var/lib/docker/volumes`, for eksempel databasevolumet i en compose-stack. Kortet **Sikkerhetskopierte mapper** på fanen **Innstillinger** for containeren viser hver slik mappe med stien inne i containeren og vertsstien, merket med rødt.
+
+Et anonymt Docker-volum blir ikke meldt. Docker lager det selv for en mappe imaget oppgir og ingen har koblet til, gir det et navn på 64 heksadesimale sifre og legger det under `/var/lib/docker/volumes`. Som regel inneholder det en hurtigbuffer, så sikkerhetskopien forblir grønn, og kortet viser det bare med en merknad om at det er anonymt.
 
 - **Du vil ha de dataene sikkerhetskopiert.** Koble mappen til en vertssti under Host Data, for eksempel en mappe i appdata-delingen din, så tar neste sikkerhetskopi den med.
-- **Du trenger dem ikke.** Legg til mappens sti inne i containeren, for eksempel `/var/lib/beszel-agent` eller `/cache`, som en linje i kortet **Ekskluderingsmønstre** på fanen **Innstillinger** for containeren. Fra neste sikkerhetskopi utelater varselet den mappen, og forhåndsvisningen under feltet sier hvorfor. En linje for en mappe over den virker også, et rent navn gjør ikke.
+- **Du trenger dem ikke.** Legg til en av de to stiene som en linje i kortet **Ekskluderingsmønstre** på samme fane: stien inne i containeren, for eksempel `/cache`, eller vertsstien varselet nevner, for eksempel `/var/lib/docker/volumes/jellyfin_cache/_data`. Fra neste sikkerhetskopi utelater varselet den mappen, og forhåndsvisningen under feltet sier hvorfor. En linje for en mappe over den virker også, et rent navn eller `/` gjør ikke.
 
 ## En stor sikkerhetskopi ble drept fordi minnet tok slutt
 

@@ -54,10 +54,12 @@ A restic elutasítja az általa nem ismert tanúsítványt, és a hibaüzenet me
 
 ## Egy mentés jelzi, hogy a Host Data területén kívüli adatokról nem készült mentés {#data-outside-host-data}
 
-A konténer olyan mappában tart adatokat, amelyet a BombVault a Host Data felől nem tud olvasni. A mentés elmenti a definíciót és minden mappát, amelyet elér, a sorát narancssárgára színezi a tevékenységnaplóban, és megnevezi a kihagyott mappákat. Két eset gyakori: egy ixVolume TrueNAS-on a `/mnt/.ix-apps` alatt, és egy névtelen Docker-kötet a `/var/lib/docker/volumes` alatt, amelyet a Docker magától hoz létre egy olyan mappához, amelyet az image megad, de senki nem csatolt, például egy megfigyelő ügynök adataihoz vagy egy médiaszerver gyorsítótárához.
+A konténer olyan mappában tart adatokat, amelyet a BombVault a Host Data felől nem tud olvasni. A mentés elmenti a definíciót és minden mappát, amelyet elér, a sorát narancssárgára színezi a tevékenységnaplóban, és megnevezi a kihagyott mappákat. Két eset gyakori: egy ixVolume TrueNAS-on a `/mnt/.ix-apps` alatt, és egy elnevezett Docker-kötet a `/var/lib/docker/volumes` alatt, például egy compose stack adatbázis-kötete. A konténer **Beállítások** lapján lévő **Mentett mappák** kártya minden ilyen mappát megmutat a konténeren belüli és a gazdagépes útvonalával, pirossal jelölve.
+
+A névtelen Docker-kötetről nincs jelzés. A Docker magától hozza létre egy olyan mappához, amelyet az image megad, de senki nem csatolt, 64 hexadecimális számjegyből álló nevet ad neki, és a `/var/lib/docker/volumes` alatt tárolja. Többnyire gyorsítótár van benne, ezért a mentés zöld marad, a kártya pedig csak felsorolja egy megjegyzéssel, hogy névtelen.
 
 - **Szeretnéd menteni ezeket az adatokat.** Csatold a mappát egy Host Data alatti gazdagépes útvonalhoz, például egy mappához az appdata megosztásodban, és a következő mentés már tartalmazza.
-- **Nincs rájuk szükséged.** Add hozzá a mappa konténeren belüli útvonalát, például `/var/lib/beszel-agent` vagy `/cache`, sorként a konténer **Beállítások** lapján lévő **Kizárási minták** kártyához. A következő mentéstől a figyelmeztetés kihagyja ezt a mappát, a mező alatti előnézet pedig megmondja, miért. Egy fölötte lévő mappa sora is működik, egy önálló név nem.
+- **Nincs rájuk szükséged.** Add hozzá a két útvonala közül az egyiket sorként ugyanezen a lapon a **Kizárási minták** kártyához: a konténeren belüli útvonalat, például `/cache`, vagy a gazdagépes útvonalat, amelyet a figyelmeztetés megnevez, például `/var/lib/docker/volumes/jellyfin_cache/_data`. A következő mentéstől a figyelmeztetés kihagyja ezt a mappát, a mező alatti előnézet pedig megmondja, miért. Egy fölötte lévő mappa sora is működik, egy önálló név vagy a `/` nem.
 
 ## Egy nagy mentést memóriahiány miatt leállítottak
 

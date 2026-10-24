@@ -54,10 +54,12 @@ restic odrzuca certyfikat, którego nie zna, a komunikat błędu mówi, gdzie go
 
 ## Kopia zapasowa zgłasza, że dane poza Host Data nie zostały zarchiwizowane {#data-outside-host-data}
 
-Kontener trzyma dane w folderze, którego BombVault nie może odczytać przez Host Data. Kopia zapisuje definicję i każdy folder, do którego sięga, barwi swój wiersz w dzienniku aktywności na pomarańczowo i wymienia foldery, które pominęła. Dwa przypadki są częste: ixVolume na TrueNAS pod `/mnt/.ix-apps` oraz anonimowy wolumen Dockera pod `/var/lib/docker/volumes`, który Docker sam tworzy dla folderu zadeklarowanego przez obraz, którego nikt nie zmapował, na przykład dla danych agenta monitorującego albo pamięci podręcznej serwera multimediów.
+Kontener trzyma dane w folderze, którego BombVault nie może odczytać przez Host Data. Kopia zapisuje definicję i każdy folder, do którego sięga, barwi swój wiersz w dzienniku aktywności na pomarańczowo i wymienia foldery, które pominęła. Dwa przypadki są częste: ixVolume na TrueNAS pod `/mnt/.ix-apps` oraz nazwany wolumen Dockera pod `/var/lib/docker/volumes`, na przykład wolumen bazy danych stosu compose. Karta **Foldery do kopii** na karcie **Ustawienia** kontenera pokazuje każdy taki folder z jego ścieżką wewnątrz kontenera i ścieżką na hoście, oznaczony na czerwono.
+
+Anonimowy wolumen Dockera nie jest zgłaszany. Docker sam go tworzy dla folderu zadeklarowanego przez obraz, którego nikt nie zmapował, nadaje mu nazwę z 64 cyfr szesnastkowych i trzyma go pod `/var/lib/docker/volumes`. Zwykle jest w nim pamięć podręczna, więc kopia pozostaje zielona, a karta tylko go pokazuje z uwagą, że jest anonimowy.
 
 - **Chcesz archiwizować te dane.** Zmapuj folder na ścieżkę hosta pod Host Data, na przykład na folder w udziale appdata, a następna kopia go obejmie.
-- **Nie potrzebujesz ich.** Dodaj ścieżkę folderu wewnątrz kontenera, na przykład `/var/lib/beszel-agent` albo `/cache`, jako wiersz w karcie **Wzorce wykluczeń** na karcie **Ustawienia** kontenera. Od następnej kopii ostrzeżenie pomija ten folder, a podgląd pod polem mówi dlaczego. Wiersz dla folderu nadrzędnego też działa, sama nazwa nie.
+- **Nie potrzebujesz ich.** Dodaj jedną z jego dwóch ścieżek jako wiersz w karcie **Wzorce wykluczeń** na tej samej karcie: ścieżkę wewnątrz kontenera, na przykład `/cache`, albo ścieżkę na hoście, którą podaje ostrzeżenie, na przykład `/var/lib/docker/volumes/jellyfin_cache/_data`. Od następnej kopii ostrzeżenie pomija ten folder, a podgląd pod polem mówi dlaczego. Wiersz dla folderu nadrzędnego też działa, sama nazwa ani `/` nie.
 
 ## Duża kopia zapasowa została zabita z braku pamięci
 

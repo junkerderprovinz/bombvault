@@ -54,10 +54,12 @@ restic lehnt ein Zertifikat ab, das es nicht kennt, und die Fehlermeldung sagt, 
 
 ## Eine Sicherung meldet, dass Daten außerhalb von Host Data nicht gesichert wurden {#data-outside-host-data}
 
-Der Container hält Daten in einem Ordner, den BombVault über Host Data nicht lesen kann. Die Sicherung speichert die Definition und jeden Ordner, den sie erreicht, färbt ihre Zeile im Aktivitätsprotokoll orange und nennt die Ordner, die sie ausgelassen hat. Zwei Fälle sind häufig: ein ixVolume unter TrueNAS in `/mnt/.ix-apps` und ein anonymes Docker-Volume in `/var/lib/docker/volumes`, das Docker von selbst für einen Ordner anlegt, den das Image vorsieht und niemand zugeordnet hat, etwa die Daten eines Monitoring-Agenten oder den Cache eines Medienservers.
+Der Container hält Daten in einem Ordner, den BombVault über Host Data nicht lesen kann. Die Sicherung speichert die Definition und jeden Ordner, den sie erreicht, färbt ihre Zeile im Aktivitätsprotokoll orange und nennt die Ordner, die sie ausgelassen hat. Zwei Fälle sind häufig: ein ixVolume unter TrueNAS in `/mnt/.ix-apps` und ein benanntes Docker-Volume in `/var/lib/docker/volumes`, etwa das Datenbank-Volume eines Compose-Stacks. Die Karte **Gesicherte Ordner** auf dem Reiter **Einstellungen** des Containers zeigt jeden solchen Ordner mit seinem Pfad im Container und seinem Host-Pfad, rot markiert.
+
+Ein anonymes Docker-Volume wird nicht gemeldet. Docker legt es von selbst für einen Ordner an, den das Image vorsieht und niemand zugeordnet hat, gibt ihm einen Namen aus 64 Hex-Ziffern und legt es in `/var/lib/docker/volumes` ab. Meist liegt darin ein Cache, deshalb bleibt die Sicherung grün, und die Karte führt es nur auf, mit dem Hinweis, dass es anonym ist.
 
 - **Du willst diese Daten gesichert haben.** Ordne den Ordner einem Host-Pfad unterhalb von Host Data zu, etwa einem Ordner in deiner appdata-Freigabe, dann nimmt ihn die nächste Sicherung mit.
-- **Du brauchst sie nicht.** Trag den Pfad des Ordners im Container, etwa `/var/lib/beszel-agent` oder `/cache`, als Zeile in der Karte **Ausschlussmuster** auf dem Reiter **Einstellungen** des Containers ein. Ab der nächsten Sicherung lässt die Warnung diesen Ordner weg, und die Vorschau unter dem Feld sagt, warum. Eine Zeile für einen Ordner darüber wirkt genauso, ein reiner Name nicht.
+- **Du brauchst sie nicht.** Trag einen seiner beiden Pfade als Zeile in der Karte **Ausschlussmuster** auf demselben Reiter ein: den Pfad im Container, etwa `/cache`, oder den Host-Pfad, den die Warnung nennt, etwa `/var/lib/docker/volumes/jellyfin_cache/_data`. Ab der nächsten Sicherung lässt die Warnung diesen Ordner weg, und die Vorschau unter dem Feld sagt, warum. Eine Zeile für einen Ordner darüber wirkt genauso, ein reiner Name oder `/` nicht.
 
 ## Eine große Sicherung wurde wegen fehlenden Speichers beendet
 

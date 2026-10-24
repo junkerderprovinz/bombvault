@@ -54,10 +54,12 @@ restic hylkää varmenteen, jota se ei tunne, ja virheilmoitus kertoo, minne var
 
 ## Varmuuskopio kertoo, ettei Host Datan ulkopuolisia tietoja varmuuskopioitu {#data-outside-host-data}
 
-Kontti pitää tietoja kansiossa, jota BombVault ei voi lukea Host Datan kautta. Varmuuskopio tallentaa määrittelyn ja jokaisen kansion, johon se ylettyy, värittää rivinsä tapahtumalokissa oranssiksi ja nimeää kansiot, jotka se jätti pois. Kaksi tapausta on yleisiä: ixVolume TrueNASissa polussa `/mnt/.ix-apps` ja nimetön Docker-taltio polussa `/var/lib/docker/volumes`, jonka Docker luo itse kansiolle, jonka image määrittelee eikä kukaan ole liittänyt, kuten valvonta-agentin tiedot tai mediapalvelimen välimuisti.
+Kontti pitää tietoja kansiossa, jota BombVault ei voi lukea Host Datan kautta. Varmuuskopio tallentaa määrittelyn ja jokaisen kansion, johon se ylettyy, värittää rivinsä tapahtumalokissa oranssiksi ja nimeää kansiot, jotka se jätti pois. Kaksi tapausta on yleisiä: ixVolume TrueNASissa polussa `/mnt/.ix-apps` ja nimetty Docker-taltio polussa `/var/lib/docker/volumes`, kuten compose-pinon tietokantataltio. Kontin **Asetukset**-välilehden kortti **Varmuuskopioitavat kansiot** näyttää jokaisen tällaisen kansion polun kontin sisällä ja isännällä punaisella merkittynä.
+
+Nimettömästä Docker-taltiosta ei varoiteta. Docker luo sen itse kansiolle, jonka image määrittelee eikä kukaan ole liittänyt, nimeää sen 64 heksadesimaalinumerolla ja säilyttää sitä polussa `/var/lib/docker/volumes`. Siinä on yleensä välimuisti, joten varmuuskopio pysyy vihreänä ja kortti vain näyttää sen ja mainitsee, että se on nimetön.
 
 - **Haluat varmuuskopioida nuo tiedot.** Liitä kansio isännän polkuun Host Datan alla, esimerkiksi appdata-jaon kansioon, niin seuraava varmuuskopio ottaa sen mukaan.
-- **Et tarvitse niitä.** Lisää kansion polku kontin sisällä, kuten `/var/lib/beszel-agent` tai `/cache`, riviksi kortille **Poissulkumallit** kontin välilehdellä **Asetukset**. Seuraavasta varmuuskopiosta alkaen varoitus jättää kansion pois, ja kentän alla oleva esikatselu kertoo miksi. Myös rivi yläpuoliselle kansiolle toimii, pelkkä nimi ei.
+- **Et tarvitse niitä.** Lisää jompikumpi sen kahdesta polusta riviksi kortille **Poissulkumallit** samalla välilehdellä: polku kontin sisällä, kuten `/cache`, tai isännän polku, jonka varoitus mainitsee, kuten `/var/lib/docker/volumes/jellyfin_cache/_data`. Seuraavasta varmuuskopiosta alkaen varoitus jättää kansion pois, ja kentän alla oleva esikatselu kertoo miksi. Myös rivi yläpuoliselle kansiolle toimii, pelkkä nimi tai `/` ei.
 
 ## Suuri varmuuskopio lopetettiin muistin loppumisen vuoksi
 

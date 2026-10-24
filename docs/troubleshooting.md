@@ -54,10 +54,12 @@ restic refuses a certificate it does not know, and the error says where to put i
 
 ## A backup says data outside Host Data was not backed up {#data-outside-host-data}
 
-The container keeps data in a folder BombVault cannot read through Host Data. The backup saves the definition and every folder it can reach, turns its line in the activity log orange and names the folders it left out. Two cases are common: an ixVolume on TrueNAS under `/mnt/.ix-apps`, and an anonymous Docker volume under `/var/lib/docker/volumes`, which Docker creates by itself for a folder the image declares and nobody mapped, such as the data of a monitoring agent or the cache of a media server.
+The container keeps data in a folder BombVault cannot read through Host Data. The backup saves the definition and every folder it can reach, turns its line in the activity log orange and names the folders it left out. Two cases are common: an ixVolume on TrueNAS under `/mnt/.ix-apps`, and a named Docker volume under `/var/lib/docker/volumes`, such as the database volume of a compose stack. The **Backup folders** card on the container's **Settings** tab lists each such folder with its path inside the container and its host path, marked in red.
+
+An anonymous Docker volume is not reported. Docker creates one by itself for a folder the image declares and nobody mapped, names it with 64 hex digits and keeps it under `/var/lib/docker/volumes`. It usually holds a cache, so the backup stays green and the card only lists it, with a note that it is anonymous.
 
 - **You want that data backed up.** Map the folder to a host path below Host Data, for example a folder in your appdata share, and the next backup includes it.
-- **You do not need it.** Add the folder's path inside the container, such as `/var/lib/beszel-agent` or `/cache`, as a line in the **Exclude patterns** card on the container's **Settings** tab. From the next backup on, the warning leaves that folder out, and the preview under the field says why. A line for a folder above it works too, a bare name does not.
+- **You do not need it.** Add one of its two paths as a line in the **Exclude patterns** card on the same tab: the path inside the container, such as `/cache`, or the host path the warning names, such as `/var/lib/docker/volumes/jellyfin_cache/_data`. From the next backup on, the warning leaves that folder out, and the preview under the field says why. A line for a folder above it works too, a bare name or `/` does not.
 
 ## A large backup was killed for running out of memory
 

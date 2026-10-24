@@ -54,10 +54,12 @@ restic refuză un certificat pe care nu îl cunoaște, iar eroarea spune unde s�
 
 ## Un backup spune că datele din afara Host Data nu au fost salvate {#data-outside-host-data}
 
-Containerul ține date într-un dosar pe care BombVault nu îl poate citi prin Host Data. Backupul salvează definiția și fiecare dosar la care ajunge, își colorează linia din jurnalul de activitate în portocaliu și numește dosarele lăsate pe dinafară. Două cazuri sunt frecvente: un ixVolume pe TrueNAS sub `/mnt/.ix-apps` și un volum Docker anonim sub `/var/lib/docker/volumes`, pe care Docker îl creează singur pentru un dosar declarat de imagine și pe care nu l-a mapat nimeni, de exemplu datele unui agent de monitorizare sau cache-ul unui server media.
+Containerul ține date într-un dosar pe care BombVault nu îl poate citi prin Host Data. Backupul salvează definiția și fiecare dosar la care ajunge, își colorează linia din jurnalul de activitate în portocaliu și numește dosarele lăsate pe dinafară. Două cazuri sunt frecvente: un ixVolume pe TrueNAS sub `/mnt/.ix-apps` și un volum Docker cu nume sub `/var/lib/docker/volumes`, de exemplu volumul bazei de date dintr-un stack compose. Cardul **Foldere de salvat** din fila **Setări** a containerului arată fiecare astfel de dosar cu calea lui din container și calea de pe gazdă, marcat cu roșu.
+
+Un volum Docker anonim nu este raportat. Docker îl creează singur pentru un dosar declarat de imagine și pe care nu l-a mapat nimeni, îi dă un nume de 64 de cifre hexazecimale și îl ține sub `/var/lib/docker/volumes`. De obicei conține un cache, așa că backupul rămâne verde, iar cardul doar îl afișează, cu o notă că este anonim.
 
 - **Vrei să salvezi aceste date.** Mapează dosarul pe o cale a gazdei sub Host Data, de exemplu un dosar din partajarea appdata, iar următorul backup îl include.
-- **Nu ai nevoie de ele.** Adaugă calea dosarului din interiorul containerului, de exemplu `/var/lib/beszel-agent` sau `/cache`, ca linie în cardul **Modele de excludere** din fila **Setări** a containerului. De la următorul backup, avertismentul lasă dosarul deoparte, iar previzualizarea de sub câmp spune de ce. Merge și o linie pentru un dosar de deasupra, un nume simplu nu.
+- **Nu ai nevoie de ele.** Adaugă una dintre cele două căi ale lui ca linie în cardul **Modele de excludere** din aceeași filă: calea din interiorul containerului, de exemplu `/cache`, sau calea de pe gazdă pe care o numește avertismentul, de exemplu `/var/lib/docker/volumes/jellyfin_cache/_data`. De la următorul backup, avertismentul lasă dosarul deoparte, iar previzualizarea de sub câmp spune de ce. Merge și o linie pentru un dosar de deasupra, un nume simplu sau `/` nu.
 
 ## Un backup mare a fost oprit din lipsă de memorie
 

@@ -54,10 +54,12 @@ restic từ chối một chứng chỉ mà nó không biết, và thông báo l�
 
 ## Bản sao lưu báo rằng dữ liệu ngoài Host Data chưa được sao lưu {#data-outside-host-data}
 
-Container giữ dữ liệu trong một thư mục mà BombVault không đọc được qua Host Data. Bản sao lưu lưu định nghĩa và mọi thư mục nó với tới, tô cam dòng của nó trong nhật ký hoạt động và nêu tên các thư mục đã bỏ qua. Có hai trường hợp thường gặp: một ixVolume trên TrueNAS dưới `/mnt/.ix-apps`, và một volume Docker ẩn danh dưới `/var/lib/docker/volumes` mà Docker tự tạo cho một thư mục do image khai báo nhưng chưa ai ánh xạ, chẳng hạn dữ liệu của một agent giám sát hay bộ nhớ đệm của một máy chủ media.
+Container giữ dữ liệu trong một thư mục mà BombVault không đọc được qua Host Data. Bản sao lưu lưu định nghĩa và mọi thư mục nó với tới, tô cam dòng của nó trong nhật ký hoạt động và nêu tên các thư mục đã bỏ qua. Có hai trường hợp thường gặp: một ixVolume trên TrueNAS dưới `/mnt/.ix-apps`, và một volume Docker có tên dưới `/var/lib/docker/volumes`, chẳng hạn volume cơ sở dữ liệu của một stack compose. Thẻ **Thư mục sao lưu** trên tab **Cài đặt** của container hiển thị từng thư mục như vậy với đường dẫn bên trong container và đường dẫn trên host, được đánh dấu màu đỏ.
+
+Volume Docker ẩn danh không bị báo. Docker tự tạo nó cho một thư mục do image khai báo nhưng chưa ai ánh xạ, đặt tên bằng 64 chữ số thập lục phân và giữ nó dưới `/var/lib/docker/volumes`. Bên trong thường là bộ nhớ đệm, nên bản sao lưu vẫn xanh và thẻ chỉ liệt kê nó kèm ghi chú rằng nó ẩn danh.
 
 - **Bạn muốn sao lưu dữ liệu đó.** Ánh xạ thư mục tới một đường dẫn trên host bên dưới Host Data, ví dụ một thư mục trong share appdata của bạn, và lần sao lưu tiếp theo sẽ bao gồm nó.
-- **Bạn không cần nó.** Thêm đường dẫn của thư mục bên trong container, như `/var/lib/beszel-agent` hoặc `/cache`, thành một dòng trong thẻ **Mẫu loại trừ** trên tab **Cài đặt** của container. Từ lần sao lưu tiếp theo, cảnh báo sẽ bỏ thư mục đó ra, và bản xem trước bên dưới ô nhập cho biết lý do. Một dòng cho thư mục cha cũng có tác dụng, một tên đơn giản thì không.
+- **Bạn không cần nó.** Thêm một trong hai đường dẫn của nó thành một dòng trong thẻ **Mẫu loại trừ** trên cùng tab: đường dẫn bên trong container, như `/cache`, hoặc đường dẫn trên host mà cảnh báo nêu, như `/var/lib/docker/volumes/jellyfin_cache/_data`. Từ lần sao lưu tiếp theo, cảnh báo sẽ bỏ thư mục đó ra, và bản xem trước bên dưới ô nhập cho biết lý do. Một dòng cho thư mục cha cũng có tác dụng, một tên đơn giản hoặc `/` thì không.
 
 ## Một bản sao lưu lớn bị dừng vì hết bộ nhớ
 
