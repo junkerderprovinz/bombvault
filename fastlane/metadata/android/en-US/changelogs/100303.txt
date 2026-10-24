@@ -1,0 +1,1 @@
+The app is still on its break and sends its regards. BombVault 10.3.3 tidies up on the server: anonymous Docker volumes, the cache folders an image makes up on its own, stop turning backups orange. The Backup folders card shows every folder BombVault can't reach, and an exclude takes the host path from the warning too. Fewer orange lines, more naps.
