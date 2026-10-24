@@ -17,7 +17,7 @@ import {
 import { humanBytes } from "../../lib/forecast";
 import type { TranslationKey } from "../../lib/i18n";
 import type { ProgressState } from "../../lib/progress";
-import { formatRecent, relativeTime } from "../../lib/reltime";
+import { formatClockTime, formatRecent, relativeTime } from "../../lib/reltime";
 import { runReason } from "../../lib/runReason";
 import { useLongPress } from "../../lib/useLongPress";
 import { useTipBubble } from "../../lib/useTipBubble";
@@ -292,6 +292,8 @@ export function BackupRow({
         <ProgressBar percent={replicaProgress.percent} active inline />
       </span>
     );
+  } else if (status.is === "deferred") {
+    cell = <Status tone="warn">{t("backups.status.deferred").replace("{time}", formatClockTime(status.nextTry, false))}</Status>;
   } else if (status.is === "failed") {
     cell = <Status tone="fail">{t("run.statusFailed")}</Status>;
   } else if (status.is === "replicaFailed") {
@@ -341,8 +343,9 @@ export function BackupRow({
     <li
       data-testid="backup-row"
       data-new="backups-row"
-      // A ZFS entry with a replica is also the way to what is new about replicas.
-      data-new-way={item.replica ? "entry zfs-replica" : "entry"}
+      // A ZFS entry with a replica is also the way to what is new about
+      // replicas, and a container to what is new on a container's page.
+      data-new-way={item.replica ? "entry zfs-replica" : item.kind === "container" ? "entry container" : "entry"}
       data-picked={picked || undefined}
       onClick={(e) => {
         if (!taken(e)) navigate(target);

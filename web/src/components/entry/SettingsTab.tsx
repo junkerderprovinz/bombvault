@@ -6,6 +6,7 @@ import {
   setVMScheduleCadence,
   type AnomalyItem,
   type Container,
+  type DeferredBackup,
   type FileSetView,
   type OkEnvelope,
   type PlacementDomain,
@@ -32,6 +33,7 @@ import { KIND_SCHEDULE_LABEL } from "../backups/kinds";
 import { Button } from "../Button";
 import type { CadenceMode } from "../CadenceBuilder";
 import { ConfigSettingsCard } from "../config/ConfigSettingsCard";
+import { DEFAULT_DEFERRAL, DeferralCard } from "../containers/DeferralCard";
 import { ExcludesEditor } from "../containers/ExcludesEditor";
 import { FoldersEditor } from "../containers/FoldersEditor";
 import { HooksEditor } from "../containers/HooksEditor";
@@ -252,12 +254,15 @@ function NeedsDocker() {
 
 function ContainerCards({
   container,
+  waiting,
   installed,
   hostAnswered,
   onChanged,
   nextHue,
 }: {
   container: Container;
+  /** The backup of the container that waits for its app, if one does. */
+  waiting?: DeferredBackup;
   installed: Container[];
   /** Without Docker the folders and the containers to stop cannot be read. */
   hostAnswered: boolean;
@@ -325,9 +330,10 @@ function ContainerCards({
           <NeedsDocker />
         )}
       </Card>
-      <Card title={t("entry.settings.hooks")} hint={t("hooks.hint")} hueIndex={nextHue()}>
+      <Card title={t("entry.settings.hooks")} hint={`${t("hooks.hint")} ${t("hooks.deferHint")}`} hueIndex={nextHue()}>
         <HooksEditor name={container.name} initialPre={container.preHook} initialPost={container.postHook} open t={t} />
       </Card>
+      <DeferralCard name={container.name} initial={container.deferral ?? DEFAULT_DEFERRAL} waiting={waiting} hueIndex={nextHue()} />
       {aliases.length > 0 && (
         <Card title={t("entry.settings.formerNames")} hueIndex={nextHue()}>
           <FormerNames
@@ -502,6 +508,7 @@ export function SettingsTab({
       {detail.kind === "container" && !gone && (
         <ContainerCards
           container={detail.container}
+          waiting={item.deferral}
           installed={detail.installed}
           hostAnswered={detail.hostAnswered}
           onChanged={onChanged}

@@ -31,15 +31,17 @@ const DOT: Record<string, string> = {
   success: "bg-statusOkSolid",
   failed: "bg-statusFailSolid",
   running: "bg-accent",
+  deferred: "bg-statusWarnSolid",
 };
 
-/** What a run has to add under its line: why it failed or was skipped, or
- *  the note of a successful one. */
+/** What a run has to add under its line: why it failed, was skipped or
+ *  waits, or the note of a successful one. */
 function RunReasonLine({ t, run }: { t: T; run: Run }) {
   if (!run.error) return null;
   let tone: string;
   if (run.status === "failed") tone = "text-statusFail";
   else if (run.status === "skipped") tone = "text-carbon-textMuted";
+  else if (run.status === "deferred") tone = "text-statusWarn";
   else if (run.status === "success") tone = isWarningNote(run.error) ? "text-statusWarn" : "text-carbon-textMuted";
   else return null;
   const replicaSentence = run.status === "failed" ? replicaRunSentence(t, run) : null;

@@ -47,6 +47,8 @@ export type BackupWatchState =
   // The container was removed from the host but is still a target, so the run
   // was skipped. Neutral, and the watch ends instead of running into its timeout.
   | { phase: "skipped" }
+  // The app was busy, so the backup waits and is tried again on its own.
+  | { phase: "deferred"; reason: string }
   | { phase: "error"; message: string };
 
 /** The run kind being watched (matches the recorded run's `kind` field). */
@@ -230,6 +232,10 @@ export function useBackupWatch({ progressKey, start, matchRun, kind = "backup", 
         finish({ phase: "skipped" });
         return "resolved";
       }
+      if (run.status === "deferred") {
+        finish({ phase: "deferred", reason: run.error });
+        return "resolved";
+      }
       return "inconclusive"; // still running
     } catch {
       return "inconclusive"; // transient network error, keep polling
@@ -405,6 +411,7 @@ function outcomeOf(run: Run, kind: WatchKind, t: T): RunOutcome {
   switch (run.status) {
     case "success":
     case "skipped": // a removed target is skipped, not failed
+    case "deferred": // tried again on its own once the app is free
       return { ok: true };
     case "cancelled":
       return { ok: false, cancelled: true, error: t("run.statusCancelled") };

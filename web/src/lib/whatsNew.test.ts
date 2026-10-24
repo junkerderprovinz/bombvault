@@ -29,8 +29,11 @@ const found = (pattern: RegExp) => new Set(CODE.flatMap((source) => [...source.m
 // A card takes its mark as a prop, and a group of cards one such prop per
 // card, such as flowNewId; every other element takes the attribute.
 const MARKED = found(/(?:data-new|[nN]ewId)="([^"$]+)"/g);
-// A way that only one of several rows carries is written as a condition.
-const WAYS = new Set([...found(/data-new-way=(?:\{[^}"]*)?"([^"$]+)"/g)].flatMap((way) => way.split(" ")));
+// A way that only some rows carry is written as a condition, and every
+// string in it is a way.
+const WAYS = new Set(
+  [...found(/data-new-way=("[^"$]+"|\{[^}]*\})/g)].flatMap((attr) => [...attr.matchAll(/"([^"$]+)"/g)].flatMap((m) => m[1].split(" ")))
+);
 // A link on the way is written with the path it leads to.
 const LINKED = found(/\bto[=:]\s*\{?[`"](\/[^`"$]*)[`"]/g);
 const SETTINGS_PAGES = found(/\{ id: "(\w+)", label: "[\w.]+", icon:/g);
@@ -98,6 +101,15 @@ describe("what is new", () => {
     expect(onCard).toContain("zfs-replica-source-keep");
     for (const id of onCard) {
       expect(PLACED.find((change) => change.id === id)?.way, id).toEqual(["/backups", "zfs-replica", { within: "entry-tabs", tab: "settings" }]);
+    }
+  });
+
+  it("leads a change on the card for a busy app to a container and its Settings tab", () => {
+    const card = readFileSync(join(SRC, "components", "containers", "DeferralCard.tsx"), "utf8");
+    const onCard = [...card.matchAll(/(?:data-new|newId)="([^"$]+)"/g)].map((m) => m[1]);
+    expect(onCard).toEqual(["deferral-preset", "deferral-net", "deferral-retry"]);
+    for (const id of onCard) {
+      expect(PLACED.find((change) => change.id === id)?.way, id).toEqual(["/backups", "container", { within: "entry-tabs", tab: "settings" }]);
     }
   });
 

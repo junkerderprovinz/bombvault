@@ -1,7 +1,7 @@
 // What needs the person: the list behind the overview's first card, the
 // number in the status head and a count in the navigation.
 
-import type { AnomalyView, BackupItem, Run, StorageLocation, StorageLocationSection } from "./api";
+import type { AnomalyView, BackupItem, DeferredBackup, Run, StorageLocation, StorageLocationSection } from "./api";
 import { protection } from "./backupList";
 import { isFreshInstall } from "./freshInstall";
 import { tallyEntries } from "./protectionTally";
@@ -15,6 +15,9 @@ export type Need =
   | { is: "failedRun"; run: Run; item?: BackupItem }
   /** An entry no schedule reaches, whatever old backups it has. */
   | { is: "unprotected"; item: BackupItem }
+  /** A container whose backup waits while its app is busy. Nothing has to be
+   *  done, but the backup is late until it goes through. */
+  | { is: "deferred"; item: BackupItem; deferral: DeferredBackup }
   /** The off-site copies to one storage location that have failed since they
    *  last worked. `since` is when the first of them began, in Unix seconds. */
   | { is: "failedCopy"; location: StorageLocation; sections: StorageLocationSection[]; since: number }
@@ -78,11 +81,15 @@ export function needsOf({ items, runs, locations, anomalies, kitDue, keyLocked =
   const loud = anomalies
     .filter((finding) => finding.severity !== "info")
     .map((finding): Need => ({ is: "anomaly", finding }));
+  const deferred = items.flatMap((item): Need[] =>
+    item.deferral && !withFailure.has(item) && !item.backupDeclined ? [{ is: "deferred", item, deferral: item.deferral }] : []
+  );
   return [
     // First, because every backup is refused until it is solved.
     ...(keyLocked ? [{ is: "keyLocked" } as const] : []),
     ...failed,
     ...unprotected,
+    ...deferred,
     ...failedCopies(locations),
     ...loud,
     ...(kitDue && !fresh ? [{ is: "recoveryKit" } as const] : []),

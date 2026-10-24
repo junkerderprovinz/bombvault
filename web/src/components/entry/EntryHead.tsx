@@ -5,10 +5,11 @@ import type { AnomalyItem } from "../../lib/api";
 import { hueVars } from "../../lib/appearance";
 import { ENTRY_KIND } from "../../lib/backupEntry";
 import { inSchedule, isGone, itemProgressKey, protection, runsNow, waitingLabel } from "../../lib/backupList";
+import { deferralSentence } from "../../lib/deferral";
 import { entryReason, hostSilent, type Entry } from "../../lib/entry";
 import { stateLabel, useT } from "../../lib/i18n";
 import type { ProgressState } from "../../lib/progress";
-import { formatRecent } from "../../lib/reltime";
+import { formatClockTime, formatRecent } from "../../lib/reltime";
 import { zfsReplicaFailure } from "../../lib/zfsCodes";
 import { BackupCancelButton } from "../BackupCancelButton";
 import { runningLabel } from "../backups/BackupRow";
@@ -34,6 +35,8 @@ function useReasonText(entry: Entry): string {
       return t("entry.reason.declined");
     case "noPlace":
       return t("entry.reason.noPlace");
+    case "deferred":
+      return t("entry.reason.deferred").replace("{time}", formatClockTime(reason.nextTry, false));
     case "lastFailed":
       return t("entry.reason.lastFailed").replace("{when}", formatRecent(reason.lastGood, lang));
     case "lastBackup":
@@ -87,6 +90,15 @@ function ProtectionBadge({ entry, replicating }: { entry: Entry; replicating: bo
   const { t } = useT();
   if (isGone(entry.item)) return <Badge tone="neutral">{t("containers.notInstalled")}</Badge>;
   if (replicating) return <Badge tone="active">{t("zfs.replica.state.running")}</Badge>;
+  const deferral = entry.item.deferral;
+  if (deferral) {
+    return (
+      <span className="inline-flex items-center gap-1">
+        <Badge tone="warn">{t("run.statusDeferred")}</Badge>
+        <InfoBubble tip={deferralSentence(t, deferral)} />
+      </span>
+    );
+  }
   if (entry.item.replica?.lastStatus === "failed") {
     const why = zfsReplicaFailure(t, entry.item.replica.code);
     return (

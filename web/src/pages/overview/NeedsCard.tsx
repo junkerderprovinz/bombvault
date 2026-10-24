@@ -25,6 +25,7 @@ import {
 import { ATTENTION_CHANGED_EVENT } from "../../lib/attention";
 import { ENTRY_KIND } from "../../lib/backupEntry";
 import { entryTarget } from "../../lib/backupList";
+import { deferralSentence } from "../../lib/deferral";
 import { useT } from "../../lib/i18n";
 import type { Need } from "../../lib/needs";
 import { formatList } from "../../lib/placement";
@@ -199,7 +200,9 @@ function UnprotectedRow({ item, t, onChanged }: { item: BackupItem; t: T; onChan
     ? { text: t(item.dbDumpGap === "db-dump-failing" ? "coverage.reason.dbDumpFailing" : "coverage.reason.dbDumpOnlyCopyOff") }
     : item.zfsMembersSkipped?.length
       ? { text: `${t("coverage.reason.zfsMemberSkipped")}: ${item.zfsMembersSkipped.join(", ")}` }
-      : sentence(item.effectiveSchedule, KIND_SCHEDULE_LABEL[item.kind]);
+      : item.deferralGaveUp
+        ? { text: t("coverage.reason.deferralGaveUp") }
+        : sentence(item.effectiveSchedule, KIND_SCHEDULE_LABEL[item.kind]);
   const { decline, busy: declining } = useDeclineBackup(onChanged);
 
   async function start(setIncluded: NonNullable<typeof include>) {
@@ -268,6 +271,36 @@ function UnprotectedRow({ item, t, onChanged }: { item: BackupItem; t: T; onChan
       }
     >
       {why && <p className={`${SUB} first-letter:uppercase`}>{why.text}</p>}
+    </Row>
+  );
+}
+
+function DeferredRow({ need, t }: { need: Need & { is: "deferred" }; t: T }) {
+  const navigate = useNavigate();
+  const { item, deferral } = need;
+  return (
+    <Row
+      testid="need-deferred"
+      tone="warn"
+      title={
+        <>
+          <Link to={entryTarget(item)} className={NAME_LINK}>
+            {entryName(item, t)}
+          </Link>
+          <Badge tone="warn">{t("run.statusDeferred")}</Badge>
+        </>
+      }
+      actions={
+        <Button
+          className={TOUCH}
+          label={t("zfs.replica.view")}
+          labelKey="zfs.replica.view"
+          glyph={<IconEye />}
+          onClick={() => navigate(entryTarget(item))}
+        />
+      }
+    >
+      <p className={SUB}>{deferralSentence(t, deferral)}</p>
     </Row>
   );
 }
@@ -470,7 +503,8 @@ function RecoveryKitRow({ t }: { t: T }) {
  * settles it: a backup key that does not open, a failed run, an entry
  * nothing backs up, a failed off-site copy, an anomaly, the recovery kit.
  * An entry nothing backs up can also be left that way, which takes it off
- * the list.
+ * the list. A backup that waits for its app stands there too, in amber,
+ * with its next try, until it goes through or its wait ends.
  */
 export function NeedsCard({
   needs,
@@ -507,6 +541,8 @@ export function NeedsCard({
                     onChanged={onItemsChanged}
                   />
                 );
+              case "deferred":
+                return <DeferredRow key={`deferred:${need.item.key}`} need={need} t={t} />;
               case "failedCopy":
                 return <FailedCopyRow key={`copy:${need.location.id}`} need={need} t={t} lang={lang} />;
               case "anomaly":

@@ -103,11 +103,20 @@ export type Protection = "ok" | "pending" | "none";
  * it and a backup of it exists. One no schedule reaches is not, whatever old
  * backups it has, and neither is one the person said not to back up, one
  * whose section has every storage location switched off, a database whose
- * dumps are missing, or a ZFS item whose last run could not read part of its
- * tree. The server counts by the same rule in GET /api/coverage.
+ * dumps are missing, a ZFS item whose last run could not read part of its
+ * tree, or a container whose backup gave up because its app stayed busy. The
+ * server counts by the same rule in GET /api/coverage.
  */
 export function protection(item: BackupItem): Protection {
-  if (item.backupDeclined || item.noPlace || isGone(item) || neverRuns(item) || item.dbDumpGap || item.zfsMembersSkipped?.length) {
+  if (
+    item.backupDeclined ||
+    item.noPlace ||
+    isGone(item) ||
+    neverRuns(item) ||
+    item.dbDumpGap ||
+    item.zfsMembersSkipped?.length ||
+    item.deferralGaveUp
+  ) {
     return "none";
   }
   return item.lastBackup > 0 || replicatedAlone(item) ? "ok" : "pending";
@@ -139,6 +148,8 @@ export function itemReplicaKey(item: BackupItem): string {
 
 /** The one thing a row's status says when no backup of it is running. */
 export type RowStatus =
+  /** The backup waits while the app is busy and is tried again at nextTry. */
+  | { is: "deferred"; nextTry: number }
   | { is: "failed" }
   | { is: "replicaFailed" }
   /** The replica is the only copy so far. */
@@ -152,6 +163,7 @@ export type RowStatus =
 
 export function rowStatus(item: BackupItem, openAnomalies: number): RowStatus {
   const gone = isGone(item);
+  if (!gone && item.deferral) return { is: "deferred", nextTry: item.deferral.nextTry };
   if (!gone && item.lastRunStatus === "failed") return { is: "failed" };
   if (!gone && item.replica?.lastStatus === "failed") return { is: "replicaFailed" };
   if (openAnomalies > 0) return { is: "anomalies", count: openAnomalies };
@@ -177,7 +189,8 @@ const STRIP_KINDS = new Set(["backup", "import"]);
 /**
  * runStrip is the tone of each of the last runs, oldest first and padded at
  * the old end, so a young entry reads as new and not as missed. A cancelled or
- * skipped run wrote nothing and stays grey.
+ * skipped run wrote nothing and stays grey; a deferred one is amber, because
+ * its backup is still to come.
  */
 export function runStrip(item: BackupItem, hasAnomaly: (runId: string) => boolean): RunTone[] {
   const tones = item.runs
@@ -186,6 +199,7 @@ export function runStrip(item: BackupItem, hasAnomaly: (runId: string) => boolea
     .map((run): RunTone => {
       if (hasAnomaly(run.id)) return "warn";
       if (run.status === "success") return isWarningNote(run.note) ? "warn" : "ok";
+      if (run.status === "deferred") return "warn";
       return run.status === "failed" ? "fail" : "none";
     })
     .reverse();

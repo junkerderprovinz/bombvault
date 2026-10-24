@@ -46,6 +46,7 @@ export function CoverageCard({
     "db-not-scheduled": "coverage.reason.dbNotScheduled",
     "zfs-member-skipped": "coverage.reason.zfsMemberSkipped",
     "no-place": "coverage.reason.noPlace",
+    "deferral-gave-up": "coverage.reason.deferralGaveUp",
   };
 
   function skippedTip(code: string): string {

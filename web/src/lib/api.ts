@@ -49,6 +49,8 @@ export interface Container {
   /** How long a scheduled backup waits at most for the app to be idle, in
    *  hours; 0 when it does not wait. */
   idleWaitHours?: number;
+  /** How the backup waits while the app is busy. */
+  deferral?: DeferralPolicy;
   /** When the post-backup update check last completed (unix seconds, 0 = never)
    *  and its outcome ('' | 'up-to-date' | 'updated' | 'failed' | 'held'), so
    *  "checked, up to date" reads apart from "never reached". */
@@ -552,6 +554,8 @@ export interface Run {
   /** Why a container with data on ZFS was stopped for its whole backup: a
    *  reason code, a colon and what it is about. */
   snapshotFallback?: string;
+  /** When the backup of a deferred run is tried again, null for any other run. */
+  retryAt?: number | null;
 }
 
 /** The one resource a slow backup waited on. share is how busy it was, or
@@ -1783,6 +1787,58 @@ export function followZFSSnapshot(name: string): Promise<OkEnvelope> {
   return fetchJSON(`/api/containers/${encodeURIComponent(name)}`, {
     method: "PATCH",
     body: JSON.stringify({ zfsSnapshotDefault: true }),
+  });
+}
+
+/** The media servers BombVault asks whether anybody is watching. */
+export type ActivityPreset = "" | "plex" | "jellyfin" | "emby";
+
+/** What a deferred backup does once its wait has ended. */
+export type AtDeadline = "give-up" | "back-up";
+
+/** How a container's backup waits while its app is busy, as GET
+ *  /api/containers shows it. The API key never comes back; apiKeySet says
+ *  whether one is stored. */
+export interface DeferralPolicy {
+  retryMin: number;
+  /** The window the tries keep to, as HH:MM in the server's time zone, both
+   *  "" for any time. */
+  windowFrom: string;
+  windowTo: string;
+  maxHours: number;
+  atDeadline: AtDeadline;
+  preset: ActivityPreset;
+  apiKeySet: boolean;
+  /** A session paused this many minutes stops counting, 0 counts all. */
+  pausedMin: number;
+  failOpen: boolean;
+  /** The backup waits while the container sent this much within netMin
+   *  minutes; 0 switches it off. */
+  netKiB: number;
+  netMin: number;
+}
+
+/** What the card saves: the whole policy, a new API key or the removal of
+ *  the stored one. */
+export type DeferralPatch = Omit<DeferralPolicy, "apiKeySet"> & { apiKey?: string; apiKeyClear?: boolean };
+
+/** A container backup that waits while its app is busy. */
+export interface DeferredBackup {
+  domain: string;
+  name: string;
+  reason: string;
+  since: number;
+  nextTry: number;
+  deadline: number;
+  atDeadline: AtDeadline;
+  tries: number;
+}
+
+/** PATCH /api/containers/{name}: how the backup waits while the app is busy. */
+export function setDeferral(name: string, deferral: DeferralPatch): Promise<OkEnvelope> {
+  return fetchJSON(`/api/containers/${encodeURIComponent(name)}`, {
+    method: "PATCH",
+    body: JSON.stringify({ deferral }),
   });
 }
 
@@ -4099,6 +4155,11 @@ export interface BackupItem {
    *  the replica is all the item gets, because its section has no place for
    *  a backup. */
   replica?: { lastAt: number; lastStatus: string; code?: string; only?: boolean };
+  /** Containers: the backup that waits while the app is busy. */
+  deferral?: DeferredBackup;
+  /** Containers: the newest backup gave up because the app stayed busy for
+   *  its whole wait, which GET /api/coverage lists as unprotected. */
+  deferralGaveUp?: boolean;
   /** The newest fourteen backups, imports and restores, newest first. */
   runs: BackupItemRun[];
 }
@@ -7372,7 +7433,8 @@ export async function downloadDiagnostics(): Promise<string | null> {
 export type CoverageItem = {
   name: string;
   /** "not-set-up" | "not-included" | "override-off" | "no-schedule" |
-   *  "zfs-member-skipped" | "no-place" and the database-dump reasons */
+   *  "zfs-member-skipped" | "no-place" | "deferral-gave-up" and the
+   *  database-dump reasons */
   reason: string;
   /** With "zfs-member-skipped": the member outcome that left the dataset out. */
   code?: string;

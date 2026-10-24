@@ -165,6 +165,7 @@ describe("the cards of each kind", () => {
       en["excludes.title"],
       en["stophook.title"],
       en["entry.settings.hooks"],
+      en["deferral.title"],
     ]);
   });
 

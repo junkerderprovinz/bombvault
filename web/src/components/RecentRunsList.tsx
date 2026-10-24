@@ -33,6 +33,8 @@ export function statusDotClass(status: string): string {
       return "bg-accentText";
     case "skipped":
       return "bg-statusNeutralSolid";
+    case "deferred":
+      return "bg-statusWarnSolid";
     default:
       return "bg-carbon-surface3";
   }
@@ -109,6 +111,7 @@ export function RecentRunsList({
             {run.kind === "import" && <span className="text-carbon-textMuted">{runKindLabel(t, run.kind)}</span>}
             {/* The grey dot alone reads as a failure. */}
             {run.status === "cancelled" && <span className="text-carbon-textMuted">{t("run.statusCancelled")}</span>}
+            {run.status === "deferred" && <span className="text-statusWarn">{t("run.statusDeferred")}</span>}
           </>
         );
         const badge = <RunAnomalyBadge findings={byRunId.get(run.id)} t={t} />;

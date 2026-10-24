@@ -125,8 +125,10 @@ export function statusTone(status: string): BadgeTone {
     // check failure) always meant a real caution, never activity; routes
     // to warn, matching SpikePanel.tsx's own hard-coded tone="warn" for the
     // identical best-effort-fail case. Unaffected by the "active" rename
-    // above; this is a separate switch arm.
+    // above; this is a separate switch arm. A deferred backup waits for its
+    // app and is still to come, which is a caution too.
     case "info":
+    case "deferred":
       return "warn";
     // A skip is neither success nor failure: a muted, neutral chip so a removed
     // container's scheduled target reads as "intentionally not run", distinct
@@ -157,6 +159,7 @@ export function statusLabel(status: string, t: ReturnType<typeof useT>["t"]): st
   // history; a different claim about a different event, and the one the user
   // themselves had just caused.
   if (status === "cancelled") return t("run.statusCancelled");
+  if (status === "deferred") return t("run.statusDeferred");
   switch (statusTone(status)) {
     case "ok":
       return t("spike.ok");

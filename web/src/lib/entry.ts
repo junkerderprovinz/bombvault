@@ -96,6 +96,7 @@ export type EntryReason =
   | { is: "gone" }
   | { is: "declined" }
   | { is: "noPlace" }
+  | { is: "deferred"; nextTry: number }
   | { is: "lastFailed"; lastGood: number }
   | { is: "lastBackup"; at: number }
   | { is: "replicated"; at: number }
@@ -107,6 +108,7 @@ export function entryReason(item: BackupItem): EntryReason {
   if (isGone(item)) return { is: "gone" };
   if (item.backupDeclined) return { is: "declined" };
   if (item.noPlace) return { is: "noPlace" };
+  if (item.deferral) return { is: "deferred", nextTry: item.deferral.nextTry };
   if (item.lastBackup > 0) {
     return item.lastRunStatus === "failed"
       ? { is: "lastFailed", lastGood: item.lastBackup }

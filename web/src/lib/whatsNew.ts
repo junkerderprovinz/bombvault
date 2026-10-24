@@ -55,9 +55,40 @@ const TO_STORAGE: WayStep[] = ["/settings", "/settings/storage", "/storage"];
 const TO_INSTANCES: WayStep[] = ["/settings", "/settings/instances", "/instances"];
 // Only a ZFS entry with a replica shows the Replica card, on its Settings tab.
 const TO_REPLICA_CARD: WayStep[] = ["/backups", "zfs-replica", { within: "entry-tabs", tab: "settings" }];
+// A container's own settings are on its Settings tab.
+const TO_CONTAINER_SETTINGS: WayStep[] = ["/backups", "container", { within: "entry-tabs", tab: "settings" }];
 
 /** Every release that brought something new, newest first. */
 export const RELEASES: Release[] = [
+  {
+    version: "10.3.4",
+    changes: [
+      {
+        id: "deferral-retry",
+        page: ENTRY,
+        go: "/backups",
+        where: ["backups.title", "whatsNew.page.entry"],
+        way: TO_CONTAINER_SETTINGS,
+        text: "whatsNew.deferral",
+      },
+      {
+        id: "deferral-preset",
+        page: ENTRY,
+        go: "/backups",
+        where: ["backups.title", "whatsNew.page.entry"],
+        way: TO_CONTAINER_SETTINGS,
+        text: "whatsNew.activityPresets",
+      },
+      {
+        id: "deferral-net",
+        page: ENTRY,
+        go: "/backups",
+        where: ["backups.title", "whatsNew.page.entry"],
+        way: TO_CONTAINER_SETTINGS,
+        text: "whatsNew.netGate",
+      },
+    ],
+  },
   {
     version: "10.3.1",
     changes: [

@@ -608,6 +608,12 @@ function finishedLineText(resolveName: ResolveName, run: Run, domain: LogDomain,
   if (run.status === "skipped") {
     return { status: "info", text: resolveName("activityLog.lineBackupSkipped", { name, error: reasonText(run.error, resolveName) }) };
   }
+  if (run.status === "deferred") {
+    const error = reasonText(run.error, resolveName);
+    return run.retryAt
+      ? { status: "info", text: resolveName("activityLog.lineBackupDeferred", { name, error, time: formatClockTime(run.retryAt, false) }) }
+      : { status: "info", text: resolveName("activityLog.lineBackupDeferredLater", { name, error }) };
+  }
   return { status: "info", text: resolveName("activityLog.lineOther", { name, kind: run.kind, status: run.status }) };
 }
 
@@ -724,7 +730,7 @@ function buildHistoryLines(runs: Run[], resolveName: ResolveName, superseded: Se
       kind: asLogKind(run.kind),
       live: false,
     };
-    if (run.status === "success" && isWarningNote(run.error)) line.warn = true;
+    if ((run.status === "success" && isWarningNote(run.error)) || run.status === "deferred") line.warn = true;
     lines.push(line);
   }
   return lines;
