@@ -193,9 +193,9 @@ type Event struct {
 	// ItemResult marks the outcome of one item of a run, the message a
 	// scheduled summary replaces.
 	ItemResult bool
-	// Warning marks a success that left something out, which reaches the
-	// message channels of somebody who hears only about failures. A health
-	// check still counts it as the success it is.
+	// Warning marks a success that left something out, or a backup that waits
+	// for its app, which reaches the message channels of somebody who hears
+	// only about failures. A health check still counts it as a success.
 	Warning bool
 }
 
@@ -435,6 +435,15 @@ func PingDomainStart(ctx context.Context, c Config, domain string) {
 	if err := pingHealthchecks(ctx, client, hcURL, "start"); err != nil {
 		log.Printf("notify: healthchecks domain start: %v", redactErr(err))
 	}
+}
+
+// Ping ends the backup a SendStart began on the domain's check without a
+// message, for a backup that ended in a way nobody is told about each time.
+func Ping(ctx context.Context, c Config, domain string, ok bool) {
+	if healthchecksSuppressed(ctx) {
+		return
+	}
+	PingDomainResult(ctx, c, domain, ok, "")
 }
 
 // PingDomainResult pings the domain's check once at the end of a scheduled

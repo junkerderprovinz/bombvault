@@ -436,6 +436,9 @@ func (s *Service) everythingRunContainers(ctx context.Context, pass *everythingP
 			if errors.Is(err, backup.ErrContainerNotInstalled) || IsBackupCancelled(err) || errors.Is(err, ErrNoPlace) {
 				continue // a removed container is a skip and already recorded; a cancel or a section with no place is no failure
 			}
+			if _, deferred := backup.IsDeferred(err); deferred {
+				continue // tried again on its own once its app is free
+			}
 			failed++
 			failures = append(failures, schedule.ItemFailure{Name: t.ContainerName, Reason: truncateRunErr(err)})
 			log.Printf("api: backup everything: containers: backup %q failed: %v", t.ContainerName, err) //nolint:gosec // G706: name is %q-quoted

@@ -270,6 +270,14 @@ type BackupDeps struct {
 	// Hooks only run when WasRunning (you cannot exec in a stopped container).
 	PreHook  string
 	PostHook string
+	// Busy, when set, is asked before the pre-hook whether the app is in use.
+	// A reason defers the backup: the run is recorded as deferred and the
+	// error is a *DeferredError, as for a pre-hook that exits ExitTempFail.
+	// Like the hooks it is only asked of a running container.
+	Busy func(ctx context.Context) string
+	// Regardless runs the backup when the app is busy: Busy is not asked and
+	// a pre-hook exit of ExitTempFail lets the backup go on.
+	Regardless bool
 	// DBDump, when non-nil, streams a logical dump of this container's database
 	// into the repository as its own snapshot, after PreHook and before the stop,
 	// while the server still runs. It is never fatal: its outcome is a run of its
@@ -622,15 +630,33 @@ func BackupContainer(ctx context.Context, d BackupDeps) (Summary, error) {
 		return Summary{}, fmt.Errorf("backup: record run start: %w", err)
 	}
 
+	deferRun := func(reason string) (Summary, error) {
+		_ = d.Runs.Finish(runID, StatusDeferred, Summary{}, truncateErr(errors.New(reason)))
+		return Summary{}, &DeferredError{Reason: reason}
+	}
+	if d.WasRunning && d.Busy != nil && !d.Regardless {
+		if reason := d.Busy(ctx); reason != "" {
+			return deferRun(reason)
+		}
+	}
+
 	// Pre-backup hook runs while the container is still UP (before stop), so what
 	// it writes lands in appdata and is included below. A failure aborts the
 	// backup — we never store a snapshot the hook was meant to make consistent.
 	// Skipped when the container is already stopped (cannot exec in it).
 	if d.WasRunning && d.PreHook != "" {
 		if hookErr := d.Docker.Exec(ctx, d.ContainerRef, []string{"sh", "-c", d.PreHook}); hookErr != nil {
-			e := fmt.Errorf("backup: pre-hook: %w", hookErr)
-			_ = d.Runs.Finish(runID, statusFailed, Summary{}, truncateErr(e))
-			return Summary{}, e
+			reason, busy := hookDeferral(hookErr)
+			switch {
+			case busy && !d.Regardless:
+				return deferRun(reason)
+			case busy:
+				log.Printf("backup: %s: %s, backing up anyway", d.ContainerName, reason) //nolint:gosec // G706: container names from Docker
+			default:
+				e := fmt.Errorf("backup: pre-hook: %w", hookErr)
+				_ = d.Runs.Finish(runID, statusFailed, Summary{}, truncateErr(e))
+				return Summary{}, e
+			}
 		}
 	}
 

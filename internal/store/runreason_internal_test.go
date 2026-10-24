@@ -22,6 +22,7 @@ func namedReasons() map[string]string {
 		"ReasonCancelled":            ReasonCancelled,
 		"ReasonStalled":              ReasonStalled,
 		"ReasonOwnData":              ReasonOwnData,
+		"ReasonDeferralGaveUp":       ReasonDeferralGaveUp,
 		"ReasonDBDumpAuth":           ReasonDBDumpAuth,
 		"ReasonDBDumpPrivileges":     ReasonDBDumpPrivileges,
 		"ReasonDBDumpUnreachable":    ReasonDBDumpUnreachable,

@@ -1,0 +1,43 @@
+[
+  {
+    "PlayState": {"PositionTicks": 18340000000, "CanSeek": true, "IsPaused": false, "IsMuted": false, "PlayMethod": "DirectPlay", "RepeatMode": "RepeatNone"},
+    "AdditionalUsers": [],
+    "RemoteEndPoint": "192.168.1.20",
+    "PlayableMediaTypes": ["Video"],
+    "Id": "5d5e2b1a9f1c4e0f8a7b6c5d4e3f2a1b",
+    "UserId": "8f0e5c2a1b3d4e6f",
+    "UserName": "alice",
+    "Client": "Jellyfin Web",
+    "LastActivityDate": "2026-10-24T22:41:07.1234567Z",
+    "LastPlaybackCheckIn": "2026-10-24T22:41:05.0000000Z",
+    "DeviceName": "Firefox",
+    "NowPlayingItem": {"Name": "Big Buck Bunny", "Id": "a1b2c3", "Type": "Movie", "RunTimeTicks": 72000000000},
+    "DeviceId": "TW96aWxsYS81LjA",
+    "ApplicationVersion": "10.10.3",
+    "IsActive": true,
+    "SupportsMediaControl": true,
+    "SupportsRemoteControl": true,
+    "HasCustomDeviceName": false,
+    "ServerId": "f00dbabe"
+  },
+  {
+    "PlayState": {"PositionTicks": 640000000, "CanSeek": true, "IsPaused": true, "IsMuted": false, "PlayMethod": "DirectStream", "RepeatMode": "RepeatNone"},
+    "Id": "0a1b2c3d4e5f60718293a4b5c6d7e8f9",
+    "UserName": "bob",
+    "Client": "Jellyfin Android",
+    "LastActivityDate": "2026-10-24T20:00:00.0000000Z",
+    "LastPausedDate": "2026-10-24T20:00:00.0000000Z",
+    "DeviceName": "Pixel",
+    "NowPlayingItem": {"Name": "Song", "Id": "d4e5f6", "Type": "Audio"},
+    "IsActive": true
+  },
+  {
+    "PlayState": {"CanSeek": false, "IsPaused": false, "IsMuted": false, "RepeatMode": "RepeatNone"},
+    "Id": "ffeeddccbbaa99887766554433221100",
+    "UserName": "carol",
+    "Client": "Jellyfin Web",
+    "LastActivityDate": "2026-10-24T22:30:00.0000000Z",
+    "DeviceName": "Chrome",
+    "IsActive": true
+  }
+]

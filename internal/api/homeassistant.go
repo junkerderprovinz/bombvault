@@ -134,7 +134,7 @@ func (h *Handler) lastBackupResult(domain string) string {
 	runs, err := h.store.ListRunsFiltered(store.RunFilter{
 		TargetIDs: ids,
 		Kinds:     []string{"backup"},
-		Statuses:  []string{"success", "failed", "cancelled", "skipped"},
+		Statuses:  []string{"success", "failed", "cancelled", "skipped", "deferred"},
 		Limit:     1,
 	})
 	if err != nil || len(runs) == 0 {

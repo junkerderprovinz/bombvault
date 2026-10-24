@@ -77,6 +77,8 @@ type fakeServiceDocker struct {
 	execExit   int    // exit code both report
 	execErr    error
 	execFed    string // what ExecStdin was fed
+	// hookErr is what Exec, the way the hooks run, answers with.
+	hookErr error
 
 	started bool
 	// onStart runs inside Start, e.g. to cancel a backup while it starts the
@@ -168,7 +170,7 @@ func (f *fakeServiceDocker) ImageRemove(_ context.Context, id string) error {
 
 func (f *fakeServiceDocker) Exec(_ context.Context, name string, cmd []string) error {
 	f.calls = append(f.calls, "exec:"+name)
-	return nil
+	return f.hookErr
 }
 
 func (f *fakeServiceDocker) ExecOutput(_ context.Context, name string, _ []string, max int) (string, int, error) {

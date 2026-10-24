@@ -688,6 +688,8 @@ type containerView struct {
 	// IdleWaitHours is how long a scheduled backup waits at most for the app to
 	// be idle, 0 when it does not wait.
 	IdleWaitHours int `json:"idleWaitHours"`
+	// Deferral is how the backup waits while the app is busy.
+	Deferral deferralView `json:"deferral"`
 	// homeBackups is how many backups the listing found at the container's
 	// home, nil when the home was not listed.
 	homeBackups *int
@@ -762,6 +764,10 @@ func (h *Handler) containerViews(r *http.Request, infos []dockercli.ContainerInf
 	if iErr != nil {
 		log.Printf("api: list containers: idle waits: %v", iErr)
 	}
+	policies, pErr := h.store.DeferPolicies()
+	if pErr != nil {
+		log.Printf("api: list containers: deferral policies: %v", pErr)
+	}
 
 	settings, sErr := h.store.GetSettings()
 	if sErr != nil {
@@ -823,6 +829,7 @@ func (h *Handler) containerViews(r *http.Request, infos []dockercli.ContainerInf
 			Stack:          c.Stack,
 			Self:           self != "" && c.Name == self,
 			AliasConflicts: []string{},
+			Deferral:       deferralViewOf(store.DefaultDeferPolicy("")),
 			Aliases:        []string{},
 		}
 		if db, ok := dbRows[c.Name]; ok {
@@ -845,7 +852,7 @@ func (h *Handler) containerViews(r *http.Request, infos []dockercli.ContainerInf
 				v.DBDumpEngine = t.DBDumpEngine
 				v.LastDBDump = h.lastDBDump(t.ID)
 			}
-			v.takeStored(t, settings, idleHours[t.ID])
+			v.takeStored(t, settings, idleHours[t.ID], policies)
 			run, _ = h.store.LastSuccessfulBackup(t.ID)
 		}
 		home, hErr := h.svc.primaryRepo(settings, "containers", c.Name)
@@ -886,7 +893,7 @@ func (h *Handler) containerViews(r *http.Request, infos []dockercli.ContainerInf
 		}
 		if !answered {
 			v.State = ""
-			v.takeStored(t, settings, idleHours[t.ID])
+			v.takeStored(t, settings, idleHours[t.ID], policies)
 		}
 		if t.Definition != "" {
 			var def containerDefinition
@@ -947,7 +954,10 @@ func (h *Handler) containerViews(r *http.Request, infos []dockercli.ContainerInf
 }
 
 // takeStored fills in what the container's entry keeps for itself.
-func (v *containerView) takeStored(t store.Target, settings store.Settings, idleWaitHours int) {
+func (v *containerView) takeStored(t store.Target, settings store.Settings, idleWaitHours int, policies map[string]store.DeferPolicy) {
+	if p, ok := policies[t.ID]; ok {
+		v.Deferral = deferralViewOf(p)
+	}
 	v.IncludeInSchedule = t.IncludeInSchedule
 	v.PreHook = t.PreHook
 	v.PostHook = t.PostHook
@@ -1987,6 +1997,9 @@ func (h *Handler) handlePatchContainer(w http.ResponseWriter, r *http.Request) {
 		// IdleWaitHours is how long a scheduled backup waits at most for the
 		// app to be idle; 0 switches the wait off.
 		IdleWaitHours *int `json:"idleWaitHours"`
+		// Deferral is the whole policy of how the backup waits while the app
+		// is busy.
+		Deferral *deferralPatch `json:"deferral"`
 		// Repo is the older spelling of home {repo}.
 		Repo *string `json:"repo"`
 		// Home is this item's own location: a named repository from Settings,
@@ -2081,6 +2094,12 @@ func (h *Handler) handlePatchContainer(w http.ResponseWriter, r *http.Request) {
 	}
 	if body.IdleWaitHours != nil {
 		if err := setIdleWait(h.store, name, *body.IdleWaitHours); err != nil {
+			writeJSON(w, http.StatusOK, failEnvelope(err))
+			return
+		}
+	}
+	if body.Deferral != nil {
+		if err := h.svc.SetDeferPolicy(r.Context(), name, *body.Deferral); err != nil {
 			writeJSON(w, http.StatusOK, failEnvelope(err))
 			return
 		}

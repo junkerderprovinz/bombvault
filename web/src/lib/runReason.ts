@@ -32,6 +32,7 @@ export const RUN_REASONS: Record<string, TranslationKey> = {
   "container no longer exists on the host": "runReason.containerGone",
   "cancelled by the user": "runReason.cancelled",
   "this would write into BombVault's own data folder or a folder that holds it; choose another folder": "runReason.ownDataFolder",
+  "the app was still busy when the wait for it ended": "runReason.deferralGaveUp",
 };
 
 /** What a container restore writes when Docker refused the GPU or runtime of

@@ -91,7 +91,7 @@
           { "name": "limit", "in": "query", "schema": { "type": "integer", "minimum": 1, "maximum": 100, "default": 20 } },
           { "name": "domain", "in": "query", "schema": { "$ref": "#/components/schemas/RunDomain" } },
           { "name": "item", "in": "query", "description": "One item: a container or VM by name, a folder set or ZFS dataset by id or name. Needs domain.", "schema": { "type": "string" } },
-          { "name": "status", "in": "query", "schema": { "type": "string", "enum": ["running", "success", "failed", "cancelled", "skipped"] } },
+          { "name": "status", "in": "query", "schema": { "type": "string", "enum": ["running", "success", "failed", "cancelled", "skipped", "deferred"] } },
           { "name": "kind", "in": "query", "schema": { "type": "string", "enum": ["backup", "dbdump", "dbdumpsave", "dbimport", "restore", "update", "prune", "verify", "offsite", "drill", "drdrill", "tamper", "export"] } },
           { "name": "since", "in": "query", "description": "Only runs that started at or after this unix time.", "schema": { "type": "integer", "minimum": 0 } }
         ],
@@ -317,6 +317,23 @@
         "properties": {
           "domains": { "type": "array", "items": { "$ref": "#/components/schemas/DomainStatus" } },
           "nextRuns": { "type": "array", "items": { "$ref": "#/components/schemas/NextRun" } },
+          "deferred": {
+            "type": "array",
+            "description": "Container backups that wait while their app is busy and are tried again on their own.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "domain": { "type": "string" },
+                "item": { "type": "string" },
+                "reason": { "type": "string" },
+                "since": { "type": "integer" },
+                "nextTry": { "type": "integer" },
+                "deadline": { "type": "integer" },
+                "atDeadline": { "type": "string", "enum": ["give-up", "back-up"] },
+                "tries": { "type": "integer" }
+              }
+            }
+          },
           "backupRunning": { "type": "boolean" },
           "everythingRunning": { "type": "boolean" }
         },

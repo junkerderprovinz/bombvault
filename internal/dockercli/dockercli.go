@@ -355,10 +355,22 @@ func (c *Client) Health(ctx context.Context, name string) (model.Health, error) 
 	return h, nil
 }
 
-// Exec runs cmd inside a running container and returns an error when it exits
-// non-zero (used for pre/post-backup hooks). Output is captured only to surface
-// a short failure reason; it is demuxed via stdcopy and drained so the exec
-// completes before we read the exit code.
+// ExitError is a command run in a container that ended with a non-zero exit
+// code. Reason is the tail of what it wrote, stderr first.
+type ExitError struct {
+	Code   int
+	Reason string
+}
+
+func (e *ExitError) Error() string { return fmt.Sprintf("hook exited %d: %s", e.Code, e.Reason) }
+
+// ExitCode is the code the command ended with.
+func (e *ExitError) ExitCode() int { return e.Code }
+
+// Exec runs cmd inside a running container and returns an *ExitError when it
+// exits non-zero (used for pre/post-backup hooks). Output is captured only to
+// surface a short failure reason; it is demuxed via stdcopy and drained so the
+// exec completes before we read the exit code.
 func (c *Client) Exec(ctx context.Context, name string, cmd []string) error {
 	created, err := c.api.ContainerExecCreate(ctx, name, container.ExecOptions{
 		Cmd:          cmd,
@@ -393,7 +405,7 @@ func (c *Client) Exec(ctx context.Context, name string, cmd []string) error {
 		if len(reason) > 200 {
 			reason = reason[len(reason)-200:]
 		}
-		return fmt.Errorf("hook exited %d: %s", exitCode, reason)
+		return &ExitError{Code: exitCode, Reason: reason}
 	}
 	return nil
 }

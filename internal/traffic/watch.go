@@ -144,6 +144,32 @@ func (w *Watch) streamingLocked(rule StreamRule, now time.Time) (string, bool) {
 	return who, true
 }
 
+// Sending reports whether name sent at least bps bytes per second at any
+// reading of the last window. measured is false while the watch has not read
+// it over that whole window, or cannot count its traffic at all because it is
+// on the host network. A stopped container sends nothing.
+func (w *Watch) Sending(name string, bps float64, window time.Duration, now time.Time) (sending, measured bool) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	last, ok := w.last[name]
+	if !ok || now.Sub(last.At) > w.gap {
+		return false, false
+	}
+	if !last.Running {
+		return false, true
+	}
+	if !last.HasNet || now.Sub(w.since[name]) < window {
+		return false, false
+	}
+	from := now.Add(-window)
+	for _, r := range w.rates[name] {
+		if !r.At.Before(from) && r.TxBps >= bps {
+			return true, true
+		}
+	}
+	return false, true
+}
+
 // IdleRule says when a container counts as idle. A media server is idle once
 // it was measured for the hold of Stream without streaming; any other
 // container, and a media server on the host network, when CPU and network

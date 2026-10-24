@@ -49,6 +49,7 @@ var sealSites = map[string]string{
 	"encodeCloudCredSets":    "settings.cloud_cred_sets",
 	"zfsReceiveAllow":        "zfs_receive_slots.token_enc",
 	"askZFSReceive":          "zfs_datasets.replica_peer_token_enc",
+	"SetDeferPolicy":         "defer_policies.api_key_enc",
 }
 
 // sealingFunctions returns the functions of the module, tests left out, that

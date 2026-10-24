@@ -1,0 +1,29 @@
+[
+  {
+    "PlayState": {"CanSeek": true, "IsPaused": true, "IsMuted": false, "PositionTicks": 9000000000, "PlayMethod": "Transcode"},
+    "AdditionalUsers": [],
+    "RemoteEndPoint": "192.168.1.30",
+    "Protocol": "HTTP/1.1",
+    "PlayableMediaTypes": ["Audio", "Video"],
+    "Id": "b71c5f6a2c3e4d9b8a7f6e5d4c3b2a19",
+    "ServerId": "c0ffee",
+    "UserId": "42",
+    "UserName": "dave",
+    "Client": "Emby Theater",
+    "LastActivityDate": "2026-10-24T21:12:44.0000000Z",
+    "DeviceName": "Living room PC",
+    "NowPlayingItem": {"Name": "Sintel", "Id": "777", "Type": "Movie", "MediaType": "Video", "RunTimeTicks": 88800000000},
+    "DeviceId": "emby-theater-1",
+    "ApplicationVersion": "4.8.10.0",
+    "SupportedCommands": []
+  },
+  {
+    "PlayState": {"CanSeek": false, "IsPaused": false, "IsMuted": false},
+    "Id": "0011223344556677889900aabbccddee",
+    "UserName": "erin",
+    "Client": "Emby Web",
+    "LastActivityDate": "2026-10-24T21:00:00.0000000Z",
+    "DeviceName": "Safari",
+    "NowPlayingItem": null
+  }
+]

@@ -700,12 +700,13 @@ func (s *Service) forgetDBDumpSeries(ctx context.Context, repo string, settings 
 }
 
 // roundTally collects what one scheduled round has to name in its single
-// summary although no item failed: the dumps that failed, and the backups
-// that could not read some files.
+// summary although no item failed: the dumps that failed, the backups that
+// could not read some files, and the ones that wait for their app.
 type roundTally struct {
 	mu         sync.Mutex
 	failed     []string
 	incomplete []string
+	deferred   []string
 }
 
 type roundTallyKey struct{}
@@ -736,14 +737,22 @@ func (t *roundTally) addIncomplete(line string) {
 	t.incomplete = append(t.incomplete, line)
 }
 
+// addDeferred records a backup that waits for its app, as the line the
+// summary lists it with.
+func (t *roundTally) addDeferred(line string) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	t.deferred = append(t.deferred, line)
+}
+
 // take is what the round's summary appends, empty when every dump went
-// through and every backup read all its files. It empties the tally, so
-// rounds that overlap and share it name each one once.
+// through, every backup read all its files and none waits for its app. It
+// empties the tally, so rounds that overlap and share it name each one once.
 func (t *roundTally) take() string {
 	t.mu.Lock()
 	defer t.mu.Unlock()
-	dumps, incomplete := t.failed, t.incomplete
-	t.failed, t.incomplete = nil, nil
+	dumps, incomplete, deferred := t.failed, t.incomplete, t.deferred
+	t.failed, t.incomplete, t.deferred = nil, nil, nil
 	var out []string
 	if len(dumps) > 0 {
 		names, tail := dumps, ""
@@ -765,6 +774,20 @@ func (t *roundTally) take() string {
 		for i, line := range incomplete {
 			if i == maxListedFailures {
 				out = append(out, fmt.Sprintf("+%d more", len(incomplete)-maxListedFailures))
+				break
+			}
+			out = append(out, line)
+		}
+	}
+	if len(deferred) > 0 {
+		what := "backups wait for their app and are tried again on their own:"
+		if len(deferred) == 1 {
+			what = "backup waits for its app and is tried again on its own:"
+		}
+		out = append(out, fmt.Sprintf("%d %s", len(deferred), what))
+		for i, line := range deferred {
+			if i == maxListedFailures {
+				out = append(out, fmt.Sprintf("+%d more", len(deferred)-maxListedFailures))
 				break
 			}
 			out = append(out, line)

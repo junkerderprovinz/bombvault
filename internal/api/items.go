@@ -180,7 +180,14 @@ type backupItemView struct {
 	// Replica is how a ZFS item's replica stands, absent for an item that
 	// replicates nowhere.
 	Replica *itemReplicaView `json:"replica,omitempty"`
-	Runs    []store.RunBrief `json:"runs"`
+	// Deferral is a container's backup that waits for its app, absent while
+	// none does.
+	Deferral *DeferredBackup `json:"deferral,omitempty"`
+	// DeferralGaveUp is set while the newest backup of a container gave up
+	// because its app stayed busy, which GET /api/coverage lists as
+	// unprotected.
+	DeferralGaveUp bool             `json:"deferralGaveUp,omitempty"`
+	Runs           []store.RunBrief `json:"runs"`
 }
 
 // itemReplicaView is the newest word on an item's replica: when it last
@@ -529,6 +536,8 @@ type containerSources struct {
 	self     string
 	former   aliasIndex
 	shapes   map[string]string
+	// deferred are the backups waiting for their app, by container name.
+	deferred map[string]DeferredBackup
 }
 
 func (h *Handler) readContainerSources(ctx context.Context, settings store.Settings) (containerSources, error) {
@@ -544,6 +553,10 @@ func (h *Handler) readContainerSources(ctx context.Context, settings store.Setti
 	if err != nil {
 		log.Printf("api: items: the change notice is unavailable: %v", err)
 	}
+	deferred := map[string]DeferredBackup{}
+	for _, d := range h.svc.DeferredBackups() {
+		deferred[d.Name] = d
+	}
 	return containerSources{
 		settings: settings,
 		targets:  targets,
@@ -552,6 +565,7 @@ func (h *Handler) readContainerSources(ctx context.Context, settings store.Setti
 		self:     h.svc.SelfContainerName(ctx),
 		former:   h.formerNames("container"),
 		shapes:   shapes,
+		deferred: deferred,
 	}, nil
 }
 
@@ -570,6 +584,10 @@ func (src containerSources) row(hist itemHistory, t store.Target) backupItemView
 	v.Self = src.self != "" && t.ContainerName == src.self
 	v.KindDisabled = !src.settings.ContainersEnabled
 	v.FormerNames = src.former[t.ID]
+	if d, ok := src.deferred[t.ContainerName]; ok {
+		v.Deferral = &d
+	}
+	v.DeferralGaveUp = v.LastRunStatus == "failed" && v.LastRunError == store.ReasonDeferralGaveUp
 	return v
 }
 

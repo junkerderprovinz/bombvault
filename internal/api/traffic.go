@@ -108,6 +108,11 @@ func (s *Service) pollTraffic(ctx context.Context, sr statsReader, now time.Time
 	st := s.trafficState()
 	servers := s.mediaServers(ctx, cfg, now)
 	watched := s.idleWaitContainers()
+	for _, n := range s.netGateContainers() {
+		if !slices.Contains(watched, n) {
+			watched = append(watched, n)
+		}
+	}
 	if cfg.StreamThrottle {
 		for _, n := range servers {
 			if !slices.Contains(watched, n) {

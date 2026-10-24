@@ -47,11 +47,14 @@ type Run struct {
 	// snapshot was stopped for the whole backup instead: a reason code, a colon
 	// and what it was about.
 	SnapshotFallback string `json:"snapshotFallback"`
+	// RetryAt is when the backup of a deferred run is tried again, nil for
+	// every other run.
+	RetryAt *int64 `json:"retryAt"`
 }
 
 // runCols is the column list of every full run query, in the order scanRun
 // reads them.
-const runCols = `id, target_id, kind, status, started_at, finished_at, snapshot_id, bytes, error, acknowledged, group_id, started_via, started_via_key, load_summary, source_bytes, subject, snapshot_window_ms, snapshot_fallback`
+const runCols = `id, target_id, kind, status, started_at, finished_at, snapshot_id, bytes, error, acknowledged, group_id, started_via, started_via_key, load_summary, source_bytes, subject, snapshot_window_ms, snapshot_fallback, retry_at`
 
 // RunMeta is what a caller knows about a run beyond its target and kind: the
 // pass it belongs to and who asked for it.
@@ -267,6 +270,10 @@ const (
 	// ReasonOwnData is written for a restore refused because it would write
 	// into BombVault's own data folder or a folder that holds it.
 	ReasonOwnData = "this would write into BombVault's own data folder or a folder that holds it; choose another folder"
+
+	// ReasonDeferralGaveUp is the failed backup of a container whose app was
+	// still busy when its wait ended, set to give up then.
+	ReasonDeferralGaveUp = "the app was still busy when the wait for it ended"
 )
 
 // StalledReason is the reason of a backup the stall guard cancelled after
@@ -940,18 +947,19 @@ func (r *Repo) RunCountsOfKind(kind string) (map[string]map[string]int, error) {
 
 func scanRun(s scanner) (Run, error) {
 	var run Run
-	var finishedAt, bytes, sourceBytes, window sql.NullInt64
+	var finishedAt, bytes, sourceBytes, window, retryAt sql.NullInt64
 	var snapID, errCol sql.NullString
 	err := s.Scan(
 		&run.ID, &run.TargetID, &run.Kind, &run.Status,
 		&run.StartedAt, &finishedAt, &snapID, &bytes, &errCol, &run.Acknowledged, &run.GroupID,
 		&run.StartedVia, &run.StartedViaKey, &run.Load, &sourceBytes, &run.Subject,
-		&window, &run.SnapshotFallback,
+		&window, &run.SnapshotFallback, &retryAt,
 	)
 	if err != nil {
 		return Run{}, err
 	}
 	run.SnapshotWindowMS = nullableInt(window)
+	run.RetryAt = nullableInt(retryAt)
 	if finishedAt.Valid {
 		run.FinishedAt = &finishedAt.Int64
 	}

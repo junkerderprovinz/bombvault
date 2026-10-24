@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MediaContainer size="3">
+<Video addedAt="1717171717" duration="7200000" grandparentTitle="" key="/library/metadata/4711" librarySectionID="1" ratingKey="4711" sessionKey="12" title="Big Buck Bunny" type="movie" viewOffset="1834000">
+<Media audioCodec="aac" bitrate="5000" container="mkv" duration="7200000" height="1080" id="9001" videoCodec="h264" width="1920">
+<Part container="mkv" duration="7200000" file="/media/movies/bbb.mkv" id="9002" size="4294967296" />
+</Media>
+<User id="1" thumb="https://plex.tv/users/1/avatar" title="alice" />
+<Player address="192.168.1.20" machineIdentifier="tv-livingroom" platform="Roku" product="Plex for Roku" state="playing" title="Living room" />
+<Session bandwidth="6000" id="abc123session" location="lan" />
+<TranscodeSession key="/transcode/sessions/x1" throttled="0" videoDecision="directplay" />
+</Video>
+<Track key="/library/metadata/815" ratingKey="815" sessionKey="13" title="Song" type="track" viewOffset="64000">
+<User id="2" title="bob" />
+<Player address="192.168.1.21" machineIdentifier="phone-bob" platform="Android" state="paused" title="Bob's phone" />
+<Session id="def456session" location="lan" />
+</Track>
+<Photo key="/library/metadata/99" ratingKey="99" title="Beach" type="photo">
+<User id="3" title="carol" />
+<Player address="192.168.1.22" machineIdentifier="tablet-carol" state="playing" />
+</Photo>
+</MediaContainer>

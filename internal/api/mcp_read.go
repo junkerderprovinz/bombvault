@@ -114,11 +114,26 @@ func (h *Handler) toolGetStatus(ctx context.Context, _ *mcp.CallToolRequest) (*m
 		waiting = append(waiting, row)
 	}
 
+	deferred := make([]map[string]any, 0)
+	for _, d := range h.svc.DeferredBackups() {
+		deferred = append(deferred, map[string]any{
+			"domain":     d.Domain,
+			"item":       d.Name,
+			"reason":     mcpScrubText(d.Reason),
+			"since":      d.Since,
+			"nextTry":    d.NextTry,
+			"deadline":   d.Deadline,
+			"atDeadline": d.AtDeadline,
+			"tries":      d.Tries,
+		})
+	}
+
 	h.logMCPCall(ctx, "get_status", "ok")
 	return mcpOK(map[string]any{
 		"domains":           domains,
 		"nextRuns":          next,
 		"waitingForIdle":    waiting,
+		"deferred":          deferred,
 		"backupRunning":     h.svc.BackupInProgress(),
 		"everythingRunning": h.svc.EverythingInProgress(),
 		"backupKey":         h.svc.currentBackupKey().state,
@@ -788,7 +803,7 @@ func (h *Handler) resolveMCPDataset(item string) (mcpItem, *mcp.CallToolResult) 
 }
 
 // mcpRunStatuses are the states a run row can be in.
-var mcpRunStatuses = []string{"running", "success", "failed", "cancelled", "skipped"}
+var mcpRunStatuses = []string{"running", "success", "failed", "cancelled", "skipped", "deferred"}
 
 // mcpRunDomains is the domain vocabulary of a run: the item domains plus the
 // Backup Everything pass, which owns runs but no items.

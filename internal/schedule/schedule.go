@@ -4,6 +4,7 @@
 package schedule
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"math"
@@ -2163,7 +2164,15 @@ func RunContainersJob(targets []store.Target, backupFn BackupFunc) (attempted, f
 			continue
 		}
 		attempted++
-		if err := backupFn(t.ContainerName); err != nil {
+		err := backupFn(t.ContainerName)
+		var deferred interface{ Deferred() bool }
+		if errors.As(err, &deferred) && deferred.Deferred() {
+			// The backup waits for its app and is tried again on its own,
+			// so the rest of the run goes on and nothing failed.
+			log.Printf("schedule: containers job: %v", err)
+			continue
+		}
+		if err != nil {
 			failed++
 			failures = append(failures, ItemFailure{Name: t.ContainerName, Reason: err.Error()})
 			log.Printf("schedule: containers job: backup %q failed: %v", t.ContainerName, err)

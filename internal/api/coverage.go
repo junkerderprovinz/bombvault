@@ -64,6 +64,9 @@ const (
 	// CoverageNoPlace: a schedule reaches the item, but its section has every
 	// storage location switched off for it, so the run has nowhere to write.
 	CoverageNoPlace = "no-place"
+	// CoverageDeferralGaveUp: the container's app was busy for the whole wait
+	// its backup allows, and the backup gave up at the deadline.
+	CoverageDeferralGaveUp = "deferral-gave-up"
 )
 
 // CoverageItem is one unprotected item.
@@ -232,9 +235,24 @@ func (s *Service) coverContainers(ctx context.Context, settings store.Settings, 
 			})
 			continue
 		}
+		if s.deferralGaveUp(row.ID) {
+			out.Unprotected = append(out.Unprotected, CoverageItem{
+				Name: c.Name, Reason: CoverageDeferralGaveUp, NeverBackedUp: s.neverBackedUp(row.ID),
+			})
+			continue
+		}
 		out.count(s.neverBackedUp(row.ID))
 	}
 	return out
+}
+
+// deferralGaveUp reports whether the newest backup of a container gave up
+// because its app was still busy when the wait for it ended. Until a backup
+// goes through again the container counts as unprotected; while it still
+// waits, it counts as before.
+func (s *Service) deferralGaveUp(targetID string) bool {
+	run, err := s.store.LastRunOfKind(targetID, "backup")
+	return err == nil && run != nil && run.Status == "failed" && run.Error == store.ReasonDeferralGaveUp
 }
 
 // count adds an item a schedule reaches and nothing else is missing from:

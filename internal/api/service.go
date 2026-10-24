@@ -502,6 +502,9 @@ type Service struct {
 	waitsOnce sync.Once
 	idleWaits *idleWaits
 	heldRun   func(names []string)
+	// deferralSt tries the backups again whose app was busy; see deferral.go.
+	deferralOnce sync.Once
+	deferralSt   *deferrals
 
 	// budgetMu guards offsiteOverBudget, the per-domain "off-site repo is over its
 	// growth budget" latch. The alarm fires ONCE per false→true crossing (not on
@@ -3763,6 +3766,11 @@ func (s *Service) domainStatusFrom(settings store.Settings) ([]DomainStatusEntry
 		// same guard — so no row can contradict the chip.
 		protection := protectionLevel(now, in)
 		checks := protectionChecks(now, in)
+		// A backup that waits for its app is late by choice until its deadline.
+		backupStatus := rpoStatus(now, lastUnix, period, scheduled)
+		if backupStatus == "overdue" && s.deferralHolds(d.name, now) {
+			backupStatus = "warn"
+		}
 
 		// An off-site retention strategy is "configured" when the far side prunes
 		// (immutable), a growth budget is set, or an off-site keep policy is set.
@@ -3777,7 +3785,7 @@ func (s *Service) domainStatusFrom(settings store.Settings) ([]DomainStatusEntry
 			CoveredBy:             coveredBy,
 			LastSuccess:           lastUnix,
 			PeriodSeconds:         period,
-			Status:                rpoStatus(now, lastUnix, period, scheduled),
+			Status:                backupStatus,
 			LastVerified:          lastVerified,
 			LastVerifiedOK:        lastVerifiedOK,
 			VerifiedDetail:        verifiedDetail,
@@ -6424,7 +6432,7 @@ func (s *Service) inspectNamed(ctx context.Context, name string) (model.Inspect,
 
 // Backup runs a full container backup: resolve repo + mode, ensure the repo,
 // inspect the container, find-or-create its target, and drive the orchestrator.
-func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, retErr error) {
+func (s *Service) Backup(ctx context.Context, name string) (out backup.Summary, retErr error) {
 	// A backup must survive the client that triggered it disconnecting — closing
 	// the browser tab, or stopping the very container the BombVault UI runs in.
 	// Detach from the request's cancellation (keeping its values) with a generous
@@ -6468,6 +6476,9 @@ func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, re
 			s.recordPreflightFailure(ctx, "Backup", name, targetID, retErr)
 		}
 	}()
+	// A backup that waited for its app ends its wait however it ends, unless
+	// it was deferred once more.
+	defer func() { s.settleDeferral(ctx, targetID, name, out, retErr) }()
 
 	settings, err := s.store.GetSettings()
 	if err != nil {
@@ -6674,6 +6685,8 @@ func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, re
 		WasRunning:           in.Running,
 		PreHook:              tg.PreHook,
 		PostHook:             tg.PostHook,
+		Busy:                 s.busyCheck(tg, in),
+		Regardless:           isBeforeRestore(ctx) || backsUpRegardless(ctx),
 		StopContainers:       deps,
 		HealthWait:           settings.RestartHealthWait,
 		HealthTimeout:        time.Duration(settings.RestartHealthTimeoutSec) * time.Second,
@@ -6704,7 +6717,15 @@ func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, re
 	})
 	s.recordSnapshotRead(runs.id, window, fallback)
 	s.progEnd(pkey, "backup", err == nil, startedAt)
-	s.notifyBackup(ctx, "container", name, "container:"+name, err == nil, sum, err)
+	if reason, deferred := backup.IsDeferred(err); deferred {
+		s.deferBackup(ctx, tg, runs.id, reason, time.Now())
+		return backup.Summary{}, err
+	}
+	// A backup that waited for its app gets the message of how its wait ended
+	// instead of a plain success.
+	if err != nil || !s.hasDeferral(tg.ID) {
+		s.notifyBackup(ctx, "container", name, "container:"+name, err == nil, sum, err)
+	}
 	// After the backup's own outcome is known, so the dump's message can say
 	// whether the files around it made it.
 	s.notifyDBDumpFailed(ctx, tg.ID, name, dumpOutcome, err == nil)
@@ -7032,7 +7053,7 @@ func (s *Service) StartBackupAll(ctx context.Context, names []string) (bool, err
 				if errors.Is(err, backup.ErrContainerNotInstalled) {
 					skipped++                                                                   // removed container: a skip (already recorded), not a batch failure (#57)
 					log.Printf("api: backup-all: %q skipped — not installed (backups only)", n) //nolint:gosec // G706: n is %q-quoted
-				} else if errors.Is(err, ErrNoPlace) {
+				} else if _, deferred := backup.IsDeferred(err); deferred || errors.Is(err, ErrNoPlace) {
 					skipped++
 					log.Printf("api: backup-all: %q skipped: %v", n, err) //nolint:gosec // G706: n is %q-quoted
 				} else {

@@ -3466,6 +3466,48 @@ UPDATE pull_sources SET leftovers_moved = 0;`,
 		alreadySatisfied: columnPresent("zfs_datasets", "replica_keep_source"),
 		sql:              `ALTER TABLE zfs_datasets ADD COLUMN replica_keep_source INTEGER NOT NULL DEFAULT 0;`,
 	},
+	{
+		// How a container's backup waits while its app is busy, keyed by
+		// target id so a rename keeps it.
+		version: deferralMigration,
+		name:    "defer_policies",
+		sql: `CREATE TABLE IF NOT EXISTS defer_policies (
+  target_id   TEXT    PRIMARY KEY,
+  retry_min   INTEGER NOT NULL DEFAULT 30,
+  window_from TEXT    NOT NULL DEFAULT '',
+  window_to   TEXT    NOT NULL DEFAULT '',
+  max_hours   INTEGER NOT NULL DEFAULT 12,
+  at_deadline TEXT    NOT NULL DEFAULT 'give-up',
+  preset      TEXT    NOT NULL DEFAULT '',
+  api_key_enc BLOB,
+  paused_min  INTEGER NOT NULL DEFAULT 0,
+  fail_open   INTEGER NOT NULL DEFAULT 1,
+  net_kib     INTEGER NOT NULL DEFAULT 0,
+  net_min     INTEGER NOT NULL DEFAULT 5
+);`,
+	},
+	{
+		// The container backups waiting for their app, so a restart tries
+		// them again.
+		version: deferralMigration + 1,
+		name:    "deferred_backups",
+		sql: `CREATE TABLE IF NOT EXISTS deferred_backups (
+  target_id TEXT    PRIMARY KEY,
+  container TEXT    NOT NULL,
+  since     INTEGER NOT NULL,
+  next_try  INTEGER NOT NULL,
+  tries     INTEGER NOT NULL DEFAULT 1,
+  reason    TEXT    NOT NULL DEFAULT '',
+  trigger   TEXT    NOT NULL DEFAULT ''
+);`,
+	},
+	{
+		// When a deferred run's backup is tried again, NULL on every other run.
+		version:          deferralMigration + 2,
+		name:             "runs_retry_at",
+		alreadySatisfied: columnPresent("runs", "retry_at"),
+		sql:              `ALTER TABLE runs ADD COLUMN retry_at INTEGER;`,
+	},
 }
 
 // offsiteFieldDomains are the domains with an off-site field in the settings,
@@ -3750,6 +3792,10 @@ const receiverReachedMigration = 580
 // replicaSourceKeepMigration numbers how many replica snapshots a ZFS item
 // keeps on this server.
 const replicaSourceKeepMigration = 590
+
+// deferralMigration numbers the backups that wait while their app is busy:
+// the policies, the waiting backups and the retry time of a run.
+const deferralMigration = 600
 
 // oneLineColumns are the names and locations the recovery kit prints.
 var oneLineColumns = []struct {

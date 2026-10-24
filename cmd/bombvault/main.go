@@ -670,6 +670,9 @@ func run() error {
 	// Container load for slowing off-site uploads while a media server streams.
 	svc.StartTrafficWatch(ctx)
 	svc.StartIdleWaits()
+	// Backups deferred while their app was busy, also those a restart cut
+	// short, are tried again from here on.
+	svc.StartDeferrals()
 
 	server := api.NewServer(cfg, web.DistFS(), handler.Router())
 	svc.ServePhonePages(server.Handler())

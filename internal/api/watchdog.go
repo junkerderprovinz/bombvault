@@ -89,6 +89,10 @@ func (s *Service) runWatchdogAt(ctx context.Context, now int64) error {
 		if !notifyNeeded {
 			continue
 		}
+		if s.deferralHolds(d.name, now) {
+			log.Printf("api: watchdog: %s backups are overdue, but one waits for its app until its deadline", d.name) //nolint:gosec // G706: domain is a fixed literal
+			continue
+		}
 		if !s.notifyBackupOverdue(ctx, c, d.name, lastUnix, period, now) {
 			// No channel took it, so the next run tries again.
 			continue
