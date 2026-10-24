@@ -48,12 +48,12 @@ function first(selector: string): HTMLElement | undefined {
 
 /** The element of a step on the way, where the page shows one. A link in the
  *  navigation goes before one in the page, and the tab that is open leads
- *  nowhere. */
+ *  nowhere. An element can be on several ways, named apart by spaces. */
 function stepElement(step: WayStep): HTMLElement | undefined {
   if (typeof step !== "string") {
-    return first(`[data-new-way="${step.within}"] [data-sel-id="${step.tab}"]:not([aria-selected="true"])`);
+    return first(`[data-new-way~="${step.within}"] [data-sel-id="${step.tab}"]:not([aria-selected="true"])`);
   }
-  if (!step.startsWith("/")) return first(`[data-new-way="${step}"]`);
+  if (!step.startsWith("/")) return first(`[data-new-way~="${step}"]`);
   return first(`nav a[href="${step}"]`) ?? first(`a[href="${step}"]`);
 }
 

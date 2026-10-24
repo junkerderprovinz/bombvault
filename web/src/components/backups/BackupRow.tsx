@@ -341,7 +341,8 @@ export function BackupRow({
     <li
       data-testid="backup-row"
       data-new="backups-row"
-      data-new-way="entry"
+      // A ZFS entry with a replica is also the way to what is new about replicas.
+      data-new-way={item.replica ? "entry zfs-replica" : "entry"}
       data-picked={picked || undefined}
       onClick={(e) => {
         if (!taken(e)) navigate(target);

@@ -53,6 +53,8 @@ const ENTRY = "/backups/:kind/:id";
 const LOCATION = "/storage/:id";
 const TO_STORAGE: WayStep[] = ["/settings", "/settings/storage", "/storage"];
 const TO_INSTANCES: WayStep[] = ["/settings", "/settings/instances", "/instances"];
+// Only a ZFS entry with a replica shows the Replica card, on its Settings tab.
+const TO_REPLICA_CARD: WayStep[] = ["/backups", "zfs-replica", { within: "entry-tabs", tab: "settings" }];
 
 /** Every release that brought something new, newest first. */
 export const RELEASES: Release[] = [
@@ -64,7 +66,7 @@ export const RELEASES: Release[] = [
         page: ENTRY,
         go: "/backups",
         where: ["backups.title", "whatsNew.page.entry"],
-        way: ["/backups", "entry"],
+        way: TO_REPLICA_CARD,
         text: "whatsNew.replicaSourceKeep",
       },
     ],
@@ -258,7 +260,7 @@ export const RELEASES: Release[] = [
         page: ENTRY,
         go: "/backups",
         where: ["backups.title", "whatsNew.page.entry"],
-        way: ["/backups", "entry"],
+        way: TO_REPLICA_CARD,
         text: "whatsNew.zfsReplicaOnlySwitch",
       },
       { id: "whats-new-cards", text: "whatsNew.releaseCards" },
@@ -300,7 +302,7 @@ export const RELEASES: Release[] = [
       },
       { id: "containers-restart", text: "whatsNew.containersRestart" },
       { id: "zvol-vms", text: "whatsNew.zvolVms" },
-      { id: "zfs-replicate-now", page: ENTRY, go: "/backups", where: ["backups.title", "whatsNew.page.entry"], way: ["/backups", "entry"], text: "whatsNew.zfsReplicateNow" },
+      { id: "zfs-replicate-now", page: ENTRY, go: "/backups", where: ["backups.title", "whatsNew.page.entry"], way: ["/backups", "zfs-replica"], text: "whatsNew.zfsReplicateNow" },
       { id: "zfs-replicate-all", page: "/backups", where: ["backups.title"], way: ["/backups"], wide: true, text: "whatsNew.zfsReplicateAll" },
       { id: "zfs-replica-only", text: "whatsNew.zfsReplicaOnly" },
       {

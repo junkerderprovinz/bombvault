@@ -234,6 +234,37 @@ describe("a change elsewhere", () => {
     expect(tab[0].getAttribute("aria-label")).not.toContain(text("entry-page"));
   });
 
+  it("leads a replica change past the first entry to a ZFS entry with a replica and its Settings tab", async () => {
+    const opened: string[] = [];
+    await act(async () => markSeen(CHANGES.map((c) => c.id).filter((id) => id !== "zfs-replica-source-keep")));
+    await renderAt(
+      "/backups",
+      <ul>
+        <li data-new-way="entry">
+          <button onClick={() => opened.push("config")}>BombVault settings</button>
+        </li>
+        <li data-new-way="entry zfs-replica">
+          <button onClick={() => opened.push("tank")}>tank/appdata</button>
+        </li>
+      </ul>
+    );
+    const [dot] = wayDots();
+    expect(dot.getAttribute("aria-label")).toContain(text("zfs-replica-source-keep"));
+    await press(dot);
+    expect(opened).toEqual(["tank"]);
+
+    cleanup();
+    await renderAt(
+      "/backups/zfs/z1",
+      <div data-new-way="entry-tabs">
+        <button data-sel-id="backups" aria-selected="true">Backups</button>
+        <button data-sel-id="settings">Settings</button>
+      </div>
+    );
+    const tab = wayDots().filter((d) => d.getAttribute("aria-label")?.includes(text("zfs-replica-source-keep")));
+    expect(tab).toHaveLength(1);
+  });
+
   it("marks only the step furthest along that is in view", async () => {
     const row = () => document.querySelector<HTMLElement>('[data-new-way="location"]')!;
     const leading = () => wayDots().filter((dot) => dot.getAttribute("aria-label")?.includes(text("location-keep")));

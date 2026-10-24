@@ -30,7 +30,7 @@ const found = (pattern: RegExp) => new Set(CODE.flatMap((source) => [...source.m
 // card, such as flowNewId; every other element takes the attribute.
 const MARKED = found(/(?:data-new|[nN]ewId)="([^"$]+)"/g);
 // A way that only one of several rows carries is written as a condition.
-const WAYS = found(/data-new-way=(?:\{[^}"]*)?"([^"$]+)"/g);
+const WAYS = new Set([...found(/data-new-way=(?:\{[^}"]*)?"([^"$]+)"/g)].flatMap((way) => way.split(" ")));
 // A link on the way is written with the path it leads to.
 const LINKED = found(/\bto[=:]\s*\{?[`"](\/[^`"$]*)[`"]/g);
 const SETTINGS_PAGES = found(/\{ id: "(\w+)", label: "[\w.]+", icon:/g);
@@ -90,6 +90,19 @@ describe("what is new", () => {
       }
     }
     expect(broken).toEqual([]);
+  });
+
+  it("leads a change on the Replica card to a ZFS entry with a replica and its Settings tab", () => {
+    const card = readFileSync(join(SRC, "components", "zfs", "replica", "ReplicaCard.tsx"), "utf8");
+    const onCard = [...card.matchAll(/(?:data-new|newId)="([^"$]+)"/g)].map((m) => m[1]);
+    expect(onCard).toContain("zfs-replica-source-keep");
+    for (const id of onCard) {
+      expect(PLACED.find((change) => change.id === id)?.way, id).toEqual(["/backups", "zfs-replica", { within: "entry-tabs", tab: "settings" }]);
+    }
+  });
+
+  it("leads Replicate now to a ZFS entry with a replica", () => {
+    expect(PLACED.find((change) => change.id === "zfs-replicate-now")?.way).toEqual(["/backups", "zfs-replica"]);
   });
 
   it("starts every way in the navigation", () => {
