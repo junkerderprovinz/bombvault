@@ -61,6 +61,18 @@ Nimettömästä Docker-taltiosta ei varoiteta. Docker luo sen itse kansiolle, jo
 - **Haluat varmuuskopioida nuo tiedot.** Liitä kansio isännän polkuun Host Datan alla, esimerkiksi appdata-jaon kansioon, niin seuraava varmuuskopio ottaa sen mukaan.
 - **Et tarvitse niitä.** Lisää jompikumpi sen kahdesta polusta riviksi kortille **Poissulkumallit** samalla välilehdellä: polku kontin sisällä, kuten `/cache`, tai isännän polku, jonka varoitus mainitsee, kuten `/var/lib/docker/volumes/jellyfin_cache/_data`. Seuraavasta varmuuskopiosta alkaen varoitus jättää kansion pois, ja kentän alla oleva esikatselu kertoo miksi. Myös rivi yläpuoliselle kansiolle toimii, pelkkä nimi tai `/` ei.
 
+## Varmuuskopio näyttää tilaa Lykätty {#deferred-backups}
+
+Kontin sovellus oli kiireinen, joten sen varmuuskopio odottaa ja sitä yritetään uudelleen itsestään. Tapahtumalokin rivi kertoo syyn ja sen, milloin seuraava yritys on; kontin **Asetukset**-välilehden kortti **Kun sovellus on kiireinen** kertoo saman ja lisäksi, milloin odotus päättyy. Sinun ei tarvitse tehdä mitään. Jos haluat varmuuskopioida heti, käytä painiketta **Varmuuskopioi nyt**, kun sovellus on vapaa.
+
+- **Oma tarkistus.** Anna komennon **Varmuuskopiota edeltävä komento** päättyä koodiin 75, kun sovellus on kiireinen, esimerkiksi `[ "$(cat /tmp/players)" = 0 ] || exit 75`. Mikä tahansa muu koodi kuin 0 kaataa varmuuskopion kuten ennenkin, joten rikkinäinen skripti näkyy yhä kohdassa **Vaatii huomiota**.
+- **Plexiltä, Jellyfiniltä tai Embyltä ei koskaan kysytä.** BombVault kysyy ensin palvelimelta kontin omasta osoitteesta ja, jos sieltä ei vastata, ajaa kontin sisällä komennon curl tai wget. Imagelta, jossa ei ole kumpaakaan, ei voi kysyä sen itsensä kautta; loki mainitsee silloin sen. Kun **Varmuuskopioi, kun palvelin ei vastaa** on päällä, tällainen varmuuskopio ajetaan silti; pois päältä se odottaa.
+- **Jellyfin tai Emby kieltäytyy.** Tarkista **API-avain**. Se luodaan palvelimen hallintapaneelissa kohdassa API-avaimet.
+- **Plex kieltäytyy.** BombVault lukee tokenin `/config`-polkuun liitetyn kansion tiedostosta `Preferences.xml`. Palvelimella, jolle ei ole koskaan kirjauduttu, ei ole tokenia, ja se vastaa vain siellä, missä se sallii pääsyn ilman tokenia.
+- **Tauotettu elokuva pitää varmuuskopion odottamassa koko yön.** Aseta **Ohita tauotetut istunnot (min) jälkeen**, esimerkiksi arvoon 30.
+- **Liikennetarkistus ei koskaan päästä varmuuskopiota läpi.** Nosta **Kiireinen alkaen (KiB/s)** suuremmaksi kuin mitä kontti lähettää, kun kukaan ei käytä sitä. Heti BombVaultin käynnistyttyä tarkistus odottaa, kunnes se on seurannut konttia **Hiljaisena (min)** minuutin ajan.
+- **Varmuuskopiota ei koskaan ajeta yöllä.** Kun ikkuna on asetettu, yrityksiä tulee vain sen sisällä. Odotus, joka saavuttaa määräaikansa ikkunan ulkopuolella, päättyy silti määräaikaan.
+
 ## Suuri varmuuskopio lopetettiin muistin loppumisen vuoksi
 
 Aseta **Muistiraja varmuuskopiota kohden (MiB, 0 = ei rajaa)** kortissa **Suorituskyky** kohdassa **Asetukset, Järjestelmä** selvästi pienemmäksi kuin muisti, jota kontti saa käyttää. Rajan lähellä restic vapauttaa muistia useammin, mikä maksaa hieman nopeutta, joten varmuuskopio hidastuu sen sijaan, että se lopetettaisiin.

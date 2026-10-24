@@ -61,6 +61,18 @@ Volume Docker ẩn danh không bị báo. Docker tự tạo nó cho một thư m
 - **Bạn muốn sao lưu dữ liệu đó.** Ánh xạ thư mục tới một đường dẫn trên host bên dưới Host Data, ví dụ một thư mục trong share appdata của bạn, và lần sao lưu tiếp theo sẽ bao gồm nó.
 - **Bạn không cần nó.** Thêm một trong hai đường dẫn của nó thành một dòng trong thẻ **Mẫu loại trừ** trên cùng tab: đường dẫn bên trong container, như `/cache`, hoặc đường dẫn trên host mà cảnh báo nêu, như `/var/lib/docker/volumes/jellyfin_cache/_data`. Từ lần sao lưu tiếp theo, cảnh báo sẽ bỏ thư mục đó ra, và bản xem trước bên dưới ô nhập cho biết lý do. Một dòng cho thư mục cha cũng có tác dụng, một tên đơn giản hoặc `/` thì không.
 
+## Một bản sao lưu báo Đã hoãn {#deferred-backups}
+
+Ứng dụng của container đang bận, nên bản sao lưu của nó chờ và được tự động thử lại. Dòng trong nhật ký hoạt động cho biết lý do và khi nào có lần thử tiếp theo; thẻ **Khi ứng dụng đang bận** trên tab **Cài đặt** của container cũng cho biết như vậy và khi nào việc chờ kết thúc. Bạn không cần làm gì. Để sao lưu ngay, hãy dùng **Sao lưu ngay** khi ứng dụng đã rảnh.
+
+- **Kiểm tra của riêng bạn.** Cho **Lệnh trước sao lưu** thoát với mã 75 khi ứng dụng đang bận, ví dụ `[ "$(cat /tmp/players)" = 0 ] || exit 75`. Mọi mã khác không phải 0 vẫn làm bản sao lưu thất bại như trước, nên một script hỏng vẫn hiện dưới **Cần chú ý**.
+- **Plex, Jellyfin hoặc Emby không bao giờ được hỏi.** BombVault trước tiên hỏi máy chủ ở chính địa chỉ của container và, khi ở đó không có trả lời, chạy curl hoặc wget bên trong container. Một image không có cả hai thì không thể được hỏi thông qua chính nó; khi đó nhật ký sẽ nêu điều này. Khi bật **Sao lưu khi máy chủ không trả lời**, bản sao lưu như vậy vẫn chạy, khi tắt thì nó chờ.
+- **Jellyfin hoặc Emby từ chối.** Kiểm tra **Khóa API**. Khóa được tạo trong bảng điều khiển của máy chủ, ở mục API keys.
+- **Plex từ chối.** BombVault đọc token từ `Preferences.xml` trong thư mục được gắn vào `/config`. Một máy chủ chưa từng được đăng nhập thì không có token và chỉ trả lời ở nơi nó cho phép truy cập không cần token.
+- **Một bộ phim tạm dừng giữ bản sao lưu chờ cả đêm.** Đặt **Bỏ qua phiên tạm dừng sau (phút)**, ví dụ 30.
+- **Kiểm tra lưu lượng không bao giờ cho bản sao lưu chạy.** Nâng **Bận từ (KiB/s)** lên trên mức container gửi khi không ai dùng nó. Ngay sau khi BombVault khởi động, kiểm tra sẽ chờ cho đến khi đã theo dõi container đủ số phút trong **Yên trong (phút)**.
+- **Bản sao lưu không bao giờ chạy vào ban đêm.** Khi đã đặt khoảng thời gian, các lần thử chỉ diễn ra trong đó. Một lần chờ chạm hạn chót bên ngoài khoảng đó vẫn kết thúc đúng hạn chót.
+
 ## Một bản sao lưu lớn bị dừng vì hết bộ nhớ
 
 Đặt **Giới hạn bộ nhớ mỗi bản sao lưu (MiB, 0 = không)** trong thẻ **Hiệu năng** dưới **Cài đặt, Hệ thống** ở mức thấp hơn hẳn lượng bộ nhớ mà container được phép dùng. Khi gần tới giới hạn, restic giải phóng bộ nhớ thường xuyên hơn, việc này làm chậm đi một chút, nên bản sao lưu chạy chậm lại thay vì bị dừng.

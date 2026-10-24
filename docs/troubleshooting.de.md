@@ -61,6 +61,18 @@ Ein anonymes Docker-Volume wird nicht gemeldet. Docker legt es von selbst für e
 - **Du willst diese Daten gesichert haben.** Ordne den Ordner einem Host-Pfad unterhalb von Host Data zu, etwa einem Ordner in deiner appdata-Freigabe, dann nimmt ihn die nächste Sicherung mit.
 - **Du brauchst sie nicht.** Trag einen seiner beiden Pfade als Zeile in der Karte **Ausschlussmuster** auf demselben Reiter ein: den Pfad im Container, etwa `/cache`, oder den Host-Pfad, den die Warnung nennt, etwa `/var/lib/docker/volumes/jellyfin_cache/_data`. Ab der nächsten Sicherung lässt die Warnung diesen Ordner weg, und die Vorschau unter dem Feld sagt, warum. Eine Zeile für einen Ordner darüber wirkt genauso, ein reiner Name oder `/` nicht.
 
+## Eine Sicherung steht auf Zurückgestellt {#deferred-backups}
+
+Die App des Containers war beschäftigt, deshalb wartet seine Sicherung und wird von selbst erneut versucht. Die Zeile im Aktivitätsprotokoll sagt, warum, und wann der nächste Versuch kommt; die Karte **Wenn die App beschäftigt ist** auf dem Tab **Einstellungen** des Containers sagt dasselbe und dazu, wann das Warten endet. Du musst nichts tun. Um sofort zu sichern, nimm **Jetzt sichern**, sobald die App frei ist.
+
+- **Eine eigene Prüfung.** Lass den **Befehl vor der Sicherung** mit Code 75 enden, solange die App beschäftigt ist, zum Beispiel `[ "$(cat /tmp/players)" = 0 ] || exit 75`. Jeder andere Code außer 0 lässt die Sicherung wie bisher fehlschlagen, ein kaputtes Skript taucht also weiterhin unter **Braucht dich** auf.
+- **Plex, Jellyfin oder Emby wird nie gefragt.** BombVault fragt den Server zuerst unter der Adresse des Containers und führt, wenn dort nichts antwortet, curl oder wget im Container aus. Ein Image ohne beides lässt sich nicht über sich selbst fragen; das Log nennt das dann. Mit **Sichern, wenn der Server nicht antwortet** läuft so eine Sicherung trotzdem, ohne wartet sie.
+- **Jellyfin oder Emby lehnt ab.** Prüf den **API-Schlüssel**. Du legst ihn im Dashboard des Servers unter API-Schlüssel an.
+- **Plex lehnt ab.** BombVault liest das Token aus der `Preferences.xml` im Ordner, der unter `/config` eingebunden ist. Ein Server, der nie angemeldet war, hat keins und antwortet nur dort, wo er Zugriff ohne Token erlaubt.
+- **Ein pausierter Film lässt die Sicherung die ganze Nacht warten.** Setz **Pausierte Sitzungen ignorieren nach (Min.)**, zum Beispiel auf 30.
+- **Die Verkehrsprüfung lässt die Sicherung nie durch.** Setz **Beschäftigt ab (KiB/s)** über das, was der Container sendet, wenn ihn niemand nutzt. Direkt nach dem Start von BombVault wartet die Prüfung, bis sie den Container **Ruhig für (Min.)** Minuten lang beobachtet hat.
+- **Die Sicherung läuft nachts nie.** Mit einem Zeitfenster kommen Versuche nur darin. Erreicht das Warten seine Frist außerhalb des Fensters, endet es trotzdem zur Frist.
+
 ## Eine große Sicherung wurde wegen fehlenden Speichers beendet
 
 Setz **Speicherlimit pro Sicherung (MiB, 0 = keins)** auf der Karte **Leistung** unter **Einstellungen, System**, deutlich unter den Speicher, den der Container nutzen darf. Nahe am Limit gibt restic öfter Speicher frei, was etwas Tempo kostet, sodass die Sicherung langsamer wird, statt beendet zu werden.

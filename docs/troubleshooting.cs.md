@@ -61,6 +61,18 @@ Anonymní svazek Dockeru se nehlásí. Docker ho sám vytvoří pro složku, kte
 - **Chceš ta data zálohovat.** Namapuj složku na cestu na hostiteli pod Host Data, třeba na složku ve sdílení appdata, a další záloha ji zahrne.
 - **Nepotřebuješ je.** Přidej jednu z jejích dvou cest jako řádek do karty **Vzory vyloučení** na stejné kartě: cestu uvnitř kontejneru, třeba `/cache`, nebo cestu na hostiteli, kterou varování uvádí, třeba `/var/lib/docker/volumes/jellyfin_cache/_data`. Od další zálohy varování tuto složku vynechá a náhled pod polem řekne proč. Řádek pro nadřazenou složku funguje také, samotný název nebo `/` ne.
 
+## Záloha hlásí Odloženo {#deferred-backups}
+
+Aplikace kontejneru byla zaneprázdněná, takže jeho záloha čeká a sama se zkusí znovu. Řádek v protokolu aktivit říká proč a kdy přijde další pokus; karta **Když je aplikace zaneprázdněná** na kartě **Nastavení** kontejneru říká totéž a navíc, kdy čekání skončí. Nemusíš nic dělat. Chceš-li zálohovat hned, použij **Zálohovat nyní**, jakmile je aplikace volná.
+
+- **Vlastní kontrola.** Nech **Příkaz před zálohou** skončit s kódem 75, dokud je aplikace zaneprázdněná, například `[ "$(cat /tmp/players)" = 0 ] || exit 75`. Jakýkoli jiný kód než 0 nechá zálohu selhat jako dosud, takže rozbitý skript se dál ukáže v **Vyžaduje pozornost**.
+- **Na Plex, Jellyfin ani Emby nikdy nepřijde dotaz.** BombVault se nejdřív zeptá serveru na vlastní adrese kontejneru, a když tam nic neodpoví, spustí curl nebo wget uvnitř kontejneru. Image bez obou se přes sebe samu zeptat nedá; protokol to pak uvede. Se zapnutým **Zálohovat, když server neodpovídá** taková záloha stejně proběhne, s vypnutým čeká.
+- **Jellyfin nebo Emby odmítá.** Zkontroluj **Klíč API**. Vytvoříš ho v dashboardu serveru v části klíčů API.
+- **Plex odmítá.** BombVault čte token z `Preferences.xml` ve složce připojené na `/config`. Server, ke kterému se nikdo nikdy nepřihlásil, žádný token nemá a odpovídá jen tam, kde povoluje přístup bez tokenu.
+- **Pozastavený film nechá zálohu čekat celou noc.** Nastav **Ignorovat pozastavené relace po (min)**, třeba na 30.
+- **Kontrola provozu zálohu nikdy nepustí.** Zvyš **Zaneprázdněný od (KiB/s)** nad to, co kontejner odesílá, když ho nikdo nepoužívá. Hned po startu BombVaultu kontrola čeká, dokud kontejner nesleduje **V klidu po dobu (min)** minut.
+- **Záloha v noci nikdy neproběhne.** S nastaveným oknem přicházejí pokusy jen uvnitř něj. Čekání, které dosáhne svého termínu mimo okno, skončí v termínu i tak.
+
 ## Velká záloha byla ukončena kvůli nedostatku paměti
 
 Nastav **Limit paměti na zálohu (MiB, 0 = žádný)** v kartě **Výkon** v **Nastavení, Systém** výrazně pod to, co smí kontejner použít. Blízko limitu restic častěji uvolňuje paměť, což stojí trochu rychlosti, takže záloha zpomalí, místo aby byla ukončena.

@@ -61,6 +61,18 @@ Un volum Docker anonim nu este raportat. Docker îl creează singur pentru un do
 - **Vrei să salvezi aceste date.** Mapează dosarul pe o cale a gazdei sub Host Data, de exemplu un dosar din partajarea appdata, iar următorul backup îl include.
 - **Nu ai nevoie de ele.** Adaugă una dintre cele două căi ale lui ca linie în cardul **Modele de excludere** din aceeași filă: calea din interiorul containerului, de exemplu `/cache`, sau calea de pe gazdă pe care o numește avertismentul, de exemplu `/var/lib/docker/volumes/jellyfin_cache/_data`. De la următorul backup, avertismentul lasă dosarul deoparte, iar previzualizarea de sub câmp spune de ce. Merge și o linie pentru un dosar de deasupra, un nume simplu sau `/` nu.
 
+## O copie de rezervă arată Amânat {#deferred-backups}
+
+Aplicația containerului era ocupată, așa că copia lui așteaptă și este încercată din nou de la sine. Linia din jurnalul de activitate spune de ce și când are loc următoarea încercare; cardul **Când aplicația e ocupată** din fila **Setări** a containerului spune același lucru și când se termină așteptarea. Nu trebuie să faci nimic. Ca să faci copia imediat, folosește **Copiază acum** după ce aplicația s-a eliberat.
+
+- **Propria ta verificare.** Fă ca **Comandă pre-backup** să se încheie cu codul 75 cât timp aplicația e ocupată, de exemplu `[ "$(cat /tmp/players)" = 0 ] || exit 75`. Orice alt cod diferit de 0 face copia să eșueze ca înainte, așa că un script stricat apare tot la **Necesită atenție**.
+- **Plex, Jellyfin sau Emby nu este întrebat niciodată.** BombVault întreabă întâi serverul la adresa proprie a containerului și, când acolo nu răspunde nimic, rulează curl sau wget în interiorul containerului. O imagine fără niciunul dintre ele nu poate fi întrebată prin ea însăși; jurnalul spune atunci asta. Cu **Fă copia când serverul nu răspunde** pornit, o astfel de copie rulează oricum; cu el oprit, așteaptă.
+- **Jellyfin sau Emby refuză.** Verifică **Cheie API**. Se creează în dashboardul serverului, la API keys.
+- **Plex refuză.** BombVault citește tokenul din `Preferences.xml` din folderul montat la `/config`. Un server la care nu s-a conectat niciodată nimeni nu are token și răspunde doar acolo unde permite accesul fără el.
+- **Un film pus pe pauză ține copia în așteptare toată noaptea.** Setează **Ignoră sesiunile în pauză după (min)**, de exemplu la 30.
+- **Verificarea traficului nu lasă niciodată copia să treacă.** Ridică **Ocupat de la (KiB/s)** peste cât trimite containerul când nu îl folosește nimeni. Imediat după pornirea BombVault, verificarea așteaptă până a urmărit containerul atâtea minute câte spune **Liniștit timp de (min)**.
+- **Copia nu rulează niciodată noaptea.** Cu un interval setat, încercările au loc doar în interiorul lui. O așteptare care își atinge termenul în afara intervalului se încheie totuși la termen.
+
 ## Un backup mare a fost oprit din lipsă de memorie
 
 Setează **Limită de memorie per copie (MiB, 0 = fără)** în cardul **Performanță** de la **Setări, Sistem**, cu mult sub cât are voie să folosească containerul. Aproape de limită, restic eliberează memorie mai des, ceea ce costă puțină viteză, așa că backupul încetinește în loc să fie oprit.

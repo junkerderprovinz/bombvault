@@ -61,6 +61,18 @@ Um volume anónimo do Docker não é reportado. O Docker cria-o sozinho para uma
 - **Queres copiar esses dados.** Mapeia a pasta para um caminho do host abaixo de Host Data, por exemplo uma pasta da tua partilha appdata, e o próximo backup inclui-a.
 - **Não precisas deles.** Adiciona um dos seus dois caminhos como uma linha no cartão **Padrões de exclusão** do mesmo separador: o caminho dentro do container, como `/cache`, ou o caminho no host que o aviso indica, como `/var/lib/docker/volumes/jellyfin_cache/_data`. A partir do próximo backup, o aviso deixa essa pasta de fora, e a pré-visualização por baixo do campo diz porquê. Uma linha para uma pasta acima também serve, um nome simples ou `/` não.
 
+## Um backup aparece como Adiado {#deferred-backups}
+
+A app do container estava ocupada, por isso o seu backup espera e volta a ser tentado sozinho. A linha no registo de atividade diz porquê e quando é a próxima tentativa; o cartão **Quando a app está ocupada** no separador **Definições** do container diz o mesmo e quando termina a espera. Não é preciso fazer nada. Para fazer o backup já, usa **Fazer backup agora** assim que a app estiver livre.
+
+- **A tua própria verificação.** Faz o **Comando pré-backup** terminar com o código 75 enquanto a app está ocupada, por exemplo `[ "$(cat /tmp/players)" = 0 ] || exit 75`. Qualquer outro código diferente de 0 faz falhar o backup como antes, por isso um script avariado continua a aparecer em **Precisa de atenção**.
+- **O Plex, o Jellyfin ou o Emby nunca é consultado.** O BombVault pergunta primeiro ao servidor no endereço do próprio container e, quando aí não há resposta, corre curl ou wget dentro do container. Uma imagem sem nenhum dos dois não pode ser consultada através de si mesma; nesse caso o registo indica-o. Com **Fazer backup quando o servidor não responde** ligado, um backup assim corre na mesma; com a opção desligada, espera.
+- **O Jellyfin ou o Emby recusa.** Verifica a **Chave de API**. Cria-se no painel do servidor, em chaves de API.
+- **O Plex recusa.** O BombVault lê o token do `Preferences.xml` na pasta montada em `/config`. Um servidor onde nunca se iniciou sessão não tem token e só responde onde permite acesso sem ele.
+- **Um filme em pausa deixa o backup à espera a noite toda.** Define **Ignorar sessões em pausa após (min)**, por exemplo para 30.
+- **A verificação de tráfego nunca deixa passar o backup.** Sobe **Ocupado a partir de (KiB/s)** acima do que o container envia quando ninguém o usa. Logo depois de o BombVault arrancar, a verificação espera até ter observado o container durante **Calmo durante (min)** minutos.
+- **O backup nunca corre à noite.** Com uma janela definida, as tentativas só acontecem dentro dela. Uma espera que chega ao prazo fora da janela termina na mesma no prazo.
+
 ## Um backup grande foi terminado por falta de memória
 
 Define **Limite de memória por backup (MiB, 0 = nenhum)** no cartão **Desempenho** em **Definições, Sistema**, bem abaixo do que o container pode usar. Perto do limite, o restic liberta memória mais vezes, o que custa alguma velocidade, por isso o backup abranda em vez de ser terminado.

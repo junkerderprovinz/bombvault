@@ -61,6 +61,18 @@ Anonimowy wolumen Dockera nie jest zgłaszany. Docker sam go tworzy dla folderu 
 - **Chcesz archiwizować te dane.** Zmapuj folder na ścieżkę hosta pod Host Data, na przykład na folder w udziale appdata, a następna kopia go obejmie.
 - **Nie potrzebujesz ich.** Dodaj jedną z jego dwóch ścieżek jako wiersz w karcie **Wzorce wykluczeń** na tej samej karcie: ścieżkę wewnątrz kontenera, na przykład `/cache`, albo ścieżkę na hoście, którą podaje ostrzeżenie, na przykład `/var/lib/docker/volumes/jellyfin_cache/_data`. Od następnej kopii ostrzeżenie pomija ten folder, a podgląd pod polem mówi dlaczego. Wiersz dla folderu nadrzędnego też działa, sama nazwa ani `/` nie.
 
+## Kopia zapasowa ma stan Odroczono {#deferred-backups}
+
+Aplikacja kontenera była zajęta, więc jego kopia czeka i jest ponawiana samoczynnie. Wiersz w dzienniku aktywności mówi, dlaczego i kiedy będzie następna próba; karta **Gdy aplikacja jest zajęta** na karcie **Ustawienia** kontenera mówi to samo oraz kiedy kończy się oczekiwanie. Nie trzeba nic robić. Aby zrobić kopię od razu, użyj **Utwórz kopię teraz**, gdy aplikacja będzie wolna.
+
+- **Własna kontrola.** Spraw, by **Polecenie przed kopią** kończyło się kodem 75, gdy aplikacja jest zajęta, na przykład `[ "$(cat /tmp/players)" = 0 ] || exit 75`. Każdy inny kod różny od 0 nadal powoduje niepowodzenie kopii, więc zepsuty skrypt wciąż pokazuje się w **Wymaga uwagi**.
+- **Plex, Jellyfin albo Emby nigdy nie dostaje pytania.** BombVault najpierw pyta serwer pod własnym adresem kontenera, a gdy tam nie ma odpowiedzi, uruchamia curl albo wget wewnątrz kontenera. Obrazu bez żadnego z nich nie da się zapytać przez niego samego; dziennik wtedy to podaje. Przy włączonym **Twórz kopię, gdy serwer nie odpowiada** taka kopia i tak się wykonuje, przy wyłączonym czeka.
+- **Jellyfin albo Emby odmawia.** Sprawdź **Klucz API**. Tworzy się go w panelu serwera w sekcji kluczy API.
+- **Plex odmawia.** BombVault odczytuje token z `Preferences.xml` w folderze zamontowanym jako `/config`. Serwer, na którym nikt się nigdy nie zalogował, nie ma tokenu i odpowiada tylko tam, gdzie pozwala na dostęp bez niego.
+- **Wstrzymany film każe kopii czekać całą noc.** Ustaw **Ignoruj wstrzymane sesje po (min)**, na przykład na 30.
+- **Kontrola ruchu nigdy nie przepuszcza kopii.** Podnieś **Zajęty od (KiB/s)** powyżej tego, co kontener wysyła, gdy nikt go nie używa. Zaraz po starcie BombVault kontrola czeka, dopóki nie poobserwuje kontenera przez **Spokój przez (min)** minut.
+- **Kopia nigdy nie wykonuje się w nocy.** Gdy okno jest ustawione, próby odbywają się tylko w nim. Oczekiwanie, które osiąga termin poza oknem, i tak kończy się w terminie.
+
 ## Duża kopia zapasowa została zabita z braku pamięci
 
 Ustaw **Limit pamięci na kopię zapasową (MiB, 0 = brak)** w karcie **Wydajność** w **Ustawienia, System** wyraźnie poniżej tego, ile pamięci może używać kontener. W pobliżu limitu restic częściej zwalnia pamięć, co kosztuje trochę szybkości, więc kopia działa wolniej, zamiast zostać zabita.

@@ -61,6 +61,18 @@ An anonymous Docker volume is not reported. Docker creates one by itself for a f
 - **You want that data backed up.** Map the folder to a host path below Host Data, for example a folder in your appdata share, and the next backup includes it.
 - **You do not need it.** Add one of its two paths as a line in the **Exclude patterns** card on the same tab: the path inside the container, such as `/cache`, or the host path the warning names, such as `/var/lib/docker/volumes/jellyfin_cache/_data`. From the next backup on, the warning leaves that folder out, and the preview under the field says why. A line for a folder above it works too, a bare name or `/` does not.
 
+## A backup says Deferred {#deferred-backups}
+
+The container's app was busy, so its backup waits and is tried again on its own. The line in the activity log says why and when the next try is; the **When the app is busy** card on the container's **Settings** tab says the same and when the wait ends. Nothing has to be done. To back up right away, use **Back up now** once the app is free.
+
+- **Your own check.** Make the **Pre-backup command** exit with code 75 while the app is busy, for example `[ "$(cat /tmp/players)" = 0 ] || exit 75`. Any other code that is not 0 fails the backup as before, so a broken script still shows up under **Needs you**.
+- **Plex, Jellyfin or Emby is never asked.** BombVault first asks the server at the container's own address and, when that does not answer, runs curl or wget inside the container. An image with neither cannot be asked through itself; the log then names that. With **Back up when the server does not answer** on, such a backup runs anyway, with it off it waits.
+- **Jellyfin or Emby refuses.** Check the **API key**. It is made in the server's dashboard under API keys.
+- **Plex refuses.** BombVault reads the token from `Preferences.xml` in the folder mounted at `/config`. A server that was never signed in has none and answers only where it allows access without one.
+- **A paused film keeps the backup waiting all night.** Set **Ignore paused sessions after (min)**, for example to 30.
+- **The traffic check never lets the backup through.** Raise **Busy from (KiB/s)** above what the container sends while nobody uses it. Right after BombVault starts, the check waits until it has watched the container for **Quiet for (min)** minutes.
+- **The backup never runs at night.** With a window set, tries come only inside it. A wait that reaches its deadline outside the window still ends at the deadline.
+
 ## A large backup was killed for running out of memory
 
 Set **Memory limit per backup (MiB, 0 = none)** in the **Performance** card under **Settings, System**, well below what the container may use. Near the limit restic frees memory more often, which costs some speed, so the backup slows down instead of being killed.

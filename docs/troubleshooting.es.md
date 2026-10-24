@@ -61,6 +61,18 @@ De un volumen anónimo de Docker no se avisa. Docker lo crea por su cuenta para 
 - **Quieres copiar esos datos.** Mapea la carpeta a una ruta del host bajo Host Data, por ejemplo una carpeta de tu recurso appdata, y la próxima copia la incluye.
 - **No los necesitas.** Añade una de sus dos rutas como una línea en la tarjeta **Patrones de exclusión** de la misma pestaña: la ruta dentro del contenedor, como `/cache`, o la ruta del host que nombra el aviso, como `/var/lib/docker/volumes/jellyfin_cache/_data`. A partir de la próxima copia el aviso deja fuera esa carpeta, y la vista previa bajo el campo dice por qué. Una línea para una carpeta superior también sirve, un nombre simple o `/` no.
 
+## Una copia dice Aplazado {#deferred-backups}
+
+La app del contenedor estaba ocupada, así que su copia espera y se reintenta sola. La línea del registro de actividad dice por qué y cuándo es el próximo intento; la tarjeta **Cuando la app está ocupada** de la pestaña **Ajustes** del contenedor dice lo mismo y cuándo termina la espera. No tienes que hacer nada. Para copiar ya, usa **Copiar ahora** en cuanto la app quede libre.
+
+- **Tu propia comprobación.** Haz que el **Comando pre-copia** termine con el código 75 mientras la app está ocupada, por ejemplo `[ "$(cat /tmp/players)" = 0 ] || exit 75`. Cualquier otro código distinto de 0 hace fallar la copia como siempre, así que un script roto sigue apareciendo en **Necesita atención**.
+- **A Plex, Jellyfin o Emby nunca se les pregunta.** BombVault pregunta primero al servidor en la dirección del propio contenedor y, si ahí no responde nada, ejecuta curl o wget dentro del contenedor. Una imagen sin ninguno de los dos no se puede consultar a través de sí misma; el registro lo dice entonces. Con **Copiar cuando el servidor no responde** activado, esa copia se hace igualmente; desactivado, espera.
+- **Jellyfin o Emby se niega.** Revisa la **Clave de API**. Se crea en el panel del servidor, en Claves de API.
+- **Plex se niega.** BombVault lee el token de `Preferences.xml` en la carpeta montada en `/config`. Un servidor en el que nunca se inició sesión no tiene ninguno y solo responde donde permite el acceso sin token.
+- **Una película en pausa hace esperar a la copia toda la noche.** Ajusta **Ignorar sesiones en pausa tras (min)**, por ejemplo a 30.
+- **La comprobación de tráfico nunca deja pasar la copia.** Sube **Ocupado a partir de (KiB/s)** por encima de lo que envía el contenedor cuando nadie lo usa. Justo después de arrancar BombVault, la comprobación espera hasta haber observado el contenedor durante **Tranquilo durante (min)** minutos.
+- **La copia nunca se hace por la noche.** Con una franja configurada, los intentos solo llegan dentro de ella. Una espera que alcanza su plazo fuera de la franja termina igualmente en el plazo.
+
 ## Una copia grande se terminó por quedarse sin memoria
 
 Ajusta **Límite de memoria por copia (MiB, 0 = ninguno)** en la tarjeta **Rendimiento** de **Ajustes, Sistema**, bastante por debajo de lo que puede usar el contenedor. Cerca del límite restic libera memoria más a menudo, lo que cuesta algo de velocidad, así que la copia va más lenta en lugar de terminarse.

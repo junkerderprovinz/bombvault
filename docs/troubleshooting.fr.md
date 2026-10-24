@@ -61,6 +61,18 @@ Un volume Docker anonyme n'est pas signalé. Docker le crée de lui-même pour u
 - **Vous voulez sauvegarder ces données.** Mappez le dossier sur un chemin de l'hôte sous Host Data, par exemple un dossier de votre partage appdata, et la prochaine sauvegarde l'inclut.
 - **Vous n'en avez pas besoin.** Ajoutez l'un de ses deux chemins comme ligne dans la carte **Motifs d'exclusion** du même onglet : le chemin dans le conteneur, comme `/cache`, ou le chemin sur l'hôte que nomme l'avertissement, comme `/var/lib/docker/volumes/jellyfin_cache/_data`. À partir de la prochaine sauvegarde, l'avertissement laisse ce dossier de côté, et l'aperçu sous le champ dit pourquoi. Une ligne pour un dossier au-dessus fonctionne aussi, un nom simple ou `/` non.
 
+## Une sauvegarde indique Reporté {#deferred-backups}
+
+L'application du conteneur était occupée, sa sauvegarde attend donc et sera réessayée d'elle-même. La ligne du journal d'activité dit pourquoi et quand a lieu le prochain essai ; la carte **Quand l'application est occupée** de l'onglet **Paramètres** du conteneur dit la même chose, ainsi que la fin de l'attente. Vous n'avez rien à faire. Pour sauvegarder tout de suite, utilisez **Sauvegarder maintenant** une fois l'application libre.
+
+- **Votre propre vérification.** Faites sortir la **Commande pré-sauvegarde** avec le code 75 tant que l'application est occupée, par exemple `[ "$(cat /tmp/players)" = 0 ] || exit 75`. Tout autre code différent de 0 fait échouer la sauvegarde comme avant, un script cassé apparaît donc toujours sous **À traiter**.
+- **Plex, Jellyfin ou Emby n'est jamais interrogé.** BombVault interroge d'abord le serveur à l'adresse du conteneur et, si rien n'y répond, lance curl ou wget dans le conteneur. Une image qui n'a ni l'un ni l'autre ne peut pas être interrogée par elle-même ; le journal le dit alors. Avec **Sauvegarder quand le serveur ne répond pas** activé, une telle sauvegarde a lieu quand même ; désactivé, elle attend.
+- **Jellyfin ou Emby refuse.** Vérifiez la **Clé API**. Elle se crée dans le tableau de bord du serveur, sous Clés API.
+- **Plex refuse.** BombVault lit le jeton dans `Preferences.xml`, dans le dossier monté sur `/config`. Un serveur qui n'a jamais été connecté à un compte n'en a pas et ne répond que là où il autorise l'accès sans jeton.
+- **Un film en pause fait attendre la sauvegarde toute la nuit.** Réglez **Ignorer les sessions en pause après (min)**, par exemple sur 30.
+- **La vérification du trafic ne laisse jamais passer la sauvegarde.** Montez **Occupé à partir de (KiB/s)** au-dessus de ce que le conteneur envoie quand personne ne l'utilise. Juste après le démarrage de BombVault, la vérification attend d'avoir observé le conteneur pendant **Calme pendant (min)** minutes.
+- **La sauvegarde ne s'exécute jamais la nuit.** Avec une plage définie, les essais n'ont lieu qu'à l'intérieur. Une attente qui atteint son échéance hors de la plage se termine quand même à l'échéance.
+
 ## Une grosse sauvegarde a été tuée faute de mémoire
 
 Réglez **Limite de mémoire par sauvegarde (MiB, 0 = aucune)** dans la carte **Performances** sous **Paramètres, Système**, bien en dessous de ce que le conteneur peut utiliser. À l'approche de la limite, restic libère la mémoire plus souvent, ce qui coûte un peu de vitesse : la sauvegarde ralentit au lieu d'être tuée.

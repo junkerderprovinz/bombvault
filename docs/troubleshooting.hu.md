@@ -61,6 +61,18 @@ A névtelen Docker-kötetről nincs jelzés. A Docker magától hozza létre egy
 - **Szeretnéd menteni ezeket az adatokat.** Csatold a mappát egy Host Data alatti gazdagépes útvonalhoz, például egy mappához az appdata megosztásodban, és a következő mentés már tartalmazza.
 - **Nincs rájuk szükséged.** Add hozzá a két útvonala közül az egyiket sorként ugyanezen a lapon a **Kizárási minták** kártyához: a konténeren belüli útvonalat, például `/cache`, vagy a gazdagépes útvonalat, amelyet a figyelmeztetés megnevez, például `/var/lib/docker/volumes/jellyfin_cache/_data`. A következő mentéstől a figyelmeztetés kihagyja ezt a mappát, a mező alatti előnézet pedig megmondja, miért. Egy fölötte lévő mappa sora is működik, egy önálló név vagy a `/` nem.
 
+## Egy mentés Elhalasztva állapotban áll {#deferred-backups}
+
+A konténer alkalmazása foglalt volt, ezért a mentése vár, és magától újra próbálkozik. A tevékenységnapló sora megmondja, miért, és mikor lesz a következő próbálkozás; a konténer **Beállítások** fülén lévő **Ha az alkalmazás foglalt** kártya ugyanezt mutatja, és azt is, mikor ér véget a várakozás. Semmit sem kell tenned. Ha azonnal menteni szeretnél, használd a **Biztonsági mentés most** gombot, amint az alkalmazás szabad.
+
+- **Saját ellenőrzés.** Állítsd be, hogy a **Biztonsági mentés előtti parancs** 75-ös kóddal lépjen ki, amíg az alkalmazás foglalt, például `[ "$(cat /tmp/players)" = 0 ] || exit 75`. Minden más, 0-tól eltérő kód ugyanúgy sikertelenné teszi a mentést, így egy hibás szkript továbbra is megjelenik a **Figyelmet igényel** alatt.
+- **A Plexet, a Jellyfint vagy az Embyt sosem kérdezi meg.** A BombVault előbb a konténer saját címén kérdezi a szervert, és ha ott nincs válasz, a konténeren belül curl vagy wget segítségével próbálja. Egy image, amelyben egyik sincs, nem kérdezhető meg önmagán keresztül; ilyenkor a napló ezt megnevezi. Ha a **Mentés, ha a szerver nem válaszol** be van kapcsolva, egy ilyen mentés mindenképp lefut, kikapcsolva vár.
+- **A Jellyfin vagy az Emby elutasítja.** Ellenőrizd az **API-kulcs** értékét. A szerver irányítópultján, az API-kulcsok alatt hozható létre.
+- **A Plex elutasítja.** A BombVault a tokent a `/config` alá csatolt mappában lévő `Preferences.xml` fájlból olvassa. Egy szervernek, amelybe sosem jelentkeztek be, nincs tokenje, és csak ott válaszol, ahol token nélkül is enged hozzáférést.
+- **Egy szüneteltetett film egész éjjel várakoztatja a mentést.** Állítsd be a **Szüneteltetett munkamenetek kihagyása ennyi után (perc)** értékét, például 30-ra.
+- **A forgalomellenőrzés sosem engedi át a mentést.** Emeld a **Foglalt ettől (KiB/s)** értékét afölé, amennyit a konténer akkor küld, amikor senki sem használja. Közvetlenül a BombVault indulása után az ellenőrzés addig vár, amíg **Csendes ennyi ideig (perc)** percig figyelte a konténert.
+- **A mentés éjjel sosem fut.** Beállított ablaknál a próbálkozások csak azon belül történnek. Egy várakozás, amelynek határideje az ablakon kívülre esik, akkor is a határidőnél ér véget.
+
 ## Egy nagy mentést memóriahiány miatt leállítottak
 
 Állítsd a **Memóriakorlát biztonsági mentésenként (MiB, 0 = nincs)** értékét a **Teljesítmény** kártyán a **Beállítások, Rendszer** alatt jóval az alá, amennyit a konténer használhat. A korlát közelében a restic gyakrabban szabadít fel memóriát, ami némi sebességbe kerül, így a mentés lelassul ahelyett, hogy leállítanák.

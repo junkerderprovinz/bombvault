@@ -61,6 +61,18 @@ Een anoniem Docker-volume wordt niet gemeld. Docker maakt het zelf aan voor een 
 - **Je wilt die gegevens geback-upt hebben.** Koppel de map aan een hostpad onder Host Data, bijvoorbeeld een map in je appdata-share, dan neemt de volgende back-up hem mee.
 - **Je hebt ze niet nodig.** Voeg een van de twee paden toe als regel in de kaart **Uitsluitpatronen** op hetzelfde tabblad: het pad binnen de container, zoals `/cache`, of het hostpad dat de waarschuwing noemt, zoals `/var/lib/docker/volumes/jellyfin_cache/_data`. Vanaf de volgende back-up laat de waarschuwing die map weg, en het voorbeeld onder het veld zegt waarom. Een regel voor een map erboven werkt ook, een kale naam of `/` niet.
 
+## Een back-up staat op Uitgesteld {#deferred-backups}
+
+De app van de container was bezig, dus zijn back-up wacht en wordt vanzelf opnieuw geprobeerd. De regel in het activiteitenlogboek zegt waarom en wanneer de volgende poging is; de kaart **Als de app bezig is** op het tabblad **Instellingen** van de container zegt hetzelfde, en wanneer het wachten afloopt. Je hoeft niets te doen. Wil je meteen een back-up, gebruik dan **Nu back-up maken** zodra de app vrij is.
+
+- **Je eigen controle.** Laat het **Pre-back-upcommando** eindigen met code 75 zolang de app bezig is, bijvoorbeeld `[ "$(cat /tmp/players)" = 0 ] || exit 75`. Elke andere code dan 0 laat de back-up gewoon mislukken, dus een kapot script verschijnt nog steeds onder **Aandacht nodig**.
+- **Plex, Jellyfin of Emby wordt nooit gevraagd.** BombVault vraagt de server eerst op het eigen adres van de container en draait, als daar geen antwoord komt, curl of wget in de container. Een image met geen van beide kan niet via zichzelf worden gevraagd; het logboek noemt dat dan. Met **Back-up maken als de server niet antwoordt** aan draait zo'n back-up toch, met de optie uit wacht hij.
+- **Jellyfin of Emby weigert.** Controleer de **API-sleutel**. Die maak je in het dashboard van de server onder API-sleutels.
+- **Plex weigert.** BombVault leest het token uit `Preferences.xml` in de map die op `/config` is gekoppeld. Een server waarop nooit is ingelogd heeft er geen en antwoordt alleen waar hij toegang zonder token toestaat.
+- **Een gepauzeerde film laat de back-up de hele nacht wachten.** Stel **Gepauzeerde sessies negeren na (min)** in, bijvoorbeeld op 30.
+- **De verkeerscontrole laat de back-up nooit door.** Zet **Bezig vanaf (KiB/s)** hoger dan wat de container verstuurt als niemand hem gebruikt. Vlak nadat BombVault is gestart, wacht de controle tot ze de container **Rustig gedurende (min)** minuten heeft bekeken.
+- **De back-up draait 's nachts nooit.** Met een venster ingesteld komen pogingen alleen binnen dat venster. Een wachttijd die zijn deadline buiten het venster bereikt, eindigt toch op de deadline.
+
 ## Een grote back-up werd afgebroken wegens geheugengebrek
 
 Stel **Geheugenlimiet per back-up (MiB, 0 = geen)** in de kaart **Prestaties** onder **Instellingen, Systeem** ruim onder wat de container mag gebruiken. Dicht bij de limiet geeft restic vaker geheugen vrij. Dat kost wat snelheid, maar de back-up wordt dan trager in plaats van te worden afgebroken.

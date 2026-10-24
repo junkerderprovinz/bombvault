@@ -61,6 +61,18 @@ Anonim bir Docker birimi bildirilmez. Docker onu, image'in tanımladığı ama k
 - **Bu verilerin yedeklenmesini istiyorsun.** Klasörü Host Data altındaki bir ana makine yoluna, örneğin appdata paylaşımındaki bir klasöre eşle; bir sonraki yedek onu da alır.
 - **Onlara ihtiyacın yok.** İki yolundan birini aynı sekmedeki **Hariç tutma desenleri** kartına bir satır olarak ekle: konteyner içindeki yolu, örneğin `/cache`, ya da uyarının adını verdiği ana makine yolunu, örneğin `/var/lib/docker/volumes/jellyfin_cache/_data`. Bir sonraki yedekten itibaren uyarı o klasörü dışarıda bırakır ve alanın altındaki önizleme nedenini söyler. Üstteki bir klasör için yazılan satır da işe yarar, düz bir ad ya da `/` yaramaz.
 
+## Bir yedek Ertelendi gösteriyor {#deferred-backups}
+
+Konteynerin uygulaması meşguldü, bu yüzden yedeklemesi bekliyor ve kendiliğinden yeniden denenecek. Etkinlik günlüğündeki satır nedenini ve bir sonraki denemenin ne zaman olacağını söyler; konteynerin **Ayarlar** sekmesindeki **Uygulama meşgulken** kartı da aynısını ve beklemenin ne zaman biteceğini söyler. Bir şey yapman gerekmez. Hemen yedeklemek için uygulama boşalınca **Şimdi yedekle**'yi kullan.
+
+- **Kendi denetimin.** Uygulama meşgulken **Yedekleme öncesi komut** 75 koduyla çıksın, örneğin `[ "$(cat /tmp/players)" = 0 ] || exit 75`. 0 olmayan başka her kod yedeklemeyi eskisi gibi başarısız kılar, bu yüzden bozuk bir betik yine **İlgi bekliyor** altında görünür.
+- **Plex, Jellyfin ya da Emby'ye hiç sorulmuyor.** BombVault önce sunucuya konteynerin kendi adresinden sorar, oradan yanıt gelmezse konteynerin içinde curl ya da wget çalıştırır. İkisi de olmayan bir image kendi üzerinden sorgulanamaz; günlük bunu o zaman belirtir. **Sunucu yanıt vermezse yedekle** açıksa böyle bir yedekleme yine de çalışır, kapalıysa bekler.
+- **Jellyfin ya da Emby reddediyor.** **API anahtarı**'nı denetle. Sunucunun panelinde API keys altında oluşturulur.
+- **Plex reddediyor.** BombVault belirteci `/config` olarak bağlanan klasördeki `Preferences.xml` dosyasından okur. Hiç oturum açılmamış bir sunucunun belirteci yoktur ve yalnızca belirteçsiz erişime izin verdiği yerde yanıt verir.
+- **Duraklatılmış bir film yedeklemeyi bütün gece bekletiyor.** **Duraklatılmış oturumları şu süreden sonra yok say (dk)** değerini ayarla, örneğin 30.
+- **Trafik denetimi yedeklemenin geçmesine hiç izin vermiyor.** **Şu hızdan itibaren meşgul (KiB/s)** değerini, kimse kullanmazken konteynerin gönderdiğinin üstüne çıkar. BombVault başladıktan hemen sonra denetim, konteyneri **Sessiz kalma süresi (dk)** ile belirlenen dakika boyunca izleyene dek bekler.
+- **Yedekleme gece hiç çalışmıyor.** Bir aralık ayarlandığında denemeler yalnızca onun içinde olur. Son tarihine aralığın dışında ulaşan bir bekleme yine de son tarihte biter.
+
 ## Büyük bir yedekleme belleği tükendiği için sonlandırıldı
 
 **Ayarlar, Sistem** altındaki **Performans** kartında **Yedekleme başına bellek sınırı (MiB, 0 = yok)** değerini, konteynerin kullanabileceği belleğin epey altına ayarla. restic sınıra yaklaştıkça belleği daha sık boşaltır; bu biraz hıza mal olur, ama yedekleme sonlandırılmak yerine yavaşlar.

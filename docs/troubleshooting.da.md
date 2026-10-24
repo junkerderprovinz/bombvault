@@ -61,6 +61,18 @@ En anonym Docker-volumen bliver ikke meldt. Docker opretter den selv til en mapp
 - **Du vil have de data sikkerhedskopieret.** Tilknyt mappen til en værtssti under Host Data, for eksempel en mappe i din appdata-share, så kommer den med i næste sikkerhedskopi.
 - **Du har ikke brug for dem.** Tilføj en af dens to stier som en linje i kortet **Udelukkelsesmønstre** på samme fane: stien inde i containeren, for eksempel `/cache`, eller værtsstien, som advarslen nævner, for eksempel `/var/lib/docker/volumes/jellyfin_cache/_data`. Fra næste sikkerhedskopi udelader advarslen den mappe, og forhåndsvisningen under feltet siger hvorfor. En linje for en mappe over den virker også, et rent navn eller `/` gør ikke.
 
+## En sikkerhedskopi står som Udsat {#deferred-backups}
+
+Containerens app var optaget, så dens sikkerhedskopi venter og prøves igen af sig selv. Linjen i aktivitetsloggen siger hvorfor, og hvornår næste forsøg er; kortet **Når appen er optaget** på containerens fane **Indstillinger** siger det samme, og hvornår ventetiden slutter. Du behøver ikke gøre noget. Vil du sikkerhedskopiere med det samme, så brug **Sikkerhedskopier nu**, når appen er fri.
+
+- **Dit eget tjek.** Lad **Pre-sikkerhedskopikommando** slutte med kode 75, mens appen er optaget, for eksempel `[ "$(cat /tmp/players)" = 0 ] || exit 75`. Enhver anden kode end 0 får sikkerhedskopien til at fejle som før, så et ødelagt script stadig dukker op under **Kræver opmærksomhed**.
+- **Plex, Jellyfin eller Emby bliver aldrig spurgt.** BombVault spørger først serveren på containerens egen adresse og kører, hvis der ikke kommer svar, curl eller wget inde i containeren. Et image uden nogen af dem kan ikke spørges gennem sig selv; det nævner loggen så. Med **Sikkerhedskopier, når serveren ikke svarer** slået til kører sådan en sikkerhedskopi alligevel, slået fra venter den.
+- **Jellyfin eller Emby afviser.** Tjek **API-nøgle**. Den oprettes i serverens dashboard under API-nøgler.
+- **Plex afviser.** BombVault læser tokenet fra `Preferences.xml` i mappen, der er monteret på `/config`. En server, der aldrig er blevet logget ind på, har intet token og svarer kun dér, hvor den tillader adgang uden.
+- **En film på pause får sikkerhedskopien til at vente hele natten.** Sæt **Ignorer sessioner på pause efter (min)**, for eksempel til 30.
+- **Trafiktjekket lukker aldrig sikkerhedskopien igennem.** Hæv **Optaget fra (KiB/s)** over det, containeren sender, når ingen bruger den. Lige efter BombVault starter, venter tjekket, til det har fulgt containeren i **Rolig i (min)** minutter.
+- **Sikkerhedskopien kører aldrig om natten.** Med et vindue sat kommer forsøg kun inden for det. En ventetid, der når sin frist uden for vinduet, slutter alligevel ved fristen.
+
 ## En stor sikkerhedskopi blev dræbt, fordi hukommelsen slap op
 
 Sæt **Hukommelsesgrænse pr. sikkerhedskopi (MiB, 0 = ingen)** i kortet **Ydeevne** under **Indstillinger, System** et godt stykke under det, containeren må bruge. Tæt på grænsen frigiver restic hukommelse oftere, hvilket koster lidt fart, så sikkerhedskopien bliver langsommere i stedet for at blive dræbt.
