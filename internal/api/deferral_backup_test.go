@@ -2,6 +2,7 @@ package api_test
 
 import (
 	"context"
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"strings"
@@ -60,12 +61,27 @@ func plexBackup(t *testing.T) (*api.Service, *store.Repo, *fakeServiceDocker) {
 	return svc, st, d
 }
 
-func TestAPreHookThatExits75DefersTheBackupUntilItGoesThrough(t *testing.T) {
+func scheduled() context.Context { return api.WithScheduledBackup(context.Background()) }
+
+func lastRun(t *testing.T, st *store.Repo) *store.Run {
+	t.Helper()
+	tg, err := st.GetTargetByContainer("plex")
+	if err != nil {
+		t.Fatal(err)
+	}
+	run, err := st.LastRunForTarget(tg.ID)
+	if err != nil || run == nil {
+		t.Fatalf("run = %+v, %v", run, err)
+	}
+	return run
+}
+
+func TestAScheduledBackupWhoseHookExits75WaitsUntilItGoesThrough(t *testing.T) {
 	svc, st, d := plexBackup(t)
 	d.hookErr = &dockercli.ExitError{Code: 75, Reason: "2 streams"}
 
-	_, err := svc.Backup(context.Background(), "plex")
-	if reason, deferred := backup.IsDeferred(err); !deferred || !strings.Contains(reason, "hook exited 75: 2 streams") {
+	_, err := svc.Backup(scheduled(), "plex")
+	if reason, deferred := backup.IsDeferred(err); !deferred || reason != store.ReasonDeferredHook+": 2 streams" {
 		t.Fatalf("err = %v, want a deferral", err)
 	}
 	for _, c := range d.calls {
@@ -73,13 +89,9 @@ func TestAPreHookThatExits75DefersTheBackupUntilItGoesThrough(t *testing.T) {
 			t.Fatalf("a deferred backup stopped the container: %v", d.calls)
 		}
 	}
-	tg, err := st.GetTargetByContainer("plex")
-	if err != nil {
-		t.Fatal(err)
-	}
-	run, err := st.LastRunForTarget(tg.ID)
-	if err != nil || run == nil || run.Status != "deferred" || run.RetryAt == nil {
-		t.Fatalf("run = %+v, %v; want a deferred run with its next try", run, err)
+	run := lastRun(t, st)
+	if run.Status != "deferred" || run.RetryAt == nil {
+		t.Fatalf("run = %+v; want a deferred run with its next try", run)
 	}
 	waiting := svc.DeferredBackups()
 	if len(waiting) != 1 || waiting[0].Name != "plex" || waiting[0].NextTry != *run.RetryAt || waiting[0].Tries != 1 {
@@ -87,7 +99,7 @@ func TestAPreHookThatExits75DefersTheBackupUntilItGoesThrough(t *testing.T) {
 	}
 
 	d.hookErr = nil
-	if _, err := svc.Backup(context.Background(), "plex"); err != nil {
+	if _, err := svc.Backup(scheduled(), "plex"); err != nil {
 		t.Fatalf("the backup once the app was free: %v", err)
 	}
 	if left := svc.DeferredBackups(); len(left) != 0 {
@@ -95,14 +107,70 @@ func TestAPreHookThatExits75DefersTheBackupUntilItGoesThrough(t *testing.T) {
 	}
 }
 
-func TestAPreHookFailingWithAnotherCodeStaysAFailure(t *testing.T) {
+func TestAHookThatSaysNothingLeavesNoEmptyTail(t *testing.T) {
 	svc, _, d := plexBackup(t)
-	d.hookErr = &dockercli.ExitError{Code: 1, Reason: "streams"}
-	_, err := svc.Backup(context.Background(), "plex")
-	if _, deferred := backup.IsDeferred(err); deferred || err == nil {
-		t.Fatalf("err = %v, want a failure", err)
+	d.hookErr = &dockercli.ExitError{Code: 75}
+	_, err := svc.Backup(scheduled(), "plex")
+	if reason, _ := backup.IsDeferred(err); reason != store.ReasonDeferredHook {
+		t.Fatalf("reason = %q", reason)
 	}
-	if left := svc.DeferredBackups(); len(left) != 0 {
-		t.Fatalf("a failure started a wait: %+v", left)
+}
+
+func TestAManualBackupRunsThroughABusyApp(t *testing.T) {
+	cases := map[string]func(*testing.T, *api.Service, *fakeServiceDocker){
+		"a hook that exits 75": func(_ *testing.T, _ *api.Service, d *fakeServiceDocker) {
+			d.hookErr = &dockercli.ExitError{Code: 75, Reason: "2 streams"}
+		},
+		"an activity check that cannot ask": func(t *testing.T, svc *api.Service, _ *fakeServiceDocker) {
+			setDeferral(t, svc, `{"retryMin":30,"maxHours":12,"atDeadline":"give-up","preset":"jellyfin","failOpen":false,"netMin":5}`)
+		},
+		"a traffic limit not yet measured": func(t *testing.T, svc *api.Service, _ *fakeServiceDocker) {
+			setDeferral(t, svc, `{"retryMin":30,"maxHours":12,"atDeadline":"give-up","failOpen":true,"netKiB":100,"netMin":5}`)
+		},
+	}
+	for name, busy := range cases {
+		t.Run(name, func(t *testing.T) {
+			svc, st, d := plexBackup(t)
+			busy(t, svc, d)
+			if _, err := svc.Backup(scheduled(), "plex"); err == nil {
+				t.Fatal("the scheduled backup went through a busy app")
+			} else if _, deferred := backup.IsDeferred(err); !deferred {
+				t.Fatalf("the scheduled backup failed instead of waiting: %v", err)
+			}
+			if _, err := svc.Backup(context.Background(), "plex"); err != nil {
+				t.Fatalf("the manual backup: %v", err)
+			}
+			if run := lastRun(t, st); run.Status != "success" {
+				t.Fatalf("run = %+v, want the manual backup through", run)
+			}
+			if left := svc.DeferredBackups(); len(left) != 0 {
+				t.Fatalf("the manual backup left the wait of the scheduled one: %+v", left)
+			}
+		})
+	}
+}
+
+func TestAPreHookFailingWithAnotherCodeStaysAFailure(t *testing.T) {
+	for _, ctx := range []context.Context{context.Background(), scheduled()} {
+		svc, _, d := plexBackup(t)
+		d.hookErr = &dockercli.ExitError{Code: 1, Reason: "streams"}
+		_, err := svc.Backup(ctx, "plex")
+		if _, deferred := backup.IsDeferred(err); deferred || err == nil {
+			t.Fatalf("err = %v, want a failure", err)
+		}
+		if left := svc.DeferredBackups(); len(left) != 0 {
+			t.Fatalf("a failure started a wait: %+v", left)
+		}
+	}
+}
+
+func setDeferral(t *testing.T, svc *api.Service, body string) {
+	t.Helper()
+	var patch api.DeferralPatch
+	if err := json.Unmarshal([]byte(body), &patch); err != nil {
+		t.Fatal(err)
+	}
+	if err := svc.SetDeferPolicy(context.Background(), "plex", patch); err != nil {
+		t.Fatal(err)
 	}
 }

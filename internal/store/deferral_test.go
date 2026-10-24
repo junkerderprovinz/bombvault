@@ -51,7 +51,7 @@ func TestAPolicyIsStoredWhole(t *testing.T) {
 
 func TestAWaitingBackupIsKeptUntilItIsForgotten(t *testing.T) {
 	r := newRepo(t)
-	d := store.Deferral{TargetID: "t1", Container: "plex", Since: 100, NextTry: 1900, Tries: 1, Reason: "busy", Trigger: "schedule"}
+	d := store.Deferral{TargetID: "t1", Container: "plex", Since: 100, NextTry: 1900, Tries: 1, Reason: "busy"}
 	if err := r.SaveDeferral(d); err != nil {
 		t.Fatal(err)
 	}

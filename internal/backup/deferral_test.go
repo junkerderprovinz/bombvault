@@ -7,13 +7,15 @@ import (
 	"testing"
 
 	"github.com/junkerderprovinz/bombvault/internal/backup"
+	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
 // exitErr is a hook that ended with a code, the way dockercli reports it.
 type exitErr struct{ code int }
 
-func (e exitErr) Error() string { return fmt.Sprintf("hook exited %d: streams active", e.code) }
-func (e exitErr) ExitCode() int { return e.code }
+func (e exitErr) Error() string  { return fmt.Sprintf("hook exited %d: streams active", e.code) }
+func (e exitErr) ExitCode() int  { return e.code }
+func (e exitErr) Output() string { return "streams active" }
 
 func deferDeps(d *fakeDocker, r *fakeRestic, runs *fakeRuns) backup.BackupDeps {
 	return backup.BackupDeps{
@@ -33,7 +35,7 @@ func TestAPreHookExitingWithTempFailDefersTheBackup(t *testing.T) {
 	if !deferred {
 		t.Fatalf("err = %v, want a deferral", err)
 	}
-	if reason != "pre-hook: hook exited 75: streams active" {
+	if reason != store.ReasonDeferredHook+": streams active" {
 		t.Fatalf("reason = %q", reason)
 	}
 	if contains(d.log, "stop:plex") || len(r.log) != 0 {

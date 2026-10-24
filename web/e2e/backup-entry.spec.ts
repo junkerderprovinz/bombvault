@@ -562,6 +562,25 @@ test("the card for a busy app saves its whole policy", async ({ page }, testInfo
   expect(saved[saved.length - 1]).toMatchObject({ deferral: { netKiB: 100, netMin: 5, retryMin: 30, maxHours: 12, atDeadline: "give-up" } });
 });
 
+test("the card for a busy app keeps each number and the end of the wait beside its label @ 390px", async ({ page }, testInfo) => {
+  test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "the phone layout");
+  await stage(page);
+  await page.setViewportSize({ width: 390, height: 900 });
+  await openEntry(page, "/backups/container/immich?tab=settings", "immich");
+  const busy = card(page, "Wenn die App beschäftigt ist");
+  await busy.scrollIntoViewIfNeeded();
+  for (const [label, control] of [
+    ["Erneut versuchen alle (Min.)", busy.getByLabel("Erneut versuchen alle (Min.)")],
+    ["Höchstens warten (Stunden)", busy.getByLabel("Höchstens warten (Stunden)")],
+    ["Am Ende der Wartezeit", busy.getByRole("radio", { name: "Aufgeben" })],
+  ] as const) {
+    const text = (await busy.getByText(label, { exact: true }).boundingBox())!;
+    const box = (await control.boundingBox())!;
+    expect(box.y, `${label}: the control sits under its label`).toBeLessThan(text.y + text.height);
+    expect(box.x, `${label}: the control sits under its label`).toBeGreaterThan(text.x);
+  }
+});
+
 test("the Verify tab shows the checks, the runs and the size, and opens a run in a window", async ({ page }, testInfo) => {
   test.skip(MOBILE_PROJECTS.has(testInfo.project.name), "the desktop layout");
   await stage(page);

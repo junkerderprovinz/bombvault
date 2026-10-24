@@ -33,7 +33,46 @@ export const RUN_REASONS: Record<string, TranslationKey> = {
   "cancelled by the user": "runReason.cancelled",
   "this would write into BombVault's own data folder or a folder that holds it; choose another folder": "runReason.ownDataFolder",
   "the app was still busy when the wait for it ended": "runReason.deferralGaveUp",
+  "the wait for the app ended because the container left the schedule": "runReason.deferralUnscheduled",
+  "the wait for the app ended because the containers were switched off": "runReason.deferralSectionOff",
 };
+
+/**
+ * Why a backup waits for its app, with the name or number it carries. Keep in
+ * step with the Deferred* functions in internal/store/runs.go. The count picks
+ * the plural, and the other values fill the placeholders.
+ */
+const DEFERRALS: { re: RegExp; key: TranslationKey; fill: (m: RegExpExecArray) => { count?: number; values: Record<string, string> } }[] = [
+  {
+    re: /^(Plex|Jellyfin|Emby) has (\d+) active sessions?$/,
+    key: "runReason.deferredSessions",
+    fill: (m) => ({ count: Number(m[2]), values: { server: m[1] } }),
+  },
+  { re: /^(Plex|Jellyfin|Emby) did not answer$/, key: "runReason.deferredNoAnswer", fill: (m) => ({ values: { server: m[1] } }) },
+  { re: /^(Plex|Jellyfin|Emby) has no API key set$/, key: "runReason.deferredNoKey", fill: (m) => ({ values: { server: m[1] } }) },
+  {
+    re: /^the container sent (\d+) KiB\/s or more within the last (?:(\d+) minutes|1 minute)$/,
+    key: "runReason.deferredSending",
+    fill: (m) => ({ count: Number(m[2] ?? 1), values: { kib: m[1] } }),
+  },
+  {
+    re: /^BombVault has watched the container's traffic for less than (?:(\d+) minutes|1 minute)$/,
+    key: "runReason.deferredMeasuring",
+    fill: (m) => ({ count: Number(m[1] ?? 1), values: {} }),
+  },
+];
+
+function deferralReason(text: string, t: T): string | undefined {
+  for (const { re, key, fill } of DEFERRALS) {
+    const m = re.exec(text);
+    if (!m) continue;
+    const { count, values } = fill(m);
+    let out: string = t(key, count);
+    for (const [name, value] of Object.entries(values)) out = out.replaceAll(`{${name}}`, value);
+    return out;
+  }
+  return undefined;
+}
 
 /** What a container restore writes when Docker refused the GPU or runtime of
  *  the container, followed by ": " and Docker's refusal. Keep in step with
@@ -126,6 +165,7 @@ export const RUN_REASON_PREFIXES: Record<string, TranslationKey> = {
   [RESTORED_WITHOUT_RUNTIME]: "runReason.restoredWithoutRuntime",
   [RESTORED_WITHOUT_LINKS]: "runReason.restoredWithoutLinks",
   [CONTAINERS_NOT_BACK]: "runReason.containersNotBack",
+  "the pre-backup command says the app is busy": "runReason.deferredHook",
 };
 
 /**
@@ -269,6 +309,9 @@ export function runReasonParts(raw: string | null | undefined, t: T): RunReasonP
 
   const errors = IMPORT_ERRORS.exec(text);
   if (errors) return { head: t("runReason.dbimportErrors", Number(errors[1])), detail: errors[2] };
+
+  const deferral = deferralReason(text, t);
+  if (deferral) return { head: deferral, detail: "" };
 
   const exact = RUN_REASONS[text] ?? RUN_REASON_PREFIXES[text];
   if (exact) return { head: t(exact), detail: "" };

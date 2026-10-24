@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -53,9 +54,9 @@ func (s *Service) sendingGate(name string, in model.Inspect, p store.DeferPolicy
 	sending, measured := s.trafficState().watch.Sending(name, float64(p.NetKiB)*1024, window, now)
 	switch {
 	case sending:
-		return fmt.Sprintf("the container sent %d KiB/s or more within the last %d minutes", p.NetKiB, p.NetMin)
+		return store.DeferredSending(p.NetKiB, p.NetMin)
 	case !measured:
-		return fmt.Sprintf("BombVault has not yet watched the container's traffic for %d minutes", p.NetMin)
+		return store.DeferredMeasuring(p.NetMin)
 	}
 	return ""
 }
@@ -80,9 +81,13 @@ func (s *Service) netGateContainers() []string {
 	return names
 }
 
+// errNoKey is a Jellyfin or Emby with no API key to ask it with.
+var errNoKey = errors.New("no API key is set")
+
 // sessionGate asks the media server whether anybody is watching. A server
 // that cannot be asked lets the backup through or defers it, as the policy
-// says.
+// says. Why it could not be asked goes to the log only: the error names
+// addresses inside the host.
 func (s *Service) sessionGate(ctx context.Context, tg store.Target, in model.Inspect, p store.DeferPolicy, preset activity.Preset) string {
 	ctx, cancel := context.WithTimeout(ctx, sessionsTimeout)
 	defer cancel()
@@ -92,15 +97,16 @@ func (s *Service) sessionGate(ctx context.Context, tg store.Target, in model.Ins
 			log.Printf("api: could not ask %s whether anybody watches on %s, backing up anyway: %v", preset.Name(), tg.ContainerName, err) //nolint:gosec // G706: container names from Docker
 			return ""
 		}
-		return fmt.Sprintf("could not ask %s whether anybody is watching: %v", preset.Name(), err)
+		log.Printf("api: could not ask %s whether anybody watches on %s, the backup waits: %v", preset.Name(), tg.ContainerName, err) //nolint:gosec // G706: container names from Docker
+		if errors.Is(err, errNoKey) {
+			return store.DeferredNoKey(preset.Name())
+		}
+		return store.DeferredNoAnswer(preset.Name())
 	}
-	switch busy {
-	case 0:
+	if busy == 0 {
 		return ""
-	case 1:
-		return preset.Name() + " has 1 active session"
 	}
-	return fmt.Sprintf("%s has %d active sessions", preset.Name(), busy)
+	return store.DeferredSessions(preset.Name(), busy)
 }
 
 // askSessions counts the sessions that keep the server busy.
@@ -152,7 +158,7 @@ func (s *Service) directAddr(ctx context.Context, name string, in model.Inspect)
 func (s *Service) presetToken(ctx context.Context, name string, in model.Inspect, p store.DeferPolicy, preset activity.Preset) (string, error) {
 	if preset != activity.Plex {
 		if len(p.APIKeyEnc) == 0 {
-			return "", fmt.Errorf("no API key is set for %s", preset.Name())
+			return "", fmt.Errorf("%s: %w", preset.Name(), errNoKey)
 		}
 		key, err := secret.Decrypt(s.cfg.AppKey, p.APIKeyEnc)
 		if err != nil {

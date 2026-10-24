@@ -7,9 +7,10 @@ import type { BackupItem, DeferredBackup, Run } from "./api";
 import { protection, rowStatus, runStrip } from "./backupList";
 import { deferralSentence, deferralTime } from "./deferral";
 import { entryReason } from "./entry";
-import { en } from "./i18n";
+import { countText, de, en } from "./i18n";
 import { needsOf } from "./needs";
 import { formatClockTime } from "./reltime";
+import { runReason } from "./runReason";
 import { statusLabel, statusTone } from "./runDisplay";
 
 const resolveName = (key: string, params?: Record<string, string>): string =>
@@ -19,7 +20,7 @@ const resolveName = (key: string, params?: Record<string, string>): string =>
         .join(" ")}`
     : key;
 
-const t = ((key: keyof typeof en) => en[key]) as Parameters<typeof deferralSentence>[0];
+const t = ((key: keyof typeof en, n?: number) => countText(en[key], "en", n)) as Parameters<typeof deferralSentence>[0];
 
 const NOW = Math.floor(new Date(2026, 9, 24, 1, 0).getTime() / 1000);
 
@@ -75,13 +76,13 @@ describe("a deferred backup", () => {
     const [line] = buildLogLines([run({ retryAt: NOW + 1800 })], {}, [], resolveName, (NOW + 10) * 1000);
     expect(line.warn).toBe(true);
     expect(line.text).toBe(
-      `activityLog.lineBackupDeferred name=plex error=Plex has 2 active sessions time=${formatClockTime(NOW + 1800, false)}`
+      `activityLog.lineBackupDeferred name=plex error=runReason.deferredSessions time=${formatClockTime(NOW + 1800, false)}`
     );
   });
 
   it("still reads as deferred in the log before its next try is known", () => {
     const [line] = buildLogLines([run({ retryAt: null })], {}, [], resolveName, (NOW + 10) * 1000);
-    expect(line.text).toBe("activityLog.lineBackupDeferredLater name=plex error=Plex has 2 active sessions");
+    expect(line.text).toBe("activityLog.lineBackupDeferredLater name=plex error=runReason.deferredSessions");
   });
 
   it("is amber in the list of backups and on its run strip", () => {
@@ -116,6 +117,33 @@ describe("a deferred backup", () => {
   it("puts the date in front of a time that is not today", () => {
     expect(deferralTime(NOW + 1800, NOW * 1000)).toBe(formatClockTime(NOW + 1800, false));
     expect(deferralTime(NOW + 30 * 3600, NOW * 1000)).not.toBe(formatClockTime(NOW + 30 * 3600, false));
+  });
+});
+
+describe("why a backup waits", () => {
+  const tIn = (table: Record<string, string>, lang: string) =>
+    ((key: string, n?: number) => countText(table[key] ?? key, lang, n)) as Parameters<typeof runReason>[1];
+
+  it("reads in the reader's language with the right plural", () => {
+    const tEn = tIn(en, "en");
+    const tDe = tIn(de, "de");
+    expect(runReason("Plex has 1 active session", tEn)).toBe("Plex has 1 active session");
+    expect(runReason("Plex has 3 active sessions", tDe)).toBe("Plex hat 3 aktive Sitzungen");
+    expect(runReason("Jellyfin did not answer", tDe)).toBe("Jellyfin hat nicht geantwortet");
+    expect(runReason("Jellyfin has no API key set", tDe)).toBe("für Jellyfin ist kein API-Schlüssel eingetragen");
+    expect(runReason("the container sent 100 KiB/s or more within the last 1 minute", tEn)).toBe(
+      "the container sent 100 KiB/s or more within the last 1 minute"
+    );
+    expect(runReason("the container sent 100 KiB/s or more within the last 5 minutes", tDe)).toBe(
+      "der Container hat in den letzten 5 Minuten 100 KiB/s oder mehr gesendet"
+    );
+    expect(runReason("BombVault has watched the container's traffic for less than 1 minute", tDe)).toBe(
+      "BombVault beobachtet den Verkehr des Containers seit weniger als 1 Minute"
+    );
+    expect(runReason("the pre-backup command says the app is busy: 2 streams", tDe)).toBe(
+      "der Befehl vor der Sicherung meldet, dass die App beschäftigt ist: 2 streams"
+    );
+    expect(runReason("the pre-backup command says the app is busy", tDe)).toBe("der Befehl vor der Sicherung meldet, dass die App beschäftigt ist");
   });
 });
 

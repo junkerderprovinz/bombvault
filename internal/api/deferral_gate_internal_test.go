@@ -114,7 +114,7 @@ func TestAServerThatCannotBeAskedFailsOpenOrClosed(t *testing.T) {
 		switch {
 		case open && got != "":
 			t.Fatalf("fail-open deferred with %q", got)
-		case !open && !strings.Contains(got, "could not ask Jellyfin"):
+		case !open && got != "Jellyfin did not answer":
 			t.Fatalf("fail-closed gave %q", got)
 		}
 	}
@@ -145,8 +145,8 @@ func TestTheTrafficGateDefersWhileTheContainerSends(t *testing.T) {
 		tx    uint64
 		want  string
 	}{
-		{"after 20 seconds of readings", 3, 10, "has not yet watched"},
-		{"while it sends", 12, 50_000_000, "sent 100 KiB/s or more within the last 1 minutes"},
+		{"after 20 seconds of readings", 3, 10, "traffic for less than 1 minute"},
+		{"while it sends", 12, 50_000_000, "sent 100 KiB/s or more within the last 1 minute"},
 		{"after a quiet minute", 12, 1_000, ""},
 	} {
 		t.Run(tc.name, func(t *testing.T) {

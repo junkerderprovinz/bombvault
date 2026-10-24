@@ -94,7 +94,7 @@ func TestTheFirstDeferralTellsOnceAndLaterOnesOnlyMoveTheNextTry(t *testing.T) {
 	if err != nil || !ok {
 		t.Fatalf("no wait stored: %v", err)
 	}
-	if d.Tries != 3 || d.Since != now.Unix() || d.Reason != "Plex has 2 active sessions" || d.Trigger != "manual" {
+	if d.Tries != 3 || d.Since != now.Unix() || d.Reason != "Plex has 2 active sessions" {
 		t.Fatalf("wait = %+v", d)
 	}
 	if d.NextTry != now.Add(90*time.Minute).Unix() {
@@ -126,9 +126,6 @@ func TestADeferralInASummaryRoundIsNamedInTheSummary(t *testing.T) {
 	got := wh.messages()
 	if len(got) != 1 || !strings.Contains(got[0], "1 backup waits for its app") || !strings.Contains(got[0], "plex: Plex has 1 active session") {
 		t.Fatalf("summary = %q", got)
-	}
-	if d, _, _ := st.GetDeferral(tg.ID); d.Trigger != "schedule" {
-		t.Fatalf("trigger = %q, want schedule", d.Trigger)
 	}
 }
 
@@ -164,7 +161,7 @@ func TestATryOutsideTheWindowWaitsForItsStart(t *testing.T) {
 	tg := deferralTarget(t, st, "plex")
 	setPolicy(t, st, tg, func(p *store.DeferPolicy) { p.WindowFrom, p.WindowTo, p.MaxHours = "00:00", "08:00", 48 })
 	noon := time.Date(2026, time.October, 24, 12, 0, 0, 0, time.Local)
-	if err := st.SaveDeferral(store.Deferral{TargetID: tg.ID, Container: "plex", Since: noon.Add(-time.Hour).Unix(), NextTry: noon.Unix(), Tries: 1, Trigger: "schedule"}); err != nil {
+	if err := st.SaveDeferral(store.Deferral{TargetID: tg.ID, Container: "plex", Since: noon.Add(-time.Hour).Unix(), NextTry: noon.Unix(), Tries: 1}); err != nil {
 		t.Fatal(err)
 	}
 	s.tryDeferrals(context.Background(), noon)
@@ -279,11 +276,10 @@ func TestAWaitEndsWhenItsBackupRuns(t *testing.T) {
 	}
 }
 
-func TestAWaitIsDroppedWhenItsContainerLeftTheSchedule(t *testing.T) {
-	s, st, _, r := newDeferralService(t)
+func TestAWaitThatLostItsScheduleEndsWithARunAndANotice(t *testing.T) {
+	s, st, wh, r := newDeferralService(t)
 	tg := deferralTarget(t, st, "plex")
-	ctx := WithBulkReplicateSuppressed(context.Background())
-	s.deferBackup(ctx, tg, "", "busy", time.Now().Add(-time.Hour))
+	s.deferBackup(WithScheduledBackup(context.Background()), tg, "", "busy", time.Now().Add(-time.Hour))
 	if err := st.SetInclude("plex", false); err != nil {
 		t.Fatal(err)
 	}
@@ -292,20 +288,28 @@ func TestAWaitIsDroppedWhenItsContainerLeftTheSchedule(t *testing.T) {
 	if _, ok, _ := st.GetDeferral(tg.ID); ok || len(r.names()) != 0 {
 		t.Fatalf("a wait of a container off the schedule was tried: %v", r.names())
 	}
+	run, err := st.LastRunForTarget(tg.ID)
+	if err != nil || run == nil || run.Status != statusSkipped || run.Error != store.ReasonDeferralUnscheduled {
+		t.Fatalf("run = %+v, %v; want the end of the wait recorded", run, err)
+	}
+	msgs := wh.messages()
+	if len(msgs) != 2 || !strings.Contains(msgs[1], "is not tried again") {
+		t.Fatalf("messages = %q, want the deferral and its end", msgs)
+	}
 }
 
 func TestAPolicyIsCheckedAndItsKeyStoredSealed(t *testing.T) {
 	s, st, _, _ := newDeferralService(t)
-	ok := deferralPatch{RetryMin: 30, MaxHours: 12, AtDeadline: store.AtDeadlineGiveUp, Preset: "jellyfin", APIKey: " k3y ", FailOpen: true, NetMin: 5}
-	for name, bad := range map[string]func(*deferralPatch){
-		"too short an interval": func(p *deferralPatch) { p.RetryMin = 1 },
-		"half a window":         func(p *deferralPatch) { p.WindowFrom = "00:00" },
-		"an empty window":       func(p *deferralPatch) { p.WindowFrom, p.WindowTo = "03:00", "03:00" },
-		"no time of day":        func(p *deferralPatch) { p.WindowFrom, p.WindowTo = "midnight", "08:00" },
-		"too long a wait":       func(p *deferralPatch) { p.MaxHours = 500 },
-		"an unknown outcome":    func(p *deferralPatch) { p.AtDeadline = "panic" },
-		"an unknown preset":     func(p *deferralPatch) { p.Preset = "kodi" },
-		"a traffic window of 0": func(p *deferralPatch) { p.NetMin = 0 },
+	ok := DeferralPatch{RetryMin: 30, MaxHours: 12, AtDeadline: store.AtDeadlineGiveUp, Preset: "jellyfin", APIKey: " k3y ", FailOpen: true, NetMin: 5}
+	for name, bad := range map[string]func(*DeferralPatch){
+		"too short an interval": func(p *DeferralPatch) { p.RetryMin = 1 },
+		"half a window":         func(p *DeferralPatch) { p.WindowFrom = "00:00" },
+		"an empty window":       func(p *DeferralPatch) { p.WindowFrom, p.WindowTo = "03:00", "03:00" },
+		"no time of day":        func(p *DeferralPatch) { p.WindowFrom, p.WindowTo = "midnight", "08:00" },
+		"too long a wait":       func(p *DeferralPatch) { p.MaxHours = 500 },
+		"an unknown outcome":    func(p *DeferralPatch) { p.AtDeadline = "panic" },
+		"an unknown preset":     func(p *DeferralPatch) { p.Preset = "kodi" },
+		"a traffic window of 0": func(p *DeferralPatch) { p.NetMin = 0 },
 	} {
 		p := ok
 		bad(&p)
@@ -352,7 +356,7 @@ func TestANewPolicyMovesTheNextTryOfAWaitingBackup(t *testing.T) {
 	tg := deferralTarget(t, st, "plex")
 	s.deferBackup(context.Background(), tg, "", "busy", time.Now())
 	before, _, _ := st.GetDeferral(tg.ID)
-	p := deferralPatch{RetryMin: 5, MaxHours: 12, AtDeadline: store.AtDeadlineGiveUp, FailOpen: true, NetMin: 5}
+	p := DeferralPatch{RetryMin: 5, MaxHours: 12, AtDeadline: store.AtDeadlineGiveUp, FailOpen: true, NetMin: 5}
 	if err := s.SetDeferPolicy(context.Background(), "plex", p); err != nil {
 		t.Fatal(err)
 	}

@@ -86,6 +86,9 @@ func backupEnding(err error) string {
 	if IsBackupCancelled(err) {
 		return "cancelled"
 	}
+	if _, deferred := backup.IsDeferred(err); deferred {
+		return "deferred"
+	}
 	return "failed"
 }
 

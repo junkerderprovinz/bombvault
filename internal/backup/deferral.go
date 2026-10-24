@@ -2,7 +2,9 @@ package backup
 
 import (
 	"errors"
-	"fmt"
+	"strings"
+
+	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
 // ExitTempFail is the exit code with which a pre-backup hook says the app is
@@ -34,9 +36,11 @@ func IsDeferred(err error) (string, bool) {
 	return "", false
 }
 
-// exitCoder is an error that carries the exit code of a command.
+// exitCoder is an error that carries the exit code of a command and what it
+// wrote.
 type exitCoder interface {
 	ExitCode() int
+	Output() string
 }
 
 // hookDeferral says why a pre-hook that failed with ExitTempFail deferred the
@@ -46,5 +50,8 @@ func hookDeferral(err error) (string, bool) {
 	if !errors.As(err, &ec) || ec.ExitCode() != ExitTempFail {
 		return "", false
 	}
-	return fmt.Sprintf("pre-hook: %v", err), true
+	if out := strings.TrimSpace(ec.Output()); out != "" {
+		return store.ReasonDeferredHook + ": " + out, true
+	}
+	return store.ReasonDeferredHook, true
 }

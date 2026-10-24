@@ -166,7 +166,7 @@ export function DeferralCard({
         )}
         {preset !== "" && (
           <>
-            <SettingRow label={t("deferral.paused")} hint={t("deferral.pausedHint")} htmlFor={`${uid}-paused`}>
+            <SettingRow label={t("deferral.paused")} hint={t("deferral.pausedHint")} htmlFor={`${uid}-paused`} narrow>
               <NumberField
                 id={`${uid}-paused`}
                 min={0}
@@ -197,7 +197,7 @@ export function DeferralCard({
         </div>
         {netOn && (
           <>
-            <SettingRow label={t("deferral.netKiB")} hint={t("deferral.netKiBHint")} htmlFor={`${uid}-kib`}>
+            <SettingRow label={t("deferral.netKiB")} hint={t("deferral.netKiBHint")} htmlFor={`${uid}-kib`} narrow>
               <NumberField
                 id={`${uid}-kib`}
                 min={1}
@@ -212,7 +212,7 @@ export function DeferralCard({
                 className={FIELD}
               />
             </SettingRow>
-            <SettingRow label={t("deferral.netMin")} hint={t("deferral.netMinHint")} htmlFor={`${uid}-netmin`}>
+            <SettingRow label={t("deferral.netMin")} hint={t("deferral.netMinHint")} htmlFor={`${uid}-netmin`} narrow>
               <NumberField
                 id={`${uid}-netmin`}
                 min={1}
@@ -225,7 +225,7 @@ export function DeferralCard({
             </SettingRow>
           </>
         )}
-        <SettingRow label={t("deferral.retryMin")} hint={t("deferral.retryMinHint")} htmlFor={`${uid}-retry`} newId="deferral-retry">
+        <SettingRow label={t("deferral.retryMin")} hint={t("deferral.retryMinHint")} htmlFor={`${uid}-retry`} newId="deferral-retry" narrow>
           <NumberField
             id={`${uid}-retry`}
             min={5}
@@ -261,7 +261,7 @@ export function DeferralCard({
             />
           </SettingRow>
         )}
-        <SettingRow label={t("idle.maxHours")} hint={t("deferral.maxHoursHint")} htmlFor={`${uid}-hours`}>
+        <SettingRow label={t("idle.maxHours")} hint={t("deferral.maxHoursHint")} htmlFor={`${uid}-hours`} narrow>
           <NumberField
             id={`${uid}-hours`}
             min={1}
@@ -272,7 +272,7 @@ export function DeferralCard({
             className={FIELD}
           />
         </SettingRow>
-        <SettingRow label={t("deferral.atDeadline")} hint={t("deferral.atDeadlineHint")}>
+        <SettingRow label={t("deferral.atDeadline")} hint={t("deferral.atDeadlineHint")} narrow>
           <Selector
             items={[
               { id: "give-up", label: t("deferral.giveUp") },

@@ -1999,7 +1999,7 @@ func (h *Handler) handlePatchContainer(w http.ResponseWriter, r *http.Request) {
 		IdleWaitHours *int `json:"idleWaitHours"`
 		// Deferral is the whole policy of how the backup waits while the app
 		// is busy.
-		Deferral *deferralPatch `json:"deferral"`
+		Deferral *DeferralPatch `json:"deferral"`
 		// Repo is the older spelling of home {repo}.
 		Repo *string `json:"repo"`
 		// Home is this item's own location: a named repository from Settings,

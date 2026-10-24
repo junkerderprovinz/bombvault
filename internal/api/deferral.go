@@ -67,12 +67,22 @@ func backsUpRegardless(ctx context.Context) bool {
 	return v
 }
 
-// deferralTrigger names what asked for a backup that was deferred.
-func deferralTrigger(ctx context.Context) string {
-	if bulkReplicateSuppressed(ctx) || scheduledPass(ctx) {
-		return "schedule"
-	}
-	return "manual"
+// scheduledBackupKey marks a container backup that a schedule started, the
+// only kind that waits for a busy app. A backup somebody asked for runs at
+// once.
+type scheduledBackupKey struct{}
+
+// WithScheduledBackup marks ctx as a container backup a schedule started.
+func WithScheduledBackup(ctx context.Context) context.Context {
+	return context.WithValue(ctx, scheduledBackupKey{}, true)
+}
+
+// waitsForApp reports whether a backup under ctx waits while its app is
+// busy: one a schedule started, a scheduled Backup Everything pass included,
+// and the retry of one that waits already.
+func waitsForApp(ctx context.Context) bool {
+	v, _ := ctx.Value(scheduledBackupKey{}).(bool)
+	return v || scheduledPass(ctx)
 }
 
 // policyOf is the target's policy. A failed read falls back to the default,
@@ -96,7 +106,7 @@ func (s *Service) deferBackup(ctx context.Context, tg store.Target, runID, reaso
 		log.Printf("api: deferral: %v", err)
 	}
 	if !waiting {
-		d = store.Deferral{TargetID: tg.ID, Since: now.Unix(), Trigger: deferralTrigger(ctx)}
+		d = store.Deferral{TargetID: tg.ID, Since: now.Unix()}
 	}
 	d.Container, d.Reason = tg.ContainerName, reason
 	d.Tries++
@@ -183,15 +193,37 @@ func (s *Service) StartDeferrals() {
 	}()
 }
 
-// deferralDropped says why a waiting backup is not tried again, or "".
-func deferralDropped(settings store.Settings, tg store.Target, d store.Deferral) string {
+// deferralDropped is the reason a waiting backup is not tried again, or "".
+func deferralDropped(settings store.Settings, tg store.Target) string {
 	if !settings.ContainersEnabled {
-		return "the containers were switched off"
+		return store.ReasonDeferralSectionOff
 	}
-	if d.Trigger == "schedule" && !tg.IncludeInSchedule {
-		return "the container left the schedule"
+	if !tg.IncludeInSchedule {
+		return store.ReasonDeferralUnscheduled
 	}
 	return ""
+}
+
+// dropDeferral ends a wait that has no schedule left to belong to. The end
+// is recorded as a skipped run and told once, like any other end of a wait.
+func (s *Service) dropDeferral(tg store.Target, d store.Deferral, why string, now time.Time) {
+	if err := s.store.DeleteDeferral(tg.ID); err != nil {
+		log.Printf("api: deferral: forget %s: %v", tg.ContainerName, err)
+	}
+	log.Printf("api: the deferred backup of %s is not tried again: %s", tg.ContainerName, why) //nolint:gosec // G706: container names from Docker
+	ctx := context.Background()
+	if runID, err := s.startRun(ctx, tg.ID, "backup"); err != nil {
+		log.Printf("api: deferral: record the end of the wait of %s: %v", tg.ContainerName, err)
+	} else if err := s.store.FinishRun(runID, statusSkipped, "", 0, why); err != nil {
+		log.Printf("api: deferral: record the end of the wait of %s: %v", tg.ContainerName, err)
+	}
+	c, err := s.NotifyConfig()
+	if err != nil || !c.Active() {
+		return
+	}
+	msg := fmt.Sprintf("Backup of container %q is not tried again: %s. It had waited since %s.", tg.ContainerName, why, clockAt(time.Unix(d.Since, 0), now))
+	s.sendAlert(notify.WithHealthchecksSuppressed(ctx), c, "container", notify.Event{Title: "BombVault", Message: msg, OK: true, Warning: true},
+		"BombVault: deferred backup ended", msg, "normal")
 }
 
 // containersBusy reports whether a backup of the containers runs or is about
@@ -239,15 +271,17 @@ func (s *Service) tryDeferrals(ctx context.Context, now time.Time) {
 			continue
 		}
 		tg, ok := byID[d.TargetID]
-		why := deferralDropped(settings, tg, d)
 		if !ok {
-			why = "its entry is gone"
-		}
-		if why != "" {
+			// The entry was removed with its runs, so there is nothing to
+			// record the end on.
 			if dErr := s.store.DeleteDeferral(d.TargetID); dErr != nil {
 				log.Printf("api: deferral: forget %s: %v", d.Container, dErr)
 			}
-			log.Printf("api: dropped the deferred backup of %s: %s", d.Container, why) //nolint:gosec // G706: container names from Docker
+			log.Printf("api: dropped the deferred backup of %s: its entry is gone", d.Container) //nolint:gosec // G706: container names from Docker
+			continue
+		}
+		if why := deferralDropped(settings, tg); why != "" {
+			s.dropDeferral(tg, d, why, now)
 			continue
 		}
 		p := s.policyOf(tg.ID)
@@ -298,7 +332,7 @@ func (s *Service) retryDeferred(tg store.Target, regardless bool) {
 		}()
 		defer s.batchActive.Store(false)
 		// The scheduled run this backup belonged to has pinged its check already.
-		ctx := notify.WithHealthchecksSuppressed(context.Background())
+		ctx := WithScheduledBackup(notify.WithHealthchecksSuppressed(context.Background()))
 		if regardless {
 			ctx = context.WithValue(ctx, regardlessKey{}, true)
 		}
@@ -369,8 +403,11 @@ func (s *Service) notifyDeferralDone(ctx context.Context, name string, d store.D
 		return
 	}
 	how := "once the app was free"
-	if backsUpRegardless(ctx) {
+	switch {
+	case backsUpRegardless(ctx):
 		how = "at the end of its wait, with the app still busy"
+	case !waitsForApp(ctx):
+		how = "when it was started by hand"
 	}
 	msg := fmt.Sprintf("Backup of container %q went through %s (snapshot %s, %s). It had waited since %s.",
 		name, how, shortID(sum.SnapshotID), humanBytes(sum.Bytes), clockAt(time.Unix(d.Since, 0), time.Now()))

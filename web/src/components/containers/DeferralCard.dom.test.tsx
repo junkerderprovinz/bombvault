@@ -69,6 +69,14 @@ it("asks Jellyfin for a key, keeps a stored one hidden and saves a new one once"
   expect(saved[0]).toMatchObject({ preset: "jellyfin", apiKey: "abc123", retryMin: 30, maxHours: 12 });
 });
 
+it("keeps the numbers and the end of the wait beside their label on a phone", async () => {
+  await show(<DeferralCard name="jf" initial={{ ...DEFAULT_DEFERRAL, preset: "jellyfin", netKiB: 100 }} hueIndex={0} />);
+  for (const key of ["deferral.paused", "deferral.netKiB", "deferral.netMin", "deferral.retryMin", "idle.maxHours", "deferral.atDeadline"] as const) {
+    const row = document.querySelector(`[data-search-row="${en[key]}"]`);
+    expect(row?.firstElementChild?.className, key).toContain("basis-0");
+  }
+});
+
 it("tells Plex users there is no key to enter", async () => {
   await show(<DeferralCard name="plex" initial={{ ...DEFAULT_DEFERRAL, preset: "plex" }} hueIndex={0} />);
   expect(screen.getByText(en["deferral.plexToken"])).toBeTruthy();

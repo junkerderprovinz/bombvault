@@ -120,17 +120,15 @@ type Deferral struct {
 	Tries int
 	// Reason is why the last try was deferred.
 	Reason string
-	// Trigger names what asked for the first try: "schedule" or "manual".
-	Trigger string
 }
 
 // SaveDeferral stores d, replacing the one of the same target.
 func (r *Repo) SaveDeferral(d Deferral) error {
-	_, err := r.db.Exec(`INSERT INTO deferred_backups (target_id, container, since, next_try, tries, reason, trigger)
-		VALUES (?, ?, ?, ?, ?, ?, ?)
+	_, err := r.db.Exec(`INSERT INTO deferred_backups (target_id, container, since, next_try, tries, reason)
+		VALUES (?, ?, ?, ?, ?, ?)
 		ON CONFLICT(target_id) DO UPDATE SET container = excluded.container, since = excluded.since,
-		  next_try = excluded.next_try, tries = excluded.tries, reason = excluded.reason, trigger = excluded.trigger`,
-		d.TargetID, d.Container, d.Since, d.NextTry, d.Tries, d.Reason, d.Trigger)
+		  next_try = excluded.next_try, tries = excluded.tries, reason = excluded.reason`,
+		d.TargetID, d.Container, d.Since, d.NextTry, d.Tries, d.Reason)
 	if err != nil {
 		return fmt.Errorf("SaveDeferral: %w", err)
 	}
@@ -140,9 +138,9 @@ func (r *Repo) SaveDeferral(d Deferral) error {
 // GetDeferral returns the waiting backup of a target. ok is false when it
 // waits for nothing.
 func (r *Repo) GetDeferral(targetID string) (d Deferral, ok bool, err error) {
-	err = r.db.QueryRow(`SELECT target_id, container, since, next_try, tries, reason, trigger
+	err = r.db.QueryRow(`SELECT target_id, container, since, next_try, tries, reason
 		FROM deferred_backups WHERE target_id = ?`, targetID).
-		Scan(&d.TargetID, &d.Container, &d.Since, &d.NextTry, &d.Tries, &d.Reason, &d.Trigger)
+		Scan(&d.TargetID, &d.Container, &d.Since, &d.NextTry, &d.Tries, &d.Reason)
 	if errors.Is(err, sql.ErrNoRows) {
 		return Deferral{}, false, nil
 	}
@@ -163,7 +161,7 @@ func (r *Repo) DeleteDeferral(targetID string) error {
 
 // ListDeferrals returns the waiting backups, the next to try first.
 func (r *Repo) ListDeferrals() ([]Deferral, error) {
-	rows, err := r.db.Query(`SELECT target_id, container, since, next_try, tries, reason, trigger
+	rows, err := r.db.Query(`SELECT target_id, container, since, next_try, tries, reason
 		FROM deferred_backups ORDER BY next_try, container`)
 	if err != nil {
 		return nil, fmt.Errorf("ListDeferrals: %w", err)
@@ -172,7 +170,7 @@ func (r *Repo) ListDeferrals() ([]Deferral, error) {
 	var out []Deferral
 	for rows.Next() {
 		var d Deferral
-		if err := rows.Scan(&d.TargetID, &d.Container, &d.Since, &d.NextTry, &d.Tries, &d.Reason, &d.Trigger); err != nil {
+		if err := rows.Scan(&d.TargetID, &d.Container, &d.Since, &d.NextTry, &d.Tries, &d.Reason); err != nil {
 			return nil, fmt.Errorf("ListDeferrals: %w", err)
 		}
 		out = append(out, d)

@@ -5,6 +5,7 @@ import { formatLogDate } from "./activityLog";
 import type { DeferredBackup } from "./api";
 import type { useT } from "./i18n";
 import { formatClockTime } from "./reltime";
+import { runReason } from "./runReason";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -20,7 +21,7 @@ export function deferralTime(unix: number, now: number = Date.now()): string {
 /** deferralSentence is the whole word on a waiting backup: its reason, its
  *  next try and its deadline. */
 export function deferralSentence(t: T, d: DeferredBackup, now: number = Date.now()): string {
-  const waiting = t("deferral.waiting").replace("{reason}", d.reason).replace("{time}", deferralTime(d.nextTry, now));
+  const waiting = t("deferral.waiting").replace("{reason}", runReason(d.reason, t)).replace("{time}", deferralTime(d.nextTry, now));
   const end = t(d.atDeadline === "back-up" ? "deferral.deadlineBackUp" : "deferral.deadlineGiveUp").replace(
     "{time}",
     deferralTime(d.deadline, now)

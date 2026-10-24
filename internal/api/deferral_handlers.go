@@ -32,9 +32,9 @@ type deferralView struct {
 	NetMin     int    `json:"netMin"`
 }
 
-// deferralPatch is the whole policy as the card saves it. APIKey replaces the
+// DeferralPatch is the whole policy as the card saves it. APIKey replaces the
 // stored key when it is not empty, and APIKeyClear removes it.
-type deferralPatch struct {
+type DeferralPatch struct {
 	RetryMin    int    `json:"retryMin"`
 	WindowFrom  string `json:"windowFrom"`
 	WindowTo    string `json:"windowTo"`
@@ -67,7 +67,7 @@ const (
 	maxNetMin    = 60
 )
 
-func validateDeferral(v deferralPatch) error {
+func validateDeferral(v DeferralPatch) error {
 	switch {
 	case v.RetryMin < minRetryMin || v.RetryMin > maxRetryMin:
 		return fmt.Errorf("the time between two tries has to be between %d and %d minutes", minRetryMin, maxRetryMin)
@@ -97,7 +97,7 @@ func validateDeferral(v deferralPatch) error {
 
 // SetDeferPolicy stores how a container's backup waits while its app is busy.
 // A backup that waits already gets its next try from the new policy.
-func (s *Service) SetDeferPolicy(_ context.Context, name string, v deferralPatch) error {
+func (s *Service) SetDeferPolicy(_ context.Context, name string, v DeferralPatch) error {
 	v.WindowFrom, v.WindowTo, v.APIKey = strings.TrimSpace(v.WindowFrom), strings.TrimSpace(v.WindowTo), strings.TrimSpace(v.APIKey)
 	if err := validateDeferral(v); err != nil {
 		return err

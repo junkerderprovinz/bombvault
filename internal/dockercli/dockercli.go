@@ -362,10 +362,18 @@ type ExitError struct {
 	Reason string
 }
 
-func (e *ExitError) Error() string { return fmt.Sprintf("hook exited %d: %s", e.Code, e.Reason) }
+func (e *ExitError) Error() string {
+	if e.Reason == "" {
+		return fmt.Sprintf("hook exited %d", e.Code)
+	}
+	return fmt.Sprintf("hook exited %d: %s", e.Code, e.Reason)
+}
 
 // ExitCode is the code the command ended with.
 func (e *ExitError) ExitCode() int { return e.Code }
+
+// Output is what the command wrote, "" when it wrote nothing.
+func (e *ExitError) Output() string { return e.Reason }
 
 // Exec runs cmd inside a running container and returns an *ExitError when it
 // exits non-zero (used for pre/post-backup hooks). Output is captured only to

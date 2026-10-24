@@ -3497,8 +3497,7 @@ UPDATE pull_sources SET leftovers_moved = 0;`,
   since     INTEGER NOT NULL,
   next_try  INTEGER NOT NULL,
   tries     INTEGER NOT NULL DEFAULT 1,
-  reason    TEXT    NOT NULL DEFAULT '',
-  trigger   TEXT    NOT NULL DEFAULT ''
+  reason    TEXT    NOT NULL DEFAULT ''
 );`,
 	},
 	{

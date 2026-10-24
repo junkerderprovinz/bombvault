@@ -274,7 +274,52 @@ const (
 	// ReasonDeferralGaveUp is the failed backup of a container whose app was
 	// still busy when its wait ended, set to give up then.
 	ReasonDeferralGaveUp = "the app was still busy when the wait for it ended"
+
+	// ReasonDeferralUnscheduled and ReasonDeferralSectionOff end the wait of
+	// a deferred backup that has no schedule left to belong to.
+	ReasonDeferralUnscheduled = "the wait for the app ended because the container left the schedule"
+	ReasonDeferralSectionOff  = "the wait for the app ended because the containers were switched off"
+
+	// ReasonDeferredHook defers a backup whose pre-backup command exited with
+	// 75. What the command wrote follows after ": ".
+	ReasonDeferredHook = "the pre-backup command says the app is busy"
 )
+
+// The reasons below defer a backup and carry a name or a number, which the
+// page reads back by their pattern in web/src/lib/runReason.ts.
+
+// DeferredSessions is a media server with n sessions that keep it busy.
+func DeferredSessions(server string, n int) string {
+	if n == 1 {
+		return server + " has 1 active session"
+	}
+	return fmt.Sprintf("%s has %d active sessions", server, n)
+}
+
+// DeferredNoAnswer is a media server that could not be asked.
+func DeferredNoAnswer(server string) string { return server + " did not answer" }
+
+// DeferredNoKey is a Jellyfin or Emby without its API key.
+func DeferredNoKey(server string) string { return server + " has no API key set" }
+
+// DeferredSending is a container that sent kib KiB/s or more within the last
+// minutes.
+func DeferredSending(kib, minutes int) string {
+	return fmt.Sprintf("the container sent %d KiB/s or more within the last %s", kib, minutesText(minutes))
+}
+
+// DeferredMeasuring is a container BombVault has watched for less than the
+// minutes its traffic check looks back.
+func DeferredMeasuring(minutes int) string {
+	return "BombVault has watched the container's traffic for less than " + minutesText(minutes)
+}
+
+func minutesText(n int) string {
+	if n == 1 {
+		return "1 minute"
+	}
+	return fmt.Sprintf("%d minutes", n)
+}
 
 // StalledReason is the reason of a backup the stall guard cancelled after
 // going without progress for after, naming the ZFS dataset it was reading when
