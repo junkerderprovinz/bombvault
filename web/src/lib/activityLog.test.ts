@@ -925,6 +925,23 @@ describe("dbdump runs", () => {
     expect(lines.find((l) => l.id === "run:i2")?.status).toBe("success");
   });
 
+  it("says on an orange backup line what the warning is", () => {
+    const runs = [
+      makeRun({ id: "b1", target: "beszel-agent", bytes: 0, error: "data folders outside Host Data were not backed up: /var/lib/beszel" }),
+      makeRun({ id: "b2", target: "Jellyfin", error: "some files could not be read and are missing from this backup: config/log/a.log" }),
+      makeRun({ id: "b3", target: "plex", error: "" }),
+    ];
+    const lines = buildLogLines(runs, {}, [], english, 2_000_000);
+    const outside = lines.find((l) => l.id === "run:b1")!;
+    expect(outside.warn).toBe(true);
+    expect(outside.text).toContain("the data sits outside Host Data and was not backed up");
+    expect(outside.text).toContain("/var/lib/beszel");
+    const unreadable = lines.find((l) => l.id === "run:b2")!;
+    expect(unreadable.warn).toBe(true);
+    expect(unreadable.text).toContain("some files could not be read and are missing from this backup");
+    expect(lines.find((l) => l.id === "run:b3")!.text).toBe("plex backed up: 2.0 KB in 30s");
+  });
+
   it("counts the dumped bytes on the live line, where there is no percentage", () => {
     const progress: ProgressMap = {
       "container:immich_postgres": {

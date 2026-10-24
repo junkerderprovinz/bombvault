@@ -595,7 +595,9 @@ function finishedLineText(resolveName: ResolveName, run: Run, domain: LogDomain,
 
   // backup, and any kind this client does not know yet.
   if (run.status === "success") {
-    return { status: "success", text: resolveName("activityLog.lineBackupSuccess", { name, bytes: humanBytes(run.bytes), duration }) };
+    const text = resolveName("activityLog.lineBackupSuccess", { name, bytes: humanBytes(run.bytes), duration });
+    // The line turns orange for these notes, so it has to say which one.
+    return { status: "success", text: isWarningNote(run.error) ? `${text}; ${reasonText(run.error, resolveName)}` : text };
   }
   if (run.status === "failed") {
     return { status: "failed", text: resolveName("activityLog.lineBackupFailed", { name, error: reasonText(run.error, resolveName) }) };
