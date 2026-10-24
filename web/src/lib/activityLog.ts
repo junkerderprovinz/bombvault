@@ -17,6 +17,7 @@ import { KEY_RUN_KIND } from "./runKind";
 import { humanBytes } from "./forecast";
 import { formatNumber } from "./numberFormat";
 import {
+  backupNotes,
   CONTAINERS_NOT_BACK,
   isWarningNote,
   RESTORED_WITHOUT_LINKS,
@@ -597,7 +598,9 @@ function finishedLineText(resolveName: ResolveName, run: Run, domain: LogDomain,
   if (run.status === "success") {
     const text = resolveName("activityLog.lineBackupSuccess", { name, bytes: humanBytes(run.bytes), duration });
     // The line turns orange for these notes, so it has to say which one.
-    return { status: "success", text: isWarningNote(run.error) ? `${text}; ${reasonText(run.error, resolveName)}` : text };
+    if (!isWarningNote(run.error)) return { status: "success", text };
+    const notes = backupNotes(run.error.trim()).map((note) => reasonText(note, resolveName));
+    return { status: "success", text: [text, ...notes].join("; ") };
   }
   if (run.status === "failed") {
     return { status: "failed", text: resolveName("activityLog.lineBackupFailed", { name, error: reasonText(run.error, resolveName) }) };

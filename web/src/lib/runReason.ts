@@ -195,9 +195,27 @@ const WARNING_NOTES = [
   CONTAINERS_NOT_BACK,
 ];
 
+/**
+ * Splits the notes a backup run joins with "; " (internal/backup/orchestrator.go
+ * and withUnreadableNote). A note starts at a dump note or one of the heads
+ * below; any other "; " belongs to the note before it.
+ */
+export function backupNotes(raw: string): string[] {
+  const heads = [FILES_UNREADABLE, DATA_OUTSIDE_HOST, CONTAINERS_NOT_BACK];
+  const notes: string[] = [];
+  for (const part of raw.split("; ")) {
+    const starts = part.startsWith("database dump ") || heads.some((h) => part === h || part.startsWith(h + ": "));
+    if (notes.length > 0 && !starts) notes[notes.length - 1] += "; " + part;
+    else notes.push(part);
+  }
+  return notes;
+}
+
 /** Whether a note of a successful run reports something worth acting on. */
 export function isWarningNote(raw: string | null | undefined): boolean {
   const text = raw?.trim() ?? "";
+  const notes = backupNotes(text);
+  if (notes.length > 1) return notes.some(isWarningNote);
   if (importAppTail(text)) return true;
   if (WARNING_NOTES.some((note) => text === note || text.startsWith(note + ": "))) return true;
   const left = restoreNotes(text);

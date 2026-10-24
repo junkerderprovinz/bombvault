@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 import { buildLogLines, domainLabel, filterLogLines, formatLogDate } from "./activityLog";
 import type { LogLine, ResolveName } from "./activityLog";
 import type { Run, ScheduleNext } from "./api";
-import { countText, en } from "./i18n";
+import { countText, de, en } from "./i18n";
 import type { ProgressMap } from "./progress";
 
 const resolveName = (key: string, params?: Record<string, string>): string =>
@@ -940,6 +940,30 @@ describe("dbdump runs", () => {
     expect(unreadable.warn).toBe(true);
     expect(unreadable.text).toContain("some files could not be read and are missing from this backup");
     expect(lines.find((l) => l.id === "run:b3")!.text).toBe("plex backed up: 2.0 KB in 30s");
+  });
+
+  it("finds a warning behind another note and words every note of the run", () => {
+    const runs = [
+      makeRun({ id: "b1", target: "immich", error: "database dump covers one database only; data folders outside Host Data were not backed up: /srv/immich" }),
+      makeRun({
+        id: "b2",
+        target: "Jellyfin",
+        error: "some files could not be read and are missing from this backup: cache/a; some containers did not start again: jellyfin-db",
+      }),
+    ];
+    const behind = buildLogLines(runs, {}, [], english, 2_000_000).find((l) => l.id === "run:b1")!;
+    expect(behind.warn).toBe(true);
+    expect(behind.text).toContain("the data sits outside Host Data and was not backed up: /srv/immich");
+    expect(behind.text).not.toContain("data folders outside Host Data were not backed up");
+    const german: ResolveName = (key, params, count) => {
+      let s = countText(de[key as keyof typeof de] ?? key, "de", count);
+      for (const [name, value] of Object.entries(params ?? {})) s = s.split(`{${name}}`).join(value);
+      return s;
+    };
+    const both = buildLogLines(runs, {}, [], german, 2_000_000).find((l) => l.id === "run:b2")!.text;
+    expect(both).toContain(`${de["runReason.filesUnreadable"]}: cache/a`);
+    expect(both).toContain(`${de["runReason.containersNotBack"]}: jellyfin-db`);
+    expect(both).not.toContain("some containers did not start again");
   });
 
   it("counts the dumped bytes on the live line, where there is no percentage", () => {
