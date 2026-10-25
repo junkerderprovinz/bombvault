@@ -110,6 +110,8 @@ KINDS = {
     "windows-script":   (1, "windows", *WINDOWS, "Windows", "start script", "Download the Windows start script"),
     # Space grey, since black vanishes against GitHub's dark theme.
     "macos":            (1, "apple", "#6e6e73", "#ffffff", "macOS", "Universal", "Download for macOS"),
+    # For apps that ship Intel and Apple silicon as two files.
+    "macos-split":      (1, "apple", "#6e6e73", "#ffffff", "macOS", "Intel, ARM", "Download for macOS on Intel or Apple silicon"),
     # Tux yellow, with dark ink for contrast.
     "linux":            (1, "linux", "#fcc624", "#1b1b1b", "Linux", "x64", "Download for Linux"),
     "linux-arm":        (1, None, "#fcc624", "#1b1b1b", "Linux", "ARM64", "Download for Linux on ARM"),
@@ -118,6 +120,8 @@ KINDS = {
     "google-play":      (2, "google-play", "#01875f", "#ffffff", "Android", "Google Play", "Get it on Google Play"),
     "f-droid":          (2, "f-droid", "#1976d2", "#ffffff", "Android", "F-Droid", "Get it on F-Droid"),
     "apk":              (2, "android", "#3ddc84", "#1b1b1b", "Android", "APK", "Download the Android app"),
+    # The App Store's blue, where white holds 3.1:1.
+    "app-store":        (2, "apple", "#0d96f6", "#ffffff", "iOS", "App Store", "Download on the App Store"),
     # One button per browser, in the colours of KnightLoader's browser tiles.
     # White holds 3.3:1 on Brave's orange, about as much as on Unraid's, and
     # more on the others. On Firefox's lighter orange it falls to 2.7:1, so
@@ -144,7 +148,7 @@ SOON = {
     "unraid-plugin": ("coming soon", "In Unraid's Community Applications soon"),
 }
 # Links that may lead away from the repository.
-STORES = ("play.google.com", "f-droid.org", "chromewebstore.google.com", "addons.mozilla.org", "microsoftedge.microsoft.com",
+STORES = ("play.google.com", "f-droid.org", "apps.apple.com","chromewebstore.google.com", "addons.mozilla.org", "microsoftedge.microsoft.com",
           "unraid.net", "mos-official.net", "github.com/junkerderprovinz/zimaos-apps", "github.com/junkerderprovinz/umbrel-apps",
           "github.com/junkerderprovinz/parleyport", "github.com/junkerderprovinz/bombvault-widget")
 
