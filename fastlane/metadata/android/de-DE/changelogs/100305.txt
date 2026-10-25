@@ -1,0 +1,1 @@
+Die App liegt weiter in der Hängematte und winkt. BombVault 10.3.5 repariert die Probe-Wiederherstellung auf Unraid: Der Share /mnt/user lehnt ein paar Dateiattribute ab, und die Prüfung hat das persönlich genommen. Jetzt zählt sie die wiederhergestellten Dateien und Bytes und wird grün, wenn alles passt. Weniger Rot, gleich viele Nickerchen.
