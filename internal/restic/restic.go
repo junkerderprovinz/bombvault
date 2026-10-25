@@ -2043,12 +2043,11 @@ func stderrError(args []string, stderr string) error {
 	if reason := lastReason(stderr); reason != "" {
 		msg = fmt.Sprintf("restic %s failed: %s", sub, reason)
 	}
-	// A restore whose ONLY errors were per-file ownership/metadata permission
-	// errors on the target (all data extracted — normal on an Unraid /mnt/user FUSE
-	// share) is tagged ErrRestoreMetadataOnly so the files restore can finish
-	// success-with-warning. The message text is unchanged, so every other restore
-	// caller (container to-path, DR drill, config self-restore) still records a
-	// plain failure.
+	// A restore whose only errors were ownership or metadata permission errors on
+	// the target (all data extracted, normal on an Unraid /mnt/user FUSE share) is
+	// tagged ErrRestoreMetadataOnly, so the files restore and the restore checks
+	// can go on. The message text is unchanged, so a caller that does not look
+	// for the tag (container to-path, config self-restore) records a failure.
 	if sub == "restore" && isMetadataOnlyRestoreFailure(stderr) {
 		return &metadataOnlyRestoreErr{msg: msg}
 	}

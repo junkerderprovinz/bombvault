@@ -290,6 +290,14 @@ func TestIsMetadataOnlyRestoreFailureJSONForm(t *testing.T) {
 	}
 }
 
+func TestARefusedTrustedXattrIsMetadataOnly(t *testing.T) {
+	line := `{"message_type":"error","error":{"message":"xattr.LSet /host/user/user/bombvault/restore/bombvault-drill-containers-1/host/user/user trusted.xfs:autofsck: operation not permitted"},"during":"restore","item":"/host/user/user"}`
+	err := runError([]string{"-r", "/repo", "restore", "--target", "/t", "--", "abc:/"}, line+"\nFatal: There were 1 errors")
+	if !errors.Is(err, ErrRestoreMetadataOnly) {
+		t.Fatalf("a refused trusted.* xattr must count as metadata-only, got %v", err)
+	}
+}
+
 // TestRunErrorTagsMetadataOnlyRestore checks that runError wraps
 // ErrRestoreMetadataOnly for a metadata-only restore failure without changing
 // the message, and tags neither real failures nor other subcommands.

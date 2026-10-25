@@ -5475,6 +5475,7 @@ type fakeResticEngine struct {
 	restored          []string
 	restoreErrPath    string // when set, RestoreInclude fails on this include path
 	restoreErr        error  // when set, every RestoreInclude/RestorePath returns it (e.g. context.Canceled)
+	restoreAfterErr   error  // when set, RestoreInclude writes its files and then returns it
 	forgotten         []string
 	// forgotRepos is the repository of every Forget call, parallel to the ids it
 	// carried, so a test can check where a delete landed.
@@ -6038,7 +6039,7 @@ func (f *fakeResticEngine) RestoreInclude(ctx context.Context, repo, snapshotID,
 			}
 		}
 	}
-	return nil
+	return f.restoreAfterErr
 }
 
 func (f *fakeResticEngine) RestoreVerify(_ context.Context, repo, snapshotID string, files []string, target string, _ restic.Mode) error {
@@ -6707,6 +6708,48 @@ func TestRunDRDrillTruncatedFileFails(t *testing.T) {
 	latest, found, lErr := svc.LatestDrill("containers", "offsite")
 	if lErr != nil || !found || latest.OK {
 		t.Fatalf("a failed drill must be recorded ok=false: %+v found=%v err=%v", latest, found, lErr)
+	}
+}
+
+// A restore folder on /mnt/user refuses trusted.* xattrs, so restic ends with
+// an error although every file landed. The drill still verifies the sandbox
+// and passes.
+func TestRunDRDrillPassesWhenOnlyMetadataCouldNotBeSet(t *testing.T) {
+	eng := &fakeResticEngine{
+		snaps: []restic.Snapshot{{ID: "aaaa1111bbbb2222", Time: "2026-07-01T00:00:00Z", Tags: []string{"container:plex"}}},
+		lsEntries: []restic.FileEntry{
+			{Path: "/appdata/plex/a.conf", Type: "file", Size: 100},
+		},
+		restoreAfterErr: fmt.Errorf("restic restore failed: xattr.LSet [path] trusted.xfs:autofsck: operation not permitted: %w", restic.ErrRestoreMetadataOnly),
+	}
+	svc, _ := drDrillService(t, eng, "containers", "rest:http://192.168.20.9:8000/containers", "plex")
+
+	drill, err := svc.RunRestoreDrill(context.Background(), "containers", "offsite", "dr", false)
+	if err != nil {
+		t.Fatalf("a metadata-only restore error must not fail the drill: %v", err)
+	}
+	if !drill.OK || drill.Detail != "" {
+		t.Fatalf("want an ok drill without a failure detail, got %+v", drill)
+	}
+}
+
+func TestRunDRDrillWithAMetadataErrorStillFailsOnMissingData(t *testing.T) {
+	eng := &fakeResticEngine{
+		snaps: []restic.Snapshot{{ID: "aaaa1111bbbb2222", Time: "2026-07-01T00:00:00Z", Tags: []string{"container:plex"}}},
+		lsEntries: []restic.FileEntry{
+			{Path: "/appdata/plex/a.conf", Type: "file", Size: 100},
+		},
+		statsRestoreBytes: 9_000_000,
+		restoreAfterErr:   restic.ErrRestoreMetadataOnly,
+	}
+	svc, _ := drDrillService(t, eng, "containers", "rest:http://192.168.20.9:8000/containers", "plex")
+
+	drill, err := svc.RunRestoreDrill(context.Background(), "containers", "offsite", "dr", false)
+	if err == nil || drill.OK {
+		t.Fatalf("missing data must fail the drill even after a metadata-only error, got %+v err=%v", drill, err)
+	}
+	if !strings.Contains(drill.Detail, "verification mismatch") {
+		t.Fatalf("the failure must come from the verification, got detail %q", drill.Detail)
 	}
 }
 

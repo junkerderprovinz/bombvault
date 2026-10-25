@@ -17643,7 +17643,9 @@ func (s *Service) sandboxRestoreVerify(ctx context.Context, domain string, setti
 		}
 	}
 
-	if err := s.engine.RestoreInclude(dctx, repo, snapID, "/", sandbox, mode); err != nil {
+	// A /mnt/user restore folder refuses ownership and trusted.* xattrs, yet every
+	// file's data is there, so the count and byte check below decides (#379).
+	if err := s.engine.RestoreInclude(dctx, repo, snapID, "/", sandbox, mode); err != nil && !errors.Is(err, restic.ErrRestoreMetadataOnly) {
 		return fmt.Errorf("restore into sandbox: %w", err)
 	}
 
