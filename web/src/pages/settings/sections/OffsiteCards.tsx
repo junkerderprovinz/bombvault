@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import { replicateOffsite, testOffsite } from "../../../lib/api";
 import type { OffsiteDomain } from "../../../lib/useOffsiteTargets";
-import { NumberField } from "../../../components/NumberField";
+import { RateField } from "../../../components/RateField";
 import { DomainGlyph, Rows, SettingRow } from "../../../components/storage/rows";
 import { OffsiteWizard } from "../../../components/OffsiteWizard";
 import { OffsiteLocationInput, type LocationField } from "../../../components/placement/OffsiteLocationInput";
@@ -276,7 +276,7 @@ export function OffsiteCards({ nextHue }: { nextHue: () => number }) {
             ["offsiteLimitDownload", "settings.limitDownload"],
           ] as const).map(([key, label]) => (
             <SettingRow key={key} label={t(label)} htmlFor={`offsite-${key}`}>
-              <NumberField
+              <RateField
                 id={`offsite-${key}`}
                 wrapperClassName="w-28"
                 min={0}

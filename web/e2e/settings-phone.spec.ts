@@ -646,6 +646,20 @@ test("settings storage on a phone: a repository shows its whole name and address
   await expect(row.getByText("Nur anhängen", { exact: true })).toHaveCount(1);
 });
 
+test("settings storage: an off-site limit in KiB/s shows the rate in MB/s and Mbit/s beside it", async ({ page }, testInfo) => {
+  await openPage(page, testInfo.project.use.viewport!.width, "storage", "Speicherorte");
+  const card = page.locator('[data-search-card="Off-site-Bandbreite"]');
+  const upload = card.getByRole("spinbutton", { name: "Upload-Limit (KiB/s)" });
+  await expect(upload).toHaveAccessibleDescription("≈ 19,5 MB/s (163,8 Mbit/s)");
+  await expect(card.getByRole("spinbutton", { name: "Download-Limit (KiB/s)" })).toHaveAccessibleDescription("≈ 48,8 MB/s (409,6 Mbit/s)");
+
+  await upload.fill("2048");
+  await expect(upload).toHaveAccessibleDescription("≈ 2,0 MB/s (16,8 Mbit/s)");
+  await upload.fill("0");
+  await expect(card.getByText("≈", { exact: false })).toHaveCount(1);
+  await expect(upload).not.toHaveAttribute("aria-describedby");
+});
+
 test("settings schedules on a phone: the every-N-days field shows three digits beside its steppers", async ({ page }, testInfo) => {
   test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only: the steppers sit side by side under a coarse pointer");
   await openPage(page, 320, "schedules", "Zeitplan");

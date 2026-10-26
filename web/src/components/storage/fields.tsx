@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useDebouncedSave } from "../../lib/useDebouncedSave";
 import { NumberField } from "../NumberField";
+import { RateField } from "../RateField";
 
 const FIELD = "rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 glim-field-focus";
 
@@ -14,13 +15,17 @@ export function NumberSetting({
   value,
   onCommit,
   disabled,
+  rate,
 }: {
   /** The field's accessible name; the visible label stands beside it. */
   label: string;
   value: number;
   onCommit: (next: number) => void;
   disabled?: boolean;
+  /** The count is a rate in KiB/s, shown in MB/s and Mbit/s as well. */
+  rate?: boolean;
 }) {
+  const Field = rate ? RateField : NumberField;
   const [draft, setDraft] = useState(value);
   const [seen, setSeen] = useState(value);
   const { debouncedSave } = useDebouncedSave();
@@ -29,7 +34,7 @@ export function NumberSetting({
     setDraft(value);
   }
   return (
-    <NumberField
+    <Field
       min={0}
       value={draft}
       aria-label={label}

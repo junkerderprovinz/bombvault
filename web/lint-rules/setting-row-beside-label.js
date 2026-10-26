@@ -19,6 +19,7 @@ const ONE_LINE = new Set([
   "DropdownListbox",
   "NumberField",
   "NumberSetting",
+  "RateField",
   "TextSetting",
   "RevealInput",
   "Selector",

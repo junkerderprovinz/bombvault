@@ -80,7 +80,7 @@ export function CopyCard({ edit, hueIndex }: { edit: LocationEdit; hueIndex: num
           return (
             <SettingRow key={key} label={t(label)} hint={t("storage.copy.unlimited")}>
               {can(key) ? (
-                <NumberSetting label={t(label)} value={value} disabled={busy} onCommit={(n) => void save(key === "limitUpload" ? { limitUpload: n } : { limitDownload: n })} />
+                <NumberSetting label={t(label)} value={value} disabled={busy} rate onCommit={(n) => void save(key === "limitUpload" ? { limitUpload: n } : { limitDownload: n })} />
               ) : (
                 <span className="text-sm tabular-nums text-carbon-textSub">{value}</span>
               )}

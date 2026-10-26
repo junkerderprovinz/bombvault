@@ -7,6 +7,7 @@ import { useDebouncedSave } from "../../lib/useDebouncedSave";
 import { useReveal } from "../../lib/useReveal";
 import { Card, ToggleRow } from "../../pages/settings/shared";
 import { NumberField } from "../NumberField";
+import { RateField } from "../RateField";
 import { RevealInput } from "../RevealInput";
 import { SelectField } from "../SelectField";
 import { Selector } from "../Selector";
@@ -198,7 +199,7 @@ export function DeferralCard({
         {netOn && (
           <>
             <SettingRow label={t("deferral.netKiB")} hint={t("deferral.netKiBHint")} htmlFor={`${uid}-kib`} narrow>
-              <NumberField
+              <RateField
                 id={`${uid}-kib`}
                 min={1}
                 max={1 << 20}

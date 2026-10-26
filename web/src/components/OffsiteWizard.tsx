@@ -24,6 +24,7 @@ import { useOffsiteTargets } from "../lib/useOffsiteTargets";
 import { useConfirm } from "../lib/useConfirm";
 import { InfoBubble } from "./InfoBubble";
 import { NumberField } from "./NumberField";
+import { RateField } from "./RateField";
 import { Toggle } from "./Toggle";
 import { Badge } from "./Badge";
 import { withLtrFragments, withLtrIsolates, REPO_LOCAL_HINT_LTR_FRAGMENTS } from "../lib/ltrFragments";
@@ -813,7 +814,7 @@ export function OffsiteWizard({
           </span>
           <Rows>
             <SettingRow label={t("settings.limitUpload")} htmlFor="offsite-wizard-limit-up">
-              <NumberField
+              <RateField
                 id="offsite-wizard-limit-up"
                 wrapperClassName="w-28"
                 min={0}
@@ -827,7 +828,7 @@ export function OffsiteWizard({
               />
             </SettingRow>
             <SettingRow label={t("settings.limitDownload")} htmlFor="offsite-wizard-limit-down">
-              <NumberField
+              <RateField
                 id="offsite-wizard-limit-down"
                 wrapperClassName="w-28"
                 min={0}

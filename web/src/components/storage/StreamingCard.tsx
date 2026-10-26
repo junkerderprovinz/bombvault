@@ -6,6 +6,7 @@ import { SelectDot } from "../backups/SelectMark";
 import { Button } from "../Button";
 import { DropdownListbox } from "../DropdownListbox";
 import { NumberField } from "../NumberField";
+import { RateField } from "../RateField";
 import { Rows, SettingRow } from "./rows";
 
 const NUMBER_FIELDS: { key: StreamingNumberKey; label: "streaming.threshold" | "streaming.limit" | "streaming.hold"; hint: "streaming.thresholdHint" | "streaming.limitHint" | "streaming.holdHint"; max: number }[] = [
@@ -97,19 +98,22 @@ function StreamingFields({ t, state }: { t: ReturnType<typeof useT>["t"]; state:
       </>
 
       <Rows>
-        {NUMBER_FIELDS.map(({ key, label, hint, max }) => (
-          <SettingRow key={key} label={t(label)} hint={t(hint)} htmlFor={`${id}-${key}`}>
-            <NumberField
-              id={`${id}-${key}`}
-              wrapperClassName="w-28"
-              min={1}
-              max={max}
-              value={cfg[key]}
-              onChange={(e) => setNumber(key, Math.min(max, Math.max(1, parseInt(e.target.value, 10) || 1)))}
-              className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full glim-field-focus"
-            />
-          </SettingRow>
-        ))}
+        {NUMBER_FIELDS.map(({ key, label, hint, max }) => {
+          const Field = key === "limitKiB" ? RateField : NumberField;
+          return (
+            <SettingRow key={key} label={t(label)} hint={t(hint)} htmlFor={`${id}-${key}`}>
+              <Field
+                id={`${id}-${key}`}
+                wrapperClassName="w-28"
+                min={1}
+                max={max}
+                value={cfg[key]}
+                onChange={(e) => setNumber(key, Math.min(max, Math.max(1, parseInt(e.target.value, 10) || 1)))}
+                className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full glim-field-focus"
+              />
+            </SettingRow>
+          );
+        })}
       </Rows>
     </>
   );

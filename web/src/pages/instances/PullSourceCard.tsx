@@ -8,8 +8,8 @@ import { Badge } from "../../components/Badge";
 import { Button } from "../../components/Button";
 import { InfoBubble } from "../../components/InfoBubble";
 import { EXACT_CADENCE_MODES } from "../../components/CadenceBuilder";
-import { NumberField } from "../../components/NumberField";
 import { PlanButton } from "../../components/PlanButton";
+import { RateField } from "../../components/RateField";
 import { SelectField } from "../../components/SelectField";
 import { Rows, SettingRow } from "../../components/storage/rows";
 import { TestButton, VerdictLine } from "../../components/TestButton";
@@ -366,7 +366,7 @@ export function PullDialog({
         </div>
 
         <SettingRow label={t("pull.limitDownload")} htmlFor="bv-pull-limit">
-          <NumberField
+          <RateField
             id="bv-pull-limit"
             wrapperClassName="w-28"
             min={0}
