@@ -1,0 +1,1 @@
+The app is still on its break and does the maths from the hammock. BombVault 10.3.6 puts MB/s and Mbit/s next to every bandwidth limit, so 2048 KiB/s finally looks like the 16.8 Mbit/s your provider talks about. Same limits, fewer calculators.
