@@ -2,7 +2,7 @@ import type { CSSProperties, ReactNode } from "react";
 import type { Provider } from "../../lib/api";
 import { useT, type TranslationKey } from "../../lib/i18n";
 import { PROVIDER_MARKS, PROVIDER_TILES } from "../../lib/providerMarks";
-import { IconCloud, IconDatabase, IconFolder, IconLocal, IconTabSystem, IconSync } from "../navGlyphs";
+import { IconCloud, IconDatabase, IconFolder, IconLocal, IconTabStorage, IconTabSystem, IconSync } from "../navGlyphs";
 import { IconLink, IconShieldOn } from "../glyphs";
 import { BrandMark, ReadmeButton } from "../ReadmeButton";
 
@@ -15,6 +15,7 @@ const HOUSE: Record<string, () => ReactNode> = {
   IconTransfer: () => <IconSync />,
   IconDrive: () => <IconLocal />,
   IconBuckets: () => <IconDatabase />,
+  IconTabStorage: () => <IconTabStorage />,
 };
 
 /** The mark a provider is drawn with, a generic cloud where it has none. */

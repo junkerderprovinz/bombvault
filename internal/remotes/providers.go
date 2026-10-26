@@ -256,7 +256,7 @@ var providers = []Provider{
 	cloud("koofr", "Koofr", "koofr", "IconKoofr", AuthAppPassword),
 	cloud("icloud", "iCloud Drive", "iclouddrive", "IconICloud", AuthTrustToken),
 	cloud("fichier", "1Fichier", "fichier", "fichier", AuthAPIKey),
-	cloud("filefabric", "Enterprise File Fabric", "filefabric", "", AuthToken),
+	cloud("filefabric", "Enterprise File Fabric", "filefabric", "IconTabStorage", AuthToken),
 	cloud("filelu", "FileLu", "filelu", "filelu", AuthAPIKey),
 	cloud("drime", "Drime", "drime", "drime", AuthAPIKey),
 	cloud("shade", "Shade", "shade", "shade", AuthAPIKey),
