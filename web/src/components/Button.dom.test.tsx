@@ -93,6 +93,14 @@ it("does not open on focus when the pointer was used last", () => {
   expect(document.querySelector(".glim-bubble")).toBeNull();
 });
 
+it("tells a screen reader that a busy button is working", () => {
+  const props = { label: "Prune", onClick: () => {} };
+  const { rerender } = render(<Button {...props} busy />);
+  expect(screen.getByRole("button").getAttribute("aria-busy")).toBe("true");
+  rerender(<Button {...props} />);
+  expect(screen.getByRole("button").hasAttribute("aria-busy")).toBe(false);
+});
+
 // A button disabled under its open bubble is swapped for a new element inside
 // the wrapper, and the old one never reports losing the focus or the pointer.
 it("closes an open bubble when the button is disabled under it, and again when it comes back", () => {

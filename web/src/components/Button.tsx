@@ -228,6 +228,7 @@ export function Button({
           onClick={onClick}
           disabled={disabled}
           autoFocus={autoFocus}
+          aria-busy={busy || undefined}
           aria-expanded={ariaExpanded}
           aria-controls={ariaControls}
           aria-describedby={[ariaDescribedBy, tooltip.describedBy].filter(Boolean).join(" ") || undefined}
