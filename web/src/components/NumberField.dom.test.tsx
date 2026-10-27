@@ -104,6 +104,20 @@ describe("NumberField, the wrapper", () => {
     const wrap = (screen.getByLabelText("n") as HTMLInputElement).parentElement!;
     expect(wrap.className).toContain("max-w-full");
   });
+
+  // React draws the wrapper itself, so nothing moves the input out of the
+  // place React keeps it in, and the field can go while its row stays.
+  it("comes and goes inside a row that stays", () => {
+    function Row({ shown }: { shown: boolean }) {
+      return <div data-testid="row">{shown && <NumberField defaultValue={5} aria-label="n" />}<span>KiB/s</span></div>;
+    }
+    const { rerender } = render(<Row shown />);
+    rerender(<Row shown={false} />);
+    expect(screen.queryByLabelText("n")).toBeNull();
+    rerender(<Row shown />);
+    expect(screen.getByTestId("row").textContent).toContain("KiB/s");
+    expect(screen.getByLabelText("n")).toBeTruthy();
+  });
 });
 
 // jsdom lays nothing out, so this pins the classes the touch layout rests on.
