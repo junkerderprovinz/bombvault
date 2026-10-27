@@ -1,0 +1,1 @@
+Die App liegt weiter in der Hängematte, holt aber jetzt genau das, worauf du zeigst. BombVault 10.3.7 legt eine Datei, die du zum Wiederherstellen auswählst, direkt in deinen Ordner, statt den ganzen Pfad nachzubauen, aus dem sie kam. Eine Datei rein, eine Datei raus.

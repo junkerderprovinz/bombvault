@@ -1,0 +1,1 @@
+The app is still in the hammock, but it now fetches exactly what you point at. BombVault 10.3.7 puts a file you pick for a restore straight into your folder instead of rebuilding the whole path it came from. One file in, one file out.
