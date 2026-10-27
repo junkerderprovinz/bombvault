@@ -1,8 +1,6 @@
 /**
- * GLIMSTONE_VERSION is the GlimStone release the copied reference files come
- * from. It is a copy of reference/react/version.ts and sits beside the other
- * copied files, so a re-copy brings the number along. The About card links to
- * that release's tag, so it has to name a published release (see `gh release
- * list` in the glimstone repo), not a changelog heading.
+ * The version of the reference files beside this one. It ships with them so an
+ * app's Version card cannot drift from the copies it runs; bump it in the release
+ * that changes the files.
  */
-export const GLIMSTONE_VERSION = "3.5.0";
+export const GLIMSTONE_VERSION = "3.6.3";
