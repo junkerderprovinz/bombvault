@@ -438,9 +438,8 @@ func TestRestoreZFSChildToFolderLandsInTheFolder(t *testing.T) {
 	}
 }
 
-// A selected path lands in the folder under its own name, wherever it sits in
-// the dataset. A file or folder at the top of the dataset has the dataset root
-// as its parent, and restic takes no single file as the root of a restore.
+// Selected paths land in the folder under their own names, below the folder
+// they share. Picks that share only the dataset root keep their path from it.
 func TestRestoreZFSSelectedPathsToFolderKeepTheirNames(t *testing.T) {
 	s, st, _, eng := zfsRestoreFixture(t)
 	d := zfsSeedItem(t, st, zfsRoot)
@@ -459,10 +458,31 @@ func TestRestoreZFSSelectedPathsToFolderKeepTheirNames(t *testing.T) {
 	want := []string{
 		"RestoreInclude|" + zfsChildSnapID + "|/a.bin->" + folder,
 		"RestoreInclude|" + zfsChildSnapID + "|/sub->" + folder,
-		"RestoreSubtreeInclude|" + zfsChildSnapID + "|/sub|/name.txt->" + folder,
+		"RestoreInclude|" + zfsChildSnapID + "|/sub/name.txt->" + folder,
 	}
 	if got := strings.Join(eng.readRestores(), " "); got != strings.Join(want, " ") {
 		t.Fatalf("restic calls = %q, want %q", got, strings.Join(want, " "))
+	}
+}
+
+func TestRestoreZFSSelectedFileDeepInTheDatasetLandsDirectlyInTheFolder(t *testing.T) {
+	s, st, _, eng := zfsRestoreFixture(t)
+	d := zfsSeedItem(t, st, zfsRoot)
+
+	req := ZFSRestoreRequest{
+		Stamp: zfsStamp, Dataset: zfsChild, TargetPath: zfsMountedSub + "/files",
+		Paths: []string{"/sub/name.txt"},
+	}
+	if _, started, err := s.StartRestoreZFS(context.Background(), d.ID, "local", req); !started || err != nil {
+		t.Fatalf("started = %v, err = %v", started, err)
+	}
+	if run := zfsAwaitRestore(t, st, d.ID); run.Status != "success" {
+		t.Fatalf("run = %s %q, want success", run.Status, run.Error)
+	}
+	folder := s.cfg.HostMountRoot + "/" + zfsMountedSub + "/files"
+	want := "RestoreSubtreeInclude|" + zfsChildSnapID + "|/sub|/name.txt->" + folder
+	if got := strings.Join(eng.readRestores(), " "); got != want {
+		t.Fatalf("restic calls = %q, want %q", got, want)
 	}
 }
 

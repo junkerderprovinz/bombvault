@@ -826,8 +826,11 @@ func (s *Service) restoreZFSStep(ctx context.Context, plan zfsRestorePlan, step 
 		}
 		return s.engine.RestoreAll(ctx, plan.repo, step.snapshotID, step.target, plan.mode, excludes...)
 	}
+	// A member snapshot's root is the dataset root, so in place each pick goes
+	// back to its own place inside the dataset.
+	picked := pickedSteps(plan.paths, plan.inPlace)
 	for i, sel := range plan.paths {
-		if err := s.restoreZFSFile(ctx, plan, step, sel); err != nil {
+		if err := s.restorePicked(ctx, plan.repo, step.snapshotID, picked[i], step.target, plan.mode); err != nil {
 			if len(plan.paths) > 1 {
 				return fmt.Errorf("restored %d of %d files, then failed on %q: %w", i, len(plan.paths), sel, err)
 			}
@@ -835,22 +838,6 @@ func (s *Service) restoreZFSStep(ctx context.Context, plan zfsRestorePlan, step 
 		}
 	}
 	return nil
-}
-
-// restoreZFSFile puts one selected path back. In place it goes to its own place
-// inside the dataset; into a folder it lands directly as <target>/<name>, with
-// no tree in between, the way a folder set's file restore does it. A member
-// snapshot's root is the dataset root, so a path at the top of the dataset
-// already lands under its own name with a plain include; restic would refuse
-// a file as the root of a subtree restore.
-func (s *Service) restoreZFSFile(ctx context.Context, plan zfsRestorePlan, step zfsRestoreStep, sel string) error {
-	parent, base := path.Dir(sel), path.Base(sel)
-	if plan.inPlace || parent == "/" {
-		return s.engine.RestoreInclude(ctx, plan.repo, step.snapshotID, restic.EscapeGlob(sel), step.target, plan.mode)
-	}
-	// The subtree root travels as a selector and stays raw; the include is a
-	// glob and is escaped.
-	return s.engine.RestoreSubtreeInclude(ctx, plan.repo, step.snapshotID, parent, restic.EscapeGlob("/"+base), step.target, plan.mode)
 }
 
 // ListZFSSafetySnapshots reads the item's tree on the host and returns the

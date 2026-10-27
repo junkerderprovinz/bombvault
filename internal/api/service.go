@@ -10558,13 +10558,9 @@ func (s *Service) runRestoreFiles(ctx context.Context, plan filesRestorePlan) er
 	// (see executeRestore).
 	unlock := s.lockDomainFor("containers", "restore")
 	defer unlock()
+	picked := pickedSteps(plan.paths, plan.resolved == "")
 	for i, c := range plan.paths {
-		// EscapeGlob, because --include is a glob like --exclude and c is
-		// a path the user ticked in the file picker, not a pattern anyone wrote.
-		// Measured against the shipped restic: a raw "/Inception (2010)
-		// [1080p]" restored no files and still exited 0, so the run was
-		// recorded a success with an empty target folder.
-		if err := s.engine.RestoreInclude(ctx, plan.repo, plan.snapshotID, restic.EscapeGlob(c), plan.target, plan.mode); err != nil {
+		if err := s.restorePicked(ctx, plan.repo, plan.snapshotID, picked[i], plan.target, plan.mode); err != nil {
 			if len(plan.paths) > 1 {
 				return fmt.Errorf("restored %d of %d files, then failed on %q: %w", i, len(plan.paths), c, err)
 			}
@@ -15929,8 +15925,13 @@ func (s *Service) runRestoreFileSetFiles(ctx context.Context, plan fileSetFilesR
 	// Hold the domain repo lock for the restic work (see runRestoreFileSet).
 	unlock := s.lockDomainFor("files", "restore")
 	defer unlock()
+	target := plan.target
+	if target == "" {
+		target = "/"
+	}
+	picked := pickedSteps(plan.paths, plan.target == "")
 	for i, c := range plan.paths {
-		if err := s.restoreOneFileSetFile(ctx, plan, c); err != nil {
+		if err := s.restorePicked(ctx, plan.repo, plan.snapshotID, picked[i], target, plan.mode); err != nil {
 			if len(plan.paths) > 1 {
 				return fmt.Errorf("restored %d of %d files, then failed on %q: %w", i, len(plan.paths), c, err)
 			}
@@ -15938,38 +15939,6 @@ func (s *Service) runRestoreFileSetFiles(ctx context.Context, plan fileSetFilesR
 		}
 	}
 	return nil
-}
-
-// restoreOneFileSetFile restores a single selected path of an already-validated
-// plan. In place (empty target) writes it back to its absolute location
-// (RestoreInclude to "/"). To a folder roots at the snapshot's subtree and
-// includes the path RELATIVE to that subtree, so its contents land at
-// <target>/<rel> — NOT <target>/host/user/… (issue #62's nesting). A path-less
-// snapshot (no backed-up root) falls back to a plain absolute include into the
-// target (the degenerate discovered-set case).
-func (s *Service) restoreOneFileSetFile(ctx context.Context, plan fileSetFilesRestorePlan, sel string) error {
-	if plan.target == "" {
-		// In place: restore each selected path back to its own absolute location.
-		// Same glob rule as the to-folder branch above: sel is a picked path.
-		return s.engine.RestoreInclude(ctx, plan.repo, plan.snapshotID, restic.EscapeGlob(sel), "/", plan.mode)
-	}
-	// To a folder: root the restore at the selection's IMMEDIATE PARENT and include
-	// only its basename, so the picked file or folder lands directly as
-	// <target>/<name> with NO intermediate tree. Rooting at the file-set's backed-up
-	// root instead (the pre-fix behaviour) recreated the whole path BETWEEN that root
-	// and a deeply nested selection under the target — e.g. selecting
-	// dockhand/stacks/DXP480T/xo produced <target>/stacks/DXP480T/xo instead of
-	// <target>/xo (manilx, #123, 2026-08-07). restic includes ancestor path nodes,
-	// so rooting at the parent is valid for files and folders at any depth.
-	parent := path.Dir(sel)
-	base := path.Base(sel)
-	if parent == "." || parent == "/" || base == "." || base == "/" || base == "" {
-		// Degenerate (no usable parent/name) — drop the selection's contents in.
-		return s.engine.RestoreSubtreeTo(ctx, plan.repo, plan.snapshotID, sel, plan.target, plan.mode)
-	}
-	// The subtree root travels as a SELECTOR (not a pattern) and stays raw; the
-	// include is a glob and is escaped.
-	return s.engine.RestoreSubtreeInclude(ctx, plan.repo, plan.snapshotID, parent, restic.EscapeGlob("/"+base), plan.target, plan.mode)
 }
 
 // StartRestoreFileSetFiles launches a selective file-set restore in a background

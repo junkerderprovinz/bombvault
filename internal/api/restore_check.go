@@ -431,10 +431,10 @@ func (s *Service) restoreCheckScope(ctx context.Context, req RestoreCheckRequest
 			return restoreScope{}, err
 		}
 		sc := restoreScope{ref: repoRef{plan.repo, plan.mode}, snapshotID: plan.snapshotID, owner: req.Name, inPlace: plan.resolved == ""}
-		for _, p := range plan.paths {
-			sc.steps = append(sc.steps, restic.PreviewStep{SnapshotID: plan.snapshotID, Target: plan.target, Include: restic.EscapeGlob(p)})
+		for i, p := range pickedSteps(plan.paths, sc.inPlace) {
+			sc.steps = append(sc.steps, p.previewStep(plan.snapshotID, plan.target))
 			if sc.inPlace {
-				sc.written = append(sc.written, p)
+				sc.written = append(sc.written, plan.paths[i])
 			}
 		}
 		return sc, nil
@@ -568,26 +568,21 @@ func fileSetScope(plan fileSetRestorePlan) restoreScope {
 	return sc
 }
 
-// fileSetFilesScope mirrors restoreOneFileSetFile.
+// fileSetFilesScope mirrors runRestoreFileSetFiles.
 func fileSetFilesScope(plan fileSetFilesRestorePlan) restoreScope {
 	sc := restoreScope{ref: repoRef{plan.repo, plan.mode}, snapshotID: plan.snapshotID, inPlace: plan.target == ""}
-	for _, sel := range plan.paths {
-		if sc.inPlace {
-			sc.steps = append(sc.steps, restic.PreviewStep{SnapshotID: plan.snapshotID, Target: "/", Include: restic.EscapeGlob(sel)})
-			sc.written = append(sc.written, sel)
-			continue
-		}
-		parent, base := path.Dir(sel), path.Base(sel)
-		if parent == "." || parent == "/" || base == "." || base == "/" || base == "" {
-			sc.steps = append(sc.steps, restic.PreviewStep{SnapshotID: plan.snapshotID, Subtree: sel, Target: plan.target})
-			continue
-		}
-		sc.steps = append(sc.steps, restic.PreviewStep{SnapshotID: plan.snapshotID, Subtree: parent, Target: plan.target, Include: restic.EscapeGlob("/" + base)})
+	target := plan.target
+	if sc.inPlace {
+		target = "/"
+		sc.written = append(sc.written, plan.paths...)
+	}
+	for _, p := range pickedSteps(plan.paths, sc.inPlace) {
+		sc.steps = append(sc.steps, p.previewStep(plan.snapshotID, target))
 	}
 	return sc
 }
 
-// zfsScope mirrors restoreZFSStep and restoreZFSFile.
+// zfsScope mirrors restoreZFSStep.
 func zfsScope(plan zfsRestorePlan) restoreScope {
 	sc := restoreScope{ref: repoRef{plan.repo, plan.mode}, snapshotID: plan.snapshotID, inPlace: plan.inPlace, newDataset: plan.newDataset}
 	excludes := make([]string, len(plan.covered))
@@ -602,13 +597,8 @@ func zfsScope(plan zfsRestorePlan) restoreScope {
 			sc.steps = append(sc.steps, restic.PreviewStep{SnapshotID: step.snapshotID, Target: step.target, Excludes: excludes})
 			continue
 		}
-		for _, sel := range plan.paths {
-			parent, base := path.Dir(sel), path.Base(sel)
-			if plan.inPlace || parent == "/" {
-				sc.steps = append(sc.steps, restic.PreviewStep{SnapshotID: step.snapshotID, Target: step.target, Include: restic.EscapeGlob(sel)})
-				continue
-			}
-			sc.steps = append(sc.steps, restic.PreviewStep{SnapshotID: step.snapshotID, Subtree: parent, Target: step.target, Include: restic.EscapeGlob("/" + base)})
+		for _, p := range pickedSteps(plan.paths, plan.inPlace) {
+			sc.steps = append(sc.steps, p.previewStep(step.snapshotID, step.target))
 		}
 	}
 	return sc

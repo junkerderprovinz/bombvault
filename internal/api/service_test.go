@@ -797,24 +797,19 @@ func TestRestoreFileSetFilesGuards(t *testing.T) {
 	}
 }
 
-// TestRestoreFileSetFilesRestores pins the happy paths of the selective restore
-// (#65). To a folder: each selected path is restored ROOTED AT the snapshot's
-// backed-up subtree with the include RELATIVE to it (proving the selection lands
-// at <target>/<rel>, NOT nested under /host/user/… — the v6.0.0/#62 correctness),
-// the target dir is created, and a successful run is recorded against the set id.
-// In place: each path is written back to its absolute location (RestoreInclude to
-// "/"). Confirm is required throughout.
+// TestRestoreFileSetFilesRestores pins the happy path of the selective restore
+// into a folder: the selections are restored from the folder they share with
+// the include relative to it, so they land at <target>/<rel> and not nested
+// under /host/user/..., the target dir is created, and a successful run is
+// recorded against the set id.
 func TestRestoreFileSetFilesRestores(t *testing.T) {
 	eng := &fakeResticEngine{}
 	svc, st, setID, root := fileSetFilesRestoreService(t, eng)
 	ctx := context.Background()
 	fileA := root + "/data/docs/reports/2024.pdf"
 	dirB := root + "/data/docs/photos"
-	subtree := root + "/data/docs"
-	reportsDir := root + "/data/docs/reports" // fileA's immediate parent
+	shared := root + "/data/docs"
 
-	// To a folder: each selection is rooted at its OWN immediate parent and lands
-	// directly as <target>/<name>, with no intermediate tree recreated (#123 fix).
 	target, started, err := svc.StartRestoreFileSetFiles(ctx, setID, "local", "aaaa1111", []string{fileA, dirB}, "user/restore/docs", true)
 	if err != nil || !started {
 		t.Fatalf("to-folder selective restore: err=%v started=%v", err, started)
@@ -828,9 +823,9 @@ func TestRestoreFileSetFilesRestores(t *testing.T) {
 	}
 	waitForBackupDone(t, svc)
 	if len(eng.restored) != 2 ||
-		!strings.Contains(eng.restored[0], "aaaa1111:"+reportsDir+"|/2024.pdf->"+wantTarget) ||
-		!strings.Contains(eng.restored[1], "aaaa1111:"+subtree+"|/photos->"+wantTarget) {
-		t.Fatalf("expected each selection rooted at its own parent (no intermediate tree), got %v", eng.restored)
+		!strings.Contains(eng.restored[0], "aaaa1111:"+shared+"|/reports/2024.pdf->"+wantTarget) ||
+		!strings.Contains(eng.restored[1], "aaaa1111:"+shared+"|/photos->"+wantTarget) {
+		t.Fatalf("expected both selections restored below %s, got %v", shared, eng.restored)
 	}
 	runs, err := st.ListRuns(10)
 	if err != nil {
@@ -3906,8 +3901,8 @@ func TestRestoreContainerFiles(t *testing.T) {
 		t.Fatalf("no restore must have run on a rejected request, got %v", eng.restored)
 	}
 
-	// Happy path — into an alternate folder: the resolved dir is created and BOTH
-	// selected paths are extracted into it, in order (multi-file batch).
+	// Happy path, into an alternate folder: the resolved dir is created and both
+	// selected paths land in it below the folder they share, in order.
 	fileB := root + "/appdata/plex/sub/b.dat"
 	target, err := svc.RestoreContainerFiles(ctx, "plex", "local", "aaaa1111", []string{fileA, fileB}, "user/restore/plex", true)
 	if err != nil {
@@ -3920,16 +3915,17 @@ func TestRestoreContainerFiles(t *testing.T) {
 	if _, statErr := os.Stat(wantTarget); statErr != nil {
 		t.Fatalf("target dir must be created after containment passes: %v", statErr)
 	}
+	shared := root + "/appdata/plex"
 	if len(eng.restored) != 2 ||
-		!strings.Contains(eng.restored[0], "aaaa1111:"+fileA+"->"+wantTarget) ||
-		!strings.Contains(eng.restored[1], "aaaa1111:"+fileB+"->"+wantTarget) {
-		t.Fatalf("expected both files restored into the folder, got %v", eng.restored)
+		!strings.HasSuffix(eng.restored[0], "aaaa1111:"+shared+"|/a.conf->"+wantTarget) ||
+		!strings.HasSuffix(eng.restored[1], "aaaa1111:"+shared+"|/sub/b.dat->"+wantTarget) {
+		t.Fatalf("expected both files restored below %s into the folder, got %v", shared, eng.restored)
 	}
 
 	// Mid-batch failure: the second of three paths fails, so the error names the
 	// progress (how many went through) and the remaining path is not attempted.
 	eng.restored = nil
-	eng.restoreErrPath = fileB
+	eng.restoreErrPath = "/sub/b.dat"
 	if _, err := svc.RestoreContainerFiles(ctx, "plex", "local", "aaaa1111", []string{fileA, fileB, fileA}, "user/restore/plex", true); err == nil || !strings.Contains(err.Error(), "restored 1 of 3 files") {
 		t.Fatalf("expected a progress-annotated mid-batch error, got %v", err)
 	}
@@ -4069,8 +4065,9 @@ func TestStartRestoreFilesRecordsRun(t *testing.T) {
 	}
 
 	// Failure: the engine rejects the path — the run must be failed and carry the
-	// real restic error text.
-	eng.restoreErrPath = fileA
+	// real restic error text. Into a folder the include is the file below its
+	// own folder.
+	eng.restoreErrPath = "/a.conf"
 	if _, started, err := svc.StartRestoreFiles(ctx, "plex", "local", "aaaa1111", []string{fileA}, "user/restore/plex", true); err != nil || !started {
 		t.Fatalf("restore should start: started=%v err=%v", started, err)
 	}
