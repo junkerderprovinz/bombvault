@@ -4,6 +4,7 @@ import { ConfirmDialog } from "../ConfirmDialog";
 import { ConfirmSheet } from "../mobile/ConfirmSheet";
 import { Rows, SettingRow } from "../storage/rows";
 import { TestButton, VerdictLine } from "../TestButton";
+import { useDialogKeys } from "../useConfirm";
 import {
   createDirectRepo,
   getDirectRepo,
@@ -14,7 +15,6 @@ import {
 import { useT } from "../../lib/i18n";
 import { placementErrorText } from "../../lib/placementCodes";
 import { useToast } from "../../lib/toast";
-import { useDialogKeys } from "../../lib/useConfirm";
 import { useIsDesktop } from "../../lib/useMediaQuery";
 import { useTestVerdict } from "../../lib/useTestVerdict";
 import { reposChanged } from "../../lib/useNamedRepos";

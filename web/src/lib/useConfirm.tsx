@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useId, useRef, useState, type ReactNode, type RefObject } from "react";
+import { useCallback, useId, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import type { ButtonTone } from "../components/Button";
 import { ConfirmDialog } from "../components/ConfirmDialog";
 import { ConfirmSheet } from "../components/mobile/ConfirmSheet";
 import { SettingRow } from "../components/storage/rows";
+import { useDialogKeys } from "../components/useConfirm";
 import { useT, type TranslationKey } from "./i18n";
 import { useBackCloses } from "./useBackCloses";
 import { useIsDesktop } from "./useMediaQuery";
@@ -16,10 +17,11 @@ import { useIsDesktop } from "./useMediaQuery";
 //   if (!(await confirm(t("x.deleteConfirm"), { confirmKey: "x.delete" }))) return;
 //   return (<>... {confirmDialog}</>);
 //
-// The hook owns everything that needs `document` or hooks, so ConfirmDialog
-// stays a plain function component: the portal, a document-level Escape
-// listener (an onKeyDown on the dialog stops firing once focus falls to
-// <body>), a Tab trap, and returning focus to the trigger on every close path.
+// GlimStone's hook in components/useConfirm.tsx draws the desktop card alone
+// and takes its title once per page. The app calls this one, which adds the
+// phone sheet, a title, tones and a typed answer per question, and Back
+// closing the dialog; Escape and the Tab trap come from GlimStone's
+// useDialogKeys.
 //
 // One pending request per instance is enough: the dialog is modal, so a second
 // confirm() cannot be triggered while one is open.
@@ -160,39 +162,4 @@ export function useConfirm() {
     : null;
 
   return { confirm, confirmDialog, dismiss, revise };
-}
-
-/** useDialogKeys gives an open dialog Escape from anywhere and a Tab trap over
- *  its own controls, so focus never reaches the page it covers. */
-export function useDialogKeys(open: boolean, dialogRef: RefObject<HTMLDivElement | null>, onCancel: () => void): void {
-  useEffect(() => {
-    if (!open) return;
-    function onKeyDown(e: KeyboardEvent) {
-      if (e.key === "Escape") {
-        e.preventDefault();
-        onCancel();
-        return;
-      }
-      if (e.key !== "Tab") return;
-      const card = dialogRef.current;
-      if (!card) return;
-      const focusables = focusableElements(card);
-      if (focusables.length === 0) return;
-      const first = focusables[0];
-      const last = focusables[focusables.length - 1];
-      const active = document.activeElement;
-      const insideCard = active instanceof Node && card.contains(active);
-      if (e.shiftKey) {
-        if (!insideCard || active === first) {
-          e.preventDefault();
-          last.focus();
-        }
-      } else if (!insideCard || active === last) {
-        e.preventDefault();
-        first.focus();
-      }
-    }
-    document.addEventListener("keydown", onKeyDown);
-    return () => document.removeEventListener("keydown", onKeyDown);
-  }, [open, dialogRef, onCancel]);
 }
