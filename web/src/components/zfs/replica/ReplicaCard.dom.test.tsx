@@ -9,6 +9,7 @@ import { ToastProvider } from "../../../lib/toast";
 import type { ProgressMap } from "../../../lib/progress";
 import type { ZFSReplica, ZFSReplicaPatch } from "../../../lib/api";
 import { group, replica, server } from "./replica.testsupport";
+import { openSelect, pickOption } from "../../selectField.testsupport";
 
 let current: ZFSReplica;
 let progress: ProgressMap = {};
@@ -73,7 +74,7 @@ afterEach(cleanup);
 describe("replica card", () => {
   it("offers only the targets that can take a replica, plus none", async () => {
     renderCard();
-    fireEvent.click(await screen.findByRole("combobox", { name: en["zfs.replica.target"] }));
+    await openSelect(await screen.findByRole("combobox", { name: en["zfs.replica.target"] }));
     const names = screen.getAllByRole("option").map((r) => r.textContent);
     expect(names).toEqual([
       en["zfs.replica.targetNone"],
@@ -85,7 +86,7 @@ describe("replica card", () => {
   it("tells a ZFS server over SSH from a paired instance in German too", async () => {
     localStorage.setItem("bv-lang", "de");
     renderCard();
-    fireEvent.click(await screen.findByRole("combobox", { name: de["zfs.replica.target"] }));
+    await openSelect(await screen.findByRole("combobox", { name: de["zfs.replica.target"] }));
     const names = screen.getAllByRole("option").map((r) => r.textContent);
     expect(names).toEqual([de["zfs.replica.targetNone"], "Backup-NAS (über SSH)", "tower-2 (gekoppelte Instanz)"]);
   });
@@ -291,8 +292,7 @@ describe("replica card", () => {
 
   it("points the replica at another target", async () => {
     renderCard();
-    fireEvent.click(await screen.findByRole("combobox", { name: en["zfs.replica.target"] }));
-    fireEvent.click(screen.getByRole("option", { name: "tower-2 (paired instance)" }));
+    await pickOption(await screen.findByRole("combobox", { name: en["zfs.replica.target"] }), "tower-2 (paired instance)");
     await waitFor(() => expect(patches).toEqual([{ target: { kind: "peer", id: "peer-1" } }]));
     expect(await screen.findByText("Request sent to tower-2.")).toBeTruthy();
   });
@@ -301,8 +301,7 @@ describe("replica card", () => {
     patchAnswer = { ok: false, code: "peer-unreachable" };
     renderCard();
     const picker = await screen.findByRole("combobox", { name: en["zfs.replica.target"] });
-    fireEvent.click(picker);
-    fireEvent.click(screen.getByRole("option", { name: "tower-2 (paired instance)" }));
+    await pickOption(picker, "tower-2 (paired instance)");
     expect(await screen.findByText(en["zfs.code.peer-unreachable"])).toBeTruthy();
     await waitFor(() => expect(picker.textContent).toContain("tower-2 (paired instance)"));
   });

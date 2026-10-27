@@ -12,6 +12,7 @@ import {
   targetOption,
 } from "../../lib/placement.testsupport";
 import { PlacementBar } from "./PlacementBar";
+import { openSelect } from "../selectField.testsupport";
 
 const two = placementOptions({ targets: [targetOption(), targetOption({ id: "t-hz", name: "Hetzner", primary: false })] });
 const onB2 = placementView({ segment: "offsite-only", repo: "repo-b2-direct", repoKind: "direct", repoTarget: "t-b2", skip: ["*"] });
@@ -124,10 +125,10 @@ describe("PlacementBar", () => {
     expect(screen.queryByRole("combobox", { name: "Stored on" })).toBeNull();
   });
 
-  it("keeps a stored home that is off in the list, marked and not selectable", () => {
+  it("keeps a stored home that is off in the list, marked and not selectable", async () => {
     renderBar(placementView({ repo: "repo-cold", repoLabel: "Cold", repoKind: "local", repoOff: true }));
-    fireEvent.click(screen.getByRole("combobox", { name: "Stored on" }));
-    expect((screen.getByRole("option", { name: "Cold (off)" }) as HTMLButtonElement).disabled).toBe(true);
+    await openSelect(screen.getByRole("combobox", { name: "Stored on" }));
+    expect(screen.getByRole("option", { name: "Cold (off)" }).getAttribute("aria-disabled")).toBe("true");
   });
 
   it("chooses nothing while the arrow keys move along it", () => {

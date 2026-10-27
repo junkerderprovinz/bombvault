@@ -9,6 +9,7 @@ import { ToastProvider } from "../../../lib/toast";
 import type { ZFSReplica } from "../../../lib/api";
 import type { ProgressMap } from "../../../lib/progress";
 import { group, replica, server } from "./replica.testsupport";
+import { openSelect, settle } from "../../selectField.testsupport";
 
 let current: ZFSReplica;
 const restores: string[] = [];
@@ -129,9 +130,9 @@ describe("replica storage row", () => {
   it("brings the picked snapshot back as a new dataset after the question", async () => {
     renderRow();
     fireEvent.click(await screen.findByRole("button", { name: en["zfs.replica.view"] }));
-    fireEvent.click(screen.getByRole("combobox", { name: en["zfs.replica.sheet.snapshot"] }));
+    await openSelect(screen.getByRole("combobox", { name: en["zfs.replica.sheet.snapshot"] }));
     const older = new Date("2026-10-05T01:40:00Z").toLocaleString();
-    fireEvent.click(screen.getByRole("option", { name: older }));
+    await settle(() => fireEvent.click(screen.getByRole("option", { name: older })));
     expect(screen.getByText(/@bombvault-replica-20261005014000 /)).toBeTruthy();
 
     fireEvent.click(screen.getByRole("button", { name: en["zfs.replica.restore"] }));

@@ -1,8 +1,9 @@
 // @vitest-environment jsdom
 import { useState } from "react";
 import { afterEach, expect, it } from "vitest";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { SelectField, type SelectOption } from "./SelectField";
+import { settle } from "./selectField.testsupport";
 
 const OPTIONS: SelectOption<string>[] = [
   { value: "all", label: "All domains" },
@@ -54,14 +55,44 @@ it("carries every label so the width is the widest one, not the current one", ()
   expect(shown[0]?.textContent).toBe("All domains");
 });
 
-it("opens a listbox and picks an option", () => {
+it("opens a listbox and picks an option", async () => {
   render(<Harness />);
-  fireEvent.click(trigger());
+  await settle();
+  await settle(() => fireEvent.click(trigger()));
   expect(trigger().getAttribute("aria-expanded")).toBe("true");
-  fireEvent.click(screen.getByRole("option", { name: "Containers" }));
+  expect(screen.getByRole("listbox", { name: "Domain" })).toBeTruthy();
+  await settle(() => fireEvent.click(screen.getByRole("option", { name: "Containers" })));
   expect(screen.getByTestId("value").textContent).toBe("containers");
   // Picking closes the list.
   expect(trigger().getAttribute("aria-expanded")).toBe("false");
+});
+
+it("marks the current option as selected and keeps a disabled one out of reach", async () => {
+  render(<Harness start="vms" />);
+  await settle();
+  await settle(() => fireEvent.click(trigger()));
+  expect(screen.getByRole("option", { name: "A considerably longer option label" }).getAttribute("aria-selected")).toBe("true");
+  await settle(() => fireEvent.click(screen.getByRole("option", { name: "Flash" })));
+  expect(screen.getByTestId("value").textContent).toBe("vms");
+});
+
+it("picks by typing the start of a label while closed", async () => {
+  render(<Harness />);
+  await settle();
+  trigger().focus();
+  await settle(() => fireEvent.keyDown(trigger(), { key: "c" }));
+  expect(screen.getByTestId("value").textContent).toBe("containers");
+});
+
+it("gives the focus back to the trigger when Escape closes the list", async () => {
+  render(<Harness />);
+  await settle();
+  trigger().focus();
+  await settle(() => fireEvent.click(trigger()));
+  await waitFor(() => expect(document.activeElement?.getAttribute("role")).toBe("listbox"));
+  await settle(() => fireEvent.keyDown(document.activeElement as Element, { key: "Escape" }));
+  expect(trigger().getAttribute("aria-expanded")).toBe("false");
+  await waitFor(() => expect(document.activeElement).toBe(trigger()));
 });
 
 it("steps with the wheel while closed and focused, and skips a disabled option", () => {

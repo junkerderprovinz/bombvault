@@ -3544,6 +3544,105 @@ body {
   margin: 0;
 }
 
+/* The parts of Select, Combobox and Slider. Their behaviour comes from Zag,
+   which marks state with data attributes (data-state, data-highlighted,
+   data-disabled); the look reads those and nothing else, so the same rules
+   serve the React components and a page that mounts the machine by hand. */
+.glim-field-label {
+  font-size: var(--text-subline);
+  color: var(--carbon-text-sub);
+}
+.glim-select-trigger,
+.glim-combobox-control {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  width: 100%;
+  height: var(--btn-h);
+  padding: 0 0.75rem;
+  border: 1px solid var(--carbon-border);
+  border-radius: var(--radius-control);
+  background: var(--carbon-surface);
+  color: var(--carbon-text);
+  font: inherit;
+  font-size: var(--text-body);
+  text-align: start;
+  cursor: pointer;
+}
+.glim-combobox-control { padding-inline-end: 0.25rem; cursor: text; }
+.glim-select-trigger:hover { background: var(--carbon-hover); }
+.glim-select-trigger:focus-visible,
+.glim-combobox-control:focus-within {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 1px;
+}
+.glim-select-trigger[data-disabled] { opacity: 0.5; cursor: default; }
+.glim-combobox-input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  outline: none;
+}
+.glim-combobox-input::placeholder { color: var(--carbon-text-muted); }
+.glim-combobox-toggle {
+  display: inline-flex;
+  padding: 0.375rem;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--carbon-text-sub);
+  cursor: pointer;
+}
+.glim-combobox-toggle:hover { background: var(--carbon-hover); }
+.glim-select-indicator {
+  display: inline-flex;
+  color: var(--carbon-text-sub);
+}
+.glim-select-indicator[data-state="open"] { rotate: 180deg; }
+
+/* The open list. It sits on the body, so no card or scroll box can clip it. */
+.glim-select-content {
+  margin: 0;
+  padding: 0.25rem;
+  list-style: none;
+  max-height: 15rem;
+  overflow-y: auto;
+  border-radius: var(--radius-card);
+  background: var(--carbon-surface);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.28);
+  outline: none;
+}
+.glim-select-content[hidden] { display: none; }
+.glim-select-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--radius-control);
+  color: var(--carbon-text);
+  font-size: var(--text-body);
+  cursor: pointer;
+}
+.glim-select-item[data-highlighted] { background: var(--carbon-hover); }
+.glim-select-item[data-state="checked"] { font-weight: 600; }
+.glim-select-item[data-disabled] { color: var(--carbon-text-muted); cursor: default; }
+.glim-select-check { display: inline-flex; color: var(--accent-ink); }
+.glim-select-check:not([data-state="checked"]) { visibility: hidden; }
+.glim-select-empty {
+  padding: 0.5rem 0.75rem;
+  color: var(--carbon-text-muted);
+  font-size: var(--text-subline);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .glim-select-indicator { transition: rotate var(--motion-control-dur) ease; }
+}
+
 /* Pictures of a storage location: its fill level as a vessel, what a
    retention rule keeps, a copy on its way and the delete lock. They draw in the
    theme's own tokens and take the hue of the card they sit in. --pic is a

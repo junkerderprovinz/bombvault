@@ -8,13 +8,15 @@ export default defineConfig({
   test: {
     environment: "node",
     include: ["src/**/*.test.ts", "src/**/*.test.tsx"],
-    // Two guarded stubs for what jsdom does not implement, each explained in
-    // its own header: matchMedia, which lib/useMediaQuery.ts subscribes to
-    // during the Layout render and which had to land with useMediaQuery, and
-    // ResizeObserver, which Selector uses to measure the row it sits in.
+    // Guarded stubs for what jsdom does not implement, each explained in its
+    // own header: matchMedia, which lib/useMediaQuery.ts subscribes to during
+    // the Layout render and which had to land with useMediaQuery,
+    // ResizeObserver, which Selector uses to measure the row it sits in, and
+    // an element's scrollTo, which SelectField's list calls as it closes.
     setupFiles: [
       "src/lib/testSetup/matchMedia.ts",
       "src/lib/testSetup/resizeObserver.ts",
+      "src/lib/testSetup/scrollTo.ts",
     ],
   },
 });

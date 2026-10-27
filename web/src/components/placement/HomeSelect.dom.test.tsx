@@ -7,6 +7,7 @@ import { renderWithProviders, wheel } from "../../lib/placement.testsupport";
 import { I18nProvider } from "../../lib/i18n";
 import { ToastProvider } from "../../lib/toast";
 import { HomeSelect } from "./HomeSelect";
+import { openSelect } from "../selectField.testsupport";
 
 // rerender() replaces whatever renderWithProviders mounted, so a prop-change
 // test has to hand back the same provider tree or React sees a different root
@@ -57,11 +58,11 @@ describe("HomeSelect", () => {
     expect(screen.getByText("fixed since the first backup")).toBeTruthy();
   });
 
-  it("keeps a stored value that is off in the list without letting it be picked again", () => {
+  it("keeps a stored value that is off in the list without letting it be picked again", async () => {
     const withOff = [...OPTIONS.slice(0, 2), { value: "repo-old", label: "Old (off)", disabled: true }];
     renderWithProviders(<HomeSelect label="Stored on" value="repo-old" options={withOff} locked={false} onCommit={vi.fn()} />);
-    fireEvent.click(screen.getByRole("combobox", { name: "Stored on" }));
-    expect((screen.getByRole("option", { name: "Old (off)" }) as HTMLButtonElement).disabled).toBe(true);
+    await openSelect(screen.getByRole("combobox", { name: "Stored on" }));
+    expect(screen.getByRole("option", { name: "Old (off)" }).getAttribute("aria-disabled")).toBe("true");
   });
 
   it("keeps a pending draft when the stored value changes underneath", () => {

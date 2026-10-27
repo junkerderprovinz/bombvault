@@ -10,6 +10,7 @@ import { en } from "../lib/i18n";
 import { Dashboard } from "./Dashboard";
 import { FakeEventSource, installMatchMedia, resetServer, run, server } from "./overview/overview.testsupport";
 import { inApp } from "./overview/overviewApp.testsupport";
+import { pickOption } from "../components/selectField.testsupport";
 
 vi.mock("../lib/api", async (importOriginal) => {
   const { stagedApi } = await import("./overview/overview.testsupport");
@@ -112,8 +113,7 @@ describe("the runs of the history card", () => {
     const card = within(historyCard());
     expect(card.getAllByRole("listitem")).toHaveLength(2);
 
-    fireEvent.click(card.getByRole("combobox", { name: en["run.filterDay"] }));
-    fireEvent.click(screen.getByRole("option", { name: new Date(yesterday * 1000).toLocaleDateString("en") }));
+    await pickOption(card.getByRole("combobox", { name: en["run.filterDay"] }), new Date(yesterday * 1000).toLocaleDateString("en"));
 
     const rows = card.getAllByRole("listitem");
     expect(rows).toHaveLength(1);

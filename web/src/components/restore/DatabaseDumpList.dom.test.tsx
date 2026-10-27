@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { countText, I18nProvider, en } from "../../lib/i18n";
 import type { DBDumpView } from "../../lib/api";
+import { pickOption } from "../selectField.testsupport";
 
 const listDbDumps = vi.fn();
 const checkDbDumpDownload = vi.fn(() => Promise.resolve({ ok: true }));
@@ -189,8 +190,7 @@ describe("the database dump list", () => {
       });
     renderList();
 
-    fireEvent.click(await screen.findByRole("combobox", { name: en["dbdump.format"] }));
-    fireEvent.click(screen.getByRole("option", { name: en["dbdump.formatGz"] }));
+    await pickOption(await screen.findByRole("combobox", { name: en["dbdump.format"] }), en["dbdump.formatGz"]);
     fireEvent.click(screen.getByRole("button", { name: en["dbdump.download"] }));
 
     await waitFor(() => expect(clicks.length).toBe(1));

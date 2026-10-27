@@ -19,6 +19,7 @@ vi.mock("../lib/api", () => ({
 
 import { RetentionPreview } from "./RetentionPreview";
 import { en } from "../lib/i18n";
+import { openSelect, pickOption } from "./selectField.testsupport";
 
 const t = ((key: string) => (en as Record<string, string>)[key] ?? key) as unknown as Parameters<
   typeof RetentionPreview
@@ -147,9 +148,9 @@ describe("RetentionPreview", () => {
     expect(screen.getByRole("combobox", { name: en["retentionPreview.sourceLabel"] })).toBeTruthy();
   });
 
-  it("offers every source that keeps snapshots, ZFS among them", () => {
+  it("offers every source that keeps snapshots, ZFS among them", async () => {
     renderPanel();
-    fireEvent.click(screen.getByRole("combobox"));
+    await openSelect(screen.getByRole("combobox"));
     expect(screen.getAllByRole("option").map((o) => o.textContent)).toEqual([
       en["settings.containersEnabled"],
       en["settings.vmsEnabled"],
@@ -164,8 +165,7 @@ describe("RetentionPreview", () => {
     answer({ ok: false, error: "no backups yet" }, { ok: false, error: "no backups yet" });
 
     renderPanel((d) => d === "zfs");
-    fireEvent.click(screen.getByRole("combobox"));
-    fireEvent.click(screen.getByRole("option", { name: en["settings.zfsEnabled"] }));
+    await pickOption(screen.getByRole("combobox"), en["settings.zfsEnabled"]);
     show();
 
     await waitFor(() => expect(previewRetention).toHaveBeenCalledTimes(2));

@@ -9,6 +9,7 @@ import { I18nProvider, en } from "../../../lib/i18n";
 import { ToastProvider } from "../../../lib/toast";
 import type { ZFSReceiveDecision, ZFSReceiveRequest, ZFSReplicaKeep, ZFSReplicaPool } from "../../../lib/api";
 import { receiveRequest } from "./replica.testsupport";
+import { pickOption } from "../../selectField.testsupport";
 
 let requests: ZFSReceiveRequest[] = [];
 let pools: ZFSReplicaPool[] = [];
@@ -120,8 +121,7 @@ describe("receiving a ZFS replica", () => {
 
   it("allows with the pool, root and keep rule on screen", async () => {
     renderCard();
-    fireEvent.click(await screen.findByRole("combobox", { name: en["zfs.receive.pool"] }));
-    fireEvent.click(await screen.findByRole("option", { name: /^backup/ }));
+    await pickOption(await screen.findByRole("combobox", { name: en["zfs.receive.pool"] }), /^backup/);
     const root = screen.getByLabelText(en["zfs.replica.server.root"]) as HTMLInputElement;
     expect(root.value).toBe("backup/bombvault-replica");
     fireEvent.change(root, { target: { value: "backup/from-tower" } });

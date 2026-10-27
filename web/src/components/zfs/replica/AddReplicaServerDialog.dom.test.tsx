@@ -7,6 +7,7 @@ import { I18nProvider, en } from "../../../lib/i18n";
 import { ToastProvider } from "../../../lib/toast";
 import type { ZFSReplicaServerInput, ZFSReplicaTestResult } from "../../../lib/api";
 import { group } from "./replica.testsupport";
+import { pickOption } from "../../selectField.testsupport";
 
 let testAnswer: ZFSReplicaTestResult;
 const tests: string[] = [];
@@ -126,8 +127,7 @@ describe("adding a ZFS server", () => {
     fireEvent.click(screen.getByRole("button", { name: en["zfs.replica.add.submit"] }));
     expect(screen.getByText(en["zfs.replica.add.needPool"])).toBeTruthy();
 
-    fireEvent.click(screen.getByRole("combobox", { name: en["zfs.replica.add.stepPool"] }));
-    fireEvent.click(screen.getByRole("option", { name: "tank · 409.6 GB free" }));
+    await pickOption(screen.getByRole("combobox", { name: en["zfs.replica.add.stepPool"] }), "tank · 409.6 GB free");
     const root = screen.getByLabelText(en["zfs.replica.server.root"]) as HTMLInputElement;
     expect(root.value).toBe("tank/bombvault-replica");
     expect(screen.getByText("for example tank/bombvault-replica/tower/tank/appdata")).toBeTruthy();
@@ -149,8 +149,7 @@ describe("adding a ZFS server", () => {
     fireEvent.click(screen.getByRole("button", { name: en["zfs.replica.server.test"] }));
     await screen.findByRole("button", { name: en["verdict.connected"] });
     fireEvent.click(screen.getByRole("button", { name: en["zfs.replica.add.next"] }));
-    fireEvent.click(screen.getByRole("combobox", { name: en["zfs.replica.add.stepPool"] }));
-    fireEvent.click(screen.getByRole("option", { name: "tank · 409.6 GB free" }));
+    await pickOption(screen.getByRole("combobox", { name: en["zfs.replica.add.stepPool"] }), "tank · 409.6 GB free");
 
     const mount = screen.getByRole("switch", { name: en["zfs.replica.server.mount"] });
     expect(mount.getAttribute("aria-checked")).toBe("false");

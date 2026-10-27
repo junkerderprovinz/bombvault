@@ -13,6 +13,7 @@ import { act, cleanup, fireEvent, render, screen, within } from "@testing-librar
 import type { ForeignInventory, Snapshot } from "../../lib/api";
 import { I18nProvider, countText, en } from "../../lib/i18n";
 import { ToastProvider } from "../../lib/toast";
+import { openSelect, pickOption, settle } from "../selectField.testsupport";
 
 class NoopEventSource {
   onmessage: ((e: MessageEvent) => void) | null = null;
@@ -153,9 +154,8 @@ async function options(): Promise<HTMLElement> {
   return screen.getByTestId("foreign-item");
 }
 
-function choose(row: HTMLElement, label: string, option: string) {
-  fireEvent.click(within(row).getByRole("combobox", { name: label }));
-  fireEvent.click(screen.getByRole("option", { name: option }));
+async function choose(row: HTMLElement, label: string, option: string) {
+  await pickOption(within(row).getByRole("combobox", { name: label }), option);
 }
 
 const lastRestore = () => foreignRestore.mock.calls.at(-1)![0] as Record<string, unknown>;
@@ -299,7 +299,7 @@ describe("a container", () => {
     missingNetwork = "br0.20";
     await connect();
     const row = await options();
-    choose(row, en["recovery.foreignNetwork"], "proxy");
+    await choose(row, en["recovery.foreignNetwork"], "proxy");
     await press(button(en["recovery.foreignRestore"]));
     expect(lastRestore()).toMatchObject({ network: "proxy" });
   });
@@ -375,7 +375,7 @@ describe("a dataset tree", () => {
 
   it("offers each run of the whole tree once", async () => {
     await connect();
-    fireEvent.click(screen.getByRole("combobox", { name: en["recovery.foreignLatest"] }));
+    await openSelect(screen.getByRole("combobox", { name: en["recovery.foreignLatest"] }));
     // The newest one and one per run, not one per snapshot of a dataset.
     expect(screen.getAllByRole("option")).toHaveLength(3);
   });
@@ -383,12 +383,12 @@ describe("a dataset tree", () => {
   it("restores one dataset from its own snapshots", async () => {
     await connect();
     const row = await options();
-    choose(row, en["zfs.restore.dataset"], "cache/appdata/plex");
-    fireEvent.click(within(row).getByRole("combobox", { name: en["recovery.foreignLatest"] }));
+    await choose(row, en["zfs.restore.dataset"], "cache/appdata/plex");
+    await openSelect(within(row).getByRole("combobox", { name: en["recovery.foreignLatest"] }));
     const offered = screen.getAllByRole("option").map((o) => o.textContent ?? "");
     expect(offered).toHaveLength(3);
     expect(offered.slice(1).every((label) => label.includes("b2b2b2b2") || label.includes("b1b1b1b1"))).toBe(true);
-    fireEvent.click(screen.getByRole("option", { name: new RegExp("b1b1b1b1") }));
+    await settle(() => fireEvent.click(screen.getByRole("option", { name: new RegExp("b1b1b1b1") })));
 
     fireEvent.change(folder(row), { target: { value: "restore/plex" } });
     await press(button(en["recovery.foreignRestore"]));
@@ -398,7 +398,7 @@ describe("a dataset tree", () => {
   it("restores picked files of one dataset", async () => {
     await connect();
     const row = await options();
-    choose(row, en["zfs.restore.dataset"], "cache/appdata/plex");
+    await choose(row, en["zfs.restore.dataset"], "cache/appdata/plex");
     await press(within(row).getByRole("switch", { name: en["zfs.restore.selectFiles"] }));
     expect(listForeignFiles).toHaveBeenCalledWith("s1", "cache/appdata/plex", "latest", "zfs");
 

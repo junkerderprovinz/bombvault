@@ -4,8 +4,8 @@
 // redefines `--color-accent` and friends for its whole subtree, so anything
 // painted with `var(--accent)` inside a card takes that card's hue without a
 // prop. createPortal moves a panel to <body>, out of that subtree, and every
-// hued colour in it silently falls back to the global accent. DropdownListbox
-// and FolderBrowser both portal their panels and share this hook.
+// hued colour in it silently falls back to the global accent. DropdownListbox,
+// SelectField and FolderBrowser portal their panels and share this hook.
 //
 // The property list is read off hueVars() rather than typed out, so it cannot
 // drift from what that function writes.

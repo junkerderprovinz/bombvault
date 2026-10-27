@@ -4,9 +4,10 @@
 // has to say which kind of run failed, or a failed dump reads as a failed
 // container backup. listRuns and ackRuns are mocked.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen, waitFor, fireEvent } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { countText, I18nProvider, en } from "../lib/i18n";
 import type { Run } from "../lib/api";
+import { openSelect } from "./selectField.testsupport";
 
 const listRuns = vi.fn();
 const ackRuns = vi.fn();
@@ -60,7 +61,7 @@ describe("ErrorDetailPanel with the Backup Everything domain", () => {
     await waitFor(() => expect(listRuns).toHaveBeenCalled());
 
     // The filter is a listbox, so its options exist only while it is open.
-    fireEvent.click(screen.getAllByRole("combobox")[0]!);
+    await openSelect(screen.getAllByRole("combobox")[0]!);
     const labels = screen.getAllByRole("option").map((o) => o.textContent);
     expect(labels).toContain(en["activityLog.domainEverything"]);
   });
@@ -79,7 +80,7 @@ describe("ErrorDetailPanel with the Backup Everything domain", () => {
     renderPanel([run()]);
     await waitFor(() => expect(listRuns).toHaveBeenCalled());
 
-    fireEvent.click(screen.getAllByRole("combobox")[0]!);
+    await openSelect(screen.getAllByRole("combobox")[0]!);
     const labels = screen.getAllByRole("option").map((o) => o.textContent);
     expect(labels).toEqual([
       en["activityLog.filterAllDomains"],

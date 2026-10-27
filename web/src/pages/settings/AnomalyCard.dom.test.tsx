@@ -9,6 +9,7 @@ import { MemoryRouter } from "react-router-dom";
 import { AnomalyCard } from "./AnomalyCard";
 import { countText, en } from "../../lib/i18n";
 import type { AnomalySummary, Settings } from "../../lib/api";
+import { pickOption } from "../../components/selectField.testsupport";
 
 const t = ((key: string, n?: number) =>
   countText((en as Record<string, string>)[key] ?? key, "en", n)) as unknown as Parameters<
@@ -57,9 +58,8 @@ function renderCard(over: { settings?: Settings; summary?: AnomalySummary | null
   return { save };
 }
 
-function pick(field: string, option: string) {
-  fireEvent.click(screen.getByRole("combobox", { name: field }));
-  fireEvent.click(screen.getByRole("option", { name: option }));
+async function pick(field: string, option: string) {
+  await pickOption(screen.getByRole("combobox", { name: field }), option);
 }
 
 function warnText(text: string): HTMLElement {
@@ -81,11 +81,11 @@ describe("AnomalyCard", () => {
     expect(save).toHaveBeenCalledWith("anomalyRetentionHold", false);
   });
 
-  it("saves a new sensitivity and a new notification minimum", () => {
+  it("saves a new sensitivity and a new notification minimum", async () => {
     const { save } = renderCard();
-    pick(en["anomaly.settings.sensitivity"], en["anomaly.sensitivity.strict"]);
+    await pick(en["anomaly.settings.sensitivity"], en["anomaly.sensitivity.strict"]);
     expect(save).toHaveBeenCalledWith("anomalySensitivity", "strict");
-    pick(en["anomaly.settings.notifyMin"], en["anomaly.settings.notify.off"]);
+    await pick(en["anomaly.settings.notifyMin"], en["anomaly.settings.notify.off"]);
     expect(save).toHaveBeenCalledWith("anomalyNotifyMin", "off");
   });
 

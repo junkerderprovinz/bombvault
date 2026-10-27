@@ -1,12 +1,18 @@
-import { useId, useRef, useState, type ReactNode, type Ref } from "react";
-import { DropdownListbox } from "./DropdownListbox";
+import { useEffect, useId, useRef, type ReactNode, type Ref } from "react";
+import * as select from "@zag-js/select";
+import { normalizeProps, Portal, useMachine } from "@zag-js/react";
+import { IconCheck } from "./navGlyphs";
 import { mergeRefs } from "../lib/mergeRefs";
-import { stepIndex } from "../lib/selectScroll";
+import { usePortalHue } from "../lib/portalHue";
+import { enableWheelStep, stepIndex } from "../lib/selectScroll";
 
 // SelectField replaces a native <select>, whose open list is drawn by the
-// operating system and cannot be styled. The trigger takes the className the
-// select had, so each call site keeps its size, and the mouse wheel steps the
-// closed control.
+// operating system and cannot be styled. Zag's select machine carries the
+// behaviour GlimStone's Select contract asks for: typeahead, Home and End,
+// aria-activedescendant and focus back on the trigger. The open list wears
+// GlimStone's .glim-select-* rules; the trigger takes the className the select
+// had, so each call site keeps its size and the filled look of the fields
+// beside it, and the mouse wheel steps the closed control.
 
 export interface SelectOption<T extends string> {
   value: T;
@@ -55,17 +61,41 @@ export function SelectField<T extends string>({
    *  focused. */
   ref?: Ref<HTMLButtonElement>;
 }) {
-  const [open, setOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
-  const listId = useId();
-  const current = options.find((o) => o.value === value);
+  const collection = select.collection({
+    items: options,
+    itemToValue: (o) => o.value,
+    itemToString: (o) => o.label,
+    isItemDisabled: (o) => !!o.disabled,
+  });
+  const service = useMachine(select.machine, {
+    id: useId(),
+    ids: id ? { trigger: id } : undefined,
+    collection,
+    value: [value],
+    disabled,
+    loopFocus: true,
+    onValueChange: (d) => {
+      const next = d.value[0];
+      if (next !== undefined) onChange(next as T);
+    },
+    positioning: { placement: "bottom", gutter: 4 },
+  });
+  const api = select.connect(service, normalizeProps);
+  // The list sits on <body>, outside the hued card the trigger stands in.
+  const hue = usePortalHue(api.open, triggerRef);
+  const triggerProps = api.getTriggerProps();
+  const positioner = api.getPositionerProps();
 
-  // A wheel notch skips disabled options instead of landing on one.
-  function step(delta: 1 | -1) {
+  // Read through a ref, so the listener is attached once and still steps from
+  // the value of the latest render.
+  const stepRef = useRef<(delta: 1 | -1) => void>(() => {});
+  stepRef.current = (delta) => {
     if (disabled || options.length < 2) return;
     let at = options.findIndex((o) => o.value === value);
     if (at < 0) at = 0;
     let next = at;
+    // A wheel notch skips disabled options instead of landing on one.
     for (;;) {
       const candidate = stepIndex(options.length, next, delta);
       if (candidate === next) return; // clamped at an end
@@ -74,23 +104,26 @@ export function SelectField<T extends string>({
     }
     const picked = options[next];
     if (picked && picked.value !== value) onChange(picked.value);
-  }
+  };
+  useEffect(() => {
+    const trigger = triggerRef.current;
+    if (!trigger) return;
+    return enableWheelStep(trigger, (delta) => stepRef.current(delta));
+  }, []);
+
+  const current = options.find((o) => o.value === value);
 
   return (
     <>
       <button
+        {...triggerProps}
         ref={mergeRefs(ref, triggerRef)}
-        id={id}
-        type="button"
-        disabled={disabled}
-        // The ARIA select-only combobox, so screen readers announce it the
-        // way they announce a <select>.
-        role="combobox"
+        // The field has no visible label of its own, so the name is set here
+        // rather than through Zag's label part, and the list is named only
+        // while it exists.
+        aria-labelledby={undefined}
         aria-label={label}
-        aria-haspopup="listbox"
-        aria-expanded={open}
-        aria-controls={open ? listId : undefined}
-        onClick={() => setOpen((v) => !v)}
+        aria-controls={api.open ? triggerProps["aria-controls"] : undefined}
         className={`inline-flex items-center gap-2 text-start ${className}`}
       >
         {current?.glyph}
@@ -108,37 +141,41 @@ export function SelectField<T extends string>({
             </span>
           ))}
         </span>
-        <SelectArrow />
+        <span {...api.getIndicatorProps()} className="glim-select-indicator">
+          <SelectArrow />
+        </span>
       </button>
-      <DropdownListbox
-        open={open}
-        onClose={() => setOpen(false)}
-        triggerRef={triggerRef}
-        label={label}
-        wheelStep={step}
-      >
-        {options.map((o) => (
-          <button
-            key={o.value}
-            type="button"
-            role="option"
-            aria-selected={o.value === value}
-            disabled={o.disabled}
-            onClick={() => {
-              onChange(o.value);
-              setOpen(false);
-            }}
-            className={`flex w-full items-center gap-2.5 px-3 py-2 text-start text-sm transition-colors disabled:opacity-50 ${
-              o.value === value
-                ? "bg-carbon-surface3 text-carbon-text"
-                : "text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
-            }`}
+      {/* Mounted only while open, like the list a native select draws, so a
+          page holds no hidden copy of every label. Zag reaches the list a
+          frame after it opens, by when it is there. */}
+      {api.open && (
+        <Portal>
+          <div
+            {...positioner}
+            style={{ ...positioner.style, ...hue.style }}
+            className={`z-50 ${hue.className}`}
           >
-            {o.glyph}
-            <span className="truncate">{o.label}</span>
-          </button>
-        ))}
-      </DropdownListbox>
+            <ul
+              {...api.getContentProps()}
+              aria-labelledby={undefined}
+              aria-label={label}
+              className="glim-select-content glim-fade w-max min-w-(--reference-width) max-w-[min(92vw,28rem)]"
+            >
+              {options.map((item) => (
+                <li key={item.value} {...api.getItemProps({ item })} className="glim-select-item">
+                  <span {...api.getItemTextProps({ item })} className="flex min-w-0 items-center gap-2.5">
+                    {item.glyph}
+                    <span className="truncate">{item.label}</span>
+                  </span>
+                  <span {...api.getItemIndicatorProps({ item })} className="glim-select-check">
+                    <IconCheck />
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </Portal>
+      )}
     </>
   );
 }
