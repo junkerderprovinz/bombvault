@@ -132,7 +132,7 @@ it("opens the Look page on one Appearance card that holds language, theme, corne
   const card = document.querySelector<HTMLElement>(`[data-search-card="${en["tile.look.title"]}"]`);
   expect(card).not.toBeNull();
   const rows = within(card as HTMLElement);
-  expect(rows.getByRole("button", { name: /English/ })).toBeTruthy();
+  expect(rows.getByRole("combobox", { name: en["language.label"] })).toBeTruthy();
   for (const key of ["settings.theme", "settings.shape", "settings.motion"] as const) {
     expect(rows.getByRole("tablist", { name: en[key] }), key).toBeTruthy();
   }
@@ -146,7 +146,7 @@ it("keeps language, theme, shape, motion and colours off the General page", asyn
   for (const key of ["tile.look.title", "settings.labels", "settings.colors"] as const) {
     expect(general, key).not.toContain(en[key]);
   }
-  expect(screen.queryByRole("button", { name: /English/ })).toBeNull();
+  expect(screen.queryByRole("combobox", { name: en["language.label"] })).toBeNull();
 });
 
 it("sets each label axis in a row of its own, the name at the start and its selector beside it", async () => {

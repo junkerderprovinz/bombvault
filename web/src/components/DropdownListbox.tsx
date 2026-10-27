@@ -11,13 +11,13 @@ import {
 import { createPortal } from "react-dom";
 import { computeBubblePosition } from "../lib/bubblePosition";
 import { usePortalHue } from "../lib/portalHue";
-import { enableWheelStep } from "../lib/selectScroll";
 
-// DropdownListbox is the shared role="listbox" panel for pickers that open a
-// list from a button. It is portalled to document.body because a card with
-// overflow: hidden would cut it off whatever its z-index.
-// computeBubblePosition returns the panel's centre, so translateX(-50%)
-// centres it on the trigger with no RTL branch.
+// DropdownListbox is the shared role="listbox" panel for the lists that are
+// not one pick from a field: the add menus, the sort button and a
+// multi-select. A field that picks one value is a SelectField. The panel is
+// portalled to document.body because a card with overflow: hidden would cut
+// it off whatever its z-index. computeBubblePosition returns the panel's
+// centre, so translateX(-50%) centres it on the trigger with no RTL branch.
 
 /** Gap between trigger and panel, and the panel's minimum distance from the
  *  viewport edge. */
@@ -38,12 +38,6 @@ export interface DropdownListboxProps {
   label: string;
   /** Sets `aria-multiselectable` for a checkbox list. */
   multiselectable?: boolean;
-  /** What one wheel notch on the trigger does, as on a closed native
-   *  `<select>`: 1 moves down the list, -1 up. Clamp with `stepIndex` rather
-   *  than wrapping. Omit it for a multi-select, which has no current value.
-   *  It is a real listener rather than `onWheel`, which React registers as
-   *  passive, so `preventDefault` could not stop the page scrolling. */
-  wheelStep?: (delta: 1 | -1) => void;
   /** The `role="option"` buttons. */
   children: ReactNode;
 }
@@ -54,7 +48,6 @@ export function DropdownListbox({
   triggerRef,
   label,
   multiselectable,
-  wheelStep,
   children,
 }: DropdownListboxProps) {
   const panelRef = useRef<HTMLDivElement>(null);
@@ -68,18 +61,6 @@ export function DropdownListbox({
   // every listener on each render; the multi-select re-renders on every toggle.
   const onCloseRef = useRef(onClose);
   onCloseRef.current = onClose;
-
-  // Read through a ref for the same reason: the value change this handler
-  // causes re-renders the call site.
-  const wheelStepRef = useRef(wheelStep);
-  wheelStepRef.current = wheelStep;
-  useEffect(() => {
-    const trigger = triggerRef.current;
-    if (!trigger || !wheelStepRef.current) return;
-    return enableWheelStep(trigger, (delta) => wheelStepRef.current?.(delta));
-    // `open` is a dependency only so the listener follows the current trigger
-    // element; the wheel also works while the list is closed.
-  }, [triggerRef, open]);
 
   // Forget the position on close, so the next open measures again instead of
   // flashing at the previous coordinates.
