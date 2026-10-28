@@ -103,8 +103,8 @@ func Load(env map[string]string) (Config, error) {
 		LibvirtURIPort:            uriPort,
 		LibvirtHostWasPlaceholder: wasPlaceholder,
 		BindHost:                  stringOr(env["BIND_HOST"], "0.0.0.0"),
-		Port:                      intOr(env["PORT"], 3000),
-		HTTPSPort:                 intOr(env["HTTPS_PORT"], 3443),
+		Port:                      portOr(env, "PORT", 3000),
+		HTTPSPort:                 portOr(env, "HTTPS_PORT", 3443),
 		HTTPOnly:                  strings.EqualFold(env["HTTP_ONLY"], "true"),
 		FlashTemplatesDir:         stringOr(env["FLASH_TEMPLATES_DIR"], "/host/boot/config/plugins/dockerMan/templates-user"),
 		// the Unraid flash, /boot mounted at /host/boot
@@ -205,12 +205,16 @@ func stringOr(v, def string) string {
 	return v
 }
 
-func intOr(v string, def int) int {
+// portOr reads the port in env[name]. A value that is no port is logged and
+// replaced by def, so a typo in the template still brings the WebUI up.
+func portOr(env map[string]string, name string, def int) int {
+	v := env[name]
 	if v == "" {
 		return def
 	}
 	n, err := strconv.Atoi(v)
-	if err != nil {
+	if err != nil || n < 1 || n > 65535 {
+		log.Printf("config: %s=%q is not a port between 1 and 65535, using %d", name, v, def)
 		return def
 	}
 	return n

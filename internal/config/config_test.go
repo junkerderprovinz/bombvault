@@ -301,3 +301,23 @@ func TestLoadListensOnEveryInterfaceUnlessBindHostIsSet(t *testing.T) {
 		t.Errorf("BindHost = %q, want 127.0.0.1", c.BindHost)
 	}
 }
+
+func TestLoadFallsBackToTheDefaultForAPortOutOfRange(t *testing.T) {
+	key := strings.Repeat("a", 64)
+	for _, bad := range []string{"0", "-1", "65536", "99999", "port"} {
+		c, err := config.Load(map[string]string{"APP_KEY": key, "PORT": bad, "HTTPS_PORT": bad})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if c.Port != 3000 || c.HTTPSPort != 3443 {
+			t.Errorf("%q gave PORT %d and HTTPS_PORT %d, want 3000 and 3443", bad, c.Port, c.HTTPSPort)
+		}
+	}
+	c, err := config.Load(map[string]string{"APP_KEY": key, "PORT": "1", "HTTPS_PORT": "65535"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if c.Port != 1 || c.HTTPSPort != 65535 {
+		t.Errorf("PORT %d and HTTPS_PORT %d, want 1 and 65535", c.Port, c.HTTPSPort)
+	}
+}
