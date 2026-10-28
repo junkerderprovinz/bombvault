@@ -1,0 +1,1 @@
+BombVault 10.3.8 no longer trips over hardlinks in a trial restore. A file with two names counted twice on disk and once in restic's tally, and the check went red over a file that was there all along. Now both sides count the same way.
