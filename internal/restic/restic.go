@@ -2066,7 +2066,7 @@ func stderrError(args []string, stderr string) error {
 // false), so a real problem is never masked as success.
 func isMetadataOnlyRestoreFailure(stderr string) bool {
 	sawPermErr := false
-	for _, raw := range strings.Split(stderr, "\n") {
+	for _, raw := range strings.Split(plainExitErrors(stderr), "\n") {
 		line := strings.TrimSpace(raw)
 		if line == "" {
 			continue
@@ -2238,7 +2238,7 @@ var repoUserinfoRe = regexp.MustCompile(`\b(rclone|sftp|rest|s3|b2|azure|gs|swif
 // actual cause (a "Fatal:" line, "unable to save", "hash mismatch", etc.) and
 // only fall back to the literal last line when nothing better is present.
 func lastReason(stderr string) string {
-	stderr = gluedFatalRe.ReplaceAllString(stderr, "$1\nFatal:")
+	stderr = gluedFatalRe.ReplaceAllString(plainExitErrors(stderr), "$1\nFatal:")
 	var lines []string
 	for _, line := range strings.Split(stderr, "\n") {
 		if s := strings.TrimSpace(line); s != "" {
@@ -2307,6 +2307,33 @@ func lastReason(stderr string) string {
 // gluedFatalRe finds a "Fatal:" that does not start its line: restic prints
 // some warnings without a newline, and the fatal error lands behind them.
 var gluedFatalRe = regexp.MustCompile(`([^\n])Fatal:`)
+
+// exitErrorPrefix starts the object restic writes to stderr for the error it
+// exits with when --json is set.
+const exitErrorPrefix = `{"message_type":"exit_error"`
+
+// plainExitErrors replaces each JSON exit error in stderr with its message, so
+// a run with --json reads like one without. The object can be glued to the
+// end of a warning, like a plain "Fatal:" line.
+func plainExitErrors(stderr string) string {
+	if !strings.Contains(stderr, exitErrorPrefix) {
+		return stderr
+	}
+	lines := strings.Split(stderr, "\n")
+	for i, line := range lines {
+		at := strings.Index(line, exitErrorPrefix)
+		if at < 0 {
+			continue
+		}
+		var e struct {
+			Message string `json:"message"`
+		}
+		if json.Unmarshal([]byte(line[at:]), &e) == nil {
+			lines[i] = line[:at] + "\n" + strings.TrimRight(e.Message, "\n")
+		}
+	}
+	return strings.Join(lines, "\n")
+}
 
 // rcloneErrorRe is an ERROR line rclone writes into restic's stderr while
 // restic reaches a repository through it, after the date and time rclone puts

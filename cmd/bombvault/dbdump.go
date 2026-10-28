@@ -73,7 +73,7 @@ type dbdumpStreamOptions struct {
 //
 // It gives up on its own on the hard deadline and on a stdout write that has
 // been blocked for dbdumpWriteStall, both from a timer goroutine that never
-// touches the writer: restic 0.17.3 waits forever for a child blocked in a
+// touches the writer: restic before 0.19 waits forever for a child blocked in a
 // write it has stopped reading (restic #5683), and the containers domain would
 // stay locked behind it until the whole backup's cap runs out.
 func runDBDumpStream(ctx context.Context, args []string, stdout, stderr io.Writer, deps dbdumpDeps) int {

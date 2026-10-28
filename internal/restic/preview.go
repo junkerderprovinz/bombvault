@@ -5,6 +5,8 @@ import (
 	"context"
 	"encoding/json"
 	"os/exec"
+	"path/filepath"
+	"strings"
 )
 
 // PreviewStep is one restore call as its dry run replays it: the same
@@ -76,6 +78,11 @@ func (r Restic) preview(ctx context.Context, repo string, st PreviewStep, m Mode
 	cmd := exec.CommandContext(ctx, r.bin(), args...) //nolint:gosec // G204: argv is constructed by typed builders in this package; no user input reaches here
 	configureProcGroup(cmd)
 	cmd.Env = r.authEnv(m)
+	// restic names a deleted item by its path on disk, and reports what a
+	// deleted directory holds just before the directory itself, deepest first.
+	// Only the directory is passed on, relative to the target like every other
+	// item, so deleted items are held back until restic is done.
+	var deleted []PreviewItem
 	err := streamLines(cmd, args, func(line []byte) {
 		var msg struct {
 			MessageType string `json:"message_type"`
@@ -84,7 +91,22 @@ func (r Restic) preview(ctx context.Context, repo string, st PreviewStep, m Mode
 		if json.Unmarshal(bytes.TrimSpace(line), &msg) != nil || msg.MessageType != "verbose_status" {
 			return
 		}
-		onItem(msg.PreviewItem)
+		it := msg.PreviewItem
+		if it.Action != "deleted" {
+			onItem(it)
+			return
+		}
+		if rel, err := filepath.Rel(st.Target, it.Item); err == nil && filepath.IsLocal(rel) {
+			it.Item = string(filepath.Separator) + rel
+		}
+		inside := it.Item + string(filepath.Separator)
+		for len(deleted) > 0 && strings.HasPrefix(deleted[len(deleted)-1].Item, inside) {
+			deleted = deleted[:len(deleted)-1]
+		}
+		deleted = append(deleted, it)
 	})
+	for _, it := range deleted {
+		onItem(it)
+	}
 	return ctxCancelErr(ctx, args, err)
 }
