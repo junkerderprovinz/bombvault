@@ -7768,6 +7768,12 @@ export interface LocationRemoval {
   suggest?: string;
 }
 
+/** PUT /api/storage/locations/{id}/name: names a folder the domain paths share,
+ *  which has no record of its own. An empty name gives back the folder's. */
+export function renameStorageLocation(id: string, name: string): Promise<OkEnvelope & { location?: StorageLocation }> {
+  return fetchJSON(`/api/storage/locations/${encodeURIComponent(id)}/name`, { method: "PUT", body: JSON.stringify({ name }) });
+}
+
 /** GET /api/storage/locations/{id}/removal, where `id` is the location's whole
  *  id, such as `repo:4f2a`. */
 export function previewLocationRemoval(id: string): Promise<OkEnvelope & { removal?: LocationRemoval }> {

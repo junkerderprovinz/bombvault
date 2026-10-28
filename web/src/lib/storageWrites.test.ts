@@ -7,6 +7,7 @@ vi.mock("./api", async (importOriginal) => {
     ...actual,
     getSettings: vi.fn(),
     putSettings: vi.fn(),
+    renameStorageLocation: vi.fn(),
     updateDestination: vi.fn(),
     updateOffsiteTarget: vi.fn(),
     updateRepo: vi.fn(),
@@ -16,6 +17,7 @@ vi.mock("./api", async (importOriginal) => {
 const api = await import("./api");
 const getSettings = vi.mocked(api.getSettings);
 const putSettings = vi.mocked(api.putSettings);
+const renameStorageLocation = vi.mocked(api.renameStorageLocation);
 const updateDestination = vi.mocked(api.updateDestination);
 const updateOffsiteTarget = vi.mocked(api.updateOffsiteTarget);
 const updateRepo = vi.mocked(api.updateRepo);
@@ -115,15 +117,15 @@ describe("writable", () => {
     expect(can.has("offPremises")).toBe(false);
   });
 
-  it("changes only the keep rules of the copy a domain's off-site settings describe", () => {
+  it("changes only the name and the keep rules of the copy a domain's off-site settings describe", () => {
     const loc = location({ id: "target:t1", object: "target", sections: [section({ targetId: "t1", primary: true })] });
     expect(settingsOwned(loc)).toBe(true);
-    expect([...writable(loc, { targets: [target()] })]).toEqual(["retention"]);
+    expect([...writable(loc, { targets: [target()] })]).toEqual(["name", "retention"]);
   });
 
-  it("lets the local folder change the shared rule and nothing else", () => {
+  it("lets a folder of domain paths change its name and the shared rule", () => {
     const loc = location({ id: "path:abc", object: "path", kind: "local", backend: "local" });
-    expect([...writable(loc, { targets: [] })]).toEqual(["retention"]);
+    expect([...writable(loc, { targets: [] })]).toEqual(["name", "retention"]);
   });
 
   it("gives a named repository no rule of its own", () => {
@@ -174,6 +176,14 @@ describe("saveLocation", () => {
     expect(putSettings).toHaveBeenCalledWith(
       expect.objectContaining({ containersPath: "/a", retentionKeepDaily: 7, retentionKeepWeekly: 4, retentionKeepMonthly: 3 })
     );
+  });
+
+  it("names a folder of domain paths through its own route and leaves the settings alone", async () => {
+    renameStorageLocation.mockResolvedValue({ ok: true });
+    await saveLocation(location({ id: "path:abc", object: "path" }), { targets: [] }, { name: "DXP4800" });
+    expect(renameStorageLocation).toHaveBeenCalledWith("path:abc", "DXP4800");
+    expect(getSettings).not.toHaveBeenCalled();
+    expect(putSettings).not.toHaveBeenCalled();
   });
 
   it("writes nothing when the settings cannot be read", async () => {

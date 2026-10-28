@@ -1,6 +1,7 @@
 package api
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"net/http"
@@ -526,5 +527,62 @@ func TestAFailedProbeKeepsTheLocationAndNamesTheError(t *testing.T) {
 	env := decodeEnvelope(t, rec)
 	if env["ok"] != true || env["capacityError"] == nil || env["location"] == nil {
 		t.Fatalf("answer = %v, want the location and the probe's error", env)
+	}
+}
+
+func renameLocation(t *testing.T, h *Handler, id, name string) map[string]any {
+	t.Helper()
+	body, _ := json.Marshal(map[string]string{"name": name})
+	req := jsonReq(http.MethodPut, "/api/storage/locations/"+id+"/name", bytes.NewReader(body))
+	req.SetPathValue("id", id)
+	rec := httptest.NewRecorder()
+	h.handleRenameStorageLocation(rec, req)
+	return decodeEnvelope(t, rec)
+}
+
+func TestAFolderOfDomainPathsKeepsTheNameItIsGiven(t *testing.T) {
+	svc, st, _ := newProbeSvc(t, nil)
+	if _, err := st.MutateSettings(func(s *store.Settings) error {
+		s.FlashPath = "s3:http://192.168.2.51:9000/bombvault/dxp480t/flash"
+		s.ConfigPath = "s3:http://192.168.2.51:9000/bombvault/dxp480t/config"
+		return nil
+	}); err != nil {
+		t.Fatal(err)
+	}
+	var folder storageLocation
+	for _, l := range locationsOf(t, svc, locationPath) {
+		if l.Name == "dxp480t" {
+			folder = l
+		}
+	}
+	if folder.ID == "" {
+		t.Fatalf("no folder named after its last segment: %+v", locationsOf(t, svc, locationPath))
+	}
+	h := &Handler{store: st, svc: svc}
+
+	if env := renameLocation(t, h, folder.ID, " DXP4800 on S3 "); env["ok"] != true {
+		t.Fatalf("rename = %v", env)
+	}
+	if got := locationByID(t, svc, folder.ID); got.Name != "DXP4800 on S3" || len(got.Sections) != 2 {
+		t.Fatalf("after the rename: %+v", got)
+	}
+
+	if env := renameLocation(t, h, folder.ID, ""); env["ok"] != true {
+		t.Fatalf("clearing the name = %v", env)
+	}
+	if got := locationByID(t, svc, folder.ID); got.Name != "dxp480t" {
+		t.Fatalf("an empty name must give the folder's name back, got %q", got.Name)
+	}
+}
+
+func TestOnlyAFolderOfDomainPathsIsRenamedByLocation(t *testing.T) {
+	svc, st, _ := newProbeSvc(t, nil)
+	dest, _ := mustDestination(t, st, store.OffsiteTarget{Name: "Box", Repo: "rclone:box:bv"}, "containers")
+	h := &Handler{store: st, svc: svc}
+	if env := renameLocation(t, h, "destination:"+dest.ID, "Elsewhere"); env["ok"] != false {
+		t.Fatalf("a destination must be renamed through its own route, got %v", env)
+	}
+	if got := locationByID(t, svc, "destination:"+dest.ID); got.Name != "Box" {
+		t.Fatalf("the destination's name changed to %q", got.Name)
 	}
 }

@@ -3507,6 +3507,16 @@ UPDATE pull_sources SET leftovers_moved = 0;`,
 		alreadySatisfied: columnPresent("runs", "retry_at"),
 		sql:              `ALTER TABLE runs ADD COLUMN retry_at INTEGER;`,
 	},
+	{
+		// The names given to the folders the domain paths share, which have no
+		// row of their own to carry one. Keyed by the location's key.
+		version: locationNameMigration,
+		name:    "location_names",
+		sql: `CREATE TABLE IF NOT EXISTS location_names (
+  location TEXT PRIMARY KEY,
+  name     TEXT NOT NULL
+);`,
+	},
 }
 
 // offsiteFieldDomains are the domains with an off-site field in the settings,
@@ -3795,6 +3805,10 @@ const replicaSourceKeepMigration = 590
 // deferralMigration numbers the backups that wait while their app is busy:
 // the policies, the waiting backups and the retry time of a run.
 const deferralMigration = 600
+
+// locationNameMigration numbers the names of the folders the domain paths
+// share.
+const locationNameMigration = 610
 
 // oneLineColumns are the names and locations the recovery kit prints.
 var oneLineColumns = []struct {

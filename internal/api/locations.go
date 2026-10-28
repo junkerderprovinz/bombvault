@@ -196,7 +196,9 @@ type locationBuilder struct {
 	localOff map[string]bool
 	// ownIn is the storage location each section's own folder was put into,
 	// by domain. Such a folder is listed there and not among the paths.
-	ownIn  map[string]string
+	ownIn map[string]string
+	// names holds the names given to path locations, by location key.
+	names  map[string]string
 	reader capacityReader
 }
 
@@ -215,6 +217,9 @@ func (s *Service) StorageLocations() ([]storageLocation, error) {
 		return nil, err
 	}
 	if b.localOff, err = s.store.LocalOff(); err != nil {
+		return nil, err
+	}
+	if b.names, err = s.store.LocationNames(); err != nil {
 		return nil, err
 	}
 	b.ownIn = map[string]string{}
@@ -389,13 +394,17 @@ func (b *locationBuilder) pathLocations() []storageLocation {
 		if !known {
 			i = len(out)
 			at[root] = i
-			name := root
-			if cut := strings.LastIndexAny(root, "/:"); cut >= 0 {
-				name = root[cut+1:]
+			key := repoLocationKey(root)
+			name := b.names[key]
+			if name == "" {
+				name = root
+				if cut := strings.LastIndexAny(root, "/:"); cut >= 0 {
+					name = root[cut+1:]
+				}
 			}
 			keep := sharedLocalKeep(b.settings)
 			out = append(out, storageLocation{
-				ID: locationPath + ":" + repoLocationKey(root), Object: locationPath,
+				ID: locationPath + ":" + key, Object: locationPath,
 				Kind: locationKind(raw), Backend: backendOf(raw), Name: name, Where: root,
 				Enabled: true, OffPremises: restic.IsRemoteRepo(raw), Retention: &keep,
 				Protection: locationProtection{Immutable: true, Testable: backendOf(raw) == "rest"},
@@ -739,4 +748,39 @@ func (h *Handler) handleGetStorageLocation(w http.ResponseWriter, r *http.Reques
 	}
 	body["location"] = loc
 	writeJSON(w, http.StatusOK, okEnvelope(body))
+}
+
+// handleRenameStorageLocation names a location that is made of domain paths
+// and so has no row of its own. Every other kind is renamed through the route
+// of the object it is read from. An empty name gives back the folder's name.
+// PUT /api/storage/locations/{id}/name
+func (h *Handler) handleRenameStorageLocation(w http.ResponseWriter, r *http.Request) {
+	loc, err := h.svc.StorageLocation(r.PathValue("id"))
+	if errors.Is(err, errNoSuchLocation) {
+		writeJSON(w, http.StatusNotFound, map[string]any{"ok": false, "error": err.Error()})
+		return
+	}
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	if loc.Object != locationPath {
+		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "this storage location is renamed where it is saved, not here"})
+		return
+	}
+	var body struct {
+		Name string `json:"name"`
+	}
+	if !decodeBody(w, r, &body) {
+		return
+	}
+	if err := h.store.SetLocationName(strings.TrimPrefix(loc.ID, locationPath+":"), body.Name); err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	if loc, err = h.svc.StorageLocation(loc.ID); err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"location": loc}))
 }

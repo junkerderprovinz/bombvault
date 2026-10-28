@@ -5,6 +5,7 @@
 import {
   getSettings,
   putSettings,
+  renameStorageLocation,
   updateDestination,
   updateDestinationConnection,
   updateOffsiteTarget,
@@ -66,7 +67,7 @@ export function storageClassOf(location: StorageLocation, records: LocationRecor
 
 /** settingsOwned reports whether the location is the copy a domain's off-site
  *  settings describe. Those settings rewrite its target on every save, except
- *  for its keep-policy. */
+ *  for its keep-policy and its name. */
 export function settingsOwned(location: StorageLocation): boolean {
   return location.object === "target" && location.sections.some((section) => section.primary);
 }
@@ -81,13 +82,13 @@ export function writable(location: StorageLocation, records: LocationRecords): S
       return new Set(s3 ? [...DESTINATION, "storageClass"] : DESTINATION);
     case "target":
       if (!ownTarget(location, records)) return new Set();
-      if (settingsOwned(location)) return new Set(["retention"]);
+      if (settingsOwned(location)) return new Set(["name", "retention"]);
       return new Set([...TARGET, ...(s3 ? (["storageClass"] as const) : []), ...(withCredentials ? (["credsRef"] as const) : [])]);
     case "repo":
       return new Set(withCredentials ? [...REPO, "credsRef"] : REPO);
     case "path":
       // The folder the domains write to ages by the shared local rule.
-      return new Set(["retention"]);
+      return new Set(["name", "retention"]);
   }
 }
 
@@ -124,6 +125,7 @@ export async function saveLocation(
     case "repo":
       return updateRepo(id, patch);
     case "path": {
+      if (patch.name !== undefined) return renameStorageLocation(location.id, patch.name);
       if (!patch.retention) return { ok: false };
       const read = await getSettings();
       if (!read.ok) return read;
