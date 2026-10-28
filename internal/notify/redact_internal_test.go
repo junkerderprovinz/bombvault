@@ -2,6 +2,7 @@ package notify
 
 import (
 	"errors"
+	"mime"
 	"net/url"
 	"strings"
 	"testing"
@@ -45,6 +46,51 @@ func TestBuildSMTPMessage(t *testing.T) {
 		if !strings.Contains(msg, want) {
 			t.Fatalf("message missing %q\n--- message ---\n%s", want, msg)
 		}
+	}
+}
+
+func TestBuildSMTPMessageKeepsLineBreaksOutOfTheHeaders(t *testing.T) {
+	cfg := Config{SMTPFrom: "bombvault@example.com\r\nBcc: from@evil.example", SMTPTo: "admin@example.com\nBcc: to@evil.example"}
+	ev := Event{Title: "Backup failed\r\nBcc: x@evil.example", Message: "body"}
+	msg := string(buildSMTPMessage(cfg, ev))
+	head, _, _ := strings.Cut(msg, "\r\n\r\n")
+
+	subjects := 0
+	for _, line := range strings.Split(head, "\r\n") {
+		if strings.HasPrefix(line, "Subject:") {
+			subjects++
+		}
+		if strings.HasPrefix(line, "Bcc:") {
+			t.Errorf("a field value started a header of its own: %q", line)
+		}
+	}
+	if subjects != 1 {
+		t.Errorf("the message carries %d Subject headers, want 1\n%s", subjects, head)
+	}
+	if strings.ContainsAny(strings.ReplaceAll(head, "\r\n", ""), "\r\n") {
+		t.Errorf("a bare CR or LF is left in the headers\n%q", head)
+	}
+}
+
+func TestBuildSMTPMessageEncodesANonASCIISubject(t *testing.T) {
+	title := "Sicherung fehlgeschlagen: Größe überschritten"
+	msg := string(buildSMTPMessage(Config{SMTPFrom: "a@example.com", SMTPTo: "b@example.com"}, Event{Title: title}))
+
+	var subject string
+	for _, line := range strings.Split(msg, "\r\n") {
+		if v, ok := strings.CutPrefix(line, "Subject: "); ok {
+			subject = v
+		}
+	}
+	if !strings.HasPrefix(subject, "=?utf-8?") {
+		t.Fatalf("the subject is not RFC 2047 encoded: %q", subject)
+	}
+	got, err := new(mime.WordDecoder).DecodeHeader(subject)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got != title {
+		t.Errorf("the subject decodes to %q, want %q", got, title)
 	}
 }
 
