@@ -12,7 +12,7 @@ func (r *Repo) LocationNames() (map[string]string, error) {
 	if err != nil {
 		return nil, fmt.Errorf("LocationNames: %w", err)
 	}
-	defer rows.Close()
+	defer rows.Close() //nolint:errcheck // read-only
 	out := map[string]string{}
 	for rows.Next() {
 		var key, name string
