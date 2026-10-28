@@ -26,7 +26,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
-        with: { node-version: '24' }
+        with: { node-version: '26' }
       - run: npm ci
       # typecheck covers the app program and the Playwright harness program (see
       # tsconfig.harness.json for why they are two).
@@ -68,7 +68,7 @@ jobs:
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7
         with: { go-version: '1.27' }
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
-        with: { node-version: '24' }
+        with: { node-version: '26' }
       - run: npm ci
       - run: npm run build
       - name: build the server under test at the repo root (the webServer command's binary)
