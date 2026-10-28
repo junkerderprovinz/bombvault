@@ -1116,6 +1116,7 @@ const he: Partial<Translations> = {
   "whatsNew.deferral": "גיבוי מתוזמן של קונטיינר יכול להמתין כל עוד האפליקציה שלו עסוקה ולנסות שוב מעצמו, כל כמה דקות, בחלון זמן ועד מועד אחרון. פקודת טרום-גיבוי שמסתיימת ב-75 מתחילה את ההמתנה, וגיבוי עכשיו תמיד רץ מיד.",
   "whatsNew.activityPresets": "לפני גיבוי מתוזמן, BombVault יכול לשאול את Plex, Jellyfin או Emby אם מישהו צופה, בלי סקריפט משלך.",
   "whatsNew.netGate": "לאפליקציות בלי בדיקה כזו, גיבוי מתוזמן יכול להמתין כל עוד הקונטיינר שולח נתונים.",
+  "whatsNew.fdroid": "אפליקציית Android זמינה ב-F-Droid, וכפתור F-Droid כאן פותח את הדף שלה.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "חשיפת /metrics",

@@ -1107,6 +1107,7 @@ const ko: Partial<Translations> = {
   "whatsNew.deferral": "컨테이너의 예약된 백업은 앱이 사용 중인 동안 기다렸다가 몇 분마다, 정해진 시간대 안에서, 기한까지 스스로 다시 시도할 수 있습니다. 백업 전 명령이 75로 끝나면 대기가 시작되고, “지금 백업”은 언제나 바로 실행됩니다.",
   "whatsNew.activityPresets": "예약된 백업 전에 BombVault가 Plex, Jellyfin, Emby에 누군가 시청 중인지 물어볼 수 있습니다. 직접 스크립트를 쓸 필요가 없습니다.",
   "whatsNew.netGate": "그런 확인이 없는 앱은 컨테이너가 데이터를 보내는 동안 예약된 백업이 기다릴 수 있습니다.",
+  "whatsNew.fdroid": "Android 앱이 F-Droid에 있으며, 여기의 F-Droid 버튼을 누르면 해당 페이지가 열립니다.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "/metrics 노출",

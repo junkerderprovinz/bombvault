@@ -93,7 +93,13 @@ export function PhoneAppCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"];
       )}
       <div className="glim-readme-btn-rows">
         <ReadmeButton tile="glim-tile-play" parts={[{ name: "Google Play" }]} mark={<BrandMark svg={PLAY_SVG} />} soonLabel={soon} />
-        <ReadmeButton tile="glim-tile-fdroid" parts={[{ name: "F-Droid", href: FDROID }]} mark={<BrandMark svg={FDROID_SVG} />} soonLabel={soon} />
+        <ReadmeButton
+          tile="glim-tile-fdroid"
+          parts={[{ name: "F-Droid", href: FDROID }]}
+          mark={<BrandMark svg={FDROID_SVG} />}
+          soonLabel={soon}
+          newId="apps-fdroid"
+        />
         <ApkButton t={t} href={apk} />
       </div>
     </Card>

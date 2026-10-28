@@ -1124,6 +1124,7 @@ const tr: Partial<Translations> = {
   "whatsNew.deferral": "Bir konteynerin zamanlanmış yedeklemesi, uygulaması meşgulken bekleyip kendiliğinden yeniden deneyebilir: birkaç dakikada bir, bir zaman aralığında ve bir son tarihe kadar. 75 ile çıkan bir yedekleme öncesi komut beklemeyi başlatır, Şimdi yedekle ise her zaman hemen çalışır.",
   "whatsNew.activityPresets": "BombVault zamanlanmış bir yedeklemeden önce Plex, Jellyfin veya Emby'ye izleyen biri olup olmadığını, kendi betiğine gerek kalmadan sorabilir.",
   "whatsNew.netGate": "Böyle bir denetimi olmayan uygulamalar için zamanlanmış bir yedekleme, konteyner veri gönderirken bekleyebilir.",
+  "whatsNew.fdroid": "Android uygulaması F-Droid'de, buradaki F-Droid düğmesi sayfasını açar.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "/metrics'i yayınla",

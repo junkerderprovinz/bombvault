@@ -1113,6 +1113,7 @@ const no: Partial<Translations> = {
   "whatsNew.deferral": "En containers planlagte sikkerhetskopi kan vente mens appen er opptatt og prøve igjen av seg selv, med noen minutters mellomrom, i et tidsvindu og frem til en frist. En pre-sikkerhetskopikommando som avslutter med 75, starter ventingen, og «Sikkerhetskopier nå» kjører alltid med en gang.",
   "whatsNew.activityPresets": "Før en planlagt sikkerhetskopi kan BombVault spørre Plex, Jellyfin eller Emby om noen ser på, uten eget skript.",
   "whatsNew.netGate": "For apper uten en slik sjekk kan en planlagt sikkerhetskopi vente mens containeren sender data.",
+  "whatsNew.fdroid": "Android-appen finnes på F-Droid, og F-Droid-knappen her åpner siden dens.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Eksponer /metrics",

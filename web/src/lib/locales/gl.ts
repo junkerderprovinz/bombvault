@@ -813,6 +813,7 @@ const gl: Partial<Translations> = {
   "whatsNew.deferral": "A copia programada dun contedor pode agardar mentres a súa app está ocupada e tentalo de novo por si soa, cada poucos minutos, nunha franxa horaria e ata un prazo. Unha Orde previa á copia que remata con 75 inicia a espera, e Copiar agora sempre se executa ao momento.",
   "whatsNew.activityPresets": "Antes dunha copia programada, BombVault pode preguntarlle a Plex, Jellyfin ou Emby se alguén está a ver algo, sen ningún script propio.",
   "whatsNew.netGate": "Para apps sen esa comprobación, unha copia programada pode agardar mentres o contedor envía datos.",
+  "whatsNew.fdroid": "A aplicación de Android está en F-Droid, e o botón F-Droid de aquí abre a súa ficha.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Expor /metrics",

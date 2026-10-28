@@ -813,6 +813,7 @@ const et: Partial<Translations> = {
   "whatsNew.deferral": "Konteineri ajastatud varundus võib oodata, kuni selle rakendus on hõivatud, ja ise uuesti proovida, iga mõne minuti järel, ajaaknas ja kuni tähtajani. Varunduse-eelne käsk, mis lõpeb koodiga 75, alustab ootamist, ja „Varunda kohe“ käivitub alati viivitamata.",
   "whatsNew.activityPresets": "Enne ajastatud varundust saab BombVault küsida meediaserveritelt Plex, Jellyfin või Emby, kas keegi vaatab, ilma oma skriptita.",
   "whatsNew.netGate": "Ilma sellise kontrollita rakenduste puhul võib ajastatud varundus oodata, kuni konteiner andmeid saadab.",
+  "whatsNew.fdroid": "Androidi rakendus on F-Droidis ja siinne F-Droidi nupp avab selle lehe.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Ava /metrics",

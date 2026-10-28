@@ -1116,6 +1116,7 @@ const fr: Partial<Translations> = {
   "whatsNew.deferral": "La sauvegarde planifiée d'un conteneur peut attendre tant que son application est occupée et réessayer d'elle-même, toutes les quelques minutes, dans une plage horaire et jusqu'à une échéance. Une Commande pré-sauvegarde qui se termine avec 75 lance l'attente, et Sauvegarder maintenant lance toujours la sauvegarde tout de suite.",
   "whatsNew.activityPresets": "Avant une sauvegarde planifiée, BombVault peut demander à Plex, Jellyfin ou Emby si quelqu'un regarde, sans script de votre part.",
   "whatsNew.netGate": "Pour les applications sans ce genre de vérification, une sauvegarde planifiée peut attendre tant que le conteneur envoie des données.",
+  "whatsNew.fdroid": "L'application Android est sur F-Droid, et le bouton F-Droid ici ouvre sa fiche.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Exposer /metrics",

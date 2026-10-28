@@ -1114,6 +1114,7 @@ const ro: Partial<Translations> = {
   "whatsNew.deferral": "Copia de rezervă programată a unui container poate aștepta cât timp aplicația lui e ocupată și poate încerca din nou singură, la câteva minute, într-un interval orar și până la un termen. O comandă pre-backup care se termină cu 75 pornește așteptarea, iar „Copiază acum” pornește mereu imediat.",
   "whatsNew.activityPresets": "Înainte de o copie de rezervă programată, BombVault poate întreba Plex, Jellyfin sau Emby dacă se uită cineva, fără vreun script propriu.",
   "whatsNew.netGate": "Pentru aplicațiile fără o astfel de verificare, o copie programată poate aștepta cât timp containerul trimite date.",
+  "whatsNew.fdroid": "Aplicația Android este pe F-Droid, iar butonul F-Droid de aici îi deschide pagina.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Expune /metrics",

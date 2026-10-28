@@ -907,6 +907,7 @@ export const en = {
   "whatsNew.deferral": "A container's scheduled backup can wait while its app is busy and try again on its own, every so many minutes, in a time window and until a deadline. A Pre-backup command that exits with 75 starts the wait, and Back up now always runs right away.",
   "whatsNew.activityPresets": "Before a scheduled backup, BombVault can ask Plex, Jellyfin or Emby whether anybody is watching, with no script of your own.",
   "whatsNew.netGate": "For apps without such a check, a scheduled backup can wait while the container sends data.",
+  "whatsNew.fdroid": "The Android app is on F-Droid, and the F-Droid button here opens its listing.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Expose /metrics",
@@ -6076,6 +6077,7 @@ export const de: Translations = {
   "whatsNew.deferral": "Die geplante Sicherung eines Containers kann warten, solange seine App beschäftigt ist, und es von selbst erneut versuchen, alle paar Minuten, in einem Zeitfenster und bis zu einer Frist. Ein Befehl vor der Sicherung, der mit 75 endet, startet das Warten, und Jetzt sichern läuft immer sofort.",
   "whatsNew.activityPresets": "Vor einer geplanten Sicherung kann BombVault Plex, Jellyfin oder Emby fragen, ob jemand schaut, ganz ohne eigenes Skript.",
   "whatsNew.netGate": "Für Apps ohne solche Prüfung kann eine geplante Sicherung warten, solange der Container Daten sendet.",
+  "whatsNew.fdroid": "Die Android-App gibt es auf F-Droid, und der F-Droid-Knopf hier öffnet ihren Eintrag.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "/metrics bereitstellen",

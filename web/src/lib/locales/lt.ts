@@ -813,6 +813,7 @@ const lt: Partial<Translations> = {
   "whatsNew.deferral": "Suplanuota konteinerio atsarginė kopija gali palaukti, kol jo programa užimta, ir pati bandyti dar kartą kas kelias minutes, nustatytu laiku ir iki termino. Komanda prieš atsarginę kopiją, kuri baigiasi kodu 75, pradeda laukimą, o „Kurti kopiją dabar“ visada vyksta iš karto.",
   "whatsNew.activityPresets": "Prieš suplanuotą atsarginę kopiją BombVault gali paklausti Plex, Jellyfin arba Emby, ar kas nors žiūri, be jokio tavo scenarijaus.",
   "whatsNew.netGate": "Programoms be tokios patikros suplanuota kopija gali palaukti, kol konteineris siunčia duomenis.",
+  "whatsNew.fdroid": "Android programėlė yra F-Droid, o čia esantis F-Droid mygtukas atveria jos puslapį.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Rodyti /metrics",

@@ -1117,6 +1117,7 @@ const hu: Partial<Translations> = {
   "whatsNew.deferral": "Egy konténer ütemezett biztonsági mentése várhat, amíg az alkalmazása foglalt, és magától újra próbálkozhat, néhány percenként, egy időablakban és egy határidőig. Ha a Biztonsági mentés előtti parancs 75-tel lép ki, elindul a várakozás, a Biztonsági mentés most pedig mindig azonnal elindul.",
   "whatsNew.activityPresets": "Ütemezett mentés előtt a BombVault megkérdezheti a Plexet, a Jellyfint vagy az Embyt, néz-e valaki valamit, saját szkript nélkül.",
   "whatsNew.netGate": "Az ilyen ellenőrzés nélküli alkalmazásoknál az ütemezett mentés várhat, amíg a konténer adatot küld.",
+  "whatsNew.fdroid": "Az Android-alkalmazás elérhető az F-Droidon, az itteni F-Droid gomb megnyitja az oldalát.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "/metrics közzététele",

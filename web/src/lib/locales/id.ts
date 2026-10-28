@@ -813,6 +813,7 @@ const id: Partial<Translations> = {
   "whatsNew.deferral": "Pencadangan terjadwal sebuah kontainer bisa menunggu selama aplikasinya sibuk dan mencoba lagi dengan sendirinya, setiap beberapa menit, dalam rentang waktu dan sampai batas waktu. Perintah sebelum pencadangan yang keluar dengan 75 memulai penantian, dan Cadangkan sekarang selalu langsung berjalan.",
   "whatsNew.activityPresets": "Sebelum pencadangan terjadwal, BombVault bisa bertanya ke Plex, Jellyfin, atau Emby apakah ada yang sedang menonton, tanpa skrip buatan sendiri.",
   "whatsNew.netGate": "Untuk aplikasi tanpa pemeriksaan seperti itu, pencadangan terjadwal bisa menunggu selama kontainer mengirim data.",
+  "whatsNew.fdroid": "Aplikasi Android ada di F-Droid, dan tombol F-Droid di sini membuka halamannya.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Ekspos /metrics",

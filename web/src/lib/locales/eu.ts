@@ -813,6 +813,7 @@ const eu: Partial<Translations> = {
   "whatsNew.deferral": "Edukiontzi baten programatutako babeskopiak itxaron dezake bere aplikazioa lanpetuta dagoen bitartean, eta berriro saiatu bere kabuz, hainbat minututik behin, ordutegi-tarte batean eta epe bat arte. 75 kodearekin amaitzen den babeskopiaren aurretiazko komando batek abiarazten du itxaronaldia, eta «Egin babeskopia orain» berehala exekutatzen da beti.",
   "whatsNew.activityPresets": "Programatutako babeskopia baten aurretik, BombVault-ek Plex, Jellyfin edo Emby zerbitzariei galde diezaieke ea norbait ikusten ari den, zure script propiorik gabe.",
   "whatsNew.netGate": "Horrelako egiaztapenik ez duten aplikazioetan, programatutako babeskopia batek itxaron dezake edukiontziak datuak bidaltzen dituen bitartean.",
+  "whatsNew.fdroid": "Android aplikazioa F-Droid-en dago, eta hemengo F-Droid botoiak haren fitxa irekitzen du.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Erakutsi /metrics",

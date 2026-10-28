@@ -1115,6 +1115,7 @@ const vi: Partial<Translations> = {
   "whatsNew.deferral": "Bản sao lưu theo lịch của một container có thể chờ khi ứng dụng của nó đang bận và tự thử lại, cứ vài phút một lần, trong một khung giờ và cho đến một hạn chót. Lệnh trước sao lưu kết thúc với mã 75 sẽ bắt đầu việc chờ, còn nút Sao lưu ngay luôn chạy ngay lập tức.",
   "whatsNew.activityPresets": "Trước khi sao lưu theo lịch, BombVault có thể hỏi Plex, Jellyfin hoặc Emby xem có ai đang xem không, mà không cần script riêng của bạn.",
   "whatsNew.netGate": "Với ứng dụng không có kiểm tra như vậy, bản sao lưu theo lịch có thể chờ khi container đang gửi dữ liệu.",
+  "whatsNew.fdroid": "Ứng dụng Android đã có trên F-Droid, và nút F-Droid ở đây mở trang của ứng dụng.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Cung cấp /metrics",

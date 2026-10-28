@@ -1122,6 +1122,7 @@ const cs: Partial<Translations> = {
   "whatsNew.deferral": "Naplánovaná záloha kontejneru může počkat, dokud je jeho aplikace zaneprázdněná, a zkusit to sama znovu, po několika minutách, v časovém okně a do určené lhůty. Příkaz před zálohou, který skončí s 75, čekání spustí, a „Zálohovat nyní“ se vždy spustí hned.",
   "whatsNew.activityPresets": "Před naplánovanou zálohou se BombVault může zeptat mediálních serverů Plex, Jellyfin nebo Emby, jestli se někdo dívá, bez vlastního skriptu.",
   "whatsNew.netGate": "U aplikací bez takové kontroly může naplánovaná záloha čekat, dokud kontejner odesílá data.",
+  "whatsNew.fdroid": "Aplikace pro Android je na F-Droid a tlačítko F-Droid zde otevře její stránku.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Zpřístupnit /metrics",

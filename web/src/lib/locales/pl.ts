@@ -1110,6 +1110,7 @@ const pl: Partial<Translations> = {
   "whatsNew.deferral": "Zaplanowana kopia zapasowa kontenera może czekać, dopóki jego aplikacja jest zajęta, i sama ponawiać próby co kilka minut, w oknie czasowym i do wyznaczonego terminu. Polecenie przed kopią, które kończy się kodem 75, rozpoczyna oczekiwanie, a „Utwórz kopię teraz” zawsze rusza od razu.",
   "whatsNew.activityPresets": "Przed zaplanowaną kopią BombVault może zapytać Plex, Jellyfin lub Emby, czy ktoś ogląda, bez własnego skryptu.",
   "whatsNew.netGate": "W aplikacjach bez takiego sprawdzania zaplanowana kopia może czekać, gdy kontener wysyła dane.",
+  "whatsNew.fdroid": "Aplikacja na Androida jest w F-Droid, a przycisk F-Droid tutaj otwiera jej stronę.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Udostępnij /metrics",

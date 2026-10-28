@@ -1107,6 +1107,7 @@ const ja: Partial<Translations> = {
   "whatsNew.deferral": "コンテナーのスケジュールされたバックアップは、アプリが使用中の間は待機し、数分ごとに、指定した時間帯の中で、期限まで自動的に再試行できます。バックアップ前コマンドが 75 で終了すると待機が始まり、「今すぐバックアップ」は常にすぐ実行されます。",
   "whatsNew.activityPresets": "スケジュールされたバックアップの前に、BombVault は Plex、Jellyfin、Emby に誰かが視聴しているかを確認できます。自分でスクリプトを用意する必要はありません。",
   "whatsNew.netGate": "そうしたチェックのないアプリでは、コンテナーがデータを送信している間、スケジュールされたバックアップを待たせることができます。",
+  "whatsNew.fdroid": "Android アプリは F-Droid にあり、ここの F-Droid ボタンからそのページを開けます。",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "/metrics を公開",

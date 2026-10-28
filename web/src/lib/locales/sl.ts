@@ -813,6 +813,7 @@ const sl: Partial<Translations> = {
   "whatsNew.deferral": "Načrtovana varnostna kopija vsebnika lahko čaka, dokler je njegova aplikacija zasedena, in sama poskusi znova, vsakih nekaj minut, v časovnem oknu in do roka. Predhodni ukaz, ki se konča s 75, začne čakanje, gumb Naredi varnostno kopijo zdaj pa vedno začne takoj.",
   "whatsNew.activityPresets": "Pred načrtovano kopijo lahko BombVault vpraša Plex, Jellyfin ali Emby, ali kdo gleda, brez lastnega skripta.",
   "whatsNew.netGate": "Za aplikacije brez takega preverjanja lahko načrtovana kopija čaka, dokler vsebnik pošilja podatke.",
+  "whatsNew.fdroid": "Aplikacija za Android je na F-Droidu, gumb F-Droid tukaj pa odpre njeno stran.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Izpostavi /metrics",

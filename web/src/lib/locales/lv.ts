@@ -813,6 +813,7 @@ const lv: Partial<Translations> = {
   "whatsNew.deferral": "Konteinera ieplānotā dublēšana var gaidīt, kamēr tā lietotne ir aizņemta, un pati mēģināt vēlreiz ik pēc dažām minūtēm, laika logā un līdz termiņam. Komanda pirms rezerves kopijas, kas beidzas ar 75, sāk gaidīšanu, un “Izveidot rezerves kopiju tagad” vienmēr notiek uzreiz.",
   "whatsNew.activityPresets": "Pirms ieplānotas dublēšanas BombVault var pajautāt Plex, Jellyfin vai Emby, vai kāds skatās, bez jūsu paša skripta.",
   "whatsNew.netGate": "Lietotnēm bez šādas pārbaudes ieplānota dublēšana var gaidīt, kamēr konteiners sūta datus.",
+  "whatsNew.fdroid": "Android lietotne ir pieejama F-Droid, un šeit esošā F-Droid poga atver tās lapu.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Atklāt /metrics",

@@ -1113,6 +1113,7 @@ const pt: Partial<Translations> = {
   "whatsNew.deferral": "O backup agendado de um contentor pode esperar enquanto a sua app está ocupada e tentar de novo por si, a cada tantos minutos, num intervalo horário e até um prazo. Um comando pré-backup que termina com 75 inicia a espera, e «Fazer backup agora» corre sempre de imediato.",
   "whatsNew.activityPresets": "Antes de um backup agendado, o BombVault pode perguntar ao Plex, Jellyfin ou Emby se alguém está a ver, sem precisar de um script seu.",
   "whatsNew.netGate": "Para apps sem essa verificação, um backup agendado pode esperar enquanto o contentor envia dados.",
+  "whatsNew.fdroid": "A aplicação Android está no F-Droid, e o botão F-Droid aqui abre a respetiva página.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Expor /metrics",

@@ -1112,6 +1112,7 @@ const nl: Partial<Translations> = {
   "whatsNew.deferral": "De geplande back-up van een container kan wachten zolang zijn app bezig is en het vanzelf opnieuw proberen, om de zoveel minuten, in een tijdvenster en tot een deadline. Een pre-back-upcommando dat eindigt met 75 start het wachten, en „Nu back-up maken” start altijd meteen.",
   "whatsNew.activityPresets": "Vóór een geplande back-up kan BombVault aan Plex, Jellyfin of Emby vragen of iemand kijkt, zonder eigen script.",
   "whatsNew.netGate": "Voor apps zonder zo'n controle kan een geplande back-up wachten zolang de container data verstuurt.",
+  "whatsNew.fdroid": "De Android-app staat op F-Droid, en de F-Droid-knop hier opent de pagina ervan.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "/metrics beschikbaar maken",

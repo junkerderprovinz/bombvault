@@ -1116,6 +1116,7 @@ const it: Partial<Translations> = {
   "whatsNew.deferral": "Il backup pianificato di un container può attendere mentre la sua app è occupata e riprovare da solo, ogni tot minuti, in una fascia oraria e fino a una scadenza. Un Comando pre-backup che termina con 75 avvia l'attesa, ed Esegui backup ora parte sempre subito.",
   "whatsNew.activityPresets": "Prima di un backup pianificato, BombVault può chiedere a Plex, Jellyfin o Emby se qualcuno sta guardando, senza script tuoi.",
   "whatsNew.netGate": "Per le app senza un controllo del genere, un backup pianificato può attendere mentre il container invia dati.",
+  "whatsNew.fdroid": "L'app Android è su F-Droid, e il pulsante F-Droid qui apre la sua scheda.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Esponi /metrics",

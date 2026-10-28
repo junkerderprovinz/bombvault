@@ -61,6 +61,18 @@ const TO_CONTAINER_SETTINGS: WayStep[] = ["/backups", "container", { within: "en
 /** Every release that brought something new, newest first. */
 export const RELEASES: Release[] = [
   {
+    version: "10.3.8",
+    changes: [
+      {
+        id: "apps-fdroid",
+        page: "/settings/apps",
+        where: ["nav.settings", "settings.tab.apps"],
+        way: ["/settings", "/settings/apps"],
+        text: "whatsNew.fdroid",
+      },
+    ],
+  },
+  {
     version: "10.3.4",
     changes: [
       {

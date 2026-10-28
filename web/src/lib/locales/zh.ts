@@ -1115,6 +1115,7 @@ const zh: Partial<Translations> = {
   "whatsNew.deferral": "容器的定时备份可以在其应用繁忙时等待，并自行重试：每隔几分钟一次，可限定时间窗口，直到截止时间为止。以 75 退出的备份前命令会开始等待，而立即备份总是马上运行。",
   "whatsNew.activityPresets": "定时备份前，BombVault 可以询问 Plex、Jellyfin 或 Emby 是否有人在观看，无需你自己写脚本。",
   "whatsNew.netGate": "对于没有这类检查的应用，定时备份可以在容器发送数据时等待。",
+  "whatsNew.fdroid": "Android 应用已上架 F-Droid，这里的 F-Droid 按钮会打开它的页面。",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "暴露 /metrics",

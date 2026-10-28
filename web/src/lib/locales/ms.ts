@@ -813,6 +813,7 @@ const ms: Partial<Translations> = {
   "whatsNew.deferral": "Sandaran berjadual bagi bekas boleh menunggu semasa aplikasinya sibuk dan mencuba lagi dengan sendirinya, setiap beberapa minit, dalam tetingkap masa dan sehingga tarikh akhir. Arahan sebelum sandaran yang keluar dengan 75 memulakan penantian, dan “Sandarkan sekarang” sentiasa berjalan serta-merta.",
   "whatsNew.activityPresets": "Sebelum sandaran berjadual, BombVault boleh bertanya kepada Plex, Jellyfin atau Emby sama ada sesiapa sedang menonton, tanpa skrip anda sendiri.",
   "whatsNew.netGate": "Bagi aplikasi tanpa semakan sedemikian, sandaran berjadual boleh menunggu semasa bekas menghantar data.",
+  "whatsNew.fdroid": "Aplikasi Android ada di F-Droid, dan butang F-Droid di sini membuka halamannya.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Dedahkan /metrics",

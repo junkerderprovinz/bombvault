@@ -813,6 +813,7 @@ const is: Partial<Translations> = {
   "whatsNew.deferral": "Áætluð afritun gáms getur beðið meðan forritið hans er upptekið og reynt aftur af sjálfsdáðum, á nokkurra mínútna fresti, innan tímaglugga og fram að lokafresti. Skipun fyrir afritun sem hættir með 75 setur biðina af stað, og Afrita núna keyrir alltaf strax.",
   "whatsNew.activityPresets": "Fyrir áætlaða afritun getur BombVault spurt Plex, Jellyfin eða Emby hvort einhver sé að horfa, án nokkurrar eigin skriftu.",
   "whatsNew.netGate": "Fyrir forrit án slíkrar athugunar getur áætluð afritun beðið meðan gámurinn sendir gögn.",
+  "whatsNew.fdroid": "Android-appið er á F-Droid og F-Droid-hnappurinn hér opnar síðuna þess.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Sýna /metrics",

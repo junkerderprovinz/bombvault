@@ -1124,6 +1124,7 @@ const fi: Partial<Translations> = {
   "whatsNew.deferral": "Kontin ajastettu varmuuskopio voi odottaa, kun sen sovellus on kiireinen, ja yrittää itsestään uudelleen muutaman minuutin välein, aikaikkunassa ja määräaikaan asti. Varmuuskopiota edeltävä komento, joka päättyy koodiin 75, aloittaa odotuksen, ja Varmuuskopioi nyt käynnistyy aina heti.",
   "whatsNew.activityPresets": "Ennen ajastettua varmuuskopiota BombVault voi kysyä Plexiltä, Jellyfiniltä tai Embyltä, katsooko joku, ilman omaa skriptiä.",
   "whatsNew.netGate": "Sovelluksille, joilla tällaista tarkistusta ei ole, ajastettu varmuuskopio voi odottaa, kun kontti lähettää dataa.",
+  "whatsNew.fdroid": "Android-sovellus on F-Droidissa, ja tästä F-Droid-painikkeesta avautuu sen sivu.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Tarjoa /metrics",
