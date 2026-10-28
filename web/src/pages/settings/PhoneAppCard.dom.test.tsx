@@ -74,12 +74,15 @@ describe("PhoneAppCard", () => {
     expect(screen.queryByRole("link", { name: /^v\d/ })).toBeNull();
   });
 
-  it("shows both stores as coming, before the APK", async () => {
+  it("shows Google Play as coming and links F-Droid, before the APK", async () => {
     await renderCard();
     const soon = en["apps.soon"];
     const names = Array.from(document.querySelectorAll(".glim-readme-btn")).map((b) => b.getAttribute("aria-label"));
-    expect(names).toEqual([`Google Play ${soon}`, `F-Droid ${soon}`, "Android APK", `${en["apps.phone.qrCode"]} APK`]);
-    expect(screen.queryByRole("link", { name: /Google Play|F-Droid/ })).toBeNull();
+    expect(names).toEqual([`Google Play ${soon}`, "F-Droid", "Android APK", `${en["apps.phone.qrCode"]} APK`]);
+    expect(screen.queryByRole("link", { name: /Google Play/ })).toBeNull();
+    expect(screen.getByRole("link", { name: "F-Droid" }).getAttribute("href")).toBe(
+      "https://f-droid.org/packages/bombvault.halleluja.design/"
+    );
   });
 
   it("opens the APK's QR code from its segment and closes it on Escape", async () => {
