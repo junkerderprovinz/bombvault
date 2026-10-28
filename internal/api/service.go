@@ -218,9 +218,9 @@ type ResticEngine interface {
 	// the physical/deduplicated size + blob count; "restore-size" for the logical
 	// size + file count). Used to sample the repo-size trend.
 	Stats(ctx context.Context, repo, mode string, m restic.Mode) (restic.StatsResult, error)
-	// StatsRestoreSize returns the logical restore size (bytes) + file count of ONE
-	// snapshot (`restic stats --mode restore-size <snap>`). The DR drill compares it
-	// against an on-disk walk of the restored sandbox.
+	// StatsRestoreSize returns the logical restore size and file count of one
+	// snapshot (`restic stats --mode restore-size`). Restores use it to check free
+	// space before they write.
 	StatsRestoreSize(ctx context.Context, repo, snapshotID string, m restic.Mode) (files int, bytes int64, err error)
 	// RestorePreview runs one restore step as a dry run and reports each
 	// file it would write, replace, leave or find beyond the snapshot.
@@ -17196,14 +17196,10 @@ func (s *Service) runSubsetDrill(ctx context.Context, domain, source string, wai
 // that is not a marked drill sandbox we created.
 const drillMarkerName = ".bombvault-drill"
 
-// drillByteToleranceFloor is the ONLY slack allowed between restic's reported
-// restore-size and the on-disk restore of a DR drill: a tight few-KB absolute
-// floor for filesystem metadata rounding — NOT a percentage of the total.
-// `restic restore` is content-addressed, so a completed restore reproduces the
-// exact logical bytes; a percentage band (e.g. 5% of the whole snapshot) would
-// wave through a large file restored truncated by less than that fraction, with
-// the file count unchanged. The count must match exactly and the bytes to within
-// this floor.
+// drillByteToleranceFloor is the slack a DR drill allows between the snapshot's
+// listed file sizes and the restored sandbox. It is a fixed few KB rather than a
+// percentage, because a percentage of a whole snapshot would wave through a
+// large file restored short with the file count unchanged.
 const drillByteToleranceFloor = 4096
 
 // drillSnapshotTimeout bounds the DR-drill's off-site snapshot listing so a
@@ -17582,7 +17578,7 @@ func (s *Service) byNewestBackup(items []drillCandidate) ([]string, error) {
 
 // sandboxRestoreVerify restores the whole snapshot tree into a fresh
 // marker-guarded sandbox under the restore folder, verifies the restored files +
-// bytes against restic's own accounting, and (always) attempts marker-guarded
+// bytes against the snapshot's listing, and (always) attempts marker-guarded
 // cleanup. A mismatch or restore/verify error is returned; the sandbox is still
 // removed. Reuses the SAME RestoreInclude machinery + paths.Resolve containment as
 // a real restore-to-folder.
@@ -17618,41 +17614,38 @@ func (s *Service) sandboxRestoreVerify(ctx context.Context, domain string, setti
 		return fmt.Errorf("restore into sandbox: %w", err)
 	}
 
-	// Verify: restic's own file count (ls) + restore-size bytes+files (stats) vs an
-	// on-disk walk of the sandbox (the marker is excluded from the walk).
+	// Compare restic ls with a walk of the sandbox; both count a hardlinked file
+	// once per name.
 	lsEntries, err := s.engine.Ls(dctx, repo, snapID, mode)
 	if err != nil {
 		return fmt.Errorf("list snapshot: %w", err)
 	}
-	lsFiles := 0
+	lsFiles, lsBytes := 0, int64(0)
 	for _, e := range lsEntries {
 		if e.Type == "file" {
 			lsFiles++
+			lsBytes += e.Size
 		}
 	}
-	statsFiles, wantBytes, err := s.engine.StatsRestoreSize(dctx, repo, snapID, mode)
-	if err != nil {
-		return fmt.Errorf("snapshot stats: %w", err)
-	}
-	// A snapshot with no restorable file data exercises no real restore — recording
-	// it green would be a false "verified restorable". Signal "nothing to drill" so
-	// the caller records neither green nor red.
-	if lsFiles == 0 && wantBytes == 0 {
+	// A snapshot without files proves nothing about restoring, so the caller
+	// records neither green nor red.
+	if lsFiles == 0 {
 		return errNothingToDrill
 	}
 	gotFiles, gotBytes, err := walkDrillSandbox(sandbox)
 	if err != nil {
 		return fmt.Errorf("walk sandbox: %w", err)
 	}
-	if !drillVerifyOK(lsFiles, gotFiles, wantBytes, gotBytes) {
-		return fmt.Errorf("verification mismatch: restic ls %d files, stats %d files / %d bytes; restored sandbox %d files / %d bytes", lsFiles, statsFiles, wantBytes, gotFiles, gotBytes)
+	if !drillVerifyOK(lsFiles, gotFiles, lsBytes, gotBytes) {
+		return fmt.Errorf("verification mismatch: snapshot %d files / %d bytes; restored sandbox %d files / %d bytes", lsFiles, lsBytes, gotFiles, gotBytes)
 	}
 	return nil
 }
 
 // walkDrillSandbox counts the regular files and their total bytes under a drill
 // sandbox, excluding the .bombvault-drill marker at its root. Only regular files
-// count toward restore-size (dirs/symlinks/devices are ignored, matching restic).
+// count, matching the file nodes of restic ls; every name of a hardlinked file
+// counts, as it does there.
 func walkDrillSandbox(sandbox string) (files int, bytes int64, err error) {
 	marker := filepath.Join(sandbox, drillMarkerName)
 	err = filepath.WalkDir(sandbox, func(p string, d fs.DirEntry, walkErr error) error { //nolint:gosec // G703: sandbox is resolved strictly under the host mount root by paths.Resolve (rejects absolute/traversal); read-only walk
@@ -17676,29 +17669,19 @@ func walkDrillSandbox(sandbox string) (files int, bytes int64, err error) {
 	return files, bytes, err
 }
 
-// drillVerifyOK reports whether a restored sandbox matches restic's own
-// accounting. The completeness proof is the ON-DISK restore versus restic:
+// drillVerifyOK reports whether a restored sandbox matches the snapshot as
+// restic ls lists it. The file counts must be equal, and the bytes may differ
+// only by drillByteToleranceFloor, not by a percentage, because a
+// content-addressed restore reproduces the exact logical bytes.
 //
-//   - the on-disk file count == restic ls file count (a completed restore
-//     materialises every file node restic recorded);
-//   - the on-disk bytes == restic's restore-size bytes to within only
-//     drillByteToleranceFloor (a few KB for fs metadata), NOT a percentage — a
-//     content-addressed restore reproduces the exact logical bytes.
-//
-// NOTE: restic's `stats --mode restore-size` file COUNT is deliberately NOT
-// compared against `ls` here. The two restic counters legitimately differ on
-// real snapshots (e.g. hardlinks, and how restore-size tallies files vs how ls
-// enumerates nodes), so requiring statsFiles == lsFiles produced false
-// "verification mismatch" failures on perfectly restorable backups — e.g. the
-// Unraid flash restoring the exact file count and bytes yet being flagged (#30).
-// A truncated restore is already caught by gotFiles != lsFiles and the byte
-// check, both of which measure the ACTUAL restored sandbox; statsFiles measures
-// neither, so it can only add false negatives.
-func drillVerifyOK(lsFiles, gotFiles int, statsBytes, gotBytes int64) bool {
+// restic's `stats --mode restore-size` is not consulted. Its file count tallies
+// nodes differently from ls (#30), and its byte total counts a hardlinked file
+// once although the restore writes every name of it (#379).
+func drillVerifyOK(lsFiles, gotFiles int, lsBytes, gotBytes int64) bool {
 	if gotFiles != lsFiles {
 		return false
 	}
-	diff := statsBytes - gotBytes
+	diff := lsBytes - gotBytes
 	if diff < 0 {
 		diff = -diff
 	}

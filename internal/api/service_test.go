@@ -5590,11 +5590,13 @@ type fakeResticEngine struct {
 	callLog       []string          // ordered method-call log (Unlock/Tag/CheckData/RestoreInclude) for ordering assertions
 	forgetPruned  bool              // prune flag of the last Forget call
 	// DR-drill knobs. statsRestoreSizeErr fails StatsRestoreSize; statsRestoreBytes
-	// (non-zero) overrides the byte total it reports so a test can force a
-	// verification mismatch. Absent overrides, StatsRestoreSize derives files+bytes
-	// from lsEntries, consistent with the files RestoreInclude("/") writes.
+	// (non-zero) overrides the byte total it reports, the way restic counts a
+	// hardlinked file once. Absent overrides, StatsRestoreSize derives files+bytes
+	// from lsEntries. restoreShortBy leaves that many bytes out of every file
+	// RestoreInclude("/") writes, a truncated restore.
 	statsRestoreSizeErr error
 	statsRestoreBytes   int64
+	restoreShortBy      int64
 	// rawSizeBytes, when non-zero, overrides the raw-data TotalSize that Stats
 	// reports, so a test can drive the off-site growth budget over its limit.
 	rawSizeBytes int64
@@ -6031,7 +6033,7 @@ func (f *fakeResticEngine) RestoreInclude(ctx context.Context, repo, snapshotID,
 			if err := os.MkdirAll(filepath.Dir(dst), 0o700); err != nil {
 				return err
 			}
-			if err := os.WriteFile(dst, make([]byte, e.Size), 0o600); err != nil {
+			if err := os.WriteFile(dst, make([]byte, e.Size-f.restoreShortBy), 0o600); err != nil {
 				return err
 			}
 		}
@@ -6169,7 +6171,7 @@ func (f *fakeResticEngine) StatsRestoreSize(_ context.Context, _, _ string, _ re
 		}
 	}
 	if f.statsRestoreBytes != 0 {
-		bytes = f.statsRestoreBytes // force a verification mismatch
+		bytes = f.statsRestoreBytes
 	}
 	return files, bytes, nil
 }
@@ -6637,15 +6639,15 @@ func TestRunDRDrillRecordsAnOffsiteThatWasEmptied(t *testing.T) {
 }
 
 // TestRunDRDrillFailureNotifiesAndRecords pins the failure path: when the restored
-// sandbox does not match restic's restore-size accounting, the drill fails, is
-// recorded kind='dr' ok=false, surfaces an error, and the sandbox is still cleaned.
+// sandbox does not match the snapshot's listing, the drill fails, is recorded
+// kind='dr' ok=false, surfaces an error, and the sandbox is still cleaned.
 func TestRunDRDrillFailureNotifiesAndRecords(t *testing.T) {
 	eng := &fakeResticEngine{
 		snaps: []restic.Snapshot{{ID: "aaaa1111bbbb2222", Time: "2026-07-01T00:00:00Z", Tags: []string{"container:plex"}}},
 		lsEntries: []restic.FileEntry{
-			{Path: "/appdata/plex/a.conf", Type: "file", Size: 100},
+			{Path: "/appdata/plex/a.conf", Type: "file", Size: 9_000_000},
 		},
-		statsRestoreBytes: 9_000_000, // restic claims far more than the sandbox holds → mismatch
+		restoreShortBy: 8_999_900,
 	}
 	svc, st := drDrillService(t, eng, "containers", "rest:http://192.168.20.9:8000/containers", "plex")
 
@@ -6679,19 +6681,17 @@ func TestRunDRDrillFailureNotifiesAndRecords(t *testing.T) {
 // TestRunDRDrillTruncatedFileFails checks that a restored file short by a small
 // amount (5 KB of a ~125 KB snapshot, under a 5% band but over the metadata
 // floor) fails the drill. restic restore is content-addressed, so the restored
-// bytes must equal restic's restore-size exactly; the file count is unchanged,
-// so only an exact-byte check catches the hole.
+// bytes must equal the listed sizes exactly; the file count is unchanged, so
+// only an exact-byte check catches the hole.
 func TestRunDRDrillTruncatedFileFails(t *testing.T) {
 	eng := &fakeResticEngine{
 		snaps: []restic.Snapshot{{ID: "aaaa1111bbbb2222", Time: "2026-07-01T00:00:00Z", Tags: []string{"container:plex"}}},
 		lsEntries: []restic.FileEntry{
-			// One large file; the sandbox restore materialises its full 120000 bytes.
-			{Path: "/appdata/plex/big.db", Type: "file", Size: 120000},
+			{Path: "/appdata/plex/big.db", Type: "file", Size: 125000},
 		},
-		// restic's restore-size reports 125000 bytes (5000 more than landed on disk):
-		// a truncated restore with the file count unchanged. 5000 is under 5% of
-		// 125000 (6250) but over the 4 KB floor.
-		statsRestoreBytes: 125000,
+		// 5000 bytes missing on disk is under 5% of 125000 (6250) but over the
+		// 4 KB floor.
+		restoreShortBy: 5000,
 	}
 	svc, _ := drDrillService(t, eng, "containers", "rest:http://192.168.20.9:8000/containers", "plex")
 
@@ -6730,14 +6730,33 @@ func TestRunDRDrillPassesWhenOnlyMetadataCouldNotBeSet(t *testing.T) {
 	}
 }
 
+// restic stats counts a hardlinked file once, the restore writes both names, and
+// the drill still passes.
+func TestRunDRDrillPassesWithHardlinkedFiles(t *testing.T) {
+	eng := &fakeResticEngine{
+		snaps: []restic.Snapshot{{ID: "aaaa1111bbbb2222", Time: "2026-07-01T00:00:00Z", Tags: []string{"container:plex"}}},
+		lsEntries: []restic.FileEntry{
+			{Path: "/appdata/plex/cache/a.bin", Type: "file", Size: 50_000},
+			{Path: "/appdata/plex/cache/b.bin", Type: "file", Size: 50_000},
+		},
+		statsRestoreBytes: 50_000,
+	}
+	svc, _ := drDrillService(t, eng, "containers", "rest:http://192.168.20.9:8000/containers", "plex")
+
+	drill, err := svc.RunRestoreDrill(context.Background(), "containers", "offsite", "dr", false)
+	if err != nil || !drill.OK {
+		t.Fatalf("a snapshot with hardlinks must pass the drill, got %+v err=%v", drill, err)
+	}
+}
+
 func TestRunDRDrillWithAMetadataErrorStillFailsOnMissingData(t *testing.T) {
 	eng := &fakeResticEngine{
 		snaps: []restic.Snapshot{{ID: "aaaa1111bbbb2222", Time: "2026-07-01T00:00:00Z", Tags: []string{"container:plex"}}},
 		lsEntries: []restic.FileEntry{
-			{Path: "/appdata/plex/a.conf", Type: "file", Size: 100},
+			{Path: "/appdata/plex/a.conf", Type: "file", Size: 9_000_000},
 		},
-		statsRestoreBytes: 9_000_000,
-		restoreAfterErr:   restic.ErrRestoreMetadataOnly,
+		restoreShortBy:  8_999_900,
+		restoreAfterErr: restic.ErrRestoreMetadataOnly,
 	}
 	svc, _ := drDrillService(t, eng, "containers", "rest:http://192.168.20.9:8000/containers", "plex")
 
