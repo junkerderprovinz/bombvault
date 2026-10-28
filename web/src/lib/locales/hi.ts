@@ -814,6 +814,7 @@ const hi: Partial<Translations> = {
   "whatsNew.activityPresets": "शेड्यूल्ड बैकअप से पहले BombVault Plex, Jellyfin या Emby से पूछ सकता है कि क्या कोई देख रहा है, बिना आपकी अपनी किसी स्क्रिप्ट के।",
   "whatsNew.netGate": "ऐसी जाँच के बिना वाले ऐप के लिए, शेड्यूल्ड बैकअप तब तक रुक सकता है जब तक कंटेनर डेटा भेज रहा है।",
   "whatsNew.fdroid": "Android ऐप F-Droid पर है, और यहाँ का F-Droid बटन उसका पेज खोलता है।",
+  "whatsNew.locationRename": "हर गंतव्य का नाम बदला जा सकता है, उस फ़ोल्डर का भी जिसे कई सेक्शन साझा करते हैं।",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "/metrics दिखाएँ",

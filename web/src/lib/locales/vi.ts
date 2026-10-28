@@ -1116,6 +1116,7 @@ const vi: Partial<Translations> = {
   "whatsNew.activityPresets": "Trước khi sao lưu theo lịch, BombVault có thể hỏi Plex, Jellyfin hoặc Emby xem có ai đang xem không, mà không cần script riêng của bạn.",
   "whatsNew.netGate": "Với ứng dụng không có kiểm tra như vậy, bản sao lưu theo lịch có thể chờ khi container đang gửi dữ liệu.",
   "whatsNew.fdroid": "Ứng dụng Android đã có trên F-Droid, và nút F-Droid ở đây mở trang của ứng dụng.",
+  "whatsNew.locationRename": "Mọi đích sao lưu đều đổi tên được, kể cả thư mục mà nhiều phần dùng chung.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Cung cấp /metrics",

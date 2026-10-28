@@ -1122,6 +1122,7 @@ const uk: Partial<Translations> = {
   "whatsNew.activityPresets": "Перед копією за розкладом BombVault може спитати Plex, Jellyfin чи Emby, чи хтось дивиться, без вашого власного скрипта.",
   "whatsNew.netGate": "Для застосунків без такої перевірки копія за розкладом може чекати, поки контейнер надсилає дані.",
   "whatsNew.fdroid": "Застосунок для Android є в F-Droid, а кнопка F-Droid тут відкриває його сторінку.",
+  "whatsNew.locationRename": "Будь-яке місце призначення можна перейменувати, зокрема теку, спільну для кількох розділів.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Надавати /metrics",

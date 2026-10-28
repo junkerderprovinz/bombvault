@@ -814,6 +814,7 @@ const is: Partial<Translations> = {
   "whatsNew.activityPresets": "Fyrir áætlaða afritun getur BombVault spurt Plex, Jellyfin eða Emby hvort einhver sé að horfa, án nokkurrar eigin skriftu.",
   "whatsNew.netGate": "Fyrir forrit án slíkrar athugunar getur áætluð afritun beðið meðan gámurinn sendir gögn.",
   "whatsNew.fdroid": "Android-appið er á F-Droid og F-Droid-hnappurinn hér opnar síðuna þess.",
+  "whatsNew.locationRename": "Það má endurnefna alla áfangastaði, líka möppu sem nokkrir hlutar deila.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Sýna /metrics",

@@ -814,6 +814,7 @@ const lt: Partial<Translations> = {
   "whatsNew.activityPresets": "Prieš suplanuotą atsarginę kopiją BombVault gali paklausti Plex, Jellyfin arba Emby, ar kas nors žiūri, be jokio tavo scenarijaus.",
   "whatsNew.netGate": "Programoms be tokios patikros suplanuota kopija gali palaukti, kol konteineris siunčia duomenis.",
   "whatsNew.fdroid": "Android programėlė yra F-Droid, o čia esantis F-Droid mygtukas atveria jos puslapį.",
+  "whatsNew.locationRename": "Kiekvieną paskirties vietą galima pervadinti, taip pat aplanką, kurį naudoja kelios sekcijos.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Rodyti /metrics",

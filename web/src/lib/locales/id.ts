@@ -814,6 +814,7 @@ const id: Partial<Translations> = {
   "whatsNew.activityPresets": "Sebelum pencadangan terjadwal, BombVault bisa bertanya ke Plex, Jellyfin, atau Emby apakah ada yang sedang menonton, tanpa skrip buatan sendiri.",
   "whatsNew.netGate": "Untuk aplikasi tanpa pemeriksaan seperti itu, pencadangan terjadwal bisa menunggu selama kontainer mengirim data.",
   "whatsNew.fdroid": "Aplikasi Android ada di F-Droid, dan tombol F-Droid di sini membuka halamannya.",
+  "whatsNew.locationRename": "Setiap tujuan bisa diganti namanya, termasuk folder yang dipakai bersama beberapa bagian.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Ekspos /metrics",

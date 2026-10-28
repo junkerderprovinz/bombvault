@@ -1113,6 +1113,7 @@ const nl: Partial<Translations> = {
   "whatsNew.activityPresets": "Vóór een geplande back-up kan BombVault aan Plex, Jellyfin of Emby vragen of iemand kijkt, zonder eigen script.",
   "whatsNew.netGate": "Voor apps zonder zo'n controle kan een geplande back-up wachten zolang de container data verstuurt.",
   "whatsNew.fdroid": "De Android-app staat op F-Droid, en de F-Droid-knop hier opent de pagina ervan.",
+  "whatsNew.locationRename": "Elke bestemming kan een andere naam krijgen, ook een map die meerdere onderdelen delen.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "/metrics beschikbaar maken",

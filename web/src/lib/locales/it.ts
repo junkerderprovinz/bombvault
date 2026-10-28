@@ -1117,6 +1117,7 @@ const it: Partial<Translations> = {
   "whatsNew.activityPresets": "Prima di un backup pianificato, BombVault può chiedere a Plex, Jellyfin o Emby se qualcuno sta guardando, senza script tuoi.",
   "whatsNew.netGate": "Per le app senza un controllo del genere, un backup pianificato può attendere mentre il container invia dati.",
   "whatsNew.fdroid": "L'app Android è su F-Droid, e il pulsante F-Droid qui apre la sua scheda.",
+  "whatsNew.locationRename": "Ogni destinazione si può rinominare, anche una cartella condivisa da più sezioni.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Esponi /metrics",

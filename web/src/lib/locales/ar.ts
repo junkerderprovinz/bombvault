@@ -1126,6 +1126,7 @@ const ar: Partial<Translations> = {
   "whatsNew.activityPresets": "قبل النسخ الاحتياطي المجدول، يستطيع BombVault أن يسأل Plex أو Jellyfin أو Emby إن كان أحد يشاهد، من دون أي سكربت خاص بك.",
   "whatsNew.netGate": "للتطبيقات التي لا تملك فحصًا كهذا، يمكن للنسخ الاحتياطي المجدول أن ينتظر ما دامت الحاوية ترسل بيانات.",
   "whatsNew.fdroid": "تطبيق Android متوفر على F-Droid، وزر F-Droid هنا يفتح صفحته.",
+  "whatsNew.locationRename": "يمكن إعادة تسمية كل وجهة، ومنها مجلد تتشاركه عدة أقسام.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "إتاحة /metrics",

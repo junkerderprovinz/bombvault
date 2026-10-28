@@ -1125,6 +1125,7 @@ const el: Partial<Translations> = {
   "whatsNew.activityPresets": "Πριν από ένα προγραμματισμένο αντίγραφο, το BombVault μπορεί να ρωτήσει το Plex, το Jellyfin ή το Emby αν βλέπει κάποιος, χωρίς δικό σας script.",
   "whatsNew.netGate": "Για εφαρμογές χωρίς τέτοιον έλεγχο, ένα προγραμματισμένο αντίγραφο μπορεί να περιμένει όσο το κοντέινερ στέλνει δεδομένα.",
   "whatsNew.fdroid": "Η εφαρμογή Android είναι στο F-Droid, και το κουμπί F-Droid εδώ ανοίγει τη σελίδα της.",
+  "whatsNew.locationRename": "Κάθε προορισμός μπορεί να μετονομαστεί, και ένας φάκελος που μοιράζονται πολλές ενότητες.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Έκθεση /metrics",

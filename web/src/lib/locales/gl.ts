@@ -814,6 +814,7 @@ const gl: Partial<Translations> = {
   "whatsNew.activityPresets": "Antes dunha copia programada, BombVault pode preguntarlle a Plex, Jellyfin ou Emby se alguén está a ver algo, sen ningún script propio.",
   "whatsNew.netGate": "Para apps sen esa comprobación, unha copia programada pode agardar mentres o contedor envía datos.",
   "whatsNew.fdroid": "A aplicación de Android está en F-Droid, e o botón F-Droid de aquí abre a súa ficha.",
+  "whatsNew.locationRename": "Calquera destino pódese renomear, tamén un cartafol que comparten varias seccións.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Expor /metrics",

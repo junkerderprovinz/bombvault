@@ -814,6 +814,7 @@ const lv: Partial<Translations> = {
   "whatsNew.activityPresets": "Pirms ieplānotas dublēšanas BombVault var pajautāt Plex, Jellyfin vai Emby, vai kāds skatās, bez jūsu paša skripta.",
   "whatsNew.netGate": "Lietotnēm bez šādas pārbaudes ieplānota dublēšana var gaidīt, kamēr konteiners sūta datus.",
   "whatsNew.fdroid": "Android lietotne ir pieejama F-Droid, un šeit esošā F-Droid poga atver tās lapu.",
+  "whatsNew.locationRename": "Katru mērķi var pārdēvēt, arī mapi, ko koplieto vairākas sadaļas.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Atklāt /metrics",

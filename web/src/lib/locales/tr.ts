@@ -1125,6 +1125,7 @@ const tr: Partial<Translations> = {
   "whatsNew.activityPresets": "BombVault zamanlanmış bir yedeklemeden önce Plex, Jellyfin veya Emby'ye izleyen biri olup olmadığını, kendi betiğine gerek kalmadan sorabilir.",
   "whatsNew.netGate": "Böyle bir denetimi olmayan uygulamalar için zamanlanmış bir yedekleme, konteyner veri gönderirken bekleyebilir.",
   "whatsNew.fdroid": "Android uygulaması F-Droid'de, buradaki F-Droid düğmesi sayfasını açar.",
+  "whatsNew.locationRename": "Her hedef yeniden adlandırılabilir, birkaç bölümün paylaştığı bir klasör de.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "/metrics'i yayınla",

@@ -1108,6 +1108,7 @@ const ja: Partial<Translations> = {
   "whatsNew.activityPresets": "スケジュールされたバックアップの前に、BombVault は Plex、Jellyfin、Emby に誰かが視聴しているかを確認できます。自分でスクリプトを用意する必要はありません。",
   "whatsNew.netGate": "そうしたチェックのないアプリでは、コンテナーがデータを送信している間、スケジュールされたバックアップを待たせることができます。",
   "whatsNew.fdroid": "Android アプリは F-Droid にあり、ここの F-Droid ボタンからそのページを開けます。",
+  "whatsNew.locationRename": "どの保存先も名前を変更できます。複数のセクションが共有するフォルダーも同様です。",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "/metrics を公開",

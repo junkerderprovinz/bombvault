@@ -814,6 +814,7 @@ const hr: Partial<Translations> = {
   "whatsNew.activityPresets": "Prije zakazane sigurnosne kopije BombVault može pitati Plex, Jellyfin ili Emby gleda li netko, bez ikakve vlastite skripte.",
   "whatsNew.netGate": "Za aplikacije bez takve provjere zakazana kopija može čekati dok spremnik šalje podatke.",
   "whatsNew.fdroid": "Aplikacija za Android je na F-Droidu, a gumb F-Droid ovdje otvara njezinu stranicu.",
+  "whatsNew.locationRename": "Svako odredište može se preimenovati, i mapa koju dijeli više odjeljaka.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Izloži /metrics",

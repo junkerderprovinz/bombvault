@@ -1118,6 +1118,7 @@ const hu: Partial<Translations> = {
   "whatsNew.activityPresets": "Ütemezett mentés előtt a BombVault megkérdezheti a Plexet, a Jellyfint vagy az Embyt, néz-e valaki valamit, saját szkript nélkül.",
   "whatsNew.netGate": "Az ilyen ellenőrzés nélküli alkalmazásoknál az ütemezett mentés várhat, amíg a konténer adatot küld.",
   "whatsNew.fdroid": "Az Android-alkalmazás elérhető az F-Droidon, az itteni F-Droid gomb megnyitja az oldalát.",
+  "whatsNew.locationRename": "Minden cél átnevezhető, egy több szakasz által közösen használt mappa is.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "/metrics közzététele",

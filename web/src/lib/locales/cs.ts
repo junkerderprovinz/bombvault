@@ -1123,6 +1123,7 @@ const cs: Partial<Translations> = {
   "whatsNew.activityPresets": "Před naplánovanou zálohou se BombVault může zeptat mediálních serverů Plex, Jellyfin nebo Emby, jestli se někdo dívá, bez vlastního skriptu.",
   "whatsNew.netGate": "U aplikací bez takové kontroly může naplánovaná záloha čekat, dokud kontejner odesílá data.",
   "whatsNew.fdroid": "Aplikace pro Android je na F-Droid a tlačítko F-Droid zde otevře její stránku.",
+  "whatsNew.locationRename": "Každý cíl lze přejmenovat, i složku, kterou sdílí několik sekcí.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Zpřístupnit /metrics",

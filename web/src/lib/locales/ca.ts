@@ -814,6 +814,7 @@ const ca: Partial<Translations> = {
   "whatsNew.activityPresets": "Abans d'una còpia programada, BombVault pot preguntar a Plex, Jellyfin o Emby si algú està mirant alguna cosa, sense cap script propi.",
   "whatsNew.netGate": "Per a aplicacions sense aquesta comprovació, una còpia programada pot esperar mentre el contenidor envia dades.",
   "whatsNew.fdroid": "L'aplicació d'Android és a F-Droid, i el botó F-Droid d'aquí n'obre la fitxa.",
+  "whatsNew.locationRename": "Totes les destinacions es poden canviar de nom, també una carpeta que comparteixen diverses seccions.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Exposa /metrics",

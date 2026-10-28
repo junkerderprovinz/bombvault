@@ -1125,6 +1125,7 @@ const fi: Partial<Translations> = {
   "whatsNew.activityPresets": "Ennen ajastettua varmuuskopiota BombVault voi kysyä Plexiltä, Jellyfiniltä tai Embyltä, katsooko joku, ilman omaa skriptiä.",
   "whatsNew.netGate": "Sovelluksille, joilla tällaista tarkistusta ei ole, ajastettu varmuuskopio voi odottaa, kun kontti lähettää dataa.",
   "whatsNew.fdroid": "Android-sovellus on F-Droidissa, ja tästä F-Droid-painikkeesta avautuu sen sivu.",
+  "whatsNew.locationRename": "Jokaisen kohteen voi nimetä uudelleen, myös kansion, jonka useampi osio jakaa.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Tarjoa /metrics",

@@ -70,6 +70,14 @@ export const RELEASES: Release[] = [
         way: ["/settings", "/settings/apps"],
         text: "whatsNew.fdroid",
       },
+      {
+        id: "location-rename",
+        page: LOCATION,
+        go: "/storage",
+        where: ["storage.title", "whatsNew.page.location"],
+        way: [...TO_STORAGE, "location"],
+        text: "whatsNew.locationRename",
+      },
     ],
   },
   {

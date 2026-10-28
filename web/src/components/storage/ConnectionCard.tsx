@@ -54,7 +54,9 @@ export function ConnectionCard({ edit, onChange, hueIndex }: { edit: LocationEdi
       <Rows>
         <SettingRow label={t("dest.name")} hint={can("name") ? t("dest.nameHint") : undefined}>
           {can("name") ? (
-            <TextSetting label={t("dest.name")} value={location.name} disabled={busy} onCommit={(name) => void save({ name })} />
+            <span data-new="location-rename" className="flex max-w-full">
+              <TextSetting label={t("dest.name")} value={location.name} disabled={busy} onCommit={(name) => void save({ name })} />
+            </span>
           ) : (
             <span className="text-sm text-carbon-textSub wrap-anywhere">{location.name}</span>
           )}

@@ -1126,6 +1126,7 @@ const th: Partial<Translations> = {
   "whatsNew.activityPresets": "ก่อนการสำรองข้อมูลตามกำหนดเวลา BombVault ถาม Plex, Jellyfin หรือ Emby ได้ว่ามีคนกำลังดูอยู่หรือไม่ โดยไม่ต้องมีสคริปต์ของคุณเอง",
   "whatsNew.netGate": "สำหรับแอปที่ไม่มีการตรวจสอบแบบนี้ การสำรองข้อมูลตามกำหนดเวลารอได้ขณะที่คอนเทนเนอร์ส่งข้อมูล",
   "whatsNew.fdroid": "แอป Android มีบน F-Droid แล้ว และปุ่ม F-Droid ตรงนี้จะเปิดหน้าของแอป",
+  "whatsNew.locationRename": "เปลี่ยนชื่อปลายทางได้ทุกแห่ง รวมถึงโฟลเดอร์ที่หลายส่วนใช้ร่วมกัน",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "เปิดเผย /metrics",

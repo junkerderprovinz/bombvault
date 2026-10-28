@@ -814,6 +814,7 @@ const et: Partial<Translations> = {
   "whatsNew.activityPresets": "Enne ajastatud varundust saab BombVault küsida meediaserveritelt Plex, Jellyfin või Emby, kas keegi vaatab, ilma oma skriptita.",
   "whatsNew.netGate": "Ilma sellise kontrollita rakenduste puhul võib ajastatud varundus oodata, kuni konteiner andmeid saadab.",
   "whatsNew.fdroid": "Androidi rakendus on F-Droidis ja siinne F-Droidi nupp avab selle lehe.",
+  "whatsNew.locationRename": "Iga sihtkohta saab ümber nimetada, ka kausta, mida jagavad mitu jaotist.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Ava /metrics",

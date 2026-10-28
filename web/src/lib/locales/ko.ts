@@ -1108,6 +1108,7 @@ const ko: Partial<Translations> = {
   "whatsNew.activityPresets": "예약된 백업 전에 BombVault가 Plex, Jellyfin, Emby에 누군가 시청 중인지 물어볼 수 있습니다. 직접 스크립트를 쓸 필요가 없습니다.",
   "whatsNew.netGate": "그런 확인이 없는 앱은 컨테이너가 데이터를 보내는 동안 예약된 백업이 기다릴 수 있습니다.",
   "whatsNew.fdroid": "Android 앱이 F-Droid에 있으며, 여기의 F-Droid 버튼을 누르면 해당 페이지가 열립니다.",
+  "whatsNew.locationRename": "모든 대상의 이름을 바꿀 수 있으며, 여러 섹션이 함께 쓰는 폴더도 마찬가지입니다.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "/metrics 노출",

@@ -1111,6 +1111,7 @@ const pl: Partial<Translations> = {
   "whatsNew.activityPresets": "Przed zaplanowaną kopią BombVault może zapytać Plex, Jellyfin lub Emby, czy ktoś ogląda, bez własnego skryptu.",
   "whatsNew.netGate": "W aplikacjach bez takiego sprawdzania zaplanowana kopia może czekać, gdy kontener wysyła dane.",
   "whatsNew.fdroid": "Aplikacja na Androida jest w F-Droid, a przycisk F-Droid tutaj otwiera jej stronę.",
+  "whatsNew.locationRename": "Każde miejsce docelowe można przemianować, także folder współdzielony przez kilka sekcji.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Udostępnij /metrics",

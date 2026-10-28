@@ -1111,6 +1111,7 @@ const ru: Partial<Translations> = {
   "whatsNew.activityPresets": "Перед копией по расписанию BombVault может спросить Plex, Jellyfin или Emby, смотрит ли кто-нибудь, без вашего собственного скрипта.",
   "whatsNew.netGate": "Для приложений без такой проверки копия по расписанию может ждать, пока контейнер отправляет данные.",
   "whatsNew.fdroid": "Приложение для Android есть в F-Droid, и кнопка F-Droid здесь открывает его страницу.",
+  "whatsNew.locationRename": "Любое место назначения можно переименовать, в том числе папку, общую для нескольких разделов.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Публиковать /metrics",

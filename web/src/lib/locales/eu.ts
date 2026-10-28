@@ -814,6 +814,7 @@ const eu: Partial<Translations> = {
   "whatsNew.activityPresets": "Programatutako babeskopia baten aurretik, BombVault-ek Plex, Jellyfin edo Emby zerbitzariei galde diezaieke ea norbait ikusten ari den, zure script propiorik gabe.",
   "whatsNew.netGate": "Horrelako egiaztapenik ez duten aplikazioetan, programatutako babeskopia batek itxaron dezake edukiontziak datuak bidaltzen dituen bitartean.",
   "whatsNew.fdroid": "Android aplikazioa F-Droid-en dago, eta hemengo F-Droid botoiak haren fitxa irekitzen du.",
+  "whatsNew.locationRename": "Helmuga guztiei izena alda dakieke, baita hainbat ataletek partekatzen duten karpeta bati ere.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Erakutsi /metrics",

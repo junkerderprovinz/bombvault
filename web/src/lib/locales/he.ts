@@ -1117,6 +1117,7 @@ const he: Partial<Translations> = {
   "whatsNew.activityPresets": "לפני גיבוי מתוזמן, BombVault יכול לשאול את Plex, Jellyfin או Emby אם מישהו צופה, בלי סקריפט משלך.",
   "whatsNew.netGate": "לאפליקציות בלי בדיקה כזו, גיבוי מתוזמן יכול להמתין כל עוד הקונטיינר שולח נתונים.",
   "whatsNew.fdroid": "אפליקציית Android זמינה ב-F-Droid, וכפתור F-Droid כאן פותח את הדף שלה.",
+  "whatsNew.locationRename": "אפשר לשנות את השם של כל יעד, גם של תיקייה שכמה מקטעים חולקים.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "חשיפת /metrics",

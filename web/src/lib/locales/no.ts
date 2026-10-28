@@ -1114,6 +1114,7 @@ const no: Partial<Translations> = {
   "whatsNew.activityPresets": "Før en planlagt sikkerhetskopi kan BombVault spørre Plex, Jellyfin eller Emby om noen ser på, uten eget skript.",
   "whatsNew.netGate": "For apper uten en slik sjekk kan en planlagt sikkerhetskopi vente mens containeren sender data.",
   "whatsNew.fdroid": "Android-appen finnes på F-Droid, og F-Droid-knappen her åpner siden dens.",
+  "whatsNew.locationRename": "Alle mål kan gis nytt navn, også en mappe som flere seksjoner deler.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Eksponer /metrics",

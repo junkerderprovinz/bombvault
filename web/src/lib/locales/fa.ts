@@ -814,6 +814,7 @@ const fa: Partial<Translations> = {
   "whatsNew.activityPresets": "پیش از پشتیبان‌گیری زمان‌بندی‌شده، BombVault می‌تواند از Plex، Jellyfin یا Emby بپرسد که آیا کسی در حال تماشاست، بدون هیچ اسکریپتی از خودت.",
   "whatsNew.netGate": "برای برنامه‌هایی که چنین بررسی‌ای ندارند، پشتیبان‌گیری زمان‌بندی‌شده می‌تواند تا وقتی کانتینر داده می‌فرستد صبر کند.",
   "whatsNew.fdroid": "برنامهٔ Android در F-Droid است و دکمهٔ F-Droid در اینجا صفحهٔ آن را باز می‌کند.",
+  "whatsNew.locationRename": "نام هر مقصد را می‌توان تغییر داد، حتی پوشه‌ای که چند بخش با هم استفاده می‌کنند.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "نمایش /metrics",
