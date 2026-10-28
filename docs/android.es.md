@@ -7,7 +7,7 @@ La app de Android lleva todos los servidores BombVault de tu grupo al móvil. Ar
 - **Ajustes, Apps:** la tarjeta de la app de Android ofrece el APK de la versión que ejecuta tu servidor, con un código QR para escanear desde el móvil.
 - **APK:** cada versión publica `bombvault-android.apk` en su página de release, y [este enlace](https://github.com/junkerderprovinz/bombvault/releases/latest/download/bombvault-android.apk) descarga siempre la última compilación. Necesita Android 10 o posterior, y Android pregunta una vez si la app con la que abres el archivo puede instalar apps.
 - **Google Play:** la app está en una prueba cerrada hasta que pueda publicarse. Google Play solo publica una app de una cuenta de desarrollador nueva después de que al menos 12 testers la hayan mantenido instalada durante 14 días. Para ayudar, únete al [grupo de testers](https://groups.google.com/g/arrowloop-testers), abre la [página de prueba](https://play.google.com/apps/testing/bombvault.halleluja.design), toca **Convertirse en tester** e instala BombVault desde Google Play.
-- **F-Droid:** la ficha llegará más adelante.
+- **F-Droid:** [BombVault en F-Droid](https://f-droid.org/packages/bombvault.halleluja.design/). F-Droid compila la app por su cuenta a partir del código fuente y la firma con su propia clave, así que una versión nueva llega allí unos días después. Para cambiar entre la app de F-Droid y el APK, desinstala antes la otra.
 
 Empareja la app con servidores en la versión 9.7.0 o posterior. Un servidor con una versión anterior puede estar en el mismo grupo, pero muestra el móvil como una instancia normal, y la app solo lee la actividad de ese servidor después de iniciar sesión.
 

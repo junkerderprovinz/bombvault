@@ -7,7 +7,7 @@ Android uygulaması, grubundaki tüm BombVault sunucularını telefonuna getirir
 - **Ayarlar, Uygulamalar:** Android uygulamasının kartı, sunucunun çalıştırdığı sürümün APK'sını ve telefondan taranacak bir QR kodu sunar.
 - **APK:** her sürümün sayfasında `bombvault-android.apk` bulunur ve [bu bağlantı](https://github.com/junkerderprovinz/bombvault/releases/latest/download/bombvault-android.apk) her zaman en son derlemeyi indirir. Android 10 veya üstü gerekir; Android, dosyayı açtığın uygulamanın uygulama yükleyip yükleyemeyeceğini bir kez sorar.
 - **Google Play:** uygulama, herkese açılabilene kadar kapalı testte. Google Play, yeni bir geliştirici hesabının uygulamasını ancak en az 12 test kullanıcısı onu 14 gün boyunca yüklü tuttuktan sonra listeler. Yardım etmek istersen [test grubuna](https://groups.google.com/g/arrowloop-testers) katıl, [test sayfasını](https://play.google.com/apps/testing/bombvault.halleluja.design) aç, **Test kullanıcısı ol** düğmesine dokun ve BombVault'u Google Play'den yükle.
-- **F-Droid:** kaydı daha sonra gelecek.
+- **F-Droid:** [F-Droid'de BombVault](https://f-droid.org/packages/bombvault.halleluja.design/). F-Droid uygulamayı kaynak koddan kendisi derler ve kendi anahtarıyla imzalar, bu yüzden yeni bir sürüm oraya birkaç gün sonra ulaşır. F-Droid uygulaması ile APK arasında geçiş yapmak istersen önce diğerini kaldır.
 
 Uygulamayı 9.7.0 veya daha yeni sürümdeki sunucularla eşleştir. Daha eski sürümdeki bir sunucu aynı grupta olabilir, ancak telefonu sıradan bir örnek olarak gösterir ve uygulama o sunucunun etkinliğini ancak oturum açtıktan sonra okur.
 

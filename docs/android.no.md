@@ -7,7 +7,7 @@ Android-appen gir deg alle BombVault-servere i gruppen din på telefonen. Den st
 - **Innstillinger, Apper:** kortet for Android-appen tilbyr APK-en for utgivelsen serveren din kjører, med en QR-kode du kan skanne fra telefonen.
 - **APK:** hver utgivelse har `bombvault-android.apk` på utgivelsessiden, og [denne lenken](https://github.com/junkerderprovinz/bombvault/releases/latest/download/bombvault-android.apk) laster alltid ned det nyeste bygget. Den krever Android 10 eller nyere, og Android spør én gang om appen du åpner filen med, kan installere apper.
 - **Google Play:** appen er i en lukket test til den kan bli offentlig. Google Play viser en app fra en ny utviklerkonto først når minst 12 testere har hatt den installert i 14 dager. Vil du hjelpe til, bli med i [testergruppen](https://groups.google.com/g/arrowloop-testers), åpne [testsiden](https://play.google.com/apps/testing/bombvault.halleluja.design), trykk på **Bli tester** og installer BombVault fra Google Play.
-- **F-Droid:** oppføringen kommer senere.
+- **F-Droid:** [BombVault på F-Droid](https://f-droid.org/packages/bombvault.halleluja.design/). F-Droid bygger appen selv fra kildekoden og signerer den med sin egen nøkkel, så en ny utgivelse kommer dit noen dager senere. Vil du bytte mellom F-Droid-appen og APK-en, avinstaller den andre først.
 
 Par appen med servere på versjon 9.7.0 eller nyere. En server på en eldre versjon kan være i samme gruppe, men den viser telefonen som en vanlig instans, og appen leser aktiviteten til den serveren først etter en pålogging.
 

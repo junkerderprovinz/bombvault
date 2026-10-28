@@ -7,7 +7,7 @@ Aplikace pro Android ti dá do telefonu všechny servery BombVault z tvé skupin
 - **Nastavení, Aplikace:** karta aplikace pro Android nabízí APK pro vydání, které tvůj server provozuje, s QR kódem k naskenování z telefonu.
 - **APK:** každé vydání má na své stránce soubor `bombvault-android.apk` a [tento odkaz](https://github.com/junkerderprovinz/bombvault/releases/latest/download/bombvault-android.apk) vždy stáhne nejnovější sestavení. Aplikace vyžaduje Android 10 nebo novější a Android se jednou zeptá, zda aplikace, kterou soubor otevři, smí instalovat aplikace.
 - **Google Play:** aplikace je v uzavřeném testování, dokud ji nebude možné zveřejnit. Google Play zveřejní aplikaci z nového účtu vývojáře až poté, co ji alespoň 12 testerů mělo 14 dní nainstalovanou. Pokud chceš pomoci, přidej se do [skupiny testerů](https://groups.google.com/g/arrowloop-testers), otevři [testovací stránku](https://play.google.com/apps/testing/bombvault.halleluja.design), klepni na **Stát se testerem** a nainstaluj BombVault z Google Play.
-- **F-Droid:** záznam v katalogu přibude později.
+- **F-Droid:** [BombVault na F-Droidu](https://f-droid.org/packages/bombvault.halleluja.design/). F-Droid sestavuje aplikaci sám ze zdrojového kódu a podepisuje ji vlastním klíčem, proto tam nové vydání dorazí o pár dní později. Pokud chceš přejít mezi aplikací z F-Droidu a APK, nejdřív tu druhou odinstaluj.
 
 Spáruj aplikaci se servery ve verzi 9.7.0 nebo novější. Server se starší verzí může být ve stejné skupině, ale telefon u sebe ukáže jako obyčejnou instanci a aplikace čte aktivitu tohoto serveru až po přihlášení.
 

@@ -7,7 +7,7 @@ Android アプリは、グループ内のすべての BombVault サーバーを�
 - **設定、アプリ:** Android アプリのカードで、サーバーが動かしているリリースの APK を入手できます。スマートフォンから読み取る QR コードも表示されます。
 - **APK:** 各リリースのリリースページに `bombvault-android.apk` があり、[このリンク](https://github.com/junkerderprovinz/bombvault/releases/latest/download/bombvault-android.apk) からは常に最新のビルドをダウンロードできます。Android 10 以降が必要です。ファイルを開くアプリにアプリのインストールを許可するかどうかを、Android が一度だけ確認します。
 - **Google Play:** 一般公開できるようになるまで、アプリはクローズドテスト中です。Google Play は新しいデベロッパーアカウントのアプリを、12 人以上のテスターが 14 日間インストールしたままにした後でなければ公開しません。協力していただける場合は、[テスターグループ](https://groups.google.com/g/arrowloop-testers) に参加し、[テストページ](https://play.google.com/apps/testing/bombvault.halleluja.design) を開いて **テスターになる** をタップし、Google Play から BombVault をインストールしてください。
-- **F-Droid:** 掲載は準備中です。
+- **F-Droid:** [F-Droid の BombVault](https://f-droid.org/packages/bombvault.halleluja.design/)。F-Droid はアプリをソースコードから自分でビルドし、独自の鍵で署名します。そのため新しいリリースが届くのは数日後です。F-Droid 版と APK を切り替えるときは、先にもう一方をアンインストールしてください。
 
 アプリとペアリングするサーバーは、バージョン 9.7.0 以降にしてください。それより古いバージョンのサーバーも同じグループに入れますが、そのサーバーではスマートフォンが普通のインスタンスとして表示され、アプリがそのサーバーのアクティビティを読めるのはサインインした後だけです。
 
