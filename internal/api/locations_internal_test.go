@@ -563,14 +563,14 @@ func TestAFolderOfDomainPathsKeepsTheNameItIsGiven(t *testing.T) {
 	if env := renameLocation(t, h, folder.ID, " DXP4800 on S3 "); env["ok"] != true {
 		t.Fatalf("rename = %v", env)
 	}
-	if got := locationByID(t, svc, folder.ID); got.Name != "DXP4800 on S3" || len(got.Sections) != 2 {
+	if got := locationByID(t, svc, folder.ID); got.Name != "DXP4800 on S3" || !got.Renamed || len(got.Sections) != 2 {
 		t.Fatalf("after the rename: %+v", got)
 	}
 
 	if env := renameLocation(t, h, folder.ID, ""); env["ok"] != true {
 		t.Fatalf("clearing the name = %v", env)
 	}
-	if got := locationByID(t, svc, folder.ID); got.Name != "dxp480t" {
+	if got := locationByID(t, svc, folder.ID); got.Name != "dxp480t" || got.Renamed {
 		t.Fatalf("an empty name must give the folder's name back, got %q", got.Name)
 	}
 }

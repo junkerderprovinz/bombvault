@@ -614,3 +614,26 @@ test.describe("on the desktop", () => {
     expect(staged.writes).toEqual([]);
   });
 });
+
+// Against the harness's own server, whose one local folder is made of the
+// sections' paths and has no record of its own to keep a name in.
+test("the folder the sections share keeps the name it is given", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop-1280", "one desktop project is enough for the behaviour");
+  await page.addInitScript(() => window.localStorage.setItem("bv-lang", "de"));
+  const { locations } = (await (await page.request.get("/api/storage/locations")).json()) as { locations: { id: string; object: string }[] };
+  const folder = locations.find((l) => l.object === "path");
+  expect(folder, "the harness has no folder of domain paths").toBeTruthy();
+  try {
+    await page.goto(locationUrl(folder!.id));
+    const name = page.getByRole("textbox", { name: "Name" });
+    await name.fill("Keller-NAS");
+    await name.press("Enter");
+    await expect(page.getByRole("heading", { level: 1, name: "Keller-NAS" })).toBeVisible();
+    await page.reload();
+    await expect(page.getByRole("heading", { level: 1, name: "Keller-NAS" })).toBeVisible();
+    await page.goto("/storage");
+    await expect(page.getByRole("link", { name: "Keller-NAS" })).toBeVisible();
+  } finally {
+    await page.request.put(`/api/storage/locations/${encodeURIComponent(folder!.id)}/name`, { data: { name: "" } });
+  }
+});

@@ -34,11 +34,12 @@ function ownFolder(location: StorageLocation): boolean {
 }
 
 /** namedLocal calls the sections' own folder on this host Local, as the
- *  placement buttons do. Several such folders keep their own names to tell
- *  them apart, so `all` is the whole list they are counted in. */
+ *  placement buttons do, unless it was given a name. Several such folders keep
+ *  their own names to tell them apart, so `all` is the whole list they are
+ *  counted in. */
 export function namedLocal(t: T, locations: StorageLocation[], all = locations): StorageLocation[] {
   if (all.filter(ownFolder).length !== 1) return locations;
-  return locations.map((location) => (ownFolder(location) ? { ...location, name: t("placement.segLocal") } : location));
+  return locations.map((location) => (ownFolder(location) && !location.renamed ? { ...location, name: t("placement.segLocal") } : location));
 }
 
 // The part of an address that tells two places apart: the server it is on,

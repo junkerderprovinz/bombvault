@@ -71,6 +71,11 @@ describe("localName", () => {
     expect(localName(t, list, "files")).toBe(en["placement.segLocal"]);
   });
 
+  it("keeps the name the only folder on this host was given", () => {
+    const list = namedLocal(t, [{ ...folder("Keller-NAS", "files"), renamed: true }, location()]);
+    expect(localName(t, list, "files")).toBe("Keller-NAS");
+  });
+
   it("names each of several folders after itself", () => {
     const list = namedLocal(t, [folder("bombvault", "containers"), folder("cache", "files")]);
     expect(localName(t, list, "files")).toBe("cache");

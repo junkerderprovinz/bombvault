@@ -7991,6 +7991,8 @@ export interface StorageLocation {
   /** What restic talks to: local, or the scheme of the address. */
   backend: string;
   name: string;
+  /** A folder of domain paths carries a name it was given. */
+  renamed?: boolean;
   /** Path or address, without credentials. */
   where: string;
   credsRef?: string;

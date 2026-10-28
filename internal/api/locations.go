@@ -46,6 +46,9 @@ type storageLocation struct {
 	Mark     string `json:"mark,omitempty"`
 	Backend  string `json:"backend"`
 	Name     string `json:"name"`
+	// Renamed says a folder of domain paths carries a name it was given
+	// rather than its folder's.
+	Renamed  bool   `json:"renamed,omitempty"`
 	Where    string `json:"where"`
 	CredsRef string `json:"credsRef,omitempty"`
 	Enabled  bool   `json:"enabled"`
@@ -405,7 +408,7 @@ func (b *locationBuilder) pathLocations() []storageLocation {
 			keep := sharedLocalKeep(b.settings)
 			out = append(out, storageLocation{
 				ID: locationPath + ":" + key, Object: locationPath,
-				Kind: locationKind(raw), Backend: backendOf(raw), Name: name, Where: root,
+				Kind: locationKind(raw), Backend: backendOf(raw), Name: name, Renamed: b.names[key] != "", Where: root,
 				Enabled: true, OffPremises: restic.IsRemoteRepo(raw), Retention: &keep,
 				Protection: locationProtection{Immutable: true, Testable: backendOf(raw) == "rest"},
 			})
