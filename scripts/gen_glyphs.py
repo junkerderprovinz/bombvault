@@ -34,6 +34,8 @@ ACTION = [
     "IconStop",
     "IconBack",
     "IconForward",
+    "IconMove",
+    "IconGrip",
     "IconLatest",
     "IconSelectAll",
     "IconClearSelection",
@@ -50,8 +52,8 @@ ACTION = [
     "IconCompressOff",
     "IconCompressAuto",
     "IconCompressMax",
-    # The Look page's theme, corner and motion choices. The leaf and the storm
-    # are hidden levels, offered once found.
+    # The Look page's theme, corner, motion and label choices. The leaf and the
+    # storm are hidden levels, offered once found.
     "IconMoon",
     "IconSun",
     "IconThemeSystem",
@@ -63,6 +65,10 @@ ACTION = [
     "IconMotionSubtle",
     "IconMotionWild",
     "IconMotionStorm",
+    "IconLabelText",
+    "IconLabelTextGlyph",
+    "IconLabelGlyph",
+    "IconLabelReactive",
     "IconSave",
     "IconEye",
     "IconEyeOff",
