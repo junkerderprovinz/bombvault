@@ -15,6 +15,11 @@
   "prConcurrentLimit": 6,
   "packageRules": [
     {
+      "description": "Node stays on 24 until 26 is tested. This covers the node image, node-version in setup-node (looked up as actions/node-versions), .nvmrc, engines and @types/node.",
+      "matchPackageNames": ["node", "actions/node-versions", "@types/node"],
+      "allowedVersions": "<25"
+    },
+    {
       "description": "GitHub Actions: auto-merge all updates",
       "matchManagers": ["github-actions"],
       "matchUpdateTypes": ["major", "minor", "patch", "digest"],
