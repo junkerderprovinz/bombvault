@@ -657,3 +657,52 @@ func TestAnOwnFolderMoveChecksANewPlaceThatHoldsEveryBackupAlready(t *testing.T)
 		t.Fatalf("checks = %v, want the new place checked", f.eng.checks)
 	}
 }
+
+func TestMovingTheOwnFolderOfASectionThatBacksUpStraightToACopySendsNewBackupsThere(t *testing.T) {
+	f := newPlacementFixture(t)
+	vault := f.destination("Vault", vaultRepo)
+	mani := f.target("containers", "Mani", "offsite/mani/containers")
+	direct := f.direct(mani)
+	f.setDefault("containers", direct.ID, store.SkipAll)
+	f.container("web", direct.ID)
+	req := map[string]any{"domains": []string{"containers"}, "location": "destination:" + vault.ID}
+
+	if steps := ownSteps(t, f.do("POST", "/api/storage/own-folders/preview", req)); steps[0].WritesTo != "Mani" {
+		t.Fatalf("step = %+v, want it to say new backups go straight to Mani now", steps[0])
+	}
+	ownSteps(t, f.do("POST", "/api/storage/own-folders", req))
+
+	d, _, err := f.st.PlacementDefaultFor("containers")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if d.Home != "" || skipsTarget(d.Skip, mani.ID) {
+		t.Fatalf("default = %+v, want the own folder as its home and a copy at Mani", d)
+	}
+	settings, err := f.st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	repo, _, err := f.svc.settleHome(context.Background(), settings, store.ItemRef{Domain: "containers", Key: "web"})
+	if err != nil || repo != "" {
+		t.Fatalf("web backs up to %q (%v), want the new own folder", repo, err)
+	}
+}
+
+func TestMovingAnOwnFolderKeepsADefaultOnANamedRepository(t *testing.T) {
+	f := newPlacementFixture(t)
+	vault := f.destination("Vault", vaultRepo)
+	cold := f.namedRepo("Cold", "cold/containers")
+	f.setDefault("containers", cold.ID)
+
+	steps := ownSteps(t, f.do("POST", "/api/storage/own-folders", map[string]any{
+		"domains": []string{"containers"}, "location": "destination:" + vault.ID,
+	}))
+
+	if steps[0].WritesTo != "" {
+		t.Fatalf("step = %+v, want no word about a copy", steps[0])
+	}
+	if d, _, _ := f.st.PlacementDefaultFor("containers"); d.Home != cold.ID {
+		t.Fatalf("default home = %q, want Cold", d.Home)
+	}
+}

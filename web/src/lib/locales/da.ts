@@ -740,6 +740,7 @@ const da: Partial<Translations> = {
   "own.lineProtection": "Beskyttelse, båndbreddegrænser og vækstalarm kommer fra {name}.",
   "own.lineKeepWider": "Den kopi gemmer nogle sikkerhedskopier længere end opbevaringsreglerne for {section}. Fra skiftet gemmer {section} alt, hvad en af dem gemmer, så ingen af de sikkerhedskopier går tabt.",
   "own.lineSwitchOn": "Den egne mappe er slået fra, så sikkerhedskopierne går direkte til den kopi. Skiftet slår den egne mappe til igen.",
+  "own.lineHomeAgain": "Lige nu går de i stedet direkte til {name}. Efter skiftet lander de igen først i den egne mappe.",
   "own.copyOver": "Kopiér de allerede lavede sikkerhedskopier",
   "own.copyOverHint": "Fra: de bliver, hvor de er, og kopieres ikke.",
   "own.blocked": "Den egne mappe kan ikke flyttes sådan.",

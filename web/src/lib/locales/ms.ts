@@ -950,6 +950,7 @@ const ms: Partial<Translations> = {
   "own.lineProtection": "Perlindungan, had lebar jalur dan penggera pertumbuhan datang daripada {name}.",
   "own.lineKeepWider": "Salinan itu menyimpan sesetengah sandaran lebih lama daripada peraturan pengekalan {section}. Mulai pertukaran, {section} menyimpan apa sahaja yang disimpan oleh mana-mana peraturan itu, jadi tiada sandaran tersebut yang hilang.",
   "own.lineSwitchOn": "Folder sendiri dimatikan, jadi sandaran terus pergi ke salinan itu. Pertukaran menghidupkan semula folder sendiri.",
+  "own.lineHomeAgain": "Sekarang sandaran terus pergi ke {name}. Selepas pertukaran, sandaran masuk ke folder sendiri dahulu semula.",
   "own.copyOver": "Salin sandaran yang sudah dibuat",
   "own.copyOverHint": "Mati: sandaran kekal di tempatnya dan tidak disalin.",
   "own.blocked": "Folder sendiri tidak boleh dialihkan begini.",

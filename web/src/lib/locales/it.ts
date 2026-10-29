@@ -740,6 +740,7 @@ const it: Partial<Translations> = {
   "own.lineProtection": "Protezione, limiti di banda e allarme di crescita vengono da {name}.",
   "own.lineKeepWider": "Quella copia conserva alcuni backup più a lungo delle regole di conservazione di {section}. Dal cambio in poi, {section} conserva tutto ciò che conserva l'una o l'altra regola, quindi nessuno di quei backup va perso.",
   "own.lineSwitchOn": "La cartella propria è spenta, quindi i backup vanno direttamente a quella copia. Il cambio riaccende la cartella propria.",
+  "own.lineHomeAgain": "Al momento vanno direttamente a {name}. Dopo il cambio arrivano di nuovo prima nella cartella propria.",
   "own.copyOver": "Copia i backup già fatti",
   "own.copyOverHint": "Disattivato: restano dove sono e non vengono copiati.",
   "own.blocked": "La cartella propria non può essere spostata così.",

@@ -950,6 +950,7 @@ const ca: Partial<Translations> = {
   "own.lineProtection": "La protecció, els límits d'amplada de banda i l'alarma de creixement venen de {name}.",
   "own.lineKeepWider": "Aquesta còpia conserva algunes còpies de seguretat més temps que les regles de retenció de {section}. A partir del canvi, {section} conserva tot el que conservi qualsevol de les dues, així que no es perd cap d'aquestes còpies.",
   "own.lineSwitchOn": "La carpeta pròpia està desactivada, així que les còpies de seguretat van directament a aquesta còpia. El canvi torna a activar la carpeta pròpia.",
+  "own.lineHomeAgain": "Ara mateix van directament a {name}. Després del canvi tornen a arribar primer a la carpeta pròpia.",
   "own.copyOver": "Copia les còpies de seguretat ja fetes",
   "own.copyOverHint": "Desactivat: es queden on són i no es copien.",
   "own.blocked": "La carpeta pròpia no es pot moure així.",

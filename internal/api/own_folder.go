@@ -73,7 +73,13 @@ type ownFolderStep struct {
 	// backup already, so a move that copies them checks it before the switch
 	// as it would after copying them itself.
 	Verify bool `json:"verify,omitempty"`
+	// WritesTo names the copy whose direct repository the section's default
+	// backs up to, past the own folder. The switch makes the own folder the
+	// default's home again and keeps the copy.
+	WritesTo string `json:"writesTo,omitempty"`
 
+	// direct is the repository WritesTo stands for.
+	direct string
 	plan   movePlan
 	folder store.OwnFolder
 	// from is the path the settings held when the step was planned, path the
@@ -200,6 +206,11 @@ func (s *Service) planOwnFolder(ctx context.Context, settings store.Settings, do
 		step.places[1] = place.dest.ID
 	}
 	step.folder = store.OwnFolder{Domain: domain, Row: s.ownFolderRow(domain, to, place)}
+	if validPlacementDomain(domain) {
+		if step.direct, step.WritesTo, err = s.directDefault(domain); err != nil {
+			return ownFolderStep{}, err
+		}
+	}
 
 	targets, err := s.store.OffsiteTargetsForDomain(domain)
 	if err != nil {
@@ -293,6 +304,65 @@ func (s *Service) planOwnFolder(ctx context.Context, settings store.Settings, do
 	return step, nil
 }
 
+// directDefault is the direct repository a section's default backs up to, past
+// its own folder, with the name of the copy it belongs to. Both are empty for a
+// default that writes anywhere else.
+func (s *Service) directDefault(domain string) (repoID, copyName string, err error) {
+	d, _, err := s.store.PlacementDefaultFor(domain)
+	if err != nil || d.Home == "" || d.Home == store.HomeNowhere {
+		return "", "", err
+	}
+	named, err := s.namedRepoIndex()
+	if err != nil {
+		return "", "", err
+	}
+	r := named[d.Home]
+	if r.CompanionOf == "" {
+		return "", "", nil
+	}
+	t, ok, err := s.store.GetOffsiteTarget(r.CompanionOf)
+	if err != nil || !ok {
+		return "", "", err
+	}
+	return r.ID, placementTargetName(t), nil
+}
+
+// ownFolderHomeAgain points a default that backs up straight to the direct
+// repository repoID at the own folder, copying to that repository's target
+// instead. A default changed since the move was planned stays as it is.
+func (s *Service) ownFolderHomeAgain(ctx context.Context, domain, repoID string) error {
+	s.placementMu.Lock()
+	defer s.placementMu.Unlock()
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return err
+	}
+	p, err := s.readPlacement(settings, domain)
+	if err != nil || p.State.Default.Home != repoID {
+		return err
+	}
+	r, err := s.store.GetNamedRepo(repoID)
+	if err != nil {
+		return err
+	}
+	return s.writeDefault(ctx, p, "", copyingAlso(p, r.CompanionOf))
+}
+
+// copyingAlso is the default's skip with the target taken out of it.
+func copyingAlso(p placementRead, targetID string) []string {
+	skip := p.defaultSkip()
+	if !slices.Contains(skip, store.SkipAll) {
+		return slices.DeleteFunc(slices.Clone(skip), func(id string) bool { return id == targetID })
+	}
+	out := []string{}
+	for _, t := range p.Targets {
+		if t.ID != targetID {
+			out = append(out, t.ID)
+		}
+	}
+	return out
+}
+
 // oldOwnFolderOpens reports whether the old own folder holds a repository.
 // One that was never created holds nothing; one that is there and does not
 // answer, or a remote one that held backups and holds no repository now, is an
@@ -358,8 +428,9 @@ func (s *Service) ownFolderRow(domain, to string, place ownFolderPlace) *store.O
 
 // switchOwnFolder points the section at its new own folder: the path, the
 // row and the end of the copy there, in one transaction. A path set in the
-// meantime stays, since the step was planned for the one before it.
-func (s *Service) switchOwnFolder(step ownFolderStep) (store.Settings, error) {
+// meantime stays, since the step was planned for the one before it. A default
+// that backed up past the own folder takes it as its home after that.
+func (s *Service) switchOwnFolder(ctx context.Context, step ownFolderStep) (store.Settings, error) {
 	err := s.store.MoveOwnFolder(step.folder, func(st *store.Settings) error {
 		if strings.TrimSpace(domainPathRaw(step.Domain, *st)) != step.from {
 			return errOwnFolderChanged
@@ -379,6 +450,11 @@ func (s *Service) switchOwnFolder(step ownFolderStep) (store.Settings, error) {
 	})
 	if err != nil {
 		return store.Settings{}, err
+	}
+	if step.direct != "" {
+		if err := s.ownFolderHomeAgain(ctx, step.Domain, step.direct); err != nil {
+			return store.Settings{}, err
+		}
 	}
 	settings, err := s.store.GetSettings()
 	if err != nil {
@@ -441,7 +517,7 @@ func (s *Service) copyThenSwitch(ctx context.Context, step ownFolderStep, starte
 	if err := s.checkNewPlace(ctx, plan); err != nil {
 		return store.Settings{}, err
 	}
-	return s.switchOwnFolder(step)
+	return s.switchOwnFolder(ctx, step)
 }
 
 // MoveOwnFolders switches every section of the request that needs nothing
@@ -495,7 +571,7 @@ func (s *Service) MoveOwnFolders(ctx context.Context, req ownFolderRequest, move
 		}
 	}
 	for i, step := range now {
-		settings, err := s.switchOwnFolder(step)
+		settings, err := s.switchOwnFolder(ctx, step)
 		if err != nil {
 			for _, c := range claims[i:] {
 				s.releaseOwnFolder(c)

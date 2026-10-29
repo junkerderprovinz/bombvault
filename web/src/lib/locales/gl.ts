@@ -950,6 +950,7 @@ const gl: Partial<Translations> = {
   "own.lineProtection": "A protección, os límites de largo de banda e a alarma de crecemento veñen de {name}.",
   "own.lineKeepWider": "Esa copia garda algunhas copias de seguridade máis tempo que as regras de retención de {section}. Desde o cambio, {section} garda todo o que garde calquera das dúas, así que non se perde ningunha desas copias.",
   "own.lineSwitchOn": "O cartafol propio está desactivado, así que as copias de seguridade van directamente a esa copia. O cambio volve activar o cartafol propio.",
+  "own.lineHomeAgain": "Agora mesmo van directamente a {name}. Despois do cambio volven chegar primeiro ao cartafol propio.",
   "own.copyOver": "Copiar as copias de seguridade xa feitas",
   "own.copyOverHint": "Desactivado: quedan onde están e non se copian.",
   "own.blocked": "O cartafol propio non se pode mover así.",

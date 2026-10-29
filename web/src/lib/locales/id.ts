@@ -950,6 +950,7 @@ const id: Partial<Translations> = {
   "own.lineProtection": "Perlindungan, batas bandwidth, dan alarm pertumbuhan berasal dari {name}.",
   "own.lineKeepWider": "Salinan itu menyimpan sebagian cadangan lebih lama daripada aturan retensi {section}. Sejak pergantian, {section} menyimpan apa pun yang disimpan salah satu aturan itu, jadi tidak ada cadangan tersebut yang hilang.",
   "own.lineSwitchOn": "Folder sendiri sedang mati, jadi cadangan langsung masuk ke salinan itu. Pergantian menyalakan lagi folder sendiri.",
+  "own.lineHomeAgain": "Saat ini cadangan langsung masuk ke {name}. Setelah pergantian, cadangan kembali masuk ke folder sendiri lebih dulu.",
   "own.copyOver": "Salin cadangan yang sudah dibuat",
   "own.copyOverHint": "Mati: cadangan tetap di tempatnya dan tidak disalin.",
   "own.blocked": "Folder sendiri tidak bisa dipindahkan seperti ini.",

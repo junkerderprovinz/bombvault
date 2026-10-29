@@ -950,6 +950,7 @@ const sk: Partial<Translations> = {
   "own.lineProtection": "Ochrana, limity šírky pásma a alarm rastu pochádzajú z {name}.",
   "own.lineKeepWider": "Táto kópia uchováva niektoré zálohy dlhšie ako pravidlá uchovávania sekcie {section}. Po prepnutí si {section} ponechá všetko, čo ponechá ktorékoľvek z nich, takže žiadna z týchto záloh sa nestratí.",
   "own.lineSwitchOn": "Vlastný priečinok je vypnutý, takže zálohy idú priamo do tejto kópie. Prepnutie vlastný priečinok znova zapne.",
+  "own.lineHomeAgain": "Teraz idú rovno do {name}. Po prepnutí budú znova najprv vo vlastnom priečinku.",
   "own.copyOver": "Skopírovať už vytvorené zálohy",
   "own.copyOverHint": "Vypnuté: zostanú, kde sú, a neskopírujú sa.",
   "own.blocked": "Vlastný priečinok sa takto presunúť nedá.",

@@ -950,6 +950,7 @@ const lt: Partial<Translations> = {
   "own.lineProtection": "Apsauga, pralaidumo ribos ir augimo signalas ateina iš {name}.",
   "own.lineKeepWider": "Ta kopija kai kurias atsargines kopijas laiko ilgiau nei {section} saugojimo taisyklės. Nuo perjungimo {section} laiko viską, ką laiko bet kuri iš jų, todėl nė viena iš tų atsarginių kopijų nedingsta.",
   "own.lineSwitchOn": "Savas aplankas išjungtas, todėl atsarginės kopijos keliauja tiesiai į tą kopiją. Perjungimas savą aplanką vėl įjungia.",
+  "own.lineHomeAgain": "Dabar jos keliauja tiesiai į {name}. Po perjungimo jos vėl pirmiausia pateks į savą aplanką.",
   "own.copyOver": "Kopijuoti jau padarytas atsargines kopijas",
   "own.copyOverHint": "Išjungta: jos lieka ten, kur yra, ir nekopijuojamos.",
   "own.blocked": "Savo aplanko taip perkelti negalima.",

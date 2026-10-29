@@ -950,6 +950,7 @@ const eu: Partial<Translations> = {
   "own.lineProtection": "Babesa, banda-zabaleraren mugak eta hazkunde-alarma {name} helmugatik datoz.",
   "own.lineKeepWider": "Kopia horrek babeskopia batzuk {section} atalaren mantentze-arauek baino denbora gehiagoz gordetzen ditu. Aldaketatik aurrera, {section} atalak bietako edozein arauk gordetzen duen guztia gordetzen du, beraz babeskopia horietako bat ere ez da galtzen.",
   "own.lineSwitchOn": "Karpeta propioa desaktibatuta dago, beraz babeskopiak zuzenean kopia horretara doaz. Aldaketak karpeta propioa berriro aktibatzen du.",
+  "own.lineHomeAgain": "Une honetan zuzenean doaz hona: {name}. Aldaketaren ondoren karpeta propiora iristen dira lehenik berriro.",
   "own.copyOver": "Kopiatu dagoeneko egindako babeskopiak",
   "own.copyOverHint": "Desaktibatuta: dauden lekuan geratzen dira eta ez dira kopiatzen.",
   "own.blocked": "Karpeta propioa ezin da horrela mugitu.",

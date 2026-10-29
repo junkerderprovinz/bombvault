@@ -737,6 +737,7 @@ const pt: Partial<Translations> = {
   "own.lineProtection": "A proteção, os limites de largura de banda e o alarme de crescimento vêm de {name}.",
   "own.lineKeepWider": "Essa cópia guarda alguns backups durante mais tempo do que as regras de retenção de {section}. A partir da troca, {section} guarda tudo o que qualquer uma delas guardar, por isso nenhum desses backups se perde.",
   "own.lineSwitchOn": "A pasta própria está desligada, por isso os backups vão diretamente para essa cópia. A troca volta a ligar a pasta própria.",
+  "own.lineHomeAgain": "Neste momento vão diretamente para {name}. Depois da troca voltam a chegar primeiro à pasta própria.",
   "own.copyOver": "Copiar os backups já feitos",
   "own.copyOverHint": "Desligado: ficam onde estão e não são copiados.",
   "own.blocked": "A pasta própria não pode ser movida assim.",

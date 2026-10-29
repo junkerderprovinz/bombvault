@@ -734,6 +734,7 @@ const pl: Partial<Translations> = {
   "own.lineProtection": "Ochrona, limity przepustowości i alarm wzrostu pochodzą z {name}.",
   "own.lineKeepWider": "Ta kopia przechowuje niektóre kopie zapasowe dłużej niż reguły przechowywania sekcji {section}. Od przełączenia {section} zachowuje wszystko, co zachowuje którakolwiek z nich, więc żadna z tych kopii nie przepada.",
   "own.lineSwitchOn": "Własny folder jest wyłączony, więc kopie zapasowe trafiają prosto do tej kopii. Przełączenie z powrotem włącza własny folder.",
+  "own.lineHomeAgain": "Teraz trafiają prosto do {name}. Po przełączeniu znów trafiają najpierw do własnego folderu.",
   "own.copyOver": "Skopiuj już wykonane kopie zapasowe",
   "own.copyOverHint": "Wyłączone: zostają tam, gdzie są, i nie są kopiowane.",
   "own.blocked": "Własnego folderu nie da się tak przenieść.",

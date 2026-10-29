@@ -740,6 +740,7 @@ const tr: Partial<Translations> = {
   "own.lineProtection": "Koruma, bant genişliği sınırları ve büyüme alarmı {name} hedefinden gelir.",
   "own.lineKeepWider": "Bu kopya bazı yedekleri {section} için saklama kurallarından daha uzun tutuyor. Değişimden sonra {section}, iki kuraldan herhangi birinin tuttuğu her şeyi tutar; böylece bu yedeklerin hiçbiri kaybolmaz.",
   "own.lineSwitchOn": "Kendi klasörü kapalı, bu yüzden yedekler doğrudan bu kopyaya gidiyor. Değişim kendi klasörünü yeniden açar.",
+  "own.lineHomeAgain": "Şu anda bunun yerine doğrudan {name} hedefine gidiyorlar. Değişimden sonra yeniden önce kendi klasörüne gelirler.",
   "own.copyOver": "Zaten alınmış yedekleri kopyala",
   "own.copyOverHint": "Kapalı: oldukları yerde kalırlar ve kopyalanmazlar.",
   "own.blocked": "Kendi klasörü bu şekilde taşınamaz.",

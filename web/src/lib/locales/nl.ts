@@ -736,6 +736,7 @@ const nl: Partial<Translations> = {
   "own.lineProtection": "Bescherming, bandbreedtelimieten en het groeialarm komen van {name}.",
   "own.lineKeepWider": "Die kopie bewaart sommige back-ups langer dan de bewaarregels van {section}. Vanaf de wissel bewaart {section} alles wat een van beide bewaart, dus geen van die back-ups gaat verloren.",
   "own.lineSwitchOn": "De eigen map staat uit, dus de back-ups gaan rechtstreeks naar die kopie. De wissel zet de eigen map weer aan.",
+  "own.lineHomeAgain": "Op dit moment gaan ze rechtstreeks naar {name}. Na de wissel komen ze weer eerst in de eigen map.",
   "own.copyOver": "Al gemaakte back-ups meekopiëren",
   "own.copyOverHint": "Uit: ze blijven waar ze zijn en worden niet gekopieerd.",
   "own.blocked": "De eigen map kan zo niet verhuizen.",

@@ -735,6 +735,7 @@ const vi: Partial<Translations> = {
   "own.lineProtection": "Bảo vệ, giới hạn băng thông và cảnh báo tăng trưởng lấy từ {name}.",
   "own.lineKeepWider": "Bản sao đó giữ một số bản sao lưu lâu hơn quy tắc lưu giữ của {section}. Từ lúc chuyển, {section} giữ mọi thứ mà một trong hai quy tắc giữ, nên không bản sao lưu nào trong số đó bị mất.",
   "own.lineSwitchOn": "Thư mục riêng đang tắt, nên các bản sao lưu đi thẳng vào bản sao đó. Việc chuyển sẽ bật lại thư mục riêng.",
+  "own.lineHomeAgain": "Hiện các bản sao lưu đi thẳng vào {name}. Sau khi chuyển, chúng lại vào thư mục riêng trước.",
   "own.copyOver": "Sao chép các bản sao lưu đã tạo",
   "own.copyOverHint": "Tắt: chúng ở nguyên chỗ cũ và không được sao chép.",
   "own.blocked": "Không thể chuyển thư mục riêng theo cách này.",

@@ -2948,6 +2948,9 @@ export interface OwnFolderStep {
   /** The new place, no copy of the section, holds every backup already, and a
    *  move that copies them checks it before the switch. */
   verify?: boolean;
+  /** The copy whose direct repository the section's default backs up to, past
+   *  the own folder. The switch makes the own folder the home again. */
+  writesTo?: string;
 }
 
 type OwnFolderAnswer = OkEnvelope & { steps?: OwnFolderStep[] };

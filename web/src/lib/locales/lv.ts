@@ -950,6 +950,7 @@ const lv: Partial<Translations> = {
   "own.lineProtection": "Aizsardzība, joslas platuma ierobežojumi un pieauguma trauksme nāk no {name}.",
   "own.lineKeepWider": "Šī kopija dažus dublējumus glabā ilgāk nekā {section} saglabāšanas noteikumi. Pēc pārslēgšanas {section} glabā visu, ko glabā jebkurš no tiem, tāpēc neviens no šiem dublējumiem nezūd.",
   "own.lineSwitchOn": "Paša mape ir izslēgta, tāpēc dublējumi nonāk tieši šajā kopijā. Pārslēgšana paša mapi atkal ieslēdz.",
+  "own.lineHomeAgain": "Pašlaik tie nonāk tieši šeit: {name}. Pēc pārslēgšanas tie atkal vispirms nonāks paša mapē.",
   "own.copyOver": "Kopēt jau izveidotos dublējumus",
   "own.copyOverHint": "Izslēgts: tie paliek, kur ir, un netiek kopēti.",
   "own.blocked": "Paša mapi šādi nevar pārvietot.",

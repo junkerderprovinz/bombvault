@@ -950,6 +950,7 @@ const sl: Partial<Translations> = {
   "own.lineProtection": "Zaščita, omejitve pasovne širine in alarm rasti pridejo iz {name}.",
   "own.lineKeepWider": "Ta kopija nekatere varnostne kopije hrani dlje, kot določajo pravila hrambe razdelka {section}. Od zamenjave {section} obdrži vse, kar obdrži katero koli od teh pravil, zato se nobena od teh kopij ne izgubi.",
   "own.lineSwitchOn": "Lastna mapa je izklopljena, zato varnostne kopije gredo neposredno v to kopijo. Zamenjava lastno mapo spet vklopi.",
+  "own.lineHomeAgain": "Trenutno gredo neposredno v {name}. Po zamenjavi spet najprej pristanejo v lastni mapi.",
   "own.copyOver": "Prekopiraj že narejene varnostne kopije",
   "own.copyOverHint": "Izklopljeno: ostanejo, kjer so, in se ne kopirajo.",
   "own.blocked": "Lastne mape ni mogoče premakniti tako.",

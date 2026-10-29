@@ -950,6 +950,7 @@ const et: Partial<Translations> = {
   "own.lineProtection": "Kaitse, ribalaiuse piirangud ja kasvuhäire tulevad asukohast {name}.",
   "own.lineKeepWider": "See koopia hoiab mõnda varukoopiat kauem kui jaotise {section} säilitusreeglid. Pärast vahetust hoiab {section} alles kõik, mida kumbki reegel hoiab, nii et ükski neist varukoopiatest ei lähe kaotsi.",
   "own.lineSwitchOn": "Oma kaust on välja lülitatud, seega lähevad varukoopiad otse sellesse koopiasse. Vahetus lülitab oma kausta uuesti sisse.",
+  "own.lineHomeAgain": "Praegu lähevad need hoopis otse sihtkohta {name}. Pärast vahetust jõuavad need jälle kõigepealt oma kausta.",
   "own.copyOver": "Kopeeri juba tehtud varukoopiad",
   "own.copyOverHint": "Väljas: need jäävad oma kohale ja neid ei kopeerita.",
   "own.blocked": "Oma kausta ei saa nii teisaldada.",

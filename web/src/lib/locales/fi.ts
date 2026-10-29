@@ -740,6 +740,7 @@ const fi: Partial<Translations> = {
   "own.lineProtection": "Suojaus, kaistarajat ja kasvuhälytys tulevat kohteesta {name}.",
   "own.lineKeepWider": "Se kopio säilyttää joitakin varmuuskopioita pidempään kuin osion {section} säilytyssäännöt. Vaihdosta alkaen {section} säilyttää kaiken, minkä jompikumpi säännöistä säilyttää, joten yksikään niistä varmuuskopioista ei katoa.",
   "own.lineSwitchOn": "Oma kansio on pois päältä, joten varmuuskopiot menevät suoraan siihen kopioon. Vaihto kytkee oman kansion takaisin päälle.",
+  "own.lineHomeAgain": "Nyt ne menevät sen sijaan suoraan kohteeseen {name}. Vaihdon jälkeen ne tulevat taas ensin omaan kansioon.",
   "own.copyOver": "Kopioi jo tehdyt varmuuskopiot",
   "own.copyOverHint": "Pois: ne jäävät paikalleen eikä niitä kopioida.",
   "own.blocked": "Omaa kansiota ei voi siirtää näin.",

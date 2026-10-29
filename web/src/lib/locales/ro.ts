@@ -737,6 +737,7 @@ const ro: Partial<Translations> = {
   "own.lineProtection": "Protecția, limitele de lățime de bandă și alarma de creștere vin de la {name}.",
   "own.lineKeepWider": "Acea copie păstrează unele copii de rezervă mai mult decât regulile de retenție ale {section}. De la schimbare, {section} păstrează tot ce păstrează oricare dintre ele, așa că nu se pierde niciuna dintre acele copii.",
   "own.lineSwitchOn": "Dosarul propriu este oprit, așa că copiile de rezervă merg direct în acea copie. Schimbarea pornește din nou dosarul propriu.",
+  "own.lineHomeAgain": "Acum merg direct în {name}. După schimbare ajung din nou întâi în dosarul propriu.",
   "own.copyOver": "Copiază copiile de rezervă deja făcute",
   "own.copyOverHint": "Dezactivat: rămân unde sunt și nu sunt copiate.",
   "own.blocked": "Dosarul propriu nu poate fi mutat așa.",

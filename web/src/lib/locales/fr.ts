@@ -740,6 +740,7 @@ const fr: Partial<Translations> = {
   "own.lineProtection": "La protection, les limites de bande passante et l'alarme de croissance viennent de {name}.",
   "own.lineKeepWider": "Cette copie conserve certaines sauvegardes plus longtemps que les règles de rétention de {section}. À partir du changement, {section} conserve tout ce que l'une ou l'autre conserve, aucune de ces sauvegardes n'est donc perdue.",
   "own.lineSwitchOn": "Le dossier propre est désactivé, les sauvegardes vont donc directement vers cette copie. Le changement réactive le dossier propre.",
+  "own.lineHomeAgain": "Pour le moment, elles vont directement vers {name}. Après le changement, elles arrivent à nouveau en premier dans le dossier propre.",
   "own.copyOver": "Copier les sauvegardes déjà faites",
   "own.copyOverHint": "Désactivé : elles restent où elles sont et ne sont pas copiées.",
   "own.blocked": "Le dossier propre ne peut pas être déplacé ainsi.",
