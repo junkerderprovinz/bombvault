@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { getBackupOrder, setBackupOrder } from "../../lib/api";
 import type { Container, ContainerOrder } from "../../lib/api";
 import { IconTipButton } from "../IconTipButton";
+import { IconGrip } from "../glyphs";
 import { useT } from "../../lib/i18n";
 import { Button } from "../Button";
 import { useReorder } from "../../lib/dragLift";
@@ -142,14 +143,7 @@ export function BackupOrderPanel({
                     aria-hidden="true"
                     onPointerDown={(e) => drag.press(e, name)}
                   >
-                    <svg width="10" height="14" viewBox="0 0 10 14" fill="currentColor">
-                      <circle cx="3" cy="3" r="1" />
-                      <circle cx="7" cy="3" r="1" />
-                      <circle cx="3" cy="7" r="1" />
-                      <circle cx="7" cy="7" r="1" />
-                      <circle cx="3" cy="11" r="1" />
-                      <circle cx="7" cy="11" r="1" />
-                    </svg>
+                    <IconGrip />
                   </span>
                   <span className="w-6 text-xs text-carbon-textMuted tabular-nums">
                     {i + 1}.
