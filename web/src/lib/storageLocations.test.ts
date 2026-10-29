@@ -87,6 +87,25 @@ describe("localName", () => {
     expect(localName(t, namedLocal(t, [folder("bombvault", "containers"), remote]), "files")).toBe("bv");
   });
 
+  it("names a section's folder after the storage location it was put into", () => {
+    const into = location({
+      name: "DXP6800",
+      sections: [
+        section({ domain: "containers", use: "home", where: "s3:http://nas:9000/bombvault/containers" }),
+        section({ domain: "containers", targetId: "t1" }),
+      ],
+    });
+    expect(localName(t, namedLocal(t, [folder("bombvault", "files"), into]), "containers")).toBe("DXP6800");
+  });
+
+  it("does not take a copy or a direct repository for the section's folder", () => {
+    const copies = location({
+      name: "Mani",
+      sections: [section({ domain: "containers", targetId: "t1" }), section({ domain: "containers", use: "home", targetId: "t1", repoId: "r1" })],
+    });
+    expect(localName(t, [copies], "containers")).toBe(en["placement.segLocal"]);
+  });
+
   it("says Local until the storage locations are read", () => {
     expect(localName(t, [], "files")).toBe(en["placement.segLocal"]);
   });
