@@ -1,1 +1,0 @@
-Die App macht weiter Pause und lässt grüßen. BombVault 10.3.3 räumt am Server auf: Anonyme Docker-Volumes, die Cache-Ordner, die sich ein Image selbst anlegt, färben keine Sicherung mehr orange. Die Karte „Gesicherte Ordner“ zeigt jeden Ordner, an den BombVault nicht herankommt, und ein Ausschluss nimmt auch den Host-Pfad aus der Warnung. Weniger Orange, mehr Nickerchen.

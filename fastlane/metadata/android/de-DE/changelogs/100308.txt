@@ -1,1 +1,0 @@
-BombVault 10.3.8 stolpert bei der Probe-Wiederherstellung nicht mehr über Hardlinks. Eine Datei mit zwei Namen zählte auf der Platte doppelt und bei restic nur einmal, und die Probe wurde rot, obwohl alles da war. Jetzt zählen beide Seiten gleich.

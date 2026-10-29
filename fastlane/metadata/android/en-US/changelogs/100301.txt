@@ -1,1 +1,0 @@
-The app has nothing new to unpack this time and is enjoying the quiet. BombVault 10.3.1 gets to work on the server instead: a ZFS replica can keep its newest snapshots on the server it came from, so the files of an older state are right there instead of a long transfer away, and an orange line in the activity log finally says why it went orange.

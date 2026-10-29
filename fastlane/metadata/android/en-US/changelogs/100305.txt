@@ -1,1 +1,0 @@
-The app is still on its break and waves from the hammock. BombVault 10.3.5 fixes the trial restore on Unraid: the /mnt/user share turns down a few file attributes, and the check took that personally. Now it counts the restored files and bytes and goes green when they match. Less red, same naps.

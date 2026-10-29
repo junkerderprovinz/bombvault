@@ -1,1 +1,0 @@
-Die App liegt weiter in der Hängematte und rechnet von dort aus mit. BombVault 10.3.6 schreibt neben jede Bandbreitengrenze MB/s und Mbit/s, damit 2048 KiB/s endlich nach den 16,8 Mbit/s aussieht, von denen dein Anbieter redet, und die Auswahlfelder hören jetzt zu, wenn du tippst. Gleiche Grenzen, weniger Taschenrechner.

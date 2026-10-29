@@ -1,0 +1,1 @@
+BombVault 10.4.0 wartet höflich, während jemand Plex schaut, behält ZFS-Replika-Snapshots auch auf der Quelle und ist bei F-Droid eingezogen. Speicherorte heißen, wie du willst, und ein umgezogener eigener Ordner nimmt seine neuen Backups mit. Unter der Haube: restic 0.19.1 und rclone 1.75.2.

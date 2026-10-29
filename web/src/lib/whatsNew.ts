@@ -61,7 +61,7 @@ const TO_CONTAINER_SETTINGS: WayStep[] = ["/backups", "container", { within: "en
 /** Every release that brought something new, newest first. */
 export const RELEASES: Release[] = [
   {
-    version: "10.3.9",
+    version: "10.4.0",
     changes: [
       { id: "overview-move-mode", page: "/dashboard", where: ["nav.overview"], way: ["/dashboard"], wide: true, text: "whatsNew.overviewMoveMode" },
       {
@@ -71,11 +71,6 @@ export const RELEASES: Release[] = [
         way: ["/settings", "/settings/look"],
         text: "whatsNew.labelGlyphs",
       },
-    ],
-  },
-  {
-    version: "10.3.8",
-    changes: [
       {
         id: "apps-fdroid",
         page: "/settings/apps",
@@ -91,11 +86,6 @@ export const RELEASES: Release[] = [
         way: [...TO_STORAGE, "location"],
         text: "whatsNew.locationRename",
       },
-    ],
-  },
-  {
-    version: "10.3.4",
-    changes: [
       {
         id: "deferral-retry",
         page: ENTRY,
@@ -120,11 +110,6 @@ export const RELEASES: Release[] = [
         way: TO_CONTAINER_SETTINGS,
         text: "whatsNew.netGate",
       },
-    ],
-  },
-  {
-    version: "10.3.1",
-    changes: [
       {
         id: "zfs-replica-source-keep",
         page: ENTRY,

@@ -1,1 +1,0 @@
-Die App setzt wieder aus und genießt weiter die Ruhe. BombVault 10.3.2 erledigt das am Server: Ein Ordner, an den es nicht herankommt, etwa ein anonymes Docker-Volume, färbt nicht mehr jede Sicherung orange, sobald du ihn in die Ausschlussmuster des Containers einträgst. Die Warnung hat den Wink verstanden und lässt diesen Ordner aus.

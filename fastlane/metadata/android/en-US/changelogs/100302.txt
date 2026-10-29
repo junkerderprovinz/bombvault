@@ -1,1 +1,0 @@
-The app sat this one out again and is still enjoying the quiet. BombVault 10.3.2 does the work on the server: a folder it cannot reach, such as an anonymous Docker volume, stops painting every backup orange once you add it to the container's exclude patterns. The warning took the hint and leaves that folder alone.
