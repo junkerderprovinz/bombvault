@@ -7,6 +7,8 @@
 on:
   push: { branches: [main, feat/v4, "experiment/**", "integration/**"] }
   pull_request: { branches: [main] }
+permissions:
+  contents: read
 jobs:
   go:
     runs-on: ubuntu-latest
@@ -40,16 +42,12 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7
         with: { go-version: '1.27' }
-      - name: install restic >= 0.17 (apt's restic is too old for --insecure-no-password)
+      # The tests run against the restic the image ships.
+      - name: install restic
         run: |
-          RESTIC_VERSION=0.17.3
-          # From https://github.com/restic/restic/releases/download/v0.17.3/SHA256SUMS;
-          # keep in sync with RESTIC_SHA256_AMD64 in the Dockerfile.
-          RESTIC_SHA256=5097faeda6aa13167aae6e36efdba636637f8741fed89bbf015678334632d4d3
-          curl -fsSL -o restic.bz2 "https://github.com/restic/restic/releases/download/v${RESTIC_VERSION}/restic_${RESTIC_VERSION}_linux_amd64.bz2"
-          echo "${RESTIC_SHA256}  restic.bz2" | sha256sum -c -
-          bunzip2 restic.bz2
-          sudo install -m 0755 restic /usr/local/bin/restic
+          version=$(sed -n 's/^ARG RESTIC_VERSION=//p' Dockerfile)
+          sh scripts/fetch-tool.sh restic "$version" amd64 "$RUNNER_TEMP/bin"
+          sudo install -m 0755 "$RUNNER_TEMP/bin/restic" /usr/local/bin/restic
           restic version
       # internal/api alone takes around a quarter of an hour on a hosted runner,
       # well past go test's default ten-minute limit per package.

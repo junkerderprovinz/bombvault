@@ -84,6 +84,8 @@ func TestRestorePreviewReportsWithoutWriting(t *testing.T) {
 	}
 	write(filepath.Join(live, "sub", "changed"), "longer now")
 	write(filepath.Join(live, "extra"), "extra")
+	write(filepath.Join(live, "extradir", "a"), "a")
+	write(filepath.Join(live, "extradir", "deep", "b"), "b")
 
 	got := map[string]string{}
 	err = r.RestorePreview(ctx, repo, restic.PreviewStep{SnapshotID: sum.SnapshotID, Subtree: inSnapshot(src), Target: live}, m, func(it restic.PreviewItem) {
@@ -92,9 +94,14 @@ func TestRestorePreviewReportsWithoutWriting(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for item, action := range map[string]string{"/same": "unchanged", "/sub/changed": "updated", "/new": "restored", "/extra": "deleted"} {
+	for item, action := range map[string]string{"/same": "unchanged", "/sub/changed": "updated", "/new": "restored", "/extra": "deleted", "/extradir": "deleted"} {
 		if got[item] != action {
 			t.Errorf("%s: action %q, want %q (all: %v)", item, got[item], action, got)
+		}
+	}
+	for _, inside := range []string{"/extradir/a", "/extradir/deep", "/extradir/deep/b"} {
+		if action, ok := got[inside]; ok {
+			t.Errorf("%s: reported as %q, but its directory already is", inside, action)
 		}
 	}
 	if _, err := os.Stat(filepath.Join(live, "new")); !os.IsNotExist(err) {

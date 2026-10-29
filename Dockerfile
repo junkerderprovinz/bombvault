@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1@sha256:4edf897a3ffa55b89f906fc8cc78afdb3f1834cc9c7083565e611a8a7d5fe99e
 
-# The web and build stages run on the runner's own platform and cross-compile,
-# so the arm64 image is not built under QEMU.
+# The web, build and tools stages run on the runner's own platform, so only the
+# runtime stage of the arm64 image goes through QEMU.
 ARG BUILDPLATFORM
 
 FROM --platform=$BUILDPLATFORM node:24-slim@sha256:be8204d4bd327363357f532187b752ff62759c31bedf98e9e18fc08c9cbd605c AS web
@@ -30,6 +30,24 @@ ARG VERSION=dev
 RUN CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} \
     go build -ldflags "-s -w -X github.com/junkerderprovinz/bombvault/internal/api.Version=${VERSION}" -o /out/bombvault ./cmd/bombvault
 
+FROM --platform=$BUILDPLATFORM debian:stable-slim@sha256:a717a33469731894e77e912ea7d714e27c2dc38ee6554fd1a3102e92999cfc66 AS tools
+# Debian's restic is older than 0.17, which --insecure-no-password needs, and
+# its rclone 1.60 breaks some backends (Jottacloud fails restic init), so both
+# come from upstream. fetch-tool.sh checks them against upstream's signed
+# SHA256SUMS, which is why a version bump is all an update takes.
+# renovate: datasource=github-releases depName=restic/restic
+ARG RESTIC_VERSION=0.19.1
+# renovate: datasource=github-releases depName=rclone/rclone
+ARG RCLONE_VERSION=1.75.2
+ARG TARGETARCH
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends ca-certificates curl gpg gpgv bzip2 unzip \
+    && rm -rf /var/lib/apt/lists/*
+COPY scripts/fetch-tool.sh /fetch/
+COPY scripts/keys /fetch/keys
+RUN sh /fetch/fetch-tool.sh restic "${RESTIC_VERSION}" "${TARGETARCH}" /out \
+    && sh /fetch/fetch-tool.sh rclone "${RCLONE_VERSION}" "${TARGETARCH}" /out
+
 FROM debian:stable-slim@sha256:a717a33469731894e77e912ea7d714e27c2dc38ee6554fd1a3102e92999cfc66 AS runtime
 
 LABEL org.opencontainers.image.title="bombvault" \
@@ -37,51 +55,14 @@ LABEL org.opencontainers.image.title="bombvault" \
       org.opencontainers.image.source="https://github.com/junkerderprovinz/bombvault" \
       org.opencontainers.image.licenses="AGPL-3.0-only"
 
-# Debian's restic is older than 0.17, which --insecure-no-password needs, so the
-# upstream binary is used instead.
-ARG RESTIC_VERSION=0.17.3
-# Debian's rclone 1.60 breaks some backends (Jottacloud fails restic init), so
-# rclone comes from upstream too. rclone reads RCLONE_* variables as flags,
-# which is why the version check below runs with these build args unset.
-ARG RCLONE_VERSION=1.75.1
-# From upstream's SHA256SUMS for the versions above
-# (https://github.com/restic/restic/releases/download/v${RESTIC_VERSION}/SHA256SUMS
-# and https://downloads.rclone.org/v${RCLONE_VERSION}/SHA256SUMS). Update them
-# with every version bump, or the build fails.
-ARG RESTIC_SHA256_AMD64=5097faeda6aa13167aae6e36efdba636637f8741fed89bbf015678334632d4d3
-ARG RESTIC_SHA256_ARM64=db27b803534d301cef30577468cf61cb2e242165b8cd6d8cd6efd7001be2e557
-ARG RCLONE_SHA256_AMD64=982b5aa772841168f8e380f139e9e787b2a105403e32b94da8676a0e1c0a13ab
-ARG RCLONE_SHA256_ARM64=03f2504174034b6d004152ed7369251c9a9ec1f7e0836eda420f5c7a5ec0dff9
-ARG TARGETARCH
-# pipefail so no pipe below can hide a failure. bash is essential in Debian,
-# so the slim image has it.
-SHELL ["/bin/bash", "-o", "pipefail", "-c"]
-# curl survives the purge below because the Backup Everything hooks run in this
-# container and use it for health pings.
-RUN set -eux; \
-    apt-get update; \
-    apt-get install -y --no-install-recommends ca-certificates libvirt-clients qemu-utils openssh-client tini curl bzip2 wget unzip; \
-    rm -rf /var/lib/apt/lists/*; \
-    case "${TARGETARCH}" in \
-        amd64) restic_arch="amd64"; restic_sha256="${RESTIC_SHA256_AMD64}"; rclone_sha256="${RCLONE_SHA256_AMD64}" ;; \
-        arm64) restic_arch="arm64"; restic_sha256="${RESTIC_SHA256_ARM64}"; rclone_sha256="${RCLONE_SHA256_ARM64}" ;; \
-        *) echo "unsupported TARGETARCH: ${TARGETARCH}" >&2; exit 1 ;; \
-    esac; \
-    wget -q -O /tmp/restic.bz2 \
-        "https://github.com/restic/restic/releases/download/v${RESTIC_VERSION}/restic_${RESTIC_VERSION}_linux_${restic_arch}.bz2"; \
-    echo "${restic_sha256}  /tmp/restic.bz2" | sha256sum -c -; \
-    bunzip2 /tmp/restic.bz2; \
-    install -m 0755 /tmp/restic /usr/local/bin/restic; \
-    rm -f /tmp/restic; \
-    wget -q -O /tmp/rclone.zip \
-        "https://downloads.rclone.org/v${RCLONE_VERSION}/rclone-v${RCLONE_VERSION}-linux-${restic_arch}.zip"; \
-    echo "${rclone_sha256}  /tmp/rclone.zip" | sha256sum -c -; \
-    unzip -j /tmp/rclone.zip "rclone-v${RCLONE_VERSION}-linux-${restic_arch}/rclone" -d /tmp; \
-    install -m 0755 /tmp/rclone /usr/local/bin/rclone; \
-    rm -f /tmp/rclone.zip /tmp/rclone; \
-    apt-get purge -y --auto-remove bzip2 wget unzip; \
-    restic version; \
-    env -u RCLONE_VERSION -u RCLONE_SHA256_AMD64 -u RCLONE_SHA256_ARM64 rclone version
+# curl is for the Backup Everything hooks, which run in this container and use
+# it for health pings.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends ca-certificates libvirt-clients qemu-utils openssh-client tini curl \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=tools /out/restic /out/rclone /usr/local/bin/
+RUN restic version && rclone version
 
 COPY --from=build /out/bombvault /usr/local/bin/bombvault
 

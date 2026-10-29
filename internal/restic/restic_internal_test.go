@@ -136,6 +136,31 @@ func TestLastReasonSingleLine(t *testing.T) {
 	}
 }
 
+// With --json, restic 0.18 and later write the error they exit with as an
+// object. The reason has to read the same as without the flag.
+func TestLastReasonReadsJSONExitError(t *testing.T) {
+	locked := "unable to create lock in backend: repository is already locked exclusively by PID 7 on nas by root (UID 0, GID 0)"
+	for _, c := range []struct{ stderr, want string }{
+		{
+			`{"message_type":"exit_error","code":1,"message":"Fatal: unable to save snapshot: snapshot is empty"}`,
+			"Fatal: unable to save snapshot: snapshot is empty",
+		},
+		{
+			`error while unlocking: context canceled{"message_type":"exit_error","code":1,"message":"Fatal: repository is already locked"}`,
+			"Fatal: repository is already locked",
+		},
+		{
+			`{"message_type":"exit_error","code":11,"message":"repo already locked, waiting up to 0s for the lock\n` + locked +
+				`\nlock was created at 2026-10-28 01:00:00 (2m ago)\nstorage ID 4bf8c1d2\nthe unlock command can be used to remove stale locks"}`,
+			locked,
+		},
+	} {
+		if got := lastReason(c.stderr); got != c.want {
+			t.Errorf("lastReason(%q) = %q, want %q", c.stderr, got, c.want)
+		}
+	}
+}
+
 func TestLastReasonEmpty(t *testing.T) {
 	if got := lastReason("   \n  \n"); got != "" {
 		t.Fatalf("empty stderr should yield empty reason, got %q", got)
@@ -287,6 +312,15 @@ func TestIsMetadataOnlyRestoreFailureJSONForm(t *testing.T) {
 		permLine+"\nFatal: There were 1 errors")
 	if !errors.Is(err, ErrRestoreMetadataOnly) {
 		t.Fatalf("JSON-form metadata-only restore failure must wrap ErrRestoreMetadataOnly, got %v", err)
+	}
+
+	err = runError([]string{"-r", "/repo", "restore", "--target", "/t", "--", "abc:/p"},
+		permLine+"\n"+`{"message_type":"exit_error","code":1,"message":"Fatal: There were 1 errors\n"}`)
+	if !errors.Is(err, ErrRestoreMetadataOnly) {
+		t.Fatalf("a tally written as a JSON exit error must still be metadata-only, got %v", err)
+	}
+	if want := "restic restore failed: Fatal: There were 1 errors: Lchown: lchown [path]: operation not permitted"; err.Error() != want {
+		t.Fatalf("error = %q, want %q", err, want)
 	}
 }
 

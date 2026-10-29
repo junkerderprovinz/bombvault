@@ -14,6 +14,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"mime"
 	"net"
 	"net/http"
 	"net/smtp"
@@ -609,13 +610,17 @@ func do(client *http.Client, req *http.Request) error {
 	return nil
 }
 
+// headerLineBreaks turns the line breaks in a header value into spaces, since a
+// line break there would end the header and let the rest start one of its own.
+var headerLineBreaks = strings.NewReplacer("\r\n", " ", "\r", " ", "\n", " ")
+
 // buildSMTPMessage renders ev as a plain-text RFC 5322 message with the title
 // as subject.
 func buildSMTPMessage(c Config, ev Event) []byte {
 	var b strings.Builder
-	b.WriteString("From: " + c.SMTPFrom + "\r\n")
-	b.WriteString("To: " + c.SMTPTo + "\r\n")
-	b.WriteString("Subject: " + ev.Title + "\r\n")
+	b.WriteString("From: " + headerLineBreaks.Replace(c.SMTPFrom) + "\r\n")
+	b.WriteString("To: " + headerLineBreaks.Replace(c.SMTPTo) + "\r\n")
+	b.WriteString("Subject: " + mime.QEncoding.Encode("utf-8", headerLineBreaks.Replace(ev.Title)) + "\r\n")
 	b.WriteString("Date: " + time.Now().Format(time.RFC1123Z) + "\r\n")
 	b.WriteString("MIME-Version: 1.0\r\n")
 	b.WriteString("Content-Type: text/plain; charset=utf-8\r\n")
