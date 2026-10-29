@@ -815,6 +815,8 @@ const hr: Partial<Translations> = {
   "whatsNew.netGate": "Za aplikacije bez takve provjere zakazana kopija može čekati dok spremnik šalje podatke.",
   "whatsNew.fdroid": "Aplikacija za Android je na F-Droidu, a gumb F-Droid ovdje otvara njezinu stranicu.",
   "whatsNew.locationRename": "Svako odredište može se preimenovati, i mapa koju dijeli više odjeljaka.",
+  "whatsNew.overviewMoveMode": "Dok prilagođavate pregled, njegove se kartice lagano njišu kako bi pokazale da ih možete premjestiti.",
+  "whatsNew.labelGlyphs": "Oznake prikazuju simbol za svaki izbor, kao i Kutovi i Animacija.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Izloži /metrics",

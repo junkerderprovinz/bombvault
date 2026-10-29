@@ -1116,6 +1116,8 @@ const ro: Partial<Translations> = {
   "whatsNew.netGate": "Pentru aplicațiile fără o astfel de verificare, o copie programată poate aștepta cât timp containerul trimite date.",
   "whatsNew.fdroid": "Aplicația Android este pe F-Droid, iar butonul F-Droid de aici îi deschide pagina.",
   "whatsNew.locationRename": "Orice destinație poate fi redenumită, inclusiv un dosar pe care îl împart mai multe secțiuni.",
+  "whatsNew.overviewMoveMode": "Cât timp personalizezi prezentarea, cardurile ei se leagănă ușor ca să arate că le poți muta.",
+  "whatsNew.labelGlyphs": "Etichete afișează un simbol pentru fiecare opțiune, ca Colțuri și Animație.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Expune /metrics",

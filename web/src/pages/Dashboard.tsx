@@ -558,12 +558,14 @@ export function Dashboard() {
       <PageActions>
         {isDesktop && (
           <span data-new="overview-customize" className="flex">
-            <PageAction
-              primary={editing}
-              label={t(editing ? "dashboard.customizeDone" : "dashboard.customize")}
-              glyph={editing ? <IconCheck /> : <IconPencil />}
-              onClick={() => setEditing((on) => !on)}
-            />
+            <span data-new="overview-move-mode" className="flex">
+              <PageAction
+                primary={editing}
+                label={t(editing ? "dashboard.customizeDone" : "dashboard.customize")}
+                glyph={editing ? <IconCheck /> : <IconPencil />}
+                onClick={() => setEditing((on) => !on)}
+              />
+            </span>
           </span>
         )}
         <EverythingAction

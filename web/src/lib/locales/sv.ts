@@ -1126,6 +1126,8 @@ const sv: Partial<Translations> = {
   "whatsNew.netGate": "För appar utan en sådan kontroll kan en schemalagd säkerhetskopia vänta medan containern skickar data.",
   "whatsNew.fdroid": "Android-appen finns på F-Droid, och F-Droid-knappen här öppnar dess sida.",
   "whatsNew.locationRename": "Alla mål kan byta namn, även en mapp som flera sektioner delar.",
+  "whatsNew.overviewMoveMode": "Medan du anpassar översikten gungar korten lätt för att visa att du kan flytta dem.",
+  "whatsNew.labelGlyphs": "Etiketter visar en symbol för varje val, som Hörn och Animation.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Exponera /metrics",

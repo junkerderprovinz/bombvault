@@ -91,7 +91,9 @@ afterEach(() => {
 const overview = (
   <>
     <span data-new="overview-head">ring</span>
-    <span data-new="overview-customize">Customize</span>
+    <span data-new="overview-customize">
+      <span data-new="overview-move-mode">Customize</span>
+    </span>
   </>
 );
 

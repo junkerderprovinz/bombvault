@@ -815,6 +815,8 @@ const et: Partial<Translations> = {
   "whatsNew.netGate": "Ilma sellise kontrollita rakenduste puhul võib ajastatud varundus oodata, kuni konteiner andmeid saadab.",
   "whatsNew.fdroid": "Androidi rakendus on F-Droidis ja siinne F-Droidi nupp avab selle lehe.",
   "whatsNew.locationRename": "Iga sihtkohta saab ümber nimetada, ka kausta, mida jagavad mitu jaotist.",
+  "whatsNew.overviewMoveMode": "Kui sa ülevaadet kohandad, kõiguvad selle kaardid kergelt, et näidata, et saad neid liigutada.",
+  "whatsNew.labelGlyphs": "Sildid näitab iga valiku juures sümbolit, nagu Nurgad ja Animatsioon.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Ava /metrics",

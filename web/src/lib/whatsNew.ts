@@ -61,6 +61,19 @@ const TO_CONTAINER_SETTINGS: WayStep[] = ["/backups", "container", { within: "en
 /** Every release that brought something new, newest first. */
 export const RELEASES: Release[] = [
   {
+    version: "10.3.9",
+    changes: [
+      { id: "overview-move-mode", page: "/dashboard", where: ["nav.overview"], way: ["/dashboard"], wide: true, text: "whatsNew.overviewMoveMode" },
+      {
+        id: "look-label-glyphs",
+        page: "/settings/look",
+        where: ["nav.settings", "settings.tab.look"],
+        way: ["/settings", "/settings/look"],
+        text: "whatsNew.labelGlyphs",
+      },
+    ],
+  },
+  {
     version: "10.3.8",
     changes: [
       {

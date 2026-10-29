@@ -242,7 +242,7 @@ export function LookPage() {
       {/* One selector per surface and not one switch, because the right
           answer differs: a rail reduced to glyphs narrows the whole page, tabs
           do not, and action buttons are a matter of density. */}
-      <Card title={t("settings.labels")} hint={t("settings.labelsHint")} hueIndex={nextHue()}>
+      <Card title={t("settings.labels")} hint={t("settings.labelsHint")} hueIndex={nextHue()} newId="look-label-glyphs">
         <Rows>
           {CONTROL_AXES.map((axis) => (
             <SettingRow

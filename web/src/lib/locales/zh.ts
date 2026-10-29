@@ -1117,6 +1117,8 @@ const zh: Partial<Translations> = {
   "whatsNew.netGate": "对于没有这类检查的应用，定时备份可以在容器发送数据时等待。",
   "whatsNew.fdroid": "Android 应用已上架 F-Droid，这里的 F-Droid 按钮会打开它的页面。",
   "whatsNew.locationRename": "每个目标都可以重命名，包括多个部分共用的文件夹。",
+  "whatsNew.overviewMoveMode": "自定义概览时，卡片会轻轻摆动，表示你可以移动它们。",
+  "whatsNew.labelGlyphs": "标签像圆角和动画一样，为每个选项显示一个符号。",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "暴露 /metrics",

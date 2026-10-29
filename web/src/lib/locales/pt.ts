@@ -1115,6 +1115,8 @@ const pt: Partial<Translations> = {
   "whatsNew.netGate": "Para apps sem essa verificação, um backup agendado pode esperar enquanto o contentor envia dados.",
   "whatsNew.fdroid": "A aplicação Android está no F-Droid, e o botão F-Droid aqui abre a respetiva página.",
   "whatsNew.locationRename": "Qualquer destino pode mudar de nome, incluindo uma pasta partilhada por várias secções.",
+  "whatsNew.overviewMoveMode": "Enquanto personalizas a visão geral, os cartões balançam ligeiramente para mostrar que os podes mover.",
+  "whatsNew.labelGlyphs": "Rótulos mostra um símbolo para cada opção, como Cantos e Animação.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Expor /metrics",

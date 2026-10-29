@@ -815,6 +815,8 @@ const hi: Partial<Translations> = {
   "whatsNew.netGate": "ऐसी जाँच के बिना वाले ऐप के लिए, शेड्यूल्ड बैकअप तब तक रुक सकता है जब तक कंटेनर डेटा भेज रहा है।",
   "whatsNew.fdroid": "Android ऐप F-Droid पर है, और यहाँ का F-Droid बटन उसका पेज खोलता है।",
   "whatsNew.locationRename": "हर गंतव्य का नाम बदला जा सकता है, उस फ़ोल्डर का भी जिसे कई सेक्शन साझा करते हैं।",
+  "whatsNew.overviewMoveMode": "जब आप अवलोकन को अनुकूलित करते हैं, तो उसके कार्ड हल्के से हिलते हैं, ताकि पता चले कि आप उन्हें खिसका सकते हैं।",
+  "whatsNew.labelGlyphs": "लेबल कोने और एनिमेशन की तरह हर विकल्प के लिए एक प्रतीक दिखाता है।",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "/metrics दिखाएँ",

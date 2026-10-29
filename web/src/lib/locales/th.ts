@@ -1127,6 +1127,8 @@ const th: Partial<Translations> = {
   "whatsNew.netGate": "สำหรับแอปที่ไม่มีการตรวจสอบแบบนี้ การสำรองข้อมูลตามกำหนดเวลารอได้ขณะที่คอนเทนเนอร์ส่งข้อมูล",
   "whatsNew.fdroid": "แอป Android มีบน F-Droid แล้ว และปุ่ม F-Droid ตรงนี้จะเปิดหน้าของแอป",
   "whatsNew.locationRename": "เปลี่ยนชื่อปลายทางได้ทุกแห่ง รวมถึงโฟลเดอร์ที่หลายส่วนใช้ร่วมกัน",
+  "whatsNew.overviewMoveMode": "ระหว่างที่คุณปรับแต่งภาพรวม การ์ดจะโยกเบาๆ เพื่อบอกว่าคุณย้ายการ์ดได้",
+  "whatsNew.labelGlyphs": "ป้ายกำกับแสดงสัญลักษณ์สำหรับแต่ละตัวเลือก เหมือนกับมุมและแอนิเมชัน",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "เปิดเผย /metrics",

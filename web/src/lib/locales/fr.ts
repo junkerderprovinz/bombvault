@@ -1118,6 +1118,8 @@ const fr: Partial<Translations> = {
   "whatsNew.netGate": "Pour les applications sans ce genre de vérification, une sauvegarde planifiée peut attendre tant que le conteneur envoie des données.",
   "whatsNew.fdroid": "L'application Android est sur F-Droid, et le bouton F-Droid ici ouvre sa fiche.",
   "whatsNew.locationRename": "Chaque destination peut être renommée, y compris un dossier que plusieurs sections partagent.",
+  "whatsNew.overviewMoveMode": "Pendant que vous personnalisez l'aperçu, ses cartes oscillent doucement pour montrer que vous pouvez les déplacer.",
+  "whatsNew.labelGlyphs": "Libellés affiche un symbole pour chaque choix, comme Angles et Animation.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Exposer /metrics",

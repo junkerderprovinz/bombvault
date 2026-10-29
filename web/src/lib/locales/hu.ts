@@ -1119,6 +1119,8 @@ const hu: Partial<Translations> = {
   "whatsNew.netGate": "Az ilyen ellenőrzés nélküli alkalmazásoknál az ütemezett mentés várhat, amíg a konténer adatot küld.",
   "whatsNew.fdroid": "Az Android-alkalmazás elérhető az F-Droidon, az itteni F-Droid gomb megnyitja az oldalát.",
   "whatsNew.locationRename": "Minden cél átnevezhető, egy több szakasz által közösen használt mappa is.",
+  "whatsNew.overviewMoveMode": "Amíg testreszabod az Áttekintést, a kártyái finoman ringatóznak, jelezve, hogy áthelyezheted őket.",
+  "whatsNew.labelGlyphs": "A Feliratok minden választáshoz szimbólumot mutat, mint a Sarkok és az Animáció.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "/metrics közzététele",
