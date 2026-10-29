@@ -3240,6 +3240,7 @@ const bg: Partial<Translations> = {
   "repos.companionLost": "до изтрита дестинация",
   "repos.mirroredLocked": "Взето от {target}. Промени го там.",
   "repos.removeWithTarget": "Върви заедно с {target}. За да премахнеш това хранилище, премахни дестинацията.",
+  "repos.directIdle": "Тук вече не се архивира нищо. При премахване архивите в него остават.",
   "repos.offPremises": "Извън сградата",
   "repos.offPremisesHint": "Смята се за отделен обект за целите на обектите и 3-2-1 в картите. Копията не се засягат. rest-server в същата сграда трябва да е с изключена тази настройка.",
 

@@ -3240,6 +3240,7 @@ const hr: Partial<Translations> = {
   "repos.companionLost": "pored izbrisanog odredišta",
   "repos.mirroredLocked": "Preuzeto od odredišta {target}. Promijenite ondje.",
   "repos.removeWithTarget": "Ide zajedno s odredištem {target}. Za uklanjanje ovog repozitorija uklonite odredište.",
+  "repos.directIdle": "Ovamo se više ništa ne sigurnosno kopira. Uklanjanjem sigurnosne kopije koje su ondje ostaju.",
   "repos.offPremises": "Izvan objekta",
   "repos.offPremisesHint": "Za lokacije i 3-2-1 na karticama broji se kao zasebna lokacija. Kopije time nisu pogođene. Rest-server u istoj zgradi trebao bi imati ovo isključeno.",
 

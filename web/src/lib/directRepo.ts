@@ -66,3 +66,9 @@ export function alsoDirectText(t: T, use: DirectUse): string {
 export function repoDisplayName(t: (key: TranslationKey) => string, name: string, directOf?: string): string {
   return directOf ? t("placement.homeDirect").replace("{target}", () => directOf) : name;
 }
+
+/** idleDirect reports whether a direct repository takes no backups at all:
+ *  no entry and no default writes there. */
+export function idleDirect(r: NamedRepo): boolean {
+  return r.companionOf !== "" && r.inUse === 0 && r.defaultFor?.length === 0;
+}

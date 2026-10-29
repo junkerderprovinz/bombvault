@@ -3240,6 +3240,7 @@ const ms: Partial<Translations> = {
   "repos.companionLost": "di sebelah destinasi yang dipadam",
   "repos.mirroredLocked": "Diambil alih daripada {target}. Ubah di sana.",
   "repos.removeWithTarget": "Pergi bersama {target}. Untuk membuang repositori ini, buang destinasi itu.",
+  "repos.directIdle": "Tiada apa lagi yang disandarkan ke sini. Membuangnya mengekalkan sandaran yang ada di sana.",
   "repos.offPremises": "Di luar premis",
   "repos.offPremisesHint": "Dikira sebagai tapak tersendiri untuk tapak dan 3-2-1 pada kad. Salinan tidak terjejas. rest-server dalam bangunan yang sama sepatutnya mematikan ini.",
 

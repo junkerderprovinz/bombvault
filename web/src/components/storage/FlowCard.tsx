@@ -10,6 +10,7 @@ import type { FlowCounts, FlowLine, FlowRow } from "../../lib/storageFlow";
 import { DOMAIN_LABEL, locationRoute } from "../../lib/storageLocations";
 import { Card } from "../../pages/settings/shared";
 import { BusyRing } from "../BusyRing";
+import { DirectRepoDialog } from "../placement/DirectRepoDialog";
 import { Selector } from "../Selector";
 import { Differs } from "./Differs";
 import { FlowPicture } from "./FlowPicture";
@@ -236,6 +237,17 @@ export function FlowCard({
             <PausedDefault key={domain} domain={domain} />
           ))}
         </div>
+      )}
+      {flow.direct && (
+        <DirectRepoDialog
+          target={flow.direct.target}
+          mode="create"
+          onClose={flow.directCancelled}
+          onDone={(result) => {
+            if (result.kind === "created") flow.directMade(result.repo);
+            else flow.directCancelled();
+          }}
+        />
       )}
     </Card>
   );

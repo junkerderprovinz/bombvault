@@ -2551,6 +2551,7 @@ export const en = {
   "repos.companionLost": "next to a deleted target",
   "repos.mirroredLocked": "Taken over from {target}. Change it there.",
   "repos.removeWithTarget": "Goes with {target}. Remove that target to remove this repository.",
+  "repos.directIdle": "Nothing backs up here any more. Removing it keeps the backups that are there.",
   "repos.offPremises": "Off the premises",
   "repos.offPremisesHint": "Counts as a site of its own for the sites and 3-2-1 on the cards. Copies are not affected. A rest-server in the same building should have this off.",
 
@@ -7552,6 +7553,7 @@ export const de: Translations = {
   "repos.companionLost": "neben einem gelöschten Speicherort",
   "repos.mirroredLocked": "Von {target} übernommen. Dort ändern.",
   "repos.removeWithTarget": "Gehört zu {target}. Entfern den Speicherort, um dieses Repository zu entfernen.",
+  "repos.directIdle": "Hierher wird nichts mehr gesichert. Beim Entfernen bleiben die Sicherungen dort erhalten.",
   "repos.offPremises": "Außer Haus",
   "repos.offPremisesHint": "Zählt auf den Karten als eigener Standort für Standorte und 3-2-1. An den Kopien ändert das nichts. Ein rest-server im selben Haus sollte das aus haben.",
 

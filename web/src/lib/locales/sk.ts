@@ -3240,6 +3240,7 @@ const sk: Partial<Translations> = {
   "repos.companionLost": "vedľa vymazaného cieľa",
   "repos.mirroredLocked": "Prevzaté od {target}. Zmeň tam.",
   "repos.removeWithTarget": "Patrí k cieľu {target}. Ak chceš tento repozitár odstrániť, odstráň cieľ.",
+  "repos.directIdle": "Sem sa už nič nezálohuje. Po odstránení zálohy, ktoré tam sú, zostanú.",
   "repos.offPremises": "Mimo objektu",
   "repos.offPremisesHint": "Počíta sa ako samostatná lokalita pre lokality a 3-2-1 na kartách. Kópie tým nie sú dotknuté. Rest-server v tej istej budove by mal mať toto vypnuté.",
 

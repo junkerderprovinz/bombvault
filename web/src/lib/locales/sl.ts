@@ -3224,6 +3224,7 @@ const sl: Partial<Translations> = {
   "repos.companionLost": "ob izbrisanem cilju",
   "repos.mirroredLocked": "Prevzeto od {target}. Spremeni tam.",
   "repos.removeWithTarget": "Gre skupaj s ciljem {target}. Za odstranitev tega repozitorija odstrani cilj.",
+  "repos.directIdle": "Sem se nič več ne varnostno kopira. Ob odstranitvi varnostne kopije, ki so tam, ostanejo.",
   "repos.offPremises": "Zunaj objekta",
   "repos.offPremisesHint": "Za lokacije in 3-2-1 na karticah se šteje kot samostojna lokacija. Na kopije to ne vpliva. Rest-server v isti stavbi bi moral imeti to izklopljeno.",
 

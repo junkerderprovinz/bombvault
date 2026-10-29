@@ -3230,6 +3230,7 @@ const fr: Partial<Translations> = {
   "repos.companionLost": "à côté d'une destination supprimée",
   "repos.mirroredLocked": "Repris de {target}. Modifiez-le là-bas.",
   "repos.removeWithTarget": "Va avec {target}. Pour retirer ce dépôt, retirez cette destination.",
+  "repos.directIdle": "Plus rien n’est sauvegardé ici. Le retirer laisse en place les sauvegardes qui s’y trouvent.",
   "repos.offPremises": "Hors des locaux",
   "repos.offPremisesHint": "Compte comme un site à part entière pour les sites et le 3-2-1 sur les cartes. Les copies ne sont pas affectées. Un rest-server dans le même bâtiment devrait avoir ceci désactivé.",
 

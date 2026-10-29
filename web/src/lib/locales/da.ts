@@ -3230,6 +3230,7 @@ const da: Partial<Translations> = {
   "repos.companionLost": "ved siden af en slettet destination",
   "repos.mirroredLocked": "Overtaget fra {target}. Skift det der.",
   "repos.removeWithTarget": "Hører sammen med {target}. Fjern den destination for at fjerne dette depot.",
+  "repos.directIdle": "Intet sikkerhedskopieres hertil længere. Når du fjerner det, bliver sikkerhedskopierne der.",
   "repos.offPremises": "Uden for bygningen",
   "repos.offPremisesHint": "Tæller som sit eget sted for lokationer og 3-2-1 på kortene. Kopier påvirkes ikke. En rest-server i samme bygning bør have dette slået fra.",
 

@@ -3231,6 +3231,7 @@ const th: Partial<Translations> = {
   "repos.companionLost": "อยู่ข้างปลายทางที่ถูกลบ",
   "repos.mirroredLocked": "รับช่วงมาจาก {target} เปลี่ยนที่นั่น",
   "repos.removeWithTarget": "ไปด้วยกันกับ {target} หากต้องการลบที่เก็บข้อมูลนี้ ให้ลบปลายทางนั้น",
+  "repos.directIdle": "ไม่มีสิ่งใดสำรองข้อมูลมาที่นี่อีกแล้ว การนำออกจะยังเก็บข้อมูลสำรองที่อยู่ในนั้นไว้",
   "repos.offPremises": "นอกสถานที่",
   "repos.offPremisesHint": "นับเป็นไซต์ของตัวเองสำหรับจำนวนไซต์และ 3-2-1 บนการ์ด ไม่มีผลต่อสำเนา rest-server ในอาคารเดียวกันควรปิดตัวเลือกนี้",
 

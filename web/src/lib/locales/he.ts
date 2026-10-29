@@ -3230,6 +3230,7 @@ const he: Partial<Translations> = {
   "repos.companionLost": "לצד יעד שנמחק",
   "repos.mirroredLocked": "הועבר מ{target}. משנים אותו שם.",
   "repos.removeWithTarget": "הולך יחד עם {target}. כדי להסיר את המאגר הזה, יש להסיר את היעד.",
+  "repos.directIdle": "שום דבר כבר לא מגובה לכאן. הסרה משאירה את הגיבויים שנמצאים שם.",
   "repos.offPremises": "מחוץ למבנה",
   "repos.offPremisesHint": "נספר כאתר משלו לצורך האתרים וכלל 3-2-1 בכרטיסים. זה לא משפיע על העותקים. שרת rest-server באותו מבנה צריך שזה יהיה כבוי אצלו.",
 

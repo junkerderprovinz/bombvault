@@ -3231,6 +3231,7 @@ const hu: Partial<Translations> = {
   "repos.companionLost": "törölt cél mellett",
   "repos.mirroredLocked": "Átvéve innen: {target}. Ott változtasd meg.",
   "repos.removeWithTarget": "A(z) {target} céllal jár együtt. A tároló eltávolításához távolítsd el a célt.",
+  "repos.directIdle": "Ide már semmi nem ment. Az eltávolítás után az ott lévő mentések megmaradnak.",
   "repos.offPremises": "Az épületen kívül",
   "repos.offPremisesHint": "A kártyákon a helyszínek és a 3-2-1 szempontjából önálló helyszínnek számít. A másolatokat nem érinti. Az ugyanabban az épületben lévő rest-servernél ezt ki kell kapcsolni.",
 

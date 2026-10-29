@@ -3231,6 +3231,7 @@ const ro: Partial<Translations> = {
   "repos.companionLost": "lângă o destinație ștearsă",
   "repos.mirroredLocked": "Preluat de la {target}. Schimbă-l acolo.",
   "repos.removeWithTarget": "Merge împreună cu {target}. Ca să elimini acest depozit, elimină destinația.",
+  "repos.directIdle": "Nu se mai salvează nimic aici. La eliminare, copiile de rezervă de acolo rămân.",
   "repos.offPremises": "În afara sediului",
   "repos.offPremisesHint": "Se numără drept sit propriu pentru site-uri și regula 3-2-1 de pe carduri. Copiile nu sunt afectate. Un rest-server în aceeași clădire ar trebui să aibă asta dezactivat.",
 

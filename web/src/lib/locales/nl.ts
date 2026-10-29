@@ -3229,6 +3229,7 @@ const nl: Partial<Translations> = {
   "repos.companionLost": "naast een verwijderde bestemming",
   "repos.mirroredLocked": "Overgenomen van {target}. Wijzig het daar.",
   "repos.removeWithTarget": "Hoort bij {target}. Verwijder die bestemming om deze repository te verwijderen.",
+  "repos.directIdle": "Hier wordt niets meer naartoe geback-upt. Bij verwijderen blijven de back-ups die er staan bewaard.",
   "repos.offPremises": "Buiten het pand",
   "repos.offPremisesHint": "Telt op de kaarten als een eigen locatie voor de locaties en de 3-2-1. Kopieën worden niet beïnvloed. Een rest-server in hetzelfde gebouw moet dit uit hebben staan.",
 

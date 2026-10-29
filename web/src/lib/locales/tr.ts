@@ -3230,6 +3230,7 @@ const tr: Partial<Translations> = {
   "repos.companionLost": "silinmiş bir hedefin yanında",
   "repos.mirroredLocked": "{target} kaynağından devralındı. Orada değiştir.",
   "repos.removeWithTarget": "{target} hedefiyle birlikte gider. Bu depoyu kaldırmak için o hedefi kaldır.",
+  "repos.directIdle": "Buraya artık hiçbir şey yedeklenmiyor. Kaldırınca oradaki yedekler kalır.",
   "repos.offPremises": "Bina dışında",
   "repos.offPremisesHint": "Kartlardaki siteler ve 3-2-1 için kendi başına bir site olarak sayılır. Kopyalar etkilenmez. Aynı binadaki bir rest-server'da bu kapalı olmalı.",
 

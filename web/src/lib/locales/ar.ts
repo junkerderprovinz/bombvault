@@ -3231,6 +3231,7 @@ const ar: Partial<Translations> = {
   "repos.companionLost": "بجانب وجهة محذوفة",
   "repos.mirroredLocked": "أُخذ من {target}. يُغيَّر هناك.",
   "repos.removeWithTarget": "مرتبط بـ {target}. لإزالة هذا المستودع تجب إزالة تلك الوجهة.",
+  "repos.directIdle": "لم يعد يُنسخ احتياطيًا إلى هنا أي شيء. عند إزالته تبقى النسخ الاحتياطية الموجودة فيه.",
   "repos.offPremises": "خارج المبنى",
   "repos.offPremisesHint": "يُحتسب موقعًا قائمًا بذاته لأغراض المواقع وقاعدة 3-2-1 في البطاقات. لا يؤثر ذلك على النسخ. يجب إيقاف هذا لخادم rest-server في المبنى نفسه.",
 

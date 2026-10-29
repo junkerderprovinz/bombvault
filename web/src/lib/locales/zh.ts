@@ -3221,6 +3221,7 @@ const zh: Partial<Translations> = {
   "repos.companionLost": "紧邻已删除的目标",
   "repos.mirroredLocked": "从 {target} 接管。请在那里更改。",
   "repos.removeWithTarget": "与 {target} 一同存在。要移除此存储库，请移除该目标。",
+  "repos.directIdle": "已没有任何内容备份到这里。移除后，其中的备份仍会保留。",
   "repos.offPremises": "场外",
   "repos.offPremisesHint": "在卡片上的站点数和3-2-1计算中，算作独立的站点。不影响副本。同一建筑物中的 rest-server 应关闭此项。",
 

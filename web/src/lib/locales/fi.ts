@@ -3230,6 +3230,7 @@ const fi: Partial<Translations> = {
   "repos.companionLost": "poistetun kohteen vieressä",
   "repos.mirroredLocked": "Otettu kohteelta {target}. Muuta se siellä.",
   "repos.removeWithTarget": "Kuuluu yhteen kohteen {target} kanssa. Poista kohde, jos haluat poistaa tämän arkiston.",
+  "repos.directIdle": "Tänne ei enää varmuuskopioida mitään. Poistettaessa siellä olevat varmuuskopiot säilyvät.",
   "repos.offPremises": "Rakennuksen ulkopuolella",
   "repos.offPremisesHint": "Lasketaan korttien sijainneissa ja 3-2-1-säännössä omaksi sijainnikseen. Kopioihin tämä ei vaikuta. Samassa rakennuksessa olevalla rest-serverillä tämän pitäisi olla pois päältä.",
 

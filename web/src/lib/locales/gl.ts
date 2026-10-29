@@ -3240,6 +3240,7 @@ const gl: Partial<Translations> = {
   "repos.companionLost": "a carón dun destino eliminado",
   "repos.mirroredLocked": "Herdado de {target}. Cámbiao alí.",
   "repos.removeWithTarget": "Vai con {target}. Para quitar este repositorio, quita ese destino.",
+  "repos.directIdle": "Xa non se fai ningunha copia de seguridade aquí. Ao quitalo, as copias que hai quedan aí.",
   "repos.offPremises": "Fóra do edificio",
   "repos.offPremisesHint": "Conta como un lugar propio para os lugares e o 3-2-1 nas tarxetas. Non afecta ás copias. Un rest-server no mesmo edificio debería ter isto desactivado.",
 

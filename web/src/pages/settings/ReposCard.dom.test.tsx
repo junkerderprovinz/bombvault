@@ -103,6 +103,34 @@ describe("the Repositories card", () => {
     expect(screen.queryByLabelText(en["repos.locationLocked"])).toBeNull();
   });
 
+  it("says a direct repository nothing backs up to any more takes no backups, and removes it", async () => {
+    api.listRepos.mockResolvedValue({
+      ok: true,
+      repos: [repo({ id: "d1", name: "", directOf: "Mani", companionOf: "t-b2", defaultFor: [] })],
+    });
+    api.deleteRepo.mockResolvedValue({ ok: true });
+    render(<ReposCard />);
+    await screen.findByText(en["repos.directIdle"]);
+    const remove = screen.getByRole("button", { name: en["offsite.targets.remove"] }) as HTMLButtonElement;
+    expect(remove.disabled).toBe(false);
+    fireEvent.click(remove);
+    await act(async () => {
+      fireEvent.click(within(await screen.findByRole("dialog")).getByRole("button", { name: en["offsite.targets.remove"] }));
+    });
+    expect(api.deleteRepo).toHaveBeenCalledWith("d1");
+  });
+
+  it("keeps quiet about a direct repository whose section default still backs up there", async () => {
+    api.listRepos.mockResolvedValue({
+      ok: true,
+      repos: [repo({ id: "d1", name: "", directOf: "Mani", companionOf: "t-b2", defaultFor: ["containers"] })],
+    });
+    render(<ReposCard />);
+    await screen.findByText("Mani · direct");
+    expect(screen.queryByText(en["repos.directIdle"])).toBeNull();
+    expect((screen.getByRole("button", { name: en["offsite.targets.remove"] }) as HTMLButtonElement).disabled).toBe(true);
+  });
+
   it("names a direct repository without a name of its own after its target", async () => {
     api.listRepos.mockResolvedValue({ ok: true, repos: [repo({ id: "d1", name: "", directOf: "B2", companionOf: "t-b2" })] });
     render(<ReposCard />);

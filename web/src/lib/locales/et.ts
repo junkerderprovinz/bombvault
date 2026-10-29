@@ -3240,6 +3240,7 @@ const et: Partial<Translations> = {
   "repos.companionLost": "kustutatud sihtkoha kõrval",
   "repos.mirroredLocked": "Üle võetud sihtkohalt {target}. Muuda seda seal.",
   "repos.removeWithTarget": "Käib kaasa sihtkohaga {target}. Selle hoidla eemaldamiseks eemalda sihtkoht.",
+  "repos.directIdle": "Siia ei varundata enam midagi. Eemaldamisel jäävad sealsed varukoopiad alles.",
   "repos.offPremises": "Väljaspool hoonet",
   "repos.offPremisesHint": "Loetakse kaartidel asukohtade ja 3-2-1 jaoks omaette asukohaks. Koopiaid see ei mõjuta. Sama hoone rest-serveril peaks see väljas olema.",
 

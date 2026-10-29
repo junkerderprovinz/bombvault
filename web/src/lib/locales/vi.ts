@@ -3221,6 +3221,7 @@ const vi: Partial<Translations> = {
   "repos.companionLost": "cạnh một đích đã bị xóa",
   "repos.mirroredLocked": "Được tiếp quản từ {target}. Đổi nó ở đó.",
   "repos.removeWithTarget": "Đi cùng với {target}. Để gỡ kho này, hãy gỡ đích đó.",
+  "repos.directIdle": "Không còn gì được sao lưu vào đây nữa. Khi gỡ bỏ, các bản sao lưu ở đó vẫn được giữ.",
   "repos.offPremises": "Ngoài cơ sở",
   "repos.offPremisesHint": "Được tính là một địa điểm riêng cho số địa điểm và quy tắc 3-2-1 trên thẻ. Không ảnh hưởng đến các bản sao. Một rest-server trong cùng tòa nhà nên tắt tùy chọn này.",
 

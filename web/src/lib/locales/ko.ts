@@ -3221,6 +3221,7 @@ const ko: Partial<Translations> = {
   "repos.companionLost": "삭제된 대상 옆",
   "repos.mirroredLocked": "{target}에서 넘겨받음. 그곳에서 변경하세요.",
   "repos.removeWithTarget": "{target}과(와) 함께 갑니다. 이 저장소를 없애려면 그 대상을 없애세요.",
+  "repos.directIdle": "이제 여기로 백업되는 항목이 없습니다. 제거해도 그곳의 백업은 남습니다.",
   "repos.offPremises": "부지 밖",
   "repos.offPremisesHint": "카드의 사이트 수와 3-2-1 계산에서 별도의 사이트로 간주됩니다. 사본에는 영향을 주지 않습니다. 같은 건물에 있는 rest-server라면 이 설정을 꺼야 합니다.",
 

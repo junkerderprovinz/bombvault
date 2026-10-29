@@ -3228,6 +3228,7 @@ const cs: Partial<Translations> = {
   "repos.companionLost": "vedle smazaného cíle",
   "repos.mirroredLocked": "Převzato od {target}. Změň tam.",
   "repos.removeWithTarget": "Patří k cíli {target}. Chceš-li repozitář odstranit, odstraň ten cíl.",
+  "repos.directIdle": "Sem už se nic nezálohuje. Po odebrání zálohy, které tam jsou, zůstanou.",
   "repos.offPremises": "Mimo objekt",
   "repos.offPremisesHint": "Počítá se jako vlastní lokalita pro lokality a 3-2-1 na kartách. Kopie tím nejsou dotčeny. Rest-server ve stejné budově by měl mít tohle vypnuté.",
 

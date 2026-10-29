@@ -3230,6 +3230,7 @@ const sv: Partial<Translations> = {
   "repos.companionLost": "bredvid ett borttaget mål",
   "repos.mirroredLocked": "Övertaget från {target}. Ändra det där.",
   "repos.removeWithTarget": "Hör ihop med {target}. Ta bort det målet för att ta bort det här arkivet.",
+  "repos.directIdle": "Inget säkerhetskopieras hit längre. När du tar bort det ligger säkerhetskopiorna kvar där.",
   "repos.offPremises": "Utanför lokalerna",
   "repos.offPremisesHint": "Räknas som en egen plats för platserna och 3-2-1 på korten. Kopior påverkas inte. En rest-server i samma byggnad bör ha det här avstängt.",
 

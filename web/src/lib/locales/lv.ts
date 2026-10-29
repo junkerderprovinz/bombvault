@@ -3240,6 +3240,7 @@ const lv: Partial<Translations> = {
   "repos.companionLost": "blakus dzēstam mērķim",
   "repos.mirroredLocked": "Pārņemts no mērķa {target}. Mainiet to tur.",
   "repos.removeWithTarget": "Iet kopā ar mērķi {target}. Lai noņemtu šo krātuvi, noņemiet mērķi.",
+  "repos.directIdle": "Šeit vairs nekas netiek dublēts. Noņemot to, esošie dublējumi paliek.",
   "repos.offPremises": "Ārpus ēkas",
   "repos.offPremisesHint": "Karšu vietu un 3-2-1 aprēķinā tiek skaitīts kā sava atsevišķa vieta. Kopijas tas neietekmē. Tajā pašā ēkā esošam rest-server šim vajadzētu būt izslēgtam.",
 

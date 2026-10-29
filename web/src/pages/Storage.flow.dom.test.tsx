@@ -4,7 +4,7 @@
  * where, the entries that left their section's default, and the window that
  * adds a location.
  *
- * Every line is a switch that one click turns on or off, with no window: it
+ * Every line is a switch that one click turns on or off: it
  * only decides where new backups go.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -249,10 +249,16 @@ describe("the flow", () => {
     expect(line("Containers to B2").getAttribute("aria-checked")).toBe("true");
   });
 
-  it("switches Local off for a section with placement: the target's direct repository is made beside it and takes the backups", async () => {
+  it("asks before switching Local off makes the target's direct repository, and makes it the home on Create and use", async () => {
     await renderPage();
 
     await click(line("Containers to Local"));
+
+    expect(await screen.findByText("Direct repository at B2")).toBeTruthy();
+    expect(fake.callsTo("createDirectRepo")).toEqual([]);
+    expect(fake.callsTo("putPlacementDefault")).toEqual([]);
+    await screen.findByDisplayValue("b2:bucket:containers-direct");
+    await click(screen.getByRole("button", { name: "Create and use" }));
 
     await waitFor(() => expect(fake.callsTo("putPlacementDefault")).toHaveLength(1));
     expect(fake.callsTo("createDirectRepo")).toEqual([["t-b2", "", "b2:bucket:containers-direct"]]);
@@ -260,43 +266,59 @@ describe("the flow", () => {
     expect(screen.queryByRole("dialog")).toBeNull();
   });
 
-  it("switches Local off at a rest-server user root with the place the server picks, asking for nothing", async () => {
+  it("leaves everything as it was when the direct repository dialog is cancelled", async () => {
+    await renderPage();
+
+    await click(line("Containers to Local"));
+    await screen.findByText("Direct repository at B2");
+    await click(screen.getByRole("button", { name: "Cancel" }));
+
+    expect(screen.queryByText("Direct repository at B2")).toBeNull();
+    expect(fake.callsTo("createDirectRepo")).toEqual([]);
+    expect(fake.callsTo("putPlacementDefault")).toEqual([]);
+    expect(line("Containers to Local").getAttribute("aria-checked")).toBe("true");
+  });
+
+  it("offers the place the server picks at a rest-server user root", async () => {
     fake.reply("getDirectRepo", { ok: true, repo: null, suggestion: { location: "rest:https://box:8000/jdp/containers-direct" } });
     await renderPage();
 
     await click(line("Containers to Local"));
+    await screen.findByDisplayValue("rest:https://box:8000/jdp/containers-direct");
+    await click(screen.getByRole("button", { name: "Create and use" }));
 
     await waitFor(() => expect(fake.callsTo("putPlacementDefault")).toHaveLength(1));
     expect(fake.callsTo("createDirectRepo")).toEqual([["t-b2", "", "rest:https://box:8000/jdp/containers-direct"]]);
-    expect(screen.queryByRole("dialog")).toBeNull();
-    expect(screen.queryByRole("alert")).toBeNull();
   });
 
-  it("shows the line busy until the server has made the direct repository and saved", async () => {
-    const release = fake.hold("createDirectRepo");
+  it("shows the line busy until the server has saved the new home", async () => {
+    const release = fake.hold("putPlacementDefault");
     await renderPage();
 
     await click(line("Containers to Local"));
+    await screen.findByDisplayValue("b2:bucket:containers-direct");
+    await click(screen.getByRole("button", { name: "Create and use" }));
 
+    await waitFor(() => expect(line("Containers to Local").getAttribute("aria-busy")).toBe("true"));
     const busy = line("Containers to Local");
-    expect(busy.getAttribute("aria-busy")).toBe("true");
     expect(busy.querySelector(".animate-spin")).toBeTruthy();
     expect(line("Containers to B2").getAttribute("aria-busy")).toBeNull();
     await act(async () => release());
-    await waitFor(() => expect(fake.callsTo("putPlacementDefault")).toHaveLength(1));
     await waitFor(() => expect(line("Containers to Local").getAttribute("aria-busy")).toBeNull());
     expect(line("Containers to Local").querySelector(".animate-spin")).toBeNull();
   });
 
   it("shows the busy switch in the table of switches too", async () => {
-    const release = fake.hold("createDirectRepo");
+    const release = fake.hold("putPlacementDefault");
     await renderPage();
     await click(screen.getByRole("radio", { name: "Switches" }));
     const containers = screen.getByRole("group", { name: "Containers" });
 
     await click(within(containers).getByRole("button", { name: /^Local/ }));
+    await screen.findByDisplayValue("b2:bucket:containers-direct");
+    await click(screen.getByRole("button", { name: "Create and use" }));
 
-    expect(within(containers).getByRole("button", { name: /^Local/ }).querySelector(".animate-spin")).toBeTruthy();
+    await waitFor(() => expect(within(containers).getByRole("button", { name: /^Local/ }).querySelector(".animate-spin")).toBeTruthy());
     expect(within(containers).getByRole("button", { name: "B2" }).querySelector(".animate-spin")).toBeNull();
     await act(async () => release());
     await waitFor(() => expect(within(containers).getByRole("button", { name: /^Local/ }).querySelector(".animate-spin")).toBeNull());

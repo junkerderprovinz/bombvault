@@ -3240,6 +3240,7 @@ const eu: Partial<Translations> = {
   "repos.companionLost": "ezabatutako helmuga baten ondoan",
   "repos.mirroredLocked": "{target}(e)tik hartua. Aldatu hor.",
   "repos.removeWithTarget": "{target}(r)ekin doa. Biltegi hau kentzeko, kendu helmuga hori.",
+  "repos.directIdle": "Ez da ezer gehiago babesten hemen. Kentzean, bertan dauden babeskopiak geratzen dira.",
   "repos.offPremises": "Eraikinetik kanpo",
   "repos.offPremisesHint": "Txarteletako kokapenen eta 3-2-1aren ondorioetarako, bere kokapentzat hartzen da. Kopiei ez die eragiten. Eraikin berean dagoen rest-server batek hau itzalita eduki beharko luke.",
 

@@ -3240,6 +3240,7 @@ const is: Partial<Translations> = {
   "repos.companionLost": "við hlið eydds áfangastaðar",
   "repos.mirroredLocked": "Tekið yfir frá {target}. Breyttu því þar.",
   "repos.removeWithTarget": "Fylgir {target}. Fjarlægðu þann áfangastað til að fjarlægja þessa geymslu.",
+  "repos.directIdle": "Ekkert er lengur afritað hingað. Þegar það er fjarlægt verða afritin sem þar eru eftir.",
   "repos.offPremises": "Utan húss",
   "repos.offPremisesHint": "Telst sem eigin staður fyrir staði og 3-2-1 á spjöldunum. Eintök verða ekki fyrir áhrifum. rest-server í sama húsi ætti að hafa þetta slökkt.",
 

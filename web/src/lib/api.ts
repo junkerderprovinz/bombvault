@@ -3181,6 +3181,8 @@ export interface NamedRepo {
   directOf?: string;
   /** An import deleted its target, which leaves it a plain repository. */
   companionLost: boolean;
+  /** The sections whose default backs up here, null when unknown. */
+  defaultFor?: PlacementDomain[] | null;
 }
 
 /** restic's --compression mode. "auto" is restic's own default. */
@@ -3193,7 +3195,7 @@ export function listRepos(): Promise<OkEnvelope & { repos?: NamedRepo[] }> {
 
 /** POST /api/repos — create one (the id is minted server-side). */
 export function createRepo(
-  body: Partial<Omit<NamedRepo, "id" | "inUse" | "companionLost">>
+  body: Partial<Omit<NamedRepo, "id" | "inUse" | "companionLost" | "defaultFor">>
 ): Promise<OkEnvelope & { repo?: NamedRepo }> {
   return fetchJSON("/api/repos", { method: "POST", body: JSON.stringify(body) });
 }
@@ -3208,7 +3210,7 @@ export function createRepo(
  *  does, so the caller can name what is still pointed at this repository. */
 export function updateRepo(
   id: string,
-  body: Partial<Omit<NamedRepo, "id" | "inUse" | "companionOf" | "companionLost">>
+  body: Partial<Omit<NamedRepo, "id" | "inUse" | "companionOf" | "companionLost" | "defaultFor">>
 ): Promise<OkEnvelope & { repo?: NamedRepo; items?: number; defaultDomains?: PlacementDomain[] }> {
   return fetchJSON(`/api/repos/${encodeURIComponent(id)}`, {
     method: "PATCH",

@@ -3240,6 +3240,7 @@ const hi: Partial<Translations> = {
   "repos.companionLost": "हटाए गए गंतव्य के पास",
   "repos.mirroredLocked": "{target} से लिया गया। इसे वहीं बदलें।",
   "repos.removeWithTarget": "{target} के साथ जाती है। इस रिपॉज़िटरी को हटाने के लिए वह गंतव्य हटाएँ।",
+  "repos.directIdle": "यहाँ अब कुछ भी बैकअप नहीं होता। हटाने पर वहाँ मौजूद बैकअप बने रहते हैं।",
   "repos.offPremises": "परिसर से बाहर",
   "repos.offPremisesHint": "कार्ड पर साइटों और 3-2-1 के हिसाब से यह अपनी अलग साइट के रूप में गिना जाता है। प्रतियों पर इसका असर नहीं पड़ता। एक ही इमारत में मौजूद rest-server के लिए इसे बंद रखना चाहिए।",
 

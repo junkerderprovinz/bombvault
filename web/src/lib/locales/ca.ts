@@ -3240,6 +3240,7 @@ const ca: Partial<Translations> = {
   "repos.companionLost": "al costat d'una destinació eliminada",
   "repos.mirroredLocked": "Agafat de {target}. Canvia-ho allà.",
   "repos.removeWithTarget": "Va amb {target}. Per treure aquest repositori, treu aquella destinació.",
+  "repos.directIdle": "Ja no s'hi fa cap còpia de seguretat. En treure'l, les còpies que hi ha s'hi queden.",
   "repos.offPremises": "Fora de l'edifici",
   "repos.offPremisesHint": "Compta com un lloc propi per als llocs i el 3-2-1 de les targetes. No afecta les còpies. Un rest-server al mateix edifici hauria de tenir això desactivat.",
 

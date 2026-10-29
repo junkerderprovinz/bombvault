@@ -3221,6 +3221,7 @@ const ja: Partial<Translations> = {
   "repos.companionLost": "削除された保存先の隣",
   "repos.mirroredLocked": "{target}から引き継がれました。そちらで変更してください。",
   "repos.removeWithTarget": "{target}と一緒に存在します。このリポジトリを削除するには、その保存先を削除してください。",
+  "repos.directIdle": "ここにはもう何もバックアップされていません。削除しても、そこにあるバックアップは残ります。",
   "repos.offPremises": "敷地外",
   "repos.offPremisesHint": "カード上のサイト数と3-2-1では独立したサイトとして数えられます。コピーには影響しません。同じ建物内の rest-server ではこれをオフにしてください。",
 

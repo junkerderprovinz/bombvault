@@ -3240,6 +3240,7 @@ const lt: Partial<Translations> = {
   "repos.companionLost": "šalia ištrintos paskirties vietos",
   "repos.mirroredLocked": "Perimta iš paskirties vietos {target}. Pakeisk ten.",
   "repos.removeWithTarget": "Eina kartu su paskirties vieta {target}. Kad pašalintum šią saugyklą, pašalink paskirties vietą.",
+  "repos.directIdle": "Čia nebedaromos jokios atsarginės kopijos. Pašalinus esamos kopijos lieka.",
   "repos.offPremises": "Už pastato ribų",
   "repos.offPremisesHint": "Kortelėse skaičiuojant vietas ir 3-2-1 taisyklę, laikoma atskira vieta. Kopijoms tai įtakos neturi. To paties pastato rest-server turėtų turėti šitai išjungtą.",
 

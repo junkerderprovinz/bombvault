@@ -3227,6 +3227,7 @@ const pl: Partial<Translations> = {
   "repos.companionLost": "obok usuniętego miejsca docelowego",
   "repos.mirroredLocked": "Przejęte z miejsca docelowego {target}. Zmień tam.",
   "repos.removeWithTarget": "Idzie razem z miejscem docelowym {target}. Aby usunąć to repozytorium, usuń to miejsce docelowe.",
+  "repos.directIdle": "Nic już tu nie trafia z kopii zapasowych. Po usunięciu kopie, które tam są, zostają.",
   "repos.offPremises": "Poza obiektem",
   "repos.offPremisesHint": "Liczy się jako osobna lokalizacja na potrzeby lokalizacji i 3-2-1 na kartach. Nie wpływa to na kopie. Rest-server w tym samym budynku powinien mieć to wyłączone.",
 

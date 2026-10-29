@@ -3230,6 +3230,7 @@ const it: Partial<Translations> = {
   "repos.companionLost": "accanto a una destinazione eliminata",
   "repos.mirroredLocked": "Preso in carico da {target}. Modificalo lì.",
   "repos.removeWithTarget": "Va insieme a {target}. Per rimuovere questo repository, rimuovi quella destinazione.",
+  "repos.directIdle": "Qui non viene più salvato nulla. Rimuovendolo, i backup che ci sono restano lì.",
   "repos.offPremises": "Fuori sede",
   "repos.offPremisesHint": "Conta come una sede propria per le sedi e il 3-2-1 sulle schede. Le copie non ne risentono. Un rest-server nello stesso edificio dovrebbe avere questo disattivato.",
 

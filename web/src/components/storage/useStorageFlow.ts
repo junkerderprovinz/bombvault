@@ -1,9 +1,7 @@
 import { useState } from "react";
 import {
   ApiError,
-  createDirectRepo,
   destinationForDomain,
-  getDirectRepo,
   LOCAL_SWITCH_DOMAINS,
   listOffsiteTargets,
   PLACEMENT_DOMAINS,
@@ -14,6 +12,7 @@ import {
   type DefaultChange,
   type DefaultImpact,
   type DefaultRow,
+  type NamedRepo,
   type OffsiteDomain,
   type OkEnvelope,
   type PlacementDomain,
@@ -26,7 +25,6 @@ import { placementChanged } from "../../lib/placementEvents";
 import { flowDomains, flowRows, type FlowAction, type FlowDefault, type FlowLine, type FlowRow } from "../../lib/storageFlow";
 import { useToast } from "../../lib/toast";
 import { destinationsChanged } from "../../lib/useDestinations";
-import { reposChanged } from "../../lib/useNamedRepos";
 import { offsiteTargetsChanged } from "../../lib/useOffsiteTargets";
 import { storageLocationsChanged } from "../../lib/useStorageLocations";
 import { usePlacementOptions } from "../../lib/usePlacementOptions";
@@ -47,6 +45,21 @@ export interface StorageFlow {
   pending: string | null;
   shake: number;
   toggle: (line: FlowLine) => void;
+  /** The direct repository a click would make the home, waiting for the
+   *  dialog that sets it up. */
+  direct: PendingDirect | null;
+  /** Makes the repository the dialog created the home. */
+  directMade: (repo: NamedRepo) => void;
+  directCancelled: () => void;
+}
+
+export interface PendingDirect {
+  key: string;
+  domain: PlacementDomain;
+  target: { id: string; name: string };
+  skip: string[];
+  /** The target that is switched on with it. */
+  enable?: string;
 }
 
 /** A write that failed, with the answer that says why. */
@@ -106,14 +119,16 @@ function announce(action: FlowAction) {
 
 /**
  * useStorageFlow reads which section is backed up where and switches one line
- * per click, without a question: a line only says where new backups go, and
- * nothing already stored moves or goes. A section with placement changes its
- * default; flash, ZFS and the self-backup switch their own folder or a target.
+ * per click: a line only says where new backups go, and nothing already
+ * stored moves or goes. Only a direct repository that does not exist yet is
+ * set up in its dialog first. A section with placement changes its default;
+ * flash, ZFS and the self-backup switch their own folder or a target.
  */
 export function useStorageFlow(locations: StorageLocation[], defaults: PlacementDefaults): StorageFlow {
   const { t, lang } = useT();
   const { push } = useToast();
   const [pending, setPending] = useState<string | null>(null);
+  const [direct, setDirect] = useState<PendingDirect | null>(null);
   const [shake, setShake] = useState(0);
   const options = {
     containers: usePlacementOptions("containers"),
@@ -153,21 +168,12 @@ export function useStorageFlow(locations: StorageLocation[], defaults: Placement
     pushSaveWarnings(push, t, must(await updateOffsiteTarget(target.id, { ...target, enabled: on })).warnings);
   }
 
-  // A target's direct repository goes where the server places it, so a click
-  // never asks for a path.
-  async function directRepo(targetId: string): Promise<string> {
-    const found = must(await getDirectRepo(targetId));
-    if (found.repo) return found.repo.id;
-    const made = must(await createDirectRepo(targetId, "", found.suggestion?.location ?? ""));
-    if (!made.repo) throw new Refused(made);
-    reposChanged();
-    return made.repo.id;
-  }
-
   // A target made for a section starts unticked, so the click that made it
   // also lights it: as a copy where backups are written somewhere copies are
-  // made from, and as that place otherwise.
-  async function newTarget(domain: OffsiteDomain, destinationId: string) {
+  // made from, and as that place otherwise, once its direct repository is set
+  // up.
+  async function newTarget(line: FlowLine, destinationId: string) {
+    const { domain } = line;
     const made = must(await destinationForDomain(destinationId, domain));
     const target = made.target;
     if (!target) throw new Refused(made);
@@ -181,10 +187,11 @@ export function useStorageFlow(locations: StorageLocation[], defaults: Placement
       await saveDefault(domain, { skip: known.filter((id) => !copies.includes(id)) });
       return;
     }
-    await saveDefault(domain, { home: await directRepo(target.id), skip: ["*"] });
+    setDirect({ key: line.key, domain, target: { id: target.id, name: target.name || line.location.name }, skip: ["*"] });
   }
 
-  async function apply(domain: OffsiteDomain, action: FlowAction) {
+  async function apply(line: FlowLine) {
+    const { domain, action } = line;
     switch (action.kind) {
       case "local": {
         const section = LOCAL_SWITCH_DOMAINS.find((d) => d === domain);
@@ -195,12 +202,39 @@ export function useStorageFlow(locations: StorageLocation[], defaults: Placement
         return setTarget(domain, action.targetId, action.on);
       case "create":
       case "destination":
-        return newTarget(domain, action.destinationId);
+        return newTarget(line, action.destinationId);
     }
     if (!isPlacementDomain(domain)) return;
     if (action.enable) await setTarget(domain, action.enable, true);
     if (action.kind === "default") return saveDefault(domain, action.change);
-    await saveDefault(domain, { home: await directRepo(action.targetId), skip: action.skip });
+  }
+
+  // A direct repository is set up in its dialog, and the click writes nothing
+  // until the dialog made it.
+  function askDirect(line: FlowLine): boolean {
+    const { domain, action } = line;
+    if (action.kind !== "direct" || !isPlacementDomain(domain)) return false;
+    const def = read[domain];
+    const name = def && def !== "unreadable" ? def.options.targets.find((x) => x.id === action.targetId)?.name : undefined;
+    setDirect({ key: line.key, domain, target: { id: action.targetId, name: name ?? line.location.name }, skip: action.skip, enable: action.enable });
+    return true;
+  }
+
+  function directMade(repo: NamedRepo) {
+    const asked = direct;
+    setDirect(null);
+    if (!asked) return;
+    setPending(asked.key);
+    (async () => {
+      if (asked.enable) await setTarget(asked.domain, asked.enable, true);
+      await saveDefault(asked.domain, { home: repo.id, skip: asked.skip });
+    })()
+      .catch(fail)
+      .finally(() => {
+        if (asked.enable) offsiteTargetsChanged();
+        placementChanged();
+        setPending(null);
+      });
   }
 
   function fail(err: unknown) {
@@ -210,9 +244,9 @@ export function useStorageFlow(locations: StorageLocation[], defaults: Placement
   }
 
   function toggle(line: FlowLine) {
-    if (pending !== null) return;
+    if (pending !== null || direct !== null || askDirect(line)) return;
     setPending(line.key);
-    apply(line.domain, line.action)
+    apply(line)
       .catch(fail)
       .finally(() => {
         announce(line.action);
@@ -228,5 +262,8 @@ export function useStorageFlow(locations: StorageLocation[], defaults: Placement
     pending,
     shake,
     toggle,
+    direct,
+    directMade,
+    directCancelled: () => setDirect(null),
   };
 }
