@@ -209,10 +209,6 @@ export const SETTINGS_INDEX: Record<SettingsPageId, SearchCard[]> = {
       title: "repos.title",
       hint: "repos.intro",
       rows: [
-        { key: "repos.immutable", hint: "repos.immutableHint" },
-        { key: "settings.compression", hint: "settings.compressionInfo" },
-        { key: "repos.offPremises", hint: "repos.offPremisesHint" },
-        { key: "repos.enabled" },
         { key: "repos.name" },
         { key: "repos.location", hint: "repos.locationHint" },
       ],

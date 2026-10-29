@@ -62,9 +62,8 @@ describe("the settings index in English", () => {
     expect(where("mark all as seen")).toEqual([`info: ${en["about.version"]}`]);
   });
 
-  it("leads compression to the named repositories and the off-site copies", () => {
+  it("leads compression to the off-site copies", () => {
     const hits = where("compression");
-    expect(hits).toContain(`storage: ${en["repos.title"]}`);
     expect(copyCards(hits)).toHaveLength(1);
   });
 

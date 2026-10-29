@@ -11,9 +11,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 
-import type { Destination, OffsiteTarget, Provider, Settings, StorageLocation, StorageLocationSection } from "../lib/api";
+import type { Destination, NamedRepo, OffsiteTarget, Provider, Settings, StorageLocation, StorageLocationSection } from "../lib/api";
 import { ApiError } from "../lib/api";
-import { I18nProvider } from "../lib/i18n";
+import { I18nProvider, en } from "../lib/i18n";
 import { readAskKeepLess } from "../lib/keepAsk";
 import { ToastProvider } from "../lib/toast";
 
@@ -37,6 +37,7 @@ vi.mock("../lib/api", async (importOriginal) => {
     updateDestination: vi.fn(),
     updateOffsiteTarget: vi.fn(),
     updateRepo: vi.fn(),
+    listRepos: vi.fn(),
     adoptIntoDestination: vi.fn(),
     getSettings: vi.fn(),
     putSettings: vi.fn(),
@@ -58,6 +59,7 @@ const listDestinations = vi.mocked(api.listDestinations);
 const updateDestination = vi.mocked(api.updateDestination);
 const updateOffsiteTarget = vi.mocked(api.updateOffsiteTarget);
 const updateRepo = vi.mocked(api.updateRepo);
+const listRepos = vi.mocked(api.listRepos);
 const adoptIntoDestination = vi.mocked(api.adoptIntoDestination);
 const getSettings = vi.mocked(api.getSettings);
 const putSettings = vi.mocked(api.putSettings);
@@ -228,6 +230,7 @@ beforeEach(() => {
   updateDestination.mockResolvedValue({ ok: true, warnings: [] });
   updateOffsiteTarget.mockResolvedValue({ ok: true, warnings: [] });
   updateRepo.mockResolvedValue({ ok: true });
+  listRepos.mockResolvedValue({ ok: true, repos: [] });
   putSettings.mockResolvedValue({ ok: true });
   getSettings.mockResolvedValue({
     ok: true,
@@ -546,6 +549,16 @@ describe("a named repository", () => {
     expect(cardTitles()).toEqual(["Connection", "How long to keep", "Rules per section"]);
     expect(screen.queryByRole("radiogroup", { name: "How long to keep" })).toBeNull();
     expect(within(card("How long to keep")).getByText("Balanced")).toBeTruthy();
+  });
+
+  it("asks before switching off a repository entries still back up to", async () => {
+    listRepos.mockResolvedValue({ ok: true, repos: [{ id: "archive", inUse: 2 } as NamedRepo] });
+    await renderPage("repo:archive");
+
+    await click(within(card("Connection")).getByRole("switch", { name: "Available" }));
+
+    expect(await screen.findByText(en["repos.disableWarn"].replace("{n}", "2"))).toBeTruthy();
+    expect(updateRepo).not.toHaveBeenCalled();
   });
 
   it("can switch off the protection a local repository already carries, through the repository's route", async () => {

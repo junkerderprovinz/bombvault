@@ -72,3 +72,10 @@ export function repoDisplayName(t: (key: TranslationKey) => string, name: string
 export function idleDirect(r: NamedRepo): boolean {
   return r.companionOf !== "" && r.inUse === 0 && r.defaultFor?.length === 0;
 }
+
+/** inUseText says how many entries back up to a repository. A count the
+ *  server could not read never reads as unused. */
+export function inUseText(t: (key: TranslationKey) => string, r: NamedRepo): string {
+  if (r.inUse < 0) return t("repos.inUseUnknown");
+  return r.inUse > 0 ? t("repos.inUse").replace("{n}", String(r.inUse)) : t("repos.unused");
+}

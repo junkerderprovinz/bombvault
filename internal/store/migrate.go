@@ -3525,6 +3525,28 @@ UPDATE pull_sources SET leftovers_moved = 0;`,
 		alreadySatisfied: columnPresent("runs", "copied"),
 		sql:              `ALTER TABLE runs ADD COLUMN copied INTEGER;`,
 	},
+	{
+		// A direct repository has no settings of its own on any page, so one an
+		// import or an older version left apart from its target takes the
+		// target's again. Append-only stays on for both when either had it.
+		version: directFollowsTargetMigration,
+		name:    "direct_follows_target",
+		sql: `
+UPDATE offsite_targets SET immutable = 1
+ WHERE role = 'offsite' AND immutable = 0
+   AND EXISTS (SELECT 1 FROM offsite_targets r
+                WHERE r.role = 'repo' AND r.companion_of = offsite_targets.id AND r.immutable = 1);
+UPDATE offsite_targets SET
+  (storage_class, immutable, retention_keep_last, retention_keep_daily, retention_keep_weekly,
+   retention_keep_monthly, retention_keep_yearly, compression, limit_upload, limit_download, growth_budget_gb) =
+  (SELECT t.storage_class, t.immutable, t.retention_keep_last, t.retention_keep_daily, t.retention_keep_weekly,
+          t.retention_keep_monthly, t.retention_keep_yearly,
+          CASE lower(trim(t.compression)) WHEN 'auto' THEN '' ELSE lower(trim(t.compression)) END,
+          t.limit_upload, t.limit_download, t.growth_budget_gb
+     FROM offsite_targets t WHERE t.role = 'offsite' AND t.id = offsite_targets.companion_of)
+ WHERE role = 'repo' AND companion_of <> ''
+   AND EXISTS (SELECT 1 FROM offsite_targets t WHERE t.role = 'offsite' AND t.id = offsite_targets.companion_of);`,
+	},
 }
 
 // offsiteFieldDomains are the domains with an off-site field in the settings,
@@ -3821,6 +3843,10 @@ const locationNameMigration = 610
 // runCopiedMigration numbers how many snapshots an off-site replication
 // copied.
 const runCopiedMigration = 620
+
+// directFollowsTargetMigration numbers the direct repositories taking every
+// setting from their target again.
+const directFollowsTargetMigration = 630
 
 // oneLineColumns are the names and locations the recovery kit prints.
 var oneLineColumns = []struct {
