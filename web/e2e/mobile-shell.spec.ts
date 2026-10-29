@@ -307,28 +307,22 @@ test("the More sheet floats as a card above the screen edges, like the bar", asy
   const panel = page.getByRole("dialog");
   await expect(panel).toBeVisible();
 
-  // The panel slides up, so it is measured once it has held still.
-  const geometry = await panel.evaluate(async (el) => {
-    const frame = () => new Promise((resolve) => requestAnimationFrame(resolve));
-    let last = "";
-    for (let still = 0; still < 3; ) {
-      await frame();
-      const now = JSON.stringify(el.getBoundingClientRect());
-      still = now === last ? still + 1 : 0;
-      last = now;
-    }
+  // The panel slides up, and on a busy machine a few frames can pass without
+  // it moving, so its bottom is polled until it has arrived.
+  await expect
+    .poll(() => panel.evaluate((el) => innerHeight - el.getBoundingClientRect().bottom), { message: "the sheet sits on the bottom edge" })
+    .toBeGreaterThanOrEqual(7.5);
+  const geometry = await panel.evaluate((el) => {
     const r = el.getBoundingClientRect();
     const cs = getComputedStyle(el);
     return {
       left: r.left,
       right: innerWidth - r.right,
-      bottom: innerHeight - r.bottom,
       corners: [cs.borderTopLeftRadius, cs.borderBottomLeftRadius, cs.borderBottomRightRadius].map(parseFloat),
     };
   });
   expect(geometry.left, "the sheet touches the left edge").toBeGreaterThanOrEqual(15.5);
   expect(geometry.right, "the sheet touches the right edge").toBeGreaterThanOrEqual(15.5);
-  expect(geometry.bottom, "the sheet sits on the bottom edge").toBeGreaterThanOrEqual(7.5);
   for (const corner of geometry.corners) expect(corner, "a corner of the sheet is square").toBeGreaterThan(0);
 });
 
