@@ -3226,6 +3226,7 @@ const hu: Partial<Translations> = {
   "repos.directIdle": "Ide már semmi nem ment. Az eltávolítás után az ott lévő mentések megmaradnak.",
   "direct.card": "Ide ment közvetlenül",
   "direct.cardHint": "Ezeknek a részeknek a bejegyzései a saját mappájuk helyett közvetlenül ide mentenek. A közvetlen tárolójuk minden beállítást erről a tárolási helyről vesz át.",
+  "repos.byDefault": "A(z) {section} alapértelmezést követő bejegyzései ide mentenek.",
 
   // Refusals
   "placementCode.unreadable": "Az elhelyezési szabályokat nem sikerült beolvasni, ezért semmi nem másolódik, amíg ez újra nem sikerül.",

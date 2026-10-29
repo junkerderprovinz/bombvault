@@ -3222,6 +3222,7 @@ const pl: Partial<Translations> = {
   "repos.directIdle": "Nic już tu nie trafia z kopii zapasowych. Po usunięciu kopie, które tam są, zostają.",
   "direct.card": "Kopie trafiają prosto tutaj",
   "direct.cardHint": "Wpisy tych sekcji wykonują kopie zapasowe prosto tutaj zamiast do własnego folderu. Ich bezpośrednie repozytorium bierze wszystkie ustawienia z tej lokalizacji.",
+  "repos.byDefault": "Wpisy w {section}, które idą za domyślnym ustawieniem, trafiają tutaj.",
 
   // Refusals
   "placementCode.unreadable": "Reguł rozmieszczenia nie udało się odczytać, więc nic nie jest kopiowane, dopóki znowu nie da się ich odczytać.",

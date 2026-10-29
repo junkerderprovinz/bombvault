@@ -3216,6 +3216,7 @@ const ja: Partial<Translations> = {
   "repos.directIdle": "ここにはもう何もバックアップされていません。削除しても、そこにあるバックアップは残ります。",
   "direct.card": "ここに直接バックアップ",
   "direct.cardHint": "これらのセクションの項目は、専用フォルダーではなくここに直接バックアップされます。直接リポジトリはすべての設定をこの保存先から引き継ぎます。",
+  "repos.byDefault": "既定に従う {section} の項目はここにバックアップされます。",
 
   // Refusals
   "placementCode.unreadable": "配置ルールを読み込めなかったため、再び読み込めるようになるまで何もコピーされません。",

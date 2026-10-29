@@ -3223,6 +3223,7 @@ const es: Partial<Translations> = {
   "repos.directIdle": "Ya no se hace ninguna copia de seguridad aquí. Al quitarlo, las copias que hay se quedan ahí.",
   "direct.card": "Se guarda directamente aquí",
   "direct.cardHint": "Las entradas de estas secciones se guardan directamente aquí en lugar de en su carpeta propia. Su repositorio directo toma todos los ajustes de esta ubicación.",
+  "repos.byDefault": "Las entradas de {section} que siguen la predeterminada se guardan aquí.",
 
   // Refusals
   "placementCode.unreadable": "Las reglas de ubicación no se pudieron leer, así que no se copia nada hasta que se puedan leer de nuevo.",

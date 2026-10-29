@@ -3235,6 +3235,7 @@ const ca: Partial<Translations> = {
   "repos.directIdle": "Ja no s'hi fa cap còpia de seguretat. En treure'l, les còpies que hi ha s'hi queden.",
   "direct.card": "Es desa directament aquí",
   "direct.cardHint": "Les entrades d'aquestes seccions es desen directament aquí en lloc de la seva carpeta pròpia. El seu repositori directe agafa tots els paràmetres d'aquesta ubicació.",
+  "repos.byDefault": "Les entrades de {section} que segueixen la predeterminada es desen aquí.",
 
   // Refusals
   "placementCode.unreadable": "Les regles d'emplaçament no s'han pogut llegir, així que no es copia res fins que es puguin tornar a llegir.",

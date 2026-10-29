@@ -2546,6 +2546,7 @@ export const en = {
   "repos.directIdle": "Nothing backs up here any more. Removing it keeps the backups that are there.",
   "direct.card": "Backs up straight here",
   "direct.cardHint": "Entries of these sections back up straight to this place instead of their own folder. Their direct repository takes all its settings from this storage location.",
+  "repos.byDefault": "Entries of {section} that follow the default back up here.",
 
   // Refusals
   "placementCode.unreadable": "The placement rules could not be read, so nothing is copied until they can.",
@@ -7540,6 +7541,7 @@ export const de: Translations = {
   "repos.directIdle": "Hierher wird nichts mehr gesichert. Beim Entfernen bleiben die Sicherungen dort erhalten.",
   "direct.card": "Sichert direkt hierher",
   "direct.cardHint": "Einträge dieser Bereiche sichern direkt hierher statt in ihren eigenen Ordner. Ihr direktes Repository übernimmt alle Einstellungen von diesem Speicherort.",
+  "repos.byDefault": "Einträge in {section}, die der Vorgabe folgen, sichern hierher.",
 
   // Refusals
   "placementCode.unreadable": "Die Regeln für Speicherorte ließen sich nicht lesen. Bis das wieder geht, wird nichts kopiert.",

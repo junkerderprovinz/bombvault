@@ -3216,6 +3216,7 @@ const ko: Partial<Translations> = {
   "repos.directIdle": "이제 여기로 백업되는 항목이 없습니다. 제거해도 그곳의 백업은 남습니다.",
   "direct.card": "여기로 바로 백업",
   "direct.cardHint": "이 섹션의 항목은 전용 폴더 대신 이곳으로 바로 백업됩니다. 직접 저장소는 모든 설정을 이 저장 위치에서 가져옵니다.",
+  "repos.byDefault": "기본값을 따르는 {section} 항목은 여기로 백업됩니다.",
 
   // Refusals
   "placementCode.unreadable": "배치 규칙을 읽을 수 없어 다시 읽을 수 있을 때까지 아무것도 복사되지 않습니다.",

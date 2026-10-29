@@ -6,7 +6,7 @@ import { Rows, SettingRow } from "../../components/storage/rows";
 import { useToast } from "../../lib/toast";
 import { createRepo, listRepos, type NamedRepo } from "../../lib/api";
 import { useT } from "../../lib/i18n";
-import { inUseText } from "../../lib/directRepo";
+import { keptText } from "../../lib/directRepo";
 import { reposChanged } from "../../lib/useNamedRepos";
 import { storageLocationsChanged, useStorageLocationsOnDemand } from "../../lib/useStorageLocations";
 
@@ -21,7 +21,7 @@ import { storageLocationsChanged, useStorageLocationsOnDemand } from "../../lib/
 // a repository in use cannot move, and one in use cannot be deleted. The
 // in-use count is on every row, so the reason is visible before the attempt.
 export function ReposCard({ hueIndex }: { hueIndex?: number }) {
-  const { t } = useT();
+  const { t, lang } = useT();
   const { push } = useToast();
   const { locations } = useStorageLocationsOnDemand();
   const [repos, setRepos] = useState<NamedRepo[]>([]);
@@ -97,7 +97,7 @@ export function ReposCard({ hueIndex }: { hueIndex?: number }) {
         {rows.length > 0 && (
           <ul className="flex flex-col divide-y divide-carbon-border/60">
             {rows.map(({ repo: r, location }) => (
-              <LocationRow key={r.id} location={location} note={r.companionLost ? `${inUseText(t, r)} · ${t("repos.companionLost")}` : inUseText(t, r)} />
+              <LocationRow key={r.id} location={location} note={r.companionLost ? `${keptText(t, lang, r)} · ${t("repos.companionLost")}` : keptText(t, lang, r)} />
             ))}
           </ul>
         )}

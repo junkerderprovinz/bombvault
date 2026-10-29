@@ -80,6 +80,15 @@ describe("the sections that back up straight to a storage location", () => {
     await waitFor(() => expect(api.deleteRepo).toHaveBeenCalledWith("d2"));
   });
 
+  it("says so when the section's default backs up there, instead of calling it unused", async () => {
+    api.listRepos.mockResolvedValue({ ok: true, repos: [repo({ id: "d1", defaultFor: ["containers"] })] });
+    render(<DirectCard location={{ ...mani, sections: mani.sections.slice(0, 2) }} hueIndex={0} />);
+
+    expect(await screen.findByText(en["repos.byDefault"].replace("{section}", en["nav.containers"]))).toBeTruthy();
+    expect(screen.queryByText(en["repos.unused"])).toBeNull();
+    expect(screen.queryByRole("button", { name: en["offsite.targets.remove"] })).toBeNull();
+  });
+
   it("is not there for a location nothing backs up to straight", () => {
     const { container } = render(<DirectCard location={{ ...mani, sections: [section({ targetId: "t1" })] }} hueIndex={0} />);
     expect(container.textContent).toBe("");

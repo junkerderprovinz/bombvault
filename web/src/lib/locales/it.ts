@@ -3225,6 +3225,7 @@ const it: Partial<Translations> = {
   "repos.directIdle": "Qui non viene più salvato nulla. Rimuovendolo, i backup che ci sono restano lì.",
   "direct.card": "Salva direttamente qui",
   "direct.cardHint": "Le voci di queste sezioni salvano direttamente qui invece che nella loro cartella propria. Il loro repository diretto prende tutte le impostazioni da questa posizione di archiviazione.",
+  "repos.byDefault": "Le voci di {section} che seguono il predefinito salvano qui.",
 
   // Refusals
   "placementCode.unreadable": "Le regole di collocazione non sono state leggibili, quindi non viene copiato nulla finché non lo saranno di nuovo.",

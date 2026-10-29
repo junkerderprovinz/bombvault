@@ -3224,6 +3224,7 @@ const nl: Partial<Translations> = {
   "repos.directIdle": "Hier wordt niets meer naartoe geback-upt. Bij verwijderen blijven de back-ups die er staan bewaard.",
   "direct.card": "Back-upt rechtstreeks hierheen",
   "direct.cardHint": "Items van deze secties maken hun back-ups rechtstreeks hier in plaats van in hun eigen map. Hun directe repository neemt alle instellingen over van deze opslaglocatie.",
+  "repos.byDefault": "Items van {section} die de standaard volgen, maken hier hun back-up.",
 
   // Refusals
   "placementCode.unreadable": "De plaatsingsregels konden niet worden gelezen, dus wordt er niets gekopieerd totdat dat weer lukt.",

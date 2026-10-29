@@ -1,5 +1,6 @@
 import type { NamedRepo, OffsiteTarget } from "./api";
 import type { TranslationKey, useT } from "./i18n";
+import { DOMAIN_LABEL } from "./storageLocations";
 import { offsiteTargetLabel } from "./useOffsiteTargets";
 
 type T = ReturnType<typeof useT>["t"];
@@ -78,4 +79,14 @@ export function idleDirect(r: NamedRepo): boolean {
 export function inUseText(t: (key: TranslationKey) => string, r: NamedRepo): string {
   if (r.inUse < 0) return t("repos.inUseUnknown");
   return r.inUse > 0 ? t("repos.inUse").replace("{n}", String(r.inUse)) : t("repos.unused");
+}
+
+/** keptText says what backs up to a repository: the entries kept there, and
+ *  the sections whose default writes there, whose entries the count leaves out. */
+export function keptText(t: (key: TranslationKey) => string, lang: string, r: NamedRepo): string {
+  const sections = r.defaultFor ?? [];
+  if (sections.length === 0) return inUseText(t, r);
+  const names = new Intl.ListFormat(lang, { type: "conjunction" }).format(sections.map((d) => t(DOMAIN_LABEL[d])));
+  const byDefault = t("repos.byDefault").replace("{section}", () => names);
+  return r.inUse !== 0 ? `${inUseText(t, r)} · ${byDefault}` : byDefault;
 }

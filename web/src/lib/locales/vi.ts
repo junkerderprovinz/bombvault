@@ -3216,6 +3216,7 @@ const vi: Partial<Translations> = {
   "repos.directIdle": "Không còn gì được sao lưu vào đây nữa. Khi gỡ bỏ, các bản sao lưu ở đó vẫn được giữ.",
   "direct.card": "Sao lưu thẳng vào đây",
   "direct.cardHint": "Các mục của những phần này sao lưu thẳng vào đây thay vì thư mục riêng. Kho trực tiếp của chúng lấy mọi thiết lập từ vị trí lưu trữ này.",
+  "repos.byDefault": "Các mục của {section} theo mặc định sẽ sao lưu vào đây.",
 
   // Refusals
   "placementCode.unreadable": "Không đọc được quy tắc của nơi lưu trữ, nên không có gì được sao chép cho đến khi đọc lại được.",

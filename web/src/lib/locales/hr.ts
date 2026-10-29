@@ -3235,6 +3235,7 @@ const hr: Partial<Translations> = {
   "repos.directIdle": "Ovamo se više ništa ne sigurnosno kopira. Uklanjanjem sigurnosne kopije koje su ondje ostaju.",
   "direct.card": "Sigurnosno se kopira izravno ovamo",
   "direct.cardHint": "Unosi ovih odjeljaka sigurnosno se kopiraju izravno ovamo umjesto u vlastitu mapu. Njihov izravni repozitorij preuzima sve postavke s ove lokacije za pohranu.",
+  "repos.byDefault": "Unosi u {section} koji prate zadanu postavku sigurnosno se kopiraju ovamo.",
 
   // Refusals
   "placementCode.unreadable": "Pravila smještaja nije bilo moguće pročitati, pa se ništa ne kopira dok se ponovno ne mogu pročitati.",

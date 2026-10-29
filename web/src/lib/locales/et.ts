@@ -3235,6 +3235,7 @@ const et: Partial<Translations> = {
   "repos.directIdle": "Siia ei varundata enam midagi. Eemaldamisel jäävad sealsed varukoopiad alles.",
   "direct.card": "Varundatakse otse siia",
   "direct.cardHint": "Nende jaotiste kirjed varundatakse otse siia, mitte oma kausta. Nende otsene hoidla võtab kõik seaded sellest salvestuskohast.",
+  "repos.byDefault": "{section} kirjed, mis järgivad vaikeseadet, varundatakse siia.",
 
   // Refusals
   "placementCode.unreadable": "Paigutusreegleid ei õnnestunud lugeda, seega ei kopeerita midagi enne, kui neid saab jälle lugeda.",

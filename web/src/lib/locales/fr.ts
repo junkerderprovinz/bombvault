@@ -3225,6 +3225,7 @@ const fr: Partial<Translations> = {
   "repos.directIdle": "Plus rien n’est sauvegardé ici. Le retirer laisse en place les sauvegardes qui s’y trouvent.",
   "direct.card": "Sauvegardé directement ici",
   "direct.cardHint": "Les entrées de ces sections sont sauvegardées directement ici au lieu de leur dossier propre. Leur dépôt direct prend tous ses réglages de cet emplacement de stockage.",
+  "repos.byDefault": "Les entrées de {section} qui suivent le réglage par défaut sont sauvegardées ici.",
 
   // Refusals
   "placementCode.unreadable": "Les règles d'emplacement n'ont pas pu être lues, rien n'est donc copié tant que ce n'est pas de nouveau possible.",

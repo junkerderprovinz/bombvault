@@ -3235,6 +3235,7 @@ const lv: Partial<Translations> = {
   "repos.directIdle": "Šeit vairs nekas netiek dublēts. Noņemot to, esošie dublējumi paliek.",
   "direct.card": "Dublē tieši šeit",
   "direct.cardHint": "Šo sadaļu ieraksti tiek dublēti tieši šeit, nevis savā mapē. To tiešā krātuve visus iestatījumus ņem no šīs krātuves vietas.",
+  "repos.byDefault": "{section} ieraksti, kas seko noklusējumam, tiek dublēti šeit.",
 
   // Refusals
   "placementCode.unreadable": "Novietojuma noteikumus nevarēja nolasīt, tāpēc nekas netiek kopēts, kamēr tos atkal nevarēs nolasīt.",

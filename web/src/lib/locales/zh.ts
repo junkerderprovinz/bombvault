@@ -3216,6 +3216,7 @@ const zh: Partial<Translations> = {
   "repos.directIdle": "已没有任何内容备份到这里。移除后，其中的备份仍会保留。",
   "direct.card": "直接备份到这里",
   "direct.cardHint": "这些部分的条目直接备份到这里，而不是各自的专属文件夹。它们的直接仓库沿用此存储位置的全部设置。",
+  "repos.byDefault": "遵循默认设置的 {section} 条目会备份到这里。",
 
   // Refusals
   "placementCode.unreadable": "存放位置规则无法读取，因此在能够再次读取之前不会复制任何内容。",

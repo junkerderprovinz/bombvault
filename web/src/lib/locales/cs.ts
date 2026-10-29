@@ -3223,6 +3223,7 @@ const cs: Partial<Translations> = {
   "repos.directIdle": "Sem už se nic nezálohuje. Po odebrání zálohy, které tam jsou, zůstanou.",
   "direct.card": "Zálohuje se rovnou sem",
   "direct.cardHint": "Položky těchto sekcí se zálohují rovnou sem místo do své vlastní složky. Jejich přímý repozitář přebírá všechna nastavení z tohoto úložiště.",
+  "repos.byDefault": "Položky v {section}, které se řídí výchozím nastavením, se zálohují sem.",
 
   // Refusals
   "placementCode.unreadable": "Pravidla umístění se nepodařilo přečíst, takže se nic nekopíruje, dokud to zase půjde.",

@@ -3235,6 +3235,7 @@ const is: Partial<Translations> = {
   "repos.directIdle": "Ekkert er lengur afritað hingað. Þegar það er fjarlægt verða afritin sem þar eru eftir.",
   "direct.card": "Afritað beint hingað",
   "direct.cardHint": "Færslur þessara hluta eru afritaðar beint hingað í stað eigin möppu. Beina geymslan þeirra tekur allar stillingar frá þessum geymslustað.",
+  "repos.byDefault": "Færslur í {section} sem fylgja sjálfgefnu stillingunni eru afritaðar hingað.",
 
   // Refusals
   "placementCode.unreadable": "Ekki tókst að lesa staðsetningarreglurnar, svo ekkert er afritað fyrr en hægt er að lesa þær aftur.",

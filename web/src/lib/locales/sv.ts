@@ -3225,6 +3225,7 @@ const sv: Partial<Translations> = {
   "repos.directIdle": "Inget säkerhetskopieras hit längre. När du tar bort det ligger säkerhetskopiorna kvar där.",
   "direct.card": "Säkerhetskopieras direkt hit",
   "direct.cardHint": "Poster i de här delarna säkerhetskopieras direkt hit i stället för till sin egen mapp. Deras direkta repository tar alla inställningar från den här lagringsplatsen.",
+  "repos.byDefault": "Poster i {section} som följer standarden säkerhetskopieras hit.",
 
   // Refusals
   "placementCode.unreadable": "Placeringsreglerna kunde inte läsas, så inget kopieras förrän de kan läsas igen.",

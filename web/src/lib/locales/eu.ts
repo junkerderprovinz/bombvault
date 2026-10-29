@@ -3235,6 +3235,7 @@ const eu: Partial<Translations> = {
   "repos.directIdle": "Ez da ezer gehiago babesten hemen. Kentzean, bertan dauden babeskopiak geratzen dira.",
   "direct.card": "Hona zuzenean babesten da",
   "direct.cardHint": "Atal hauetako sarrerak hona zuzenean babesten dira, beren karpeta propioan beharrean. Haien biltegi zuzenak biltegiratze-kokaleku honetatik hartzen ditu ezarpen guztiak.",
+  "repos.byDefault": "Lehenetsia jarraitzen duten {section} sarrerak hona babesten dira.",
 
   // Refusals
   "placementCode.unreadable": "Kokapen-arauak ezin izan dira irakurri, beraz ezer ez da kopiatzen berriro irakurri ahal izan arte.",

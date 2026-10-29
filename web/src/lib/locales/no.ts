@@ -3225,6 +3225,7 @@ const no: Partial<Translations> = {
   "repos.directIdle": "Ingenting sikkerhetskopieres hit lenger. Når du fjerner det, blir sikkerhetskopiene der liggende.",
   "direct.card": "Sikkerhetskopieres rett hit",
   "direct.cardHint": "Oppføringer i disse delene sikkerhetskopieres rett hit i stedet for til sin egen mappe. Det direkte repositoriet deres tar alle innstillinger fra denne lagringsplassen.",
+  "repos.byDefault": "Oppføringer i {section} som følger standarden, sikkerhetskopieres hit.",
 
   // Refusals
   "placementCode.unreadable": "Plasseringsreglene kunne ikke leses, så ingenting kopieres før de kan leses igjen.",

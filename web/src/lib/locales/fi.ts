@@ -3225,6 +3225,7 @@ const fi: Partial<Translations> = {
   "repos.directIdle": "Tänne ei enää varmuuskopioida mitään. Poistettaessa siellä olevat varmuuskopiot säilyvät.",
   "direct.card": "Varmuuskopioidaan suoraan tänne",
   "direct.cardHint": "Näiden osioiden kohteet varmuuskopioidaan suoraan tänne oman kansionsa sijaan. Niiden suora tietovarasto ottaa kaikki asetukset tästä tallennuspaikasta.",
+  "repos.byDefault": "{section}-kohteet, jotka seuraavat oletusta, varmuuskopioidaan tänne.",
 
   // Refusals
   "placementCode.unreadable": "Sijoittelusääntöjä ei voitu lukea, joten mitään ei kopioida, ennen kuin ne voidaan taas lukea.",

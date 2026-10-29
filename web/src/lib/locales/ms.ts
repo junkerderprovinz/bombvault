@@ -3235,6 +3235,7 @@ const ms: Partial<Translations> = {
   "repos.directIdle": "Tiada apa lagi yang disandarkan ke sini. Membuangnya mengekalkan sandaran yang ada di sana.",
   "direct.card": "Disandarkan terus ke sini",
   "direct.cardHint": "Entri bahagian ini disandarkan terus ke sini dan bukan ke folder sendiri. Repositori terusnya mengambil semua tetapan daripada lokasi storan ini.",
+  "repos.byDefault": "Entri {section} yang mengikut lalai disandarkan ke sini.",
 
   // Refusals
   "placementCode.unreadable": "Peraturan penempatan tidak dapat dibaca, jadi tiada apa disalin sehingga ia boleh dibaca semula.",

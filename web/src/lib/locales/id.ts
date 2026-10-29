@@ -3235,6 +3235,7 @@ const id: Partial<Translations> = {
   "repos.directIdle": "Tidak ada lagi yang dicadangkan ke sini. Menghapusnya tetap menyimpan cadangan yang ada di sana.",
   "direct.card": "Dicadangkan langsung ke sini",
   "direct.cardHint": "Entri bagian ini dicadangkan langsung ke sini, bukan ke folder sendiri. Repositori langsungnya mengambil semua pengaturan dari lokasi penyimpanan ini.",
+  "repos.byDefault": "Entri {section} yang mengikuti bawaan dicadangkan ke sini.",
 
   // Refusals
   "placementCode.unreadable": "Aturan penempatan tidak dapat dibaca, jadi tidak ada yang disalin sampai bisa dibaca lagi.",

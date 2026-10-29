@@ -3235,6 +3235,7 @@ const lt: Partial<Translations> = {
   "repos.directIdle": "Čia nebedaromos jokios atsarginės kopijos. Pašalinus esamos kopijos lieka.",
   "direct.card": "Atsarginės kopijos daromos tiesiai čia",
   "direct.cardHint": "Šių skyrių įrašų atsarginės kopijos daromos tiesiai čia, o ne savame aplanke. Jų tiesioginė saugykla visus nustatymus perima iš šios saugojimo vietos.",
+  "repos.byDefault": "{section} įrašai, kurie laikosi numatytosios vietos, kopijuojami čia.",
 
   // Refusals
   "placementCode.unreadable": "Nepavyko perskaityti išdėstymo taisyklių, todėl niekas nekopijuojama, kol jų vėl nepavyks perskaityti.",

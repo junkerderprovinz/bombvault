@@ -3225,6 +3225,7 @@ const tr: Partial<Translations> = {
   "repos.directIdle": "Buraya artık hiçbir şey yedeklenmiyor. Kaldırınca oradaki yedekler kalır.",
   "direct.card": "Doğrudan buraya yedekleniyor",
   "direct.cardHint": "Bu bölümlerin girdileri kendi klasörleri yerine doğrudan buraya yedekleniyor. Doğrudan depoları tüm ayarlarını bu depolama konumundan alır.",
+  "repos.byDefault": "Varsayılanı izleyen {section} girdileri buraya yedeklenir.",
 
   // Refusals
   "placementCode.unreadable": "Yerleşim kuralları okunamadı, bu yüzden tekrar okunabilene kadar hiçbir şey kopyalanmıyor.",

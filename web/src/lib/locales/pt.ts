@@ -3225,6 +3225,7 @@ const pt: Partial<Translations> = {
   "repos.directIdle": "Já nada é guardado aqui. Ao removê-lo, os backups que lá estão ficam.",
   "direct.card": "Guarda diretamente aqui",
   "direct.cardHint": "As entradas destas secções fazem backup diretamente aqui em vez da pasta própria. O repositório direto delas usa todas as definições deste local de armazenamento.",
+  "repos.byDefault": "As entradas de {section} que seguem a predefinição fazem backup aqui.",
 
   // Refusals
   "placementCode.unreadable": "As regras de localização não puderam ser lidas, por isso nada é copiado até que voltem a poder ser lidas.",

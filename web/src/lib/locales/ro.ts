@@ -3226,6 +3226,7 @@ const ro: Partial<Translations> = {
   "repos.directIdle": "Nu se mai salvează nimic aici. La eliminare, copiile de rezervă de acolo rămân.",
   "direct.card": "Se salvează direct aici",
   "direct.cardHint": "Intrările acestor secțiuni se salvează direct aici în loc de dosarul propriu. Depozitul lor direct preia toate setările de la această locație de stocare.",
+  "repos.byDefault": "Intrările din {section} care urmează implicitul se salvează aici.",
 
   // Refusals
   "placementCode.unreadable": "Regulile de amplasare nu au putut fi citite, așa că nu se copiază nimic până când vor putea fi citite din nou.",

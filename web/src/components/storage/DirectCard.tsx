@@ -45,6 +45,9 @@ export function DirectCard({ location, hueIndex }: { location: StorageLocation; 
           const repo = repos.find((r) => r.id === section.repoId);
           const name = t(DOMAIN_LABEL[section.domain]);
           const idle = repo !== undefined && idleDirect(repo);
+          // Entries that follow the section's default are not counted among
+          // those kept here, so the default gets its own line.
+          const byDefault = repo?.defaultFor?.some((domain) => domain === section.domain) ?? false;
           return (
             <SettingRow
               key={section.repoId}
@@ -54,7 +57,8 @@ export function DirectCard({ location, hueIndex }: { location: StorageLocation; 
               note={
                 repo && (
                   <>
-                    <span className="block">{inUseText(t, repo)}</span>
+                    {(!byDefault || repo.inUse !== 0) && <span className="block">{inUseText(t, repo)}</span>}
+                    {byDefault && <span className="block">{t("repos.byDefault").replace("{section}", () => name)}</span>}
                     {idle && <span className="block">{t("repos.directIdle")}</span>}
                   </>
                 )

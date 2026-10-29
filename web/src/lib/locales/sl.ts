@@ -3219,6 +3219,7 @@ const sl: Partial<Translations> = {
   "repos.directIdle": "Sem se nič več ne varnostno kopira. Ob odstranitvi varnostne kopije, ki so tam, ostanejo.",
   "direct.card": "Varnostno kopira neposredno sem",
   "direct.cardHint": "Vnosi teh razdelkov se varnostno kopirajo neposredno sem namesto v lastno mapo. Njihov neposredni repozitorij prevzame vse nastavitve s te lokacije shrambe.",
+  "repos.byDefault": "Vnosi v {section}, ki sledijo privzeti nastavitvi, se varnostno kopirajo sem.",
 
   // Refusals
   "placementCode.unreadable": "Pravil za postavitev ni bilo mogoče prebrati, zato se ne kopira nič, dokler jih ni spet mogoče prebrati.",

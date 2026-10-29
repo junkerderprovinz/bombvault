@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { NamedRepo, OffsiteTarget } from "./api";
-import { directAsk, directUse, itemsText, retentionLowered } from "./directRepo";
+import { directAsk, directUse, itemsText, keptText, retentionLowered } from "./directRepo";
 import { en, type TranslationKey } from "./i18n";
 
 const t = (key: TranslationKey) => en[key];
@@ -57,5 +57,21 @@ describe("direct repositories in use", () => {
     expect(directAsk(t, "en", "offsite.directAppendOnlyAsk", uses)).toBe(
       "Items whose only copy is in B2 and Hetzner direct: 3. Without append-only this box may delete from it. Save anyway?"
     );
+  });
+});
+
+describe("what backs up to a repository", () => {
+  it("counts the entries kept there", () => {
+    expect(keptText(t, "en", repo({ inUse: 3, defaultFor: [] }))).toBe("3 in use");
+  });
+
+  it("names the sections whose default writes there instead of calling it unused", () => {
+    expect(keptText(t, "en", repo({ inUse: 0, defaultFor: ["containers", "files"] }))).toBe(
+      "Entries of Containers and Folders that follow the default back up here."
+    );
+  });
+
+  it("gives both when entries are kept there and a default writes there too", () => {
+    expect(keptText(t, "en", repo({ inUse: 2, defaultFor: ["vms"] }))).toBe("2 in use · Entries of VMs that follow the default back up here.");
   });
 });

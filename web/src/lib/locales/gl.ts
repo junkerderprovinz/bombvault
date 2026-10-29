@@ -3235,6 +3235,7 @@ const gl: Partial<Translations> = {
   "repos.directIdle": "Xa non se fai ningunha copia de seguridade aquí. Ao quitalo, as copias que hai quedan aí.",
   "direct.card": "Gárdase directamente aquí",
   "direct.cardHint": "As entradas destas seccións gárdanse directamente aquí en vez de no seu cartafol propio. O seu repositorio directo toma todos os axustes desta localización.",
+  "repos.byDefault": "As entradas de {section} que seguen a predeterminada gárdanse aquí.",
 
   // Refusals
   "placementCode.unreadable": "As regras de colocación non se puideron ler, así que non se copia nada ata que se poidan ler de novo.",
