@@ -64,17 +64,19 @@ export function distinctNames(locations: StorageLocation[]): StorageLocation[] {
   });
 }
 
-/** localName is what the storage pages call a section's own folder, read off
- *  the list namedLocal named: Local while it is the only folder on this host,
- *  the name of the location it was put into or its own name otherwise, and
- *  Local until the list is in. */
-export function localName(t: T, locations: StorageLocation[], domain: string): string {
-  const at = locations.find((location) => location.sections.some((s) => s.domain === domain && holdsOwnFolder(s)));
-  return at?.name ?? t("placement.segLocal");
+/** ownFolderSection is a section's own folder at a location: a home that is
+ *  neither a named repository nor a target's direct one. */
+export function ownFolderSection(location: StorageLocation, domain: string): StorageLocationSection | undefined {
+  return location.sections.find((s) => s.domain === domain && s.use === "home" && !s.repoId && !s.targetId);
 }
 
-function holdsOwnFolder(section: StorageLocationSection): boolean {
-  return section.use === "home" && !section.repoId && !section.targetId;
+/** localName is what the storage pages call a section's own folder, read off
+ *  the list namedLocal named: Local while it is the only folder on this host,
+ *  the name of the storage location it lies in, its own name otherwise, and
+ *  Local until the list is in. */
+export function localName(t: T, locations: StorageLocation[], domain: string): string {
+  const at = locations.find((location) => ownFolderSection(location, domain));
+  return at?.name ?? t("placement.segLocal");
 }
 
 /** The domains that keep backups at the location, each once, in the order the

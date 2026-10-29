@@ -239,6 +239,13 @@ describe("PlacementRow", () => {
     await waitFor(() => expect(fake.callsTo("setItemPlacement")).toEqual([[item, { copies: { skip: [] } }]]));
   });
 
+  it("leads from a line that follows the default to the section's default on the storage page", async () => {
+    renderRow(placementView({ homeFollows: true, copiesFollow: true }));
+
+    const link = await screen.findByRole("link", { name: "Follows the default" });
+    expect(link.getAttribute("href")).toBe("/settings/storage");
+  });
+
   it("opens the direct repository window when Local goes dark and the target has none yet", async () => {
     renderRow(placementView());
     fireEvent.click(await button("Local"));

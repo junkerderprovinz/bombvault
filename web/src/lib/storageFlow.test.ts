@@ -117,6 +117,30 @@ describe("the sections of the picture", () => {
     const local = location({ sections: [section("flash"), section("zfs", { enabled: false }), section("containers")] });
     expect(flowDomains([local, BOX])).toEqual(["containers", "flash"]);
   });
+
+  it("count a section whose own folder lies in a storage location, with nothing on this host", () => {
+    const dxp = location({
+      id: "destination:dxp",
+      object: "destination",
+      kind: "offsite",
+      name: "DXP6800",
+      sections: [section("containers"), section("files", { use: "home", targetId: "t-x", repoId: "r-x" })],
+    });
+    expect(flowDomains([dxp, B2])).toEqual(["containers"]);
+  });
+});
+
+describe("a section whose own folder lies in a storage location", () => {
+  const DXP = location({ id: "destination:dxp", object: "destination", kind: "offsite", name: "DXP6800", sections: [section("containers")] });
+  const containers = placed(row("containers"));
+
+  it("draws that location as its home, lit, and offers no copy onto it", () => {
+    const found = rows([DXP, B2], { containers });
+    const home = line(found, "containers", DXP);
+    expect(home.on).toBe(true);
+    expect(home.action.kind).not.toBe("destination");
+    expect(line(found, "containers", B2).action).toEqual({ kind: "destination", destinationId: "b2" });
+  });
 });
 
 describe("a section with placement", () => {

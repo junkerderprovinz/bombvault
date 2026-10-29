@@ -94,6 +94,8 @@ const repo = (id: string, name: string, url: string, extra: Record<string, unkno
   immutable: false,
   enabled: true,
   inUse: 2,
+  companionOf: "",
+  companionLost: false,
   ...extra,
 });
 
@@ -628,22 +630,35 @@ for (const [what, rows] of [
   });
 }
 
-test("settings storage on a phone: a repository shows its whole name and address, each switch labelled once", async ({ page }, testInfo) => {
+test("settings storage on a phone: a repository is one row that opens its own page", async ({ page }, testInfo) => {
   test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only");
+  const locations = REPOS.map((r) => ({
+    id: `repo:${r.id}`,
+    object: "repo",
+    kind: "offsite",
+    provider: "",
+    backend: r.repo.slice(0, r.repo.indexOf(":")),
+    name: r.name,
+    where: r.repo,
+    enabled: r.enabled,
+    offPremises: false,
+    sections: [],
+    protection: { immutable: r.immutable, testable: false },
+    capacity: {},
+  }));
+  await page.route("**/api/storage/locations", (route) => route.fulfill({ json: { ok: true, locations } }));
   await openPage(page, 320, "storage", "Speicherorte");
 
-  // The off-site cards further down the tile name the repositories again.
   const repos = page.locator('[data-search-card="Repositories"]');
   for (const r of REPOS) {
-    for (const text of [r.name, r.repo]) {
-      const el = repos.getByText(text, { exact: true });
-      await expect(el).toBeVisible();
-      const cut = await el.evaluate((node) => node.scrollWidth > node.clientWidth + 1);
-      expect(cut, `"${text}" is cut off`).toBe(false);
-    }
+    const link = repos.getByRole("link", { name: r.name, exact: true });
+    await expect(link).toBeVisible();
+    await expect(link).toHaveAttribute("href", `/storage/${encodeURIComponent(`repo:${r.id}`)}`);
   }
-  const row = repos.getByRole("listitem").filter({ hasText: REPOS[0].name });
-  await expect(row.getByText("Nur anhängen", { exact: true })).toHaveCount(1);
+  await expect(repos.getByRole("switch")).toHaveCount(0);
+  const box = await repos.boundingBox();
+  const width = await page.evaluate(() => document.documentElement.clientWidth);
+  expect(box && box.x + box.width, "the card runs past the screen").toBeLessThanOrEqual(width + 1);
 });
 
 test("settings storage: an off-site limit in KiB/s shows the rate in MB/s and Mbit/s beside it", async ({ page }, testInfo) => {

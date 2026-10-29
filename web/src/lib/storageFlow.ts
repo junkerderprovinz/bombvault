@@ -6,6 +6,7 @@
 
 import type { DefaultChange, OffsiteDomain, PlacementOptions, PlacementView, StorageLocation, StorageLocationSection } from "./api";
 import { isPlacementDomain, placementButtons, type PlacementButtons } from "./placement";
+import { ownFolderSection } from "./storageLocations";
 
 export const FLOW_DOMAINS: readonly OffsiteDomain[] = ["containers", "vms", "flash", "files", "zfs", "config"];
 
@@ -63,12 +64,10 @@ export function objectId(location: StorageLocation): string {
 }
 
 /** The sections that are backed up at all: the ones whose own folder is in
- *  use. A switched-off module has none. */
+ *  use, on this host or in a storage location. A switched-off module has none. */
 export function flowDomains(locations: StorageLocation[]): OffsiteDomain[] {
   const live = new Set(
-    locations
-      .filter((location) => location.object === "path")
-      .flatMap((location) => location.sections.filter((section) => section.enabled).map((section) => section.domain))
+    locations.flatMap((location) => FLOW_DOMAINS.filter((domain) => ownFolderSection(location, domain)?.enabled))
   );
   return FLOW_DOMAINS.filter((domain) => live.has(domain));
 }
@@ -77,9 +76,6 @@ function copyOf(location: StorageLocation, domain: OffsiteDomain): StorageLocati
   return location.sections.find((section) => section.domain === domain && section.use === "copy");
 }
 
-function ownsFolder(location: StorageLocation, domain: OffsiteDomain): StorageLocationSection | undefined {
-  return location.sections.find((section) => section.domain === domain && section.use === "home");
-}
 
 /** skipFor is the skip list that copies to exactly the given targets. A list
  *  of every other target lets a target added later arrive ticked; nothing at
@@ -145,7 +141,10 @@ function homeLine(base: Omit<FlowLine, "on" | "action">, repo: string, placed: P
 function placementLine(base: Omit<FlowLine, "on" | "action">, def: FlowDefault): FlowLine | null {
   const { location, domain } = base;
   const placed = placedOf(def);
-  if (location.object === "path") return ownsFolder(location, domain) ? homeLine(base, "", placed) : null;
+  // A storage location that holds the section's own folder is its home,
+  // never a place to copy to as well.
+  if (ownFolderSection(location, domain)) return homeLine(base, "", placed);
+  if (location.object === "path") return null;
   if (location.object === "repo") return homeLine(base, objectId(location), placed);
 
   const copy = copyOf(location, domain);
@@ -177,10 +176,9 @@ function placementLine(base: Omit<FlowLine, "on" | "action">, def: FlowDefault):
  *  of a target. */
 function switchLine(base: Omit<FlowLine, "on" | "action">): FlowLine | null {
   const { location, domain } = base;
-  if (location.object === "path") {
-    const own = ownsFolder(location, domain);
-    return own ? { ...base, on: !own.off, action: { kind: "local", on: !!own.off } } : null;
-  }
+  const own = ownFolderSection(location, domain);
+  if (own) return { ...base, on: !own.off, action: { kind: "local", on: !!own.off } };
+  if (location.object === "path") return null;
   if (location.object === "repo") return null;
   const copy = copyOf(location, domain);
   if (copy?.targetId) return { ...base, on: copy.enabled, action: { kind: "enable", targetId: copy.targetId, on: !copy.enabled } };

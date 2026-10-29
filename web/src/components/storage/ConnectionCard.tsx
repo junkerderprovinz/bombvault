@@ -12,6 +12,8 @@ import { IconPencil } from "../navGlyphs";
 import { SelectField } from "../SelectField";
 import { Selector } from "../Selector";
 import { Toggle } from "../Toggle";
+import { useConfirm } from "../../lib/useConfirm";
+import { useNamedRepos } from "../../lib/useNamedRepos";
 import { TextSetting } from "./fields";
 import { Deviations, DomainGlyph, Rows, SettingRow } from "./rows";
 import { OwnFolderWindow } from "./OwnFolderWindow";
@@ -48,9 +50,24 @@ export function ConnectionCard({ edit, onChange, hueIndex }: { edit: LocationEdi
   const routeHint = ROUTE_HINT[location.backend];
   const whereHint = local ? (perSection ? t("storage.folderHint") : undefined) : routeHint && t(routeHint);
   const [moving, setMoving] = useState<OffsiteDomain[] | null>(null);
+  const repos = useNamedRepos();
+  const { confirm, confirmDialog } = useConfirm();
+
+  // Switching a repository off while entries back up to it is allowed, it is
+  // how a share that went away is parked, but it stops those backups, and
+  // nothing else on the page says so.
+  async function setEnabled(enabled: boolean) {
+    const repo = location.object === "repo" ? repos.find((r) => `repo:${r.id}` === location.id) : undefined;
+    if (!enabled && repo && repo.inUse !== 0) {
+      const question = repo.inUse < 0 ? t("repos.disableWarnUnknown") : t("repos.disableWarn").replace("{n}", String(repo.inUse));
+      if (!(await confirm(question))) return;
+    }
+    await save({ enabled });
+  }
 
   return (
     <Card title={t("storage.connection")} hueIndex={hueIndex}>
+      {confirmDialog}
       <Rows>
         <SettingRow label={t("dest.name")} hint={can("name") ? t("dest.nameHint") : undefined}>
           {can("name") ? (
@@ -69,7 +86,7 @@ export function ConnectionCard({ edit, onChange, hueIndex }: { edit: LocationEdi
               label={t("storage.available")}
               checked={location.enabled}
               disabled={busy}
-              onChange={(enabled) => void save({ enabled })}
+              onChange={(enabled) => void setEnabled(enabled)}
             />
           </SettingRow>
         )}

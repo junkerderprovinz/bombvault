@@ -231,6 +231,9 @@ func (h *Handler) nestedTargetLocation(id string, t store.OffsiteTarget) error {
 	if err != nil {
 		return err
 	}
+	if own, err := h.svc.repoFor(settings, t.Domain, "local"); err == nil && sameRepoLocation(own, loc) {
+		return errCopyOnOwnFolder
+	}
 	self, err := h.svc.targetSelf(id, t)
 	if err != nil {
 		return err

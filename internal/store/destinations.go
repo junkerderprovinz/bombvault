@@ -152,6 +152,7 @@ func writeDestinationTx(tx *sql.Tx, d OffsiteTarget) error {
 		return err
 	}
 	for _, t := range derived {
+		was := t.Enabled
 		// A value that only spells the destination's differently stays as written.
 		differs := t.differingFrom(d)
 		for _, setting := range FollowedSettings {
@@ -166,6 +167,11 @@ func writeDestinationTx(tx *sql.Tx, d OffsiteTarget) error {
 		}
 		if err := mirrorTx(tx, t, false); err != nil {
 			return err
+		}
+		if t.Enabled != was {
+			if err := followSwitchTx(tx, t); err != nil {
+				return err
+			}
 		}
 	}
 	return nil

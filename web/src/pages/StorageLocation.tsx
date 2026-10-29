@@ -19,6 +19,7 @@ import { ConnectionCard } from "../components/storage/ConnectionCard";
 import { ConnectionWindow } from "../components/storage/ConnectionWindow";
 import { CopyCard } from "../components/storage/CopyCard";
 import { CredentialsCard } from "../components/storage/CredentialsCard";
+import { DirectCard } from "../components/storage/DirectCard";
 import { KeepCard } from "../components/storage/KeepCard";
 import { MoveWindow } from "../components/storage/MoveWindow";
 import { OwnFoldersCard } from "../components/storage/OwnFoldersCard";
@@ -120,6 +121,7 @@ function Location({ location, records }: { location: StorageLocation; records: L
   const kind = location.object === "path" ? null : credentialKind(location.backend);
   const remote = location.backend === "rclone" ? rcloneRemote(location.where) : null;
   const takesCopies = location.object === "destination" || location.object === "target";
+  const direct = takesCopies && location.sections.some((section) => section.use === "home" && section.targetId && section.repoId);
   const primary = settingsOwned(location) ? location.sections.find((section) => section.primary) : undefined;
   const changeable = location.object === "destination" && form !== undefined;
   const amount = amountText(t, location.capacity);
@@ -148,7 +150,9 @@ function Location({ location, records }: { location: StorageLocation; records: L
             <Back />
             <LocationMark location={location} size="head" />
           </span>
-          <div className="flex min-w-0 flex-1 basis-64 flex-col gap-0.5">
+          {/* On a phone the name takes a line of its own, so the actions under
+              it start where it starts. */}
+          <div className="flex min-w-0 flex-1 basis-64 flex-col gap-0.5 max-md:basis-full">
             <span className="min-w-0 text-status font-semibold text-carbon-text text-start wrap-anywhere">{location.name}</span>
             <span className="flex flex-wrap items-center gap-x-1.5 text-sm text-carbon-textMuted">
               <span>
@@ -200,6 +204,7 @@ function Location({ location, records }: { location: StorageLocation; records: L
       {removing && <RemovalWindow location={location} onClose={() => setRemoving(false)} onRemoved={() => navigate("/storage", { replace: true })} />}
 
       {location.object === "destination" && <OwnFoldersCard location={location} hueIndex={nextHue()} />}
+      {direct && <DirectCard location={location} hueIndex={nextHue()} />}
       <ConnectionCard edit={edit} onChange={changeable ? () => setChanging(true) : undefined} hueIndex={nextHue()} />
       {kind && <CredentialsCard edit={edit} kind={kind} hueIndex={nextHue()} />}
       {remote && <RcloneConfCard remote={remote} hueIndex={nextHue()} />}

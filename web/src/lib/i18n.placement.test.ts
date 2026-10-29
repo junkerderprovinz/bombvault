@@ -22,11 +22,7 @@ const PREFIXES = [
 ];
 
 const SINGLE_KEYS = new Set<string>([
-  "repos.offPremises",
-  "repos.offPremisesHint",
-  "repos.directOf",
   "repos.companionLost",
-  "repos.mirroredLocked",
   "offsite.alsoDirect",
   "offsite.directRetentionAsk",
   "offsite.directAppendOnlyAsk",

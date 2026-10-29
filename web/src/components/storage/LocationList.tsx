@@ -11,7 +11,9 @@ import { IconForward } from "../glyphs";
 import { LocationMark } from "./LocationMark";
 import { Vessel } from "./Vessel";
 
-function LocationRow({ location }: { location: StorageLocation }) {
+/** LocationRow is one storage location as a row that opens its page. `note`
+ *  stands in for the sections that use it. */
+export function LocationRow({ location, note }: { location: StorageLocation; note?: string }) {
   const { t, lang } = useT();
   const navigate = useNavigate();
   const route = locationRoute(location.id);
@@ -35,7 +37,7 @@ function LocationRow({ location }: { location: StorageLocation }) {
           <span dir="ltr" className="min-w-0 truncate text-start">
             {location.where}
           </span>
-          <span className="min-w-0 truncate md:before:me-1.5 md:before:content-['·']">{usedByText(t, lang, location)}</span>
+          <span className="min-w-0 truncate md:before:me-1.5 md:before:content-['·']">{note ?? usedByText(t, lang, location)}</span>
         </span>
       </div>
       <div className="flex min-w-0 items-center gap-3 max-md:w-full max-md:ps-[52px]">

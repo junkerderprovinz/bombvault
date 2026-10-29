@@ -52,7 +52,7 @@ export function PlacementBar({
   const home = viewHomeLabel(t, local, view, options);
   const fixed = view.locked ? lockHint(t, "home-fixed", home) : undefined;
   const items: SelectorItem[] = [
-    { id: LOCAL, label: t("placement.segLocal"), title: b.local ? fixed : undefined },
+    { id: LOCAL, label: local, title: b.local ? fixed : undefined },
     ...options.targets.map((x) => ({
       id: x.id,
       label: x.enabled ? x.name : `${x.name} ${offQualifier(t)}`,

@@ -52,3 +52,25 @@ it("leaves the idle card out when its settings cannot be read", async () => {
   const root = await renderCards();
   expect(jumpTarget(root, { card: en["idle.title"] })).toBeNull();
 });
+
+it("lands on a card that appears after its page, and says so when none comes", async () => {
+  const { awaitJumpTarget } = await import("./SettingsSearch");
+  const root = document.createElement("div");
+  document.body.appendChild(root);
+  const found = vi.fn();
+  const missing = vi.fn();
+
+  awaitJumpTarget(root, { card: "Late card" }, 1000, found, missing);
+  const card = document.createElement("section");
+  card.setAttribute("data-search-card", "Late card");
+  root.appendChild(card);
+  await vi.waitFor(() => expect(found).toHaveBeenCalledWith(card));
+  expect(missing).not.toHaveBeenCalled();
+
+  vi.useFakeTimers();
+  awaitJumpTarget(root, { card: "Never there" }, 1000, found, missing);
+  vi.advanceTimersByTime(1000);
+  expect(missing).toHaveBeenCalledTimes(1);
+  vi.useRealTimers();
+  root.remove();
+});

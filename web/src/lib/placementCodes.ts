@@ -49,6 +49,7 @@ const CODE_KEYS: Record<string, TranslationKey> = {
   "erase-running": "storage.remove.erasingNow",
   "own-folder-unreadable": "placementCode.ownFolderUnreadable",
   "own-folder-there": "placementCode.ownFolderThere",
+  "copy-on-own-folder": "placementCode.copyOnOwnFolder",
 };
 
 const WARNING_KEYS: Record<SaveWarning["code"], TranslationKey> = {

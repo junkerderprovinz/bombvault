@@ -214,7 +214,8 @@ const (
 // A row that is already a direct repository (companion_of set) only takes
 // name, repo, schedule and enabled from t; its mirrored fields come from its
 // target instead. Saving a target mirrors its own fields, credentials aside,
-// into that companion in the same transaction.
+// into that companion in the same transaction, and switches it on or off
+// when the target's own switch changes.
 //
 // A target derived from a destination keeps every followed setting it is
 // saved with a different value for, on top of those t.Own names.
@@ -250,11 +251,13 @@ func (r *Repo) upsertOffsiteTarget(t OffsiteTarget, moved bool) (OffsiteTarget, 
 	}
 	defer tx.Rollback() //nolint:errcheck // rollback after a successful commit is a no-op
 	var companionOf, destinationID string
-	err = tx.QueryRow(`SELECT companion_of, destination_id FROM offsite_targets WHERE id = ? AND role = ?`,
-		t.ID, t.Role).Scan(&companionOf, &destinationID)
+	var wasEnabled int
+	err = tx.QueryRow(`SELECT companion_of, destination_id, enabled FROM offsite_targets WHERE id = ? AND role = ?`,
+		t.ID, t.Role).Scan(&companionOf, &destinationID, &wasEnabled)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return OffsiteTarget{}, fmt.Errorf("UpsertOffsiteTarget: %w", err)
 	}
+	switched := err == nil && wasEnabled != boolInt(t.Enabled)
 	if t.DestinationID != "" {
 		destinationID = t.DestinationID
 	}
@@ -319,6 +322,11 @@ func (r *Repo) upsertOffsiteTarget(t OffsiteTarget, moved bool) (OffsiteTarget, 
 	if t.Role == RoleOffsite {
 		if err := mirrorTx(tx, t, false); err != nil {
 			return OffsiteTarget{}, fmt.Errorf("UpsertOffsiteTarget mirror: %w", err)
+		}
+		if switched {
+			if err := followSwitchTx(tx, t); err != nil {
+				return OffsiteTarget{}, fmt.Errorf("UpsertOffsiteTarget switch: %w", err)
+			}
 		}
 	}
 	if moved {
@@ -665,6 +673,15 @@ func mirrorTx(tx *sql.Tx, target OffsiteTarget, withCreds bool) error {
 	//nolint:gosec // G202: set and differs are built from the fixed mirroredCols column names, never user text; every value travels in args.
 	_, err := tx.Exec(`UPDATE offsite_targets SET `+strings.Join(set, ", ")+`
 		WHERE role = ? AND companion_of = ? AND companion_of <> '' AND (`+strings.Join(differs, " OR ")+`)`, args...)
+	return err
+}
+
+// followSwitchTx switches a target's direct repository on or off with the
+// target. Only a change of the target's switch is passed on, so a direct
+// repository switched off on its own stays off through every other save.
+func followSwitchTx(tx *sql.Tx, target OffsiteTarget) error {
+	_, err := tx.Exec(`UPDATE offsite_targets SET enabled = ? WHERE role = ? AND companion_of = ? AND companion_of <> ''`,
+		boolInt(target.Enabled), RoleRepo, target.ID)
 	return err
 }
 

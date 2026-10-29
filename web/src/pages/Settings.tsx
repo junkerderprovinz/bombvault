@@ -6,7 +6,7 @@ import { useT } from "../lib/i18n";
 import { useToast } from "../lib/toast";
 import { Navigate, useLocation, useParams } from "react-router-dom";
 import { SettingsRail, useRailForm } from "../components/SettingsRail";
-import { SettingsSearch, jumpTarget, markHit, type SearchJump } from "./settings/SettingsSearch";
+import { SettingsSearch, awaitJumpTarget, jumpTarget, markHit, type SearchJump } from "./settings/SettingsSearch";
 import {
   FALLBACK_PAGE,
   isSettingsPage,
@@ -19,6 +19,10 @@ import {
 } from "./settings/settingsPages";
 import { SettingsStoreContext, useSettingsStore } from "./settings/settingsStore";
 import { PAGE_COMPONENTS } from "./settings/pages";
+
+/** How long a jump waits for a card that appears after the page, before it
+ *  says the card is not on screen. */
+const JUMP_WAIT_MS = 3000;
 
 // bv-convention-exception: page-uses-page-shell: the rail stands beside the
 // page or above it, and the content column carries PAGE_SHELL_RESPONSIVE.
@@ -64,8 +68,7 @@ export function SettingsPage() {
     if (jump && handledJump.current !== location.key) {
       handledJump.current = location.key;
       const content = document.querySelector<HTMLElement>("[data-settings-content]");
-      const target = content && (jump.card || jump.row) ? jumpTarget(content, jump) : null;
-      if (target) {
+      const land = (target: HTMLElement) => {
         // jsdom has no scrollIntoView.
         target.scrollIntoView?.({ block: "center" });
         markHit(target);
@@ -76,10 +79,20 @@ export function SettingsPage() {
           settle.observe(content);
           window.setTimeout(() => settle.disconnect(), 1200);
         }
-      } else if (jump.card) {
-        push(t("settings.search.notShown").replace("{name}", jump.row ?? jump.card), "warn");
+      };
+      const missing = () => push(t("settings.search.notShown").replace("{name}", jump.row ?? jump.card ?? ""), "warn");
+      if (jump.card) {
+        if (!content) {
+          missing();
+          return;
+        }
+        return awaitJumpTarget(content, jump, JUMP_WAIT_MS, land, missing);
       }
-      if (target || jump.card) return;
+      const target = content && jump.row ? jumpTarget(content, jump) : null;
+      if (target) {
+        land(target);
+        return;
+      }
     }
     if (anchor) {
       const target = document.getElementById(anchor);

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { Button } from "../Button";
 import { IconRefresh } from "../glyphs";
 import { InfoBubble } from "../InfoBubble";
@@ -237,11 +238,21 @@ export function PlacementRow({
         <div className="flex flex-col gap-1">
           {copiesLine && (
             <p className="flex items-center gap-2 flex-wrap text-xs text-carbon-textMuted">
-              <span>
-                {line === "home-set"
-                  ? t("placement.homeSet").replace("{home}", () => viewHomeLabel(t, local, shown, options))
-                  : t(FOLLOW_KEYS[line])}
-              </span>
+              {line === "home-set" ? (
+                <span>{t("placement.homeSet").replace("{home}", () => viewHomeLabel(t, local, shown, options))}</span>
+              ) : line === "own-copies" ? (
+                <span>{t(FOLLOW_KEYS[line])}</span>
+              ) : (
+                // The default is set for the whole section on its storage page,
+                // the place an entry's own buttons do not show.
+                <Link
+                  to="/settings/storage"
+                  state={{ jump: { card: t("storage.flow.title") } }}
+                  className="text-accentText hover:underline"
+                >
+                  {t(FOLLOW_KEYS[line])}
+                </Link>
+              )}
               {(line === "own-copies" || line === "home-set") && (
                 <Button
                   label={t("placement.follow")}

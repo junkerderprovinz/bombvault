@@ -1,6 +1,9 @@
+import { useContext } from "react";
 import { destinationForDomain, type OkEnvelope, type PlacementDomain, type PlacementOptions } from "./api";
+import { LocationsContext } from "./attention";
 import type { useT } from "./i18n";
 import { lockHint, type PlacementStep } from "./placement";
+import { ownFolderSection } from "./storageLocations";
 import { destinationsChanged, useDestinations } from "./useDestinations";
 import { offsiteTargetsChanged } from "./useOffsiteTargets";
 
@@ -18,11 +21,15 @@ export function blockedText(t: T, step: Extract<PlacementStep, { kind: "blocked"
   }
 }
 
-/** The destinations that have no target in the domain yet, for a button each. */
+/** The destinations that have no target in the domain yet, for a button each.
+ *  One that holds the section's own folder is its home already, and a copy
+ *  there would land on itself. */
 export function useNewDestinations(domain: PlacementDomain, options: PlacementOptions | null) {
   const { destinations } = useDestinations();
+  const locations = useContext(LocationsContext);
   const known = new Set(options?.targets.map((x) => x.id) ?? []);
-  return destinations.filter((d) => !d.domains.includes(domain) && !known.has(d.id));
+  const holdsOwnFolder = (id: string) => locations.some((l) => l.id === `destination:${id}` && ownFolderSection(l, domain));
+  return destinations.filter((d) => !d.domains.includes(domain) && !known.has(d.id) && !holdsOwnFolder(d.id));
 }
 
 /**

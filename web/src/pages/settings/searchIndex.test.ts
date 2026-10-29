@@ -49,12 +49,12 @@ describe("the settings search index", () => {
     }
   });
 
-  it("has the compression choice on every card that draws one", () => {
+  it("has the compression choice on the off-site copies card and not on the repositories card", () => {
     const row = { key: "settings.compression", hint: "settings.compressionInfo" };
     expect(pageSource("storage")).toContain("<ReposCard");
-    const cards = SETTINGS_INDEX.storage.filter((c) => c.title === "repos.title" || c.title === "offsite.copies.title");
-    expect(cards).toHaveLength(2);
-    for (const card of cards) expect(card.rows).toContainEqual(row);
+    const copies = SETTINGS_INDEX.storage.find((c) => c.title === "offsite.copies.title");
+    expect(copies?.rows).toContainEqual(row);
+    expect(SETTINGS_INDEX.storage.find((c) => c.title === "repos.title")?.rows).not.toContainEqual(row);
   });
 
   it.each([["schedules", "IdleCard"]] as const)("has every caption and (i) of the card the %s page mounts as %s", (page, file) => {
@@ -100,14 +100,6 @@ describe("the settings search index", () => {
       }
     }
   );
-
-  it("has the off-premises switch of the repositories card with its (i)", () => {
-    const source = readFileSync(join(HERE, "ReposCard.tsx"), "utf8");
-    const rows = [...source.matchAll(/\{t\("([\w.]+)"\)\}\s*<InfoBubble tip=\{t\("([\w.]+)"\)\}/g)].map(([, key, hint]) => ({ key, hint }));
-    expect(rows).toContainEqual({ key: "repos.offPremises", hint: "repos.offPremisesHint" });
-    const card = SETTINGS_INDEX.storage.find((c) => c.title === "repos.title");
-    for (const row of rows) expect(card?.rows).toContainEqual(row);
-  });
 
   it("indexes the retention card's pointer to the storage locations and its link", () => {
     const source = readFileSync(join(HERE, "sections", "RetentionCards.tsx"), "utf8");

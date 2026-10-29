@@ -18,7 +18,7 @@ export function BackButton({ to, label }: { to: string; label: string }) {
       variant="icon"
       glyphOnly
       onClick={() => navigate(to)}
-      className="glim-btn-key flex-none rounded-control"
+      className="flex-none rounded-control"
     />
   );
 }
