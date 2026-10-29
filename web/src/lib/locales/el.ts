@@ -2642,6 +2642,7 @@ const el: Partial<Translations> = {
   "activityLog.jobPull": "λήψη από πηγές",
   "activityLog.jobReplica": "αντίγραφο ZFS",
   "activityLog.lineOffsiteSuccess": "Η αναπαραγωγή εκτός τόπου ολοκληρώθηκε: {domain} ({duration})",
+  "activityLog.lineOffsiteNothing": "Η αναπαραγωγή εκτός τόπου δεν βρήκε κάτι νέο για αντιγραφή: {domain}",
   "activityLog.lineOffsiteFailed": "Η αναπαραγωγή εκτός τόπου απέτυχε, {domain}: {error}",
   "activityLog.lineDrillSuccess": "Ο έλεγχος επαναφοράς πέτυχε: {domain}",
   "activityLog.lineDrillFailed": "Ο έλεγχος επαναφοράς απέτυχε, {domain}: {error}",

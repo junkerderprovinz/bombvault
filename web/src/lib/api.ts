@@ -556,6 +556,9 @@ export interface Run {
   snapshotFallback?: string;
   /** When the backup of a deferred run is tried again, null for any other run. */
   retryAt?: number | null;
+  /** How many snapshots an off-site replication copied, null when it is not
+   *  known or for any other run. */
+  copied?: number | null;
 }
 
 /** The one resource a slow backup waited on. share is how busy it was, or
@@ -7945,8 +7948,8 @@ export interface StorageLocationSection {
   /** The target's switch for a copy, the repository's for a home in one, the
    *  domain's own for its path. */
   enabled: boolean;
-  /** The own folder of a section without placement that takes no new
-   *  backups: they go to the section's targets directly. */
+  /** An own folder that takes no new backups: they go to the section's
+   *  targets directly, or to the direct repository its default writes to. */
   off?: boolean;
   /** The copy the domain's off-site settings describe. */
   primary?: boolean;

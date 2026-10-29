@@ -2633,6 +2633,7 @@ const vi: Partial<Translations> = {
   "activityLog.jobPull": "kéo về từ các nguồn",
   "activityLog.jobReplica": "bản sao ZFS",
   "activityLog.lineOffsiteSuccess": "Sao chép off-site hoàn tất: {domain} ({duration})",
+  "activityLog.lineOffsiteNothing": "Sao chép off-site không thấy gì mới để chép: {domain}",
   "activityLog.lineOffsiteFailed": "Sao chép off-site thất bại, {domain}: {error}",
   "activityLog.lineDrillSuccess": "Kiểm tra khôi phục đạt: {domain}",
   "activityLog.lineDrillFailed": "Kiểm tra khôi phục thất bại, {domain}: {error}",

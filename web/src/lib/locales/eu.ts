@@ -2835,6 +2835,7 @@ const eu: Partial<Translations> = {
   "activityLog.lineVerifySuccess": "Egiaztapena gaindituta: {domain}",
   "activityLog.lineVerifyFailed": "Egiaztapenak huts egin du, {domain}: {error}",
   "activityLog.lineOffsiteSuccess": "Kanpoko errepikapena eginda: {domain} ({duration})",
+  "activityLog.lineOffsiteNothing": "Kanpoko errepikapenak ez du ezer berririk aurkitu kopiatzeko: {domain}",
   "activityLog.lineOffsiteFailed": "Kanpoko errepikapenak huts egin du, {domain}: {error}",
   "activityLog.lineDrillSuccess": "Berrezarpen-egiaztapena gaindituta: {domain}",
   "activityLog.lineDrillFailed": "Berrezarpen-egiaztapenak huts egin du, {domain}: {error}",

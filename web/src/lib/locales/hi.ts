@@ -2835,6 +2835,7 @@ const hi: Partial<Translations> = {
   "activityLog.lineVerifySuccess": "सत्यापन सफल रहा: {domain}",
   "activityLog.lineVerifyFailed": "सत्यापन विफल हुआ, {domain}: {error}",
   "activityLog.lineOffsiteSuccess": "ऑफ़-साइट रेप्लिकेशन पूरा हुआ: {domain} ({duration})",
+  "activityLog.lineOffsiteNothing": "ऑफ़-साइट रेप्लिकेशन को कॉपी करने के लिए कुछ नया नहीं मिला: {domain}",
   "activityLog.lineOffsiteFailed": "ऑफ़-साइट रेप्लिकेशन विफल हुआ, {domain}: {error}",
   "activityLog.lineDrillSuccess": "रीस्टोर जाँच सफल रही: {domain}",
   "activityLog.lineDrillFailed": "रीस्टोर जाँच विफल हुई, {domain}: {error}",

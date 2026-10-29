@@ -2835,6 +2835,7 @@ const et: Partial<Translations> = {
   "activityLog.lineVerifySuccess": "Kontroll läbitud: {domain}",
   "activityLog.lineVerifyFailed": "Kontroll ebaõnnestus, {domain}: {error}",
   "activityLog.lineOffsiteSuccess": "Väline replitseerimine tehtud: {domain} ({duration})",
+  "activityLog.lineOffsiteNothing": "Väline replitseerimine ei leidnud midagi uut kopeerimiseks: {domain}",
   "activityLog.lineOffsiteFailed": "Väline replitseerimine ebaõnnestus, {domain}: {error}",
   "activityLog.lineDrillSuccess": "Taastekontroll läbitud: {domain}",
   "activityLog.lineDrillFailed": "Taastekontroll ebaõnnestus, {domain}: {error}",

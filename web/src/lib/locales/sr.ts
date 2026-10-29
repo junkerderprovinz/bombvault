@@ -2819,6 +2819,7 @@ const sr: Partial<Translations> = {
   "activityLog.lineVerifySuccess": "Провера успешна — {domain}",
   "activityLog.lineVerifyFailed": "Провера није успела — {domain}: {error}",
   "activityLog.lineOffsiteSuccess": "Дуплирање на спољну копију завршено — {domain} ({duration})",
+  "activityLog.lineOffsiteNothing": "Дуплирање на спољну копију није нашло ништа ново за копирање: {domain}",
   "activityLog.lineOffsiteFailed": "Дуплирање на спољну копију није успело — {domain}: {error}",
   "activityLog.lineDrillSuccess": "Провера враћања успешна — {domain}",
   "activityLog.lineDrillFailed": "Провера враћања није успела — {domain}: {error}",

@@ -4442,6 +4442,10 @@ func (s *Service) copyToOffsite(ctx context.Context, domain string, settings sto
 	// (named-return err still nil) can't stamp a phantom successful run — the
 	// deferred finish then records a failure, not a false success.
 	var ok bool
+	// sent counts the snapshots every target took, so a pass that found
+	// nothing new says so. A copy that could not tell leaves it unknown.
+	var sent int
+	known := true
 	defer func() {
 		if activityRunID == "" {
 			return
@@ -4449,6 +4453,11 @@ func (s *Service) copyToOffsite(ctx context.Context, domain string, settings sto
 		status := "failed"
 		if ok {
 			status = "success"
+		}
+		if ok && known {
+			if cErr := s.store.SetRunCopied(activityRunID, sent); cErr != nil {
+				log.Printf("api: offsite %s: could not note what the run copied: %v", domain, cErr) //nolint:gosec // G706: domain is a fixed literal
+			}
 		}
 		if fErr := s.store.FinishRun(activityRunID, status, "", 0, truncateRunErr(err)); fErr != nil {
 			log.Printf("api: offsite %s: could not finish activity run: %v", domain, fErr) //nolint:gosec // G706: domain is a fixed literal
@@ -4565,7 +4574,12 @@ func (s *Service) copyToOffsite(ctx context.Context, domain string, settings sto
 		// items whose other copy is the unreachable one. Reporting it only at the
 		// end (skippedError, below) reaches the run row long after every target's
 		// retention has already run.
-		if cerr := s.copyToOffsiteTarget(ctx, domain, settings, t, localRepos, skipped, multiTarget, startedAt, lastCopy, visit); cerr != nil {
+		n, cerr := s.copyToOffsiteTarget(ctx, domain, settings, t, localRepos, skipped, multiTarget, startedAt, lastCopy, visit)
+		if n < 0 {
+			known = false
+		}
+		sent += max(n, 0)
+		if cerr != nil {
 			log.Printf("api: offsite %s: copy to a destination failed (continuing): %v", domain, cerr) //nolint:gosec // G706: domain is a fixed literal
 			errs = append(errs, cerr)
 		}
@@ -4590,8 +4604,9 @@ func (s *Service) copyToOffsite(ctx context.Context, domain string, settings sto
 // destination and records that destination's own offsite_runs row (stamped with
 // offsite_target_id). Per-target: destination repo, restic mode (S3 storage
 // class), retention, bandwidth limits and append-only flag. Best-effort
-// bookkeeping like the rest; returns the (scrubbed) copy error. startedAt is
-// copyToOffsite's single progBegin capture, threaded through so this
+// bookkeeping like the rest; returns how many snapshots it sent, -1 when a
+// whole copy went ahead without knowing, and the (scrubbed) copy error.
+// startedAt is copyToOffsite's single progBegin capture, threaded through so this
 // target's live copy-progress events (see progBeginCopySink) carry the SAME
 // StartedAt as the domain-level begin/heartbeat/terminal events. lastCopy is
 // copyToOffsite's shared heartbeat state (see offsiteLastCopy) that
@@ -4609,7 +4624,7 @@ func (s *Service) copyToOffsite(ctx context.Context, domain string, settings sto
 //
 // visit is what the pass decided for this target: whether the rules choose the
 // ids, and whether what the target holds is recorded.
-func (s *Service) copyToOffsiteTarget(ctx context.Context, domain string, settings store.Settings, target store.OffsiteTarget, localRepos []domainRepoRef, skipped []repoSkip, multiTarget bool, startedAt int64, lastCopy *offsiteLastCopy, visit targetVisit) (err error) {
+func (s *Service) copyToOffsiteTarget(ctx context.Context, domain string, settings store.Settings, target store.OffsiteTarget, localRepos []domainRepoRef, skipped []repoSkip, multiTarget bool, startedAt int64, lastCopy *offsiteLastCopy, visit targetVisit) (sent int, err error) {
 	// Persist this destination's replication attempt to the off-site run history
 	// (begin now, close on the way out via defer with outcome + scrubbed error).
 	// The offsite_runs row itself stays duration + outcome only (no percentage
@@ -4644,7 +4659,7 @@ func (s *Service) copyToOffsiteTarget(ctx context.Context, domain string, settin
 	}()
 	dest, rerr := s.resolveRepo(target.Repo)
 	if rerr != nil {
-		return fmt.Errorf("resolve off-site repo: %w", rerr)
+		return 0, fmt.Errorf("resolve off-site repo: %w", rerr)
 	}
 	// Relax the DESTINATION repo tree the same way every local backup already
 	// relaxes the primary repo (makeRepoReadable). restic, run as root, writes a
@@ -4666,7 +4681,7 @@ func (s *Service) copyToOffsiteTarget(ctx context.Context, domain string, settin
 	// and the names its keep-policy ages.
 	dstSnaps, dstErr, err := s.listDestination(ctx, dest, mode)
 	if err != nil {
-		return fmt.Errorf("ensure off-site repo: %w", err)
+		return 0, fmt.Errorf("ensure off-site repo: %w", err)
 	}
 	if dstErr != nil {
 		log.Printf("api: offsite %s: could not list the destination before copying: %v", domain, scrubError(dstErr)) //nolint:gosec // G706: domain is a fixed literal, the error scrubbed here
@@ -4674,6 +4689,10 @@ func (s *Service) copyToOffsiteTarget(ctx context.Context, domain string, settin
 	visit.unreachable = len(unreachableSkips(skipped)) > 0
 	out := s.copySources(ctx, settings, domain, dest, mode, target, visit, localRepos, dstSnaps, dstErr, startedAt, lastCopy)
 	copied, accounted, destIsASource := out.copied, out.accounted, out.destIsASource
+	sent = len(out.landed)
+	if out.uncertain {
+		sent = -1
+	}
 	// Carried past the maintenance below: whatever did arrive is aged, sampled and
 	// measured against the budget, and the joined error still reaches the run row.
 	copyErr := errors.Join(out.errs...)
@@ -4690,7 +4709,7 @@ func (s *Service) copyToOffsiteTarget(ctx context.Context, domain string, settin
 	if copied == 0 {
 		if copyErr != nil {
 			err = copyErr
-			return err
+			return 0, err
 		}
 		// No error and nothing copied means nothing was pending anywhere. The
 		// destination is still a real replica that has to be sampled, so fall
@@ -4788,10 +4807,10 @@ func (s *Service) copyToOffsiteTarget(ctx context.Context, domain string, settin
 		s.checkOffsiteBudget(ctx, domain, target.GrowthBudgetGB)
 		if copyErr != nil {
 			err = copyErr
-			return err
+			return sent, err
 		}
 		ok = true
-		return nil
+		return sent, nil
 	}
 	statSource := offsiteStatSource(target.ID)
 	if target.GrowthBudgetGB > 0 {
@@ -4804,10 +4823,10 @@ func (s *Service) copyToOffsiteTarget(ctx context.Context, domain string, settin
 	s.checkOffsiteBudgetForTarget(ctx, domain, target)
 	if copyErr != nil {
 		err = copyErr
-		return err
+		return sent, err
 	}
 	ok = true
-	return nil
+	return sent, nil
 }
 
 // offsiteStatSource maps an off-site destination id to the repo_stats source

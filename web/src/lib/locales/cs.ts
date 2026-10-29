@@ -2640,6 +2640,7 @@ const cs: Partial<Translations> = {
   "activityLog.jobPull": "stahování ze zdrojů",
   "activityLog.jobReplica": "replika ZFS",
   "activityLog.lineOffsiteSuccess": "Replikace mimo lokalitu dokončena: {domain} ({duration})",
+  "activityLog.lineOffsiteNothing": "Replikace mimo lokalitu nenašla nic nového ke kopírování: {domain}",
   "activityLog.lineOffsiteFailed": "Replikace mimo lokalitu selhala, {domain}: {error}",
   "activityLog.lineDrillSuccess": "Kontrola obnovy prošla: {domain}",
   "activityLog.lineDrillFailed": "Kontrola obnovy selhala, {domain}: {error}",

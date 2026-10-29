@@ -2639,6 +2639,7 @@ const uk: Partial<Translations> = {
   "activityLog.jobPull": "забирання з джерел",
   "activityLog.jobReplica": "репліка ZFS",
   "activityLog.lineOffsiteSuccess": "Зовнішню реплікацію завершено — {domain} ({duration})",
+  "activityLog.lineOffsiteNothing": "Зовнішня реплікація не знайшла нічого нового для копіювання: {domain}",
   "activityLog.lineOffsiteFailed": "Зовнішня реплікація не вдалася — {domain}: {error}",
   "activityLog.lineDrillSuccess": "Перевірку відновлення пройдено — {domain}",
   "activityLog.lineDrillFailed": "Перевірку відновлення не пройдено — {domain}: {error}",

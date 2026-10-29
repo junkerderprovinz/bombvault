@@ -2835,6 +2835,7 @@ const lv: Partial<Translations> = {
   "activityLog.lineVerifySuccess": "Pārbaude veiksmīga: {domain}",
   "activityLog.lineVerifyFailed": "Pārbaude neizdevās, {domain}: {error}",
   "activityLog.lineOffsiteSuccess": "Attālinātā replicēšana pabeigta: {domain} ({duration})",
+  "activityLog.lineOffsiteNothing": "Attālinātā replicēšana neatrada neko jaunu kopēšanai: {domain}",
   "activityLog.lineOffsiteFailed": "Attālinātā replicēšana neizdevās, {domain}: {error}",
   "activityLog.lineDrillSuccess": "Atjaunošanas pārbaude veiksmīga: {domain}",
   "activityLog.lineDrillFailed": "Atjaunošanas pārbaude neizdevās, {domain}: {error}",

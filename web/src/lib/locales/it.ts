@@ -2642,6 +2642,7 @@ const it: Partial<Translations> = {
   "activityLog.jobPull": "prelievo dalle origini",
   "activityLog.jobReplica": "replica ZFS",
   "activityLog.lineOffsiteSuccess": "Replica off-site completata: {domain} ({duration})",
+  "activityLog.lineOffsiteNothing": "La replica off-site non ha trovato nulla di nuovo da copiare: {domain}",
   "activityLog.lineOffsiteFailed": "Replica off-site non riuscita, {domain}: {error}",
   "activityLog.lineDrillSuccess": "Controllo di ripristino superato: {domain}",
   "activityLog.lineDrillFailed": "Controllo di ripristino non riuscito, {domain}: {error}",

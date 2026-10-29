@@ -2633,6 +2633,7 @@ const zh: Partial<Translations> = {
   "activityLog.jobPull": "从来源拉取",
   "activityLog.jobReplica": "ZFS 副本",
   "activityLog.lineOffsiteSuccess": "异地复制完成：{domain}（{duration}）",
+  "activityLog.lineOffsiteNothing": "异地复制没有发现需要复制的新内容：{domain}",
   "activityLog.lineOffsiteFailed": "异地复制失败，{domain}：{error}",
   "activityLog.lineDrillSuccess": "恢复检查通过：{domain}",
   "activityLog.lineDrillFailed": "恢复检查失败，{domain}：{error}",

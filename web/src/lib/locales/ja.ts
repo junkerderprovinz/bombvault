@@ -2633,6 +2633,7 @@ const ja: Partial<Translations> = {
   "activityLog.jobPull": "取得元からの取り込み",
   "activityLog.jobReplica": "ZFS レプリカ",
   "activityLog.lineOffsiteSuccess": "オフサイトレプリケーション完了：{domain}（{duration}）",
+  "activityLog.lineOffsiteNothing": "オフサイトレプリケーションでコピーする新しいものはありませんでした：{domain}",
   "activityLog.lineOffsiteFailed": "オフサイトレプリケーション失敗。{domain}: {error}",
   "activityLog.lineDrillSuccess": "復元チェック合格：{domain}",
   "activityLog.lineDrillFailed": "復元チェック失敗。{domain}: {error}",

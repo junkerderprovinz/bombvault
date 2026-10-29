@@ -2642,6 +2642,7 @@ const tr: Partial<Translations> = {
   "activityLog.jobPull": "kaynaklardan çekme",
   "activityLog.jobReplica": "ZFS kopyası",
   "activityLog.lineOffsiteSuccess": "Site dışı çoğaltma tamamlandı: {domain} ({duration})",
+  "activityLog.lineOffsiteNothing": "Site dışı çoğaltma kopyalanacak yeni bir şey bulmadı: {domain}",
   "activityLog.lineOffsiteFailed": "Site dışı çoğaltma başarısız, {domain}: {error}",
   "activityLog.lineDrillSuccess": "Geri yükleme denetimi başarılı: {domain}",
   "activityLog.lineDrillFailed": "Geri yükleme denetimi başarısız, {domain}: {error}",

@@ -2643,6 +2643,7 @@ const hu: Partial<Translations> = {
   "activityLog.jobPull": "behúzás forrásokból",
   "activityLog.jobReplica": "ZFS-replika",
   "activityLog.lineOffsiteSuccess": "Telephelyen kívüli replikáció kész: {domain} ({duration})",
+  "activityLog.lineOffsiteNothing": "A telephelyen kívüli replikáció nem talált új másolnivalót: {domain}",
   "activityLog.lineOffsiteFailed": "Telephelyen kívüli replikáció sikertelen, {domain}: {error}",
   "activityLog.lineDrillSuccess": "Visszaállítási ellenőrzés sikeres: {domain}",
   "activityLog.lineDrillFailed": "Visszaállítási ellenőrzés sikertelen, {domain}: {error}",

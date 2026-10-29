@@ -2835,6 +2835,7 @@ const lt: Partial<Translations> = {
   "activityLog.lineVerifySuccess": "Patikra sėkminga: {domain}",
   "activityLog.lineVerifyFailed": "Patikra nepavyko, {domain}: {error}",
   "activityLog.lineOffsiteSuccess": "Nuotolinis replikavimas baigtas: {domain} ({duration})",
+  "activityLog.lineOffsiteNothing": "Nuotolinis replikavimas nerado nieko naujo kopijuoti: {domain}",
   "activityLog.lineOffsiteFailed": "Nuotolinis replikavimas nepavyko, {domain}: {error}",
   "activityLog.lineDrillSuccess": "Atkūrimo patikra sėkminga: {domain}",
   "activityLog.lineDrillFailed": "Atkūrimo patikra nepavyko, {domain}: {error}",

@@ -2642,6 +2642,7 @@ const sv: Partial<Translations> = {
   "activityLog.jobPull": "hämtning från källor",
   "activityLog.jobReplica": "ZFS-replika",
   "activityLog.lineOffsiteSuccess": "Off-site-replikering klar: {domain} ({duration})",
+  "activityLog.lineOffsiteNothing": "Off-site-replikering hittade inget nytt att kopiera: {domain}",
   "activityLog.lineOffsiteFailed": "Off-site-replikering misslyckades, {domain}: {error}",
   "activityLog.lineDrillSuccess": "Återställningskontroll godkänd: {domain}",
   "activityLog.lineDrillFailed": "Återställningskontroll misslyckades, {domain}: {error}",

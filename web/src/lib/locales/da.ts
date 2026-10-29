@@ -2642,6 +2642,7 @@ const da: Partial<Translations> = {
   "activityLog.jobPull": "hentning fra kilder",
   "activityLog.jobReplica": "ZFS-replika",
   "activityLog.lineOffsiteSuccess": "Off-site-replikering færdig: {domain} ({duration})",
+  "activityLog.lineOffsiteNothing": "Off-site-replikering fandt intet nyt at kopiere: {domain}",
   "activityLog.lineOffsiteFailed": "Off-site-replikering mislykkedes, {domain}: {error}",
   "activityLog.lineDrillSuccess": "Gendannelsestjek bestået: {domain}",
   "activityLog.lineDrillFailed": "Gendannelsestjek mislykkedes, {domain}: {error}",

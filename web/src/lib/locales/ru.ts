@@ -2639,6 +2639,7 @@ const ru: Partial<Translations> = {
   "activityLog.jobPull": "забор из источников",
   "activityLog.jobReplica": "реплика ZFS",
   "activityLog.lineOffsiteSuccess": "Внешняя репликация завершена — {domain} ({duration})",
+  "activityLog.lineOffsiteNothing": "Внешняя репликация не нашла ничего нового для копирования: {domain}",
   "activityLog.lineOffsiteFailed": "Внешняя репликация не удалась — {domain}: {error}",
   "activityLog.lineDrillSuccess": "Проверка восстановления пройдена — {domain}",
   "activityLog.lineDrillFailed": "Проверка восстановления не пройдена — {domain}: {error}",

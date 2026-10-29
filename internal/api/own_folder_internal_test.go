@@ -706,3 +706,38 @@ func TestMovingAnOwnFolderKeepsADefaultOnANamedRepository(t *testing.T) {
 		t.Fatalf("default home = %q, want Cold", d.Home)
 	}
 }
+
+// ownFolderOff reads whether the storage pages list a section's own folder as
+// taking no new backups.
+func (f *placementFixture) ownFolderOff(domain string) bool {
+	f.t.Helper()
+	locations, err := f.svc.StorageLocations()
+	if err != nil {
+		f.t.Fatal(err)
+	}
+	for _, l := range locations {
+		for _, s := range l.Sections {
+			if s.Domain == domain && s.Use == useHome && s.RepoID == "" && s.TargetID == "" {
+				return s.Off
+			}
+		}
+	}
+	f.t.Fatalf("no location lists the own folder of %s", domain)
+	return false
+}
+
+func TestAnOwnFolderThatNewBackupsGoPastIsListedAsOff(t *testing.T) {
+	f := newPlacementFixture(t)
+	mani := f.target("containers", "Mani", "offsite/mani/containers")
+	direct := f.direct(mani)
+	f.setDefault("containers", direct.ID, store.SkipAll)
+	f.container("web", direct.ID)
+
+	if !f.ownFolderOff("containers") {
+		t.Fatal("the own folder is listed as in use although every new backup goes straight to Mani")
+	}
+	f.container("db", "")
+	if f.ownFolderOff("containers") {
+		t.Fatal("the own folder is listed as off although db keeps it as its home")
+	}
+}

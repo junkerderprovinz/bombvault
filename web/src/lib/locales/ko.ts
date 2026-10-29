@@ -2633,6 +2633,7 @@ const ko: Partial<Translations> = {
   "activityLog.jobPull": "원본에서 가져오기",
   "activityLog.jobReplica": "ZFS 복제본",
   "activityLog.lineOffsiteSuccess": "오프사이트 복제 완료: {domain} ({duration})",
+  "activityLog.lineOffsiteNothing": "오프사이트 복제에서 새로 복사할 항목이 없습니다: {domain}",
   "activityLog.lineOffsiteFailed": "오프사이트 복제 실패, {domain}: {error}",
   "activityLog.lineDrillSuccess": "복원 검사 통과: {domain}",
   "activityLog.lineDrillFailed": "복원 검사 실패, {domain}: {error}",

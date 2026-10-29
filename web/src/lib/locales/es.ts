@@ -2640,6 +2640,7 @@ const es: Partial<Translations> = {
   "activityLog.jobPull": "recogida de orígenes",
   "activityLog.jobReplica": "réplica ZFS",
   "activityLog.lineOffsiteSuccess": "Replicación externa completada: {domain} ({duration})",
+  "activityLog.lineOffsiteNothing": "La replicación externa no encontró nada nuevo que copiar: {domain}",
   "activityLog.lineOffsiteFailed": "Replicación externa fallida, {domain}: {error}",
   "activityLog.lineDrillSuccess": "Comprobación de restauración superada: {domain}",
   "activityLog.lineDrillFailed": "Comprobación de restauración fallida, {domain}: {error}",

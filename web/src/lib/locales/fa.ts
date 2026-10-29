@@ -2835,6 +2835,7 @@ const fa: Partial<Translations> = {
   "activityLog.lineVerifySuccess": "تأیید موفق بود: {domain}",
   "activityLog.lineVerifyFailed": "تأیید ناموفق بود، {domain}: {error}",
   "activityLog.lineOffsiteSuccess": "همانندسازی خارج از محل انجام شد: {domain} ({duration})",
+  "activityLog.lineOffsiteNothing": "همانندسازی خارج از محل چیز تازه‌ای برای کپی پیدا نکرد: {domain}",
   "activityLog.lineOffsiteFailed": "همانندسازی خارج از محل ناموفق بود، {domain}: {error}",
   "activityLog.lineDrillSuccess": "بررسی بازیابی موفق بود: {domain}",
   "activityLog.lineDrillFailed": "بررسی بازیابی ناموفق بود، {domain}: {error}",

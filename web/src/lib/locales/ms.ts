@@ -2835,6 +2835,7 @@ const ms: Partial<Translations> = {
   "activityLog.lineVerifySuccess": "Pengesahan berjaya: {domain}",
   "activityLog.lineVerifyFailed": "Pengesahan gagal, {domain}: {error}",
   "activityLog.lineOffsiteSuccess": "Replikasi luar tapak selesai: {domain} ({duration})",
+  "activityLog.lineOffsiteNothing": "Replikasi luar tapak tidak menemui apa-apa yang baharu untuk disalin: {domain}",
   "activityLog.lineOffsiteFailed": "Replikasi luar tapak gagal, {domain}: {error}",
   "activityLog.lineDrillSuccess": "Semakan pemulihan berjaya: {domain}",
   "activityLog.lineDrillFailed": "Semakan pemulihan gagal, {domain}: {error}",

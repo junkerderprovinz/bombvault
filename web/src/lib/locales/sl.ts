@@ -2819,6 +2819,7 @@ const sl: Partial<Translations> = {
   "activityLog.lineVerifySuccess": "Preverjanje uspešno: {domain}",
   "activityLog.lineVerifyFailed": "Preverjanje ni uspelo, {domain}: {error}",
   "activityLog.lineOffsiteSuccess": "Podvajanje na zunanjo kopijo končano: {domain} ({duration})",
+  "activityLog.lineOffsiteNothing": "Podvajanje na zunanjo kopijo ni našlo ničesar novega za kopiranje: {domain}",
   "activityLog.lineOffsiteFailed": "Podvajanje na zunanjo kopijo ni uspelo, {domain}: {error}",
   "activityLog.lineDrillSuccess": "Preverjanje obnovitve uspešno: {domain}",
   "activityLog.lineDrillFailed": "Preverjanje obnovitve ni uspelo, {domain}: {error}",

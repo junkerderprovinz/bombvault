@@ -89,8 +89,9 @@ type locationSection struct {
 	// Enabled is the target's switch for a copy, the repository's for a home
 	// in one, and the domain's own for its path.
 	Enabled bool `json:"enabled"`
-	// Off marks the own folder of a section without placement that takes no
-	// new backups: they go to the section's targets directly.
+	// Off marks an own folder that takes no new backups: they go to the
+	// section's targets directly, or for a section with placement to the
+	// direct repository its default writes to.
 	Off bool `json:"off,omitempty"`
 	// Primary marks the copy the domain's off-site settings describe.
 	Primary       bool                `json:"primary,omitempty"`
@@ -221,6 +222,15 @@ func (s *Service) StorageLocations() ([]storageLocation, error) {
 	}
 	if b.localOff, err = s.store.LocalOff(); err != nil {
 		return nil, err
+	}
+	for _, domain := range store.PlacementDomains {
+		bypassed, err := s.ownFolderBypassed(domain)
+		if err != nil {
+			return nil, err
+		}
+		if bypassed {
+			b.localOff[domain] = true
+		}
 	}
 	if b.names, err = s.store.LocationNames(); err != nil {
 		return nil, err

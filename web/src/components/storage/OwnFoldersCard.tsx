@@ -59,11 +59,12 @@ export function OwnFoldersCard({ location, hueIndex }: { location: StorageLocati
         <Rows as="ul">
           {own.map((section) => {
             const run = sectionMoveRun(progress, section);
+            const name = t(DOMAIN_LABEL[section.domain]);
             return (
               <SettingRow
                 key={section.domain}
                 as="li"
-                label={t(DOMAIN_LABEL[section.domain])}
+                label={section.off ? t("placement.off").replace("{name}", () => name) : name}
                 glyph={<DomainGlyph domain={section.domain} />}
                 note={
                   <>

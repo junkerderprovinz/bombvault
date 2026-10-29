@@ -50,11 +50,14 @@ type Run struct {
 	// RetryAt is when the backup of a deferred run is tried again, nil for
 	// every other run.
 	RetryAt *int64 `json:"retryAt"`
+	// Copied is how many snapshots an off-site replication copied, nil when
+	// that is not known and for every other run.
+	Copied *int64 `json:"copied"`
 }
 
 // runCols is the column list of every full run query, in the order scanRun
 // reads them.
-const runCols = `id, target_id, kind, status, started_at, finished_at, snapshot_id, bytes, error, acknowledged, group_id, started_via, started_via_key, load_summary, source_bytes, subject, snapshot_window_ms, snapshot_fallback, retry_at`
+const runCols = `id, target_id, kind, status, started_at, finished_at, snapshot_id, bytes, error, acknowledged, group_id, started_via, started_via_key, load_summary, source_bytes, subject, snapshot_window_ms, snapshot_fallback, retry_at, copied`
 
 // RunMeta is what a caller knows about a run beyond its target and kind: the
 // pass it belongs to and who asked for it.
@@ -138,6 +141,14 @@ func (r *Repo) SetRunStartedHook(fn func(RunStarted)) {
 // tell a pass that reached its end from one whose process died.
 func (r *Repo) FinishRun(id, status, snapshotID string, bytes int64, errMsg string) error {
 	return r.finishRun(id, status, snapshotID, bytes, errMsg, nil, "")
+}
+
+// SetRunCopied notes on an off-site replication how many snapshots it copied.
+func (r *Repo) SetRunCopied(id string, n int) error {
+	if _, err := r.db.Exec(`UPDATE runs SET copied = ? WHERE id = ?`, n, id); err != nil {
+		return fmt.Errorf("SetRunCopied: %w", err)
+	}
+	return nil
 }
 
 // FinishRunMeasured is FinishRun plus what restic read and the fingerprint of
@@ -992,19 +1003,20 @@ func (r *Repo) RunCountsOfKind(kind string) (map[string]map[string]int, error) {
 
 func scanRun(s scanner) (Run, error) {
 	var run Run
-	var finishedAt, bytes, sourceBytes, window, retryAt sql.NullInt64
+	var finishedAt, bytes, sourceBytes, window, retryAt, copied sql.NullInt64
 	var snapID, errCol sql.NullString
 	err := s.Scan(
 		&run.ID, &run.TargetID, &run.Kind, &run.Status,
 		&run.StartedAt, &finishedAt, &snapID, &bytes, &errCol, &run.Acknowledged, &run.GroupID,
 		&run.StartedVia, &run.StartedViaKey, &run.Load, &sourceBytes, &run.Subject,
-		&window, &run.SnapshotFallback, &retryAt,
+		&window, &run.SnapshotFallback, &retryAt, &copied,
 	)
 	if err != nil {
 		return Run{}, err
 	}
 	run.SnapshotWindowMS = nullableInt(window)
 	run.RetryAt = nullableInt(retryAt)
+	run.Copied = nullableInt(copied)
 	if finishedAt.Valid {
 		run.FinishedAt = &finishedAt.Int64
 	}

@@ -2835,6 +2835,7 @@ const gl: Partial<Translations> = {
   "activityLog.lineVerifySuccess": "Verificación superada: {domain}",
   "activityLog.lineVerifyFailed": "Verificación fallida, {domain}: {error}",
   "activityLog.lineOffsiteSuccess": "Replicación externa completa: {domain} ({duration})",
+  "activityLog.lineOffsiteNothing": "A replicación externa non atopou nada novo que copiar: {domain}",
   "activityLog.lineOffsiteFailed": "Replicación externa fallida, {domain}: {error}",
   "activityLog.lineDrillSuccess": "Comprobación de restauración superada: {domain}",
   "activityLog.lineDrillFailed": "Comprobación de restauración fallida, {domain}: {error}",

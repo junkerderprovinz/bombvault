@@ -3517,6 +3517,14 @@ UPDATE pull_sources SET leftovers_moved = 0;`,
   name     TEXT NOT NULL
 );`,
 	},
+	{
+		// How many snapshots an off-site replication copied, NULL on every
+		// other run and on replications from before it was counted.
+		version:          runCopiedMigration,
+		name:             "runs_copied",
+		alreadySatisfied: columnPresent("runs", "copied"),
+		sql:              `ALTER TABLE runs ADD COLUMN copied INTEGER;`,
+	},
 }
 
 // offsiteFieldDomains are the domains with an off-site field in the settings,
@@ -3809,6 +3817,10 @@ const deferralMigration = 600
 // locationNameMigration numbers the names of the folders the domain paths
 // share.
 const locationNameMigration = 610
+
+// runCopiedMigration numbers how many snapshots an off-site replication
+// copied.
+const runCopiedMigration = 620
 
 // oneLineColumns are the names and locations the recovery kit prints.
 var oneLineColumns = []struct {

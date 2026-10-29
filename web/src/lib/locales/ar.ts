@@ -2643,6 +2643,7 @@ const ar: Partial<Translations> = {
   "activityLog.jobPull": "السحب من المصادر",
   "activityLog.jobReplica": "نسخة ZFS المتماثلة",
   "activityLog.lineOffsiteSuccess": "اكتمل النسخ المتماثل خارج الموقع: {domain} ({duration})",
+  "activityLog.lineOffsiteNothing": "لم يجد النسخ المتماثل خارج الموقع شيئًا جديدًا لنسخه: {domain}",
   "activityLog.lineOffsiteFailed": "فشل النسخ المتماثل خارج الموقع، {domain}: {error}",
   "activityLog.lineDrillSuccess": "نجح فحص الاستعادة: {domain}",
   "activityLog.lineDrillFailed": "فشل فحص الاستعادة، {domain}: {error}",

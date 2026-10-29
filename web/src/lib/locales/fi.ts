@@ -2642,6 +2642,7 @@ const fi: Partial<Translations> = {
   "activityLog.jobPull": "nouto lähteistä",
   "activityLog.jobReplica": "ZFS-replika",
   "activityLog.lineOffsiteSuccess": "Etäreplikointi valmis: {domain} ({duration})",
+  "activityLog.lineOffsiteNothing": "Etäreplikointi ei löytänyt mitään uutta kopioitavaa: {domain}",
   "activityLog.lineOffsiteFailed": "Etäreplikointi epäonnistui, {domain}: {error}",
   "activityLog.lineDrillSuccess": "Palautustarkistus läpäisty: {domain}",
   "activityLog.lineDrillFailed": "Palautustarkistus epäonnistui, {domain}: {error}",

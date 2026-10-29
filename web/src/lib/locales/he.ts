@@ -2642,6 +2642,7 @@ const he: Partial<Translations> = {
   "activityLog.jobPull": "משיכה ממקורות",
   "activityLog.jobReplica": "עותק ZFS משוכפל",
   "activityLog.lineOffsiteSuccess": "שכפול מחוץ לאתר הושלם: {domain} ({duration})",
+  "activityLog.lineOffsiteNothing": "השכפול מחוץ לאתר לא מצא שום דבר חדש להעתקה: {domain}",
   "activityLog.lineOffsiteFailed": "שכפול מחוץ לאתר נכשל, {domain}: {error}",
   "activityLog.lineDrillSuccess": "בדיקת השחזור עברה: {domain}",
   "activityLog.lineDrillFailed": "בדיקת השחזור נכשלה, {domain}: {error}",

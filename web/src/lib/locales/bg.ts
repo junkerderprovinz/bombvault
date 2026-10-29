@@ -2835,6 +2835,7 @@ const bg: Partial<Translations> = {
   "activityLog.lineVerifySuccess": "Проверката премина успешно — {domain}",
   "activityLog.lineVerifyFailed": "Проверката е неуспешна — {domain}: {error}",
   "activityLog.lineOffsiteSuccess": "Репликацията извън обекта завърши — {domain} ({duration})",
+  "activityLog.lineOffsiteNothing": "Репликацията извън обекта не намери нищо ново за копиране: {domain}",
   "activityLog.lineOffsiteFailed": "Репликацията извън обекта е неуспешна — {domain}: {error}",
   "activityLog.lineDrillSuccess": "Проверката за възстановяване премина успешно — {domain}",
   "activityLog.lineDrillFailed": "Проверката за възстановяване е неуспешна — {domain}: {error}",

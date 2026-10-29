@@ -2642,6 +2642,7 @@ const no: Partial<Translations> = {
   "activityLog.jobPull": "henting fra kilder",
   "activityLog.jobReplica": "ZFS-replika",
   "activityLog.lineOffsiteSuccess": "Off-site-replikering fullført: {domain} ({duration})",
+  "activityLog.lineOffsiteNothing": "Off-site-replikering fant ikke noe nytt å kopiere: {domain}",
   "activityLog.lineOffsiteFailed": "Off-site-replikering mislyktes, {domain}: {error}",
   "activityLog.lineDrillSuccess": "Gjenopprettingssjekk bestått: {domain}",
   "activityLog.lineDrillFailed": "Gjenopprettingssjekk mislyktes, {domain}: {error}",

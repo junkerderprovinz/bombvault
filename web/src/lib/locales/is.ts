@@ -2835,6 +2835,7 @@ const is: Partial<Translations> = {
   "activityLog.lineVerifySuccess": "Staðfesting tókst: {domain}",
   "activityLog.lineVerifyFailed": "Staðfesting mistókst, {domain}: {error}",
   "activityLog.lineOffsiteSuccess": "Fjarlæg afritun lokið: {domain} ({duration})",
+  "activityLog.lineOffsiteNothing": "Fjarlæg afritun fann ekkert nýtt til að afrita: {domain}",
   "activityLog.lineOffsiteFailed": "Fjarlæg afritun mistókst, {domain}: {error}",
   "activityLog.lineDrillSuccess": "Endurheimtarprófun tókst: {domain}",
   "activityLog.lineDrillFailed": "Endurheimtarprófun mistókst, {domain}: {error}",

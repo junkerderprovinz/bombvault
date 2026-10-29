@@ -327,6 +327,23 @@ func (s *Service) directDefault(domain string) (repoID, copyName string, err err
 	return r.ID, placementTargetName(t), nil
 }
 
+// ownFolderBypassed reports whether no new backup of a section reaches its own
+// folder: its default writes to a target's direct repository and no entry
+// keeps the own folder as its home.
+func (s *Service) ownFolderBypassed(domain string) (bool, error) {
+	repo, _, err := s.directDefault(domain)
+	if err != nil || repo == "" {
+		return false, err
+	}
+	items, err := s.domainItems(domain)
+	if err != nil {
+		return false, err
+	}
+	return !slices.ContainsFunc(items, func(it domainItem) bool {
+		return it.home.Choice != store.RepoOpen && it.home.Repo == ""
+	}), nil
+}
+
 // ownFolderHomeAgain points a default that backs up straight to the direct
 // repository repoID at the own folder, copying to that repository's target
 // instead. A default changed since the move was planned stays as it is.

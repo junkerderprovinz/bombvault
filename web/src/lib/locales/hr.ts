@@ -2835,6 +2835,7 @@ const hr: Partial<Translations> = {
   "activityLog.lineVerifySuccess": "Provjera uspješna: {domain}",
   "activityLog.lineVerifyFailed": "Provjera nije uspjela, {domain}: {error}",
   "activityLog.lineOffsiteSuccess": "Repliciranje izvan lokacije dovršeno: {domain} ({duration})",
+  "activityLog.lineOffsiteNothing": "Repliciranje izvan lokacije nije našlo ništa novo za kopiranje: {domain}",
   "activityLog.lineOffsiteFailed": "Repliciranje izvan lokacije nije uspjelo, {domain}: {error}",
   "activityLog.lineDrillSuccess": "Provjera vraćanja uspješna: {domain}",
   "activityLog.lineDrillFailed": "Provjera vraćanja nije uspjela, {domain}: {error}",

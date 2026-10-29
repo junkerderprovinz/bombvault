@@ -2643,6 +2643,7 @@ const ro: Partial<Translations> = {
   "activityLog.jobPull": "preluare din surse",
   "activityLog.jobReplica": "replică ZFS",
   "activityLog.lineOffsiteSuccess": "Replicarea externă finalizată: {domain} ({duration})",
+  "activityLog.lineOffsiteNothing": "Replicarea externă nu a găsit nimic nou de copiat: {domain}",
   "activityLog.lineOffsiteFailed": "Replicarea externă a eșuat, {domain}: {error}",
   "activityLog.lineDrillSuccess": "Verificarea restaurării a reușit: {domain}",
   "activityLog.lineDrillFailed": "Verificarea restaurării a eșuat, {domain}: {error}",

@@ -2835,6 +2835,7 @@ const sk: Partial<Translations> = {
   "activityLog.lineVerifySuccess": "Overenie úspešné: {domain}",
   "activityLog.lineVerifyFailed": "Overenie zlyhalo, {domain}: {error}",
   "activityLog.lineOffsiteSuccess": "Externá replikácia dokončená: {domain} ({duration})",
+  "activityLog.lineOffsiteNothing": "Externá replikácia nenašla nič nové na kopírovanie: {domain}",
   "activityLog.lineOffsiteFailed": "Externá replikácia zlyhala, {domain}: {error}",
   "activityLog.lineDrillSuccess": "Kontrola obnovenia úspešná: {domain}",
   "activityLog.lineDrillFailed": "Kontrola obnovenia zlyhala, {domain}: {error}",

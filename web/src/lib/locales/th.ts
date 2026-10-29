@@ -2643,6 +2643,7 @@ const th: Partial<Translations> = {
   "activityLog.jobPull": "การดึงจากต้นทาง",
   "activityLog.jobReplica": "สำเนา ZFS",
   "activityLog.lineOffsiteSuccess": "การจำลองข้อมูลนอกสถานที่เสร็จสิ้น {domain} ({duration})",
+  "activityLog.lineOffsiteNothing": "การจำลองข้อมูลนอกสถานที่ไม่พบสิ่งใหม่ที่ต้องคัดลอก {domain}",
   "activityLog.lineOffsiteFailed": "การจำลองข้อมูลนอกสถานที่ล้มเหลว {domain}: {error}",
   "activityLog.lineDrillSuccess": "การตรวจสอบการกู้คืนผ่าน {domain}",
   "activityLog.lineDrillFailed": "การตรวจสอบการกู้คืนล้มเหลว {domain}: {error}",

@@ -104,6 +104,14 @@ describe("buildLogLines", () => {
     expect(lines.map((l) => l.id)).toEqual(["run:r-old", "live:offsite:containers"]);
   });
 
+  it("says an off-site replication found nothing new when it copied nothing", () => {
+    const run = (copied: number | null) =>
+      buildLogLines([makeRun({ kind: "offsite", targetId: "containers", target: "", domain: "", copied })], {}, [], resolveName, 2_000_000)[0].text;
+    expect(run(0)).toBe("activityLog.lineOffsiteNothing domain=activityLog.domainContainers");
+    expect(run(3)).toContain("activityLog.lineOffsiteSuccess");
+    expect(run(null)).toContain("activityLog.lineOffsiteSuccess");
+  });
+
   it("keeps earlier backups of an item while it is backed up again", () => {
     const yesterday = makeRun({ id: "r-old", finishedAt: 900 });
     const running = makeRun({ id: "r-now", status: "running", startedAt: 5_000, finishedAt: null });

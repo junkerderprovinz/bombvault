@@ -2641,6 +2641,7 @@ const nl: Partial<Translations> = {
   "activityLog.jobPull": "ophalen bij bronnen",
   "activityLog.jobReplica": "ZFS-replica",
   "activityLog.lineOffsiteSuccess": "Off-site replicatie voltooid: {domain} ({duration})",
+  "activityLog.lineOffsiteNothing": "Off-site replicatie vond niets nieuws om te kopiëren: {domain}",
   "activityLog.lineOffsiteFailed": "Off-site replicatie mislukt, {domain}: {error}",
   "activityLog.lineDrillSuccess": "Herstelcontrole geslaagd: {domain}",
   "activityLog.lineDrillFailed": "Herstelcontrole mislukt, {domain}: {error}",

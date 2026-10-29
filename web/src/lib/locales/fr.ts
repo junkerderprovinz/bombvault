@@ -2642,6 +2642,7 @@ const fr: Partial<Translations> = {
   "activityLog.jobPull": "récupération depuis les sources",
   "activityLog.jobReplica": "réplique ZFS",
   "activityLog.lineOffsiteSuccess": "Réplication hors site terminée : {domain} ({duration})",
+  "activityLog.lineOffsiteNothing": "La réplication hors site n’a rien trouvé de nouveau à copier : {domain}",
   "activityLog.lineOffsiteFailed": "Réplication hors site échouée, {domain} : {error}",
   "activityLog.lineDrillSuccess": "Contrôle de restauration réussi : {domain}",
   "activityLog.lineDrillFailed": "Échec du contrôle de restauration, {domain} : {error}",

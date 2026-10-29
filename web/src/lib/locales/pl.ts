@@ -2639,6 +2639,7 @@ const pl: Partial<Translations> = {
   "activityLog.jobPull": "pobieranie ze źródeł",
   "activityLog.jobReplica": "replika ZFS",
   "activityLog.lineOffsiteSuccess": "Replikacja poza siedzibą zakończona: {domain} ({duration})",
+  "activityLog.lineOffsiteNothing": "Replikacja poza siedzibą nie znalazła nic nowego do skopiowania: {domain}",
   "activityLog.lineOffsiteFailed": "Replikacja poza siedzibą nie powiodła się, {domain}: {error}",
   "activityLog.lineDrillSuccess": "Test przywracania zaliczony: {domain}",
   "activityLog.lineDrillFailed": "Test przywracania nie powiódł się, {domain}: {error}",

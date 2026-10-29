@@ -2835,6 +2835,7 @@ const id: Partial<Translations> = {
   "activityLog.lineVerifySuccess": "Verifikasi berhasil: {domain}",
   "activityLog.lineVerifyFailed": "Verifikasi gagal, {domain}: {error}",
   "activityLog.lineOffsiteSuccess": "Replikasi off-site selesai: {domain} ({duration})",
+  "activityLog.lineOffsiteNothing": "Replikasi off-site tidak menemukan hal baru untuk disalin: {domain}",
   "activityLog.lineOffsiteFailed": "Replikasi off-site gagal, {domain}: {error}",
   "activityLog.lineDrillSuccess": "Uji pemulihan berhasil: {domain}",
   "activityLog.lineDrillFailed": "Uji pemulihan gagal, {domain}: {error}",

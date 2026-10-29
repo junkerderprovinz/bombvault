@@ -2835,6 +2835,7 @@ const ca: Partial<Translations> = {
   "activityLog.lineVerifySuccess": "Verificació superada: {domain}",
   "activityLog.lineVerifyFailed": "Verificació fallida, {domain}: {error}",
   "activityLog.lineOffsiteSuccess": "Replicació externa completa: {domain} ({duration})",
+  "activityLog.lineOffsiteNothing": "La replicació externa no ha trobat res de nou per copiar: {domain}",
   "activityLog.lineOffsiteFailed": "Replicació externa fallida, {domain}: {error}",
   "activityLog.lineDrillSuccess": "Prova de restauració superada: {domain}",
   "activityLog.lineDrillFailed": "Prova de restauració fallida, {domain}: {error}",
