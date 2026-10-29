@@ -334,6 +334,39 @@ export function jumpTarget(root: ParentNode, jump: SearchJump): HTMLElement | nu
   return row ?? card ?? null;
 }
 
+/** awaitJumpTarget hands found the element a jump names, waiting up to waitMs
+ *  for a card that appears after its page, such as one that reads a list
+ *  first, and calls missing when none came. It returns what stops the wait. */
+export function awaitJumpTarget(
+  root: HTMLElement,
+  jump: SearchJump,
+  waitMs: number,
+  found: (el: HTMLElement) => void,
+  missing: () => void
+): () => void {
+  const now = jumpTarget(root, jump);
+  if (now) {
+    found(now);
+    return () => undefined;
+  }
+  const watch = new MutationObserver(() => {
+    const late = jumpTarget(root, jump);
+    if (!late) return;
+    stop();
+    found(late);
+  });
+  const timer = window.setTimeout(() => {
+    stop();
+    missing();
+  }, waitMs);
+  function stop() {
+    watch.disconnect();
+    window.clearTimeout(timer);
+  }
+  watch.observe(root, { childList: true, subtree: true });
+  return stop;
+}
+
 /** markHit rings the element for a moment, so the eye finds it after the scroll. */
 export function markHit(el: HTMLElement): void {
   el.classList.remove("glim-search-hit");
