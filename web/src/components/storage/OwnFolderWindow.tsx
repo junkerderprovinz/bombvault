@@ -20,7 +20,7 @@ import { storageLocationsChanged, useStorageLocations } from "../../lib/useStora
 import { InstanceWindow } from "../../pages/instances/InstanceWindow";
 import { Badge } from "../Badge";
 import { Button } from "../Button";
-import { IconForward } from "../glyphs";
+import { IconMove } from "../glyphs";
 import { InfoBubble } from "../InfoBubble";
 import { IconClose } from "../navGlyphs";
 import { isRemotePath } from "../PathModeSwitch";
@@ -238,7 +238,7 @@ export function OwnFolderWindow({
           <Button
             label={t("own.switch")}
             labelKey="own.switch"
-            glyph={<IconForward />}
+            glyph={<IconMove />}
             tone="accent"
             busy={busy}
             disabled={busy || !changes}

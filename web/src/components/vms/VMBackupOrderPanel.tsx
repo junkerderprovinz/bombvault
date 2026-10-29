@@ -5,6 +5,7 @@ import { useReorder } from "../../lib/dragLift";
 import { useT } from "../../lib/i18n";
 import { useToast } from "../../lib/toast";
 import { Button } from "../Button";
+import { IconGrip } from "../glyphs";
 import { IconTipButton } from "../IconTipButton";
 
 type T = ReturnType<typeof useT>["t"];
@@ -149,14 +150,7 @@ export function VMBackupOrderPanel({
                     aria-hidden="true"
                     onPointerDown={(e) => drag.press(e, name)}
                   >
-                    <svg width="10" height="14" viewBox="0 0 10 14" fill="currentColor">
-                      <circle cx="3" cy="3" r="1" />
-                      <circle cx="7" cy="3" r="1" />
-                      <circle cx="3" cy="7" r="1" />
-                      <circle cx="7" cy="7" r="1" />
-                      <circle cx="3" cy="11" r="1" />
-                      <circle cx="7" cy="11" r="1" />
-                    </svg>
+                    <IconGrip />
                   </span>
                   <span className="w-6 text-xs text-carbon-textMuted tabular-nums">{i + 1}.</span>
                   <span className="flex-1 min-w-0 truncate text-sm text-carbon-text">

@@ -1127,6 +1127,8 @@ const da: Partial<Translations> = {
   "whatsNew.netGate": "For apps uden sådan et tjek kan en planlagt sikkerhedskopiering vente, mens containeren sender data.",
   "whatsNew.fdroid": "Android-appen findes på F-Droid, og F-Droid-knappen her åbner dens side.",
   "whatsNew.locationRename": "Alle destinationer kan omdøbes, også en mappe som flere sektioner deler.",
+  "whatsNew.overviewMoveMode": "Mens du tilpasser oversigten, vugger kortene let for at vise, at du kan flytte dem.",
+  "whatsNew.labelGlyphs": "Etiketter viser et symbol for hvert valg, ligesom Hjørner og Animation.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Eksponer /metrics",

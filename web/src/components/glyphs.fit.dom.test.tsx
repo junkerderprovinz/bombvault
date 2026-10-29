@@ -49,9 +49,19 @@ describe("generated glyphs", () => {
     expect(INK.has(name), `${name} is not in scripts/glyphs.json`).toBe(true);
   });
 
+  // The four choices of the Labels selector share one uncropped box, so the
+  // block and the bars keep their sizes against each other from choice to
+  // choice.
+  const SHARED_BOX = new Set(["IconLabelText", "IconLabelTextGlyph", "IconLabelGlyph", "IconLabelReactive"]);
+
+  it.each([...SHARED_BOX])("keeps %s in the box the label glyphs share", (name) => {
+    const Glyph = GLYPHS.find(([n]) => n === name)![1];
+    expect(viewBoxOf(Glyph)).toEqual([0, 0, 14, 14]);
+  });
+
   // glyphs.json keeps three decimals, so the crop is compared to a thousandth
   // of a unit, far below a pixel at 16px.
-  it.each(GLYPHS)("crops %s to a box recomputed from its measured ink", (name, Glyph) => {
+  it.each(GLYPHS.filter(([name]) => !SHARED_BOX.has(name)))("crops %s to a box recomputed from its measured ink", (name, Glyph) => {
     const got = viewBoxOf(Glyph);
     expect(got, `${name} has no viewBox`).toHaveLength(4);
     const want = croppedBox(INK.get(name)!);

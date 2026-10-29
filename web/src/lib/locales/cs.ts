@@ -1125,6 +1125,8 @@ const cs: Partial<Translations> = {
   "whatsNew.netGate": "U aplikací bez takové kontroly může naplánovaná záloha čekat, dokud kontejner odesílá data.",
   "whatsNew.fdroid": "Aplikace pro Android je na F-Droid a tlačítko F-Droid zde otevře její stránku.",
   "whatsNew.locationRename": "Každý cíl lze přejmenovat, i složku, kterou sdílí několik sekcí.",
+  "whatsNew.overviewMoveMode": "Když přizpůsobujete přehled, jeho karty se jemně pohupují, aby bylo vidět, že je můžete přesouvat.",
+  "whatsNew.labelGlyphs": "Popisky zobrazují u každé volby symbol, stejně jako Rohy a Animace.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Zpřístupnit /metrics",

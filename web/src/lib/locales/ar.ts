@@ -1128,6 +1128,8 @@ const ar: Partial<Translations> = {
   "whatsNew.netGate": "للتطبيقات التي لا تملك فحصًا كهذا، يمكن للنسخ الاحتياطي المجدول أن ينتظر ما دامت الحاوية ترسل بيانات.",
   "whatsNew.fdroid": "تطبيق Android متوفر على F-Droid، وزر F-Droid هنا يفتح صفحته.",
   "whatsNew.locationRename": "يمكن إعادة تسمية كل وجهة، ومنها مجلد تتشاركه عدة أقسام.",
+  "whatsNew.overviewMoveMode": "أثناء تخصيص «نظرة عامة» تتمايل بطاقاتها برفق لتُظهر أنه يمكنك نقلها.",
+  "whatsNew.labelGlyphs": "تعرض «التسميات» رمزًا لكل خيار، مثل «الزوايا» و«الرسوم المتحركة».",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "إتاحة /metrics",

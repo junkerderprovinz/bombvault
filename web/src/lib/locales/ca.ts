@@ -815,6 +815,8 @@ const ca: Partial<Translations> = {
   "whatsNew.netGate": "Per a aplicacions sense aquesta comprovació, una còpia programada pot esperar mentre el contenidor envia dades.",
   "whatsNew.fdroid": "L'aplicació d'Android és a F-Droid, i el botó F-Droid d'aquí n'obre la fitxa.",
   "whatsNew.locationRename": "Totes les destinacions es poden canviar de nom, també una carpeta que comparteixen diverses seccions.",
+  "whatsNew.overviewMoveMode": "Mentre personalitzes el resum, les targetes es balancegen suaument per mostrar que les pots moure.",
+  "whatsNew.labelGlyphs": "Etiquetes mostra un símbol per a cada opció, com Cantonades i Animació.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Exposa /metrics",

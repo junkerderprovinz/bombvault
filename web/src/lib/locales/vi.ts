@@ -1118,6 +1118,8 @@ const vi: Partial<Translations> = {
   "whatsNew.netGate": "Với ứng dụng không có kiểm tra như vậy, bản sao lưu theo lịch có thể chờ khi container đang gửi dữ liệu.",
   "whatsNew.fdroid": "Ứng dụng Android đã có trên F-Droid, và nút F-Droid ở đây mở trang của ứng dụng.",
   "whatsNew.locationRename": "Mọi đích sao lưu đều đổi tên được, kể cả thư mục mà nhiều phần dùng chung.",
+  "whatsNew.overviewMoveMode": "Khi bạn tùy chỉnh Tổng quan, các thẻ của nó khẽ lắc lư để cho thấy bạn có thể di chuyển chúng.",
+  "whatsNew.labelGlyphs": "Nhãn hiển thị một biểu tượng cho từng lựa chọn, giống như Góc và Hoạt ảnh.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Cung cấp /metrics",

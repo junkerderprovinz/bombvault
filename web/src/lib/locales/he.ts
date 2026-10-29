@@ -1119,6 +1119,8 @@ const he: Partial<Translations> = {
   "whatsNew.netGate": "לאפליקציות בלי בדיקה כזו, גיבוי מתוזמן יכול להמתין כל עוד הקונטיינר שולח נתונים.",
   "whatsNew.fdroid": "אפליקציית Android זמינה ב-F-Droid, וכפתור F-Droid כאן פותח את הדף שלה.",
   "whatsNew.locationRename": "אפשר לשנות את השם של כל יעד, גם של תיקייה שכמה מקטעים חולקים.",
+  "whatsNew.overviewMoveMode": "בזמן התאמה אישית של הסקירה, הכרטיסים שלה מתנדנדים קלות כדי להראות שאפשר להזיז אותם.",
+  "whatsNew.labelGlyphs": "“תוויות” מציגה סמל לכל בחירה, כמו “פינות” ו“אנימציה”.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "חשיפת /metrics",

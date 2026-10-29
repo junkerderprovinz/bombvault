@@ -3,6 +3,7 @@
 // bar (lib/dragLift.ts), with the move up/down buttons as the keyboard's way.
 
 import { useCallback, useEffect, useRef, useState, type PointerEventHandler, type ReactNode } from "react";
+import { IconGrip } from "../components/glyphs";
 import { IconTipButton } from "../components/IconTipButton";
 import type { TranslationKey } from "./i18n";
 
@@ -312,19 +313,6 @@ export function useDashboardLayout(cards: CardDefault[], migration: LayoutMigrat
   return { layout, reorder, setVisibleOrder, toggleHidden, stepWidth, resize, autoHeight, reset };
 }
 
-function GripIcon() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor" aria-hidden="true" className="block">
-      <circle cx="5" cy="3" r="1.15" />
-      <circle cx="9" cy="3" r="1.15" />
-      <circle cx="5" cy="7" r="1.15" />
-      <circle cx="9" cy="7" r="1.15" />
-      <circle cx="5" cy="11" r="1.15" />
-      <circle cx="9" cy="11" r="1.15" />
-    </svg>
-  );
-}
-
 function ChevronUpIcon() {
   return (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" className="block">
@@ -422,11 +410,11 @@ export function CustomizableBlock({
       <div className="mb-4 flex flex-none items-center gap-2 rounded-card bg-carbon-surface2 px-2 py-1.5">
         {/* The grip is for a pointer; the keyboard uses the arrows. */}
         <span
-          className="shrink-0 cursor-grab touch-none select-none text-carbon-textMuted active:cursor-grabbing"
+          className="flex shrink-0 cursor-grab touch-none select-none text-carbon-textMuted active:cursor-grabbing"
           aria-hidden="true"
           onPointerDown={onGripPointerDown}
         >
-          <GripIcon />
+          <IconGrip />
         </span>
         <span className="min-w-0 flex-1 truncate text-xs font-semibold uppercase tracking-wider text-carbon-textSub">
           {label}

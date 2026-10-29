@@ -8,6 +8,10 @@ import {
   IconCornerRound,
   IconCornerSoft,
   IconCornerSquare,
+  IconLabelGlyph,
+  IconLabelReactive,
+  IconLabelText,
+  IconLabelTextGlyph,
   IconMotionOff,
   IconMotionStorm,
   IconMotionSubtle,
@@ -54,6 +58,13 @@ const MOTION_GLYPHS: Record<MotionIntensity, ReactNode> = {
   subtle: <IconMotionSubtle />,
   wild: <IconMotionWild />,
   storm: <IconMotionStorm />,
+};
+
+const LABEL_GLYPHS: Record<LabelMode, ReactNode> = {
+  text: <IconLabelText />,
+  textGlyph: <IconLabelTextGlyph />,
+  glyph: <IconLabelGlyph />,
+  reactive: <IconLabelReactive />,
 };
 
 // PaletteSwatch is one editable colour in the rainbow palette editor. It opens
@@ -231,7 +242,7 @@ export function LookPage() {
       {/* One selector per surface and not one switch, because the right
           answer differs: a rail reduced to glyphs narrows the whole page, tabs
           do not, and action buttons are a matter of density. */}
-      <Card title={t("settings.labels")} hint={t("settings.labelsHint")} hueIndex={nextHue()}>
+      <Card title={t("settings.labels")} hint={t("settings.labelsHint")} hueIndex={nextHue()} newId="look-label-glyphs">
         <Rows>
           {CONTROL_AXES.map((axis) => (
             <SettingRow
@@ -252,6 +263,7 @@ export function LookPage() {
                 items={LABEL_MODES.map((m) => ({
                   id: m,
                   label: t(`settings.labels.mode.${m}` as TranslationKey),
+                  icon: LABEL_GLYPHS[m],
                 }))}
                 label={t(`settings.labels.${axis}` as TranslationKey)}
                 select="one"
@@ -264,6 +276,7 @@ export function LookPage() {
                   labelModeChanged();
                 }}
                 inline
+                pairsOnPhone
               />
             </SettingRow>
           ))}

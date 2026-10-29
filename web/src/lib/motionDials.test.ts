@@ -69,4 +69,14 @@ describe("the motion dials", () => {
     );
     expect(keyframes("glim-wiggle")).toMatch(/rotate:\s*var\(--motion-wiggle-angle/);
   });
+
+  it("rock the rows of a list in move mode, except the one in hand, and never at off", () => {
+    const selector =
+      ':root:not([data-motion="off"]) .glim-move-mode > :not(:hover, :focus-within, .glim-drag-lift, .glim-drag-settle)';
+    expect(ruleBody(selector, gate)).toMatch(/glim-row-wiggle var\(--motion-row-wiggle-dur\)/);
+    const frames = keyframes("glim-row-wiggle");
+    expect(frames).toMatch(/0%, 100% \{ transform: none; \}/);
+    expect(frames).toMatch(/var\(--motion-row-wiggle-tilt/);
+    expect(frames).toMatch(/var\(--motion-row-wiggle-lift/);
+  });
 });

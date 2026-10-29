@@ -30,8 +30,8 @@ export function ProgressBar({ percent, active, indeterminate, label, inline, acc
     <div
       className={
         inline
-          ? "relative h-1 w-full overflow-hidden rounded-pill"
-          : "absolute bottom-0 start-0 end-0 h-1 overflow-hidden"
+          ? "glim-meter relative h-1 w-full overflow-hidden rounded-pill"
+          : "glim-meter absolute bottom-0 start-0 end-0 h-1 overflow-hidden"
       }
       style={{ background: "var(--carbon-border)" }}
       role="progressbar"

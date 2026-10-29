@@ -1110,6 +1110,8 @@ const ko: Partial<Translations> = {
   "whatsNew.netGate": "그런 확인이 없는 앱은 컨테이너가 데이터를 보내는 동안 예약된 백업이 기다릴 수 있습니다.",
   "whatsNew.fdroid": "Android 앱이 F-Droid에 있으며, 여기의 F-Droid 버튼을 누르면 해당 페이지가 열립니다.",
   "whatsNew.locationRename": "모든 대상의 이름을 바꿀 수 있으며, 여러 섹션이 함께 쓰는 폴더도 마찬가지입니다.",
+  "whatsNew.overviewMoveMode": "개요를 사용자 지정하는 동안 카드가 살짝 흔들려 옮길 수 있음을 알려 줍니다.",
+  "whatsNew.labelGlyphs": "레이블은 모서리와 애니메이션처럼 선택지마다 기호를 표시합니다.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "/metrics 노출",

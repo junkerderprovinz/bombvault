@@ -1127,6 +1127,8 @@ const fi: Partial<Translations> = {
   "whatsNew.netGate": "Sovelluksille, joilla tällaista tarkistusta ei ole, ajastettu varmuuskopio voi odottaa, kun kontti lähettää dataa.",
   "whatsNew.fdroid": "Android-sovellus on F-Droidissa, ja tästä F-Droid-painikkeesta avautuu sen sivu.",
   "whatsNew.locationRename": "Jokaisen kohteen voi nimetä uudelleen, myös kansion, jonka useampi osio jakaa.",
+  "whatsNew.overviewMoveMode": "Kun mukautat yleiskatsausta, sen kortit keinuvat kevyesti merkiksi siitä, että voit siirtää niitä.",
+  "whatsNew.labelGlyphs": "Nimikkeet näyttää jokaiselle valinnalle symbolin, kuten Kulmat ja Animaatio.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Tarjoa /metrics",

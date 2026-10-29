@@ -815,6 +815,8 @@ const lt: Partial<Translations> = {
   "whatsNew.netGate": "Programoms be tokios patikros suplanuota kopija gali palaukti, kol konteineris siunčia duomenis.",
   "whatsNew.fdroid": "Android programėlė yra F-Droid, o čia esantis F-Droid mygtukas atveria jos puslapį.",
   "whatsNew.locationRename": "Kiekvieną paskirties vietą galima pervadinti, taip pat aplanką, kurį naudoja kelios sekcijos.",
+  "whatsNew.overviewMoveMode": "Kol tinkini apžvalgą, jos kortelės švelniai siūbuoja, kad matytum, jog jas gali perkelti.",
+  "whatsNew.labelGlyphs": "Etiketės rodo kiekvieno pasirinkimo simbolį, kaip ir Kampai bei Animacija.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Rodyti /metrics",
