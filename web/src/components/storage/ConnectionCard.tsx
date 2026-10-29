@@ -7,7 +7,7 @@ import { storageClassOf } from "../../lib/storageWrites";
 import { Card } from "../../pages/settings/shared";
 import { Button } from "../Button";
 import { COMPRESSION_MODES } from "../CompressionSelector";
-import { IconForward } from "../glyphs";
+import { IconMove } from "../glyphs";
 import { IconPencil } from "../navGlyphs";
 import { SelectField } from "../SelectField";
 import { Selector } from "../Selector";
@@ -122,7 +122,7 @@ export function ConnectionCard({ edit, onChange, hueIndex }: { edit: LocationEdi
               <Button
                 label={t("own.titleMany")}
                 labelKey="own.titleMany"
-                glyph={<IconForward />}
+                glyph={<IconMove />}
                 tone="neutral"
                 onClick={() => setMoving(location.sections.map((section) => section.domain))}
               />

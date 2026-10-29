@@ -7,7 +7,7 @@ import { moveText, sectionMoveRun } from "../../lib/storageRuns";
 import { useStorageLocations } from "../../lib/useStorageLocations";
 import { Card } from "../../pages/settings/shared";
 import { Button } from "../Button";
-import { IconForward } from "../glyphs";
+import { IconMove } from "../glyphs";
 import { IconPencil } from "../navGlyphs";
 import { OwnFolderWindow } from "./OwnFolderWindow";
 import { DomainGlyph, Rows, SettingRow } from "./rows";
@@ -47,7 +47,7 @@ export function OwnFoldersCard({ location, hueIndex }: { location: StorageLocati
           <Button
             label={t(own.length > 0 ? "own.addSections" : "own.use")}
             labelKey={null}
-            glyph={<IconForward />}
+            glyph={<IconMove />}
             tone="accent"
             onClick={() => setMoving({ domains: elsewhere, target: location.id })}
             className="glim-btn-wrap"
