@@ -3269,6 +3269,7 @@ const es: Partial<Translations> = {
   "placementCode.moveRunning": "Esta sección ya se está moviendo. Puedes seguirla en el Resumen.",
   "placementCode.ownFolderUnreadable": "No se pudieron leer las copias de seguridad de la carpeta propia anterior, así que no se pueden copiar. Comprueba que el disco esté montado o que el lugar responda y vuelve a intentarlo.",
   "placementCode.ownFolderThere": "Aquí está la carpeta propia de una sección. Muévela primero a otro lugar, en Carpetas propias en esta página. Después se puede quitar la ubicación de almacenamiento.",
+  "placementCode.copyOnOwnFolder": "Esta sección ya tiene su carpeta propia en esta ubicación, así que una copia allí caería sobre sí misma.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} directo ahora conserva menos. Elementos cuya única copia está ahí: {n}.",

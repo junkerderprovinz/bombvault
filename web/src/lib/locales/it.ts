@@ -3271,6 +3271,7 @@ const it: Partial<Translations> = {
   "placementCode.moveRunning": "Questa sezione è già in corso di spostamento. Puoi seguirla nella Panoramica.",
   "placementCode.ownFolderUnreadable": "Non è stato possibile leggere i backup della vecchia cartella propria, quindi non si possono copiare. Controlla che il disco sia montato o che il luogo risponda, poi riprova.",
   "placementCode.ownFolderThere": "Qui si trova la cartella propria di una sezione. Spostala prima altrove, in Cartelle proprie in questa pagina. Poi la posizione di archiviazione si può rimuovere.",
+  "placementCode.copyOnOwnFolder": "Questa sezione ha già la sua cartella propria in questa posizione, quindi una copia lì cadrebbe su sé stessa.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} diretto ora conserva meno. Elementi la cui unica copia è lì: {n}.",

@@ -3262,6 +3262,7 @@ const ja: Partial<Translations> = {
   "placementCode.moveRunning": "このセクションはすでに移動中です。「概要」で確認できます。",
   "placementCode.ownFolderUnreadable": "以前の専用フォルダーのバックアップを読み取れなかったため、コピーできません。ディスクがマウントされているか、その場所が応答するかを確認してから、もう一度お試しください。",
   "placementCode.ownFolderThere": "ここにはあるセクションの専用フォルダーがあります。まずこのページの「専用フォルダー」から別の場所へ移動してください。その後、この保存場所を削除できます。",
+  "placementCode.copyOnOwnFolder": "このセクションの専用フォルダーはすでにこの保存先にあるため、そこへのコピーは自分自身の上に重なります。",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} ダイレクトは今、保持量が減りました。唯一のコピーがそこにある項目: {n}。",

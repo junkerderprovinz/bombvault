@@ -150,7 +150,9 @@ function Location({ location, records }: { location: StorageLocation; records: L
             <Back />
             <LocationMark location={location} size="head" />
           </span>
-          <div className="flex min-w-0 flex-1 basis-64 flex-col gap-0.5">
+          {/* On a phone the name takes a line of its own, so the actions under
+              it start where it starts. */}
+          <div className="flex min-w-0 flex-1 basis-64 flex-col gap-0.5 max-md:basis-full">
             <span className="min-w-0 text-status font-semibold text-carbon-text text-start wrap-anywhere">{location.name}</span>
             <span className="flex flex-wrap items-center gap-x-1.5 text-sm text-carbon-textMuted">
               <span>

@@ -3271,6 +3271,7 @@ const fr: Partial<Translations> = {
   "placementCode.moveRunning": "Cette section est déjà en cours de déplacement. Vous pouvez la suivre dans l'Aperçu.",
   "placementCode.ownFolderUnreadable": "Les sauvegardes de l'ancien dossier propre n'ont pas pu être lues, elles ne peuvent donc pas être copiées. Vérifiez que le disque est monté ou que l'emplacement répond, puis réessayez.",
   "placementCode.ownFolderThere": "Le dossier propre d'une section se trouve ici. Déplacez-le d'abord ailleurs, sous Dossiers propres sur cette page. L'emplacement de stockage pourra ensuite être supprimé.",
+  "placementCode.copyOnOwnFolder": "Cette section garde déjà son dossier propre à cet emplacement, une copie là-bas tomberait donc sur elle-même.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} direct conserve désormais moins. Éléments dont c'est la seule copie : {n}.",

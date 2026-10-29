@@ -88,6 +88,16 @@ describe("localName", () => {
     expect(localName(t, namedLocal(t, [folder("bombvault", "containers"), remote]), "files")).toBe("bv");
   });
 
+  it("names an own folder in a storage location after the location, not after a copy there", () => {
+    const dxp = location({
+      id: "destination:dxp",
+      name: "DXP6800",
+      sections: [section({ domain: "files", use: "home" }), section({ domain: "containers", use: "home", targetId: "t1", repoId: "r1" })],
+    });
+    expect(localName(t, namedLocal(t, [dxp]), "files")).toBe("DXP6800");
+    expect(localName(t, namedLocal(t, [dxp]), "containers")).toBe(en["placement.segLocal"]);
+  });
+
   it("says Local until the storage locations are read", () => {
     expect(localName(t, [], "files")).toBe(en["placement.segLocal"]);
   });

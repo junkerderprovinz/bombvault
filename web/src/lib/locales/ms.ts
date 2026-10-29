@@ -3281,6 +3281,7 @@ const ms: Partial<Translations> = {
   "placementCode.moveRunning": "Bahagian ini sedang dialihkan. Anda boleh mengikutinya di Ikhtisar.",
   "placementCode.ownFolderUnreadable": "Sandaran dalam folder sendiri yang lama tidak dapat dibaca, jadi ia tidak boleh disalin. Semak sama ada cakera sudah dilekapkan atau tempat itu menjawab, kemudian cuba lagi.",
   "placementCode.ownFolderThere": "Di sini terletak folder sendiri sesuatu bahagian. Alihkannya dahulu ke tempat lain di Folder sendiri pada halaman ini. Selepas itu lokasi storan boleh dibuang.",
+  "placementCode.copyOnOwnFolder": "Bahagian ini sudah menyimpan folder sendiri di lokasi storan ini, jadi salinan di situ akan jatuh ke atas dirinya sendiri.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} terus kini menyimpan lebih sedikit. Entri yang satu-satunya salinan ada di situ: {n}.",

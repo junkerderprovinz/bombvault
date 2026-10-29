@@ -3281,6 +3281,7 @@ const is: Partial<Translations> = {
   "placementCode.moveRunning": "Þetta svæði er þegar í flutningi. Þú getur fylgst með því í Yfirliti.",
   "placementCode.ownFolderUnreadable": "Ekki tókst að lesa afritin í gömlu eigin möppunni, svo ekki er hægt að afrita þau. Athugaðu hvort diskurinn sé tengdur eða staðurinn svari og reyndu aftur.",
   "placementCode.ownFolderThere": "Hér er eigin mappa svæðis. Færðu hana fyrst annað undir Eigin möppur á þessari síðu. Eftir það er hægt að fjarlægja geymslustaðinn.",
+  "placementCode.copyOnOwnFolder": "Þessi hluti geymir nú þegar eigin möppu á þessum geymslustað, svo afrit þangað myndi lenda ofan á sjálfu sér.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} beint varðveitir nú minna. Færslur sem eiga eina afritið þar: {n}.",

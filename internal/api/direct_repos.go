@@ -21,6 +21,10 @@ import (
 
 var errNestedLocation = errors.New("this location lies inside another repository or target, or contains one")
 
+// errCopyOnOwnFolder refuses a copy of a section at the place its own folder
+// lies: it would copy every backup onto itself and fail on every run.
+var errCopyOnOwnFolder = errors.New("the section keeps its own folder at this place, so a copy there would land on itself")
+
 // nestedLocationErr is errNestedLocation with the place in the way, so the
 // refusal can show which one it is.
 type nestedLocationErr struct {

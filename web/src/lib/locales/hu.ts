@@ -3272,6 +3272,7 @@ const hu: Partial<Translations> = {
   "placementCode.moveRunning": "Ez a szakasz már költözik. Az Áttekintés oldalon követheted.",
   "placementCode.ownFolderUnreadable": "A régi saját mappában lévő mentéseket nem sikerült beolvasni, ezért nem másolhatók. Nézd meg, hogy a lemez csatolva van-e, vagy a hely válaszol-e, aztán próbáld újra.",
   "placementCode.ownFolderThere": "Itt van egy szakasz saját mappája. Előbb költöztesd máshová az oldal Saját mappák részében. Utána a tárolási hely eltávolítható.",
+  "placementCode.copyOnOwnFolder": "Ennek a résznek a saját mappája már ezen a tárolási helyen van, így egy másolat ott önmagára kerülne.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} közvetlenül most kevesebbet őriz meg. Elemek, amelyeknek egyetlen másolata ott van: {n}.",

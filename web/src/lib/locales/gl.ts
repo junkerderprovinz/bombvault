@@ -3281,6 +3281,7 @@ const gl: Partial<Translations> = {
   "placementCode.moveRunning": "Esta sección xa se está movendo. Podes seguila na Vista xeral.",
   "placementCode.ownFolderUnreadable": "Non se puideron ler as copias de seguridade do cartafol propio antigo, así que non se poden copiar. Comproba que o disco estea montado ou que o lugar responda e téntao de novo.",
   "placementCode.ownFolderThere": "Aquí está o cartafol propio dunha sección. Móveo primeiro a outro lugar, en Cartafoles propios nesta páxina. Despois pódese quitar a localización de almacenamento.",
+  "placementCode.copyOnOwnFolder": "Esta sección xa ten o seu cartafol propio nesta localización, así que unha copia alí caería sobre si mesma.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} directo agora conserva menos. Elementos cuxa única copia está aí: {n}.",

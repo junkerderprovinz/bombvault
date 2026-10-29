@@ -3271,6 +3271,7 @@ const he: Partial<Translations> = {
   "placementCode.moveRunning": "התחום הזה כבר מועבר. אפשר לעקוב אחרי זה בסקירה.",
   "placementCode.ownFolderUnreadable": "לא ניתן היה לקרוא את הגיבויים בתיקייה העצמית הישנה, ולכן אי אפשר להעתיק אותם. כדאי לבדוק שהדיסק מחובר או שהמקום עונה, ולנסות שוב.",
   "placementCode.ownFolderThere": "כאן נמצאת התיקייה העצמית של תחום. קודם צריך להעביר אותה למקום אחר, תחת תיקיות עצמיות בעמוד הזה. אחר כך אפשר להסיר את מיקום האחסון.",
+  "placementCode.copyOnOwnFolder": "למקטע הזה כבר יש תיקייה עצמית במיקום האחסון הזה, ולכן עותק שם ינחת על עצמו.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} ישיר שומר עכשיו פחות. פריטים שהעותק היחיד שלהם נמצא שם: {n}.",

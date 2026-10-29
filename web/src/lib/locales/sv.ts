@@ -3271,6 +3271,7 @@ const sv: Partial<Translations> = {
   "placementCode.moveRunning": "Det här avsnittet flyttas redan. Du kan följa det i Översikt.",
   "placementCode.ownFolderUnreadable": "Säkerhetskopiorna i den gamla egna mappen gick inte att läsa, så de kan inte kopieras. Kontrollera att disken är monterad eller att platsen svarar och försök igen.",
   "placementCode.ownFolderThere": "Här ligger ett avsnitts egna mapp. Flytta den först till en annan plats under Egna mappar på den här sidan. Sedan kan lagringsplatsen tas bort.",
+  "placementCode.copyOnOwnFolder": "Den här delen har redan sin egna mapp på den här lagringsplatsen, så en kopia där skulle hamna ovanpå sig själv.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} direkt behåller nu mindre. Poster vars enda kopia finns där: {n}.",

@@ -3281,6 +3281,7 @@ const lt: Partial<Translations> = {
   "placementCode.moveRunning": "Ši sritis jau perkeliama. Gali tai sekti skiltyje Apžvalga.",
   "placementCode.ownFolderUnreadable": "Senojo savo aplanko atsarginių kopijų nepavyko perskaityti, todėl jų negalima nukopijuoti. Patikrink, ar diskas prijungtas arba ar vieta atsako, ir bandyk dar kartą.",
   "placementCode.ownFolderThere": "Čia yra vienos srities savas aplankas. Pirmiausia perkelk jį kitur šio puslapio skiltyje Savi aplankai. Tada saugyklos vietą bus galima pašalinti.",
+  "placementCode.copyOnOwnFolder": "Šio skyriaus savas aplankas jau yra šioje saugojimo vietoje, todėl kopija ten nukristų ant savęs.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} tiesiogiai dabar saugo mažiau. Įrašai, kurių vienintelė kopija yra ten: {n}.",

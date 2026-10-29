@@ -1039,7 +1039,46 @@ func (h *Handler) handleCreateDestination(w http.ResponseWriter, r *http.Request
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
+	go h.svc.takeUpOldBackups(context.WithoutCancel(r.Context()), d)
 	h.answerDestination(w, d)
+}
+
+// oldBackupsListTimeout bounds the listing of one section's folder at a
+// destination just saved, so a slow remote holds no section up for long.
+const oldBackupsListTimeout = 30 * time.Second
+
+// takeUpOldBackups gives a destination just saved a target for each section
+// with placement whose folder there holds backups already, such as a storage
+// location removed and added again. The target starts unticked, so nothing is
+// copied there until somebody ticks it, but the backups are listed for
+// restore. A folder that is the section's own is left alone.
+func (s *Service) takeUpOldBackups(ctx context.Context, d store.OffsiteTarget) {
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		log.Printf("api: destination %q: the settings could not be read, so no backups there were looked for: %v", d.Name, err) //nolint:gosec // G706: the name is %q-quoted
+		return
+	}
+	for _, domain := range store.PlacementDomains {
+		loc := destinationLocation(d.Repo, domain)
+		repo, err := s.resolveRepo(loc)
+		if err != nil {
+			continue
+		}
+		if own, err := s.repoFor(settings, domain, "local"); err == nil && sameRepoLocation(own, repo) {
+			continue
+		}
+		listCtx, cancel := context.WithTimeout(ctx, oldBackupsListTimeout)
+		held, err := s.listTarget(listCtx, settings, store.OffsiteTarget{
+			Domain: domain, Repo: loc, CredsRef: d.CredsRef, StorageClass: d.StorageClass, Provider: d.Provider, DestinationID: d.ID,
+		})
+		cancel()
+		if err != nil || len(held) == 0 {
+			continue
+		}
+		if _, _, err := s.store.EnsureDestinationTarget(d.ID, domain, loc); err != nil {
+			log.Printf("api: destination %q: the backups of %s there could not be taken up: %v", d.Name, domain, err) //nolint:gosec // G706: the name is %q-quoted, the domain a fixed literal
+		}
+	}
 }
 
 // destinationEdit is what can change on a destination after it is saved. A

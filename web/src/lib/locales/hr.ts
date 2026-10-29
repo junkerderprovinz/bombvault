@@ -3281,6 +3281,7 @@ const hr: Partial<Translations> = {
   "placementCode.moveRunning": "Ovaj se odjeljak već premješta. Možete to pratiti u Pregledu.",
   "placementCode.ownFolderUnreadable": "Sigurnosne kopije u staroj vlastitoj mapi nije bilo moguće pročitati, pa se ne mogu kopirati. Provjerite je li disk montiran ili odgovara li mjesto pa pokušajte ponovno.",
   "placementCode.ownFolderThere": "Ovdje je vlastita mapa jednog odjeljka. Najprije je premjestite drugamo, pod Vlastite mape na ovoj stranici. Nakon toga se mjesto pohrane može ukloniti.",
+  "placementCode.copyOnOwnFolder": "Ovaj odjeljak već ima vlastitu mapu na ovoj lokaciji za pohranu, pa bi kopija tamo pala sama na sebe.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} izravno sada čuva manje. Stavke čija je jedina kopija ondje: {n}.",

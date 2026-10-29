@@ -3271,6 +3271,7 @@ const pt: Partial<Translations> = {
   "placementCode.moveRunning": "Esta secção já está a ser movida. Podes acompanhá-la na Visão geral.",
   "placementCode.ownFolderUnreadable": "Não foi possível ler os backups da pasta própria antiga, por isso não podem ser copiados. Verifica se o disco está montado ou se o local responde e tenta de novo.",
   "placementCode.ownFolderThere": "Aqui está a pasta própria de uma secção. Move-a primeiro para outro sítio, em Pastas próprias nesta página. Depois o local de armazenamento pode ser removido.",
+  "placementCode.copyOnOwnFolder": "Esta secção já tem a pasta própria neste local de armazenamento, por isso uma cópia ali cairia sobre si mesma.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} direto agora conserva menos. Entradas cuja única cópia está lá: {n}.",

@@ -3281,6 +3281,7 @@ const lv: Partial<Translations> = {
   "placementCode.moveRunning": "Šī sadaļa jau tiek pārvietota. Varat to vērot sadaļā Pārskats.",
   "placementCode.ownFolderUnreadable": "Vecās paša mapes dublējumus neizdevās nolasīt, tāpēc tos nevar nokopēt. Pārbaudiet, vai disks ir pievienots vai vieta atbild, un mēģiniet vēlreiz.",
   "placementCode.ownFolderThere": "Šeit atrodas kādas sadaļas paša mape. Vispirms pārvietojiet to citur šīs lapas sadaļā Pašu mapes. Pēc tam krātuves vietu var noņemt.",
+  "placementCode.copyOnOwnFolder": "Šīs sadaļas paša mape jau ir šajā krātuves vietā, tāpēc kopija tur nonāktu pati uz sevis.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} tieši tagad saglabā mazāk. Ieraksti, kuru vienīgā kopija ir tur: {n}.",

@@ -3262,6 +3262,7 @@ const zh: Partial<Translations> = {
   "placementCode.moveRunning": "该分区正在移动。你可以在“概览”中查看进度。",
   "placementCode.ownFolderUnreadable": "无法读取旧专属文件夹中的备份，因此无法复制。请检查磁盘是否已挂载或该位置是否有响应，然后重试。",
   "placementCode.ownFolderThere": "这里有某个分区的专属文件夹。请先在本页的“专属文件夹”中把它移到别处，之后才能移除此存储位置。",
+  "placementCode.copyOnOwnFolder": "此部分的专属文件夹已经在这个存储位置，所以复制到那里会落在它自己身上。",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} 直接现在保留得更少。唯一副本在那里的条目：{n}。",

@@ -3281,6 +3281,7 @@ const sk: Partial<Translations> = {
   "placementCode.moveRunning": "Táto sekcia sa už presúva. Môžeš to sledovať v Prehľade.",
   "placementCode.ownFolderUnreadable": "Zálohy v starom vlastnom priečinku sa nepodarilo prečítať, takže ich nemožno skopírovať. Skontroluj, či je disk pripojený alebo či miesto odpovedá, a skús to znova.",
   "placementCode.ownFolderThere": "Tu leží vlastný priečinok jednej sekcie. Najprv ho presuň inam v časti Vlastné priečinky na tejto stránke. Potom bude možné úložisko odstrániť.",
+  "placementCode.copyOnOwnFolder": "Táto sekcia už má vlastný priečinok v tomto úložisku, takže kópia tam by skončila sama na sebe.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} priamo teraz uchováva menej. Položky, ktorých jediná kópia je tam: {n}.",

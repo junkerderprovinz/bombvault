@@ -64,11 +64,18 @@ export function distinctNames(locations: StorageLocation[]): StorageLocation[] {
   });
 }
 
+/** ownFolderSection is a section's own folder at a location: a home that is
+ *  neither a named repository nor a target's direct one. */
+export function ownFolderSection(location: StorageLocation, domain: string): StorageLocationSection | undefined {
+  return location.sections.find((s) => s.domain === domain && s.use === "home" && !s.repoId && !s.targetId);
+}
+
 /** localName is what the storage pages call a section's own folder, read off
  *  the list namedLocal named: Local while it is the only folder on this host,
- *  its own name otherwise, and Local until the list is in. */
+ *  the name of the storage location it lies in, its own name otherwise, and
+ *  Local until the list is in. */
 export function localName(t: T, locations: StorageLocation[], domain: string): string {
-  const at = locations.find((location) => location.object === "path" && location.sections.some((s) => s.domain === domain));
+  const at = locations.find((location) => ownFolderSection(location, domain));
   return at?.name ?? t("placement.segLocal");
 }
 

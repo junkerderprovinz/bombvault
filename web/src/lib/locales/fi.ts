@@ -3271,6 +3271,7 @@ const fi: Partial<Translations> = {
   "placementCode.moveRunning": "Tätä osiota siirretään jo. Voit seurata sitä kohdassa Yleiskatsaus.",
   "placementCode.ownFolderUnreadable": "Vanhan oman kansion varmuuskopioita ei voitu lukea, joten niitä ei voi kopioida. Tarkista, että levy on liitetty tai kohde vastaa, ja yritä uudelleen.",
   "placementCode.ownFolderThere": "Täällä on erään osion oma kansio. Siirrä se ensin muualle tämän sivun kohdassa Omat kansiot. Sen jälkeen tallennuspaikan voi poistaa.",
+  "placementCode.copyOnOwnFolder": "Tämän osion oma kansio on jo tässä tallennuspaikassa, joten kopio sinne osuisi itsensä päälle.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} suoraan säilyttää nyt vähemmän. Merkinnät, joiden ainoa kopio on siellä: {n}.",

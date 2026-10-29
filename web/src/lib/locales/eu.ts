@@ -3281,6 +3281,7 @@ const eu: Partial<Translations> = {
   "placementCode.moveRunning": "Atal hau mugitzen ari da jada. Laburpena orrian jarrai dezakezu.",
   "placementCode.ownFolderUnreadable": "Ezin izan dira irakurri karpeta propio zaharreko babeskopiak, beraz ezin dira kopiatu. Egiaztatu diskoa muntatuta dagoela edo tokiak erantzuten duela, eta saiatu berriro.",
   "placementCode.ownFolderThere": "Hemen dago atal baten karpeta propioa. Lehenik, eraman beste toki batera orri honetako Karpeta propioak atalean. Ondoren, biltegiratze-kokapena kendu daiteke.",
+  "placementCode.copyOnOwnFolder": "Atal honek bere karpeta propioa du dagoeneko biltegiratze-kokaleku honetan, beraz han egindako kopia bere gainera eroriko litzateke.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} zuzenak orain gutxiago gordetzen du. Kopia bakarra hor duten elementuak: {n}.",

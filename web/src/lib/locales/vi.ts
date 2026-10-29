@@ -3262,6 +3262,7 @@ const vi: Partial<Translations> = {
   "placementCode.moveRunning": "Phần này đang được di chuyển. Bạn có thể theo dõi tại Tổng quan.",
   "placementCode.ownFolderUnreadable": "Không đọc được các bản sao lưu trong thư mục riêng cũ, nên không thể sao chép chúng. Hãy kiểm tra ổ đĩa đã được gắn hoặc nơi đó có phản hồi, rồi thử lại.",
   "placementCode.ownFolderThere": "Thư mục riêng của một phần nằm ở đây. Hãy chuyển nó sang nơi khác trước, trong mục Thư mục riêng ở trang này. Sau đó có thể gỡ vị trí lưu trữ.",
+  "placementCode.copyOnOwnFolder": "Phần này đã có thư mục riêng ở vị trí lưu trữ này, nên một bản sao ở đó sẽ đè lên chính nó.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} trực tiếp giờ giữ ít hơn. Các mục có bản sao duy nhất ở đó: {n}.",

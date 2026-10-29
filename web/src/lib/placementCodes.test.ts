@@ -15,6 +15,7 @@ describe("placementErrorText", () => {
       "destination-holds-backups", "backups-not-there", "last-copies", "nothing-to-erase",
       "move-same-place", "move-section-there", "move-direct-repo", "move-running",
       "own-folder-there",
+      "copy-on-own-folder",
       "own-folder-unreadable",
     ];
     for (const code of codes) {

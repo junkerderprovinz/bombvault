@@ -3262,6 +3262,7 @@ const ko: Partial<Translations> = {
   "placementCode.moveRunning": "이 섹션은 이미 이동 중입니다. '개요'에서 확인할 수 있습니다.",
   "placementCode.ownFolderUnreadable": "이전 전용 폴더의 백업을 읽을 수 없어 복사할 수 없습니다. 디스크가 마운트되어 있는지, 그 위치가 응답하는지 확인한 뒤 다시 시도하세요.",
   "placementCode.ownFolderThere": "여기에 어떤 섹션의 전용 폴더가 있습니다. 먼저 이 페이지의 '전용 폴더'에서 다른 곳으로 옮기세요. 그다음 저장 위치를 제거할 수 있습니다.",
+  "placementCode.copyOnOwnFolder": "이 섹션의 전용 폴더가 이미 이 저장 위치에 있어서, 그곳으로의 복사는 자기 자신 위에 놓이게 됩니다.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} 직접은 이제 더 적게 보관합니다. 유일한 사본이 그곳에 있는 항목: {n}개.",

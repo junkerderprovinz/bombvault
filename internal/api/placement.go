@@ -67,6 +67,7 @@ var placementCodes = []struct {
 	{errRepoInUse, "repo-in-use"},
 	{errDefaultRepoMissing, "default-repo-missing"},
 	{errNestedLocation, "nested-location"},
+	{errCopyOnOwnFolder, "copy-on-own-folder"},
 	{errMirroredField, "mirrored-field"},
 	{store.ErrCompanionTaken, "companion-taken"},
 	{store.ErrNotOffsiteTarget, "unknown-target"},
