@@ -62,6 +62,9 @@ describe("motion tokens", () => {
       "--motion-confirm-scale",
       "--motion-wiggle-dur",
       "--motion-wiggle-angle",
+      "--motion-row-wiggle-dur",
+      "--motion-row-wiggle-tilt",
+      "--motion-row-wiggle-lift",
       "--drag-lift-scale",
       "--drag-settle-dur",
     ]) {

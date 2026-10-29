@@ -44,6 +44,10 @@ async function customize(page: Page) {
 test.describe("the grid of the overview", () => {
   test.beforeEach(async ({ page }, testInfo) => {
     test.skip(testInfo.project.name !== "desktop-1280", "the grid is laid out and arranged at desktop width");
+    // The cards wiggle while they are arranged, and Playwright waits for an
+    // element to stand still before it clicks or hovers. The wiggle has a
+    // test of its own below.
+    await page.emulateMedia({ reducedMotion: "reduce" });
     await stageOverview(page, undefined, { lang: "en" });
   });
 
@@ -329,6 +333,28 @@ test.describe("the grid of the overview", () => {
     await expect(count(5)).toBeVisible();
     expect(sent).toEqual([true, false]);
   });
+});
+
+test("the cards wiggle while they are arranged, except the one under the pointer", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop-1280", "the grid is arranged at desktop width");
+  await stageOverview(page, undefined, { lang: "en" });
+  await openOverview(page);
+  const animation = (id: string) => cell(page, id).evaluate((el) => getComputedStyle(el).animationName);
+  await expect.poll(() => animation("targets")).toBe("none");
+
+  await page.getByTestId("page-actions").getByRole("button", { name: "Customize" }).click();
+  await page.mouse.move(1, 1);
+  await expect.poll(() => animation("protection")).toBe("glim-row-wiggle");
+  await expect.poll(() => animation("targets")).toBe("glim-row-wiggle");
+
+  await cell(page, "protection").evaluate((el) => el.scrollIntoView({ block: "center" }));
+  const protection = await box(cell(page, "protection"));
+  await page.mouse.move(protection.x + protection.width / 2, protection.y + protection.height / 2);
+  await expect.poll(() => animation("protection")).toBe("none");
+  await expect.poll(() => animation("targets")).toBe("glim-row-wiggle");
+
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await expect.poll(() => animation("targets")).toBe("none");
 });
 
 test("the customize mode is a desktop tool: a phone has no button for it", async ({ page }, testInfo) => {

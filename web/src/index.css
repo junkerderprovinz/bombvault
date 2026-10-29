@@ -2326,6 +2326,12 @@ body {
 
   --motion-wiggle-dur: 280ms;
   --motion-wiggle-angle: .6deg;
+  /* A row in move mode: one beat of its wiggle, how far it tilts and how far
+     it lifts. A wide row turns far at its ends, so the tilt is a fraction of
+     the long-press wiggle's. */
+  --motion-row-wiggle-dur: 320ms;
+  --motion-row-wiggle-tilt: .16deg;
+  --motion-row-wiggle-lift: 1px;
 
   --motion-scene-dur: 6s;
   --motion-scene-hop: 21px;
@@ -2431,6 +2437,9 @@ body {
 
   --motion-wiggle-dur: 220ms;
   --motion-wiggle-angle: 1deg;
+  --motion-row-wiggle-dur: 260ms;
+  --motion-row-wiggle-tilt: .26deg;
+  --motion-row-wiggle-lift: 1.5px;
 
   --motion-scene-dur: 4s;
   --motion-scene-hop: 32px;
@@ -2522,6 +2531,9 @@ body {
 
   --motion-wiggle-dur: 360ms;
   --motion-wiggle-angle: .3deg;
+  --motion-row-wiggle-dur: 440ms;
+  --motion-row-wiggle-tilt: .08deg;
+  --motion-row-wiggle-lift: .5px;
 
   --motion-scene-dur: 9s;
   --motion-scene-hop: 8px;
@@ -2625,6 +2637,11 @@ body {
   /* A long period rather than none, with no angle, so nothing moves. */
   --motion-wiggle-dur: 400ms;
   --motion-wiggle-angle: 0deg;
+  /* Declared so this level does not inherit the lively numbers; the row
+     wiggle leaves this level out altogether. */
+  --motion-row-wiggle-dur: 440ms;
+  --motion-row-wiggle-tilt: 0deg;
+  --motion-row-wiggle-lift: 0px;
 
   /* The pictures stand still at this level; the numbers are the ones a
      picture would hold its last frame with. */
@@ -2850,6 +2867,14 @@ body {
   to   { rotate: var(--motion-wiggle-angle, .6deg); }
 }
 
+/* A row of a list in move mode ("Move mode" in the design language). Each
+   beat starts and ends untransformed and swings to both sides in between. */
+@keyframes glim-row-wiggle {
+  0%, 100% { transform: none; }
+  25% { transform: rotate(calc(var(--motion-row-wiggle-tilt, 0deg) * -1)) translateY(calc(var(--motion-row-wiggle-lift, 0px) * -1)); }
+  75% { transform: rotate(var(--motion-row-wiggle-tilt, 0deg)) translateY(var(--motion-row-wiggle-lift, 0px)); }
+}
+
 /* Registering the radius tokens as lengths lets them transition on the root,
    so every corner that reads them follows without a transition of its own,
    which would fight each element's other transitions for the shorthand. */
@@ -3042,6 +3067,18 @@ body {
   .glim-drag-armed > :not(.glim-drag-lift) {
     animation: glim-wiggle var(--motion-wiggle-dur) ease-in-out infinite alternate;
   }
+
+  /* The row under the pointer, the focused one and the one being carried hold
+     still: a transformed row is the containing block of a menu opened from it.
+     Neighbours start at different points of the beat, so the list never tilts
+     as one. Storm is not restored under reduced motion, since this never ends. */
+  :root:not([data-motion="off"]) .glim-move-mode > :not(:hover, :focus-within, .glim-drag-lift, .glim-drag-settle) {
+    animation: glim-row-wiggle var(--motion-row-wiggle-dur) ease-in-out infinite;
+    transform-origin: 50% 50%;
+  }
+  :root:not([data-motion="off"]) .glim-move-mode > :nth-child(2n) { animation-delay: calc(var(--motion-row-wiggle-dur) * -.5); }
+  :root:not([data-motion="off"]) .glim-move-mode > :nth-child(3n) { animation-delay: calc(var(--motion-row-wiggle-dur) * -.25); }
+  :root:not([data-motion="off"]) .glim-move-mode > :nth-child(5n) { animation-delay: calc(var(--motion-row-wiggle-dur) * -.75); }
 
   .glim-stagger-row {
     /* ease-out rather than --motion-page-ease, which springs; see glim-row-in. */

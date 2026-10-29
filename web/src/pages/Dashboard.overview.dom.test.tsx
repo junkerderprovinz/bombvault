@@ -202,6 +202,19 @@ describe("customize mode", () => {
     expect(stored()).toMatchObject({ order: ALL, widths: {}, heights: {} });
   });
 
+  it("lets the cards wiggle only while they can be moved", async () => {
+    await renderPage();
+    const grid = screen.getByTestId("overview-grid");
+    expect(grid.classList.contains("glim-move-mode")).toBe(false);
+
+    await customize();
+    expect(grid.classList.contains("glim-move-mode")).toBe(true);
+
+    fireEvent.click(screen.getByRole("button", { name: en["dashboard.customizeDone"] }));
+    await act(async () => {});
+    expect(grid.classList.contains("glim-move-mode")).toBe(false);
+  });
+
   it("has one filled action, the way out, and no backup button", async () => {
     await renderPage();
     await customize();
