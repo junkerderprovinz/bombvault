@@ -891,6 +891,36 @@ func (r *Repo) DeleteNamedRepoIfUnused(id string) (NamedRepoUse, error) {
 	return use, nil
 }
 
+// DeleteUnusedDirectRepo deletes a direct repository that no entry and no
+// default backs up to, and drops it from the entries' former homes, since
+// nothing can read it once its row is gone. While something still uses it,
+// it reports what and deletes nothing.
+func (r *Repo) DeleteUnusedDirectRepo(id string) (NamedRepoUse, error) {
+	var use NamedRepoUse
+	err := r.inTx(func(tx *sql.Tx) error {
+		if err := tx.QueryRow(itemsUsingNamedRepoQ, id, id, id, id).Scan(&use.Items); err != nil {
+			return err
+		}
+		var err error
+		if use.DefaultDomains, err = placementDomainsUsingRepoTx(tx, id); err != nil {
+			return err
+		}
+		slices.Sort(use.DefaultDomains)
+		if use.InUse() {
+			return nil
+		}
+		if _, err := tx.Exec(`DELETE FROM former_homes WHERE repo = ?`, id); err != nil {
+			return err
+		}
+		_, err = tx.Exec(`DELETE FROM offsite_targets WHERE id = ? AND role = ? AND companion_of <> ''`, id, RoleRepo)
+		return err
+	})
+	if err != nil {
+		return use, fmt.Errorf("DeleteUnusedDirectRepo: %w", err)
+	}
+	return use, nil
+}
+
 // repoItemTables are the item tables whose repo column can name a repository,
 // by the domain they belong to.
 var repoItemTables = []struct{ domain, table string }{

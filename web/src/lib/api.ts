@@ -556,6 +556,9 @@ export interface Run {
   snapshotFallback?: string;
   /** When the backup of a deferred run is tried again, null for any other run. */
   retryAt?: number | null;
+  /** How many snapshots an off-site replication copied, null when it is not
+   *  known or for any other run. */
+  copied?: number | null;
 }
 
 /** The one resource a slow backup waited on. share is how busy it was, or
@@ -2948,6 +2951,9 @@ export interface OwnFolderStep {
   /** The new place, no copy of the section, holds every backup already, and a
    *  move that copies them checks it before the switch. */
   verify?: boolean;
+  /** The copy whose direct repository the section's default backs up to, past
+   *  the own folder. The switch makes the own folder the home again. */
+  writesTo?: string;
 }
 
 type OwnFolderAnswer = OkEnvelope & { steps?: OwnFolderStep[] };
@@ -3175,6 +3181,8 @@ export interface NamedRepo {
   directOf?: string;
   /** An import deleted its target, which leaves it a plain repository. */
   companionLost: boolean;
+  /** The sections whose default backs up here, null when unknown. */
+  defaultFor?: PlacementDomain[] | null;
 }
 
 /** restic's --compression mode. "auto" is restic's own default. */
@@ -3187,7 +3195,7 @@ export function listRepos(): Promise<OkEnvelope & { repos?: NamedRepo[] }> {
 
 /** POST /api/repos — create one (the id is minted server-side). */
 export function createRepo(
-  body: Partial<Omit<NamedRepo, "id" | "inUse" | "companionLost">>
+  body: Partial<Omit<NamedRepo, "id" | "inUse" | "companionLost" | "defaultFor">>
 ): Promise<OkEnvelope & { repo?: NamedRepo }> {
   return fetchJSON("/api/repos", { method: "POST", body: JSON.stringify(body) });
 }
@@ -3202,7 +3210,7 @@ export function createRepo(
  *  does, so the caller can name what is still pointed at this repository. */
 export function updateRepo(
   id: string,
-  body: Partial<Omit<NamedRepo, "id" | "inUse" | "companionOf" | "companionLost">>
+  body: Partial<Omit<NamedRepo, "id" | "inUse" | "companionOf" | "companionLost" | "defaultFor">>
 ): Promise<OkEnvelope & { repo?: NamedRepo; items?: number; defaultDomains?: PlacementDomain[] }> {
   return fetchJSON(`/api/repos/${encodeURIComponent(id)}`, {
     method: "PATCH",
@@ -7942,8 +7950,8 @@ export interface StorageLocationSection {
   /** The target's switch for a copy, the repository's for a home in one, the
    *  domain's own for its path. */
   enabled: boolean;
-  /** The own folder of a section without placement that takes no new
-   *  backups: they go to the section's targets directly. */
+  /** An own folder that takes no new backups: they go to the section's
+   *  targets directly, or to the direct repository its default writes to. */
   off?: boolean;
   /** The copy the domain's off-site settings describe. */
   primary?: boolean;

@@ -950,6 +950,7 @@ const sk: Partial<Translations> = {
   "own.lineProtection": "Ochrana, limity šírky pásma a alarm rastu pochádzajú z {name}.",
   "own.lineKeepWider": "Táto kópia uchováva niektoré zálohy dlhšie ako pravidlá uchovávania sekcie {section}. Po prepnutí si {section} ponechá všetko, čo ponechá ktorékoľvek z nich, takže žiadna z týchto záloh sa nestratí.",
   "own.lineSwitchOn": "Vlastný priečinok je vypnutý, takže zálohy idú priamo do tejto kópie. Prepnutie vlastný priečinok znova zapne.",
+  "own.lineHomeAgain": "Teraz idú rovno do {name}. Po prepnutí budú znova najprv vo vlastnom priečinku.",
   "own.copyOver": "Skopírovať už vytvorené zálohy",
   "own.copyOverHint": "Vypnuté: zostanú, kde sú, a neskopírujú sa.",
   "own.blocked": "Vlastný priečinok sa takto presunúť nedá.",
@@ -2834,6 +2835,7 @@ const sk: Partial<Translations> = {
   "activityLog.lineVerifySuccess": "Overenie úspešné: {domain}",
   "activityLog.lineVerifyFailed": "Overenie zlyhalo, {domain}: {error}",
   "activityLog.lineOffsiteSuccess": "Externá replikácia dokončená: {domain} ({duration})",
+  "activityLog.lineOffsiteNothing": "Externá replikácia nenašla nič nové na kopírovanie: {domain}",
   "activityLog.lineOffsiteFailed": "Externá replikácia zlyhala, {domain}: {error}",
   "activityLog.lineDrillSuccess": "Kontrola obnovenia úspešná: {domain}",
   "activityLog.lineDrillFailed": "Kontrola obnovenia zlyhala, {domain}: {error}",
@@ -3238,6 +3240,7 @@ const sk: Partial<Translations> = {
   "repos.companionLost": "vedľa vymazaného cieľa",
   "repos.mirroredLocked": "Prevzaté od {target}. Zmeň tam.",
   "repos.removeWithTarget": "Patrí k cieľu {target}. Ak chceš tento repozitár odstrániť, odstráň cieľ.",
+  "repos.directIdle": "Sem sa už nič nezálohuje. Po odstránení zálohy, ktoré tam sú, zostanú.",
   "repos.offPremises": "Mimo objektu",
   "repos.offPremisesHint": "Počíta sa ako samostatná lokalita pre lokality a 3-2-1 na kartách. Kópie tým nie sú dotknuté. Rest-server v tej istej budove by mal mať toto vypnuté.",
 

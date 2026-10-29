@@ -12,7 +12,7 @@ import { createRepo, deleteRepo, listOffsiteTargets, listRepos, updateRepo, type
 import { useT } from "../../lib/i18n";
 import { reposChanged } from "../../lib/useNamedRepos";
 import { placementErrorText } from "../../lib/placementCodes";
-import { repoDisplayName } from "../../lib/directRepo";
+import { idleDirect, repoDisplayName } from "../../lib/directRepo";
 import { offsiteTargetLabel } from "../../lib/useOffsiteTargets";
 
 // ReposCard — where the named repositories of #204 are written down.
@@ -231,6 +231,7 @@ export function ReposCard({ hueIndex }: { hueIndex?: number }) {
                     </span>
                     {/* On a phone the address wraps: cut to the column, the part
                         that tells two buckets apart is the part that goes. */}
+                    {idleDirect(r) && <span className="block text-carbon-textSub">{t("repos.directIdle")}</span>}
                     <span className="text-carbon-textSub font-mono truncate max-md:whitespace-normal max-md:wrap-anywhere" dir="ltr">
                       {r.repo}
                     </span>
@@ -283,15 +284,16 @@ export function ReposCard({ hueIndex }: { hueIndex?: number }) {
                     why), and the bubble says so rather than leaving a greyed
                     field to puzzle over. */}
                 {r.inUse !== 0 && r.companionOf === "" && <InfoBubble tip={t("repos.locationLocked")} />}
-                {/* A direct repository goes with its target and writes where the
-                    target decides, so the button's hint says where to go instead. */}
+                {/* A direct repository in use goes with its target and writes where
+                    the target decides, so the button's hint says where to go instead.
+                    One that takes no backups can go by itself. */}
                 <Button
                   label={t("offsite.targets.remove")}
                   labelKey="offsite.targets.remove"
                   tone="neutral"
                   onClick={() => void remove(r)}
-                  disabled={r.inUse !== 0 || r.companionOf !== ""}
-                  hint={r.companionOf !== "" ? t("repos.removeWithTarget").replace("{target}", targetOf(r)) : undefined}
+                  disabled={r.inUse !== 0 || (r.companionOf !== "" && !idleDirect(r))}
+                  hint={r.companionOf !== "" && !idleDirect(r) ? t("repos.removeWithTarget").replace("{target}", targetOf(r)) : undefined}
                 />
               </SettingRow>
             ))}

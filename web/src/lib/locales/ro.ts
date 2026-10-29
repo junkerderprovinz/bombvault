@@ -737,6 +737,7 @@ const ro: Partial<Translations> = {
   "own.lineProtection": "Protecția, limitele de lățime de bandă și alarma de creștere vin de la {name}.",
   "own.lineKeepWider": "Acea copie păstrează unele copii de rezervă mai mult decât regulile de retenție ale {section}. De la schimbare, {section} păstrează tot ce păstrează oricare dintre ele, așa că nu se pierde niciuna dintre acele copii.",
   "own.lineSwitchOn": "Dosarul propriu este oprit, așa că copiile de rezervă merg direct în acea copie. Schimbarea pornește din nou dosarul propriu.",
+  "own.lineHomeAgain": "Acum merg direct în {name}. După schimbare ajung din nou întâi în dosarul propriu.",
   "own.copyOver": "Copiază copiile de rezervă deja făcute",
   "own.copyOverHint": "Dezactivat: rămân unde sunt și nu sunt copiate.",
   "own.blocked": "Dosarul propriu nu poate fi mutat așa.",
@@ -2642,6 +2643,7 @@ const ro: Partial<Translations> = {
   "activityLog.jobPull": "preluare din surse",
   "activityLog.jobReplica": "replică ZFS",
   "activityLog.lineOffsiteSuccess": "Replicarea externă finalizată: {domain} ({duration})",
+  "activityLog.lineOffsiteNothing": "Replicarea externă nu a găsit nimic nou de copiat: {domain}",
   "activityLog.lineOffsiteFailed": "Replicarea externă a eșuat, {domain}: {error}",
   "activityLog.lineDrillSuccess": "Verificarea restaurării a reușit: {domain}",
   "activityLog.lineDrillFailed": "Verificarea restaurării a eșuat, {domain}: {error}",
@@ -3229,6 +3231,7 @@ const ro: Partial<Translations> = {
   "repos.companionLost": "lângă o destinație ștearsă",
   "repos.mirroredLocked": "Preluat de la {target}. Schimbă-l acolo.",
   "repos.removeWithTarget": "Merge împreună cu {target}. Ca să elimini acest depozit, elimină destinația.",
+  "repos.directIdle": "Nu se mai salvează nimic aici. La eliminare, copiile de rezervă de acolo rămân.",
   "repos.offPremises": "În afara sediului",
   "repos.offPremisesHint": "Se numără drept sit propriu pentru site-uri și regula 3-2-1 de pe carduri. Copiile nu sunt afectate. Un rest-server în aceeași clădire ar trebui să aibă asta dezactivat.",
 

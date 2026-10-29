@@ -738,6 +738,7 @@ const cs: Partial<Translations> = {
   "own.lineProtection": "Ochrana, limity šířky pásma a alarm růstu pocházejí z {name}.",
   "own.lineKeepWider": "Tato kopie uchovává některé zálohy déle než pravidla uchovávání sekce {section}. Po přepnutí si {section} ponechá vše, co ponechá kterékoli z nich, takže žádná z těchto záloh se neztratí.",
   "own.lineSwitchOn": "Vlastní složka je vypnutá, takže zálohy jdou rovnou do této kopie. Přepnutí vlastní složku znovu zapne.",
+  "own.lineHomeAgain": "Teď jdou místo toho rovnou do {name}. Po přepnutí budou zase nejdřív ve vlastní složce.",
   "own.copyOver": "Zkopírovat už vytvořené zálohy",
   "own.copyOverHint": "Vypnuto: zůstanou, kde jsou, a nezkopírují se.",
   "own.blocked": "Vlastní složku takto přesunout nejde.",
@@ -2639,6 +2640,7 @@ const cs: Partial<Translations> = {
   "activityLog.jobPull": "stahování ze zdrojů",
   "activityLog.jobReplica": "replika ZFS",
   "activityLog.lineOffsiteSuccess": "Replikace mimo lokalitu dokončena: {domain} ({duration})",
+  "activityLog.lineOffsiteNothing": "Replikace mimo lokalitu nenašla nic nového ke kopírování: {domain}",
   "activityLog.lineOffsiteFailed": "Replikace mimo lokalitu selhala, {domain}: {error}",
   "activityLog.lineDrillSuccess": "Kontrola obnovy prošla: {domain}",
   "activityLog.lineDrillFailed": "Kontrola obnovy selhala, {domain}: {error}",
@@ -3226,6 +3228,7 @@ const cs: Partial<Translations> = {
   "repos.companionLost": "vedle smazaného cíle",
   "repos.mirroredLocked": "Převzato od {target}. Změň tam.",
   "repos.removeWithTarget": "Patří k cíli {target}. Chceš-li repozitář odstranit, odstraň ten cíl.",
+  "repos.directIdle": "Sem už se nic nezálohuje. Po odebrání zálohy, které tam jsou, zůstanou.",
   "repos.offPremises": "Mimo objekt",
   "repos.offPremisesHint": "Počítá se jako vlastní lokalita pro lokality a 3-2-1 na kartách. Kopie tím nejsou dotčeny. Rest-server ve stejné budově by měl mít tohle vypnuté.",
 

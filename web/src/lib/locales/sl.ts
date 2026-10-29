@@ -950,6 +950,7 @@ const sl: Partial<Translations> = {
   "own.lineProtection": "Zaščita, omejitve pasovne širine in alarm rasti pridejo iz {name}.",
   "own.lineKeepWider": "Ta kopija nekatere varnostne kopije hrani dlje, kot določajo pravila hrambe razdelka {section}. Od zamenjave {section} obdrži vse, kar obdrži katero koli od teh pravil, zato se nobena od teh kopij ne izgubi.",
   "own.lineSwitchOn": "Lastna mapa je izklopljena, zato varnostne kopije gredo neposredno v to kopijo. Zamenjava lastno mapo spet vklopi.",
+  "own.lineHomeAgain": "Trenutno gredo neposredno v {name}. Po zamenjavi spet najprej pristanejo v lastni mapi.",
   "own.copyOver": "Prekopiraj že narejene varnostne kopije",
   "own.copyOverHint": "Izklopljeno: ostanejo, kjer so, in se ne kopirajo.",
   "own.blocked": "Lastne mape ni mogoče premakniti tako.",
@@ -2818,6 +2819,7 @@ const sl: Partial<Translations> = {
   "activityLog.lineVerifySuccess": "Preverjanje uspešno: {domain}",
   "activityLog.lineVerifyFailed": "Preverjanje ni uspelo, {domain}: {error}",
   "activityLog.lineOffsiteSuccess": "Podvajanje na zunanjo kopijo končano: {domain} ({duration})",
+  "activityLog.lineOffsiteNothing": "Podvajanje na zunanjo kopijo ni našlo ničesar novega za kopiranje: {domain}",
   "activityLog.lineOffsiteFailed": "Podvajanje na zunanjo kopijo ni uspelo, {domain}: {error}",
   "activityLog.lineDrillSuccess": "Preverjanje obnovitve uspešno: {domain}",
   "activityLog.lineDrillFailed": "Preverjanje obnovitve ni uspelo, {domain}: {error}",
@@ -3222,6 +3224,7 @@ const sl: Partial<Translations> = {
   "repos.companionLost": "ob izbrisanem cilju",
   "repos.mirroredLocked": "Prevzeto od {target}. Spremeni tam.",
   "repos.removeWithTarget": "Gre skupaj s ciljem {target}. Za odstranitev tega repozitorija odstrani cilj.",
+  "repos.directIdle": "Sem se nič več ne varnostno kopira. Ob odstranitvi varnostne kopije, ki so tam, ostanejo.",
   "repos.offPremises": "Zunaj objekta",
   "repos.offPremisesHint": "Za lokacije in 3-2-1 na karticah se šteje kot samostojna lokacija. Na kopije to ne vpliva. Rest-server v isti stavbi bi moral imeti to izklopljeno.",
 

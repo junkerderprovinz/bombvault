@@ -950,6 +950,7 @@ const fa: Partial<Translations> = {
   "own.lineProtection": "حفاظت، محدودیت پهنای باند و هشدار رشد از {name} می‌آیند.",
   "own.lineKeepWider": "آن نسخه برخی پشتیبان‌ها را بیشتر از قواعد نگه‌داری {section} نگه می‌دارد. از زمان جابه‌جایی، {section} هر چیزی را که هر یک از این دو قاعده نگه می‌دارد نگه می‌دارد، پس هیچ‌کدام از آن پشتیبان‌ها از بین نمی‌رود.",
   "own.lineSwitchOn": "پوشه‌ی خود خاموش است، پس پشتیبان‌ها مستقیم به آن نسخه می‌روند. جابه‌جایی پوشه‌ی خود را دوباره روشن می‌کند.",
+  "own.lineHomeAgain": "در حال حاضر به‌جای آن مستقیم به {name} می‌روند. پس از جابه‌جایی دوباره اول به پوشه‌ی خود می‌رسند.",
   "own.copyOver": "کپی پشتیبان‌هایی که از قبل گرفته شده‌اند",
   "own.copyOverHint": "خاموش: همان‌جا می‌مانند و کپی نمی‌شوند.",
   "own.blocked": "پوشه‌ی خود را نمی‌توان این‌طور جابه‌جا کرد.",
@@ -2834,6 +2835,7 @@ const fa: Partial<Translations> = {
   "activityLog.lineVerifySuccess": "تأیید موفق بود: {domain}",
   "activityLog.lineVerifyFailed": "تأیید ناموفق بود، {domain}: {error}",
   "activityLog.lineOffsiteSuccess": "همانندسازی خارج از محل انجام شد: {domain} ({duration})",
+  "activityLog.lineOffsiteNothing": "همانندسازی خارج از محل چیز تازه‌ای برای کپی پیدا نکرد: {domain}",
   "activityLog.lineOffsiteFailed": "همانندسازی خارج از محل ناموفق بود، {domain}: {error}",
   "activityLog.lineDrillSuccess": "بررسی بازیابی موفق بود: {domain}",
   "activityLog.lineDrillFailed": "بررسی بازیابی ناموفق بود، {domain}: {error}",
@@ -3238,6 +3240,7 @@ const fa: Partial<Translations> = {
   "repos.companionLost": "کنار مقصدی حذف‌شده",
   "repos.mirroredLocked": "از {target} گرفته شده. همان‌جا تغییرش بده.",
   "repos.removeWithTarget": "همراه {target} است. برای حذف این مخزن، آن مقصد را حذف کن.",
+  "repos.directIdle": "دیگر هیچ چیزی اینجا پشتیبان‌گیری نمی‌شود. با حذف آن، پشتیبان‌های موجود سر جایشان می‌مانند.",
   "repos.offPremises": "خارج از ساختمان",
   "repos.offPremisesHint": "برای محل‌ها و قاعدهٔ ۳-۲-۱ روی کارت‌ها، به‌عنوان محل جداگانه‌ای شمرده می‌شود. روی نسخه‌ها تأثیری ندارد. یک rest-server در همان ساختمان باید این گزینه خاموش باشد.",
 

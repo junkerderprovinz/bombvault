@@ -983,20 +983,39 @@ func TestDeletingATargetWhoseDirectRepositoryIsUsedIsRefused(t *testing.T) {
 	}
 }
 
-func TestDeletingADirectRepositoryOnTheRepositoriesCardIsRefused(t *testing.T) {
+func TestADirectRepositoryInUseIsNotDeletedOnTheRepositoriesCard(t *testing.T) {
 	f := newPlacementFixture(t)
 	target := f.target("containers", "B2", "b2:bkt:containers")
 	d := f.direct(target)
+	f.setDefault("containers", d.ID, store.SkipAll)
 	res := f.do("DELETE", "/api/repos/"+d.ID, nil)
-	if res["ok"] != false || res["code"] != "direct-repo" {
-		t.Fatalf("deleting a direct repository = %v", res)
-	}
-	named, _ := res["target"].(map[string]any)
-	if named["id"] != target.ID || named["name"] != placementTargetName(target) {
-		t.Errorf("the refusal does not name the target: %v", res["target"])
+	if res["ok"] != false || res["code"] != "repo-in-use" {
+		t.Fatalf("deleting a direct repository the default backs up to = %v", res)
 	}
 	if _, err := f.st.GetNamedRepo(d.ID); err != nil {
 		t.Fatalf("a refused delete must leave the row: %v", err)
+	}
+}
+
+func TestADirectRepositoryNothingBacksUpToIsDeletedOnTheRepositoriesCard(t *testing.T) {
+	f := newPlacementFixture(t)
+	target := f.target("containers", "B2", "b2:bkt:containers")
+	d := f.direct(target)
+	web := f.container("web", "")
+	if _, err := f.db.Exec(`INSERT INTO former_homes (domain, item_id, repo, left_at) VALUES ('containers', ?, ?, 1)`, web.ID, d.ID); err != nil {
+		t.Fatal(err)
+	}
+	if res := f.do("DELETE", "/api/repos/"+d.ID, nil); res["ok"] != true {
+		t.Fatalf("deleting an unused direct repository = %v", res)
+	}
+	if _, err := f.st.GetNamedRepo(d.ID); !errors.Is(err, sql.ErrNoRows) {
+		t.Fatalf("the unused direct repository is still there: %v", err)
+	}
+	if former, _ := f.st.FormerHomes("containers", web.ID); len(former) != 0 {
+		t.Fatalf("web still lists %v among its former homes", former)
+	}
+	if _, ok, _ := f.st.GetOffsiteTarget(target.ID); !ok {
+		t.Fatal("deleting the direct repository took its target along")
 	}
 }
 
@@ -1834,5 +1853,22 @@ func TestAnImportedUnnamedDirectRepositoryWithoutItsTargetIsNamedByItsLocation(t
 	}
 	if got, err := f.st.GetNamedRepo(views[0].ID); err != nil || !got.CompanionLost || got.Name != "b2:bkt:gone-direct" {
 		t.Fatalf("row = %+v, %v; want a plain repository named by its location", got, err)
+	}
+}
+
+func TestTheRepositoriesCardHearsWhichDefaultBacksUpToARepository(t *testing.T) {
+	f := newPlacementFixture(t)
+	used := f.direct(f.target("containers", "B2", "b2:bkt:containers"))
+	idle := f.direct(f.target("files", "B2", "b2:bkt:files"))
+	f.setDefault("containers", used.ID, store.SkipAll)
+
+	res := f.do("GET", "/api/repos", nil)
+	got := map[string]any{}
+	for _, r := range res["repos"].([]any) {
+		row := r.(map[string]any)
+		got[row["id"].(string)] = row["defaultFor"]
+	}
+	if fmt.Sprint(got[used.ID]) != "[containers]" || fmt.Sprint(got[idle.ID]) != "[]" {
+		t.Fatalf("defaultFor = %v, want containers for the used one and none for the idle one", got)
 	}
 }

@@ -950,6 +950,7 @@ const bg: Partial<Translations> = {
   "own.lineProtection": "Защитата, ограниченията на трафика и алармата за растеж идват от {name}.",
   "own.lineKeepWider": "Това копие пази някои архиви по-дълго от правилата за задържане на {section}. След смяната {section} пази всичко, което пази някое от двете правила, така че нито един от тези архиви не се губи.",
   "own.lineSwitchOn": "Собствената папка е изключена, затова архивите отиват направо в това копие. Смяната отново включва собствената папка.",
+  "own.lineHomeAgain": "В момента те отиват направо в {name}. След смяната отново попадат първо в собствената папка.",
   "own.copyOver": "Копирай вече направените архиви",
   "own.copyOverHint": "Изключено: остават където са и не се копират.",
   "own.blocked": "Собствената папка не може да се премести така.",
@@ -2834,6 +2835,7 @@ const bg: Partial<Translations> = {
   "activityLog.lineVerifySuccess": "Проверката премина успешно — {domain}",
   "activityLog.lineVerifyFailed": "Проверката е неуспешна — {domain}: {error}",
   "activityLog.lineOffsiteSuccess": "Репликацията извън обекта завърши — {domain} ({duration})",
+  "activityLog.lineOffsiteNothing": "Репликацията извън обекта не намери нищо ново за копиране: {domain}",
   "activityLog.lineOffsiteFailed": "Репликацията извън обекта е неуспешна — {domain}: {error}",
   "activityLog.lineDrillSuccess": "Проверката за възстановяване премина успешно — {domain}",
   "activityLog.lineDrillFailed": "Проверката за възстановяване е неуспешна — {domain}: {error}",
@@ -3238,6 +3240,7 @@ const bg: Partial<Translations> = {
   "repos.companionLost": "до изтрита дестинация",
   "repos.mirroredLocked": "Взето от {target}. Промени го там.",
   "repos.removeWithTarget": "Върви заедно с {target}. За да премахнеш това хранилище, премахни дестинацията.",
+  "repos.directIdle": "Тук вече не се архивира нищо. При премахване архивите в него остават.",
   "repos.offPremises": "Извън сградата",
   "repos.offPremisesHint": "Смята се за отделен обект за целите на обектите и 3-2-1 в картите. Копията не се засягат. rest-server в същата сграда трябва да е с изключена тази настройка.",
 

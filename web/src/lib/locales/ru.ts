@@ -734,6 +734,7 @@ const ru: Partial<Translations> = {
   "own.lineProtection": "Защита, ограничения скорости и сигнал о росте берутся из {name}.",
   "own.lineKeepWider": "Эта копия хранит некоторые резервные копии дольше, чем правила хранения раздела {section}. После переключения {section} хранит всё, что хранит любое из этих правил, поэтому ни одна из этих копий не пропадёт.",
   "own.lineSwitchOn": "Собственная папка выключена, поэтому резервные копии идут прямо в эту копию. Переключение снова включает собственную папку.",
+  "own.lineHomeAgain": "Сейчас они идут прямо в {name}. После переключения они снова сначала попадают в собственную папку.",
   "own.copyOver": "Скопировать уже сделанные резервные копии",
   "own.copyOverHint": "Выключено: они остаются на месте и не копируются.",
   "own.blocked": "Собственную папку так перенести нельзя.",
@@ -2638,6 +2639,7 @@ const ru: Partial<Translations> = {
   "activityLog.jobPull": "забор из источников",
   "activityLog.jobReplica": "реплика ZFS",
   "activityLog.lineOffsiteSuccess": "Внешняя репликация завершена — {domain} ({duration})",
+  "activityLog.lineOffsiteNothing": "Внешняя репликация не нашла ничего нового для копирования: {domain}",
   "activityLog.lineOffsiteFailed": "Внешняя репликация не удалась — {domain}: {error}",
   "activityLog.lineDrillSuccess": "Проверка восстановления пройдена — {domain}",
   "activityLog.lineDrillFailed": "Проверка восстановления не пройдена — {domain}: {error}",
@@ -3225,6 +3227,7 @@ const ru: Partial<Translations> = {
   "repos.companionLost": "рядом с удалённым местом назначения",
   "repos.mirroredLocked": "Перенято от {target}. Измените там.",
   "repos.removeWithTarget": "Идёт вместе с местом назначения {target}. Чтобы убрать этот репозиторий, уберите место назначения.",
+  "repos.directIdle": "Сюда больше ничего не сохраняется. При удалении резервные копии там остаются.",
   "repos.offPremises": "Вне помещения",
   "repos.offPremisesHint": "Считается отдельным объектом для подсчёта объектов и правила 3-2-1 на карточках. На копии это не влияет. На rest-server в том же здании это следует отключить.",
 

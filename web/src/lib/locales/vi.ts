@@ -735,6 +735,7 @@ const vi: Partial<Translations> = {
   "own.lineProtection": "Bảo vệ, giới hạn băng thông và cảnh báo tăng trưởng lấy từ {name}.",
   "own.lineKeepWider": "Bản sao đó giữ một số bản sao lưu lâu hơn quy tắc lưu giữ của {section}. Từ lúc chuyển, {section} giữ mọi thứ mà một trong hai quy tắc giữ, nên không bản sao lưu nào trong số đó bị mất.",
   "own.lineSwitchOn": "Thư mục riêng đang tắt, nên các bản sao lưu đi thẳng vào bản sao đó. Việc chuyển sẽ bật lại thư mục riêng.",
+  "own.lineHomeAgain": "Hiện các bản sao lưu đi thẳng vào {name}. Sau khi chuyển, chúng lại vào thư mục riêng trước.",
   "own.copyOver": "Sao chép các bản sao lưu đã tạo",
   "own.copyOverHint": "Tắt: chúng ở nguyên chỗ cũ và không được sao chép.",
   "own.blocked": "Không thể chuyển thư mục riêng theo cách này.",
@@ -2632,6 +2633,7 @@ const vi: Partial<Translations> = {
   "activityLog.jobPull": "kéo về từ các nguồn",
   "activityLog.jobReplica": "bản sao ZFS",
   "activityLog.lineOffsiteSuccess": "Sao chép off-site hoàn tất: {domain} ({duration})",
+  "activityLog.lineOffsiteNothing": "Sao chép off-site không thấy gì mới để chép: {domain}",
   "activityLog.lineOffsiteFailed": "Sao chép off-site thất bại, {domain}: {error}",
   "activityLog.lineDrillSuccess": "Kiểm tra khôi phục đạt: {domain}",
   "activityLog.lineDrillFailed": "Kiểm tra khôi phục thất bại, {domain}: {error}",
@@ -3219,6 +3221,7 @@ const vi: Partial<Translations> = {
   "repos.companionLost": "cạnh một đích đã bị xóa",
   "repos.mirroredLocked": "Được tiếp quản từ {target}. Đổi nó ở đó.",
   "repos.removeWithTarget": "Đi cùng với {target}. Để gỡ kho này, hãy gỡ đích đó.",
+  "repos.directIdle": "Không còn gì được sao lưu vào đây nữa. Khi gỡ bỏ, các bản sao lưu ở đó vẫn được giữ.",
   "repos.offPremises": "Ngoài cơ sở",
   "repos.offPremisesHint": "Được tính là một địa điểm riêng cho số địa điểm và quy tắc 3-2-1 trên thẻ. Không ảnh hưởng đến các bản sao. Một rest-server trong cùng tòa nhà nên tắt tùy chọn này.",
 

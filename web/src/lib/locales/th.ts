@@ -740,6 +740,7 @@ const th: Partial<Translations> = {
   "own.lineProtection": "การป้องกัน ขีดจำกัดแบนด์วิดท์ และการแจ้งเตือนการเติบโตมาจาก {name}",
   "own.lineKeepWider": "สำเนานั้นเก็บข้อมูลสำรองบางรายการไว้นานกว่ากฎการเก็บรักษาของ {section} หลังการสลับ {section} จะเก็บทุกอย่างที่กฎข้อใดข้อหนึ่งเก็บไว้ ข้อมูลสำรองเหล่านั้นจึงไม่หายไปเลย",
   "own.lineSwitchOn": "โฟลเดอร์ของตัวเองปิดอยู่ ข้อมูลสำรองจึงส่งตรงไปยังสำเนานั้น การสลับจะเปิดโฟลเดอร์ของตัวเองอีกครั้ง",
+  "own.lineHomeAgain": "ตอนนี้ข้อมูลสำรองส่งตรงไปยัง {name} หลังการสลับ ข้อมูลสำรองจะไปที่โฟลเดอร์ของตัวเองก่อนอีกครั้ง",
   "own.copyOver": "คัดลอกข้อมูลสำรองที่ทำไว้แล้ว",
   "own.copyOverHint": "ปิด: ข้อมูลสำรองจะอยู่ที่เดิมและไม่ถูกคัดลอก",
   "own.blocked": "ย้ายโฟลเดอร์ของตัวเองแบบนี้ไม่ได้",
@@ -2642,6 +2643,7 @@ const th: Partial<Translations> = {
   "activityLog.jobPull": "การดึงจากต้นทาง",
   "activityLog.jobReplica": "สำเนา ZFS",
   "activityLog.lineOffsiteSuccess": "การจำลองข้อมูลนอกสถานที่เสร็จสิ้น {domain} ({duration})",
+  "activityLog.lineOffsiteNothing": "การจำลองข้อมูลนอกสถานที่ไม่พบสิ่งใหม่ที่ต้องคัดลอก {domain}",
   "activityLog.lineOffsiteFailed": "การจำลองข้อมูลนอกสถานที่ล้มเหลว {domain}: {error}",
   "activityLog.lineDrillSuccess": "การตรวจสอบการกู้คืนผ่าน {domain}",
   "activityLog.lineDrillFailed": "การตรวจสอบการกู้คืนล้มเหลว {domain}: {error}",
@@ -3229,6 +3231,7 @@ const th: Partial<Translations> = {
   "repos.companionLost": "อยู่ข้างปลายทางที่ถูกลบ",
   "repos.mirroredLocked": "รับช่วงมาจาก {target} เปลี่ยนที่นั่น",
   "repos.removeWithTarget": "ไปด้วยกันกับ {target} หากต้องการลบที่เก็บข้อมูลนี้ ให้ลบปลายทางนั้น",
+  "repos.directIdle": "ไม่มีสิ่งใดสำรองข้อมูลมาที่นี่อีกแล้ว การนำออกจะยังเก็บข้อมูลสำรองที่อยู่ในนั้นไว้",
   "repos.offPremises": "นอกสถานที่",
   "repos.offPremisesHint": "นับเป็นไซต์ของตัวเองสำหรับจำนวนไซต์และ 3-2-1 บนการ์ด ไม่มีผลต่อสำเนา rest-server ในอาคารเดียวกันควรปิดตัวเลือกนี้",
 

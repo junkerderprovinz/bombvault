@@ -13,6 +13,7 @@ import {
   rcloneRemote,
   retentionKeep,
   sectionDomains,
+  usedByText,
 } from "./storageLocations";
 
 const KEEP = { keepLast: 0, keepDaily: 7, keepWeekly: 4, keepMonthly: 6, keepYearly: 1 };
@@ -176,6 +177,13 @@ describe("the sections of a location", () => {
     const copy = section({ targetId: "t1", own: ["retention"] });
     const home = section({ use: "home", targetId: "t1", repoId: "r1", own: ["retention"] });
     expect(deviating(location({ sections: [copy, home] }), "retention")).toEqual([copy]);
+  });
+
+  it("names a section off whose own folder there takes no new backups", () => {
+    const loc = location({
+      sections: [section({ domain: "containers", use: "home", off: true }), section({ domain: "vms", use: "home", off: true }), section({ domain: "vms" })],
+    });
+    expect(usedByText(t, "en", loc)).toBe("Used by Containers (off) and VMs");
   });
 });
 

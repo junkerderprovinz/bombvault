@@ -950,6 +950,7 @@ const lt: Partial<Translations> = {
   "own.lineProtection": "Apsauga, pralaidumo ribos ir augimo signalas ateina iš {name}.",
   "own.lineKeepWider": "Ta kopija kai kurias atsargines kopijas laiko ilgiau nei {section} saugojimo taisyklės. Nuo perjungimo {section} laiko viską, ką laiko bet kuri iš jų, todėl nė viena iš tų atsarginių kopijų nedingsta.",
   "own.lineSwitchOn": "Savas aplankas išjungtas, todėl atsarginės kopijos keliauja tiesiai į tą kopiją. Perjungimas savą aplanką vėl įjungia.",
+  "own.lineHomeAgain": "Dabar jos keliauja tiesiai į {name}. Po perjungimo jos vėl pirmiausia pateks į savą aplanką.",
   "own.copyOver": "Kopijuoti jau padarytas atsargines kopijas",
   "own.copyOverHint": "Išjungta: jos lieka ten, kur yra, ir nekopijuojamos.",
   "own.blocked": "Savo aplanko taip perkelti negalima.",
@@ -2834,6 +2835,7 @@ const lt: Partial<Translations> = {
   "activityLog.lineVerifySuccess": "Patikra sėkminga: {domain}",
   "activityLog.lineVerifyFailed": "Patikra nepavyko, {domain}: {error}",
   "activityLog.lineOffsiteSuccess": "Nuotolinis replikavimas baigtas: {domain} ({duration})",
+  "activityLog.lineOffsiteNothing": "Nuotolinis replikavimas nerado nieko naujo kopijuoti: {domain}",
   "activityLog.lineOffsiteFailed": "Nuotolinis replikavimas nepavyko, {domain}: {error}",
   "activityLog.lineDrillSuccess": "Atkūrimo patikra sėkminga: {domain}",
   "activityLog.lineDrillFailed": "Atkūrimo patikra nepavyko, {domain}: {error}",
@@ -3238,6 +3240,7 @@ const lt: Partial<Translations> = {
   "repos.companionLost": "šalia ištrintos paskirties vietos",
   "repos.mirroredLocked": "Perimta iš paskirties vietos {target}. Pakeisk ten.",
   "repos.removeWithTarget": "Eina kartu su paskirties vieta {target}. Kad pašalintum šią saugyklą, pašalink paskirties vietą.",
+  "repos.directIdle": "Čia nebedaromos jokios atsarginės kopijos. Pašalinus esamos kopijos lieka.",
   "repos.offPremises": "Už pastato ribų",
   "repos.offPremisesHint": "Kortelėse skaičiuojant vietas ir 3-2-1 taisyklę, laikoma atskira vieta. Kopijoms tai įtakos neturi. To paties pastato rest-server turėtų turėti šitai išjungtą.",
 

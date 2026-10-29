@@ -740,6 +740,7 @@ const es: Partial<Translations> = {
   "own.lineProtection": "La protección, los límites de ancho de banda y la alarma de crecimiento vienen de {name}.",
   "own.lineKeepWider": "Esa copia guarda algunas copias de seguridad más tiempo que las reglas de retención de {section}. Desde el cambio, {section} guarda todo lo que guarde cualquiera de las dos, así que no se pierde ninguna de esas copias.",
   "own.lineSwitchOn": "La carpeta propia está desactivada, así que las copias de seguridad van directamente a esa copia. El cambio vuelve a activar la carpeta propia.",
+  "own.lineHomeAgain": "Ahora mismo van directamente a {name}. Tras el cambio vuelven a llegar primero a la carpeta propia.",
   "own.copyOver": "Copiar las copias de seguridad ya hechas",
   "own.copyOverHint": "Desactivado: se quedan donde están y no se copian.",
   "own.blocked": "La carpeta propia no se puede mover así.",
@@ -2639,6 +2640,7 @@ const es: Partial<Translations> = {
   "activityLog.jobPull": "recogida de orígenes",
   "activityLog.jobReplica": "réplica ZFS",
   "activityLog.lineOffsiteSuccess": "Replicación externa completada: {domain} ({duration})",
+  "activityLog.lineOffsiteNothing": "La replicación externa no encontró nada nuevo que copiar: {domain}",
   "activityLog.lineOffsiteFailed": "Replicación externa fallida, {domain}: {error}",
   "activityLog.lineDrillSuccess": "Comprobación de restauración superada: {domain}",
   "activityLog.lineDrillFailed": "Comprobación de restauración fallida, {domain}: {error}",
@@ -3226,6 +3228,7 @@ const es: Partial<Translations> = {
   "repos.companionLost": "junto a un destino eliminado",
   "repos.mirroredLocked": "Heredado de {target}. Cámbialo allí.",
   "repos.removeWithTarget": "Va con {target}. Para quitar este repositorio, quita ese destino.",
+  "repos.directIdle": "Ya no se hace ninguna copia de seguridad aquí. Al quitarlo, las copias que hay se quedan ahí.",
   "repos.offPremises": "Fuera del local",
   "repos.offPremisesHint": "Cuenta como una sede propia para las sedes y el 3-2-1 en las tarjetas. No afecta a las copias. Un rest-server en el mismo edificio debería tener esto desactivado.",
 

@@ -735,6 +735,7 @@ const ko: Partial<Translations> = {
   "own.lineProtection": "보호, 대역폭 제한, 증가 경보는 {name}의 설정을 따릅니다.",
   "own.lineKeepWider": "그 복사본에는 {section}의 보존 규칙보다 오래 남겨 둔 백업이 있습니다. 전환 후에는 {section}이(가) 두 규칙 중 하나라도 남기는 것을 모두 남기므로, 그 백업은 하나도 사라지지 않습니다.",
   "own.lineSwitchOn": "전용 폴더가 꺼져 있어 백업이 그 복사본으로 바로 갑니다. 전환하면 전용 폴더가 다시 켜집니다.",
+  "own.lineHomeAgain": "지금은 대신 {name}(으)로 바로 갑니다. 전환 후에는 다시 전용 폴더에 먼저 저장됩니다.",
   "own.copyOver": "이미 만든 백업 복사",
   "own.copyOverHint": "끔: 지금 위치에 남고 복사되지 않습니다.",
   "own.blocked": "이대로는 전용 폴더를 옮길 수 없습니다.",
@@ -2632,6 +2633,7 @@ const ko: Partial<Translations> = {
   "activityLog.jobPull": "원본에서 가져오기",
   "activityLog.jobReplica": "ZFS 복제본",
   "activityLog.lineOffsiteSuccess": "오프사이트 복제 완료: {domain} ({duration})",
+  "activityLog.lineOffsiteNothing": "오프사이트 복제에서 새로 복사할 항목이 없습니다: {domain}",
   "activityLog.lineOffsiteFailed": "오프사이트 복제 실패, {domain}: {error}",
   "activityLog.lineDrillSuccess": "복원 검사 통과: {domain}",
   "activityLog.lineDrillFailed": "복원 검사 실패, {domain}: {error}",
@@ -3219,6 +3221,7 @@ const ko: Partial<Translations> = {
   "repos.companionLost": "삭제된 대상 옆",
   "repos.mirroredLocked": "{target}에서 넘겨받음. 그곳에서 변경하세요.",
   "repos.removeWithTarget": "{target}과(와) 함께 갑니다. 이 저장소를 없애려면 그 대상을 없애세요.",
+  "repos.directIdle": "이제 여기로 백업되는 항목이 없습니다. 제거해도 그곳의 백업은 남습니다.",
   "repos.offPremises": "부지 밖",
   "repos.offPremisesHint": "카드의 사이트 수와 3-2-1 계산에서 별도의 사이트로 간주됩니다. 사본에는 영향을 주지 않습니다. 같은 건물에 있는 rest-server라면 이 설정을 꺼야 합니다.",
 

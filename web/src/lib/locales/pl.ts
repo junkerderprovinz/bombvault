@@ -734,6 +734,7 @@ const pl: Partial<Translations> = {
   "own.lineProtection": "Ochrona, limity przepustowości i alarm wzrostu pochodzą z {name}.",
   "own.lineKeepWider": "Ta kopia przechowuje niektóre kopie zapasowe dłużej niż reguły przechowywania sekcji {section}. Od przełączenia {section} zachowuje wszystko, co zachowuje którakolwiek z nich, więc żadna z tych kopii nie przepada.",
   "own.lineSwitchOn": "Własny folder jest wyłączony, więc kopie zapasowe trafiają prosto do tej kopii. Przełączenie z powrotem włącza własny folder.",
+  "own.lineHomeAgain": "Teraz trafiają prosto do {name}. Po przełączeniu znów trafiają najpierw do własnego folderu.",
   "own.copyOver": "Skopiuj już wykonane kopie zapasowe",
   "own.copyOverHint": "Wyłączone: zostają tam, gdzie są, i nie są kopiowane.",
   "own.blocked": "Własnego folderu nie da się tak przenieść.",
@@ -2638,6 +2639,7 @@ const pl: Partial<Translations> = {
   "activityLog.jobPull": "pobieranie ze źródeł",
   "activityLog.jobReplica": "replika ZFS",
   "activityLog.lineOffsiteSuccess": "Replikacja poza siedzibą zakończona: {domain} ({duration})",
+  "activityLog.lineOffsiteNothing": "Replikacja poza siedzibą nie znalazła nic nowego do skopiowania: {domain}",
   "activityLog.lineOffsiteFailed": "Replikacja poza siedzibą nie powiodła się, {domain}: {error}",
   "activityLog.lineDrillSuccess": "Test przywracania zaliczony: {domain}",
   "activityLog.lineDrillFailed": "Test przywracania nie powiódł się, {domain}: {error}",
@@ -3225,6 +3227,7 @@ const pl: Partial<Translations> = {
   "repos.companionLost": "obok usuniętego miejsca docelowego",
   "repos.mirroredLocked": "Przejęte z miejsca docelowego {target}. Zmień tam.",
   "repos.removeWithTarget": "Idzie razem z miejscem docelowym {target}. Aby usunąć to repozytorium, usuń to miejsce docelowe.",
+  "repos.directIdle": "Nic już tu nie trafia z kopii zapasowych. Po usunięciu kopie, które tam są, zostają.",
   "repos.offPremises": "Poza obiektem",
   "repos.offPremisesHint": "Liczy się jako osobna lokalizacja na potrzeby lokalizacji i 3-2-1 na kartach. Nie wpływa to na kopie. Rest-server w tym samym budynku powinien mieć to wyłączone.",
 

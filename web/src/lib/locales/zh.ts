@@ -735,6 +735,7 @@ const zh: Partial<Translations> = {
   "own.lineProtection": "保护、带宽限制和增长警报沿用 {name} 的设置。",
   "own.lineKeepWider": "该副本中有些备份的保留时间比 {section} 的保留规则更长。切换后，{section} 会保留任一规则保留的全部备份，因此这些备份都不会丢失。",
   "own.lineSwitchOn": "专属文件夹已关闭，所以备份直接写入该副本。切换会重新开启专属文件夹。",
+  "own.lineHomeAgain": "目前它们直接写入 {name}。切换后，它们会重新先写入专属文件夹。",
   "own.copyOver": "复制已有的备份",
   "own.copyOverHint": "关闭：它们留在原处，不会被复制。",
   "own.blocked": "专属文件夹无法这样移动。",
@@ -2632,6 +2633,7 @@ const zh: Partial<Translations> = {
   "activityLog.jobPull": "从来源拉取",
   "activityLog.jobReplica": "ZFS 副本",
   "activityLog.lineOffsiteSuccess": "异地复制完成：{domain}（{duration}）",
+  "activityLog.lineOffsiteNothing": "异地复制没有发现需要复制的新内容：{domain}",
   "activityLog.lineOffsiteFailed": "异地复制失败，{domain}：{error}",
   "activityLog.lineDrillSuccess": "恢复检查通过：{domain}",
   "activityLog.lineDrillFailed": "恢复检查失败，{domain}：{error}",
@@ -3219,6 +3221,7 @@ const zh: Partial<Translations> = {
   "repos.companionLost": "紧邻已删除的目标",
   "repos.mirroredLocked": "从 {target} 接管。请在那里更改。",
   "repos.removeWithTarget": "与 {target} 一同存在。要移除此存储库，请移除该目标。",
+  "repos.directIdle": "已没有任何内容备份到这里。移除后，其中的备份仍会保留。",
   "repos.offPremises": "场外",
   "repos.offPremisesHint": "在卡片上的站点数和3-2-1计算中，算作独立的站点。不影响副本。同一建筑物中的 rest-server 应关闭此项。",
 

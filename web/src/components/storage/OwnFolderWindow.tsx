@@ -82,6 +82,8 @@ function whatHappens(t: T, lang: string, steps: OwnFolderStep[], copyOver: boole
     } else if (!copyOver && step.backups > 0) {
       line += ` ${t("own.lineStay", step.backups).replace("{from}", () => from)}`;
     }
+    const straightTo = step.writesTo;
+    if (straightTo) line += ` ${t("own.lineHomeAgain").replace("{name}", () => straightTo)}`;
     const copies = step.copies ?? [];
     if (copies.length > 0) line += ` ${t("own.lineCopies").replace("{list}", () => formatList(lang, copies))}`;
     lines.push(line);

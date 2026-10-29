@@ -740,6 +740,7 @@ const fr: Partial<Translations> = {
   "own.lineProtection": "La protection, les limites de bande passante et l'alarme de croissance viennent de {name}.",
   "own.lineKeepWider": "Cette copie conserve certaines sauvegardes plus longtemps que les règles de rétention de {section}. À partir du changement, {section} conserve tout ce que l'une ou l'autre conserve, aucune de ces sauvegardes n'est donc perdue.",
   "own.lineSwitchOn": "Le dossier propre est désactivé, les sauvegardes vont donc directement vers cette copie. Le changement réactive le dossier propre.",
+  "own.lineHomeAgain": "Pour le moment, elles vont directement vers {name}. Après le changement, elles arrivent à nouveau en premier dans le dossier propre.",
   "own.copyOver": "Copier les sauvegardes déjà faites",
   "own.copyOverHint": "Désactivé : elles restent où elles sont et ne sont pas copiées.",
   "own.blocked": "Le dossier propre ne peut pas être déplacé ainsi.",
@@ -2641,6 +2642,7 @@ const fr: Partial<Translations> = {
   "activityLog.jobPull": "récupération depuis les sources",
   "activityLog.jobReplica": "réplique ZFS",
   "activityLog.lineOffsiteSuccess": "Réplication hors site terminée : {domain} ({duration})",
+  "activityLog.lineOffsiteNothing": "La réplication hors site n’a rien trouvé de nouveau à copier : {domain}",
   "activityLog.lineOffsiteFailed": "Réplication hors site échouée, {domain} : {error}",
   "activityLog.lineDrillSuccess": "Contrôle de restauration réussi : {domain}",
   "activityLog.lineDrillFailed": "Échec du contrôle de restauration, {domain} : {error}",
@@ -3228,6 +3230,7 @@ const fr: Partial<Translations> = {
   "repos.companionLost": "à côté d'une destination supprimée",
   "repos.mirroredLocked": "Repris de {target}. Modifiez-le là-bas.",
   "repos.removeWithTarget": "Va avec {target}. Pour retirer ce dépôt, retirez cette destination.",
+  "repos.directIdle": "Plus rien n’est sauvegardé ici. Le retirer laisse en place les sauvegardes qui s’y trouvent.",
   "repos.offPremises": "Hors des locaux",
   "repos.offPremisesHint": "Compte comme un site à part entière pour les sites et le 3-2-1 sur les cartes. Les copies ne sont pas affectées. Un rest-server dans le même bâtiment devrait avoir ceci désactivé.",
 

@@ -740,6 +740,7 @@ const tr: Partial<Translations> = {
   "own.lineProtection": "Koruma, bant genişliği sınırları ve büyüme alarmı {name} hedefinden gelir.",
   "own.lineKeepWider": "Bu kopya bazı yedekleri {section} için saklama kurallarından daha uzun tutuyor. Değişimden sonra {section}, iki kuraldan herhangi birinin tuttuğu her şeyi tutar; böylece bu yedeklerin hiçbiri kaybolmaz.",
   "own.lineSwitchOn": "Kendi klasörü kapalı, bu yüzden yedekler doğrudan bu kopyaya gidiyor. Değişim kendi klasörünü yeniden açar.",
+  "own.lineHomeAgain": "Şu anda bunun yerine doğrudan {name} hedefine gidiyorlar. Değişimden sonra yeniden önce kendi klasörüne gelirler.",
   "own.copyOver": "Zaten alınmış yedekleri kopyala",
   "own.copyOverHint": "Kapalı: oldukları yerde kalırlar ve kopyalanmazlar.",
   "own.blocked": "Kendi klasörü bu şekilde taşınamaz.",
@@ -2641,6 +2642,7 @@ const tr: Partial<Translations> = {
   "activityLog.jobPull": "kaynaklardan çekme",
   "activityLog.jobReplica": "ZFS kopyası",
   "activityLog.lineOffsiteSuccess": "Site dışı çoğaltma tamamlandı: {domain} ({duration})",
+  "activityLog.lineOffsiteNothing": "Site dışı çoğaltma kopyalanacak yeni bir şey bulmadı: {domain}",
   "activityLog.lineOffsiteFailed": "Site dışı çoğaltma başarısız, {domain}: {error}",
   "activityLog.lineDrillSuccess": "Geri yükleme denetimi başarılı: {domain}",
   "activityLog.lineDrillFailed": "Geri yükleme denetimi başarısız, {domain}: {error}",
@@ -3228,6 +3230,7 @@ const tr: Partial<Translations> = {
   "repos.companionLost": "silinmiş bir hedefin yanında",
   "repos.mirroredLocked": "{target} kaynağından devralındı. Orada değiştir.",
   "repos.removeWithTarget": "{target} hedefiyle birlikte gider. Bu depoyu kaldırmak için o hedefi kaldır.",
+  "repos.directIdle": "Buraya artık hiçbir şey yedeklenmiyor. Kaldırınca oradaki yedekler kalır.",
   "repos.offPremises": "Bina dışında",
   "repos.offPremisesHint": "Kartlardaki siteler ve 3-2-1 için kendi başına bir site olarak sayılır. Kopyalar etkilenmez. Aynı binadaki bir rest-server'da bu kapalı olmalı.",
 

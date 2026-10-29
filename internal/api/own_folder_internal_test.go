@@ -657,3 +657,87 @@ func TestAnOwnFolderMoveChecksANewPlaceThatHoldsEveryBackupAlready(t *testing.T)
 		t.Fatalf("checks = %v, want the new place checked", f.eng.checks)
 	}
 }
+
+func TestMovingTheOwnFolderOfASectionThatBacksUpStraightToACopySendsNewBackupsThere(t *testing.T) {
+	f := newPlacementFixture(t)
+	vault := f.destination("Vault", vaultRepo)
+	mani := f.target("containers", "Mani", "offsite/mani/containers")
+	direct := f.direct(mani)
+	f.setDefault("containers", direct.ID, store.SkipAll)
+	f.container("web", direct.ID)
+	req := map[string]any{"domains": []string{"containers"}, "location": "destination:" + vault.ID}
+
+	if steps := ownSteps(t, f.do("POST", "/api/storage/own-folders/preview", req)); steps[0].WritesTo != "Mani" {
+		t.Fatalf("step = %+v, want it to say new backups go straight to Mani now", steps[0])
+	}
+	ownSteps(t, f.do("POST", "/api/storage/own-folders", req))
+
+	d, _, err := f.st.PlacementDefaultFor("containers")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if d.Home != "" || skipsTarget(d.Skip, mani.ID) {
+		t.Fatalf("default = %+v, want the own folder as its home and a copy at Mani", d)
+	}
+	settings, err := f.st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	repo, _, err := f.svc.settleHome(context.Background(), settings, store.ItemRef{Domain: "containers", Key: "web"})
+	if err != nil || repo != "" {
+		t.Fatalf("web backs up to %q (%v), want the new own folder", repo, err)
+	}
+}
+
+func TestMovingAnOwnFolderKeepsADefaultOnANamedRepository(t *testing.T) {
+	f := newPlacementFixture(t)
+	vault := f.destination("Vault", vaultRepo)
+	cold := f.namedRepo("Cold", "cold/containers")
+	f.setDefault("containers", cold.ID)
+
+	steps := ownSteps(t, f.do("POST", "/api/storage/own-folders", map[string]any{
+		"domains": []string{"containers"}, "location": "destination:" + vault.ID,
+	}))
+
+	if steps[0].WritesTo != "" {
+		t.Fatalf("step = %+v, want no word about a copy", steps[0])
+	}
+	if d, _, _ := f.st.PlacementDefaultFor("containers"); d.Home != cold.ID {
+		t.Fatalf("default home = %q, want Cold", d.Home)
+	}
+}
+
+// ownFolderOff reads whether the storage pages list a section's own folder as
+// taking no new backups.
+func (f *placementFixture) ownFolderOff(domain string) bool {
+	f.t.Helper()
+	locations, err := f.svc.StorageLocations()
+	if err != nil {
+		f.t.Fatal(err)
+	}
+	for _, l := range locations {
+		for _, s := range l.Sections {
+			if s.Domain == domain && s.Use == useHome && s.RepoID == "" && s.TargetID == "" {
+				return s.Off
+			}
+		}
+	}
+	f.t.Fatalf("no location lists the own folder of %s", domain)
+	return false
+}
+
+func TestAnOwnFolderThatNewBackupsGoPastIsListedAsOff(t *testing.T) {
+	f := newPlacementFixture(t)
+	mani := f.target("containers", "Mani", "offsite/mani/containers")
+	direct := f.direct(mani)
+	f.setDefault("containers", direct.ID, store.SkipAll)
+	f.container("web", direct.ID)
+
+	if !f.ownFolderOff("containers") {
+		t.Fatal("the own folder is listed as in use although every new backup goes straight to Mani")
+	}
+	f.container("db", "")
+	if f.ownFolderOff("containers") {
+		t.Fatal("the own folder is listed as off although db keeps it as its home")
+	}
+}

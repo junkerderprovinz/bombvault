@@ -950,6 +950,7 @@ const sr: Partial<Translations> = {
   "own.lineProtection": "Заштита, ограничења пропусног опсега и аларм раста долазе из {name}.",
   "own.lineKeepWider": "Та копија неке резервне копије чува дуже од правила задржавања одељка {section}. Од замене {section} чува све што чува било које од тих правила, па се ниједна од тих копија не губи.",
   "own.lineSwitchOn": "Сопствена фасцикла је искључена, па резервне копије иду право у ту копију. Замена поново укључује сопствену фасциклу.",
+  "own.lineHomeAgain": "Тренутно иду право у {name}. После замене поново прво стижу у сопствену фасциклу.",
   "own.copyOver": "Копирај већ направљене резервне копије",
   "own.copyOverHint": "Искључено: остају где јесу и не копирају се.",
   "own.blocked": "Сопствена фасцикла не може да се премести овако.",
@@ -2818,6 +2819,7 @@ const sr: Partial<Translations> = {
   "activityLog.lineVerifySuccess": "Провера успешна — {domain}",
   "activityLog.lineVerifyFailed": "Провера није успела — {domain}: {error}",
   "activityLog.lineOffsiteSuccess": "Дуплирање на спољну копију завршено — {domain} ({duration})",
+  "activityLog.lineOffsiteNothing": "Дуплирање на спољну копију није нашло ништа ново за копирање: {domain}",
   "activityLog.lineOffsiteFailed": "Дуплирање на спољну копију није успело — {domain}: {error}",
   "activityLog.lineDrillSuccess": "Провера враћања успешна — {domain}",
   "activityLog.lineDrillFailed": "Провера враћања није успела — {domain}: {error}",
@@ -3222,6 +3224,7 @@ const sr: Partial<Translations> = {
   "repos.companionLost": "поред обрисаног одредишта",
   "repos.mirroredLocked": "Преузето од {target}. Промени тамо.",
   "repos.removeWithTarget": "Иде заједно са одредиштем {target}. Да уклониш овај репозиторијум, уклони одредиште.",
+  "repos.directIdle": "Овде се више ништа не прави резервна копија. Уклањањем резервне копије које су тамо остају.",
   "repos.offPremises": "Ван објекта",
   "repos.offPremisesHint": "Рачуна се као засебна локација за локације и 3-2-1 на картицама. На копије то не утиче. Rest-server у истој згради треба да има ово искључено.",
 

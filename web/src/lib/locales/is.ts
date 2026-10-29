@@ -950,6 +950,7 @@ const is: Partial<Translations> = {
   "own.lineProtection": "Vernd, bandvíddarmörk og vaxtarviðvörun koma frá {name}.",
   "own.lineKeepWider": "Það afrit geymir sum afrit lengur en varðveislureglur {section}. Frá skiptunum geymir {section} allt sem önnur hvor reglan geymir, svo ekkert þessara afrita glatast.",
   "own.lineSwitchOn": "Eigin mappan er óvirk, svo afritin fara beint í það afrit. Skiptin kveikja aftur á eigin möppunni.",
+  "own.lineHomeAgain": "Núna fara þau beint í {name}. Eftir skiptin fara þau aftur fyrst í eigin möppuna.",
   "own.copyOver": "Afrita þau afrit sem þegar eru til",
   "own.copyOverHint": "Af: þau verða þar sem þau eru og eru ekki afrituð.",
   "own.blocked": "Ekki er hægt að færa eigin möppu svona.",
@@ -2834,6 +2835,7 @@ const is: Partial<Translations> = {
   "activityLog.lineVerifySuccess": "Staðfesting tókst: {domain}",
   "activityLog.lineVerifyFailed": "Staðfesting mistókst, {domain}: {error}",
   "activityLog.lineOffsiteSuccess": "Fjarlæg afritun lokið: {domain} ({duration})",
+  "activityLog.lineOffsiteNothing": "Fjarlæg afritun fann ekkert nýtt til að afrita: {domain}",
   "activityLog.lineOffsiteFailed": "Fjarlæg afritun mistókst, {domain}: {error}",
   "activityLog.lineDrillSuccess": "Endurheimtarprófun tókst: {domain}",
   "activityLog.lineDrillFailed": "Endurheimtarprófun mistókst, {domain}: {error}",
@@ -3238,6 +3240,7 @@ const is: Partial<Translations> = {
   "repos.companionLost": "við hlið eydds áfangastaðar",
   "repos.mirroredLocked": "Tekið yfir frá {target}. Breyttu því þar.",
   "repos.removeWithTarget": "Fylgir {target}. Fjarlægðu þann áfangastað til að fjarlægja þessa geymslu.",
+  "repos.directIdle": "Ekkert er lengur afritað hingað. Þegar það er fjarlægt verða afritin sem þar eru eftir.",
   "repos.offPremises": "Utan húss",
   "repos.offPremisesHint": "Telst sem eigin staður fyrir staði og 3-2-1 á spjöldunum. Eintök verða ekki fyrir áhrifum. rest-server í sama húsi ætti að hafa þetta slökkt.",
 

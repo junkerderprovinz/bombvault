@@ -950,6 +950,7 @@ const hi: Partial<Translations> = {
   "own.lineProtection": "सुरक्षा, बैंडविड्थ सीमाएँ और ग्रोथ अलार्म {name} से आते हैं।",
   "own.lineKeepWider": "वह कॉपी कुछ बैकअप {section} के रिटेंशन नियमों से ज़्यादा समय तक रखती है। बदलाव के बाद {section} वह सब रखता है जो दोनों में से कोई भी नियम रखता है, इसलिए उनमें से कोई बैकअप नहीं खोता।",
   "own.lineSwitchOn": "अपना फ़ोल्डर बंद है, इसलिए बैकअप सीधे उस कॉपी में जाते हैं। बदलाव अपना फ़ोल्डर फिर से चालू कर देता है।",
+  "own.lineHomeAgain": "अभी वे सीधे {name} में जाते हैं। बदलाव के बाद वे फिर पहले अपने फ़ोल्डर में पहुँचते हैं।",
   "own.copyOver": "पहले से बने बैकअप कॉपी करें",
   "own.copyOverHint": "बंद: वे जहाँ हैं वहीं रहते हैं और कॉपी नहीं होते।",
   "own.blocked": "अपना फ़ोल्डर इस तरह नहीं हिलाया जा सकता।",
@@ -2834,6 +2835,7 @@ const hi: Partial<Translations> = {
   "activityLog.lineVerifySuccess": "सत्यापन सफल रहा: {domain}",
   "activityLog.lineVerifyFailed": "सत्यापन विफल हुआ, {domain}: {error}",
   "activityLog.lineOffsiteSuccess": "ऑफ़-साइट रेप्लिकेशन पूरा हुआ: {domain} ({duration})",
+  "activityLog.lineOffsiteNothing": "ऑफ़-साइट रेप्लिकेशन को कॉपी करने के लिए कुछ नया नहीं मिला: {domain}",
   "activityLog.lineOffsiteFailed": "ऑफ़-साइट रेप्लिकेशन विफल हुआ, {domain}: {error}",
   "activityLog.lineDrillSuccess": "रीस्टोर जाँच सफल रही: {domain}",
   "activityLog.lineDrillFailed": "रीस्टोर जाँच विफल हुई, {domain}: {error}",
@@ -3238,6 +3240,7 @@ const hi: Partial<Translations> = {
   "repos.companionLost": "हटाए गए गंतव्य के पास",
   "repos.mirroredLocked": "{target} से लिया गया। इसे वहीं बदलें।",
   "repos.removeWithTarget": "{target} के साथ जाती है। इस रिपॉज़िटरी को हटाने के लिए वह गंतव्य हटाएँ।",
+  "repos.directIdle": "यहाँ अब कुछ भी बैकअप नहीं होता। हटाने पर वहाँ मौजूद बैकअप बने रहते हैं।",
   "repos.offPremises": "परिसर से बाहर",
   "repos.offPremisesHint": "कार्ड पर साइटों और 3-2-1 के हिसाब से यह अपनी अलग साइट के रूप में गिना जाता है। प्रतियों पर इसका असर नहीं पड़ता। एक ही इमारत में मौजूद rest-server के लिए इसे बंद रखना चाहिए।",
 

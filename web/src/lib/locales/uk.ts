@@ -737,6 +737,7 @@ const uk: Partial<Translations> = {
   "own.lineProtection": "Захист, обмеження швидкості і сигнал про зростання беруться з {name}.",
   "own.lineKeepWider": "Ця копія зберігає деякі резервні копії довше, ніж правила зберігання розділу {section}. Після перемикання {section} зберігає все, що зберігає будь-яке з цих правил, тож жодна з цих копій не зникне.",
   "own.lineSwitchOn": "Власна тека вимкнена, тому резервні копії йдуть просто в цю копію. Перемикання знову вмикає власну теку.",
+  "own.lineHomeAgain": "Зараз вони йдуть просто в {name}. Після перемикання вони знову спершу потрапляють у власну теку.",
   "own.copyOver": "Скопіювати вже зроблені резервні копії",
   "own.copyOverHint": "Вимкнено: вони лишаються на місці й не копіюються.",
   "own.blocked": "Власну теку так перенести не можна.",
@@ -2638,6 +2639,7 @@ const uk: Partial<Translations> = {
   "activityLog.jobPull": "забирання з джерел",
   "activityLog.jobReplica": "репліка ZFS",
   "activityLog.lineOffsiteSuccess": "Зовнішню реплікацію завершено — {domain} ({duration})",
+  "activityLog.lineOffsiteNothing": "Зовнішня реплікація не знайшла нічого нового для копіювання: {domain}",
   "activityLog.lineOffsiteFailed": "Зовнішня реплікація не вдалася — {domain}: {error}",
   "activityLog.lineDrillSuccess": "Перевірку відновлення пройдено — {domain}",
   "activityLog.lineDrillFailed": "Перевірку відновлення не пройдено — {domain}: {error}",
@@ -3225,6 +3227,7 @@ const uk: Partial<Translations> = {
   "repos.companionLost": "поруч із видаленим місцем призначення",
   "repos.mirroredLocked": "Перейнято від {target}. Змініть там.",
   "repos.removeWithTarget": "Іде разом із місцем призначення {target}. Щоб прибрати цей репозиторій, приберіть місце призначення.",
+  "repos.directIdle": "Сюди більше нічого не зберігається. Під час вилучення резервні копії там залишаються.",
   "repos.offPremises": "Поза приміщенням",
   "repos.offPremisesHint": "Враховується як окреме місце для підрахунку місць і правила 3-2-1 на картках. На копії це не впливає. На rest-server у тій самій будівлі це слід вимкнути.",
 

@@ -735,6 +735,7 @@ const ja: Partial<Translations> = {
   "own.lineProtection": "保護、帯域制限、増加アラームは {name} の設定に従います。",
   "own.lineKeepWider": "このコピーには、{section} の保持ルールより長く残しているバックアップがあります。切り替え後、{section} はどちらかのルールが残すものをすべて残すので、それらのバックアップは失われません。",
   "own.lineSwitchOn": "専用フォルダーはオフになっているため、バックアップはそのコピーに直接送られています。切り替えると専用フォルダーが再びオンになります。",
+  "own.lineHomeAgain": "現在は代わりに {name} へ直接送られています。切り替え後は、再び先に専用フォルダーへ保存されます。",
   "own.copyOver": "作成済みのバックアップをコピー",
   "own.copyOverHint": "オフ: 今の場所に残り、コピーされません。",
   "own.blocked": "この設定では専用フォルダーを移動できません。",
@@ -2632,6 +2633,7 @@ const ja: Partial<Translations> = {
   "activityLog.jobPull": "取得元からの取り込み",
   "activityLog.jobReplica": "ZFS レプリカ",
   "activityLog.lineOffsiteSuccess": "オフサイトレプリケーション完了：{domain}（{duration}）",
+  "activityLog.lineOffsiteNothing": "オフサイトレプリケーションでコピーする新しいものはありませんでした：{domain}",
   "activityLog.lineOffsiteFailed": "オフサイトレプリケーション失敗。{domain}: {error}",
   "activityLog.lineDrillSuccess": "復元チェック合格：{domain}",
   "activityLog.lineDrillFailed": "復元チェック失敗。{domain}: {error}",
@@ -3219,6 +3221,7 @@ const ja: Partial<Translations> = {
   "repos.companionLost": "削除された保存先の隣",
   "repos.mirroredLocked": "{target}から引き継がれました。そちらで変更してください。",
   "repos.removeWithTarget": "{target}と一緒に存在します。このリポジトリを削除するには、その保存先を削除してください。",
+  "repos.directIdle": "ここにはもう何もバックアップされていません。削除しても、そこにあるバックアップは残ります。",
   "repos.offPremises": "敷地外",
   "repos.offPremisesHint": "カード上のサイト数と3-2-1では独立したサイトとして数えられます。コピーには影響しません。同じ建物内の rest-server ではこれをオフにしてください。",
 

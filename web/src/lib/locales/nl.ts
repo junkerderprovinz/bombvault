@@ -736,6 +736,7 @@ const nl: Partial<Translations> = {
   "own.lineProtection": "Bescherming, bandbreedtelimieten en het groeialarm komen van {name}.",
   "own.lineKeepWider": "Die kopie bewaart sommige back-ups langer dan de bewaarregels van {section}. Vanaf de wissel bewaart {section} alles wat een van beide bewaart, dus geen van die back-ups gaat verloren.",
   "own.lineSwitchOn": "De eigen map staat uit, dus de back-ups gaan rechtstreeks naar die kopie. De wissel zet de eigen map weer aan.",
+  "own.lineHomeAgain": "Op dit moment gaan ze rechtstreeks naar {name}. Na de wissel komen ze weer eerst in de eigen map.",
   "own.copyOver": "Al gemaakte back-ups meekopiëren",
   "own.copyOverHint": "Uit: ze blijven waar ze zijn en worden niet gekopieerd.",
   "own.blocked": "De eigen map kan zo niet verhuizen.",
@@ -2640,6 +2641,7 @@ const nl: Partial<Translations> = {
   "activityLog.jobPull": "ophalen bij bronnen",
   "activityLog.jobReplica": "ZFS-replica",
   "activityLog.lineOffsiteSuccess": "Off-site replicatie voltooid: {domain} ({duration})",
+  "activityLog.lineOffsiteNothing": "Off-site replicatie vond niets nieuws om te kopiëren: {domain}",
   "activityLog.lineOffsiteFailed": "Off-site replicatie mislukt, {domain}: {error}",
   "activityLog.lineDrillSuccess": "Herstelcontrole geslaagd: {domain}",
   "activityLog.lineDrillFailed": "Herstelcontrole mislukt, {domain}: {error}",
@@ -3227,6 +3229,7 @@ const nl: Partial<Translations> = {
   "repos.companionLost": "naast een verwijderde bestemming",
   "repos.mirroredLocked": "Overgenomen van {target}. Wijzig het daar.",
   "repos.removeWithTarget": "Hoort bij {target}. Verwijder die bestemming om deze repository te verwijderen.",
+  "repos.directIdle": "Hier wordt niets meer naartoe geback-upt. Bij verwijderen blijven de back-ups die er staan bewaard.",
   "repos.offPremises": "Buiten het pand",
   "repos.offPremisesHint": "Telt op de kaarten als een eigen locatie voor de locaties en de 3-2-1. Kopieën worden niet beïnvloed. Een rest-server in hetzelfde gebouw moet dit uit hebben staan.",
 

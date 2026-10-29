@@ -740,6 +740,7 @@ const hu: Partial<Translations> = {
   "own.lineProtection": "A védelem, a sávszélesség-korlátok és a növekedési riasztás innen jönnek: {name}.",
   "own.lineKeepWider": "Ez a másolat egyes mentéseket tovább őriz meg, mint {section} megőrzési szabályai. A váltástól kezdve {section} mindent megtart, amit bármelyik szabály megtart, így egyik ilyen mentés sem vész el.",
   "own.lineSwitchOn": "A saját mappa ki van kapcsolva, ezért a mentések egyenesen ebbe a másolatba kerülnek. A váltás újra bekapcsolja a saját mappát.",
+  "own.lineHomeAgain": "Most egyenesen ide kerülnek: {name}. A váltás után újra először a saját mappába kerülnek.",
   "own.copyOver": "A már elkészült mentések másolása",
   "own.copyOverHint": "Ki: ott maradnak, ahol vannak, és nem másolódnak.",
   "own.blocked": "A saját mappa így nem költöztethető.",
@@ -2642,6 +2643,7 @@ const hu: Partial<Translations> = {
   "activityLog.jobPull": "behúzás forrásokból",
   "activityLog.jobReplica": "ZFS-replika",
   "activityLog.lineOffsiteSuccess": "Telephelyen kívüli replikáció kész: {domain} ({duration})",
+  "activityLog.lineOffsiteNothing": "A telephelyen kívüli replikáció nem talált új másolnivalót: {domain}",
   "activityLog.lineOffsiteFailed": "Telephelyen kívüli replikáció sikertelen, {domain}: {error}",
   "activityLog.lineDrillSuccess": "Visszaállítási ellenőrzés sikeres: {domain}",
   "activityLog.lineDrillFailed": "Visszaállítási ellenőrzés sikertelen, {domain}: {error}",
@@ -3229,6 +3231,7 @@ const hu: Partial<Translations> = {
   "repos.companionLost": "törölt cél mellett",
   "repos.mirroredLocked": "Átvéve innen: {target}. Ott változtasd meg.",
   "repos.removeWithTarget": "A(z) {target} céllal jár együtt. A tároló eltávolításához távolítsd el a célt.",
+  "repos.directIdle": "Ide már semmi nem ment. Az eltávolítás után az ott lévő mentések megmaradnak.",
   "repos.offPremises": "Az épületen kívül",
   "repos.offPremisesHint": "A kártyákon a helyszínek és a 3-2-1 szempontjából önálló helyszínnek számít. A másolatokat nem érinti. Az ugyanabban az épületben lévő rest-servernél ezt ki kell kapcsolni.",
 

@@ -740,6 +740,7 @@ const he: Partial<Translations> = {
   "own.lineProtection": "ההגנה, מגבלות רוחב הפס והתראת הגדילה מגיעות מ-{name}.",
   "own.lineKeepWider": "העותק הזה שומר חלק מהגיבויים זמן רב יותר מכללי השמירה של {section}. מרגע ההחלפה {section} שומר כל מה שאחד מהם שומר, כך שאף אחד מהגיבויים האלה לא הולך לאיבוד.",
   "own.lineSwitchOn": "התיקייה העצמית כבויה, ולכן הגיבויים הולכים ישר לעותק הזה. ההחלפה מדליקה את התיקייה העצמית מחדש.",
+  "own.lineHomeAgain": "כרגע הם הולכים ישר אל {name}. אחרי ההחלפה הם מגיעים שוב קודם לתיקייה העצמית.",
   "own.copyOver": "העתקת הגיבויים שכבר נעשו",
   "own.copyOverHint": "כבוי: הם נשארים במקומם ולא מועתקים.",
   "own.blocked": "אי אפשר להעביר את התיקייה העצמית כך.",
@@ -2641,6 +2642,7 @@ const he: Partial<Translations> = {
   "activityLog.jobPull": "משיכה ממקורות",
   "activityLog.jobReplica": "עותק ZFS משוכפל",
   "activityLog.lineOffsiteSuccess": "שכפול מחוץ לאתר הושלם: {domain} ({duration})",
+  "activityLog.lineOffsiteNothing": "השכפול מחוץ לאתר לא מצא שום דבר חדש להעתקה: {domain}",
   "activityLog.lineOffsiteFailed": "שכפול מחוץ לאתר נכשל, {domain}: {error}",
   "activityLog.lineDrillSuccess": "בדיקת השחזור עברה: {domain}",
   "activityLog.lineDrillFailed": "בדיקת השחזור נכשלה, {domain}: {error}",
@@ -3228,6 +3230,7 @@ const he: Partial<Translations> = {
   "repos.companionLost": "לצד יעד שנמחק",
   "repos.mirroredLocked": "הועבר מ{target}. משנים אותו שם.",
   "repos.removeWithTarget": "הולך יחד עם {target}. כדי להסיר את המאגר הזה, יש להסיר את היעד.",
+  "repos.directIdle": "שום דבר כבר לא מגובה לכאן. הסרה משאירה את הגיבויים שנמצאים שם.",
   "repos.offPremises": "מחוץ למבנה",
   "repos.offPremisesHint": "נספר כאתר משלו לצורך האתרים וכלל 3-2-1 בכרטיסים. זה לא משפיע על העותקים. שרת rest-server באותו מבנה צריך שזה יהיה כבוי אצלו.",
 

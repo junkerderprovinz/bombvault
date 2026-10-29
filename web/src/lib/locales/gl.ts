@@ -950,6 +950,7 @@ const gl: Partial<Translations> = {
   "own.lineProtection": "A protección, os límites de largo de banda e a alarma de crecemento veñen de {name}.",
   "own.lineKeepWider": "Esa copia garda algunhas copias de seguridade máis tempo que as regras de retención de {section}. Desde o cambio, {section} garda todo o que garde calquera das dúas, así que non se perde ningunha desas copias.",
   "own.lineSwitchOn": "O cartafol propio está desactivado, así que as copias de seguridade van directamente a esa copia. O cambio volve activar o cartafol propio.",
+  "own.lineHomeAgain": "Agora mesmo van directamente a {name}. Despois do cambio volven chegar primeiro ao cartafol propio.",
   "own.copyOver": "Copiar as copias de seguridade xa feitas",
   "own.copyOverHint": "Desactivado: quedan onde están e non se copian.",
   "own.blocked": "O cartafol propio non se pode mover así.",
@@ -2834,6 +2835,7 @@ const gl: Partial<Translations> = {
   "activityLog.lineVerifySuccess": "Verificación superada: {domain}",
   "activityLog.lineVerifyFailed": "Verificación fallida, {domain}: {error}",
   "activityLog.lineOffsiteSuccess": "Replicación externa completa: {domain} ({duration})",
+  "activityLog.lineOffsiteNothing": "A replicación externa non atopou nada novo que copiar: {domain}",
   "activityLog.lineOffsiteFailed": "Replicación externa fallida, {domain}: {error}",
   "activityLog.lineDrillSuccess": "Comprobación de restauración superada: {domain}",
   "activityLog.lineDrillFailed": "Comprobación de restauración fallida, {domain}: {error}",
@@ -3238,6 +3240,7 @@ const gl: Partial<Translations> = {
   "repos.companionLost": "a carón dun destino eliminado",
   "repos.mirroredLocked": "Herdado de {target}. Cámbiao alí.",
   "repos.removeWithTarget": "Vai con {target}. Para quitar este repositorio, quita ese destino.",
+  "repos.directIdle": "Xa non se fai ningunha copia de seguridade aquí. Ao quitalo, as copias que hai quedan aí.",
   "repos.offPremises": "Fóra do edificio",
   "repos.offPremisesHint": "Conta como un lugar propio para os lugares e o 3-2-1 nas tarxetas. Non afecta ás copias. Un rest-server no mesmo edificio debería ter isto desactivado.",
 

@@ -740,6 +740,7 @@ const da: Partial<Translations> = {
   "own.lineProtection": "Beskyttelse, båndbreddegrænser og vækstalarm kommer fra {name}.",
   "own.lineKeepWider": "Den kopi gemmer nogle sikkerhedskopier længere end opbevaringsreglerne for {section}. Fra skiftet gemmer {section} alt, hvad en af dem gemmer, så ingen af de sikkerhedskopier går tabt.",
   "own.lineSwitchOn": "Den egne mappe er slået fra, så sikkerhedskopierne går direkte til den kopi. Skiftet slår den egne mappe til igen.",
+  "own.lineHomeAgain": "Lige nu går de i stedet direkte til {name}. Efter skiftet lander de igen først i den egne mappe.",
   "own.copyOver": "Kopiér de allerede lavede sikkerhedskopier",
   "own.copyOverHint": "Fra: de bliver, hvor de er, og kopieres ikke.",
   "own.blocked": "Den egne mappe kan ikke flyttes sådan.",
@@ -2641,6 +2642,7 @@ const da: Partial<Translations> = {
   "activityLog.jobPull": "hentning fra kilder",
   "activityLog.jobReplica": "ZFS-replika",
   "activityLog.lineOffsiteSuccess": "Off-site-replikering færdig: {domain} ({duration})",
+  "activityLog.lineOffsiteNothing": "Off-site-replikering fandt intet nyt at kopiere: {domain}",
   "activityLog.lineOffsiteFailed": "Off-site-replikering mislykkedes, {domain}: {error}",
   "activityLog.lineDrillSuccess": "Gendannelsestjek bestået: {domain}",
   "activityLog.lineDrillFailed": "Gendannelsestjek mislykkedes, {domain}: {error}",
@@ -3228,6 +3230,7 @@ const da: Partial<Translations> = {
   "repos.companionLost": "ved siden af en slettet destination",
   "repos.mirroredLocked": "Overtaget fra {target}. Skift det der.",
   "repos.removeWithTarget": "Hører sammen med {target}. Fjern den destination for at fjerne dette depot.",
+  "repos.directIdle": "Intet sikkerhedskopieres hertil længere. Når du fjerner det, bliver sikkerhedskopierne der.",
   "repos.offPremises": "Uden for bygningen",
   "repos.offPremisesHint": "Tæller som sit eget sted for lokationer og 3-2-1 på kortene. Kopier påvirkes ikke. En rest-server i samme bygning bør have dette slået fra.",
 

@@ -740,6 +740,7 @@ const sv: Partial<Translations> = {
   "own.lineProtection": "Skydd, bandbreddsgränser och tillväxtlarm kommer från {name}.",
   "own.lineKeepWider": "Den kopian sparar vissa säkerhetskopior längre än lagringsreglerna för {section}. Från bytet sparar {section} allt som någon av dem sparar, så ingen av de säkerhetskopiorna går förlorad.",
   "own.lineSwitchOn": "Den egna mappen är avstängd, så säkerhetskopiorna går direkt till den kopian. Bytet slår på den egna mappen igen.",
+  "own.lineHomeAgain": "Just nu går de direkt till {name}. Efter bytet hamnar de igen först i den egna mappen.",
   "own.copyOver": "Kopiera de säkerhetskopior som redan finns",
   "own.copyOverHint": "Av: de stannar där de är och kopieras inte.",
   "own.blocked": "Den egna mappen kan inte flyttas så här.",
@@ -2641,6 +2642,7 @@ const sv: Partial<Translations> = {
   "activityLog.jobPull": "hämtning från källor",
   "activityLog.jobReplica": "ZFS-replika",
   "activityLog.lineOffsiteSuccess": "Off-site-replikering klar: {domain} ({duration})",
+  "activityLog.lineOffsiteNothing": "Off-site-replikering hittade inget nytt att kopiera: {domain}",
   "activityLog.lineOffsiteFailed": "Off-site-replikering misslyckades, {domain}: {error}",
   "activityLog.lineDrillSuccess": "Återställningskontroll godkänd: {domain}",
   "activityLog.lineDrillFailed": "Återställningskontroll misslyckades, {domain}: {error}",
@@ -3228,6 +3230,7 @@ const sv: Partial<Translations> = {
   "repos.companionLost": "bredvid ett borttaget mål",
   "repos.mirroredLocked": "Övertaget från {target}. Ändra det där.",
   "repos.removeWithTarget": "Hör ihop med {target}. Ta bort det målet för att ta bort det här arkivet.",
+  "repos.directIdle": "Inget säkerhetskopieras hit längre. När du tar bort det ligger säkerhetskopiorna kvar där.",
   "repos.offPremises": "Utanför lokalerna",
   "repos.offPremisesHint": "Räknas som en egen plats för platserna och 3-2-1 på korten. Kopior påverkas inte. En rest-server i samma byggnad bör ha det här avstängt.",
 

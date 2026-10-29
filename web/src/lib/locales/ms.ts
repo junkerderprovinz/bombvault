@@ -950,6 +950,7 @@ const ms: Partial<Translations> = {
   "own.lineProtection": "Perlindungan, had lebar jalur dan penggera pertumbuhan datang daripada {name}.",
   "own.lineKeepWider": "Salinan itu menyimpan sesetengah sandaran lebih lama daripada peraturan pengekalan {section}. Mulai pertukaran, {section} menyimpan apa sahaja yang disimpan oleh mana-mana peraturan itu, jadi tiada sandaran tersebut yang hilang.",
   "own.lineSwitchOn": "Folder sendiri dimatikan, jadi sandaran terus pergi ke salinan itu. Pertukaran menghidupkan semula folder sendiri.",
+  "own.lineHomeAgain": "Sekarang sandaran terus pergi ke {name}. Selepas pertukaran, sandaran masuk ke folder sendiri dahulu semula.",
   "own.copyOver": "Salin sandaran yang sudah dibuat",
   "own.copyOverHint": "Mati: sandaran kekal di tempatnya dan tidak disalin.",
   "own.blocked": "Folder sendiri tidak boleh dialihkan begini.",
@@ -2834,6 +2835,7 @@ const ms: Partial<Translations> = {
   "activityLog.lineVerifySuccess": "Pengesahan berjaya: {domain}",
   "activityLog.lineVerifyFailed": "Pengesahan gagal, {domain}: {error}",
   "activityLog.lineOffsiteSuccess": "Replikasi luar tapak selesai: {domain} ({duration})",
+  "activityLog.lineOffsiteNothing": "Replikasi luar tapak tidak menemui apa-apa yang baharu untuk disalin: {domain}",
   "activityLog.lineOffsiteFailed": "Replikasi luar tapak gagal, {domain}: {error}",
   "activityLog.lineDrillSuccess": "Semakan pemulihan berjaya: {domain}",
   "activityLog.lineDrillFailed": "Semakan pemulihan gagal, {domain}: {error}",
@@ -3238,6 +3240,7 @@ const ms: Partial<Translations> = {
   "repos.companionLost": "di sebelah destinasi yang dipadam",
   "repos.mirroredLocked": "Diambil alih daripada {target}. Ubah di sana.",
   "repos.removeWithTarget": "Pergi bersama {target}. Untuk membuang repositori ini, buang destinasi itu.",
+  "repos.directIdle": "Tiada apa lagi yang disandarkan ke sini. Membuangnya mengekalkan sandaran yang ada di sana.",
   "repos.offPremises": "Di luar premis",
   "repos.offPremisesHint": "Dikira sebagai tapak tersendiri untuk tapak dan 3-2-1 pada kad. Salinan tidak terjejas. rest-server dalam bangunan yang sama sepatutnya mematikan ini.",
 

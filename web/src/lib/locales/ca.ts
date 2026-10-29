@@ -950,6 +950,7 @@ const ca: Partial<Translations> = {
   "own.lineProtection": "La protecció, els límits d'amplada de banda i l'alarma de creixement venen de {name}.",
   "own.lineKeepWider": "Aquesta còpia conserva algunes còpies de seguretat més temps que les regles de retenció de {section}. A partir del canvi, {section} conserva tot el que conservi qualsevol de les dues, així que no es perd cap d'aquestes còpies.",
   "own.lineSwitchOn": "La carpeta pròpia està desactivada, així que les còpies de seguretat van directament a aquesta còpia. El canvi torna a activar la carpeta pròpia.",
+  "own.lineHomeAgain": "Ara mateix van directament a {name}. Després del canvi tornen a arribar primer a la carpeta pròpia.",
   "own.copyOver": "Copia les còpies de seguretat ja fetes",
   "own.copyOverHint": "Desactivat: es queden on són i no es copien.",
   "own.blocked": "La carpeta pròpia no es pot moure així.",
@@ -2834,6 +2835,7 @@ const ca: Partial<Translations> = {
   "activityLog.lineVerifySuccess": "Verificació superada: {domain}",
   "activityLog.lineVerifyFailed": "Verificació fallida, {domain}: {error}",
   "activityLog.lineOffsiteSuccess": "Replicació externa completa: {domain} ({duration})",
+  "activityLog.lineOffsiteNothing": "La replicació externa no ha trobat res de nou per copiar: {domain}",
   "activityLog.lineOffsiteFailed": "Replicació externa fallida, {domain}: {error}",
   "activityLog.lineDrillSuccess": "Prova de restauració superada: {domain}",
   "activityLog.lineDrillFailed": "Prova de restauració fallida, {domain}: {error}",
@@ -3238,6 +3240,7 @@ const ca: Partial<Translations> = {
   "repos.companionLost": "al costat d'una destinació eliminada",
   "repos.mirroredLocked": "Agafat de {target}. Canvia-ho allà.",
   "repos.removeWithTarget": "Va amb {target}. Per treure aquest repositori, treu aquella destinació.",
+  "repos.directIdle": "Ja no s'hi fa cap còpia de seguretat. En treure'l, les còpies que hi ha s'hi queden.",
   "repos.offPremises": "Fora de l'edifici",
   "repos.offPremisesHint": "Compta com un lloc propi per als llocs i el 3-2-1 de les targetes. No afecta les còpies. Un rest-server al mateix edifici hauria de tenir això desactivat.",
 

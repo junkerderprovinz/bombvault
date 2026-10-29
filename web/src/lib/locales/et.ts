@@ -950,6 +950,7 @@ const et: Partial<Translations> = {
   "own.lineProtection": "Kaitse, ribalaiuse piirangud ja kasvuhäire tulevad asukohast {name}.",
   "own.lineKeepWider": "See koopia hoiab mõnda varukoopiat kauem kui jaotise {section} säilitusreeglid. Pärast vahetust hoiab {section} alles kõik, mida kumbki reegel hoiab, nii et ükski neist varukoopiatest ei lähe kaotsi.",
   "own.lineSwitchOn": "Oma kaust on välja lülitatud, seega lähevad varukoopiad otse sellesse koopiasse. Vahetus lülitab oma kausta uuesti sisse.",
+  "own.lineHomeAgain": "Praegu lähevad need hoopis otse sihtkohta {name}. Pärast vahetust jõuavad need jälle kõigepealt oma kausta.",
   "own.copyOver": "Kopeeri juba tehtud varukoopiad",
   "own.copyOverHint": "Väljas: need jäävad oma kohale ja neid ei kopeerita.",
   "own.blocked": "Oma kausta ei saa nii teisaldada.",
@@ -2834,6 +2835,7 @@ const et: Partial<Translations> = {
   "activityLog.lineVerifySuccess": "Kontroll läbitud: {domain}",
   "activityLog.lineVerifyFailed": "Kontroll ebaõnnestus, {domain}: {error}",
   "activityLog.lineOffsiteSuccess": "Väline replitseerimine tehtud: {domain} ({duration})",
+  "activityLog.lineOffsiteNothing": "Väline replitseerimine ei leidnud midagi uut kopeerimiseks: {domain}",
   "activityLog.lineOffsiteFailed": "Väline replitseerimine ebaõnnestus, {domain}: {error}",
   "activityLog.lineDrillSuccess": "Taastekontroll läbitud: {domain}",
   "activityLog.lineDrillFailed": "Taastekontroll ebaõnnestus, {domain}: {error}",
@@ -3238,6 +3240,7 @@ const et: Partial<Translations> = {
   "repos.companionLost": "kustutatud sihtkoha kõrval",
   "repos.mirroredLocked": "Üle võetud sihtkohalt {target}. Muuda seda seal.",
   "repos.removeWithTarget": "Käib kaasa sihtkohaga {target}. Selle hoidla eemaldamiseks eemalda sihtkoht.",
+  "repos.directIdle": "Siia ei varundata enam midagi. Eemaldamisel jäävad sealsed varukoopiad alles.",
   "repos.offPremises": "Väljaspool hoonet",
   "repos.offPremisesHint": "Loetakse kaartidel asukohtade ja 3-2-1 jaoks omaette asukohaks. Koopiaid see ei mõjuta. Sama hoone rest-serveril peaks see väljas olema.",
 

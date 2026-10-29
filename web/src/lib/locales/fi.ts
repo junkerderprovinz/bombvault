@@ -740,6 +740,7 @@ const fi: Partial<Translations> = {
   "own.lineProtection": "Suojaus, kaistarajat ja kasvuhälytys tulevat kohteesta {name}.",
   "own.lineKeepWider": "Se kopio säilyttää joitakin varmuuskopioita pidempään kuin osion {section} säilytyssäännöt. Vaihdosta alkaen {section} säilyttää kaiken, minkä jompikumpi säännöistä säilyttää, joten yksikään niistä varmuuskopioista ei katoa.",
   "own.lineSwitchOn": "Oma kansio on pois päältä, joten varmuuskopiot menevät suoraan siihen kopioon. Vaihto kytkee oman kansion takaisin päälle.",
+  "own.lineHomeAgain": "Nyt ne menevät sen sijaan suoraan kohteeseen {name}. Vaihdon jälkeen ne tulevat taas ensin omaan kansioon.",
   "own.copyOver": "Kopioi jo tehdyt varmuuskopiot",
   "own.copyOverHint": "Pois: ne jäävät paikalleen eikä niitä kopioida.",
   "own.blocked": "Omaa kansiota ei voi siirtää näin.",
@@ -2641,6 +2642,7 @@ const fi: Partial<Translations> = {
   "activityLog.jobPull": "nouto lähteistä",
   "activityLog.jobReplica": "ZFS-replika",
   "activityLog.lineOffsiteSuccess": "Etäreplikointi valmis: {domain} ({duration})",
+  "activityLog.lineOffsiteNothing": "Etäreplikointi ei löytänyt mitään uutta kopioitavaa: {domain}",
   "activityLog.lineOffsiteFailed": "Etäreplikointi epäonnistui, {domain}: {error}",
   "activityLog.lineDrillSuccess": "Palautustarkistus läpäisty: {domain}",
   "activityLog.lineDrillFailed": "Palautustarkistus epäonnistui, {domain}: {error}",
@@ -3228,6 +3230,7 @@ const fi: Partial<Translations> = {
   "repos.companionLost": "poistetun kohteen vieressä",
   "repos.mirroredLocked": "Otettu kohteelta {target}. Muuta se siellä.",
   "repos.removeWithTarget": "Kuuluu yhteen kohteen {target} kanssa. Poista kohde, jos haluat poistaa tämän arkiston.",
+  "repos.directIdle": "Tänne ei enää varmuuskopioida mitään. Poistettaessa siellä olevat varmuuskopiot säilyvät.",
   "repos.offPremises": "Rakennuksen ulkopuolella",
   "repos.offPremisesHint": "Lasketaan korttien sijainneissa ja 3-2-1-säännössä omaksi sijainnikseen. Kopioihin tämä ei vaikuta. Samassa rakennuksessa olevalla rest-serverillä tämän pitäisi olla pois päältä.",
 

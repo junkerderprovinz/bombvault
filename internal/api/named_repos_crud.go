@@ -67,11 +67,29 @@ type namedRepoView struct {
 	// CompanionLost marks a direct repository whose target an import deleted:
 	// it still holds backups, but nothing on this box links to it anymore.
 	CompanionLost bool `json:"companionLost"`
+	// DefaultFor are the sections whose default backs up here, null when the
+	// defaults could not be read. A direct repository with neither entries nor
+	// a default takes no backups at all.
+	DefaultFor []string `json:"defaultFor"`
 }
 
 func (h *Handler) namedRepoViews(rows []store.OffsiteTarget) []namedRepoView {
 	out := make([]namedRepoView, 0, len(rows))
+	defaults, err := h.store.ListPlacementDefaults()
+	if err != nil {
+		log.Printf("api: repos: could not read the section defaults: %v", err)
+	}
 	for _, t := range rows {
+		// Defaults that could not be read leave it unknown, null.
+		var defaultFor []string
+		if err == nil {
+			defaultFor = []string{}
+		}
+		for _, d := range defaults {
+			if d.Home == t.ID {
+				defaultFor = append(defaultFor, d.Domain)
+			}
+		}
 		// A count that could not be read is reported as UNKNOWN (-1), never as
 		// zero. Zero is the answer that unlocks the delete button, drops the
 		// location lock and skips the switch-off confirmation - three protections
@@ -89,6 +107,7 @@ func (h *Handler) namedRepoViews(rows []store.OffsiteTarget) []namedRepoView {
 			OffPremises: t.OffPremises, InUse: n,
 			Compression: normalizedCompression(t.Compression),
 			CompanionOf: t.CompanionOf, CompanionLost: t.CompanionLost, DirectOf: h.svc.directOf(t),
+			DefaultFor: defaultFor,
 		})
 	}
 	return out
@@ -439,8 +458,7 @@ func (h *Handler) handleDeleteNamedRepo(w http.ResponseWriter, r *http.Request) 
 	// put back on its domain repository without a word.
 	use, err := h.store.DeleteNamedRepoIfUnused(id)
 	if errors.Is(err, store.ErrDirectRepo) {
-		placementFail(w, err, map[string]any{"target": h.offsiteTargetRef(row.CompanionOf)})
-		return
+		use, err = h.store.DeleteUnusedDirectRepo(row.ID)
 	}
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))

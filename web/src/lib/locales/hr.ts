@@ -950,6 +950,7 @@ const hr: Partial<Translations> = {
   "own.lineProtection": "Zaštita, ograničenja propusnosti i alarm rasta dolaze iz {name}.",
   "own.lineKeepWider": "Ta kopija neke sigurnosne kopije čuva dulje od pravila zadržavanja odjeljka {section}. Od zamjene {section} čuva sve što čuva bilo koje od tih pravila, pa se nijedna od tih kopija ne gubi.",
   "own.lineSwitchOn": "Vlastita mapa je isključena, pa sigurnosne kopije idu izravno u tu kopiju. Zamjena ponovno uključuje vlastitu mapu.",
+  "own.lineHomeAgain": "Trenutačno idu izravno u {name}. Nakon zamjene opet najprije stižu u vlastitu mapu.",
   "own.copyOver": "Kopiraj već napravljene sigurnosne kopije",
   "own.copyOverHint": "Isključeno: ostaju gdje jesu i ne kopiraju se.",
   "own.blocked": "Vlastita mapa ne može se ovako premjestiti.",
@@ -2834,6 +2835,7 @@ const hr: Partial<Translations> = {
   "activityLog.lineVerifySuccess": "Provjera uspješna: {domain}",
   "activityLog.lineVerifyFailed": "Provjera nije uspjela, {domain}: {error}",
   "activityLog.lineOffsiteSuccess": "Repliciranje izvan lokacije dovršeno: {domain} ({duration})",
+  "activityLog.lineOffsiteNothing": "Repliciranje izvan lokacije nije našlo ništa novo za kopiranje: {domain}",
   "activityLog.lineOffsiteFailed": "Repliciranje izvan lokacije nije uspjelo, {domain}: {error}",
   "activityLog.lineDrillSuccess": "Provjera vraćanja uspješna: {domain}",
   "activityLog.lineDrillFailed": "Provjera vraćanja nije uspjela, {domain}: {error}",
@@ -3238,6 +3240,7 @@ const hr: Partial<Translations> = {
   "repos.companionLost": "pored izbrisanog odredišta",
   "repos.mirroredLocked": "Preuzeto od odredišta {target}. Promijenite ondje.",
   "repos.removeWithTarget": "Ide zajedno s odredištem {target}. Za uklanjanje ovog repozitorija uklonite odredište.",
+  "repos.directIdle": "Ovamo se više ništa ne sigurnosno kopira. Uklanjanjem sigurnosne kopije koje su ondje ostaju.",
   "repos.offPremises": "Izvan objekta",
   "repos.offPremisesHint": "Za lokacije i 3-2-1 na karticama broji se kao zasebna lokacija. Kopije time nisu pogođene. Rest-server u istoj zgradi trebao bi imati ovo isključeno.",
 

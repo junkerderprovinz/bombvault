@@ -740,6 +740,7 @@ const it: Partial<Translations> = {
   "own.lineProtection": "Protezione, limiti di banda e allarme di crescita vengono da {name}.",
   "own.lineKeepWider": "Quella copia conserva alcuni backup più a lungo delle regole di conservazione di {section}. Dal cambio in poi, {section} conserva tutto ciò che conserva l'una o l'altra regola, quindi nessuno di quei backup va perso.",
   "own.lineSwitchOn": "La cartella propria è spenta, quindi i backup vanno direttamente a quella copia. Il cambio riaccende la cartella propria.",
+  "own.lineHomeAgain": "Al momento vanno direttamente a {name}. Dopo il cambio arrivano di nuovo prima nella cartella propria.",
   "own.copyOver": "Copia i backup già fatti",
   "own.copyOverHint": "Disattivato: restano dove sono e non vengono copiati.",
   "own.blocked": "La cartella propria non può essere spostata così.",
@@ -2641,6 +2642,7 @@ const it: Partial<Translations> = {
   "activityLog.jobPull": "prelievo dalle origini",
   "activityLog.jobReplica": "replica ZFS",
   "activityLog.lineOffsiteSuccess": "Replica off-site completata: {domain} ({duration})",
+  "activityLog.lineOffsiteNothing": "La replica off-site non ha trovato nulla di nuovo da copiare: {domain}",
   "activityLog.lineOffsiteFailed": "Replica off-site non riuscita, {domain}: {error}",
   "activityLog.lineDrillSuccess": "Controllo di ripristino superato: {domain}",
   "activityLog.lineDrillFailed": "Controllo di ripristino non riuscito, {domain}: {error}",
@@ -3228,6 +3230,7 @@ const it: Partial<Translations> = {
   "repos.companionLost": "accanto a una destinazione eliminata",
   "repos.mirroredLocked": "Preso in carico da {target}. Modificalo lì.",
   "repos.removeWithTarget": "Va insieme a {target}. Per rimuovere questo repository, rimuovi quella destinazione.",
+  "repos.directIdle": "Qui non viene più salvato nulla. Rimuovendolo, i backup che ci sono restano lì.",
   "repos.offPremises": "Fuori sede",
   "repos.offPremisesHint": "Conta come una sede propria per le sedi e il 3-2-1 sulle schede. Le copie non ne risentono. Un rest-server nello stesso edificio dovrebbe avere questo disattivato.",
 

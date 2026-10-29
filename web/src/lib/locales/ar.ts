@@ -740,6 +740,7 @@ const ar: Partial<Translations> = {
   "own.lineProtection": "تأتي الحماية وحدود عرض النطاق وإنذار النمو من {name}.",
   "own.lineKeepWider": "تحتفظ تلك النسخة ببعض النسخ الاحتياطية مدة أطول مما تسمح به قواعد الاحتفاظ في {section}. بعد التبديل يحتفظ {section} بكل ما تحتفظ به أي من القاعدتين، فلا تضيع أي من تلك النسخ الاحتياطية.",
   "own.lineSwitchOn": "المجلد الخاص متوقف، لذلك تذهب النسخ الاحتياطية مباشرة إلى تلك النسخة. يعيد التبديل تشغيل المجلد الخاص.",
+  "own.lineHomeAgain": "حاليًا تذهب مباشرة إلى {name} بدلًا من ذلك. بعد التبديل تصل أولًا إلى المجلد الخاص من جديد.",
   "own.copyOver": "نسخ النسخ الاحتياطية الموجودة",
   "own.copyOverHint": "متوقف: تبقى حيث هي ولا تُنسخ.",
   "own.blocked": "لا يمكن نقل المجلد الخاص بهذه الطريقة.",
@@ -2642,6 +2643,7 @@ const ar: Partial<Translations> = {
   "activityLog.jobPull": "السحب من المصادر",
   "activityLog.jobReplica": "نسخة ZFS المتماثلة",
   "activityLog.lineOffsiteSuccess": "اكتمل النسخ المتماثل خارج الموقع: {domain} ({duration})",
+  "activityLog.lineOffsiteNothing": "لم يجد النسخ المتماثل خارج الموقع شيئًا جديدًا لنسخه: {domain}",
   "activityLog.lineOffsiteFailed": "فشل النسخ المتماثل خارج الموقع، {domain}: {error}",
   "activityLog.lineDrillSuccess": "نجح فحص الاستعادة: {domain}",
   "activityLog.lineDrillFailed": "فشل فحص الاستعادة، {domain}: {error}",
@@ -3229,6 +3231,7 @@ const ar: Partial<Translations> = {
   "repos.companionLost": "بجانب وجهة محذوفة",
   "repos.mirroredLocked": "أُخذ من {target}. يُغيَّر هناك.",
   "repos.removeWithTarget": "مرتبط بـ {target}. لإزالة هذا المستودع تجب إزالة تلك الوجهة.",
+  "repos.directIdle": "لم يعد يُنسخ احتياطيًا إلى هنا أي شيء. عند إزالته تبقى النسخ الاحتياطية الموجودة فيه.",
   "repos.offPremises": "خارج المبنى",
   "repos.offPremisesHint": "يُحتسب موقعًا قائمًا بذاته لأغراض المواقع وقاعدة 3-2-1 في البطاقات. لا يؤثر ذلك على النسخ. يجب إيقاف هذا لخادم rest-server في المبنى نفسه.",
 

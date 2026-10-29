@@ -810,3 +810,23 @@ func TestMovingARepositoryADefaultPointsAtNamesTheDomain(t *testing.T) {
 		t.Fatalf("repo = %+v, %v, want the location untouched", back, err)
 	}
 }
+
+func TestAReplicationNotesHowManySnapshotsItCopied(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.target("containers", "B2", "b2:bucket:containers")
+	f.replicated("containers")
+	f.hold(f.domainPath("containers"), snap("a1", 100, "container:nginx"))
+
+	for _, want := range []int64{1, 0} {
+		if err := f.svc.ReplicateOffsite(context.Background(), "containers"); err != nil {
+			t.Fatal(err)
+		}
+		runs, err := f.st.RecentRunsOfKind(domainRunTargetID("containers"), "offsite", 1)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(runs) != 1 || runs[0].Status != "success" || runs[0].Copied == nil || *runs[0].Copied != want {
+			t.Fatalf("runs = %+v, want a success that copied %d", runs, want)
+		}
+	}
+}

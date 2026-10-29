@@ -475,26 +475,8 @@ func (s *Service) putDefault(ctx context.Context, domain string, change defaultC
 	if change.Skip != nil && !s.setsOnlyHome(settings, domain, named, change) {
 		skip = *change.Skip
 	}
-	var moving []domainItem
-	if home != p.State.Default.Home {
-		items, err := s.domainItems(domain)
-		if err != nil {
-			return defaultRow{}, impact, err
-		}
-		moving = followers(p, items)
-		if err := s.canFollow(ctx, domain, home, moving); err != nil {
-			return defaultRow{}, impact, err
-		}
-	}
-	if _, err := s.store.PutPlacementDefault(domain, home, skip); err != nil {
+	if err := s.writeDefault(ctx, p, home, skip); err != nil {
 		return defaultRow{}, impact, err
-	}
-	// A follower whose row changed since it was read made a choice of its own
-	// meanwhile and keeps it.
-	for _, it := range moving {
-		if _, err := s.store.FollowSection(it.ref, it.home); err != nil {
-			return defaultRow{}, impact, err
-		}
 	}
 	impact.Home, impact.Skip = home, append([]string{}, skip...)
 	for _, t := range impact.Dropped {
@@ -504,6 +486,34 @@ func (s *Service) putDefault(ctx context.Context, domain string, change defaultC
 	}
 	row, err := s.defaultRowFor(settings, named, domain)
 	return row, impact, err
+}
+
+// writeDefault saves a domain's default. A new home takes along the items kept
+// at the old one, unless a folder set among them cannot go there. The caller
+// holds placementMu.
+func (s *Service) writeDefault(ctx context.Context, p placementRead, home string, skip []string) error {
+	var moving []domainItem
+	if home != p.State.Default.Home {
+		items, err := s.domainItems(p.Domain)
+		if err != nil {
+			return err
+		}
+		moving = followers(p, items)
+		if err := s.canFollow(ctx, p.Domain, home, moving); err != nil {
+			return err
+		}
+	}
+	if _, err := s.store.PutPlacementDefault(p.Domain, home, skip); err != nil {
+		return err
+	}
+	// A follower whose row changed since it was read made a choice of its own
+	// meanwhile and keeps it.
+	for _, it := range moving {
+		if _, err := s.store.FollowSection(it.ref, it.home); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // applyCandidate is one item the "apply to entries without backups" button

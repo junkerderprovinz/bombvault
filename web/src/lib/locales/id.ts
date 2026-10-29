@@ -950,6 +950,7 @@ const id: Partial<Translations> = {
   "own.lineProtection": "Perlindungan, batas bandwidth, dan alarm pertumbuhan berasal dari {name}.",
   "own.lineKeepWider": "Salinan itu menyimpan sebagian cadangan lebih lama daripada aturan retensi {section}. Sejak pergantian, {section} menyimpan apa pun yang disimpan salah satu aturan itu, jadi tidak ada cadangan tersebut yang hilang.",
   "own.lineSwitchOn": "Folder sendiri sedang mati, jadi cadangan langsung masuk ke salinan itu. Pergantian menyalakan lagi folder sendiri.",
+  "own.lineHomeAgain": "Saat ini cadangan langsung masuk ke {name}. Setelah pergantian, cadangan kembali masuk ke folder sendiri lebih dulu.",
   "own.copyOver": "Salin cadangan yang sudah dibuat",
   "own.copyOverHint": "Mati: cadangan tetap di tempatnya dan tidak disalin.",
   "own.blocked": "Folder sendiri tidak bisa dipindahkan seperti ini.",
@@ -2834,6 +2835,7 @@ const id: Partial<Translations> = {
   "activityLog.lineVerifySuccess": "Verifikasi berhasil: {domain}",
   "activityLog.lineVerifyFailed": "Verifikasi gagal, {domain}: {error}",
   "activityLog.lineOffsiteSuccess": "Replikasi off-site selesai: {domain} ({duration})",
+  "activityLog.lineOffsiteNothing": "Replikasi off-site tidak menemukan hal baru untuk disalin: {domain}",
   "activityLog.lineOffsiteFailed": "Replikasi off-site gagal, {domain}: {error}",
   "activityLog.lineDrillSuccess": "Uji pemulihan berhasil: {domain}",
   "activityLog.lineDrillFailed": "Uji pemulihan gagal, {domain}: {error}",
@@ -3238,6 +3240,7 @@ const id: Partial<Translations> = {
   "repos.companionLost": "di samping tujuan yang dihapus",
   "repos.mirroredLocked": "Diambil alih dari {target}. Ubah di sana.",
   "repos.removeWithTarget": "Menyertai {target}. Untuk menghapus repositori ini, hapus tujuan itu.",
+  "repos.directIdle": "Tidak ada lagi yang dicadangkan ke sini. Menghapusnya tetap menyimpan cadangan yang ada di sana.",
   "repos.offPremises": "Di luar gedung",
   "repos.offPremisesHint": "Dihitung sebagai lokasi tersendiri untuk lokasi dan 3-2-1 di kartu. Salinan tidak terpengaruh. Rest-server di gedung yang sama sebaiknya mematikan ini.",
 
