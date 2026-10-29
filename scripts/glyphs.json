@@ -858,6 +858,97 @@
   "svg": "<path fill-rule=\"evenodd\" clip-rule=\"evenodd\" d=\"M2.5 4.72 3.44 9.26 3.82 10.77 4.03 11.42 4.25 11.91 4.52 12.32 4.76 12.55 5.01 12.69 5.34 12.79 5.66 12.79 5.99 12.69 6.24 12.55 6.42 12.39 6.61 12.15 6.81 11.79 6.97 11.42 7.12 10.99 7.43 9.81 8.5 4.72 9.32 8.69 9.63 10.06 9.95 11.19 10.09 11.57 10.25 11.91 10.45 12.23 10.7 12.5 11.01 12.69 11.34 12.79 11.66 12.79 11.99 12.69 12.3 12.5 12.55 12.23 12.75 11.91 12.97 11.42 13.18 10.79 13.37 10.06 13.62 8.97 13.98 7.2 14 7 13.98 6.81 13.92 6.62 13.83 6.44 13.71 6.29 13.56 6.17 13.38 6.08 13.2 6.02 13 6 12.81 6.02 12.62 6.08 12.44 6.17 12.29 6.29 12.17 6.44 12.08 6.62 12.02 6.8 11.5 9.28 10.56 4.74 10.18 3.23 9.97 2.58 9.75 2.09 9.48 1.68 9.24 1.45 8.99 1.31 8.66 1.21 8.34 1.21 8.01 1.31 7.76 1.45 7.58 1.61 7.39 1.85 7.19 2.21 7.03 2.58 6.88 3.01 6.57 4.19 5.5 9.28 4.49 4.46 4.24 3.44 3.98 2.61 3.72 2.03 3.55 1.77 3.42 1.61 3.24 1.45 2.99 1.31 2.72 1.22 2.5 1.2 2.28 1.22 1.95 1.33 1.7 1.5 1.52 1.68 1.34 1.93 1.19 2.21 1.03 2.58 0.88 3.01 0.69 3.7 0.44 4.74 0.02 6.8 0 7 0.02 7.19 0.08 7.38 0.17 7.56 0.29 7.71 0.44 7.83 0.62 7.92 0.8 7.98 1 8 1.19 7.98 1.38 7.92 1.56 7.83 1.71 7.71 1.83 7.56 1.92 7.38 1.98 7.2Z\" />"
  },
  {
+  "name": "IconLabelText",
+  "means": "Label mode, the words alone",
+  "source": "Drawn for GlimStone",
+  "viewBox": "0 0 14 14",
+  "ink": [
+   0,
+   2.5,
+   14,
+   9
+  ],
+  "svg": "<path fill-rule=\"evenodd\" clip-rule=\"evenodd\" d=\"M0 3.5A1 1 0 0 1 1 2.5H13A1 1 0 0 1 13 4.5H1A1 1 0 0 1 0 3.5ZM0 7A1 1 0 0 1 1 6H13A1 1 0 0 1 13 8H1A1 1 0 0 1 0 7ZM0 10.5A1 1 0 0 1 1 9.5H8A1 1 0 0 1 8 11.5H1A1 1 0 0 1 0 10.5Z\" />"
+ },
+ {
+  "name": "IconLabelTextGlyph",
+  "means": "Label mode, glyph and words",
+  "source": "Drawn for GlimStone",
+  "viewBox": "0 0 14 14",
+  "ink": [
+   0,
+   4,
+   14,
+   6
+  ],
+  "svg": "<path fill-rule=\"evenodd\" clip-rule=\"evenodd\" d=\"M3 4A3 3 0 1 1 3 10 3 3 0 1 1 3 4ZM7 5A1 1 0 0 1 8 4H13A1 1 0 0 1 13 6H8A1 1 0 0 1 7 5ZM7 9A1 1 0 0 1 8 8H11A1 1 0 0 1 11 10H8A1 1 0 0 1 7 9Z\" />"
+ },
+ {
+  "name": "IconLabelGlyph",
+  "means": "Label mode, the glyph alone",
+  "source": "Drawn for GlimStone",
+  "viewBox": "1.5 1.5 11 11",
+  "ink": [
+   1.5,
+   1.5,
+   11,
+   11
+  ],
+  "svg": "<path fill-rule=\"evenodd\" clip-rule=\"evenodd\" d=\"M7 1.5A5.5 5.5 0 1 1 7 12.5 5.5 5.5 0 1 1 7 1.5Z\" />"
+ },
+ {
+  "name": "IconLabelReactive",
+  "means": "Label mode, the glyph that opens to its words",
+  "source": "Drawn for GlimStone",
+  "viewBox": "0.25 0.5 14 14",
+  "ink": [
+   0.5,
+   0.5,
+   13.5,
+   14
+  ],
+  "svg": "<path fill-rule=\"evenodd\" clip-rule=\"evenodd\" d=\"M4.5 0.5A4 4 0 1 1 4.5 8.5 4 4 0 1 1 4.5 0.5ZM8.8 8.8 14 11 11.7 11.7 13.2 13.9 12.2 14.5 10.8 12.3 9.2 13.9Z\" />"
+ },
+ {
+  "name": "IconRowCompact",
+  "means": "Compact rows",
+  "source": "Drawn for GlimStone",
+  "viewBox": "0 0 14 14",
+  "ink": [
+   0,
+   0.5,
+   14,
+   13
+  ],
+  "svg": "<path fill-rule=\"evenodd\" clip-rule=\"evenodd\" d=\"M0 1.4A.9.9 0 0 1 .9.5H13.1A.9.9 0 0 1 13.1 2.3H.9A.9.9 0 0 1 0 1.4ZM0 5.13A.9.9 0 0 1 .9 4.23H13.1A.9.9 0 0 1 13.1 6.03H.9A.9.9 0 0 1 0 5.13ZM0 8.87A.9.9 0 0 1 .9 7.97H13.1A.9.9 0 0 1 13.1 9.77H.9A.9.9 0 0 1 0 8.87ZM0 12.6A.9.9 0 0 1 .9 11.7H13.1A.9.9 0 0 1 13.1 13.5H.9A.9.9 0 0 1 0 12.6Z\" />"
+ },
+ {
+  "name": "IconRowMedium",
+  "means": "Medium rows",
+  "source": "Drawn for GlimStone",
+  "viewBox": "0 0 14 14",
+  "ink": [
+   0,
+   1,
+   14,
+   12
+  ],
+  "svg": "<path fill-rule=\"evenodd\" clip-rule=\"evenodd\" d=\"M0 2A1 1 0 0 1 1 1H13A1 1 0 0 1 13 3H1A1 1 0 0 1 0 2ZM0 7A1 1 0 0 1 1 6H13A1 1 0 0 1 13 8H1A1 1 0 0 1 0 7ZM0 12A1 1 0 0 1 1 11H13A1 1 0 0 1 13 13H1A1 1 0 0 1 0 12Z\" />"
+ },
+ {
+  "name": "IconRowComfortable",
+  "means": "Comfortable rows",
+  "source": "Drawn for GlimStone",
+  "viewBox": "0 0 14 14",
+  "ink": [
+   0,
+   1.8,
+   14,
+   10.4
+  ],
+  "svg": "<path fill-rule=\"evenodd\" clip-rule=\"evenodd\" d=\"M0 3A1.2 1.2 0 0 1 1.2 1.8H12.8A1.2 1.2 0 0 1 12.8 4.2H1.2A1.2 1.2 0 0 1 0 3ZM0 11A1.2 1.2 0 0 1 1.2 9.8H12.8A1.2 1.2 0 0 1 12.8 12.2H1.2A1.2 1.2 0 0 1 0 11Z\" />"
+ },
+ {
   "name": "IconGear",
   "means": "Settings",
   "source": "Streamline interface-essential/cog.svg",

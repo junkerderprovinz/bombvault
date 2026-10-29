@@ -8,6 +8,10 @@ import {
   IconCornerRound,
   IconCornerSoft,
   IconCornerSquare,
+  IconLabelGlyph,
+  IconLabelReactive,
+  IconLabelText,
+  IconLabelTextGlyph,
   IconMotionOff,
   IconMotionStorm,
   IconMotionSubtle,
@@ -54,6 +58,13 @@ const MOTION_GLYPHS: Record<MotionIntensity, ReactNode> = {
   subtle: <IconMotionSubtle />,
   wild: <IconMotionWild />,
   storm: <IconMotionStorm />,
+};
+
+const LABEL_GLYPHS: Record<LabelMode, ReactNode> = {
+  text: <IconLabelText />,
+  textGlyph: <IconLabelTextGlyph />,
+  glyph: <IconLabelGlyph />,
+  reactive: <IconLabelReactive />,
 };
 
 // PaletteSwatch is one editable colour in the rainbow palette editor. It opens
@@ -252,6 +263,7 @@ export function LookPage() {
                 items={LABEL_MODES.map((m) => ({
                   id: m,
                   label: t(`settings.labels.mode.${m}` as TranslationKey),
+                  icon: LABEL_GLYPHS[m],
                 }))}
                 label={t(`settings.labels.${axis}` as TranslationKey)}
                 select="one"
