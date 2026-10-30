@@ -2596,6 +2596,7 @@ export const en = {
   "placementCode.ownFolderUnreadable": "The backups in the old own folder could not be read, so they cannot be copied. Check that its disk is mounted or the place answers, then try again.",
   "placementCode.ownFolderThere": "The own folder of a section lies here. Move it to another place first, under Own folders on this page. Then the storage location can be removed.",
   "placementCode.copyOnOwnFolder": "This section keeps its own folder in this storage location already, so a copy there would land on itself.",
+  "placementCode.ownFolderOnCopy": "A copy of this section is already stored here, so its backups would be copied onto themselves. To put the own folder here, move it under Own folders in Settings, Storage locations, which ends the copy.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} direct now keeps less. Items whose only copy is there: {n}.",
@@ -7595,6 +7596,7 @@ export const de: Translations = {
   "placementCode.ownFolderUnreadable": "Die Sicherungen im alten eigenen Ordner ließen sich nicht lesen, darum können sie nicht mitkommen. Prüf, ob die Platte eingehängt ist oder der Ort antwortet, und versuch es dann noch einmal.",
   "placementCode.ownFolderThere": "Hier liegt der eigene Ordner eines Bereichs. Verschieb ihn zuerst an einen anderen Ort, unter Eigene Ordner auf dieser Seite. Danach lässt sich der Speicherort entfernen.",
   "placementCode.copyOnOwnFolder": "Dieser Bereich hat seinen eigenen Ordner schon an diesem Speicherort, eine Kopie dort würde auf sich selbst landen.",
+  "placementCode.ownFolderOnCopy": "Hier liegt schon eine Kopie dieses Bereichs, seine Sicherungen würden also auf sich selbst kopiert. Damit der eigene Ordner hierher kommt, verschieb ihn unter Eigene Ordner in Einstellungen, Speicherorte. Das beendet die Kopie.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} direkt bewahrt jetzt weniger auf. Einträge, deren einzige Kopie dort liegt: {n}.",

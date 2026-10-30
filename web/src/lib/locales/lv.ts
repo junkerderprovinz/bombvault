@@ -3285,6 +3285,7 @@ const lv: Partial<Translations> = {
   "placementCode.ownFolderUnreadable": "Vecās paša mapes dublējumus neizdevās nolasīt, tāpēc tos nevar nokopēt. Pārbaudiet, vai disks ir pievienots vai vieta atbild, un mēģiniet vēlreiz.",
   "placementCode.ownFolderThere": "Šeit atrodas kādas sadaļas paša mape. Vispirms pārvietojiet to citur šīs lapas sadaļā Pašu mapes. Pēc tam krātuves vietu var noņemt.",
   "placementCode.copyOnOwnFolder": "Šīs sadaļas paša mape jau ir šajā krātuves vietā, tāpēc kopija tur nonāktu pati uz sevis.",
+  "placementCode.ownFolderOnCopy": "Šeit jau ir šīs sadaļas kopija, tāpēc tās dublējumi tiktu kopēti paši uz sevis. Lai paša mapi novietotu šeit, pārvietojiet to sadaļā Pašu mapes lapā Iestatījumi, Mērķi, un tad šī kopija beidzas.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} tieši tagad saglabā mazāk. Ieraksti, kuru vienīgā kopija ir tur: {n}.",

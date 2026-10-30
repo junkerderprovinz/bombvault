@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { getSettings, type OffsiteDomain, type Settings } from "../../lib/api";
 import { useT, type TranslationKey } from "../../lib/i18n";
-import { pushSaveWarnings } from "../../lib/placementCodes";
+import { placementErrorText, pushSaveWarnings } from "../../lib/placementCodes";
 import { putSettingsPatch, type SettingsPatchResult } from "../../lib/settingsPatch";
 import { useToast } from "../../lib/toast";
 import { useDebouncedSave } from "../../lib/useDebouncedSave";
@@ -29,7 +29,7 @@ const PATH: Record<OffsiteDomain, { key: PathKey; label: TranslationKey }> = {
  * what is still waiting is saved when the window closes.
  */
 export function SectionPathWindow({ domain, onClose }: { domain: OffsiteDomain; onClose: () => void }) {
-  const { t } = useT();
+  const { t, lang } = useT();
   const { push } = useToast();
   const { key, label } = PATH[domain];
   const [settings, setSettings] = useState<Settings | null>(null);
@@ -69,7 +69,7 @@ export function SectionPathWindow({ domain, onClose }: { domain: OffsiteDomain; 
     revision.current = out.revision;
     stored.current = out.res.ok ? out.sent : (out.fresh ?? stored.current);
     if (!out.res.ok) {
-      push(out.res.error ?? t("settings.error"), "fail");
+      push(placementErrorText(t, lang, out.res, "settings.error"), "fail");
       return false;
     }
     push(t("settings.saved"), "success");

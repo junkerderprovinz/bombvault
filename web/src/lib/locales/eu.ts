@@ -3285,6 +3285,7 @@ const eu: Partial<Translations> = {
   "placementCode.ownFolderUnreadable": "Ezin izan dira irakurri karpeta propio zaharreko babeskopiak, beraz ezin dira kopiatu. Egiaztatu diskoa muntatuta dagoela edo tokiak erantzuten duela, eta saiatu berriro.",
   "placementCode.ownFolderThere": "Hemen dago atal baten karpeta propioa. Lehenik, eraman beste toki batera orri honetako Karpeta propioak atalean. Ondoren, biltegiratze-kokapena kendu daiteke.",
   "placementCode.copyOnOwnFolder": "Atal honek bere karpeta propioa du dagoeneko biltegiratze-kokaleku honetan, beraz han egindako kopia bere gainera eroriko litzateke.",
+  "placementCode.ownFolderOnCopy": "Atal honen kopia bat dago dagoeneko hemen, beraz bere babeskopiak beren gainera kopiatuko lirateke. Karpeta propioa hona ekartzeko, eraman ezazu Karpeta propioak ataletik Ezarpenak, Helmugak orrian, eta horrela kopia amaitzen da.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} zuzenak orain gutxiago gordetzen du. Kopia bakarra hor duten elementuak: {n}.",

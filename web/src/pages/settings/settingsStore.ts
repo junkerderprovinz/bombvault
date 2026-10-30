@@ -15,7 +15,7 @@ import { reposChanged } from "../../lib/useNamedRepos";
 import { storageLocationsChanged } from "../../lib/useStorageLocations";
 import { placementChanged } from "../../lib/placementEvents";
 import { useConfirm } from "../../lib/useConfirm";
-import { pushSaveWarnings } from "../../lib/placementCodes";
+import { placementErrorText, pushSaveWarnings } from "../../lib/placementCodes";
 import type { Settings, Container, VM } from "../../lib/api";
 import { useT } from "../../lib/i18n";
 import { useToast } from "../../lib/toast";
@@ -46,7 +46,7 @@ export function rebaseSettings(live: Settings, base: Settings, fresh: Settings):
 // useSettingsStore loads the settings and owns every write to them.
 // SettingsPage calls it once and hands the result to its pages.
 export function useSettingsStore() {
-  const { t } = useT();
+  const { t, lang } = useT();
   const { push } = useToast();
   const { confirm, confirmDialog } = useConfirm();
   const [allTargets, setAllTargets] = useState<OffsiteTarget[]>([]);
@@ -292,7 +292,7 @@ export function useSettingsStore() {
         return true;
       }
       setSaveState("idle");
-      push(res.error ?? t("settings.error"), "fail");
+      push(placementErrorText(t, lang, res, "settings.error"), "fail");
       return false;
     } catch (err) {
       setSaveState("idle");

@@ -3273,6 +3273,7 @@ const cs: Partial<Translations> = {
   "placementCode.ownFolderUnreadable": "Zálohy ve staré vlastní složce nešlo přečíst, takže je nelze zkopírovat. Zkontroluj, že je disk připojený nebo že místo odpovídá, a zkus to znovu.",
   "placementCode.ownFolderThere": "Tady leží vlastní složka jedné sekce. Nejdřív ji přesuň jinam, v části Vlastní složky na této stránce. Potom půjde úložiště odebrat.",
   "placementCode.copyOnOwnFolder": "Tato sekce už má svou vlastní složku v tomto úložišti, takže kopie tam by skončila sama na sobě.",
+  "placementCode.ownFolderOnCopy": "Tady už leží kopie této sekce, takže by se její zálohy kopírovaly samy na sebe. Pokud sem chceš dát vlastní složku, přesuň ji v části Vlastní složky v Nastavení, Cíle. Tím kopie skončí.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} přímo teď uchovává méně. Položky, jejichž jediná kopie je tam: {n}.",

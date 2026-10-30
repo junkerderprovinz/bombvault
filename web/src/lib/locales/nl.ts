@@ -3274,6 +3274,7 @@ const nl: Partial<Translations> = {
   "placementCode.ownFolderUnreadable": "De back-ups in de oude eigen map konden niet worden gelezen, dus ze kunnen niet worden gekopieerd. Controleer of de schijf gekoppeld is of de plek antwoordt en probeer het opnieuw.",
   "placementCode.ownFolderThere": "Hier staat de eigen map van een onderdeel. Verplaats die eerst naar een andere plek, onder Eigen mappen op deze pagina. Daarna kan de opslaglocatie weg.",
   "placementCode.copyOnOwnFolder": "Deze sectie heeft haar eigen map al op deze opslaglocatie, dus een kopie daar zou op zichzelf terechtkomen.",
+  "placementCode.ownFolderOnCopy": "Hier staat al een kopie van deze sectie, dus haar back-ups zouden op zichzelf worden gekopieerd. Wil je de eigen map hier hebben, verplaats die dan onder Eigen mappen in Instellingen, Bestemmingen. Daarmee stopt die kopie.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} direct bewaart nu minder. Items waarvan de enige kopie daar staat: {n}.",

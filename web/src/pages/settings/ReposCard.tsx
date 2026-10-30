@@ -7,6 +7,7 @@ import { useToast } from "../../lib/toast";
 import { createRepo, listRepos, type NamedRepo } from "../../lib/api";
 import { useT } from "../../lib/i18n";
 import { keptText } from "../../lib/directRepo";
+import { placementErrorText } from "../../lib/placementCodes";
 import { reposChanged } from "../../lib/useNamedRepos";
 import { storageLocationsChanged, useStorageLocationsOnDemand } from "../../lib/useStorageLocations";
 
@@ -55,7 +56,7 @@ export function ReposCard({ hueIndex }: { hueIndex?: number }) {
     try {
       const r = await createRepo({ name: name.trim(), repo: repo.trim(), enabled: true });
       if (!r.ok) {
-        push(r.error ?? t("settings.error"), "fail");
+        push(placementErrorText(t, lang, r, "settings.error"), "fail");
         setShake((n) => n + 1);
         return;
       }

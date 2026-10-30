@@ -2928,7 +2928,8 @@ func (h *Handler) rejectSettingsPathOnNamedRepo(v settingsView, cur store.Settin
 // rejectNestedSettingsPath refuses a save that moves a domain path or an
 // off-site field into or around another repository or target. Like
 // rejectSettingsPathOnNamedRepo it checks only the fields this save changes.
-func (h *Handler) rejectNestedSettingsPath(v settingsView, cur store.Settings) string {
+// The refusal wraps the location check's error, so its code reaches the client.
+func (h *Handler) rejectNestedSettingsPath(v settingsView, cur store.Settings) error {
 	next := cur
 	next.ContainersPath, next.VMsPath, next.FlashPath, next.ConfigPath, next.FilesPath =
 		v.ContainersPath, v.VMsPath, v.FlashPath, v.ConfigPath, v.FilesPath
@@ -2961,17 +2962,31 @@ func (h *Handler) rejectNestedSettingsPath(v settingsView, cur store.Settings) s
 			self = locationSelf{field: f.domain}
 			row, ok, err := h.store.FieldOffsiteTarget(f.domain)
 			if err != nil {
-				return "could not check this path against the off-site targets; try again"
+				return errors.New("could not check this path against the off-site targets; try again")
 			}
 			if ok {
 				self.ids = []string{row.ID}
 			}
 		}
 		if err := h.svc.locationClash(next, loc, self); err != nil {
-			return fmt.Sprintf("the %s path: %s", f.label, scrubError(err))
+			return fmt.Errorf("the %s path: %w", f.label, err)
 		}
 	}
-	return ""
+	return nil
+}
+
+// settingsLocationRefusal runs the location checks of a settings save on next,
+// so a step that writes settings itself, or asks before a save, refuses what
+// the save would.
+func (h *Handler) settingsLocationRefusal(next, cur store.Settings) error {
+	v := toView(next)
+	if msg := rejectInvalidSettingsPaths(v, h.cfg.HostMountRoot); msg != "" {
+		return errors.New(msg)
+	}
+	if msg := h.rejectSettingsPathOnNamedRepo(v, cur); msg != "" {
+		return errors.New(msg)
+	}
+	return h.rejectNestedSettingsPath(v, cur)
 }
 
 // applyOffsiteSettings writes the form's off-site fields onto cur. The GET hands
@@ -3177,8 +3192,8 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": msg})
 		return
 	}
-	if msg := h.rejectNestedSettingsPath(v, cur); msg != "" {
-		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": msg})
+	if err := h.rejectNestedSettingsPath(v, cur); err != nil {
+		placementFail(w, err, nil)
 		return
 	}
 	next := cur

@@ -3275,6 +3275,7 @@ const tr: Partial<Translations> = {
   "placementCode.ownFolderUnreadable": "Eski kendi klasöründeki yedekler okunamadı, bu yüzden kopyalanamıyor. Diskin bağlı olduğunu ya da yerin yanıt verdiğini kontrol et ve yeniden dene.",
   "placementCode.ownFolderThere": "Burada bir bölümün kendi klasörü var. Önce bu sayfadaki Kendi klasörleri bölümünden başka bir yere taşı. Ardından depolama konumu kaldırılabilir.",
   "placementCode.copyOnOwnFolder": "Bu bölümün kendi klasörü zaten bu depolama konumunda, bu yüzden oraya bir kopya kendi üstüne düşerdi.",
+  "placementCode.ownFolderOnCopy": "Bu bölümün bir kopyası zaten burada, bu yüzden yedekleri kendi üstlerine kopyalanırdı. Kendi klasörünü buraya koymak için onu Ayarlar, Hedefler sayfasındaki Kendi klasörleri bölümünden taşı; böylece bu kopya sona erer.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} doğrudan artık daha az tutuyor. Tek kopyası orada olan ögeler: {n}.",

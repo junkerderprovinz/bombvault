@@ -3285,6 +3285,7 @@ const id: Partial<Translations> = {
   "placementCode.ownFolderUnreadable": "Cadangan di folder sendiri yang lama tidak bisa dibaca, jadi tidak bisa disalin. Periksa apakah disk sudah dipasang atau tempat itu merespons, lalu coba lagi.",
   "placementCode.ownFolderThere": "Di sini ada folder sendiri milik sebuah bagian. Pindahkan dulu ke tempat lain di Folder sendiri pada halaman ini. Setelah itu lokasi penyimpanan bisa dihapus.",
   "placementCode.copyOnOwnFolder": "Bagian ini sudah menyimpan folder sendiri di lokasi penyimpanan ini, jadi salinan di sana akan jatuh ke dirinya sendiri.",
+  "placementCode.ownFolderOnCopy": "Salinan bagian ini sudah ada di sini, jadi cadangannya akan tersalin ke dirinya sendiri. Untuk menaruh folder sendiri di sini, pindahkan lewat Folder sendiri di Pengaturan, Tujuan, yang sekaligus mengakhiri salinan itu.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} langsung sekarang menyimpan lebih sedikit. Entri yang satu-satunya salinannya ada di sana: {n}.",

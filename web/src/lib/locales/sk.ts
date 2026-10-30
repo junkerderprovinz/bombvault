@@ -3285,6 +3285,7 @@ const sk: Partial<Translations> = {
   "placementCode.ownFolderUnreadable": "Zálohy v starom vlastnom priečinku sa nepodarilo prečítať, takže ich nemožno skopírovať. Skontroluj, či je disk pripojený alebo či miesto odpovedá, a skús to znova.",
   "placementCode.ownFolderThere": "Tu leží vlastný priečinok jednej sekcie. Najprv ho presuň inam v časti Vlastné priečinky na tejto stránke. Potom bude možné úložisko odstrániť.",
   "placementCode.copyOnOwnFolder": "Táto sekcia už má vlastný priečinok v tomto úložisku, takže kópia tam by skončila sama na sebe.",
+  "placementCode.ownFolderOnCopy": "Tu už leží kópia tejto sekcie, takže jej zálohy by sa kopírovali samy na seba. Ak sem chceš dať vlastný priečinok, presuň ho v časti Vlastné priečinky v Nastavenia, Ciele. Tým sa kópia skončí.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} priamo teraz uchováva menej. Položky, ktorých jediná kópia je tam: {n}.",

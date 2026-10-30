@@ -3276,6 +3276,7 @@ const hu: Partial<Translations> = {
   "placementCode.ownFolderUnreadable": "A régi saját mappában lévő mentéseket nem sikerült beolvasni, ezért nem másolhatók. Nézd meg, hogy a lemez csatolva van-e, vagy a hely válaszol-e, aztán próbáld újra.",
   "placementCode.ownFolderThere": "Itt van egy szakasz saját mappája. Előbb költöztesd máshová az oldal Saját mappák részében. Utána a tárolási hely eltávolítható.",
   "placementCode.copyOnOwnFolder": "Ennek a résznek a saját mappája már ezen a tárolási helyen van, így egy másolat ott önmagára kerülne.",
+  "placementCode.ownFolderOnCopy": "Ennek a résznek már van itt egy másolata, így a mentései önmagukra másolódnának. Ha ide szeretnéd tenni a saját mappát, költöztesd át a Saját mappák részben a Beállítások, Célok oldalon, ezzel a másolat megszűnik.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} közvetlenül most kevesebbet őriz meg. Elemek, amelyeknek egyetlen másolata ott van: {n}.",

@@ -343,7 +343,7 @@ func (h *Handler) handleCreateNamedRepo(w http.ResponseWriter, r *http.Request) 
 		row.OffPremises = restic.IsRemoteRepo(row.Repo)
 	}
 	if err := h.validateNamedRepo(row, body.StorageClass != nil, true); err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
+		placementFail(w, err, nil)
 		return
 	}
 	saved, err := h.store.UpsertOffsiteTarget(row)
@@ -388,7 +388,7 @@ func (h *Handler) handleUpdateNamedRepo(w http.ResponseWriter, r *http.Request) 
 	moving := body.Repo != nil && strings.TrimSpace(*body.Repo) != current
 	body.applyTo(&row)
 	if err := h.validateNamedRepo(row, body.StorageClass != nil, moving); err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
+		placementFail(w, err, nil)
 		return
 	}
 	// The everything-but-the-location write goes FIRST, with the location left as

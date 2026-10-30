@@ -244,6 +244,7 @@ func TestPlacementRefusalsCarryTheirCodes(t *testing.T) {
 		errDefaultRepoMissing:      "default-repo-missing",
 		errNestedLocation:          "nested-location",
 		errCopyOnOwnFolder:         "copy-on-own-folder",
+		errOwnFolderOnCopy:         "own-folder-on-copy",
 		errMirroredField:           "mirrored-field",
 		store.ErrCompanionTaken:    "companion-taken",
 		store.ErrNotOffsiteTarget:  "unknown-target",

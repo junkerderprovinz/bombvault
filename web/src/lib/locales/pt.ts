@@ -3275,6 +3275,7 @@ const pt: Partial<Translations> = {
   "placementCode.ownFolderUnreadable": "Não foi possível ler os backups da pasta própria antiga, por isso não podem ser copiados. Verifica se o disco está montado ou se o local responde e tenta de novo.",
   "placementCode.ownFolderThere": "Aqui está a pasta própria de uma secção. Move-a primeiro para outro sítio, em Pastas próprias nesta página. Depois o local de armazenamento pode ser removido.",
   "placementCode.copyOnOwnFolder": "Esta secção já tem a pasta própria neste local de armazenamento, por isso uma cópia ali cairia sobre si mesma.",
+  "placementCode.ownFolderOnCopy": "Já existe aqui uma cópia desta secção, por isso as cópias de segurança seriam copiadas sobre si mesmas. Para pôr aqui a pasta própria, move-a em Pastas próprias em Definições, Destinos, o que termina essa cópia.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} direto agora conserva menos. Entradas cuja única cópia está lá: {n}.",

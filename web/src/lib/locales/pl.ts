@@ -3272,6 +3272,7 @@ const pl: Partial<Translations> = {
   "placementCode.ownFolderUnreadable": "Nie udało się odczytać kopii zapasowych ze starego własnego folderu, więc nie da się ich skopiować. Sprawdź, czy dysk jest zamontowany albo czy miejsce odpowiada, i spróbuj ponownie.",
   "placementCode.ownFolderThere": "Tu leży własny folder jednej z sekcji. Najpierw przenieś go gdzie indziej w części Własne foldery na tej stronie. Potem miejsce przechowywania da się usunąć.",
   "placementCode.copyOnOwnFolder": "Ta sekcja ma już własny folder w tej lokalizacji, więc kopia tam trafiłaby sama na siebie.",
+  "placementCode.ownFolderOnCopy": "Kopia tej sekcji już tu leży, więc jej kopie zapasowe kopiowałyby się same na siebie. Aby umieścić tu własny folder, przenieś go w części Własne foldery w Ustawienia, Miejsca docelowe. To kończy tę kopię.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} bezpośrednio przechowuje teraz mniej. Elementy, których jedyna kopia tam jest: {n}.",

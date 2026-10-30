@@ -3285,6 +3285,7 @@ const hr: Partial<Translations> = {
   "placementCode.ownFolderUnreadable": "Sigurnosne kopije u staroj vlastitoj mapi nije bilo moguće pročitati, pa se ne mogu kopirati. Provjerite je li disk montiran ili odgovara li mjesto pa pokušajte ponovno.",
   "placementCode.ownFolderThere": "Ovdje je vlastita mapa jednog odjeljka. Najprije je premjestite drugamo, pod Vlastite mape na ovoj stranici. Nakon toga se mjesto pohrane može ukloniti.",
   "placementCode.copyOnOwnFolder": "Ovaj odjeljak već ima vlastitu mapu na ovoj lokaciji za pohranu, pa bi kopija tamo pala sama na sebe.",
+  "placementCode.ownFolderOnCopy": "Ovdje već postoji kopija ovog odjeljka, pa bi se njegove sigurnosne kopije kopirale same na sebe. Da biste vlastitu mapu stavili ovdje, premjestite je pod Vlastite mape u Postavke, Odredišta, čime ta kopija prestaje.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} izravno sada čuva manje. Stavke čija je jedina kopija ondje: {n}.",

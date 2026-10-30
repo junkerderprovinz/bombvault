@@ -3269,6 +3269,7 @@ const sl: Partial<Translations> = {
   "placementCode.ownFolderUnreadable": "Varnostnih kopij v stari lastni mapi ni bilo mogoče prebrati, zato jih ni mogoče kopirati. Preveri, da je disk priklopljen ali da mesto odgovarja, in poskusi znova.",
   "placementCode.ownFolderThere": "Tu je lastna mapa enega od razdelkov. Najprej jo premakni drugam pod Lastne mape na tej strani. Nato je mesto shranjevanja mogoče odstraniti.",
   "placementCode.copyOnOwnFolder": "Ta razdelek že ima lastno mapo na tej lokaciji shrambe, zato bi kopija tja pristala sama na sebi.",
+  "placementCode.ownFolderOnCopy": "Tu je že kopija tega razdelka, zato bi se njegove varnostne kopije kopirale same nase. Če želiš lastno mapo tukaj, jo premakni pod Lastne mape v Nastavitve, Cilji, s tem se kopija konča.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} neposredno zdaj hrani manj. Vnosi, katerih edina kopija je tam: {n}.",

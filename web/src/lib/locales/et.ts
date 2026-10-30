@@ -3285,6 +3285,7 @@ const et: Partial<Translations> = {
   "placementCode.ownFolderUnreadable": "Vana oma kausta varukoopiaid ei õnnestunud lugeda, seega ei saa neid kopeerida. Kontrolli, et ketas oleks ühendatud või asukoht vastaks, ja proovi uuesti.",
   "placementCode.ownFolderThere": "Siin asub ühe jaotise oma kaust. Teisalda see enne mujale, sellel lehel jaotises Oma kaustad. Seejärel saab salvestuskoha eemaldada.",
   "placementCode.copyOnOwnFolder": "Selle jaotise oma kaust on juba selles salvestuskohas, nii et koopia sinna satuks iseenda peale.",
+  "placementCode.ownFolderOnCopy": "Siin on juba selle jaotise koopia, nii et selle varukoopiad kopeeritaks iseenda peale. Kui tahad oma kausta siia panna, teisalda see jaotises Oma kaustad lehel Seaded, Sihtkohad. Siis koopia lõpeb.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} otse säilitab nüüd vähem. Kirjed, mille ainus koopia on seal: {n}.",

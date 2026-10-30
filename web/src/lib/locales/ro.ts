@@ -3276,6 +3276,7 @@ const ro: Partial<Translations> = {
   "placementCode.ownFolderUnreadable": "Copiile de rezervă din vechiul dosar propriu nu au putut fi citite, așa că nu pot fi copiate. Verifică dacă discul este montat sau dacă locul răspunde, apoi încearcă din nou.",
   "placementCode.ownFolderThere": "Aici se află dosarul propriu al unei secțiuni. Mută-l mai întâi în alt loc, la Dosare proprii pe această pagină. Apoi locația de stocare poate fi eliminată.",
   "placementCode.copyOnOwnFolder": "Această secțiune are deja dosarul propriu în această locație de stocare, așa că o copie acolo ar ajunge peste ea însăși.",
+  "placementCode.ownFolderOnCopy": "Aici se află deja o copie a acestei secțiuni, așa că backup-urile ei s-ar copia peste ele însele. Ca să pui aici dosarul propriu, mută-l la Dosare proprii în Setări, Destinații, iar copia se încheie.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} direct păstrează acum mai puțin. Elemente a căror unică copie este acolo: {n}.",

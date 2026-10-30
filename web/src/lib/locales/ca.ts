@@ -3285,6 +3285,7 @@ const ca: Partial<Translations> = {
   "placementCode.ownFolderUnreadable": "No s'han pogut llegir les còpies de seguretat de la carpeta pròpia antiga, així que no es poden copiar. Comprova que el disc estigui muntat o que el lloc respongui i torna-ho a provar.",
   "placementCode.ownFolderThere": "Aquí hi ha la carpeta pròpia d'una secció. Primer mou-la a un altre lloc, a Carpetes pròpies en aquesta pàgina. Després es pot eliminar la ubicació d'emmagatzematge.",
   "placementCode.copyOnOwnFolder": "Aquesta secció ja té la seva carpeta pròpia en aquesta ubicació, així que una còpia allà cauria sobre si mateixa.",
+  "placementCode.ownFolderOnCopy": "Aquí ja hi ha una còpia d'aquesta secció, així que les seves còpies de seguretat es copiarien sobre si mateixes. Per posar-hi la carpeta pròpia, mou-la a Carpetes pròpies a Configuració, Destinacions, i així s'acaba la còpia.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} directe ara conserva menys. Elements l'única còpia dels quals hi és: {n}.",

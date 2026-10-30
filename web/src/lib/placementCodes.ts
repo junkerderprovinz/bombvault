@@ -50,6 +50,7 @@ const CODE_KEYS: Record<string, TranslationKey> = {
   "own-folder-unreadable": "placementCode.ownFolderUnreadable",
   "own-folder-there": "placementCode.ownFolderThere",
   "copy-on-own-folder": "placementCode.copyOnOwnFolder",
+  "own-folder-on-copy": "placementCode.ownFolderOnCopy",
 };
 
 const WARNING_KEYS: Record<SaveWarning["code"], TranslationKey> = {

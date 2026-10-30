@@ -3275,6 +3275,7 @@ const da: Partial<Translations> = {
   "placementCode.ownFolderUnreadable": "Sikkerhedskopierne i den gamle egne mappe kunne ikke læses, så de kan ikke kopieres. Tjek, at disken er monteret, eller at stedet svarer, og prøv igen.",
   "placementCode.ownFolderThere": "Her ligger et områdes egen mappe. Flyt den først et andet sted hen under Egne mapper på denne side. Derefter kan lagerstedet fjernes.",
   "placementCode.copyOnOwnFolder": "Denne sektion har allerede sin egen mappe på denne lagerplacering, så en kopi dér ville lande oven i sig selv.",
+  "placementCode.ownFolderOnCopy": "Der ligger allerede en kopi af denne sektion her, så dens backups ville blive kopieret oven i sig selv. For at lægge den egne mappe her skal du flytte den under Egne mapper i Indstillinger, Destinationer, hvilket afslutter kopien.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} direkte bevarer nu mindre. Elementer hvis eneste kopi ligger der: {n}.",
