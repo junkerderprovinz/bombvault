@@ -141,7 +141,7 @@ func (s *Service) drainProbeQueue() {
 // item already has one or was first backed up before probes existed. A probe
 // that never got its turn leaves no row, so the next backup asks again.
 func (s *Service) firstProbe(ctx context.Context, targetID string) {
-	due, snapshotID, err := s.firstProbeDue(targetID)
+	due, run, err := s.firstProbeDue(targetID)
 	if err != nil {
 		log.Printf("api: restore probe %s: %v", targetID, err) //nolint:gosec // G706: targetID is a stored id
 		return
@@ -160,7 +160,7 @@ func (s *Service) firstProbe(ctx context.Context, targetID string) {
 		return
 	}
 	defer unlock()
-	rec, err := s.probeAndRecord(ctx, it, snapshotID, "first")
+	rec, err := s.probeAndRecord(ctx, it, run, "first")
 	switch {
 	case errors.Is(err, errNothingToDrill):
 		return
@@ -174,24 +174,24 @@ func (s *Service) firstProbe(ctx context.Context, targetID string) {
 }
 
 // firstProbeDue reports whether an item is owed its first-backup probe, and
-// the snapshot of that backup.
-func (s *Service) firstProbeDue(targetID string) (bool, string, error) {
+// the run of that backup.
+func (s *Service) firstProbeDue(targetID string) (bool, store.Run, error) {
 	if _, found, err := s.store.LatestItemProbe(targetID); err != nil || found {
-		return false, "", err
+		return false, store.Run{}, err
 	}
 	since, err := s.store.FirstProbesSince()
 	if err != nil {
-		return false, "", err
+		return false, store.Run{}, err
 	}
 	first, err := s.store.FirstSuccessfulBackupAt(targetID)
 	if err != nil || first == 0 || first < since {
-		return false, "", err
+		return false, store.Run{}, err
 	}
 	run, err := s.store.LastSuccessfulBackup(targetID)
 	if err != nil || run == nil || run.SnapshotID == "" {
-		return false, "", err
+		return false, store.Run{}, err
 	}
-	return true, run.SnapshotID, nil
+	return true, *run, nil
 }
 
 // OpenScheduledRun marks a scheduled multi-item run of domain as open until
@@ -218,11 +218,12 @@ func (s *Service) scheduledRunOpen(domain string) bool {
 
 // waitProbeLock takes the domain once nothing else wants it: a batch, a
 // Backup Everything pass or a scheduled run of the domain keeps going first,
-// since a probe between two of its items would hold the next one up.
+// since a probe between two of its items would hold the next one up, and so
+// does the removal of a storage location, which somebody waits for.
 func (s *Service) waitProbeLock(domain string) (func(), bool) {
 	deadline := time.Now().Add(drillLockWait)
 	for {
-		if !s.batchActive.Load() && !s.everythingActive.Load() && !s.scheduledRunOpen(domain) {
+		if !s.batchActive.Load() && !s.everythingActive.Load() && !s.scheduledRunOpen(domain) && !s.domainIsWanted(domain) {
 			if unlock, ok := s.tryLockDomainFor(domain, "verify"); ok {
 				return unlock, true
 			}
@@ -253,7 +254,7 @@ func (s *Service) ProbeItem(ctx context.Context, targetID string) (store.ItemPro
 		return store.ItemProbe{}, errProbeBusy
 	}
 	defer unlock()
-	rec, err := s.probeAndRecord(ctx, it, run.SnapshotID, "manual")
+	rec, err := s.probeAndRecord(ctx, it, *run, "manual")
 	switch {
 	case errors.Is(err, errNothingToDrill):
 		return store.ItemProbe{}, errors.New("this backup holds no files, so there is nothing to check")
@@ -263,19 +264,20 @@ func (s *Service) ProbeItem(ctx context.Context, targetID string) (store.ItemPro
 	return rec, nil
 }
 
-// probeAndRecord runs one probe under the caller's domain lock and stores its
-// outcome. A snapshot without files records nothing.
-func (s *Service) probeAndRecord(ctx context.Context, it probeItem, snapshotID, trigger string) (store.ItemProbe, error) {
+// probeAndRecord runs one probe of the backup run made, under the caller's
+// domain lock, and stores its outcome. A snapshot without files records
+// nothing.
+func (s *Service) probeAndRecord(ctx context.Context, it probeItem, run store.Run, trigger string) (store.ItemProbe, error) {
 	key := "probe:" + it.domain + ":" + it.name
 	pctx, startedAt := s.progBegin(context.WithoutCancel(ctx), key, "maintenance")
-	res, err := s.runItemProbe(pctx, it, snapshotID)
+	res, err := s.runItemProbe(pctx, it, run)
 	s.progEnd(key, "maintenance", err == nil, startedAt)
 	if errors.Is(err, errNothingToDrill) || errors.Is(err, errProbeSnapshotElsewhere) {
 		return store.ItemProbe{}, err
 	}
 	rec := store.ItemProbe{
 		TargetID: it.targetID, Domain: it.domain, At: time.Now().Unix(),
-		OK: err == nil, SnapshotID: snapshotID, Files: res.files, Bytes: res.bytes, Trigger: trigger,
+		OK: err == nil, SnapshotID: run.SnapshotID, Files: res.files, Bytes: res.bytes, Trigger: trigger,
 	}
 	if err != nil {
 		rec.Detail = truncateDetail(scrubError(err))
@@ -298,10 +300,11 @@ type probeResult struct {
 	bytes int64
 }
 
-// runItemProbe restores a sample of a snapshot into a sandbox with restic's
-// own read-back check, compares every restored size with the listing, and
-// streams the start of the largest file when it was too big for the sample.
-func (s *Service) runItemProbe(ctx context.Context, it probeItem, snapshotID string) (probeResult, error) {
+// runItemProbe restores a sample of the snapshot run made into a sandbox with
+// restic's own read-back check, compares every restored size with the
+// listing, and streams the start of the largest file when it was too big for
+// the sample.
+func (s *Service) runItemProbe(ctx context.Context, it probeItem, run store.Run) (probeResult, error) {
 	ctx, cancel := context.WithTimeout(ctx, probeTimeout)
 	defer cancel()
 	settings, err := s.store.GetSettings()
@@ -318,6 +321,10 @@ func (s *Service) runItemProbe(ctx context.Context, it probeItem, snapshotID str
 	// to it is billed.
 	if !restic.IsRemoteRepo(repo) {
 		s.unlockStale(ctx, repo, mode)
+	}
+	snapshotID, err := s.probeSnapshot(ctx, it, repo, mode, run)
+	if err != nil {
+		return probeResult{}, err
 	}
 	sampler := newProbeSampler(rand.New(rand.NewPCG(uint64(time.Now().UnixNano()), 0))) //nolint:gosec // G404: picks which files to read back, nothing secret
 	layout := blockLayout{}
@@ -387,6 +394,50 @@ func (s *Service) runItemProbe(ctx context.Context, it probeItem, snapshotID str
 		res.bytes += n
 	}
 	return res, nil
+}
+
+// probeSnapshot is the id the probe reads the snapshot of run under in repo:
+// its own, or that of the copy a move of the own folder brought along. A
+// repository that may have lost the snapshot since is listed first, so restic
+// is not sent after a backup that stayed in the old own folder.
+func (s *Service) probeSnapshot(ctx context.Context, it probeItem, repo string, mode restic.Mode, run store.Run) (string, error) {
+	if !s.snapshotMayBeGone(it, repo, run) {
+		return run.SnapshotID, nil
+	}
+	snaps, err := s.listRepo(ctx, repo, mode)
+	if err != nil {
+		// The listing that follows says what is wrong with the repository.
+		return run.SnapshotID, nil
+	}
+	if id, ok := heldAs(snaps, run.SnapshotID); ok {
+		return id, nil
+	}
+	return "", errProbeSnapshotElsewhere
+}
+
+// snapshotMayBeGone reports whether repo may not hold the snapshot of run. A
+// folder on this host answers from its snapshot files. A remote one is asked
+// only when the item's place changed after the run, since every call to it is
+// billed.
+func (s *Service) snapshotMayBeGone(it probeItem, repo string, run store.Run) bool {
+	if names, err := snapshotFileNames(repo); err == nil {
+		return !slices.ContainsFunc(strings.Split(names, "\n"), func(name string) bool {
+			return strings.HasPrefix(name, run.SnapshotID)
+		})
+	}
+	changed, err := s.store.PlaceChangedSince(it.domain, it.targetID, run.StartedAt)
+	return err != nil || changed
+}
+
+// heldAs finds the snapshot id, whole or short, in snaps, or the copy of it
+// restic copy made, and returns the id it is listed under.
+func heldAs(snaps []restic.Snapshot, id string) (string, bool) {
+	for _, sn := range snaps {
+		if strings.HasPrefix(sn.ID, id) || (sn.Original != "" && strings.HasPrefix(sn.Original, id)) {
+			return sn.ID, true
+		}
+	}
+	return "", false
 }
 
 // snapshotNotIn reports whether repo answers its listing without the snapshot.
