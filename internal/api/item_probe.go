@@ -36,6 +36,11 @@ var probeLockPoll = 15 * time.Second
 
 var errProbeBusy = errors.New("a backup or another check is running for this item's domain; try again when it finishes")
 
+// errProbeSnapshotElsewhere is a backup the item's repository does not hold,
+// as after its own folder moved without the backups made before. The next
+// backup lands where the probe reads.
+var errProbeSnapshotElsewhere = errors.New("the newest backup of this item stayed in its old own folder, so the restore can be checked after the next backup")
+
 // probeItem is the item a probe reads: its target id, its domain and the key
 // its repository is looked up by (a container or VM name, a folder set or
 // dataset id, nothing for flash and config).
@@ -156,7 +161,11 @@ func (s *Service) firstProbe(ctx context.Context, targetID string) {
 	}
 	defer unlock()
 	rec, err := s.probeAndRecord(ctx, it, snapshotID, "first")
-	if errors.Is(err, errNothingToDrill) {
+	switch {
+	case errors.Is(err, errNothingToDrill):
+		return
+	case errors.Is(err, errProbeSnapshotElsewhere):
+		log.Printf("api: restore probe of %q waits for the next backup: its first one stayed in the old own folder", it.name) //nolint:gosec // G706: %q-quoted
 		return
 	}
 	if !rec.OK {
@@ -245,8 +254,11 @@ func (s *Service) ProbeItem(ctx context.Context, targetID string) (store.ItemPro
 	}
 	defer unlock()
 	rec, err := s.probeAndRecord(ctx, it, run.SnapshotID, "manual")
-	if errors.Is(err, errNothingToDrill) {
+	switch {
+	case errors.Is(err, errNothingToDrill):
 		return store.ItemProbe{}, errors.New("this backup holds no files, so there is nothing to check")
+	case errors.Is(err, errProbeSnapshotElsewhere):
+		return store.ItemProbe{}, err
 	}
 	return rec, nil
 }
@@ -258,7 +270,7 @@ func (s *Service) probeAndRecord(ctx context.Context, it probeItem, snapshotID, 
 	pctx, startedAt := s.progBegin(context.WithoutCancel(ctx), key, "maintenance")
 	res, err := s.runItemProbe(pctx, it, snapshotID)
 	s.progEnd(key, "maintenance", err == nil, startedAt)
-	if errors.Is(err, errNothingToDrill) {
+	if errors.Is(err, errNothingToDrill) || errors.Is(err, errProbeSnapshotElsewhere) {
 		return store.ItemProbe{}, err
 	}
 	rec := store.ItemProbe{
@@ -307,7 +319,6 @@ func (s *Service) runItemProbe(ctx context.Context, it probeItem, snapshotID str
 	if !restic.IsRemoteRepo(repo) {
 		s.unlockStale(ctx, repo, mode)
 	}
-
 	sampler := newProbeSampler(rand.New(rand.NewPCG(uint64(time.Now().UnixNano()), 0))) //nolint:gosec // G404: picks which files to read back, nothing secret
 	layout := blockLayout{}
 	if err := s.retryAfterUnlock(ctx, repo, mode, func() error {
@@ -318,6 +329,9 @@ func (s *Service) runItemProbe(ctx context.Context, it probeItem, snapshotID str
 			}
 		})
 	}); err != nil {
+		if s.snapshotNotIn(ctx, repo, mode, snapshotID) {
+			return probeResult{}, errProbeSnapshotElsewhere
+		}
 		return probeResult{}, fmt.Errorf("list the backup: %w", err)
 	}
 	// A changed-block snapshot is a set of segments per disk. The sample reads
@@ -373,6 +387,16 @@ func (s *Service) runItemProbe(ctx context.Context, it probeItem, snapshotID str
 		res.bytes += n
 	}
 	return res, nil
+}
+
+// snapshotNotIn reports whether repo answers its listing without the snapshot.
+// A listing that fails says nothing either way.
+func (s *Service) snapshotNotIn(ctx context.Context, repo string, mode restic.Mode, snapshotID string) bool {
+	snaps, err := s.listRepo(ctx, repo, mode)
+	if err != nil {
+		return false
+	}
+	return !slices.ContainsFunc(snaps, func(sn restic.Snapshot) bool { return strings.HasPrefix(sn.ID, snapshotID) })
 }
 
 // errHeadRead stops a dump once enough of the file came back.

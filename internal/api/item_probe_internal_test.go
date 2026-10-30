@@ -31,6 +31,13 @@ type probeEngine struct {
 	calls    []string
 	// dumps are whole files DumpRaw hands back instead of an endless stream.
 	dumps map[string][]byte
+	// lsErr fails the listing, and snaps is what the repository lists then.
+	lsErr error
+	snaps []restic.Snapshot
+}
+
+func (e *probeEngine) Snapshots(context.Context, string, restic.Mode) ([]restic.Snapshot, error) {
+	return e.snaps, nil
 }
 
 func (e *probeEngine) Unlock(_ context.Context, _ string, removeAll bool, _ restic.Mode) error {
@@ -39,6 +46,9 @@ func (e *probeEngine) Unlock(_ context.Context, _ string, removeAll bool, _ rest
 }
 
 func (e *probeEngine) LsStream(_ context.Context, _, _ string, _ restic.Mode, onEntry func(restic.FileEntry)) error {
+	if e.lsErr != nil {
+		return e.lsErr
+	}
 	for _, en := range e.entries {
 		onEntry(en)
 	}
@@ -353,5 +363,59 @@ func TestItemProbeOfARemoteRepositoryUnlocksNothingWithoutALock(t *testing.T) {
 	}
 	if !slices.Contains(eng.calls, "RestoreVerify") {
 		t.Fatalf("calls = %v, the probe never read anything back", eng.calls)
+	}
+}
+
+// movedProbeService is a probe of nextcloud whose own folder moved to a remote
+// place without its backups: the last run's snapshot is not listed there.
+func movedProbeService(t *testing.T, listed ...restic.Snapshot) (*Service, store.Target) {
+	t.Helper()
+	eng := &probeEngine{lsErr: errors.New(`restic ls: Fatal: no matching ID found for prefix "abcd1234"`), snaps: listed}
+	s, tg := newProbeService(t, eng)
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	settings.ContainersPath = "s3:https://s3.example.com/bucket/moved"
+	if err := s.store.UpdateSettings(settings); err != nil {
+		t.Fatal(err)
+	}
+	recordBackup(t, s.store, tg.ID, "abcd1234")
+	return s, tg
+}
+
+func TestTheFirstProbeOfABackupLeftInTheOldOwnFolderWaitsForTheNextBackup(t *testing.T) {
+	s, tg := movedProbeService(t, restic.Snapshot{ID: "ef567890ef567890"})
+
+	out := captureLog(t, func() { s.firstProbe(context.Background(), tg.ID) })
+
+	if _, found, err := s.store.LatestItemProbe(tg.ID); err != nil || found {
+		t.Fatalf("probe recorded = %v, %v, want none so the next backup is probed", found, err)
+	}
+	if !strings.Contains(out, "waits for the next backup") || strings.Contains(out, "no matching ID") {
+		t.Fatalf("log = %q, want the wait said plainly without restic's error", out)
+	}
+}
+
+func TestACheckOfABackupLeftInTheOldOwnFolderSaysToWaitForTheNextBackup(t *testing.T) {
+	s, tg := movedProbeService(t)
+
+	if _, err := s.ProbeItem(context.Background(), tg.ID); !errors.Is(err, errProbeSnapshotElsewhere) {
+		t.Fatalf("err = %v, want errProbeSnapshotElsewhere", err)
+	}
+	if _, found, _ := s.store.LatestItemProbe(tg.ID); found {
+		t.Fatal("a backup that is not there must not record a failed probe")
+	}
+}
+
+func TestAProbeThatCannotListABackupTheRepositoryHoldsStillFails(t *testing.T) {
+	s, tg := movedProbeService(t, restic.Snapshot{ID: "abcd1234abcd1234"})
+
+	rec, err := s.ProbeItem(context.Background(), tg.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if rec.OK || !strings.Contains(rec.Detail, "list the backup") {
+		t.Fatalf("probe = %+v, want the failed listing recorded", rec)
 	}
 }
