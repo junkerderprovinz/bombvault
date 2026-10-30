@@ -694,11 +694,36 @@ func (r *Repo) RemoveDestination(id string, behind func(t OffsiteTarget, s Setti
 // the way RemoveDestination deletes the targets of one. settle gets the domain
 // when it was the section's primary off-site target.
 func (r *Repo) RemoveOffsiteTarget(id string, settle func(s *Settings, primaries []string)) error {
+	err := r.removeTarget(id, ` AND destination_id = ''`, func(s *Settings, t OffsiteTarget) bool {
+		if t.SortOrder != 0 {
+			return false
+		}
+		settle(s, []string{t.Domain})
+		return true
+	})
+	if err != nil {
+		return fmt.Errorf("RemoveOffsiteTarget: %w", err)
+	}
+	return nil
+}
+
+// RemoveCopyOnOwnFolder deletes an off-site target that sits on its section's
+// own folder, the way RemoveOffsiteTarget does, whether it follows a
+// destination or not. settle reports whether it changed the settings.
+func (r *Repo) RemoveCopyOnOwnFolder(id string, settle func(s *Settings, t OffsiteTarget) bool) error {
+	if err := r.removeTarget(id, "", settle); err != nil {
+		return fmt.Errorf("RemoveCopyOnOwnFolder: %w", err)
+	}
+	return nil
+}
+
+func (r *Repo) removeTarget(id, only string, settle func(s *Settings, t OffsiteTarget) bool) error {
 	r.settingsMu.Lock()
 	defer r.settingsMu.Unlock()
-	err := r.inTx(func(tx *sql.Tx) error {
+	return r.inTx(func(tx *sql.Tx) error {
+		//nolint:gosec // G202: only is one of the two fixed clauses its callers pass.
 		t, err := scanOffsiteTarget(tx.QueryRow(`SELECT `+offsiteTargetCols+`
-			FROM offsite_targets WHERE id = ? AND role = ? AND destination_id = ''`, id, RoleOffsite))
+			FROM offsite_targets WHERE id = ? AND role = ?`+only, id, RoleOffsite))
 		if err != nil {
 			return err
 		}
@@ -708,15 +733,12 @@ func (r *Repo) RemoveOffsiteTarget(id string, settle func(s *Settings, primaries
 		if err := deleteTargetKeepingDirectTx(tx, t.ID); err != nil {
 			return err
 		}
-		if t.SortOrder != 0 {
-			return nil
+		s, err := getSettings(tx)
+		if err != nil || !settle(&s, t) {
+			return err
 		}
-		return settleTx(tx, func(s *Settings) { settle(s, []string{t.Domain}) })
+		return updateSettings(tx, s)
 	})
-	if err != nil {
-		return fmt.Errorf("RemoveOffsiteTarget: %w", err)
-	}
-	return nil
 }
 
 // dropUnusedDirectTx deletes a target's direct repository when no item and no

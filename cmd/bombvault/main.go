@@ -356,6 +356,9 @@ func run() error {
 	if err := svc.WriteRcloneConfFile(); err != nil {
 		log.Printf("rclone: write config: %v", err) // non-fatal: off-site stays unavailable until fixed
 	}
+	if err := svc.RemoveCopiesOnOwnFolders(); err != nil {
+		log.Printf("offsite: remove copies on their own folder: %v", err)
+	}
 	if n, mErr := svc.MoveTargetsOffPrimarySlot(); mErr != nil {
 		log.Printf("offsite: move additional targets off sort order 0: %v", mErr)
 	} else if n > 0 {
