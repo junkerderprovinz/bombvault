@@ -2172,10 +2172,11 @@ body {
   --color-accentSoft: var(--item-hue-soft);
 }
 
-/* A bar whose value changes all the time keeps each step inside it, so the
-   page around it is not laid out again (rule 37). Paint containment would clip
-   what the bar draws past its edge. A contained box takes no height from its
-   content, so every bar that wears this sets its own. */
+/* A bar or meter whose value changes all the time keeps each step inside it,
+   so the page around it is not laid out again (rule 37). Paint containment
+   would clip what the bar draws past its edge, such as a label above it. A
+   contained box takes no height from its content, so every bar that wears
+   this sets a real one. */
 .glim-meter { contain: size layout; }
 
 /* Indeterminate progress: a short accent segment sliding from start to end,
