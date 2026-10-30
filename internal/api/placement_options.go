@@ -301,10 +301,11 @@ func (h *Handler) handleNewTargetPreview(w http.ResponseWriter, r *http.Request)
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"preview": pv}))
 }
 
-// newLocationRefusal is the refusal the save after the question would meet on
-// loc: as the domain's off-site field ("field") or as the target with the id
-// ("target", "" for a new one). Without as the location is not checked, since
-// what it becomes is not known.
+// newLocationRefusal is the refusal a save of loc meets as the domain's
+// off-site field ("field") or as the target with the id ("target", "" for a
+// new one). The question before such a save asks it first, so it never opens
+// on a location the save refuses. Without as the location is not checked,
+// since what it becomes is not known.
 func (h *Handler) newLocationRefusal(domain, targetID, loc, as string) error {
 	loc = strings.TrimSpace(loc)
 	switch as {

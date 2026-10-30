@@ -184,6 +184,12 @@ func (h *Handler) handleAcceptMeshOffer(w http.ResponseWriter, r *http.Request) 
 			return
 		}
 	}
+	// The peer names the location, and it is held to what a target typed in
+	// here is held to.
+	if err := h.newLocationRefusal(in.Domain, "", offer.Repo, "target"); err != nil {
+		placementFail(w, err, nil)
+		return
+	}
 	password, err := secret.Decrypt(h.cfg.AppKey, offer.RESTPasswordEnc)
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(fmt.Errorf("decrypt offer credential: %w", err)))
