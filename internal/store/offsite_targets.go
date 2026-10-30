@@ -1172,9 +1172,8 @@ func releaseDirectTx(tx *sql.Tx, id string) error {
 	return err
 }
 
-// ReleaseDirectOfGoneTarget turns the direct repository of a target that no
-// longer exists into a named repository of its own, as removing the target
-// would have.
+// ReleaseDirectOfGoneTarget turns the direct repository of a target that is
+// gone into a named repository of its own, as removing the target would have.
 func (r *Repo) ReleaseDirectOfGoneTarget(targetID string) error {
 	err := r.inTx(func(tx *sql.Tx) error {
 		var held bool
