@@ -28,6 +28,10 @@ type migration struct {
 	// migration error, the container does not start. See the NUMBERING HAZARD
 	// note above v90.
 	alreadySatisfied func(*sql.Tx) (bool, error)
+
+	// report, when non-nil, reads before the body what the body is about to
+	// change and returns a line for each, logged once the version commits.
+	report func(*sql.Tx) ([]string, error)
 }
 
 // columnPresent reports whether table already has column. It is the probe behind
@@ -3553,7 +3557,33 @@ UPDATE offsite_targets SET
 		version: removedSkipsMigration,
 		name:    "skips_without_removed_targets",
 		sql:     droppedSkipSQL("placement_defaults") + droppedSkipSQL("offsite_copy_rules"),
+		report:  droppedSkipLines,
 	},
+}
+
+// droppedSkipLines names each id droppedSkipSQL takes out, once per domain, in
+// the words of the repair at start.
+func droppedSkipLines(tx *sql.Tx) ([]string, error) {
+	gone := func(table string) string {
+		return `SELECT t.domain, j.value
+  FROM ` + table + ` t, json_each(CASE WHEN json_valid(t.skip) THEN t.skip ELSE '[]' END) j
+ WHERE j.value <> '*'
+   AND j.value NOT IN (SELECT id FROM offsite_targets WHERE role = 'offsite' AND domain = t.domain)`
+	}
+	rows, err := tx.Query(gone("placement_defaults") + ` UNION ` + gone("offsite_copy_rules") + ` ORDER BY 1, 2`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close() //nolint:errcheck // read-only
+	var lines []string
+	for rows.Next() {
+		var domain, id string
+		if err := rows.Scan(&domain, &id); err != nil {
+			return nil, err
+		}
+		lines = append(lines, fmt.Sprintf("placement: took %s out of the %s skip lists, since no copy of the section has that id", id, domain))
+	}
+	return lines, rows.Err()
 }
 
 // droppedSkipSQL takes out of table's skip lists every id that names no
@@ -3989,6 +4019,13 @@ func Migrate(db *sql.DB) error {
 				)
 			}
 		}
+		var lines []string
+		if run && m.report != nil {
+			if lines, err = m.report(tx); err != nil {
+				tx.Rollback() //nolint:errcheck,gosec // best-effort rollback; original error takes priority
+				return fmt.Errorf("migrate: read v%d (%s): %w", m.version, m.name, err)
+			}
+		}
 		if run {
 			if _, err := tx.Exec(m.sql); err != nil {
 				tx.Rollback() //nolint:errcheck,gosec // best-effort rollback; original error takes priority
@@ -4005,6 +4042,9 @@ func Migrate(db *sql.DB) error {
 		}
 		if err := tx.Commit(); err != nil {
 			return fmt.Errorf("migrate: commit v%d: %w", m.version, err)
+		}
+		for _, line := range lines {
+			log.Print(line)
 		}
 	}
 	return nil
