@@ -90,6 +90,18 @@ describe("the New button", () => {
     await renderButton();
     expect(screen.getByRole("button", { name: en["whatsNew.title"] })).toBeTruthy();
   });
+
+  it("wears the gift behind its dot, and the dot greys once everything was seen", async () => {
+    await renderButton();
+    const button = screen.getByRole("button", { name: `${en["whatsNew.title"]} · ${CHANGES.length}` });
+    const dot = button.querySelector(".glim-new-dot")!;
+    expect(dot.nextElementSibling?.tagName.toLowerCase()).toBe("svg");
+    expect(dot.classList.contains("glim-new-dot-seen")).toBe(false);
+    cleanup();
+    markSeen(CHANGES.map((change) => change.id));
+    await renderButton();
+    expect(screen.getByRole("button", { name: en["whatsNew.title"] }).querySelector(".glim-new-dot-seen")).toBeTruthy();
+  });
 });
 
 describe("the cards", () => {
