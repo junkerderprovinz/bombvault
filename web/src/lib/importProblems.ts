@@ -23,57 +23,71 @@ export type ImportProblem = PlacementRefusal & {
 const PROBLEM_KEYS: Record<string, TranslationKey> = {
   "import-version": "settingsIO.problem.version",
   "import-unreadable": "settingsIO.problem.unreadable",
-  "import-row-invalid": "settingsIO.problem.rowInvalid",
-  "import-row-name": "settingsIO.problem.rowName",
-  "import-row-location": "settingsIO.problem.rowLocation",
-  "import-row-compression": "settingsIO.problem.rowCompression",
   "import-schedule": "settingsIO.problem.schedule",
   "import-path": "settingsIO.problem.path",
   "import-setting": "settingsIO.problem.setting",
   "import-integrations": "settingsIO.problem.integrations",
-  "import-place-taken": "settingsIO.problem.placeTaken",
-  "import-place-twice": "settingsIO.problem.placeTwice",
   "import-check-failed": "settingsIO.problem.checkFailed",
 };
 
-const ROW_KEYS: Record<string, TranslationKey> = {
-  target: "settingsIO.problem.rowTarget",
-  repository: "settingsIO.problem.rowRepository",
-  destination: "settingsIO.problem.rowDestination",
-  "zfs-server": "settingsIO.problem.rowZfsServer",
-  "zfs-replica": "settingsIO.problem.rowZfsReplica",
-  "stored-repository": "settingsIO.problem.storedRepository",
+/** The sentences of the problems about one row of the file, by the part of the
+ *  file the row is in, and for a place taken by what takes it. Each language
+ *  writes every sentence whole, since a row named on its own would need another
+ *  case or article in each sentence it stands in. */
+const ROW_KEYS: Record<string, Record<string, TranslationKey>> = {
+  "import-row-invalid": {
+    target: "settingsIO.problem.targetInvalid",
+    "zfs-server": "settingsIO.problem.zfsServerInvalid",
+    "zfs-replica": "settingsIO.problem.zfsReplicaInvalid",
+  },
+  "import-row-name": {
+    repository: "settingsIO.problem.repositoryName",
+    destination: "settingsIO.problem.destinationName",
+  },
+  "import-row-location": {
+    repository: "settingsIO.problem.repositoryLocation",
+    destination: "settingsIO.problem.destinationLocation",
+  },
+  "import-row-compression": {
+    target: "settingsIO.problem.targetCompression",
+    repository: "settingsIO.problem.repositoryCompression",
+    destination: "settingsIO.problem.destinationCompression",
+  },
+  "import-place-taken": {
+    "repository:path": "settingsIO.problem.repositoryOnPath",
+    "repository:offsite": "settingsIO.problem.repositoryOnOffsite",
+    "repository:target": "settingsIO.problem.repositoryOnTarget",
+    "stored-repository:path": "settingsIO.problem.storedOnPath",
+    "stored-repository:offsite": "settingsIO.problem.storedOnOffsite",
+    "stored-repository:target": "settingsIO.problem.storedOnTarget",
+  },
+  "import-place-twice": {
+    repository: "settingsIO.problem.repositoryTwice",
+    "stored-repository": "settingsIO.problem.storedTwice",
+  },
 };
 
-/** The row a problem is about, as the sentence names it. */
-function rowLabel(t: T, p: ImportProblem): string {
-  const key = p.part ? ROW_KEYS[p.part] : undefined;
-  if (!key) return "";
-  return t(key)
-    .replace("{n}", String(p.row ?? ""))
-    .replace("{name}", () => isolateLtr(p.name ?? ""));
-}
-
-/** The place a repository of the file collides with. */
-function placeLabel(t: T, place: string): string {
-  const [kind, domain] = place.split(":");
-  const section = domain && domain in DOMAIN_LABEL ? t(DOMAIN_LABEL[domain as OffsiteDomain]) : "";
-  if (kind === "path") return t("settingsIO.problem.placePath").replace("{section}", () => section);
-  if (kind === "offsite") return t("settingsIO.problem.placeOffsite").replace("{section}", () => section);
-  return t("settingsIO.problem.placeTarget");
+/** The key of the sentence a problem is worded with, if it has one. */
+function problemKey(p: ImportProblem): TranslationKey | undefined {
+  if (!p.code) return undefined;
+  const rows = ROW_KEYS[p.code];
+  if (!rows) return PROBLEM_KEYS[p.code];
+  const kind = p.code === "import-place-taken" ? `:${(p.place ?? "").split(":")[0]}` : "";
+  return rows[`${p.part ?? ""}${kind}`];
 }
 
 /** importProblemText is the sentence a refused settings file shows, or null
  *  when the refusal is not one of its problems. A problem with a cause says
  *  that cause as well. */
 export function importProblemText(t: T, lang: string, p: ImportProblem): string | null {
-  const key = p.code ? PROBLEM_KEYS[p.code] : undefined;
+  const key = problemKey(p);
   if (!key) return null;
+  const domain = (p.place ?? "").split(":")[1];
+  const section = domain && domain in DOMAIN_LABEL ? t(DOMAIN_LABEL[domain as OffsiteDomain]) : "";
   const sentence = t(key)
-    .replace("{row}", () => rowLabel(t, p))
     .replace("{n}", String(p.row ?? ""))
     .replace("{name}", () => isolateLtr(p.name ?? ""))
-    .replace("{place}", () => placeLabel(t, p.place ?? ""));
+    .replace("{section}", () => section);
   if (!p.cause) return sentence;
   const because = placementErrorText(t, lang, { ok: false, code: p.cause, suggest: p.suggest }, "settingsIO.importFailed");
   return `${sentence} ${because}`;
