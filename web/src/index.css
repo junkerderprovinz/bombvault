@@ -200,9 +200,10 @@
   box-shadow: var(--elevation), var(--hairline);
 }
 /* A toast rises above the page actions, or it would lie on the button that
-   raised it. PageActions reports how far up it reaches. */
+   raised it. PageActions reports how far up it reaches, and the toast
+   provider how far the action row of an open dialog does. */
 .glim-toasts {
-  padding-bottom: calc(1rem + var(--page-actions-clearance, 0px));
+  padding-bottom: calc(1rem + max(var(--page-actions-clearance, 0px), var(--dialog-actions-clearance, 0px)));
 }
 
 /* What is new after an update (components/WhatsNewDots.tsx): a dot on each

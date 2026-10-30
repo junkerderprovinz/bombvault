@@ -437,8 +437,12 @@ describe("AttentionProvider", () => {
     act(() => {
       window.dispatchEvent(new Event("bv:settings-changed"));
     });
-    await waitFor(() => expect(fresh()).toBe("false"));
-    expect(sectionsChosen()).toBe(false);
+    // The step is forgotten in an effect, which React runs after the commit
+    // that shows the answer, so the wait covers both.
+    await waitFor(() => {
+      expect(fresh()).toBe("false");
+      expect(sectionsChosen()).toBe(false);
+    });
   });
 
   it("does not take a list that never arrived for a first start", async () => {

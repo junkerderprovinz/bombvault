@@ -441,12 +441,12 @@ func (h *Handler) handleImportSettings(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	if msg := validateExport(exp, h.cfg.HostMountRoot); msg != "" {
-		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": msg})
+	if err := validateExport(exp, h.cfg.HostMountRoot, h.cfg.HostSourceRoot); err != nil {
+		importFail(w, err)
 		return
 	}
-	if msg := h.rejectImportCollisions(exp); msg != "" {
-		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": msg})
+	if err := h.rejectImportCollisions(exp); err != nil {
+		importFail(w, err)
 		return
 	}
 	dropped, err := h.dropStaleLinks(&exp)
@@ -505,10 +505,10 @@ func decodeExport(w http.ResponseWriter, r *http.Request) (settingsExport, bool)
 	r.Body = http.MaxBytesReader(w, r.Body, 4<<20) // 4 MiB — a config file, not a data blob
 	if err := json.NewDecoder(r.Body).Decode(&exp); err != nil {
 		if err == io.EOF {
-			writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "empty import file"})
+			importFail(w, &importProblem{code: "import-unreadable", msg: "empty import file"})
 			return exp, false
 		}
-		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "malformed import file: expected a BombVault settings-export JSON"})
+		importFail(w, &importProblem{code: "import-unreadable", msg: "malformed import file: expected a BombVault settings-export JSON"})
 		return exp, false
 	}
 	return exp, true
@@ -516,7 +516,7 @@ func decodeExport(w http.ResponseWriter, r *http.Request) (settingsExport, bool)
 
 // rejectImportCollisions is the half of the import validation that needs the
 // running service: whether two locations in the file name the SAME repository.
-// Returns a user-facing sentence, or "".
+// It returns nil when the file passes.
 //
 // Kept apart from validateExport because that one is deliberately a pure
 // function over the file, while this has to resolve every location. What it
@@ -545,11 +545,14 @@ func decodeExport(w http.ResponseWriter, r *http.Request) (settingsExport, bool)
 // forms refuse, and it surfaced at that repository's first backup - or, worse,
 // quietly, as a repository whose append-only flag and credentials answered for a
 // domain that never set them.
-func (h *Handler) rejectImportCollisions(exp settingsExport) string {
+func (h *Handler) rejectImportCollisions(exp settingsExport) error {
 	// One repository that will exist after the apply, with the name to call it by
 	// in the refusal - the file's rows are numbered as the operator sees them,
 	// and a row that only exists here has no number in the file to give.
-	type repoRow struct{ label, loc string }
+	type repoRow struct {
+		label, loc, name string
+		row              int
+	}
 	// COPIED, never aliased. exp.NamedRepos is a slice of value structs, so
 	// writing through the slice header would edit the caller's export - and
 	// handleImportSettings hands that same export on to summarizeExport and
@@ -559,7 +562,7 @@ func (h *Handler) rejectImportCollisions(exp settingsExport) string {
 	rows := make([]repoRow, 0, len(exp.NamedRepos))
 	stored, sErr := h.store.ListNamedRepos()
 	if sErr != nil {
-		return "could not check this file against the repositories already set up; try again"
+		return errImportCheck
 	}
 	storedByID := make(map[string]store.OffsiteTarget, len(stored))
 	for _, r := range stored {
@@ -568,7 +571,7 @@ func (h *Handler) rejectImportCollisions(exp settingsExport) string {
 	switch {
 	case len(exp.NamedRepos) == 0:
 		for _, r := range stored {
-			rows = append(rows, repoRow{fmt.Sprintf("the repository %q already set up here", scrubSafeName(h.svc.repoName(r))), r.Repo})
+			rows = append(rows, repoRow{label: fmt.Sprintf("the repository %q already set up here", scrubSafeName(h.svc.repoName(r))), loc: r.Repo, name: h.svc.repoName(r)})
 		}
 	default:
 		inFile := make(map[string]bool, len(exp.NamedRepos))
@@ -585,7 +588,7 @@ func (h *Handler) rejectImportCollisions(exp settingsExport) string {
 					// validates a location the apply may not write - it would move an
 					// unused row the guard had just decided to leave alone - and the
 					// response would still say applied.
-					return "could not check this file against the repositories already set up; try again"
+					return errImportCheck
 				}
 				if n != 0 {
 					loc = cur.Repo
@@ -601,7 +604,7 @@ func (h *Handler) rejectImportCollisions(exp settingsExport) string {
 					loc = importedLocation(cur.Repo, tv.Repo)
 				}
 			}
-			rows = append(rows, repoRow{fmt.Sprintf("repository #%d", i+1), loc})
+			rows = append(rows, repoRow{label: fmt.Sprintf("repository #%d", i+1), loc: loc, row: i + 1})
 		}
 		// …and the rows the apply KEEPS because they are in use and the file does
 		// not carry them.
@@ -611,10 +614,10 @@ func (h *Handler) rejectImportCollisions(exp settingsExport) string {
 			}
 			n, cErr := h.store.ItemsUsingNamedRepo(r.ID)
 			if cErr != nil {
-				return "could not check this file against the repositories already set up; try again"
+				return errImportCheck
 			}
 			if n != 0 {
-				rows = append(rows, repoRow{fmt.Sprintf("the repository %q already set up here", scrubSafeName(h.svc.repoName(r))), r.Repo})
+				rows = append(rows, repoRow{label: fmt.Sprintf("the repository %q already set up here", scrubSafeName(h.svc.repoName(r))), loc: r.Repo, name: h.svc.repoName(r)})
 			}
 		}
 	}
@@ -629,7 +632,7 @@ func (h *Handler) rejectImportCollisions(exp settingsExport) string {
 		}
 		return out, true
 	}
-	type place struct{ label, loc string }
+	type place struct{ label, loc, key string }
 	var occupied []place
 	s := exp.Settings
 	offsite := exp.OffsiteTargets
@@ -638,12 +641,12 @@ func (h *Handler) rejectImportCollisions(exp settingsExport) string {
 		// a repository in the file must not land on.
 		cur, err := h.store.GetSettings()
 		if err != nil {
-			return "could not check this file against the repositories already set up; try again"
+			return errImportCheck
 		}
 		s.ZFSPath, s.ZFSOffsite = cur.ZFSPath, cur.ZFSOffsite
 		targets, err := h.store.ListOffsiteTargets()
 		if err != nil {
-			return "could not check this file against the repositories already set up; try again"
+			return errImportCheck
 		}
 		for _, t := range targets {
 			if t.Domain == zfsDomain {
@@ -652,24 +655,24 @@ func (h *Handler) rejectImportCollisions(exp settingsExport) string {
 		}
 	}
 	for _, p := range []place{
-		{"the Containers path", s.ContainersPath}, {"the VMs path", s.VMsPath},
-		{"the Flash path", s.FlashPath}, {"the Config path", s.ConfigPath},
-		{"the Folders path", s.FilesPath},
-		{"the ZFS datasets path", s.ZFSPath},
-		{"the Containers off-site destination", s.ContainersOffsite},
-		{"the VMs off-site destination", s.VMsOffsite},
-		{"the Flash off-site destination", s.FlashOffsite},
-		{"the Config off-site destination", s.ConfigOffsite},
-		{"the Folders off-site destination", s.FilesOffsite},
-		{"the ZFS datasets off-site destination", s.ZFSOffsite},
+		{"the Containers path", s.ContainersPath, "path:containers"}, {"the VMs path", s.VMsPath, "path:vms"},
+		{"the Flash path", s.FlashPath, "path:flash"}, {"the Config path", s.ConfigPath, "path:config"},
+		{"the Folders path", s.FilesPath, "path:files"},
+		{"the ZFS datasets path", s.ZFSPath, "path:zfs"},
+		{"the Containers off-site destination", s.ContainersOffsite, "offsite:containers"},
+		{"the VMs off-site destination", s.VMsOffsite, "offsite:vms"},
+		{"the Flash off-site destination", s.FlashOffsite, "offsite:flash"},
+		{"the Config off-site destination", s.ConfigOffsite, "offsite:config"},
+		{"the Folders off-site destination", s.FilesOffsite, "offsite:files"},
+		{"the ZFS datasets off-site destination", s.ZFSOffsite, "offsite:zfs"},
 	} {
 		if loc, ok := resolve(p.loc); ok {
-			occupied = append(occupied, place{p.label, loc})
+			occupied = append(occupied, place{p.label, loc, p.key})
 		}
 	}
 	for _, tv := range offsite {
 		if loc, ok := resolve(tv.Repo); ok {
-			occupied = append(occupied, place{"an off-site destination", loc})
+			occupied = append(occupied, place{"an off-site destination", loc, "target"})
 		}
 	}
 	for i, a := range occupied {
@@ -680,7 +683,7 @@ func (h *Handler) rejectImportCollisions(exp settingsExport) string {
 		}
 	}
 	if len(rows) == 0 {
-		return ""
+		return nil
 	}
 	seen := make([]string, 0, len(rows))
 	for _, row := range rows {
@@ -690,7 +693,7 @@ func (h *Handler) rejectImportCollisions(exp settingsExport) string {
 		}
 		for _, p := range occupied {
 			if sameRepoLocation(p.loc, loc) {
-				return fmt.Sprintf("%s is at %s; a repository has to be a different place", row.label, p.label)
+				return collision(row.row, row.name, p.key, fmt.Sprintf("%s is at %s; a repository has to be a different place", row.label, p.label))
 			}
 			if repoLocationsOverlap(p.loc, loc) {
 				log.Printf("api: settings import: %s lies inside or around %s; imported anyway so older files still load", row.label, p.label) //nolint:gosec // G706: the labels are fixed text around %q-quoted names
@@ -698,7 +701,7 @@ func (h *Handler) rejectImportCollisions(exp settingsExport) string {
 		}
 		for _, other := range seen {
 			if sameRepoLocation(other, loc) {
-				return fmt.Sprintf("%s names the same place as an earlier one; two rows over one repository would give every question about it two answers", row.label)
+				return collision(row.row, row.name, "", fmt.Sprintf("%s names the same place as an earlier one; two rows over one repository would give every question about it two answers", row.label))
 			}
 			if repoLocationsOverlap(other, loc) {
 				log.Printf("api: settings import: %s lies inside or around an earlier repository; imported anyway so older files still load", row.label) //nolint:gosec // G706: the label is fixed text around a %q-quoted name
@@ -706,7 +709,7 @@ func (h *Handler) rejectImportCollisions(exp settingsExport) string {
 		}
 		seen = append(seen, loc)
 	}
-	return ""
+	return nil
 }
 
 // validateExport checks the envelope is a supported, structurally-sane export.
@@ -720,16 +723,16 @@ func (h *Handler) rejectImportCollisions(exp settingsExport) string {
 // the first field to be shared for that reason; the path and DR-target guards
 // are now shared the same way, through the same functions handlePutSettings
 // calls, so extending one cannot leave the other behind.
-func validateExport(exp settingsExport, mountRoot string) string {
+func validateExport(exp settingsExport, mountRoot, sourceRoot string) error {
 	if exp.SchemaVersion != settingsExportSchema {
-		return fmt.Sprintf("unsupported schemaVersion %d (this build reads version %d)", exp.SchemaVersion, settingsExportSchema)
+		return &importProblem{code: "import-version", row: exp.SchemaVersion, msg: fmt.Sprintf("unsupported schemaVersion %d (this build reads version %d)", exp.SchemaVersion, settingsExportSchema)}
 	}
 	// Off-site targets must each map to a valid domain + non-empty repo. Validate
 	// against the same contract the CRUD endpoints enforce, so a bad file is
 	// rejected before any write.
 	for i, tv := range exp.OffsiteTargets {
 		if msg := validateOffsiteTargetInput(tv.toStoreTarget()); msg != "" {
-			return fmt.Sprintf("off-site target #%d: %s", i+1, msg)
+			return rowProblem("import-row-invalid", importPartTarget, i, nil, "off-site target #%d: %s", i+1, msg)
 		}
 	}
 	// Named repositories (#204) carry NO domain - that is the point of them, an
@@ -747,39 +750,36 @@ func validateExport(exp settingsExport, mountRoot string) string {
 	// those are not, not because the import is allowed to skip them.
 	for i, tv := range exp.NamedRepos {
 		if strings.TrimSpace(tv.Name) == "" && strings.TrimSpace(tv.CompanionOf) == "" {
-			return fmt.Sprintf("repository #%d: needs a name", i+1)
+			return rowProblem("import-row-name", importPartRepository, i, nil, "repository #%d: needs a name", i+1)
 		}
 		loc := strings.TrimSpace(tv.Repo)
-		if loc == "" {
-			return fmt.Sprintf("repository #%d: needs a location", i+1)
-		}
 		// The SAME refusals the create form applies, not a hand-copied subset.
 		// Mirroring two of four here is how the import became the one write path
 		// that accepted what the form rejects; the shared check below cannot drift
 		// from the form because it IS the form's.
-		if msg := staticNamedRepoRefusals(loc, mountRoot); msg != "" {
-			return fmt.Sprintf("repository #%d (%s): %s", i+1, tv.Name, msg)
+		if err := staticNamedRepoRefusals(loc, mountRoot, sourceRoot); err != nil {
+			return rowProblem("import-row-location", importPartRepository, i, err, "repository #%d (%s): %s", i+1, tv.Name, scrubError(err))
 		}
 		if _, err := restic.ParseCompression(tv.Compression); err != nil {
-			return fmt.Sprintf("repository #%d (%s): %s", i+1, tv.Name, err)
+			return rowProblem("import-row-compression", importPartRepository, i, nil, "repository #%d (%s): %s", i+1, tv.Name, err)
 		}
 	}
 	for i, tv := range exp.Destinations {
 		if strings.TrimSpace(tv.Name) == "" {
-			return fmt.Sprintf("destination #%d: needs a name", i+1)
+			return rowProblem("import-row-name", importPartDestination, i, nil, "destination #%d: needs a name", i+1)
 		}
 		if strings.TrimSpace(tv.Repo) == "" {
-			return fmt.Sprintf("destination #%d (%s): needs a location", i+1, tv.Name)
+			return rowProblem("import-row-location", importPartDestination, i, errLocationNeeded, "destination #%d (%s): needs a location", i+1, tv.Name)
 		}
 		if _, err := restic.ParseCompression(tv.Compression); err != nil {
-			return fmt.Sprintf("destination #%d (%s): %s", i+1, tv.Name, err)
+			return rowProblem("import-row-compression", importPartDestination, i, nil, "destination #%d (%s): %s", i+1, tv.Name, err)
 		}
 	}
 	// Every schedule cadence in the imported settings must parse (same grammar the
 	// settings save enforces), so an apply cannot install an un-runnable schedule.
 	for _, cad := range exportCadences(exp.Settings) {
 		if _, err := schedule.ParseCadence(cad); err != nil {
-			return "invalid schedule in settings: " + scrubError(err)
+			return &importProblem{code: "import-schedule", msg: "invalid schedule in settings: " + scrubError(err)}
 		}
 	}
 	// …and must respect the SAME everyN restriction the settings save enforces
@@ -791,7 +791,7 @@ func validateExport(exp settingsExport, mountRoot string) string {
 	// supports import exactly where a UI-set one is accepted, with no second list
 	// left to drift out of step.
 	if msg := rejectEveryNSchedules(exp.Settings); msg != "" {
-		return "invalid schedule in settings: " + msg
+		return &importProblem{code: "import-schedule", msg: "invalid schedule in settings: " + msg}
 	}
 	// Repo locations. Without this an imported `containersPath` of
 	// "/mnt/user/backups" — absolute rather than the required relative subpath,
@@ -800,42 +800,56 @@ func validateExport(exp settingsExport, mountRoot string) string {
 	// with "invalid backup path: must be a relative subpath under the mount root".
 	// The user could not change ANY setting, including the path itself, without
 	// editing the database.
-	if msg := rejectInvalidSettingsPaths(exp.Settings, mountRoot); msg != "" {
-		return "invalid path in settings: " + msg
+	if err := rejectInvalidSettingsPaths(exp.Settings, mountRoot, sourceRoot); err != nil {
+		return &importProblem{code: "import-path", cause: err, msg: "invalid path in settings: " + scrubError(err)}
 	}
 	// The DR-drill targets, which had the same asymmetry: validated on PUT,
 	// unchecked on import.
 	if msg := rejectInvalidSettingsNames(exp.Settings); msg != "" {
-		return "invalid settings: " + msg
+		key := "drDrillTargetVm"
+		if dt := strings.TrimSpace(exp.Settings.DRDrillTarget); dt != "" && !validResourceName(dt) {
+			key = "drDrillTarget"
+		}
+		return settingProblem(key, "invalid settings: "+msg)
 	}
 	// The two anomaly presets, through the guard the save uses, so an import
 	// cannot persist a value the Settings page then refuses to save.
 	if msg := rejectInvalidAnomalySettings(exp.Settings); msg != "" {
-		return "invalid settings: " + msg
+		key := "anomalyNotifyMin"
+		if p := exp.Settings.AnomalySensitivity; p != "" && !slices.Contains(anomalyPresets, Sensitivity(p)) {
+			key = "anomalySensitivity"
+		}
+		return settingProblem(key, "invalid settings: "+msg)
 	}
 	if msg := rejectInvalidOwnRetention("ownRetention", exp.Settings.OwnRetention); msg != "" {
-		return "invalid settings: " + msg
+		return settingProblem("ownRetention", "invalid settings: "+msg)
 	}
 	if msg := rejectInvalidOwnRetention("ownOffsiteRetention", exp.Settings.OwnOffsiteRetention); msg != "" {
-		return "invalid settings: " + msg
+		return settingProblem("ownOffsiteRetention", "invalid settings: "+msg)
 	}
 	if msg := rejectInvalidCompression(exp.Settings.Compression); msg != "" {
-		return "invalid settings: " + msg
+		return settingProblem("compression", "invalid settings: "+msg)
 	}
 	if exp.Streaming != nil {
 		if err := validateStreaming(*exp.Streaming); err != nil {
-			return "invalid streaming settings: " + err.Error()
+			return settingProblem("streaming", "invalid streaming settings: "+err.Error())
 		}
 	}
 	if exp.Idle != nil {
 		if err := validateIdle(*exp.Idle); err != nil {
-			return "invalid idle settings: " + err.Error()
+			return settingProblem("idle", "invalid idle settings: "+err.Error())
 		}
 	}
-	if msg := zfsReplicaRefusal(exp); msg != "" {
-		return msg
+	if err := zfsReplicaRefusal(exp); err != nil {
+		return err
 	}
 	return integrationsRefusal(exp)
+}
+
+// settingProblem is a value of the file's settings under key that this
+// version does not accept.
+func settingProblem(key, msg string) error {
+	return &importProblem{code: "import-setting", name: key, msg: msg}
 }
 
 // exportCadences lists every schedule string carried in a settings view. It must

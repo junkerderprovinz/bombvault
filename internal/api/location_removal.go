@@ -331,15 +331,8 @@ func (h *Handler) planFolderMove(key string, expect locationRemoval, home string
 		move[sh.domain] = [2]string{sh.raw, to}
 		*sectionPath(&next, sh.domain) = to
 	}
-	v := toView(next)
-	for _, msg := range []string{
-		rejectInvalidSettingsPaths(v, h.cfg.HostMountRoot),
-		h.rejectSettingsPathOnNamedRepo(v, cur),
-		h.rejectNestedSettingsPath(v, cur),
-	} {
-		if msg != "" {
-			return nil, errors.New(msg)
-		}
+	if err := h.settingsLocationRefusal(next, cur); err != nil {
+		return nil, err
 	}
 	return move, nil
 }

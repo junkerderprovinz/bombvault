@@ -46,7 +46,7 @@ describe("the new target question", () => {
     expect(dialog.textContent).toContain("Snapshots: up to 420");
     expect(dialog.textContent).not.toContain("Size:");
     expect(accentButtons(dialog)).toEqual(["Confirm"]);
-    expect(fake.callsTo("getNewTargetPreview")).toEqual([["containers", "b2:bucket:containers", undefined]]);
+    expect(fake.callsTo("getNewTargetPreview")).toEqual([["containers", "b2:bucket:containers", undefined, undefined]]);
   });
 
   it("gives the size when the sources were measured", async () => {
@@ -58,7 +58,7 @@ describe("the new target question", () => {
   it("asks about the whole history when a target moves", async () => {
     askWith({ domain: "vms", location: "b2:new", targetId: "t1", name: "B2", moved: true });
     expect((await screen.findByRole("dialog")).textContent).toContain("The new location of B2 receives the whole history.");
-    expect(fake.callsTo("getNewTargetPreview")).toEqual([["vms", "b2:new", "t1"]]);
+    expect(fake.callsTo("getNewTargetPreview")).toEqual([["vms", "b2:new", "t1", undefined]]);
   });
 
   it("says nothing is sent again when the new location holds the history", async () => {
@@ -129,6 +129,22 @@ describe("the new target question", () => {
     expect(accentButtons(dialog)).toEqual(["Confirm"]);
     fireEvent.click(within(dialog).getByRole("button", { name: "Confirm" }));
     await waitFor(() => expect(onAnswer).toHaveBeenCalledWith({ go: true, alsoExclude: null }));
+  });
+
+  it("refuses before asking when the save would refuse the location", async () => {
+    fake.reply("getNewTargetPreview", {
+      ok: false,
+      error: "the section keeps its own folder at this place, so a copy there would land on itself",
+      code: "copy-on-own-folder",
+      saveRefused: true,
+    });
+    const onAnswer = askWith({ ...b2, as: "field" });
+    await waitFor(() => expect(onAnswer).toHaveBeenCalledWith({ go: false, refused: true }));
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect((await screen.findByRole("alert")).textContent).toContain(
+      "This section keeps its own folder in this storage location already, so a copy there would land on itself."
+    );
+    expect(fake.callsTo("getNewTargetPreview")).toEqual([["containers", "b2:bucket:containers", undefined, "field"]]);
   });
 
   it.each(["flash", "config"] as const)("does not ask for %s", async (domain) => {

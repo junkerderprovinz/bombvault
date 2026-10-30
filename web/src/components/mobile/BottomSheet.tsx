@@ -285,6 +285,7 @@ export function BottomSheet({ open, onClose, headerClose = true, title, hint, ch
             inset is here. */}
         {footer !== undefined && (
           <div
+            data-dialog-actions
             className={`flex-none bg-carbon-sidebar pl-[max(1rem,var(--safe-area-left))] pr-[max(1rem,var(--safe-area-right))] ${
               fullHeight ? "pb-[var(--safe-area-bottom)]" : ""
             }`}

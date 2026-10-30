@@ -17,6 +17,7 @@ import { Rows, SettingRow } from "../../components/storage/rows";
 import { Card, SubCard, ToggleRow } from "./shared";
 import { NewTargetPreviewLines } from "../../components/placement/NewTargetQuestion";
 import { domainLabel, formatList } from "../../lib/placement";
+import { importProblemText } from "../../lib/importProblems";
 import { placementErrorText } from "../../lib/placementCodes";
 import { placementChanged } from "../../lib/placementEvents";
 import { useRef, useState, type ReactNode } from "react";
@@ -123,7 +124,7 @@ export function SettingsPortabilityCard({
         setPendingText(text);
         setPreview(res.summary);
       } else {
-        push(res.error ?? t("settingsIO.importFailed"), "fail");
+        push(importProblemText(t, lang, res) ?? placementErrorText(t, lang, res, "settingsIO.importFailed"), "fail");
         bumpShake("chooseFile");
       }
     } catch (err) {
@@ -161,7 +162,7 @@ export function SettingsPortabilityCard({
         if (fileInputRef.current) fileInputRef.current.value = "";
         await excludeChosen(applied);
       } else {
-        push(res.error ?? t("settingsIO.importFailed"), "fail");
+        push(importProblemText(t, lang, res) ?? placementErrorText(t, lang, res, "settingsIO.importFailed"), "fail");
         bumpShake("import");
       }
     } catch (err) {

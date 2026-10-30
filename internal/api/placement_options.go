@@ -287,6 +287,10 @@ func (h *Handler) handleNewTargetPreview(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	targetID := r.URL.Query().Get("target")
+	if err := h.newLocationRefusal(domain, targetID, r.URL.Query().Get("repo"), r.URL.Query().Get("as")); err != nil {
+		placementFail(w, err, map[string]any{"saveRefused": true})
+		return
+	}
 	pv, err := h.svc.newTargetPreview(r.Context(), domain, targetID, nil)
 	if err != nil {
 		placementFail(w, err, nil)
@@ -294,6 +298,42 @@ func (h *Handler) handleNewTargetPreview(w http.ResponseWriter, r *http.Request)
 	}
 	pv.Held = h.svc.heldAtNewLocation(r.Context(), targetID, r.URL.Query().Get("repo"), pv.counted)
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"preview": pv}))
+}
+
+// newLocationRefusal is the refusal a save of loc meets as the domain's
+// off-site field ("field") or as the target with the id ("target", "" for a
+// new one). The question before such a save asks it first, so it never opens
+// on a location the save refuses. Without as the location is not checked,
+// since what it becomes is not known.
+func (h *Handler) newLocationRefusal(domain, targetID, loc, as string) error {
+	loc = strings.TrimSpace(loc)
+	switch as {
+	case "field":
+		cur, err := h.store.GetSettings()
+		if err != nil {
+			return err
+		}
+		next := cur
+		setOffsiteRepoInSettings(&next, domain, loc)
+		return h.settingsLocationRefusal(next, cur)
+	case "target":
+		t := store.OffsiteTarget{Domain: domain, Repo: loc}
+		if targetID != "" {
+			existing, ok, err := h.store.GetOffsiteTarget(targetID)
+			if err != nil {
+				return err
+			}
+			// The save checks a target's location only when it moves.
+			if ok && sameRepoLocation(loc, strings.TrimSpace(existing.Repo)) {
+				return nil
+			}
+		}
+		if err := h.rejectOffsiteTargetOnNamedRepo(t); err != nil {
+			return err
+		}
+		return h.nestedTargetLocation(targetID, t)
+	}
+	return nil
 }
 
 // heldAtNewLocation counts the snapshots of counted that the target would find

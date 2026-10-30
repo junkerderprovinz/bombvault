@@ -131,3 +131,22 @@ export function applyEngagement(
 export function shouldShowToast(severity: ToastSeverity, quiet: boolean): boolean {
   return !quiet || severity !== "success";
 }
+
+/** The parts of a DOMRect the corner and an action row are measured by. */
+export interface ToastBox {
+  top: number;
+  bottom: number;
+  left: number;
+  right: number;
+}
+
+/** dialogActionsClearance is how far the toast corner has to rise to stay off
+ *  the action row of the dialog on top, the last of rows that is shown. reach
+ *  is how far up from the bottom of the window the toasts stand unlifted, so a
+ *  row above them, or one that ends beside the corner, is no reason to rise. */
+export function dialogActionsClearance(rows: ToastBox[], corner: ToastBox, reach: number, viewportHeight: number): number {
+  const shown = rows.filter((row) => row.bottom > row.top);
+  const row = shown[shown.length - 1];
+  if (!row || row.right <= corner.left || row.left >= corner.right || row.bottom <= viewportHeight - reach) return 0;
+  return Math.max(0, Math.ceil(viewportHeight - row.top));
+}

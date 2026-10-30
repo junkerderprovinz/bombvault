@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import { createPortal } from "react-dom";
-import { computeBubblePosition } from "../lib/bubblePosition";
+import { computeBubblePosition, triggerMoved } from "../lib/bubblePosition";
 import { hueVars } from "../lib/appearance";
 import { useT } from "../lib/i18n";
 
@@ -168,6 +168,7 @@ export function TimePicker({
   // those do not move the trigger and are ignored.
   useEffect(() => {
     if (!open) return;
+    const anchor = triggerRef.current?.getBoundingClientRect();
     function onPointerDown(e: MouseEvent) {
       const target = e.target as Node;
       if (panelRef.current?.contains(target)) return;
@@ -180,6 +181,8 @@ export function TimePicker({
     function onScroll(e: Event) {
       const target = e.target;
       if (target instanceof Node && panelRef.current?.contains(target)) return;
+      const trigger = triggerRef.current;
+      if (trigger && anchor && !triggerMoved(trigger.getBoundingClientRect(), anchor)) return;
       closeSelf();
     }
     document.addEventListener("mousedown", onPointerDown);

@@ -5,7 +5,6 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/junkerderprovinz/bombvault/internal/paths"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
@@ -22,23 +21,23 @@ func restoreFolders(s store.Settings) map[string]string {
 
 // rejectInvalidRestoreFolders holds a section's own restore folder to what the
 // shared one has to be: a relative path under the mount root.
-func rejectInvalidRestoreFolders(in map[string]string, mountRoot string) string {
+func rejectInvalidRestoreFolders(in map[string]string, mountRoot, sourceRoot string) error {
 	for section, folder := range in {
 		if !slices.Contains(offsiteConfigDomains, section) {
-			return fmt.Sprintf("restoreFolderOverrides: %q is not a section", section)
+			return fmt.Errorf("restoreFolderOverrides: %q is not a section", section)
 		}
 		folder = strings.TrimSpace(folder)
 		if folder == "" {
 			continue
 		}
 		if restic.IsRemoteRepo(folder) {
-			return "restore folder must be a local path under the mount root"
+			return errRestoreFolderRemote
 		}
-		if _, err := paths.Resolve(mountRoot, folder); err != nil {
-			return "invalid restore folder: must be a relative subpath under the mount root"
+		if err := localPathRefusal(mountRoot, sourceRoot, folder); err != nil {
+			return err
 		}
 	}
-	return ""
+	return nil
 }
 
 // applyRestoreFolders stores the submitted switch and the sections' own

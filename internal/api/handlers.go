@@ -2869,26 +2869,22 @@ func rejectEveryNSchedules(v settingsView) string {
 
 // rejectSettingsPathOnNamedRepo refuses a settings save that MOVES a domain's
 // own repository (or an off-site destination) onto a location an existing named
-// repository already occupies. Returns a user-facing sentence, or "".
+// repository already occupies.
 //
-// Only the fields this save CHANGES are checked, against `cur`. That scoping is
-// not a nicety: the SPA sends the whole settings object from every card, so an
-// install that upgraded carrying a standing collision - legal to create on the
-// previous build, which had neither this guard nor its counterpart - had every
-// settings save refused, from every card, over a path the operator was not
-// touching and a repository they may not remember. The guard is here to stop
-// somebody CREATING that state, and a state that already exists is not created
-// by saving a notification address.
+// Only the fields this save changes are checked, against cur: the page sends
+// the whole settings object from every card, so a standing collision an older
+// build let through would otherwise refuse every save, over a path nobody is
+// touching. The guard stops somebody creating that state.
 //
-// A store read that fails does NOT drop the guard: an unanswerable question is
-// not a yes, and the save can be repeated.
-func (h *Handler) rejectSettingsPathOnNamedRepo(v settingsView, cur store.Settings) string {
+// A store read that fails keeps the guard: an unanswerable question is not a
+// yes, and the save can be repeated.
+func (h *Handler) rejectSettingsPathOnNamedRepo(v settingsView, cur store.Settings) error {
 	rows, err := h.store.ListNamedRepos()
 	if err != nil {
-		return "could not check this path against the repositories you set up; try again"
+		return errors.New("could not check this path against the repositories you set up; try again")
 	}
 	if len(rows) == 0 {
-		return ""
+		return nil
 	}
 	for _, f := range []struct{ label, loc, was string }{
 		{"Containers", v.ContainersPath, cur.ContainersPath},
@@ -2919,16 +2915,17 @@ func (h *Handler) rejectSettingsPathOnNamedRepo(v settingsView, cur store.Settin
 			if oErr != nil || !repoLocationsOverlap(other, loc) {
 				continue
 			}
-			return fmt.Sprintf("the %s path is, holds or lies inside the repository %q you set up under Repositories; pick a different folder, or remove that repository first", f.label, h.svc.repoName(r))
+			return fmt.Errorf("the %s path, at the repository %q: %w", f.label, h.svc.repoName(r), errNamedRepoOverlap)
 		}
 	}
-	return ""
+	return nil
 }
 
 // rejectNestedSettingsPath refuses a save that moves a domain path or an
 // off-site field into or around another repository or target. Like
 // rejectSettingsPathOnNamedRepo it checks only the fields this save changes.
-func (h *Handler) rejectNestedSettingsPath(v settingsView, cur store.Settings) string {
+// The refusal wraps the location check's error, so its code reaches the client.
+func (h *Handler) rejectNestedSettingsPath(v settingsView, cur store.Settings) error {
 	next := cur
 	next.ContainersPath, next.VMsPath, next.FlashPath, next.ConfigPath, next.FilesPath =
 		v.ContainersPath, v.VMsPath, v.FlashPath, v.ConfigPath, v.FilesPath
@@ -2961,17 +2958,31 @@ func (h *Handler) rejectNestedSettingsPath(v settingsView, cur store.Settings) s
 			self = locationSelf{field: f.domain}
 			row, ok, err := h.store.FieldOffsiteTarget(f.domain)
 			if err != nil {
-				return "could not check this path against the off-site targets; try again"
+				return errors.New("could not check this path against the off-site targets; try again")
 			}
 			if ok {
 				self.ids = []string{row.ID}
 			}
 		}
 		if err := h.svc.locationClash(next, loc, self); err != nil {
-			return fmt.Sprintf("the %s path: %s", f.label, scrubError(err))
+			return fmt.Errorf("the %s path: %w", f.label, err)
 		}
 	}
-	return ""
+	return nil
+}
+
+// settingsLocationRefusal runs the location checks of a settings save on next,
+// so a step that writes settings itself, or asks before a save, refuses what
+// the save would.
+func (h *Handler) settingsLocationRefusal(next, cur store.Settings) error {
+	v := toView(next)
+	if err := rejectInvalidSettingsPaths(v, h.cfg.HostMountRoot, h.cfg.HostSourceRoot); err != nil {
+		return err
+	}
+	if err := h.rejectSettingsPathOnNamedRepo(v, cur); err != nil {
+		return err
+	}
+	return h.rejectNestedSettingsPath(v, cur)
 }
 
 // applyOffsiteSettings writes the form's off-site fields onto cur. The GET hands
@@ -3018,25 +3029,19 @@ func applyOffsiteSettings(cur *store.Settings, v settingsView) {
 // carries: the restore folder is always local, a remote backend (rclone:/s3:/
 // rest:/sftp:/b2:) is accepted verbatim, an unprefixed remote-looking value is
 // refused with guidance, and a local path must resolve under the mount root.
-// Returns a user-facing message, or "" when the whole set is acceptable.
 //
-// It is shared by BOTH settings write paths for the reason rejectEveryNSchedules
-// gives, and the everyN guard is the precedent: this validation used to live
-// only in handlePutSettings, so an imported file could persist an absolute
-// containersPath that the UI's own save path then refused FOREVER. The SPA
-// always PUTs the whole settings object, so one poisoned field failed every
-// later save from every card — including the card that would fix it. One guard,
-// both write paths, or the two drift apart again the next time one is extended.
-func rejectInvalidSettingsPaths(v settingsView, mountRoot string) string {
-	// RestoreFolder is ALWAYS a local filesystem path (restores land on the local
-	// mount root). A remote-looking value (e.g. "s3:foo") would slip past the
-	// containment check below, which skips remotes with `continue`, so reject it
-	// up front — it can never legitimately be a remote backend.
+// Both settings write paths share it, as rejectEveryNSchedules explains: a
+// value only one of them refuses lets an import store an absolute path that
+// then fails every later save from every card, the one that would fix it
+// included, since the page always sends the whole settings object.
+func rejectInvalidSettingsPaths(v settingsView, mountRoot, sourceRoot string) error {
+	// The containment check below skips remotes, so a remote-looking restore
+	// folder such as "s3:foo" is refused before it: restores land on this host.
 	if v.RestoreFolder != "" && restic.IsRemoteRepo(v.RestoreFolder) {
-		return "restore folder must be a local path under the mount root"
+		return errRestoreFolderRemote
 	}
-	if msg := rejectInvalidRestoreFolders(v.RestoreFolderOverrides, mountRoot); msg != "" {
-		return msg
+	if err := rejectInvalidRestoreFolders(v.RestoreFolderOverrides, mountRoot, sourceRoot); err != nil {
+		return err
 	}
 
 	// Local domain repos, plus any configured off-site repos (off-site may be
@@ -3054,14 +3059,14 @@ func rejectInvalidSettingsPaths(v settingsView, mountRoot string) string {
 		// "rclone:BackBlaze:bucket"); reject it with guidance rather than
 		// silently treating it as a local folder named after the string.
 		if restic.LooksLikeUnprefixedRemote(sub) {
-			return fmt.Sprintf("%q looks like a remote backend but is missing its prefix. Off-site backends need one of rclone:/s3:/rest:/sftp:/b2:, for example rclone:%s", sub, sub)
+			return fmt.Errorf("%q: %w", sub, errUnprefixedRemote)
 		}
-		if _, err := paths.Resolve(mountRoot, sub); err != nil {
+		if err := localPathRefusal(mountRoot, sourceRoot, sub); err != nil {
 			log.Printf("api: settings: rejected path %q: %v", sub, err)
-			return "invalid backup path: must be a relative subpath under the mount root, or an rclone:/s3: remote"
+			return err
 		}
 	}
-	return ""
+	return nil
 }
 
 // rejectInvalidSettingsNames validates the DR-drill targets, which are
@@ -3145,10 +3150,10 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Repo locations and the restore folder — the same guard the import path
+	// Repo locations and the restore folder, the same guard the import path
 	// applies, so a value one path refuses cannot arrive through the other.
-	if msg := rejectInvalidSettingsPaths(v, h.cfg.HostMountRoot); msg != "" {
-		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": msg})
+	if err := rejectInvalidSettingsPaths(v, h.cfg.HostMountRoot, h.cfg.HostSourceRoot); err != nil {
+		placementFail(w, err, nil)
 		return
 	}
 	// The RECIPROCAL of the named-repository refusal. validateNamedRepo stops a
@@ -3173,12 +3178,12 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, codedFailEnvelope(errSettingsStale, "settings-stale"))
 		return
 	}
-	if msg := h.rejectSettingsPathOnNamedRepo(v, cur); msg != "" {
-		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": msg})
+	if err := h.rejectSettingsPathOnNamedRepo(v, cur); err != nil {
+		placementFail(w, err, nil)
 		return
 	}
-	if msg := h.rejectNestedSettingsPath(v, cur); msg != "" {
-		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": msg})
+	if err := h.rejectNestedSettingsPath(v, cur); err != nil {
+		placementFail(w, err, nil)
 		return
 	}
 	next := cur

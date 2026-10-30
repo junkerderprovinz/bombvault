@@ -5,7 +5,13 @@ import { TimePicker } from "./TimePicker";
 
 afterEach(() => {
   cleanup();
+  vi.restoreAllMocks();
 });
+
+/** Puts the element at top, as a scroll of the page would. */
+function movedTo(el: Element, top: number) {
+  vi.spyOn(el, "getBoundingClientRect").mockReturnValue(new DOMRect(0, top, 80, 24));
+}
 
 describe("TimePicker trigger", () => {
   it("shows the current value and no dialog until activated", () => {
@@ -182,10 +188,19 @@ describe("TimePicker dismissal", () => {
 
   it("scrolling the page closes the open popover", () => {
     render(<TimePicker value="14:30" onChange={vi.fn()} label="Time" />);
-    fireEvent.click(screen.getByRole("button", { name: "Time: 14:30" }));
+    const trigger = screen.getByRole("button", { name: "Time: 14:30" });
+    fireEvent.click(trigger);
     expect(screen.queryByRole("dialog")).not.toBeNull();
+    movedTo(trigger, 120);
     fireEvent.scroll(window);
     expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  it("a scroll that leaves the trigger in place keeps it open", () => {
+    render(<TimePicker value="14:30" onChange={vi.fn()} label="Time" />);
+    fireEvent.click(screen.getByRole("button", { name: "Time: 14:30" }));
+    fireEvent.scroll(window);
+    expect(screen.queryByRole("dialog")).not.toBeNull();
   });
 
   it("scrolling a listbox column does not close it", () => {

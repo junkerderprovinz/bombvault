@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/notify"
+	"github.com/junkerderprovinz/bombvault/internal/paths"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
@@ -68,6 +69,14 @@ var placementCodes = []struct {
 	{errDefaultRepoMissing, "default-repo-missing"},
 	{errNestedLocation, "nested-location"},
 	{errCopyOnOwnFolder, "copy-on-own-folder"},
+	{errOwnFolderOnCopy, "own-folder-on-copy"},
+	{errNamedRepoOverlap, "named-repo-overlap"},
+	{errUnprefixedRemote, "unprefixed-remote"},
+	{errLocationNeeded, "location-needed"},
+	{errRestoreFolderRemote, "restore-folder-remote"},
+	{paths.ErrAbsoluteSub, "path-absolute"},
+	{paths.ErrTraversal, "path-outside"},
+	{paths.ErrLinkEscape, "path-outside"},
 	{errMirroredField, "mirrored-field"},
 	{store.ErrCompanionTaken, "companion-taken"},
 	{store.ErrNotOffsiteTarget, "unknown-target"},
@@ -120,6 +129,9 @@ func placementFail(w http.ResponseWriter, err error, extra map[string]any) {
 	}
 	if nested, ok := errors.AsType[*nestedLocationErr](err); ok {
 		env["at"] = scrubRepoLocation(nested.at)
+	}
+	if pathErr, ok := errors.AsType[*repoPathErr](err); ok && pathErr.suggest != "" {
+		env["suggest"] = pathErr.suggest
 	}
 	maps.Copy(env, extra)
 	writeJSON(w, http.StatusOK, env)

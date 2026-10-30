@@ -266,7 +266,7 @@ func (s *Service) checkReceiverInput(in receiverServerInput) (receiverServerInpu
 	}
 	abs, err := paths.Resolve(s.cfg.HostMountRoot, in.Folder)
 	if err != nil {
-		return in, "", s.repoPathError(in.Folder, err)
+		return in, "", repoPathError(s.cfg.HostSourceRoot, in.Folder, err)
 	}
 	// The rest-server gets the folder to write in, which must not be ours.
 	if err := s.refuseOwnData(abs); err != nil {

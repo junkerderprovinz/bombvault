@@ -1,11 +1,19 @@
 package store
 
 import (
+	"bytes"
+	"database/sql"
+	"log"
 	"reflect"
+	"strings"
 	"testing"
 )
 
-func TestTheUpgradeDropsRemovedTargetsFromSkipLists(t *testing.T) {
+// skipsBeforeTheUpgrade is a database one step before removedSkipsMigration
+// whose skip lists name the vms target nas under containers and a target gone
+// that exists nowhere.
+func skipsBeforeTheUpgrade(t *testing.T) *sql.DB {
+	t.Helper()
 	db := OpenMem(t)
 	bootAs(t, db, removedSkipsMigration-1)
 	if _, err := db.Exec(`
@@ -22,6 +30,11 @@ func TestTheUpgradeDropsRemovedTargetsFromSkipLists(t *testing.T) {
 		  ('vms',        'vm:win11',       '["nas"]');`); err != nil {
 		t.Fatalf("seed: %v", err)
 	}
+	return db
+}
+
+func TestTheUpgradeDropsRemovedTargetsFromSkipLists(t *testing.T) {
+	db := skipsBeforeTheUpgrade(t)
 
 	if err := Migrate(db); err != nil {
 		t.Fatalf("Migrate: %v", err)
@@ -45,5 +58,33 @@ func TestTheUpgradeDropsRemovedTargetsFromSkipLists(t *testing.T) {
 		if err != nil || !found || !reflect.DeepEqual(rule.Skip, c.want) {
 			t.Errorf("%s rule = %+v, %v, %v, want skip %v", c.identity, rule, found, err, c.want)
 		}
+	}
+}
+
+func TestTheUpgradeLogsEachIdItTakesOutOfTheSkipLists(t *testing.T) {
+	db := skipsBeforeTheUpgrade(t)
+	var buf bytes.Buffer
+	out, flags := log.Writer(), log.Flags()
+	log.SetOutput(&buf)
+	log.SetFlags(0)
+	t.Cleanup(func() { log.SetOutput(out); log.SetFlags(flags) })
+
+	if err := Migrate(db); err != nil {
+		t.Fatalf("Migrate: %v", err)
+	}
+
+	var got []string
+	for line := range strings.Lines(buf.String()) {
+		if strings.Contains(line, "skip lists") {
+			got = append(got, strings.TrimSpace(line))
+		}
+	}
+	want := []string{
+		"placement: took gone out of the containers skip lists, since no copy of the section has that id",
+		"placement: took nas out of the containers skip lists, since no copy of the section has that id",
+		"placement: took gone out of the files skip lists, since no copy of the section has that id",
+	}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("logged %q, want %q", got, want)
 	}
 }

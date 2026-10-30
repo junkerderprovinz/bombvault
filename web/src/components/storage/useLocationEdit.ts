@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { DestinationConnectionEdit, FollowedSetting, StorageLocation, StorageLocationSection } from "../../lib/api";
 import { useT } from "../../lib/i18n";
-import { pushSaveWarnings } from "../../lib/placementCodes";
+import { placementErrorText, pushSaveWarnings } from "../../lib/placementCodes";
 import {
   followLocation,
   saveConnection,
@@ -42,7 +42,7 @@ export interface LocationEdit {
 }
 
 export function useLocationEdit(location: StorageLocation, records: LocationRecords): LocationEdit {
-  const { t } = useT();
+  const { t, lang } = useT();
   const { push } = useToast();
   const [busy, setBusy] = useState(false);
   const settings = writable(location, records);
@@ -67,7 +67,7 @@ export function useLocationEdit(location: StorageLocation, records: LocationReco
   async function write(run: () => Promise<SaveAnswer>, done: string): Promise<boolean> {
     const res = await attempt(run);
     if (!res.ok) {
-      push(res.error ?? t("settings.error"), "fail");
+      push(placementErrorText(t, lang, res, "settings.error"), "fail");
       return false;
     }
     taken(res, done);

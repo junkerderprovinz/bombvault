@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { computeBubblePosition } from "./bubblePosition";
+import { computeBubblePosition, triggerMoved } from "./bubblePosition";
 
 const VIEWPORT = { width: 1024, height: 768 };
 const SMALL_BUBBLE = { width: 200, height: 60 };
@@ -110,5 +110,19 @@ describe("computeBubblePosition: vertical clamping", () => {
     const bubble = { width: 260, height: 900 };
     const pos = computeBubblePosition(trigger, bubble, VIEWPORT);
     expect(pos.top).toBe(24 + 8);
+  });
+});
+
+describe("triggerMoved", () => {
+  const at = { left: 100, right: 180, top: 400, bottom: 424 };
+
+  it("keeps a popup whose trigger stayed where it was measured", () => {
+    expect(triggerMoved({ ...at }, at)).toBe(false);
+    expect(triggerMoved({ ...at, top: 400.4 }, at)).toBe(false);
+  });
+
+  it("lets a popup go once its trigger moved a pixel or more", () => {
+    expect(triggerMoved({ ...at, top: 322, bottom: 346 }, at)).toBe(true);
+    expect(triggerMoved({ ...at, left: 101, right: 181 }, at)).toBe(true);
   });
 });

@@ -192,31 +192,28 @@ func validateOffsiteTargetInput(t store.OffsiteTarget) string {
 // is already a named repository, the counterpart of validateNamedRepo. Items
 // backed up there would write their only copy where replication keeps the
 // second: the copy moves nothing, the run reports success, and off-site
-// retention then ages the only copy. It returns a user-facing sentence, or ""
-// when the location is free, and refuses when the store or the target's
-// location cannot be read.
+// retention then ages the only copy. It refuses when the store or the
+// target's location cannot be read.
 //
 // It needs the store, so it stays out of validateOffsiteTargetInput, which the
 // settings import runs on rows it has not resolved yet.
-func (h *Handler) rejectOffsiteTargetOnNamedRepo(t store.OffsiteTarget) string {
+func (h *Handler) rejectOffsiteTargetOnNamedRepo(t store.OffsiteTarget) error {
 	loc, err := h.svc.resolveRepo(t.Repo)
 	if err != nil {
-		return scrubError(err)
+		return err
 	}
-	rows, lErr := h.store.ListNamedRepos()
-	if lErr != nil {
-		return "could not check this location against the named repositories: " + scrubError(lErr)
+	rows, err := h.store.ListNamedRepos()
+	if err != nil {
+		return fmt.Errorf("could not check this location against the named repositories: %w", err)
 	}
 	for _, r := range rows {
 		other, oErr := h.svc.resolveRepo(r.Repo)
 		if oErr != nil || !repoLocationsOverlap(other, loc) {
 			continue
 		}
-		// The row's name is left out: it is free text, and scrubError takes a
-		// slash that opens a word in it for a path.
-		return "that location is a named repository, or lies inside or around one; backups written there would be their own off-site copy, and the off-site retention would then age the only copy"
+		return errNamedRepoOverlap
 	}
-	return ""
+	return nil
 }
 
 // nestedTargetLocation refuses a target location that holds or lies inside a
@@ -301,8 +298,8 @@ func (h *Handler) handleCreateOffsiteTarget(w http.ResponseWriter, r *http.Reque
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "sortOrder must be 1 or higher: 0 is the primary target, and the off-site setting in Settings manages it"})
 		return
 	}
-	if msg := h.rejectOffsiteTargetOnNamedRepo(t); msg != "" {
-		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": msg})
+	if err := h.rejectOffsiteTargetOnNamedRepo(t); err != nil {
+		placementFail(w, err, nil)
 		return
 	}
 	if err := h.nestedTargetLocation("", t); err != nil {
@@ -411,8 +408,8 @@ func (h *Handler) handleUpdateOffsiteTarget(w http.ResponseWriter, r *http.Reque
 		}
 	}
 	if moved {
-		if msg := h.rejectOffsiteTargetOnNamedRepo(t); msg != "" {
-			writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": msg})
+		if err := h.rejectOffsiteTargetOnNamedRepo(t); err != nil {
+			placementFail(w, err, nil)
 			return
 		}
 		if err := h.nestedTargetLocation(existing.ID, t); err != nil {

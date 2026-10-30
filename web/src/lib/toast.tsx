@@ -1,10 +1,22 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+  type RefObject,
+} from "react";
 import { createPortal } from "react-dom";
 import { ToastViewport } from "../components/Toast";
 import {
   NO_ENGAGEMENT,
   addToast,
   applyEngagement,
+  dialogActionsClearance,
   pauseToast,
   removeToast,
   resumeToast,
@@ -29,6 +41,53 @@ import { useT } from "./i18n";
 // that ancestor instead of covering the viewport.
 
 const QUIET_STORAGE_KEY = "bombvault.quietToasts";
+
+/** What the corner reports to index.css while a dialog's action row is under
+ *  it, so the toasts rise above the row. */
+const DIALOG_CLEARANCE = "--dialog-actions-clearance";
+
+/** useDialogActionsClearance keeps the toasts off the buttons of the dialog on
+ *  top, whose action row carries data-dialog-actions, while any toast shows.
+ *  A refusal answers a press in that row, and on a phone the corner and the
+ *  row are the same place. The row moves when a dialog opens, closes or
+ *  slides in, so it is measured again then. */
+function useDialogActionsClearance(shown: boolean, corner: RefObject<HTMLDivElement | null>) {
+  useLayoutEffect(() => {
+    if (!shown) return;
+    const root = document.documentElement;
+    const measure = () => {
+      const el = corner.current;
+      if (!el) return;
+      const cards = [...el.children].map((card) => card.getBoundingClientRect());
+      const stack = cards.length > 0 ? cards[cards.length - 1].bottom - cards[0].top : 0;
+      // The corner's own padding, the 1rem index.css keeps below the toasts.
+      const reach = parseFloat(getComputedStyle(root).fontSize) + stack;
+      const rows = [...document.querySelectorAll("[data-dialog-actions]")].map((row) => row.getBoundingClientRect());
+      const lift = dialogActionsClearance(rows, el.getBoundingClientRect(), reach, window.innerHeight);
+      if (lift > 0) root.style.setProperty(DIALOG_CLEARANCE, `${lift}px`);
+      else root.style.removeProperty(DIALOG_CLEARANCE);
+    };
+    let frame = 0;
+    const later = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(measure);
+    };
+    measure();
+    const observer = new MutationObserver(later);
+    observer.observe(document.body, { childList: true, subtree: true });
+    window.addEventListener("resize", later);
+    document.addEventListener("transitionend", later, true);
+    document.addEventListener("animationend", later, true);
+    return () => {
+      cancelAnimationFrame(frame);
+      observer.disconnect();
+      window.removeEventListener("resize", later);
+      document.removeEventListener("transitionend", later, true);
+      document.removeEventListener("animationend", later, true);
+      root.style.removeProperty(DIALOG_CLEARANCE);
+    };
+  }, [shown, corner]);
+}
 
 function readStoredQuiet(): boolean {
   try {
@@ -72,6 +131,8 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   // a render of its own; the pause itself lives in `toasts`. A toast without
   // an entry is disengaged.
   const engagement = useRef(new Map<string, ToastEngagement>());
+  const corner = useRef<HTMLDivElement>(null);
+  useDialogActionsClearance(toasts.length > 0, corner);
 
   const clearTimer = useCallback((id: string) => {
     const handle = timers.current.get(id);
@@ -188,6 +249,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 
   const viewport = createPortal(
     <ToastViewport
+      ref={corner}
       toasts={toasts}
       dismissLabel={t("toast.dismiss")}
       onDismiss={dismiss}

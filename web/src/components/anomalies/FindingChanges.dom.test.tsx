@@ -140,3 +140,17 @@ it("only offers a comparison where the server can make one", () => {
   expect(findingHasChanges({ ...finding, scopeKind: "zfsds" })).toBe(false);
   expect(findingHasChanges({ ...finding, domain: "flash" })).toBe(false);
 });
+
+it("says plainly when no folder holds both backups", async () => {
+  getAnomalyChanges.mockResolvedValue({ ok: true, changes: { state: "apart", fromAt: 1758000000, toAt: 1758600000 } });
+  await act(async () => {
+    render(<FindingChanges a={finding} t={t} />);
+  });
+  expect(screen.getByText(en["anomaly.changes.apart"])).toBeTruthy();
+  expect(screen.queryByRole("status")).toBeNull();
+  expect(screen.queryByRole("button", { name: en["breakdown.retry"] })).toBeNull();
+  await act(async () => {
+    await vi.advanceTimersByTimeAsync(4000);
+  });
+  expect(getAnomalyChanges).toHaveBeenCalledTimes(1);
+});

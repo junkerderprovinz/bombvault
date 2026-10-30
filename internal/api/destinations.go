@@ -1246,8 +1246,8 @@ func (h *Handler) handleDestinationForDomain(w http.ResponseWriter, r *http.Requ
 			return
 		}
 	}
-	if msg := h.rejectOffsiteTargetOnNamedRepo(t); msg != "" {
-		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": msg})
+	if err := h.rejectOffsiteTargetOnNamedRepo(t); err != nil {
+		placementFail(w, err, nil)
 		return
 	}
 	if err := h.nestedTargetLocation("", t); err != nil {
@@ -1307,8 +1307,8 @@ func (h *Handler) handlePrimaryFromDestination(w http.ResponseWriter, r *http.Re
 		return
 	}
 	t := store.OffsiteTarget{Domain: domain, Repo: destinationLocation(d.Repo, domain)}
-	if msg := h.rejectOffsiteTargetOnNamedRepo(t); msg != "" {
-		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": msg})
+	if err := h.rejectOffsiteTargetOnNamedRepo(t); err != nil {
+		placementFail(w, err, nil)
 		return
 	}
 	primary, _, err := h.store.FieldOffsiteTarget(domain)

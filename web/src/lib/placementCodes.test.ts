@@ -16,6 +16,13 @@ describe("placementErrorText", () => {
       "move-same-place", "move-section-there", "move-direct-repo", "move-running",
       "own-folder-there",
       "copy-on-own-folder",
+      "own-folder-on-copy",
+      "named-repo-overlap",
+      "unprefixed-remote",
+      "location-needed",
+      "restore-folder-remote",
+      "path-absolute",
+      "path-outside",
       "own-folder-unreadable",
     ];
     for (const code of codes) {
@@ -57,6 +64,14 @@ describe("placementErrorText", () => {
     expect(placementErrorText(t, "en", refusal, "settings.error")).toBe(
       `${en["placementCode.nestedLocation"]} ⁦s3:http://minio:9000/bv/vms⁩`
     );
+  });
+
+  it("gives the relative path to enter instead of a full host path", () => {
+    const refusal = { ok: false, error: "x", code: "path-absolute", suggest: "user/backups" };
+    expect(placementErrorText(t, "en", refusal, "settings.error")).toBe(
+      en["placementCode.pathAbsoluteTo"].replace("{path}", "⁦user/backups⁩")
+    );
+    expect(placementErrorText(t, "en", { ok: false, code: "path-absolute" }, "settings.error")).toBe(en["placementCode.pathAbsolute"]);
   });
 
   it("falls back to the server's text, then to the given key", () => {

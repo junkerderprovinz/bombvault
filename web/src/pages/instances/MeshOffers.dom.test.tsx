@@ -47,7 +47,7 @@ describe("accepting a mesh offer", () => {
     await waitFor(() =>
       expect(fake.callsTo("acceptMeshOffer")).toEqual([["o1", "vms", { identities: ["vm:win11"], default: false }]])
     );
-    expect(fake.callsTo("getNewTargetPreview")).toEqual([["vms", "rest:http://192.0.2.5:8000/vms", undefined]]);
+    expect(fake.callsTo("getNewTargetPreview")).toEqual([["vms", "rest:http://192.0.2.5:8000/vms", undefined, "target"]]);
   });
 
   it("locks Accept while the question is still being prepared", async () => {
@@ -63,6 +63,20 @@ describe("accepting a mesh offer", () => {
     answer();
     fireEvent.click(within(await screen.findByRole("dialog")).getByRole("button", { name: "Cancel" }));
     await waitFor(() => expect(button.hasAttribute("disabled")).toBe(false));
+  });
+
+  it("refuses an offer on a place the location check refuses before asking anything", async () => {
+    fake.reply("getNewTargetPreview", {
+      ok: false,
+      error: "the section keeps its own folder at this place, so a copy there would land on itself",
+      code: "copy-on-own-folder",
+      saveRefused: true,
+    });
+    renderWithProviders(<Row />);
+    fireEvent.click(await screen.findByRole("button", { name: "Accept" }));
+    expect(await screen.findByText("This section keeps its own folder in this storage location already, so a copy there would land on itself.")).toBeTruthy();
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(fake.callsTo("acceptMeshOffer")).toEqual([]);
   });
 
   it("words a placement refusal of the accept in the reader's language", async () => {

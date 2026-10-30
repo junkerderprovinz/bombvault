@@ -1405,7 +1405,7 @@ func (s *Service) resolveRepo(loc string) (string, error) {
 	}
 	repo, err := paths.Resolve(s.cfg.HostMountRoot, loc)
 	if err != nil {
-		return "", s.repoPathError(loc, err)
+		return "", repoPathError(s.cfg.HostSourceRoot, loc, err)
 	}
 	return repo, nil
 }

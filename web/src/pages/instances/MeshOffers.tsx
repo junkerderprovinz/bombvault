@@ -69,9 +69,11 @@ function MeshOfferRow({ offer, t, onChanged }: { offer: MeshOffer; t: T; onChang
       location: offer.repo,
       name: offer.from || t("fleet.mesh.unknownPeer"),
       moved: false,
+      as: "target",
     });
     if (!answer.go) {
       setBusy(false);
+      if (answer.refused) setShakeAccept((n) => n + 1);
       return;
     }
     try {
