@@ -1,7 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Button } from "../../../components/Button";
-import { CheckDraw } from "../../../components/CheckDraw";
-import { IconSearch } from "../../../components/glyphs";
+import { IconSearch, IconUpdateAvailable, IconUpToDate } from "../../../components/glyphs";
 import { IconClose, IconDiagnostics } from "../../../components/navGlyphs";
 import { BrandMark, ReadmeButton } from "../../../components/ReadmeButton";
 import { Rows, SettingRow } from "../../../components/storage/rows";
@@ -83,7 +82,7 @@ function UpdateButton() {
     const behind = check.update.updateAvailable;
     label = behind ? waiting : current;
     labelKey = behind ? "tile.info.updates" : "tile.info.upToDate";
-    glyph = behind ? <IconSearch /> : <CheckDraw />;
+    glyph = behind ? <IconUpdateAvailable /> : <IconUpToDate />;
     tone = behind ? "warn" : "ok";
   } else if (check.state === "refused") {
     label = failed;
