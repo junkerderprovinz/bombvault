@@ -90,8 +90,6 @@ type ownFolderStep struct {
 	// places are the storage locations the move reads and writes, by the id
 	// an erasure there runs under.
 	places [2]string
-	// primaryCopy says CopyAt is the copy the section's off-site field holds.
-	primaryCopy bool
 }
 
 // ownFolderPlace is where the request sends the sections.
@@ -233,7 +231,6 @@ func (s *Service) planOwnFolder(ctx context.Context, settings store.Settings, do
 			return ownFolderStep{}, store.ErrTargetHasDirectRepo
 		}
 		step.CopyAt, step.folder.EndCopy = copyAt.ID, copyAt.ID
-		step.primaryCopy = copyAt.SortOrder == 0 && sameRepoLocation(offsiteRepoFromSettings(domain, settings), copyAt.Repo)
 		// After the switch the copy's history ages by the section's own rule,
 		// which must not forget what the copy kept.
 		keep := targetKeep(copyAt)
@@ -448,13 +445,17 @@ func (s *Service) ownFolderRow(domain, to string, place ownFolderPlace) *store.O
 // meantime stays, since the step was planned for the one before it. A default
 // that backed up past the own folder takes it as its home after that.
 func (s *Service) switchOwnFolder(ctx context.Context, step ownFolderStep) (store.Settings, error) {
+	cleared := false
 	err := s.store.MoveOwnFolder(step.folder, func(st *store.Settings) error {
 		if strings.TrimSpace(domainPathRaw(step.Domain, *st)) != step.from {
 			return errOwnFolderChanged
 		}
 		setDomainPath(st, step.Domain, step.path)
-		if step.primaryCopy {
+		// An off-site field there would copy the section onto its own folder,
+		// whichever copy row it describes.
+		if s.samePlace(offsiteRepoFromSettings(step.Domain, *st), step.path) {
 			setOffsiteRepoInSettings(st, step.Domain, "")
+			cleared = true
 		}
 		if step.copyKeep != nil {
 			if keep := widerKeep(localKeep(*st, step.Domain), *step.copyKeep); keep != localKeep(*st, step.Domain) {
@@ -477,12 +478,25 @@ func (s *Service) switchOwnFolder(ctx context.Context, step ownFolderStep) (stor
 	if err != nil {
 		return store.Settings{}, err
 	}
-	if step.primaryCopy {
+	if cleared {
 		if err := s.syncPrimaryOffsiteTarget(step.Domain, settings); err != nil {
 			return store.Settings{}, err
 		}
 	}
 	return settings, nil
+}
+
+// samePlace reports whether two locations as typed name one repository.
+func (s *Service) samePlace(a, b string) bool {
+	if strings.TrimSpace(a) == "" || strings.TrimSpace(b) == "" {
+		return false
+	}
+	ra, errA := s.resolveRepo(a)
+	rb, errB := s.resolveRepo(b)
+	if errA != nil || errB != nil {
+		return sameRepoLocation(a, b)
+	}
+	return sameRepoLocation(ra, rb)
 }
 
 func setDomainPath(st *store.Settings, domain, path string) {

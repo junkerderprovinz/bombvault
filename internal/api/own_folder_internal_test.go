@@ -747,3 +747,31 @@ func TestAnOwnFolderThatNewBackupsGoPastIsListedAsOff(t *testing.T) {
 		t.Fatal("the own folder is listed as off although db keeps it as its home")
 	}
 }
+
+func TestMovingAnOwnFolderClearsAnOffsiteFieldThatNamesItsNewPlace(t *testing.T) {
+	f := newPlacementFixture(t)
+	vault := f.destination("Vault", vaultRepo)
+	settings, err := f.st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	settings.ContainersOffsite = vaultRepo + "/containers"
+	if err := f.st.UpdateSettings(settings); err != nil {
+		t.Fatal(err)
+	}
+	copyThere := f.tickDestination(vault, "containers")
+	if copyThere.SortOrder == 0 {
+		t.Fatalf("the ticked copy took the primary slot: %+v", copyThere)
+	}
+
+	ownSteps(t, f.do("POST", "/api/storage/own-folders", map[string]any{
+		"domains": []string{"containers"}, "location": "destination:" + vault.ID,
+	}))
+
+	if s, _ := f.st.GetSettings(); s.ContainersOffsite != "" {
+		t.Fatalf("off-site field = %q, want it cleared with the own folder there", s.ContainersOffsite)
+	}
+	if faults, err := f.svc.locationFaults(); err != nil || len(faults) != 0 {
+		t.Fatalf("faults = %+v, %v", faults, err)
+	}
+}
