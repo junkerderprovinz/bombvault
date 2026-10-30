@@ -3174,6 +3174,7 @@ const lv: Partial<Translations> = {
   "settingsIO.previewNamedRepos": "Krātuves",
   "settingsIO.previewCopyRules": "Kopēšanas noteikumi",
   "settingsIO.previewNotInFile": "nav failā, paliek nemainīgs",
+  "settingsIO.previewLeftOut": "Sadaļā {sections} fails joprojām norāda uz mērķiem, kuru vairs nav. Importēšana šīs saites izlaiž.",
   "settingsIO.previewCredentials": "Akreditācijas dati",
   "settingsIO.previewCredsIncluded": "iekļauti",
   "settingsIO.previewCredsNotIncluded": "nav iekļauti",

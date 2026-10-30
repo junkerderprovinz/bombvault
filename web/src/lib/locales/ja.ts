@@ -2685,6 +2685,7 @@ const ja: Partial<Translations> = {
   "settingsIO.previewNamedRepos": "リポジトリ",
   "settingsIO.previewCopyRules": "コピールール",
   "settingsIO.previewNotInFile": "ファイルにないため変更なし",
+  "settingsIO.previewLeftOut": "{sections} では、ファイルがもう存在しない保存先をまだ指しています。インポートではそのリンクを省きます。",
   "settingsIO.previewCredentials": "認証情報",
   "settingsIO.previewCredsIncluded": "含まれる",
   "settingsIO.previewCredsNotIncluded": "含まれない",

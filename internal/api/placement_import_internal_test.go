@@ -110,32 +110,49 @@ func TestAnImportKeepsAPausedDomainPaused(t *testing.T) {
 	}
 }
 
-func TestADefaultOnAnUnknownRepositoryRefusesTheImport(t *testing.T) {
+func TestADefaultOnARepositoryThatIsGoneGoesBackToItsOwnFolder(t *testing.T) {
 	f := newPlacementFixture(t)
-	f.rule("vms", "vm:win11", store.SkipAll)
 	res := importEdited(t, f, func(exp map[string]any) {
 		exp["placementDefaults"] = []any{map[string]any{"domain": "containers", "home": "no-such-repo", "skip": []any{}}}
-		exp["copyRules"] = []any{}
 	})
-	if res["code"] != "default-repo-missing" {
-		t.Fatalf("import = %v, want default-repo-missing", res)
+	if res["ok"] != true {
+		t.Fatalf("import = %v", res)
 	}
-	if _, found, _ := f.st.CopyRuleFor("vms", "vm:win11"); !found {
-		t.Error("a refused import still cleared the rules")
+	assertLeftOut(t, res, "containers", "home", "no-such-repo")
+	if d, found, _ := f.st.PlacementDefaultFor("containers"); !found || d.Home != "" {
+		t.Fatalf("containers default = %+v, %v, want its own folder", d, found)
 	}
 }
 
-func TestADefaultSkipNamingAnUnknownTargetRefusesTheImport(t *testing.T) {
+func TestADefaultSkipNamingATargetThatIsGoneIsLeftOut(t *testing.T) {
 	f := newPlacementFixture(t)
 	f.rule("vms", "vm:win11", store.SkipAll)
 	res := importEdited(t, f, func(exp map[string]any) {
 		exp["placementDefaults"] = []any{map[string]any{"domain": "containers", "home": "", "skip": []any{"no-such-target"}}}
 	})
-	if res["code"] != "unknown-target" {
-		t.Fatalf("import = %v, want unknown-target", res)
+	if res["ok"] != true {
+		t.Fatalf("import = %v", res)
+	}
+	assertLeftOut(t, res, "containers", "copy", "no-such-target")
+	if d, found, _ := f.st.PlacementDefaultFor("containers"); !found || len(d.Skip) != 0 {
+		t.Fatalf("containers default = %+v, %v, want an empty skip", d, found)
 	}
 	if _, found, _ := f.st.CopyRuleFor("vms", "vm:win11"); !found {
-		t.Error("a refused import still cleared the rules")
+		t.Error("the file's own rule did not land")
+	}
+}
+
+func TestThePreviewNamesWhatTheImportLeavesOut(t *testing.T) {
+	f := newPlacementFixture(t)
+	exp := f.do(http.MethodGet, "/api/settings/export", nil)
+	exp["copyRules"] = []any{map[string]any{"domain": "vms", "identity": "vm:win11", "skip": []any{"gone-target"}}}
+	res := f.do(http.MethodPost, "/api/settings/import", exp)
+	if res["ok"] != true || res["preview"] != true {
+		t.Fatalf("preview = %v", res)
+	}
+	assertLeftOut(t, res, "vms", "copy", "gone-target")
+	if _, found, _ := f.st.CopyRuleFor("vms", "vm:win11"); found {
+		t.Error("the preview wrote the rule")
 	}
 }
 
@@ -159,21 +176,72 @@ func TestADefaultSkipNamingATargetTheFileItselfBringsIsAccepted(t *testing.T) {
 	}
 }
 
-// TestADefaultSkipNamingATargetOnlyTheDatabaseHasRefusesTheImport is the
-// mirror of TestADefaultSkipNamingATargetTheFileItselfBringsIsAccepted: the
-// import always replaces every off-site target with the file's own set, so a
-// skip entry naming a target that only the current database still has, and
-// the file no longer carries, would exclude nothing once the import lands.
-func TestADefaultSkipNamingATargetOnlyTheDatabaseHasRefusesTheImport(t *testing.T) {
+// TestADefaultSkipNamingATargetOnlyTheDatabaseHasIsLeftOut is the mirror of
+// TestADefaultSkipNamingATargetTheFileItselfBringsIsAccepted: the import
+// replaces every off-site target with the file's own set, so a skip entry
+// naming a target the file no longer carries would exclude nothing once the
+// import lands.
+func TestADefaultSkipNamingATargetOnlyTheDatabaseHasIsLeftOut(t *testing.T) {
 	f := newPlacementFixture(t)
 	b2 := f.target("containers", "B2", "b2:bucket/containers")
 	f.setDefault("containers", "", b2.ID)
 	res := importEdited(t, f, func(exp map[string]any) {
 		exp["offsiteTargets"] = []any{}
 	})
-	if res["code"] != "unknown-target" {
-		t.Fatalf("import = %v, want unknown-target", res)
+	if res["ok"] != true {
+		t.Fatalf("import = %v", res)
 	}
+	assertLeftOut(t, res, "containers", "copy", b2.ID)
+}
+
+func TestRemovingATargetTakesItOutOfTheSkipLists(t *testing.T) {
+	f := newPlacementFixture(t)
+	b2 := f.target("containers", "B2", "b2:bucket/containers")
+	box := f.target("containers", "Box", "b2:box/containers")
+	f.setDefault("containers", "", b2.ID, box.ID)
+	f.rule("containers", "container:plex", b2.ID)
+	if err := f.st.DeleteOffsiteTarget(b2.ID); err != nil {
+		t.Fatal(err)
+	}
+	if d, _, _ := f.st.PlacementDefaultFor("containers"); !reflect.DeepEqual(d.Skip, []string{box.ID}) {
+		t.Errorf("default skip = %v, want only %s", d.Skip, box.ID)
+	}
+	if r, found, _ := f.st.CopyRuleFor("containers", "container:plex"); !found || len(r.Skip) != 0 {
+		t.Errorf("rule = %+v, %v, want an empty skip", r, found)
+	}
+	if _, err := f.st.DeleteOffsiteTargetIfUnused(box.ID); err != nil {
+		t.Fatal(err)
+	}
+	if d, _, _ := f.st.PlacementDefaultFor("containers"); len(d.Skip) != 0 {
+		t.Errorf("default skip = %v after the off-site delete, want it empty", d.Skip)
+	}
+}
+
+func TestAnExportLeavesOutASkipOfATargetThatIsGone(t *testing.T) {
+	f := newPlacementFixture(t)
+	b2 := f.target("containers", "B2", "b2:bucket/containers")
+	f.setDefault("containers", "", b2.ID)
+	if _, err := f.db.Exec(`UPDATE placement_defaults SET skip = ? WHERE domain = 'containers'`, `["`+b2.ID+`","stale"]`); err != nil {
+		t.Fatal(err)
+	}
+	exp := f.do(http.MethodGet, "/api/settings/export", nil)
+	d := exp["placementDefaults"].([]any)[0].(map[string]any)
+	if !reflect.DeepEqual(d["skip"], []any{b2.ID}) {
+		t.Fatalf("exported skip = %v, want only %s", d["skip"], b2.ID)
+	}
+}
+
+// assertLeftOut checks that the import's summary names the link it left out.
+func assertLeftOut(t *testing.T, res map[string]any, domain, kind, id string) {
+	t.Helper()
+	summary, _ := res["summary"].(map[string]any)
+	list, _ := summary["leftOut"].([]any)
+	for _, item := range list {
+		if l, _ := item.(map[string]any); l["domain"] == domain && l["kind"] == kind && l["id"] == id {
+			return
+		}
+	}
+	t.Fatalf("leftOut = %v, want %s %s %s", summary["leftOut"], domain, kind, id)
 }
 
 // TestTwoDefaultsForTheSameDomainRefuseTheImport pins that the pre-flight

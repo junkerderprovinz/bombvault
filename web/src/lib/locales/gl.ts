@@ -3174,6 +3174,7 @@ const gl: Partial<Translations> = {
   "settingsIO.previewNamedRepos": "Repositorios",
   "settingsIO.previewCopyRules": "Regras de copia",
   "settingsIO.previewNotInFile": "non está no ficheiro, mantense igual",
+  "settingsIO.previewLeftOut": "En {sections}, o ficheiro aínda apunta a destinos que xa non existen. A importación omite esas ligazóns.",
   "settingsIO.previewCredentials": "Credenciais",
   "settingsIO.previewCredsIncluded": "incluídas",
   "settingsIO.previewCredsNotIncluded": "non incluídas",

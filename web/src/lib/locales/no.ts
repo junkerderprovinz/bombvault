@@ -2694,6 +2694,7 @@ const no: Partial<Translations> = {
   "settingsIO.previewNamedRepos": "Depoter",
   "settingsIO.previewCopyRules": "Kopieringsregler",
   "settingsIO.previewNotInFile": "ikke i filen, forblir uendret",
+  "settingsIO.previewLeftOut": "Under {sections} viser filen fortsatt til mål som ikke finnes lenger. Importen hopper over disse koblingene.",
   "settingsIO.previewCredentials": "Legitimasjon",
   "settingsIO.previewCredsIncluded": "inkludert",
   "settingsIO.previewCredsNotIncluded": "ikke inkludert",

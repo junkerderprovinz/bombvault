@@ -70,6 +70,26 @@ describe("the import preview and placement", () => {
     expect(valueOf("Copy rules")).toBe("not in the file, stays as it is");
   });
 
+  it("names the sections whose links to gone storage locations the import leaves out", async () => {
+    file.summary = summary({
+      leftOut: [
+        { domain: "containers", kind: "copy", id: "t-gone" },
+        { domain: "files", kind: "home", id: "r-gone" },
+        { domain: "containers", kind: "copy", id: "t-gone-too" },
+      ],
+    });
+    await pickFile();
+    expect(
+      screen.getByText("In Containers and Folders, the file still links to storage locations that are gone. The import leaves those links out.")
+    ).toBeTruthy();
+  });
+
+  it("says nothing about left-out links when the file has none", async () => {
+    file.summary = summary({});
+    await pickFile();
+    expect(screen.queryByText(/leaves those links out/)).toBeNull();
+  });
+
   it("asks what each new target receives and writes the ticked exclusions after the import", async () => {
     file.summary = summary({ newTargets: [hetzner] });
     const seen = vi.fn();

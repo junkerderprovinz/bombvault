@@ -3158,6 +3158,7 @@ const sl: Partial<Translations> = {
   "settingsIO.previewNamedRepos": "Skladišča",
   "settingsIO.previewCopyRules": "Pravila kopiranja",
   "settingsIO.previewNotInFile": "ni v datoteki, ostane nespremenjeno",
+  "settingsIO.previewLeftOut": "Pri {sections} datoteka še vedno kaže na cilje, ki jih ni več. Uvoz te povezave izpusti.",
   "settingsIO.previewCredentials": "Poverilnice",
   "settingsIO.previewCredsIncluded": "vključene",
   "settingsIO.previewCredsNotIncluded": "niso vključene",

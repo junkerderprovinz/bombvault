@@ -2694,6 +2694,7 @@ const fi: Partial<Translations> = {
   "settingsIO.previewNamedRepos": "Arkistot",
   "settingsIO.previewCopyRules": "Kopiointisäännöt",
   "settingsIO.previewNotInFile": "ei tiedostossa, pysyy ennallaan",
+  "settingsIO.previewLeftOut": "Kohdassa {sections} tiedosto viittaa yhä kohteisiin, joita ei enää ole. Tuonti jättää nämä viittaukset pois.",
   "settingsIO.previewCredentials": "Tunnistetiedot",
   "settingsIO.previewCredsIncluded": "sisältyy",
   "settingsIO.previewCredsNotIncluded": "ei sisälly",

@@ -3174,6 +3174,7 @@ const ca: Partial<Translations> = {
   "settingsIO.previewNamedRepos": "Repositoris",
   "settingsIO.previewCopyRules": "Regles de còpia",
   "settingsIO.previewNotInFile": "no és al fitxer, es manté igual",
+  "settingsIO.previewLeftOut": "A {sections}, el fitxer encara apunta a destinacions que ja no existeixen. La importació omet aquests enllaços.",
   "settingsIO.previewCredentials": "Credencials",
   "settingsIO.previewCredsIncluded": "incloses",
   "settingsIO.previewCredsNotIncluded": "no incloses",

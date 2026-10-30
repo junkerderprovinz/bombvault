@@ -490,6 +490,10 @@ export interface ImportSettingsSummary {
   copyRules: number | null;
   /** Targets the file adds, with what each would receive at its first run. */
   newTargets: NewTargetPreview[];
+  /** The file's links to targets and repositories that are gone, which the
+   *  import leaves out. A default whose repository is gone goes back to its
+   *  section's own folder. */
+  leftOut?: { domain: PlacementDomain; kind: "copy" | "home"; id: string }[];
   credentials: {
     present: boolean;
     cloud: boolean;

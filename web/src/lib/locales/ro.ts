@@ -2695,6 +2695,7 @@ const ro: Partial<Translations> = {
   "settingsIO.previewNamedRepos": "Depozite",
   "settingsIO.previewCopyRules": "Reguli de copiere",
   "settingsIO.previewNotInFile": "lipsește din fișier, rămâne neschimbat",
+  "settingsIO.previewLeftOut": "La {sections}, fișierul încă trimite la destinații care nu mai există. Importul lasă deoparte aceste legături.",
   "settingsIO.previewCredentials": "Acreditări",
   "settingsIO.previewCredsIncluded": "incluse",
   "settingsIO.previewCredsNotIncluded": "neincluse",

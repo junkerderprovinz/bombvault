@@ -2694,6 +2694,7 @@ const tr: Partial<Translations> = {
   "settingsIO.previewNamedRepos": "Depolar",
   "settingsIO.previewCopyRules": "Kopyalama kuralları",
   "settingsIO.previewNotInFile": "dosyada yok, olduğu gibi kalır",
+  "settingsIO.previewLeftOut": "{sections} bölümünde dosya hâlâ artık var olmayan hedeflere bağlantı veriyor. İçe aktarma bu bağlantıları dışarıda bırakır.",
   "settingsIO.previewCredentials": "Kimlik bilgileri",
   "settingsIO.previewCredsIncluded": "dahil",
   "settingsIO.previewCredsNotIncluded": "dahil değil",

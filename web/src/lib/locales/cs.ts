@@ -2692,6 +2692,7 @@ const cs: Partial<Translations> = {
   "settingsIO.previewNamedRepos": "Repozitáře",
   "settingsIO.previewCopyRules": "Pravidla kopírování",
   "settingsIO.previewNotInFile": "není v souboru, zůstává beze změny",
+  "settingsIO.previewLeftOut": "U {sections} soubor stále odkazuje na cíle, které už neexistují. Import tyto odkazy vynechá.",
   "settingsIO.previewCredentials": "Přihlašovací údaje",
   "settingsIO.previewCredsIncluded": "zahrnuty",
   "settingsIO.previewCredsNotIncluded": "nezahrnuty",

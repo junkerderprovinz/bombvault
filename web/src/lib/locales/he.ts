@@ -2694,6 +2694,7 @@ const he: Partial<Translations> = {
   "settingsIO.previewNamedRepos": "מאגרים",
   "settingsIO.previewCopyRules": "כללי העתקה",
   "settingsIO.previewNotInFile": "לא בקובץ, נשאר כפי שהוא",
+  "settingsIO.previewLeftOut": "ב{sections} הקובץ עדיין מפנה ליעדים שכבר לא קיימים. הייבוא משמיט את ההפניות האלה.",
   "settingsIO.previewCredentials": "אישורים",
   "settingsIO.previewCredsIncluded": "כלולים",
   "settingsIO.previewCredsNotIncluded": "לא כלולים",

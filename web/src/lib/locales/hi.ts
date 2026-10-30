@@ -3174,6 +3174,7 @@ const hi: Partial<Translations> = {
   "settingsIO.previewNamedRepos": "रिपॉज़िटरी",
   "settingsIO.previewCopyRules": "कॉपी नियम",
   "settingsIO.previewNotInFile": "फ़ाइल में नहीं है, जैसा है वैसा ही रहता है",
+  "settingsIO.previewLeftOut": "{sections} में फ़ाइल अब भी ऐसे गंतव्यों की ओर इशारा करती है जो अब मौजूद नहीं हैं। आयात इन लिंक को छोड़ देता है।",
   "settingsIO.previewCredentials": "क्रेडेंशियल्स",
   "settingsIO.previewCredsIncluded": "शामिल",
   "settingsIO.previewCredsNotIncluded": "शामिल नहीं",

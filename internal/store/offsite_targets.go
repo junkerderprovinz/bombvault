@@ -1135,6 +1135,9 @@ func deleteTargetKeepingDirectTx(tx *sql.Tx, id string) error {
 	if _, err := tx.Exec(`DELETE FROM offsite_targets WHERE id = ? AND role = ?`, id, RoleOffsite); err != nil {
 		return err
 	}
+	if err := forgetSkippedTargetTx(tx, id); err != nil {
+		return err
+	}
 	return deleteTargetObservationsTx(tx, id)
 }
 
@@ -1182,6 +1185,9 @@ func (r *Repo) DeleteOffsiteTargetIfUnused(id string) (TargetUse, error) {
 		return use, fmt.Errorf("DeleteOffsiteTargetIfUnused: %w", err)
 	}
 	if _, err := tx.Exec(`DELETE FROM offsite_targets WHERE id = ? AND role = ?`, id, RoleOffsite); err != nil {
+		return use, fmt.Errorf("DeleteOffsiteTargetIfUnused: %w", err)
+	}
+	if err := forgetSkippedTargetTx(tx, id); err != nil {
 		return use, fmt.Errorf("DeleteOffsiteTargetIfUnused: %w", err)
 	}
 	if err := deleteTargetObservationsTx(tx, id); err != nil {

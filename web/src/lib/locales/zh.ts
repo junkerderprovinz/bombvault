@@ -2685,6 +2685,7 @@ const zh: Partial<Translations> = {
   "settingsIO.previewNamedRepos": "仓库",
   "settingsIO.previewCopyRules": "复制规则",
   "settingsIO.previewNotInFile": "文件中没有，保持不变",
+  "settingsIO.previewLeftOut": "在{sections}中，文件仍指向已不存在的目标。导入时会略过这些链接。",
   "settingsIO.previewCredentials": "凭据",
   "settingsIO.previewCredsIncluded": "已包含",
   "settingsIO.previewCredsNotIncluded": "未包含",

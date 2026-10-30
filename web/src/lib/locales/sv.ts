@@ -2694,6 +2694,7 @@ const sv: Partial<Translations> = {
   "settingsIO.previewNamedRepos": "Förvar",
   "settingsIO.previewCopyRules": "Kopieringsregler",
   "settingsIO.previewNotInFile": "inte i filen, förblir oförändrat",
+  "settingsIO.previewLeftOut": "Under {sections} pekar filen fortfarande på mål som inte finns längre. Importen hoppar över de länkarna.",
   "settingsIO.previewCredentials": "Autentiseringsuppgifter",
   "settingsIO.previewCredsIncluded": "inkluderade",
   "settingsIO.previewCredsNotIncluded": "ej inkluderade",

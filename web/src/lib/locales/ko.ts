@@ -2685,6 +2685,7 @@ const ko: Partial<Translations> = {
   "settingsIO.previewNamedRepos": "저장소",
   "settingsIO.previewCopyRules": "복사 규칙",
   "settingsIO.previewNotInFile": "파일에 없어 그대로 유지됨",
+  "settingsIO.previewLeftOut": "{sections}에서 파일이 더 이상 없는 대상을 아직 가리키고 있습니다. 가져오기는 이 링크를 건너뜁니다.",
   "settingsIO.previewCredentials": "자격 증명",
   "settingsIO.previewCredsIncluded": "포함됨",
   "settingsIO.previewCredsNotIncluded": "포함되지 않음",

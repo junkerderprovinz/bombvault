@@ -2685,6 +2685,7 @@ const vi: Partial<Translations> = {
   "settingsIO.previewNamedRepos": "Kho",
   "settingsIO.previewCopyRules": "Quy tắc sao chép",
   "settingsIO.previewNotInFile": "không có trong tệp, giữ nguyên",
+  "settingsIO.previewLeftOut": "Ở {sections}, tệp vẫn trỏ tới các đích sao lưu không còn tồn tại. Thao tác nhập sẽ bỏ qua các liên kết đó.",
   "settingsIO.previewCredentials": "Thông tin xác thực",
   "settingsIO.previewCredsIncluded": "có bao gồm",
   "settingsIO.previewCredsNotIncluded": "không bao gồm",
