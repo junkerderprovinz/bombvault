@@ -28,7 +28,7 @@ var errCopyOnOwnFolder = errors.New("the section keeps its own folder at this pl
 // errOwnFolderOnCopy refuses an own folder typed in at the place a copy of the
 // section lies, for the same reason. Moving the own folder there from the
 // storage page ends that copy instead.
-var errOwnFolderOnCopy = errors.New("a copy of the section lies at this place, so its backups would be copied onto themselves; move the own folder there under Storage locations, which ends that copy")
+var errOwnFolderOnCopy = errors.New("a copy of the section lies at this place, so its backups would be copied onto themselves; move the own folder there in the Own folders card of that storage location, which ends that copy")
 
 // nestedLocationErr is errNestedLocation with the place in the way, so the
 // refusal can show which one it is.

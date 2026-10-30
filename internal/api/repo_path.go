@@ -38,7 +38,7 @@ func (e *repoPathErr) Is(target error) bool { return target == errRepoPathGuidan
 // errNamedRepoOverlap refuses a location that is, holds or lies inside a
 // repository set up under Repositories: the backups there would answer to two
 // rows, and a target there would be the only copy that retention ages.
-var errNamedRepoOverlap = errors.New("that location is a repository set up under Repositories, or lies inside or around one")
+var errNamedRepoOverlap = errors.New("that location is a repository set up under Repositories in Settings, Storage, or lies inside or around one")
 
 // errUnprefixedRemote refuses a location that looks like a remote without a
 // restic prefix, which restic would take for a folder of that name under the
