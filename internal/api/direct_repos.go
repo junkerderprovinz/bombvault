@@ -25,6 +25,11 @@ var errNestedLocation = errors.New("this location lies inside another repository
 // lies: it would copy every backup onto itself and fail on every run.
 var errCopyOnOwnFolder = errors.New("the section keeps its own folder at this place, so a copy there would land on itself")
 
+// errOwnFolderOnCopy refuses an own folder typed in at the place a copy of the
+// section lies, for the same reason. Moving the own folder there from the
+// storage page ends that copy instead.
+var errOwnFolderOnCopy = errors.New("a copy of the section lies at this place, so its backups would be copied onto themselves; move the own folder there under Storage locations, which ends that copy")
+
 // nestedLocationErr is errNestedLocation with the place in the way, so the
 // refusal can show which one it is.
 type nestedLocationErr struct {
@@ -183,11 +188,18 @@ func (s *Service) locationClash(settings store.Settings, loc string, self locati
 		switch {
 		case oErr != nil:
 			log.Printf("api: location check: the %s domain's own repository does not resolve, so this location was not held against it: %v", d, oErr) //nolint:gosec // G706: the domain is a fixed literal
+		case d == self.field && sameRepoLocation(own, loc):
+			return errCopyOnOwnFolder
 		case d != self.own && clashes(own):
 			return &nestedLocationErr{what: "the " + d + " domain's own repository", at: own}
 		}
 		if off := offsiteRepoFromSettings(d, settings); off != "" && d != self.field {
-			if offLoc, ok := s.clashCandidate("off-site destination of the domain", d, off); ok && clashes(offLoc) {
+			offLoc, ok := s.clashCandidate("off-site destination of the domain", d, off)
+			switch {
+			case !ok:
+			case d == self.own && sameRepoLocation(offLoc, loc):
+				return errOwnFolderOnCopy
+			case clashes(offLoc):
 				return &nestedLocationErr{what: "the " + d + " domain's off-site destination", at: offLoc}
 			}
 		}
@@ -202,10 +214,17 @@ func (s *Service) locationClash(settings store.Settings, loc string, self locati
 	}
 	ids := destinationIDs(destinations)
 	for _, t := range targets {
-		if slices.Contains(self.ids, t.ID) || hiddenTarget(t, settings, ids) {
+		if slices.Contains(self.ids, t.ID) {
 			continue
 		}
-		if tLoc, ok := s.clashCandidate("off-site destination", t.Name, t.Repo); ok && clashes(tLoc) {
+		// A copy of the section itself counts even where the page lists it
+		// nowhere, since it still lands on the own folder.
+		tLoc, ok := s.clashCandidate("off-site destination", t.Name, t.Repo)
+		switch {
+		case !ok:
+		case t.Domain == self.own && sameRepoLocation(tLoc, loc):
+			return errOwnFolderOnCopy
+		case !hiddenTarget(t, settings, ids) && clashes(tLoc):
 			return &nestedLocationErr{what: fmt.Sprintf("the off-site destination %q", t.Name), at: tLoc}
 		}
 	}
