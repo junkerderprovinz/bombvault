@@ -10,7 +10,7 @@ import { ExcludesEverythingNote } from "../ExcludesEverythingNote";
 import { createPlacedFileSet } from "../files/createPlacedFileSet";
 import { FolderBrowser } from "../FolderBrowser";
 import { InfoBubble } from "../InfoBubble";
-import { IconAdd, IconCheck, IconFolder } from "../navGlyphs";
+import { IconCheck, IconFolder, IconFolderAdd } from "../navGlyphs";
 import { PlacementDraft, type PlacementDraftValue } from "../placement/PlacementDraft";
 
 /** A folder the server offers for a new set. `path` is relative to the host
@@ -229,7 +229,7 @@ export function FolderAddForm({
       key={shake}
       label={t("dest.folder.create")}
       labelKey={null}
-      glyph={<IconAdd />}
+      glyph={<IconFolderAdd />}
       tone="accent"
       onClick={() => void create()}
       disabled={saving || name.trim() === "" || path.trim() === ""}

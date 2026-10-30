@@ -1,7 +1,7 @@
 import { useT } from "../../lib/i18n";
 import { Button } from "../Button";
 import { usePlaceLabel, type TimelineState } from "../entry/BackupPlaces";
-import { IconRefresh } from "../glyphs";
+import { IconRetry } from "../glyphs";
 import { IconCheck } from "../navGlyphs";
 
 /** PlaceChecks offers to read the storage locations nobody has read yet.
@@ -22,7 +22,7 @@ export function PlaceChecks({ timeline }: { timeline: TimelineState }) {
           <Button
             label={t(p.state === "unreadable" ? "restoreCheck.recheck" : "timeline.check")}
             labelKey={p.state === "unreadable" ? "restoreCheck.recheck" : "timeline.check"}
-            glyph={p.state === "unreadable" ? <IconRefresh /> : <IconCheck />}
+            glyph={p.state === "unreadable" ? <IconRetry /> : <IconCheck />}
             tone="subtle"
             busy={reading.has(p.place)}
             disabled={reading.has(p.place)}

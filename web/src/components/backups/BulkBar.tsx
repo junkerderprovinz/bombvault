@@ -2,7 +2,7 @@ import { useEffect, useRef, type ReactNode } from "react";
 import type { TranslationKey } from "../../lib/i18n";
 import { useIsDesktop } from "../../lib/useMediaQuery";
 import { Button } from "../Button";
-import { IconCheck } from "../navGlyphs";
+import { IconConfirm } from "../glyphs";
 import { SelectMark } from "./SelectMark";
 
 type T = (key: TranslationKey, n?: number) => string;
@@ -101,7 +101,7 @@ export function BulkBar({
       </span>
       <div className="ms-auto flex flex-wrap items-center justify-end gap-2.5">
         {count > 0 && children}
-        <BarButton label={t("common.done")} glyph={<IconCheck />} onClick={onDone} wide />
+        <BarButton label={t("common.done")} glyph={<IconConfirm />} onClick={onDone} wide />
       </div>
     </div>
   );

@@ -14,6 +14,7 @@ import { tLtr } from "../../lib/ltrFragments";
 import { InstanceWindow } from "../instances/InstanceWindow";
 import { ClientMark } from "./McpClientMark";
 import { connectorUrl, McpOAuthSettings } from "./McpOAuthSettings";
+import { IconConfirm } from "../../components/glyphs";
 
 /** A key handed out by create, with the row it belongs to. */
 export interface FreshKey {
@@ -597,7 +598,7 @@ export function McpClientDialog({
         <Button
           label={connected ? t("common.done") : t("common.close")}
           labelKey={connected ? "common.done" : "common.close"}
-          glyph={connected ? <IconCheck /> : undefined}
+          glyph={connected ? <IconConfirm /> : undefined}
           tone="accent"
           onClick={close}
         />

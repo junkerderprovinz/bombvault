@@ -3,9 +3,9 @@ import { draftFolders, draftMakeFolder } from "../../lib/api";
 import { useT } from "../../lib/i18n";
 import { InstanceWindow } from "../../pages/instances/InstanceWindow";
 import { Button } from "../Button";
-import { IconBack } from "../glyphs";
+import { IconApply, IconBack } from "../glyphs";
 import { InfoBubble } from "../InfoBubble";
-import { IconCheck, IconClose, IconFolder } from "../navGlyphs";
+import { IconClose, IconFolder } from "../navGlyphs";
 import { FIELD } from "./steps";
 
 function split(path: string): string[] {
@@ -124,7 +124,7 @@ export function RemoteFolderBrowser({
               <Button
                 label={t("folder.use")}
                 labelKey="folder.use"
-                glyph={<IconCheck />}
+                glyph={<IconApply />}
                 tone="accent"
                 disabled={folders === null}
                 onClick={() => {

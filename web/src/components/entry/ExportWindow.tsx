@@ -21,7 +21,7 @@ import { InstanceWindow } from "../../pages/instances/InstanceWindow";
 import { PageSentence } from "../../pages/settings/SidebarTile";
 import { Button } from "../Button";
 import { CopyBlock } from "../CopyBlock";
-import { IconCheck, IconDownload } from "../navGlyphs";
+import { IconConfirm, IconExport } from "../glyphs";
 import { ProgressBar } from "../ProgressBar";
 import { Selector } from "../Selector";
 import { Rows, SettingRow } from "../storage/rows";
@@ -199,7 +199,7 @@ export function ExportWindow({
         <Button
           label={t("entry.export.action")}
           labelKey="entry.export.action"
-          glyph={<IconDownload />}
+          glyph={<IconExport />}
           tone="accent"
           disabled={preview === null || phase === "starting" || other.active}
           busy={phase === "starting"}
@@ -222,7 +222,7 @@ export function ExportWindow({
     );
   } else {
     footer = (
-      <Button label={t("common.done")} labelKey="common.done" glyph={<IconCheck />} tone="accent" onClick={onClose} />
+      <Button label={t("common.done")} labelKey="common.done" glyph={<IconConfirm />} tone="accent" onClick={onClose} />
     );
   }
 
@@ -352,7 +352,7 @@ export function LiveExportWindow({ entry, name, onClose }: { entry: Entry; name:
             <Button
               label={t("entry.export.action")}
               labelKey="entry.export.action"
-              glyph={<IconDownload />}
+              glyph={<IconExport />}
               tone="accent"
               disabled={busy}
               busy={busy}
@@ -360,7 +360,7 @@ export function LiveExportWindow({ entry, name, onClose }: { entry: Entry; name:
             />
           </>
         ) : (
-          <Button label={t("common.done")} labelKey="common.done" glyph={<IconCheck />} tone="accent" onClick={onClose} />
+          <Button label={t("common.done")} labelKey="common.done" glyph={<IconConfirm />} tone="accent" onClick={onClose} />
         )
       }
     >

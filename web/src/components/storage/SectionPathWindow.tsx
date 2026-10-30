@@ -8,7 +8,7 @@ import { useDebouncedSave } from "../../lib/useDebouncedSave";
 import { storageLocationsChanged } from "../../lib/useStorageLocations";
 import { InstanceWindow } from "../../pages/instances/InstanceWindow";
 import { Button } from "../Button";
-import { IconCheck } from "../navGlyphs";
+import { IconConfirm } from "../glyphs";
 import { PathModeSwitch } from "../PathModeSwitch";
 
 type PathKey = "containersPath" | "vmsPath" | "flashPath" | "filesPath" | "zfsPath" | "configPath";
@@ -97,7 +97,7 @@ export function SectionPathWindow({ domain, onClose }: { domain: OffsiteDomain; 
       title={t(label)}
       hint={t("settings.pathsHint").replace("{root}", () => root)}
       onClose={close}
-      footer={<Button label={t("common.done")} labelKey="common.done" glyph={<IconCheck />} tone="accent" onClick={close} />}
+      footer={<Button label={t("common.done")} labelKey="common.done" glyph={<IconConfirm />} tone="accent" onClick={close} />}
     >
       {settings ? (
         <PathModeSwitch

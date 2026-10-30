@@ -3,7 +3,7 @@ import { Badge } from "../../components/Badge";
 import { Button } from "../../components/Button";
 import { ConfirmPrompt } from "../../components/ConfirmPrompt";
 import { Note } from "../../components/entry/Note";
-import { IconInfo, IconKeyRevoke, IconLink, IconRefresh } from "../../components/glyphs";
+import { IconInfo, IconKeyRevoke, IconLink, IconLog, IconRetry } from "../../components/glyphs";
 import { InfoBubble } from "../../components/InfoBubble";
 import { PickerGroup, PickerNoMatch } from "../../components/Picker";
 import { RevealInput } from "../../components/RevealInput";
@@ -589,7 +589,7 @@ export function McpServerCard({ hueIndex, passwordSet }: { hueIndex?: number; pa
                     }
                     note={t(REVOKED_REASON[k.revokedReason] ?? "mcp.revokedAt").replace("{date}", formatTs(k.revokedAt))}
                   >
-                    <Button label={t("mcp.log")} labelKey="mcp.log" glyph={<IconInfo />} onClick={() => setLogOf(k)} />
+                    <Button label={t("mcp.log")} labelKey="mcp.log" glyph={<IconLog />} onClick={() => setLogOf(k)} />
                     <span className="flex items-center gap-1.5">
                       <Button
                         label={t("common.delete")}
@@ -624,7 +624,7 @@ export function McpServerCard({ hueIndex, passwordSet }: { hueIndex?: number; pa
                 <Button
                   label={t("mcp.rotate")}
                   labelKey="mcp.rotate"
-                  glyph={<IconRefresh />}
+                  glyph={<IconRetry />}
                   tone="subtle"
                   onClick={() => confirmFor("rotate", open)}
                   disabled={busy}

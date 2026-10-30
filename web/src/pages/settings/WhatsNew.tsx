@@ -4,8 +4,8 @@ import { useNavigate } from "react-router-dom";
 import { Badge } from "../../components/Badge";
 import { hueVars } from "../../lib/appearance";
 import { Button } from "../../components/Button";
-import { IconEye, IconForward } from "../../components/glyphs";
-import { IconCheck, IconClose } from "../../components/navGlyphs";
+import { IconConfirm, IconEye, IconForward } from "../../components/glyphs";
+import { IconClose } from "../../components/navGlyphs";
 import { ReleaseNotes, releasePage } from "../../components/ReleaseNotes";
 import { useT } from "../../lib/i18n";
 import { CHANGES, placed, RELEASES, type Change } from "../../lib/whatsNew";
@@ -194,7 +194,7 @@ export function WhatsNewWindow({ version, onClose }: { version: string | null; o
             <Button
               label={`${t(left.length > 0 ? "whatsNew.markAll" : "whatsNew.showAll")} · ${left.length > 0 ? left.length : listed.length}`}
               labelKey={left.length > 0 ? "whatsNew.markAll" : "whatsNew.showAll"}
-              glyph={left.length > 0 ? <IconCheck /> : <IconEye />}
+              glyph={left.length > 0 ? <IconConfirm /> : <IconEye />}
               tone="neutral"
               onClick={() => markSeen(listed.map((change) => change.id), left.length > 0)}
               className="glim-btn-wrap"

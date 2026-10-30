@@ -33,10 +33,10 @@ import { InstanceWindow } from "../../pages/instances/InstanceWindow";
 import { KindGlyph } from "../backups/kinds";
 import { Button } from "../Button";
 import { FolderBrowser } from "../FolderBrowser";
-import { IconBack, IconLink } from "../glyphs";
+import { IconBack, IconConfirm, IconLink } from "../glyphs";
 import { InfoBubble } from "../InfoBubble";
 import { Rows, SettingRow } from "../storage/rows";
-import { IconCheck, IconClose, IconGear, IconRestore } from "../navGlyphs";
+import { IconClose, IconGear, IconRestore } from "../navGlyphs";
 import { RevealInput } from "../RevealInput";
 import { Selector } from "../Selector";
 import { SelectField } from "../SelectField";
@@ -660,7 +660,7 @@ export function OldFolderWindow({ hostMountRoot, onClose }: { hostMountRoot: str
       </>
     );
   } else {
-    foot = <Button label={t("common.done")} labelKey="common.done" glyph={<IconCheck />} tone="accent" onClick={onClose} />;
+    foot = <Button label={t("common.done")} labelKey="common.done" glyph={<IconConfirm />} tone="accent" onClick={onClose} />;
   }
 
   return (

@@ -10,7 +10,7 @@ import { Button } from "../../../components/Button";
 import { InfoBubble } from "../../../components/InfoBubble";
 import { Selector } from "../../../components/Selector";
 import { SettingRow } from "../../../components/storage/rows";
-import { IconEye, IconRefresh } from "../../../components/glyphs";
+import { IconEye, IconRetry } from "../../../components/glyphs";
 import { IconClose } from "../../../components/navGlyphs";
 import { setDirectAddress, setRelay, type GroupState, type RelayMode } from "../../../lib/api";
 import type { TranslationKey, useT } from "../../../lib/i18n";
@@ -377,7 +377,7 @@ export function RelayCard({
                 <li>{t("pairing.relayCheckFilter")}</li>
               </ul>
               <div className="flex justify-end">
-                <Button label={t("pairing.checkAgain")} labelKey="pairing.checkAgain" glyph={<IconRefresh />} tone="neutral" onClick={onRefresh} />
+                <Button label={t("pairing.checkAgain")} labelKey="pairing.checkAgain" glyph={<IconRetry />} tone="neutral" onClick={onRefresh} />
               </div>
             </section>
           )}

@@ -8,8 +8,8 @@ import { KIND_SCHEDULE_LABEL, entryName } from "../../components/backups/kinds";
 import { Badge } from "../../components/Badge";
 import { Button } from "../../components/Button";
 import { useScheduleSentence } from "../../components/EffectiveScheduleLine";
-import { IconClearSelection, IconEye, IconRefresh } from "../../components/glyphs";
-import { IconBackupNow, IconCheck, IconDownload, IconRecovery } from "../../components/navGlyphs";
+import { IconClearSelection, IconConfirm, IconEye, IconRetry } from "../../components/glyphs";
+import { IconBackupNow, IconDownload, IconRecovery } from "../../components/navGlyphs";
 import { anomalyEntryName, anomalySentence } from "../../lib/anomalies";
 import {
   ApiError,
@@ -119,7 +119,7 @@ function FailedRunRow({
   }
 
   const viewErrors: MenuAction = { id: "errors", label: t("overview.needs.viewErrors"), glyph: <IconEye />, onSelect: onErrors };
-  const resolved: MenuAction = { id: "resolve", label: t("errorPanel.resolve"), glyph: <IconCheck />, onSelect: resolve };
+  const resolved: MenuAction = { id: "resolve", label: t("errorPanel.resolve"), glyph: <IconConfirm />, onSelect: resolve };
 
   async function retry(entry: BackupItem) {
     setStarting(true);
@@ -159,7 +159,7 @@ function FailedRunRow({
               className={WRAPPING}
               label={t("breakdown.retry")}
               labelKey="breakdown.retry"
-              glyph={<IconRefresh />}
+              glyph={<IconRetry />}
               onClick={() => void retry(item)}
               disabled={starting}
               busy={starting}
@@ -365,8 +365,8 @@ function FailedCopyRow({ need, t, lang }: { need: Need & { is: "failedCopy" }; t
             className={WRAPPING}
             label={t("overview.needs.copyFailed")}
             actions={[
-              { id: "retry", label: t("breakdown.retry"), glyph: <IconRefresh />, onSelect: () => void retry() },
-              { id: "resolve", label: t("errorPanel.resolve"), glyph: <IconCheck />, onSelect: () => void resolve() },
+              { id: "retry", label: t("breakdown.retry"), glyph: <IconRetry />, onSelect: () => void retry() },
+              { id: "resolve", label: t("errorPanel.resolve"), glyph: <IconConfirm />, onSelect: () => void resolve() },
             ]}
           />
         </>
@@ -477,7 +477,7 @@ function RecoveryKitRow({ t }: { t: T }) {
               className={TOUCH}
               label={t("recovery.stored")}
               labelKey="recovery.stored"
-              glyph={<IconCheck />}
+              glyph={<IconConfirm />}
               onClick={stored}
               disabled={storing}
               busy={storing}
@@ -486,7 +486,7 @@ function RecoveryKitRow({ t }: { t: T }) {
             <MoreMenu
               className={WRAPPING}
               label={t("recovery.nagTitle")}
-              actions={[{ id: "stored", label: t("recovery.stored"), glyph: <IconCheck />, onSelect: stored }]}
+              actions={[{ id: "stored", label: t("recovery.stored"), glyph: <IconConfirm />, onSelect: stored }]}
             />
           )}
         </>

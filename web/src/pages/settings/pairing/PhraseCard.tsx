@@ -9,7 +9,7 @@ import { Card, useOpenPasswordField } from "../shared";
 import { Button } from "../../../components/Button";
 import { InfoBubble } from "../../../components/InfoBubble";
 import { RevealInput } from "../../../components/RevealInput";
-import { IconEye, IconInfo, IconRefresh, IconSearch, IconSignOut } from "../../../components/glyphs";
+import { IconEye, IconInfo, IconRetry, IconSearch, IconSignOut } from "../../../components/glyphs";
 import { IconCheck, IconClose, IconCopy, IconPencil } from "../../../components/navGlyphs";
 import {
   createPhrase,
@@ -99,7 +99,7 @@ function RelayDownLine({ group, onRefresh, t }: { group: GroupState; onRefresh: 
             onClick={() => setOpen(true)}
             glyph={<IconInfo />}
           />
-          <Button label={t("pairing.checkAgain")} labelKey="pairing.checkAgain" glyph={<IconRefresh />} tone="neutral" onClick={onRefresh} />
+          <Button label={t("pairing.checkAgain")} labelKey="pairing.checkAgain" glyph={<IconRetry />} tone="neutral" onClick={onRefresh} />
         </span>
       </div>
       {open && (

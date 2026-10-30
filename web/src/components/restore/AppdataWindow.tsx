@@ -8,8 +8,7 @@ import { InstanceWindow } from "../../pages/instances/InstanceWindow";
 import { Badge } from "../Badge";
 import { Button } from "../Button";
 import { FolderBrowser } from "../FolderBrowser";
-import { IconBack, IconSearch } from "../glyphs";
-import { IconCheck, IconDownload } from "../navGlyphs";
+import { IconBack, IconConfirm, IconImport, IconSearch } from "../glyphs";
 import { ProgressBar } from "../ProgressBar";
 import { Rows, SettingRow } from "../storage/rows";
 import { StepBar } from "./StepBar";
@@ -148,12 +147,12 @@ export function AppdataWindow({ hostMountRoot, onClose }: { hostMountRoot: strin
               disabled={running}
             />
             {outcome === "done" && fresh === 0 ? (
-              <Button label={t("common.done")} labelKey="common.done" glyph={<IconCheck />} tone="accent" onClick={onClose} />
+              <Button label={t("common.done")} labelKey="common.done" glyph={<IconConfirm />} tone="accent" onClick={onClose} />
             ) : (
               <Button
                 label={t("recovery.abImport")}
                 labelKey="recovery.abImport"
-                glyph={<IconDownload />}
+                glyph={<IconImport />}
                 tone="accent"
                 onClick={() => void startImport()}
                 disabled={fresh === 0 || running || starting}

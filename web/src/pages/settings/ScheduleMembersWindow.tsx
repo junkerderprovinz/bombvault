@@ -6,7 +6,7 @@ import { useToast } from "../../lib/toast";
 import { Button } from "../../components/Button";
 import { KIND_LABEL, KIND_SCHEDULE_LABEL, entryName } from "../../components/backups/kinds";
 import { useScheduleSentence } from "../../components/EffectiveScheduleLine";
-import { IconCheck } from "../../components/navGlyphs";
+import { IconConfirm } from "../../components/glyphs";
 import { Rows } from "../../components/storage/rows";
 import { Toggle } from "../../components/Toggle";
 import { InstanceWindow } from "../instances/InstanceWindow";
@@ -54,7 +54,7 @@ export function ScheduleMembersWindow({
       title={t("schedules.membersTitle").replace("{area}", t(KIND_LABEL[kind]))}
       facts={t("schedules.membersHint")}
       onClose={onClose}
-      footer={<Button label={t("common.done")} labelKey="common.done" glyph={<IconCheck />} tone="accent" onClick={onClose} />}
+      footer={<Button label={t("common.done")} labelKey="common.done" glyph={<IconConfirm />} tone="accent" onClick={onClose} />}
     >
       <Rows as="ul">
         {items.map((item) => {

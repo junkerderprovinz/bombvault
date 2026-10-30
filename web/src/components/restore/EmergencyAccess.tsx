@@ -30,7 +30,7 @@ import { RcloneCard } from "../../pages/settings/RcloneCard";
 import { Badge } from "../Badge";
 import { Button } from "../Button";
 import { FolderBrowser } from "../FolderBrowser";
-import { IconBack, IconKey, IconUpload } from "../glyphs";
+import { IconBack, IconImport, IconKey, IconSave } from "../glyphs";
 import { InfoBubble } from "../InfoBubble";
 import { IconCheck, IconFleet, IconRestore } from "../navGlyphs";
 import { RevealInput } from "../RevealInput";
@@ -369,7 +369,7 @@ export function EmergencyAccess({
               <Button
                 label={t("emergency.signInsSave")}
                 labelKey={null}
-                glyph={<IconCheck />}
+                glyph={<IconSave />}
                 onClick={() => void saveSignIns(session)}
                 disabled={busy || signInsSaved}
                 busy={busy}
@@ -458,7 +458,7 @@ export function EmergencyAccess({
       <div role="radiogroup" aria-label={t("emergency.access")} className="grid gap-3 sm:grid-cols-2">
         <WayCard
           on={way === "kit"}
-          glyph={<IconUpload />}
+          glyph={<IconImport />}
           title={t("emergency.way.kit")}
           sub={t("emergency.way.kitSub")}
           onPick={() => setWay("kit")}
