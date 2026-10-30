@@ -977,21 +977,7 @@ func (r *Repo) RemoveNamedRepo(id string) error {
 		if companionOf != "" {
 			return ErrDirectRepo
 		}
-		for _, t := range repoItemTables {
-			set := `repo = '', repo_chosen = ?`
-			args := []any{RepoOpen, id}
-			if t.table == "zfs_datasets" {
-				set, args = `repo = ''`, []any{id}
-			}
-			//nolint:gosec // G202: the table name comes from repoItemTables, never from input.
-			if _, err := tx.Exec(`UPDATE `+t.table+` SET `+set+` WHERE repo = ?`, args...); err != nil {
-				return err
-			}
-		}
-		if _, err := tx.Exec(`UPDATE placement_defaults SET home = '' WHERE home = ?`, id); err != nil {
-			return err
-		}
-		if _, err := tx.Exec(`DELETE FROM former_homes WHERE repo = ?`, id); err != nil {
+		if err := sendBackFromRepoTx(tx, id); err != nil {
 			return err
 		}
 		_, err := tx.Exec(`DELETE FROM offsite_targets WHERE id = ? AND role = ?`, id, RoleRepo)
@@ -1001,6 +987,44 @@ func (r *Repo) RemoveNamedRepo(id string) error {
 		return fmt.Errorf("RemoveNamedRepo: %w", err)
 	}
 	return nil
+}
+
+// ForgetGoneRepo sends everything that still names the repository id back to
+// its section, the way RemoveNamedRepo does, once no row of that id is left.
+func (r *Repo) ForgetGoneRepo(id string) error {
+	err := r.inTx(func(tx *sql.Tx) error {
+		var held bool
+		if err := tx.QueryRow(`SELECT EXISTS (SELECT 1 FROM offsite_targets WHERE id = ? AND role = ?)`,
+			id, RoleRepo).Scan(&held); err != nil || held {
+			return err
+		}
+		return sendBackFromRepoTx(tx, id)
+	})
+	if err != nil {
+		return fmt.Errorf("ForgetGoneRepo: %w", err)
+	}
+	return nil
+}
+
+// sendBackFromRepoTx points every item and default that names the repository
+// id at its section again and drops it from the items' former homes.
+func sendBackFromRepoTx(tx *sql.Tx, id string) error {
+	for _, t := range repoItemTables {
+		set := `repo = '', repo_chosen = ?`
+		args := []any{RepoOpen, id}
+		if t.table == "zfs_datasets" {
+			set, args = `repo = ''`, []any{id}
+		}
+		//nolint:gosec // G202: the table name comes from repoItemTables, never from input.
+		if _, err := tx.Exec(`UPDATE `+t.table+` SET `+set+` WHERE repo = ?`, args...); err != nil {
+			return err
+		}
+	}
+	if _, err := tx.Exec(`UPDATE placement_defaults SET home = '' WHERE home = ?`, id); err != nil {
+		return err
+	}
+	_, err := tx.Exec(`DELETE FROM former_homes WHERE repo = ?`, id)
+	return err
 }
 
 // SetNamedRepoLocationIfUnused moves a named repository's location ONLY while
@@ -1119,14 +1143,7 @@ func (r *Repo) DeleteOffsiteTarget(id string) error {
 // deleteTargetKeepingDirectTx removes a target and its observations and turns
 // its direct repository into a named repository of its own.
 func deleteTargetKeepingDirectTx(tx *sql.Tx, id string) error {
-	// A direct repository without a name of its own went by its target, so
-	// it keeps that name, or its location when the target had none.
-	//nolint:gosec // G202: remoteLocation is built from restic's scheme list, never from user text; every value travels as a parameter.
-	if _, err := tx.Exec(`UPDATE offsite_targets SET companion_of = '', companion_lost = 1,
-		  off_premises = (`+remoteLocation("repo")+`),
-		  name = CASE WHEN name <> '' THEN name
-		              ELSE COALESCE(NULLIF((SELECT t.name FROM offsite_targets t WHERE t.id = ? AND t.role = ?), ''), repo) END
-		WHERE role = ? AND companion_of = ? AND companion_of <> ''`, id, RoleOffsite, RoleRepo, id); err != nil {
+	if err := releaseDirectTx(tx, id); err != nil {
 		return err
 	}
 	if err := forgetDeletedTargetVerdictsTx(tx, id); err != nil {
@@ -1135,10 +1152,42 @@ func deleteTargetKeepingDirectTx(tx *sql.Tx, id string) error {
 	if _, err := tx.Exec(`DELETE FROM offsite_targets WHERE id = ? AND role = ?`, id, RoleOffsite); err != nil {
 		return err
 	}
-	if err := forgetSkippedTargetTx(tx, id); err != nil {
+	if err := forgetSkippedTargetTx(tx, id, ""); err != nil {
 		return err
 	}
 	return deleteTargetObservationsTx(tx, id)
+}
+
+// releaseDirectTx turns the direct repository of the target with the id into
+// a named repository of its own, labelled lost.
+func releaseDirectTx(tx *sql.Tx, id string) error {
+	// A direct repository without a name of its own went by its target, so
+	// it keeps that name, or its location when the target had none.
+	//nolint:gosec // G202: remoteLocation is built from restic's scheme list, never from user text; every value travels as a parameter.
+	_, err := tx.Exec(`UPDATE offsite_targets SET companion_of = '', companion_lost = 1,
+		  off_premises = (`+remoteLocation("repo")+`),
+		  name = CASE WHEN name <> '' THEN name
+		              ELSE COALESCE(NULLIF((SELECT t.name FROM offsite_targets t WHERE t.id = ? AND t.role = ?), ''), repo) END
+		WHERE role = ? AND companion_of = ? AND companion_of <> ''`, id, RoleOffsite, RoleRepo, id)
+	return err
+}
+
+// ReleaseDirectOfGoneTarget turns the direct repository of a target that no
+// longer exists into a named repository of its own, as removing the target
+// would have.
+func (r *Repo) ReleaseDirectOfGoneTarget(targetID string) error {
+	err := r.inTx(func(tx *sql.Tx) error {
+		var held bool
+		if err := tx.QueryRow(`SELECT EXISTS (SELECT 1 FROM offsite_targets WHERE id = ? AND role = ?)`,
+			targetID, RoleOffsite).Scan(&held); err != nil || held {
+			return err
+		}
+		return releaseDirectTx(tx, targetID)
+	})
+	if err != nil {
+		return fmt.Errorf("ReleaseDirectOfGoneTarget: %w", err)
+	}
+	return nil
 }
 
 // TargetUse is what keeps an offsite target from being deleted in the Off-site tab.
@@ -1187,7 +1236,7 @@ func (r *Repo) DeleteOffsiteTargetIfUnused(id string) (TargetUse, error) {
 	if _, err := tx.Exec(`DELETE FROM offsite_targets WHERE id = ? AND role = ?`, id, RoleOffsite); err != nil {
 		return use, fmt.Errorf("DeleteOffsiteTargetIfUnused: %w", err)
 	}
-	if err := forgetSkippedTargetTx(tx, id); err != nil {
+	if err := forgetSkippedTargetTx(tx, id, ""); err != nil {
 		return use, fmt.Errorf("DeleteOffsiteTargetIfUnused: %w", err)
 	}
 	if err := deleteTargetObservationsTx(tx, id); err != nil {

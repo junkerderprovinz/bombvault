@@ -34,17 +34,23 @@ func ownSteps(t *testing.T, res map[string]any) []ownFolderStep {
 // waitOwnFolder waits until the copy before a switch has ended.
 func (f *placementFixture) waitOwnFolder(domain string) {
 	f.t.Helper()
+	f.waitRun("own:" + domain)
+}
+
+// waitRun waits until the background run under key has ended.
+func (f *placementFixture) waitRun(key string) {
+	f.t.Helper()
 	deadline := time.Now().Add(10 * time.Second)
 	for time.Now().Before(deadline) {
 		f.svc.cancelMu.Lock()
-		_, running := f.svc.runCancels["own:"+domain]
+		_, running := f.svc.runCancels[key]
 		f.svc.cancelMu.Unlock()
 		if !running {
 			return
 		}
 		time.Sleep(5 * time.Millisecond)
 	}
-	f.t.Fatalf("the own folder of %s did not move", domain)
+	f.t.Fatalf("%s did not end", key)
 }
 
 func TestTheOwnFolderPreviewSaysACopyThereBecomesTheOwnFolder(t *testing.T) {

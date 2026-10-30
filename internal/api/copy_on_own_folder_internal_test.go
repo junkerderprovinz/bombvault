@@ -21,7 +21,7 @@ func TestACopyOnItsOwnFolderIsRemovedAtStart(t *testing.T) {
 	f.setDefault("containers", "", self.ID, box.ID)
 	f.rule("containers", "container:plex", self.ID)
 
-	if err := f.svc.RemoveCopiesOnOwnFolders(); err != nil {
+	if _, err := f.svc.RepairLocationModel(); err != nil {
 		t.Fatal(err)
 	}
 
@@ -58,7 +58,7 @@ func TestACopyOnItsOwnFolderTakesTheOffsiteFieldAlongWhenItWasThePrimary(t *test
 		t.Fatal(err)
 	}
 
-	if err := f.svc.RemoveCopiesOnOwnFolders(); err != nil {
+	if _, err := f.svc.RepairLocationModel(); err != nil {
 		t.Fatal(err)
 	}
 
