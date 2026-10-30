@@ -145,17 +145,29 @@ export function backupRuns(runs: Run[]): Run[] {
 }
 
 /**
- * recommendedRun is the backup to restore from when nothing says otherwise:
- * the newest one no open finding was raised on.
+ * definitionOnly is the backup of a container without data folders: it kept
+ * the container's definition and wrote no snapshot.
  */
-export function recommendedRun(runs: Run[], isFlagged: (run: Run) => boolean): Run | undefined {
-  return backupRuns(runs).find((run) => !isFlagged(run));
+export function definitionOnly(run: Run): boolean {
+  return run.domain === "container" && run.kind === "backup" && run.snapshotId === "";
+}
+
+function snapshotRuns(runs: Run[]): Run[] {
+  return backupRuns(runs).filter((run) => !definitionOnly(run));
 }
 
 /**
- * historyDays sorts the backups of the last two weeks into days, oldest
- * first and ending today. A day without a backup stays in the row, so a gap
- * shows as a gap.
+ * recommendedRun is the backup to restore from when nothing says otherwise:
+ * the newest snapshot no open finding was raised on.
+ */
+export function recommendedRun(runs: Run[], isFlagged: (run: Run) => boolean): Run | undefined {
+  return snapshotRuns(runs).find((run) => !isFlagged(run));
+}
+
+/**
+ * historyDays sorts the snapshots of the last two weeks into days, oldest
+ * first and ending today. A day without one stays in the row, so a gap shows
+ * as a gap.
  */
 export function historyDays(runs: Run[], isFlagged: (run: Run) => boolean, now = Date.now()): HistoryDay[] {
   const today = new Date(dayStart(now));
@@ -169,7 +181,7 @@ export function historyDays(runs: Run[], isFlagged: (run: Run) => boolean, now =
   }));
   const byStart = new Map(days.map((day) => [day.start, day]));
   const recommended = recommendedRun(runs, isFlagged);
-  for (const run of backupRuns(runs)) {
+  for (const run of snapshotRuns(runs)) {
     const day = byStart.get(dayStart(run.startedAt * 1000));
     if (!day) continue;
     day.runs.push(run);
@@ -178,6 +190,15 @@ export function historyDays(runs: Run[], isFlagged: (run: Run) => boolean, now =
     if (run === recommended) day.recommended = true;
   }
   return days;
+}
+
+// A megabyte is the least the tallest bar stands for, so two weeks of backups
+// that each wrote a few hundred bytes of folder entries stay low bars.
+const HISTORY_SCALE_FLOOR = 1024 ** 2;
+
+/** historyScale is the size the tallest bar of the history stands for. */
+export function historyScale(days: HistoryDay[]): number {
+  return Math.max(HISTORY_SCALE_FLOOR, ...days.map((day) => day.bytes));
 }
 
 /** barHeight is a day's share of the tallest day, in percent. The root keeps

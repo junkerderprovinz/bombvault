@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import type { Run } from "../../lib/api";
 import { isGone } from "../../lib/backupList";
-import { historyDays, rowHolds, rowOfRun, rowTime, type Entry } from "../../lib/entry";
+import { definitionOnly, historyDays, rowHolds, rowOfRun, rowTime, type Entry } from "../../lib/entry";
 import { useT } from "../../lib/i18n";
 import { tLtr } from "../../lib/ltrFragments";
 import { dataOutsideHost } from "../../lib/runReason";
@@ -94,7 +94,11 @@ export function BackupsTab({
 
   const { rows, places, loading, error } = timeline;
   const pending = places.filter((p) => p.state !== "read");
-  const empty = !loading && error === null && rows.length === 0 && pending.length === 0;
+  const newestBackup = runs.find((run) => run.kind === "backup" && run.status === "success");
+  // When the newest backup kept the definition only, the list can say so
+  // before an off-site location has been read.
+  const keptDefinition = container !== null && newestBackup !== undefined && definitionOnly(newestBackup);
+  const empty = !loading && error === null && rows.length === 0 && (pending.length === 0 || keptDefinition);
   const openedRow = opened ? rows.find((row) => rowHolds(row, opened.key)) : undefined;
   const actingRow = acting ? rows.find((row) => row.key === acting.key) : undefined;
   const wanted = request.dump ? "" : request.snapshot;
@@ -171,7 +175,7 @@ export function BackupsTab({
             ) : (
               <p className="text-sm text-carbon-textMuted">
                 {container && item.lastBackup > 0
-                  ? dataOutsideHost(runs.find((run) => run.kind === "backup" && run.status === "success")?.error)
+                  ? dataOutsideHost(newestBackup?.error)
                     ? tLtr(t, "snapshots.outsideHostHint")
                     : t("snapshots.configOnlyHint")
                   : t("entry.list.empty").replace("{name}", () => name)}

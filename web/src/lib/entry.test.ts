@@ -9,6 +9,7 @@ import {
   entryReason,
   entryTabPath,
   historyDays,
+  historyScale,
   isOwnTag,
   parseEntryTab,
   parseTags,
@@ -149,6 +150,20 @@ describe("the backup history", () => {
     expect(days.flatMap((d) => d.runs.map((r) => r.id))).toEqual(["import"]);
   });
 
+  it("leaves out a container backup that kept the definition only", () => {
+    const runs = [run("kept", 0, { snapshotId: "", bytes: 0 }), run("data", 1), run("vm", 2, { domain: "vm", snapshotId: "" })];
+    const days = historyDays(runs, none, NOON);
+    expect(days.flatMap((d) => d.runs.map((r) => r.id))).toEqual(["vm", "data"]);
+    expect(recommendedRun(runs, none)?.id).toBe("data");
+    expect(days.at(-2)).toMatchObject({ recommended: true });
+  });
+
+  it("shows no day at all for a container that only ever kept its definition", () => {
+    const runs = [run("a", 0, { snapshotId: "" }), run("b", 1, { snapshotId: "" })];
+    expect(historyDays(runs, none, NOON).every((d) => d.runs.length === 0)).toBe(true);
+    expect(recommendedRun(runs, none)).toBeUndefined();
+  });
+
   it("recommends the newest backup no finding was raised on", () => {
     const runs = [run("a", 0), run("b", 1), run("c", 2)];
     const flagged = (r: Run) => r.id === "a";
@@ -156,6 +171,17 @@ describe("the backup history", () => {
     const days = historyDays(runs, flagged, NOON);
     expect(days.at(-1)).toMatchObject({ flagged: true, recommended: false });
     expect(days.at(-2)).toMatchObject({ flagged: false, recommended: true });
+  });
+
+  it("draws days that wrote a few hundred bytes as low bars", () => {
+    const days = historyDays([0, 1, 2].map((d) => run(`r${d}`, d, { bytes: 349 })), none, NOON);
+    expect(historyScale(days)).toBe(1024 ** 2);
+    expect(barHeight(349, historyScale(days))).toBe(8);
+  });
+
+  it("scales to the tallest day once it wrote more than a megabyte", () => {
+    const days = historyDays([run("a", 0, { bytes: 5 * 1024 ** 2 }), run("b", 1, { bytes: 349 })], none, NOON);
+    expect(historyScale(days)).toBe(5 * 1024 ** 2);
   });
 
   it("keeps a quiet day visible beside a large one", () => {
