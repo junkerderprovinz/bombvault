@@ -16,7 +16,7 @@ import { MANUAL_SVG } from "../../../lib/appMarks";
 import { groupStage } from "../../../lib/controls";
 import { useT, type TranslationKey } from "../../../lib/i18n";
 import { useToast } from "../../../lib/toast";
-import { AboutGive, GLIMSTONE_REPO, GLIMSTONE_VERSION, REPO, ReportButtons, releaseUrl } from "../AboutCard";
+import { AboutGive, GLIMSTONE_REPO, GLIMSTONE_VERSION, REPO, ReportButtons, releaseUrl, shownVersion } from "../AboutCard";
 import { Card, hueCounter } from "../shared";
 import { WhatsNewButton } from "../WhatsNew";
 
@@ -34,7 +34,7 @@ const REFUSED: Record<UpdateCheckRefusal, TranslationKey> = {
 function Version({ version, repo }: { version: string; repo?: string }) {
   const href = repo ? releaseUrl(repo, version) : "";
   const number = "text-sm tabular-nums";
-  if (!href) return <span className={`${number} text-carbon-textSub`}>{version}</span>;
+  if (!href) return <span className={`${number} text-carbon-textSub`}>{shownVersion(version)}</span>;
   return (
     // Under a coarse pointer the padding widens the target and the negative
     // margin takes it back, so the row keeps its height.
@@ -44,7 +44,7 @@ function Version({ version, repo }: { version: string; repo?: string }) {
       rel="noopener noreferrer"
       className={`${number} text-accentText no-underline hover:underline pointer-coarse:-m-2.5 pointer-coarse:p-2.5`}
     >
-      {version}
+      {shownVersion(version)}
     </a>
   );
 }
@@ -97,7 +97,7 @@ function UpdateButton() {
       {check.state === "done" && check.update.updateAvailable && (
         <p className="text-xs text-statusWarn">
           <a href={check.update.releaseUrl} target="_blank" rel="noopener noreferrer" className="underline-offset-2 hover:underline">
-            {t("tile.info.available").replace("{version}", () => check.update.latest)}
+            {t("tile.info.available").replace("{version}", () => shownVersion(check.update.latest))}
           </a>
         </p>
       )}

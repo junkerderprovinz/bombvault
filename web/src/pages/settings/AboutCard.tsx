@@ -30,6 +30,12 @@ export function releaseTag(version: string): string {
   return bare.startsWith("v") ? bare : `v${bare}`;
 }
 
+/** A version as the card shows it: `v3.8.0` reads "3.8.0". The "v" names the tag, not the version. */
+export function shownVersion(version: string): string {
+  const trimmed = version.trim();
+  return /^v\d/.test(trimmed) ? trimmed.slice(1) : trimmed;
+}
+
 /** The address of a version's release page, "" for a build without a tag. */
 export function releaseUrl(repo: string, version: string): string {
   const tag = releaseTag(version);
@@ -42,7 +48,7 @@ function VersionLink({ label, version, repo }: { label: string; version: string;
   if (!href) {
     return (
       <span className="text-carbon-textMuted">
-        {label} <span className="font-mono tabular-nums">{version}</span>
+        {label} <span className="font-mono tabular-nums">{shownVersion(version)}</span>
       </span>
     );
   }
@@ -58,7 +64,7 @@ function VersionLink({ label, version, repo }: { label: string; version: string;
         rel="noopener noreferrer"
         className="font-mono tabular-nums text-carbon-textMuted no-underline hover:text-carbon-text pointer-coarse:inline-block pointer-coarse:-m-2.5 pointer-coarse:p-2.5"
       >
-        {version}
+        {shownVersion(version)}
       </a>
     </span>
   );

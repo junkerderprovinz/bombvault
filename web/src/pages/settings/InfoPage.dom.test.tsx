@@ -85,6 +85,17 @@ describe("the Version card", () => {
     ]);
   });
 
+  it("shows a tagged version without its v and still links the tag", async () => {
+    api.getVersions.mockResolvedValue({ ok: true, versions: { bombvault: "v10.0.0", restic: "0.18.1", rclone: "v1.75.2" } });
+    await renderPage();
+    const version = within(card(en["about.version"]));
+    expect(version.getByRole("link", { name: "10.0.0" }).getAttribute("href")).toBe(
+      "https://github.com/junkerderprovinz/bombvault/releases/tag/v10.0.0",
+    );
+    expect(version.getByText("1.75.2")).toBeTruthy();
+    expect(card(en["about.version"]).textContent).not.toMatch(/\bv\d/);
+  });
+
   it("names GlimStone 3.7.1", () => {
     expect(GLIMSTONE_VERSION).toBe("3.7.1");
   });
