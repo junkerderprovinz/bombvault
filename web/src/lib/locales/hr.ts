@@ -3312,6 +3312,7 @@ const hr: Partial<Translations> = {
   "placementCode.copyOnOwnFolder": "Ovaj odjeljak već ima vlastitu mapu na ovoj lokaciji za pohranu, pa bi kopija tamo pala sama na sebe.",
   "placementCode.ownFolderOnCopy": "Ovdje već postoji kopija ovog odjeljka, pa bi se njegove sigurnosne kopije kopirale same na sebe. Da bi ovo mjesto postalo vlastita mapa, otvorite ga pod Odredišta i u njegovoj kartici Vlastite mape premjestite odjeljak ovamo. Time ta kopija prestaje.",
   "placementCode.ownFolderOnTypedCopy": "Ovdje već postoji kopija ovog odjeljka, pa bi se njegove sigurnosne kopije kopirale same na sebe. Ta je kopija unesena ručno i nema karticu Vlastite mape. Da bi ovo mjesto postalo vlastita mapa, otvorite ga pod Odredišta, odaberite Ukloni odredište i zadržite sigurnosne kopije ondje. Zatim ponovno unesite ovo mjesto.",
+  "placementCode.placeUnchecked": "Repozitorij na ovom mjestu nije se mogao provjeriti, pa ništa nije promijenjeno. Provjerite odgovara li mjesto pa pokušajte ponovno.",
   "placementCode.namedRepoOverlap": "Ova lokacija je repozitorij koji ste postavili pod Repozitoriji u Postavke, Odredišta, ili se nalazi unutar takvog repozitorija ili oko njega. Odaberite drugo mjesto ili najprije uklonite taj repozitorij.",
   "placementCode.unprefixedRemote": "Ova lokacija izgleda kao udaljena, ali nema restic prefiks. Stavite rclone: ispred imena rclone udaljene lokacije, kao u rclone:myremote:bucket.",
   "placementCode.locationNeeded": "Repozitorij treba lokaciju: mapu pod Host Data ili restic udaljenu lokaciju poput b2:bucket.",

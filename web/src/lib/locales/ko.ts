@@ -3293,6 +3293,7 @@ const ko: Partial<Translations> = {
   "placementCode.copyOnOwnFolder": "이 섹션의 전용 폴더가 이미 이 저장 위치에 있어서, 그곳으로의 복사는 자기 자신 위에 놓이게 됩니다.",
   "placementCode.ownFolderOnCopy": "이 섹션의 복사본이 이미 여기에 저장되어 있어서 백업이 자기 자신 위에 복사됩니다. 이곳을 전용 폴더로 쓰려면 '대상'에서 이곳을 열고 '전용 폴더' 카드에서 섹션을 이곳으로 옮기세요. 그러면 이 복사가 끝납니다.",
   "placementCode.ownFolderOnTypedCopy": "이 섹션의 복사본이 이미 여기에 저장되어 있어서 백업이 자기 자신 위에 복사됩니다. 이 복사본은 직접 입력해 추가한 것이라 '전용 폴더' 카드가 없습니다. 이곳을 전용 폴더로 쓰려면 '대상'에서 이곳을 열고 '대상 제거'를 선택한 뒤 백업은 유지하세요. 그런 다음 이곳을 다시 입력하세요.",
+  "placementCode.placeUnchecked": "이 위치의 저장소를 확인할 수 없어 아무것도 변경하지 않았습니다. 그 위치가 응답하는지 확인한 뒤 다시 시도하세요.",
   "placementCode.namedRepoOverlap": "이 위치는 설정, 대상의 '저장소'에서 설정한 저장소이거나, 그 안에 있거나 그것을 둘러싸고 있습니다. 다른 곳을 고르거나 먼저 그 저장소를 제거하세요.",
   "placementCode.unprefixedRemote": "이 위치는 원격처럼 보이지만 restic 접두사가 없습니다. rclone 원격 이름 앞에 rclone:을 붙이세요. 예: rclone:myremote:bucket.",
   "placementCode.locationNeeded": "저장소에는 위치가 필요합니다. Host Data 아래 폴더나 b2:bucket 같은 restic 원격을 지정하세요.",

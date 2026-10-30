@@ -1,6 +1,7 @@
 package api
 
 import (
+	"errors"
 	"reflect"
 	"strings"
 	"testing"
@@ -210,21 +211,47 @@ func TestTheQuestionBeforeANewLocationRefusesWhatTheSaveWould(t *testing.T) {
 	}
 }
 
-func TestAnOwnFolderMayGoWhereASwitchedOffCopyWasLeftAndKeepsItsBackups(t *testing.T) {
-	f := newPlacementFixture(t)
-	left := f.fieldTarget("files", "moved/files")
-	f.hold(f.root+"/moved/files", snap("c1", 100, "fileset:iso"))
+// leftoverCopy is the row the files section's off-site field leaves switched
+// off at location once the field is cleared, with the sign-in credsRef.
+func leftoverCopy(f *placementFixture, location, credsRef string) store.OffsiteTarget {
+	f.t.Helper()
+	left := f.fieldTarget("files", location)
+	if credsRef != "" {
+		left.CredsRef = credsRef
+		if _, err := f.st.UpsertOffsiteTarget(left); err != nil {
+			f.t.Fatal(err)
+		}
+	}
 	settings, err := f.st.GetSettings()
 	if err != nil {
-		t.Fatal(err)
+		f.t.Fatal(err)
 	}
 	settings.FilesOffsite = ""
 	if err := f.st.UpdateSettings(settings); err != nil {
-		t.Fatal(err)
+		f.t.Fatal(err)
 	}
 	if err := f.svc.syncPrimaryOffsiteTarget("files", settings); err != nil {
-		t.Fatal(err)
+		f.t.Fatal(err)
 	}
+	return left
+}
+
+// ownFilesAt saves the files section's own folder at path the way the page does.
+func ownFilesAt(f *placementFixture, path string) map[string]any {
+	f.t.Helper()
+	settings, err := f.st.GetSettings()
+	if err != nil {
+		f.t.Fatal(err)
+	}
+	v := toView(settings)
+	v.FilesPath = path
+	return f.do("PUT", "/api/settings", v)
+}
+
+func TestAnOwnFolderMayGoWhereASwitchedOffCopyWasLeftAndKeepsItsBackups(t *testing.T) {
+	f := newPlacementFixture(t)
+	left := leftoverCopy(f, "moved/files", "")
+	f.hold(f.root+"/moved/files", snap("c1", 100, "fileset:iso"))
 	locations, err := f.svc.StorageLocations()
 	if err != nil {
 		t.Fatal(err)
@@ -235,9 +262,7 @@ func TestAnOwnFolderMayGoWhereASwitchedOffCopyWasLeftAndKeepsItsBackups(t *testi
 		}
 	}
 
-	v := toView(settings)
-	v.FilesPath = "moved/files"
-	if res := f.do("PUT", "/api/settings", v); res["ok"] != true {
+	if res := ownFilesAt(f, "moved/files"); res["ok"] != true {
 		t.Fatalf("answer = %v, want the own folder where the switched-off copy was left", res)
 	}
 	if f.hasTarget(left.ID) {
@@ -251,5 +276,64 @@ func TestAnOwnFolderMayGoWhereASwitchedOffCopyWasLeftAndKeepsItsBackups(t *testi
 	}
 	if got := f.snapsAt(f.root + "/moved/files"); len(got) != 1 {
 		t.Fatalf("the own folder holds %d backups, want the copy's one", len(got))
+	}
+}
+
+func TestAnOwnFolderStaysWhereItIsWhenItsKeyDoesNotOpenALeftCopy(t *testing.T) {
+	for name, c := range map[string]struct {
+		err  error
+		code string
+	}{
+		"another key":      {errors.New("Fatal: wrong password or no key found"), "repo-wrong-key"},
+		"a place far away": {errors.New("dial tcp: no route to host"), "place-unchecked"},
+	} {
+		t.Run(name, func(t *testing.T) {
+			f := newPlacementFixture(t)
+			left := leftoverCopy(f, "moved/files", "")
+			f.eng.opens[f.root+"/moved/files"] = false
+			f.eng.openErr[f.root+"/moved/files"] = c.err
+			f.makeRepo(f.root + "/moved/files")
+			before, _ := f.st.GetSettings()
+
+			if res := ownFilesAt(f, "moved/files"); res["ok"] != false || res["code"] != c.code {
+				t.Fatalf("answer = %v, want %s", res, c.code)
+			}
+			if !f.hasTarget(left.ID) {
+				t.Fatal("the switched-off copy went although the save was refused")
+			}
+			if s, _ := f.st.GetSettings(); s.FilesPath != before.FilesPath {
+				t.Fatalf("files path = %q, want it kept", s.FilesPath)
+			}
+		})
+	}
+}
+
+func TestAnOwnFolderOnALeftRemoteCopyTakesItsSignIn(t *testing.T) {
+	f := newPlacementFixture(t)
+	const place = "s3:https://box.example/bv/files"
+	leftoverCopy(f, place, "box-keys")
+
+	if res := ownFilesAt(f, place); res["ok"] != true {
+		t.Fatalf("answer = %v, want the own folder there", res)
+	}
+	row, ok, err := f.st.PrimaryRemoteTarget("files")
+	if err != nil || !ok || row.CredsRef != "box-keys" {
+		t.Fatalf("remote-primary row = %+v, %v, %v, want it to sign in with box-keys", row, ok, err)
+	}
+}
+
+func TestAnOwnFolderOnALeftRemoteCopyKeepsTheSignInItHas(t *testing.T) {
+	f := newPlacementFixture(t)
+	const place = "s3:https://box.example/bv/files"
+	leftoverCopy(f, place, "box-keys")
+	if _, err := f.st.UpsertPrimaryRemoteTarget("files", store.OffsiteTarget{Repo: place, CredsRef: "own-keys", Enabled: true}); err != nil {
+		t.Fatal(err)
+	}
+
+	if res := ownFilesAt(f, place); res["ok"] != true {
+		t.Fatalf("answer = %v, want the own folder there", res)
+	}
+	if row, _, _ := f.st.PrimaryRemoteTarget("files"); row.CredsRef != "own-keys" {
+		t.Fatalf("remote-primary row signs in with %q, want its own own-keys", row.CredsRef)
 	}
 }

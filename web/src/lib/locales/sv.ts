@@ -3302,6 +3302,7 @@ const sv: Partial<Translations> = {
   "placementCode.copyOnOwnFolder": "Den här delen har redan sin egna mapp på den här lagringsplatsen, så en kopia där skulle hamna ovanpå sig själv.",
   "placementCode.ownFolderOnCopy": "Här ligger redan en kopia av den här delen, så dess säkerhetskopior skulle kopieras ovanpå sig själva. För att göra den här platsen till den egna mappen, öppna målet under Mål och flytta hit delen i målets kort Egna mappar. Då upphör kopian.",
   "placementCode.ownFolderOnTypedCopy": "Här ligger redan en kopia av den här delen, så dess säkerhetskopior skulle kopieras ovanpå sig själva. Den här kopian skrevs in för hand och har inget kort Egna mappar. För att göra den här platsen till den egna mappen, öppna målet under Mål, välj Ta bort mål och behåll säkerhetskopiorna där. Ange sedan den här platsen igen.",
+  "placementCode.placeUnchecked": "Arkivet på den här platsen gick inte att kontrollera, så ingenting ändrades. Kontrollera att platsen svarar och försök igen.",
   "placementCode.namedRepoOverlap": "Den här platsen är ett arkiv som du har ställt in under Arkiv i Inställningar, Mål, eller ligger i eller runt ett sådant. Välj en annan plats eller ta först bort det arkivet.",
   "placementCode.unprefixedRemote": "Den här platsen ser ut som en fjärrplats men har inget restic-prefix. Skriv rclone: framför namnet på en rclone-fjärrplats, som i rclone:myremote:bucket.",
   "placementCode.locationNeeded": "Ett arkiv behöver en plats: en mapp under Host Data eller en restic-fjärrplats som b2:bucket.",

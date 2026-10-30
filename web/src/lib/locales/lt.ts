@@ -3312,6 +3312,7 @@ const lt: Partial<Translations> = {
   "placementCode.copyOnOwnFolder": "Šio skyriaus savas aplankas jau yra šioje saugojimo vietoje, todėl kopija ten nukristų ant savęs.",
   "placementCode.ownFolderOnCopy": "Čia jau saugoma šio skyriaus kopija, todėl jo atsarginės kopijos būtų kopijuojamos pačios ant savęs. Kad ši vieta taptų savu aplanku, atidaryk ją puslapyje Paskirties vietos ir kortelėje Savi aplankai perkelk skyrių čia. Taip kopija baigsis.",
   "placementCode.ownFolderOnTypedCopy": "Čia jau saugoma šio skyriaus kopija, todėl jo atsarginės kopijos būtų kopijuojamos pačios ant savęs. Ši kopija buvo įvesta ranka ir neturi kortelės Savi aplankai. Kad ši vieta taptų savu aplanku, atidaryk ją puslapyje Paskirties vietos, pasirink Pašalinti paskirties vietą ir palik kopijas ten. Tada įvesk šią vietą dar kartą.",
+  "placementCode.placeUnchecked": "Šioje vietoje esančios saugyklos nepavyko patikrinti, todėl niekas nepakeista. Patikrink, ar vieta atsako, ir bandyk dar kartą.",
   "placementCode.namedRepoOverlap": "Ši vieta yra saugykla, kurią nustatei skiltyje Nustatymai, Paskirties vietos, kortelėje Saugyklos, arba yra jos viduje ar aplink ją. Pasirink kitą vietą arba pirma pašalink tą saugyklą.",
   "placementCode.unprefixedRemote": "Ši vieta atrodo kaip nuotolinė, bet neturi restic priešdėlio. Prieš rclone nuotolinės vietos pavadinimą parašyk rclone:, pvz., rclone:myremote:bucket.",
   "placementCode.locationNeeded": "Saugyklai reikia vietos: aplanko po Host Data arba restic nuotolinės vietos, pvz., b2:bucket.",

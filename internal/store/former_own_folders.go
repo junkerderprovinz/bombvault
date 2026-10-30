@@ -1,6 +1,7 @@
 package store
 
 import (
+	"cmp"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -80,21 +81,24 @@ func offsiteFieldsOf(s Settings) map[string]string {
 // dropLeftoverCopyTx deletes the row a section's off-site field left switched
 // off at path, which the section's own folder takes. No page lists that row,
 // and a copy on the own folder would land on itself; the backups at the place
-// stay, as the own folder's.
+// stay, as the own folder's. The row may hold the only sign-in for the place,
+// so the section's remote-primary row takes it unless it has one of its own.
 func dropLeftoverCopyTx(tx *sql.Tx, domain, path string) error {
-	rows, err := tx.Query(`SELECT id FROM offsite_targets WHERE role = ? AND domain = ? AND destination_id = ''
+	rows, err := tx.Query(`SELECT id, creds_ref FROM offsite_targets WHERE role = ? AND domain = ? AND destination_id = ''
 		AND enabled = 0 AND sort_order = 0 AND rtrim(repo, '/') = ?`, RoleOffsite, domain, path)
 	if err != nil {
 		return err
 	}
 	var ids []string
+	var creds string
 	for rows.Next() {
-		var id string
-		if err := rows.Scan(&id); err != nil {
+		var id, ref string
+		if err := rows.Scan(&id, &ref); err != nil {
 			rows.Close() //nolint:errcheck,gosec // the scan error is the one to report
 			return err
 		}
 		ids = append(ids, id)
+		creds = cmp.Or(creds, ref)
 	}
 	if err := rows.Close(); err != nil {
 		return err
@@ -107,7 +111,20 @@ func dropLeftoverCopyTx(tx *sql.Tx, domain, path string) error {
 			return err
 		}
 	}
-	return nil
+	if creds == "" {
+		return nil
+	}
+	var primary, own string
+	err = tx.QueryRow(`SELECT id, creds_ref FROM offsite_targets WHERE domain = ? AND role = ? ORDER BY created_at LIMIT 1`,
+		domain, RolePrimary).Scan(&primary, &own)
+	switch {
+	case errors.Is(err, sql.ErrNoRows):
+		return insertPrimaryTx(tx, domain, OffsiteTarget{Repo: path, CredsRef: creds})
+	case err != nil || own != "":
+		return err
+	}
+	_, err = tx.Exec(`UPDATE offsite_targets SET creds_ref = ? WHERE id = ?`, creds, primary)
+	return err
 }
 
 // FormerOwnFolders returns the places a section's own folder lay before, the

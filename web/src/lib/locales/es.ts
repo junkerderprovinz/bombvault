@@ -3300,6 +3300,7 @@ const es: Partial<Translations> = {
   "placementCode.copyOnOwnFolder": "Esta sección ya tiene su carpeta propia en esta ubicación, así que una copia allí caería sobre sí misma.",
   "placementCode.ownFolderOnCopy": "Aquí ya hay una copia de esta sección, así que sus copias de seguridad se copiarían sobre sí mismas. Para que este lugar sea la carpeta propia, ábrelo en Destinos y mueve allí la sección desde su tarjeta Carpetas propias. Eso termina la copia.",
   "placementCode.ownFolderOnTypedCopy": "Aquí ya hay una copia de esta sección, así que sus copias de seguridad se copiarían sobre sí mismas. Esta copia se introdujo a mano y no tiene la tarjeta Carpetas propias. Para que este lugar sea la carpeta propia, ábrelo en Destinos, elige Eliminar destino y conserva allí las copias. Después vuelve a introducir este lugar.",
+  "placementCode.placeUnchecked": "No se pudo comprobar el repositorio de este lugar, así que no se ha cambiado nada. Comprueba que el lugar responda y vuelve a intentarlo.",
   "placementCode.namedRepoOverlap": "Esta ubicación es un repositorio que configuraste en Repositorios, en Ajustes, Destinos, o está dentro o alrededor de uno. Elige otro lugar o quita primero ese repositorio.",
   "placementCode.unprefixedRemote": "Esta ubicación parece un remoto pero no tiene prefijo de restic. Pon rclone: delante del nombre de un remoto de rclone, como en rclone:myremote:bucket.",
   "placementCode.locationNeeded": "Un repositorio necesita una ubicación: una carpeta bajo Host Data o un remoto de restic como b2:bucket.",

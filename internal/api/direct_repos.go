@@ -43,6 +43,33 @@ func ownFolderOnCopy(t store.OffsiteTarget) error {
 	return errOwnFolderOnCopy
 }
 
+// errPlaceUnchecked is a place whose repository could not be read for the
+// check before an own folder takes it from a switched-off copy.
+var errPlaceUnchecked = errors.New("the repository at this place could not be checked, so nothing was changed")
+
+// leftoverCheckTimeout bounds the look at a remote place a save waits for.
+const leftoverCheckTimeout = 2 * time.Minute
+
+// leftoverCopyOpens checks that the section's key opens what the switched-off
+// copy t left at loc, with the copy's sign-in, before the own folder takes the
+// place and the row goes. An empty place passes.
+func (s *Service) leftoverCopyOpens(settings store.Settings, t store.OffsiteTarget, loc string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), leftoverCheckTimeout)
+	defer cancel()
+	mode := s.applyTargetCreds(s.ModeFor(settings), settings, t)
+	if !restic.IsRemoteRepo(loc) && localRepoMissing(loc) {
+		return nil
+	}
+	err := s.engine.RepoOpensErr(ctx, loc, mode)
+	switch {
+	case err == nil, isRepoUninitialized(err):
+		return nil
+	case isWrongKey(err):
+		return errRepoWrongKey
+	}
+	return fmt.Errorf("%w: %w", errPlaceUnchecked, err)
+}
+
 // nestedLocationErr is errNestedLocation with the place in the way, so the
 // refusal can show which one it is.
 type nestedLocationErr struct {
@@ -238,12 +265,16 @@ func (s *Service) locationClash(settings store.Settings, loc string, self locati
 		// nowhere, since it still lands on the own folder. One switched off
 		// with its off-site field copies nothing, and the save that puts the
 		// own folder there takes it away; its backups stay as the own
-		// folder's.
+		// folder's, so the section's key has to open them.
 		hidden := hiddenTarget(t, settings, ids)
 		tLoc, ok := s.clashCandidate("off-site destination", t.Name, t.Repo)
 		switch {
 		case !ok:
-		case t.Domain == self.own && sameRepoLocation(tLoc, loc) && !(hidden && t.DestinationID == ""):
+		case t.Domain == self.own && sameRepoLocation(tLoc, loc) && hidden && t.DestinationID == "":
+			if err := s.leftoverCopyOpens(settings, t, tLoc); err != nil {
+				return err
+			}
+		case t.Domain == self.own && sameRepoLocation(tLoc, loc):
 			return ownFolderOnCopy(t)
 		case !hidden && clashes(tLoc):
 			return &nestedLocationErr{what: fmt.Sprintf("the off-site destination %q", t.Name), at: tLoc}

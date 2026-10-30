@@ -3302,6 +3302,7 @@ const no: Partial<Translations> = {
   "placementCode.copyOnOwnFolder": "Denne delen har allerede sin egen mappe på denne lagringsplassen, så en kopi der ville havne oppå seg selv.",
   "placementCode.ownFolderOnCopy": "Det ligger allerede en kopi av denne delen her, så sikkerhetskopiene ville blitt kopiert oppå seg selv. For å gjøre dette stedet til den egne mappen, åpne det under Mål og flytt delen hit i kortet Egne mapper. Da stopper kopien.",
   "placementCode.ownFolderOnTypedCopy": "Det ligger allerede en kopi av denne delen her, så sikkerhetskopiene ville blitt kopiert oppå seg selv. Denne kopien ble skrevet inn for hånd og har ikke noe kort Egne mapper. For å gjøre dette stedet til den egne mappen, åpne det under Mål, velg Fjern mål og behold sikkerhetskopiene der. Skriv deretter inn dette stedet på nytt.",
+  "placementCode.placeUnchecked": "Depotet på dette stedet kunne ikke sjekkes, så ingenting ble endret. Sjekk at stedet svarer, og prøv igjen.",
   "placementCode.namedRepoOverlap": "Denne plasseringen er et depot du har satt opp under Depoter i Innstillinger, Mål, eller ligger inne i eller rundt et. Velg et annet sted, eller fjern først det depotet.",
   "placementCode.unprefixedRemote": "Denne plasseringen ser ut som et fjernlager, men har ikke noe restic-prefiks. Sett rclone: foran navnet på et rclone-fjernlager, som i rclone:myremote:bucket.",
   "placementCode.locationNeeded": "Et depot trenger en plassering: en mappe under Host Data eller et restic-fjernlager som b2:bucket.",

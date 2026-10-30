@@ -3296,6 +3296,7 @@ const sl: Partial<Translations> = {
   "placementCode.copyOnOwnFolder": "Ta razdelek že ima lastno mapo na tej lokaciji shrambe, zato bi kopija tja pristala sama na sebi.",
   "placementCode.ownFolderOnCopy": "Tu je že kopija tega razdelka, zato bi se njegove varnostne kopije kopirale same nase. Če želiš lastno mapo tukaj, odpri ta cilj pod Cilji in v njegovi kartici Lastne mape premakni razdelek sem. S tem se kopija konča.",
   "placementCode.ownFolderOnTypedCopy": "Tu je že kopija tega razdelka, zato bi se njegove varnostne kopije kopirale same nase. Ta kopija je bila vnesena ročno in nima kartice Lastne mape. Če želiš lastno mapo tukaj, odpri ta cilj pod Cilji, izberi Odstrani cilj in kopije tam ohrani. Nato to mesto vnesi znova.",
+  "placementCode.placeUnchecked": "Repozitorija na tem mestu ni bilo mogoče preveriti, zato se ni nič spremenilo. Preveri, da mesto odgovarja, in poskusi znova.",
   "placementCode.namedRepoOverlap": "Ta lokacija je repozitorij, ki je nastavljen pod Repozitoriji v Nastavitve, Cilji, ali pa leži v takem repozitoriju oziroma okoli njega. Izberi drugo mesto ali najprej odstrani ta repozitorij.",
   "placementCode.unprefixedRemote": "Ta lokacija je videti kot oddaljena, a nima predpone restic. Pred ime oddaljene lokacije rclone napiši rclone:, na primer rclone:myremote:bucket.",
   "placementCode.locationNeeded": "Repozitorij potrebuje lokacijo: mapo pod Host Data ali oddaljeno lokacijo restic, kot je b2:bucket.",
