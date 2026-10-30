@@ -3200,7 +3200,7 @@ const lt: Partial<Translations> = {
   "settingsIO.problem.repositoryName": "Faile saugykla {n} neturi pavadinimo.",
   "settingsIO.problem.destinationName": "Faile paskirties vieta {n} neturi pavadinimo.",
   "settingsIO.problem.repositoryLocation": "Faile saugykla {n} turi vietą, kurią BombVault atmeta.",
-  "settingsIO.problem.destinationLocation": "Faile paskirties vietai {n} nenurodyta vieta.",
+  "settingsIO.problem.destinationLocation": "Faile paskirties vietai {n} nenurodyta, kur ji yra.",
   "settingsIO.problem.repositoryCompression": "Faile saugykla {n} turi glaudinimo nustatymą, kurio ši versija nežino.",
   "settingsIO.problem.destinationCompression": "Faile paskirties vieta {n} turi glaudinimo nustatymą, kurio ši versija nežino.",
   "settingsIO.problem.repositoryOnPath": "Faile saugykla {n} yra toje pačioje vietoje kaip {section} savas aplankas. Saugyklai reikia savos vietos.",
