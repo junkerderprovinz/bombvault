@@ -2597,6 +2597,12 @@ export const en = {
   "placementCode.ownFolderThere": "The own folder of a section lies here. Move it to another place first, under Own folders on this page. Then the storage location can be removed.",
   "placementCode.copyOnOwnFolder": "This section keeps its own folder in this storage location already, so a copy there would land on itself.",
   "placementCode.ownFolderOnCopy": "A copy of this section is already stored here, so its backups would be copied onto themselves. To put the own folder here, move it under Own folders in Settings, Storage locations, which ends the copy.",
+  "placementCode.namedRepoOverlap": "This location is a repository from the Repositories list, or lies inside or around one. Choose another place, or remove that repository first.",
+  "placementCode.unprefixedRemote": "This location looks like a remote but has no restic prefix. Put rclone: in front of an rclone remote's name, as in rclone:myremote:bucket.",
+  "placementCode.locationNeeded": "A repository needs a location: a folder under the Host Data mount, or a restic remote such as b2:bucket.",
+  "placementCode.restoreFolderRemote": "A restore folder has to be a folder on this host, under the Host Data mount.",
+  "placementCode.pathAbsolute": "This is a full path on the host. Paths here start at the Host Data mount, so leave out the part up to it, or use a restic remote such as rest:, s3: or rclone:.",
+  "placementCode.pathOutside": "This path leads out of the Host Data mount. Enter a path inside it, or a restic remote such as rest:, s3: or rclone:.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} direct now keeps less. Items whose only copy is there: {n}.",
@@ -7598,6 +7604,12 @@ export const de: Translations = {
   "placementCode.ownFolderThere": "Hier liegt der eigene Ordner eines Bereichs. Verschieb ihn zuerst an einen anderen Ort, unter Eigene Ordner auf dieser Seite. Danach lässt sich der Speicherort entfernen.",
   "placementCode.copyOnOwnFolder": "Dieser Bereich hat seinen eigenen Ordner schon an diesem Speicherort, eine Kopie dort würde auf sich selbst landen.",
   "placementCode.ownFolderOnCopy": "Hier liegt schon eine Kopie dieses Bereichs, seine Sicherungen würden also auf sich selbst kopiert. Damit der eigene Ordner hierher kommt, verschieb ihn unter Eigene Ordner in Einstellungen, Speicherorte. Das beendet die Kopie.",
+  "placementCode.namedRepoOverlap": "Dieser Ort ist ein Repository aus der Liste unter Repositories oder liegt darin oder drumherum. Wähl einen anderen Ort oder entferne zuerst dieses Repository.",
+  "placementCode.unprefixedRemote": "Dieser Ort sieht aus wie ein Remote, hat aber kein restic-Präfix. Schreib rclone: vor den Namen eines rclone-Remotes, etwa rclone:myremote:bucket.",
+  "placementCode.locationNeeded": "Ein Repository braucht einen Ort: einen Ordner unter dem Host-Data-Mount oder ein restic-Remote wie b2:bucket.",
+  "placementCode.restoreFolderRemote": "Ein Wiederherstellungsordner muss ein Ordner auf diesem Host sein, unter dem Host-Data-Mount.",
+  "placementCode.pathAbsolute": "Das ist ein vollständiger Pfad auf dem Host. Pfade hier beginnen beim Host-Data-Mount, lass also den Teil bis dorthin weg, oder nimm ein restic-Remote wie rest:, s3: oder rclone:.",
+  "placementCode.pathOutside": "Dieser Pfad führt aus dem Host-Data-Mount hinaus. Gib einen Pfad darin an oder ein restic-Remote wie rest:, s3: oder rclone:.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} direkt bewahrt jetzt weniger auf. Einträge, deren einzige Kopie dort liegt: {n}.",

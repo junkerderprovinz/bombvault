@@ -3286,6 +3286,12 @@ const et: Partial<Translations> = {
   "placementCode.ownFolderThere": "Siin asub ühe jaotise oma kaust. Teisalda see enne mujale, sellel lehel jaotises Oma kaustad. Seejärel saab salvestuskoha eemaldada.",
   "placementCode.copyOnOwnFolder": "Selle jaotise oma kaust on juba selles salvestuskohas, nii et koopia sinna satuks iseenda peale.",
   "placementCode.ownFolderOnCopy": "Siin on juba selle jaotise koopia, nii et selle varukoopiad kopeeritaks iseenda peale. Kui tahad oma kausta siia panna, teisalda see jaotises Oma kaustad lehel Seaded, Sihtkohad. Siis koopia lõpeb.",
+  "placementCode.namedRepoOverlap": "See asukoht on hoidla loendist Hoidlad või asub selle sees või ümber. Vali teine koht või eemalda enne see hoidla.",
+  "placementCode.unprefixedRemote": "See asukoht näeb välja nagu kaugkoht, aga sel pole restic-eesliidet. Pane rclone: rclone'i kaugkoha nime ette, näiteks rclone:myremote:bucket.",
+  "placementCode.locationNeeded": "Hoidla vajab asukohta: kausta Host Data all või restic-kaugkohta nagu b2:bucket.",
+  "placementCode.restoreFolderRemote": "Taastekaust peab olema kaust selles hostis, Host Data all.",
+  "placementCode.pathAbsolute": "See on täielik tee hostis. Teed algavad siin Host Data juurest, nii et jäta osa sinnani ära või kasuta restic-kaugkohta nagu rest:, s3: või rclone:.",
+  "placementCode.pathOutside": "See tee viib Host Data'st välja. Sisesta tee selle sees või restic-kaugkoht nagu rest:, s3: või rclone:.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} otse säilitab nüüd vähem. Kirjed, mille ainus koopia on seal: {n}.",

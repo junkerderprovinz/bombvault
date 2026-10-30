@@ -3276,6 +3276,12 @@ const fi: Partial<Translations> = {
   "placementCode.ownFolderThere": "Täällä on erään osion oma kansio. Siirrä se ensin muualle tämän sivun kohdassa Omat kansiot. Sen jälkeen tallennuspaikan voi poistaa.",
   "placementCode.copyOnOwnFolder": "Tämän osion oma kansio on jo tässä tallennuspaikassa, joten kopio sinne osuisi itsensä päälle.",
   "placementCode.ownFolderOnCopy": "Tässä on jo kopio tästä osiosta, joten sen varmuuskopiot kopioituisivat itsensä päälle. Jos haluat oman kansion tänne, siirrä se kohdassa Omat kansiot sivulla Asetukset, Kohteet. Silloin kopio päättyy.",
+  "placementCode.namedRepoOverlap": "Tämä sijainti on arkisto Arkistot-luettelosta tai on sellaisen sisällä tai ympärillä. Valitse toinen paikka tai poista ensin se arkisto.",
+  "placementCode.unprefixedRemote": "Tämä sijainti näyttää etäsijainnilta, mutta siinä ei ole restic-etuliitettä. Kirjoita rclone: rclone-etäsijainnin nimen eteen, esimerkiksi rclone:myremote:bucket.",
+  "placementCode.locationNeeded": "Arkisto tarvitsee sijainnin: kansion Host Datan alla tai restic-etäsijainnin, kuten b2:bucket.",
+  "placementCode.restoreFolderRemote": "Palautuskansion on oltava kansio tällä isännällä, Host Datan alla.",
+  "placementCode.pathAbsolute": "Tämä on isännän täydellinen polku. Polut alkavat täällä Host Datasta, joten jätä osa sinne asti pois tai käytä restic-etäsijaintia, kuten rest:, s3: tai rclone:.",
+  "placementCode.pathOutside": "Tämä polku johtaa ulos Host Datasta. Anna polku sen sisältä tai restic-etäsijainti, kuten rest:, s3: tai rclone:.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} suoraan säilyttää nyt vähemmän. Merkinnät, joiden ainoa kopio on siellä: {n}.",

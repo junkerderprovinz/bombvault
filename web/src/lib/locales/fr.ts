@@ -3276,6 +3276,12 @@ const fr: Partial<Translations> = {
   "placementCode.ownFolderThere": "Le dossier propre d'une section se trouve ici. Déplacez-le d'abord ailleurs, sous Dossiers propres sur cette page. L'emplacement de stockage pourra ensuite être supprimé.",
   "placementCode.copyOnOwnFolder": "Cette section garde déjà son dossier propre à cet emplacement, une copie là-bas tomberait donc sur elle-même.",
   "placementCode.ownFolderOnCopy": "Une copie de cette section se trouve déjà ici, ses sauvegardes seraient donc copiées sur elles-mêmes. Pour mettre le dossier propre ici, déplacez-le sous Dossiers propres dans Paramètres, Destinations, ce qui met fin à cette copie.",
+  "placementCode.namedRepoOverlap": "Cet emplacement est un dépôt de la liste Dépôts, ou se trouve dedans ou autour. Choisissez un autre endroit ou retirez d'abord ce dépôt.",
+  "placementCode.unprefixedRemote": "Cet emplacement ressemble à un distant mais n'a pas de préfixe restic. Mettez rclone: devant le nom d'un distant rclone, comme dans rclone:myremote:bucket.",
+  "placementCode.locationNeeded": "Un dépôt a besoin d'un emplacement : un dossier sous Host Data ou un distant restic comme b2:bucket.",
+  "placementCode.restoreFolderRemote": "Un dossier de restauration doit être un dossier de cet hôte, sous Host Data.",
+  "placementCode.pathAbsolute": "Ceci est un chemin complet de l'hôte. Ici les chemins partent de Host Data, retirez donc la partie jusque-là, ou utilisez un distant restic comme rest:, s3: ou rclone:.",
+  "placementCode.pathOutside": "Ce chemin sort de Host Data. Saisissez un chemin à l'intérieur, ou un distant restic comme rest:, s3: ou rclone:.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} direct conserve désormais moins. Éléments dont c'est la seule copie : {n}.",

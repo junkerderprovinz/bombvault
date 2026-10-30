@@ -757,8 +757,8 @@ func validateExport(exp settingsExport, mountRoot string) string {
 		// Mirroring two of four here is how the import became the one write path
 		// that accepted what the form rejects; the shared check below cannot drift
 		// from the form because it IS the form's.
-		if msg := staticNamedRepoRefusals(loc, mountRoot); msg != "" {
-			return fmt.Sprintf("repository #%d (%s): %s", i+1, tv.Name, msg)
+		if err := staticNamedRepoRefusals(loc, mountRoot); err != nil {
+			return fmt.Sprintf("repository #%d (%s): %s", i+1, tv.Name, scrubError(err))
 		}
 		if _, err := restic.ParseCompression(tv.Compression); err != nil {
 			return fmt.Sprintf("repository #%d (%s): %s", i+1, tv.Name, err)
@@ -800,8 +800,8 @@ func validateExport(exp settingsExport, mountRoot string) string {
 	// with "invalid backup path: must be a relative subpath under the mount root".
 	// The user could not change ANY setting, including the path itself, without
 	// editing the database.
-	if msg := rejectInvalidSettingsPaths(exp.Settings, mountRoot); msg != "" {
-		return "invalid path in settings: " + msg
+	if err := rejectInvalidSettingsPaths(exp.Settings, mountRoot); err != nil {
+		return "invalid path in settings: " + scrubError(err)
 	}
 	// The DR-drill targets, which had the same asymmetry: validated on PUT,
 	// unchecked on import.

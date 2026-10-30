@@ -3277,6 +3277,12 @@ const ro: Partial<Translations> = {
   "placementCode.ownFolderThere": "Aici se află dosarul propriu al unei secțiuni. Mută-l mai întâi în alt loc, la Dosare proprii pe această pagină. Apoi locația de stocare poate fi eliminată.",
   "placementCode.copyOnOwnFolder": "Această secțiune are deja dosarul propriu în această locație de stocare, așa că o copie acolo ar ajunge peste ea însăși.",
   "placementCode.ownFolderOnCopy": "Aici se află deja o copie a acestei secțiuni, așa că backup-urile ei s-ar copia peste ele însele. Ca să pui aici dosarul propriu, mută-l la Dosare proprii în Setări, Destinații, iar copia se încheie.",
+  "placementCode.namedRepoOverlap": "Această locație este un depozit din lista Depozite sau se află în interiorul ori în jurul unuia. Alege alt loc sau elimină mai întâi acel depozit.",
+  "placementCode.unprefixedRemote": "Această locație arată ca o destinație la distanță, dar nu are prefix restic. Pune rclone: în fața numelui unei destinații rclone, ca în rclone:myremote:bucket.",
+  "placementCode.locationNeeded": "Un depozit are nevoie de o locație: un dosar sub Host Data sau o destinație restic la distanță, ca b2:bucket.",
+  "placementCode.restoreFolderRemote": "Un dosar de restaurare trebuie să fie un dosar pe această gazdă, sub Host Data.",
+  "placementCode.pathAbsolute": "Aceasta este o cale completă pe gazdă. Căile de aici încep de la Host Data, așa că omite partea până acolo sau folosește o destinație restic la distanță, ca rest:, s3: sau rclone:.",
+  "placementCode.pathOutside": "Această cale iese din Host Data. Introdu o cale din interiorul lui sau o destinație restic la distanță, ca rest:, s3: sau rclone:.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} direct păstrează acum mai puțin. Elemente a căror unică copie este acolo: {n}.",

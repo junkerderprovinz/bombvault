@@ -3267,6 +3267,12 @@ const ko: Partial<Translations> = {
   "placementCode.ownFolderThere": "여기에 어떤 섹션의 전용 폴더가 있습니다. 먼저 이 페이지의 '전용 폴더'에서 다른 곳으로 옮기세요. 그다음 저장 위치를 제거할 수 있습니다.",
   "placementCode.copyOnOwnFolder": "이 섹션의 전용 폴더가 이미 이 저장 위치에 있어서, 그곳으로의 복사는 자기 자신 위에 놓이게 됩니다.",
   "placementCode.ownFolderOnCopy": "이 섹션의 복사본이 이미 여기에 있어서 백업이 자기 자신 위에 복사됩니다. 전용 폴더를 여기에 두려면 설정, 대상의 '전용 폴더'에서 옮기세요. 그러면 이 복사가 끝납니다.",
+  "placementCode.namedRepoOverlap": "이 위치는 저장소 목록의 저장소이거나, 저장소 안이나 바깥을 둘러싸고 있습니다. 다른 곳을 고르거나 먼저 그 저장소를 제거하세요.",
+  "placementCode.unprefixedRemote": "이 위치는 원격처럼 보이지만 restic 접두사가 없습니다. rclone 원격 이름 앞에 rclone:을 붙이세요. 예: rclone:myremote:bucket.",
+  "placementCode.locationNeeded": "저장소에는 위치가 필요합니다. Host Data 아래 폴더나 b2:bucket 같은 restic 원격을 지정하세요.",
+  "placementCode.restoreFolderRemote": "복원 폴더는 이 호스트의 Host Data 아래 폴더여야 합니다.",
+  "placementCode.pathAbsolute": "이것은 호스트의 전체 경로입니다. 여기서 경로는 Host Data에서 시작하므로 거기까지의 부분을 빼거나 rest:, s3:, rclone: 같은 restic 원격을 쓰세요.",
+  "placementCode.pathOutside": "이 경로는 Host Data 밖으로 나갑니다. 그 안의 경로나 rest:, s3:, rclone: 같은 restic 원격을 입력하세요.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} 직접은 이제 더 적게 보관합니다. 유일한 사본이 그곳에 있는 항목: {n}개.",

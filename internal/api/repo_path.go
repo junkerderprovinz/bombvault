@@ -33,6 +33,22 @@ func (e *repoPathErr) Unwrap() error { return e.cause }
 
 func (e *repoPathErr) Is(target error) bool { return target == errRepoPathGuidance }
 
+// errNamedRepoOverlap refuses a location that is, holds or lies inside a
+// repository set up under Repositories: the backups there would answer to two
+// rows, and a target there would be the only copy that retention ages.
+var errNamedRepoOverlap = errors.New("that location is a repository set up under Repositories, or lies inside or around one")
+
+// errUnprefixedRemote refuses a location that looks like a remote without a
+// restic prefix, which restic would take for a folder of that name under the
+// mount root.
+var errUnprefixedRemote = errors.New("this location looks like a remote but carries no restic prefix; an rclone remote needs rclone: in front of its name, as in rclone:myremote:bucket")
+
+var errLocationNeeded = errors.New("a repository needs a location: a folder under the host mount, or a restic remote such as b2:bucket")
+
+// errRestoreFolderRemote refuses a remote restore folder: restores land on
+// this host.
+var errRestoreFolderRemote = errors.New("restore folder must be a local path under the mount root")
+
 // remoteURLHint ends both guidance messages so a refused local path does not
 // read as "only local paths are supported".
 const remoteURLHint = "or a restic remote URL (rest:, sftp:, s3:, b2:, rclone:)"

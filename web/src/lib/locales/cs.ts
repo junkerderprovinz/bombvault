@@ -3274,6 +3274,12 @@ const cs: Partial<Translations> = {
   "placementCode.ownFolderThere": "Tady leží vlastní složka jedné sekce. Nejdřív ji přesuň jinam, v části Vlastní složky na této stránce. Potom půjde úložiště odebrat.",
   "placementCode.copyOnOwnFolder": "Tato sekce už má svou vlastní složku v tomto úložišti, takže kopie tam by skončila sama na sobě.",
   "placementCode.ownFolderOnCopy": "Tady už leží kopie této sekce, takže by se její zálohy kopírovaly samy na sebe. Pokud sem chceš dát vlastní složku, přesuň ji v části Vlastní složky v Nastavení, Cíle. Tím kopie skončí.",
+  "placementCode.namedRepoOverlap": "Toto místo je repozitář ze seznamu Repozitáře, nebo leží v něm či kolem něj. Vyber jiné místo, nebo nejdřív ten repozitář odeber.",
+  "placementCode.unprefixedRemote": "Toto místo vypadá jako vzdálené úložiště, ale nemá prefix restic. Napiš rclone: před název vzdáleného úložiště rclone, například rclone:myremote:bucket.",
+  "placementCode.locationNeeded": "Repozitář potřebuje místo: složku pod Host Data, nebo vzdálené úložiště restic jako b2:bucket.",
+  "placementCode.restoreFolderRemote": "Složka pro obnovení musí být složka na tomto hostiteli, pod Host Data.",
+  "placementCode.pathAbsolute": "Tohle je úplná cesta na hostiteli. Cesty tu začínají v Host Data, takže část až tam vynech, nebo použij vzdálené úložiště restic jako rest:, s3: nebo rclone:.",
+  "placementCode.pathOutside": "Tato cesta vede ven z Host Data. Zadej cestu uvnitř, nebo vzdálené úložiště restic jako rest:, s3: nebo rclone:.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} přímo teď uchovává méně. Položky, jejichž jediná kopie je tam: {n}.",

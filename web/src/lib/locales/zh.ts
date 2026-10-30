@@ -3267,6 +3267,12 @@ const zh: Partial<Translations> = {
   "placementCode.ownFolderThere": "这里有某个分区的专属文件夹。请先在本页的“专属文件夹”中把它移到别处，之后才能移除此存储位置。",
   "placementCode.copyOnOwnFolder": "此部分的专属文件夹已经在这个存储位置，所以复制到那里会落在它自己身上。",
   "placementCode.ownFolderOnCopy": "这里已经有此部分的一份副本，所以它的备份会复制到自己身上。要把专属文件夹放到这里，请在“设置，目标”的“专属文件夹”中移动它，这样那份副本就会结束。",
+  "placementCode.namedRepoOverlap": "此位置是“存储库”列表中的存储库，或位于某个存储库之内，或包含了某个存储库。请选择其他位置，或先移除该存储库。",
+  "placementCode.unprefixedRemote": "此位置看起来像远程位置，但没有 restic 前缀。请在 rclone 远程名称前加上 rclone:，例如 rclone:myremote:bucket。",
+  "placementCode.locationNeeded": "存储库需要一个位置：Host Data 下的文件夹，或 b2:bucket 这样的 restic 远程位置。",
+  "placementCode.restoreFolderRemote": "恢复文件夹必须是此主机上 Host Data 下的文件夹。",
+  "placementCode.pathAbsolute": "这是主机上的完整路径。这里的路径从 Host Data 开始，请省略到那里为止的部分，或使用 rest:、s3: 或 rclone: 这样的 restic 远程位置。",
+  "placementCode.pathOutside": "此路径超出了 Host Data。请输入其中的路径，或 rest:、s3: 或 rclone: 这样的 restic 远程位置。",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} 直接现在保留得更少。唯一副本在那里的条目：{n}。",

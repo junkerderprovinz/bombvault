@@ -51,6 +51,12 @@ const CODE_KEYS: Record<string, TranslationKey> = {
   "own-folder-there": "placementCode.ownFolderThere",
   "copy-on-own-folder": "placementCode.copyOnOwnFolder",
   "own-folder-on-copy": "placementCode.ownFolderOnCopy",
+  "named-repo-overlap": "placementCode.namedRepoOverlap",
+  "unprefixed-remote": "placementCode.unprefixedRemote",
+  "location-needed": "placementCode.locationNeeded",
+  "restore-folder-remote": "placementCode.restoreFolderRemote",
+  "path-absolute": "placementCode.pathAbsolute",
+  "path-outside": "placementCode.pathOutside",
 };
 
 const WARNING_KEYS: Record<SaveWarning["code"], TranslationKey> = {

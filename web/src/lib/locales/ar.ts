@@ -3277,6 +3277,12 @@ const ar: Partial<Translations> = {
   "placementCode.ownFolderThere": "يوجد هنا المجلد الخاص لأحد الأقسام. انقله أولًا إلى مكان آخر من «المجلدات الخاصة» في هذه الصفحة. بعدها يمكن إزالة موقع التخزين.",
   "placementCode.copyOnOwnFolder": "يحتفظ هذا القسم بمجلده الخاص في موقع التخزين هذا بالفعل، لذا ستقع النسخة هناك على نفسها.",
   "placementCode.ownFolderOnCopy": "توجد نسخة من هذا القسم هنا بالفعل، لذا ستُنسخ نسخه الاحتياطية فوق نفسها. لوضع المجلد الخاص هنا، انقله من «المجلدات الخاصة» في الإعدادات، الوجهات، وبذلك تنتهي النسخة.",
+  "placementCode.namedRepoOverlap": "هذا الموقع مستودع من قائمة «المستودعات» أو يقع داخل أحدها أو حوله. اختر مكانًا آخر أو أزل ذلك المستودع أولًا.",
+  "placementCode.unprefixedRemote": "يبدو هذا الموقع مثل مستودع بعيد لكنه بلا بادئة restic. ضع rclone: قبل اسم مستودع rclone البعيد، مثل rclone:myremote:bucket.",
+  "placementCode.locationNeeded": "يحتاج المستودع إلى موقع: مجلد تحت Host Data أو مستودع restic بعيد مثل b2:bucket.",
+  "placementCode.restoreFolderRemote": "يجب أن يكون مجلد الاستعادة مجلدًا على هذا المضيف تحت Host Data.",
+  "placementCode.pathAbsolute": "هذا مسار كامل على المضيف. المسارات هنا تبدأ من Host Data، لذا احذف الجزء حتى هناك، أو استخدم مستودع restic بعيدًا مثل rest: أو s3: أو rclone:.",
+  "placementCode.pathOutside": "يقود هذا المسار إلى خارج Host Data. أدخل مسارًا داخله أو مستودع restic بعيدًا مثل rest: أو s3: أو rclone:.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} المباشر يحتفظ الآن بأقل. العناصر التي نسختها الوحيدة هناك: {n}.",

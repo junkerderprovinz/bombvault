@@ -3277,6 +3277,12 @@ const th: Partial<Translations> = {
   "placementCode.ownFolderThere": "ที่นี่มีโฟลเดอร์ของตัวเองของส่วนหนึ่งอยู่ ย้ายไปที่อื่นก่อนจาก โฟลเดอร์ของตัวเอง ในหน้านี้ จากนั้นจึงนำตำแหน่งจัดเก็บออกได้",
   "placementCode.copyOnOwnFolder": "ส่วนนี้มีโฟลเดอร์ของตัวเองอยู่ที่ตำแหน่งจัดเก็บนี้แล้ว สำเนาที่นั่นจึงจะทับตัวเอง",
   "placementCode.ownFolderOnCopy": "มีสำเนาของส่วนนี้อยู่ที่นี่แล้ว ข้อมูลสำรองของส่วนนี้จึงจะถูกคัดลอกทับตัวเอง หากต้องการวางโฟลเดอร์ของตัวเองไว้ที่นี่ ให้ย้ายจาก โฟลเดอร์ของตัวเอง ใน การตั้งค่า, ปลายทาง ซึ่งจะทำให้สำเนานั้นสิ้นสุดลง",
+  "placementCode.namedRepoOverlap": "ตำแหน่งนี้เป็นที่เก็บข้อมูลจากรายการ ที่เก็บข้อมูล หรืออยู่ภายในหรือรอบที่เก็บข้อมูลหนึ่ง ให้เลือกที่อื่นหรือนำที่เก็บข้อมูลนั้นออกก่อน",
+  "placementCode.unprefixedRemote": "ตำแหน่งนี้ดูเหมือนรีโมตแต่ไม่มีคำนำหน้าของ restic ให้ใส่ rclone: หน้าชื่อรีโมตของ rclone เช่น rclone:myremote:bucket",
+  "placementCode.locationNeeded": "ที่เก็บข้อมูลต้องมีตำแหน่ง: โฟลเดอร์ใต้ Host Data หรือรีโมตของ restic เช่น b2:bucket",
+  "placementCode.restoreFolderRemote": "โฟลเดอร์กู้คืนต้องเป็นโฟลเดอร์บนโฮสต์นี้ ใต้ Host Data",
+  "placementCode.pathAbsolute": "นี่คือพาธเต็มบนโฮสต์ พาธที่นี่เริ่มที่ Host Data จึงให้ตัดส่วนจนถึงตรงนั้นออก หรือใช้รีโมตของ restic เช่น rest:, s3: หรือ rclone:",
+  "placementCode.pathOutside": "พาธนี้ออกไปนอก Host Data ให้ใส่พาธภายใน หรือรีโมตของ restic เช่น rest:, s3: หรือ rclone:",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} โดยตรงเก็บข้อมูลน้อยลงแล้ว รายการที่มีสำเนาเดียวอยู่ที่นั่น: {n} รายการ",

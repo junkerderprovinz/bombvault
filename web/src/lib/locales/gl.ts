@@ -3286,6 +3286,12 @@ const gl: Partial<Translations> = {
   "placementCode.ownFolderThere": "Aquí está o cartafol propio dunha sección. Móveo primeiro a outro lugar, en Cartafoles propios nesta páxina. Despois pódese quitar a localización de almacenamento.",
   "placementCode.copyOnOwnFolder": "Esta sección xa ten o seu cartafol propio nesta localización, así que unha copia alí caería sobre si mesma.",
   "placementCode.ownFolderOnCopy": "Aquí xa hai unha copia desta sección, así que as súas copias de seguranza copiaríanse sobre si mesmas. Para poñer aquí o cartafol propio, móveo en Cartafoles propios en Configuración, Destinos, e así remata a copia.",
+  "placementCode.namedRepoOverlap": "Esta localización é un repositorio da lista Repositorios, ou está dentro ou arredor dun. Escolle outro lugar ou quita primeiro ese repositorio.",
+  "placementCode.unprefixedRemote": "Esta localización parece un remoto pero non ten prefixo de restic. Pon rclone: diante do nome dun remoto de rclone, como en rclone:myremote:bucket.",
+  "placementCode.locationNeeded": "Un repositorio necesita unha localización: un cartafol baixo Host Data ou un remoto de restic como b2:bucket.",
+  "placementCode.restoreFolderRemote": "Un cartafol de restauración ten que ser un cartafol deste equipo, baixo Host Data.",
+  "placementCode.pathAbsolute": "Isto é unha ruta completa do equipo. Aquí as rutas comezan en Host Data, así que quita a parte ata alí ou usa un remoto de restic como rest:, s3: ou rclone:.",
+  "placementCode.pathOutside": "Esta ruta sae de Host Data. Escribe unha ruta dentro ou un remoto de restic como rest:, s3: ou rclone:.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} directo agora conserva menos. Elementos cuxa única copia está aí: {n}.",

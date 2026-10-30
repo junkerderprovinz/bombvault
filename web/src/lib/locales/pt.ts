@@ -3276,6 +3276,12 @@ const pt: Partial<Translations> = {
   "placementCode.ownFolderThere": "Aqui está a pasta própria de uma secção. Move-a primeiro para outro sítio, em Pastas próprias nesta página. Depois o local de armazenamento pode ser removido.",
   "placementCode.copyOnOwnFolder": "Esta secção já tem a pasta própria neste local de armazenamento, por isso uma cópia ali cairia sobre si mesma.",
   "placementCode.ownFolderOnCopy": "Já existe aqui uma cópia desta secção, por isso as cópias de segurança seriam copiadas sobre si mesmas. Para pôr aqui a pasta própria, move-a em Pastas próprias em Definições, Destinos, o que termina essa cópia.",
+  "placementCode.namedRepoOverlap": "Este local é um repositório da lista Repositórios, ou fica dentro ou à volta de um. Escolhe outro sítio ou remove primeiro esse repositório.",
+  "placementCode.unprefixedRemote": "Este local parece um remoto mas não tem prefixo do restic. Põe rclone: antes do nome de um remoto rclone, como em rclone:myremote:bucket.",
+  "placementCode.locationNeeded": "Um repositório precisa de um local: uma pasta sob Host Data ou um remoto restic como b2:bucket.",
+  "placementCode.restoreFolderRemote": "Uma pasta de restauro tem de ser uma pasta neste anfitrião, sob Host Data.",
+  "placementCode.pathAbsolute": "Este é um caminho completo no anfitrião. Aqui os caminhos começam em Host Data, por isso retira a parte até lá, ou usa um remoto restic como rest:, s3: ou rclone:.",
+  "placementCode.pathOutside": "Este caminho sai de Host Data. Indica um caminho dentro dele ou um remoto restic como rest:, s3: ou rclone:.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} direto agora conserva menos. Entradas cuja única cópia está lá: {n}.",

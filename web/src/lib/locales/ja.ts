@@ -3267,6 +3267,12 @@ const ja: Partial<Translations> = {
   "placementCode.ownFolderThere": "ここにはあるセクションの専用フォルダーがあります。まずこのページの「専用フォルダー」から別の場所へ移動してください。その後、この保存場所を削除できます。",
   "placementCode.copyOnOwnFolder": "このセクションの専用フォルダーはすでにこの保存先にあるため、そこへのコピーは自分自身の上に重なります。",
   "placementCode.ownFolderOnCopy": "このセクションのコピーがすでにここにあるため、バックアップが自分自身の上にコピーされてしまいます。専用フォルダーをここに置くには、設定、保存先の「専用フォルダー」から移動してください。そうするとこのコピーは終了します。",
+  "placementCode.namedRepoOverlap": "この場所は「リポジトリ」一覧のリポジトリか、その中または周りにあります。別の場所を選ぶか、先にそのリポジトリを削除してください。",
+  "placementCode.unprefixedRemote": "この場所はリモートのように見えますが、restic のプレフィックスがありません。rclone リモートの名前の前に rclone: を付けてください（例: rclone:myremote:bucket）。",
+  "placementCode.locationNeeded": "リポジトリには場所が必要です。Host Data の下のフォルダーか、b2:bucket のような restic リモートを指定してください。",
+  "placementCode.restoreFolderRemote": "復元フォルダーは、このホスト上の Host Data の下にあるフォルダーにしてください。",
+  "placementCode.pathAbsolute": "これはホスト上のフルパスです。ここでのパスは Host Data から始まるので、そこまでの部分を省くか、rest:、s3:、rclone: などの restic リモートを使ってください。",
+  "placementCode.pathOutside": "このパスは Host Data の外へ出ています。その中のパスか、rest:、s3:、rclone: などの restic リモートを入力してください。",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} ダイレクトは今、保持量が減りました。唯一のコピーがそこにある項目: {n}。",

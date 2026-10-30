@@ -3286,6 +3286,12 @@ const hi: Partial<Translations> = {
   "placementCode.ownFolderThere": "यहाँ किसी सेक्शन का अपना फ़ोल्डर है। पहले उसे इस पेज पर अपने फ़ोल्डर में से किसी और जगह ले जाएँ। उसके बाद स्टोरेज लोकेशन हटाई जा सकती है।",
   "placementCode.copyOnOwnFolder": "इस सेक्शन का अपना फ़ोल्डर पहले से इसी स्टोरेज लोकेशन में है, इसलिए वहाँ की कॉपी अपने ही ऊपर पड़ेगी।",
   "placementCode.ownFolderOnCopy": "इस सेक्शन की एक कॉपी पहले से यहाँ है, इसलिए इसके बैकअप अपने ही ऊपर कॉपी हो जाएँगे। अपना फ़ोल्डर यहाँ रखने के लिए उसे सेटिंग्स, गंतव्य में अपने फ़ोल्डर से यहाँ ले जाएँ, इससे वह कॉपी ख़त्म हो जाती है।",
+  "placementCode.namedRepoOverlap": "यह जगह रिपॉज़िटरी सूची का एक रिपॉज़िटरी है, या किसी रिपॉज़िटरी के अंदर या उसके आसपास है। कोई और जगह चुनें या पहले वह रिपॉज़िटरी हटाएँ।",
+  "placementCode.unprefixedRemote": "यह जगह रिमोट जैसी दिखती है, लेकिन इसमें restic प्रीफ़िक्स नहीं है। rclone रिमोट के नाम से पहले rclone: लिखें, जैसे rclone:myremote:bucket।",
+  "placementCode.locationNeeded": "रिपॉज़िटरी को एक जगह चाहिए: Host Data के नीचे कोई फ़ोल्डर, या b2:bucket जैसा restic रिमोट।",
+  "placementCode.restoreFolderRemote": "रीस्टोर फ़ोल्डर इसी होस्ट पर, Host Data के नीचे का फ़ोल्डर होना चाहिए।",
+  "placementCode.pathAbsolute": "यह होस्ट का पूरा पाथ है। यहाँ पाथ Host Data से शुरू होते हैं, इसलिए वहाँ तक का हिस्सा हटा दें, या rest:, s3: या rclone: जैसा restic रिमोट इस्तेमाल करें।",
+  "placementCode.pathOutside": "यह पाथ Host Data से बाहर जाता है। उसके अंदर का पाथ दें, या rest:, s3: या rclone: जैसा restic रिमोट।",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} डायरेक्ट अब कम रखता है। जिन प्रविष्टियों की एकमात्र कॉपी वहाँ है: {n}।",

@@ -3274,6 +3274,12 @@ const es: Partial<Translations> = {
   "placementCode.ownFolderThere": "Aquí está la carpeta propia de una sección. Muévela primero a otro lugar, en Carpetas propias en esta página. Después se puede quitar la ubicación de almacenamiento.",
   "placementCode.copyOnOwnFolder": "Esta sección ya tiene su carpeta propia en esta ubicación, así que una copia allí caería sobre sí misma.",
   "placementCode.ownFolderOnCopy": "Aquí ya hay una copia de esta sección, así que sus copias de seguridad se copiarían sobre sí mismas. Para poner aquí la carpeta propia, muévela en Carpetas propias en Ajustes, Destinos, y así termina la copia.",
+  "placementCode.namedRepoOverlap": "Esta ubicación es un repositorio de la lista Repositorios, o está dentro o alrededor de uno. Elige otro lugar o quita primero ese repositorio.",
+  "placementCode.unprefixedRemote": "Esta ubicación parece un remoto pero no tiene prefijo de restic. Pon rclone: delante del nombre de un remoto de rclone, como en rclone:myremote:bucket.",
+  "placementCode.locationNeeded": "Un repositorio necesita una ubicación: una carpeta bajo Host Data o un remoto de restic como b2:bucket.",
+  "placementCode.restoreFolderRemote": "Una carpeta de restauración tiene que ser una carpeta de este equipo, bajo Host Data.",
+  "placementCode.pathAbsolute": "Esto es una ruta completa del equipo. Aquí las rutas empiezan en Host Data, así que quita la parte hasta allí o usa un remoto de restic como rest:, s3: o rclone:.",
+  "placementCode.pathOutside": "Esta ruta sale de Host Data. Escribe una ruta dentro o un remoto de restic como rest:, s3: o rclone:.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} directo ahora conserva menos. Elementos cuya única copia está ahí: {n}.",

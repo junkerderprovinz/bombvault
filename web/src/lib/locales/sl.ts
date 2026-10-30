@@ -3270,6 +3270,12 @@ const sl: Partial<Translations> = {
   "placementCode.ownFolderThere": "Tu je lastna mapa enega od razdelkov. Najprej jo premakni drugam pod Lastne mape na tej strani. Nato je mesto shranjevanja mogoče odstraniti.",
   "placementCode.copyOnOwnFolder": "Ta razdelek že ima lastno mapo na tej lokaciji shrambe, zato bi kopija tja pristala sama na sebi.",
   "placementCode.ownFolderOnCopy": "Tu je že kopija tega razdelka, zato bi se njegove varnostne kopije kopirale same nase. Če želiš lastno mapo tukaj, jo premakni pod Lastne mape v Nastavitve, Cilji, s tem se kopija konča.",
+  "placementCode.namedRepoOverlap": "Ta lokacija je repozitorij s seznama Repozitoriji ali leži v njem oziroma okoli njega. Izberi drugo mesto ali najprej odstrani ta repozitorij.",
+  "placementCode.unprefixedRemote": "Ta lokacija je videti kot oddaljena, a nima predpone restic. Pred ime oddaljene lokacije rclone napiši rclone:, na primer rclone:myremote:bucket.",
+  "placementCode.locationNeeded": "Repozitorij potrebuje lokacijo: mapo pod Host Data ali oddaljeno lokacijo restic, kot je b2:bucket.",
+  "placementCode.restoreFolderRemote": "Mapa za obnovitev mora biti mapa na tem gostitelju, pod Host Data.",
+  "placementCode.pathAbsolute": "To je polna pot na gostitelju. Poti se tu začnejo pri Host Data, zato izpusti del do tja ali uporabi oddaljeno lokacijo restic, kot je rest:, s3: ali rclone:.",
+  "placementCode.pathOutside": "Ta pot vodi iz Host Data. Vnesi pot znotraj njega ali oddaljeno lokacijo restic, kot je rest:, s3: ali rclone:.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} neposredno zdaj hrani manj. Vnosi, katerih edina kopija je tam: {n}.",

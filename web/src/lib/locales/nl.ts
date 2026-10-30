@@ -3275,6 +3275,12 @@ const nl: Partial<Translations> = {
   "placementCode.ownFolderThere": "Hier staat de eigen map van een onderdeel. Verplaats die eerst naar een andere plek, onder Eigen mappen op deze pagina. Daarna kan de opslaglocatie weg.",
   "placementCode.copyOnOwnFolder": "Deze sectie heeft haar eigen map al op deze opslaglocatie, dus een kopie daar zou op zichzelf terechtkomen.",
   "placementCode.ownFolderOnCopy": "Hier staat al een kopie van deze sectie, dus haar back-ups zouden op zichzelf worden gekopieerd. Wil je de eigen map hier hebben, verplaats die dan onder Eigen mappen in Instellingen, Bestemmingen. Daarmee stopt die kopie.",
+  "placementCode.namedRepoOverlap": "Deze locatie is een repository uit de lijst Repository's, of ligt erin of eromheen. Kies een andere plek of verwijder eerst die repository.",
+  "placementCode.unprefixedRemote": "Deze locatie lijkt op een remote maar heeft geen restic-voorvoegsel. Zet rclone: voor de naam van een rclone-remote, zoals rclone:myremote:bucket.",
+  "placementCode.locationNeeded": "Een repository heeft een locatie nodig: een map onder Host Data of een restic-remote zoals b2:bucket.",
+  "placementCode.restoreFolderRemote": "Een herstelmap moet een map op deze host zijn, onder Host Data.",
+  "placementCode.pathAbsolute": "Dit is een volledig pad op de host. Paden beginnen hier bij Host Data, dus laat het deel tot daar weg, of gebruik een restic-remote zoals rest:, s3: of rclone:.",
+  "placementCode.pathOutside": "Dit pad leidt uit Host Data. Geef een pad daarbinnen op of een restic-remote zoals rest:, s3: of rclone:.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} direct bewaart nu minder. Items waarvan de enige kopie daar staat: {n}.",

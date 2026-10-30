@@ -3276,6 +3276,12 @@ const he: Partial<Translations> = {
   "placementCode.ownFolderThere": "כאן נמצאת התיקייה העצמית של תחום. קודם צריך להעביר אותה למקום אחר, תחת תיקיות עצמיות בעמוד הזה. אחר כך אפשר להסיר את מיקום האחסון.",
   "placementCode.copyOnOwnFolder": "למקטע הזה כבר יש תיקייה עצמית במיקום האחסון הזה, ולכן עותק שם ינחת על עצמו.",
   "placementCode.ownFolderOnCopy": "כבר יש כאן עותק של המקטע הזה, ולכן הגיבויים שלו יועתקו על עצמם. כדי להעביר את התיקייה העצמית לכאן, צריך להעביר אותה תחת תיקיות עצמיות בהגדרות, יעדים, וכך העותק מסתיים.",
+  "placementCode.namedRepoOverlap": "המיקום הזה הוא מאגר מהרשימה מאגרים, או שהוא נמצא בתוך מאגר כזה או סביבו. צריך לבחור מקום אחר או להסיר קודם את המאגר הזה.",
+  "placementCode.unprefixedRemote": "המיקום הזה נראה כמו מרוחק אבל אין לו קידומת restic. צריך לכתוב rclone: לפני שם המרוחק של rclone, כמו rclone:myremote:bucket.",
+  "placementCode.locationNeeded": "מאגר צריך מיקום: תיקייה תחת Host Data או מרוחק של restic כמו b2:bucket.",
+  "placementCode.restoreFolderRemote": "תיקיית שחזור חייבת להיות תיקייה במארח הזה, תחת Host Data.",
+  "placementCode.pathAbsolute": "זה נתיב מלא במארח. הנתיבים כאן מתחילים ב־Host Data, אז צריך להשמיט את החלק עד שם, או להשתמש במרוחק של restic כמו rest:, s3: או rclone:.",
+  "placementCode.pathOutside": "הנתיב הזה יוצא מ־Host Data. צריך להזין נתיב בתוכו או מרוחק של restic כמו rest:, s3: או rclone:.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} ישיר שומר עכשיו פחות. פריטים שהעותק היחיד שלהם נמצא שם: {n}.",

@@ -3,7 +3,6 @@ package api
 import (
 	"cmp"
 	"context"
-	"errors"
 	"log"
 	"maps"
 	"net/http"
@@ -329,8 +328,8 @@ func (h *Handler) newLocationRefusal(domain, targetID, loc, as string) error {
 				return nil
 			}
 		}
-		if msg := h.rejectOffsiteTargetOnNamedRepo(t); msg != "" {
-			return errors.New(msg)
+		if err := h.rejectOffsiteTargetOnNamedRepo(t); err != nil {
+			return err
 		}
 		return h.nestedTargetLocation(targetID, t)
 	}

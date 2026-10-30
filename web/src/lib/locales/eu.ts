@@ -3286,6 +3286,12 @@ const eu: Partial<Translations> = {
   "placementCode.ownFolderThere": "Hemen dago atal baten karpeta propioa. Lehenik, eraman beste toki batera orri honetako Karpeta propioak atalean. Ondoren, biltegiratze-kokapena kendu daiteke.",
   "placementCode.copyOnOwnFolder": "Atal honek bere karpeta propioa du dagoeneko biltegiratze-kokaleku honetan, beraz han egindako kopia bere gainera eroriko litzateke.",
   "placementCode.ownFolderOnCopy": "Atal honen kopia bat dago dagoeneko hemen, beraz bere babeskopiak beren gainera kopiatuko lirateke. Karpeta propioa hona ekartzeko, eraman ezazu Karpeta propioak ataletik Ezarpenak, Helmugak orrian, eta horrela kopia amaitzen da.",
+  "placementCode.namedRepoOverlap": "Kokaleku hau Biltegiak zerrendako biltegi bat da, edo baten barruan edo inguruan dago. Aukeratu beste toki bat edo kendu lehenik biltegi hori.",
+  "placementCode.unprefixedRemote": "Kokaleku honek urrunekoa dirudi, baina ez du restic aurrizkirik. Jarri rclone: rclone urruneko baten izenaren aurrean, rclone:myremote:bucket bezala.",
+  "placementCode.locationNeeded": "Biltegi batek kokaleku bat behar du: Host Data azpiko karpeta bat edo restic urruneko bat, b2:bucket bezalakoa.",
+  "placementCode.restoreFolderRemote": "Leheneratze-karpeta ostalari honetako karpeta bat izan behar da, Host Data azpian.",
+  "placementCode.pathAbsolute": "Hau ostalariko bide oso bat da. Hemen bideak Host Data-n hasten dira, beraz kendu hara arteko zatia edo erabili restic urruneko bat, rest:, s3: edo rclone: bezalakoa.",
+  "placementCode.pathOutside": "Bide honek Host Data-tik kanpora darama. Idatzi barruko bide bat edo restic urruneko bat, rest:, s3: edo rclone: bezalakoa.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} zuzenak orain gutxiago gordetzen du. Kopia bakarra hor duten elementuak: {n}.",

@@ -3267,6 +3267,12 @@ const vi: Partial<Translations> = {
   "placementCode.ownFolderThere": "Thư mục riêng của một phần nằm ở đây. Hãy chuyển nó sang nơi khác trước, trong mục Thư mục riêng ở trang này. Sau đó có thể gỡ vị trí lưu trữ.",
   "placementCode.copyOnOwnFolder": "Phần này đã có thư mục riêng ở vị trí lưu trữ này, nên một bản sao ở đó sẽ đè lên chính nó.",
   "placementCode.ownFolderOnCopy": "Đã có một bản sao của phần này ở đây, nên các bản sao lưu của nó sẽ bị sao chép đè lên chính chúng. Để đặt thư mục riêng ở đây, hãy chuyển nó trong mục Thư mục riêng ở Cài đặt, Đích sao lưu, việc này sẽ kết thúc bản sao đó.",
+  "placementCode.namedRepoOverlap": "Vị trí này là một kho lưu trữ trong danh sách Kho lưu trữ, hoặc nằm bên trong hay bao quanh một kho. Hãy chọn nơi khác hoặc gỡ kho đó trước.",
+  "placementCode.unprefixedRemote": "Vị trí này trông như một remote nhưng không có tiền tố restic. Hãy thêm rclone: trước tên remote rclone, ví dụ rclone:myremote:bucket.",
+  "placementCode.locationNeeded": "Kho lưu trữ cần một vị trí: một thư mục dưới Host Data hoặc một remote restic như b2:bucket.",
+  "placementCode.restoreFolderRemote": "Thư mục khôi phục phải là một thư mục trên máy chủ này, dưới Host Data.",
+  "placementCode.pathAbsolute": "Đây là đường dẫn đầy đủ trên máy chủ. Đường dẫn ở đây bắt đầu từ Host Data, nên hãy bỏ phần đến đó, hoặc dùng remote restic như rest:, s3: hay rclone:.",
+  "placementCode.pathOutside": "Đường dẫn này đi ra ngoài Host Data. Hãy nhập đường dẫn bên trong hoặc remote restic như rest:, s3: hay rclone:.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} trực tiếp giờ giữ ít hơn. Các mục có bản sao duy nhất ở đó: {n}.",

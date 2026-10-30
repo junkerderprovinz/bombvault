@@ -3286,6 +3286,12 @@ const hr: Partial<Translations> = {
   "placementCode.ownFolderThere": "Ovdje je vlastita mapa jednog odjeljka. Najprije je premjestite drugamo, pod Vlastite mape na ovoj stranici. Nakon toga se mjesto pohrane može ukloniti.",
   "placementCode.copyOnOwnFolder": "Ovaj odjeljak već ima vlastitu mapu na ovoj lokaciji za pohranu, pa bi kopija tamo pala sama na sebe.",
   "placementCode.ownFolderOnCopy": "Ovdje već postoji kopija ovog odjeljka, pa bi se njegove sigurnosne kopije kopirale same na sebe. Da biste vlastitu mapu stavili ovdje, premjestite je pod Vlastite mape u Postavke, Odredišta, čime ta kopija prestaje.",
+  "placementCode.namedRepoOverlap": "Ova lokacija je repozitorij s popisa Repozitoriji ili leži u njemu ili oko njega. Odaberite drugo mjesto ili najprije uklonite taj repozitorij.",
+  "placementCode.unprefixedRemote": "Ova lokacija izgleda kao udaljena, ali nema restic prefiks. Stavite rclone: ispred imena rclone udaljene lokacije, kao u rclone:myremote:bucket.",
+  "placementCode.locationNeeded": "Repozitorij treba lokaciju: mapu pod Host Data ili restic udaljenu lokaciju poput b2:bucket.",
+  "placementCode.restoreFolderRemote": "Mapa za vraćanje mora biti mapa na ovom računalu, pod Host Data.",
+  "placementCode.pathAbsolute": "Ovo je puna putanja na računalu. Putanje ovdje počinju od Host Data, pa izostavite dio do tamo ili koristite restic udaljenu lokaciju poput rest:, s3: ili rclone:.",
+  "placementCode.pathOutside": "Ova putanja vodi izvan Host Data. Unesite putanju unutar njega ili restic udaljenu lokaciju poput rest:, s3: ili rclone:.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} izravno sada čuva manje. Stavke čija je jedina kopija ondje: {n}.",

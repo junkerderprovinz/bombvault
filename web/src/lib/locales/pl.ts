@@ -3273,6 +3273,12 @@ const pl: Partial<Translations> = {
   "placementCode.ownFolderThere": "Tu leży własny folder jednej z sekcji. Najpierw przenieś go gdzie indziej w części Własne foldery na tej stronie. Potem miejsce przechowywania da się usunąć.",
   "placementCode.copyOnOwnFolder": "Ta sekcja ma już własny folder w tej lokalizacji, więc kopia tam trafiłaby sama na siebie.",
   "placementCode.ownFolderOnCopy": "Kopia tej sekcji już tu leży, więc jej kopie zapasowe kopiowałyby się same na siebie. Aby umieścić tu własny folder, przenieś go w części Własne foldery w Ustawienia, Miejsca docelowe. To kończy tę kopię.",
+  "placementCode.namedRepoOverlap": "To miejsce jest repozytorium z listy Repozytoria albo leży w nim lub wokół niego. Wybierz inne miejsce albo najpierw usuń to repozytorium.",
+  "placementCode.unprefixedRemote": "To miejsce wygląda na zdalne, ale nie ma prefiksu restic. Wpisz rclone: przed nazwą zdalnego miejsca rclone, na przykład rclone:myremote:bucket.",
+  "placementCode.locationNeeded": "Repozytorium potrzebuje miejsca: folderu pod Host Data albo zdalnego miejsca restic, takiego jak b2:bucket.",
+  "placementCode.restoreFolderRemote": "Folder przywracania musi być folderem na tym hoście, pod Host Data.",
+  "placementCode.pathAbsolute": "To pełna ścieżka na hoście. Ścieżki zaczynają się tu od Host Data, więc pomiń część do tego miejsca albo użyj zdalnego miejsca restic, takiego jak rest:, s3: lub rclone:.",
+  "placementCode.pathOutside": "Ta ścieżka wychodzi poza Host Data. Podaj ścieżkę w jego obrębie albo zdalne miejsce restic, takie jak rest:, s3: lub rclone:.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} bezpośrednio przechowuje teraz mniej. Elementy, których jedyna kopia tam jest: {n}.",

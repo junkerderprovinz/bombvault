@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/notify"
+	"github.com/junkerderprovinz/bombvault/internal/paths"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
@@ -69,6 +70,13 @@ var placementCodes = []struct {
 	{errNestedLocation, "nested-location"},
 	{errCopyOnOwnFolder, "copy-on-own-folder"},
 	{errOwnFolderOnCopy, "own-folder-on-copy"},
+	{errNamedRepoOverlap, "named-repo-overlap"},
+	{errUnprefixedRemote, "unprefixed-remote"},
+	{errLocationNeeded, "location-needed"},
+	{errRestoreFolderRemote, "restore-folder-remote"},
+	{paths.ErrAbsoluteSub, "path-absolute"},
+	{paths.ErrTraversal, "path-outside"},
+	{paths.ErrLinkEscape, "path-outside"},
 	{errMirroredField, "mirrored-field"},
 	{store.ErrCompanionTaken, "companion-taken"},
 	{store.ErrNotOffsiteTarget, "unknown-target"},

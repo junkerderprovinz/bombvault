@@ -3276,6 +3276,12 @@ const tr: Partial<Translations> = {
   "placementCode.ownFolderThere": "Burada bir bölümün kendi klasörü var. Önce bu sayfadaki Kendi klasörleri bölümünden başka bir yere taşı. Ardından depolama konumu kaldırılabilir.",
   "placementCode.copyOnOwnFolder": "Bu bölümün kendi klasörü zaten bu depolama konumunda, bu yüzden oraya bir kopya kendi üstüne düşerdi.",
   "placementCode.ownFolderOnCopy": "Bu bölümün bir kopyası zaten burada, bu yüzden yedekleri kendi üstlerine kopyalanırdı. Kendi klasörünü buraya koymak için onu Ayarlar, Hedefler sayfasındaki Kendi klasörleri bölümünden taşı; böylece bu kopya sona erer.",
+  "placementCode.namedRepoOverlap": "Bu konum Depolar listesindeki bir depo ya da bir deponun içinde veya çevresinde. Başka bir yer seç ya da önce o depoyu kaldır.",
+  "placementCode.unprefixedRemote": "Bu konum uzak bir yere benziyor ama restic öneki yok. Bir rclone uzak yerinin adının önüne rclone: yaz, örneğin rclone:myremote:bucket.",
+  "placementCode.locationNeeded": "Bir deponun bir konuma ihtiyacı var: Host Data altında bir klasör ya da b2:bucket gibi bir restic uzak yeri.",
+  "placementCode.restoreFolderRemote": "Geri yükleme klasörü bu ana bilgisayarda, Host Data altında bir klasör olmalı.",
+  "placementCode.pathAbsolute": "Bu, ana bilgisayardaki tam bir yol. Buradaki yollar Host Data'dan başlar, o yüzden oraya kadarki kısmı çıkar ya da rest:, s3: veya rclone: gibi bir restic uzak yeri kullan.",
+  "placementCode.pathOutside": "Bu yol Host Data'nın dışına çıkıyor. İçinde bir yol ya da rest:, s3: veya rclone: gibi bir restic uzak yeri gir.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} doğrudan artık daha az tutuyor. Tek kopyası orada olan ögeler: {n}.",

@@ -3286,6 +3286,12 @@ const fa: Partial<Translations> = {
   "placementCode.ownFolderThere": "پوشه‌ی خود یک حوزه این‌جاست. اول آن را از بخش پوشه‌های خود در همین صفحه به جای دیگری ببر. بعد می‌شود این محل ذخیره‌سازی را حذف کرد.",
   "placementCode.copyOnOwnFolder": "این بخش پوشه‌ی خودش را از قبل در این محل ذخیره‌سازی دارد، پس کپی در آنجا روی خودش می‌افتد.",
   "placementCode.ownFolderOnCopy": "یک کپی از این بخش از قبل این‌جاست، پس پشتیبان‌هایش روی خودشان کپی می‌شوند. برای گذاشتن پوشه‌ی خود این‌جا، آن را از پوشه‌های خود در تنظیمات، مقصدها جابه‌جا کن؛ با این کار آن کپی تمام می‌شود.",
+  "placementCode.namedRepoOverlap": "این محل یکی از مخزن‌های فهرست مخازن است یا داخل یا اطراف یکی از آن‌هاست. جای دیگری انتخاب کن یا اول آن مخزن را حذف کن.",
+  "placementCode.unprefixedRemote": "این محل شبیه یک ریموت است اما پیشوند restic ندارد. پیش از نام ریموت rclone بنویس rclone:، مثل rclone:myremote:bucket.",
+  "placementCode.locationNeeded": "مخزن به یک محل نیاز دارد: پوشه‌ای زیر Host Data یا ریموت restic مثل b2:bucket.",
+  "placementCode.restoreFolderRemote": "پوشه‌ی بازیابی باید پوشه‌ای روی همین میزبان، زیر Host Data باشد.",
+  "placementCode.pathAbsolute": "این یک مسیر کامل روی میزبان است. مسیرها این‌جا از Host Data شروع می‌شوند، پس بخش تا آن‌جا را ننویس یا از ریموت restic مثل rest:، s3: یا rclone: استفاده کن.",
+  "placementCode.pathOutside": "این مسیر از Host Data بیرون می‌رود. مسیری داخل آن یا ریموت restic مثل rest:، s3: یا rclone: وارد کن.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} مستقیم اکنون کمتر نگه می‌دارد. موردهایی که تنها نسخه‌شان همان‌جاست: {n}.",

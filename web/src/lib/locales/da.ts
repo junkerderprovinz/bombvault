@@ -3276,6 +3276,12 @@ const da: Partial<Translations> = {
   "placementCode.ownFolderThere": "Her ligger et områdes egen mappe. Flyt den først et andet sted hen under Egne mapper på denne side. Derefter kan lagerstedet fjernes.",
   "placementCode.copyOnOwnFolder": "Denne sektion har allerede sin egen mappe på denne lagerplacering, så en kopi dér ville lande oven i sig selv.",
   "placementCode.ownFolderOnCopy": "Der ligger allerede en kopi af denne sektion her, så dens backups ville blive kopieret oven i sig selv. For at lægge den egne mappe her skal du flytte den under Egne mapper i Indstillinger, Destinationer, hvilket afslutter kopien.",
+  "placementCode.namedRepoOverlap": "Denne placering er et depot fra listen Depoter eller ligger i eller omkring et. Vælg et andet sted, eller fjern først det depot.",
+  "placementCode.unprefixedRemote": "Denne placering ligner et fjernlager, men har intet restic-præfiks. Sæt rclone: foran navnet på et rclone-fjernlager, som i rclone:myremote:bucket.",
+  "placementCode.locationNeeded": "Et depot skal have en placering: en mappe under Host Data eller et restic-fjernlager som b2:bucket.",
+  "placementCode.restoreFolderRemote": "En gendannelsesmappe skal være en mappe på denne vært, under Host Data.",
+  "placementCode.pathAbsolute": "Det er en fuld sti på værten. Stier her starter ved Host Data, så udelad delen dertil, eller brug et restic-fjernlager som rest:, s3: eller rclone:.",
+  "placementCode.pathOutside": "Denne sti fører ud af Host Data. Angiv en sti inden i den eller et restic-fjernlager som rest:, s3: eller rclone:.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} direkte bevarer nu mindre. Elementer hvis eneste kopi ligger der: {n}.",

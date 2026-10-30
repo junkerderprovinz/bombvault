@@ -3276,6 +3276,12 @@ const sv: Partial<Translations> = {
   "placementCode.ownFolderThere": "Här ligger ett avsnitts egna mapp. Flytta den först till en annan plats under Egna mappar på den här sidan. Sedan kan lagringsplatsen tas bort.",
   "placementCode.copyOnOwnFolder": "Den här delen har redan sin egna mapp på den här lagringsplatsen, så en kopia där skulle hamna ovanpå sig själv.",
   "placementCode.ownFolderOnCopy": "Här ligger redan en kopia av den här delen, så dess säkerhetskopior skulle kopieras ovanpå sig själva. För att lägga den egna mappen här, flytta den under Egna mappar i Inställningar, Mål, så upphör kopian.",
+  "placementCode.namedRepoOverlap": "Den här platsen är ett arkiv från listan Arkiv, eller ligger i eller runt ett. Välj en annan plats eller ta först bort det arkivet.",
+  "placementCode.unprefixedRemote": "Den här platsen ser ut som en fjärrplats men har inget restic-prefix. Skriv rclone: framför namnet på en rclone-fjärrplats, som i rclone:myremote:bucket.",
+  "placementCode.locationNeeded": "Ett arkiv behöver en plats: en mapp under Host Data eller en restic-fjärrplats som b2:bucket.",
+  "placementCode.restoreFolderRemote": "En återställningsmapp måste vara en mapp på den här värden, under Host Data.",
+  "placementCode.pathAbsolute": "Det här är en fullständig sökväg på värden. Sökvägar här börjar vid Host Data, så utelämna delen dit, eller använd en restic-fjärrplats som rest:, s3: eller rclone:.",
+  "placementCode.pathOutside": "Den här sökvägen leder ut ur Host Data. Ange en sökväg inuti den eller en restic-fjärrplats som rest:, s3: eller rclone:.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} direkt behåller nu mindre. Poster vars enda kopia finns där: {n}.",

@@ -8,6 +8,7 @@ import (
 	"slices"
 	"testing"
 
+	"github.com/junkerderprovinz/bombvault/internal/paths"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
@@ -245,6 +246,13 @@ func TestPlacementRefusalsCarryTheirCodes(t *testing.T) {
 		errNestedLocation:          "nested-location",
 		errCopyOnOwnFolder:         "copy-on-own-folder",
 		errOwnFolderOnCopy:         "own-folder-on-copy",
+		errNamedRepoOverlap:        "named-repo-overlap",
+		errUnprefixedRemote:        "unprefixed-remote",
+		errLocationNeeded:          "location-needed",
+		errRestoreFolderRemote:     "restore-folder-remote",
+		paths.ErrAbsoluteSub:       "path-absolute",
+		paths.ErrTraversal:         "path-outside",
+		paths.ErrLinkEscape:        "path-outside",
 		errMirroredField:           "mirrored-field",
 		store.ErrCompanionTaken:    "companion-taken",
 		store.ErrNotOffsiteTarget:  "unknown-target",

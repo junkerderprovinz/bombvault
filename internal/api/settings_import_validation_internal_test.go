@@ -35,8 +35,8 @@ func stillSaveable(t *testing.T, h *Handler) (bool, string) {
 		t.Fatal(err)
 	}
 	v := toView(s)
-	if msg := rejectInvalidSettingsPaths(v, h.cfg.HostMountRoot); msg != "" {
-		return false, msg
+	if err := rejectInvalidSettingsPaths(v, h.cfg.HostMountRoot); err != nil {
+		return false, err.Error()
 	}
 	if msg := rejectInvalidSettingsNames(v); msg != "" {
 		return false, msg

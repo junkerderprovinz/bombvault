@@ -17,6 +17,12 @@ describe("placementErrorText", () => {
       "own-folder-there",
       "copy-on-own-folder",
       "own-folder-on-copy",
+      "named-repo-overlap",
+      "unprefixed-remote",
+      "location-needed",
+      "restore-folder-remote",
+      "path-absolute",
+      "path-outside",
       "own-folder-unreadable",
     ];
     for (const code of codes) {

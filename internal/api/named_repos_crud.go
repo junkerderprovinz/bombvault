@@ -196,8 +196,7 @@ func (b namedRepoBody) applyTo(t *store.OffsiteTarget) {
 
 // staticNamedRepoRefusals holds the refusals that need nothing but the location
 // string and the mount root, so the CREATE form and the settings IMPORT apply
-// exactly the same ones. It returns a user-facing sentence, or "" when the
-// location passes.
+// exactly the same ones. It returns nil when the location passes.
 //
 // It exists because the import used to mirror two of the four checks by hand.
 // A shared function cannot drift; a copy always does, and here the drift let a
@@ -206,10 +205,10 @@ func (b namedRepoBody) applyTo(t *store.OffsiteTarget) {
 // The messages carry NO SLASH: every error leaving the API goes through
 // scrubError, whose absPathRe redacts any slash-led token, so an example path
 // in one of these arrives unusable. Measured in the browser, twice.
-func staticNamedRepoRefusals(loc, mountRoot string) string {
+func staticNamedRepoRefusals(loc, mountRoot string) error {
 	loc = strings.TrimSpace(loc)
 	if loc == "" {
-		return "a repository needs a location: a folder under the host mount, or a restic remote such as b2:bucket"
+		return errLocationNeeded
 	}
 	// "BackBlaze:bucket/cold" is an rclone REMOTE NAME, not a restic location:
 	// restic does not know that scheme, so it would be taken for a relative path
@@ -217,16 +216,16 @@ func staticNamedRepoRefusals(loc, mountRoot string) string {
 	// "BackBlaze:bucket" under the mount root. The backups would work, they would
 	// simply be in the wrong place - which is only discovered by looking.
 	if restic.LooksLikeUnprefixedRemote(loc) {
-		return "this location looks like a remote but carries no restic prefix. An rclone remote needs one: write rclone: in front of the remote name, as in rclone:myremote:bucket"
+		return errUnprefixedRemote
 	}
 	// A local location must stay under the mount root, the same rule the settings
 	// paths are held to on save.
 	if !restic.IsRemoteRepo(loc) && mountRoot != "" {
 		if _, err := paths.Resolve(mountRoot, loc); err != nil {
-			return scrubError(err)
+			return err
 		}
 	}
-	return ""
+	return nil
 }
 
 // validateNamedRepo refuses a row the next backup could not use. The location is
@@ -249,8 +248,8 @@ func (h *Handler) validateNamedRepo(t store.OffsiteTarget, checkClass, checkLoca
 	}
 	// The location refusals that need nothing but the string and the mount root,
 	// shared with the settings import so the two cannot disagree.
-	if msg := staticNamedRepoRefusals(t.Repo, h.cfg.HostMountRoot); msg != "" {
-		return errors.New(msg)
+	if err := staticNamedRepoRefusals(t.Repo, h.cfg.HostMountRoot); err != nil {
+		return err
 	}
 	if _, err := restic.ParseCompression(t.Compression); err != nil {
 		return err

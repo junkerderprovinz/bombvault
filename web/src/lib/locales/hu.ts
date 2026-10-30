@@ -3277,6 +3277,12 @@ const hu: Partial<Translations> = {
   "placementCode.ownFolderThere": "Itt van egy szakasz saját mappája. Előbb költöztesd máshová az oldal Saját mappák részében. Utána a tárolási hely eltávolítható.",
   "placementCode.copyOnOwnFolder": "Ennek a résznek a saját mappája már ezen a tárolási helyen van, így egy másolat ott önmagára kerülne.",
   "placementCode.ownFolderOnCopy": "Ennek a résznek már van itt egy másolata, így a mentései önmagukra másolódnának. Ha ide szeretnéd tenni a saját mappát, költöztesd át a Saját mappák részben a Beállítások, Célok oldalon, ezzel a másolat megszűnik.",
+  "placementCode.namedRepoOverlap": "Ez a hely egy tároló a Tárolók listából, vagy egy tárolón belül vagy körülötte van. Válassz másik helyet, vagy előbb távolítsd el azt a tárolót.",
+  "placementCode.unprefixedRemote": "Ez a hely távolinak látszik, de nincs restic előtagja. Írd a rclone: előtagot egy rclone távoli hely neve elé, például rclone:myremote:bucket.",
+  "placementCode.locationNeeded": "Egy tárolónak hely kell: egy mappa a Host Data alatt, vagy egy restic távoli hely, például b2:bucket.",
+  "placementCode.restoreFolderRemote": "A visszaállítási mappának ezen a gépen, a Host Data alatt kell lennie.",
+  "placementCode.pathAbsolute": "Ez egy teljes útvonal a gépen. Az útvonalak itt a Host Datától indulnak, ezért hagyd el az odáig tartó részt, vagy használj restic távoli helyet, például rest:, s3: vagy rclone:.",
+  "placementCode.pathOutside": "Ez az útvonal kivezet a Host Datából. Adj meg egy benne lévő útvonalat vagy egy restic távoli helyet, például rest:, s3: vagy rclone:.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} közvetlenül most kevesebbet őriz meg. Elemek, amelyeknek egyetlen másolata ott van: {n}.",

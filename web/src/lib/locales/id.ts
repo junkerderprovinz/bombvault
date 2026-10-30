@@ -3286,6 +3286,12 @@ const id: Partial<Translations> = {
   "placementCode.ownFolderThere": "Di sini ada folder sendiri milik sebuah bagian. Pindahkan dulu ke tempat lain di Folder sendiri pada halaman ini. Setelah itu lokasi penyimpanan bisa dihapus.",
   "placementCode.copyOnOwnFolder": "Bagian ini sudah menyimpan folder sendiri di lokasi penyimpanan ini, jadi salinan di sana akan jatuh ke dirinya sendiri.",
   "placementCode.ownFolderOnCopy": "Salinan bagian ini sudah ada di sini, jadi cadangannya akan tersalin ke dirinya sendiri. Untuk menaruh folder sendiri di sini, pindahkan lewat Folder sendiri di Pengaturan, Tujuan, yang sekaligus mengakhiri salinan itu.",
+  "placementCode.namedRepoOverlap": "Lokasi ini adalah repositori dari daftar Repositori, atau berada di dalam atau di sekitar salah satunya. Pilih tempat lain atau hapus dulu repositori itu.",
+  "placementCode.unprefixedRemote": "Lokasi ini terlihat seperti remote tetapi tidak punya awalan restic. Tulis rclone: di depan nama remote rclone, seperti rclone:myremote:bucket.",
+  "placementCode.locationNeeded": "Repositori butuh lokasi: folder di bawah Host Data atau remote restic seperti b2:bucket.",
+  "placementCode.restoreFolderRemote": "Folder pemulihan harus berupa folder di host ini, di bawah Host Data.",
+  "placementCode.pathAbsolute": "Ini path lengkap di host. Path di sini dimulai dari Host Data, jadi hilangkan bagian sampai ke sana, atau gunakan remote restic seperti rest:, s3: atau rclone:.",
+  "placementCode.pathOutside": "Path ini keluar dari Host Data. Masukkan path di dalamnya atau remote restic seperti rest:, s3: atau rclone:.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} langsung sekarang menyimpan lebih sedikit. Entri yang satu-satunya salinannya ada di sana: {n}.",

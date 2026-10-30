@@ -35,6 +35,7 @@ import {
 import { fireAndWaitRun } from "../../lib/backupWatch";
 import { lossText, refusalText, sessionKeyInUse, settingsOfPlaces, takenOver } from "../../lib/emergency";
 import { useT, type TranslationKey } from "../../lib/i18n";
+import { placementErrorText } from "../../lib/placementCodes";
 import { placementChanged } from "../../lib/placementEvents";
 import { anyActive, busyPhraseKey, useProgress } from "../../lib/progress";
 import { clearNotStarted, DOUBLE_CLICK_MS, holdRunLock, noteNotStarted } from "../../lib/restoreMany";
@@ -271,7 +272,7 @@ export function EmergencyWindow({
     const latest = await getSettings();
     if (!latest.ok) return latest.error ?? t("config.loadSettingsFailed");
     const res = await putSettings({ ...latest.settings, ...patch });
-    if (!res.ok) return res.error ?? t("settings.error");
+    if (!res.ok) return placementErrorText(t, lang, res, "settings.error");
     setSettings((prev) => (prev ? { ...prev, ...patch } : prev));
     return null;
   }

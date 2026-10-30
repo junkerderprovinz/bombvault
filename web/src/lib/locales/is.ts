@@ -3286,6 +3286,12 @@ const is: Partial<Translations> = {
   "placementCode.ownFolderThere": "Hér er eigin mappa svæðis. Færðu hana fyrst annað undir Eigin möppur á þessari síðu. Eftir það er hægt að fjarlægja geymslustaðinn.",
   "placementCode.copyOnOwnFolder": "Þessi hluti geymir nú þegar eigin möppu á þessum geymslustað, svo afrit þangað myndi lenda ofan á sjálfu sér.",
   "placementCode.ownFolderOnCopy": "Afrit af þessum hluta er þegar hér, svo öryggisafritin yrðu afrituð ofan á sjálf sig. Til að setja eigin möppu hingað skaltu færa hana undir Eigin möppur í Stillingar, Áfangastaðir, og þá hættir afritið.",
+  "placementCode.namedRepoOverlap": "Þessi staður er geymsla af listanum Geymslur, eða liggur innan í eða utan um eina. Veldu annan stað eða fjarlægðu fyrst þá geymslu.",
+  "placementCode.unprefixedRemote": "Þessi staður lítur út eins og fjartenging en hefur ekkert restic-forskeyti. Settu rclone: fyrir framan heiti rclone-fjartengingar, eins og í rclone:myremote:bucket.",
+  "placementCode.locationNeeded": "Geymsla þarf stað: möppu undir Host Data eða restic-fjartengingu eins og b2:bucket.",
+  "placementCode.restoreFolderRemote": "Endurheimtarmappa verður að vera mappa á þessum hýsli, undir Host Data.",
+  "placementCode.pathAbsolute": "Þetta er fullur slóði á hýslinum. Slóðar hér byrja í Host Data, svo slepptu hlutanum þangað eða notaðu restic-fjartengingu eins og rest:, s3: eða rclone:.",
+  "placementCode.pathOutside": "Þessi slóði liggur út úr Host Data. Sláðu inn slóða innan þess eða restic-fjartengingu eins og rest:, s3: eða rclone:.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} beint varðveitir nú minna. Færslur sem eiga eina afritið þar: {n}.",

@@ -3286,6 +3286,12 @@ const lt: Partial<Translations> = {
   "placementCode.ownFolderThere": "Čia yra vienos srities savas aplankas. Pirmiausia perkelk jį kitur šio puslapio skiltyje Savi aplankai. Tada saugyklos vietą bus galima pašalinti.",
   "placementCode.copyOnOwnFolder": "Šio skyriaus savas aplankas jau yra šioje saugojimo vietoje, todėl kopija ten nukristų ant savęs.",
   "placementCode.ownFolderOnCopy": "Čia jau yra šio skyriaus kopija, todėl jo atsarginės kopijos būtų kopijuojamos pačios ant savęs. Kad savas aplankas būtų čia, perkelk jį skiltyje Savi aplankai puslapyje Nustatymai, Paskirties vietos, tada ši kopija baigsis.",
+  "placementCode.namedRepoOverlap": "Ši vieta yra saugykla iš sąrašo Saugyklos arba yra jos viduje ar aplink ją. Pasirink kitą vietą arba pirma pašalink tą saugyklą.",
+  "placementCode.unprefixedRemote": "Ši vieta atrodo kaip nuotolinė, bet neturi restic priešdėlio. Prieš rclone nuotolinės vietos pavadinimą parašyk rclone:, pvz., rclone:myremote:bucket.",
+  "placementCode.locationNeeded": "Saugyklai reikia vietos: aplanko po Host Data arba restic nuotolinės vietos, pvz., b2:bucket.",
+  "placementCode.restoreFolderRemote": "Atkūrimo aplankas turi būti aplankas šiame pagrindiniame kompiuteryje, po Host Data.",
+  "placementCode.pathAbsolute": "Tai pilnas kelias pagrindiniame kompiuteryje. Keliai čia prasideda nuo Host Data, tad praleisk dalį iki ten arba naudok restic nuotolinę vietą, pvz., rest:, s3: ar rclone:.",
+  "placementCode.pathOutside": "Šis kelias veda už Host Data ribų. Įvesk kelią jo viduje arba restic nuotolinę vietą, pvz., rest:, s3: ar rclone:.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} tiesiogiai dabar saugo mažiau. Įrašai, kurių vienintelė kopija yra ten: {n}.",

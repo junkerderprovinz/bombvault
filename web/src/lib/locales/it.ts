@@ -3276,6 +3276,12 @@ const it: Partial<Translations> = {
   "placementCode.ownFolderThere": "Qui si trova la cartella propria di una sezione. Spostala prima altrove, in Cartelle proprie in questa pagina. Poi la posizione di archiviazione si può rimuovere.",
   "placementCode.copyOnOwnFolder": "Questa sezione ha già la sua cartella propria in questa posizione, quindi una copia lì cadrebbe su sé stessa.",
   "placementCode.ownFolderOnCopy": "Qui c'è già una copia di questa sezione, quindi i suoi backup verrebbero copiati su sé stessi. Per mettere qui la cartella propria, spostala in Cartelle proprie in Impostazioni, Destinazioni: così la copia termina.",
+  "placementCode.namedRepoOverlap": "Questa posizione è un repository dell'elenco Repository, oppure si trova dentro o attorno a uno. Scegli un altro posto o rimuovi prima quel repository.",
+  "placementCode.unprefixedRemote": "Questa posizione sembra un remoto ma non ha il prefisso di restic. Metti rclone: davanti al nome di un remoto rclone, come in rclone:myremote:bucket.",
+  "placementCode.locationNeeded": "Un repository ha bisogno di una posizione: una cartella sotto Host Data o un remoto restic come b2:bucket.",
+  "placementCode.restoreFolderRemote": "Una cartella di ripristino deve essere una cartella su questo host, sotto Host Data.",
+  "placementCode.pathAbsolute": "Questo è un percorso completo dell'host. Qui i percorsi partono da Host Data, quindi togli la parte fin lì, oppure usa un remoto restic come rest:, s3: o rclone:.",
+  "placementCode.pathOutside": "Questo percorso esce da Host Data. Inserisci un percorso al suo interno o un remoto restic come rest:, s3: o rclone:.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} diretto ora conserva meno. Elementi la cui unica copia è lì: {n}.",

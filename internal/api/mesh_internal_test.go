@@ -382,26 +382,29 @@ func TestAMeshOfferOnAPlaceTheLocationCheckRefusesIsNotAccepted(t *testing.T) {
 	if _, err := st.CreateOffsiteTarget(store.OffsiteTarget{Domain: "vms", Name: "Cold", Repo: "s3:cold/vault", Enabled: true, SortOrder: 1}); err != nil {
 		t.Fatal(err)
 	}
+	if _, err := st.UpsertOffsiteTarget(store.OffsiteTarget{Role: store.RoleRepo, Name: "Archive", Repo: "s3:archive/vault", Enabled: true}); err != nil {
+		t.Fatal(err)
+	}
 	enc, err := secret.Encrypt(appKey, []byte("peer-password"))
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	for repo, code := range map[string]string{own: "copy-on-own-folder", "s3:cold/vault/vms": "nested-location"} {
-		offer, err := st.CreateMeshOffer(store.MeshOffer{From: "tower-a", Repo: repo, RESTUser: "bv", RESTPasswordEnc: enc})
+	for _, c := range []struct{ repo, domain, code string }{
+		{own, "containers", "copy-on-own-folder"},
+		{"s3:cold/vault/vms", "vms", "nested-location"},
+		{"s3:archive/vault/containers", "containers", "named-repo-overlap"},
+	} {
+		offer, err := st.CreateMeshOffer(store.MeshOffer{From: "tower-a", Repo: c.repo, RESTUser: "bv", RESTPasswordEnc: enc})
 		if err != nil {
 			t.Fatal(err)
 		}
-		domain := "containers"
-		if code == "nested-location" {
-			domain = "vms"
-		}
 		w := httptest.NewRecorder()
-		r := postJSONReq(t, "/api/fleet/mesh-offers/"+offer.ID+"/accept", map[string]any{"domain": domain})
+		r := postJSONReq(t, "/api/fleet/mesh-offers/"+offer.ID+"/accept", map[string]any{"domain": c.domain})
 		r.SetPathValue("id", offer.ID)
 		h.handleAcceptMeshOffer(w, r)
-		if resp := decodeResp(t, w); resp["ok"] != false || resp["code"] != code {
-			t.Errorf("accept of %s = %v, want code %s", repo, resp, code)
+		if resp := decodeResp(t, w); resp["ok"] != false || resp["code"] != c.code {
+			t.Errorf("accept of %s = %v, want code %s", c.repo, resp, c.code)
 		}
 	}
 	if targets, _ := st.OffsiteTargetsForDomain("containers"); len(targets) != 0 {
