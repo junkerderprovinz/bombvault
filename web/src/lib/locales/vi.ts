@@ -3292,7 +3292,7 @@ const vi: Partial<Translations> = {
   "placementCode.ownFolderThere": "Thư mục riêng của một phần nằm ở đây. Hãy chuyển nó sang nơi khác trước, trong mục Thư mục riêng ở trang này. Sau đó có thể gỡ vị trí lưu trữ.",
   "placementCode.copyOnOwnFolder": "Phần này đã có thư mục riêng ở vị trí lưu trữ này, nên một bản sao ở đó sẽ đè lên chính nó.",
   "placementCode.ownFolderOnCopy": "Đã có một bản sao của phần này ở đây, nên các bản sao lưu của nó sẽ bị sao chép đè lên chính chúng. Để biến nơi này thành thư mục riêng, hãy mở đích này trong Đích sao lưu rồi chuyển phần đó vào đây trong thẻ Thư mục riêng của đích. Việc này sẽ kết thúc bản sao.",
-  "placementCode.namedRepoOverlap": "Vị trí này là một kho lưu trữ bạn đã thiết lập trong mục Kho lưu trữ ở Cài đặt, Lưu trữ, hoặc nằm bên trong hay bao quanh một kho như vậy. Hãy chọn nơi khác hoặc gỡ kho đó trước.",
+  "placementCode.namedRepoOverlap": "Vị trí này là một kho lưu trữ bạn đã thiết lập trong mục Kho lưu trữ ở Cài đặt, Đích sao lưu, hoặc nằm bên trong hay bao quanh một kho như vậy. Hãy chọn nơi khác hoặc gỡ kho đó trước.",
   "placementCode.unprefixedRemote": "Vị trí này trông như một remote nhưng không có tiền tố restic. Hãy thêm rclone: trước tên remote rclone, ví dụ rclone:myremote:bucket.",
   "placementCode.locationNeeded": "Kho lưu trữ cần một vị trí: một thư mục dưới Host Data hoặc một remote restic như b2:bucket.",
   "placementCode.restoreFolderRemote": "Thư mục khôi phục phải là một thư mục trên máy chủ này, dưới Host Data.",

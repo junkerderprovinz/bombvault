@@ -3302,7 +3302,7 @@ const ro: Partial<Translations> = {
   "placementCode.ownFolderThere": "Aici se află dosarul propriu al unei secțiuni. Mută-l mai întâi în alt loc, la Dosare proprii pe această pagină. Apoi locația de stocare poate fi eliminată.",
   "placementCode.copyOnOwnFolder": "Această secțiune are deja dosarul propriu în această locație de stocare, așa că o copie acolo ar ajunge peste ea însăși.",
   "placementCode.ownFolderOnCopy": "Aici se află deja o copie a acestei secțiuni, așa că backup-urile ei s-ar copia peste ele însele. Ca să faci din acest loc dosarul propriu, deschide-l la Destinații și mută secțiunea aici în cardul Dosare proprii. Asta încheie copia.",
-  "placementCode.namedRepoOverlap": "Această locație este un depozit pe care l-ai configurat la Depozite în Setări, Stocare, sau se află în interiorul ori în jurul unuia. Alege alt loc sau elimină mai întâi acel depozit.",
+  "placementCode.namedRepoOverlap": "Această locație este un depozit pe care l-ai configurat la Depozite în Setări, Destinații, sau se află în interiorul ori în jurul unuia. Alege alt loc sau elimină mai întâi acel depozit.",
   "placementCode.unprefixedRemote": "Această locație arată ca o destinație la distanță, dar nu are prefix restic. Pune rclone: în fața numelui unei destinații rclone, ca în rclone:myremote:bucket.",
   "placementCode.locationNeeded": "Un depozit are nevoie de o locație: un dosar sub Host Data sau o destinație restic la distanță, ca b2:bucket.",
   "placementCode.restoreFolderRemote": "Un dosar de restaurare trebuie să fie un dosar pe această gazdă, sub Host Data.",

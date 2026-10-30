@@ -3311,7 +3311,7 @@ const ca: Partial<Translations> = {
   "placementCode.ownFolderThere": "Aquí hi ha la carpeta pròpia d'una secció. Primer mou-la a un altre lloc, a Carpetes pròpies en aquesta pàgina. Després es pot eliminar la ubicació d'emmagatzematge.",
   "placementCode.copyOnOwnFolder": "Aquesta secció ja té la seva carpeta pròpia en aquesta ubicació, així que una còpia allà cauria sobre si mateixa.",
   "placementCode.ownFolderOnCopy": "Aquí ja hi ha una còpia d'aquesta secció, així que les seves còpies de seguretat es copiarien sobre si mateixes. Per fer d'aquest lloc la carpeta pròpia, obre'l a Destinacions i mou-hi la secció des de la seva targeta Carpetes pròpies. Així s'acaba la còpia.",
-  "placementCode.namedRepoOverlap": "Aquesta ubicació és un repositori que has configurat a Repositoris, a Configuració, Emmagatzematge, o és dins o al voltant d'un. Tria un altre lloc o elimina primer aquest repositori.",
+  "placementCode.namedRepoOverlap": "Aquesta ubicació és un repositori que has configurat a Repositoris, a Configuració, Destinacions, o és dins o al voltant d'un. Tria un altre lloc o elimina primer aquest repositori.",
   "placementCode.unprefixedRemote": "Aquesta ubicació sembla un remot però no té prefix de restic. Posa rclone: davant del nom d'un remot de rclone, com a rclone:myremote:bucket.",
   "placementCode.locationNeeded": "Un repositori necessita una ubicació: una carpeta sota Host Data o un remot de restic com b2:bucket.",
   "placementCode.restoreFolderRemote": "Una carpeta de restauració ha de ser una carpeta d'aquest amfitrió, sota Host Data.",

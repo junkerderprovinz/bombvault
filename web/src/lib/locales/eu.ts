@@ -3311,7 +3311,7 @@ const eu: Partial<Translations> = {
   "placementCode.ownFolderThere": "Hemen dago atal baten karpeta propioa. Lehenik, eraman beste toki batera orri honetako Karpeta propioak atalean. Ondoren, biltegiratze-kokapena kendu daiteke.",
   "placementCode.copyOnOwnFolder": "Atal honek bere karpeta propioa du dagoeneko biltegiratze-kokaleku honetan, beraz han egindako kopia bere gainera eroriko litzateke.",
   "placementCode.ownFolderOnCopy": "Atal honen kopia bat dago dagoeneko hemen, beraz bere babeskopiak beren gainera kopiatuko lirateke. Toki hau karpeta propioa izan dadin, ireki ezazu Helmugak orrian eta eraman atala hara bere Karpeta propioak txartelean. Horrek kopia amaitzen du.",
-  "placementCode.namedRepoOverlap": "Kokaleku hau Ezarpenak, Biltegiratzea orriko Biltegiak atalean konfiguratu duzun biltegi bat da, edo baten barruan edo inguruan dago. Aukeratu beste toki bat edo kendu lehenik biltegi hori.",
+  "placementCode.namedRepoOverlap": "Kokaleku hau Ezarpenak, Helmugak orriko Biltegiak atalean konfiguratu duzun biltegi bat da, edo baten barruan edo inguruan dago. Aukeratu beste toki bat edo kendu lehenik biltegi hori.",
   "placementCode.unprefixedRemote": "Kokaleku honek urrunekoa dirudi, baina ez du restic aurrizkirik. Jarri rclone: rclone urruneko baten izenaren aurrean, rclone:myremote:bucket bezala.",
   "placementCode.locationNeeded": "Biltegi batek kokaleku bat behar du: Host Data azpiko karpeta bat edo restic urruneko bat, b2:bucket bezalakoa.",
   "placementCode.restoreFolderRemote": "Leheneratze-karpeta ostalari honetako karpeta bat izan behar da, Host Data azpian.",

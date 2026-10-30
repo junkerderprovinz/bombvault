@@ -3301,7 +3301,7 @@ const fr: Partial<Translations> = {
   "placementCode.ownFolderThere": "Le dossier propre d'une section se trouve ici. Déplacez-le d'abord ailleurs, sous Dossiers propres sur cette page. L'emplacement de stockage pourra ensuite être supprimé.",
   "placementCode.copyOnOwnFolder": "Cette section garde déjà son dossier propre à cet emplacement, une copie là-bas tomberait donc sur elle-même.",
   "placementCode.ownFolderOnCopy": "Une copie de cette section se trouve déjà ici, ses sauvegardes seraient donc copiées sur elles-mêmes. Pour faire de cet endroit le dossier propre, ouvrez-le sous Destinations et déplacez-y la section dans sa carte Dossiers propres. Cela met fin à la copie.",
-  "placementCode.namedRepoOverlap": "Cet emplacement est un dépôt que vous avez configuré sous Dépôts dans Paramètres, Stockage, ou il se trouve dedans ou autour. Choisissez un autre endroit ou retirez d'abord ce dépôt.",
+  "placementCode.namedRepoOverlap": "Cet emplacement est un dépôt que vous avez configuré sous Dépôts dans Paramètres, Destinations, ou il se trouve dedans ou autour. Choisissez un autre endroit ou retirez d'abord ce dépôt.",
   "placementCode.unprefixedRemote": "Cet emplacement ressemble à un distant mais n'a pas de préfixe restic. Mettez rclone: devant le nom d'un distant rclone, comme dans rclone:myremote:bucket.",
   "placementCode.locationNeeded": "Un dépôt a besoin d'un emplacement : un dossier sous Host Data ou un distant restic comme b2:bucket.",
   "placementCode.restoreFolderRemote": "Un dossier de restauration doit être un dossier de cet hôte, sous Host Data.",

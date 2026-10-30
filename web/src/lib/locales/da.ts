@@ -3301,7 +3301,7 @@ const da: Partial<Translations> = {
   "placementCode.ownFolderThere": "Her ligger et områdes egen mappe. Flyt den først et andet sted hen under Egne mapper på denne side. Derefter kan lagerstedet fjernes.",
   "placementCode.copyOnOwnFolder": "Denne sektion har allerede sin egen mappe på denne lagerplacering, så en kopi dér ville lande oven i sig selv.",
   "placementCode.ownFolderOnCopy": "Der ligger allerede en kopi af denne sektion her, så dens backups ville blive kopieret oven i sig selv. Hvis dette sted skal være den egne mappe, så åbn det under Destinationer, og flyt sektionen derhen på dets kort Egne mapper. Det afslutter kopien.",
-  "placementCode.namedRepoOverlap": "Denne placering er et depot, du har sat op under Depoter i Indstillinger, Lagring, eller ligger i eller omkring et. Vælg et andet sted, eller fjern først det depot.",
+  "placementCode.namedRepoOverlap": "Denne placering er et depot, du har sat op under Depoter i Indstillinger, Destinationer, eller ligger i eller omkring et. Vælg et andet sted, eller fjern først det depot.",
   "placementCode.unprefixedRemote": "Denne placering ligner et fjernlager, men har intet restic-præfiks. Sæt rclone: foran navnet på et rclone-fjernlager, som i rclone:myremote:bucket.",
   "placementCode.locationNeeded": "Et depot skal have en placering: en mappe under Host Data eller et restic-fjernlager som b2:bucket.",
   "placementCode.restoreFolderRemote": "En gendannelsesmappe skal være en mappe på denne vært, under Host Data.",

@@ -3311,7 +3311,7 @@ const sk: Partial<Translations> = {
   "placementCode.ownFolderThere": "Tu leží vlastný priečinok jednej sekcie. Najprv ho presuň inam v časti Vlastné priečinky na tejto stránke. Potom bude možné úložisko odstrániť.",
   "placementCode.copyOnOwnFolder": "Táto sekcia už má vlastný priečinok v tomto úložisku, takže kópia tam by skončila sama na sebe.",
   "placementCode.ownFolderOnCopy": "Tu už leží kópia tejto sekcie, takže jej zálohy by sa kopírovali samy na seba. Ak tu chceš mať vlastný priečinok, otvor tento cieľ v časti Ciele a v jeho karte Vlastné priečinky sem presuň sekciu. Tým sa kópia skončí.",
-  "placementCode.namedRepoOverlap": "Toto miesto je repozitár, ktorý máš nastavený v zozname Repozitáre v časti Nastavenia, Úložisko, alebo leží v takom repozitári či okolo neho. Vyber iné miesto alebo najprv ten repozitár odstráň.",
+  "placementCode.namedRepoOverlap": "Toto miesto je repozitár, ktorý máš nastavený v zozname Repozitáre v časti Nastavenia, Ciele, alebo leží v takom repozitári či okolo neho. Vyber iné miesto alebo najprv ten repozitár odstráň.",
   "placementCode.unprefixedRemote": "Toto miesto vyzerá ako vzdialené, ale nemá prefix restic. Napíš rclone: pred názov vzdialeného miesta rclone, napríklad rclone:myremote:bucket.",
   "placementCode.locationNeeded": "Repozitár potrebuje miesto: priečinok pod Host Data alebo vzdialené miesto restic ako b2:bucket.",
   "placementCode.restoreFolderRemote": "Priečinok na obnovenie musí byť priečinok na tomto hostiteľovi, pod Host Data.",

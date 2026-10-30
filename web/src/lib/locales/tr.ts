@@ -3301,7 +3301,7 @@ const tr: Partial<Translations> = {
   "placementCode.ownFolderThere": "Burada bir bölümün kendi klasörü var. Önce bu sayfadaki Kendi klasörleri bölümünden başka bir yere taşı. Ardından depolama konumu kaldırılabilir.",
   "placementCode.copyOnOwnFolder": "Bu bölümün kendi klasörü zaten bu depolama konumunda, bu yüzden oraya bir kopya kendi üstüne düşerdi.",
   "placementCode.ownFolderOnCopy": "Bu bölümün bir kopyası zaten burada, bu yüzden yedekleri kendi üstlerine kopyalanırdı. Burayı kendi klasörü yapmak için Hedefler sayfasında bu hedefi aç ve bölümü onun Kendi klasörleri kartından buraya taşı. Bu, kopyayı sona erdirir.",
-  "placementCode.namedRepoOverlap": "Bu konum, Ayarlar, Depolama bölümündeki Depolar listesinde kurduğun bir depo ya da böyle bir deponun içinde veya çevresinde. Başka bir yer seç ya da önce o depoyu kaldır.",
+  "placementCode.namedRepoOverlap": "Bu konum, Ayarlar, Hedefler bölümündeki Depolar listesinde kurduğun bir depo ya da böyle bir deponun içinde veya çevresinde. Başka bir yer seç ya da önce o depoyu kaldır.",
   "placementCode.unprefixedRemote": "Bu konum uzak bir yere benziyor ama restic öneki yok. Bir rclone uzak yerinin adının önüne rclone: yaz, örneğin rclone:myremote:bucket.",
   "placementCode.locationNeeded": "Bir deponun bir konuma ihtiyacı var: Host Data altında bir klasör ya da b2:bucket gibi bir restic uzak yeri.",
   "placementCode.restoreFolderRemote": "Geri yükleme klasörü bu ana bilgisayarda, Host Data altında bir klasör olmalı.",

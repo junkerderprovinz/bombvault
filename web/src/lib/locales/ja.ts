@@ -3292,7 +3292,7 @@ const ja: Partial<Translations> = {
   "placementCode.ownFolderThere": "ここにはあるセクションの専用フォルダーがあります。まずこのページの「専用フォルダー」から別の場所へ移動してください。その後、この保存場所を削除できます。",
   "placementCode.copyOnOwnFolder": "このセクションの専用フォルダーはすでにこの保存先にあるため、そこへのコピーは自分自身の上に重なります。",
   "placementCode.ownFolderOnCopy": "このセクションのコピーがすでにここに保存されているため、バックアップが自分自身の上にコピーされてしまいます。ここを専用フォルダーにするには、「保存先」でこの場所を開き、その「専用フォルダー」カードでセクションをここへ移動してください。そうするとこのコピーは終了します。",
-  "placementCode.namedRepoOverlap": "この場所は、設定、ストレージの「リポジトリ」で設定したリポジトリと同じか、その中または周りにあります。別の場所を選ぶか、先にそのリポジトリを削除してください。",
+  "placementCode.namedRepoOverlap": "この場所は、設定、保存先の「リポジトリ」で設定したリポジトリと同じか、その中または周りにあります。別の場所を選ぶか、先にそのリポジトリを削除してください。",
   "placementCode.unprefixedRemote": "この場所はリモートのように見えますが、restic のプレフィックスがありません。rclone リモートの名前の前に rclone: を付けてください（例: rclone:myremote:bucket）。",
   "placementCode.locationNeeded": "リポジトリには場所が必要です。Host Data の下のフォルダーか、b2:bucket のような restic リモートを指定してください。",
   "placementCode.restoreFolderRemote": "復元フォルダーは、このホスト上の Host Data の下にあるフォルダーにしてください。",

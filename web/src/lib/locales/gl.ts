@@ -3311,7 +3311,7 @@ const gl: Partial<Translations> = {
   "placementCode.ownFolderThere": "Aquí está o cartafol propio dunha sección. Móveo primeiro a outro lugar, en Cartafoles propios nesta páxina. Despois pódese quitar a localización de almacenamento.",
   "placementCode.copyOnOwnFolder": "Esta sección xa ten o seu cartafol propio nesta localización, así que unha copia alí caería sobre si mesma.",
   "placementCode.ownFolderOnCopy": "Aquí xa hai unha copia desta sección, así que as súas copias de seguranza copiaríanse sobre si mesmas. Para facer deste lugar o cartafol propio, ábreo en Destinos e move alí a sección na súa tarxeta Cartafoles propios. Iso remata a copia.",
-  "placementCode.namedRepoOverlap": "Esta localización é un repositorio que configuraches en Repositorios, en Configuración, Almacenamento, ou está dentro ou arredor dun. Escolle outro lugar ou quita primeiro ese repositorio.",
+  "placementCode.namedRepoOverlap": "Esta localización é un repositorio que configuraches en Repositorios, en Configuración, Destinos, ou está dentro ou arredor dun. Escolle outro lugar ou quita primeiro ese repositorio.",
   "placementCode.unprefixedRemote": "Esta localización parece un remoto pero non ten prefixo de restic. Pon rclone: diante do nome dun remoto de rclone, como en rclone:myremote:bucket.",
   "placementCode.locationNeeded": "Un repositorio necesita unha localización: un cartafol baixo Host Data ou un remoto de restic como b2:bucket.",
   "placementCode.restoreFolderRemote": "Un cartafol de restauración ten que ser un cartafol deste equipo, baixo Host Data.",

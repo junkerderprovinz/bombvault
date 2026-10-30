@@ -3300,7 +3300,7 @@ const nl: Partial<Translations> = {
   "placementCode.ownFolderThere": "Hier staat de eigen map van een onderdeel. Verplaats die eerst naar een andere plek, onder Eigen mappen op deze pagina. Daarna kan de opslaglocatie weg.",
   "placementCode.copyOnOwnFolder": "Deze sectie heeft haar eigen map al op deze opslaglocatie, dus een kopie daar zou op zichzelf terechtkomen.",
   "placementCode.ownFolderOnCopy": "Hier staat al een kopie van deze sectie, dus haar back-ups zouden op zichzelf worden gekopieerd. Wil je van deze plek de eigen map maken, open hem dan onder Bestemmingen en verplaats de sectie hierheen op de kaart Eigen mappen. Daarmee stopt de kopie.",
-  "placementCode.namedRepoOverlap": "Deze locatie is een repository die je onder Repository's in Instellingen, Opslag hebt ingesteld, of ligt erin of eromheen. Kies een andere plek of verwijder eerst die repository.",
+  "placementCode.namedRepoOverlap": "Deze locatie is een repository die je onder Repository's in Instellingen, Bestemmingen hebt ingesteld, of ligt erin of eromheen. Kies een andere plek of verwijder eerst die repository.",
   "placementCode.unprefixedRemote": "Deze locatie lijkt op een remote maar heeft geen restic-voorvoegsel. Zet rclone: voor de naam van een rclone-remote, zoals rclone:myremote:bucket.",
   "placementCode.locationNeeded": "Een repository heeft een locatie nodig: een map onder Host Data of een restic-remote zoals b2:bucket.",
   "placementCode.restoreFolderRemote": "Een herstelmap moet een map op deze host zijn, onder Host Data.",
