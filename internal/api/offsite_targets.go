@@ -263,6 +263,47 @@ func (s *Service) nextOffsiteSortOrder(domain string) (int, error) {
 	return next, nil
 }
 
+// RemoveCopiesOnOwnFolders takes away every off-site target that sits on its
+// section's own folder. A copy there lands on itself and fails each run; the
+// create path refuses one with errCopyOnOwnFolder, and this clears the rows a
+// database already holds.
+func (s *Service) RemoveCopiesOnOwnFolders() error {
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return err
+	}
+	for _, d := range offsiteConfigDomains {
+		own, err := s.repoFor(settings, d, "local")
+		if err != nil {
+			continue
+		}
+		targets, err := s.store.OffsiteTargetsForDomain(d)
+		if err != nil {
+			return err
+		}
+		for _, t := range targets {
+			if loc, err := s.resolveRepo(t.Repo); err != nil || !sameRepoLocation(own, loc) {
+				continue
+			}
+			err := s.store.RemoveCopyOnOwnFolder(t.ID, func(st *store.Settings, t store.OffsiteTarget) bool {
+				// An off-site field that names the own folder would bring the
+				// copy back as the section's primary target.
+				field, err := s.resolveRepo(offsiteRepoFromSettings(t.Domain, *st))
+				if err != nil || !sameRepoLocation(own, field) {
+					return false
+				}
+				clearOffsiteFields(st, []string{t.Domain})
+				return true
+			})
+			if err != nil {
+				return err
+			}
+			log.Printf("offsite: removed the %s copy %q, which sat on the section's own folder", d, placementTargetName(t)) //nolint:gosec // G706: the name is %q-quoted
+		}
+	}
+	return nil
+}
+
 // MoveTargetsOffPrimarySlot runs moveTargetsOffPrimarySlot against the stored
 // settings at startup, before a settings save can take a stray row for the
 // primary.
