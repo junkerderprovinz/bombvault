@@ -8,7 +8,7 @@ import type { Settings } from "../lib/api";
 import { targetPreview } from "../lib/placement.testsupport";
 
 const fake = await vi.hoisted(async () => (await import("../lib/placement.testsupport")).createPlacementApi());
-const stored = vi.hoisted(() => ({ containersOffsite: "", puts: [] as Settings[] }));
+const stored = vi.hoisted(() => ({ containersOffsite: "", puts: [] as Settings[], refusal: null as object | null }));
 
 function baseSettings(): Settings {
   return {
@@ -74,7 +74,7 @@ vi.mock("../lib/api", async (importOriginal) => ({
     Promise.resolve({ ok: true, settings: baseSettings(), hostMountRoot: "/host/user", platform: "unraid" }),
   putSettings: (s: Settings) => {
     stored.puts.push(s);
-    return Promise.resolve({ ok: true, warnings: [], notes: [] });
+    return Promise.resolve(stored.refusal ?? { ok: true, warnings: [], notes: [] });
   },
   getAuth: () => Promise.resolve({ enabled: false, authed: false }),
   listContainers: () => Promise.resolve({ ok: true, containers: [] }),
@@ -169,6 +169,7 @@ beforeEach(() => {
   fake.reset();
   stored.containersOffsite = "";
   stored.puts.length = 0;
+  stored.refusal = null;
 });
 
 afterEach(() => {
@@ -242,6 +243,41 @@ describe("the off-site field", () => {
     await waitFor(() => expect(stored.puts).toHaveLength(1));
     expect(stored.puts[0].flashOffsite).toBe("b2:bucket:flash");
     expect(fake.callsTo("getNewTargetPreview")).toEqual([]);
+  });
+
+  it("refuses the section's own folder before the question opens", async () => {
+    fake.reply("getNewTargetPreview", {
+      ok: false,
+      error: "the section keeps its own folder at this place, so a copy there would land on itself",
+      code: "copy-on-own-folder",
+      saveRefused: true,
+    });
+    await renderOffsitePage();
+    await openCopy(en["nav.containers"]);
+    await type("backups/containers");
+    await act(async () => {
+      fireEvent.keyDown(field(), { key: "Enter" });
+    });
+    expect(await screen.findByText(en["placementCode.copyOnOwnFolder"])).toBeTruthy();
+    expect(screen.getAllByRole("dialog")).toHaveLength(1);
+    expect(stored.puts).toHaveLength(0);
+    expect(fake.callsTo("getNewTargetPreview")).toEqual([["containers", "backups/containers", undefined, "field"]]);
+  });
+
+  it("shows a refused save in the user's language", async () => {
+    stored.refusal = {
+      ok: false,
+      error: "the Flash off-site path: a copy of the section lies at this place, so its backups would be copied onto themselves",
+      code: "own-folder-on-copy",
+    };
+    await renderOffsitePage();
+    await openCopy(en["nav.flash"]);
+    await type("b2:bucket:flash");
+    await act(async () => {
+      fireEvent.keyDown(field(), { key: "Enter" });
+    });
+    expect(await screen.findByText(en["placementCode.ownFolderOnCopy"])).toBeTruthy();
+    expect(screen.queryByText(/the Flash off-site path/)).toBeNull();
   });
 });
 

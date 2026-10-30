@@ -95,8 +95,8 @@ export function OffsiteLocationInput({
     if (next === value.trim()) return true;
     let alsoExclude: NewTargetExclusion | null = null;
     if (next !== "") {
-      const answer = await ask({ domain, location: next, targetId, name: targetName || next, moved: value.trim() !== "" });
-      if (!answer.go) return true;
+      const answer = await ask({ domain, location: next, targetId, name: targetName || next, moved: value.trim() !== "", as: "field" });
+      if (!answer.go) return !answer.refused;
       alsoExclude = answer.alsoExclude;
     }
     if (!(await onSave(next))) return false;
@@ -108,8 +108,9 @@ export function OffsiteLocationInput({
   useImperativeHandle(ref, () => ({ commit }));
 
   async function use(d: Destination): Promise<boolean> {
-    const answer = await ask({ domain, location: destinationFolder(d, domain), targetId, name: d.name, moved: value.trim() !== "" });
-    if (!answer.go) return true;
+    // The server puts the destination's folder on the field's target row.
+    const answer = await ask({ domain, location: destinationFolder(d, domain), targetId, name: d.name, moved: value.trim() !== "", as: "target" });
+    if (!answer.go) return !answer.refused;
     const r = await primaryFromDestination(d.id, domain).catch((e: unknown) => ({
       ok: false,
       error: e instanceof Error ? e.message : undefined,

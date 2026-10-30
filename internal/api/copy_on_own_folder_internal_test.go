@@ -128,3 +128,56 @@ func TestMovingASectionFolderOntoACopyOfTheSectionIsRefused(t *testing.T) {
 		t.Fatalf("files path = %q, want it kept", s.FilesPath)
 	}
 }
+
+func TestALocationRefusalCarriesTheCodeTheInterfaceTranslates(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.target("files", "Moved", "moved/files")
+	settings, err := f.st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	onCopy := toView(settings)
+	onCopy.FilesPath = "moved/files"
+	onOwn := toView(settings)
+	onOwn.FilesOffsite = settings.FilesPath
+	locations, err := f.svc.StorageLocations()
+	if err != nil {
+		t.Fatal(err)
+	}
+	id := locations[0].ID
+	removal := f.do("GET", "/api/storage/locations/"+id+"/removal", nil)
+
+	for name, c := range map[string]struct {
+		res  map[string]any
+		code string
+	}{
+		"own folder on a copy":        {f.do("PUT", "/api/settings", onCopy), "own-folder-on-copy"},
+		"off-site field on own":       {f.do("PUT", "/api/settings", onOwn), "copy-on-own-folder"},
+		"section folder moved":        {f.do("POST", "/api/storage/locations/"+id+"/removal", map[string]any{"expect": removal["removal"], "home": "moved"}), "own-folder-on-copy"},
+		"repository in an own folder": {f.do("POST", "/api/repos", map[string]any{"name": "Inside", "repo": settings.FilesPath + "/inside"}), "nested-location"},
+	} {
+		if c.res["ok"] != false || c.res["code"] != c.code {
+			t.Errorf("%s: answer = %v, want code %s", name, c.res, c.code)
+		}
+	}
+}
+
+func TestTheQuestionBeforeANewLocationRefusesWhatTheSaveWould(t *testing.T) {
+	f := newPlacementFixture(t)
+	settings, err := f.st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, as := range []string{"field", "target"} {
+		res := f.do("GET", "/api/placement/new-target-preview?domain=files&repo="+settings.FilesPath+"&as="+as, nil)
+		if res["ok"] != false || res["saveRefused"] != true || res["code"] != "copy-on-own-folder" {
+			t.Errorf("as %s: answer = %v, want the save refused before the question", as, res)
+		}
+	}
+	if left, _ := f.st.OffsiteTargetsForDomain("files"); len(left) != 0 {
+		t.Fatalf("files targets = %+v, want none", left)
+	}
+	if pv := f.newTargetPreview("domain=containers&repo=b2:bucket:containers&as=field"); pv["items"] == nil {
+		t.Fatalf("preview = %v, want a free location previewed", pv)
+	}
+}

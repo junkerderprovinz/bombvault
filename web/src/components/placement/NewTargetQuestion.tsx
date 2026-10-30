@@ -2,15 +2,16 @@ import { useCallback, useState, type ReactNode } from "react";
 import { ToggleRow } from "../../pages/settings/shared";
 import {
   getNewTargetPreview,
+  type NewLocationKind,
   type NewTargetExclusion,
   type OffsiteDomain,
-  type OkEnvelope,
   type TargetPreview,
 } from "../../lib/api";
 import { humanBytes } from "../../lib/forecast";
 import { useT, type TranslationKey } from "../../lib/i18n";
 import { formatList, isPlacementDomain } from "../../lib/placement";
-import { placementErrorText } from "../../lib/placementCodes";
+import { placementErrorText, type PlacementRefusal } from "../../lib/placementCodes";
+import { useToast } from "../../lib/toast";
 import { useConfirm } from "../../lib/useConfirm";
 
 export interface NewTargetQuestion {
@@ -19,9 +20,14 @@ export interface NewTargetQuestion {
   targetId?: string;
   name: string;
   moved: boolean;
+  /** What the location becomes. With it, a location the save would refuse is
+   *  refused before anything is asked. */
+  as?: NewLocationKind;
 }
 
-export type NewTargetAnswer = { go: false } | { go: true; alsoExclude: NewTargetExclusion | null };
+/** refused says the location was turned down before the question opened, and
+ *  the reason is already on screen. */
+export type NewTargetAnswer = { go: false; refused?: boolean } | { go: true; alsoExclude: NewTargetExclusion | null };
 
 const NOTHING: NewTargetExclusion = { identities: [], default: false };
 
@@ -123,17 +129,22 @@ export function useNewTargetQuestion(): {
   dialog: ReactNode;
 } {
   const { t, lang } = useT();
+  const { push } = useToast();
   const { confirm, confirmDialog } = useConfirm();
 
   const ask = useCallback(
     async (q: NewTargetQuestion): Promise<NewTargetAnswer> => {
       const domain = q.domain;
       if (!isPlacementDomain(domain)) return { go: true, alsoExclude: null };
-      let res: OkEnvelope & { preview?: TargetPreview };
+      let res: PlacementRefusal & { preview?: TargetPreview; saveRefused?: boolean };
       try {
-        res = await getNewTargetPreview(domain, q.location, q.targetId);
+        res = await getNewTargetPreview(domain, q.location, q.targetId, q.as);
       } catch (err) {
         res = { ok: false, error: err instanceof Error ? err.message : undefined };
+      }
+      if (res.saveRefused) {
+        push(placementErrorText(t, lang, res, "settings.error"), "fail");
+        return { go: false, refused: true };
       }
       const preview = res.preview;
       const intro = t(introKey(q.moved, preview)).replace("{target}", () => q.name);
@@ -146,7 +157,7 @@ export function useNewTargetQuestion(): {
       if (!(await confirm(intro, { extra, cancelTone: "neutral" }))) return { go: false };
       return { go: true, alsoExclude: chosen.identities.length > 0 || chosen.default ? chosen : null };
     },
-    [confirm, t, lang]
+    [confirm, push, t, lang]
   );
 
   return { ask, dialog: confirmDialog };

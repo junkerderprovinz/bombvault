@@ -234,7 +234,7 @@ export function OffsiteTargetsSection({
   async function addFrom(d: Destination) {
     const r = await destinationForDomain(d.id, domain).catch((e: unknown) => ({ ok: false, error: e instanceof Error ? e.message : undefined }));
     if (!r.ok) {
-      push(r.error ?? t("settings.error"), "fail");
+      push(placementErrorText(t, lang, r, "settings.error"), "fail");
       return;
     }
     push(t("offsite.targets.addedFrom").replace("{name}", () => d.name), "success");
@@ -282,9 +282,11 @@ export function OffsiteTargetsSection({
         targetId: saved?.id,
         name: draft.name.trim() || location,
         moved: saved !== undefined,
+        as: "target",
       });
       if (!answer.go) {
         setSaveState("idle");
+        if (answer.refused) setSaveShake((n) => n + 1);
         return;
       }
       alsoExclude = answer.alsoExclude ?? undefined;

@@ -3662,14 +3662,21 @@ export function getPlacementOptions(domain: PlacementDomain): Promise<OkEnvelope
   return fetchJSON(`/api/placement/options?domain=${encodeURIComponent(domain)}`);
 }
 
+/** What a location becomes once the question about it is answered: the
+ *  domain's off-site field or a target. The preview then refuses, with
+ *  saveRefused, what that save would refuse. */
+export type NewLocationKind = "field" | "target";
+
 export function getNewTargetPreview(
   domain: PlacementDomain,
   repo: string,
-  targetId?: string
-): Promise<OkEnvelope & { preview?: TargetPreview }> {
+  targetId?: string,
+  as?: NewLocationKind
+): Promise<OkEnvelope & { preview?: TargetPreview; saveRefused?: boolean; at?: string }> {
   const target = targetId ? `&target=${encodeURIComponent(targetId)}` : "";
+  const kind = as ? `&as=${as}` : "";
   return fetchJSON(
-    `/api/placement/new-target-preview?domain=${encodeURIComponent(domain)}&repo=${encodeURIComponent(repo)}${target}`
+    `/api/placement/new-target-preview?domain=${encodeURIComponent(domain)}&repo=${encodeURIComponent(repo)}${target}${kind}`
   );
 }
 

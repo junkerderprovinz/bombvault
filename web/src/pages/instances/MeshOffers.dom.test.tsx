@@ -47,7 +47,7 @@ describe("accepting a mesh offer", () => {
     await waitFor(() =>
       expect(fake.callsTo("acceptMeshOffer")).toEqual([["o1", "vms", { identities: ["vm:win11"], default: false }]])
     );
-    expect(fake.callsTo("getNewTargetPreview")).toEqual([["vms", "rest:http://192.0.2.5:8000/vms", undefined]]);
+    expect(fake.callsTo("getNewTargetPreview")).toEqual([["vms", "rest:http://192.0.2.5:8000/vms", undefined, undefined]]);
   });
 
   it("locks Accept while the question is still being prepared", async () => {

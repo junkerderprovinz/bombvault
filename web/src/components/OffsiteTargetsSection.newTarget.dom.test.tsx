@@ -62,7 +62,7 @@ describe("the off-site targets and a new location", () => {
     fireEvent.click(within(dialog).getByRole("switch", { name: "Leave these out here too" }));
     fireEvent.click(within(dialog).getByRole("button", { name: "Confirm" }));
     await waitFor(() => expect(fake.callsTo("createOffsiteTarget")).toHaveLength(1));
-    expect(fake.callsTo("getNewTargetPreview")).toEqual([["containers", "b2:bucket:containers", undefined]]);
+    expect(fake.callsTo("getNewTargetPreview")).toEqual([["containers", "b2:bucket:containers", undefined, "target"]]);
     expect(fake.callsTo("createOffsiteTarget")[0][1]).toEqual({ identities: ["container:plex"], default: false });
   });
 
@@ -103,7 +103,7 @@ describe("the off-site targets and a new location", () => {
     expect(dialog.textContent).toContain("The new location of Hetzner receives the whole history.");
     fireEvent.click(within(dialog).getByRole("button", { name: "Confirm" }));
     await waitFor(() => expect(fake.callsTo("updateOffsiteTarget")).toHaveLength(1));
-    expect(fake.callsTo("getNewTargetPreview")).toEqual([["containers", "sftp:u1@box:/containers-new", "t-hz"]]);
+    expect(fake.callsTo("getNewTargetPreview")).toEqual([["containers", "sftp:u1@box:/containers-new", "t-hz", "target"]]);
     expect(fake.callsTo("updateOffsiteTarget")[0][2]).toBeUndefined();
   });
 
