@@ -15,30 +15,42 @@ import {
   IconSync,
   IconTrash,
 } from "./Sidebar";
+import { IconFolderAdd } from "./navGlyphs";
 import {
+  IconApply,
   IconBack,
   IconClearSelection,
   IconCompare,
+  IconConfirm,
+  IconExport,
   IconEye,
+  IconForgotPassword,
   IconForward,
+  IconImport,
   IconInfo,
+  IconInstall,
   IconKey,
   IconKeyRevoke,
   IconLatest,
   IconLink,
+  IconLog,
   IconMail,
   IconPlay,
   IconPrune,
   IconRefresh,
+  IconReject,
+  IconRetry,
   IconSave,
   IconSearch,
   IconSelectAll,
+  IconSendTest,
   IconShieldOff,
   IconShieldOn,
   IconSignIn,
   IconSignOut,
   IconStar,
   IconStop,
+  IconUndo,
   IconUnlock,
   IconUpload,
 } from "./glyphs";
@@ -54,9 +66,14 @@ type Rule = [RegExp, () => ReactNode];
 const RULES: Rule[] = [
   // Backups and restores, the app's own verbs, before anything generic.
   [/backupNow|backupAll|backupSelected|runNow/i, () => <IconBackupNow />],
+  // Undo takes back the step just made, which is not a restore of a backup.
+  [/undo/i, () => <IconUndo />],
+  // Checking again is a retry. Above the restore rule, which every
+  // restoreCheck key would otherwise match, and the pairing rule.
+  [/\.recheck$|checkAgain/i, () => <IconRetry />],
+  [/showFiles/i, () => <IconEye />],
   // "restor" also catches the "restoring" keys shown while a run is in flight.
-  // Undo puts back what was there, so it shares the mark.
-  [/restor|recreate|rebuild|\.undo$/i, () => <IconRestore />],
+  [/restor|recreate|rebuild/i, () => <IconRestore />],
   [/replicate|sync|refreshStatus|pollNow/i, () => <IconSync />],
 
   // Destructive and corrective actions.
@@ -66,54 +83,55 @@ const RULES: Rule[] = [
 
   // Above the sign-in rule, which every signIns key would otherwise match.
   [/makeDefault/i, () => <IconStar />],
-  // Got it acknowledges what was read, so it takes the check of the other
-  // agreements wherever it stands.
-  [/gotIt/i, () => <IconCheck />],
+
+  // Agreeing and refusing: taking over or using the one shown applies it, and
+  // Done, Got it, accepting and allowing confirm. Above the creation rules,
+  // which zfs.add.done would otherwise match.
+  [/apply|\.takeOver$|takeover\.accept|adopt\.take|primary\.use|folder\.use|useThis|useLocal|settingsIO\.confirm/i, () => <IconApply />],
+  [/decline|deny|reject|refuse/i, () => <IconReject />],
+  [/\bdone\b|gotIt|confirm(?!Password)|accept|approve|\.allow$|cameraAllow|acknowledge|resolveAll|markAll|\.stored$|recoverySaved/i, () => <IconConfirm />],
 
   // Creation and editing.
+  [/folder\.create|makeFolder/i, () => <IconFolderAdd />],
   [/\.add|addSet|addPreset|addTarget|addTag|credSets\.add|registryAdd|passkeyAdd|passkeyCreate|certAddAddress/i, () => <IconAdd />],
   // A list that fetches its next page grows by the same plus as one that gains
   // an entry.
   [/loadMore/i, () => <IconAdd />],
   [/edit|rename|editSet|retype/i, () => <IconPencil />],
-  [/save|apply/i, () => <IconSave />],
+  [/save/i, () => <IconSave />],
 
   // Selection. "Exclude all" and "Include all" are clear and select all under
-  // other names.
-  [/clearSelection|clearDayFilter|clearOrder|reset|excludeAll|assistExclude/i, () => <IconClearSelection />],
+  // other names. A reset goes back to the default.
+  [/clearSelection|clearDayFilter|resetSelection|excludeAll|assistExclude/i, () => <IconClearSelection />],
   [/selectAll|selectEvery|includeAll/i, () => <IconSelectAll />],
+  [/reset|useDefault/i, () => <IconRefresh />],
 
   // Navigation and dialogs.
-  [/cancel|skip|decline|close|dismiss/i, () => <IconClose />],
-  // "Done" is a sheet's terminal verb rather than a close: it signs off on what
-  // the surface just let the user do (the schedule just saved, the guided flow
-  // just finished), which is the same agreement the probing block's mark
-  // already carries. Word-bounded, so a future key merely CONTAINING done
-  // (backupDone) never takes the check by substring accident.
-  [/\bdone\b/i, () => <IconCheck />],
+  [/cancel|skip|close|dismiss/i, () => <IconClose />],
   [/back|previous|prev\b/i, () => <IconBack />],
   [/jumpToLatest/i, () => <IconLatest />],
   [/next|continue|forward/i, () => <IconForward />],
 
   // Connections, above the probing rules so recovery.connectPreview, which
   // connects first and previews after, gets the link.
-  [/connect|pair|link|reconnect|adopt\.take|takeOver|primary\.use/i, () => <IconLink />],
+  [/connect|pair|link|reconnect/i, () => <IconLink />],
 
-  // Probing and inspection. "accept", "confirm" and "resolveAll" agree to what
-  // is on screen, so they take the same check.
-  [/test|probe|verify|check|drill|appendOnly|tamper|accept|approve|confirm(?!Password)|resolveAll|\.stored$/i, () => <IconCheck />],
-  // Settling an anomaly: seen and closed takes the same check as the other
-  // agreements, while marking it as expected records a new normal level.
-  [/acknowledge/i, () => <IconCheck />],
+  // Probing and inspection. A test message is sent, not checked.
+  [/notify\.test|sendTest/i, () => <IconSendTest />],
+  [/test|probe|verify|check|drill|appendOnly|tamper/i, () => <IconCheck />],
+  // Marking an anomaly as expected records a new normal level.
   [/expected/i, () => <IconSave />],
 
   [/scan|discover|browse|search/i, () => <IconSearch />],
   [/show|reveal|preview|view/i, () => <IconEye />],
   [/hint|info|explain|examples/i, () => <IconInfo />],
 
-  // Transfer. Pulling another instance's snapshots into this one is a
-  // download.
-  [/download|export|pullNow|pullFrom/i, () => <IconDownload />],
+  // Transfer. Import and export read a file in and write one out, while upload
+  // and download move one between here and elsewhere. Pulling another
+  // instance's snapshots into this one is a download.
+  [/import/i, () => <IconImport />],
+  [/export/i, () => <IconExport />],
+  [/download|pullNow|pullFrom/i, () => <IconDownload />],
   [/upload|send|offer|push|proposeButton/i, () => <IconUpload />],
   [/copy/i, () => <IconCopy />],
 
@@ -130,6 +148,7 @@ const RULES: Rule[] = [
   // deleted nor the second factor going off.
   [/revoke|passkeyRemove$/i, () => <IconKeyRevoke />],
   [/compare|diff\b/i, () => <IconCompare />],
+  [/forgotPassword/i, () => <IconForgotPassword />],
   [/credential|password|secret|token|key\b/i, () => <IconKey />],
 
   // Lifecycle.
@@ -148,10 +167,14 @@ const RULES: Rule[] = [
   // site, never reached by pattern.
   [/\.mail|contact|writeToUs/i, () => <IconMail />],
 
+  // Above the places rule, which settings.dashTileInstall would otherwise match.
+  [/install/i, () => <IconInstall />],
+  [/\.log$/i, () => <IconLog />],
+
   // Places and configuration, last because they are the vaguest.
   [/folder|path|directory/i, () => <IconFolder />],
   [/settings|config|setup|wizard|options/i, () => <IconGear />],
-  [/refresh|reload|retry|tryAgain|askAgain|rotate/i, () => <IconRefresh />],
+  [/refresh|reload|retry|tryAgain|again\b|rotate/i, () => <IconRetry />],
 ];
 
 /**
