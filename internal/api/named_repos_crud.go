@@ -195,17 +195,10 @@ func (b namedRepoBody) applyTo(t *store.OffsiteTarget) {
 }
 
 // staticNamedRepoRefusals holds the refusals that need nothing but the location
-// string and the mount root, so the CREATE form and the settings IMPORT apply
-// exactly the same ones. It returns nil when the location passes.
-//
-// It exists because the import used to mirror two of the four checks by hand.
-// A shared function cannot drift; a copy always does, and here the drift let a
-// file install a location the form refuses.
-//
-// The messages carry NO SLASH: every error leaving the API goes through
-// scrubError, whose absPathRe redacts any slash-led token, so an example path
-// in one of these arrives unusable. Measured in the browser, twice.
-func staticNamedRepoRefusals(loc, mountRoot string) error {
+// string and the host roots, so the create form and the settings import apply
+// the same ones and cannot drift apart. It returns nil when the location
+// passes.
+func staticNamedRepoRefusals(loc, mountRoot, sourceRoot string) error {
 	loc = strings.TrimSpace(loc)
 	if loc == "" {
 		return errLocationNeeded
@@ -221,9 +214,7 @@ func staticNamedRepoRefusals(loc, mountRoot string) error {
 	// A local location must stay under the mount root, the same rule the settings
 	// paths are held to on save.
 	if !restic.IsRemoteRepo(loc) && mountRoot != "" {
-		if _, err := paths.Resolve(mountRoot, loc); err != nil {
-			return err
-		}
+		return localPathRefusal(mountRoot, sourceRoot, loc)
 	}
 	return nil
 }
@@ -248,7 +239,7 @@ func (h *Handler) validateNamedRepo(t store.OffsiteTarget, checkClass, checkLoca
 	}
 	// The location refusals that need nothing but the string and the mount root,
 	// shared with the settings import so the two cannot disagree.
-	if err := staticNamedRepoRefusals(t.Repo, h.cfg.HostMountRoot); err != nil {
+	if err := staticNamedRepoRefusals(t.Repo, h.cfg.HostMountRoot, h.cfg.HostSourceRoot); err != nil {
 		return err
 	}
 	if _, err := restic.ParseCompression(t.Compression); err != nil {

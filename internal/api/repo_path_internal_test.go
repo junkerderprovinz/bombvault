@@ -72,7 +72,7 @@ func TestHostRelativeSuggestion(t *testing.T) {
 		{"//mnt/x", "mnt/x"},
 	}
 	for _, c := range cases {
-		if got := s.hostRelativeSuggestion(c.in); got != c.want {
+		if got := hostRelativeSuggestion(s.cfg.HostSourceRoot, c.in); got != c.want {
 			t.Errorf("hostRelativeSuggestion(%q) = %q, want %q", c.in, got, c.want)
 		}
 	}

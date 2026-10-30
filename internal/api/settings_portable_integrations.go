@@ -60,15 +60,15 @@ func (h *Handler) brokerPassword() (string, error) {
 
 // integrationsRefusal checks the Home Assistant block of a file the way the
 // card checks a save.
-func integrationsRefusal(exp settingsExport) string {
+func integrationsRefusal(exp settingsExport) error {
 	ha := exp.HomeAssistant
 	if ha == nil {
-		return ""
+		return nil
 	}
 	if _, err := mqttSettingsRefusal(ha.Enabled, strings.TrimSpace(ha.Host), ha.Port, strings.TrimSpace(ha.Prefix)); err != nil {
-		return "invalid Home Assistant settings: " + err.Error()
+		return &importProblem{code: "import-integrations", msg: "invalid Home Assistant settings: " + err.Error()}
 	}
-	return ""
+	return nil
 }
 
 // integrationGroups names the integration areas an apply would change. The

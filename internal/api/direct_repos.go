@@ -295,7 +295,7 @@ func insideOwnTarget(target store.OffsiteTarget, loc string) bool {
 // directLocation checks a direct repository location the way the Repositories
 // card checks any named one, plus the overlap rule, and returns it resolved.
 func (s *Service) directLocation(settings store.Settings, target store.OffsiteTarget, location string) (string, error) {
-	if err := staticNamedRepoRefusals(location, s.cfg.HostMountRoot); err != nil {
+	if err := staticNamedRepoRefusals(location, s.cfg.HostMountRoot, s.cfg.HostSourceRoot); err != nil {
 		return "", err
 	}
 	loc, err := s.resolveRepo(strings.TrimSpace(location))

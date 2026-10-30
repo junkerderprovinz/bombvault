@@ -6,7 +6,14 @@ import type { ToastSeverity } from "./toastEngine";
 type T = ReturnType<typeof useT>["t"];
 
 /** A refusal from the placement routes, with the fields some codes carry. */
-export type PlacementRefusal = OkEnvelope & { defaultDomains?: string[]; use?: TargetUse; target?: RefusalTarget; at?: string };
+export type PlacementRefusal = OkEnvelope & {
+  defaultDomains?: string[];
+  use?: TargetUse;
+  target?: RefusalTarget;
+  at?: string;
+  /** The relative path to enter instead of a full host path. */
+  suggest?: string;
+};
 
 const CODE_KEYS: Record<string, TranslationKey> = {
   "placement-unreadable": "placementCode.unreadable",
@@ -96,6 +103,10 @@ export function placementErrorText(t: T, lang: string, res: PlacementRefusal, fa
   }
   if (res.code === "nested-location" && res.at) {
     return `${tLtr(t, "placementCode.nestedLocation")} ${isolateLtr(res.at)}`;
+  }
+  const suggest = res.suggest;
+  if (res.code === "path-absolute" && suggest) {
+    return t("placementCode.pathAbsoluteTo").replace("{path}", () => isolateLtr(suggest));
   }
   const key = res.code ? CODE_KEYS[res.code] : undefined;
   if (key) return tLtr(t, key);

@@ -66,6 +66,14 @@ describe("placementErrorText", () => {
     );
   });
 
+  it("gives the relative path to enter instead of a full host path", () => {
+    const refusal = { ok: false, error: "x", code: "path-absolute", suggest: "user/backups" };
+    expect(placementErrorText(t, "en", refusal, "settings.error")).toBe(
+      en["placementCode.pathAbsoluteTo"].replace("{path}", "⁦user/backups⁩")
+    );
+    expect(placementErrorText(t, "en", { ok: false, code: "path-absolute" }, "settings.error")).toBe(en["placementCode.pathAbsolute"]);
+  });
+
   it("falls back to the server's text, then to the given key", () => {
     expect(placementErrorText(t, "en", { ok: false, error: "server text", code: "no-such-code" }, "settings.error")).toBe("server text");
     expect(placementErrorText(t, "en", { ok: false }, "settings.error")).toBe(en["settings.error"]);

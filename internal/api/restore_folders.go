@@ -22,7 +22,7 @@ func restoreFolders(s store.Settings) map[string]string {
 
 // rejectInvalidRestoreFolders holds a section's own restore folder to what the
 // shared one has to be: a relative path under the mount root.
-func rejectInvalidRestoreFolders(in map[string]string, mountRoot string) error {
+func rejectInvalidRestoreFolders(in map[string]string, mountRoot, sourceRoot string) error {
 	for section, folder := range in {
 		if !slices.Contains(offsiteConfigDomains, section) {
 			return fmt.Errorf("restoreFolderOverrides: %q is not a section", section)
@@ -34,8 +34,8 @@ func rejectInvalidRestoreFolders(in map[string]string, mountRoot string) error {
 		if restic.IsRemoteRepo(folder) {
 			return errRestoreFolderRemote
 		}
-		if _, err := paths.Resolve(mountRoot, folder); err != nil {
-			return fmt.Errorf("invalid restore folder: must be a relative subpath under the mount root: %w", err)
+		if err := localPathRefusal(mountRoot, sourceRoot, folder); err != nil {
+			return err
 		}
 	}
 	return nil

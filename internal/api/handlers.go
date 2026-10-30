@@ -2976,7 +2976,7 @@ func (h *Handler) rejectNestedSettingsPath(v settingsView, cur store.Settings) e
 // the save would.
 func (h *Handler) settingsLocationRefusal(next, cur store.Settings) error {
 	v := toView(next)
-	if err := rejectInvalidSettingsPaths(v, h.cfg.HostMountRoot); err != nil {
+	if err := rejectInvalidSettingsPaths(v, h.cfg.HostMountRoot, h.cfg.HostSourceRoot); err != nil {
 		return err
 	}
 	if err := h.rejectSettingsPathOnNamedRepo(v, cur); err != nil {
@@ -3034,13 +3034,13 @@ func applyOffsiteSettings(cur *store.Settings, v settingsView) {
 // value only one of them refuses lets an import store an absolute path that
 // then fails every later save from every card, the one that would fix it
 // included, since the page always sends the whole settings object.
-func rejectInvalidSettingsPaths(v settingsView, mountRoot string) error {
+func rejectInvalidSettingsPaths(v settingsView, mountRoot, sourceRoot string) error {
 	// The containment check below skips remotes, so a remote-looking restore
 	// folder such as "s3:foo" is refused before it: restores land on this host.
 	if v.RestoreFolder != "" && restic.IsRemoteRepo(v.RestoreFolder) {
 		return errRestoreFolderRemote
 	}
-	if err := rejectInvalidRestoreFolders(v.RestoreFolderOverrides, mountRoot); err != nil {
+	if err := rejectInvalidRestoreFolders(v.RestoreFolderOverrides, mountRoot, sourceRoot); err != nil {
 		return err
 	}
 
@@ -3061,9 +3061,9 @@ func rejectInvalidSettingsPaths(v settingsView, mountRoot string) error {
 		if restic.LooksLikeUnprefixedRemote(sub) {
 			return fmt.Errorf("%q: %w", sub, errUnprefixedRemote)
 		}
-		if _, err := paths.Resolve(mountRoot, sub); err != nil {
+		if err := localPathRefusal(mountRoot, sourceRoot, sub); err != nil {
 			log.Printf("api: settings: rejected path %q: %v", sub, err)
-			return fmt.Errorf("invalid backup path: must be a relative subpath under the mount root, or an rclone:/s3: remote: %w", err)
+			return err
 		}
 	}
 	return nil
@@ -3152,7 +3152,7 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 
 	// Repo locations and the restore folder, the same guard the import path
 	// applies, so a value one path refuses cannot arrive through the other.
-	if err := rejectInvalidSettingsPaths(v, h.cfg.HostMountRoot); err != nil {
+	if err := rejectInvalidSettingsPaths(v, h.cfg.HostMountRoot, h.cfg.HostSourceRoot); err != nil {
 		placementFail(w, err, nil)
 		return
 	}

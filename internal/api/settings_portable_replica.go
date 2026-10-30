@@ -149,33 +149,33 @@ func zfsReplicaItemRefusal(target zfsReplicaTargetExport, cadence string, keep s
 
 // zfsReplicaRefusal checks the replica block of a file before anything is
 // written.
-func zfsReplicaRefusal(exp settingsExport) string {
+func zfsReplicaRefusal(exp settingsExport) error {
 	rep := exp.ZFSReplica
 	if rep == nil {
-		return ""
+		return nil
 	}
 	ids := map[string]bool{}
 	for i, s := range rep.Servers {
 		// The id names the server's known_hosts directory.
 		if !validResourceName(s.ID) || ids[s.ID] {
-			return fmt.Sprintf("ZFS server #%d: needs an id of its own", i+1)
+			return rowProblem("import-row-invalid", importPartZFSServer, i, nil, "ZFS server #%d: needs an id of its own", i+1)
 		}
 		ids[s.ID] = true
 		if msg := zfsReplicaServerRefusal(s.Name, s.Host, s.User, s.Port, s.Pool, s.Root); msg != "" {
-			return fmt.Sprintf("ZFS server #%d (%s): %s", i+1, s.Name, msg)
+			return rowProblem("import-row-invalid", importPartZFSServer, i, nil, "ZFS server #%d (%s): %s", i+1, s.Name, msg)
 		}
 	}
 	seen := map[string]bool{}
 	for i, it := range rep.Items {
 		if strings.TrimSpace(it.Dataset) == "" || seen[it.Dataset] {
-			return fmt.Sprintf("ZFS replica #%d: needs a dataset of its own", i+1)
+			return rowProblem("import-row-invalid", importPartZFSReplica, i, nil, "ZFS replica #%d: needs a dataset of its own", i+1)
 		}
 		seen[it.Dataset] = true
 		if msg := zfsReplicaItemRefusal(it.Target, it.Cadence, it.Keep, it.KeepOnSource, ids); msg != "" {
-			return fmt.Sprintf("ZFS replica of %s: %s", it.Dataset, msg)
+			return rowProblem("import-row-invalid", importPartZFSReplica, i, nil, "ZFS replica of %s: %s", it.Dataset, msg)
 		}
 	}
-	return ""
+	return nil
 }
 
 // zfsReplicaGroups names the replica in the preview when the file sets up a

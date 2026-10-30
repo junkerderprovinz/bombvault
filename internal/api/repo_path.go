@@ -21,10 +21,12 @@ import (
 var errRepoPathGuidance = errors.New("repository location refused")
 
 // repoPathErr is errRepoPathGuidance for errors.Is and unwraps to the paths
-// sentinel that caused it.
+// sentinel that caused it. suggest is the relative path to enter instead of an
+// absolute one, which the page puts in its own sentence.
 type repoPathErr struct {
-	msg   string
-	cause error
+	msg     string
+	cause   error
+	suggest string
 }
 
 func (e *repoPathErr) Error() string { return e.msg }
@@ -53,11 +55,11 @@ var errRestoreFolderRemote = errors.New("restore folder must be a local path und
 // read as "only local paths are supported".
 const remoteURLHint = "or a restic remote URL (rest:, sftp:, s3:, b2:, rclone:)"
 
-// hostRelativeSuggestion strips cfg.HostSourceRoot from an absolute host path,
-// so "/mnt/remotes/nas/bombvault" becomes "remotes/nas/bombvault". A path
+// hostRelativeSuggestion strips the host source root from an absolute host
+// path, so "/mnt/remotes/nas/bombvault" becomes "remotes/nas/bombvault". A path
 // outside that root only loses its leading slash.
-func (s *Service) hostRelativeSuggestion(loc string) string {
-	root := strings.TrimSuffix(s.cfg.HostSourceRoot, "/")
+func hostRelativeSuggestion(sourceRoot, loc string) string {
+	root := strings.TrimSuffix(sourceRoot, "/")
 	if root != "" && strings.HasPrefix(loc, root+"/") {
 		loc = strings.TrimPrefix(loc, root+"/")
 	}
@@ -66,8 +68,8 @@ func (s *Service) hostRelativeSuggestion(loc string) string {
 
 // hostRootName names the mount in messages: the Unraid template's label plus the
 // host path behind it.
-func (s *Service) hostRootName() string {
-	if root := strings.TrimSuffix(s.cfg.HostSourceRoot, "/"); root != "" {
+func hostRootName(sourceRoot string) string {
+	if root := strings.TrimSuffix(sourceRoot, "/"); root != "" {
 		return `the "Host Data" mount (` + root + ")"
 	}
 	return `the "Host Data" mount`
@@ -76,18 +78,28 @@ func (s *Service) hostRootName() string {
 // repoPathError converts a paths.Resolve failure for a local repo location into
 // the error resolveRepo returns. The two known sentinels get guidance; any other
 // cause is wrapped plainly rather than dressed up as advice.
-func (s *Service) repoPathError(loc string, err error) error {
+func repoPathError(sourceRoot, loc string, err error) error {
 	switch {
 	case errors.Is(err, paths.ErrAbsoluteSub):
-		return &repoPathErr{cause: err, msg: fmt.Sprintf(
+		suggest := hostRelativeSuggestion(sourceRoot, loc)
+		return &repoPathErr{cause: err, suggest: suggest, msg: fmt.Sprintf(
 			"%q is an absolute host path. Backup and off-site locations are relative to %s, so enter %q instead, %s.",
-			loc, s.hostRootName(), s.hostRelativeSuggestion(loc), remoteURLHint)}
+			loc, hostRootName(sourceRoot), suggest, remoteURLHint)}
 	case errors.Is(err, paths.ErrTraversal):
 		return &repoPathErr{cause: err, msg: fmt.Sprintf(
 			"%q points outside %s. Enter a path inside it, %s.",
-			loc, s.hostRootName(), remoteURLHint)}
+			loc, hostRootName(sourceRoot), remoteURLHint)}
 	}
 	return fmt.Errorf("resolve repo path: %w", err)
+}
+
+// localPathRefusal is the refusal of a local location that does not resolve
+// under the mount, worded as resolveRepo words it.
+func localPathRefusal(mountRoot, sourceRoot, loc string) error {
+	if _, err := paths.Resolve(mountRoot, loc); err != nil {
+		return repoPathError(sourceRoot, loc, err)
+	}
+	return nil
 }
 
 // ErrNoLocation refuses a backup or an off-site copy of a section whose own

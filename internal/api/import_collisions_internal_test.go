@@ -15,6 +15,14 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
+// refusalText is what a refusal says, "" for none.
+func refusalText(err error) string {
+	if err == nil {
+		return ""
+	}
+	return err.Error()
+}
+
 // seedNamedRepoInUse creates a named repository at loc and points a container at
 // it, so ItemsUsingNamedRepo answers non-zero and the apply would keep the row.
 func seedNamedRepoInUse(t *testing.T, st *store.Repo, name, loc string) store.OffsiteTarget {
@@ -48,7 +56,7 @@ func TestAnImportIsCheckedAgainstTheRowsTheApplyKEEPS(t *testing.T) {
 		Settings:   settingsView{ContainersPath: "backups/cold"},
 		NamedRepos: []offsiteTargetView{{Name: "Warm", Repo: "backups/warm", Enabled: true}},
 	}
-	msg := h.rejectImportCollisions(exp)
+	msg := refusalText(h.rejectImportCollisions(exp))
 	if msg == "" {
 		t.Fatal("the import was accepted although the Containers path lands on a repository the apply keeps.\n" +
 			"The file does not carry that row, so it is not deleted - it is in use - and after the\n" +
@@ -74,7 +82,7 @@ func TestTheImportGuardDoesNotRewriteTheFileItValidates(t *testing.T) {
 		Settings:   settingsView{ContainersPath: "backups/containers"},
 		NamedRepos: []offsiteTargetView{{ID: r.ID, Name: "Cold", Repo: "backups/moved", Enabled: true}},
 	}
-	if msg := h.rejectImportCollisions(exp); msg != "" {
+	if msg := refusalText(h.rejectImportCollisions(exp)); msg != "" {
 		t.Fatalf("nothing collides here: %s", msg)
 	}
 	if got := exp.NamedRepos[0].Repo; got != "backups/moved" {
@@ -112,7 +120,7 @@ func TestTheGuardValidatesTheLocationTheApplyWillActuallyStore(t *testing.T) {
 			{ID: r.ID, Name: "Cold", Repo: "rest:https://" + redactedLocationMarker + "@host:8000/repo", Enabled: true},
 		},
 	}
-	msg := h.rejectImportCollisions(exp)
+	msg := refusalText(h.rejectImportCollisions(exp))
 	if msg == "" {
 		t.Fatal("the import was accepted although the Containers path lands on the location this\n" +
 			"repository KEEPS. The guard validated the redacted string from the file, which the\n" +
@@ -139,7 +147,7 @@ func TestAnImportWithNoRepositoriesIsStillCheckedAgainstTheStoredOnes(t *testing
 	}
 
 	exp := settingsExport{Settings: settingsView{VMsPath: "backups/cold"}}
-	if msg := h.rejectImportCollisions(exp); msg == "" {
+	if msg := refusalText(h.rejectImportCollisions(exp)); msg == "" {
 		t.Fatal("a file with no repositories leaves the stored rows in place, so an imported\n" +
 			"domain path still has to be checked against them")
 	}
@@ -160,7 +168,7 @@ func TestAFileWithoutZFSIsCheckedAgainstTheZFSPathTheApplyKeeps(t *testing.T) {
 		NamedRepos:  []offsiteTargetView{{Name: "Warm", Repo: "backups/zfs", Enabled: true}},
 		predatesZFS: true,
 	}
-	if msg := h.rejectImportCollisions(exp); !strings.Contains(msg, "ZFS") {
+	if msg := refusalText(h.rejectImportCollisions(exp)); !strings.Contains(msg, "ZFS") {
 		t.Fatalf("a repository on the ZFS path this instance keeps must be refused, got %q", msg)
 	}
 }

@@ -5,7 +5,6 @@ package api
 
 import (
 	"encoding/json"
-	"strings"
 	"testing"
 )
 
@@ -35,7 +34,7 @@ func stillSaveable(t *testing.T, h *Handler) (bool, string) {
 		t.Fatal(err)
 	}
 	v := toView(s)
-	if err := rejectInvalidSettingsPaths(v, h.cfg.HostMountRoot); err != nil {
+	if err := rejectInvalidSettingsPaths(v, h.cfg.HostMountRoot, h.cfg.HostSourceRoot); err != nil {
 		return false, err.Error()
 	}
 	if msg := rejectInvalidSettingsNames(v); msg != "" {
@@ -55,8 +54,8 @@ func TestImportRefusesAnAbsoluteRepoPath(t *testing.T) {
 		t.Fatal("an absolute containersPath must be REFUSED at import: applying it locks the instance out of its own settings, " +
 			"because the SPA PUTs the whole settings object and one poisoned field then fails every later save from every card")
 	}
-	if msg, _ := env["error"].(string); !strings.Contains(msg, "relative subpath") {
-		t.Fatalf("the refusal must name the rule the save enforces, got %q", msg)
+	if env["code"] != "import-path" || env["cause"] != "path-absolute" || env["suggest"] == nil {
+		t.Fatalf("the refusal must carry the rule the save enforces and the path to enter, got %v", env)
 	}
 
 	if ok, msg := stillSaveable(t, dst); !ok {

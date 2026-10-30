@@ -171,11 +171,11 @@ func TestAnImportWithNestedLocationsIsNotRefused(t *testing.T) {
 		OffsiteTargets: []offsiteTargetView{{Domain: "containers", Name: "B2", Repo: "b2:bkt:c", Enabled: true}},
 		NamedRepos:     []offsiteTargetView{{Name: "inner", Repo: "b2:bkt:c/inner", Enabled: true}},
 	}
-	if msg := f.h.rejectImportCollisions(exp); msg != "" {
+	if msg := f.refusalText(h.rejectImportCollisions(exp)); msg != "" {
 		t.Fatalf("an older file with nested locations must still import: %s", msg)
 	}
 	exp.NamedRepos[0].Repo = "b2:bkt:c"
-	if msg := f.h.rejectImportCollisions(exp); msg == "" {
+	if msg := f.refusalText(h.rejectImportCollisions(exp)); msg == "" {
 		t.Fatal("the same place twice is still refused")
 	}
 }
@@ -289,7 +289,7 @@ func TestAnImportWithATargetInsideADomainPathIsNotRefused(t *testing.T) {
 		Settings:       toView(settings),
 		OffsiteTargets: []offsiteTargetView{{Domain: "vms", Name: "inner", Repo: "backups/containers/offsite", Enabled: true}},
 	}
-	if msg := f.h.rejectImportCollisions(exp); msg != "" {
+	if msg := f.refusalText(h.rejectImportCollisions(exp)); msg != "" {
 		t.Fatalf("an older file with a target inside a domain path must still import: %s", msg)
 	}
 }
