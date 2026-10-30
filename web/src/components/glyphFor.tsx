@@ -72,6 +72,8 @@ const RULES: Rule[] = [
   // restoreCheck key would otherwise match, and the pairing rule.
   [/\.recheck$|checkAgain/i, () => <IconRetry />],
   [/showFiles/i, () => <IconEye />],
+  // Stopping a restore is a cancel like any other, not a restore.
+  [/restore\.cancel$/i, () => <IconClose />],
   // "restor" also catches the "restoring" keys shown while a run is in flight.
   [/restor|recreate|rebuild/i, () => <IconRestore />],
   [/replicate|sync|refreshStatus|pollNow/i, () => <IconSync />],
@@ -89,7 +91,7 @@ const RULES: Rule[] = [
   // which zfs.add.done would otherwise match.
   [/apply|\.takeOver$|takeover\.accept|adopt\.take|primary\.use|folder\.use|useThis|useLocal|settingsIO\.confirm/i, () => <IconApply />],
   [/decline|deny|reject|refuse/i, () => <IconReject />],
-  [/\bdone\b|gotIt|confirm(?!Password)|accept|approve|\.allow$|cameraAllow|acknowledge|resolveAll|markAll|\.stored$|recoverySaved/i, () => <IconConfirm />],
+  [/\bdone\b|gotIt|dismissKey|confirm(?!Password)|accept|approve|\.allow$|cameraAllow|acknowledge|resolveAll|markAll|\.stored$|recoverySaved/i, () => <IconConfirm />],
 
   // Creation and editing.
   [/folder\.create|makeFolder/i, () => <IconFolderAdd />],

@@ -115,7 +115,7 @@ describe("glyphFor on close meanings", () => {
   });
 
   it("gives Done, Confirm, Got it and Allow one mark, apart from a test", () => {
-    for (const key of ["common.gotIt", "common.confirm", "zfs.receive.allow", "anomaly.action.acknowledge"]) {
+    for (const key of ["common.gotIt", "common.confirm", "zfs.receive.allow", "anomaly.action.acknowledge", "mcp.dismissKey"]) {
       expect(glyphFor(key), key).toEqual(glyphFor("common.done"));
     }
     expect(glyphFor("common.done")).not.toEqual(glyphFor("offsite.test"));
@@ -123,6 +123,11 @@ describe("glyphFor on close meanings", () => {
 
   it("takes the Done mark where the key also names an add", () => {
     expect(glyphFor("zfs.add.done")).toEqual(glyphFor("common.done"));
+  });
+
+  it("cancels a restore with the cancel mark, not the restore one", () => {
+    expect(glyphFor("restore.cancel")).toEqual(glyphFor("common.cancel"));
+    expect(glyphFor("restore.cancel")).not.toEqual(glyphFor("restore.open"));
   });
 
   it("refuses with a mark apart from closing", () => {
