@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"slices"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -204,6 +205,43 @@ func encodeSkip(skip []string) (string, error) {
 		return "", err
 	}
 	return string(b), nil
+}
+
+// forgetSkippedTargetTx takes a removed target out of every skip list, the
+// section defaults' and the copy rules', so none of them names a target that
+// is gone. A list left empty means every target, which with the target gone is
+// what it said before.
+func forgetSkippedTargetTx(tx *sql.Tx, id string) error {
+	for _, table := range []string{"placement_defaults", "offsite_copy_rules"} {
+		//nolint:gosec // G202: the table comes from the list above; the id travels as a parameter.
+		rows, err := tx.Query(`SELECT rowid, skip FROM `+table+` WHERE instr(skip, ?) > 0`, strconv.Quote(id))
+		if err != nil {
+			return err
+		}
+		pruned := map[int64]string{}
+		for rows.Next() {
+			var row int64
+			var raw string
+			if err := rows.Scan(&row, &raw); err != nil {
+				rows.Close()
+				return err
+			}
+			if list, err := decodeSkip(raw); err == nil {
+				pruned[row], _ = encodeSkip(slices.DeleteFunc(list, func(s string) bool { return s == id }))
+			}
+		}
+		rows.Close()
+		if err := rows.Err(); err != nil {
+			return err
+		}
+		for row, raw := range pruned {
+			//nolint:gosec // G202: as above.
+			if _, err := tx.Exec(`UPDATE `+table+` SET skip = ? WHERE rowid = ?`, raw, row); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
 
 // decodeSkip reads a stored skip list and refuses anything encodeSkip would not

@@ -3547,6 +3547,24 @@ UPDATE offsite_targets SET
  WHERE role = 'repo' AND companion_of <> ''
    AND EXISTS (SELECT 1 FROM offsite_targets t WHERE t.role = 'offsite' AND t.id = offsite_targets.companion_of);`,
 	},
+	{
+		// A skip list that names a removed target refuses every save of its
+		// default and every import of a file that carries it, so such ids go.
+		version: removedSkipsMigration,
+		name:    "skips_without_removed_targets",
+		sql:     droppedSkipSQL("placement_defaults") + droppedSkipSQL("offsite_copy_rules"),
+	},
+}
+
+// droppedSkipSQL takes out of table's skip lists every id that names no
+// off-site target of the row's domain.
+func droppedSkipSQL(table string) string {
+	gone := `value <> '*' AND value NOT IN (SELECT id FROM offsite_targets WHERE role = 'offsite' AND domain = ` + table + `.domain)`
+	return `UPDATE ` + table + ` SET skip = (
+  SELECT json_group_array(value) FROM (
+    SELECT value FROM json_each(` + table + `.skip) WHERE NOT (` + gone + `) ORDER BY value))
+ WHERE json_valid(skip) AND EXISTS (SELECT 1 FROM json_each(` + table + `.skip) WHERE ` + gone + `);
+`
 }
 
 // offsiteFieldDomains are the domains with an off-site field in the settings,
@@ -3847,6 +3865,10 @@ const runCopiedMigration = 620
 // directFollowsTargetMigration numbers the direct repositories taking every
 // setting from their target again.
 const directFollowsTargetMigration = 630
+
+// removedSkipsMigration numbers the clean-up of skip lists that name removed
+// targets.
+const removedSkipsMigration = 640
 
 // oneLineColumns are the names and locations the recovery kit prints.
 var oneLineColumns = []struct {
