@@ -34,29 +34,76 @@ func sameSectionPath(a, b string) bool {
 // write from before to after changes, whichever page or import changes it, and
 // forgets a former one a section comes back to. It runs before the section's
 // remote-primary row is replaced, so a remote folder keeps the sign-in it had.
-func keepLeftOwnFolders(e settingsWriter, before, after Settings) error {
+func keepLeftOwnFolders(tx *sql.Tx, before, after Settings) error {
 	now := sectionPathsOf(after)
+	fields := offsiteFieldsOf(after)
 	for domain, old := range sectionPathsOf(before) {
 		next := now[domain]
 		if sameSectionPath(old, next) {
 			continue
 		}
 		if back := strings.TrimRight(strings.TrimSpace(next), "/"); back != "" {
-			if _, err := e.Exec(`DELETE FROM former_own_folders WHERE domain = ? AND rtrim(repo, '/') = ?`, domain, back); err != nil {
+			if _, err := tx.Exec(`DELETE FROM former_own_folders WHERE domain = ? AND rtrim(repo, '/') = ?`, domain, back); err != nil {
 				return err
+			}
+			if strings.TrimSpace(fields[domain]) == "" {
+				if err := dropLeftoverCopyTx(tx, domain, back); err != nil {
+					return err
+				}
 			}
 		}
 		if strings.TrimSpace(old) == "" {
 			continue
 		}
 		var credsRef, destID string
-		err := e.QueryRow(`SELECT creds_ref, destination_id FROM offsite_targets WHERE domain = ? AND role = ?`, domain, RolePrimary).Scan(&credsRef, &destID)
+		err := tx.QueryRow(`SELECT creds_ref, destination_id FROM offsite_targets WHERE domain = ? AND role = ?`, domain, RolePrimary).Scan(&credsRef, &destID)
 		if err != nil && !errors.Is(err, sql.ErrNoRows) {
 			return err
 		}
-		if _, err := e.Exec(`INSERT INTO former_own_folders (domain, repo, creds_ref, destination_id, left_at) VALUES (?, ?, ?, ?, ?)
+		if _, err := tx.Exec(`INSERT INTO former_own_folders (domain, repo, creds_ref, destination_id, left_at) VALUES (?, ?, ?, ?, ?)
 			ON CONFLICT (domain, repo) DO UPDATE SET creds_ref = excluded.creds_ref, destination_id = excluded.destination_id, left_at = excluded.left_at`,
 			domain, strings.TrimSpace(old), credsRef, destID, time.Now().Unix()); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// offsiteFieldsOf lists each section's off-site field in s.
+func offsiteFieldsOf(s Settings) map[string]string {
+	return map[string]string{
+		"containers": s.ContainersOffsite, "vms": s.VMsOffsite, "flash": s.FlashOffsite,
+		"config": s.ConfigOffsite, "files": s.FilesOffsite, "zfs": s.ZFSOffsite,
+	}
+}
+
+// dropLeftoverCopyTx deletes the row a section's off-site field left switched
+// off at path, which the section's own folder takes. No page lists that row,
+// and a copy on the own folder would land on itself; the backups at the place
+// stay, as the own folder's.
+func dropLeftoverCopyTx(tx *sql.Tx, domain, path string) error {
+	rows, err := tx.Query(`SELECT id FROM offsite_targets WHERE role = ? AND domain = ? AND destination_id = ''
+		AND enabled = 0 AND sort_order = 0 AND rtrim(repo, '/') = ?`, RoleOffsite, domain, path)
+	if err != nil {
+		return err
+	}
+	var ids []string
+	for rows.Next() {
+		var id string
+		if err := rows.Scan(&id); err != nil {
+			rows.Close() //nolint:errcheck,gosec // the scan error is the one to report
+			return err
+		}
+		ids = append(ids, id)
+	}
+	if err := rows.Close(); err != nil {
+		return err
+	}
+	for _, id := range ids {
+		if err := dropUnusedDirectTx(tx, id); err != nil {
+			return err
+		}
+		if err := deleteTargetKeepingDirectTx(tx, id); err != nil {
 			return err
 		}
 	}

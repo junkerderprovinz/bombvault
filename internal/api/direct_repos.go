@@ -236,9 +236,9 @@ func (s *Service) locationClash(settings store.Settings, loc string, self locati
 		}
 		// A copy of the section itself counts even where the page lists it
 		// nowhere, since it still lands on the own folder. One switched off
-		// with its off-site field copies nothing, and the repair at start
-		// takes it away once the own folder lies there; its backups stay as
-		// the own folder's.
+		// with its off-site field copies nothing, and the save that puts the
+		// own folder there takes it away; its backups stay as the own
+		// folder's.
 		hidden := hiddenTarget(t, settings, ids)
 		tLoc, ok := s.clashCandidate("off-site destination", t.Name, t.Repo)
 		switch {

@@ -240,17 +240,11 @@ func TestAnOwnFolderMayGoWhereASwitchedOffCopyWasLeftAndKeepsItsBackups(t *testi
 	if res := f.do("PUT", "/api/settings", v); res["ok"] != true {
 		t.Fatalf("answer = %v, want the own folder where the switched-off copy was left", res)
 	}
-	lines := captureLog(t, func() {
-		if _, err := f.svc.RepairLocationModel(); err != nil {
-			t.Fatal(err)
-		}
-	})
-
 	if f.hasTarget(left.ID) {
-		t.Fatal("the switched-off copy is still there after the repair at start")
+		t.Fatal("the switched-off copy is still there after the own folder took its place")
 	}
-	if !strings.Contains(lines, "sat on the section's own folder") {
-		t.Fatalf("log = %q, want the repair named", lines)
+	if fixed, err := f.svc.RepairLocationModel(); err != nil || len(fixed) != 0 {
+		t.Fatalf("a start repaired %v, %v, want nothing left to repair", fixed, err)
 	}
 	if len(f.eng.forgets) != 0 || len(f.eng.deletes) != 0 {
 		t.Fatalf("forgot %+v and deleted %+v, want the backups there kept", f.eng.forgets, f.eng.deletes)
