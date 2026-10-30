@@ -305,14 +305,10 @@ type Settings struct {
 	StartTestEnabled bool
 }
 
-// settingsQuerier and settingsExecer are satisfied by both *sql.DB and *sql.Tx,
-// so MutateSettings runs the same read and write as the plain methods.
+// settingsQuerier is satisfied by both *sql.DB and *sql.Tx, so a read inside a
+// write sees the row the write replaces.
 type settingsQuerier interface {
 	QueryRow(query string, args ...any) *sql.Row
-}
-
-type settingsExecer interface {
-	Exec(query string, args ...any) (sql.Result, error)
 }
 
 // GetSettings returns the current app settings. To change a field, use
@@ -458,7 +454,7 @@ func getSettings(q settingsQuerier) (Settings, error) {
 func (r *Repo) UpdateSettings(s Settings) error {
 	r.settingsMu.Lock()
 	defer r.settingsMu.Unlock()
-	return updateSettings(r.db, s)
+	return r.inTx(func(tx *sql.Tx) error { return updateSettings(tx, s) })
 }
 
 // MutateSettings applies fn to the current settings row and writes the result
@@ -502,8 +498,15 @@ func (r *Repo) MutateSettings(fn func(*Settings) error) (Settings, error) {
 	return after, nil
 }
 
-func updateSettings(e settingsExecer, s Settings) error {
-	_, err := e.Exec(`
+func updateSettings(tx *sql.Tx, s Settings) error {
+	before, err := getSettings(tx)
+	if err != nil {
+		return fmt.Errorf("UpdateSettings: %w", err)
+	}
+	if err := keepLeftOwnFolders(tx, before, s); err != nil {
+		return fmt.Errorf("UpdateSettings: %w", err)
+	}
+	_, err = tx.Exec(`
 		UPDATE settings SET
 		  encryption_enabled  = ?,
 		  containers_enabled  = ?,

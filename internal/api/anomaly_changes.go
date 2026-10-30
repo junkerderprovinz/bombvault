@@ -385,6 +385,21 @@ func (s *Service) pairPlace(ctx context.Context, pair changePair) (breakdownItem
 			places = append(places, place)
 		}
 	}
+	// The section's own folder resolves to where it is now, so the folders it
+	// left are asked as well.
+	left, err := s.store.FormerOwnFolders(it.domain)
+	if err != nil {
+		return it, nil, err
+	}
+	for _, f := range left {
+		repo, err := s.resolveRepo(f.Repo)
+		if err != nil || slices.ContainsFunc(places, func(p breakdownItem) bool { return sameRepoLocation(p.repo, repo) }) {
+			continue
+		}
+		place := it
+		place.repo, place.mode = repo, s.formerOwnFolderMode(settings, it.domain, f)
+		places = append(places, place)
+	}
 	for i, place := range places {
 		snaps, err := s.listRepo(ctx, place.repo, place.mode)
 		switch {

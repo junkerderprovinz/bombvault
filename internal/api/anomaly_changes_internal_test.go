@@ -66,3 +66,23 @@ func TestAComparisonReadsTheBackupsWhereTheItemKeptThemBefore(t *testing.T) {
 		t.Fatalf("restic compared %v", f.eng.diffs)
 	}
 }
+
+func TestAComparisonReadsTheBackupsTheSectionsOldOwnFolderKeeps(t *testing.T) {
+	f := newPlacementFixture(t)
+	vault := f.destination("Vault", vaultRepo)
+	plex := f.container("plex", "")
+	f.hold(f.domainPath("containers"), plexSnap("a1a1a1a1"), plexSnap("b1b1b1b1"))
+	ownSteps(t, f.do("POST", "/api/storage/own-folders", map[string]any{
+		"domains": []string{"containers"}, "location": "destination:" + vault.ID,
+	}))
+	f.hold(vaultRepo+"/containers", plexSnap("c3c3c3c3"))
+
+	view := comparePair(t, f, plex.ID, "a1a1a1a1", "b1b1b1b1")
+
+	if view.State != breakdownReady {
+		t.Fatalf("view = %+v, want the comparison done in the old own folder", view)
+	}
+	if !slices.Equal(f.eng.diffs, []string{"a1a1a1a1->b1b1b1b1"}) {
+		t.Fatalf("restic compared %v", f.eng.diffs)
+	}
+}

@@ -34,9 +34,13 @@ type probeEngine struct {
 	// lsErr fails the listing, and snaps is what the repository lists then.
 	lsErr error
 	snaps []restic.Snapshot
+	// listed counts the snapshot listings, and read holds the snapshots ls ran on.
+	listed int
+	read   []string
 }
 
 func (e *probeEngine) Snapshots(context.Context, string, restic.Mode) ([]restic.Snapshot, error) {
+	e.listed++
 	return e.snaps, nil
 }
 
@@ -45,7 +49,8 @@ func (e *probeEngine) Unlock(_ context.Context, _ string, removeAll bool, _ rest
 	return nil
 }
 
-func (e *probeEngine) LsStream(_ context.Context, _, _ string, _ restic.Mode, onEntry func(restic.FileEntry)) error {
+func (e *probeEngine) LsStream(_ context.Context, _, snapshotID string, _ restic.Mode, onEntry func(restic.FileEntry)) error {
+	e.read = append(e.read, snapshotID)
 	if e.lsErr != nil {
 		return e.lsErr
 	}
@@ -115,6 +120,10 @@ func newProbeServiceDB(t *testing.T, eng *probeEngine) (*Service, store.Target, 
 	settings.ContainersPath = "backups/containers"
 	settings.RestoreFolder = "restore"
 	if err := st.UpdateSettings(settings); err != nil {
+		t.Fatal(err)
+	}
+	// The own folder was set up long before any backup the test makes.
+	if _, err := db.Exec(`UPDATE former_own_folders SET left_at = left_at - 3600`); err != nil {
 		t.Fatal(err)
 	}
 	tg, err := st.UpsertTarget(store.Target{ContainerName: "nextcloud"})
@@ -343,7 +352,10 @@ func TestItemProbeFailsAChangedBlockSnapshotWithAShortSegment(t *testing.T) {
 }
 
 func TestItemProbeOfARemoteRepositoryUnlocksNothingWithoutALock(t *testing.T) {
-	eng := &probeEngine{entries: []restic.FileEntry{fileEntry("/host/user/appdata/nextcloud/config.php", 1200)}}
+	eng := &probeEngine{
+		entries: []restic.FileEntry{fileEntry("/host/user/appdata/nextcloud/config.php", 1200)},
+		snaps:   []restic.Snapshot{{ID: "abcd1234ffffffff"}},
+	}
 	s, tg := newProbeService(t, eng)
 	settings, err := s.store.GetSettings()
 	if err != nil {
@@ -417,5 +429,126 @@ func TestAProbeThatCannotListABackupTheRepositoryHoldsStillFails(t *testing.T) {
 	}
 	if rec.OK || !strings.Contains(rec.Detail, "list the backup") {
 		t.Fatalf("probe = %+v, want the failed listing recorded", rec)
+	}
+}
+
+// remoteProbeService is a probe of nextcloud backed up once to a remote own
+// folder, the run made a minute ago.
+func remoteProbeService(t *testing.T, eng *probeEngine) (*Service, store.Target, *sql.DB) {
+	t.Helper()
+	s, tg, db := newProbeServiceDB(t, eng)
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	settings.ContainersPath = "s3:https://s3.example.com/bucket/containers"
+	if err := s.store.UpdateSettings(settings); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := db.Exec(`UPDATE former_own_folders SET left_at = left_at - 120`); err != nil {
+		t.Fatal(err)
+	}
+	recordBackup(t, s.store, tg.ID, "abcd1234")
+	if _, err := db.Exec(`UPDATE runs SET started_at = started_at - 60`); err != nil {
+		t.Fatal(err)
+	}
+	return s, tg, db
+}
+
+func moveOwnFolderTo(t *testing.T, s *Service, path string) {
+	t.Helper()
+	if _, err := s.store.MutateSettings(func(st *store.Settings) error {
+		st.ContainersPath = path
+		return nil
+	}); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestAProbeOfAnUnmovedRemoteFolderReadsTheBackupWithoutListingFirst(t *testing.T) {
+	eng := &probeEngine{entries: []restic.FileEntry{fileEntry("/host/user/appdata/nextcloud/config.php", 1200)}}
+	s, tg, _ := remoteProbeService(t, eng)
+
+	if rec, err := s.ProbeItem(context.Background(), tg.ID); err != nil || !rec.OK {
+		t.Fatalf("probe = %+v, %v", rec, err)
+	}
+	if eng.listed != 0 {
+		t.Fatalf("listed the repository %d times, want the backup read straight away", eng.listed)
+	}
+}
+
+func TestAProbeAfterAnOwnFolderMovedWithoutItsBackupsNeverRunsLs(t *testing.T) {
+	eng := &probeEngine{lsErr: errors.New("restic ls: Load(<snapshot/abcd1234>, 0, 0) failed: The specified key does not exist.")}
+	s, tg, _ := remoteProbeService(t, eng)
+	moveOwnFolderTo(t, s, "s3:https://s3.example.com/other/containers")
+
+	out := captureLog(t, func() { s.firstProbe(context.Background(), tg.ID) })
+
+	if len(eng.read) != 0 {
+		t.Fatalf("ls ran on %v, want the listing to settle it", eng.read)
+	}
+	if !strings.Contains(out, "waits for the next backup") {
+		t.Fatalf("log = %q, want the wait said plainly", out)
+	}
+	if _, found, _ := s.store.LatestItemProbe(tg.ID); found {
+		t.Fatal("a backup that is not there must not record a probe")
+	}
+}
+
+func TestAProbeOfABackupMadeInTheSecondTheOwnFolderMovedNeverRunsLs(t *testing.T) {
+	eng := &probeEngine{lsErr: errors.New("restic ls: Load(<snapshot/abcd1234>, 0, 0) failed: The specified key does not exist.")}
+	s, tg, db := remoteProbeService(t, eng)
+	moveOwnFolderTo(t, s, "s3:https://s3.example.com/other/containers")
+	if _, err := db.Exec(`UPDATE runs SET started_at = (SELECT MAX(left_at) FROM former_own_folders)`); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := s.ProbeItem(context.Background(), tg.ID); !errors.Is(err, errProbeSnapshotElsewhere) {
+		t.Fatalf("err = %v, want the probe to wait for the next backup", err)
+	}
+	if len(eng.read) != 0 {
+		t.Fatalf("ls ran on %v, want the listing to settle it", eng.read)
+	}
+}
+
+func TestAProbeAfterAnOwnFolderMovedWithItsBackupsReadsTheCopy(t *testing.T) {
+	eng := &probeEngine{
+		entries: []restic.FileEntry{fileEntry("/host/user/appdata/nextcloud/config.php", 1200)},
+		snaps:   []restic.Snapshot{{ID: "c0ffee99c0ffee99", Original: "abcd1234ffffffff"}},
+	}
+	s, tg, _ := remoteProbeService(t, eng)
+	moveOwnFolderTo(t, s, "s3:https://s3.example.com/other/containers")
+
+	rec, err := s.ProbeItem(context.Background(), tg.ID)
+	if err != nil || !rec.OK || rec.SnapshotID != "abcd1234" {
+		t.Fatalf("probe = %+v, %v, want the backup checked through its copy", rec, err)
+	}
+	if !slices.Equal(eng.read, []string{"c0ffee99c0ffee99"}) {
+		t.Fatalf("ls ran on %v, want the copy", eng.read)
+	}
+}
+
+func TestAProbeOfAFolderOnThisHostAsksItsSnapshotFilesFirst(t *testing.T) {
+	eng := &probeEngine{entries: []restic.FileEntry{fileEntry("/host/user/appdata/nextcloud/config.php", 1200)}}
+	s, tg := newProbeService(t, eng)
+	snapshots := filepath.Join(s.cfg.HostMountRoot, "backups", "containers", "snapshots")
+	if err := os.MkdirAll(snapshots, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	recordBackup(t, s.store, tg.ID, "abcd1234")
+	if err := os.WriteFile(filepath.Join(snapshots, "abcd1234ffffffff"), nil, 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	if rec, err := s.ProbeItem(context.Background(), tg.ID); err != nil || !rec.OK || eng.listed != 0 {
+		t.Fatalf("probe = %+v, %v after %d listings, want the backup read straight away", rec, err, eng.listed)
+	}
+
+	recordBackup(t, s.store, tg.ID, "ee11ee11")
+	if _, err := s.ProbeItem(context.Background(), tg.ID); !errors.Is(err, errProbeSnapshotElsewhere) {
+		t.Fatalf("err = %v, want a backup the folder has no file of to wait", err)
+	}
+	if slices.Contains(eng.read, "ee11ee11") {
+		t.Fatalf("ls ran on %v, want the missing backup left alone", eng.read)
 	}
 }

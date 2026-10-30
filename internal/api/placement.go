@@ -70,6 +70,8 @@ var placementCodes = []struct {
 	{errNestedLocation, "nested-location"},
 	{errCopyOnOwnFolder, "copy-on-own-folder"},
 	{errOwnFolderOnCopy, "own-folder-on-copy"},
+	{errOwnFolderOnTypedCopy, "own-folder-on-typed-copy"},
+	{errPlaceUnchecked, "place-unchecked"},
 	{errNamedRepoOverlap, "named-repo-overlap"},
 	{errUnprefixedRemote, "unprefixed-remote"},
 	{errLocationNeeded, "location-needed"},
@@ -132,6 +134,9 @@ func placementFail(w http.ResponseWriter, err error, extra map[string]any) {
 	}
 	if pathErr, ok := errors.AsType[*repoPathErr](err); ok && pathErr.suggest != "" {
 		env["suggest"] = pathErr.suggest
+	}
+	if busy, ok := errors.AsType[*sectionBusyErr](err); ok {
+		env["domain"] = busy.domain
 	}
 	maps.Copy(env, extra)
 	writeJSON(w, http.StatusOK, env)

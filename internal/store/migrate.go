@@ -3559,6 +3559,22 @@ UPDATE offsite_targets SET
 		sql:     droppedSkipSQL("placement_defaults") + droppedSkipSQL("offsite_copy_rules"),
 		report:  droppedSkipLines,
 	},
+	{
+		// The places each section's own folder lay before it moved, so the
+		// backups left there can still be found. An install whose own folders
+		// never moved has no rows.
+		version:          formerOwnFoldersMigration,
+		name:             "former_own_folders",
+		alreadySatisfied: tablePresent("former_own_folders"),
+		sql: `CREATE TABLE IF NOT EXISTS former_own_folders (
+  domain         TEXT    NOT NULL,
+  repo           TEXT    NOT NULL,
+  creds_ref      TEXT    NOT NULL DEFAULT '',
+  destination_id TEXT    NOT NULL DEFAULT '',
+  left_at        INTEGER NOT NULL,
+  PRIMARY KEY (domain, repo)
+);`,
+	},
 }
 
 // droppedSkipLines names each id droppedSkipSQL takes out, once per domain, in
@@ -3899,6 +3915,9 @@ const directFollowsTargetMigration = 630
 // removedSkipsMigration numbers the clean-up of skip lists that name removed
 // targets.
 const removedSkipsMigration = 640
+
+// formerOwnFoldersMigration numbers the places own folders moved away from.
+const formerOwnFoldersMigration = 650
 
 // oneLineColumns are the names and locations the recovery kit prints.
 var oneLineColumns = []struct {

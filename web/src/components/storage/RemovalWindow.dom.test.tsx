@@ -52,3 +52,33 @@ it("keeps a storage location that holds an own folder and says where to move it"
   expect(screen.queryByRole("radiogroup")).toBeNull();
   expect((screen.getByRole("button", { name: "Remove storage location" }) as HTMLButtonElement).disabled).toBe(true);
 });
+
+it("names the busy section when a removal has to wait for it", async () => {
+  const removal: LocationRemoval = {
+    sections: [
+      {
+        domain: "vms", use: "copy", targetId: "t1", repo: "rclone:vault:bv/vms",
+        primary: false, appendOnly: false, entries: 1, backups: 2, listedAt: 0, lastCopyAt: 0,
+      },
+    ],
+  };
+  vi.mocked(api.previewLocationRemoval).mockResolvedValue({ ok: true, removal });
+  vi.mocked(api.removeLocation).mockResolvedValue({ ok: false, code: "domain-busy", error: "a backup is currently running", domain: "vms" });
+
+  await act(async () => {
+    render(
+      <I18nProvider>
+        <ToastProvider>
+          <RemovalWindow location={VAULT} onClose={() => {}} onRemoved={() => {}} />
+        </ToastProvider>
+      </I18nProvider>
+    );
+  });
+  await act(async () => {
+    screen.getByRole("button", { name: "Remove storage location" }).click();
+  });
+
+  expect(
+    screen.getByText("Nothing was removed, because another task is using VMs right now, such as a backup, a copy or a check. Try again when it has finished.")
+  ).toBeTruthy();
+});

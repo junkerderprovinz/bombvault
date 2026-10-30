@@ -679,6 +679,11 @@ func (r *Repo) RemoveDestination(id string, behind func(t OffsiteTarget, s Setti
 		if _, err := tx.Exec(`DELETE FROM offsite_targets WHERE id = ? AND role = ?`, id, RoleDestination); err != nil {
 			return err
 		}
+		// Its sign-in goes with it, so an own folder that lay there cannot be
+		// read any more.
+		if _, err := tx.Exec(`DELETE FROM former_own_folders WHERE destination_id = ?`, id); err != nil {
+			return err
+		}
 		if len(primaries) == 0 {
 			return nil
 		}

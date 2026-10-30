@@ -1,10 +1,12 @@
 package api
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"slices"
 	"strings"
+	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
@@ -239,21 +241,58 @@ func (s *Service) RemoveDestination(id string, expect locationRemoval) (store.Se
 
 // removeWhileIdle runs remove while it holds the lock of every section expect
 // names, so no backup or copy goes on writing to a place that is taken away
-// under it. A section that is busy refuses the removal.
-func (s *Service) removeWhileIdle(expect locationRemoval, remove func() (store.Settings, error)) (store.Settings, error) {
+// under it. A section that stays busy refuses the removal.
+func (s *Service) removeWhileIdle(ctx context.Context, expect locationRemoval, remove func() (store.Settings, error)) (store.Settings, error) {
 	locked := map[string]bool{}
 	for _, sec := range expect.Sections {
 		if locked[sec.Domain] {
 			continue
 		}
-		unlock, ok := s.tryLockDomainFor(sec.Domain, "delete")
-		if !ok {
-			return store.Settings{}, errDomainBusy
+		unlock, err := s.lockForRemoval(ctx, sec.Domain)
+		if err != nil {
+			return store.Settings{}, err
 		}
 		defer unlock()
 		locked[sec.Domain] = true
 	}
 	return remove()
+}
+
+// The restore probes and copies that follow a run hold its section for
+// moments, and a removal right after the nightly run would be refused for
+// them. A removal waits this long for a section before it gives up.
+var (
+	removalLockWait = 30 * time.Second
+	removalLockPoll = 250 * time.Millisecond
+)
+
+// sectionBusyErr is errDomainBusy for the section a removal waited for in
+// vain, which the refusal names.
+type sectionBusyErr struct{ domain string }
+
+func (e *sectionBusyErr) Error() string { return errDomainBusy.Error() }
+
+func (e *sectionBusyErr) Is(target error) bool { return target == errDomainBusy }
+
+// lockForRemoval takes a section's lock for a removal or an erasure, waiting
+// up to removalLockWait. The restore probes queued behind a run wait until
+// the removal has had its turn.
+func (s *Service) lockForRemoval(ctx context.Context, domain string) (func(), error) {
+	defer s.wantDomain(domain)()
+	deadline := time.Now().Add(removalLockWait)
+	for {
+		if unlock, ok := s.tryLockDomainFor(domain, "delete"); ok {
+			return unlock, nil
+		}
+		if !time.Now().Before(deadline) {
+			return nil, &sectionBusyErr{domain: domain}
+		}
+		select {
+		case <-ctx.Done():
+			return nil, &sectionBusyErr{domain: domain}
+		case <-time.After(removalLockPoll):
+		}
+	}
 }
 
 // clearOffsiteFields empties the off-site field of each domain whose primary
@@ -305,7 +344,7 @@ func (h *Handler) handleRemoveDestination(w http.ResponseWriter, r *http.Request
 	if !decodeBody(w, r, &body) {
 		return
 	}
-	settings, err := h.svc.removeWhileIdle(body.Expect, func() (store.Settings, error) {
+	settings, err := h.svc.removeWhileIdle(r.Context(), body.Expect, func() (store.Settings, error) {
 		return h.svc.RemoveDestination(r.PathValue("id"), body.Expect)
 	})
 	var changed *removalChangedErr

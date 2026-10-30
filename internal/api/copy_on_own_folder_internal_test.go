@@ -1,6 +1,7 @@
 package api
 
 import (
+	"errors"
 	"reflect"
 	"strings"
 	"testing"
@@ -101,11 +102,34 @@ func TestASettingsSaveRefusesAnOwnFolderWhereACopyOfTheSectionLies(t *testing.T)
 
 	res := f.do("PUT", "/api/settings", v)
 
-	if msg, _ := res["error"].(string); res["ok"] != false || !strings.Contains(msg, errOwnFolderOnCopy.Error()) {
+	if msg, _ := res["error"].(string); res["ok"] != false || !strings.Contains(msg, errOwnFolderOnTypedCopy.Error()) {
 		t.Fatalf("answer = %v, want the own folder on the copy refused", res)
 	}
 	if s, _ := f.st.GetSettings(); s.FilesPath != settings.FilesPath {
 		t.Fatalf("files path = %q, want it kept", s.FilesPath)
+	}
+}
+
+func TestAnOwnFolderGoesWhereATypedInCopyWasOnceThatCopyIsRemoved(t *testing.T) {
+	f := newPlacementFixture(t)
+	moved := f.target("files", "Moved", "moved/files")
+	settings, err := f.st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	v := toView(settings)
+	v.FilesPath = "moved/files"
+	if res := f.do("PUT", "/api/settings", v); res["code"] != "own-folder-on-typed-copy" {
+		t.Fatalf("answer = %v, want the typed-in copy named", res)
+	}
+
+	id := "target:" + moved.ID
+	removal := f.do("GET", "/api/storage/locations/"+id+"/removal", nil)
+	if res := f.do("POST", "/api/storage/locations/"+id+"/removal", map[string]any{"expect": removal["removal"]}); res["ok"] != true {
+		t.Fatalf("removal = %v", res)
+	}
+	if res := f.do("PUT", "/api/settings", v); res["ok"] != true {
+		t.Fatalf("answer after the copy went = %v, want the own folder there", res)
 	}
 }
 
@@ -121,7 +145,7 @@ func TestMovingASectionFolderOntoACopyOfTheSectionIsRefused(t *testing.T) {
 
 	res := f.do("POST", "/api/storage/locations/"+id+"/removal", map[string]any{"expect": removal["removal"], "home": "moved"})
 
-	if msg, _ := res["error"].(string); res["ok"] != false || !strings.Contains(msg, errOwnFolderOnCopy.Error()) {
+	if msg, _ := res["error"].(string); res["ok"] != false || !strings.Contains(msg, errOwnFolderOnTypedCopy.Error()) {
 		t.Fatalf("answer = %v, want the move onto the copy refused", res)
 	}
 	if s, _ := f.st.GetSettings(); s.FilesPath != "backups/files" {
@@ -140,6 +164,10 @@ func TestALocationRefusalCarriesTheCodeTheInterfaceTranslates(t *testing.T) {
 	onCopy.FilesPath = "moved/files"
 	onOwn := toView(settings)
 	onOwn.FilesOffsite = settings.FilesPath
+	box := f.destination("Box", "rest:https://box:8000/bv")
+	f.tickDestination(box, "vms")
+	onBox := toView(settings)
+	onBox.VMsPath = "rest:https://box:8000/bv/vms"
 	locations, err := f.svc.StorageLocations()
 	if err != nil {
 		t.Fatal(err)
@@ -151,9 +179,10 @@ func TestALocationRefusalCarriesTheCodeTheInterfaceTranslates(t *testing.T) {
 		res  map[string]any
 		code string
 	}{
-		"own folder on a copy":        {f.do("PUT", "/api/settings", onCopy), "own-folder-on-copy"},
+		"own folder on a typed copy":  {f.do("PUT", "/api/settings", onCopy), "own-folder-on-typed-copy"},
+		"own folder on a box's copy":  {f.do("PUT", "/api/settings", onBox), "own-folder-on-copy"},
 		"off-site field on own":       {f.do("PUT", "/api/settings", onOwn), "copy-on-own-folder"},
-		"section folder moved":        {f.do("POST", "/api/storage/locations/"+id+"/removal", map[string]any{"expect": removal["removal"], "home": "moved"}), "own-folder-on-copy"},
+		"section folder moved":        {f.do("POST", "/api/storage/locations/"+id+"/removal", map[string]any{"expect": removal["removal"], "home": "moved"}), "own-folder-on-typed-copy"},
 		"repository in an own folder": {f.do("POST", "/api/repos", map[string]any{"name": "Inside", "repo": settings.FilesPath + "/inside"}), "nested-location"},
 	} {
 		if c.res["ok"] != false || c.res["code"] != c.code {
@@ -179,5 +208,132 @@ func TestTheQuestionBeforeANewLocationRefusesWhatTheSaveWould(t *testing.T) {
 	}
 	if pv := f.newTargetPreview("domain=containers&repo=b2:bucket:containers&as=field"); pv["items"] == nil {
 		t.Fatalf("preview = %v, want a free location previewed", pv)
+	}
+}
+
+// leftoverCopy is the row the files section's off-site field leaves switched
+// off at location once the field is cleared, with the sign-in credsRef.
+func leftoverCopy(f *placementFixture, location, credsRef string) store.OffsiteTarget {
+	f.t.Helper()
+	left := f.fieldTarget("files", location)
+	if credsRef != "" {
+		left.CredsRef = credsRef
+		if _, err := f.st.UpsertOffsiteTarget(left); err != nil {
+			f.t.Fatal(err)
+		}
+	}
+	settings, err := f.st.GetSettings()
+	if err != nil {
+		f.t.Fatal(err)
+	}
+	settings.FilesOffsite = ""
+	if err := f.st.UpdateSettings(settings); err != nil {
+		f.t.Fatal(err)
+	}
+	if err := f.svc.syncPrimaryOffsiteTarget("files", settings); err != nil {
+		f.t.Fatal(err)
+	}
+	return left
+}
+
+// ownFilesAt saves the files section's own folder at path the way the page does.
+func ownFilesAt(f *placementFixture, path string) map[string]any {
+	f.t.Helper()
+	settings, err := f.st.GetSettings()
+	if err != nil {
+		f.t.Fatal(err)
+	}
+	v := toView(settings)
+	v.FilesPath = path
+	return f.do("PUT", "/api/settings", v)
+}
+
+func TestAnOwnFolderMayGoWhereASwitchedOffCopyWasLeftAndKeepsItsBackups(t *testing.T) {
+	f := newPlacementFixture(t)
+	left := leftoverCopy(f, "moved/files", "")
+	f.hold(f.root+"/moved/files", snap("c1", 100, "fileset:iso"))
+	locations, err := f.svc.StorageLocations()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, l := range locations {
+		if l.ID == "target:"+left.ID {
+			t.Fatalf("the switched-off copy is listed as %+v, want it hidden", l)
+		}
+	}
+
+	if res := ownFilesAt(f, "moved/files"); res["ok"] != true {
+		t.Fatalf("answer = %v, want the own folder where the switched-off copy was left", res)
+	}
+	if f.hasTarget(left.ID) {
+		t.Fatal("the switched-off copy is still there after the own folder took its place")
+	}
+	if fixed, err := f.svc.RepairLocationModel(); err != nil || len(fixed) != 0 {
+		t.Fatalf("a start repaired %v, %v, want nothing left to repair", fixed, err)
+	}
+	if len(f.eng.forgets) != 0 || len(f.eng.deletes) != 0 {
+		t.Fatalf("forgot %+v and deleted %+v, want the backups there kept", f.eng.forgets, f.eng.deletes)
+	}
+	if got := f.snapsAt(f.root + "/moved/files"); len(got) != 1 {
+		t.Fatalf("the own folder holds %d backups, want the copy's one", len(got))
+	}
+}
+
+func TestAnOwnFolderStaysWhereItIsWhenItsKeyDoesNotOpenALeftCopy(t *testing.T) {
+	for name, c := range map[string]struct {
+		err  error
+		code string
+	}{
+		"another key":      {errors.New("Fatal: wrong password or no key found"), "repo-wrong-key"},
+		"a place far away": {errors.New("dial tcp: no route to host"), "place-unchecked"},
+	} {
+		t.Run(name, func(t *testing.T) {
+			f := newPlacementFixture(t)
+			left := leftoverCopy(f, "moved/files", "")
+			f.eng.opens[f.root+"/moved/files"] = false
+			f.eng.openErr[f.root+"/moved/files"] = c.err
+			f.makeRepo(f.root + "/moved/files")
+			before, _ := f.st.GetSettings()
+
+			if res := ownFilesAt(f, "moved/files"); res["ok"] != false || res["code"] != c.code {
+				t.Fatalf("answer = %v, want %s", res, c.code)
+			}
+			if !f.hasTarget(left.ID) {
+				t.Fatal("the switched-off copy went although the save was refused")
+			}
+			if s, _ := f.st.GetSettings(); s.FilesPath != before.FilesPath {
+				t.Fatalf("files path = %q, want it kept", s.FilesPath)
+			}
+		})
+	}
+}
+
+func TestAnOwnFolderOnALeftRemoteCopyTakesItsSignIn(t *testing.T) {
+	f := newPlacementFixture(t)
+	const place = "s3:https://box.example/bv/files"
+	leftoverCopy(f, place, "box-keys")
+
+	if res := ownFilesAt(f, place); res["ok"] != true {
+		t.Fatalf("answer = %v, want the own folder there", res)
+	}
+	row, ok, err := f.st.PrimaryRemoteTarget("files")
+	if err != nil || !ok || row.CredsRef != "box-keys" {
+		t.Fatalf("remote-primary row = %+v, %v, %v, want it to sign in with box-keys", row, ok, err)
+	}
+}
+
+func TestAnOwnFolderOnALeftRemoteCopyKeepsTheSignInItHas(t *testing.T) {
+	f := newPlacementFixture(t)
+	const place = "s3:https://box.example/bv/files"
+	leftoverCopy(f, place, "box-keys")
+	if _, err := f.st.UpsertPrimaryRemoteTarget("files", store.OffsiteTarget{Repo: place, CredsRef: "own-keys", Enabled: true}); err != nil {
+		t.Fatal(err)
+	}
+
+	if res := ownFilesAt(f, place); res["ok"] != true {
+		t.Fatalf("answer = %v, want the own folder there", res)
+	}
+	if row, _, _ := f.st.PrimaryRemoteTarget("files"); row.CredsRef != "own-keys" {
+		t.Fatalf("remote-primary row signs in with %q, want its own own-keys", row.CredsRef)
 	}
 }

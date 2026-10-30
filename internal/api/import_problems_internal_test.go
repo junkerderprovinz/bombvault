@@ -46,6 +46,12 @@ func TestEveryImportProblemCarriesTheCodeThePageWords(t *testing.T) {
 			func(exp *settingsExport) { exp.Destinations = []offsiteTargetView{{Name: "Box"}} },
 			map[string]any{"code": "import-row-location", "part": "destination", "row": 1.0, "cause": "location-needed"},
 		},
+		"off-site storage location with an unknown compression": {
+			func(exp *settingsExport) {
+				exp.OffsiteTargets = []offsiteTargetView{{Domain: "containers", Repo: "b2:bucket:c", Compression: "huge"}}
+			},
+			map[string]any{"code": "import-row-compression", "part": "target", "row": 1.0},
+		},
 		"unknown compression": {
 			func(exp *settingsExport) { exp.Settings.Compression = map[string]string{"containers": "huge"} },
 			map[string]any{"code": "import-setting", "name": "compression"},

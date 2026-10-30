@@ -731,7 +731,11 @@ func validateExport(exp settingsExport, mountRoot, sourceRoot string) error {
 	// against the same contract the CRUD endpoints enforce, so a bad file is
 	// rejected before any write.
 	for i, tv := range exp.OffsiteTargets {
-		if msg := validateOffsiteTargetInput(tv.toStoreTarget()); msg != "" {
+		t := tv.toStoreTarget()
+		if _, err := restic.ParseCompression(t.Compression); err != nil {
+			return rowProblem("import-row-compression", importPartTarget, i, nil, "off-site target #%d: %s", i+1, err)
+		}
+		if msg := validateOffsiteTargetInput(t); msg != "" {
 			return rowProblem("import-row-invalid", importPartTarget, i, nil, "off-site target #%d: %s", i+1, msg)
 		}
 	}

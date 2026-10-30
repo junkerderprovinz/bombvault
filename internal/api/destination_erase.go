@@ -538,9 +538,9 @@ func (s *Service) StartErasure(ctx context.Context, job erasureJob, expect locat
 		if locked[domain] {
 			return nil
 		}
-		u, ok := s.tryLockDomainFor(domain, "delete")
-		if !ok {
-			return errDomainBusy
+		u, err := s.lockForRemoval(ctx, domain)
+		if err != nil {
+			return err
 		}
 		locked[domain] = true
 		unlocks = append(unlocks, u)

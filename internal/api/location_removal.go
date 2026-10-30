@@ -354,8 +354,8 @@ func (h *Handler) moveFolders(move folderMove) (store.Settings, error) {
 
 // removeLocation takes the location with the id away and leaves its data
 // where it is. home is where the sections of a section folder move to.
-func (h *Handler) removeLocation(id string, expect locationRemoval, home string) (store.Settings, error) {
-	return h.svc.removeWhileIdle(expect, func() (store.Settings, error) { return h.removeIdleLocation(id, expect, home) })
+func (h *Handler) removeLocation(ctx context.Context, id string, expect locationRemoval, home string) (store.Settings, error) {
+	return h.svc.removeWhileIdle(ctx, expect, func() (store.Settings, error) { return h.removeIdleLocation(id, expect, home) })
 }
 
 func (h *Handler) removeIdleLocation(id string, expect locationRemoval, home string) (store.Settings, error) {
@@ -496,7 +496,7 @@ func (h *Handler) handleRemoveLocation(w http.ResponseWriter, r *http.Request) {
 	if !decodeBody(w, r, &body) {
 		return
 	}
-	settings, err := h.removeLocation(r.PathValue("id"), body.Expect, body.Home)
+	settings, err := h.removeLocation(r.Context(), r.PathValue("id"), body.Expect, body.Home)
 	if err != nil {
 		removalFail(w, err)
 		return
