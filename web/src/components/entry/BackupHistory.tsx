@@ -1,5 +1,5 @@
 import type { Run } from "../../lib/api";
-import { HISTORY_DAYS, barHeight, type HistoryDay } from "../../lib/entry";
+import { HISTORY_DAYS, barHeight, historyScale, type HistoryDay } from "../../lib/entry";
 import { humanBytes } from "../../lib/forecast";
 import { useT } from "../../lib/i18n";
 import { useTipBubble } from "../../lib/useTipBubble";
@@ -95,7 +95,7 @@ export function BackupHistory({
   hueIndex: number;
 }) {
   const { t, lang } = useT();
-  const largest = Math.max(...days.map((day) => day.bytes));
+  const largest = historyScale(days);
   const today = new Intl.RelativeTimeFormat(lang, { numeric: "auto" }).format(0, "day");
 
   return (

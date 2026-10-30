@@ -316,6 +316,16 @@ describe("the list of backups", () => {
     expect(screen.getByRole("button", { name: en["snapshots.recreate"] })).toBeTruthy();
   });
 
+  it("says a container keeps its definition only, without a history and before the off-site location is read", async () => {
+    const kept = [0, 1, 2].map((daysAgo) => backupRun(`k${daysAgo}`, daysAgo, { snapshotId: "", bytes: 0, sourceBytes: null }));
+    serveEntries(mocks, { runs: kept });
+    getTimeline.mockResolvedValue(timelineOf([], [BOX]));
+    await renderPage("/backups/container/immich");
+    expect(screen.getByText(en["snapshots.configOnlyHint"])).toBeTruthy();
+    expect(screen.queryByRole("heading", { level: 2, name: new RegExp(en["entry.history.title"]) })).toBeNull();
+    expect(bars()).toHaveLength(0);
+  });
+
   it("says when the backups could not be read", async () => {
     getTimeline.mockResolvedValue({ ok: false, error: "repository locked" });
     await renderPage("/backups/container/immich");

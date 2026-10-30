@@ -1351,3 +1351,37 @@ func TestCapacityWindowResetAndLowFree(t *testing.T) {
 		}
 	})
 }
+
+func TestContainerThatOnlyKeepsItsDefinitionHasNothingToLearnFrom(t *testing.T) {
+	kept := daily(14, anomalyNow-14*anomalyDay, func(i int) store.SeriesRun {
+		return mkRun(fmt.Sprintf("r%d", i), 0, "success", 0)
+	})
+	res := evaluateItem(itemInput{Kind: seriesItem, Domain: anomalyDomainContainer, Series: kept, Sens: sensBalanced})
+	if !res.Learning.NoData {
+		t.Fatalf("learning = %+v, want no data", res.Learning)
+	}
+}
+
+func TestOnlyContainersCountRunsWithoutSnapshotAsNoData(t *testing.T) {
+	bare := []store.SeriesRun{mkRun("r1", anomalyNow, "success", 0)}
+	if res := evaluateItem(itemInput{Kind: seriesItem, Domain: anomalyDomainVM, Series: bare, Sens: sensBalanced}); res.Learning.NoData {
+		t.Fatalf("a VM series without a snapshot read as no data: %+v", res.Learning)
+	}
+	if res := evaluateItem(itemInput{Kind: seriesItem, Domain: anomalyDomainContainer, Sens: sensBalanced}); res.Learning.NoData {
+		t.Fatalf("a container that never ran read as no data: %+v", res.Learning)
+	}
+	failed := []store.SeriesRun{mkRun("r1", anomalyNow, "failed", 0)}
+	if res := evaluateItem(itemInput{Kind: seriesItem, Domain: anomalyDomainContainer, Series: failed, Sens: sensBalanced}); res.Learning.NoData {
+		t.Fatalf("a container whose only backup failed read as no data: %+v", res.Learning)
+	}
+}
+
+func TestContainerWithSnapshotsKeepsLearning(t *testing.T) {
+	rows := daily(3, anomalyNow-3*anomalyDay, func(i int) store.SeriesRun {
+		return mkRun(fmt.Sprintf("r%d", i), 0, "success", 100, withSource(1<<20, 10), func(run *store.SeriesRun) { run.SnapshotID = fmt.Sprintf("s%d", i) })
+	})
+	res := evaluateItem(itemInput{Kind: seriesItem, Domain: anomalyDomainContainer, Series: append([]store.SeriesRun{mkRun("kept", anomalyNow, "success", 0)}, rows...), Sens: sensBalanced})
+	if res.Learning.NoData {
+		t.Fatalf("a container with snapshots read as no data: %+v", res.Learning)
+	}
+}

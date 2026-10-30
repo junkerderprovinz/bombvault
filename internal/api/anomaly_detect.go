@@ -1275,7 +1275,7 @@ func evaluateItem(in itemInput) itemResult {
 
 	eligible := oldestFirst(eligibleRuns(in.Series))
 	sizes := measurements(eligible, func(run store.SeriesRun) *int64 { return run.SourceBytes })
-	res.Learning.NoData = len(sizes) > 0 && slices.Max(sampleValues(sizes)) == 0
+	res.Learning.NoData = (len(sizes) > 0 && slices.Max(sampleValues(sizes)) == 0) || keptDefinitionOnly(in, eligible)
 	res.Typical = typicalValues{
 		SourceBytes: typicalOf(sizes, learned.Source),
 		ResticMS: typicalOf(measurements(eligible,
@@ -1283,6 +1283,16 @@ func evaluateItem(in itemInput) itemResult {
 		NewDataBytes: typicalOf(newDataMeasurements(in.NewData), learned.NewData),
 	}
 	return res
+}
+
+// keptDefinitionOnly reports a container whose successful backups all kept its
+// definition and nothing else: no snapshot, no measurement. It has no data
+// folders, so no number of further runs gives a rule a sample.
+func keptDefinitionOnly(in itemInput, eligible []store.SeriesRun) bool {
+	if in.Kind != seriesItem || in.Domain != anomalyDomainContainer || len(eligible) > 0 {
+		return false
+	}
+	return slices.ContainsFunc(in.Series, func(run store.SeriesRun) bool { return run.Status == "success" })
 }
 
 // typicalOf is the median of a rule's samples once it has enough of them. A
