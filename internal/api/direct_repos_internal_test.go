@@ -119,7 +119,7 @@ func TestALocationInsideOrAroundAnotherIsRefused(t *testing.T) {
 	res := f.do("POST", "/api/offsite/targets", map[string]any{
 		"domain": "vms", "name": "inner", "repo": "backups/nas/offsite", "enabled": true,
 	})
-	if msg, _ := res["error"].(string); res["ok"] != false || !strings.Contains(msg, "named repository") {
+	if res["ok"] != false || res["code"] != "named-repo-overlap" {
 		t.Errorf("target inside a named repository: %v", res)
 	}
 	res = f.do("POST", "/api/repos", map[string]any{"name": "x", "repo": "backups/containers/inner"})
