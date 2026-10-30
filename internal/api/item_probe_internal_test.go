@@ -122,6 +122,10 @@ func newProbeServiceDB(t *testing.T, eng *probeEngine) (*Service, store.Target, 
 	if err := st.UpdateSettings(settings); err != nil {
 		t.Fatal(err)
 	}
+	// The own folder was set up long before any backup the test makes.
+	if _, err := db.Exec(`UPDATE former_own_folders SET left_at = left_at - 3600`); err != nil {
+		t.Fatal(err)
+	}
 	tg, err := st.UpsertTarget(store.Target{ContainerName: "nextcloud"})
 	if err != nil {
 		t.Fatal(err)
@@ -348,7 +352,10 @@ func TestItemProbeFailsAChangedBlockSnapshotWithAShortSegment(t *testing.T) {
 }
 
 func TestItemProbeOfARemoteRepositoryUnlocksNothingWithoutALock(t *testing.T) {
-	eng := &probeEngine{entries: []restic.FileEntry{fileEntry("/host/user/appdata/nextcloud/config.php", 1200)}}
+	eng := &probeEngine{
+		entries: []restic.FileEntry{fileEntry("/host/user/appdata/nextcloud/config.php", 1200)},
+		snaps:   []restic.Snapshot{{ID: "abcd1234ffffffff"}},
+	}
 	s, tg := newProbeService(t, eng)
 	settings, err := s.store.GetSettings()
 	if err != nil {
@@ -485,6 +492,22 @@ func TestAProbeAfterAnOwnFolderMovedWithoutItsBackupsNeverRunsLs(t *testing.T) {
 	}
 	if _, found, _ := s.store.LatestItemProbe(tg.ID); found {
 		t.Fatal("a backup that is not there must not record a probe")
+	}
+}
+
+func TestAProbeOfABackupMadeInTheSecondTheOwnFolderMovedNeverRunsLs(t *testing.T) {
+	eng := &probeEngine{lsErr: errors.New("restic ls: Load(<snapshot/abcd1234>, 0, 0) failed: The specified key does not exist.")}
+	s, tg, db := remoteProbeService(t, eng)
+	moveOwnFolderTo(t, s, "s3:https://s3.example.com/other/containers")
+	if _, err := db.Exec(`UPDATE runs SET started_at = (SELECT MAX(left_at) FROM former_own_folders)`); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := s.ProbeItem(context.Background(), tg.ID); !errors.Is(err, errProbeSnapshotElsewhere) {
+		t.Fatalf("err = %v, want the probe to wait for the next backup", err)
+	}
+	if len(eng.read) != 0 {
+		t.Fatalf("ls ran on %v, want the listing to settle it", eng.read)
 	}
 }
 

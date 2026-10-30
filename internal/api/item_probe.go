@@ -417,8 +417,8 @@ func (s *Service) probeSnapshot(ctx context.Context, it probeItem, repo string, 
 
 // snapshotMayBeGone reports whether repo may not hold the snapshot of run. A
 // folder on this host answers from its snapshot files. A remote one is asked
-// only when the item's place changed after the run, since every call to it is
-// billed.
+// only when the item's place changed since the run started, since every call
+// to it is billed.
 func (s *Service) snapshotMayBeGone(it probeItem, repo string, run store.Run) bool {
 	if names, err := snapshotFileNames(repo); err == nil {
 		return !slices.ContainsFunc(strings.Split(names, "\n"), func(name string) bool {

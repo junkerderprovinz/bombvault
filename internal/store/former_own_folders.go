@@ -84,12 +84,13 @@ func (r *Repo) FormerOwnFolders(domain string) ([]FormerOwnFolder, error) {
 }
 
 // PlaceChangedSince reports whether the backups of an item may have been
-// written somewhere else after at: its section's own folder moved, or the
-// item left a home. itemID is the row id its runs are recorded under.
+// written somewhere else from at on: its section's own folder moved, or the
+// item left a home. Both are counted in seconds, so a move in the second at
+// counts too. itemID is the row id its runs are recorded under.
 func (r *Repo) PlaceChangedSince(domain, itemID string, at int64) (bool, error) {
 	var changed bool
-	err := r.db.QueryRow(`SELECT EXISTS (SELECT 1 FROM former_own_folders WHERE domain = ? AND left_at > ?)
-		OR EXISTS (SELECT 1 FROM former_homes WHERE domain = ? AND item_id = ? AND left_at > ?)`,
+	err := r.db.QueryRow(`SELECT EXISTS (SELECT 1 FROM former_own_folders WHERE domain = ? AND left_at >= ?)
+		OR EXISTS (SELECT 1 FROM former_homes WHERE domain = ? AND item_id = ? AND left_at >= ?)`,
 		domain, at, domain, itemID, at).Scan(&changed)
 	if err != nil {
 		return false, fmt.Errorf("PlaceChangedSince: %w", err)

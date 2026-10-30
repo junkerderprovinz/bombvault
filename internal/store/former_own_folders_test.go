@@ -96,7 +96,10 @@ func TestAPlaceChangesAfterABackupWhenItsOwnFolderMovesLater(t *testing.T) {
 	if changed, err := r.PlaceChangedSince("containers", "any", left-60); err != nil || !changed {
 		t.Fatalf("a backup before the move = %v, %v, want its place changed", changed, err)
 	}
-	if changed, err := r.PlaceChangedSince("containers", "any", left); err != nil || changed {
+	if changed, err := r.PlaceChangedSince("containers", "any", left); err != nil || !changed {
+		t.Fatalf("a backup in the second of the move = %v, %v, want its place changed", changed, err)
+	}
+	if changed, err := r.PlaceChangedSince("containers", "any", left+1); err != nil || changed {
 		t.Fatalf("a backup after the move = %v, %v, want its place unchanged", changed, err)
 	}
 	if changed, err := r.PlaceChangedSince("vms", "any", left-60); err != nil || changed {
