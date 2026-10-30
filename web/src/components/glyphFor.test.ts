@@ -151,3 +151,15 @@ describe("glyphFor on close meanings", () => {
     expect(glyphFor("restoreCheck.plan.showFiles")).toEqual(glyphFor("snapshots.show"));
   });
 });
+
+describe("glyphFor on links and passkeys", () => {
+  it("drops a link with a mark apart from making one", () => {
+    expect(glyphFor("takeover.unlink")).toBeDefined();
+    expect(glyphFor("takeover.unlink")).not.toEqual(glyphFor("entry.menu.link"));
+  });
+
+  it("signs in with a passkey under the key, apart from the password door", () => {
+    expect(glyphFor("auth.signInWithPasskey")).toEqual(glyphFor("auth.setPassword"));
+    expect(glyphFor("auth.signInWithPasskey")).not.toEqual(glyphFor("auth.signIn"));
+  });
+});

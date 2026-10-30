@@ -8,6 +8,7 @@ import { hueVars } from "../lib/appearance";
 import type { useT } from "../lib/i18n";
 import { PHRASE_WORDS, checkPhrase } from "../lib/phraseWords";
 import { useConfirm } from "../lib/useConfirm";
+import { shownVersion } from "../pages/settings/AboutCard";
 import { WordSlots } from "../pages/settings/pairing/WordSlots";
 import { displayAddress, type FoundServer, type LauncherState, type PairError } from "./bridge";
 import { PageTop } from "./PageTop";
@@ -187,7 +188,7 @@ export function PairPage({
             {joining.members.map((m) => (
               <div key={m.id} className="rounded-card bg-carbon-surface p-3.5">
                 <p className="truncate text-sm font-semibold text-carbon-text">{m.name || m.id}</p>
-                <p className="truncate text-xs text-carbon-textMuted">{m.version}</p>
+                <p className="truncate text-xs text-carbon-textMuted">{shownVersion(m.version)}</p>
               </div>
             ))}
             {joining.members.length === 0 && (
@@ -313,7 +314,7 @@ export function PairPage({
               <span className="flex min-w-0 flex-1 flex-col gap-0.5">
                 <span className="truncate text-sm font-semibold text-carbon-text">{f.name}</span>
                 <span dir="ltr" className="truncate text-start font-mono text-xs text-carbon-textMuted">
-                  {`${displayAddress(f.url)} · ${f.version}`}
+                  {`${displayAddress(f.url)} · ${shownVersion(f.version)}`}
                 </span>
               </span>
             </button>

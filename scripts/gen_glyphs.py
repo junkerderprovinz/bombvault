@@ -46,6 +46,7 @@ ACTION = [
     "IconKeyRevoke",
     "IconForgotPassword",
     "IconLink",
+    "IconUnlink",
     "IconInfo",
     "IconMail",
     "IconSignIn",
@@ -225,7 +226,7 @@ def jsx(svg):
     path left without a fill of its own also takes one a stylesheet sets on the
     <svg>.
     """
-    s = svg.strip()
+    s = svg.strip().replace("\r\n", "\n")
     bare = re.fullmatch(r"<g>\s*(.*?)\s*</g>", s, re.S)
     if bare:
         s = bare.group(1)
