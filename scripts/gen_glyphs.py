@@ -56,6 +56,7 @@ ACTION = [
     "IconUndo",
     "IconSendTest",
     "IconInstall",
+    "IconUpdate",
     "IconUpToDate",
     "IconUpdateAvailable",
     "IconLog",

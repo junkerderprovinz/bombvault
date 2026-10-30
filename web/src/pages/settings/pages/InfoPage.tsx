@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Button } from "../../../components/Button";
-import { IconSearch, IconUpdateAvailable, IconUpToDate } from "../../../components/glyphs";
+import { IconUpdate, IconUpdateAvailable, IconUpToDate } from "../../../components/glyphs";
 import { IconClose, IconDiagnostics } from "../../../components/navGlyphs";
 import { BrandMark, ReadmeButton } from "../../../components/ReadmeButton";
 import { Rows, SettingRow } from "../../../components/storage/rows";
@@ -76,7 +76,7 @@ function UpdateButton() {
   const failed = t("verdict.failed");
   let label = resting;
   let labelKey = "tile.info.check";
-  let glyph: ReactNode = <IconSearch />;
+  let glyph: ReactNode = <IconUpdate />;
   let tone: "neutral" | "ok" | "warn" | "danger" = "neutral";
   if (check.state === "done") {
     const behind = check.update.updateAvailable;
