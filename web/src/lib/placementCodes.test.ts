@@ -17,6 +17,7 @@ describe("placementErrorText", () => {
       "own-folder-there",
       "copy-on-own-folder",
       "own-folder-on-copy",
+      "own-folder-on-typed-copy",
       "named-repo-overlap",
       "unprefixed-remote",
       "location-needed",

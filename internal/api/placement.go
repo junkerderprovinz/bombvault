@@ -70,6 +70,7 @@ var placementCodes = []struct {
 	{errNestedLocation, "nested-location"},
 	{errCopyOnOwnFolder, "copy-on-own-folder"},
 	{errOwnFolderOnCopy, "own-folder-on-copy"},
+	{errOwnFolderOnTypedCopy, "own-folder-on-typed-copy"},
 	{errNamedRepoOverlap, "named-repo-overlap"},
 	{errUnprefixedRemote, "unprefixed-remote"},
 	{errLocationNeeded, "location-needed"},

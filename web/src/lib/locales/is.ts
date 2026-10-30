@@ -3311,6 +3311,7 @@ const is: Partial<Translations> = {
   "placementCode.ownFolderThere": "Hér er eigin mappa svæðis. Færðu hana fyrst annað undir Eigin möppur á þessari síðu. Eftir það er hægt að fjarlægja geymslustaðinn.",
   "placementCode.copyOnOwnFolder": "Þessi hluti geymir nú þegar eigin möppu á þessum geymslustað, svo afrit þangað myndi lenda ofan á sjálfu sér.",
   "placementCode.ownFolderOnCopy": "Afrit af þessum hluta er þegar hér, svo öryggisafritin yrðu afrituð ofan á sjálf sig. Til að gera þennan stað að eigin möppu skaltu opna hann undir Áfangastaðir og færa hlutann hingað á spjaldinu Eigin möppur þar. Þá hættir afritið.",
+  "placementCode.ownFolderOnTypedCopy": "Afrit af þessum hluta er þegar hér, svo öryggisafritin yrðu afrituð ofan á sjálf sig. Þetta afrit var slegið inn handvirkt og er ekki með spjaldið Eigin möppur. Til að gera þennan stað að eigin möppu skaltu opna hann undir Áfangastaðir, velja Fjarlægja áfangastað og halda afritunum þar. Sláðu síðan þennan stað inn aftur.",
   "placementCode.namedRepoOverlap": "Þessi staður er geymsla sem þú settir upp undir Geymslur í Stillingar, Áfangastaðir, eða liggur innan í eða utan um eina slíka. Veldu annan stað eða fjarlægðu fyrst þá geymslu.",
   "placementCode.unprefixedRemote": "Þessi staður lítur út eins og fjartenging en hefur ekkert restic-forskeyti. Settu rclone: fyrir framan heiti rclone-fjartengingar, eins og í rclone:myremote:bucket.",
   "placementCode.locationNeeded": "Geymsla þarf stað: möppu undir Host Data eða restic-fjartengingu eins og b2:bucket.",

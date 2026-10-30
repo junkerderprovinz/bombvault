@@ -30,6 +30,30 @@ var errCopyOnOwnFolder = errors.New("the section keeps its own folder at this pl
 // storage page ends that copy instead.
 var errOwnFolderOnCopy = errors.New("a copy of the section lies at this place, so its backups would be copied onto themselves; move the own folder there in the Own folders card of that storage location, which ends that copy")
 
+// errOwnFolderOnTypedCopy is errOwnFolderOnCopy for a copy typed in by hand.
+// Its storage location has no Own folders card, so the copy has to go first.
+var errOwnFolderOnTypedCopy = errors.New("a copy of the section typed in by hand lies at this place, so its backups would be copied onto themselves; remove that storage location and keep its backups, then the own folder can go there")
+
+// fieldTarget is the row of a section's off-site field among targets, an
+// empty one for a field without a row.
+func fieldTarget(targets []store.OffsiteTarget, domain string) store.OffsiteTarget {
+	for _, t := range targets {
+		if t.Domain == domain && t.SortOrder == 0 {
+			return t
+		}
+	}
+	return store.OffsiteTarget{}
+}
+
+// ownFolderOnCopy refuses an own folder at the place of the copy t, which
+// follows a storage location or was typed in by hand.
+func ownFolderOnCopy(t store.OffsiteTarget) error {
+	if t.DestinationID == "" {
+		return errOwnFolderOnTypedCopy
+	}
+	return errOwnFolderOnCopy
+}
+
 // nestedLocationErr is errNestedLocation with the place in the way, so the
 // refusal can show which one it is.
 type nestedLocationErr struct {
@@ -183,6 +207,10 @@ func (s *Service) locationClash(settings store.Settings, loc string, self locati
 	clashes := func(other string) bool {
 		return repoLocationsOverlap(other, loc) && (!self.shared() || !sameRepoLocation(other, loc))
 	}
+	targets, err := s.store.ListOffsiteTargets()
+	if err != nil {
+		return fmt.Errorf("read the off-site targets to check this location: %w", err)
+	}
 	for _, d := range offsiteConfigDomains {
 		own, oErr := s.repoFor(settings, d, "local")
 		switch {
@@ -198,15 +226,11 @@ func (s *Service) locationClash(settings store.Settings, loc string, self locati
 			switch {
 			case !ok:
 			case d == self.own && sameRepoLocation(offLoc, loc):
-				return errOwnFolderOnCopy
+				return ownFolderOnCopy(fieldTarget(targets, d))
 			case clashes(offLoc):
 				return &nestedLocationErr{what: "the " + d + " domain's off-site destination", at: offLoc}
 			}
 		}
-	}
-	targets, err := s.store.ListOffsiteTargets()
-	if err != nil {
-		return fmt.Errorf("read the off-site targets to check this location: %w", err)
 	}
 	destinations, err := s.store.ListDestinations()
 	if err != nil {
@@ -223,7 +247,7 @@ func (s *Service) locationClash(settings store.Settings, loc string, self locati
 		switch {
 		case !ok:
 		case t.Domain == self.own && sameRepoLocation(tLoc, loc):
-			return errOwnFolderOnCopy
+			return ownFolderOnCopy(t)
 		case !hiddenTarget(t, settings, ids) && clashes(tLoc):
 			return &nestedLocationErr{what: fmt.Sprintf("the off-site destination %q", t.Name), at: tLoc}
 		}

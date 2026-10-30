@@ -101,11 +101,34 @@ func TestASettingsSaveRefusesAnOwnFolderWhereACopyOfTheSectionLies(t *testing.T)
 
 	res := f.do("PUT", "/api/settings", v)
 
-	if msg, _ := res["error"].(string); res["ok"] != false || !strings.Contains(msg, errOwnFolderOnCopy.Error()) {
+	if msg, _ := res["error"].(string); res["ok"] != false || !strings.Contains(msg, errOwnFolderOnTypedCopy.Error()) {
 		t.Fatalf("answer = %v, want the own folder on the copy refused", res)
 	}
 	if s, _ := f.st.GetSettings(); s.FilesPath != settings.FilesPath {
 		t.Fatalf("files path = %q, want it kept", s.FilesPath)
+	}
+}
+
+func TestAnOwnFolderGoesWhereATypedInCopyWasOnceThatCopyIsRemoved(t *testing.T) {
+	f := newPlacementFixture(t)
+	moved := f.target("files", "Moved", "moved/files")
+	settings, err := f.st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	v := toView(settings)
+	v.FilesPath = "moved/files"
+	if res := f.do("PUT", "/api/settings", v); res["code"] != "own-folder-on-typed-copy" {
+		t.Fatalf("answer = %v, want the typed-in copy named", res)
+	}
+
+	id := "target:" + moved.ID
+	removal := f.do("GET", "/api/storage/locations/"+id+"/removal", nil)
+	if res := f.do("POST", "/api/storage/locations/"+id+"/removal", map[string]any{"expect": removal["removal"]}); res["ok"] != true {
+		t.Fatalf("removal = %v", res)
+	}
+	if res := f.do("PUT", "/api/settings", v); res["ok"] != true {
+		t.Fatalf("answer after the copy went = %v, want the own folder there", res)
 	}
 }
 
@@ -121,7 +144,7 @@ func TestMovingASectionFolderOntoACopyOfTheSectionIsRefused(t *testing.T) {
 
 	res := f.do("POST", "/api/storage/locations/"+id+"/removal", map[string]any{"expect": removal["removal"], "home": "moved"})
 
-	if msg, _ := res["error"].(string); res["ok"] != false || !strings.Contains(msg, errOwnFolderOnCopy.Error()) {
+	if msg, _ := res["error"].(string); res["ok"] != false || !strings.Contains(msg, errOwnFolderOnTypedCopy.Error()) {
 		t.Fatalf("answer = %v, want the move onto the copy refused", res)
 	}
 	if s, _ := f.st.GetSettings(); s.FilesPath != "backups/files" {
@@ -140,6 +163,10 @@ func TestALocationRefusalCarriesTheCodeTheInterfaceTranslates(t *testing.T) {
 	onCopy.FilesPath = "moved/files"
 	onOwn := toView(settings)
 	onOwn.FilesOffsite = settings.FilesPath
+	box := f.destination("Box", "rest:https://box:8000/bv")
+	f.tickDestination(box, "vms")
+	onBox := toView(settings)
+	onBox.VMsPath = "rest:https://box:8000/bv/vms"
 	locations, err := f.svc.StorageLocations()
 	if err != nil {
 		t.Fatal(err)
@@ -151,9 +178,10 @@ func TestALocationRefusalCarriesTheCodeTheInterfaceTranslates(t *testing.T) {
 		res  map[string]any
 		code string
 	}{
-		"own folder on a copy":        {f.do("PUT", "/api/settings", onCopy), "own-folder-on-copy"},
+		"own folder on a typed copy":  {f.do("PUT", "/api/settings", onCopy), "own-folder-on-typed-copy"},
+		"own folder on a box's copy":  {f.do("PUT", "/api/settings", onBox), "own-folder-on-copy"},
 		"off-site field on own":       {f.do("PUT", "/api/settings", onOwn), "copy-on-own-folder"},
-		"section folder moved":        {f.do("POST", "/api/storage/locations/"+id+"/removal", map[string]any{"expect": removal["removal"], "home": "moved"}), "own-folder-on-copy"},
+		"section folder moved":        {f.do("POST", "/api/storage/locations/"+id+"/removal", map[string]any{"expect": removal["removal"], "home": "moved"}), "own-folder-on-typed-copy"},
 		"repository in an own folder": {f.do("POST", "/api/repos", map[string]any{"name": "Inside", "repo": settings.FilesPath + "/inside"}), "nested-location"},
 	} {
 		if c.res["ok"] != false || c.res["code"] != c.code {

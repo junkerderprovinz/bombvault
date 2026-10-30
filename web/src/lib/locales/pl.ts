@@ -3298,6 +3298,7 @@ const pl: Partial<Translations> = {
   "placementCode.ownFolderThere": "Tu leży własny folder jednej z sekcji. Najpierw przenieś go gdzie indziej w części Własne foldery na tej stronie. Potem miejsce przechowywania da się usunąć.",
   "placementCode.copyOnOwnFolder": "Ta sekcja ma już własny folder w tej lokalizacji, więc kopia tam trafiłaby sama na siebie.",
   "placementCode.ownFolderOnCopy": "Kopia tej sekcji jest już tu zapisana, więc jej kopie zapasowe kopiowałyby się same na siebie. Aby zrobić z tego miejsca własny folder, otwórz je w Miejsca docelowe i przenieś tu sekcję na karcie Własne foldery. To zakończy tę kopię.",
+  "placementCode.ownFolderOnTypedCopy": "Kopia tej sekcji jest już tu zapisana, więc jej kopie zapasowe kopiowałyby się same na siebie. Ta kopia została wpisana ręcznie i nie ma karty Własne foldery. Aby zrobić z tego miejsca własny folder, otwórz je w Miejsca docelowe, wybierz Usuń miejsce docelowe i zachowaj tam kopie zapasowe. Potem wpisz to miejsce jeszcze raz.",
   "placementCode.namedRepoOverlap": "To miejsce jest repozytorium skonfigurowanym na karcie Repozytoria w Ustawienia, Miejsca docelowe albo leży w nim lub wokół niego. Wybierz inne miejsce albo najpierw usuń to repozytorium.",
   "placementCode.unprefixedRemote": "To miejsce wygląda na zdalne, ale nie ma prefiksu restic. Wpisz rclone: przed nazwą zdalnego miejsca rclone, na przykład rclone:myremote:bucket.",
   "placementCode.locationNeeded": "Repozytorium potrzebuje miejsca: folderu pod Host Data albo zdalnego miejsca restic, takiego jak b2:bucket.",

@@ -3302,6 +3302,7 @@ const hu: Partial<Translations> = {
   "placementCode.ownFolderThere": "Itt van egy szakasz saját mappája. Előbb költöztesd máshová az oldal Saját mappák részében. Utána a tárolási hely eltávolítható.",
   "placementCode.copyOnOwnFolder": "Ennek a résznek a saját mappája már ezen a tárolási helyen van, így egy másolat ott önmagára kerülne.",
   "placementCode.ownFolderOnCopy": "Ennek a résznek már van itt egy másolata, így a mentései önmagukra másolódnának. Ha ezt a helyet szeretnéd saját mappának, nyisd meg a Célok oldalon, és a Saját mappák kártyáján költöztesd ide a részt. Ezzel a másolat megszűnik.",
+  "placementCode.ownFolderOnTypedCopy": "Ennek a résznek már van itt egy másolata, így a mentései önmagukra másolódnának. Ezt a másolatot kézzel írták be, és nincs Saját mappák kártyája. Ha ezt a helyet szeretnéd saját mappának, nyisd meg a Célok oldalon, válaszd a Cél eltávolítása lehetőséget, és tartsd meg ott a mentéseket. Utána add meg újra ezt a helyet.",
   "placementCode.namedRepoOverlap": "Ez a hely egy tároló, amelyet a Beállítások, Célok oldalon a Tárolók kártyán állítottál be, vagy egy ilyen tárolón belül vagy körülötte van. Válassz másik helyet, vagy előbb távolítsd el azt a tárolót.",
   "placementCode.unprefixedRemote": "Ez a hely távolinak látszik, de nincs restic előtagja. Írd a rclone: előtagot egy rclone távoli hely neve elé, például rclone:myremote:bucket.",
   "placementCode.locationNeeded": "Egy tárolónak hely kell: egy mappa a Host Data alatt, vagy egy restic távoli hely, például b2:bucket.",
