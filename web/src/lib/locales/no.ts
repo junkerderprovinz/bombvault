@@ -3492,6 +3492,7 @@ const no: Partial<Translations> = {
   "anomaly.changes.hint": "Viser hvilke mapper som er forskjellige mellom den siste gode sikkerhetskopien og den første funnet gjelder: hva som forsvant, hva som kom til og hva som ble endret. BombVault leser det fra lagerets indeks uten å lese filene.",
   "anomaly.changes.span": "Sikkerhetskopi fra {from} mot sikkerhetskopi fra {to}.",
   "anomaly.changes.none": "Begge kopiene inneholder de samme filene.",
+  "anomaly.changes.apart": "Disse to kopiene ligger ikke sammen i noen mappe dette elementet tar sikkerhetskopi til nå eller gjorde før, så de kan ikke sammenlignes. Det skjer når en egen mappe flyttes uten de eldre kopiene sine.",
   "anomaly.changes.focus": "Nesten alt ligger i {path}.",
   "anomaly.changes.regenerable": "Mappen ser ut som en søkeindeks, en hurtigbuffer eller miniatyrbilder, som en app bygger opp igjen selv. I så fall er ingenting tapt, og utelater du mappen, holdes slike gjenoppbygginger utenfor sikkerhetskopiene dine og utenfor disse funnene.",
   "anomaly.changes.rest": "Alt annet",

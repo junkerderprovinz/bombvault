@@ -3502,6 +3502,7 @@ const et: Partial<Translations> = {
   "anomaly.changes.hint": "Näitab, millised kaustad erinevad viimase korras varunduse ja esimese selle leiuga seotud varunduse vahel: mis kadus, mis lisandus ja mis muutus. BombVault loeb selle hoidla indeksist faile lugemata.",
   "anomaly.changes.span": "Varundus {from} võrreldes varundusega {to}.",
   "anomaly.changes.none": "Mõlemas varunduses on samad failid.",
+  "anomaly.changes.apart": "Need kaks varundust ei ole koos üheski kaustas, kuhu see üksus varundab või varem varundas, nii et neid ei saa võrrelda. Nii juhtub, kui oma kaust kolib ilma vanemate varundusteta.",
   "anomaly.changes.focus": "Peaaegu kõik on kaustas {path}.",
   "anomaly.changes.regenerable": "See kaust näeb välja nagu otsinguindeks, vahemälu või pisipildid, mille rakendus ise uuesti loob. Kui nii, siis midagi ei kadunud, ja kausta välja jättes jäävad sellised taasloomised su varundustest ja nendest leidudest välja.",
   "anomaly.changes.rest": "Kõik muu",

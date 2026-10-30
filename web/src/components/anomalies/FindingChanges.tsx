@@ -63,6 +63,7 @@ export function FindingChanges({ a, t }: { a: AnomalyView; t: TranslateAnomaly }
   }, [a.id, retry]);
 
   const failed = failure ?? (data?.state === "failed" ? (data.error ?? "") : null);
+  const apart = failed === null && data?.state === "apart";
   const summary = data?.state === "ready" ? data.summary : undefined;
   return (
     <div className="flex flex-col gap-2 text-sm">
@@ -82,7 +83,8 @@ export function FindingChanges({ a, t }: { a: AnomalyView; t: TranslateAnomaly }
           <Button label={t("breakdown.retry")} labelKey="breakdown.retry" onClick={() => setRetry((n) => n + 1)} />
         </div>
       )}
-      {failed === null && !summary && (
+      {apart && <p className="text-caption text-carbon-textSub">{t("anomaly.changes.apart")}</p>}
+      {failed === null && !apart && !summary && (
         <p role="status" className="text-caption text-carbon-textMuted">
           {t("breakdown.running")}
         </p>

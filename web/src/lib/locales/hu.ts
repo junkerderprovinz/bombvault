@@ -3493,6 +3493,7 @@ const hu: Partial<Translations> = {
   "anomaly.changes.hint": "Megmutatja, mely mappák térnek el az utolsó jó biztonsági mentés és az első, erre az észlelésre vonatkozó mentés között: mi tűnt el, mi került be és mi változott. A BombVault ezt a tároló indexéből olvassa ki, a fájlok beolvasása nélkül.",
   "anomaly.changes.span": "{from} biztonsági mentés a {to} mentéssel szemben.",
   "anomaly.changes.none": "A két biztonsági mentés ugyanazokat a fájlokat tartalmazza.",
+  "anomaly.changes.apart": "Ez a két biztonsági mentés egyik olyan mappában sincs együtt, ahová ez az elem most ment vagy korábban mentett, ezért nem hasonlíthatók össze. Ez akkor fordul elő, ha egy saját mappa a régebbi mentései nélkül költözik.",
   "anomaly.changes.focus": "Szinte minden a(z) {path} mappában van.",
   "anomaly.changes.regenerable": "Ez a mappa keresési indexnek, gyorsítótárnak vagy bélyegképeknek tűnik, amelyeket az alkalmazás magától újraépít. Ha így van, semmi sem veszett el, és ha kizárod a mappát, az ilyen újraépítések nem kerülnek be a biztonsági mentéseidbe és ezekbe az észlelésekbe.",
   "anomaly.changes.rest": "Minden más",

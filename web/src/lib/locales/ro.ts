@@ -3493,6 +3493,7 @@ const ro: Partial<Translations> = {
   "anomaly.changes.hint": "Arată ce dosare diferă între ultima copie bună și prima la care se referă această constatare: ce a dispărut, ce a apărut și ce s-a schimbat. BombVault citește asta din indexul depozitului fără să citească fișierele.",
   "anomaly.changes.span": "Copie din {from} față de copia din {to}.",
   "anomaly.changes.none": "Ambele copii conțin aceleași fișiere.",
+  "anomaly.changes.apart": "Aceste două copii nu se află împreună în niciun dosar în care acest element face copii acum sau făcea înainte, așa că nu pot fi comparate. Se întâmplă când un dosar propriu se mută fără copiile mai vechi.",
   "anomaly.changes.focus": "Aproape totul se află în {path}.",
   "anomaly.changes.regenerable": "Dosarul arată ca un index de căutare, un cache sau miniaturi, pe care o aplicație le reconstruiește singură. Dacă e așa, nu s-a pierdut nimic, iar excluderea dosarului ține asemenea reconstruiri în afara copiilor tale și a acestor constatări.",
   "anomaly.changes.rest": "Tot restul",

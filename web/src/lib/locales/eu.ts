@@ -3502,6 +3502,7 @@ const eu: Partial<Translations> = {
   "anomaly.changes.hint": "Azken babeskopia onaren eta aurkikuntza honi dagokion lehenengoaren artean zein karpeta desberdin diren erakusten du: zer desagertu den, zer gehitu den eta zer aldatu den. BombVault-ek biltegiaren indizetik irakurtzen du, fitxategiak irakurri gabe.",
   "anomaly.changes.span": "{from}(e)ko babeskopia {to}(e)koaren aldean.",
   "anomaly.changes.none": "Bi babeskopiek fitxategi berak dituzte.",
+  "anomaly.changes.apart": "Bi babeskopia hauek ez daude elkarrekin elementu honek orain edo lehen erabili duen inongo karpetatan, beraz ezin dira alderatu. Hori gertatzen da karpeta propio bat bere babeskopia zaharrenik gabe mugitzen denean.",
   "anomaly.changes.focus": "Ia dena {path} karpetan dago.",
   "anomaly.changes.regenerable": "Karpeta hori bilaketa-indize, cache edo miniatura baten itxura du, aplikazio batek bere kabuz berreraikitzen dituenak. Hala bada, ez da ezer galdu, eta karpeta baztertuz gero berreraikitze horiek ez dira zure babeskopietan ez aurkikuntza hauetan agertuko.",
   "anomaly.changes.rest": "Gainerako guztia",

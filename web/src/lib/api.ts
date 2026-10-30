@@ -8281,7 +8281,7 @@ export type ChangeFolder = {
 
 /** A finding's last good backup compared with the first affected one. */
 export type AnomalyChanges = {
-  state: "running" | "ready" | "failed";
+  state: "running" | "ready" | "failed" | "apart";
   error?: string;
   fromAt?: number;
   toAt?: number;

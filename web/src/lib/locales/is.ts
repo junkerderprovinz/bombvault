@@ -3502,6 +3502,7 @@ const is: Partial<Translations> = {
   "anomaly.changes.hint": "Sýnir hvaða möppur eru ólíkar milli síðasta gilda afrits og þess fyrsta sem þessi niðurstaða snýst um: hvað hvarf, hvað bættist við og hvað breyttist. BombVault les þetta úr vísi geymslunnar án þess að lesa skrárnar.",
   "anomaly.changes.span": "Afrit frá {from} borið saman við afrit frá {to}.",
   "anomaly.changes.none": "Bæði afritin geyma sömu skrár.",
+  "anomaly.changes.apart": "Þessi tvö afrit eru ekki saman í neinni möppu sem þetta atriði afritar í núna eða gerði áður, svo það er ekki hægt að bera þau saman. Það gerist þegar eigin mappa er færð án eldri afritanna sinna.",
   "anomaly.changes.focus": "Nánast allt er í {path}.",
   "anomaly.changes.regenerable": "Mappan lítur út eins og leitarvísir, skyndiminni eða smámyndir sem forrit byggir sjálft upp aftur. Ef svo er tapaðist ekkert, og ef þú undanskilur möppuna haldast slíkar endurbyggingar utan afritanna og utan þessara niðurstaðna.",
   "anomaly.changes.rest": "Allt annað",

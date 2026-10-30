@@ -3502,6 +3502,7 @@ const ca: Partial<Translations> = {
   "anomaly.changes.hint": "Mostra quines carpetes canvien entre l'última còpia bona i la primera a què es refereix aquesta troballa: què ha desaparegut, què ha arribat i què ha canviat. BombVault ho llegeix de l'índex del repositori sense llegir els fitxers.",
   "anomaly.changes.span": "Còpia del {from} contra la còpia del {to}.",
   "anomaly.changes.none": "Les dues còpies contenen els mateixos fitxers.",
+  "anomaly.changes.apart": "Aquestes dues còpies no són juntes a cap carpeta on aquest element desa o desava abans, així que no es poden comparar. Passa quan una carpeta pròpia es mou sense les seves còpies anteriors.",
   "anomaly.changes.focus": "Gairebé tot és a {path}.",
   "anomaly.changes.regenerable": "Aquesta carpeta sembla un índex de cerca, una memòria cau o miniatures, que una aplicació reconstrueix sola. Si és així, no s'ha perdut res, i excloure la carpeta deixa aquestes reconstruccions fora de les còpies i d'aquestes troballes.",
   "anomaly.changes.rest": "Tota la resta",

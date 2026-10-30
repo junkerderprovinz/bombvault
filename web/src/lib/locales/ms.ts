@@ -3502,6 +3502,7 @@ const ms: Partial<Translations> = {
   "anomaly.changes.hint": "Menunjukkan folder mana yang berbeza antara sandaran baik terakhir dengan sandaran pertama yang berkaitan dengan dapatan ini: apa yang hilang, apa yang masuk dan apa yang berubah. BombVault membacanya daripada indeks repositori tanpa membaca fail.",
   "anomaly.changes.span": "Sandaran pada {from} berbanding sandaran pada {to}.",
   "anomaly.changes.none": "Kedua-dua sandaran mengandungi fail yang sama.",
+  "anomaly.changes.apart": "Kedua-dua sandaran ini tidak berada bersama dalam mana-mana folder yang item ini sandarkan sekarang atau sebelum ini, jadi ia tidak boleh dibandingkan. Ini berlaku apabila folder sendiri dialihkan tanpa sandaran lamanya.",
   "anomaly.changes.focus": "Hampir semuanya dalam {path}.",
   "anomaly.changes.regenerable": "Folder itu kelihatan seperti indeks carian, cache atau gambar kecil yang dibina semula sendiri oleh aplikasi. Jika begitu, tiada apa yang hilang, dan mengecualikan folder itu memastikan binaan semula sebegini kekal di luar sandaran anda dan di luar dapatan ini.",
   "anomaly.changes.rest": "Selebihnya",

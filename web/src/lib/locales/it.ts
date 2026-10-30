@@ -3492,6 +3492,7 @@ const it: Partial<Translations> = {
   "anomaly.changes.hint": "Mostra quali cartelle differiscono tra l'ultimo backup valido e il primo a cui si riferisce questa segnalazione: cosa è sparito, cosa è arrivato e cosa è cambiato. BombVault lo legge dall'indice del repository senza leggere i file.",
   "anomaly.changes.span": "Backup del {from} a confronto con il backup del {to}.",
   "anomaly.changes.none": "I due backup contengono gli stessi file.",
+  "anomaly.changes.apart": "Questi due backup non si trovano insieme in nessuna cartella in cui questo elemento salva ora o salvava prima, quindi non si possono confrontare. Succede quando una cartella propria viene spostata senza i suoi backup più vecchi.",
   "anomaly.changes.focus": "Quasi tutto si trova in {path}.",
   "anomaly.changes.regenerable": "Quella cartella sembra un indice di ricerca, una cache o delle miniature, che un'app ricostruisce da sola. Se è così, non si è perso nulla, ed escludere la cartella tiene queste ricostruzioni fuori dai tuoi backup e da queste segnalazioni.",
   "anomaly.changes.rest": "Tutto il resto",

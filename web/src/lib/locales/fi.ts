@@ -3492,6 +3492,7 @@ const fi: Partial<Translations> = {
   "anomaly.changes.hint": "Näyttää, mitkä kansiot eroavat viimeisimmän hyvän varmuuskopion ja ensimmäisen tähän havaintoon liittyvän välillä: mitä katosi, mitä tuli lisää ja mikä muuttui. BombVault lukee tiedot säilön hakemistosta lukematta tiedostoja.",
   "anomaly.changes.span": "Varmuuskopio {from} verrattuna varmuuskopioon {to}.",
   "anomaly.changes.none": "Molemmissa varmuuskopioissa on samat tiedostot.",
+  "anomaly.changes.apart": "Nämä kaksi varmuuskopiota eivät ole yhdessä missään kansiossa, johon tämä kohde varmuuskopioi nyt tai ennen, joten niitä ei voi verrata. Näin käy, kun oma kansio siirtyy ilman vanhempia varmuuskopioitaan.",
   "anomaly.changes.focus": "Lähes kaikki on kansiossa {path}.",
   "anomaly.changes.regenerable": "Kansio näyttää hakuindeksiltä, välimuistilta tai pikkukuvilta, jotka sovellus rakentaa itse uudelleen. Jos näin on, mitään ei menetetty, ja kun jätät kansion pois, tällaiset uudelleenrakennukset eivät päädy varmuuskopioihisi eivätkä näihin havaintoihin.",
   "anomaly.changes.rest": "Kaikki muu",

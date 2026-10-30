@@ -3502,6 +3502,7 @@ const lv: Partial<Translations> = {
   "anomaly.changes.hint": "Parāda, kuras mapes atšķiras starp pēdējo labo dublējumu un pirmo, uz kuru attiecas šis atradums: kas pazuda, kas nāca klāt un kas mainījās. BombVault to nolasa no krātuves indeksa, nelasot failus.",
   "anomaly.changes.span": "Kopija no {from} salīdzinājumā ar kopiju no {to}.",
   "anomaly.changes.none": "Abās kopijās ir tie paši faili.",
+  "anomaly.changes.apart": "Šīs divas kopijas nav kopā nevienā mapē, kurā šis vienums dublē tagad vai dublēja agrāk, tāpēc tās nevar salīdzināt. Tā notiek, ja paša mape tiek pārvietota bez vecākajām kopijām.",
   "anomaly.changes.focus": "Gandrīz viss ir mapē {path}.",
   "anomaly.changes.regenerable": "Šī mape izskatās pēc meklēšanas indeksa, kešatmiņas vai sīktēliem, ko lietotne pati izveido no jauna. Ja tā, nekas nav zaudēts, un, izslēdzot mapi, šādas pārbūves nenonāk ne jūsu dublējumos, ne šajos atradumos.",
   "anomaly.changes.rest": "Viss pārējais",

@@ -3502,6 +3502,7 @@ const id: Partial<Translations> = {
   "anomaly.changes.hint": "Menunjukkan folder mana yang berbeda antara cadangan baik terakhir dan cadangan pertama yang dibahas temuan ini: apa yang hilang, apa yang masuk, dan apa yang berubah. BombVault membacanya dari indeks repositori tanpa membaca file.",
   "anomaly.changes.span": "Cadangan dari {from} dibandingkan cadangan dari {to}.",
   "anomaly.changes.none": "Kedua cadangan berisi file yang sama.",
+  "anomaly.changes.apart": "Kedua cadangan ini tidak berada bersama di folder mana pun tempat item ini mencadangkan sekarang atau sebelumnya, jadi tidak bisa dibandingkan. Ini terjadi saat folder sendiri dipindahkan tanpa cadangan lamanya.",
   "anomaly.changes.focus": "Hampir semuanya ada di {path}.",
   "anomaly.changes.regenerable": "Folder itu tampak seperti indeks pencarian, cache, atau gambar mini yang dibangun ulang sendiri oleh aplikasi. Jika begitu, tidak ada yang hilang, dan mengecualikan folder itu menjaga pembangunan ulang seperti ini tetap di luar cadangan Anda dan di luar temuan ini.",
   "anomaly.changes.rest": "Selebihnya",

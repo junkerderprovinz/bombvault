@@ -3483,6 +3483,7 @@ const zh: Partial<Translations> = {
   "anomaly.changes.hint": "显示最近一次正常备份与本发现涉及的第一个备份之间有哪些文件夹不同：哪些消失了、哪些新增了、哪些改变了。BombVault 从仓库的索引中读取这些信息，无需读取文件。",
   "anomaly.changes.span": "{from} 的备份与 {to} 的备份对比。",
   "anomaly.changes.none": "两个备份包含相同的文件。",
+  "anomaly.changes.apart": "这两个备份不在此项目现在或以前备份到的任何同一文件夹中，所以无法比较。当专属文件夹在不带旧备份的情况下移走时会出现这种情况。",
   "anomaly.changes.focus": "几乎全部位于 {path}。",
   "anomaly.changes.regenerable": "这个文件夹看起来是搜索索引、缓存或缩略图，应用会自行重建。如果是这样，就没有丢失任何东西；排除这个文件夹后，此类重建将不再进入你的备份和这些发现。",
   "anomaly.changes.rest": "其余全部",

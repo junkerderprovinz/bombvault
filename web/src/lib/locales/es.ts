@@ -3490,6 +3490,7 @@ const es: Partial<Translations> = {
   "anomaly.changes.hint": "Muestra qué carpetas cambian entre la última copia correcta y la primera a la que se refiere este hallazgo: qué desapareció, qué llegó y qué cambió. BombVault lo lee del índice del repositorio sin leer los archivos.",
   "anomaly.changes.span": "Copia del {from} frente a la copia del {to}.",
   "anomaly.changes.none": "Las dos copias contienen los mismos archivos.",
+  "anomaly.changes.apart": "Estas dos copias no están juntas en ninguna carpeta donde este elemento guarda o guardaba sus copias, así que no se pueden comparar. Ocurre cuando una carpeta propia se mueve sin sus copias anteriores.",
   "anomaly.changes.focus": "Casi todo está en {path}.",
   "anomaly.changes.regenerable": "Esa carpeta parece un índice de búsqueda, una caché o miniaturas, que una aplicación reconstruye sola. Si es así, no se perdió nada, y excluir la carpeta deja esas reconstrucciones fuera de tus copias y de estos hallazgos.",
   "anomaly.changes.rest": "Todo lo demás",

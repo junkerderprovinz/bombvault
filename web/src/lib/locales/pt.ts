@@ -3492,6 +3492,7 @@ const pt: Partial<Translations> = {
   "anomaly.changes.hint": "Mostra quais pastas diferem entre o último backup bom e o primeiro a que esta deteção se refere: o que desapareceu, o que chegou e o que mudou. O BombVault lê isso do índice do repositório sem ler os ficheiros.",
   "anomaly.changes.span": "Backup de {from} face ao backup de {to}.",
   "anomaly.changes.none": "Os dois backups têm os mesmos ficheiros.",
+  "anomaly.changes.apart": "Estes dois backups não estão juntos em nenhuma pasta onde este item guarda ou guardava cópias, por isso não podem ser comparados. Acontece quando uma pasta própria é movida sem os backups mais antigos.",
   "anomaly.changes.focus": "Quase tudo está em {path}.",
   "anomaly.changes.regenerable": "Essa pasta parece um índice de pesquisa, uma cache ou miniaturas, que uma aplicação reconstrói sozinha. Se for o caso, nada se perdeu, e excluir a pasta mantém essas reconstruções fora dos teus backups e destas deteções.",
   "anomaly.changes.rest": "Todo o resto",

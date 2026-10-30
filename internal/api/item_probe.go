@@ -393,10 +393,12 @@ func (s *Service) runItemProbe(ctx context.Context, it probeItem, snapshotID str
 // A listing that fails says nothing either way.
 func (s *Service) snapshotNotIn(ctx context.Context, repo string, mode restic.Mode, snapshotID string) bool {
 	snaps, err := s.listRepo(ctx, repo, mode)
-	if err != nil {
-		return false
-	}
-	return !slices.ContainsFunc(snaps, func(sn restic.Snapshot) bool { return strings.HasPrefix(sn.ID, snapshotID) })
+	return err == nil && !listsSnapshot(snaps, snapshotID)
+}
+
+// listsSnapshot reports whether snaps holds the snapshot id, whole or short.
+func listsSnapshot(snaps []restic.Snapshot, id string) bool {
+	return slices.ContainsFunc(snaps, func(sn restic.Snapshot) bool { return strings.HasPrefix(sn.ID, id) })
 }
 
 // errHeadRead stops a dump once enough of the file came back.

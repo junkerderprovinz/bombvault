@@ -3491,6 +3491,7 @@ const nl: Partial<Translations> = {
   "anomaly.changes.hint": "Laat zien welke mappen verschillen tussen de laatste goede back-up en de eerste waar deze bevinding over gaat: wat verdween, wat erbij kwam en wat veranderde. BombVault leest dat uit de index van de repository zonder de bestanden te lezen.",
   "anomaly.changes.span": "Back-up van {from} tegenover de back-up van {to}.",
   "anomaly.changes.none": "Beide back-ups bevatten dezelfde bestanden.",
+  "anomaly.changes.apart": "Deze twee back-ups staan niet samen in een map waar dit item nu of eerder naar back-upt, dus ze zijn niet te vergelijken. Dat gebeurt als een eigen map verhuist zonder zijn oudere back-ups.",
   "anomaly.changes.focus": "Bijna alles zit in {path}.",
   "anomaly.changes.regenerable": "Die map lijkt een zoekindex, een cache of miniaturen, die een app zelf opnieuw opbouwt. Is dat zo, dan is er niets verloren, en als je de map uitsluit, blijven zulke herbouwingen buiten je back-ups en buiten deze bevindingen.",
   "anomaly.changes.rest": "Al het andere",

@@ -3502,6 +3502,7 @@ const sk: Partial<Translations> = {
   "anomaly.changes.hint": "Ukáže, ktoré priečinky sa líšia medzi poslednou dobrou zálohou a prvou, ktorej sa tento nález týka: čo zmizlo, čo pribudlo a čo sa zmenilo. BombVault to číta z indexu úložiska bez čítania súborov.",
   "anomaly.changes.span": "Záloha z {from} oproti zálohe z {to}.",
   "anomaly.changes.none": "Obe zálohy obsahujú rovnaké súbory.",
+  "anomaly.changes.apart": "Tieto dve zálohy nie sú spolu v žiadnom priečinku, do ktorého táto položka zálohuje alebo predtým zálohovala, takže ich nemožno porovnať. Stáva sa to, keď sa vlastný priečinok presunie bez starších záloh.",
   "anomaly.changes.focus": "Takmer všetko je v {path}.",
   "anomaly.changes.regenerable": "Tento priečinok vyzerá ako vyhľadávací index, vyrovnávacia pamäť alebo náhľady, ktoré si aplikácia sama znova vytvorí. Ak je to tak, nič sa nestratilo, a vylúčením priečinka sa takéto prestavby nedostanú do tvojich záloh ani do týchto nálezov.",
   "anomaly.changes.rest": "Všetko ostatné",

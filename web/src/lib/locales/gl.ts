@@ -3502,6 +3502,7 @@ const gl: Partial<Translations> = {
   "anomaly.changes.hint": "Amosa que cartafoles cambian entre a última copia boa e a primeira á que se refire este achado: que desapareceu, que chegou e que cambiou. BombVault leo do índice do repositorio sen ler os ficheiros.",
   "anomaly.changes.span": "Copia do {from} fronte á copia do {to}.",
   "anomaly.changes.none": "As dúas copias conteñen os mesmos ficheiros.",
+  "anomaly.changes.apart": "Estas dúas copias non están xuntas en ningún cartafol onde este elemento garda ou gardaba as súas copias, así que non se poden comparar. Pasa cando un cartafol propio se move sen as súas copias anteriores.",
   "anomaly.changes.focus": "Case todo está en {path}.",
   "anomaly.changes.regenerable": "Ese cartafol parece un índice de busca, unha caché ou miniaturas, que unha aplicación reconstrúe soa. Se é así, non se perdeu nada, e excluír o cartafol deixa esas reconstrucións fóra das túas copias e destes achados.",
   "anomaly.changes.rest": "Todo o demais",

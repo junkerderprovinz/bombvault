@@ -3483,6 +3483,7 @@ const vi: Partial<Translations> = {
   "anomaly.changes.hint": "Cho biết thư mục nào khác nhau giữa bản sao lưu tốt gần nhất và bản đầu tiên mà phát hiện này nói đến: thứ gì mất đi, thứ gì thêm vào và thứ gì thay đổi. BombVault đọc điều này từ chỉ mục của kho mà không đọc các tệp.",
   "anomaly.changes.span": "Bản sao lưu lúc {from} so với bản sao lưu lúc {to}.",
   "anomaly.changes.none": "Hai bản sao lưu có cùng các tệp.",
+  "anomaly.changes.apart": "Hai bản sao lưu này không nằm cùng nhau trong thư mục nào mà mục này đang hoặc từng sao lưu vào, nên không thể so sánh. Điều này xảy ra khi thư mục riêng được chuyển đi mà không kèm các bản sao lưu cũ.",
   "anomaly.changes.focus": "Gần như tất cả nằm trong {path}.",
   "anomaly.changes.regenerable": "Thư mục này trông giống chỉ mục tìm kiếm, bộ nhớ đệm hoặc ảnh thu nhỏ mà ứng dụng tự dựng lại. Nếu vậy thì không mất gì, và loại trừ thư mục sẽ giữ những lần dựng lại như thế ngoài các bản sao lưu và ngoài các phát hiện này.",
   "anomaly.changes.rest": "Mọi thứ khác",

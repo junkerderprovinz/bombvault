@@ -3502,6 +3502,7 @@ const hr: Partial<Translations> = {
   "anomaly.changes.hint": "Pokazuje koje se mape razlikuju između posljednje dobre kopije i prve na koju se odnosi ovaj nalaz: što je nestalo, što je došlo i što se promijenilo. BombVault to čita iz indeksa repozitorija bez čitanja datoteka.",
   "anomaly.changes.span": "Kopija od {from} prema kopiji od {to}.",
   "anomaly.changes.none": "Obje kopije sadrže iste datoteke.",
+  "anomaly.changes.apart": "Ove dvije kopije nisu zajedno ni u jednoj mapi u koju ova stavka sprema sada ili je spremala prije, pa se ne mogu usporediti. To se događa kad se vlastita mapa premjesti bez starijih kopija.",
   "anomaly.changes.focus": "Gotovo sve je u {path}.",
   "anomaly.changes.regenerable": "Ova mapa izgleda kao indeks pretraživanja, predmemorija ili sličice, koje aplikacija sama ponovno izgradi. Ako je tako, ništa nije izgubljeno, a izuzimanjem mape takve ponovne izgradnje ostaju izvan vaših kopija i izvan ovih nalaza.",
   "anomaly.changes.rest": "Sve ostalo",

@@ -3502,6 +3502,7 @@ const lt: Partial<Translations> = {
   "anomaly.changes.hint": "Parodo, kurie aplankai skiriasi tarp paskutinės geros kopijos ir pirmosios, su kuria susijęs šis radinys: kas dingo, kas atsirado ir kas pasikeitė. BombVault tai skaito iš saugyklos indekso, neskaitydama failų.",
   "anomaly.changes.span": "{from} kopija, palyginti su {to} kopija.",
   "anomaly.changes.none": "Abiejose kopijose yra tie patys failai.",
+  "anomaly.changes.apart": "Šios dvi kopijos nėra kartu jokiame aplanke, į kurį šis elementas kuria kopijas dabar ar kūrė anksčiau, todėl jų palyginti negalima. Taip nutinka, kai savas aplankas perkeliamas be senesnių kopijų.",
   "anomaly.changes.focus": "Beveik viskas yra {path}.",
   "anomaly.changes.regenerable": "Šis aplankas atrodo kaip paieškos indeksas, podėlis ar miniatiūros, kurias programa pati atkuria. Jei taip, niekas neprarasta, o neįtraukus aplanko tokie atkūrimai nepateks nei į tavo kopijas, nei į šiuos radinius.",
   "anomaly.changes.rest": "Visa kita",

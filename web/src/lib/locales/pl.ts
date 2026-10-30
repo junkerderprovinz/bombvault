@@ -3489,6 +3489,7 @@ const pl: Partial<Translations> = {
   "anomaly.changes.hint": "Pokazuje, które foldery różnią się między ostatnią dobrą kopią a pierwszą, której dotyczy to wykrycie: co zniknęło, co doszło i co się zmieniło. BombVault odczytuje to z indeksu repozytorium bez czytania plików.",
   "anomaly.changes.span": "Kopia z {from} w porównaniu z kopią z {to}.",
   "anomaly.changes.none": "Obie kopie zawierają te same pliki.",
+  "anomaly.changes.apart": "Te dwie kopie nie leżą razem w żadnym folderze, do którego ten element zapisuje kopie teraz lub zapisywał wcześniej, więc nie da się ich porównać. Tak się dzieje, gdy własny folder zostaje przeniesiony bez starszych kopii.",
   "anomaly.changes.focus": "Prawie wszystko jest w {path}.",
   "anomaly.changes.regenerable": "Ten folder wygląda na indeks wyszukiwania, pamięć podręczną lub miniatury, które aplikacja sama odbudowuje. Jeśli tak, nic nie przepadło, a wykluczenie folderu trzyma takie odbudowy z dala od twoich kopii i od tych wykryć.",
   "anomaly.changes.rest": "Cała reszta",

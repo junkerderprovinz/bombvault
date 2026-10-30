@@ -3492,6 +3492,7 @@ const fr: Partial<Translations> = {
   "anomaly.changes.hint": "Indique quels dossiers diffèrent entre la dernière bonne sauvegarde et la première concernée par ce constat : ce qui a disparu, ce qui est arrivé et ce qui a changé. BombVault le lit dans l'index du dépôt sans lire les fichiers.",
   "anomaly.changes.span": "Sauvegarde du {from} comparée à celle du {to}.",
   "anomaly.changes.none": "Les deux sauvegardes contiennent les mêmes fichiers.",
+  "anomaly.changes.apart": "Ces deux sauvegardes ne se trouvent ensemble dans aucun dossier où cet élément sauvegarde ou sauvegardait, elles ne peuvent donc pas être comparées. Cela arrive quand un dossier propre est déplacé sans ses sauvegardes plus anciennes.",
   "anomaly.changes.focus": "Presque tout se trouve dans {path}.",
   "anomaly.changes.regenerable": "Ce dossier ressemble à un index de recherche, un cache ou des vignettes, qu'une application reconstruit d'elle-même. Si c'est le cas, rien n'est perdu, et exclure le dossier tient ces reconstructions à l'écart de vos sauvegardes et de ces constats.",
   "anomaly.changes.rest": "Tout le reste",

@@ -3490,6 +3490,7 @@ const cs: Partial<Translations> = {
   "anomaly.changes.hint": "Ukáže, které složky se liší mezi poslední dobrou zálohou a první, které se tento nález týká: co zmizelo, co přibylo a co se změnilo. BombVault to čte z indexu repozitáře, aniž by četl soubory.",
   "anomaly.changes.span": "Záloha z {from} proti záloze z {to}.",
   "anomaly.changes.none": "Obě zálohy obsahují stejné soubory.",
+  "anomaly.changes.apart": "Tyto dvě zálohy nejsou spolu v žádné složce, do které tato položka zálohuje nebo dřív zálohovala, takže je nejde porovnat. Stává se to, když se vlastní složka přesune bez starších záloh.",
   "anomaly.changes.focus": "Téměř všechno je v {path}.",
   "anomaly.changes.regenerable": "Tato složka vypadá jako vyhledávací index, mezipaměť nebo náhledy, které si aplikace sama znovu sestaví. Pokud ano, nic se neztratilo, a když složku vyloučíš, takové přestavby se nedostanou do záloh ani do těchto nálezů.",
   "anomaly.changes.rest": "Všechno ostatní",

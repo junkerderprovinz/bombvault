@@ -3492,6 +3492,7 @@ const tr: Partial<Translations> = {
   "anomaly.changes.hint": "Son sağlam yedekle bu bulgunun ilgili olduğu ilk yedek arasında hangi klasörlerin farklı olduğunu gösterir: ne kayboldu, ne geldi ve ne değişti. BombVault bunu dosyaları okumadan deponun dizininden okur.",
   "anomaly.changes.span": "{from} tarihli yedek ile {to} tarihli yedeğin karşılaştırması.",
   "anomaly.changes.none": "İki yedek de aynı dosyaları içeriyor.",
+  "anomaly.changes.apart": "Bu iki yedek, bu öğenin şu an ya da daha önce yedeklediği hiçbir klasörde birlikte değil, bu yüzden karşılaştırılamaz. Bu, kendi klasörü eski yedekleri olmadan taşındığında olur.",
   "anomaly.changes.focus": "Neredeyse hepsi {path} içinde.",
   "anomaly.changes.regenerable": "Bu klasör bir arama dizini, önbellek ya da küçük resimlere benziyor; bunları uygulama kendisi yeniden oluşturur. Öyleyse hiçbir şey kaybolmadı ve klasörü hariç tutmak bu tür yeniden oluşturmaları yedeklerinin ve bu bulguların dışında tutar.",
   "anomaly.changes.rest": "Geri kalan her şey",

@@ -337,10 +337,14 @@ func (s *Service) compareBackups(pair changePair) {
 	defer cancel()
 	view := pair.view()
 	root, summary, err := s.diffBackups(ctx, pair)
-	if err != nil {
+	switch {
+	case errors.Is(err, errPairApart):
+		log.Printf("api: the backups of %s are not compared: %v", pair.item.id, err)
+		view.State = changesApart
+	case err != nil:
 		log.Printf("api: compare the backups of %s: %v", pair.item.id, err)
 		view.State, view.Error = breakdownFailed, scrubError(err)
-	} else {
+	default:
 		view.State, view.Root, view.Summary = breakdownReady, s.toHostPath(root), &summary
 	}
 	c.mu.Lock()
@@ -348,13 +352,63 @@ func (s *Service) compareBackups(pair changePair) {
 	c.mu.Unlock()
 }
 
+// changesApart is the state of a comparison whose two backups no repository
+// of the item holds together.
+const changesApart = "apart"
+
+// errPairApart is a pair of backups no repository of the item holds both of,
+// as after its own folder moved without the backups made before.
+var errPairApart = errors.New("no folder the item backs up to or did before holds both backups")
+
+// pairPlace finds the repository that holds both backups of pair: the item's
+// own, or one it backed up to before. It returns that repository's listing
+// and the item with the repository in place.
+func (s *Service) pairPlace(ctx context.Context, pair changePair) (breakdownItem, []restic.Snapshot, error) {
+	it := pair.item
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return it, nil, err
+	}
+	places := []breakdownItem{it}
+	if validPlacementDomain(it.domain) {
+		former, err := s.store.FormerHomes(it.domain, it.id)
+		if err != nil {
+			return it, nil, err
+		}
+		for _, id := range former {
+			repo, err := s.itemRepoPath(id, func() (string, error) { return s.repoFor(settings, it.domain, "local") })
+			if err != nil || repo == it.repo {
+				continue
+			}
+			place := it
+			place.repo, place.mode = repo, s.repoModeFor(settings, it.domain, "local", repo)
+			places = append(places, place)
+		}
+	}
+	for i, place := range places {
+		snaps, err := s.listRepo(ctx, place.repo, place.mode)
+		switch {
+		case err != nil && i == 0:
+			return it, nil, fmt.Errorf("list the backups: %w", err)
+		case err != nil:
+			// A folder the item left may be gone; only its current one has to answer.
+		case listsSnapshot(snaps, pair.from.SnapshotID) && listsSnapshot(snaps, pair.to.SnapshotID):
+			return place, snaps, nil
+		}
+	}
+	return it, nil, errPairApart
+}
+
 // diffBackups reads which files differ and then their sizes, from the older
 // listing for what went away and from the newer one for what is there now.
 func (s *Service) diffBackups(ctx context.Context, pair changePair) (string, ChangeSummary, error) {
-	it := pair.item
+	it, snaps, err := s.pairPlace(ctx, pair)
+	if err != nil {
+		return "", ChangeSummary{}, err
+	}
 	kinds := map[string]changeKind{}
 	partial := false
-	_, err := s.engine.DiffStream(ctx, it.repo, pair.from.SnapshotID, pair.to.SnapshotID, it.mode, func(c restic.DiffChange) {
+	_, err = s.engine.DiffStream(ctx, it.repo, pair.from.SnapshotID, pair.to.SnapshotID, it.mode, func(c restic.DiffChange) {
 		if strings.HasSuffix(c.Path, "/") {
 			return
 		}
@@ -379,10 +433,6 @@ func (s *Service) diffBackups(ctx context.Context, pair changePair) (string, Cha
 		return "", ChangeSummary{}, fmt.Errorf("compare the two backups: %w", err)
 	}
 
-	snaps, err := s.itemSnapshots(ctx, it)
-	if err != nil {
-		return "", ChangeSummary{}, fmt.Errorf("list the backups: %w", err)
-	}
 	root := "/"
 	for _, snap := range snaps {
 		if snap.ID == pair.to.SnapshotID || strings.HasPrefix(snap.ID, pair.to.SnapshotID) {
