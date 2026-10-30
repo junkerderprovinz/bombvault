@@ -111,7 +111,27 @@ func (s *Service) locationFaults() ([]locationFault, error) {
 		}
 	}
 	out = append(out, s.directFaults(m)...)
+	out = append(out, s.repoOnOwnFolderFaults(m)...)
 	return out, nil
+}
+
+// repoOnOwnFolderFaults finds a repository at a section's own folder. Entries
+// there would write into the section's repository with sign-in and settings
+// of their own, and removing either place would take the other's backups.
+func (s *Service) repoOnOwnFolderFaults(m locationModel) []locationFault {
+	var out []locationFault
+	for _, domain := range offsiteConfigDomains {
+		own, err := s.repoFor(m.settings, domain, "local")
+		if err != nil {
+			continue
+		}
+		for _, r := range m.named {
+			if loc, err := s.resolveRepo(r.Repo); err == nil && sameRepoLocation(own, loc) {
+				out = append(out, locationFault{problem: fmt.Sprintf("the repository %q lies at the own folder of the %s section", r.Name, domain)})
+			}
+		}
+	}
+	return out
 }
 
 // ownFolderFaults finds a copy and an off-site field of the section that name
