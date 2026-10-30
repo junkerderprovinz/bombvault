@@ -56,9 +56,14 @@ function useDialogActionsClearance(shown: boolean, corner: RefObject<HTMLDivElem
     if (!shown) return;
     const root = document.documentElement;
     const measure = () => {
-      const box = corner.current?.getBoundingClientRect();
+      const el = corner.current;
+      if (!el) return;
+      const cards = [...el.children].map((card) => card.getBoundingClientRect());
+      const stack = cards.length > 0 ? cards[cards.length - 1].bottom - cards[0].top : 0;
+      // The corner's own padding, the 1rem index.css keeps below the toasts.
+      const reach = parseFloat(getComputedStyle(root).fontSize) + stack;
       const rows = [...document.querySelectorAll("[data-dialog-actions]")].map((row) => row.getBoundingClientRect());
-      const lift = box ? dialogActionsClearance(rows, box, window.innerHeight) : 0;
+      const lift = dialogActionsClearance(rows, el.getBoundingClientRect(), reach, window.innerHeight);
       if (lift > 0) root.style.setProperty(DIALOG_CLEARANCE, `${lift}px`);
       else root.style.removeProperty(DIALOG_CLEARANCE);
     };

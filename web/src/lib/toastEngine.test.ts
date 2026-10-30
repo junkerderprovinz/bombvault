@@ -310,26 +310,32 @@ describe("shouldShowToast", () => {
 
 describe("dialogActionsClearance", () => {
   // A 320 px phone, 640 px high: the corner spans the width, as a toast does
-  // there, and a sheet's action row sits at the bottom.
-  const corner = { top: 400, left: 0, right: 320, height: 240 };
-  const row = (top: number, left = 0, right = 320) => ({ top, left, right, height: 72 });
+  // there, a toast stands 120 px up from the bottom and a sheet's action row
+  // sits at the bottom.
+  const corner = { top: 520, bottom: 640, left: 0, right: 320 };
+  const row = (top: number, left = 0, right = 320) => ({ top, bottom: top + 72, left, right });
 
   it("lifts the toasts above the action row of an open dialog on a phone", () => {
-    expect(dialogActionsClearance([row(568)], corner, 640)).toBe(72);
+    expect(dialogActionsClearance([row(568)], corner, 120, 640)).toBe(72);
   });
 
   it("follows the dialog on top when dialogs stack", () => {
-    expect(dialogActionsClearance([row(568), row(500)], corner, 640)).toBe(140);
+    expect(dialogActionsClearance([row(568), row(500)], corner, 120, 640)).toBe(140);
   });
 
   it("leaves the toasts where they are without a shown action row", () => {
-    expect(dialogActionsClearance([], corner, 640)).toBe(0);
-    expect(dialogActionsClearance([{ top: 0, left: 0, right: 0, height: 0 }], corner, 640)).toBe(0);
+    expect(dialogActionsClearance([], corner, 120, 640)).toBe(0);
+    expect(dialogActionsClearance([{ top: 0, bottom: 0, left: 0, right: 0 }], corner, 120, 640)).toBe(0);
   });
 
   it("leaves the toasts where they are beside a row that ends before the corner", () => {
-    const desktopCorner = { top: 600, left: 944, right: 1280, height: 120 };
-    expect(dialogActionsClearance([row(600, 256, 900)], desktopCorner, 720)).toBe(0);
-    expect(dialogActionsClearance([row(600, 256, 1024)], desktopCorner, 720)).toBe(120);
+    const desktopCorner = { top: 600, bottom: 720, left: 944, right: 1280 };
+    expect(dialogActionsClearance([row(560, 256, 900)], desktopCorner, 120, 720)).toBe(0);
+    expect(dialogActionsClearance([row(560, 256, 1024)], desktopCorner, 120, 720)).toBe(160);
+  });
+
+  it("leaves the toasts where they are below the row of a short centred window", () => {
+    const desktopCorner = { top: 680, bottom: 800, left: 944, right: 1280 };
+    expect(dialogActionsClearance([row(464, 256, 1024)], desktopCorner, 100, 800)).toBe(0);
   });
 });
