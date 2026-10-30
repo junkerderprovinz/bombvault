@@ -209,3 +209,53 @@ func TestTheQuestionBeforeANewLocationRefusesWhatTheSaveWould(t *testing.T) {
 		t.Fatalf("preview = %v, want a free location previewed", pv)
 	}
 }
+
+func TestAnOwnFolderMayGoWhereASwitchedOffCopyWasLeftAndKeepsItsBackups(t *testing.T) {
+	f := newPlacementFixture(t)
+	left := f.fieldTarget("files", "moved/files")
+	f.hold(f.root+"/moved/files", snap("c1", 100, "fileset:iso"))
+	settings, err := f.st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	settings.FilesOffsite = ""
+	if err := f.st.UpdateSettings(settings); err != nil {
+		t.Fatal(err)
+	}
+	if err := f.svc.syncPrimaryOffsiteTarget("files", settings); err != nil {
+		t.Fatal(err)
+	}
+	locations, err := f.svc.StorageLocations()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, l := range locations {
+		if l.ID == "target:"+left.ID {
+			t.Fatalf("the switched-off copy is listed as %+v, want it hidden", l)
+		}
+	}
+
+	v := toView(settings)
+	v.FilesPath = "moved/files"
+	if res := f.do("PUT", "/api/settings", v); res["ok"] != true {
+		t.Fatalf("answer = %v, want the own folder where the switched-off copy was left", res)
+	}
+	lines := captureLog(t, func() {
+		if _, err := f.svc.RepairLocationModel(); err != nil {
+			t.Fatal(err)
+		}
+	})
+
+	if f.hasTarget(left.ID) {
+		t.Fatal("the switched-off copy is still there after the repair at start")
+	}
+	if !strings.Contains(lines, "sat on the section's own folder") {
+		t.Fatalf("log = %q, want the repair named", lines)
+	}
+	if len(f.eng.forgets) != 0 || len(f.eng.deletes) != 0 {
+		t.Fatalf("forgot %+v and deleted %+v, want the backups there kept", f.eng.forgets, f.eng.deletes)
+	}
+	if got := f.snapsAt(f.root + "/moved/files"); len(got) != 1 {
+		t.Fatalf("the own folder holds %d backups, want the copy's one", len(got))
+	}
+}

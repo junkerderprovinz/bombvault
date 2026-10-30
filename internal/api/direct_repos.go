@@ -235,13 +235,17 @@ func (s *Service) locationClash(settings store.Settings, loc string, self locati
 			continue
 		}
 		// A copy of the section itself counts even where the page lists it
-		// nowhere, since it still lands on the own folder.
+		// nowhere, since it still lands on the own folder. One switched off
+		// with its off-site field copies nothing, and the repair at start
+		// takes it away once the own folder lies there; its backups stay as
+		// the own folder's.
+		hidden := hiddenTarget(t, settings, ids)
 		tLoc, ok := s.clashCandidate("off-site destination", t.Name, t.Repo)
 		switch {
 		case !ok:
-		case t.Domain == self.own && sameRepoLocation(tLoc, loc):
+		case t.Domain == self.own && sameRepoLocation(tLoc, loc) && !(hidden && t.DestinationID == ""):
 			return ownFolderOnCopy(t)
-		case !hiddenTarget(t, settings, ids) && clashes(tLoc):
+		case !hidden && clashes(tLoc):
 			return &nestedLocationErr{what: fmt.Sprintf("the off-site destination %q", t.Name), at: tLoc}
 		}
 	}
