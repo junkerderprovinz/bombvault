@@ -69,7 +69,7 @@ export function PairingWindow({
           </Badge>
         </h2>
         {children}
-        <div className="flex flex-wrap items-center justify-end gap-3">{footer}</div>
+        <div data-dialog-actions className="flex flex-wrap items-center justify-end gap-3">{footer}</div>
       </div>
     </div>,
     document.body,

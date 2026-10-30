@@ -1,3 +1,4 @@
+import type { Ref } from "react";
 import type { ToastAction, ToastSeverity } from "../lib/toastEngine";
 import { Button } from "./Button";
 import { glyphFor } from "./glyphFor";
@@ -146,6 +147,7 @@ export interface ToastViewportProps {
   onMouseLeave: (id: string) => void;
   onFocus: (id: string) => void;
   onBlur: (id: string) => void;
+  ref?: Ref<HTMLDivElement>;
 }
 
 // ToastViewport stacks toasts in the bottom-end corner, newest at the bottom.
@@ -153,9 +155,9 @@ export interface ToastViewportProps {
 // matter on a very short viewport. The inset is padding rather than an offset
 // because overflow-y: auto also clips horizontally, and a flush box would cut
 // off each card's shadow and the start of its slide-in.
-export function ToastViewport({ toasts, dismissLabel, onDismiss, onMouseEnter, onMouseLeave, onFocus, onBlur }: ToastViewportProps) {
+export function ToastViewport({ toasts, dismissLabel, onDismiss, onMouseEnter, onMouseLeave, onFocus, onBlur, ref }: ToastViewportProps) {
   return (
-    <div className="glim-toasts pointer-events-none fixed bottom-0 end-0 z-[70] flex max-h-screen flex-col gap-2 overflow-y-auto p-4">
+    <div ref={ref} className="glim-toasts pointer-events-none fixed bottom-0 end-0 z-[70] flex max-h-screen flex-col gap-2 overflow-y-auto p-4">
       {toasts.map((t) => (
         <ToastCard
           key={t.id}

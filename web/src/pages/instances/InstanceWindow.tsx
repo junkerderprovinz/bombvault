@@ -154,7 +154,7 @@ export function InstanceWindow({
           </div>
         )}
         <div className={`flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto px-6 pb-2 ${search ? "pt-5" : "pt-6"}`}>{children}</div>
-        <div className="flex flex-wrap items-center justify-end gap-2 px-6 pb-6 pt-4">{footer}</div>
+        <div data-dialog-actions className="flex flex-wrap items-center justify-end gap-2 px-6 pb-6 pt-4">{footer}</div>
       </div>
     </div>,
     document.body,

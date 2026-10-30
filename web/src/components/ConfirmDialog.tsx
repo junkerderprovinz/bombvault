@@ -93,7 +93,7 @@ export function ConfirmDialog({
           {extra !== undefined && <div className="mt-4">{extra}</div>}
         </div>
 
-        <div className="flex items-center justify-end gap-3 px-5 py-4">
+        <div data-dialog-actions className="flex items-center justify-end gap-3 px-5 py-4">
           <Button
             label={cancelLabel}
             labelKey="common.cancel"

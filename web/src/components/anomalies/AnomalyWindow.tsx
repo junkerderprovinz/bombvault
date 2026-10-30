@@ -140,7 +140,7 @@ function DesktopWindow({
           className="flex max-h-[90vh] w-full flex-col gap-4 overflow-y-auto rounded-card bg-carbon-surface p-6 pt-7 shadow-2xl outline-none"
         >
           {children}
-          <div className="flex flex-wrap items-center justify-end gap-2.5">
+          <div data-dialog-actions className="flex flex-wrap items-center justify-end gap-2.5">
             {actions}
             <Button label={t("common.close")} labelKey="common.close" onClick={onClose} />
           </div>
