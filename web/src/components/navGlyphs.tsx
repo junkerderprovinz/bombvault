@@ -146,7 +146,7 @@ export function IconAnomalies() {
   );
 }
 
-/** Settings. */
+/** Settings, open a setting. */
 export function IconGear() {
   return (
     <G box="-0.001 0 14 14">
@@ -169,6 +169,15 @@ export function IconFolder() {
   return (
     <G box="0 0 14 14">
       <path d="M6.12675 0.805269c-0.2708 -0.205804 -0.60343 -0.313418 -0.9433 -0.305333H1.5c-0.39782 0 -0.779356 0.158035 -1.06066 0.43934C0.158035 1.22058 0 1.60211 0 1.99994v9.99996c0 0.3979 0.158035 0.7794 0.43934 1.0607 0.281304 0.2813 0.66283 0.4393 1.06066 0.4393h11c0.3978 0 0.7794 -0.158 1.0607 -0.4393S14 12.3978 14 11.9999V3.99994c0 -0.39783 -0.158 -0.77936 -0.4393 -1.06066 -0.2813 -0.28131 -0.6629 -0.43934 -1.0607 -0.43934H6.89039l-0.21495 -0.85979c-0.08224 -0.33249 -0.27599 -0.62762 -0.54869 -0.834881Z" />
+    </G>
+  );
+}
+
+/** New folder. */
+export function IconFolderAdd() {
+  return (
+    <G box="0 0 14 14">
+      <path fillRule="evenodd" d="M5.183 0.5a1.5 1.5 0 0 1 1.492 1.14l0.215 0.86h5.61A1.5 1.5 0 0 1 14 4v8a1.5 1.5 0 0 1 -1.5 1.5h-11A1.5 1.5 0 0 1 0 12V2A1.5 1.5 0 0 1 1.5 0.5h3.683ZM7 4.75a0.75 0.75 0 0 1 0.75 0.75v1.75H9.5a0.75 0.75 0 0 1 0 1.5H7.75v1.75a0.75 0.75 0 0 1 -1.5 0V8.75H4.5a0.75 0.75 0 0 1 0 -1.5h1.75V5.5A0.75 0.75 0 0 1 7 4.75Z" clipRule="evenodd" />
     </G>
   );
 }
@@ -200,7 +209,7 @@ export function IconDatabase() {
   );
 }
 
-/** Download, export. */
+/** Download. */
 export function IconDownload() {
   return (
     <G box="0 0 14 14">
@@ -254,7 +263,7 @@ export function IconPower() {
   );
 }
 
-/** Delete. */
+/** Delete, remove. */
 export function IconTrash() {
   return (
     <G box="0 0 14 14">
@@ -263,7 +272,7 @@ export function IconTrash() {
   );
 }
 
-/** Edit. */
+/** Edit, rename, change. */
 export function IconPencil() {
   return (
     <G box="-0.002 -0.001 14.001 14.001">
@@ -282,7 +291,7 @@ export function IconCopy() {
   );
 }
 
-/** Verify, confirmed. */
+/** Test, verify, success. */
 export function IconCheck() {
   return (
     <G box="0.3 0.549 13.399 13.399">
@@ -291,7 +300,7 @@ export function IconCheck() {
   );
 }
 
-/** Add. */
+/** Add, create. */
 export function IconAdd() {
   return (
     <G box="0.006 0.006 13.988 13.988">
@@ -300,7 +309,7 @@ export function IconAdd() {
   );
 }
 
-/** Close, cancel. */
+/** Close, cancel, dismiss. */
 export function IconClose() {
   return (
     <G box="0 0 14 14">
