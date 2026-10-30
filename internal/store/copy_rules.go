@@ -207,14 +207,35 @@ func encodeSkip(skip []string) (string, error) {
 	return string(b), nil
 }
 
-// forgetSkippedTargetTx takes a removed target out of every skip list, the
-// section defaults' and the copy rules', so none of them names a target that
-// is gone. A list left empty means every target, which with the target gone is
-// what it said before.
-func forgetSkippedTargetTx(tx *sql.Tx, id string) error {
+// ForgetSkippedTarget takes id out of the skip lists of domain while it names
+// no target of that section.
+func (r *Repo) ForgetSkippedTarget(domain, id string) error {
+	err := r.inTx(func(tx *sql.Tx) error {
+		var held bool
+		if err := tx.QueryRow(`SELECT EXISTS (SELECT 1 FROM offsite_targets WHERE id = ? AND role = ? AND domain = ?)`,
+			id, RoleOffsite, domain).Scan(&held); err != nil || held {
+			return err
+		}
+		return forgetSkippedTargetTx(tx, id, domain)
+	})
+	if err != nil {
+		return fmt.Errorf("ForgetSkippedTarget: %w", err)
+	}
+	return nil
+}
+
+// forgetSkippedTargetTx takes a removed target out of the skip lists of domain,
+// or of every section for "", the section defaults' and the copy rules', so
+// none of them names a target that is gone. A list left empty means every
+// target, which with the target gone is what it said before.
+func forgetSkippedTargetTx(tx *sql.Tx, id, domain string) error {
+	where, args := `instr(skip, ?) > 0`, []any{strconv.Quote(id)}
+	if domain != "" {
+		where, args = where+` AND domain = ?`, append(args, domain)
+	}
 	for _, table := range []string{"placement_defaults", "offsite_copy_rules"} {
-		//nolint:gosec // G202: the table comes from the list above; the id travels as a parameter.
-		rows, err := tx.Query(`SELECT rowid, skip FROM `+table+` WHERE instr(skip, ?) > 0`, strconv.Quote(id))
+		//nolint:gosec // G202: the table comes from the list above and where from the two fixed clauses; values travel as parameters.
+		rows, err := tx.Query(`SELECT rowid, skip FROM `+table+` WHERE `+where, args...)
 		if err != nil {
 			return err
 		}

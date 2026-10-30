@@ -2,6 +2,7 @@ package api
 
 import (
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/junkerderprovinz/bombvault/internal/store"
@@ -20,7 +21,7 @@ func TestACopyOnItsOwnFolderIsRemovedAtStart(t *testing.T) {
 	f.setDefault("containers", "", self.ID, box.ID)
 	f.rule("containers", "container:plex", self.ID)
 
-	if err := f.svc.RemoveCopiesOnOwnFolders(); err != nil {
+	if _, err := f.svc.RepairLocationModel(); err != nil {
 		t.Fatal(err)
 	}
 
@@ -57,7 +58,7 @@ func TestACopyOnItsOwnFolderTakesTheOffsiteFieldAlongWhenItWasThePrimary(t *test
 		t.Fatal(err)
 	}
 
-	if err := f.svc.RemoveCopiesOnOwnFolders(); err != nil {
+	if _, err := f.svc.RepairLocationModel(); err != nil {
 		t.Fatal(err)
 	}
 
@@ -66,5 +67,64 @@ func TestACopyOnItsOwnFolderTakesTheOffsiteFieldAlongWhenItWasThePrimary(t *test
 	}
 	if s, _ := f.st.GetSettings(); s.ContainersOffsite != "" {
 		t.Errorf("containers off-site field = %q, want it cleared", s.ContainersOffsite)
+	}
+}
+
+func TestASettingsSaveRefusesAnOffsiteFieldOnTheOwnFolder(t *testing.T) {
+	f := newPlacementFixture(t)
+	settings, err := f.st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	v := toView(settings)
+	v.FilesOffsite = settings.FilesPath
+
+	res := f.do("PUT", "/api/settings", v)
+
+	if msg, _ := res["error"].(string); res["ok"] != false || !strings.Contains(msg, errCopyOnOwnFolder.Error()) {
+		t.Fatalf("answer = %v, want the copy onto the own folder refused", res)
+	}
+	if left, _ := f.st.OffsiteTargetsForDomain("files"); len(left) != 0 {
+		t.Fatalf("files targets = %+v, want none", left)
+	}
+}
+
+func TestASettingsSaveRefusesAnOwnFolderWhereACopyOfTheSectionLies(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.target("files", "Moved", "moved/files")
+	settings, err := f.st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	v := toView(settings)
+	v.FilesPath = "moved/files"
+
+	res := f.do("PUT", "/api/settings", v)
+
+	if msg, _ := res["error"].(string); res["ok"] != false || !strings.Contains(msg, errOwnFolderOnCopy.Error()) {
+		t.Fatalf("answer = %v, want the own folder on the copy refused", res)
+	}
+	if s, _ := f.st.GetSettings(); s.FilesPath != settings.FilesPath {
+		t.Fatalf("files path = %q, want it kept", s.FilesPath)
+	}
+}
+
+func TestMovingASectionFolderOntoACopyOfTheSectionIsRefused(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.target("files", "Moved", "moved/files")
+	locations, err := f.svc.StorageLocations()
+	if err != nil {
+		t.Fatal(err)
+	}
+	id := locations[0].ID
+	removal := f.do("GET", "/api/storage/locations/"+id+"/removal", nil)
+
+	res := f.do("POST", "/api/storage/locations/"+id+"/removal", map[string]any{"expect": removal["removal"], "home": "moved"})
+
+	if msg, _ := res["error"].(string); res["ok"] != false || !strings.Contains(msg, errOwnFolderOnCopy.Error()) {
+		t.Fatalf("answer = %v, want the move onto the copy refused", res)
+	}
+	if s, _ := f.st.GetSettings(); s.FilesPath != "backups/files" {
+		t.Fatalf("files path = %q, want it kept", s.FilesPath)
 	}
 }

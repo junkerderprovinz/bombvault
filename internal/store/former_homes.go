@@ -52,6 +52,25 @@ func (r *Repo) FollowSection(item ItemRef, expect HomeState) (bool, error) {
 	return true, nil
 }
 
+// FormerHomeRepos returns every named repository id some item has as a former
+// home, sorted.
+func (r *Repo) FormerHomeRepos() ([]string, error) {
+	rows, err := r.db.Query(`SELECT DISTINCT repo FROM former_homes WHERE repo <> '' ORDER BY repo`)
+	if err != nil {
+		return nil, fmt.Errorf("FormerHomeRepos: %w", err)
+	}
+	defer rows.Close() //nolint:errcheck // rows.Close on a completed query is always nil for SQLite
+	out := []string{}
+	for rows.Next() {
+		var repo string
+		if err := rows.Scan(&repo); err != nil {
+			return nil, fmt.Errorf("FormerHomeRepos: %w", err)
+		}
+		out = append(out, repo)
+	}
+	return out, rows.Err()
+}
+
 // FormerHomes returns the places an item's backups were written to before it
 // followed its section elsewhere: named repository ids, and "" for the
 // section's own folder. They are ordered by when the item left them, the most
