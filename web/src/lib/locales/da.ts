@@ -2694,6 +2694,7 @@ const da: Partial<Translations> = {
   "settingsIO.previewNamedRepos": "Repositories",
   "settingsIO.previewCopyRules": "Kopieringsregler",
   "settingsIO.previewNotInFile": "ikke i filen, forbliver uændret",
+  "settingsIO.previewLeftOut": "Under {sections} henviser filen stadig til destinationer, der ikke findes mere. Importen udelader de henvisninger.",
   "settingsIO.previewCredentials": "Legitimationsoplysninger",
   "settingsIO.previewCredsIncluded": "inkluderet",
   "settingsIO.previewCredsNotIncluded": "ikke inkluderet",

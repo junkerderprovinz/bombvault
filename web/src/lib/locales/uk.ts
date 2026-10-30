@@ -2691,6 +2691,7 @@ const uk: Partial<Translations> = {
   "settingsIO.previewNamedRepos": "Сховища",
   "settingsIO.previewCopyRules": "Правила копіювання",
   "settingsIO.previewNotInFile": "немає у файлі, залишається без змін",
+  "settingsIO.previewLeftOut": "У розділах {sections} файл досі посилається на місця призначення, яких уже немає. Імпорт пропускає ці посилання.",
   "settingsIO.previewCredentials": "Облікові дані",
   "settingsIO.previewCredsIncluded": "включені",
   "settingsIO.previewCredsNotIncluded": "не включені",

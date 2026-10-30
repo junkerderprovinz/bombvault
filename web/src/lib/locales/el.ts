@@ -2694,6 +2694,7 @@ const el: Partial<Translations> = {
   "settingsIO.previewNamedRepos": "Αποθετήρια",
   "settingsIO.previewCopyRules": "Κανόνες αντιγραφής",
   "settingsIO.previewNotInFile": "δεν υπάρχει στο αρχείο, παραμένει όπως είναι",
+  "settingsIO.previewLeftOut": "Στα {sections} το αρχείο παραπέμπει ακόμη σε προορισμούς που δεν υπάρχουν πια. Η εισαγωγή παραλείπει αυτές τις παραπομπές.",
   "settingsIO.previewCredentials": "Διαπιστευτήρια",
   "settingsIO.previewCredsIncluded": "περιλαμβάνονται",
   "settingsIO.previewCredsNotIncluded": "δεν περιλαμβάνονται",

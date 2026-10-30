@@ -971,6 +971,72 @@ func importedPlacement(exp settingsExport) store.PlacementImport {
 	return in
 }
 
+// leftOut is a link in a settings file to a target or repository that neither
+// the file nor this instance has. The import leaves it out instead of refusing
+// the whole file, and the preview says so.
+type leftOut struct {
+	Domain string `json:"domain"`
+	// Kind is "copy" for a target a default or a copy rule skips, "home" for the
+	// repository a default wrote to; that section's default goes back to its own
+	// folder.
+	Kind string `json:"kind"`
+	ID   string `json:"id"`
+}
+
+// dropStaleSkips takes every skipped id that names no target of its section in
+// the file out of the file's defaults and copy rules.
+func dropStaleSkips(exp *settingsExport) []leftOut {
+	inFile := map[string]map[string]bool{}
+	for _, tv := range exp.OffsiteTargets {
+		if inFile[tv.Domain] == nil {
+			inFile[tv.Domain] = map[string]bool{}
+		}
+		inFile[tv.Domain][strings.TrimSpace(tv.ID)] = true
+	}
+	var out []leftOut
+	keep := func(domain string, skip []string) []string {
+		return slices.DeleteFunc(skip, func(id string) bool {
+			if id == store.SkipAll || inFile[domain][id] {
+				return false
+			}
+			out = append(out, leftOut{Domain: domain, Kind: "copy", ID: id})
+			return true
+		})
+	}
+	for i := range exp.PlacementDefaults {
+		exp.PlacementDefaults[i].Skip = keep(exp.PlacementDefaults[i].Domain, exp.PlacementDefaults[i].Skip)
+	}
+	for i := range exp.CopyRules {
+		exp.CopyRules[i].Skip = keep(exp.CopyRules[i].Domain, exp.CopyRules[i].Skip)
+	}
+	return out
+}
+
+// dropStaleLinks is dropStaleSkips plus a default whose repository is neither in
+// the file nor here, which goes back to its section's own folder.
+func (h *Handler) dropStaleLinks(exp *settingsExport) ([]leftOut, error) {
+	out := dropStaleSkips(exp)
+	inFile := map[string]bool{}
+	for _, tv := range exp.NamedRepos {
+		inFile[strings.TrimSpace(tv.ID)] = true
+	}
+	for i, d := range exp.PlacementDefaults {
+		home := strings.TrimSpace(d.Home)
+		if home == "" || home == store.HomeNowhere || inFile[home] {
+			continue
+		}
+		if _, err := h.store.GetNamedRepo(home); !errors.Is(err, sql.ErrNoRows) {
+			if err != nil {
+				return nil, err
+			}
+			continue
+		}
+		exp.PlacementDefaults[i].Home = ""
+		out = append(out, leftOut{Domain: d.Domain, Kind: "home", ID: home})
+	}
+	return out, nil
+}
+
 // checkImportedPlacement refuses the defaults and rules an import could not
 // write whole, before anything of the file is written: one entry per domain,
 // a skip that names a target the import itself is about to create, and a home

@@ -2691,6 +2691,7 @@ const ru: Partial<Translations> = {
   "settingsIO.previewNamedRepos": "Хранилища",
   "settingsIO.previewCopyRules": "Правила копирования",
   "settingsIO.previewNotInFile": "нет в файле, остаётся без изменений",
+  "settingsIO.previewLeftOut": "В разделах {sections} файл всё ещё ссылается на места назначения, которых больше нет. Импорт пропускает эти ссылки.",
   "settingsIO.previewCredentials": "Учётные данные",
   "settingsIO.previewCredsIncluded": "включены",
   "settingsIO.previewCredsNotIncluded": "не включены",

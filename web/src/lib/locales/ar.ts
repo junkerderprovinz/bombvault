@@ -2695,6 +2695,7 @@ const ar: Partial<Translations> = {
   "settingsIO.previewNamedRepos": "المستودعات",
   "settingsIO.previewCopyRules": "قواعد النسخ",
   "settingsIO.previewNotInFile": "غير موجود في الملف، يبقى كما هو",
+  "settingsIO.previewLeftOut": "في {sections} لا يزال الملف يشير إلى وجهات لم تعد موجودة. يتجاهل الاستيراد هذه الإشارات.",
   "settingsIO.previewCredentials": "بيانات الاعتماد",
   "settingsIO.previewCredsIncluded": "مضمّنة",
   "settingsIO.previewCredsNotIncluded": "غير مضمّنة",

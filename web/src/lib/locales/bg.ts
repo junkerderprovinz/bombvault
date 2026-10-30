@@ -3174,6 +3174,7 @@ const bg: Partial<Translations> = {
   "settingsIO.previewNamedRepos": "Хранилища",
   "settingsIO.previewCopyRules": "Правила за копиране",
   "settingsIO.previewNotInFile": "не е във файла, остава непроменено",
+  "settingsIO.previewLeftOut": "При {sections} файлът все още сочи към дестинации, които вече ги няма. Импортът пропуска тези връзки.",
   "settingsIO.previewCredentials": "Данни за достъп",
   "settingsIO.previewCredsIncluded": "включени",
   "settingsIO.previewCredsNotIncluded": "не са включени",

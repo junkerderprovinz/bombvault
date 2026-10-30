@@ -2693,6 +2693,7 @@ const nl: Partial<Translations> = {
   "settingsIO.previewNamedRepos": "Repositories",
   "settingsIO.previewCopyRules": "Kopieerregels",
   "settingsIO.previewNotInFile": "niet in het bestand, blijft zoals het is",
+  "settingsIO.previewLeftOut": "Bij {sections} verwijst het bestand nog naar bestemmingen die er niet meer zijn. De import laat die verwijzingen weg.",
   "settingsIO.previewCredentials": "Inloggegevens",
   "settingsIO.previewCredsIncluded": "inbegrepen",
   "settingsIO.previewCredsNotIncluded": "niet inbegrepen",

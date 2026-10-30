@@ -2695,6 +2695,7 @@ const th: Partial<Translations> = {
   "settingsIO.previewNamedRepos": "ที่เก็บ",
   "settingsIO.previewCopyRules": "กฎการคัดลอก",
   "settingsIO.previewNotInFile": "ไม่มีในไฟล์ คงไว้ตามเดิม",
+  "settingsIO.previewLeftOut": "ใน {sections} ไฟล์ยังชี้ไปยังปลายทางที่ไม่มีอยู่แล้ว การนำเข้าจะข้ามลิงก์เหล่านั้น",
   "settingsIO.previewCredentials": "ข้อมูลรับรอง",
   "settingsIO.previewCredsIncluded": "รวมอยู่",
   "settingsIO.previewCredsNotIncluded": "ไม่รวม",

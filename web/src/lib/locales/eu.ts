@@ -3174,6 +3174,7 @@ const eu: Partial<Translations> = {
   "settingsIO.previewNamedRepos": "Biltegiak",
   "settingsIO.previewCopyRules": "Kopiatze-arauak",
   "settingsIO.previewNotInFile": "ez dago fitxategian, dagoen bezala geratzen da",
+  "settingsIO.previewLeftOut": "{sections} ataletan, fitxategiak oraindik existitzen ez diren helmugak aipatzen ditu. Inportazioak esteka horiek alde batera uzten ditu.",
   "settingsIO.previewCredentials": "Kredentzialak",
   "settingsIO.previewCredsIncluded": "sartuta",
   "settingsIO.previewCredsNotIncluded": "sartu gabe",

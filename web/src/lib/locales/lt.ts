@@ -3174,6 +3174,7 @@ const lt: Partial<Translations> = {
   "settingsIO.previewNamedRepos": "Saugyklos",
   "settingsIO.previewCopyRules": "Kopijavimo taisyklės",
   "settingsIO.previewNotInFile": "nėra faile, lieka nepakitęs",
+  "settingsIO.previewLeftOut": "Skiltyje {sections} failas vis dar nurodo paskirties vietas, kurių nebėra. Importas šias nuorodas praleidžia.",
   "settingsIO.previewCredentials": "Prisijungimo duomenys",
   "settingsIO.previewCredsIncluded": "įtraukti",
   "settingsIO.previewCredsNotIncluded": "neįtraukti",

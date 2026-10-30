@@ -3174,6 +3174,7 @@ const fa: Partial<Translations> = {
   "settingsIO.previewNamedRepos": "مخزن‌ها",
   "settingsIO.previewCopyRules": "قوانین کپی",
   "settingsIO.previewNotInFile": "در فایل نیست، همان‌طور که هست باقی می‌ماند",
+  "settingsIO.previewLeftOut": "در {sections} فایل هنوز به مقصدهایی اشاره می‌کند که دیگر وجود ندارند. درون‌ریزی این پیوندها را کنار می‌گذارد.",
   "settingsIO.previewCredentials": "اطلاعات ورود",
   "settingsIO.previewCredsIncluded": "شامل شده",
   "settingsIO.previewCredsNotIncluded": "شامل نشده",

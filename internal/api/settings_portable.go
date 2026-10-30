@@ -329,6 +329,9 @@ func (h *Handler) handleExportSettings(w http.ResponseWriter, r *http.Request) {
 		Streaming:         streamingToView(traffic),
 		Idle:              idleToView(traffic),
 	}
+	// The skip lists of an upgraded database can still name removed targets,
+	// and an import elsewhere refuses a skip it cannot resolve.
+	dropStaleSkips(&exp)
 	if err := h.exportIntegrations(&exp); err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
@@ -396,17 +399,19 @@ func (h *Handler) collectCredentials(s store.Settings) (*exportCredentials, erro
 
 // importSummary is the preview payload: what an apply WOULD change, without writing.
 type importSummary struct {
-	SchemaVersion     int                 `json:"schemaVersion"`
-	ExportedAt        string              `json:"exportedAt"`
-	AppVersion        string              `json:"appVersion"`
-	OffsiteTargets    int                 `json:"offsiteTargets"`
-	NamedRepos        int                 `json:"namedRepos"`
-	Destinations      *int                `json:"destinations"`
-	PlacementDefaults *int                `json:"placementDefaults"`
-	CopyRules         *int                `json:"copyRules"`
-	NewTargets        []newTargetRow      `json:"newTargets"`
-	Credentials       importCredsPresence `json:"credentials"`
-	SettingsGroups    []string            `json:"settingsGroups"`
+	SchemaVersion     int            `json:"schemaVersion"`
+	ExportedAt        string         `json:"exportedAt"`
+	AppVersion        string         `json:"appVersion"`
+	OffsiteTargets    int            `json:"offsiteTargets"`
+	NamedRepos        int            `json:"namedRepos"`
+	Destinations      *int           `json:"destinations"`
+	PlacementDefaults *int           `json:"placementDefaults"`
+	CopyRules         *int           `json:"copyRules"`
+	NewTargets        []newTargetRow `json:"newTargets"`
+	// LeftOut are the file's links to targets and repositories that are gone.
+	LeftOut        []leftOut           `json:"leftOut"`
+	Credentials    importCredsPresence `json:"credentials"`
+	SettingsGroups []string            `json:"settingsGroups"`
 }
 
 // importCredsPresence reports which credential kinds the file carries (never the
@@ -444,6 +449,11 @@ func (h *Handler) handleImportSettings(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": msg})
 		return
 	}
+	dropped, err := h.dropStaleLinks(&exp)
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
 	if err := h.checkImportedPlacement(exp); err != nil {
 		placementFail(w, err, nil)
 		return
@@ -453,6 +463,7 @@ func (h *Handler) handleImportSettings(w http.ResponseWriter, r *http.Request) {
 	if !apply {
 		summary := summarizeExport(exp)
 		summary.NewTargets = h.svc.importNewTargets(r.Context(), exp)
+		summary.LeftOut = dropped
 		writeJSON(w, http.StatusOK, okEnvelope(map[string]any{
 			"preview": true,
 			"summary": summary,
@@ -464,9 +475,14 @@ func (h *Handler) handleImportSettings(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
+	for _, l := range dropped {
+		log.Printf("api: settings import: left out the %s section's link to %q, which is gone", l.Domain, l.ID) //nolint:gosec // G706: the section passed checkImportedPlacement and the id is %q-quoted
+	}
+	summary := summarizeExport(exp)
+	summary.LeftOut = dropped
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{
 		"applied": true,
-		"summary": summarizeExport(exp),
+		"summary": summary,
 	}))
 }
 

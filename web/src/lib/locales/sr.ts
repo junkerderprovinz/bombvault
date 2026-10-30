@@ -3158,6 +3158,7 @@ const sr: Partial<Translations> = {
   "settingsIO.previewNamedRepos": "Складишта",
   "settingsIO.previewCopyRules": "Правила копирања",
   "settingsIO.previewNotInFile": "није у датотеци, остаје непромењено",
+  "settingsIO.previewLeftOut": "Код {sections} датотека још упућује на одредишта којих више нема. Увоз изоставља те везе.",
   "settingsIO.previewCredentials": "Акредитиви",
   "settingsIO.previewCredsIncluded": "укључени",
   "settingsIO.previewCredsNotIncluded": "нису укључени",

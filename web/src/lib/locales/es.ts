@@ -2692,6 +2692,7 @@ const es: Partial<Translations> = {
   "settingsIO.previewNamedRepos": "Repositorios",
   "settingsIO.previewCopyRules": "Reglas de copia",
   "settingsIO.previewNotInFile": "no está en el archivo, se mantiene igual",
+  "settingsIO.previewLeftOut": "En {sections}, el archivo todavía apunta a destinos que ya no existen. La importación omite esos enlaces.",
   "settingsIO.previewCredentials": "Credenciales",
   "settingsIO.previewCredsIncluded": "incluidas",
   "settingsIO.previewCredsNotIncluded": "no incluidas",

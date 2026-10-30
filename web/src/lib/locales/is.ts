@@ -3174,6 +3174,7 @@ const is: Partial<Translations> = {
   "settingsIO.previewNamedRepos": "Söfn",
   "settingsIO.previewCopyRules": "Afritunarreglur",
   "settingsIO.previewNotInFile": "ekki í skránni, helst óbreytt",
+  "settingsIO.previewLeftOut": "Í {sections} vísar skráin enn á áfangastaði sem eru ekki lengur til. Innflutningurinn sleppir þeim tenglum.",
   "settingsIO.previewCredentials": "Aðgangsgögn",
   "settingsIO.previewCredsIncluded": "meðtalið",
   "settingsIO.previewCredsNotIncluded": "ekki meðtalið",

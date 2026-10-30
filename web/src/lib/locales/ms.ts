@@ -3174,6 +3174,7 @@ const ms: Partial<Translations> = {
   "settingsIO.previewNamedRepos": "Repositori",
   "settingsIO.previewCopyRules": "Peraturan salinan",
   "settingsIO.previewNotInFile": "tiada dalam fail, kekal seperti sedia ada",
+  "settingsIO.previewLeftOut": "Dalam {sections}, fail masih memaut ke destinasi yang sudah tiada. Import meninggalkan pautan itu.",
   "settingsIO.previewCredentials": "Kelayakan",
   "settingsIO.previewCredsIncluded": "disertakan",
   "settingsIO.previewCredsNotIncluded": "tidak disertakan",

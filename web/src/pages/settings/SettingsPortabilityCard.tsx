@@ -16,7 +16,7 @@ import { useToast } from "../../lib/toast";
 import { Rows, SettingRow } from "../../components/storage/rows";
 import { Card, SubCard, ToggleRow } from "./shared";
 import { NewTargetPreviewLines } from "../../components/placement/NewTargetQuestion";
-import { domainLabel } from "../../lib/placement";
+import { domainLabel, formatList } from "../../lib/placement";
 import { placementErrorText } from "../../lib/placementCodes";
 import { placementChanged } from "../../lib/placementEvents";
 import { useRef, useState, type ReactNode } from "react";
@@ -283,6 +283,13 @@ export function SettingsPortabilityCard({
                 </SettingRow>
               </Rows>
             </SubCard>
+            {preview.leftOut && preview.leftOut.length > 0 && (
+              <p className="text-sm text-carbon-textMuted">
+                {t("settingsIO.previewLeftOut").replace("{sections}", () =>
+                  formatList(lang, [...new Set(preview.leftOut!.map((l) => l.domain))].map((d) => domainLabel(t, d)))
+                )}
+              </p>
+            )}
             {preview.newTargets.map((target) => (
               <div key={target.id} className="flex flex-col gap-1">
                 <span className="text-xs font-semibold text-carbon-textSub">

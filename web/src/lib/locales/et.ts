@@ -3174,6 +3174,7 @@ const et: Partial<Translations> = {
   "settingsIO.previewNamedRepos": "Hoidlad",
   "settingsIO.previewCopyRules": "Kopeerimisreeglid",
   "settingsIO.previewNotInFile": "failis pole, jääb samaks",
+  "settingsIO.previewLeftOut": "Jaotises {sections} viitab fail veel sihtkohtadele, mida enam pole. Import jätab need viited välja.",
   "settingsIO.previewCredentials": "Mandaadid",
   "settingsIO.previewCredsIncluded": "kaasatud",
   "settingsIO.previewCredsNotIncluded": "pole kaasatud",

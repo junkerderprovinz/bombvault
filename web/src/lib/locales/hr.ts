@@ -3174,6 +3174,7 @@ const hr: Partial<Translations> = {
   "settingsIO.previewNamedRepos": "Spremišta",
   "settingsIO.previewCopyRules": "Pravila kopiranja",
   "settingsIO.previewNotInFile": "nije u datoteci, ostaje kako jest",
+  "settingsIO.previewLeftOut": "Kod {sections} datoteka još upućuje na odredišta kojih više nema. Uvoz izostavlja te poveznice.",
   "settingsIO.previewCredentials": "Vjerodajnice",
   "settingsIO.previewCredsIncluded": "uključene",
   "settingsIO.previewCredsNotIncluded": "nisu uključene",

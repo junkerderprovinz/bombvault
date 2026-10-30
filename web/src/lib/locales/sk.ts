@@ -3174,6 +3174,7 @@ const sk: Partial<Translations> = {
   "settingsIO.previewNamedRepos": "Úložiská",
   "settingsIO.previewCopyRules": "Pravidlá kopírovania",
   "settingsIO.previewNotInFile": "nie je v súbore, zostáva bez zmeny",
+  "settingsIO.previewLeftOut": "Pri {sections} súbor stále odkazuje na ciele, ktoré už neexistujú. Import tieto odkazy vynechá.",
   "settingsIO.previewCredentials": "Poverenia",
   "settingsIO.previewCredsIncluded": "zahrnuté",
   "settingsIO.previewCredsNotIncluded": "nezahrnuté",

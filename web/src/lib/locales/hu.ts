@@ -2695,6 +2695,7 @@ const hu: Partial<Translations> = {
   "settingsIO.previewNamedRepos": "Tárolók",
   "settingsIO.previewCopyRules": "Másolási szabályok",
   "settingsIO.previewNotInFile": "nincs a fájlban, változatlan marad",
+  "settingsIO.previewLeftOut": "A(z) {sections} résznél a fájl még olyan célokra mutat, amelyek már nem léteznek. Az importálás kihagyja ezeket a hivatkozásokat.",
   "settingsIO.previewCredentials": "Hitelesítő adatok",
   "settingsIO.previewCredsIncluded": "tartalmazza",
   "settingsIO.previewCredsNotIncluded": "nem tartalmazza",
