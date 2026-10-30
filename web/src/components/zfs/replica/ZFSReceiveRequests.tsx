@@ -13,7 +13,7 @@ import { Button } from "../../Button";
 import { InfoBubble } from "../../InfoBubble";
 import { SelectField } from "../../SelectField";
 import { Rows, SettingRow } from "../../storage/rows";
-import { IconCheck } from "../../Sidebar";
+import { IconConfirm } from "../../glyphs";
 import { IconZFS } from "../../navGlyphs";
 import { ReplicaKeepField } from "./ReplicaKeepField";
 import { defaultRoot, examplePath, poolLabel, unixOf } from "./replicaModel";
@@ -199,7 +199,7 @@ function AskedRequest({
         <Button
           label={t("zfs.receive.allow")}
           labelKey="zfs.receive.allow"
-          glyph={<IconCheck />}
+          glyph={<IconConfirm />}
           tone="accent"
           onClick={allow}
           disabled={busy !== ""}

@@ -65,9 +65,9 @@ import { usePlaceLabel, type TimelineState } from "../entry/BackupPlaces";
 import { CompareWindow } from "../entry/CompareWindow";
 import { FlashPluginList } from "../FlashPluginList";
 import { FolderBrowser } from "../FolderBrowser";
-import { IconCompare } from "../glyphs";
+import { IconApply, IconCompare, IconConfirm } from "../glyphs";
 import { InfoBubble } from "../InfoBubble";
-import { IconCheck, IconCopy, IconDownload, IconRecovery, IconRestore, IconTrash } from "../navGlyphs";
+import { IconCopy, IconDownload, IconRecovery, IconRestore, IconTrash } from "../navGlyphs";
 import { RadioMark } from "../RadioMark";
 import { Selector } from "../Selector";
 import { SelectField } from "../SelectField";
@@ -709,7 +709,7 @@ function RestoreForm({
             <Button
               label={t(finished ? "common.done" : "common.close")}
               labelKey={finished ? "common.done" : "common.close"}
-              glyph={finished ? <IconCheck /> : undefined}
+              glyph={finished ? <IconConfirm /> : undefined}
               tone="accent"
               onClick={onClose}
             />
@@ -946,7 +946,7 @@ function RestoreForm({
               <Button
                 label={t("restoreWindow.useThis")}
                 labelKey={null}
-                glyph={<IconCheck />}
+                glyph={<IconApply />}
                 onClick={() => setRowKey(recommended.key)}
               />
             </div>

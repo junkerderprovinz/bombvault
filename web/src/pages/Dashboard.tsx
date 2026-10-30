@@ -5,12 +5,12 @@ import { useNavigate } from "react-router-dom";
 
 import { ErrorDetailPanel } from "../components/ErrorDetailPanel";
 import { RunDetailSheet } from "../components/mobile/RunDetailSheet";
-import { IconCheck, IconPencil } from "../components/navGlyphs";
+import { IconPencil } from "../components/navGlyphs";
 import { PageAction, PageActions } from "../components/PageActions";
 import { PageTitle } from "../components/PageTitle";
 import { Button } from "../components/Button";
 import { InfoBubble } from "../components/InfoBubble";
-import { IconRefresh } from "../components/glyphs";
+import { IconConfirm, IconRefresh } from "../components/glyphs";
 import { getCoverage, getScheduleNext, getStatus, listRuns } from "../lib/api";
 import type { CoverageReport, DomainStatus, Run, ScheduleNext } from "../lib/api";
 import { inApp } from "../lib/appServers";
@@ -562,7 +562,7 @@ export function Dashboard() {
               <PageAction
                 primary={editing}
                 label={t(editing ? "dashboard.customizeDone" : "dashboard.customize")}
-                glyph={editing ? <IconCheck /> : <IconPencil />}
+                glyph={editing ? <IconConfirm /> : <IconPencil />}
                 onClick={() => setEditing((on) => !on)}
               />
             </span>

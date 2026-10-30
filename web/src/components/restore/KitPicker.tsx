@@ -3,7 +3,7 @@
 import { useId, useRef, useState, type DragEvent, type RefObject } from "react";
 import { useT } from "../../lib/i18n";
 import { Button } from "../Button";
-import { IconUpload } from "../glyphs";
+import { IconImport } from "../glyphs";
 import { SettingRow } from "../storage/rows";
 
 // A kit is a page of text. Anything far beyond that is another file.
@@ -72,7 +72,7 @@ export function KitPicker({
       <Button
         label={t("kit.choose")}
         labelKey={null}
-        glyph={<IconUpload />}
+        glyph={<IconImport />}
         onClick={() => input.current?.click()}
         disabled={busy}
         busy={busy}

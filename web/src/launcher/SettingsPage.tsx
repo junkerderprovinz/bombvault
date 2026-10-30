@@ -4,7 +4,7 @@ import { Button } from "../components/Button";
 import { ColorPickerSwatch } from "../components/ColorPickerPopover";
 import { IconTipButton } from "../components/IconTipButton";
 import { InfoBubble } from "../components/InfoBubble";
-import { IconCopy, IconTrash } from "../components/navGlyphs";
+import { IconCheck, IconCopy, IconTrash } from "../components/navGlyphs";
 import { BrandMark, ReadmeButton } from "../components/ReadmeButton";
 import { Toggle } from "../components/Toggle";
 import { AboutContent } from "../pages/settings/AboutCard";
@@ -552,12 +552,7 @@ export function LanguagePage({ t, onBack }: { t: T; onBack: () => void }) {
   const { lang, languages, setLanguage } = useT();
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-xl flex-col gap-4 px-4 pb-8 pt-2">
-      <header className="flex flex-col gap-1">
-        <button type="button" onClick={onBack} className="self-start text-xs text-carbon-textMuted glim-field-focus">
-          ‹ {t("settings.title")}
-        </button>
-        <h1 className="text-status font-semibold text-carbon-text">{t("settings.language")}</h1>
-      </header>
+      <PageTop t={t} title={t("settings.language")} onBack={onBack} />
       <div className="flex flex-col gap-1.5">
         {languages.map((l) => {
           const chosen = l.code === lang;
@@ -577,8 +572,8 @@ export function LanguagePage({ t, onBack }: { t: T; onBack: () => void }) {
               </span>
               <span className="min-w-0 flex-1 truncate text-sm text-carbon-text">{l.label}</span>
               {chosen && (
-                <span aria-hidden className="text-sm font-bold text-accentText">
-                  ✓
+                <span aria-hidden className="flex text-accentText">
+                  <IconCheck />
                 </span>
               )}
             </button>

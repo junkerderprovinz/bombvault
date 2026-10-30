@@ -2,8 +2,7 @@
 import { Button } from "../../components/Button";
 import { CheckDraw } from "../../components/CheckDraw";
 import { InfoBubble } from "../../components/InfoBubble";
-import { IconDownload } from "../../components/Sidebar";
-import { IconUpload } from "../../components/glyphs";
+import { IconExport, IconImport } from "../../components/glyphs";
 import {
   excludeFromTarget,
   exportSettings,
@@ -202,7 +201,7 @@ export function SettingsPortabilityCard({
           // arrow reversed, so the pair reads as one glyph without a
           // mirroring transform.
           tone="accent"
-          glyph={<IconDownload />}
+          glyph={<IconExport />}
           onClick={() => void handleExport()}
           disabled={busy}
           busy={exporting}
@@ -231,7 +230,7 @@ export function SettingsPortabilityCard({
           label={t("settingsIO.importButton")}
           labelKey="settingsIO.importButton"
           tone="accent"
-          glyph={<IconUpload />}
+          glyph={<IconImport />}
           onClick={() => fileInputRef.current?.click()}
           disabled={busy}
           hueIndex={hueIndex}

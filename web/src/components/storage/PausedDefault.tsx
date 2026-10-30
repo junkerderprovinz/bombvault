@@ -16,7 +16,7 @@ import { useConfirm } from "../../lib/useConfirm";
 import { ToggleRow } from "../../pages/settings/shared";
 import { Button } from "../Button";
 import { InfoBubble } from "../InfoBubble";
-import { IconCheck } from "../navGlyphs";
+import { IconConfirm } from "../glyphs";
 import { itemName, NewTargetPreviewLines } from "../placement/NewTargetQuestion";
 
 type Preview = OkEnvelope & { targets?: TargetPreviewRow[]; unmatched?: UnmatchedName[] };
@@ -127,7 +127,7 @@ export function PausedDefault({ domain }: { domain: PlacementDomain }) {
       <Button
         label={t("placementDefaults.confirm")}
         labelKey="placementDefaults.confirm"
-        glyph={<IconCheck />}
+        glyph={<IconConfirm />}
         tone="neutral"
         disabled={busy}
         onClick={() => void confirmDefault()}

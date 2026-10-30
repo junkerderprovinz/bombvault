@@ -16,9 +16,9 @@ import { InstanceWindow } from "../../pages/instances/InstanceWindow";
 import { Card } from "../../pages/settings/shared";
 import { Button } from "../Button";
 import { COMPRESSION_MODES } from "../CompressionSelector";
-import { IconForward, IconLink, IconRefresh } from "../glyphs";
+import { IconConfirm, IconForward, IconLink, IconRefresh } from "../glyphs";
 import { InfoBubble } from "../InfoBubble";
-import { IconCheck, IconPencil } from "../navGlyphs";
+import { IconPencil } from "../navGlyphs";
 import { Selector } from "../Selector";
 import { keepSummary } from "./KeepCard";
 import { KeepCountFields, useKeepLessQuestion } from "./keepFields";
@@ -95,7 +95,7 @@ function RulesWindow({ edit, section, onClose }: { edit: LocationEdit; section: 
               }}
             />
           )}
-          <Button label={t("common.done")} labelKey="common.done" glyph={<IconCheck />} tone="accent" onClick={onClose} />
+          <Button label={t("common.done")} labelKey="common.done" glyph={<IconConfirm />} tone="accent" onClick={onClose} />
         </>
       }
     >

@@ -85,12 +85,69 @@ describe("glyphFor on credentials", () => {
     expect(glyphFor("auth.passkeyRemove")).toEqual(glyphFor("mcp.revoke"));
   });
 
-  it("gives undo the mark of putting something back", () => {
-    expect(glyphFor("emergency.undo")).toEqual(glyphFor("snapshots.restore"));
-    expect(glyphFor("takeover.undo")).toEqual(glyphFor("snapshots.restore"));
+  it("gives undo a mark of its own, apart from restoring a backup", () => {
+    expect(glyphFor("emergency.undo")).toEqual(glyphFor("takeover.undo"));
+    expect(glyphFor("emergency.undo")).not.toEqual(glyphFor("snapshots.restore"));
+  });
+
+  it("marks a forgotten password apart from setting one", () => {
+    expect(glyphFor("auth.forgotPassword")).toBeDefined();
+    expect(glyphFor("auth.forgotPassword")).not.toEqual(glyphFor("auth.setPassword"));
   });
 
   it("marks turning the login off like turning two-factor off", () => {
     expect(glyphFor("auth.loginDisable")).toEqual(glyphFor("auth.twoFactorDisable"));
+  });
+});
+
+describe("glyphFor on close meanings", () => {
+  it("tells trying again from going back to the default", () => {
+    expect(glyphFor("anomaly.retry")).toEqual(glyphFor("pairing.checkAgain"));
+    expect(glyphFor("anomaly.retry")).toEqual(glyphFor("restoreCheck.recheck"));
+    expect(glyphFor("placement.reset")).toEqual(glyphFor("backupOrder.reset"));
+    expect(glyphFor("anomaly.retry")).not.toEqual(glyphFor("placement.reset"));
+  });
+
+  it("tells reading in and writing out from moving a file", () => {
+    expect(glyphFor("settingsIO.importButton")).not.toEqual(glyphFor("fleet.mesh.send"));
+    expect(glyphFor("settingsIO.exportButton")).toEqual(glyphFor("entry.export.action"));
+    expect(glyphFor("settingsIO.exportButton")).not.toEqual(glyphFor("dbdump.download"));
+  });
+
+  it("gives Done, Confirm, Got it and Allow one mark, apart from a test", () => {
+    for (const key of ["common.gotIt", "common.confirm", "zfs.receive.allow", "anomaly.action.acknowledge", "mcp.dismissKey"]) {
+      expect(glyphFor(key), key).toEqual(glyphFor("common.done"));
+    }
+    expect(glyphFor("common.done")).not.toEqual(glyphFor("offsite.test"));
+  });
+
+  it("takes the Done mark where the key also names an add", () => {
+    expect(glyphFor("zfs.add.done")).toEqual(glyphFor("common.done"));
+  });
+
+  it("cancels a restore with the cancel mark, not the restore one", () => {
+    expect(glyphFor("restore.cancel")).toEqual(glyphFor("common.cancel"));
+    expect(glyphFor("restore.cancel")).not.toEqual(glyphFor("restore.open"));
+  });
+
+  it("refuses with a mark apart from closing", () => {
+    expect(glyphFor("fleet.mesh.decline")).toEqual(glyphFor("oauth.decline"));
+    expect(glyphFor("fleet.mesh.decline")).not.toEqual(glyphFor("common.close"));
+  });
+
+  it("applies the one shown apart from saving", () => {
+    expect(glyphFor("folder.use")).toEqual(glyphFor("excludes.presetApply"));
+    expect(glyphFor("folder.use")).toEqual(glyphFor("zfs.replica.takeOver"));
+    expect(glyphFor("folder.use")).not.toEqual(glyphFor("settings.save"));
+    expect(glyphFor("takeover.decline")).not.toEqual(glyphFor("takeover.accept"));
+  });
+
+  it("sends a test message apart from testing a connection", () => {
+    expect(glyphFor("notify.test")).toBeDefined();
+    expect(glyphFor("notify.test")).not.toEqual(glyphFor("offsite.test"));
+  });
+
+  it("shows a restore check's files as a view", () => {
+    expect(glyphFor("restoreCheck.plan.showFiles")).toEqual(glyphFor("snapshots.show"));
   });
 });

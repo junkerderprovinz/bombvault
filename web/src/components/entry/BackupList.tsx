@@ -8,9 +8,9 @@ import type { MenuAction } from "../backups/ActionMenu";
 import { MoreMenu } from "../backups/MoreMenu";
 import { Badge } from "../Badge";
 import { Button } from "../Button";
-import { IconCompare } from "../glyphs";
+import { IconCompare, IconExport } from "../glyphs";
 import { InfoBubble } from "../InfoBubble";
-import { IconAdd, IconCloud, IconDownload, IconLocal, IconRestore, IconTrash } from "../navGlyphs";
+import { IconAdd, IconCloud, IconLocal, IconRestore, IconTrash } from "../navGlyphs";
 import { Rows } from "../storage/rows";
 import { usePlaceLabel, type TimelineState } from "./BackupPlaces";
 
@@ -55,7 +55,7 @@ function RowMenu({
       glyph: <IconAdd />,
       onSelect: () => onAct("tag"),
     },
-    { id: "export", label: t("entry.export.action"), glyph: <IconDownload />, onSelect: () => onAct("export") }
+    { id: "export", label: t("entry.export.action"), glyph: <IconExport />, onSelect: () => onAct("export") }
   );
   if (deletable) {
     actions.push({ id: "delete", label: t("common.delete"), glyph: <IconTrash />, onSelect: () => onAct("delete") });

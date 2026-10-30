@@ -5,7 +5,7 @@ import { useState } from "react";
 
 import { Badge } from "../../components/Badge";
 import { Button } from "../../components/Button";
-import { IconCheck, IconTrash } from "../../components/navGlyphs";
+import { IconTrash } from "../../components/navGlyphs";
 import { unixOf } from "../../components/zfs/replica/replicaModel";
 import { decideRelease, dropKeptDeposit } from "../../lib/api";
 import type { DepositRelease, Deposits } from "../../lib/api";
@@ -17,6 +17,7 @@ import { useConfirm } from "../../lib/useConfirm";
 import { useOwnLogin } from "../../lib/useOwnLogin";
 import { ROLES } from "./RoleTile";
 import type { InstancesState } from "./useInstances";
+import { IconConfirm } from "../../components/glyphs";
 
 type Kept = Deposits["kept"][number];
 
@@ -99,7 +100,7 @@ export function ReleaseRequests({ releases, state }: { releases: DepositRelease[
               <Button
                 label={t("zfs.receive.allow")}
                 labelKey="zfs.receive.allow"
-                glyph={<IconCheck />}
+                glyph={<IconConfirm />}
                 tone="accent"
                 onClick={() => void decide(r, "allow")}
                 disabled={busy !== ""}

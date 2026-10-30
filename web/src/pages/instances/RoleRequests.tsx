@@ -2,7 +2,7 @@ import { useState } from "react";
 
 import { Badge } from "../../components/Badge";
 import { Button } from "../../components/Button";
-import { IconCheck } from "../../components/navGlyphs";
+import { IconConfirm } from "../../components/glyphs";
 import { unixOf } from "../../components/zfs/replica/replicaModel";
 import { decideRole } from "../../lib/api";
 import type { RequestedRole, RoleDecision, RoleRequest } from "../../lib/api";
@@ -126,7 +126,7 @@ export function RoleRequests({
                 <Button
                   label={t("zfs.receive.allow")}
                   labelKey="zfs.receive.allow"
-                  glyph={<IconCheck />}
+                  glyph={<IconConfirm />}
                   tone="accent"
                   onClick={() => void allow(role, request)}
                   disabled={busy !== ""}

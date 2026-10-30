@@ -50,8 +50,8 @@ import { KindGlyph } from "../backups/kinds";
 import { Badge } from "../Badge";
 import { Button } from "../Button";
 import { FolderBrowser } from "../FolderBrowser";
-import { IconBack, IconForward, IconPause } from "../glyphs";
-import { IconCheck, IconDownload, IconRestore } from "../navGlyphs";
+import { IconBack, IconConfirm, IconForward, IconPause } from "../glyphs";
+import { IconDownload, IconRestore } from "../navGlyphs";
 import { DiscoverFindings } from "../placement/DiscoverFindings";
 import { ProgressBar } from "../ProgressBar";
 import { RadioMark } from "../RadioMark";
@@ -630,7 +630,7 @@ export function EmergencyWindow({
       <Button
         label={t(finished ? "common.done" : "common.close")}
         labelKey={finished ? "common.done" : "common.close"}
-        glyph={finished ? <IconCheck /> : undefined}
+        glyph={finished ? <IconConfirm /> : undefined}
         tone="accent"
         onClick={() => void (finished ? finish() : onClose())}
       />
@@ -641,7 +641,7 @@ export function EmergencyWindow({
       <>
         <Button label={t("common.back")} labelKey="common.back" glyph={<IconBack />} tone="subtle" onClick={() => setLeaving(false)} />
         <Button label={t("emergency.undo")} labelKey="emergency.undo" onClick={() => void undoAndClose()} />
-        <Button label={t("emergency.keep")} labelKey={null} glyph={<IconCheck />} tone="accent" onClick={() => void finish()} />
+        <Button label={t("emergency.keep")} labelKey={null} glyph={<IconConfirm />} tone="accent" onClick={() => void finish()} />
       </>
     );
   }

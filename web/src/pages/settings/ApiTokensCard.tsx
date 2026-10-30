@@ -4,7 +4,7 @@ import { Button } from "../../components/Button";
 import { ConfirmPrompt } from "../../components/ConfirmPrompt";
 import { RevealInput } from "../../components/RevealInput";
 import { Toggle } from "../../components/Toggle";
-import { IconInfo } from "../../components/glyphs";
+import { IconLog } from "../../components/glyphs";
 import { IconAdd, IconCopy } from "../../components/navGlyphs";
 import { Rows, SettingRow } from "../../components/storage/rows";
 import { InstanceWindow } from "../instances/InstanceWindow";
@@ -391,7 +391,7 @@ export function ApiTokensCard({ hueIndex, passwordSet }: { hueIndex?: number; pa
                 </>
               }
             >
-              <Button label={t("mcp.log")} labelKey="mcp.log" tone="neutral" glyph={<IconInfo />} onClick={() => setLogOf(k)} />
+              <Button label={t("mcp.log")} labelKey="mcp.log" tone="neutral" glyph={<IconLog />} onClick={() => setLogOf(k)} />
               <Button
                 label={t("mcp.revoke")}
                 labelKey="mcp.revoke"
@@ -484,7 +484,7 @@ export function ApiTokensCard({ hueIndex, passwordSet }: { hueIndex?: number; pa
                   formatTs(k.revokedAt)
                 )}
               >
-                <Button label={t("mcp.log")} labelKey="mcp.log" tone="neutral" glyph={<IconInfo />} onClick={() => setLogOf(k)} />
+                <Button label={t("mcp.log")} labelKey="mcp.log" tone="neutral" glyph={<IconLog />} onClick={() => setLogOf(k)} />
                 <Button
                   label={t("common.delete")}
                   labelKey="common.delete"

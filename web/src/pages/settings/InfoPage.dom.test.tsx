@@ -84,8 +84,8 @@ describe("the Version card", () => {
     ]);
   });
 
-  it("names GlimStone 3.7.0", () => {
-    expect(GLIMSTONE_VERSION).toBe("3.7.0");
+  it("names GlimStone 3.7.1", () => {
+    expect(GLIMSTONE_VERSION).toBe("3.7.1");
   });
 
   it("asks the server only when the button is pressed", async () => {

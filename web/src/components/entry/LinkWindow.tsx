@@ -3,7 +3,7 @@ import { useT } from "../../lib/i18n";
 import { countBackups, useTakeOver, type TakeoverEntry } from "../../lib/useTakeOver";
 import { InstanceWindow } from "../../pages/instances/InstanceWindow";
 import { Button } from "../Button";
-import { IconLink } from "../glyphs";
+import { IconApply } from "../glyphs";
 import { Rows, SettingRow } from "../storage/rows";
 
 /**
@@ -48,7 +48,7 @@ export function LinkWindow({
             <Button
               label={t("takeover.accept")}
               labelKey="takeover.accept"
-              glyph={<IconLink />}
+              glyph={<IconApply />}
               disabled={busy || counting}
               onClick={() => void link(from)}
             />

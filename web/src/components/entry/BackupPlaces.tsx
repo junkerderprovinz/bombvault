@@ -6,7 +6,7 @@ import type { useTimeline } from "../../lib/useTimeline";
 import { Card } from "../../pages/settings/shared";
 import { Badge } from "../Badge";
 import { Button } from "../Button";
-import { IconRefresh } from "../glyphs";
+import { IconRetry } from "../glyphs";
 import { InfoBubble } from "../InfoBubble";
 import { IconCheck, IconCloud, IconLocal } from "../navGlyphs";
 import { RowGlyph, Rows, SettingRow } from "../storage/rows";
@@ -82,7 +82,7 @@ export function BackupPlaces({
                   <Button
                     label={t("restoreCheck.recheck")}
                     labelKey="restoreCheck.recheck"
-                    glyph={<IconRefresh />}
+                    glyph={<IconRetry />}
                     onClick={() => void loadPlace(p.place)}
                   />
                 </>

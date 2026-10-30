@@ -5,7 +5,7 @@ import { useState } from "react";
 
 import { Badge, type BadgeTone } from "../../components/Badge";
 import { Button } from "../../components/Button";
-import { IconKey, IconRefresh } from "../../components/glyphs";
+import { IconKey, IconUpload } from "../../components/glyphs";
 import { unixOf } from "../../components/zfs/replica/replicaModel";
 import { askKeeper, newDepositCode, renewDeposits } from "../../lib/api";
 import type { DepositState, Deposits } from "../../lib/api";
@@ -91,7 +91,7 @@ export function KeyDepositWindow({ state, onClose }: { state: InstancesState; on
       <Button
         label={t("keeper.sendNow")}
         labelKey="keeper.sendNow"
-        glyph={<IconRefresh />}
+        glyph={<IconUpload />}
         tone="neutral"
         onClick={() => void run(deposit.memberId, renewDeposits)}
         disabled={busy !== ""}

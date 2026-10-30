@@ -8,7 +8,7 @@ import { RELEASE_OVER, recoveryCodeComplete, recoveryCodeShown, refusalText } fr
 import { useT } from "../../lib/i18n";
 import { formatRecent } from "../../lib/reltime";
 import { Button } from "../Button";
-import { IconBack, IconKey, IconLink, IconRefresh } from "../glyphs";
+import { IconBack, IconKey, IconLink, IconRetry } from "../glyphs";
 import { Rows, SettingRow } from "../storage/rows";
 import { EMERGENCY_FIELD, Note, Section } from "./EmergencyParts";
 
@@ -229,7 +229,7 @@ export function EmergencyGroup({
         )}
         {!loading && (
           <div>
-            <Button label={t("emergency.group.again")} labelKey={null} glyph={<IconRefresh />} tone="subtle" onClick={load} />
+            <Button label={t("emergency.group.again")} labelKey={null} glyph={<IconRetry />} tone="subtle" onClick={load} />
           </div>
         )}
       </Section>

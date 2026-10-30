@@ -30,7 +30,7 @@ import { STOP_ACK_KEY } from "../BackupButton";
 import type { MenuAction } from "../backups/ActionMenu";
 import { ZFSConnectionWindow } from "../backups/ZFSConnectionWindow";
 import { Button } from "../Button";
-import { IconClearSelection, IconLink, IconSelectAll } from "../glyphs";
+import { IconClearSelection, IconExport, IconLink, IconSelectAll } from "../glyphs";
 import { RunDetailSheet } from "../mobile/RunDetailSheet";
 import { IconBackupNow, IconDownload, IconRestore, IconSync, IconTrash, IconZFS } from "../navGlyphs";
 import { PageAction } from "../PageActions";
@@ -310,7 +310,7 @@ export function EntryHeadActions({
   const add = (id: string, label: string, glyph: ReactNode, onSelect: () => void) =>
     actions.push({ id, label, glyph, onSelect });
   const exportNewest = () => {
-    if (newest) add("export", t("entry.menu.exportNewest"), <IconDownload />, () => setShown("exportNewest"));
+    if (newest) add("export", t("entry.menu.exportNewest"), <IconExport />, () => setShown("exportNewest"));
   };
   let takeover: TakeoverEntry | null = null;
   let candidates: string[] = [];
@@ -325,7 +325,7 @@ export function EntryHeadActions({
       takeover = { name: c.name, displayName: c.name, api: containerTakeover };
       if (c.lastBackup == null && (c.aliases ?? []).length === 0) candidates = detail.linkCandidates;
       if (candidates.length > 0) add("link", t("entry.menu.link"), <IconLink />, () => setShown("link"));
-      add("export", t("entry.menu.exportContainer"), <IconDownload />, () => setShown("export"));
+      add("export", t("entry.menu.exportContainer"), <IconExport />, () => setShown("export"));
     } else {
       exportNewest();
       // The server keeps the entry of a container with backups, so they go with it.
@@ -345,7 +345,7 @@ export function EntryHeadActions({
       takeover = { name: vm.libvirtName, displayName: vm.name, api: vmTakeover };
       if (vm.lastBackup == null && (vm.aliases ?? []).length === 0) candidates = detail.linkCandidates;
       if (candidates.length > 0) add("link", t("entry.menu.link"), <IconLink />, () => setShown("link"));
-      add("export", t("entry.menu.exportVM"), <IconDownload />, () => setShown("export"));
+      add("export", t("entry.menu.exportVM"), <IconExport />, () => setShown("export"));
       if (hasBackups) {
         add("remove", t("entry.deleteLocal"), <IconTrash />, () =>
           void removeAfter(t("snapshots.deleteAllConfirm"), "snapshots.deleteAll", () => deleteBackupsVM(vm.libvirtName, "local"), () => {
