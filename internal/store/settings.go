@@ -502,8 +502,21 @@ func (r *Repo) MutateSettings(fn func(*Settings) error) (Settings, error) {
 	return after, nil
 }
 
-func updateSettings(e settingsExecer, s Settings) error {
-	_, err := e.Exec(`
+// settingsWriter reads the row a write replaces and writes the new one.
+type settingsWriter interface {
+	settingsQuerier
+	settingsExecer
+}
+
+func updateSettings(e settingsWriter, s Settings) error {
+	before, err := getSettings(e)
+	if err != nil {
+		return fmt.Errorf("UpdateSettings: %w", err)
+	}
+	if err := keepLeftOwnFolders(e, before, s); err != nil {
+		return fmt.Errorf("UpdateSettings: %w", err)
+	}
+	_, err = e.Exec(`
 		UPDATE settings SET
 		  encryption_enabled  = ?,
 		  containers_enabled  = ?,

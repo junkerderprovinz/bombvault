@@ -91,6 +91,23 @@ func followLocation(t, d store.OffsiteTarget) store.OffsiteTarget {
 	return t
 }
 
+// formerOwnFolderMode is the mode a folder a section's own folder left is read
+// with: the sign-in of the storage location it lay in while that is still
+// there, or the one it was typed with.
+func (s *Service) formerOwnFolderMode(settings store.Settings, domain string, f store.FormerOwnFolder) restic.Mode {
+	mode := s.ModeFor(settings)
+	if !restic.IsRemoteRepo(f.Repo) {
+		return mode
+	}
+	row := store.OffsiteTarget{Domain: domain, Repo: f.Repo, CredsRef: f.CredsRef}
+	if f.DestinationID != "" {
+		if d, ok, err := s.store.GetDestination(f.DestinationID); err == nil && ok {
+			row = followLocation(row, d)
+		}
+	}
+	return s.applyTargetCreds(mode, settings, row)
+}
+
 // primaryLimitsFor returns the bandwidth caps for a domain's primary backup:
 // those of the saved row when repo is remote and the row is enabled, otherwise
 // none, in which case limitFlags adds no --limit-* flags.
