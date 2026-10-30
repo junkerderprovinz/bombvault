@@ -34,17 +34,6 @@ var errOwnFolderOnCopy = errors.New("a copy of the section lies at this place, s
 // Its storage location has no Own folders card, so the copy has to go first.
 var errOwnFolderOnTypedCopy = errors.New("a copy of the section typed in by hand lies at this place, so its backups would be copied onto themselves; remove that storage location and keep its backups, then the own folder can go there")
 
-// fieldTarget is the row of a section's off-site field among targets, an
-// empty one for a field without a row.
-func fieldTarget(targets []store.OffsiteTarget, domain string) store.OffsiteTarget {
-	for _, t := range targets {
-		if t.Domain == domain && t.SortOrder == 0 {
-			return t
-		}
-	}
-	return store.OffsiteTarget{}
-}
-
 // ownFolderOnCopy refuses an own folder at the place of the copy t, which
 // follows a storage location or was typed in by hand.
 func ownFolderOnCopy(t store.OffsiteTarget) error {
@@ -207,10 +196,6 @@ func (s *Service) locationClash(settings store.Settings, loc string, self locati
 	clashes := func(other string) bool {
 		return repoLocationsOverlap(other, loc) && (!self.shared() || !sameRepoLocation(other, loc))
 	}
-	targets, err := s.store.ListOffsiteTargets()
-	if err != nil {
-		return fmt.Errorf("read the off-site targets to check this location: %w", err)
-	}
 	for _, d := range offsiteConfigDomains {
 		own, oErr := s.repoFor(settings, d, "local")
 		switch {
@@ -226,11 +211,19 @@ func (s *Service) locationClash(settings store.Settings, loc string, self locati
 			switch {
 			case !ok:
 			case d == self.own && sameRepoLocation(offLoc, loc):
-				return ownFolderOnCopy(fieldTarget(targets, d))
+				field, _, err := s.store.FieldOffsiteTarget(d)
+				if err != nil {
+					return fmt.Errorf("read the off-site field of the %s domain: %w", d, err)
+				}
+				return ownFolderOnCopy(field)
 			case clashes(offLoc):
 				return &nestedLocationErr{what: "the " + d + " domain's off-site destination", at: offLoc}
 			}
 		}
+	}
+	targets, err := s.store.ListOffsiteTargets()
+	if err != nil {
+		return fmt.Errorf("read the off-site targets to check this location: %w", err)
 	}
 	destinations, err := s.store.ListDestinations()
 	if err != nil {
