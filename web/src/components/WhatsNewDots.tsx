@@ -63,6 +63,10 @@ function stepElement(step: WayStep): HTMLElement | undefined {
  * sideways, such as the Settings rail above a narrow page, keeps the dot at
  * its edge on the side the point lies past, where a swipe brings it in.
  */
+// Half the dot and its ring, so a dot held at a strip's edge stays whole where
+// the strip meets the side of the screen.
+const DOT_REACH = 8;
+
 function inView(el: HTMLElement, x: number, y: number): { x: number; y: number } | null {
   const cuts = (overflow: string) => /auto|scroll|hidden|clip/.test(overflow);
   for (let box = el.parentElement; box; box = box.parentElement) {
@@ -73,7 +77,7 @@ function inView(el: HTMLElement, x: number, y: number): { x: number; y: number }
     if (cuts(overflowX) && (x < edge.left || x > edge.right)) {
       const sideways = box.scrollWidth > box.clientWidth && box.scrollHeight <= box.clientHeight;
       if (!sideways) return null;
-      x = Math.min(Math.max(x, edge.left + 4), edge.right - 4);
+      x = Math.min(Math.max(x, edge.left + DOT_REACH), edge.right - DOT_REACH);
     }
   }
   return { x: Math.round(x), y };
