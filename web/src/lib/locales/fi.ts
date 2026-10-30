@@ -4256,6 +4256,7 @@ const fi: Partial<Translations> = {
   "storage.remove.erasing": "Kohteen {name} varmuuskopioita poistetaan taustalla. Kohde poistetaan, kun ne ovat poissa.",
   "storage.remove.erasingNow": "Varmuuskopioita poistetaan",
   "storage.remove.passwordNeeded": "Varmuuskopioiden poistaminen täältä vaatii kirjautumissalasanan. Aseta sellainen kohdassa Asetukset, Turvallisuus.",
+  "storage.remove.busy": "Mitään ei poistettu, koska toinen tehtävä, kuten varmuuskopiointi, kopiointi tai tarkistus, käyttää osiota {section} juuri nyt. Yritä uudelleen, kun se on valmis.",
   "storage.remove.keepHome": "Osiot kirjoittavat tästä lähtien uuteen kansioon. Täällä olevat varmuuskopiot jäävät. Voit lukea ne myöhemmin kohdasta Palautus › Vanhasta varmuuskopiokansiosta.",
   "storage.remove.moved": "Nämä osiot saavat uuden kansion",
   "storage.remove.follow": "Nämä merkinnät seuraavat taas osiotaan",

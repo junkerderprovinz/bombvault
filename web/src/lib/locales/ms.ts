@@ -4266,6 +4266,7 @@ const ms: Partial<Translations> = {
   "storage.remove.erasing": "Sandaran dalam {name} sedang dipadam di latar belakang. Destinasi dialih keluar setelah semuanya hilang.",
   "storage.remove.erasingNow": "Sandaran sedang dipadam",
   "storage.remove.passwordNeeded": "Memadam sandaran di sini memerlukan kata laluan log masuk. Tetapkan satu di Tetapan, Keselamatan.",
+  "storage.remove.busy": "Tiada apa-apa yang dialih keluar kerana tugas lain, seperti sandaran, salinan atau semakan, sedang menggunakan {section}. Cuba lagi apabila tugas itu selesai.",
   "storage.remove.keepHome": "Mulai sekarang bahagian menulis ke folder baharu. Sandaran di sini kekal. Anda boleh membacanya kemudian di Pemulihan › Daripada folder sandaran lama.",
   "storage.remove.moved": "Bahagian ini mendapat folder baharu",
   "storage.remove.follow": "Entri ini kembali mengikut bahagiannya",

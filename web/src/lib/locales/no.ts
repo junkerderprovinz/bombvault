@@ -4256,6 +4256,7 @@ const no: Partial<Translations> = {
   "storage.remove.erasing": "Sikkerhetskopiene i {name} slettes i bakgrunnen. Målet fjernes når de er borte.",
   "storage.remove.erasingNow": "Sikkerhetskopier slettes",
   "storage.remove.passwordNeeded": "Å slette sikkerhetskopiene her krever et påloggingspassord. Angi ett under Innstillinger, Sikkerhet.",
+  "storage.remove.busy": "Ingenting ble fjernet, fordi en annen oppgave, for eksempel en sikkerhetskopiering, en kopiering eller en kontroll, bruker {section} akkurat nå. Prøv igjen når den er ferdig.",
   "storage.remove.keepHome": "Områdene skriver heretter til den nye mappen. Sikkerhetskopiene her blir liggende. Du kan lese dem senere under Gjenoppretting › Fra en gammel sikkerhetskopimappe.",
   "storage.remove.moved": "Disse områdene får en ny mappe",
   "storage.remove.follow": "Disse elementene følger igjen området sitt",

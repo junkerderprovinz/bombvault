@@ -191,6 +191,7 @@ func TestAFailedErasureKeepsTheDestination(t *testing.T) {
 }
 
 func TestAnErasureWaitsForNoBackupAndRefusesWhatItCannotEmpty(t *testing.T) {
+	briefRemovalWait(t)
 	f := newPlacementFixture(t)
 	f.signIn()
 	box, _ := boxWithVMs(f)
@@ -454,6 +455,7 @@ func TestAnErasureRefusesASectionLeftBehindThatWasNotShown(t *testing.T) {
 }
 
 func TestAnErasureWaitsForABackupOfASectionLeftBehind(t *testing.T) {
+	briefRemovalWait(t)
 	f := newPlacementFixture(t)
 	f.signIn()
 	box := f.destination("Box", boxRepo)

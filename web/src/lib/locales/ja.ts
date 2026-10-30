@@ -4247,6 +4247,7 @@ const ja: Partial<Translations> = {
   "storage.remove.erasing": "{name} のバックアップをバックグラウンドで削除しています。完了すると保存先が削除されます。",
   "storage.remove.erasingNow": "バックアップを削除中",
   "storage.remove.passwordNeeded": "ここのバックアップを削除するには、ログインパスワードが必要です。設定のセキュリティで設定してください。",
+  "storage.remove.busy": "バックアップ、コピー、チェックなどの別の処理がいま {section} を使用中のため、何も削除しませんでした。処理が終わってからもう一度試してください。",
   "storage.remove.keepHome": "これからセクションは新しいフォルダーに書き込みます。ここのバックアップは残ります。あとから「復元」›「古いバックアップフォルダーから」で読み取れます。",
   "storage.remove.moved": "これらのセクションに新しいフォルダーを割り当てます",
   "storage.remove.follow": "これらの項目は再びセクションの設定に従います",

@@ -4257,6 +4257,7 @@ const ro: Partial<Translations> = {
   "storage.remove.erasing": "Copiile din {name} sunt șterse în fundal. Destinația este eliminată când dispar.",
   "storage.remove.erasingNow": "Copiile se șterg",
   "storage.remove.passwordNeeded": "Ștergerea copiilor de aici cere o parolă de conectare. Setează una în Setări, Securitate.",
+  "storage.remove.busy": "Nu s-a eliminat nimic, pentru că o altă activitate, cum ar fi un backup, o copiere sau o verificare, folosește acum secțiunea {section}. Încearcă din nou după ce se termină.",
   "storage.remove.keepHome": "De acum secțiunile scriu în folderul nou. Copiile de rezervă de aici rămân. Le poți citi mai târziu în Restaurare › Dintr-un folder vechi de copii.",
   "storage.remove.moved": "Aceste secțiuni primesc un folder nou",
   "storage.remove.follow": "Aceste elemente își urmează din nou secțiunea",

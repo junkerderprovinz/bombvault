@@ -4250,6 +4250,7 @@ const sl: Partial<Translations> = {
   "storage.remove.erasing": "Varnostne kopije v {name} se brišejo v ozadju. Cilj se odstrani, ko izginejo.",
   "storage.remove.erasingNow": "Varnostne kopije se brišejo",
   "storage.remove.passwordNeeded": "Za brisanje varnostnih kopij tukaj je potrebno geslo za prijavo. Nastavi ga v Nastavitve, Varnost.",
+  "storage.remove.busy": "Nič ni bilo odstranjeno, ker razdelek {section} trenutno uporablja drugo opravilo, na primer varnostno kopiranje, kopiranje ali preverjanje. Poskusi znova, ko se konča.",
   "storage.remove.keepHome": "Razdelki odslej pišejo v novo mapo. Varnostne kopije tukaj ostanejo. Pozneje jih lahko prebereš v razdelku Obnova › Iz stare mape z varnostnimi kopijami.",
   "storage.remove.moved": "Ti razdelki dobijo novo mapo",
   "storage.remove.follow": "Ti vnosi spet sledijo svojemu razdelku",

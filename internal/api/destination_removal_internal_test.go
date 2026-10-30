@@ -8,7 +8,9 @@ import (
 	"net/http/httptest"
 	"slices"
 	"strings"
+	"sync"
 	"testing"
+	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
@@ -166,7 +168,16 @@ func TestRemovingADestinationClearsTheOffsiteFieldOfAPrimaryItHeld(t *testing.T)
 	}
 }
 
+// briefRemovalWait lets a removal give up on a busy section at once.
+func briefRemovalWait(t *testing.T) {
+	t.Helper()
+	wait := removalLockWait
+	removalLockWait = 0
+	t.Cleanup(func() { removalLockWait = wait })
+}
+
 func TestALocationIsNotRemovedWhileACopyIntoItRuns(t *testing.T) {
+	briefRemovalWait(t)
 	f := newPlacementFixture(t)
 	box, vms := boxWithVMs(f)
 	preview := f.removalPreview(box)
@@ -178,8 +189,8 @@ func TestALocationIsNotRemovedWhileACopyIntoItRuns(t *testing.T) {
 	if res := f.remove(box, preview); res["ok"] != false || res["code"] != "domain-busy" {
 		t.Fatalf("removal during the copy = %v, want it refused as busy", res)
 	}
-	if res := f.removeLocation("destination:"+box.ID, preview, ""); res["ok"] != false || res["code"] != "domain-busy" {
-		t.Fatalf("removal from the storage page during the copy = %v, want it refused as busy", res)
+	if res := f.removeLocation("destination:"+box.ID, preview, ""); res["ok"] != false || res["code"] != "domain-busy" || res["domain"] != "vms" {
+		t.Fatalf("removal from the storage page during the copy = %v, want it refused as busy with the section named", res)
 	}
 	if !f.hasTarget(vms.ID) {
 		t.Fatal("the copy lost its target while it ran")
@@ -188,6 +199,76 @@ func TestALocationIsNotRemovedWhileACopyIntoItRuns(t *testing.T) {
 	unlock()
 	if res := f.remove(box, preview); res["ok"] != true {
 		t.Fatalf("removal after the copy = %v", res)
+	}
+}
+
+func TestARemovalStraightAfterARunWaitsForTheCheckThatFollowsIt(t *testing.T) {
+	f := newPlacementFixture(t)
+	box, vms := boxWithVMs(f)
+	preview := f.removalPreview(box)
+	unlock, ok := f.svc.tryLockDomainFor("vms", "verify")
+	if !ok {
+		t.Fatal("vms is locked already")
+	}
+	time.AfterFunc(100*time.Millisecond, unlock)
+
+	if res := f.removeLocation("destination:"+box.ID, preview, ""); res["ok"] != true {
+		t.Fatalf("removal while the check after the run ends = %v, want it to go through", res)
+	}
+	if f.hasTarget(vms.ID) {
+		t.Fatal("the copy kept its target after the removal")
+	}
+}
+
+func TestAQueuedProbeLetsAWaitingRemovalGoFirst(t *testing.T) {
+	fastLockPolls(t)
+	s := &Service{repoMu: map[string]*sync.Mutex{"vms": {}}}
+	unlockRun, _ := s.tryLockDomainFor("vms", "backup")
+	removal := make(chan error, 1)
+	go func() {
+		unlock, err := s.lockForRemoval(context.Background(), "vms")
+		if err == nil {
+			defer unlock()
+			time.Sleep(50 * time.Millisecond)
+		}
+		removal <- err
+	}()
+	for !s.domainIsWanted("vms") {
+		time.Sleep(time.Millisecond)
+	}
+	probe := make(chan func(), 1)
+	go func() {
+		if unlock, ok := s.waitProbeLock("vms"); ok {
+			probe <- unlock
+		}
+	}()
+	unlockRun()
+
+	if err := <-removal; err != nil {
+		t.Fatalf("removal = %v, want the section once the run let go", err)
+	}
+	select {
+	case unlock := <-probe:
+		unlock()
+	case <-time.After(5 * time.Second):
+		t.Fatal("the probe never got its turn after the removal")
+	}
+}
+
+func TestARemovalRefusedAsBusyNamesTheSection(t *testing.T) {
+	briefRemovalWait(t)
+	f := newPlacementFixture(t)
+	box, _ := boxWithVMs(f)
+	preview := f.removalPreview(box)
+	unlock, ok := f.svc.tryLockDomainFor("vms", "prune")
+	if !ok {
+		t.Fatal("vms is locked already")
+	}
+	defer unlock()
+
+	res := f.remove(box, preview)
+	if res["ok"] != false || res["code"] != "domain-busy" || res["domain"] != "vms" {
+		t.Fatalf("answer = %v, want domain-busy naming vms", res)
 	}
 }
 

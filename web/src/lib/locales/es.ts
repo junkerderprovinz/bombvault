@@ -4254,6 +4254,7 @@ const es: Partial<Translations> = {
   "storage.remove.erasing": "Las copias de seguridad de {name} se están borrando en segundo plano. El destino se elimina cuando hayan desaparecido.",
   "storage.remove.erasingNow": "Se están borrando las copias de seguridad",
   "storage.remove.passwordNeeded": "Borrar aquí las copias de seguridad requiere una contraseña de inicio de sesión. Define una en Ajustes, Seguridad.",
+  "storage.remove.busy": "No se eliminó nada, porque otra tarea, como una copia de seguridad, una copia o una comprobación, está usando {section} ahora mismo. Vuelve a intentarlo cuando haya terminado.",
   "storage.remove.keepHome": "A partir de ahora las secciones escriben en la carpeta nueva. Las copias de seguridad de aquí se quedan. Más adelante podrás leerlas en Restauración › Desde una carpeta de copias antigua.",
   "storage.remove.moved": "Estas secciones reciben una carpeta nueva",
   "storage.remove.follow": "Estos elementos vuelven a seguir a su sección",

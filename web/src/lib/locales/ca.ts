@@ -4266,6 +4266,7 @@ const ca: Partial<Translations> = {
   "storage.remove.erasing": "Les còpies de seguretat de {name} s'estan esborrant en segon pla. La destinació s'elimina quan hagin desaparegut.",
   "storage.remove.erasingNow": "S'estan esborrant les còpies de seguretat",
   "storage.remove.passwordNeeded": "Eliminar-hi les còpies de seguretat requereix una contrasenya d'inici de sessió. Defineix-ne una a Configuració, Seguretat.",
+  "storage.remove.busy": "No s'ha eliminat res perquè una altra tasca, com ara una còpia de seguretat, una còpia o una comprovació, fa servir {section} ara mateix. Torna-ho a provar quan hagi acabat.",
   "storage.remove.keepHome": "Des d'ara les seccions escriuen a la carpeta nova. Les còpies de seguretat d'aquí es queden. Més endavant les pots llegir a Restauració › D'una carpeta de còpies antiga.",
   "storage.remove.moved": "Aquestes seccions reben una carpeta nova",
   "storage.remove.follow": "Aquests elements tornen a seguir la seva secció",

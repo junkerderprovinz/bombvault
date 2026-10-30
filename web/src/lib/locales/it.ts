@@ -4256,6 +4256,7 @@ const it: Partial<Translations> = {
   "storage.remove.erasing": "I backup in {name} vengono eliminati in background. La destinazione viene rimossa quando sono spariti.",
   "storage.remove.erasingNow": "Eliminazione dei backup in corso",
   "storage.remove.passwordNeeded": "Per eliminare qui i backup serve una password di accesso. Impostane una in Impostazioni, Sicurezza.",
+  "storage.remove.busy": "Non è stato rimosso nulla, perché un'altra attività sta usando {section} in questo momento, come un backup, una copia o un controllo. Riprova quando è terminata.",
   "storage.remove.keepHome": "Da ora le sezioni scrivono nella nuova cartella. I backup qui restano. Potrai leggerli più avanti in Ripristino › Da una vecchia cartella di backup.",
   "storage.remove.moved": "Queste sezioni ricevono una nuova cartella",
   "storage.remove.follow": "Questi elementi seguono di nuovo la loro sezione",

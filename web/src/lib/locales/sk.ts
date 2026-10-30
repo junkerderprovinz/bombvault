@@ -4266,6 +4266,7 @@ const sk: Partial<Translations> = {
   "storage.remove.erasing": "Zálohy v {name} sa mažú na pozadí. Cieľ sa odstráni, keď zmiznú.",
   "storage.remove.erasingNow": "Zálohy sa mažú",
   "storage.remove.passwordNeeded": "Vymazanie záloh tu vyžaduje prihlasovacie heslo. Nastav ho v časti Nastavenia, Zabezpečenie.",
+  "storage.remove.busy": "Nič sa neodstránilo, pretože sekciu {section} práve používa iná úloha, napríklad záloha, kopírovanie alebo kontrola. Skús to znova, keď skončí.",
   "storage.remove.keepHome": "Sekcie odteraz zapisujú do nového priečinka. Zálohy tu zostanú. Neskôr si ich prečítaš v časti Obnova › Zo starého priečinka so zálohami.",
   "storage.remove.moved": "Tieto sekcie dostanú nový priečinok",
   "storage.remove.follow": "Tieto položky sa znova riadia svojou sekciou",

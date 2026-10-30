@@ -4266,6 +4266,7 @@ const gl: Partial<Translations> = {
   "storage.remove.erasing": "As copias de seguranza de {name} bórranse en segundo plano. O destino elimínase cando desaparezan.",
   "storage.remove.erasingNow": "Bórranse as copias de seguranza",
   "storage.remove.passwordNeeded": "Borrar aquí as copias de seguranza require un contrasinal de inicio de sesión. Define un en Configuración, Seguridade.",
+  "storage.remove.busy": "Non se eliminou nada, porque agora mesmo outra tarefa está a usar {section}, como unha copia de seguranza, unha copia ou unha comprobación. Téntao de novo cando remate.",
   "storage.remove.keepHome": "Desde agora as seccións escriben no cartafol novo. As copias de seguranza de aquí quedan. Máis tarde podes lelas en Restauración › Desde un cartafol de copias antigo.",
   "storage.remove.moved": "Estas seccións reciben un cartafol novo",
   "storage.remove.follow": "Estes elementos volven seguir a súa sección",

@@ -4256,6 +4256,7 @@ const da: Partial<Translations> = {
   "storage.remove.erasing": "Sikkerhedskopierne i {name} slettes i baggrunden. Destinationen fjernes, når de er væk.",
   "storage.remove.erasingNow": "Sikkerhedskopier slettes",
   "storage.remove.passwordNeeded": "Sletning af sikkerhedskopierne her kræver en loginadgangskode. Angiv en under Indstillinger, Sikkerhed.",
+  "storage.remove.busy": "Intet blev fjernet, fordi en anden opgave, fx en sikkerhedskopiering, en kopiering eller et tjek, bruger {section} lige nu. Prøv igen, når den er færdig.",
   "storage.remove.keepHome": "Områderne skriver fremover til den nye mappe. Sikkerhedskopierne her bliver. Du kan læse dem senere under Gendannelse › Fra en gammel sikkerhedskopimappe.",
   "storage.remove.moved": "Disse områder får en ny mappe",
   "storage.remove.follow": "Disse elementer følger igen deres område",

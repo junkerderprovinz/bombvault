@@ -4256,6 +4256,7 @@ const tr: Partial<Translations> = {
   "storage.remove.erasing": "{name} içindeki yedekler arka planda siliniyor. Hedef, yedekler gidince kaldırılır.",
   "storage.remove.erasingNow": "Yedekler siliniyor",
   "storage.remove.passwordNeeded": "Buradaki yedekleri silmek için bir giriş parolası gerekir. Ayarlar, Güvenlik bölümünde bir tane belirle.",
+  "storage.remove.busy": "Hiçbir şey kaldırılmadı, çünkü şu anda {section} bölümünü yedekleme, kopyalama ya da denetim gibi başka bir iş kullanıyor. Bittiğinde yeniden dene.",
   "storage.remove.keepHome": "Bölümler bundan sonra yeni klasöre yazar. Buradaki yedekler kalır. Onları sonra Geri yükleme › Eski bir yedek klasöründen bölümünden okuyabilirsin.",
   "storage.remove.moved": "Bu bölümler yeni bir klasör alır",
   "storage.remove.follow": "Bu ögeler yeniden kendi bölümlerini izler",

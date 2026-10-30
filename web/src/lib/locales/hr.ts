@@ -4266,6 +4266,7 @@ const hr: Partial<Translations> = {
   "storage.remove.erasing": "Sigurnosne kopije u {name} brišu se u pozadini. Odredište se uklanja kad nestanu.",
   "storage.remove.erasingNow": "Sigurnosne kopije se brišu",
   "storage.remove.passwordNeeded": "Brisanje sigurnosnih kopija ovdje traži lozinku za prijavu. Postavite je pod Postavke, Sigurnost.",
+  "storage.remove.busy": "Ništa nije uklonjeno jer drugi zadatak upravo koristi odjeljak {section}, primjerice sigurnosna kopija, kopiranje ili provjera. Pokušajte ponovno kad završi.",
   "storage.remove.keepHome": "Odjeljci od sada pišu u novu mapu. Sigurnosne kopije ovdje ostaju. Poslije ih možete pročitati u Vraćanje › Iz stare mape sa sigurnosnim kopijama.",
   "storage.remove.moved": "Ovi odjeljci dobivaju novu mapu",
   "storage.remove.follow": "Ove stavke ponovno prate svoj odjeljak",

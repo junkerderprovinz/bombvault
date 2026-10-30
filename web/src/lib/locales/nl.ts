@@ -4255,6 +4255,7 @@ const nl: Partial<Translations> = {
   "storage.remove.erasing": "De back-ups in {name} worden op de achtergrond gewist. De bestemming wordt verwijderd zodra ze weg zijn.",
   "storage.remove.erasingNow": "Back-ups worden gewist",
   "storage.remove.passwordNeeded": "Om de back-ups hier te wissen is een inlogwachtwoord nodig. Stel er een in onder Instellingen, Beveiliging.",
+  "storage.remove.busy": "Er is niets verwijderd, omdat een andere taak, zoals een back-up, een kopie of een controle, {section} op dit moment gebruikt. Probeer het opnieuw als die klaar is.",
   "storage.remove.keepHome": "De onderdelen schrijven voortaan naar de nieuwe map. De back-ups hier blijven staan. Je kunt ze later lezen onder Herstel › Uit een oude back-upmap.",
   "storage.remove.moved": "Deze onderdelen krijgen een nieuwe map",
   "storage.remove.follow": "Deze items volgen weer hun onderdeel",

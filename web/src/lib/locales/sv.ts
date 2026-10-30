@@ -4256,6 +4256,7 @@ const sv: Partial<Translations> = {
   "storage.remove.erasing": "Säkerhetskopiorna i {name} raderas i bakgrunden. Målet tas bort när de är borta.",
   "storage.remove.erasingNow": "Säkerhetskopior raderas",
   "storage.remove.passwordNeeded": "För att radera säkerhetskopiorna här krävs ett inloggningslösenord. Ange ett under Inställningar, Säkerhet.",
+  "storage.remove.busy": "Inget togs bort, eftersom en annan uppgift använder {section} just nu, till exempel en säkerhetskopiering, en kopiering eller en kontroll. Försök igen när den är klar.",
   "storage.remove.keepHome": "Avsnitten skriver från och med nu till den nya mappen. Säkerhetskopiorna här ligger kvar. Du kan läsa dem senare under Återställning › Från en gammal säkerhetskopiemapp.",
   "storage.remove.moved": "De här avsnitten får en ny mapp",
   "storage.remove.follow": "De här posterna följer sitt avsnitt igen",

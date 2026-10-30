@@ -4256,6 +4256,7 @@ const fr: Partial<Translations> = {
   "storage.remove.erasing": "Les sauvegardes de {name} sont effacées en arrière-plan. La destination est retirée une fois qu'elles ont disparu.",
   "storage.remove.erasingNow": "Sauvegardes en cours d'effacement",
   "storage.remove.passwordNeeded": "Supprimer les sauvegardes ici demande un mot de passe de connexion. Définissez-en un sous Paramètres, Sécurité.",
+  "storage.remove.busy": "Rien n'a été supprimé, car une autre tâche utilise {section} en ce moment, par exemple une sauvegarde, une copie ou une vérification. Réessayez une fois qu'elle est terminée.",
   "storage.remove.keepHome": "Les sections écrivent désormais dans le nouveau dossier. Les sauvegardes d'ici restent. Vous pourrez les lire plus tard sous Restauration › Depuis un ancien dossier de sauvegardes.",
   "storage.remove.moved": "Ces sections reçoivent un nouveau dossier",
   "storage.remove.follow": "Ces éléments suivent de nouveau leur section",

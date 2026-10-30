@@ -4257,6 +4257,7 @@ const hu: Partial<Translations> = {
   "storage.remove.erasing": "A(z) {name} mentései a háttérben törlődnek. A cél eltávolítása a törlés végén történik.",
   "storage.remove.erasingNow": "A mentések törlődnek",
   "storage.remove.passwordNeeded": "A mentések itteni törléséhez bejelentkezési jelszó kell. Állíts be egyet a Beállítások, Biztonság részen.",
+  "storage.remove.busy": "Semmi nem lett eltávolítva, mert egy másik feladat éppen használja a(z) {section} szakaszt, például egy mentés, egy másolás vagy egy ellenőrzés. Próbáld újra, ha végzett.",
   "storage.remove.keepHome": "A szakaszok mostantól az új mappába írnak. Az itteni biztonsági mentések megmaradnak. Később elolvashatod őket a Visszaállítás › Régi mentési mappából alatt.",
   "storage.remove.moved": "Ezek a szakaszok új mappát kapnak",
   "storage.remove.follow": "Ezek az elemek újra a szakaszukat követik",

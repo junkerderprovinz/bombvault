@@ -4256,6 +4256,7 @@ const pt: Partial<Translations> = {
   "storage.remove.erasing": "Os backups em {name} estão a ser excluídos em segundo plano. O destino é removido quando tiverem desaparecido.",
   "storage.remove.erasingNow": "A excluir backups",
   "storage.remove.passwordNeeded": "Excluir os backups aqui exige uma palavra-passe de início de sessão. Define uma em Definições, Segurança.",
+  "storage.remove.busy": "Nada foi removido, porque outra tarefa, como um backup, uma cópia ou uma verificação, está a usar {section} neste momento. Tenta de novo quando terminar.",
   "storage.remove.keepHome": "A partir de agora, as secções escrevem na pasta nova. Os backups daqui ficam. Podes lê-los mais tarde em Restauração › De uma pasta de backups antiga.",
   "storage.remove.moved": "Estas secções recebem uma pasta nova",
   "storage.remove.follow": "Estas entradas voltam a seguir a sua secção",

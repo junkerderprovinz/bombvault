@@ -4266,6 +4266,7 @@ const id: Partial<Translations> = {
   "storage.remove.erasing": "Cadangan di {name} sedang dihapus di latar belakang. Tujuan dihapus setelah semuanya hilang.",
   "storage.remove.erasingNow": "Cadangan sedang dihapus",
   "storage.remove.passwordNeeded": "Menghapus cadangan di sini memerlukan kata sandi login. Atur satu di Pengaturan, Keamanan.",
+  "storage.remove.busy": "Tidak ada yang dihapus, karena tugas lain sedang memakai {section}, misalnya pencadangan, penyalinan, atau pemeriksaan. Coba lagi setelah tugas itu selesai.",
   "storage.remove.keepHome": "Mulai sekarang bagian menulis ke folder baru. Cadangan di sini tetap ada. Anda bisa membacanya nanti di Pemulihan › Dari folder cadangan lama.",
   "storage.remove.moved": "Bagian ini mendapat folder baru",
   "storage.remove.follow": "Entri ini kembali mengikuti bagiannya",

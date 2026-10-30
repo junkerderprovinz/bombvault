@@ -4266,6 +4266,7 @@ const lv: Partial<Translations> = {
   "storage.remove.erasing": "Dublējumi mērķī {name} tiek dzēsti fonā. Mērķis tiek noņemts, kad tie ir pazuduši.",
   "storage.remove.erasingNow": "Dublējumi tiek dzēsti",
   "storage.remove.passwordNeeded": "Lai šeit izdzēstu dublējumus, nepieciešama pieteikšanās parole. Iestatiet to sadaļā Iestatījumi, Drošība.",
+  "storage.remove.busy": "Nekas netika noņemts, jo sadaļu {section} pašlaik izmanto cits uzdevums, piemēram, dublēšana, kopēšana vai pārbaude. Mēģiniet vēlreiz, kad tas būs beidzies.",
   "storage.remove.keepHome": "Turpmāk sadaļas raksta jaunajā mapē. Šeit esošie dublējumi paliek. Vēlāk tos varat izlasīt sadaļā Atjaunošana › No vecas dublējumu mapes.",
   "storage.remove.moved": "Šīs sadaļas saņem jaunu mapi",
   "storage.remove.follow": "Šie ieraksti atkal seko savai sadaļai",

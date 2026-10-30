@@ -4266,6 +4266,7 @@ const is: Partial<Translations> = {
   "storage.remove.erasing": "Afritunum í {name} er eytt í bakgrunni. Áfangastaðurinn er fjarlægður þegar þau eru farin.",
   "storage.remove.erasingNow": "Afritum er eytt",
   "storage.remove.passwordNeeded": "Til að eyða afritunum hér þarf innskráningarlykilorð. Settu eitt undir Stillingar, Öryggi.",
+  "storage.remove.busy": "Ekkert var fjarlægt, því annað verk notar {section} núna, til dæmis öryggisafritun, afritun eða athugun. Reyndu aftur þegar því er lokið.",
   "storage.remove.keepHome": "Svæðin skrifa héðan í frá í nýju möppuna. Afritin hér verða áfram. Þú getur lesið þau seinna undir Endurheimt › Úr gamalli afritamöppu.",
   "storage.remove.moved": "Þessi svæði fá nýja möppu",
   "storage.remove.follow": "Þessar færslur fylgja aftur sínu svæði",

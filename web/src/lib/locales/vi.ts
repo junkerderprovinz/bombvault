@@ -4247,6 +4247,7 @@ const vi: Partial<Translations> = {
   "storage.remove.erasing": "Các bản sao lưu trong {name} đang được xóa ở chế độ nền. Đích sao lưu sẽ được gỡ khi chúng biến mất.",
   "storage.remove.erasingNow": "Đang xóa các bản sao lưu",
   "storage.remove.passwordNeeded": "Xóa các bản sao lưu ở đây cần có mật khẩu đăng nhập. Hãy đặt một mật khẩu trong Cài đặt, Bảo mật.",
+  "storage.remove.busy": "Không có gì bị xóa, vì một tác vụ khác đang dùng {section}, như sao lưu, sao chép hoặc kiểm tra. Hãy thử lại khi tác vụ đó xong.",
   "storage.remove.keepHome": "Từ giờ các phần ghi vào thư mục mới. Các bản sao lưu ở đây vẫn được giữ. Bạn có thể đọc chúng sau trong Khôi phục › Từ thư mục sao lưu cũ.",
   "storage.remove.moved": "Các phần này nhận thư mục mới",
   "storage.remove.follow": "Các mục này lại theo phần của chúng",

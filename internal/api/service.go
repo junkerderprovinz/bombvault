@@ -369,6 +369,10 @@ type Service struct {
 	// activityMu; set when a lock is acquired, cleared (defer) on release.
 	activityMu     sync.Mutex
 	domainActivity map[string]string
+	// domainWanted counts, per domain, the removals waiting for its lock,
+	// which the restore probes queued behind a run let go first. Guarded by
+	// activityMu.
+	domainWanted map[string]int
 
 	// runCancels maps a running restore's progress key ("container:<name>" /
 	// "vm:<name>" / "to:<path>" / "stack:<project>") to the CancelFunc of its
@@ -759,6 +763,28 @@ func (s *Service) domainBusy(domain string) (string, bool) {
 	defer s.activityMu.Unlock()
 	r, ok := s.domainActivity[domain]
 	return r, ok
+}
+
+// wantDomain marks a domain as waited for until the returned func is called.
+func (s *Service) wantDomain(domain string) func() {
+	s.activityMu.Lock()
+	defer s.activityMu.Unlock()
+	if s.domainWanted == nil {
+		s.domainWanted = map[string]int{}
+	}
+	s.domainWanted[domain]++
+	return func() {
+		s.activityMu.Lock()
+		defer s.activityMu.Unlock()
+		s.domainWanted[domain]--
+	}
+}
+
+// domainIsWanted reports whether a removal waits for the domain.
+func (s *Service) domainIsWanted(domain string) bool {
+	s.activityMu.Lock()
+	defer s.activityMu.Unlock()
+	return s.domainWanted[domain] > 0
 }
 
 // lockDomainFor is lockDomain plus an activity label recorded for the hold, so

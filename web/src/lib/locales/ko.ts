@@ -4247,6 +4247,7 @@ const ko: Partial<Translations> = {
   "storage.remove.erasing": "{name}의 백업을 백그라운드에서 삭제하는 중입니다. 모두 삭제되면 대상이 제거됩니다.",
   "storage.remove.erasingNow": "백업 삭제 중",
   "storage.remove.passwordNeeded": "여기의 백업을 삭제하려면 로그인 비밀번호가 필요합니다. 설정의 보안에서 비밀번호를 설정하세요.",
+  "storage.remove.busy": "백업, 복사, 검사 같은 다른 작업이 지금 {section} 섹션을 사용하고 있어서 아무것도 제거하지 않았습니다. 작업이 끝난 뒤 다시 시도하세요.",
   "storage.remove.keepHome": "이제부터 섹션은 새 폴더에 씁니다. 여기의 백업은 그대로 남습니다. 나중에 '복원 › 이전 백업 폴더에서'를 통해 읽을 수 있습니다.",
   "storage.remove.moved": "이 섹션은 새 폴더를 받습니다",
   "storage.remove.follow": "이 항목은 다시 섹션을 따릅니다",

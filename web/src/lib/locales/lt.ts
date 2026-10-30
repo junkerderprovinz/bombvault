@@ -4266,6 +4266,7 @@ const lt: Partial<Translations> = {
   "storage.remove.erasing": "Atsarginės kopijos vietoje {name} trinamos fone. Paskirties vieta pašalinama, kai jų nebelieka.",
   "storage.remove.erasingNow": "Atsarginės kopijos trinamos",
   "storage.remove.passwordNeeded": "Atsargines kopijas čia ištrinti galima tik su prisijungimo slaptažodžiu. Nustatyk jį skiltyje Nustatymai, Saugumas.",
+  "storage.remove.busy": "Nieko nepašalinta, nes sritį {section} dabar naudoja kita užduotis, pavyzdžiui, atsarginės kopijos kūrimas, kopijavimas ar patikra. Bandyk dar kartą, kai ji baigsis.",
   "storage.remove.keepHome": "Nuo šiol sritys rašo į naują aplanką. Čia esančios atsarginės kopijos lieka. Vėliau jas gali perskaityti skiltyje Atkūrimas › Iš seno atsarginių kopijų aplanko.",
   "storage.remove.moved": "Šios sritys gauna naują aplanką",
   "storage.remove.follow": "Šie įrašai vėl seka savo sritį",

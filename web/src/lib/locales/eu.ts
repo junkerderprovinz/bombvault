@@ -4266,6 +4266,7 @@ const eu: Partial<Translations> = {
   "storage.remove.erasing": "{name} helmugako babeskopiak atzeko planoan ezabatzen ari dira. Helmuga kendu egingo da haiek desagertzean.",
   "storage.remove.erasingNow": "Babeskopiak ezabatzen ari dira",
   "storage.remove.passwordNeeded": "Hemengo babeskopiak ezabatzeko saioa hasteko pasahitza behar da. Ezarri bat Ezarpenak, Segurtasuna atalean.",
+  "storage.remove.busy": "Ez da ezer kendu, beste zeregin bat, adibidez babeskopia bat, kopia bat edo egiaztapen bat, {section} atala erabiltzen ari delako une honetan. Saiatu berriro amaitzen denean.",
   "storage.remove.keepHome": "Hemendik aurrera atalek karpeta berrian idazten dute. Hemengo babeskopiak gelditu egiten dira. Geroago irakur ditzakezu Berrezarpena › Babeskopia-karpeta zahar batetik atalean.",
   "storage.remove.moved": "Atal hauek karpeta berria jasotzen dute",
   "storage.remove.follow": "Elementu hauek berriro beren atalari jarraitzen diote",

@@ -7805,12 +7805,13 @@ export function previewLocationRemoval(id: string): Promise<OkEnvelope & { remov
  *  carries them as they are, or nothing when they have to be read again. A
  *  folder needs `home`, the folder its sections move to: without one the code
  *  is "home-needed", with the folder they are in "home-same", and a folder a
- *  settings save would refuse comes back with that save's error. */
+ *  settings save would refuse comes back with that save's error. A section
+ *  that stays busy for a while is "domain-busy" with that section's `domain`. */
 export function removeLocation(
   id: string,
   expect: LocationRemoval,
   home?: string
-): Promise<OkEnvelope & { removal?: LocationRemoval }> {
+): Promise<OkEnvelope & { removal?: LocationRemoval; domain?: OffsiteDomain }> {
   return fetchJSON(`/api/storage/locations/${encodeURIComponent(id)}/removal`, {
     method: "POST",
     body: JSON.stringify({ expect, home }),
@@ -7872,16 +7873,16 @@ export function previewLocationErasure(id: string): Promise<OkEnvelope & { erasu
  *  `erasure.removal` as it was shown and `lastCopies` the identities of the
  *  entries that may lose their only backup. A refusal carries the code "stale"
  *  with `removal`, `erasure` or neither, or "last-copies" or
- *  "nothing-to-erase" with `erasure`, each as it stands, "domain-busy" while a
- *  section is being backed up, "move-running" while a section moves to or from
- *  here, a SecretsRefusal code like the preview, or one of the refusals
- *  removeLocation gives a folder's `home`. */
+ *  "nothing-to-erase" with `erasure`, each as it stands, "domain-busy" with
+ *  the section's `domain` while it is busy, "move-running" while a section
+ *  moves to or from here, a SecretsRefusal code like the preview, or one of
+ *  the refusals removeLocation gives a folder's `home`. */
 export function eraseLocation(
   id: string,
   expect: LocationRemoval,
   lastCopies: string[],
   home?: string
-): Promise<OkEnvelope & { started?: boolean; removal?: LocationRemoval; erasure?: LocationErasure }> {
+): Promise<OkEnvelope & { started?: boolean; removal?: LocationRemoval; erasure?: LocationErasure; domain?: OffsiteDomain }> {
   return fetchKeyJSON(`/api/storage/locations/${encodeURIComponent(id)}/erasure`, {
     method: "POST",
     body: JSON.stringify({ expect, lastCopies, home }),

@@ -4266,6 +4266,7 @@ const et: Partial<Translations> = {
   "storage.remove.erasing": "Sihtkoha {name} varundusi kustutatakse taustal. Sihtkoht eemaldatakse, kui need on kadunud.",
   "storage.remove.erasingNow": "Varundusi kustutatakse",
   "storage.remove.passwordNeeded": "Varunduste kustutamine siin nõuab sisselogimisparooli. Määra see jaotises Seaded, Turvalisus.",
+  "storage.remove.busy": "Midagi ei eemaldatud, sest teine töö, näiteks varundus, kopeerimine või kontroll, kasutab praegu jaotist {section}. Proovi uuesti, kui see on lõppenud.",
   "storage.remove.keepHome": "Valdkonnad kirjutavad nüüdsest uude kausta. Siinsed varundused jäävad alles. Neid saad hiljem lugeda jaotises Taastamine › Vanast varunduste kaustast.",
   "storage.remove.moved": "Need valdkonnad saavad uue kausta",
   "storage.remove.follow": "Need kirjed järgivad taas oma valdkonda",

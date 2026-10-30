@@ -4253,6 +4253,7 @@ const pl: Partial<Translations> = {
   "storage.remove.erasing": "Kopie zapasowe w {name} są kasowane w tle. Miejsce docelowe zostanie usunięte, gdy znikną.",
   "storage.remove.erasingNow": "Kopie zapasowe są kasowane",
   "storage.remove.passwordNeeded": "Usunięcie tutaj kopii zapasowych wymaga hasła logowania. Ustaw je w Ustawienia, Bezpieczeństwo.",
+  "storage.remove.busy": "Nic nie zostało usunięte, bo z sekcji {section} korzysta teraz inne zadanie, na przykład kopia zapasowa, kopiowanie lub sprawdzanie. Spróbuj ponownie, gdy się zakończy.",
   "storage.remove.keepHome": "Od teraz sekcje zapisują do nowego folderu. Kopie zapasowe tutaj zostają. Później możesz je odczytać w Przywracanie › Ze starego folderu z kopiami.",
   "storage.remove.moved": "Te sekcje dostają nowy folder",
   "storage.remove.follow": "Te wpisy znów podążają za swoją sekcją",

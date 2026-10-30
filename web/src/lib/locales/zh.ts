@@ -4247,6 +4247,7 @@ const zh: Partial<Translations> = {
   "storage.remove.erasing": "{name} 中的备份正在后台删除。删除完成后会移除该目标。",
   "storage.remove.erasingNow": "正在删除备份",
   "storage.remove.passwordNeeded": "删除这里的备份需要登录密码。请在设置的安全页面设置一个。",
+  "storage.remove.busy": "没有移除任何内容，因为另一项任务（例如备份、复制或检查）正在使用{section}。请在它完成后重试。",
   "storage.remove.keepHome": "从现在起，各分区写入新文件夹。这里的备份会保留。之后你可以在“恢复 › 从旧的备份文件夹”中读取它们。",
   "storage.remove.moved": "这些分区将使用新文件夹",
   "storage.remove.follow": "这些条目重新跟随其分区",
