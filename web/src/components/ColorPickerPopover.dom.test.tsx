@@ -7,7 +7,13 @@ import { ColorPickerSwatch } from "./ColorPickerPopover";
 
 afterEach(() => {
   cleanup();
+  vi.restoreAllMocks();
 });
+
+/** Puts the element at top, as a scroll of the page would. */
+function movedTo(el: Element, top: number) {
+  vi.spyOn(el, "getBoundingClientRect").mockReturnValue(new DOMRect(0, top, 80, 24));
+}
 
 describe("ColorPickerSwatch trigger and popover", () => {
   it("renders a swatch showing the current value as its background, no dialog until clicked", () => {
@@ -56,10 +62,19 @@ describe("ColorPickerSwatch trigger and popover", () => {
 
   it("scrolling closes the open popover", () => {
     render(<ColorPickerSwatch value="#2f6feb" onChange={vi.fn()} label="Accent colour" />);
-    fireEvent.click(screen.getByRole("button", { name: "Accent colour" }));
+    const trigger = screen.getByRole("button", { name: "Accent colour" });
+    fireEvent.click(trigger);
     expect(screen.queryByRole("dialog")).not.toBeNull();
+    movedTo(trigger, 120);
     fireEvent.scroll(window);
     expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  it("a scroll that leaves the trigger in place keeps it open", () => {
+    render(<ColorPickerSwatch value="#2f6feb" onChange={vi.fn()} label="Accent colour" />);
+    fireEvent.click(screen.getByRole("button", { name: "Accent colour" }));
+    fireEvent.scroll(window);
+    expect(screen.queryByRole("dialog")).not.toBeNull();
   });
 
   it("disabled=true renders a disabled trigger that never opens the popover", () => {

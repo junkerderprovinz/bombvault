@@ -71,3 +71,11 @@ export function computeBubblePosition(
 
   return { left, top, above };
 }
+
+/** triggerMoved reports whether a popup's trigger has left the place it had
+ *  when the popup opened. A browser dispatches a scroll event a frame after
+ *  the scroll, so one from just before the open arrives with the trigger
+ *  still where it was measured, and must not close the popup. */
+export function triggerMoved(now: BubbleTriggerRect, at: BubbleTriggerRect): boolean {
+  return Math.abs(now.top - at.top) >= 1 || Math.abs(now.left - at.left) >= 1;
+}

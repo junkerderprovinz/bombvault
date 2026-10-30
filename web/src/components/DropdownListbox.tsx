@@ -9,7 +9,7 @@ import {
   type RefObject,
 } from "react";
 import { createPortal } from "react-dom";
-import { computeBubblePosition } from "../lib/bubblePosition";
+import { computeBubblePosition, triggerMoved } from "../lib/bubblePosition";
 import { usePortalHue } from "../lib/portalHue";
 
 // DropdownListbox is the shared role="listbox" panel for the lists that are
@@ -112,10 +112,11 @@ export function DropdownListbox({
   // panel that has lost its trigger looks broken. The panel is exempt from the
   // outside check, or a mousedown would unmount an option before its click
   // arrived. Scroll is captured on window because the page scroller is `main`,
-  // not the document; a scroll inside the panel is its own list moving and
-  // leaves it open.
+  // not the document; a scroll inside the panel is its own list moving, and one
+  // that leaves the trigger where it was is no reason to close either.
   useEffect(() => {
     if (!open) return;
+    const anchor = triggerRef.current?.getBoundingClientRect();
     function onPointerDown(e: MouseEvent) {
       const target = e.target as Node;
       if (panelRef.current?.contains(target)) return;
@@ -128,6 +129,8 @@ export function DropdownListbox({
     function onScroll(e: Event) {
       const target = e.target;
       if (target instanceof Node && panelRef.current?.contains(target)) return;
+      const trigger = triggerRef.current;
+      if (trigger && anchor && !triggerMoved(trigger.getBoundingClientRect(), anchor)) return;
       onCloseRef.current();
     }
     function onResize() {

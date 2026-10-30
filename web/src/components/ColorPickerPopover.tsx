@@ -7,6 +7,7 @@ import {
   type KeyboardEvent as ReactKeyboardEvent,
 } from "react";
 import { createPortal } from "react-dom";
+import { triggerMoved } from "../lib/bubblePosition";
 import { useT } from "../lib/i18n";
 
 // ColorPickerSwatch is the shared custom-colour control: a swatch sized like
@@ -162,9 +163,11 @@ export function ColorPickerSwatch({
   }, [open]);
 
   // Scroll and resize close the popover rather than moving it, because a fixed
-  // popover that drifts from its trigger looks broken.
+  // popover that drifts from its trigger looks broken. A scroll that leaves the
+  // trigger where it was is no reason to close.
   useEffect(() => {
     if (!open) return;
+    const anchor = triggerRef.current?.getBoundingClientRect();
     function onPointerDown(e: MouseEvent) {
       const target = e.target as Node;
       if (panelRef.current?.contains(target)) return;
@@ -174,14 +177,19 @@ export function ColorPickerSwatch({
     function onKeyDown(e: KeyboardEvent) {
       if (e.key === "Escape") closeSelf();
     }
+    function onScroll() {
+      const trigger = triggerRef.current;
+      if (trigger && anchor && !triggerMoved(trigger.getBoundingClientRect(), anchor)) return;
+      closeSelf();
+    }
     document.addEventListener("mousedown", onPointerDown);
     document.addEventListener("keydown", onKeyDown);
-    window.addEventListener("scroll", closeSelf, true);
+    window.addEventListener("scroll", onScroll, true);
     window.addEventListener("resize", closeSelf);
     return () => {
       document.removeEventListener("mousedown", onPointerDown);
       document.removeEventListener("keydown", onKeyDown);
-      window.removeEventListener("scroll", closeSelf, true);
+      window.removeEventListener("scroll", onScroll, true);
       window.removeEventListener("resize", closeSelf);
     };
   }, [open, closeSelf]);

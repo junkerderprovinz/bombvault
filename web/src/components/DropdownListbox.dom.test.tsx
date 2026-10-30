@@ -13,9 +13,12 @@ import { DropdownListbox } from "./DropdownListbox";
 function Harness({
   onPick,
   multiselectable,
+  closeOnPick,
 }: {
   onPick?: (value: string) => void;
   multiselectable?: boolean;
+  /** Closes the list on a pick, as a single-select call site does. */
+  closeOnPick?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   // On the button, as the real call sites attach it; see the width test.
@@ -34,7 +37,16 @@ function Harness({
           multiselectable={multiselectable}
         >
           {["alpha", "beta"].map((v) => (
-            <button key={v} type="button" role="option" aria-selected={false} onClick={() => onPick?.(v)}>
+            <button
+              key={v}
+              type="button"
+              role="option"
+              aria-selected={false}
+              onClick={() => {
+                onPick?.(v);
+                if (closeOnPick) setOpen(false);
+              }}
+            >
               {v}
             </button>
           ))}
@@ -47,7 +59,13 @@ function Harness({
 
 afterEach(() => {
   cleanup();
+  vi.restoreAllMocks();
 });
+
+/** Puts the element at top, as a scroll of the page would. */
+function movedTo(el: Element, top: number) {
+  vi.spyOn(el, "getBoundingClientRect").mockReturnValue(new DOMRect(0, top, 80, 24));
+}
 
 describe("DropdownListbox escaping the clipping ancestor", () => {
   it("renders the panel outside the overflow-hidden card, as a direct child of document.body", () => {
@@ -130,14 +148,28 @@ describe("DropdownListbox interaction across the portal", () => {
     expect(screen.queryByRole("listbox")).not.toBeNull();
   });
 
-  it("closes when an ancestor scrolls, but not when its own list scrolls", () => {
+  it("closes when a scroll moves its trigger away, but not when its own list scrolls", () => {
     render(<Harness />);
-    fireEvent.click(screen.getByRole("button", { name: "Trigger" }));
-    // Scrolling the list itself does not move it away from its trigger.
+    const trigger = screen.getByRole("button", { name: "Trigger" });
+    fireEvent.click(trigger);
     fireEvent.scroll(screen.getByRole("listbox"));
     expect(screen.queryByRole("listbox")).not.toBeNull();
+    movedTo(trigger, 120);
     fireEvent.scroll(window);
     expect(screen.queryByRole("listbox")).toBeNull();
+  });
+
+  it("opens on a click right after a pick, though the page's scroll event arrives after it", () => {
+    render(<Harness closeOnPick />);
+    const trigger = screen.getByRole("button", { name: "Trigger" });
+    fireEvent.click(trigger);
+    fireEvent.click(screen.getByRole("option", { name: "beta" }));
+    expect(screen.queryByRole("listbox")).toBeNull();
+    fireEvent.click(trigger);
+    // The page scrolled the trigger into view before the click, and the event
+    // for that scroll comes a frame later.
+    fireEvent.scroll(window);
+    expect(screen.queryByRole("listbox")).not.toBeNull();
   });
 
   it("carries aria-multiselectable only when asked for it", () => {
