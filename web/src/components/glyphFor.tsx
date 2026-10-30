@@ -51,6 +51,7 @@ import {
   IconStar,
   IconStop,
   IconUndo,
+  IconUnlink,
   IconUnlock,
   IconUpload,
 } from "./glyphs";
@@ -115,7 +116,9 @@ const RULES: Rule[] = [
   [/next|continue|forward/i, () => <IconForward />],
 
   // Connections, above the probing rules so recovery.connectPreview, which
-  // connects first and previews after, gets the link.
+  // connects first and previews after, gets the link. Dropping one is the
+  // broken link.
+  [/unlink/i, () => <IconUnlink />],
   [/connect|pair|link|reconnect/i, () => <IconLink />],
 
   // Probing and inspection. A test message is sent, not checked.
@@ -139,7 +142,8 @@ const RULES: Rule[] = [
 
   // Signing in and two-factor sit above the credentials rule (the key marks a
   // secret, signing in is a door) and above the power rule, which is for
-  // shutting a machine down.
+  // shutting a machine down. A passkey signs in with the key.
+  [/signInWithPasskey/i, () => <IconKey />],
   [/signIn|logIn\b/i, () => <IconSignIn />],
   [/logout|signOut/i, () => <IconSignOut />],
   [/twoFactorEnable|totpEnable/i, () => <IconShieldOn />],
