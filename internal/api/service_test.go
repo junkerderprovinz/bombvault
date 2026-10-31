@@ -4254,14 +4254,12 @@ func TestDeleteBackupsRefusedWhileDomainLocked(t *testing.T) {
 		t.Fatal("restore never reached the engine")
 	}
 
-	// DeleteBackups must be refused IMMEDIATELY while the restore holds the
-	// domain lock — proving the lock is genuinely checked (before the fix this
-	// call went straight through to Forget with zero serialization).
+	// DeleteBackups is refused at once while the restore holds the domain lock.
 	deleteErr := make(chan error, 1)
 	go func() { deleteErr <- svc.DeleteBackups(ctx, "plex", "") }()
 	select {
 	case err := <-deleteErr:
-		if err == nil || !strings.Contains(err.Error(), "currently running") {
+		if err == nil || !strings.Contains(err.Error(), "is running on") {
 			t.Fatalf("expected an immediate domain-busy refusal, got %v", err)
 		}
 	case <-time.After(2 * time.Second):
@@ -4461,7 +4459,7 @@ func TestTagSnapshotBusyWhileDomainLocked(t *testing.T) {
 		t.Fatal("restore never reached the engine")
 	}
 
-	if err := svc.TagBackup(ctx, "containers", "plex", "local", "aaaa1111", []string{"keep"}, nil); err == nil || !strings.Contains(err.Error(), "currently running") {
+	if err := svc.TagBackup(ctx, "containers", "plex", "local", "aaaa1111", []string{"keep"}, nil); err == nil || !strings.Contains(err.Error(), "is running on") {
 		t.Fatalf("a tag on a busy domain returned %v, want the busy error", err)
 	}
 	if len(eng.taggedSnaps) != 0 {
@@ -6857,7 +6855,7 @@ func TestRunSubsetDrillManualBusyRecordsNothing(t *testing.T) {
 	}
 
 	_, err := svc.RunRestoreDrill(ctx, "containers", "local", "subset", false)
-	if err == nil || !strings.Contains(err.Error(), "currently running") {
+	if err == nil || !strings.Contains(err.Error(), "is running on") {
 		t.Fatalf("a manual drill on a busy domain must return busy, got %v", err)
 	}
 	if len(eng.checkDataRepos) != 0 {
@@ -6974,7 +6972,7 @@ func TestRunSubsetDrillScheduledLockWaitTimesOut(t *testing.T) {
 
 	// wait=true, but the lock stays held past the (tiny) deadline → bounded skip.
 	_, err := svc.RunRestoreDrill(ctx, "containers", "local", "subset", true)
-	if err == nil || !strings.Contains(err.Error(), "currently running") {
+	if err == nil || !strings.Contains(err.Error(), "is running on") {
 		t.Fatalf("a scheduled drill that waits past the deadline must return busy, got %v", err)
 	}
 	if len(eng.checkDataRepos) != 0 {

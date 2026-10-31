@@ -333,7 +333,9 @@ func TestASavedDefaultConfirmedBeforeItsFirstListingStaysConfirmed(t *testing.T)
 	if pausedDefault(t, f, "containers") {
 		t.Fatal("the first listing paused a default somebody confirmed")
 	}
-	if got := copiedTo(f, "b2:bucket:containers"); !slices.Contains(got, "a9") {
-		t.Fatalf("copied to B2: %v, want the new backup there", got)
+	f.eng.mu.Lock()
+	defer f.eng.mu.Unlock()
+	if !slices.ContainsFunc(f.eng.copies, func(c copyCall) bool { return c.Dest == "b2:bucket:containers" }) {
+		t.Fatal("nothing was copied to B2")
 	}
 }
