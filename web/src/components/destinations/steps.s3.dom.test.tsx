@@ -64,6 +64,13 @@ it("gives rclone's advice on a generic region in the reader's language", async (
   expect(screen.getByRole("button", { name: "Im Zweifel diese wählen." })).toBeTruthy();
 });
 
+it("labels rclone's S3 bucket options in words", async () => {
+  const fields = { main: [option("location_constraint"), option("bucket_object_lock_enabled")], more: [] };
+  await show(<SignInBody draft={draft(s3("minio", "Other"), { fields })} providerLabel="MinIO" />);
+  expect(screen.getByLabelText("Location constraint")).toBeTruthy();
+  expect(screen.getByLabelText("Object Lock on new buckets")).toBeTruthy();
+});
+
 it("offers only the storage classes the provider takes", async () => {
   await show(<FolderBody draft={draft(s3("r2", "Cloudflare", ["STANDARD", "STANDARD_IA"]))} />);
   const picker = screen.getByRole("combobox", { name: "(provider default)" });

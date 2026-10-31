@@ -48,6 +48,8 @@ const FIELD_LABELS: Record<string, TranslationKey> = {
   library: "dest.field.library",
   share_name: "dest.field.share_name",
   path: "dest.field.path",
+  location_constraint: "dest.field.location_constraint",
+  bucket_object_lock_enabled: "dest.field.bucket_object_lock_enabled",
 };
 
 // Where a provider's field means something rclone's help does not say, as
@@ -116,15 +118,16 @@ function fitNote(t: ReturnType<typeof useT>["t"], p: Provider, label: string): {
   return { text: t("dest.note.good") + (p.lock ? ` ${t("dest.note.lock")}` : ""), tone: "ok" };
 }
 
-/** One field of a provider's form. `kept` stands in an empty field whose
- *  stored value the server does not show. */
-// rclone's advice on its generic S3 regions, which the reader should get in
-// their own language. Region names stay as rclone gives them.
+// rclone's advice among its S3 examples, which the reader should get in their
+// own language. Region names stay as rclone gives them.
 const EXAMPLE_HELP: Record<string, TranslationKey> = {
   "Use this if unsure.": "dest.example.ifUnsure",
   "Use this only if v4 signatures don't work.": "dest.example.v4Fails",
+  "The default endpoint - a good choice if you are unsure.": "dest.example.defaultEndpoint",
 };
 
+/** One field of a provider's form. `kept` stands in an empty field whose
+ *  stored value the server does not show. */
 export function DraftField({
   draft,
   option,
@@ -184,7 +187,7 @@ export function DraftField({
         autoComplete={masked(o) ? "new-password" : "off"}
         spellCheck={false}
         dir="ltr"
-        className={`w-72 max-w-full ${FIELD} font-mono text-start`}
+        className={`w-md max-w-full ${FIELD} font-mono text-start`}
       />
       {examples.length > 0 && (
         <span className="flex w-full flex-wrap justify-end gap-1.5">
@@ -307,7 +310,7 @@ export function SignInBody({ draft, providerLabel }: { draft: DestinationDraftSt
             value={draft.name}
             onChange={(e) => draft.setName(e.target.value)}
             autoComplete="off"
-            className={`w-72 max-w-full ${FIELD}`}
+            className={`w-md max-w-full ${FIELD}`}
           />
         </SettingRow>
         {kind && saved.length > 0 && (
@@ -352,7 +355,7 @@ export function SignInBody({ draft, providerLabel }: { draft: DestinationDraftSt
               autoComplete="off"
               spellCheck={false}
               dir="ltr"
-              className={`w-72 max-w-full ${FIELD} font-mono text-start`}
+              className={`w-md max-w-full ${FIELD} font-mono text-start`}
             />
           </SettingRow>
         )}
@@ -365,7 +368,7 @@ export function SignInBody({ draft, providerLabel }: { draft: DestinationDraftSt
               autoComplete="off"
               spellCheck={false}
               dir="ltr"
-              className={`w-72 max-w-full ${FIELD} font-mono text-start`}
+              className={`w-md max-w-full ${FIELD} font-mono text-start`}
             />
           </SettingRow>
         )}
@@ -379,7 +382,7 @@ export function SignInBody({ draft, providerLabel }: { draft: DestinationDraftSt
                 { value: "", label: t("dest.question.pick"), disabled: true },
                 ...question.choices.map((c) => ({ value: c.value, label: c.help || c.value })),
               ]}
-              className={`w-72 max-w-full ${FIELD}`}
+              className={`w-md max-w-full ${FIELD}`}
             />
           </SettingRow>
         )}
