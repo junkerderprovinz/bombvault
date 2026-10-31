@@ -113,9 +113,10 @@ describe("BottomSheet", () => {
   function rising() {
     vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout", "requestAnimationFrame", "cancelAnimationFrame"] });
     const real = window.getComputedStyle.bind(window);
+    const restsAbove = `${window.innerHeight - 500}px`;
     const style = vi.spyOn(window, "getComputedStyle").mockImplementation((el, pseudo) =>
       el.getAttribute("role") === "dialog"
-        ? ({ transitionDuration: "0.32s", transform: "matrix(1, 0, 0, 1, 0, 400)" } as CSSStyleDeclaration)
+        ? ({ transitionDuration: "0.32s", bottom: restsAbove } as CSSStyleDeclaration)
         : real(el, pseudo)
     );
     const onClose = vi.fn();

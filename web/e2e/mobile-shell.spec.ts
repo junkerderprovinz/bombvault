@@ -154,6 +154,28 @@ test("the More sheet opens with the fresh-DB registry and closes via all three p
   expect(focusInsideDialog).toBe(true);
 });
 
+test("a tap where the rising sheet comes to rest leaves it open", async ({ page }, testInfo) => {
+  test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only: the More trigger exists below the breakpoint");
+  await bootWithoutServerLook(page);
+  const moreTrigger = page.getByTestId("bottom-nav").getByRole("button", { name: "More" });
+  const sheet = page.getByTestId("more-sheet");
+  const panel = page.getByRole("dialog");
+
+  await moreTrigger.click();
+  await expect(panel).not.toHaveClass(/pointer-events-none/);
+  const link = await sheet.getByRole("link").first().boundingBox();
+  await page.keyboard.press("Escape");
+  await expect(sheet).toHaveCount(0);
+
+  // A slow slide keeps the sheet below its resting place while the tap lands.
+  await page.evaluate(() => document.documentElement.style.setProperty("--motion-page-dur", "3000ms"));
+  await moreTrigger.click();
+  await expect(panel).toHaveClass(/pointer-events-none/);
+  await page.touchscreen.tap(link!.x + link!.width / 2, link!.y + link!.height / 2);
+  await expect(panel).not.toHaveClass(/pointer-events-none/, { timeout: 8000 });
+  await expect(sheet).toHaveCount(1);
+});
+
 test("a row of the More sheet opens its page and leaves the trigger filled", async ({ page }, testInfo) => {
   test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only: the More trigger exists below the breakpoint");
   await bootWithoutServerLook(page);

@@ -728,9 +728,9 @@ func NewService(cfg config.Config, st *store.Repo, d dockercli.Docker, v virshcl
 	return s
 }
 
-// errDomainBusy is returned by a maintenance op when a backup is holding the
-// domain's lock (so it never disturbs an in-progress backup's repo).
-var errDomainBusy = errors.New("a backup is currently running for this domain; try again when it finishes")
+// errDomainBusy is returned by an action refused because another operation
+// holds the domain's lock, so it never disturbs that operation's repo.
+var errDomainBusy = errors.New("another task is running on this section; try again when it finishes")
 
 // setDomainActivity records the reason label for a currently-held domain lock.
 func (s *Service) setDomainActivity(domain, reason string) {
@@ -756,7 +756,22 @@ type sectionBusyErr struct {
 	err        error
 }
 
-func (e *sectionBusyErr) Error() string { return e.err.Error() }
+func (e *sectionBusyErr) Error() string {
+	if e.err != errDomainBusy {
+		return e.err.Error()
+	}
+	what := map[string]string{
+		"backup":  "a backup",
+		"copy":    "a copy",
+		"restore": "a restore",
+		"prune":   "a clean-up",
+		"check":   "a check",
+	}[busyKind(e.op)]
+	if what == "" {
+		what = "another task"
+	}
+	return what + " is running on " + e.domain + "; try again when it finishes"
+}
 
 func (e *sectionBusyErr) Unwrap() error { return e.err }
 

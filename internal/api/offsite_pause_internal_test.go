@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"errors"
+	"net/http"
 	"slices"
 	"strings"
 	"testing"
@@ -311,5 +312,28 @@ func TestAConfirmDuringAFirstListingIsNotUndoneByIt(t *testing.T) {
 	}
 	if pausedDefault(t, f, "containers") {
 		t.Fatal("the pass paused the domain over the confirm that came in while it listed")
+	}
+}
+
+func TestASavedDefaultConfirmedBeforeItsFirstListingStaysConfirmed(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.setDefault("containers", "")
+	if res := f.do(http.MethodPost, "/api/placement/default/containers/confirm", map[string]any{}); res["ok"] != true {
+		t.Fatalf("confirm = %v, want ok", res)
+	}
+	f.target("containers", "B2", "b2:bucket:containers")
+	now := time.Now().Unix()
+	f.hold(f.domainPath("containers"), snap("a9", now, "container:nginx"))
+	f.hold("b2:bucket:containers", copied("b1", "a1", now-86400, "container:nginx"))
+
+	if err := f.svc.ReplicateOffsite(context.Background(), "containers"); err != nil {
+		t.Fatal(err)
+	}
+
+	if pausedDefault(t, f, "containers") {
+		t.Fatal("the first listing paused a default somebody confirmed")
+	}
+	if got := copiedTo(f, "b2:bucket:containers"); !slices.Contains(got, "a9") {
+		t.Fatalf("copied to B2: %v, want the new backup there", got)
 	}
 }

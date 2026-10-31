@@ -260,11 +260,13 @@ func (s *Service) removeWhileIdle(ctx context.Context, expect locationRemoval, r
 
 // The copy that follows a run holds its section for moments too, and a
 // removal right after the nightly run would be refused for it. A removal
-// waits this long for any holder before it gives up.
+// waits this long for such a copy or check before it gives up.
 var removalLockWait = 30 * time.Second
 
-// lockForRemoval takes a section's lock for a removal or an erasure, waiting
-// up to removalLockWait for whatever holds it.
+// lockForRemoval takes a section's lock for a removal or an erasure. It waits
+// up to removalLockWait while a copy or a check holds the section, which a run
+// leaves behind for moments, and refuses at once for anything else, such as a
+// backup somebody is watching run.
 func (s *Service) lockForRemoval(ctx context.Context, domain string) (func(), error) {
 	if unlock, ok := s.tryLockDomainFor(domain, "delete"); ok {
 		return unlock, nil
@@ -275,7 +277,8 @@ func (s *Service) lockForRemoval(ctx context.Context, domain string) (func(), er
 		if unlock, ok := s.takeDomainLock(domain, "delete"); ok {
 			return unlock, nil
 		}
-		if !time.Now().Before(deadline) {
+		op, held := s.domainBusy(domain)
+		if !time.Now().Before(deadline) || held && !followsARun(op) {
 			return nil, s.busyErr(domain, errDomainBusy)
 		}
 		select {
@@ -284,6 +287,13 @@ func (s *Service) lockForRemoval(ctx context.Context, domain string) (func(), er
 		case <-time.After(userLockPoll):
 		}
 	}
+}
+
+// followsARun reports whether op is one a run leaves holding its section for
+// moments once it ends.
+func followsARun(op string) bool {
+	kind := busyKind(op)
+	return kind == "copy" || kind == "check"
 }
 
 // clearOffsiteFields empties the off-site field of each domain whose primary

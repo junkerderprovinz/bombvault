@@ -75,20 +75,14 @@ function focusableElements(root: HTMLElement): HTMLElement[] {
 const openPanels: RefObject<HTMLDivElement | null>[] = [];
 
 /** underRestingPanel reports whether a point lies where the panel comes to
- *  rest once its slide has ended. */
+ *  rest once its slide has ended. The slide moves the panel by `translate`,
+ *  which leaves its layout alone, so the resting place follows from the
+ *  panel's own bottom inset and height. */
 function underRestingPanel(panel: HTMLElement | null, x: number, y: number): boolean {
   if (!panel) return false;
   const box = panel.getBoundingClientRect();
-  const shift = translateY(getComputedStyle(panel).transform);
-  return x >= box.left && x <= box.right && y >= box.top - shift && y <= box.bottom - shift;
-}
-
-/** translateY reads the vertical offset out of a computed transform. */
-function translateY(transform: string): number {
-  const matrix = /^matrix(3d)?\((.+)\)$/.exec(transform);
-  if (!matrix) return 0;
-  const values = matrix[2].split(",").map(Number);
-  return (matrix[1] ? values[13] : values[5]) ?? 0;
+  const bottom = window.innerHeight - (parseFloat(getComputedStyle(panel).bottom) || 0);
+  return x >= box.left && x <= box.right && y >= bottom - box.height && y <= bottom;
 }
 
 /** slideMs is how long the panel's slide runs, 0 when motion is off. */

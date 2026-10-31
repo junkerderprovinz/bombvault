@@ -223,7 +223,7 @@ func TestARemovalStraightAfterARunWaitsForTheCheckThatFollowsIt(t *testing.T) {
 func TestAQueuedProbeLetsAWaitingRemovalGoFirst(t *testing.T) {
 	fastLockPolls(t)
 	s := &Service{repoMu: map[string]*sync.Mutex{"vms": {}}}
-	unlockRun, _ := s.tryLockDomainFor("vms", "backup")
+	unlockCopy, _ := s.tryLockDomainFor("vms", offsiteLockReason)
 	removal := make(chan error, 1)
 	go func() {
 		unlock, err := s.lockForRemoval(context.Background(), "vms")
@@ -242,10 +242,10 @@ func TestAQueuedProbeLetsAWaitingRemovalGoFirst(t *testing.T) {
 			probe <- unlock
 		}
 	}()
-	unlockRun()
+	unlockCopy()
 
 	if err := <-removal; err != nil {
-		t.Fatalf("removal = %v, want the section once the run let go", err)
+		t.Fatalf("removal = %v, want the section once the copy let go", err)
 	}
 	select {
 	case unlock := <-probe:
@@ -477,5 +477,33 @@ func TestAnRcloneRemoteAnOwnFolderUsesStays(t *testing.T) {
 	settings, _ = f.st.GetSettings()
 	if conf, _ := f.svc.decodeRcloneConf(settings); !strings.Contains(conf, "[vault]") {
 		t.Fatalf("rclone.conf = %q, want the remote kept", conf)
+	}
+}
+
+func TestARemovalDuringABackupIsRefusedAtOnce(t *testing.T) {
+	s := &Service{repoMu: map[string]*sync.Mutex{"vms": {}}}
+	unlock, _ := s.tryLockDomainFor("vms", "backup")
+	defer unlock()
+
+	start := time.Now()
+	_, err := s.lockForRemoval(context.Background(), "vms")
+	if !errors.Is(err, errDomainBusy) {
+		t.Fatalf("removal during the backup = %v, want it refused as busy", err)
+	}
+	if took := time.Since(start); took > time.Second {
+		t.Fatalf("the refusal took %v, want it at once", took)
+	}
+	if want := "a backup is running on vms; try again when it finishes"; err.Error() != want {
+		t.Fatalf("refusal = %q, want %q", err, want)
+	}
+}
+
+func TestARefusalNamesTheCopyThatHoldsTheSection(t *testing.T) {
+	s := &Service{repoMu: map[string]*sync.Mutex{"vms": {}}}
+	unlock, _ := s.tryLockDomainFor("vms", offsiteLockReason)
+	defer unlock()
+
+	if got, want := s.busyErr("vms", errDomainBusy).Error(), "a copy is running on vms; try again when it finishes"; got != want {
+		t.Fatalf("refusal = %q, want %q", got, want)
 	}
 }

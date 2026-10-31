@@ -780,13 +780,12 @@ func unmatchedNames(p placementRead, items []domainItem, listing sourceListing) 
 	return out
 }
 
-// confirmDefault ends the domain's pause and leaves each excluded name out of
-// every target with a rule of its own. A domain without a default is left
-// untouched: there is nothing yet for an exclusion to answer to. A domain
-// that already has one but was never paused still gets its exclusions
-// written, since the confirm route is the only place they are, but keeps its
-// pause and confirmed state exactly as they are, so confirming a healthy
-// domain still cannot take the rebuild check out of service.
+// confirmDefault ends the domain's pause, marks its default confirmed and
+// leaves each excluded name out of every target with a rule of its own. A
+// domain without a default is left untouched: there is nothing yet for an
+// exclusion to answer to. A default confirmed before its first listing stays
+// confirmed through it, since the confirm route shows what that listing would
+// and somebody has answered it.
 func (s *Service) confirmDefault(domain string, exclude []string) error {
 	prefix := itemIdentityPrefix(domain)
 	for _, id := range exclude {
@@ -796,15 +795,9 @@ func (s *Service) confirmDefault(domain string, exclude []string) error {
 	}
 	s.placementMu.Lock()
 	defer s.placementMu.Unlock()
-	d, found, err := s.store.PlacementDefaultFor(domain)
-	if err != nil {
+	_, found, err := s.store.PlacementDefaultFor(domain)
+	if err != nil || !found {
 		return err
-	}
-	if !found {
-		return nil
-	}
-	if !d.Paused() {
-		return s.store.SetExcludeRules(domain, exclude)
 	}
 	return s.store.ConfirmPlacement(domain, exclude)
 }

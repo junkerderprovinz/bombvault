@@ -752,11 +752,7 @@ func TestASecondConfirmationWritesItsExclusion(t *testing.T) {
 	}
 }
 
-// TestASecondConfirmationDoesNotGrantAPutDefaultManualImmunity is the other
-// half: a domain that has a default only because it was saved through the PUT
-// route, never through an actual confirmation, must not gain the manual
-// marker just because a later confirm call wrote its exclusion.
-func TestASecondConfirmationDoesNotGrantAPutDefaultManualImmunity(t *testing.T) {
+func TestConfirmingASavedDefaultKeepsItConfirmed(t *testing.T) {
 	f := newPlacementFixture(t)
 	f.setDefault("containers", "")
 	res := f.do(http.MethodPost, "/api/placement/default/containers/confirm", map[string]any{"exclude": []string{"container:old-app"}})
@@ -770,8 +766,8 @@ func TestASecondConfirmationDoesNotGrantAPutDefaultManualImmunity(t *testing.T) 
 	if err != nil || !found {
 		t.Fatalf("default = %+v, %v, %v", d, found, err)
 	}
-	if d.ConfirmedManually {
-		t.Fatal("confirming a domain that was never paused granted its PUT default manual-confirmation immunity")
+	if !d.ConfirmedManually {
+		t.Fatal("a confirmed default is not marked confirmed, so its first listing can pause it again")
 	}
 }
 
