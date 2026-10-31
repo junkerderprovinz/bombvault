@@ -1568,6 +1568,12 @@ export interface NotifyConfig {
   matrixHomeserver: string;
   matrixToken: string;
   matrixRoom: string;
+  gotifyEnabled: boolean;
+  gotifyUrl: string;
+  gotifyToken: string;
+  // 0 to 10, as Gotify's clients read them.
+  gotifyPriorityFailure: number;
+  gotifyPrioritySuccess: number;
   healthchecksUrl: string;
   // Optional per-domain Healthchecks ping URLs, keyed by domain ("container",
   // "VM", "flash", "config"). A set URL overrides healthchecksUrl for that
@@ -1601,6 +1607,7 @@ export interface GetNotifyResponse extends OkEnvelope {
   // blank submit as "keep the stored secret".
   smtpPasswordSet?: boolean;
   matrixTokenSet?: boolean;
+  gotifyTokenSet?: boolean;
 }
 
 /** GET /api/notify — the current (decrypted) notification config. */

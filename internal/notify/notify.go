@@ -91,7 +91,14 @@ type Config struct {
 	MatrixHomeserver string `json:"matrixHomeserver"`
 	MatrixToken      string `json:"matrixToken"`
 	MatrixRoom       string `json:"matrixRoom"`
-	HealthchecksURL  string `json:"healthchecksUrl"`
+	// Gotify posts to a Gotify server's /message endpoint with an app token.
+	// The priorities run from 0 to 10, as Gotify's clients read them.
+	GotifyEnabled         bool   `json:"gotifyEnabled"`
+	GotifyURL             string `json:"gotifyUrl"`
+	GotifyToken           string `json:"gotifyToken"`
+	GotifyPriorityFailure int    `json:"gotifyPriorityFailure"`
+	GotifyPrioritySuccess int    `json:"gotifyPrioritySuccess"`
+	HealthchecksURL       string `json:"healthchecksUrl"`
 	// HealthchecksByDomain maps a backup domain ("container", "VM", "flash",
 	// "config", "files", "zfs") to its own check URL, which replaces
 	// HealthchecksURL for that domain. An empty entry falls back to
@@ -163,11 +170,15 @@ func (c *Config) decode(data []byte, strict bool) error {
 	} else if err := json.Unmarshal(data, &out); err != nil {
 		return err
 	}
-	// Read the three switches again as pointers: nil means the key was absent.
+	// Read the switches and the Gotify priorities again as pointers: nil means
+	// the key was absent.
 	var gates struct {
-		Webhook *bool `json:"webhookEnabled"`
-		Matrix  *bool `json:"matrixEnabled"`
-		Apprise *bool `json:"appriseEnabled"`
+		Webhook       *bool `json:"webhookEnabled"`
+		Matrix        *bool `json:"matrixEnabled"`
+		Apprise       *bool `json:"appriseEnabled"`
+		Gotify        *bool `json:"gotifyEnabled"`
+		GotifyFailure *int  `json:"gotifyPriorityFailure"`
+		GotifySuccess *int  `json:"gotifyPrioritySuccess"`
 	}
 	if err := json.Unmarshal(data, &gates); err != nil {
 		return err
@@ -180,6 +191,15 @@ func (c *Config) decode(data []byte, strict bool) error {
 	}
 	if gates.Apprise == nil {
 		out.AppriseEnabled = out.AppriseURL != ""
+	}
+	if gates.Gotify == nil {
+		out.GotifyEnabled = out.GotifyURL != "" && out.GotifyToken != ""
+	}
+	if gates.GotifyFailure == nil {
+		out.GotifyPriorityFailure = GotifyPriorityFailure
+	}
+	if gates.GotifySuccess == nil {
+		out.GotifyPrioritySuccess = GotifyPrioritySuccess
 	}
 	*c = Config(out)
 	return nil
@@ -228,14 +248,24 @@ func (c Config) shouldSend(ok bool) bool {
 // Configured reports whether at least one channel is set. Healthchecks counts when
 // the global URL or any per-domain URL is set.
 func (c Config) Configured() bool {
-	return c.webhookReady() || c.matrixReady() || len(c.healthchecksURLs()) > 0 || c.smtpReady() || c.appriseReady()
+	return c.webhookReady() || c.matrixReady() || len(c.healthchecksURLs()) > 0 || c.smtpReady() || c.appriseReady() || c.gotifyReady()
 }
 
 // HasMessageChannel reports whether a channel that carries a message is set:
-// webhook, Matrix, SMTP or Apprise. Healthchecks only takes pings, and the
-// Unraid push is the service layer's.
+// webhook, Matrix, SMTP, Apprise or Gotify. Healthchecks only takes pings, and
+// the Unraid push is the service layer's.
 func (c Config) HasMessageChannel() bool {
-	return c.webhookReady() || c.matrixReady() || c.smtpReady() || c.appriseReady()
+	return c.webhookReady() || c.matrixReady() || c.smtpReady() || c.appriseReady() || c.gotifyReady()
+}
+
+// Validate rejects a Gotify priority outside the 0 to 10 Gotify's clients know.
+func (c Config) Validate() error {
+	for _, p := range []int{c.GotifyPriorityFailure, c.GotifyPrioritySuccess} {
+		if p < 0 || p > 10 {
+			return fmt.Errorf("a Gotify priority runs from 0 to 10, not %d", p)
+		}
+	}
+	return nil
 }
 
 // healthchecksURLFor returns the domain's own Healthchecks URL, or the global
@@ -301,6 +331,10 @@ func (c Config) appriseReady() bool {
 	return c.AppriseEnabled && c.AppriseURL != ""
 }
 
+func (c Config) gotifyReady() bool {
+	return c.GotifyEnabled && c.GotifyURL != "" && c.GotifyToken != ""
+}
+
 // Send delivers ev to the configured channels and logs each channel's error.
 // It reports whether at least one message channel took the event, so an alert
 // sent once per episode can be tried again when none did. The On policy
@@ -358,6 +392,11 @@ func (c Config) messageChannels(ev Event) []channel {
 	if c.appriseReady() {
 		out = append(out, channel{"apprise", true, func(ctx context.Context, client *http.Client) error {
 			return sendApprise(ctx, client, c, ev)
+		}})
+	}
+	if c.gotifyReady() {
+		out = append(out, channel{"gotify", true, func(ctx context.Context, client *http.Client) error {
+			return sendGotify(ctx, client, c, ev)
 		}})
 	}
 	return out
@@ -532,6 +571,34 @@ func sendWebhook(ctx context.Context, client *http.Client, c Config, ev Event) e
 	default: // generic
 		return postJSON(ctx, client, c.WebhookURL, map[string]any{"title": ev.Title, "message": ev.Message, "ok": ev.OK})
 	}
+}
+
+// The priorities a Gotify channel starts with. Gotify's Android app treats 8
+// and up as high, so a failure stands out and a success arrives as usual.
+const (
+	GotifyPriorityFailure = 8
+	GotifyPrioritySuccess = 5
+)
+
+// sendGotify posts ev to the server's /message endpoint. The app token goes in
+// the X-Gotify-Key header, never in the URL, so no log or error carries it.
+func sendGotify(ctx context.Context, client *http.Client, c Config, ev Event) error {
+	priority := c.GotifyPrioritySuccess
+	if !ev.OK {
+		priority = c.GotifyPriorityFailure
+	}
+	body, err := json.Marshal(map[string]any{"title": ev.Title, "message": ev.Message, "priority": priority})
+	if err != nil {
+		return err
+	}
+	endpoint := strings.TrimRight(c.GotifyURL, "/") + "/message"
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, bytes.NewReader(body))
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("X-Gotify-Key", c.GotifyToken)
+	return do(client, req)
 }
 
 // sendMatrix posts an m.text message to a room via the client-server API

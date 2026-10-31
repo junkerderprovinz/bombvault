@@ -85,6 +85,80 @@ func TestMatrixEndpointAndAuth(t *testing.T) {
 	}
 }
 
+func TestGotifyPostsToMessageWithItsKeyAndPriority(t *testing.T) {
+	type post struct {
+		path, key string
+		body      map[string]any
+	}
+	var posts []post
+	srv := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
+		var body map[string]any
+		b, _ := io.ReadAll(r.Body)
+		_ = json.Unmarshal(b, &body)
+		posts = append(posts, post{r.URL.Path, r.Header.Get("X-Gotify-Key"), body})
+	}))
+	defer srv.Close()
+	cfg := notify.Config{On: "always", GotifyEnabled: true, GotifyURL: srv.URL + "/gotify/", GotifyToken: "app-token",
+		GotifyPriorityFailure: 9, GotifyPrioritySuccess: 2}
+	notify.Send(context.Background(), cfg, "", notify.Event{Title: "BombVault", Message: "done", OK: true})
+	notify.Send(context.Background(), cfg, "", notify.Event{Title: "BombVault", Message: "broke", OK: false})
+	if len(posts) != 2 {
+		t.Fatalf("posts = %d, want 2", len(posts))
+	}
+	for _, p := range posts {
+		if p.path != "/gotify/message" || p.key != "app-token" {
+			t.Fatalf("post went to %q with key %q", p.path, p.key)
+		}
+	}
+	if posts[0].body["title"] != "BombVault" || posts[0].body["message"] != "done" || posts[0].body["priority"] != float64(2) {
+		t.Fatalf("success body = %v", posts[0].body)
+	}
+	if posts[1].body["priority"] != float64(9) {
+		t.Fatalf("failure priority = %v, want 9", posts[1].body["priority"])
+	}
+}
+
+func TestGotifyStartsWithItsDefaultPriorities(t *testing.T) {
+	var c notify.Config
+	if err := json.Unmarshal([]byte(`{"on":"always","gotifyUrl":"https://push.example","gotifyToken":"t"}`), &c); err != nil {
+		t.Fatal(err)
+	}
+	if !c.GotifyEnabled || c.GotifyPriorityFailure != notify.GotifyPriorityFailure || c.GotifyPrioritySuccess != notify.GotifyPrioritySuccess {
+		t.Fatalf("decoded %+v", c)
+	}
+	if err := json.Unmarshal([]byte(`{"gotifyEnabled":false,"gotifyPriorityFailure":0,"gotifyPrioritySuccess":0}`), &c); err != nil {
+		t.Fatal(err)
+	}
+	if c.GotifyEnabled || c.GotifyPriorityFailure != 0 || c.GotifyPrioritySuccess != 0 {
+		t.Fatalf("a stored switch and priority 0 must be kept: %+v", c)
+	}
+}
+
+func TestGotifyPriorityStaysWithinGotifysRange(t *testing.T) {
+	for _, p := range []int{-1, 11} {
+		if err := (notify.Config{GotifyPriorityFailure: p}).Validate(); err == nil {
+			t.Fatalf("priority %d was accepted", p)
+		}
+	}
+	if err := (notify.Config{GotifyPriorityFailure: 10, GotifyPrioritySuccess: 0}).Validate(); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestSendGotifyDisabledSkips(t *testing.T) {
+	var hits int
+	srv := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) { hits++ }))
+	defer srv.Close()
+	cfg := notify.Config{On: "always", GotifyURL: srv.URL, GotifyToken: "t"}
+	if cfg.Configured() {
+		t.Fatal("a Gotify block with GotifyEnabled false must not count as configured")
+	}
+	notify.Send(context.Background(), cfg, "", notify.Event{OK: false})
+	if hits != 0 {
+		t.Fatalf("a switched-off Gotify channel was posted to %d times", hits)
+	}
+}
+
 func TestHealthchecksFailEndpoint(t *testing.T) {
 	var path string
 	srv := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) { path = r.URL.Path }))

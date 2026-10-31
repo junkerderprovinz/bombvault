@@ -37,6 +37,11 @@ const emptyNotify: NotifyConfig = {
   matrixHomeserver: "",
   matrixToken: "",
   matrixRoom: "",
+  gotifyEnabled: false,
+  gotifyUrl: "",
+  gotifyToken: "",
+  gotifyPriorityFailure: 8,
+  gotifyPrioritySuccess: 5,
   healthchecksUrl: "",
   unraid: false,
   smtpEnabled: false,
@@ -95,8 +100,9 @@ export function NotifyCard({
   const [, setState] = useState<SaveState>("idle");
   // The SMTP password / Matrix token are never sent to the browser; track whether
   // one is stored so the field shows "configured" and a blank submit keeps it.
-  const [secretSet, setSecretSet] = useState({ smtp: false, matrix: false });
+  const [secretSet, setSecretSet] = useState({ smtp: false, matrix: false, gotify: false });
   const revealMatrixToken = useReveal();
+  const revealGotifyToken = useReveal();
   const revealSmtpPassword = useReveal();
   // The config as the server last confirmed it. A failed save reverts its
   // field to this value, so the form never shows an edit that did not persist.
@@ -134,7 +140,7 @@ export function NotifyCard({
         } else {
           setLoadErr(true);
         }
-        setSecretSet({ smtp: !!r.smtpPasswordSet, matrix: !!r.matrixTokenSet });
+        setSecretSet({ smtp: !!r.smtpPasswordSet, matrix: !!r.matrixTokenSet, gotify: !!r.gotifyTokenSet });
       })
       .catch(() => setLoadErr(true));
   }, []);
@@ -302,7 +308,7 @@ export function NotifyCard({
 
     <Card title={t("notify.channelsTitle")} hint={t("notify.channelsHint")} hueIndex={channelsHueIndex}>
       {/* Each channel's toggle also gates the backend send, and its fields
-          hide while it is off. The four channel toggles form one group for
+          hide while it is off. The five channel toggles form one group for
           hueIndex, in the order they appear. */}
       <div className="flex flex-col divide-y divide-carbon-border/60 [&>*]:py-3 [&>*:first-child]:pt-0 [&>*:last-child]:pb-0">
       <div className="flex flex-col gap-2">
@@ -404,10 +410,47 @@ export function NotifyCard({
 
       <div className="flex flex-col gap-2">
         <ToggleRow
+          label={t("notify.gotify")}
+          hint={t("notify.gotifyHint")}
+          checked={cfg.gotifyEnabled}
+          onChange={(v) => setImmediate("gotifyEnabled", v)}
+          hueIndex={3}
+          shakeNonce={fieldShake.gotifyEnabled}
+        />
+        {cfg.gotifyEnabled && (
+          <>
+            <label className={fieldCls}>
+              {t("notify.gotifyUrl")}
+              <input key={fieldShake.gotifyUrl} value={cfg.gotifyUrl} onChange={(e) => set("gotifyUrl", e.target.value)} spellCheck={false}
+                placeholder="https://gotify.example.com" dir="ltr"
+                className={`${inputCls} ${fieldInputCls} text-start ${fieldShake.gotifyUrl ? "glim-shake" : ""}`} />
+            </label>
+            <label className={fieldCls}>
+              {t("notify.gotifyToken")}
+              <RevealInput {...revealGotifyToken} key={fieldShake.gotifyToken} value={cfg.gotifyToken} onChange={(e) => set("gotifyToken", e.target.value)} spellCheck={false}
+                placeholder={secretSet.gotify ? t("cloud.secretSet") : ""} wrapperClassName={fieldInputCls}
+                className={`${inputCls} w-full ${fieldShake.gotifyToken ? "glim-shake" : ""}`} />
+            </label>
+            <label className={fieldCls}>
+              {t("notify.gotifyPriorityFailure")}
+              <NumberField key={fieldShake.gotifyPriorityFailure} value={cfg.gotifyPriorityFailure} onChange={(e) => set("gotifyPriorityFailure", Number(e.target.value) || 0)}
+                min={0} max={10} className={`${inputCls} ${fieldInputCls}${fieldShake.gotifyPriorityFailure ? " glim-shake" : ""}`} />
+            </label>
+            <label className={fieldCls}>
+              {t("notify.gotifyPrioritySuccess")}
+              <NumberField key={fieldShake.gotifyPrioritySuccess} value={cfg.gotifyPrioritySuccess} onChange={(e) => set("gotifyPrioritySuccess", Number(e.target.value) || 0)}
+                min={0} max={10} className={`${inputCls} ${fieldInputCls}${fieldShake.gotifyPrioritySuccess ? " glim-shake" : ""}`} />
+            </label>
+          </>
+        )}
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <ToggleRow
           label={t("notify.smtp")}
           checked={cfg.smtpEnabled}
           onChange={(v) => setImmediate("smtpEnabled", v)}
-          hueIndex={3}
+          hueIndex={4}
           shakeNonce={fieldShake.smtpEnabled}
         />
         {cfg.smtpEnabled && (

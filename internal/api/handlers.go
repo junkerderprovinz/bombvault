@@ -3944,10 +3944,10 @@ func (h *Handler) handleSetRclone(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, okEnvelope(nil))
 }
 
-// handleGetNotify returns the notification config WITHOUT the stored credentials:
-// the SMTP password and Matrix access token are blanked and reported via "is-set"
-// flags, so the UI can show what's configured and edit it without shipping the
-// secrets to the browser (mirrors the cloud-credentials endpoint). GET /api/notify
+// handleGetNotify returns the notification config without the stored credentials:
+// the SMTP password, the Matrix access token and the Gotify app token are blanked
+// and reported through "is-set" flags, so the UI can edit the config without the
+// secrets reaching the browser. GET /api/notify
 func (h *Handler) handleGetNotify(w http.ResponseWriter, _ *http.Request) {
 	c, err := h.svc.NotifyConfig()
 	if err != nil {
@@ -3956,12 +3956,15 @@ func (h *Handler) handleGetNotify(w http.ResponseWriter, _ *http.Request) {
 	}
 	smtpPasswordSet := c.SMTPPassword != ""
 	matrixTokenSet := c.MatrixToken != ""
+	gotifyTokenSet := c.GotifyToken != ""
 	c.SMTPPassword = ""
 	c.MatrixToken = ""
+	c.GotifyToken = ""
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{
 		"notify":          c,
 		"smtpPasswordSet": smtpPasswordSet,
 		"matrixTokenSet":  matrixTokenSet,
+		"gotifyTokenSet":  gotifyTokenSet,
 	}))
 }
 
@@ -3984,11 +3987,11 @@ func decodeNotifyBody(w http.ResponseWriter, r *http.Request, c *notify.Config) 
 	return true
 }
 
-// fillNotifySecrets fills blank credential fields from the stored config. Because
-// handleGetNotify never ships the SMTP password / Matrix token to the browser, an
-// unchanged form re-submits them blank — blank therefore means "keep the stored one".
+// fillNotifySecrets fills blank credential fields from the stored config. The
+// browser never gets the stored secrets, so an unchanged form sends them blank,
+// and blank means "keep the stored one".
 func (h *Handler) fillNotifySecrets(c notify.Config) (notify.Config, error) {
-	if c.SMTPPassword != "" && c.MatrixToken != "" {
+	if c.SMTPPassword != "" && c.MatrixToken != "" && c.GotifyToken != "" {
 		return c, nil
 	}
 	cur, err := h.svc.NotifyConfig()
@@ -4019,6 +4022,12 @@ func (h *Handler) fillNotifySecrets(c notify.Config) (notify.Config, error) {
 		}
 		c.SMTPPassword = cur.SMTPPassword
 	}
+	if c.GotifyToken == "" && cur.GotifyToken != "" {
+		if c.GotifyURL != cur.GotifyURL {
+			return c, errors.New("enter the Gotify app token again: the stored one belongs to the previous server")
+		}
+		c.GotifyToken = cur.GotifyToken
+	}
 	return c, nil
 }
 
@@ -4036,14 +4045,17 @@ func sameSMTPTarget(req, cur notify.Config) bool {
 	return req.SMTPHost == cur.SMTPHost && req.SMTPPort == cur.SMTPPort && req.SMTPUsername == cur.SMTPUsername
 }
 
-// handleSetNotify stores the notification config (encrypted). A blank SMTP password
-// or Matrix token keeps the previously stored one. POST /api/notify
+// handleSetNotify stores the notification config, encrypted. A blank SMTP
+// password, Matrix token or Gotify token keeps the stored one. POST /api/notify
 func (h *Handler) handleSetNotify(w http.ResponseWriter, r *http.Request) {
 	var c notify.Config
 	if !decodeNotifyBody(w, r, &c) {
 		return
 	}
 	filled, err := h.fillNotifySecrets(c)
+	if err == nil {
+		err = filled.Validate()
+	}
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
@@ -4231,6 +4243,9 @@ func (h *Handler) handleTestNotify(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	filled, err := h.fillNotifySecrets(c)
+	if err == nil {
+		err = filled.Validate()
+	}
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return

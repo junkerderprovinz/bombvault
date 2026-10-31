@@ -145,6 +145,9 @@ func TestNotifySecretStaysWithItsDestination(t *testing.T) {
 		SMTPPort:         587,
 		SMTPUsername:     "bombvault",
 		SMTPPassword:     "real-password",
+		GotifyEnabled:    true,
+		GotifyURL:        "https://push.example",
+		GotifyToken:      "real-app-token",
 	}
 	if err := svc.SetNotifyConfig(stored); err != nil {
 		t.Fatal(err)
@@ -175,15 +178,26 @@ func TestNotifySecretStaysWithItsDestination(t *testing.T) {
 		}
 	})
 
+	t.Run("another Gotify server is refused too", func(t *testing.T) {
+		req := stored
+		req.GotifyURL = "https://attacker.example"
+		req.GotifyToken = ""
+		got, err := h.fillNotifySecrets(req)
+		if err == nil || got.GotifyToken == stored.GotifyToken {
+			t.Fatal("a changed Gotify server with a blank token must be refused")
+		}
+	})
+
 	t.Run("the unchanged destination still gets its secrets back", func(t *testing.T) {
 		req := stored
 		req.MatrixToken = ""
 		req.SMTPPassword = ""
+		req.GotifyToken = ""
 		got, err := h.fillNotifySecrets(req)
 		if err != nil {
 			t.Fatalf("an unchanged destination must keep working: %v", err)
 		}
-		if got.MatrixToken != "real-token" || got.SMTPPassword != "real-password" {
+		if got.MatrixToken != "real-token" || got.SMTPPassword != "real-password" || got.GotifyToken != "real-app-token" {
 			t.Fatalf("secrets were not refilled: %+v", got)
 		}
 	})
