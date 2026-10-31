@@ -250,13 +250,19 @@ export function NotifyCard({
     return key ? t(key) : r.error ?? t("settings.error");
   }
 
-  // A stored secret whose place was changed asks to be typed again.
-  function secretHint(set: Secret, secret: keyof NotifyConfig): string {
-    if (!secretSet[set] || cfg[secret]) return "";
+  // The line under a stored secret: it is kept while the field stays empty,
+  // and a changed place waits for it to be typed again. A line rather than a
+  // placeholder, since a phone's field is too narrow for the sentence.
+  function secretNote(set: Secret, secret: keyof NotifyConfig): ReactNode {
+    if (!secretSet[set] || cfg[secret]) return null;
     const moved = Object.entries(SECRET_PLACE).some(
       ([field, place]) => place.set === set && cfg[field as keyof NotifyConfig] !== lastGoodRef.current[field as keyof NotifyConfig]
     );
-    return t(moved ? "notify.secretAgain" : "cloud.secretSet");
+    return (
+      <p className={`ps-4 text-xs ${moved ? "text-statusWarn" : "text-carbon-textMuted"}`}>
+        {t(moved ? "notify.secretAgain" : "notify.secretKept")}
+      </p>
+    );
   }
 
   const inputCls =
@@ -442,9 +448,10 @@ export function NotifyCard({
             <label className={fieldCls}>
               {t("notify.matrixToken")}
               <RevealInput {...revealMatrixToken} key={fieldShake.matrixToken} value={cfg.matrixToken} onChange={(e) => set("matrixToken", e.target.value)} spellCheck={false}
-                placeholder={secretHint("matrix", "matrixToken")} wrapperClassName={fieldInputCls}
+                wrapperClassName={fieldInputCls}
                 className={`${inputCls} w-full ${fieldShake.matrixToken ? "glim-shake" : ""}`} />
             </label>
+            {secretNote("matrix", "matrixToken")}
             <label className={fieldCls}>
               {t("notify.matrixRoom")}
               <input key={fieldShake.matrixRoom} value={cfg.matrixRoom} onChange={(e) => set("matrixRoom", e.target.value)} spellCheck={false}
@@ -475,9 +482,10 @@ export function NotifyCard({
             <label className={fieldCls}>
               {t("notify.gotifyToken")}
               <RevealInput {...revealGotifyToken} key={fieldShake.gotifyToken} value={cfg.gotifyToken} onChange={(e) => set("gotifyToken", e.target.value)} spellCheck={false}
-                placeholder={secretHint("gotify", "gotifyToken")} wrapperClassName={fieldInputCls}
+                wrapperClassName={fieldInputCls}
                 className={`${inputCls} w-full ${fieldShake.gotifyToken ? "glim-shake" : ""}`} />
             </label>
+            {secretNote("gotify", "gotifyToken")}
             <label className={fieldCls}>
               {t("notify.gotifyPriorityFailure")}
               <SelectField
@@ -548,9 +556,10 @@ export function NotifyCard({
             <label className={fieldCls}>
               {t("notify.smtpPass")}
               <RevealInput {...revealSmtpPassword} key={fieldShake.smtpPassword} value={cfg.smtpPassword} onChange={(e) => set("smtpPassword", e.target.value)} spellCheck={false}
-                placeholder={secretHint("smtp", "smtpPassword")} wrapperClassName={fieldInputCls}
+                wrapperClassName={fieldInputCls}
                 className={`${inputCls} w-full ${fieldShake.smtpPassword ? "glim-shake" : ""}`} />
             </label>
+            {secretNote("smtp", "smtpPassword")}
             <label className={fieldCls}>
               {t("notify.smtpFrom")}
               <input key={fieldShake.smtpFrom} value={cfg.smtpFrom} onChange={(e) => set("smtpFrom", e.target.value)} spellCheck={false}

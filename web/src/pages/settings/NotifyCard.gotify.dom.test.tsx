@@ -66,7 +66,7 @@ describe("the Gotify channel", () => {
   it("shows its server, a stored token without its value, and both priorities", async () => {
     show();
     expect(((await screen.findByLabelText("Server URL")) as HTMLInputElement).value).toBe("https://push.example");
-    expect((screen.getByLabelText("App token") as HTMLInputElement).placeholder).toBe("saved (leave blank to keep)");
+    expect(screen.getByText("Saved. Leave the field empty to keep it.")).toBeTruthy();
     expect(screen.getByRole("combobox", { name: "Priority on failure" }).textContent).toContain("8");
     expect(screen.getByRole("combobox", { name: "Priority on success" }).textContent).toContain("5");
   });
@@ -85,7 +85,7 @@ describe("the Gotify channel", () => {
     fireEvent.change(await screen.findByLabelText("Server URL"), { target: { value: "https://other.example" } });
     await pause(1000);
     expect(saved).toHaveLength(0);
-    expect((screen.getByLabelText("App token") as HTMLInputElement).placeholder).toBe("enter it again for the new address");
+    expect(screen.getByText("The new address is saved once you enter this again.")).toBeTruthy();
     fireEvent.change(screen.getByLabelText("App token"), { target: { value: "new-token" } });
     await pause(1000);
     expect(saved.at(-1)).toMatchObject({ gotifyUrl: "https://other.example", gotifyToken: "new-token" });
