@@ -280,3 +280,36 @@ func TestAConfirmedDomainDoesNotPauseWhenTheBackgroundListingFindsHistory(t *tes
 		t.Fatalf("the background listing was not recorded (listed=%v err=%v)", listed, err)
 	}
 }
+
+func TestAConfirmDuringAFirstListingIsNotUndoneByIt(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.target("containers", "B2", "b2:bucket:containers")
+	now := time.Now().Unix()
+	f.hold(f.domainPath("containers"), snap("a9", now, "container:nginx"))
+	f.hold("b2:bucket:containers", copied("b1", "a1", now-86400, "container:nginx"))
+	f.setDefault("containers", "")
+	confirmed := false
+	f.eng.onSnapshots = func() {
+		if confirmed {
+			return
+		}
+		confirmed = true
+		if _, err := f.st.PausePlacement("containers"); err != nil {
+			t.Error(err)
+		}
+		if err := f.svc.confirmDefault("containers", nil); err != nil {
+			t.Error(err)
+		}
+	}
+
+	if err := f.svc.ReplicateOffsite(context.Background(), "containers"); err != nil {
+		t.Fatal(err)
+	}
+
+	if !confirmed {
+		t.Fatal("the pass listed nothing")
+	}
+	if pausedDefault(t, f, "containers") {
+		t.Fatal("the pass paused the domain over the confirm that came in while it listed")
+	}
+}

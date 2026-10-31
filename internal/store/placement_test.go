@@ -153,3 +153,20 @@ func TestConfirmPlacementSetsTheManualMarker(t *testing.T) {
 		t.Fatalf("PlacementDefaultFor after ConfirmPlacement = %+v, %v, %v, want the manual marker set", d, found, err)
 	}
 }
+
+func TestAConfirmedDefaultIsNotPausedByAFindingReadBeforeTheConfirm(t *testing.T) {
+	r := newRepo(t)
+	if _, err := r.PausePlacement("containers"); err != nil {
+		t.Fatal(err)
+	}
+	if err := r.ConfirmPlacement("containers", nil); err != nil {
+		t.Fatal(err)
+	}
+
+	if started, err := r.PausePlacement("containers"); err != nil || started {
+		t.Fatalf("PausePlacement after the confirm = %v, %v, want no pause", started, err)
+	}
+	if d, _, err := r.PlacementDefaultFor("containers"); err != nil || d.Paused() || !d.ConfirmedManually {
+		t.Fatalf("default = %+v, %v, want it confirmed still", d, err)
+	}
+}
