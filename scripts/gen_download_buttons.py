@@ -19,8 +19,10 @@ Size and corner radius are the Buy Me a Coffee button's (841.9 by 245.3, rx
 38.2), so every button on the page has the same shape.
 
 The logos are the platforms' own marks from Font Awesome Free (CC BY 4.0 for the
-icons), Vivaldi's and F-Droid's from Simple Icons, and Unraid's from Dashboard
-Icons (Apache-2.0); see scripts/brand-paths/. The companions carry their own
+icons), Vivaldi's from Simple Icons, F-Droid's from its 2015 logo in
+gitlab.com/fdroid/artwork (CC BY-SA 3.0 or GPL-3.0-or-later) with the eyes,
+ring and F cut out, and Unraid's from Dashboard Icons (Apache-2.0); see
+scripts/brand-paths/. The companions carry their own
 logos. Every mark is drawn in the button's one ink.
 Each is a trademark of its owner, used unmodified and only to name the platform
 a button downloads for, with no claim of endorsement by or affiliation with its

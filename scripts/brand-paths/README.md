@@ -12,8 +12,9 @@ and Google Play from the `brands` set; the ZIP (`file-zipper`) and the book
 (`book`) from the `solid` set. The icons are **CC BY 4.0**, which asks for
 attribution and nothing else. Copyright 2024 Fonticons, Inc.
 
-**Simple Icons 16.34.0** (<https://simpleicons.org>): F-Droid, in one ink, since
-the Dashboard Icons drawing is shaded in several tones. **CC0 1.0**.
+**F-Droid's 2015 logo** from its artwork repository
+(<https://gitlab.com/fdroid/artwork>), in one ink with the eyes, ring and F cut
+out. **CC BY-SA 3.0** or **GPL-3.0-or-later**.
 
 **Dashboard Icons** (`homarr-labs/dashboard-icons`, <https://dashboardicons.com>):
 Unraid, its `unraid.svg` with the gradient left out, since the button draws it
