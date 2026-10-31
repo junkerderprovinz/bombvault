@@ -82,3 +82,33 @@ it("names the busy section when a removal has to wait for it", async () => {
     screen.getByText("Nothing was removed, because another task is using VMs right now, such as a backup, a copy or a check. Try again when it has finished.")
   ).toBeTruthy();
 });
+
+it("says a backup holds the section when the refusal names it", async () => {
+  const removal: LocationRemoval = {
+    sections: [
+      {
+        domain: "vms", use: "copy", targetId: "t1", repo: "rclone:vault:bv/vms",
+        primary: false, appendOnly: false, entries: 1, backups: 2, listedAt: 0, lastCopyAt: 0,
+      },
+    ],
+  };
+  vi.mocked(api.previewLocationRemoval).mockResolvedValue({ ok: true, removal });
+  vi.mocked(api.removeLocation).mockResolvedValue({
+    ok: false, code: "domain-busy", error: "a backup is running on vms; try again when it finishes", domain: "vms", busyWith: "backup",
+  });
+
+  await act(async () => {
+    render(
+      <I18nProvider>
+        <ToastProvider>
+          <RemovalWindow location={VAULT} onClose={() => {}} onRemoved={() => {}} />
+        </ToastProvider>
+      </I18nProvider>
+    );
+  });
+  await act(async () => {
+    screen.getByRole("button", { name: "Remove storage location" }).click();
+  });
+
+  expect(screen.getByText("VMs is being backed up right now. Try again when the backup has finished.")).toBeTruthy();
+});

@@ -11,6 +11,7 @@ import {
   type OkEnvelope,
   type StorageLocation,
 } from "../../lib/api";
+import { busySentence } from "../../lib/busySentence";
 import { useT, type TranslationKey } from "../../lib/i18n";
 import { formatList } from "../../lib/placement";
 import { placementErrorText } from "../../lib/placementCodes";
@@ -30,7 +31,7 @@ import { RadioMark } from "../RadioMark";
 import { IconClose, IconTrash } from "../navGlyphs";
 import { DetachedList, ErasureDetails, erasable } from "./removalParts";
 
-type Answer = OkEnvelope & { removal?: LocationRemoval; erasure?: LocationErasure; domain?: OffsiteDomain };
+type Answer = OkEnvelope & { removal?: LocationRemoval; erasure?: LocationErasure; domain?: OffsiteDomain; busyWith?: string };
 
 function failed(e: unknown): Answer {
   return { ok: false, error: e instanceof Error ? e.message : undefined };
@@ -43,11 +44,11 @@ function refusalSentence(t: (key: TranslationKey) => string, code: string | unde
 }
 
 /** The sentence for a removal refused because a section stayed busy, which
- *  names the section. */
-function busySentence(t: (key: TranslationKey) => string, res: Answer): string | undefined {
+ *  names the section and, where the refusal says, what holds it. */
+function removalBusySentence(t: (key: TranslationKey) => string, res: Answer): string | undefined {
   if (res.code !== "domain-busy" || !res.domain || !(res.domain in DOMAIN_LABEL)) return undefined;
   const section = t(DOMAIN_LABEL[res.domain]);
-  return t("storage.remove.busy").replace("{section}", () => section);
+  return busySentence(t, res) ?? t("storage.remove.busy").replace("{section}", () => section);
 }
 
 function trimmedFolder(path: string): string {
@@ -204,7 +205,7 @@ export function RemovalWindow({
     if (!res.ok) {
       if (res.removal) setRemoval(res.removal);
       else if (res.code === "stale") setRemovalReads((n) => n + 1);
-      setProblem(busySentence(t, res) ?? placementErrorText(t, lang, res, "settings.error"));
+      setProblem(removalBusySentence(t, res) ?? placementErrorText(t, lang, res, "settings.error"));
       return;
     }
     announce(t("storage.remove.done").replace("{name}", () => location.name));
@@ -217,7 +218,7 @@ export function RemovalWindow({
     const res = await eraseLocation(id, erasure.removal, named, sentHome).catch(failed);
     setBusy(false);
     if (!res.ok) {
-      setProblem(refusalSentence(t, res.code) ?? busySentence(t, res) ?? placementErrorText(t, lang, res, "settings.error"));
+      setProblem(refusalSentence(t, res.code) ?? removalBusySentence(t, res) ?? placementErrorText(t, lang, res, "settings.error"));
       setLastToo(false);
       if (res.erasure) setErasure(res.erasure);
       else if (res.removal || res.code === "stale") {
