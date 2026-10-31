@@ -62,6 +62,11 @@ func startRefusal(err error) map[string]any {
 		body["code"] = codeNoLocation
 	case busyCode(err) != "":
 		body["code"] = busyCode(err)
+		if busy, ok := errors.AsType[*sectionBusyErr](err); ok {
+			body["domain"], body["busyWith"] = busy.domain, busyKind(busy.op)
+		} else if busy, ok := errors.AsType[domainBusyError](err); ok {
+			body["domain"], body["busyWith"] = busy.domain, busyKind(busy.op)
+		}
 	}
 	return body
 }

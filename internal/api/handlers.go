@@ -3820,7 +3820,11 @@ func (h *Handler) handleReplicateOffsite(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	if err := h.svc.StartReplicateOffsite(domain); err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
+		if placementCode(err) != "" {
+			placementFail(w, err, nil)
+		} else {
+			writeJSON(w, http.StatusOK, failEnvelope(err))
+		}
 		return
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"started": true}))
@@ -6861,7 +6865,7 @@ func (h *Handler) handlePatchFileSet(w http.ResponseWriter, r *http.Request) {
 	if nameChanging && change.Home == nil {
 		unlock, ok := h.svc.tryLockDomainFor("files", "rename")
 		if !ok {
-			op, busy := h.svc.domainBusy("files")
+			op, busy := h.svc.busyForUser("files")
 			if !busy {
 				op = "another operation"
 			}

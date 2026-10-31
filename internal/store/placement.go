@@ -131,8 +131,10 @@ func (r *Repo) PutPlacementDefault(domain, home string, skip []string) (Placemen
 }
 
 // PausePlacement stops a domain's replication until its default is confirmed,
-// creating the row on the domain path when there is none. It reports whether
-// this call started the pause.
+// creating the row on the domain path when there is none. A default an
+// operator confirmed stays confirmed: whoever decided to pause read the
+// default before, and the confirmation may have come in since. It reports
+// whether this call started the pause.
 func (r *Repo) PausePlacement(domain string) (bool, error) {
 	if err := checkPlacementDomain(domain); err != nil {
 		return false, err
@@ -140,7 +142,8 @@ func (r *Repo) PausePlacement(domain string) (bool, error) {
 	started := false
 	err := r.inTx(func(tx *sql.Tx) error {
 		var confirmed int64
-		err := tx.QueryRow(`SELECT confirmed_at FROM placement_defaults WHERE domain = ?`, domain).Scan(&confirmed)
+		var manual bool
+		err := tx.QueryRow(`SELECT confirmed_at, confirmed_manually FROM placement_defaults WHERE domain = ?`, domain).Scan(&confirmed, &manual)
 		now := time.Now().Unix()
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
@@ -148,7 +151,7 @@ func (r *Repo) PausePlacement(domain string) (bool, error) {
 				VALUES (?, '', '[]', 0, ?)`, domain, now)
 		case err != nil:
 			return err
-		case confirmed == 0:
+		case confirmed == 0, manual:
 			return nil
 		default:
 			_, err = tx.Exec(`UPDATE placement_defaults SET confirmed_at = 0, updated_at = ? WHERE domain = ?`, now, domain)

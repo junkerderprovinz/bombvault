@@ -115,7 +115,7 @@ func (s *Service) forgetAtTarget(ctx context.Context, domain, identity, source s
 	}
 	unlock, ok := s.tryLockDomainFor(domain, "delete")
 	if !ok {
-		return 0, errDomainBusy
+		return 0, s.busyErr(domain, errDomainBusy)
 	}
 	defer unlock()
 

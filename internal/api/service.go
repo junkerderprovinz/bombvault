@@ -373,6 +373,9 @@ type Service struct {
 	// which the restore probes queued behind a run let go first. Guarded by
 	// activityMu.
 	domainWanted map[string]int
+	// domainFollowUp holds, per domain, how to stop the follow-up running in
+	// the background that holds its lock. Guarded by activityMu.
+	domainFollowUp map[string]func()
 
 	// runCancels maps a running restore's progress key ("container:<name>" /
 	// "vm:<name>" / "to:<path>" / "stack:<project>") to the CancelFunc of its
@@ -746,6 +749,41 @@ func (s *Service) clearDomainActivity(domain string) {
 	s.activityMu.Unlock()
 }
 
+// sectionBusyErr is err for an action refused because something holds its
+// section, naming the section and the operation that holds it.
+type sectionBusyErr struct {
+	domain, op string
+	err        error
+}
+
+func (e *sectionBusyErr) Error() string { return e.err.Error() }
+
+func (e *sectionBusyErr) Unwrap() error { return e.err }
+
+// busyErr is err naming domain and the operation that holds it now.
+func (s *Service) busyErr(domain string, err error) error {
+	op, _ := s.domainBusy(domain)
+	return &sectionBusyErr{domain: domain, op: op, err: err}
+}
+
+// busyKind sorts the operation that holds a section into the kinds the page
+// words.
+func busyKind(op string) string {
+	switch op {
+	case "backup":
+		return "backup"
+	case offsiteLockReason, "replicate":
+		return "copy"
+	case "restore", "restore-plugin", "import":
+		return "restore"
+	case "prune":
+		return "prune"
+	case "verify", "unlock", "maintenance":
+		return "check"
+	}
+	return "other"
+}
+
 // domainBusyError is a start refused because another operation holds the
 // domain, which a caller answers as busy rather than as a failure.
 type domainBusyError struct{ op, domain string }
@@ -780,7 +818,8 @@ func (s *Service) wantDomain(domain string) func() {
 	}
 }
 
-// domainIsWanted reports whether a removal waits for the domain.
+// domainIsWanted reports whether an action somebody asked for waits for the
+// domain.
 func (s *Service) domainIsWanted(domain string) bool {
 	s.activityMu.Lock()
 	defer s.activityMu.Unlock()
@@ -795,7 +834,12 @@ func (s *Service) lockDomainFor(domain, reason string) func() {
 	if mu == nil {
 		return func() {}
 	}
-	mu.Lock()
+	if !mu.TryLock() {
+		done := s.wantDomain(domain)
+		s.stopFollowUp(domain)
+		mu.Lock()
+		done()
+	}
 	s.setDomainActivity(domain, reason)
 	return func() {
 		s.clearDomainActivity(domain)
@@ -809,10 +853,93 @@ func (s *Service) lockDomainFor(domain, reason string) func() {
 // label so domainBusy can name what is running.
 func (s *Service) lockDomain(domain string) func() { return s.lockDomainFor(domain, "backup") }
 
-// tryLockDomainFor acquires the domain's repo lock without blocking, recording
-// the reason label on success. It returns the unlock func and true, or
-// (nil, false) when another op holds it.
+// A follow-up a run leaves in the background, such as the restore probe after
+// a first backup, gives way to an action somebody asked for. That action
+// waits this long for the follow-up to stop and let go of the domain.
+var (
+	userLockWait = 30 * time.Second
+	userLockPoll = 100 * time.Millisecond
+)
+
+// tryLockDomainFor takes the domain's repo lock for an action somebody asked
+// for, recording the reason label, and returns the unlock func and true. When
+// a follow-up holds the lock it is stopped, the queued ones keep back, and the
+// action waits up to userLockWait for it; any other holder answers false at
+// once.
 func (s *Service) tryLockDomainFor(domain, reason string) (func(), bool) {
+	if unlock, ok := s.takeDomainLock(domain, reason); ok {
+		return unlock, true
+	}
+	defer s.wantDomain(domain)()
+	if !s.stopFollowUp(domain) {
+		return nil, false
+	}
+	deadline := time.Now().Add(userLockWait)
+	for time.Now().Before(deadline) {
+		time.Sleep(userLockPoll)
+		if unlock, ok := s.takeDomainLock(domain, reason); ok {
+			return unlock, true
+		}
+	}
+	return nil, false
+}
+
+// tryLockFollowUp takes the domain's lock for a follow-up running in the
+// background, unless an action somebody asked for waits for it. stop ends the
+// follow-up early when one does.
+func (s *Service) tryLockFollowUp(domain, reason string, stop func()) (func(), bool) {
+	if s.domainIsWanted(domain) {
+		return nil, false
+	}
+	unlock, ok := s.takeDomainLock(domain, reason)
+	if !ok {
+		return nil, false
+	}
+	s.activityMu.Lock()
+	if s.domainFollowUp == nil {
+		s.domainFollowUp = map[string]func(){}
+	}
+	s.domainFollowUp[domain] = stop
+	s.activityMu.Unlock()
+	return func() {
+		s.activityMu.Lock()
+		delete(s.domainFollowUp, domain)
+		s.activityMu.Unlock()
+		unlock()
+	}, true
+}
+
+// stopFollowUp stops the follow-up that holds the domain's lock and reports
+// whether there was one.
+func (s *Service) stopFollowUp(domain string) bool {
+	s.activityMu.Lock()
+	stop := s.domainFollowUp[domain]
+	s.activityMu.Unlock()
+	if stop == nil {
+		return false
+	}
+	stop()
+	return true
+}
+
+// heldByFollowUp reports whether a follow-up that gives way holds the domain.
+func (s *Service) heldByFollowUp(domain string) bool {
+	s.activityMu.Lock()
+	defer s.activityMu.Unlock()
+	return s.domainFollowUp[domain] != nil
+}
+
+// busyForUser is domainBusy for an action somebody asked for: a follow-up
+// that gives way holds nothing up.
+func (s *Service) busyForUser(domain string) (string, bool) {
+	if s.heldByFollowUp(domain) {
+		return "", false
+	}
+	return s.domainBusy(domain)
+}
+
+// takeDomainLock takes the domain's repo lock if it is free.
+func (s *Service) takeDomainLock(domain, reason string) (func(), bool) {
 	mu := s.repoMu[domain]
 	if mu == nil {
 		return func() {}, true
@@ -5292,7 +5419,11 @@ func (s *Service) StartReplicateOffsite(domain string) error {
 	}
 	unlock, ok := s.tryLockDomainFor(domain, offsiteLockReason)
 	if !ok {
-		return errDomainBusy
+		return s.busyErr(domain, errDomainBusy)
+	}
+	if err := s.replicationWouldRun(settings, domain); err != nil {
+		unlock()
+		return err
 	}
 	go func() {
 		defer s.recoverOperation("offsite replicate: "+domain, nil, func(msg string) {
@@ -5315,6 +5446,26 @@ func (s *Service) StartReplicateOffsite(domain string) error {
 			s.notifyReplicationFailed(ctx, domain, truncateRunErr(err))
 		}
 	}()
+	return nil
+}
+
+// errReplicationPaused and errNothingToCopy are the passes copyToOffsite ends
+// without a run, which a replication somebody started says up front.
+var (
+	errReplicationPaused = errors.New("off-site copies of this section are paused until its placement default is confirmed, so nothing was started")
+	errNothingToCopy     = errors.New("this section's own folder is switched off and its backups go straight to its storage locations, so there is nothing to copy")
+)
+
+// replicationWouldRun reports why a pass over the domain would end at once
+// without copying or recording anything, nil when it would run.
+func (s *Service) replicationWouldRun(settings store.Settings, domain string) error {
+	sources, _ := s.offsiteReplicationSources(settings, domain)
+	if _, nothing := s.skipOwnCopySource(domain, sources); nothing {
+		return errNothingToCopy
+	}
+	if p, err := s.readPlacement(settings, domain); err == nil && p.State.Paused() {
+		return errReplicationPaused
+	}
 	return nil
 }
 
@@ -7049,7 +7200,7 @@ func (s *Service) StartBackupAll(ctx context.Context, names []string) (bool, err
 	if !s.batchActive.CompareAndSwap(false, true) {
 		return false, s.batchRefusal()
 	}
-	if op, busy := s.domainBusy("containers"); busy {
+	if op, busy := s.busyForUser("containers"); busy {
 		s.batchActive.Store(false)
 		return false, domainBusyError{op: op, domain: "containers"}
 	}
@@ -7180,7 +7331,7 @@ func (s *Service) StartBackup(ctx context.Context, name string) (bool, error) {
 	if !s.batchActive.CompareAndSwap(false, true) {
 		return false, s.batchRefusal()
 	}
-	if op, busy := s.domainBusy("containers"); busy {
+	if op, busy := s.busyForUser("containers"); busy {
 		s.batchActive.Store(false)
 		return false, domainBusyError{op: op, domain: "containers"}
 	}
@@ -7217,7 +7368,7 @@ func (s *Service) StartBackupVM(ctx context.Context, name string) (bool, error) 
 	if !s.batchActive.CompareAndSwap(false, true) {
 		return false, s.batchRefusal()
 	}
-	if op, busy := s.domainBusy("vms"); busy {
+	if op, busy := s.busyForUser("vms"); busy {
 		s.batchActive.Store(false)
 		return false, domainBusyError{op: op, domain: "vms"}
 	}
@@ -7250,7 +7401,7 @@ func (s *Service) StartBackupFlash(ctx context.Context) (bool, error) {
 	if !s.batchActive.CompareAndSwap(false, true) {
 		return false, s.batchRefusal()
 	}
-	if op, busy := s.domainBusy("flash"); busy {
+	if op, busy := s.busyForUser("flash"); busy {
 		s.batchActive.Store(false)
 		return false, domainBusyError{op: op, domain: "flash"}
 	}
@@ -7279,7 +7430,7 @@ func (s *Service) StartBackupConfig(ctx context.Context) (bool, error) {
 	if !s.batchActive.CompareAndSwap(false, true) {
 		return false, s.batchRefusal()
 	}
-	if op, busy := s.domainBusy("config"); busy {
+	if op, busy := s.busyForUser("config"); busy {
 		s.batchActive.Store(false)
 		return false, domainBusyError{op: op, domain: "config"}
 	}
@@ -7309,7 +7460,7 @@ func (s *Service) StartBackupFileSet(ctx context.Context, id string) (bool, erro
 	if !s.batchActive.CompareAndSwap(false, true) {
 		return false, s.batchRefusal()
 	}
-	if op, busy := s.domainBusy("files"); busy {
+	if op, busy := s.busyForUser("files"); busy {
 		s.batchActive.Store(false)
 		return false, domainBusyError{op: op, domain: "files"}
 	}
@@ -7338,7 +7489,7 @@ func (s *Service) StartBackupFilesAll(ctx context.Context, ids []string) (bool, 
 	if !s.batchActive.CompareAndSwap(false, true) {
 		return false, s.batchRefusal()
 	}
-	if op, busy := s.domainBusy("files"); busy {
+	if op, busy := s.busyForUser("files"); busy {
 		s.batchActive.Store(false)
 		return false, domainBusyError{op: op, domain: "files"}
 	}
@@ -7453,7 +7604,7 @@ func (s *Service) StartBackupVMsAll(ctx context.Context, names []string) (bool, 
 	if !s.batchActive.CompareAndSwap(false, true) {
 		return false, s.batchRefusal()
 	}
-	if op, busy := s.domainBusy("vms"); busy {
+	if op, busy := s.busyForUser("vms"); busy {
 		s.batchActive.Store(false)
 		return false, domainBusyError{op: op, domain: "vms"}
 	}
@@ -11247,7 +11398,7 @@ func (s *Service) DeleteBackups(ctx context.Context, name, source string) error 
 
 	unlock, ok := s.tryLockDomainFor("containers", "delete")
 	if !ok {
-		return errDomainBusy
+		return s.busyErr("containers", errDomainBusy)
 	}
 	defer unlock()
 	id := s.containerIdentity(name)
@@ -11378,7 +11529,7 @@ func (s *Service) DeleteBackupsVM(ctx context.Context, name, source string) erro
 		}
 		unlock, ok := s.tryLockDomainFor("vms", "delete")
 		if !ok {
-			return errDomainBusy
+			return s.busyErr("vms", errDomainBusy)
 		}
 		defer unlock()
 		if err := refuseDeleteWithPartialIdentity(name, s.vmIdentity(name)); err != nil {
@@ -11395,7 +11546,7 @@ func (s *Service) DeleteBackupsVM(ctx context.Context, name, source string) erro
 	}
 	unlock, ok := s.tryLockDomainFor("vms", "delete")
 	if !ok {
-		return errDomainBusy
+		return s.busyErr("vms", errDomainBusy)
 	}
 	defer unlock()
 	mode := s.repoModeFor(settings, "vms", source, repo)
@@ -11458,7 +11609,7 @@ func (s *Service) ForgetVMTarget(ctx context.Context, name string) error {
 	}
 	unlock, ok := s.tryLockDomainFor("vms", "delete")
 	if !ok {
-		return errDomainBusy
+		return s.busyErr("vms", errDomainBusy)
 	}
 	defer unlock()
 	repo, err := s.vmRepoForName(settings, name, "")
@@ -11622,7 +11773,7 @@ func (s *Service) ForgetTarget(ctx context.Context, name string) error {
 	}
 	unlock, ok := s.tryLockDomainFor("containers", "delete")
 	if !ok {
-		return errDomainBusy
+		return s.busyErr("containers", errDomainBusy)
 	}
 	defer unlock()
 	settings, err := s.store.GetSettings()
@@ -11885,7 +12036,7 @@ func (s *Service) TakeOverContainer(ctx context.Context, oldName, newName string
 	// between a lock-free check and the rename would slip past it.
 	unlock, ok := s.tryLockDomainFor("containers", "takeover")
 	if !ok {
-		return errDomainBusy
+		return s.busyErr("containers", errDomainBusy)
 	}
 	defer unlock()
 	live, err := s.installedContainers(ctx)
@@ -12055,7 +12206,7 @@ func (s *Service) UnlinkContainerAlias(ctx context.Context, oldName string) erro
 	}
 	unlock, ok := s.tryLockDomainFor("containers", "unlink")
 	if !ok {
-		return errDomainBusy
+		return s.busyErr("containers", errDomainBusy)
 	}
 	defer unlock()
 	// Under the lock, like the takeover gate: a backup of a machine under
@@ -16068,7 +16219,7 @@ func (s *Service) DeleteBackupsFileSet(ctx context.Context, id, source string) e
 	}
 	unlock, ok := s.tryLockDomainFor("files", "delete")
 	if !ok {
-		return errDomainBusy
+		return s.busyErr("files", errDomainBusy)
 	}
 	defer unlock()
 	mode := s.repoModeFor(settings, "files", "local", repo)
@@ -16575,7 +16726,7 @@ func (s *Service) StartRestoreConfig(ctx context.Context, snapshotID, source str
 	if !s.batchActive.CompareAndSwap(false, true) {
 		return false, false, nil
 	}
-	if op, busy := s.domainBusy("config"); busy {
+	if op, busy := s.busyForUser("config"); busy {
 		s.batchActive.Store(false)
 		return false, false, domainBusyError{op: op, domain: "config"}
 	}
@@ -16896,7 +17047,7 @@ func (s *Service) CheckDomain(ctx context.Context, domain, source string) (err e
 	// is a restic started by hand.
 	unlock, ok := s.tryLockDomainFor(domain, "verify")
 	if !ok {
-		return errDomainBusy
+		return s.busyErr(domain, errDomainBusy)
 	}
 	defer unlock()
 	// Publish "maintenance" progress, with restic's pack counts while it reads,
@@ -17103,7 +17254,7 @@ func (s *Service) runSubsetDrill(ctx context.Context, domain, source string, wai
 	} else {
 		u, ok := s.tryLockDomainFor(domain, "verify")
 		if !ok {
-			return store.RestoreDrill{}, errDomainBusy
+			return store.RestoreDrill{}, s.busyErr(domain, errDomainBusy)
 		}
 		unlock = u
 	}
@@ -17338,7 +17489,7 @@ func (s *Service) runDRDrill(ctx context.Context, domain, source string, wait bo
 	} else {
 		u, ok := s.tryLockDomainFor(domain, "verify")
 		if !ok {
-			return store.RestoreDrill{}, errDomainBusy
+			return store.RestoreDrill{}, s.busyErr(domain, errDomainBusy)
 		}
 		unlock = u
 	}
@@ -18182,7 +18333,7 @@ func (s *Service) UnlockDomain(ctx context.Context, domain, source string) ([]st
 	skipped = append(skipped, missing...)
 	unlock, ok := s.tryLockDomainFor(domain, "unlock")
 	if !ok {
-		return nil, errDomainBusy
+		return nil, s.busyErr(domain, errDomainBusy)
 	}
 	defer unlock()
 	// Per repository, so a domain with several gets the same time for each.
@@ -18447,7 +18598,7 @@ func (s *Service) DeleteSnapshot(ctx context.Context, domain, snapshotID, source
 	skipped = append(skipped, missing...)
 	unlock, ok := s.tryLockDomainFor(domain, "delete")
 	if !ok {
-		return errDomainBusy
+		return s.busyErr(domain, errDomainBusy)
 	}
 	defer unlock()
 	repo, mode, err := s.repoHoldingSnapshot(ctx, settings, domain, source, repos, snapshotID)

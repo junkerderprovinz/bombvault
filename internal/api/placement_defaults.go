@@ -632,7 +632,7 @@ func (s *Service) applyDefaultPreview(ctx context.Context, domain string) ([]app
 func (s *Service) applyDefault(ctx context.Context, domain string, keys []string) ([]string, []keptItem, error) {
 	unlock, ok := s.tryLockDomainFor(domain, placementLockReason)
 	if !ok {
-		return nil, nil, errPlacementBusy
+		return nil, nil, s.busyErr(domain, errPlacementBusy)
 	}
 	defer unlock()
 	s.placementMu.Lock()

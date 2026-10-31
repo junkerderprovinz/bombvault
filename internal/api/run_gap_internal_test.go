@@ -29,7 +29,7 @@ func TestAProbeWaitsUntilTheScheduledRunOfItsDomainCloses(t *testing.T) {
 
 	got := make(chan func(), 1)
 	go func() {
-		unlock, ok := s.waitProbeLock("containers")
+		unlock, ok := s.waitProbeLock("containers", func() {})
 		if ok {
 			got <- unlock
 		}

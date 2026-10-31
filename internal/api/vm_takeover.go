@@ -32,7 +32,7 @@ func (s *Service) TakeOverVM(ctx context.Context, oldName, newName string) error
 	}
 	unlock, ok := s.tryLockDomainFor("vms", "takeover")
 	if !ok {
-		return errDomainBusy
+		return s.busyErr("vms", errDomainBusy)
 	}
 	defer unlock()
 	infos, err := s.virsh.List(ctx)
@@ -129,7 +129,7 @@ func (s *Service) UnlinkVMAlias(ctx context.Context, oldName string) error {
 	}
 	unlock, ok := s.tryLockDomainFor("vms", "unlink")
 	if !ok {
-		return errDomainBusy
+		return s.busyErr("vms", errDomainBusy)
 	}
 	defer unlock()
 	alias, err := s.store.AliasByOldName("vm", oldName)

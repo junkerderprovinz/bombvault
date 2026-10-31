@@ -572,7 +572,7 @@ func (s *Service) StartBackupZFSDataset(ctx context.Context, id string) (bool, e
 	if !s.batchActive.CompareAndSwap(false, true) {
 		return false, s.batchRefusal()
 	}
-	if op, busy := s.domainBusy(zfsDomain); busy {
+	if op, busy := s.busyForUser(zfsDomain); busy {
 		s.batchActive.Store(false)
 		return false, domainBusyError{op: op, domain: "zfs"}
 	}
@@ -610,7 +610,7 @@ func (s *Service) StartBackupZFSAll(ctx context.Context, ids []string) (bool, er
 	if !s.batchActive.CompareAndSwap(false, true) {
 		return false, s.batchRefusal()
 	}
-	if op, busy := s.domainBusy(zfsDomain); busy {
+	if op, busy := s.busyForUser(zfsDomain); busy {
 		s.batchActive.Store(false)
 		return false, domainBusyError{op: op, domain: "zfs"}
 	}

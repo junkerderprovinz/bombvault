@@ -205,7 +205,7 @@ func (s *Service) TagBackup(ctx context.Context, domain, key, source, snapID str
 	// or prune of the domain instead of colliding with one.
 	unlock, ok := s.tryLockDomainFor(domain, "tag")
 	if !ok {
-		return errDomainBusy
+		return s.busyErr(domain, errDomainBusy)
 	}
 	defer unlock()
 	// A lock an interrupted copy or check left behind would refuse the tag.

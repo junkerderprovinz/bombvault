@@ -1,3 +1,4 @@
+import { busySentence } from "./busySentence";
 import { translate } from "./i18n";
 import { ZFS_CODE_KEY, zfsCodeSentence } from "./zfsCodes";
 
@@ -832,7 +833,7 @@ export function openedAsPairedPhone(): boolean {
  *  session that ended, a relay that cannot carry the call, a proxy or gateway
  *  in the way, an answer that did not come in time. Status 0 is a call that
  *  never reached the server. */
-function knownSentence(status: number, code: string | undefined): string | undefined {
+function knownSentence(status: number, code: string | undefined, busy?: Busy): string | undefined {
   switch (code) {
     case undefined:
       break;
@@ -849,7 +850,7 @@ function knownSentence(status: number, code: string | undefined): string | undef
     case "no-location":
       return translate("apiError.noLocation");
     case "domain-busy":
-      return translate("apiError.domainBusy");
+      return (busy && busySentence(translate, busy)) ?? translate("apiError.domainBusy");
     case "offsite-busy":
       return translate("apiError.offsiteBusy");
     case "replica-busy":
@@ -885,8 +886,8 @@ function knownSentence(status: number, code: string | undefined): string | undef
 /** failureOf is what a person reads for a call that failed, always in their
  *  language. A failure this client cannot explain gets a general sentence,
  *  and what the server said stays apart as its detail. */
-export function failureOf(status: number, code?: string, said?: string): { message: string; detail?: string } {
-  const known = knownSentence(status, code);
+export function failureOf(status: number, code?: string, said?: string, busy?: Busy): { message: string; detail?: string } {
+  const known = knownSentence(status, code, busy);
   if (known) return { message: known };
   // Below 400 the call went through and failed on the server all the same.
   const general = status >= 400 && status < 500 ? "apiError.refused" : "apiError.serverFailed";
@@ -906,14 +907,17 @@ export function answerLost(err: unknown): boolean {
   return err instanceof ApiError && (err.status === 0 || err.status === 408 || err.status === 502 || err.status === 504);
 }
 
-type Refusal = { code?: string; error?: string } | null;
+/** The section a busy refusal is about, and what holds it. */
+type Busy = { domain?: string; busyWith?: string };
+
+type Refusal = ({ code?: string; error?: string } & Busy) | null;
 
 async function readRefusal(res: Response): Promise<Refusal> {
   return (await res.json().catch(() => null)) as Refusal;
 }
 
 function apiError(res: Response, body: Refusal): ApiError {
-  const { message, detail } = failureOf(res.status, body?.code, body?.error);
+  const { message, detail } = failureOf(res.status, body?.code, body?.error, body ?? undefined);
   return new ApiError(res.status, message, body?.code, detail);
 }
 

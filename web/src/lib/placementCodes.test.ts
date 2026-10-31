@@ -19,6 +19,8 @@ describe("placementErrorText", () => {
       "own-folder-on-copy",
       "own-folder-on-typed-copy",
       "place-unchecked",
+      "replication-paused",
+      "nothing-to-copy",
       "named-repo-overlap",
       "unprefixed-remote",
       "location-needed",
@@ -32,6 +34,17 @@ describe("placementErrorText", () => {
       expect(text, code).not.toBe("server text");
       expect(text, code).not.toBe("");
     }
+  });
+
+  it("names the section and the task a busy refusal is about", () => {
+    const busy = (busyWith?: string) => ({ ok: false, error: "x", code: "domain-busy", domain: "containers", busyWith });
+    expect(placementErrorText(t, "en", busy("backup"), "settings.error")).toBe(
+      "Containers is being backed up right now. Try again when the backup has finished."
+    );
+    expect(placementErrorText(t, "en", busy("check"), "settings.error")).toBe(
+      "Containers is being checked right now. Try again when the check has finished."
+    );
+    expect(placementErrorText(t, "en", busy(), "settings.error")).toBe(en["placementCode.domainBusy"]);
   });
 
   it("names the defaults that hold a repository", () => {

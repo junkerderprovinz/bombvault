@@ -282,7 +282,7 @@ func (s *Service) restoreForStartTest(ctx context.Context, settings store.Settin
 	} else {
 		u, ok := s.tryLockDomainFor("containers", "verify")
 		if !ok {
-			return errDomainBusy
+			return s.busyErr("containers", errDomainBusy)
 		}
 		unlock = u
 	}

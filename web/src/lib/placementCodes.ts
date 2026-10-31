@@ -1,4 +1,5 @@
 import type { OkEnvelope, RefusalTarget, SaveWarning, TargetUse } from "./api";
+import { busySentence } from "./busySentence";
 import type { TranslationKey, useT } from "./i18n";
 import { isolateLtr, tLtr } from "./ltrFragments";
 import type { ToastSeverity } from "./toastEngine";
@@ -13,6 +14,9 @@ export type PlacementRefusal = OkEnvelope & {
   at?: string;
   /** The relative path to enter instead of a full host path. */
   suggest?: string;
+  /** The section a refusal for a busy section is about, and what holds it. */
+  domain?: string;
+  busyWith?: string;
 };
 
 const CODE_KEYS: Record<string, TranslationKey> = {
@@ -60,6 +64,8 @@ const CODE_KEYS: Record<string, TranslationKey> = {
   "own-folder-on-copy": "placementCode.ownFolderOnCopy",
   "own-folder-on-typed-copy": "placementCode.ownFolderOnTypedCopy",
   "place-unchecked": "placementCode.placeUnchecked",
+  "replication-paused": "placementCode.replicationPaused",
+  "nothing-to-copy": "placementCode.nothingToCopy",
   "named-repo-overlap": "placementCode.namedRepoOverlap",
   "unprefixed-remote": "placementCode.unprefixedRemote",
   "location-needed": "placementCode.locationNeeded",
@@ -89,6 +95,8 @@ function domainNames(t: T, lang: string, domains: string[]): string {
  *  its code, the server's own error for a code this table does not know, and
  *  the fallback when there is neither. */
 export function placementErrorText(t: T, lang: string, res: PlacementRefusal, fallback: TranslationKey): string {
+  const busy = res.code === "domain-busy" ? busySentence(t, res) : undefined;
+  if (busy) return busy;
   if (res.code === "repo-in-use") {
     const domains = res.defaultDomains ?? [];
     return domains.length > 0

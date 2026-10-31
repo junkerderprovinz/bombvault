@@ -342,7 +342,7 @@ func (s *Service) ZFSRunDetail(_ context.Context, runID string) (ZFSRunDetail, e
 func (s *Service) DeleteZFSDataset(ctx context.Context, id string, removeSafety bool) (ZFSDeleteResult, error) {
 	unlock, ok := s.tryLockDomainFor(zfsDomain, "delete")
 	if !ok {
-		return ZFSDeleteResult{}, errDomainBusy
+		return ZFSDeleteResult{}, s.busyErr(zfsDomain, errDomainBusy)
 	}
 	defer unlock()
 	return s.deleteZFSDatasetLocked(ctx, id, removeSafety)
@@ -418,7 +418,7 @@ func (s *Service) DeleteBackupsZFSDataset(ctx context.Context, id string, remove
 	}
 	unlock, ok := s.tryLockDomainFor(zfsDomain, "delete")
 	if !ok {
-		return ZFSDeleteResult{}, errDomainBusy
+		return ZFSDeleteResult{}, s.busyErr(zfsDomain, errDomainBusy)
 	}
 	defer unlock()
 

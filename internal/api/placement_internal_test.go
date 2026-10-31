@@ -248,6 +248,8 @@ func TestPlacementRefusalsCarryTheirCodes(t *testing.T) {
 		errOwnFolderOnCopy:         "own-folder-on-copy",
 		errOwnFolderOnTypedCopy:    "own-folder-on-typed-copy",
 		errPlaceUnchecked:          "place-unchecked",
+		errReplicationPaused:       "replication-paused",
+		errNothingToCopy:           "nothing-to-copy",
 		errNamedRepoOverlap:        "named-repo-overlap",
 		errUnprefixedRemote:        "unprefixed-remote",
 		errLocationNeeded:          "location-needed",

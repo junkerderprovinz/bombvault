@@ -16,6 +16,7 @@ import { Badge } from "../../../components/Badge";
 import { Button } from "../../../components/Button";
 import type { Settings } from "../../../lib/api";
 import { useT } from "../../../lib/i18n";
+import { placementErrorText } from "../../../lib/placementCodes";
 import { useToast } from "../../../lib/toast";
 import { REPO_LOCAL_HINT_LTR_FRAGMENTS, withLtrIsolates } from "../../../lib/ltrFragments";
 import { InfoBubble } from "../../../components/InfoBubble";
@@ -31,6 +32,7 @@ type T = ReturnType<typeof useT>["t"];
 const DOMAINS: OffsiteDomain[] = ["containers", "vms", "flash", "files", "zfs", "config"];
 
 function ReplicateNowButton({ domain, t }: { domain: OffsiteDomain; t: T }) {
+  const { lang } = useT();
   const { push } = useToast();
   const [busy, setBusy] = useState(false);
   async function go() {
@@ -40,7 +42,7 @@ function ReplicateNowButton({ domain, t }: { domain: OffsiteDomain; t: T }) {
       if (r.ok) {
         push(t("offsite.replicateStarted"), "success");
       } else {
-        push(r.error ?? t("offsite.replicateFailed"), "fail");
+        push(placementErrorText(t, lang, r, "offsite.replicateFailed"), "fail");
       }
     } catch (e) {
       push(e instanceof Error ? e.message : t("offsite.replicateFailed"), "fail");

@@ -238,7 +238,7 @@ func TestAQueuedProbeLetsAWaitingRemovalGoFirst(t *testing.T) {
 	}
 	probe := make(chan func(), 1)
 	go func() {
-		if unlock, ok := s.waitProbeLock("vms"); ok {
+		if unlock, ok := s.waitProbeLock("vms", func() {}); ok {
 			probe <- unlock
 		}
 	}()

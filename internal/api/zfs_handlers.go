@@ -383,7 +383,7 @@ func (h *Handler) handleProbeZFSDataset(w http.ResponseWriter, r *http.Request) 
 	if !ok {
 		return
 	}
-	if op, busy := h.svc.domainBusy(zfsDomain); busy {
+	if op, busy := h.svc.busyForUser(zfsDomain); busy {
 		writeJSON(w, http.StatusConflict, startRefusal(domainBusyError{op: op, domain: zfsDomain}))
 		return
 	}
@@ -398,7 +398,7 @@ func (h *Handler) handleSweepZFSDataset(w http.ResponseWriter, r *http.Request) 
 	if !ok {
 		return
 	}
-	if op, busy := h.svc.domainBusy(zfsDomain); busy {
+	if op, busy := h.svc.busyForUser(zfsDomain); busy {
 		writeJSON(w, http.StatusConflict, startRefusal(domainBusyError{op: op, domain: zfsDomain}))
 		return
 	}

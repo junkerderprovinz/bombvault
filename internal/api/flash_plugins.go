@@ -218,7 +218,7 @@ func (s *Service) StartRestoreFlashPlugin(ctx context.Context, snapshotID, sourc
 	unlock, ok := s.tryLockDomainFor("flash", "restore-plugin")
 	if !ok {
 		s.batchActive.Store(false)
-		return false, errDomainBusy
+		return false, s.busyErr("flash", errDomainBusy)
 	}
 	bctx := context.WithoutCancel(ctx)
 	go func() {
