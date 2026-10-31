@@ -3303,6 +3303,8 @@ const fi: Partial<Translations> = {
   "placementCode.ownFolderOnCopy": "Tässä on jo kopio tästä osiosta, joten sen varmuuskopiot kopioituisivat itsensä päälle. Jos haluat tästä paikasta oman kansion, avaa se sivulla Kohteet ja siirrä osio sinne sen Omat kansiot -kortissa. Silloin kopio päättyy.",
   "placementCode.ownFolderOnTypedCopy": "Tässä on jo kopio tästä osiosta, joten sen varmuuskopiot kopioituisivat itsensä päälle. Tämä kopio on syötetty käsin, eikä sillä ole Omat kansiot -korttia. Jos haluat tästä paikasta oman kansion, avaa se sivulla Kohteet, valitse Poista kohde ja säilytä varmuuskopiot siellä. Syötä sitten tämä paikka uudelleen.",
   "placementCode.placeUnchecked": "Tämän kohteen arkistoa ei voitu tarkistaa, joten mitään ei muutettu. Tarkista, että kohde vastaa, ja yritä uudelleen.",
+  "placementCode.replicationPaused": "Tämän osion etäkopiot ovat tauolla, kunnes sen oletus on vahvistettu, joten mitään ei käynnistetty. Vahvista ensin oletus ja käynnistä sitten kopiointi uudelleen.",
+  "placementCode.nothingToCopy": "Tämän osion oma kansio on poissa käytöstä ja sen varmuuskopiot menevät suoraan sen tallennuspaikkoihin, joten kopioitavaa ei ole.",
   "placementCode.namedRepoOverlap": "Tämä sijainti on arkisto, jonka määritit kohdassa Arkistot sivulla Asetukset, Kohteet, tai se on sellaisen sisällä tai ympärillä. Valitse toinen paikka tai poista ensin se arkisto.",
   "placementCode.unprefixedRemote": "Tämä sijainti näyttää etäsijainnilta, mutta siinä ei ole restic-etuliitettä. Kirjoita rclone: rclone-etäsijainnin nimen eteen, esimerkiksi rclone:myremote:bucket.",
   "placementCode.locationNeeded": "Arkisto tarvitsee sijainnin: kansion Host Datan alla tai restic-etäsijainnin, kuten b2:bucket.",

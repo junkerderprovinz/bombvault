@@ -3303,6 +3303,8 @@ const da: Partial<Translations> = {
   "placementCode.ownFolderOnCopy": "Der ligger allerede en kopi af denne sektion her, så dens backups ville blive kopieret oven i sig selv. Hvis dette sted skal være den egne mappe, så åbn det under Destinationer, og flyt sektionen derhen på dets kort Egne mapper. Det afslutter kopien.",
   "placementCode.ownFolderOnTypedCopy": "Der ligger allerede en kopi af denne sektion her, så dens backups ville blive kopieret oven i sig selv. Denne kopi blev indtastet manuelt og har ikke noget kort Egne mapper. Hvis dette sted skal være den egne mappe, så åbn det under Destinationer, vælg Fjern destination, og behold sikkerhedskopierne der. Indtast derefter stedet igen.",
   "placementCode.placeUnchecked": "Depotet på dette sted kunne ikke tjekkes, så intet blev ændret. Tjek, at stedet svarer, og prøv igen.",
+  "placementCode.replicationPaused": "Off-site-kopier af denne sektion er sat på pause, indtil dens standard er bekræftet, så intet blev startet. Bekræft standarden først, og start så kopien igen.",
+  "placementCode.nothingToCopy": "Denne sektions egen mappe er slået fra, og dens sikkerhedskopier går direkte til dens lagerplaceringer, så der er intet at kopiere.",
   "placementCode.namedRepoOverlap": "Denne placering er et depot, du har sat op under Depoter i Indstillinger, Destinationer, eller ligger i eller omkring et. Vælg et andet sted, eller fjern først det depot.",
   "placementCode.unprefixedRemote": "Denne placering ligner et fjernlager, men har intet restic-præfiks. Sæt rclone: foran navnet på et rclone-fjernlager, som i rclone:myremote:bucket.",
   "placementCode.locationNeeded": "Et depot skal have en placering: en mappe under Host Data eller et restic-fjernlager som b2:bucket.",

@@ -3301,6 +3301,8 @@ const cs: Partial<Translations> = {
   "placementCode.ownFolderOnCopy": "Tady už leží kopie této sekce, takže by se její zálohy kopírovaly samy na sebe. Pokud chceš z tohoto místa udělat vlastní složku, otevři ho v části Cíle a na jeho kartě Vlastní složky tam sekci přesuň. Tím kopie skončí.",
   "placementCode.ownFolderOnTypedCopy": "Tady už leží kopie této sekce, takže by se její zálohy kopírovaly samy na sebe. Tato kopie byla zadána ručně a nemá kartu Vlastní složky. Pokud chceš z tohoto místa udělat vlastní složku, otevři ho v části Cíle, zvol Odebrat cíl a zálohy tam ponech. Potom toto místo zadej znovu.",
   "placementCode.placeUnchecked": "Repozitář na tomto místě nešlo ověřit, takže se nic nezměnilo. Zkontroluj, že místo odpovídá, a zkus to znovu.",
+  "placementCode.replicationPaused": "Kopie této sekce mimo lokalitu jsou pozastavené, dokud se nepotvrdí její výchozí nastavení, takže se nic nespustilo. Nejdřív potvrď výchozí nastavení a pak spusť kopii znovu.",
+  "placementCode.nothingToCopy": "Vlastní složka této sekce je vypnutá a její zálohy jdou rovnou do jejích úložišť, takže není co kopírovat.",
   "placementCode.namedRepoOverlap": "Toto místo je repozitář nastavený v části Repozitáře v Nastavení, Cíle, nebo leží v takovém repozitáři či kolem něj. Vyber jiné místo, nebo nejdřív ten repozitář odeber.",
   "placementCode.unprefixedRemote": "Toto místo vypadá jako vzdálené úložiště, ale nemá prefix restic. Napiš rclone: před název vzdáleného úložiště rclone, například rclone:myremote:bucket.",
   "placementCode.locationNeeded": "Repozitář potřebuje místo: složku pod Host Data, nebo vzdálené úložiště restic jako b2:bucket.",

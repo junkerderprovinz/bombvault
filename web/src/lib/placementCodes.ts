@@ -64,6 +64,8 @@ const CODE_KEYS: Record<string, TranslationKey> = {
   "own-folder-on-copy": "placementCode.ownFolderOnCopy",
   "own-folder-on-typed-copy": "placementCode.ownFolderOnTypedCopy",
   "place-unchecked": "placementCode.placeUnchecked",
+  "replication-paused": "placementCode.replicationPaused",
+  "nothing-to-copy": "placementCode.nothingToCopy",
   "named-repo-overlap": "placementCode.namedRepoOverlap",
   "unprefixed-remote": "placementCode.unprefixedRemote",
   "location-needed": "placementCode.locationNeeded",

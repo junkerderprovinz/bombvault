@@ -3313,6 +3313,8 @@ const lv: Partial<Translations> = {
   "placementCode.ownFolderOnCopy": "Šeit jau glabājas šīs sadaļas kopija, tāpēc tās dublējumi tiktu kopēti paši uz sevis. Lai šī vieta kļūtu par paša mapi, atveriet to lapā Mērķi un kartītē Pašu mapes pārvietojiet sadaļu uz šejieni. Ar to kopija beigsies.",
   "placementCode.ownFolderOnTypedCopy": "Šeit jau glabājas šīs sadaļas kopija, tāpēc tās dublējumi tiktu kopēti paši uz sevis. Šī kopija tika ievadīta manuāli, un tai nav kartītes Pašu mapes. Lai šī vieta kļūtu par paša mapi, atveriet to lapā Mērķi, izvēlieties Noņemt mērķi un paturiet dublējumus tur. Pēc tam ievadiet šo vietu vēlreiz.",
   "placementCode.placeUnchecked": "Šajā vietā esošo krātuvi neizdevās pārbaudīt, tāpēc nekas netika mainīts. Pārbaudiet, vai vieta atbild, un mēģiniet vēlreiz.",
+  "placementCode.replicationPaused": "Šīs sadaļas attālinātās kopijas ir pauzētas, kamēr nav apstiprināts tās noklusējums, tāpēc nekas netika sākts. Vispirms apstipriniet noklusējumu un tad sāciet kopēšanu vēlreiz.",
+  "placementCode.nothingToCopy": "Šīs sadaļas paša mape ir izslēgta, un tās dublējumi nonāk tieši tās krātuves vietās, tāpēc nav ko kopēt.",
   "placementCode.namedRepoOverlap": "Šī vieta ir krātuve, ko iestatījāt kartītē Krātuves sadaļā Iestatījumi, Mērķi, vai atrodas tās iekšpusē vai apkārt. Izvēlieties citu vietu vai vispirms noņemiet šo krātuvi.",
   "placementCode.unprefixedRemote": "Šī vieta izskatās pēc attālās vietas, bet tai nav restic prefiksa. Ierakstiet rclone: pirms rclone attālās vietas nosaukuma, piemēram, rclone:myremote:bucket.",
   "placementCode.locationNeeded": "Krātuvei vajag vietu: mapi zem Host Data vai restic attālo vietu, piemēram, b2:bucket.",

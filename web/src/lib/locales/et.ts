@@ -3313,6 +3313,8 @@ const et: Partial<Translations> = {
   "placementCode.ownFolderOnCopy": "Siin on juba selle jaotise koopia, nii et selle varukoopiad kopeeritaks iseenda peale. Kui tahad, et see koht oleks oma kaust, ava see lehel Sihtkohad ja teisalda jaotis sinna selle kaardil Oma kaustad. Siis koopia lõpeb.",
   "placementCode.ownFolderOnTypedCopy": "Siin on juba selle jaotise koopia, nii et selle varukoopiad kopeeritaks iseenda peale. See koopia sisestati käsitsi ja sellel pole kaarti Oma kaustad. Kui tahad, et see koht oleks oma kaust, ava see lehel Sihtkohad, vali Eemalda sihtkoht ja jäta varundused sinna alles. Seejärel sisesta see koht uuesti.",
   "placementCode.placeUnchecked": "Selles asukohas olevat hoidlat ei õnnestunud kontrollida, seega ei muudetud midagi. Kontrolli, et asukoht vastaks, ja proovi uuesti.",
+  "placementCode.replicationPaused": "Selle jaotise välised koopiad on peatatud, kuni selle vaikeväärtus on kinnitatud, nii et midagi ei käivitatud. Kinnita kõigepealt vaikeväärtus ja käivita siis koopia uuesti.",
+  "placementCode.nothingToCopy": "Selle jaotise oma kaust on välja lülitatud ja selle varukoopiad lähevad otse selle salvestuskohtadesse, nii et kopeerida pole midagi.",
   "placementCode.namedRepoOverlap": "See asukoht on hoidla, mille seadistasid jaotises Hoidlad lehel Seaded, Sihtkohad, või asub see mõne hoidla sees või ümber. Vali teine koht või eemalda enne see hoidla.",
   "placementCode.unprefixedRemote": "See asukoht näeb välja nagu kaugkoht, aga sel pole restic-eesliidet. Pane rclone: rclone'i kaugkoha nime ette, näiteks rclone:myremote:bucket.",
   "placementCode.locationNeeded": "Hoidla vajab asukohta: kausta Host Data all või restic-kaugkohta nagu b2:bucket.",

@@ -67,3 +67,61 @@ func TestReplicateNowStartsForASectionWithoutOwnFolder(t *testing.T) {
 		time.Sleep(5 * time.Millisecond)
 	}
 }
+
+func TestReplicateNowOnAPausedSectionSaysSoInsteadOfStarting(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.target("containers", "B2", "b2:bucket:containers")
+	if _, err := f.st.PausePlacement("containers"); err != nil {
+		t.Fatal(err)
+	}
+
+	res := f.do("POST", "/api/offsite/containers", nil)
+
+	if res["ok"] != false || res["code"] != "replication-paused" {
+		t.Fatalf("answer = %v, want replication-paused", res)
+	}
+	if unlock, ok := f.svc.tryLockDomainFor("containers", "test"); !ok {
+		t.Fatal("the refused start kept the section")
+	} else {
+		unlock()
+	}
+}
+
+func TestReplicateNowWithNothingToCopySaysSoInsteadOfStarting(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.target(zfsDomain, "B2", "b2:bucket:zfs")
+	if err := f.st.SetLocal(zfsDomain, false); err != nil {
+		t.Fatal(err)
+	}
+
+	res := f.do("POST", "/api/offsite/zfs", nil)
+
+	if res["ok"] != false || res["code"] != "nothing-to-copy" {
+		t.Fatalf("answer = %v, want nothing-to-copy", res)
+	}
+}
+
+func TestReplicateNowThatStartsLeavesARun(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.target("files", "B2", "b2:bucket:files")
+	f.hold(f.domainPath("files"), snap("f1", time.Now().Unix(), "fileset:iso"))
+	f.setDefault("files", "")
+
+	if res := f.do("POST", "/api/offsite/files", nil); res["ok"] != true {
+		t.Fatalf("answer = %v, want it started", res)
+	}
+	deadline := time.Now().Add(10 * time.Second)
+	for {
+		runs, err := f.st.ListRuns(20)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if slices.ContainsFunc(runs, func(r store.Run) bool { return r.Kind == "offsite" && r.TargetID == "files" && r.Status != "running" }) {
+			return
+		}
+		if time.Now().After(deadline) {
+			t.Fatalf("runs = %+v, want the replication that said it started", runs)
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+}

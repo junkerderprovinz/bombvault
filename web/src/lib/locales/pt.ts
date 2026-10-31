@@ -3303,6 +3303,8 @@ const pt: Partial<Translations> = {
   "placementCode.ownFolderOnCopy": "Já existe aqui uma cópia desta secção, por isso as cópias de segurança seriam copiadas sobre si mesmas. Para fazer deste sítio a pasta própria, abre-o em Destinos e move a secção para aqui no cartão Pastas próprias. Isso termina a cópia.",
   "placementCode.ownFolderOnTypedCopy": "Já existe aqui uma cópia desta secção, por isso as cópias de segurança seriam copiadas sobre si mesmas. Esta cópia foi introduzida à mão e não tem o cartão Pastas próprias. Para fazer deste sítio a pasta própria, abre-o em Destinos, escolhe Remover destino e mantém lá os backups. Depois, introduz este sítio outra vez.",
   "placementCode.placeUnchecked": "Não foi possível verificar o repositório neste local, por isso nada foi alterado. Verifica se o local responde e tenta de novo.",
+  "placementCode.replicationPaused": "As cópias externas desta secção estão em pausa até o seu padrão ser confirmado, por isso nada foi iniciado. Confirma primeiro o padrão e depois inicia a cópia de novo.",
+  "placementCode.nothingToCopy": "A pasta própria desta secção está desligada e os seus backups vão diretamente para os seus locais de armazenamento, por isso não há nada para copiar.",
   "placementCode.namedRepoOverlap": "Este local é um repositório que configuraste em Repositórios, em Definições, Destinos, ou fica dentro ou à volta de um. Escolhe outro sítio ou remove primeiro esse repositório.",
   "placementCode.unprefixedRemote": "Este local parece um remoto mas não tem prefixo do restic. Põe rclone: antes do nome de um remoto rclone, como em rclone:myremote:bucket.",
   "placementCode.locationNeeded": "Um repositório precisa de um local: uma pasta sob Host Data ou um remoto restic como b2:bucket.",

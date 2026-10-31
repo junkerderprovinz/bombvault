@@ -3297,6 +3297,8 @@ const sl: Partial<Translations> = {
   "placementCode.ownFolderOnCopy": "Tu je že kopija tega razdelka, zato bi se njegove varnostne kopije kopirale same nase. Če želiš lastno mapo tukaj, odpri ta cilj pod Cilji in v njegovi kartici Lastne mape premakni razdelek sem. S tem se kopija konča.",
   "placementCode.ownFolderOnTypedCopy": "Tu je že kopija tega razdelka, zato bi se njegove varnostne kopije kopirale same nase. Ta kopija je bila vnesena ročno in nima kartice Lastne mape. Če želiš lastno mapo tukaj, odpri ta cilj pod Cilji, izberi Odstrani cilj in kopije tam ohrani. Nato to mesto vnesi znova.",
   "placementCode.placeUnchecked": "Repozitorija na tem mestu ni bilo mogoče preveriti, zato se ni nič spremenilo. Preveri, da mesto odgovarja, in poskusi znova.",
+  "placementCode.replicationPaused": "Zunanje kopiranje tega razdelka je zaustavljeno, dokler njegovo privzeto ni potrjeno, zato se ni nič začelo. Najprej potrdi privzeto, nato znova zaženi kopiranje.",
+  "placementCode.nothingToCopy": "Lastna mapa tega razdelka je izklopljena in njegove varnostne kopije gredo naravnost na njegove lokacije shrambe, zato ni ničesar za kopiranje.",
   "placementCode.namedRepoOverlap": "Ta lokacija je repozitorij, ki je nastavljen pod Repozitoriji v Nastavitve, Cilji, ali pa leži v takem repozitoriju oziroma okoli njega. Izberi drugo mesto ali najprej odstrani ta repozitorij.",
   "placementCode.unprefixedRemote": "Ta lokacija je videti kot oddaljena, a nima predpone restic. Pred ime oddaljene lokacije rclone napiši rclone:, na primer rclone:myremote:bucket.",
   "placementCode.locationNeeded": "Repozitorij potrebuje lokacijo: mapo pod Host Data ali oddaljeno lokacijo restic, kot je b2:bucket.",

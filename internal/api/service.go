@@ -5419,7 +5419,11 @@ func (s *Service) StartReplicateOffsite(domain string) error {
 	}
 	unlock, ok := s.tryLockDomainFor(domain, offsiteLockReason)
 	if !ok {
-		return errDomainBusy
+		return s.busyErr(domain, errDomainBusy)
+	}
+	if err := s.replicationWouldRun(settings, domain); err != nil {
+		unlock()
+		return err
 	}
 	go func() {
 		defer s.recoverOperation("offsite replicate: "+domain, nil, func(msg string) {
@@ -5442,6 +5446,26 @@ func (s *Service) StartReplicateOffsite(domain string) error {
 			s.notifyReplicationFailed(ctx, domain, truncateRunErr(err))
 		}
 	}()
+	return nil
+}
+
+// errReplicationPaused and errNothingToCopy are the passes copyToOffsite ends
+// without a run, which a replication somebody started says up front.
+var (
+	errReplicationPaused = errors.New("off-site copies of this section are paused until its placement default is confirmed, so nothing was started")
+	errNothingToCopy     = errors.New("this section's own folder is switched off and its backups go straight to its storage locations, so there is nothing to copy")
+)
+
+// replicationWouldRun reports why a pass over the domain would end at once
+// without copying or recording anything, nil when it would run.
+func (s *Service) replicationWouldRun(settings store.Settings, domain string) error {
+	sources, _ := s.offsiteReplicationSources(settings, domain)
+	if _, nothing := s.skipOwnCopySource(domain, sources); nothing {
+		return errNothingToCopy
+	}
+	if p, err := s.readPlacement(settings, domain); err == nil && p.State.Paused() {
+		return errReplicationPaused
+	}
 	return nil
 }
 

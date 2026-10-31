@@ -3313,6 +3313,8 @@ const sk: Partial<Translations> = {
   "placementCode.ownFolderOnCopy": "Tu už leží kópia tejto sekcie, takže jej zálohy by sa kopírovali samy na seba. Ak tu chceš mať vlastný priečinok, otvor tento cieľ v časti Ciele a v jeho karte Vlastné priečinky sem presuň sekciu. Tým sa kópia skončí.",
   "placementCode.ownFolderOnTypedCopy": "Tu už leží kópia tejto sekcie, takže jej zálohy by sa kopírovali samy na seba. Táto kópia bola zadaná ručne a nemá kartu Vlastné priečinky. Ak tu chceš mať vlastný priečinok, otvor tento cieľ v časti Ciele, vyber Odstrániť cieľ a zálohy tam ponechaj. Potom toto miesto zadaj znova.",
   "placementCode.placeUnchecked": "Repozitár na tomto mieste sa nepodarilo overiť, takže sa nič nezmenilo. Skontroluj, či miesto odpovedá, a skús to znova.",
+  "placementCode.replicationPaused": "Kópie tejto sekcie mimo lokality sú pozastavené, kým sa nepotvrdí jej predvolené nastavenie, takže sa nič nespustilo. Najprv potvrď predvolené nastavenie a potom znova spusti kópiu.",
+  "placementCode.nothingToCopy": "Vlastný priečinok tejto sekcie je vypnutý a jej zálohy idú rovno do jej úložísk, takže nie je čo kopírovať.",
   "placementCode.namedRepoOverlap": "Toto miesto je repozitár, ktorý máš nastavený v zozname Repozitáre v časti Nastavenia, Ciele, alebo leží v takom repozitári či okolo neho. Vyber iné miesto alebo najprv ten repozitár odstráň.",
   "placementCode.unprefixedRemote": "Toto miesto vyzerá ako vzdialené, ale nemá prefix restic. Napíš rclone: pred názov vzdialeného miesta rclone, napríklad rclone:myremote:bucket.",
   "placementCode.locationNeeded": "Repozitár potrebuje miesto: priečinok pod Host Data alebo vzdialené miesto restic ako b2:bucket.",

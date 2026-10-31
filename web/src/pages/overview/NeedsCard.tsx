@@ -27,6 +27,7 @@ import { ENTRY_KIND } from "../../lib/backupEntry";
 import { entryTarget } from "../../lib/backupList";
 import { deferralSentence } from "../../lib/deferral";
 import { useT } from "../../lib/i18n";
+import { placementErrorText } from "../../lib/placementCodes";
 import type { Need } from "../../lib/needs";
 import { formatList } from "../../lib/placement";
 import { formatRecent } from "../../lib/reltime";
@@ -320,7 +321,7 @@ function FailedCopyRow({ need, t, lang }: { need: Need & { is: "failedCopy" }; t
     try {
       const answers = await Promise.all(domains.map((domain) => replicateOffsite(domain)));
       const refused = answers.find((res) => !res.ok);
-      if (refused) push(refused.error ?? t("offsite.replicateFailed"), "fail");
+      if (refused) push(placementErrorText(t, lang, refused, "offsite.replicateFailed"), "fail");
       else push(t("offsite.replicateStarted"), "success");
     } catch (err) {
       push(err instanceof Error ? err.message : t("offsite.replicateFailed"), "fail");

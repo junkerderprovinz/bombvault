@@ -3294,6 +3294,8 @@ const zh: Partial<Translations> = {
   "placementCode.ownFolderOnCopy": "这里已经有此部分的一份副本，所以它的备份会复制到自己身上。要把这里设为专属文件夹，请在“目标”中打开这个目标，并在它的“专属文件夹”卡片中把该部分移到这里。这样那份副本就会结束。",
   "placementCode.ownFolderOnTypedCopy": "这里已经有此部分的一份副本，所以它的备份会复制到自己身上。这份副本是手动输入的，没有“专属文件夹”卡片。要把这里设为专属文件夹，请在“目标”中打开这个目标，选择“移除目标”并保留备份。然后再次输入这个位置。",
   "placementCode.placeUnchecked": "无法检查该位置的存储库，因此没有做任何更改。请检查该位置是否有响应，然后重试。",
+  "placementCode.replicationPaused": "此部分的异地复制已暂停，直到其默认被确认，因此没有启动任何操作。请先确认默认，再重新开始复制。",
+  "placementCode.nothingToCopy": "此部分的专属文件夹已关闭，其备份会直接存到它的存储位置，因此没有需要复制的内容。",
   "placementCode.namedRepoOverlap": "此位置是在“设置，目标”的“存储库”中设置的存储库，或位于某个存储库之内，或包含了某个存储库。请选择其他位置，或先移除该存储库。",
   "placementCode.unprefixedRemote": "此位置看起来像远程位置，但没有 restic 前缀。请在 rclone 远程名称前加上 rclone:，例如 rclone:myremote:bucket。",
   "placementCode.locationNeeded": "存储库需要一个位置：Host Data 下的文件夹，或 b2:bucket 这样的 restic 远程位置。",

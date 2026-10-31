@@ -3294,6 +3294,8 @@ const vi: Partial<Translations> = {
   "placementCode.ownFolderOnCopy": "Đã có một bản sao của phần này ở đây, nên các bản sao lưu của nó sẽ bị sao chép đè lên chính chúng. Để biến nơi này thành thư mục riêng, hãy mở đích này trong Đích sao lưu rồi chuyển phần đó vào đây trong thẻ Thư mục riêng của đích. Việc này sẽ kết thúc bản sao.",
   "placementCode.ownFolderOnTypedCopy": "Đã có một bản sao của phần này ở đây, nên các bản sao lưu của nó sẽ bị sao chép đè lên chính chúng. Bản sao này được nhập thủ công và không có thẻ Thư mục riêng. Để biến nơi này thành thư mục riêng, hãy mở đích này trong Đích sao lưu, chọn Xóa đích sao lưu và giữ các bản sao lưu ở đó. Sau đó, hãy nhập lại nơi này.",
   "placementCode.placeUnchecked": "Không thể kiểm tra kho ở nơi này, nên không có gì thay đổi. Hãy kiểm tra nơi đó có phản hồi không, rồi thử lại.",
+  "placementCode.replicationPaused": "Các bản sao ngoài site của phần này đang tạm dừng cho đến khi mặc định của phần được xác nhận, nên chưa có gì được bắt đầu. Hãy xác nhận mặc định trước, rồi bắt đầu lại việc sao chép.",
+  "placementCode.nothingToCopy": "Thư mục riêng của phần này đang tắt và các bản sao lưu của phần này đi thẳng tới các vị trí lưu trữ của nó, nên không có gì để sao chép.",
   "placementCode.namedRepoOverlap": "Vị trí này là một kho lưu trữ bạn đã thiết lập trong mục Kho lưu trữ ở Cài đặt, Đích sao lưu, hoặc nằm bên trong hay bao quanh một kho như vậy. Hãy chọn nơi khác hoặc gỡ kho đó trước.",
   "placementCode.unprefixedRemote": "Vị trí này trông như một remote nhưng không có tiền tố restic. Hãy thêm rclone: trước tên remote rclone, ví dụ rclone:myremote:bucket.",
   "placementCode.locationNeeded": "Kho lưu trữ cần một vị trí: một thư mục dưới Host Data hoặc một remote restic như b2:bucket.",

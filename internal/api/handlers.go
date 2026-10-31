@@ -3820,7 +3820,11 @@ func (h *Handler) handleReplicateOffsite(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	if err := h.svc.StartReplicateOffsite(domain); err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
+		if placementCode(err) != "" {
+			placementFail(w, err, nil)
+		} else {
+			writeJSON(w, http.StatusOK, failEnvelope(err))
+		}
 		return
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"started": true}))
