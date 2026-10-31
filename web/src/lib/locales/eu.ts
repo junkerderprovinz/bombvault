@@ -485,6 +485,8 @@ const eu: Partial<Translations> = {
   "dest.keyInstall.err.hostKey": "Zerbitzariak lehen baino ostalari-gako desberdina erakusten du. Berriro konfiguratu bada, ezabatu bere lerroa /config/ssh/known_hosts fitxategian. Bestela, gelditu hemen.",
   "dest.keyInstall.err.noWayIn": "Zerbitzariak ez du ez SFTP ez shellik eskaintzen gakoa gehitzeko. Jarri gakoa eskuz.",
   "dest.appPassword.tip": "Bi urratseko saio-hasiera aktibatuta dagoenean, pasahitz normalak ez du balio. Sortu aplikazio-pasahitz bat zure kontuaren segurtasun-ezarpenetan.",
+  "dest.example.ifUnsure": "Erabili hau zalantzarik baduzu.",
+  "dest.example.v4Fails": "Erabili hau v4 sinadurek funtzionatzen ez badute bakarrik.",
   "dest.token.regionFirst": "Aukeratu lehenik eskualdea behean. Orduan exekutatu beharreko komandoa agertuko da hemen.",
   "dest.loginToken.run": "Sortu saio-hasierako token pertsonal bat orri honetan eta itsatsi behean",
   "dest.loginToken.tip": "Konexioa probatzean, BombVaultek tokena saio-hasiera iraunkor batekin trukatzen du. Token batek behin bakarrik balio du; proba berriro egin behar bada, sortu beste bat.",

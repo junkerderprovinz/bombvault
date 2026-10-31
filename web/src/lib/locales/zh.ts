@@ -1465,6 +1465,8 @@ const zh: Partial<Translations> = {
   "dest.keyInstall.err.hostKey": "服务器显示的主机密钥与之前不同。如果它是重新安装的，请删除 /config/ssh/known_hosts 中它的那一行。如果不是，请就此停下。",
   "dest.keyInstall.err.noWayIn": "服务器既不提供 SFTP，也不提供可以添加密钥的 shell。请手动放置密钥。",
   "dest.appPassword.tip": "开启两步验证后，普通密码无法使用。请在账户的安全设置中创建应用专用密码。",
+  "dest.example.ifUnsure": "不确定时用这个。",
+  "dest.example.v4Fails": "仅在 v4 签名不可用时使用。",
   "dest.token.regionFirst": "请先在下方选择区域，然后这里会显示要运行的命令。",
   "dest.loginToken.run": "在此页面创建个人登录令牌，并粘贴到下方",
   "dest.loginToken.tip": "测试连接时，BombVault 会用该令牌换取长期有效的登录。令牌只能使用一次，如需再次测试，请重新创建。",

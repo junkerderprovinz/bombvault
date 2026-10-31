@@ -53,7 +53,16 @@ async function show(node: React.ReactNode) {
   });
 }
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  localStorage.removeItem("bv-lang");
+});
+
+it("gives rclone's advice on a generic region in the reader's language", async () => {
+  localStorage.setItem("bv-lang", "de");
+  await show(<SignInBody draft={draft(s3("minio", "Other"))} providerLabel="MinIO" />);
+  expect(screen.getByRole("button", { name: "Im Zweifel diese wählen." })).toBeTruthy();
+});
 
 it("offers only the storage classes the provider takes", async () => {
   await show(<FolderBody draft={draft(s3("r2", "Cloudflare", ["STANDARD", "STANDARD_IA"]))} />);

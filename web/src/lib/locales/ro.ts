@@ -1463,6 +1463,8 @@ const ro: Partial<Translations> = {
   "dest.keyInstall.err.hostKey": "Serverul arată o altă cheie de gazdă decât înainte. Dacă a fost configurat din nou, șterge-i rândul din /config/ssh/known_hosts. Dacă nu, oprește-te aici.",
   "dest.keyInstall.err.noWayIn": "Serverul nu oferă nici SFTP, nici un shell prin care să se adauge cheia. Pune cheia de mână.",
   "dest.appPassword.tip": "Cu autentificarea în doi pași activă, parola obișnuită nu funcționează. Creează o parolă de aplicație în setările de securitate ale contului.",
+  "dest.example.ifUnsure": "Folosește asta dacă nu ești sigur.",
+  "dest.example.v4Fails": "Folosește asta doar dacă semnăturile v4 nu merg.",
   "dest.token.regionFirst": "Alege mai întâi regiunea de mai jos. Apoi apare aici comanda de rulat.",
   "dest.loginToken.run": "Creează pe această pagină un token personal de conectare și lipește-l mai jos",
   "dest.loginToken.tip": "La testarea conexiunii, BombVault schimbă tokenul pe o conectare de durată. Un token merge o singură dată, așa că creează unul nou dacă testul trebuie rulat din nou.",

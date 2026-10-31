@@ -485,6 +485,8 @@ const id: Partial<Translations> = {
   "dest.keyInstall.err.hostKey": "Server menunjukkan kunci host yang berbeda dari sebelumnya. Jika server dipasang ulang, hapus barisnya di /config/ssh/known_hosts. Jika tidak, berhenti di sini.",
   "dest.keyInstall.err.noWayIn": "Server tidak menyediakan SFTP maupun shell untuk menambahkan kunci. Taruh kunci secara manual.",
   "dest.appPassword.tip": "Jika autentikasi dua faktor aktif, kata sandi biasa tidak berfungsi. Buat kata sandi aplikasi di pengaturan keamanan akun Anda.",
+  "dest.example.ifUnsure": "Pakai ini jika ragu.",
+  "dest.example.v4Fails": "Pakai ini hanya jika tanda tangan v4 tidak berfungsi.",
   "dest.token.regionFirst": "Pilih dulu wilayah di bawah. Lalu perintah yang perlu dijalankan muncul di sini.",
   "dest.loginToken.run": "Buat token masuk pribadi di halaman ini lalu tempelkan di bawah",
   "dest.loginToken.tip": "Saat menguji koneksi, BombVault menukar token dengan sesi masuk yang tahan lama. Token hanya berlaku sekali, jadi buat yang baru jika pengujian harus diulang.",

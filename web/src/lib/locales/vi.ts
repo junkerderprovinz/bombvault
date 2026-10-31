@@ -1465,6 +1465,8 @@ const vi: Partial<Translations> = {
   "dest.keyInstall.err.hostKey": "Máy chủ hiển thị khóa máy chủ khác với trước đây. Nếu nó được cài lại, hãy xóa dòng của nó trong /config/ssh/known_hosts. Nếu không, hãy dừng lại ở đây.",
   "dest.keyInstall.err.noWayIn": "Máy chủ không có SFTP lẫn shell để thêm khóa. Hãy đặt khóa thủ công.",
   "dest.appPassword.tip": "Khi bật xác minh hai bước, mật khẩu thông thường không dùng được. Hãy tạo mật khẩu ứng dụng trong phần cài đặt bảo mật của tài khoản.",
+  "dest.example.ifUnsure": "Dùng mục này nếu không chắc.",
+  "dest.example.v4Fails": "Chỉ dùng mục này khi chữ ký v4 không hoạt động.",
   "dest.token.regionFirst": "Hãy chọn vùng ở bên dưới trước. Sau đó lệnh cần chạy sẽ hiện ở đây.",
   "dest.loginToken.run": "Tạo một mã đăng nhập cá nhân trên trang này rồi dán vào bên dưới",
   "dest.loginToken.tip": "Khi kiểm tra kết nối, BombVault đổi mã này lấy một phiên đăng nhập lâu dài. Mỗi mã chỉ dùng được một lần, nên hãy tạo mã mới nếu cần kiểm tra lại.",

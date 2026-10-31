@@ -118,6 +118,13 @@ function fitNote(t: ReturnType<typeof useT>["t"], p: Provider, label: string): {
 
 /** One field of a provider's form. `kept` stands in an empty field whose
  *  stored value the server does not show. */
+// rclone's advice on its generic S3 regions, which the reader should get in
+// their own language. Region names stay as rclone gives them.
+const EXAMPLE_HELP: Record<string, TranslationKey> = {
+  "Use this if unsure.": "dest.example.ifUnsure",
+  "Use this only if v4 signatures don't work.": "dest.example.v4Fails",
+};
+
 export function DraftField({
   draft,
   option,
@@ -189,7 +196,7 @@ export function DraftField({
               size="small"
               onClick={() => setSetting(o.name, e.value)}
             >
-              {e.help || e.value}
+              {EXAMPLE_HELP[e.help] ? t(EXAMPLE_HELP[e.help]) : e.help || e.value}
             </Badge>
           ))}
         </span>

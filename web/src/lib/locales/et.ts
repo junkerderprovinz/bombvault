@@ -485,6 +485,8 @@ const et: Partial<Translations> = {
   "dest.keyInstall.err.hostKey": "Server näitab teistsugust hostivõtit kui varem. Kui see seati uuesti üles, kustuta selle rida failist /config/ssh/known_hosts. Kui mitte, siis peatu siin.",
   "dest.keyInstall.err.noWayIn": "Server ei paku võtme lisamiseks ei SFTP-d ega kesta. Pane võti käsitsi.",
   "dest.appPassword.tip": "Kui kaheastmeline sisselogimine on sees, tavaline parool ei tööta. Loo rakenduse parool oma konto turvaseadetes.",
+  "dest.example.ifUnsure": "Kasuta seda, kui pole kindel.",
+  "dest.example.v4Fails": "Kasuta seda ainult siis, kui v4-allkirjad ei tööta.",
   "dest.token.regionFirst": "Vali esmalt allpool piirkond. Siis ilmub siia käsk, mille käivitad.",
   "dest.loginToken.run": "Loo sellel lehel isiklik sisselogimistõend ja kleebi see allapoole",
   "dest.loginToken.tip": "Ühenduse testimisel vahetab BombVault tõendi püsiva sisselogimise vastu. Tõend kehtib ainult üks kord, nii et loo uus, kui test tuleb uuesti käivitada.",

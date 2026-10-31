@@ -1461,6 +1461,8 @@ const nl: Partial<Translations> = {
   "dest.keyInstall.err.hostKey": "De server toont een andere hostsleutel dan eerder. Is hij opnieuw ingericht, verwijder dan zijn regel in /config/ssh/known_hosts. Zo niet, stop dan hier.",
   "dest.keyInstall.err.noWayIn": "De server biedt geen SFTP en geen shell om de sleutel mee toe te voegen. Zet de sleutel met de hand erop.",
   "dest.appPassword.tip": "Met tweestapsverificatie aan werkt het gewone wachtwoord niet. Maak een app-wachtwoord aan in de beveiligingsinstellingen van je account.",
+  "dest.example.ifUnsure": "Gebruik deze bij twijfel.",
+  "dest.example.v4Fails": "Gebruik deze alleen als v4-handtekeningen niet werken.",
   "dest.token.regionFirst": "Kies eerst hieronder de regio. Dan verschijnt hier de opdracht die je uitvoert.",
   "dest.loginToken.run": "Maak op deze pagina een persoonlijk inlogtoken aan en plak het hieronder",
   "dest.loginToken.tip": "Bij het testen van de verbinding ruilt BombVault het token in voor een blijvende aanmelding. Een token werkt maar één keer, dus maak een nieuw aan als de test opnieuw moet.",

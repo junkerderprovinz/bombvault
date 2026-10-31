@@ -1474,6 +1474,8 @@ const tr: Partial<Translations> = {
   "dest.keyInstall.err.hostKey": "Sunucu öncekinden farklı bir ana bilgisayar anahtarı gösteriyor. Yeniden kurulduysa /config/ssh/known_hosts içindeki satırını sil. Kurulmadıysa burada dur.",
   "dest.keyInstall.err.noWayIn": "Sunucu anahtarı eklemek için ne SFTP ne de kabuk sunuyor. Anahtarı elle koy.",
   "dest.appPassword.tip": "İki adımlı doğrulama açıkken normal parola çalışmaz. Hesabının güvenlik ayarlarında bir uygulama parolası oluştur.",
+  "dest.example.ifUnsure": "Emin değilsen bunu kullan.",
+  "dest.example.v4Fails": "Bunu yalnızca v4 imzaları çalışmazsa kullan.",
   "dest.token.regionFirst": "Önce aşağıdan bölgeyi seç. Ardından çalıştıracağın komut burada görünür.",
   "dest.loginToken.run": "Bu sayfada kişisel bir oturum açma belirteci oluştur ve aşağıya yapıştır",
   "dest.loginToken.tip": "Bağlantıyı test ettiğinde BombVault belirteci kalıcı bir oturum açmayla değiştirir. Bir belirteç yalnızca bir kez çalışır; test yeniden yapılacaksa yenisini oluştur.",

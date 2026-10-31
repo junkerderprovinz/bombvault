@@ -1457,6 +1457,8 @@ const ko: Partial<Translations> = {
   "dest.keyInstall.err.hostKey": "서버가 전과 다른 호스트 키를 보여 줍니다. 새로 설치했다면 /config/ssh/known_hosts에서 해당 줄을 지우세요. 그렇지 않다면 여기서 멈추세요.",
   "dest.keyInstall.err.noWayIn": "서버에 키를 추가할 SFTP도 셸도 없습니다. 키를 직접 두세요.",
   "dest.appPassword.tip": "2단계 인증이 켜져 있으면 일반 비밀번호는 통하지 않습니다. 계정의 보안 설정에서 앱 비밀번호를 만드세요.",
+  "dest.example.ifUnsure": "확실하지 않으면 이것을 사용하세요.",
+  "dest.example.v4Fails": "v4 서명이 작동하지 않을 때만 사용하세요.",
   "dest.token.regionFirst": "먼저 아래에서 리전을 선택하세요. 그러면 실행할 명령이 여기에 표시됩니다.",
   "dest.loginToken.run": "이 페이지에서 개인 로그인 토큰을 만들어 아래에 붙여 넣으세요",
   "dest.loginToken.tip": "연결을 테스트할 때 BombVault가 토큰을 지속되는 로그인으로 교환합니다. 토큰은 한 번만 쓸 수 있으므로 테스트를 다시 해야 하면 새로 만드세요.",

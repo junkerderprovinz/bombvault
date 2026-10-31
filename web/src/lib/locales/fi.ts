@@ -1474,6 +1474,8 @@ const fi: Partial<Translations> = {
   "dest.keyInstall.err.hostKey": "Palvelin näyttää eri isäntäavaimen kuin ennen. Jos se on asennettu uudelleen, poista sen rivi tiedostosta /config/ssh/known_hosts. Jos ei, älä jatka.",
   "dest.keyInstall.err.noWayIn": "Palvelin ei tarjoa SFTP:tä eikä komentotulkkia avaimen lisäämiseen. Vie avain käsin.",
   "dest.appPassword.tip": "Kaksivaiheisen tunnistautumisen ollessa käytössä tavallinen salasana ei toimi. Luo sovelluskohtainen salasana tilisi suojausasetuksissa.",
+  "dest.example.ifUnsure": "Käytä tätä, jos et ole varma.",
+  "dest.example.v4Fails": "Käytä tätä vain, jos v4-allekirjoitukset eivät toimi.",
   "dest.token.regionFirst": "Valitse ensin alue alta. Ajettava komento näkyy sitten tässä.",
   "dest.loginToken.run": "Luo henkilökohtainen kirjautumistunnus tällä sivulla ja liitä se alle",
   "dest.loginToken.tip": "Yhteyttä testattaessa BombVault vaihtaa tunnuksen pysyvään kirjautumiseen. Tunnus toimii vain kerran, joten luo uusi, jos testi pitää ajaa uudelleen.",

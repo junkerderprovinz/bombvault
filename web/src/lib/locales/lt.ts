@@ -485,6 +485,8 @@ const lt: Partial<Translations> = {
   "dest.keyInstall.err.hostKey": "Serveris rodo kitokį pagrindinio kompiuterio raktą nei anksčiau. Jei jis buvo įdiegtas iš naujo, ištrink jo eilutę faile /config/ssh/known_hosts. Jei ne, čia sustok.",
   "dest.keyInstall.err.noWayIn": "Serveris nesiūlo nei SFTP, nei apvalkalo raktui pridėti. Padėk raktą rankiniu būdu.",
   "dest.appPassword.tip": "Įjungus dviejų veiksnių prisijungimą, įprastas slaptažodis neveikia. Sukurk programos slaptažodį savo paskyros saugumo nustatymuose.",
+  "dest.example.ifUnsure": "Naudok, jei abejoji.",
+  "dest.example.v4Fails": "Naudok tik tada, kai v4 parašai neveikia.",
   "dest.token.regionFirst": "Pirmiausia žemiau pasirink regioną. Tada čia atsiras komanda, kurią paleisi.",
   "dest.loginToken.run": "Šiame puslapyje susikurk asmeninį prisijungimo žetoną ir įklijuok jį žemiau",
   "dest.loginToken.tip": "Tikrinant ryšį BombVault iškeičia žetoną į ilgalaikį prisijungimą. Žetonas galioja tik kartą, todėl susikurk naują, jei patikrą reikia kartoti.",

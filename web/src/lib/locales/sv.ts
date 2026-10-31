@@ -1474,6 +1474,8 @@ const sv: Partial<Translations> = {
   "dest.keyInstall.err.hostKey": "Servern visar en annan värdnyckel än tidigare. Om den har satts upp på nytt, ta bort dess rad i /config/ssh/known_hosts. Om inte, stanna här.",
   "dest.keyInstall.err.noWayIn": "Servern erbjuder varken SFTP eller ett skal att lägga till nyckeln med. Lägg på nyckeln för hand.",
   "dest.appPassword.tip": "Med tvåstegsverifiering på fungerar inte det vanliga lösenordet. Skapa ett applösenord i kontots säkerhetsinställningar.",
+  "dest.example.ifUnsure": "Använd den här om du är osäker.",
+  "dest.example.v4Fails": "Använd den här bara om v4-signaturer inte fungerar.",
   "dest.token.regionFirst": "Välj först regionen nedan. Då visas kommandot du ska köra här.",
   "dest.loginToken.run": "Skapa en personlig inloggningstoken på den här sidan och klistra in den nedan",
   "dest.loginToken.tip": "När du testar anslutningen byter BombVault token mot en varaktig inloggning. En token fungerar bara en gång, så skapa en ny om testet måste köras igen.",

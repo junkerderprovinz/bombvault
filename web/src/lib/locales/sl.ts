@@ -485,6 +485,8 @@ const sl: Partial<Translations> = {
   "dest.keyInstall.err.hostKey": "Strežnik kaže drug ključ gostitelja kot prej. Če je bil na novo nameščen, izbriši njegovo vrstico v /config/ssh/known_hosts. Če ne, se ustavi tukaj.",
   "dest.keyInstall.err.noWayIn": "Strežnik ne ponuja ne SFTP ne lupine, s katero bi dodali ključ. Postavi ključ ročno.",
   "dest.appPassword.tip": "Z vklopljeno dvostopenjsko prijavo navadno geslo ne deluje. Ustvari geslo aplikacije v varnostnih nastavitvah svojega računa.",
+  "dest.example.ifUnsure": "Uporabi to, če nisi prepričan.",
+  "dest.example.v4Fails": "Uporabi to samo, če podpisi v4 ne delujejo.",
   "dest.token.regionFirst": "Najprej spodaj izberi regijo. Nato se tu prikaže ukaz, ki ga zaženeš.",
   "dest.loginToken.run": "Na tej strani ustvari osebni prijavni žeton in ga prilepi spodaj",
   "dest.loginToken.tip": "Pri preizkusu povezave BombVault žeton zamenja za trajno prijavo. Žeton velja samo enkrat, zato ustvari novega, če je treba preizkus ponoviti.",

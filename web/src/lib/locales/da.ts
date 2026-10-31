@@ -1474,6 +1474,8 @@ const da: Partial<Translations> = {
   "dest.keyInstall.err.hostKey": "Serveren viser en anden værtsnøgle end før. Hvis den er sat op på ny, så slet dens linje i /config/ssh/known_hosts. Hvis ikke, så stop her.",
   "dest.keyInstall.err.noWayIn": "Serveren tilbyder hverken SFTP eller en shell til at tilføje nøglen med. Læg nøglen på i hånden.",
   "dest.appPassword.tip": "Med tofaktorlogin slået til virker den normale adgangskode ikke. Opret en app-adgangskode i kontoens sikkerhedsindstillinger.",
+  "dest.example.ifUnsure": "Brug denne, hvis du er i tvivl.",
+  "dest.example.v4Fails": "Brug kun denne, hvis v4-signaturer ikke virker.",
   "dest.token.regionFirst": "Vælg først regionen nedenfor. Så vises kommandoen, du skal køre, her.",
   "dest.loginToken.run": "Opret et personligt login-token på denne side, og indsæt det nedenfor",
   "dest.loginToken.tip": "Når du tester forbindelsen, bytter BombVault tokenet til et varigt login. Et token virker kun én gang, så opret et nyt, hvis testen skal køre igen.",

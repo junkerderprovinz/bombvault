@@ -1467,6 +1467,8 @@ const hu: Partial<Translations> = {
   "dest.keyInstall.err.hostKey": "A szerver más gazdagépkulcsot mutat, mint korábban. Ha újratelepítették, töröld a sorát a /config/ssh/known_hosts fájlban. Ha nem, itt állj meg.",
   "dest.keyInstall.err.noWayIn": "A szerver sem SFTP-t, sem parancsértelmezőt nem kínál a kulcs hozzáadásához. Tedd fel a kulcsot kézzel.",
   "dest.appPassword.tip": "Kétlépcsős bejelentkezés mellett a szokásos jelszó nem működik. Hozz létre alkalmazásjelszót a fiókod biztonsági beállításaiban.",
+  "dest.example.ifUnsure": "Ezt használd, ha bizonytalan vagy.",
+  "dest.example.v4Fails": "Csak akkor használd, ha a v4-aláírás nem működik.",
   "dest.token.regionFirst": "Először válaszd ki lent a régiót. Ekkor itt megjelenik a futtatandó parancs.",
   "dest.loginToken.run": "Hozz létre ezen az oldalon egy személyes bejelentkezési tokent, és illeszd be lent",
   "dest.loginToken.tip": "A kapcsolat tesztelésekor a BombVault a tokent tartós bejelentkezésre cseréli. Egy token csak egyszer működik, ezért ha a tesztet újra kell futtatni, hozz létre újat.",

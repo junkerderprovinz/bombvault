@@ -485,6 +485,8 @@ const lv: Partial<Translations> = {
   "dest.keyInstall.err.hostKey": "Serveris rāda citu resursdatora atslēgu nekā iepriekš. Ja tas iestatīts no jauna, izdzēsiet tā rindu failā /config/ssh/known_hosts. Ja nē, apstājieties šeit.",
   "dest.keyInstall.err.noWayIn": "Serveris nepiedāvā ne SFTP, ne čaulu atslēgas pievienošanai. Nolieciet atslēgu ar roku.",
   "dest.appPassword.tip": "Ja ieslēgta divfaktoru pierakstīšanās, parastā parole nedarbojas. Izveidojiet lietotnes paroli sava konta drošības iestatījumos.",
+  "dest.example.ifUnsure": "Izmanto šo, ja neesi pārliecināts.",
+  "dest.example.v4Fails": "Izmanto šo tikai tad, ja v4 paraksti nedarbojas.",
   "dest.token.regionFirst": "Vispirms zemāk izvēlieties reģionu. Tad šeit parādīsies izpildāmā komanda.",
   "dest.loginToken.run": "Izveidojiet šajā lapā personīgu pieteikšanās marķieri un ielīmējiet to zemāk",
   "dest.loginToken.tip": "Pārbaudot savienojumu, BombVault apmaina marķieri pret pastāvīgu pieteikšanos. Marķieris derīgs tikai vienreiz, tāpēc izveidojiet jaunu, ja pārbaude jāatkārto.",

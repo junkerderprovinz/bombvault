@@ -485,6 +485,8 @@ const is: Partial<Translations> = {
   "dest.keyInstall.err.hostKey": "Þjónninn sýnir annan hýsillykil en áður. Ef hann var settur upp að nýju skaltu eyða línu hans í /config/ssh/known_hosts. Ef ekki, stoppaðu hér.",
   "dest.keyInstall.err.noWayIn": "Þjónninn býður hvorki SFTP né skel til að bæta lyklinum við. Settu lykilinn á handvirkt.",
   "dest.appPassword.tip": "Með tvíþættri auðkenningu virkar venjulega lykilorðið ekki. Búðu til forritslykilorð í öryggisstillingum reikningsins þíns.",
+  "dest.example.ifUnsure": "Notaðu þetta ef þú ert óviss.",
+  "dest.example.v4Fails": "Notaðu þetta aðeins ef v4-undirskriftir virka ekki.",
   "dest.token.regionFirst": "Veldu fyrst svæðið hér fyrir neðan. Þá birtist skipunin sem þú keyrir hér.",
   "dest.loginToken.run": "Búðu til persónulegt innskráningartákn á þessari síðu og límdu það hér fyrir neðan",
   "dest.loginToken.tip": "Þegar þú prófar tenginguna skiptir BombVault tákninu út fyrir varanlega innskráningu. Tákn virkar aðeins einu sinni, svo búðu til nýtt ef prófið þarf að keyra aftur.",

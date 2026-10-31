@@ -1459,6 +1459,8 @@ const pl: Partial<Translations> = {
   "dest.keyInstall.err.hostKey": "Serwer pokazuje inny klucz hosta niż wcześniej. Jeśli został skonfigurowany od nowa, usuń jego wiersz w /config/ssh/known_hosts. Jeśli nie, zatrzymaj się tutaj.",
   "dest.keyInstall.err.noWayIn": "Serwer nie oferuje ani SFTP, ani powłoki do dodania klucza. Umieść klucz ręcznie.",
   "dest.appPassword.tip": "Przy włączonym uwierzytelnianiu dwuskładnikowym zwykłe hasło nie działa. Utwórz hasło aplikacji w ustawieniach zabezpieczeń konta.",
+  "dest.example.ifUnsure": "Użyj tego, jeśli nie masz pewności.",
+  "dest.example.v4Fails": "Użyj tego tylko wtedy, gdy podpisy v4 nie działają.",
   "dest.token.regionFirst": "Najpierw wybierz region poniżej. Wtedy pojawi się tu polecenie do uruchomienia.",
   "dest.loginToken.run": "Utwórz na tej stronie osobisty token logowania i wklej go poniżej",
   "dest.loginToken.tip": "Podczas testu połączenia BombVault wymienia token na trwałe logowanie. Token działa tylko raz, więc utwórz nowy, jeśli test trzeba powtórzyć.",

@@ -1457,6 +1457,8 @@ const ja: Partial<Translations> = {
   "dest.keyInstall.err.hostKey": "サーバーが以前と違うホスト鍵を示しています。再セットアップしたのなら、/config/ssh/known_hosts からその行を削除してください。そうでなければ、ここで止めてください。",
   "dest.keyInstall.err.noWayIn": "サーバーには鍵を追加するための SFTP もシェルもありません。鍵を手動で置いてください。",
   "dest.appPassword.tip": "2 要素認証が有効だと通常のパスワードは使えません。アカウントのセキュリティ設定でアプリパスワードを作成してください。",
+  "dest.example.ifUnsure": "迷ったらこちらを使います。",
+  "dest.example.v4Fails": "v4 署名が使えない場合だけこちらを使います。",
   "dest.token.regionFirst": "まず下でリージョンを選んでください。すると実行するコマンドがここに表示されます。",
   "dest.loginToken.run": "このページで個人用ログイントークンを作成し、下に貼り付けてください",
   "dest.loginToken.tip": "接続のテスト時に、BombVault はトークンを長く使えるサインインと交換します。トークンは 1 回しか使えないため、テストをやり直す場合は新しく作成してください。",

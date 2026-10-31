@@ -1462,6 +1462,8 @@ const pt: Partial<Translations> = {
   "dest.keyInstall.err.hostKey": "O servidor mostra uma chave de anfitrião diferente da de antes. Se foi configurado de novo, apaga a linha dele em /config/ssh/known_hosts. Se não, para aqui.",
   "dest.keyInstall.err.noWayIn": "O servidor não oferece nem SFTP nem uma shell para adicionar a chave. Coloca a chave à mão.",
   "dest.appPassword.tip": "Com a autenticação de dois fatores ativa, a palavra-passe normal não funciona. Cria uma palavra-passe de aplicação nas definições de segurança da tua conta.",
+  "dest.example.ifUnsure": "Use esta em caso de dúvida.",
+  "dest.example.v4Fails": "Use esta só se as assinaturas v4 não funcionarem.",
   "dest.token.regionFirst": "Escolhe primeiro a região abaixo. O comando a executar aparece então aqui.",
   "dest.loginToken.run": "Cria um token de início de sessão pessoal nesta página e cola-o abaixo",
   "dest.loginToken.tip": "Ao testar a ligação, o BombVault troca o token por um início de sessão duradouro. Um token só serve uma vez, por isso cria um novo se o teste tiver de correr outra vez.",

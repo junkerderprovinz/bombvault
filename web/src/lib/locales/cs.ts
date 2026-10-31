@@ -1472,6 +1472,8 @@ const cs: Partial<Translations> = {
   "dest.keyInstall.err.hostKey": "Server ukazuje jiný klíč hostitele než dřív. Pokud byl nastaven znovu, smaž jeho řádek v /config/ssh/known_hosts. Pokud ne, dál nepokračuj.",
   "dest.keyInstall.err.noWayIn": "Server nenabízí SFTP ani shell, kterým by šlo klíč přidat. Ulož klíč ručně.",
   "dest.appPassword.tip": "Při zapnutém dvoufázovém ověření běžné heslo nefunguje. Vytvoř heslo aplikace v nastavení zabezpečení svého účtu.",
+  "dest.example.ifUnsure": "Použij, pokud si nejsi jistý.",
+  "dest.example.v4Fails": "Použij, jen pokud nefungují podpisy v4.",
   "dest.token.regionFirst": "Nejdřív níže vyber region. Pak se tu objeví příkaz, který spustíš.",
   "dest.loginToken.run": "Vytvoř na této stránce osobní přihlašovací token a vlož ho níže",
   "dest.loginToken.tip": "Při testu připojení BombVault vymění token za trvalé přihlášení. Token platí jen jednou, takže když se test musí spustit znovu, vytvoř nový.",

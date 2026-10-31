@@ -485,6 +485,8 @@ const ms: Partial<Translations> = {
   "dest.keyInstall.err.hostKey": "Pelayan menunjukkan kunci hos yang berbeza daripada sebelum ini. Jika ia dipasang semula, padamkan barisnya dalam /config/ssh/known_hosts. Jika tidak, berhenti di sini.",
   "dest.keyInstall.err.noWayIn": "Pelayan tidak menawarkan SFTP mahupun shell untuk menambah kunci. Letakkan kunci secara manual.",
   "dest.appPassword.tip": "Apabila log masuk dua faktor dihidupkan, kata laluan biasa tidak berfungsi. Cipta kata laluan aplikasi dalam tetapan keselamatan akaun anda.",
+  "dest.example.ifUnsure": "Guna ini jika tidak pasti.",
+  "dest.example.v4Fails": "Guna ini hanya jika tandatangan v4 tidak berfungsi.",
   "dest.token.regionFirst": "Pilih wilayah di bawah dahulu. Kemudian arahan yang perlu dijalankan muncul di sini.",
   "dest.loginToken.run": "Cipta token log masuk peribadi di halaman ini dan tampalkan di bawah",
   "dest.loginToken.tip": "Semasa menguji sambungan, BombVault menukar token kepada log masuk yang kekal. Token hanya berfungsi sekali, jadi cipta yang baharu jika ujian perlu dijalankan semula.",

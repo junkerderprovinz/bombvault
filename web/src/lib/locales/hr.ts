@@ -485,6 +485,8 @@ const hr: Partial<Translations> = {
   "dest.keyInstall.err.hostKey": "Poslužitelj pokazuje drukčiji ključ hosta nego prije. Ako je ponovno postavljen, izbrišite njegov redak u /config/ssh/known_hosts. Ako nije, stanite ovdje.",
   "dest.keyInstall.err.noWayIn": "Poslužitelj ne nudi ni SFTP ni ljusku za dodavanje ključa. Postavite ključ ručno.",
   "dest.appPassword.tip": "Kad je uključena dvofaktorska prijava, uobičajena lozinka ne radi. Izradite lozinku za aplikaciju u sigurnosnim postavkama svog računa.",
+  "dest.example.ifUnsure": "Koristi ovo ako nisi siguran.",
+  "dest.example.v4Fails": "Koristi ovo samo ako v4 potpisi ne rade.",
   "dest.token.regionFirst": "Najprije ispod odaberite regiju. Tada se ovdje pojavljuje naredba koju pokrećete.",
   "dest.loginToken.run": "Na ovoj stranici izradite osobni token za prijavu i zalijepite ga ispod",
   "dest.loginToken.tip": "Pri testu veze BombVault mijenja token za trajnu prijavu. Token vrijedi samo jednom, pa izradite novi ako se test mora ponoviti.",

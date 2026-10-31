@@ -485,6 +485,8 @@ const sk: Partial<Translations> = {
   "dest.keyInstall.err.hostKey": "Server ukazuje iný kľúč hostiteľa ako predtým. Ak bol nastavený nanovo, zmaž jeho riadok v /config/ssh/known_hosts. Ak nie, ďalej nepokračuj.",
   "dest.keyInstall.err.noWayIn": "Server neponúka SFTP ani shell, ktorým by sa dal kľúč pridať. Ulož kľúč ručne.",
   "dest.appPassword.tip": "So zapnutým dvojfázovým prihlásením bežné heslo nefunguje. Vytvor heslo aplikácie v nastaveniach zabezpečenia svojho účtu.",
+  "dest.example.ifUnsure": "Použi, ak si nie si istý.",
+  "dest.example.v4Fails": "Použi, len ak nefungujú podpisy v4.",
   "dest.token.regionFirst": "Najprv nižšie vyber región. Potom sa tu zobrazí príkaz, ktorý spustíš.",
   "dest.loginToken.run": "Vytvor na tejto stránke osobný prihlasovací token a vlož ho nižšie",
   "dest.loginToken.tip": "Pri teste pripojenia BombVault vymení token za trvalé prihlásenie. Token platí len raz, takže ak sa test musí spustiť znova, vytvor nový.",

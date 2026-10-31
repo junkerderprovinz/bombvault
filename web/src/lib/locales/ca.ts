@@ -485,6 +485,8 @@ const ca: Partial<Translations> = {
   "dest.keyInstall.err.hostKey": "El servidor mostra una clau d'amfitrió diferent de la d'abans. Si s'ha configurat de nou, esborra'n la línia a /config/ssh/known_hosts. Si no, atura't aquí.",
   "dest.keyInstall.err.noWayIn": "El servidor no ofereix ni SFTP ni un intèrpret d'ordres per afegir la clau. Posa la clau a mà.",
   "dest.appPassword.tip": "Amb la verificació en dos passos activada, la contrasenya normal no funciona. Crea una contrasenya d'aplicació a la configuració de seguretat del teu compte.",
+  "dest.example.ifUnsure": "Fes servir aquesta si no n'estàs segur.",
+  "dest.example.v4Fails": "Fes servir aquesta només si les signatures v4 no funcionen.",
   "dest.token.regionFirst": "Tria primer la regió a sota. Llavors apareixerà aquí l'ordre que has d'executar.",
   "dest.loginToken.run": "Crea un testimoni d'inici de sessió personal en aquesta pàgina i enganxa'l a sota",
   "dest.loginToken.tip": "En provar la connexió, BombVault canvia el testimoni per un inici de sessió durador. Un testimoni només serveix una vegada, així que crea'n un de nou si la prova s'ha de repetir.",
