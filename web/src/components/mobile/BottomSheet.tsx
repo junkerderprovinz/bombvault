@@ -74,6 +74,12 @@ function focusableElements(root: HTMLElement): HTMLElement[] {
 // and the keyboard would stop moving.
 const openPanels: RefObject<HTMLDivElement | null>[] = [];
 
+/** slideMs is how long the panel's slide runs, 0 when motion is off. */
+function slideMs(panel: HTMLElement | null): number {
+  const seconds = panel ? parseFloat(getComputedStyle(panel).transitionDuration) : 0;
+  return Number.isFinite(seconds) ? seconds * 1000 : 0;
+}
+
 export function BottomSheet({ open, onClose, headerClose = true, title, hint, children, fullHeight, footer, describedBy }: BottomSheetProps) {
   const { t } = useT();
   const titleId = useId();
@@ -84,6 +90,10 @@ export function BottomSheet({ open, onClose, headerClose = true, title, hint, ch
   // Flipped after a double rAF so the parked frame paints first and the
   // transform transition runs instead of coalescing both states into one paint.
   const [entered, setEntered] = useState(false);
+  // Set once the slide has ended. Until then the panel takes no tap and the
+  // scrim does not close: a tap aimed at a rising sheet lands where the sheet
+  // no longer is, often on the scrim, and would close it.
+  const [resting, setResting] = useState(false);
   useBackCloses(open, onClose);
 
   // Focus capture + initial focus-in + restore, in one effect. A controlled
@@ -169,15 +179,23 @@ export function BottomSheet({ open, onClose, headerClose = true, title, hint, ch
   useEffect(() => {
     if (!open) {
       setEntered(false);
+      setResting(false);
       return;
     }
+    const slide = slideMs(panelRef.current);
+    if (slide === 0) setResting(true);
     let raf2 = 0;
+    let rest = 0;
     const raf1 = requestAnimationFrame(() => {
-      raf2 = requestAnimationFrame(() => setEntered(true));
+      raf2 = requestAnimationFrame(() => {
+        setEntered(true);
+        if (slide > 0) rest = window.setTimeout(() => setResting(true), slide);
+      });
     });
     return () => {
       cancelAnimationFrame(raf1);
       cancelAnimationFrame(raf2);
+      window.clearTimeout(rest);
     };
   }, [open]);
 
@@ -194,7 +212,7 @@ export function BottomSheet({ open, onClose, headerClose = true, title, hint, ch
         aria-hidden="true"
         className="glim-modal-backdrop fixed inset-0 z-50"
         onClick={(e) => {
-          if (e.target === e.currentTarget) onClose();
+          if (e.target === e.currentTarget && resting) onClose();
         }}
       />
       {/* Bottom-anchored panel; a scrim sibling, not its DOM child (an
@@ -217,7 +235,7 @@ export function BottomSheet({ open, onClose, headerClose = true, title, hint, ch
             : "bottom-[calc(var(--safe-area-bottom)+0.5rem)] left-[max(1rem,var(--safe-area-left))] right-[max(1rem,var(--safe-area-right))] max-h-[85dvh] overflow-hidden rounded-card"
         } flex-col bg-carbon-surface shadow-2xl motion-safe:transition-transform motion-safe:duration-[var(--motion-page-dur)] ${
           entered ? "translate-y-0" : fullHeight ? "translate-y-full" : "translate-y-[calc(100%+var(--safe-area-bottom)+0.5rem)]"
-        }`}
+        } ${resting ? "" : "pointer-events-none"}`}
       >
         {/* Side padding is inset-clamped: each physical side takes
             max(1rem, its own safe-area inset), so content clears landscape

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { useState } from "react";
 import { BottomSheet, type BottomSheetProps } from "./BottomSheet";
 import { en, I18nProvider } from "../../lib/i18n";
@@ -106,6 +106,34 @@ describe("BottomSheet", () => {
     expect(onClose2).not.toHaveBeenCalled();
     // ...and the sheet is still open after the interior click.
     expect(screen.getByRole("dialog")).not.toBeNull();
+  });
+
+  it("takes no tap and keeps its scrim shut until its slide has ended", () => {
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout", "requestAnimationFrame", "cancelAnimationFrame"] });
+    const real = window.getComputedStyle.bind(window);
+    const style = vi.spyOn(window, "getComputedStyle").mockImplementation((el, pseudo) =>
+      el.getAttribute("role") === "dialog" ? ({ transitionDuration: "0.32s" } as CSSStyleDeclaration) : real(el, pseudo)
+    );
+    try {
+      const onClose = vi.fn();
+      render(<SheetHarness onClose={onClose} initialOpen />);
+      const scrim = document.body.querySelector<HTMLElement>(":scope > [aria-hidden='true']")!;
+      const panel = screen.getByRole("dialog");
+
+      fireEvent.click(scrim);
+      expect(onClose).not.toHaveBeenCalled();
+      expect(panel.className).toContain("pointer-events-none");
+
+      act(() => {
+        vi.advanceTimersByTime(400);
+      });
+      expect(panel.className).not.toContain("pointer-events-none");
+      fireEvent.click(scrim);
+      expect(onClose).toHaveBeenCalledTimes(1);
+    } finally {
+      style.mockRestore();
+      vi.useRealTimers();
+    }
   });
 
   it("closes via the header close button found by its accessible name", () => {
