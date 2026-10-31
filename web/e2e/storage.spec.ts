@@ -10,6 +10,7 @@
 // without the backups there, a section's copy moves to another location, and
 // a section's folder is set. German, because its labels run longest.
 import { expect, test, type Locator, type Page } from "@playwright/test";
+import { sheetUp } from "./sheets";
 import { B2, IMPACT, LOCAL, LOCATIONS, MOVE, OWN_ENTRY, OWN_ONLY, REMOVAL, REST, STORAGE_BOX, measureLayout, settle, stageStorage } from "./storage";
 
 const MOBILE_PROJECTS = new Set(["mobile-iphone", "mobile-android"]);
@@ -91,6 +92,7 @@ for (const width of [320, 390]) {
     await page.locator("#bv-main").getByRole("button", { name: "Mehr" }).click();
     await page.getByRole("menuitem", { name: "Speicherort entfernen" }).click();
     const window = page.getByRole("dialog", { name: `${STORAGE_BOX.name} entfernen?` });
+    await sheetUp(window);
     await window.getByRole("radio", { name: /Sicherungen dort löschen/ }).click();
     await expect(window.getByLabel(`Zum Bestätigen ${STORAGE_BOX.name} eintippen`)).toBeVisible();
     await settle(page);
@@ -458,6 +460,7 @@ test.describe("on the desktop", () => {
     await page.getByRole("button", { name: "Mehr" }).click();
     await page.getByRole("menuitem", { name: "Speicherort entfernen" }).click();
     const window = page.getByRole("dialog", { name: `${STORAGE_BOX.name} entfernen?` });
+    await sheetUp(window);
     await window.getByRole("radio", { name: /Sicherungen dort löschen/ }).click();
 
     await expect(window.getByRole("listitem").filter({ hasText: "Flash" })).toContainText("Bleibt: Der Löschschutz verweigert das Löschen.");
