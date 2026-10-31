@@ -964,7 +964,7 @@ const fi: Partial<Translations> = {
   "notify.matrixToken": "Käyttötunniste",
   "notify.matrixRoom": "Huoneen tunnus",
   "notify.gotify": "Gotify",
-  "notify.gotifyHint": "Luo Gotifyssa sovellus ja liitä sen tunnus tähän. Prioriteetit ovat 0–10, ja Gotifyn Android-sovellus pitää 8:aa ja suurempia korkeina.",
+  "notify.gotifyHint": "Luo Gotifyssa sovellus ja liitä sen tunnus tähän. Prioriteetti on 0 ja 10 välillä, ja Gotifyn Android-sovellus pitää 8:aa ja suurempia korkeina.",
   "notify.gotifyUrl": "Palvelimen URL",
   "notify.gotifyToken": "Sovelluksen tunnus",
   "notify.gotifyPriorityFailure": "Prioriteetti epäonnistuessa",
