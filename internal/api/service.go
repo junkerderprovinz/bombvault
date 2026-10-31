@@ -18897,7 +18897,7 @@ func (s *Service) NotifyConfig() (notify.Config, error) {
 	if err != nil {
 		return notify.Config{}, err
 	}
-	var c notify.Config
+	c := notify.Defaults()
 	if strings.TrimSpace(settings.NotifyConf) == "" {
 		return c, nil
 	}

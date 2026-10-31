@@ -4012,23 +4012,46 @@ func (h *Handler) fillNotifySecrets(c notify.Config) (notify.Config, error) {
 	// somebody was setting them up and being told it worked.
 	if c.MatrixToken == "" && cur.MatrixToken != "" {
 		if !sameMatrixTarget(c, cur) {
-			return c, errors.New("enter the Matrix access token again: the stored one belongs to the previous homeserver")
+			return c, errMatrixTokenAgain
 		}
 		c.MatrixToken = cur.MatrixToken
 	}
 	if c.SMTPPassword == "" && cur.SMTPPassword != "" {
 		if !sameSMTPTarget(c, cur) {
-			return c, errors.New("enter the SMTP password again: the stored one belongs to the previous server")
+			return c, errSMTPPasswordAgain
 		}
 		c.SMTPPassword = cur.SMTPPassword
 	}
 	if c.GotifyToken == "" && cur.GotifyToken != "" {
 		if c.GotifyURL != cur.GotifyURL {
-			return c, errors.New("enter the Gotify app token again: the stored one belongs to the previous server")
+			return c, errGotifyTokenAgain
 		}
 		c.GotifyToken = cur.GotifyToken
 	}
 	return c, nil
+}
+
+var (
+	errMatrixTokenAgain  = errors.New("enter the Matrix access token again: the stored one belongs to the previous homeserver")
+	errSMTPPasswordAgain = errors.New("enter the SMTP password again: the stored one belongs to the previous server")
+	errGotifyTokenAgain  = errors.New("enter the Gotify app token again: the stored one belongs to the previous server")
+)
+
+// notifyFailEnvelope is failEnvelope with the codes the notification card turns
+// into a sentence in the reader's language.
+func notifyFailEnvelope(err error) map[string]any {
+	for code, known := range map[string]error{
+		"matrix-token-again":  errMatrixTokenAgain,
+		"smtp-password-again": errSMTPPasswordAgain,
+		"gotify-token-again":  errGotifyTokenAgain,
+		"gotify-priority":     notify.ErrGotifyPriority,
+		"gotify-key-refused":  notify.ErrGotifyKey,
+	} {
+		if errors.Is(err, known) {
+			return codedFailEnvelope(err, code)
+		}
+	}
+	return failEnvelope(err)
 }
 
 // sameMatrixTarget reports whether a request names the same Matrix destination
@@ -4057,7 +4080,7 @@ func (h *Handler) handleSetNotify(w http.ResponseWriter, r *http.Request) {
 		err = filled.Validate()
 	}
 	if err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
+		writeJSON(w, http.StatusOK, notifyFailEnvelope(err))
 		return
 	}
 	if err := h.svc.SetNotifyConfig(filled); err != nil {
@@ -4247,11 +4270,11 @@ func (h *Handler) handleTestNotify(w http.ResponseWriter, r *http.Request) {
 		err = filled.Validate()
 	}
 	if err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
+		writeJSON(w, http.StatusOK, notifyFailEnvelope(err))
 		return
 	}
 	if err := h.svc.TestNotify(r.Context(), filled); err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
+		writeJSON(w, http.StatusOK, notifyFailEnvelope(err))
 		return
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(nil))

@@ -258,14 +258,26 @@ func (c Config) HasMessageChannel() bool {
 	return c.webhookReady() || c.matrixReady() || c.smtpReady() || c.appriseReady() || c.gotifyReady()
 }
 
-// Validate rejects a Gotify priority outside the 0 to 10 Gotify's clients know.
+// ErrGotifyPriority refuses a Gotify priority outside the 0 to 10 Gotify's
+// clients know.
+var ErrGotifyPriority = errors.New("a Gotify priority runs from 0 to 10")
+
+// ErrGotifyKey is a Gotify server turning the app token away.
+var ErrGotifyKey = errors.New("the Gotify server refused the app token")
+
+// Validate rejects a Gotify priority outside 0 to 10.
 func (c Config) Validate() error {
 	for _, p := range []int{c.GotifyPriorityFailure, c.GotifyPrioritySuccess} {
 		if p < 0 || p > 10 {
-			return fmt.Errorf("a Gotify priority runs from 0 to 10, not %d", p)
+			return ErrGotifyPriority
 		}
 	}
 	return nil
+}
+
+// Defaults is the config of an instance that never saved one.
+func Defaults() Config {
+	return Config{GotifyPriorityFailure: GotifyPriorityFailure, GotifyPrioritySuccess: GotifyPrioritySuccess}
 }
 
 // healthchecksURLFor returns the domain's own Healthchecks URL, or the global
@@ -598,7 +610,11 @@ func sendGotify(ctx context.Context, client *http.Client, c Config, ev Event) er
 	}
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("X-Gotify-Key", c.GotifyToken)
-	return do(client, req)
+	err = do(client, req)
+	if status, ok := errors.AsType[statusError](err); ok && (status == http.StatusUnauthorized || status == http.StatusForbidden) {
+		return ErrGotifyKey
+	}
+	return err
 }
 
 // sendMatrix posts an m.text message to a room via the client-server API
@@ -672,9 +688,16 @@ func do(client *http.Client, req *http.Request) error {
 	defer resp.Body.Close() //nolint:errcheck // response body close error is not actionable
 	_, _ = io.Copy(io.Discard, resp.Body)
 	if resp.StatusCode >= 300 {
-		return fmt.Errorf("endpoint returned HTTP %d", resp.StatusCode)
+		return statusError(resp.StatusCode)
 	}
 	return nil
+}
+
+// statusError is an HTTP status a channel's endpoint answered with.
+type statusError int
+
+func (s statusError) Error() string {
+	return fmt.Sprintf("endpoint returned HTTP %d", int(s))
 }
 
 // headerLineBreaks turns the line breaks in a header value into spaces, since a

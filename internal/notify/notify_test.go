@@ -3,6 +3,7 @@ package notify_test
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"io"
 	"log"
 	"net/http"
@@ -142,6 +143,27 @@ func TestGotifyPriorityStaysWithinGotifysRange(t *testing.T) {
 	}
 	if err := (notify.Config{GotifyPriorityFailure: 10, GotifyPrioritySuccess: 0}).Validate(); err != nil {
 		t.Fatal(err)
+	}
+}
+
+func TestGotifyNamesARefusedToken(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusUnauthorized)
+	}))
+	defer srv.Close()
+	err := notify.SendTest(context.Background(), notify.Config{GotifyEnabled: true, GotifyURL: srv.URL, GotifyToken: "wrong"})
+	if !errors.Is(err, notify.ErrGotifyKey) {
+		t.Fatalf("err = %v, want the refused token", err)
+	}
+	if strings.Contains(err.Error(), "wrong") {
+		t.Fatalf("the error carries the token: %v", err)
+	}
+}
+
+func TestANeverSavedConfigStartsGotifyAtItsDefaults(t *testing.T) {
+	c := notify.Defaults()
+	if c.GotifyPriorityFailure != notify.GotifyPriorityFailure || c.GotifyPrioritySuccess != notify.GotifyPrioritySuccess || c.Configured() {
+		t.Fatalf("defaults = %+v", c)
 	}
 }
 
