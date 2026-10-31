@@ -177,11 +177,18 @@ describe("DirectRepoDialog", () => {
     expect(onDone.mock.calls[0][0]).toMatchObject({ kind: "created", repo: { id: "repo-direct", companionOf: "t-b2" } });
   });
 
-  it("confirms the repository it created", async () => {
+  it("confirms the repository it created by the name it goes by", async () => {
     renderDialog();
     await screen.findByDisplayValue("b2:bucket:containers-direct");
     fireEvent.click(screen.getByRole("button", { name: "Create and use" }));
-    expect(await screen.findByText("B2 direct is set up and in use.")).toBeTruthy();
+    expect(await screen.findByText("B2 · direct is set up and in use.")).toBeTruthy();
+  });
+
+  it("confirms a named repository by its own name", async () => {
+    renderDialog();
+    fireEvent.change(await screen.findByPlaceholderText("B2 · direct"), { target: { value: "Offsite vault" } });
+    fireEvent.click(screen.getByRole("button", { name: "Create and use" }));
+    expect(await screen.findByText("Offsite vault is set up and in use.")).toBeTruthy();
   });
 
   it("only remembers the place for a folder set that does not exist yet", async () => {

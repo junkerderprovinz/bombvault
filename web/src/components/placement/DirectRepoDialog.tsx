@@ -21,7 +21,8 @@ export type DirectRepoResult =
   | { kind: "created"; repo: NamedRepo }
   | { kind: "remembered"; name: string; location: string };
 
-const FIELD = "w-md max-w-full rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 glim-field-focus";
+// Wide enough for a full S3 address such as s3:https://host:9000/bucket/path.
+const FIELD = "w-2xl max-w-full rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 glim-field-focus";
 
 /** DirectRepoDialog sets up a target's direct repository. Nothing is created
  *  before "Create and use"; in "remember" mode nothing is created at all, the
@@ -107,7 +108,7 @@ export function DirectRepoDialog({
     }
     const { repo } = r;
     reposChanged();
-    push(t("directRepo.created").replace("{name}", () => repo.name), "success");
+    push(t("directRepo.created").replace("{name}", () => repo.name || withTarget(t("placement.homeDirect"))), "success");
     onDone({ kind: "created", repo });
   }
 

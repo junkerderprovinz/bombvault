@@ -275,9 +275,8 @@ const DEFAULTS: Record<string, Reply> = {
     ok: true,
     repo: namedRepo({
       id: "repo-direct",
-      // bv-convention-exception: user-message-is-translated: fixture data for
-      // a test double, standing in for the server's own naming; never rendered.
-      name: (args[1] as string) || "B2 direct",
+      // The server keeps a direct repository's name empty when none is typed.
+      name: args[1] as string,
       repo: args[2] as string,
       companionOf: args[0] as string,
     }),
