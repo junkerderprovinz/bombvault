@@ -74,6 +74,29 @@ function focusableElements(root: HTMLElement): HTMLElement[] {
 // and the keyboard would stop moving.
 const openPanels: RefObject<HTMLDivElement | null>[] = [];
 
+/** underRestingPanel reports whether a point lies where the panel comes to
+ *  rest once its slide has ended. */
+function underRestingPanel(panel: HTMLElement | null, x: number, y: number): boolean {
+  if (!panel) return false;
+  const box = panel.getBoundingClientRect();
+  const shift = translateY(getComputedStyle(panel).transform);
+  return x >= box.left && x <= box.right && y >= box.top - shift && y <= box.bottom - shift;
+}
+
+/** translateY reads the vertical offset out of a computed transform. */
+function translateY(transform: string): number {
+  const matrix = /^matrix(3d)?\((.+)\)$/.exec(transform);
+  if (!matrix) return 0;
+  const values = matrix[2].split(",").map(Number);
+  return (matrix[1] ? values[13] : values[5]) ?? 0;
+}
+
+/** slideMs is how long the panel's slide runs, 0 when motion is off. */
+function slideMs(panel: HTMLElement | null): number {
+  const seconds = panel ? parseFloat(getComputedStyle(panel).transitionDuration) : 0;
+  return Number.isFinite(seconds) ? seconds * 1000 : 0;
+}
+
 export function BottomSheet({ open, onClose, headerClose = true, title, hint, children, fullHeight, footer, describedBy }: BottomSheetProps) {
   const { t } = useT();
   const titleId = useId();
@@ -84,6 +107,10 @@ export function BottomSheet({ open, onClose, headerClose = true, title, hint, ch
   // Flipped after a double rAF so the parked frame paints first and the
   // transform transition runs instead of coalescing both states into one paint.
   const [entered, setEntered] = useState(false);
+  // Set once the slide has ended. Until then the panel takes no tap, and a
+  // tap on the scrim where the sheet comes to rest does not close it: it was
+  // aimed at the rising sheet and landed where the sheet no longer was.
+  const [resting, setResting] = useState(false);
   useBackCloses(open, onClose);
 
   // Focus capture + initial focus-in + restore, in one effect. A controlled
@@ -169,15 +196,23 @@ export function BottomSheet({ open, onClose, headerClose = true, title, hint, ch
   useEffect(() => {
     if (!open) {
       setEntered(false);
+      setResting(false);
       return;
     }
+    const slide = slideMs(panelRef.current);
+    if (slide === 0) setResting(true);
     let raf2 = 0;
+    let rest = 0;
     const raf1 = requestAnimationFrame(() => {
-      raf2 = requestAnimationFrame(() => setEntered(true));
+      raf2 = requestAnimationFrame(() => {
+        setEntered(true);
+        if (slide > 0) rest = window.setTimeout(() => setResting(true), slide);
+      });
     });
     return () => {
       cancelAnimationFrame(raf1);
       cancelAnimationFrame(raf2);
+      window.clearTimeout(rest);
     };
   }, [open]);
 
@@ -194,7 +229,9 @@ export function BottomSheet({ open, onClose, headerClose = true, title, hint, ch
         aria-hidden="true"
         className="glim-modal-backdrop fixed inset-0 z-50"
         onClick={(e) => {
-          if (e.target === e.currentTarget) onClose();
+          if (e.target !== e.currentTarget) return;
+          if (!resting && underRestingPanel(panelRef.current, e.clientX, e.clientY)) return;
+          onClose();
         }}
       />
       {/* Bottom-anchored panel; a scrim sibling, not its DOM child (an
@@ -217,7 +254,7 @@ export function BottomSheet({ open, onClose, headerClose = true, title, hint, ch
             : "bottom-[calc(var(--safe-area-bottom)+0.5rem)] left-[max(1rem,var(--safe-area-left))] right-[max(1rem,var(--safe-area-right))] max-h-[85dvh] overflow-hidden rounded-card"
         } flex-col bg-carbon-surface shadow-2xl motion-safe:transition-transform motion-safe:duration-[var(--motion-page-dur)] ${
           entered ? "translate-y-0" : fullHeight ? "translate-y-full" : "translate-y-[calc(100%+var(--safe-area-bottom)+0.5rem)]"
-        }`}
+        } ${resting ? "" : "pointer-events-none"}`}
       >
         {/* Side padding is inset-clamped: each physical side takes
             max(1rem, its own safe-area inset), so content clears landscape

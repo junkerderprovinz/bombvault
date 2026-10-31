@@ -9,6 +9,7 @@ import { expect, test, type Page } from "@playwright/test";
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { blockServerLook } from "./serverLook";
+import { sheetUp } from "./sheets";
 
 const MOBILE_PROJECTS = new Set(["mobile-iphone", "mobile-android"]);
 
@@ -829,7 +830,9 @@ for (const width of [320, 360]) {
     expect(read.clipped, "the places clip the edge").toEqual([]);
 
     await wizard(page).getByRole("button", { name: "Schlüssel übernehmen" }).click();
-    await page.getByRole("dialog").last().getByRole("button", { name: "Schlüssel übernehmen" }).click();
+    const ask = page.getByRole("dialog", { name: "Bestätigen" });
+    await sheetUp(ask);
+    await ask.getByRole("button", { name: "Schlüssel übernehmen" }).click();
     await expect(wizard(page).getByRole("button", { name: "Zugangsdaten speichern" })).toBeVisible();
     await settle(page);
     expect((await edges(page)).clipped, "the taken-over key clips the edge").toEqual([]);
@@ -967,7 +970,9 @@ test("pictures of the page", async ({ page }, testInfo) => {
     await showKit(page);
     await page.screenshot({ path: join(SHOTS!, `emergency-read-${name}.png`) });
     await wizard(page).getByRole("button", { name: "Schlüssel übernehmen" }).click();
-    await page.getByRole("dialog").last().getByRole("button", { name: "Schlüssel übernehmen" }).click();
+    const ask = page.getByRole("dialog", { name: "Bestätigen" });
+    await sheetUp(ask);
+    await ask.getByRole("button", { name: "Schlüssel übernehmen" }).click();
     await expect(wizard(page).getByRole("button", { name: "Zugangsdaten speichern" })).toBeVisible();
     await page.screenshot({ path: join(SHOTS!, `emergency-taken-${name}.png`) });
     await page.goto("/restore");
