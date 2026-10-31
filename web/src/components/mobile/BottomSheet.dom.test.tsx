@@ -108,31 +108,57 @@ describe("BottomSheet", () => {
     expect(screen.getByRole("dialog")).not.toBeNull();
   });
 
-  it("takes no tap and keeps its scrim shut until its slide has ended", () => {
+  // A sheet still 400px below the place it rests at, 100 to 500, on a 390px
+  // wide screen.
+  function rising() {
     vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout", "requestAnimationFrame", "cancelAnimationFrame"] });
     const real = window.getComputedStyle.bind(window);
     const style = vi.spyOn(window, "getComputedStyle").mockImplementation((el, pseudo) =>
-      el.getAttribute("role") === "dialog" ? ({ transitionDuration: "0.32s" } as CSSStyleDeclaration) : real(el, pseudo)
+      el.getAttribute("role") === "dialog"
+        ? ({ transitionDuration: "0.32s", transform: "matrix(1, 0, 0, 1, 0, 400)" } as CSSStyleDeclaration)
+        : real(el, pseudo)
     );
-    try {
-      const onClose = vi.fn();
-      render(<SheetHarness onClose={onClose} initialOpen />);
-      const scrim = document.body.querySelector<HTMLElement>(":scope > [aria-hidden='true']")!;
-      const panel = screen.getByRole("dialog");
+    const onClose = vi.fn();
+    render(<SheetHarness onClose={onClose} initialOpen />);
+    const panel = screen.getByRole("dialog");
+    vi.spyOn(panel, "getBoundingClientRect").mockReturnValue(new DOMRect(0, 500, 390, 400));
+    const scrim = document.body.querySelector<HTMLElement>(":scope > [aria-hidden='true']")!;
+    return {
+      onClose,
+      panel,
+      tap: (y: number) => fireEvent.click(scrim, { clientX: 100, clientY: y }),
+      done: () => {
+        style.mockRestore();
+        vi.useRealTimers();
+      },
+    };
+  }
 
-      fireEvent.click(scrim);
-      expect(onClose).not.toHaveBeenCalled();
-      expect(panel.className).toContain("pointer-events-none");
+  it("takes no tap aimed at it while it rises, and lets the scrim close it once it rests", () => {
+    const sheet = rising();
+    try {
+      sheet.tap(300);
+      expect(sheet.onClose).not.toHaveBeenCalled();
+      expect(sheet.panel.className).toContain("pointer-events-none");
 
       act(() => {
         vi.advanceTimersByTime(400);
       });
-      expect(panel.className).not.toContain("pointer-events-none");
-      fireEvent.click(scrim);
-      expect(onClose).toHaveBeenCalledTimes(1);
+      expect(sheet.panel.className).not.toContain("pointer-events-none");
+      sheet.tap(300);
+      expect(sheet.onClose).toHaveBeenCalledTimes(1);
     } finally {
-      style.mockRestore();
-      vi.useRealTimers();
+      sheet.done();
+    }
+  });
+
+  it("closes on a tap outside its place while it still rises", () => {
+    const sheet = rising();
+    try {
+      sheet.tap(50);
+      expect(sheet.onClose).toHaveBeenCalledTimes(1);
+    } finally {
+      sheet.done();
     }
   });
 

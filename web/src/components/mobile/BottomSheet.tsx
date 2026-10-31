@@ -74,6 +74,23 @@ function focusableElements(root: HTMLElement): HTMLElement[] {
 // and the keyboard would stop moving.
 const openPanels: RefObject<HTMLDivElement | null>[] = [];
 
+/** underRestingPanel reports whether a point lies where the panel comes to
+ *  rest once its slide has ended. */
+function underRestingPanel(panel: HTMLElement | null, x: number, y: number): boolean {
+  if (!panel) return false;
+  const box = panel.getBoundingClientRect();
+  const shift = translateY(getComputedStyle(panel).transform);
+  return x >= box.left && x <= box.right && y >= box.top - shift && y <= box.bottom - shift;
+}
+
+/** translateY reads the vertical offset out of a computed transform. */
+function translateY(transform: string): number {
+  const matrix = /^matrix(3d)?\((.+)\)$/.exec(transform);
+  if (!matrix) return 0;
+  const values = matrix[2].split(",").map(Number);
+  return (matrix[1] ? values[13] : values[5]) ?? 0;
+}
+
 /** slideMs is how long the panel's slide runs, 0 when motion is off. */
 function slideMs(panel: HTMLElement | null): number {
   const seconds = panel ? parseFloat(getComputedStyle(panel).transitionDuration) : 0;
@@ -90,9 +107,9 @@ export function BottomSheet({ open, onClose, headerClose = true, title, hint, ch
   // Flipped after a double rAF so the parked frame paints first and the
   // transform transition runs instead of coalescing both states into one paint.
   const [entered, setEntered] = useState(false);
-  // Set once the slide has ended. Until then the panel takes no tap and the
-  // scrim does not close: a tap aimed at a rising sheet lands where the sheet
-  // no longer is, often on the scrim, and would close it.
+  // Set once the slide has ended. Until then the panel takes no tap, and a
+  // tap on the scrim where the sheet comes to rest does not close it: it was
+  // aimed at the rising sheet and landed where the sheet no longer was.
   const [resting, setResting] = useState(false);
   useBackCloses(open, onClose);
 
@@ -212,7 +229,9 @@ export function BottomSheet({ open, onClose, headerClose = true, title, hint, ch
         aria-hidden="true"
         className="glim-modal-backdrop fixed inset-0 z-50"
         onClick={(e) => {
-          if (e.target === e.currentTarget && resting) onClose();
+          if (e.target !== e.currentTarget) return;
+          if (!resting && underRestingPanel(panelRef.current, e.clientX, e.clientY)) return;
+          onClose();
         }}
       />
       {/* Bottom-anchored panel; a scrim sibling, not its DOM child (an
