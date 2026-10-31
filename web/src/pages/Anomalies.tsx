@@ -272,7 +272,7 @@ export function Anomalies() {
             onChange={(id) => setView(id as View)}
             variant="well"
             inline
-            className="h-(--btn-h)"
+            className="min-h-(--btn-h)"
           />
         </div>
 
