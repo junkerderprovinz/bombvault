@@ -1,10 +1,9 @@
 import { useEffect, useId, useRef, useState } from "react";
-import { createPortal } from "react-dom";
-import { ConfirmDialog } from "../ConfirmDialog";
-import { ConfirmSheet } from "../mobile/ConfirmSheet";
+import { InstanceWindow } from "../../pages/instances/InstanceWindow";
+import { Button } from "../Button";
+import { IconClose } from "../navGlyphs";
 import { Rows, SettingRow } from "../storage/rows";
 import { TestButton, VerdictLine } from "../TestButton";
-import { useDialogKeys } from "../useConfirm";
 import {
   createDirectRepo,
   getDirectRepo,
@@ -15,7 +14,6 @@ import {
 import { useT } from "../../lib/i18n";
 import { placementErrorText } from "../../lib/placementCodes";
 import { useToast } from "../../lib/toast";
-import { useIsDesktop } from "../../lib/useMediaQuery";
 import { useTestVerdict } from "../../lib/useTestVerdict";
 import { reposChanged } from "../../lib/useNamedRepos";
 
@@ -41,7 +39,6 @@ export function DirectRepoDialog({
 }) {
   const { t, lang } = useT();
   const { push } = useToast();
-  const dialogRef = useRef<HTMLDivElement>(null);
   const nameId = useId();
   const locationId = useId();
   const creating = useRef(false);
@@ -49,8 +46,6 @@ export function DirectRepoDialog({
   const [name, setName] = useState("");
   const [location, setLocation] = useState("");
   const verdict = useTestVerdict(location.trim(), t("settings.error"));
-  const isDesktop = useIsDesktop();
-  useDialogKeys(isDesktop, dialogRef, onClose);
 
   useEffect(() => {
     let alive = true;
@@ -114,45 +109,14 @@ export function DirectRepoDialog({
     onDone({ kind: "created", repo: r.repo });
   }
 
-  const surface = {
-    title: withTarget(t("directRepo.title")),
-    message: withTarget(t("directRepo.intro")),
-    confirmLabel: t("directRepo.addAndUse"),
-    confirmLabelKey: "directRepo.addAndUse",
-    cancelLabel: t("common.cancel"),
-    cancelTone: "neutral" as const,
-    extra: (
-      <div className="flex flex-col gap-3">
-        <Rows>
-          <SettingRow label={t("repos.name")} htmlFor={nameId}>
-            <input
-              id={nameId}
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder={withTarget(t("placement.homeDirect"))}
-              spellCheck={false}
-              autoComplete="off"
-              className={FIELD}
-            />
-          </SettingRow>
-          <SettingRow label={t("repos.location")} htmlFor={locationId}>
-            <input
-              id={locationId}
-              value={location}
-              onChange={(e) => {
-                locationTouched.current = true;
-                setLocation(e.target.value);
-              }}
-              spellCheck={false}
-              autoComplete="off"
-              dir="ltr"
-              className={`${FIELD} font-mono text-start`}
-            />
-          </SettingRow>
-        </Rows>
-        {mode === "remember" && <p className="text-xs text-carbon-textMuted">{t("directRepo.draftNote")}</p>}
-        <VerdictLine verdict={verdict.verdict} />
-        <div className="flex items-center gap-2 flex-wrap">
+  return (
+    <InstanceWindow
+      title={withTarget(t("directRepo.title"))}
+      hint={withTarget(t("directRepo.intro"))}
+      onClose={onClose}
+      footer={
+        <>
+          <Button label={t("common.cancel")} labelKey="common.cancel" glyph={<IconClose />} tone="neutral" onClick={onClose} />
           <TestButton
             label={t("directRepo.test")}
             labelKey="directRepo.test"
@@ -160,15 +124,39 @@ export function DirectRepoDialog({
             onClick={test}
             disabled={location.trim() === ""}
           />
-        </div>
-      </div>
-    ),
-    onConfirm: () => void confirm(),
-    onCancel: onClose,
-  };
-  // The sheet takes no ref: BottomSheet handles Escape and the Tab trap itself.
-  return createPortal(
-    isDesktop ? <ConfirmDialog ref={dialogRef} {...surface} /> : <ConfirmSheet {...surface} />,
-    document.body
+          <Button label={t("directRepo.addAndUse")} labelKey="directRepo.addAndUse" tone="accent" onClick={() => void confirm()} />
+        </>
+      }
+    >
+      <Rows>
+        <SettingRow label={t("repos.name")} htmlFor={nameId}>
+          <input
+            id={nameId}
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder={withTarget(t("placement.homeDirect"))}
+            spellCheck={false}
+            autoComplete="off"
+            className={FIELD}
+          />
+        </SettingRow>
+        <SettingRow label={t("repos.location")} htmlFor={locationId}>
+          <input
+            id={locationId}
+            value={location}
+            onChange={(e) => {
+              locationTouched.current = true;
+              setLocation(e.target.value);
+            }}
+            spellCheck={false}
+            autoComplete="off"
+            dir="ltr"
+            className={`${FIELD} font-mono text-start`}
+          />
+        </SettingRow>
+      </Rows>
+      {mode === "remember" && <p className="text-xs text-carbon-textMuted">{t("directRepo.draftNote")}</p>}
+      <VerdictLine verdict={verdict.verdict} />
+    </InstanceWindow>
   );
 }

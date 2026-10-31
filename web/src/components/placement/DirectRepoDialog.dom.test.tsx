@@ -39,11 +39,19 @@ describe("DirectRepoDialog", () => {
     const { onDone, onClose } = renderDialog();
     await screen.findByDisplayValue("b2:bucket:containers-direct");
     expect(screen.getByRole("dialog").className).not.toContain("glim-modal-card");
-    expect(screen.getByRole("button", { name: "Cancel" }).className).toContain("w-full");
+    const foot = screen.getByRole("button", { name: "Cancel" }).parentElement!;
+    expect([...foot.querySelectorAll("button")].map((b) => b.textContent)).toEqual(["Cancel", "Test connection", "Create and use"]);
     fireEvent.keyDown(document, { key: "Escape" });
     expect(onClose).toHaveBeenCalledOnce();
     fireEvent.click(screen.getByRole("button", { name: "Create and use" }));
     await waitFor(() => expect(onDone).toHaveBeenCalled());
+  });
+
+  it("keeps the test beside cancel and create at the foot of the window", async () => {
+    renderDialog();
+    await screen.findByDisplayValue("b2:bucket:containers-direct");
+    const foot = screen.getByRole("button", { name: "Cancel" }).parentElement!;
+    expect([...foot.querySelectorAll("button")].map((b) => b.textContent)).toEqual(["Cancel", "Test connection", "Create and use"]);
   });
 
   it("shows the name an empty name field stands for", async () => {
