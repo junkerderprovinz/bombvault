@@ -136,7 +136,7 @@ func placementFail(w http.ResponseWriter, err error, extra map[string]any) {
 		env["suggest"] = pathErr.suggest
 	}
 	if busy, ok := errors.AsType[*sectionBusyErr](err); ok {
-		env["domain"] = busy.domain
+		env["domain"], env["busyWith"] = busy.domain, busyKind(busy.op)
 	}
 	maps.Copy(env, extra)
 	writeJSON(w, http.StatusOK, env)

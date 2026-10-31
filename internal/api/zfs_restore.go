@@ -893,7 +893,7 @@ func (s *Service) DeleteZFSSafetySnapshot(ctx context.Context, id, dataset, name
 	// A restore that is still writing may be the one this snapshot undoes.
 	unlock, ok := s.tryLockDomainFor(zfsDomain, "delete-safety")
 	if !ok {
-		return errDomainBusy
+		return s.busyErr(zfsDomain, errDomainBusy)
 	}
 	defer unlock()
 	sctx, cancel := context.WithTimeout(ctx, zfsSnapshotTimeout)

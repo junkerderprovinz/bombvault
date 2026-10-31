@@ -72,7 +72,7 @@ func (s *Service) writeItemPlacement(ctx context.Context, item store.ItemRef, ch
 	if home != nil {
 		unlock, ok := s.tryLockDomainFor(item.Domain, placementLockReason)
 		if !ok {
-			return res, errPlacementBusy
+			return res, s.busyErr(item.Domain, errPlacementBusy)
 		}
 		defer unlock()
 	}
@@ -215,8 +215,8 @@ func (s *Service) checkPlacementChange(ctx context.Context, item store.ItemRef, 
 		return err
 	}
 	if home != nil {
-		if _, busy := s.domainBusy(item.Domain); busy {
-			return errPlacementBusy
+		if _, busy := s.busyForUser(item.Domain); busy {
+			return s.busyErr(item.Domain, errPlacementBusy)
 		}
 	}
 	settings, err := s.store.GetSettings()

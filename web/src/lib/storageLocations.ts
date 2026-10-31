@@ -10,20 +10,14 @@ import type {
   StorageLocationSection,
 } from "./api";
 import { FORECAST_CAP_WEEKS, FORECAST_WARN_WEEKS, humanBytes } from "./forecast";
-import type { TranslationKey, useT } from "./i18n";
+import type { useT } from "./i18n";
 import type { KeepCounts } from "./keepPlan";
 import { formatList } from "./placement";
+import { DOMAIN_LABEL } from "./sectionLabels";
 
 type T = ReturnType<typeof useT>["t"];
 
-export const DOMAIN_LABEL: Record<OffsiteDomain, TranslationKey> = {
-  containers: "nav.containers",
-  vms: "nav.vms",
-  flash: "nav.flash",
-  files: "nav.files",
-  zfs: "nav.zfs",
-  config: "nav.config",
-};
+export { DOMAIN_LABEL };
 
 export function locationRoute(id: string): string {
   return `/storage/${encodeURIComponent(id)}`;

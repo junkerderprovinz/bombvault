@@ -587,7 +587,7 @@ func (s *Service) MoveOwnFolders(ctx context.Context, req ownFolderRequest, move
 			for _, c := range claims {
 				s.releaseOwnFolder(c)
 			}
-			return nil, fmt.Errorf("%s: %w", step.Domain, errDomainBusy)
+			return nil, s.busyErr(step.Domain, errDomainBusy)
 		}
 		unlocks = append(unlocks, unlock)
 	}

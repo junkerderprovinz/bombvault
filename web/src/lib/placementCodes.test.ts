@@ -34,6 +34,17 @@ describe("placementErrorText", () => {
     }
   });
 
+  it("names the section and the task a busy refusal is about", () => {
+    const busy = (busyWith?: string) => ({ ok: false, error: "x", code: "domain-busy", domain: "containers", busyWith });
+    expect(placementErrorText(t, "en", busy("backup"), "settings.error")).toBe(
+      "Containers is being backed up right now. Try again when the backup has finished."
+    );
+    expect(placementErrorText(t, "en", busy("check"), "settings.error")).toBe(
+      "Containers is being checked right now. Try again when the check has finished."
+    );
+    expect(placementErrorText(t, "en", busy(), "settings.error")).toBe(en["placementCode.domainBusy"]);
+  });
+
   it("names the defaults that hold a repository", () => {
     const refusal = (defaultDomains: PlacementDomain[]) => ({ ok: false, error: "x", code: "repo-in-use", defaultDomains });
     expect(placementErrorText(t, "en", refusal(["containers", "vms"]), "settings.error")).toBe(

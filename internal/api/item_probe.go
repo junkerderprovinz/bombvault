@@ -41,6 +41,9 @@ var errProbeBusy = errors.New("a backup or another check is running for this ite
 // backup lands where the probe reads.
 var errProbeSnapshotElsewhere = errors.New("the newest backup of this item stayed in its old own folder, so the restore can be checked after the next backup")
 
+// errProbeGaveWay is a probe stopped because somebody asked for its domain.
+var errProbeGaveWay = errors.New("the restore probe gave way to an action on its section")
+
 // probeItem is the item a probe reads: its target id, its domain and the key
 // its repository is looked up by (a container or VM name, a folder set or
 // dataset id, nothing for flash and config).
@@ -154,15 +157,21 @@ func (s *Service) firstProbe(ctx context.Context, targetID string) {
 		log.Printf("api: restore probe: %v", err)
 		return
 	}
-	unlock, ok := s.waitProbeLock(it.domain)
+	ctx, stop := context.WithCancelCause(ctx)
+	defer stop(nil)
+	unlock, ok := s.waitProbeLock(it.domain, func() { stop(errProbeGaveWay) })
 	if !ok {
 		log.Printf("api: restore probe of %q skipped: %s stayed busy", it.name, it.domain) //nolint:gosec // G706: %q-quoted
 		return
 	}
-	defer unlock()
 	rec, err := s.probeAndRecord(ctx, it, run, "first")
+	unlock()
 	switch {
 	case errors.Is(err, errNothingToDrill):
+		return
+	case errors.Is(err, errProbeGaveWay):
+		log.Printf("api: restore probe of %q gave way to an action on %s and runs again after it", it.name, it.domain) //nolint:gosec // G706: %q-quoted
+		s.queueFirstProbe(targetID)
 		return
 	case errors.Is(err, errProbeSnapshotElsewhere):
 		log.Printf("api: restore probe of %q waits for the next backup: its first one stayed in the old own folder", it.name) //nolint:gosec // G706: %q-quoted
@@ -218,13 +227,14 @@ func (s *Service) scheduledRunOpen(domain string) bool {
 
 // waitProbeLock takes the domain once nothing else wants it: a batch, a
 // Backup Everything pass or a scheduled run of the domain keeps going first,
-// since a probe between two of its items would hold the next one up, and so
-// does the removal of a storage location, which somebody waits for.
-func (s *Service) waitProbeLock(domain string) (func(), bool) {
+// since a probe between two of its items would hold the next one up. The probe
+// holds the domain as a follow-up, which stop ends when somebody asks for the
+// domain.
+func (s *Service) waitProbeLock(domain string, stop func()) (func(), bool) {
 	deadline := time.Now().Add(drillLockWait)
 	for {
-		if !s.batchActive.Load() && !s.everythingActive.Load() && !s.scheduledRunOpen(domain) && !s.domainIsWanted(domain) {
-			if unlock, ok := s.tryLockDomainFor(domain, "verify"); ok {
+		if !s.batchActive.Load() && !s.everythingActive.Load() && !s.scheduledRunOpen(domain) {
+			if unlock, ok := s.tryLockFollowUp(domain, "verify", stop); ok {
 				return unlock, true
 			}
 		}
@@ -254,7 +264,7 @@ func (s *Service) ProbeItem(ctx context.Context, targetID string) (store.ItemPro
 		return store.ItemProbe{}, errProbeBusy
 	}
 	defer unlock()
-	rec, err := s.probeAndRecord(ctx, it, *run, "manual")
+	rec, err := s.probeAndRecord(context.WithoutCancel(ctx), it, *run, "manual")
 	switch {
 	case errors.Is(err, errNothingToDrill):
 		return store.ItemProbe{}, errors.New("this backup holds no files, so there is nothing to check")
@@ -266,13 +276,16 @@ func (s *Service) ProbeItem(ctx context.Context, targetID string) (store.ItemPro
 
 // probeAndRecord runs one probe of the backup run made, under the caller's
 // domain lock, and stores its outcome. A snapshot without files records
-// nothing.
+// nothing, and neither does a probe that gave way.
 func (s *Service) probeAndRecord(ctx context.Context, it probeItem, run store.Run, trigger string) (store.ItemProbe, error) {
 	key := "probe:" + it.domain + ":" + it.name
-	pctx, startedAt := s.progBegin(context.WithoutCancel(ctx), key, "maintenance")
+	pctx, startedAt := s.progBegin(ctx, key, "maintenance")
 	res, err := s.runItemProbe(pctx, it, run)
+	if errors.Is(context.Cause(ctx), errProbeGaveWay) {
+		err = errProbeGaveWay
+	}
 	s.progEnd(key, "maintenance", err == nil, startedAt)
-	if errors.Is(err, errNothingToDrill) || errors.Is(err, errProbeSnapshotElsewhere) {
+	if errors.Is(err, errNothingToDrill) || errors.Is(err, errProbeSnapshotElsewhere) || errors.Is(err, errProbeGaveWay) {
 		return store.ItemProbe{}, err
 	}
 	rec := store.ItemProbe{

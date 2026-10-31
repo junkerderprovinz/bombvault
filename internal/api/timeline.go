@@ -778,7 +778,7 @@ func (s *Service) timelineDelete(ctx context.Context, domain, key, rowKey string
 	deleted, skipped := []placeDelete{}, []otherPlace{}
 	unlock, ok := s.tryLockDomainFor(domain, "delete")
 	if !ok {
-		return deleted, skipped, errDomainBusy
+		return deleted, skipped, s.busyErr(domain, errDomainBusy)
 	}
 	defer unlock()
 

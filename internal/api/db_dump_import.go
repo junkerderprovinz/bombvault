@@ -552,7 +552,7 @@ func (s *Service) RemoveKeptDataDir(ctx context.Context, name, stamp string) (st
 	// A running import may still need the folder to put the data back.
 	unlock, ok := s.tryLockDomainFor("containers", "restore")
 	if !ok {
-		return "", errDomainBusy
+		return "", s.busyErr("containers", errDomainBusy)
 	}
 	defer unlock()
 	kept := dataDir + dbImportKept + stamp

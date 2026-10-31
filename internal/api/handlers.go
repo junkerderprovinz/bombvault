@@ -6861,7 +6861,7 @@ func (h *Handler) handlePatchFileSet(w http.ResponseWriter, r *http.Request) {
 	if nameChanging && change.Home == nil {
 		unlock, ok := h.svc.tryLockDomainFor("files", "rename")
 		if !ok {
-			op, busy := h.svc.domainBusy("files")
+			op, busy := h.svc.busyForUser("files")
 			if !busy {
 				op = "another operation"
 			}

@@ -258,39 +258,30 @@ func (s *Service) removeWhileIdle(ctx context.Context, expect locationRemoval, r
 	return remove()
 }
 
-// The restore probes and copies that follow a run hold its section for
-// moments, and a removal right after the nightly run would be refused for
-// them. A removal waits this long for a section before it gives up.
-var (
-	removalLockWait = 30 * time.Second
-	removalLockPoll = 250 * time.Millisecond
-)
-
-// sectionBusyErr is errDomainBusy for the section a removal waited for in
-// vain, which the refusal names.
-type sectionBusyErr struct{ domain string }
-
-func (e *sectionBusyErr) Error() string { return errDomainBusy.Error() }
-
-func (e *sectionBusyErr) Is(target error) bool { return target == errDomainBusy }
+// The copy that follows a run holds its section for moments too, and a
+// removal right after the nightly run would be refused for it. A removal
+// waits this long for any holder before it gives up.
+var removalLockWait = 30 * time.Second
 
 // lockForRemoval takes a section's lock for a removal or an erasure, waiting
-// up to removalLockWait. The restore probes queued behind a run wait until
-// the removal has had its turn.
+// up to removalLockWait for whatever holds it.
 func (s *Service) lockForRemoval(ctx context.Context, domain string) (func(), error) {
+	if unlock, ok := s.tryLockDomainFor(domain, "delete"); ok {
+		return unlock, nil
+	}
 	defer s.wantDomain(domain)()
 	deadline := time.Now().Add(removalLockWait)
 	for {
-		if unlock, ok := s.tryLockDomainFor(domain, "delete"); ok {
+		if unlock, ok := s.takeDomainLock(domain, "delete"); ok {
 			return unlock, nil
 		}
 		if !time.Now().Before(deadline) {
-			return nil, &sectionBusyErr{domain: domain}
+			return nil, s.busyErr(domain, errDomainBusy)
 		}
 		select {
 		case <-ctx.Done():
-			return nil, &sectionBusyErr{domain: domain}
-		case <-time.After(removalLockPoll):
+			return nil, s.busyErr(domain, errDomainBusy)
+		case <-time.After(userLockPoll):
 		}
 	}
 }

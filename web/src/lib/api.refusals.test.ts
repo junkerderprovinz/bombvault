@@ -158,6 +158,13 @@ describe("a refused settings change", () => {
     expect((err as Error).message).toBe(en["apiError.domainBusy"]);
   });
 
+  it("names the section and what runs there when the refusal says", async () => {
+    answers(409, { ok: false, error: "prune is running on containers", code: "domain-busy", domain: "containers", busyWith: "prune" });
+    const api = await import("./api");
+    const err = await api.backupAll(["plex"]).catch((e: unknown) => e);
+    expect((err as Error).message).toBe("Old backups of Containers are being cleared away right now. Try again when that has finished.");
+  });
+
   it("leaves a call its caller stopped as the AbortError it expects", async () => {
     fetchMock.mockRejectedValue(new DOMException("aborted", "AbortError"));
     const api = await import("./api");
