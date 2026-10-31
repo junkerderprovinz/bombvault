@@ -1428,7 +1428,7 @@ const fi: Partial<Translations> = {
   "dest.title": "Kohteet",
   "dest.usedBy": "Käyttäjät: {domains}",
   "dest.unused": "Ei vielä valittu mihinkään",
-  "dest.removeAsk": "Poistetaanko {name}? Sen mukana poistuu myös siihen kuulunut rclone-etäsijainti tai tunnistetietojoukko.",
+  "dest.removeBrings": "Sen mukana poistuu myös siihen kuulunut rclone-etäsijainti tai tunnistetietojoukko.",
   "dest.saved": "{name} tallennettu",
   "dest.adopt.take": "Ota haltuun",
   "dest.loadError": "Kohteita ei voitu ladata",
@@ -3391,6 +3391,7 @@ const fi: Partial<Translations> = {
   "directRepo.testFailed": "Ei tavoitettavissa: {error}",
   "directRepo.addAndUse": "Luo ja käytä",
   "directRepo.draftNote": "Luodaan yhdessä kansiojoukon kanssa.",
+  "directRepo.created": "{name} on luotu ja käytössä.",
 
   // Defaults
   "placementDefaults.title": "Sijoittelun oletukset",

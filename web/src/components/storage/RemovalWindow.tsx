@@ -237,7 +237,7 @@ export function RemovalWindow({
   return (
     <InstanceWindow
       title={t("storage.remove.title").replace("{name}", () => location.name)}
-      facts={homes ? undefined : t("dest.removeAsk").replace("{name}", () => location.name)}
+      facts={homes ? undefined : t("dest.removeBrings")}
       onClose={onClose}
       footer={
         <>

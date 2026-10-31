@@ -1416,7 +1416,7 @@ const no: Partial<Translations> = {
   "dest.title": "Mål",
   "dest.usedBy": "Brukt av {domains}",
   "dest.unused": "Ikke avkrysset noe sted ennå",
-  "dest.removeAsk": "Fjerne {name}? Rclone-remoten eller påloggingssettet som fulgte med, fjernes sammen med det.",
+  "dest.removeBrings": "Rclone-remoten eller påloggingssettet som fulgte med, fjernes sammen med det.",
   "dest.saved": "{name} lagret",
   "dest.adopt.take": "Overta",
   "dest.loadError": "Målene kunne ikke lastes",
@@ -3391,6 +3391,7 @@ const no: Partial<Translations> = {
   "directRepo.testFailed": "Ikke tilgjengelig: {error}",
   "directRepo.addAndUse": "Opprett og bruk",
   "directRepo.draftNote": "Opprettes sammen med mappesettet.",
+  "directRepo.created": "{name} er opprettet og i bruk.",
 
   // Defaults
   "placementDefaults.title": "Standardplasseringer",

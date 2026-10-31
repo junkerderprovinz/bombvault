@@ -1426,7 +1426,7 @@ const es: Partial<Translations> = {
   "dest.title": "Destinos",
   "dest.usedBy": "Usado por {domains}",
   "dest.unused": "Aún no está marcado en ningún sitio",
-  "dest.removeAsk": "¿Quitar {name}? El remoto de rclone o el conjunto de credenciales que traía consigo se elimina con él.",
+  "dest.removeBrings": "El remoto de rclone o el conjunto de credenciales que traía consigo se elimina con él.",
   "dest.saved": "{name} guardado",
   "dest.adopt.take": "Asumir",
   "dest.loadError": "No se pudieron cargar los destinos",
@@ -3389,6 +3389,7 @@ const es: Partial<Translations> = {
   "directRepo.testFailed": "No accesible: {error}",
   "directRepo.addAndUse": "Crear y usar",
   "directRepo.draftNote": "Se crea junto con el conjunto de carpetas.",
+  "directRepo.created": "{name} está creado y en uso.",
 
   // Defaults
   "placementDefaults.title": "Valores predeterminados de ubicación",

@@ -439,7 +439,7 @@ const lv: Partial<Translations> = {
   "dest.title": "Mērķi",
   "dest.usedBy": "Izmanto: {domains}",
   "dest.unused": "Vēl nekur nav atzīmēts",
-  "dest.removeAsk": "Noņemt {name}? Kopā ar to tiek noņemts arī līdzi izveidotais rclone remote vai piekļuves datu kopa.",
+  "dest.removeBrings": "Kopā ar to tiek noņemts arī līdzi izveidotais rclone remote vai piekļuves datu kopa.",
   "dest.saved": "{name} saglabāts",
   "dest.adopt.take": "Pārņemt",
   "dest.loadError": "Neizdevās ielādēt mērķus",
@@ -3401,6 +3401,7 @@ const lv: Partial<Translations> = {
   "directRepo.testFailed": "Nav sasniedzams: {error}",
   "directRepo.addAndUse": "Izveidot un lietot",
   "directRepo.draftNote": "Tiek izveidota kopā ar mapju kopu.",
+  "directRepo.created": "{name} ir izveidots un tiek izmantots.",
 
   // Defaults
   "placementDefaults.title": "Novietojuma noklusējumi",

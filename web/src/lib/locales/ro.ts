@@ -1417,7 +1417,7 @@ const ro: Partial<Translations> = {
   "dest.title": "Destinații",
   "dest.usedBy": "Folosită de {domains}",
   "dest.unused": "Nebifată nicăieri încă",
-  "dest.removeAsk": "Elimini {name}? Remote-ul rclone sau setul de credențiale care a venit odată cu ea se elimină împreună cu ea.",
+  "dest.removeBrings": "Remote-ul rclone sau setul de credențiale care a venit odată cu ea se elimină împreună cu ea.",
   "dest.saved": "{name} salvată",
   "dest.adopt.take": "Preia",
   "dest.loadError": "Destinațiile nu au putut fi încărcate",
@@ -3392,6 +3392,7 @@ const ro: Partial<Translations> = {
   "directRepo.testFailed": "Inaccesibil: {error}",
   "directRepo.addAndUse": "Creează și folosește",
   "directRepo.draftNote": "Creat împreună cu setul de foldere.",
+  "directRepo.created": "{name} a fost creat și este folosit.",
 
   // Defaults
   "placementDefaults.title": "Amplasări implicite",

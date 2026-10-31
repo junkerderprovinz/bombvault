@@ -1429,7 +1429,7 @@ const th: Partial<Translations> = {
   "dest.title": "ปลายทาง",
   "dest.usedBy": "ใช้โดย {domains}",
   "dest.unused": "ยังไม่ได้เลือกที่ใดเลย",
-  "dest.removeAsk": "ลบ {name} หรือไม่ rclone remote หรือชุดข้อมูลรับรองที่มากับปลายทางนี้จะถูกลบไปด้วย",
+  "dest.removeBrings": "rclone remote หรือชุดข้อมูลรับรองที่มากับปลายทางนี้จะถูกลบไปด้วย",
   "dest.saved": "บันทึก {name} แล้ว",
   "dest.adopt.take": "รับช่วง",
   "dest.loadError": "โหลดรายการปลายทางไม่ได้",
@@ -3392,6 +3392,7 @@ const th: Partial<Translations> = {
   "directRepo.testFailed": "เข้าถึงไม่ได้ {error}",
   "directRepo.addAndUse": "สร้างและใช้งาน",
   "directRepo.draftNote": "จะสร้างพร้อมกับชุดโฟลเดอร์",
+  "directRepo.created": "สร้าง {name} แล้วและกำลังใช้งาน",
 
   // Defaults
   "placementDefaults.title": "ค่าเริ่มต้นของการจัดวาง",

@@ -439,7 +439,7 @@ const gl: Partial<Translations> = {
   "dest.title": "Destinos",
   "dest.usedBy": "Usado por {domains}",
   "dest.unused": "Aínda non está marcado en ningures",
-  "dest.removeAsk": "Eliminar {name}? O remoto de rclone ou o conxunto de credenciais que trouxo consigo elimínase con el.",
+  "dest.removeBrings": "O remoto de rclone ou o conxunto de credenciais que trouxo consigo elimínase con el.",
   "dest.saved": "{name} gardado",
   "dest.adopt.take": "Asumir",
   "dest.loadError": "Non se puideron cargar os destinos",
@@ -3401,6 +3401,7 @@ const gl: Partial<Translations> = {
   "directRepo.testFailed": "Non accesible: {error}",
   "directRepo.addAndUse": "Crear e usar",
   "directRepo.draftNote": "Créase xunto co conxunto de cartafoles.",
+  "directRepo.created": "{name} está creado e en uso.",
 
   // Defaults
   "placementDefaults.title": "Valores por defecto de colocación",

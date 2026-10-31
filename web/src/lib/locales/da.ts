@@ -1428,7 +1428,7 @@ const da: Partial<Translations> = {
   "dest.title": "Destinationer",
   "dest.usedBy": "Bruges af {domains}",
   "dest.unused": "Ikke afkrydset nogen steder endnu",
-  "dest.removeAsk": "Fjerne {name}? Den rclone-remote eller de legitimationsoplysninger, der fulgte med, fjernes sammen med den.",
+  "dest.removeBrings": "Den rclone-remote eller de legitimationsoplysninger, der fulgte med, fjernes sammen med den.",
   "dest.saved": "{name} gemt",
   "dest.adopt.take": "Overtag",
   "dest.loadError": "Destinationerne kunne ikke indlæses",
@@ -3391,6 +3391,7 @@ const da: Partial<Translations> = {
   "directRepo.testFailed": "Ikke tilgængelig: {error}",
   "directRepo.addAndUse": "Opret og brug",
   "directRepo.draftNote": "Oprettes sammen med mappesættet.",
+  "directRepo.created": "{name} er oprettet og i brug.",
 
   // Defaults
   "placementDefaults.title": "Standardplaceringer",

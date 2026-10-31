@@ -21,7 +21,7 @@ export type DirectRepoResult =
   | { kind: "created"; repo: NamedRepo }
   | { kind: "remembered"; name: string; location: string };
 
-const FIELD = "w-72 max-w-full rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 glim-field-focus";
+const FIELD = "w-md max-w-full rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 glim-field-focus";
 
 /** DirectRepoDialog sets up a target's direct repository. Nothing is created
  *  before "Create and use"; in "remember" mode nothing is created at all, the
@@ -105,8 +105,10 @@ export function DirectRepoDialog({
       push(placementErrorText(t, lang, r, "settings.error"), "fail");
       return;
     }
+    const { repo } = r;
     reposChanged();
-    onDone({ kind: "created", repo: r.repo });
+    push(t("directRepo.created").replace("{name}", () => repo.name), "success");
+    onDone({ kind: "created", repo });
   }
 
   return (

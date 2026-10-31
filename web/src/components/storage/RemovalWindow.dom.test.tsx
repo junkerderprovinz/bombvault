@@ -53,6 +53,23 @@ it("keeps a storage location that holds an own folder and says where to move it"
   expect((screen.getByRole("button", { name: "Remove storage location" }) as HTMLButtonElement).disabled).toBe(true);
 });
 
+it("says what goes with the location without asking the title's question again", async () => {
+  vi.mocked(api.previewLocationRemoval).mockResolvedValue({ ok: true, removal: { sections: [] } });
+
+  await act(async () => {
+    render(
+      <I18nProvider>
+        <ToastProvider>
+          <RemovalWindow location={VAULT} onClose={() => {}} onRemoved={() => {}} />
+        </ToastProvider>
+      </I18nProvider>
+    );
+  });
+
+  expect(screen.getByText("Remove Vault?")).toBeTruthy();
+  expect(screen.getByText("The rclone remote or credential set it brought along is removed with it.")).toBeTruthy();
+});
+
 it("names the busy section when a removal has to wait for it", async () => {
   const removal: LocationRemoval = {
     sections: [

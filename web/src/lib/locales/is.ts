@@ -439,7 +439,7 @@ const is: Partial<Translations> = {
   "dest.title": "Áfangastaðir",
   "dest.usedBy": "Notað af {domains}",
   "dest.unused": "Hvergi merkt ennþá",
-  "dest.removeAsk": "Fjarlægja {name}? rclone-fjarstöðin eða aðgangsgagnasafnið sem fylgdi með er fjarlægt um leið.",
+  "dest.removeBrings": "rclone-fjarstöðin eða aðgangsgagnasafnið sem fylgdi með er fjarlægt um leið.",
   "dest.saved": "{name} vistað",
   "dest.adopt.take": "Taka yfir",
   "dest.loadError": "Ekki tókst að hlaða áfangastöðunum",
@@ -3401,6 +3401,7 @@ const is: Partial<Translations> = {
   "directRepo.testFailed": "Ekki aðgengilegt: {error}",
   "directRepo.addAndUse": "Búa til og nota",
   "directRepo.draftNote": "Verður til samhliða möppusettinu.",
+  "directRepo.created": "{name} er sett upp og í notkun.",
 
   // Defaults
   "placementDefaults.title": "Sjálfgefin staðsetning",

@@ -439,7 +439,7 @@ const hr: Partial<Translations> = {
   "dest.title": "Odredišta",
   "dest.usedBy": "Koriste: {domains}",
   "dest.unused": "Još nigdje nije označeno",
-  "dest.removeAsk": "Ukloniti {name}? Uklanja se i rclone remote ili skup vjerodajnica koji je došao s njim.",
+  "dest.removeBrings": "Uklanja se i rclone remote ili skup vjerodajnica koji je došao s njim.",
   "dest.saved": "{name} je spremljeno",
   "dest.adopt.take": "Preuzmi",
   "dest.loadError": "Odredišta nije bilo moguće učitati",
@@ -3401,6 +3401,7 @@ const hr: Partial<Translations> = {
   "directRepo.testFailed": "Nije dostupno: {error}",
   "directRepo.addAndUse": "Stvori i koristi",
   "directRepo.draftNote": "Stvara se zajedno sa skupom mapa.",
+  "directRepo.created": "{name} je stvoren i u upotrebi.",
 
   // Defaults
   "placementDefaults.title": "Zadani smještaj",

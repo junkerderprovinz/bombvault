@@ -1426,7 +1426,7 @@ const cs: Partial<Translations> = {
   "dest.title": "Cíle",
   "dest.usedBy": "Používá: {domains}",
   "dest.unused": "Zatím nikde nezaškrtnuto",
-  "dest.removeAsk": "Odebrat {name}? Spolu s ním se odebere i vzdálený cíl rclone nebo sada přihlašovacích údajů, které přinesl.",
+  "dest.removeBrings": "Spolu s ním se odebere i vzdálený cíl rclone nebo sada přihlašovacích údajů, které přinesl.",
   "dest.saved": "{name} uloženo",
   "dest.adopt.take": "Převzít",
   "dest.loadError": "Cíle se nepodařilo načíst",
@@ -3389,6 +3389,7 @@ const cs: Partial<Translations> = {
   "directRepo.testFailed": "Nedostupné: {error}",
   "directRepo.addAndUse": "Vytvořit a použít",
   "directRepo.draftNote": "Vytvoří se spolu se sadou složek.",
+  "directRepo.created": "{name} je vytvořeno a používá se.",
 
   // Defaults
   "placementDefaults.title": "Výchozí umístění",

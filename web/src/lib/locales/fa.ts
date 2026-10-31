@@ -439,7 +439,7 @@ const fa: Partial<Translations> = {
   "dest.title": "مقصدها",
   "dest.usedBy": "استفاده‌کنندگان: {domains}",
   "dest.unused": "هنوز در هیچ جا تیک نخورده است",
-  "dest.removeAsk": "{name} حذف شود؟ ریموت rclone یا مجموعه اعتبارنامه‌ای که همراه آن آمده بود نیز با آن حذف می‌شود.",
+  "dest.removeBrings": "ریموت rclone یا مجموعه اعتبارنامه‌ای که همراه آن آمده بود نیز با آن حذف می‌شود.",
   "dest.saved": "{name} ذخیره شد",
   "dest.adopt.take": "تحویل گرفتن",
   "dest.loadError": "بارگذاری مقصدها ممکن نبود",
@@ -3401,6 +3401,7 @@ const fa: Partial<Translations> = {
   "directRepo.testFailed": "در دسترس نیست: {error}",
   "directRepo.addAndUse": "ایجاد و استفاده",
   "directRepo.draftNote": "همراه با مجموعه پوشه ساخته می‌شود.",
+  "directRepo.created": "{name} ساخته شد و در حال استفاده است.",
 
   // Defaults
   "placementDefaults.title": "پیش‌فرض‌های مکان‌گذاری",

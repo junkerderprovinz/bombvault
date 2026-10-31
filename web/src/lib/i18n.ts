@@ -526,7 +526,7 @@ export const en = {
   "dest.title": "Storage locations",
   "dest.usedBy": "Used by {domains}",
   "dest.unused": "Not ticked anywhere yet",
-  "dest.removeAsk": "Remove {name}? The rclone remote or credential set it brought along is removed with it.",
+  "dest.removeBrings": "The rclone remote or credential set it brought along is removed with it.",
   "dest.saved": "{name} saved",
   "dest.adopt.take": "Take over",
   "dest.loadError": "Could not load the storage locations",
@@ -2690,6 +2690,7 @@ export const en = {
   "directRepo.testFailed": "Not reachable: {error}",
   "directRepo.addAndUse": "Create and use",
   "directRepo.draftNote": "Created together with the folder set.",
+  "directRepo.created": "{name} is set up and in use.",
 
   // Defaults
   "placementDefaults.title": "Placement defaults",
@@ -5748,7 +5749,7 @@ export const de: Translations = {
   "dest.title": "Speicherorte",
   "dest.usedBy": "Genutzt von {domains}",
   "dest.unused": "Noch nirgends angeklickt",
-  "dest.removeAsk": "{name} entfernen? Der rclone-Remote oder Zugangsdatensatz, der dafür angelegt wurde, geht mit.",
+  "dest.removeBrings": "Der rclone-Remote oder Zugangsdatensatz, der dafür angelegt wurde, geht mit.",
   "dest.saved": "{name} gespeichert",
   "dest.adopt.take": "Übernehmen",
   "dest.loadError": "Die Speicherorte konnten nicht geladen werden",
@@ -7735,6 +7736,7 @@ export const de: Translations = {
   "directRepo.testFailed": "Nicht erreichbar: {error}",
   "directRepo.addAndUse": "Anlegen und nutzen",
   "directRepo.draftNote": "Entsteht zusammen mit dem Ordner-Set.",
+  "directRepo.created": "{name} ist angelegt und wird genutzt.",
 
   // Defaults
   "placementDefaults.title": "Vorgaben für Speicherorte",

@@ -1419,7 +1419,7 @@ const vi: Partial<Translations> = {
   "dest.title": "Đích sao lưu",
   "dest.usedBy": "Được dùng bởi {domains}",
   "dest.unused": "Chưa được chọn ở đâu",
-  "dest.removeAsk": "Xóa {name}? rclone remote hoặc bộ thông tin xác thực đi kèm cũng sẽ bị xóa theo.",
+  "dest.removeBrings": "rclone remote hoặc bộ thông tin xác thực đi kèm cũng sẽ bị xóa theo.",
   "dest.saved": "Đã lưu {name}",
   "dest.adopt.take": "Tiếp quản",
   "dest.loadError": "Không tải được danh sách đích",
@@ -3382,6 +3382,7 @@ const vi: Partial<Translations> = {
   "directRepo.testFailed": "Không thể truy cập: {error}",
   "directRepo.addAndUse": "Tạo và dùng",
   "directRepo.draftNote": "Được tạo cùng với bộ thư mục.",
+  "directRepo.created": "Đã tạo {name} và đang sử dụng.",
 
   // Defaults
   "placementDefaults.title": "Nơi lưu trữ mặc định",

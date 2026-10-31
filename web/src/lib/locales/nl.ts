@@ -1415,7 +1415,7 @@ const nl: Partial<Translations> = {
   "dest.title": "Bestemmingen",
   "dest.usedBy": "Gebruikt door {domains}",
   "dest.unused": "Nog nergens aangevinkt",
-  "dest.removeAsk": "{name} verwijderen? De rclone-remote of het set inloggegevens dat erbij hoorde, wordt mee verwijderd.",
+  "dest.removeBrings": "De rclone-remote of het set inloggegevens dat erbij hoorde, wordt mee verwijderd.",
   "dest.saved": "{name} opgeslagen",
   "dest.adopt.take": "Overnemen",
   "dest.loadError": "De bestemmingen konden niet worden geladen",
@@ -3390,6 +3390,7 @@ const nl: Partial<Translations> = {
   "directRepo.testFailed": "Niet bereikbaar: {error}",
   "directRepo.addAndUse": "Aanmaken en gebruiken",
   "directRepo.draftNote": "Wordt samen met de mappenset aangemaakt.",
+  "directRepo.created": "{name} is aangemaakt en in gebruik.",
 
   // Defaults
   "placementDefaults.title": "Standaardplaatsing",

@@ -439,7 +439,7 @@ const et: Partial<Translations> = {
   "dest.title": "Sihtkohad",
   "dest.usedBy": "Kasutavad: {domains}",
   "dest.unused": "Pole veel kuskil märgitud",
-  "dest.removeAsk": "Kas eemaldada {name}? Sellega koos eemaldatakse ka kaasatulnud rclone'i kaugseade või mandaadikomplekt.",
+  "dest.removeBrings": "Sellega koos eemaldatakse ka kaasatulnud rclone'i kaugseade või mandaadikomplekt.",
   "dest.saved": "{name} salvestatud",
   "dest.adopt.take": "Võta üle",
   "dest.loadError": "Sihtkohti ei õnnestunud laadida",
@@ -3401,6 +3401,7 @@ const et: Partial<Translations> = {
   "directRepo.testFailed": "Pole kättesaadav: {error}",
   "directRepo.addAndUse": "Loo ja kasuta",
   "directRepo.draftNote": "Luuakse koos kaustakomplektiga.",
+  "directRepo.created": "{name} on loodud ja kasutusel.",
 
   // Defaults
   "placementDefaults.title": "Paigutuse vaikeväärtused",

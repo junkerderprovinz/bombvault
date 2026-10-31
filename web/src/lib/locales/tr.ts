@@ -1428,7 +1428,7 @@ const tr: Partial<Translations> = {
   "dest.title": "Hedefler",
   "dest.usedBy": "Kullanan: {domains}",
   "dest.unused": "Henüz hiçbir yerde işaretlenmedi",
-  "dest.removeAsk": "{name} kaldırılsın mı? Beraberinde gelen rclone remote'u veya kimlik bilgisi kümesi de kaldırılır.",
+  "dest.removeBrings": "Beraberinde gelen rclone remote'u veya kimlik bilgisi kümesi de kaldırılır.",
   "dest.saved": "{name} kaydedildi",
   "dest.adopt.take": "Devral",
   "dest.loadError": "Hedefler yüklenemedi",
@@ -3391,6 +3391,7 @@ const tr: Partial<Translations> = {
   "directRepo.testFailed": "Erişilemiyor: {error}",
   "directRepo.addAndUse": "Oluştur ve kullan",
   "directRepo.draftNote": "Klasör setiyle birlikte oluşturulur.",
+  "directRepo.created": "{name} oluşturuldu ve kullanılıyor.",
 
   // Defaults
   "placementDefaults.title": "Varsayılan yerleşimler",

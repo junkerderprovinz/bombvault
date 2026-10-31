@@ -439,7 +439,7 @@ const ms: Partial<Translations> = {
   "dest.title": "Destinasi",
   "dest.usedBy": "Digunakan oleh {domains}",
   "dest.unused": "Belum ditanda di mana-mana",
-  "dest.removeAsk": "Alih keluar {name}? Remote rclone atau set kelayakan yang dibawanya turut dialih keluar.",
+  "dest.removeBrings": "Remote rclone atau set kelayakan yang dibawanya turut dialih keluar.",
   "dest.saved": "{name} disimpan",
   "dest.adopt.take": "Ambil alih",
   "dest.loadError": "Destinasi tidak dapat dimuatkan",
@@ -3401,6 +3401,7 @@ const ms: Partial<Translations> = {
   "directRepo.testFailed": "Tidak boleh dicapai: {error}",
   "directRepo.addAndUse": "Cipta dan guna",
   "directRepo.draftNote": "Dicipta bersama set folder.",
+  "directRepo.created": "{name} telah disediakan dan digunakan.",
 
   // Defaults
   "placementDefaults.title": "Lalai penempatan",

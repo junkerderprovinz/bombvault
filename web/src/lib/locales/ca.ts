@@ -439,7 +439,7 @@ const ca: Partial<Translations> = {
   "dest.title": "Destinacions",
   "dest.usedBy": "Utilitzada per {domains}",
   "dest.unused": "Encara no està marcada enlloc",
-  "dest.removeAsk": "Vols eliminar {name}? El remot de rclone o el conjunt de credencials que hi anava associat s'elimina amb ella.",
+  "dest.removeBrings": "El remot de rclone o el conjunt de credencials que hi anava associat s'elimina amb ella.",
   "dest.saved": "{name} desada",
   "dest.adopt.take": "Assumeix",
   "dest.loadError": "No s'han pogut carregar les destinacions",
@@ -3401,6 +3401,7 @@ const ca: Partial<Translations> = {
   "directRepo.testFailed": "No accessible: {error}",
   "directRepo.addAndUse": "Crea i utilitza",
   "directRepo.draftNote": "Es crea juntament amb el conjunt de carpetes.",
+  "directRepo.created": "{name} s'ha creat i ja es fa servir.",
 
   // Defaults
   "placementDefaults.title": "Valors per defecte d'emplaçament",

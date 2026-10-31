@@ -1413,7 +1413,7 @@ const ru: Partial<Translations> = {
   "dest.title": "Места назначения",
   "dest.usedBy": "Используется для: {domains}",
   "dest.unused": "Пока нигде не выбрано",
-  "dest.removeAsk": "Удалить {name}? Вместе с ним удаляется связанный remote rclone или набор учётных данных.",
+  "dest.removeBrings": "Вместе с ним удаляется связанный remote rclone или набор учётных данных.",
   "dest.saved": "{name} сохранено",
   "dest.adopt.take": "Принять",
   "dest.loadError": "Не удалось загрузить места назначения",
@@ -3388,6 +3388,7 @@ const ru: Partial<Translations> = {
   "directRepo.testFailed": "Недоступен: {error}",
   "directRepo.addAndUse": "Создать и использовать",
   "directRepo.draftNote": "Создаётся вместе с набором папок.",
+  "directRepo.created": "{name} создан и используется.",
 
   // Defaults
   "placementDefaults.title": "Размещение по умолчанию",

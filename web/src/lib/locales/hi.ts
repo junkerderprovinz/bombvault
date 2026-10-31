@@ -439,7 +439,7 @@ const hi: Partial<Translations> = {
   "dest.title": "गंतव्य",
   "dest.usedBy": "इस्तेमाल करने वाले: {domains}",
   "dest.unused": "अभी कहीं नहीं चुना गया",
-  "dest.removeAsk": "{name} हटाएँ? इसके साथ आया rclone रिमोट या क्रेडेंशियल सेट भी हट जाएगा।",
+  "dest.removeBrings": "इसके साथ आया rclone रिमोट या क्रेडेंशियल सेट भी हट जाएगा।",
   "dest.saved": "{name} सहेजा गया",
   "dest.adopt.take": "अपनाएँ",
   "dest.loadError": "गंतव्य लोड नहीं हो सके",
@@ -3401,6 +3401,7 @@ const hi: Partial<Translations> = {
   "directRepo.testFailed": "पहुँच योग्य नहीं: {error}",
   "directRepo.addAndUse": "बनाएँ और उपयोग करें",
   "directRepo.draftNote": "फ़ोल्डर सेट के साथ बनेगा।",
+  "directRepo.created": "{name} बन गया है और उपयोग में है।",
 
   // Defaults
   "placementDefaults.title": "प्लेसमेंट डिफ़ॉल्ट",

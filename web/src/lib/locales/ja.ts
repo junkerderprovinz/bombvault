@@ -1411,7 +1411,7 @@ const ja: Partial<Translations> = {
   "dest.title": "保存先",
   "dest.usedBy": "使用中: {domains}",
   "dest.unused": "まだどこにもチェックされていません",
-  "dest.removeAsk": "{name} を削除しますか。一緒に作成された rclone リモートまたは認証情報も削除されます。",
+  "dest.removeBrings": "一緒に作成された rclone リモートまたは認証情報も削除されます。",
   "dest.saved": "{name} を保存しました",
   "dest.adopt.take": "引き継ぐ",
   "dest.loadError": "保存先を読み込めませんでした",
@@ -3382,6 +3382,7 @@ const ja: Partial<Translations> = {
   "directRepo.testFailed": "到達不可：{error}",
   "directRepo.addAndUse": "作成して使う",
   "directRepo.draftNote": "フォルダーセットと一緒に作成されます。",
+  "directRepo.created": "{name} を作成し、使用を開始しました。",
 
   // Defaults
   "placementDefaults.title": "配置の既定値",

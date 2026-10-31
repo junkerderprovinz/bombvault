@@ -439,7 +439,7 @@ const sr: Partial<Translations> = {
   "dest.title": "Одредишта",
   "dest.usedBy": "Користе: {domains}",
   "dest.unused": "Још нигде није означено",
-  "dest.removeAsk": "Уклонити {name}? Заједно с њим уклања се и rclone удаљена локација или скуп акредитива који је донео.",
+  "dest.removeBrings": "Заједно с њим уклања се и rclone удаљена локација или скуп акредитива који је донео.",
   "dest.saved": "{name} је сачувано",
   "dest.adopt.take": "Преузми",
   "dest.loadError": "Одредишта није могуће учитати",
@@ -3385,6 +3385,7 @@ const sr: Partial<Translations> = {
   "directRepo.testFailed": "Није доступно: {error}",
   "directRepo.addAndUse": "Направи и користи",
   "directRepo.draftNote": "Прави се заједно са скупом фасцикли.",
+  "directRepo.created": "{name} је направљен и у употреби.",
 
   // Defaults
   "placementDefaults.title": "Подразумевани размештај",

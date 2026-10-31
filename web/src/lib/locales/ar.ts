@@ -1429,7 +1429,7 @@ const ar: Partial<Translations> = {
   "dest.title": "الوجهات",
   "dest.usedBy": "مستخدمة من {domains}",
   "dest.unused": "غير محددة في أي مكان بعد",
-  "dest.removeAsk": "إزالة {name}؟ تُزال معها أيضاً وجهة rclone البعيدة أو مجموعة بيانات الاعتماد المرتبطة بها.",
+  "dest.removeBrings": "تُزال معها أيضاً وجهة rclone البعيدة أو مجموعة بيانات الاعتماد المرتبطة بها.",
   "dest.saved": "تم حفظ {name}",
   "dest.adopt.take": "تولّي",
   "dest.loadError": "تعذّر تحميل الوجهات",
@@ -3392,6 +3392,7 @@ const ar: Partial<Translations> = {
   "directRepo.testFailed": "غير قابل للوصول: {error}",
   "directRepo.addAndUse": "إنشاء واستخدام",
   "directRepo.draftNote": "يُنشأ مع مجموعة المجلدات.",
+  "directRepo.created": "تم إعداد {name} وهو قيد الاستخدام.",
 
   // Defaults
   "placementDefaults.title": "افتراضيات الموضع",

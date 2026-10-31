@@ -1428,7 +1428,7 @@ const sv: Partial<Translations> = {
   "dest.title": "Mål",
   "dest.usedBy": "Används av {domains}",
   "dest.unused": "Inte ikryssat någonstans ännu",
-  "dest.removeAsk": "Ta bort {name}? Den rclone-fjärrplats eller uppsättning inloggningsuppgifter som följde med tas bort samtidigt.",
+  "dest.removeBrings": "Den rclone-fjärrplats eller uppsättning inloggningsuppgifter som följde med tas bort samtidigt.",
   "dest.saved": "{name} sparades",
   "dest.adopt.take": "Ta över",
   "dest.loadError": "Målen kunde inte läsas in",
@@ -3391,6 +3391,7 @@ const sv: Partial<Translations> = {
   "directRepo.testFailed": "Inte nåbar: {error}",
   "directRepo.addAndUse": "Skapa och använd",
   "directRepo.draftNote": "Skapas tillsammans med mappuppsättningen.",
+  "directRepo.created": "{name} är skapat och används.",
 
   // Defaults
   "placementDefaults.title": "Standardplaceringar",

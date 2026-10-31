@@ -1411,7 +1411,7 @@ const ko: Partial<Translations> = {
   "dest.title": "대상",
   "dest.usedBy": "사용 중: {domains}",
   "dest.unused": "아직 어디에도 체크되지 않음",
-  "dest.removeAsk": "{name}을(를) 삭제할까요? 함께 만들어진 rclone 리모트나 자격 증명도 같이 삭제됩니다.",
+  "dest.removeBrings": "함께 만들어진 rclone 리모트나 자격 증명도 같이 삭제됩니다.",
   "dest.saved": "{name} 저장됨",
   "dest.adopt.take": "인수",
   "dest.loadError": "대상을 불러오지 못했습니다",
@@ -3382,6 +3382,7 @@ const ko: Partial<Translations> = {
   "directRepo.testFailed": "도달 불가: {error}",
   "directRepo.addAndUse": "만들고 사용",
   "directRepo.draftNote": "폴더 세트와 함께 생성됩니다.",
+  "directRepo.created": "{name}을(를) 만들고 사용하기 시작했습니다.",
 
   // Defaults
   "placementDefaults.title": "배치 기본값",

@@ -1428,7 +1428,7 @@ const el: Partial<Translations> = {
   "dest.title": "Προορισμοί",
   "dest.usedBy": "Χρησιμοποιείται από {domains}",
   "dest.unused": "Δεν έχει επιλεγεί πουθενά ακόμη",
-  "dest.removeAsk": "Να αφαιρεθεί το {name}; Το απομακρυσμένο rclone ή το σετ διαπιστευτηρίων που το συνόδευε αφαιρείται μαζί του.",
+  "dest.removeBrings": "Το απομακρυσμένο rclone ή το σετ διαπιστευτηρίων που το συνόδευε αφαιρείται μαζί του.",
   "dest.saved": "Το {name} αποθηκεύτηκε",
   "dest.adopt.take": "Ανάληψη",
   "dest.loadError": "Δεν ήταν δυνατή η φόρτωση των προορισμών",
@@ -3391,6 +3391,7 @@ const el: Partial<Translations> = {
   "directRepo.testFailed": "Μη προσβάσιμο: {error}",
   "directRepo.addAndUse": "Δημιουργία και χρήση",
   "directRepo.draftNote": "Δημιουργείται μαζί με το σύνολο φακέλων.",
+  "directRepo.created": "Το {name} δημιουργήθηκε και χρησιμοποιείται.",
 
   // Defaults
   "placementDefaults.title": "Προεπιλογές τοποθέτησης",

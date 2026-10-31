@@ -439,7 +439,7 @@ const id: Partial<Translations> = {
   "dest.title": "Tujuan",
   "dest.usedBy": "Dipakai oleh {domains}",
   "dest.unused": "Belum dicentang di mana pun",
-  "dest.removeAsk": "Hapus {name}? Remote rclone atau kumpulan kredensial yang menyertainya ikut dihapus.",
+  "dest.removeBrings": "Remote rclone atau kumpulan kredensial yang menyertainya ikut dihapus.",
   "dest.saved": "{name} disimpan",
   "dest.adopt.take": "Ambil alih",
   "dest.loadError": "Tujuan tidak dapat dimuat",
@@ -3401,6 +3401,7 @@ const id: Partial<Translations> = {
   "directRepo.testFailed": "Tidak dapat dijangkau: {error}",
   "directRepo.addAndUse": "Buat dan gunakan",
   "directRepo.draftNote": "Dibuat bersama set folder.",
+  "directRepo.created": "{name} sudah dibuat dan digunakan.",
 
   // Defaults
   "placementDefaults.title": "Penempatan bawaan",

@@ -1419,7 +1419,7 @@ const zh: Partial<Translations> = {
   "dest.title": "目标",
   "dest.usedBy": "使用者：{domains}",
   "dest.unused": "尚未在任何地方勾选",
-  "dest.removeAsk": "移除 {name}？随它创建的 rclone remote 或凭据也会一并移除。",
+  "dest.removeBrings": "随它创建的 rclone remote 或凭据也会一并移除。",
   "dest.saved": "已保存 {name}",
   "dest.adopt.take": "接管",
   "dest.loadError": "无法加载目标列表",
@@ -3382,6 +3382,7 @@ const zh: Partial<Translations> = {
   "directRepo.testFailed": "不可达：{error}",
   "directRepo.addAndUse": "创建并使用",
   "directRepo.draftNote": "与文件夹集一起创建。",
+  "directRepo.created": "{name} 已创建并开始使用。",
 
   // Defaults
   "placementDefaults.title": "存放位置默认值",

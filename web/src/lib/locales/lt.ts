@@ -439,7 +439,7 @@ const lt: Partial<Translations> = {
   "dest.title": "Paskirties vietos",
   "dest.usedBy": "Naudoja: {domains}",
   "dest.unused": "Dar niekur nepažymėta",
-  "dest.removeAsk": "Pašalinti {name}? Kartu pašalinamas ir su ja sukurtas rclone remote arba prisijungimo duomenų rinkinys.",
+  "dest.removeBrings": "Kartu pašalinamas ir su ja sukurtas rclone remote arba prisijungimo duomenų rinkinys.",
   "dest.saved": "{name} išsaugota",
   "dest.adopt.take": "Perimti",
   "dest.loadError": "Nepavyko įkelti paskirties vietų",
@@ -3401,6 +3401,7 @@ const lt: Partial<Translations> = {
   "directRepo.testFailed": "Nepasiekiama: {error}",
   "directRepo.addAndUse": "Sukurti ir naudoti",
   "directRepo.draftNote": "Sukuriama kartu su aplankų rinkiniu.",
+  "directRepo.created": "{name} sukurta ir naudojama.",
 
   // Defaults
   "placementDefaults.title": "Numatytasis išdėstymas",

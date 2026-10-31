@@ -1425,7 +1425,7 @@ const uk: Partial<Translations> = {
   "dest.title": "Місця призначення",
   "dest.usedBy": "Використовують: {domains}",
   "dest.unused": "Ще ніде не позначено",
-  "dest.removeAsk": "Видалити {name}? Разом із ним видаляється rclone remote або набір облікових даних, який він приніс.",
+  "dest.removeBrings": "Разом із ним видаляється rclone remote або набір облікових даних, який він приніс.",
   "dest.saved": "{name} збережено",
   "dest.adopt.take": "Прийняти",
   "dest.loadError": "Не вдалося завантажити місця призначення",
@@ -3388,6 +3388,7 @@ const uk: Partial<Translations> = {
   "directRepo.testFailed": "Недоступний: {error}",
   "directRepo.addAndUse": "Створити і використати",
   "directRepo.draftNote": "Створюється разом із набором папок.",
+  "directRepo.created": "{name} створено, і він використовується.",
 
   // Defaults
   "placementDefaults.title": "Розміщення за замовчуванням",

@@ -1420,7 +1420,7 @@ const it: Partial<Translations> = {
   "dest.title": "Destinazioni",
   "dest.usedBy": "Usata da {domains}",
   "dest.unused": "Non ancora selezionata da nessuna parte",
-  "dest.removeAsk": "Rimuovere {name}? Vengono rimossi anche il remote rclone o l'insieme di credenziali che l'ha accompagnata.",
+  "dest.removeBrings": "Vengono rimossi anche il remote rclone o l'insieme di credenziali che l'ha accompagnata.",
   "dest.saved": "{name} salvata",
   "dest.adopt.take": "Prendi in carico",
   "dest.loadError": "Impossibile caricare le destinazioni",
@@ -3391,6 +3391,7 @@ const it: Partial<Translations> = {
   "directRepo.testFailed": "Non raggiungibile: {error}",
   "directRepo.addAndUse": "Crea e usa",
   "directRepo.draftNote": "Creato insieme al set di cartelle.",
+  "directRepo.created": "{name} è stato creato ed è in uso.",
 
   // Defaults
   "placementDefaults.title": "Collocazioni predefinite",

@@ -1413,7 +1413,7 @@ const pl: Partial<Translations> = {
   "dest.title": "Miejsca docelowe",
   "dest.usedBy": "Używane przez {domains}",
   "dest.unused": "Jeszcze nigdzie nie zaznaczone",
-  "dest.removeAsk": "Usunąć {name}? Razem z nim zostanie usunięty zdalny zasób rclone lub zestaw poświadczeń, który z nim przyszedł.",
+  "dest.removeBrings": "Razem z nim zostanie usunięty zdalny zasób rclone lub zestaw poświadczeń, który z nim przyszedł.",
   "dest.saved": "Zapisano {name}",
   "dest.adopt.take": "Przejmij",
   "dest.loadError": "Nie udało się wczytać miejsc docelowych",
@@ -3388,6 +3388,7 @@ const pl: Partial<Translations> = {
   "directRepo.testFailed": "Niedostępne: {error}",
   "directRepo.addAndUse": "Utwórz i użyj",
   "directRepo.draftNote": "Zostanie utworzone razem z zestawem folderów.",
+  "directRepo.created": "{name} zostało utworzone i jest używane.",
 
   // Defaults
   "placementDefaults.title": "Domyślne rozmieszczenie",

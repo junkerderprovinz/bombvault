@@ -1420,7 +1420,7 @@ const fr: Partial<Translations> = {
   "dest.title": "Destinations",
   "dest.usedBy": "Utilisée par {domains}",
   "dest.unused": "Pas encore cochée nulle part",
-  "dest.removeAsk": "Supprimer {name} ? Le remote rclone ou le jeu d'identifiants qui l'accompagnait est supprimé avec elle.",
+  "dest.removeBrings": "Le remote rclone ou le jeu d'identifiants qui l'accompagnait est supprimé avec elle.",
   "dest.saved": "{name} enregistrée",
   "dest.adopt.take": "Reprendre",
   "dest.loadError": "Impossible de charger les destinations",
@@ -3391,6 +3391,7 @@ const fr: Partial<Translations> = {
   "directRepo.testFailed": "Non joignable : {error}",
   "directRepo.addAndUse": "Créer et utiliser",
   "directRepo.draftNote": "Créé en même temps que le jeu de dossiers.",
+  "directRepo.created": "{name} est créé et utilisé.",
 
   // Defaults
   "placementDefaults.title": "Emplacements par défaut",

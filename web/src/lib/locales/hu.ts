@@ -1421,7 +1421,7 @@ const hu: Partial<Translations> = {
   "dest.title": "Célok",
   "dest.usedBy": "Használja: {domains}",
   "dest.unused": "Még sehol nincs bejelölve",
-  "dest.removeAsk": "Eltávolítod: {name}? A hozzá tartozó rclone remote vagy hitelesítőadat-készlet is törlődik.",
+  "dest.removeBrings": "A hozzá tartozó rclone remote vagy hitelesítőadat-készlet is törlődik.",
   "dest.saved": "{name} mentve",
   "dest.adopt.take": "Átvétel",
   "dest.loadError": "A célokat nem sikerült betölteni",
@@ -3392,6 +3392,7 @@ const hu: Partial<Translations> = {
   "directRepo.testFailed": "Nem érhető el: {error}",
   "directRepo.addAndUse": "Létrehozás és használat",
   "directRepo.draftNote": "A mappakészlettel együtt jön létre.",
+  "directRepo.created": "{name} létrejött, és használatban van.",
 
   // Defaults
   "placementDefaults.title": "Elhelyezési alapértelmezések",

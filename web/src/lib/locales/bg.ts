@@ -439,7 +439,7 @@ const bg: Partial<Translations> = {
   "dest.title": "Дестинации",
   "dest.usedBy": "Използва се от {domains}",
   "dest.unused": "Още не е отметната никъде",
-  "dest.removeAsk": "Да се премахне ли {name}? Заедно с нея се премахва и rclone remote-ът или наборът от данни за вход, които е донесла.",
+  "dest.removeBrings": "Заедно с нея се премахва и rclone remote-ът или наборът от данни за вход, които е донесла.",
   "dest.saved": "{name} е запазена",
   "dest.adopt.take": "Поемане",
   "dest.loadError": "Дестинациите не можаха да се заредят",
@@ -3401,6 +3401,7 @@ const bg: Partial<Translations> = {
   "directRepo.testFailed": "Недостъпно: {error}",
   "directRepo.addAndUse": "Създай и използвай",
   "directRepo.draftNote": "Създава се заедно с набора от папки.",
+  "directRepo.created": "{name} е създадено и се използва.",
 
   // Defaults
   "placementDefaults.title": "Настройки по подразбиране за разположение",

@@ -439,7 +439,7 @@ const eu: Partial<Translations> = {
   "dest.title": "Helmugak",
   "dest.usedBy": "Erabiltzaileak: {domains}",
   "dest.unused": "Oraindik inon ez dago markatuta",
-  "dest.removeAsk": "{name} kendu? Berarekin zetorren rclone urruneko konexioa edo kredentzial-multzoa ere kentzen da.",
+  "dest.removeBrings": "Berarekin zetorren rclone urruneko konexioa edo kredentzial-multzoa ere kentzen da.",
   "dest.saved": "{name} gordeta",
   "dest.adopt.take": "Hartu",
   "dest.loadError": "Ezin izan dira helmugak kargatu",
@@ -3401,6 +3401,7 @@ const eu: Partial<Translations> = {
   "directRepo.testFailed": "Ez dago eskuragarri: {error}",
   "directRepo.addAndUse": "Sortu eta erabili",
   "directRepo.draftNote": "Karpeta-multzoarekin batera sortzen da.",
+  "directRepo.created": "{name} sortuta dago eta erabiltzen ari da.",
 
   // Defaults
   "placementDefaults.title": "Kokapenaren lehenespenak",

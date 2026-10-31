@@ -439,7 +439,7 @@ const sl: Partial<Translations> = {
   "dest.title": "Cilji",
   "dest.usedBy": "Uporabljajo: {domains}",
   "dest.unused": "Še nikjer ni označen",
-  "dest.removeAsk": "Odstranim {name}? Z njim se odstrani tudi oddaljena lokacija rclone ali komplet poverilnic, ki ga je prinesel.",
+  "dest.removeBrings": "Z njim se odstrani tudi oddaljena lokacija rclone ali komplet poverilnic, ki ga je prinesel.",
   "dest.saved": "{name} shranjen",
   "dest.adopt.take": "Prevzemi",
   "dest.loadError": "Ciljev ni bilo mogoče naložiti",
@@ -3385,6 +3385,7 @@ const sl: Partial<Translations> = {
   "directRepo.testFailed": "Ni dosegljivo: {error}",
   "directRepo.addAndUse": "Ustvari in uporabi",
   "directRepo.draftNote": "Ustvarjeno skupaj z naborom map.",
+  "directRepo.created": "{name} je ustvarjen in v uporabi.",
 
   // Defaults
   "placementDefaults.title": "Privzeta postavitev",

@@ -1420,7 +1420,7 @@ const he: Partial<Translations> = {
   "dest.title": "יעדים",
   "dest.usedBy": "בשימוש של {domains}",
   "dest.unused": "עדיין לא מסומן בשום מקום",
-  "dest.removeAsk": "להסיר את {name}? יעד ה-rclone או ערכת פרטי הגישה שהגיעו איתו יוסרו יחד איתו.",
+  "dest.removeBrings": "יעד ה-rclone או ערכת פרטי הגישה שהגיעו איתו יוסרו יחד איתו.",
   "dest.saved": "{name} נשמר",
   "dest.adopt.take": "אימוץ",
   "dest.loadError": "לא ניתן היה לטעון את היעדים",
@@ -3391,6 +3391,7 @@ const he: Partial<Translations> = {
   "directRepo.testFailed": "לא נגיש: {error}",
   "directRepo.addAndUse": "יצירה ושימוש",
   "directRepo.draftNote": "נוצר יחד עם ערכת התיקיות.",
+  "directRepo.created": "{name} נוצר ונמצא בשימוש.",
 
   // Defaults
   "placementDefaults.title": "ברירות מחדל של מיקום",
