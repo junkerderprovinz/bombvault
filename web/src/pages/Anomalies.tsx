@@ -257,57 +257,62 @@ export function Anomalies() {
         <SeverityTiles t={t} list={current.list} view={view} chosen={chosen} onChoose={choose} />
       )}
 
-      <div className="flex md:justify-end">
-        <Selector
-          items={[
-            { id: "open", label: t("anomaly.state.open") },
-            { id: "closed", label: t("anomaly.closedRecent") },
-          ]}
-          label={t("anomaly.view")}
-          select="one"
-          active={view}
-          onChange={(id) => setView(id as View)}
-          variant="well"
-          inline
-        />
-      </div>
+      {/* Spaced like the list bar on Backups, so the switch sits where the
+          buttons do there. */}
+      <div className="flex flex-col gap-4 md:gap-6">
+        <div className="flex md:justify-end">
+          <Selector
+            items={[
+              { id: "open", label: t("anomaly.state.open") },
+              { id: "closed", label: t("anomaly.closedRecent") },
+            ]}
+            label={t("anomaly.view")}
+            select="one"
+            active={view}
+            onChange={(id) => setView(id as View)}
+            variant="well"
+            inline
+            className="h-(--btn-h)"
+          />
+        </div>
 
-      <Card
-        title={t(view === "open" ? "anomaly.list.open" : "anomaly.closedRecent")}
-        hueIndex={TILES.length}
-        newId="anomalies-tiles"
-        foot={current.failed && <Button label={t("anomaly.retry")} labelKey="anomaly.retry" onClick={current.retry} />}
-      >
-        {current.failed ? (
-          <p className="text-sm text-statusWarn">{t("anomaly.loadFailed")}</p>
-        ) : !current.loaded ? (
-          <p className="text-sm text-carbon-textSub">{t("dashboard.checking")}</p>
-        ) : shown.length === 0 ? (
-          <p className="px-2 py-9 text-center text-sm text-carbon-textMuted">{t(empty)}</p>
-        ) : (
-          <Rows as="ul">
-            {shown.map((a, i) => {
-              const key = anomalyGroupKey(a);
-              const first = !seen.has(key);
-              seen.add(key);
-              const siblings = first && view === "open" ? shown.filter((b) => anomalyGroupKey(b) === key) : [];
-              return (
-                <FindingLine
-                  key={a.id}
-                  a={a}
-                  t={t}
-                  closed={view === "closed"}
-                  lead={i === 0}
-                  siblings={siblings.length > 1 ? siblings : undefined}
-                  place={findingPlace(a, places)}
-                  onSettle={settle}
-                  onDetails={(comparing) => setShownWindow({ kind: "finding", id: a.id, comparing })}
-                />
-              );
-            })}
-          </Rows>
-        )}
-      </Card>
+        <Card
+          title={t(view === "open" ? "anomaly.list.open" : "anomaly.closedRecent")}
+          hueIndex={TILES.length}
+          newId="anomalies-tiles"
+          foot={current.failed && <Button label={t("anomaly.retry")} labelKey="anomaly.retry" onClick={current.retry} />}
+        >
+          {current.failed ? (
+            <p className="text-sm text-statusWarn">{t("anomaly.loadFailed")}</p>
+          ) : !current.loaded ? (
+            <p className="text-sm text-carbon-textSub">{t("dashboard.checking")}</p>
+          ) : shown.length === 0 ? (
+            <p className="px-2 py-9 text-center text-sm text-carbon-textMuted">{t(empty)}</p>
+          ) : (
+            <Rows as="ul">
+              {shown.map((a, i) => {
+                const key = anomalyGroupKey(a);
+                const first = !seen.has(key);
+                seen.add(key);
+                const siblings = first && view === "open" ? shown.filter((b) => anomalyGroupKey(b) === key) : [];
+                return (
+                  <FindingLine
+                    key={a.id}
+                    a={a}
+                    t={t}
+                    closed={view === "closed"}
+                    lead={i === 0}
+                    siblings={siblings.length > 1 ? siblings : undefined}
+                    place={findingPlace(a, places)}
+                    onSettle={settle}
+                    onDetails={(comparing) => setShownWindow({ kind: "finding", id: a.id, comparing })}
+                  />
+                );
+              })}
+            </Rows>
+          )}
+        </Card>
+      </div>
 
       {view === "open" &&
         !chosen &&
@@ -420,7 +425,7 @@ function SeverityTiles({
             <span className={`row-span-2 [&>svg]:h-[22px] [&>svg]:w-[22px] ${on ? "" : glyph}`}>
               <IconAnomalies />
             </span>
-            <span className="truncate font-semibold">{t(label)}</span>
+            <span className="truncate text-sm font-semibold">{t(label)}</span>
             <span className="truncate text-xs tabular-nums opacity-75">
               {t(view === "open" ? "anomaly.tile.open" : "anomaly.tile.closed", count)}
             </span>
