@@ -33,8 +33,10 @@ export function SheetFoot({ close, children }: {
   const [more, setMore] = useState(false);
   const buttons = buttonsOf(children);
   if (buttons.length + (close ? 1 : 0) <= ROOM) {
+    // The buttons share the width, so one that wraps to a row of its own
+    // spans it instead of standing alone at the end.
     return (
-      <div className="flex flex-wrap items-center justify-end gap-2 py-3">
+      <div className="flex flex-wrap items-center justify-end gap-2 py-3 [&>*]:grow">
         {children}
         {close}
       </div>
