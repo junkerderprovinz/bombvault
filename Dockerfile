@@ -30,7 +30,7 @@ ARG VERSION=dev
 RUN CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} \
     go build -ldflags "-s -w -X github.com/junkerderprovinz/bombvault/internal/api.Version=${VERSION}" -o /out/bombvault ./cmd/bombvault
 
-FROM --platform=$BUILDPLATFORM debian:stable-slim@sha256:a717a33469731894e77e912ea7d714e27c2dc38ee6554fd1a3102e92999cfc66 AS tools
+FROM --platform=$BUILDPLATFORM debian:stable-slim@sha256:13e0a2e78aa0554ad5ff66e4e260c6dbcdff807eb1f39d43b9fb0288aae88b04 AS tools
 # Debian's restic is older than 0.17, which --insecure-no-password needs, and
 # its rclone 1.60 breaks some backends (Jottacloud fails restic init), so both
 # come from upstream. fetch-tool.sh checks them against upstream's signed
@@ -48,7 +48,7 @@ COPY scripts/keys /fetch/keys
 RUN sh /fetch/fetch-tool.sh restic "${RESTIC_VERSION}" "${TARGETARCH}" /out \
     && sh /fetch/fetch-tool.sh rclone "${RCLONE_VERSION}" "${TARGETARCH}" /out
 
-FROM debian:stable-slim@sha256:a717a33469731894e77e912ea7d714e27c2dc38ee6554fd1a3102e92999cfc66 AS runtime
+FROM debian:stable-slim@sha256:13e0a2e78aa0554ad5ff66e4e260c6dbcdff807eb1f39d43b9fb0288aae88b04 AS runtime
 
 LABEL org.opencontainers.image.title="bombvault" \
       org.opencontainers.image.description="Backup & disaster recovery for Docker containers and KVM/libvirt VMs, powered by restic." \
