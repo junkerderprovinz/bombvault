@@ -1140,6 +1140,7 @@ const tr: Partial<Translations> = {
   "whatsNew.netGate": "Böyle bir denetimi olmayan uygulamalar için zamanlanmış bir yedekleme, konteyner veri gönderirken bekleyebilir.",
   "whatsNew.fdroid": "Android uygulaması F-Droid'de, buradaki F-Droid düğmesi sayfasını açar.",
   "whatsNew.locationRename": "Her hedef yeniden adlandırılabilir, birkaç bölümün paylaştığı bir klasör de.",
+  "whatsNew.gotify": "Gotify ayrı bir bildirim kanalıdır; sunucu URL'si, uygulama belirteci ve başarısızlıkta ve başarıda ayrı öncelik alır.",
   "whatsNew.overviewMoveMode": "Genel bakışı özelleştirirken kartları hafifçe sallanarak onları taşıyabileceğinizi gösterir.",
   "whatsNew.labelGlyphs": "Etiketler, Köşeler ve Animasyon gibi her seçenek için bir simge gösterir.",
 

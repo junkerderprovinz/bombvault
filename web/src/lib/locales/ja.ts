@@ -1123,6 +1123,7 @@ const ja: Partial<Translations> = {
   "whatsNew.netGate": "そうしたチェックのないアプリでは、コンテナーがデータを送信している間、スケジュールされたバックアップを待たせることができます。",
   "whatsNew.fdroid": "Android アプリは F-Droid にあり、ここの F-Droid ボタンからそのページを開けます。",
   "whatsNew.locationRename": "どの保存先も名前を変更できます。複数のセクションが共有するフォルダーも同様です。",
+  "whatsNew.gotify": "Gotify は独立した通知チャネルです。サーバー URL、アプリトークン、失敗時と成功時の優先度を設定します。",
   "whatsNew.overviewMoveMode": "概要をカスタマイズしている間は、カードが小さく揺れて移動できることを示します。",
   "whatsNew.labelGlyphs": "ラベルは、角の形状やアニメーションと同じく選択肢ごとに記号が表示されます。",
 

@@ -820,6 +820,7 @@ const id: Partial<Translations> = {
   "whatsNew.netGate": "Untuk aplikasi tanpa pemeriksaan seperti itu, pencadangan terjadwal bisa menunggu selama kontainer mengirim data.",
   "whatsNew.fdroid": "Aplikasi Android ada di F-Droid, dan tombol F-Droid di sini membuka halamannya.",
   "whatsNew.locationRename": "Setiap tujuan bisa diganti namanya, termasuk folder yang dipakai bersama beberapa bagian.",
+  "whatsNew.gotify": "Gotify adalah saluran notifikasi tersendiri, dengan URL server, token aplikasi, serta prioritas saat gagal dan saat berhasil.",
   "whatsNew.overviewMoveMode": "Saat Anda menyesuaikan Ringkasan, kartunya bergoyang pelan untuk menunjukkan bahwa Anda dapat memindahkannya.",
   "whatsNew.labelGlyphs": "Label menampilkan simbol untuk setiap pilihan, seperti Sudut dan Animasi.",
 

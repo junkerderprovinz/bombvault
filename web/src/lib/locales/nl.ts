@@ -1128,6 +1128,7 @@ const nl: Partial<Translations> = {
   "whatsNew.netGate": "Voor apps zonder zo'n controle kan een geplande back-up wachten zolang de container data verstuurt.",
   "whatsNew.fdroid": "De Android-app staat op F-Droid, en de F-Droid-knop hier opent de pagina ervan.",
   "whatsNew.locationRename": "Elke bestemming kan een andere naam krijgen, ook een map die meerdere onderdelen delen.",
+  "whatsNew.gotify": "Gotify is een eigen meldingskanaal, met een server-URL, een app-token en een prioriteit bij mislukking en een bij succes.",
   "whatsNew.overviewMoveMode": "Terwijl je het overzicht aanpast, wiegen de kaarten zachtjes om te laten zien dat je ze kunt verplaatsen.",
   "whatsNew.labelGlyphs": "Labels toont voor elke keuze een symbool, net als Hoeken en Animatie.",
 

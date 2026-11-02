@@ -1129,6 +1129,7 @@ const no: Partial<Translations> = {
   "whatsNew.netGate": "For apper uten en slik sjekk kan en planlagt sikkerhetskopi vente mens containeren sender data.",
   "whatsNew.fdroid": "Android-appen finnes på F-Droid, og F-Droid-knappen her åpner siden dens.",
   "whatsNew.locationRename": "Alle mål kan gis nytt navn, også en mappe som flere seksjoner deler.",
+  "whatsNew.gotify": "Gotify er en egen varslingskanal, med server-URL, app-token og en prioritet ved feil og en ved suksess.",
   "whatsNew.overviewMoveMode": "Mens du tilpasser oversikten, vugger kortene lett for å vise at du kan flytte dem.",
   "whatsNew.labelGlyphs": "Etiketter viser et symbol for hvert valg, som Hjørner og Animasjon.",
 

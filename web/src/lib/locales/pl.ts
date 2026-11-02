@@ -1126,6 +1126,7 @@ const pl: Partial<Translations> = {
   "whatsNew.netGate": "W aplikacjach bez takiego sprawdzania zaplanowana kopia może czekać, gdy kontener wysyła dane.",
   "whatsNew.fdroid": "Aplikacja na Androida jest w F-Droid, a przycisk F-Droid tutaj otwiera jej stronę.",
   "whatsNew.locationRename": "Każde miejsce docelowe można przemianować, także folder współdzielony przez kilka sekcji.",
+  "whatsNew.gotify": "Gotify to osobny kanał powiadomień z URL serwera, tokenem aplikacji i priorytetem przy niepowodzeniu oraz przy powodzeniu.",
   "whatsNew.overviewMoveMode": "Gdy dostosowujesz przegląd, jego karty lekko się kołyszą, pokazując, że możesz je przenosić.",
   "whatsNew.labelGlyphs": "Etykiety pokazują symbol dla każdej opcji, tak jak Narożniki i Animacja.",
 

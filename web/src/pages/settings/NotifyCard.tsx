@@ -462,7 +462,7 @@ export function NotifyCard({
         )}
       </div>
 
-      <div className="flex flex-col gap-2">
+      <div data-new="notify-gotify" className="flex flex-col gap-2">
         <ToggleRow
           label={t("notify.gotify")}
           hint={t("notify.gotifyHint")}

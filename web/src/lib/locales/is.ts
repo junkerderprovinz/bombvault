@@ -820,6 +820,7 @@ const is: Partial<Translations> = {
   "whatsNew.netGate": "Fyrir forrit án slíkrar athugunar getur áætluð afritun beðið meðan gámurinn sendir gögn.",
   "whatsNew.fdroid": "Android-appið er á F-Droid og F-Droid-hnappurinn hér opnar síðuna þess.",
   "whatsNew.locationRename": "Það má endurnefna alla áfangastaði, líka möppu sem nokkrir hlutar deila.",
+  "whatsNew.gotify": "Gotify er sérstök tilkynningarás, með slóð þjóns, forritatóka og forgangi við villu og við árangur.",
   "whatsNew.overviewMoveMode": "Á meðan þú sérsníður yfirlitið vagga spjöldin þess létt til að sýna að þú getur fært þau.",
   "whatsNew.labelGlyphs": "Merkingar sýnir tákn fyrir hvern valkost, eins og Horn og Hreyfimynd.",
 

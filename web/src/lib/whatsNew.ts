@@ -87,6 +87,13 @@ export const RELEASES: Release[] = [
         text: "whatsNew.locationRename",
       },
       {
+        id: "notify-gotify",
+        page: "/settings/notifications",
+        where: ["nav.settings", "settings.tab.notifications"],
+        way: ["/settings", "/settings/notifications"],
+        text: "whatsNew.gotify",
+      },
+      {
         id: "deferral-retry",
         page: ENTRY,
         go: "/backups",
