@@ -30,7 +30,7 @@ type locationWalk struct {
 }
 
 func newLocationWalk(t *testing.T, seed uint64) *locationWalk {
-	w := &locationWalk{t: t, rng: rand.New(rand.NewPCG(seed, seed^0x9e3779b97f4a7c15))}
+	w := &locationWalk{t: t, rng: rand.New(rand.NewPCG(seed, seed^0x9e3779b97f4a7c15))} //nolint:gosec // G404: a seed has to replay the same walk
 	w.f = w.freshFixture()
 	for i, place := range walkPlaces {
 		domain := store.PlacementDomains[i%len(store.PlacementDomains)]
@@ -530,7 +530,7 @@ func TestOneStartupRepairLeavesNoFaultAndASecondChangesNothing(t *testing.T) {
 	for seed := range uint64(40) {
 		t.Run("seed"+strconv.FormatUint(seed, 10), func(t *testing.T) {
 			f := newPlacementFixture(t)
-			broken := breakLocationModel(t, f, rand.New(rand.NewPCG(seed, seed+1)))
+			broken := breakLocationModel(t, f, rand.New(rand.NewPCG(seed, seed+1))) //nolint:gosec // G404: a seed has to replay the same damage
 
 			fixed, err := f.svc.RepairLocationModel()
 			if err != nil {

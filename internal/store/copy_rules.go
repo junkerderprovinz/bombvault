@@ -244,14 +244,16 @@ func forgetSkippedTargetTx(tx *sql.Tx, id, domain string) error {
 			var row int64
 			var raw string
 			if err := rows.Scan(&row, &raw); err != nil {
-				rows.Close()
+				rows.Close() //nolint:errcheck,gosec // the scan error is the one to report
 				return err
 			}
 			if list, err := decodeSkip(raw); err == nil {
 				pruned[row], _ = encodeSkip(slices.DeleteFunc(list, func(s string) bool { return s == id }))
 			}
 		}
-		rows.Close()
+		if err := rows.Close(); err != nil {
+			return err
+		}
 		if err := rows.Err(); err != nil {
 			return err
 		}
