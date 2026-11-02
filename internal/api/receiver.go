@@ -104,12 +104,19 @@ func (s *Service) receiverOpen(ctx context.Context, rr store.ReceivedRepo) (stri
 // failure would only repeat with the plain mode and double the wait on a
 // backend that does not answer, so it is reported as it is.
 func (s *Service) openOthersRepo(ctx context.Context, repo string, enc, plain restic.Mode, what string) (restic.Mode, error) {
-	err := s.engine.RepoOpensErr(ctx, repo, enc)
+	// restic keeps retrying the config of a backend that does not answer for up
+	// to 15 minutes, so each attempt gets the bound the other open probes have.
+	open := func(m restic.Mode) error {
+		pctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+		defer cancel()
+		return s.engine.RepoOpensErr(pctx, repo, m)
+	}
+	err := open(enc)
 	switch {
 	case err == nil:
 		return enc, nil
 	case isWrongKey(err):
-		if s.engine.RepoOpensErr(ctx, repo, plain) == nil {
+		if open(plain) == nil {
 			return plain, nil
 		}
 		// No slash in "BombVault or restic": scrubError would redact "/restic" as
