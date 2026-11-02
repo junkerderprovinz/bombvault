@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 
@@ -207,12 +208,15 @@ func TestReceiverOpenKeepsRemoteLocations(t *testing.T) {
 	svc.cfg.HostMountRoot = "/host/user"
 
 	for _, loc := range []string{"rest:http://box:8000/repo", "s3:s3.example.com/bucket", "rclone:remote:path"} {
+		eng := &signInEngine{answer: func(string, []string) error { return noRepository{} }}
+		svc.engine = eng
 		rr := makeReceivedRepo(t, appKey, strings.Repeat("b", 64), loc, 0)
 		_, _, err := svc.receiverOpen(context.Background(), rr)
-		// The repo does not exist, so opening fails, but at the open and not at
-		// path resolution.
 		if err != nil && strings.Contains(err.Error(), "absolute host path") {
 			t.Errorf("%q is a backend URL and must not be path-resolved: %v", loc, err)
+		}
+		if !slices.Equal(eng.probed, []string{loc}) {
+			t.Errorf("%q reached restic as %q", loc, eng.probed)
 		}
 	}
 }
