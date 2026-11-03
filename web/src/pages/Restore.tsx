@@ -1,6 +1,7 @@
 // The Restore page. Most restores bring one entry back to one moment, so the
 // page opens on the entries and the backups of the one that is picked. The
-// rare ways, the emergency and the other sources, wait at the bottom.
+// compose stacks, whose containers come back together, follow, and the rare
+// ways, the emergency and the other sources, wait at the bottom.
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type MouseEvent, type ReactNode } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
@@ -13,7 +14,7 @@ import { EmptyStateIcon } from "../components/EmptyStateIcon";
 import { IconArchive, IconForward, IconSearch, IconSelectAll } from "../components/glyphs";
 import { InfoBubble } from "../components/InfoBubble";
 import { InstanceWindow } from "./instances/InstanceWindow";
-import { IconCheck, IconDownload, IconFolder, IconRecovery, IconRestore } from "../components/navGlyphs";
+import { IconCheck, IconContainers, IconDownload, IconFolder, IconRecovery, IconRestore } from "../components/navGlyphs";
 import { PageAction, PageActions } from "../components/PageActions";
 import { PageTitle } from "../components/PageTitle";
 import { ProgressBar } from "../components/ProgressBar";
@@ -27,13 +28,14 @@ import { OldFolderWindow } from "../components/restore/OldFolderWindow";
 import { PlaceChecks } from "../components/restore/PlaceChecks";
 import { RestoreManyWindow } from "../components/restore/RestoreManyWindow";
 import { RestoreWindow, type RestoreAsk } from "../components/restore/RestoreWindow";
+import { StackWindow, membersLine } from "../components/restore/StackWindow";
 import { RestoreCancelButton } from "../components/RestoreCancelButton";
 import { Rows } from "../components/storage/rows";
 import { getEmergency, getSettings, listItems, type BackupItem, type EmergencyState } from "../lib/api";
 import { ATTENTION_CHANGED_EVENT } from "../lib/attention";
 import { hueVars } from "../lib/appearance";
 import { ENTRY_KIND, ENTRY_KINDS, type EntryKind } from "../lib/backupEntry";
-import { entriesOf, entryTarget, itemId, itemProgressKey, listedItems } from "../lib/backupList";
+import { entriesOf, entryTarget, itemId, itemProgressKey, listedItems, stacksOf } from "../lib/backupList";
 import { useT, type TranslationKey } from "../lib/i18n";
 import { PAGE_SHELL_RESPONSIVE } from "../lib/pageShell";
 import { anyActive, useProgress, type ProgressState } from "../lib/progress";
@@ -336,6 +338,7 @@ export function Restore() {
   const [hostMountRoot, setHostMountRoot] = useState("/host/user");
   const [keyState, setKeyState] = useState<EmergencyState | null>(null);
   const [many, setMany] = useState<BackupItem[] | null>(null);
+  const [stackOpen, setStackOpen] = useState<string | null>(null);
 
   // The emergency window can take a key over or give it back, so the key is
   // read again each time it closes.
@@ -396,6 +399,7 @@ export function Restore() {
     );
   }, [items, t, lang]);
   const restorable = entries.filter(hasBackups);
+  const stacks = useMemo(() => stacksOf(listedItems(items ?? []), lang), [items, lang]);
 
   // The page opens on the entry that most likely needs a restore: one whose
   // recommended backup is not its newest.
@@ -410,6 +414,12 @@ export function Restore() {
       (kind === null || item.kind === kind) &&
       `${entryName(item, t)} ${t(KIND_LABEL[item.kind])}`.toLowerCase().includes(needle)
   );
+  // A stack is made of containers, so it stands with them, and the search
+  // finds it by the name of any member.
+  const shownStacks =
+    kind === null || kind === "container"
+      ? stacks.filter((stack) => [stack.project, ...stack.members.map((m) => m.name)].some((name) => name.toLowerCase().includes(needle)))
+      : [];
   const joinable = shown.filter(joinsMany).map(itemId);
   const joinableKey = joinable.join(" ");
   const selection = useRowSelection(useMemo(() => (joinableKey === "" ? [] : joinableKey.split(" ")), [joinableKey]));
@@ -453,6 +463,9 @@ export function Restore() {
       {source === "oldFolder" && <OldFolderWindow hostMountRoot={hostMountRoot} onClose={() => setSource(null)} />}
       {source === "appdata" && <AppdataWindow hostMountRoot={hostMountRoot} onClose={() => setSource(null)} />}
       {many && <RestoreManyWindow items={many} onClose={() => setMany(null)} />}
+      {stackOpen !== null && stacks.length > 0 && (
+        <StackWindow stacks={stacks} initial={stackOpen} onClose={() => setStackOpen(null)} onStarted={load} />
+      )}
       <NotStartedNotice />
 
       {failed ? (
@@ -570,6 +583,24 @@ export function Restore() {
 
               {picked && !selection.selecting && (
                 <PickedEntry key={itemId(picked)} item={picked} reveal={pick !== null} hueIndex={nextHue()} />
+              )}
+
+              {shownStacks.length > 0 && (
+                <Card title={t("stack.title")} hint={t("stack.hint")} hueIndex={nextHue()}>
+                  <div data-testid="stacks">
+                    <Rows>
+                      {shownStacks.map((stack) => (
+                        <Way
+                          key={stack.project}
+                          glyph={<IconContainers />}
+                          name={stack.project}
+                          sub={membersLine(stack, t)}
+                          onOpen={() => setStackOpen(stack.project)}
+                        />
+                      ))}
+                    </Rows>
+                  </div>
+                </Card>
               )}
             </>
           )}

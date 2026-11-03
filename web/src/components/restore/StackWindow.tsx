@@ -10,55 +10,24 @@ import { offsiteTargetLabel, useOffsiteTargets } from "../../lib/useOffsiteTarge
 import { restoreBlockReason, useRestoreCheck } from "../../lib/useRestoreCheck";
 import { stackRestoreQuestion, useStackRestore } from "../../lib/useStackRestore";
 import { InstanceWindow } from "../../pages/instances/InstanceWindow";
-import { Card, ToggleRow } from "../../pages/settings/shared";
+import { ToggleRow } from "../../pages/settings/shared";
 import { Badge } from "../Badge";
+import { ListNote } from "../backups/ListNotes";
 import { Button } from "../Button";
 import { IconBack, IconForward } from "../glyphs";
-import { IconContainers, IconRestore } from "../navGlyphs";
+import { IconRestore } from "../navGlyphs";
 import { ProgressBar } from "../ProgressBar";
 import { RadioMark } from "../RadioMark";
 import { RestoreCancelButton } from "../RestoreCancelButton";
-import { RestoreCheckPanel } from "../restore/RestoreCheckPanel";
-import { RuntimeRetry } from "../restore/RuntimeRetry";
 import { SourceToggle, isOffsiteSource, type RepoSource } from "../SourceToggle";
-import { ListNote } from "./ListNotes";
+import { RestoreCheckPanel } from "./RestoreCheckPanel";
+import { RuntimeRetry } from "./RuntimeRetry";
 
 type T = (key: TranslationKey, n?: number) => string;
 
-function membersLine(stack: StackGroup, t: T): string {
+/** membersLine counts the members of a stack and names them. */
+export function membersLine(stack: StackGroup, t: T): string {
   return `${t("stack.members", stack.members.length)} · ${stack.members.map((m) => m.name).join(", ")}`;
-}
-
-/** StacksCard lists the compose projects that can come back as one. */
-export function StacksCard({ stacks, onRestore, t }: { stacks: StackGroup[]; onRestore: (project: string) => void; t: T }) {
-  return (
-    <Card title={t("stack.title")} hint={t("backups.stack.hint")} hueIndex={1}>
-      <ul data-testid="stacks">
-        {stacks.map((stack) => (
-          <li
-            key={stack.project}
-            className="flex min-h-[50px] flex-wrap items-center gap-3 border-t border-carbon-border px-1.5 py-2 first:border-t-0"
-          >
-            <span className="flex h-[34px] w-[34px] flex-none items-center justify-center rounded-control bg-carbon-surface2 text-accentText [&_svg]:h-[18px] [&_svg]:w-[18px]">
-              <IconContainers />
-            </span>
-            <span className="flex min-w-0 flex-[1_1_10rem] flex-col">
-              <span className="truncate text-sm font-semibold text-carbon-text">{stack.project}</span>
-              <span className="text-xs text-carbon-textMuted wrap-break-word">{membersLine(stack, t)}</span>
-            </span>
-            <Button
-              label={t("backups.stack.restore")}
-              labelKey={null}
-              glyph={<IconRestore />}
-              tone="subtle"
-              onClick={() => onRestore(stack.project)}
-              className="ms-auto"
-            />
-          </li>
-        ))}
-      </ul>
-    </Card>
-  );
 }
 
 type Step = "pick" | "check" | "run";
@@ -174,7 +143,7 @@ export function StackWindow({
       <>
         <Button label={t("common.back")} labelKey={null} glyph={<IconBack />} tone="subtle" onClick={() => setStep("pick")} disabled={busy} />
         <Button
-          label={t("backups.stack.restore")}
+          label={t("stack.restore")}
           labelKey={null}
           glyph={<IconRestore />}
           tone="accent"
@@ -196,8 +165,8 @@ export function StackWindow({
 
   return (
     <InstanceWindow
-      title={t("backups.stack.restore")}
-      facts={step === "pick" ? t("backups.stack.intro") : `${stack.project} · ${place}`}
+      title={t("stack.restore")}
+      facts={step === "pick" ? t("stack.intro") : `${stack.project} · ${place}`}
       footer={footer}
       onClose={onClose}
     >
@@ -237,12 +206,12 @@ export function StackWindow({
                   .replace("{place}", () => place)
                   .replace("{home}", () => local)}
               </span>
-              <Button label={t("backups.stack.useLocal")} labelKey="backups.stack.useLocal" onClick={takeLocalFolder} />
+              <Button label={t("stack.useLocal")} labelKey="stack.useLocal" onClick={takeLocalFolder} />
             </ListNote>
           )}
           <ToggleRow
             label={t("stack.startInOrder")}
-            hint={t("backups.stack.orderHint")}
+            hint={t("stack.orderHint")}
             checked={startInOrder}
             onChange={setStartInOrder}
           />

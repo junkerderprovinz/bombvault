@@ -1,11 +1,11 @@
 // @vitest-environment jsdom
-// The stacks card and the window a stack is restored through: which stack and
-// from where, the check before the restore, and the members coming back.
+// The window a stack is restored through: which stack and from where, the
+// check before the restore, and the members coming back.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import type { BackupItem, CheckLine, Run } from "../../lib/api";
 import type { StackGroup } from "../../lib/backupList";
-import { countText, en } from "../../lib/i18n";
+import { en } from "../../lib/i18n";
 import { renderWithProviders } from "../../lib/placement.testsupport";
 import { RESTORE_NO_RUNTIME } from "../../lib/runReason";
 import { DESKTOP_QUERY } from "../../lib/useMediaQuery";
@@ -24,7 +24,7 @@ vi.mock("../../lib/api", async (importOriginal) => ({
   getSettings: () => Promise.resolve({ ok: true, platform: "unraid" }),
 }));
 
-const { StacksCard, StackWindow } = await import("./StackWindow");
+const { StackWindow } = await import("./StackWindow");
 
 window.matchMedia = ((query: string) => ({
   matches: query === DESKTOP_QUERY,
@@ -82,7 +82,6 @@ function restoreRun(target: string, over: Partial<Run> = {}): Run {
   return { id: `new-${target}`, kind: "restore", domain: "container", target, status: "success", error: "", ...over } as Run;
 }
 
-const t = (key: keyof typeof en, n?: number) => countText(en[key], "en", n);
 const onClose = vi.fn();
 const onStarted = vi.fn();
 
@@ -115,20 +114,6 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   vi.useRealTimers();
-});
-
-describe("the stacks card", () => {
-  it("names each stack with its members and offers to restore it", async () => {
-    const onRestore = vi.fn();
-    renderWithProviders(<StacksCard stacks={STACKS} onRestore={onRestore} t={t} />);
-    const rows = within(screen.getByTestId("stacks")).getAllByRole("listitem");
-    expect(rows.map((row) => row.textContent)).toEqual([
-      "immich2 containers · immich, immich_postgresRestore stack",
-      "paperless2 containers · paperless, paperless-redisRestore stack",
-    ]);
-    fireEvent.click(within(rows[1]).getByRole("button", { name: "Restore stack" }));
-    expect(onRestore).toHaveBeenCalledWith("paperless");
-  });
 });
 
 describe("the stack window", () => {
