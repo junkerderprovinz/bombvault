@@ -1,0 +1,1 @@
+BombVault 10.4.1 packt eine VM mit Unraid-Snapshots bis zur letzten Backing-Datei ein und lässt bei der Live-Sicherung die Finger von ihren Snapshots. Nach dem Aufräumen ist das lokale Repository sofort wieder für andere lesbar, und Stacks holst du auf der Seite Wiederherstellung zurück.
