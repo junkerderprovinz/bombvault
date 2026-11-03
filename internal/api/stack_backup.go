@@ -81,6 +81,9 @@ func (s *Service) backupStackDir(ctx context.Context, project, dir string) error
 		return fmt.Errorf("stack %s: %w", project, err)
 	}
 	s.applyRetention(ctx, repo, settings, mode, tagIdentity(tag), "containers", anomalyScope{})
+	// A round backs the stacks up after its last container, and without a
+	// keep-policy no batched prune follows to relax what this wrote.
+	makeLocalRepoReadable(repo, s.cfg.DataDir)
 	return nil
 }
 
