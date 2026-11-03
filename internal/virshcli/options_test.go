@@ -68,3 +68,15 @@ func TestDomainNamesAreNeverReadAsOptions(t *testing.T) {
 		}
 	}
 }
+
+// A live backup's overlay sits on top of whatever chain the disk has, such as
+// the overlays of Unraid's own snapshots, and only the overlay may go back.
+func TestBlockCommitMergesOnlyTheOverlayIntoTheImageBelowIt(t *testing.T) {
+	c, file := recordingVirsh(t)
+	if err := c.BlockCommitActivePivot(context.Background(), "win", "vda"); err != nil {
+		t.Fatal(err)
+	}
+	if calls := recordedCalls(t, file); len(calls) != 1 || !strings.Contains(" "+calls[0]+" ", " --shallow ") {
+		t.Fatalf("calls = %q, want one blockcommit with --shallow", calls)
+	}
+}

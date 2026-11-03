@@ -98,8 +98,9 @@ type Virsh interface {
 	// (the VM keeps running, writing to a fresh overlay). skipDevs lists target
 	// devices to exclude (cdrom / read-only) via --diskspec <dev>,snapshot=no.
 	SnapshotCreateDiskOnly(ctx context.Context, name, snapName string, quiesce bool, skipDevs []string) error
-	// BlockCommitActivePivot merges the active overlay back into its base and
-	// pivots the running VM onto the base (blockcommit --active --pivot --wait).
+	// BlockCommitActivePivot merges the active overlay back into the image
+	// right below it and pivots the running VM onto that image (blockcommit
+	// --active --shallow --pivot --wait).
 	BlockCommitActivePivot(ctx context.Context, name, device string) error
 	// GuestAgentPing reports whether the qemu guest agent answers in the VM.
 	GuestAgentPing(ctx context.Context, name string) bool
