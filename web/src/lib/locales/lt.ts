@@ -821,6 +821,7 @@ const lt: Partial<Translations> = {
   "whatsNew.fdroid": "Android programėlė yra F-Droid, o čia esantis F-Droid mygtukas atveria jos puslapį.",
   "whatsNew.locationRename": "Kiekvieną paskirties vietą galima pervadinti, taip pat aplanką, kurį naudoja kelios sekcijos.",
   "whatsNew.gotify": "Gotify yra atskiras pranešimų kanalas su serverio URL, programos raktu ir prioritetu nesėkmės bei sėkmės atveju.",
+  "whatsNew.restoreStacks": "Compose krūvas atkuri iš atskiros kortelės puslapyje Atkūrimas.",
   "whatsNew.overviewMoveMode": "Kol tinkini apžvalgą, jos kortelės švelniai siūbuoja, kad matytum, jog jas gali perkelti.",
   "whatsNew.labelGlyphs": "Etiketės rodo kiekvieno pasirinkimo simbolį, kaip ir Kampai bei Animacija.",
 

@@ -821,6 +821,7 @@ const et: Partial<Translations> = {
   "whatsNew.fdroid": "Androidi rakendus on F-Droidis ja siinne F-Droidi nupp avab selle lehe.",
   "whatsNew.locationRename": "Iga sihtkohta saab ümber nimetada, ka kausta, mida jagavad mitu jaotist.",
   "whatsNew.gotify": "Gotify on eraldi teavituskanal, millel on serveri URL, rakenduse tunnus ning prioriteet nurjumisel ja õnnestumisel.",
+  "whatsNew.restoreStacks": "Compose'i virnad taastad nende oma kaardilt lehel Taastamine.",
   "whatsNew.overviewMoveMode": "Kui sa ülevaadet kohandad, kõiguvad selle kaardid kergelt, et näidata, et saad neid liigutada.",
   "whatsNew.labelGlyphs": "Sildid näitab iga valiku juures sümbolit, nagu Nurgad ja Animatsioon.",
 

@@ -1142,6 +1142,7 @@ const ar: Partial<Translations> = {
   "whatsNew.fdroid": "تطبيق Android متوفر على F-Droid، وزر F-Droid هنا يفتح صفحته.",
   "whatsNew.locationRename": "يمكن إعادة تسمية كل وجهة، ومنها مجلد تتشاركه عدة أقسام.",
   "whatsNew.gotify": "Gotify قناة إشعارات مستقلة، مع عنوان URL للخادم ورمز التطبيق وأولوية لكل من الفشل والنجاح.",
+  "whatsNew.restoreStacks": "تُستعاد الـ Stacks الخاصة بـ Compose من بطاقة خاصة بها في صفحة الاستعادة.",
   "whatsNew.overviewMoveMode": "أثناء تخصيص «نظرة عامة» تتمايل بطاقاتها برفق لتُظهر أنه يمكنك نقلها.",
   "whatsNew.labelGlyphs": "تعرض «التسميات» رمزًا لكل خيار، مثل «الزوايا» و«الرسوم المتحركة».",
 

@@ -586,7 +586,7 @@ export function Restore() {
               )}
 
               {shownStacks.length > 0 && (
-                <Card title={t("stack.title")} hint={t("stack.hint")} hueIndex={nextHue()}>
+                <Card title={t("stack.title")} hint={t("stack.hint")} hueIndex={nextHue()} newId="restore-stacks">
                   <div data-testid="stacks">
                     <Rows>
                       {shownStacks.map((stack) => (

@@ -1133,6 +1133,7 @@ const he: Partial<Translations> = {
   "whatsNew.fdroid": "אפליקציית Android זמינה ב-F-Droid, וכפתור F-Droid כאן פותח את הדף שלה.",
   "whatsNew.locationRename": "אפשר לשנות את השם של כל יעד, גם של תיקייה שכמה מקטעים חולקים.",
   "whatsNew.gotify": "Gotify הוא ערוץ התראות בפני עצמו, עם כתובת השרת, אסימון האפליקציה ועדיפות בכישלון ובהצלחה.",
+  "whatsNew.restoreStacks": "Stacks של Compose משוחזרים מכרטיס משלהם בדף שחזור.",
   "whatsNew.overviewMoveMode": "בזמן התאמה אישית של הסקירה, הכרטיסים שלה מתנדנדים קלות כדי להראות שאפשר להזיז אותם.",
   "whatsNew.labelGlyphs": "“תוויות” מציגה סמל לכל בחירה, כמו “פינות” ו“אנימציה”.",
 

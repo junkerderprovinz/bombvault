@@ -1133,6 +1133,7 @@ const it: Partial<Translations> = {
   "whatsNew.fdroid": "L'app Android è su F-Droid, e il pulsante F-Droid qui apre la sua scheda.",
   "whatsNew.locationRename": "Ogni destinazione si può rinominare, anche una cartella condivisa da più sezioni.",
   "whatsNew.gotify": "Gotify è un canale di notifica a sé, con l'URL del server, un token dell'applicazione e una priorità in caso di errore e una in caso di successo.",
+  "whatsNew.restoreStacks": "Gli stack di Compose si ripristinano dalla loro scheda nella pagina Ripristino.",
   "whatsNew.overviewMoveMode": "Mentre personalizzi la panoramica, le sue schede ondeggiano leggermente per mostrare che puoi spostarle.",
   "whatsNew.labelGlyphs": "Etichette mostra un simbolo per ogni scelta, come Angoli e Animazione.",
 

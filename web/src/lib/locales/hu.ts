@@ -1134,6 +1134,7 @@ const hu: Partial<Translations> = {
   "whatsNew.fdroid": "Az Android-alkalmazás elérhető az F-Droidon, az itteni F-Droid gomb megnyitja az oldalát.",
   "whatsNew.locationRename": "Minden cél átnevezhető, egy több szakasz által közösen használt mappa is.",
   "whatsNew.gotify": "A Gotify önálló értesítési csatorna, szerver URL-lel, alkalmazás-tokennel, valamint külön prioritással hibánál és sikernél.",
+  "whatsNew.restoreStacks": "A Compose stackeket a Visszaállítás oldal saját kártyájáról állítod vissza.",
   "whatsNew.overviewMoveMode": "Amíg testreszabod az Áttekintést, a kártyái finoman ringatóznak, jelezve, hogy áthelyezheted őket.",
   "whatsNew.labelGlyphs": "A Feliratok minden választáshoz szimbólumot mutat, mint a Sarkok és az Animáció.",
 

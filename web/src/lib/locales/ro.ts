@@ -1131,6 +1131,7 @@ const ro: Partial<Translations> = {
   "whatsNew.fdroid": "Aplicația Android este pe F-Droid, iar butonul F-Droid de aici îi deschide pagina.",
   "whatsNew.locationRename": "Orice destinație poate fi redenumită, inclusiv un dosar pe care îl împart mai multe secțiuni.",
   "whatsNew.gotify": "Gotify este un canal de notificare separat, cu URL-ul serverului, tokenul aplicației și o prioritate la eșec și una la succes.",
+  "whatsNew.restoreStacks": "Stack-urile Compose se restaurează dintr-un card propriu pe pagina Restaurare.",
   "whatsNew.overviewMoveMode": "Cât timp personalizezi prezentarea, cardurile ei se leagănă ușor ca să arate că le poți muta.",
   "whatsNew.labelGlyphs": "Etichete afișează un simbol pentru fiecare opțiune, ca Colțuri și Animație.",
 

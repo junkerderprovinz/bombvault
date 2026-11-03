@@ -1133,6 +1133,7 @@ const fr: Partial<Translations> = {
   "whatsNew.fdroid": "L'application Android est sur F-Droid, et le bouton F-Droid ici ouvre sa fiche.",
   "whatsNew.locationRename": "Chaque destination peut être renommée, y compris un dossier que plusieurs sections partagent.",
   "whatsNew.gotify": "Gotify est un canal de notification à part entière, avec l'URL du serveur, un jeton de l'application et une priorité en cas d'échec et une en cas de réussite.",
+  "whatsNew.restoreStacks": "Les stacks Compose se restaurent depuis leur propre carte sur la page Restauration.",
   "whatsNew.overviewMoveMode": "Pendant que vous personnalisez l'aperçu, ses cartes oscillent doucement pour montrer que vous pouvez les déplacer.",
   "whatsNew.labelGlyphs": "Libellés affiche un symbole pour chaque choix, comme Angles et Animation.",
 

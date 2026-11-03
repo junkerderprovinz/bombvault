@@ -1127,6 +1127,7 @@ const pl: Partial<Translations> = {
   "whatsNew.fdroid": "Aplikacja na Androida jest w F-Droid, a przycisk F-Droid tutaj otwiera jej stronę.",
   "whatsNew.locationRename": "Każde miejsce docelowe można przemianować, także folder współdzielony przez kilka sekcji.",
   "whatsNew.gotify": "Gotify to osobny kanał powiadomień z URL serwera, tokenem aplikacji i priorytetem przy niepowodzeniu oraz przy powodzeniu.",
+  "whatsNew.restoreStacks": "Stacki Compose przywracasz z osobnej karty na stronie Przywracanie.",
   "whatsNew.overviewMoveMode": "Gdy dostosowujesz przegląd, jego karty lekko się kołyszą, pokazując, że możesz je przenosić.",
   "whatsNew.labelGlyphs": "Etykiety pokazują symbol dla każdej opcji, tak jak Narożniki i Animacja.",
 
