@@ -3575,6 +3575,45 @@ UPDATE offsite_targets SET
   PRIMARY KEY (domain, repo)
 );`,
 	},
+	{
+		// An entry's own plan counts by itself. Where the switch that gated
+		// plans was off, the stored ones did nothing, so they go before they
+		// would start to count.
+		version: ownPlansCountMigration,
+		name:    "own_plans_count",
+		report:  inertOwnPlanLines,
+		sql: `UPDATE targets      SET schedule_cadence = '' WHERE (SELECT per_item_schedules FROM settings) = 0;
+UPDATE vms          SET schedule_cadence = '' WHERE (SELECT per_item_schedules FROM settings) = 0;
+UPDATE file_sets    SET schedule_cadence = '' WHERE (SELECT per_item_schedules FROM settings) = 0;
+UPDATE zfs_datasets SET schedule_cadence = '' WHERE (SELECT per_item_schedules FROM settings) = 0;`,
+	},
+}
+
+// inertOwnPlanLines names each own plan the switch left unused, which the
+// own_plans_count migration clears.
+func inertOwnPlanLines(tx *sql.Tx) ([]string, error) {
+	var on int
+	if err := tx.QueryRow(`SELECT COALESCE(MAX(per_item_schedules), 1) FROM settings`).Scan(&on); err != nil || on != 0 {
+		return nil, err
+	}
+	rows, err := tx.Query(`SELECT 'container', container_name, schedule_cadence FROM targets WHERE schedule_cadence <> ''
+UNION ALL SELECT 'VM', name, schedule_cadence FROM vms WHERE schedule_cadence <> ''
+UNION ALL SELECT 'folder set', name, schedule_cadence FROM file_sets WHERE schedule_cadence <> ''
+UNION ALL SELECT 'ZFS item', dataset, schedule_cadence FROM zfs_datasets WHERE schedule_cadence <> ''
+ORDER BY 1 COLLATE NOCASE, 2`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close() //nolint:errcheck // read-only
+	var lines []string
+	for rows.Next() {
+		var kind, name, cadence string
+		if err := rows.Scan(&kind, &name, &cadence); err != nil {
+			return nil, err
+		}
+		lines = append(lines, fmt.Sprintf("schedule: cleared the unused own plan %q of %s %s, so it keeps following its section", cadence, kind, name))
+	}
+	return lines, rows.Err()
 }
 
 // droppedSkipLines names each id droppedSkipSQL takes out, once per domain, in
@@ -3918,6 +3957,10 @@ const removedSkipsMigration = 640
 
 // formerOwnFoldersMigration numbers the places own folders moved away from.
 const formerOwnFoldersMigration = 650
+
+// ownPlansCountMigration numbers the clean-up that lets an entry's own plan
+// count without a switch.
+const ownPlansCountMigration = 670
 
 // oneLineColumns are the names and locations the recovery kit prints.
 var oneLineColumns = []struct {

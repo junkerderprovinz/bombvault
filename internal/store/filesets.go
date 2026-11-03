@@ -24,9 +24,8 @@ type FileSet struct {
 	// ScheduleCadence is the set's optional per-item schedule. Empty follows the
 	// Folders domain schedule. A cadence gives the set its own entry and takes
 	// it out of the domain run and Backup Everything; "off" excludes it from
-	// scheduling. It only applies while per-item schedules are switched on.
-	// Only SetFileSetScheduleCadence writes it, so editing the name or path
-	// cannot drop it.
+	// scheduling. Only SetFileSetScheduleCadence writes it, so editing the name
+	// or path cannot drop it.
 	ScheduleCadence string
 	// Repo is the ID of the set's own named repository (a RoleRepo row in
 	// offsite_targets), not a location. Empty means the Folders domain

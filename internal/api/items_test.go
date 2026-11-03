@@ -264,7 +264,6 @@ func TestListItemsScheduledAndPausedStates(t *testing.T) {
 	docker := &fakeServiceDocker{listOut: []dockercli.ContainerInfo{runningContainer("plex")}}
 	h, st, _ := newItemsRouter(t, docker, fakeVirsh{})
 	enableEveryKind(t, st, func(s *store.Settings) {
-		s.PerItemSchedules = true
 		s.ContainersSchedule = "daily 02:30"
 		s.FilesSchedule = "weekly mon 04:00"
 		s.ConfigSchedule = "daily 06:00"

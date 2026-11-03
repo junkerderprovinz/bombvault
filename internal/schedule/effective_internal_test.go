@@ -12,7 +12,6 @@ import (
 func baseSettings() store.Settings {
 	return store.Settings{
 		FilesEnabled:       true,
-		PerItemSchedules:   true,
 		FilesSchedule:      "off",
 		EverythingSchedule: "off",
 	}
@@ -94,16 +93,6 @@ func TestEffectiveSectionPlanTakesTheSetOutOfTheFullBackup(t *testing.T) {
 	got := EffectiveFileSetSchedule(set(true, ""), s)
 	if got.Kind != EffectiveDomain || got.Spec != "weekly mon 02:00" {
 		t.Fatalf("a section with its own plan runs only on it, got %q / %q", got.Kind, got.Spec)
-	}
-}
-
-func TestEffectiveIgnoresOverridesWhilePerItemSchedulesIsOff(t *testing.T) {
-	s := baseSettings()
-	s.PerItemSchedules = false
-	s.FilesSchedule = "weekly mon 02:00"
-	got := EffectiveFileSetSchedule(set(true, "daily 03:00"), s)
-	if got.Kind != EffectiveDomain {
-		t.Fatalf("with the feature toggle off an override must be inert, got %q", got.Kind)
 	}
 }
 

@@ -150,7 +150,7 @@ func TestEmptyDomainRunSkipsJobAndBatchedTail(t *testing.T) {
 				// run nor on an entry of its own.
 				return []store.Target{{ContainerName: "plex", IncludeInSchedule: true, ScheduleCadence: "off"}}, nil
 			},
-			settings: store.Settings{ContainersEnabled: true, ContainersSchedule: "daily 03:00", PerItemSchedules: true},
+			settings: store.Settings{ContainersEnabled: true, ContainersSchedule: "daily 03:00"},
 		},
 		{
 			domain: "vms",
@@ -160,7 +160,7 @@ func TestEmptyDomainRunSkipsJobAndBatchedTail(t *testing.T) {
 				})
 			},
 			listFn:   func() ([]store.Target, error) { return nil, nil },
-			settings: store.Settings{VMsEnabled: true, VMsSchedule: "daily 03:00", PerItemSchedules: true},
+			settings: store.Settings{VMsEnabled: true, VMsSchedule: "daily 03:00"},
 		},
 		{
 			domain: "files",

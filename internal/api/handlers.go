@@ -628,8 +628,7 @@ type containerView struct {
 	// positive value runs earlier, 0 means unordered (overdue-first tiebreak).
 	BackupOrder int `json:"backupOrder"`
 	// ScheduleCadence is the container's optional per-item schedule override (#121);
-	// "" means it follows the containers domain schedule. Only takes effect when the
-	// perItemSchedules setting is on.
+	// "" means it follows the containers domain schedule.
 	ScheduleCadence string `json:"scheduleCadence"`
 	// LastUpdateCheck / LastUpdateResult: when the post-backup update check last
 	// completed (unix seconds, 0 = never) and its outcome ('' | 'up-to-date' |
@@ -2523,11 +2522,9 @@ type settingsView struct {
 	// ContainerSnapshots reads every container on ZFS without a choice of its
 	// own from a snapshot. A pointer for the same reason.
 	ContainerSnapshots *bool `json:"containerSnapshots"`
-	// PerItemSchedules opts into per-container/VM schedule overrides (#121). Default
-	// false: the per-domain schedule stays authoritative for every item and the UI
-	// is unchanged. When on, an included item with a non-empty scheduleCadence runs
-	// on its own cadence; an item with an empty override follows its domain schedule.
-	PerItemSchedules bool `json:"perItemSchedules"`
+	// PerItemSchedules is accepted and ignored: a tab still running an older
+	// build posts it, and the strict decoder would refuse the whole save over it.
+	PerItemSchedules *bool `json:"perItemSchedules,omitempty"`
 	// Private container-registry credentials for the post-backup update pull
 	// (#106). Per-entry the token follows the house blank-and-report-is-set
 	// contract (see MetricsToken): GET returns every token blank with TokenSet
@@ -2695,7 +2692,6 @@ func toView(s store.Settings) settingsView {
 		ReceiverEnabled:             s.ReceiverEnabled,
 		RestartHealthWait:           s.RestartHealthWait,
 		RestartHealthTimeoutSec:     s.RestartHealthTimeoutSec,
-		PerItemSchedules:            s.PerItemSchedules,
 		FleetEnabled:                s.FleetEnabled,
 		PullEnabled:                 s.PullEnabled,
 		DBDumpsEnabled:              &s.DBDumpsEnabled,
@@ -3354,7 +3350,6 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		cur.ReceiverEnabled = v.ReceiverEnabled
 		cur.RestartHealthWait = v.RestartHealthWait
 		cur.RestartHealthTimeoutSec = clampHealthTimeoutSec(v.RestartHealthTimeoutSec)
-		cur.PerItemSchedules = v.PerItemSchedules
 		cur.FleetEnabled = v.FleetEnabled
 		cur.PullEnabled = v.PullEnabled
 		// An absent switch keeps the stored one: an older tab posts a body

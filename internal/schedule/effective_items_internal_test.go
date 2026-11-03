@@ -23,7 +23,6 @@ func containerSettings() store.Settings {
 	return store.Settings{
 		ContainersEnabled:  true,
 		VMsEnabled:         true,
-		PerItemSchedules:   true,
 		ContainersSchedule: "off",
 		VMsSchedule:        "off",
 		EverythingSchedule: "off",
@@ -141,20 +140,6 @@ func TestItemOfASectionWithItsOwnPlanLeavesTheFullBackup(t *testing.T) {
 	}
 }
 
-// Per-item overrides are only consulted when the setting is on. With it off, an
-// item carrying a stale override still follows its domain, and a report that
-// honoured the override anyway would describe a schedule nobody runs.
-func TestItemOverrideIgnoredWhenPerItemSchedulesIsOff(t *testing.T) {
-	s := containerSettings()
-	s.PerItemSchedules = false
-	s.ContainersSchedule = "daily 02:00"
-	s.VMsSchedule = "daily 02:00"
-
-	c, v := bothKinds(t, s, true, "off")
-	wantKind(t, c, EffectiveDomain, "container, override ignored")
-	wantKind(t, v, EffectiveDomain, "vm, override ignored")
-}
-
 func TestFlashAndConfigFollowTheirKindAndBackupEverything(t *testing.T) {
 	off := store.Settings{FlashSchedule: "daily 02:00", ConfigSchedule: "daily 02:00", EverythingSchedule: "daily 05:00"}
 	if got := EffectiveFlashSchedule(off); got.Kind != EffectiveNone || got.Reason != NoneDomainOff {
@@ -164,9 +149,9 @@ func TestFlashAndConfigFollowTheirKindAndBackupEverything(t *testing.T) {
 		t.Fatalf("config with its kind off: got %+v", got)
 	}
 
-	// Per-item schedules are on and change nothing: neither has an override.
+	// Neither has an override, so only the kind and the full backup count.
 	s := store.Settings{
-		FlashEnabled: true, ConfigEnabled: true, PerItemSchedules: true,
+		FlashEnabled: true, ConfigEnabled: true,
 		FlashSchedule: "off", ConfigSchedule: "weekly sun 03:00", EverythingSchedule: "daily 05:00",
 	}
 	want := EffectiveSchedule{Kind: EffectiveEverything, Spec: "daily 05:00"}

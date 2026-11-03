@@ -1609,7 +1609,6 @@ func mergeImportedSettings(existing store.Settings, v settingsView) store.Settin
 	out.ReceiverEnabled = v.ReceiverEnabled
 	out.RestartHealthWait = v.RestartHealthWait
 	out.RestartHealthTimeoutSec = clampHealthTimeoutSec(v.RestartHealthTimeoutSec)
-	out.PerItemSchedules = v.PerItemSchedules
 	// An export written before the switch existed carries no value for it, and
 	// taking that as "off" would stop dumping databases on the instance the
 	// file is applied to.

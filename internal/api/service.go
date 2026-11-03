@@ -3460,7 +3460,7 @@ func domainCoverage(ownCadence, everythingCadence string) (period int64, covered
 // shortest of those is the window, so a section backed up only by per-item
 // schedules still turns overdue when its backups stop.
 func (s *Service) domainWindow(domain, ownCadence string, settings store.Settings) (period int64, coveredBy string) {
-	if period, coveredBy = domainCoverage(ownCadence, settings.EverythingSchedule); period > 0 || !settings.PerItemSchedules {
+	if period, coveredBy = domainCoverage(ownCadence, settings.EverythingSchedule); period > 0 {
 		return period, coveredBy
 	}
 	var effs []schedule.EffectiveSchedule
@@ -13089,8 +13089,7 @@ type VMView struct {
 	LastBackup        *int64 `json:"lastBackup"`
 	LastBackupStarted *int64 `json:"lastBackupStarted"`
 	// ScheduleCadence is the VM's optional per-item schedule override (#121); ""
-	// means it follows the VMs domain schedule. Only takes effect when the
-	// perItemSchedules setting is on.
+	// means it follows the VMs domain schedule.
 	ScheduleCadence string        `json:"scheduleCadence"`
 	Placement       placementView `json:"placement"`
 	// RenameFrom and RenameReason suggest a rename: they are set on a live VM
@@ -15302,8 +15301,7 @@ type FileSetView struct {
 	SelectedPaths []string `json:"selectedPaths,omitempty"`
 	// ScheduleCadence is the set's per-item schedule override (#199); empty means
 	// it follows the Folders domain schedule. Always sent, so the interface can
-	// show the cadence without a second request, and only acted on while the
-	// per-item-schedules toggle is on.
+	// show the cadence without a second request.
 	ScheduleCadence string `json:"scheduleCadence"`
 	// Repo is the set's OWN repository (#204); empty means it follows the
 	// Folders domain repository. Always sent, so the card can show where a set

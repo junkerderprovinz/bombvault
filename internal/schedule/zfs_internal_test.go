@@ -136,9 +136,9 @@ func TestRunZFSJobSkipsDisabledAndNamesFailuresByDataset(t *testing.T) {
 	}
 }
 
-// TestDomainRunZFSDatasetsDropsOverrides checks that with per-item schedules on,
-// an item with its own cadence leaves the domain run, an item switched to "off"
-// leaves it too, and an unusable override falls back to the domain.
+// TestDomainRunZFSDatasetsDropsOverrides checks that an item with its own cadence
+// leaves the domain run, an item switched to "off" leaves it too, and an
+// unusable override falls back to the domain.
 func TestDomainRunZFSDatasetsDropsOverrides(t *testing.T) {
 	items := []store.ZFSDataset{
 		{ID: "a", Dataset: "tank/a", Enabled: true, ScheduleCadence: "weekly sun 04:00"},
@@ -147,11 +147,7 @@ func TestDomainRunZFSDatasetsDropsOverrides(t *testing.T) {
 		{ID: "d", Dataset: "tank/d", Enabled: true, ScheduleCadence: "nonsense"},
 		{ID: "e", Dataset: "tank/e", Enabled: true, ScheduleCadence: "everyN 3 04:00"},
 	}
-	if got := DomainRunZFSDatasets(items, false); len(got) != len(items) {
-		t.Fatalf("the feature off must not filter: got %d of %d", len(got), len(items))
-	}
-
-	got := DomainRunZFSDatasets(items, true)
+	got := DomainRunZFSDatasets(items)
 	want := []string{"b", "d", "e"}
 	if len(got) != len(want) {
 		t.Fatalf("got %d items, want %d: %+v", len(got), len(want), got)
@@ -186,20 +182,12 @@ func TestZFSDueGateUsesOnlyDomainRunRows(t *testing.T) {
 		{ID: "nightly", Dataset: "tank/appdata", Enabled: true},
 		{ID: "paused", Dataset: "tank/old", Enabled: false},
 	}
-	st := &fakeGateStore{zfs: items, settings: store.Settings{PerItemSchedules: true}}
+	st := &fakeGateStore{zfs: items}
 	if _, err := ZFSDueGate(st, nil)(); err != nil {
 		t.Fatalf("due gate: %v", err)
 	}
 	if len(st.askedFor) != 1 || st.askedFor[0] != "nightly" {
 		t.Fatalf("the gate must ask only about the domain-cadence items, got %v", st.askedFor)
-	}
-
-	st2 := &fakeGateStore{zfs: items, settings: store.Settings{}}
-	if _, err := ZFSDueGate(st2, nil)(); err != nil {
-		t.Fatalf("due gate (per-item off): %v", err)
-	}
-	if len(st2.askedFor) != 2 {
-		t.Fatalf("per-item off: want both enabled items, got %v", st2.askedFor)
 	}
 }
 
@@ -234,7 +222,7 @@ func TestRegisterPerItemEntriesZFS(t *testing.T) {
 	}
 	sc, rec := newZFSScheduler(items)
 
-	settings := store.Settings{ZFSEnabled: true, ZFSSchedule: "daily 03:00", PerItemSchedules: true}
+	settings := store.Settings{ZFSEnabled: true, ZFSSchedule: "daily 03:00"}
 	if err := sc.ReloadWithGates(settings, DueGates{}); err != nil {
 		t.Fatalf("reload: %v", err)
 	}
@@ -284,13 +272,13 @@ func TestEffectiveZFSDatasetSchedule(t *testing.T) {
 		{
 			name:     "own cadence",
 			item:     store.ZFSDataset{Enabled: true, ScheduleCadence: "weekly sun 04:00"},
-			settings: store.Settings{ZFSEnabled: true, ZFSSchedule: "daily 03:00", PerItemSchedules: true},
+			settings: store.Settings{ZFSEnabled: true, ZFSSchedule: "daily 03:00"},
 			want:     EffectiveOwn,
 		},
 		{
 			name:     "override off",
 			item:     store.ZFSDataset{Enabled: true, ScheduleCadence: "off"},
-			settings: store.Settings{ZFSEnabled: true, ZFSSchedule: "daily 03:00", PerItemSchedules: true},
+			settings: store.Settings{ZFSEnabled: true, ZFSSchedule: "daily 03:00"},
 			want:     EffectiveNone,
 		},
 		{

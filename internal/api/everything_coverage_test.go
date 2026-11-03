@@ -30,7 +30,6 @@ func TestDomainStatusFollowsTheEntriesOwnSchedules(t *testing.T) {
 	s := mustSettings(t, st)
 	s.ContainersEnabled = true
 	s.ContainersSchedule, s.EverythingSchedule = "off", "off"
-	s.PerItemSchedules = true
 	if err := st.UpdateSettings(s); err != nil {
 		t.Fatal(err)
 	}

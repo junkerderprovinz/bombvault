@@ -168,7 +168,7 @@ func TestMCPStartSwitchesRefuseAnUnknownDomain(t *testing.T) {
 		t.Fatalf("start_domain_backup's switch answered started=%v err=%v for an unknown domain", started, err)
 	}
 	waitForFilesIdle(t, h)
-	if items, _, err := h.domainStartSelection(ctx, settings, "nas", false); err == nil {
+	if items, _, err := h.domainStartSelection(ctx, "nas", false); err == nil {
 		t.Fatalf("the domain selection picked %v for an unknown domain", items)
 	}
 	runs, err := repo.ListRuns(10)

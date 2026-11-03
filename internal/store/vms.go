@@ -26,11 +26,9 @@ type VMTarget struct {
 	// RepoChosen says whether Repo is settled. An open row has an empty Repo and
 	// takes the default's location at its first backup.
 	RepoChosen RepoChoice
-	// ScheduleCadence is this VM's OPTIONAL per-item schedule override (#121, same
-	// cadence grammar as the domain schedules). Empty (the default) means "use the
-	// VMs domain schedule exactly as today"; only consulted when the per-item-
-	// schedules feature toggle is on. Owned by SetVMScheduleCadence (never reset by
-	// UpsertVMTarget).
+	// ScheduleCadence is this VM's own plan, in the grammar of the domain
+	// schedules. Empty follows the VMs schedule. Only SetVMScheduleCadence writes
+	// it, so UpsertVMTarget cannot reset it.
 	ScheduleCadence string
 	// BackupOrder is the explicit position this VM takes in a scheduled VM run
 	// (#119, mirrors targets.backup_order): VMs with an explicit order (>0) run

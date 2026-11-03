@@ -142,7 +142,7 @@ func TestAnExcludedContainerIsNeverOfferedToTheWait(t *testing.T) {
 
 func TestAPerItemFireOfABusyContainerWaitsToo(t *testing.T) {
 	p := &idleProbe{busy: map[string]bool{"plex": true}, pending: map[string]func(){}}
-	sc := newIdleScheduler(t, p, store.Settings{ContainersEnabled: true, ContainersSchedule: "off", PerItemSchedules: true}, []store.Target{
+	sc := newIdleScheduler(t, p, store.Settings{ContainersEnabled: true, ContainersSchedule: "off"}, []store.Target{
 		{ContainerName: "plex", IncludeInSchedule: true, ScheduleCadence: "daily 04:00"},
 	})
 	fireDomain(t, sc, "containers")
