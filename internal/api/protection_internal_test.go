@@ -31,7 +31,17 @@ func TestProtectionLevel(t *testing.T) {
 			enabled: true, offsiteConfigured: true, offsiteImmutable: true,
 			hadTamper: true, lastTamperOK: true, lastTamperAt: now - day, tamperPeriod: week,
 		}, "green"},
-		{"configured, non-immutable, no tamper → green", protInputs{
+		{"immutable, never tested while the check is off → amber", protInputs{
+			enabled: true, offsiteConfigured: true, offsiteImmutable: true,
+		}, "amber"},
+		{"immutable, last test failed while the check is off → red", protInputs{
+			enabled: true, offsiteConfigured: true, offsiteImmutable: true,
+			hadTamper: true, lastTamperOK: false, lastTamperAt: now - 30*day,
+		}, "red"},
+		{"non-immutable copy nobody accepted → amber", protInputs{
+			enabled: true, offsiteConfigured: true, deleteGap: true,
+		}, "amber"},
+		{"non-immutable copy that was accepted → green", protInputs{
 			enabled: true, offsiteConfigured: true,
 		}, "green"},
 		{"replication overdue → amber", protInputs{
@@ -113,6 +123,14 @@ func TestProtectionChecksConsistentWithLevel(t *testing.T) {
 			wantLevel:  "red",
 		},
 		{
+			name: "immutable + never tamper while the check is off → never + amber",
+			in: protInputs{
+				enabled: true, offsiteConfigured: true, offsiteImmutable: true,
+			},
+			wantChecks: protChecks{Tamper: "never"},
+			wantLevel:  "amber",
+		},
+		{
 			name: "immutable + failed tamper → failed + red",
 			in: protInputs{
 				enabled: true, offsiteConfigured: true, offsiteImmutable: true,
@@ -161,7 +179,10 @@ func TestProtectionChecksConsistentWithLevel(t *testing.T) {
 		if gotLevel != c.wantLevel {
 			t.Errorf("%s: protectionLevel = %q, want %q", c.name, gotLevel, c.wantLevel)
 		}
-		redTamper := gotChecks.Tamper == "never" || gotChecks.Tamper == "failed" || gotChecks.Tamper == "stale"
+		redTamper := (gotChecks.Tamper == "never" && c.in.tamperPeriod > 0) || gotChecks.Tamper == "failed" || gotChecks.Tamper == "stale"
+		if gotChecks.Tamper == "never" && gotLevel == "green" {
+			t.Errorf("%s: an untested claim must not coincide with a green chip", c.name)
+		}
 		if redTamper && gotLevel != "red" {
 			t.Errorf("%s: tamper %q must coincide with a red chip, got %q", c.name, gotChecks.Tamper, gotLevel)
 		}

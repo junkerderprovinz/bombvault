@@ -1368,6 +1368,7 @@ const eu: Partial<Translations> = {
 
   // Dashboard ransomware-protection card
   "ransomware.protGreen": "Babestuta",
+  "ransomware.protAccepted": "Babestuta, arriskua onartuta",
   "ransomware.protAmber": "Arreta behar du",
   "ransomware.protRed": "Arriskuan",
   "ransomware.replicationNever": "oraindik errepikatu gabe",
@@ -4093,7 +4094,7 @@ const eu: Partial<Translations> = {
   "storage.off": "Itzalita",
   "storage.usedOf": "{used} / {total}",
   "storage.localFolder": "Karpeta lokala",
-  "storage.primaryNote": "Hau {domain} atalaren Kanpokoa eremuko kopia da. Babeskopiak zenbat denboran gordetzen dituen hemen ezartzen da. Haren gainerako balioak Ezarpenak, Helmugak atalean ezartzen dira.",
+  "storage.primaryNote": "Hau {domain} atalaren Kanpokoa eremuko kopia da. Izena, babeskopiak zenbat denboran gordetzen dituen eta ezabatzearen aurkako babesik gabe onartzen den hemen ezartzen dira. Haren gainerako balioak Ezarpenak, Helmugak atalean ezartzen dira.",
   "storage.vessel.full": "beteta",
   "storage.vessel.fullInWeeks": "one=gutxi gorabehera aste batean beteko da|other=gutxi gorabehera {n} astetan beteko da",
   "storage.vessel.fullOverYear": "urte bat baino gehiagoan beteko da",

@@ -3530,6 +3530,7 @@ type protInputs struct {
 	paused            bool             // replication waits for the placement default to be confirmed
 	byTarget          bool             // copy rules decide per target; targets replaces the domain-wide pair above
 	targets           []targetCurrency // the enabled targets items are copied to
+	deleteGap         bool             // the off-site copy has no delete protection and nobody accepted that
 }
 
 // replicationState decides the off-site replication currency (""/never/overdue/ok)
@@ -3621,10 +3622,10 @@ func replicationRank(state string) int {
 //
 //   - ""    the domain is disabled — the dashboard shows nothing for it.
 //   - red   the domain is enabled but has no off-site copy at all; OR the off-site
-//     is flagged immutable yet the append-only guarantee is unproven — the
-//     tamper test is missing, last failed, or is stale (older than 2× its
-//     schedule period). A non-immutable off-site makes no append-only claim,
-//     so a missing tamper test does not make it red.
+//     is flagged immutable yet the append-only guarantee is disproven or
+//     unproven by a check that runs: the last tamper test failed, is stale
+//     (older than 2× its schedule period), or never ran although it is
+//     scheduled.
 //   - amber protection exists but a scheduled time-check is overdue by the SAME
 //     period-doubling rule backups use (rpoStatus "overdue"): the off-site
 //     replication (only when a decoupled off-site schedule is set) or the
@@ -3632,14 +3633,13 @@ func replicationRank(state string) int {
 //     scheduled DR drill FAILED — a failed restorability proof is a real posture
 //     concern, so the chip can't read green over the red "failed" drill row, but
 //     it stays amber (not full red) because other protections may still be fine.
+//     Amber as well: the append-only claim was never tested while its check is
+//     switched off, or the copy has no delete protection and nobody accepted it.
 //   - green otherwise.
 //
-// An off-site copy that is simply not flagged immutable stays green here: it is
-// a real copy, and whether the far side can enforce append-only is a property of
-// the destination the user picked, not a check that failed. The dashboard's
-// scorecard still marks that row amber rather than grey, so the gap is visible
-// without the chip nagging about a deliberate choice — the one place a row's
-// colour and this chip deliberately differ (see appendOnlyRow in Dashboard.tsx).
+// The chip follows the dashboard's delete protection row: a copy the user
+// accepted without delete protection counts like one that has it, so the
+// remaining checks decide.
 func protectionLevel(now int64, in protInputs) string {
 	if !in.enabled {
 		return "" // disabled domains carry no protection posture
@@ -3649,9 +3649,14 @@ func protectionLevel(now int64, in protInputs) string {
 	}
 	if in.offsiteImmutable {
 		tamperStale := in.tamperPeriod > 0 && now-in.lastTamperAt > in.tamperPeriod*2
-		if !in.hadTamper || !in.lastTamperOK || tamperStale {
+		if (in.hadTamper && !in.lastTamperOK) || tamperStale || (!in.hadTamper && in.tamperPeriod > 0) {
 			return "red" // an append-only claim we cannot currently PROVE
 		}
+	}
+	// An append-only claim no check looks at, and a copy anyone can delete that
+	// nobody accepted, are gaps the user can close, not proven losses.
+	if (in.offsiteImmutable && !in.hadTamper) || in.deleteGap {
+		return "amber"
 	}
 	// Replication currency: overdue is amber. Decoupled off-sites use their own
 	// schedule; coupled (default) off-sites are checked against the last backup with
@@ -3692,7 +3697,8 @@ type protChecks struct {
 // the DR-drill OUTCOME on top of currency for Drill:
 //
 //   - Tamper ∈ {never,failed,stale} is precisely the immutable branch that turns
-//     the chip red; a non-immutable off-site makes no append-only claim → "".
+//     the chip red, except "never" while the check is off, which is amber; a
+//     non-immutable off-site makes no append-only claim → "".
 //   - Replication "overdue" is precisely the amber branch (rpoStatus "overdue",
 //     the same period-doubling rule). "never"/"ok" stay non-amber so they match a
 //     green chip.
@@ -3919,6 +3925,8 @@ func (s *Service) domainStatusFrom(settings store.Settings) ([]DomainStatusEntry
 			drillPeriod:       drillPeriod,
 		}
 		in.paused, in.byTarget, in.targets = s.placementCurrency(settings, d.name)
+		riskAccepted := s.deleteRiskAccepted(d.name, settings)
+		in.deleteGap = offsiteConfigured && !offsiteImmutable && !riskAccepted
 		// Without a restic off-site, current replicas of every ZFS item are the
 		// domain's copy off the premises, and their age is its currency. They
 		// are no restic repository, so OffsiteConfigured stays false: the off-site
@@ -3982,7 +3990,7 @@ func (s *Service) domainStatusFrom(settings store.Settings) ([]DomainStatusEntry
 			Protection:            protection,
 			TamperState:           checks.Tamper,
 			TamperOff:             in.tamperPeriod == 0,
-			DeleteRiskAccepted:    s.deleteRiskAccepted(d.name, settings),
+			DeleteRiskAccepted:    riskAccepted,
 			ReplicationState:      checks.Replication,
 			DrillState:            checks.Drill,
 			EncryptionOn:          settings.EncryptionEnabled,

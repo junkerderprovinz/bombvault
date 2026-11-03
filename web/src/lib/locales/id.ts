@@ -1368,6 +1368,7 @@ const id: Partial<Translations> = {
 
   // Dashboard ransomware-protection card
   "ransomware.protGreen": "Terlindungi",
+  "ransomware.protAccepted": "Terlindungi, risiko diterima",
   "ransomware.protAmber": "Perlu perhatian",
   "ransomware.protRed": "Berisiko",
   "ransomware.replicationNever": "belum pernah direplikasi",
@@ -4093,7 +4094,7 @@ const id: Partial<Translations> = {
   "storage.off": "Mati",
   "storage.usedOf": "{used} dari {total}",
   "storage.localFolder": "Folder lokal",
-  "storage.primaryNote": "Ini adalah salinan dari kolom Off-site milik bagian {domain}. Berapa lama salinan ini menyimpan cadangan diatur di sini. Nilai lainnya berasal dari Pengaturan, Tujuan.",
+  "storage.primaryNote": "Ini adalah salinan dari kolom Off-site milik bagian {domain}. Namanya, berapa lama salinan ini menyimpan cadangan, dan apakah salinan ini diterima tanpa perlindungan dari penghapusan diatur di sini. Nilai lainnya berasal dari Pengaturan, Tujuan.",
   "storage.vessel.full": "penuh",
   "storage.vessel.fullInWeeks": "penuh dalam sekitar {n} minggu",
   "storage.vessel.fullOverYear": "penuh dalam lebih dari setahun",

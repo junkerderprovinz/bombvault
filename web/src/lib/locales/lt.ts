@@ -1368,6 +1368,7 @@ const lt: Partial<Translations> = {
 
   // Dashboard ransomware-protection card
   "ransomware.protGreen": "Apsaugota",
+  "ransomware.protAccepted": "Apsaugota, rizika priimta",
   "ransomware.protAmber": "Reikia dėmesio",
   "ransomware.protRed": "Pavojuje",
   "ransomware.replicationNever": "dar nereplikuota",
@@ -4093,7 +4094,7 @@ const lt: Partial<Translations> = {
   "storage.off": "Išjungta",
   "storage.usedOf": "{used} iš {total}",
   "storage.localFolder": "Vietinis aplankas",
-  "storage.primaryNote": "Tai srities {domain} nuotolinio lauko kopija. Čia nustatai, kiek laiko ji saugo atsargines kopijas. Kitos jos reikšmės imamos iš skilties Nustatymai, Paskirties vietos.",
+  "storage.primaryNote": "Tai srities {domain} nuotolinio lauko kopija. Čia nustatai pavadinimą, kiek laiko ji saugo atsargines kopijas ir ar ją priimi be apsaugos nuo trynimo. Kitos jos reikšmės imamos iš skilties Nustatymai, Paskirties vietos.",
   "storage.vessel.full": "pilna",
   "storage.vessel.fullInWeeks": "one=pilna maždaug po {n} savaitės|few=pilna maždaug po {n} savaičių|other=pilna maždaug po {n} savaičių",
   "storage.vessel.fullOverYear": "pilna po daugiau nei metų",

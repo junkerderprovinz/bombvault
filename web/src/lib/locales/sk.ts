@@ -1368,6 +1368,7 @@ const sk: Partial<Translations> = {
 
   // Dashboard ransomware-protection card
   "ransomware.protGreen": "Chránené",
+  "ransomware.protAccepted": "Chránené, riziko prijaté",
   "ransomware.protAmber": "Vyžaduje pozornosť",
   "ransomware.protRed": "Ohrozené",
   "ransomware.replicationNever": "zatiaľ nereplikované",
@@ -4093,7 +4094,7 @@ const sk: Partial<Translations> = {
   "storage.off": "Vypnuté",
   "storage.usedOf": "{used} z {total}",
   "storage.localFolder": "Lokálny priečinok",
-  "storage.primaryNote": "Toto je kópia z poľa Externé pri sekcii {domain}. Ako dlho uchováva zálohy, nastavíš tu. Jej ostatné hodnoty pochádzajú z časti Nastavenia, Ciele.",
+  "storage.primaryNote": "Toto je kópia z poľa Externé pri sekcii {domain}. Názov, ako dlho uchováva zálohy a či ju prijmeš bez ochrany proti zmazaniu, nastavíš tu. Jej ostatné hodnoty pochádzajú z časti Nastavenia, Ciele.",
   "storage.vessel.full": "plno",
   "storage.vessel.fullInWeeks": "one=plno asi o týždeň|few=plno asi o {n} týždne|other=plno asi o {n} týždňov",
   "storage.vessel.fullOverYear": "plno o viac ako rok",

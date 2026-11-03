@@ -1607,6 +1607,7 @@ const no: Partial<Translations> = {
 
   // Dashboard ransomware-protection card (v4)
   "ransomware.protGreen": "Beskyttet",
+  "ransomware.protAccepted": "Beskyttet, risiko akseptert",
   "ransomware.protAmber": "Trenger oppmerksomhet",
   "ransomware.protRed": "Utsatt",
   "ransomware.replicationNever": "ikke replikert ennå",
@@ -4083,7 +4084,7 @@ const no: Partial<Translations> = {
   "storage.off": "Av",
   "storage.usedOf": "{used} av {total}",
   "storage.localFolder": "Lokal mappe",
-  "storage.primaryNote": "Dette er kopien fra off-site-feltet til {domain}. Hvor lenge den beholder sikkerhetskopier, stiller du inn her. De andre verdiene kommer fra Innstillinger, Mål.",
+  "storage.primaryNote": "Dette er kopien fra off-site-feltet til {domain}. Navnet, hvor lenge den beholder sikkerhetskopier, og om du godtar den uten beskyttelse mot sletting, stiller du inn her. De andre verdiene kommer fra Innstillinger, Mål.",
   "storage.vessel.full": "full",
   "storage.vessel.fullInWeeks": "one=full om omtrent en uke|other=full om omtrent {n} uker",
   "storage.vessel.fullOverYear": "full om mer enn et år",

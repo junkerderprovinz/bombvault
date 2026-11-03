@@ -1610,6 +1610,7 @@ const vi: Partial<Translations> = {
 
   // Dashboard ransomware-protection card (v4)
   "ransomware.protGreen": "Được bảo vệ",
+  "ransomware.protAccepted": "Được bảo vệ, đã chấp nhận rủi ro",
   "ransomware.protAmber": "Cần chú ý",
   "ransomware.protRed": "Có rủi ro",
   "ransomware.replicationNever": "chưa sao chép",
@@ -4074,7 +4075,7 @@ const vi: Partial<Translations> = {
   "storage.off": "Tắt",
   "storage.usedOf": "{used} / {total}",
   "storage.localFolder": "Thư mục cục bộ",
-  "storage.primaryNote": "Đây là bản sao từ trường Ngoài site của phần {domain}. Thời gian giữ dữ liệu sao lưu được đặt tại đây. Các giá trị khác của nó lấy từ Cài đặt, Đích sao lưu.",
+  "storage.primaryNote": "Đây là bản sao từ trường Ngoài site của phần {domain}. Tên, thời gian giữ dữ liệu sao lưu và việc chấp nhận khi không có bảo vệ chống xóa được đặt tại đây. Các giá trị khác của nó lấy từ Cài đặt, Đích sao lưu.",
   "storage.vessel.full": "đầy",
   "storage.vessel.fullInWeeks": "đầy sau khoảng {n} tuần",
   "storage.vessel.fullOverYear": "đầy sau hơn một năm",

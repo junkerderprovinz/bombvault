@@ -1619,6 +1619,7 @@ const el: Partial<Translations> = {
 
   // Dashboard ransomware-protection card (v4)
   "ransomware.protGreen": "Προστατευμένο",
+  "ransomware.protAccepted": "Προστατευμένο, ο κίνδυνος έγινε αποδεκτός",
   "ransomware.protAmber": "Χρειάζεται προσοχή",
   "ransomware.protRed": "Σε κίνδυνο",
   "ransomware.replicationNever": "δεν έχει αναπαραχθεί ακόμα",
@@ -4083,7 +4084,7 @@ const el: Partial<Translations> = {
   "storage.off": "Απενεργοποιημένη",
   "storage.usedOf": "{used} από {total}",
   "storage.localFolder": "Τοπικός φάκελος",
-  "storage.primaryNote": "Αυτό είναι το αντίγραφο από το πεδίο Εκτός τόπου του τομέα {domain}. Πόσο καιρό διατηρεί τα αντίγραφα ασφαλείας, το ορίζεις εδώ. Οι υπόλοιπες τιμές του προέρχονται από τις Ρυθμίσεις, Προορισμοί.",
+  "storage.primaryNote": "Αυτό είναι το αντίγραφο από το πεδίο Εκτός τόπου του τομέα {domain}. Το όνομα, πόσο καιρό διατηρεί τα αντίγραφα ασφαλείας και αν το αποδέχεσαι χωρίς προστασία από διαγραφή, τα ορίζεις εδώ. Οι υπόλοιπες τιμές του προέρχονται από τις Ρυθμίσεις, Προορισμοί.",
   "storage.vessel.full": "γεμάτο",
   "storage.vessel.fullInWeeks": "one=γεμάτο σε περίπου μία εβδομάδα|other=γεμάτο σε περίπου {n} εβδομάδες",
   "storage.vessel.fullOverYear": "γεμάτο σε περισσότερο από ένα χρόνο",

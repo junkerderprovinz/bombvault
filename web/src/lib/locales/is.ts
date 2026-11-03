@@ -1368,6 +1368,7 @@ const is: Partial<Translations> = {
 
   // Dashboard ransomware-protection card
   "ransomware.protGreen": "Varið",
+  "ransomware.protAccepted": "Varið, áhættan samþykkt",
   "ransomware.protAmber": "Þarfnast athygli",
   "ransomware.protRed": "Í hættu",
   "ransomware.replicationNever": "ekki fjarafritað ennþá",
@@ -4093,7 +4094,7 @@ const is: Partial<Translations> = {
   "storage.off": "Slökkt",
   "storage.usedOf": "{used} af {total}",
   "storage.localFolder": "Staðbundin mappa",
-  "storage.primaryNote": "Þetta er afritið úr reitnum Fjarlægt á svæðinu {domain}. Hversu lengi það geymir öryggisafrit stillir þú hér. Önnur gildi þess koma úr Stillingar, Áfangastaðir.",
+  "storage.primaryNote": "Þetta er afritið úr reitnum Fjarlægt á svæðinu {domain}. Nafnið, hversu lengi það geymir öryggisafrit og hvort þú samþykkir það án varnar gegn eyðingu stillir þú hér. Önnur gildi þess koma úr Stillingar, Áfangastaðir.",
   "storage.vessel.full": "fullt",
   "storage.vessel.fullInWeeks": "one=fullt eftir um það bil {n} viku|other=fullt eftir um það bil {n} vikur",
   "storage.vessel.fullOverYear": "fullt eftir meira en ár",

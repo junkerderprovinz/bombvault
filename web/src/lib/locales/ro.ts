@@ -1608,6 +1608,7 @@ const ro: Partial<Translations> = {
 
   // Dashboard ransomware-protection card (v4)
   "ransomware.protGreen": "Protejat",
+  "ransomware.protAccepted": "Protejat, risc acceptat",
   "ransomware.protAmber": "Necesită atenție",
   "ransomware.protRed": "În pericol",
   "ransomware.replicationNever": "nereplicat încă",
@@ -4084,7 +4085,7 @@ const ro: Partial<Translations> = {
   "storage.off": "Dezactivată",
   "storage.usedOf": "{used} din {total}",
   "storage.localFolder": "Dosar local",
-  "storage.primaryNote": "Aceasta este copia din câmpul extern al lui {domain}. Cât timp păstrează copiile de rezervă se setează aici. Celelalte valori ale ei vin din Setări, Destinații.",
+  "storage.primaryNote": "Aceasta este copia din câmpul extern al lui {domain}. Numele, cât timp păstrează copiile de rezervă și dacă o accepți fără protecție împotriva ștergerii se setează aici. Celelalte valori ale ei vin din Setări, Destinații.",
   "storage.vessel.full": "plin",
   "storage.vessel.fullInWeeks": "one=plin în aproximativ o săptămână|few=plin în aproximativ {n} săptămâni|other=plin în aproximativ {n} de săptămâni",
   "storage.vessel.fullOverYear": "plin în mai mult de un an",

@@ -166,3 +166,68 @@ func TestTheAcceptanceSurvivesARoundTrip(t *testing.T) {
 		t.Error("a file that takes the acceptance back left it in place")
 	}
 }
+
+func TestSwitchingDeleteProtectionOnTakesTheAcceptanceBack(t *testing.T) {
+	f := newPlacementFixture(t)
+	drive := f.target("containers", "Drive", "rclone:drive:bv/containers")
+	f.acceptDeleteRisk("target:"+drive.ID, true)
+
+	drive.Immutable = true
+	if _, err := f.st.UpsertOffsiteTarget(drive); err != nil {
+		t.Fatal(err)
+	}
+	drive.Immutable = false
+	saved, err := f.st.UpsertOffsiteTarget(drive)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if saved.DeleteRiskAccepted || f.domainStatus("containers").DeleteRiskAccepted {
+		t.Error("the acceptance came back with delete protection switched off again")
+	}
+
+	box := f.destination("Box", "rclone:box:BombVault")
+	f.tickDestination(box, "flash")
+	f.acceptDeleteRisk("destination:"+box.ID, true)
+	box.Immutable = true
+	if _, err := f.st.SaveDestination(box); err != nil {
+		t.Fatal(err)
+	}
+	box.Immutable = false
+	if _, err := f.st.SaveDestination(box); err != nil {
+		t.Fatal(err)
+	}
+	if locationByID(t, f.svc, "destination:"+box.ID).Protection.RiskAccepted {
+		t.Error("the destination kept its acceptance through delete protection")
+	}
+}
+
+func TestTheProtectionChipCountsAnAcceptedGapAsNoRisk(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.settings(func(s *store.Settings) { s.ContainersEnabled = true })
+	drive := f.target("containers", "Drive", "rclone:drive:bv/containers")
+	if got := f.domainStatus("containers").Protection; got != "amber" {
+		t.Fatalf("a copy anyone can delete reads %q, want amber", got)
+	}
+	f.acceptDeleteRisk("target:"+drive.ID, true)
+	if got := f.domainStatus("containers").Protection; got != "green" {
+		t.Errorf("an accepted copy reads %q, want the other checks to decide", got)
+	}
+}
+
+func TestAnUntestedAppendOnlyCopyIsAmberWhileItsCheckIsOff(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.settings(func(s *store.Settings) {
+		s.ContainersEnabled = true
+		s.TamperTestSchedule = "off"
+	})
+	if _, err := f.st.CreateOffsiteTarget(store.OffsiteTarget{Domain: "containers", Name: "Vault", Repo: "rest:http://vault:8000/containers", Enabled: true, Immutable: true}); err != nil {
+		t.Fatal(err)
+	}
+	if got := f.domainStatus("containers").Protection; got != "amber" {
+		t.Errorf("check off: %q, want amber", got)
+	}
+	f.settings(func(s *store.Settings) { s.TamperTestSchedule = "daily 04:00" })
+	if got := f.domainStatus("containers").Protection; got != "red" {
+		t.Errorf("check on: %q, want red", got)
+	}
+}

@@ -664,9 +664,31 @@ describe("the copy a section's off-site settings describe", () => {
     expect(within(card("How long to keep")).getByRole("radio", { name: "Long" })).toBeTruthy();
     expect(
       screen.getByLabelText(
-        "This is the copy from the off-site field of Folders. You set how long it keeps backups here. Its other values come from Settings, Storage locations."
+        "This is the copy from the off-site field of Folders. Here you set its name, how long it keeps backups and whether you accept it without delete protection. Its other values come from Settings, Storage locations."
       )
     ).toBeTruthy();
+  });
+});
+
+describe("a copy kept on a folder of this host", () => {
+  it("can be accepted without delete protection like a copy anywhere else", async () => {
+    const usb = location({
+      id: "target:t-usb",
+      object: "target",
+      kind: "offsite",
+      provider: "",
+      mark: undefined,
+      backend: "local",
+      name: "USB disk",
+      where: "/mnt/disks/usb/bv/containers",
+      protection: { immutable: false, testable: false },
+      sections: [section({ domain: "containers", targetId: "t-usb" })],
+    });
+    stage(usb, [target({ id: "t-usb", repo: "/mnt/disks/usb/bv/containers", destinationId: undefined })]);
+    await renderPage("target:t-usb");
+
+    expect(within(card("Delete protection")).getByRole("switch", { name: "Accept without delete protection" })).toBeTruthy();
+    expect(screen.queryByRole("switch", { name: "Delete protection (append-only)" })).toBeNull();
   });
 });
 

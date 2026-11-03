@@ -166,6 +166,13 @@ describe("ProtectionWindow", () => {
     }
   });
 
+  it("calls a section whose only gap was accepted protected with the risk accepted", () => {
+    const window = renderWindow(domain({ offsiteImmutable: false, tamperState: "", deleteRiskAccepted: true }));
+
+    expect(window.getByText(en["ransomware.protAccepted"])).toBeTruthy();
+    expect(window.getByText(en["overview.check.lockAccepted"])).toBeTruthy();
+  });
+
   it("leads to the off-site settings from a missing off-site copy", () => {
     const window = renderWindow(domain({ offsiteConfigured: false }));
 

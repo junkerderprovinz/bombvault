@@ -1368,6 +1368,7 @@ const gl: Partial<Translations> = {
 
   // Dashboard ransomware-protection card
   "ransomware.protGreen": "Protexido",
+  "ransomware.protAccepted": "Protexido, risco aceptado",
   "ransomware.protAmber": "Precisa atención",
   "ransomware.protRed": "En risco",
   "ransomware.replicationNever": "aínda non replicado",
@@ -4093,7 +4094,7 @@ const gl: Partial<Translations> = {
   "storage.off": "Desactivado",
   "storage.usedOf": "{used} de {total}",
   "storage.localFolder": "Cartafol local",
-  "storage.primaryNote": "Esta é a copia do campo externo de {domain}. Aquí defines canto tempo garda as copias de seguranza. Os seus outros valores veñen de Configuración, Destinos.",
+  "storage.primaryNote": "Esta é a copia do campo externo de {domain}. Aquí defines o nome, canto tempo garda as copias de seguranza e se a aceptas sen protección contra a eliminación. Os seus outros valores veñen de Configuración, Destinos.",
   "storage.vessel.full": "cheo",
   "storage.vessel.fullInWeeks": "one=cheo dentro de aproximadamente unha semana|other=cheo dentro de aproximadamente {n} semanas",
   "storage.vessel.fullOverYear": "cheo dentro de máis dun ano",

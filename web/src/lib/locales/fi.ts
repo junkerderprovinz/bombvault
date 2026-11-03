@@ -1619,6 +1619,7 @@ const fi: Partial<Translations> = {
 
   // Dashboard ransomware-protection card (v4)
   "ransomware.protGreen": "Suojattu",
+  "ransomware.protAccepted": "Suojattu, riski hyväksytty",
   "ransomware.protAmber": "Vaatii huomiota",
   "ransomware.protRed": "Vaarassa",
   "ransomware.replicationNever": "ei vielä replikoitu",
@@ -4083,7 +4084,7 @@ const fi: Partial<Translations> = {
   "storage.off": "Pois",
   "storage.usedOf": "{used} / {total}",
   "storage.localFolder": "Paikallinen kansio",
-  "storage.primaryNote": "Tämä on kopio osion {domain} etäkentästä. Täällä asetat, kuinka kauan se säilyttää varmuuskopioita. Sen muut arvot tulevat kohdasta Asetukset, Kohteet.",
+  "storage.primaryNote": "Tämä on kopio osion {domain} etäkentästä. Täällä asetat sen nimen, kuinka kauan se säilyttää varmuuskopioita ja hyväksytkö sen ilman poistosuojaa. Sen muut arvot tulevat kohdasta Asetukset, Kohteet.",
   "storage.vessel.full": "täynnä",
   "storage.vessel.fullInWeeks": "one=täynnä noin viikon kuluttua|other=täynnä noin {n} viikon kuluttua",
   "storage.vessel.fullOverYear": "täynnä yli vuoden kuluttua",

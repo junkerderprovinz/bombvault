@@ -1368,6 +1368,7 @@ const lv: Partial<Translations> = {
 
   // Dashboard ransomware-protection card
   "ransomware.protGreen": "Aizsargāts",
+  "ransomware.protAccepted": "Aizsargāts, risks pieņemts",
   "ransomware.protAmber": "Nepieciešama uzmanība",
   "ransomware.protRed": "Apdraudēts",
   "ransomware.replicationNever": "vēl nav replicēts",
@@ -4093,7 +4094,7 @@ const lv: Partial<Translations> = {
   "storage.off": "Izslēgta",
   "storage.usedOf": "{used} no {total}",
   "storage.localFolder": "Vietējā mape",
-  "storage.primaryNote": "Šī ir sadaļas {domain} lauka Attālināts kopija. Cik ilgi tā glabā dublējumus, iestatāms šeit. Pārējās tās vērtības nāk no sadaļas Iestatījumi, Mērķi.",
+  "storage.primaryNote": "Šī ir sadaļas {domain} lauka Attālināts kopija. Nosaukums, cik ilgi tā glabā dublējumus un vai to pieņem bez aizsardzības pret dzēšanu, iestatāms šeit. Pārējās tās vērtības nāk no sadaļas Iestatījumi, Mērķi.",
   "storage.vessel.full": "pilns",
   "storage.vessel.fullInWeeks": "one=pilns pēc aptuveni {n} nedēļas|zero=pilns pēc aptuveni {n} nedēļām|other=pilns pēc aptuveni {n} nedēļām",
   "storage.vessel.fullOverYear": "pilns pēc vairāk nekā gada",

@@ -1602,6 +1602,7 @@ const ja: Partial<Translations> = {
 
   // Dashboard ransomware-protection card (v4)
   "ransomware.protGreen": "保護済み",
+  "ransomware.protAccepted": "保護済み、リスクを承認済み",
   "ransomware.protAmber": "要注意",
   "ransomware.protRed": "リスクあり",
   "ransomware.replicationNever": "未複製",
@@ -4074,7 +4075,7 @@ const ja: Partial<Translations> = {
   "storage.off": "オフ",
   "storage.usedOf": "{total} 中 {used}",
   "storage.localFolder": "ローカルフォルダー",
-  "storage.primaryNote": "これは {domain} のオフサイト欄のコピーです。バックアップをどれだけ保持するかは、ここで指定します。そのほかの値は設定の保存先で指定します。",
+  "storage.primaryNote": "これは {domain} のオフサイト欄のコピーです。名前、バックアップをどれだけ保持するか、削除に対する保護なしで承認するかは、ここで指定します。そのほかの値は設定の保存先で指定します。",
   "storage.vessel.full": "満杯",
   "storage.vessel.fullInWeeks": "約 {n} 週間で満杯",
   "storage.vessel.fullOverYear": "満杯になるまで 1 年以上",

@@ -1612,6 +1612,7 @@ const hu: Partial<Translations> = {
 
   // Dashboard ransomware-protection card (v4)
   "ransomware.protGreen": "Védett",
+  "ransomware.protAccepted": "Védett, a kockázat elfogadva",
   "ransomware.protAmber": "Figyelmet igényel",
   "ransomware.protRed": "Veszélyben",
   "ransomware.replicationNever": "még nincs replikálva",
@@ -4084,7 +4085,7 @@ const hu: Partial<Translations> = {
   "storage.off": "Kikapcsolva",
   "storage.usedOf": "{used} / {total}",
   "storage.localFolder": "Helyi mappa",
-  "storage.primaryNote": "Ez a(z) {domain} szakasz Telephelyen kívüli mezőjének másolata. Itt adhatod meg, mennyi ideig őrzi a mentéseket. A többi értéke a Beállítások, Célok alól jön.",
+  "storage.primaryNote": "Ez a(z) {domain} szakasz Telephelyen kívüli mezőjének másolata. Itt adhatod meg a nevét, hogy mennyi ideig őrzi a mentéseket, és hogy elfogadod-e törlés elleni védelem nélkül. A többi értéke a Beállítások, Célok alól jön.",
   "storage.vessel.full": "tele",
   "storage.vessel.fullInWeeks": "one=tele kb. egy hét múlva|other=tele kb. {n} hét múlva",
   "storage.vessel.fullOverYear": "tele több mint egy év múlva",

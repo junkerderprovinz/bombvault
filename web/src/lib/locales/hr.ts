@@ -1368,6 +1368,7 @@ const hr: Partial<Translations> = {
 
   // Dashboard ransomware-protection card
   "ransomware.protGreen": "Zaštićeno",
+  "ransomware.protAccepted": "Zaštićeno, rizik prihvaćen",
   "ransomware.protAmber": "Potrebna pažnja",
   "ransomware.protRed": "U opasnosti",
   "ransomware.replicationNever": "još nije replicirano",
@@ -4093,7 +4094,7 @@ const hr: Partial<Translations> = {
   "storage.off": "Isključeno",
   "storage.usedOf": "{used} od {total}",
   "storage.localFolder": "Lokalna mapa",
-  "storage.primaryNote": "Ovo je kopija iz polja Izvan lokacije za odjeljak {domain}. Koliko dugo čuva sigurnosne kopije, postavljaš ovdje. Njezine ostale vrijednosti dolaze iz odjeljka Postavke, Odredišta.",
+  "storage.primaryNote": "Ovo je kopija iz polja Izvan lokacije za odjeljak {domain}. Naziv, koliko dugo čuva sigurnosne kopije i prihvaćaš li je bez zaštite od brisanja, postavljaš ovdje. Njezine ostale vrijednosti dolaze iz odjeljka Postavke, Odredišta.",
   "storage.vessel.full": "puno",
   "storage.vessel.fullInWeeks": "one=puno za otprilike {n} tjedan|few=puno za otprilike {n} tjedna|other=puno za otprilike {n} tjedana",
   "storage.vessel.fullOverYear": "puno za više od godinu dana",

@@ -103,9 +103,10 @@ type OffsiteTarget struct {
 	// Own names the settings a derived target keeps for itself.
 	Own OwnSettings
 	// DeleteRiskAccepted says the user accepted that this location cannot
-	// refuse a delete. A save of the row's other settings leaves it as it is:
-	// SetDeleteRiskAccepted writes it, and a move to another place clears it.
-	// A derived target answers with its destination's.
+	// refuse a delete. SetDeleteRiskAccepted writes it, and a save of the row
+	// leaves it as it is unless the save switches delete protection on or
+	// moves the row to another place, which clears it. A derived target
+	// answers with its destination's.
 	DeleteRiskAccepted bool
 }
 
@@ -297,6 +298,7 @@ func (r *Repo) upsertOffsiteTarget(t OffsiteTarget, moved bool) (OffsiteTarget, 
 			  creds_ref              = excluded.creds_ref,
 			  storage_class          = excluded.storage_class,
 			  immutable              = excluded.immutable,
+			  delete_risk_accepted   = CASE WHEN excluded.immutable = 1 THEN 0 ELSE offsite_targets.delete_risk_accepted END,
 			  schedule               = excluded.schedule,
 			  retention_keep_last    = excluded.retention_keep_last,
 			  retention_keep_daily   = excluded.retention_keep_daily,

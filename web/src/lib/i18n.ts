@@ -1585,6 +1585,7 @@ export const en = {
 
   // Dashboard ransomware-protection card (v4)
   "ransomware.protGreen": "Protected",
+  "ransomware.protAccepted": "Protected, risk accepted",
   "ransomware.protAmber": "Needs attention",
   "ransomware.protRed": "At risk",
   "ransomware.replicationNever": "not replicated yet",
@@ -4429,7 +4430,7 @@ export const en = {
   "storage.off": "Off",
   "storage.usedOf": "{used} of {total}",
   "storage.localFolder": "Local folder",
-  "storage.primaryNote": "This is the copy from the off-site field of {domain}. You set how long it keeps backups here. Its other values come from Settings, Storage locations.",
+  "storage.primaryNote": "This is the copy from the off-site field of {domain}. Here you set its name, how long it keeps backups and whether you accept it without delete protection. Its other values come from Settings, Storage locations.",
   "storage.vessel.full": "full",
   "storage.vessel.fullInWeeks": "one=full in about a week|other=full in about {n} weeks",
   "storage.vessel.fullOverYear": "full in more than a year",
@@ -6716,6 +6717,7 @@ export const de: Translations = {
 
   // Dashboard-Ransomware-Schutz-Karte (v4)
   "ransomware.protGreen": "Geschützt",
+  "ransomware.protAccepted": "Geschützt, Risiko akzeptiert",
   "ransomware.protAmber": "Aufmerksamkeit nötig",
   "ransomware.protRed": "Gefährdet",
   "ransomware.replicationNever": "Noch nicht repliziert",
@@ -9477,7 +9479,7 @@ export const de: Translations = {
   "storage.off": "Aus",
   "storage.usedOf": "{used} von {total}",
   "storage.localFolder": "Lokaler Ordner",
-  "storage.primaryNote": "Das ist die Kopie aus dem Off-site-Feld von {domain}. Wie lange sie Sicherungen aufhebt, stellst du hier ein. Ihre übrigen Werte kommen aus Einstellungen, Speicherorte.",
+  "storage.primaryNote": "Das ist die Kopie aus dem Off-site-Feld von {domain}. Den Namen, wie lange sie Sicherungen aufhebt und ob du sie ohne Löschschutz akzeptierst, stellst du hier ein. Ihre übrigen Werte kommen aus Einstellungen, Speicherorte.",
   "storage.vessel.full": "voll",
   "storage.vessel.fullInWeeks": "one=voll in etwa einer Woche|other=voll in etwa {n} Wochen",
   "storage.vessel.fullOverYear": "voll in mehr als einem Jahr",

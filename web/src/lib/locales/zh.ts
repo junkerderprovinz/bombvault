@@ -1610,6 +1610,7 @@ const zh: Partial<Translations> = {
 
   // Dashboard ransomware-protection card (v4)
   "ransomware.protGreen": "已受保护",
+  "ransomware.protAccepted": "已受保护，已接受风险",
   "ransomware.protAmber": "需要关注",
   "ransomware.protRed": "存在风险",
   "ransomware.replicationNever": "尚未复制",
@@ -4074,7 +4075,7 @@ const zh: Partial<Translations> = {
   "storage.off": "关闭",
   "storage.usedOf": "{used} / {total}",
   "storage.localFolder": "本地文件夹",
-  "storage.primaryNote": "这是分区 {domain} 的异地字段中的副本。它保留备份多长时间，在这里设定。它的其他值来自设置，目标。",
+  "storage.primaryNote": "这是分区 {domain} 的异地字段中的副本。它的名称、保留备份多长时间，以及是否在没有防删除保护的情况下接受，都在这里设定。它的其他值来自设置，目标。",
   "storage.vessel.full": "已满",
   "storage.vessel.fullInWeeks": "约 {n} 周后会满",
   "storage.vessel.fullOverYear": "一年以上后才会满",

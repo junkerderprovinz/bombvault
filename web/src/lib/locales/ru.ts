@@ -1604,6 +1604,7 @@ const ru: Partial<Translations> = {
 
   // Dashboard ransomware-protection card (v4)
   "ransomware.protGreen": "Защищено",
+  "ransomware.protAccepted": "Защищено, риск принят",
   "ransomware.protAmber": "Требует внимания",
   "ransomware.protRed": "Под угрозой",
   "ransomware.replicationNever": "ещё не реплицировано",
@@ -4080,7 +4081,7 @@ const ru: Partial<Translations> = {
   "storage.off": "Выключено",
   "storage.usedOf": "{used} из {total}",
   "storage.localFolder": "Локальная папка",
-  "storage.primaryNote": "Это копия из поля Внешнее у раздела {domain}. Как долго она хранит резервные копии, задаётся здесь. Остальные её значения берутся из раздела Настройки, Места назначения.",
+  "storage.primaryNote": "Это копия из поля Внешнее у раздела {domain}. Название, как долго она хранит резервные копии и принимается ли она без защиты от удаления, задаётся здесь. Остальные её значения берутся из раздела Настройки, Места назначения.",
   "storage.vessel.full": "заполнено",
   "storage.vessel.fullInWeeks": "one=заполнится примерно через {n} неделю|few=заполнится примерно через {n} недели|many=заполнится примерно через {n} недель|other=заполнится примерно через {n} недели",
   "storage.vessel.fullOverYear": "заполнится больше чем через год",

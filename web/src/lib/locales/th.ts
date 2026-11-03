@@ -1620,6 +1620,7 @@ const th: Partial<Translations> = {
 
   // Dashboard ransomware-protection card (v4)
   "ransomware.protGreen": "ได้รับการป้องกัน",
+  "ransomware.protAccepted": "ได้รับการป้องกัน ยอมรับความเสี่ยงแล้ว",
   "ransomware.protAmber": "ต้องการความสนใจ",
   "ransomware.protRed": "มีความเสี่ยง",
   "ransomware.replicationNever": "ยังไม่ได้จำลอง",
@@ -4084,7 +4085,7 @@ const th: Partial<Translations> = {
   "storage.off": "ปิด",
   "storage.usedOf": "{used} จาก {total}",
   "storage.localFolder": "โฟลเดอร์ในเครื่อง",
-  "storage.primaryNote": "นี่คือสำเนาจากช่องนอกสถานที่ของส่วน {domain} ระยะเวลาที่สำเนานี้เก็บข้อมูลสำรองตั้งได้ที่นี่ ส่วนค่าอื่น ๆ มาจาก การตั้งค่า, ปลายทาง",
+  "storage.primaryNote": "นี่คือสำเนาจากช่องนอกสถานที่ของส่วน {domain} ชื่อ ระยะเวลาที่สำเนานี้เก็บข้อมูลสำรอง และการยอมรับโดยไม่มีการป้องกันการลบ ตั้งได้ที่นี่ ส่วนค่าอื่น ๆ มาจาก การตั้งค่า, ปลายทาง",
   "storage.vessel.full": "เต็ม",
   "storage.vessel.fullInWeeks": "จะเต็มในอีกประมาณ {n} สัปดาห์",
   "storage.vessel.fullOverYear": "จะเต็มในอีกมากกว่าหนึ่งปี",

@@ -30,7 +30,7 @@ export interface Check {
   at: number;
 }
 
-type Verdict = [tone: CheckTone, say: TranslationKey, at?: number];
+export type Verdict = [tone: CheckTone, say: TranslationKey, at?: number];
 
 // VMs and the self-backup can have an off-site copy, but the server refuses
 // to restore either into a sandbox.
@@ -88,7 +88,7 @@ function offsiteCheck(d: DomainStatus, copying: boolean): Verdict {
 // A location that cannot refuse a delete is a gap the check of delete
 // protection has nothing to say about, so it is named as missing rather than
 // unproven, and switching that check off changes nothing about it.
-function lockCheck(d: DomainStatus): Verdict {
+export function lockCheck(d: DomainStatus): Verdict {
   if (!d.offsiteConfigured) return ["neutral", "overview.check.lockNeedsOffsite"];
   if (d.tamperState === "ok") return ["ok", "overview.check.lockChecked", d.lastTamperAt];
   if (d.tamperState === "failed") return ["fail", "overview.check.lockFailed", d.lastTamperAt];
@@ -125,13 +125,20 @@ export function worstTone(checks: Check[]): CheckTone {
   return TONE_RANK.find((tone) => checks.some((c) => c.tone === tone)) ?? "neutral";
 }
 
-export const VERDICT: Record<CheckTone, TranslationKey> = {
+const VERDICT: Record<CheckTone, TranslationKey> = {
   ok: "ransomware.protGreen",
   warn: "ransomware.protAmber",
   fail: "ransomware.protRed",
   run: "overview.verdict.checking",
   neutral: "overview.verdict.nothing",
 };
+
+/** What a section's verdict says. A healthy one that lacks only a delete
+ *  protection the user accepted says so, rather than plain protected. */
+export function verdictOf(section: Pick<Section, "tone" | "checks">): TranslationKey {
+  if (section.tone === "ok" && section.checks.some((c) => c.say === "overview.check.lockAccepted")) return "ransomware.protAccepted";
+  return VERDICT[section.tone];
+}
 
 /** One switched-on section with everything the overview says about it. */
 export interface Section {

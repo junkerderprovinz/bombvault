@@ -1620,6 +1620,7 @@ const ar: Partial<Translations> = {
 
   // Dashboard ransomware-protection card (v4)
   "ransomware.protGreen": "محمي",
+  "ransomware.protAccepted": "محمي، والخطر مقبول",
   "ransomware.protAmber": "يحتاج إلى انتباه",
   "ransomware.protRed": "في خطر",
   "ransomware.replicationNever": "لم يُنسخ بعد",
@@ -4084,7 +4085,7 @@ const ar: Partial<Translations> = {
   "storage.off": "إيقاف",
   "storage.usedOf": "{used} من {total}",
   "storage.localFolder": "مجلد محلي",
-  "storage.primaryNote": "هذه نسخة من حقل خارج الموقع الخاص بقسم {domain}. مدة الاحتفاظ بالنسخ الاحتياطية تضبطها هنا. أما قيمها الأخرى فتأتي من الإعدادات، الوجهات.",
+  "storage.primaryNote": "هذه نسخة من حقل خارج الموقع الخاص بقسم {domain}. اسمها ومدة الاحتفاظ بالنسخ الاحتياطية وقبولها بدون حماية من الحذف تضبطها هنا. أما قيمها الأخرى فتأتي من الإعدادات، الوجهات.",
   "storage.vessel.full": "ممتلئة",
   "storage.vessel.fullInWeeks": "one=ستمتلئ خلال أسبوع تقريبًا|two=ستمتلئ خلال أسبوعين تقريبًا|few=ستمتلئ خلال {n} أسابيع تقريبًا|many=ستمتلئ خلال {n} أسبوعًا تقريبًا|other=ستمتلئ خلال {n} أسبوع تقريبًا",
   "storage.vessel.fullOverYear": "ستمتلئ خلال أكثر من سنة",

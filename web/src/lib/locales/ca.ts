@@ -1368,6 +1368,7 @@ const ca: Partial<Translations> = {
 
   // Dashboard ransomware-protection card
   "ransomware.protGreen": "Protegit",
+  "ransomware.protAccepted": "Protegit, risc acceptat",
   "ransomware.protAmber": "Necessita atenció",
   "ransomware.protRed": "En risc",
   "ransomware.replicationNever": "encara no replicat",
@@ -4093,7 +4094,7 @@ const ca: Partial<Translations> = {
   "storage.off": "Desactivat",
   "storage.usedOf": "{used} de {total}",
   "storage.localFolder": "Carpeta local",
-  "storage.primaryNote": "Aquesta és la còpia del camp extern de {domain}. Aquí estableixes quant de temps conserva les còpies de seguretat. Els altres valors vénen de Configuració, Destinacions.",
+  "storage.primaryNote": "Aquesta és la còpia del camp extern de {domain}. Aquí estableixes el nom, quant de temps conserva les còpies de seguretat i si l'acceptes sense protecció contra l'esborrat. Els altres valors vénen de Configuració, Destinacions.",
   "storage.vessel.full": "plena",
   "storage.vessel.fullInWeeks": "one=plena d'aquí a una setmana aproximadament|other=plena d'aquí a {n} setmanes aproximadament",
   "storage.vessel.fullOverYear": "plena d'aquí a més d'un any",

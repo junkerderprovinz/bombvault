@@ -32,14 +32,15 @@ function copy(domain: StorageLocationSection["domain"], targetId: string, enable
 function edit(
   sections: StorageLocationSection[],
   protection: StorageLocation["protection"] = { immutable: true, testable: true },
-  save: LocationEdit["save"] = () => Promise.resolve(true)
+  save: LocationEdit["save"] = () => Promise.resolve(true),
+  backend = "rest"
 ): LocationEdit {
   const location: StorageLocation = {
     id: "destination:box",
     object: "destination",
     kind: "offsite",
     provider: "rest",
-    backend: "rest",
+    backend,
     name: "Box",
     where: "rest:http://box:8000/bv",
     enabled: true,
@@ -115,4 +116,11 @@ it("says every copy is switched off instead of offering a test", () => {
   show([copy("containers", "t-off", false)]);
   expect(screen.getByText(en["storage.lock.testOff"])).toBeTruthy();
   expect(screen.queryByRole("button", { name: en["storage.lock.testNow"] })).toBeNull();
+});
+
+it("offers the acceptance for copies on a folder of this host, without a switch for delete protection", () => {
+  const copies = [copy("containers", "t1", true)];
+  show(copies, edit(copies, unprotected, undefined, "local"));
+  expect(acceptSwitch()).toBeTruthy();
+  expect(screen.queryByRole("switch", { name: en["storage.lock.toggle"] })).toBeNull();
 });

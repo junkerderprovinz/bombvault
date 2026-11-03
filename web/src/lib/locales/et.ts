@@ -1368,6 +1368,7 @@ const et: Partial<Translations> = {
 
   // Dashboard ransomware-protection card
   "ransomware.protGreen": "Kaitstud",
+  "ransomware.protAccepted": "Kaitstud, risk on aktsepteeritud",
   "ransomware.protAmber": "Vajab tähelepanu",
   "ransomware.protRed": "Ohus",
   "ransomware.replicationNever": "pole veel replitseeritud",
@@ -4093,7 +4094,7 @@ const et: Partial<Translations> = {
   "storage.off": "Väljas",
   "storage.usedOf": "{used} / {total}",
   "storage.localFolder": "Kohalik kaust",
-  "storage.primaryNote": "See on valdkonna {domain} välise välja koopia. Siin määrad, kui kaua see varukoopiaid hoiab. Selle muud väärtused tulevad jaotisest Seaded, Sihtkohad.",
+  "storage.primaryNote": "See on valdkonna {domain} välise välja koopia. Siin määrad nime, kui kaua see varukoopiaid hoiab ja kas aktsepteerid selle ilma kustutamiskaitseta. Selle muud väärtused tulevad jaotisest Seaded, Sihtkohad.",
   "storage.vessel.full": "täis",
   "storage.vessel.fullInWeeks": "one=täis umbes nädala pärast|other=täis umbes {n} nädala pärast",
   "storage.vessel.fullOverYear": "täis rohkem kui aasta pärast",

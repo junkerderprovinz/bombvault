@@ -1611,6 +1611,7 @@ const he: Partial<Translations> = {
 
   // Dashboard ransomware-protection card (v4)
   "ransomware.protGreen": "מוגן",
+  "ransomware.protAccepted": "מוגן, הסיכון התקבל",
   "ransomware.protAmber": "דורש תשומת לב",
   "ransomware.protRed": "בסיכון",
   "ransomware.replicationNever": "טרם שוכפל",
@@ -4083,7 +4084,7 @@ const he: Partial<Translations> = {
   "storage.off": "כבוי",
   "storage.usedOf": "{used} מתוך {total}",
   "storage.localFolder": "תיקייה מקומית",
-  "storage.primaryNote": "זה העותק משדה מחוץ לאתר של התחום {domain}. את משך השמירה של הגיבויים קובעים כאן. שאר הערכים שלו מגיעים מהגדרות, יעדים.",
+  "storage.primaryNote": "זה העותק משדה מחוץ לאתר של התחום {domain}. את השם, את משך השמירה של הגיבויים ואת הקבלה ללא הגנה מפני מחיקה קובעים כאן. שאר הערכים שלו מגיעים מהגדרות, יעדים.",
   "storage.vessel.full": "מלא",
   "storage.vessel.fullInWeeks": "one=יתמלא בעוד כשבוע|two=יתמלא בעוד כשבועיים|other=יתמלא בעוד כ-{n} שבועות",
   "storage.vessel.fullOverYear": "יתמלא בעוד יותר משנה",

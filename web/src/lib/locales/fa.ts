@@ -1368,6 +1368,7 @@ const fa: Partial<Translations> = {
 
   // Dashboard ransomware-protection card
   "ransomware.protGreen": "محافظت‌شده",
+  "ransomware.protAccepted": "محافظت‌شده، خطر پذیرفته شده",
   "ransomware.protAmber": "نیازمند توجه",
   "ransomware.protRed": "در معرض خطر",
   "ransomware.replicationNever": "هنوز همانندسازی نشده",
@@ -4093,7 +4094,7 @@ const fa: Partial<Translations> = {
   "storage.off": "خاموش",
   "storage.usedOf": "{used} از {total}",
   "storage.localFolder": "پوشه محلی",
-  "storage.primaryNote": "این نسخه از فیلد خارج از محل حوزه {domain} است. اینکه چه مدت نسخه‌های پشتیبان را نگه دارد، همین‌جا تعیین می‌کنی. بقیه مقدارهایش از تنظیمات، مقصدها می‌آیند.",
+  "storage.primaryNote": "این نسخه از فیلد خارج از محل حوزه {domain} است. نام آن، اینکه چه مدت نسخه‌های پشتیبان را نگه دارد و اینکه آن را بدون محافظت در برابر حذف می‌پذیری یا نه، همین‌جا تعیین می‌کنی. بقیه مقدارهایش از تنظیمات، مقصدها می‌آیند.",
   "storage.vessel.full": "پر",
   "storage.vessel.fullInWeeks": "تقریباً تا {n} هفته دیگر پر می‌شود",
   "storage.vessel.fullOverYear": "بیش از یک سال دیگر پر می‌شود",

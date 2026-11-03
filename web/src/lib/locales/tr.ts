@@ -1619,6 +1619,7 @@ const tr: Partial<Translations> = {
 
   // Dashboard ransomware-protection card (v4)
   "ransomware.protGreen": "Korumalı",
+  "ransomware.protAccepted": "Korumalı, risk kabul edildi",
   "ransomware.protAmber": "Dikkat gerekiyor",
   "ransomware.protRed": "Risk altında",
   "ransomware.replicationNever": "henüz çoğaltılmadı",
@@ -4083,7 +4084,7 @@ const tr: Partial<Translations> = {
   "storage.off": "Kapalı",
   "storage.usedOf": "{used} / {total}",
   "storage.localFolder": "Yerel klasör",
-  "storage.primaryNote": "Bu, {domain} bölümünün Site dışı alanındaki kopyadır. Yedekleri ne kadar süre tutacağını burada belirlersin. Diğer değerleri Ayarlar, Hedefler altından gelir.",
+  "storage.primaryNote": "Bu, {domain} bölümünün Site dışı alanındaki kopyadır. Adını, yedekleri ne kadar süre tutacağını ve silmeye karşı koruma olmadan kabul edip etmediğini burada belirlersin. Diğer değerleri Ayarlar, Hedefler altından gelir.",
   "storage.vessel.full": "dolu",
   "storage.vessel.fullInWeeks": "one=yaklaşık bir hafta içinde dolacak|other=yaklaşık {n} hafta içinde dolacak",
   "storage.vessel.fullOverYear": "bir yıldan uzun sürede dolacak",

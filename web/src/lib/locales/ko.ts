@@ -1602,6 +1602,7 @@ const ko: Partial<Translations> = {
 
   // Dashboard ransomware-protection card (v4)
   "ransomware.protGreen": "보호됨",
+  "ransomware.protAccepted": "보호됨, 위험 수락됨",
   "ransomware.protAmber": "주의 필요",
   "ransomware.protRed": "위험",
   "ransomware.replicationNever": "아직 복제 안 됨",
@@ -4074,7 +4075,7 @@ const ko: Partial<Translations> = {
   "storage.off": "끄기",
   "storage.usedOf": "{total} 중 {used}",
   "storage.localFolder": "로컬 폴더",
-  "storage.primaryNote": "{domain} 섹션의 오프사이트 필드에서 가져온 복사본입니다. 백업을 얼마나 오래 보관할지는 여기서 정합니다. 나머지 값은 설정, 대상에서 가져옵니다.",
+  "storage.primaryNote": "{domain} 섹션의 오프사이트 필드에서 가져온 복사본입니다. 이름, 백업 보관 기간, 삭제 방지 없이 수락할지는 여기서 정합니다. 나머지 값은 설정, 대상에서 가져옵니다.",
   "storage.vessel.full": "가득 참",
   "storage.vessel.fullInWeeks": "약 {n}주 후 가득 참",
   "storage.vessel.fullOverYear": "1년 넘게 지나야 가득 참",

@@ -9,7 +9,7 @@ import type { TranslationKey, useT } from "../../lib/i18n";
 import { lastBackupOf, type Tally } from "../../lib/protectionTally";
 import { formatRecent } from "../../lib/reltime";
 import { runTargetText } from "../../lib/runDisplay";
-import { VERDICT, type CheckTone, type Section } from "./protectionChecks";
+import { verdictOf, type CheckTone, type Section } from "./protectionChecks";
 import { STATIONS, passShare, type Headline, type LiveRun, type Pass, type Station } from "./headState";
 
 type T = ReturnType<typeof useT>["t"];
@@ -82,7 +82,7 @@ function ProtectionRing({ sections, needs, anyBackup, t }: { sections: Section[]
           style={{ "--ring-i": i } as CSSProperties}
           className={`glim-ring-grow ${SEGMENT[section.tone]}`}
         >
-          <title>{`${t(KIND_LABEL[section.kind])}: ${t(VERDICT[section.tone])}`}</title>
+          <title>{`${t(KIND_LABEL[section.kind])}: ${t(verdictOf(section))}`}</title>
         </circle>
       ))}
     </RingFrame>

@@ -1606,6 +1606,7 @@ const nl: Partial<Translations> = {
 
   // Dashboard ransomware-protection card (v4)
   "ransomware.protGreen": "Beschermd",
+  "ransomware.protAccepted": "Beschermd, risico geaccepteerd",
   "ransomware.protAmber": "Aandacht nodig",
   "ransomware.protRed": "In gevaar",
   "ransomware.replicationNever": "nog niet gerepliceerd",
@@ -4082,7 +4083,7 @@ const nl: Partial<Translations> = {
   "storage.off": "Uit",
   "storage.usedOf": "{used} van {total}",
   "storage.localFolder": "Lokale map",
-  "storage.primaryNote": "Dit is de kopie uit het off-site-veld van {domain}. Hoelang ze back-ups bewaart, stel je hier in. De overige waarden komen uit Instellingen, Bestemmingen.",
+  "storage.primaryNote": "Dit is de kopie uit het off-site-veld van {domain}. De naam, hoelang ze back-ups bewaart en of je ze zonder bescherming tegen verwijderen accepteert, stel je hier in. De overige waarden komen uit Instellingen, Bestemmingen.",
   "storage.vessel.full": "vol",
   "storage.vessel.fullInWeeks": "one=vol over ongeveer een week|other=vol over ongeveer {n} weken",
   "storage.vessel.fullOverYear": "vol over meer dan een jaar",

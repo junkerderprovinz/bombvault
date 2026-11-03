@@ -1611,6 +1611,7 @@ const it: Partial<Translations> = {
 
   // Dashboard ransomware-protection card (v4)
   "ransomware.protGreen": "Protetto",
+  "ransomware.protAccepted": "Protetto, rischio accettato",
   "ransomware.protAmber": "Richiede attenzione",
   "ransomware.protRed": "A rischio",
   "ransomware.replicationNever": "non ancora replicato",
@@ -4083,7 +4084,7 @@ const it: Partial<Translations> = {
   "storage.off": "Disattivato",
   "storage.usedOf": "{used} di {total}",
   "storage.localFolder": "Cartella locale",
-  "storage.primaryNote": "Questa è la copia del campo off-site di {domain}. Qui imposti per quanto tempo conserva i backup. Gli altri valori vengono da Impostazioni, Destinazioni.",
+  "storage.primaryNote": "Questa è la copia del campo off-site di {domain}. Qui imposti il nome, per quanto tempo conserva i backup e se la accetti senza protezione dall'eliminazione. Gli altri valori vengono da Impostazioni, Destinazioni.",
   "storage.vessel.full": "pieno",
   "storage.vessel.fullInWeeks": "one=pieno tra circa una settimana|other=pieno tra circa {n} settimane",
   "storage.vessel.fullOverYear": "pieno tra più di un anno",

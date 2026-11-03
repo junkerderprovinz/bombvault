@@ -1616,6 +1616,7 @@ const uk: Partial<Translations> = {
 
   // Dashboard ransomware-protection card (v4)
   "ransomware.protGreen": "Захищено",
+  "ransomware.protAccepted": "Захищено, ризик прийнято",
   "ransomware.protAmber": "Потребує уваги",
   "ransomware.protRed": "Під загрозою",
   "ransomware.replicationNever": "ще не реплікувалося",
@@ -4080,7 +4081,7 @@ const uk: Partial<Translations> = {
   "storage.off": "Вимкнено",
   "storage.usedOf": "{used} із {total}",
   "storage.localFolder": "Локальна тека",
-  "storage.primaryNote": "Це копія з поля Зовнішнє розділу {domain}. Як довго вона зберігає резервні копії, задається тут. Решта її значень береться з розділу Налаштування, Місця призначення.",
+  "storage.primaryNote": "Це копія з поля Зовнішнє розділу {domain}. Назва, як довго вона зберігає резервні копії і чи приймається вона без захисту від видалення, задається тут. Решта її значень береться з розділу Налаштування, Місця призначення.",
   "storage.vessel.full": "заповнено",
   "storage.vessel.fullInWeeks": "one=заповниться приблизно через {n} тиждень|few=заповниться приблизно через {n} тижні|many=заповниться приблизно через {n} тижнів|other=заповниться приблизно через {n} тижня",
   "storage.vessel.fullOverYear": "заповниться більш ніж через рік",

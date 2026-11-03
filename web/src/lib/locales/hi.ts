@@ -1368,6 +1368,7 @@ const hi: Partial<Translations> = {
 
   // Dashboard ransomware-protection card
   "ransomware.protGreen": "सुरक्षित",
+  "ransomware.protAccepted": "सुरक्षित, जोखिम स्वीकार किया गया",
   "ransomware.protAmber": "ध्यान देने की ज़रूरत है",
   "ransomware.protRed": "खतरे में",
   "ransomware.replicationNever": "अभी तक रेप्लिकेट नहीं हुआ",
@@ -4093,7 +4094,7 @@ const hi: Partial<Translations> = {
   "storage.off": "बंद",
   "storage.usedOf": "{total} में से {used}",
   "storage.localFolder": "स्थानीय फ़ोल्डर",
-  "storage.primaryNote": "यह सेक्शन {domain} के ऑफ़-साइट फ़ील्ड की कॉपी है। यह बैकअप कितने समय तक रखती है, यह यहीं तय किया जाता है। इसके बाकी मान सेटिंग्स, गंतव्य से आते हैं।",
+  "storage.primaryNote": "यह सेक्शन {domain} के ऑफ़-साइट फ़ील्ड की कॉपी है। इसका नाम, यह बैकअप कितने समय तक रखती है, और इसे डिलीट से सुरक्षा के बिना स्वीकार करना है या नहीं, यह यहीं तय किया जाता है। इसके बाकी मान सेटिंग्स, गंतव्य से आते हैं।",
   "storage.vessel.full": "भरा",
   "storage.vessel.fullInWeeks": "one=लगभग एक सप्ताह में भर जाएगा|other=लगभग {n} सप्ताह में भर जाएगा",
   "storage.vessel.fullOverYear": "एक साल से ज़्यादा में भरेगा",

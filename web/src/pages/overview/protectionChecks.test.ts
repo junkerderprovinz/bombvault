@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { tallyEntries } from "../../lib/protectionTally";
 import { domain, item } from "./overview.testsupport";
 import { en } from "../../lib/i18n";
-import { domainChecks, drilledText, sectionsOf, worstTone, type Check, type CheckKey } from "./protectionChecks";
+import { domainChecks, drilledText, sectionsOf, verdictOf, worstTone, type Check, type CheckKey } from "./protectionChecks";
 
 const calm = { copying: false, drilling: false };
 const one = tallyEntries([item()]);
@@ -179,6 +179,23 @@ describe("the trial restore check", () => {
 
   it("shows a restore that is running", () => {
     expect(drill({ lastDrDrillOK: false }, true).tone).toBe("run");
+  });
+});
+
+describe("verdictOf", () => {
+  const accepted = { offsiteImmutable: false, tamperState: "", deleteRiskAccepted: true };
+  const verdict = (over: Parameters<typeof domain>[0]) => verdictOf(sectionsOf([domain(over)], [item()], {}, null)[0]);
+
+  it("says protected with the risk accepted where an accepted gap is all that is missing", () => {
+    expect(verdict(accepted)).toBe("ransomware.protAccepted");
+  });
+
+  it("says plain protected where delete protection is checked", () => {
+    expect(verdict({})).toBe("ransomware.protGreen");
+  });
+
+  it("lets a worse check speak over an accepted gap", () => {
+    expect(verdict({ ...accepted, status: "overdue" })).toBe("ransomware.protRed");
   });
 });
 

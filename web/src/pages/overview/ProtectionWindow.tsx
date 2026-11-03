@@ -11,7 +11,7 @@ import { entryTarget, protection, waitingLabel, type Protection } from "../../li
 import type { TranslationKey, useT } from "../../lib/i18n";
 import { formatTs, relativeTime } from "../../lib/reltime";
 import { TONE_DOT } from "./ProtectionCard";
-import { VERDICT, canDrill, drilledText, type CheckTone, type Section } from "./protectionChecks";
+import { canDrill, drilledText, verdictOf, type CheckTone, type Section } from "./protectionChecks";
 import type { TrialRestore } from "./useTrialRestore";
 
 type T = ReturnType<typeof useT>["t"];
@@ -148,7 +148,7 @@ export function ProtectionWindow({
     >
       <div className="flex flex-wrap items-center justify-between gap-2">
         <span className="text-sm text-carbon-textSub">{t("dashboard.protectionTitle")}</span>
-        <Badge tone={VERDICT_BADGE[section.tone]}>{t(VERDICT[section.tone])}</Badge>
+        <Badge tone={VERDICT_BADGE[section.tone]}>{t(verdictOf(section))}</Badge>
       </div>
 
       <ul className="flex flex-col">
