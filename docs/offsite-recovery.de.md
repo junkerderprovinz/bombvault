@@ -138,6 +138,8 @@ Schalte den Löschschutz für einen Speicherort außer Haus ein, damit Ransomwar
 
 Der Schalter gehört zum Speicherort: Ein Bereich, der dorthin kopiert, übernimmt ihn vom Speicherort, also schaltest du ihn auf der Seite des Speicherorts unter **Speicherorte** ein. Das geplante **Löschschutz prüfen** läuft nur, solange ein Bereich an einen Speicherort mit eingeschaltetem Schalter kopiert. Die Gegenseite muss mit `--append-only` gestartet sein; beim Image `restic/rest-server` gehört das, auf TrueNAS wie auf jedem anderen Docker-Host, in die Variable `OPTIONS`.
 
+Manche Orte können das Löschen gar nicht verweigern, ein Cloud-Laufwerk wie OneDrive zum Beispiel. Wenn du dort bewusst Kopien ablegst, schalte auf der Seite des Speicherorts **Ohne Löschschutz akzeptieren** ein. Die Übersicht zeigt den fehlenden Löschschutz eines Bereichs, der nur an akzeptierte Speicherorte kopiert, dann als akzeptiertes Risiko, als grauen Ring statt als gelben Punkt, und die Farbe des Bereichs richtet sich nach seinen übrigen Prüfungen. Sonst ändert sich nichts: Die Sicherungen dort lassen sich weiterhin löschen, BombVault räumt sie weiter nach den Regeln des Speicherorts auf, und der Schalter verschwindet, sobald der Löschschutz an ist. Zieht eine Kopie an einen anderen Ort um, gilt die Zustimmung dort nicht mehr. Auch das Einschalten des Löschschutzes nimmt sie zurück.
+
 Der schnellste Weg zu einer Append-only-Kopie ist ein gekoppeltes BombVault mit einem [Empfangsserver](#receiving-server): Es betreibt den rest-server für dich, im Append-only-Modus.
 
 !!! note "Ein erfolgreiches Löschen unter `/locks/` ist zu erwarten"
@@ -149,6 +151,8 @@ Der schnellste Weg zu einer Append-only-Kopie ist ein gekoppeltes BombVault mit 
 ## Manipulationstest
 
 BombVault beweist die Append-only-Garantie regelmäßig, indem es tatsächlich einen Löschversuch gegen das Off-site-Repo unternimmt, gezielt auf ein nicht existierendes Objekt. **Löschschutz jetzt testen** auf der Seite eines Orts führt ihn sofort aus, und **Löschschutz prüfen** unter **Einstellungen, Prüfung, Automatische Prüfungen** nach Plan.
+
+**Löschschutz prüfen** auszuschalten versteckt keine Lücke. Ein Speicherort mit Löschschutz, der nie getestet wurde, zeigt dann „nicht nachgewiesen, die Prüfung ist aus“, und ein Speicherort ohne Löschschutz zeigt so oder so „keiner“.
 
 Eine ausgeschaltete Kopie wird nicht getestet, und der Speicherort sagt das. Der Verbindungstest läuft bei ihr trotzdem, weil er nur liest, so kannst du eine Kopie prüfen, bevor du sie einschaltest.
 
@@ -165,7 +169,7 @@ BombVault bietet zwei Stufen des Nachweises, dass deine Sicherungen wirklich wie
 - **Wiederherstellungs-Prüfübungen (lokal).** BombVault führt regelmäßig `restic check --read-data-subset` aus (begrenzt, nie eine plattenfüllende Vollwiederherstellung). Der Rhythmus steht unter **Einstellungen, Prüfung, Automatische Prüfungen**, und die Karte **Sicherungen prüfen** auf derselben Kachel zeigt das Ergebnis.
 - **Probe-Wiederherstellung (Off-site).** BombVault stellt ein echtes Ziel aus dem Off-site-Repo in eine abgeschottete Sandbox wieder her, prüft es Datei für Datei und Byte für Byte und räumt dann auf. Das beweist, dass du aus dem Off-site wiederherstellen kannst, nicht nur, dass das Repo antwortet.
 
-Die Karte **Schutzstatus** auf der Übersicht fasst das pro Bereich in vier Prüfungen zusammen: eine aktuelle Sicherung auf diesem Server, eine Kopie außer Haus, Löschschutz dort und eine Probe-Wiederherstellung von dort. Ein Klick auf einen Bereich zeigt die Einzelheiten, und die Karte wird nur bei verifizierten Fakten grün.
+Die Karte **Schutzstatus** auf der Übersicht fasst das pro Bereich in vier Prüfungen zusammen: eine aktuelle Sicherung auf diesem Server, eine Kopie außer Haus, Löschschutz dort und eine Probe-Wiederherstellung von dort. Ein Klick auf einen Bereich zeigt die Einzelheiten, und die Karte wird nur bei verifizierten Fakten grün. Ein Speicherort, den du ohne Löschschutz akzeptiert hast, zählt dort als akzeptiertes Risiko, nicht als Warnung.
 
 ## Instanzen koppeln {#pairing}
 

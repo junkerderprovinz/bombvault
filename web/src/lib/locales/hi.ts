@@ -823,6 +823,7 @@ const hi: Partial<Translations> = {
   "whatsNew.gotify": "Gotify एक अलग सूचना चैनल है, जिसमें सर्वर URL, ऐप टोकन और विफल तथा सफल होने पर अलग-अलग प्राथमिकता होती है।",
   "whatsNew.restoreStacks": "Compose स्टैक रीस्टोर पेज पर अपने अलग कार्ड से रीस्टोर होते हैं।",
   "whatsNew.entryOwnPlan": "कोई भी कंटेनर, VM, फ़ोल्डर या ZFS डेटासेट अपने शेड्यूल पर चल सकता है। आप इसे प्रविष्टि के सेटिंग्स टैब पर सेट करते हैं, पहले कोई स्विच चालू किए बिना।",
+  "whatsNew.deleteRisk": "डिलीट से सुरक्षा के बिना किसी स्टोरेज लोकेशन को जैसा है वैसा स्वीकार किया जा सकता है। तब ओवरव्यू उसके बारे में चेतावनी देना बंद कर देता है और यह बताता रहता है कि वहाँ के बैकअप डिलीट हो सकते हैं।",
   "whatsNew.overviewMoveMode": "जब आप अवलोकन को अनुकूलित करते हैं, तो उसके कार्ड हल्के से हिलते हैं, ताकि पता चले कि आप उन्हें खिसका सकते हैं।",
   "whatsNew.labelGlyphs": "लेबल कोने और एनिमेशन की तरह हर विकल्प के लिए एक प्रतीक दिखाता है।",
 
@@ -1368,6 +1369,7 @@ const hi: Partial<Translations> = {
 
   // Dashboard ransomware-protection card
   "ransomware.protGreen": "सुरक्षित",
+  "ransomware.protAccepted": "सुरक्षित, जोखिम स्वीकार किया गया",
   "ransomware.protAmber": "ध्यान देने की ज़रूरत है",
   "ransomware.protRed": "खतरे में",
   "ransomware.replicationNever": "अभी तक रेप्लिकेट नहीं हुआ",
@@ -4093,7 +4095,7 @@ const hi: Partial<Translations> = {
   "storage.off": "बंद",
   "storage.usedOf": "{total} में से {used}",
   "storage.localFolder": "स्थानीय फ़ोल्डर",
-  "storage.primaryNote": "यह सेक्शन {domain} के ऑफ़-साइट फ़ील्ड की कॉपी है। यह बैकअप कितने समय तक रखती है, यह यहीं तय किया जाता है। इसके बाकी मान सेटिंग्स, गंतव्य से आते हैं।",
+  "storage.primaryNote": "यह सेक्शन {domain} के ऑफ़-साइट फ़ील्ड की कॉपी है। इसका नाम, यह बैकअप कितने समय तक रखती है, और इसे डिलीट से सुरक्षा के बिना स्वीकार करना है या नहीं, यह यहीं तय किया जाता है। इसके बाकी मान सेटिंग्स, गंतव्य से आते हैं।",
   "storage.vessel.full": "भरा",
   "storage.vessel.fullInWeeks": "one=लगभग एक सप्ताह में भर जाएगा|other=लगभग {n} सप्ताह में भर जाएगा",
   "storage.vessel.fullOverYear": "एक साल से ज़्यादा में भरेगा",
@@ -4122,6 +4124,8 @@ const hi: Partial<Translations> = {
   "storage.rclone.all": "rclone.conf के सभी रिमोट",
   "storage.rclone.hidden": "छिपा",
   "storage.lock.toggle": "डिलीट से सुरक्षा (append-only)",
+  "storage.lock.accept": "डिलीट से सुरक्षा के बिना स्वीकार करें",
+  "storage.lock.acceptHint": "यहाँ के बैकअप अब भी डिलीट होने से सुरक्षित नहीं हैं: जो कोई इस स्टोरेज लोकेशन या BombVault तक पहुँच जाए, वह उन्हें डिलीट कर सकता है। इसे चालू करने पर ओवरव्यू कमी को चेतावनी के बजाय स्वीकार किए गए जोखिम के रूप में दिखाता है, और सेक्शन का रंग उसकी बाकी जाँचों के हिसाब से तय होता है। लोकेशन पर कुछ नहीं बदलता, और पुराने बैकअप पहले की तरह हटाए जाते हैं।",
   "storage.lock.localHint": "इस मशीन की कोई चीज़ इस रिपॉज़िटरी से डिलीट नहीं कर सकती। प्रून और बैकअप डिलीट करना अस्वीकार कर दिया जाता है। उस आर्काइव के लिए जिसे आप रखना चाहते हैं।",
   "storage.lock.test": "डिलीट से सुरक्षा अभी जाँचें",
   "storage.lock.testHint": "एक टेस्ट ऑब्जेक्ट डिलीट करने की कोशिश करता है। अगर दूसरा पक्ष मना कर दे, तो सुरक्षा असली है।",
@@ -4375,6 +4379,9 @@ const hi: Partial<Translations> = {
   "overview.check.lockChecked": "डिलीट से सुरक्षा: जाँचा गया",
   "overview.check.lockFailed": "डिलीट से सुरक्षा: परीक्षण विफल रहा",
   "overview.check.lockUnproven": "डिलीट से सुरक्षा: अभी तक प्रमाणित नहीं",
+  "overview.check.lockNone": "डिलीट से सुरक्षा: नहीं है",
+  "overview.check.lockAccepted": "डिलीट से सुरक्षा: नहीं है, जोखिम स्वीकार किया गया",
+  "overview.check.lockCheckOff": "डिलीट से सुरक्षा: प्रमाणित नहीं, इसकी जाँच बंद है",
   "overview.check.drillNeedsOffsite": "परीक्षण पुनर्स्थापना: ऑफ़-साइट गंतव्य चाहिए",
   "overview.check.drillUnavailable": "परीक्षण पुनर्स्थापना: इस सेक्शन के लिए संभव नहीं",
   "overview.check.drillRunning": "परीक्षण पुनर्स्थापना: चल रही है",

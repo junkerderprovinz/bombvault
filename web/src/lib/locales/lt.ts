@@ -823,6 +823,7 @@ const lt: Partial<Translations> = {
   "whatsNew.gotify": "Gotify yra atskiras pranešimų kanalas su serverio URL, programos raktu ir prioritetu nesėkmės bei sėkmės atveju.",
   "whatsNew.restoreStacks": "Compose krūvas atkuri iš atskiros kortelės puslapyje Atkūrimas.",
   "whatsNew.entryOwnPlan": "Konteineris, VM, aplankas ar ZFS duomenų rinkinys gali veikti pagal savo tvarkaraštį. Jį nustatai įrašo skirtuke Nustatymai, prieš tai nereikia įjungti jokio jungiklio.",
+  "whatsNew.deleteRisk": "Saugojimo vietą be apsaugos nuo trynimo gali priimti tokią, kokia ji yra. Apžvalga tada nustoja dėl jos įspėti ir toliau sako, kad ten esančias kopijas galima ištrinti.",
   "whatsNew.overviewMoveMode": "Kol tinkini apžvalgą, jos kortelės švelniai siūbuoja, kad matytum, jog jas gali perkelti.",
   "whatsNew.labelGlyphs": "Etiketės rodo kiekvieno pasirinkimo simbolį, kaip ir Kampai bei Animacija.",
 
@@ -1368,6 +1369,7 @@ const lt: Partial<Translations> = {
 
   // Dashboard ransomware-protection card
   "ransomware.protGreen": "Apsaugota",
+  "ransomware.protAccepted": "Apsaugota, rizika priimta",
   "ransomware.protAmber": "Reikia dėmesio",
   "ransomware.protRed": "Pavojuje",
   "ransomware.replicationNever": "dar nereplikuota",
@@ -4093,7 +4095,7 @@ const lt: Partial<Translations> = {
   "storage.off": "Išjungta",
   "storage.usedOf": "{used} iš {total}",
   "storage.localFolder": "Vietinis aplankas",
-  "storage.primaryNote": "Tai srities {domain} nuotolinio lauko kopija. Čia nustatai, kiek laiko ji saugo atsargines kopijas. Kitos jos reikšmės imamos iš skilties Nustatymai, Paskirties vietos.",
+  "storage.primaryNote": "Tai srities {domain} nuotolinio lauko kopija. Čia nustatai pavadinimą, kiek laiko ji saugo atsargines kopijas ir ar ją priimi be apsaugos nuo trynimo. Kitos jos reikšmės imamos iš skilties Nustatymai, Paskirties vietos.",
   "storage.vessel.full": "pilna",
   "storage.vessel.fullInWeeks": "one=pilna maždaug po {n} savaitės|few=pilna maždaug po {n} savaičių|other=pilna maždaug po {n} savaičių",
   "storage.vessel.fullOverYear": "pilna po daugiau nei metų",
@@ -4122,6 +4124,8 @@ const lt: Partial<Translations> = {
   "storage.rclone.all": "Visi rclone.conf remote",
   "storage.rclone.hidden": "paslėpta",
   "storage.lock.toggle": "Apsauga nuo trynimo (append-only)",
+  "storage.lock.accept": "Priimti be apsaugos nuo trynimo",
+  "storage.lock.acceptHint": "Čia esančios atsarginės kopijos vis dar neapsaugotos nuo trynimo: kas patenka į šią saugojimo vietą ar į BombVault, gali jas ištrinti. Kai tai įjungta, apžvalga trūkstamą apsaugą rodo kaip priimtą riziką, o ne kaip įspėjimą, o skyriaus spalva priklauso nuo kitų jo patikrų. Pačioje vietoje niekas nesikeičia, o senos kopijos valomos kaip anksčiau.",
   "storage.lock.localHint": "Niekas šioje mašinoje negali trinti iš šios saugyklos. Valymas ir atsarginių kopijų trynimas atmetami. Skirta archyvui, kurį nori išsaugoti.",
   "storage.lock.test": "Išbandyti apsaugą nuo trynimo dabar",
   "storage.lock.testHint": "Bando ištrinti bandomąjį objektą. Jei kita pusė atsisako, apsauga tikra.",
@@ -4375,6 +4379,9 @@ const lt: Partial<Translations> = {
   "overview.check.lockChecked": "Apsauga nuo trynimo: patikrinta",
   "overview.check.lockFailed": "Apsauga nuo trynimo: testas nepavyko",
   "overview.check.lockUnproven": "Apsauga nuo trynimo: dar neįrodyta",
+  "overview.check.lockNone": "Apsauga nuo trynimo: nėra",
+  "overview.check.lockAccepted": "Apsauga nuo trynimo: nėra, rizika priimta",
+  "overview.check.lockCheckOff": "Apsauga nuo trynimo: neįrodyta, patikra išjungta",
   "overview.check.drillNeedsOffsite": "Bandomasis atkūrimas: reikia nuotolinės paskirties vietos",
   "overview.check.drillUnavailable": "Bandomasis atkūrimas: šiai sričiai neįmanoma",
   "overview.check.drillRunning": "Bandomasis atkūrimas: vyksta",

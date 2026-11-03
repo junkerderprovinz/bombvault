@@ -1143,6 +1143,7 @@ const sv: Partial<Translations> = {
   "whatsNew.gotify": "Gotify är en egen aviseringskanal, med serverns URL, en app-token och en prioritet vid fel och en vid lyckat.",
   "whatsNew.restoreStacks": "Compose-stackar återställs från ett eget kort på sidan Återställning.",
   "whatsNew.entryOwnPlan": "En container, en VM, en mapp eller en ZFS-datauppsättning kan köra enligt ett eget schema. Du ställer in det på postens flik Inställningar, utan att först slå på någon brytare.",
+  "whatsNew.deleteRisk": "En lagringsplats utan skydd mot radering kan accepteras som den är. Översikten slutar då varna för den och säger fortfarande att säkerhetskopiorna där kan raderas.",
   "whatsNew.overviewMoveMode": "Medan du anpassar översikten gungar korten lätt för att visa att du kan flytta dem.",
   "whatsNew.labelGlyphs": "Etiketter visar en symbol för varje val, som Hörn och Animation.",
 
@@ -1619,6 +1620,7 @@ const sv: Partial<Translations> = {
 
   // Dashboard ransomware-protection card (v4)
   "ransomware.protGreen": "Skyddad",
+  "ransomware.protAccepted": "Skyddad, risken accepterad",
   "ransomware.protAmber": "Kräver åtgärd",
   "ransomware.protRed": "I riskzonen",
   "ransomware.replicationNever": "inte replikerad än",
@@ -4083,7 +4085,7 @@ const sv: Partial<Translations> = {
   "storage.off": "Av",
   "storage.usedOf": "{used} av {total}",
   "storage.localFolder": "Lokal mapp",
-  "storage.primaryNote": "Det här är kopian från off-site-fältet för {domain}. Hur länge den sparar säkerhetskopior ställer du in här. De övriga värdena kommer från Inställningar, Mål.",
+  "storage.primaryNote": "Det här är kopian från off-site-fältet för {domain}. Namnet, hur länge den sparar säkerhetskopior och om du accepterar den utan skydd mot radering ställer du in här. De övriga värdena kommer från Inställningar, Mål.",
   "storage.vessel.full": "full",
   "storage.vessel.fullInWeeks": "one=full om ungefär en vecka|other=full om ungefär {n} veckor",
   "storage.vessel.fullOverYear": "full om mer än ett år",
@@ -4112,6 +4114,8 @@ const sv: Partial<Translations> = {
   "storage.rclone.all": "Alla remotes i rclone.conf",
   "storage.rclone.hidden": "dold",
   "storage.lock.toggle": "Skydd mot radering (append-only)",
+  "storage.lock.accept": "Acceptera utan skydd mot radering",
+  "storage.lock.acceptHint": "Säkerhetskopiorna här är fortfarande inte skyddade mot radering: den som tar sig in på den här lagringsplatsen eller i BombVault kan radera dem. När detta är på visar översikten det saknade skyddet som en accepterad risk i stället för en varning, och avsnittets färg följer dess övriga kontroller. På själva platsen ändras ingenting, och gamla säkerhetskopior rensas som tidigare.",
   "storage.lock.localHint": "Inget på den här maskinen får radera från det här repositoryt. Rensning och radering av säkerhetskopior avvisas. Avsett för ett arkiv du vill behålla.",
   "storage.lock.test": "Testa skyddet mot radering nu",
   "storage.lock.testHint": "Försöker radera ett testobjekt. Om andra sidan avvisar det är skyddet på riktigt.",
@@ -4365,6 +4369,9 @@ const sv: Partial<Translations> = {
   "overview.check.lockChecked": "Skydd mot radering: kontrollerat",
   "overview.check.lockFailed": "Skydd mot radering: testet misslyckades",
   "overview.check.lockUnproven": "Skydd mot radering: inte bevisat än",
+  "overview.check.lockNone": "Skydd mot radering: inget",
+  "overview.check.lockAccepted": "Skydd mot radering: inget, risken accepterad",
+  "overview.check.lockCheckOff": "Skydd mot radering: inte bevisat, kontrollen är avstängd",
   "overview.check.drillNeedsOffsite": "Teståterställning: behöver ett externt mål",
   "overview.check.drillUnavailable": "Teståterställning: inte möjlig för det här avsnittet",
   "overview.check.drillRunning": "Teståterställning: pågår",

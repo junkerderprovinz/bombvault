@@ -823,6 +823,7 @@ const ca: Partial<Translations> = {
   "whatsNew.gotify": "Gotify és un canal de notificacions propi, amb l'URL del servidor, un testimoni de l'aplicació i una prioritat en fallar i una altra en tenir èxit.",
   "whatsNew.restoreStacks": "Les piles de Compose es restauren des d'una targeta pròpia a la pàgina Restauració.",
   "whatsNew.entryOwnPlan": "Un contenidor, una MV, una carpeta o un conjunt de dades ZFS pot executar-se amb una planificació pròpia. La defineixes a la pestanya Configuració de l'element, sense haver d'activar cap interruptor abans.",
+  "whatsNew.deleteRisk": "Una ubicació sense protecció contra l'esborrat es pot acceptar tal com és. La vista general deixa d'avisar-ne i continua dient que les còpies d'allà es poden esborrar.",
   "whatsNew.overviewMoveMode": "Mentre personalitzes el resum, les targetes es balancegen suaument per mostrar que les pots moure.",
   "whatsNew.labelGlyphs": "Etiquetes mostra un símbol per a cada opció, com Cantonades i Animació.",
 
@@ -1368,6 +1369,7 @@ const ca: Partial<Translations> = {
 
   // Dashboard ransomware-protection card
   "ransomware.protGreen": "Protegit",
+  "ransomware.protAccepted": "Protegit, risc acceptat",
   "ransomware.protAmber": "Necessita atenció",
   "ransomware.protRed": "En risc",
   "ransomware.replicationNever": "encara no replicat",
@@ -4093,7 +4095,7 @@ const ca: Partial<Translations> = {
   "storage.off": "Desactivat",
   "storage.usedOf": "{used} de {total}",
   "storage.localFolder": "Carpeta local",
-  "storage.primaryNote": "Aquesta és la còpia del camp extern de {domain}. Aquí estableixes quant de temps conserva les còpies de seguretat. Els altres valors vénen de Configuració, Destinacions.",
+  "storage.primaryNote": "Aquesta és la còpia del camp extern de {domain}. Aquí estableixes el nom, quant de temps conserva les còpies de seguretat i si l'acceptes sense protecció contra l'esborrat. Els altres valors vénen de Configuració, Destinacions.",
   "storage.vessel.full": "plena",
   "storage.vessel.fullInWeeks": "one=plena d'aquí a una setmana aproximadament|other=plena d'aquí a {n} setmanes aproximadament",
   "storage.vessel.fullOverYear": "plena d'aquí a més d'un any",
@@ -4122,6 +4124,8 @@ const ca: Partial<Translations> = {
   "storage.rclone.all": "Tots els remots del rclone.conf",
   "storage.rclone.hidden": "ocult",
   "storage.lock.toggle": "Protecció contra l'esborrat (append-only)",
+  "storage.lock.accept": "Acceptar sense protecció contra l'esborrat",
+  "storage.lock.acceptHint": "Les còpies d'aquí continuen sense protecció contra l'esborrat: qui entri en aquesta ubicació o a BombVault les pot esborrar. Amb això activat, la vista general mostra la manca de protecció com un risc acceptat en lloc d'un avís, i el color de la secció segueix les altres comprovacions. A la ubicació no hi canvia res, i les còpies antigues s'esporguen com abans.",
   "storage.lock.localHint": "Res d'aquest equip no pot esborrar d'aquest repositori. La neteja i l'esborrat de còpies es rebutgen. Pensat per a un arxiu que vols conservar.",
   "storage.lock.test": "Prova ara la protecció contra l'esborrat",
   "storage.lock.testHint": "Intenta esborrar un objecte de prova. Si l'altre costat ho rebutja, la protecció és real.",
@@ -4375,6 +4379,9 @@ const ca: Partial<Translations> = {
   "overview.check.lockChecked": "Protecció contra l'esborrat: comprovada",
   "overview.check.lockFailed": "Protecció contra l'esborrat: la prova ha fallat",
   "overview.check.lockUnproven": "Protecció contra l'esborrat: encara no demostrada",
+  "overview.check.lockNone": "Protecció contra l'esborrat: cap",
+  "overview.check.lockAccepted": "Protecció contra l'esborrat: cap, risc acceptat",
+  "overview.check.lockCheckOff": "Protecció contra l'esborrat: no demostrada, la comprovació està desactivada",
   "overview.check.drillNeedsOffsite": "Restauració de prova: cal una destinació externa",
   "overview.check.drillUnavailable": "Restauració de prova: no és possible per a aquesta secció",
   "overview.check.drillRunning": "Restauració de prova: en curs",

@@ -1133,6 +1133,7 @@ const ro: Partial<Translations> = {
   "whatsNew.gotify": "Gotify este un canal de notificare separat, cu URL-ul serverului, tokenul aplicației și o prioritate la eșec și una la succes.",
   "whatsNew.restoreStacks": "Stack-urile Compose se restaurează dintr-un card propriu pe pagina Restaurare.",
   "whatsNew.entryOwnPlan": "Un container, o VM, un folder sau un set de date ZFS poate rula după o programare proprie. O setezi în fila Setări a elementului, fără să pornești mai întâi vreun comutator.",
+  "whatsNew.deleteRisk": "O locație de stocare fără protecție împotriva ștergerii poate fi acceptată așa cum este. Prezentarea generală nu mai avertizează atunci despre ea și spune în continuare că copiile de acolo pot fi șterse.",
   "whatsNew.overviewMoveMode": "Cât timp personalizezi prezentarea, cardurile ei se leagănă ușor ca să arate că le poți muta.",
   "whatsNew.labelGlyphs": "Etichete afișează un simbol pentru fiecare opțiune, ca Colțuri și Animație.",
 
@@ -1608,6 +1609,7 @@ const ro: Partial<Translations> = {
 
   // Dashboard ransomware-protection card (v4)
   "ransomware.protGreen": "Protejat",
+  "ransomware.protAccepted": "Protejat, risc acceptat",
   "ransomware.protAmber": "Necesită atenție",
   "ransomware.protRed": "În pericol",
   "ransomware.replicationNever": "nereplicat încă",
@@ -4084,7 +4086,7 @@ const ro: Partial<Translations> = {
   "storage.off": "Dezactivată",
   "storage.usedOf": "{used} din {total}",
   "storage.localFolder": "Dosar local",
-  "storage.primaryNote": "Aceasta este copia din câmpul extern al lui {domain}. Cât timp păstrează copiile de rezervă se setează aici. Celelalte valori ale ei vin din Setări, Destinații.",
+  "storage.primaryNote": "Aceasta este copia din câmpul extern al lui {domain}. Numele, cât timp păstrează copiile de rezervă și dacă o accepți fără protecție împotriva ștergerii se setează aici. Celelalte valori ale ei vin din Setări, Destinații.",
   "storage.vessel.full": "plin",
   "storage.vessel.fullInWeeks": "one=plin în aproximativ o săptămână|few=plin în aproximativ {n} săptămâni|other=plin în aproximativ {n} de săptămâni",
   "storage.vessel.fullOverYear": "plin în mai mult de un an",
@@ -4113,6 +4115,8 @@ const ro: Partial<Translations> = {
   "storage.rclone.all": "Toate remote-urile din rclone.conf",
   "storage.rclone.hidden": "ascuns",
   "storage.lock.toggle": "Protecție împotriva ștergerii (append-only)",
+  "storage.lock.accept": "Acceptă fără protecție împotriva ștergerii",
+  "storage.lock.acceptHint": "Copiile de rezervă de aici tot nu sunt protejate împotriva ștergerii: oricine intră în această locație de stocare sau în BombVault le poate șterge. Cu aceasta pornită, prezentarea generală arată lipsa protecției ca risc acceptat în loc de avertisment, iar culoarea secțiunii urmează celelalte verificări ale ei. La locația însăși nu se schimbă nimic, iar copiile vechi sunt curățate ca înainte.",
   "storage.lock.localHint": "Nimic de pe acest dispozitiv nu poate șterge din acest depozit. Curățarea și ștergerea copiilor de rezervă sunt refuzate. Gândit pentru o arhivă pe care vrei s-o păstrezi.",
   "storage.lock.test": "Testează acum protecția împotriva ștergerii",
   "storage.lock.testHint": "Încearcă să șteargă un obiect de test. Dacă cealaltă parte refuză, protecția este reală.",
@@ -4366,6 +4370,9 @@ const ro: Partial<Translations> = {
   "overview.check.lockChecked": "Protecție împotriva ștergerii: verificată",
   "overview.check.lockFailed": "Protecție împotriva ștergerii: testul a eșuat",
   "overview.check.lockUnproven": "Protecție împotriva ștergerii: încă nedovedită",
+  "overview.check.lockNone": "Protecție împotriva ștergerii: niciuna",
+  "overview.check.lockAccepted": "Protecție împotriva ștergerii: niciuna, risc acceptat",
+  "overview.check.lockCheckOff": "Protecție împotriva ștergerii: nedovedită, verificarea este oprită",
   "overview.check.drillNeedsOffsite": "Restaurare de test: necesită o destinație off-site",
   "overview.check.drillUnavailable": "Restaurare de test: imposibilă pentru această secțiune",
   "overview.check.drillRunning": "Restaurare de test: rulează",

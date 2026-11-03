@@ -1132,6 +1132,7 @@ const pt: Partial<Translations> = {
   "whatsNew.gotify": "O Gotify é um canal de notificação próprio, com o URL do servidor, um token da aplicação e uma prioridade em caso de falha e outra em caso de sucesso.",
   "whatsNew.restoreStacks": "As stacks do Compose restauram-se a partir do seu próprio cartão na página Restauração.",
   "whatsNew.entryOwnPlan": "Um container, uma VM, uma pasta ou um conjunto de dados ZFS pode correr num agendamento próprio. Defines-o no separador Definições da entrada, sem teres de ligar primeiro um interruptor.",
+  "whatsNew.deleteRisk": "Um local de armazenamento sem proteção contra eliminação pode ser aceite tal como está. A vista geral deixa então de avisar sobre ele e continua a dizer que as cópias lá podem ser eliminadas.",
   "whatsNew.overviewMoveMode": "Enquanto personalizas a visão geral, os cartões balançam ligeiramente para mostrar que os podes mover.",
   "whatsNew.labelGlyphs": "Rótulos mostra um símbolo para cada opção, como Cantos e Animação.",
 
@@ -1607,6 +1608,7 @@ const pt: Partial<Translations> = {
 
   // Dashboard ransomware-protection card (v4)
   "ransomware.protGreen": "Protegido",
+  "ransomware.protAccepted": "Protegido, risco aceite",
   "ransomware.protAmber": "Requer atenção",
   "ransomware.protRed": "Em risco",
   "ransomware.replicationNever": "ainda não replicado",
@@ -4083,7 +4085,7 @@ const pt: Partial<Translations> = {
   "storage.off": "Desativado",
   "storage.usedOf": "{used} de {total}",
   "storage.localFolder": "Pasta local",
-  "storage.primaryNote": "Esta é a cópia do campo externo de {domain}. Quanto tempo guarda as cópias de segurança define-se aqui. Os restantes valores vêm de Definições, Destinos.",
+  "storage.primaryNote": "Esta é a cópia do campo externo de {domain}. O nome, quanto tempo guarda as cópias de segurança e se é aceite sem proteção contra eliminação definem-se aqui. Os restantes valores vêm de Definições, Destinos.",
   "storage.vessel.full": "cheio",
   "storage.vessel.fullInWeeks": "one=cheio dentro de cerca de uma semana|other=cheio dentro de cerca de {n} semanas",
   "storage.vessel.fullOverYear": "cheio dentro de mais de um ano",
@@ -4112,6 +4114,8 @@ const pt: Partial<Translations> = {
   "storage.rclone.all": "Todos os remotes no rclone.conf",
   "storage.rclone.hidden": "oculto",
   "storage.lock.toggle": "Proteção contra eliminação (append-only)",
+  "storage.lock.accept": "Aceitar sem proteção contra eliminação",
+  "storage.lock.acceptHint": "As cópias de segurança aqui continuam sem proteção contra eliminação: quem entrar neste local de armazenamento ou no BombVault pode eliminá-las. Com isto ligado, a vista geral mostra a falta de proteção como um risco aceite em vez de um aviso, e a cor da secção segue as restantes verificações. No local em si nada muda, e as cópias antigas são limpas como antes.",
   "storage.lock.localHint": "Nada neste equipamento pode eliminar deste repositório. A poda e a eliminação de backups são recusadas. Pensado para um arquivo que se quer manter.",
   "storage.lock.test": "Testar agora a proteção contra eliminação",
   "storage.lock.testHint": "Tenta eliminar um objeto de teste. Se o outro lado recusar, a proteção é real.",
@@ -4365,6 +4369,9 @@ const pt: Partial<Translations> = {
   "overview.check.lockChecked": "Proteção contra eliminação: verificada",
   "overview.check.lockFailed": "Proteção contra eliminação: o teste falhou",
   "overview.check.lockUnproven": "Proteção contra eliminação: ainda não comprovada",
+  "overview.check.lockNone": "Proteção contra eliminação: nenhuma",
+  "overview.check.lockAccepted": "Proteção contra eliminação: nenhuma, risco aceite",
+  "overview.check.lockCheckOff": "Proteção contra eliminação: não comprovada, a verificação está desligada",
   "overview.check.drillNeedsOffsite": "Restauro de teste: precisa de um destino externo",
   "overview.check.drillUnavailable": "Restauro de teste: não é possível para esta secção",
   "overview.check.drillRunning": "Restauro de teste: em curso",

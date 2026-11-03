@@ -128,6 +128,9 @@ type locationProtection struct {
 	// LastTamper folds the sections' last tests: the oldest of them, and
 	// protected only when every one was.
 	LastTamper *tamperState `json:"lastTamper,omitempty"`
+	// RiskAccepted says the user accepted that a location copies go to cannot
+	// refuse a delete. It counts only while Immutable is off.
+	RiskAccepted bool `json:"riskAccepted,omitempty"`
 }
 
 type tamperState struct {
@@ -499,7 +502,7 @@ func (b *locationBuilder) destinationLocation(d store.OffsiteTarget) storageLoca
 		Enabled: d.Enabled, OffPremises: d.OffPremises,
 		Retention: &keep, Compression: normalizedCompression(d.Compression),
 		LimitUpload: &d.LimitUpload, LimitDownload: &d.LimitDownload,
-		Protection: locationProtection{Immutable: d.Immutable, Testable: backendOf(d.Repo) == "rest"},
+		Protection: locationProtection{Immutable: d.Immutable, Testable: backendOf(d.Repo) == "rest", RiskAccepted: d.DeleteRiskAccepted},
 	}
 	if repo, err := b.s.resolveRepo(d.Repo); err == nil {
 		loc.volumes = []string{repo}
@@ -548,7 +551,7 @@ func (b *locationBuilder) targetLocation(t store.OffsiteTarget) storageLocation 
 		Enabled: t.Enabled, OffPremises: targetOffPremises(t, nil),
 		Retention: &keep, Compression: normalizedCompression(t.Compression),
 		LimitUpload: &t.LimitUpload, LimitDownload: &t.LimitDownload,
-		Protection: locationProtection{Immutable: t.Immutable, Testable: backendOf(t.Repo) == "rest"},
+		Protection: locationProtection{Immutable: t.Immutable, Testable: backendOf(t.Repo) == "rest", RiskAccepted: t.DeleteRiskAccepted},
 	}
 	b.addTarget(&loc, t)
 	loc.Protection.LastTamper = foldTamper(loc.Sections)
@@ -788,6 +791,51 @@ func (h *Handler) handleRenameStorageLocation(w http.ResponseWriter, r *http.Req
 		return
 	}
 	if err := h.store.SetLocationName(strings.TrimPrefix(loc.ID, locationPath+":"), body.Name); err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	if loc, err = h.svc.StorageLocation(loc.ID); err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"location": loc}))
+}
+
+// The refusals for a location that has nothing to accept.
+var (
+	errNoRiskToAccept   = errors.New("this storage location has delete protection, so there is no missing protection to accept")
+	errRiskNotForCopies = errors.New("only a storage location that takes copies can be accepted without delete protection")
+)
+
+// handleAcceptDeleteRisk records that the user accepts a location without
+// delete protection, or takes that back. It changes how the dashboard words
+// the gap and nothing else: the location still takes deletes and prunes.
+// PUT /api/storage/locations/{id}/risk-accepted
+func (h *Handler) handleAcceptDeleteRisk(w http.ResponseWriter, r *http.Request) {
+	loc, err := h.svc.StorageLocation(r.PathValue("id"))
+	if errors.Is(err, errNoSuchLocation) {
+		writeJSON(w, http.StatusNotFound, map[string]any{"ok": false, "error": err.Error()})
+		return
+	}
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	var body struct {
+		Accepted bool `json:"accepted"`
+	}
+	if !decodeBody(w, r, &body) {
+		return
+	}
+	switch {
+	case loc.Object != locationDestination && loc.Object != locationTarget:
+		writeJSON(w, http.StatusOK, failEnvelope(errRiskNotForCopies))
+		return
+	case body.Accepted && loc.Protection.Immutable:
+		writeJSON(w, http.StatusOK, failEnvelope(errNoRiskToAccept))
+		return
+	}
+	if err := h.store.SetDeleteRiskAccepted(strings.TrimPrefix(loc.ID, loc.Object+":"), body.Accepted); err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}

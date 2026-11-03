@@ -823,6 +823,7 @@ const id: Partial<Translations> = {
   "whatsNew.gotify": "Gotify adalah saluran notifikasi tersendiri, dengan URL server, token aplikasi, serta prioritas saat gagal dan saat berhasil.",
   "whatsNew.restoreStacks": "Stack Compose dipulihkan dari kartunya sendiri di halaman Pemulihan.",
   "whatsNew.entryOwnPlan": "Container, VM, folder, atau dataset ZFS bisa berjalan dengan jadwalnya sendiri. Anda mengaturnya di tab Pengaturan entri itu, tanpa perlu menyalakan sakelar apa pun lebih dulu.",
+  "whatsNew.deleteRisk": "Lokasi penyimpanan tanpa perlindungan dari penghapusan bisa diterima apa adanya. Ringkasan lalu berhenti memperingatkannya dan tetap menyebutkan bahwa cadangan di sana bisa dihapus.",
   "whatsNew.overviewMoveMode": "Saat Anda menyesuaikan Ringkasan, kartunya bergoyang pelan untuk menunjukkan bahwa Anda dapat memindahkannya.",
   "whatsNew.labelGlyphs": "Label menampilkan simbol untuk setiap pilihan, seperti Sudut dan Animasi.",
 
@@ -1368,6 +1369,7 @@ const id: Partial<Translations> = {
 
   // Dashboard ransomware-protection card
   "ransomware.protGreen": "Terlindungi",
+  "ransomware.protAccepted": "Terlindungi, risiko diterima",
   "ransomware.protAmber": "Perlu perhatian",
   "ransomware.protRed": "Berisiko",
   "ransomware.replicationNever": "belum pernah direplikasi",
@@ -4093,7 +4095,7 @@ const id: Partial<Translations> = {
   "storage.off": "Mati",
   "storage.usedOf": "{used} dari {total}",
   "storage.localFolder": "Folder lokal",
-  "storage.primaryNote": "Ini adalah salinan dari kolom Off-site milik bagian {domain}. Berapa lama salinan ini menyimpan cadangan diatur di sini. Nilai lainnya berasal dari Pengaturan, Tujuan.",
+  "storage.primaryNote": "Ini adalah salinan dari kolom Off-site milik bagian {domain}. Namanya, berapa lama salinan ini menyimpan cadangan, dan apakah salinan ini diterima tanpa perlindungan dari penghapusan diatur di sini. Nilai lainnya berasal dari Pengaturan, Tujuan.",
   "storage.vessel.full": "penuh",
   "storage.vessel.fullInWeeks": "penuh dalam sekitar {n} minggu",
   "storage.vessel.fullOverYear": "penuh dalam lebih dari setahun",
@@ -4122,6 +4124,8 @@ const id: Partial<Translations> = {
   "storage.rclone.all": "Semua remote di rclone.conf",
   "storage.rclone.hidden": "tersembunyi",
   "storage.lock.toggle": "Perlindungan dari penghapusan (append-only)",
+  "storage.lock.accept": "Terima tanpa perlindungan dari penghapusan",
+  "storage.lock.acceptHint": "Cadangan di sini tetap tidak terlindungi dari penghapusan: siapa pun yang masuk ke lokasi penyimpanan ini atau ke BombVault bisa menghapusnya. Jika ini aktif, ringkasan menampilkan perlindungan yang hilang sebagai risiko yang diterima, bukan peringatan, dan warna bagian mengikuti pemeriksaan lainnya. Tidak ada yang berubah di lokasi itu sendiri, dan cadangan lama tetap dipangkas seperti sebelumnya.",
   "storage.lock.localHint": "Tidak ada apa pun di mesin ini yang boleh menghapus dari repositori ini. Prune dan penghapusan cadangan ditolak. Ditujukan untuk arsip yang ingin Anda simpan.",
   "storage.lock.test": "Uji perlindungan dari penghapusan sekarang",
   "storage.lock.testHint": "Mencoba menghapus objek uji. Jika pihak seberang menolak, perlindungannya nyata.",
@@ -4375,6 +4379,9 @@ const id: Partial<Translations> = {
   "overview.check.lockChecked": "Perlindungan dari penghapusan: sudah diperiksa",
   "overview.check.lockFailed": "Perlindungan dari penghapusan: pengujian gagal",
   "overview.check.lockUnproven": "Perlindungan dari penghapusan: belum terbukti",
+  "overview.check.lockNone": "Perlindungan dari penghapusan: tidak ada",
+  "overview.check.lockAccepted": "Perlindungan dari penghapusan: tidak ada, risiko diterima",
+  "overview.check.lockCheckOff": "Perlindungan dari penghapusan: belum terbukti, pemeriksaannya mati",
   "overview.check.drillNeedsOffsite": "Uji pemulihan: perlu tujuan off-site",
   "overview.check.drillUnavailable": "Uji pemulihan: tidak bisa untuk bagian ini",
   "overview.check.drillRunning": "Uji pemulihan: sedang berjalan",

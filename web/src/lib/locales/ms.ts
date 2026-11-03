@@ -823,6 +823,7 @@ const ms: Partial<Translations> = {
   "whatsNew.gotify": "Gotify ialah saluran pemberitahuan tersendiri, dengan URL pelayan, token aplikasi dan keutamaan apabila gagal dan apabila berjaya.",
   "whatsNew.restoreStacks": "Stack Compose dipulihkan daripada kadnya sendiri di halaman Pemulihan.",
   "whatsNew.entryOwnPlan": "Bekas, VM, folder atau set data ZFS boleh berjalan mengikut jadual sendiri. Anda menetapkannya pada tab Tetapan entri itu, tanpa perlu menghidupkan sebarang suis dahulu.",
+  "whatsNew.deleteRisk": "Lokasi storan tanpa perlindungan daripada pemadaman boleh diterima seadanya. Gambaran keseluruhan kemudian berhenti memberi amaran tentangnya dan masih menyatakan bahawa sandaran di sana boleh dipadamkan.",
   "whatsNew.overviewMoveMode": "Semasa anda menyesuaikan Ikhtisar, kadnya bergoyang perlahan untuk menunjukkan bahawa anda boleh mengalihkannya.",
   "whatsNew.labelGlyphs": "Label memaparkan simbol untuk setiap pilihan, seperti Sudut dan Animasi.",
 
@@ -1368,6 +1369,7 @@ const ms: Partial<Translations> = {
 
   // Dashboard ransomware-protection card
   "ransomware.protGreen": "Dilindungi",
+  "ransomware.protAccepted": "Dilindungi, risiko diterima",
   "ransomware.protAmber": "Memerlukan perhatian",
   "ransomware.protRed": "Berisiko",
   "ransomware.replicationNever": "belum direplikasikan",
@@ -4093,7 +4095,7 @@ const ms: Partial<Translations> = {
   "storage.off": "Mati",
   "storage.usedOf": "{used} daripada {total}",
   "storage.localFolder": "Folder tempatan",
-  "storage.primaryNote": "Ini ialah salinan daripada medan Luar tapak bagi bahagian {domain}. Berapa lama ia menyimpan sandaran ditetapkan di sini. Nilai lainnya datang daripada Tetapan, Destinasi.",
+  "storage.primaryNote": "Ini ialah salinan daripada medan Luar tapak bagi bahagian {domain}. Namanya, berapa lama ia menyimpan sandaran dan sama ada ia diterima tanpa perlindungan daripada pemadaman ditetapkan di sini. Nilai lainnya datang daripada Tetapan, Destinasi.",
   "storage.vessel.full": "penuh",
   "storage.vessel.fullInWeeks": "penuh dalam kira-kira {n} minggu",
   "storage.vessel.fullOverYear": "penuh dalam lebih daripada setahun",
@@ -4122,6 +4124,8 @@ const ms: Partial<Translations> = {
   "storage.rclone.all": "Semua remote dalam rclone.conf",
   "storage.rclone.hidden": "tersembunyi",
   "storage.lock.toggle": "Perlindungan daripada pemadaman (append-only)",
+  "storage.lock.accept": "Terima tanpa perlindungan daripada pemadaman",
+  "storage.lock.acceptHint": "Sandaran di sini masih tidak dilindungi daripada pemadaman: sesiapa yang masuk ke lokasi storan ini atau ke BombVault boleh memadamkannya. Apabila ini dihidupkan, gambaran keseluruhan menunjukkan perlindungan yang tiada sebagai risiko yang diterima, bukan amaran, dan warna bahagian mengikut semakan lainnya. Tiada apa yang berubah pada lokasi itu sendiri, dan sandaran lama dibersihkan seperti dahulu.",
   "storage.lock.localHint": "Tiada apa-apa pada mesin ini yang boleh memadam daripada repositori ini. Prune dan pemadaman sandaran ditolak. Bertujuan untuk arkib yang anda mahu kekalkan.",
   "storage.lock.test": "Uji perlindungan daripada pemadaman sekarang",
   "storage.lock.testHint": "Cuba memadam objek ujian. Jika pihak sebelah lagi menolak, perlindungan itu benar.",
@@ -4375,6 +4379,9 @@ const ms: Partial<Translations> = {
   "overview.check.lockChecked": "Perlindungan daripada pemadaman: disemak",
   "overview.check.lockFailed": "Perlindungan daripada pemadaman: ujian gagal",
   "overview.check.lockUnproven": "Perlindungan daripada pemadaman: belum dibuktikan",
+  "overview.check.lockNone": "Perlindungan daripada pemadaman: tiada",
+  "overview.check.lockAccepted": "Perlindungan daripada pemadaman: tiada, risiko diterima",
+  "overview.check.lockCheckOff": "Perlindungan daripada pemadaman: belum dibuktikan, semakannya dimatikan",
   "overview.check.drillNeedsOffsite": "Pemulihan ujian: memerlukan destinasi luar tapak",
   "overview.check.drillUnavailable": "Pemulihan ujian: tidak boleh untuk bahagian ini",
   "overview.check.drillRunning": "Pemulihan ujian: sedang berjalan",

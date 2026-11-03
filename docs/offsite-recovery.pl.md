@@ -138,6 +138,8 @@ Włącz ochronę przed usunięciem dla miejsca docelowego poza siedzibą, aby ra
 
 Przełącznik należy do miejsca docelowego: sekcja, która tam kopiuje, przejmuje go od miejsca docelowego, więc włącz go na stronie miejsca docelowego w **Miejsca docelowe**. Zaplanowane **Sprawdzaj ochronę przed usunięciem** działa tylko wtedy, gdy jakaś sekcja kopiuje do miejsca docelowego z włączonym przełącznikiem. Druga strona musi być uruchomiona z `--append-only`; w obrazie `restic/rest-server`, na TrueNAS tak jak na każdym innym hoście Dockera, trafia to do zmiennej `OPTIONS`.
 
+Niektóre miejsca w ogóle nie potrafią odmówić usunięcia, na przykład dysk w chmurze taki jak OneDrive. Jeśli świadomie trzymasz tam kopie, włącz **Akceptuj bez ochrony przed usunięciem** na stronie lokalizacji. Przegląd pokazuje wtedy brakującą ochronę sekcji, która kopiuje tylko do zaakceptowanych lokalizacji, jako zaakceptowane ryzyko, szary pierścień zamiast pomarańczowej kropki, a kolor sekcji wynika z jej pozostałych kontroli. Nic więcej się nie zmienia: kopie tam nadal można usunąć, BombVault nadal je czyści według reguł lokalizacji, a przełącznik znika, gdy tylko ochrona przed usunięciem jest włączona. Kopia, która przenosi się gdzie indziej, traci akceptację. Włączenie ochrony przed usunięciem także ją cofa.
+
 Najszybsza droga do kopii append-only to sparowany BombVault z [serwerem odbiorczym](#receiving-server): uruchamia rest-server za Ciebie, w trybie append-only.
 
 !!! note "Udane usunięcie w `/locks/` jest oczekiwane"
@@ -149,6 +151,8 @@ Najszybsza droga do kopii append-only to sparowany BombVault z [serwerem odbiorc
 ## Tamper test
 
 BombVault okresowo dowodzi gwarancji append-only, faktycznie próbując usunąć coś w repozytorium poza siedzibą, na nieistniejącym obiekcie. **Przetestuj ochronę przed usunięciem teraz** na stronie miejsca docelowego uruchamia to na żądanie, a **Sprawdzaj ochronę przed usunięciem** w **Ustawienia, Weryfikacja, Automatyczne kontrole** uruchamia to według harmonogramu.
+
+Wyłączenie **Sprawdzaj ochronę przed usunięciem** nie ukrywa żadnej luki: nigdy nietestowana ochrona pokazuje się wtedy jako nieudowodniona, bo sprawdzanie jest wyłączone, a lokalizacja bez ochrony przed usunięciem w każdym przypadku pokazuje się jako bez ochrony.
 
 Wyłączona kopia nie jest testowana, a miejsce docelowe to pokazuje. Test połączenia nadal działa, bo tylko odczytuje, więc kopię można sprawdzić przed jej włączeniem.
 
@@ -165,7 +169,7 @@ BombVault oferuje dwa poziomy dowodu, że Twoje kopie zapasowe da się naprawdę
 - **Próby weryfikacji przywracania (lokalne).** BombVault okresowo uruchamia `restic check --read-data-subset` (ograniczone, nigdy pełne przywracanie zapychające dysk). Rytm ustawia się w **Ustawienia, Weryfikacja, Automatyczne kontrole**, a karta **Sprawdź kopie zapasowe** na tym samym kafelku pokazuje wynik.
 - **Próbne przywracanie (poza siedzibą).** BombVault przywraca prawdziwy cel z repozytorium poza siedzibą do odizolowanej piaskownicy, weryfikuje go plik po pliku i bajt po bajcie, po czym sprząta. To dowodzi, że potrafisz odzyskać dane spoza siedziby, a nie tylko że repozytorium odpowiada.
 
-Karta **Stan ochrony** w przeglądzie podsumowuje to dla każdej sekcji w czterech kontrolach: aktualna kopia na tym serwerze, kopia poza siedzibą, ochrona przed usunięciem tam i próbne przywracanie stamtąd. Kliknięcie sekcji pokazuje szczegóły, a karta robi się zielona tylko na zweryfikowanych faktach.
+Karta **Stan ochrony** w przeglądzie podsumowuje to dla każdej sekcji w czterech kontrolach: aktualna kopia na tym serwerze, kopia poza siedzibą, ochrona przed usunięciem tam i próbne przywracanie stamtąd. Kliknięcie sekcji pokazuje szczegóły, a karta robi się zielona tylko na zweryfikowanych faktach. Lokalizacja zaakceptowana przez Ciebie bez ochrony przed usunięciem liczy się tam jako zaakceptowane ryzyko, nie jako ostrzeżenie.
 
 ## Parowanie instancji {#pairing}
 

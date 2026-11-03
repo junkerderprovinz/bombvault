@@ -1151,6 +1151,7 @@ const es: Partial<Translations> = {
   "whatsNew.gotify": "Gotify es un canal de notificaciones propio, con la URL del servidor, un token de la aplicación y una prioridad si falla y otra si sale bien.",
   "whatsNew.restoreStacks": "Los stacks de Compose se restauran desde su propia tarjeta en la página Restauración.",
   "whatsNew.entryOwnPlan": "Un contenedor, una VM, una carpeta o un conjunto de datos ZFS puede ejecutarse con un calendario propio. Lo ajustas en la pestaña Ajustes del elemento, sin activar antes ningún interruptor.",
+  "whatsNew.deleteRisk": "Una ubicación sin protección contra borrado se puede aceptar tal como es. La vista general deja de avisar por ella y sigue indicando que las copias de allí se pueden borrar.",
   "whatsNew.overviewMoveMode": "Mientras personalizas el resumen, sus tarjetas se balancean suavemente para mostrar que puedes moverlas.",
   "whatsNew.labelGlyphs": "Etiquetas muestra un símbolo para cada opción, como Esquinas y Animación.",
 
@@ -1617,6 +1618,7 @@ const es: Partial<Translations> = {
 
   // Dashboard ransomware-protection card (v4)
   "ransomware.protGreen": "Protegido",
+  "ransomware.protAccepted": "Protegido, riesgo aceptado",
   "ransomware.protAmber": "Requiere atención",
   "ransomware.protRed": "En riesgo",
   "ransomware.replicationNever": "aún sin replicar",
@@ -4081,7 +4083,7 @@ const es: Partial<Translations> = {
   "storage.off": "Desactivado",
   "storage.usedOf": "{used} de {total}",
   "storage.localFolder": "Carpeta local",
-  "storage.primaryNote": "Esta es la copia del campo externo de {domain}. Aquí ajustas cuánto tiempo conserva las copias de seguridad. Sus demás valores vienen de Ajustes, Destinos.",
+  "storage.primaryNote": "Esta es la copia del campo externo de {domain}. Aquí ajustas el nombre, cuánto tiempo conserva las copias de seguridad y si la aceptas sin protección contra borrado. Sus demás valores vienen de Ajustes, Destinos.",
   "storage.vessel.full": "lleno",
   "storage.vessel.fullInWeeks": "one=lleno en aproximadamente una semana|other=lleno en aproximadamente {n} semanas",
   "storage.vessel.fullOverYear": "lleno en más de un año",
@@ -4110,6 +4112,8 @@ const es: Partial<Translations> = {
   "storage.rclone.all": "Todos los remotes del rclone.conf",
   "storage.rclone.hidden": "oculto",
   "storage.lock.toggle": "Protección contra borrado (append-only)",
+  "storage.lock.accept": "Aceptar sin protección contra borrado",
+  "storage.lock.acceptHint": "Las copias de aquí siguen sin protección contra borrado: quien entre en esta ubicación o en BombVault puede borrarlas. Con esto activado, la vista general muestra la falta de protección como un riesgo aceptado en lugar de un aviso, y el color de la sección sigue sus demás comprobaciones. En la ubicación no cambia nada, y las copias antiguas se purgan como antes.",
   "storage.lock.localHint": "Nada de este equipo puede borrar en este repositorio. La poda y el borrado de copias se rechazan. Pensado para un archivo que quieres conservar.",
   "storage.lock.test": "Probar la protección contra borrado ahora",
   "storage.lock.testHint": "Intenta borrar un objeto de prueba. Si el otro lado lo rechaza, la protección es real.",
@@ -4363,6 +4367,9 @@ const es: Partial<Translations> = {
   "overview.check.lockChecked": "Protección contra borrado: comprobada",
   "overview.check.lockFailed": "Protección contra borrado: la prueba falló",
   "overview.check.lockUnproven": "Protección contra borrado: aún sin demostrar",
+  "overview.check.lockNone": "Protección contra borrado: ninguna",
+  "overview.check.lockAccepted": "Protección contra borrado: ninguna, riesgo aceptado",
+  "overview.check.lockCheckOff": "Protección contra borrado: sin demostrar, la comprobación está desactivada",
   "overview.check.drillNeedsOffsite": "Restauración de prueba: necesita un destino externo",
   "overview.check.drillUnavailable": "Restauración de prueba: no es posible para esta sección",
   "overview.check.drillRunning": "Restauración de prueba: en curso",

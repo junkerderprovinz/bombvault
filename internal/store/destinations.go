@@ -130,6 +130,7 @@ func writeDestinationTx(tx *sql.Tx, d OffsiteTarget) error {
 		ON CONFLICT(id) DO UPDATE SET
 		  name = excluded.name, repo = excluded.repo, creds_ref = excluded.creds_ref,
 		  storage_class = excluded.storage_class, immutable = excluded.immutable, provider = excluded.provider,
+		  delete_risk_accepted = CASE WHEN excluded.immutable = 1 THEN 0 ELSE offsite_targets.delete_risk_accepted END,
 		  off_premises = excluded.off_premises, `+assignments(followedCols, "excluded.")+`
 		WHERE offsite_targets.role = excluded.role`,
 		slices.Concat([]any{d.ID, d.Name, d.Repo, RoleDestination, d.CredsRef, d.StorageClass, boolInt(d.Immutable),

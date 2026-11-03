@@ -1135,6 +1135,7 @@ const fr: Partial<Translations> = {
   "whatsNew.gotify": "Gotify est un canal de notification à part entière, avec l'URL du serveur, un jeton de l'application et une priorité en cas d'échec et une en cas de réussite.",
   "whatsNew.restoreStacks": "Les stacks Compose se restaurent depuis leur propre carte sur la page Restauration.",
   "whatsNew.entryOwnPlan": "Un conteneur, une VM, un dossier ou un jeu de données ZFS peut suivre son propre planning. Vous le réglez dans l'onglet Paramètres de l'élément, sans interrupteur à activer d'abord.",
+  "whatsNew.deleteRisk": "Un emplacement sans protection contre la suppression peut être accepté tel quel. L'aperçu cesse alors d'avertir à son sujet et indique toujours que les sauvegardes qui s'y trouvent peuvent être supprimées.",
   "whatsNew.overviewMoveMode": "Pendant que vous personnalisez l'aperçu, ses cartes oscillent doucement pour montrer que vous pouvez les déplacer.",
   "whatsNew.labelGlyphs": "Libellés affiche un symbole pour chaque choix, comme Angles et Animation.",
 
@@ -1611,6 +1612,7 @@ const fr: Partial<Translations> = {
 
   // Dashboard ransomware-protection card (v4)
   "ransomware.protGreen": "Protégé",
+  "ransomware.protAccepted": "Protégé, risque accepté",
   "ransomware.protAmber": "Attention requise",
   "ransomware.protRed": "À risque",
   "ransomware.replicationNever": "pas encore répliqué",
@@ -4083,7 +4085,7 @@ const fr: Partial<Translations> = {
   "storage.off": "Désactivé",
   "storage.usedOf": "{used} sur {total}",
   "storage.localFolder": "Dossier local",
-  "storage.primaryNote": "Il s'agit de la copie du champ hors site de {domain}. La durée de conservation des sauvegardes se règle ici. Ses autres valeurs viennent de Paramètres, Destinations.",
+  "storage.primaryNote": "Il s'agit de la copie du champ hors site de {domain}. Le nom, la durée de conservation des sauvegardes et l'acceptation sans protection contre la suppression se règlent ici. Ses autres valeurs viennent de Paramètres, Destinations.",
   "storage.vessel.full": "plein",
   "storage.vessel.fullInWeeks": "one=plein dans environ une semaine|other=plein dans environ {n} semaines",
   "storage.vessel.fullOverYear": "plein dans plus d'un an",
@@ -4112,6 +4114,8 @@ const fr: Partial<Translations> = {
   "storage.rclone.all": "Tous les remotes du rclone.conf",
   "storage.rclone.hidden": "masqué",
   "storage.lock.toggle": "Protection contre la suppression (append-only)",
+  "storage.lock.accept": "Accepter sans protection contre la suppression",
+  "storage.lock.acceptHint": "Les sauvegardes ici ne sont toujours pas protégées contre la suppression : quiconque accède à cet emplacement ou à BombVault peut les supprimer. Une fois activé, l'aperçu affiche l'absence de protection comme un risque accepté plutôt qu'un avertissement, et la couleur de la section suit ses autres vérifications. Rien ne change sur l'emplacement lui-même, et les anciennes sauvegardes sont élaguées comme avant.",
   "storage.lock.localHint": "Rien sur cette machine ne peut supprimer dans ce dépôt. L'élagage et la suppression de sauvegardes sont refusés. Prévu pour une archive à conserver.",
   "storage.lock.test": "Tester la protection contre la suppression maintenant",
   "storage.lock.testHint": "Tente de supprimer un objet de test. Si l'autre côté refuse, la protection est réelle.",
@@ -4365,6 +4369,9 @@ const fr: Partial<Translations> = {
   "overview.check.lockChecked": "Protection contre la suppression : vérifiée",
   "overview.check.lockFailed": "Protection contre la suppression : le test a échoué",
   "overview.check.lockUnproven": "Protection contre la suppression : pas encore prouvée",
+  "overview.check.lockNone": "Protection contre la suppression : aucune",
+  "overview.check.lockAccepted": "Protection contre la suppression : aucune, risque accepté",
+  "overview.check.lockCheckOff": "Protection contre la suppression : non prouvée, sa vérification est désactivée",
   "overview.check.drillNeedsOffsite": "Restauration de test : nécessite une destination hors site",
   "overview.check.drillUnavailable": "Restauration de test : impossible pour cette section",
   "overview.check.drillRunning": "Restauration de test : en cours",

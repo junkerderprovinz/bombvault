@@ -3576,6 +3576,14 @@ UPDATE offsite_targets SET
 );`,
 	},
 	{
+		// Whether the user accepted that a storage location cannot refuse a
+		// delete. A row from before has not.
+		version:          deleteRiskMigration,
+		name:             "offsite_targets_delete_risk_accepted",
+		alreadySatisfied: columnPresent("offsite_targets", "delete_risk_accepted"),
+		sql:              `ALTER TABLE offsite_targets ADD COLUMN delete_risk_accepted INTEGER NOT NULL DEFAULT 0;`,
+	},
+	{
 		// An entry's own plan counts by itself. Where the switch that gated
 		// plans was off, the stored ones did nothing, so they go before they
 		// would start to count.
@@ -3957,6 +3965,10 @@ const removedSkipsMigration = 640
 
 // formerOwnFoldersMigration numbers the places own folders moved away from.
 const formerOwnFoldersMigration = 650
+
+// deleteRiskMigration numbers the storage locations accepted without delete
+// protection.
+const deleteRiskMigration = 660
 
 // ownPlansCountMigration numbers the clean-up that lets an entry's own plan
 // count without a switch.

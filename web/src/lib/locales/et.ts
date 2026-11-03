@@ -823,6 +823,7 @@ const et: Partial<Translations> = {
   "whatsNew.gotify": "Gotify on eraldi teavituskanal, millel on serveri URL, rakenduse tunnus ning prioriteet nurjumisel ja õnnestumisel.",
   "whatsNew.restoreStacks": "Compose'i virnad taastad nende oma kaardilt lehel Taastamine.",
   "whatsNew.entryOwnPlan": "Konteiner, VM, kaust või ZFS-i andmekogum saab töötada oma ajakava järgi. Määrad selle kirje vahekaardil Seaded ja ühtegi lülitit ei pea enne sisse lülitama.",
+  "whatsNew.deleteRisk": "Kustutamiskaitseta salvestuskoha saab aktsepteerida sellisena, nagu see on. Ülevaade lõpetab siis selle kohta hoiatamise ja ütleb endiselt, et sealsed varukoopiad saab kustutada.",
   "whatsNew.overviewMoveMode": "Kui sa ülevaadet kohandad, kõiguvad selle kaardid kergelt, et näidata, et saad neid liigutada.",
   "whatsNew.labelGlyphs": "Sildid näitab iga valiku juures sümbolit, nagu Nurgad ja Animatsioon.",
 
@@ -1368,6 +1369,7 @@ const et: Partial<Translations> = {
 
   // Dashboard ransomware-protection card
   "ransomware.protGreen": "Kaitstud",
+  "ransomware.protAccepted": "Kaitstud, risk on aktsepteeritud",
   "ransomware.protAmber": "Vajab tähelepanu",
   "ransomware.protRed": "Ohus",
   "ransomware.replicationNever": "pole veel replitseeritud",
@@ -4093,7 +4095,7 @@ const et: Partial<Translations> = {
   "storage.off": "Väljas",
   "storage.usedOf": "{used} / {total}",
   "storage.localFolder": "Kohalik kaust",
-  "storage.primaryNote": "See on valdkonna {domain} välise välja koopia. Siin määrad, kui kaua see varukoopiaid hoiab. Selle muud väärtused tulevad jaotisest Seaded, Sihtkohad.",
+  "storage.primaryNote": "See on valdkonna {domain} välise välja koopia. Siin määrad nime, kui kaua see varukoopiaid hoiab ja kas aktsepteerid selle ilma kustutamiskaitseta. Selle muud väärtused tulevad jaotisest Seaded, Sihtkohad.",
   "storage.vessel.full": "täis",
   "storage.vessel.fullInWeeks": "one=täis umbes nädala pärast|other=täis umbes {n} nädala pärast",
   "storage.vessel.fullOverYear": "täis rohkem kui aasta pärast",
@@ -4122,6 +4124,8 @@ const et: Partial<Translations> = {
   "storage.rclone.all": "Kõik rclone.conf-i remote'id",
   "storage.rclone.hidden": "peidetud",
   "storage.lock.toggle": "Kustutamiskaitse (append-only)",
+  "storage.lock.accept": "Aktsepteeri ilma kustutamiskaitseta",
+  "storage.lock.acceptHint": "Siinsed varukoopiad pole endiselt kustutamise eest kaitstud: igaüks, kes pääseb sellesse salvestuskohta või BombVaulti, saab need kustutada. Kui see on sees, näitab ülevaade puuduvat kaitset aktsepteeritud riskina, mitte hoiatusena, ja jaotise värv järgib selle teisi kontrolle. Salvestuskohas endas ei muutu midagi ja vanad varukoopiad puhastatakse nagu varem.",
   "storage.lock.localHint": "Miski sellel masinal ei tohi sellest hoidlast kustutada. Puhastamine ja varunduste kustutamine lükatakse tagasi. Mõeldud arhiivile, mida tahad alles hoida.",
   "storage.lock.test": "Testi kustutamiskaitset kohe",
   "storage.lock.testHint": "Proovib kustutada testobjekti. Kui teine pool keeldub, on kaitse tõeline.",
@@ -4375,6 +4379,9 @@ const et: Partial<Translations> = {
   "overview.check.lockChecked": "Kustutamiskaitse: kontrollitud",
   "overview.check.lockFailed": "Kustutamiskaitse: test ebaõnnestus",
   "overview.check.lockUnproven": "Kustutamiskaitse: pole veel tõendatud",
+  "overview.check.lockNone": "Kustutamiskaitse: puudub",
+  "overview.check.lockAccepted": "Kustutamiskaitse: puudub, risk on aktsepteeritud",
+  "overview.check.lockCheckOff": "Kustutamiskaitse: tõendamata, kontroll on välja lülitatud",
   "overview.check.drillNeedsOffsite": "Proovitaastamine: vajab välist sihtkohta",
   "overview.check.drillUnavailable": "Proovitaastamine: pole selle valdkonna jaoks võimalik",
   "overview.check.drillRunning": "Proovitaastamine: käib",

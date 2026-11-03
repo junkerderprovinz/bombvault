@@ -138,6 +138,8 @@ Slå på beskyttelse mot sletting for et eksternt mål slik at løsepengevirus, 
 
 Bryteren hører til målet: en seksjon som kopierer dit, tar den fra målet, så slå den på på målets side under **Mål**. Den planlagte **Kontroller slettebeskyttelse** kjører bare så lenge en seksjon kopierer til et mål med bryteren slått på. Den andre siden må startes med `--append-only`; med imaget `restic/rest-server`, på TrueNAS som på enhver annen Docker-vert, legges det i variabelen `OPTIONS`.
 
+Noen steder kan ikke avvise en sletting i det hele tatt, for eksempel en skydisk som OneDrive. Hvis du bevisst legger kopier der, slår du på **Godta uten beskyttelse mot sletting** på siden til lagringsstedet. Oversikten viser da den manglende beskyttelsen for en del som bare kopierer til godtatte steder som en akseptert risiko, en grå ring i stedet for en gul prikk, og fargen på delen følger de andre kontrollene. Ellers endres ingenting: sikkerhetskopiene der kan fortsatt slettes, BombVault rydder dem fortsatt etter stedets regler, og bryteren forsvinner så snart beskyttelse mot sletting er på. En kopi som flytter til et annet sted, mister godkjenningen. Det samme skjer når beskyttelse mot sletting slås på.
+
 Den raskeste veien til en append-only-kopi er en paret BombVault med en [mottaksserver](#receiving-server): den kjører rest-serveren for deg, i append-only-modus.
 
 !!! note "En vellykket sletting under `/locks/` er forventet"
@@ -149,6 +151,8 @@ Den raskeste veien til en append-only-kopi er en paret BombVault med en [mottaks
 ## Tamper-test
 
 BombVault beviser append-only-garantien jevnlig ved faktisk å forsøke en sletting mot det eksterne repoet, rettet mot et objekt som ikke finnes. **Test beskyttelsen mot sletting nå** på siden til et mål kjører den på forespørsel, og **Kontroller slettebeskyttelse** under **Innstillinger, Verifisering, Automatiske kontroller** kjører den etter en tidsplan.
+
+Å slå av **Kontroller slettebeskyttelse** skjuler ikke et hull: en beskyttelse som aldri er testet, vises da som ikke bevist fordi kontrollen er av, og et sted uten beskyttelse mot sletting vises som uten beskyttelse uansett.
 
 En kopi som er slått av, testes ikke, og målet sier det. Tilkoblingstesten virker fortsatt, fordi den bare leser, så en kopi kan kontrolleres før den slås på.
 
@@ -165,7 +169,7 @@ BombVault tilbyr to nivåer av bevis for at sikkerhetskopiene dine faktisk er gj
 - **Gjenopprettingsverifiserings-øvelser (lokalt).** BombVault kjører jevnlig `restic check --read-data-subset` (begrenset, aldri en diskfyllende full gjenoppretting). Rytmen ligger under **Innstillinger, Verifisering, Automatiske kontroller**, og kortet **Kontroller sikkerhetskopier** på samme flis viser resultatet.
 - **Testgjenoppretting (eksternt).** BombVault gjenoppretter et ekte mål fra det eksterne repoet til en avskjermet sandkasse, verifiserer det fil for fil og byte for byte, og rydder opp. Dette beviser at du kan gjenopprette fra eksternt, ikke bare at repoet svarer.
 
-Kortet **Beskyttelsesstatus** på oversikten sammenfatter dette per område i fire kontroller: en fersk sikkerhetskopi på denne serveren, en kopi eksternt, beskyttelse mot sletting der og en testgjenoppretting derfra. Et klikk på et område viser detaljene, og kortet blir bare grønt på verifiserte fakta.
+Kortet **Beskyttelsesstatus** på oversikten sammenfatter dette per område i fire kontroller: en fersk sikkerhetskopi på denne serveren, en kopi eksternt, beskyttelse mot sletting der og en testgjenoppretting derfra. Et klikk på et område viser detaljene, og kortet blir bare grønt på verifiserte fakta. Et sted du har godtatt uten beskyttelse mot sletting, teller der som en akseptert risiko, ikke som en advarsel.
 
 ## Koble instanser sammen {#pairing}
 

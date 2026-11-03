@@ -138,6 +138,8 @@ Pornește protecția împotriva ștergerii pentru o destinație off-site ca rans
 
 Comutatorul ține de destinație: o secțiune care copiază acolo îl preia de la destinație, așa că pornește-l pe pagina destinației, la **Destinații**. Verificarea programată **Verifică protecția la ștergere** rulează doar cât timp o secțiune copiază către o destinație cu comutatorul pornit. Cealaltă parte trebuie pornită cu `--append-only`; cu imaginea `restic/rest-server`, pe TrueNAS ca pe orice alt host Docker, asta intră în variabila `OPTIONS`.
 
+Unele locuri nu pot refuza deloc o ștergere, de exemplu un disc în cloud precum OneDrive. Dacă păstrezi acolo copii în mod conștient, pornește **Acceptă fără protecție împotriva ștergerii** pe pagina locației. Prezentarea generală arată atunci protecția lipsă a unei secțiuni care copiază doar în locații acceptate ca risc acceptat, un inel gri în loc de un punct portocaliu, iar culoarea secțiunii urmează celelalte verificări. Nimic altceva nu se schimbă: copiile de acolo pot fi șterse în continuare, BombVault le curăță în continuare după regulile locației, iar comutatorul dispare imediat ce protecția împotriva ștergerii este pornită. O copie care se mută în alt loc pierde acceptarea. Pornirea protecției împotriva ștergerii o retrage și ea.
+
 Cea mai rapidă cale spre o copie append-only este un BombVault împerecheat cu un [server receptor](#receiving-server): el rulează rest-server-ul pentru tine, în mod append-only.
 
 !!! note "O ștergere reușită sub `/locks/` este de așteptat"
@@ -149,6 +151,8 @@ Cea mai rapidă cale spre o copie append-only este un BombVault împerecheat cu 
 ## Test de manipulare
 
 BombVault dovedește periodic garanția append-only încercând efectiv o ștergere în depozitul off-site, țintită la un obiect inexistent. **Testează acum protecția împotriva ștergerii** pe pagina unei destinații îl rulează la cerere, iar **Verifică protecția la ștergere** la **Setări, Verificare, Verificări automate** îl rulează după un program.
+
+Oprirea **Verifică protecția la ștergere** nu ascunde nicio lipsă: o protecție netestată niciodată apare atunci ca nedovedită pentru că verificarea este oprită, iar o locație fără protecție împotriva ștergerii apare fără protecție în orice caz.
 
 O copie oprită nu este testată, iar destinația spune asta. Testul de conexiune merge în continuare, pentru că doar citește, deci o copie poate fi verificată înainte să fie pornită.
 
@@ -165,7 +169,7 @@ BombVault oferă două niveluri de dovadă că copiile tale chiar se pot restaur
 - **Exerciții de verificare a restaurării (local).** BombVault rulează periodic `restic check --read-data-subset` (limitat, niciodată o restaurare completă care umple discul). Cadența se află la **Setări, Verificare, Verificări automate**, iar cardul **Verifică copiile de rezervă** de pe aceeași placă arată rezultatul.
 - **Restaurare de probă (off-site).** BombVault restaurează o țintă reală din depozitul off-site într-un sandbox izolat, o verifică fișier cu fișier și octet cu octet, apoi curăță. Asta dovedește că poți recupera din off-site, nu doar că depozitul răspunde.
 
-Cardul **Stare protecție** din prezentare rezumă asta pe secțiuni în patru verificări: o copie actuală pe acest server, o copie off-site, protecție la ștergere acolo și o restaurare de probă de acolo. Un clic pe o secțiune arată detaliile, iar cardul devine verde doar pe fapte verificate.
+Cardul **Stare protecție** din prezentare rezumă asta pe secțiuni în patru verificări: o copie actuală pe acest server, o copie off-site, protecție la ștergere acolo și o restaurare de probă de acolo. Un clic pe o secțiune arată detaliile, iar cardul devine verde doar pe fapte verificate. O locație pe care ai acceptat-o fără protecție împotriva ștergerii contează acolo ca risc acceptat, nu ca avertisment.
 
 ## Împerecherea instanțelor {#pairing}
 

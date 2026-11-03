@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { tallyEntries } from "../../lib/protectionTally";
 import { domain, item } from "./overview.testsupport";
 import { en } from "../../lib/i18n";
-import { domainChecks, drilledText, sectionsOf, worstTone, type Check, type CheckKey } from "./protectionChecks";
+import { domainChecks, drilledText, sectionsOf, verdictOf, worstTone, type Check, type CheckKey } from "./protectionChecks";
 
 const calm = { copying: false, drilling: false };
 const one = tallyEntries([item()]);
@@ -113,12 +113,32 @@ describe("the delete protection check", () => {
   });
 
   it("is a gap, not a grey mark, while an off-site copy can be deleted", () => {
-    expect(lock({ offsiteImmutable: false, tamperState: "" })).toEqual({ tone: "warn", say: "overview.check.lockUnproven" });
+    expect(lock({ offsiteImmutable: false, tamperState: "" })).toEqual({ tone: "warn", say: "overview.check.lockNone" });
+  });
+
+  it("names a missing protection the same whether its check is on or off", () => {
+    expect(lock({ offsiteImmutable: false, tamperState: "", tamperOff: true })).toEqual({ tone: "warn", say: "overview.check.lockNone" });
+  });
+
+  it("is neutral where the user accepted a location without delete protection", () => {
+    expect(lock({ offsiteImmutable: false, tamperState: "", deleteRiskAccepted: true })).toEqual({
+      tone: "neutral",
+      say: "overview.check.lockAccepted",
+    });
+  });
+
+  it("ignores an acceptance once every copy has delete protection", () => {
+    expect(lock({ tamperState: "never", deleteRiskAccepted: true }).tone).toBe("warn");
+    expect(lock({ tamperState: "failed", deleteRiskAccepted: true }).tone).toBe("fail");
   });
 
   it("warns while the proof is missing or stale", () => {
-    expect(lock({ tamperState: "never" }).tone).toBe("warn");
+    expect(lock({ tamperState: "never" })).toEqual({ tone: "warn", say: "overview.check.lockUnproven" });
     expect(lock({ tamperState: "stale" }).tone).toBe("warn");
+  });
+
+  it("says why the proof stays missing while its check is switched off", () => {
+    expect(lock({ tamperState: "never", tamperOff: true })).toEqual({ tone: "warn", say: "overview.check.lockCheckOff" });
   });
 
   it("is red when the test deleted something", () => {
@@ -162,6 +182,23 @@ describe("the trial restore check", () => {
   });
 });
 
+describe("verdictOf", () => {
+  const accepted = { offsiteImmutable: false, tamperState: "", deleteRiskAccepted: true };
+  const verdict = (over: Parameters<typeof domain>[0]) => verdictOf(sectionsOf([domain(over)], [item()], {}, null)[0]);
+
+  it("says protected with the risk accepted where an accepted gap is all that is missing", () => {
+    expect(verdict(accepted)).toBe("ransomware.protAccepted");
+  });
+
+  it("says plain protected where delete protection is checked", () => {
+    expect(verdict({})).toBe("ransomware.protGreen");
+  });
+
+  it("lets a worse check speak over an accepted gap", () => {
+    expect(verdict({ ...accepted, status: "overdue" })).toBe("ransomware.protRed");
+  });
+});
+
 describe("worstTone", () => {
   const tones = (...list: Check["tone"][]) => list.map((tone) => ({ tone }) as Check);
 
@@ -180,6 +217,13 @@ describe("sectionsOf", () => {
   it("leaves out a switched-off section", () => {
     const sections = sectionsOf([domain(), domain({ domain: "vms", enabled: false })], [], {}, null);
     expect(sections.map((s) => s.kind)).toEqual(["container"]);
+  });
+
+  it("lets the other checks decide a section whose missing delete protection was accepted", () => {
+    const accepted = { offsiteImmutable: false, tamperState: "", deleteRiskAccepted: true };
+    expect(sectionsOf([domain(accepted)], [item()], {}, null)[0].tone).toBe("ok");
+    expect(sectionsOf([domain({ ...accepted, status: "overdue" })], [item()], {}, null)[0].tone).toBe("fail");
+    expect(sectionsOf([domain({ ...accepted, deleteRiskAccepted: false })], [item()], {}, null)[0].tone).toBe("warn");
   });
 
   it("counts each section's own entries", () => {

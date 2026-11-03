@@ -823,6 +823,7 @@ const lv: Partial<Translations> = {
   "whatsNew.gotify": "Gotify ir atsevišķs paziņojumu kanāls ar servera URL, lietotnes marķieri un prioritāti kļūmes un veiksmes gadījumā.",
   "whatsNew.restoreStacks": "Compose kaudzes atjauno no to pašu kartītes lapā Atjaunošana.",
   "whatsNew.entryOwnPlan": "Konteiners, VM, mape vai ZFS datu kopa var darboties pēc sava grafika. To iestatāt ieraksta cilnē Iestatījumi, iepriekš neieslēdzot nekādu slēdzi.",
+  "whatsNew.deleteRisk": "Krātuves vietu bez aizsardzības pret dzēšanu var pieņemt tādu, kāda tā ir. Pārskats tad vairs nebrīdina par to un joprojām norāda, ka tur esošās kopijas var izdzēst.",
   "whatsNew.overviewMoveMode": "Kamēr tu pielāgo pārskatu, tā kartītes viegli šūpojas, lai parādītu, ka tās vari pārvietot.",
   "whatsNew.labelGlyphs": "Uzraksti rāda simbolu katrai izvēlei, tāpat kā Stūri un Animācija.",
 
@@ -1368,6 +1369,7 @@ const lv: Partial<Translations> = {
 
   // Dashboard ransomware-protection card
   "ransomware.protGreen": "Aizsargāts",
+  "ransomware.protAccepted": "Aizsargāts, risks pieņemts",
   "ransomware.protAmber": "Nepieciešama uzmanība",
   "ransomware.protRed": "Apdraudēts",
   "ransomware.replicationNever": "vēl nav replicēts",
@@ -4093,7 +4095,7 @@ const lv: Partial<Translations> = {
   "storage.off": "Izslēgta",
   "storage.usedOf": "{used} no {total}",
   "storage.localFolder": "Vietējā mape",
-  "storage.primaryNote": "Šī ir sadaļas {domain} lauka Attālināts kopija. Cik ilgi tā glabā dublējumus, iestatāms šeit. Pārējās tās vērtības nāk no sadaļas Iestatījumi, Mērķi.",
+  "storage.primaryNote": "Šī ir sadaļas {domain} lauka Attālināts kopija. Nosaukums, cik ilgi tā glabā dublējumus un vai to pieņem bez aizsardzības pret dzēšanu, iestatāms šeit. Pārējās tās vērtības nāk no sadaļas Iestatījumi, Mērķi.",
   "storage.vessel.full": "pilns",
   "storage.vessel.fullInWeeks": "one=pilns pēc aptuveni {n} nedēļas|zero=pilns pēc aptuveni {n} nedēļām|other=pilns pēc aptuveni {n} nedēļām",
   "storage.vessel.fullOverYear": "pilns pēc vairāk nekā gada",
@@ -4122,6 +4124,8 @@ const lv: Partial<Translations> = {
   "storage.rclone.all": "Visi rclone.conf remote",
   "storage.rclone.hidden": "paslēpts",
   "storage.lock.toggle": "Aizsardzība pret dzēšanu (append-only)",
+  "storage.lock.accept": "Pieņemt bez aizsardzības pret dzēšanu",
+  "storage.lock.acceptHint": "Šeit esošās rezerves kopijas joprojām nav aizsargātas pret dzēšanu: ikviens, kas tiek šajā krātuves vietā vai BombVault, var tās izdzēst. Kad tas ir ieslēgts, pārskats trūkstošo aizsardzību rāda kā pieņemtu risku, nevis brīdinājumu, un sadaļas krāsa atbilst tās pārējām pārbaudēm. Pašā vietā nekas nemainās, un vecās kopijas tiek tīrītas kā līdz šim.",
   "storage.lock.localHint": "Nekas šajā ierīcē nedrīkst dzēst no šīs krātuves. Tīrīšana un rezerves kopiju dzēšana tiek noraidīta. Paredzēts arhīvam, ko vēlaties saglabāt.",
   "storage.lock.test": "Pārbaudīt aizsardzību pret dzēšanu tagad",
   "storage.lock.testHint": "Mēģina izdzēst testa objektu. Ja otra puse atsakās, aizsardzība ir īsta.",
@@ -4375,6 +4379,9 @@ const lv: Partial<Translations> = {
   "overview.check.lockChecked": "Aizsardzība pret dzēšanu: pārbaudīts",
   "overview.check.lockFailed": "Aizsardzība pret dzēšanu: tests neizdevās",
   "overview.check.lockUnproven": "Aizsardzība pret dzēšanu: vēl nav pierādīts",
+  "overview.check.lockNone": "Aizsardzība pret dzēšanu: nav",
+  "overview.check.lockAccepted": "Aizsardzība pret dzēšanu: nav, risks pieņemts",
+  "overview.check.lockCheckOff": "Aizsardzība pret dzēšanu: nav pierādīta, pārbaude ir izslēgta",
   "overview.check.drillNeedsOffsite": "Testa atjaunošana: vajadzīgs attālināts mērķis",
   "overview.check.drillUnavailable": "Testa atjaunošana: šai sadaļai nav iespējams",
   "overview.check.drillRunning": "Testa atjaunošana: notiek",

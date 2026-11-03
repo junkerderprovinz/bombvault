@@ -1334,9 +1334,15 @@ func TestDomainStatusDrillCurrencyIgnoresDisabledDrills(t *testing.T) {
 	s := mustSettings(t, st)
 	s.ContainersEnabled = true
 	s.ContainersOffsite = "rest:http://192.168.1.2:8000/containers"
+	s.ContainersOffsiteImmutable = true
 	s.DrillsEnabled = false
 	s.DrillsSchedule = "weekly Sun 03:00"
 	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	// Proven delete protection leaves the drill as the only thing that could
+	// colour the chip.
+	if err := st.RecordTamperTest("containers", true, ""); err != nil {
 		t.Fatal(err)
 	}
 	// A very stale DR drill (would be "overdue" if drills were enabled).
@@ -1379,7 +1385,13 @@ func TestDomainStatusOffsiteDrillOptOutNeutralNotRed(t *testing.T) {
 	s.DrillsEnabled = true         // scheduled drills on in general...
 	s.OffsiteDrillsEnabled = false // ...but the OFF-SITE DR drill is opted out (#37)
 	s.DrillsSchedule = "weekly Sun 03:00"
+	s.ContainersOffsiteImmutable = true
 	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	// Proven delete protection leaves the drill as the only thing that could
+	// colour the chip.
+	if err := st.RecordTamperTest("containers", true, ""); err != nil {
 		t.Fatal(err)
 	}
 	// A recent FAILED DR drill: would read amber "failed" if the off-site DR drill

@@ -1131,6 +1131,7 @@ const nl: Partial<Translations> = {
   "whatsNew.gotify": "Gotify is een eigen meldingskanaal, met een server-URL, een app-token en een prioriteit bij mislukking en een bij succes.",
   "whatsNew.restoreStacks": "Compose-stacks herstel je vanaf een eigen kaart op de pagina Herstel.",
   "whatsNew.entryOwnPlan": "Een container, VM, map of ZFS-dataset kan op een eigen planning draaien. Je stelt die in op het tabblad Instellingen van het item, zonder eerst een schakelaar aan te zetten.",
+  "whatsNew.deleteRisk": "Een opslaglocatie zonder bescherming tegen verwijderen kun je accepteren zoals ze is. Het overzicht waarschuwt er dan niet meer voor en zegt nog steeds dat de back-ups daar verwijderd kunnen worden.",
   "whatsNew.overviewMoveMode": "Terwijl je het overzicht aanpast, wiegen de kaarten zachtjes om te laten zien dat je ze kunt verplaatsen.",
   "whatsNew.labelGlyphs": "Labels toont voor elke keuze een symbool, net als Hoeken en Animatie.",
 
@@ -1606,6 +1607,7 @@ const nl: Partial<Translations> = {
 
   // Dashboard ransomware-protection card (v4)
   "ransomware.protGreen": "Beschermd",
+  "ransomware.protAccepted": "Beschermd, risico geaccepteerd",
   "ransomware.protAmber": "Aandacht nodig",
   "ransomware.protRed": "In gevaar",
   "ransomware.replicationNever": "nog niet gerepliceerd",
@@ -4082,7 +4084,7 @@ const nl: Partial<Translations> = {
   "storage.off": "Uit",
   "storage.usedOf": "{used} van {total}",
   "storage.localFolder": "Lokale map",
-  "storage.primaryNote": "Dit is de kopie uit het off-site-veld van {domain}. Hoelang ze back-ups bewaart, stel je hier in. De overige waarden komen uit Instellingen, Bestemmingen.",
+  "storage.primaryNote": "Dit is de kopie uit het off-site-veld van {domain}. De naam, hoelang ze back-ups bewaart en of je ze zonder bescherming tegen verwijderen accepteert, stel je hier in. De overige waarden komen uit Instellingen, Bestemmingen.",
   "storage.vessel.full": "vol",
   "storage.vessel.fullInWeeks": "one=vol over ongeveer een week|other=vol over ongeveer {n} weken",
   "storage.vessel.fullOverYear": "vol over meer dan een jaar",
@@ -4111,6 +4113,8 @@ const nl: Partial<Translations> = {
   "storage.rclone.all": "Alle remotes in de rclone.conf",
   "storage.rclone.hidden": "verborgen",
   "storage.lock.toggle": "Bescherming tegen verwijderen (append-only)",
+  "storage.lock.accept": "Accepteren zonder bescherming tegen verwijderen",
+  "storage.lock.acceptHint": "De back-ups hier zijn nog steeds niet beschermd tegen verwijderen: wie in deze opslaglocatie of in BombVault komt, kan ze verwijderen. Staat dit aan, dan toont het overzicht de ontbrekende bescherming als geaccepteerd risico in plaats van als waarschuwing, en volgt de kleur van de sectie de andere controles. Aan de locatie zelf verandert niets, en oude back-ups worden opgeruimd zoals voorheen.",
   "storage.lock.localHint": "Niets op deze machine mag uit deze repository verwijderen. Prunen en het verwijderen van back-ups worden geweigerd. Bedoeld voor een archief dat moet blijven.",
   "storage.lock.test": "Bescherming tegen verwijderen nu testen",
   "storage.lock.testHint": "Probeert een testobject te verwijderen. Weigert de andere kant dat, dan is de bescherming echt.",
@@ -4364,6 +4368,9 @@ const nl: Partial<Translations> = {
   "overview.check.lockChecked": "Bescherming tegen verwijderen: gecontroleerd",
   "overview.check.lockFailed": "Bescherming tegen verwijderen: test mislukt",
   "overview.check.lockUnproven": "Bescherming tegen verwijderen: nog niet bewezen",
+  "overview.check.lockNone": "Bescherming tegen verwijderen: geen",
+  "overview.check.lockAccepted": "Bescherming tegen verwijderen: geen, risico geaccepteerd",
+  "overview.check.lockCheckOff": "Bescherming tegen verwijderen: niet bewezen, de controle staat uit",
   "overview.check.drillNeedsOffsite": "Testherstel: heeft een off-site-bestemming nodig",
   "overview.check.drillUnavailable": "Testherstel: niet mogelijk voor dit onderdeel",
   "overview.check.drillRunning": "Testherstel: loopt",

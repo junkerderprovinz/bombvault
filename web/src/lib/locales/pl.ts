@@ -1129,6 +1129,7 @@ const pl: Partial<Translations> = {
   "whatsNew.gotify": "Gotify to osobny kanał powiadomień z URL serwera, tokenem aplikacji i priorytetem przy niepowodzeniu oraz przy powodzeniu.",
   "whatsNew.restoreStacks": "Stacki Compose przywracasz z osobnej karty na stronie Przywracanie.",
   "whatsNew.entryOwnPlan": "Kontener, maszyna wirtualna, folder lub zbiór danych ZFS może działać według własnego harmonogramu. Ustawiasz go na karcie Ustawienia elementu, bez włączania wcześniej żadnego przełącznika.",
+  "whatsNew.deleteRisk": "Lokalizację bez ochrony przed usunięciem możesz zaakceptować taką, jaka jest. Przegląd przestaje wtedy przed nią ostrzegać i nadal mówi, że kopie tam można usunąć.",
   "whatsNew.overviewMoveMode": "Gdy dostosowujesz przegląd, jego karty lekko się kołyszą, pokazując, że możesz je przenosić.",
   "whatsNew.labelGlyphs": "Etykiety pokazują symbol dla każdej opcji, tak jak Narożniki i Animacja.",
 
@@ -1604,6 +1605,7 @@ const pl: Partial<Translations> = {
 
   // Dashboard ransomware-protection card (v4)
   "ransomware.protGreen": "Chronione",
+  "ransomware.protAccepted": "Chronione, ryzyko zaakceptowane",
   "ransomware.protAmber": "Wymaga uwagi",
   "ransomware.protRed": "Zagrożone",
   "ransomware.replicationNever": "jeszcze nie replikowano",
@@ -4080,7 +4082,7 @@ const pl: Partial<Translations> = {
   "storage.off": "Wyłączony",
   "storage.usedOf": "{used} z {total}",
   "storage.localFolder": "Folder lokalny",
-  "storage.primaryNote": "To jest kopia z pola Poza siedzibą dla sekcji {domain}. Jak długo przechowuje kopie zapasowe, ustawisz tutaj. Pozostałe jej wartości pochodzą z sekcji Ustawienia, Miejsca docelowe.",
+  "storage.primaryNote": "To jest kopia z pola Poza siedzibą dla sekcji {domain}. Nazwę, jak długo przechowuje kopie zapasowe i czy akceptujesz ją bez ochrony przed usunięciem, ustawisz tutaj. Pozostałe jej wartości pochodzą z sekcji Ustawienia, Miejsca docelowe.",
   "storage.vessel.full": "pełne",
   "storage.vessel.fullInWeeks": "one=pełne za około tydzień|few=pełne za około {n} tygodnie|many=pełne za około {n} tygodni|other=pełne za około {n} tygodnia",
   "storage.vessel.fullOverYear": "pełne za ponad rok",
@@ -4109,6 +4111,8 @@ const pl: Partial<Translations> = {
   "storage.rclone.all": "Wszystkie remote'y w rclone.conf",
   "storage.rclone.hidden": "ukryte",
   "storage.lock.toggle": "Ochrona przed usunięciem (append-only)",
+  "storage.lock.accept": "Akceptuj bez ochrony przed usunięciem",
+  "storage.lock.acceptHint": "Kopie zapasowe tutaj nadal nie są chronione przed usunięciem: każdy, kto dostanie się do tej lokalizacji lub do BombVault, może je usunąć. Gdy to jest włączone, przegląd pokazuje brak ochrony jako zaakceptowane ryzyko zamiast ostrzeżenia, a kolor sekcji wynika z jej pozostałych kontroli. W samej lokalizacji nic się nie zmienia, a stare kopie są czyszczone jak dotąd.",
   "storage.lock.localHint": "Nic na tej maszynie nie może usuwać z tego repozytorium. Przycinanie i usuwanie kopii zapasowych jest odrzucane. Przeznaczone dla archiwum, które ma zostać.",
   "storage.lock.test": "Przetestuj ochronę przed usunięciem teraz",
   "storage.lock.testHint": "Próbuje usunąć obiekt testowy. Jeśli druga strona odmówi, ochrona jest prawdziwa.",
@@ -4362,6 +4366,9 @@ const pl: Partial<Translations> = {
   "overview.check.lockChecked": "Ochrona przed usunięciem: sprawdzono",
   "overview.check.lockFailed": "Ochrona przed usunięciem: test się nie powiódł",
   "overview.check.lockUnproven": "Ochrona przed usunięciem: jeszcze nie udowodniono",
+  "overview.check.lockNone": "Ochrona przed usunięciem: brak",
+  "overview.check.lockAccepted": "Ochrona przed usunięciem: brak, ryzyko zaakceptowane",
+  "overview.check.lockCheckOff": "Ochrona przed usunięciem: nieudowodniona, sprawdzanie jest wyłączone",
   "overview.check.drillNeedsOffsite": "Testowe odtwarzanie: wymaga miejsca docelowego poza siedzibą",
   "overview.check.drillUnavailable": "Testowe odtwarzanie: niemożliwe dla tej sekcji",
   "overview.check.drillRunning": "Testowe odtwarzanie: trwa",

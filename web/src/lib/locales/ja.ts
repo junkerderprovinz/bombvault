@@ -1126,6 +1126,7 @@ const ja: Partial<Translations> = {
   "whatsNew.gotify": "Gotify は独立した通知チャネルです。サーバー URL、アプリトークン、失敗時と成功時の優先度を設定します。",
   "whatsNew.restoreStacks": "Compose のスタックは、復元ページにある専用のカードから復元します。",
   "whatsNew.entryOwnPlan": "コンテナ、VM、フォルダー、ZFS データセットはそれぞれ独自のスケジュールで実行できます。項目の設定タブで設定でき、先にスイッチをオンにする必要はありません。",
+  "whatsNew.deleteRisk": "削除に対する保護がない保存先を、そのまま承認できるようになりました。概要はそれについて警告しなくなり、そこにあるバックアップが削除されうることは引き続き示します。",
   "whatsNew.overviewMoveMode": "概要をカスタマイズしている間は、カードが小さく揺れて移動できることを示します。",
   "whatsNew.labelGlyphs": "ラベルは、角の形状やアニメーションと同じく選択肢ごとに記号が表示されます。",
 
@@ -1602,6 +1603,7 @@ const ja: Partial<Translations> = {
 
   // Dashboard ransomware-protection card (v4)
   "ransomware.protGreen": "保護済み",
+  "ransomware.protAccepted": "保護済み、リスクを承認済み",
   "ransomware.protAmber": "要注意",
   "ransomware.protRed": "リスクあり",
   "ransomware.replicationNever": "未複製",
@@ -4074,7 +4076,7 @@ const ja: Partial<Translations> = {
   "storage.off": "オフ",
   "storage.usedOf": "{total} 中 {used}",
   "storage.localFolder": "ローカルフォルダー",
-  "storage.primaryNote": "これは {domain} のオフサイト欄のコピーです。バックアップをどれだけ保持するかは、ここで指定します。そのほかの値は設定の保存先で指定します。",
+  "storage.primaryNote": "これは {domain} のオフサイト欄のコピーです。名前、バックアップをどれだけ保持するか、削除に対する保護なしで承認するかは、ここで指定します。そのほかの値は設定の保存先で指定します。",
   "storage.vessel.full": "満杯",
   "storage.vessel.fullInWeeks": "約 {n} 週間で満杯",
   "storage.vessel.fullOverYear": "満杯になるまで 1 年以上",
@@ -4103,6 +4105,8 @@ const ja: Partial<Translations> = {
   "storage.rclone.all": "rclone.conf のすべてのリモート",
   "storage.rclone.hidden": "非表示",
   "storage.lock.toggle": "削除に対する保護(append-only)",
+  "storage.lock.accept": "削除に対する保護なしで承認",
+  "storage.lock.acceptHint": "ここにあるバックアップは引き続き削除から保護されていません。この保存先や BombVault に入れる人なら誰でも削除できます。オンにすると、概要は保護がないことを警告ではなく承認済みのリスクとして表示し、セクションの色はほかのチェックに従います。保存先そのものは何も変わらず、古いバックアップもこれまでどおり整理されます。",
   "storage.lock.localHint": "このマシンからは、このリポジトリのデータを一切削除できません。整理とバックアップの削除は拒否されます。残しておきたいアーカイブ向けです。",
   "storage.lock.test": "削除に対する保護を今すぐテスト",
   "storage.lock.testHint": "テスト用オブジェクトの削除を試みます。相手側が拒否すれば、保護は有効です。",
@@ -4356,6 +4360,9 @@ const ja: Partial<Translations> = {
   "overview.check.lockChecked": "削除に対する保護: 確認済み",
   "overview.check.lockFailed": "削除に対する保護: テスト失敗",
   "overview.check.lockUnproven": "削除に対する保護: 未確認",
+  "overview.check.lockNone": "削除に対する保護: なし",
+  "overview.check.lockAccepted": "削除に対する保護: なし、リスクを承認済み",
+  "overview.check.lockCheckOff": "削除に対する保護: 未証明、チェックはオフ",
   "overview.check.drillNeedsOffsite": "テスト復元: オフサイトの保存先が必要",
   "overview.check.drillUnavailable": "テスト復元: このセクションでは不可",
   "overview.check.drillRunning": "テスト復元: 実行中",

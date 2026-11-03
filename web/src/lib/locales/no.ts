@@ -1132,6 +1132,7 @@ const no: Partial<Translations> = {
   "whatsNew.gotify": "Gotify er en egen varslingskanal, med server-URL, app-token og en prioritet ved feil og en ved suksess.",
   "whatsNew.restoreStacks": "Compose-stacker gjenopprettes fra sitt eget kort på siden Gjenoppretting.",
   "whatsNew.entryOwnPlan": "En container, en VM, en mappe eller et ZFS-datasett kan kjøre etter sin egen tidsplan. Du setter den på fanen Innstillinger for elementet, uten å slå på noen bryter først.",
+  "whatsNew.deleteRisk": "Et lagringssted uten beskyttelse mot sletting kan godtas som det er. Oversikten slutter da å advare om det og sier fortsatt at sikkerhetskopiene der kan slettes.",
   "whatsNew.overviewMoveMode": "Mens du tilpasser oversikten, vugger kortene lett for å vise at du kan flytte dem.",
   "whatsNew.labelGlyphs": "Etiketter viser et symbol for hvert valg, som Hjørner og Animasjon.",
 
@@ -1607,6 +1608,7 @@ const no: Partial<Translations> = {
 
   // Dashboard ransomware-protection card (v4)
   "ransomware.protGreen": "Beskyttet",
+  "ransomware.protAccepted": "Beskyttet, risiko akseptert",
   "ransomware.protAmber": "Trenger oppmerksomhet",
   "ransomware.protRed": "Utsatt",
   "ransomware.replicationNever": "ikke replikert ennå",
@@ -4083,7 +4085,7 @@ const no: Partial<Translations> = {
   "storage.off": "Av",
   "storage.usedOf": "{used} av {total}",
   "storage.localFolder": "Lokal mappe",
-  "storage.primaryNote": "Dette er kopien fra off-site-feltet til {domain}. Hvor lenge den beholder sikkerhetskopier, stiller du inn her. De andre verdiene kommer fra Innstillinger, Mål.",
+  "storage.primaryNote": "Dette er kopien fra off-site-feltet til {domain}. Navnet, hvor lenge den beholder sikkerhetskopier, og om du godtar den uten beskyttelse mot sletting, stiller du inn her. De andre verdiene kommer fra Innstillinger, Mål.",
   "storage.vessel.full": "full",
   "storage.vessel.fullInWeeks": "one=full om omtrent en uke|other=full om omtrent {n} uker",
   "storage.vessel.fullOverYear": "full om mer enn et år",
@@ -4112,6 +4114,8 @@ const no: Partial<Translations> = {
   "storage.rclone.all": "Alle remotes i rclone.conf",
   "storage.rclone.hidden": "skjult",
   "storage.lock.toggle": "Beskyttelse mot sletting (append-only)",
+  "storage.lock.accept": "Godta uten beskyttelse mot sletting",
+  "storage.lock.acceptHint": "Sikkerhetskopiene her er fortsatt ikke beskyttet mot sletting: den som kommer inn på dette lagringsstedet eller i BombVault, kan slette dem. Når dette er på, viser oversikten den manglende beskyttelsen som en akseptert risiko i stedet for en advarsel, og fargen på delen følger de andre kontrollene. Selve stedet endres ikke, og gamle sikkerhetskopier ryddes som før.",
   "storage.lock.localHint": "Ingenting på denne maskinen kan slette fra dette repositoryet. Beskjæring og sletting av sikkerhetskopier avvises. Ment for et arkiv du vil beholde.",
   "storage.lock.test": "Test beskyttelsen mot sletting nå",
   "storage.lock.testHint": "Prøver å slette et testobjekt. Avviser den andre siden det, er beskyttelsen ekte.",
@@ -4365,6 +4369,9 @@ const no: Partial<Translations> = {
   "overview.check.lockChecked": "Beskyttelse mot sletting: kontrollert",
   "overview.check.lockFailed": "Beskyttelse mot sletting: testen feilet",
   "overview.check.lockUnproven": "Beskyttelse mot sletting: ikke bevist ennå",
+  "overview.check.lockNone": "Beskyttelse mot sletting: ingen",
+  "overview.check.lockAccepted": "Beskyttelse mot sletting: ingen, risiko akseptert",
+  "overview.check.lockCheckOff": "Beskyttelse mot sletting: ikke bevist, kontrollen er slått av",
   "overview.check.drillNeedsOffsite": "Testgjenoppretting: trenger et off-site-mål",
   "overview.check.drillUnavailable": "Testgjenoppretting: ikke mulig for dette området",
   "overview.check.drillRunning": "Testgjenoppretting: pågår",

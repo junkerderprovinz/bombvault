@@ -823,6 +823,7 @@ const eu: Partial<Translations> = {
   "whatsNew.gotify": "Gotify jakinarazpen-kanal propioa da, zerbitzariaren URLa, aplikazioaren tokena eta huts egitean eta ondo ateratzean lehentasun banarekin.",
   "whatsNew.restoreStacks": "Compose pilak Berrezarpena orriko beren txarteletik berrezartzen dira.",
   "whatsNew.entryOwnPlan": "Edukiontzi, MB, karpeta edo ZFS datu-multzo batek bere plangintza propioa izan dezake. Elementuaren Ezarpenak fitxan ezartzen duzu, aurretik etengailurik aktibatu gabe.",
+  "whatsNew.deleteRisk": "Ezabatzearen aurkako babesik gabeko biltegiratze-kokaleku bat dagoen bezala onar daiteke. Orduan ikuspegi orokorrak ez du horri buruz ohartarazten, eta han dauden babeskopiak ezaba daitezkeela esaten jarraitzen du.",
   "whatsNew.overviewMoveMode": "Laburpena pertsonalizatzen duzun bitartean, txartelak leunki kulunkatzen dira, mugi ditzakezula erakusteko.",
   "whatsNew.labelGlyphs": "Etiketak aukera bakoitzeko ikur bat erakusten du, Ertzak eta Animazioa bezala.",
 
@@ -1368,6 +1369,7 @@ const eu: Partial<Translations> = {
 
   // Dashboard ransomware-protection card
   "ransomware.protGreen": "Babestuta",
+  "ransomware.protAccepted": "Babestuta, arriskua onartuta",
   "ransomware.protAmber": "Arreta behar du",
   "ransomware.protRed": "Arriskuan",
   "ransomware.replicationNever": "oraindik errepikatu gabe",
@@ -4093,7 +4095,7 @@ const eu: Partial<Translations> = {
   "storage.off": "Itzalita",
   "storage.usedOf": "{used} / {total}",
   "storage.localFolder": "Karpeta lokala",
-  "storage.primaryNote": "Hau {domain} atalaren Kanpokoa eremuko kopia da. Babeskopiak zenbat denboran gordetzen dituen hemen ezartzen da. Haren gainerako balioak Ezarpenak, Helmugak atalean ezartzen dira.",
+  "storage.primaryNote": "Hau {domain} atalaren Kanpokoa eremuko kopia da. Izena, babeskopiak zenbat denboran gordetzen dituen eta ezabatzearen aurkako babesik gabe onartzen den hemen ezartzen dira. Haren gainerako balioak Ezarpenak, Helmugak atalean ezartzen dira.",
   "storage.vessel.full": "beteta",
   "storage.vessel.fullInWeeks": "one=gutxi gorabehera aste batean beteko da|other=gutxi gorabehera {n} astetan beteko da",
   "storage.vessel.fullOverYear": "urte bat baino gehiagoan beteko da",
@@ -4122,6 +4124,8 @@ const eu: Partial<Translations> = {
   "storage.rclone.all": "rclone.conf-eko remote guztiak",
   "storage.rclone.hidden": "ezkutua",
   "storage.lock.toggle": "Ezabatzearen aurkako babesa (append-only)",
+  "storage.lock.accept": "Onartu ezabatzearen aurkako babesik gabe",
+  "storage.lock.acceptHint": "Hemengo babeskopiak oraindik ez daude ezabatzearen aurka babestuta: biltegiratze-kokaleku honetara edo BombVault-era sartzen denak ezaba ditzake. Hau piztuta dagoenean, ikuspegi orokorrak falta den babesa onartutako arrisku gisa erakusten du abisu baten ordez, eta atalaren koloreak bere beste egiaztapenei jarraitzen die. Kokalekuan bertan ez da ezer aldatzen, eta babeskopia zaharrak lehen bezala garbitzen dira.",
   "storage.lock.localHint": "Makina honetako ezerk ezin du biltegi honetatik ezabatu. Garbiketa eta babeskopiak ezabatzea ukatu egiten dira. Gorde nahi duzun artxibo batentzat pentsatuta.",
   "storage.lock.test": "Probatu orain ezabatzearen aurkako babesa",
   "storage.lock.testHint": "Proba-objektu bat ezabatzen saiatzen da. Beste aldeak ukatzen badu, babesa benetakoa da.",
@@ -4375,6 +4379,9 @@ const eu: Partial<Translations> = {
   "overview.check.lockChecked": "Ezabatzearen aurkako babesa: egiaztatuta",
   "overview.check.lockFailed": "Ezabatzearen aurkako babesa: probak huts egin du",
   "overview.check.lockUnproven": "Ezabatzearen aurkako babesa: oraindik frogatu gabe",
+  "overview.check.lockNone": "Ezabatzearen aurkako babesa: bat ere ez",
+  "overview.check.lockAccepted": "Ezabatzearen aurkako babesa: bat ere ez, arriskua onartuta",
+  "overview.check.lockCheckOff": "Ezabatzearen aurkako babesa: frogatu gabe, egiaztapena itzalita dago",
   "overview.check.drillNeedsOffsite": "Proba-leheneratzea: kanpoko helmuga bat behar du",
   "overview.check.drillUnavailable": "Proba-leheneratzea: ez da posible atal honetan",
   "overview.check.drillRunning": "Proba-leheneratzea: martxan",

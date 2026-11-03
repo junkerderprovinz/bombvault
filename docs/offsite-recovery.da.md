@@ -138,6 +138,8 @@ Slå beskyttelse mod sletning til for en off-site-destination, så ransomware el
 
 Kontakten hører til destinationen: en sektion, der kopierer dertil, tager den fra destinationen, så slå den til på destinationens side under **Destinationer**. Det planlagte **Tjek sletningsbeskyttelse** kører kun, så længe en sektion kopierer til en destination med kontakten slået til. Den anden side skal startes med `--append-only`; med imaget `restic/rest-server`, på TrueNAS som på enhver anden Docker-vært, skal det i variablen `OPTIONS`.
 
+Nogle steder kan slet ikke afvise en sletning, for eksempel et cloud-drev som OneDrive. Hvis du bevidst lægger kopier der, så slå **Accepter uden beskyttelse mod sletning** til på lagerplaceringens side. Oversigten viser så den manglende beskyttelse for et afsnit, der kun kopierer til accepterede placeringer, som en accepteret risiko, en grå ring i stedet for en gul prik, og afsnittets farve følger dets øvrige kontroller. Ellers ændres intet: sikkerhedskopierne der kan stadig slettes, BombVault rydder stadig op i dem efter placeringens regler, og kontakten forsvinder, så snart beskyttelse mod sletning er slået til. En kopi, der flytter et andet sted hen, mister accepten. Det samme gør det at slå beskyttelse mod sletning til.
+
 Den hurtigste vej til en append-only-kopi er en parret BombVault med en [modtageserver](#receiving-server): den kører rest-serveren for dig, i append-only-tilstand.
 
 !!! note "En vellykket sletning under `/locks/` er forventet"
@@ -149,6 +151,8 @@ Den hurtigste vej til en append-only-kopi er en parret BombVault med en [modtage
 ## Manipulationstest
 
 BombVault beviser jævnligt append-only-garantien ved faktisk at forsøge en sletning i off-site-repositoriet, rettet mod et ikke-eksisterende objekt. **Test beskyttelsen mod sletning nu** på en destinations side kører den på forlangende, og **Tjek sletningsbeskyttelse** under **Indstillinger, Verificering, Automatiske tjek** kører den efter en tidsplan.
+
+At slå **Tjek sletningsbeskyttelse** fra skjuler ikke et hul: en beskyttelse, der aldrig er testet, vises så som ikke bevist, fordi kontrollen er slået fra, og en placering uden beskyttelse mod sletning vises som uden beskyttelse under alle omstændigheder.
 
 En kopi, der er slået fra, testes ikke, og destinationen siger det. Forbindelsestesten virker stadig, fordi den kun læser, så en kopi kan tjekkes, før den slås til.
 
@@ -165,7 +169,7 @@ BombVault tilbyder to niveauer af bevis for, at dine sikkerhedskopier faktisk ka
 - **Gendannelsesverificeringsøvelser (lokale).** BombVault kører jævnligt `restic check --read-data-subset` (afgrænset, aldrig en diskfyldende fuld gendannelse). Kadencen ligger under **Indstillinger, Verificering, Automatiske tjek**, og kortet **Tjek sikkerhedskopier** på samme felt viser resultatet.
 - **Prøvegendannelse (off-site).** BombVault gendanner et rigtigt mål fra off-site-repositoriet til en aflukket sandkasse, verificerer det fil for fil og byte for byte og rydder så op. Det beviser, at du kan komme tilbage fra off-site, ikke bare at repositoriet svarer.
 
-Kortet **Beskyttelsesstatus** på oversigten sammenfatter det pr. område i fire tjek: en aktuel sikkerhedskopi på denne server, en kopi off-site, sletningsbeskyttelse dér og en prøvegendannelse derfra. Et klik på et område viser detaljerne, og kortet bliver kun grønt på verificerede fakta.
+Kortet **Beskyttelsesstatus** på oversigten sammenfatter det pr. område i fire tjek: en aktuel sikkerhedskopi på denne server, en kopi off-site, sletningsbeskyttelse dér og en prøvegendannelse derfra. Et klik på et område viser detaljerne, og kortet bliver kun grønt på verificerede fakta. En placering, du har accepteret uden beskyttelse mod sletning, tæller der som en accepteret risiko, ikke som en advarsel.
 
 ## Parring af instanser {#pairing}
 

@@ -138,6 +138,8 @@ Activez la protection contre la suppression pour une destination hors site afin 
 
 L'interrupteur appartient à la destination : une section qui y copie le prend de la destination, il s'active donc sur la page de la destination, sous **Destinations**. La vérification planifiée **Vérifier la protection contre la suppression** ne tourne que tant qu'une section copie vers une destination dont l'interrupteur est activé. L'autre côté doit être lancé avec `--append-only` ; avec l'image `restic/rest-server`, sur TrueNAS comme sur tout autre hôte Docker, cela va dans la variable `OPTIONS`.
 
+Certains endroits ne peuvent pas du tout refuser une suppression, par exemple un disque cloud comme OneDrive. Si vous y gardez des copies en connaissance de cause, activez **Accepter sans protection contre la suppression** sur la page de l'emplacement. L'aperçu montre alors la protection manquante d'une section qui ne copie que vers des emplacements acceptés comme un risque accepté, un anneau gris au lieu d'un point orange, et la couleur de la section suit ses autres vérifications. Rien d'autre ne change : les sauvegardes qui s'y trouvent peuvent toujours être supprimées, BombVault continue de les élaguer selon les règles de l'emplacement, et l'interrupteur disparaît dès que la protection contre la suppression est active. Une copie qui part ailleurs perd l'acceptation. Activer la protection contre la suppression la retire aussi.
+
 La voie la plus rapide vers une copie append-only est un BombVault appairé avec un [serveur récepteur](#receiving-server) : il exécute le rest-server pour vous, en mode append-only.
 
 !!! note "Une suppression réussie sous `/locks/` est attendue"
@@ -149,6 +151,8 @@ La voie la plus rapide vers une copie append-only est un BombVault appairé avec
 ## Test de sabotage
 
 BombVault prouve périodiquement la garantie append-only en tentant réellement une suppression contre le dépôt hors site, visant un objet inexistant. **Tester la protection contre la suppression maintenant** sur la page d'une destination la lance à la demande, et **Vérifier la protection contre la suppression** sous **Paramètres, Vérification, Contrôles automatiques** la lance selon un planning.
+
+Désactiver **Vérifier la protection contre la suppression** ne masque aucune faille : une protection jamais testée apparaît alors comme non prouvée parce que sa vérification est désactivée, et un emplacement sans protection contre la suppression apparaît sans protection dans tous les cas.
 
 Une copie désactivée n'est pas testée, et la destination l'indique. Le test de connexion fonctionne toujours, car il ne fait que lire : une copie peut donc être vérifiée avant d'être activée.
 
@@ -165,7 +169,7 @@ BombVault offre deux niveaux de preuve que vos sauvegardes sont réellement rest
 - **Essais de vérification de restauration (locaux).** BombVault exécute périodiquement `restic check --read-data-subset` (borné, jamais une restauration complète qui remplit le disque). La cadence se règle sous **Paramètres, Vérification, Contrôles automatiques**, et la carte **Vérifier les sauvegardes** de la même tuile montre le résultat.
 - **Restauration d'essai (hors site).** BombVault restaure une vraie cible du dépôt hors site dans un bac à sable isolé, la vérifie fichier par fichier et octet par octet, puis nettoie. Cela prouve que vous pouvez vous rétablir depuis le hors site, pas seulement que le dépôt répond.
 
-La carte **État de protection** de l'aperçu résume cela par section en quatre contrôles : une sauvegarde à jour sur ce serveur, une copie hors site, la protection contre la suppression là-bas et une restauration d'essai depuis là-bas. Un clic sur une section montre les détails, et la carte ne passe au vert que sur des faits vérifiés.
+La carte **État de protection** de l'aperçu résume cela par section en quatre contrôles : une sauvegarde à jour sur ce serveur, une copie hors site, la protection contre la suppression là-bas et une restauration d'essai depuis là-bas. Un clic sur une section montre les détails, et la carte ne passe au vert que sur des faits vérifiés. Un emplacement que vous avez accepté sans protection contre la suppression y compte comme un risque accepté, pas comme un avertissement.
 
 ## Appairage des instances {#pairing}
 

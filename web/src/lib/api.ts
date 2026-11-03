@@ -621,6 +621,11 @@ export interface DomainStatus {
   // never contradict the chip. encryptionOn/pruneStrategySet are the two config
   // facts the card also renders (no separate /api/settings round-trip needed).
   tamperState: string; // "" | "never" | "failed" | "stale" | "ok"
+  /** The scheduled check of delete protection is switched off. */
+  tamperOff?: boolean;
+  /** Every copy without delete protection goes to a storage location where
+   *  that was accepted. */
+  deleteRiskAccepted?: boolean;
   replicationState: string; // "" | "never" | "overdue" | "ok" | "paused"
   drillState: string; // "" | "never" | "failed" | "overdue" | "ok"
   encryptionOn: boolean; // repo encryption is enabled
@@ -7797,6 +7802,13 @@ export function renameStorageLocation(id: string, name: string): Promise<OkEnvel
   return fetchJSON(`/api/storage/locations/${encodeURIComponent(id)}/name`, { method: "PUT", body: JSON.stringify({ name }) });
 }
 
+/** PUT /api/storage/locations/{id}/risk-accepted: accepts that a location
+ *  copies go to cannot refuse a delete, or takes that back. Only how the
+ *  overview words the gap changes. */
+export function acceptDeleteRisk(id: string, accepted: boolean): Promise<OkEnvelope & { location?: StorageLocation }> {
+  return fetchJSON(`/api/storage/locations/${encodeURIComponent(id)}/risk-accepted`, { method: "PUT", body: JSON.stringify({ accepted }) });
+}
+
 /** GET /api/storage/locations/{id}/removal, where `id` is the location's whole
  *  id, such as `repo:4f2a`. */
 export function previewLocationRemoval(id: string): Promise<OkEnvelope & { removal?: LocationRemoval }> {
@@ -8035,6 +8047,9 @@ export interface StorageLocation {
     testable: boolean;
     /** The oldest of the sections' last tests, protected only when all were. */
     lastTamper?: { at: number; protected: boolean };
+    /** The user accepted that the location cannot refuse a delete. It counts
+     *  only while immutable is off. */
+    riskAccepted?: boolean;
   };
   capacity: StorageLocationCapacity;
   /** A remote repository here that held backups was found empty, and nothing

@@ -138,6 +138,8 @@ Bật bảo vệ chống xóa cho một đích sao lưu off-site để ransomwar
 
 Công tắc thuộc về đích: một phần sao chép tới đó sẽ lấy nó từ đích, nên hãy bật nó trên trang của đích trong **Đích sao lưu**. **Kiểm tra bảo vệ chống xóa** theo lịch chỉ chạy khi có một phần sao chép tới đích đã bật công tắc. Phía bên kia phải được khởi động với `--append-only`; với image `restic/rest-server`, trên TrueNAS cũng như trên mọi máy chủ Docker khác, giá trị này nằm trong biến `OPTIONS`.
 
+Một số nơi hoàn toàn không thể từ chối việc xóa, ví dụ một ổ đám mây như OneDrive. Nếu bạn cố ý giữ bản sao ở đó, hãy bật **Chấp nhận khi không có bảo vệ chống xóa** trên trang của vị trí. Phần tổng quan khi đó hiển thị việc thiếu bảo vệ của một phần chỉ sao chép đến các vị trí đã chấp nhận là rủi ro đã chấp nhận, bằng vòng tròn xám thay cho chấm màu hổ phách, và màu của phần đó theo các kiểm tra còn lại. Ngoài ra không có gì thay đổi: các bản sao lưu ở đó vẫn có thể bị xóa, BombVault vẫn dọn chúng theo quy tắc của vị trí, và công tắc biến mất ngay khi bảo vệ chống xóa được bật. Một bản sao chuyển sang nơi khác sẽ mất sự chấp nhận này. Bật bảo vệ chống xóa cũng hủy sự chấp nhận này.
+
 Cách nhanh nhất để có một bản sao append-only là một BombVault đã ghép nối với một [máy chủ nhận](#receiving-server): nó chạy rest-server cho bạn, ở chế độ append-only.
 
 !!! note "Xóa thành công dưới `/locks/` là hành vi mong đợi"
@@ -149,6 +151,8 @@ Cách nhanh nhất để có một bản sao append-only là một BombVault đ�
 ## Kiểm tra can thiệp
 
 BombVault định kỳ chứng minh bảo đảm append-only bằng cách thực sự thử xóa trên kho off-site, nhắm vào một đối tượng không tồn tại. **Kiểm tra bảo vệ chống xóa ngay** trên trang của một đích chạy nó theo yêu cầu, và **Kiểm tra bảo vệ chống xóa** dưới **Cài đặt, Xác minh, Kiểm tra tự động** chạy nó theo lịch.
+
+Tắt **Kiểm tra bảo vệ chống xóa** không che giấu lỗ hổng nào: một bảo vệ chưa từng được kiểm tra khi đó hiển thị là chưa chứng minh vì việc kiểm tra đang tắt, còn một vị trí không có bảo vệ chống xóa thì trường hợp nào cũng hiển thị là không có.
 
 Bản sao đang tắt sẽ không được kiểm tra, và đích sẽ ghi rõ điều đó. Kiểm tra kết nối vẫn chạy được vì nó chỉ đọc, nên có thể kiểm tra một bản sao trước khi bật nó.
 
@@ -165,7 +169,7 @@ BombVault cung cấp hai cấp độ bằng chứng rằng các bản sao lưu c
 - **Diễn tập xác minh khôi phục (cục bộ).** BombVault định kỳ chạy `restic check --read-data-subset` (có giới hạn, không bao giờ là một lần khôi phục đầy đủ làm đầy đĩa). Chu kỳ nằm dưới **Cài đặt, Xác minh, Kiểm tra tự động**, và thẻ **Kiểm tra bản sao lưu** trên cùng ô hiển thị kết quả.
 - **Khôi phục thử (off-site).** BombVault khôi phục một đích thật từ kho off-site vào một sandbox niêm phong, xác minh từng tệp và từng byte, rồi dọn dẹp. Điều này chứng minh bạn khôi phục được từ off-site, chứ không chỉ là kho có phản hồi.
 
-Thẻ **Trạng thái bảo vệ** trên Tổng quan gộp điều này theo từng phần thành bốn kiểm tra: một bản sao lưu hiện hành trên máy chủ này, một bản sao off-site, bảo vệ chống xóa ở đó và một lần khôi phục thử từ đó. Nhấp vào một phần hiển thị chi tiết, và thẻ chỉ xanh trên các sự thật đã xác minh.
+Thẻ **Trạng thái bảo vệ** trên Tổng quan gộp điều này theo từng phần thành bốn kiểm tra: một bản sao lưu hiện hành trên máy chủ này, một bản sao off-site, bảo vệ chống xóa ở đó và một lần khôi phục thử từ đó. Nhấp vào một phần hiển thị chi tiết, và thẻ chỉ xanh trên các sự thật đã xác minh. Một vị trí bạn đã chấp nhận khi không có bảo vệ chống xóa được tính ở đó là rủi ro đã chấp nhận, không phải cảnh báo.
 
 ## Ghép nối các phiên bản {#pairing}
 

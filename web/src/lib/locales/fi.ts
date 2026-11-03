@@ -1143,6 +1143,7 @@ const fi: Partial<Translations> = {
   "whatsNew.gotify": "Gotify on oma ilmoituskanavansa, ja siihen annetaan palvelimen URL, sovelluksen tunnus sekä prioriteetti epäonnistuessa ja onnistuessa.",
   "whatsNew.restoreStacks": "Compose-stackit palautetaan omalta kortiltaan Palautus-sivulla.",
   "whatsNew.entryOwnPlan": "Kontti, VM, kansio tai ZFS-tietojoukko voi ajaa omalla aikataulullaan. Asetat sen merkinnän Asetukset-välilehdellä, eikä mitään kytkintä tarvitse ensin kytkeä päälle.",
+  "whatsNew.deleteRisk": "Tallennuspaikan ilman poistosuojaa voi hyväksyä sellaisenaan. Yleiskatsaus lakkaa silloin varoittamasta siitä ja kertoo edelleen, että siellä olevat varmuuskopiot voi poistaa.",
   "whatsNew.overviewMoveMode": "Kun mukautat yleiskatsausta, sen kortit keinuvat kevyesti merkiksi siitä, että voit siirtää niitä.",
   "whatsNew.labelGlyphs": "Nimikkeet näyttää jokaiselle valinnalle symbolin, kuten Kulmat ja Animaatio.",
 
@@ -1619,6 +1620,7 @@ const fi: Partial<Translations> = {
 
   // Dashboard ransomware-protection card (v4)
   "ransomware.protGreen": "Suojattu",
+  "ransomware.protAccepted": "Suojattu, riski hyväksytty",
   "ransomware.protAmber": "Vaatii huomiota",
   "ransomware.protRed": "Vaarassa",
   "ransomware.replicationNever": "ei vielä replikoitu",
@@ -4083,7 +4085,7 @@ const fi: Partial<Translations> = {
   "storage.off": "Pois",
   "storage.usedOf": "{used} / {total}",
   "storage.localFolder": "Paikallinen kansio",
-  "storage.primaryNote": "Tämä on kopio osion {domain} etäkentästä. Täällä asetat, kuinka kauan se säilyttää varmuuskopioita. Sen muut arvot tulevat kohdasta Asetukset, Kohteet.",
+  "storage.primaryNote": "Tämä on kopio osion {domain} etäkentästä. Täällä asetat sen nimen, kuinka kauan se säilyttää varmuuskopioita ja hyväksytkö sen ilman poistosuojaa. Sen muut arvot tulevat kohdasta Asetukset, Kohteet.",
   "storage.vessel.full": "täynnä",
   "storage.vessel.fullInWeeks": "one=täynnä noin viikon kuluttua|other=täynnä noin {n} viikon kuluttua",
   "storage.vessel.fullOverYear": "täynnä yli vuoden kuluttua",
@@ -4112,6 +4114,8 @@ const fi: Partial<Translations> = {
   "storage.rclone.all": "Kaikki rclone.conf-tiedoston remotet",
   "storage.rclone.hidden": "piilotettu",
   "storage.lock.toggle": "Poistosuoja (append-only)",
+  "storage.lock.accept": "Hyväksy ilman poistosuojaa",
+  "storage.lock.acceptHint": "Täällä olevat varmuuskopiot eivät edelleenkään ole suojassa poistolta: kuka tahansa, joka pääsee tähän tallennuspaikkaan tai BombVaultiin, voi poistaa ne. Kun tämä on päällä, yleiskatsaus näyttää puuttuvan suojan hyväksyttynä riskinä eikä varoituksena, ja osion väri seuraa sen muita tarkistuksia. Itse paikassa ei muutu mitään, ja vanhat varmuuskopiot karsitaan kuten ennenkin.",
   "storage.lock.localHint": "Mikään tällä koneella ei saa poistaa tästä arkistosta. Karsinta ja varmuuskopioiden poisto estetään. Tarkoitettu säilytettävälle arkistolle.",
   "storage.lock.test": "Testaa poistosuoja nyt",
   "storage.lock.testHint": "Yrittää poistaa testiobjektin. Jos toinen pää kieltäytyy, suoja on todellinen.",
@@ -4365,6 +4369,9 @@ const fi: Partial<Translations> = {
   "overview.check.lockChecked": "Poistosuoja: tarkistettu",
   "overview.check.lockFailed": "Poistosuoja: testi epäonnistui",
   "overview.check.lockUnproven": "Poistosuoja: ei vielä todistettu",
+  "overview.check.lockNone": "Poistosuoja: ei ole",
+  "overview.check.lockAccepted": "Poistosuoja: ei ole, riski hyväksytty",
+  "overview.check.lockCheckOff": "Poistosuoja: ei todistettu, tarkistus on pois päältä",
   "overview.check.drillNeedsOffsite": "Koepalautus: tarvitsee etäkohteen",
   "overview.check.drillUnavailable": "Koepalautus: ei mahdollinen tälle osiolle",
   "overview.check.drillRunning": "Koepalautus: käynnissä",

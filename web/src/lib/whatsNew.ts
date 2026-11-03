@@ -72,6 +72,14 @@ export const RELEASES: Release[] = [
         way: TO_CONTAINER_SETTINGS,
         text: "whatsNew.entryOwnPlan",
       },
+      {
+        id: "location-risk-accepted",
+        page: LOCATION,
+        go: "/storage",
+        where: ["storage.title", "whatsNew.page.location"],
+        way: [...TO_STORAGE, "location"],
+        text: "whatsNew.deleteRisk",
+      },
     ],
   },
   {

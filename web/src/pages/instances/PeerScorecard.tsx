@@ -6,6 +6,7 @@ import { IconConfig, IconContainers, IconFiles, IconFlash, IconVM, IconZFS } fro
 import type { DomainStatus } from "../../lib/api";
 import { useT, type TranslationKey } from "../../lib/i18n";
 import { relativeTime } from "../../lib/reltime";
+import { lockCheck } from "../overview/protectionChecks";
 
 export const DOMAIN_LABEL_KEYS: Record<string, TranslationKey> = {
   containers: "settings.containersEnabled",
@@ -43,10 +44,14 @@ function protectionTone(level: string): "ok" | "fail" | "warn" | "neutral" {
   }
 }
 
-function protectionLabelKey(level: string): TranslationKey {
+// The delete protection gaps that turn a section amber, which the overview
+// names on its own row and the scorecard names under the section.
+const LOCK_GAPS = new Set<TranslationKey>(["overview.check.lockNone", "overview.check.lockCheckOff"]);
+
+function protectionLabelKey(level: string, lock: TranslationKey): TranslationKey {
   switch (level) {
     case "green":
-      return "fleet.protection.green";
+      return lock === "overview.check.lockAccepted" ? "ransomware.protAccepted" : "fleet.protection.green";
     case "amber":
       return "fleet.protection.amber";
     case "red":
@@ -73,27 +78,31 @@ export function PeerScorecard({
   }
   return (
     <ul className="flex flex-col gap-3">
-      {shown.map((d) => (
-        <li key={d.domain} data-domain={d.domain} className="flex flex-wrap items-center gap-x-3 gap-y-2">
-          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-control bg-carbon-surface3 text-accentText">
-            {DOMAIN_GLYPH[d.domain]}
-          </span>
-          <span className="flex min-w-0 flex-1 flex-col">
-            <span className="text-sm font-semibold text-carbon-text">{t(domainLabelKey(d.domain))}</span>
-            {d.lastSuccess > 0 && (
-              <span className="text-xs text-carbon-textMuted">
-                {t("fleet.lastBackup").replace("{time}", relativeTime(t, d.lastSuccess))}
-              </span>
-            )}
-          </span>
-          <span className="ms-auto flex flex-wrap items-center justify-end gap-2">
-            <Badge tone={protectionTone(d.protection)}>{t(protectionLabelKey(d.protection))}</Badge>
-            {onCheck && d.domain !== "config" && (
-              <Button label={t("fleet.checkNow")} labelKey="fleet.checkNow" tone="neutral" onClick={() => onCheck(d.domain)} />
-            )}
-          </span>
-        </li>
-      ))}
+      {shown.map((d) => {
+        const [, lock] = lockCheck(d);
+        return (
+          <li key={d.domain} data-domain={d.domain} className="flex flex-wrap items-center gap-x-3 gap-y-2">
+            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-control bg-carbon-surface3 text-accentText">
+              {DOMAIN_GLYPH[d.domain]}
+            </span>
+            <span className="flex min-w-0 flex-1 flex-col">
+              <span className="text-sm font-semibold text-carbon-text">{t(domainLabelKey(d.domain))}</span>
+              {d.lastSuccess > 0 && (
+                <span className="text-xs text-carbon-textMuted">
+                  {t("fleet.lastBackup").replace("{time}", relativeTime(t, d.lastSuccess))}
+                </span>
+              )}
+              {d.protection === "amber" && LOCK_GAPS.has(lock) && <span className="text-xs text-statusWarn">{t(lock)}</span>}
+            </span>
+            <span className="ms-auto flex flex-wrap items-center justify-end gap-2">
+              <Badge tone={protectionTone(d.protection)}>{t(protectionLabelKey(d.protection, lock))}</Badge>
+              {onCheck && d.domain !== "config" && (
+                <Button label={t("fleet.checkNow")} labelKey="fleet.checkNow" tone="neutral" onClick={() => onCheck(d.domain)} />
+              )}
+            </span>
+          </li>
+        );
+      })}
     </ul>
   );
 }

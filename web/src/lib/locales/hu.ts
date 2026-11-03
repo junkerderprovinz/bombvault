@@ -1136,6 +1136,7 @@ const hu: Partial<Translations> = {
   "whatsNew.gotify": "A Gotify önálló értesítési csatorna, szerver URL-lel, alkalmazás-tokennel, valamint külön prioritással hibánál és sikernél.",
   "whatsNew.restoreStacks": "A Compose stackeket a Visszaállítás oldal saját kártyájáról állítod vissza.",
   "whatsNew.entryOwnPlan": "Egy konténer, VM, mappa vagy ZFS-adatkészlet saját ütemezés szerint is futhat. Az elem Beállítások lapján állítod be, anélkül hogy előbb bármilyen kapcsolót be kellene kapcsolnod.",
+  "whatsNew.deleteRisk": "Egy törlés elleni védelem nélküli tárolóhelyet úgy is elfogadhatsz, ahogy van. Az áttekintés ekkor már nem figyelmeztet miatta, de továbbra is jelzi, hogy az ottani mentések törölhetők.",
   "whatsNew.overviewMoveMode": "Amíg testreszabod az Áttekintést, a kártyái finoman ringatóznak, jelezve, hogy áthelyezheted őket.",
   "whatsNew.labelGlyphs": "A Feliratok minden választáshoz szimbólumot mutat, mint a Sarkok és az Animáció.",
 
@@ -1612,6 +1613,7 @@ const hu: Partial<Translations> = {
 
   // Dashboard ransomware-protection card (v4)
   "ransomware.protGreen": "Védett",
+  "ransomware.protAccepted": "Védett, a kockázat elfogadva",
   "ransomware.protAmber": "Figyelmet igényel",
   "ransomware.protRed": "Veszélyben",
   "ransomware.replicationNever": "még nincs replikálva",
@@ -4084,7 +4086,7 @@ const hu: Partial<Translations> = {
   "storage.off": "Kikapcsolva",
   "storage.usedOf": "{used} / {total}",
   "storage.localFolder": "Helyi mappa",
-  "storage.primaryNote": "Ez a(z) {domain} szakasz Telephelyen kívüli mezőjének másolata. Itt adhatod meg, mennyi ideig őrzi a mentéseket. A többi értéke a Beállítások, Célok alól jön.",
+  "storage.primaryNote": "Ez a(z) {domain} szakasz Telephelyen kívüli mezőjének másolata. Itt adhatod meg a nevét, hogy mennyi ideig őrzi a mentéseket, és hogy elfogadod-e törlés elleni védelem nélkül. A többi értéke a Beállítások, Célok alól jön.",
   "storage.vessel.full": "tele",
   "storage.vessel.fullInWeeks": "one=tele kb. egy hét múlva|other=tele kb. {n} hét múlva",
   "storage.vessel.fullOverYear": "tele több mint egy év múlva",
@@ -4113,6 +4115,8 @@ const hu: Partial<Translations> = {
   "storage.rclone.all": "Az rclone.conf összes remote-ja",
   "storage.rclone.hidden": "rejtett",
   "storage.lock.toggle": "Törlés elleni védelem (append-only)",
+  "storage.lock.accept": "Elfogadás törlés elleni védelem nélkül",
+  "storage.lock.acceptHint": "Az itteni mentések továbbra sincsenek védve a törlés ellen: aki bejut erre a tárolóhelyre vagy a BombVaultba, törölheti őket. Ha ez be van kapcsolva, az áttekintés a hiányzó védelmet elfogadott kockázatként mutatja figyelmeztetés helyett, és a szakasz színe a többi ellenőrzését követi. Magán a helyen semmi sem változik, és a régi mentések ugyanúgy törlődnek, mint eddig.",
   "storage.lock.localHint": "Erről a gépről semmi sem törölhet ebből a tárolóból. A nyesést és a mentések törlését elutasítja. Megőrzendő archívumhoz való.",
   "storage.lock.test": "Törlés elleni védelem tesztelése most",
   "storage.lock.testHint": "Megpróbál törölni egy tesztobjektumot. Ha a másik oldal elutasítja, a védelem valódi.",
@@ -4366,6 +4370,9 @@ const hu: Partial<Translations> = {
   "overview.check.lockChecked": "Törlés elleni védelem: ellenőrizve",
   "overview.check.lockFailed": "Törlés elleni védelem: a teszt meghiúsult",
   "overview.check.lockUnproven": "Törlés elleni védelem: még nincs bizonyítva",
+  "overview.check.lockNone": "Törlés elleni védelem: nincs",
+  "overview.check.lockAccepted": "Törlés elleni védelem: nincs, a kockázat elfogadva",
+  "overview.check.lockCheckOff": "Törlés elleni védelem: nincs bizonyítva, az ellenőrzése ki van kapcsolva",
   "overview.check.drillNeedsOffsite": "Próba-visszaállítás: telephelyen kívüli célt igényel",
   "overview.check.drillUnavailable": "Próba-visszaállítás: ennél a szakasznál nem lehetséges",
   "overview.check.drillRunning": "Próba-visszaállítás: folyamatban",

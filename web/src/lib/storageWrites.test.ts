@@ -8,6 +8,7 @@ vi.mock("./api", async (importOriginal) => {
     getSettings: vi.fn(),
     putSettings: vi.fn(),
     renameStorageLocation: vi.fn(),
+    acceptDeleteRisk: vi.fn(),
     updateDestination: vi.fn(),
     updateOffsiteTarget: vi.fn(),
     updateRepo: vi.fn(),
@@ -18,6 +19,7 @@ const api = await import("./api");
 const getSettings = vi.mocked(api.getSettings);
 const putSettings = vi.mocked(api.putSettings);
 const renameStorageLocation = vi.mocked(api.renameStorageLocation);
+const acceptDeleteRisk = vi.mocked(api.acceptDeleteRisk);
 const updateDestination = vi.mocked(api.updateDestination);
 const updateOffsiteTarget = vi.mocked(api.updateOffsiteTarget);
 const updateRepo = vi.mocked(api.updateRepo);
@@ -100,7 +102,7 @@ describe("writable", () => {
   it("lets a destination change everything it carries, the storage class on S3 only", () => {
     const can = writable(location(), { destination: DESTINATION, targets: [] });
     expect([...can].sort()).toEqual(
-      ["compression", "enabled", "immutable", "limitDownload", "limitUpload", "name", "offPremises", "retention", "storageClass"].sort()
+      ["compression", "enabled", "immutable", "limitDownload", "limitUpload", "name", "offPremises", "retention", "riskAccepted", "storageClass"].sort()
     );
     expect(writable(location({ backend: "rclone" }), { destination: DESTINATION, targets: [] }).has("storageClass")).toBe(false);
   });
@@ -117,10 +119,15 @@ describe("writable", () => {
     expect(can.has("offPremises")).toBe(false);
   });
 
-  it("changes only the name and the keep rules of the copy a domain's off-site settings describe", () => {
+  it("changes only the name, the keep rules and the accepted risk of the copy a domain's off-site settings describe", () => {
     const loc = location({ id: "target:t1", object: "target", sections: [section({ targetId: "t1", primary: true })] });
     expect(settingsOwned(loc)).toBe(true);
-    expect([...writable(loc, { targets: [target()] })]).toEqual(["name", "retention"]);
+    expect([...writable(loc, { targets: [target()] })]).toEqual(["name", "retention", "riskAccepted"]);
+  });
+
+  it("lets no location the backups are written to accept a risk", () => {
+    expect(writable(location({ id: "path:abc", object: "path" }), { targets: [] }).has("riskAccepted")).toBe(false);
+    expect(writable(location({ id: "repo:r1", object: "repo" }), { targets: [] }).has("riskAccepted")).toBe(false);
   });
 
   it("lets a folder of domain paths change its name and the shared rule", () => {
@@ -184,6 +191,13 @@ describe("saveLocation", () => {
     expect(renameStorageLocation).toHaveBeenCalledWith("path:abc", "DXP4800");
     expect(getSettings).not.toHaveBeenCalled();
     expect(putSettings).not.toHaveBeenCalled();
+  });
+
+  it("accepts a risk through its own route and leaves the record behind the location alone", async () => {
+    acceptDeleteRisk.mockResolvedValue({ ok: true });
+    await saveLocation(location({ protection: { immutable: false, testable: false } }), { destination: DESTINATION, targets: [] }, { riskAccepted: true });
+    expect(acceptDeleteRisk).toHaveBeenCalledWith("destination:d1", true);
+    expect(updateDestination).not.toHaveBeenCalled();
   });
 
   it("writes nothing when the settings cannot be read", async () => {

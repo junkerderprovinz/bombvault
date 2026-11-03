@@ -1143,6 +1143,7 @@ const tr: Partial<Translations> = {
   "whatsNew.gotify": "Gotify ayrı bir bildirim kanalıdır; sunucu URL'si, uygulama belirteci ve başarısızlıkta ve başarıda ayrı öncelik alır.",
   "whatsNew.restoreStacks": "Compose stack'leri, Geri yükleme sayfasındaki kendi kartlarından geri yüklenir.",
   "whatsNew.entryOwnPlan": "Bir konteyner, VM, klasör ya da ZFS veri kümesi kendi zamanlamasıyla çalışabilir. Bunu ögenin Ayarlar sekmesinde ayarlarsın, önce bir anahtarı açman gerekmez.",
+  "whatsNew.deleteRisk": "Silmeye karşı koruması olmayan bir depolama konumu olduğu gibi kabul edilebilir. Genel bakış bundan sonra onun için uyarmaz ve oradaki yedeklerin silinebileceğini söylemeye devam eder.",
   "whatsNew.overviewMoveMode": "Genel bakışı özelleştirirken kartları hafifçe sallanarak onları taşıyabileceğinizi gösterir.",
   "whatsNew.labelGlyphs": "Etiketler, Köşeler ve Animasyon gibi her seçenek için bir simge gösterir.",
 
@@ -1619,6 +1620,7 @@ const tr: Partial<Translations> = {
 
   // Dashboard ransomware-protection card (v4)
   "ransomware.protGreen": "Korumalı",
+  "ransomware.protAccepted": "Korumalı, risk kabul edildi",
   "ransomware.protAmber": "Dikkat gerekiyor",
   "ransomware.protRed": "Risk altında",
   "ransomware.replicationNever": "henüz çoğaltılmadı",
@@ -4083,7 +4085,7 @@ const tr: Partial<Translations> = {
   "storage.off": "Kapalı",
   "storage.usedOf": "{used} / {total}",
   "storage.localFolder": "Yerel klasör",
-  "storage.primaryNote": "Bu, {domain} bölümünün Site dışı alanındaki kopyadır. Yedekleri ne kadar süre tutacağını burada belirlersin. Diğer değerleri Ayarlar, Hedefler altından gelir.",
+  "storage.primaryNote": "Bu, {domain} bölümünün Site dışı alanındaki kopyadır. Adını, yedekleri ne kadar süre tutacağını ve silmeye karşı koruma olmadan kabul edip etmediğini burada belirlersin. Diğer değerleri Ayarlar, Hedefler altından gelir.",
   "storage.vessel.full": "dolu",
   "storage.vessel.fullInWeeks": "one=yaklaşık bir hafta içinde dolacak|other=yaklaşık {n} hafta içinde dolacak",
   "storage.vessel.fullOverYear": "bir yıldan uzun sürede dolacak",
@@ -4112,6 +4114,8 @@ const tr: Partial<Translations> = {
   "storage.rclone.all": "rclone.conf içindeki tüm remote'lar",
   "storage.rclone.hidden": "gizli",
   "storage.lock.toggle": "Silmeye karşı koruma (append-only)",
+  "storage.lock.accept": "Silmeye karşı koruma olmadan kabul et",
+  "storage.lock.acceptHint": "Buradaki yedekler hâlâ silinmeye karşı korunmuyor: bu depolama konumuna ya da BombVault'a giren herkes onları silebilir. Bu açıkken genel bakış eksik korumayı uyarı yerine kabul edilmiş bir risk olarak gösterir ve bölümün rengi diğer denetimlerine göre belirlenir. Konumun kendisinde hiçbir şey değişmez ve eski yedekler eskisi gibi temizlenir.",
   "storage.lock.localHint": "Bu makinedeki hiçbir şey bu depodan silemez. Budama ve yedek silme reddedilir. Saklamak istediğin bir arşiv için tasarlanmıştır.",
   "storage.lock.test": "Silmeye karşı korumayı şimdi sına",
   "storage.lock.testHint": "Bir test nesnesini silmeyi dener. Karşı taraf reddederse koruma gerçektir.",
@@ -4365,6 +4369,9 @@ const tr: Partial<Translations> = {
   "overview.check.lockChecked": "Silmeye karşı koruma: kontrol edildi",
   "overview.check.lockFailed": "Silmeye karşı koruma: test başarısız",
   "overview.check.lockUnproven": "Silmeye karşı koruma: henüz kanıtlanmadı",
+  "overview.check.lockNone": "Silmeye karşı koruma: yok",
+  "overview.check.lockAccepted": "Silmeye karşı koruma: yok, risk kabul edildi",
+  "overview.check.lockCheckOff": "Silmeye karşı koruma: kanıtlanmadı, denetimi kapalı",
   "overview.check.drillNeedsOffsite": "Deneme geri yüklemesi: site dışı bir hedef gerekiyor",
   "overview.check.drillUnavailable": "Deneme geri yüklemesi: bu bölüm için mümkün değil",
   "overview.check.drillRunning": "Deneme geri yüklemesi: sürüyor",

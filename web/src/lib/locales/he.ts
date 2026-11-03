@@ -1135,6 +1135,7 @@ const he: Partial<Translations> = {
   "whatsNew.gotify": "Gotify הוא ערוץ התראות בפני עצמו, עם כתובת השרת, אסימון האפליקציה ועדיפות בכישלון ובהצלחה.",
   "whatsNew.restoreStacks": "Stacks של Compose משוחזרים מכרטיס משלהם בדף שחזור.",
   "whatsNew.entryOwnPlan": "Container, VM, תיקייה או מערך נתונים של ZFS יכולים לרוץ לפי לוח זמנים משלהם. מגדירים אותו בלשונית הגדרות של הפריט, בלי להפעיל קודם שום מתג.",
+  "whatsNew.deleteRisk": "אפשר לקבל מיקום אחסון ללא הגנה מפני מחיקה כפי שהוא. הסקירה מפסיקה אז להזהיר עליו וממשיכה לומר שאפשר למחוק את הגיבויים שם.",
   "whatsNew.overviewMoveMode": "בזמן התאמה אישית של הסקירה, הכרטיסים שלה מתנדנדים קלות כדי להראות שאפשר להזיז אותם.",
   "whatsNew.labelGlyphs": "“תוויות” מציגה סמל לכל בחירה, כמו “פינות” ו“אנימציה”.",
 
@@ -1611,6 +1612,7 @@ const he: Partial<Translations> = {
 
   // Dashboard ransomware-protection card (v4)
   "ransomware.protGreen": "מוגן",
+  "ransomware.protAccepted": "מוגן, הסיכון התקבל",
   "ransomware.protAmber": "דורש תשומת לב",
   "ransomware.protRed": "בסיכון",
   "ransomware.replicationNever": "טרם שוכפל",
@@ -4083,7 +4085,7 @@ const he: Partial<Translations> = {
   "storage.off": "כבוי",
   "storage.usedOf": "{used} מתוך {total}",
   "storage.localFolder": "תיקייה מקומית",
-  "storage.primaryNote": "זה העותק משדה מחוץ לאתר של התחום {domain}. את משך השמירה של הגיבויים קובעים כאן. שאר הערכים שלו מגיעים מהגדרות, יעדים.",
+  "storage.primaryNote": "זה העותק משדה מחוץ לאתר של התחום {domain}. את השם, את משך השמירה של הגיבויים ואת הקבלה ללא הגנה מפני מחיקה קובעים כאן. שאר הערכים שלו מגיעים מהגדרות, יעדים.",
   "storage.vessel.full": "מלא",
   "storage.vessel.fullInWeeks": "one=יתמלא בעוד כשבוע|two=יתמלא בעוד כשבועיים|other=יתמלא בעוד כ-{n} שבועות",
   "storage.vessel.fullOverYear": "יתמלא בעוד יותר משנה",
@@ -4112,6 +4114,8 @@ const he: Partial<Translations> = {
   "storage.rclone.all": "כל ה-remote ב-rclone.conf",
   "storage.rclone.hidden": "מוסתר",
   "storage.lock.toggle": "הגנה מפני מחיקה (append-only)",
+  "storage.lock.accept": "לקבל ללא הגנה מפני מחיקה",
+  "storage.lock.acceptHint": "הגיבויים כאן עדיין לא מוגנים מפני מחיקה: מי שנכנס למיקום האחסון הזה או ל-BombVault יכול למחוק אותם. כשזה מופעל, הסקירה מציגה את ההגנה החסרה כסיכון שהתקבל במקום כאזהרה, וצבע המקטע נקבע לפי שאר הבדיקות שלו. במיקום עצמו לא משתנה דבר, וגיבויים ישנים מנוקים כמו קודם.",
   "storage.lock.localHint": "שום דבר במכונה הזאת לא רשאי למחוק מהמאגר הזה. גיזום ומחיקת גיבויים נדחים. מיועד לארכיון שרוצים לשמור.",
   "storage.lock.test": "בדיקת ההגנה מפני מחיקה עכשיו",
   "storage.lock.testHint": "מנסה למחוק אובייקט בדיקה. אם הצד השני מסרב, ההגנה אמיתית.",
@@ -4365,6 +4369,9 @@ const he: Partial<Translations> = {
   "overview.check.lockChecked": "הגנה מפני מחיקה: נבדק",
   "overview.check.lockFailed": "הגנה מפני מחיקה: הבדיקה נכשלה",
   "overview.check.lockUnproven": "הגנה מפני מחיקה: עדיין לא הוכחה",
+  "overview.check.lockNone": "הגנה מפני מחיקה: אין",
+  "overview.check.lockAccepted": "הגנה מפני מחיקה: אין, הסיכון התקבל",
+  "overview.check.lockCheckOff": "הגנה מפני מחיקה: לא הוכחה, הבדיקה כבויה",
   "overview.check.drillNeedsOffsite": "שחזור ניסיון: נדרש יעד מחוץ לאתר",
   "overview.check.drillUnavailable": "שחזור ניסיון: לא אפשרי לתחום הזה",
   "overview.check.drillRunning": "שחזור ניסיון: מתבצע",

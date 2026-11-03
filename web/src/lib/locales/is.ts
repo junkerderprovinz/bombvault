@@ -823,6 +823,7 @@ const is: Partial<Translations> = {
   "whatsNew.gotify": "Gotify er sérstök tilkynningarás, með slóð þjóns, forritatóka og forgangi við villu og við árangur.",
   "whatsNew.restoreStacks": "Compose-staflar eru endurheimtir af eigin spjaldi á síðunni Endurheimt.",
   "whatsNew.entryOwnPlan": "Gámur, sýndarvél, mappa eða ZFS-gagnasafn getur keyrt á eigin áætlun. Þú stillir hana á flipanum Stillingar í færslunni og þarft ekki fyrst að kveikja á neinum rofa.",
+  "whatsNew.deleteRisk": "Geymslustað án varnar gegn eyðingu má samþykkja eins og hann er. Yfirlitið hættir þá að vara við honum og segir áfram að afritunum þar megi eyða.",
   "whatsNew.overviewMoveMode": "Á meðan þú sérsníður yfirlitið vagga spjöldin þess létt til að sýna að þú getur fært þau.",
   "whatsNew.labelGlyphs": "Merkingar sýnir tákn fyrir hvern valkost, eins og Horn og Hreyfimynd.",
 
@@ -1368,6 +1369,7 @@ const is: Partial<Translations> = {
 
   // Dashboard ransomware-protection card
   "ransomware.protGreen": "Varið",
+  "ransomware.protAccepted": "Varið, áhættan samþykkt",
   "ransomware.protAmber": "Þarfnast athygli",
   "ransomware.protRed": "Í hættu",
   "ransomware.replicationNever": "ekki fjarafritað ennþá",
@@ -4093,7 +4095,7 @@ const is: Partial<Translations> = {
   "storage.off": "Slökkt",
   "storage.usedOf": "{used} af {total}",
   "storage.localFolder": "Staðbundin mappa",
-  "storage.primaryNote": "Þetta er afritið úr reitnum Fjarlægt á svæðinu {domain}. Hversu lengi það geymir öryggisafrit stillir þú hér. Önnur gildi þess koma úr Stillingar, Áfangastaðir.",
+  "storage.primaryNote": "Þetta er afritið úr reitnum Fjarlægt á svæðinu {domain}. Nafnið, hversu lengi það geymir öryggisafrit og hvort þú samþykkir það án varnar gegn eyðingu stillir þú hér. Önnur gildi þess koma úr Stillingar, Áfangastaðir.",
   "storage.vessel.full": "fullt",
   "storage.vessel.fullInWeeks": "one=fullt eftir um það bil {n} viku|other=fullt eftir um það bil {n} vikur",
   "storage.vessel.fullOverYear": "fullt eftir meira en ár",
@@ -4122,6 +4124,8 @@ const is: Partial<Translations> = {
   "storage.rclone.all": "Allir remote í rclone.conf",
   "storage.rclone.hidden": "falið",
   "storage.lock.toggle": "Vörn gegn eyðingu (append-only)",
+  "storage.lock.accept": "Samþykkja án varnar gegn eyðingu",
+  "storage.lock.acceptHint": "Afritin hér eru enn óvarin gegn eyðingu: hver sem kemst inn á þennan geymslustað eða í BombVault getur eytt þeim. Þegar kveikt er á þessu sýnir yfirlitið vörnina sem vantar sem samþykkta áhættu í stað viðvörunar, og litur hlutans fylgir öðrum athugunum hans. Á staðnum sjálfum breytist ekkert og gömul afrit eru hreinsuð eins og áður.",
   "storage.lock.localHint": "Ekkert á þessari vél má eyða úr þessu safni. Hreinsun og eyðing afrita er hafnað. Ætlað fyrir skjalasafn sem þú vilt halda.",
   "storage.lock.test": "Prófa vörn gegn eyðingu núna",
   "storage.lock.testHint": "Reynir að eyða prufuhlut. Ef hinn endinn hafnar því er vörnin raunveruleg.",
@@ -4375,6 +4379,9 @@ const is: Partial<Translations> = {
   "overview.check.lockChecked": "Vörn gegn eyðingu: athugað",
   "overview.check.lockFailed": "Vörn gegn eyðingu: prófun mistókst",
   "overview.check.lockUnproven": "Vörn gegn eyðingu: ekki sannað enn",
+  "overview.check.lockNone": "Vörn gegn eyðingu: engin",
+  "overview.check.lockAccepted": "Vörn gegn eyðingu: engin, áhættan samþykkt",
+  "overview.check.lockCheckOff": "Vörn gegn eyðingu: ekki sönnuð, athugunin er óvirk",
   "overview.check.drillNeedsOffsite": "Prufuendurheimt: þarf fjarlægan áfangastað",
   "overview.check.drillUnavailable": "Prufuendurheimt: ekki hægt fyrir þetta svæði",
   "overview.check.drillRunning": "Prufuendurheimt: í gangi",

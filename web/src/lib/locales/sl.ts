@@ -823,6 +823,7 @@ const sl: Partial<Translations> = {
   "whatsNew.gotify": "Gotify je samostojen kanal za obvestila, z URL-jem strežnika, žetonom aplikacije ter prioriteto ob neuspehu in ob uspehu.",
   "whatsNew.restoreStacks": "Sklope Compose obnoviš z lastne kartice na strani Obnova.",
   "whatsNew.entryOwnPlan": "Vsebnik, VM, mapa ali nabor podatkov ZFS lahko teče po lastnem urniku. Nastaviš ga na zavihku Nastavitve vnosa in ti prej ni treba vklopiti nobenega stikala.",
+  "whatsNew.deleteRisk": "Mesto shranjevanja brez zaščite pred brisanjem lahko sprejmeš takšno, kot je. Pregled potem ne opozarja več nanj in še naprej pove, da se kopije tam lahko izbrišejo.",
   "whatsNew.overviewMoveMode": "Med prilagajanjem pregleda se njegove kartice rahlo zibljejo, da pokažejo, da jih lahko premikaš.",
   "whatsNew.labelGlyphs": "Oznake prikazujejo simbol za vsako izbiro, tako kot Oglišča in Animacija.",
 
@@ -1366,6 +1367,7 @@ const sl: Partial<Translations> = {
 
   // Dashboard ransomware-protection card (v4)
   "ransomware.protGreen": "Zaščiteno",
+  "ransomware.protAccepted": "Zaščiteno, tveganje sprejeto",
   "ransomware.protAmber": "Potrebna pozornost",
   "ransomware.protRed": "Ogroženo",
   "ransomware.replicationNever": "še ni podvojeno",
@@ -4077,7 +4079,7 @@ const sl: Partial<Translations> = {
   "storage.off": "Izklopljeno",
   "storage.usedOf": "{used} od {total}",
   "storage.localFolder": "Lokalna mapa",
-  "storage.primaryNote": "To je kopija iz polja Zunanja kopija pri razdelku {domain}. Kako dolgo hrani varnostne kopije, nastaviš tukaj. Druge njene vrednosti izhajajo iz razdelka Nastavitve, Cilji.",
+  "storage.primaryNote": "To je kopija iz polja Zunanja kopija pri razdelku {domain}. Ime, kako dolgo hrani varnostne kopije in ali jo sprejmeš brez zaščite pred brisanjem, nastaviš tukaj. Druge njene vrednosti izhajajo iz razdelka Nastavitve, Cilji.",
   "storage.vessel.full": "polno",
   "storage.vessel.fullInWeeks": "one=polno čez približno {n} teden|two=polno čez približno {n} tedna|few=polno čez približno {n} tedne|other=polno čez približno {n} tednov",
   "storage.vessel.fullOverYear": "polno čez več kot leto",
@@ -4106,6 +4108,8 @@ const sl: Partial<Translations> = {
   "storage.rclone.all": "Vsi remoti v rclone.conf",
   "storage.rclone.hidden": "skrito",
   "storage.lock.toggle": "Zaščita pred brisanjem (append-only)",
+  "storage.lock.accept": "Sprejmi brez zaščite pred brisanjem",
+  "storage.lock.acceptHint": "Varnostne kopije tukaj še vedno niso zaščitene pred brisanjem: kdor pride na to mesto shranjevanja ali v BombVault, jih lahko izbriše. Ko je to vklopljeno, pregled manjkajočo zaščito prikaže kot sprejeto tveganje namesto opozorila, barva razdelka pa sledi njegovim drugim preverjanjem. Na samem mestu se nič ne spremeni, stare kopije pa se čistijo kot doslej.",
   "storage.lock.localHint": "Nič na tem računalniku ne sme brisati iz tega repozitorija. Čiščenje in brisanje varnostnih kopij se zavrneta. Namenjeno arhivu, ki naj ostane.",
   "storage.lock.test": "Preizkusi zaščito pred brisanjem zdaj",
   "storage.lock.testHint": "Poskusi izbrisati preizkusni objekt. Če druga stran zavrne, je zaščita resnična.",
@@ -4359,6 +4363,9 @@ const sl: Partial<Translations> = {
   "overview.check.lockChecked": "Zaščita pred brisanjem: preverjeno",
   "overview.check.lockFailed": "Zaščita pred brisanjem: preizkus ni uspel",
   "overview.check.lockUnproven": "Zaščita pred brisanjem: še ni dokazano",
+  "overview.check.lockNone": "Zaščita pred brisanjem: brez",
+  "overview.check.lockAccepted": "Zaščita pred brisanjem: brez, tveganje sprejeto",
+  "overview.check.lockCheckOff": "Zaščita pred brisanjem: ni dokazano, preverjanje je izklopljeno",
   "overview.check.drillNeedsOffsite": "Preizkusna obnovitev: potrebuje zunanji cilj",
   "overview.check.drillUnavailable": "Preizkusna obnovitev: za ta razdelek ni mogoča",
   "overview.check.drillRunning": "Preizkusna obnovitev: poteka",

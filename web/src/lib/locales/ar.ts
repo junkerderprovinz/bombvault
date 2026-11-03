@@ -1144,6 +1144,7 @@ const ar: Partial<Translations> = {
   "whatsNew.gotify": "Gotify قناة إشعارات مستقلة، مع عنوان URL للخادم ورمز التطبيق وأولوية لكل من الفشل والنجاح.",
   "whatsNew.restoreStacks": "تُستعاد الـ Stacks الخاصة بـ Compose من بطاقة خاصة بها في صفحة الاستعادة.",
   "whatsNew.entryOwnPlan": "يمكن لأي container أو VM أو مجلد أو مجموعة بيانات ZFS أن يعمل وفق جدول خاص به. تضبطه في تبويب الإعدادات الخاص به، دون مفتاح عليك تشغيله أولًا.",
+  "whatsNew.deleteRisk": "يمكن قبول موقع تخزين بلا حماية من الحذف كما هو. عندها تتوقف النظرة العامة عن التحذير منه، وتبقى توضح أن النسخ الاحتياطية هناك قابلة للحذف.",
   "whatsNew.overviewMoveMode": "أثناء تخصيص «نظرة عامة» تتمايل بطاقاتها برفق لتُظهر أنه يمكنك نقلها.",
   "whatsNew.labelGlyphs": "تعرض «التسميات» رمزًا لكل خيار، مثل «الزوايا» و«الرسوم المتحركة».",
 
@@ -1620,6 +1621,7 @@ const ar: Partial<Translations> = {
 
   // Dashboard ransomware-protection card (v4)
   "ransomware.protGreen": "محمي",
+  "ransomware.protAccepted": "محمي، والخطر مقبول",
   "ransomware.protAmber": "يحتاج إلى انتباه",
   "ransomware.protRed": "في خطر",
   "ransomware.replicationNever": "لم يُنسخ بعد",
@@ -4084,7 +4086,7 @@ const ar: Partial<Translations> = {
   "storage.off": "إيقاف",
   "storage.usedOf": "{used} من {total}",
   "storage.localFolder": "مجلد محلي",
-  "storage.primaryNote": "هذه نسخة من حقل خارج الموقع الخاص بقسم {domain}. مدة الاحتفاظ بالنسخ الاحتياطية تضبطها هنا. أما قيمها الأخرى فتأتي من الإعدادات، الوجهات.",
+  "storage.primaryNote": "هذه نسخة من حقل خارج الموقع الخاص بقسم {domain}. اسمها ومدة الاحتفاظ بالنسخ الاحتياطية وقبولها بدون حماية من الحذف تضبطها هنا. أما قيمها الأخرى فتأتي من الإعدادات، الوجهات.",
   "storage.vessel.full": "ممتلئة",
   "storage.vessel.fullInWeeks": "one=ستمتلئ خلال أسبوع تقريبًا|two=ستمتلئ خلال أسبوعين تقريبًا|few=ستمتلئ خلال {n} أسابيع تقريبًا|many=ستمتلئ خلال {n} أسبوعًا تقريبًا|other=ستمتلئ خلال {n} أسبوع تقريبًا",
   "storage.vessel.fullOverYear": "ستمتلئ خلال أكثر من سنة",
@@ -4113,6 +4115,8 @@ const ar: Partial<Translations> = {
   "storage.rclone.all": "كل الوجهات البعيدة في rclone.conf",
   "storage.rclone.hidden": "مخفي",
   "storage.lock.toggle": "الحماية من الحذف (append-only)",
+  "storage.lock.accept": "القبول بدون حماية من الحذف",
+  "storage.lock.acceptHint": "النسخ الاحتياطية هنا لا تزال غير محمية من الحذف: من يصل إلى موقع التخزين هذا أو إلى BombVault يمكنه حذفها. عند التشغيل تعرض النظرة العامة غياب الحماية من الحذف كخطر مقبول بدلًا من تحذير، ويتبع لون القسم فحوصه الأخرى. لا يتغير شيء في الموقع نفسه، وتُحذف النسخ القديمة كما كانت من قبل.",
   "storage.lock.localHint": "لا يُسمح لأي شيء على هذا الجهاز بالحذف من هذا المستودع. يُرفض التقليم وحذف النسخ الاحتياطية. مخصص لأرشيف يُراد الإبقاء عليه.",
   "storage.lock.test": "اختبار الحماية من الحذف الآن",
   "storage.lock.testHint": "يحاول حذف كائن اختباري. إذا رفض الطرف الآخر فالحماية فعلية.",
@@ -4366,6 +4370,9 @@ const ar: Partial<Translations> = {
   "overview.check.lockChecked": "الحماية من الحذف: تم الفحص",
   "overview.check.lockFailed": "الحماية من الحذف: فشل الاختبار",
   "overview.check.lockUnproven": "الحماية من الحذف: لم يثبت بعد",
+  "overview.check.lockNone": "الحماية من الحذف: غير متوفرة",
+  "overview.check.lockAccepted": "الحماية من الحذف: غير متوفرة، والخطر مقبول",
+  "overview.check.lockCheckOff": "الحماية من الحذف: لم تثبت، وفحصها متوقف",
   "overview.check.drillNeedsOffsite": "الاستعادة التجريبية: تحتاج إلى وجهة خارج الموقع",
   "overview.check.drillUnavailable": "الاستعادة التجريبية: غير ممكنة لهذا القسم",
   "overview.check.drillRunning": "الاستعادة التجريبية: قيد التشغيل",

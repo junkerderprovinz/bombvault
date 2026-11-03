@@ -823,6 +823,7 @@ const fa: Partial<Translations> = {
   "whatsNew.gotify": "Gotify یک کانال اعلان جداگانه است، با نشانی سرور، توکن برنامه و یک اولویت هنگام شکست و یکی هنگام موفقیت.",
   "whatsNew.restoreStacks": "استک‌های Compose از کارت مخصوص خودشان در صفحه بازیابی بازیابی می‌شوند.",
   "whatsNew.entryOwnPlan": "هر کانتینر، ماشین مجازی، پوشه یا مجموعه‌داده ZFS می‌تواند با زمان‌بندی اختصاصی خودش اجرا شود. آن را در زبانهٔ تنظیمات همان مورد تنظیم می‌کنی، بدون اینکه اول کلیدی را روشن کنی.",
+  "whatsNew.deleteRisk": "یک محل ذخیره‌سازی بدون محافظت در برابر حذف را می‌توان همان‌طور که هست پذیرفت. نمای کلی آن‌وقت دیگر درباره‌اش هشدار نمی‌دهد و همچنان می‌گوید که پشتیبان‌های آنجا قابل حذف هستند.",
   "whatsNew.overviewMoveMode": "وقتی «بررسی اجمالی» را شخصی‌سازی می‌کنی، کارت‌هایش آرام تکان می‌خورند تا نشان دهند می‌توانی جابه‌جایشان کنی.",
   "whatsNew.labelGlyphs": "«برچسب‌ها» مانند «گوشه‌ها» و «انیمیشن» برای هر گزینه یک نماد نشان می‌دهد.",
 
@@ -1368,6 +1369,7 @@ const fa: Partial<Translations> = {
 
   // Dashboard ransomware-protection card
   "ransomware.protGreen": "محافظت‌شده",
+  "ransomware.protAccepted": "محافظت‌شده، خطر پذیرفته شده",
   "ransomware.protAmber": "نیازمند توجه",
   "ransomware.protRed": "در معرض خطر",
   "ransomware.replicationNever": "هنوز همانندسازی نشده",
@@ -4093,7 +4095,7 @@ const fa: Partial<Translations> = {
   "storage.off": "خاموش",
   "storage.usedOf": "{used} از {total}",
   "storage.localFolder": "پوشه محلی",
-  "storage.primaryNote": "این نسخه از فیلد خارج از محل حوزه {domain} است. اینکه چه مدت نسخه‌های پشتیبان را نگه دارد، همین‌جا تعیین می‌کنی. بقیه مقدارهایش از تنظیمات، مقصدها می‌آیند.",
+  "storage.primaryNote": "این نسخه از فیلد خارج از محل حوزه {domain} است. نام آن، اینکه چه مدت نسخه‌های پشتیبان را نگه دارد و اینکه آن را بدون محافظت در برابر حذف می‌پذیری یا نه، همین‌جا تعیین می‌کنی. بقیه مقدارهایش از تنظیمات، مقصدها می‌آیند.",
   "storage.vessel.full": "پر",
   "storage.vessel.fullInWeeks": "تقریباً تا {n} هفته دیگر پر می‌شود",
   "storage.vessel.fullOverYear": "بیش از یک سال دیگر پر می‌شود",
@@ -4122,6 +4124,8 @@ const fa: Partial<Translations> = {
   "storage.rclone.all": "همه remoteها در rclone.conf",
   "storage.rclone.hidden": "پنهان",
   "storage.lock.toggle": "محافظت در برابر حذف (append-only)",
+  "storage.lock.accept": "پذیرفتن بدون محافظت در برابر حذف",
+  "storage.lock.acceptHint": "پشتیبان‌های اینجا همچنان در برابر حذف محافظت نمی‌شوند: هر کسی که به این محل ذخیره‌سازی یا به BombVault دسترسی پیدا کند می‌تواند آن‌ها را حذف کند. با روشن بودن این گزینه، نمای کلی نبود محافظت را به‌جای هشدار به‌عنوان خطر پذیرفته‌شده نشان می‌دهد و رنگ بخش از بررسی‌های دیگر آن پیروی می‌کند. در خود محل چیزی تغییر نمی‌کند و پشتیبان‌های قدیمی مثل قبل پاک‌سازی می‌شوند.",
   "storage.lock.localHint": "هیچ چیز روی این دستگاه اجازه ندارد از این مخزن حذف کند. پاک‌سازی و حذف پشتیبان‌ها رد می‌شود. برای آرشیوی که می‌خواهی نگه داری.",
   "storage.lock.test": "آزمایش همین حالا محافظت در برابر حذف",
   "storage.lock.testHint": "تلاش می‌کند یک شیء آزمایشی را حذف کند. اگر طرف مقابل رد کند، محافظت واقعی است.",
@@ -4375,6 +4379,9 @@ const fa: Partial<Translations> = {
   "overview.check.lockChecked": "محافظت در برابر حذف: بررسی شد",
   "overview.check.lockFailed": "محافظت در برابر حذف: آزمایش شکست خورد",
   "overview.check.lockUnproven": "محافظت در برابر حذف: هنوز اثبات نشده",
+  "overview.check.lockNone": "محافظت در برابر حذف: ندارد",
+  "overview.check.lockAccepted": "محافظت در برابر حذف: ندارد، خطر پذیرفته شده",
+  "overview.check.lockCheckOff": "محافظت در برابر حذف: اثبات نشده، بررسی آن خاموش است",
   "overview.check.drillNeedsOffsite": "بازیابی آزمایشی: به مقصد خارج از محل نیاز دارد",
   "overview.check.drillUnavailable": "بازیابی آزمایشی: برای این حوزه ممکن نیست",
   "overview.check.drillRunning": "بازیابی آزمایشی: در حال اجرا",

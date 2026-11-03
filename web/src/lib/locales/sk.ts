@@ -823,6 +823,7 @@ const sk: Partial<Translations> = {
   "whatsNew.gotify": "Gotify je samostatný kanál upozornení s URL servera, tokenom aplikácie a prioritou pri zlyhaní aj pri úspechu.",
   "whatsNew.restoreStacks": "Zásobníky Compose obnovíš z vlastnej karty na stránke Obnova.",
   "whatsNew.entryOwnPlan": "Kontajner, VM, priečinok alebo dátová sada ZFS môže bežať podľa vlastného plánu. Nastavíš ho na karte Nastavenia položky a nemusíš predtým zapínať žiadny prepínač.",
+  "whatsNew.deleteRisk": "Úložisko bez ochrany proti zmazaniu môžeš prijať také, aké je. Prehľad potom pred ním prestane varovať a naďalej uvádza, že zálohy tam sa dajú zmazať.",
   "whatsNew.overviewMoveMode": "Keď prispôsobujete prehľad, jeho karty sa jemne pohupujú, aby bolo vidieť, že ich môžete presúvať.",
   "whatsNew.labelGlyphs": "Označenia zobrazujú pri každej voľbe symbol, rovnako ako Rohy a Animácia.",
 
@@ -1368,6 +1369,7 @@ const sk: Partial<Translations> = {
 
   // Dashboard ransomware-protection card
   "ransomware.protGreen": "Chránené",
+  "ransomware.protAccepted": "Chránené, riziko prijaté",
   "ransomware.protAmber": "Vyžaduje pozornosť",
   "ransomware.protRed": "Ohrozené",
   "ransomware.replicationNever": "zatiaľ nereplikované",
@@ -4093,7 +4095,7 @@ const sk: Partial<Translations> = {
   "storage.off": "Vypnuté",
   "storage.usedOf": "{used} z {total}",
   "storage.localFolder": "Lokálny priečinok",
-  "storage.primaryNote": "Toto je kópia z poľa Externé pri sekcii {domain}. Ako dlho uchováva zálohy, nastavíš tu. Jej ostatné hodnoty pochádzajú z časti Nastavenia, Ciele.",
+  "storage.primaryNote": "Toto je kópia z poľa Externé pri sekcii {domain}. Názov, ako dlho uchováva zálohy a či ju prijmeš bez ochrany proti zmazaniu, nastavíš tu. Jej ostatné hodnoty pochádzajú z časti Nastavenia, Ciele.",
   "storage.vessel.full": "plno",
   "storage.vessel.fullInWeeks": "one=plno asi o týždeň|few=plno asi o {n} týždne|other=plno asi o {n} týždňov",
   "storage.vessel.fullOverYear": "plno o viac ako rok",
@@ -4122,6 +4124,8 @@ const sk: Partial<Translations> = {
   "storage.rclone.all": "Všetky remoty v rclone.conf",
   "storage.rclone.hidden": "skryté",
   "storage.lock.toggle": "Ochrana proti zmazaniu (append-only)",
+  "storage.lock.accept": "Prijať bez ochrany proti zmazaniu",
+  "storage.lock.acceptHint": "Zálohy tu stále nie sú chránené proti zmazaniu: kto sa dostane do tohto úložiska alebo do BombVault, môže ich zmazať. Keď je to zapnuté, prehľad ukazuje chýbajúcu ochranu ako prijaté riziko namiesto varovania a farba sekcie sa riadi jej ostatnými kontrolami. Na samotnom úložisku sa nič nemení a staré zálohy sa čistia ako doteraz.",
   "storage.lock.localHint": "Nič na tomto stroji nesmie z tohto repozitára mazať. Čistenie a mazanie záloh sa odmieta. Určené pre archív, ktorý má zostať.",
   "storage.lock.test": "Otestovať ochranu proti zmazaniu hneď",
   "storage.lock.testHint": "Skúsi zmazať testovací objekt. Ak to druhá strana odmietne, ochrana je skutočná.",
@@ -4375,6 +4379,9 @@ const sk: Partial<Translations> = {
   "overview.check.lockChecked": "Ochrana proti zmazaniu: skontrolované",
   "overview.check.lockFailed": "Ochrana proti zmazaniu: test zlyhal",
   "overview.check.lockUnproven": "Ochrana proti zmazaniu: zatiaľ nepreukázané",
+  "overview.check.lockNone": "Ochrana proti zmazaniu: žiadna",
+  "overview.check.lockAccepted": "Ochrana proti zmazaniu: žiadna, riziko prijaté",
+  "overview.check.lockCheckOff": "Ochrana proti zmazaniu: nepreukázané, kontrola je vypnutá",
   "overview.check.drillNeedsOffsite": "Skúšobná obnova: vyžaduje externý cieľ",
   "overview.check.drillUnavailable": "Skúšobná obnova: pre túto sekciu nie je možná",
   "overview.check.drillRunning": "Skúšobná obnova: beží",

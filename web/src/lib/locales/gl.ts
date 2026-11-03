@@ -823,6 +823,7 @@ const gl: Partial<Translations> = {
   "whatsNew.gotify": "Gotify é unha canle de notificacións propia, co URL do servidor, un token da aplicación e unha prioridade se falla e outra se sae ben.",
   "whatsNew.restoreStacks": "As pilas de Compose restáuranse desde a súa propia tarxeta na páxina Restauración.",
   "whatsNew.entryOwnPlan": "Un contedor, unha MV, un cartafol ou un conxunto de datos ZFS pode executarse coa súa propia planificación. Axústala na lapela Configuración do elemento, sen activar antes ningún interruptor.",
+  "whatsNew.deleteRisk": "Unha localización sen protección contra a eliminación pódese aceptar tal como é. A vista xeral deixa entón de avisar dela e segue dicindo que as copias de alí se poden eliminar.",
   "whatsNew.overviewMoveMode": "Mentres personalizas a vista xeral, as súas tarxetas balancéanse suavemente para amosar que as podes mover.",
   "whatsNew.labelGlyphs": "Etiquetas amosa un símbolo para cada opción, como Esquinas e Animación.",
 
@@ -1368,6 +1369,7 @@ const gl: Partial<Translations> = {
 
   // Dashboard ransomware-protection card
   "ransomware.protGreen": "Protexido",
+  "ransomware.protAccepted": "Protexido, risco aceptado",
   "ransomware.protAmber": "Precisa atención",
   "ransomware.protRed": "En risco",
   "ransomware.replicationNever": "aínda non replicado",
@@ -4093,7 +4095,7 @@ const gl: Partial<Translations> = {
   "storage.off": "Desactivado",
   "storage.usedOf": "{used} de {total}",
   "storage.localFolder": "Cartafol local",
-  "storage.primaryNote": "Esta é a copia do campo externo de {domain}. Aquí defines canto tempo garda as copias de seguranza. Os seus outros valores veñen de Configuración, Destinos.",
+  "storage.primaryNote": "Esta é a copia do campo externo de {domain}. Aquí defines o nome, canto tempo garda as copias de seguranza e se a aceptas sen protección contra a eliminación. Os seus outros valores veñen de Configuración, Destinos.",
   "storage.vessel.full": "cheo",
   "storage.vessel.fullInWeeks": "one=cheo dentro de aproximadamente unha semana|other=cheo dentro de aproximadamente {n} semanas",
   "storage.vessel.fullOverYear": "cheo dentro de máis dun ano",
@@ -4122,6 +4124,8 @@ const gl: Partial<Translations> = {
   "storage.rclone.all": "Todos os remotes do rclone.conf",
   "storage.rclone.hidden": "oculto",
   "storage.lock.toggle": "Protección contra a eliminación (append-only)",
+  "storage.lock.accept": "Aceptar sen protección contra a eliminación",
+  "storage.lock.acceptHint": "As copias de aquí seguen sen protección contra a eliminación: quen entre nesta localización ou en BombVault pode eliminalas. Con isto activado, a vista xeral mostra a falta de protección como un risco aceptado en vez dun aviso, e a cor da sección segue as súas outras comprobacións. Na localización non cambia nada, e as copias antigas límpanse coma antes.",
   "storage.lock.localHint": "Nada deste equipo pode eliminar neste repositorio. A poda e a eliminación de copias rexéitanse. Pensado para un arquivo que queres conservar.",
   "storage.lock.test": "Probar agora a protección contra a eliminación",
   "storage.lock.testHint": "Tenta eliminar un obxecto de proba. Se o outro lado o rexeita, a protección é real.",
@@ -4375,6 +4379,9 @@ const gl: Partial<Translations> = {
   "overview.check.lockChecked": "Protección contra a eliminación: comprobada",
   "overview.check.lockFailed": "Protección contra a eliminación: a proba fallou",
   "overview.check.lockUnproven": "Protección contra a eliminación: aínda sen demostrar",
+  "overview.check.lockNone": "Protección contra a eliminación: ningunha",
+  "overview.check.lockAccepted": "Protección contra a eliminación: ningunha, risco aceptado",
+  "overview.check.lockCheckOff": "Protección contra a eliminación: sen demostrar, a comprobación está desactivada",
   "overview.check.drillNeedsOffsite": "Restauración de proba: precisa un destino externo",
   "overview.check.drillUnavailable": "Restauración de proba: non é posible para esta sección",
   "overview.check.drillRunning": "Restauración de proba: en curso",

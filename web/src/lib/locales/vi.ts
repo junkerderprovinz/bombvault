@@ -1134,6 +1134,7 @@ const vi: Partial<Translations> = {
   "whatsNew.gotify": "Gotify là một kênh thông báo riêng, với URL máy chủ, token ứng dụng và mức ưu tiên khi thất bại và khi thành công.",
   "whatsNew.restoreStacks": "Các stack Compose được khôi phục từ thẻ riêng của chúng trên trang Khôi phục.",
   "whatsNew.entryOwnPlan": "Một container, VM, thư mục hoặc tập dữ liệu ZFS có thể chạy theo lịch trình riêng. Bạn đặt nó ở thẻ Cài đặt của mục đó, không cần bật công tắc nào trước.",
+  "whatsNew.deleteRisk": "Một vị trí lưu trữ không có bảo vệ chống xóa giờ có thể được chấp nhận như hiện trạng. Phần tổng quan khi đó ngừng cảnh báo về nó và vẫn cho biết các bản sao lưu ở đó có thể bị xóa.",
   "whatsNew.overviewMoveMode": "Khi bạn tùy chỉnh Tổng quan, các thẻ của nó khẽ lắc lư để cho thấy bạn có thể di chuyển chúng.",
   "whatsNew.labelGlyphs": "Nhãn hiển thị một biểu tượng cho từng lựa chọn, giống như Góc và Hoạt ảnh.",
 
@@ -1610,6 +1611,7 @@ const vi: Partial<Translations> = {
 
   // Dashboard ransomware-protection card (v4)
   "ransomware.protGreen": "Được bảo vệ",
+  "ransomware.protAccepted": "Được bảo vệ, đã chấp nhận rủi ro",
   "ransomware.protAmber": "Cần chú ý",
   "ransomware.protRed": "Có rủi ro",
   "ransomware.replicationNever": "chưa sao chép",
@@ -4074,7 +4076,7 @@ const vi: Partial<Translations> = {
   "storage.off": "Tắt",
   "storage.usedOf": "{used} / {total}",
   "storage.localFolder": "Thư mục cục bộ",
-  "storage.primaryNote": "Đây là bản sao từ trường Ngoài site của phần {domain}. Thời gian giữ dữ liệu sao lưu được đặt tại đây. Các giá trị khác của nó lấy từ Cài đặt, Đích sao lưu.",
+  "storage.primaryNote": "Đây là bản sao từ trường Ngoài site của phần {domain}. Tên, thời gian giữ dữ liệu sao lưu và việc chấp nhận khi không có bảo vệ chống xóa được đặt tại đây. Các giá trị khác của nó lấy từ Cài đặt, Đích sao lưu.",
   "storage.vessel.full": "đầy",
   "storage.vessel.fullInWeeks": "đầy sau khoảng {n} tuần",
   "storage.vessel.fullOverYear": "đầy sau hơn một năm",
@@ -4103,6 +4105,8 @@ const vi: Partial<Translations> = {
   "storage.rclone.all": "Tất cả remote trong rclone.conf",
   "storage.rclone.hidden": "ẩn",
   "storage.lock.toggle": "Bảo vệ chống xóa (append-only)",
+  "storage.lock.accept": "Chấp nhận khi không có bảo vệ chống xóa",
+  "storage.lock.acceptHint": "Các bản sao lưu ở đây vẫn không được bảo vệ chống xóa: bất kỳ ai vào được vị trí lưu trữ này hoặc vào BombVault đều có thể xóa chúng. Khi bật mục này, phần tổng quan hiển thị việc thiếu bảo vệ là rủi ro đã chấp nhận thay vì cảnh báo, và màu của phần đó theo các kiểm tra còn lại. Tại chính vị trí đó không có gì thay đổi, và các bản sao lưu cũ vẫn được dọn như trước.",
   "storage.lock.localHint": "Không gì trên máy này được phép xóa khỏi kho này. Việc dọn bớt và xóa bản sao lưu đều bị từ chối. Dành cho kho lưu trữ bạn muốn giữ lại.",
   "storage.lock.test": "Kiểm tra bảo vệ chống xóa ngay",
   "storage.lock.testHint": "Thử xóa một đối tượng kiểm tra. Nếu phía bên kia từ chối thì sự bảo vệ là thật.",
@@ -4356,6 +4360,9 @@ const vi: Partial<Translations> = {
   "overview.check.lockChecked": "Bảo vệ chống xóa: đã kiểm tra",
   "overview.check.lockFailed": "Bảo vệ chống xóa: kiểm thử thất bại",
   "overview.check.lockUnproven": "Bảo vệ chống xóa: chưa được chứng minh",
+  "overview.check.lockNone": "Bảo vệ chống xóa: không có",
+  "overview.check.lockAccepted": "Bảo vệ chống xóa: không có, đã chấp nhận rủi ro",
+  "overview.check.lockCheckOff": "Bảo vệ chống xóa: chưa chứng minh, việc kiểm tra đang tắt",
   "overview.check.drillNeedsOffsite": "Khôi phục thử: cần một đích ngoài site",
   "overview.check.drillUnavailable": "Khôi phục thử: không thể thực hiện cho phần này",
   "overview.check.drillRunning": "Khôi phục thử: đang chạy",

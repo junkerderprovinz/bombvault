@@ -1144,6 +1144,7 @@ const th: Partial<Translations> = {
   "whatsNew.gotify": "Gotify เป็นช่องทางการแจ้งเตือนแยกต่างหาก ใช้ URL ของเซิร์ฟเวอร์ โทเค็นแอป และลำดับความสำคัญเมื่อล้มเหลวและเมื่อสำเร็จ",
   "whatsNew.restoreStacks": "สแตกของ Compose กู้คืนได้จากการ์ดของตัวเองบนหน้าการกู้คืน",
   "whatsNew.entryOwnPlan": "container, VM, โฟลเดอร์ หรือชุดข้อมูล ZFS แต่ละรายการรันตามกำหนดการของตัวเองได้ คุณตั้งค่าได้ที่แท็บการตั้งค่าของรายการนั้น โดยไม่ต้องเปิดสวิตช์ใดก่อน",
+  "whatsNew.deleteRisk": "ตำแหน่งจัดเก็บที่ไม่มีการป้องกันการลบสามารถยอมรับตามสภาพได้ ภาพรวมจะหยุดเตือนเรื่องนี้ และยังบอกต่อไปว่าข้อมูลสำรองที่นั่นลบได้",
   "whatsNew.overviewMoveMode": "ระหว่างที่คุณปรับแต่งภาพรวม การ์ดจะโยกเบาๆ เพื่อบอกว่าคุณย้ายการ์ดได้",
   "whatsNew.labelGlyphs": "ป้ายกำกับแสดงสัญลักษณ์สำหรับแต่ละตัวเลือก เหมือนกับมุมและแอนิเมชัน",
 
@@ -1620,6 +1621,7 @@ const th: Partial<Translations> = {
 
   // Dashboard ransomware-protection card (v4)
   "ransomware.protGreen": "ได้รับการป้องกัน",
+  "ransomware.protAccepted": "ได้รับการป้องกัน ยอมรับความเสี่ยงแล้ว",
   "ransomware.protAmber": "ต้องการความสนใจ",
   "ransomware.protRed": "มีความเสี่ยง",
   "ransomware.replicationNever": "ยังไม่ได้จำลอง",
@@ -4084,7 +4086,7 @@ const th: Partial<Translations> = {
   "storage.off": "ปิด",
   "storage.usedOf": "{used} จาก {total}",
   "storage.localFolder": "โฟลเดอร์ในเครื่อง",
-  "storage.primaryNote": "นี่คือสำเนาจากช่องนอกสถานที่ของส่วน {domain} ระยะเวลาที่สำเนานี้เก็บข้อมูลสำรองตั้งได้ที่นี่ ส่วนค่าอื่น ๆ มาจาก การตั้งค่า, ปลายทาง",
+  "storage.primaryNote": "นี่คือสำเนาจากช่องนอกสถานที่ของส่วน {domain} ชื่อ ระยะเวลาที่สำเนานี้เก็บข้อมูลสำรอง และการยอมรับโดยไม่มีการป้องกันการลบ ตั้งได้ที่นี่ ส่วนค่าอื่น ๆ มาจาก การตั้งค่า, ปลายทาง",
   "storage.vessel.full": "เต็ม",
   "storage.vessel.fullInWeeks": "จะเต็มในอีกประมาณ {n} สัปดาห์",
   "storage.vessel.fullOverYear": "จะเต็มในอีกมากกว่าหนึ่งปี",
@@ -4113,6 +4115,8 @@ const th: Partial<Translations> = {
   "storage.rclone.all": "รีโมตทั้งหมดใน rclone.conf",
   "storage.rclone.hidden": "ซ่อนอยู่",
   "storage.lock.toggle": "การป้องกันการลบ (append-only)",
+  "storage.lock.accept": "ยอมรับโดยไม่มีการป้องกันการลบ",
+  "storage.lock.acceptHint": "ข้อมูลสำรองที่นี่ยังไม่ได้รับการป้องกันจากการลบ ใครก็ตามที่เข้าถึงตำแหน่งจัดเก็บนี้หรือ BombVault ได้ก็ลบได้ เมื่อเปิดตัวเลือกนี้ ภาพรวมจะแสดงการป้องกันที่ขาดไปเป็นความเสี่ยงที่ยอมรับแล้วแทนคำเตือน และสีของส่วนจะเป็นไปตามการตรวจสอบอื่น ๆ ของส่วนนั้น ที่ตำแหน่งจัดเก็บเองไม่มีอะไรเปลี่ยน และข้อมูลสำรองเก่ายังถูกล้างออกเหมือนเดิม",
   "storage.lock.localHint": "ไม่มีสิ่งใดบนเครื่องนี้ลบจากรีพอสิทอรีนี้ได้ การพรูนและการลบข้อมูลสำรองจะถูกปฏิเสธ เหมาะกับที่เก็บถาวรที่ต้องการเก็บไว้",
   "storage.lock.test": "ทดสอบการป้องกันการลบตอนนี้",
   "storage.lock.testHint": "ลองลบออบเจ็กต์ทดสอบ ถ้าอีกฝั่งปฏิเสธ แสดงว่าการป้องกันใช้ได้จริง",
@@ -4366,6 +4370,9 @@ const th: Partial<Translations> = {
   "overview.check.lockChecked": "การป้องกันการลบ: ตรวจสอบแล้ว",
   "overview.check.lockFailed": "การป้องกันการลบ: การทดสอบล้มเหลว",
   "overview.check.lockUnproven": "การป้องกันการลบ: ยังไม่ได้พิสูจน์",
+  "overview.check.lockNone": "การป้องกันการลบ: ไม่มี",
+  "overview.check.lockAccepted": "การป้องกันการลบ: ไม่มี ยอมรับความเสี่ยงแล้ว",
+  "overview.check.lockCheckOff": "การป้องกันการลบ: ยังไม่ได้พิสูจน์ การตรวจสอบปิดอยู่",
   "overview.check.drillNeedsOffsite": "การทดสอบกู้คืน: ต้องมีปลายทางนอกสถานที่",
   "overview.check.drillUnavailable": "การทดสอบกู้คืน: ทำไม่ได้กับส่วนนี้",
   "overview.check.drillRunning": "การทดสอบกู้คืน: กำลังทำงาน",

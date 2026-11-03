@@ -655,18 +655,40 @@ describe("the copy a section's off-site settings describe", () => {
     sections: [section({ domain: "files", targetId: "t-primary", primary: true })],
   });
 
-  it("lets its keep rules be changed here and nothing else", async () => {
+  it("lets its keep rules and its accepted risk be changed here and nothing else", async () => {
     stage(PRIMARY, [target({ id: "t-primary", domain: "files", destinationId: undefined, sortOrder: 0 })]);
     await renderPage("target:t-primary");
 
-    expect(screen.getAllByRole("switch").map((s) => s.getAttribute("aria-label"))).toEqual(["Ask before keeping less"]);
+    expect(screen.getAllByRole("switch").map((s) => s.getAttribute("aria-label"))).toEqual(["Accept without delete protection", "Ask before keeping less"]);
     expect(screen.getAllByRole("radiogroup")).toHaveLength(1);
     expect(within(card("How long to keep")).getByRole("radio", { name: "Long" })).toBeTruthy();
     expect(
       screen.getByLabelText(
-        "This is the copy from the off-site field of Folders. You set how long it keeps backups here. Its other values come from Settings, Storage locations."
+        "This is the copy from the off-site field of Folders. Here you set its name, how long it keeps backups and whether you accept it without delete protection. Its other values come from Settings, Storage locations."
       )
     ).toBeTruthy();
+  });
+});
+
+describe("a copy kept on a folder of this host", () => {
+  it("can be accepted without delete protection like a copy anywhere else", async () => {
+    const usb = location({
+      id: "target:t-usb",
+      object: "target",
+      kind: "offsite",
+      provider: "",
+      mark: undefined,
+      backend: "local",
+      name: "USB disk",
+      where: "/mnt/disks/usb/bv/containers",
+      protection: { immutable: false, testable: false },
+      sections: [section({ domain: "containers", targetId: "t-usb" })],
+    });
+    stage(usb, [target({ id: "t-usb", repo: "/mnt/disks/usb/bv/containers", destinationId: undefined })]);
+    await renderPage("target:t-usb");
+
+    expect(within(card("Delete protection")).getByRole("switch", { name: "Accept without delete protection" })).toBeTruthy();
+    expect(screen.queryByRole("switch", { name: "Delete protection (append-only)" })).toBeNull();
   });
 });
 

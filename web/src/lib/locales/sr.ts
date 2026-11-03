@@ -823,6 +823,7 @@ const sr: Partial<Translations> = {
   "whatsNew.gotify": "Gotify је засебан канал обавештења, са URL-ом сервера, токеном апликације и приоритетом при неуспеху и при успеху.",
   "whatsNew.restoreStacks": "Скупови Compose враћају се са сопствене картице на страници Враћање.",
   "whatsNew.entryOwnPlan": "Контејнер, ВМ, фасцикла или ZFS скуп података може да ради по сопственом распореду. Подешаваш га на картици Подешавања ставке и не мораш претходно да укључујеш никакав прекидач.",
+  "whatsNew.deleteRisk": "Место складиштења без заштите од брисања можеш да прихватиш онакво какво јесте. Преглед тада престаје да упозорава на њега и и даље каже да се копије тамо могу обрисати.",
   "whatsNew.overviewMoveMode": "Док прилагођаваш преглед, његове картице се благо њишу да покажу да их можеш померати.",
   "whatsNew.labelGlyphs": "Ознаке приказују симбол за сваки избор, као и Углови и Анимација.",
 
@@ -1366,6 +1367,7 @@ const sr: Partial<Translations> = {
 
   // Dashboard ransomware-protection card (v4)
   "ransomware.protGreen": "Заштићено",
+  "ransomware.protAccepted": "Заштићено, ризик прихваћен",
   "ransomware.protAmber": "Потребна пажња",
   "ransomware.protRed": "Угрожено",
   "ransomware.replicationNever": "још није дуплирано",
@@ -4077,7 +4079,7 @@ const sr: Partial<Translations> = {
   "storage.off": "Искључено",
   "storage.usedOf": "{used} од {total}",
   "storage.localFolder": "Локална фасцикла",
-  "storage.primaryNote": "Ово је копија из поља Спољна копија за одељак {domain}. Колико дуго чува резервне копије, подешаваш овде. Њене остале вредности долазе из одељка Подешавања, Одредишта.",
+  "storage.primaryNote": "Ово је копија из поља Спољна копија за одељак {domain}. Назив, колико дуго чува резервне копије и да ли је прихваташ без заштите од брисања, подешаваш овде. Њене остале вредности долазе из одељка Подешавања, Одредишта.",
   "storage.vessel.full": "пуно",
   "storage.vessel.fullInWeeks": "one=пуно за око {n} недељу|few=пуно за око {n} недеље|other=пуно за око {n} недеља",
   "storage.vessel.fullOverYear": "пуно за више од годину дана",
@@ -4106,6 +4108,8 @@ const sr: Partial<Translations> = {
   "storage.rclone.all": "Сви remote у rclone.conf",
   "storage.rclone.hidden": "скривено",
   "storage.lock.toggle": "Заштита од брисања (append-only)",
+  "storage.lock.accept": "Прихвати без заштите од брисања",
+  "storage.lock.acceptHint": "Резервне копије овде и даље нису заштићене од брисања: ко год уђе у ово место складиштења или у BombVault, може да их обрише. Када је ово укључено, преглед приказује недостатак заштите као прихваћен ризик уместо упозорења, а боја одељка прати његове остале провере. На самом месту се ништа не мења, а старе копије се чисте као и раније.",
   "storage.lock.localHint": "Ништа на овој машини не сме да брише из овог репозиторијума. Чишћење и брисање резервних копија се одбијају. Намењено архиви коју желиш да задржиш.",
   "storage.lock.test": "Тестирај заштиту од брисања сада",
   "storage.lock.testHint": "Покушава да обрише пробни објекат. Ако друга страна одбије, заштита је стварна.",
@@ -4359,6 +4363,9 @@ const sr: Partial<Translations> = {
   "overview.check.lockChecked": "Заштита од брисања: проверено",
   "overview.check.lockFailed": "Заштита од брисања: тест није успео",
   "overview.check.lockUnproven": "Заштита од брисања: још није доказано",
+  "overview.check.lockNone": "Заштита од брисања: нема",
+  "overview.check.lockAccepted": "Заштита од брисања: нема, ризик прихваћен",
+  "overview.check.lockCheckOff": "Заштита од брисања: није доказано, провера је искључена",
   "overview.check.drillNeedsOffsite": "Пробно враћање: треба спољно одредиште",
   "overview.check.drillUnavailable": "Пробно враћање: није могуће за овај одељак",
   "overview.check.drillRunning": "Пробно враћање: у току",

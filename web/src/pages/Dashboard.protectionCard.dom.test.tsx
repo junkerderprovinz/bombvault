@@ -103,6 +103,19 @@ describe("ProtectionCard", () => {
     expect(tone(en["nav.zfs"])).toBe("ok");
   });
 
+  it("shows an accepted lack of delete protection as a neutral dot and lets the other checks colour the section", () => {
+    const open = { offsiteImmutable: false, tamperState: "" };
+    renderCard(sections([domain({ ...open, deleteRiskAccepted: true }), domain({ ...open, domain: "flash" })], [item(), item({ kind: "flash", key: "f" })]));
+
+    const accepted = row(en["nav.containers"]).getByRole("img", { name: en["overview.check.lockAccepted"] });
+    expect(accepted.getAttribute("data-tone")).toBe("neutral");
+    const tone = (name: string) =>
+      screen.getByRole("button", { name }).closest("li")!.querySelector("[data-tone]")!.getAttribute("data-tone");
+    expect(tone(en["nav.containers"])).toBe("ok");
+    expect(row(en["nav.flash"]).getByRole("img", { name: en["overview.check.lockNone"] }).getAttribute("data-tone")).toBe("warn");
+    expect(tone(en["nav.flash"])).toBe("warn");
+  });
+
   it("counts the section's entries as every other card does", () => {
     renderCard(sections([domain()], [item(), item({ key: "new", lastBackup: 0 }), item({ key: "old", installed: false })]));
 
@@ -151,6 +164,13 @@ describe("ProtectionWindow", () => {
     ] as const) {
       expect(window.getByText(en[key])).toBeTruthy();
     }
+  });
+
+  it("calls a section whose only gap was accepted protected with the risk accepted", () => {
+    const window = renderWindow(domain({ offsiteImmutable: false, tamperState: "", deleteRiskAccepted: true }));
+
+    expect(window.getByText(en["ransomware.protAccepted"])).toBeTruthy();
+    expect(window.getByText(en["overview.check.lockAccepted"])).toBeTruthy();
   });
 
   it("leads to the off-site settings from a missing off-site copy", () => {

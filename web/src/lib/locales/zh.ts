@@ -1134,6 +1134,7 @@ const zh: Partial<Translations> = {
   "whatsNew.gotify": "Gotify 是独立的通知渠道，需要服务器 URL、应用令牌，并分别设置失败时和成功时的优先级。",
   "whatsNew.restoreStacks": "Compose 堆栈在恢复页面上有自己的卡片，在那里还原。",
   "whatsNew.entryOwnPlan": "容器、虚拟机、文件夹或 ZFS 数据集都可以按独立计划运行。在条目的设置选项卡中直接设置，无需先打开任何开关。",
+  "whatsNew.deleteRisk": "没有防删除保护的存储位置现在可以按原样接受。概览随后不再为此发出警告，但仍会说明那里的备份可以被删除。",
   "whatsNew.overviewMoveMode": "自定义概览时，卡片会轻轻摆动，表示你可以移动它们。",
   "whatsNew.labelGlyphs": "标签像圆角和动画一样，为每个选项显示一个符号。",
 
@@ -1610,6 +1611,7 @@ const zh: Partial<Translations> = {
 
   // Dashboard ransomware-protection card (v4)
   "ransomware.protGreen": "已受保护",
+  "ransomware.protAccepted": "已受保护，已接受风险",
   "ransomware.protAmber": "需要关注",
   "ransomware.protRed": "存在风险",
   "ransomware.replicationNever": "尚未复制",
@@ -4074,7 +4076,7 @@ const zh: Partial<Translations> = {
   "storage.off": "关闭",
   "storage.usedOf": "{used} / {total}",
   "storage.localFolder": "本地文件夹",
-  "storage.primaryNote": "这是分区 {domain} 的异地字段中的副本。它保留备份多长时间，在这里设定。它的其他值来自设置，目标。",
+  "storage.primaryNote": "这是分区 {domain} 的异地字段中的副本。它的名称、保留备份多长时间，以及是否在没有防删除保护的情况下接受，都在这里设定。它的其他值来自设置，目标。",
   "storage.vessel.full": "已满",
   "storage.vessel.fullInWeeks": "约 {n} 周后会满",
   "storage.vessel.fullOverYear": "一年以上后才会满",
@@ -4103,6 +4105,8 @@ const zh: Partial<Translations> = {
   "storage.rclone.all": "rclone.conf 中的所有 remote",
   "storage.rclone.hidden": "已隐藏",
   "storage.lock.toggle": "防删除保护（append-only）",
+  "storage.lock.accept": "在没有防删除保护的情况下接受",
+  "storage.lock.acceptHint": "这里的备份仍然没有防删除保护：任何能进入这个存储位置或 BombVault 的人都可以删除它们。开启后，概览会把缺少的保护显示为已接受的风险，而不是警告，该部分的颜色由其他检查决定。存储位置本身不会有任何改变，旧备份也照常清理。",
   "storage.lock.localHint": "这台机器上的任何东西都不能从此仓库删除。清理和删除备份都会被拒绝。适合想长期保留的归档。",
   "storage.lock.test": "立即测试防删除保护",
   "storage.lock.testHint": "尝试删除一个测试对象。如果对方拒绝，保护就是有效的。",
@@ -4356,6 +4360,9 @@ const zh: Partial<Translations> = {
   "overview.check.lockChecked": "防删除保护：已检查",
   "overview.check.lockFailed": "防删除保护：测试失败",
   "overview.check.lockUnproven": "防删除保护：尚未证明",
+  "overview.check.lockNone": "防删除保护：无",
+  "overview.check.lockAccepted": "防删除保护：无，已接受风险",
+  "overview.check.lockCheckOff": "防删除保护：未证明，检查已关闭",
   "overview.check.drillNeedsOffsite": "测试恢复：需要一个异地目标",
   "overview.check.drillUnavailable": "测试恢复：此分区无法进行",
   "overview.check.drillRunning": "测试恢复：正在运行",
