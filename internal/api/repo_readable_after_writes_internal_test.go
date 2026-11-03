@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/junkerderprovinz/bombvault/internal/restic"
+	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
 // writeAsRestic adds a file to a local repository the way restic run as root
@@ -43,6 +44,11 @@ func (e rootWritesEngine) Prune(ctx context.Context, repo string, mode restic.Mo
 	writeAsRestic(e.t, repo, "data", "bb", "repacked")
 	writeAsRestic(e.t, repo, "index", "repacked")
 	return e.placementEngine.Prune(ctx, repo, mode)
+}
+
+func (e rootWritesEngine) Tag(ctx context.Context, repo string, ids, add, remove []string, mode restic.Mode) error {
+	writeAsRestic(e.t, repo, "snapshots", "retagged")
+	return e.placementEngine.Tag(ctx, repo, ids, add, remove, mode)
 }
 
 // unreadableByOthers lists what under repo a user outside the owner's group
@@ -128,5 +134,78 @@ func TestAPruneLeavesWhatItWroteReadableByOthers(t *testing.T) {
 				t.Fatalf("the prune left %v unreadable", got)
 			}
 		})
+	}
+}
+
+func TestAPruneAfterADeleteLeavesWhatItWroteReadableByOthers(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("unix permission bits are not modelled on windows")
+	}
+	f := newPlacementFixture(t)
+	f.svc.engine = rootWritesEngine{placementEngine: f.eng, t: t}
+	repo := f.domainPath("containers")
+	f.svc.pruneAfterDelete("containers", filepath.FromSlash(repo), restic.Mode{})
+	f.svc.deletePrunes.Wait()
+	if !prunedAt(f, repo) {
+		t.Fatal("the repository was not pruned")
+	}
+	if got := unreadableByOthers(t, repo); len(got) > 0 {
+		t.Fatalf("the prune left %v unreadable", got)
+	}
+}
+
+func TestATagLeavesTheRewrittenSnapshotReadableByOthers(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("unix permission bits are not modelled on windows")
+	}
+	f := newPlacementFixture(t)
+	f.container("web", "")
+	repo := f.domainPath("containers")
+	f.hold(repo, snap("aaaaaaaa", 100, "container:web"))
+	f.svc.engine = rootWritesEngine{placementEngine: f.eng, t: t}
+	if err := f.svc.TagBackup(context.Background(), "containers", "web", "local", "aaaaaaaa", []string{"keep"}, nil); err != nil {
+		t.Fatal(err)
+	}
+	if len(f.eng.tags) != 1 {
+		t.Fatalf("tag calls = %+v, want one", f.eng.tags)
+	}
+	if got := unreadableByOthers(t, repo); len(got) > 0 {
+		t.Fatalf("the tag left %v unreadable", got)
+	}
+}
+
+// rootWritesPull is the pull recorder with a copy that lands files as restic
+// does.
+type rootWritesPull struct {
+	pullRecorder
+	t *testing.T
+}
+
+func (e *rootWritesPull) Copy(ctx context.Context, dest, src string, ids []string, lim restic.Limits, m restic.Mode) error {
+	writeAsRestic(e.t, dest, "data", "cc", "pulled")
+	return e.pullRecorder.Copy(ctx, dest, src, ids, lim, m)
+}
+
+func TestAPullLeavesWhatItCopiedReadableByOthers(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("unix permission bits are not modelled on windows")
+	}
+	eng := &rootWritesPull{pullRecorder: pullRecorder{snaps: map[string][]restic.Snapshot{pullSrcLoc: {{ID: "aaa"}}}}, t: t}
+	svc, st, ps := pullFixture(t, eng)
+	if _, err := st.MutateSettings(func(s *store.Settings) error {
+		s.ContainersPath = "backups/containers"
+		return nil
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := svc.PullFromSource(context.Background(), ps); err != nil {
+		t.Fatal(err)
+	}
+	dest := pulledRepo(filepath.Join(svc.cfg.HostMountRoot, "backups", "containers"), ps.ID)
+	if _, err := os.Stat(filepath.Join(dest, "data", "cc", "pulled")); err != nil {
+		t.Fatalf("the copy did not land in %s: %v", dest, err)
+	}
+	if got := unreadableByOthers(t, dest); len(got) > 0 {
+		t.Fatalf("the pull left %v unreadable", got)
 	}
 }

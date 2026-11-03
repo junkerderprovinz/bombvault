@@ -175,6 +175,9 @@ func (s *Service) pullFromSource(ctx context.Context, ps store.PullSource) (int,
 	if err := s.EnsureRepo(ctx, dest, destMode); err != nil {
 		return 0, fmt.Errorf("ensure the local %s repository: %w", domain, err)
 	}
+	// dest lies inside the domain's repository, whose own relax pass waits for
+	// the domain's next backup.
+	defer makeLocalRepoReadable(dest, s.cfg.DataDir)
 	// This pull is the only writer of dest, so a lock left behind is stale.
 	// listSnapshots leaves the source's locks alone because its mode sets NoLock.
 	// A remote dest is unlocked only when a lock stops the copy, since every
@@ -379,9 +382,11 @@ func (s *Service) movePullLeftovers(ctx context.Context, ps store.PullSource, se
 		}
 		copyMode.Env = env
 		copyMode.NoAmbientCreds = repoScheme(dest) != "rclone"
-		if err := s.retryAfterUnlock(ctx, dest, destMode, func() error {
+		err = s.retryAfterUnlock(ctx, dest, destMode, func() error {
 			return s.engine.Copy(ctx, copyDest, copySrc, carry, restic.Limits{}, copyMode)
-		}); err != nil {
+		})
+		makeLocalRepoReadable(dest, s.cfg.DataDir)
+		if err != nil {
 			fail("copying them to the source's repository", err)
 			return
 		}

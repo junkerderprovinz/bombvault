@@ -214,6 +214,8 @@ func (s *Service) TagBackup(ctx context.Context, domain, key, source, snapID str
 	for _, sn := range set.together(snap) {
 		ids = append(ids, sn.ID)
 	}
+	// restic tag writes each snapshot anew.
+	defer makeLocalRepoReadable(set.repo, s.cfg.DataDir)
 	return s.engine.Tag(ctx, set.repo, ids, add, remove, set.mode)
 }
 

@@ -704,7 +704,10 @@ func (s *Service) emptyRepo(ctx context.Context, repo erasureRepo) error {
 			log.Printf("api: erase %s: the copies seen at %s stay listed: %v", repo.domain, placementTargetName(repo.target), err) //nolint:gosec // G706: domain is a fixed literal, the name is the row's own
 		}
 	}
-	if err := s.engine.Prune(ctx, repo.loc, repo.mode); err != nil {
+	// Whatever the prune keeps, it repacks into new files.
+	err := s.engine.Prune(ctx, repo.loc, repo.mode)
+	makeLocalRepoReadable(repo.loc, s.cfg.DataDir)
+	if err != nil {
 		return fmt.Errorf("prune: %w", err)
 	}
 	return nil
