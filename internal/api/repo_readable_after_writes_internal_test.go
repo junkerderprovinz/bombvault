@@ -23,7 +23,7 @@ func writeAsRestic(t *testing.T, repo string, elems ...string) {
 		t.Error(err)
 		return
 	}
-	if err := os.WriteFile(p, []byte("restic"), 0o440); err != nil {
+	if err := os.WriteFile(p, []byte("restic"), 0o440); err != nil { //nolint:gosec // G306: the group-readable mode restic writes is what the relax pass has to fix
 		t.Error(err)
 	}
 }

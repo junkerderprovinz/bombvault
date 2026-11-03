@@ -38,7 +38,10 @@ func (s *Service) pruneAfterDelete(domain, repo string, mode restic.Mode) {
 			log.Printf("api: prune after a delete in %s: the run is not recorded: %v", domain, err) //nolint:gosec // G706: domain is a fixed literal
 		}
 		err = s.retryAfterUnlock(ctx, repo, mode, func() error { return s.engine.Prune(ctx, repo, mode) })
-		makeLocalRepoReadable(repo, s.cfg.DataDir)
+		// A full walk without a stamp: it costs nothing next to the prune, and
+		// nothing waits for this pass, so it leaves the data directory alone.
+		// The next backup's pass starts from its own earlier stamp.
+		makeLocalRepoReadable(repo, "")
 		if runID != "" {
 			status := "success"
 			switch {
