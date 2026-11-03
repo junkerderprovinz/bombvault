@@ -1134,6 +1134,7 @@ const it: Partial<Translations> = {
   "whatsNew.locationRename": "Ogni destinazione si può rinominare, anche una cartella condivisa da più sezioni.",
   "whatsNew.gotify": "Gotify è un canale di notifica a sé, con l'URL del server, un token dell'applicazione e una priorità in caso di errore e una in caso di successo.",
   "whatsNew.restoreStacks": "Gli stack di Compose si ripristinano dalla loro scheda nella pagina Ripristino.",
+  "whatsNew.entryOwnPlan": "Un container, una VM, una cartella o un dataset ZFS può seguire una pianificazione propria. La imposti nella scheda Impostazioni dell'elemento, senza dover prima attivare un interruttore.",
   "whatsNew.overviewMoveMode": "Mentre personalizzi la panoramica, le sue schede ondeggiano leggermente per mostrare che puoi spostarle.",
   "whatsNew.labelGlyphs": "Etichette mostra un simbolo per ogni scelta, come Angoli e Animazione.",
 
@@ -4922,9 +4923,7 @@ const it: Partial<Translations> = {
   "schedules.offsiteRuleAll": "Tutte le sezioni copiano subito dopo ogni backup.",
   "schedules.offsiteRuleOthers": "Tutte le altre sezioni copiano subito dopo ogni backup.",
   "schedules.entries": "Elementi pianificati",
-  "schedules.entriesHint": "Quali elementi rientrano nelle pianificazioni e quando viene eseguito ciascuno. Un elemento disattivato viene salvato solo quando lo avvii a mano.",
-  "schedules.perItem": "Pianificazioni proprie per elemento",
-  "schedules.perItemHint": "Permette a singoli container, VM, cartelle e dataset ZFS di seguire una pianificazione propria, che imposti nella loro pagina. Un elemento con una pianificazione propria esce dal backup completo. Disattivato: ogni elemento segue la pianificazione della sua sezione.",
+  "schedules.entriesHint": "Quali elementi rientrano nelle pianificazioni e quando viene eseguito ciascuno. La pianificazione propria di un elemento la imposti nella sua pagina. Un elemento disattivato viene salvato solo quando lo avvii a mano.",
   "schedules.scheduledCount": "{n} di {m} pianificati",
   "schedules.entriesButton": "Elementi",
   "schedules.membersTitle": "{area} in pianificazione",

@@ -123,7 +123,7 @@ beforeEach(() => {
     "fetch",
     vi.fn(async () => ({ ok: true, json: async () => ({ ok: false }) }))
   );
-  serveEntries(mocks, { runs: RUNS, settings: { perItemSchedules: true } });
+  serveEntries(mocks, { runs: RUNS });
   vi.mocked(api.listRuns).mockResolvedValue({ ok: true, runs: [] });
   vi.mocked(api.getAnomalies).mockResolvedValue({ ok: true, anomalies: [], nextCursor: "" });
   vi.mocked(api.getAnomalySummary).mockResolvedValue({ ok: true, summary: { enabled: true, generation: 1 } } as never);

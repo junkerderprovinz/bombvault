@@ -140,9 +140,9 @@ func ParseCadence(s string) (Cadence, error) {
 	}
 }
 
-// itemSchedule is how one included item takes part in scheduling when per-item
-// schedules are on, derived from its optional override string. With both flags
-// false the item is not scheduled at all.
+// itemSchedule is how one included item takes part in scheduling, derived from
+// its optional override string. With both flags false the item is not
+// scheduled at all.
 type itemSchedule struct {
 	// ownEntry means the item has a valid cadence override and gets its own
 	// cron entry firing on Spec.
@@ -155,8 +155,8 @@ type itemSchedule struct {
 }
 
 // classifyItemOverride decides from an override string how an item takes part
-// under per-item schedules. Entry registration and the domain-run filter both
-// use it, so they cannot disagree about an item.
+// in scheduling. Entry registration and the domain-run filter both use it, so
+// they cannot disagree about an item.
 //
 //   - empty: follow the domain default.
 //   - invalid: follow the domain default, so a bad override never drops an item
@@ -184,13 +184,9 @@ func classifyItemOverride(override string) itemSchedule {
 }
 
 // DomainRunTargets filters container targets to those the domain job should
-// back up. With perItem false it returns targets unchanged. With perItem true it
-// drops targets that have their own per-item entry or are "off".
+// back up: it drops targets that have their own per-item entry or are "off".
 // RunContainersJob still checks IncludeInSchedule.
-func DomainRunTargets(targets []store.Target, perItem bool) []store.Target {
-	if !perItem {
-		return targets
-	}
+func DomainRunTargets(targets []store.Target) []store.Target {
 	out := make([]store.Target, 0, len(targets))
 	for _, t := range targets {
 		if classifyItemOverride(t.ScheduleCadence).inDomainRun {
@@ -202,10 +198,7 @@ func DomainRunTargets(targets []store.Target, perItem bool) []store.Target {
 
 // DomainRunFileSets is the file-set counterpart of DomainRunTargets. RunFilesJob
 // still checks Enabled.
-func DomainRunFileSets(sets []store.FileSet, perItem bool) []store.FileSet {
-	if !perItem {
-		return sets
-	}
+func DomainRunFileSets(sets []store.FileSet) []store.FileSet {
 	out := make([]store.FileSet, 0, len(sets))
 	for _, fs := range sets {
 		if classifyItemOverride(fs.ScheduleCadence).inDomainRun {
@@ -217,10 +210,7 @@ func DomainRunFileSets(sets []store.FileSet, perItem bool) []store.FileSet {
 
 // DomainRunZFSDatasets is the ZFS counterpart of DomainRunTargets. RunZFSJob
 // still checks Enabled.
-func DomainRunZFSDatasets(ds []store.ZFSDataset, perItem bool) []store.ZFSDataset {
-	if !perItem {
-		return ds
-	}
+func DomainRunZFSDatasets(ds []store.ZFSDataset) []store.ZFSDataset {
 	out := make([]store.ZFSDataset, 0, len(ds))
 	for _, d := range ds {
 		if classifyItemOverride(d.ScheduleCadence).inDomainRun {
@@ -231,10 +221,7 @@ func DomainRunZFSDatasets(ds []store.ZFSDataset, perItem bool) []store.ZFSDatase
 }
 
 // DomainRunVMTargets is the VM counterpart of DomainRunTargets.
-func DomainRunVMTargets(vms []store.VMTarget, perItem bool) []store.VMTarget {
-	if !perItem {
-		return vms
-	}
+func DomainRunVMTargets(vms []store.VMTarget) []store.VMTarget {
 	out := make([]store.VMTarget, 0, len(vms))
 	for _, v := range vms {
 		if classifyItemOverride(v.ScheduleCadence).inDomainRun {
@@ -250,7 +237,7 @@ func DomainRunVMTargets(vms []store.VMTarget, perItem bool) []store.VMTarget {
 //
 // The domain jobs skip their whole pass when it is false. The loop itself is
 // free, but the prune, the off-site copy and the "0 of 0 items succeeded" ping
-// after it are not. With per-item schedules on an empty list is common, and its
+// after it are not. Once every item has its own plan the list is empty, and its
 // everyN gate reads the zero time and reports due at every fire, because an
 // empty pass records no run.
 func DomainRunHasWork(targets []store.Target) bool {
@@ -295,10 +282,8 @@ func DomainRunHasZFSWork(ds []store.ZFSDataset) bool {
 }
 
 // DomainGateStore is what a multi-item domain's everyN due-gate reads: the
-// settings (for the per-item switch), the domain's items, and the last
-// successful backup among a given set of them.
+// domain's items and the last successful backup among a given set of them.
 type DomainGateStore interface {
-	GetSettings() (store.Settings, error)
 	ListTargets() ([]store.Target, error)
 	ListVMTargets() ([]store.VMTarget, error)
 	ListFileSets() ([]store.FileSet, error)
@@ -326,16 +311,12 @@ func domainPassGate(st DomainGateStore, domain string, ids []string) (time.Time,
 // gate skips a fire it cannot judge and a zero time would mean due.
 func ContainersDueGate(st DomainGateStore) LastRunFunc {
 	return func() (time.Time, error) {
-		settings, err := st.GetSettings()
-		if err != nil {
-			return time.Time{}, fmt.Errorf("containers due-gate: read settings: %w", err)
-		}
 		targets, err := st.ListTargets()
 		if err != nil {
 			return time.Time{}, fmt.Errorf("containers due-gate: list targets: %w", err)
 		}
 		ids := make([]string, 0, len(targets))
-		for _, t := range DomainRunTargets(targets, settings.PerItemSchedules) {
+		for _, t := range DomainRunTargets(targets) {
 			if t.IncludeInSchedule {
 				ids = append(ids, t.ID)
 			}
@@ -347,16 +328,12 @@ func ContainersDueGate(st DomainGateStore) LastRunFunc {
 // VMsDueGate is the VM counterpart of ContainersDueGate.
 func VMsDueGate(st DomainGateStore) LastRunFunc {
 	return func() (time.Time, error) {
-		settings, err := st.GetSettings()
-		if err != nil {
-			return time.Time{}, fmt.Errorf("vms due-gate: read settings: %w", err)
-		}
 		vms, err := st.ListVMTargets()
 		if err != nil {
 			return time.Time{}, fmt.Errorf("vms due-gate: list VM targets: %w", err)
 		}
 		ids := make([]string, 0, len(vms))
-		for _, v := range DomainRunVMTargets(vms, settings.PerItemSchedules) {
+		for _, v := range DomainRunVMTargets(vms) {
 			if v.IncludeInSchedule {
 				ids = append(ids, v.ID)
 			}
@@ -370,16 +347,12 @@ func VMsDueGate(st DomainGateStore) LastRunFunc {
 // disabled set or one on its own cadence, so neither may answer for the others.
 func FilesDueGate(st DomainGateStore) LastRunFunc {
 	return func() (time.Time, error) {
-		settings, err := st.GetSettings()
-		if err != nil {
-			return time.Time{}, fmt.Errorf("files due-gate: read settings: %w", err)
-		}
 		sets, err := st.ListFileSets()
 		if err != nil {
 			return time.Time{}, fmt.Errorf("files due-gate: list file sets: %w", err)
 		}
 		ids := make([]string, 0, len(sets))
-		for _, fs := range DomainRunFileSets(sets, settings.PerItemSchedules) {
+		for _, fs := range DomainRunFileSets(sets) {
 			if fs.Enabled {
 				ids = append(ids, fs.ID)
 			}
@@ -393,16 +366,12 @@ func FilesDueGate(st DomainGateStore) LastRunFunc {
 // says when the newest replica among such items succeeded.
 func ZFSDueGate(st DomainGateStore, replicated func(ids []string) (time.Time, error)) LastRunFunc {
 	return func() (time.Time, error) {
-		settings, err := st.GetSettings()
-		if err != nil {
-			return time.Time{}, fmt.Errorf("zfs due-gate: read settings: %w", err)
-		}
 		ds, err := st.ListZFSDatasets()
 		if err != nil {
 			return time.Time{}, fmt.Errorf("zfs due-gate: list datasets: %w", err)
 		}
 		ids := make([]string, 0, len(ds))
-		for _, d := range DomainRunZFSDatasets(ds, settings.PerItemSchedules) {
+		for _, d := range DomainRunZFSDatasets(ds) {
 			if d.Enabled {
 				ids = append(ids, d.ID)
 			}
@@ -1269,11 +1238,6 @@ func (s *Scheduler) ReloadWithGates(settings store.Settings, g DueGates) error {
 		s.c.Remove(e.id)
 	}
 
-	// With per-item schedules on, an item with its own cadence gets its own entry
-	// (registered below) and is left out of the domain run, so it is never backed
-	// up twice. With them off, overrides are ignored.
-	perItem := settings.PerItemSchedules
-
 	domains := []domainSpec{
 		{
 			cadence: settings.ContainersSchedule,
@@ -1285,7 +1249,7 @@ func (s *Scheduler) ReloadWithGates(settings store.Settings, g DueGates) error {
 					log.Printf("schedule: containers job: list targets: %v", err)
 					return
 				}
-				targets = s.holdBusy(DomainRunTargets(targets, perItem), "domain")
+				targets = s.holdBusy(DomainRunTargets(targets), "domain")
 				if !DomainRunHasWork(targets) {
 					return
 				}
@@ -1329,7 +1293,7 @@ func (s *Scheduler) ReloadWithGates(settings store.Settings, g DueGates) error {
 					return
 				}
 				store.SortVMTargetsForRun(vms)
-				vms = DomainRunVMTargets(vms, perItem)
+				vms = DomainRunVMTargets(vms)
 				if !DomainRunHasVMWork(vms) {
 					return
 				}
@@ -1390,7 +1354,7 @@ func (s *Scheduler) ReloadWithGates(settings store.Settings, g DueGates) error {
 					log.Printf("schedule: files job: list file sets: %v", err)
 					return
 				}
-				sets = DomainRunFileSets(sets, settings.PerItemSchedules)
+				sets = DomainRunFileSets(sets)
 				if !DomainRunHasFileWork(sets) {
 					return
 				}
@@ -1421,7 +1385,7 @@ func (s *Scheduler) ReloadWithGates(settings store.Settings, g DueGates) error {
 					log.Printf("schedule: zfs job: list datasets: %v", err)
 					return
 				}
-				ds = DomainRunZFSDatasets(ds, settings.PerItemSchedules)
+				ds = DomainRunZFSDatasets(ds)
 				if !DomainRunHasZFSWork(ds) {
 					return
 				}
@@ -1735,10 +1699,8 @@ func (s *Scheduler) ReloadWithGates(settings store.Settings, g DueGates) error {
 		s.mu.Unlock()
 	}
 
-	if perItem {
-		if err := s.registerPerItemEntries(); err != nil {
-			return err
-		}
+	if err := s.registerPerItemEntries(); err != nil {
+		return err
 	}
 	if err := s.registerZFSReplicaEntries(settings); err != nil {
 		return err

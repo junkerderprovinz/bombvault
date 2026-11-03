@@ -91,13 +91,11 @@ func effectiveItemSchedule(domainEnabled, included bool, override, domainSchedul
 	if !included {
 		return EffectiveSchedule{Kind: EffectiveNone, Reason: NoneExcluded}
 	}
-	if s.PerItemSchedules {
-		switch cls := classifyItemOverride(override); {
-		case cls.ownEntry:
-			return EffectiveSchedule{Kind: EffectiveOwn, Spec: override}
-		case !cls.inDomainRun:
-			return EffectiveSchedule{Kind: EffectiveNone, Reason: NoneOverrideOff}
-		}
+	switch cls := classifyItemOverride(override); {
+	case cls.ownEntry:
+		return EffectiveSchedule{Kind: EffectiveOwn, Spec: override}
+	case !cls.inDomainRun:
+		return EffectiveSchedule{Kind: EffectiveNone, Reason: NoneOverrideOff}
 	}
 	switch {
 	case CadenceRuns(domainSchedule):
@@ -152,10 +150,7 @@ func EffectiveConfigSchedule(s store.Settings) EffectiveSchedule {
 // item with a cadence of its own is not paused, so a manual "back up this
 // domain now" takes it along even though the scheduled domain pass leaves it to
 // its own entry.
-func PausedByOverride(override string, perItem bool) bool {
-	if !perItem {
-		return false
-	}
+func PausedByOverride(override string) bool {
 	cls := classifyItemOverride(override)
 	return !cls.ownEntry && !cls.inDomainRun
 }

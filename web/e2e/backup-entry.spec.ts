@@ -539,6 +539,29 @@ test("the Settings tab gives a container the cards of its kind", async ({ page }
   await expect(card(page, "Zeitplan und Speicherort").getByRole("switch", { name: "Im Zeitplan" })).toBeChecked();
 });
 
+test("a folder set gets a plan of its own from its Settings tab", async ({ page }, testInfo) => {
+  test.skip(MOBILE_PROJECTS.has(testInfo.project.name), "the desktop layout");
+  await stage(page);
+  const saved: unknown[] = [];
+  await page.route(
+    (url) => url.pathname === `/api/files/sets/${SET_ID}`,
+    (route) => {
+      if (route.request().method() !== "PATCH") return route.continue();
+      saved.push(route.request().postDataJSON());
+      return route.fulfill({ json: { ok: true } });
+    },
+  );
+  await openEntry(page, `/backups/files/${SET_ID}?tab=settings`, "Fotos");
+
+  const schedule = card(page, "Zeitplan und Speicherort");
+  const own = schedule.getByRole("switch", { name: "Eigener Plan" });
+  await expect(own).not.toBeChecked();
+  await own.click();
+  await expect.poll(() => saved.length, { timeout: 5000 }).toBe(1);
+  expect(saved[0]).toEqual({ scheduleCadence: "daily 03:00" });
+  await expect(schedule.getByRole("button", { name: /^Plan: Fotos/ })).toBeVisible();
+});
+
 test("the card for a busy app saves its whole policy", async ({ page }, testInfo) => {
   test.skip(MOBILE_PROJECTS.has(testInfo.project.name), "the desktop layout");
   await stage(page);

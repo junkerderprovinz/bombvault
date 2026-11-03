@@ -48,6 +48,7 @@ vi.mock("../lib/api", async (importOriginal) => {
     getZFSReplica: vi.fn(),
     setInclude: vi.fn(),
     setScheduleCadence: vi.fn(),
+    patchFileSet: vi.fn(),
     setVMInclude: vi.fn(),
     patchZFSDataset: vi.fn(),
     setVMBlockBackup: vi.fn(),
@@ -74,6 +75,7 @@ const mocks = {
 const setItemPlacement = vi.mocked(api.setItemPlacement);
 const setInclude = vi.mocked(api.setInclude);
 const setScheduleCadence = vi.mocked(api.setScheduleCadence);
+const patchFileSet = vi.mocked(api.patchFileSet);
 const patchZFSDataset = vi.mocked(api.patchZFSDataset);
 const setVMBlockBackup = vi.mocked(api.setVMBlockBackup);
 const setUpdateAfterBackup = vi.mocked(api.setUpdateAfterBackup);
@@ -274,12 +276,7 @@ describe("the schedule", () => {
     expect(patchZFSDataset).toHaveBeenCalledWith(ZFS_ID, { enabled: false });
   });
 
-  it("offers a plan of its own only while entries may have one", async () => {
-    await renderSettings("container/immich");
-    expect(screen.queryByRole("switch", { name: en["entry.settings.ownPlan"] })).toBeNull();
-    cleanup();
-
-    serveEntries(mocks, { settings: { perItemSchedules: true } });
+  it("offers every entry a plan of its own, off until one is set", async () => {
     await renderSettings("container/immich");
     const schedule = within(card(en["entry.settings.schedule"]));
     expect(schedule.getByRole("switch", { name: en["entry.settings.ownPlan"] }).getAttribute("aria-checked")).toBe("false");
@@ -288,7 +285,6 @@ describe("the schedule", () => {
 
   it("gives the entry a daily plan of its own and shows it as a sentence", async () => {
     setScheduleCadence.mockResolvedValue({ ok: true });
-    serveEntries(mocks, { settings: { perItemSchedules: true } });
     await renderSettings("container/immich");
     const schedule = within(card(en["entry.settings.schedule"]));
     await press(schedule.getByRole("switch", { name: en["entry.settings.ownPlan"] }));
@@ -296,9 +292,15 @@ describe("the schedule", () => {
     expect(schedule.getByRole("button", { name: /^Plan: ?immich: ?daily at 3:00/ })).toBeTruthy();
   });
 
+  it("gives a folder set a plan of its own", async () => {
+    patchFileSet.mockResolvedValue({ ok: true });
+    await renderSettings(`files/${SET_ID}`);
+    await press(within(card(en["entry.settings.schedule"])).getByRole("switch", { name: en["entry.settings.ownPlan"] }));
+    expect(patchFileSet).toHaveBeenCalledWith(SET_ID, { scheduleCadence: "daily 03:00" });
+  });
+
   it("keeps the switch off when the server refuses the plan", async () => {
     setScheduleCadence.mockResolvedValue({ ok: false, error: "refused" });
-    serveEntries(mocks, { settings: { perItemSchedules: true } });
     await renderSettings("container/immich");
     const own = within(card(en["entry.settings.schedule"])).getByRole("switch", { name: en["entry.settings.ownPlan"] });
     await press(own);

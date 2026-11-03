@@ -43,16 +43,16 @@ func TestAReplicaWithACadenceOfItsOwnGetsAnEntry(t *testing.T) {
 	}
 }
 
-func TestReplicaEntriesNeedNoPerItemSchedulesButTheDomain(t *testing.T) {
+func TestReplicaEntriesFollowTheZFSDomain(t *testing.T) {
 	sc, _ := newZFSScheduler([]store.ZFSDataset{replicaItem("own", false, "daily 04:00")})
 	replica, _ := recordingBackup()
 	sc.SetZFSReplicaJob(replica)
 
-	if err := sc.ReloadWithGates(store.Settings{ZFSEnabled: true, PerItemSchedules: false}, DueGates{}); err != nil {
+	if err := sc.ReloadWithGates(store.Settings{ZFSEnabled: true}, DueGates{}); err != nil {
 		t.Fatalf("reload: %v", err)
 	}
 	if got := entriesFor(sc, "replica", "zfs"); len(got) != 1 {
-		t.Fatalf("per-item schedules off: %d replica entries, want 1", len(got))
+		t.Fatalf("domain on: %d replica entries, want 1", len(got))
 	}
 	if err := sc.ReloadWithGates(store.Settings{ZFSEnabled: false}, DueGates{}); err != nil {
 		t.Fatalf("reload: %v", err)

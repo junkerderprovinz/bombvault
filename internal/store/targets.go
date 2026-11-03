@@ -70,11 +70,9 @@ type Target struct {
 	// (the default) means "unordered" and falls back to the most-overdue-first
 	// tiebreak. Owned by SetBackupOrder (never reset by Upsert).
 	BackupOrder int
-	// ScheduleCadence is this container's OPTIONAL per-item schedule override (#121,
-	// same cadence grammar as the domain schedules). Empty (the default) means "use
-	// the containers domain schedule exactly as today"; only consulted when the
-	// per-item-schedules feature toggle is on. Owned by SetScheduleCadence (never
-	// reset by Upsert).
+	// ScheduleCadence is this container's own plan, in the grammar of the domain
+	// schedules. Empty follows the containers schedule. Only SetScheduleCadence
+	// writes it, so an Upsert cannot reset it.
 	ScheduleCadence string
 	// DBDumpOff opts this container out of the automatic database dump. The
 	// polarity is "off" so that a container without a target row dumps, which is

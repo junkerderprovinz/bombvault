@@ -822,6 +822,7 @@ const lt: Partial<Translations> = {
   "whatsNew.locationRename": "Kiekvieną paskirties vietą galima pervadinti, taip pat aplanką, kurį naudoja kelios sekcijos.",
   "whatsNew.gotify": "Gotify yra atskiras pranešimų kanalas su serverio URL, programos raktu ir prioritetu nesėkmės bei sėkmės atveju.",
   "whatsNew.restoreStacks": "Compose krūvas atkuri iš atskiros kortelės puslapyje Atkūrimas.",
+  "whatsNew.entryOwnPlan": "Konteineris, VM, aplankas ar ZFS duomenų rinkinys gali veikti pagal savo tvarkaraštį. Jį nustatai įrašo skirtuke Nustatymai, prieš tai nereikia įjungti jokio jungiklio.",
   "whatsNew.overviewMoveMode": "Kol tinkini apžvalgą, jos kortelės švelniai siūbuoja, kad matytum, jog jas gali perkelti.",
   "whatsNew.labelGlyphs": "Etiketės rodo kiekvieno pasirinkimo simbolį, kaip ir Kampai bei Animacija.",
 
@@ -4932,9 +4933,7 @@ const lt: Partial<Translations> = {
   "schedules.offsiteRuleAll": "Visos sritys kopijuoja iškart po kiekvienos atsarginės kopijos.",
   "schedules.offsiteRuleOthers": "Visos kitos sritys kopijuoja iškart po kiekvienos atsarginės kopijos.",
   "schedules.entries": "Suplanuoti įrašai",
-  "schedules.entriesHint": "Kuriuos įrašus apima tvarkaraščiai ir kada vykdomas kiekvienas. Išjungto įrašo kopija kuriama tik tada, kai paleidi ją rankiniu būdu.",
-  "schedules.perItem": "Savi tvarkaraščiai pagal įrašą",
-  "schedules.perItemHint": "Leidžia atskiriems konteineriams, VM, aplankams ir ZFS duomenų rinkiniams veikti pagal savo tvarkaraštį, kurį nustatai jų puslapyje. Įrašas su savo tvarkaraščiu iškrenta iš pilnos atsarginės kopijos. Išjungta: kiekvienas įrašas laikosi savo srities tvarkaraščio.",
+  "schedules.entriesHint": "Kuriuos įrašus apima tvarkaraščiai ir kada vykdomas kiekvienas. Vieno įrašo savą tvarkaraštį nustatai jo puslapyje. Išjungto įrašo kopija kuriama tik tada, kai paleidi ją rankiniu būdu.",
   "schedules.scheduledCount": "Suplanuota {n} iš {m}",
   "schedules.entriesButton": "Įrašai",
   "schedules.membersTitle": "{area} tvarkaraštyje",

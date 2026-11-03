@@ -822,6 +822,7 @@ const et: Partial<Translations> = {
   "whatsNew.locationRename": "Iga sihtkohta saab ümber nimetada, ka kausta, mida jagavad mitu jaotist.",
   "whatsNew.gotify": "Gotify on eraldi teavituskanal, millel on serveri URL, rakenduse tunnus ning prioriteet nurjumisel ja õnnestumisel.",
   "whatsNew.restoreStacks": "Compose'i virnad taastad nende oma kaardilt lehel Taastamine.",
+  "whatsNew.entryOwnPlan": "Konteiner, VM, kaust või ZFS-i andmekogum saab töötada oma ajakava järgi. Määrad selle kirje vahekaardil Seaded ja ühtegi lülitit ei pea enne sisse lülitama.",
   "whatsNew.overviewMoveMode": "Kui sa ülevaadet kohandad, kõiguvad selle kaardid kergelt, et näidata, et saad neid liigutada.",
   "whatsNew.labelGlyphs": "Sildid näitab iga valiku juures sümbolit, nagu Nurgad ja Animatsioon.",
 
@@ -4932,9 +4933,7 @@ const et: Partial<Translations> = {
   "schedules.offsiteRuleAll": "Kõik valdkonnad kopeerivad kohe pärast iga varundust.",
   "schedules.offsiteRuleOthers": "Kõik teised valdkonnad kopeerivad kohe pärast iga varundust.",
   "schedules.entries": "Ajastatud kirjed",
-  "schedules.entriesHint": "Milliseid kirjeid ajakavad hõlmavad ja millal iga kirje töötab. Väljalülitatud kirjet varundatakse ainult siis, kui käivitad selle käsitsi.",
-  "schedules.perItem": "Oma ajakavad kirjete kaupa",
-  "schedules.perItemHint": "Lubab üksikutel konteineritel, VM-idel, kaustadel ja ZFS-i andmekogumitel töötada oma ajakava järgi, mille määrad nende lehel. Oma ajakavaga kirje lahkub täisvarundusest. Väljas: iga kirje järgib oma valdkonna ajakava.",
+  "schedules.entriesHint": "Milliseid kirjeid ajakavad hõlmavad ja millal iga kirje töötab. Ühe kirje oma ajakava määrad selle kirje lehel. Väljalülitatud kirjet varundatakse ainult siis, kui käivitad selle käsitsi.",
   "schedules.scheduledCount": "{n} / {m} ajastatud",
   "schedules.entriesButton": "Kirjed",
   "schedules.membersTitle": "{area} ajakavas",

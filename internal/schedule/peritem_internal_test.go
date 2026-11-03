@@ -49,57 +49,34 @@ func TestClassifyItemOverride(t *testing.T) {
 	}
 }
 
-// TestDomainRunTargetsFlagOff checks that with the feature off overrides are
-// ignored and every included item stays in the domain run.
-func TestDomainRunTargetsFlagOff(t *testing.T) {
-	targets := []store.Target{
-		{ContainerName: "web", IncludeInSchedule: true, ScheduleCadence: "daily 06:00"},
-		{ContainerName: "db", IncludeInSchedule: true},
-	}
-	got := DomainRunTargets(targets, false)
-	if len(got) != 2 {
-		t.Fatalf("flag off: expected all %d targets (overrides ignored), got %d", len(targets), len(got))
-	}
-
-	backup, rec := recordingBackup()
-	attempted, failed, _ := RunContainersJob(got, backup)
-	if attempted != 2 || failed != 0 {
-		t.Fatalf("flag off: expected attempted 2 failed 0, got %d/%d", attempted, failed)
-	}
-	if len(*rec) != 2 {
-		t.Fatalf("flag off: expected both web+db backed up, got %v", *rec)
-	}
-}
-
-// TestDomainRunTargetsFlagOn checks that with the feature on, an item with a
+// TestDomainRunTargetsLeavesOwnPlansToTheirEntries checks that an item with a
 // valid override leaves the domain run for its own entry, an item without one
 // stays, and an "off" override drops the item from scheduling.
-func TestDomainRunTargetsFlagOn(t *testing.T) {
+func TestDomainRunTargetsLeavesOwnPlansToTheirEntries(t *testing.T) {
 	targets := []store.Target{
 		{ContainerName: "web", IncludeInSchedule: true, ScheduleCadence: "daily 06:00"}, // own entry
 		{ContainerName: "db", IncludeInSchedule: true},                                  // domain default
 		{ContainerName: "cache", IncludeInSchedule: true, ScheduleCadence: "off"},       // not scheduled
 		{ContainerName: "bad", IncludeInSchedule: true, ScheduleCadence: "gibberish"},   // invalid -> domain default
 	}
-	got := DomainRunTargets(targets, true)
+	got := DomainRunTargets(targets)
 
 	backup, rec := recordingBackup()
 	RunContainersJob(got, backup)
 
 	want := map[string]bool{"db": true, "bad": true}
 	if len(*rec) != len(want) {
-		t.Fatalf("flag on domain run: expected %v, got %v", keys(want), *rec)
+		t.Fatalf("domain run: expected %v, got %v", keys(want), *rec)
 	}
 	for _, n := range *rec {
 		if !want[n] {
-			t.Fatalf("flag on domain run backed up %q, which should be excluded (own entry or off): got %v", n, *rec)
+			t.Fatalf("domain run backed up %q, which should be excluded (own entry or off): got %v", n, *rec)
 		}
 	}
 }
 
 // TestPerItemEntriesRegistered checks that each included item with an override
-// gets its own cron entry while the feature is on, and that turning it off
-// leaves only the domain entry.
+// gets its own cron entry beside the domain entry.
 func TestPerItemEntriesRegistered(t *testing.T) {
 	targets := []store.Target{
 		{ContainerName: "web", IncludeInSchedule: true, ScheduleCadence: "daily 06:00"},       // own entry
@@ -111,29 +88,13 @@ func TestPerItemEntriesRegistered(t *testing.T) {
 	backup, _ := recordingBackup()
 	sc := New(backup, func() ([]store.Target, error) { return targets, nil })
 
-	off := store.Settings{ContainersEnabled: true, ContainersSchedule: "daily 03:00"}
-	if err := sc.ReloadWithDueChecks(off, nil, nil, nil, nil, nil, nil); err != nil {
-		t.Fatalf("ReloadWithDueChecks (off): %v", err)
-	}
-	if got := len(sc.entries); got != 1 {
-		t.Fatalf("feature off: expected exactly 1 entry (containers domain), got %d", got)
-	}
-
 	// The domain entry plus web and api; off1 and excluded get none.
-	on := off
-	on.PerItemSchedules = true
-	if err := sc.ReloadWithDueChecks(on, nil, nil, nil, nil, nil, nil); err != nil {
-		t.Fatalf("ReloadWithDueChecks (on): %v", err)
+	settings := store.Settings{ContainersEnabled: true, ContainersSchedule: "daily 03:00"}
+	if err := sc.ReloadWithDueChecks(settings, nil, nil, nil, nil, nil, nil); err != nil {
+		t.Fatalf("ReloadWithDueChecks: %v", err)
 	}
 	if got := len(sc.entries); got != 3 {
-		t.Fatalf("feature on: expected 3 entries (1 domain + 2 per-item), got %d", got)
-	}
-
-	if err := sc.ReloadWithDueChecks(off, nil, nil, nil, nil, nil, nil); err != nil {
-		t.Fatalf("ReloadWithDueChecks (off again): %v", err)
-	}
-	if got := len(sc.entries); got != 1 {
-		t.Fatalf("feature toggled off: expected 1 entry again, got %d", got)
+		t.Fatalf("expected 3 entries (1 domain + 2 per-item), got %d", got)
 	}
 }
 
@@ -148,7 +109,7 @@ func TestPerItemEntryRunsOnlyItsItem(t *testing.T) {
 	backup, rec := recordingBackup()
 	sc := New(backup, func() ([]store.Target, error) { return targets, nil })
 
-	on := store.Settings{ContainersEnabled: true, ContainersSchedule: "daily 03:00", PerItemSchedules: true}
+	on := store.Settings{ContainersEnabled: true, ContainersSchedule: "daily 03:00"}
 	if err := sc.ReloadWithDueChecks(on, nil, nil, nil, nil, nil, nil); err != nil {
 		t.Fatalf("ReloadWithDueChecks: %v", err)
 	}
@@ -171,18 +132,16 @@ func TestPerItemEntryRunsOnlyItsItem(t *testing.T) {
 	}
 }
 
-// TestDomainRunVMTargetsFlag checks the same filter for VMs.
-func TestDomainRunVMTargetsFlag(t *testing.T) {
+// TestDomainRunVMTargetsLeavesOwnPlansToTheirEntries checks the same filter for
+// VMs.
+func TestDomainRunVMTargetsLeavesOwnPlansToTheirEntries(t *testing.T) {
 	vms := []store.VMTarget{
 		{Name: "win", IncludeInSchedule: true, ScheduleCadence: "daily 06:00"}, // own entry
 		{Name: "lin", IncludeInSchedule: true},                                 // domain default
 	}
-	if got := DomainRunVMTargets(vms, false); len(got) != 2 {
-		t.Fatalf("flag off: expected both VMs, got %d", len(got))
-	}
-	got := DomainRunVMTargets(vms, true)
+	got := DomainRunVMTargets(vms)
 	if len(got) != 1 || got[0].Name != "lin" {
-		t.Fatalf("flag on: expected only the non-overridden VM (lin), got %+v", got)
+		t.Fatalf("expected only the non-overridden VM (lin), got %+v", got)
 	}
 }
 

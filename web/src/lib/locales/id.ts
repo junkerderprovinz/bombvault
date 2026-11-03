@@ -822,6 +822,7 @@ const id: Partial<Translations> = {
   "whatsNew.locationRename": "Setiap tujuan bisa diganti namanya, termasuk folder yang dipakai bersama beberapa bagian.",
   "whatsNew.gotify": "Gotify adalah saluran notifikasi tersendiri, dengan URL server, token aplikasi, serta prioritas saat gagal dan saat berhasil.",
   "whatsNew.restoreStacks": "Stack Compose dipulihkan dari kartunya sendiri di halaman Pemulihan.",
+  "whatsNew.entryOwnPlan": "Container, VM, folder, atau dataset ZFS bisa berjalan dengan jadwalnya sendiri. Anda mengaturnya di tab Pengaturan entri itu, tanpa perlu menyalakan sakelar apa pun lebih dulu.",
   "whatsNew.overviewMoveMode": "Saat Anda menyesuaikan Ringkasan, kartunya bergoyang pelan untuk menunjukkan bahwa Anda dapat memindahkannya.",
   "whatsNew.labelGlyphs": "Label menampilkan simbol untuk setiap pilihan, seperti Sudut dan Animasi.",
 
@@ -4932,9 +4933,7 @@ const id: Partial<Translations> = {
   "schedules.offsiteRuleAll": "Semua bagian menyalin segera setelah setiap pencadangan.",
   "schedules.offsiteRuleOthers": "Semua bagian lainnya menyalin segera setelah setiap pencadangan.",
   "schedules.entries": "Entri terjadwal",
-  "schedules.entriesHint": "Entri mana yang disertakan jadwal dan kapan masing-masing berjalan. Entri yang dimatikan hanya dicadangkan saat Anda memulainya secara manual.",
-  "schedules.perItem": "Jadwal sendiri per entri",
-  "schedules.perItemHint": "Memungkinkan container, VM, folder, dan dataset ZFS tertentu berjalan dengan jadwalnya sendiri, yang Anda atur di halamannya. Entri dengan jadwal sendiri keluar dari pencadangan penuh. Mati: setiap entri mengikuti jadwal bagiannya.",
+  "schedules.entriesHint": "Entri mana yang disertakan jadwal dan kapan masing-masing berjalan. Jadwal sendiri untuk satu entri Anda atur di halamannya. Entri yang dimatikan hanya dicadangkan saat Anda memulainya secara manual.",
   "schedules.scheduledCount": "{n} dari {m} terjadwal",
   "schedules.entriesButton": "Entri",
   "schedules.membersTitle": "{area} dalam jadwal",

@@ -333,7 +333,6 @@ func TestMCPListItemsIdsNamesAndStamps(t *testing.T) {
 	settings.ConfigEnabled = true
 	settings.ConfigSchedule = "daily 06:00"
 	settings.EverythingSchedule = "daily 05:00"
-	settings.PerItemSchedules = true
 	if err := st.UpdateSettings(settings); err != nil {
 		t.Fatal(err)
 	}

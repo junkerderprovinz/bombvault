@@ -213,7 +213,7 @@ func (s *Service) coverContainers(ctx context.Context, settings store.Settings, 
 		}
 		db, isDB := dbRows[c.Name]
 		if eff.Kind == schedule.EffectiveNone {
-			reason := reasonFor(row.IncludeInSchedule, row.ScheduleCadence, settings.PerItemSchedules)
+			reason := reasonFor(row.IncludeInSchedule, row.ScheduleCadence)
 			if isDB {
 				reason = CoverageDBNotScheduled
 			}
@@ -330,7 +330,7 @@ func (s *Service) coverVMs(settings store.Settings, declined declinedBackups, no
 		}
 		out.Unprotected = append(out.Unprotected, CoverageItem{
 			Name:          v.Name,
-			Reason:        reasonFor(v.IncludeInSchedule, v.ScheduleCadence, settings.PerItemSchedules),
+			Reason:        reasonFor(v.IncludeInSchedule, v.ScheduleCadence),
 			NeverBackedUp: s.neverBackedUp(v.ID),
 		})
 	}
@@ -371,7 +371,7 @@ func (s *Service) coverFileSets(settings store.Settings, declined declinedBackup
 		}
 		out.Unprotected = append(out.Unprotected, CoverageItem{
 			Name:          fs.Name,
-			Reason:        reasonFor(fs.Enabled, fs.ScheduleCadence, settings.PerItemSchedules),
+			Reason:        reasonFor(fs.Enabled, fs.ScheduleCadence),
 			NeverBackedUp: s.neverBackedUp(fs.ID),
 		})
 	}
@@ -409,7 +409,7 @@ func (s *Service) coverZFSDatasets(settings store.Settings, declined declinedBac
 		if eff.Kind == schedule.EffectiveNone {
 			out.Unprotected = append(out.Unprotected, CoverageItem{
 				Name:          d.Dataset,
-				Reason:        reasonFor(d.Enabled, d.ScheduleCadence, settings.PerItemSchedules),
+				Reason:        reasonFor(d.Enabled, d.ScheduleCadence),
 				NeverBackedUp: s.neverBackedUp(d.ID) && !s.zfsReplicated(d.ID),
 			})
 			continue
@@ -477,11 +477,11 @@ func (s *Service) zfsSkippedMembers(d store.ZFSDataset) []CoverageItem {
 
 // reasonFor names which of the three switches left this item uncovered, in the
 // order the scheduler checks them.
-func reasonFor(included bool, override string, perItem bool) string {
+func reasonFor(included bool, override string) string {
 	if !included {
 		return CoverageNotIncluded
 	}
-	if perItem && override == "off" {
+	if override == "off" {
 		return CoverageOverrideOff
 	}
 	return CoverageNoSchedule

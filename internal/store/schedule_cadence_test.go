@@ -105,24 +105,3 @@ func TestVMScheduleCadencePersists(t *testing.T) {
 		t.Fatal("expected not-found error for an unknown VM")
 	}
 }
-
-func TestPerItemSchedulesSettingPersists(t *testing.T) {
-	r := newRepo(t)
-
-	s, err := r.GetSettings()
-	if err != nil {
-		t.Fatalf("GetSettings: %v", err)
-	}
-	if s.PerItemSchedules {
-		t.Fatal("PerItemSchedules should default to false")
-	}
-
-	s.PerItemSchedules = true
-	if err := r.UpdateSettings(s); err != nil {
-		t.Fatalf("UpdateSettings: %v", err)
-	}
-	got, _ := r.GetSettings()
-	if !got.PerItemSchedules {
-		t.Fatal("PerItemSchedules did not persist as true")
-	}
-}

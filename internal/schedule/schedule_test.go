@@ -819,20 +819,17 @@ func TestReloadWithDueChecksDelegatesToGates(t *testing.T) {
 func TestPausedByOverride(t *testing.T) {
 	cases := []struct {
 		override string
-		perItem  bool
 		want     bool
 	}{
-		{"off", true, true},
-		{"", true, false},
-		{"daily 02:00", true, false},
-		{"everyN 3 02:00", true, false},
-		{"nonsense", true, false},
-		{"off", false, false},
-		{"daily 02:00", false, false},
+		{"off", true},
+		{"", false},
+		{"daily 02:00", false},
+		{"everyN 3 02:00", false},
+		{"nonsense", false},
 	}
 	for _, c := range cases {
-		if got := schedule.PausedByOverride(c.override, c.perItem); got != c.want {
-			t.Errorf("PausedByOverride(%q, %v) = %v, want %v", c.override, c.perItem, got, c.want)
+		if got := schedule.PausedByOverride(c.override); got != c.want {
+			t.Errorf("PausedByOverride(%q) = %v, want %v", c.override, got, c.want)
 		}
 	}
 }

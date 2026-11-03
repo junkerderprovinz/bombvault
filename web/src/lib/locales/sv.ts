@@ -1142,6 +1142,7 @@ const sv: Partial<Translations> = {
   "whatsNew.locationRename": "Alla mål kan byta namn, även en mapp som flera sektioner delar.",
   "whatsNew.gotify": "Gotify är en egen aviseringskanal, med serverns URL, en app-token och en prioritet vid fel och en vid lyckat.",
   "whatsNew.restoreStacks": "Compose-stackar återställs från ett eget kort på sidan Återställning.",
+  "whatsNew.entryOwnPlan": "En container, en VM, en mapp eller en ZFS-datauppsättning kan köra enligt ett eget schema. Du ställer in det på postens flik Inställningar, utan att först slå på någon brytare.",
   "whatsNew.overviewMoveMode": "Medan du anpassar översikten gungar korten lätt för att visa att du kan flytta dem.",
   "whatsNew.labelGlyphs": "Etiketter visar en symbol för varje val, som Hörn och Animation.",
 
@@ -4922,9 +4923,7 @@ const sv: Partial<Translations> = {
   "schedules.offsiteRuleAll": "Alla avsnitt kopierar direkt efter varje säkerhetskopia.",
   "schedules.offsiteRuleOthers": "Alla andra avsnitt kopierar direkt efter varje säkerhetskopia.",
   "schedules.entries": "Schemalagda poster",
-  "schedules.entriesHint": "Vilka poster schemana omfattar och när var och en körs. En post som är avstängd säkerhetskopieras bara när du startar den för hand.",
-  "schedules.perItem": "Egna scheman per post",
-  "schedules.perItemHint": "Låter enskilda containers, VMs, mappar och ZFS-datauppsättningar köra enligt ett eget schema, som du ställer in på deras sida. En post med eget schema lämnar den totala säkerhetskopian. Av: varje post följer sitt avsnitts schema.",
+  "schedules.entriesHint": "Vilka poster schemana omfattar och när var och en körs. Ett eget schema för en enskild post ställer du in på dess sida. En post som är avstängd säkerhetskopieras bara när du startar den för hand.",
   "schedules.scheduledCount": "{n} av {m} schemalagda",
   "schedules.entriesButton": "Poster",
   "schedules.membersTitle": "{area} i schemat",

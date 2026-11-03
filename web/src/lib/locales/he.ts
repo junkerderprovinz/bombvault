@@ -1134,6 +1134,7 @@ const he: Partial<Translations> = {
   "whatsNew.locationRename": "אפשר לשנות את השם של כל יעד, גם של תיקייה שכמה מקטעים חולקים.",
   "whatsNew.gotify": "Gotify הוא ערוץ התראות בפני עצמו, עם כתובת השרת, אסימון האפליקציה ועדיפות בכישלון ובהצלחה.",
   "whatsNew.restoreStacks": "Stacks של Compose משוחזרים מכרטיס משלהם בדף שחזור.",
+  "whatsNew.entryOwnPlan": "Container, VM, תיקייה או מערך נתונים של ZFS יכולים לרוץ לפי לוח זמנים משלהם. מגדירים אותו בלשונית הגדרות של הפריט, בלי להפעיל קודם שום מתג.",
   "whatsNew.overviewMoveMode": "בזמן התאמה אישית של הסקירה, הכרטיסים שלה מתנדנדים קלות כדי להראות שאפשר להזיז אותם.",
   "whatsNew.labelGlyphs": "“תוויות” מציגה סמל לכל בחירה, כמו “פינות” ו“אנימציה”.",
 
@@ -4922,9 +4923,7 @@ const he: Partial<Translations> = {
   "schedules.offsiteRuleAll": "כל התחומים מעתיקים מיד אחרי כל גיבוי.",
   "schedules.offsiteRuleOthers": "כל שאר התחומים מעתיקים מיד אחרי כל גיבוי.",
   "schedules.entries": "פריטים מתוזמנים",
-  "schedules.entriesHint": "אילו פריטים לוחות הזמנים כוללים ומתי כל אחד רץ. פריט שכבוי מגובה רק כשמפעילים אותו ידנית.",
-  "schedules.perItem": "לוחות זמנים משלהם לפי פריט",
-  "schedules.perItemHint": "מאפשר ל-Containers, ל-VMs, לתיקיות ולמערכי נתונים של ZFS בודדים לרוץ לפי לוח זמנים משלהם, שמגדירים בעמוד שלהם. פריט עם לוח זמנים משלו יוצא מהגיבוי המלא. כבוי: כל פריט עוקב אחרי לוח הזמנים של התחום שלו.",
+  "schedules.entriesHint": "אילו פריטים לוחות הזמנים כוללים ומתי כל אחד רץ. לוח זמנים משלו לפריט בודד מגדירים בעמוד שלו. פריט שכבוי מגובה רק כשמפעילים אותו ידנית.",
   "schedules.scheduledCount": "{n} מתוך {m} מתוזמנים",
   "schedules.entriesButton": "פריטים",
   "schedules.membersTitle": "{area} בלוח הזמנים",

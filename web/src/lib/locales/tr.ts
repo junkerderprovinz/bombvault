@@ -1142,6 +1142,7 @@ const tr: Partial<Translations> = {
   "whatsNew.locationRename": "Her hedef yeniden adlandırılabilir, birkaç bölümün paylaştığı bir klasör de.",
   "whatsNew.gotify": "Gotify ayrı bir bildirim kanalıdır; sunucu URL'si, uygulama belirteci ve başarısızlıkta ve başarıda ayrı öncelik alır.",
   "whatsNew.restoreStacks": "Compose stack'leri, Geri yükleme sayfasındaki kendi kartlarından geri yüklenir.",
+  "whatsNew.entryOwnPlan": "Bir konteyner, VM, klasör ya da ZFS veri kümesi kendi zamanlamasıyla çalışabilir. Bunu ögenin Ayarlar sekmesinde ayarlarsın, önce bir anahtarı açman gerekmez.",
   "whatsNew.overviewMoveMode": "Genel bakışı özelleştirirken kartları hafifçe sallanarak onları taşıyabileceğinizi gösterir.",
   "whatsNew.labelGlyphs": "Etiketler, Köşeler ve Animasyon gibi her seçenek için bir simge gösterir.",
 
@@ -4922,9 +4923,7 @@ const tr: Partial<Translations> = {
   "schedules.offsiteRuleAll": "Tüm bölümler her yedeklemenin hemen ardından kopyalar.",
   "schedules.offsiteRuleOthers": "Diğer tüm bölümler her yedeklemenin hemen ardından kopyalar.",
   "schedules.entries": "Zamanlanmış ögeler",
-  "schedules.entriesHint": "Zamanlamaların hangi ögeleri kapsadığı ve her birinin ne zaman çalıştığı. Kapalı bir öge yalnızca elle başlattığında yedeklenir.",
-  "schedules.perItem": "Öge başına kendi zamanlamaları",
-  "schedules.perItemHint": "Tek tek konteynerlerin, VM'lerin, klasörlerin ve ZFS veri kümelerinin kendi sayfalarında ayarladığın bir zamanlamayla çalışmasına izin verir. Kendi zamanlaması olan bir öge tam yedeklemeden çıkar. Kapalı: her öge kendi bölümünün zamanlamasını izler.",
+  "schedules.entriesHint": "Zamanlamaların hangi ögeleri kapsadığı ve her birinin ne zaman çalıştığı. Tek bir ögenin kendi zamanlamasını o ögenin sayfasında ayarlarsın. Kapalı bir öge yalnızca elle başlattığında yedeklenir.",
   "schedules.scheduledCount": "{m} ögeden {n} tanesi zamanlandı",
   "schedules.entriesButton": "Ögeler",
   "schedules.membersTitle": "Zamanlamadaki {area}",

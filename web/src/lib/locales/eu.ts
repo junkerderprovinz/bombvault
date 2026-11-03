@@ -822,6 +822,7 @@ const eu: Partial<Translations> = {
   "whatsNew.locationRename": "Helmuga guztiei izena alda dakieke, baita hainbat ataletek partekatzen duten karpeta bati ere.",
   "whatsNew.gotify": "Gotify jakinarazpen-kanal propioa da, zerbitzariaren URLa, aplikazioaren tokena eta huts egitean eta ondo ateratzean lehentasun banarekin.",
   "whatsNew.restoreStacks": "Compose pilak Berrezarpena orriko beren txarteletik berrezartzen dira.",
+  "whatsNew.entryOwnPlan": "Edukiontzi, MB, karpeta edo ZFS datu-multzo batek bere plangintza propioa izan dezake. Elementuaren Ezarpenak fitxan ezartzen duzu, aurretik etengailurik aktibatu gabe.",
   "whatsNew.overviewMoveMode": "Laburpena pertsonalizatzen duzun bitartean, txartelak leunki kulunkatzen dira, mugi ditzakezula erakusteko.",
   "whatsNew.labelGlyphs": "Etiketak aukera bakoitzeko ikur bat erakusten du, Ertzak eta Animazioa bezala.",
 
@@ -4932,9 +4933,7 @@ const eu: Partial<Translations> = {
   "schedules.offsiteRuleAll": "Atal guztiek kopiatzen dute babeskopia bakoitzaren ondoren berehala.",
   "schedules.offsiteRuleOthers": "Gainerako atal guztiek kopiatzen dute babeskopia bakoitzaren ondoren berehala.",
   "schedules.entries": "Programatutako elementuak",
-  "schedules.entriesHint": "Plangintzek zein elementu hartzen dituzten eta bakoitza noiz exekutatzen den. Desaktibatutako elementuaren babeskopia eskuz abiarazten duzunean bakarrik egiten da.",
-  "schedules.perItem": "Plangintza propioak elementuko",
-  "schedules.perItemHint": "Edukiontziak, MBak, karpetak eta ZFS datu-multzoak banaka bere plangintzan exekutatzen uzten du, haien orrian ezartzen dena. Plangintza propioa duen elementua babeskopia osotik ateratzen da. Itzalita: elementu guztiek bere atalaren plangintza jarraitzen dute.",
+  "schedules.entriesHint": "Plangintzek zein elementu hartzen dituzten eta bakoitza noiz exekutatzen den. Elementu baten plangintza propioa haren orrian ezartzen duzu. Desaktibatutako elementuaren babeskopia eskuz abiarazten duzunean bakarrik egiten da.",
   "schedules.scheduledCount": "Programatuta: {n} / {m}",
   "schedules.entriesButton": "Elementuak",
   "schedules.membersTitle": "{area} egutegian",

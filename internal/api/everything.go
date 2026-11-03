@@ -343,7 +343,7 @@ func (s *Service) everythingContainers(ctx context.Context, settings store.Setti
 		return nil, err
 	}
 	skip := everythingSkips(ctx)
-	targets = schedule.DomainRunTargets(targets, settings.PerItemSchedules)
+	targets = schedule.DomainRunTargets(targets)
 	return slices.DeleteFunc(targets, func(t store.Target) bool { return skip[t.ID] || !t.IncludeInSchedule }), nil
 }
 
@@ -355,7 +355,7 @@ func (s *Service) everythingVMs(ctx context.Context, settings store.Settings) ([
 	}
 	store.SortVMTargetsForRun(vms)
 	skip := everythingSkips(ctx)
-	vms = schedule.DomainRunVMTargets(vms, settings.PerItemSchedules)
+	vms = schedule.DomainRunVMTargets(vms)
 	return slices.DeleteFunc(vms, func(v store.VMTarget) bool { return skip[v.ID] || !v.IncludeInSchedule }), nil
 }
 
@@ -367,7 +367,7 @@ func (s *Service) everythingFileSets(ctx context.Context, settings store.Setting
 		return nil, err
 	}
 	skip := everythingSkips(ctx)
-	sets = schedule.DomainRunFileSets(sets, settings.PerItemSchedules)
+	sets = schedule.DomainRunFileSets(sets)
 	return slices.DeleteFunc(sets, func(fs store.FileSet) bool { return skip[fs.ID] || !fs.Enabled }), nil
 }
 
@@ -378,7 +378,7 @@ func (s *Service) everythingZFSItems(ctx context.Context, settings store.Setting
 		return nil, err
 	}
 	skip := everythingSkips(ctx)
-	items = schedule.DomainRunZFSDatasets(items, settings.PerItemSchedules)
+	items = schedule.DomainRunZFSDatasets(items)
 	return slices.DeleteFunc(items, func(d store.ZFSDataset) bool { return skip[d.ID] || !d.Enabled }), nil
 }
 

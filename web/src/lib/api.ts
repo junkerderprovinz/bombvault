@@ -65,7 +65,7 @@ export interface Container {
   self?: boolean;
   /** Optional per-item schedule override (#121): a cadence string that overrides
    *  the containers domain schedule for this container. "" means it follows the
-   *  domain schedule. Only takes effect when the perItemSchedules setting is on. */
+   *  domain schedule. */
   scheduleCadence?: string;
   /** Where the backups go and where they are copied, as the card shows it. */
   placement: PlacementView;
@@ -420,11 +420,6 @@ export interface Settings {
   /** Reads every container on ZFS without a choice of its own from a snapshot,
    *  so it is down only while the snapshot is taken. On by default. */
   containerSnapshots: boolean;
-  /** #121: opt into per-item schedule overrides. Off by default, so every item
-   *  follows its domain schedule and the UI is unchanged. When on, a container or
-   *  VM with a non-empty scheduleCadence runs on its own cadence; an item left
-   *  blank keeps its domain schedule. */
-  perItemSchedules: boolean;
 }
 
 /** One private container-registry credential (#106), e.g. ghcr.io. */
@@ -2267,8 +2262,8 @@ export function setInclude(
  * PATCH /api/containers/{name} — set (or clear) this container's per-item schedule
  * override (#121). Pass a cadence string ("daily HH:MM", "weekly DOW HH:MM", a cron
  * expression, or "off"); an empty string clears the override so the container falls
- * back to the containers domain schedule. Only takes effect when perItemSchedules
- * is on. everyN is rejected server-side (no per-item last-run gate).
+ * back to the containers domain schedule. The server refuses everyN, since no
+ * last run is kept per item.
  */
 export function setScheduleCadence(
   name: string,
@@ -4121,7 +4116,7 @@ export interface BackupItem {
   name: string;
   /** False once the item is taken out of the schedule. */
   included: boolean;
-  /** True while the item's own schedule is "off" and per-item schedules are on. */
+  /** True while the item's own schedule is "off". */
   paused: boolean;
   effectiveSchedule: EffectiveSchedule;
   /** Unix seconds of the last successful backup, 0 for none. */
@@ -4449,8 +4444,7 @@ export interface VM {
   lastBackup: number | null;
   lastBackupStarted: number | null;
   /** Optional per-item schedule override (#121): a cadence string that overrides
-   *  the VMs domain schedule for this VM. "" means it follows the domain schedule.
-   *  Only takes effect when the perItemSchedules setting is on. */
+   *  the VMs domain schedule for this VM. "" means it follows the domain schedule. */
   scheduleCadence?: string;
   /** Where the backups go and where they are copied, as the card shows it. */
   placement: PlacementView;
@@ -4540,8 +4534,7 @@ export function setVMInclude(
 /**
  * PATCH /api/vms/{name} — set (or clear) this VM's per-item schedule override
  * (#121). Same grammar and semantics as setScheduleCadence: an empty string clears
- * the override so the VM falls back to the VMs domain schedule, and it only takes
- * effect when perItemSchedules is on.
+ * the override so the VM falls back to the VMs domain schedule.
  */
 export function setVMScheduleCadence(
   name: string,
@@ -4754,7 +4747,7 @@ export interface FileSetView {
   /** Unix seconds of the last successful backup; 0 = never. */
   lastBackup: number;
   /** This set's per-item schedule override (#199); "" follows the Folders
-   *  domain schedule. Only acted on while perItemSchedules is on. */
+   *  domain schedule. */
   scheduleCadence?: string;
   /** This set's OWN repository (#204); "" means it follows the Folders domain
    *  repository. Either a relative subpath under the host mount root or a raw

@@ -822,6 +822,7 @@ const hr: Partial<Translations> = {
   "whatsNew.locationRename": "Svako odredište može se preimenovati, i mapa koju dijeli više odjeljaka.",
   "whatsNew.gotify": "Gotify je zaseban kanal obavijesti, s URL-om poslužitelja, tokenom aplikacije i prioritetom pri neuspjehu i pri uspjehu.",
   "whatsNew.restoreStacks": "Compose stogovi vraćaju se s vlastite kartice na stranici Vraćanje.",
+  "whatsNew.entryOwnPlan": "Kontejner, VM, mapa ili ZFS skup podataka može raditi prema vlastitom rasporedu. Postavljate ga na kartici Postavke stavke i ne morate prije toga uključiti nikakav prekidač.",
   "whatsNew.overviewMoveMode": "Dok prilagođavate pregled, njegove se kartice lagano njišu kako bi pokazale da ih možete premjestiti.",
   "whatsNew.labelGlyphs": "Oznake prikazuju simbol za svaki izbor, kao i Kutovi i Animacija.",
 
@@ -4932,9 +4933,7 @@ const hr: Partial<Translations> = {
   "schedules.offsiteRuleAll": "Svi odjeljci kopiraju odmah nakon svake sigurnosne kopije.",
   "schedules.offsiteRuleOthers": "Svi ostali odjeljci kopiraju odmah nakon svake sigurnosne kopije.",
   "schedules.entries": "Zakazane stavke",
-  "schedules.entriesHint": "Koje stavke rasporedi obuhvaćaju i kada se svaka izvršava. Isključena stavka kopira se samo kad je ručno pokrenete.",
-  "schedules.perItem": "Vlastiti rasporedi po stavci",
-  "schedules.perItemHint": "Omogućuje da pojedini kontejneri, VM-ovi, mape i ZFS skupovi podataka rade prema vlastitom rasporedu, koji postavljate na njihovoj stranici. Stavka s vlastitim rasporedom izlazi iz potpune sigurnosne kopije. Isključeno: svaka stavka slijedi raspored svog odjeljka.",
+  "schedules.entriesHint": "Koje stavke rasporedi obuhvaćaju i kada se svaka izvršava. Vlastiti raspored pojedine stavke postavljate na njezinoj stranici. Isključena stavka kopira se samo kad je ručno pokrenete.",
   "schedules.scheduledCount": "{n} od {m} zakazano",
   "schedules.entriesButton": "Stavke",
   "schedules.membersTitle": "{area} u rasporedu",

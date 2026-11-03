@@ -146,7 +146,6 @@ export function useSettingsStore() {
   // The plain boolean fields of the schedules page, saved by
   // autoSaveScheduleField below with their own busy and shake maps.
   type ScheduleBoolKey =
-    | "perItemSchedules"
     | "catchUpMissed"
     | "drillsEnabled"
     | "offsiteDrillsEnabled"

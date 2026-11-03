@@ -1150,6 +1150,7 @@ const es: Partial<Translations> = {
   "whatsNew.locationRename": "Cualquier destino se puede renombrar, también una carpeta que comparten varias secciones.",
   "whatsNew.gotify": "Gotify es un canal de notificaciones propio, con la URL del servidor, un token de la aplicación y una prioridad si falla y otra si sale bien.",
   "whatsNew.restoreStacks": "Los stacks de Compose se restauran desde su propia tarjeta en la página Restauración.",
+  "whatsNew.entryOwnPlan": "Un contenedor, una VM, una carpeta o un conjunto de datos ZFS puede ejecutarse con un calendario propio. Lo ajustas en la pestaña Ajustes del elemento, sin activar antes ningún interruptor.",
   "whatsNew.overviewMoveMode": "Mientras personalizas el resumen, sus tarjetas se balancean suavemente para mostrar que puedes moverlas.",
   "whatsNew.labelGlyphs": "Etiquetas muestra un símbolo para cada opción, como Esquinas y Animación.",
 
@@ -4920,9 +4921,7 @@ const es: Partial<Translations> = {
   "schedules.offsiteRuleAll": "Todas las secciones copian justo después de cada copia.",
   "schedules.offsiteRuleOthers": "Todas las demás secciones copian justo después de cada copia.",
   "schedules.entries": "Elementos programados",
-  "schedules.entriesHint": "Qué elementos incluyen los calendarios y cuándo se ejecuta cada uno. Un elemento desactivado solo se copia cuando lo inicias a mano.",
-  "schedules.perItem": "Calendarios propios por elemento",
-  "schedules.perItemHint": "Permite que cada contenedor, VM, carpeta y conjunto de datos ZFS se ejecute con un calendario propio, que ajustas en su página. Un elemento con calendario propio sale de la copia total. Desactivado: cada elemento sigue el calendario de su sección.",
+  "schedules.entriesHint": "Qué elementos incluyen los calendarios y cuándo se ejecuta cada uno. El calendario propio de un elemento lo ajustas en su página. Un elemento desactivado solo se copia cuando lo inicias a mano.",
   "schedules.scheduledCount": "{n} de {m} programados",
   "schedules.entriesButton": "Elementos",
   "schedules.membersTitle": "{area} en el calendario",

@@ -1135,6 +1135,7 @@ const hu: Partial<Translations> = {
   "whatsNew.locationRename": "Minden cél átnevezhető, egy több szakasz által közösen használt mappa is.",
   "whatsNew.gotify": "A Gotify önálló értesítési csatorna, szerver URL-lel, alkalmazás-tokennel, valamint külön prioritással hibánál és sikernél.",
   "whatsNew.restoreStacks": "A Compose stackeket a Visszaállítás oldal saját kártyájáról állítod vissza.",
+  "whatsNew.entryOwnPlan": "Egy konténer, VM, mappa vagy ZFS-adatkészlet saját ütemezés szerint is futhat. Az elem Beállítások lapján állítod be, anélkül hogy előbb bármilyen kapcsolót be kellene kapcsolnod.",
   "whatsNew.overviewMoveMode": "Amíg testreszabod az Áttekintést, a kártyái finoman ringatóznak, jelezve, hogy áthelyezheted őket.",
   "whatsNew.labelGlyphs": "A Feliratok minden választáshoz szimbólumot mutat, mint a Sarkok és az Animáció.",
 
@@ -4923,9 +4924,7 @@ const hu: Partial<Translations> = {
   "schedules.offsiteRuleAll": "Minden szakasz közvetlenül az egyes mentések után másol.",
   "schedules.offsiteRuleOthers": "Az összes többi szakasz közvetlenül az egyes mentések után másol.",
   "schedules.entries": "Ütemezett elemek",
-  "schedules.entriesHint": "Mely elemeket foglalják magukba az ütemezések, és mikor fut az egyes elem. A kikapcsolt elemet csak akkor menti a rendszer, ha te indítod el kézzel.",
-  "schedules.perItem": "Saját ütemezés elemenként",
-  "schedules.perItemHint": "Lehetővé teszi, hogy az egyes konténerek, VM-ek, mappák és ZFS-adatkészletek saját ütemezés szerint fussanak, amit az oldalukon állítasz be. A saját ütemezésű elem kimarad a teljes biztonsági mentésből. Ki: minden elem a szakasza ütemezését követi.",
+  "schedules.entriesHint": "Mely elemeket foglalják magukba az ütemezések, és mikor fut az egyes elem. Egy elem saját ütemezését az elem oldalán állítod be. A kikapcsolt elemet csak akkor menti a rendszer, ha te indítod el kézzel.",
   "schedules.scheduledCount": "{m} elemből {n} ütemezve",
   "schedules.entriesButton": "Elemek",
   "schedules.membersTitle": "{area} az ütemezésben",

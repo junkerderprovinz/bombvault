@@ -822,6 +822,7 @@ const sk: Partial<Translations> = {
   "whatsNew.locationRename": "Každý cieľ sa dá premenovať, aj priečinok, ktorý zdieľa niekoľko sekcií.",
   "whatsNew.gotify": "Gotify je samostatný kanál upozornení s URL servera, tokenom aplikácie a prioritou pri zlyhaní aj pri úspechu.",
   "whatsNew.restoreStacks": "Zásobníky Compose obnovíš z vlastnej karty na stránke Obnova.",
+  "whatsNew.entryOwnPlan": "Kontajner, VM, priečinok alebo dátová sada ZFS môže bežať podľa vlastného plánu. Nastavíš ho na karte Nastavenia položky a nemusíš predtým zapínať žiadny prepínač.",
   "whatsNew.overviewMoveMode": "Keď prispôsobujete prehľad, jeho karty sa jemne pohupujú, aby bolo vidieť, že ich môžete presúvať.",
   "whatsNew.labelGlyphs": "Označenia zobrazujú pri každej voľbe symbol, rovnako ako Rohy a Animácia.",
 
@@ -4932,9 +4933,7 @@ const sk: Partial<Translations> = {
   "schedules.offsiteRuleAll": "Všetky sekcie kopírujú hneď po každej zálohe.",
   "schedules.offsiteRuleOthers": "Všetky ostatné sekcie kopírujú hneď po každej zálohe.",
   "schedules.entries": "Naplánované položky",
-  "schedules.entriesHint": "Ktoré položky plány zahŕňajú a kedy beží každá z nich. Vypnutá položka sa zálohuje, iba keď ju spustíš ručne.",
-  "schedules.perItem": "Vlastné plány podľa položiek",
-  "schedules.perItemHint": "Umožní jednotlivým kontajnerom, VM, priečinkom a dátovým sadám ZFS bežať podľa vlastného plánu, ktorý nastavíš na ich stránke. Položka s vlastným plánom vypadne z kompletnej zálohy. Vypnuté: každá položka sleduje plán svojej sekcie.",
+  "schedules.entriesHint": "Ktoré položky plány zahŕňajú a kedy beží každá z nich. Vlastný plán jednej položky nastavíš na jej stránke. Vypnutá položka sa zálohuje, iba keď ju spustíš ručne.",
   "schedules.scheduledCount": "{n} z {m} naplánovaných",
   "schedules.entriesButton": "Položky",
   "schedules.membersTitle": "{area} v pláne",

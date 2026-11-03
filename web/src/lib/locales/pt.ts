@@ -1131,6 +1131,7 @@ const pt: Partial<Translations> = {
   "whatsNew.locationRename": "Qualquer destino pode mudar de nome, incluindo uma pasta partilhada por várias secções.",
   "whatsNew.gotify": "O Gotify é um canal de notificação próprio, com o URL do servidor, um token da aplicação e uma prioridade em caso de falha e outra em caso de sucesso.",
   "whatsNew.restoreStacks": "As stacks do Compose restauram-se a partir do seu próprio cartão na página Restauração.",
+  "whatsNew.entryOwnPlan": "Um container, uma VM, uma pasta ou um conjunto de dados ZFS pode correr num agendamento próprio. Defines-o no separador Definições da entrada, sem teres de ligar primeiro um interruptor.",
   "whatsNew.overviewMoveMode": "Enquanto personalizas a visão geral, os cartões balançam ligeiramente para mostrar que os podes mover.",
   "whatsNew.labelGlyphs": "Rótulos mostra um símbolo para cada opção, como Cantos e Animação.",
 
@@ -4922,9 +4923,7 @@ const pt: Partial<Translations> = {
   "schedules.offsiteRuleAll": "Todas as secções copiam logo após cada backup.",
   "schedules.offsiteRuleOthers": "Todas as outras secções copiam logo após cada backup.",
   "schedules.entries": "Entradas agendadas",
-  "schedules.entriesHint": "Que entradas os agendamentos incluem e quando corre cada uma. Uma entrada desligada só é guardada quando a inicias manualmente.",
-  "schedules.perItem": "Agendamentos próprios por entrada",
-  "schedules.perItemHint": "Permite que containers, VMs, pastas e conjuntos de dados ZFS individuais corram num agendamento próprio, que defines na página deles. Uma entrada com agendamento próprio sai do backup total. Desligado: cada entrada segue o agendamento da sua secção.",
+  "schedules.entriesHint": "Que entradas os agendamentos incluem e quando corre cada uma. Dás a uma entrada um agendamento próprio na página dela. Uma entrada desligada só é guardada quando a inicias manualmente.",
   "schedules.scheduledCount": "{n} de {m} agendadas",
   "schedules.entriesButton": "Entradas",
   "schedules.membersTitle": "{area} no agendamento",

@@ -1143,6 +1143,7 @@ const ar: Partial<Translations> = {
   "whatsNew.locationRename": "يمكن إعادة تسمية كل وجهة، ومنها مجلد تتشاركه عدة أقسام.",
   "whatsNew.gotify": "Gotify قناة إشعارات مستقلة، مع عنوان URL للخادم ورمز التطبيق وأولوية لكل من الفشل والنجاح.",
   "whatsNew.restoreStacks": "تُستعاد الـ Stacks الخاصة بـ Compose من بطاقة خاصة بها في صفحة الاستعادة.",
+  "whatsNew.entryOwnPlan": "يمكن لأي container أو VM أو مجلد أو مجموعة بيانات ZFS أن يعمل وفق جدول خاص به. تضبطه في تبويب الإعدادات الخاص به، دون مفتاح عليك تشغيله أولًا.",
   "whatsNew.overviewMoveMode": "أثناء تخصيص «نظرة عامة» تتمايل بطاقاتها برفق لتُظهر أنه يمكنك نقلها.",
   "whatsNew.labelGlyphs": "تعرض «التسميات» رمزًا لكل خيار، مثل «الزوايا» و«الرسوم المتحركة».",
 
@@ -4923,9 +4924,7 @@ const ar: Partial<Translations> = {
   "schedules.offsiteRuleAll": "تُنسخ كل الأقسام مباشرة بعد كل نسخة احتياطية.",
   "schedules.offsiteRuleOthers": "تُنسخ كل الأقسام الأخرى مباشرة بعد كل نسخة احتياطية.",
   "schedules.entries": "العناصر المجدولة",
-  "schedules.entriesHint": "أي العناصر تشملها الجداول ومتى يعمل كل منها. العنصر المعطّل لا يُنسخ إلا عند بدئه يدويًا.",
-  "schedules.perItem": "جداول خاصة لكل عنصر",
-  "schedules.perItemHint": "يتيح لكل container أو VM أو مجلد أو مجموعة بيانات ZFS أن يعمل وفق جدول خاص به يُضبط في صفحته. العنصر الذي له جدول خاص يخرج من النسخ الاحتياطي الشامل. عند الإيقاف: يتبع كل عنصر جدول قسمه.",
+  "schedules.entriesHint": "أي العناصر تشملها الجداول ومتى يعمل كل منها. تمنح عنصرًا واحدًا جدولًا خاصًا به من صفحته. العنصر المعطّل لا يُنسخ إلا عند بدئه يدويًا.",
   "schedules.scheduledCount": "{n} من {m} مجدول",
   "schedules.entriesButton": "العناصر",
   "schedules.membersTitle": "{area} في الجدول",

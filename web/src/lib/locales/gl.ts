@@ -822,6 +822,7 @@ const gl: Partial<Translations> = {
   "whatsNew.locationRename": "Calquera destino pódese renomear, tamén un cartafol que comparten varias seccións.",
   "whatsNew.gotify": "Gotify é unha canle de notificacións propia, co URL do servidor, un token da aplicación e unha prioridade se falla e outra se sae ben.",
   "whatsNew.restoreStacks": "As pilas de Compose restáuranse desde a súa propia tarxeta na páxina Restauración.",
+  "whatsNew.entryOwnPlan": "Un contedor, unha MV, un cartafol ou un conxunto de datos ZFS pode executarse coa súa propia planificación. Axústala na lapela Configuración do elemento, sen activar antes ningún interruptor.",
   "whatsNew.overviewMoveMode": "Mentres personalizas a vista xeral, as súas tarxetas balancéanse suavemente para amosar que as podes mover.",
   "whatsNew.labelGlyphs": "Etiquetas amosa un símbolo para cada opción, como Esquinas e Animación.",
 
@@ -4932,9 +4933,7 @@ const gl: Partial<Translations> = {
   "schedules.offsiteRuleAll": "Todas as seccións copian xusto despois de cada copia.",
   "schedules.offsiteRuleOthers": "Todas as demais seccións copian xusto despois de cada copia.",
   "schedules.entries": "Elementos planificados",
-  "schedules.entriesHint": "Que elementos inclúen as planificacións e cando se executa cada un. Un elemento desactivado só se copia cando o inicias a man.",
-  "schedules.perItem": "Planificacións propias por elemento",
-  "schedules.perItemHint": "Permite que cada contedor, MV, cartafol e conxunto de datos ZFS se execute coa súa propia planificación, que axustas na súa páxina. Un elemento con planificación propia sae da copia completa. Desactivado: cada elemento segue a planificación da súa sección.",
+  "schedules.entriesHint": "Que elementos inclúen as planificacións e cando se executa cada un. A planificación propia dun elemento axústala na súa páxina. Un elemento desactivado só se copia cando o inicias a man.",
   "schedules.scheduledCount": "{n} de {m} planificados",
   "schedules.entriesButton": "Elementos",
   "schedules.membersTitle": "{area} na planificación",

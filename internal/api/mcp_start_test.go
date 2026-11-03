@@ -223,7 +223,6 @@ func TestMCPStartZFSDomainNamesWhatItStops(t *testing.T) {
 	rig := newMCPStartRig(t, &fakeServiceDocker{listOut: []dockercli.ContainerInfo{runningContainer("plex")}}, &fakeResticEngine{})
 	enableZFS(t, rig)
 	s := mustSettings(t, rig.st)
-	s.PerItemSchedules = true
 	if err := rig.st.UpdateSettings(s); err != nil {
 		t.Fatal(err)
 	}
@@ -314,7 +313,7 @@ func TestMCPStartBackupSingletonsAndFileSets(t *testing.T) {
 func TestMCPStartDomainSelection(t *testing.T) {
 	t.Run("containers", func(t *testing.T) {
 		rig := newMCPStartRig(t, &fakeServiceDocker{}, &fakeResticEngine{})
-		seedSelectionContainers(t, rig, true)
+		seedSelectionContainers(t, rig)
 
 		res := mcpCallTool(t, rig.h, rig.key, "start_domain_backup", `{"domain":"containers"}`)
 		if res.IsError {
@@ -330,7 +329,7 @@ func TestMCPStartDomainSelection(t *testing.T) {
 			t.Fatal(err)
 		}
 		var scheduled []string
-		for _, tg := range schedule.DomainRunTargets(targets, true) {
+		for _, tg := range schedule.DomainRunTargets(targets) {
 			if tg.IncludeInSchedule {
 				scheduled = append(scheduled, tg.ContainerName)
 			}
@@ -340,26 +339,11 @@ func TestMCPStartDomainSelection(t *testing.T) {
 		}
 	})
 
-	t.Run("an override only counts while per-item schedules are on", func(t *testing.T) {
-		rig := newMCPStartRig(t, &fakeServiceDocker{}, &fakeResticEngine{})
-		seedSelectionContainers(t, rig, false)
-
-		res := mcpCallTool(t, rig.h, rig.key, "start_domain_backup", `{"domain":"containers"}`)
-		if res.IsError {
-			t.Fatalf("start_domain_backup: %v", res.Structured)
-		}
-		if got := mcpStartedNames(t, res); !slices.Equal(got, []string{"immich", "plex", "sonarr"}) {
-			t.Fatalf("started %v, want the paused container along with the rest", got)
-		}
-		waitForBackupDone(t, rig.svc)
-	})
-
 	t.Run("vms", func(t *testing.T) {
 		rig := newMCPStartRig(t, &fakeServiceDocker{}, &fakeResticEngine{})
 		s := mustSettings(t, rig.st)
 		s.VMsEnabled = true
 		s.VMsPath = "backups/vms"
-		s.PerItemSchedules = true
 		if err := rig.st.UpdateSettings(s); err != nil {
 			t.Fatal(err)
 		}
@@ -613,7 +597,6 @@ func TestMCPStartBackupEverythingCountsOnlyWhatThePassRuns(t *testing.T) {
 	rig := newMCPStartRig(t, &fakeServiceDocker{}, &fakeResticEngine{})
 	s := mustSettings(t, rig.st)
 	s.RetentionKeepLast = 2
-	s.PerItemSchedules = true
 	if err := rig.st.UpdateSettings(s); err != nil {
 		t.Fatal(err)
 	}
@@ -694,7 +677,7 @@ func TestMCPReadOnlyKeyGetsNotPermitted(t *testing.T) {
 // seedSelectionContainers writes the four containers the domain selection has to
 // tell apart: protected, protected with a cadence of its own, paused and not
 // protected.
-func seedSelectionContainers(t *testing.T, rig *mcpStartRig, perItem bool) {
+func seedSelectionContainers(t *testing.T, rig *mcpStartRig) {
 	t.Helper()
 	for _, c := range []struct {
 		name     string
@@ -714,11 +697,6 @@ func seedSelectionContainers(t *testing.T, rig *mcpStartRig, perItem bool) {
 				t.Fatal(err)
 			}
 		}
-	}
-	s := mustSettings(t, rig.st)
-	s.PerItemSchedules = perItem
-	if err := rig.st.UpdateSettings(s); err != nil {
-		t.Fatal(err)
 	}
 }
 

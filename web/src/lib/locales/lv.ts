@@ -822,6 +822,7 @@ const lv: Partial<Translations> = {
   "whatsNew.locationRename": "Katru mērķi var pārdēvēt, arī mapi, ko koplieto vairākas sadaļas.",
   "whatsNew.gotify": "Gotify ir atsevišķs paziņojumu kanāls ar servera URL, lietotnes marķieri un prioritāti kļūmes un veiksmes gadījumā.",
   "whatsNew.restoreStacks": "Compose kaudzes atjauno no to pašu kartītes lapā Atjaunošana.",
+  "whatsNew.entryOwnPlan": "Konteiners, VM, mape vai ZFS datu kopa var darboties pēc sava grafika. To iestatāt ieraksta cilnē Iestatījumi, iepriekš neieslēdzot nekādu slēdzi.",
   "whatsNew.overviewMoveMode": "Kamēr tu pielāgo pārskatu, tā kartītes viegli šūpojas, lai parādītu, ka tās vari pārvietot.",
   "whatsNew.labelGlyphs": "Uzraksti rāda simbolu katrai izvēlei, tāpat kā Stūri un Animācija.",
 
@@ -4932,9 +4933,7 @@ const lv: Partial<Translations> = {
   "schedules.offsiteRuleAll": "Visas sadaļas kopē uzreiz pēc katras rezerves kopijas.",
   "schedules.offsiteRuleOthers": "Visas pārējās sadaļas kopē uzreiz pēc katras rezerves kopijas.",
   "schedules.entries": "Ieplānotie ieraksti",
-  "schedules.entriesHint": "Kurus ierakstus grafiki ietver un kad darbojas katrs. Izslēgta ieraksta rezerves kopija tiek veidota tikai tad, kad to palaižat paši.",
-  "schedules.perItem": "Savi grafiki katram ierakstam",
-  "schedules.perItemHint": "Ļauj atsevišķiem konteineriem, VM, mapēm un ZFS datu kopām darboties pēc sava grafika, ko iestatāt to lapā. Ieraksts ar savu grafiku izkrīt no pilnas rezerves kopijas. Izslēgts: katrs ieraksts seko savas sadaļas grafikam.",
+  "schedules.entriesHint": "Kurus ierakstus grafiki ietver un kad darbojas katrs. Viena ieraksta savu grafiku iestatāt tā lapā. Izslēgta ieraksta rezerves kopija tiek veidota tikai tad, kad to palaižat paši.",
   "schedules.scheduledCount": "Ieplānoti {n} no {m}",
   "schedules.entriesButton": "Ieraksti",
   "schedules.membersTitle": "{area} grafikā",

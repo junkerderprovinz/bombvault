@@ -28,8 +28,7 @@ func ZFSReplicaRunsOnItsOwn(d store.ZFSDataset, settings store.Settings) (string
 }
 
 // registerZFSReplicaEntries adds an entry for every enabled ZFS item whose
-// replica has a cadence of its own. It does not depend on per-item schedules,
-// which are about backups; with the ZFS domain off nothing replicates.
+// replica has a cadence of its own. With the ZFS domain off nothing replicates.
 func (s *Scheduler) registerZFSReplicaEntries(settings store.Settings) error {
 	if s.replicaZFS == nil || s.listZFSFn == nil || !settings.ZFSEnabled {
 		return nil

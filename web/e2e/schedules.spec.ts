@@ -26,7 +26,6 @@ const SETTINGS = {
   zfsSchedule: "off",
   configSchedule: "off",
   zfsOffsiteSchedule: "daily 05:00",
-  perItemSchedules: true,
 };
 
 const ITEMS = [

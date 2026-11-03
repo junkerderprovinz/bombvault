@@ -822,6 +822,7 @@ const ca: Partial<Translations> = {
   "whatsNew.locationRename": "Totes les destinacions es poden canviar de nom, també una carpeta que comparteixen diverses seccions.",
   "whatsNew.gotify": "Gotify és un canal de notificacions propi, amb l'URL del servidor, un testimoni de l'aplicació i una prioritat en fallar i una altra en tenir èxit.",
   "whatsNew.restoreStacks": "Les piles de Compose es restauren des d'una targeta pròpia a la pàgina Restauració.",
+  "whatsNew.entryOwnPlan": "Un contenidor, una MV, una carpeta o un conjunt de dades ZFS pot executar-se amb una planificació pròpia. La defineixes a la pestanya Configuració de l'element, sense haver d'activar cap interruptor abans.",
   "whatsNew.overviewMoveMode": "Mentre personalitzes el resum, les targetes es balancegen suaument per mostrar que les pots moure.",
   "whatsNew.labelGlyphs": "Etiquetes mostra un símbol per a cada opció, com Cantonades i Animació.",
 
@@ -4932,9 +4933,7 @@ const ca: Partial<Translations> = {
   "schedules.offsiteRuleAll": "Totes les seccions copien just després de cada còpia.",
   "schedules.offsiteRuleOthers": "Totes les altres seccions copien just després de cada còpia.",
   "schedules.entries": "Elements planificats",
-  "schedules.entriesHint": "Quins elements inclouen les planificacions i quan s'executa cadascun. Un element desactivat només es copia quan l'inicies a mà.",
-  "schedules.perItem": "Planificacions pròpies per element",
-  "schedules.perItemHint": "Permet que contenidors, MV, carpetes i conjunts de dades ZFS individuals s'executin amb una planificació pròpia, que defineixes a la seva pàgina. Un element amb planificació pròpia surt de la còpia completa. Desactivat: cada element segueix la planificació de la seva secció.",
+  "schedules.entriesHint": "Quins elements inclouen les planificacions i quan s'executa cadascun. La planificació pròpia d'un element la defineixes a la seva pàgina. Un element desactivat només es copia quan l'inicies a mà.",
   "schedules.scheduledCount": "{n} de {m} planificats",
   "schedules.entriesButton": "Elements",
   "schedules.membersTitle": "{area} a la planificació",

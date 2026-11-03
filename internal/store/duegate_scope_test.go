@@ -30,23 +30,12 @@ func seedSuccess(t *testing.T, db *sql.DB, r *store.Repo, targetID string, at ti
 	}
 }
 
-func perItemOn(t *testing.T, r *store.Repo) {
-	t.Helper()
-	if _, err := r.MutateSettings(func(s *store.Settings) error {
-		s.PerItemSchedules = true
-		return nil
-	}); err != nil {
-		t.Fatalf("MutateSettings: %v", err)
-	}
-}
-
 func TestContainersDueGateIgnoresItemsTheDomainRunSkips(t *testing.T) {
 	db := store.OpenMem(t)
 	if err := store.Migrate(db); err != nil {
 		t.Fatal(err)
 	}
 	r := store.New(db)
-	perItemOn(t, r)
 
 	now := time.Now()
 	mk := func(name, cadence string, include bool) string {
@@ -103,7 +92,6 @@ func TestVMsDueGateIgnoresItemsTheDomainRunSkips(t *testing.T) {
 		t.Fatal(err)
 	}
 	r := store.New(db)
-	perItemOn(t, r)
 
 	now := time.Now()
 	mk := func(name, cadence string, include bool) string {
@@ -176,7 +164,6 @@ func TestDueGateNeverBackedUpIsDue(t *testing.T) {
 		t.Fatal(err)
 	}
 	r := store.New(db)
-	perItemOn(t, r)
 
 	if _, err := r.UpsertTarget(store.Target{ContainerName: "fresh"}); err != nil {
 		t.Fatal(err)
