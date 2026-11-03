@@ -445,9 +445,9 @@ func (s *Service) backupZFSToRepo(ctx context.Context, id string) (_ backup.Summ
 	if ctx.Err() == nil {
 		for _, pl := range places {
 			s.applyRetentionTags(ctx, settings, pl, tags, zfsDomain)
+			makeLocalRepoReadable(pl.repo, s.cfg.DataDir) // a target on a mounted share as well as the own folder
 		}
 		if places[0].own() {
-			makeRepoReadable(repo, s.cfg.DataDir)
 			s.replicateOffsite(ctx, zfsDomain, settings, repo, "")
 			s.checkPrimaryRemoteBudget(ctx, zfsDomain, repo, settings)
 		}
