@@ -4365,6 +4365,8 @@ const hu: Partial<Translations> = {
   "overview.check.lockChecked": "Törlés elleni védelem: ellenőrizve",
   "overview.check.lockFailed": "Törlés elleni védelem: a teszt meghiúsult",
   "overview.check.lockUnproven": "Törlés elleni védelem: még nincs bizonyítva",
+  "overview.check.lockNone": "Törlés elleni védelem: nincs",
+  "overview.check.lockCheckOff": "Törlés elleni védelem: nincs bizonyítva, az ellenőrzése ki van kapcsolva",
   "overview.check.drillNeedsOffsite": "Próba-visszaállítás: telephelyen kívüli célt igényel",
   "overview.check.drillUnavailable": "Próba-visszaállítás: ennél a szakasznál nem lehetséges",
   "overview.check.drillRunning": "Próba-visszaállítás: folyamatban",

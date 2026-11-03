@@ -3391,6 +3391,9 @@ type DomainStatusEntry struct {
 	DrillState       string `json:"drillState"`       // "" | "never" | "failed" | "overdue" | "ok"
 	EncryptionOn     bool   `json:"encryptionOn"`     // repo encryption is enabled
 	PruneStrategySet bool   `json:"pruneStrategySet"` // an off-site retention strategy is configured
+	// TamperOff says the scheduled check of delete protection is switched
+	// off, so an unproven claim stays unproven until it is tested by hand.
+	TamperOff bool `json:"tamperOff,omitempty"`
 	// ReplicaState is the ZFS replica line of the scorecard: "" with no item
 	// replicating, "ok", "stale" or "failed".
 	ReplicaState string `json:"replicaState,omitempty"`
@@ -3974,6 +3977,7 @@ func (s *Service) domainStatusFrom(settings store.Settings) ([]DomainStatusEntry
 			DrillDetail:           drDetail,
 			Protection:            protection,
 			TamperState:           checks.Tamper,
+			TamperOff:             in.tamperPeriod == 0,
 			ReplicationState:      checks.Replication,
 			DrillState:            checks.Drill,
 			EncryptionOn:          settings.EncryptionEnabled,

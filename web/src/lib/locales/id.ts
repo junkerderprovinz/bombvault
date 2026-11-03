@@ -4374,6 +4374,8 @@ const id: Partial<Translations> = {
   "overview.check.lockChecked": "Perlindungan dari penghapusan: sudah diperiksa",
   "overview.check.lockFailed": "Perlindungan dari penghapusan: pengujian gagal",
   "overview.check.lockUnproven": "Perlindungan dari penghapusan: belum terbukti",
+  "overview.check.lockNone": "Perlindungan dari penghapusan: tidak ada",
+  "overview.check.lockCheckOff": "Perlindungan dari penghapusan: belum terbukti, pemeriksaannya mati",
   "overview.check.drillNeedsOffsite": "Uji pemulihan: perlu tujuan off-site",
   "overview.check.drillUnavailable": "Uji pemulihan: tidak bisa untuk bagian ini",
   "overview.check.drillRunning": "Uji pemulihan: sedang berjalan",

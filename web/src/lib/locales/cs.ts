@@ -4362,6 +4362,8 @@ const cs: Partial<Translations> = {
   "overview.check.lockChecked": "Ochrana proti smazání: zkontrolováno",
   "overview.check.lockFailed": "Ochrana proti smazání: test selhal",
   "overview.check.lockUnproven": "Ochrana proti smazání: zatím neprokázáno",
+  "overview.check.lockNone": "Ochrana proti smazání: žádná",
+  "overview.check.lockCheckOff": "Ochrana proti smazání: neprokázáno, kontrola je vypnutá",
   "overview.check.drillNeedsOffsite": "Zkušební obnova: vyžaduje cíl mimo lokalitu",
   "overview.check.drillUnavailable": "Zkušební obnova: pro tuto sekci není možná",
   "overview.check.drillRunning": "Zkušební obnova: běží",

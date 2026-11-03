@@ -4364,6 +4364,8 @@ const it: Partial<Translations> = {
   "overview.check.lockChecked": "Protezione dall'eliminazione: verificata",
   "overview.check.lockFailed": "Protezione dall'eliminazione: test fallito",
   "overview.check.lockUnproven": "Protezione dall'eliminazione: non ancora dimostrata",
+  "overview.check.lockNone": "Protezione dall'eliminazione: nessuna",
+  "overview.check.lockCheckOff": "Protezione dall'eliminazione: non dimostrata, il controllo è disattivato",
   "overview.check.drillNeedsOffsite": "Ripristino di prova: richiede una destinazione off-site",
   "overview.check.drillUnavailable": "Ripristino di prova: non possibile per questa sezione",
   "overview.check.drillRunning": "Ripristino di prova: in corso",

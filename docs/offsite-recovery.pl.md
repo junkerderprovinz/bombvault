@@ -150,6 +150,8 @@ Najszybsza droga do kopii append-only to sparowany BombVault z [serwerem odbiorc
 
 BombVault okresowo dowodzi gwarancji append-only, faktycznie próbując usunąć coś w repozytorium poza siedzibą, na nieistniejącym obiekcie. **Przetestuj ochronę przed usunięciem teraz** na stronie miejsca docelowego uruchamia to na żądanie, a **Sprawdzaj ochronę przed usunięciem** w **Ustawienia, Weryfikacja, Automatyczne kontrole** uruchamia to według harmonogramu.
 
+Wyłączenie **Sprawdzaj ochronę przed usunięciem** nie ukrywa żadnej luki: nigdy nietestowana ochrona pokazuje się wtedy jako nieudowodniona, bo sprawdzanie jest wyłączone, a lokalizacja bez ochrony przed usunięciem w każdym przypadku pokazuje się jako bez ochrony.
+
 Wyłączona kopia nie jest testowana, a miejsce docelowe to pokazuje. Test połączenia nadal działa, bo tylko odczytuje, więc kopię można sprawdzić przed jej włączeniem.
 
 - **Odrzucone** oznacza chronione.

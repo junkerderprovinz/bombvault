@@ -4374,6 +4374,8 @@ const ca: Partial<Translations> = {
   "overview.check.lockChecked": "Protecció contra l'esborrat: comprovada",
   "overview.check.lockFailed": "Protecció contra l'esborrat: la prova ha fallat",
   "overview.check.lockUnproven": "Protecció contra l'esborrat: encara no demostrada",
+  "overview.check.lockNone": "Protecció contra l'esborrat: cap",
+  "overview.check.lockCheckOff": "Protecció contra l'esborrat: no demostrada, la comprovació està desactivada",
   "overview.check.drillNeedsOffsite": "Restauració de prova: cal una destinació externa",
   "overview.check.drillUnavailable": "Restauració de prova: no és possible per a aquesta secció",
   "overview.check.drillRunning": "Restauració de prova: en curs",

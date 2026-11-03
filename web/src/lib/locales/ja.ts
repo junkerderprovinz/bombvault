@@ -4355,6 +4355,8 @@ const ja: Partial<Translations> = {
   "overview.check.lockChecked": "削除に対する保護: 確認済み",
   "overview.check.lockFailed": "削除に対する保護: テスト失敗",
   "overview.check.lockUnproven": "削除に対する保護: 未確認",
+  "overview.check.lockNone": "削除に対する保護: なし",
+  "overview.check.lockCheckOff": "削除に対する保護: 未証明、チェックはオフ",
   "overview.check.drillNeedsOffsite": "テスト復元: オフサイトの保存先が必要",
   "overview.check.drillUnavailable": "テスト復元: このセクションでは不可",
   "overview.check.drillRunning": "テスト復元: 実行中",

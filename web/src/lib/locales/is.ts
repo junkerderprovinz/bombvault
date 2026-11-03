@@ -4374,6 +4374,8 @@ const is: Partial<Translations> = {
   "overview.check.lockChecked": "Vörn gegn eyðingu: athugað",
   "overview.check.lockFailed": "Vörn gegn eyðingu: prófun mistókst",
   "overview.check.lockUnproven": "Vörn gegn eyðingu: ekki sannað enn",
+  "overview.check.lockNone": "Vörn gegn eyðingu: engin",
+  "overview.check.lockCheckOff": "Vörn gegn eyðingu: ekki sönnuð, athugunin er óvirk",
   "overview.check.drillNeedsOffsite": "Prufuendurheimt: þarf fjarlægan áfangastað",
   "overview.check.drillUnavailable": "Prufuendurheimt: ekki hægt fyrir þetta svæði",
   "overview.check.drillRunning": "Prufuendurheimt: í gangi",

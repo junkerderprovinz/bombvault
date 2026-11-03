@@ -4355,6 +4355,8 @@ const zh: Partial<Translations> = {
   "overview.check.lockChecked": "防删除保护：已检查",
   "overview.check.lockFailed": "防删除保护：测试失败",
   "overview.check.lockUnproven": "防删除保护：尚未证明",
+  "overview.check.lockNone": "防删除保护：无",
+  "overview.check.lockCheckOff": "防删除保护：未证明，检查已关闭",
   "overview.check.drillNeedsOffsite": "测试恢复：需要一个异地目标",
   "overview.check.drillUnavailable": "测试恢复：此分区无法进行",
   "overview.check.drillRunning": "测试恢复：正在运行",

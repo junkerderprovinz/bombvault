@@ -150,6 +150,8 @@ Der schnellste Weg zu einer Append-only-Kopie ist ein gekoppeltes BombVault mit 
 
 BombVault beweist die Append-only-Garantie regelmäßig, indem es tatsächlich einen Löschversuch gegen das Off-site-Repo unternimmt, gezielt auf ein nicht existierendes Objekt. **Löschschutz jetzt testen** auf der Seite eines Orts führt ihn sofort aus, und **Löschschutz prüfen** unter **Einstellungen, Prüfung, Automatische Prüfungen** nach Plan.
 
+**Löschschutz prüfen** auszuschalten versteckt keine Lücke. Ein Speicherort mit Löschschutz, der nie getestet wurde, zeigt dann „nicht nachgewiesen, die Prüfung ist aus“, und ein Speicherort ohne Löschschutz zeigt so oder so „keiner“.
+
 Eine ausgeschaltete Kopie wird nicht getestet, und der Speicherort sagt das. Der Verbindungstest läuft bei ihr trotzdem, weil er nur liest, so kannst du eine Kopie prüfen, bevor du sie einschaltest.
 
 - **Verweigert** heißt geschützt.

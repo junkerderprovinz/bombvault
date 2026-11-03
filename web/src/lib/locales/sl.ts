@@ -4358,6 +4358,8 @@ const sl: Partial<Translations> = {
   "overview.check.lockChecked": "Zaščita pred brisanjem: preverjeno",
   "overview.check.lockFailed": "Zaščita pred brisanjem: preizkus ni uspel",
   "overview.check.lockUnproven": "Zaščita pred brisanjem: še ni dokazano",
+  "overview.check.lockNone": "Zaščita pred brisanjem: brez",
+  "overview.check.lockCheckOff": "Zaščita pred brisanjem: ni dokazano, preverjanje je izklopljeno",
   "overview.check.drillNeedsOffsite": "Preizkusna obnovitev: potrebuje zunanji cilj",
   "overview.check.drillUnavailable": "Preizkusna obnovitev: za ta razdelek ni mogoča",
   "overview.check.drillRunning": "Preizkusna obnovitev: poteka",

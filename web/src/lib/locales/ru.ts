@@ -4361,6 +4361,8 @@ const ru: Partial<Translations> = {
   "overview.check.lockChecked": "Защита от удаления: проверена",
   "overview.check.lockFailed": "Защита от удаления: тест не пройден",
   "overview.check.lockUnproven": "Защита от удаления: пока не подтверждена",
+  "overview.check.lockNone": "Защита от удаления: нет",
+  "overview.check.lockCheckOff": "Защита от удаления: не подтверждена, проверка выключена",
   "overview.check.drillNeedsOffsite": "Тестовое восстановление: нужно внешнее место назначения",
   "overview.check.drillUnavailable": "Тестовое восстановление: для этого раздела невозможно",
   "overview.check.drillRunning": "Тестовое восстановление: идёт",

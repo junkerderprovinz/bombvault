@@ -150,6 +150,8 @@ The fastest way to an append-only copy is a paired BombVault with a [receiving s
 
 BombVault periodically proves the append-only guarantee by actually attempting a delete against the off-site repo, aimed at a non-existent object. **Test delete protection now** on a location's page runs it on demand, and **Check delete protection** under **Settings, Verify, Automatic checks** runs it on a schedule.
 
+Switching **Check delete protection** off does not hide a gap. A location with delete protection that was never tested then reads "not proven, its check is off", and a location without delete protection reads "none" either way.
+
 A copy that is switched off is not tested, and the location says so. The connection test still runs on it, because it only reads, so a copy can be checked before it is switched on.
 
 - **Refused** means protected.

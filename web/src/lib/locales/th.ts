@@ -4365,6 +4365,8 @@ const th: Partial<Translations> = {
   "overview.check.lockChecked": "การป้องกันการลบ: ตรวจสอบแล้ว",
   "overview.check.lockFailed": "การป้องกันการลบ: การทดสอบล้มเหลว",
   "overview.check.lockUnproven": "การป้องกันการลบ: ยังไม่ได้พิสูจน์",
+  "overview.check.lockNone": "การป้องกันการลบ: ไม่มี",
+  "overview.check.lockCheckOff": "การป้องกันการลบ: ยังไม่ได้พิสูจน์ การตรวจสอบปิดอยู่",
   "overview.check.drillNeedsOffsite": "การทดสอบกู้คืน: ต้องมีปลายทางนอกสถานที่",
   "overview.check.drillUnavailable": "การทดสอบกู้คืน: ทำไม่ได้กับส่วนนี้",
   "overview.check.drillRunning": "การทดสอบกู้คืน: กำลังทำงาน",

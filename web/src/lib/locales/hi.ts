@@ -4374,6 +4374,8 @@ const hi: Partial<Translations> = {
   "overview.check.lockChecked": "डिलीट से सुरक्षा: जाँचा गया",
   "overview.check.lockFailed": "डिलीट से सुरक्षा: परीक्षण विफल रहा",
   "overview.check.lockUnproven": "डिलीट से सुरक्षा: अभी तक प्रमाणित नहीं",
+  "overview.check.lockNone": "डिलीट से सुरक्षा: नहीं है",
+  "overview.check.lockCheckOff": "डिलीट से सुरक्षा: प्रमाणित नहीं, इसकी जाँच बंद है",
   "overview.check.drillNeedsOffsite": "परीक्षण पुनर्स्थापना: ऑफ़-साइट गंतव्य चाहिए",
   "overview.check.drillUnavailable": "परीक्षण पुनर्स्थापना: इस सेक्शन के लिए संभव नहीं",
   "overview.check.drillRunning": "परीक्षण पुनर्स्थापना: चल रही है",

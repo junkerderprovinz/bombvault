@@ -4364,6 +4364,8 @@ const tr: Partial<Translations> = {
   "overview.check.lockChecked": "Silmeye karşı koruma: kontrol edildi",
   "overview.check.lockFailed": "Silmeye karşı koruma: test başarısız",
   "overview.check.lockUnproven": "Silmeye karşı koruma: henüz kanıtlanmadı",
+  "overview.check.lockNone": "Silmeye karşı koruma: yok",
+  "overview.check.lockCheckOff": "Silmeye karşı koruma: kanıtlanmadı, denetimi kapalı",
   "overview.check.drillNeedsOffsite": "Deneme geri yüklemesi: site dışı bir hedef gerekiyor",
   "overview.check.drillUnavailable": "Deneme geri yüklemesi: bu bölüm için mümkün değil",
   "overview.check.drillRunning": "Deneme geri yüklemesi: sürüyor",

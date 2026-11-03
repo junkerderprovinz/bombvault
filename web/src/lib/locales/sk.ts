@@ -4374,6 +4374,8 @@ const sk: Partial<Translations> = {
   "overview.check.lockChecked": "Ochrana proti zmazaniu: skontrolované",
   "overview.check.lockFailed": "Ochrana proti zmazaniu: test zlyhal",
   "overview.check.lockUnproven": "Ochrana proti zmazaniu: zatiaľ nepreukázané",
+  "overview.check.lockNone": "Ochrana proti zmazaniu: žiadna",
+  "overview.check.lockCheckOff": "Ochrana proti zmazaniu: nepreukázané, kontrola je vypnutá",
   "overview.check.drillNeedsOffsite": "Skúšobná obnova: vyžaduje externý cieľ",
   "overview.check.drillUnavailable": "Skúšobná obnova: pre túto sekciu nie je možná",
   "overview.check.drillRunning": "Skúšobná obnova: beží",

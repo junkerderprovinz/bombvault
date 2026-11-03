@@ -85,11 +85,15 @@ function offsiteCheck(d: DomainStatus, copying: boolean): Verdict {
   return ["neutral", "overview.check.offsiteNever"];
 }
 
+// A location that cannot refuse a delete is a gap the check of delete
+// protection has nothing to say about, so it is named as missing rather than
+// unproven, and switching that check off changes nothing about it.
 function lockCheck(d: DomainStatus): Verdict {
   if (!d.offsiteConfigured) return ["neutral", "overview.check.lockNeedsOffsite"];
   if (d.tamperState === "ok") return ["ok", "overview.check.lockChecked", d.lastTamperAt];
   if (d.tamperState === "failed") return ["fail", "overview.check.lockFailed", d.lastTamperAt];
-  return ["warn", "overview.check.lockUnproven"];
+  if (!d.offsiteImmutable) return ["warn", "overview.check.lockNone"];
+  return ["warn", d.tamperOff ? "overview.check.lockCheckOff" : "overview.check.lockUnproven"];
 }
 
 function drillCheck(d: DomainStatus, drilling: boolean): Verdict {

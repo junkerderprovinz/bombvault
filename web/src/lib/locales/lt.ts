@@ -4374,6 +4374,8 @@ const lt: Partial<Translations> = {
   "overview.check.lockChecked": "Apsauga nuo trynimo: patikrinta",
   "overview.check.lockFailed": "Apsauga nuo trynimo: testas nepavyko",
   "overview.check.lockUnproven": "Apsauga nuo trynimo: dar neįrodyta",
+  "overview.check.lockNone": "Apsauga nuo trynimo: nėra",
+  "overview.check.lockCheckOff": "Apsauga nuo trynimo: neįrodyta, patikra išjungta",
   "overview.check.drillNeedsOffsite": "Bandomasis atkūrimas: reikia nuotolinės paskirties vietos",
   "overview.check.drillUnavailable": "Bandomasis atkūrimas: šiai sričiai neįmanoma",
   "overview.check.drillRunning": "Bandomasis atkūrimas: vyksta",

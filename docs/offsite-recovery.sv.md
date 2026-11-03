@@ -150,6 +150,8 @@ Snabbaste vägen till en append-only-kopia är en parkopplad BombVault med en [m
 
 BombVault bevisar med jämna mellanrum append-only-garantin genom att faktiskt försöka radera i off-site-arkivet, riktat mot ett obefintligt objekt. **Testa skyddet mot radering nu** på ett måls sida kör det på begäran, och **Kontrollera raderingsskydd** under **Inställningar, Verifiering, Automatiska kontroller** kör det enligt ett schema.
 
+Att slå av **Kontrollera raderingsskydd** döljer ingen lucka: ett skydd som aldrig testats visas då som inte bevisat eftersom kontrollen är avstängd, och en plats utan skydd mot radering visas som utan skydd i vilket fall som helst.
+
 En kopia som är avstängd testas inte, och målet säger det. Anslutningstestet fungerar fortfarande, eftersom det bara läser, så en kopia kan kontrolleras innan den slås på.
 
 - **Nekat** betyder skyddat.

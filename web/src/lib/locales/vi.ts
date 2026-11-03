@@ -4355,6 +4355,8 @@ const vi: Partial<Translations> = {
   "overview.check.lockChecked": "Bảo vệ chống xóa: đã kiểm tra",
   "overview.check.lockFailed": "Bảo vệ chống xóa: kiểm thử thất bại",
   "overview.check.lockUnproven": "Bảo vệ chống xóa: chưa được chứng minh",
+  "overview.check.lockNone": "Bảo vệ chống xóa: không có",
+  "overview.check.lockCheckOff": "Bảo vệ chống xóa: chưa chứng minh, việc kiểm tra đang tắt",
   "overview.check.drillNeedsOffsite": "Khôi phục thử: cần một đích ngoài site",
   "overview.check.drillUnavailable": "Khôi phục thử: không thể thực hiện cho phần này",
   "overview.check.drillRunning": "Khôi phục thử: đang chạy",

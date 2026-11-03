@@ -150,6 +150,8 @@ La voie la plus rapide vers une copie append-only est un BombVault appairé avec
 
 BombVault prouve périodiquement la garantie append-only en tentant réellement une suppression contre le dépôt hors site, visant un objet inexistant. **Tester la protection contre la suppression maintenant** sur la page d'une destination la lance à la demande, et **Vérifier la protection contre la suppression** sous **Paramètres, Vérification, Contrôles automatiques** la lance selon un planning.
 
+Désactiver **Vérifier la protection contre la suppression** ne masque aucune faille : une protection jamais testée apparaît alors comme non prouvée parce que sa vérification est désactivée, et un emplacement sans protection contre la suppression apparaît sans protection dans tous les cas.
+
 Une copie désactivée n'est pas testée, et la destination l'indique. Le test de connexion fonctionne toujours, car il ne fait que lire : une copie peut donc être vérifiée avant d'être activée.
 
 - **Refusé** signifie protégé.

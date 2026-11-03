@@ -150,6 +150,8 @@ La vía más rápida a una copia append-only es un BombVault emparejado con un [
 
 BombVault demuestra periódicamente la garantía append-only intentando realmente un borrado contra el repo externo, dirigido a un objeto inexistente. **Probar la protección contra borrado ahora** en la página de un destino la ejecuta a demanda, y **Comprobar la protección contra borrado** en **Ajustes, Verificación, Comprobaciones automáticas** la ejecuta según un calendario.
 
+Desactivar **Comprobar la protección contra borrado** no oculta ningún hueco: una protección que nunca se probó aparece entonces como sin demostrar porque su comprobación está desactivada, y una ubicación sin protección contra borrado aparece sin ella en cualquier caso.
+
 Una copia desactivada no se prueba, y el destino lo indica. La prueba de conexión sigue funcionando con ella, porque solo lee, así que una copia se puede comprobar antes de activarla.
 
 - **Rechazado** significa protegido.

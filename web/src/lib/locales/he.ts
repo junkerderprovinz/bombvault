@@ -4364,6 +4364,8 @@ const he: Partial<Translations> = {
   "overview.check.lockChecked": "הגנה מפני מחיקה: נבדק",
   "overview.check.lockFailed": "הגנה מפני מחיקה: הבדיקה נכשלה",
   "overview.check.lockUnproven": "הגנה מפני מחיקה: עדיין לא הוכחה",
+  "overview.check.lockNone": "הגנה מפני מחיקה: אין",
+  "overview.check.lockCheckOff": "הגנה מפני מחיקה: לא הוכחה, הבדיקה כבויה",
   "overview.check.drillNeedsOffsite": "שחזור ניסיון: נדרש יעד מחוץ לאתר",
   "overview.check.drillUnavailable": "שחזור ניסיון: לא אפשרי לתחום הזה",
   "overview.check.drillRunning": "שחזור ניסיון: מתבצע",

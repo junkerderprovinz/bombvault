@@ -150,6 +150,8 @@ Nopein tie append-only-kopioon on pariliitetty BombVault, jolla on [vastaanottop
 
 BombVault todistaa ajoittain append-only-takeen yrittämällä oikeasti poistoa etärepoa vastaan, kohdistettuna olemattomaan objektiin. **Testaa poistosuoja nyt** kohteen sivulla ajaa sen pyynnöstä, ja **Tarkista poistosuoja** kohdassa **Asetukset, Tarkistus, Automaattiset tarkistukset** ajaa sen aikataulun mukaan.
 
+Kun **Tarkista poistosuoja** kytketään pois, aukko ei piiloudu: koskaan testaamaton poistosuoja näkyy silloin todistamattomana, koska tarkistus on pois päältä, ja paikka ilman poistosuojaa näkyy joka tapauksessa suojattomana.
+
 Pois päältä olevaa kopiota ei testata, ja kohde kertoo sen. Yhteystesti toimii silti, koska se vain lukee, joten kopion voi tarkistaa ennen kuin sen ottaa käyttöön.
 
 - **Torjuttu** tarkoittaa suojattua.

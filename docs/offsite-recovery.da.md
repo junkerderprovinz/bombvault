@@ -150,6 +150,8 @@ Den hurtigste vej til en append-only-kopi er en parret BombVault med en [modtage
 
 BombVault beviser jævnligt append-only-garantien ved faktisk at forsøge en sletning i off-site-repositoriet, rettet mod et ikke-eksisterende objekt. **Test beskyttelsen mod sletning nu** på en destinations side kører den på forlangende, og **Tjek sletningsbeskyttelse** under **Indstillinger, Verificering, Automatiske tjek** kører den efter en tidsplan.
 
+At slå **Tjek sletningsbeskyttelse** fra skjuler ikke et hul: en beskyttelse, der aldrig er testet, vises så som ikke bevist, fordi kontrollen er slået fra, og en placering uden beskyttelse mod sletning vises som uden beskyttelse under alle omstændigheder.
+
 En kopi, der er slået fra, testes ikke, og destinationen siger det. Forbindelsestesten virker stadig, fordi den kun læser, så en kopi kan tjekkes, før den slås til.
 
 - **Afvist** betyder beskyttet.

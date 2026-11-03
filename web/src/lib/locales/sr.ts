@@ -4358,6 +4358,8 @@ const sr: Partial<Translations> = {
   "overview.check.lockChecked": "Заштита од брисања: проверено",
   "overview.check.lockFailed": "Заштита од брисања: тест није успео",
   "overview.check.lockUnproven": "Заштита од брисања: још није доказано",
+  "overview.check.lockNone": "Заштита од брисања: нема",
+  "overview.check.lockCheckOff": "Заштита од брисања: није доказано, провера је искључена",
   "overview.check.drillNeedsOffsite": "Пробно враћање: треба спољно одредиште",
   "overview.check.drillUnavailable": "Пробно враћање: није могуће за овај одељак",
   "overview.check.drillRunning": "Пробно враћање: у току",

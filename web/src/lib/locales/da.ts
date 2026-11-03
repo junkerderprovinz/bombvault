@@ -4364,6 +4364,8 @@ const da: Partial<Translations> = {
   "overview.check.lockChecked": "Beskyttelse mod sletning: kontrolleret",
   "overview.check.lockFailed": "Beskyttelse mod sletning: testen fejlede",
   "overview.check.lockUnproven": "Beskyttelse mod sletning: endnu ikke bevist",
+  "overview.check.lockNone": "Beskyttelse mod sletning: ingen",
+  "overview.check.lockCheckOff": "Beskyttelse mod sletning: ikke bevist, kontrollen er slået fra",
   "overview.check.drillNeedsOffsite": "Testgendannelse: kræver en off-site-destination",
   "overview.check.drillUnavailable": "Testgendannelse: ikke mulig for dette område",
   "overview.check.drillRunning": "Testgendannelse: kører",

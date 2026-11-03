@@ -150,6 +150,8 @@ Nejrychlejší cesta ke kopii append-only je spárovaný BombVault s [přijímac
 
 BombVault pravidelně dokazuje záruku append-only tím, že se skutečně pokusí o smazání v repozitáři mimo lokalitu, zaměřené na neexistující objekt. **Otestovat ochranu proti smazání hned** na stránce cíle ho spustí na požádání a **Kontrola ochrany proti smazání** v **Nastavení, Ověření, Automatické kontroly** ho spouští podle plánu.
 
+Vypnutí **Kontrola ochrany proti smazání** žádnou mezeru neskryje: nikdy netestovaná ochrana se pak ukáže jako neprokázaná, protože kontrola je vypnutá, a úložiště bez ochrany proti smazání se v obou případech ukáže jako bez ochrany.
+
 Vypnutá kopie se netestuje a cíl to uvádí. Test připojení u ní funguje dál, protože jen čte, takže kopii lze ověřit dřív, než ji zapneš.
 
 - **Odmítnuto** znamená chráněno.

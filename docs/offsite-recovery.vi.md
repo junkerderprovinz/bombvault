@@ -150,6 +150,8 @@ Cách nhanh nhất để có một bản sao append-only là một BombVault đ�
 
 BombVault định kỳ chứng minh bảo đảm append-only bằng cách thực sự thử xóa trên kho off-site, nhắm vào một đối tượng không tồn tại. **Kiểm tra bảo vệ chống xóa ngay** trên trang của một đích chạy nó theo yêu cầu, và **Kiểm tra bảo vệ chống xóa** dưới **Cài đặt, Xác minh, Kiểm tra tự động** chạy nó theo lịch.
 
+Tắt **Kiểm tra bảo vệ chống xóa** không che giấu lỗ hổng nào: một bảo vệ chưa từng được kiểm tra khi đó hiển thị là chưa chứng minh vì việc kiểm tra đang tắt, còn một vị trí không có bảo vệ chống xóa thì trường hợp nào cũng hiển thị là không có.
+
 Bản sao đang tắt sẽ không được kiểm tra, và đích sẽ ghi rõ điều đó. Kiểm tra kết nối vẫn chạy được vì nó chỉ đọc, nên có thể kiểm tra một bản sao trước khi bật nó.
 
 - **Bị từ chối** nghĩa là được bảo vệ.

@@ -4364,6 +4364,8 @@ const fr: Partial<Translations> = {
   "overview.check.lockChecked": "Protection contre la suppression : vérifiée",
   "overview.check.lockFailed": "Protection contre la suppression : le test a échoué",
   "overview.check.lockUnproven": "Protection contre la suppression : pas encore prouvée",
+  "overview.check.lockNone": "Protection contre la suppression : aucune",
+  "overview.check.lockCheckOff": "Protection contre la suppression : non prouvée, sa vérification est désactivée",
   "overview.check.drillNeedsOffsite": "Restauration de test : nécessite une destination hors site",
   "overview.check.drillUnavailable": "Restauration de test : impossible pour cette section",
   "overview.check.drillRunning": "Restauration de test : en cours",

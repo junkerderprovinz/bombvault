@@ -4364,6 +4364,8 @@ const el: Partial<Translations> = {
   "overview.check.lockChecked": "Προστασία από διαγραφή: ελέγχθηκε",
   "overview.check.lockFailed": "Προστασία από διαγραφή: η δοκιμή απέτυχε",
   "overview.check.lockUnproven": "Προστασία από διαγραφή: δεν έχει αποδειχθεί ακόμη",
+  "overview.check.lockNone": "Προστασία από διαγραφή: καμία",
+  "overview.check.lockCheckOff": "Προστασία από διαγραφή: δεν έχει αποδειχθεί, ο έλεγχος είναι ανενεργός",
   "overview.check.drillNeedsOffsite": "Δοκιμαστική επαναφορά: απαιτεί προορισμό εκτός τόπου",
   "overview.check.drillUnavailable": "Δοκιμαστική επαναφορά: δεν είναι δυνατή για αυτόν τον τομέα",
   "overview.check.drillRunning": "Δοκιμαστική επαναφορά: σε εξέλιξη",

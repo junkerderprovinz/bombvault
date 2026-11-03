@@ -4374,6 +4374,8 @@ const eu: Partial<Translations> = {
   "overview.check.lockChecked": "Ezabatzearen aurkako babesa: egiaztatuta",
   "overview.check.lockFailed": "Ezabatzearen aurkako babesa: probak huts egin du",
   "overview.check.lockUnproven": "Ezabatzearen aurkako babesa: oraindik frogatu gabe",
+  "overview.check.lockNone": "Ezabatzearen aurkako babesa: bat ere ez",
+  "overview.check.lockCheckOff": "Ezabatzearen aurkako babesa: frogatu gabe, egiaztapena itzalita dago",
   "overview.check.drillNeedsOffsite": "Proba-leheneratzea: kanpoko helmuga bat behar du",
   "overview.check.drillUnavailable": "Proba-leheneratzea: ez da posible atal honetan",
   "overview.check.drillRunning": "Proba-leheneratzea: martxan",

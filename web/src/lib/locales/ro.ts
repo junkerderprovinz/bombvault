@@ -4365,6 +4365,8 @@ const ro: Partial<Translations> = {
   "overview.check.lockChecked": "Protecție împotriva ștergerii: verificată",
   "overview.check.lockFailed": "Protecție împotriva ștergerii: testul a eșuat",
   "overview.check.lockUnproven": "Protecție împotriva ștergerii: încă nedovedită",
+  "overview.check.lockNone": "Protecție împotriva ștergerii: niciuna",
+  "overview.check.lockCheckOff": "Protecție împotriva ștergerii: nedovedită, verificarea este oprită",
   "overview.check.drillNeedsOffsite": "Restaurare de test: necesită o destinație off-site",
   "overview.check.drillUnavailable": "Restaurare de test: imposibilă pentru această secțiune",
   "overview.check.drillRunning": "Restaurare de test: rulează",

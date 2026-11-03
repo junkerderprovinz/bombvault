@@ -150,6 +150,8 @@ O caminho mais rápido para uma cópia append-only é um BombVault emparelhado c
 
 O BombVault prova periodicamente a garantia append-only tentando de facto uma eliminação contra o repo externo, dirigida a um objeto inexistente. **Testar agora a proteção contra eliminação** na página de um destino corre-o a pedido, e **Verificar proteção contra eliminação** em **Definições, Verificação, Verificações automáticas** corre-o num agendamento.
 
+Desligar **Verificar proteção contra eliminação** não esconde nenhuma falha: uma proteção nunca testada aparece então como não comprovada porque a verificação está desligada, e um local sem proteção contra eliminação aparece sem proteção em qualquer caso.
+
 Uma cópia desligada não é testada, e o destino indica-o. O teste de ligação continua a funcionar, porque só lê, por isso uma cópia pode ser verificada antes de ser ligada.
 
 - **Recusada** significa protegido.

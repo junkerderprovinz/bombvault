@@ -150,6 +150,8 @@ Den raskeste veien til en append-only-kopi er en paret BombVault med en [mottaks
 
 BombVault beviser append-only-garantien jevnlig ved faktisk å forsøke en sletting mot det eksterne repoet, rettet mot et objekt som ikke finnes. **Test beskyttelsen mot sletting nå** på siden til et mål kjører den på forespørsel, og **Kontroller slettebeskyttelse** under **Innstillinger, Verifisering, Automatiske kontroller** kjører den etter en tidsplan.
 
+Å slå av **Kontroller slettebeskyttelse** skjuler ikke et hull: en beskyttelse som aldri er testet, vises da som ikke bevist fordi kontrollen er av, og et sted uten beskyttelse mot sletting vises som uten beskyttelse uansett.
+
 En kopi som er slått av, testes ikke, og målet sier det. Tilkoblingstesten virker fortsatt, fordi den bare leser, så en kopi kan kontrolleres før den slås på.
 
 - **Avvist** betyr beskyttet.

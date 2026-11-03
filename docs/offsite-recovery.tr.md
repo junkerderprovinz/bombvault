@@ -150,6 +150,8 @@ Append-only bir kopyaya en hızlı yol, bir [alıcı sunucu](#receiving-server) 
 
 BombVault, append-only garantisini site dışı depoya, var olmayan bir nesneye yönelik gerçekten bir silme denemesi yaparak düzenli olarak kanıtlar. Bir hedefin sayfasındaki **Silmeye karşı korumayı şimdi sına** onu istek üzerine, **Ayarlar, Doğrulama, Otomatik denetimler** altındaki **Silme korumasını denetle** ise bir zamanlamayla çalıştırır.
 
+**Silme korumasını denetle** seçeneğini kapatmak bir açığı gizlemez: hiç test edilmemiş bir koruma o zaman denetimi kapalı olduğu için kanıtlanmamış görünür, silmeye karşı koruması olmayan bir konum ise her durumda korumasız görünür.
+
 Kapalı bir kopya sınanmaz ve hedef bunu belirtir. Bağlantı testi yalnızca okuduğu için yine çalışır, böylece bir kopya açılmadan önce denetlenebilir.
 
 - **Reddedildi**, korunuyor demektir.

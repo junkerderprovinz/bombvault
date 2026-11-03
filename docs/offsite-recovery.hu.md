@@ -150,6 +150,8 @@ A leggyorsabb út egy append-only másolathoz egy párosított BombVault [fogad�
 
 A BombVault rendszeresen bizonyítja az append-only garanciát azzal, hogy ténylegesen törlést kísérel meg a telephelyen kívüli tárolón, egy nem létező objektumra célozva. A **Törlés elleni védelem tesztelése most** egy cél oldalán igény szerint lefuttatja, a **Törlésvédelem ellenőrzése** pedig a **Beállítások, Ellenőrzés, Automatikus ellenőrzések** alatt ütemezve futtatja.
 
+A **Törlésvédelem ellenőrzése** kikapcsolása nem rejt el hiányt: egy soha nem tesztelt védelem ekkor nem bizonyítottként jelenik meg, mert az ellenőrzése ki van kapcsolva, a törlés elleni védelem nélküli hely pedig mindenképp védelem nélküliként.
+
 A kikapcsolt másolatot nem teszteli, és a cél ezt jelzi. A kapcsolatteszt továbbra is működik rajta, mert csak olvas, így egy másolat bekapcsolás előtt is ellenőrizhető.
 
 - Az **elutasítás** azt jelenti, hogy védett.

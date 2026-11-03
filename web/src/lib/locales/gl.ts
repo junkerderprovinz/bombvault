@@ -4374,6 +4374,8 @@ const gl: Partial<Translations> = {
   "overview.check.lockChecked": "Protección contra a eliminación: comprobada",
   "overview.check.lockFailed": "Protección contra a eliminación: a proba fallou",
   "overview.check.lockUnproven": "Protección contra a eliminación: aínda sen demostrar",
+  "overview.check.lockNone": "Protección contra a eliminación: ningunha",
+  "overview.check.lockCheckOff": "Protección contra a eliminación: sen demostrar, a comprobación está desactivada",
   "overview.check.drillNeedsOffsite": "Restauración de proba: precisa un destino externo",
   "overview.check.drillUnavailable": "Restauración de proba: non é posible para esta sección",
   "overview.check.drillRunning": "Restauración de proba: en curso",

@@ -4362,6 +4362,8 @@ const es: Partial<Translations> = {
   "overview.check.lockChecked": "Protección contra borrado: comprobada",
   "overview.check.lockFailed": "Protección contra borrado: la prueba falló",
   "overview.check.lockUnproven": "Protección contra borrado: aún sin demostrar",
+  "overview.check.lockNone": "Protección contra borrado: ninguna",
+  "overview.check.lockCheckOff": "Protección contra borrado: sin demostrar, la comprobación está desactivada",
   "overview.check.drillNeedsOffsite": "Restauración de prueba: necesita un destino externo",
   "overview.check.drillUnavailable": "Restauración de prueba: no es posible para esta sección",
   "overview.check.drillRunning": "Restauración de prueba: en curso",

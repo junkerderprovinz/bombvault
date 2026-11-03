@@ -4363,6 +4363,8 @@ const nl: Partial<Translations> = {
   "overview.check.lockChecked": "Bescherming tegen verwijderen: gecontroleerd",
   "overview.check.lockFailed": "Bescherming tegen verwijderen: test mislukt",
   "overview.check.lockUnproven": "Bescherming tegen verwijderen: nog niet bewezen",
+  "overview.check.lockNone": "Bescherming tegen verwijderen: geen",
+  "overview.check.lockCheckOff": "Bescherming tegen verwijderen: niet bewezen, de controle staat uit",
   "overview.check.drillNeedsOffsite": "Testherstel: heeft een off-site-bestemming nodig",
   "overview.check.drillUnavailable": "Testherstel: niet mogelijk voor dit onderdeel",
   "overview.check.drillRunning": "Testherstel: loopt",

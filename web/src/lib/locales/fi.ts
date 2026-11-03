@@ -4364,6 +4364,8 @@ const fi: Partial<Translations> = {
   "overview.check.lockChecked": "Poistosuoja: tarkistettu",
   "overview.check.lockFailed": "Poistosuoja: testi epäonnistui",
   "overview.check.lockUnproven": "Poistosuoja: ei vielä todistettu",
+  "overview.check.lockNone": "Poistosuoja: ei ole",
+  "overview.check.lockCheckOff": "Poistosuoja: ei todistettu, tarkistus on pois päältä",
   "overview.check.drillNeedsOffsite": "Koepalautus: tarvitsee etäkohteen",
   "overview.check.drillUnavailable": "Koepalautus: ei mahdollinen tälle osiolle",
   "overview.check.drillRunning": "Koepalautus: käynnissä",

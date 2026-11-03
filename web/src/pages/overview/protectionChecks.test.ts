@@ -113,12 +113,20 @@ describe("the delete protection check", () => {
   });
 
   it("is a gap, not a grey mark, while an off-site copy can be deleted", () => {
-    expect(lock({ offsiteImmutable: false, tamperState: "" })).toEqual({ tone: "warn", say: "overview.check.lockUnproven" });
+    expect(lock({ offsiteImmutable: false, tamperState: "" })).toEqual({ tone: "warn", say: "overview.check.lockNone" });
+  });
+
+  it("names a missing protection the same whether its check is on or off", () => {
+    expect(lock({ offsiteImmutable: false, tamperState: "", tamperOff: true })).toEqual({ tone: "warn", say: "overview.check.lockNone" });
   });
 
   it("warns while the proof is missing or stale", () => {
-    expect(lock({ tamperState: "never" }).tone).toBe("warn");
+    expect(lock({ tamperState: "never" })).toEqual({ tone: "warn", say: "overview.check.lockUnproven" });
     expect(lock({ tamperState: "stale" }).tone).toBe("warn");
+  });
+
+  it("says why the proof stays missing while its check is switched off", () => {
+    expect(lock({ tamperState: "never", tamperOff: true })).toEqual({ tone: "warn", say: "overview.check.lockCheckOff" });
   });
 
   it("is red when the test deleted something", () => {

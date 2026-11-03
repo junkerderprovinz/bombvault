@@ -4374,6 +4374,8 @@ const fa: Partial<Translations> = {
   "overview.check.lockChecked": "محافظت در برابر حذف: بررسی شد",
   "overview.check.lockFailed": "محافظت در برابر حذف: آزمایش شکست خورد",
   "overview.check.lockUnproven": "محافظت در برابر حذف: هنوز اثبات نشده",
+  "overview.check.lockNone": "محافظت در برابر حذف: ندارد",
+  "overview.check.lockCheckOff": "محافظت در برابر حذف: اثبات نشده، بررسی آن خاموش است",
   "overview.check.drillNeedsOffsite": "بازیابی آزمایشی: به مقصد خارج از محل نیاز دارد",
   "overview.check.drillUnavailable": "بازیابی آزمایشی: برای این حوزه ممکن نیست",
   "overview.check.drillRunning": "بازیابی آزمایشی: در حال اجرا",

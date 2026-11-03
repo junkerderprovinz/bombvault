@@ -4361,6 +4361,8 @@ const uk: Partial<Translations> = {
   "overview.check.lockChecked": "Захист від видалення: перевірено",
   "overview.check.lockFailed": "Захист від видалення: тест не пройдено",
   "overview.check.lockUnproven": "Захист від видалення: ще не підтверджено",
+  "overview.check.lockNone": "Захист від видалення: немає",
+  "overview.check.lockCheckOff": "Захист від видалення: не підтверджено, перевірку вимкнено",
   "overview.check.drillNeedsOffsite": "Тестове відновлення: потрібне зовнішнє місце призначення",
   "overview.check.drillUnavailable": "Тестове відновлення: для цього розділу неможливо",
   "overview.check.drillRunning": "Тестове відновлення: триває",

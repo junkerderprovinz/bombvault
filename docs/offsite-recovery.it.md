@@ -150,6 +150,8 @@ La via più rapida a una copia append-only è un BombVault associato con un [ser
 
 BombVault dimostra periodicamente la garanzia append-only tentando effettivamente un'eliminazione contro il repo off-site, mirata a un oggetto inesistente. **Prova subito la protezione dall'eliminazione** nella pagina di una destinazione la esegue su richiesta, e **Controlla la protezione dall'eliminazione** in **Impostazioni, Verifica, Controlli automatici** la esegue secondo una pianificazione.
 
+Disattivare **Controlla la protezione dall'eliminazione** non nasconde nessuna lacuna: una protezione mai testata appare allora come non dimostrata perché il suo controllo è disattivato, e una posizione senza protezione dall'eliminazione appare senza protezione in ogni caso.
+
 Una copia disattivata non viene testata, e la destinazione lo dice. Il test di connessione funziona comunque, perché legge soltanto, così una copia si può verificare prima di attivarla.
 
 - **Rifiutata** significa protetto.

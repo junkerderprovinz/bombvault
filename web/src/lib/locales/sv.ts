@@ -4364,6 +4364,8 @@ const sv: Partial<Translations> = {
   "overview.check.lockChecked": "Skydd mot radering: kontrollerat",
   "overview.check.lockFailed": "Skydd mot radering: testet misslyckades",
   "overview.check.lockUnproven": "Skydd mot radering: inte bevisat än",
+  "overview.check.lockNone": "Skydd mot radering: inget",
+  "overview.check.lockCheckOff": "Skydd mot radering: inte bevisat, kontrollen är avstängd",
   "overview.check.drillNeedsOffsite": "Teståterställning: behöver ett externt mål",
   "overview.check.drillUnavailable": "Teståterställning: inte möjlig för det här avsnittet",
   "overview.check.drillRunning": "Teståterställning: pågår",

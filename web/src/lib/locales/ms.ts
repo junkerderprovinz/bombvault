@@ -4374,6 +4374,8 @@ const ms: Partial<Translations> = {
   "overview.check.lockChecked": "Perlindungan daripada pemadaman: disemak",
   "overview.check.lockFailed": "Perlindungan daripada pemadaman: ujian gagal",
   "overview.check.lockUnproven": "Perlindungan daripada pemadaman: belum dibuktikan",
+  "overview.check.lockNone": "Perlindungan daripada pemadaman: tiada",
+  "overview.check.lockCheckOff": "Perlindungan daripada pemadaman: belum dibuktikan, semakannya dimatikan",
   "overview.check.drillNeedsOffsite": "Pemulihan ujian: memerlukan destinasi luar tapak",
   "overview.check.drillUnavailable": "Pemulihan ujian: tidak boleh untuk bahagian ini",
   "overview.check.drillRunning": "Pemulihan ujian: sedang berjalan",

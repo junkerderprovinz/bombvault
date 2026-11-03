@@ -4361,6 +4361,8 @@ const pl: Partial<Translations> = {
   "overview.check.lockChecked": "Ochrona przed usunięciem: sprawdzono",
   "overview.check.lockFailed": "Ochrona przed usunięciem: test się nie powiódł",
   "overview.check.lockUnproven": "Ochrona przed usunięciem: jeszcze nie udowodniono",
+  "overview.check.lockNone": "Ochrona przed usunięciem: brak",
+  "overview.check.lockCheckOff": "Ochrona przed usunięciem: nieudowodniona, sprawdzanie jest wyłączone",
   "overview.check.drillNeedsOffsite": "Testowe odtwarzanie: wymaga miejsca docelowego poza siedzibą",
   "overview.check.drillUnavailable": "Testowe odtwarzanie: niemożliwe dla tej sekcji",
   "overview.check.drillRunning": "Testowe odtwarzanie: trwa",

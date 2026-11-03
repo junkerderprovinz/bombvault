@@ -4365,6 +4365,8 @@ const ar: Partial<Translations> = {
   "overview.check.lockChecked": "الحماية من الحذف: تم الفحص",
   "overview.check.lockFailed": "الحماية من الحذف: فشل الاختبار",
   "overview.check.lockUnproven": "الحماية من الحذف: لم يثبت بعد",
+  "overview.check.lockNone": "الحماية من الحذف: غير متوفرة",
+  "overview.check.lockCheckOff": "الحماية من الحذف: لم تثبت، وفحصها متوقف",
   "overview.check.drillNeedsOffsite": "الاستعادة التجريبية: تحتاج إلى وجهة خارج الموقع",
   "overview.check.drillUnavailable": "الاستعادة التجريبية: غير ممكنة لهذا القسم",
   "overview.check.drillRunning": "الاستعادة التجريبية: قيد التشغيل",

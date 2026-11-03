@@ -4374,6 +4374,8 @@ const bg: Partial<Translations> = {
   "overview.check.lockChecked": "Защита срещу изтриване: проверено",
   "overview.check.lockFailed": "Защита срещу изтриване: тестът е неуспешен",
   "overview.check.lockUnproven": "Защита срещу изтриване: още не е доказана",
+  "overview.check.lockNone": "Защита срещу изтриване: няма",
+  "overview.check.lockCheckOff": "Защита срещу изтриване: не е доказана, проверката е изключена",
   "overview.check.drillNeedsOffsite": "Тестово възстановяване: изисква дестинация извън обекта",
   "overview.check.drillUnavailable": "Тестово възстановяване: невъзможно за този раздел",
   "overview.check.drillRunning": "Тестово възстановяване: върви",

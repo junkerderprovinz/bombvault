@@ -4374,6 +4374,8 @@ const lv: Partial<Translations> = {
   "overview.check.lockChecked": "Aizsardzība pret dzēšanu: pārbaudīts",
   "overview.check.lockFailed": "Aizsardzība pret dzēšanu: tests neizdevās",
   "overview.check.lockUnproven": "Aizsardzība pret dzēšanu: vēl nav pierādīts",
+  "overview.check.lockNone": "Aizsardzība pret dzēšanu: nav",
+  "overview.check.lockCheckOff": "Aizsardzība pret dzēšanu: nav pierādīta, pārbaude ir izslēgta",
   "overview.check.drillNeedsOffsite": "Testa atjaunošana: vajadzīgs attālināts mērķis",
   "overview.check.drillUnavailable": "Testa atjaunošana: šai sadaļai nav iespējams",
   "overview.check.drillRunning": "Testa atjaunošana: notiek",

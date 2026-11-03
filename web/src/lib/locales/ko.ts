@@ -4355,6 +4355,8 @@ const ko: Partial<Translations> = {
   "overview.check.lockChecked": "삭제 방지: 확인됨",
   "overview.check.lockFailed": "삭제 방지: 테스트 실패",
   "overview.check.lockUnproven": "삭제 방지: 아직 검증되지 않음",
+  "overview.check.lockNone": "삭제 방지: 없음",
+  "overview.check.lockCheckOff": "삭제 방지: 검증되지 않음, 검사가 꺼져 있음",
   "overview.check.drillNeedsOffsite": "테스트 복원: 오프사이트 대상 필요",
   "overview.check.drillUnavailable": "테스트 복원: 이 섹션에서는 불가능",
   "overview.check.drillRunning": "테스트 복원: 진행 중",

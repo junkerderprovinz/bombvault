@@ -150,6 +150,8 @@ Cea mai rapidă cale spre o copie append-only este un BombVault împerecheat cu 
 
 BombVault dovedește periodic garanția append-only încercând efectiv o ștergere în depozitul off-site, țintită la un obiect inexistent. **Testează acum protecția împotriva ștergerii** pe pagina unei destinații îl rulează la cerere, iar **Verifică protecția la ștergere** la **Setări, Verificare, Verificări automate** îl rulează după un program.
 
+Oprirea **Verifică protecția la ștergere** nu ascunde nicio lipsă: o protecție netestată niciodată apare atunci ca nedovedită pentru că verificarea este oprită, iar o locație fără protecție împotriva ștergerii apare fără protecție în orice caz.
+
 O copie oprită nu este testată, iar destinația spune asta. Testul de conexiune merge în continuare, pentru că doar citește, deci o copie poate fi verificată înainte să fie pornită.
 
 - **Refuzat** înseamnă protejat.

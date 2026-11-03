@@ -4374,6 +4374,8 @@ const et: Partial<Translations> = {
   "overview.check.lockChecked": "Kustutamiskaitse: kontrollitud",
   "overview.check.lockFailed": "Kustutamiskaitse: test ebaõnnestus",
   "overview.check.lockUnproven": "Kustutamiskaitse: pole veel tõendatud",
+  "overview.check.lockNone": "Kustutamiskaitse: puudub",
+  "overview.check.lockCheckOff": "Kustutamiskaitse: tõendamata, kontroll on välja lülitatud",
   "overview.check.drillNeedsOffsite": "Proovitaastamine: vajab välist sihtkohta",
   "overview.check.drillUnavailable": "Proovitaastamine: pole selle valdkonna jaoks võimalik",
   "overview.check.drillRunning": "Proovitaastamine: käib",

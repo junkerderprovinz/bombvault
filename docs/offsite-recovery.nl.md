@@ -150,6 +150,8 @@ De snelste weg naar een append-only kopie is een gekoppelde BombVault met een [o
 
 BombVault bewijst de append-only-garantie periodiek door daadwerkelijk een verwijdering te proberen tegen de off-site repo, gericht op een niet-bestaand object. **Bescherming tegen verwijderen nu testen** op de pagina van een bestemming draait de test op aanvraag, en **Verwijderbeveiliging controleren** onder **Instellingen, Verificatie, Automatische controles** draait haar volgens een schema.
 
+**Verwijderbeveiliging controleren** uitzetten verbergt geen gat: een bescherming die nooit getest is, staat dan als niet bewezen omdat de controle uitstaat, en een locatie zonder bescherming tegen verwijderen staat hoe dan ook als zonder bescherming.
+
 Een kopie die uit staat wordt niet getest, en de bestemming zegt dat. De verbindingstest werkt er nog wel op, omdat die alleen leest, zodat je een kopie kunt controleren voordat je hem aanzet.
 
 - **Geweigerd** betekent beschermd.

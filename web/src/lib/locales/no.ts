@@ -4364,6 +4364,8 @@ const no: Partial<Translations> = {
   "overview.check.lockChecked": "Beskyttelse mot sletting: kontrollert",
   "overview.check.lockFailed": "Beskyttelse mot sletting: testen feilet",
   "overview.check.lockUnproven": "Beskyttelse mot sletting: ikke bevist ennå",
+  "overview.check.lockNone": "Beskyttelse mot sletting: ingen",
+  "overview.check.lockCheckOff": "Beskyttelse mot sletting: ikke bevist, kontrollen er slått av",
   "overview.check.drillNeedsOffsite": "Testgjenoppretting: trenger et off-site-mål",
   "overview.check.drillUnavailable": "Testgjenoppretting: ikke mulig for dette området",
   "overview.check.drillRunning": "Testgjenoppretting: pågår",
