@@ -4838,9 +4838,9 @@ func (s *Service) copyToOffsiteTarget(ctx context.Context, domain string, settin
 	// through the 0700 dirs, while a CIFS mount authenticates as an ordinary SMB
 	// user whose access the far side denies (issue #138 follow-up). Deferred, so a
 	// copy that fails half-way, or a retention prune that writes fresh index/pack
-	// files after it, is covered too; makeOffsiteRepoReadable skips remote
+	// files after it, is covered too; makeLocalRepoReadable skips remote
 	// destinations and a path that is not there yet.
-	defer makeOffsiteRepoReadable(dest, s.cfg.DataDir)
+	defer makeLocalRepoReadable(dest, s.cfg.DataDir)
 	// Per-target restic mode carrying this destination's S3 storage class (see
 	// offsiteModeForTarget: the global class is preserved for a backfilled N=1
 	// target whose class is "").
@@ -8054,32 +8054,23 @@ func writePermStamp(path string, at time.Time) {
 	_ = os.Chtimes(path, at, at)
 }
 
-// makeOffsiteRepoReadable is makeRepoReadable for an off-site DESTINATION repo:
-// the same relax pass every backup already runs on the primary repo, applied to
-// the replica so the far side of a mounted-share destination is readable by the
-// share's non-root clients too.
+// makeLocalRepoReadable is makeRepoReadable for a repository that may sit behind
+// a remote backend: an off-site destination, or whatever repository a prune, a
+// tag or a pull has just written to. A remote backend has no tree here to chmod
+// and is skipped.
 //
-// Why the destination needs it at all: restic derives its modes from the repo's
-// existing `data` directory and otherwise defaults to 0700 dirs / 0400 files, so
-// an off-site repo BombVault creates (EnsureRepo → paths.EnsureDir, 0700) stays
-// root-only forever — every pack, index and snapshot file included. On a local
-// repo that never showed, because the operator reads it through the same root
-// process; on a share it decides whether ANY other client can open the replica.
+// restic derives its modes from the repository's data directory and otherwise
+// writes 0700 directories and 0400 files, so a destination BombVault creates
+// stays root-only, which on a mounted share locks out every other client.
 // Verified against restic 0.17.3: `init` into a 0755 directory still creates
-// data/ and keys/ at 0700 and files at 0400, so relaxing the repo root alone is
-// not enough — the tree has to be walked. Once the walk has run, restic derives
-// group-readable modes for later writes, but still not other-readable ones, so
-// this must run after EVERY replication, exactly like the primary repo's pass.
-//
-// Remote backends have no local tree to chmod and are skipped outright (a bare
-// WalkDir over "rest:http://…" would merely fail, but the guard says so). The
-// repo is encrypted, so group/other READ exposes nothing — the same reasoning
-// makeRepoReadable already documents. Best-effort throughout.
-func makeOffsiteRepoReadable(dest, stampDir string) {
-	if restic.IsRemoteRepo(dest) {
+// data/ and keys/ at 0700, so the whole tree has to be walked. Once it has been,
+// restic writes group-readable files but still not other-readable ones, so this
+// has to run after every write to the repository, not only the first.
+func makeLocalRepoReadable(repo, stampDir string) {
+	if restic.IsRemoteRepo(repo) {
 		return
 	}
-	makeRepoReadable(dest, stampDir)
+	makeRepoReadable(repo, stampDir)
 }
 
 // readStoredDef reads an encrypted definition, preferring the new in-repo location
@@ -18530,6 +18521,13 @@ func (s *Service) pruneDomain(ctx context.Context, domain, source string, afterB
 		}
 		if fErr := s.store.FinishRun(runID, status, "", 0, note); fErr != nil {
 			log.Printf("api: prune %s: could not finish run record: %v", domain, fErr) //nolint:gosec // G706: domain is a fixed literal
+		}
+	}()
+	// The prune writes its new packs and indexes after every item's own relax
+	// pass has run. Deferred, so a prune that fails half-way is covered too.
+	defer func() {
+		for _, r := range repos {
+			makeLocalRepoReadable(r.Loc, s.cfg.DataDir)
 		}
 	}()
 

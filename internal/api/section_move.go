@@ -236,6 +236,7 @@ func (s *Service) MoveSection(ctx context.Context, plan movePlan, startedAt int6
 	if err := s.EnsureRepo(ctx, plan.dst, plan.mode); err != nil {
 		return store.Settings{}, fmt.Errorf("open %s: %w", plan.To, err)
 	}
+	defer makeLocalRepoReadable(plan.dst, s.cfg.DataDir)
 	if err := s.copyPending(ctx, plan, startedAt); err != nil {
 		return store.Settings{}, err
 	}

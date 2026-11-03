@@ -38,6 +38,7 @@ func (s *Service) pruneAfterDelete(domain, repo string, mode restic.Mode) {
 			log.Printf("api: prune after a delete in %s: the run is not recorded: %v", domain, err) //nolint:gosec // G706: domain is a fixed literal
 		}
 		err = s.retryAfterUnlock(ctx, repo, mode, func() error { return s.engine.Prune(ctx, repo, mode) })
+		makeLocalRepoReadable(repo, s.cfg.DataDir)
 		if runID != "" {
 			status := "success"
 			switch {

@@ -121,7 +121,7 @@ func (e *modeErr) Error() string {
 }
 
 // A remote destination has no local tree, so WalkDir must not run on its URL.
-func TestMakeOffsiteRepoReadableSkipsRemote(t *testing.T) {
+func TestMakeLocalRepoReadableSkipsRemote(t *testing.T) {
 	for _, repo := range []string{
 		"rest:http://192.168.1.2:8000/containers",
 		"s3:s3.amazonaws.com/bucket/containers",
@@ -130,15 +130,15 @@ func TestMakeOffsiteRepoReadableSkipsRemote(t *testing.T) {
 		if !restic.IsRemoteRepo(repo) {
 			t.Fatalf("%q must be recognised as a remote repo", repo)
 		}
-		makeOffsiteRepoReadable(repo, t.TempDir())
+		makeLocalRepoReadable(repo, t.TempDir())
 	}
 }
 
 // When the share has not mounted, the destination does not exist and must not
 // be created.
-func TestMakeOffsiteRepoReadableToleratesMissingPath(t *testing.T) {
+func TestMakeLocalRepoReadableToleratesMissingPath(t *testing.T) {
 	missing := filepath.Join(t.TempDir(), "never-mounted")
-	makeOffsiteRepoReadable(missing, t.TempDir())
+	makeLocalRepoReadable(missing, t.TempDir())
 	if _, err := os.Stat(missing); !os.IsNotExist(err) {
 		t.Fatalf("relax pass must not create the destination, stat err = %v", err)
 	}
