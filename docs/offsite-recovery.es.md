@@ -138,6 +138,8 @@ Activa la protección contra borrado en un destino externo para que el ransomwar
 
 El interruptor es del destino: una sección que copia allí lo toma del destino, así que actívalo en la página del destino, en **Destinos**. La comprobación programada **Comprobar la protección contra borrado** solo se ejecuta mientras una sección copia a un destino con el interruptor activado. El otro lado tiene que arrancar con `--append-only`; con la imagen `restic/rest-server`, en TrueNAS como en cualquier otro host Docker, eso va en la variable `OPTIONS`.
 
+Algunos sitios no pueden rechazar un borrado en absoluto, por ejemplo una unidad en la nube como OneDrive. Si guardas copias allí a propósito, activa **Aceptar sin protección contra borrado** en la página de la ubicación. La vista general muestra entonces la protección que falta en una sección que solo copia a ubicaciones aceptadas como un riesgo aceptado, un anillo gris en lugar de un punto ámbar, y el color de la sección sigue sus demás comprobaciones. Nada más cambia: las copias de allí se pueden seguir borrando, BombVault las sigue purgando según las reglas de la ubicación y el interruptor desaparece en cuanto la protección contra borrado está activada. Una copia que se muda a otro sitio pierde la aceptación.
+
 La vía más rápida a una copia append-only es un BombVault emparejado con un [servidor receptor](#receiving-server): ejecuta el rest-server por ti, en modo append-only.
 
 !!! note "Un borrado correcto en `/locks/` es lo esperado"
@@ -167,7 +169,7 @@ BombVault ofrece dos niveles de prueba de que tus copias son realmente restaurab
 - **Ensayos de verificación de restauración (locales).** BombVault ejecuta periódicamente `restic check --read-data-subset` (acotado, nunca una restauración completa que llene el disco). La cadencia está en **Ajustes, Verificación, Comprobaciones automáticas**, y la tarjeta **Comprobar las copias** del mismo mosaico muestra el resultado.
 - **Restauración de prueba (externa).** BombVault restaura un objetivo real desde el repo externo en un entorno de pruebas aislado, lo verifica archivo por archivo y byte por byte, y luego limpia. Esto demuestra que puedes recuperarte desde el externo, no solo que el repo responde.
 
-La tarjeta **Estado de protección** del resumen lo resume por sección en cuatro comprobaciones: una copia actual en este servidor, una copia externa, la protección contra borrado allí y una restauración de prueba desde allí. Un clic en una sección muestra los detalles, y la tarjeta solo se pone en verde con hechos verificados.
+La tarjeta **Estado de protección** del resumen lo resume por sección en cuatro comprobaciones: una copia actual en este servidor, una copia externa, la protección contra borrado allí y una restauración de prueba desde allí. Un clic en una sección muestra los detalles, y la tarjeta solo se pone en verde con hechos verificados. Una ubicación que aceptaste sin protección contra borrado cuenta ahí como un riesgo aceptado, no como un aviso.
 
 ## Emparejamiento de instancias {#pairing}
 

@@ -102,6 +102,11 @@ type OffsiteTarget struct {
 	DestinationID string
 	// Own names the settings a derived target keeps for itself.
 	Own OwnSettings
+	// DeleteRiskAccepted says the user accepted that this location cannot
+	// refuse a delete. A save of the row's other settings leaves it as it is:
+	// SetDeleteRiskAccepted writes it, and a move to another place clears it.
+	// A derived target answers with its destination's.
+	DeleteRiskAccepted bool
 }
 
 // OwnSettings names settings a target derived from a destination holds values
@@ -376,9 +381,13 @@ func forgetDeletedTargetVerdictsTx(tx *sql.Tx, id string) error {
 
 // forgetTargetPlaceTx drops what a target's rows say about the place it held
 // before a move. Its successful copies are kept as aging-only runs, so the
-// domain still counts as replicated and no first-listing pause starts.
+// domain still counts as replicated and no first-listing pause starts. A risk
+// accepted for the old place was not accepted for the new one.
 func forgetTargetPlaceTx(tx *sql.Tx, targetID, domain string) error {
 	if err := forgetPlaceVerdictsTx(tx, targetID, domain); err != nil {
+		return err
+	}
+	if _, err := tx.Exec(`UPDATE offsite_targets SET delete_risk_accepted = 0 WHERE id = ?`, targetID); err != nil {
 		return err
 	}
 	if _, err := tx.Exec(`UPDATE offsite_runs SET aging_only = 1 WHERE offsite_target_id = ? AND ok = 1`, targetID); err != nil {
@@ -531,7 +540,7 @@ const offsiteTargetCols = `id, domain, name, repo, role, creds_ref, storage_clas
 	retention_keep_last, retention_keep_daily, retention_keep_weekly, retention_keep_monthly,
 	limit_upload, limit_download, growth_budget_gb, enabled, created_at, sort_order,
 	companion_of, companion_lost, off_premises, retention_keep_yearly, compression, provider, destination_id,
-	own_settings`
+	own_settings, delete_risk_accepted`
 
 // ListOffsiteTargets returns all off-site REPLICATION DESTINATIONS (role =
 // 'offsite'; a domain's "primary" safety-config row, if any, is never among
@@ -602,6 +611,20 @@ func (r *Repo) ListNamedRepos() ([]OffsiteTarget, error) {
 		out = append(out, t)
 	}
 	return out, rows.Err()
+}
+
+// SetDeleteRiskAccepted records whether the user accepts that the off-site
+// target or destination with the given id cannot refuse a delete.
+func (r *Repo) SetDeleteRiskAccepted(id string, accepted bool) error {
+	res, err := r.db.Exec(`UPDATE offsite_targets SET delete_risk_accepted = ? WHERE id = ? AND role IN (?, ?)`,
+		boolInt(accepted), id, RoleOffsite, RoleDestination)
+	if err != nil {
+		return fmt.Errorf("SetDeleteRiskAccepted: %w", err)
+	}
+	if n, err := res.RowsAffected(); err == nil && n == 0 {
+		return ErrNotOffsiteTarget
+	}
+	return nil
 }
 
 // GetNamedRepo returns one named repository by id, or sql.ErrNoRows. Scoped to
@@ -1310,13 +1333,13 @@ func (r *Repo) DeletePrimaryRemoteTarget(domain string) error {
 
 func scanOffsiteTarget(s scanner) (OffsiteTarget, error) {
 	var t OffsiteTarget
-	var immutable, enabled, lost, offPremises int
+	var immutable, enabled, lost, offPremises, riskAccepted int
 	err := s.Scan(
 		&t.ID, &t.Domain, &t.Name, &t.Repo, &t.Role, &t.CredsRef, &t.StorageClass, &immutable, &t.Schedule,
 		&t.RetentionKeepLast, &t.RetentionKeepDaily, &t.RetentionKeepWeekly, &t.RetentionKeepMonthly,
 		&t.LimitUpload, &t.LimitDownload, &t.GrowthBudgetGB, &enabled, &t.CreatedAt, &t.SortOrder,
 		&t.CompanionOf, &lost, &offPremises, &t.RetentionKeepYearly, &t.Compression, &t.Provider, &t.DestinationID,
-		&t.Own,
+		&t.Own, &riskAccepted,
 	)
 	if err != nil {
 		return OffsiteTarget{}, fmt.Errorf("scanOffsiteTarget: %w", err)
@@ -1325,5 +1348,6 @@ func scanOffsiteTarget(s scanner) (OffsiteTarget, error) {
 	t.Enabled = enabled != 0
 	t.CompanionLost = lost != 0
 	t.OffPremises = offPremises != 0
+	t.DeleteRiskAccepted = riskAccepted != 0
 	return t, nil
 }

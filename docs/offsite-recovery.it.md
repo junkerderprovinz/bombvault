@@ -138,6 +138,8 @@ Attiva la protezione dall'eliminazione per una destinazione off-site così ranso
 
 L'interruttore appartiene alla destinazione: una sezione che copia lì lo prende dalla destinazione, quindi si attiva nella pagina della destinazione, in **Destinazioni**. Il controllo pianificato **Controlla la protezione dall'eliminazione** gira solo finché una sezione copia verso una destinazione con l'interruttore attivo. L'altra parte va avviata con `--append-only`; con l'immagine `restic/rest-server`, su TrueNAS come su qualsiasi altro host Docker, va nella variabile `OPTIONS`.
 
+Alcuni posti non possono rifiutare affatto un'eliminazione, per esempio un disco cloud come OneDrive. Se ci tieni delle copie consapevolmente, attiva **Accetta senza protezione dall'eliminazione** nella pagina della posizione. La panoramica mostra allora la protezione mancante di una sezione che copia solo verso posizioni accettate come rischio accettato, un anello grigio invece di un punto ambra, e il colore della sezione segue gli altri suoi controlli. Nient'altro cambia: i backup lì si possono ancora eliminare, BombVault continua a sfoltirli secondo le regole della posizione, e l'interruttore sparisce appena la protezione dall'eliminazione è attiva. Una copia che si sposta altrove perde l'accettazione.
+
 La via più rapida a una copia append-only è un BombVault associato con un [server ricevente](#receiving-server): esegue il rest-server per te, in modalità append-only.
 
 !!! note "Una cancellazione riuscita sotto `/locks/` è prevista"
@@ -167,7 +169,7 @@ BombVault offre due livelli di prova che i tuoi backup siano effettivamente ripr
 - **Esercitazioni di verifica del ripristino (locali).** BombVault esegue periodicamente `restic check --read-data-subset` (limitato, mai un ripristino completo che riempie il disco). La cadenza si imposta in **Impostazioni, Verifica, Controlli automatici**, e la scheda **Controlla i backup** nello stesso riquadro mostra il risultato.
 - **Ripristino di prova (off-site).** BombVault ripristina una destinazione reale dal repo off-site in una sandbox isolata, la verifica file per file e byte per byte, poi ripulisce. Questo dimostra che puoi recuperare da off-site, non solo che il repo risponde.
 
-La scheda **Stato di protezione** nella panoramica riassume tutto questo per sezione in quattro controlli: un backup recente su questo server, una copia off-site, la protezione dall'eliminazione lì e un ripristino di prova da lì. Un clic su una sezione mostra i dettagli, e la scheda diventa verde solo su fatti verificati.
+La scheda **Stato di protezione** nella panoramica riassume tutto questo per sezione in quattro controlli: un backup recente su questo server, una copia off-site, la protezione dall'eliminazione lì e un ripristino di prova da lì. Un clic su una sezione mostra i dettagli, e la scheda diventa verde solo su fatti verificati. Una posizione che hai accettato senza protezione dall'eliminazione conta lì come rischio accettato, non come avviso.
 
 ## Associazione delle istanze {#pairing}
 

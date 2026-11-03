@@ -3394,6 +3394,10 @@ type DomainStatusEntry struct {
 	// TamperOff says the scheduled check of delete protection is switched
 	// off, so an unproven claim stays unproven until it is tested by hand.
 	TamperOff bool `json:"tamperOff,omitempty"`
+	// DeleteRiskAccepted says every copy of the section that has no delete
+	// protection goes to a storage location where the user accepted that. It
+	// changes how the dashboard words the gap, never what is protected.
+	DeleteRiskAccepted bool `json:"deleteRiskAccepted,omitempty"`
 	// ReplicaState is the ZFS replica line of the scorecard: "" with no item
 	// replicating, "ok", "stale" or "failed".
 	ReplicaState string `json:"replicaState,omitempty"`
@@ -3978,6 +3982,7 @@ func (s *Service) domainStatusFrom(settings store.Settings) ([]DomainStatusEntry
 			Protection:            protection,
 			TamperState:           checks.Tamper,
 			TamperOff:             in.tamperPeriod == 0,
+			DeleteRiskAccepted:    s.deleteRiskAccepted(d.name, settings),
 			ReplicationState:      checks.Replication,
 			DrillState:            checks.Drill,
 			EncryptionOn:          settings.EncryptionEnabled,

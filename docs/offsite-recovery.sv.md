@@ -138,6 +138,8 @@ Slå på raderingsskydd för ett off-site-mål så att ransomware, eller en komp
 
 Reglaget hör till målet: en sektion som kopierar dit tar det från målet, så slå på det på målets sida under **Mål**. Den schemalagda **Kontrollera raderingsskydd** körs bara så länge en sektion kopierar till ett mål där reglaget är på. Andra sidan måste startas med `--append-only`; med avbilden `restic/rest-server`, på TrueNAS som på vilken annan Docker-värd som helst, läggs det i variabeln `OPTIONS`.
 
+Vissa platser kan inte vägra en radering alls, till exempel en molnenhet som OneDrive. Om du medvetet lägger kopior där, slå på **Acceptera utan skydd mot radering** på lagringsplatsens sida. Översikten visar då det saknade skyddet för ett avsnitt som bara kopierar till accepterade platser som en accepterad risk, en grå ring i stället för en gul prick, och avsnittets färg följer dess övriga kontroller. Inget annat ändras: säkerhetskopiorna där kan fortfarande raderas, BombVault rensar dem fortfarande enligt platsens regler, och reglaget försvinner så snart raderingsskyddet är på. En kopia som flyttar till en annan plats förlorar godkännandet.
+
 Snabbaste vägen till en append-only-kopia är en parkopplad BombVault med en [mottagarserver](#receiving-server): den kör rest-servern åt dig, i append-only-läge.
 
 !!! note "En lyckad radering under `/locks/` är väntad"
@@ -167,7 +169,7 @@ BombVault erbjuder två nivåer av bevis för att dina säkerhetskopior verklige
 - **Återställningsverifieringsövningar (lokala).** BombVault kör med jämna mellanrum `restic check --read-data-subset` (begränsat, aldrig en diskfyllande full återställning). Kadensen finns under **Inställningar, Verifiering, Automatiska kontroller**, och kortet **Kontrollera säkerhetskopior** på samma bricka visar resultatet.
 - **Provåterställning (off-site).** BombVault återställer ett riktigt mål från off-site-arkivet i en avskärmad sandlåda, verifierar det fil för fil och byte för byte och städar sedan upp. Det bevisar att du kan återhämta dig från off-site, inte bara att arkivet svarar.
 
-Kortet **Skyddsstatus** på översikten sammanfattar detta per avsnitt i fyra kontroller: en aktuell säkerhetskopia på den här servern, en kopia off-site, raderingsskydd där och en provåterställning därifrån. Ett klick på ett avsnitt visar detaljerna, och kortet blir bara grönt på verifierade fakta.
+Kortet **Skyddsstatus** på översikten sammanfattar detta per avsnitt i fyra kontroller: en aktuell säkerhetskopia på den här servern, en kopia off-site, raderingsskydd där och en provåterställning därifrån. Ett klick på ett avsnitt visar detaljerna, och kortet blir bara grönt på verifierade fakta. En plats som du har accepterat utan skydd mot radering räknas där som en accepterad risk, inte som en varning.
 
 ## Parkoppla instanser {#pairing}
 

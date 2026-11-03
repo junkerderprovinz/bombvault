@@ -50,12 +50,13 @@ function pruner(immutable: boolean, keep: RetentionKeep | undefined): Pruner {
  * picture of what it does, and for a rest-server the test that proves the far
  * side refuses a delete. A folder on this host cannot refuse anything to
  * whoever holds BombVault, so it gets the card only to turn an earlier
- * protection off.
+ * protection off. Where copies go without the protection, the user can accept
+ * that, which the overview then shows as a known gap instead of a warning.
  */
 export function ProtectionCard({ edit, provider, hueIndex }: { edit: LocationEdit; provider?: Provider; hueIndex: number }) {
   const { t, lang } = useT();
   const { location, can, save, busy } = edit;
-  const { immutable, testable, lastTamper } = location.protection;
+  const { immutable, testable, lastTamper, riskAccepted } = location.protection;
   const local = location.backend === "local";
   const copies = location.sections.filter((section) => section.use === "copy" && section.targetId);
   // The server refuses to test a switched-off copy: its verdict would stand
@@ -106,6 +107,19 @@ export function ProtectionCard({ edit, provider, hueIndex }: { edit: LocationEdi
             <span className="text-sm text-carbon-textSub">{t(immutable ? "storage.on" : "storage.off")}</span>
           )}
         </SettingRow>
+
+        {/* With delete protection on there is nothing left to accept. */}
+        {takesCopies && !immutable && can("riskAccepted") && (
+          <SettingRow label={t("storage.lock.accept")} hint={t("storage.lock.acceptHint")} newId="location-risk-accepted">
+            <Toggle
+              hideLabel
+              label={t("storage.lock.accept")}
+              checked={!!riskAccepted}
+              disabled={busy}
+              onChange={(next) => void save({ riskAccepted: next })}
+            />
+          </SettingRow>
+        )}
 
         {immutable && testable && copies.length > 0 && (
           <SettingRow

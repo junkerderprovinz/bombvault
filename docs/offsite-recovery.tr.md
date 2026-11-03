@@ -138,6 +138,8 @@ Fidye yazılımı ya da ele geçirilmiş bir host yedeklerini silemesin veya yen
 
 Anahtar hedefe aittir: oraya kopyalayan bir bölüm onu hedeften alır, bu yüzden **Hedefler** altında hedefin sayfasında açılır. Zamanlanmış **Silme korumasını denetle**, yalnızca bir bölüm anahtarı açık bir hedefe kopyaladığı sürece çalışır. Karşı taraf `--append-only` ile başlatılmalıdır; `restic/rest-server` imajında, TrueNAS'ta da diğer her Docker ana makinesinde olduğu gibi, bu `OPTIONS` değişkenine yazılır.
 
+Bazı yerler silmeyi hiç reddedemez, örneğin OneDrive gibi bir bulut sürücüsü. Kopyaları oraya bilerek koyuyorsan, konumun sayfasında **Silmeye karşı koruma olmadan kabul et** seçeneğini aç. Genel bakış o zaman yalnızca kabul edilmiş konumlara kopyalayan bir bölümün eksik korumasını, turuncu nokta yerine gri bir halkayla, kabul edilmiş bir risk olarak gösterir ve bölümün rengi diğer denetimlerine göre belirlenir. Başka hiçbir şey değişmez: oradaki yedekler yine silinebilir, BombVault onları yine konumun kurallarına göre temizler ve silmeye karşı koruma açılır açılmaz anahtar kaybolur. Başka bir yere taşınan kopya bu kabulü kaybeder.
+
 Append-only bir kopyaya en hızlı yol, bir [alıcı sunucu](#receiving-server) olan eşleştirilmiş bir BombVault'tur: rest-server'ı senin için append-only kipinde çalıştırır.
 
 !!! note "`/locks/` altında başarılı bir silme beklenen davranıştır"
@@ -167,7 +169,7 @@ BombVault, yedeklerinin yalnızca mevcut değil, gerçekten geri yüklenebilir o
 - **Geri yükleme doğrulama tatbikatları (yerel).** BombVault düzenli olarak `restic check --read-data-subset` çalıştırır (sınırlı, asla diski dolduran tam bir geri yükleme değil). Sıklık **Ayarlar, Doğrulama, Otomatik denetimler** altında yaşar ve aynı kutucuktaki **Yedekleri denetle** kartı sonucu gösterir.
 - **Deneme geri yüklemesi (site dışı).** BombVault site dışı depodan gerçek bir hedefi mühürlü bir kum havuzuna geri yükler, dosya dosya ve bayt bayt doğrular, sonra temizler. Bu, deponun yalnızca yanıt verdiğini değil, site dışından kurtarabileceğini kanıtlar.
 
-Genel bakıştaki **Koruma durumu** kartı bunu bölüm başına dört denetimde toplar: bu sunucuda güncel bir yedek, site dışı bir kopya, orada silmeye karşı koruma ve oradan bir deneme geri yüklemesi. Bir bölüme tıklamak ayrıntıları gösterir ve kart yalnızca doğrulanmış gerçeklerle yeşile döner.
+Genel bakıştaki **Koruma durumu** kartı bunu bölüm başına dört denetimde toplar: bu sunucuda güncel bir yedek, site dışı bir kopya, orada silmeye karşı koruma ve oradan bir deneme geri yüklemesi. Bir bölüme tıklamak ayrıntıları gösterir ve kart yalnızca doğrulanmış gerçeklerle yeşile döner. Silmeye karşı koruma olmadan kabul ettiğin bir konum orada uyarı olarak değil, kabul edilmiş bir risk olarak sayılır.
 
 ## Örnekleri eşleştirme {#pairing}
 

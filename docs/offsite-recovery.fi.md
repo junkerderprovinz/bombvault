@@ -138,6 +138,8 @@ Kytke poistosuoja päälle etäkohteelle, jotta kiristysohjelma tai kaapattu is�
 
 Kytkin kuuluu kohteelle: osio, joka kopioi sinne, saa sen kohteelta, joten kytke se päälle kohteen sivulla kohdassa **Kohteet**. Ajastettu **Tarkista poistosuoja** ajetaan vain, kun jokin osio kopioi kohteeseen, jossa kytkin on päällä. Toisen pään on käynnistyttävä valinnalla `--append-only`; `restic/rest-server`-imagessa se laitetaan TrueNASissa kuten missä tahansa muussa Docker-isännässä muuttujaan `OPTIONS`.
 
+Jotkin paikat eivät voi lainkaan kieltäytyä poistosta, esimerkiksi pilviasema kuten OneDrive. Jos säilytät kopioita siellä tietoisesti, kytke paikan sivulla päälle **Hyväksy ilman poistosuojaa**. Yleiskatsaus näyttää silloin puuttuvan poistosuojan hyväksyttynä riskinä osiolle, joka kopioi vain hyväksyttyihin paikkoihin, harmaana renkaana oranssin pisteen sijaan, ja osion väri seuraa sen muita tarkistuksia. Muuta ei muutu: siellä olevat varmuuskopiot voi yhä poistaa, BombVault karsii niitä edelleen paikan sääntöjen mukaan, ja kytkin katoaa heti, kun poistosuoja on päällä. Toiseen paikkaan siirtyvä kopio menettää hyväksynnän.
+
 Nopein tie append-only-kopioon on pariliitetty BombVault, jolla on [vastaanottopalvelin](#receiving-server): se ajaa rest-serverin puolestasi append-only-tilassa.
 
 !!! note "Onnistunut poisto polussa `/locks/` on odotettua"
@@ -167,7 +169,7 @@ BombVault tarjoaa kaksi tasoa todisteita siitä, että varmuuskopiosi ovat tosia
 - **Palautuksen todentamisharjoitukset (paikalliset).** BombVault ajaa ajoittain `restic check --read-data-subset` (rajattu, ei koskaan levyn täyttävä täyspalautus). Tahti on kohdassa **Asetukset, Tarkistus, Automaattiset tarkistukset**, ja saman ruudun kortti **Tarkista varmuuskopiot** näyttää tuloksen.
 - **Koepalautus (etä).** BombVault palauttaa oikean kohteen etärepositorysta eristettyyn hiekkalaatikkoon, varmentaa sen tiedosto tiedostolta ja tavu tavulta ja siivoaa sitten. Tämä todistaa, että voit toipua etäkopiosta, ei vain että repo vastaa.
 
-Yleiskatsauksen kortti **Suojaustila** kokoaa tämän osioittain neljäksi tarkistukseksi: ajantasainen varmuuskopio tällä palvelimella, kopio etänä, poistosuoja siellä ja koepalautus sieltä. Osion napsautus näyttää tiedot, ja kortti muuttuu vihreäksi vain varmennetuilla tosiasioilla.
+Yleiskatsauksen kortti **Suojaustila** kokoaa tämän osioittain neljäksi tarkistukseksi: ajantasainen varmuuskopio tällä palvelimella, kopio etänä, poistosuoja siellä ja koepalautus sieltä. Osion napsautus näyttää tiedot, ja kortti muuttuu vihreäksi vain varmennetuilla tosiasioilla. Paikka, jonka hyväksyit ilman poistosuojaa, lasketaan siellä hyväksytyksi riskiksi eikä varoitukseksi.
 
 ## Instanssien pariliitos {#pairing}
 

@@ -60,6 +60,29 @@ func (s *Service) appendOnlyTargets(domain string, settings store.Settings) []st
 	return slices.DeleteFunc(s.offsiteReplicationTargets(domain, settings), func(t store.OffsiteTarget) bool { return !t.Immutable })
 }
 
+// deleteRiskAccepted reports whether every switched-on copy of the domain
+// without delete protection goes to a storage location where the user
+// accepted that, and there is at least one such copy. A target derived from a
+// destination answers with the destination's choice, since that is the
+// location the page shows.
+func (s *Service) deleteRiskAccepted(domain string, settings store.Settings) bool {
+	open := slices.DeleteFunc(s.offsiteReplicationTargets(domain, settings), func(t store.OffsiteTarget) bool { return t.Immutable })
+	if len(open) == 0 {
+		return false
+	}
+	for _, t := range open {
+		accepted := t.DeleteRiskAccepted
+		if t.DestinationID != "" {
+			d, ok, err := s.store.GetDestination(t.DestinationID)
+			accepted = err == nil && ok && d.DeleteRiskAccepted
+		}
+		if !accepted {
+			return false
+		}
+	}
+	return true
+}
+
 // errNoAppendOnlyTarget answers a tamper test of a domain without a switched-on
 // append-only target, as when all were switched off or unflagged since the
 // schedule was planned.

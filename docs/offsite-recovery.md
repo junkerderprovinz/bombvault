@@ -138,6 +138,8 @@ Switch on delete protection for an off-site storage location so ransomware, or a
 
 The switch belongs to the storage location: a section that copies there takes it from the location, so turn it on from the location's page under **Storage locations**. The scheduled **Check delete protection** runs only while a section copies to a location with the switch on. The far side has to be started with `--append-only`; with the `restic/rest-server` image, on TrueNAS as on any other Docker host, that goes into the `OPTIONS` variable.
 
+Some places cannot refuse a delete at all, a cloud drive such as OneDrive for example. If you keep copies there on purpose, switch on **Accept without delete protection** on the location's page. The overview then shows the missing delete protection of a section that copies only to accepted locations as an accepted risk, a grey ring instead of an amber dot, and the section's colour follows its other checks. Nothing else changes: the backups there can still be deleted, BombVault still prunes them by the location's keep rules, and the switch goes away once delete protection is on. A copy that moves to another place loses the acceptance.
+
 The fastest way to an append-only copy is a paired BombVault with a [receiving server](#receiving-server): it runs the rest-server for you, in append-only mode.
 
 !!! note "A successful delete under `/locks/` is expected"
@@ -167,7 +169,7 @@ BombVault offers two levels of proof that your backups are actually restorable, 
 - **Restore-verification drills (local).** BombVault periodically runs `restic check --read-data-subset` (bounded, never a disk-filling full restore). The cadence lives under **Settings, Verify, Automatic checks**, and the **Check backups** card on the same tile shows the result.
 - **Trial restore (off-site).** BombVault restores a real target from the off-site repo into a sealed-off sandbox, verifies it file-for-file and byte-for-byte, then cleans up. This proves you can recover from off-site, not just that the repo answers.
 
-The **Protection status** card on the overview rolls this up per section into four checks: a current backup on this server, a copy off-site, delete protection there and a trial restore from there. A click on a section shows the details, and the card only goes green on verified facts.
+The **Protection status** card on the overview rolls this up per section into four checks: a current backup on this server, a copy off-site, delete protection there and a trial restore from there. A click on a section shows the details, and the card only goes green on verified facts. A location you accepted without delete protection counts there as an accepted risk, not as a warning.
 
 ## Pairing instances {#pairing}
 

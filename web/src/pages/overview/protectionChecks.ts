@@ -92,7 +92,7 @@ function lockCheck(d: DomainStatus): Verdict {
   if (!d.offsiteConfigured) return ["neutral", "overview.check.lockNeedsOffsite"];
   if (d.tamperState === "ok") return ["ok", "overview.check.lockChecked", d.lastTamperAt];
   if (d.tamperState === "failed") return ["fail", "overview.check.lockFailed", d.lastTamperAt];
-  if (!d.offsiteImmutable) return ["warn", "overview.check.lockNone"];
+  if (!d.offsiteImmutable) return d.deleteRiskAccepted ? ["neutral", "overview.check.lockAccepted"] : ["warn", "overview.check.lockNone"];
   return ["warn", d.tamperOff ? "overview.check.lockCheckOff" : "overview.check.lockUnproven"];
 }
 

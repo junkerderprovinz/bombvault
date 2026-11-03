@@ -655,11 +655,11 @@ describe("the copy a section's off-site settings describe", () => {
     sections: [section({ domain: "files", targetId: "t-primary", primary: true })],
   });
 
-  it("lets its keep rules be changed here and nothing else", async () => {
+  it("lets its keep rules and its accepted risk be changed here and nothing else", async () => {
     stage(PRIMARY, [target({ id: "t-primary", domain: "files", destinationId: undefined, sortOrder: 0 })]);
     await renderPage("target:t-primary");
 
-    expect(screen.getAllByRole("switch").map((s) => s.getAttribute("aria-label"))).toEqual(["Ask before keeping less"]);
+    expect(screen.getAllByRole("switch").map((s) => s.getAttribute("aria-label"))).toEqual(["Accept without delete protection", "Ask before keeping less"]);
     expect(screen.getAllByRole("radiogroup")).toHaveLength(1);
     expect(within(card("How long to keep")).getByRole("radio", { name: "Long" })).toBeTruthy();
     expect(

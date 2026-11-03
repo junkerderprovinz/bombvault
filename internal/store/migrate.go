@@ -3575,6 +3575,14 @@ UPDATE offsite_targets SET
   PRIMARY KEY (domain, repo)
 );`,
 	},
+	{
+		// Whether the user accepted that a storage location cannot refuse a
+		// delete. A row from before has not.
+		version:          deleteRiskMigration,
+		name:             "offsite_targets_delete_risk_accepted",
+		alreadySatisfied: columnPresent("offsite_targets", "delete_risk_accepted"),
+		sql:              `ALTER TABLE offsite_targets ADD COLUMN delete_risk_accepted INTEGER NOT NULL DEFAULT 0;`,
+	},
 }
 
 // droppedSkipLines names each id droppedSkipSQL takes out, once per domain, in
@@ -3918,6 +3926,10 @@ const removedSkipsMigration = 640
 
 // formerOwnFoldersMigration numbers the places own folders moved away from.
 const formerOwnFoldersMigration = 650
+
+// deleteRiskMigration numbers the storage locations accepted without delete
+// protection.
+const deleteRiskMigration = 660
 
 // oneLineColumns are the names and locations the recovery kit prints.
 var oneLineColumns = []struct {

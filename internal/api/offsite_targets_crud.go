@@ -53,6 +53,10 @@ type offsiteTargetView struct {
 	// the settings import reads it; a save of the target keeps what is stored
 	// and gives settings back through Follow.
 	Own []string `json:"own,omitempty"`
+	// DeleteRiskAccepted travels in the settings file. A save of the target
+	// ignores it, since the storage location page sets it through a route of
+	// its own.
+	DeleteRiskAccepted bool `json:"deleteRiskAccepted"`
 }
 
 // ownSettingNames spells the followed settings the way the API does.
@@ -110,6 +114,7 @@ func offsiteTargetToView(t store.OffsiteTarget) offsiteTargetView {
 		CompanionOf:          t.CompanionOf,
 		DestinationID:        t.DestinationID,
 		Provider:             t.Provider,
+		DeleteRiskAccepted:   t.DeleteRiskAccepted,
 	}
 	if t.Role == store.RoleRepo || t.Role == store.RoleDestination {
 		v.OffPremises = &t.OffPremises

@@ -3,6 +3,7 @@
 // location can change depends on what it is.
 
 import {
+  acceptDeleteRisk,
   getSettings,
   putSettings,
   renameStorageLocation,
@@ -40,14 +41,16 @@ export interface LocationPatch {
   limitUpload?: number;
   limitDownload?: number;
   credsRef?: string;
+  /** Accepts that the location cannot refuse a delete. */
+  riskAccepted?: boolean;
 }
 
 export type LocationSetting = keyof LocationPatch;
 
 export type SaveAnswer = OkEnvelope & { warnings?: SaveWarning[] };
 
-const DESTINATION: LocationSetting[] = ["name", "enabled", "compression", "offPremises", "immutable", "retention", "limitUpload", "limitDownload"];
-const TARGET: LocationSetting[] = ["name", "enabled", "compression", "immutable", "retention", "limitUpload", "limitDownload"];
+const DESTINATION: LocationSetting[] = ["name", "enabled", "compression", "offPremises", "immutable", "retention", "limitUpload", "limitDownload", "riskAccepted"];
+const TARGET: LocationSetting[] = ["name", "enabled", "compression", "immutable", "retention", "limitUpload", "limitDownload", "riskAccepted"];
 const REPO: LocationSetting[] = ["name", "enabled", "compression", "offPremises", "immutable"];
 
 function idOf(location: StorageLocation): string {
@@ -67,7 +70,7 @@ export function storageClassOf(location: StorageLocation, records: LocationRecor
 
 /** settingsOwned reports whether the location is the copy a domain's off-site
  *  settings describe. Those settings rewrite its target on every save, except
- *  for its keep-policy and its name. */
+ *  for its keep-policy, its name and an accepted risk. */
 export function settingsOwned(location: StorageLocation): boolean {
   return location.object === "target" && location.sections.some((section) => section.primary);
 }
@@ -82,7 +85,7 @@ export function writable(location: StorageLocation, records: LocationRecords): S
       return new Set(s3 ? [...DESTINATION, "storageClass"] : DESTINATION);
     case "target":
       if (!ownTarget(location, records)) return new Set();
-      if (settingsOwned(location)) return new Set(["name", "retention"]);
+      if (settingsOwned(location)) return new Set(["name", "retention", "riskAccepted"]);
       return new Set([...TARGET, ...(s3 ? (["storageClass"] as const) : []), ...(withCredentials ? (["credsRef"] as const) : [])]);
     case "repo":
       return new Set(withCredentials ? [...REPO, "credsRef"] : REPO);
@@ -109,6 +112,9 @@ export async function saveLocation(
   records: LocationRecords,
   patch: LocationPatch
 ): Promise<SaveAnswer> {
+  // The acceptance has a route of its own, so no save of the record behind
+  // the location can take it back.
+  if (patch.riskAccepted !== undefined) return acceptDeleteRisk(location.id, patch.riskAccepted);
   const id = idOf(location);
   switch (location.object) {
     case "destination": {

@@ -62,7 +62,17 @@ const TO_CONTAINER_SETTINGS: WayStep[] = ["/backups", "container", { within: "en
 export const RELEASES: Release[] = [
   {
     version: "10.4.1",
-    changes: [{ id: "restore-stacks", page: "/restore", where: ["nav.restore"], way: ["/restore"], text: "whatsNew.restoreStacks" }],
+    changes: [
+      { id: "restore-stacks", page: "/restore", where: ["nav.restore"], way: ["/restore"], text: "whatsNew.restoreStacks" },
+      {
+        id: "location-risk-accepted",
+        page: LOCATION,
+        go: "/storage",
+        where: ["storage.title", "whatsNew.page.location"],
+        way: [...TO_STORAGE, "location"],
+        text: "whatsNew.deleteRisk",
+      },
+    ],
   },
   {
     version: "10.4.0",

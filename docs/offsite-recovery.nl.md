@@ -138,6 +138,8 @@ Zet bescherming tegen verwijderen aan voor een off-site bestemming, zodat ransom
 
 De schakelaar hoort bij de bestemming: een onderdeel dat daarheen kopieert, neemt hem over van de bestemming, dus zet je hem aan op de pagina van de bestemming onder **Bestemmingen**. De geplande **Verwijderbeveiliging controleren** draait alleen zolang een onderdeel naar een bestemming kopieert waar de schakelaar aan staat. De andere kant moet met `--append-only` starten; bij de image `restic/rest-server` gaat dat, op TrueNAS net als op elke andere Docker-host, in de variabele `OPTIONS`.
 
+Sommige plekken kunnen een verwijdering helemaal niet weigeren, bijvoorbeeld een clouddrive zoals OneDrive. Bewaar je daar bewust kopieën, zet dan **Accepteren zonder bescherming tegen verwijderen** aan op de pagina van de locatie. Het overzicht toont de ontbrekende bescherming van een sectie die alleen naar geaccepteerde locaties kopieert dan als geaccepteerd risico, een grijze ring in plaats van een oranje stip, en de kleur van de sectie volgt de andere controles. Verder verandert er niets: de back-ups daar kunnen nog steeds verwijderd worden, BombVault ruimt ze nog steeds op volgens de regels van de locatie, en de schakelaar verdwijnt zodra bescherming tegen verwijderen aanstaat. Een kopie die naar een andere plek verhuist, verliest de acceptatie.
+
 De snelste weg naar een append-only kopie is een gekoppelde BombVault met een [ontvangserver](#receiving-server): die draait de rest-server voor je, in append-only-modus.
 
 !!! note "Een geslaagde verwijdering onder `/locks/` is verwacht"
@@ -167,7 +169,7 @@ BombVault biedt twee niveaus van bewijs dat je back-ups echt herstelbaar zijn, n
 - **Herstelverificatie-oefeningen (lokaal).** BombVault draait periodiek `restic check --read-data-subset` (begrensd, nooit een schijfvullend volledig herstel). Het ritme staat onder **Instellingen, Verificatie, Automatische controles**, en de kaart **Back-ups controleren** op dezelfde tegel toont het resultaat.
 - **Testherstel (off-site).** BombVault herstelt een echt doel uit de off-site repo naar een afgeschermde sandbox, verifieert het bestand voor bestand en byte voor byte, en ruimt dan op. Dit bewijst dat je vanuit off-site kunt herstellen, niet alleen dat de repo antwoordt.
 
-De kaart **Beschermingsstatus** in het overzicht vat dit per onderdeel samen in vier controles: een actuele back-up op deze server, een kopie off-site, bescherming tegen verwijderen daar en een testherstel vanaf daar. Een klik op een onderdeel toont de details, en de kaart wordt alleen groen op geverifieerde feiten.
+De kaart **Beschermingsstatus** in het overzicht vat dit per onderdeel samen in vier controles: een actuele back-up op deze server, een kopie off-site, bescherming tegen verwijderen daar en een testherstel vanaf daar. Een klik op een onderdeel toont de details, en de kaart wordt alleen groen op geverifieerde feiten. Een locatie die je zonder bescherming tegen verwijderen hebt geaccepteerd, telt daar als geaccepteerd risico, niet als waarschuwing.
 
 ## Koppeling van instanties {#pairing}
 

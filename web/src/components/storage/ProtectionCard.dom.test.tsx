@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 // The server refuses to test the delete protection of a switched-off copy, so
-// the card tests only the copies that are on and says so when none is.
+// the card tests only the copies that are on and says so when none is. Where
+// there is no delete protection, the card lets the user accept that.
 import { afterEach, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import type { StorageLocation, StorageLocationSection } from "../../lib/api";
@@ -28,7 +29,11 @@ function copy(domain: StorageLocationSection["domain"], targetId: string, enable
   return { domain, use: "copy", targetId, where: "", enabled, immutable: true, retention: KEEP, compression: "auto", limitUpload: 0, limitDownload: 0, own: [] };
 }
 
-function edit(sections: StorageLocationSection[]): LocationEdit {
+function edit(
+  sections: StorageLocationSection[],
+  protection: StorageLocation["protection"] = { immutable: true, testable: true },
+  save: LocationEdit["save"] = () => Promise.resolve(true)
+): LocationEdit {
   const location: StorageLocation = {
     id: "destination:box",
     object: "destination",
@@ -40,14 +45,14 @@ function edit(sections: StorageLocationSection[]): LocationEdit {
     enabled: true,
     offPremises: true,
     sections,
-    protection: { immutable: true, testable: true },
+    protection,
     capacity: {},
   };
   return {
     location,
     records: { targets: [] },
     can: () => true,
-    save: () => Promise.resolve(true),
+    save,
     follow: () => {},
     saveSection: () => Promise.resolve(true),
     followAll: () => {},
@@ -56,12 +61,18 @@ function edit(sections: StorageLocationSection[]): LocationEdit {
   };
 }
 
-function show(sections: StorageLocationSection[]) {
+function show(sections: StorageLocationSection[], location: LocationEdit = edit(sections)) {
   render(
     <I18nProvider>
-      <ProtectionCard edit={edit(sections)} hueIndex={0} />
+      <ProtectionCard edit={location} hueIndex={0} />
     </I18nProvider>
   );
+}
+
+const unprotected = { immutable: false, testable: false };
+
+function acceptSwitch() {
+  return screen.queryByRole("switch", { name: en["storage.lock.accept"] });
 }
 
 afterEach(() => {
@@ -75,6 +86,29 @@ it("tests only the copies that are switched on", async () => {
     fireEvent.click(screen.getByRole("button", { name: en["storage.lock.testNow"] }));
   });
   expect(tested).toEqual(["t-on"]);
+});
+
+it("offers to accept a location without delete protection and saves the choice", async () => {
+  const save = vi.fn<LocationEdit["save"]>(() => Promise.resolve(true));
+  const copies = [copy("containers", "t1", true)];
+  show(copies, edit(copies, unprotected, save));
+  const toggle = acceptSwitch();
+  expect(toggle?.getAttribute("aria-checked")).toBe("false");
+  await act(async () => {
+    fireEvent.click(toggle!);
+  });
+  expect(save).toHaveBeenCalledWith({ riskAccepted: true });
+});
+
+it("shows an accepted location as accepted, so the choice can be taken back", () => {
+  const copies = [copy("containers", "t1", true)];
+  show(copies, edit(copies, { ...unprotected, riskAccepted: true }));
+  expect(acceptSwitch()?.getAttribute("aria-checked")).toBe("true");
+});
+
+it("has nothing to accept while delete protection is on", () => {
+  show([copy("containers", "t1", true)]);
+  expect(acceptSwitch()).toBeNull();
 });
 
 it("says every copy is switched off instead of offering a test", () => {

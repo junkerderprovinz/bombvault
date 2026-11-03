@@ -138,6 +138,8 @@ Liga a proteção contra eliminação num destino externo para que o ransomware,
 
 O interruptor pertence ao destino: uma secção que copia para lá recebe-o do destino, por isso liga-o na página do destino, em **Destinos**. A verificação agendada **Verificar proteção contra eliminação** só corre enquanto uma secção copia para um destino com o interruptor ligado. O outro lado tem de arrancar com `--append-only`; com a imagem `restic/rest-server`, no TrueNAS como em qualquer outro host Docker, isso vai na variável `OPTIONS`.
 
+Alguns sítios não conseguem recusar uma eliminação de todo, por exemplo uma unidade na nuvem como o OneDrive. Se guardas cópias lá de propósito, liga **Aceitar sem proteção contra eliminação** na página do local. A vista geral mostra então a proteção em falta de uma secção que só copia para locais aceites como um risco aceite, um anel cinzento em vez de um ponto âmbar, e a cor da secção segue as restantes verificações. Nada mais muda: as cópias lá continuam a poder ser eliminadas, o BombVault continua a limpá-las segundo as regras do local, e o interruptor desaparece assim que a proteção contra eliminação está ligada. Uma cópia que muda para outro sítio perde a aceitação.
+
 O caminho mais rápido para uma cópia append-only é um BombVault emparelhado com um [servidor recetor](#receiving-server): ele executa o rest-server por ti, em modo append-only.
 
 !!! note "Uma eliminação bem-sucedida em `/locks/` é esperada"
@@ -167,7 +169,7 @@ O BombVault oferece dois níveis de prova de que os teus backups são realmente 
 - **Ensaios de verificação de restauro (local).** O BombVault corre periodicamente `restic check --read-data-subset` (limitado, nunca um restauro completo que encha o disco). O ritmo fica em **Definições, Verificação, Verificações automáticas**, e o cartão **Verificar os backups** no mesmo mosaico mostra o resultado.
 - **Restauro de teste (externo).** O BombVault restaura um alvo real do repo externo para uma sandbox isolada, verifica-o ficheiro a ficheiro e byte a byte, e depois limpa. Isto prova que consegues recuperar a partir do externo, e não apenas que o repo responde.
 
-O cartão **Estado de proteção** na visão geral resume isto por secção em quatro verificações: um backup atual neste servidor, uma cópia externa, proteção contra eliminação aí e um restauro de teste a partir de lá. Um clique numa secção mostra os detalhes, e o cartão só fica verde com factos verificados.
+O cartão **Estado de proteção** na visão geral resume isto por secção em quatro verificações: um backup atual neste servidor, uma cópia externa, proteção contra eliminação aí e um restauro de teste a partir de lá. Um clique numa secção mostra os detalhes, e o cartão só fica verde com factos verificados. Um local que aceitaste sem proteção contra eliminação conta lá como um risco aceite, não como um aviso.
 
 ## Emparelhamento de instâncias {#pairing}
 

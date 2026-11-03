@@ -7,8 +7,9 @@
 // back to its default, a location is added in one window, a shorter rule asks
 // before it is saved, a section gets rules of its own and gives them back, a
 // destination's connection is changed, the destination is removed with or
-// without the backups there, a section's copy moves to another location, and
-// a section's folder is set. German, because its labels run longest.
+// without the backups there, a section's copy moves to another location, a
+// section's folder is set, and a location without delete protection is
+// accepted. German, because its labels run longest.
 import { expect, test, type Locator, type Page } from "@playwright/test";
 import { sheetUp } from "./sheets";
 import { B2, IMPACT, LOCAL, LOCATIONS, MOVE, OWN_ENTRY, OWN_ONLY, REMOVAL, REST, STORAGE_BOX, measureLayout, settle, stageStorage } from "./storage";
@@ -607,6 +608,29 @@ test.describe("on the desktop", () => {
     await page.getByRole("button", { name: "Testen", exact: true }).click();
     await expect.poll(() => staged.writes.map((w) => w.path)).toEqual(["/api/offsite/targets/t-rest/tamper-test"]);
     await expect(page.getByRole("button", { name: "Bestanden" })).toBeVisible();
+  });
+
+  test("a location without delete protection is accepted through its own route, and one with it has nothing to accept", async ({ page }) => {
+    const staged = await stageStorage(page, 1280);
+    await page.route(
+      (url) => url.pathname.endsWith("/risk-accepted"),
+      (route) => {
+        const request = route.request();
+        staged.writes.push({ method: request.method(), path: new URL(request.url()).pathname, body: request.postDataJSON() });
+        return route.fulfill({ json: { ok: true, location: { ...STORAGE_BOX, protection: { ...STORAGE_BOX.protection, riskAccepted: true } } } });
+      },
+    );
+    await page.goto(locationUrl(STORAGE_BOX.id));
+    const accept = page.getByRole("switch", { name: "Ohne Löschschutz akzeptieren" });
+    await expect(accept).toHaveAttribute("aria-checked", "false");
+    await accept.click();
+    await expect.poll(() => staged.writes).toEqual([
+      { method: "PUT", path: `/api/storage/locations/${encodeURIComponent(STORAGE_BOX.id)}/risk-accepted`, body: { accepted: true } },
+    ]);
+
+    await page.goto(locationUrl(REST.id));
+    await expect(page.getByText("Jede Kopie an diesen Speicherort ist ausgeschaltet", { exact: false })).toBeVisible();
+    await expect(page.getByRole("switch", { name: "Ohne Löschschutz akzeptieren" })).toHaveCount(0);
   });
 
   test("a location whose only copy is switched off offers no tamper test", async ({ page }) => {

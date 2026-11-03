@@ -120,6 +120,18 @@ describe("the delete protection check", () => {
     expect(lock({ offsiteImmutable: false, tamperState: "", tamperOff: true })).toEqual({ tone: "warn", say: "overview.check.lockNone" });
   });
 
+  it("is neutral where the user accepted a location without delete protection", () => {
+    expect(lock({ offsiteImmutable: false, tamperState: "", deleteRiskAccepted: true })).toEqual({
+      tone: "neutral",
+      say: "overview.check.lockAccepted",
+    });
+  });
+
+  it("ignores an acceptance once every copy has delete protection", () => {
+    expect(lock({ tamperState: "never", deleteRiskAccepted: true }).tone).toBe("warn");
+    expect(lock({ tamperState: "failed", deleteRiskAccepted: true }).tone).toBe("fail");
+  });
+
   it("warns while the proof is missing or stale", () => {
     expect(lock({ tamperState: "never" })).toEqual({ tone: "warn", say: "overview.check.lockUnproven" });
     expect(lock({ tamperState: "stale" }).tone).toBe("warn");
@@ -188,6 +200,13 @@ describe("sectionsOf", () => {
   it("leaves out a switched-off section", () => {
     const sections = sectionsOf([domain(), domain({ domain: "vms", enabled: false })], [], {}, null);
     expect(sections.map((s) => s.kind)).toEqual(["container"]);
+  });
+
+  it("lets the other checks decide a section whose missing delete protection was accepted", () => {
+    const accepted = { offsiteImmutable: false, tamperState: "", deleteRiskAccepted: true };
+    expect(sectionsOf([domain(accepted)], [item()], {}, null)[0].tone).toBe("ok");
+    expect(sectionsOf([domain({ ...accepted, status: "overdue" })], [item()], {}, null)[0].tone).toBe("fail");
+    expect(sectionsOf([domain({ ...accepted, deleteRiskAccepted: false })], [item()], {}, null)[0].tone).toBe("warn");
   });
 
   it("counts each section's own entries", () => {

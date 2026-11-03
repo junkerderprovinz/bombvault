@@ -1239,6 +1239,10 @@ func (h *Handler) replaceOffsiteTargets(views []offsiteTargetView, fileSettings 
 		}
 		if saved.Role != store.RoleOffsite {
 			log.Printf("api: settings import: off-site target %q has the id of a named repository here, so the file's copy was left unapplied", t.Name) //nolint:gosec // G706: the name is %q-quoted
+			continue
+		}
+		if err := h.store.SetDeleteRiskAccepted(saved.ID, tv.DeleteRiskAccepted); err != nil {
+			return err
 		}
 	}
 	for _, d := range offsiteConfigDomains {
@@ -1287,6 +1291,14 @@ func (h *Handler) importDestinations(views []offsiteTargetView) error {
 	kept, err := h.store.ImportDestinations(ds)
 	if err != nil {
 		return err
+	}
+	for i, v := range views {
+		if ds[i].ID == "" {
+			continue
+		}
+		if err := h.store.SetDeleteRiskAccepted(ds[i].ID, v.DeleteRiskAccepted); err != nil {
+			return err
+		}
 	}
 	if len(kept) > 0 {
 		log.Printf("api: settings import: these destinations kept their location here, because repositories already sit under it: %s", strings.Join(kept, ", ")) //nolint:gosec // G706: names of the operator's own destinations

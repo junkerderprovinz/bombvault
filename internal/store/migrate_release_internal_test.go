@@ -33,9 +33,8 @@ func TestAMemberThatPinnedAKeyIsNoLegacyMember(t *testing.T) {
 func TestATargetWhoseNameSpansLinesCanStillBeSaved(t *testing.T) {
 	db := OpenMem(t)
 	migrateThrough(t, db, oneLineMigration-1)
-	r := New(db)
-	stored, err := r.CreateOffsiteTarget(OffsiteTarget{Domain: "files", Name: "Two\nlines", Repo: "rest:https://box:8000/files", Enabled: true})
-	if err != nil {
+	if _, err := db.Exec(`INSERT INTO offsite_targets (id, domain, name, repo, role, enabled, created_at, sort_order)
+		VALUES ('t1', 'files', 'Two' || char(10) || 'lines', 'rest:https://box:8000/files', 'offsite', 1, 1, 1)`); err != nil {
 		t.Fatal(err)
 	}
 	if err := Migrate(db); err != nil {
@@ -43,6 +42,11 @@ func TestATargetWhoseNameSpansLinesCanStillBeSaved(t *testing.T) {
 	}
 	if err := Migrate(db); err != nil {
 		t.Fatalf("a second start: %v", err)
+	}
+	r := New(db)
+	stored, ok, err := r.GetOffsiteTarget("t1")
+	if err != nil || !ok {
+		t.Fatalf("the stored target: ok=%v err=%v", ok, err)
 	}
 
 	stored.Schedule = "daily 03:00"

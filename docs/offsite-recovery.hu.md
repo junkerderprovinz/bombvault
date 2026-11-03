@@ -138,6 +138,8 @@ Kapcsold be a törlés elleni védelmet egy telephelyen kívüli célnál, hogy 
 
 A kapcsoló a célhoz tartozik: egy szakasz, amely oda másol, a céltól veszi át, ezért a cél oldalán, a **Célok** alatt kell bekapcsolni. Az ütemezett **Törlésvédelem ellenőrzése** csak addig fut, amíg egy szakasz olyan célra másol, amelyen a kapcsoló be van kapcsolva. A másik oldalt `--append-only` kapcsolóval kell indítani; a `restic/rest-server` image esetén ez TrueNAS-on, mint bármely más Docker-gazdán, az `OPTIONS` változóba kerül.
 
+Egyes helyek egyáltalán nem tudják megtagadni a törlést, például egy felhőmeghajtó, mint a OneDrive. Ha tudatosan tartasz ott másolatokat, kapcsold be a hely oldalán az **Elfogadás törlés elleni védelem nélkül** kapcsolót. Az áttekintés ekkor annak a szakasznak a hiányzó védelmét, amely csak elfogadott helyekre másol, elfogadott kockázatként mutatja, szürke gyűrűként narancssárga pont helyett, és a szakasz színe a többi ellenőrzését követi. Más nem változik: az ottani mentések továbbra is törölhetők, a BombVault továbbra is a hely szabályai szerint ritkítja őket, és a kapcsoló eltűnik, amint a törlés elleni védelem bekapcsol. Egy másik helyre költöző másolat elveszti az elfogadást.
+
 A leggyorsabb út egy append-only másolathoz egy párosított BombVault [fogadószerverrel](#receiving-server): ez helyetted futtatja a rest-servert, append-only módban.
 
 !!! note "A `/locks/` alatti sikeres törlés várható"
@@ -167,7 +169,7 @@ A BombVault kétféle szintű bizonyítékot kínál arra, hogy a mentéseid té
 - **Visszaállítás-ellenőrző próbák (helyi).** A BombVault rendszeresen lefuttatja a `restic check --read-data-subset` parancsot (korlátozott, soha nem lemezt megtöltő teljes visszaállítás). Az ütemezés a **Beállítások, Ellenőrzés, Automatikus ellenőrzések** alatt él, az eredményt ugyanezen a csempén a **Mentések ellenőrzése** kártya mutatja.
 - **Próbavisszaállítás (telephelyen kívüli).** A BombVault egy valódi célt visszaállít a telephelyen kívüli tárolóból egy elzárt homokozóba, fájlonként és bájtonként ellenőrzi, majd takarít. Ez bizonyítja, hogy a telephelyen kívülről helyre tudsz állni, nem csak azt, hogy a tároló válaszol.
 
-Az Áttekintés **Védelmi állapot** kártyája ezt szakaszonként négy ellenőrzésbe sűríti: friss mentés ezen a szerveren, másolat telephelyen kívül, törlés elleni védelem ott, és próbavisszaállítás onnan. Egy szakaszra kattintva megjelennek a részletek, és a kártya csak ellenőrzött tények alapján lesz zöld.
+Az Áttekintés **Védelmi állapot** kártyája ezt szakaszonként négy ellenőrzésbe sűríti: friss mentés ezen a szerveren, másolat telephelyen kívül, törlés elleni védelem ott, és próbavisszaállítás onnan. Egy szakaszra kattintva megjelennek a részletek, és a kártya csak ellenőrzött tények alapján lesz zöld. Egy hely, amelyet törlés elleni védelem nélkül fogadtál el, ott elfogadott kockázatnak számít, nem figyelmeztetésnek.
 
 ## Példányok párosítása {#pairing}
 
