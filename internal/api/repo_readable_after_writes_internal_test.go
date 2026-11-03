@@ -209,3 +209,28 @@ func TestAPullLeavesWhatItCopiedReadableByOthers(t *testing.T) {
 		t.Fatalf("the pull left %v unreadable", got)
 	}
 }
+
+func TestAFlashBackupStraightToATargetOnAShareLeavesItReadableByOthers(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("unix permission bits are not modelled on windows")
+	}
+	f := newPlacementFixture(t)
+	f.svc.cfg.FlashDir = t.TempDir()
+	if err := os.WriteFile(filepath.Join(f.svc.cfg.FlashDir, "config"), []byte("x"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	f.singletonRepo("flash")
+	share := f.localRepo("backups/share-flash")
+	f.target("flash", "Share", "backups/share-flash")
+	switchLocal(t, f, "flash", false)
+	f.svc.engine = rootWritesEngine{placementEngine: f.eng, t: t}
+	if _, err := f.svc.BackupFlash(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(filepath.Join(filepath.FromSlash(share), "data", "aa", "backedup")); err != nil {
+		t.Fatalf("the backup did not land on the share: %v", err)
+	}
+	if got := unreadableByOthers(t, share); len(got) > 0 {
+		t.Fatalf("the backup left %v unreadable", got)
+	}
+}

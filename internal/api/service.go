@@ -14878,9 +14878,9 @@ func (s *Service) BackupFlash(ctx context.Context) (_ backup.Summary, retErr err
 	s.queueFirstProbe(store.FlashTargetID)
 	for _, pl := range places {
 		s.agePlace(ctx, settings, "flash", pl, tagIdentity("flash"), anomalyScope{Kind: anomalyScopeItem, ID: store.FlashTargetID})
+		makeLocalRepoReadable(pl.repo, s.cfg.DataDir) // a target on a mounted share as well as the own folder
 	}
 	if places[0].own() {
-		makeRepoReadable(repo, s.cfg.DataDir) // keep the local repo copyable off-box by a non-root user
 		s.replicateOffsite(ctx, "flash", settings, repo, "")
 		s.checkPrimaryRemoteBudget(ctx, "flash", repo, settings)
 	}
