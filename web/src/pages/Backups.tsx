@@ -14,7 +14,6 @@ import { KIND_LABEL, KIND_SCHEDULE_LABEL, entryName, tileLabel } from "../compon
 import { KindTiles } from "../components/backups/KindTiles";
 import { ListBar } from "../components/backups/ListBar";
 import { BatchNote, DumpIntro, ZFSDownNote } from "../components/backups/ListNotes";
-import { StacksCard, StackWindow } from "../components/backups/StackWindow";
 import { useBulkActions } from "../components/backups/useBulkActions";
 import { useReplicateAll } from "../components/backups/useReplicateAll";
 import { useRowSelection } from "../components/backups/useRowSelection";
@@ -25,7 +24,7 @@ import { useScheduleSentence } from "../components/EffectiveScheduleLine";
 import { EmptyStateIcon } from "../components/EmptyStateIcon";
 import { IconArchive, IconClearSelection, IconEye, IconPause, IconSearch, IconSelectAll } from "../components/glyphs";
 import { InfoBubble } from "../components/InfoBubble";
-import { IconAdd, IconBackupNow, IconClose, IconRestore, IconSchedules, IconSync, IconZFS } from "../components/navGlyphs";
+import { IconAdd, IconBackupNow, IconClose, IconSchedules, IconSync, IconZFS } from "../components/navGlyphs";
 import { PageAction, PageActions } from "../components/PageActions";
 import { PageTitle } from "../components/PageTitle";
 import { zfsReaches } from "../components/zfs/ZFSConnectionCard";
@@ -64,7 +63,6 @@ import {
   saveListView,
   showsSelf,
   sortItems,
-  stacksOf,
   tileEntries,
   tilePath,
   type AddedKind,
@@ -132,7 +130,6 @@ export function Backups() {
   const [introDismissed, setIntroDismissed] = useState(introSeen);
   const [rowMenu, setRowMenu] = useState<{ place: MenuPlace; id: string } | null>(null);
   const [adding, setAdding] = useState<AddedKind | "choose" | null>(null);
-  const [stackOpen, setStackOpen] = useState<string | null>(null);
   const [zfsOpen, setZfsOpen] = useState(false);
   const [zfsDown, setZfsDown] = useState<ZFSConnectionResult | null>(null);
 
@@ -224,7 +221,6 @@ export function Backups() {
   const showIp = view.sort.field === "ip";
 
   const onContainers = tile === "all" || tile === "container";
-  const stacks = useMemo(() => stacksOf(items, lang), [items, lang]);
   const databases = onContainers
     ? introDatabases(entries.filter((item) => item.kind === "container" && !isGone(item)))
     : [];
@@ -355,9 +351,6 @@ export function Backups() {
   const moreActions: MenuAction[] = [
     { id: "select", label: t("backups.select"), glyph: <IconSelectAll />, onSelect: () => selection.begin() },
     { id: "discover", label: t("containers.discover"), glyph: <IconSearch />, onSelect: () => void discover() },
-    ...(stacks.length > 0
-      ? [{ id: "stack", label: t("backups.stack.restore"), glyph: <IconRestore />, onSelect: () => setStackOpen(stacks[0].project) }]
-      : []),
     ...(!isDesktop && onZFS && replicas.available
       ? [{ id: "replicate", label: t("zfs.replica.replicateAll"), glyph: <IconSync />, onSelect: () => void replicas.start() }]
       : []),
@@ -491,7 +484,6 @@ export function Backups() {
                   )}
                 </div>
               </Card>
-              {tile === "container" && stacks.length > 0 && <StacksCard stacks={stacks} onRestore={setStackOpen} t={t} />}
             </div>
           )}
         </>
@@ -515,9 +507,6 @@ export function Backups() {
           onClose={() => setAdding(null)}
           onAdded={() => void load()}
         />
-      )}
-      {stackOpen !== null && stacks.length > 0 && (
-        <StackWindow stacks={stacks} initial={stackOpen} onClose={() => setStackOpen(null)} onStarted={() => void load()} />
       )}
       {zfsOpen && <ZFSConnectionWindow onClose={() => setZfsOpen(false)} />}
 

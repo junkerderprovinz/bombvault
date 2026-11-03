@@ -311,13 +311,6 @@ async function stage(page: Page, s: Stage = {}): Promise<{ posts: string[] }> {
     posts.push(`POST /api/files/sets ${route.request().postData() ?? ""}`);
     return route.fulfill({ json: { ok: true, id: "a9" } });
   });
-  await page.route("**/api/restore/check", (route) =>
-    route.fulfill({ json: { ok: true, ready: true, checks: [], members: [] } }),
-  );
-  await page.route("**/api/stacks/*/restore*", (route) => {
-    posts.push(`${new URL(route.request().url()).pathname} ${route.request().postData() ?? ""}`);
-    return route.fulfill({ json: { ok: true, started: true } });
-  });
   // The stored look is the one under test, so the server's must not replace it.
   await blockServerLook(page);
   await page.addInitScript(
@@ -626,7 +619,6 @@ test("the rare actions wait under More", async ({ page }, testInfo) => {
   await expect(menu.getByRole("menuitem")).toHaveText([
     "Auswählen",
     "Sicherungen entdecken",
-    "Stack wiederherstellen",
     "ZFS-Verbindung zu diesem Server",
   ]);
   // It opens above its button, clear of the corner.
@@ -660,25 +652,6 @@ test("the database dumps are explained once", async ({ page }, testInfo) => {
   await page.reload();
   await expect(rows(page).first()).toBeVisible();
   await expect(note).toBeHidden();
-});
-
-test("a stack comes back through its window", async ({ page }, testInfo) => {
-  test.skip(testInfo.project.name !== "desktop-1280", "the desktop list");
-  const { posts } = await stage(page);
-  await openList(page, "/backups?kind=container");
-
-  const stacks = page.getByTestId("stacks");
-  await expect(stacks).toContainText("2 Container · immich, immich_postgres");
-  await stacks.getByRole("button", { name: "Stack wiederherstellen" }).click();
-  const win = page.getByRole("dialog", { name: "Stack wiederherstellen" });
-  await expect(win.getByRole("radio", { name: /immich/ })).toHaveAttribute("aria-checked", "true");
-  await win.getByRole("button", { name: "Weiter" }).click();
-  await expect(win).toContainText("Alle Container dieses Stacks wiederherstellen?");
-  await win.getByRole("button", { name: "Stack wiederherstellen" }).click();
-  await expect.poll(() => posts.find((p) => p.startsWith("/api/stacks/immich/restore"))).toBeTruthy();
-  await expect(win).toContainText("immich_postgres");
-  await win.getByRole("button", { name: "Schließen" }).click();
-  await expect(win).toBeHidden();
 });
 
 test("Add opens one window for a folder or a ZFS dataset", async ({ page }, testInfo) => {
@@ -878,36 +851,6 @@ for (const width of [320, 360, 390]) {
         return Math.max(document.documentElement.scrollWidth - window.innerWidth, main.scrollWidth - main.clientWidth);
       });
       expect(pan, "the page scrolls sideways").toBeLessThanOrEqual(1);
-    });
-
-    test(`a stack @ ${width}px (${lang}) keeps its members readable and moves its button under them`, async ({ page }, testInfo) => {
-      test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "the phone layout lives below 48rem");
-      await stage(page, { lang });
-      await page.setViewportSize({ width, height: 800 });
-      await page.goto("/backups?kind=container");
-      const stacks = page.getByTestId("stacks");
-      await expect(stacks).toContainText("immich_postgres");
-      await settle(page);
-
-      const row = stacks.getByRole("listitem").first();
-      const found = await row.evaluate((li) => {
-        const members = li.querySelector(":scope > span:nth-child(2) > span:last-child")!;
-        const lineHeight = parseFloat(getComputedStyle(members).lineHeight);
-        const m = members.getBoundingClientRect();
-        const b = li.querySelector("button")!.getBoundingClientRect();
-        const icon = li.querySelector(":scope > span:first-child")!.getBoundingClientRect();
-        const name = li.querySelector(":scope > span:nth-child(2)")!.getBoundingClientRect();
-        return {
-          alone: icon.bottom <= name.top + 1,
-          lines: Math.round(m.height / lineHeight),
-          beside: b.top < m.bottom - 1 && b.bottom > m.top + 1,
-          past: b.right > window.innerWidth + 1,
-        };
-      });
-      expect(found.beside && found.lines > 1, "the button squeezes the members into several lines").toBe(false);
-      expect(found.lines, "the members line breaks inside its words").toBeLessThanOrEqual(2);
-      expect(found.past, "the button runs past the edge").toBe(false);
-      expect(found.alone, "the icon stands in a row of its own").toBe(false);
     });
   }
 }
@@ -1144,13 +1087,7 @@ test("pictures of the page", async ({ page }, testInfo) => {
     await page.getByTestId("bulk-bar").getByRole("button", { name: "Fertig" }).click();
     await page.getByTestId("page-actions").getByRole("button", { name: "Mehr" }).click();
     await shot("more");
-    await page.getByRole("menuitem", { name: "Stack wiederherstellen" }).click();
-    await settle(page);
-    await shot("stack-pick");
-    await page.getByRole("dialog").getByRole("button", { name: "Weiter" }).click();
-    await shot("stack-check");
-    await page.getByRole("dialog").getByRole("button", { name: "Zurück" }).click();
-    await page.getByRole("dialog").getByRole("button", { name: "Abbrechen" }).click();
+    await page.keyboard.press("Escape");
     await page.getByTestId("page-actions").getByRole("button", { name: "Hinzufügen" }).click();
     await settle(page);
     await shot("add-pick");

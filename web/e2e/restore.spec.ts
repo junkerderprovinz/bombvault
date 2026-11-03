@@ -1,10 +1,11 @@
 // The Restore page. A fresh harness database has nothing to restore, so the
 // entries, their timelines, one open finding and the answer of the restore
 // check are staged at the route layer. On the desktop: the tiles, the search,
-// the backups of the picked entry on their rail, the restore window and the
-// windows of the rare ways, among them the emergency that takes the key of
-// another install over from its recovery kit. On the phones: the same content
-// with nothing past the edge. German, because its labels run longest.
+// the backups of the picked entry on their rail, the restore window, the
+// compose stack that comes back as one and the windows of the rare ways,
+// among them the emergency that takes the key of another install over from
+// its recovery kit. On the phones: the same content with nothing past the
+// edge. German, because its labels run longest.
 import { expect, test, type Page } from "@playwright/test";
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
@@ -69,7 +70,8 @@ const LONG_NAME = "nextcloud-aio-datenbank-hauptserver-produktivsystem";
 
 const ITEMS = [
   item({ key: "homeassistant" }),
-  item({ key: "immich" }),
+  item({ key: "immich", stack: "immich" }),
+  item({ key: "redis", stack: "immich" }),
   item({ key: LONG_NAME }),
   item({ key: "gitea", lastBackup: 0, lastRunStatus: "", sourceBytes: null, included: false }),
   item({ kind: "vm", key: "win11", name: "Windows 11" }),
@@ -78,7 +80,7 @@ const ITEMS = [
   item({ kind: "config", key: "config", name: "config", state: undefined, installed: undefined }),
 ];
 
-const CONTAINERS = ["homeassistant", "immich", LONG_NAME, "gitea"].map((name) => ({
+const CONTAINERS = ["homeassistant", "immich", "redis", LONG_NAME, "gitea"].map((name) => ({
   name,
   image: `ghcr.io/example/${name}:latest`,
   state: "running",
@@ -231,6 +233,12 @@ async function stage(page: Page, theme: "dark" | "light" = "dark"): Promise<void
   await page.route("**/api/restore/check", (route) => {
     const req = route.request().postDataJSON() as Record<string, unknown>;
     checks.push(req);
+    if (req.kind === "stack") {
+      const passed = [{ id: "repository", status: "ok" }, { id: "key", status: "ok" }];
+      return route.fulfill({
+        json: { ok: true, ready: true, members: ["immich", "redis"].map((name) => ({ name, ready: true, checks: passed })) },
+      });
+    }
     const beside = req.target === "beside";
     return route.fulfill({
       json: {
@@ -489,8 +497,8 @@ test("the page opens on the entry that needs a restore, with its backups on the 
   await stage(page);
   await openPage(page);
 
-  await expect(page.getByRole("button", { name: /^Container 3 mit Sicherungen/ })).toBeVisible();
-  await expect(entries(page).getByRole("button")).toHaveCount(8);
+  await expect(page.getByRole("button", { name: /^Container 4 mit Sicherungen/ })).toBeVisible();
+  await expect(entries(page).getByRole("button")).toHaveCount(9);
   await expect(entries(page).getByRole("button", { name: /^gitea/ })).toBeDisabled();
   await expect(entries(page).getByRole("button", { name: /^immich/ })).toHaveAttribute("aria-expanded", "true");
 
@@ -637,6 +645,38 @@ test("several entries are picked like rows of the list and restored one after th
   await expect(win).toContainText("3 wiederhergestellt, 0 fehlgeschlagen.");
   await win.getByRole("button", { name: "Schließen" }).click();
   await expect(win).toBeHidden();
+});
+
+test("a compose stack is restored from the page, its containers together", async ({ page }, testInfo) => {
+  test.skip(MOBILE_PROJECTS.has(testInfo.project.name), "the desktop layout");
+  await stage(page);
+  const started: string[] = [];
+  await page.route("**/api/stacks/*/restore*", (route) => {
+    started.push(new URL(route.request().url()).pathname);
+    return route.fulfill({ json: { ok: true, started: true } });
+  });
+  await openPage(page);
+
+  const stacks = page.getByTestId("stacks");
+  await expect(page.getByRole("heading", { level: 2, name: /^Stacks/ })).toBeAttached();
+  await expect(stacks).toContainText("2 Container · immich, redis");
+  await stacks.getByRole("button", { name: /^immich/ }).click();
+  const win = page.getByRole("dialog", { name: "Stack wiederherstellen" });
+  await expect(win.getByRole("radio", { name: /immich/ })).toHaveAttribute("aria-checked", "true");
+  await win.getByRole("button", { name: "Weiter" }).click();
+  await expect(win).toContainText("Alle Container dieses Stacks wiederherstellen?");
+  await win.getByRole("button", { name: "Stack wiederherstellen" }).click();
+  await expect.poll(() => started).toEqual(["/api/stacks/immich/restore"]);
+  await expect(win).toContainText("redis");
+  await win.getByRole("button", { name: "Schließen" }).click();
+  await expect(win).toBeHidden();
+
+  // The stack stands with the containers, and the search finds it by a member.
+  await page.getByRole("button", { name: /^VMs/ }).click();
+  await expect(stacks).toHaveCount(0);
+  await page.getByRole("button", { name: /^VMs/ }).click();
+  await page.getByRole("searchbox", { name: "Was willst du zurückholen?" }).fill("redis");
+  await expect(stacks).toContainText("immich");
 });
 
 test("the old address leads to the page and keeps what the link asked for", async ({ page }, testInfo) => {
@@ -899,6 +939,13 @@ for (const width of [320, 360]) {
     expect((await edges(page)).clipped, "the restore window clips the edge").toEqual([]);
     await win.getByRole("button", { name: "Abbrechen" }).click();
 
+    await page.getByTestId("stacks").getByRole("button", { name: /^immich/ }).click();
+    const stack = page.getByRole("dialog", { name: "Stack wiederherstellen" });
+    await expect(stack.getByRole("radio", { name: /immich/ })).toBeVisible();
+    await settle(page);
+    expect((await edges(page)).clipped, "the stack window clips the edge").toEqual([]);
+    await stack.getByRole("button", { name: "Abbrechen" }).click();
+
     await page.goto("/restore?emergency=access");
     await wizard(page).getByRole("radio", { name: /^Schlüssel eintippen/ }).click();
     await expect(wizard(page).getByRole("button", { name: "Verbinden und prüfen" })).toBeVisible();
@@ -951,6 +998,15 @@ test("pictures of the page", async ({ page }, testInfo) => {
     await win.getByRole("button", { name: "immich ersetzen" }).scrollIntoViewIfNeeded();
     await page.screenshot({ path: join(SHOTS!, `window-replace-${name}.png`) });
     await win.getByRole("button", { name: "Abbrechen" }).click();
+
+    await page.getByTestId("stacks").scrollIntoViewIfNeeded();
+    await settle(page);
+    await page.screenshot({ path: join(SHOTS!, `stacks-${name}.png`) });
+    await page.getByTestId("stacks").getByRole("button", { name: /^immich/ }).click();
+    await expect(page.getByRole("dialog", { name: "Stack wiederherstellen" })).toBeVisible();
+    await settle(page);
+    await page.screenshot({ path: join(SHOTS!, `stack-window-${name}.png`) });
+    await page.getByRole("dialog").getByRole("button", { name: "Abbrechen" }).click();
 
     await page.unrouteAll({ behavior: "ignoreErrors" });
     await stage(page, theme);

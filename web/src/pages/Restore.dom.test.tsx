@@ -14,7 +14,7 @@ import type { AnomalyView } from "../lib/api";
 import { I18nProvider, countText, en } from "../lib/i18n";
 import type { ProgressMap } from "../lib/progress";
 import { RESTORE_NO_RUNTIME } from "../lib/runReason";
-import { BOX, IMMICH, PHOTOS, backupRun, serveEntries, timelineOf } from "./backupEntry.testsupport";
+import { BOX, IMMICH, PHOTOS, backupRun, entryItem, serveEntries, timelineOf } from "./backupEntry.testsupport";
 
 vi.mock("../lib/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../lib/api")>();
@@ -43,6 +43,11 @@ vi.mock("../lib/api", async (importOriginal) => {
 });
 
 vi.mock("../lib/toast", () => ({ useToast: () => ({ push: () => {} }) }));
+
+vi.mock("../components/restore/StackWindow", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../components/restore/StackWindow")>()),
+  StackWindow: ({ initial }: { initial: string }) => <div data-testid="stack-window">{initial}</div>,
+}));
 
 vi.mock("../lib/backupWatch", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../lib/backupWatch")>()),
@@ -407,6 +412,45 @@ describe("the other sources", () => {
   it("do not offer another instance through the group, which the server cannot reach yet", async () => {
     await renderPage();
     expect(screen.queryByText(/another BombVault instance/i)).toBeNull();
+  });
+});
+
+describe("stacks", () => {
+  const STACK = [
+    entryItem({ stack: "immich" }),
+    entryItem({ key: "immich_postgres", name: "immich_postgres", stack: "immich" }),
+  ];
+  const stacks = () => screen.queryByTestId("stacks");
+
+  it("stand on the page with their members and open the window that restores them together", async () => {
+    serveEntries(mocks, { items: STACK });
+    await renderPage();
+    const card = within(stacks()!);
+    expect(card.getByText(`${countText(en["stack.members"], "en", 2)} · immich, immich_postgres`)).toBeTruthy();
+    await press(card.getByRole("button", { name: /^immich/ }));
+    expect(screen.getByTestId("stack-window").textContent).toBe("immich");
+  });
+
+  it("follow the containers tile and are found by the name of any member", async () => {
+    serveEntries(mocks, { items: STACK });
+    await renderPage();
+    await press(tile(en["nav.vms"]));
+    expect(stacks()).toBeNull();
+    await press(tile(en["nav.containers"]));
+    expect(stacks()).not.toBeNull();
+    await press(tile(en["nav.containers"]));
+
+    const search = screen.getByRole("searchbox", { name: en["restorePage.search"] });
+    fireEvent.change(search, { target: { value: "postgres" } });
+    expect(stacks()!.textContent).toContain("immich");
+    fireEvent.change(search, { target: { value: "phot" } });
+    expect(stacks()).toBeNull();
+  });
+
+  it("are not offered while no compose project has two containers backed up", async () => {
+    await renderPage();
+    expect(entry("immich")).toBeTruthy();
+    expect(stacks()).toBeNull();
   });
 });
 

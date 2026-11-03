@@ -60,10 +60,6 @@ vi.mock("../lib/backupWatch", async (importOriginal) => ({
 vi.mock("../components/backups/AddWindow", () => ({
   AddWindow: ({ start }: { start: string }) => <div data-testid="add-window">{start}</div>,
 }));
-vi.mock("../components/backups/StackWindow", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("../components/backups/StackWindow")>()),
-  StackWindow: ({ initial }: { initial: string }) => <div data-testid="stack-window">{initial}</div>,
-}));
 vi.mock("../components/backups/ZFSConnectionWindow", () => ({
   ZFSConnectionWindow: () => <div data-testid="zfs-window" />,
 }));
@@ -1338,14 +1334,14 @@ describe("the More menu", () => {
     await renderPage();
     await openMore();
     expect(screen.getByRole("menu", { name: "More" })).toBeTruthy();
-    expect(menuItems()).toEqual(["Select", "Discover backups", "Restore stack", "ZFS connection to this server"]);
+    // A stack is restored from the Restore page.
+    expect(menuItems()).toEqual(["Select", "Discover backups", "ZFS connection to this server"]);
 
     cleanup();
     getSettings.mockResolvedValue({ ok: true, settings: { ...ALL_ON, zfsEnabled: false } as Settings });
     serve(MIXED);
     await renderPage();
     await openMore();
-    // No stack is backed up here either, so there is none to restore.
     expect(menuItems()).toEqual(["Select", "Discover backups"]);
   });
 
@@ -1359,12 +1355,8 @@ describe("the More menu", () => {
     expect(picked()).toEqual(["plex"]);
   });
 
-  it("opens the windows for a stack and for the ZFS connection", async () => {
-    serve([...MIXED, ...STACK]);
+  it("opens the window for the ZFS connection", async () => {
     await renderPage();
-    await openMore();
-    await chooseFromMenu("Restore stack");
-    expect(screen.getByTestId("stack-window").textContent).toBe("immich");
     await openMore();
     await chooseFromMenu("ZFS connection to this server");
     expect(screen.getByTestId("zfs-window")).toBeTruthy();
@@ -1544,27 +1536,11 @@ describe("the notes above the list", () => {
 });
 
 describe("stacks", () => {
-  it("are listed under the containers with a way to restore each", async () => {
+  it("are left to the Restore page, also under the containers", async () => {
     serve([...MIXED, ...STACK]);
-    await renderPage();
-    expect(screen.queryByTestId("stacks")).toBeNull();
-    await press(tile("Containers"));
-    const stacks = within(screen.getByTestId("stacks"));
-    expect(stacks.getByText("2 containers · immich, immich_postgres")).toBeTruthy();
-    await press(stacks.getByRole("button", { name: "Restore stack" }));
-    expect(screen.getByTestId("stack-window").textContent).toBe("immich");
-  });
-
-  it("need two backed-up containers, of which one may be gone", async () => {
-    serve([
-      entry({ key: "a", stack: "pair" }),
-      entry({ key: "b", stack: "pair", installed: false, state: undefined }),
-      entry({ key: "c", stack: "fresh" }),
-      entry({ key: "d", stack: "fresh", lastBackup: 0, lastRunStatus: "" }),
-    ]);
     await renderPage("/backups?kind=container");
-    expect(screen.getByTestId("stacks").textContent).toContain("pair");
-    expect(screen.getByTestId("stacks").textContent).not.toContain("fresh");
+    expect(row("immich_postgres")).toBeTruthy();
+    expect(screen.queryByTestId("stacks")).toBeNull();
   });
 });
 
