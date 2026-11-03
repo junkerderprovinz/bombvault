@@ -821,6 +821,7 @@ const id: Partial<Translations> = {
   "whatsNew.fdroid": "Aplikasi Android ada di F-Droid, dan tombol F-Droid di sini membuka halamannya.",
   "whatsNew.locationRename": "Setiap tujuan bisa diganti namanya, termasuk folder yang dipakai bersama beberapa bagian.",
   "whatsNew.gotify": "Gotify adalah saluran notifikasi tersendiri, dengan URL server, token aplikasi, serta prioritas saat gagal dan saat berhasil.",
+  "whatsNew.restoreStacks": "Stack Compose dipulihkan dari kartunya sendiri di halaman Pemulihan.",
   "whatsNew.overviewMoveMode": "Saat Anda menyesuaikan Ringkasan, kartunya bergoyang pelan untuk menunjukkan bahwa Anda dapat memindahkannya.",
   "whatsNew.labelGlyphs": "Label menampilkan simbol untuk setiap pilihan, seperti Sudut dan Animasi.",
 

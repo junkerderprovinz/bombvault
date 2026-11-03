@@ -821,6 +821,7 @@ const hr: Partial<Translations> = {
   "whatsNew.fdroid": "Aplikacija za Android je na F-Droidu, a gumb F-Droid ovdje otvara njezinu stranicu.",
   "whatsNew.locationRename": "Svako odredište može se preimenovati, i mapa koju dijeli više odjeljaka.",
   "whatsNew.gotify": "Gotify je zaseban kanal obavijesti, s URL-om poslužitelja, tokenom aplikacije i prioritetom pri neuspjehu i pri uspjehu.",
+  "whatsNew.restoreStacks": "Compose stogovi vraćaju se s vlastite kartice na stranici Vraćanje.",
   "whatsNew.overviewMoveMode": "Dok prilagođavate pregled, njegove se kartice lagano njišu kako bi pokazale da ih možete premjestiti.",
   "whatsNew.labelGlyphs": "Oznake prikazuju simbol za svaki izbor, kao i Kutovi i Animacija.",
 

@@ -821,6 +821,7 @@ const eu: Partial<Translations> = {
   "whatsNew.fdroid": "Android aplikazioa F-Droid-en dago, eta hemengo F-Droid botoiak haren fitxa irekitzen du.",
   "whatsNew.locationRename": "Helmuga guztiei izena alda dakieke, baita hainbat ataletek partekatzen duten karpeta bati ere.",
   "whatsNew.gotify": "Gotify jakinarazpen-kanal propioa da, zerbitzariaren URLa, aplikazioaren tokena eta huts egitean eta ondo ateratzean lehentasun banarekin.",
+  "whatsNew.restoreStacks": "Compose pilak Berrezarpena orriko beren txarteletik berrezartzen dira.",
   "whatsNew.overviewMoveMode": "Laburpena pertsonalizatzen duzun bitartean, txartelak leunki kulunkatzen dira, mugi ditzakezula erakusteko.",
   "whatsNew.labelGlyphs": "Etiketak aukera bakoitzeko ikur bat erakusten du, Ertzak eta Animazioa bezala.",
 

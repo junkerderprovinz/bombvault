@@ -821,6 +821,7 @@ const gl: Partial<Translations> = {
   "whatsNew.fdroid": "A aplicación de Android está en F-Droid, e o botón F-Droid de aquí abre a súa ficha.",
   "whatsNew.locationRename": "Calquera destino pódese renomear, tamén un cartafol que comparten varias seccións.",
   "whatsNew.gotify": "Gotify é unha canle de notificacións propia, co URL do servidor, un token da aplicación e unha prioridade se falla e outra se sae ben.",
+  "whatsNew.restoreStacks": "As pilas de Compose restáuranse desde a súa propia tarxeta na páxina Restauración.",
   "whatsNew.overviewMoveMode": "Mentres personalizas a vista xeral, as súas tarxetas balancéanse suavemente para amosar que as podes mover.",
   "whatsNew.labelGlyphs": "Etiquetas amosa un símbolo para cada opción, como Esquinas e Animación.",
 

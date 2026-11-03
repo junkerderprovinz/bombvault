@@ -915,6 +915,7 @@ export const en = {
   "whatsNew.fdroid": "The Android app is on F-Droid, and the F-Droid button here opens its listing.",
   "whatsNew.locationRename": "Every storage location can be renamed, a folder that several sections share as well.",
   "whatsNew.gotify": "Gotify is a notification channel of its own, with a server URL, an app token and a priority each for failure and success.",
+  "whatsNew.restoreStacks": "Compose stacks are restored from their own card on the Restore page.",
   "whatsNew.overviewMoveMode": "While you customize the overview, its cards rock gently to show that you can move them.",
   "whatsNew.labelGlyphs": "Labels shows a symbol for each choice, like Corners and Animation.",
 
@@ -6151,6 +6152,7 @@ export const de: Translations = {
   "whatsNew.fdroid": "Die Android-App gibt es auf F-Droid, und der F-Droid-Knopf hier öffnet ihren Eintrag.",
   "whatsNew.locationRename": "Jeder Speicherort lässt sich umbenennen, auch ein Ordner, den mehrere Bereiche teilen.",
   "whatsNew.gotify": "Gotify ist ein eigener Benachrichtigungskanal, mit Server-URL, App-Token und je einer Priorität für Fehlschlag und Erfolg.",
+  "whatsNew.restoreStacks": "Compose-Stacks stellst du über eine eigene Karte auf der Seite Wiederherstellung wieder her.",
   "whatsNew.overviewMoveMode": "Während du die Übersicht anpasst, wiegen sich ihre Karten leicht, damit du siehst, dass du sie verschieben kannst.",
   "whatsNew.labelGlyphs": "Beschriftungen zeigt wie Ecken und Animation für jede Auswahl ein Symbol.",
 

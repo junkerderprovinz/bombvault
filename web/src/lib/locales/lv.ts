@@ -821,6 +821,7 @@ const lv: Partial<Translations> = {
   "whatsNew.fdroid": "Android lietotne ir pieejama F-Droid, un šeit esošā F-Droid poga atver tās lapu.",
   "whatsNew.locationRename": "Katru mērķi var pārdēvēt, arī mapi, ko koplieto vairākas sadaļas.",
   "whatsNew.gotify": "Gotify ir atsevišķs paziņojumu kanāls ar servera URL, lietotnes marķieri un prioritāti kļūmes un veiksmes gadījumā.",
+  "whatsNew.restoreStacks": "Compose kaudzes atjauno no to pašu kartītes lapā Atjaunošana.",
   "whatsNew.overviewMoveMode": "Kamēr tu pielāgo pārskatu, tā kartītes viegli šūpojas, lai parādītu, ka tās vari pārvietot.",
   "whatsNew.labelGlyphs": "Uzraksti rāda simbolu katrai izvēlei, tāpat kā Stūri un Animācija.",
 

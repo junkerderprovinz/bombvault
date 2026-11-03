@@ -1132,6 +1132,7 @@ const vi: Partial<Translations> = {
   "whatsNew.fdroid": "Ứng dụng Android đã có trên F-Droid, và nút F-Droid ở đây mở trang của ứng dụng.",
   "whatsNew.locationRename": "Mọi đích sao lưu đều đổi tên được, kể cả thư mục mà nhiều phần dùng chung.",
   "whatsNew.gotify": "Gotify là một kênh thông báo riêng, với URL máy chủ, token ứng dụng và mức ưu tiên khi thất bại và khi thành công.",
+  "whatsNew.restoreStacks": "Các stack Compose được khôi phục từ thẻ riêng của chúng trên trang Khôi phục.",
   "whatsNew.overviewMoveMode": "Khi bạn tùy chỉnh Tổng quan, các thẻ của nó khẽ lắc lư để cho thấy bạn có thể di chuyển chúng.",
   "whatsNew.labelGlyphs": "Nhãn hiển thị một biểu tượng cho từng lựa chọn, giống như Góc và Hoạt ảnh.",
 

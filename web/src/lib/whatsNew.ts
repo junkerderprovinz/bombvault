@@ -61,6 +61,10 @@ const TO_CONTAINER_SETTINGS: WayStep[] = ["/backups", "container", { within: "en
 /** Every release that brought something new, newest first. */
 export const RELEASES: Release[] = [
   {
+    version: "10.4.1",
+    changes: [{ id: "restore-stacks", page: "/restore", where: ["nav.restore"], way: ["/restore"], text: "whatsNew.restoreStacks" }],
+  },
+  {
     version: "10.4.0",
     changes: [
       { id: "overview-move-mode", page: "/dashboard", where: ["nav.overview"], way: ["/dashboard"], wide: true, text: "whatsNew.overviewMoveMode" },

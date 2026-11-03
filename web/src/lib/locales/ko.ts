@@ -1124,6 +1124,7 @@ const ko: Partial<Translations> = {
   "whatsNew.fdroid": "Android 앱이 F-Droid에 있으며, 여기의 F-Droid 버튼을 누르면 해당 페이지가 열립니다.",
   "whatsNew.locationRename": "모든 대상의 이름을 바꿀 수 있으며, 여러 섹션이 함께 쓰는 폴더도 마찬가지입니다.",
   "whatsNew.gotify": "Gotify는 별도의 알림 채널입니다. 서버 URL, 앱 토큰, 실패 시와 성공 시 우선순위를 설정합니다.",
+  "whatsNew.restoreStacks": "Compose 스택은 복원 페이지의 전용 카드에서 복원합니다.",
   "whatsNew.overviewMoveMode": "개요를 사용자 지정하는 동안 카드가 살짝 흔들려 옮길 수 있음을 알려 줍니다.",
   "whatsNew.labelGlyphs": "레이블은 모서리와 애니메이션처럼 선택지마다 기호를 표시합니다.",
 

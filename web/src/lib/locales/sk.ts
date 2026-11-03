@@ -821,6 +821,7 @@ const sk: Partial<Translations> = {
   "whatsNew.fdroid": "Aplikácia pre Android je na F-Droid a tlačidlo F-Droid tu otvorí jej stránku.",
   "whatsNew.locationRename": "Každý cieľ sa dá premenovať, aj priečinok, ktorý zdieľa niekoľko sekcií.",
   "whatsNew.gotify": "Gotify je samostatný kanál upozornení s URL servera, tokenom aplikácie a prioritou pri zlyhaní aj pri úspechu.",
+  "whatsNew.restoreStacks": "Zásobníky Compose obnovíš z vlastnej karty na stránke Obnova.",
   "whatsNew.overviewMoveMode": "Keď prispôsobujete prehľad, jeho karty sa jemne pohupujú, aby bolo vidieť, že ich môžete presúvať.",
   "whatsNew.labelGlyphs": "Označenia zobrazujú pri každej voľbe symbol, rovnako ako Rohy a Animácia.",
 

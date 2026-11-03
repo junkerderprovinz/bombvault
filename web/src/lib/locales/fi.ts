@@ -1141,6 +1141,7 @@ const fi: Partial<Translations> = {
   "whatsNew.fdroid": "Android-sovellus on F-Droidissa, ja tästä F-Droid-painikkeesta avautuu sen sivu.",
   "whatsNew.locationRename": "Jokaisen kohteen voi nimetä uudelleen, myös kansion, jonka useampi osio jakaa.",
   "whatsNew.gotify": "Gotify on oma ilmoituskanavansa, ja siihen annetaan palvelimen URL, sovelluksen tunnus sekä prioriteetti epäonnistuessa ja onnistuessa.",
+  "whatsNew.restoreStacks": "Compose-stackit palautetaan omalta kortiltaan Palautus-sivulla.",
   "whatsNew.overviewMoveMode": "Kun mukautat yleiskatsausta, sen kortit keinuvat kevyesti merkiksi siitä, että voit siirtää niitä.",
   "whatsNew.labelGlyphs": "Nimikkeet näyttää jokaiselle valinnalle symbolin, kuten Kulmat ja Animaatio.",
 

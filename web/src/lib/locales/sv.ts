@@ -1141,6 +1141,7 @@ const sv: Partial<Translations> = {
   "whatsNew.fdroid": "Android-appen finns på F-Droid, och F-Droid-knappen här öppnar dess sida.",
   "whatsNew.locationRename": "Alla mål kan byta namn, även en mapp som flera sektioner delar.",
   "whatsNew.gotify": "Gotify är en egen aviseringskanal, med serverns URL, en app-token och en prioritet vid fel och en vid lyckat.",
+  "whatsNew.restoreStacks": "Compose-stackar återställs från ett eget kort på sidan Återställning.",
   "whatsNew.overviewMoveMode": "Medan du anpassar översikten gungar korten lätt för att visa att du kan flytta dem.",
   "whatsNew.labelGlyphs": "Etiketter visar en symbol för varje val, som Hörn och Animation.",
 
