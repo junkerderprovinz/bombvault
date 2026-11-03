@@ -1142,6 +1142,7 @@ const fi: Partial<Translations> = {
   "whatsNew.locationRename": "Jokaisen kohteen voi nimetä uudelleen, myös kansion, jonka useampi osio jakaa.",
   "whatsNew.gotify": "Gotify on oma ilmoituskanavansa, ja siihen annetaan palvelimen URL, sovelluksen tunnus sekä prioriteetti epäonnistuessa ja onnistuessa.",
   "whatsNew.restoreStacks": "Compose-stackit palautetaan omalta kortiltaan Palautus-sivulla.",
+  "whatsNew.entryOwnPlan": "Kontti, VM, kansio tai ZFS-tietojoukko voi ajaa omalla aikataulullaan. Asetat sen merkinnän Asetukset-välilehdellä, eikä mitään kytkintä tarvitse ensin kytkeä päälle.",
   "whatsNew.overviewMoveMode": "Kun mukautat yleiskatsausta, sen kortit keinuvat kevyesti merkiksi siitä, että voit siirtää niitä.",
   "whatsNew.labelGlyphs": "Nimikkeet näyttää jokaiselle valinnalle symbolin, kuten Kulmat ja Animaatio.",
 
@@ -4922,9 +4923,7 @@ const fi: Partial<Translations> = {
   "schedules.offsiteRuleAll": "Kaikki osiot kopioivat heti jokaisen varmuuskopion jälkeen.",
   "schedules.offsiteRuleOthers": "Kaikki muut osiot kopioivat heti jokaisen varmuuskopion jälkeen.",
   "schedules.entries": "Aikataulutetut merkinnät",
-  "schedules.entriesHint": "Mitkä merkinnät aikataulut kattavat ja milloin kukin ajetaan. Pois kytketty merkintä varmuuskopioidaan vain, kun käynnistät sen käsin.",
-  "schedules.perItem": "Omat aikataulut merkinnöittäin",
-  "schedules.perItemHint": "Antaa yksittäisten konttien, VM:ien, kansioiden ja ZFS-tietojoukkojen ajaa omalla aikataulullaan, jonka asetat niiden omalla sivulla. Merkintä, jolla on oma aikataulu, jää pois täysvarmuuskopiosta. Pois: jokainen merkintä noudattaa osionsa aikataulua.",
+  "schedules.entriesHint": "Mitkä merkinnät aikataulut kattavat ja milloin kukin ajetaan. Yksittäisen merkinnän oman aikataulun asetat sen omalla sivulla. Pois kytketty merkintä varmuuskopioidaan vain, kun käynnistät sen käsin.",
   "schedules.scheduledCount": "{n} / {m} aikataulutettu",
   "schedules.entriesButton": "Merkinnät",
   "schedules.membersTitle": "{area} aikataulussa",

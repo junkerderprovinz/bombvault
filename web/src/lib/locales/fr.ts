@@ -1134,6 +1134,7 @@ const fr: Partial<Translations> = {
   "whatsNew.locationRename": "Chaque destination peut être renommée, y compris un dossier que plusieurs sections partagent.",
   "whatsNew.gotify": "Gotify est un canal de notification à part entière, avec l'URL du serveur, un jeton de l'application et une priorité en cas d'échec et une en cas de réussite.",
   "whatsNew.restoreStacks": "Les stacks Compose se restaurent depuis leur propre carte sur la page Restauration.",
+  "whatsNew.entryOwnPlan": "Un conteneur, une VM, un dossier ou un jeu de données ZFS peut suivre son propre planning. Vous le réglez dans l'onglet Paramètres de l'élément, sans interrupteur à activer d'abord.",
   "whatsNew.overviewMoveMode": "Pendant que vous personnalisez l'aperçu, ses cartes oscillent doucement pour montrer que vous pouvez les déplacer.",
   "whatsNew.labelGlyphs": "Libellés affiche un symbole pour chaque choix, comme Angles et Animation.",
 
@@ -4922,9 +4923,7 @@ const fr: Partial<Translations> = {
   "schedules.offsiteRuleAll": "Toutes les sections copient juste après chaque sauvegarde.",
   "schedules.offsiteRuleOthers": "Toutes les autres sections copient juste après chaque sauvegarde.",
   "schedules.entries": "Éléments planifiés",
-  "schedules.entriesHint": "Quels éléments les plannings incluent et quand chacun s'exécute. Un élément désactivé n'est sauvegardé que si vous le lancez à la main.",
-  "schedules.perItem": "Plannings propres par élément",
-  "schedules.perItemHint": "Permet aux conteneurs, VMs, dossiers et jeux de données ZFS de s'exécuter selon leur propre planning, que vous réglez sur leur page. Un élément qui a son propre planning quitte la sauvegarde complète. Désactivé : chaque élément suit le planning de sa section.",
+  "schedules.entriesHint": "Quels éléments les plannings incluent et quand chacun s'exécute. Le planning propre d'un élément se règle sur sa page. Un élément désactivé n'est sauvegardé que si vous le lancez à la main.",
   "schedules.scheduledCount": "{n} sur {m} planifiés",
   "schedules.entriesButton": "Éléments",
   "schedules.membersTitle": "{area} dans le planning",

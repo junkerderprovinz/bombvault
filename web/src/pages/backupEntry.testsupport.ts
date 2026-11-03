@@ -236,7 +236,6 @@ export const SETTINGS = {
   anomalyEnabled: true,
   anomalySensitivity: "balanced",
   anomalyNotifyMin: "critical",
-  perItemSchedules: false,
   restoreFolder: "user/bombvault/restore",
   flashZipExportEnabled: false,
   flashZipExportPath: "",

@@ -1125,6 +1125,7 @@ const ja: Partial<Translations> = {
   "whatsNew.locationRename": "どの保存先も名前を変更できます。複数のセクションが共有するフォルダーも同様です。",
   "whatsNew.gotify": "Gotify は独立した通知チャネルです。サーバー URL、アプリトークン、失敗時と成功時の優先度を設定します。",
   "whatsNew.restoreStacks": "Compose のスタックは、復元ページにある専用のカードから復元します。",
+  "whatsNew.entryOwnPlan": "コンテナ、VM、フォルダー、ZFS データセットはそれぞれ独自のスケジュールで実行できます。項目の設定タブで設定でき、先にスイッチをオンにする必要はありません。",
   "whatsNew.overviewMoveMode": "概要をカスタマイズしている間は、カードが小さく揺れて移動できることを示します。",
   "whatsNew.labelGlyphs": "ラベルは、角の形状やアニメーションと同じく選択肢ごとに記号が表示されます。",
 
@@ -4913,9 +4914,7 @@ const ja: Partial<Translations> = {
   "schedules.offsiteRuleAll": "すべてのセクションが、各バックアップの直後にコピーします。",
   "schedules.offsiteRuleOthers": "それ以外のすべてのセクションが、各バックアップの直後にコピーします。",
   "schedules.entries": "スケジュール済みの項目",
-  "schedules.entriesHint": "スケジュールに含まれる項目と、それぞれの実行時刻です。オフにした項目は、手動で開始したときだけバックアップされます。",
-  "schedules.perItem": "項目ごとの独自スケジュール",
-  "schedules.perItemHint": "個々のコンテナ、VM、フォルダー、ZFS データセットを独自のスケジュールで実行できるようにします。スケジュールは項目のページで設定します。独自のスケジュールを持つ項目は全体バックアップから外れます。オフの場合、すべての項目がセクションのスケジュールに従います。",
+  "schedules.entriesHint": "スケジュールに含まれる項目と、それぞれの実行時刻です。1 つの項目だけの独自のスケジュールは、その項目のページで設定します。オフにした項目は、手動で開始したときだけバックアップされます。",
   "schedules.scheduledCount": "{m} 件中 {n} 件がスケジュール済み",
   "schedules.entriesButton": "項目",
   "schedules.membersTitle": "スケジュール内の{area}",

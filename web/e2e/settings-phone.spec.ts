@@ -76,7 +76,6 @@ const SETTINGS = {
   pruneImageAfterUpdate: true,
   digestEnabled: true,
   digestSchedule: "weekly Mon 08:00",
-  perItemSchedules: true,
   registryAuths: [
     { host: "ghcr.io", username: "junkerderprovinz", token: "", tokenSet: true, kind: "ghcr" },
     { host: "registry.gitlab.example-company.internal:5050", username: "deploy-bot-readonly", token: "", tokenSet: true, kind: "gitlab" },

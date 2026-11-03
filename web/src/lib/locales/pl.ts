@@ -1128,6 +1128,7 @@ const pl: Partial<Translations> = {
   "whatsNew.locationRename": "Każde miejsce docelowe można przemianować, także folder współdzielony przez kilka sekcji.",
   "whatsNew.gotify": "Gotify to osobny kanał powiadomień z URL serwera, tokenem aplikacji i priorytetem przy niepowodzeniu oraz przy powodzeniu.",
   "whatsNew.restoreStacks": "Stacki Compose przywracasz z osobnej karty na stronie Przywracanie.",
+  "whatsNew.entryOwnPlan": "Kontener, maszyna wirtualna, folder lub zbiór danych ZFS może działać według własnego harmonogramu. Ustawiasz go na karcie Ustawienia elementu, bez włączania wcześniej żadnego przełącznika.",
   "whatsNew.overviewMoveMode": "Gdy dostosowujesz przegląd, jego karty lekko się kołyszą, pokazując, że możesz je przenosić.",
   "whatsNew.labelGlyphs": "Etykiety pokazują symbol dla każdej opcji, tak jak Narożniki i Animacja.",
 
@@ -4919,9 +4920,7 @@ const pl: Partial<Translations> = {
   "schedules.offsiteRuleAll": "Wszystkie sekcje kopiują zaraz po każdej kopii zapasowej.",
   "schedules.offsiteRuleOthers": "Wszystkie pozostałe sekcje kopiują zaraz po każdej kopii zapasowej.",
   "schedules.entries": "Zaplanowane elementy",
-  "schedules.entriesHint": "Które elementy obejmują harmonogramy i kiedy działa każdy z nich. Wyłączony element jest zapisywany tylko wtedy, gdy uruchomisz go ręcznie.",
-  "schedules.perItem": "Własne harmonogramy elementów",
-  "schedules.perItemHint": "Pozwala pojedynczym kontenerom, maszynom wirtualnym, folderom i zbiorom danych ZFS działać według własnego harmonogramu, który ustawiasz na ich stronie. Element z własnym harmonogramem wypada z pełnej kopii. Wyłączone: każdy element podąża za harmonogramem swojej sekcji.",
+  "schedules.entriesHint": "Które elementy obejmują harmonogramy i kiedy działa każdy z nich. Własny harmonogram pojedynczego elementu ustawiasz na jego stronie. Wyłączony element jest zapisywany tylko wtedy, gdy uruchomisz go ręcznie.",
   "schedules.scheduledCount": "{n} z {m} w harmonogramie",
   "schedules.entriesButton": "Elementy",
   "schedules.membersTitle": "{area} w harmonogramie",

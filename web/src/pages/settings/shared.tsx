@@ -187,6 +187,7 @@ export function ToggleRow({
   shakeNonce,
   pulseNonce,
   hueIndex,
+  newId,
 }: {
   label: string;
   /** What a screen reader hears for the switch, when the visible label
@@ -207,6 +208,8 @@ export function ToggleRow({
    *  ToggleRows rendered together in one group. Omit it only for a lone row
    *  with no siblings of its kind on screen. */
   hueIndex?: number;
+  /** The change in lib/whatsNew.ts the row is, which puts its dot on it. */
+  newId?: string;
 }) {
   // No hooks: Settings.toggleRow.test.ts calls ToggleRow as a plain function,
   // outside a React renderer. hueVars is a plain function.
@@ -223,6 +226,7 @@ export function ToggleRow({
   return (
     <div
       data-search-row={label}
+      data-new={newId}
       className={`flex items-start justify-between gap-4 ${hueOn ? "glim-hue" : ""}`}
       style={hueOn ? (hueVars(hueIndex) as CSSProperties) : undefined}
     >

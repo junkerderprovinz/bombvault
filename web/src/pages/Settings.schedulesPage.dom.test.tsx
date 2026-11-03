@@ -37,7 +37,6 @@ function baseSettings(over: Partial<Settings> = {}): Settings {
     everythingPreHookSet: false,
     everythingPostHookSet: false,
     catchUpMissed: true,
-    perItemSchedules: false,
     registryAuths: [],
     ...over,
   } as unknown as Settings;
@@ -277,11 +276,6 @@ describe("scheduled entries", () => {
     await waitFor(() => expect(putBodies.at(-1)?.containerSnapshots).toBe(false));
   });
 
-  it("saves the switch for own plans per entry", async () => {
-    await renderPage();
-    fireEvent.click(screen.getByRole("switch", { name: en["schedules.perItem"] }));
-    await waitFor(() => expect(putBodies.at(-1)?.perItemSchedules).toBe(true));
-  });
 });
 
 describe("commands before and after", () => {

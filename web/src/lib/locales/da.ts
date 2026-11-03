@@ -1142,6 +1142,7 @@ const da: Partial<Translations> = {
   "whatsNew.locationRename": "Alle destinationer kan omdøbes, også en mappe som flere sektioner deler.",
   "whatsNew.gotify": "Gotify er en notifikationskanal for sig, med server-URL, app-token og en prioritet ved fejl og en ved succes.",
   "whatsNew.restoreStacks": "Compose-stakke gendannes fra deres eget kort på siden Gendannelse.",
+  "whatsNew.entryOwnPlan": "En container, en VM, en mappe eller et ZFS-datasæt kan køre efter sin egen tidsplan. Du indstiller den på elementets fane Indstillinger uden først at slå en kontakt til.",
   "whatsNew.overviewMoveMode": "Mens du tilpasser oversigten, vugger kortene let for at vise, at du kan flytte dem.",
   "whatsNew.labelGlyphs": "Etiketter viser et symbol for hvert valg, ligesom Hjørner og Animation.",
 
@@ -4922,9 +4923,7 @@ const da: Partial<Translations> = {
   "schedules.offsiteRuleAll": "Alle områder kopierer lige efter hver sikkerhedskopi.",
   "schedules.offsiteRuleOthers": "Alle andre områder kopierer lige efter hver sikkerhedskopi.",
   "schedules.entries": "Planlagte elementer",
-  "schedules.entriesHint": "Hvilke elementer tidsplanerne omfatter, og hvornår hvert enkelt kører. Et element, der er slået fra, sikkerhedskopieres kun, når du starter det manuelt.",
-  "schedules.perItem": "Egne tidsplaner pr. element",
-  "schedules.perItemHint": "Lader enkelte containere, VMs, mapper og ZFS-datasæt køre efter deres egen tidsplan, som du indstiller på deres side. Et element med egen tidsplan forlader den fulde sikkerhedskopi. Fra: hvert element følger sit områdes tidsplan.",
+  "schedules.entriesHint": "Hvilke elementer tidsplanerne omfatter, og hvornår hvert enkelt kører. Et enkelt elements egen tidsplan indstiller du på dets side. Et element, der er slået fra, sikkerhedskopieres kun, når du starter det manuelt.",
   "schedules.scheduledCount": "{n} af {m} planlagt",
   "schedules.entriesButton": "Elementer",
   "schedules.membersTitle": "{area} på tidsplanen",

@@ -136,7 +136,7 @@ function ScheduleCard({
 }) {
   const { t } = useT();
   const { push } = useToast();
-  const { item, detail, settings } = entry;
+  const { item, detail } = entry;
   const spec = ENTRY_KIND[item.kind];
   const [own, setOwn] = useState(() => ownCadence(entry));
   const [busy, setBusy] = useState(false);
@@ -179,11 +179,12 @@ function ScheduleCard({
           hint={isGone(item) ? t("entry.settings.inScheduleGone") : pausedHint}
         />
       )}
-      {saveCadence && settings.perItemSchedules && !isGone(item) && (
+      {saveCadence && !isGone(item) && (
         <>
           <ToggleRow
             label={t("entry.settings.ownPlan")}
             hint={t("entry.settings.ownPlanHint")}
+            newId="entry-own-plan"
             checked={hasOwnPlan(own)}
             disabled={busy}
             onChange={(on) => void saveOwn(on ? NEW_OWN_PLAN : "")}

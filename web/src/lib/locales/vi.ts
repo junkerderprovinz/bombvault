@@ -1133,6 +1133,7 @@ const vi: Partial<Translations> = {
   "whatsNew.locationRename": "Mọi đích sao lưu đều đổi tên được, kể cả thư mục mà nhiều phần dùng chung.",
   "whatsNew.gotify": "Gotify là một kênh thông báo riêng, với URL máy chủ, token ứng dụng và mức ưu tiên khi thất bại và khi thành công.",
   "whatsNew.restoreStacks": "Các stack Compose được khôi phục từ thẻ riêng của chúng trên trang Khôi phục.",
+  "whatsNew.entryOwnPlan": "Một container, VM, thư mục hoặc tập dữ liệu ZFS có thể chạy theo lịch trình riêng. Bạn đặt nó ở thẻ Cài đặt của mục đó, không cần bật công tắc nào trước.",
   "whatsNew.overviewMoveMode": "Khi bạn tùy chỉnh Tổng quan, các thẻ của nó khẽ lắc lư để cho thấy bạn có thể di chuyển chúng.",
   "whatsNew.labelGlyphs": "Nhãn hiển thị một biểu tượng cho từng lựa chọn, giống như Góc và Hoạt ảnh.",
 
@@ -4913,9 +4914,7 @@ const vi: Partial<Translations> = {
   "schedules.offsiteRuleAll": "Mọi phần sao chép ngay sau mỗi lần sao lưu.",
   "schedules.offsiteRuleOthers": "Mọi phần khác sao chép ngay sau mỗi lần sao lưu.",
   "schedules.entries": "Mục trong lịch trình",
-  "schedules.entriesHint": "Các lịch trình gồm những mục nào và mỗi mục chạy khi nào. Mục đã tắt chỉ được sao lưu khi bạn tự bắt đầu.",
-  "schedules.perItem": "Lịch trình riêng theo mục",
-  "schedules.perItemHint": "Cho phép từng container, VM, thư mục và tập dữ liệu ZFS chạy theo lịch trình riêng, được đặt ở trang của chúng. Mục có lịch trình riêng rời khỏi sao lưu toàn bộ. Tắt: mọi mục theo lịch trình của phần mình.",
+  "schedules.entriesHint": "Các lịch trình gồm những mục nào và mỗi mục chạy khi nào. Lịch trình riêng cho một mục được đặt ở trang của mục đó. Mục đã tắt chỉ được sao lưu khi bạn tự bắt đầu.",
   "schedules.scheduledCount": "{n} trên {m} đã lên lịch",
   "schedules.entriesButton": "Mục",
   "schedules.membersTitle": "{area} trong lịch trình",

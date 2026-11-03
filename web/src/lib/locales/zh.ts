@@ -1133,6 +1133,7 @@ const zh: Partial<Translations> = {
   "whatsNew.locationRename": "每个目标都可以重命名，包括多个部分共用的文件夹。",
   "whatsNew.gotify": "Gotify 是独立的通知渠道，需要服务器 URL、应用令牌，并分别设置失败时和成功时的优先级。",
   "whatsNew.restoreStacks": "Compose 堆栈在恢复页面上有自己的卡片，在那里还原。",
+  "whatsNew.entryOwnPlan": "容器、虚拟机、文件夹或 ZFS 数据集都可以按独立计划运行。在条目的设置选项卡中直接设置，无需先打开任何开关。",
   "whatsNew.overviewMoveMode": "自定义概览时，卡片会轻轻摆动，表示你可以移动它们。",
   "whatsNew.labelGlyphs": "标签像圆角和动画一样，为每个选项显示一个符号。",
 
@@ -4913,9 +4914,7 @@ const zh: Partial<Translations> = {
   "schedules.offsiteRuleAll": "所有分区在每次备份后立即复制。",
   "schedules.offsiteRuleOthers": "其他所有分区在每次备份后立即复制。",
   "schedules.entries": "已计划的条目",
-  "schedules.entriesHint": "各个计划包含哪些条目，以及每个条目何时运行。已关闭的条目只有在你手动启动时才会备份。",
-  "schedules.perItem": "按条目的独立计划",
-  "schedules.perItemHint": "允许单个容器、虚拟机、文件夹和 ZFS 数据集按各自的计划运行，计划在它们自己的页面上设置。有独立计划的条目不再属于全部备份。关闭时：每个条目都遵循所属分区的计划。",
+  "schedules.entriesHint": "各个计划包含哪些条目，以及每个条目何时运行。单个条目的独立计划在它自己的页面上设置。已关闭的条目只有在你手动启动时才会备份。",
   "schedules.scheduledCount": "{m} 个中已计划 {n} 个",
   "schedules.entriesButton": "条目",
   "schedules.membersTitle": "计划中的{area}",

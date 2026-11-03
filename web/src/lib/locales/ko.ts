@@ -1125,6 +1125,7 @@ const ko: Partial<Translations> = {
   "whatsNew.locationRename": "모든 대상의 이름을 바꿀 수 있으며, 여러 섹션이 함께 쓰는 폴더도 마찬가지입니다.",
   "whatsNew.gotify": "Gotify는 별도의 알림 채널입니다. 서버 URL, 앱 토큰, 실패 시와 성공 시 우선순위를 설정합니다.",
   "whatsNew.restoreStacks": "Compose 스택은 복원 페이지의 전용 카드에서 복원합니다.",
+  "whatsNew.entryOwnPlan": "컨테이너, VM, 폴더, ZFS 데이터세트는 각각 고유 일정으로 실행할 수 있습니다. 항목의 설정 탭에서 바로 설정하며, 먼저 켜야 하는 스위치는 없습니다.",
   "whatsNew.overviewMoveMode": "개요를 사용자 지정하는 동안 카드가 살짝 흔들려 옮길 수 있음을 알려 줍니다.",
   "whatsNew.labelGlyphs": "레이블은 모서리와 애니메이션처럼 선택지마다 기호를 표시합니다.",
 
@@ -4913,9 +4914,7 @@ const ko: Partial<Translations> = {
   "schedules.offsiteRuleAll": "모든 섹션이 백업 직후에 복사합니다.",
   "schedules.offsiteRuleOthers": "나머지 모든 섹션이 백업 직후에 복사합니다.",
   "schedules.entries": "예약된 항목",
-  "schedules.entriesHint": "일정에 포함되는 항목과 각 항목이 실행되는 시점입니다. 꺼 둔 항목은 직접 시작할 때만 백업됩니다.",
-  "schedules.perItem": "항목별 고유 일정",
-  "schedules.perItemHint": "컨테이너, VM, 폴더, ZFS 데이터세트를 각각 고유 일정으로 실행할 수 있게 합니다. 일정은 해당 항목 페이지에서 설정합니다. 고유 일정이 있는 항목은 전체 백업에서 빠집니다. 끄면 모든 항목이 자기 섹션의 일정을 따릅니다.",
+  "schedules.entriesHint": "일정에 포함되는 항목과 각 항목이 실행되는 시점입니다. 항목 하나의 고유 일정은 해당 항목 페이지에서 설정합니다. 꺼 둔 항목은 직접 시작할 때만 백업됩니다.",
   "schedules.scheduledCount": "{m}개 중 {n}개 예약됨",
   "schedules.entriesButton": "항목",
   "schedules.membersTitle": "일정에 포함된 {area}",

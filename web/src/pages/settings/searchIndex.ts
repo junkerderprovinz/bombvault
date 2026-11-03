@@ -131,7 +131,7 @@ export const SETTINGS_INDEX: Record<SettingsPageId, SearchCard[]> = {
     {
       title: "schedules.entries",
       hint: "schedules.entriesHint",
-      rows: [{ key: "schedules.perItem", hint: "schedules.perItemHint" }],
+      rows: [{ key: "schedules.entriesButton" }],
     },
     {
       title: "schedules.order",

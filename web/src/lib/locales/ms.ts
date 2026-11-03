@@ -822,6 +822,7 @@ const ms: Partial<Translations> = {
   "whatsNew.locationRename": "Setiap destinasi boleh dinamakan semula, termasuk folder yang dikongsi beberapa bahagian.",
   "whatsNew.gotify": "Gotify ialah saluran pemberitahuan tersendiri, dengan URL pelayan, token aplikasi dan keutamaan apabila gagal dan apabila berjaya.",
   "whatsNew.restoreStacks": "Stack Compose dipulihkan daripada kadnya sendiri di halaman Pemulihan.",
+  "whatsNew.entryOwnPlan": "Bekas, VM, folder atau set data ZFS boleh berjalan mengikut jadual sendiri. Anda menetapkannya pada tab Tetapan entri itu, tanpa perlu menghidupkan sebarang suis dahulu.",
   "whatsNew.overviewMoveMode": "Semasa anda menyesuaikan Ikhtisar, kadnya bergoyang perlahan untuk menunjukkan bahawa anda boleh mengalihkannya.",
   "whatsNew.labelGlyphs": "Label memaparkan simbol untuk setiap pilihan, seperti Sudut dan Animasi.",
 
@@ -4932,9 +4933,7 @@ const ms: Partial<Translations> = {
   "schedules.offsiteRuleAll": "Semua bahagian disalin sejurus selepas setiap sandaran.",
   "schedules.offsiteRuleOthers": "Semua bahagian lain disalin sejurus selepas setiap sandaran.",
   "schedules.entries": "Entri berjadual",
-  "schedules.entriesHint": "Entri mana yang termasuk dalam jadual dan bila setiap satu berjalan. Entri yang dimatikan hanya disandarkan apabila anda memulakannya secara manual.",
-  "schedules.perItem": "Jadual sendiri bagi setiap entri",
-  "schedules.perItemHint": "Membolehkan bekas, VM, folder dan set data ZFS tunggal berjalan mengikut jadual sendiri, yang anda tetapkan pada halamannya. Entri yang mempunyai jadual sendiri keluar daripada sandaran penuh. Mati: setiap entri mengikut jadual bahagiannya.",
+  "schedules.entriesHint": "Entri mana yang termasuk dalam jadual dan bila setiap satu berjalan. Jadual sendiri untuk satu entri anda tetapkan pada halamannya. Entri yang dimatikan hanya disandarkan apabila anda memulakannya secara manual.",
   "schedules.scheduledCount": "{n} daripada {m} berjadual",
   "schedules.entriesButton": "Entri",
   "schedules.membersTitle": "{area} dalam jadual",

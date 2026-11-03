@@ -822,6 +822,7 @@ const sl: Partial<Translations> = {
   "whatsNew.locationRename": "Vsak cilj je mogoče preimenovati, tudi mapo, ki si jo deli več razdelkov.",
   "whatsNew.gotify": "Gotify je samostojen kanal za obvestila, z URL-jem strežnika, žetonom aplikacije ter prioriteto ob neuspehu in ob uspehu.",
   "whatsNew.restoreStacks": "Sklope Compose obnoviš z lastne kartice na strani Obnova.",
+  "whatsNew.entryOwnPlan": "Vsebnik, VM, mapa ali nabor podatkov ZFS lahko teče po lastnem urniku. Nastaviš ga na zavihku Nastavitve vnosa in ti prej ni treba vklopiti nobenega stikala.",
   "whatsNew.overviewMoveMode": "Med prilagajanjem pregleda se njegove kartice rahlo zibljejo, da pokažejo, da jih lahko premikaš.",
   "whatsNew.labelGlyphs": "Oznake prikazujejo simbol za vsako izbiro, tako kot Oglišča in Animacija.",
 
@@ -4916,9 +4917,7 @@ const sl: Partial<Translations> = {
   "schedules.offsiteRuleAll": "Vsi razdelki kopirajo takoj po vsaki varnostni kopiji.",
   "schedules.offsiteRuleOthers": "Vsi drugi razdelki kopirajo takoj po vsaki varnostni kopiji.",
   "schedules.entries": "Vnosi v urniku",
-  "schedules.entriesHint": "Katere vnose urniki zajamejo in kdaj teče posamezni. Izklopljen vnos se varnostno kopira samo, ko ga zaženeš ročno.",
-  "schedules.perItem": "Lastni urniki po vnosih",
-  "schedules.perItemHint": "Posameznim vsebnikom, VM-jem, mapam in naborom podatkov ZFS omogoči lasten urnik, ki ga nastaviš na njihovi strani. Vnos z lastnim urnikom izstopi iz popolne varnostne kopije. Izklopljeno: vsak vnos sledi urniku svojega razdelka.",
+  "schedules.entriesHint": "Katere vnose urniki zajamejo in kdaj teče posamezni. Lasten urnik posameznega vnosa nastaviš na njegovi strani. Izklopljen vnos se varnostno kopira samo, ko ga zaženeš ročno.",
   "schedules.scheduledCount": "{n} od {m} v urniku",
   "schedules.entriesButton": "Vnosi",
   "schedules.membersTitle": "{area} v urniku",

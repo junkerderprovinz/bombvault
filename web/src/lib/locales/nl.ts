@@ -1130,6 +1130,7 @@ const nl: Partial<Translations> = {
   "whatsNew.locationRename": "Elke bestemming kan een andere naam krijgen, ook een map die meerdere onderdelen delen.",
   "whatsNew.gotify": "Gotify is een eigen meldingskanaal, met een server-URL, een app-token en een prioriteit bij mislukking en een bij succes.",
   "whatsNew.restoreStacks": "Compose-stacks herstel je vanaf een eigen kaart op de pagina Herstel.",
+  "whatsNew.entryOwnPlan": "Een container, VM, map of ZFS-dataset kan op een eigen planning draaien. Je stelt die in op het tabblad Instellingen van het item, zonder eerst een schakelaar aan te zetten.",
   "whatsNew.overviewMoveMode": "Terwijl je het overzicht aanpast, wiegen de kaarten zachtjes om te laten zien dat je ze kunt verplaatsen.",
   "whatsNew.labelGlyphs": "Labels toont voor elke keuze een symbool, net als Hoeken en Animatie.",
 
@@ -4921,9 +4922,7 @@ const nl: Partial<Translations> = {
   "schedules.offsiteRuleAll": "Alle onderdelen kopiëren direct na elke back-up.",
   "schedules.offsiteRuleOthers": "Alle andere onderdelen kopiëren direct na elke back-up.",
   "schedules.entries": "Geplande items",
-  "schedules.entriesHint": "Welke items de planningen omvatten en wanneer elk item draait. Een item dat is uitgeschakeld, krijgt alleen een back-up als je die met de hand start.",
-  "schedules.perItem": "Eigen planningen per item",
-  "schedules.perItemHint": "Laat afzonderlijke containers, VM's, mappen en ZFS-datasets op een eigen planning draaien, die je op hun pagina instelt. Een item met een eigen planning valt buiten de volledige back-up. Uit: elk item volgt de planning van zijn onderdeel.",
+  "schedules.entriesHint": "Welke items de planningen omvatten en wanneer elk item draait. Een eigen planning voor één item stel je in op de pagina van dat item. Een item dat is uitgeschakeld, krijgt alleen een back-up als je die met de hand start.",
   "schedules.scheduledCount": "{n} van {m} gepland",
   "schedules.entriesButton": "Items",
   "schedules.membersTitle": "{area} in de planning",

@@ -14,7 +14,6 @@ import { NumberField } from "../../../components/NumberField";
 import { PlanButton } from "../../../components/PlanButton";
 import { scheduleStatus } from "../../../components/ScheduleBadge";
 import { Rows, SettingRow } from "../../../components/storage/rows";
-import { Toggle } from "../../../components/Toggle";
 import { VMBackupOrderPanel } from "../../../components/vms/VMBackupOrderPanel";
 import { IdleCard } from "../IdleCard";
 import { ScheduleMembersWindow } from "../ScheduleMembersWindow";
@@ -262,16 +261,6 @@ export function SchedulesPage() {
 
       <Card title={t("schedules.entries")} hint={t("schedules.entriesHint")} hueIndex={nextHue()}>
         <Rows>
-          <SettingRow label={t("schedules.perItem")} hint={t("schedules.perItemHint")}>
-            <Toggle
-              hideLabel
-              label={t("schedules.perItem")}
-              checked={settings.perItemSchedules}
-              onChange={(v) => void autoSaveScheduleField("perItemSchedules", v)}
-              disabled={schedFieldBusy.perItemSchedules}
-              className={schedFieldShake.perItemSchedules ? "glim-shake" : ""}
-            />
-          </SettingRow>
           {sections
             .filter((s) => MEMBER_KINDS.includes(s.kind))
             .map((s, i) => {

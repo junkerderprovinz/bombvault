@@ -822,6 +822,7 @@ const is: Partial<Translations> = {
   "whatsNew.locationRename": "Það má endurnefna alla áfangastaði, líka möppu sem nokkrir hlutar deila.",
   "whatsNew.gotify": "Gotify er sérstök tilkynningarás, með slóð þjóns, forritatóka og forgangi við villu og við árangur.",
   "whatsNew.restoreStacks": "Compose-staflar eru endurheimtir af eigin spjaldi á síðunni Endurheimt.",
+  "whatsNew.entryOwnPlan": "Gámur, sýndarvél, mappa eða ZFS-gagnasafn getur keyrt á eigin áætlun. Þú stillir hana á flipanum Stillingar í færslunni og þarft ekki fyrst að kveikja á neinum rofa.",
   "whatsNew.overviewMoveMode": "Á meðan þú sérsníður yfirlitið vagga spjöldin þess létt til að sýna að þú getur fært þau.",
   "whatsNew.labelGlyphs": "Merkingar sýnir tákn fyrir hvern valkost, eins og Horn og Hreyfimynd.",
 
@@ -4932,9 +4933,7 @@ const is: Partial<Translations> = {
   "schedules.offsiteRuleAll": "Öll svæði afrita strax eftir hverja afritun.",
   "schedules.offsiteRuleOthers": "Öll önnur svæði afrita strax eftir hverja afritun.",
   "schedules.entries": "Færslur í áætlun",
-  "schedules.entriesHint": "Hvaða færslur áætlanirnar ná yfir og hvenær hver þeirra keyrir. Færsla sem er slökkt á er aðeins afrituð þegar þú ræsir hana handvirkt.",
-  "schedules.perItem": "Eigin áætlanir fyrir færslur",
-  "schedules.perItemHint": "Leyfir einstökum gámum, sýndarvélum, möppum og ZFS-gagnasöfnum að keyra á eigin áætlun, sem þú stillir á síðu þeirra. Færsla með eigin áætlun fer úr heildarafritun. Slökkt: hver færsla fylgir áætlun síns svæðis.",
+  "schedules.entriesHint": "Hvaða færslur áætlanirnar ná yfir og hvenær hver þeirra keyrir. Eigin áætlun einnar færslu stillir þú á síðu hennar. Færsla sem er slökkt á er aðeins afrituð þegar þú ræsir hana handvirkt.",
   "schedules.scheduledCount": "{n} af {m} í áætlun",
   "schedules.entriesButton": "Færslur",
   "schedules.membersTitle": "{area} í áætlun",

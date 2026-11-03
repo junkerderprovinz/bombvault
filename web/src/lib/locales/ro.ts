@@ -1132,6 +1132,7 @@ const ro: Partial<Translations> = {
   "whatsNew.locationRename": "Orice destinație poate fi redenumită, inclusiv un dosar pe care îl împart mai multe secțiuni.",
   "whatsNew.gotify": "Gotify este un canal de notificare separat, cu URL-ul serverului, tokenul aplicației și o prioritate la eșec și una la succes.",
   "whatsNew.restoreStacks": "Stack-urile Compose se restaurează dintr-un card propriu pe pagina Restaurare.",
+  "whatsNew.entryOwnPlan": "Un container, o VM, un folder sau un set de date ZFS poate rula după o programare proprie. O setezi în fila Setări a elementului, fără să pornești mai întâi vreun comutator.",
   "whatsNew.overviewMoveMode": "Cât timp personalizezi prezentarea, cardurile ei se leagănă ușor ca să arate că le poți muta.",
   "whatsNew.labelGlyphs": "Etichete afișează un simbol pentru fiecare opțiune, ca Colțuri și Animație.",
 
@@ -4923,9 +4924,7 @@ const ro: Partial<Translations> = {
   "schedules.offsiteRuleAll": "Toate secțiunile copiază imediat după fiecare backup.",
   "schedules.offsiteRuleOthers": "Toate celelalte secțiuni copiază imediat după fiecare backup.",
   "schedules.entries": "Elemente programate",
-  "schedules.entriesHint": "Ce elemente includ programările și când rulează fiecare. Un element dezactivat este salvat doar când îl pornești manual.",
-  "schedules.perItem": "Programări proprii pe elemente",
-  "schedules.perItemHint": "Lasă containerele, VM-urile, folderele și seturile de date ZFS individuale să ruleze după o programare proprie, pe care o setezi pe pagina lor. Un element cu programare proprie iese din backupul total. Oprit: fiecare element urmează programarea secțiunii sale.",
+  "schedules.entriesHint": "Ce elemente includ programările și când rulează fiecare. Programarea proprie a unui element o setezi pe pagina lui. Un element dezactivat este salvat doar când îl pornești manual.",
   "schedules.scheduledCount": "{n} din {m} programate",
   "schedules.entriesButton": "Elemente",
   "schedules.membersTitle": "{area} în programare",
