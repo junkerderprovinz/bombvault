@@ -244,9 +244,13 @@ func (s *Service) refreshedVMDefinition(ctx context.Context, def vmDefinition, u
 	if err != nil {
 		return "", err
 	}
-	def.DomainXML, def.DiskPaths, def.NVRAMHostPath = xmlStr, diskPaths, domain.NVRAMPath
+	backing, err := s.vmBackingChains(domain)
+	if err != nil {
+		return "", fmt.Errorf("the disks of VM %q cannot be backed up: %w", name, err)
+	}
+	def.DomainXML, def.DiskPaths, def.Backing, def.NVRAMHostPath = xmlStr, diskPaths, backing, domain.NVRAMPath
 	if domain.UUID == "" || domain.UUID != uuid {
-		def.NVRAMBytes, def.TPMBytes = nil, nil
+		def.NVRAMBytes, def.TPMBytes, def.SnapshotDB = nil, nil, nil
 	}
 	b, _ := json.Marshal(def)
 	return string(b), nil

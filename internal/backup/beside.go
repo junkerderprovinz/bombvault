@@ -151,6 +151,9 @@ type BesideVMDeps struct {
 	Convert     ImageConverter
 	// Files are written once the disks are there.
 	Files []BesideFile
+	// Backing leads each copied qcow2 image to the copy of its backing file
+	// instead of the original's.
+	Backing []VMBackingLink
 	// TargetID is the VM's run-recording target id.
 	TargetID string
 
@@ -197,6 +200,9 @@ func runVMBeside(ctx context.Context, d BesideVMDeps) error {
 		if err := d.Restic.RestoreSubtreeTo(ctx, d.RepoPath, d.SnapshotID, rd.Subtree, rd.Target); err != nil {
 			return fmt.Errorf("vm restore: restic restore: %w", err)
 		}
+	}
+	if err := repointBacking(d.Backing); err != nil {
+		return err
 	}
 	for _, f := range d.Files {
 		if err := os.WriteFile(f.Path, f.Data, 0o600); err != nil {

@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/progress"
+	"github.com/junkerderprovinz/bombvault/internal/qcow2"
 )
 
 // parentDirs returns the deduplicated parent directories of the given absolute
@@ -115,7 +116,8 @@ type VMBackupDeps struct {
 	// a mixed file and zvol backup into several snapshots, and the tag ties
 	// them back to one run.
 	RunTag string
-	// DiskPaths are the container-visible absolute paths to the disk images.
+	// DiskPaths are the container-visible absolute paths to the disk images
+	// and to every file their qcow2 backing chains read through to.
 	DiskPaths []string
 	// DiskDevice is the first disk's target dev (e.g. "vda", "hdc"). Used as the
 	// blockcommit target for live backup when CommitDevs is empty (back-compat).
@@ -284,9 +286,36 @@ type VMRestoreDeps struct {
 	ImageDumper BlockDumper
 	Convert     ImageConverter
 
+	// Backing leads each restored qcow2 image to the restored copy of its
+	// backing file before the VM is defined.
+	Backing []VMBackingLink
+
 	VM     VM
 	Restic Restic
 	Runs   Runs
+}
+
+// VMBackingLink is a restored qcow2 image and the restored file it reads
+// through to. The image's header names that file by where it was backed up,
+// which is the original once the copy lies anywhere else.
+type VMBackingLink struct {
+	// Image is the restored image as this process opens it, ImageHost the
+	// same file as the VM host knows it.
+	Image     string
+	ImageHost string
+	// Backing is the restored backing file as the VM host knows it.
+	Backing string
+}
+
+// repointBacking makes every restored image read through to the restored
+// copy of its backing file.
+func repointBacking(links []VMBackingLink) error {
+	for _, l := range links {
+		if err := qcow2.Repoint(l.Image, l.ImageHost, l.Backing); err != nil {
+			return fmt.Errorf("vm restore: point %s at its backing file %s: %w", l.ImageHost, l.Backing, err)
+		}
+	}
+	return nil
 }
 
 // VMRestoreBlockDisk is one zvol disk of a VM to restore.
@@ -792,6 +821,9 @@ func runVMRestore(ctx context.Context, d VMRestoreDeps) error {
 		if err := d.Restic.RestorePaths(ctx, d.RepoPath, d.SnapshotID, restoreDirs); err != nil {
 			return fmt.Errorf("vm restore: restic restore: %w", err)
 		}
+	}
+	if err := repointBacking(d.Backing); err != nil {
+		return err
 	}
 
 	// A VM missing a disk it boots from is not defined.
