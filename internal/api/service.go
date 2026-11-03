@@ -13027,6 +13027,13 @@ func (a *resticZvolAdapter) DumpTo(ctx context.Context, repo, snapshotID, path s
 type vmDefinition struct {
 	DomainXML string   `json:"domain_xml"`
 	DiskPaths []string `json:"disk_paths"` // container-visible absolute paths (under the Host Data mount)
+	// Backing is the qcow2 backing chain of the disks that have one. Its
+	// files go into the backup beside the disks, and a restore elsewhere
+	// points each copy at the copy below it.
+	Backing []vmBacking `json:"backing,omitempty"`
+	// SnapshotDB is Unraid's record of the VM's snapshots, read over SSH as
+	// NVRAM is, for a VM whose disks have a backing chain.
+	SnapshotDB []byte `json:"snapshot_db,omitempty"`
 	// NVRAM travels in the definition (read/written over SSH), NOT via a libvirt
 	// mount. NVRAMHostPath is the host path from the domain XML; NVRAMBytes is the
 	// captured var store (base64 in JSON). Empty for BIOS VMs or when SSH capture
@@ -13549,6 +13556,10 @@ func (s *Service) BackupVM(ctx context.Context, name string) (_ backup.Summary, 
 	if err != nil {
 		return backup.Summary{}, fmt.Errorf("backup vm: %w", err)
 	}
+	backing, err := s.vmBackingChains(domain)
+	if err != nil {
+		return backup.Summary{}, fmt.Errorf("backup vm: %w", err)
+	}
 
 	// The VM is now guaranteed on its base disks (recoverLeftoverOverlay committed
 	// any overlay). Delete stray "*.bombvault-tmp" overlay files left behind by a
@@ -13581,6 +13592,16 @@ func (s *Service) BackupVM(ctx context.Context, name string) (_ backup.Summary, 
 			tpmBytes = b
 		} else {
 			log.Printf("api: BackupVM: WARN TPM state read over SSH failed for %q (%v) — the disks are backed up, but on restore the vTPM will start fresh/empty, not restore its captured state", name, rerr) //nolint:gosec // G706: name is %q-quoted
+		}
+	}
+
+	// A chain built by hand has no record, so a failed read is no warning.
+	var snapshotDB []byte
+	if len(backing) > 0 && s.ssh != nil && s.platformFn().Kind() == platform.KindUnraid {
+		if b, rerr := s.ssh.ReadFile(ctx, unraidSnapshotDB(name)); rerr == nil {
+			snapshotDB = b
+		} else {
+			log.Printf("api: BackupVM: %q has a backing chain but no snapshot list of Unraid's could be read: %v", name, rerr) //nolint:gosec // G706: %q-quoted
 		}
 	}
 
@@ -13640,6 +13661,8 @@ func (s *Service) BackupVM(ctx context.Context, name string) (_ backup.Summary, 
 	def := vmDefinition{
 		DomainXML:     defXML,
 		DiskPaths:     diskPaths,
+		Backing:       backing,
+		SnapshotDB:    snapshotDB,
 		NVRAMHostPath: domain.NVRAMPath,
 		NVRAMBytes:    nvramBytes,
 		TPMBytes:      tpmBytes,
@@ -13678,7 +13701,8 @@ func (s *Service) BackupVM(ctx context.Context, name string) (_ backup.Summary, 
 
 	// A zvol disk is part of what this VM covers just as much as a file-backed
 	// one, so dropping either has to move the fingerprint.
-	sources := append([]string{}, diskPaths...)
+	files := append(slices.Clone(diskPaths), backingFiles(backing, diskPaths)...)
+	sources := slices.Clone(files)
 	for _, bd := range vmBlockDisks {
 		sources = append(sources, bd.Dataset)
 	}
@@ -13690,7 +13714,7 @@ func (s *Service) BackupVM(ctx context.Context, name string) (_ backup.Summary, 
 	deps := backup.VMBackupDeps{
 		Name:             name,
 		FormerNames:      aliasOldNames(aliases),
-		DiskPaths:        diskPaths,
+		DiskPaths:        files,
 		DiskDevice:       domain.DiskDevice,
 		CommitDevs:       commitDevs,
 		SkipSnapshotDevs: domain.SkipSnapshotDevs,
@@ -13869,6 +13893,8 @@ type vmRestorePlan struct {
 	blockDisks []backup.VMRestoreBlockDisk
 	// images are the disks of a changed-block snapshot and where each goes.
 	images []backup.VMRestoreImage
+	// backing is the backing chain of the restored disks, as restored.
+	backing []vmBacking
 	// beside is set for a restore next to the original, which uses it in place
 	// of the fields above that say where a disk goes.
 	beside *vmBeside
@@ -14002,23 +14028,30 @@ func (s *Service) prepareRestoreVMForTarget(ctx context.Context, ref repoRef, na
 		return vmRestorePlan{}, fmt.Errorf("restore vm: unmarshal definition: %w", err)
 	}
 
+	// A changed-block snapshot holds each disk whole, so only a snapshot of
+	// the files brings back the backing chains with the disks.
+	blocks := slices.Contains(snap.Tags, backup.BlocksTag)
+	diskPaths := def.DiskPaths
+	if !blocks {
+		diskPaths = append(slices.Clone(def.DiskPaths), heldBackingFiles(def, snap.Paths)...)
+	}
 	// Disks must live within the Host Data mount, which is how restic reaches
 	// them. The backup refuses a VM with a disk outside it and refuses it whole,
 	// so the restore refuses too: leaving the disk out and defining the VM from
 	// an XML that still lists it hands back a machine with a missing or stale
 	// disk and says nothing.
-	for _, p := range def.DiskPaths {
+	for _, p := range diskPaths {
 		if !paths.Within(s.cfg.HostMountRoot, p) {
 			return vmRestorePlan{}, destinationRefusal("disk %s in this backup is not under your Host Data mount (%s) and cannot be restored. Move it under that mount, or restore this VM to another instance with a destination folder", p, s.cfg.HostSourceRoot)
 		}
 	}
-	diskPaths := def.DiskPaths
+	backedUp := diskPaths
 	// A changed-block snapshot holds each disk as segments, not as a file at
 	// its path, so its disks are matched through the manifest instead.
 	var blockManifest *backup.BlocksManifest
 	var blockDiskIdx []int
 	sources := diskPaths
-	if slices.Contains(snap.Tags, backup.BlocksTag) {
+	if blocks {
 		m, mErr := (&vmBlockRestic{engine: s.engine, mode: ref.mode}).Manifest(ctx, ref.repo, snapshotID)
 		if mErr != nil {
 			return vmRestorePlan{}, fmt.Errorf("restore vm: read the snapshot's disk list: %w", mErr)
@@ -14108,6 +14141,15 @@ func (s *Service) prepareRestoreVMForTarget(ctx context.Context, ref repoRef, na
 		}
 	}
 
+	var backing []vmBacking
+	if !blocks {
+		restoredAt := make(map[string]string, len(backedUp))
+		for i, p := range backedUp {
+			restoredAt[p] = diskPaths[i]
+		}
+		backing = restoredBacking(def, restoredAt)
+	}
+
 	var images []backup.VMRestoreImage
 	if blockManifest != nil {
 		restoreDirs = nil
@@ -14180,11 +14222,21 @@ func (s *Service) prepareRestoreVMForTarget(ctx context.Context, ref repoRef, na
 	// variables and vTPM state. It writes to the (possibly remapped)
 	// destination nvram path plus the re-derived TPM path. No-op for either
 	// when there is nothing to write or SSH is unavailable.
+	//
+	// Unraid's snapshot list names the files of the chain where they were
+	// backed up, so it only goes back with a chain restored to that place.
+	var snapshotDB []byte
+	if !blocks && len(restoreDirs) == 0 {
+		snapshotDB = def.SnapshotDB
+	}
 	var preDefine func(context.Context) error
-	if s.ssh != nil && ((len(def.NVRAMBytes) > 0 && nvramHostPath != "") || (len(def.TPMBytes) > 0 && tpmPath != "")) {
+	if s.ssh != nil && ((len(def.NVRAMBytes) > 0 && nvramHostPath != "") || (len(def.TPMBytes) > 0 && tpmPath != "") || len(snapshotDB) > 0) {
 		writeNVRAMPath := nvramHostPath
 		writeTPMPath := tpmPath
 		preDefine = func(ctx context.Context) error {
+			if len(snapshotDB) > 0 {
+				s.writeSnapshotDB(ctx, name, snapshotDB)
+			}
 			if len(def.NVRAMBytes) > 0 && writeNVRAMPath != "" {
 				if err := s.ssh.WriteFile(ctx, writeNVRAMPath, def.NVRAMBytes); err != nil {
 					log.Printf("api: RestoreVM: WARN NVRAM write over SSH failed for %q (%v) — the VM is restored and will boot, but libvirt regenerates the UEFI variables from the firmware template, so boot entries may need to be re-added", name, err) //nolint:gosec // G706: name is %q-quoted
@@ -14219,6 +14271,7 @@ func (s *Service) prepareRestoreVMForTarget(ctx context.Context, ref repoRef, na
 		preDefine:    preDefine,
 		blockDisks:   vmRestoreBlockDisks,
 		images:       images,
+		backing:      backing,
 	}, nil
 }
 
@@ -14657,6 +14710,7 @@ func (s *Service) executeRestoreVM(ctx context.Context, name string, plan vmRest
 		Images:      plan.images,
 		ImageDumper: &vmBlockRestic{engine: s.engine, mode: plan.mode},
 		Convert:     qemuImgConvert,
+		Backing:     s.backingLinks(plan.backing),
 	})
 	if rerr == nil {
 		s.healRestoreDirOwnership(rctx, plan.repo, plan.snapshotID, plan.mode, plan.restoreDirs)

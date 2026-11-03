@@ -366,6 +366,11 @@ func (s *Service) ExportVM(ctx context.Context, name string) (string, []string, 
 		}
 		diskPaths = append(diskPaths, cp)
 	}
+	backing, err := s.vmBackingChains(domain)
+	if err != nil {
+		return "", nil, fmt.Errorf("export vm: %w", err)
+	}
+	diskPaths = append(diskPaths, backingFiles(backing, diskPaths)...)
 	defXML := liveXML
 	if inactive, ierr := s.virsh.DumpXMLInactive(ctx, name); ierr == nil && strings.TrimSpace(inactive) != "" {
 		defXML = inactive

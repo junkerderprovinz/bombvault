@@ -411,8 +411,10 @@ func (c *Client) SnapshotCreateDiskOnly(ctx context.Context, name, snapName stri
 }
 
 // BlockCommitActivePivot merges the active overlay back into the base and pivots.
+// Without --shallow virsh commits the whole chain, which on a disk with
+// snapshots of its own would merge every one of them into the bottom image.
 func (c *Client) BlockCommitActivePivot(ctx context.Context, name, device string) error {
-	_, err := c.run(ctx, "blockcommit", "--active", "--pivot", "--wait", "--", name, device)
+	_, err := c.run(ctx, "blockcommit", "--active", "--shallow", "--pivot", "--wait", "--", name, device)
 	return err
 }
 

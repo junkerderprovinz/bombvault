@@ -515,6 +515,9 @@ type vmBeside struct {
 	dirs   []backup.VMRestoreDir
 	images []backup.VMRestoreImage
 	files  []backup.BesideFile
+	// backing is the chain of the copied disks, which has to lead through
+	// the copies and never into the original's files.
+	backing []vmBacking
 }
 
 // prepareRestoreVMBeside prepares the restore of a VM's disks into new
@@ -567,6 +570,11 @@ func (s *Service) prepareRestoreVMBeside(ctx context.Context, name, snapshotID, 
 	if len(def.NVRAMBytes) > 0 && def.NVRAMHostPath != "" {
 		b.files = append(b.files, backup.BesideFile{Path: roots[0].copy + "/" + path.Base(def.NVRAMHostPath), Data: def.NVRAMBytes})
 	}
+	for _, l := range plan.backing {
+		img, _ := besidePath(roots, l.Image)
+		file, _ := besidePath(roots, l.File)
+		b.backing = append(b.backing, vmBacking{Image: img, File: file})
+	}
 	plan.beside = b
 	return plan, nil
 }
@@ -596,6 +604,7 @@ func (s *Service) executeRestoreVMBeside(ctx context.Context, name string, plan 
 		ImageDumper: &vmBlockRestic{engine: s.engine, mode: plan.mode},
 		Convert:     qemuImgConvert,
 		Files:       b.files,
+		Backing:     s.backingLinks(b.backing),
 		TargetID:    plan.targetID,
 		Restic:      &resticAdapter{engine: s.engine, mode: plan.mode},
 		Runs:        runsAdapter{st: s.store, ctx: ctx},
