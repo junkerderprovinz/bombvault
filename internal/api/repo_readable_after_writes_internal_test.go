@@ -234,3 +234,22 @@ func TestAFlashBackupStraightToATargetOnAShareLeavesItReadableByOthers(t *testin
 		t.Fatalf("the backup left %v unreadable", got)
 	}
 }
+
+func TestAStackBackupLeavesWhatItWroteReadableByOthers(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("unix permission bits are not modelled on windows")
+	}
+	f := newPlacementFixture(t)
+	f.svc.engine = rootWritesEngine{placementEngine: f.eng, t: t}
+	dir := t.TempDir()
+	if err := f.svc.backupStackDir(WithBulkReplicateSuppressed(context.Background()), "media", dir); err != nil {
+		t.Fatal(err)
+	}
+	repo := f.domainPath("containers")
+	if _, err := os.Stat(filepath.Join(filepath.FromSlash(repo), "data", "aa", "backedup")); err != nil {
+		t.Fatalf("the stack was not backed up into %s: %v", repo, err)
+	}
+	if got := unreadableByOthers(t, repo); len(got) > 0 {
+		t.Fatalf("the stack backup left %v unreadable", got)
+	}
+}
