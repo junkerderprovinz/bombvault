@@ -23,9 +23,9 @@ Khi chưa có mật khẩu đăng nhập, ai mở được giao diện web cũng
 | `GET /api/v1/health` | Phiên bản, tên phiên bản chạy, có bản sao lưu đang chạy không và mã này được làm gì | đọc |
 | `GET /api/v1/status` | Trạng thái bảo vệ theo phần: bản sao lưu thành công gần nhất, khoảng thời gian dự kiến, kiểm tra, lần chạy theo lịch tiếp theo | đọc |
 | `GET /api/v1/activity` | Những gì đang chạy lúc này, kèm giai đoạn và phần trăm | đọc |
-| `GET /api/v1/items` | Mọi mục được bảo vệ với lịch, những gì một bản sao lưu dừng và bản sao lưu gần nhất; `?domain=` cho một phần | đọc |
-| `GET /api/v1/runs` | Lịch sử chạy, mới nhất trước; bộ lọc `limit`, `domain`, `item`, `status`, `kind`, `since` | đọc |
-| `GET /api/v1/anomalies` | Bất thường kèm tóm tắt những mục còn mở; bộ lọc `state`, `severity`, `domain`, `limit` | đọc |
+| `GET /api/v1/items` | Mọi mục được bảo vệ với lịch, những gì một bản sao lưu dừng và bản sao lưu gần nhất. `?domain=` cho một phần | đọc |
+| `GET /api/v1/runs` | Lịch sử chạy, mới nhất trước. Bộ lọc `limit`, `domain`, `item`, `status`, `kind`, `since` | đọc |
+| `GET /api/v1/anomalies` | Bất thường kèm tóm tắt những mục còn mở. Bộ lọc `state`, `severity`, `domain`, `limit` | đọc |
 | `GET /api/v1/anomalies/{id}` | Một bất thường | đọc |
 | `GET /api/v1/storage/{domain}` | Lịch sử dung lượng, mức tăng mỗi tuần và dung lượng trống của từng kho trong một phần | đọc |
 | `POST /api/v1/backups` | Sao lưu một mục (`{"domain":"containers","item":"plex"}`) hoặc cả phần (`{"domain":"vms"}`) | bắt đầu |
@@ -61,7 +61,7 @@ Lỗi trả về dưới dạng `{"error": {"code": "...", "message": "..."}}` k
 | 403 | `not_permitted`, `forbidden_origin` | Mã chỉ được đọc, hoặc không phải mã đã bắt đầu lần chạy đó, hoặc yêu cầu đến từ một trang có nguồn gốc (origin) khác |
 | 404 | `not_found` | Không có mục, lần chạy hoặc bất thường đó |
 | 409 | `busy`, `domain_off`, `nothing_to_back_up`, `not_running` | Đã có việc khác đang chạy, phần đang tắt, hoặc không có gì để làm |
-| 429 | `throttled`, `rate_limited`, `cooldown`, `retention_guard` | Một giới hạn giữ yêu cầu lại; `Retry-After` cho biết khi nào thử lại |
+| 429 | `throttled`, `rate_limited`, `cooldown`, `retention_guard` | Một giới hạn giữ yêu cầu lại. `Retry-After` cho biết khi nào thử lại |
 
 Việc bắt đầu tuân theo cùng giới hạn như [bắt đầu qua MCP](mcp.md#starting-backups): 12 lần mỗi giờ cho mỗi mã, cách nhau 15 phút giữa hai lần bắt đầu cùng một mục, tối đa 4 lần cho một mục trong 24 giờ, và cơ chế bảo vệ lưu giữ. Ba giới hạn sau tính chung các lần bắt đầu qua MCP, qua API và từ Home Assistant. Một mã được gửi 120 yêu cầu mỗi phút. Năm lần thử thất bại từ một địa chỉ sẽ khóa địa chỉ đó trong một phút.
 
@@ -74,7 +74,7 @@ BombVault cung cấp mô tả các tuyến này tại `/api/v1/openapi.json` (Op
 BombVault có thể xuất hiện trong Home Assistant như một thiết bị, nhờ cơ chế khám phá MQTT. Home Assistant cần tích hợp MQTT của nó và một broker, ví dụ tiện ích bổ sung Mosquitto. Không cần thành phần riêng nào.
 
 1. Trong BombVault, mở **Cài đặt, Tích hợp** và bật **Home Assistant** trong thẻ **Dịch vụ**. Các trường cho broker hiện bên dưới nó.
-2. Nhập địa chỉ và cổng của broker, cùng tên người dùng và mật khẩu nếu broker yêu cầu. Bật **Dùng TLS** nếu broker dùng TLS, thường ở cổng 8883; chứng chỉ của broker phải hợp lệ cho địa chỉ bạn nhập. Nếu bạn đổi địa chỉ, cổng hoặc tên người dùng, hãy nhập lại mật khẩu: BombVault không chuyển mật khẩu đã lưu sang broker hay người dùng khác.
+2. Nhập địa chỉ và cổng của broker, cùng tên người dùng và mật khẩu nếu broker yêu cầu. Bật **Dùng TLS** nếu broker dùng TLS, thường ở cổng 8883. Chứng chỉ của broker phải hợp lệ cho địa chỉ bạn nhập. Nếu bạn đổi địa chỉ, cổng hoặc tên người dùng, hãy nhập lại mật khẩu: BombVault không chuyển mật khẩu đã lưu sang broker hay người dùng khác.
 3. Bấm **Lưu**. Hàng sẽ cho biết khi kết nối đã thông.
 
 Thiết bị có tên BombVault, hoặc BombVault kèm tên phiên bản chạy trong ngoặc, và có các thực thể sau:
@@ -93,6 +93,42 @@ Thiết bị có tên BombVault, hoặc BombVault kèm tên phiên bản chạy 
 Tên thực thể bằng tiếng Anh, vì Home Assistant dùng đúng tên BombVault gửi. Mỗi phần đang bật có thực thể riêng, và phần bạn tắt sẽ mất chúng. Các nút xuất hiện khi bạn bật **Nút bấm bắt đầu sao lưu**, mục này tắt khi mới cài đặt. Các nút tuân theo cùng giới hạn như [bắt đầu qua API](#errors). Ngoài ra BombVault chỉ nhận mỗi lần một lần bấm cho mỗi phần và tối đa sáu lần mỗi phút, đồng thời bỏ qua lần bấm mà broker giữ lại dưới dạng tin nhắn retained. Ai công bố được lên broker đều bấm được, nên hãy đặt mật khẩu cho broker.
 
 BombVault đọc trạng thái của mình mỗi 15 giây và công bố khi có thay đổi, dạng JSON tại `<tiền tố>/<nút>/state`. Tiền tố là `bombvault` nếu bạn không đổi, còn nút là một mã ngắn BombVault chọn một lần. Các thông điệp khám phá đi tới tiền tố mặc định của Home Assistant là `homeassistant`. Cả hai đều được giữ lại (retained). Thông điệp di chúc (last will) đánh dấu thiết bị là không khả dụng nếu BombVault dừng mà không báo trước. Khi tắt liên kết, BombVault gỡ thiết bị và các thực thể của nó khỏi Home Assistant.
+
+### Ví dụ: một thẻ và một cảnh báo {#home-assistant-example}
+
+Home Assistant tạo id thực thể từ tên, nên thiết bị BombVault nhận các id như `sensor.bombvault_status`. Khi tên phiên bản đứng trong ngoặc, các id cũng mang tên đó, vì vậy hãy xem chúng trước dưới **Developer Tools, States**. Một thẻ cho bảng điều khiển:
+
+```yaml
+type: entities
+title: Backups
+entities:
+  - sensor.bombvault_status
+  - sensor.bombvault_running_job
+  - sensor.bombvault_open_anomalies
+  - sensor.bombvault_next_scheduled_backup
+```
+
+Một automation báo cho điện thoại của bạn khi trạng thái chuyển sang `failed`:
+
+```yaml
+alias: BombVault backup failed
+trigger:
+  - platform: state
+    entity_id: sensor.bombvault_status
+    to: failed
+action:
+  - service: notify.mobile_app_my_phone
+    data:
+      message: A BombVault backup failed. Open Needs you on the overview.
+```
+
+## Prometheus {#metrics}
+
+**Cung cấp /metrics** trong thẻ **Dịch vụ** dưới **Cài đặt, Tích hợp** phục vụ trạng thái sao lưu, dung lượng và dấu thời gian cho Prometheus, Grafana hoặc Uptime Kuma, tại `/metrics` trên cổng của giao diện web. Tùy chọn này tắt theo mặc định. **Token scrape (tùy chọn)** khiến bộ scrape gửi một bearer token. Các nhãn không chứa bí mật hay đường dẫn nào.
+
+## Widget bảng điều khiển {#dashboard-widget}
+
+Thẻ **Widget bảng điều khiển** dưới **Cài đặt, Tích hợp** tạo một token chỉ đọc và đưa cho bạn một địa chỉ dùng cho bất kỳ bảng điều khiển nào hiển thị iframe, như Homepage, Organizr hoặc Heimdall. Địa chỉ đó mở một trang nhỏ tại `/widget` chỉ với nhật ký hoạt động trực tiếp. Token chỉ cấp quyền cho nhật ký đó và không gì khác, và **Tắt** thu hồi nó ngay lập tức. Trang được nhúng chỉ có tiếng Anh.
 
 ## Tìm BombVault trên mạng {#mdns}
 

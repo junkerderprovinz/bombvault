@@ -6,7 +6,7 @@ Bản sao lưu không bao giờ gửi luồng vào restic và không bao giờ h
 
 ## Yêu cầu {#requirements}
 
-- **Kết nối SSH tới máy chủ này.** Tập dữ liệu ZFS dùng cùng khóa, máy chủ và người dùng với sao lưu VM. Nếu sao lưu VM đã hoạt động thì phần này cũng hoạt động. Nếu chưa, hãy làm theo [hướng dẫn sao lưu VM qua SSH](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md) trên GitHub. Các trường trong mẫu có tên **Host SSH: Address**, **Host SSH: Port** và **Host SSH: User**.
+- **Kết nối SSH tới máy chủ này.** Tập dữ liệu ZFS dùng cùng khóa, máy chủ và người dùng với sao lưu VM. Nếu sao lưu VM đã hoạt động thì phần này cũng hoạt động. Nếu chưa, hãy làm theo [hướng dẫn sao lưu VM qua SSH](vm-backup-ssh-setup.md). Các trường trong mẫu có tên **Host SSH: Address**, **Host SSH: Port** và **Host SSH: User**.
 - **Lệnh `zfs` trên máy chủ đó.** Unraid 6.12 trở lên và TrueNAS SCALE đều có.
 - **Host Data được ánh xạ thành `/mnt` với Access Mode Read/Write - Slave.** Đây là giá trị mặc định của mẫu. Ảnh chụp của một tập dữ liệu chỉ xuất hiện trong thư mục `.zfs/snapshot` của tập dữ liệu sau khi BombVault đã khởi động, nên container phải nhận được các lần gắn kết mà máy chủ thực hiện về sau.
 - **Các tập dữ liệu được gắn kết dưới `/mnt`.** Trên Unraid, pool nằm ở `/mnt/<pool>`, nên điều này đã đúng sẵn.
@@ -17,7 +17,7 @@ Bật phần này trong **Cài đặt, Chung** (Tập dữ liệu ZFS). **Kết 
 
 Chọn **Thêm** trên trang Bản sao lưu, rồi **Một tập dữ liệu ZFS**. Danh sách lấy từ máy chủ. Chọn tập dữ liệu ở đầu những gì bạn muốn sao lưu, ví dụ `cache/appdata`, và mục bao gồm nó cùng mọi tập dữ liệu bên dưới.
 
-- **Tập dữ liệu con mới tự gia nhập.** Một tập dữ liệu được tạo bên dưới mục về sau sẽ được sao lưu ở lần chạy kế tiếp, và lần chạy đó nêu tên nó là mới. Bản sao lưu đầu tiên đọc toàn bộ nó một lần; sau đó chỉ đọc các thay đổi.
+- **Tập dữ liệu con mới tự gia nhập.** Một tập dữ liệu được tạo bên dưới mục về sau sẽ được sao lưu ở lần chạy kế tiếp, và lần chạy đó nêu tên nó là mới. Bản sao lưu đầu tiên đọc toàn bộ nó một lần. Sau đó chỉ đọc các thay đổi.
 - **Có thể loại từng tập con.** Tắt một tập con trên tab Cài đặt của mục và nó bị loại cùng mọi thứ bên dưới. Một tập con bị loại mà không còn tồn tại trên máy chủ được đánh dấu như vậy và có thể gỡ khỏi danh sách.
 - **Tập con không đọc được sẽ bị bỏ qua, không bao giờ một cách âm thầm.** Lần chạy liệt kê chúng, mục hiển thị có bao nhiêu bị bỏ qua, và thẻ **Chưa được sao lưu** trên Tổng quan tính mỗi cái là chưa được bảo vệ. Lần chạy vẫn sao lưu mọi thứ khác và không thất bại vì một tập con bị bỏ qua. Lý do nằm trong [bảng mã lý do](#reason-codes): một tập dữ liệu chưa gắn, `canmount=off`, mountpoint là `legacy` hoặc không có, khóa mã hóa chưa nạp, truy cập snapshot bị tắt, hoặc một mountpoint mà BombVault không thấy.
 - **Một tập dữ liệu bị bỏ qua không kéo theo các tập con của nó.** Tập dữ liệu `canmount=off` chỉ chứa các tập dữ liệu khác sẽ bị bỏ qua (hiển thị là "chỉ cấu trúc"), và các tập con đã gắn kết của nó được sao lưu. Tập dữ liệu mã hóa chưa nạp khóa sẽ bị bỏ qua cùng các tập con dùng chung khóa đó.
@@ -44,7 +44,7 @@ Một tập dữ liệu chỉ thuộc về một mục. BombVault từ chối m�
 
 Snapshot của một cơ sở dữ liệu đang chạy giống như mất điện đột ngột: cơ sở dữ liệu thường sẽ tự phục hồi, nhưng nó phải làm vậy. Mỗi mục có thể làm hai việc về điều đó, và cả hai chỉ bao phủ khoảnh khắc của snapshot, không phải toàn bộ bản sao lưu.
 
-- **Dừng các container này cho ảnh chụp.** BombVault dừng các container trong danh sách, chụp ảnh và khởi động lại chúng ngay. Các container cùng một cấp phụ thuộc dừng song song, container phụ thuộc dừng trước, nên cả khoảng thời gian thường chỉ vài giây; lần chạy cho biết nó kéo dài bao lâu. Sau đó bản sao lưu đọc ảnh chụp đã đóng băng trong khi các ứng dụng đã chạy lại. Chỉ các container đang chạy mới bị dừng.
+- **Dừng các container này cho ảnh chụp.** BombVault dừng các container trong danh sách, chụp ảnh và khởi động lại chúng ngay. Các container cùng một cấp phụ thuộc dừng song song, container phụ thuộc dừng trước, nên cả khoảng thời gian thường chỉ vài giây. Lần chạy cho biết nó kéo dài bao lâu. Sau đó bản sao lưu đọc ảnh chụp đã đóng băng trong khi các ứng dụng đã chạy lại. Chỉ các container đang chạy mới bị dừng.
 - **Một lệnh trước và sau ảnh chụp.** Lệnh chạy bên trong container bạn chọn, ví dụ để xuất một cơ sở dữ liệu vào tập dữ liệu ngay trước khi chụp mà không dừng gì cả. Nếu lệnh trước ảnh chụp thất bại, bản sao lưu thất bại và không có ảnh chụp nào được tạo. Lệnh sau ảnh chụp thất bại sẽ hiển thị trên lần chạy nhưng không làm bản sao lưu thất bại.
 
 Điều gì xảy ra khi có sự cố:
@@ -53,7 +53,7 @@ Snapshot của một cơ sở dữ liệu đang chạy giống như mất điệ
 - Việc dừng sẽ chờ một bản sao lưu container đang chạy kết thúc (tối đa 30 phút với lần chạy thủ công, tới giới hạn thời gian của bản sao lưu với lần chạy theo lịch), để hai bên không bao giờ dừng và khởi động cùng một container cùng lúc.
 - Trước khi container đầu tiên dừng, BombVault ghi lại những container nào nó dừng. Nếu BombVault bị tắt đột ngột trong khoảng đó, nó khởi động lại các container ấy ở lần khởi động kế tiếp, gửi một thông báo, và mục hiển thị ghi chú đỏ cho mỗi container nó không khởi động được.
 
-Các bản kết xuất cơ sở dữ liệu tự động (xem [Tính năng](features.md)) chạy cùng bản sao lưu riêng của container, không phải cùng một mục ZFS. Một cơ sở dữ liệu có container chỉ được sao lưu qua tập dữ liệu của nó thì không có bản kết xuất, nên hãy đưa cho nó một lệnh ở đây.
+Các [bản kết xuất cơ sở dữ liệu](backups.md#database-dumps) tự động chạy cùng bản sao lưu riêng của container, không phải cùng một mục ZFS. Một cơ sở dữ liệu có container chỉ được sao lưu qua tập dữ liệu của nó thì không có bản kết xuất, nên hãy đưa cho nó một lệnh ở đây.
 
 Một container có thể nằm trong danh sách này và đồng thời được sao lưu như một container. Dữ liệu của nó khi đó được lưu hai lần, trong hai kho, và sao lưu toàn bộ dừng nó hai lần. Mục nói điều đó.
 
@@ -63,15 +63,15 @@ Mở mục và chọn **Khôi phục**, hoặc chọn nó trên trang **Khôi ph
 
 - **Khôi phục vào chính tập dữ liệu.** Tệp từ bản sao lưu được ghi vào điểm gắn kết của tập dữ liệu. Tệp cùng tên bị ghi đè, các tệp khác giữ nguyên. Tập dữ liệu không bao giờ bị quay lui hay thay thế. BombVault kiểm tra rằng tập dữ liệu đã được gắn kết, nhìn thấy được và ghi được, một lần trước khi bắt đầu và một lần nữa ngay trước khi ghi. Chỗ nào có tập con được gắn kết bên trong thì không ghi gì: tập con giữ nguyên tệp, chủ sở hữu và quyền của nó, và được khôi phục từ bản sao lưu riêng.
 - **Vào một thư mục.** Chọn một thư mục dưới `/mnt`. BombVault kiểm tra thư mục nằm trên một pool hoặc share đã gắn và còn đủ dung lượng trống. Cách này hoạt động không cần liên kết SSH và cho các tập dữ liệu không còn tồn tại.
-- **Vào một tập dữ liệu mới.** Đặt tên cho một tập dữ liệu chưa tồn tại; cửa sổ gợi ý `<dataset>-restored`. BombVault tạo nó với các thuộc tính ZFS được lưu trong bản sao lưu và khôi phục vào đó, xem [Khôi phục thành tập dữ liệu mới](#new-dataset).
+- **Vào một tập dữ liệu mới.** Đặt tên cho một tập dữ liệu chưa tồn tại. Cửa sổ gợi ý `<dataset>-restored`. BombVault tạo nó với các thuộc tính ZFS được lưu trong bản sao lưu và khôi phục vào đó, xem [Khôi phục thành tập dữ liệu mới](#new-dataset).
 
-Chọn **Mọi tập dữ liệu của bản sao lưu này** làm tập dữ liệu sẽ ghi mọi tập dữ liệu của cây vào thư mục con riêng trong thư mục bạn chọn. Các tập dữ liệu bị bỏ qua trong bản sao lưu đó được nêu tên. Để khôi phục từ kho của một BombVault khác, dùng **Từ thư mục sao lưu cũ** trên trang Khôi phục; nó luôn khôi phục vào một thư mục: mọi tập dữ liệu của một bản sao lưu, mỗi tập vào thư mục con riêng, hoặc một tập dữ liệu của cây, nguyên vẹn hoặc các tệp chọn lọc.
+Chọn **Mọi tập dữ liệu của bản sao lưu này** làm tập dữ liệu sẽ ghi mọi tập dữ liệu của cây vào thư mục con riêng trong thư mục bạn chọn. Các tập dữ liệu bị bỏ qua trong bản sao lưu đó được nêu tên. Để khôi phục từ kho của một BombVault khác, dùng **Từ thư mục sao lưu cũ** trên trang Khôi phục. Nó luôn khôi phục vào một thư mục: mọi tập dữ liệu của một bản sao lưu, mỗi tập vào thư mục con riêng, hoặc một tập dữ liệu của cây, nguyên vẹn hoặc các tệp chọn lọc.
 
 Danh sách container cần dừng của mục cũng được đưa ra cho việc khôi phục vào tập dữ liệu. Các container đó giữ trạng thái dừng suốt quá trình khôi phục, và sao lưu container chờ trong lúc đó.
 
 ### Ảnh chụp an toàn {#safety-snapshot}
 
-Trước khi ghi vào một tập dữ liệu, BombVault chụp một snapshot ZFS của riêng tập dữ liệu đó, tên `bombvault-prerestore-<time>`. **Giữ trước một ảnh chụp ZFS của trạng thái hiện tại** được bật mặc định; tắt nó cần xác nhận lần hai. Nếu không chụp được snapshot, không có gì được khôi phục.
+Trước khi ghi vào một tập dữ liệu, BombVault chụp một snapshot ZFS của riêng tập dữ liệu đó, tên `bombvault-prerestore-<time>`. **Giữ trước một ảnh chụp ZFS của trạng thái hiện tại** được bật mặc định. Tắt nó cần xác nhận lần hai. Nếu không chụp được snapshot, không có gì được khôi phục.
 
 BombVault không bao giờ tự xóa snapshot an toàn. Mục liệt kê chúng cùng tuổi và dung lượng, mỗi cái có hành động **Xóa**, và cảnh báo khi cái cũ nhất quá 30 ngày, vì nó giữ dữ liệu đã xóa và đã đổi trên pool.
 
@@ -90,16 +90,16 @@ Có trong bản sao lưu: tệp và thư mục của mọi tập dữ liệu đ�
 
 Không có trong bản sao lưu:
 
-- chủ sở hữu và quyền của chính thư mục trên cùng của mỗi tập dữ liệu (mọi thứ bên dưới đều có). Khôi phục vào chính tập dữ liệu giữ nguyên thư mục trên cùng hiện có, khôi phục vào một thư mục sẽ tạo nó với quyền `0755`;
-- các ảnh chụp ZFS hiện có;
-- các tập con bị bỏ qua hoặc bị loại trừ;
+- chủ sở hữu và quyền của chính thư mục trên cùng của mỗi tập dữ liệu (mọi thứ bên dưới đều có). Khôi phục vào chính tập dữ liệu giữ nguyên thư mục trên cùng hiện có, khôi phục vào một thư mục sẽ tạo nó với quyền `0755`,
+- các ảnh chụp ZFS hiện có,
+- các tập con bị bỏ qua hoặc bị loại trừ,
 - ổ đĩa ảo.
 
 Để khôi phục sang một pool mới, hãy tạo pool rồi khôi phục từng tập dữ liệu vào một tập dữ liệu mới. Việc NFSv4 ACL, theo cách TrueNAS dùng trên tập dữ liệu SMB, có trở lại như bạn mong đợi hay không vẫn chưa được kiểm chứng, nên hãy thử khôi phục với dữ liệu của chính bạn trước khi dựa vào chúng.
 
 ## Tập dữ liệu được mã hóa {#encryption}
 
-Tập dữ liệu được mã hóa chỉ được sao lưu khi khóa của nó đã được nạp. Nếu không, nó bị bỏ qua kèm cảnh báo; hãy nạp khóa bằng `zfs load-key` và gắn kết tập dữ liệu. BombVault đọc dữ liệu đã giải mã và lưu vào kho của restic, vốn được mã hóa. Nếu bạn đã tắt mã hóa trong BombVault thì kho đó không được mã hóa.
+Tập dữ liệu được mã hóa chỉ được sao lưu khi khóa của nó đã được nạp. Nếu không, nó bị bỏ qua kèm cảnh báo. Hãy nạp khóa bằng `zfs load-key` và gắn kết tập dữ liệu. BombVault đọc dữ liệu đã giải mã và lưu vào kho của restic, vốn được mã hóa. Nếu bạn đã tắt mã hóa trong BombVault thì kho đó không được mã hóa.
 
 ## Bản nhân bản {#replica}
 
@@ -109,7 +109,18 @@ Bản nhân bản không bao giờ thay thế bản sao lưu. Phiên bản cũ h
 
 **Chỉ bản nhân bản, không sao lưu** trong thẻ **Bản nhân bản** khiến cả phần ZFS gửi bản nhân bản và không tạo bản sao lưu. Thư mục riêng và các đích sao lưu off-site vẫn giữ công tắc của chúng, nên khi tắt tùy chọn này, phần đó lại sao lưu tới những nơi ấy, và thẻ của mọi mục ZFS hiển thị công tắc của phần đúng như trạng thái hiện tại. Một mục như vậy chờ bản nhân bản đầu tiên thay vì bản sao lưu, **Sao lưu ngay** được thay bằng **Nhân bản ngay**, và các container của mục dừng lại cùng các lệnh của nó chạy quanh snapshot như khi sao lưu. Các bản nhân bản của nó được tính cho lịch vài ngày một lần, cảnh báo quá hạn và độ bao phủ.
 
-Bật nó trong thẻ **Bản nhân bản** ở tab Cài đặt của mục. Ở đó bạn chọn bản nhân bản đi đâu, khi nào chạy (**Sau mỗi bản sao lưu** hoặc **Kế hoạch riêng**) và bao nhiêu snapshot ở lại trên đích và trên máy chủ này. Thẻ liệt kê mọi tập dữ liệu và volume cùng trạng thái, và **Nhân bản ngay** bắt đầu một lần chạy. Một lần chạy nhân bản có khóa riêng, nên lần truyền đầu tiên dài không bao giờ làm chậm các bản sao lưu.
+Bật nó trong thẻ **Bản nhân bản** ở tab Cài đặt của mục. Thẻ liệt kê mọi tập dữ liệu và volume cùng trạng thái, và **Nhân bản ngay** bắt đầu một lần chạy. Một lần chạy nhân bản có khóa riêng, nên lần truyền đầu tiên dài không bao giờ làm chậm các bản sao lưu.
+
+| Trường | Nó đặt gì |
+|---|---|
+| **Nhân bản tới** | Đích: một máy chủ ZFS (đánh dấu **qua SSH**) hoặc một **phiên bản đã ghép đôi**. **Thêm máy chủ ZFS** thiết lập một máy mới. |
+| **Khi nào** | **Sau mỗi bản sao lưu**, nghĩa là sau lần chạy sao lưu của mục, hoặc **Kế hoạch riêng**. |
+| **Giữ trên đích** | Bao nhiêu snapshot ở lại trên máy chủ ZFS: **Ngắn**, **Cân bằng**, **Dài** hoặc **Giá trị riêng**. Một phiên bản đã ghép đôi tự quyết định điều này. |
+| **Giữ trên máy chủ này** | Bao nhiêu snapshot bản nhân bản mới nhất cũng ở lại trên máy chủ này. 0 hoặc 1 chỉ giữ cái mới nhất. |
+| **Chỉ bản nhân bản, không sao lưu** | Cả phần ZFS gửi bản nhân bản và không tạo bản sao lưu. |
+
+![Thẻ Bản nhân bản của một mục ZFS.](assets/screenshots/zfs/replica-dark.png#only-dark)
+![Thẻ Bản nhân bản của một mục ZFS.](assets/screenshots/zfs/replica-light.png#only-light)
 
 **Nhân bản tất cả ngay**, nằm cạnh các thao tác sao lưu khi ô ZFS được chọn trên trang Bản sao lưu, gửi bản nhân bản của mọi mục ZFS, lần lượt từng mục. Máy chủ chạy cả lô, nên nó vẫn tiếp tục khi bạn rời trang, và mục nào không nhân bản được sẽ được nêu tên và bỏ qua.
 
@@ -160,7 +171,7 @@ Mỗi tập dữ liệu nằm tại `<root>/<server>/<pool>/<path>`. Thư mục 
 
 Sau khi BombVault được thiết lập lại, đích từ chối thư mục mà BombVault này đã ghi vào trước đó. Khi đó thẻ **Bản nhân bản** đưa ra **Tiếp quản thư mục**, và bản nhân bản tiếp theo tiếp tục từ các bản sao trong đó. Chỉ tiếp quản khi không còn BombVault nào khác nhân bản vào thư mục đó.
 
-Bản sao trên đích ở chế độ chỉ đọc và không được gắn kết, nên nó không che phủ gì trên máy chủ đó. Các thuộc tính ZFS được mang theo, trừ điểm gắn kết, `sharenfs` và `sharesmb`. Các phần đặt trước `reservation` và `refreservation` cũng không được mang theo, nên bản sao chỉ chiếm dung lượng mà dữ liệu của nó cần.
+Bản sao trên đích ở chế độ chỉ đọc. Theo mặc định nó không được gắn kết, nên không che phủ gì trên máy chủ đó. Một máy chủ ZFS kết nối qua SSH có công tắc **Gắn chỉ đọc trên máy chủ** trên trang của nó: khi bật, BombVault gắn các bản sao ở đó ở chế độ chỉ đọc sau mỗi lần chạy, để bạn đọc và sao chép tệp của chúng trên đích. Các bản sao đã mã hóa vẫn bị khóa cho đến khi khóa của chúng được nạp, và tắt công tắc không gỡ gắn gì cả. Một phiên bản đã ghép đôi nhận bản nhân bản sẽ giữ nó không được gắn kết. Các thuộc tính ZFS được mang theo, trừ điểm gắn kết, `sharenfs` và `sharesmb`. Các phần đặt trước `reservation` và `refreservation` cũng không được mang theo, nên bản sao chỉ chiếm dung lượng mà dữ liệu của nó cần.
 
 ### Những gì được đưa vào {#replica-contents}
 
@@ -220,7 +231,40 @@ zfs inherit -r readonly backup/bombvault-replica/tower/cache/appdata && zfs inhe
 
 Sau đó BombVault ngừng nhân bản sang tập dữ liệu đó, cho đến khi bạn bắt đầu một lần chạy đầu tiên mới.
 
-Để đưa một trạng thái về nguồn, nhấn **Bring back as a new dataset** trong trang. BombVault gửi ảnh chụp vào một tập dữ liệu mới cạnh bản gốc, tên là `<dataset>-bombvault-restore-` cộng với dấu thời gian. Nó không bao giờ ghi đè lên bản gốc.
+Để đưa một trạng thái về nguồn, nhấn **Khôi phục thành tập dữ liệu mới** trong trang. BombVault gửi ảnh chụp vào một tập dữ liệu mới cạnh bản gốc, tên là `<dataset>-bombvault-restore-` cộng với dấu thời gian. Nó không bao giờ ghi đè lên bản gốc.
+
+### Ví dụ: một bản nhân bản tới máy Unraid thứ hai {#example-replica}
+
+Máy chủ `tower` sao lưu tập dữ liệu `cache/appdata` như một mục ZFS. Một máy Unraid thứ hai tại `192.168.1.20`, không có BombVault, có một pool tên `backup` và nên giữ một bản sao mà bạn đọc được bất cứ lúc nào.
+
+1. Mở **Bản sao lưu**, rồi `cache/appdata`, rồi tab **Cài đặt** của nó. Trong thẻ **Bản nhân bản**, chọn **Thêm máy chủ ZFS** dưới **Nhân bản tới**.
+2. Nhập `192.168.1.20`, người dùng `root` và cổng `22`. Hộp thoại hiện khóa bản nhân bản. Trên máy thứ hai, dán nó vào **Users, root, SSH keys** và bấm **Apply**. Khóa này khác với khóa SSH máy chủ, nên hãy thêm nó kể cả khi khóa kia đã có ở đó.
+3. Kiểm tra kết nối. Chọn pool `backup` và giữ gốc mà nó gợi ý, `backup/bombvault-replica`.
+4. Quay lại thẻ, máy chủ mới đã được chọn dưới **Nhân bản tới**. Để **Khi nào** là **Sau mỗi bản sao lưu**, để **Giữ trên đích** ở mức 7 snapshot hằng ngày và 3 hằng tuần, và đặt **Giữ trên máy chủ này** thành `7`.
+5. Bấm **Nhân bản ngay**. Lần chạy đầu gửi mọi thứ, nên 300 GB qua đường 1 Gbit/s mất ít nhất 40 phút. Thẻ và danh sách Bản sao lưu hiện **Đang nhân bản**, rồi **Đã nhân bản** kèm thời gian. Các lần chạy sau chỉ gửi các khối đã đổi.
+
+Các tập dữ liệu giờ nằm tại `backup/bombvault-replica/tower/cache/appdata` trên máy thứ hai, ở chế độ chỉ đọc. Trên trang tổng quan, **Ngoài site** của phần ZFS tính bản nhân bản là một bản sao ngoài cơ sở.
+
+Để lấy một tệp từ thứ Ba tuần trước, bạn có ba cách:
+
+- **Trên máy chủ này**, vì **Giữ trên máy chủ này** đang giữ bảy snapshot:
+
+    ```
+    cp /mnt/cache/appdata/.zfs/snapshot/bombvault-replica-20261103014100/plex/Preferences.xml /mnt/user/restore/
+    ```
+
+- **Trên máy thứ hai**, với một bản clone của snapshot trên đích. Tab **Bản sao lưu** của mục hiện các lệnh với tên thật của bạn khi bạn bấm dòng **Bản nhân bản ZFS**. Hãy xóa bản clone bằng `zfs destroy` khi bạn xong.
+- **Bằng cách gắn kết**, bật **Gắn chỉ đọc trên máy chủ** trên trang của máy chủ ZFS. Sau lần chạy tiếp theo, các bản sao nằm được gắn kết và chỉ đọc trên máy thứ hai.
+
+Các phiên bản cũ hơn những gì bản nhân bản giữ vẫn đến từ các bản sao lưu, như ví dụ tiếp theo cho thấy.
+
+### Ví dụ: một tệp từ bản sao lưu ZFS {#example-zfs-file}
+
+1. Mở **Khôi phục**, chọn ô **ZFS** và bấm `cache/appdata`.
+2. Chọn bản sao lưu, và dưới **Tập dữ liệu** chọn tập dữ liệu chứa tệp.
+3. Ở **Cái gì**, chọn **Từng tập tin** và đánh dấu tệp.
+4. Ở **Đến đâu**, chọn **Vào một thư mục** và chọn một thư mục dưới `/mnt`, chẳng hạn `user/restore`. Cách này không cần liên kết SSH và cũng dùng được cho tập dữ liệu không còn tồn tại.
+5. Bấm **Khôi phục**. Tệp nằm thẳng trong thư mục đó, không có đường dẫn phía trên.
 
 ## Ảnh chụp còn sót lại {#leftover-snapshots}
 
@@ -247,7 +291,7 @@ Một tập dữ liệu mà lần chạy trước đã sao lưu và lần chạy
 
 Mỗi tập dữ liệu có một dòng riêng trong phần giám sát của mục, mở bằng **Giám sát** trên trang Bất thường và nằm trên tab **Xác minh** của mục. Các phát hiện đang mở hiện cạnh từng tập dữ liệu. Liên kết trong một phát hiện mở cửa sổ khôi phục trên bản sao lưu tốt gần nhất của tập dữ liệu. Việc một lần chạy có hoàn tất không được đánh giá cho cả mục, vì một lần chạy thành công hay thất bại như một thể.
 
-Bản thân các kiểm tra được mô tả trong [Tính năng](features.md). Một trợ lý kết nối qua [máy chủ MCP](mcp.md) có thể liệt kê các điểm khôi phục của một mục ZFS, bắt đầu sao lưu của nó và đọc các phát hiện, nhưng việc xác nhận một phát hiện diễn ra trên trang Bất thường.
+Bản thân các kiểm tra được mô tả trong [Bất thường](anomalies.md). Một trợ lý kết nối qua [máy chủ MCP](mcp.md) có thể liệt kê các điểm khôi phục của một mục ZFS, bắt đầu sao lưu của nó và đọc các phát hiện, nhưng việc xác nhận một phát hiện diễn ra trên trang Bất thường.
 
 ## Mã lý do {#reason-codes}
 
@@ -289,7 +333,7 @@ Trang của mục, lịch sử chạy và các thông báo nêu một vấn đ�
 | `snapdir-disabled` | Quyền truy cập ảnh chụp bị tắt, đã bỏ qua. | `zfs set snapdir=hidden <dataset>`. Thư mục `.zfs` vẫn bị ẩn. |
 | `not-visible` | BombVault không thấy điểm gắn kết của tập dữ liệu. | Chuyển điểm gắn kết xuống dưới đường dẫn Host Data, hoặc ánh xạ nó vào container tại cùng đường dẫn với Read/Write - Slave. |
 | `shfs-only` | Tập dữ liệu chỉ thấy được qua `/mnt/user`, vốn ẩn các ảnh chụp. | Ánh xạ `/mnt`, không phải `/mnt/user`, làm Host Data. |
-| `snapshot-not-visible` | Ảnh chụp đã được tạo nhưng không xuất hiện bên trong BombVault. | Chạy **Thử truy cập ảnh chụp**; xem bên dưới. |
+| `snapshot-not-visible` | Ảnh chụp đã được tạo nhưng không xuất hiện bên trong BombVault. | Chạy **Thử truy cập ảnh chụp**. Xem bên dưới. |
 | `snapshot-loop` | Ảnh chụp không tới được BombVault vì Host Data không chuyển tiếp các lần gắn kết mới. | Đặt Access Mode của Host Data thành Read/Write - Slave và khởi động lại BombVault. |
 | `backup-failed` | restic thất bại với tập dữ liệu này. | Chi tiết lần chạy cho biết lý do. |
 | `not-reached` | Lần chạy kết thúc trước khi tới tập dữ liệu này. | Chạy lại bản sao lưu. |
@@ -329,5 +373,5 @@ Mỗi dòng là một lần gắn kết bên trong container. Dòng của một 
 
   Khôi phục vào một tập dữ liệu mới còn cần quyền `create` trên tập dữ liệu phía trên, và đặt các thuộc tính đã lưu cần quyền đối với các thuộc tính đó.
 
-  Phiên SSH không phải root trên TrueNAS không có `/usr/sbin` trong đường dẫn; khi đó BombVault gọi trực tiếp `/usr/sbin/zfs`.
+  Phiên SSH không phải root trên TrueNAS không có `/usr/sbin` trong đường dẫn. Khi đó BombVault gọi trực tiếp `/usr/sbin/zfs`.
 - **Host Data** của ứng dụng phải là một đường dẫn máy chủ nằm trên các tập dữ liệu, ví dụ `/mnt/tank`, không phải ixVolume. Với đường dẫn máy chủ, ứng dụng chuyển các lần gắn kết mới của máy chủ tới BombVault (`rslave`), và đó chính là điều quyền truy cập ảnh chụp cần. Xem [TrueNAS SCALE](getting-started.md#truenas) cho toàn bộ phần thiết lập ứng dụng.
