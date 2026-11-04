@@ -3650,6 +3650,7 @@ func balancedKeepLines(tx *sql.Tx) ([]string, error) {
        json_each(CASE WHEN json_valid(settings.` + column + `) THEN settings.` + column + ` ELSE '{}' END)
  WHERE ` + oldBalancedRule
 	}
+	//nolint:gosec // G202: every fragment is a literal from this file.
 	rows, err := tx.Query(`SELECT 'the shared local rule' FROM settings WHERE ` + oldBalancedColumns("retention_") + `
 UNION ALL SELECT 'the shared off-site rule' FROM settings WHERE ` + oldBalancedColumns("offsite_retention_") + `
 UNION ALL ` + overrides("retention_overrides", "the own rule of") + `
