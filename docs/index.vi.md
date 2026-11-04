@@ -2,16 +2,19 @@
 
 **Dữ liệu Unraid của bạn, niêm phong trong một két sắt. Thả một bản sao lưu vào. Kích nổ một lần khôi phục.**
 
-BombVault là một ứng dụng web tự lưu trữ, thiết kế riêng cho Unraid, dùng để **sao lưu và khôi phục toàn diện sau thảm họa** cho các Docker container và KVM/libvirt VM của bạn. Nó chạy dưới dạng một Docker container đa kiến trúc duy nhất, cung cấp cho bạn giao diện web với chế độ tối, sáng hoặc theo hệ thống, và xử lý toàn bộ vòng đời: sao lưu, lên lịch, xác minh và khôi phục.
+![Trang tổng quan: phần đầu trạng thái, những gì cần bạn xử lý, mức bảo vệ của từng phần, các đích sao lưu và lịch sử.](assets/screenshots/overview/home-dark.png#only-dark)
+![Trang tổng quan: phần đầu trạng thái, những gì cần bạn xử lý, mức bảo vệ của từng phần, các đích sao lưu và lịch sử.](assets/screenshots/overview/home-light.png#only-light)
 
-Việc khôi phục diễn ra tự động. Các container xuất hiện lại trong tab Docker của Unraid y hệt như trước, và các VM được định nghĩa lại trong VM Manager cùng với đĩa và UEFI NVRAM được gắn lại. Không cần cài đặt lại thủ công, không cấu hình lại, không rắc rối.
+BombVault là một ứng dụng web tự lưu trữ để **sao lưu và khôi phục toàn diện sau thảm họa** trên Unraid và các máy chủ Docker khác, như TrueNAS SCALE, ZimaOS hay một máy Linux thông thường. Nó sao lưu các Docker container, KVM/libvirt VM, thư mục, tập dữ liệu ZFS và ổ flash của Unraid. Nó chạy dưới dạng một Docker container đa kiến trúc duy nhất, cung cấp cho bạn giao diện web với chế độ tối, sáng hoặc theo hệ thống, và xử lý toàn bộ vòng đời: sao lưu, lên lịch, xác minh và khôi phục.
 
-Được vận hành bởi [restic](https://restic.net), nên mỗi bản sao lưu đều được khử trùng lặp, tăng dần và luôn được mã hóa.
+Việc khôi phục diễn ra tự động. Trên Unraid, các container xuất hiện lại trong tab Docker y hệt như trước, và các VM được định nghĩa lại trong VM Manager cùng với đĩa và UEFI NVRAM được gắn lại. Không cần cài đặt lại thủ công, không cấu hình lại, không rắc rối. Trên TrueNAS, một container được khôi phục bên cạnh bản gốc chạy như một Docker container thông thường mà màn hình Apps không liệt kê.
+
+Được vận hành bởi [restic](https://restic.net), nên mỗi bản sao lưu đều được khử trùng lặp, tăng dần và được mã hóa theo mặc định.
 
 !!! note "Giữ APP_KEY của bạn an toàn"
     BombVault dẫn xuất mật khẩu kho lưu trữ restic từ một bí mật 32 byte tên là `APP_KEY`. Mất nó cùng với bộ khôi phục sẽ khiến các bản sao lưu đã mã hóa không thể khôi phục được. Hãy tạo một khóa bằng `openssl rand -hex 32` và cất giữ nó ở nơi an toàn. Xem [Cấu hình](configuration.md).
 
-## BombVault bảo vệ những gì
+## BombVault bảo vệ những gì {#what-bombvault-protects}
 
 Mỗi container, VM, bộ thư mục, ổ flash, mỗi tập dữ liệu ZFS và chính cài đặt của BombVault là một **mục** có trang riêng. Các mục cùng loại tạo thành một **phần**, và bạn bật phần đó trong **Cài đặt, Chung**.
 
@@ -24,15 +27,15 @@ Mỗi container, VM, bộ thư mục, ổ flash, mỗi tập dữ liệu ZFS và
 | **Thư mục** | Bất kỳ thư mục nào trên máy chủ dưới dạng một bộ thư mục, mỗi bộ có tùy chọn mẫu loại trừ riêng. |
 | **Tập dữ liệu ZFS** | Một tập dữ liệu cùng mọi tập bên dưới, đọc từ một ảnh chụp ZFS và lưu như một thư mục. Xem [Tập dữ liệu ZFS](zfs-datasets.md). |
 
-## Khôi phục là ngôi sao
+## Khôi phục là ngôi sao {#restore-is-the-star}
 
 Sau khi sao chép dữ liệu trở lại từ snapshot restic, BombVault phát lại định nghĩa container đã lưu qua Docker API, nên container xuất hiện lại trong tab Docker của Unraid như thể nó vẫn luôn ở đó (cùng image, cùng cài đặt, cùng ánh xạ cổng). Các VM được định nghĩa lại XML qua SSH cùng với đĩa và UEFI NVRAM được gắn lại, ngay cả sau khi VM đã bị xóa.
 
 Một cửa sổ khôi phục mọi loại. Mặc định nó chọn **Bên cạnh bản gốc**, đưa bản sao lưu trở lại dưới dạng một bản sao và giữ nguyên bản gốc. **Thay thế bản gốc** sao lưu trạng thái hiện tại trước, nên một lần khôi phục có thể được hoàn tác. Một thư mục hoặc một tập dữ liệu ZFS mới là các đích khác.
 
-Khi một lần sao lưu dừng các container phụ thuộc, chúng quay trở lại theo đúng thứ tự: BombVault khởi động lại chúng theo thứ tự `depends_on` của Compose và chờ mỗi cái báo khỏe mạnh trước khi khởi động những cái phụ thuộc vào nó, nên không có gì chạy vượt lên trước một cơ sở dữ liệu hay một gateway chưa sẵn sàng. Xem [Tính năng](features.md).
+Khi một lần sao lưu dừng các container phụ thuộc, chúng quay trở lại theo đúng thứ tự: BombVault khởi động lại chúng theo thứ tự `depends_on` của Compose và chờ mỗi cái báo khỏe mạnh trước khi khởi động những cái phụ thuộc vào nó, nên không có gì chạy vượt lên trước một cơ sở dữ liệu hay một gateway chưa sẵn sàng. Xem [Khôi phục](restore.md) và [Lệnh và các container khác](backups.md#commands).
 
-## Cách nó hoạt động
+## Cách nó hoạt động {#how-it-works}
 
 ```
 Browser --HTTPS--> BombVault container
@@ -43,7 +46,7 @@ Browser --HTTPS--> BombVault container
                    |- qemu+ssh://host       -> libvirt / KVM on the HOST over SSH (no mount)
                    |- /mnt/ -> /host/user   -> appdata, VM disks + restic repos (read/write)
                    |- /boot/ -> /host/boot  -> Unraid flash backup (whole USB)
-                   |- /config               -> BombVault's own settings + credentials (self-backup)
+                   |- /config               -> BombVault's own settings + sign-ins (self-backup)
                    '- <repo path>           -> restic repository (local or remote: rclone/s3/rest/sftp)
 ```
 
@@ -51,13 +54,33 @@ BombVault dùng Docker socket để dừng các container trước khi sao lưu 
 
 BombVault là lớp điều phối và giao diện, không phải công cụ lưu trữ. Toàn bộ việc di chuyển dữ liệu thực tế đều đi qua restic.
 
-## Bắt đầu nhanh
+## Bắt đầu nhanh {#quick-start}
 
-Mới đến đây? Hãy vào **[Bắt đầu](getting-started.md)** để cài đặt BombVault trên Unraid qua Community Applications và chạy bản sao lưu đầu tiên của bạn. Sau đó khám phá đầy đủ **[Tính năng](features.md)**, tinh chỉnh **[Cấu hình](configuration.md)** của bạn, và thiết lập **[Off-site & khôi phục](offsite-recovery.md)**.
+Mới đến đây? Hãy vào **[Bắt đầu](getting-started.md)** để cài đặt BombVault và chạy bản sao lưu đầu tiên của bạn, rồi thiết lập **[Off-site & khôi phục](offsite-recovery.md)**. Các **[ví dụ thực hành](guides.md)** đi qua những việc thường gặp từ đầu đến cuối, trang **[Cài đặt](settings.md)** liệt kê mọi ô, và **[Tính năng](features.md)** là danh mục ngắn về mọi thứ BombVault làm.
 
 Mỗi phần có thể sao chép tới nhiều đích sao lưu cùng lúc, một BombVault đã ghép nối có thể giữ các bản sao off-site của bạn trên một máy chủ từ chối xóa, và **Trình hướng dẫn khẩn cấp** đưa một máy chủ bị mất trở lại từ bộ khôi phục của nó, qua nhóm của bạn hoặc bằng khóa nhập tay. Để mang cấu hình sang một máy mới, hãy dùng thẻ **Xuất / nhập cài đặt**. Xem [Off-site & khôi phục](offsite-recovery.md) và [Cấu hình](configuration.md#portable-settings-export-and-import).
 
 **[Ứng dụng Android](android.md)** đưa mọi máy chủ trong nhóm của bạn lên điện thoại, với nhật ký hoạt động của tất cả trên một màn hình.
+
+Tài liệu có 26 ngôn ngữ và giao diện có 42. Các trang chưa có bản dịch sẽ hiện bằng tiếng Anh.
+
+## Các từ dùng ở đây {#glossary}
+
+Một vài từ có nghĩa cố định trong BombVault và trong các trang này.
+
+| Từ | Ý nghĩa |
+|---|---|
+| **Mục** | Một thứ BombVault sao lưu: một container, một VM, một bộ thư mục, ổ flash, một tập dữ liệu ZFS cùng các tập bên dưới nó, hoặc chính cài đặt của nó. Mỗi mục có một trang riêng. |
+| **Phần** | Tất cả các mục cùng loại, chẳng hạn Containers. Bạn bật các phần trong **Cài đặt, Chung**. |
+| **Đích sao lưu** | Một nơi các bản sao lưu được gửi tới: một thư mục trên máy chủ này, một share, một máy chủ của riêng bạn hoặc một dịch vụ đám mây. Xem [Các đích sao lưu](offsite-recovery.md#destinations). |
+| **Cục bộ** | Đích sao lưu trên máy chủ này, nơi giữ các thư mục của các phần. |
+| **Thư mục riêng** | Kho mà một phần ghi các bản sao lưu của nó vào trước tiên. Mặc định nó nằm trên máy chủ này và có thể nằm trong một đích sao lưu. Xem [Thư mục riêng của một phần](offsite-recovery.md#own-folder). |
+| **Bản sao** | Một bản sao lưu được sao chép từ thư mục riêng sang một đích sao lưu khác bằng `restic copy`. |
+| **Kho trực tiếp** | Một kho tại một nơi ngoài cơ sở mà các mục sao lưu thẳng tới, không có bản sao cục bộ ở giữa. Xem [Kho trực tiếp](offsite-recovery.md#direct-repositories). |
+| **Thông tin đăng nhập** | Khóa hoặc mật khẩu đã lưu cho một dịch vụ S3 hoặc một rest-server. Một trong số đó là mặc định. Xem [Thông tin đăng nhập](offsite-recovery.md#sign-ins). |
+| **Vị trí đặt** | Những đích sao lưu nào nhận các bản sao lưu của một mục, đặt trên mục hoặc làm mặc định của phần. Xem [Vị trí theo từng mục](offsite-recovery.md#placement). |
+| **Bản nhân bản** | Một bản sao khớp từng khối của một mục ZFS trên máy chủ ZFS thứ hai, tạo bằng `zfs send`. Nó đứng cạnh bản sao lưu và không thay thế nó. Xem [Bản nhân bản](zfs-datasets.md#replica). |
+| **Vai trò** | Việc mà một phiên bản trong nhóm của bạn làm cho phiên bản khác: Receiver, Fetcher, ZFS server hoặc Key keeper. Xem [Phiên bản và vai trò](offsite-recovery.md#roles). |
 
 ## Ghi công {#credits}
 
@@ -72,7 +95,7 @@ Copyright (C) 2026 Junker der Provinz. BombVault là phần mềm tự do theo *
 
 Tên và thương hiệu không được cấp phép. AGPL chỉ áp dụng cho mã nguồn: "BombVault", logo và thương hiệu của nó vẫn được bảo lưu, nên một bản fork phải dùng tên và thương hiệu của riêng mình và không được tự giới thiệu là BombVault.
 
-## Liên kết
+## Liên kết {#links}
 
 - **Mã nguồn:** [github.com/junkerderprovinz/bombvault](https://github.com/junkerderprovinz/bombvault)
 - **Luồng hỗ trợ Unraid:** [forums.unraid.net](https://forums.unraid.net/topic/199509-support-junkerderprovinz-bombvault/)
