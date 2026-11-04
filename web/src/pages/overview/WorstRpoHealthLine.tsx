@@ -26,7 +26,7 @@ export function WorstRpoHealthLine({
   const health = worstRpoStatus(domains);
   return (
     <>
-      {health !== "off" && (
+      {health !== "off" && health !== "never" && (
         <Badge tone={statusTone(chipForRpo(health))}>{statusLabel(chipForRpo(health), t)}</Badge>
       )}
       <span className="text-sm text-carbon-text truncate min-w-0">{worstRpoLabel(t, health)}</span>

@@ -3595,6 +3595,139 @@ UPDATE vms          SET schedule_cadence = '' WHERE (SELECT per_item_schedules F
 UPDATE file_sets    SET schedule_cadence = '' WHERE (SELECT per_item_schedules FROM settings) = 0;
 UPDATE zfs_datasets SET schedule_cadence = '' WHERE (SELECT per_item_schedules FROM settings) = 0;`,
 	},
+	{
+		// An own folder in a storage location ages by that location's How long
+		// to keep card. One that pruned by the shared rule before keeps that
+		// rule as its own. One that kept everything starts to follow the card.
+		version: ownFolderKeepMigration,
+		name:    "own_folder_keep_follows_location",
+		report:  ownFolderKeepLines,
+		sql:     ownFolderKeepSQL,
+	},
+	{
+		// Keeping one year holds only this year's newest backup, so the Balanced
+		// preset keeps two. A place on its old counts would read as custom values
+		// otherwise, and the rule only ever keeps more.
+		version: balancedKeepMigration,
+		name:    "balanced_keeps_two_years",
+		report:  balancedKeepLines,
+		sql:     balancedKeepSQL(),
+	},
+}
+
+// oldBalancedColumns is the condition that the keep columns starting with prefix
+// hold the old Balanced counts.
+func oldBalancedColumns(prefix string) string {
+	return prefix + `keep_last = 0 AND ` + prefix + `keep_daily = 7 AND ` + prefix + `keep_weekly = 4 AND ` +
+		prefix + `keep_monthly = 6 AND ` + prefix + `keep_yearly = 1`
+}
+
+// oldBalancedRule is the condition that the rule in a json_each row's value
+// holds the old Balanced counts.
+const oldBalancedRule = `COALESCE(json_extract(value, '$.keepLast'), 0) = 0 AND json_extract(value, '$.keepDaily') = 7
+  AND json_extract(value, '$.keepWeekly') = 4 AND json_extract(value, '$.keepMonthly') = 6 AND json_extract(value, '$.keepYearly') = 1`
+
+// balancedKeepSQL moves every stored rule on the old Balanced counts to the new
+// ones. A copy that follows its location moves with it, so it goes on following.
+func balancedKeepSQL() string {
+	rules := func(column string) string {
+		return `UPDATE settings SET ` + column + ` = (
+  SELECT json_group_object(key, json(CASE WHEN ` + oldBalancedRule + ` THEN json_set(value, '$.keepYearly', 2) ELSE value END))
+    FROM json_each(settings.` + column + `))
+ WHERE json_valid(` + column + `) AND EXISTS (SELECT 1 FROM json_each(settings.` + column + `) WHERE ` + oldBalancedRule + `);
+`
+	}
+	return `UPDATE settings SET retention_keep_yearly = 2 WHERE ` + oldBalancedColumns("retention_") + `;
+UPDATE settings SET offsite_retention_keep_yearly = 2 WHERE ` + oldBalancedColumns("offsite_retention_") + `;
+UPDATE offsite_targets SET retention_keep_yearly = 2 WHERE ` + oldBalancedColumns("retention_") + `;
+` + rules("retention_overrides") + rules("offsite_retention_overrides")
+}
+
+// balancedKeepLines names each place balancedKeepSQL moves.
+func balancedKeepLines(tx *sql.Tx) ([]string, error) {
+	overrides := func(column, label string) string {
+		return `SELECT '` + label + ` ' || key FROM settings,
+       json_each(CASE WHEN json_valid(settings.` + column + `) THEN settings.` + column + ` ELSE '{}' END)
+ WHERE ` + oldBalancedRule
+	}
+	rows, err := tx.Query(`SELECT 'the shared local rule' FROM settings WHERE ` + oldBalancedColumns("retention_") + `
+UNION ALL SELECT 'the shared off-site rule' FROM settings WHERE ` + oldBalancedColumns("offsite_retention_") + `
+UNION ALL ` + overrides("retention_overrides", "the own rule of") + `
+UNION ALL ` + overrides("offsite_retention_overrides", "the off-site rule of") + `
+UNION ALL SELECT COALESCE(NULLIF(d.name, ''), NULLIF(t.name, ''), 'A location') || CASE WHEN t.domain <> '' THEN ' for ' || t.domain ELSE '' END
+  FROM offsite_targets t LEFT JOIN offsite_targets d ON d.id = t.destination_id
+ WHERE ` + oldBalancedColumns("t.retention_") + `
+ORDER BY 1`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close() //nolint:errcheck // read-only
+	var lines []string
+	for rows.Next() {
+		var place string
+		if err := rows.Scan(&place); err != nil {
+			return nil, err
+		}
+		lines = append(lines, "retention: "+place+" stays on Balanced and keeps 2 yearly instead of 1")
+	}
+	return lines, rows.Err()
+}
+
+// ownFolderKeepRows are the sections whose own folder was put into a storage
+// location and that have no keep rule of their own, with the location's name,
+// whether its card differs from the shared rule, and whether the shared rule
+// prunes at all. A row whose path was typed over since then lies in no
+// location and ages by the shared rule either way, so keeping that rule as its
+// own changes nothing it does.
+const ownFolderKeepRows = `
+SELECT p.domain AS domain, d.name AS name,
+       d.retention_keep_last <> s.retention_keep_last OR d.retention_keep_daily <> s.retention_keep_daily
+         OR d.retention_keep_weekly <> s.retention_keep_weekly OR d.retention_keep_monthly <> s.retention_keep_monthly
+         OR d.retention_keep_yearly <> s.retention_keep_yearly AS differs,
+       s.retention_keep_last + s.retention_keep_daily + s.retention_keep_weekly + s.retention_keep_monthly + s.retention_keep_yearly > 0 AS prunes
+  FROM offsite_targets p
+  JOIN offsite_targets d ON d.id = p.destination_id AND d.role = 'destination'
+  JOIN settings s ON s.id = 1
+ WHERE p.role = 'primary'
+   AND json_type(CASE WHEN json_valid(s.retention_overrides) THEN s.retention_overrides ELSE '{}' END, '$.' || p.domain) IS NULL`
+
+// ownFolderKeepSQL gives each section of ownFolderKeepRows whose card differs
+// from a shared rule that prunes that rule as its own.
+const ownFolderKeepSQL = `UPDATE settings SET retention_overrides = (
+  SELECT json_group_object(key, json(value)) FROM (
+    SELECT key, value FROM json_each(CASE WHEN json_valid(settings.retention_overrides) THEN settings.retention_overrides ELSE '{}' END)
+    UNION ALL
+    SELECT k.domain, json_object('keepLast', settings.retention_keep_last, 'keepDaily', settings.retention_keep_daily,
+             'keepWeekly', settings.retention_keep_weekly, 'keepMonthly', settings.retention_keep_monthly,
+             'keepYearly', settings.retention_keep_yearly)
+      FROM (` + ownFolderKeepRows + `) k
+     WHERE k.differs AND k.prunes))
+ WHERE id = 1 AND EXISTS (SELECT 1 FROM (` + ownFolderKeepRows + `) k WHERE k.differs AND k.prunes);`
+
+// ownFolderKeepLines says for each section whether ownFolderKeepSQL keeps its
+// rule or lets it follow its location's card.
+func ownFolderKeepLines(tx *sql.Tx) ([]string, error) {
+	rows, err := tx.Query(ownFolderKeepRows + ` ORDER BY p.domain`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close() //nolint:errcheck // read-only
+	var lines []string
+	for rows.Next() {
+		var domain, name string
+		var differs, prunes bool
+		if err := rows.Scan(&domain, &name, &differs, &prunes); err != nil {
+			return nil, err
+		}
+		switch {
+		case !differs:
+		case prunes:
+			lines = append(lines, fmt.Sprintf("retention: %s keeps the shared keep rule as its own, since %s's How long to keep card says otherwise", domain, name))
+		default:
+			lines = append(lines, fmt.Sprintf("retention: the own folder of %s in %s kept every backup and from now on ages by that location's How long to keep card", domain, name))
+		}
+	}
+	return lines, rows.Err()
 }
 
 // inertOwnPlanLines names each own plan the switch left unused, which the
@@ -3973,6 +4106,13 @@ const deleteRiskMigration = 660
 // ownPlansCountMigration numbers the clean-up that lets an entry's own plan
 // count without a switch.
 const ownPlansCountMigration = 670
+
+// ownFolderKeepMigration numbers the keep rule an own folder in a storage
+// location takes from that location.
+const ownFolderKeepMigration = 680
+
+// balancedKeepMigration numbers the second year of the Balanced keep preset.
+const balancedKeepMigration = 690
 
 // oneLineColumns are the names and locations the recovery kit prints.
 var oneLineColumns = []struct {

@@ -48,7 +48,8 @@ func TestWatchdogDecisionUsesDashboardPredicate(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			gotNotify, gotClear := watchdogDecision(now, c.lastSucc, c.period, c.enabled, c.state, c.haveState)
+			status := rpoStatus(now, c.lastSucc, c.period, c.enabled && c.period > 0)
+			gotNotify, gotClear := watchdogDecision(status, c.lastSucc, c.state, c.haveState)
 			if gotNotify != c.wantNotify || gotClear != c.wantClear {
 				t.Fatalf("watchdogDecision = (notify=%v, clear=%v), want (notify=%v, clear=%v)",
 					gotNotify, gotClear, c.wantNotify, c.wantClear)
@@ -96,7 +97,7 @@ func watchdogTestService(t *testing.T) (*Service, *store.Repo, *int32, int64) {
 		t.Fatal(err)
 	}
 
-	tg, err := st.UpsertTarget(store.Target{ContainerName: "plex", AppdataPaths: []string{"/host/user/appdata/plex"}})
+	tg, err := st.UpsertTarget(store.Target{ContainerName: "plex", AppdataPaths: []string{"/host/user/appdata/plex"}, IncludeInSchedule: true})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -239,5 +240,49 @@ func TestWatchdogRetriesAnAlertThatReachedNobody(t *testing.T) {
 	}
 	if _, found, err := st.GetWatchdogState("containers"); err != nil || !found {
 		t.Fatalf("the delivered alert must be recorded, found=%v err=%v", found, err)
+	}
+}
+
+func TestWatchdogAlertsOnceWhenASectionMissedItsFirstRun(t *testing.T) {
+	svc, st, hits, seeded := watchdogTestService(t)
+	const day = int64(86400)
+	settings, err := st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	settings.VMsEnabled, settings.VMsSchedule = true, "daily 03:00"
+	if err := st.UpdateSettings(settings); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.UpsertVMTarget(store.VMTarget{Name: "win11", IncludeInSchedule: true, CreatedAt: seeded}); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := svc.runWatchdogAt(context.Background(), seeded+day/2); err != nil {
+		t.Fatal(err)
+	}
+	if n := atomic.LoadInt32(hits); n != 0 {
+		t.Fatalf("an alert went out before the first run was due (%d)", n)
+	}
+	for range 2 {
+		if err := svc.runWatchdogAt(context.Background(), seeded+day+1); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if n := atomic.LoadInt32(hits); n != 1 {
+		t.Fatalf("alerts = %d, want one for the missed first run", n)
+	}
+}
+
+func TestTheOverdueAlertSaysWhenNoBackupHasSucceededYet(t *testing.T) {
+	const day = int64(86400)
+	now := int64(1_800_000_000)
+	want := "Backups for vms are overdue: none has succeeded yet, expected every 1d."
+	if got := overdueMessage("vms", 0, day, now); got != want {
+		t.Fatalf("message = %q, want %q", got, want)
+	}
+	want = "Backups for vms are overdue: last success 3d ago, expected every 1d."
+	if got := overdueMessage("vms", now-3*day, day, now); got != want {
+		t.Fatalf("message = %q, want %q", got, want)
 	}
 }

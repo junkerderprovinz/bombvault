@@ -168,7 +168,7 @@ func TestObservedIsUnconfirmedWhenTheListingIsOlderThanTheGrace(t *testing.T) {
 	f := newPlacementFixture(t)
 	dailyContainerBackups(f)
 	b2 := f.target("containers", "B2", "b2:bucket:containers")
-	f.container("nginx", "")
+	scheduledContainer(t, f, "nginx")
 	now := time.Now().Unix()
 	f.listing("containers", b2.ID, now-72*hour, copiesRow("container:nginx", 20, now-73*hour))
 

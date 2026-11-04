@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { afterEach, beforeEach, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import type { CloudCredSetInfo, OwnFolderStep, StorageLocation, StorageLocationSection } from "../../lib/api";
 import { I18nProvider } from "../../lib/i18n";
@@ -62,7 +62,7 @@ const { OwnFolderWindow } = await import("./OwnFolderWindow");
 
 const STEP: OwnFolderStep = {
   domain: "containers", from: "user/backups/containers", to: "s3:https://fsn1/bv/containers", same: false,
-  copyAt: "t-copy", copies: ["Wasabi"], backups: 415, pending: 3, key: "own:containers",
+  copyAt: "t-copy", copies: ["Wasabi"], backups: 415, pending: 3, key: "own:containers", keep: KEEP, keepThere: KEEP,
 };
 
 let closed = 0;
@@ -252,4 +252,64 @@ it("says the old backups cannot be read and that the switch can go ahead without
   expect(alert.textContent).toContain("The backups in the old own folder could not be read");
   expect(alert.textContent).toContain('Switch off "Copy the backups already made"');
   expect((screen.getByRole("button", { name: "Switch" }) as HTMLButtonElement).disabled).toBe(true);
+});
+
+describe("a move into a place that keeps less", () => {
+  const LESS = { keepLast: 0, keepDaily: 3, keepWeekly: 0, keepMonthly: 0, keepYearly: 0 };
+  const REQUEST = { domains: ["containers"], copyOver: true, location: "destination:h" };
+
+  async function pressSwitch() {
+    await open(["containers"], "destination:h");
+    await settle();
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Switch" }));
+    });
+  }
+
+  async function answer(name: string) {
+    const question = await screen.findByText(/^Keep less\?/);
+    await act(async () => {
+      fireEvent.click(within(question.closest("[role=dialog]") as HTMLElement).getByRole("button", { name }));
+    });
+  }
+
+  beforeEach(() => previewOwnFolders.mockResolvedValue({ ok: true, steps: [{ ...STEP, keepThere: LESS }] }));
+
+  it("asks first and takes the new place's rule on Save anyway", async () => {
+    await pressSwitch();
+    expect(moveOwnFolders).not.toHaveBeenCalled();
+    expect(screen.getByText(/^Keep less\?/).textContent).toContain("from Hetzner S3 for good");
+
+    await answer("Save anyway");
+
+    expect(moveOwnFolders).toHaveBeenCalledWith(REQUEST);
+  });
+
+  it("holds on to the current values when the section is told to", async () => {
+    await pressSwitch();
+    await act(async () => {
+      fireEvent.click(screen.getByRole("switch", { name: "Keep the current values for Containers under Rules per section" }));
+    });
+
+    await answer("Save anyway");
+
+    expect(moveOwnFolders).toHaveBeenCalledWith({ ...REQUEST, keepRules: ["containers"] });
+  });
+
+  it("moves nothing on Back", async () => {
+    await pressSwitch();
+
+    await answer("Back");
+
+    expect(moveOwnFolders).not.toHaveBeenCalled();
+    expect(closed).toBe(0);
+  });
+
+  it("does not ask when the question is switched off", async () => {
+    localStorage.setItem("bombvault.askKeepLess", "off");
+    await pressSwitch();
+
+    expect(moveOwnFolders).toHaveBeenCalledWith(REQUEST);
+    localStorage.removeItem("bombvault.askKeepLess");
+  });
 });

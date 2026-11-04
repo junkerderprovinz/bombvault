@@ -4,6 +4,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
 const oneDay = int64(86400)
@@ -33,6 +35,16 @@ func dailyContainers(t *testing.T, f *placementFixture) {
 	if err := f.st.UpdateSettings(s); err != nil {
 		t.Fatal(err)
 	}
+}
+
+// scheduledContainer is a container the daily schedule backs up.
+func scheduledContainer(t *testing.T, f *placementFixture, name string) store.Target {
+	t.Helper()
+	tg := f.container(name, "")
+	if err := f.st.SetInclude(name, true); err != nil {
+		t.Fatal(err)
+	}
+	return tg
 }
 
 // replicatedAt records a successful copy to the target; agingOnly marks it as a
@@ -71,7 +83,7 @@ func TestATargetNoItemIsCopiedToDropsOut(t *testing.T) {
 	dailyContainers(t, f)
 	b2 := f.target("containers", "B2", "b2:bucket:containers")
 	hz := f.target("containers", "Hetzner", "sftp:u@box:/containers")
-	nginx := f.container("nginx", "")
+	nginx := scheduledContainer(t, f, "nginx")
 	f.rule("containers", "container:nginx", hz.ID)
 	now := time.Now().Unix()
 	f.backupRun(nginx.ID, now-3*oneDay)
@@ -95,8 +107,8 @@ func TestCoupledCurrencyIsJudgedPerTarget(t *testing.T) {
 		dailyContainers(t, f)
 		b2 := f.target("containers", "B2", "b2:bucket:containers")
 		hz := f.target("containers", "Hetzner", "sftp:u@box:/containers")
-		nginx := f.container("nginx", "")
-		plex := f.container("plex", "")
+		nginx := scheduledContainer(t, f, "nginx")
+		plex := scheduledContainer(t, f, "plex")
 		f.rule("containers", "container:nginx", hz.ID)
 		f.rule("containers", "container:plex", b2.ID)
 		now := time.Now().Unix()
@@ -128,8 +140,8 @@ func TestAnAgingRunDoesNotMakeATargetCurrent(t *testing.T) {
 	}
 	b2 := f.target("containers", "B2", "b2:bucket:containers")
 	hz := f.target("containers", "Hetzner", "sftp:u@box:/containers")
-	f.container("nginx", "")
-	f.container("plex", "")
+	scheduledContainer(t, f, "nginx")
+	scheduledContainer(t, f, "plex")
 	f.rule("containers", "container:nginx", hz.ID)
 	f.rule("containers", "container:plex", b2.ID)
 	now := time.Now().Unix()
@@ -161,7 +173,7 @@ func TestWithoutRulesTheDomainIsJudgedAsBefore(t *testing.T) {
 	f := newPlacementFixture(t)
 	dailyContainers(t, f)
 	f.target("containers", "B2", "b2:bucket:containers")
-	nginx := f.container("nginx", "")
+	nginx := scheduledContainer(t, f, "nginx")
 	f.backupRun(nginx.ID, time.Now().Unix()-3*oneDay)
 
 	if _, byTarget, _ := f.svc.placementCurrency(settingsOf(t, f.svc), "containers"); byTarget {
@@ -169,5 +181,27 @@ func TestWithoutRulesTheDomainIsJudgedAsBefore(t *testing.T) {
 	}
 	if st := statusFor(t, f, "containers"); st.ReplicationState != "overdue" {
 		t.Fatalf("state %q, want overdue as before: a backup three days old never replicated", st.ReplicationState)
+	}
+}
+
+func TestAFirstBackupUnderWayHoldsOverdueBack(t *testing.T) {
+	f := newPlacementFixture(t)
+	dailyContainers(t, f)
+	scheduledContainer(t, f, "nginx")
+	if _, err := f.db.Exec(`UPDATE targets SET created_at = created_at - ?`, 2*oneDay); err != nil {
+		t.Fatal(err)
+	}
+	if st := statusFor(t, f, "containers"); st.Status != "overdue" {
+		t.Fatalf("status %q, want overdue past the first run", st.Status)
+	}
+
+	unlock, ok := f.svc.tryLockDomainFor("containers", "backup")
+	if !ok {
+		t.Fatal("the domain is busy")
+	}
+	defer unlock()
+
+	if st := statusFor(t, f, "containers"); st.Status != "never" {
+		t.Fatalf("status %q, want never while the first backup runs", st.Status)
 	}
 }

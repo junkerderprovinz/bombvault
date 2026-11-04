@@ -22,7 +22,7 @@ describe("replica keep rules", () => {
 
   it("read a preset's numbers rather than the stored own ones", () => {
     expect(keepCounts({ preset: "long", own: [0, 7, 3, 0, 0] })).toEqual([0, 14, 8, 12, 3]);
-    expect(keepSummary(t, { preset: "balanced", own: [0, 0, 0, 0, 0] })).toBe("7 daily, 4 weekly, 6 monthly, 1 yearly");
+    expect(keepSummary(t, { preset: "balanced", own: [0, 0, 0, 0, 0] })).toBe("7 daily, 4 weekly, 6 monthly, 2 yearly");
   });
 
   it("clamp an own number to a whole count of at least zero", () => {

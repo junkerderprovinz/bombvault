@@ -22,7 +22,7 @@ import {
   type StorageLocation,
   type StorageLocationSection,
 } from "./api";
-import { credentialKind } from "./storageLocations";
+import { credentialKind, isOwnFolder } from "./storageLocations";
 
 /** The records behind a location that its routes want sent back whole. */
 export interface LocationRecords {
@@ -158,8 +158,8 @@ export type SectionSetting = keyof SectionPatch;
  * sectionSettings lists what the server lets a section hold for itself. A
  * target made from a destination has its own keep-policy and compression; the
  * copy a domain's off-site settings describe takes its compression from those.
- * A domain that writes to a folder or a named repository has its own local
- * keep-policy.
+ * A section's own folder, wherever it lies, and a named repository it writes
+ * to can have a local keep-policy of its own.
  */
 export function sectionSettings(
   location: StorageLocation,
@@ -167,6 +167,7 @@ export function sectionSettings(
   section: StorageLocationSection
 ): SectionSetting[] {
   if (location.object === "destination") {
+    if (isOwnFolder(section)) return ["retention"];
     const derived = section.use === "copy" && records.targets.some((t) => t.id === section.targetId);
     if (!derived) return [];
     return section.primary ? ["retention"] : ["retention", "compression"];
@@ -181,7 +182,7 @@ export async function saveSection(
   section: StorageLocationSection,
   patch: SectionPatch
 ): Promise<SaveAnswer> {
-  if (location.object === "destination") {
+  if (location.object === "destination" && !isOwnFolder(section)) {
     const target = records.targets.find((t) => t.id === section.targetId);
     if (!target) return { ok: false };
     const { retention, ...rest } = patch;
@@ -200,7 +201,7 @@ export async function followLocation(
   section: StorageLocationSection,
   settings: FollowedSetting[]
 ): Promise<SaveAnswer> {
-  if (location.object === "destination") {
+  if (location.object === "destination" && !isOwnFolder(section)) {
     const target = records.targets.find((t) => t.id === section.targetId);
     if (!target) return { ok: false };
     return updateOffsiteTarget(target.id, target, undefined, settings);

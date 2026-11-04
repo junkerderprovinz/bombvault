@@ -81,7 +81,7 @@ O dispositivo chama-se BombVault, ou BombVault com o nome da instância entre pa
 
 | Entidade | O que mostra |
 |---|---|
-| Status | `ok`, `warning`, `failed` ou `off`, o pior entre as secções ligadas |
+| Status | `ok`, `warning`, `failed` ou `off`, o pior entre as secções ligadas. Uma secção à espera do primeiro backup só conta depois de esse backup estar previsto |
 | Running job | O que está a correr agora, ou `idle` |
 | Open anomalies | Quantas anomalias estão abertas |
 | Next scheduled backup | Quando começa o próximo backup agendado |

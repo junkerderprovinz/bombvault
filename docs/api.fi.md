@@ -81,7 +81,7 @@ Laitteen nimi on BombVault tai BombVault, jonka perässä on instanssin nimi sul
 
 | Entiteetti | Mitä se näyttää |
 |---|---|
-| Status | `ok`, `warning`, `failed` tai `off`, päällä olevista osioista huonoin |
+| Status | `ok`, `warning`, `failed` tai `off`, päällä olevista osioista huonoin. Ensimmäistä varmuuskopiotaan odottava osio lasketaan mukaan vasta, kun se on ollut ajoitettu |
 | Running job | Mikä on nyt käynnissä, tai `idle` |
 | Open anomalies | Montako poikkeamaa on avoinna |
 | Next scheduled backup | Milloin seuraava ajastettu kopio alkaa |

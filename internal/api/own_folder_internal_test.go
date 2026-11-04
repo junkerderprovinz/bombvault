@@ -368,11 +368,15 @@ func TestEachPlaceBringsOnlyTheSignInItsBackendReads(t *testing.T) {
 func TestACopyThatBecomesTheOwnFolderKeepsWhatItsRuleKept(t *testing.T) {
 	f := newPlacementFixture(t)
 	localKeepLast(t, f, 3)
-	box, err := f.st.SaveDestination(store.OffsiteTarget{Name: "Box", Repo: boxRepo, Provider: "box", RetentionKeepMonthly: 24})
+	box, err := f.st.SaveDestination(store.OffsiteTarget{Name: "Box", Repo: boxRepo, Provider: "box", RetentionKeepDaily: 7})
 	if err != nil {
 		t.Fatal(err)
 	}
-	f.tickDestination(box, "vms")
+	vms := f.tickDestination(box, "vms")
+	vms.RetentionKeepDaily, vms.RetentionKeepMonthly = 0, 24
+	if _, err := f.st.UpsertOffsiteTarget(vms); err != nil {
+		t.Fatal(err)
+	}
 
 	steps := ownSteps(t, f.do("POST", "/api/storage/own-folders/preview", map[string]any{
 		"domains": []string{"vms"}, "location": "destination:" + box.ID,
@@ -385,11 +389,33 @@ func TestACopyThatBecomesTheOwnFolderKeepsWhatItsRuleKept(t *testing.T) {
 	}))
 
 	settings, _ := f.st.GetSettings()
-	if got := localKeep(settings, "vms"); got != (store.RetentionKeep{KeepLast: 3, KeepMonthly: 24}) {
-		t.Fatalf("vms keeps %+v, want both rules", got)
+	if got := f.svc.localKeep(settings, "vms"); got != (store.RetentionKeep{KeepDaily: 7, KeepMonthly: 24}) {
+		t.Fatalf("vms keeps %+v, want the location's rule and the copy's", got)
 	}
-	if got := localKeep(settings, "containers"); got != (store.RetentionKeep{KeepLast: 3}) {
+	if got := f.svc.localKeep(settings, "containers"); got != (store.RetentionKeep{KeepLast: 3}) {
 		t.Fatalf("containers keeps %+v, want its rule untouched", got)
+	}
+}
+
+func TestACopyThatFollowsTheLocationBecomesAnOwnFolderThatFollowsItToo(t *testing.T) {
+	f := newPlacementFixture(t)
+	localKeepLast(t, f, 3)
+	box, err := f.st.SaveDestination(store.OffsiteTarget{Name: "Box", Repo: boxRepo, Provider: "box", RetentionKeepMonthly: 24})
+	if err != nil {
+		t.Fatal(err)
+	}
+	f.tickDestination(box, "vms")
+
+	steps := ownSteps(t, f.do("POST", "/api/storage/own-folders", map[string]any{
+		"domains": []string{"vms"}, "location": "destination:" + box.ID,
+	}))
+
+	settings, _ := f.st.GetSettings()
+	if _, own := settings.OwnRetention()["vms"]; own || steps[0].WiderKeep {
+		t.Fatalf("vms got a rule of its own %+v, want it to follow Box", settings.OwnRetention())
+	}
+	if got := f.svc.localKeep(settings, "vms"); got != (store.RetentionKeep{KeepMonthly: 24}) {
+		t.Fatalf("vms keeps %+v, want Box's rule", got)
 	}
 }
 

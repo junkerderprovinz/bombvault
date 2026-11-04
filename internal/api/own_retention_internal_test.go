@@ -34,7 +34,7 @@ func TestRetentionPolicyFallsBackToTheSharedOne(t *testing.T) {
 		"vms":   {KeepWeekly: 4, KeepMonthly: 6},
 		"flash": {},
 	})
-	svc := &Service{}
+	svc := &Service{store: newTestStore(t)}
 	for _, tc := range []struct {
 		domain string
 		want   restic.RetentionPolicy
@@ -52,7 +52,7 @@ func TestRetentionPolicyFallsBackToTheSharedOne(t *testing.T) {
 
 func TestAnUndecodableOverrideFallsBackToTheSharedPolicy(t *testing.T) {
 	s := store.Settings{RetentionKeepLast: 5, RetentionOverrides: "{not json"}
-	if got := (&Service{}).retentionPolicy(s, "vms"); got != (restic.RetentionPolicy{KeepLast: 5}) {
+	if got := (&Service{store: newTestStore(t)}).retentionPolicy(s, "vms"); got != (restic.RetentionPolicy{KeepLast: 5}) {
 		t.Fatalf("retentionPolicy = %+v, want the shared keep-last 5", got)
 	}
 }
@@ -60,7 +60,7 @@ func TestAnUndecodableOverrideFallsBackToTheSharedPolicy(t *testing.T) {
 func TestTheOffsitePolicyIgnoresTheDomainsOwnOne(t *testing.T) {
 	s := store.Settings{RetentionKeepLast: 5, OffsiteRetentionKeepMonthly: 12}
 	s.SetOwnRetention(map[string]store.RetentionKeep{"vms": {KeepWeekly: 4}})
-	svc := &Service{}
+	svc := &Service{store: newTestStore(t)}
 	if got := svc.retentionPolicyForSource(s, "vms", "offsite"); got != (restic.RetentionPolicy{KeepMonthly: 12, Direct: true}) {
 		t.Fatalf("off-site policy = %+v, want the off-site keep-monthly 12", got)
 	}
