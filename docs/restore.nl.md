@@ -1,0 +1,113 @@
+# Herstel
+
+Elk herstel begint op de pagina **Herstel**: kies een onderdeel, zoek wat je terug wilt en kies een back-up. Eén venster herstelt elk soort item en vraagt in stappen. Standaard verandert er niets aan het origineel, want de back-up komt ernaast terug.
+
+![De pagina Herstel met de onderdelen als tegels, het zoekveld en de kaart Stacks.](assets/screenshots/restore/page-dark.png#only-dark)
+![De pagina Herstel met de onderdelen als tegels, het zoekveld en de kaart Stacks.](assets/screenshots/restore/page-light.png#only-light)
+
+## De pagina Herstel {#page}
+
+- **Onderdelen** toont de onderdelen als tegels, elk met hoeveel items snapshots hebben.
+- **Wat wil je terughalen?** doorzoekt de items van het gekozen onderdeel. Elke rij toont zijn nieuwste snapshot, en **Item openen** leidt naar de pagina van het item.
+- **Stacks** toont de Compose-projecten met minstens twee geback-upte containers, zoals `immich` met zijn database en Redis. Het zoekveld vindt een stack op zijn naam of op een van zijn containers.
+- **Bezig** toont een herstel terwijl het loopt, ook nadat je zijn venster sloot.
+- **Noodgeval** start de Noodassistent voor een server die weg is of opnieuw is ingesteld, zie [Noodassistent](offsite-recovery.md#emergency).
+- **Andere bronnen** bevat **Uit een oude back-upmap**, voor de back-ups van een andere BombVault, en **Importeren uit de Appdata.Backup-plug-in**.
+
+![De pagina Herstel op een telefoon.](assets/screenshots/restore/page-phone-dark.png#only-dark)
+![De pagina Herstel op een telefoon.](assets/screenshots/restore/page-phone-light.png#only-light)
+
+## Het herstelvenster {#window}
+
+Een klik op een item opent **Herstel** met zijn naam. Het vraagt in stappen, en elke stap kan worden gewijzigd voordat je begint:
+
+1. **Back-up**: de aanbevolen snapshot is vooraf gekozen. Dat is de nieuwste, of na een openstaande anomalie de laatste daarvóór. Oudere staan in de lijst, en **Vergelijken** toont wat er tussen twee verschilt.
+2. **Bron**: waar de bestanden vandaan komen, als een snapshot op meerdere plekken staat. **Lokaal** is het snelst.
+3. **Wat**: **Alles**, of **Losse bestanden**, waar je de bestanden en mappen aanvinkt die je wilt.
+4. **Waarheen**: het doel. De keuzes hangen af van het soort item:
+
+    | Doel | Wat het doet |
+    |---|---|
+    | **Naast het origineel** | De standaard. Een container komt terug als een tweede container met de naam `<name>-restored` met eigen poorten, de schijven en NVRAM van een VM komen in een map met de naam `<folder>-restored`, en een mappenset komt terug als `<path>-restored`. Er verandert niets aan het origineel. |
+    | **Origineel vervangen** | Overschrijft wat er nu staat. Met **Eerst de huidige staat back-uppen**, standaard aan, maakt BombVault eerst een back-up van de toestand van vandaag, zodat je terug kunt. Mislukt die back-up, dan start het herstel niet. |
+    | **Naar een map** | Alleen de bestanden, om door te bladeren. |
+    | **Downloaden als ZIP** | De flash, voor een nieuwe stick. BombVault schrijft nooit in de draaiende flash. |
+    | **In een nieuwe dataset** en **Terugzetten in de dataset** | ZFS-datasets, zie [ZFS-datasets](zfs-datasets.md#restore). |
+
+5. **Wat er gebeurt** zegt in woorden wat het herstel gaat doen, en een afbeelding toont het doel dat je koos.
+
+Voordat **Herstellen** ontgrendelt, controleert het venster of het repository antwoordt, of de sleutel het opent, of de snapshot er is en of het doel ruimte heeft. Zolang een controle mislukt, blijft de knop vergrendeld, en de (i) erin zegt welke.
+
+Het venster toont ook wat het herstel verandert ten opzichte van wat er nu staat: nieuwe, vervangen en ongewijzigde bestanden, met de lijst op verzoek, en de bestanden op het doel die niet in de back-up staan en blijven waar ze zijn. restic berekent dit als een droge run op grootte en wijzigingstijd, zonder de bestanden te lezen, en een zeer grote boom stopt na 30 seconden en zegt dat. Voor containers en VM's vergelijkt het de instellingen die het herstel opnieuw aanmaakt met de draaiende: image en tag, poorten, variabelenamen en volumes, of geheugen, vCPU's, schijven en netwerk.
+
+Sommige dingen kunnen een herstel stoppen voordat het iets verandert. Het vaste IP en de gepubliceerde poorten van een container moeten vrij zijn, en zijn netwerk moet bestaan. Een herstel op zijn plaats noemt elke andere container waarvan een bind-mount tot in een map reikt waarin het schrijft, bijvoorbeeld "dit pad wordt ook gebruikt door nextcloud-db", maar dat waarschuwt alleen.
+
+Een paar opties verschijnen waar ze van toepassing zijn: **Daarna gestopt laten**, om een container of VM te bekijken voordat hij weer draait, en **Herstellen zonder GPU en runtime** op een host die de GPU of runtime mist waarmee de back-up is gemaakt.
+
+Het herstel loopt op de achtergrond. Je kunt het venster sluiten, en de voortgang staat ook onder **Bezig**. Een lang herstel toont een percentage en kan worden geannuleerd, en een geannuleerd herstel wordt als geannuleerd vastgelegd, niet als mislukt.
+
+![Het herstelvenster bij de stap Wat, met losse bestanden aangevinkt.](assets/screenshots/restore/window-what-dark.png#only-dark)
+![Het herstelvenster bij de stap Wat, met losse bestanden aangevinkt.](assets/screenshots/restore/window-what-light.png#only-light)
+
+### Waar een herstel naar een map terechtkomt {#folders}
+
+**Herstelmappen** onder **Instellingen, Herstel** bepaalt de **Standaard herstelmap**, desgewenst met een **Submap per onderdeel**, en een **Uitzondering** voor één onderdeel. Gekozen bestanden komen rechtstreeks in de doelmap: één bestand komt terug als alleen dat bestand, een map als de map met zijn inhoud, en keuzes uit verschillende mappen houden alleen hun pad onder de map die ze delen. BombVault weigert een doel dat niet op gemounte opslag staat, omdat zo'n map op Unraid in het geheugen leeft en na een herstart weg is, en het herstelt nooit in zijn eigen datamap.
+
+## Voorbeeld: één bestand terughalen {#example-single-file}
+
+Iemand heeft gisteravond het `config.php` van Nextcloud bewerkt en Nextcloud start niet meer. De nachtelijke back-up van 03:00 heeft het goede bestand nog. Je wilt dat ene bestand, niet de hele container.
+
+1. Open **Herstel**, kies de tegel **Containers** en typ `nextcloud` in **Wat wil je terughalen?**.
+2. Klik op `nextcloud`. Het venster opent met de back-up van 03:00 vooraf gekozen als de aanbevolen.
+3. Laat **Bron** op **Lokaal** staan.
+4. Kies onder **Wat** **Losse bestanden**. Open de mappen tot `config` en vink `config.php` aan.
+5. Kies onder **Waarheen** **Naar een map** en kies een map, bijvoorbeeld `user/restore`, wat op de host `/mnt/user/restore` is.
+6. Lees **Wat er gebeurt**: het bestand komt in de doelmap te staan en er verandert niets aan de container. Druk op **Herstellen**.
+
+Het venster eindigt met **Klaar: de bestanden staan in /mnt/user/restore**. Je vindt het bestand als `/mnt/user/restore/config.php`, zonder de mappen erboven. Vergelijk het met het kapotte bestand, kopieer het terug in de appdata-map en herstart Nextcloud.
+
+Om het bestand in plaats daarvan meteen terug te zetten, kies je in stap 5 **Origineel vervangen**. Laat **Eerst de huidige staat back-uppen** aan, zodat BombVault de kapotte toestand back-upt voordat het schrijft, typ `nextcloud` ter bevestiging en druk op **Herstellen**. Nextcloud wordt gestopt terwijl het gekozen bestand op zijn plek wordt teruggeschreven, en alleen de bestanden die je aanvinkte, worden geschreven.
+
+![Het herstelvenster bij Wat er gebeurt, met Origineel vervangen gekozen.](assets/screenshots/restore/window-replace-dark.png#only-dark)
+![Het herstelvenster bij Wat er gebeurt, met Origineel vervangen gekozen.](assets/screenshots/restore/window-replace-light.png#only-light)
+
+## Wat er terugkomt, per soort {#kinds}
+
+**Containers** worden opnieuw aangemaakt uit hun opgeslagen definitie via de Docker-API, met hun entrypoint, hostnaam, stopinstellingen, volumes en mounts, resourcelimieten, logdriver, DNS-instellingen en oude links. Een container komt terug op de image waarop hij liep toen de back-up werd gemaakt, niet op een nieuwere die later is opgehaald, en een ontbrekende image wordt eerst opgehaald, met de inloggegevens uit **Container-registry's** onder **Instellingen, Herstel**. Zijn GPU of runtime (`--gpus`, `--runtime=nvidia`) komt ook terug. Op een host zonder dat stuurprogramma of die runtime zegt het herstel dat en biedt het **Herstellen zonder GPU en runtime** aan. Een link naar een container die ontbreekt, of gestopt is terwijl de herstelde start, wordt weggelaten, en de runhistorie zegt dat. Een herstel dat mislukt nadat de container was verwijderd, zet hem terug, gestopt.
+
+**VM's** krijgen hun XML opnieuw gedefinieerd via SSH en hun schijven en UEFI NVRAM opnieuw gekoppeld, zelfs nadat de VM was verwijderd. Zie [VM-back-ups](vm-backup-ssh-setup.md) voor VM's met Unraid-snapshots en schijven op zvols.
+
+**Mappensets** komen terug met hun eigenaar, modi en tijdstempels zoals restic ze opslaat.
+
+**De flash** raakt de draaiende `/boot` nooit aan. Het herstel is een download genaamd `flash-<id>.zip`, klaar om in de Unraid USB Creator te zetten. Het venster toont ook de plug-ins in elke flashback-up met hun versie en grootte, en kan er één terugzetten in de draaiende flash: zijn `.plg`-bestand, zijn map onder `config/plugins` en de pakketbestanden die de back-up bevat. Unraid installeert hem bij de volgende start, of meteen onder **Plugins, Install Plugin**.
+
+**ZFS-datasets** hebben eigen doelen en behouden hun ZFS-eigenschappen, zie [Herstellen](zfs-datasets.md#restore).
+
+**De zelf-back-up** komt alleen terug via de Noodassistent, die BombVault herstart, zodat de draaiende database nooit onder een open handle wordt overschreven.
+
+**Databasedumps** worden nooit uit zichzelf teruggeladen. Een rij onder **Databasedumps** kan worden gedownload, in een map worden opgeslagen of worden geïmporteerd in een vers gestarte database. Zie [Databasedumps](backups.md#database-dumps).
+
+## Meerdere items tegelijk herstellen {#several}
+
+Kies op de pagina Herstel items zoals je rijen kiest in de lijst Back-ups: Ctrl+klik, Shift+klik, Ctrl+A, lang drukken of **Selecteren**. **Herstellen** opent dan één venster voor alle.
+
+- **Welke back-up**: **Aanbevolen** neemt voor elk item de back-up die zijn eigen venster zou aanbevelen. **Eén moment voor alle** neemt voor elk item zijn nieuwste back-up vanaf een **Moment** dat je kiest of eerder, bijvoorbeeld de avond voordat er iets misging.
+- **Waarheen**: **Naast het origineel** of **Origineel vervangen**, met **Eerst de huidige staat back-uppen**.
+
+Elk item wordt gecontroleerd zoals een enkel herstel, en daarna lopen ze na elkaar. Elke rij toont hoe zijn eigen herstel ging: **Wacht**, **Actief**, **Hersteld**, **Mislukt** of **Weggelaten**. **Stoppen na dit item** laat het lopende herstel afmaken en start er geen meer. De flash komt als ZIP om te downloaden, en ZFS-datasets en de zelf-back-up worden één voor één hersteld.
+
+![Meerdere items herstellen: één rij per item met zijn voortgang.](assets/screenshots/restore/several-dark.png#only-dark)
+![Meerdere items herstellen: één rij per item met zijn voortgang.](assets/screenshots/restore/several-light.png#only-light)
+
+## Een stack herstellen {#stacks}
+
+Een klik op een stack in de kaart **Stacks** opent **Stack herstellen**. Het herstelt elk lid tegelijk vanaf zijn laatste back-up, en met **Na herstel starten in afhankelijkheidsvolgorde** start het ze in hun volgorde `depends_on`: eerst databases en caches, dan de app. Ontbreekt de projectmap van een lid op de plek die je koos, dan biedt het venster in plaats daarvan de toestand uit Lokaal aan.
+
+## Andere bronnen {#other-sources}
+
+- **Uit een oude back-upmap** opent het repository van een andere BombVault die niet meer draait, op een schijf of op een off-site-bestemming, met zijn herstelkit of zijn ingetypte `APP_KEY`. De sessie is alleen-lezen en leeft alleen in het geheugen. Zie [Uit een oude back-upmap](offsite-recovery.md#restore-from-another-bombvault-repo).
+- **Importeren uit de Appdata.Backup-plug-in** leest de back-upmap van de plug-in. Elk containerarchief wordt een herstelpunt van zijn container, gedateerd op het moment dat de plug-in het maakte. Eerder geïmporteerde archieven worden overgeslagen, en de archieven zelf worden alleen gelezen. De container heeft eerst één back-up in BombVault nodig, zodat het herstel zijn definitie heeft. Het bewaarbeleid laat geïmporteerde herstelpunten met rust, dus verwijder er zelf een als je hem niet meer nodig hebt.
+
+## Na een herstel {#after}
+
+Een kopie die naast het origineel is hersteld, staat onder **Back-ups** als uitgesloten, zodat ze niet als openstaande taak telt. Voeg haar toe aan de planning als je haar wilt houden. Een container of VM die draaide toen hij werd geback-upt, komt draaiend terug, een die gestopt was, blijft gestopt. Op Unraid verschijnt een herstelde container weer in het Docker-tabblad als een gewone, bewerkbare app, en een VM in de VM Manager met zijn schijven en NVRAM gekoppeld.
