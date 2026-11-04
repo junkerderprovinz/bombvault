@@ -1360,6 +1360,7 @@ const ca: Partial<Translations> = {
   "dashboard.rpoOk": "Al dia",
   "dashboard.rpoWarn": "Aviat vencerà",
   "dashboard.rpoOverdue": "Vençuda",
+  "dashboard.rpoNever": "Encara no hi ha cap còpia de seguretat",
   "dashboard.rpoOff": "Sense programar",
   "dashboard.rpoViaEverything": "{cadence}, via la còpia completa",
   "dashboard.rpoEntries": "Cada entrada amb la seva pròpia planificació",

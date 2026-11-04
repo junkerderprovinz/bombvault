@@ -1360,6 +1360,7 @@ const eu: Partial<Translations> = {
   "dashboard.rpoOk": "Eguneratuta",
   "dashboard.rpoWarn": "Laster bete beharra",
   "dashboard.rpoOverdue": "Epea gaindituta",
+  "dashboard.rpoNever": "Oraindik ez dago babeskopiarik",
   "dashboard.rpoOff": "Programatu gabe",
   "dashboard.rpoViaEverything": "{cadence}, babeskopia osoaren bidez",
   "dashboard.rpoEntries": "Sarrera bakoitza bere programazioarekin",

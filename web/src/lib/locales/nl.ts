@@ -1317,6 +1317,7 @@ const nl: Partial<Translations> = {
   "dashboard.rpoOk": "Up-to-date",
   "dashboard.rpoWarn": "Binnenkort nodig",
   "dashboard.rpoOverdue": "Te laat",
+  "dashboard.rpoNever": "Nog geen back-up",
   "dashboard.rpoOff": "Niet gepland",
   "dashboard.rpoViaEverything": "{cadence}, via de volledige back-up",
   "dashboard.rpoEntries": "Elk item volgens een eigen schema",

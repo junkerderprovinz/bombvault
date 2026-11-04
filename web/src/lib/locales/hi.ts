@@ -1360,6 +1360,7 @@ const hi: Partial<Translations> = {
   "dashboard.rpoOk": "अद्यतन",
   "dashboard.rpoWarn": "जल्द ही देय",
   "dashboard.rpoOverdue": "समय सीमा बीत गई",
+  "dashboard.rpoNever": "अभी तक कोई बैकअप नहीं",
   "dashboard.rpoOff": "शेड्यूल नहीं किया गया",
   "dashboard.rpoViaEverything": "{cadence}, पूर्ण बैकअप के माध्यम से",
   "dashboard.rpoEntries": "हर प्रविष्टि अपने शेड्यूल पर",

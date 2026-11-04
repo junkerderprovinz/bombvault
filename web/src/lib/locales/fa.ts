@@ -1360,6 +1360,7 @@ const fa: Partial<Translations> = {
   "dashboard.rpoOk": "به‌روز",
   "dashboard.rpoWarn": "به‌زودی موعدش می‌رسد",
   "dashboard.rpoOverdue": "معوق",
+  "dashboard.rpoNever": "هنوز پشتیبانی گرفته نشده است",
   "dashboard.rpoOff": "زمان‌بندی نشده",
   "dashboard.rpoViaEverything": "{cadence}، از طریق پشتیبان‌گیری کامل",
   "dashboard.rpoEntries": "هر مورد با زمان‌بندی خودش",

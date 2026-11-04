@@ -1321,6 +1321,7 @@ const he: Partial<Translations> = {
   "dashboard.rpoOk": "עדכני",
   "dashboard.rpoWarn": "צפוי בקרוב",
   "dashboard.rpoOverdue": "באיחור",
+  "dashboard.rpoNever": "עדיין אין גיבוי",
   "dashboard.rpoOff": "לא מתוזמן",
   "dashboard.rpoViaEverything": "{cadence}, דרך הגיבוי המלא",
   "dashboard.rpoEntries": "כל רשומה לפי לוח הזמנים שלה",

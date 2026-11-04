@@ -1358,6 +1358,7 @@ const sl: Partial<Translations> = {
   "dashboard.rpoOk": "Posodobljeno",
   "dashboard.rpoWarn": "Kmalu zapade",
   "dashboard.rpoOverdue": "Zamujeno",
+  "dashboard.rpoNever": "Še ni varnostne kopije",
   "dashboard.rpoOff": "Ni načrtovano",
   "dashboard.rpoViaEverything": "{cadence}, prek popolne varnostne kopije",
   "dashboard.rpoEntries": "Vsak vnos po svojem urniku",

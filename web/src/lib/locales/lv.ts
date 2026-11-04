@@ -1360,6 +1360,7 @@ const lv: Partial<Translations> = {
   "dashboard.rpoOk": "Aktuāls",
   "dashboard.rpoWarn": "Drīz jāatjauno",
   "dashboard.rpoOverdue": "Nokavēts",
+  "dashboard.rpoNever": "Vēl nav dublējuma",
   "dashboard.rpoOff": "Nav ieplānots",
   "dashboard.rpoViaEverything": "{cadence}, ar pilnu rezerves kopiju",
   "dashboard.rpoEntries": "Katrs ieraksts pēc sava grafika",

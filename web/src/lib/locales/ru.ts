@@ -1315,6 +1315,7 @@ const ru: Partial<Translations> = {
   "dashboard.rpoOk": "Актуально",
   "dashboard.rpoWarn": "Скоро истекает",
   "dashboard.rpoOverdue": "Просрочено",
+  "dashboard.rpoNever": "Резервной копии пока нет",
   "dashboard.rpoOff": "Без расписания",
   "dashboard.rpoViaEverything": "{cadence}, через полный бэкап",
   "dashboard.rpoEntries": "Каждая запись по собственному расписанию",

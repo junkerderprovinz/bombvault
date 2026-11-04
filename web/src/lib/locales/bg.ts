@@ -1360,6 +1360,7 @@ const bg: Partial<Translations> = {
   "dashboard.rpoOk": "Актуално",
   "dashboard.rpoWarn": "Скоро предстои",
   "dashboard.rpoOverdue": "Просрочено",
+  "dashboard.rpoNever": "Все още няма архив",
   "dashboard.rpoOff": "Не е планирано",
   "dashboard.rpoViaEverything": "{cadence}, чрез пълния бекъп",
   "dashboard.rpoEntries": "Всеки запис по собствен график",

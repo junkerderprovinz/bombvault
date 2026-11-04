@@ -1360,6 +1360,7 @@ const lt: Partial<Translations> = {
   "dashboard.rpoOk": "Atnaujinta",
   "dashboard.rpoWarn": "Netrukus terminas",
   "dashboard.rpoOverdue": "Vėluojama",
+  "dashboard.rpoNever": "Atsarginės kopijos dar nėra",
   "dashboard.rpoOff": "Neplanuota",
   "dashboard.rpoViaEverything": "{cadence}, per pilną atsarginę kopiją",
   "dashboard.rpoEntries": "Kiekvienas įrašas pagal savo tvarkaraštį",

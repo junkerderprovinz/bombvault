@@ -1329,6 +1329,7 @@ const tr: Partial<Translations> = {
   "dashboard.rpoOk": "Güncel",
   "dashboard.rpoWarn": "Yakında gerekli",
   "dashboard.rpoOverdue": "Gecikmiş",
+  "dashboard.rpoNever": "Henüz yedek yok",
   "dashboard.rpoOff": "Zamanlanmamış",
   "dashboard.rpoViaEverything": "{cadence}, tam yedekleme ile",
   "dashboard.rpoEntries": "Her giriş kendi zamanlamasıyla",

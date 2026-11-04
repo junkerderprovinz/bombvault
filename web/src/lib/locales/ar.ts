@@ -1330,6 +1330,7 @@ const ar: Partial<Translations> = {
   "dashboard.rpoOk": "محدَّث",
   "dashboard.rpoWarn": "مستحق قريباً",
   "dashboard.rpoOverdue": "متأخر",
+  "dashboard.rpoNever": "لا يوجد نسخ احتياطي بعد",
   "dashboard.rpoOff": "غير مجدوَل",
   "dashboard.rpoViaEverything": "{cadence}، عبر النسخ الاحتياطي الشامل",
   "dashboard.rpoEntries": "كل إدخال وفق جدوله الخاص",

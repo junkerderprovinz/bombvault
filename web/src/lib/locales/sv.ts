@@ -1329,6 +1329,7 @@ const sv: Partial<Translations> = {
   "dashboard.rpoOk": "Aktuell",
   "dashboard.rpoWarn": "Snart dags",
   "dashboard.rpoOverdue": "Försenad",
+  "dashboard.rpoNever": "Ingen säkerhetskopia ännu",
   "dashboard.rpoOff": "Ej schemalagd",
   "dashboard.rpoViaEverything": "{cadence}, via den totala säkerhetskopian",
   "dashboard.rpoEntries": "Varje post enligt sitt eget schema",

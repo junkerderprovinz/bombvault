@@ -1318,6 +1318,7 @@ const no: Partial<Translations> = {
   "dashboard.rpoOk": "Oppdatert",
   "dashboard.rpoWarn": "Snart forfalt",
   "dashboard.rpoOverdue": "Forfalt",
+  "dashboard.rpoNever": "Ingen sikkerhetskopi ennå",
   "dashboard.rpoOff": "Ikke planlagt",
   "dashboard.rpoViaEverything": "{cadence}, via den fulle sikkerhetskopien",
   "dashboard.rpoEntries": "Hver oppføring etter sin egen tidsplan",

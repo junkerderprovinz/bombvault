@@ -1360,6 +1360,7 @@ const is: Partial<Translations> = {
   "dashboard.rpoOk": "Uppfært",
   "dashboard.rpoWarn": "Rennur út bráðum",
   "dashboard.rpoOverdue": "Á gjalddaga",
+  "dashboard.rpoNever": "Ekkert afrit ennþá",
   "dashboard.rpoOff": "Ekki áætlað",
   "dashboard.rpoViaEverything": "{cadence}, með heildarafritun",
   "dashboard.rpoEntries": "Hver færsla eftir eigin áætlun",

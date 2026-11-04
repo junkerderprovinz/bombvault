@@ -1329,6 +1329,7 @@ const el: Partial<Translations> = {
   "dashboard.rpoOk": "Ενημερωμένο",
   "dashboard.rpoWarn": "Λήγει σύντομα",
   "dashboard.rpoOverdue": "Εκπρόθεσμο",
+  "dashboard.rpoNever": "Δεν υπάρχει ακόμη αντίγραφο ασφαλείας",
   "dashboard.rpoOff": "Μη προγραμματισμένο",
   "dashboard.rpoViaEverything": "{cadence}, μέσω του πλήρους αντιγράφου ασφαλείας",
   "dashboard.rpoEntries": "Κάθε καταχώριση με το δικό της πρόγραμμα",

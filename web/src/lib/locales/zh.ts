@@ -1320,6 +1320,7 @@ const zh: Partial<Translations> = {
   "dashboard.rpoOk": "最新",
   "dashboard.rpoWarn": "即将到期",
   "dashboard.rpoOverdue": "已逾期",
+  "dashboard.rpoNever": "尚无备份",
   "dashboard.rpoOff": "未计划",
   "dashboard.rpoViaEverything": "{cadence}，通过全部备份",
   "dashboard.rpoEntries": "每个条目按各自的计划运行",

@@ -1326,6 +1326,7 @@ const uk: Partial<Translations> = {
   "dashboard.rpoOk": "Актуально",
   "dashboard.rpoWarn": "Скоро потрібно",
   "dashboard.rpoOverdue": "Прострочено",
+  "dashboard.rpoNever": "Резервної копії ще немає",
   "dashboard.rpoOff": "Без розкладу",
   "dashboard.rpoViaEverything": "{cadence}, через повний бекап",
   "dashboard.rpoEntries": "Кожен запис за власним розкладом",

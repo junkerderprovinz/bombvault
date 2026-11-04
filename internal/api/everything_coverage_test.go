@@ -360,3 +360,59 @@ func TestStatusEndpointOmitsEverythingSchedule(t *testing.T) {
 		t.Fatal("containers domain not present in the status envelope")
 	}
 }
+
+// A section without a backup waits for its first run. Once that would have
+// been due it counts as overdue, like one whose backups stopped.
+func TestASectionWithoutABackupTurnsOverdueOnceItsFirstRunWasDue(t *testing.T) {
+	dir := t.TempDir()
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
+	st, db := newMemStoreDB(t)
+
+	s := mustSettings(t, st)
+	s.ContainersEnabled, s.FlashEnabled = true, true
+	s.ContainersSchedule, s.FlashSchedule = "off", "off"
+	s.EverythingSchedule = "daily 03:00"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.UpsertTarget(store.Target{ContainerName: "plex", IncludeInSchedule: true}); err != nil {
+		t.Fatal(err)
+	}
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, &fakeResticEngine{})
+	statusOf := func(domain string) string {
+		t.Helper()
+		statuses, err := svc.DomainStatus()
+		if err != nil {
+			t.Fatalf("DomainStatus: %v", err)
+		}
+		for _, d := range statuses {
+			if d.Domain == domain {
+				return d.Status
+			}
+		}
+		t.Fatalf("no status for %s", domain)
+		return ""
+	}
+
+	if got := statusOf("containers"); got != "never" {
+		t.Errorf("containers before its first run = %q, want never", got)
+	}
+	if got := statusOf("flash"); got != "never" {
+		t.Errorf("flash before its first run = %q, want never", got)
+	}
+
+	twoDays := 2 * 86400
+	if _, err := db.Exec(`UPDATE targets SET created_at = created_at - ?`, twoDays); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := db.Exec(`UPDATE schema_migrations SET applied_at = applied_at - ?`, twoDays); err != nil {
+		t.Fatal(err)
+	}
+
+	if got := statusOf("containers"); got != "overdue" {
+		t.Errorf("containers past its first run = %q, want overdue", got)
+	}
+	if got := statusOf("flash"); got != "overdue" {
+		t.Errorf("flash past its first run = %q, want overdue", got)
+	}
+}

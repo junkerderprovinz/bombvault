@@ -1330,6 +1330,7 @@ const th: Partial<Translations> = {
   "dashboard.rpoOk": "เป็นปัจจุบัน",
   "dashboard.rpoWarn": "ใกล้ถึงกำหนด",
   "dashboard.rpoOverdue": "เกินกำหนด",
+  "dashboard.rpoNever": "ยังไม่มีการสำรองข้อมูล",
   "dashboard.rpoOff": "ไม่มีตารางเวลา",
   "dashboard.rpoViaEverything": "{cadence} ผ่านการสำรองข้อมูลทั้งหมด",
   "dashboard.rpoEntries": "แต่ละรายการตามกำหนดเวลาของตัวเอง",

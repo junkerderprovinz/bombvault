@@ -1360,6 +1360,7 @@ const ms: Partial<Translations> = {
   "dashboard.rpoOk": "Terkini",
   "dashboard.rpoWarn": "Akan tamat tempoh tidak lama lagi",
   "dashboard.rpoOverdue": "Tertunggak",
+  "dashboard.rpoNever": "Belum ada sandaran",
   "dashboard.rpoOff": "Tidak berjadual",
   "dashboard.rpoViaEverything": "{cadence}, melalui sandaran penuh",
   "dashboard.rpoEntries": "Setiap entri mengikut jadualnya sendiri",

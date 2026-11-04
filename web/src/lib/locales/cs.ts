@@ -1327,6 +1327,7 @@ const cs: Partial<Translations> = {
   "dashboard.rpoOk": "Aktuální",
   "dashboard.rpoWarn": "Brzy splatné",
   "dashboard.rpoOverdue": "Po termínu",
+  "dashboard.rpoNever": "Zatím žádná záloha",
   "dashboard.rpoOff": "Neplánováno",
   "dashboard.rpoViaEverything": "{cadence}, přes úplnou zálohu",
   "dashboard.rpoEntries": "Každá položka podle vlastního plánu",

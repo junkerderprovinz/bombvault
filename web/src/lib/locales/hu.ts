@@ -1322,6 +1322,7 @@ const hu: Partial<Translations> = {
   "dashboard.rpoOk": "Naprakész",
   "dashboard.rpoWarn": "Hamarosan esedékes",
   "dashboard.rpoOverdue": "Lejárt",
+  "dashboard.rpoNever": "Még nincs biztonsági mentés",
   "dashboard.rpoOff": "Nincs ütemezve",
   "dashboard.rpoViaEverything": "{cadence}, a teljes biztonsági mentéssel",
   "dashboard.rpoEntries": "Minden bejegyzés a saját ütemezése szerint",

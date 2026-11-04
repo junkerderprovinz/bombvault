@@ -183,3 +183,25 @@ func TestWithoutRulesTheDomainIsJudgedAsBefore(t *testing.T) {
 		t.Fatalf("state %q, want overdue as before: a backup three days old never replicated", st.ReplicationState)
 	}
 }
+
+func TestAFirstBackupUnderWayHoldsOverdueBack(t *testing.T) {
+	f := newPlacementFixture(t)
+	dailyContainers(t, f)
+	scheduledContainer(t, f, "nginx")
+	if _, err := f.db.Exec(`UPDATE targets SET created_at = created_at - ?`, 2*oneDay); err != nil {
+		t.Fatal(err)
+	}
+	if st := statusFor(t, f, "containers"); st.Status != "overdue" {
+		t.Fatalf("status %q, want overdue past the first run", st.Status)
+	}
+
+	unlock, ok := f.svc.tryLockDomainFor("containers", "backup")
+	if !ok {
+		t.Fatal("the domain is busy")
+	}
+	defer unlock()
+
+	if st := statusFor(t, f, "containers"); st.Status != "never" {
+		t.Fatalf("status %q, want never while the first backup runs", st.Status)
+	}
+}

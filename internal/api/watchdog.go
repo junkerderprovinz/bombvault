@@ -12,16 +12,17 @@ import (
 
 // The overdue-backup watchdog runs once a day and notifies when a domain's
 // backups are overdue, which is otherwise visible only on the dashboard. It
-// uses rpoStatus, the predicate behind the dashboard's protection status, so
+// uses sectionStatus, the predicate behind the dashboard's protection status, so
 // the two cannot disagree. Each overdue episode notifies once:
 // store.WatchdogState keeps the last success the alert was based on, and a
 // newer success starts a new episode.
 
-// watchdogDecision returns what RunWatchdog does for one domain. "never" and
-// "warn" are not reported, because the watchdog alerts on backups that
-// stopped, not on setups that have not started.
-func watchdogDecision(now, lastSuccess, periodSeconds int64, enabled bool, state store.WatchdogState, haveState bool) (notifyNeeded, clearState bool) {
-	if rpoStatus(now, lastSuccess, periodSeconds, enabled && periodSeconds > 0) != "overdue" {
+// watchdogDecision returns what RunWatchdog does for one domain in the given
+// status. "never" and "warn" are not reported, because the watchdog alerts on
+// backups that stopped or missed their first run, not on setups still waiting
+// for it.
+func watchdogDecision(status string, lastSuccess int64, state store.WatchdogState, haveState bool) (notifyNeeded, clearState bool) {
+	if status != "overdue" {
 		return false, haveState
 	}
 	if haveState && state.LastSuccessAt == lastSuccess {
@@ -80,7 +81,8 @@ func (s *Service) runWatchdogAt(ctx context.Context, now int64) error {
 			log.Printf("api: watchdog: %s state read failed (skipping): %v", d.name, sErr) //nolint:gosec // G706: domain is a fixed literal
 			continue
 		}
-		notifyNeeded, clearState := watchdogDecision(now, lastUnix, period, d.enabled, state, haveState)
+		status := s.sectionStatus(d.name, settings, now, lastUnix, period, d.enabled && period > 0)
+		notifyNeeded, clearState := watchdogDecision(status, lastUnix, state, haveState)
 		if clearState {
 			if dErr := s.store.DeleteWatchdogState(d.name); dErr != nil {
 				log.Printf("api: watchdog: %s state clear failed: %v", d.name, dErr) //nolint:gosec // G706: domain is a fixed literal
@@ -106,13 +108,20 @@ func (s *Service) runWatchdogAt(ctx context.Context, now int64) error {
 	return nil
 }
 
+// overdueMessage is the text of the overdue alert.
+func overdueMessage(domain string, lastSuccess, period, now int64) string {
+	if lastSuccess == 0 {
+		return fmt.Sprintf("Backups for %s are overdue: none has succeeded yet, expected every %s.", domain, watchdogPeriod(period))
+	}
+	return fmt.Sprintf("Backups for %s are overdue: last success %s, expected every %s.", domain, digestAge(now, lastSuccess), watchdogPeriod(period))
+}
+
 // notifyBackupOverdue sends the overdue alert to the message channels and the
 // Unraid mirror. The Healthchecks ping is suppressed: the alert is about runs
 // that did not happen, and a /fail ping would break the check's start/success
 // pairing. It reports whether a channel took the alert.
 func (s *Service) notifyBackupOverdue(ctx context.Context, c notify.Config, domain string, lastSuccess, period, now int64) bool {
-	msg := fmt.Sprintf("Backups for %s are overdue: last success %s, expected every %s.",
-		domain, digestAge(now, lastSuccess), watchdogPeriod(period))
+	msg := overdueMessage(domain, lastSuccess, period, now)
 	delivered, _ := s.sendAlert(notify.WithHealthchecksSuppressed(ctx), c, domain,
 		notify.Event{Title: "BombVault", Message: msg, OK: false},
 		"BombVault: backups overdue for "+domain, msg, "warning")

@@ -1315,6 +1315,7 @@ const pl: Partial<Translations> = {
   "dashboard.rpoOk": "Aktualne",
   "dashboard.rpoWarn": "Wkrótce wymagane",
   "dashboard.rpoOverdue": "Zaległe",
+  "dashboard.rpoNever": "Jeszcze bez kopii zapasowej",
   "dashboard.rpoOff": "Bez harmonogramu",
   "dashboard.rpoViaEverything": "{cadence}, przez pełną kopię",
   "dashboard.rpoEntries": "Każdy wpis według własnego harmonogramu",

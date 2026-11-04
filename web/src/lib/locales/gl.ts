@@ -1360,6 +1360,7 @@ const gl: Partial<Translations> = {
   "dashboard.rpoOk": "Ao día",
   "dashboard.rpoWarn": "Vence pronto",
   "dashboard.rpoOverdue": "Vencido",
+  "dashboard.rpoNever": "Aínda non hai copia de seguranza",
   "dashboard.rpoOff": "Sen programar",
   "dashboard.rpoViaEverything": "{cadence}, mediante a copia completa",
   "dashboard.rpoEntries": "Cada entrada coa súa propia programación",

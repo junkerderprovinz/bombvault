@@ -1321,6 +1321,7 @@ const fr: Partial<Translations> = {
   "dashboard.rpoOk": "À jour",
   "dashboard.rpoWarn": "Bientôt dû",
   "dashboard.rpoOverdue": "En retard",
+  "dashboard.rpoNever": "Pas encore de sauvegarde",
   "dashboard.rpoOff": "Non planifié",
   "dashboard.rpoViaEverything": "{cadence}, via la sauvegarde complète",
   "dashboard.rpoEntries": "Chaque entrée selon sa propre planification",

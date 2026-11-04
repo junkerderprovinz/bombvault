@@ -1318,6 +1318,7 @@ const pt: Partial<Translations> = {
   "dashboard.rpoOk": "Atualizado",
   "dashboard.rpoWarn": "Em breve",
   "dashboard.rpoOverdue": "Em atraso",
+  "dashboard.rpoNever": "Ainda sem backup",
   "dashboard.rpoOff": "Não agendado",
   "dashboard.rpoViaEverything": "{cadence}, via backup total",
   "dashboard.rpoEntries": "Cada entrada com o seu próprio agendamento",

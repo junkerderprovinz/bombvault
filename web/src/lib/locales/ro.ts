@@ -1319,6 +1319,7 @@ const ro: Partial<Translations> = {
   "dashboard.rpoOk": "La zi",
   "dashboard.rpoWarn": "Scadent curând",
   "dashboard.rpoOverdue": "Restant",
+  "dashboard.rpoNever": "Încă nicio copie de rezervă",
   "dashboard.rpoOff": "Neprogramat",
   "dashboard.rpoViaEverything": "{cadence}, prin backupul total",
   "dashboard.rpoEntries": "Fiecare intrare după propria programare",

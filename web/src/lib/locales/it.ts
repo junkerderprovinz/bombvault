@@ -1311,6 +1311,7 @@ const it: Partial<Translations> = {
   "dashboard.rpoOk": "Aggiornato",
   "dashboard.rpoWarn": "In scadenza",
   "dashboard.rpoOverdue": "In ritardo",
+  "dashboard.rpoNever": "Ancora nessun backup",
   "dashboard.rpoOff": "Non pianificato",
   "dashboard.rpoViaEverything": "{cadence}, tramite il backup completo",
   "dashboard.rpoEntries": "Ogni voce con la propria pianificazione",

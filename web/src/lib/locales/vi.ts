@@ -1320,6 +1320,7 @@ const vi: Partial<Translations> = {
   "dashboard.rpoOk": "Cập nhật",
   "dashboard.rpoWarn": "Sắp đến hạn",
   "dashboard.rpoOverdue": "Quá hạn",
+  "dashboard.rpoNever": "Chưa có bản sao lưu nào",
   "dashboard.rpoOff": "Chưa lên lịch",
   "dashboard.rpoViaEverything": "{cadence}, qua sao lưu toàn bộ",
   "dashboard.rpoEntries": "Mỗi mục theo lịch riêng",

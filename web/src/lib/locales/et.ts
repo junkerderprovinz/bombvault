@@ -1360,6 +1360,7 @@ const et: Partial<Translations> = {
   "dashboard.rpoOk": "Ajakohane",
   "dashboard.rpoWarn": "Peagi tähtaeg",
   "dashboard.rpoOverdue": "Tähtaeg möödas",
+  "dashboard.rpoNever": "Varundust veel pole",
   "dashboard.rpoOff": "Pole plaanitud",
   "dashboard.rpoViaEverything": "{cadence}, täisvarunduse kaudu",
   "dashboard.rpoEntries": "Iga kirje oma ajakava järgi",

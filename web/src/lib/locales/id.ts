@@ -1360,6 +1360,7 @@ const id: Partial<Translations> = {
   "dashboard.rpoOk": "Terbaru",
   "dashboard.rpoWarn": "Segera jatuh tempo",
   "dashboard.rpoOverdue": "Terlambat",
+  "dashboard.rpoNever": "Belum ada backup",
   "dashboard.rpoOff": "Tidak dijadwalkan",
   "dashboard.rpoViaEverything": "{cadence}, lewat pencadangan penuh",
   "dashboard.rpoEntries": "Setiap entri dengan jadwalnya sendiri",
