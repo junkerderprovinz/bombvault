@@ -1,0 +1,1 @@
+BombVault 10.4.2 finally listens to the How long to keep card on an own folder's storage location, so a fresh install stops hoarding backups forever. A section with nothing to back up no longer cries Overdue, and a brand new one just says No backup yet.
