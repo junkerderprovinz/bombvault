@@ -23,9 +23,9 @@ Bez přihlašovacího hesla může token vytvořit každý, kdo otevře webové 
 | `GET /api/v1/health` | Verze, název instance, zda běží záloha a co tento token smí | čtení |
 | `GET /api/v1/status` | Stav ochrany podle sekce: poslední úspěšná záloha, očekávaný interval, kontroly, příští plánované běhy | čtení |
 | `GET /api/v1/activity` | Co právě běží, s fází a procenty | čtení |
-| `GET /api/v1/items` | Každá chráněná položka s plánem, tím, co záloha zastaví, a poslední zálohou; `?domain=` pro jednu sekci | čtení |
-| `GET /api/v1/runs` | Historie běhů, nejnovější první; filtry `limit`, `domain`, `item`, `status`, `kind`, `since` | čtení |
-| `GET /api/v1/anomalies` | Anomálie s přehledem otevřených; filtry `state`, `severity`, `domain`, `limit` | čtení |
+| `GET /api/v1/items` | Každá chráněná položka s plánem, tím, co záloha zastaví, a poslední zálohou. `?domain=` pro jednu sekci | čtení |
+| `GET /api/v1/runs` | Historie běhů, nejnovější první. Filtry `limit`, `domain`, `item`, `status`, `kind`, `since` | čtení |
+| `GET /api/v1/anomalies` | Anomálie s přehledem otevřených. Filtry `state`, `severity`, `domain`, `limit` | čtení |
 | `GET /api/v1/anomalies/{id}` | Jedna anomálie | čtení |
 | `GET /api/v1/storage/{domain}` | Vývoj velikosti, týdenní růst a volné místo každého repozitáře sekce | čtení |
 | `POST /api/v1/backups` | Zálohuje jednu položku (`{"domain":"containers","item":"plex"}`) nebo celou sekci (`{"domain":"vms"}`) | spouštění |
@@ -61,7 +61,7 @@ Chyba se vrátí jako `{"error": {"code": "...", "message": "..."}}` s odpovída
 | 403 | `not_permitted`, `forbidden_origin` | Token smí jen číst, nebo ten běh nespustil, nebo požadavek přišel ze stránky s jiným původem |
 | 404 | `not_found` | Taková položka, běh nebo anomálie neexistuje |
 | 409 | `busy`, `domain_off`, `nothing_to_back_up`, `not_running` | Už něco běží, sekce je vypnutá, nebo není co dělat |
-| 429 | `throttled`, `rate_limited`, `cooldown`, `retention_guard` | Limit požadavek zdrží; `Retry-After` říká, kdy to zkusit znovu |
+| 429 | `throttled`, `rate_limited`, `cooldown`, `retention_guard` | Limit požadavek zdrží. `Retry-After` říká, kdy to zkusit znovu |
 
 Spuštění mají stejné limity jako [spuštění přes MCP](mcp.md#starting-backups): 12 za hodinu na token, 15 minut mezi dvěma spuštěními téže položky, nejvýše 4 spuštění jedné položky za 24 hodin a ochrana uchovávání. Poslední tři počítají spuštění přes MCP, přes API a z Home Assistant dohromady. Token smí poslat 120 požadavků za minutu. Pět neúspěšných pokusů z jedné adresy ji na minutu zablokuje.
 
@@ -74,7 +74,7 @@ BombVault poskytuje popis těchto cest na `/api/v1/openapi.json` (OpenAPI 3.1). 
 BombVault se může v Home Assistant objevit jako zařízení díky zjišťování MQTT. Home Assistant k tomu potřebuje svou integraci MQTT a broker, třeba doplněk Mosquitto. Žádná vlastní komponenta není potřeba.
 
 1. V BombVault otevři **Nastavení, Integrace** a zapni **Home Assistant** v kartě **Služby**. Pod ním se objeví pole pro broker.
-2. Zadej adresu a port brokeru, a pokud je vyžaduje, i uživatelské jméno a heslo. Zapni **Použít TLS**, pokud broker používá TLS, obvykle na portu 8883; jeho certifikát musí platit pro zadanou adresu. Když změníš adresu, port nebo uživatelské jméno, zadej heslo znovu: BombVault uložené heslo jinému brokeru ani uživateli nepředá.
+2. Zadej adresu a port brokeru, a pokud je vyžaduje, i uživatelské jméno a heslo. Zapni **Použít TLS**, pokud broker používá TLS, obvykle na portu 8883. Jeho certifikát musí platit pro zadanou adresu. Když změníš adresu, port nebo uživatelské jméno, zadej heslo znovu: BombVault uložené heslo jinému brokeru ani uživateli nepředá.
 3. Klikni na **Uložit**. Řádek ukáže, až spojení naběhne.
 
 Zařízení se jmenuje BombVault, případně BombVault s názvem instance v závorce, a má tyto entity:
@@ -90,9 +90,45 @@ Zařízení se jmenuje BombVault, případně BombVault s názvem instance v zá
 | *Sekce* repository free space | Volné místo tam, kde leží její hlavní repozitář, pokud ho BombVault umí přečíst |
 | Back up *sekce* | Tlačítko, které zálohuje celou sekci |
 
-Názvy entit jsou anglicky, protože Home Assistant je přebírá tak, jak je BombVault posílá. Každá zapnutá sekce dostane vlastní entity a vypnutá o ně přijde. Tlačítka se objeví, jakmile zapneš **Tlačítka spouštějí zálohy**; nová instalace to má vypnuté. Mají stejné limity jako [spuštění přes API](#errors). Navíc BombVault bere pro každou sekci jen jedno stisknutí najednou a nejvýš šest za minutu a stisknutí, které broker uchoval jako retained zprávu, ignoruje. Stisknout je může každý, kdo smí do brokeru publikovat, proto brokeru dej heslo.
+Názvy entit jsou anglicky, protože Home Assistant je přebírá tak, jak je BombVault posílá. Každá zapnutá sekce dostane vlastní entity a vypnutá o ně přijde. Tlačítka se objeví, jakmile zapneš **Tlačítka spouštějí zálohy**. Nová instalace to má vypnuté. Mají stejné limity jako [spuštění přes API](#errors). Navíc BombVault bere pro každou sekci jen jedno stisknutí najednou a nejvýš šest za minutu a stisknutí, které broker uchoval jako retained zprávu, ignoruje. Stisknout je může každý, kdo smí do brokeru publikovat, proto brokeru dej heslo.
 
 BombVault čte svůj stav každých 15 sekund a zveřejní ho, když se něco změnilo, jako JSON pod `<předpona>/<uzel>/state`. Předpona je `bombvault`, dokud ji nezměníš, a uzel je krátký identifikátor, který si BombVault jednou zvolí. Zprávy zjišťování jdou pod výchozí předponu Home Assistant `homeassistant`. Obojí se uchovává (retained). Poslední vůle (last will) označí zařízení jako nedostupné, když se BombVault zastaví bez ohlášení. Vypnutím propojení BombVault zařízení i jeho entity z Home Assistant odstraní.
+
+### Příklad: karta a upozornění {#home-assistant-example}
+
+Home Assistant vyrábí id entit z jmen, takže zařízení BombVault dostane id jako `sensor.bombvault_status`. S názvem instance v závorce nesou id i ten, proto je nejdřív zkontroluj v **Developer Tools, States**. Karta pro dashboard:
+
+```yaml
+type: entities
+title: Backups
+entities:
+  - sensor.bombvault_status
+  - sensor.bombvault_running_job
+  - sensor.bombvault_open_anomalies
+  - sensor.bombvault_next_scheduled_backup
+```
+
+Automatizace, která dá vědět do telefonu, když se stav změní na `failed`:
+
+```yaml
+alias: BombVault backup failed
+trigger:
+  - platform: state
+    entity_id: sensor.bombvault_status
+    to: failed
+action:
+  - service: notify.mobile_app_my_phone
+    data:
+      message: A BombVault backup failed. Open Needs you on the overview.
+```
+
+## Prometheus {#metrics}
+
+**Zpřístupnit /metrics** v kartě **Služby** pod **Nastavení, Integrace** poskytuje stav záloh, velikosti a časové značky pro Prometheus, Grafanu nebo Uptime Kuma, na `/metrics` na portu webového rozhraní. Ve výchozím stavu je vypnuto. **Scrape token (volitelné)** přiměje scraper posílat bearer token. Štítky neobsahují žádná tajemství ani cesty.
+
+## Widget pro dashboard {#dashboard-widget}
+
+Karta **Widget pro dashboard** pod **Nastavení, Integrace** vytvoří token jen pro čtení a dá ti adresu pro libovolný dashboard, který umí zobrazit iframe, například Homepage, Organizr nebo Heimdall. Adresa otevře malou stránku na `/widget` jen s živým protokolem aktivity. Token dává přístup k tomuto protokolu a ničemu jinému a **Zakázat** ho okamžitě odvolá. Vložená stránka je jen anglicky.
 
 ## Najít BombVault v síti {#mdns}
 

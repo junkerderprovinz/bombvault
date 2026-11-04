@@ -2,7 +2,7 @@
 
 Tato stránka tě provede od čerstvého stroje s Unraidem až k tvé první záloze.
 
-## Požadavky
+## Požadavky {#requirements}
 
 | Požadavek | Poznámky |
 |---|---|
@@ -14,7 +14,7 @@ Tato stránka tě provede od čerstvého stroje s Unraidem až k tvé první zá
 | **Datové sady ZFS** (volitelné) | Stejné spojení SSH jako u záloh VM, `zfs` na hostiteli a Host Data připojené jako `/mnt` s režimem přístupu Read/Write - Slave, což je výchozí nastavení šablony. Viz [Datové sady ZFS](zfs-datasets.md). |
 | **Aplikace pro Android** (nepovinné) | Android 10 nebo novější, spárovaná se servery ve verzi 9.7.0 nebo novější. Viz [Aplikace pro Android](android.md). |
 
-## Instalace na Unraid
+## Instalace na Unraid {#install-on-unraid}
 
 Nejsnazší cestou je **Community Applications**.
 
@@ -43,7 +43,7 @@ Nemáš Unraid? BombVault běží i jako prostý kontejner na libovolném hostit
 V čem se to liší od Unraidu:
 
 - **Žádná sekce Flash.** Není tu žádný zaváděcí USB disk, který by se dal zachytit nebo obnovit, sekce Flash tedy nemá co dělat. Místo toho, když Host Data sahá do `/etc` hostitele, nabízí **Přidat** na stránce Zálohy jako návrh složky **Konfigurace systému**: výchozí sadu složek `/etc`, kterou si před uložením projdeš a upravíš.
-- **Žádná nativní oznámení Unraidu.** Vlastní oznamovací kanály BombVaultu (webhook, upozornění na selhání mimo lokalitu a podobně) fungují normálně; vynechává se jen odeslání do oznamovacího systému Unraidu, protože takový systém tu není.
+- **Žádná nativní oznámení Unraidu.** Vlastní oznamovací kanály BombVaultu (webhook, upozornění na selhání mimo lokalitu a podobně) fungují normálně. Vynechává se jen odeslání do oznamovacího systému Unraidu, protože takový systém tu není.
 - **Záloha virtuálních strojů je volitelná a potřebuje samostatného hostitele libvirtd dostupného přes SSH.** Viz zakomentovaný blok v souboru compose. Obecný hostitel Dockeru sám o sobě žádného správce virtuálních strojů nemá.
 - **Žádný widget na dashboardu.** BombVault Widget je plugin pro Unraid, takže i tento krok odpadá.
 - **Jak se najdou data kontejneru.** Bez konvence `appdata` z Unraidu se datová složka kontejneru najde podle segmentů v `DATA_ROOT_SEGMENTS`, pojmenovaných svazků Dockeru, pracovního adresáře projektu Compose a štítku `bombvault.data` (viz [Rozpoznávání zdrojů zálohy](configuration.md#backup-source-detection)). Pojmenované svazky i přednastavení `/etc` dosáhnou jen na cesty uvnitř připojení Host Data, takže nasměruj Host Data na společného předka, který pokrývá i kořen dat Dockeru.
@@ -85,13 +85,43 @@ Pak otevři `https://<truenas-ip>:30528/`. Co je uvedeno v [V čem se to liší 
 - **Capabilities.** BombVault potřebuje sedm výše uvedených. Bez `SETPCAP` zálohy VM selžou a bez `SYS_CHROOT` se každý kontejner zastaví na celou zálohu, místo aby se četl ze snímku.
 - **Host Data** je cesta hostitele na datové sadě, zde `/mnt/tank`, připojená pod stejnou cestou uvnitř aplikace. Proto ji uvádějí `HOST_SOURCE_ROOT` i `HOST_MOUNT_ROOT`. `rslave` předává připojení, která hostitel vytvoří později, a ta potřebují zálohy datových sad ZFS.
 - **Data v ixVolume se nezálohují.** Aplikace, jejímž úložištěm je ixVolume, drží data pod `/mnt/.ix-apps`, mimo Host Data. BombVault uloží jen definici aplikace a běh uvede složky, které vynechal. Pro každou aplikaci, jejíž data chceš zálohovat, zvol úložiště **Host Path** na datové sadě pod Host Data.
-- **Zálohy VM a datových sad ZFS** se k TrueNAS připojují přes SSH jako root. Zapni službu SSH v **System, Services** a přidej veřejný klíč z **Nastavení, Integrace, SSH k hostiteli** uživateli root v **Credentials, Users**. Zálohy VM navíc potřebují `LIBVIRT_URI` jako výše, protože libvirtd na TrueNAS naslouchá na vlastním socketu. Když není nastavena `LIBVIRT_URI` ani `LIBVIRT_HOST`, BombVault použije jako hostitele výchozí bránu aplikace, protože `host.docker.internal` se v aplikaci TrueNAS nepřeloží. Podrobnosti, včetně VM na zvolech, popisuje [průvodce zálohou VM](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md#truenas-scale).
+- **Zálohy VM a datových sad ZFS** se k TrueNAS připojují přes SSH jako root. Zapni službu SSH v **System, Services** a přidej veřejný klíč z **Nastavení, Integrace, SSH k hostiteli** uživateli root v **Credentials, Users**. Zálohy VM navíc potřebují `LIBVIRT_URI` jako výše, protože libvirtd na TrueNAS naslouchá na vlastním socketu. Když není nastavena `LIBVIRT_URI` ani `LIBVIRT_HOST`, BombVault použije jako hostitele výchozí bránu aplikace, protože `host.docker.internal` se v aplikaci TrueNAS nepřeloží. Podrobnosti, včetně VM na zvolech, popisuje [průvodce zálohou VM](vm-backup-ssh-setup.md#truenas-scale).
 - **Replika ZFS používá jiný klíč.** Replika na druhém serveru ZFS se přihlašuje klíčem, který ukazuje dialog repliky, ne klíčem SSH k hostiteli. Ten přidej na přijímajícím serveru.
 - **Smazaná aplikace se vrací ve dvou krocích.** Nejdřív ji v TrueNAS znovu nainstaluj pod stejným názvem, čímž se znovu vytvoří její síť, a pak obnov její data v BombVaultu. Do té doby kontrola před obnovou hlásí chybějící síť a obnova odmítne dřív, než cokoli změní.
 - **Vedle originálu** vytvoří prostý kontejner Dockeru. Běží, ale obrazovka Apps v TrueNAS ho neukazuje.
 - **Dumpy databází** fungují na připojeních datových sad. Import do datové složky, která je samostatnou datovou sadou, přesune starý obsah do složky vedle ní, takže nadřazená datová sada pro něj potřebuje místo.
 
-## Jediné povinné nastavení
+### ZimaOS, CasaOS a další hostitelé {#other-hosts}
+
+- **ZimaOS a CasaOS:** přidej [komunitní obchod](https://github.com/junkerderprovinz/zimaos-apps#install) a nainstaluj z něj BombVault. Běží tam jako `PLATFORM=generic` s Host Data na `/DATA`. ZimaOS drží data aplikací v `/DATA/AppData/<app>`, což BombVault najde sám, protože `DATA_ROOT_SEGMENTS` odpovídá `appdata` v jakékoli velikosti písmen.
+- **MOS:** nainstaluj BombVault z [MOS Hub](https://mos-official.net/apps.html?search=BombVault). Běží tam jako `PLATFORM=generic` s Host Data na `/mnt/cache`.
+- **Synology:** v Container Manageru vytvoř projekt z compose souboru (DSM 7.2 nebo novější).
+- **Proxmox:** spusť ho ve VM nebo kontejneru LXC, který má Docker.
+
+Bez komentářů je obecný compose soubor krátký. Nahraď `./data` složkou hostitele, která drží data tvých kontejnerů, nastav `HOST_SOURCE_ROOT` na stejnou cestu a vyplň `APP_KEY`:
+
+```yaml
+services:
+  bombvault:
+    image: junkerderprovinz/bombvault:latest
+    restart: unless-stopped
+    hostname: bombvault
+    container_name: bombvault
+    volumes:
+      - ./config:/config
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./data:/host/user
+    environment:
+      APP_KEY: ""
+      PLATFORM: generic
+      HOST_SOURCE_ROOT: /host/user
+    ports:
+      - "3443:3443"
+```
+
+Chceš-li zálohovat i pojmenované svazky Dockeru, připoj složku, která drží jak tvá data, tak datový kořen Dockeru (`docker info -f '{{.DockerRootDir}}'`, obvykle `/var/lib/docker`), tak jako šablona Unraidu připojuje celé `/mnt`.
+
+## Jediné povinné nastavení {#the-one-required-setting}
 
 Jedinou proměnnou, kterou musíš nastavit, je `APP_KEY`, 32bajtové hex tajemství (64 hex znaků) použité k odvození hesla k restic repozitáři.
 
@@ -108,40 +138,64 @@ Výsledek vlož do pole `APP_KEY` v šabloně (Unraid), nebo do proměnné prost
 
 Šablona za tebe také připojí Docker socket, flash (`/boot`) a kořen **Host Data** (`/mnt`). *Zdroje* i *cíle* záloh žijí pod Host Data. Kompletní referenci proměnných a nastavení mimo lokalitu najdeš v [Konfiguraci](configuration.md).
 
-## První spuštění
+## První spuštění {#first-run}
 
-![Přehled po první záloze: co vyžaduje pozornost, ochrana každé sekce, cíle a historie.](assets/screenshots/dashboard.png)
-
-*Přehled po první záloze: co vyžaduje pozornost, ochrana každé sekce, cíle a historie.*
+![Uvítací stránka nové instalace s tím, co BombVault na serveru našel.](assets/screenshots/getting-started/welcome-dark.png#only-dark)
+![Uvítací stránka nové instalace s tím, co BombVault na serveru našel.](assets/screenshots/getting-started/welcome-light.png#only-light)
 
 1. Otevři webové rozhraní na `https://<your-unraid-ip>:3443` (ze startu samopodepsaný certifikát). Nová instalace se otevře na **Vítej v BombVaultu**, kde je seznam toho, co BombVault na serveru našel.
 2. Zvol **Jdeme na to**. Přehled pak ukáže kartu **První kroky** se třemi kroky:
     1. **Vyber sekce**: zapni, co BombVault zálohuje (Kontejnery, VMs, Flash, Složky, Datové sady ZFS, Autozáloha). **Vybrat** otevře seznam položek sekce, kde **Pozastavit plán** jednu vynechá. Sekce zapnuté tady se spouštějí každou noc, což změníš v **Nastavení, Plán**.
-    2. **Přidat cíl**: kam se zálohy ukládají. Na začátek stačí místní složka. Nejbezpečnější je druhý cíl mimo lokalitu, například Storage Box nebo Backblaze B2. Místní repozitáře mají ve výchozím stavu `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}` a vytvoří se při první záloze.
-    3. **První záloha**: potom už běží každou noc sama.
+    2. **Přidat cíl**: druhé místo pro zálohy. Každá sekce už má složku na tomto serveru, `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, která se vytvoří při první záloze. Nejbezpečnější je druhý cíl mimo lokalitu, například Storage Box nebo Backblaze B2.
+    3. **První záloha**: potom už běží každou noc sama. Karta zůstává, dokud první záloha neskončí.
 3. Otevři **Zálohy** a uvidíš všechny položky v jednom seznamu. **Zálohovat vše nyní** spustí běh přes všechny zapnuté sekce a **Zálohovat nyní** na stránce položky zazálohuje jen tuto jednu.
+
+![Karta První kroky se třemi kroky, druhý je otevřený.](assets/screenshots/getting-started/first-steps-dark.png#only-dark)
+![Karta První kroky se třemi kroky, druhý je otevřený.](assets/screenshots/getting-started/first-steps-light.png#only-light)
 
 Už jsi BombVault používal? **Obnovit ze zálohy** na uvítací stránce otevře stránku Obnova, kde **Nouzový průvodce** vrátí nastavení, kontejnery, VM a složky ztraceného serveru. Viz [Mimo lokalitu a obnova](offsite-recovery.md#emergency).
 
 !!! tip "Volitelné: zvol pořadí zálohování"
-    Pokud by se některé kontejnery měly vždy zálohovat před ostatními (například databáze před aplikací, která ji používá), otevři kartu **Pořadí** v **Nastavení, Plán** a přetáhni je do požadované sekvence. Naplánované běhy a úplná záloha se jím pak řídí; cokoli neuspořádaného se zálohuje od nejvíce po termínu.
+    Pokud by se některé kontejnery měly vždy zálohovat před ostatními (například databáze před aplikací, která ji používá), otevři kartu **Pořadí** v **Nastavení, Plán** a přetáhni je do požadované sekvence. Naplánované běhy a úplná záloha se jím pak řídí. Cokoli neuspořádaného se zálohuje od nejvíce po termínu.
+
+## Příklad: tvoje první záloha kontejneru od začátku do konce {#example-first-backup}
+
+Tady projdeš čerstvý stroj s Unraidem a několika kontejnery, mezi nimi `plex`, až do chvíle, kdy je první záloha hotová a víš, kde ji najít. Zabere to asi deset minut plus čas první zálohy.
+
+1. **Instalace.** V záložce **Apps** v Unraidu vyhledej **BombVault** a stiskni **Install**.
+2. **Nastav klíč.** Na počítači spusť `openssl rand -hex 32` a vlož těch 64 znaků do pole `APP_KEY` v šabloně. Uchovej si hned kopii ve správci hesel, dřív než cokoli jiného. Stiskni **Apply**.
+3. **Otevři ho.** Jdi na `https://<your-unraid-ip>:3443` a přijmi samopodepsaný certifikát. **Vítej v BombVaultu** vypíše, co našel, třeba 12 kontejnerů, 2 VM a flashku.
+4. **Jdeme na to.** Přehled se otevře s kartou **První kroky**.
+5. **Vyber sekce.** **Kontejnery** jsou zapnuté od začátku. Zapni, co chceš navíc, třeba **Flash**. **Vybrat** otevře seznam nalezených kontejnerů, kde **Pozastavit plán** jeden vynechá, například testovací kontejner, na kterém ti nezáleží. Zapnuté sekce běží každou noc v úplné záloze.
+6. **Přidat cíl.** Každá sekce už má vlastní složku na tomto serveru pod `/mnt/user/bombvault`, takže první záloha má kam jít. Tenhle krok přidá druhé místo a nejbezpečnější je mimo lokalitu. Můžeš to udělat hned podle [příkladu se S3](offsite-recovery.md#example-s3), nebo se k tomu vrátit po první záloze. Karta zůstává až do té doby.
+7. **První záloha.** Otevři **Zálohy** a stiskni **Zálohovat vše nyní**, nebo počkej na noc. Kruh v hlavičce stavu se změní na ukazatel průběhu a počítá položky, třeba **Právě se zálohuje: 3 z 12**. Každý kontejner se zastaví, zatímco se čtou jeho data, a hned potom znovu spustí. Kontejner, jehož data leží na ZFS, stojí jen těch pár vteřin snapshotu. První záloha čte všechno, takže trvá nejdéle. Další ukládají jen to, co se změnilo.
+8. **Zkontroluj ji.** Když kruh říká **Vše zálohováno**, otevři na přehledu **Historie**: každý kontejner má v **Běhy** zelený řádek. Otevři **Zálohy**, klikni na `plex` a podívej se na záložku **Zálohy**: první snapshot tam je a jako místo, které ho drží, je uvedeno **Místní**. O pár minut později záložka **Ověření** ukáže kontrolu obnovy, která obnovila vzorek zálohy a přečetla ho zpět.
+9. **Chraň klíč.** Otevři **Nastavení, Zabezpečení** a nastav přihlašovací heslo. Pak otevři **Nastavení, Obnova** a v **Pro nouzové případy** stiskni **Stáhnout sadu pro obnovu**. Ulož soubor mimo server, vedle kopie `APP_KEY` z kroku 2. Připomínka **Ulož si sadu pro obnovu** na přehledu zmizí, jakmile stiskneš **Uložil jsem ji bezpečně**.
+
+Od teď se kontejnery zálohují každou noc. Dobré další kroky, v tomto pořadí: [cíl mimo lokalitu](offsite-recovery.md#example-s3), aby mrtvý server nevzal zálohy s sebou, pak [oznámení](notifications.md), aby se k tobě selhání dostalo, a pak pohled do [Plánů](schedules.md), pokud ti 03:00 nevyhovuje.
+
+![Hlavička stavu během první zálohy, s ukazatelem průběhu a jeho stanicemi.](assets/screenshots/getting-started/status-ring-dark.png#only-dark)
+![Hlavička stavu během první zálohy, s ukazatelem průběhu a jeho stanicemi.](assets/screenshots/getting-started/status-ring-light.png#only-light)
 
 !!! note "Kontrola integrace hostitele"
     Karta **Integrace hostitele** v Přehledu prozkoumá každé připojení a CLI (Docker socket, libvirt, restic, qemu-img, rclone) a nahlásí případné chybějící části, takže si můžeš potvrdit, že je kontejner správně zapojen, dříve než se na něj budeš spoléhat. Čeká pod **Přizpůsobit**, dokud ji nepřidáš.
 
 ## Orientace v rozhraní {#navigation}
 
-![Nastavení jako dlaždice, vedle nich karty zvolené dlaždice. Každá změna se zapíše hned, jak ji uděláš.](assets/screenshots/settings.png)
-
-*Nastavení jako dlaždice, vedle nich karty zvolené dlaždice. Každá změna se zapíše hned, jak ji uděláš.*
+![Nastavení jako dlaždice, vedle nich karty zvolené dlaždice. Každá změna se zapíše hned, jak ji uděláš.](assets/screenshots/getting-started/settings-rail-dark.png#only-dark)
+![Nastavení jako dlaždice, vedle nich karty zvolené dlaždice. Každá změna se zapíše hned, jak ji uděláš.](assets/screenshots/getting-started/settings-rail-light.png#only-light)
 
 Postranní panel má pět položek: **Přehled**, **Anomálie** (dokud je zapnuté zjišťování anomálií), **Zálohy**, **Obnova** a pod **Odhlásit se** **Nastavení**. Hlavní akce stránky plave vpravo dole a **Více** skrývá ty vzácné. Na telefonu lišta obsahuje Přehled, Zálohy, Obnovu a Nastavení a **Více** má zbytek.
 
 Stránky a nastavení využívají celou šířku okna. Okno drží svá tlačítka v patě a to, které vede dál, je vpravo. Na telefonu pata s více než třemi tlačítky ponechá cestu ven a hlavní akci a ostatní dá pod **Více**.
 
-- **Zálohy** vypisují každý kontejner, VM, sadu složek, flash disk, každou datovou sadu ZFS a autozálohu jako položky. Dlaždice nad seznamem vybírají druh a **Filtry**, **Řazení** a **Hledat** výběr zužují. Každá položka má vlastní stránku se třemi záložkami: **Zálohy**, **Nastavení** a **Ověření**. Tlačítko zpět vlevo od ikony položky vede na seznam.
-- **Obnova** je jedna stránka pro všechno: vyber sekci, vyhledej položku a zvol zálohu. Odtud začíná i Nouzový průvodce a další zdroje.
-- **Nastavení** je čtrnáct dlaždic: Obecné, Vzhled, Plán, Cíle, Obnova, Oznámení, Ověření, Zabezpečení, Instance, Párování, Integrace, Aplikace, Systém a Info. Klávesa `/` nebo Ctrl+K prohledá všechny, i podle názvů, které stránky měly v dřívějších verzích. Dlaždice si přetáhni do vlastního pořadí pod **Vzhled**. Kde by sloupec dlaždic vedle stránky stránku zúžil, například v okně širokém asi 1200 pixelů, stanou se dlaždice pruhem nad stránkou, který se posouvá do stran. Telefon ukazuje stejný pruh.
+![V telefonu, lišta dole s otevřeným Více.](assets/screenshots/getting-started/phone-more-dark.png#only-dark)
+![V telefonu, lišta dole s otevřeným Více.](assets/screenshots/getting-started/phone-more-light.png#only-light)
+
+- **Přehled** ukazuje, zda je všechno zálohované a co vyžaduje pozornost. Viz [Přehled](overview.md).
+- **Zálohy** vypisují každý kontejner, VM, sadu složek, flash disk, každou datovou sadu ZFS a autozálohu jako položky. Dlaždice nad seznamem vybírají druh a **Filtry**, **Řazení** a **Hledat** výběr zužují. Každá položka má vlastní stránku se třemi záložkami: **Zálohy**, **Nastavení** a **Ověření**. Tlačítko zpět vlevo od ikony položky vede na seznam. Viz [Zálohy a položky](backups.md).
+- **Obnova** je jedna stránka pro všechno: vyber sekci, vyhledej položku a zvol zálohu. Odtud začíná i Nouzový průvodce a další zdroje. Viz [Obnova](restore.md).
+- **Nastavení** je čtrnáct dlaždic: Obecné, Vzhled, Plán, Cíle, Obnova, Oznámení, Ověření, Zabezpečení, Instance, Párování, Integrace, Aplikace, Systém a Info. Viz [Nastavení](settings.md). Klávesa `/` nebo Ctrl+K prohledá všechny, i podle názvů, které stránky měly v dřívějších verzích. Dlaždice si přetáhni do vlastního pořadí pod **Vzhled**. Kde by sloupec dlaždic vedle stránky stránku zúžil, například v okně širokém asi 1200 pixelů, stanou se dlaždice pruhem nad stránkou, který se posouvá do stran. Telefon ukazuje stejný pruh.
 - **Cíle** a **Instance** jsou dlaždice nastavení s vlastními stránkami. **Zobrazit také v postranním panelu** na jejich dlaždici je připne do postranního panelu.
 
 Nic nemá tlačítko Uložit a nic se nerozbaluje: vzácné věci mají vlastní kartu nebo okno a vysvětlení jsou v bublinách (i). Po aktualizaci se samo otevře okno s kartou pro každé vydání od tvé poslední verze a zelené tečky označují, co se změnilo. Klepnutím tečku skryješ. **Novinky** na kartě Verze v **Nastavení, Info** počítají, co jsi ještě neviděl, a znovu otevřou toto okno, s poznámkami ke každému vydání a jeho změnami s **Přejít tam**.
@@ -161,10 +215,12 @@ go run ./cmd/bombvault         # serves https://localhost:3443 with a self-signe
 
 Sestavení rozhraní je potřeba i pro `go run`. Repozitář obsahuje pod `web/dist` jen prázdnou značku, takže bez `npm --prefix web run build` binárka nic nevloží a odpoví `500 SPA index not found`, což je očekávané. Docker, libvirt a Unraid nejde v CI otestovat, takže připojení, restic a SSH spojení k VM ověř na skutečném hostiteli pomocí karty **Integrace hostitele** v Přehledu (nebo `GET /api/spike`), než otevřeš pull request.
 
-## Další kroky
+## Další kroky {#next-steps}
 
-- Projdi si kompletní **[Funkce](features.md)**.
+- Přidej jeden nebo více cílů mimo lokalitu (každá sekce může kopírovat do několika najednou) a ulož si sadu pro obnovu, jak je popsáno v **[Mimo lokalitu a obnova](offsite-recovery.md)**. [Příklad se S3](offsite-recovery.md#example-s3) jím provede.
+- Postarej se, aby se k tobě selhání dostalo, pomocí **[Oznámení](notifications.md)**.
+- Zkontroluj, kdy co běží, v **[Plánech](schedules.md)**.
 - Dej si všechny servery své skupiny do telefonu s **[aplikací pro Android](android.md)**.
-- Přidej jeden nebo více cílů mimo lokalitu (každá sekce může kopírovat do několika najednou) a ulož si sadu pro obnovu, jak je popsáno v **[Mimo lokalitu a obnova](offsite-recovery.md)**.
+- **[Praktické příklady](guides.md)** provedou běžnými úkoly a **[Funkce](features.md)** vypisují všechno, co BombVault umí.
 - Klonuješ sestavu nebo přecházíš na nový stroj? Přenes celou svou konfiguraci pomocí karty **Export / import nastavení**. Viz [Konfigurace](configuration.md#portable-settings-export-and-import).
 - Narazil jsi na problém? Viz **[Řešení problémů](troubleshooting.md)**.

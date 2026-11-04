@@ -2,9 +2,12 @@
 
 Aplikace pro Android ti dá do telefonu všechny servery BombVault z tvé skupiny. Začíná seznamem tvých serverů, nad kterým je protokol aktivit všech z nich, tytéž řádky, jaké ukazuje Přehled, a po klepnutí na server otevře jeho zobrazení pro telefon. Sama aplikace nic nezálohuje.
 
+![Úvodní obrazovka aplikace: nahoře protokol aktivit všech serverů, pod ním seznam serverů.](assets/screenshots/android/start-dark.png#only-dark)
+![Úvodní obrazovka aplikace: nahoře protokol aktivit všech serverů, pod ním seznam serverů.](assets/screenshots/android/start-light.png#only-light)
+
 ## Získání aplikace {#install}
 
-- **Nastavení, Aplikace:** karta aplikace pro Android nabízí APK pro vydání, které tvůj server provozuje, s QR kódem k naskenování z telefonu.
+- **Nastavení, Aplikace:** karta aplikace pro Android nabízí APK pro vydání, které tvůj server provozuje, s QR kódem k naskenování z telefonu a odkazuje na záznam v F-Droidu.
 - **APK:** každé vydání má na své stránce soubor `bombvault-android.apk` a [tento odkaz](https://github.com/junkerderprovinz/bombvault/releases/latest/download/bombvault-android.apk) vždy stáhne nejnovější sestavení. Aplikace vyžaduje Android 10 nebo novější a Android se jednou zeptá, zda aplikace, kterou soubor otevři, smí instalovat aplikace.
 - **Google Play:** aplikace je v uzavřeném testování, dokud ji nebude možné zveřejnit. Google Play zveřejní aplikaci z nového účtu vývojáře až poté, co ji alespoň 12 testerů mělo 14 dní nainstalovanou. Pokud chceš pomoci, přidej se do [skupiny testerů](https://groups.google.com/g/arrowloop-testers), otevři [testovací stránku](https://play.google.com/apps/testing/bombvault.halleluja.design), klepni na **Stát se testerem** a nainstaluj BombVault z Google Play.
 - **F-Droid:** [BombVault na F-Droidu](https://f-droid.org/packages/bombvault.halleluja.design/). F-Droid sestavuje aplikaci sám ze zdrojového kódu a podepisuje ji vlastním klíčem, proto tam nové vydání dorazí o pár dní později. Pokud chceš přejít mezi aplikací z F-Droidu a APK, nejdřív tu druhou odinstaluj.
@@ -59,13 +62,13 @@ Ozubené kolo vedle plusu otevře nastavení aplikace:
 
 - jazyk a název, pod kterým se telefon zobrazuje na stránce Instance (prázdné pole znamená model telefonu),
 - vzhled, který se řídí prvním serverem v seznamu, dokud si nenastavíš vlastní, a animace, které mají vlastní nastavení,
-- hlášení ke zkopírování, když hlásíš problém; neobsahuje žádnou adresu, název ani frázi,
+- hlášení ke zkopírování, když hlásíš problém. Neobsahuje žádnou adresu, název ani frázi,
 - kartu O aplikaci se zásadami ochrany osobních údajů,
 - **Odebrat všechny servery**, které z aplikace odebere všechny servery a opustí skupinu. Každý server, na který telefon ještě dosáhne, ho odebere ze své stránky Instance.
 
 ## Stahování a nahrávání {#files}
 
-Exporty, sady pro obnovu, ZIPy flashe a dumpy databází se ukládají do složky Stažené soubory v telefonu, stejně jako z prohlížeče. Import nastavení otevře výběr souborů v telefonu. Přes relay se nic neukládá; otevři k tomu server na jeho vlastní adrese.
+Exporty, sady pro obnovu, ZIPy flashe a dumpy databází se ukládají do složky Stažené soubory v telefonu, stejně jako z prohlížeče. Import nastavení otevře výběr souborů v telefonu. Přes relay se nic neukládá. Otevři k tomu server na jeho vlastní adrese.
 
 ## Na dotykové obrazovce {#touch}
 
