@@ -3477,13 +3477,13 @@ func domainCoverage(ownCadence, everythingCadence string) (period int64, covered
 // domainWindow is domainCoverage for a domain whose entries may run on
 // schedules of their own. Without a section or full-backup cadence, the
 // shortest of those is the window, so a section backed up only by per-item
-// schedules still turns overdue when its backups stop.
+// schedules still turns overdue when its backups stop. A section without an
+// entry that any schedule backs up has no window, since a scheduled run finds
+// nothing to do there and no recovery point can fall behind.
 func (s *Service) domainWindow(domain, ownCadence string, settings store.Settings) (period int64, coveredBy string) {
-	if period, coveredBy = domainCoverage(ownCadence, settings.EverythingSchedule); period > 0 {
-		return period, coveredBy
-	}
 	var effs []schedule.EffectiveSchedule
 	var err error
+	entries := true
 	switch domain {
 	case "containers":
 		var ts []store.Target
@@ -3509,9 +3509,18 @@ func (s *Service) domainWindow(domain, ownCadence string, settings store.Setting
 		for _, d := range ds {
 			effs = append(effs, schedule.EffectiveZFSDatasetSchedule(d, settings))
 		}
+	default:
+		entries = false
 	}
 	if err != nil {
-		log.Printf("api: status %s: the entries could not be read, so their own schedules set no window: %v", domain, err) //nolint:gosec // G706: domain is a fixed literal
+		log.Printf("api: status %s: the entries could not be read, so only the section's cadence sets the window: %v", domain, err) //nolint:gosec // G706: domain is a fixed literal
+		entries = false
+	}
+	if entries && !slices.ContainsFunc(effs, func(eff schedule.EffectiveSchedule) bool { return eff.Kind != schedule.EffectiveNone }) {
+		return 0, ""
+	}
+	if period, coveredBy = domainCoverage(ownCadence, settings.EverythingSchedule); period > 0 {
+		return period, coveredBy
 	}
 	for _, eff := range effs {
 		if p := cadencePeriodSeconds(eff.Spec); eff.Kind == schedule.EffectiveOwn && p > 0 && (period == 0 || p < period) {

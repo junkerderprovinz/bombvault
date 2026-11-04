@@ -77,6 +77,7 @@ func TestDomainStatusCoveredByEverything(t *testing.T) {
 	if err := st.UpdateSettings(s); err != nil {
 		t.Fatal(err)
 	}
+	oneEntryEach(t, st)
 
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, &fakeResticEngine{})
 	statuses, err := svc.DomainStatus()
@@ -99,6 +100,54 @@ func TestDomainStatusCoveredByEverything(t *testing.T) {
 	}
 }
 
+// oneEntryEach gives every section with entries one that the schedule backs up.
+func oneEntryEach(t *testing.T, st *store.Repo) {
+	t.Helper()
+	if _, err := st.UpsertTarget(store.Target{ContainerName: "plex", IncludeInSchedule: true}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.UpsertVMTarget(store.VMTarget{Name: "win11", IncludeInSchedule: true}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.CreateFileSet(store.FileSet{Name: "Documents", Path: "/mnt/user/documents", Enabled: true}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.CreateZFSDataset(store.ZFSDataset{Dataset: "tank/media", Enabled: true}); err != nil {
+		t.Fatal(err)
+	}
+}
+
+// A section the full backup finds nothing to do in has no recovery point to
+// miss: switched on without entries, or with only switched-off ones, it reads
+// as unscheduled and never as overdue.
+func TestASectionWithNothingToBackUpIsNeverOverdue(t *testing.T) {
+	dir := t.TempDir()
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
+	st := newMemStore(t)
+
+	s := mustSettings(t, st)
+	s.ZFSEnabled, s.FilesEnabled = true, true
+	s.ZFSSchedule, s.FilesSchedule = "off", "off"
+	s.EverythingSchedule = "daily 03:00"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.CreateFileSet(store.FileSet{Name: "Old", Path: "/mnt/user/old", Enabled: false}); err != nil {
+		t.Fatal(err)
+	}
+
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, &fakeResticEngine{})
+	statuses, err := svc.DomainStatus()
+	if err != nil {
+		t.Fatalf("DomainStatus: %v", err)
+	}
+	for _, d := range statuses {
+		if (d.Domain == "zfs" || d.Domain == "files") && (d.Status != "off" || d.PeriodSeconds != 0) {
+			t.Errorf("%s: status %q, period %d; want off, since no entry is backed up", d.Domain, d.Status, d.PeriodSeconds)
+		}
+	}
+}
+
 // A domain with a cadence of its own leaves CoveredBy empty, and its window is
 // its own cadence: the full backup leaves it out.
 func TestDomainStatusOwnScheduleWins(t *testing.T) {
@@ -114,6 +163,7 @@ func TestDomainStatusOwnScheduleWins(t *testing.T) {
 	if err := st.UpdateSettings(s); err != nil {
 		t.Fatal(err)
 	}
+	oneEntryEach(t, st)
 
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, &fakeResticEngine{})
 	statuses, err := svc.DomainStatus()

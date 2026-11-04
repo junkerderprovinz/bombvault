@@ -96,7 +96,7 @@ func watchdogTestService(t *testing.T) (*Service, *store.Repo, *int32, int64) {
 		t.Fatal(err)
 	}
 
-	tg, err := st.UpsertTarget(store.Target{ContainerName: "plex", AppdataPaths: []string{"/host/user/appdata/plex"}})
+	tg, err := st.UpsertTarget(store.Target{ContainerName: "plex", AppdataPaths: []string{"/host/user/appdata/plex"}, IncludeInSchedule: true})
 	if err != nil {
 		t.Fatal(err)
 	}
