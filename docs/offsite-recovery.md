@@ -201,7 +201,7 @@ The fastest way to an append-only copy is a paired BombVault with a [receiving s
 !!! warning "Append-only repos are never pruned from this box"
     An append-only location never prunes old snapshots from here; pruning is the far side's job. Set a **growth-budget alarm** for it so you are alerted before the repo size runs away.
 
-## Tamper test {#tamper-test}
+## Tamper test {#tamper-test}
 
 BombVault periodically proves the append-only guarantee by actually attempting a delete against the off-site repo, aimed at a non-existent object. **Test delete protection now** on a location's page runs it on demand, and **Check delete protection** under **Settings, Verify, Automatic checks** runs it on a schedule.
 
@@ -215,7 +215,7 @@ A copy that is switched off is not tested, and the location says so. The connect
 
 A real protected-to-unprotected flip fires a single alert.
 
-## DR drills {#dr-drills}
+## DR drills {#dr-drills}
 
 BombVault offers two levels of proof that your backups are actually restorable, not just present.
 
@@ -295,7 +295,7 @@ The instances in your group then find the server among the providers under **Fro
 
 An instance that reaches the receiving box only through the relay cannot use the server, because the relay carries no backups. Add the receiving box's address on the pairing page first. When BombVault runs on an IP address of its own (on br0, for example), fill in **Address for partners**, because the server listens on the host's address.
 
-## Worked example: two Unraid boxes, end to end {#worked-example-two-unraid-boxes-end-to-end}
+## Worked example: two Unraid boxes, end to end {#worked-example-two-unraid-boxes-end-to-end}
 
 Everything above describes the parts. This is one complete setup, because the parts are easier to assemble when you have seen them assembled once.
 
@@ -373,7 +373,7 @@ This is the piece that makes disaster recovery possible even when there is no ru
 !!! warning "The newest snapshot is not always the one to restore"
     Since restic 0.17, `restic snapshots` shows each snapshot's size. After data loss the newest snapshot can be the emptied one, so do not restore a snapshot that is far smaller than the ones before it. After ransomware it can be the encrypted one at the usual size. If BombVault still runs, check its **Anomalies** page first: it names the last good backup, and the restore window preselects it. A restore does not need any of BombVault's anomaly data, and the retention pause only ever keeps more snapshots.
 
-### Sealing the kit {#sealing-the-kit}
+### Sealing the kit {#sealing-the-kit}
 
 If you have switched on **Encrypt exports with age** under **Settings, System**, the kit is sealed with it too and downloads as `bombvault-recovery-kit.md.age`. It is ASCII-armored rather than binary, so it is still plain text: pasting it into a password manager or printing it works exactly as before, the contents are simply unreadable without your key.
 
@@ -382,7 +382,7 @@ If you have switched on **Encrypt exports with age** under **Settings, System**,
 
     With encryption on and no usable recipient configured, the download is refused outright. BombVault never falls back to handing out the master key in the clear.
 
-### If you do not have the kit to hand {#if-you-do-not-have-the-kit-to-hand}
+### If you do not have the kit to hand {#if-you-do-not-have-the-kit-to-hand}
 
 The password is not stored anywhere, it is **computed** from the key of the backups, so you can reproduce it yourself with nothing but the key and a shell:
 
