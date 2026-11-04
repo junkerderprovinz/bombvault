@@ -73,7 +73,7 @@ Minden mentési célnak saját oldala van. Csak azokat a kártyákat mutatja, am
 - **Kapcsolat**: a **Név**, az **Elérhető** kapcsoló (kikapcsolva a BombVault már nem ír ide, és az ide mentő elemek érthető üzenettel hibáznak ahelyett, hogy máshová kerülnének), a mappa, a **Tömörítés**, a **Tárolási osztály** és a **Telephelyen kívül**. A **Helyi** célnál a **Saját mappák itt** alatt felsorolja minden szakasz mappáját. A **Kapcsolat módosítása** teszteli és menti az új címet vagy bejelentkezést. Ha más helyek ugyanazzal a mentett bejelentkezéssel jelentkeznek be, az ablak ezt jelzi, és az itteni módosítás ennek a célnak saját bejelentkezést ad ahelyett, hogy átírná a megosztottat.
 - **Hitelesítő adatok**: melyik mentett bejelentkezést használja (**Bejelentkezik ezzel**), mely más célok használják még (**Ezek is használják**), és a **Szerkesztés**, amely megnyitja a bejelentkezési ablakot. Lásd: [Bejelentkezések](#sign-ins).
 - **rclone.conf**: ennek a célnak az rclone-konfigurációs szakasza, az rclone-on át futó célnál.
-- **Törlés elleni védelem**, a **Törlés elleni védelem (append-only)**, az **Elfogadás törlés elleni védelem nélkül**, a **Törlés elleni védelem tesztelése most** és a **Ki nyes** elemekkel, amely megmondja, hogy a BombVault metszi-e itt a másolatot és a saját mappákat, vagy ezt a túloldalra hagyja. Egy helyi mappa csak akkor mutatja ezt a kártyát, ha van kikapcsolható védelme. Lásd: [Törlés elleni védelem](#delete-protection-append-only).
+- **Törlés elleni védelem**, a **Törlés elleni védelem (append-only)**, az **Elfogadás törlés elleni védelem nélkül**, a **Törlés elleni védelem tesztelése most** és a **Ki nyes** elemekkel, amely megmondja, hogy a BombVault metszi-e itt a másolatot és a saját mappákat, e cél **Meddig őrizze meg** kártyája vagy egy szakasz saját értékei szerint a **Szabályok szakaszonként** alatt, vagy ezt a túloldalra hagyja. Egy helyi mappa csak akkor mutatja ezt a kártyát, ha van kikapcsolható védelme. Lásd: [Törlés elleni védelem](#delete-protection-append-only).
 - **Másolás**: a **Mikor másoljon**, valamint a **Feltöltési korlát (KiB/s)** és a **Letöltési korlát (KiB/s)**. Az a cél, amely csak saját mappákat tart, másolatokat nem, a korlátokat **Sávszélesség** nevű kártyán mutatja.
 - **Meddig őrizze meg**: **Rövid**, **Kiegyensúlyozott**, **Hosszú** vagy **Saját értékek**, idővonallal arról, hogy a szabály mely mentéseket tartja meg. Lásd: [Meddig őrizze meg](#keep).
 - **Már ennek a célnak az alatt van**: szakaszok, amelyek kézzel beírt címe ennek a célnak egy mappájában van. Az átvétel a tárolót ott hagyja, ahol van. A bejelentkezés, a tárolási osztály és a törlés elleni védelem ezután a céltól jön. A BombVault előbb ellenőrzi, hogy a cél bejelentkezése megnyitja-e a tárolót, és megtagadja, hogy egy append-only tárolót olyan cél alá tegyen, amely nem append-only.
@@ -100,10 +100,10 @@ A szabály naponta, hetente, havonta és évente egy mentést tart meg, addig vi
 | Előbeállítás | Legutóbbi mentések | Napok | Hetek | Hónapok | Évek |
 |---|---|---|---|---|---|
 | **Rövid** | 0 | 7 | 4 | 3 | 0 |
-| **Kiegyensúlyozott** | 0 | 7 | 4 | 6 | 1 |
+| **Kiegyensúlyozott** | 0 | 7 | 4 | 6 | 2 |
 | **Hosszú** | 0 | 14 | 8 | 12 | 3 |
 
-A **Saját értékek** az öt számot te adod meg. A 0 kikapcsolja az adott számot, és az a szabály, amelyben minden szám 0, mindent megtart. A kártyán lévő pontok megmutatják, hogy egy szabály a 40 mintamentés közül melyiket tartja meg, a legújabb ott van a jobb szélen. A minta minden célnál ugyanaz, mert a kép azelőtt készül, hogy a BombVault beolvasná az ottani mentéseket.
+A **Saját értékek** az öt számot te adod meg. A 0 kikapcsolja az adott számot, és az a szabály, amelyben minden szám 0, mindent megtart. A kártyán lévő pontok megmutatják, hogy egy szabály a 40 mintamentés közül melyiket tartja meg, a legújabb ott van a jobb szélen. A minta minden célnál ugyanaz, mert a kép azelőtt készül, hogy a BombVault beolvasná az ottani mentéseket. A minta a mai naptól számol visszafelé, így az, hogy hány pont marad, a dátummal változik.
 
 A **Rákérdezés a kevesebb megőrzés előtt**, amely alapból be van kapcsolva, rákérdez, mielőtt egy kevesebb mentést megtartó módosítás elmentődik, és megmondja, a 40 mintamentés közül hányat távolít el az új szabály. Minden mentési célra érvényes. A **Vissza a cél értékeihez** a **Szabályok szakaszonként** alatt ugyanezt kérdezi.
 
@@ -116,7 +116,7 @@ Hogy a következő futás valójában mit törölne, azt az **Előnézet** mutat
 
 #### Példa: mit tart meg a Kiegyensúlyozott {#example-retention}
 
-Egy konténert 2025. október 1. óta minden éjjel 03:00-kor mentenek, így 2026. november 4-én, szerdán 400 mentése van. A mentési célja **Kiegyensúlyozott** értéken áll: 7 nap, 4 hét, 6 hónap és 1 év.
+Egy konténert 2024. október 1. óta minden éjjel 03:00-kor mentenek, így 2026. november 4-én, szerdán 765 mentése van. A mentési célja **Kiegyensúlyozott** értéken áll: 7 nap, 4 hét, 6 hónap és 2 év.
 
 Minden szám a saját napjának, hetének, hónapjának vagy évének legújabb mentését tartja meg, és az a mentés, amelyet több szám is kiválaszt, egyszer marad meg. A hetek hétfőtől vasárnapig tartanak:
 
@@ -125,19 +125,19 @@ Minden szám a saját napjának, hetének, hónapjának vagy évének legújabb 
 | 7 nap | nov. 4., nov. 3., nov. 2., nov. 1., okt. 31., okt. 30., okt. 29. | mind a 7 |
 | 4 hét | nov. 4., nov. 1., okt. 25., okt. 18. | okt. 25., okt. 18. |
 | 6 hónap | nov. 4., okt. 31., szept. 30., aug. 31., júl. 31., jún. 30. | szept. 30., aug. 31., júl. 31., jún. 30. |
-| 1 év | nov. 4. | nincs |
+| 2 év | nov. 4., 2025. dec. 31. | 2025. dec. 31. |
 
-Ez 400 mentésből 13-at hagy meg. A legrégebbi június 30-i, így valamivel több mint négy hónapot mehetsz vissza. A deduplikációnak köszönhetően alig foglalnak több helyet, mint egy teljes mentés plusz az, ami közben változott.
+Ez 765 mentésből 14-et hagy meg. A legrégebbi 2025. december 31-i, így ma valamivel több mint tíz hónapot mehetsz vissza. A deduplikációnak köszönhetően alig foglalnak több helyet, mint egy teljes mentés plusz az, ami közben változott.
 
-Az **Évek** érdemes még egy pillantásra. A naptári éveket számolja, amelyekben van mentés, az aktuálissal kezdve, és ennek az évnek a legújabb mentése a mai. Ezért az **Évek** mezőbe írt 1 nem ad hozzá semmit a többi számhoz, és a tavalyi évbe való visszanyúláshoz 2 kell. Ugyanez a 400 mentés a többi előbeállítással:
+Az **Évek** érdemes még egy pillantásra. A naptári éveket számolja, amelyekben van mentés, az aktuálissal kezdve, és ennek az évnek a legújabb mentése a mai. Ezért az első év nem ad hozzá semmit a többi számhoz, a második pedig az előző év utolsó mentését adja hozzá. Emiatt változik egy szabály visszanyúlása az év során. Ugyanezek a mentések az egyes előbeállításokkal:
 
-| Előbeállítás | Megtartott mentések | Legrégebbi mentés |
-|---|---|---|
-| **Rövid** | 10 | 2026. szeptember 30. |
-| **Kiegyensúlyozott** | 13 | 2026. június 30. |
-| **Hosszú** | 29 | 2025. december 31. |
+| Előbeállítás | Megtartott mentések ma | Legrégebbi mentés ma | Visszanyúlás az év során |
+|---|---|---|---|
+| **Rövid** | 10 | 2026. szeptember 30. | 1-2 hónap |
+| **Kiegyensúlyozott** | 14 | 2025. december 31. | kora tavasszal körülbelül 4 hónap, december 31-én egy teljes év |
+| **Hosszú** | 30 | 2024. december 31. | január 1-jén 1 év, december 31-én 2 év |
 
-A **Kiegyensúlyozott** értékről a **Rövid** értékre váltás előbb rákérdez, a **Rákérdezés a kevesebb megőrzés előtt** miatt: „A képen látható 40 mentésből az új szabály 3-at töröl, amelyet a jelenlegi megtart.” A szám a képen látható mintából jön, nem a saját mentéseidből. Itt véletlenül egyezik: augusztus 31., július 31. és június 30. menne el. A **Mentés mégis** alkalmazza a szabályt, és a következő metszés véglegesen törli őket abból a célból.
+A **Kiegyensúlyozott** értékről a **Rövid** értékre váltás előbb rákérdez, a **Rákérdezés a kevesebb megőrzés előtt** miatt. A kérdés megmondja, hogy a képen látható 40 mentésből hányat töröl az új szabály. Ez a szám a mintából jön, ezért a dátummal változik, és nem a saját mentéseidet számolja. Ennek a példának a mentései közül augusztus 31., július 31., június 30. és 2025. december 31. menne el. A **Mentés mégis** alkalmazza a szabályt, és a következő metszés véglegesen törli őket abból a célból.
 
 Hogy a konténereket tovább tartsd, mint a többit ennél a célnál, nyomd meg a **Szabályok módosítása** gombot a **Szabályok szakaszonként** alatt, válaszd a **Konténerek** szakaszt, és állítsd be a **Saját értékek** értéket a **Konténerek szabályai** között, például 14 nap, 8 hét, 12 hónap és 2 év. A többi szakasz továbbra is a cél kártyáját követi, a **Vissza a cél értékeihez** pedig visszahozza a Konténereket.
 
@@ -218,7 +218,7 @@ Mivel innen semmi nem metszi ezt a másolatot, állítsd be a **Növekedési ker
 
 Minden szakasznak van saját mappája: az a tároló, amelybe a mentései először íródnak. A más mentési célokra menő másolatok onnan indulnak. Egy új telepítés a saját mappákat ezen a szerveren tartja, a `/mnt/user/bombvault` alatt, és együtt alkotják a **Helyi** mentési célt.
 
-A saját mappa egy már meglévő mentési célon is lehet, például egy NAS-on, egy rest-serveren vagy egy S3-bucketen. A szakasz ilyenkor közvetlenül oda ment, helyi másolat közbeiktatása nélkül, és a saját mappa a cél bejelentkezését, törlés elleni védelmét, sávszélesség-korlátait és megőrzési szabályait követi. A cél a **Saját mappák** kártyáján felsorolja a szakaszt, a **Célok szakaszonként** pedig a célt a szakasz otthonaként mutatja.
+A saját mappa egy már meglévő mentési célon is lehet, például egy NAS-on, egy rest-serveren vagy egy S3-bucketen. A szakasz ilyenkor közvetlenül oda ment, helyi másolat közbeiktatása nélkül, és a saját mappa a cél bejelentkezését, törlés elleni védelmét és sávszélesség-korlátait követi. A BombVault minden mentés után a cél **Meddig őrizze meg** kártyája szerint metszi, és egy szakasz saját értékei a **Szabályok szakaszonként** alatt felülírják a kártyát. A cél a **Saját mappák** kártyáján felsorolja a szakaszt, a **Célok szakaszonként** pedig a célt a szakasz otthonaként mutatja.
 
 ### Saját mappa áthelyezése {#move-own-folder}
 
@@ -226,7 +226,7 @@ A saját mappa egy már meglévő mentési célon is lehet, például egy NAS-on
 2. Válaszd ki a szakaszokat a **Szakaszok** alatt, a helyet pedig az **Áthelyezés ide** alatt. A **Másik hely** egy ezen a gazdán lévő mappát vagy egy kézzel beírt távoli tároló címét fogadja, a mentett bejelentkezéseid közül választott bejelentkezéssel.
 3. Olvasd el a **Mi történik** részt. Szakaszonként megmondja, hová mennek az új mentések, a már az új helyen lévő másolatból saját mappa lesz-e, és mely mentések másolódnak át előbb.
 4. A **A már elkészült mentések másolása** alapból be van kapcsolva. Kikapcsolva a régi mentések ott maradnak, ahol vannak, és onnan továbbra is visszaállíthatók.
-5. Válaszd az **Átváltás** gombot. Ha előbb mentéseket kell átmásolni, a BombVault átmásolja őket, majd átváltja a saját mappát. Ha már ott vannak, az átváltás előtt ellenőrzi őket.
+5. Válaszd az **Átváltás** gombot. Ha az új hely **Meddig őrizze meg** kártyája kevesebbet tart meg, mint a szakasz mai szabálya, a BombVault előbb megkérdezi: **Kevesebbet őrizzen meg?** Itt a szakasz **jelenlegi értékeinek megtartása a Szabályok szakaszonként részben** magával viszi a mai értékeket, a **Mentés mégis** továbbmegy, a **Vissza** pedig mindent úgy hagy, ahogy volt. Ha előbb mentéseket kell átmásolni, a BombVault átmásolja őket, majd átváltja a saját mappát. Ha már ott vannak, az átváltás előtt ellenőrzi őket.
 
 Az áthelyezés után az új mentések az áthelyezett saját mappába mennek, olyan szakasznál is, amelynél a **Helyi** ki volt kapcsolva, és közvetlenül egy másolatra mentett. Az a másolat, amely már az új helyen volt, saját mappa lesz, és az oda másolás megszűnik. Ahol az a másolat bizonyos mentéseket tovább őrzött, mint a szakasz megőrzési szabályai, a szakasz megtart mindent, amit akár az egyik, akár a másik szabály megtart, így egyik sem vész el.
 
@@ -246,7 +246,7 @@ A cache-pool telik, és van egy `nas` nevű mentési célod, egy SMB-megosztás 
 3. Olvasd el a **Mi történik** részt. Azt mondja, hogy a Konténerek új mentései a `nas` mappájába mennek, a Helyiben lévő 61 mentés előbb odamásolódik, a másolatok továbbra is a Backblaze B2-re mennek, a védelem, a sávszélesség-korlátok és a növekedési riasztás pedig a `nas`-tól jön.
 4. Hagyd bekapcsolva a **A már elkészült mentések másolása** kapcsolót, és nyomd meg az **Átváltás** gombot.
 
-A BombVault a háttérben átmásolja a mentéseket, majd átváltja a saját mappát. A `nas` oldala a Konténereket a **Saját mappák** alatt sorolja fel, a szakaszát követő elem a `nas`-t nevezi meg otthonaként, és a következő mentés oda kerül, a B2-re menő másolattal, amely a `nas`-ról indul. A régi mappa ezen a szerveren ott marad, ahol van, és a BombVault ott nem töröl semmit.
+A BombVault a háttérben átmásolja a mentéseket, majd átváltja a saját mappát. A `nas` oldala a Konténereket a **Saját mappák** alatt sorolja fel, a szakaszát követő elem a `nas`-t nevezi meg otthonaként, és a következő mentés oda kerül, a B2-re menő másolattal, amely a `nas`-ról indul. Mostantól a `nas` **Meddig őrizze meg** kártyája metszi a mappát. A régi mappa ezen a szerveren ott marad, ahol van, és a BombVault ott nem töröl semmit.
 
 ### Távoli cím kézzel beírva {#remote-primary-repositories}
 

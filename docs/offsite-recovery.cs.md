@@ -73,7 +73,7 @@ Každý cíl má vlastní stránku. Ukazuje jen karty, které se na daný cíl v
 - **Připojení**: **Název**, přepínač **Dostupné** (vypnuto znamená, že BombVault sem už nezapisuje a položky, které sem zálohují, selžou s jasnou zprávou, místo aby skončily jinde), složka, **Komprese**, **Třída úložiště** a **Mimo areál**. U cíle **Místní** vypisuje pod **Vlastní složky zde** složku každé sekce. **Změnit připojení** otestuje a uloží novou adresu nebo přihlášení. Když se stejnými uloženými přihlašovacími údaji přihlašují i jiná místa, okno to řekne a změna zde dá tomuto cíli vlastní přihlášení místo přepsání sdíleného.
 - **Přihlašovací údaje**: které uložené přihlašovací údaje používá (**Přihlašuje se pomocí**), které další cíle je používají také (**Používá také**) a **Upravit**, které otevře okno přihlášení. Viz [Přihlašovací údaje](#sign-ins).
 - **rclone.conf**: sekce konfigurace rclone tohoto cíle, pro cíl, který běží přes rclone.
-- **Ochrana proti smazání** s **Ochrana proti smazání (append-only)**, **Přijmout bez ochrany proti smazání**, **Otestovat ochranu proti smazání hned** a **Kdo čistí**, což říká, zda BombVault kopii a vlastní složky tady čistí, nebo to nechává na druhé straně. Místní složka tuto kartu ukazuje, jen když má ochranu, kterou jde vypnout. Viz [Ochrana proti smazání](#delete-protection-append-only).
+- **Ochrana proti smazání** s **Ochrana proti smazání (append-only)**, **Přijmout bez ochrany proti smazání**, **Otestovat ochranu proti smazání hned** a **Kdo čistí**, což říká, zda BombVault kopii a vlastní složky tady čistí, podle karty **Jak dlouho uchovávat** tohoto cíle nebo vlastních hodnot sekce pod **Pravidla podle sekcí**, nebo to nechává na druhé straně. Místní složka tuto kartu ukazuje, jen když má ochranu, kterou jde vypnout. Viz [Ochrana proti smazání](#delete-protection-append-only).
 - **Kopírovat**: **Kdy kopírovat** a **Limit nahrávání (KiB/s)** a **Limit stahování (KiB/s)**. Cíl, který drží jen vlastní složky a žádné kopie, ukazuje limity jako kartu **Šířka pásma**.
 - **Jak dlouho uchovávat**: **Krátké**, **Vyvážené**, **Dlouhé** nebo **Vlastní hodnoty**, s časovou osou, které zálohy pravidlo drží. Viz [Jak dlouho uchovávat](#keep).
 - **Už pod tímto cílem**: sekce, jejichž ručně napsaná adresa leží ve složce tohoto cíle. Převzetí jedné nechá repozitář, kde je. Přihlášení, třída úložiště a ochrana proti smazání pak pocházejí z cíle. BombVault napřed zkontroluje, že přihlášení cíle repozitář otevře, a odmítne dát repozitář append-only pod cíl, který append-only není.
@@ -100,10 +100,10 @@ Pravidlo drží jednu zálohu na den, týden, měsíc a rok, tak daleko do minul
 | Předvolba | Poslední zálohy | Dny | Týdny | Měsíce | Roky |
 |---|---|---|---|---|---|
 | **Krátké** | 0 | 7 | 4 | 3 | 0 |
-| **Vyvážené** | 0 | 7 | 4 | 6 | 1 |
+| **Vyvážené** | 0 | 7 | 4 | 6 | 2 |
 | **Dlouhé** | 0 | 14 | 8 | 12 | 3 |
 
-**Vlastní hodnoty** nastavíš těch pět počtů sám. 0 daný počet vypne a pravidlo se všemi počty na 0 drží všechno. Tečky v kartě ukazují, které ze 40 ukázkových záloh pravidlo drží, nejnovější úplně vpravo. Ukázka je pro každý cíl stejná, protože obrázek se kreslí dřív, než BombVault přečte tamní zálohy.
+**Vlastní hodnoty** nastavíš těch pět počtů sám. 0 daný počet vypne a pravidlo se všemi počty na 0 drží všechno. Tečky v kartě ukazují, které ze 40 ukázkových záloh pravidlo drží, nejnovější úplně vpravo. Ukázka je pro každý cíl stejná, protože obrázek se kreslí dřív, než BombVault přečte tamní zálohy. Počítá zpět od dneška, takže počet teček, které zůstanou, se mění s datem.
 
 **Zeptat se před uchováním méně**, ve výchozím stavu zapnuté, se zeptá před uložením změny, která drží méně záloh, a řekne, kolik ze 40 ukázkových záloh nové pravidlo odstraní. Platí pro každý cíl. **Vrátit na hodnoty cíle** pod **Pravidla podle sekcí** klade stejnou otázku.
 
@@ -116,7 +116,7 @@ Chceš-li vidět, co příští běh opravdu smaže, otevři **Náhled** v **Nas
 
 #### Příklad: co drží Vyvážené {#example-retention}
 
-Kontejner se zálohuje každou noc ve 03:00 od 1. října 2025, takže ve středu 4. listopadu 2026 má 400 záloh. Jeho cíl je nastavený na **Vyvážené**: 7 dní, 4 týdny, 6 měsíců a 1 rok.
+Kontejner se zálohuje každou noc ve 03:00 od 1. října 2024, takže ve středu 4. listopadu 2026 má 765 záloh. Jeho cíl je nastavený na **Vyvážené**: 7 dní, 4 týdny, 6 měsíců a 2 roky.
 
 Každý počet drží nejnovější zálohu svého dne, týdne, měsíce nebo roku a záloha, kterou vybere více počtů, se drží jednou. Týdny jdou od pondělí do neděle:
 
@@ -125,19 +125,19 @@ Každý počet drží nejnovější zálohu svého dne, týdne, měsíce nebo ro
 | 7 dní | 4. 11., 3. 11., 2. 11., 1. 11., 31. 10., 30. 10., 29. 10. | všech 7 |
 | 4 týdny | 4. 11., 1. 11., 25. 10., 18. 10. | 25. 10., 18. 10. |
 | 6 měsíců | 4. 11., 31. 10., 30. 9., 31. 8., 31. 7., 30. 6. | 30. 9., 31. 8., 31. 7., 30. 6. |
-| 1 rok | 4. 11. | žádné |
+| 2 roky | 4. 11., 31. 12. 2025 | 31. 12. 2025 |
 
-Zbývá tak 13 záloh ze 400. Nejstarší je z 30. června, takže se můžeš vrátit o něco víc než čtyři měsíce. Díky deduplikaci zabírají jen o málo víc místa než jedna úplná záloha plus to, co se mezitím změnilo.
+Zbývá tak 14 záloh ze 765. Nejstarší je z 31. prosince 2025, takže se dnes můžeš vrátit o něco víc než deset měsíců. Díky deduplikaci zabírají jen o málo víc místa než jedna úplná záloha plus to, co se mezitím změnilo.
 
-**Roky** stojí za druhý pohled. Počítají kalendářní roky, ve kterých je záloha, počínaje tímto, a nejnovější záloha tohoto roku je dnešní. Takže 1 v **Roky** nepřidá k ostatním počtům nic a chceš-li sáhnout do loňského roku, potřebuješ 2. Stejných 400 záloh pod ostatními předvolbami:
+**Roky** stojí za druhý pohled. Počítají kalendářní roky, ve kterých je záloha, počínaje tímto, a nejnovější záloha tohoto roku je dnešní. Takže první rok k ostatním počtům nic nepřidá a druhý přidá poslední zálohu předchozího roku. Proto se dosah pravidla během roku mění. Stejné zálohy pod každou předvolbou:
 
-| Předvolba | Držených záloh | Nejstarší záloha |
-|---|---|---|
-| **Krátké** | 10 | 30. září 2026 |
-| **Vyvážené** | 13 | 30. června 2026 |
-| **Dlouhé** | 29 | 31. prosince 2025 |
+| Předvolba | Držených záloh dnes | Nejstarší záloha dnes | Dosah během roku |
+|---|---|---|---|
+| **Krátké** | 10 | 30. září 2026 | 1 až 2 měsíce |
+| **Vyvážené** | 14 | 31. prosince 2025 | zhruba 4 měsíce brzy na jaře, celý rok 31. prosince |
+| **Dlouhé** | 30 | 31. prosince 2024 | 1 rok 1. ledna, 2 roky 31. prosince |
 
-Přechod z **Vyvážené** na **Krátké** se nejdřív zeptá, kvůli **Zeptat se před uchováním méně**: „Ze 40 záloh na obrázku nové pravidlo odstraní 3, které současné drží.“ Číslo pochází z ukázky na obrázku, ne z tvých vlastních záloh. Tady se shodou okolností shoduje: 31. srpen, 31. červenec a 30. červen by odešly. **Přesto uložit** pravidlo použije a příští čištění je z toho cíle smaže natrvalo.
+Přechod z **Vyvážené** na **Krátké** se nejdřív zeptá, kvůli **Zeptat se před uchováním méně**. Otázka říká, kolik ze 40 záloh na obrázku nové pravidlo odstraní. To číslo pochází z ukázky, takže se mění s datem a nepočítá tvoje vlastní zálohy. Ze záloh v tomto příkladu by odešly 31. srpen, 31. červenec, 30. červen a 31. prosinec 2025 by odešly. **Přesto uložit** pravidlo použije a příští čištění je z toho cíle smaže natrvalo.
 
 Chceš-li kontejnery držet v tomto cíli déle než zbytek, stiskni **Změnit pravidla** pod **Pravidla podle sekcí**, vyber **Kontejnery** a nastav **Vlastní hodnoty** v **Pravidla pro Kontejnery**, například 14 dní, 8 týdnů, 12 měsíců a 2 roky. Ostatní sekce se dál řídí kartou cíle a **Vrátit na hodnoty cíle** vrátí Kontejnery zpět.
 
@@ -218,7 +218,7 @@ Protože tuto kopii odsud nic nečistí, nastav **Rozpočet růstu (GB, 0 = vypn
 
 Každá sekce má vlastní složku: repozitář, do kterého se její zálohy zapisují jako první. Kopie do jiných cílů odcházejí odtud. Nová instalace drží vlastní složky na tomto serveru, pod `/mnt/user/bombvault`, a dohromady tvoří cíl **Místní**.
 
-Vlastní složka může ležet i v cíli, který už máš, třeba na NAS, rest-serveru nebo v bucketu S3. Sekce pak zálohuje přímo tam, bez místní kopie mezi tím, a vlastní složka se řídí přihlášením, ochranou proti smazání, limity šířky pásma a pravidly uchovávání toho cíle. Cíl sekci vypisuje ve své kartě **Vlastní složky** a **Cíle podle sekcí** ukazuje cíl jako domov sekce.
+Vlastní složka může ležet i v cíli, který už máš, třeba na NAS, rest-serveru nebo v bucketu S3. Sekce pak zálohuje přímo tam, bez místní kopie mezi tím, a vlastní složka se řídí přihlášením, ochranou proti smazání a limity šířky pásma toho cíle. BombVault ji po každé záloze čistí podle karty **Jak dlouho uchovávat** toho cíle a vlastní hodnoty sekce pod **Pravidla podle sekcí** mají před kartou přednost. Cíl sekci vypisuje ve své kartě **Vlastní složky** a **Cíle podle sekcí** ukazuje cíl jako domov sekce.
 
 ### Přesun vlastní složky {#move-own-folder}
 
@@ -226,7 +226,7 @@ Vlastní složka může ležet i v cíli, který už máš, třeba na NAS, rest-
 2. Vyber sekce pod **Sekce** a místo pod **Přesunout do**. **Jiné místo** bere složku na tomto hostiteli nebo ručně napsanou adresu vzdáleného repozitáře, s přihlášením z tvých uložených přihlašovacích údajů.
 3. Přečti si **Co se stane**. U každé sekce říká, kam půjdou nové zálohy, zda se kopie, která už na novém místě je, stane vlastní složkou, a které zálohy se napřed zkopírují.
 4. **Zkopírovat už vytvořené zálohy** je ve výchozím stavu zapnuté. Vypnuté, staré zálohy zůstanou, kde jsou, a lze z nich dál obnovovat.
-5. Zvol **Přepnout**. Když je potřeba zálohy napřed zkopírovat, BombVault je zkopíruje a pak vlastní složku přepne. Když tam už jsou, před přepnutím je zkontroluje.
+5. Zvol **Přepnout**. Když karta **Jak dlouho uchovávat** nového místa drží méně než dnešní pravidlo sekce, BombVault se nejdřív zeptá **Uchovat méně?** Tam **Ponechat současné hodnoty pro** tuto sekci **v části Pravidla podle sekcí** přenese dnešní hodnoty s sebou, **Přesto uložit** pokračuje a **Zpět** nechá všechno, jak bylo. Když je potřeba zálohy napřed zkopírovat, BombVault je zkopíruje a pak vlastní složku přepne. Když tam už jsou, před přepnutím je zkontroluje.
 
 Po přesunu jdou nové zálohy do přesunuté vlastní složky, i u sekce, která měla **Místní** vypnuté a zálohovala rovnou na kopii. Kopie, která už na novém místě byla, se stane vlastní složkou a kopírování tam skončí. Kde ta kopie držela některé zálohy déle, než určují pravidla uchovávání sekce, drží sekce to, co drží kterékoli z pravidel, takže žádná nezmizí.
 
@@ -246,7 +246,7 @@ Pool cache se plní a ty máš cíl jménem `nas`, sdílenou složku SMB na druh
 3. Přečti si **Co se stane**. Říká, že nové zálohy Kontejnerů jdou do složky na `nas`, že 61 záloh v Místní se tam napřed zkopíruje, že kopie dál jdou na Backblaze B2 a že ochrana, limity šířky pásma a poplach růstu pocházejí z `nas`.
 4. Nech **Zkopírovat už vytvořené zálohy** zapnuté a stiskni **Přepnout**.
 
-BombVault zkopíruje zálohy na pozadí a pak vlastní složku přepne. Stránka `nas` vypíše Kontejnery pod **Vlastní složky**, položka, která se řídí svou sekcí, jmenuje `nas` jako svůj domov a příští záloha tam přistane, s kopií na B2 odcházející z `nas`. Stará složka na tomto serveru zůstává, kde je, a BombVault tam nic nemaže.
+BombVault zkopíruje zálohy na pozadí a pak vlastní složku přepne. Stránka `nas` vypíše Kontejnery pod **Vlastní složky**, položka, která se řídí svou sekcí, jmenuje `nas` jako svůj domov a příští záloha tam přistane, s kopií na B2 odcházející z `nas`. Od této chvíle složku čistí karta **Jak dlouho uchovávat** cíle `nas`. Stará složka na tomto serveru zůstává, kde je, a BombVault tam nic nemaže.
 
 ### Ruční zadání vzdálené adresy {#remote-primary-repositories}
 

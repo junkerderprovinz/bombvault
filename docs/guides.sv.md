@@ -10,7 +10,7 @@ Vart och ett av de här går igenom en verklig uppgift från början till slut, 
 
 - [En off-site-kopia på Backblaze B2](offsite-recovery.md#example-s3): en hink, en nyckel för just den hinken och den första kopian. Cloudflare R2 fungerar likadant.
 - [En rest-server som du kör själv](offsite-recovery.md#example-rest-server): en off-site-kopia som vägrar radering, med raden `docker run` och manipuleringstestet.
-- [Vad Balanserad behåller](offsite-recovery.md#example-retention): gallring över 400 dagars nattliga säkerhetskopior, säkerhetskopia för säkerhetskopia.
+- [Vad Balanserad behåller](offsite-recovery.md#example-retention): gallring över två års nattliga säkerhetskopior, säkerhetskopia för säkerhetskopia.
 - [Containrar flyttar till en NAS](offsite-recovery.md#example-own-folder): ett avsnitts egna mapp byter plats, och vad som händer med de säkerhetskopior som redan finns.
 
 ## Säkerhetskopior och scheman {#backups}

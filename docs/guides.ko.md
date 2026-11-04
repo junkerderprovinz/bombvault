@@ -10,7 +10,7 @@
 
 - [Backblaze B2에 오프사이트 사본 만들기](offsite-recovery.md#example-s3): 버킷, 그 버킷 전용 키, 그리고 첫 사본. Cloudflare R2도 같은 방식으로 합니다.
 - [직접 운영하는 rest-server](offsite-recovery.md#example-rest-server): 삭제를 거부하는 오프사이트 사본. `docker run` 명령줄과 변조 시험도 다룹니다.
-- [균형이 남기는 것](offsite-recovery.md#example-retention): 400일 동안 매일 밤 백업했을 때의 보존 결과를 백업 하나씩 따라갑니다.
+- [균형이 남기는 것](offsite-recovery.md#example-retention): 2년 동안 매일 밤 백업했을 때의 보존 결과를 백업 하나씩 따라갑니다.
 - [컨테이너를 NAS로 옮길 때](offsite-recovery.md#example-own-folder): 섹션 전용 폴더의 위치가 바뀌었을 때, 이미 만든 백업은 어떻게 되는지.
 
 ## 백업과 일정 {#backups}

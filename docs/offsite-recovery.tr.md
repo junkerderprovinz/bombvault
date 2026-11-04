@@ -73,7 +73,7 @@ Her hedefin kendi sayfası vardır. Yalnızca o hedef için geçerli kartları �
 - **Bağlantı**: **Ad**, **Kullanılabilir** anahtarı (kapalı, BombVault'un artık buraya yazmadığı ve buraya yedekleyen ögelerin başka bir yere düşmek yerine açık bir mesajla başarısız olduğu anlamına gelir), klasör, **Sıkıştırma**, **Depolama sınıfı** ve **Tesis dışı**. **Yerel** hedefte **Burada kendi klasörleri** altında her bölümün klasörünü listeler. **Bağlantıyı değiştir** yeni bir adresi ya da oturum açmayı test eder ve kaydeder. Başka yerler aynı kayıtlı oturum açma bilgisiyle giriş yaptığında pencere bunu söyler ve burada bir değişiklik paylaşılanı yeniden yazmak yerine bu hedefe kendi oturum açma bilgisini verir.
 - **Oturum açma**: hangi kayıtlı oturum açma bilgisini kullandığı (**Şununla oturum açar**), hangi diğer hedeflerin de onu kullandığı (**Bunu da kullananlar**) ve oturum açma penceresini açan **Düzenle**. Bkz. [Oturum açma bilgileri](#sign-ins).
 - **rclone.conf**: rclone üzerinden çalışan bir hedef için, bu hedefin rclone yapılandırma bölümü.
-- **Silmeye karşı koruma**, **Silmeye karşı koruma (append-only)**, **Silmeye karşı koruma olmadan kabul et**, **Silmeye karşı korumayı şimdi test et** ve BombVault'un buradaki kopyayı ve kendi klasörlerini budayıp budamadığını ya da bunu karşı tarafa bırakıp bırakmadığını söyleyen **Kim budar** ile. Yerel bir klasör bu kartı yalnızca kapatılabilir bir koruması olduğunda gösterir. Bkz. [Silmeye karşı koruma](#delete-protection-append-only).
+- **Silmeye karşı koruma**, **Silmeye karşı koruma (append-only)**, **Silmeye karşı koruma olmadan kabul et**, **Silmeye karşı korumayı şimdi test et** ve BombVault'un buradaki kopyayı ve kendi klasörlerini, bu hedefin **Ne kadar saklanır** kartına ya da bir bölümün **Bölüme göre kurallar** altındaki kendi değerlerine göre budayıp budamadığını ya da bunu karşı tarafa bırakıp bırakmadığını söyleyen **Kim budar** ile. Yerel bir klasör bu kartı yalnızca kapatılabilir bir koruması olduğunda gösterir. Bkz. [Silmeye karşı koruma](#delete-protection-append-only).
 - **Kopyala**: **Ne zaman kopyalanır** ve **Yükleme sınırı (KiB/s)** ile **İndirme sınırı (KiB/s)**. Yalnızca kendi klasörlerini tutan ve kopya tutmayan bir hedef sınırları **Bant genişliği** adlı bir kart olarak gösterir.
 - **Ne kadar saklanır**: bir kuralın hangi yedekleri tuttuğunun zaman çizelgesiyle **Kısa**, **Dengeli**, **Uzun** ya da **Özel değerler**. Bkz. [Ne kadar saklanır](#keep).
 - **Zaten bu hedefin altında**: elle yazılmış adresi bu hedefin bir klasöründe duran bölümler. Birini devralmak depoyu olduğu yerde bırakır. Oturum açma, depolama sınıfı ve silmeye karşı koruma o zaman hedeften gelir. BombVault önce hedefin oturum açmasının depoyu açtığını denetler ve append-only bir depoyu append-only olmayan bir hedefin altına koymayı reddeder.
@@ -100,10 +100,10 @@ Bir kural, ayarladığın kadar geriye, gün, hafta, ay ve yıl başına bir yed
 | Hazır ayar | Son yedekler | Gün | Hafta | Ay | Yıl |
 |---|---|---|---|---|---|
 | **Kısa** | 0 | 7 | 4 | 3 | 0 |
-| **Dengeli** | 0 | 7 | 4 | 6 | 1 |
+| **Dengeli** | 0 | 7 | 4 | 6 | 2 |
 | **Uzun** | 0 | 14 | 8 | 12 | 3 |
 
-**Özel değerler** beş sayıyı kendin ayarlar. 0 o sayıyı kapatır ve her sayısı 0 olan bir kural her şeyi tutar. Kartın noktaları, 40 örnek yedeğin hangilerini bir kuralın tuttuğunu gösterir, en yenisi en sağda. Örnek her hedef için aynıdır, çünkü resim BombVault oradaki yedekleri okumadan önce çizilir.
+**Özel değerler** beş sayıyı kendin ayarlar. 0 o sayıyı kapatır ve her sayısı 0 olan bir kural her şeyi tutar. Kartın noktaları, 40 örnek yedeğin hangilerini bir kuralın tuttuğunu gösterir, en yenisi en sağda. Örnek her hedef için aynıdır, çünkü resim BombVault oradaki yedekleri okumadan önce çizilir. Bugünden geriye doğru sayar, bu yüzden kaç noktanın kaldığı tarihe göre değişir.
 
 Varsayılan olarak açık **Daha az saklamadan önce sor**, daha az yedek tutan bir değişiklik kaydedilmeden önce sorar ve yeni kuralın 40 örnek yedeğin kaçını kaldırdığını söyler. Her hedef için geçerlidir. **Bölüme göre kurallar** altındaki **Hedefin değerlerine dön** aynı soruyu sorar.
 
@@ -116,7 +116,7 @@ Sonraki çalıştırmanın gerçekte neyi sileceğini görmek için **Ayarlar, H
 
 #### Örnek: Dengeli neyi saklar {#example-retention}
 
-Bir konteyner 1 Ekim 2025'ten beri her gece 03:00'te yedekleniyor, yani 4 Kasım 2026 Çarşamba günü 400 yedeği var. Hedefi **Dengeli** olarak ayarlı: 7 gün, 4 hafta, 6 ay ve 1 yıl.
+Bir konteyner 1 Ekim 2024'ten beri her gece 03:00'te yedekleniyor, yani 4 Kasım 2026 Çarşamba günü 765 yedeği var. Hedefi **Dengeli** olarak ayarlı: 7 gün, 4 hafta, 6 ay ve 2 yıl.
 
 Her sayı kendi gününün, haftasının, ayının ya da yılının en yeni yedeğini tutar ve birkaç sayının seçtiği bir yedek bir kez tutulur. Haftalar Pazartesi'den Pazar'a işler:
 
@@ -125,19 +125,19 @@ Her sayı kendi gününün, haftasının, ayının ya da yılının en yeni yede
 | 7 gün | 4 Kas, 3 Kas, 2 Kas, 1 Kas, 31 Eki, 30 Eki, 29 Eki | 7'si de |
 | 4 hafta | 4 Kas, 1 Kas, 25 Eki, 18 Eki | 25 Eki, 18 Eki |
 | 6 ay | 4 Kas, 31 Eki, 30 Eyl, 31 Ağu, 31 Tem, 30 Haz | 30 Eyl, 31 Ağu, 31 Tem, 30 Haz |
-| 1 yıl | 4 Kas | yok |
+| 2 yıl | 4 Kas, 31 Ara 2025 | 31 Ara 2025 |
 
-Bu, 400 yedekten 13'ünü bırakır. En eskisi 30 Haziran'dan, yani dört aydan biraz fazla geriye gidebilirsin. Tekilleştirme sayesinde bir tam yedek artı arasında değişenden biraz fazla yer kaplarlar.
+Bu, 765 yedekten 14'ünü bırakır. En eskisi 31 Aralık 2025'ten, yani bugün on aydan biraz fazla geriye gidebilirsin. Tekilleştirme sayesinde bir tam yedek artı arasında değişenden biraz fazla yer kaplarlar.
 
-**Yıl** ikinci bir bakışı hak eder. İçinde yedek olan takvim yıllarını, geçerli olandan başlayarak sayar ve bu yılın en yeni yedeği bugünküdür. Yani **Yıl** içinde 1 diğer sayılara bir şey eklemez ve geçen yıla uzanmak için 2 gerekir. Aynı 400 yedek diğer hazır ayarlarda:
+**Yıl** ikinci bir bakışı hak eder. İçinde yedek olan takvim yıllarını, geçerli olandan başlayarak sayar ve bu yılın en yeni yedeği bugünküdür. Yani ilk yıl diğer sayılara bir şey eklemez, ikinci yıl ise önceki yılın son yedeğini ekler. Bu yüzden bir kuralın ne kadar geriye uzandığı yıl içinde değişir. Aynı yedekler her hazır ayarda:
 
-| Hazır ayar | Tutulan yedek | En eski yedek |
-|---|---|---|
-| **Kısa** | 10 | 30 Eylül 2026 |
-| **Dengeli** | 13 | 30 Haziran 2026 |
-| **Uzun** | 29 | 31 Aralık 2025 |
+| Hazır ayar | Bugün tutulan yedek | Bugün en eski yedek | Yıl içinde geriye uzanma |
+|---|---|---|---|
+| **Kısa** | 10 | 30 Eylül 2026 | 1 ile 2 ay arası |
+| **Dengeli** | 14 | 31 Aralık 2025 | ilkbahar başında yaklaşık 4 ay, 31 Aralık'ta tam bir yıl |
+| **Uzun** | 30 | 31 Aralık 2024 | 1 Ocak'ta 1 yıl, 31 Aralık'ta 2 yıl |
 
-**Dengeli**'den **Kısa**'ya geçmek önce sorar, **Daha az saklamadan önce sor** yüzünden: "Resimdeki 40 yedekten yeni kural, mevcut kuralın tuttuğu 3 tanesini kaldırıyor." Sayı resimdeki örnekten gelir, kendi yedeklerinden değil. Burada tesadüfen uyuşuyor: 31 Ağustos, 31 Temmuz ve 30 Haziran giderdi. **Yine de kaydet** kuralı uygular ve sonraki budama onları o hedeften kalıcı olarak siler.
+**Dengeli**'den **Kısa**'ya geçmek önce sorar, **Daha az saklamadan önce sor** yüzünden. Soru, yeni kuralın resimdeki 40 yedekten kaçını kaldırdığını söyler. Bu sayı örnek yedeklerden gelir, yani tarihe göre değişir ve kendi yedeklerini saymaz. Bu örnekteki yedeklerden 31 Ağustos, 31 Temmuz, 30 Haziran ve 31 Aralık 2025 giderdi. **Yine de kaydet** kuralı uygular ve sonraki budama onları o hedeften kalıcı olarak siler.
 
 Bu hedefte konteynerleri diğerlerinden daha uzun tutmak için **Bölüme göre kurallar** altında **Kuralları değiştir**'e bas, **Konteynerler**'i seç ve **Konteynerler için kurallar** içinde **Özel değerler**'i ayarla, örneğin 14 gün, 8 hafta, 12 ay ve 2 yıl. Diğer bölümler hedefin kartını izlemeye devam eder ve **Hedefin değerlerine dön** Konteynerler'i geri getirir.
 
@@ -218,7 +218,7 @@ Bu kopyayı buradan hiçbir şey budamadığı için, disk dolmadan önce haberi
 
 Her bölümün bir kendi klasörü vardır: yedeklerinin önce yazıldığı depo. Diğer hedeflere kopyalar oradan çıkar. Yeni bir kurulum kendi klasörlerini bu sunucuda, `/mnt/user/bombvault` altında tutar ve birlikte **Yerel** hedefini oluştururlar.
 
-Bir kendi klasörü, bir NAS, bir rest-server ya da bir S3 bucket'ı gibi, zaten sahip olduğun bir hedefte de durabilir. Bölüm o zaman aralarında yerel kopya olmadan doğrudan oraya yedekler ve kendi klasörü o hedefin oturum açmasını, silmeye karşı korumasını, bant genişliği sınırlarını ve saklama kurallarını izler. Hedef bölümü **Kendi klasörleri** kartında listeler ve **Bölüme göre hedefler** hedefi bölümün evi olarak gösterir.
+Bir kendi klasörü, bir NAS, bir rest-server ya da bir S3 bucket'ı gibi, zaten sahip olduğun bir hedefte de durabilir. Bölüm o zaman aralarında yerel kopya olmadan doğrudan oraya yedekler ve kendi klasörü o hedefin oturum açmasını, silmeye karşı korumasını ve bant genişliği sınırlarını izler. BombVault onu her yedekten sonra hedefin **Ne kadar saklanır** kartına göre budar ve bir bölümün **Bölüme göre kurallar** altındaki kendi değerleri karttan önce gelir. Hedef bölümü **Kendi klasörleri** kartında listeler ve **Bölüme göre hedefler** hedefi bölümün evi olarak gösterir.
 
 ### Bir kendi klasörünü taşımak {#move-own-folder}
 
@@ -226,7 +226,7 @@ Bir kendi klasörü, bir NAS, bir rest-server ya da bir S3 bucket'ı gibi, zaten
 2. **Bölümler** altında bölümleri ve **Şuraya taşı** altında yeri seç. **Başka bir yer** bu ana makinedeki bir klasörü ya da kayıtlı oturum açma bilgilerinden biriyle elle yazılan uzak bir deponun adresini alır.
 3. **Ne olur**'u oku. Her bölüm için yeni yedeklerin nereye gideceğini, yeni yerde zaten olan bir kopyanın kendi klasörü olup olmayacağını ve hangi yedeklerin önce kopyalanacağını söyler.
 4. **Önceden alınmış yedekleri kopyala** varsayılan olarak açıktır. Kapalıyken eski yedekler olduğu yerde kalır ve yine de oradan geri yüklenebilir.
-5. **Geç**'i seç. Yedeklerin önce kopyalanması gerektiğinde BombVault onları kopyalar ve sonra kendi klasörünü değiştirir. Zaten oradalarsa değiştirmeden önce onları denetler.
+5. **Geç**'i seç. Yeni yerin **Ne kadar saklanır** kartı bölümün bugünkü kuralından daha az saklıyorsa BombVault önce **Daha az saklansın mı?** diye sorar. Orada o bölüm **için geçerli değerleri Bölüme göre kurallar altında koru** seçeneği bugünkü değerleri beraberinde taşır, **Yine de kaydet** devam eder ve **Geri** her şeyi olduğu gibi bırakır. Yedeklerin önce kopyalanması gerektiğinde BombVault onları kopyalar ve sonra kendi klasörünü değiştirir. Zaten oradalarsa değiştirmeden önce onları denetler.
 
 Taşımadan sonra yeni yedekler taşınan kendi klasörüne gider, **Yerel**'i kapalı olan ve doğrudan bir kopyaya yedekleyen bir bölüm için de. Yeni yerde zaten duran bir kopya kendi klasörü olur ve oraya kopyalama biter. O kopyanın bölümün saklama kurallarından daha uzun yedek tuttuğu yerde bölüm iki kuraldan birinin tuttuğu her şeyi tutar, yani hiçbiri kaybolmaz.
 
@@ -246,7 +246,7 @@ Bir bölümün her zaman bir kendi klasörüne ihtiyacı vardır. Onu tutan hede
 3. **Ne olur**'u oku. Konteynerler'in yeni yedeklerinin `nas`'taki klasöre gittiğini, Yerel'deki 61 yedeğin önce oraya kopyalandığını, kopyaların Backblaze B2'ye gitmeye devam ettiğini ve korumanın, bant genişliği sınırlarının ve büyüme alarmının `nas`'tan geldiğini söyler.
 4. **Önceden alınmış yedekleri kopyala**'yı açık bırak ve **Geç**'e bas.
 
-BombVault yedekleri arka planda kopyalar ve sonra kendi klasörünü değiştirir. `nas` sayfası Konteynerler'i **Kendi klasörleri** altında listeler, bölümünü izleyen bir öge `nas`'ı evi olarak adlandırır ve sonraki yedek oraya düşer, B2'ye kopya `nas`'tan çıkar. Bu sunucudaki eski klasör olduğu yerde kalır ve BombVault orada hiçbir şeyi silmez.
+BombVault yedekleri arka planda kopyalar ve sonra kendi klasörünü değiştirir. `nas` sayfası Konteynerler'i **Kendi klasörleri** altında listeler, bölümünü izleyen bir öge `nas`'ı evi olarak adlandırır ve sonraki yedek oraya düşer, B2'ye kopya `nas`'tan çıkar. Artık klasörü `nas`'ın **Ne kadar saklanır** kartı budar. Bu sunucudaki eski klasör olduğu yerde kalır ve BombVault orada hiçbir şeyi silmez.
 
 ### Uzak bir adresi elle yazmak {#remote-primary-repositories}
 

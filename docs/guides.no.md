@@ -10,7 +10,7 @@ Hvert av disse tar én ekte oppgave fra start til slutt, med navn og tall fylt i
 
 - [En off-site-kopi på Backblaze B2](offsite-recovery.md#example-s3): en bøtte, en nøkkel for den bøtta og den første kopien. Cloudflare R2 fungerer på samme måte.
 - [En rest-server du kjører selv](offsite-recovery.md#example-rest-server): en off-site-kopi som nekter sletting, med `docker run`-linjen og tamper-testen.
-- [Hva Balansert beholder](offsite-recovery.md#example-retention): oppbevaring over 400 dager med nattlige sikkerhetskopier, sikkerhetskopi for sikkerhetskopi.
+- [Hva Balansert beholder](offsite-recovery.md#example-retention): oppbevaring over to år med nattlige sikkerhetskopier, sikkerhetskopi for sikkerhetskopi.
 - [Containere flytter til en NAS](offsite-recovery.md#example-own-folder): den egne mappen til et område bytter sted, og hva som skjer med sikkerhetskopiene som allerede er laget.
 
 ## Sikkerhetskopier og tidsplaner {#backups}

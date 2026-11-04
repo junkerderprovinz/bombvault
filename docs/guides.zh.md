@@ -10,7 +10,7 @@
 
 - [在 Backblaze B2 上做异地副本](offsite-recovery.md#example-s3)：一个存储桶、一把只用于该桶的密钥，以及第一份副本。Cloudflare R2 的做法相同。
 - [自己运行的 rest-server](offsite-recovery.md#example-rest-server)：一份拒绝删除的异地副本，附 `docker run` 命令和防篡改测试。
-- [均衡保留什么](offsite-recovery.md#example-retention)：400 天每晚备份的保留规则，一份一份地看。
+- [均衡保留什么](offsite-recovery.md#example-retention)：两年每晚备份的保留规则，一份一份地看。
 - [容器搬到 NAS](offsite-recovery.md#example-own-folder)：分区的专属文件夹换了位置，以及已有的备份会怎样。
 
 ## 备份与计划 {#backups}

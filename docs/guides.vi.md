@@ -10,7 +10,7 @@ Mỗi ví dụ dưới đây đi qua một công việc thật từ đầu đế
 
 - [Một bản sao ngoài site trên Backblaze B2](offsite-recovery.md#example-s3): một bucket, một khóa cho bucket đó và bản sao đầu tiên. Cloudflare R2 hoạt động theo cùng cách.
 - [Một rest-server do bạn tự chạy](offsite-recovery.md#example-rest-server): một bản sao ngoài site từ chối việc xóa, với dòng `docker run` và phép thử phá hoại.
-- [Balanced giữ lại những gì](offsite-recovery.md#example-retention): chính sách lưu giữ qua 400 ngày sao lưu hằng đêm, từng bản một.
+- [Cân bằng giữ lại những gì](offsite-recovery.md#example-retention): chính sách lưu giữ qua hai năm sao lưu hằng đêm, từng bản một.
 - [Các container chuyển sang một NAS](offsite-recovery.md#example-own-folder): thư mục riêng của một phần đổi chỗ, và chuyện gì xảy ra với các bản sao lưu đã có.
 
 ## Sao lưu và lịch trình {#backups}

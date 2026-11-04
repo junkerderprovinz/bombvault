@@ -73,7 +73,7 @@ Mỗi đích sao lưu có một trang riêng. Nó chỉ hiện các thẻ áp d�
 - **Kết nối**: **Tên**, công tắc **Sẵn dùng** (tắt nghĩa là BombVault không còn ghi vào đây, và các mục sao lưu tới đây thất bại với thông báo rõ ràng thay vì rơi vào nơi khác), thư mục, **Nén**, **Lớp lưu trữ** và **Ngoài cơ sở**. Trên đích **Cục bộ**, nó liệt kê thư mục của từng phần dưới **Thư mục riêng ở đây**. **Đổi kết nối** kiểm tra và lưu một địa chỉ hoặc đăng nhập mới. Khi các nơi khác đăng nhập bằng cùng thông tin đăng nhập đã lưu, cửa sổ cho biết, và một thay đổi ở đây sẽ cho đích này thông tin đăng nhập riêng thay vì ghi đè cái dùng chung.
 - **Thông tin đăng nhập**: nó dùng thông tin đăng nhập đã lưu nào (**Đăng nhập bằng**), những đích khác nào cũng dùng nó (**Cũng được dùng bởi**), và **Chỉnh sửa**, mở cửa sổ thông tin đăng nhập. Xem [Thông tin đăng nhập](#sign-ins).
 - **rclone.conf**: phần của đích này trong cấu hình rclone, dành cho một đích chạy qua rclone.
-- **Bảo vệ chống xóa**, với **Bảo vệ chống xóa (append-only)**, **Chấp nhận khi không có bảo vệ chống xóa**, **Kiểm tra bảo vệ chống xóa ngay** và **Ai dọn bớt**, cho biết BombVault dọn bản sao và các thư mục riêng ở đây hay để phía bên kia làm. Một thư mục cục bộ chỉ hiện thẻ này khi nó có mức bảo vệ mà bạn tắt được. Xem [Bảo vệ chống xóa](#delete-protection-append-only).
+- **Bảo vệ chống xóa**, với **Bảo vệ chống xóa (append-only)**, **Chấp nhận khi không có bảo vệ chống xóa**, **Kiểm tra bảo vệ chống xóa ngay** và **Ai dọn bớt**, cho biết BombVault dọn bản sao và các thư mục riêng ở đây, theo thẻ **Giữ trong bao lâu** của đích này hoặc các giá trị riêng của một phần trong **Quy tắc theo phần**, hay để phía bên kia làm. Một thư mục cục bộ chỉ hiện thẻ này khi nó có mức bảo vệ mà bạn tắt được. Xem [Bảo vệ chống xóa](#delete-protection-append-only).
 - **Sao chép**: **Khi nào sao chép**, cùng **Giới hạn tải lên (KiB/s)** và **Giới hạn tải xuống (KiB/s)**. Một đích chỉ chứa thư mục riêng mà không có bản sao hiển thị các giới hạn trong một thẻ tên **Băng thông**.
 - **Giữ trong bao lâu**: **Ngắn**, **Cân bằng**, **Dài** hoặc **Giá trị riêng**, với dòng thời gian cho thấy quy tắc giữ những bản sao lưu nào. Xem [Giữ trong bao lâu](#keep).
 - **Đã nằm dưới đích này**: các phần có địa chỉ gõ tay nằm trong một thư mục của đích này. Tiếp nhận một phần để kho ở nguyên chỗ. Thông tin đăng nhập, lớp lưu trữ và bảo vệ chống xóa khi đó đến từ đích. BombVault trước tiên kiểm tra thông tin đăng nhập của đích mở được kho, và từ chối đặt một kho append-only dưới một đích không phải append-only.
@@ -100,10 +100,10 @@ Một quy tắc giữ một bản sao lưu cho mỗi ngày, tuần, tháng và n
 | Mẫu | Bản sao lưu mới nhất | Ngày | Tuần | Tháng | Năm |
 |---|---|---|---|---|---|
 | **Ngắn** | 0 | 7 | 4 | 3 | 0 |
-| **Cân bằng** | 0 | 7 | 4 | 6 | 1 |
+| **Cân bằng** | 0 | 7 | 4 | 6 | 2 |
 | **Dài** | 0 | 14 | 8 | 12 | 3 |
 
-**Giá trị riêng** cho bạn tự đặt năm số đếm. Số 0 tắt số đếm đó, và một quy tắc có mọi số đếm bằng 0 giữ tất cả. Các chấm trong thẻ cho thấy quy tắc giữ những bản nào trong 40 bản sao lưu mẫu, bản mới nhất ở ngoài cùng bên phải. Mẫu này giống nhau cho mọi đích, vì hình được vẽ trước khi BombVault đọc các bản sao lưu ở đó.
+**Giá trị riêng** cho bạn tự đặt năm số đếm. Số 0 tắt số đếm đó, và một quy tắc có mọi số đếm bằng 0 giữ tất cả. Các chấm trong thẻ cho thấy quy tắc giữ những bản nào trong 40 bản sao lưu mẫu, bản mới nhất ở ngoài cùng bên phải. Mẫu này giống nhau cho mọi đích, vì hình được vẽ trước khi BombVault đọc các bản sao lưu ở đó. Mẫu này đếm lùi từ hôm nay, nên số chấm còn lại thay đổi theo ngày.
 
 **Hỏi trước khi giữ ít hơn**, bật theo mặc định, hỏi trước khi lưu một thay đổi giữ ít bản sao lưu hơn, và cho biết quy tắc mới loại bỏ bao nhiêu trong 40 bản sao lưu mẫu. Nó áp dụng cho mọi đích sao lưu. **Đặt lại theo đích** dưới **Quy tắc theo phần** cũng hỏi cùng câu đó.
 
@@ -116,7 +116,7 @@ Một đích có bảo vệ chống xóa không bao giờ bị dọn từ máy n
 
 #### Ví dụ: Cân bằng giữ những gì {#example-retention}
 
-Một container được sao lưu mỗi đêm lúc 03:00 từ ngày 1 tháng 10 năm 2025, nên vào thứ Tư 4 tháng 11 năm 2026 nó có 400 bản sao lưu. Đích sao lưu của nó đặt là **Cân bằng**: 7 ngày, 4 tuần, 6 tháng và 1 năm.
+Một container được sao lưu mỗi đêm lúc 03:00 từ ngày 1 tháng 10 năm 2024, nên vào thứ Tư 4 tháng 11 năm 2026 nó có 765 bản sao lưu. Đích sao lưu của nó đặt là **Cân bằng**: 7 ngày, 4 tuần, 6 tháng và 2 năm.
 
 Mỗi số đếm giữ bản sao lưu mới nhất của ngày, tuần, tháng hoặc năm của nó, và một bản mà nhiều số đếm cùng chọn chỉ được giữ một lần. Tuần chạy từ thứ Hai đến Chủ nhật:
 
@@ -125,19 +125,19 @@ Mỗi số đếm giữ bản sao lưu mới nhất của ngày, tuần, tháng 
 | 7 ngày | 4/11, 3/11, 2/11, 1/11, 31/10, 30/10, 29/10 | cả 7 |
 | 4 tuần | 4/11, 1/11, 25/10, 18/10 | 25/10, 18/10 |
 | 6 tháng | 4/11, 31/10, 30/9, 31/8, 31/7, 30/6 | 30/9, 31/8, 31/7, 30/6 |
-| 1 năm | 4/11 | không có |
+| 2 năm | 4/11, 31/12/2025 | 31/12/2025 |
 
-Như vậy còn 13 bản trong 400. Bản cũ nhất là từ 30/6, nên bạn lùi lại được hơn bốn tháng một chút. Nhờ khử trùng lặp, chúng chiếm ít chỗ hơn không đáng kể so với một bản sao lưu đầy đủ cộng với những gì thay đổi ở giữa.
+Như vậy còn 14 bản trong 765. Bản cũ nhất là từ 31/12/2025, nên hôm nay bạn lùi lại được hơn mười tháng một chút. Nhờ khử trùng lặp, chúng chiếm ít chỗ hơn không đáng kể so với một bản sao lưu đầy đủ cộng với những gì thay đổi ở giữa.
 
-**Năm** đáng để xem kỹ hơn. Nó đếm các năm dương lịch có bản sao lưu, bắt đầu từ năm hiện tại, và bản sao lưu mới nhất của năm nay là của hôm nay. Vì vậy số 1 trong **Năm** không thêm gì vào các số đếm khác, và bạn cần số 2 để lùi vào năm ngoái. Cùng 400 bản sao lưu đó với các mẫu khác:
+**Năm** đáng để xem kỹ hơn. Nó đếm các năm dương lịch có bản sao lưu, bắt đầu từ năm hiện tại, và bản sao lưu mới nhất của năm nay là của hôm nay. Vì vậy năm đầu tiên không thêm gì vào các số đếm khác, còn năm thứ hai thêm bản sao lưu cuối cùng của năm trước. Đó là lý do phạm vi lùi lại của một quy tắc thay đổi trong suốt năm. Cùng các bản sao lưu đó với từng mẫu:
 
-| Mẫu | Số bản được giữ | Bản cũ nhất |
-|---|---|---|
-| **Ngắn** | 10 | 30 tháng 9 năm 2026 |
-| **Cân bằng** | 13 | 30 tháng 6 năm 2026 |
-| **Dài** | 29 | 31 tháng 12 năm 2025 |
+| Mẫu | Số bản được giữ hôm nay | Bản cũ nhất hôm nay | Phạm vi lùi lại trong suốt năm |
+|---|---|---|---|
+| **Ngắn** | 10 | 30 tháng 9 năm 2026 | 1 đến 2 tháng |
+| **Cân bằng** | 14 | 31 tháng 12 năm 2025 | khoảng 4 tháng vào đầu mùa xuân, tròn một năm vào 31 tháng 12 |
+| **Dài** | 30 | 31 tháng 12 năm 2024 | 1 năm vào 1 tháng 1, 2 năm vào 31 tháng 12 |
 
-Chuyển từ **Cân bằng** sang **Ngắn** sẽ hỏi trước, nhờ **Hỏi trước khi giữ ít hơn**: "Trong 40 bản sao lưu ở hình, quy tắc mới loại bỏ 3 bản mà quy tắc hiện tại giữ." Con số này đến từ mẫu trong hình, không phải từ các bản sao lưu của bạn. Ở đây nó tình cờ khớp: 31/8, 31/7 và 30/6 sẽ bị bỏ. **Vẫn lưu** áp dụng quy tắc, và lần dọn kế tiếp xóa chúng khỏi đích đó vĩnh viễn.
+Chuyển từ **Cân bằng** sang **Ngắn** sẽ hỏi trước, nhờ **Hỏi trước khi giữ ít hơn**. Câu hỏi cho biết quy tắc mới bỏ bao nhiêu bản trong 40 bản sao lưu ở hình. Con số này đến từ mẫu, nên nó thay đổi theo ngày và không đếm các bản sao lưu của bạn. Trong các bản sao lưu của ví dụ này, 31/8, 31/7, 30/6 và 31/12/2025 sẽ bị bỏ. **Vẫn lưu** áp dụng quy tắc, và lần dọn kế tiếp xóa chúng khỏi đích đó vĩnh viễn.
 
 Để giữ các container lâu hơn phần còn lại tại đích này, hãy bấm **Đổi quy tắc** dưới **Quy tắc theo phần**, chọn **Containers**, và đặt **Giá trị riêng** trong **Quy tắc cho Containers**, ví dụ 14 ngày, 8 tuần, 12 tháng và 2 năm. Các phần khác tiếp tục theo thẻ của đích, và **Đặt lại theo đích** đưa Containers trở lại.
 
@@ -218,7 +218,7 @@ Vì không có gì dọn bản sao này từ đây, hãy đặt **Hạn mức t�
 
 Mỗi phần có một thư mục riêng: kho mà các bản sao lưu của nó được ghi vào trước tiên. Các bản sao tới những đích sao lưu khác đi ra từ đó. Một bản cài mới giữ các thư mục riêng trên máy chủ này, dưới `/mnt/user/bombvault`, và chúng cùng nhau tạo thành đích sao lưu **Cục bộ**.
 
-Một thư mục riêng cũng có thể nằm trong một đích sao lưu bạn đã có, như một NAS, một rest-server hoặc một bucket S3. Khi đó phần sao lưu thẳng vào đó, không có bản sao cục bộ ở giữa, và thư mục riêng theo thông tin đăng nhập, bảo vệ chống xóa, giới hạn băng thông và quy tắc giữ của đích đó. Đích liệt kê phần trong thẻ **Thư mục riêng** của nó, và **Đích theo phần** hiển thị đích là nhà của phần.
+Một thư mục riêng cũng có thể nằm trong một đích sao lưu bạn đã có, như một NAS, một rest-server hoặc một bucket S3. Khi đó phần sao lưu thẳng vào đó, không có bản sao cục bộ ở giữa, và thư mục riêng theo thông tin đăng nhập, bảo vệ chống xóa và giới hạn băng thông của đích đó. BombVault dọn nó sau mỗi lần sao lưu theo thẻ **Giữ trong bao lâu** của đích, và các giá trị riêng của một phần trong **Quy tắc theo phần** được ưu tiên hơn thẻ. Đích liệt kê phần trong thẻ **Thư mục riêng** của nó, và **Đích theo phần** hiển thị đích là nhà của phần.
 
 ### Chuyển một thư mục riêng {#move-own-folder}
 
@@ -226,7 +226,7 @@ Một thư mục riêng cũng có thể nằm trong một đích sao lưu bạn 
 2. Chọn các phần dưới **Phần** và nơi đến dưới **Chuyển đến**. **Nơi khác** nhận một thư mục trên máy chủ này hoặc địa chỉ của một kho từ xa gõ tay, với một thông tin đăng nhập từ các thông tin đăng nhập đã lưu của bạn.
 3. Đọc **Điều gì xảy ra**. Với từng phần, nó cho biết các bản sao lưu mới đi đâu, một bản sao đã nằm ở nơi mới có trở thành thư mục riêng không, và các bản sao lưu nào được sao chép sang trước.
 4. **Sao chép các bản sao lưu đã tạo** được bật theo mặc định. Khi tắt, các bản sao lưu cũ ở yên chỗ và vẫn khôi phục được từ đó.
-5. Chọn **Chuyển**. Khi cần sao chép các bản sao lưu trước, BombVault sao chép chúng rồi mới chuyển thư mục riêng. Khi chúng đã có ở đó, nó kiểm tra chúng trước khi chuyển.
+5. Chọn **Chuyển**. Khi thẻ **Giữ trong bao lâu** của nơi mới giữ ít hơn quy tắc hiện tại của phần, BombVault hỏi trước **Giữ ít hơn?** Ở đó, **Giữ các giá trị hiện tại của phần đó trong Quy tắc theo phần** mang các giá trị hiện tại theo, **Vẫn lưu** cứ tiếp tục, còn **Quay lại** để mọi thứ như cũ. Khi cần sao chép các bản sao lưu trước, BombVault sao chép chúng rồi mới chuyển thư mục riêng. Khi chúng đã có ở đó, nó kiểm tra chúng trước khi chuyển.
 
 Sau khi chuyển, các bản sao lưu mới đi tới thư mục riêng đã chuyển, kể cả với một phần đã tắt **Cục bộ** và sao lưu thẳng tới một bản sao. Một bản sao đã nằm ở nơi mới sẽ trở thành thư mục riêng, và việc sao chép tới đó kết thúc. Khi bản sao ấy giữ một số bản sao lưu lâu hơn quy tắc giữ của phần, phần sẽ giữ bất cứ thứ gì một trong hai quy tắc giữ, nên không bản nào bị mất.
 
@@ -246,7 +246,7 @@ Pool cache đang đầy, và bạn có một đích sao lưu tên `nas`, một s
 3. Đọc **Điều gì xảy ra**. Nó cho biết các bản sao lưu mới của Containers đi tới thư mục trên `nas`, 61 bản sao lưu ở Cục bộ được sao chép sang đó trước, các bản sao vẫn tiếp tục tới Backblaze B2, và bảo vệ, giới hạn băng thông cùng cảnh báo tăng trưởng đến từ `nas`.
 4. Để **Sao chép các bản sao lưu đã tạo** bật và bấm **Chuyển**.
 
-BombVault sao chép các bản sao lưu ở chế độ nền rồi chuyển thư mục riêng. Trang `nas` liệt kê Containers dưới **Thư mục riêng**, một mục theo phần của nó nêu `nas` là nhà, và bản sao lưu kế tiếp nằm ở đó, với bản sao tới B2 đi ra từ `nas`. Thư mục cũ trên máy chủ này ở yên chỗ, và BombVault không xóa gì ở đó.
+BombVault sao chép các bản sao lưu ở chế độ nền rồi chuyển thư mục riêng. Trang `nas` liệt kê Containers dưới **Thư mục riêng**, một mục theo phần của nó nêu `nas` là nhà, và bản sao lưu kế tiếp nằm ở đó, với bản sao tới B2 đi ra từ `nas`. Từ giờ thẻ **Giữ trong bao lâu** của `nas` sẽ dọn thư mục này. Thư mục cũ trên máy chủ này ở yên chỗ, và BombVault không xóa gì ở đó.
 
 ### Gõ tay một địa chỉ từ xa {#remote-primary-repositories}
 

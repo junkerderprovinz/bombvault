@@ -46,7 +46,9 @@ Cada secção ligada tem uma linha com quatro verificações:
 
 Uma secção só fica verde com factos verificados. Uma cópia neste servidor não conta como externa, e um destino que marcaste com **Aceitar sem proteção contra eliminação** mostra um anel cinzento em vez de um ponto âmbar, por isso a cor da secção segue as suas outras verificações.
 
-Um clique numa secção abre a sua janela com todas as verificações explicadas, as entradas que conta e **Iniciar o restauro de teste** ou **Executar o restauro de teste novamente**.
+Uma secção agendada diz **Ainda sem backup** e fica neutra até chegar a hora da primeira execução. Depois diz **Em atraso** e avisa uma vez. Uma secção sem nada para copiar, porque nenhum agendamento chega às suas entradas, diz **Não agendado** e nunca fica em atraso.
+
+Um clique numa secção abre a sua janela com todas as verificações explicadas, as entradas que conta e **Iniciar o restauro de teste** ou **Executar o restauro de teste novamente**. Diz também **Regra de poda definida** ou **Sem regra de poda**, e a regra de retenção da pasta própria de uma secção conta tanto como as suas regras externas.
 
 ![A janela de proteção da secção Containers com as suas quatro verificações explicadas.](assets/screenshots/overview/protection-window-dark.png#only-dark)
 ![A janela de proteção da secção Containers com as suas quatro verificações explicadas.](assets/screenshots/overview/protection-window-light.png#only-light)

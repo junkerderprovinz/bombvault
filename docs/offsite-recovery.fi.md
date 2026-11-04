@@ -73,7 +73,7 @@ Jokaisella kohteella on oma sivunsa. Se näyttää vain kortit, jotka koskevat k
 - **Yhteys**: **Nimi**, kytkin **Käytettävissä** (pois tarkoittaa, ettei BombVault enää kirjoita tänne, ja merkinnät, jotka varmuuskopioivat tänne, epäonnistuvat selkeällä viestillä sen sijaan, että päätyisivät muualle), kansio, **Pakkaus**, **Tallennusluokka** ja **Toimipaikan ulkopuolella**. **Paikallinen**-kohteessa se listaa kunkin osion kansion kohdassa **Omat kansiot täällä**. **Muuta yhteyttä** testaa ja tallentaa uuden osoitteen tai kirjautumisen. Kun muut paikat kirjautuvat samoilla tallennetuilla tunnuksilla, ikkuna kertoo sen, ja muutos tässä antaa tälle kohteelle omat tunnukset jaettujen uudelleenkirjoittamisen sijaan.
 - **Tunnistetiedot**: mitkä tallennetut tunnukset se käyttää (**Kirjautuu tunnuksilla**), mitkä muut kohteet käyttävät niitä myös (**Käyttää myös**) ja **Muokkaa**, joka avaa tunnusten ikkunan. Katso [Tunnukset](#sign-ins).
 - **rclone.conf**: tämän kohteen osa rclone-määrityksestä, kohteelle, joka kulkee rclonen kautta.
-- **Poistosuoja**, jossa **Poistosuoja (append-only)**, **Hyväksy ilman poistosuojaa**, **Testaa poistosuoja nyt** ja **Kuka karsii**, joka kertoo, karsiiko BombVault kopion ja omat kansiot täällä vai jättääkö se sen vastapuolelle. Paikallinen kansio näyttää tämän kortin vain, kun sillä on suoja, jonka voi kytkeä pois. Katso [Poistosuoja](#delete-protection-append-only).
+- **Poistosuoja**, jossa **Poistosuoja (append-only)**, **Hyväksy ilman poistosuojaa**, **Testaa poistosuoja nyt** ja **Kuka karsii**, joka kertoo, karsiiko BombVault kopion ja omat kansiot täällä, joko tämän kohteen kortin **Kuinka kauan säilytetään** tai osion omien arvojen mukaan kohdassa **Säännöt osioittain**, vai jättääkö se sen vastapuolelle. Paikallinen kansio näyttää tämän kortin vain, kun sillä on suoja, jonka voi kytkeä pois. Katso [Poistosuoja](#delete-protection-append-only).
 - **Kopioi**: **Milloin kopioidaan** sekä **Lähetysraja (KiB/s)** ja **Latausraja (KiB/s)**. Kohde, jossa on vain omia kansioita eikä kopioita, näyttää rajat kortissa nimeltä **Kaistanleveys**.
 - **Kuinka kauan säilytetään**: **Lyhyt**, **Tasapainoinen**, **Pitkä** tai **Omat arvot**, aikajanalla siitä, mitkä varmuuskopiot sääntö säilyttää. Katso [Kuinka kauan säilytetään](#keep).
 - **Jo tämän kohteen alla**: osiot, joiden käsin kirjoitettu osoite on tämän kohteen kansiossa. Haltuunotto jättää arkiston paikalleen. Tunnukset, tallennusluokka ja poistosuoja tulevat sen jälkeen kohteelta. BombVault tarkistaa ensin, että kohteen tunnukset avaavat arkiston, ja kieltäytyy asettamasta append-only-arkistoa kohteen alle, joka ei ole append-only.
@@ -100,10 +100,10 @@ Sääntö säilyttää yhden varmuuskopion päivää, viikkoa, kuukautta ja vuot
 | Esiasetus | Viimeisimmät | Päivät | Viikot | Kuukaudet | Vuodet |
 |---|---|---|---|---|---|
 | **Lyhyt** | 0 | 7 | 4 | 3 | 0 |
-| **Tasapainoinen** | 0 | 7 | 4 | 6 | 1 |
+| **Tasapainoinen** | 0 | 7 | 4 | 6 | 2 |
 | **Pitkä** | 0 | 14 | 8 | 12 | 3 |
 
-**Omat arvot** antaa asettaa viisi lukua itse. 0 kytkee kyseisen luvun pois, ja sääntö, jossa kaikki luvut ovat 0, säilyttää kaiken. Kortin pisteet näyttävät, mitkä 40 esimerkkivarmuuskopiosta sääntö säilyttää, uusin aivan oikealla. Esimerkki on sama jokaiselle kohteelle, koska kuva piirretään ennen kuin BombVault on lukenut siellä olevat varmuuskopiot.
+**Omat arvot** antaa asettaa viisi lukua itse. 0 kytkee kyseisen luvun pois, ja sääntö, jossa kaikki luvut ovat 0, säilyttää kaiken. Kortin pisteet näyttävät, mitkä 40 esimerkkivarmuuskopiosta sääntö säilyttää, uusin aivan oikealla. Esimerkki on sama jokaiselle kohteelle, koska kuva piirretään ennen kuin BombVault on lukenut siellä olevat varmuuskopiot. Se laskee taaksepäin tästä päivästä, joten jäljelle jäävien pisteiden määrä vaihtelee päivämäärän mukaan.
 
 **Kysy ennen vähemmän säilyttämistä** on oletuksena päällä. Se kysyy ennen kuin muutos, joka säilyttää vähemmän varmuuskopioita, tallennetaan, ja kertoo, kuinka monta 40 esimerkkivarmuuskopiosta uusi sääntö poistaa. Se koskee jokaista kohdetta. **Palauta kohteen asetukset** kohdassa **Säännöt osioittain** kysyy saman kysymyksen.
 
@@ -116,7 +116,7 @@ Nähdäksesi, mitä seuraava ajo todella poistaisi, avaa **Esikatselu** kohdassa
 
 #### Esimerkki: mitä Tasapainoinen säilyttää {#example-retention}
 
-Kontista on otettu varmuuskopio joka yö kello 03.00 1. lokakuuta 2025 lähtien, joten keskiviikkona 4. marraskuuta 2026 sillä on 400 varmuuskopiota. Sen kohteeksi on asetettu **Tasapainoinen**: 7 päivää, 4 viikkoa, 6 kuukautta ja 1 vuosi.
+Kontista on otettu varmuuskopio joka yö kello 03.00 1. lokakuuta 2024 lähtien, joten keskiviikkona 4. marraskuuta 2026 sillä on 765 varmuuskopiota. Sen kohteeksi on asetettu **Tasapainoinen**: 7 päivää, 4 viikkoa, 6 kuukautta ja 2 vuotta.
 
 Jokainen luku säilyttää päivänsä, viikkonsa, kuukautensa tai vuotensa uusimman varmuuskopion, ja varmuuskopio, jonka useampi luku valitsee, säilytetään kerran. Viikot kulkevat maanantaista sunnuntaihin:
 
@@ -125,19 +125,19 @@ Jokainen luku säilyttää päivänsä, viikkonsa, kuukautensa tai vuotensa uusi
 | 7 päivää | 4.11., 3.11., 2.11., 1.11., 31.10., 30.10., 29.10. | kaikki 7 |
 | 4 viikkoa | 4.11., 1.11., 25.10., 18.10. | 25.10., 18.10. |
 | 6 kuukautta | 4.11., 31.10., 30.9., 31.8., 31.7., 30.6. | 30.9., 31.8., 31.7., 30.6. |
-| 1 vuosi | 4.11. | ei yhtään |
+| 2 vuotta | 4.11., 31.12.2025 | 31.12.2025 |
 
-Jäljelle jää 13 varmuuskopiota 400:sta. Vanhin on 30. kesäkuulta, joten pääset taaksepäin hieman yli neljä kuukautta. Deduplikoinnin ansiosta ne vievät vain vähän enemmän tilaa kuin yksi täysi varmuuskopio ja siinä välillä muuttunut data.
+Jäljelle jää 14 varmuuskopiota 765:stä. Vanhin on päivältä 31. joulukuuta 2025, joten tänään pääset taaksepäin hieman yli kymmenen kuukautta. Deduplikoinnin ansiosta ne vievät vain vähän enemmän tilaa kuin yksi täysi varmuuskopio ja siinä välillä muuttunut data.
 
-**Vuodet** ansaitsee toisen katseen. Se laskee kalenterivuodet, joissa on varmuuskopio, nykyisestä alkaen, ja tämän vuoden uusin varmuuskopio on tämän päivän. Siksi arvo 1 kohdassa **Vuodet** ei lisää mitään muihin lukuihin, ja tarvitset arvon 2 yltääksesi viime vuoteen. Samat 400 varmuuskopiota muilla esiasetuksilla:
+**Vuodet** ansaitsee toisen katseen. Se laskee kalenterivuodet, joissa on varmuuskopio, nykyisestä alkaen, ja tämän vuoden uusin varmuuskopio on tämän päivän. Ensimmäinen vuosi ei siis lisää mitään muihin lukuihin, ja toinen lisää edellisen vuoden viimeisen varmuuskopion. Siksi säännön ulottuvuus vaihtelee vuoden mittaan. Samat varmuuskopiot kullakin esiasetuksella:
 
-| Esiasetus | Säilytetyt varmuuskopiot | Vanhin varmuuskopio |
-|---|---|---|
-| **Lyhyt** | 10 | 30. syyskuuta 2026 |
-| **Tasapainoinen** | 13 | 30. kesäkuuta 2026 |
-| **Pitkä** | 29 | 31. joulukuuta 2025 |
+| Esiasetus | Tänään säilytetyt varmuuskopiot | Vanhin varmuuskopio tänään | Ulottuvuus vuoden mittaan |
+|---|---|---|---|
+| **Lyhyt** | 10 | 30. syyskuuta 2026 | 1 tai 2 kuukautta |
+| **Tasapainoinen** | 14 | 31. joulukuuta 2025 | noin 4 kuukautta alkukeväällä, koko vuosi 31. joulukuuta |
+| **Pitkä** | 30 | 31. joulukuuta 2024 | 1 vuosi 1. tammikuuta, 2 vuotta 31. joulukuuta |
 
-Siirtyminen arvosta **Tasapainoinen** arvoon **Lyhyt** kysyy ensin, koska **Kysy ennen vähemmän säilyttämistä** on päällä: "Kuvan 40 varmuuskopiosta uusi sääntö poistaa 3, jotka nykyinen säilyttää." Luku tulee kuvan esimerkistä, ei omista varmuuskopioistasi. Tässä se sattuu täsmäämään: 31. elokuuta, 31. heinäkuuta ja 30. kesäkuuta poistuisivat. **Tallenna silti** ottaa säännön käyttöön, ja seuraava karsinta poistaa ne kyseisestä kohteesta lopullisesti.
+Siirtyminen arvosta **Tasapainoinen** arvoon **Lyhyt** kysyy ensin, koska **Kysy ennen vähemmän säilyttämistä** on päällä. Kysymys kertoo, kuinka monta kuvan 40 varmuuskopiosta uusi sääntö poistaa. Luku tulee esimerkistä, joten se vaihtelee päivämäärän mukaan eikä laske omia varmuuskopioitasi. Tämän esimerkin varmuuskopioista 31. elokuuta, 31. heinäkuuta, 30. kesäkuuta ja 31. joulukuuta 2025 poistuisivat. **Tallenna silti** ottaa säännön käyttöön, ja seuraava karsinta poistaa ne kyseisestä kohteesta lopullisesti.
 
 Jos haluat säilyttää konttien varmuuskopioita pidempään kuin muiden tässä kohteessa, paina **Muuta sääntöjä** kohdassa **Säännöt osioittain**, valitse **Kontit** ja aseta **Omat arvot** kohdassa **Säännöt osiolle Kontit**, esimerkiksi 14 päivää, 8 viikkoa, 12 kuukautta ja 2 vuotta. Muut osiot seuraavat yhä kohteen korttia, ja **Palauta kohteen asetukset** tuo Kontit takaisin.
 
@@ -218,7 +218,7 @@ Koska mikään ei karsi tätä kopiota täältä, aseta **Kasvubudjetti (GB, 0 =
 
 Jokaisella osiolla on oma kansio: arkisto, johon sen varmuuskopiot kirjoitetaan ensin. Kopiot muihin kohteisiin lähtevät sieltä. Uusi asennus pitää omat kansiot tällä palvelimella hakemiston `/mnt/user/bombvault` alla, ja yhdessä ne muodostavat **Paikallinen**-kohteen.
 
-Oma kansio voi sijaita myös kohteessa, joka sinulla jo on, kuten NAS:ssa, rest-serverissä tai S3-bucketissa. Osio varmuuskopioi silloin suoraan sinne ilman paikallista kopiota välissä, ja oma kansio noudattaa sen kohteen tunnuksia, poistosuojaa, kaistanleveyden rajoja ja säilytyssääntöjä. Kohde listaa osion kortissaan **Omat kansiot**, ja **Kohteet osioittain** näyttää kohteen osion kotina.
+Oma kansio voi sijaita myös kohteessa, joka sinulla jo on, kuten NAS:ssa, rest-serverissä tai S3-bucketissa. Osio varmuuskopioi silloin suoraan sinne ilman paikallista kopiota välissä, ja oma kansio noudattaa sen kohteen tunnuksia, poistosuojaa ja kaistanleveyden rajoja. BombVault karsii sen jokaisen varmuuskopion jälkeen kohteen kortin **Kuinka kauan säilytetään** mukaan, ja osion omat arvot kohdassa **Säännöt osioittain** menevät kortin edelle. Kohde listaa osion kortissaan **Omat kansiot**, ja **Kohteet osioittain** näyttää kohteen osion kotina.
 
 ### Oman kansion siirtäminen {#move-own-folder}
 
@@ -226,7 +226,7 @@ Oma kansio voi sijaita myös kohteessa, joka sinulla jo on, kuten NAS:ssa, rest-
 2. Valitse osiot kohdassa **Osiot** ja paikka kohdassa **Siirrä kohteeseen**. **Muu paikka** ottaa kansion tällä isännällä tai käsin kirjoitetun etäarkiston osoitteen, tallennetuista tunnuksistasi valittavilla tunnuksilla.
 3. Lue **Mitä tapahtuu**. Se kertoo jokaisesta osiosta, minne uudet varmuuskopiot menevät, muuttuuko uudessa paikassa jo oleva kopio omaksi kansioksi ja mitkä varmuuskopiot kopioidaan ensin.
 4. **Kopioi jo tehdyt varmuuskopiot** on oletuksena päällä. Pois kytkettynä vanhat varmuuskopiot jäävät paikalleen ja ne voi yhä palauttaa sieltä.
-5. Valitse **Vaihda**. Kun varmuuskopiot pitää kopioida ensin, BombVault kopioi ne ja vaihtaa sitten oman kansion. Kun ne ovat jo perillä, se tarkistaa ne ennen vaihtoa.
+5. Valitse **Vaihda**. Kun uuden paikan kortti **Kuinka kauan säilytetään** säilyttää vähemmän kuin osion tämänhetkinen sääntö, BombVault kysyy ensin **Säilytetäänkö vähemmän?** Siinä **Säilytä** tuon osion **nykyiset arvot kohdassa Säännöt osioittain** ottaa tämänhetkiset arvot mukaan, **Tallenna silti** jatkaa, ja **Takaisin** jättää kaiken ennalleen. Kun varmuuskopiot pitää kopioida ensin, BombVault kopioi ne ja vaihtaa sitten oman kansion. Kun ne ovat jo perillä, se tarkistaa ne ennen vaihtoa.
 
 Siirron jälkeen uudet varmuuskopiot menevät siirrettyyn omaan kansioon, myös osiolle, jolla **Paikallinen** oli kytketty pois ja joka varmuuskopioi suoraan kopioon. Kopio, joka oli jo uudessa paikassa, muuttuu omaksi kansioksi, ja sinne kopiointi päättyy. Jos kyseinen kopio piti joitakin varmuuskopioita pidempään kuin osion säilytyssäännöt, osio säilyttää kaiken, minkä jompikumpi sääntö säilyttää, joten mitään ei menetetä.
 
@@ -246,7 +246,7 @@ Cache-pooli täyttyy, ja sinulla on kohde nimeltä `nas`, SMB-jako toisessa laat
 3. Lue **Mitä tapahtuu**. Se kertoo, että Konttien uudet varmuuskopiot menevät `nas`-kohteen kansioon, että Paikallinen-kohteen 61 varmuuskopiota kopioidaan sinne ensin, että kopiot jatkavat Backblaze B2:een ja että suojaus, kaistanleveyden rajat ja kasvuhälytys tulevat `nas`-kohteelta.
 4. Jätä **Kopioi jo tehdyt varmuuskopiot** päälle ja paina **Vaihda**.
 
-BombVault kopioi varmuuskopiot taustalla ja vaihtaa sitten oman kansion. `nas`-sivu listaa Kontit kohdassa **Omat kansiot**, osiotaan seuraava merkintä nimeää `nas`-kohteen kodikseen, ja seuraava varmuuskopio päätyy sinne, ja B2-kopio lähtee `nas`-kohteesta. Vanha kansio tällä palvelimella pysyy paikallaan, eikä BombVault poista siellä mitään.
+BombVault kopioi varmuuskopiot taustalla ja vaihtaa sitten oman kansion. `nas`-sivu listaa Kontit kohdassa **Omat kansiot**, osiotaan seuraava merkintä nimeää `nas`-kohteen kodikseen, ja seuraava varmuuskopio päätyy sinne, ja B2-kopio lähtee `nas`-kohteesta. Tästä lähtien `nas`-kohteen kortti **Kuinka kauan säilytetään** karsii kansion. Vanha kansio tällä palvelimella pysyy paikallaan, eikä BombVault poista siellä mitään.
 
 ### Etäosoitteen kirjoittaminen käsin {#remote-primary-repositories}
 

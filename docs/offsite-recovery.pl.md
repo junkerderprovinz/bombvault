@@ -71,7 +71,7 @@ Każde miejsce docelowe ma własną stronę. Pokazuje tylko te karty, które go 
 - **Połączenie**: **Nazwa**, przełącznik **Dostępne** (wyłączone znaczy, że BombVault już tu nie zapisuje, a elementy kopiujące tu kończą się czytelnym komunikatem zamiast trafiać gdzie indziej), folder, **Kompresja**, **Klasa magazynu** i **Poza lokalizacją**. W miejscu **Lokalne** wymienia folder każdej sekcji w **Własne foldery tutaj**. **Zmień połączenie** testuje i zapisuje nowy adres lub logowanie. Gdy inne miejsca logują się tymi samymi zapisanymi danymi, okno o tym mówi, a zmiana tutaj daje temu miejscu własne dane logowania zamiast przepisywać wspólne.
 - **Dane logowania**: z których zapisanych danych korzysta (**Loguje się przez**), które inne miejsca używają ich też (**Używane też przez**) oraz **Edytuj**, co otwiera okno logowania. Zobacz [Dane logowania](#sign-ins).
 - **rclone.conf**: część konfiguracji rclone tego miejsca, dla miejsca działającego przez rclone.
-- **Ochrona przed usunięciem**, z **Ochrona przed usunięciem (append-only)**, **Akceptuj bez ochrony przed usunięciem**, **Przetestuj ochronę przed usunięciem teraz** i **Kto przycina**, co mówi, czy BombVault przycina tu kopię i własne foldery, czy zostawia to drugiej stronie. Folder lokalny pokazuje tę kartę tylko wtedy, gdy ma ochronę, którą można wyłączyć. Zobacz [Ochrona przed usunięciem](#delete-protection-append-only).
+- **Ochrona przed usunięciem**, z **Ochrona przed usunięciem (append-only)**, **Akceptuj bez ochrony przed usunięciem**, **Przetestuj ochronę przed usunięciem teraz** i **Kto przycina**, co mówi, czy BombVault przycina tu kopię i własne foldery, według karty **Jak długo przechowywać** tego miejsca albo własnych wartości sekcji w **Reguły według sekcji**, czy zostawia to drugiej stronie. Folder lokalny pokazuje tę kartę tylko wtedy, gdy ma ochronę, którą można wyłączyć. Zobacz [Ochrona przed usunięciem](#delete-protection-append-only).
 - **Kopiuj**: **Kiedy kopiować** oraz **Limit wysyłania (KiB/s)** i **Limit pobierania (KiB/s)**. Miejsce, które ma tylko własne foldery i żadnych kopii, pokazuje limity jako kartę **Przepustowość**.
 - **Jak długo przechowywać**: **Krótko**, **Zrównoważone**, **Długo** albo **Własne wartości**, z osią czasu pokazującą, które kopie reguła zachowuje. Zobacz [Jak długo przechowywać](#keep).
 - **Już pod tym miejscem docelowym**: sekcje, których wpisany ręcznie adres leży w folderze tego miejsca. Przejęcie jednej zostawia repozytorium tam, gdzie jest. Logowanie, klasa magazynu i ochrona przed usunięciem pochodzą wtedy z miejsca. BombVault najpierw sprawdza, czy logowanie miejsca otwiera repozytorium, i odmawia umieszczenia repozytorium append-only pod miejscem, które nie jest append-only.
@@ -98,10 +98,10 @@ Reguła zachowuje jedną kopię na dzień, tydzień, miesiąc i rok, tak daleko 
 | Ustawienie | Najnowsze kopie | Dni | Tygodnie | Miesiące | Lata |
 |---|---|---|---|---|---|
 | **Krótko** | 0 | 7 | 4 | 3 | 0 |
-| **Zrównoważone** | 0 | 7 | 4 | 6 | 1 |
+| **Zrównoważone** | 0 | 7 | 4 | 6 | 2 |
 | **Długo** | 0 | 14 | 8 | 12 | 3 |
 
-**Własne wartości** pozwalają ustawić pięć liczb samodzielnie. 0 wyłącza daną liczbę, a reguła ze wszystkimi zerami zachowuje wszystko. Kropki na karcie pokazują, które z 40 przykładowych kopii reguła zachowuje, z najnowszą po prawej. Przykład jest taki sam dla każdego miejsca, bo obrazek powstaje, zanim BombVault przeczyta tamtejsze kopie.
+**Własne wartości** pozwalają ustawić pięć liczb samodzielnie. 0 wyłącza daną liczbę, a reguła ze wszystkimi zerami zachowuje wszystko. Kropki na karcie pokazują, które z 40 przykładowych kopii reguła zachowuje, z najnowszą po prawej. Przykład jest taki sam dla każdego miejsca, bo obrazek powstaje, zanim BombVault przeczyta tamtejsze kopie. Liczy on wstecz od dzisiaj, więc to, ile kropek zostaje, zmienia się wraz z datą.
 
 **Pytaj przed zachowaniem mniej**, domyślnie włączone, pyta przed zapisaniem zmiany, która zachowuje mniej kopii, i mówi, ile z 40 przykładowych kopii nowa reguła usuwa. Dotyczy każdego miejsca docelowego. **Przywróć ustawienia miejsca docelowego** w **Reguły według sekcji** zadaje to samo pytanie.
 
@@ -114,7 +114,7 @@ Aby zobaczyć, co następne uruchomienie naprawdę usunie, otwórz **Podgląd** 
 
 #### Przykład: co zachowuje Zrównoważone {#example-retention}
 
-Kontener jest kopiowany co noc o 03:00 od 1 października 2025, więc w środę 4 listopada 2026 ma 400 kopii. Jego miejsce docelowe jest ustawione na **Zrównoważone**: 7 dni, 4 tygodnie, 6 miesięcy i 1 rok.
+Kontener jest kopiowany co noc o 03:00 od 1 października 2024, więc w środę 4 listopada 2026 ma 765 kopii. Jego miejsce docelowe jest ustawione na **Zrównoważone**: 7 dni, 4 tygodnie, 6 miesięcy i 2 lata.
 
 Każda liczba zachowuje najnowszą kopię swojego dnia, tygodnia, miesiąca lub roku, a kopia wybrana przez kilka liczb jest zachowana raz. Tygodnie biegną od poniedziałku do niedzieli:
 
@@ -123,19 +123,19 @@ Każda liczba zachowuje najnowszą kopię swojego dnia, tygodnia, miesiąca lub 
 | 7 dni | 4 lis, 3 lis, 2 lis, 1 lis, 31 paź, 30 paź, 29 paź | wszystkie 7 |
 | 4 tygodnie | 4 lis, 1 lis, 25 paź, 18 paź | 25 paź, 18 paź |
 | 6 miesięcy | 4 lis, 31 paź, 30 wrz, 31 sie, 31 lip, 30 cze | 30 wrz, 31 sie, 31 lip, 30 cze |
-| 1 rok | 4 lis | żadnej |
+| 2 lata | 4 lis, 31 gru 2025 | 31 gru 2025 |
 
-Zostaje 13 kopii z 400. Najstarsza pochodzi z 30 czerwca, więc możesz cofnąć się nieco ponad cztery miesiące. Dzięki deduplikacji zajmują niewiele więcej miejsca niż jedna pełna kopia plus to, co zmieniło się po drodze.
+Zostaje 14 kopii z 765. Najstarsza pochodzi z 31 grudnia 2025, więc dziś możesz cofnąć się nieco ponad dziesięć miesięcy. Dzięki deduplikacji zajmują niewiele więcej miejsca niż jedna pełna kopia plus to, co zmieniło się po drodze.
 
-**Lata** zasługują na drugie spojrzenie. Liczą lata kalendarzowe, w których jest kopia, zaczynając od bieżącego, a najnowszą kopią tego roku jest dzisiejsza. Dlatego 1 w **Lata** nie dodaje niczego do pozostałych liczb i potrzebujesz 2, żeby sięgnąć do zeszłego roku. Te same 400 kopii przy pozostałych ustawieniach:
+**Lata** zasługują na drugie spojrzenie. Liczą lata kalendarzowe, w których jest kopia, zaczynając od bieżącego, a najnowszą kopią tego roku jest dzisiejsza. Dlatego pierwszy rok nie dodaje niczego do pozostałych liczb, a drugi dodaje ostatnią kopię poprzedniego roku. To dlatego zasięg reguły zmienia się w ciągu roku. Te same kopie przy każdym ustawieniu:
 
-| Ustawienie | Zachowane kopie | Najstarsza kopia |
-|---|---|---|
-| **Krótko** | 10 | 30 września 2026 |
-| **Zrównoważone** | 13 | 30 czerwca 2026 |
-| **Długo** | 29 | 31 grudnia 2025 |
+| Ustawienie | Zachowane kopie dziś | Najstarsza kopia dziś | Zasięg w ciągu roku |
+|---|---|---|---|
+| **Krótko** | 10 | 30 września 2026 | od 1 do 2 miesięcy |
+| **Zrównoważone** | 14 | 31 grudnia 2025 | około 4 miesięcy wczesną wiosną, pełny rok 31 grudnia |
+| **Długo** | 30 | 31 grudnia 2024 | 1 rok 1 stycznia, 2 lata 31 grudnia |
 
-Przejście ze **Zrównoważone** na **Krótko** najpierw pyta, z powodu **Pytaj przed zachowaniem mniej**: „Z 40 kopii na obrazku nowa reguła usuwa 3, które obecna zachowuje.” Liczba pochodzi z przykładu na obrazku, a nie z Twoich własnych kopii. Tu akurat się zgadza: zniknęłyby 31 sierpnia, 31 lipca i 30 czerwca. **Zapisz mimo to** stosuje regułę, a następne przycinanie usuwa je z tego miejsca na stałe.
+Przejście ze **Zrównoważone** na **Krótko** najpierw pyta, z powodu **Pytaj przed zachowaniem mniej**. Pytanie mówi, ile z 40 kopii na obrazku nowa reguła usuwa. Ta liczba pochodzi z przykładowych kopii, więc zmienia się wraz z datą i nie obejmuje Twoich własnych kopii. Spośród kopii z tego przykładu zniknęłyby 31 sierpnia, 31 lipca, 30 czerwca i 31 grudnia 2025. **Zapisz mimo to** stosuje regułę, a następne przycinanie usuwa je z tego miejsca na stałe.
 
 Aby w tym miejscu trzymać kontenery dłużej niż resztę, naciśnij **Zmień reguły** w **Reguły według sekcji**, wybierz **Containers** i ustaw **Własne wartości** w **Reguły dla Containers**, na przykład 14 dni, 8 tygodni, 12 miesięcy i 2 lata. Pozostałe sekcje nadal podążają za kartą miejsca, a **Przywróć ustawienia miejsca docelowego** przywraca Containers.
 
@@ -216,7 +216,7 @@ Ponieważ nic stąd nie przycina tej kopii, ustaw **Budżet wzrostu (GB, 0 = wy�
 
 Każda sekcja ma własny folder: repozytorium, do którego jej kopie są zapisywane najpierw. Stamtąd wychodzą kopie do innych miejsc docelowych. Nowa instalacja trzyma własne foldery na tym serwerze, pod `/mnt/user/bombvault`, i razem tworzą one miejsce docelowe **Lokalne**.
 
-Własny folder może też leżeć w miejscu docelowym, które już masz, takim jak NAS, rest-server albo koszyk S3. Sekcja kopiuje wtedy tam bezpośrednio, bez lokalnej kopii pośrodku, a własny folder podąża za logowaniem, ochroną przed usunięciem, limitami przepustowości i regułami przechowywania tego miejsca. Miejsce wymienia sekcję w swojej karcie **Własne foldery**, a **Miejsca docelowe według sekcji** pokazuje je jako dom sekcji.
+Własny folder może też leżeć w miejscu docelowym, które już masz, takim jak NAS, rest-server albo koszyk S3. Sekcja kopiuje wtedy tam bezpośrednio, bez lokalnej kopii pośrodku, a własny folder podąża za logowaniem, ochroną przed usunięciem i limitami przepustowości tego miejsca. BombVault przycina go po każdej kopii według karty **Jak długo przechowywać** tego miejsca, a własne wartości sekcji w **Reguły według sekcji** mają pierwszeństwo przed kartą. Miejsce wymienia sekcję w swojej karcie **Własne foldery**, a **Miejsca docelowe według sekcji** pokazuje je jako dom sekcji.
 
 ### Przenoszenie własnego folderu {#move-own-folder}
 
@@ -224,7 +224,7 @@ Własny folder może też leżeć w miejscu docelowym, które już masz, takim j
 2. Wybierz sekcje w **Sekcje** i miejsce w **Przenieś do**. **Inne miejsce** przyjmuje folder na tym hoście albo ręcznie wpisany adres zdalnego repozytorium, z logowaniem spośród Twoich zapisanych danych logowania.
 3. Przeczytaj **Co się stanie**. Dla każdej sekcji mówi, dokąd trafiają nowe kopie, czy kopia, która już jest w nowym miejscu, staje się własnym folderem, i które kopie są najpierw kopiowane.
 4. **Skopiuj już wykonane kopie zapasowe** jest domyślnie włączone. Po wyłączeniu stare kopie zostają tam, gdzie są, i nadal można z nich przywracać.
-5. Wybierz **Przełącz**. Gdy kopie trzeba najpierw skopiować, BombVault je kopiuje, a potem przełącza własny folder. Gdy już tam są, sprawdza je przed przełączeniem.
+5. Wybierz **Przełącz**. Gdy karta **Jak długo przechowywać** nowego miejsca zachowuje mniej niż dzisiejsza reguła sekcji, BombVault najpierw pyta **Zachować mniej?** Tam **Zachowaj obecne wartości dla** tej sekcji **w Reguły według sekcji** przenosi dzisiejsze wartości, **Zapisz mimo to** idzie dalej, a **Wstecz** zostawia wszystko tak, jak było. Gdy kopie trzeba najpierw skopiować, BombVault je kopiuje, a potem przełącza własny folder. Gdy już tam są, sprawdza je przed przełączeniem.
 
 Po przeniesieniu nowe kopie trafiają do przeniesionego własnego folderu, także dla sekcji, która miała **Lokalne** wyłączone i kopiowała prosto do kopii. Kopia, która już leżała w nowym miejscu, staje się własnym folderem, a kopiowanie tam się kończy. Gdy ta kopia trzymała niektóre kopie dłużej niż reguły przechowywania sekcji, sekcja zachowuje to, co zachowuje którakolwiek z reguł, więc żadna nie przepada.
 
@@ -244,7 +244,7 @@ Pula cache się zapełnia, a Ty masz miejsce docelowe o nazwie `nas`, udział SM
 3. Przeczytaj **Co się stanie**. Mówi, że nowe kopie Containers trafiają do folderu na `nas`, że 61 kopii z Lokalne jest tam najpierw kopiowanych, że kopiowanie do Backblaze B2 trwa nadal i że ochrona, limity przepustowości i alarm wzrostu pochodzą z `nas`.
 4. Zostaw **Skopiuj już wykonane kopie zapasowe** włączone i naciśnij **Przełącz**.
 
-BombVault kopiuje kopie w tle, a potem przełącza własny folder. Strona `nas` wymienia Containers w **Własne foldery**, element, który podąża za swoją sekcją, podaje `nas` jako swój dom, a następna kopia ląduje tam, z kopiowaniem do B2 wychodzącym z `nas`. Stary folder na tym serwerze zostaje tam, gdzie jest, i BombVault niczego tam nie usuwa.
+BombVault kopiuje kopie w tle, a potem przełącza własny folder. Strona `nas` wymienia Containers w **Własne foldery**, element, który podąża za swoją sekcją, podaje `nas` jako swój dom, a następna kopia ląduje tam, z kopiowaniem do B2 wychodzącym z `nas`. Od teraz folder przycina karta **Jak długo przechowywać** miejsca `nas`. Stary folder na tym serwerze zostaje tam, gdzie jest, i BombVault niczego tam nie usuwa.
 
 ### Ręczne wpisanie zdalnego adresu {#remote-primary-repositories}
 

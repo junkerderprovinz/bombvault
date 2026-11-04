@@ -81,7 +81,7 @@ Das Gerät heißt BombVault oder BombVault mit dem Instanznamen in Klammern und 
 
 | Entität | Was sie zeigt |
 |---|---|
-| Status | `ok`, `warning`, `failed` oder `off`, der schlechteste der eingeschalteten Domains |
+| Status | `ok`, `warning`, `failed` oder `off`, der schlechteste der eingeschalteten Domains. Eine Domain, die auf ihre erste Sicherung wartet, zählt erst, wenn diese Sicherung fällig war, und nur eine aktuelle Domain ergibt den Status `ok` |
 | Running job | Was gerade läuft, oder `idle` |
 | Open anomalies | Wie viele Anomalien offen sind |
 | Next scheduled backup | Wann die nächste geplante Sicherung startet |

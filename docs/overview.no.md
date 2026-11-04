@@ -46,7 +46,9 @@ Hvert område som er slått på har en rad med fire kontroller:
 
 Et område er grønt bare på bekreftede fakta. En kopi på denne serveren regnes ikke som off-site, og et mål du merket **Godta uten beskyttelse mot sletting** viser en grå ring i stedet for en gul prikk, så områdets farge følger de andre kontrollene.
 
-Et klikk på et område åpner vinduet med alle kontrollene forklart, elementene det teller og **Start testgjenoppretting** eller **Kjør testgjenoppretting på nytt**.
+Et planlagt område viser **Ingen sikkerhetskopi ennå** og forblir nøytralt til tidspunktet for den første kjøringen er nådd. Etter det står det **Forfalt**, og det varsler én gang. Et område uten noe å sikkerhetskopiere, fordi ingen tidsplan når noen av elementene, viser **Ikke planlagt** og er aldri forfalt.
+
+Et klikk på et område åpner vinduet med alle kontrollene forklart, elementene det teller og **Start testgjenoppretting** eller **Kjør testgjenoppretting på nytt**. Det viser også **Beskjæringsregel satt** eller **Ingen beskjæringsregel**, og oppbevaringsregelen for et områdes egen mappe teller like mye som off-site-reglene.
 
 ![Beskyttelsesvinduet for området Kontainere med de fire kontrollene forklart.](assets/screenshots/overview/protection-window-dark.png#only-dark)
 ![Beskyttelsesvinduet for området Kontainere med de fire kontrollene forklart.](assets/screenshots/overview/protection-window-light.png#only-light)

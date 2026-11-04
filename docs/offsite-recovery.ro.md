@@ -73,7 +73,7 @@ Fiecare destinație are o pagină proprie. Ea arată doar cardurile care se apli
 - **Conexiune**: **Nume**, comutatorul **Disponibil** (oprit înseamnă că BombVault nu mai scrie aici, iar elementele care se salvează aici eșuează cu un mesaj clar în loc să ajungă în altă parte), folderul, **Comprimare**, **Clasă de stocare** și **În afara sediului**. Pe destinația **Local** listează folderul fiecărei secțiuni la **Dosare proprii aici**. **Schimbă conexiunea** testează și salvează o adresă sau o autentificare nouă. Când alte locuri se autentifică cu aceeași autentificare salvată, fereastra spune asta, iar o schimbare de aici dă acestei destinații o autentificare proprie, în loc să rescrie pe cea partajată.
 - **Credențiale**: ce autentificare salvată folosește (**Se autentifică cu**), ce alte destinații o mai folosesc (**Folosită și de**) și **Editează**, care deschide fereastra autentificării. Vezi [Autentificări](#sign-ins).
 - **rclone.conf**: secțiunea acestei destinații din configurația rclone, pentru o destinație care rulează prin rclone.
-- **Protecție împotriva ștergerii**, cu **Protecție împotriva ștergerii (append-only)**, **Acceptă fără protecție împotriva ștergerii**, **Testează acum protecția împotriva ștergerii** și **Cine curăță**, care spune dacă BombVault curăță copia și dosarele proprii de aici sau lasă asta în seama părții îndepărtate. Un folder local arată acest card doar când are o protecție pe care o poți opri. Vezi [Protecție împotriva ștergerii](#delete-protection-append-only).
+- **Protecție împotriva ștergerii**, cu **Protecție împotriva ștergerii (append-only)**, **Acceptă fără protecție împotriva ștergerii**, **Testează acum protecția împotriva ștergerii** și **Cine curăță**, care spune dacă BombVault curăță copia și dosarele proprii de aici, după cardul **Cât timp se păstrează** al acestei destinații sau după valorile proprii ale unei secțiuni de la **Reguli pe secțiuni**, sau lasă asta în seama părții îndepărtate. Un folder local arată acest card doar când are o protecție pe care o poți opri. Vezi [Protecție împotriva ștergerii](#delete-protection-append-only).
 - **Copiază**: **Când se copiază**, **Limită încărcare (KiB/s)** și **Limită descărcare (KiB/s)**. O destinație care ține doar dosare proprii și nicio copie arată limitele într-un card numit **Lățime de bandă**.
 - **Cât timp se păstrează**: **Scurt**, **Echilibrat**, **Lung** sau **Valori proprii**, cu o axă a timpului a copiilor pe care le păstrează regula. Vezi [Cât timp se păstrează](#keep).
 - **Deja sub această destinație**: secțiuni a căror adresă tastată manual se află într-un folder al acestei destinații. Preluarea uneia lasă depozitul unde este. Autentificarea, clasa de stocare și protecția la ștergere vin apoi de la destinație. BombVault verifică întâi dacă autentificarea destinației deschide depozitul și refuză să pună un depozit append-only sub o destinație care nu este append-only.
@@ -100,10 +100,10 @@ O regulă păstrează o copie pe zi, pe săptămână, pe lună și pe an, cât 
 | Presetare | Ultimele copii | Zile | Săptămâni | Luni | Ani |
 |---|---|---|---|---|---|
 | **Scurt** | 0 | 7 | 4 | 3 | 0 |
-| **Echilibrat** | 0 | 7 | 4 | 6 | 1 |
+| **Echilibrat** | 0 | 7 | 4 | 6 | 2 |
 | **Lung** | 0 | 14 | 8 | 12 | 3 |
 
-**Valori proprii** îți lasă să stabilești singur cele cinci numere. Un 0 oprește acel număr, iar o regulă cu toate numerele pe 0 păstrează tot. Punctele din card arată care dintre 40 de copii eșantion le păstrează o regulă, cea mai nouă fiind în dreapta de tot. Eșantionul este același pentru fiecare destinație, pentru că imaginea se desenează înainte ca BombVault să fi citit copiile de acolo.
+**Valori proprii** îți lasă să stabilești singur cele cinci numere. Un 0 oprește acel număr, iar o regulă cu toate numerele pe 0 păstrează tot. Punctele din card arată care dintre 40 de copii eșantion le păstrează o regulă, cea mai nouă fiind în dreapta de tot. Eșantionul este același pentru fiecare destinație, pentru că imaginea se desenează înainte ca BombVault să fi citit copiile de acolo. Numără înapoi de azi, așa că numărul punctelor care rămân se schimbă odată cu data.
 
 **Întreabă înainte de a păstra mai puțin**, pornit implicit, întreabă înainte să se salveze o schimbare care păstrează mai puține copii și spune câte dintre cele 40 de copii eșantion le elimină regula nouă. Se aplică fiecărei destinații. **Revino la destinație** de la **Reguli pe secțiuni** pune aceeași întrebare.
 
@@ -116,7 +116,7 @@ Ca să vezi ce ar șterge cu adevărat următoarea rulare, deschide **Previzuali
 
 #### Exemplu: ce păstrează Echilibrat {#example-retention}
 
-Un container este salvat în fiecare noapte la 03:00 din 1 octombrie 2025, așa că miercuri, 4 noiembrie 2026, are 400 de copii. Destinația lui este pe **Echilibrat**: 7 zile, 4 săptămâni, 6 luni și 1 an.
+Un container este salvat în fiecare noapte la 03:00 din 1 octombrie 2024, așa că miercuri, 4 noiembrie 2026, are 765 de copii. Destinația lui este pe **Echilibrat**: 7 zile, 4 săptămâni, 6 luni și 2 ani.
 
 Fiecare număr păstrează cea mai nouă copie a zilei, săptămânii, lunii sau anului lui, iar o copie pe care o aleg mai multe numere se păstrează o singură dată. Săptămânile merg de luni până duminică:
 
@@ -125,19 +125,19 @@ Fiecare număr păstrează cea mai nouă copie a zilei, săptămânii, lunii sau
 | 7 zile | 4 nov, 3 nov, 2 nov, 1 nov, 31 oct, 30 oct, 29 oct | toate 7 |
 | 4 săptămâni | 4 nov, 1 nov, 25 oct, 18 oct | 25 oct, 18 oct |
 | 6 luni | 4 nov, 31 oct, 30 sep, 31 aug, 31 iul, 30 iun | 30 sep, 31 aug, 31 iul, 30 iun |
-| 1 an | 4 nov | niciuna |
+| 2 ani | 4 nov, 31 dec 2025 | 31 dec 2025 |
 
-Rămân 13 copii din 400. Cea mai veche este din 30 iunie, deci te poți întoarce puțin peste patru luni. Datorită deduplicării ocupă puțin mai mult decât o copie completă plus ce s-a schimbat între timp.
+Rămân 14 copii din 765. Cea mai veche este din 31 decembrie 2025, deci azi te poți întoarce puțin peste zece luni. Datorită deduplicării ocupă puțin mai mult decât o copie completă plus ce s-a schimbat între timp.
 
-**Ani** merită o a doua privire. Numără anii calendaristici în care există o copie, începând cu cel curent, iar cea mai nouă copie din acest an este cea de azi. Așadar un 1 la **Ani** nu adaugă nimic la celelalte numere, și ai nevoie de un 2 ca să ajungi în anul trecut. Aceleași 400 de copii cu celelalte presetări:
+**Ani** merită o a doua privire. Numără anii calendaristici în care există o copie, începând cu cel curent, iar cea mai nouă copie din acest an este cea de azi. Așadar primul an nu adaugă nimic la celelalte numere, iar al doilea adaugă ultima copie din anul precedent. De aceea acoperirea unei reguli variază pe parcursul anului. Aceleași copii cu fiecare presetare:
 
-| Presetare | Copii păstrate | Cea mai veche copie |
-|---|---|---|
-| **Scurt** | 10 | 30 septembrie 2026 |
-| **Echilibrat** | 13 | 30 iunie 2026 |
-| **Lung** | 29 | 31 decembrie 2025 |
+| Presetare | Copii păstrate azi | Cea mai veche copie azi | Acoperire pe parcursul anului |
+|---|---|---|---|
+| **Scurt** | 10 | 30 septembrie 2026 | 1 până la 2 luni |
+| **Echilibrat** | 14 | 31 decembrie 2025 | circa 4 luni la începutul primăverii, un an întreg pe 31 decembrie |
+| **Lung** | 30 | 31 decembrie 2024 | 1 an pe 1 ianuarie, 2 ani pe 31 decembrie |
 
-Trecerea de la **Echilibrat** la **Scurt** întreabă mai întâi, din cauza **Întreabă înainte de a păstra mai puțin**: „Din cele 40 de copii din imagine, regula nouă elimină 3 pe care cea actuală le păstrează.” Numărul vine din eșantionul din imagine, nu din copiile tale. Aici se potrivește întâmplător: 31 august, 31 iulie și 30 iunie ar dispărea. **Salvează oricum** aplică regula, iar următoarea curățare le șterge definitiv de la acea destinație.
+Trecerea de la **Echilibrat** la **Scurt** întreabă mai întâi, din cauza **Întreabă înainte de a păstra mai puțin**. Întrebarea spune câte dintre cele 40 de copii din imagine le elimină regula nouă. Numărul vine din eșantion, așa că se schimbă odată cu data și nu ține cont de copiile tale. Dintre copiile din acest exemplu, ar dispărea 31 august, 31 iulie, 30 iunie și 31 decembrie 2025. **Salvează oricum** aplică regula, iar următoarea curățare le șterge definitiv de la acea destinație.
 
 Ca să ții containerele mai mult decât restul la această destinație, apasă **Schimbă regulile** la **Reguli pe secțiuni**, alege **Containere** și setează **Valori proprii** în **Reguli pentru Containere**, de exemplu 14 zile, 8 săptămâni, 12 luni și 2 ani. Celelalte secțiuni urmează în continuare cardul destinației, iar **Revino la destinație** readuce Containerele.
 
@@ -218,7 +218,7 @@ Pentru că nimic nu curăță această copie de aici, setează **Buget de creșt
 
 Fiecare secțiune are un dosar propriu: depozitul în care i se scriu mai întâi copiile. Copiile spre alte destinații pleacă de acolo. O instalare nouă ține dosarele proprii pe acest server, sub `/mnt/user/bombvault`, iar împreună ele formează destinația **Local**.
 
-Un dosar propriu poate sta și într-o destinație pe care o ai deja, de exemplu un NAS, un rest-server sau un bucket S3. Secțiunea se salvează atunci direct acolo, fără o copie locală între ele, iar dosarul propriu urmează autentificarea, protecția la ștergere, limitele de lățime de bandă și regulile de păstrare ale acelei destinații. Destinația listează secțiunea în cardul ei **Dosare proprii**, iar **Destinații pe secțiuni** arată destinația ca fiind casa secțiunii.
+Un dosar propriu poate sta și într-o destinație pe care o ai deja, de exemplu un NAS, un rest-server sau un bucket S3. Secțiunea se salvează atunci direct acolo, fără o copie locală între ele, iar dosarul propriu urmează autentificarea, protecția la ștergere și limitele de lățime de bandă ale acelei destinații. BombVault îl curăță după fiecare copie conform cardului **Cât timp se păstrează** al destinației, iar valorile proprii ale unei secțiuni de la **Reguli pe secțiuni** au prioritate față de card. Destinația listează secțiunea în cardul ei **Dosare proprii**, iar **Destinații pe secțiuni** arată destinația ca fiind casa secțiunii.
 
 ### Mutarea unui dosar propriu {#move-own-folder}
 
@@ -226,7 +226,7 @@ Un dosar propriu poate sta și într-o destinație pe care o ai deja, de exemplu
 2. Alege secțiunile la **Secțiuni** și locul la **Mută în**. **Alt loc** primește un folder de pe această gazdă sau adresa unui depozit la distanță tastată manual, cu o autentificare dintre cele salvate.
 3. Citește **Ce se întâmplă**. Pentru fiecare secțiune spune unde merg copiile noi, dacă o copie care se află deja la noul loc devine dosarul propriu și ce copii se copiază mai întâi.
 4. **Copiază copiile de rezervă deja făcute** este pornit implicit. Dacă îl oprești, copiile vechi rămân unde sunt și pot fi restaurate în continuare de acolo.
-5. Alege **Comută**. Când copiile trebuie copiate întâi, BombVault le copiază și apoi comută dosarul propriu. Când sunt deja acolo, le verifică înainte de comutare.
+5. Alege **Comută**. Când cardul **Cât timp se păstrează** al noului loc păstrează mai puțin decât regula de azi a secțiunii, BombVault întreabă mai întâi **Păstrezi mai puțin?** Acolo, **Păstrează valorile actuale pentru** acea secțiune **la Reguli pe secțiuni** preia valorile de azi, **Salvează oricum** merge mai departe, iar **Înapoi** lasă totul cum era. Când copiile trebuie copiate întâi, BombVault le copiază și apoi comută dosarul propriu. Când sunt deja acolo, le verifică înainte de comutare.
 
 După mutare, copiile noi merg în dosarul propriu mutat, și pentru o secțiune care avea **Local** oprit și se salva direct într-o copie. O copie care stătea deja la noul loc devine dosarul propriu, iar copierea acolo se încheie. Acolo unde acea copie păstra unele copii mai mult decât regulile de păstrare ale secțiunii, secțiunea păstrează tot ce păstrează oricare dintre reguli, așa că nu se pierde niciuna.
 
@@ -246,7 +246,7 @@ Pool-ul cache se umple, iar tu ai o destinație numită `nas`, o partajare SMB p
 3. Citește **Ce se întâmplă**. Spune că copiile noi ale Containerelor merg în folderul de pe `nas`, că cele 61 de copii din Local se copiază mai întâi acolo, că copierile spre Backblaze B2 continuă și că protecția, limitele de lățime de bandă și alarma de creștere vin de la `nas`.
 4. Lasă pornit **Copiază copiile de rezervă deja făcute** și apasă **Comută**.
 
-BombVault copiază copiile în fundal și apoi comută dosarul propriu. Pagina `nas` listează Containerele la **Dosare proprii**, un element care urmează secțiunea lui numește `nas` ca locuință, iar următoarea copie ajunge acolo, cu copierea spre B2 pornind de pe `nas`. Vechiul folder de pe acest server rămâne unde este, iar BombVault nu șterge nimic acolo.
+BombVault copiază copiile în fundal și apoi comută dosarul propriu. Pagina `nas` listează Containerele la **Dosare proprii**, un element care urmează secțiunea lui numește `nas` ca locuință, iar următoarea copie ajunge acolo, cu copierea spre B2 pornind de pe `nas`. De acum înainte, cardul **Cât timp se păstrează** al `nas` curăță dosarul. Vechiul folder de pe acest server rămâne unde este, iar BombVault nu șterge nimic acolo.
 
 ### Tastarea manuală a unei adrese la distanță {#remote-primary-repositories}
 

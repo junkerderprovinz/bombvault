@@ -73,7 +73,7 @@ Elke bestemming heeft een eigen pagina. Ze toont alleen de kaarten die voor die 
 - **Verbinding**: de **Naam**, de schakelaar **Beschikbaar** (uit betekent dat BombVault hier niet meer schrijft, en items die hierheen back-uppen mislukken met een duidelijke melding in plaats van elders terecht te komen), de map, **Compressie**, **Opslagklasse** en **Buiten de locatie**. Op de bestemming **Lokaal** toont ze de map van elk onderdeel onder **Eigen mappen hier**. **Verbinding wijzigen** test en bewaart een nieuw adres of nieuwe inloggegevens. Melden andere plekken zich met dezelfde opgeslagen inloggegevens aan, dan zegt het venster dat, en een wijziging hier geeft deze bestemming eigen inloggegevens in plaats van de gedeelde te herschrijven.
 - **Inloggegevens**: welke opgeslagen inloggegevens ze gebruikt (**Logt in met**), welke andere bestemmingen ze ook gebruiken (**Ook gebruikt door**) en **Bewerken**, dat het venster met de inloggegevens opent. Zie [Inloggegevens](#sign-ins).
 - **rclone.conf**: het deel van de rclone-configuratie van deze bestemming, voor een bestemming die via rclone loopt.
-- **Bescherming tegen verwijderen**, met **Bescherming tegen verwijderen (append-only)**, **Accepteren zonder bescherming tegen verwijderen**, **Bescherming tegen verwijderen nu testen** en **Wie pruned**, wat zegt of BombVault de kopie en de eigen mappen hier opschoont of dat aan de andere kant overlaat. Een lokale map toont deze kaart alleen als ze een bescherming heeft die je kunt uitschakelen. Zie [Bescherming tegen verwijderen](#delete-protection-append-only).
+- **Bescherming tegen verwijderen**, met **Bescherming tegen verwijderen (append-only)**, **Accepteren zonder bescherming tegen verwijderen**, **Bescherming tegen verwijderen nu testen** en **Wie pruned**, wat zegt of BombVault de kopie en de eigen mappen hier opschoont, volgens de kaart **Hoe lang bewaren** van deze bestemming of de eigen waarden van een onderdeel onder **Regels per onderdeel**, of dat aan de andere kant overlaat. Een lokale map toont deze kaart alleen als ze een bescherming heeft die je kunt uitschakelen. Zie [Bescherming tegen verwijderen](#delete-protection-append-only).
 - **Kopiëren**: **Wanneer kopiëren**, en de **Uploadlimiet (KiB/s)** en **Downloadlimiet (KiB/s)**. Een bestemming die alleen eigen mappen en geen kopieën bevat, toont de limieten als een kaart genaamd **Bandbreedte**.
 - **Hoe lang bewaren**: **Kort**, **Gebalanceerd**, **Lang** of **Eigen waarden**, met een tijdlijn van welke back-ups de regel bewaart. Zie [Hoe lang bewaren](#keep).
 - **Staat al onder deze bestemming**: onderdelen waarvan het met de hand getypte adres in een map van deze bestemming ligt. Er een overnemen laat het repository waar het is. Aanmelding, opslagklasse en bescherming tegen verwijderen komen dan van de bestemming. BombVault controleert eerst dat de inloggegevens van de bestemming het repository openen, en weigert een append-only-repository onder een bestemming te zetten die niet append-only is.
@@ -100,10 +100,10 @@ Een regel bewaart één back-up per dag, week, maand en jaar, zo ver terug als j
 | Voorinstelling | Laatste back-ups | Dagen | Weken | Maanden | Jaren |
 |---|---|---|---|---|---|
 | **Kort** | 0 | 7 | 4 | 3 | 0 |
-| **Gebalanceerd** | 0 | 7 | 4 | 6 | 1 |
+| **Gebalanceerd** | 0 | 7 | 4 | 6 | 2 |
 | **Lang** | 0 | 14 | 8 | 12 | 3 |
 
-**Eigen waarden** stelt de vijf aantallen zelf in. Een 0 schakelt dat aantal uit, en een regel waarvan elk aantal 0 is, bewaart alles. De stippen in de kaart tonen welke van 40 voorbeeldback-ups een regel bewaart, de nieuwste uiterst rechts. Het voorbeeld is voor elke bestemming hetzelfde, omdat het plaatje wordt getekend voordat BombVault de back-ups daar heeft gelezen.
+**Eigen waarden** stelt de vijf aantallen zelf in. Een 0 schakelt dat aantal uit, en een regel waarvan elk aantal 0 is, bewaart alles. De stippen in de kaart tonen welke van 40 voorbeeldback-ups een regel bewaart, de nieuwste uiterst rechts. Het voorbeeld is voor elke bestemming hetzelfde, omdat het plaatje wordt getekend voordat BombVault de back-ups daar heeft gelezen. Het telt terug vanaf vandaag, dus hoeveel stippen er blijven staan, hangt af van de datum.
 
 **Vragen voor minder bewaren**, standaard aan, vraagt om bevestiging voordat een wijziging die minder back-ups bewaart wordt opgeslagen, en zegt hoeveel van de 40 voorbeeldback-ups de nieuwe regel verwijdert. Het geldt voor elke bestemming. **Terug naar de bestemming** onder **Regels per onderdeel** stelt dezelfde vraag.
 
@@ -116,7 +116,7 @@ Om te zien wat de volgende run echt zou verwijderen, open je **Voorbeeld** onder
 
 #### Voorbeeld: wat Gebalanceerd bewaart {#example-retention}
 
-Een container wordt sinds 1 oktober 2025 elke nacht om 03:00 geback-upt, dus op woensdag 4 november 2026 heeft hij 400 back-ups gehad. Zijn bestemming staat op **Gebalanceerd**: 7 dagen, 4 weken, 6 maanden en 1 jaar.
+Een container wordt sinds 1 oktober 2024 elke nacht om 03:00 geback-upt, dus op woensdag 4 november 2026 heeft hij 765 back-ups gehad. Zijn bestemming staat op **Gebalanceerd**: 7 dagen, 4 weken, 6 maanden en 2 jaar.
 
 Elk aantal bewaart de nieuwste back-up van zijn dag, week, maand of jaar, en een back-up die meerdere aantallen kiezen, wordt één keer bewaard. Weken lopen van maandag tot zondag:
 
@@ -125,19 +125,19 @@ Elk aantal bewaart de nieuwste back-up van zijn dag, week, maand of jaar, en een
 | 7 dagen | 4 nov, 3 nov, 2 nov, 1 nov, 31 okt, 30 okt, 29 okt | alle 7 |
 | 4 weken | 4 nov, 1 nov, 25 okt, 18 okt | 25 okt, 18 okt |
 | 6 maanden | 4 nov, 31 okt, 30 sep, 31 aug, 31 jul, 30 jun | 30 sep, 31 aug, 31 jul, 30 jun |
-| 1 jaar | 4 nov | geen |
+| 2 jaar | 4 nov, 31 dec 2025 | 31 dec 2025 |
 
-Dat laat 13 back-ups van de 400 over. De oudste is van 30 juni, dus je kunt iets meer dan vier maanden terug. Dankzij deduplicatie nemen ze weinig meer ruimte in dan één volledige back-up plus wat er tussendoor veranderde.
+Dat laat 14 back-ups van de 765 over. De oudste is van 31 december 2025, dus vandaag kun je iets meer dan tien maanden terug. Dankzij deduplicatie nemen ze weinig meer ruimte in dan één volledige back-up plus wat er tussendoor veranderde.
 
-**Jaren** verdient een tweede blik. Het telt kalenderjaren met een back-up erin, beginnend met het huidige, en de nieuwste back-up van dit jaar is die van vandaag. Een 1 bij **Jaren** voegt dus niets toe aan de andere aantallen, en je hebt een 2 nodig om in het vorige jaar te reiken. Dezelfde 400 back-ups onder de andere voorinstellingen:
+**Jaren** verdient een tweede blik. Het telt kalenderjaren met een back-up erin, beginnend met het huidige, en de nieuwste back-up van dit jaar is die van vandaag. Het eerste jaar voegt dus niets toe aan de andere aantallen, en het tweede voegt de laatste back-up van het vorige jaar toe. Daarom wisselt het bereik van een regel door het jaar heen. Dezelfde back-ups onder elke voorinstelling:
 
-| Voorinstelling | Bewaarde back-ups | Oudste back-up |
-|---|---|---|
-| **Kort** | 10 | 30 september 2026 |
-| **Gebalanceerd** | 13 | 30 juni 2026 |
-| **Lang** | 29 | 31 december 2025 |
+| Voorinstelling | Vandaag bewaarde back-ups | Oudste back-up vandaag | Bereik door het jaar heen |
+|---|---|---|---|
+| **Kort** | 10 | 30 september 2026 | 1 tot 2 maanden |
+| **Gebalanceerd** | 14 | 31 december 2025 | ongeveer 4 maanden in het vroege voorjaar, een heel jaar op 31 december |
+| **Lang** | 30 | 31 december 2024 | 1 jaar op 1 januari, 2 jaar op 31 december |
 
-Van **Gebalanceerd** naar **Kort** gaan, vraagt eerst om bevestiging, vanwege **Vragen voor minder bewaren**: "Van de 40 back-ups in het plaatje verwijdert de nieuwe regel er 3 die de huidige bewaart." Het getal komt uit het voorbeeld in het plaatje, niet uit je eigen back-ups. Hier komt het toevallig overeen: 31 augustus, 31 juli en 30 juni zouden verdwijnen. **Toch opslaan** past de regel toe, en de volgende opschoonronde verwijdert ze definitief van die bestemming.
+Van **Gebalanceerd** naar **Kort** gaan, vraagt eerst om bevestiging, vanwege **Vragen voor minder bewaren**. De vraag zegt hoeveel van de 40 back-ups in het plaatje de nieuwe regel verwijdert. Dat getal komt uit het voorbeeld, dus het verandert met de datum en telt je eigen back-ups niet mee. Van de back-ups in dit voorbeeld zouden 31 augustus, 31 juli, 30 juni en 31 december 2025 verdwijnen. **Toch opslaan** past de regel toe, en de volgende opschoonronde verwijdert ze definitief van die bestemming.
 
 Om de containers op deze bestemming langer te bewaren dan de rest, druk je op **Regels wijzigen** onder **Regels per onderdeel**, kies je **Containers** en stel je **Eigen waarden** in bij **Regels voor Containers**, bijvoorbeeld 14 dagen, 8 weken, 12 maanden en 2 jaar. De andere onderdelen blijven de kaart van de bestemming volgen, en **Terug naar de bestemming** brengt Containers terug.
 
@@ -218,7 +218,7 @@ Omdat niets deze kopie van hieruit opschoont, stel je **Groeibudget (GB, 0 = uit
 
 Elk onderdeel heeft een eigen map: het repository waarnaar zijn back-ups eerst worden geschreven. Kopieën naar andere bestemmingen gaan van daaruit. Een nieuwe installatie houdt de eigen mappen op deze server, onder `/mnt/user/bombvault`, en samen vormen ze de bestemming **Lokaal**.
 
-Een eigen map kan ook in een bestemming liggen die je al hebt, zoals een NAS, een rest-server of een S3-bucket. Het onderdeel maakt dan rechtstreeks daar zijn back-up, zonder lokale kopie ertussen, en de eigen map volgt de aanmelding, bescherming tegen verwijderen, bandbreedtelimieten en bewaarregels van die bestemming. De bestemming toont het onderdeel in haar kaart **Eigen mappen**, en **Bestemmingen per onderdeel** toont de bestemming als thuis van het onderdeel.
+Een eigen map kan ook in een bestemming liggen die je al hebt, zoals een NAS, een rest-server of een S3-bucket. Het onderdeel maakt dan rechtstreeks daar zijn back-up, zonder lokale kopie ertussen, en de eigen map volgt de aanmelding, bescherming tegen verwijderen en bandbreedtelimieten van die bestemming. BombVault schoont hem na elke back-up op volgens de kaart **Hoe lang bewaren** van de bestemming, en de eigen waarden van een onderdeel onder **Regels per onderdeel** gaan voor op de kaart. De bestemming toont het onderdeel in haar kaart **Eigen mappen**, en **Bestemmingen per onderdeel** toont de bestemming als thuis van het onderdeel.
 
 ### Een eigen map verplaatsen {#move-own-folder}
 
@@ -226,7 +226,7 @@ Een eigen map kan ook in een bestemming liggen die je al hebt, zoals een NAS, ee
 2. Kies de onderdelen onder **Onderdelen** en de plek onder **Verplaatsen naar**. **Een andere plek** neemt een map op deze host of het adres van een extern repository dat met de hand is getypt, met inloggegevens uit je opgeslagen inloggegevens.
 3. Lees **Wat er gebeurt**. Voor elk onderdeel zegt het waar nieuwe back-ups heen gaan, of een kopie die al op de nieuwe plek staat de eigen map wordt, en welke back-ups eerst worden overgekopieerd.
 4. **Al gemaakte back-ups meekopiëren** staat standaard aan. Uitgeschakeld blijven de oude back-ups waar ze zijn en kunnen ze nog van daaruit worden hersteld.
-5. Kies **Omzetten**. Moeten back-ups eerst worden gekopieerd, dan kopieert BombVault ze en zet daarna de eigen map om. Staan ze er al, dan controleert het ze vóór het omzetten.
+5. Kies **Omzetten**. Bewaart de kaart **Hoe lang bewaren** van de nieuwe plek minder dan de regel die het onderdeel vandaag heeft, dan vraagt BombVault eerst **Minder bewaren?** Daar neemt **Huidige waarden van** dat onderdeel **bewaren onder Regels per onderdeel** de waarden van vandaag mee, **Toch opslaan** gaat door, en **Terug** laat alles zoals het was. Moeten back-ups eerst worden gekopieerd, dan kopieert BombVault ze en zet daarna de eigen map om. Staan ze er al, dan controleert het ze vóór het omzetten.
 
 Na de verplaatsing gaan nieuwe back-ups naar de verplaatste eigen map, ook voor een onderdeel dat **Lokaal** had uitgeschakeld en rechtstreeks naar een kopie back-upte. Een kopie die al op de nieuwe plek stond, wordt de eigen map, en het kopiëren daarheen eindigt. Waar die kopie sommige back-ups langer bewaarde dan de bewaarregels van het onderdeel, bewaart het onderdeel wat een van beide regels bewaart, zodat er geen verloren gaat.
 
@@ -246,7 +246,7 @@ De cachepool loopt vol, en je hebt een bestemming genaamd `nas`, een SMB-share o
 3. Lees **Wat er gebeurt**. Het zegt dat nieuwe back-ups van Containers naar de map op `nas` gaan, dat de 61 back-ups in Lokaal eerst daarheen worden gekopieerd, dat kopieën naar Backblaze B2 blijven gaan en dat bescherming, bandbreedtelimieten en het groeialarm van `nas` komen.
 4. Laat **Al gemaakte back-ups meekopiëren** aan en druk op **Omzetten**.
 
-BombVault kopieert de back-ups op de achtergrond en zet daarna de eigen map om. De pagina van `nas` toont Containers onder **Eigen mappen**, een item dat zijn onderdeel volgt noemt `nas` zijn thuis, en de volgende back-up komt daar terecht, waarbij de kopie naar B2 vanaf `nas` vertrekt. De oude map op deze server blijft staan waar hij is, en BombVault verwijdert daar niets.
+BombVault kopieert de back-ups op de achtergrond en zet daarna de eigen map om. De pagina van `nas` toont Containers onder **Eigen mappen**, een item dat zijn onderdeel volgt noemt `nas` zijn thuis, en de volgende back-up komt daar terecht, waarbij de kopie naar B2 vanaf `nas` vertrekt. Vanaf nu is het de kaart **Hoe lang bewaren** van `nas` die de map opschoont. De oude map op deze server blijft staan waar hij is, en BombVault verwijdert daar niets.
 
 ### Een extern adres met de hand typen {#remote-primary-repositories}
 

@@ -46,7 +46,9 @@ Ogni sezione attivata ha una riga con quattro controlli:
 
 Una sezione è verde solo sulla base di fatti verificati. Una copia su questo server non conta come off-site, e una destinazione che hai segnato **Accetta senza protezione dall'eliminazione** mostra un anello grigio invece di un punto ambra, così il colore della sezione segue gli altri suoi controlli.
 
-Un clic su una sezione apre la sua finestra con ogni controllo spiegato per esteso, gli elementi che conta e **Avvia il ripristino di prova** o **Ripeti il ripristino di prova**.
+Una sezione pianificata mostra **Ancora nessun backup** e resta neutra finché non arriva l'ora della sua prima esecuzione. Dopo mostra **In ritardo** e avvisa una volta. Una sezione senza nulla da salvare, perché nessuna pianificazione raggiunge i suoi elementi, mostra **Non pianificato** e non è mai in ritardo.
+
+Un clic su una sezione apre la sua finestra con ogni controllo spiegato per esteso, gli elementi che conta e **Avvia il ripristino di prova** o **Ripeti il ripristino di prova**. Indica anche **Regola di potatura impostata** o **Nessuna regola di potatura**, e la regola di conservazione della cartella propria di una sezione conta quanto le sue regole off-site.
 
 ![La finestra di protezione della sezione Container con i suoi quattro controlli spiegati per esteso.](assets/screenshots/overview/protection-window-dark.png#only-dark)
 ![La finestra di protezione della sezione Container con i suoi quattro controlli spiegati per esteso.](assets/screenshots/overview/protection-window-light.png#only-light)

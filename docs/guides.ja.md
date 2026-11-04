@@ -10,7 +10,7 @@
 
 - [Backblaze B2 へのオフサイトコピー](offsite-recovery.md#example-s3)：バケット、そのバケット用のキー、最初のコピー。Cloudflare R2 でも同じ手順です。
 - [自分で動かす rest-server](offsite-recovery.md#example-rest-server)：削除を拒否するオフサイトコピー。`docker run` の行と改ざんテストも載せています。
-- [Balanced が残すもの](offsite-recovery.md#example-retention)：毎晩のバックアップを 400 日続けた場合の保持ルールを、バックアップごとに追います。
+- [標準が残すもの](offsite-recovery.md#example-retention)：毎晩のバックアップを 2 年続けた場合の保持ルールを、バックアップごとに追います。
 - [コンテナを NAS へ移す](offsite-recovery.md#example-own-folder)：セクションの専用フォルダーの場所を変えたとき、すでに作ったバックアップがどうなるか。
 
 ## バックアップとスケジュール {#backups}

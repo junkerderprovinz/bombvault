@@ -10,7 +10,7 @@ Bu örneklerin her biri gerçek bir işi baştan sona anlatır, isimler ve sayı
 
 - [Backblaze B2'de site dışı kopya](offsite-recovery.md#example-s3): bir bucket, o bucket için bir anahtar ve ilk kopya. Cloudflare R2 de aynı şekilde çalışır.
 - [Kendi çalıştırdığın bir rest-server](offsite-recovery.md#example-rest-server): silmeyi reddeden bir site dışı kopya, `docker run` satırı ve kurcalama testiyle.
-- [Dengeli neyi saklar](offsite-recovery.md#example-retention): 400 günlük gece yedeklerinde saklama, yedek yedek.
+- [Dengeli neyi saklar](offsite-recovery.md#example-retention): iki yıllık gece yedeklerinde saklama, yedek yedek.
 - [Konteynerler bir NAS'a taşınıyor](offsite-recovery.md#example-own-folder): bir bölümün kendi klasörü yer değiştirir, daha önce alınmış yedeklere ne olur.
 
 ## Yedekler ve zamanlamalar {#backups}

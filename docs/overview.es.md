@@ -46,7 +46,9 @@ Cada sección activada tiene una fila con cuatro comprobaciones:
 
 Una sección solo se pone en verde con hechos verificados. Una copia en este servidor no cuenta como externa, y un destino que marcaste con **Aceptar sin protección contra borrado** muestra un anillo gris en lugar de un punto ámbar, de modo que el color de la sección sigue a sus otras comprobaciones.
 
-Un clic en una sección abre su ventana con cada comprobación detallada, los elementos que cuenta y **Iniciar la restauración de prueba** o **Repetir la restauración de prueba**.
+Una sección programada dice **Aún no hay copia de seguridad** y sigue neutral hasta que llega la hora de su primera ejecución. Después dice **Atrasado** y avisa una vez. Una sección sin nada que copiar, porque ninguna programación alcanza a sus elementos, dice **Sin programar** y nunca está atrasada.
+
+Un clic en una sección abre su ventana con cada comprobación detallada, los elementos que cuenta y **Iniciar la restauración de prueba** o **Repetir la restauración de prueba**. También dice **Regla de poda definida** o **Sin regla de poda**, y la regla de conservación de la carpeta propia de una sección cuenta igual que sus reglas externas.
 
 ![La ventana de protección de la sección Contenedores con sus cuatro comprobaciones detalladas.](assets/screenshots/overview/protection-window-dark.png#only-dark)
 ![La ventana de protección de la sección Contenedores con sus cuatro comprobaciones detalladas.](assets/screenshots/overview/protection-window-light.png#only-light)

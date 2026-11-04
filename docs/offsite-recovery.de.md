@@ -73,7 +73,7 @@ Jeder Speicherort hat eine eigene Seite. Sie zeigt nur die Karten, die für dies
 - **Verbindung**: der **Name**, der Schalter **Verfügbar** (aus heißt, BombVault schreibt hier nicht mehr, und Einträge, die hierher sichern, scheitern mit einer klaren Meldung, statt woanders zu landen), der Ordner, **Kompression**, **Speicherklasse** und **Außer Haus**. Auf dem Ort **Lokal** listet sie unter **Eigene Ordner hier** den Ordner jedes Bereichs auf. **Verbindung ändern** testet und speichert eine neue Adresse oder Anmeldung. Melden sich andere Orte mit denselben gespeicherten Zugangsdaten an, sagt das Fenster es, und eine Änderung hier gibt diesem Ort eigene Zugangsdaten, statt die gemeinsamen umzuschreiben.
 - **Zugangsdaten**: welche gespeicherten Zugangsdaten er nutzt (**Meldet sich an mit**), welche anderen Orte sie auch nutzen (**Auch verwendet von**) und **Bearbeiten**, was das Fenster der Zugangsdaten öffnet. Siehe [Zugangsdaten](#sign-ins).
 - **rclone.conf**: der Abschnitt dieses Ortes in der rclone-Konfiguration, für einen Ort, der über rclone läuft.
-- **Löschschutz**, mit **Löschschutz (append-only)**, **Ohne Löschschutz akzeptieren**, **Löschschutz jetzt testen** und **Wer aufräumt**, was sagt, ob BombVault die Kopie und die eigenen Ordner hier aufräumt oder das der Gegenseite überlässt. Ein lokaler Ordner zeigt diese Karte nur, wenn er einen Schutz hat, den du ausschalten kannst. Siehe [Löschschutz](#delete-protection-append-only).
+- **Löschschutz**, mit **Löschschutz (append-only)**, **Ohne Löschschutz akzeptieren**, **Löschschutz jetzt testen** und **Wer aufräumt**, was sagt, ob BombVault die Kopie und die eigenen Ordner hier aufräumt, nach der Karte **Wie lange aufheben** dieses Ortes oder den eigenen Werten eines Bereichs unter **Regeln je Bereich**, oder das der Gegenseite überlässt. Ein lokaler Ordner zeigt diese Karte nur, wenn er einen Schutz hat, den du ausschalten kannst. Siehe [Löschschutz](#delete-protection-append-only).
 - **Kopieren**: **Wann kopieren** sowie **Upload-Limit (KiB/s)** und **Download-Limit (KiB/s)**. Ein Ort, der nur eigene Ordner und keine Kopien hält, zeigt die Limits als Karte namens **Bandbreite**.
 - **Wie lange aufheben**: **Kurz**, **Ausgewogen**, **Lang** oder **Eigene Werte**, mit einer Zeitleiste, welche Sicherungen die Regel behält. Siehe [Wie lange aufheben](#keep).
 - **Schon unter diesem Speicherort**: Bereiche, deren von Hand eingetippte Adresse in einem Ordner dieses Ortes liegt. Sie zu übernehmen lässt das Repository, wo es ist. Anmeldung, Speicherklasse und Löschschutz kommen dann vom Ort. BombVault prüft zuerst, dass die Anmeldung des Ortes das Repository öffnet, und lehnt es ab, ein Append-only-Repository unter einen Ort zu stellen, der nicht append-only ist.
@@ -100,10 +100,10 @@ Eine Regel behält eine Sicherung pro Tag, Woche, Monat und Jahr, so weit zurüc
 | Vorgabe | Letzte Sicherungen | Tage | Wochen | Monate | Jahre |
 |---|---|---|---|---|---|
 | **Kurz** | 0 | 7 | 4 | 3 | 0 |
-| **Ausgewogen** | 0 | 7 | 4 | 6 | 1 |
+| **Ausgewogen** | 0 | 7 | 4 | 6 | 2 |
 | **Lang** | 0 | 14 | 8 | 12 | 3 |
 
-**Eigene Werte** legt die fünf Zahlen selbst fest. Eine 0 schaltet diese Zahl ab, und eine Regel mit jeder Zahl auf 0 behält alles. Die Punkte in der Karte zeigen, welche von 40 Beispielsicherungen eine Regel behält, die neueste ganz rechts. Das Beispiel ist für jeden Ort dasselbe, da das Bild gezeichnet wird, bevor BombVault die Sicherungen dort gelesen hat.
+**Eigene Werte** legt die fünf Zahlen selbst fest. Eine 0 schaltet diese Zahl ab, und eine Regel mit jeder Zahl auf 0 behält alles. Die Punkte in der Karte zeigen, welche von 40 Beispielsicherungen eine Regel behält, die neueste ganz rechts. Das Beispiel ist für jeden Ort dasselbe, da das Bild gezeichnet wird, bevor BombVault die Sicherungen dort gelesen hat. Es zählt von heute zurück, also ändert sich mit dem Datum, wie viele Punkte bleiben.
 
 **Vor dem Verkürzen nachfragen**, standardmäßig an, fragt nach, bevor eine Änderung gespeichert wird, die weniger Sicherungen behält, und sagt, wie viele der 40 Beispielsicherungen die neue Regel entfernt. Es gilt für jeden Speicherort. **Auf den Speicherort zurücksetzen** unter **Regeln je Bereich** stellt dieselbe Frage.
 
@@ -116,7 +116,7 @@ Um zu sehen, was der nächste Lauf wirklich löschen würde, öffne **Vorschau**
 
 #### Beispiel: was Ausgewogen aufbewahrt {#example-retention}
 
-Ein Container wird seit dem 1. Oktober 2025 jede Nacht um 03:00 gesichert, sodass er am Mittwoch, dem 4. November 2026, 400 Sicherungen hat. Sein Speicherort steht auf **Ausgewogen**: 7 Tage, 4 Wochen, 6 Monate und 1 Jahr.
+Ein Container wird seit dem 1. Oktober 2024 jede Nacht um 03:00 gesichert, sodass er am Mittwoch, dem 4. November 2026, 765 Sicherungen hat. Sein Speicherort steht auf **Ausgewogen**: 7 Tage, 4 Wochen, 6 Monate und 2 Jahre.
 
 Jede Zahl behält die neueste Sicherung ihres Tages, ihrer Woche, ihres Monats oder Jahres, und eine Sicherung, die mehrere Zahlen wählen, wird einmal behalten. Wochen laufen von Montag bis Sonntag:
 
@@ -125,19 +125,19 @@ Jede Zahl behält die neueste Sicherung ihres Tages, ihrer Woche, ihres Monats o
 | 7 Tage | 4. Nov, 3. Nov, 2. Nov, 1. Nov, 31. Okt, 30. Okt, 29. Okt | alle 7 |
 | 4 Wochen | 4. Nov, 1. Nov, 25. Okt, 18. Okt | 25. Okt, 18. Okt |
 | 6 Monate | 4. Nov, 31. Okt, 30. Sep, 31. Aug, 31. Jul, 30. Jun | 30. Sep, 31. Aug, 31. Jul, 30. Jun |
-| 1 Jahr | 4. Nov | keine |
+| 2 Jahre | 4. Nov, 31. Dez 2025 | 31. Dez 2025 |
 
-Das lässt 13 Sicherungen von 400 übrig. Die älteste ist vom 30. Juni, du kannst also gut vier Monate zurückgehen. Dank Deduplizierung brauchen sie kaum mehr Platz als eine volle Sicherung plus das, was sich dazwischen geändert hat.
+Das lässt 14 Sicherungen von 765 übrig. Die älteste ist vom 31. Dezember 2025, du kannst also heute gut zehn Monate zurückgehen. Dank Deduplizierung brauchen sie kaum mehr Platz als eine volle Sicherung plus das, was sich dazwischen geändert hat.
 
-**Jahre** verdient einen zweiten Blick. Es zählt Kalenderjahre, in denen es eine Sicherung gibt, beginnend mit dem laufenden, und die neueste Sicherung dieses Jahres ist die von heute. Eine 1 bei **Jahre** fügt also nichts zu den anderen Zahlen hinzu, und du brauchst eine 2, um ins letzte Jahr zurückzureichen. Dieselben 400 Sicherungen unter den anderen Vorgaben:
+**Jahre** verdient einen zweiten Blick. Es zählt Kalenderjahre, in denen es eine Sicherung gibt, beginnend mit dem laufenden, und die neueste Sicherung dieses Jahres ist die von heute. Das erste Jahr fügt also nichts zu den anderen Zahlen hinzu, und das zweite bringt die letzte Sicherung des Vorjahres dazu. Deshalb ändert sich die Reichweite einer Regel im Lauf des Jahres. Dieselben Sicherungen unter jeder Vorgabe:
 
-| Vorgabe | Behaltene Sicherungen | Älteste Sicherung |
-|---|---|---|
-| **Kurz** | 10 | 30. September 2026 |
-| **Ausgewogen** | 13 | 30. Juni 2026 |
-| **Lang** | 29 | 31. Dezember 2025 |
+| Vorgabe | Heute behaltene Sicherungen | Älteste Sicherung heute | Reichweite im Lauf des Jahres |
+|---|---|---|---|
+| **Kurz** | 10 | 30. September 2026 | 1 bis 2 Monate |
+| **Ausgewogen** | 14 | 31. Dezember 2025 | etwa 4 Monate im Vorfrühling, ein volles Jahr am 31. Dezember |
+| **Lang** | 30 | 31. Dezember 2024 | 1 Jahr am 1. Januar, 2 Jahre am 31. Dezember |
 
-Der Wechsel von **Ausgewogen** zu **Kurz** fragt zuerst nach, wegen **Vor dem Verkürzen nachfragen**: „Von den 40 Sicherungen im Bild entfernt die neue Regel 3, die die aktuelle behält.“ Die Zahl stammt aus dem Beispiel im Bild, nicht aus deinen eigenen Sicherungen. Hier stimmt sie zufällig überein: Der 31. August, 31. Juli und 30. Juni würden wegfallen. **Trotzdem speichern** wendet die Regel an, und das nächste Aufräumen löscht sie an diesem Ort endgültig.
+Der Wechsel von **Ausgewogen** zu **Kurz** fragt zuerst nach, wegen **Vor dem Verkürzen nachfragen**. Die Frage sagt, wie viele der 40 Sicherungen im Bild die neue Regel entfernt. Diese Zahl stammt aus dem Beispiel im Bild, sie ändert sich also mit dem Datum und zählt nicht deine eigenen Sicherungen. Von den Sicherungen dieses Containers würden der 31. August, 31. Juli, 30. Juni und 31. Dezember 2025 wegfallen. **Trotzdem speichern** wendet die Regel an, und das nächste Aufräumen löscht sie an diesem Ort endgültig.
 
 Willst du die Container an diesem Ort länger aufbewahren als den Rest, drücke unter **Regeln je Bereich** **Regeln ändern**, wähle **Container** und setze in **Regeln für Container** **Eigene Werte**, zum Beispiel 14 Tage, 8 Wochen, 12 Monate und 2 Jahre. Die anderen Bereiche folgen weiter der Karte des Ortes, und **Auf den Speicherort zurücksetzen** holt Container zurück.
 
@@ -218,7 +218,7 @@ Da nichts diese Kopie von hier aus aufräumt, setze **Wachstumsbudget (GB, 0 = a
 
 Jeder Bereich hat einen eigenen Ordner: das Repository, in das seine Sicherungen zuerst geschrieben werden. Kopien an andere Speicherorte gehen von dort aus. Eine Neuinstallation hält die eigenen Ordner auf diesem Server, unterhalb von `/mnt/user/bombvault`, und zusammen bilden sie den Speicherort **Lokal**.
 
-Ein eigener Ordner kann auch in einem Speicherort liegen, den du schon hast, etwa einem NAS, einem rest-server oder einem S3-Bucket. Der Bereich sichert dann direkt dorthin, ohne lokale Kopie dazwischen, und der eigene Ordner folgt der Anmeldung, dem Löschschutz, den Bandbreitenlimits und den Aufbewahrungsregeln dieses Ortes. Der Ort listet den Bereich in seiner Karte **Eigene Ordner** auf, und **Speicherorte je Bereich** zeigt den Ort als Zuhause des Bereichs.
+Ein eigener Ordner kann auch in einem Speicherort liegen, den du schon hast, etwa einem NAS, einem rest-server oder einem S3-Bucket. Der Bereich sichert dann direkt dorthin, ohne lokale Kopie dazwischen, und der eigene Ordner folgt der Anmeldung, dem Löschschutz und den Bandbreitenlimits dieses Ortes. BombVault räumt ihn nach jeder Sicherung nach der Karte **Wie lange aufheben** des Ortes auf, und die eigenen Werte eines Bereichs unter **Regeln je Bereich** gehen der Karte vor. Der Ort listet den Bereich in seiner Karte **Eigene Ordner** auf, und **Speicherorte je Bereich** zeigt den Ort als Zuhause des Bereichs.
 
 ### Einen eigenen Ordner umziehen {#move-own-folder}
 
@@ -226,7 +226,7 @@ Ein eigener Ordner kann auch in einem Speicherort liegen, den du schon hast, etw
 2. Wähle die Bereiche unter **Bereiche** und den Ort unter **Verschieben nach**. **Ein anderer Ort** nimmt einen Ordner auf diesem Host oder die von Hand eingetippte Adresse eines entfernten Repositorys, mit Zugangsdaten aus deinen gespeicherten.
 3. Lies **Was passiert**. Es sagt für jeden Bereich, wohin neue Sicherungen gehen, ob eine Kopie, die schon am neuen Ort liegt, zum eigenen Ordner wird, und welche Sicherungen zuerst herüberkopiert werden.
 4. **Bisherige Sicherungen mitnehmen** ist standardmäßig an. Ausgeschaltet bleiben die alten Sicherungen, wo sie sind, und lassen sich von dort weiter wiederherstellen.
-5. Wähle **Umstellen**. Müssen Sicherungen zuerst kopiert werden, kopiert BombVault sie und stellt dann den eigenen Ordner um. Sind sie schon da, prüft es sie vor dem Umstellen.
+5. Wähle **Umstellen**. Hebt die Karte **Wie lange aufheben** am neuen Ort weniger auf als die heutige Regel des Bereichs, fragt BombVault zuerst **Weniger aufheben?** Dort nimmt **Bisherige Werte für** diesen Bereich **unter Regeln je Bereich behalten** die heutigen Werte mit, **Trotzdem speichern** macht weiter, und **Zurück** lässt alles, wie es war. Müssen Sicherungen zuerst kopiert werden, kopiert BombVault sie und stellt dann den eigenen Ordner um. Sind sie schon da, prüft es sie vor dem Umstellen.
 
 Nach dem Umzug gehen neue Sicherungen in den umgezogenen eigenen Ordner, auch bei einem Bereich, bei dem **Lokal** ausgeschaltet war und der direkt auf eine Kopie sicherte. Eine Kopie, die schon am neuen Ort lag, wird zum eigenen Ordner, und das Kopieren dorthin endet. Hat diese Kopie manche Sicherungen länger behalten als die Aufbewahrungsregeln des Bereichs, behält der Bereich, was eine der beiden Regeln behält, sodass keine davon verloren geht.
 
@@ -246,7 +246,7 @@ Der Cache-Pool läuft voll, und du hast einen Speicherort namens `nas`, einen SM
 3. Lies **Was passiert**. Es sagt, dass neue Sicherungen von Container in den Ordner auf `nas` gehen, dass die 61 Sicherungen in Lokal zuerst dorthin kopiert werden, dass Kopien weiter zu Backblaze B2 gehen und dass Schutz, Bandbreitenlimits und der Wachstumsalarm von `nas` kommen.
 4. Lass **Bisherige Sicherungen mitnehmen** an und drücke **Umstellen**.
 
-BombVault kopiert die Sicherungen im Hintergrund und stellt dann den eigenen Ordner um. Die Seite `nas` listet Container unter **Eigene Ordner** auf, ein Eintrag, der seinem Bereich folgt, nennt `nas` als sein Zuhause, und die nächste Sicherung landet dort, wobei die Kopie nach B2 von `nas` aus geht. Der alte Ordner auf diesem Server bleibt, wo er ist, und BombVault löscht dort nichts.
+BombVault kopiert die Sicherungen im Hintergrund und stellt dann den eigenen Ordner um. Die Seite `nas` listet Container unter **Eigene Ordner** auf, ein Eintrag, der seinem Bereich folgt, nennt `nas` als sein Zuhause, und die nächste Sicherung landet dort, wobei die Kopie nach B2 von `nas` aus geht. Ab jetzt räumt die Karte **Wie lange aufheben** von `nas` den Ordner auf. Der alte Ordner auf diesem Server bleibt, wo er ist, und BombVault löscht dort nichts.
 
 ### Eine entfernte Adresse von Hand eintippen {#remote-primary-repositories}
 

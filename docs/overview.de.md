@@ -46,7 +46,9 @@ Jeder eingeschaltete Bereich hat eine Zeile mit vier Prüfungen:
 
 Ein Bereich ist nur auf Grundlage geprüfter Tatsachen grün. Eine Kopie auf diesem Server zählt nicht als Off-site, und ein Speicherort, den du mit **Ohne Löschschutz akzeptieren** markiert hast, zeigt einen grauen Ring statt eines gelben Punkts, sodass die Farbe des Bereichs seinen anderen Prüfungen folgt.
 
-Ein Klick auf einen Bereich öffnet sein Fenster mit jeder Prüfung im Klartext, den Einträgen, die er zählt, und **Probe-Wiederherstellung starten** oder **Probe-Wiederherstellung erneut starten**.
+Ein geplanter Bereich zeigt **Noch keine Sicherung** und bleibt neutral, bis sein erster Lauf fällig ist. Danach zeigt er **Überfällig** und warnt einmal. Ein Bereich, in dem es nichts zu sichern gibt, weil kein Zeitplan einen seiner Einträge erreicht, zeigt **Kein Zeitplan** und ist nie überfällig.
+
+Ein Klick auf einen Bereich öffnet sein Fenster mit jeder Prüfung im Klartext, den Einträgen, die er zählt, und **Probe-Wiederherstellung starten** oder **Probe-Wiederherstellung erneut starten**. Dort steht auch **Aufräumregel gesetzt** oder **Keine Aufräumregel gesetzt**, und die Aufbewahrungsregel des eigenen Ordners eines Bereichs zählt genauso wie seine Off-site-Regeln.
 
 ![Das Schutzfenster des Bereichs Container mit seinen vier Prüfungen im Klartext.](assets/screenshots/overview/protection-window-dark.png#only-dark)
 ![Das Schutzfenster des Bereichs Container mit seinen vier Prüfungen im Klartext.](assets/screenshots/overview/protection-window-light.png#only-light)

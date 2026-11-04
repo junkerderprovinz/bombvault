@@ -81,7 +81,7 @@ Zařízení se jmenuje BombVault, případně BombVault s názvem instance v zá
 
 | Entita | Co ukazuje |
 |---|---|
-| Status | `ok`, `warning`, `failed` nebo `off`, nejhorší ze zapnutých sekcí. Sekce čekající na první zálohu se počítá až po termínu této zálohy |
+| Status | `ok`, `warning`, `failed` nebo `off`, nejhorší ze zapnutých sekcí. Sekce čekající na první zálohu se počítá až po termínu této zálohy a stav `ok` dává jen sekce s aktuální zálohou |
 | Running job | Co právě běží, nebo `idle` |
 | Open anomalies | Kolik anomálií je otevřených |
 | Next scheduled backup | Kdy začne další plánovaná záloha |

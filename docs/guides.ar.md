@@ -10,7 +10,7 @@
 
 - [نسخة خارج الموقع على Backblaze B2](offsite-recovery.md#example-s3): حاوية (bucket) ومفتاح لهذه الحاوية وأول نسخة. يعمل Cloudflare R2 بالطريقة نفسها.
 - [خادم rest-server تشغّله بنفسك](offsite-recovery.md#example-rest-server): نسخة خارج الموقع ترفض الحذف، مع سطر `docker run` واختبار العبث.
-- [ما الذي يحتفظ به «متوازن»](offsite-recovery.md#example-retention): الاحتفاظ على مدى 400 يوم من النسخ الليلية، نسخة بعد نسخة.
+- [ما الذي يحتفظ به «متوازن»](offsite-recovery.md#example-retention): الاحتفاظ على مدى سنتين من النسخ الليلية، نسخة بعد نسخة.
 - [الحاويات تنتقل إلى NAS](offsite-recovery.md#example-own-folder): ينتقل المجلد الخاص بقسم إلى مكان آخر، وماذا يحدث للنسخ المأخوذة سابقًا.
 
 ## النسخ الاحتياطية والجداول {#backups}

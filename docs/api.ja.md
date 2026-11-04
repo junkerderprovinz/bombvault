@@ -81,7 +81,7 @@ BombVault は、MQTT ディスカバリーを通じて、Home Assistant にデ�
 
 | エンティティ | 表示するもの |
 |---|---|
-| Status | `ok`、`warning`、`failed`、`off` のどれか。オンになっているドメインのうち最も悪いもの |
+| Status | `ok`、`warning`、`failed`、`off` のどれか。オンになっているドメインのうち最も悪いもの。最初のバックアップを待っているドメインは、そのバックアップの期限が来てから初めて数に入ります。ステータスが `ok` になるのは、最新の状態のドメインがある場合だけです |
 | Running job | 今実行中のもの、または `idle` |
 | Open anomalies | 未処理の異常の数 |
 | Next scheduled backup | 次のスケジュールされたバックアップが始まる時刻 |

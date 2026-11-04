@@ -46,7 +46,9 @@ Açık olan her bölümün dört denetimli bir satırı vardır:
 
 Bir bölüm yalnızca doğrulanmış gerçeklerle yeşil olur. Bu sunucudaki bir kopya site dışı sayılmaz, **Silmeye karşı koruma olmadan kabul et** olarak işaretlediğin bir hedef kehribar noktası yerine gri bir halka gösterir, böylece bölümün rengini diğer denetimleri belirler.
 
-Bir bölüme tıklamak, her denetimin ayrıntılı yazıldığı, saydığı ögelerin ve **Deneme geri yüklemesini başlat** ya da **Deneme geri yüklemesini yeniden çalıştır**'ın bulunduğu penceresini açar.
+Zamanlanmış bir bölüm **Henüz yedek yok** der ve ilk çalıştırmasının zamanı gelene kadar nötr kalır. Sonrasında **Gecikmiş** der ve bir kez uyarır. Hiçbir zamanlama ögelerine ulaşmadığı için yedekleyecek bir şeyi olmayan bir bölüm **Zamanlanmamış** der ve hiçbir zaman gecikmiş sayılmaz.
+
+Bir bölüme tıklamak, her denetimin ayrıntılı yazıldığı, saydığı ögelerin ve **Deneme geri yüklemesini başlat** ya da **Deneme geri yüklemesini yeniden çalıştır**'ın bulunduğu penceresini açar. Ayrıca **Budama kuralı ayarlı** ya da **Budama kuralı yok** der ve bölümün kendi klasörünün saklama kuralı da site dışı kuralları kadar sayılır.
 
 ![Konteynerler bölümünün dört denetimi ayrıntılı yazılmış koruma penceresi.](assets/screenshots/overview/protection-window-dark.png#only-dark)
 ![Konteynerler bölümünün dört denetimi ayrıntılı yazılmış koruma penceresi.](assets/screenshots/overview/protection-window-light.png#only-light)

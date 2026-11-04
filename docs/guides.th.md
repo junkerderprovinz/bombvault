@@ -10,7 +10,7 @@
 
 - [สำเนานอกสถานที่บน Backblaze B2](offsite-recovery.md#example-s3): บักเก็ต คีย์สำหรับบักเก็ตนั้น และสำเนาครั้งแรก Cloudflare R2 ทำแบบเดียวกัน
 - [rest-server ที่คุณรันเอง](offsite-recovery.md#example-rest-server): สำเนานอกสถานที่ที่ปฏิเสธการลบ พร้อมคำสั่ง `docker run` และการทดสอบการแก้ไขข้อมูล
-- [สิ่งที่สมดุลเก็บไว้](offsite-recovery.md#example-retention): การเก็บรักษาตลอด 400 วันของการสำรองรายคืน ดูทีละครั้ง
+- [สิ่งที่สมดุลเก็บไว้](offsite-recovery.md#example-retention): การเก็บรักษาตลอดสองปีของการสำรองรายคืน ดูทีละครั้ง
 - [คอนเทนเนอร์ย้ายไป NAS](offsite-recovery.md#example-own-folder): โฟลเดอร์ของส่วนหนึ่งเปลี่ยนที่ และสิ่งที่เกิดกับข้อมูลสำรองที่ทำไว้แล้ว
 
 ## การสำรองข้อมูลและตารางเวลา {#backups}

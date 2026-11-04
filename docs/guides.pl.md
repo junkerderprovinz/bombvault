@@ -10,7 +10,7 @@ Każdy z nich prowadzi przez jedno prawdziwe zadanie od początku do końca, z w
 
 - [Kopia poza siedzibą w Backblaze B2](offsite-recovery.md#example-s3): koszyk, klucz do tego koszyka i pierwsza kopia. Cloudflare R2 działa tak samo.
 - [Rest-server, który prowadzisz sam](offsite-recovery.md#example-rest-server): kopia poza siedzibą, która odmawia usuwania, z linią `docker run` i testem manipulacji.
-- [Co zachowuje Zrównoważone](offsite-recovery.md#example-retention): przechowywanie na przestrzeni 400 dni nocnych kopii, kopia po kopii.
+- [Co zachowuje Zrównoważone](offsite-recovery.md#example-retention): przechowywanie na przestrzeni dwóch lat nocnych kopii, kopia po kopii.
 - [Kontenery przenoszą się na NAS](offsite-recovery.md#example-own-folder): własny folder sekcji zmienia miejsce i co dzieje się z kopiami już wykonanymi.
 
 ## Kopie i harmonogramy {#backups}

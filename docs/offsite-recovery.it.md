@@ -73,7 +73,7 @@ Ogni destinazione ha una pagina propria. Mostra solo le schede che si applicano 
 - **Connessione**: il **Nome**, l'interruttore **Disponibile** (disattivato significa che BombVault non scrive più qui, e gli elementi che salvano qui falliscono con un messaggio chiaro invece di finire altrove), la cartella, **Compressione**, **Classe di archiviazione** e **Fuori sede**. Sulla destinazione **Locale** elenca la cartella di ogni sezione sotto **Cartelle proprie qui**. **Cambia connessione** prova e salva un nuovo indirizzo o nuove credenziali. Quando altri posti accedono con le stesse credenziali salvate, la finestra lo dice, e una modifica qui dà a questa destinazione credenziali proprie invece di riscrivere quelle condivise.
 - **Credenziali**: quali credenziali salvate usa (**Accede con**), quali altre destinazioni le usano a loro volta (**Usate anche da**), e **Modifica**, che apre la finestra delle credenziali. Vedi [Credenziali](#sign-ins).
 - **rclone.conf**: la sezione di questa destinazione della configurazione di rclone, per una destinazione che passa da rclone.
-- **Protezione dall'eliminazione**, con **Protezione dall'eliminazione (append-only)**, **Accetta senza protezione dall'eliminazione**, **Prova subito la protezione dall'eliminazione** e **Chi pota**, che dice se BombVault pota la copia e le cartelle proprie qui o lo lascia al lato remoto. Una cartella locale mostra questa scheda solo quando ha una protezione che puoi disattivare. Vedi [Protezione dall'eliminazione](#delete-protection-append-only).
+- **Protezione dall'eliminazione**, con **Protezione dall'eliminazione (append-only)**, **Accetta senza protezione dall'eliminazione**, **Prova subito la protezione dall'eliminazione** e **Chi pota**, che dice se BombVault pota la copia e le cartelle proprie qui, secondo la scheda **Per quanto tempo conservare** di questa destinazione o i valori personalizzati di una sezione sotto **Regole per sezione**, o lo lascia al lato remoto. Una cartella locale mostra questa scheda solo quando ha una protezione che puoi disattivare. Vedi [Protezione dall'eliminazione](#delete-protection-append-only).
 - **Copia**: **Quando copiare**, e **Limite upload (KiB/s)** e **Limite download (KiB/s)**. Una destinazione che contiene solo cartelle proprie e nessuna copia mostra i limiti come una scheda chiamata **Larghezza di banda**.
 - **Per quanto tempo conservare**: **Breve**, **Equilibrato**, **Lungo** o **Valori personalizzati**, con una linea del tempo di quali backup la regola conserva. Vedi [Per quanto tempo conservare](#keep).
 - **Già sotto questa destinazione**: sezioni il cui indirizzo digitato a mano sta in una cartella di questa destinazione. Adottarne una lascia il repository dov'è. Credenziali, classe di archiviazione e protezione dall'eliminazione arrivano allora dalla destinazione. BombVault controlla prima che le credenziali della destinazione aprano il repository, e rifiuta di mettere un repository append-only sotto una destinazione che non è append-only.
@@ -100,10 +100,10 @@ Una regola conserva un backup per giorno, settimana, mese e anno, fin dove l'hai
 | Preimpostazione | Ultimi backup | Giorni | Settimane | Mesi | Anni |
 |---|---|---|---|---|---|
 | **Breve** | 0 | 7 | 4 | 3 | 0 |
-| **Equilibrato** | 0 | 7 | 4 | 6 | 1 |
+| **Equilibrato** | 0 | 7 | 4 | 6 | 2 |
 | **Lungo** | 0 | 14 | 8 | 12 | 3 |
 
-**Valori personalizzati** imposta tu i cinque conteggi. Uno 0 disattiva quel conteggio, e una regola con ogni conteggio a 0 conserva tutto. I punti nella scheda mostrano quali di 40 backup di esempio una regola conserva, il più recente all'estrema destra. L'esempio è lo stesso per ogni destinazione, poiché l'immagine viene disegnata prima che BombVault abbia letto i backup lì.
+**Valori personalizzati** imposta tu i cinque conteggi. Uno 0 disattiva quel conteggio, e una regola con ogni conteggio a 0 conserva tutto. I punti nella scheda mostrano quali di 40 backup di esempio una regola conserva, il più recente all'estrema destra. L'esempio è lo stesso per ogni destinazione, poiché l'immagine viene disegnata prima che BombVault abbia letto i backup lì. Conta all'indietro da oggi, quindi il numero di punti che restano cambia con la data.
 
 **Chiedi prima di conservare meno**, attivo di default, chiede conferma prima che venga salvata una modifica che conserva meno backup, e dice quanti dei 40 backup di esempio la nuova regola elimina. Vale per ogni destinazione. **Torna alla destinazione** sotto **Regole per sezione** pone la stessa domanda.
 
@@ -116,7 +116,7 @@ Per vedere cosa eliminerebbe davvero la prossima esecuzione, apri **Anteprima** 
 
 #### Esempio: cosa conserva Equilibrato {#example-retention}
 
-Un container viene salvato ogni notte alle 03:00 dal 1 ottobre 2025, quindi mercoledì 4 novembre 2026 ha avuto 400 backup. La sua destinazione è impostata su **Equilibrato**: 7 giorni, 4 settimane, 6 mesi e 1 anno.
+Un container viene salvato ogni notte alle 03:00 dal 1 ottobre 2024, quindi mercoledì 4 novembre 2026 ha avuto 765 backup. La sua destinazione è impostata su **Equilibrato**: 7 giorni, 4 settimane, 6 mesi e 2 anni.
 
 Ogni conteggio conserva il backup più recente del suo giorno, settimana, mese o anno, e un backup scelto da più conteggi viene conservato una volta. Le settimane vanno da lunedì a domenica:
 
@@ -125,19 +125,19 @@ Ogni conteggio conserva il backup più recente del suo giorno, settimana, mese o
 | 7 giorni | 4 nov, 3 nov, 2 nov, 1 nov, 31 ott, 30 ott, 29 ott | tutti e 7 |
 | 4 settimane | 4 nov, 1 nov, 25 ott, 18 ott | 25 ott, 18 ott |
 | 6 mesi | 4 nov, 31 ott, 30 set, 31 ago, 31 lug, 30 giu | 30 set, 31 ago, 31 lug, 30 giu |
-| 1 anno | 4 nov | nessuno |
+| 2 anni | 4 nov, 31 dic 2025 | 31 dic 2025 |
 
-Restano così 13 backup su 400. Il più vecchio è del 30 giugno, quindi puoi tornare indietro di poco più di quattro mesi. Grazie alla deduplicazione occupano poco più di un backup completo più ciò che è cambiato nel frattempo.
+Restano così 14 backup su 765. Il più vecchio è del 31 dicembre 2025, quindi oggi puoi tornare indietro di poco più di dieci mesi. Grazie alla deduplicazione occupano poco più di un backup completo più ciò che è cambiato nel frattempo.
 
-**Anni** merita un secondo sguardo. Conta gli anni di calendario con un backup al loro interno, a partire da quello corrente, e il backup più recente di quest'anno è quello di oggi. Quindi un 1 in **Anni** non aggiunge nulla agli altri conteggi, e ti serve un 2 per arrivare all'anno scorso. Gli stessi 400 backup con le altre preimpostazioni:
+**Anni** merita un secondo sguardo. Conta gli anni di calendario con un backup al loro interno, a partire da quello corrente, e il backup più recente di quest'anno è quello di oggi. Quindi il primo anno non aggiunge nulla agli altri conteggi, e il secondo aggiunge l'ultimo backup dell'anno precedente. Per questo la portata di una regola cambia nel corso dell'anno. Gli stessi backup con ogni preimpostazione:
 
-| Preimpostazione | Backup conservati | Backup più vecchio |
-|---|---|---|
-| **Breve** | 10 | 30 settembre 2026 |
-| **Equilibrato** | 13 | 30 giugno 2026 |
-| **Lungo** | 29 | 31 dicembre 2025 |
+| Preimpostazione | Backup conservati oggi | Backup più vecchio oggi | Portata nel corso dell'anno |
+|---|---|---|---|
+| **Breve** | 10 | 30 settembre 2026 | da 1 a 2 mesi |
+| **Equilibrato** | 14 | 31 dicembre 2025 | circa 4 mesi a inizio primavera, un anno intero il 31 dicembre |
+| **Lungo** | 30 | 31 dicembre 2024 | 1 anno il 1 gennaio, 2 anni il 31 dicembre |
 
-Passare da **Equilibrato** a **Breve** chiede prima conferma, a causa di **Chiedi prima di conservare meno**: "Dei 40 backup nell'immagine, la nuova regola ne elimina 3 che quella attuale conserva." Il numero viene dall'esempio nell'immagine, non dai tuoi backup. Qui per caso coincide: andrebbero via il 31 agosto, il 31 luglio e il 30 giugno. **Salva comunque** applica la regola, e la prossima potatura li elimina da quella destinazione in via definitiva.
+Passare da **Equilibrato** a **Breve** chiede prima conferma, a causa di **Chiedi prima di conservare meno**. La domanda dice quanti dei 40 backup nell'immagine la nuova regola elimina. Quel numero viene dall'esempio nell'immagine, quindi cambia con la data e non conta i tuoi backup. Dei backup di questo container andrebbero via il 31 agosto, il 31 luglio, il 30 giugno e il 31 dicembre 2025. **Salva comunque** applica la regola, e la prossima potatura li elimina da quella destinazione in via definitiva.
 
 Per tenere i container più a lungo del resto a questa destinazione, premi **Modifica le regole** sotto **Regole per sezione**, scegli **Container** e imposta **Valori personalizzati** in **Regole per Container**, per esempio 14 giorni, 8 settimane, 12 mesi e 2 anni. Le altre sezioni continuano a seguire la scheda della destinazione, e **Torna alla destinazione** riporta indietro Container.
 
@@ -218,7 +218,7 @@ Poiché da qui nulla pota questa copia, imposta **Budget di crescita (GB, 0 = di
 
 Ogni sezione ha una cartella propria: il repository in cui i suoi backup vengono scritti per primi. Le copie verso altre destinazioni partono da lì. Una nuova installazione tiene le cartelle proprie su questo server, sotto `/mnt/user/bombvault`, e insieme formano la destinazione **Locale**.
 
-Una cartella propria può anche stare in una destinazione che hai già, come un NAS, un rest-server o un bucket S3. La sezione salva allora lì direttamente, senza una copia locale nel mezzo, e la cartella propria segue le credenziali, la protezione dall'eliminazione, i limiti di banda e le regole di conservazione di quella destinazione. La destinazione elenca la sezione nella sua scheda **Cartelle proprie**, e **Destinazioni per sezione** mostra la destinazione come casa della sezione.
+Una cartella propria può anche stare in una destinazione che hai già, come un NAS, un rest-server o un bucket S3. La sezione salva allora lì direttamente, senza una copia locale nel mezzo, e la cartella propria segue le credenziali, la protezione dall'eliminazione e i limiti di banda di quella destinazione. BombVault la pota dopo ogni backup secondo la scheda **Per quanto tempo conservare** della destinazione, e i valori personalizzati di una sezione sotto **Regole per sezione** hanno la precedenza sulla scheda. La destinazione elenca la sezione nella sua scheda **Cartelle proprie**, e **Destinazioni per sezione** mostra la destinazione come casa della sezione.
 
 ### Spostare una cartella propria {#move-own-folder}
 
@@ -226,7 +226,7 @@ Una cartella propria può anche stare in una destinazione che hai già, come un 
 2. Scegli le sezioni sotto **Sezioni** e il posto sotto **Sposta in**. **Un altro posto** accetta una cartella su questo host o l'indirizzo di un repository remoto digitato a mano, con delle credenziali tra quelle salvate.
 3. Leggi **Cosa succede**. Per ogni sezione dice dove vanno i nuovi backup, se una copia che si trova già nel nuovo posto diventa la cartella propria e quali backup vengono copiati prima.
 4. **Copia i backup già fatti** è attivo di default. Se lo disattivi, i vecchi backup restano dove sono e si possono ancora ripristinare da lì.
-5. Scegli **Passa**. Quando i backup devono essere copiati prima, BombVault li copia e poi passa alla cartella propria. Quando ci sono già, li controlla prima del passaggio.
+5. Scegli **Passa**. Quando la scheda **Per quanto tempo conservare** del nuovo posto conserva meno della regola attuale della sezione, BombVault chiede prima **Conservare meno?** Lì, **Mantieni i valori attuali** di quella sezione **in Regole per sezione** porta con sé i valori di oggi, **Salva comunque** va avanti e **Indietro** lascia tutto com'era. Quando i backup devono essere copiati prima, BombVault li copia e poi passa alla cartella propria. Quando ci sono già, li controlla prima del passaggio.
 
 Dopo lo spostamento, i nuovi backup vanno nella cartella propria spostata, anche per una sezione che aveva **Locale** disattivato e salvava direttamente su una copia. Una copia che si trovava già nel nuovo posto diventa la cartella propria, e la copia lì termina. Dove quella copia teneva alcuni backup più a lungo delle regole di conservazione della sezione, la sezione conserva ciò che conserva una delle due regole, così nessuno va perso.
 
@@ -246,7 +246,7 @@ Il pool cache si sta riempiendo, e hai una destinazione chiamata `nas`, una cond
 3. Leggi **Cosa succede**. Dice che i nuovi backup di Container vanno nella cartella su `nas`, che i 61 backup in Locale vengono copiati lì per primi, che le copie continuano verso Backblaze B2 e che protezione, limiti di banda e allarme di crescita arrivano da `nas`.
 4. Lascia attivo **Copia i backup già fatti** e premi **Passa**.
 
-BombVault copia i backup in background e poi passa alla cartella propria. La pagina `nas` elenca Container sotto **Cartelle proprie**, un elemento che segue la sua sezione nomina `nas` come casa, e il prossimo backup finisce lì, con la copia verso B2 che parte da `nas`. La vecchia cartella su questo server resta dov'è, e BombVault non elimina nulla lì.
+BombVault copia i backup in background e poi passa alla cartella propria. La pagina `nas` elenca Container sotto **Cartelle proprie**, un elemento che segue la sua sezione nomina `nas` come casa, e il prossimo backup finisce lì, con la copia verso B2 che parte da `nas`. Da ora in poi la scheda **Per quanto tempo conservare** di `nas` pota la cartella. La vecchia cartella su questo server resta dov'è, e BombVault non elimina nulla lì.
 
 ### Digitare a mano un indirizzo remoto {#remote-primary-repositories}
 

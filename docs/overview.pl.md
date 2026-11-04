@@ -46,7 +46,9 @@ Każda włączona sekcja ma wiersz z czterema kontrolami:
 
 Sekcja jest zielona tylko na podstawie sprawdzonych faktów. Kopia na tym serwerze nie liczy się jako poza siedzibą, a miejsce oznaczone **Akceptuj bez ochrony przed usunięciem** pokazuje szary pierścień zamiast bursztynowej kropki, więc kolor sekcji wynika z jej pozostałych kontroli.
 
-Kliknięcie sekcji otwiera jej okno z opisem każdej kontroli, policzonymi elementami i przyciskiem **Uruchom testowe odtwarzanie** albo **Uruchom testowe odtwarzanie ponownie**.
+Sekcja z harmonogramem pokazuje **Jeszcze bez kopii zapasowej** i pozostaje neutralna, dopóki nie nadejdzie termin jej pierwszego przebiegu. Potem pokazuje **Zaległe** i alarmuje jeden raz. Sekcja, która nie ma czego kopiować, bo żaden harmonogram nie obejmuje żadnego z jej elementów, pokazuje **Bez harmonogramu** i nigdy nie jest zaległa.
+
+Kliknięcie sekcji otwiera jej okno z opisem każdej kontroli, policzonymi elementami i przyciskiem **Uruchom testowe odtwarzanie** albo **Uruchom testowe odtwarzanie ponownie**. Pokazuje też **Reguła przycinania ustawiona** albo **Brak reguły przycinania**, a reguła przechowywania własnego folderu sekcji liczy się tak samo jak jej reguły poza siedzibą.
 
 ![Okno ochrony sekcji Containers z opisanymi czterema kontrolami.](assets/screenshots/overview/protection-window-dark.png#only-dark)
 ![Okno ochrony sekcji Containers z opisanymi czterema kontrolami.](assets/screenshots/overview/protection-window-light.png#only-light)

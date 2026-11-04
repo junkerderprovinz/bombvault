@@ -81,7 +81,7 @@ Cihaz BombVault ya da örnek adı parantez içinde olan BombVault olarak adland�
 
 | Varlık | Ne gösterir |
 |---|---|
-| Status | `ok`, `warning`, `failed` ya da `off`, açık bölümlerin en kötüsü |
+| Status | `ok`, `warning`, `failed` ya da `off`, açık bölümlerin en kötüsü. İlk yedeğini bekleyen bir bölüm ancak o yedeğin zamanı geldiğinde sayılır ve durumu yalnızca güncel bir bölüm `ok` yapar |
 | Running job | Şu an ne çalışıyor, ya da `idle` |
 | Open anomalies | Kaç anormallik açık |
 | Next scheduled backup | Sonraki zamanlanmış yedeğin ne zaman başlayacağı |

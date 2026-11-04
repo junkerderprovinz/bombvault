@@ -46,7 +46,9 @@ Jokaisella päällä olevalla osiolla on rivi, jossa on neljä tarkistusta:
 
 Osio on vihreä vain varmennetuilla tosiasioilla. Kopio tällä palvelimella ei ole etäkopio, ja kohde, jonka merkitsit valinnalla **Hyväksy ilman poistosuojaa**, näyttää harmaan renkaan keltaisen pisteen sijaan, joten osion väri seuraa sen muita tarkistuksia.
 
-Osion napsautus avaa sen ikkunan, jossa jokainen tarkistus on kirjoitettu auki, mukana ovat sen laskemat merkinnät sekä **Aloita koepalautus** tai **Aja koepalautus uudelleen**.
+Ajoitettu osio näyttää **Ei vielä varmuuskopiota** ja pysyy neutraalina, kunnes sen ensimmäisen ajon aika on tullut. Sen jälkeen siinä lukee **Myöhässä**, ja se hälyttää kerran. Osio, jossa ei ole mitään varmuuskopioitavaa, koska mikään aikataulu ei ulotu sen merkintöihin, näyttää **Ei aikataulutettu** eikä ole koskaan myöhässä.
+
+Osion napsautus avaa sen ikkunan, jossa jokainen tarkistus on kirjoitettu auki, mukana ovat sen laskemat merkinnät sekä **Aloita koepalautus** tai **Aja koepalautus uudelleen**. Se näyttää myös **Karsintasääntö asetettu** tai **Ei karsintasääntöä**, ja osion oman kansion säilytyssääntö lasketaan siinä missä sen etäkopioiden säännötkin.
 
 ![Kontit-osion suojausikkuna, jossa sen neljä tarkistusta on kirjoitettu auki.](assets/screenshots/overview/protection-window-dark.png#only-dark)
 ![Kontit-osion suojausikkuna, jossa sen neljä tarkistusta on kirjoitettu auki.](assets/screenshots/overview/protection-window-light.png#only-light)

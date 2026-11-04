@@ -10,7 +10,7 @@ Každý z nich provede jedním skutečným úkolem od začátku do konce, s dopl
 
 - [Kopie mimo lokalitu na Backblaze B2](offsite-recovery.md#example-s3): bucket, klíč jen pro ten bucket a první kopie. Cloudflare R2 funguje stejně.
 - [Rest-server, který si provozuješ sám](offsite-recovery.md#example-rest-server): kopie mimo lokalitu, která odmítá mazání, s řádkem `docker run` a tamper testem.
-- [Co drží Vyvážené](offsite-recovery.md#example-retention): uchovávání během 400 dní nočních záloh, záloha po záloze.
+- [Co drží Vyvážené](offsite-recovery.md#example-retention): uchovávání během dvou let nočních záloh, záloha po záloze.
 - [Kontejnery se stěhují na NAS](offsite-recovery.md#example-own-folder): vlastní složka sekce změní místo a co se stane se zálohami, které už existují.
 
 ## Zálohy a plány {#backups}

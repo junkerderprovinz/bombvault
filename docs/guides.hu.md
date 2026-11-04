@@ -10,7 +10,7 @@ Mindegyik példa egy valódi feladatot visz végig az elejétől a végéig, kit
 
 - [Telephelyen kívüli másolat a Backblaze B2-n](offsite-recovery.md#example-s3): egy vödör, egy kulcs ahhoz a vödörhöz, és az első másolat. A Cloudflare R2 ugyanígy működik.
 - [Egy rest-server, amelyet magad üzemeltetsz](offsite-recovery.md#example-rest-server): egy telephelyen kívüli másolat, amely megtagadja a törlést, a `docker run` sorral és a kijátszási próbával.
-- [Mit tart meg a Kiegyensúlyozott](offsite-recovery.md#example-retention): a megőrzés 400 napnyi éjszakai mentésen, mentésről mentésre.
+- [Mit tart meg a Kiegyensúlyozott](offsite-recovery.md#example-retention): a megőrzés két évnyi éjszakai mentésen, mentésről mentésre.
 - [A konténerek egy NAS-ra költöznek](offsite-recovery.md#example-own-folder): egy szakasz saját mappája helyet vált, és mi lesz a már elkészült mentésekkel.
 
 ## Mentések és ütemezések {#backups}

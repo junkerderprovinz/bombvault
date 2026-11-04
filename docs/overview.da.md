@@ -46,7 +46,9 @@ Hvert aktiveret område har en række med fire kontroller:
 
 Et område er kun grønt på bekræftede kendsgerninger. En kopi på denne server tæller ikke som off-site, og en destination, du har markeret **Accepter uden beskyttelse mod sletning**, viser en grå ring i stedet for en gul prik, så områdets farve følger dets øvrige kontroller.
 
-Et klik på et område åbner dets vindue med hver kontrol udskrevet, de poster, den tæller, og **Start testgendannelse** eller **Kør testgendannelse igen**.
+Et planlagt område viser **Endnu ingen sikkerhedskopi** og forbliver neutralt, indtil tidspunktet for dets første kørsel er nået. Derefter står der **Forfalden**, og det advarer én gang. Et område uden noget at sikkerhedskopiere, fordi ingen tidsplan når nogen af dets poster, viser **Ikke planlagt** og er aldrig forfaldent.
+
+Et klik på et område åbner dets vindue med hver kontrol udskrevet, de poster, den tæller, og **Start testgendannelse** eller **Kør testgendannelse igen**. Det viser også **Beskæringsregel angivet** eller **Ingen beskæringsregel**, og behold-reglen for et områdes egen mappe tæller lige så vel som dets off-site-regler.
 
 ![Beskyttelsesvinduet for området Containers med dets fire kontroller udskrevet.](assets/screenshots/overview/protection-window-dark.png#only-dark)
 ![Beskyttelsesvinduet for området Containers med dets fire kontroller udskrevet.](assets/screenshots/overview/protection-window-light.png#only-light)

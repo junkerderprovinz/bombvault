@@ -46,7 +46,9 @@ Chaque section activée a une ligne avec quatre contrôles :
 
 Une section n'est verte que sur des faits vérifiés. Une copie sur ce serveur ne compte pas comme hors site, et une destination que vous avez marquée **Accepter sans protection contre la suppression** montre un anneau gris au lieu d'un point ambre, si bien que la couleur de la section suit ses autres contrôles.
 
-Un clic sur une section ouvre sa fenêtre avec chaque contrôle détaillé, les éléments qu'elle compte et **Lancer la restauration de test** ou **Relancer la restauration de test**.
+Une section planifiée affiche **Pas encore de sauvegarde** et reste neutre jusqu'à ce que sa première exécution soit due. Ensuite, elle indique **En retard** et alerte une fois. Une section qui n'a rien à sauvegarder, parce qu'aucun planning n'atteint ses éléments, affiche **Non planifié** et n'est jamais en retard.
+
+Un clic sur une section ouvre sa fenêtre avec chaque contrôle détaillé, les éléments qu'elle compte et **Lancer la restauration de test** ou **Relancer la restauration de test**. Elle indique aussi **Règle d'élagage définie** ou **Aucune règle d'élagage**, et la règle de conservation du dossier propre d'une section compte autant que ses règles hors site.
 
 ![La fenêtre de protection de la section Conteneurs avec ses quatre contrôles détaillés.](assets/screenshots/overview/protection-window-dark.png#only-dark)
 ![La fenêtre de protection de la section Conteneurs avec ses quatre contrôles détaillés.](assets/screenshots/overview/protection-window-light.png#only-light)

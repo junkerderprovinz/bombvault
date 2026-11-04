@@ -10,7 +10,7 @@ Elk voorbeeld loopt één echte klus van begin tot eind door, met namen en getal
 
 - [Een off-site-kopie op Backblaze B2](offsite-recovery.md#example-s3): een bucket, een sleutel voor die bucket en de eerste kopie. Cloudflare R2 werkt op dezelfde manier.
 - [Een rest-server die je zelf draait](offsite-recovery.md#example-rest-server): een off-site-kopie die verwijderen weigert, met de regel `docker run` en de sabotagetest.
-- [Wat Gebalanceerd bewaart](offsite-recovery.md#example-retention): bewaarbeleid over 400 dagen nachtelijke back-ups, back-up voor back-up.
+- [Wat Gebalanceerd bewaart](offsite-recovery.md#example-retention): bewaarbeleid over twee jaar nachtelijke back-ups, back-up voor back-up.
 - [Containers verhuizen naar een NAS](offsite-recovery.md#example-own-folder): de eigen map van een onderdeel verandert van plek, en wat er gebeurt met de al gemaakte back-ups.
 
 ## Back-ups en planningen {#backups}

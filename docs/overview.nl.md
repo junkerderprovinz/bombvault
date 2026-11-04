@@ -46,7 +46,9 @@ Elk ingeschakeld onderdeel heeft een rij met vier controles:
 
 Een onderdeel is alleen groen op geverifieerde feiten. Een kopie op deze server telt niet als off-site, en een bestemming die je markeerde met **Accepteren zonder bescherming tegen verwijderen** toont een grijze ring in plaats van een amberkleurige stip, zodat de kleur van het onderdeel zijn andere controles volgt.
 
-Een klik op een onderdeel opent zijn venster met elke controle uitgeschreven, de items die het telt en **Testherstel starten** of **Testherstel opnieuw uitvoeren**.
+Een onderdeel met een planning toont **Nog geen back-up** en blijft neutraal tot zijn eerste run aan de beurt was. Daarna staat er **Te laat** en waarschuwt het één keer. Een onderdeel zonder iets om te back-uppen, omdat geen planning een van zijn items bereikt, toont **Niet gepland** en is nooit te laat.
+
+Een klik op een onderdeel opent zijn venster met elke controle uitgeschreven, de items die het telt en **Testherstel starten** of **Testherstel opnieuw uitvoeren**. Het toont ook **Opschoonregel ingesteld** of **Geen opschoonregel**, en de bewaarregel van de eigen map van een onderdeel telt net zo goed mee als zijn off-site-regels.
 
 ![Het beschermingsvenster van het onderdeel Containers met zijn vier controles uitgeschreven.](assets/screenshots/overview/protection-window-dark.png#only-dark)
 ![Het beschermingsvenster van het onderdeel Containers met zijn vier controles uitgeschreven.](assets/screenshots/overview/protection-window-light.png#only-light)

@@ -73,7 +73,7 @@ Chaque destination a sa propre page. Elle ne montre que les cartes qui s'appliqu
 - **Connexion** : le **Nom**, l'interrupteur **Disponible** (désactivé, BombVault n'écrit plus ici, et les éléments qui sauvegardent ici échouent avec un message clair au lieu d'atterrir ailleurs), le dossier, **Compression**, **Classe de stockage** et **Hors des locaux**. Sur la destination **Local**, elle liste le dossier de chaque section sous **Dossiers propres ici**. **Modifier la connexion** teste et enregistre une nouvelle adresse ou de nouveaux identifiants. Quand d'autres endroits se connectent avec les mêmes identifiants enregistrés, la fenêtre le dit, et une modification ici donne à cette destination ses propres identifiants au lieu de réécrire ceux qui sont partagés.
 - **Identifiants** : quels identifiants enregistrés elle utilise (**Se connecte avec**), quelles autres destinations les utilisent aussi (**Également utilisés par**), et **Modifier**, qui ouvre la fenêtre des identifiants. Voir [Identifiants](#sign-ins).
 - **rclone.conf** : la section de la configuration rclone de cette destination, pour une destination qui passe par rclone.
-- **Protection contre la suppression**, avec **Protection contre la suppression (ajout seul)**, **Accepter sans protection contre la suppression**, **Tester la protection contre la suppression maintenant** et **Qui élague**, qui dit si BombVault élague la copie et les dossiers propres ici ou laisse cela à l'autre côté. Un dossier local ne montre cette carte que s'il a une protection que vous pouvez désactiver. Voir [Protection contre la suppression](#delete-protection-append-only).
+- **Protection contre la suppression**, avec **Protection contre la suppression (ajout seul)**, **Accepter sans protection contre la suppression**, **Tester la protection contre la suppression maintenant** et **Qui élague**, qui dit si BombVault élague la copie et les dossiers propres ici, selon la carte **Durée de conservation** de cette destination ou les valeurs personnalisées d'une section sous **Règles par section**, ou laisse cela à l'autre côté. Un dossier local ne montre cette carte que s'il a une protection que vous pouvez désactiver. Voir [Protection contre la suppression](#delete-protection-append-only).
 - **Copier** : **Quand copier**, et la **Limite d'envoi (KiB/s)** et la **Limite de téléchargement (KiB/s)**. Une destination qui ne contient que des dossiers propres et aucune copie montre les limites dans une carte appelée **Bande passante**.
 - **Durée de conservation** : **Court**, **Équilibré**, **Long** ou **Valeurs personnalisées**, avec une chronologie des sauvegardes que la règle garde. Voir [Durée de conservation](#keep).
 - **Déjà sous cette destination** : les sections dont l'adresse saisie à la main se trouve dans un dossier de cette destination. En reprendre une laisse le dépôt où il est. Les identifiants, la classe de stockage et la protection contre la suppression viennent alors de la destination. BombVault vérifie d'abord que les identifiants de la destination ouvrent le dépôt, et il refuse de placer un dépôt en ajout seul sous une destination qui n'est pas en ajout seul.
@@ -100,10 +100,10 @@ Une règle garde une sauvegarde par jour, semaine, mois et année, aussi loin qu
 | Préréglage | Dernières sauvegardes | Jours | Semaines | Mois | Années |
 |---|---|---|---|---|---|
 | **Court** | 0 | 7 | 4 | 3 | 0 |
-| **Équilibré** | 0 | 7 | 4 | 6 | 1 |
+| **Équilibré** | 0 | 7 | 4 | 6 | 2 |
 | **Long** | 0 | 14 | 8 | 12 | 3 |
 
-**Valeurs personnalisées** règle vous-même les cinq nombres. Un 0 désactive ce nombre, et une règle dont tous les nombres sont à 0 garde tout. Les points de la carte montrent lesquelles de 40 sauvegardes d'exemple une règle garde, la plus récente tout à droite. L'échantillon est le même pour chaque destination, car l'image est dessinée avant que BombVault ait lu les sauvegardes de l'endroit.
+**Valeurs personnalisées** règle vous-même les cinq nombres. Un 0 désactive ce nombre, et une règle dont tous les nombres sont à 0 garde tout. Les points de la carte montrent lesquelles de 40 sauvegardes d'exemple une règle garde, la plus récente tout à droite. L'échantillon est le même pour chaque destination, car l'image est dessinée avant que BombVault ait lu les sauvegardes de l'endroit. Il remonte à partir d'aujourd'hui, donc le nombre de points qui restent change avec la date.
 
 **Demander avant de conserver moins**, activé par défaut, demande avant d'enregistrer un changement qui garde moins de sauvegardes, et dit combien des 40 sauvegardes d'exemple la nouvelle règle supprime. Il s'applique à chaque destination. **Revenir à la destination** sous **Règles par section** pose la même question.
 
@@ -116,7 +116,7 @@ Pour voir ce que la prochaine exécution supprimerait vraiment, ouvrez **Aperçu
 
 #### Exemple : ce que garde Équilibré {#example-retention}
 
-Un conteneur est sauvegardé chaque nuit à 03:00 depuis le 1er octobre 2025, si bien que le mercredi 4 novembre 2026 il a eu 400 sauvegardes. Sa destination est réglée sur **Équilibré** : 7 jours, 4 semaines, 6 mois et 1 an.
+Un conteneur est sauvegardé chaque nuit à 03:00 depuis le 1er octobre 2024, si bien que le mercredi 4 novembre 2026 il a eu 765 sauvegardes. Sa destination est réglée sur **Équilibré** : 7 jours, 4 semaines, 6 mois et 2 ans.
 
 Chaque nombre garde la sauvegarde la plus récente de son jour, sa semaine, son mois ou son année, et une sauvegarde que plusieurs nombres choisissent n'est gardée qu'une fois. Les semaines vont du lundi au dimanche :
 
@@ -125,19 +125,19 @@ Chaque nombre garde la sauvegarde la plus récente de son jour, sa semaine, son 
 | 7 jours | 4 nov, 3 nov, 2 nov, 1 nov, 31 oct, 30 oct, 29 oct | les 7 |
 | 4 semaines | 4 nov, 1 nov, 25 oct, 18 oct | 25 oct, 18 oct |
 | 6 mois | 4 nov, 31 oct, 30 sept, 31 août, 31 juil, 30 juin | 30 sept, 31 août, 31 juil, 30 juin |
-| 1 an | 4 nov | aucune |
+| 2 ans | 4 nov, 31 déc 2025 | 31 déc 2025 |
 
-Il reste donc 13 sauvegardes sur 400. La plus ancienne date du 30 juin, vous pouvez donc remonter un peu plus de quatre mois en arrière. Grâce à la déduplication, elles ne prennent guère plus de place qu'une sauvegarde complète plus ce qui a changé entre-temps.
+Il reste donc 14 sauvegardes sur 765. La plus ancienne date du 31 décembre 2025, vous pouvez donc aujourd'hui remonter un peu plus de dix mois en arrière. Grâce à la déduplication, elles ne prennent guère plus de place qu'une sauvegarde complète plus ce qui a changé entre-temps.
 
-**Années** mérite un second regard. Il compte les années civiles qui contiennent une sauvegarde, en commençant par l'année en cours, et la sauvegarde la plus récente de cette année est celle d'aujourd'hui. Un 1 dans **Années** n'ajoute donc rien aux autres nombres, et il faut un 2 pour remonter dans l'année dernière. Les mêmes 400 sauvegardes avec les autres préréglages :
+**Années** mérite un second regard. Il compte les années civiles qui contiennent une sauvegarde, en commençant par l'année en cours, et la sauvegarde la plus récente de cette année est celle d'aujourd'hui. La première année n'ajoute donc rien aux autres nombres, et la seconde ajoute la dernière sauvegarde de l'année précédente. C'est pourquoi la portée d'une règle varie au fil de l'année. Les mêmes sauvegardes avec chaque préréglage :
 
-| Préréglage | Sauvegardes gardées | Sauvegarde la plus ancienne |
-|---|---|---|
-| **Court** | 10 | 30 septembre 2026 |
-| **Équilibré** | 13 | 30 juin 2026 |
-| **Long** | 29 | 31 décembre 2025 |
+| Préréglage | Sauvegardes gardées aujourd'hui | Sauvegarde la plus ancienne aujourd'hui | Portée au fil de l'année |
+|---|---|---|---|
+| **Court** | 10 | 30 septembre 2026 | 1 à 2 mois |
+| **Équilibré** | 14 | 31 décembre 2025 | environ 4 mois au début du printemps, une année entière le 31 décembre |
+| **Long** | 30 | 31 décembre 2024 | 1 an le 1er janvier, 2 ans le 31 décembre |
 
-Passer d'**Équilibré** à **Court** demande d'abord confirmation, à cause de **Demander avant de conserver moins** : « Sur les 40 sauvegardes de l'image, la nouvelle règle en supprime 3 que l'actuelle garde. » Le nombre vient de l'échantillon de l'image, pas de vos propres sauvegardes. Ici, il se trouve qu'il concorde : le 31 août, le 31 juillet et le 30 juin partiraient. **Enregistrer quand même** applique la règle, et le prochain élagage les supprime de cette destination pour de bon.
+Passer d'**Équilibré** à **Court** demande d'abord confirmation, à cause de **Demander avant de conserver moins**. La question indique combien des 40 sauvegardes de l'image la nouvelle règle retire. Ce nombre vient de l'échantillon, il change donc avec la date et ne compte pas vos propres sauvegardes. Parmi les sauvegardes de cet exemple, le 31 août, le 31 juillet, le 30 juin et le 31 décembre 2025 partiraient. **Enregistrer quand même** applique la règle, et le prochain élagage les supprime de cette destination pour de bon.
 
 Pour garder les conteneurs plus longtemps que le reste à cette destination, appuyez sur **Modifier les règles** sous **Règles par section**, choisissez **Conteneurs**, et réglez des **Valeurs personnalisées** dans **Règles pour Conteneurs**, par exemple 14 jours, 8 semaines, 12 mois et 2 ans. Les autres sections continuent de suivre la carte de la destination, et **Revenir à la destination** ramène Conteneurs.
 
@@ -218,7 +218,7 @@ Comme rien n'élague cette copie d'ici, réglez **Budget de croissance (GB, 0 = 
 
 Chaque section a un dossier propre : le dépôt dans lequel ses sauvegardes sont d'abord écrites. Les copies vers d'autres destinations partent de là. Une nouvelle installation garde les dossiers propres sur ce serveur, sous `/mnt/user/bombvault`, et ensemble ils forment la destination **Local**.
 
-Un dossier propre peut aussi se trouver dans une destination que vous avez déjà, comme un NAS, un rest-server ou un bucket S3. La section sauvegarde alors directement là, sans copie locale intermédiaire, et le dossier propre suit les identifiants, la protection contre la suppression, les limites de bande passante et les règles de conservation de cette destination. La destination liste la section dans sa carte **Dossiers propres**, et **Destinations par section** montre la destination comme le domicile de la section.
+Un dossier propre peut aussi se trouver dans une destination que vous avez déjà, comme un NAS, un rest-server ou un bucket S3. La section sauvegarde alors directement là, sans copie locale intermédiaire, et le dossier propre suit les identifiants, la protection contre la suppression et les limites de bande passante de cette destination. BombVault l'élague après chaque sauvegarde selon la carte **Durée de conservation** de la destination, et les valeurs personnalisées d'une section sous **Règles par section** l'emportent sur la carte. La destination liste la section dans sa carte **Dossiers propres**, et **Destinations par section** montre la destination comme le domicile de la section.
 
 ### Déplacer un dossier propre {#move-own-folder}
 
@@ -226,7 +226,7 @@ Un dossier propre peut aussi se trouver dans une destination que vous avez déj�
 2. Choisissez les sections sous **Sections** et l'endroit sous **Déplacer vers**. **Un autre endroit** accepte un dossier sur cet hôte ou l'adresse d'un dépôt distant saisie à la main, avec des identifiants pris parmi vos identifiants enregistrés.
 3. Lisez **Ce qui se passe**. Pour chaque section, cela dit où vont les nouvelles sauvegardes, si une copie déjà présente au nouvel endroit devient le dossier propre, et quelles sauvegardes sont d'abord copiées.
 4. **Copier les sauvegardes déjà faites** est activé par défaut. Désactivé, les anciennes sauvegardes restent où elles sont et peuvent encore y être restaurées.
-5. Choisissez **Basculer**. Quand des sauvegardes doivent d'abord être copiées, BombVault les copie puis bascule le dossier propre. Quand elles sont déjà là, il les contrôle avant de basculer.
+5. Choisissez **Basculer**. Quand la carte **Durée de conservation** du nouvel endroit garde moins que la règle actuelle de la section, BombVault demande d'abord **Conserver moins ?** Là, **Conserver les valeurs actuelles** de cette section **dans Règles par section** reprend les valeurs d'aujourd'hui, **Enregistrer quand même** poursuit, et **Retour** laisse tout tel quel. Quand des sauvegardes doivent d'abord être copiées, BombVault les copie puis bascule le dossier propre. Quand elles sont déjà là, il les contrôle avant de basculer.
 
 Après le déplacement, les nouvelles sauvegardes vont au dossier propre déplacé, aussi pour une section dont **Local** était désactivé et qui sauvegardait directement vers une copie. Une copie qui se trouvait déjà au nouvel endroit devient le dossier propre, et la copie vers là s'arrête. Là où cette copie gardait certaines sauvegardes plus longtemps que les règles de conservation de la section, la section garde ce que l'une ou l'autre règle garde, si bien qu'aucune n'est perdue.
 
@@ -246,7 +246,7 @@ Le pool de cache se remplit, et vous avez une destination appelée `nas`, un par
 3. Lisez **Ce qui se passe**. Cela dit que les nouvelles sauvegardes de Conteneurs vont au dossier sur `nas`, que les 61 sauvegardes de Local y sont d'abord copiées, que les copies vers Backblaze B2 continuent, et que la protection, les limites de bande passante et l'alarme de croissance viennent de `nas`.
 4. Laissez **Copier les sauvegardes déjà faites** activé et appuyez sur **Basculer**.
 
-BombVault copie les sauvegardes en arrière-plan puis bascule le dossier propre. La page de `nas` liste Conteneurs sous **Dossiers propres**, un élément qui suit sa section nomme `nas` comme son domicile, et la prochaine sauvegarde y atterrit, avec la copie vers B2 qui part de `nas`. L'ancien dossier sur ce serveur reste où il est, et BombVault n'y supprime rien.
+BombVault copie les sauvegardes en arrière-plan puis bascule le dossier propre. La page de `nas` liste Conteneurs sous **Dossiers propres**, un élément qui suit sa section nomme `nas` comme son domicile, et la prochaine sauvegarde y atterrit, avec la copie vers B2 qui part de `nas`. À partir de maintenant, la carte **Durée de conservation** de `nas` élague le dossier. L'ancien dossier sur ce serveur reste où il est, et BombVault n'y supprime rien.
 
 ### Saisir une adresse distante à la main {#remote-primary-repositories}
 

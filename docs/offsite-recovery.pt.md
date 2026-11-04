@@ -73,7 +73,7 @@ Cada destino tem uma página própria. Mostra só os cartões que se aplicam a e
 - **Ligação**: o **Nome**, o interruptor **Disponível** (desligado significa que o BombVault deixa de escrever aqui, e as entradas que fazem backup aqui falham com uma mensagem clara em vez de irem parar a outro sítio), a pasta, a **Compressão**, a **Classe de armazenamento** e **Fora das instalações**. No destino **Local** lista a pasta de cada secção em **Pastas próprias aqui**. **Alterar a ligação** testa e guarda um novo endereço ou início de sessão. Quando outros lugares iniciam sessão com as mesmas credenciais guardadas, a janela di-lo, e uma alteração aqui dá a este destino credenciais próprias em vez de reescrever as partilhadas.
 - **Credenciais**: que credenciais guardadas usa (**Entra com**), que outros destinos as usam também (**Também usadas por**), e **Editar**, que abre a janela das credenciais. Vê [Credenciais](#sign-ins).
 - **rclone.conf**: a secção deste destino da configuração do rclone, para um destino que passa pelo rclone.
-- **Proteção contra eliminação**, com **Proteção contra eliminação (append-only)**, **Aceitar sem proteção contra eliminação**, **Testar agora a proteção contra eliminação** e **Quem poda**, que diz se o BombVault poda a cópia e as pastas próprias aqui ou deixa isso ao outro lado. Uma pasta local só mostra este cartão quando tem uma proteção que se pode desligar. Vê [Proteção contra eliminação](#delete-protection-append-only).
+- **Proteção contra eliminação**, com **Proteção contra eliminação (append-only)**, **Aceitar sem proteção contra eliminação**, **Testar agora a proteção contra eliminação** e **Quem poda**, que diz se o BombVault poda a cópia e as pastas próprias aqui, pelo cartão **Durante quanto tempo guardar** deste destino ou pelos valores próprios de uma secção em **Regras por secção**, ou deixa isso ao outro lado. Uma pasta local só mostra este cartão quando tem uma proteção que se pode desligar. Vê [Proteção contra eliminação](#delete-protection-append-only).
 - **Copiar**: **Quando copiar**, e o **Limite de envio (KiB/s)** e o **Limite de receção (KiB/s)**. Um destino que guarda só pastas próprias e nenhuma cópia mostra os limites num cartão chamado **Largura de banda**.
 - **Durante quanto tempo guardar**: **Curto**, **Equilibrado**, **Longo** ou **Valores próprios**, com uma linha cronológica dos backups que a regra mantém. Vê [Durante quanto tempo guardar](#keep).
 - **Já está sob este destino**: secções cujo endereço escrito à mão está numa pasta deste destino. Assumir uma deixa o repositório onde está. As credenciais, a classe de armazenamento e a proteção contra eliminação passam então a vir do destino. O BombVault verifica primeiro que as credenciais do destino abrem o repositório, e recusa pôr um repositório append-only sob um destino que não é append-only.
@@ -100,10 +100,10 @@ Uma regra guarda um backup por dia, semana, mês e ano, tão para trás quanto d
 | Predefinição | Últimos backups | Dias | Semanas | Meses | Anos |
 |---|---|---|---|---|---|
 | **Curto** | 0 | 7 | 4 | 3 | 0 |
-| **Equilibrado** | 0 | 7 | 4 | 6 | 1 |
+| **Equilibrado** | 0 | 7 | 4 | 6 | 2 |
 | **Longo** | 0 | 14 | 8 | 12 | 3 |
 
-**Valores próprios** define tu mesmo as cinco contagens. Um 0 desliga essa contagem, e uma regra com todas as contagens a 0 guarda tudo. Os pontos no cartão mostram quais de 40 backups de exemplo uma regra guarda, o mais recente na ponta direita. A amostra é a mesma para todos os destinos, já que a imagem é desenhada antes de o BombVault ter lido os backups lá.
+**Valores próprios** define tu mesmo as cinco contagens. Um 0 desliga essa contagem, e uma regra com todas as contagens a 0 guarda tudo. Os pontos no cartão mostram quais de 40 backups de exemplo uma regra guarda, o mais recente na ponta direita. A amostra é a mesma para todos os destinos, já que a imagem é desenhada antes de o BombVault ter lido os backups lá. Conta para trás a partir de hoje, por isso o número de pontos que ficam muda com a data.
 
 **Perguntar antes de guardar menos**, ligado por predefinição, pergunta antes de se guardar uma alteração que guarda menos backups, e diz quantos dos 40 backups de exemplo a nova regra remove. Aplica-se a todos os destinos. **Repor o do destino** em **Regras por secção** faz a mesma pergunta.
 
@@ -116,7 +116,7 @@ Para ver o que a próxima execução apagaria de verdade, abre **Pré-visualizar
 
 #### Exemplo: o que guarda o Equilibrado {#example-retention}
 
-Um container tem feito backup todas as noites às 03:00 desde 1 de outubro de 2025, por isso na quarta-feira 4 de novembro de 2026 já tem 400 backups. O seu destino está em **Equilibrado**: 7 dias, 4 semanas, 6 meses e 1 ano.
+Um container tem feito backup todas as noites às 03:00 desde 1 de outubro de 2024, por isso na quarta-feira 4 de novembro de 2026 já tem 765 backups. O seu destino está em **Equilibrado**: 7 dias, 4 semanas, 6 meses e 2 anos.
 
 Cada contagem guarda o backup mais recente do seu dia, semana, mês ou ano, e um backup que várias contagens escolhem é guardado uma só vez. As semanas vão de segunda a domingo:
 
@@ -125,19 +125,19 @@ Cada contagem guarda o backup mais recente do seu dia, semana, mês ou ano, e um
 | 7 dias | 4 nov, 3 nov, 2 nov, 1 nov, 31 out, 30 out, 29 out | todos os 7 |
 | 4 semanas | 4 nov, 1 nov, 25 out, 18 out | 25 out, 18 out |
 | 6 meses | 4 nov, 31 out, 30 set, 31 ago, 31 jul, 30 jun | 30 set, 31 ago, 31 jul, 30 jun |
-| 1 ano | 4 nov | nenhum |
+| 2 anos | 4 nov, 31 dez 2025 | 31 dez 2025 |
 
-Ficam 13 backups em 400. O mais antigo é de 30 de junho, por isso podes recuar um pouco mais de quatro meses. Graças à deduplicação ocupam pouco mais espaço do que um backup completo mais o que mudou pelo meio.
+Ficam 14 backups em 765. O mais antigo é de 31 de dezembro de 2025, por isso hoje podes recuar um pouco mais de dez meses. Graças à deduplicação ocupam pouco mais espaço do que um backup completo mais o que mudou pelo meio.
 
-Os **Anos** merecem um segundo olhar. Contam os anos civis em que há um backup, a começar pelo atual, e o backup mais recente deste ano é o de hoje. Por isso um 1 em **Anos** não acrescenta nada às outras contagens, e precisas de um 2 para chegar ao ano passado. Os mesmos 400 backups com as outras predefinições:
+Os **Anos** merecem um segundo olhar. Contam os anos civis em que há um backup, a começar pelo atual, e o backup mais recente deste ano é o de hoje. Assim, o primeiro ano não acrescenta nada às outras contagens, e o segundo acrescenta o último backup do ano anterior. É por isso que o alcance de uma regra varia ao longo do ano. Os mesmos backups com cada predefinição:
 
-| Predefinição | Backups guardados | Backup mais antigo |
-|---|---|---|
-| **Curto** | 10 | 30 de setembro de 2026 |
-| **Equilibrado** | 13 | 30 de junho de 2026 |
-| **Longo** | 29 | 31 de dezembro de 2025 |
+| Predefinição | Backups guardados hoje | Backup mais antigo hoje | Alcance ao longo do ano |
+|---|---|---|---|
+| **Curto** | 10 | 30 de setembro de 2026 | 1 a 2 meses |
+| **Equilibrado** | 14 | 31 de dezembro de 2025 | cerca de 4 meses no início da primavera, um ano inteiro a 31 de dezembro |
+| **Longo** | 30 | 31 de dezembro de 2024 | 1 ano a 1 de janeiro, 2 anos a 31 de dezembro |
 
-Passar de **Equilibrado** para **Curto** pergunta primeiro, por causa de **Perguntar antes de guardar menos**: "Dos 40 backups da imagem, a nova regra remove 3 que a atual guarda." O número vem da amostra da imagem, não dos teus próprios backups. Aqui calha coincidir: iam 31 de agosto, 31 de julho e 30 de junho. **Guardar mesmo assim** aplica a regra, e a poda seguinte elimina-os desse destino de vez.
+Passar de **Equilibrado** para **Curto** pergunta primeiro, por causa de **Perguntar antes de guardar menos**. A pergunta diz quantos dos 40 backups na imagem a nova regra elimina. Esse número vem da amostra, por isso muda com a data e não conta os teus próprios backups. Dos backups deste exemplo, iam 31 de agosto, 31 de julho, 30 de junho e 31 de dezembro de 2025. **Guardar mesmo assim** aplica a regra, e a poda seguinte elimina-os desse destino de vez.
 
 Para manter os containers mais tempo do que o resto neste destino, carrega em **Alterar regras** em **Regras por secção**, escolhe **Containers** e define **Valores próprios** em **Regras para Containers**, por exemplo 14 dias, 8 semanas, 12 meses e 2 anos. As outras secções continuam a seguir o cartão do destino, e **Repor o do destino** devolve os Containers a ele.
 
@@ -218,7 +218,7 @@ Como nada poda esta cópia a partir daqui, define o **Orçamento de crescimento 
 
 Cada secção tem uma pasta própria: o repositório para onde os seus backups são escritos primeiro. As cópias para outros destinos saem daí. Uma instalação nova mantém as pastas próprias neste servidor, por baixo de `/mnt/user/bombvault`, e juntas formam o destino **Local**.
 
-Uma pasta própria também pode ficar num destino que já tenhas, como um NAS, um rest-server ou um bucket S3. A secção faz então backup diretamente para lá, sem cópia local pelo meio, e a pasta própria segue as credenciais, a proteção contra eliminação, os limites de largura de banda e as regras de retenção desse destino. O destino lista a secção no seu cartão **Pastas próprias**, e **Destinos por secção** mostra o destino como a casa da secção.
+Uma pasta própria também pode ficar num destino que já tenhas, como um NAS, um rest-server ou um bucket S3. A secção faz então backup diretamente para lá, sem cópia local pelo meio, e a pasta própria segue as credenciais, a proteção contra eliminação e os limites de largura de banda desse destino. O BombVault poda-a depois de cada backup pelo cartão **Durante quanto tempo guardar** do destino, e os valores próprios de uma secção em **Regras por secção** têm prioridade sobre o cartão. O destino lista a secção no seu cartão **Pastas próprias**, e **Destinos por secção** mostra o destino como a casa da secção.
 
 ### Mudar uma pasta própria {#move-own-folder}
 
@@ -226,7 +226,7 @@ Uma pasta própria também pode ficar num destino que já tenhas, como um NAS, u
 2. Escolhe as secções em **Secções** e o lugar em **Mover para**. **Outro lugar** aceita uma pasta neste anfitrião ou o endereço de um repositório remoto escrito à mão, com umas credenciais das tuas credenciais guardadas.
 3. Lê **O que acontece**. Para cada secção diz para onde vão os novos backups, se uma cópia que já está no novo lugar passa a ser a pasta própria, e que backups são copiados primeiro.
 4. **Copiar os backups já feitos** vem ligado por predefinição. Desligado, os backups antigos ficam onde estão e ainda se podem restaurar de lá.
-5. Escolhe **Mudar**. Quando os backups têm de ser copiados primeiro, o BombVault copia-os e depois muda a pasta própria. Quando já lá estão, verifica-os antes da mudança.
+5. Escolhe **Mudar**. Quando o cartão **Durante quanto tempo guardar** do novo lugar guarda menos do que a regra atual da secção, o BombVault pergunta primeiro **Guardar menos?** Aí, **Manter os valores atuais** dessa secção **em Regras por secção** leva os valores de hoje, **Guardar mesmo assim** segue em frente e **Voltar** deixa tudo como estava. Quando os backups têm de ser copiados primeiro, o BombVault copia-os e depois muda a pasta própria. Quando já lá estão, verifica-os antes da mudança.
 
 Depois da mudança, os novos backups vão para a pasta própria mudada, também para uma secção que tinha o **Local** desligado e fazia backup diretamente para uma cópia. Uma cópia que já estava no novo lugar passa a ser a pasta própria, e a cópia para lá termina. Onde essa cópia guardava alguns backups mais tempo do que as regras de retenção da secção, a secção guarda o que qualquer das duas regras guarde, para que nenhum se perca.
 
@@ -246,7 +246,7 @@ O pool de cache está a encher, e tens um destino chamado `nas`, uma partilha SM
 3. Lê **O que acontece**. Diz que os novos backups dos Containers vão para a pasta em `nas`, que os 61 backups do Local são copiados para lá primeiro, que as cópias continuam a ir para o Backblaze B2, e que a proteção, os limites de largura de banda e o alarme de crescimento vêm de `nas`.
 4. Deixa **Copiar os backups já feitos** ligado e carrega em **Mudar**.
 
-O BombVault copia os backups em segundo plano e depois muda a pasta própria. A página de `nas` lista os Containers em **Pastas próprias**, uma entrada que segue a sua secção nomeia `nas` como a sua casa, e o backup seguinte cai lá, com a cópia para o B2 a sair de `nas`. A pasta antiga neste servidor fica onde está, e o BombVault não elimina nada aí.
+O BombVault copia os backups em segundo plano e depois muda a pasta própria. A página de `nas` lista os Containers em **Pastas próprias**, uma entrada que segue a sua secção nomeia `nas` como a sua casa, e o backup seguinte cai lá, com a cópia para o B2 a sair de `nas`. A partir de agora, o cartão **Durante quanto tempo guardar** de `nas` poda a pasta. A pasta antiga neste servidor fica onde está, e o BombVault não elimina nada aí.
 
 ### Escrever um endereço remoto à mão {#remote-primary-repositories}
 

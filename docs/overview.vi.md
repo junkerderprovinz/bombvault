@@ -46,7 +46,9 @@ Mỗi phần đang bật có một dòng với bốn kiểm tra:
 
 Một phần chỉ xanh khi dựa trên sự thật đã được kiểm chứng. Một bản sao trên chính máy chủ này không được tính là ngoài site, và một đích bạn đã đánh dấu **Chấp nhận khi không có bảo vệ chống xóa** hiện một vòng xám thay vì chấm hổ phách, nên màu của phần đó theo các kiểm tra còn lại.
 
-Bấm vào một phần sẽ mở cửa sổ của nó với từng kiểm tra được giải thích rõ, các mục nó đang đếm và **Bắt đầu khôi phục thử** hoặc **Chạy lại khôi phục thử**.
+Một phần có lịch sẽ báo **Chưa có bản sao lưu nào** và giữ trung tính cho đến khi lần chạy đầu tiên đến hạn. Sau đó nó báo **Quá hạn** và cảnh báo một lần. Một phần không có gì để sao lưu, vì không lịch nào với tới các mục của nó, sẽ báo **Chưa lên lịch** và không bao giờ quá hạn.
+
+Bấm vào một phần sẽ mở cửa sổ của nó với từng kiểm tra được giải thích rõ, các mục nó đang đếm và **Bắt đầu khôi phục thử** hoặc **Chạy lại khôi phục thử**. Cửa sổ cũng cho biết **Đã đặt quy tắc dọn bớt** hoặc **Chưa có quy tắc dọn bớt**, và quy tắc giữ của thư mục riêng của một phần cũng được tính như các quy tắc ngoài site của phần đó.
 
 ![Cửa sổ bảo vệ của phần Containers với bốn kiểm tra được giải thích rõ.](assets/screenshots/overview/protection-window-dark.png#only-dark)
 ![Cửa sổ bảo vệ của phần Containers với bốn kiểm tra được giải thích rõ.](assets/screenshots/overview/protection-window-light.png#only-light)

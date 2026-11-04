@@ -81,7 +81,7 @@ Il dispositivo si chiama BombVault, oppure BombVault con il nome dell'istanza tr
 
 | Entità | Cosa mostra |
 |---|---|
-| Status | `ok`, `warning`, `failed` oppure `off`, il peggiore tra i domini attivati |
+| Status | `ok`, `warning`, `failed` oppure `off`, il peggiore tra i domini attivati. Un dominio in attesa del primo backup conta solo quando quel backup era previsto, e solo un dominio aggiornato rende lo stato `ok` |
 | Running job | Cosa gira ora, oppure `idle` |
 | Open anomalies | Quante anomalie sono aperte |
 | Next scheduled backup | Quando parte il prossimo backup pianificato |

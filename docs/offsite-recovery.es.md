@@ -73,7 +73,7 @@ Cada destino tiene una página propia. Muestra solo las tarjetas que se aplican 
 - **Conexión**: el **Nombre**, el interruptor **Disponible** (desactivado significa que BombVault ya no escribe aquí, y los elementos que copian aquí fallan con un mensaje claro en lugar de acabar en otro sitio), la carpeta, **Compresión**, **Clase de almacenamiento** y **Fuera de las instalaciones**. En el destino **Local** lista la carpeta de cada sección en **Carpetas propias aquí**. **Cambiar conexión** prueba y guarda una dirección o credenciales nuevas. Cuando otros lugares inician sesión con las mismas credenciales guardadas, la ventana lo dice, y un cambio aquí da a este destino unas credenciales propias en lugar de reescribir las compartidas.
 - **Credenciales**: qué credenciales guardadas usa (**Inicia sesión con**), qué otros destinos las usan también (**También las usa**), y **Editar**, que abre la ventana de las credenciales. Consulta [Credenciales](#sign-ins).
 - **rclone.conf**: la sección de este destino en la configuración de rclone, para un destino que funciona mediante rclone.
-- **Protección contra borrado**, con **Protección contra borrado (append-only)**, **Aceptar sin protección contra borrado**, **Probar la protección contra borrado ahora** y **Quién poda**, que dice si BombVault poda aquí la copia y las carpetas propias o lo deja al otro lado. Una carpeta local muestra esta tarjeta solo cuando tiene una protección que se puede desactivar. Consulta [Protección contra borrado](#delete-protection-append-only).
+- **Protección contra borrado**, con **Protección contra borrado (append-only)**, **Aceptar sin protección contra borrado**, **Probar la protección contra borrado ahora** y **Quién poda**, que dice si BombVault poda aquí la copia y las carpetas propias, según la tarjeta **Cuánto tiempo conservar** de este destino o los valores propios de una sección en **Reglas por sección**, o lo deja al otro lado. Una carpeta local muestra esta tarjeta solo cuando tiene una protección que se puede desactivar. Consulta [Protección contra borrado](#delete-protection-append-only).
 - **Copiar**: **Cuándo copiar**, y el **Límite de subida (KiB/s)** y el **Límite de bajada (KiB/s)**. Un destino que contiene solo carpetas propias y ninguna copia muestra los límites como una tarjeta llamada **Ancho de banda**.
 - **Cuánto tiempo conservar**: **Corto**, **Equilibrado**, **Largo** o **Valores propios**, con una línea de tiempo de qué copias conserva la regla. Consulta [Cuánto tiempo conservar](#keep).
 - **Ya está bajo este destino**: secciones cuya dirección escrita a mano está en una carpeta de este destino. Adoptar una deja el repositorio donde está. Las credenciales, la clase de almacenamiento y la protección contra borrado pasan entonces a venir del destino. BombVault comprueba antes que las credenciales del destino abren el repositorio, y se niega a poner un repositorio append-only bajo un destino que no es append-only.
@@ -100,10 +100,10 @@ Una regla conserva una copia por día, semana, mes y año, tan atrás como fijes
 | Preajuste | Últimas copias | Días | Semanas | Meses | Años |
 |---|---|---|---|---|---|
 | **Corto** | 0 | 7 | 4 | 3 | 0 |
-| **Equilibrado** | 0 | 7 | 4 | 6 | 1 |
+| **Equilibrado** | 0 | 7 | 4 | 6 | 2 |
 | **Largo** | 0 | 14 | 8 | 12 | 3 |
 
-**Valores propios** te deja fijar tú los cinco recuentos. Un 0 desactiva ese recuento, y una regla con todos los recuentos a 0 lo conserva todo. Los puntos de la tarjeta muestran cuáles de 40 copias de muestra conserva una regla, la más reciente en el extremo derecho. La muestra es la misma para todos los destinos, ya que la imagen se dibuja antes de que BombVault haya leído las copias de allí.
+**Valores propios** te deja fijar tú los cinco recuentos. Un 0 desactiva ese recuento, y una regla con todos los recuentos a 0 lo conserva todo. Los puntos de la tarjeta muestran cuáles de 40 copias de muestra conserva una regla, la más reciente en el extremo derecho. La muestra es la misma para todos los destinos, ya que la imagen se dibuja antes de que BombVault haya leído las copias de allí. Cuenta hacia atrás desde hoy, así que el número de puntos que quedan cambia con la fecha.
 
 **Preguntar antes de conservar menos**, activado por defecto, pregunta antes de guardar un cambio que conserva menos copias, y dice cuántas de las 40 copias de muestra elimina la regla nueva. Se aplica a todos los destinos. **Volver al destino** en **Reglas por sección** hace la misma pregunta.
 
@@ -116,7 +116,7 @@ Para ver lo que borraría de verdad la próxima ejecución, abre **Vista previa*
 
 #### Ejemplo: qué conserva Equilibrado {#example-retention}
 
-Un contenedor se ha copiado cada noche a las 03:00 desde el 1 de octubre de 2025, así que el miércoles 4 de noviembre de 2026 tiene 400 copias. Su destino está en **Equilibrado**: 7 días, 4 semanas, 6 meses y 1 año.
+Un contenedor se ha copiado cada noche a las 03:00 desde el 1 de octubre de 2024, así que el miércoles 4 de noviembre de 2026 tiene 765 copias. Su destino está en **Equilibrado**: 7 días, 4 semanas, 6 meses y 2 años.
 
 Cada recuento conserva la copia más reciente de su día, semana, mes o año, y una copia que eligen varios recuentos se conserva una vez. Las semanas van de lunes a domingo:
 
@@ -125,19 +125,19 @@ Cada recuento conserva la copia más reciente de su día, semana, mes o año, y 
 | 7 días | 4 nov, 3 nov, 2 nov, 1 nov, 31 oct, 30 oct, 29 oct | las 7 |
 | 4 semanas | 4 nov, 1 nov, 25 oct, 18 oct | 25 oct, 18 oct |
 | 6 meses | 4 nov, 31 oct, 30 sep, 31 ago, 31 jul, 30 jun | 30 sep, 31 ago, 31 jul, 30 jun |
-| 1 año | 4 nov | ninguna |
+| 2 años | 4 nov, 31 dic 2025 | 31 dic 2025 |
 
-Eso deja 13 copias de 400. La más antigua es del 30 de junio, así que puedes volver atrás un poco más de cuatro meses. Gracias a la deduplicación ocupan poco más que una copia completa más lo que cambió entre medias.
+Eso deja 14 copias de 765. La más antigua es del 31 de diciembre de 2025, así que hoy puedes volver atrás un poco más de diez meses. Gracias a la deduplicación ocupan poco más que una copia completa más lo que cambió entre medias.
 
-**Años** merece una segunda mirada. Cuenta los años naturales que tienen una copia, empezando por el actual, y la copia más reciente de este año es la de hoy. Así que un 1 en **Años** no añade nada a los otros recuentos, y necesitas un 2 para llegar al año pasado. Las mismas 400 copias con los otros preajustes:
+**Años** merece una segunda mirada. Cuenta los años naturales que tienen una copia, empezando por el actual, y la copia más reciente de este año es la de hoy. Así que el primer año no añade nada a los otros recuentos, y el segundo añade la última copia del año anterior. Por eso el alcance de una regla varía a lo largo del año. Las mismas copias con cada preajuste:
 
-| Preajuste | Copias conservadas | Copia más antigua |
-|---|---|---|
-| **Corto** | 10 | 30 de septiembre de 2026 |
-| **Equilibrado** | 13 | 30 de junio de 2026 |
-| **Largo** | 29 | 31 de diciembre de 2025 |
+| Preajuste | Copias conservadas hoy | Copia más antigua hoy | Alcance a lo largo del año |
+|---|---|---|---|
+| **Corto** | 10 | 30 de septiembre de 2026 | 1 a 2 meses |
+| **Equilibrado** | 14 | 31 de diciembre de 2025 | unos 4 meses a principios de primavera, un año entero el 31 de diciembre |
+| **Largo** | 30 | 31 de diciembre de 2024 | 1 año el 1 de enero, 2 años el 31 de diciembre |
 
-Pasar de **Equilibrado** a **Corto** pregunta antes, por **Preguntar antes de conservar menos**: "De las 40 copias de la imagen, la regla nueva elimina 3 que la actual conserva." El número sale de la muestra de la imagen, no de tus propias copias. Aquí coincide por casualidad: se irían el 31 de agosto, el 31 de julio y el 30 de junio. **Guardar de todos modos** aplica la regla, y la siguiente poda las borra de ese destino para siempre.
+Pasar de **Equilibrado** a **Corto** pregunta antes, por **Preguntar antes de conservar menos**. La pregunta dice cuántas de las 40 copias de la imagen elimina la regla nueva. Ese número sale de la muestra, así que cambia con la fecha y no cuenta tus propias copias. De las copias de este ejemplo, se irían el 31 de agosto, el 31 de julio, el 30 de junio y el 31 de diciembre de 2025. **Guardar de todos modos** aplica la regla, y la siguiente poda las borra de ese destino para siempre.
 
 Para conservar los contenedores más tiempo que el resto en este destino, pulsa **Cambiar reglas** en **Reglas por sección**, elige **Contenedores** y fija **Valores propios** en **Reglas para Contenedores**, por ejemplo 14 días, 8 semanas, 12 meses y 2 años. Las demás secciones siguen la tarjeta del destino, y **Volver al destino** devuelve Contenedores.
 
@@ -218,7 +218,7 @@ Como nada poda esta copia desde aquí, fija **Presupuesto de crecimiento (GB, 0 
 
 Cada sección tiene una carpeta propia: el repositorio en el que se escriben primero sus copias. Las copias a otros destinos salen de ahí. Una instalación nueva mantiene las carpetas propias en este servidor, bajo `/mnt/user/bombvault`, y juntas forman el destino **Local**.
 
-Una carpeta propia también puede estar en un destino que ya tienes, como un NAS, un rest-server o un bucket S3. La sección copia entonces directamente allí, sin una copia local de por medio, y la carpeta propia sigue las credenciales, la protección contra borrado, los límites de ancho de banda y las reglas de conservación de ese destino. El destino lista la sección en su tarjeta **Carpetas propias**, y **Destinos por sección** muestra el destino como el hogar de la sección.
+Una carpeta propia también puede estar en un destino que ya tienes, como un NAS, un rest-server o un bucket S3. La sección copia entonces directamente allí, sin una copia local de por medio, y la carpeta propia sigue las credenciales, la protección contra borrado y los límites de ancho de banda de ese destino. BombVault la poda tras cada copia según la tarjeta **Cuánto tiempo conservar** del destino, y los valores propios de una sección en **Reglas por sección** tienen prioridad sobre la tarjeta. El destino lista la sección en su tarjeta **Carpetas propias**, y **Destinos por sección** muestra el destino como el hogar de la sección.
 
 ### Mover una carpeta propia {#move-own-folder}
 
@@ -226,7 +226,7 @@ Una carpeta propia también puede estar en un destino que ya tienes, como un NAS
 2. Elige las secciones en **Secciones** y el lugar en **Mover a**. **Otro lugar** acepta una carpeta de este host o la dirección de un repositorio remoto escrita a mano, con unas credenciales de tus credenciales guardadas.
 3. Lee **Qué pasa**. Para cada sección dice adónde van las copias nuevas, si una copia que ya está en el lugar nuevo pasa a ser la carpeta propia y qué copias se copian primero.
 4. **Copiar las copias de seguridad ya hechas** está activado por defecto. Si se desactiva, las copias antiguas se quedan donde están y aún se pueden restaurar desde allí.
-5. Elige **Cambiar**. Cuando hay que copiar antes las copias, BombVault las copia y luego cambia la carpeta propia. Cuando ya están allí, las comprueba antes del cambio.
+5. Elige **Cambiar**. Cuando la tarjeta **Cuánto tiempo conservar** del lugar nuevo conserva menos que la regla actual de la sección, BombVault pregunta primero **¿Conservar menos?** Ahí, **Conservar los valores actuales** de esa sección **en Reglas por sección** se lleva los valores de hoy, **Guardar de todos modos** sigue adelante y **Atrás** lo deja todo como estaba. Cuando hay que copiar antes las copias, BombVault las copia y luego cambia la carpeta propia. Cuando ya están allí, las comprueba antes del cambio.
 
 Tras el movimiento, las copias nuevas van a la carpeta propia movida, también para una sección que tenía **Local** desactivado y copiaba directamente a una réplica. Una copia que ya estaba en el lugar nuevo pasa a ser la carpeta propia, y la copia allí termina. Donde esa copia conservaba algunas copias más tiempo que las reglas de conservación de la sección, la sección conserva lo que conserve cualquiera de las dos reglas, así que no se pierde ninguna.
 
@@ -246,7 +246,7 @@ El pool de caché se está llenando, y tienes un destino llamado `nas`, un recur
 3. Lee **Qué pasa**. Dice que las copias nuevas de Contenedores van a la carpeta de `nas`, que las 61 copias de Local se copian allí primero, que las copias siguen yendo a Backblaze B2 y que la protección, los límites de ancho de banda y la alarma de crecimiento vienen de `nas`.
 4. Deja activado **Copiar las copias de seguridad ya hechas** y pulsa **Cambiar**.
 
-BombVault copia las copias en segundo plano y luego cambia la carpeta propia. La página de `nas` lista Contenedores en **Carpetas propias**, un elemento que sigue a su sección nombra `nas` como su hogar, y la siguiente copia acaba allí, con la copia a B2 saliendo desde `nas`. La carpeta antigua de este servidor se queda donde está, y BombVault no borra nada allí.
+BombVault copia las copias en segundo plano y luego cambia la carpeta propia. La página de `nas` lista Contenedores en **Carpetas propias**, un elemento que sigue a su sección nombra `nas` como su hogar, y la siguiente copia acaba allí, con la copia a B2 saliendo desde `nas`. A partir de ahora, la tarjeta **Cuánto tiempo conservar** de `nas` poda la carpeta. La carpeta antigua de este servidor se queda donde está, y BombVault no borra nada allí.
 
 ### Escribir a mano una dirección remota {#remote-primary-repositories}
 

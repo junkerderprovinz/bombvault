@@ -46,7 +46,9 @@ Každá zapnutá sekce má řádek se čtyřmi kontrolami:
 
 Sekce je zelená jen na základě ověřených faktů. Kopie na tomto serveru se za kopii mimo lokalitu nepočítá a cíl, který jsi označil **Přijmout bez ochrany proti smazání**, ukazuje šedý kruh místo oranžové tečky, takže barvu sekce určují její ostatní kontroly.
 
-Klik na sekci otevře její okno se všemi kontrolami rozepsanými, s položkami, které počítá, a s tlačítkem **Spustit zkušební obnovu** nebo **Spustit zkušební obnovu znovu**.
+Naplánovaná sekce ukazuje **Zatím žádná záloha** a zůstává neutrální, dokud nepřijde termín jejího prvního běhu. Potom ukazuje **Po termínu** a jednou upozorní. Sekce, ve které není co zálohovat, protože žádný plán nezasahuje žádnou z jejích položek, ukazuje **Neplánováno** a nikdy není po termínu.
+
+Klik na sekci otevře její okno se všemi kontrolami rozepsanými, s položkami, které počítá, a s tlačítkem **Spustit zkušební obnovu** nebo **Spustit zkušební obnovu znovu**. Uvádí také **Pravidlo pro vyčištění je nastaveno** nebo **Žádné pravidlo pro vyčištění** a pravidlo uchovávání vlastní složky sekce se počítá stejně jako její pravidla mimo lokalitu.
 
 ![Okno ochrany sekce Kontejnery se čtyřmi rozepsanými kontrolami.](assets/screenshots/overview/protection-window-dark.png#only-dark)
 ![Okno ochrany sekce Kontejnery se čtyřmi rozepsanými kontrolami.](assets/screenshots/overview/protection-window-light.png#only-light)

@@ -46,7 +46,9 @@ Fiecare secțiune pornită are un rând cu patru verificări:
 
 O secțiune este verde doar pe fapte verificate. O copie pe acest server nu contează ca off-site, iar o destinație marcată **Acceptă fără protecție împotriva ștergerii** arată un inel gri în loc de un punct chihlimbariu, așa că culoarea secțiunii urmează celelalte verificări ale ei.
 
-Un clic pe o secțiune deschide fereastra ei cu fiecare verificare explicată, elementele pe care le numără și **Pornește restaurarea de test** sau **Rulează din nou restaurarea de test**.
+O secțiune programată arată **Încă nicio copie de rezervă** și rămâne neutră până când vine termenul primei ei rulări. După aceea arată **Restant** și alertează o singură dată. O secțiune fără nimic de salvat, pentru că niciun program nu ajunge la vreunul dintre elementele ei, arată **Neprogramat** și nu este niciodată restantă.
+
+Un clic pe o secțiune deschide fereastra ei cu fiecare verificare explicată, elementele pe care le numără și **Pornește restaurarea de test** sau **Rulează din nou restaurarea de test**. Arată și **Regulă de curățare setată** sau **Fără regulă de curățare**, iar regula de păstrare a dosarului propriu al unei secțiuni contează la fel ca regulile ei off-site.
 
 ![Fereastra de protecție a secțiunii Containere cu cele patru verificări explicate.](assets/screenshots/overview/protection-window-dark.png#only-dark)
 ![Fereastra de protecție a secțiunii Containere cu cele patru verificări explicate.](assets/screenshots/overview/protection-window-light.png#only-light)

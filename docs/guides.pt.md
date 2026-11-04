@@ -10,7 +10,7 @@ Cada um destes percorre uma tarefa real do princípio ao fim, com nomes e númer
 
 - [Uma cópia externa no Backblaze B2](offsite-recovery.md#example-s3): um bucket, uma chave para esse bucket e a primeira cópia. O Cloudflare R2 funciona da mesma maneira.
 - [Um rest-server que geres tu](offsite-recovery.md#example-rest-server): uma cópia externa que recusa eliminações, com a linha `docker run` e o teste de adulteração.
-- [O que guarda o Equilibrado](offsite-recovery.md#example-retention): a retenção ao longo de 400 dias de backups noturnos, backup a backup.
+- [O que guarda o Equilibrado](offsite-recovery.md#example-retention): a retenção ao longo de dois anos de backups noturnos, backup a backup.
 - [Os containers mudam para um NAS](offsite-recovery.md#example-own-folder): a pasta própria de uma secção muda de sítio, e o que acontece aos backups já feitos.
 
 ## Backups e agendamentos {#backups}

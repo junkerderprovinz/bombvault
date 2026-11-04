@@ -81,7 +81,7 @@ Het apparaat heet BombVault, of BombVault met de instantienaam tussen haakjes, e
 
 | Entiteit | Wat die toont |
 |---|---|
-| Status | `ok`, `warning`, `failed` of `off`, de slechtste van de ingeschakelde onderdelen |
+| Status | `ok`, `warning`, `failed` of `off`, de slechtste van de ingeschakelde onderdelen. Een onderdeel dat op zijn eerste back-up wacht, telt pas mee zodra die back-up aan de beurt was, en alleen een actueel onderdeel maakt de status `ok` |
 | Running job | Wat er nu loopt, of `idle` |
 | Open anomalies | Hoeveel anomalieën openstaan |
 | Next scheduled backup | Wanneer de volgende geplande back-up start |

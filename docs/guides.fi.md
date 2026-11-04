@@ -10,7 +10,7 @@ Jokainen näistä käy läpi yhden oikean tehtävän alusta loppuun, nimet ja lu
 
 - [Etäkopio Backblaze B2:een](offsite-recovery.md#example-s3): bucket, avain juuri sitä bucketia varten ja ensimmäinen kopio. Cloudflare R2 toimii samalla tavalla.
 - [Itse ajamasi rest-server](offsite-recovery.md#example-rest-server): etäkopio, joka kieltäytyy poistoista, mukana `docker run` -rivi ja väärennystesti.
-- [Mitä Balanced säilyttää](offsite-recovery.md#example-retention): säilytys 400 päivän yövarmuuskopioiden yli, varmuuskopio kerrallaan.
+- [Mitä Tasapainoinen säilyttää](offsite-recovery.md#example-retention): säilytys kahden vuoden yövarmuuskopioiden yli, varmuuskopio kerrallaan.
 - [Kontit siirtyvät NAS-laitteelle](offsite-recovery.md#example-own-folder): osion oma kansio vaihtaa paikkaa, ja mitä jo tehdyille varmuuskopioille tapahtuu.
 
 ## Varmuuskopiot ja ajastukset {#backups}

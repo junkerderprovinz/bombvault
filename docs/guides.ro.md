@@ -10,7 +10,7 @@ Fiecare dintre ele parcurge o sarcină reală de la început până la sfârșit
 
 - [O copie off-site pe Backblaze B2](offsite-recovery.md#example-s3): un bucket, o cheie pentru acel bucket și prima copie. Cloudflare R2 funcționează la fel.
 - [Un rest-server pe care îl rulezi tu](offsite-recovery.md#example-rest-server): o copie off-site care refuză ștergerile, cu linia `docker run` și testul de manipulare.
-- [Ce păstrează Echilibrat](offsite-recovery.md#example-retention): păstrarea pe 400 de zile de backupuri nocturne, backup cu backup.
+- [Ce păstrează Echilibrat](offsite-recovery.md#example-retention): păstrarea pe doi ani de backupuri nocturne, backup cu backup.
 - [Containerele se mută pe un NAS](offsite-recovery.md#example-own-folder): folderul propriu al unei secțiuni își schimbă locul și ce se întâmplă cu backupurile deja făcute.
 
 ## Backupuri și programări {#backups}

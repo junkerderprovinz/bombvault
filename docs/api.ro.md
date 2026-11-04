@@ -81,7 +81,7 @@ Dispozitivul se numește BombVault, sau BombVault cu numele instanței între pa
 
 | Entitate | Ce arată |
 |---|---|
-| Status | `ok`, `warning`, `failed` sau `off`, cel mai rău dintre secțiunile pornite. O secțiune care așteaptă prima copie contează abia după ce acea copie era programată |
+| Status | `ok`, `warning`, `failed` sau `off`, cel mai rău dintre secțiunile pornite. O secțiune care așteaptă prima copie contează abia după ce a venit termenul acelei copii, și doar o secțiune cu o copie curentă face ca statusul să fie `ok` |
 | Running job | Ce rulează acum, sau `idle` |
 | Open anomalies | Câte anomalii sunt deschise |
 | Next scheduled backup | Când începe următoarea copie planificată |

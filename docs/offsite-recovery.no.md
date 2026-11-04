@@ -73,7 +73,7 @@ Hvert mål har en egen side. Den viser bare kortene som gjelder for det målet, 
 - **Tilkobling**: **Navn**, bryteren **Tilgjengelig** (av betyr at BombVault ikke skriver hit lenger, og elementer som sikkerhetskopierer hit, feiler med en tydelig melding i stedet for å havne et annet sted), mappen, **Komprimering**, **Lagringsklasse** og **Utenfor lokalet**. På målet **Lokal** lister den mappen til hvert område under **Egne mapper her**. **Endre tilkobling** tester og lagrer en ny adresse eller pålogging. Når andre steder logger inn med samme lagrede pålogging, sier vinduet det, og en endring her gir dette målet en egen pålogging i stedet for å skrive om den delte.
 - **Legitimasjon**: hvilken lagret pålogging den bruker (**Logger på med**), hvilke andre mål som bruker den også (**Brukes også av**), og **Rediger**, som åpner påloggingsvinduet. Se [Pålogginger](#sign-ins).
 - **rclone.conf**: seksjonen til dette målet i rclone-konfigurasjonen, for et mål som går gjennom rclone.
-- **Beskyttelse mot sletting**, med **Beskyttelse mot sletting (append-only)**, **Godta uten beskyttelse mot sletting**, **Test beskyttelsen mot sletting nå** og **Hvem beskjærer**, som sier om BombVault beskjærer kopien og de egne mappene her eller overlater det til den andre siden. En lokal mappe viser dette kortet bare når den har en beskyttelse du kan slå av. Se [Beskyttelse mot sletting](#delete-protection-append-only).
+- **Beskyttelse mot sletting**, med **Beskyttelse mot sletting (append-only)**, **Godta uten beskyttelse mot sletting**, **Test beskyttelsen mot sletting nå** og **Hvem beskjærer**, som sier om BombVault beskjærer kopien og de egne mappene her, etter kortet **Hvor lenge det beholdes** for dette målet eller et områdes egne verdier under **Regler per område**, eller overlater det til den andre siden. En lokal mappe viser dette kortet bare når den har en beskyttelse du kan slå av. Se [Beskyttelse mot sletting](#delete-protection-append-only).
 - **Kopier**: **Når det kopieres**, og **Opplastingsgrense (KiB/s)** og **Nedlastingsgrense (KiB/s)**. Et mål som bare har egne mapper og ingen kopier, viser grensene som et kort som heter **Båndbredde**.
 - **Hvor lenge det beholdes**: **Kort**, **Balansert**, **Lang** eller **Egne verdier**, med en tidslinje over hvilke sikkerhetskopier regelen beholder. Se [Hvor lenge det beholdes](#keep).
 - **Ligger allerede under dette målet**: områder der en adresse skrevet for hånd ligger i en mappe på dette målet. Å ta et over lar repositoryet bli der det er. Pålogging, lagringsklasse og beskyttelse mot sletting kommer da fra målet. BombVault sjekker først at påloggingen til målet åpner repositoryet, og nekter å legge et append-only-repository under et mål som ikke er append-only.
@@ -100,10 +100,10 @@ En regel beholder én sikkerhetskopi per dag, uke, måned og år, så langt tilb
 | Forhåndsvalg | Siste sikkerhetskopier | Dager | Uker | Måneder | År |
 |---|---|---|---|---|---|
 | **Kort** | 0 | 7 | 4 | 3 | 0 |
-| **Balansert** | 0 | 7 | 4 | 6 | 1 |
+| **Balansert** | 0 | 7 | 4 | 6 | 2 |
 | **Lang** | 0 | 14 | 8 | 12 | 3 |
 
-**Egne verdier** setter de fem tallene selv. En 0 slår det tallet av, og en regel med alle tall på 0 beholder alt. Prikkene i kortet viser hvilke av 40 eksempelkopier en regel beholder, den nyeste lengst til høyre. Eksempelet er det samme for hvert mål, siden bildet tegnes før BombVault har lest sikkerhetskopiene der.
+**Egne verdier** setter de fem tallene selv. En 0 slår det tallet av, og en regel med alle tall på 0 beholder alt. Prikkene i kortet viser hvilke av 40 eksempelkopier en regel beholder, den nyeste lengst til høyre. Eksempelet er det samme for hvert mål, siden bildet tegnes før BombVault har lest sikkerhetskopiene der. Det teller bakover fra i dag, så hvor mange prikker som blir igjen, endrer seg med datoen.
 
 **Spør før det beholdes mindre**, på som standard, spør før en endring som beholder færre sikkerhetskopier lagres, og sier hvor mange av de 40 eksempelkopiene den nye regelen fjerner. Det gjelder hvert mål. **Tilbake til målet** under **Regler per område** stiller det samme spørsmålet.
 
@@ -116,7 +116,7 @@ For å se hva neste kjøring faktisk ville slette, åpner du **Forhåndsvisning*
 
 #### Eksempel: hva Balansert beholder {#example-retention}
 
-En container har blitt sikkerhetskopiert hver natt kl. 03:00 siden 1. oktober 2025, så onsdag 4. november 2026 har den 400 sikkerhetskopier. Målet er satt til **Balansert**: 7 dager, 4 uker, 6 måneder og 1 år.
+En container har blitt sikkerhetskopiert hver natt kl. 03:00 siden 1. oktober 2024, så onsdag 4. november 2026 har den 765 sikkerhetskopier. Målet er satt til **Balansert**: 7 dager, 4 uker, 6 måneder og 2 år.
 
 Hvert tall beholder den nyeste sikkerhetskopien fra sin dag, uke, måned eller år, og en sikkerhetskopi som flere tall velger, beholdes én gang. Uker går fra mandag til søndag:
 
@@ -125,19 +125,19 @@ Hvert tall beholder den nyeste sikkerhetskopien fra sin dag, uke, måned eller �
 | 7 dager | 4. nov, 3. nov, 2. nov, 1. nov, 31. okt, 30. okt, 29. okt | alle 7 |
 | 4 uker | 4. nov, 1. nov, 25. okt, 18. okt | 25. okt, 18. okt |
 | 6 måneder | 4. nov, 31. okt, 30. sep, 31. aug, 31. jul, 30. jun | 30. sep, 31. aug, 31. jul, 30. jun |
-| 1 år | 4. nov | ingen |
+| 2 år | 4. nov, 31. des 2025 | 31. des 2025 |
 
-Det gir 13 sikkerhetskopier av 400. Den eldste er fra 30. juni, så du kan gå litt over fire måneder tilbake. Takket være deduplisering tar de bare litt mer plass enn én full sikkerhetskopi pluss det som endret seg imellom.
+Det gir 14 sikkerhetskopier av 765. Den eldste er fra 31. desember 2025, så i dag kan du gå litt over ti måneder tilbake. Takket være deduplisering tar de bare litt mer plass enn én full sikkerhetskopi pluss det som endret seg imellom.
 
-**År** fortjener et ekstra blikk. Det teller kalenderår som har en sikkerhetskopi, med det inneværende først, og den nyeste sikkerhetskopien i år er dagens. Så en 1 i **År** legger ikke til noe utover de andre tallene, og du trenger en 2 for å nå inn i fjoråret. De samme 400 sikkerhetskopiene under de andre forhåndsvalgene:
+**År** fortjener et ekstra blikk. Det teller kalenderår som har en sikkerhetskopi, med det inneværende først, og den nyeste sikkerhetskopien i år er dagens. Så det første året legger ikke til noe utover de andre tallene, og det andre legger til den siste sikkerhetskopien fra året før. Derfor varierer rekkevidden til en regel gjennom året. De samme sikkerhetskopiene under hvert forhåndsvalg:
 
-| Forhåndsvalg | Sikkerhetskopier beholdt | Eldste sikkerhetskopi |
-|---|---|---|
-| **Kort** | 10 | 30. september 2026 |
-| **Balansert** | 13 | 30. juni 2026 |
-| **Lang** | 29 | 31. desember 2025 |
+| Forhåndsvalg | Sikkerhetskopier beholdt i dag | Eldste sikkerhetskopi i dag | Rekkevidde gjennom året |
+|---|---|---|---|
+| **Kort** | 10 | 30. september 2026 | 1 til 2 måneder |
+| **Balansert** | 14 | 31. desember 2025 | omtrent 4 måneder tidlig på våren, et helt år 31. desember |
+| **Lang** | 30 | 31. desember 2024 | 1 år 1. januar, 2 år 31. desember |
 
-Å gå fra **Balansert** til **Kort** spør først, på grunn av **Spør før det beholdes mindre**: «Av de 40 sikkerhetskopiene i bildet fjerner den nye regelen 3 som den gjeldende beholder.» Tallet kommer fra eksempelet i bildet, ikke fra dine egne sikkerhetskopier. Her stemmer det tilfeldigvis: 31. august, 31. juli og 30. juni ville gå. **Lagre likevel** bruker regelen, og neste prune sletter dem for godt fra det målet.
+Å gå fra **Balansert** til **Kort** spør først, på grunn av **Spør før det beholdes mindre**. Spørsmålet sier hvor mange av de 40 sikkerhetskopiene i bildet den nye regelen fjerner. Tallet kommer fra eksempelet, så det endrer seg med datoen og teller ikke dine egne sikkerhetskopier. Av sikkerhetskopiene i dette eksempelet ville 31. august, 31. juli, 30. juni og 31. desember 2025 gå. **Lagre likevel** bruker regelen, og neste prune sletter dem for godt fra det målet.
 
 For å beholde kontainerne lenger enn resten på dette målet trykker du **Endre regler** under **Regler per område**, velger **Kontainere** og setter **Egne verdier** i **Regler for Kontainere**, for eksempel 14 dager, 8 uker, 12 måneder og 2 år. De andre områdene følger fortsatt kortet til målet, og **Tilbake til målet** henter Kontainere tilbake.
 
@@ -218,7 +218,7 @@ Siden ingenting beskjærer denne kopien herfra, setter du **Vekstbudsjett (GB, 0
 
 Hvert område har en egen mappe: repositoryet sikkerhetskopiene skrives til først. Kopier til andre mål går ut derfra. En ny installasjon har de egne mappene på denne serveren, under `/mnt/user/bombvault`, og sammen danner de målet **Lokal**.
 
-En egen mappe kan også ligge på et mål du allerede har, som en NAS, en rest-server eller en S3-bucket. Området sikkerhetskopierer da rett dit, uten en lokal kopi imellom, og den egne mappen følger påloggingen, beskyttelsen mot sletting, båndbreddegrensene og oppbevaringsreglene til det målet. Målet lister området i kortet **Egne mapper**, og **Mål per område** viser målet som hjemmet til området.
+En egen mappe kan også ligge på et mål du allerede har, som en NAS, en rest-server eller en S3-bucket. Området sikkerhetskopierer da rett dit, uten en lokal kopi imellom, og den egne mappen følger påloggingen, beskyttelsen mot sletting og båndbreddegrensene til det målet. BombVault beskjærer den etter hver sikkerhetskopi ut fra kortet **Hvor lenge det beholdes** for målet, og et områdes egne verdier under **Regler per område** går foran kortet. Målet lister området i kortet **Egne mapper**, og **Mål per område** viser målet som hjemmet til området.
 
 ### Flytte en egen mappe {#move-own-folder}
 
@@ -226,7 +226,7 @@ En egen mappe kan også ligge på et mål du allerede har, som en NAS, en rest-s
 2. Velg områdene under **Områder** og stedet under **Flytt til**. **Et annet sted** tar en mappe på denne verten eller adressen til et eksternt repository skrevet for hånd, med en pålogging fra de lagrede påloggingene dine.
 3. Les **Hva som skjer**. For hvert område sier den hvor nye sikkerhetskopier går, om en kopi som allerede ligger på det nye stedet, blir den egne mappen, og hvilke sikkerhetskopier som kopieres over først.
 4. **Kopier sikkerhetskopiene som allerede finnes** er på som standard. Er den slått av, blir de gamle sikkerhetskopiene der de er og kan fortsatt gjenopprettes derfra.
-5. Velg **Bytt**. Når sikkerhetskopier må kopieres først, kopierer BombVault dem og bytter så den egne mappen. Når de allerede er der, sjekker den dem før byttet.
+5. Velg **Bytt**. Når kortet **Hvor lenge det beholdes** på det nye stedet beholder mindre enn regelen området har i dag, spør BombVault først **Beholde mindre?** Der tar **Behold gjeldende verdier for** det området **under Regler per område** med dagens verdier, **Lagre likevel** går videre, og **Tilbake** lar alt være som det var. Når sikkerhetskopier må kopieres først, kopierer BombVault dem og bytter så den egne mappen. Når de allerede er der, sjekker den dem før byttet.
 
 Etter flyttingen går nye sikkerhetskopier til den flyttede egne mappen, også for et område som hadde **Lokal** slått av og sikkerhetskopierte rett til en kopi. En kopi som allerede lå på det nye stedet, blir den egne mappen, og kopieringen dit tar slutt. Der kopien beholdt noen sikkerhetskopier lenger enn oppbevaringsreglene til området, beholder området det begge reglene beholder, så ingen av dem går tapt.
 
@@ -246,7 +246,7 @@ Cache-poolen fylles opp, og du har et mål som heter `nas`, en SMB-deling på en
 3. Les **Hva som skjer**. Den sier at nye sikkerhetskopier av Kontainere går til mappen på `nas`, at de 61 sikkerhetskopiene i Lokal kopieres dit først, at kopier fortsetter til Backblaze B2, og at beskyttelse, båndbreddegrenser og vekstalarmen kommer fra `nas`.
 4. La **Kopier sikkerhetskopiene som allerede finnes** stå på og trykk **Bytt**.
 
-BombVault kopierer sikkerhetskopiene i bakgrunnen og bytter så den egne mappen. Siden til `nas` lister Kontainere under **Egne mapper**, et element som følger området sitt, nevner `nas` som hjemmet sitt, og neste sikkerhetskopi havner der, med kopien til B2 som går ut fra `nas`. Den gamle mappen på denne serveren blir der den er, og BombVault sletter ingenting der.
+BombVault kopierer sikkerhetskopiene i bakgrunnen og bytter så den egne mappen. Siden til `nas` lister Kontainere under **Egne mapper**, et element som følger området sitt, nevner `nas` som hjemmet sitt, og neste sikkerhetskopi havner der, med kopien til B2 som går ut fra `nas`. Fra nå av er det kortet **Hvor lenge det beholdes** på `nas` som beskjærer mappen. Den gamle mappen på denne serveren blir der den er, og BombVault sletter ingenting der.
 
 ### Skrive en ekstern adresse for hånd {#remote-primary-repositories}
 

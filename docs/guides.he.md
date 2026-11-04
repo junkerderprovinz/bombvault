@@ -10,7 +10,7 @@
 
 - [עותק מחוץ לאתר ב-Backblaze B2](offsite-recovery.md#example-s3): דלי, מפתח לדלי הזה והעותק הראשון. Cloudflare R2 עובד באותה דרך.
 - [rest-server שמריצים בעצמך](offsite-recovery.md#example-rest-server): עותק מחוץ לאתר שמסרב למחיקות, עם שורת `docker run` ובדיקת החבלה.
-- [מה שומרת התוכנית המאוזנת](offsite-recovery.md#example-retention): שמירה על פני 400 ימים של גיבויים לילִיים, גיבוי אחר גיבוי.
+- [מה שומרת התוכנית המאוזנת](offsite-recovery.md#example-retention): שמירה על פני שנתיים של גיבויים לילִיים, גיבוי אחר גיבוי.
 - [קונטיינרים עוברים ל-NAS](offsite-recovery.md#example-own-folder): התיקייה העצמית של תחום מחליפה מקום, ומה קורה לגיבויים שכבר נעשו.
 
 ## גיבויים ולוחות זמנים {#backups}

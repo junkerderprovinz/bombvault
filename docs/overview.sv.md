@@ -46,7 +46,9 @@ Varje påslaget avsnitt har en rad med fyra kontroller:
 
 Ett avsnitt är grönt bara på kontrollerade fakta. En kopia på den här servern räknas inte som extern, och ett mål som du markerat **Acceptera utan skydd mot radering** får en grå ring i stället för en gul punkt, så avsnittets färg följer dess andra kontroller.
 
-Ett klick på ett avsnitt öppnar dess fönster med varje kontroll utskriven, de poster den räknar och **Starta teståterställning** eller **Kör teståterställningen igen**.
+Ett schemalagt avsnitt visar **Ingen säkerhetskopia ännu** och förblir neutralt tills det är dags för dess första körning. Därefter står det **Försenad** och det larmar en gång. Ett avsnitt utan något att säkerhetskopiera, eftersom inget schema når någon av dess poster, visar **Ej schemalagd** och är aldrig försenat.
+
+Ett klick på ett avsnitt öppnar dess fönster med varje kontroll utskriven, de poster den räknar och **Starta teståterställning** eller **Kör teståterställningen igen**. Det visar också **Rensningsregel angiven** eller **Ingen rensningsregel**, och behållregeln för ett avsnitts egna mapp räknas lika väl som dess externa regler.
 
 ![Skyddsfönstret för avsnittet Containers med sina fyra kontroller utskrivna.](assets/screenshots/overview/protection-window-dark.png#only-dark)
 ![Skyddsfönstret för avsnittet Containers med sina fyra kontroller utskrivna.](assets/screenshots/overview/protection-window-light.png#only-light)

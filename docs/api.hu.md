@@ -81,7 +81,7 @@ Az eszköz neve BombVault, vagy BombVault a példány nevével zárójelben, és
 
 | Entitás | Mit mutat |
 |---|---|
-| Status | `ok`, `warning`, `failed` vagy `off`, a bekapcsolt szakaszok közül a legrosszabb. Az első mentésére váró szakasz csak akkor számít, ha az a mentés már esedékes volt |
+| Status | `ok`, `warning`, `failed` vagy `off`, a bekapcsolt szakaszok közül a legrosszabb. Az első mentésére váró szakasz csak akkor számít, ha az a mentés már esedékes volt, és a státuszt csak egy friss mentésű szakasz teszi `ok` értékűvé |
 | Running job | Mi fut éppen, vagy `idle` |
 | Open anomalies | Hány anomália nyitott |
 | Next scheduled backup | Mikor indul a következő ütemezett mentés |
