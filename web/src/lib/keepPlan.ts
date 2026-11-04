@@ -10,7 +10,7 @@ export type KeepPreset = "short" | "balanced" | "long";
 
 export const KEEP_PRESETS: Readonly<Record<KeepPreset, KeepCounts>> = {
   short: [0, 7, 4, 3, 0],
-  balanced: [0, 7, 4, 6, 1],
+  balanced: [0, 7, 4, 6, 2],
   long: [0, 14, 8, 12, 3],
 };
 

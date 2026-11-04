@@ -3604,6 +3604,73 @@ UPDATE zfs_datasets SET schedule_cadence = '' WHERE (SELECT per_item_schedules F
 		report:  ownFolderKeepLines,
 		sql:     ownFolderKeepSQL,
 	},
+	{
+		// Keeping one year holds only this year's newest backup, so the Balanced
+		// preset keeps two. A place on its old counts would read as custom values
+		// otherwise, and the rule only ever keeps more.
+		version: balancedKeepMigration,
+		name:    "balanced_keeps_two_years",
+		report:  balancedKeepLines,
+		sql:     balancedKeepSQL(),
+	},
+}
+
+// oldBalancedColumns is the condition that the keep columns starting with prefix
+// hold the old Balanced counts.
+func oldBalancedColumns(prefix string) string {
+	return prefix + `keep_last = 0 AND ` + prefix + `keep_daily = 7 AND ` + prefix + `keep_weekly = 4 AND ` +
+		prefix + `keep_monthly = 6 AND ` + prefix + `keep_yearly = 1`
+}
+
+// oldBalancedRule is the condition that the rule in a json_each row's value
+// holds the old Balanced counts.
+const oldBalancedRule = `COALESCE(json_extract(value, '$.keepLast'), 0) = 0 AND json_extract(value, '$.keepDaily') = 7
+  AND json_extract(value, '$.keepWeekly') = 4 AND json_extract(value, '$.keepMonthly') = 6 AND json_extract(value, '$.keepYearly') = 1`
+
+// balancedKeepSQL moves every stored rule on the old Balanced counts to the new
+// ones. A copy that follows its location moves with it, so it goes on following.
+func balancedKeepSQL() string {
+	rules := func(column string) string {
+		return `UPDATE settings SET ` + column + ` = (
+  SELECT json_group_object(key, json(CASE WHEN ` + oldBalancedRule + ` THEN json_set(value, '$.keepYearly', 2) ELSE value END))
+    FROM json_each(settings.` + column + `))
+ WHERE json_valid(` + column + `) AND EXISTS (SELECT 1 FROM json_each(settings.` + column + `) WHERE ` + oldBalancedRule + `);
+`
+	}
+	return `UPDATE settings SET retention_keep_yearly = 2 WHERE ` + oldBalancedColumns("retention_") + `;
+UPDATE settings SET offsite_retention_keep_yearly = 2 WHERE ` + oldBalancedColumns("offsite_retention_") + `;
+UPDATE offsite_targets SET retention_keep_yearly = 2 WHERE ` + oldBalancedColumns("retention_") + `;
+` + rules("retention_overrides") + rules("offsite_retention_overrides")
+}
+
+// balancedKeepLines names each place balancedKeepSQL moves.
+func balancedKeepLines(tx *sql.Tx) ([]string, error) {
+	overrides := func(column, label string) string {
+		return `SELECT '` + label + ` ' || key FROM settings,
+       json_each(CASE WHEN json_valid(settings.` + column + `) THEN settings.` + column + ` ELSE '{}' END)
+ WHERE ` + oldBalancedRule
+	}
+	rows, err := tx.Query(`SELECT 'the shared local rule' FROM settings WHERE ` + oldBalancedColumns("retention_") + `
+UNION ALL SELECT 'the shared off-site rule' FROM settings WHERE ` + oldBalancedColumns("offsite_retention_") + `
+UNION ALL ` + overrides("retention_overrides", "the own rule of") + `
+UNION ALL ` + overrides("offsite_retention_overrides", "the off-site rule of") + `
+UNION ALL SELECT COALESCE(NULLIF(d.name, ''), NULLIF(t.name, ''), 'A location') || CASE WHEN t.domain <> '' THEN ' for ' || t.domain ELSE '' END
+  FROM offsite_targets t LEFT JOIN offsite_targets d ON d.id = t.destination_id
+ WHERE ` + oldBalancedColumns("t.retention_") + `
+ORDER BY 1`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close() //nolint:errcheck // read-only
+	var lines []string
+	for rows.Next() {
+		var place string
+		if err := rows.Scan(&place); err != nil {
+			return nil, err
+		}
+		lines = append(lines, "retention: "+place+" stays on Balanced and keeps 2 yearly instead of 1")
+	}
+	return lines, rows.Err()
 }
 
 // ownFolderKeepRows are the sections whose own folder was put into a storage
@@ -4043,6 +4110,9 @@ const ownPlansCountMigration = 670
 // ownFolderKeepMigration numbers the keep rule an own folder in a storage
 // location takes from that location.
 const ownFolderKeepMigration = 680
+
+// balancedKeepMigration numbers the second year of the Balanced keep preset.
+const balancedKeepMigration = 690
 
 // oneLineColumns are the names and locations the recovery kit prints.
 var oneLineColumns = []struct {

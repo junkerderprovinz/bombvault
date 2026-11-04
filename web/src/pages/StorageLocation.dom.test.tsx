@@ -76,7 +76,7 @@ const { StorageLocationPage } = await import("./StorageLocation");
 const GB = 1024 ** 3;
 const LONG = { keepLast: 0, keepDaily: 14, keepWeekly: 8, keepMonthly: 12, keepYearly: 3 };
 const SHORT = { keepLast: 0, keepDaily: 7, keepWeekly: 4, keepMonthly: 3, keepYearly: 0 };
-const BALANCED = { keepLast: 0, keepDaily: 7, keepWeekly: 4, keepMonthly: 6, keepYearly: 1 };
+const BALANCED = { keepLast: 0, keepDaily: 7, keepWeekly: 4, keepMonthly: 6, keepYearly: 2 };
 
 function section(over: Partial<StorageLocationSection> = {}): StorageLocationSection {
   return {
@@ -392,7 +392,7 @@ describe("a destination", () => {
     await renderPage("destination:box");
 
     const keep = card("How long to keep");
-    expect(within(keep).getByText("Custom values · Keeps 0 latest, 7 daily, 4 weekly, 6 monthly, 1 yearly.")).toBeTruthy();
+    expect(within(keep).getByText("Custom values · Keeps 0 latest, 7 daily, 4 weekly, 6 monthly, 2 yearly.")).toBeTruthy();
     const back = within(keep).getAllByRole("button", { name: "Reset to the storage location" });
     // Containers, the copy its domain's off-site settings describe, goes back for its keep rules too.
     expect(back).toHaveLength(2);
