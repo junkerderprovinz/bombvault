@@ -12,7 +12,7 @@ Chaque requête demande un jeton d'API, même sans mot de passe de connexion. Cr
 
 Envoyez le jeton dans un en-tête, soit `Authorization: Bearer <token>`, soit `X-API-Key: <token>`. Un jeton commence par `bvapi_`. Il n'ouvre que l'API : une clé MCP ne fonctionne pas ici, et un jeton ne fonctionne pas pour MCP.
 
-Chaque jeton a une tuile avec son nom, s'il peut lancer des sauvegardes, ses quatre derniers caractères, quand et d'où il a servi la dernière fois, et ses appels du jour. Sur la tuile, vous pouvez le renommer, changer ce qu'il peut faire, le remplacer ou le révoquer. **Journal** montre les sauvegardes qu'il a lancées et ses derniers appels. Restaurer la configuration de BombVault depuis une sauvegarde révoque tous les jetons, car la sauvegarde peut contenir des jetons révoqués depuis.
+Chaque jeton a une tuile avec son nom, s'il peut lancer des sauvegardes, ses quatre derniers caractères, quand et d'où il a servi la dernière fois, et ses appels du jour. Sur la tuile, vous pouvez le renommer, changer ce qu'il peut faire, le remplacer ou le révoquer. **Journal** montre les sauvegardes qu'il a lancées et ses derniers appels. Restaurer la configuration de BombVault depuis une sauvegarde révoque tous les jetons, car la sauvegarde peut contenir des jetons que vous avez révoqués depuis.
 
 Sans mot de passe de connexion, toute personne qui peut ouvrir l'interface web peut aussi créer un jeton. Si vous ouvrez BombVault sous un nom d'apparence publique sans mot de passe, aucun jeton ne peut être créé depuis cette adresse, comme pour les [clés MCP](mcp.md#switch-on).
 
@@ -23,13 +23,13 @@ Sans mot de passe de connexion, toute personne qui peut ouvrir l'interface web p
 | `GET /api/v1/health` | Version, nom de l'instance, si une sauvegarde tourne et ce que ce jeton peut faire | lecture |
 | `GET /api/v1/status` | État de protection par section : dernière sauvegarde réussie, intervalle attendu, vérifications, prochains lancements prévus | lecture |
 | `GET /api/v1/activity` | Ce qui tourne en ce moment, avec phase et pourcentage | lecture |
-| `GET /api/v1/items` | Chaque élément protégé avec sa planification, ce qu'une sauvegarde arrête et sa dernière sauvegarde ; `?domain=` pour une section | lecture |
-| `GET /api/v1/runs` | Historique des exécutions, les plus récentes d'abord ; filtres `limit`, `domain`, `item`, `status`, `kind`, `since` | lecture |
-| `GET /api/v1/anomalies` | Anomalies avec un résumé de ce qui est ouvert ; filtres `state`, `severity`, `domain`, `limit` | lecture |
+| `GET /api/v1/items` | Chaque élément protégé avec son planning, ce qu'une sauvegarde arrête et sa dernière sauvegarde. `?domain=` pour une section | lecture |
+| `GET /api/v1/runs` | Historique des exécutions, les plus récentes d'abord. Filtres `limit`, `domain`, `item`, `status`, `kind`, `since` | lecture |
+| `GET /api/v1/anomalies` | Anomalies avec un résumé de ce qui est ouvert. Filtres `state`, `severity`, `domain`, `limit` | lecture |
 | `GET /api/v1/anomalies/{id}` | Une anomalie | lecture |
 | `GET /api/v1/storage/{domain}` | Historique de taille, croissance par semaine et espace libre de chaque dépôt d'une section | lecture |
 | `POST /api/v1/backups` | Sauvegarde un élément (`{"domain":"containers","item":"plex"}`) ou une section entière (`{"domain":"vms"}`) | lancement |
-| `POST /api/v1/backups/everything` | Lance la Sauvegarde complète | lancement |
+| `POST /api/v1/backups/everything` | Lance la sauvegarde complète | lancement |
 | `POST /api/v1/runs/{id}/cancel` | Annule une sauvegarde en cours lancée par ce jeton | lancement |
 
 Les sections sont `containers`, `vms`, `files`, `zfs`, `flash` et `config`. Les heures sont des secondes Unix. Les réponses sont celles des [outils MCP](mcp.md#tools) du même nom, les deux restent donc alignés.
@@ -39,10 +39,10 @@ Une sauvegarde lancée ici est la même que celle de l'interface web : un conten
 ## Exemples {#examples}
 
 ```sh
-# Où en sont les sauvegardes ?
+# How are the backups doing?
 curl -s -H "Authorization: Bearer $BOMBVAULT_TOKEN" https://tower:3443/api/v1/status
 
-# Sauvegarder un conteneur maintenant.
+# Back up one container now.
 curl -s -X POST -H "Authorization: Bearer $BOMBVAULT_TOKEN" \
   -H "Content-Type: application/json" -d '{"domain":"containers","item":"plex"}' \
   https://tower:3443/api/v1/backups
@@ -58,12 +58,12 @@ Une erreur revient sous la forme `{"error": {"code": "...", "message": "..."}}` 
 |---|---|---|
 | 400 | `invalid_argument`, `ambiguous` | Un argument manque ou est faux |
 | 401 | `no_token`, `invalid_token` | Pas de jeton, ou pas un jeton actif |
-| 403 | `not_permitted`, `forbidden_origin` | Le jeton peut seulement lire, ou il n'a pas lancé cette exécution, ou la requête vient d'une page d'une autre origine |
+| 403 | `not_permitted`, `forbidden_origin` | Le jeton peut seulement lire, ce n'est pas lui qui a lancé l'exécution, ou la requête vient d'une page d'une autre origine |
 | 404 | `not_found` | Élément, exécution ou anomalie introuvable |
 | 409 | `busy`, `domain_off`, `nothing_to_back_up`, `not_running` | Autre chose tourne, la section est désactivée, ou il n'y a rien à faire |
-| 429 | `throttled`, `rate_limited`, `cooldown`, `retention_guard` | Une limite retient la requête ; `Retry-After` dit quand réessayer |
+| 429 | `throttled`, `rate_limited`, `cooldown`, `retention_guard` | Une limite retient la requête. `Retry-After` dit quand réessayer |
 
-Les lancements suivent les mêmes limites que [ceux via MCP](mcp.md#starting-backups) : 12 par heure et par jeton, 15 minutes entre deux lancements du même élément, au plus 4 lancements d'un élément en 24 heures, et la protection de rétention. Les trois dernières comptent ensemble les lancements via MCP, via l'API et depuis Home Assistant. Un jeton peut faire 120 requêtes par minute. Après cinq échecs depuis une adresse, elle est bloquée une minute.
+Les lancements suivent les mêmes limites que les [lancements via MCP](mcp.md#starting-backups) : 12 par heure et par jeton, 15 minutes entre deux lancements du même élément, au plus 4 lancements d'un élément en 24 heures, et la protection de rétention. Les trois dernières comptent ensemble les lancements via MCP, via l'API et depuis Home Assistant. Un jeton peut faire 120 requêtes par minute. Après cinq échecs depuis une même adresse, elle est bloquée une minute.
 
 ## OpenAPI {#openapi}
 
@@ -71,10 +71,10 @@ BombVault sert une description de ces routes sous `/api/v1/openapi.json` (OpenAP
 
 ## Home Assistant {#home-assistant}
 
-BombVault peut apparaître dans Home Assistant comme un appareil, grâce à la découverte MQTT. Home Assistant a besoin de son intégration MQTT et d'un broker, par exemple le module Mosquitto. Aucun composant personnalisé n'est nécessaire.
+BombVault peut apparaître dans Home Assistant comme un appareil, grâce à la découverte MQTT. Home Assistant a besoin de son intégration MQTT et d'un broker, par exemple le module complémentaire Mosquitto. Aucun composant personnalisé n'est nécessaire.
 
 1. Dans BombVault, ouvrez **Paramètres, Intégrations** et activez **Home Assistant** dans la carte **Services**. Les champs du broker apparaissent en dessous.
-2. Saisissez l'adresse et le port du broker, ainsi que le nom d'utilisateur et le mot de passe s'il en demande. Activez **Utiliser TLS** si le broker parle TLS, en général sur le port 8883 ; son certificat doit être valide pour l'adresse saisie. Si vous changez l'adresse, le port ou le nom d'utilisateur, saisissez de nouveau le mot de passe : BombVault ne transmet pas celui enregistré à un autre broker ou utilisateur.
+2. Saisissez l'adresse et le port du broker, ainsi que le nom d'utilisateur et le mot de passe s'il en demande. Activez **Utiliser TLS** si le broker accepte TLS, en général sur le port 8883. Son certificat doit être valide pour l'adresse saisie. Si vous changez l'adresse, le port ou le nom d'utilisateur, saisissez de nouveau le mot de passe : BombVault ne transmet pas celui qui est enregistré à un autre broker ou utilisateur.
 3. Cliquez sur **Enregistrer**. La ligne indique quand la connexion est établie.
 
 L'appareil s'appelle BombVault, ou BombVault avec le nom de l'instance entre parenthèses, et possède ces entités :
@@ -90,17 +90,53 @@ L'appareil s'appelle BombVault, ou BombVault avec le nom de l'instance entre par
 | *Section* repository free space | L'espace libre là où se trouve son dépôt principal, si BombVault peut le lire |
 | Back up *section* | Un bouton qui sauvegarde toute la section |
 
-Les noms des entités sont en anglais, car Home Assistant les reprend tels que BombVault les envoie. Chaque section activée a ses propres entités, et une section désactivée les perd. Les boutons apparaissent dès que vous activez **Les boutons lancent des sauvegardes**, désactivé sur une nouvelle installation. Ils suivent les mêmes limites que les [lancements via l'API](#errors). En plus, BombVault ne traite qu'un appui à la fois par section et au plus six par minute, et ignore un appui que le broker a gardé comme message retenu (retained). Toute personne qui peut publier sur le broker peut appuyer dessus : protégez donc le broker par un mot de passe.
+Chaque section activée a ses propres entités, et une section désactivée les perd. Les boutons apparaissent dès que vous activez **Les boutons lancent des sauvegardes**. Une nouvelle installation l'a désactivé. Ils suivent les mêmes limites que les [lancements via l'API](#errors). En plus, BombVault ne traite qu'un appui à la fois par section et au plus six par minute, et ignore un appui que le broker a gardé comme message retenu. Toute personne qui peut publier sur le broker peut appuyer dessus, protégez donc le broker par un mot de passe.
 
-BombVault lit son état toutes les 15 secondes et le publie quand quelque chose a changé, en JSON sous `<préfixe>/<nœud>/state`. Le préfixe est `bombvault` tant que vous ne le changez pas, et le nœud est un court identifiant que BombVault choisit une fois. Les messages de découverte vont au préfixe par défaut de Home Assistant, `homeassistant`. Les deux sont conservés (retained). Un dernier message (last will) marque l'appareil comme indisponible si BombVault s'arrête sans prévenir. Désactiver la liaison retire l'appareil et ses entités de Home Assistant.
+BombVault lit son état toutes les 15 secondes et le publie quand quelque chose a changé, en JSON sous `<prefix>/<node>/state`. Le préfixe est `bombvault` tant que vous ne le changez pas, et le nœud est un court identifiant que BombVault choisit une fois. Les messages de découverte vont au préfixe par défaut de Home Assistant, `homeassistant`. Les deux sont retenus. Un dernier message (last will) marque l'appareil comme indisponible si BombVault s'arrête sans prévenir. Désactiver la liaison retire l'appareil et ses entités de Home Assistant.
+
+### Exemple : une carte et une alerte {#home-assistant-example}
+
+Home Assistant fabrique les identifiants d'entités à partir des noms, l'appareil BombVault reçoit donc des identifiants comme `sensor.bombvault_status`. Avec un nom d'instance entre parenthèses, les identifiants le portent aussi, vérifiez-les donc d'abord sous **Developer Tools, States**. Une carte pour le tableau de bord :
+
+```yaml
+type: entities
+title: Backups
+entities:
+  - sensor.bombvault_status
+  - sensor.bombvault_running_job
+  - sensor.bombvault_open_anomalies
+  - sensor.bombvault_next_scheduled_backup
+```
+
+Une automatisation qui prévient votre téléphone quand l'état passe à `failed` :
+
+```yaml
+alias: BombVault backup failed
+trigger:
+  - platform: state
+    entity_id: sensor.bombvault_status
+    to: failed
+action:
+  - service: notify.mobile_app_my_phone
+    data:
+      message: A BombVault backup failed. Open Needs you on the overview.
+```
+
+## Prometheus {#metrics}
+
+**Exposer /metrics** dans la carte **Services** sous **Paramètres, Intégrations** sert l'état des sauvegardes, les tailles et les horodatages pour Prometheus, Grafana ou Uptime Kuma, sur `/metrics` au port de l'interface web. C'est désactivé par défaut. **Jeton de scrape (facultatif)** fait envoyer un jeton bearer par le scraper. Les étiquettes ne contiennent ni secrets ni chemins.
+
+## Widget de tableau de bord {#dashboard-widget}
+
+La carte **Widget de tableau de bord** sous **Paramètres, Intégrations** génère un jeton en lecture seule et vous donne une adresse pour tout tableau de bord qui affiche une iframe, comme Homepage, Organizr ou Heimdall. L'adresse ouvre une petite page sur `/widget` avec seulement le journal d'activité en direct. Le jeton donne accès à ce journal et à rien d'autre, et **Désactiver** le révoque aussitôt. La page intégrée n'existe qu'en anglais.
 
 ## Trouver BombVault sur le réseau {#mdns}
 
 BombVault annonce son interface web sur le réseau local via mDNS, le protocole derrière Bonjour et Avahi. Un navigateur l'atteint alors sous `https://bombvault.local:3443`, ou `http://bombvault.local:3000` avec `HTTP_ONLY`, et les explorateurs de services le listent comme service web avec le sous-type `_bombvault`. Ses enregistrements TXT portent la version et le chemin. Le réglage est **Trouver sur le réseau**, dans la carte **Services** sous **Paramètres, Intégrations**, et il est activé par défaut. Si un autre appareil utilise déjà le nom, BombVault prend `bombvault-2.local` et ainsi de suite, et la carte affiche l'adresse obtenue. Quand BombVault s'arrête ou que vous désactivez l'annonce, il le signale au réseau, et les navigateurs retirent l'entrée aussitôt.
 
-L'annonce atteint votre réseau selon la façon dont le conteneur est connecté :
+L'annonce atteint ou non votre réseau selon la façon dont le conteneur est connecté :
 
-- **bridge**, le réglage par défaut du modèle Unraid : l'annonce reste dans le réseau de Docker et personne sur le réseau local ne la voit. Ouvrez BombVault par l'adresse de l'hôte comme avant.
+- **bridge**, le réglage par défaut du modèle Unraid : l'annonce reste dans le réseau de Docker et personne sur le réseau local ne la voit. Ouvrez BombVault par l'adresse de l'hôte, comme avant.
 - **br0** ou un autre réseau macvlan ou ipvlan : le conteneur a sa propre adresse sur le réseau local, et l'annonce l'atteint.
 - **host** : l'annonce sort par les interfaces de l'hôte, à côté de celle d'Unraid. Les ponts de Docker et de libvirt sont laissés de côté.
 

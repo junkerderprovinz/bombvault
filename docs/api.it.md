@@ -1,107 +1,143 @@
 # API e integrazioni
 
-BombVault ha una piccola API HTTP per script, dashboard e domotica. Legge le stesse cose che mostra la panoramica e può avviare un backup. Tutto il resto, come ripristini, eliminazione di backup e impostazioni, resta nell'interfaccia web.
+BombVault ha una piccola API HTTP per script, dashboard e domotica. Legge le stesse cose che mostra la panoramica e può avviare un backup. Tutto il resto, come i ripristini, l'eliminazione dei backup e le impostazioni, resta nell'interfaccia web.
 
 ## Token {#tokens}
 
-Ogni richiesta ha bisogno di un token API, anche senza password di accesso. Crealo in **Impostazioni, Integrazioni, Token API**:
+Ogni richiesta ha bisogno di un token API, anche quando non è impostata alcuna password di accesso. Creane uno in **Impostazioni, Integrazioni, Token API**:
 
-1. Scrivi un nome che dica dove si usa il token, per esempio "Home Assistant" o "Uptime Kuma".
-2. Attiva **Consenti di avviare backup** se il token deve poter avviare backup. Altrimenti può solo leggere.
-3. Fai clic su **Crea token**. Il token compare una volta sola. BombVault ne tiene solo un'impronta, quindi copialo adesso.
+1. Scrivi un nome che dica dove viene usato il token, per esempio "Home Assistant" o "Uptime Kuma".
+2. Attiva **Consenti di avviare backup** se il token deve poter avviare backup. Senza, il token può solo leggere.
+3. Clicca **Crea token**. Il token viene mostrato una volta sola. BombVault ne conserva solo un'impronta, quindi copialo subito.
 
-Invia il token in un'intestazione, `Authorization: Bearer <token>` oppure `X-API-Key: <token>`. Un token inizia con `bvapi_`. Apre solo l'API: una chiave MCP qui non funziona, e un token non funziona per MCP.
+Invia il token in un header, come `Authorization: Bearer <token>` oppure come `X-API-Key: <token>`. Un token inizia con `bvapi_`. Apre solo l'API: una chiave MCP qui non funziona, e un token non funziona per MCP.
 
-Ogni token ha un riquadro con il nome, se può avviare backup, gli ultimi quattro caratteri, quando e da dove è stato usato l'ultima volta e le chiamate di oggi. Dal riquadro puoi rinominarlo, cambiare cosa può fare, sostituirlo o revocarlo. **Registro** mostra i backup che ha avviato e le ultime chiamate. Ripristinare la configurazione di BombVault da un backup revoca tutti i token, perché il backup può contenere token revocati in seguito.
+Ogni token ha un riquadro con il suo nome, se può avviare backup, gli ultimi quattro caratteri, quando è stato usato l'ultima volta e da dove, e le sue chiamate di oggi. Sul riquadro puoi rinominarlo, cambiare ciò che può fare, sostituirlo o revocarlo. **Registro** mostra i backup che ha avviato e le sue chiamate recenti. Ripristinare la configurazione di BombVault da un backup revoca ogni token, perché il backup potrebbe contenere token che hai revocato dopo.
 
-Senza password di accesso, chiunque possa aprire l'interfaccia web può anche creare un token. Se apri BombVault con un nome dall'aspetto pubblico e non c'è password, da quell'indirizzo non si possono creare token, come per le [chiavi MCP](mcp.md#switch-on).
+Senza una password di accesso, chiunque riesca ad aprire l'interfaccia web può anche creare un token. Se apri BombVault con un nome che sembra pubblico e non è impostata alcuna password, da quell'indirizzo non si possono creare token, la stessa regola valida per le [chiavi MCP](mcp.md#switch-on).
 
 ## Endpoint {#endpoints}
 
 | Route | Cosa restituisce o fa | Token |
 |---|---|---|
-| `GET /api/v1/health` | Versione, nome dell'istanza, se un backup è in corso e cosa può fare questo token | lettura |
-| `GET /api/v1/status` | Stato di protezione per sezione: ultimo backup riuscito, intervallo previsto, controlli, prossime esecuzioni | lettura |
-| `GET /api/v1/activity` | Cosa è in corso adesso, con fase e percentuale | lettura |
-| `GET /api/v1/items` | Ogni elemento protetto con pianificazione, cosa ferma un backup e l'ultimo backup; `?domain=` per una sezione | lettura |
-| `GET /api/v1/runs` | Cronologia delle esecuzioni, le più recenti prima; filtri `limit`, `domain`, `item`, `status`, `kind`, `since` | lettura |
-| `GET /api/v1/anomalies` | Anomalie con un riepilogo di quelle aperte; filtri `state`, `severity`, `domain`, `limit` | lettura |
+| `GET /api/v1/health` | Versione, nome dell'istanza, se è in corso un backup e cosa può fare questo token | lettura |
+| `GET /api/v1/status` | Stato di protezione per dominio: ultimo backup riuscito, intervallo previsto, controlli, prossime esecuzioni pianificate | lettura |
+| `GET /api/v1/activity` | Cosa è in corso in questo momento, con fase e percentuale | lettura |
+| `GET /api/v1/items` | Ogni elemento protetto con la sua pianificazione, ciò che un backup ferma e il suo ultimo backup. `?domain=` per un solo dominio | lettura |
+| `GET /api/v1/runs` | Cronologia delle esecuzioni, la più recente per prima. Filtri `limit`, `domain`, `item`, `status`, `kind`, `since` | lettura |
+| `GET /api/v1/anomalies` | Anomalie con un riepilogo di ciò che è aperto. Filtri `state`, `severity`, `domain`, `limit` | lettura |
 | `GET /api/v1/anomalies/{id}` | Un'anomalia | lettura |
-| `GET /api/v1/storage/{domain}` | Andamento della dimensione, crescita settimanale e spazio libero di ogni repository di una sezione | lettura |
-| `POST /api/v1/backups` | Esegue il backup di un elemento (`{"domain":"containers","item":"plex"}`) o di un'intera sezione (`{"domain":"vms"}`) | avvio |
-| `POST /api/v1/backups/everything` | Avvia il Backup totale | avvio |
+| `GET /api/v1/storage/{domain}` | Storico delle dimensioni, crescita a settimana e spazio libero di ogni repository di un dominio | lettura |
+| `POST /api/v1/backups` | Salva un elemento (`{"domain":"containers","item":"plex"}`) o un intero dominio (`{"domain":"vms"}`) | avvio |
+| `POST /api/v1/backups/everything` | Esegue il passaggio Esegui il backup di tutto ora | avvio |
 | `POST /api/v1/runs/{id}/cancel` | Annulla un backup in corso avviato da questo token | avvio |
 
-Le sezioni sono `containers`, `vms`, `files`, `zfs`, `flash` e `config`. Gli orari sono secondi Unix. Le risposte sono quelle degli [strumenti MCP](mcp.md#tools) con lo stesso nome, così le due restano allineate.
+I domini sono `containers`, `vms`, `files`, `zfs`, `flash` e `config`. Gli orari sono secondi unix. Le risposte sono le stesse degli [strumenti MCP](mcp.md#tools) con gli stessi nomi, così restano allineate.
 
-Un backup avviato qui è lo stesso che avvia l'interfaccia web: un container in esecuzione viene fermato fino alla fine del suo backup. La richiesta torna subito, e `/api/v1/activity` e `/api/v1/runs` mostrano come procede.
+Un backup avviato è lo stesso backup che avvia l'interfaccia web: un container in esecuzione viene fermato finché il suo backup non è finito. La richiesta ritorna subito, e `/api/v1/activity` e `/api/v1/runs` mostrano come procede.
 
 ## Esempi {#examples}
 
 ```sh
-# Come vanno i backup?
+# How are the backups doing?
 curl -s -H "Authorization: Bearer $BOMBVAULT_TOKEN" https://tower:3443/api/v1/status
 
-# Backup di un container adesso.
+# Back up one container now.
 curl -s -X POST -H "Authorization: Bearer $BOMBVAULT_TOKEN" \
   -H "Content-Type: application/json" -d '{"domain":"containers","item":"plex"}' \
   https://tower:3443/api/v1/backups
 ```
 
-Con il certificato autofirmato di BombVault aggiungi `--cacert bombvault-cert.pem` (il file che ottieni con **Scarica certificato** sulla scheda MCP) oppure `-k` su una rete di cui ti fidi.
+Con il certificato autofirmato di BombVault aggiungi `--cacert bombvault-cert.pem` (il file che ti dà **Scarica certificato** nella scheda MCP) oppure `-k` su una rete di cui ti fidi.
 
 ## Errori e limiti {#errors}
 
-Un errore torna come `{"error": {"code": "...", "message": "..."}}` con lo stato corrispondente:
+Un errore torna come `{"error": {"code": "...", "message": "..."}}` con uno stato corrispondente:
 
 | Stato | Codici | Significato |
 |---|---|---|
 | 400 | `invalid_argument`, `ambiguous` | Un argomento manca o è sbagliato |
 | 401 | `no_token`, `invalid_token` | Nessun token, o non uno attivo |
-| 403 | `not_permitted`, `forbidden_origin` | Il token può solo leggere, oppure non ha avviato quell'esecuzione, oppure la richiesta arriva da una pagina di un'altra origine |
-| 404 | `not_found` | Elemento, esecuzione o anomalia inesistente |
-| 409 | `busy`, `domain_off`, `nothing_to_back_up`, `not_running` | C'è già qualcosa in corso, la sezione è spenta o non c'è niente da fare |
-| 429 | `throttled`, `rate_limited`, `cooldown`, `retention_guard` | Un limite trattiene la richiesta; `Retry-After` dice quando riprovare |
+| 403 | `not_permitted`, `forbidden_origin` | Il token può solo leggere, l'esecuzione non è stata avviata da lui, oppure la richiesta arriva da una pagina di un'altra origine |
+| 404 | `not_found` | Nessun elemento, esecuzione o anomalia di questo tipo |
+| 409 | `busy`, `domain_off`, `nothing_to_back_up`, `not_running` | Sta già girando altro, il dominio è disattivato oppure non c'è nulla da fare |
+| 429 | `throttled`, `rate_limited`, `cooldown`, `retention_guard` | Un limite trattiene la richiesta. `Retry-After` dice quando riprovare |
 
-Gli avvii seguono gli stessi limiti degli [avvii tramite MCP](mcp.md#starting-backups): 12 all'ora per token, 15 minuti tra due avvii dello stesso elemento, al massimo 4 avvii di un elemento in 24 ore e la protezione della conservazione. Gli ultimi tre contano insieme gli avvii tramite MCP, tramite API e da Home Assistant. Un token può fare 120 richieste al minuto. Cinque tentativi falliti da un indirizzo lo bloccano per un minuto.
+Gli avvii seguono gli stessi limiti degli [avvii tramite MCP](mcp.md#starting-backups): 12 all'ora per token, 15 minuti tra due avvii dello stesso elemento, al massimo 4 avvii di un elemento in 24 ore e la protezione della conservazione. Gli ultimi tre contano insieme gli avvii tramite MCP, API e Home Assistant. Un token può fare 120 richieste al minuto. Cinque tentativi falliti dallo stesso indirizzo lo bloccano per un minuto.
 
 ## OpenAPI {#openapi}
 
-BombVault fornisce una descrizione di queste route in `/api/v1/openapi.json` (OpenAPI 3.1). Non serve un token. Caricala in Swagger UI, Postman o un generatore di codice.
+BombVault pubblica una descrizione di queste route in `/api/v1/openapi.json` (OpenAPI 3.1). Non richiede alcun token. Caricala in Swagger UI, in Postman o in un generatore di codice.
 
 ## Home Assistant {#home-assistant}
 
-BombVault può comparire in Home Assistant come dispositivo, grazie al rilevamento MQTT. Home Assistant ha bisogno della sua integrazione MQTT e di un broker, per esempio il componente aggiuntivo Mosquitto. Non serve alcun componente personalizzato.
+BombVault può comparire in Home Assistant come dispositivo, tramite MQTT discovery. Home Assistant ha bisogno della sua integrazione MQTT e di un broker, per esempio l'add-on Mosquitto. Non è coinvolto alcun componente personalizzato.
 
-1. In BombVault apri **Impostazioni, Integrazioni** e attiva **Home Assistant** nella scheda **Servizi**. I campi per il broker compaiono sotto.
-2. Inserisci indirizzo e porta del broker, e nome utente e password se li chiede. Attiva **Usa TLS** se il broker usa TLS, di solito sulla porta 8883; il suo certificato deve essere valido per l'indirizzo inserito. Se cambi indirizzo, porta o nome utente, inserisci di nuovo la password: BombVault non passa quella salvata a un altro broker o utente.
-3. Fai clic su **Salva**. La riga mostra quando la connessione è attiva.
+1. In BombVault apri **Impostazioni, Integrazioni** e attiva **Home Assistant** nella scheda **Servizi**. Sotto compaiono i campi per il broker.
+2. Inserisci l'indirizzo e la porta del broker, e il nome utente e la password se li richiede. Attiva **Usa TLS** se il broker accetta TLS, di solito sulla porta 8883. Il suo certificato deve essere valido per l'indirizzo che hai inserito. Se cambi l'indirizzo, la porta o il nome utente, inserisci di nuovo la password: BombVault non passa quella salvata a un altro broker o utente.
+3. Clicca **Salva**. La riga mostra quando la connessione è attiva.
 
 Il dispositivo si chiama BombVault, oppure BombVault con il nome dell'istanza tra parentesi, e ha queste entità:
 
 | Entità | Cosa mostra |
 |---|---|
-| Status | `ok`, `warning`, `failed` o `off`, il peggiore tra le sezioni attive |
-| Running job | Cosa è in corso adesso, oppure `idle` |
+| Status | `ok`, `warning`, `failed` oppure `off`, il peggiore tra i domini attivati |
+| Running job | Cosa gira ora, oppure `idle` |
 | Open anomalies | Quante anomalie sono aperte |
 | Next scheduled backup | Quando parte il prossimo backup pianificato |
-| *Sezione* last backup | Quando è stato eseguito l'ultimo backup riuscito della sezione |
-| *Sezione* last result | Come si è concluso il suo ultimo backup |
-| *Sezione* repository free space | Lo spazio libero dove si trova il suo repository principale, se BombVault riesce a leggerlo |
-| Back up *sezione* | Un pulsante che esegue il backup dell'intera sezione |
+| *Domain* last backup | Quando è stato eseguito l'ultimo backup riuscito del dominio |
+| *Domain* last result | Come si è concluso il suo ultimo backup |
+| *Domain* repository free space | Lo spazio libero dove si trova il suo repository primario, se BombVault riesce a leggerlo |
+| Back up *domain* | Un pulsante che salva l'intero dominio |
 
-I nomi delle entità sono in inglese, perché Home Assistant li riprende così come BombVault li invia. Ogni sezione attiva ha le sue entità, e una sezione spenta le perde. I pulsanti compaiono quando attivi **I pulsanti avviano backup**, che su una nuova installazione è spento. Seguono gli stessi limiti degli [avvii tramite l'API](#errors). In più BombVault accetta una sola pressione alla volta per sezione e al massimo sei al minuto, e ignora una pressione che il broker ha conservato come messaggio retained. Chiunque possa pubblicare sul broker può premerli, quindi proteggi il broker con una password.
+Ogni dominio attivato ottiene entità proprie, e un dominio che disattivi le perde. I pulsanti compaiono quando attivi **I pulsanti avviano backup**. In una nuova installazione è disattivato. Seguono gli stessi limiti degli [avvii tramite l'API](#errors). In più BombVault gestisce una pressione per dominio alla volta e non più di sei al minuto, e ignora una pressione che il broker ha conservato come messaggio retained. Chiunque possa pubblicare sul broker può premerli, quindi proteggi il broker con una password.
 
-BombVault legge il suo stato ogni 15 secondi e lo pubblica quando qualcosa è cambiato, come JSON sotto `<prefisso>/<nodo>/state`. Il prefisso è `bombvault` finché non lo cambi, e il nodo è un breve identificativo che BombVault sceglie una volta. I messaggi di rilevamento vanno al prefisso predefinito di Home Assistant, `homeassistant`. Entrambi sono conservati (retained). Un ultimo messaggio (last will) segna il dispositivo come non disponibile se BombVault si ferma senza avvisare. Disattivare il collegamento rimuove il dispositivo e le sue entità da Home Assistant.
+BombVault legge il proprio stato ogni 15 secondi e lo pubblica quando qualcosa è cambiato, come JSON sotto `<prefix>/<node>/state`. Il prefisso è `bombvault` finché non lo cambi, e il nodo è un breve id che BombVault sceglie una volta. I messaggi di discovery vanno al prefisso predefinito di Home Assistant, `homeassistant`. Entrambi sono retained. Un last will segna il dispositivo come non disponibile se BombVault si ferma senza avvisare. Disattivare il collegamento rimuove da Home Assistant il dispositivo e le sue entità.
+
+### Esempio: una scheda e un avviso {#home-assistant-example}
+
+Home Assistant ricava gli id delle entità dai nomi, quindi il dispositivo BombVault ottiene id come `sensor.bombvault_status`. Con un nome di istanza tra parentesi anche gli id lo contengono, perciò controllali prima in **Developer Tools, States**. Una scheda per la dashboard:
+
+```yaml
+type: entities
+title: Backups
+entities:
+  - sensor.bombvault_status
+  - sensor.bombvault_running_job
+  - sensor.bombvault_open_anomalies
+  - sensor.bombvault_next_scheduled_backup
+```
+
+Un'automazione che avvisa il telefono quando lo stato diventa `failed`:
+
+```yaml
+alias: BombVault backup failed
+trigger:
+  - platform: state
+    entity_id: sensor.bombvault_status
+    to: failed
+action:
+  - service: notify.mobile_app_my_phone
+    data:
+      message: A BombVault backup failed. Open Needs you on the overview.
+```
+
+## Prometheus {#metrics}
+
+**Esponi /metrics** nella scheda **Servizi** in **Impostazioni, Integrazioni** pubblica stato dei backup, dimensioni e timestamp per Prometheus, Grafana o Uptime Kuma, in `/metrics` sulla porta dell'interfaccia web. È disattivato di default. **Token di scrape (facoltativo)** fa inviare allo scraper un bearer token. Le label non contengono segreti né percorsi.
+
+## Widget per dashboard {#dashboard-widget}
+
+La scheda **Widget per dashboard** in **Impostazioni, Integrazioni** genera un token di sola lettura e ti dà un indirizzo per qualsiasi dashboard che mostri un iframe, come Homepage, Organizr o Heimdall. L'indirizzo apre una piccola pagina in `/widget` con solo il registro attività in tempo reale. Il token concede quel registro e nient'altro, e **Disattiva** lo revoca subito. La pagina incorporata è solo in inglese.
 
 ## Trovare BombVault in rete {#mdns}
 
-BombVault annuncia la sua interfaccia web sulla rete locale tramite mDNS, il protocollo dietro Bonjour e Avahi. Un browser lo raggiunge così come `https://bombvault.local:3443`, oppure `http://bombvault.local:3000` con `HTTP_ONLY`, e i browser di servizi lo elencano come servizio web con il sottotipo `_bombvault`. I suoi record TXT riportano la versione e il percorso. L'interruttore è **Trova in rete** nella scheda **Servizi** sotto **Impostazioni, Integrazioni** ed è attivo di serie. Se un altro dispositivo usa già il nome, BombVault prende `bombvault-2.local` e così via, e la scheda mostra l'indirizzo ottenuto. Quando BombVault si ferma o disattivi l'annuncio, lo comunica alla rete e i browser tolgono subito la voce.
+BombVault annuncia la sua interfaccia web sulla rete locale tramite mDNS, il protocollo dietro Bonjour e Avahi. Un browser lo raggiunge allora come `https://bombvault.local:3443`, oppure `http://bombvault.local:3000` con `HTTP_ONLY`, e i browser di servizi lo elencano come servizio web con il sottotipo `_bombvault`. I suoi record TXT portano la versione e il percorso. L'interruttore è **Trova in rete** nella scheda **Servizi** in **Impostazioni, Integrazioni** ed è attivo di default. Se un altro dispositivo usa già il nome, BombVault prende `bombvault-2.local` e così via, e la scheda mostra l'indirizzo ottenuto. Quando BombVault si ferma o disattivi l'annuncio, lo comunica alla rete, così i browser tolgono subito la voce.
 
 Se l'annuncio raggiunge la tua rete dipende da come è collegato il container:
 
-- **bridge**, l'impostazione predefinita del modello Unraid: l'annuncio resta nella rete di Docker e nessuno sulla LAN lo vede. Apri BombVault con l'indirizzo dell'host come prima.
-- **br0** o un'altra rete macvlan o ipvlan: il container ha un suo indirizzo sulla LAN e l'annuncio la raggiunge.
-- **host**: l'annuncio esce dalle interfacce dell'host, accanto a quello di Unraid. I bridge di Docker e di libvirt restano esclusi.
+- **bridge**, il valore predefinito nel template Unraid: l'annuncio resta dentro la rete di Docker e nessuno nella LAN lo vede. Apri BombVault con l'indirizzo dell'host come prima.
+- **br0** o un'altra rete macvlan o ipvlan: il container ha un proprio indirizzo nella LAN e l'annuncio lo raggiunge.
+- **host**: l'annuncio esce dalle interfacce dell'host, accanto a quello di Unraid. Salta i bridge di Docker e libvirt.
 
 Vengono annunciati solo indirizzi IPv4.
