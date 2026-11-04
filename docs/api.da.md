@@ -23,10 +23,10 @@ Uden adgangskode kan alle, der kan åbne brugerfladen, også oprette et token. �
 | `GET /api/v1/health` | Version, instansnavn, om en kopi kører, og hvad dette token må | læse |
 | `GET /api/v1/status` | Beskyttelsesstatus pr. område: seneste vellykkede kopi, forventet interval, kontroller, næste planlagte kørsler | læse |
 | `GET /api/v1/activity` | Hvad der kører lige nu, med fase og procent | læse |
-| `GET /api/v1/items` | Hvert beskyttet element med tidsplan, hvad en kopi stopper, og seneste kopi; `?domain=` for ét område | læse |
-| `GET /api/v1/runs` | Kørselshistorik, nyeste først; filtre `limit`, `domain`, `item`, `status`, `kind`, `since` | læse |
-| `GET /api/v1/anomalies` | Anomalier med et overblik over de åbne; filtre `state`, `severity`, `domain`, `limit` | læse |
-| `GET /api/v1/anomalies/{id}` | Én anomali | læse |
+| `GET /api/v1/items` | Hvert beskyttet element med tidsplan, hvad en kopi stopper, og seneste kopi. `?domain=` for ét område | læse |
+| `GET /api/v1/runs` | Kørselshistorik, nyeste først. Filtre `limit`, `domain`, `item`, `status`, `kind`, `since` | læse |
+| `GET /api/v1/anomalies` | Afvigelser med et overblik over de åbne. Filtre `state`, `severity`, `domain`, `limit` | læse |
+| `GET /api/v1/anomalies/{id}` | Én afvigelse | læse |
 | `GET /api/v1/storage/{domain}` | Størrelseshistorik, vækst pr. uge og ledig plads for hvert repository i et område | læse |
 | `POST /api/v1/backups` | Sikkerhedskopierer ét element (`{"domain":"containers","item":"plex"}`) eller et helt område (`{"domain":"vms"}`) | starte |
 | `POST /api/v1/backups/everything` | Kører Fuld sikkerhedskopi | starte |
@@ -59,9 +59,9 @@ En fejl kommer tilbage som `{"error": {"code": "...", "message": "..."}}` med de
 | 400 | `invalid_argument`, `ambiguous` | Et argument mangler eller er forkert |
 | 401 | `no_token`, `invalid_token` | Intet token, eller ikke et aktivt |
 | 403 | `not_permitted`, `forbidden_origin` | Tokenet må kun læse, eller det startede ikke kørslen, eller anmodningen kom fra en side med en anden oprindelse |
-| 404 | `not_found` | Intet sådant element, kørsel eller anomali |
+| 404 | `not_found` | Intet sådant element, ingen sådan kørsel eller afvigelse |
 | 409 | `busy`, `domain_off`, `nothing_to_back_up`, `not_running` | Noget andet kører, området er slået fra, eller der er intet at gøre |
-| 429 | `throttled`, `rate_limited`, `cooldown`, `retention_guard` | En grænse holder forespørgslen tilbage; `Retry-After` siger, hvornår du kan prøve igen |
+| 429 | `throttled`, `rate_limited`, `cooldown`, `retention_guard` | En grænse holder forespørgslen tilbage. `Retry-After` siger, hvornår du kan prøve igen |
 
 Starter følger de samme grænser som [starter via MCP](mcp.md#starting-backups): 12 i timen pr. token, 15 minutter mellem to starter af samme element, højst 4 starter af et element på 24 timer og opbevaringsbeskyttelsen. De sidste tre tæller starter via MCP, via API'et og fra Home Assistant sammen. Et token må lave 120 forespørgsler i minuttet. Fem mislykkede forsøg fra én adresse spærrer den i et minut.
 
@@ -74,7 +74,7 @@ BombVault leverer en beskrivelse af disse ruter på `/api/v1/openapi.json` (Open
 BombVault kan vises i Home Assistant som en enhed via MQTT-discovery. Home Assistant skal bruge sin MQTT-integration og en broker, for eksempel Mosquitto-tilføjelsen. Der skal ikke installeres nogen egen komponent.
 
 1. Åbn **Indstillinger, Integrationer** i BombVault og slå **Home Assistant** til i kortet **Tjenester**. Felterne til brokeren kommer frem under den.
-2. Skriv brokerens adresse og port, og brugernavn og adgangskode, hvis den beder om dem. Slå **Brug TLS** til, hvis brokeren taler TLS, som regel på port 8883; dens certifikat skal være gyldigt for den adresse, du skrev. Ændrer du adressen, porten eller brugernavnet, skal du indtaste adgangskoden igen: BombVault giver ikke den gemte videre til en anden broker eller bruger.
+2. Skriv brokerens adresse og port, og brugernavn og adgangskode, hvis den beder om dem. Slå **Brug TLS** til, hvis brokeren taler TLS, som regel på port 8883. Dens certifikat skal være gyldigt for den adresse, du skrev. Ændrer du adressen, porten eller brugernavnet, skal du indtaste adgangskoden igen: BombVault giver ikke den gemte videre til en anden broker eller bruger.
 3. Klik på **Gem**. Rækken viser, når forbindelsen er oppe.
 
 Enheden hedder BombVault, eller BombVault med instansnavnet i parentes, og har disse entiteter:
@@ -90,9 +90,45 @@ Enheden hedder BombVault, eller BombVault med instansnavnet i parentes, og har d
 | *Område* repository free space | Ledig plads der, hvor dets primære repository ligger, hvis BombVault kan læse den |
 | Back up *område* | En knap, der sikkerhedskopierer hele området |
 
-Entiteternes navne er på engelsk, fordi Home Assistant overtager dem, som BombVault sender dem. Hvert område, der er slået til, får sine egne entiteter, og et område, du slår fra, mister dem. Knapperne dukker op, når du slår **Knapper starter sikkerhedskopier** til; en ny installation har det slået fra. De følger de samme grænser som [starter via API'et](#errors). Derudover tager BombVault kun imod ét tryk ad gangen pr. område og højst seks i minuttet, og ser bort fra et tryk, som brokeren har gemt som retained-besked. Alle, der kan udgive på brokeren, kan trykke på dem, så giv brokeren en adgangskode.
+Entiteternes navne er på engelsk, fordi Home Assistant overtager dem, som BombVault sender dem. Hvert område, der er slået til, får sine egne entiteter, og et område, du slår fra, mister dem. Knapperne dukker op, når du slår **Knapper starter sikkerhedskopier** til. En ny installation har det slået fra. De følger de samme grænser som [starter via API'et](#errors). Derudover tager BombVault kun imod ét tryk ad gangen pr. område og højst seks i minuttet, og ser bort fra et tryk, som brokeren har gemt som retained-besked. Alle, der kan udgive på brokeren, kan trykke på dem, så giv brokeren en adgangskode.
 
 BombVault læser sin status hvert 15. sekund og udgiver den, når noget har ændret sig, som JSON under `<præfiks>/<node>/state`. Præfikset er `bombvault`, så længe du ikke ændrer det, og noden er et kort id, som BombVault vælger én gang. Discovery-beskederne går til Home Assistants standardpræfiks `homeassistant`. Begge gemmes (retained). En last will markerer enheden som utilgængelig, hvis BombVault stopper uden at melde fra. Slår du forbindelsen fra, fjerner BombVault enheden og dens entiteter fra Home Assistant.
+
+### Eksempel: et kort og en alarm {#home-assistant-example}
+
+Home Assistant laver entitets-id'erne ud fra navnene, så enheden BombVault får id'er som `sensor.bombvault_status`. Med et instansnavn i parentes bærer id'erne også det, så tjek dem først under **Developer Tools, States**. Et kort til dashboardet:
+
+```yaml
+type: entities
+title: Backups
+entities:
+  - sensor.bombvault_status
+  - sensor.bombvault_running_job
+  - sensor.bombvault_open_anomalies
+  - sensor.bombvault_next_scheduled_backup
+```
+
+En automation, der giver din telefon besked, når status skifter til `failed`:
+
+```yaml
+alias: BombVault backup failed
+trigger:
+  - platform: state
+    entity_id: sensor.bombvault_status
+    to: failed
+action:
+  - service: notify.mobile_app_my_phone
+    data:
+      message: A BombVault backup failed. Open Needs you on the overview.
+```
+
+## Prometheus {#metrics}
+
+**Eksponer /metrics** i kortet **Tjenester** under **Indstillinger, Integrationer** leverer sikkerhedskopistatus, størrelser og tidsstempler til Prometheus, Grafana eller Uptime Kuma på `/metrics` på webgrænsefladens port. Det er slået fra som standard. **Scrape-token (valgfrit)** får scraperen til at sende et bearer-token. Labelsene indeholder ingen hemmeligheder og ingen stier.
+
+## Dashboard-widget {#dashboard-widget}
+
+Kortet **Dashboard-widget** under **Indstillinger, Integrationer** laver et skrivebeskyttet token og giver dig en adresse til ethvert dashboard, der viser en iframe, for eksempel Homepage, Organizr eller Heimdall. Adressen åbner en lille side på `/widget` med kun den levende aktivitetslog. Tokenet giver adgang til den log og intet andet, og **Deaktivér** tilbagekalder det med det samme. Den indlejrede side er kun på engelsk.
 
 ## Find BombVault på netværket {#mdns}
 
