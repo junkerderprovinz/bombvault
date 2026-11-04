@@ -23,9 +23,9 @@ Fără parolă de conectare, oricine poate deschide interfața web poate crea ș
 | `GET /api/v1/health` | Versiunea, numele instanței, dacă rulează o copie și ce poate face acest token | citire |
 | `GET /api/v1/status` | Starea protecției pe secțiuni: ultima copie reușită, intervalul așteptat, verificările, următoarele rulări planificate | citire |
 | `GET /api/v1/activity` | Ce rulează acum, cu fază și procent | citire |
-| `GET /api/v1/items` | Fiecare element protejat cu programul, ce oprește o copie și ultima copie; `?domain=` pentru o secțiune | citire |
-| `GET /api/v1/runs` | Istoricul rulărilor, cele mai noi primele; filtre `limit`, `domain`, `item`, `status`, `kind`, `since` | citire |
-| `GET /api/v1/anomalies` | Anomalii cu un rezumat al celor deschise; filtre `state`, `severity`, `domain`, `limit` | citire |
+| `GET /api/v1/items` | Fiecare element protejat cu programul, ce oprește o copie și ultima copie. `?domain=` pentru o secțiune | citire |
+| `GET /api/v1/runs` | Istoricul rulărilor, cele mai noi primele. Filtre `limit`, `domain`, `item`, `status`, `kind`, `since` | citire |
+| `GET /api/v1/anomalies` | Anomalii cu un rezumat al celor deschise. Filtre `state`, `severity`, `domain`, `limit` | citire |
 | `GET /api/v1/anomalies/{id}` | O anomalie | citire |
 | `GET /api/v1/storage/{domain}` | Istoricul mărimii, creșterea pe săptămână și spațiul liber al fiecărui depozit dintr-o secțiune | citire |
 | `POST /api/v1/backups` | Copiază un element (`{"domain":"containers","item":"plex"}`) sau o secțiune întreagă (`{"domain":"vms"}`) | pornire |
@@ -61,7 +61,7 @@ O eroare se întoarce ca `{"error": {"code": "...", "message": "..."}}`, cu star
 | 403 | `not_permitted`, `forbidden_origin` | Tokenul poate doar citi, sau nu el a pornit rularea, sau cererea a venit de pe o pagină cu altă origine |
 | 404 | `not_found` | Nu există acel element, acea rulare sau anomalie |
 | 409 | `busy`, `domain_off`, `nothing_to_back_up`, `not_running` | Rulează deja altceva, secțiunea e oprită sau nu e nimic de făcut |
-| 429 | `throttled`, `rate_limited`, `cooldown`, `retention_guard` | O limită reține cererea; `Retry-After` spune când poți încerca din nou |
+| 429 | `throttled`, `rate_limited`, `cooldown`, `retention_guard` | O limită reține cererea. `Retry-After` spune când poți încerca din nou |
 
 Pornirile respectă aceleași limite ca [pornirile prin MCP](mcp.md#starting-backups): 12 pe oră per token, 15 minute între două porniri ale aceluiași element, cel mult 4 porniri ale unui element în 24 de ore și protecția de retenție. Ultimele trei numără împreună pornirile prin MCP, prin API și din Home Assistant. Un token poate face 120 de cereri pe minut. Cinci încercări eșuate de la o adresă o blochează un minut.
 
@@ -74,7 +74,7 @@ BombVault servește o descriere a acestor rute la `/api/v1/openapi.json` (OpenAP
 BombVault poate apărea în Home Assistant ca dispozitiv, prin descoperirea MQTT. Home Assistant are nevoie de integrarea sa MQTT și de un broker, de exemplu add-on-ul Mosquitto. Nu e nevoie de nicio componentă proprie.
 
 1. În BombVault, deschide **Setări, Integrări** și pornește **Home Assistant** în cardul **Servicii**. Câmpurile pentru broker apar dedesubt.
-2. Introdu adresa și portul brokerului, iar utilizatorul și parola dacă le cere. Pornește **Folosește TLS** dacă brokerul folosește TLS, de obicei pe portul 8883; certificatul lui trebuie să fie valid pentru adresa introdusă. Dacă schimbi adresa, portul sau numele de utilizator, introdu din nou parola: BombVault nu dă parola salvată mai departe unui alt broker sau utilizator.
+2. Introdu adresa și portul brokerului, iar utilizatorul și parola dacă le cere. Pornește **Folosește TLS** dacă brokerul folosește TLS, de obicei pe portul 8883. Certificatul lui trebuie să fie valid pentru adresa introdusă. Dacă schimbi adresa, portul sau numele de utilizator, introdu din nou parola: BombVault nu dă parola salvată mai departe unui alt broker sau utilizator.
 3. Apasă **Salvare**. Rândul arată când conexiunea e activă.
 
 Dispozitivul se numește BombVault, sau BombVault cu numele instanței între paranteze, și are aceste entități:
@@ -90,9 +90,45 @@ Dispozitivul se numește BombVault, sau BombVault cu numele instanței între pa
 | *Secțiune* repository free space | Spațiul liber acolo unde se află depozitul său principal, dacă BombVault îl poate citi |
 | Back up *secțiune* | Un buton care copiază toată secțiunea |
 
-Numele entităților sunt în engleză, pentru că Home Assistant le preia așa cum le trimite BombVault. Fiecare secțiune pornită primește entități proprii, iar una pe care o oprești le pierde. Butoanele apar după ce pornești **Butoanele pornesc copii**, oprit la o instalare nouă. Respectă aceleași limite ca [pornirile prin API](#errors). În plus, BombVault primește o singură apăsare odată pentru fiecare secțiune și cel mult șase pe minut, și ignoră o apăsare pe care brokerul a păstrat-o ca mesaj retained. Oricine poate publica pe broker le poate apăsa, așa că pune o parolă brokerului.
+Numele entităților sunt în engleză, pentru că Home Assistant le preia așa cum le trimite BombVault. Fiecare secțiune pornită primește entități proprii, iar una pe care o oprești le pierde. Butoanele apar după ce pornești **Butoanele pornesc copii**, iar la o instalare nouă este oprit. Respectă aceleași limite ca [pornirile prin API](#errors). În plus, BombVault primește o singură apăsare odată pentru fiecare secțiune și cel mult șase pe minut, și ignoră o apăsare pe care brokerul a păstrat-o ca mesaj retained. Oricine poate publica pe broker le poate apăsa, așa că pune o parolă brokerului.
 
 BombVault își citește starea la fiecare 15 secunde și o publică atunci când s-a schimbat ceva, ca JSON sub `<prefix>/<nod>/state`. Prefixul este `bombvault` cât timp nu îl schimbi, iar nodul este un identificator scurt pe care BombVault îl alege o dată. Mesajele de descoperire merg la prefixul implicit al Home Assistant, `homeassistant`. Ambele sunt păstrate (retained). Un ultim mesaj (last will) marchează dispozitivul ca indisponibil dacă BombVault se oprește fără să anunțe. Dacă oprești legătura, BombVault scoate dispozitivul și entitățile lui din Home Assistant.
+
+### Exemplu: un card și o alertă {#home-assistant-example}
+
+Home Assistant creează id-urile entităților din nume, așa că dispozitivul BombVault primește id-uri precum `sensor.bombvault_status`. Dacă numele instanței apare între paranteze, id-urile îl conțin și pe el, așa că verifică-le mai întâi la **Developer Tools, States**. Un card pentru dashboard:
+
+```yaml
+type: entities
+title: Backups
+entities:
+  - sensor.bombvault_status
+  - sensor.bombvault_running_job
+  - sensor.bombvault_open_anomalies
+  - sensor.bombvault_next_scheduled_backup
+```
+
+O automatizare care îți anunță telefonul când starea devine `failed`:
+
+```yaml
+alias: BombVault backup failed
+trigger:
+  - platform: state
+    entity_id: sensor.bombvault_status
+    to: failed
+action:
+  - service: notify.mobile_app_my_phone
+    data:
+      message: A BombVault backup failed. Open Needs you on the overview.
+```
+
+## Prometheus {#metrics}
+
+**Expune /metrics** din cardul **Servicii**, la **Setări, Integrări**, oferă starea copiilor, dimensiunile și orele pentru Prometheus, Grafana sau Uptime Kuma, la `/metrics` pe portul interfeței web. Este oprit implicit. **Token de scrape (opțional)** face ca instrumentul de colectare să trimită un token bearer. Etichetele nu conțin secrete și nicio cale.
+
+## Widget pentru dashboard {#dashboard-widget}
+
+Cardul **Widget pentru dashboard** de la **Setări, Integrări** generează un token doar pentru citire și îți dă o adresă pentru orice dashboard care afișează un iframe, precum Homepage, Organizr sau Heimdall. Adresa deschide o pagină mică la `/widget`, doar cu jurnalul de activitate în direct. Tokenul permite acest jurnal și nimic altceva, iar **Dezactivează** îl revocă pe loc. Pagina încorporată este doar în engleză.
 
 ## Găsirea BombVault în rețea {#mdns}
 

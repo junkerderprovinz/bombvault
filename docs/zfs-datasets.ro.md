@@ -6,7 +6,7 @@ Copia nu trimite niciodată un flux în restic și nu readuce niciodată un set 
 
 ## Cerințe {#requirements}
 
-- **Legătura SSH cu acest server.** Seturile de date ZFS folosesc aceeași cheie, aceeași gazdă și același utilizator ca backupurile VM. Dacă backupurile VM funcționează deja, funcționează și asta. Altfel, urmează [ghidul de backup VM prin SSH](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md) de pe GitHub. Câmpurile șablonului se numesc **Host SSH: Address**, **Host SSH: Port** și **Host SSH: User**.
+- **Legătura SSH cu acest server.** Seturile de date ZFS folosesc aceeași cheie, aceeași gazdă și același utilizator ca backupurile VM. Dacă backupurile VM funcționează deja, funcționează și asta. Altfel, urmează [ghidul de backup VM prin SSH](vm-backup-ssh-setup.md). Câmpurile șablonului se numesc **Host SSH: Address**, **Host SSH: Port** și **Host SSH: User**.
 - **Comanda `zfs` pe acea gazdă.** Unraid 6.12 și mai nou, precum și TrueNAS SCALE, o au.
 - **Host Data mapat ca `/mnt` cu Access Mode Read/Write - Slave.** Aceasta e valoarea implicită a șablonului. Instantaneul unui set de date apare în dosarul `.zfs/snapshot` al setului abia după ce BombVault a pornit, așa că containerul trebuie să primească montările pe care gazda le face mai târziu.
 - **Seturile de date montate sub `/mnt`.** Pe Unraid, pool-urile se află în `/mnt/<pool>`, deci așa este deja.
@@ -17,7 +17,7 @@ Pornește secțiunea la **Setări, General** (Seturi de date ZFS). **Conexiune Z
 
 Alege **Adaugă** pe pagina Copii de rezervă, apoi **Un set de date ZFS**. Lista vine de la server. Alege setul de date din vârful a ceea ce vrei salvat, de exemplu `cache/appdata`, iar elementul îl acoperă pe el și fiecare set de date de sub el.
 
-- **Seturile de date copil noi se alătură singure.** Un set de date creat ulterior sub element este salvat la rularea următoare, iar acea rulare îl numește ca nou. Prima lui copie îl citește integral o dată; după aceea se citesc doar modificările.
+- **Seturile de date copil noi se alătură singure.** Un set de date creat ulterior sub element este salvat la rularea următoare, iar acea rulare îl numește ca nou. Prima lui copie îl citește integral o dată. După aceea se citesc doar modificările.
 - **Poți lăsa deoparte copii individuali.** Oprește un copil în fila Setări a elementului și el este lăsat deoparte împreună cu tot ce e sub el. Un copil lăsat deoparte care nu mai există pe server este marcat ca atare și poate fi scos din listă.
 - **Copiii care nu pot fi citiți sunt sărit, niciodată în tăcere.** Rularea îi listează, elementul arată câți au fost sărit, iar cardul **Fără backup** din prezentare numără fiecare ca neprotejat. Rularea salvează tot restul și nu eșuează din cauza unui copil sărit. Motivele sunt în [tabelul codurilor de motiv](#reason-codes): un set de date care nu este montat, are `canmount=off`, un punct de montare `legacy` sau lipsă, o cheie de criptare neîncărcată, accesul la instantanee oprit sau un punct de montare pe care BombVault nu îl vede.
 - **Un set de date sărit nu își trage copiii după el.** Un set de date cu `canmount=off` care conține doar alte seturi de date este sărit (afișat ca "doar structură"), iar copiii lui montați sunt salvați. Un set de date criptat a cărui cheie nu e încărcată este sărit împreună cu copiii care îi împart cheia.
@@ -44,7 +44,7 @@ Un set de date poate aparține unui singur element. BombVault refuză un element
 
 Un instantaneu al unei baze de date în execuție seamănă cu o pană bruscă de curent: baza de date de obicei își revine, dar trebuie să o facă. Fiecare element poate face două lucruri în privința asta, și ambele acoperă doar momentul instantaneului, nu întreaga copie.
 
-- **Oprește aceste containere pentru instantaneu.** BombVault oprește containerele din listă, face instantaneul și le pornește din nou imediat. Containerele de pe același nivel de dependențe se opresc în paralel, întâi cele dependente, așa că întreaga fereastră durează de obicei câteva secunde; rularea arată cât a durat. Copia citește apoi instantaneul înghețat în timp ce aplicațiile rulează deja din nou. Sunt oprite doar containerele care rulau.
+- **Oprește aceste containere pentru instantaneu.** BombVault oprește containerele din listă, face instantaneul și le pornește din nou imediat. Containerele de pe același nivel de dependențe se opresc în paralel, întâi cele dependente, așa că întreaga fereastră durează de obicei câteva secunde. Rularea arată cât a durat. Copia citește apoi instantaneul înghețat în timp ce aplicațiile rulează deja din nou. Sunt oprite doar containerele care rulau.
 - **O comandă înainte și după instantaneu.** Rulează într-un container ales de tine, de exemplu pentru a descărca o bază de date în setul de date chiar înainte de instantaneu, fără să oprească nimic. Dacă comanda de dinainte de instantaneu eșuează, copia eșuează și nu se face niciun instantaneu. O comandă de după instantaneu care eșuează apare la rulare, dar nu face copia să eșueze.
 
 Ce se întâmplă când ceva merge prost:
@@ -53,7 +53,7 @@ Ce se întâmplă când ceva merge prost:
 - Oprirea așteaptă terminarea unei copii de container în curs (până la 30 de minute la o rulare manuală, până la limita de timp a copiei la una programată), ca cele două să nu oprească și să pornească niciodată același container în același timp.
 - Înainte să se oprească primul container, BombVault notează care dintre ele le oprește. Dacă BombVault este oprit forțat în interiorul ferestrei, el pornește acele containere din nou la următoarea pornire, trimite o notificare, iar elementul arată o notă roșie pentru orice container pe care nu l-a putut porni.
 
-Copiile automate SQL ale bazelor de date (vezi [Funcționalități](features.md)) rulează cu copia proprie a unui container, nu cu un element ZFS. O bază de date al cărei container este salvat doar prin setul de date nu primește dump, așa că dă-i aici o comandă.
+[Copiile automate ale bazelor de date](backups.md#database-dumps) rulează cu copia proprie a unui container, nu cu un element ZFS. O bază de date al cărei container este salvat doar prin setul de date nu primește dump, așa că dă-i aici o comandă.
 
 Un container poate fi pe această listă și, în același timp, salvat ca container. Datele lui sunt atunci stocate de două ori, în două depozite, iar copia totală îl oprește de două ori. Elementul spune asta.
 
@@ -63,15 +63,15 @@ Deschide elementul și alege **Restaurare**, sau alege-l pe pagina **Restaurare*
 
 - **Restaurează în setul de date.** Fișierele din copie sunt scrise în punctul de montare al setului de date. Fișierele cu același nume sunt suprascrise, celelalte rămân. Setul de date nu este niciodată readus la o stare anterioară sau înlocuit. BombVault verifică dacă setul de date este montat, vizibil și inscriptibil, o dată înainte de început și din nou chiar înainte de scriere. Acolo unde în interior e montat un set de date copil, nu se scrie nimic: copilul își păstrează fișierele, proprietarul și permisiunile și este restaurat din propria copie.
 - **Într-un folder.** Alege un folder sub `/mnt`. BombVault verifică dacă folderul este pe un pool sau o partajare montată și dacă există destul spațiu liber. Funcționează fără legătura SSH și pentru seturi de date care nu mai există.
-- **Într-un set de date nou.** Dă numele unui set de date care nu există încă; fereastra sugerează `<set-de-date>-restored`. BombVault îl creează cu proprietățile ZFS stocate în copie și restaurează în el, vezi [Restaurare ca set de date nou](#new-dataset).
+- **Într-un set de date nou.** Dă numele unui set de date care nu există încă. Fereastra sugerează `<set-de-date>-restored`. BombVault îl creează cu proprietățile ZFS stocate în copie și restaurează în el, vezi [Restaurare ca set de date nou](#new-dataset).
 
-Alegerea **Toate seturile de date ale acestei copii** ca set de date scrie fiecare set de date al arborelui în propriul subfolder al folderului ales. Seturile de date sărite în acea copie sunt numite. Ca să restaurezi din depozitul altui BombVault, folosește **Dintr-un folder vechi de copii** pe pagina Restaurare; ea restaurează mereu într-un folder: toate seturile de date ale unei copii, fiecare în propriul subfolder, sau un set de date al arborelui, întreg sau fișiere alese.
+Alegerea **Toate seturile de date ale acestei copii** ca set de date scrie fiecare set de date al arborelui în propriul subfolder al folderului ales. Seturile de date sărite în acea copie sunt numite. Ca să restaurezi din depozitul altui BombVault, folosește **Dintr-un folder vechi de copii** pe pagina Restaurare. Ea restaurează mereu într-un folder: toate seturile de date ale unei copii, fiecare în propriul subfolder, sau un set de date al arborelui, întreg sau fișiere alese.
 
 Lista elementului cu containere de oprit este oferită și pentru o restaurare în setul de date. Acele containere rămân oprite pe toată durata restaurării, iar copiile de containere așteaptă între timp.
 
 ### Instantaneul de siguranță {#safety-snapshot}
 
-Înainte să scrie într-un set de date, BombVault face un instantaneu ZFS al acelui set de date, numit `bombvault-prerestore-<ora>`. **Păstrează întâi un instantaneu ZFS al stării de acum** este pornit implicit; oprirea lui cere o a doua confirmare. Dacă instantaneul nu poate fi făcut, nu se restaurează nimic.
+Înainte să scrie într-un set de date, BombVault face un instantaneu ZFS al acelui set de date, numit `bombvault-prerestore-<ora>`. **Păstrează întâi un instantaneu ZFS al stării de acum** este pornit implicit. Oprirea lui cere o a doua confirmare. Dacă instantaneul nu poate fi făcut, nu se restaurează nimic.
 
 BombVault nu șterge niciodată singur un instantaneu de siguranță. Elementul le listează cu vârsta și dimensiunea lor, fiecare cu acțiunea **Șterge**, și avertizează când cel mai vechi are mai mult de 30 de zile, pentru că păstrează pe pool date șterse și modificate.
 
@@ -90,16 +90,16 @@ BombVault salvează la fiecare backup proprietățile ZFS setate local ale fiec�
 
 Nu sunt în copie:
 
-- proprietarul și permisiunile dosarului de sus al fiecărui set de date în sine (tot ce e sub el este inclus). O restaurare în setul de date lasă dosarul de sus existent așa cum e, o restaurare într-un dosar îl creează cu permisiunile `0755`;
-- instantaneele ZFS existente;
-- copiii care au fost săriți sau excluși;
+- proprietarul și permisiunile dosarului de sus al fiecărui set de date în sine (tot ce e sub el este inclus). O restaurare în setul de date lasă dosarul de sus existent așa cum e, o restaurare într-un dosar îl creează cu permisiunile `0755`,
+- instantaneele ZFS existente,
+- copiii care au fost săriți sau excluși,
 - volumele.
 
 Pentru a restaura pe un pool nou, creează poolul și restaurează fiecare set de date într-un set de date nou. Nu s-a verificat încă dacă ACL-urile NFSv4, așa cum le folosește TrueNAS pe seturile de date SMB, revin așa cum te aștepți, așa că testează o restaurare cu propriile date înainte să te bazezi pe ele.
 
 ## Seturi de date criptate {#encryption}
 
-Un set de date criptat este salvat doar cât timp cheia lui este încărcată. Altfel este sărit cu un avertisment; încarcă cheia cu `zfs load-key` și montează setul de date. BombVault citește datele decriptate și le stochează în depozitul restic, care este criptat. Dacă ai dezactivat criptarea în BombVault, acel depozit nu este criptat.
+Un set de date criptat este salvat doar cât timp cheia lui este încărcată. Altfel este sărit cu un avertisment. Încarcă cheia cu `zfs load-key` și montează setul de date. BombVault citește datele decriptate și le stochează în depozitul restic, care este criptat. Dacă ai dezactivat criptarea în BombVault, acel depozit nu este criptat.
 
 ## Replică {#replica}
 
@@ -109,7 +109,18 @@ O replică nu înlocuiește niciodată copia de rezervă. Versiunile mai vechi, 
 
 **Doar replică, fără copie de rezervă** din cardul Replică face ca întreaga secțiune ZFS să trimită replici și să nu mai facă nicio copie de rezervă. Folderul propriu și destinațiile off-site își păstrează comutatoarele, așa că dezactivarea lui face din nou copii de rezervă acolo, iar cardul fiecărui element ZFS arată comutatorul secțiunii așa cum este. Un astfel de element așteaptă prima replică în loc de o copie de rezervă, **Copiază acum** apare ca **Replicează acum**, iar containerele elementului se opresc și comenzile lui rulează în jurul instantaneului ca la o copie de rezervă. Replicile lui contează pentru o programare la câteva zile, alerta de întârziere și acoperire.
 
-Pornește-o în cardul **Replică** din fila Setări a elementului. Acolo alegi unde merge replica, când rulează (**După fiecare copie de rezervă** sau **Plan propriu**) și câte instantanee rămân pe țintă și pe acest server. Cardul listează fiecare set de date și volum cu starea lui, iar **Replică acum** pornește o rulare. O rulare de replică are un lock propriu, așa că un prim transfer lung nu oprește niciodată copiile de rezervă.
+Pornește-o în cardul **Replică** din fila Setări a elementului. Cardul listează fiecare set de date și volum cu starea lui, iar **Replicează acum** pornește o rulare. O rulare de replică are un lock propriu, așa că un prim transfer lung nu oprește niciodată copiile de rezervă.
+
+| Câmp | Ce stabilește |
+|---|---|
+| **Replică pe** | Ținta: un server ZFS (marcat **prin SSH**) sau o **instanță împerecheată**. **Adaugă server ZFS** configurează unul nou. |
+| **Când** | **După fiecare copie de rezervă**, adică după rularea de backup a elementului, sau **Plan propriu**. |
+| **Păstrează pe destinație** | Câte instantanee rămân pe serverul ZFS: **Scurt**, **Echilibrat**, **Lung** sau **Valori proprii**. O instanță împerecheată hotărăște singură. |
+| **Păstrează pe acest server** | Câte dintre cele mai noi instantanee de replică rămân și pe acest server. 0 sau 1 păstrează doar ultimul. |
+| **Doar replică, fără copie de rezervă** | Întreaga secțiune ZFS trimite replici și nu face copii de rezervă. |
+
+![Cardul Replică al unui element ZFS.](assets/screenshots/zfs/replica-dark.png#only-dark)
+![Cardul Replică al unui element ZFS.](assets/screenshots/zfs/replica-light.png#only-light)
 
 **Replică tot acum**, lângă acțiunile de copiere când placa ZFS este aleasă pe pagina Copii de rezervă, trimite replica fiecărui element ZFS, unul după altul. Serverul rulează lotul, așa că acesta continuă când părăsești pagina, iar un element care nu poate fi replicat este numit și sărit.
 
@@ -160,7 +171,7 @@ Fiecare set de date ajunge la `<root>/<server>/<pool>/<path>`. Dosarul serverulu
 
 După ce BombVault este configurat din nou, ținta refuză dosarul pe care acest BombVault l-a umplut înainte. Cardul Replică oferă atunci **Preia dosarul**, iar următoarea replică continuă de la copiile din el. Preia-l doar când niciun alt BombVault nu mai replică în acel dosar.
 
-Copia de pe țintă este doar în citire și nu este montată, deci nu acoperă niciodată nimic pe acel server. Proprietățile ZFS merg cu ea, cu excepția punctului de montare, `sharenfs` și `sharesmb`. Nici rezervările `reservation` și `refreservation` nu sunt preluate, așa că copia ocupă doar spațiul de care au nevoie datele ei.
+Copia de pe țintă este doar în citire. Implicit nu este montată, deci nu acoperă niciodată nimic pe acel server. Un server ZFS conectat prin SSH are pe pagina lui comutatorul **Montează doar pentru citire pe server**: cu el pornit, BombVault montează copiile acolo doar pentru citire după fiecare rulare, așa că poți citi și copia fișierele lor direct pe țintă. Copiile criptate rămân blocate până când cheia lor este încărcată, iar oprirea comutatorului nu demontează nimic. O instanță împerecheată care primește replica o ține nemontată. Proprietățile ZFS merg cu ea, cu excepția punctului de montare, `sharenfs` și `sharesmb`. Nici rezervările `reservation` și `refreservation` nu sunt preluate, așa că copia ocupă doar spațiul de care au nevoie datele ei.
 
 ### Ce intră {#replica-contents}
 
@@ -222,6 +233,39 @@ După aceea, BombVault nu mai replică pe acel set de date, până pornești o n
 
 Ca să aduci o stare înapoi pe sursă, apasă **Bring back as a new dataset** în foaie. BombVault trimite instantaneul într-un set de date nou, lângă cel original, cu numele `<dataset>-bombvault-restore-` plus o marcă de timp. Nu scrie niciodată peste original.
 
+### Exemplu: o replică pe un al doilea server Unraid {#example-replica}
+
+Serverul `tower` salvează setul de date `cache/appdata` ca element ZFS. Un al doilea server Unraid de la `192.168.1.20`, fără BombVault, are un pool numit `backup` și ar trebui să țină o copie pe care o poți citi oricând.
+
+1. Deschide **Copii de rezervă**, apoi `cache/appdata`, apoi fila lui **Setări**. În cardul **Replică**, alege **Adaugă server ZFS** la **Replică pe**.
+2. Introdu `192.168.1.20`, utilizatorul `root` și portul `22`. Dialogul arată cheia replicii. Pe al doilea server, lipește-o la **Users, root, SSH keys** și apasă **Apply**. Această cheie diferă de cheia Host SSH, așa că adaugă-o chiar dacă pe cea din urmă o ai deja acolo.
+3. Testează conexiunea. Alege pool-ul `backup` și păstrează rădăcina propusă, `backup/bombvault-replica`.
+4. Înapoi în card, noul server este ales la **Replică pe**. Lasă **Când** pe **După fiecare copie de rezervă**, lasă **Păstrează pe destinație** la cele 7 instantanee zilnice și 3 săptămânale și setează **Păstrează pe acest server** la `7`.
+5. Apasă **Replicează acum**. Prima rulare trimite tot, așa că 300 GB pe o linie de 1 Gbit/s durează cel puțin 40 de minute. Cardul și lista Copii de rezervă arată **Se replică**, apoi **Replicat** cu ora. Rulările următoare trimit doar blocurile care s-au schimbat.
+
+Seturile de date stau acum la `backup/bombvault-replica/tower/cache/appdata` pe al doilea server, doar pentru citire. În prezentare, **Extern** al secțiunii ZFS numără replica drept copie în afara sediului.
+
+Ca să scoți un fișier de marțea trecută, ai trei căi:
+
+- **Pe acest server**, pentru că **Păstrează pe acest server** ține șapte instantanee:
+
+    ```
+    cp /mnt/cache/appdata/.zfs/snapshot/bombvault-replica-20261103014100/plex/Preferences.xml /mnt/user/restore/
+    ```
+
+- **Pe al doilea server**, cu o clonă a unui instantaneu de pe țintă. Fila **Copii de rezervă** a elementului arată comenzile cu numele tale reale când dai clic pe rândul **Replică ZFS**. Șterge clona cu `zfs destroy` când ai terminat.
+- **Cu o montare**, pornind **Montează doar pentru citire pe server** pe pagina serverului ZFS. După rularea următoare, copiile stau montate doar pentru citire pe al doilea server.
+
+Versiunile mai vechi decât păstrează replica vin tot din copiile de rezervă, cum arată exemplul următor.
+
+### Exemplu: un fișier dintr-un backup ZFS {#example-zfs-file}
+
+1. Deschide **Restaurare**, alege placa **ZFS** și dă clic pe `cache/appdata`.
+2. Alege copia și, la **Set de date**, setul de date care conține fișierul.
+3. La **Ce**, alege **Fișiere individuale** și bifează fișierul.
+4. La **Unde**, alege **Într-un folder** și alege un folder sub `/mnt`, de exemplu `user/restore`. Asta nu cere legătura SSH și merge și pentru un set de date care nu mai există.
+5. Apasă **Restaurare**. Fișierul ajunge direct în acel folder, fără calea de deasupra lui.
+
 ## Instantanee rămase {#leftover-snapshots}
 
 Instantaneul unei copii se numește `<dataset>@bombvault-<14 cifre>`, de exemplu `cache/appdata@bombvault-20260924021500` (UTC). BombVault îl elimină imediat după copie. Dacă asta nu reușește, de exemplu pentru că setul de date e ocupat sau BombVault a fost oprit, BombVault îl elimină:
@@ -247,7 +291,7 @@ Un set de date pe care rularea anterioară l-a salvat și această rulare nu l-a
 
 Fiecare set de date are o linie proprie în monitorizarea elementului, care se deschide cu **Monitorizare** pe pagina **Anomalii** și stă în fila **Verificare** a elementului. Constatările deschise apar lângă fiecare set de date. Linkul dintr-o constatare deschide fereastra de restaurare pe ultima copie bună a setului de date. Dacă o rulare se încheie se judecă pentru întregul element, pentru că o rulare reușește sau eșuează ca întreg.
 
-Verificările în sine sunt descrise la [Funcționalități](features.md). Un asistent conectat prin [serverul MCP](mcp.md) poate lista punctele de restaurare ale unui element ZFS, îi poate porni copia și poate citi constatările, dar confirmarea unei constatări se face pe pagina **Anomalii**.
+Verificările în sine sunt descrise la [Anomalii](anomalies.md). Un asistent conectat prin [serverul MCP](mcp.md) poate lista punctele de restaurare ale unui element ZFS, îi poate porni copia și poate citi constatările, dar confirmarea unei constatări se face pe pagina **Anomalii**.
 
 ## Coduri de motiv {#reason-codes}
 
@@ -289,7 +333,7 @@ Pagina elementului, istoricul rulărilor și notificările numesc o problemă cu
 | `snapdir-disabled` | Accesul la instantanee este dezactivat, sărit. | `zfs set snapdir=hidden <dataset>`. Dosarul `.zfs` rămâne ascuns. |
 | `not-visible` | BombVault nu vede punctul de montare al setului de date. | Mută punctul de montare sub calea Host Data sau mapează-l în container la aceeași cale cu Read/Write - Slave. |
 | `shfs-only` | Setul de date e vizibil doar prin `/mnt/user`, care ascunde instantaneele. | Mapează ca Host Data `/mnt`, nu `/mnt/user`. |
-| `snapshot-not-visible` | Instantaneul a fost creat, dar nu a apărut în BombVault. | Rulează **Testează accesul la instantanee**; vezi mai jos. |
+| `snapshot-not-visible` | Instantaneul a fost creat, dar nu a apărut în BombVault. | Rulează **Testează accesul la instantanee**. Vezi mai jos. |
 | `snapshot-loop` | Instantaneul nu a ajuns la BombVault pentru că Host Data nu lasă să treacă montările noi. | Setează Access Mode pentru Host Data la Read/Write - Slave și repornește BombVault. |
 | `backup-failed` | restic a eșuat pentru acest set de date. | Detaliile rulării arată de ce. |
 | `not-reached` | Rularea s-a încheiat înainte de acest set de date. | Rulează din nou copia. |
@@ -329,5 +373,5 @@ Fiecare linie este o montare în container. Linia unui set de date arată calea 
 
   Restaurarea într-un set de date nou are nevoie în plus de `create` pe setul de date de deasupra, iar setarea proprietăților salvate are nevoie de drepturi pentru acele proprietăți.
 
-  O sesiune SSH fără root pe TrueNAS nu are `/usr/sbin` în cale; BombVault apelează atunci direct `/usr/sbin/zfs`.
+  O sesiune SSH fără root pe TrueNAS nu are `/usr/sbin` în cale. BombVault apelează atunci direct `/usr/sbin/zfs`.
 - **Host Data** al aplicației trebuie să fie o cale a gazdei deasupra seturilor de date, de exemplu `/mnt/tank`, nu un ixVolume. Cu o cale a gazdei, aplicația transmite montările noi ale gazdei către BombVault (`rslave`), iar de asta are nevoie accesul la instantanee. Vezi [TrueNAS SCALE](getting-started.md#truenas) pentru configurarea completă a aplicației.

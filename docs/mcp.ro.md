@@ -9,9 +9,9 @@ BombVault are un server integrat pentru Model Context Protocol (MCP), protocolul
 | `get_health` | Versiunea, numele instanței, dacă rulează o copie și ce are voie să facă această cheie | citire |
 | `get_status` | Starea protecției pe fiecare secțiune: ultima copie reușită, intervalul așteptat, verificările și controalele off-site, următoarele rulări programate, copiile care așteaptă o aplicație inactivă, iar pentru containere cel mai recent test de pornire | citire |
 | `get_coverage` | Ce protejează BombVault și ce nu, cu motivul pentru fiecare | citire |
-| `list_items` | Fiecare container, VM și set de foldere protejat, stick-ul flash și configurația aplicației, cu programarea, ce oprește o copie, ultima copie și cât a durat; containerele de baze de date arată și ultimul dump; apar și seturile de date ZFS, cu rezultatul ultimei lor verificări; fiecare element are ultima sa verificare a restaurării, iar un container și ultimul test de pornire sau motivul pentru care nu poate fi testat; un container recreat cu alte setări de la ultima copie arată ce s-a schimbat | citire |
-| `list_runs` | Istoricul rulărilor, cele mai noi primele, filtrabil după secțiune, element, stare, tip și timp; o copie lentă frânată de un singur lucru îl numește | citire |
-| `list_restore_points` | Punctele de restaurare ale unui element din depozitul lui principal și, pentru un container, dumpurile lui de baze de date; un set de date ZFS are câte un punct de restaurare pentru fiecare copie, cu un snapshot al fiecărui set de date de sub el | citire |
+| `list_items` | Fiecare container, VM și set de foldere protejat, stick-ul flash și configurația aplicației, cu programarea, ce oprește o copie, ultima copie și cât a durat. Containerele de baze de date arată și ultimul dump. Apar și seturile de date ZFS, cu rezultatul ultimei lor verificări. Fiecare element are ultima sa verificare a restaurării, iar un container și ultimul test de pornire sau motivul pentru care nu poate fi testat. Un container recreat cu alte setări de la ultima copie arată ce s-a schimbat | citire |
+| `list_runs` | Istoricul rulărilor, cele mai noi primele, filtrabil după secțiune, element, stare, tip și timp. O copie lentă frânată de un singur lucru îl numește | citire |
+| `list_restore_points` | Punctele de restaurare ale unui element din depozitul lui principal și, pentru un container, dumpurile lui de baze de date. Un set de date ZFS are câte un punct de restaurare pentru fiecare copie, cu un snapshot al fiecărui set de date de sub el | citire |
 | `get_activity` | Ce rulează chiar acum, cu fază și procent | citire |
 | `get_storage_stats` | Istoricul de dimensiune al depozitului principal al unei secțiuni și creșterea lui pe săptămână, plus spațiul folosit, liber și total pe discul sau locația la distanță a fiecăruia dintre depozitele sale | citire |
 | `get_size_breakdown` | Ce dosare și fișiere ocupă spațiu în cea mai nouă copie a unui container, a unei VM sau a unui set de dosare, și cât din ele a adăugat ultima copie | citire |
@@ -24,7 +24,7 @@ BombVault are un server integrat pentru Model Context Protocol (MCP), protocolul
 
 Rămân în interfața web: restaurările de orice fel (inclusiv descărcarea, salvarea sau importul unui dump de bază de date), ștergerea copiilor, prune, unlock, verificările și exercițiile, replicarea off-site, setările, datele de autentificare și cheile MCP, precum și anularea unei copii pornite de programare, de interfața web sau de altă cheie. La fel și confirmarea unei anomalii sau marcarea ei ca așteptată, care se face pe pagina **Anomalii**. Motivul: răspunsurile uneltelor conțin nume și mesaje de eroare de pe serverul tău, iar oricare dintre ele poate conține un text scris ca să manipuleze asistentul. Un asistent care se lasă păcălit de un asemenea text poate cel mult să pornească o copie în limitele de mai jos sau să anuleze una pe care a pornit-o el.
 
-Dacă depozitul principal al unui element e la distanță (S3, REST, SFTP, rclone), `list_restore_points` îl contactează, iar apelul poate dura puțin. Copiile off-site nu pot fi listate prin MCP. Ce urmăresc verificările de anomalii se descrie în [Funcționalități](features.md), iar cum păstrează un element ZFS câte un snapshot pentru fiecare set de date, în [Seturi de date ZFS](zfs-datasets.md#contents).
+Dacă depozitul principal al unui element e la distanță (S3, REST, SFTP, rclone), `list_restore_points` îl contactează, iar apelul poate dura puțin. Copiile off-site nu pot fi listate prin MCP. Ce urmăresc verificările de anomalii se descrie în [Anomalii](anomalies.md), iar cum păstrează un element ZFS câte un snapshot pentru fiecare set de date, în [Seturi de date ZFS](zfs-datasets.md#contents).
 
 ## Ce face o copie pornită {#starting-backups}
 
@@ -43,9 +43,9 @@ Pornirile prin [API](api.md#errors) și din [Home Assistant](api.md#home-assista
 
 ## Pornire {#switch-on}
 
-1. Deschide **Setări, Integrări, Server MCP** dă clic pe **Alege un client** și alege-l pe al tău în fereastră; căutarea din colțul ei din dreapta sus îl găsește după nume. Un client care nu e în listă se conectează prin **Alt client**.
+1. Deschide **Setări, Integrări, Server MCP**, dă clic pe **Alege un client** și alege-l pe al tău în fereastră. Căutarea din colțul ei din dreapta sus îl găsește după nume. Un client care nu e în listă se conectează prin **Alt client**.
 2. La **Cheie** lasă **Cheie nouă** și numele propus, adică al clientului, sau scrie unul care spune unde e folosită cheia, de exemplu „Claude Code pe laptop”. O cheie pentru fiecare client îți permite să revoci una fără să le atingi pe celelalte. **Cheie existentă** îi dă clientului o cheie creată mai devreme.
-3. Pornește **Permite pornirea copiilor** pentru o cheie care trebuie să poată porni copii; fără asta poate doar să citească. Poți schimba asta mai târziu la **Detalii** ale cheii, iar schimbarea se aplică de la următoarea cerere a asistentului, fără reconectare.
+3. Pornește **Permite pornirea copiilor** pentru o cheie care trebuie să poată porni copii. Fără asta poate doar să citească. Poți schimba asta mai târziu la **Detalii** ale cheii, iar schimbarea se aplică de la următoarea cerere a asistentului, fără reconectare.
 4. Dă clic pe **Creează cheia**. Cheia e afișată o singură dată. BombVault păstrează doar o amprentă a ei și nu o mai poate arăta, așa că copiaz-o acum. Dacă închizi fereastra înainte ca clientul să fi folosit cheia, cardul continuă să o afișeze până confirmi că ai copiat-o.
 
 Fără parolă de autentificare, interfața web însăși e deschisă pentru toată lumea din rețeaua ta, iar cine o poate deschide poate crea și o cheie. Cardul spune asta. Dacă deschizi BombVault sub un nume care pare public (de exemplu `bombvault.example.com` în spatele unui proxy invers) și nu e setată nicio parolă de autentificare, de la acea adresă nu se pot crea și nici înlocui chei, ca nicio pagină web de pe internet să nu-ți poată face browserul să creeze una. Setează o parolă de autentificare sau deschide BombVault prin adresa IP ori printr-un nume local precum `tower` sau `tower.local`.
@@ -62,7 +62,7 @@ BombVault păstrează intrările fiecărei chei cel mult 30 de zile: cele mai no
 
 ## Conectarea unui client {#clients}
 
-**Alege un client** deschide o fereastră cu fiecare client ca o placă, sub **Pe acest computer** sau **În cloud**, și cu o căutare în colțul din dreapta sus. O placă deschide configurarea clientului în aceeași fereastră, în trei pași: cheia; configurația pentru acel client, cu adresa la care ai deschis cardul, un buton pentru copiere, locul unde stă configurația și, cu certificatul propriu al BombVault, ce îi trebuie clientului ca să aibă încredere în el; și așteptarea primului apel al clientului. Fereastra urmărește ultima folosire a cheii și devine verde când apelul sosește.
+**Alege un client** deschide o fereastră cu fiecare client ca o placă, sub **Pe acest computer** sau **În cloud**, și cu o căutare în colțul din dreapta sus. O placă deschide configurarea clientului în aceeași fereastră, în trei pași: cheia, configurația pentru acel client, cu adresa la care ai deschis cardul, un buton pentru copiere, locul unde stă configurația și, cu certificatul propriu al BombVault, ce îi trebuie clientului ca să aibă încredere în el. Și așteptarea primului apel al clientului. Fereastra urmărește ultima folosire a cheii și devine verde când apelul sosește.
 
 Configurarea ține cheia departe de orice linie de comandă. Acolo unde clientul o poate citi dintr-o variabilă de mediu (`BOMBVAULT_MCP_KEY`), dintr-o solicitare mascată sau dintr-un fișier propriu, configurația doar o numește. Acolo unde clientul nu are o asemenea cale, cheia stă în fișierul lui de configurare sau în setări, iar configurarea spune asta. Acolo unde documentația unui client nu spune cum tratează un certificat necunoscut, configurarea scrie pasul ca ce e de făcut dacă clientul respinge certificatul BombVault.
 
@@ -123,7 +123,7 @@ Cu certificatul propriu al BombVault (vezi [TLS și certificate](#tls)), comanda
 claude mcp add bombvault --scope user -e "NODE_EXTRA_CA_CERTS=<path of the downloaded bombvault-cert.pem>" -- npx -y mcp-remote@latest https://192.168.1.10:3443/mcp --header-file "<path of the file with your key>"
 ```
 
-Verifică legătura cu `/mcp` în Claude Code. `--scope user` face BombVault disponibil în toate proiectele tale. Claude Code păstrează doar calea fișierului cu cheia, așa că cheia nu apare nici în comandă și în istoricul shell-ului, nici în lista de procese. Ține fișierul într-un loc unde doar tu îl poți citi și în afara oricărui folder pe care îl pui în commit. `@latest` face ca `npx` să descarce un `mcp-remote` actual; altfel s-ar folosi o versiune mai veche instalată global, care nu cunoaște `--header-file`.
+Verifică legătura cu `/mcp` în Claude Code. `--scope user` face BombVault disponibil în toate proiectele tale. Claude Code păstrează doar calea fișierului cu cheia, așa că cheia nu apare nici în comandă și în istoricul shell-ului, nici în lista de procese. Ține fișierul într-un loc unde doar tu îl poți citi și în afara oricărui folder pe care îl pui în commit. `@latest` face ca `npx` să descarce un `mcp-remote` actual. Altfel s-ar folosi o versiune mai veche instalată global, care nu cunoaște `--header-file`.
 
 Nu scrie `${BOMBVAULT_MCP_KEY}` în argumentele `mcp-remote` pentru Claude Code. Claude Code completează o astfel de referință din propriul mediu înainte să pornească `mcp-remote`, așa că cheia ajunge în linia de comandă a acelui proces, unde alte programe și utilizatori ai calculatorului o pot citi.
 
@@ -170,7 +170,7 @@ Claude Desktop ajunge la BombVault prin `mcp-remote`, care are nevoie de Node.js
 
 ### Clienți în cloud {#cloud-clients}
 
-ChatGPT, Claude pe claude.ai, Grok și Le Chat apelează BombVault de pe serverele furnizorului lor, deci BombVault trebuie să fie accesibil din internet cu un certificat de încredere publică, de exemplu în spatele unui proxy invers; Le Chat refuză certificatele autosemnate. O autentificare pe proxy poate proteja interfața web, dar `/mcp` trebuie să ajungă la BombVault fără ea: aceste servicii nu se pot autentifica la un proxy, iar BombVault le verifică singur cheia sau tokenul. Grok și Le Chat trimit o cheie fixă, iar butoanele lor le configurează ca pe celelalte. ChatGPT, și în majoritatea organizațiilor și Claude pe claude.ai, se conectează doar prin autentificare cu OAuth, descrisă mai jos.
+ChatGPT, Claude pe claude.ai, Grok și Le Chat apelează BombVault de pe serverele furnizorului lor, deci BombVault trebuie să fie accesibil din internet cu un certificat de încredere publică, de exemplu în spatele unui proxy invers. Le Chat refuză certificatele autosemnate. O autentificare pe proxy poate proteja interfața web, dar `/mcp` trebuie să ajungă la BombVault fără ea: aceste servicii nu se pot autentifica la un proxy, iar BombVault le verifică singur cheia sau tokenul. Grok și Le Chat trimit o cheie fixă, iar butoanele lor le configurează ca pe celelalte. ChatGPT, și în majoritatea organizațiilor și Claude pe claude.ai, se conectează doar prin autentificare cu OAuth, descrisă mai jos.
 
 ### Autentificare prin OAuth {#oauth}
 
@@ -193,14 +193,14 @@ Merge orice client care vorbește Streamable HTTP:
 - URL: adresa interfeței web plus `/mcp`, de exemplu `https://192.168.1.10:3443/mcp`.
 - Cheia în `Authorization: Bearer <key>` sau în `X-API-Key: <key>`. Dacă vin amândouă, trebuie să conțină aceeași cheie.
 - `POST` cu `Content-Type: application/json` și `Accept: application/json, text/event-stream`.
-- Un singur mesaj JSON-RPC pe cerere; loturile (batch) sunt refuzate.
+- Un singur mesaj JSON-RPC pe cerere. Loturile (batch) sunt refuzate.
 - Versiunile de protocol 2026-07-28, 2025-11-25, 2025-06-18 și 2025-03-26.
 
 ## TLS și certificate {#tls}
 
 BombVault servește HTTPS cu un certificat emis de el însuși, iar la început acest certificat numește doar `localhost`, `127.0.0.1` și `::1`. Claude Code și `mcp-remote` îl refuză pe o adresă din rețeaua locală. Căile de ocolire, în ordinea care se potrivește celor mai multe instalări Unraid:
 
-1. **Adaugă adresa în cardul MCP.** Când deschizi cardul prin HTTPS la o adresă pe care certificatul nu o numește, cardul spune asta și oferă **Adaugă această adresă la certificat**. BombVault emite atunci din nou certificatul, cu acea adresă inclusă (browserul te avertizează încă o dată, ca prima oară). Apoi dă clic pe **Descarcă certificatul**; fragmentele setează `NODE_EXTRA_CA_CERTS` pe fișierul descărcat, astfel încât clientul are încredere exact în acel certificat. Asta înseamnă și că orice client configurat cu un fișier descărcat anterior nu se mai conectează din clipa în care certificatul e emis din nou, pe acest computer și pe oricare altul, până primește fișierul nou.
+1. **Adaugă adresa în cardul MCP.** Când deschizi cardul prin HTTPS la o adresă pe care certificatul nu o numește, cardul spune asta și oferă **Adaugă această adresă la certificat**. BombVault emite atunci din nou certificatul, cu acea adresă inclusă (browserul te avertizează încă o dată, ca prima oară). Apoi dă clic pe **Descarcă certificatul**. Fragmentele setează `NODE_EXTRA_CA_CERTS` pe fișierul descărcat, astfel încât clientul are încredere exact în acel certificat. Asta înseamnă și că orice client configurat cu un fișier descărcat anterior nu se mai conectează din clipa în care certificatul e emis din nou, pe acest computer și pe oricare altul, până primește fișierul nou.
 2. **Un proxy invers cu un certificat de încredere** (Nginx Proxy Manager, SWAG, Caddy, Traefik). Clientul vede atunci certificatul proxy-ului și nu mai are nevoie de nimic, iar cardul nu avertizează despre cel al BombVault.
 3. **Tailscale.** `tailscale serve` în fața containerului sau integrarea Tailscale din Unraid îți dă un nume `ts.net` cu un certificat de încredere.
 4. **`HTTP_ONLY=true`**, doar în spatele unui proxy care termină TLS sau într-o rețea în care ai încredere deplină. Trece toată interfața web pe HTTP simplu, cere o modificare în setările containerului și trimite cheia necriptată.
@@ -261,9 +261,9 @@ Tot ce citește un asistent ajunge la furnizorul de IA din spatele lui: numele e
 | `cooldown` | Acest element, această secțiune sau Backupul total a fost pornit din afara interfeței web acum mai puțin de 15 minute. |
 | `retention_guard` | Încă o copie MCP ar lăsa doar puncte de restaurare din MCP într-o fereastră "păstrează ultimele N", sau elementul a primit deja 4 copii prin MCP în ultimele 24 de ore, inclusiv cele eșuate și anulate. În primul caz următoarea copie programată face loc, în al doilea elementul e liber din nou la 24 de ore după cea mai veche dintre aceste copii. Din interfața web o poți porni oricând. |
 | `rate_limited` | Cheia și-a consumat cele 12 porniri din această oră. |
-| `not_permitted` la o pornire | Cheia poate doar să citească. Pornește **Permite pornirea copiilor** în card; nu e nevoie de reconectare. La o anulare înseamnă că rularea nu a fost pornită de această cheie. |
+| `not_permitted` la o pornire | Cheia poate doar să citească. Pornește **Permite pornirea copiilor** în card. Nu e nevoie de reconectare. La o anulare înseamnă că rularea nu a fost pornită de această cheie. |
 | `domain_off` | Acea secțiune este oprită la **Setări, General**. |
-| `not_found` | BombVault nu protejează acel element. Adaugă-l întâi în interfața web; MCP nu creează niciodată configurație. |
+| `not_found` | BombVault nu protejează acel element. Adaugă-l întâi în interfața web. MCP nu creează niciodată configurație. |
 | Clientul nu găsește serverul de autorizare | Autentificarea prin OAuth este oprită, nu este setată o parolă de conectare, sau proxy-ul nu lasă `/.well-known/` să treacă până la BombVault. |
 | Pagina de acord spune că adresa de întoarcere nu este înregistrată | Clientul a trimis o adresă de întoarcere pe care nu a înregistrat-o. Elimină conectorul din client și adaugă-l din nou. |
 | Un client autentificat primește `401` | Permisiunea lui a fost revocată, a expirat după 30 de zile fără utilizare, sau adresa publică s-a schimbat. Clientul se autentifică din nou. |

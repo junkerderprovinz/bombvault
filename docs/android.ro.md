@@ -2,9 +2,12 @@
 
 Aplicația Android pune pe telefon toate serverele BombVault din grupul tău. Pornește cu o listă a serverelor tale, cu jurnalul de activitate al tuturor deasupra, aceleași rânduri pe care le arată prezentarea, și deschide vizualizarea pentru telefon a serverului pe care îl atingi. Aplicația nu face ea însăși niciun backup.
 
+![Ecranul de start al aplicației: jurnalul de activitate al tuturor serverelor deasupra, apoi lista serverelor.](assets/screenshots/android/start-dark.png#only-dark)
+![Ecranul de start al aplicației: jurnalul de activitate al tuturor serverelor deasupra, apoi lista serverelor.](assets/screenshots/android/start-light.png#only-light)
+
 ## Obținerea aplicației {#install}
 
-- **Setări, Aplicații:** cardul aplicației Android oferă APK-ul pentru versiunea pe care o rulează serverul tău, cu un cod QR de scanat de pe telefon.
+- **Setări, Aplicații:** cardul aplicației Android oferă APK-ul pentru versiunea pe care o rulează serverul tău, cu un cod QR de scanat de pe telefon, și trimite la pagina F-Droid.
 - **APK:** fiecare versiune are `bombvault-android.apk` pe pagina sa de release, iar [acest link](https://github.com/junkerderprovinz/bombvault/releases/latest/download/bombvault-android.apk) descarcă mereu cea mai nouă versiune. Are nevoie de Android 10 sau mai nou, iar Android întreabă o dată dacă aplicația cu care deschizi fișierul are voie să instaleze aplicații.
 - **Google Play:** aplicația este într-un test închis până când poate deveni publică. Google Play listează o aplicație de la un cont de dezvoltator nou doar după ce cel puțin 12 testeri au păstrat-o instalată timp de 14 zile. Ca să ajuți, intră în [grupul de testeri](https://groups.google.com/g/arrowloop-testers), deschide [pagina de test](https://play.google.com/apps/testing/bombvault.halleluja.design), atinge **Deveniți tester** și instalează BombVault din Google Play.
 - **F-Droid:** [BombVault pe F-Droid](https://f-droid.org/packages/bombvault.halleluja.design/). F-Droid construiește singur aplicația din codul sursă și o semnează cu propria cheie, așa că o versiune nouă ajunge acolo câteva zile mai târziu. Ca să treci între aplicația din F-Droid și APK, dezinstalează mai întâi cealaltă variantă.
@@ -23,7 +26,7 @@ Aplicația intră în grup prin releu, și acasă. Dacă instanța ta este pe **
 
 ## În afara casei {#away}
 
-Aplicația încearcă mai întâi serverul la adresa lui proprie. Când aceasta nu răspunde, de exemplu în rețeaua mobilă, deschide în schimb interfața serverului prin releul grupului. Un server al grupului a cărui adresă aplicația încă nu o cunoaște se deschide la fel. Dacă nu răspunde nici adresa, nici releul, ecranul de pornire arată asta pe cardul serverului.
+Aplicația încearcă mai întâi serverul la adresa lui proprie pentru asta. Când aceasta nu răspunde, de exemplu în rețeaua mobilă, deschide în schimb interfața serverului prin releul grupului. Un server al grupului a cărui adresă aplicația încă nu o cunoaște se deschide la fel. Dacă nu răspunde nici adresa, nici releul, ecranul de pornire arată asta pe cardul serverului.
 
 Prin releu, pagina ajunge la ce ajunge un telefon împerecheat acasă, așa cum este descris mai jos. Autentificarea cu parola și salvarea fișierelor funcționează doar la adresa proprie a serverului. Barele de progres se actualizează o dată la două secunde, nu continuu. Fișierele interfeței rămân pe telefon după prima vizită, deci vizitele următoare se încarcă mai repede. Un server mai vechi de 10.0.0 se deschide doar la adresa lui proprie.
 
@@ -59,13 +62,13 @@ Rotița de lângă butonul + deschide setările aplicației:
 
 - limba și numele pe care telefonul îl arată pe pagina Instanțe (gol înseamnă modelul telefonului),
 - aspectul, care urmează primul server din listă până când îl setezi pe al tău, și animațiile, care au o setare proprie,
-- un raport de copiat când raportezi o problemă; nu conține nicio adresă, niciun nume și nicio frază,
+- un raport de copiat când raportezi o problemă. Nu conține nicio adresă, niciun nume și nicio frază,
 - cardul **Despre** cu politica de confidențialitate,
 - **Elimină toate serverele**, care scoate toate serverele din aplicație și părăsește grupul. Fiecare server la care telefonul mai ajunge îl scoate de pe pagina sa Instanțe.
 
 ## Descărcări și încărcări {#files}
 
-Exporturile, kiturile de recuperare, arhivele ZIP ale flash-ului și dumpurile de baze de date ajung în dosarul Descărcări al telefonului, ca dintr-un browser. Un import de setări deschide selectorul de fișiere al telefonului. Prin releu nu se salvează niciun fișier; pentru asta deschide serverul la adresa lui proprie.
+Exporturile, kiturile de recuperare, arhivele ZIP ale flash-ului și dumpurile de baze de date ajung în dosarul Descărcări al telefonului, ca dintr-un browser. Un import de setări deschide selectorul de fișiere al telefonului. Prin releu nu se salvează niciun fișier. Deschide serverul la adresa lui proprie.
 
 ## Pe un ecran tactil {#touch}
 
