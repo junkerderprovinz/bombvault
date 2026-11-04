@@ -2,9 +2,12 @@
 
 Az Android-alkalmazás a csoportod összes BombVault-szerverét a telefonodra hozza. A szervereid listájával indul, felette mindegyikük tevékenységnaplójával, ugyanazokkal a sorokkal, amelyeket az Irányítópult mutat, és annak a szervernek a telefonos nézetét nyitja meg, amelyikre koppintasz. Maga az alkalmazás semmit sem ment.
 
+![Az alkalmazás kezdőképernyője: felül az összes szerver tevékenységnaplója, alatta a szerverek listája.](assets/screenshots/android/start-dark.png#only-dark)
+![Az alkalmazás kezdőképernyője: felül az összes szerver tevékenységnaplója, alatta a szerverek listája.](assets/screenshots/android/start-light.png#only-light)
+
 ## Az alkalmazás beszerzése {#install}
 
-- **Beállítások, Alkalmazások:** az Android-alkalmazás kártyája felkínálja a szerver által futtatott kiadás APK-ját, QR-kóddal, amelyet a telefonról lehet beolvasni.
+- **Beállítások, Alkalmazások:** az Android-alkalmazás kártyája felkínálja a szerver által futtatott kiadás APK-ját, QR-kóddal, amelyet a telefonról lehet beolvasni, és hivatkozik az F-Droid-listára is.
 - **APK:** minden kiadás oldalán ott van a `bombvault-android.apk`, és [ez a hivatkozás](https://github.com/junkerderprovinz/bombvault/releases/latest/download/bombvault-android.apk) mindig a legújabb buildet tölti le. Android 10 vagy újabb kell hozzá, és az Android egyszer megkérdezi, hogy az az alkalmazás, amellyel a fájlt megnyitod, telepíthet-e alkalmazásokat.
 - **Google Play:** az alkalmazás zárt tesztben van, amíg nyilvános nem lehet. A Google Play egy új fejlesztői fiók alkalmazását csak akkor teszi közzé, ha legalább 12 tesztelő 14 napig telepítve tartotta. Ha segítenél, lépj be a [tesztelői csoportba](https://groups.google.com/g/arrowloop-testers), nyisd meg a [tesztoldalt](https://play.google.com/apps/testing/bombvault.halleluja.design), koppints a **Legyen tesztelő** gombra, és telepítsd a BombVaultot a Google Playről.
 - **F-Droid:** [A BombVault az F-Droidon](https://f-droid.org/packages/bombvault.halleluja.design/). Az F-Droid maga fordítja le az alkalmazást a forráskódból, és a saját kulcsával írja alá, ezért egy új kiadás néhány nappal később ér oda. Ha váltanál az F-Droidos alkalmazás és az APK között, előbb távolítsd el a másikat.
@@ -35,17 +38,21 @@ Ha egy szerver meg van nyitva, az áttekintése tetején a szerver neve áll, el
 
 ## Bejelentkezve a párosított telefonon {#sign-in}
 
-A csoportoddal párosított telefon a csoport minden szerverét eleve bejelentkezve nyitja meg. Mielőtt betöltene egy oldalt, a csoporton át munkamenetet kér az adott szervertől, és a szerver csak olyan tagnak ad ilyet, amely telefon. A cím alapján hozzáadott szerver jelszót kér, ahogy egy böngészőben is. Aki ismeri a tizenkét szót, az amúgy is megnyithatja a csoport minden mentését, így a párosítás nem ad semmi újat.
+A csoportoddal párosított telefon a csoport minden szerverét eleve bejelentkezve nyitja meg. Mielőtt betöltene egy oldalt, a csoporton át munkamenetet kér az adott szervertől, és a szerver csak olyan tagnak ad ilyet, amely telefon. A cím alapján hozzáadott szerver jelszót kér, ahogy egy böngészőben is.
+
+A párosított telefon nem kap meg mindent, amit egy jelszó megad. A munkamenete az alkalmazás által mutatott dolgok rögzített listáját éri el: az áttekintést, a futásokat és a tevékenységnaplót, a megtekinthető mentéseket, az indítást és a visszaállítást, az olvasható anomáliákat és a Példányok oldalt megtekintésre. A mentési célok és a parancsok a címük és a titkaik nélkül érkeznek vissza. Az az eredetit felülíró visszaállítás előbb elmenti az aktuális állapotot. A kulcsok, a helyreállítási csomag, a kulcsletétek, a beállítások és a mentések törlése továbbra is magán a szerveren történő bejelentkezéshez kötött, és minden más azt válaszolja, hogy ahhoz bejelentkezés kell. A relayen át ugyanez a lista érvényes, jelszó nélküli szerveren is.
+
+Ennek a kapcsolója a **A telefonok párosíthatók a csoport tizenkét szavával** a **Beállítások, Biztonság** alatti **Android-alkalmazás** kártyán. A jelszó visszaállítása kikapcsolja, és minden telefont kijelentkeztet, amíg ott vissza nem kapcsolod.
 
 ## Csoporton kívüli szerverek {#other-servers}
 
 - A **Szerver hozzáadása** azt a címet várja, amellyel a BombVaultot böngészőben megnyitod, például `192.168.1.10:3443`. Ha nincs előtte `http://` vagy `https://`, az alkalmazás https-t használ.
-- A helyi hálózaton magukat bejelentő szerverek az **Ezen a hálózaton** alatt jelennek meg, és egy koppintással megnyílnak. Ezt addig teszik, amíg a Beállítások, Integrációk alatt be van kapcsolva a **Megtalálás a hálózaton**. Egy másik hálózatban vagy VPN mögött lévő szerver ott nem jelenik meg.
+- A helyi hálózaton magukat bejelentő szerverek az **Ezen a hálózaton** alatt jelennek meg, és egy koppintással megnyílnak. Ezt addig teszik, amíg a **Beállítások, Integrációk** alatti **Szolgáltatások** kártyán be van kapcsolva a **Megtalálás a hálózaton**. Egy másik hálózatban vagy VPN mögött lévő szerver ott nem jelenik meg.
 - Egy önaláírt tanúsítványt egyszer, az SHA-256 ujjlenyomata alapján fogadsz el megbízhatóként. Ha a szerver később másikat mutat, az alkalmazás figyelmeztet, és csak azután nyitja meg, hogy az új tanúsítványt is megbízhatónak jelölted.
 
 ## A telefon a Példányok oldalon {#instances}
 
-A telefon saját kártyát kap a csoport minden szerverének Példányok oldalán, Android-alkalmazásként megjelölve, és azon a néven, amelyet a telefonnak adtál. Nincs eredménytáblája, mert semmit sem ment. Az **Eltávolítás** leveszi az oldalról, és azonnal lezárja a munkamenetét, ahogy az is, ha a részleteiben a **Felügyelet** alatt kikapcsolod az **Ennek a példánynak a lekérdezése** kapcsolót. A telefon továbbra is ismeri a szavakat, így újra megjelenik, amikor megnyílik az alkalmazása, de kikapcsolva, és addig nem kap munkamenetet, amíg valaki be nem kapcsolja. Elveszett telefonnál távolítsd el a kártyáját minden szerveren, kapcsold ki a **A telefonok párosíthatók a csoport tizenkét szavával** kapcsolót a **Beállítások, Biztonság** alatt, vagy válaszd minden példánynál a **Csoport elhagyása** lehetőséget, és párosítsd őket újra új szavakkal.
+A telefon saját kártyát kap a csoport minden szerverének Példányok oldalán, Android-alkalmazásként megjelölve, és azon a néven, amelyet a telefonnak adtál. Nincs eredménytáblája, mert semmit sem ment. Az **Eltávolítás** leveszi az oldalról, és azonnal lezárja a munkamenetét, ahogy az is, ha a részleteiben a **Felügyelet** alatt kikapcsolod az **Ennek a példánynak a lekérdezése** kapcsolót. A telefon továbbra is ismeri a szavakat, így újra megjelenik, amikor megnyílik az alkalmazása, de kikapcsolva, és addig nem kap munkamenetet, amíg valaki be nem kapcsolja. Elveszett telefonnál távolítsd el a kártyáját minden szerveren, vagy kapcsold ki a **A telefonok párosíthatók a csoport tizenkét szavával** kapcsolót a **Beállítások, Biztonság** alatt, vagy válaszd minden példánynál a **Csoport elhagyása** lehetőséget, és párosítsd őket újra új szavakkal.
 
 A 10.0.0 előtt párosított telefon a frissítés utáni első látogatásakor kezdi aláírni a hívásait, és minden szerver megtartja az első kulcsot, amelyet a telefonhoz kap. Ha a telefon offline állapota alatt valaki más, aki ismeri a csoport szavait, előbb ér oda, az a szerver attól kezdve elutasítja a telefont, és az alkalmazás már nem tudja megnyitni a relayen keresztül. A javításhoz jelentkezz be arra a szerverre böngészőből, válaszd a **Kulcs elfelejtése** gombot a telefon kártyáján a Példányok oldalon, majd az **Elfelejtés megerősítése** gombot, és nyisd meg újra az alkalmazást. A szerver a következő híváskor a telefon saját kulcsát veszi át. Ha a telefont újra elutasítják, valaki másnak megvannak a szavak: válaszd minden példánynál a **Csoport elhagyása** lehetőséget, és párosítsd őket újra új szavakkal, mint elveszett telefon esetén.
 
@@ -55,13 +62,13 @@ A plusz melletti fogaskerék nyitja meg az alkalmazás beállításait:
 
 - a nyelv, és az a név, amellyel a telefon a Példányok oldalon megjelenik (üresen hagyva a telefon típusa),
 - a megjelenés, amely a lista első szerverét követi, amíg sajátot nem állítasz be, valamint az animációk, amelyeknek külön beállításuk van,
-- egy másolható jelentés, ha hibát jelentesz; nincs benne cím, név vagy jelmondat,
+- egy másolható jelentés, ha hibát jelentesz. Nincs benne cím, név vagy jelmondat,
 - a Névjegy kártya az adatvédelmi irányelvekkel,
 - a **Minden szerver eltávolítása**, amely minden szervert eltávolít az alkalmazásból, és kilép a csoportból. Minden szerver, amelyet a telefon még elér, leveszi a telefont a Példányok oldaláról.
 
 ## Letöltések és feltöltések {#files}
 
-Az exportok, a helyreállítási csomagok, a flash ZIP-ek és az adatbázis-mentések a telefon Letöltések mappájába kerülnek, ahogy egy böngészőből is. A beállítások importálása a telefon fájlválasztóját nyitja meg. A relayen át nem mentődik fájl; ehhez nyisd meg a szervert a saját címén.
+Az exportok, a helyreállítási csomagok, a flash ZIP-ek és az adatbázis-mentések a telefon Letöltések mappájába kerülnek, ahogy egy böngészőből is. A beállítások importálása a telefon fájlválasztóját nyitja meg. A relayen át nem mentődik fájl. Ehhez nyisd meg a szervert a saját címén.
 
 ## Érintőképernyőn {#touch}
 

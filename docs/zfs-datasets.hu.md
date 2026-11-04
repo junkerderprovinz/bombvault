@@ -6,7 +6,7 @@ A mentés soha nem küld adatfolyamot a restic felé, és soha nem görget vissz
 
 ## Követelmények {#requirements}
 
-- **Az SSH-kapcsolat ehhez a kiszolgálóhoz.** A ZFS-adatkészletek ugyanazt a kulcsot, gazdát és felhasználót használják, mint a VM-mentések. Ha a VM-mentések már működnek, ez is működik. Egyébként kövesd a GitHubon található [VM-mentés SSH-n keresztül útmutatót](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md). A sablon mezői: **Host SSH: Address**, **Host SSH: Port** és **Host SSH: User**.
+- **Az SSH-kapcsolat ehhez a kiszolgálóhoz.** A ZFS-adatkészletek ugyanazt a kulcsot, gazdát és felhasználót használják, mint a VM-mentések. Ha a VM-mentések már működnek, ez is működik. Egyébként kövesd a [VM-mentés SSH-n keresztül útmutatót](vm-backup-ssh-setup.md). A sablon mezői: **Host SSH: Address**, **Host SSH: Port** és **Host SSH: User**.
 - **A `zfs` parancs azon a gazdán.** Az Unraid 6.12 és újabb, valamint a TrueNAS SCALE tartalmazza.
 - **A Host Data `/mnt`-ként leképezve, Read/Write - Slave Access Mode-dal.** Ez a sablon alapértéke. Egy adatkészlet pillanatképe csak a BombVault indulása után jelenik meg az adatkészlet `.zfs/snapshot` mappájában, ezért a konténernek meg kell kapnia a gazda által később létrehozott csatolásokat.
 - **Az adatkészletek a `/mnt` alá csatolva.** Unraidon a poolok a `/mnt/<pool>` alatt vannak, így ez már teljesül.
@@ -17,7 +17,7 @@ Kapcsold be a szakaszt a **Beállítások, Általános** alatt (ZFS-adatkészlet
 
 Válaszd a Biztonsági mentések oldalon a **Hozzáadás** gombot, majd az **Egy ZFS adatkészlet** lehetőséget. A lista a kiszolgálóról jön. Válaszd ki azt az adatkészletet, amely a menteni kívánt rész legtetején van, például `cache/appdata`, és az elem lefedi azt és az alatta lévő összes adatkészletet.
 
-- **Az új gyermek-adatkészletek maguktól csatlakoznak.** Az elem alatt később létrehozott adatkészletet a következő futás menti, és azt újként jelzi. Az első mentés egyszer teljes egészében beolvassa; utána csak a változások kerülnek beolvasásra.
+- **Az új gyermek-adatkészletek maguktól csatlakoznak.** Az elem alatt később létrehozott adatkészletet a következő futás menti, és azt újként jelzi. Az első mentés egyszer teljes egészében beolvassa. Utána csak a változások kerülnek beolvasásra.
 - **Egyes gyermekeket kihagyhatsz.** Kapcsolj ki egyet az elem Beállítások lapján, és az alatta lévő mindennel együtt kimarad. Egy kihagyott gyermek, amely már nem létezik a kiszolgálón, ilyenként jelölődik, és eltávolítható a listából.
 - **Az olvashatatlan gyermekek kimaradnak, de soha nem csendben.** A futás felsorolja őket, az elem mutatja, hány maradt ki, és az Áttekintés **Nincs mentve** kártyája mindegyiket védtelennek számolja. A futás ettől még minden mást ment, és egy kihagyott gyermek miatt nem hiúsul meg. Az okok az [okkódok táblázatában](#reason-codes) vannak: nem csatolt adatkészlet, `canmount=off`, `legacy` vagy hiányzó csatolási pont, be nem töltött titkosítási kulcs, kikapcsolt pillanatkép-hozzáférés vagy olyan csatolási pont, amelyet a BombVault nem lát.
 - **Egy kihagyott adatkészlet nem viszi magával a gyermekeit.** Egy `canmount=off` adatkészlet, amely csak más adatkészleteket tartalmaz, kimarad ("csak szerkezet"-ként jelenik meg), a csatolt gyermekei pedig mentésre kerülnek. Egy titkosított adatkészlet, amelynek kulcsa nincs betöltve, a kulcsát megosztó gyermekekkel együtt marad ki.
@@ -44,7 +44,7 @@ Egy adatkészlet csak egy elemhez tartozhat. A BombVault elutasít egy új eleme
 
 Egy futó adatbázisról készült pillanatkép olyan, mint egy hirtelen áramszünet: az adatbázis általában helyreáll, de ezt meg kell tennie. Minden elem két dolgot tehet ez ellen, és mindkettő csak a pillanatkép pillanatára vonatkozik, nem az egész mentésre.
 
-- **Állítsd le ezeket a konténereket a pillanatképhez.** A BombVault leállítja a felsorolt konténereket, elkészíti a pillanatképet, és azonnal újraindítja őket. Az azonos függőségi szintű konténerek párhuzamosan állnak le, előbb a függők, így az egész ablak általában néhány másodperc; a futás megmutatja, mennyi volt. A mentés ezután a befagyasztott pillanatképet olvassa, miközben az alkalmazások már újra futnak. Csak a futó konténerek állnak le.
+- **Állítsd le ezeket a konténereket a pillanatképhez.** A BombVault leállítja a felsorolt konténereket, elkészíti a pillanatképet, és azonnal újraindítja őket. Az azonos függőségi szintű konténerek párhuzamosan állnak le, előbb a függők, így az egész ablak általában néhány másodperc. A futás megmutatja, mennyi volt. A mentés ezután a befagyasztott pillanatképet olvassa, miközben az alkalmazások már újra futnak. Csak a futó konténerek állnak le.
 - **Egy parancs a pillanatkép előtt és után.** Egy általad választott konténerben fut, például hogy közvetlenül a pillanatkép előtt kiírjon egy adatbázist az adatkészletbe, anélkül hogy bármit leállítana. Ha a pillanatkép előtti parancs sikertelen, a mentés meghiúsul, és nem készül pillanatkép. A pillanatkép utáni sikertelen parancs megjelenik a futásnál, de nem hiúsítja meg a mentést.
 
 Mi történik, ha valami rosszul sül el:
@@ -53,7 +53,7 @@ Mi történik, ha valami rosszul sül el:
 - A leállítás megvárja, amíg egy folyamatban lévő konténermentés befejeződik (kézi futásnál legfeljebb 30 percig, ütemezettnél a mentés időkorlátjáig), így a kettő soha nem állítja le és indítja el ugyanazt a konténert egyszerre.
 - Mielőtt az első konténer leállna, a BombVault feljegyzi, melyeket állítja le. Ha a BombVaultot az ablakon belül leállítják, a következő indításakor újraindítja ezeket a konténereket, értesítést küld, és az elem piros megjegyzést mutat minden olyan konténernél, amelyet nem tudott elindítani.
 
-Az automatikus adatbázis-kiírások (lásd [Funkciók](features.md)) egy konténer saját mentésével futnak, nem egy ZFS-elemmel. Az az adatbázis, amelynek konténerét csak az adatkészletén keresztül mentik, nem kap kiírást, ezért adj neki itt egy parancsot.
+Az automatikus [adatbázis-kiírások](backups.md#database-dumps) egy konténer saját mentésével futnak, nem egy ZFS-elemmel. Az az adatbázis, amelynek konténerét csak az adatkészletén keresztül mentik, nem kap kiírást, ezért adj neki itt egy parancsot.
 
 Egy konténer egyszerre lehet ezen a listán, és konténerként is menthető. Az adatai ilyenkor kétszer tárolódnak, két tárolóban, és a teljes mentés kétszer állítja le. Az elem jelzi ezt.
 
@@ -63,15 +63,15 @@ Nyisd meg az elemet, és válaszd a **Visszaállítás** gombot, vagy válaszd k
 
 - **Visszaállítás az adatkészletbe.** A mentés fájljai az adatkészlet csatolási pontjába íródnak. Az azonos nevű fájlok felülíródnak, a többiek maradnak. Az adatkészletet soha nem görgetjük vissza és nem cseréljük le. A BombVault ellenőrzi, hogy az adatkészlet csatolva, látható és írható, egyszer a kezdés előtt, és újra közvetlenül az írás előtt. Ahol egy gyermek-adatkészlet van benne csatolva, oda semmi nem íródik: a gyermek megtartja fájljait, tulajdonosát és jogosultságait, és a saját mentéséből áll vissza.
 - **Egy mappába.** Válassz egy mappát a `/mnt` alatt. A BombVault ellenőrzi, hogy a mappa csatolt poolon vagy megosztáson van-e, és van-e elég szabad hely. Ez SSH-kapcsolat nélkül és már nem létező adatkészleteknél is működik.
-- **Új adatkészletbe.** Adj meg egy adatkészletet, amely még nem létezik; az ablak a `<dataset>-restored` nevet javasolja. A BombVault létrehozza a mentésben tárolt ZFS-tulajdonságokkal, és abba állít vissza, lásd: [Visszaállítás új adatkészletként](#new-dataset).
+- **Új adatkészletbe.** Adj meg egy adatkészletet, amely még nem létezik. Az ablak a `<dataset>-restored` nevet javasolja. A BombVault létrehozza a mentésben tárolt ZFS-tulajdonságokkal, és abba állít vissza, lásd: [Visszaállítás új adatkészletként](#new-dataset).
 
-Ha adatkészletként az **Ennek a biztonsági mentésnek az összes adatkészlete** lehetőséget választod, a fa minden adatkészlete a kiválasztott mappa saját almappájába kerül. A mentésben kihagyott adatkészletek meg vannak nevezve. Egy másik BombVault tárolójából való visszaállításhoz használd a Visszaállítás oldalon a **Régi mentési mappából** lehetőséget; az mindig mappába állít vissza: egy mentés összes adatkészletét, mindegyiket saját almappába, vagy a fa egy adatkészletét, egészben vagy kiválasztott fájlokat.
+Ha adatkészletként az **Ennek a biztonsági mentésnek az összes adatkészlete** lehetőséget választod, a fa minden adatkészlete a kiválasztott mappa saját almappájába kerül. A mentésben kihagyott adatkészletek meg vannak nevezve. Egy másik BombVault tárolójából való visszaállításhoz használd a Visszaállítás oldalon a **Régi mentési mappából** lehetőséget. Az mindig mappába állít vissza: egy mentés összes adatkészletét, mindegyiket saját almappába, vagy a fa egy adatkészletét, egészben vagy kiválasztott fájlokat.
 
 Az elem leállítandó konténereinek listáját az adatkészletbe történő visszaállításnál is felajánlja. Ezek a konténerek az egész visszaállítás alatt leállítva maradnak, a konténermentések addig várnak.
 
 ### A biztonsági pillanatkép {#safety-snapshot}
 
-Mielőtt írna egy adatkészletbe, a BombVault ZFS-pillanatképet készít csak arról az adatkészletről `bombvault-prerestore-<idő>` néven. Az **Előbb ZFS pillanatkép a mostani állapotról** alapértelmezés szerint be van kapcsolva; kikapcsolásához második megerősítés kell. Ha a pillanatkép nem készíthető el, semmi nem áll vissza.
+Mielőtt írna egy adatkészletbe, a BombVault ZFS-pillanatképet készít csak arról az adatkészletről `bombvault-prerestore-<idő>` néven. Az **Előbb ZFS pillanatkép a mostani állapotról** alapértelmezés szerint be van kapcsolva. Kikapcsolásához második megerősítés kell. Ha a pillanatkép nem készíthető el, semmi nem áll vissza.
 
 A BombVault soha nem töröl magától biztonsági pillanatképet. Az elem felsorolja őket korukkal és méretükkel, mindegyiket **Törlés** művelettel, és figyelmeztet, ha a legrégebbi 30 napnál idősebb, mert törölt és módosított adatokat tart a poolban.
 
@@ -82,7 +82,7 @@ Ha egy visszaállítás után vissza szeretnél lépni, másolj egyes fájlokat 
 A BombVault minden mentéssel eltárolja minden adatkészlet helyben beállított ZFS-tulajdonságait: compression, recordsize, quota, reservation, atime, xattr, acltype, casesensitivity és a saját felhasználói tulajdonságaid. Az örökölt és csak olvasható értékek kimaradnak, mert maguktól visszajönnek. Azokban a mentésekben, amelyek még azelőtt készültek, hogy a BombVault tárolta volna őket, nincsenek ilyenek.
 
 - **Új adatkészletbe** a `zfs create` parancsot futtatja minden tárolt tulajdonsággal. A casesensitivity, a normalization és az utf8only csak így állítható be. A kvótákat és foglalásokat csak a fájlok után állítja be, hogy ne utasíthassák el azokat. A csatolási pont kimarad, hogy a másolat ne ütközzön az eredetivel, és ugyanígy a `canmount`, a `readonly` és a titkosítás is, hogy a visszaállítás írni tudjon. Egy titkosított alatti új adatkészlet átveszi annak titkosítását. A fölötte lévő adatkészletnek léteznie kell. Ha a létrehozás után valami hibára fut, az új adatkészlet a szerveren marad, mert a BombVault soha nem töröl adatkészletet.
-- **Visszaállítás az adatkészletbe** a visszaállítás mellett mutatja a tárolt tulajdonságokat. A **Ezeket a tulajdonságokat is beállítja** beállítja azokat, amelyeket egy meglévő adatkészlet még elfogad, mielőtt bármilyen fájl íródna. A kvótákat és foglalásokat csak a fájlok után állítja be, hogy ne utasíthassák el azokat. E kapcsoló nélkül az adatkészlet megtartja a beállításait.
+- **Visszaállítás az adatkészletbe** a visszaállítás mellett mutatja a tárolt tulajdonságokat. Az **Ezeket a tulajdonságokat is beállítja** beállítja azokat, amelyeket egy meglévő adatkészlet még elfogad, mielőtt bármilyen fájl íródna. A kvótákat és foglalásokat csak a fájlok után állítja be, hogy ne utasíthassák el azokat. E kapcsoló nélkül az adatkészlet megtartja a beállításait.
 
 ## Mi van a mentésben {#contents}
 
@@ -90,26 +90,39 @@ A mentésben: minden mentett adatkészlet fájljai és mappái, tulajdonossal, j
 
 Nincs a mentésben:
 
-- az egyes adatkészletek legfelső mappájának saját tulajdonosa és jogosultságai (minden alatta lévő benne van). Az adatkészletbe történő visszaállítás a meglévő legfelső mappát változatlanul hagyja, a mappába történő visszaállítás `0755` jogosultsággal hozza létre;
-- a meglévő ZFS-pillanatképek;
-- a kihagyott vagy kizárt gyermekek;
+- az egyes adatkészletek legfelső mappájának saját tulajdonosa és jogosultságai (minden alatta lévő benne van). Az adatkészletbe történő visszaállítás a meglévő legfelső mappát változatlanul hagyja, a mappába történő visszaállítás `0755` jogosultsággal hozza létre,
+- a meglévő ZFS-pillanatképek,
+- a kihagyott vagy kizárt gyermekek,
 - a kötetek.
 
 Új poolra való visszaállításhoz hozd létre a poolt, és minden adatkészletet állíts vissza egy új adatkészletbe. Azt még nem ellenőriztük, hogy az NFSv4 ACL-ek, ahogy a TrueNAS használja őket SMB-adatkészleteken, úgy jönnek-e vissza, ahogy várod, ezért próbálj ki egy visszaállítást a saját adataidon, mielőtt rájuk hagyatkozol.
 
 ## Titkosított adatkészletek {#encryption}
 
-Egy titkosított adatkészletet csak akkor ment, amíg a kulcsa be van töltve. Egyébként figyelmeztetéssel kimarad; töltsd be a kulcsot a `zfs load-key` paranccsal, és csatold az adatkészletet. A BombVault visszafejtve olvassa az adatokat, és a restic tárolójában tárolja őket, amely titkosított. Ha kikapcsoltad a titkosítást a BombVaultban, az a tároló nem titkosított.
+Egy titkosított adatkészletet csak akkor ment, amíg a kulcsa be van töltve. Egyébként figyelmeztetéssel kimarad. Töltsd be a kulcsot a `zfs load-key` paranccsal, és csatold az adatkészletet. A BombVault visszafejtve olvassa az adatokat, és a restic tárolójában tárolja őket, amely titkosított. Ha kikapcsoltad a titkosítást a BombVaultban, az a tároló nem titkosított.
 
 ## Replika {#replica}
 
 A replika egy elem adatkészleteinek másolata egy második ZFS-kiszolgálón. A BombVault a `zfs send` és a `zfs receive` segítségével tartja naprakészen. Az első futás mindent elküld, utána csak a megváltozott blokkok utaznak. A másik kiszolgálón a másolatot azonnal csatolhatod.
 
-A replika soha nem helyettesíti a mentést. A régebbi verziók, az egyes fájlok és az ellenőrzés továbbra is a mentésekből származnak, a replika pedig csak annyi pillanatképet tart meg, amennyit beállítasz. Egy naprakész replika telephelyen kívüli másolatnak számít, de a replikával rendelkező, mentés nélküli elem narancssárga marad.
+A replika soha nem helyettesíti a mentést. A régebbi verziók, az egyes fájlok és az ellenőrzés továbbra is a mentésekből származnak, a replika pedig csak annyi pillanatképet tart meg, amennyit beállítasz. Egy naprakész replika telephelyen kívüli másolatnak számít, de mentésnek nem.
 
-A Replika kártyán a **Csak replika, mentés nélkül** azt eredményezi, hogy az egész ZFS-szakasz replikákat küld, és nem készít mentéseket. A saját mappa és a telephelyen kívüli célok megtartják a kapcsolóikat, így kikapcsolás után a szakasz újra oda ment, és minden ZFS-elem kártyája a szakasz kapcsolóját a tényleges állása szerint mutatja. Egy ilyen elem mentés helyett az első replikájára vár, a **Biztonsági mentés most** nála **Replikálás most** néven jelenik meg, és a pillanatkép körül leállnak a konténerei és lefutnak a parancsai, mint egy mentésnél. A replikái beleszámítanak a néhány naponkénti ütemezésbe, a késési riasztásba és a lefedettségbe.
+A replika nem vár a mentésre. A **Minden mentés után** az elem mentési futása utánt jelenti, akár sikerült az a futás, akár hibázott, akár nem volt mit tennie. Ha a ZFS-szakaszban nincs bekapcsolva mentési cél, és az elemnek nincs saját tárolója, az elem mentési futása csak a replikát küldi el, és a Replika kártya ezt a **Mikor** melletti buborékban jelzi. A Biztonsági mentések lista, az elem fejléce és a futási előzmények mutatják a replikát: **Replikálás folyamatban**, amíg fut, és **Replikálva** az idővel, ha kész.
 
-Kapcsold be az elem Beállítások lapján a **Replika** kártyán. Ott választod ki, hová kerüljön a replika, mikor fusson (**Minden mentés után** vagy **Saját terv**), és hány pillanatkép maradjon a célon és ezen a kiszolgálón. A kártya felsorolja az összes adatkészletet és kötetet az állapotukkal, a **Replikálás most** pedig elindít egy futást. A replikafutásnak saját zárja van, így egy hosszú első átvitel soha nem tartja fel a mentéseket.
+A Replika kártyán a **Csak replika, mentés nélkül** azt eredményezi, hogy az egész ZFS-szakasz replikákat küld, és nem készít mentéseket. A saját mappa és a telephelyen kívüli mentési célok megtartják a kapcsolóikat, így kikapcsolás után a szakasz újra oda ment, és minden ZFS-elem kártyája a szakasz kapcsolóját a tényleges állása szerint mutatja. Egy ilyen elem mentés helyett az első replikájára vár, a **Biztonsági mentés most** nála **Replikálás most** néven jelenik meg, és a pillanatkép körül leállnak a konténerei és lefutnak a parancsai, mint egy mentésnél. A replikái beleszámítanak a néhány naponkénti ütemezésbe, a késési riasztásba és a lefedettségbe.
+
+Kapcsold be az elem Beállítások lapján a **Replika** kártyán. A kártya felsorolja az összes adatkészletet és kötetet az állapotukkal, a **Replikálás most** pedig elindít egy futást. A replikafutásnak saját zárja van, így egy hosszú első átvitel soha nem tartja fel a mentéseket.
+
+| Mező | Mit állít be |
+|---|---|
+| **Ide replikál** | A cél: egy ZFS-kiszolgáló (**SSH-n keresztül** jelölve) vagy egy **párosított példány**. A **ZFS-kiszolgáló hozzáadása** újat állít be. |
+| **Mikor** | **Minden mentés után**, vagyis az elem mentési futása után, vagy **Saját terv**. |
+| **Megőrzés a célon** | Hány pillanatkép marad a ZFS-kiszolgálón: **Rövid**, **Kiegyensúlyozott**, **Hosszú** vagy **Saját értékek**. Egy párosított példány ezt maga dönti el. |
+| **Megőrzés ezen a kiszolgálón** | A legújabb replika-pillanatképek közül hány marad ezen a kiszolgálón is. A 0 vagy az 1 csak a legutóbbit tartja meg. |
+| **Csak replika, mentés nélkül** | Az egész ZFS-szakasz replikákat küld, és nem készít mentéseket. |
+
+![Egy ZFS-elem Replika kártyája.](assets/screenshots/zfs/replica-dark.png#only-dark)
+![Egy ZFS-elem Replika kártyája.](assets/screenshots/zfs/replica-light.png#only-light)
 
 Az **Összes replikálása most**, amely a mentési műveletek mellett áll, ha a Biztonsági mentések oldalon a ZFS csempe van kiválasztva, egymás után elküldi minden ZFS-elem replikáját. A köteget a kiszolgáló futtatja, így akkor is halad, ha elhagyod az oldalt, és az az elem, amely nem tud replikálni, név szerint megjelenik és kimarad.
 
@@ -118,7 +131,7 @@ Az **Összes replikálása most**, amely a mentési műveletek mellett áll, ha 
 Bármely gép fogadhat, amelyen van ZFS és SSH, például egy második Unraid vagy egy TrueNAS. A BombVaultnak nem kell ott futnia.
 
 1. A **Beállítások, Párosítás** alatt válaszd a **ZFS-kiszolgáló BombVault nélkül** részben a **Csatlakozás SSH-n át** gombot, vagy az elem **Replika** kártyáján a **ZFS-kiszolgáló hozzáadása** gombot.
-2. Add meg a címet, a felhasználót és a portot. A párbeszédablak megmutatja a BombVault nyilvános kulcsát. Add hozzá a felhasználó `~/.ssh/authorized_keys` fájljához a kiszolgálón. Unraidon ez a **Users, root, SSH keys** alatt van. A **Display Settings** beállításától függően a Users a fejléc menüjében vagy a Settings alatt található. TrueNAS-on a felhasználót a **Credentials, Users** alatt szerkeszd. Ez a replika kulcsa. Más, mint a virtuális gépek és a gazdagép SSH-kapcsolatának kulcsa, ezért akkor is add hozzá, ha az már engedélyezett.
+2. Add meg a címet, a felhasználót és a portot. A párbeszédablak megmutatja a BombVault nyilvános kulcsát. Add hozzá a felhasználó `~/.ssh/authorized_keys` fájljához a kiszolgálón. Unraidon ez a **Users, root, SSH keys** alatt van. A **Display Settings** beállításától függően a Users a fejléc menüjében vagy a Settings alatt található. TrueNAS-on a felhasználót a **Credentials, Users** alatt szerkeszd. Ez a replika kulcsa. Más, mint a VM-ek és a gazdagép SSH-kapcsolatának kulcsa, ezért akkor is add hozzá, ha az már engedélyezett.
 3. Teszteld a kapcsolatot. A párbeszédablak ezután felsorolja a kiszolgáló poolait. Válassz egyet, és add meg a gyökeret, amelynek alapértéke `<pool>/bombvault-replica`.
 4. Válaszd ki az új kiszolgálót az elem **Replika** kártyáján. A kiszolgálónak ezután saját kártyája van a Példányok oldalon, és a **Megnyitás** az oldalára visz.
 
@@ -160,7 +173,7 @@ Minden adatkészlet ide kerül: `<root>/<server>/<pool>/<path>`. A kiszolgálóm
 
 Miután a BombVaultot újra beállították, a cél elutasítja azt a mappát, amelyet ez a BombVault korábban feltöltött. A Replika kártya ekkor felajánlja a **Mappa átvétele** lehetőséget, és a következő replika a benne lévő másolatoktól folytatja. Csak akkor vedd át, ha egyetlen másik BombVault sem replikál már abba a mappába.
 
-A másolat a célon csak olvasható és nincs csatolva, így soha nem takar el semmit azon a kiszolgálón. A ZFS-tulajdonságok vele utaznak, kivéve a csatolási pontot, a `sharenfs`-t és a `sharesmb`-t. A foglalások (`reservation` és `refreservation`) sem mennek át, így a másolat csak annyi helyet foglal, amennyit az adatai igényelnek.
+A másolat a célon csak olvasható. Alapból nincs csatolva, így soha nem takar el semmit azon a kiszolgálón. Az SSH-n csatlakoztatott ZFS-kiszolgáló oldalán van egy **Csatolás csak olvashatóként a szerveren** kapcsoló: bekapcsolva a BombVault minden futás után csak olvashatóként csatolja ott a másolatokat, így a fájljaikat a célon olvashatod és másolhatod. A titkosított másolatok zárolva maradnak, amíg a kulcsuk be nem töltődik, és a kapcsoló kikapcsolása nem csatol le semmit. A replikát fogadó párosított példány csatolatlanul tartja. A ZFS-tulajdonságok vele utaznak, kivéve a csatolási pontot, a `sharenfs`-t és a `sharesmb`-t. A foglalások (`reservation` és `refreservation`) sem mennek át, így a másolat csak annyi helyet foglal, amennyit az adatai igényelnek.
 
 ### Mi kerül bele {#replica-contents}
 
@@ -222,6 +235,39 @@ A BombVault ezután leáll a replikálással erre az adatkészletre, amíg új e
 
 Egy állapot forrásra való visszahozásához nyomd meg a **Visszaállítás új adatkészletként** gombot a lapon. A BombVault a pillanatképet egy új adatkészletbe küldi az eredeti mellé, amelynek neve `<dataset>-bombvault-restore-` és egy időbélyeg. Az eredetit soha nem írja felül.
 
+### Példa: replika egy második Unraid-gépre {#example-replica}
+
+A `tower` szerver a `cache/appdata` adatkészletet menti ZFS-elemként. Egy második, BombVault nélküli Unraid-gép a `192.168.1.20` címen, amelyen van egy `backup` nevű pool, tartson egy másolatot, amelyet bármikor elolvashatsz.
+
+1. Nyisd meg a **Biztonsági mentések** oldalt, majd a `cache/appdata` elemet, és annak **Beállítások** lapját. A **Replika** kártyán válaszd a **ZFS-kiszolgáló hozzáadása** lehetőséget az **Ide replikál** alatt.
+2. Add meg a `192.168.1.20` címet, a `root` felhasználót és a `22` portot. A párbeszédablak megmutatja a replika kulcsát. A második gépen illeszd be a **Users, root, SSH keys** alatt, és nyomd meg az **Apply** gombot. Ez a kulcs más, mint a Host SSH kulcsa, ezért akkor is add hozzá, ha az már ott van.
+3. Teszteld a kapcsolatot. Válaszd a `backup` poolt, és hagyd meg a javasolt gyökeret, a `backup/bombvault-replica` értéket.
+4. Visszatérve a kártyára, az új kiszolgáló ki van választva az **Ide replikál** alatt. Hagyd a **Mikor** értékét **Minden mentés után** állapotban, a **Megőrzés a célon** értékét a 7 napi és 3 heti pillanatképen, a **Megőrzés ezen a kiszolgálón** értékét pedig állítsd `7`-re.
+5. Nyomd meg a **Replikálás most** gombot. Az első futás mindent elküld, ezért 300 GB egy 1 Gbit/s-os vonalon legalább 40 percig tart. A kártya és a Biztonsági mentések lista **Replikálás folyamatban**, majd **Replikálva** állapotot mutat az idővel. A későbbi futások csak a megváltozott blokkokat küldik.
+
+Az adatkészletek ezután a második gépen a `backup/bombvault-replica/tower/cache/appdata` helyen vannak, csak olvashatóan. Az Áttekintésen a ZFS-szakasz **Telephelyen kívüli** értéke a replikát telephelyen kívüli másolatnak számolja.
+
+Hogy a múlt keddi állapotból kiszedj egy fájlt, három utad van:
+
+- **Ezen a kiszolgálón**, mert a **Megőrzés ezen a kiszolgálón** hét pillanatképet tart:
+
+    ```
+    cp /mnt/cache/appdata/.zfs/snapshot/bombvault-replica-20261103014100/plex/Preferences.xml /mnt/user/restore/
+    ```
+
+- **A második gépen**, a célon lévő pillanatkép klónjával. Az elem **Biztonsági mentések** lapja a valódi neveiddel mutatja a parancsokat, ha a **ZFS-replika** sorra kattintasz. Ha végeztél, töröld a klónt a `zfs destroy` paranccsal.
+- **Csatolással**, a ZFS-kiszolgáló oldalán bekapcsolva a **Csatolás csak olvashatóként a szerveren** kapcsolót. A következő futás után a másolatok csatolva és csak olvashatóan állnak a második gépen.
+
+A replika által megtartottnál régebbi verziók továbbra is a mentésekből jönnek, ahogy a következő példa mutatja.
+
+### Példa: egy fájl egy ZFS-mentésből {#example-zfs-file}
+
+1. Nyisd meg a **Visszaállítás** oldalt, válaszd a **ZFS** csempét, és kattints a `cache/appdata` elemre.
+2. Válaszd ki a mentést, az **Adatkészlet** alatt pedig azt az adatkészletet, amelyben a fájl van.
+3. A **Mit** alatt válaszd az **Egyes fájlok** lehetőséget, és jelöld be a fájlt.
+4. A **Hová** alatt válaszd az **Egy mappába** lehetőséget, és válassz egy mappát a `/mnt` alatt, például `user/restore`. Ehhez nem kell SSH-kapcsolat, és már nem létező adatkészletnél is működik.
+5. Nyomd meg a **Visszaállítás** gombot. A fájl közvetlenül abba a mappába kerül, a fölötte lévő útvonal nélkül.
+
 ## Megmaradt pillanatképek {#leftover-snapshots}
 
 Egy mentés pillanatképének neve `<dataset>@bombvault-<14 számjegy>`, például `cache/appdata@bombvault-20260924021500` (UTC). A BombVault közvetlenül a mentés után eltávolítja. Ha ez nem sikerül, például mert az adatkészlet foglalt, vagy a BombVaultot leállították, a BombVault eltávolítja:
@@ -247,7 +293,7 @@ Egy adatkészlet, amelyet az előző futás mentett, de ez a futás nem tudott b
 
 Minden adatkészletnek saját sora van az elem felügyeletében, amely az **Anomáliák** oldalon a **Figyelés** gombbal nyílik meg, és az elem **Ellenőrzés** lapján áll. A nyitott megállapítások minden adatkészlet mellett megjelennek. Egy megállapítás hivatkozása a visszaállítási ablakot az adatkészlet utolsó jó mentésénél nyitja meg. Azt, hogy egy futás befejeződik-e, az egész elemre nézve ítéljük meg, mert egy futás egészként sikerül vagy hiúsul meg.
 
-Magukat az ellenőrzéseket a [Funkciók](features.md) írja le. Egy, az [MCP-kiszolgálón](mcp.md) keresztül kapcsolódó asszisztens listázhatja egy ZFS-elem visszaállítási pontjait, elindíthatja a mentését és olvashatja a megállapításokat, de egy megállapítás nyugtázása az **Anomáliák** oldalon történik.
+Magukat az ellenőrzéseket az [Anomáliák](anomalies.md) írja le. Egy, az [MCP-kiszolgálón](mcp.md) keresztül kapcsolódó asszisztens listázhatja egy ZFS-elem visszaállítási pontjait, elindíthatja a mentését és olvashatja a megállapításokat, de egy megállapítás nyugtázása az **Anomáliák** oldalon történik.
 
 ## Okkódok {#reason-codes}
 
@@ -289,7 +335,7 @@ Az elem oldala, a futási előzmények és az értesítések ezek egyikével nev
 | `snapdir-disabled` | A pillanatkép-hozzáférés ki van kapcsolva, kihagyva. | `zfs set snapdir=hidden <dataset>`. A `.zfs` mappa rejtve marad. |
 | `not-visible` | A BombVault nem látja az adatkészlet csatolási pontját. | Helyezd a csatolási pontot a Host Data útvonal alá, vagy képezd le a konténerbe ugyanazon az útvonalon Read/Write - Slave-vel. |
 | `shfs-only` | Az adatkészlet csak a `/mnt/user` útvonalon látszik, amely elrejti a pillanatképeket. | A `/mnt`-t képezd le Host Datának, ne a `/mnt/user`-t. |
-| `snapshot-not-visible` | A pillanatkép elkészült, de nem jelent meg a BombVaultban. | Futtasd a **Próbáld ki a pillanatképek elérését** műveletet; lásd lent. |
+| `snapshot-not-visible` | A pillanatkép elkészült, de nem jelent meg a BombVaultban. | Futtasd a **Próbáld ki a pillanatképek elérését** műveletet. Lásd lent. |
 | `snapshot-loop` | A pillanatkép nem jutott el a BombVaultig, mert a Host Data nem engedi át az új csatolásokat. | Állítsd a Host Data Access Mode értékét Read/Write - Slave-re, és indítsd újra a BombVaultot. |
 | `backup-failed` | A restic ennél az adatkészletnél sikertelen volt. | A futás részletei mutatják az okát. |
 | `not-reached` | A futás ezen adatkészlet előtt véget ért. | Futtasd újra a mentést. |
@@ -329,5 +375,5 @@ Minden sor egy csatolás a konténerben. Egy adatkészlet sora mutatja az útvon
 
   Az új adatkészletbe való visszaállításhoz kell még a `create` jog a fölötte lévő adatkészleten, a tárolt tulajdonságok beállításához pedig az adott tulajdonságokra vonatkozó jog.
 
-  TrueNAS-on egy nem root SSH-munkamenet útvonalában nincs benne a `/usr/sbin`; a BombVault ilyenkor közvetlenül a `/usr/sbin/zfs` parancsot hívja.
+  TrueNAS-on egy nem root SSH-munkamenet útvonalában nincs benne a `/usr/sbin`. A BombVault ilyenkor közvetlenül a `/usr/sbin/zfs` parancsot hívja.
 - Az alkalmazás **Host Data** értékének az adatkészletek feletti gazdaútvonalnak kell lennie, például `/mnt/tank`, nem ixVolume-nak. Gazdaútvonallal az alkalmazás továbbadja a gazda új csatolásait a BombVaultnak (`rslave`), és erre van szüksége a pillanatkép-hozzáférésnek. A teljes alkalmazásbeállítást a [TrueNAS SCALE](getting-started.md#truenas) írja le.
