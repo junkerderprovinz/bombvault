@@ -109,20 +109,27 @@ markdown_extensions:
   - toc:
       permalink: true
 
-# The VM guide is read on GitHub. Leaving it out of the site keeps --strict from
-# failing on a page that is not in nav.
-exclude_docs: |
-  vm-backup-ssh-setup.md
-
-# No titles: each page's translated H1 becomes its nav label.
+# No page titles: each page's translated H1 becomes its nav label. A section
+# title has no H1 to take its text from, so it needs nav_translations per locale.
 nav:
   - index.md
   - getting-started.md
+  - guides.md
+  - Using BombVault:
+      - overview.md
+      - backups.md
+      - restore.md
+      - offsite-recovery.md
+      - schedules.md
+      - notifications.md
+      - anomalies.md
+  - Reference:
+      - settings.md
+      - configuration.md
+      - zfs-datasets.md
+      - vm-backup-ssh-setup.md
+      - mcp.md
+      - api.md
   - android.md
-  - features.md
-  - configuration.md
-  - zfs-datasets.md
-  - offsite-recovery.md
-  - mcp.md
-  - api.md
   - troubleshooting.md
+  - features.md
