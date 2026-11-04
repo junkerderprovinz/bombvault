@@ -16,6 +16,10 @@
 // screenshots, and the call for Android testers, testers.png at 1920x640,
 // with the two steps as QR codes.
 //
+// `node android/store/render.mjs docs [folder]` writes the start screen for
+// the documentation, plain at 390x844 in the dark and the light theme, to
+// docs/assets/screenshots/android or the folder given.
+//
 // Deps (global): playwright-core with its Chromium installed, qrcode-generator.
 // Run: (cd web && npm run build && npm run build:launcher) && go build ./cmd/bombvault && node android/store/render.mjs [readme]
 
@@ -431,17 +435,22 @@ async function stageServer(page, text) {
   await page.route(at("/api/anomalies"), json({ anomalies: [], nextCursor: "" }));
 }
 
-/** Takes one screen of the app as the phone shows it, 1080x1920. */
-async function capture(browser, urls, text, shot) {
-  const { servers, activity, members } = group(text);
-  const paired = shot.name !== "pairing";
-  const state = {
+/** What the app tells the launcher about itself and the group. */
+function appState(text, paired) {
+  const { servers, members } = group(text);
+  return {
     servers: paired ? servers : [],
     found: [],
     group: paired ? { paired: true, connected: true } : { paired: false, connected: true, joining: { members, connected: true } },
     camera: true,
     app: { version: VERSION, versionCode: 100000, android: "36", model: "Pixel 8", deviceName: "" },
   };
+}
+
+/** Takes one screen of the app as the phone shows it, 1080x1920. */
+async function capture(browser, urls, text, shot) {
+  const { activity } = group(text);
+  const state = appState(text, shot.name !== "pairing");
   const look = { "bv-theme": "dark", "bv-accent": "#FCC419" };
 
   const page = await browser.newPage({
@@ -724,6 +733,37 @@ async function readme(browser, urls) {
   console.log("wrote .github/assets/screenshots/testers.png");
 }
 
+/**
+ * The start screen alone for the documentation, at a phone's size in CSS
+ * pixels and without phone, caption or status bar, once in each theme:
+ * <folder>/android/start-dark.png and start-light.png.
+ */
+async function docs(browser, urls) {
+  const out = join(process.argv[3] ?? join(root, "docs", "assets", "screenshots"), "android");
+  mkdirSync(out, { recursive: true });
+  const text = CAPTIONS["en-US"];
+  const { activity } = group(text);
+  for (const theme of ["dark", "light"]) {
+    const page = await browser.newPage({ viewport: { width: 390, height: 844 }, colorScheme: theme, hasTouch: true, isMobile: true });
+    await page.clock.setFixedTime(NOW);
+    await page.addInitScript(
+      ({ lang, theme }) => {
+        localStorage.setItem("bv-lang", lang);
+        localStorage.setItem("bv-theme", theme);
+      },
+      { lang: text.lang, theme },
+    );
+    await page.addInitScript(fakeApp, { state: appState(text, true), activity, look: { "bv-theme": theme, "bv-accent": "#FCC419" } });
+    await page.goto(`${urls.launcher}/launcher.html`);
+    await page.waitForSelector("main");
+    await page.evaluate(() => document.fonts.ready);
+    await page.waitForTimeout(600);
+    await page.screenshot({ path: join(out, `start-${theme}.png`) });
+    await page.close();
+    console.log(`wrote android/start-${theme}.png`);
+  }
+}
+
 async function store(browser, urls) {
   const bombvault = await boot();
   try {
@@ -757,7 +797,8 @@ const server = await serve();
 const launcher = `http://127.0.0.1:${server.address().port}`;
 const browser = await chromium.launch();
 try {
-  await (process.argv[2] === "readme" ? readme : store)(browser, { launcher });
+  const mode = { readme, docs }[process.argv[2]] ?? store;
+  await mode(browser, { launcher });
 } finally {
   await browser.close();
   server.close();

@@ -93,6 +93,7 @@ const testMatch = [
   "welcome.spec.ts",
   "look-help.spec.ts",
   "schedules.spec.ts",
+  "docs-pictures.spec.ts",
 ];
 
 for (const spec of testMatch) {
