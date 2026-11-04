@@ -6,7 +6,7 @@ The backup never sends a stream into restic and never rolls a dataset back. Bomb
 
 ## Requirements {#requirements}
 
-- **The SSH link to this server.** ZFS datasets use the same key, host and user as VM backups. If VM backups already work, so does this. Otherwise follow the [VM backup over SSH guide](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md) on GitHub. The template fields are called **Host SSH: Address**, **Host SSH: Port** and **Host SSH: User**.
+- **The SSH link to this server.** ZFS datasets use the same key, host and user as VM backups. If VM backups already work, so does this. Otherwise follow the [VM backup over SSH guide](vm-backup-ssh-setup.md). The template fields are called **Host SSH: Address**, **Host SSH: Port** and **Host SSH: User**.
 - **The `zfs` command on that host.** Unraid 6.12 and newer and TrueNAS SCALE have it.
 - **Host Data mapped as `/mnt` with Access Mode Read/Write - Slave.** That is the template default. The snapshot of a dataset shows up inside the dataset's `.zfs/snapshot` folder only after BombVault has started, so the container has to receive mounts the host makes later.
 - **The datasets mounted below `/mnt`.** On Unraid pools live at `/mnt/<pool>`, so that is already the case.
@@ -17,7 +17,7 @@ Switch the section on under **Settings, General** (ZFS datasets). **ZFS connecti
 
 Choose **Add** on the Backups page, then **A ZFS dataset**. The list comes from the server. Pick the dataset at the top of what you want backed up, for example `cache/appdata`, and the entry covers it and every dataset below it.
 
-- **New child datasets join on their own.** A dataset created below the entry later is backed up with the next run, and that run names it as new. Its first backup reads it in full once; after that only changes are read.
+- **New child datasets join on their own.** A dataset created below the entry later is backed up with the next run, and that run names it as new. Its first backup reads it in full once. After that only changes are read.
 - **You can leave single children out.** Switch a child off on the entry's Settings tab and it is left out together with everything below it. A left-out child that no longer exists on the server is marked as such and can be removed from the list.
 - **Children that cannot be read are skipped, never silently.** The run lists them, the entry shows how many were skipped, and the overview's **Not backed up** card counts each one as not protected. The run still backs up everything else and does not fail because of a skipped child. The reasons are in the [table of reason codes](#reason-codes): a dataset that is not mounted, has `canmount=off`, a `legacy` or no mountpoint, an encryption key that is not loaded, snapshot access switched off, or a mountpoint BombVault cannot see.
 - **A skipped dataset does not take its children with it.** A `canmount=off` dataset that only holds other datasets is skipped (shown as "structure only") and its mounted children are backed up. An encrypted dataset whose key is not loaded is skipped together with the children that share its key.
@@ -44,7 +44,7 @@ A dataset can belong to one entry only. BombVault refuses a new entry that lies 
 
 A snapshot of a running database is like a sudden power cut: the database will usually recover, but it has to. Each entry can do two things about that, and both only cover the instant of the snapshot, not the whole backup.
 
-- **Stop these containers for the snapshot.** BombVault stops the listed containers, takes the snapshot and starts them again right away. Containers of one level of dependencies stop in parallel, dependents first, so the whole window is usually a few seconds; the run shows how long it was. The backup then reads the frozen snapshot while the apps are already running again. Only containers that were running are stopped.
+- **Stop these containers for the snapshot.** BombVault stops the listed containers, takes the snapshot and starts them again right away. Containers of one level of dependencies stop in parallel, dependents first, so the whole window is usually a few seconds. The run shows how long it was. The backup then reads the frozen snapshot while the apps are already running again. Only containers that were running are stopped.
 - **A command before and after the snapshot.** It runs inside a container you choose, for example to dump a database into the dataset right before the snapshot, without stopping anything. If the command before the snapshot fails, the backup fails and no snapshot is taken. A failing command after the snapshot is shown on the run but does not fail the backup.
 
 What happens when something goes wrong:
@@ -53,7 +53,7 @@ What happens when something goes wrong:
 - The stop waits for a running container backup to finish (up to 30 minutes for a manual run, up to the backup time limit for a scheduled one), so the two never stop and start the same container at once.
 - Before the first container stops, BombVault writes down which ones it stops. If BombVault is killed inside the window, it starts those containers again the next time it starts, sends a notification, and the entry shows a red note for any container it could not start.
 
-The automatic database dumps (see [Features](features.md)) run with a container's own backup, not with a ZFS entry. A database whose container is backed up only through its dataset gets no dump, so give it a command here.
+The automatic [database dumps](backups.md#database-dumps) run with a container's own backup, not with a ZFS entry. A database whose container is backed up only through its dataset gets no dump, so give it a command here.
 
 A container can be on this list and be backed up as a container at the same time. Its data is then stored twice, in two repositories, and the full backup stops it twice. The entry says so.
 
@@ -63,15 +63,15 @@ Open the entry and choose **Restore**, or pick it on the **Restore** page. The r
 
 - **Restore into the dataset.** Files from the backup are written into the dataset's mountpoint. Files with the same name are overwritten, other files stay. The dataset is never rolled back or replaced. BombVault checks that the dataset is mounted, visible and writable, once before it starts and again right before it writes. Where a child dataset is mounted inside it, nothing is written: the child keeps its files, owner and permissions, and is restored from its own backup.
 - **To a folder.** Pick a folder below `/mnt`. BombVault checks that the folder is on a mounted pool or share and that there is enough free space. This works without the SSH link and for datasets that no longer exist.
-- **Into a new dataset.** Name a dataset that does not exist yet; the window suggests `<dataset>-restored`. BombVault creates it with the ZFS properties stored in the backup and restores into it, see [Restoring as a new dataset](#new-dataset).
+- **Into a new dataset.** Name a dataset that does not exist yet. The window suggests `<dataset>-restored`. BombVault creates it with the ZFS properties stored in the backup and restores into it, see [Restoring as a new dataset](#new-dataset).
 
-Picking **All datasets of this backup** as the dataset writes every dataset of the tree into its own subfolder of the folder you pick. Datasets that were skipped in that backup are named. To restore from another BombVault's repository, use **From an old backup folder** on the Restore page; it always restores into a folder: all datasets of one backup, each into its own subfolder, or one dataset of the tree, whole or selected files.
+Picking **All datasets of this backup** as the dataset writes every dataset of the tree into its own subfolder of the folder you pick. Datasets that were skipped in that backup are named. To restore from another BombVault's repository, use **From an old backup folder** on the Restore page. It always restores into a folder: all datasets of one backup, each into its own subfolder, or one dataset of the tree, whole or selected files.
 
 The entry's list of containers to stop is offered for a restore into the dataset as well. Those containers stay stopped for the whole restore, and container backups wait meanwhile.
 
 ### The safety snapshot {#safety-snapshot}
 
-Before it writes into a dataset, BombVault takes a ZFS snapshot of that one dataset, named `bombvault-prerestore-<time>`. **Keep a ZFS snapshot of the current state first** is on by default; switching it off needs a second confirmation. If the snapshot cannot be taken, nothing is restored.
+Before it writes into a dataset, BombVault takes a ZFS snapshot of that one dataset, named `bombvault-prerestore-<time>`. **Keep a ZFS snapshot of the current state first** is on by default. Switching it off needs a second confirmation. If the snapshot cannot be taken, nothing is restored.
 
 BombVault never deletes a safety snapshot by itself. The entry lists them with their age and size, each with a **Delete** action, and warns when the oldest one is more than 30 days old, because it keeps deleted and changed data on the pool.
 
@@ -90,16 +90,16 @@ In the backup: the files and folders of every backed-up dataset, with their owne
 
 Not in the backup:
 
-- the owner and mode of each dataset's top folder itself (everything below it is included). A restore into the dataset leaves the existing top folder as it is, a restore to a folder creates it with mode `0755`;
-- existing ZFS snapshots;
-- children that were skipped or left out;
+- the owner and mode of each dataset's top folder itself (everything below it is included). A restore into the dataset leaves the existing top folder as it is, a restore to a folder creates it with mode `0755`,
+- existing ZFS snapshots,
+- children that were skipped or left out,
 - volumes.
 
 To restore onto a new pool, create the pool and restore each dataset into a new dataset. Whether NFSv4 ACLs, as TrueNAS uses them on SMB datasets, come back the way you expect has not been verified yet, so check a restore on your own data before you rely on them.
 
 ## Encrypted datasets {#encryption}
 
-An encrypted dataset is backed up only while its key is loaded. Otherwise it is skipped with a warning; load the key with `zfs load-key` and mount the dataset. BombVault reads the data decrypted and stores it in restic's repository, which is encrypted. If you switched encryption off in BombVault, that repository is not.
+An encrypted dataset is backed up only while its key is loaded. Otherwise it is skipped with a warning. Load the key with `zfs load-key` and mount the dataset. BombVault reads the data decrypted and stores it in restic's repository, which is encrypted. If you switched encryption off in BombVault, that repository is not.
 
 ## Replica {#replica}
 
@@ -111,7 +111,18 @@ The replica does not wait for the backup. **After every backup** means after the
 
 **Replica only, no backup** on the Replica card makes the whole ZFS section send replicas and take no backups. The own folder and the off-site storage locations keep their switches, so turning it off backs up to them again, and every ZFS entry's card shows the section's switch as it stands. Such an entry waits for its first replica instead of a backup, **Back up now** is offered as **Replicate now**, and the entry's containers stop and its commands run around the snapshot as for a backup. Its replicas count for an every-few-days schedule, the overdue alert and the coverage.
 
-Switch it on in the **Replica** card on the entry's Settings tab. There you pick where the replica goes, when it runs (**After every backup** or **Own plan**) and how many snapshots stay on the target and on this server. The card lists every dataset and volume with its state, and **Replicate now** starts a run. A replica run has a lock of its own, so a long first transfer never holds up the backups.
+Switch it on in the **Replica** card on the entry's Settings tab. The card lists every dataset and volume with its state, and **Replicate now** starts a run. A replica run has a lock of its own, so a long first transfer never holds up the backups.
+
+| Field | What it sets |
+|---|---|
+| **Replicates to** | The target: a ZFS server (marked **over SSH**) or a **paired instance**. **Add ZFS server** sets up a new one. |
+| **When** | **After every backup**, which means after the entry's backup run, or **Own plan**. |
+| **Keep on the target** | How many snapshots stay on the ZFS server: **Short**, **Balanced**, **Long** or **Custom values**. A paired instance decides this itself. |
+| **Keep on this server** | How many of the newest replica snapshots stay on this server too. 0 or 1 keeps only the latest. |
+| **Replica only, no backup** | The whole ZFS section sends replicas and takes no backups. |
+
+![The Replica card of a ZFS entry.](assets/screenshots/zfs/replica-dark.png#only-dark)
+![The Replica card of a ZFS entry.](assets/screenshots/zfs/replica-light.png#only-light)
 
 **Replicate all now**, beside the backup actions when the ZFS tile is picked on the Backups page, sends the replica of every ZFS entry, one after the other. The server runs the batch, so it goes on when you leave the page, and an entry that cannot replicate is named and skipped.
 
@@ -224,6 +235,39 @@ BombVault stops replicating to that dataset afterwards, until you start a new fi
 
 To get a state back to the source, press **Bring back as a new dataset** in the sheet. BombVault sends the snapshot into a new dataset next to the original, named `<dataset>-bombvault-restore-` plus a timestamp. It never writes over the original.
 
+### Example: a replica to a second Unraid box {#example-replica}
+
+The server `tower` backs up the dataset `cache/appdata` as a ZFS entry. A second Unraid box at `192.168.1.20`, without BombVault, has a pool called `backup` and should hold a copy that you can read at any time.
+
+1. Open **Backups**, then `cache/appdata`, then its **Settings** tab. In the **Replica** card, choose **Add ZFS server** under **Replicates to**.
+2. Enter `192.168.1.20`, the user `root` and port `22`. The dialog shows the replica key. On the second box, paste it under **Users, root, SSH keys** and press **Apply**. This key differs from the Host SSH key, so add it even if that one is already there.
+3. Test the connection. Pick the pool `backup` and keep the root it suggests, `backup/bombvault-replica`.
+4. Back on the card, the new server is picked under **Replicates to**. Leave **When** at **After every backup**, leave **Keep on the target** at its 7 daily and 3 weekly snapshots, and set **Keep on this server** to `7`.
+5. Press **Replicate now**. The first run sends everything, so 300 GB over a 1 Gbit/s line takes at least 40 minutes. The card and the Backups list say **Replicating**, then **Replicated** with the time. Later runs send only the blocks that changed.
+
+The datasets now lie at `backup/bombvault-replica/tower/cache/appdata` on the second box, read-only. On the overview, **Off-site** of the ZFS section counts the replica as a copy off the premises.
+
+To get one file from last Tuesday, you have three ways:
+
+- **On this server**, because **Keep on this server** holds seven snapshots:
+
+    ```
+    cp /mnt/cache/appdata/.zfs/snapshot/bombvault-replica-20261103014100/plex/Preferences.xml /mnt/user/restore/
+    ```
+
+- **On the second box**, with a clone of a snapshot on the target. The entry's **Backups** tab shows the commands with your real names when you click the **ZFS replica** row. Remove the clone with `zfs destroy` when you are done.
+- **With a mount**, by switching on **Mount read only on the server** on the ZFS server's page. After the next run the copies stand mounted and read only on the second box.
+
+Versions older than the replica keeps still come from the backups, as the next example shows.
+
+### Example: one file from a ZFS backup {#example-zfs-file}
+
+1. Open **Restore**, pick the **ZFS** tile and click `cache/appdata`.
+2. Pick the backup, and under **Dataset** the dataset that holds the file.
+3. Under **What**, choose **Individual files** and tick the file.
+4. Under **Where to**, choose **To a folder** and pick a folder below `/mnt`, such as `user/restore`. This needs no SSH link and also works for a dataset that no longer exists.
+5. Press **Restore**. The file lands directly in that folder, without the path above it.
+
 ## Leftover snapshots {#leftover-snapshots}
 
 The snapshot of a backup is named `<dataset>@bombvault-<14 digits>`, for example `cache/appdata@bombvault-20260924021500` (UTC). BombVault removes it right after the backup. If that fails, for example because the dataset is busy or BombVault was stopped, BombVault removes it:
@@ -249,7 +293,7 @@ A dataset that the previous run backed up and this run could not read counts as 
 
 Every dataset has a line of its own in the entry's monitoring, which opens with **Monitoring** on the **Anomalies** page and stands on the entry's **Verify** tab. The open findings show next to each dataset. The link in a finding opens the restore window on the dataset's last good backup. Whether a run finishes is judged for the whole entry, because a run succeeds or fails as a whole.
 
-The checks themselves are described under [Features](features.md). An assistant connected through the [MCP server](mcp.md) can list a ZFS entry's restore points, start its backup and read the findings, but acknowledging one happens on the **Anomalies** page.
+The checks themselves are described under [Anomalies](anomalies.md). An assistant connected through the [MCP server](mcp.md) can list a ZFS entry's restore points, start its backup and read the findings, but acknowledging one happens on the **Anomalies** page.
 
 ## Reason codes {#reason-codes}
 
@@ -291,7 +335,7 @@ The entry's page, the run history and the notifications name a problem with one 
 | `snapdir-disabled` | Snapshot access is switched off, skipped. | `zfs set snapdir=hidden <dataset>`. The `.zfs` folder stays hidden. |
 | `not-visible` | BombVault cannot see the dataset's mountpoint. | Move the mountpoint below the Host Data path, or map it into the container at the same path with Read/Write - Slave. |
 | `shfs-only` | The dataset is only visible through `/mnt/user`, which hides snapshots. | Map `/mnt`, not `/mnt/user`, as Host Data. |
-| `snapshot-not-visible` | The snapshot was created but did not appear inside BombVault. | Run **Test snapshot access**; see below. |
+| `snapshot-not-visible` | The snapshot was created but did not appear inside BombVault. | Run **Test snapshot access**. See below. |
 | `snapshot-loop` | The snapshot did not reach BombVault because Host Data does not pass new mounts through. | Set the Access Mode of Host Data to Read/Write - Slave and restart BombVault. |
 | `backup-failed` | restic failed for this dataset. | The run details show why. |
 | `not-reached` | The run ended before this dataset. | Run the backup again. |
@@ -331,5 +375,5 @@ Each line is one mount inside the container. The line of a dataset shows its pat
 
   Restoring into a new dataset also needs `create` on the dataset above it, and setting stored properties needs permission for those properties.
 
-  A non-root SSH session on TrueNAS does not have `/usr/sbin` in its path; BombVault then calls `/usr/sbin/zfs` directly.
+  A non-root SSH session on TrueNAS does not have `/usr/sbin` in its path. BombVault then calls `/usr/sbin/zfs` directly.
 - The app's **Host Data** must be a host path above the datasets, for example `/mnt/tank`, not an ixVolume. With a host path the app passes the host's new mounts on to BombVault (`rslave`), which snapshot access needs. See [TrueNAS SCALE](getting-started.md#truenas) for the whole app setup.

@@ -2,6 +2,9 @@
 
 **Your Unraid data, sealed in a vault. Drop a backup. Detonate a restore.**
 
+![The overview: the status head, what needs you, the protection of each section, the storage locations and the history.](assets/screenshots/overview/home-dark.png#only-dark)
+![The overview: the status head, what needs you, the protection of each section, the storage locations and the history.](assets/screenshots/overview/home-light.png#only-light)
+
 BombVault is a self-hosted web app for **backup and full disaster recovery** on Unraid and other Docker hosts, such as TrueNAS SCALE, ZimaOS or a plain Linux box. It backs up Docker containers, KVM/libvirt VMs, folders, ZFS datasets and the Unraid flash drive. It runs as a single multi-arch Docker container, gives you a web interface in a dark, light or system theme, and handles the whole lifecycle: back up, schedule, verify and restore.
 
 Restores are automatic. On Unraid, containers reappear in the Docker tab exactly as before, and VMs are re-defined in the VM Manager with their disks and UEFI NVRAM reattached. No manual reinstall, no reconfiguration, no drama. On TrueNAS a container restored next to the original runs as a plain Docker container that the Apps screen does not list.
@@ -30,7 +33,7 @@ After copying data back from the restic snapshot, BombVault replays the saved co
 
 One window restores every kind. By default it picks **Next to the original**, which brings the backup back as a copy and leaves the original as it is. **Replace original** backs up the current state first, so a restore can be undone. A folder or a new ZFS dataset are the other targets.
 
-When a backup stops dependent containers, they come back in the right order: BombVault restarts them in their Compose `depends_on` order and waits for each to report healthy before starting the ones that depend on it, so nothing races ahead of a database or a gateway that is not up yet. See [Features](features.md).
+When a backup stops dependent containers, they come back in the right order: BombVault restarts them in their Compose `depends_on` order and waits for each to report healthy before starting the ones that depend on it, so nothing races ahead of a database or a gateway that is not up yet. See [Restore](restore.md) and [Commands and other containers](backups.md#commands).
 
 ## How it works {#how-it-works}
 
@@ -53,11 +56,31 @@ BombVault is the orchestration and UI layer, not the storage engine. All actual 
 
 ## Quick start {#quick-start}
 
-New here? Head to **[Getting started](getting-started.md)** to install BombVault on Unraid via Community Applications and run your first backup. Then explore the full **[Features](features.md)**, tune your **[Configuration](configuration.md)**, and set up **[Off-site & recovery](offsite-recovery.md)**.
+New here? Head to **[Getting started](getting-started.md)** to install BombVault and run your first backup, then set up **[Off-site & recovery](offsite-recovery.md)**. The **[worked examples](guides.md)** walk through the common jobs from start to end, the **[Settings](settings.md)** page lists every tile, and **[Features](features.md)** is the short catalogue of everything BombVault does.
 
 Each section can copy to several storage locations at once, a paired BombVault can keep your off-site copies in a server that refuses deletes, and the **Emergency wizard** brings a lost server back from its recovery kit, through your group or with its typed key. To carry your configuration to a new box, use the **Export / import settings** card. See [Off-site & recovery](offsite-recovery.md) and [Configuration](configuration.md#portable-settings-export-and-import).
 
 The **[Android app](android.md)** puts every server of your group on your phone, with the activity log of all of them on one screen.
+
+The documentation comes in 26 languages and the interface in 42. Pages that have no translation yet show in English.
+
+## Words used here {#glossary}
+
+A few words have a fixed meaning in BombVault and in these pages.
+
+| Word | Meaning |
+|---|---|
+| **Entry** | One thing BombVault backs up: a container, a VM, a folder set, the flash drive, a ZFS dataset with the ones below it, or its own settings. Each has a page of its own. |
+| **Section** | All entries of one kind, such as Containers. You switch sections on under **Settings, General**. |
+| **Storage location** | A place backups go: a folder on this server, a share, a server of your own or a cloud service. See [Storage locations](offsite-recovery.md#destinations). |
+| **Local** | The storage location on this server that holds the sections' folders. |
+| **Own folder** | The repository a section writes its backups to first. It is on this server by default and can lie in a storage location. See [A section's own folder](offsite-recovery.md#own-folder). |
+| **Copy** | A backup copied from the own folder to another storage location with `restic copy`. |
+| **Direct repository** | A repository at an off-site location that entries back up straight to, without a local copy in between. See [Direct repositories](offsite-recovery.md#direct-repositories). |
+| **Sign-in** | The saved key or password for an S3 service or a rest-server. One of them is the default. See [Sign-ins](offsite-recovery.md#sign-ins). |
+| **Placement** | Which storage locations get an entry's backups, set on the entry or as its section's default. See [Placement per entry](offsite-recovery.md#placement). |
+| **Replica** | A block-exact copy of a ZFS entry on a second ZFS server, made with `zfs send`. It stands beside the backup and does not replace it. See [Replica](zfs-datasets.md#replica). |
+| **Role** | Something one instance of your group does for another: Receiver, Fetcher, ZFS server or Key keeper. See [Instances and roles](offsite-recovery.md#roles). |
 
 ## Credits {#credits}
 

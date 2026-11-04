@@ -2,6 +2,9 @@
 
 The Android app puts every BombVault server of your group on your phone. It starts on a list of your servers with the activity log of all of them on top, the same lines the overview shows, and opens the phone view of whichever server you tap. The app backs nothing up itself.
 
+![The app's start screen: the activity log of all servers on top, then the list of servers.](assets/screenshots/android/start-dark.png#only-dark)
+![The app's start screen: the activity log of all servers on top, then the list of servers.](assets/screenshots/android/start-light.png#only-light)
+
 ## Getting the app {#install}
 
 - **Settings, Apps:** the Android app's card offers the APK for the release your server runs, with a QR code to scan from the phone, and links the F-Droid listing.
@@ -59,13 +62,13 @@ The gear beside the plus opens the app's settings:
 
 - the language, and the name the phone shows on the Instances page (empty means the phone's model),
 - the look, which follows the first server in the list until you set your own, and animations, which have a setting of their own,
-- a report to copy when you report a problem; it contains no address, name or phrase,
+- a report to copy when you report a problem. It contains no address, name or phrase,
 - the About card with the privacy policy,
 - **Remove all servers**, which removes every server from the app and leaves the group. Every server the phone still reaches takes it off its Instances page.
 
 ## Downloads and uploads {#files}
 
-Exports, recovery kits, flash ZIPs and database dumps land in the phone's Downloads folder, as they would from a browser. A settings import opens the phone's file picker. Over the relay no file is saved; open the server at its own address for that.
+Exports, recovery kits, flash ZIPs and database dumps land in the phone's Downloads folder, as they would from a browser. A settings import opens the phone's file picker. Over the relay no file is saved. Open the server at its own address for that.
 
 ## On a touch screen {#touch}
 

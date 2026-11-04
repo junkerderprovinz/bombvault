@@ -23,9 +23,9 @@ Without a login password, anyone who can open the web interface can also create 
 | `GET /api/v1/health` | Version, instance name, whether a backup is running, and what this token may do | read |
 | `GET /api/v1/status` | Protection status per domain: last successful backup, expected interval, checks, next scheduled runs | read |
 | `GET /api/v1/activity` | What is running right now, with phase and percentage | read |
-| `GET /api/v1/items` | Every protected item with its schedule, what a backup stops and its last backup; `?domain=` for one domain | read |
-| `GET /api/v1/runs` | Run history, newest first; filters `limit`, `domain`, `item`, `status`, `kind`, `since` | read |
-| `GET /api/v1/anomalies` | Anomalies with a summary of what is open; filters `state`, `severity`, `domain`, `limit` | read |
+| `GET /api/v1/items` | Every protected item with its schedule, what a backup stops and its last backup. `?domain=` for one domain | read |
+| `GET /api/v1/runs` | Run history, newest first. Filters `limit`, `domain`, `item`, `status`, `kind`, `since` | read |
+| `GET /api/v1/anomalies` | Anomalies with a summary of what is open. Filters `state`, `severity`, `domain`, `limit` | read |
 | `GET /api/v1/anomalies/{id}` | One anomaly | read |
 | `GET /api/v1/storage/{domain}` | Size history, growth per week, and free space of each repository of a domain | read |
 | `POST /api/v1/backups` | Backs up one item (`{"domain":"containers","item":"plex"}`) or a whole domain (`{"domain":"vms"}`) | start |
@@ -61,7 +61,7 @@ An error comes back as `{"error": {"code": "...", "message": "..."}}` with a mat
 | 403 | `not_permitted`, `forbidden_origin` | The token may only read, the run was not started by it, or the request came from a page on another origin |
 | 404 | `not_found` | No such item, run or anomaly |
 | 409 | `busy`, `domain_off`, `nothing_to_back_up`, `not_running` | Something else is running, the domain is off, or there is nothing to do |
-| 429 | `throttled`, `rate_limited`, `cooldown`, `retention_guard` | A limit holds the request back; `Retry-After` says when to try again |
+| 429 | `throttled`, `rate_limited`, `cooldown`, `retention_guard` | A limit holds the request back. `Retry-After` says when to try again |
 
 Starts follow the same limits as [starts through MCP](mcp.md#starting-backups): 12 per hour per token, 15 minutes between two starts of the same item, at most 4 starts of one item in 24 hours, and the retention guard. The last three count starts through MCP, the API and Home Assistant together. A token can make 120 requests a minute. Five failed attempts from one address lock it out for a minute.
 
@@ -74,7 +74,7 @@ BombVault serves a description of these routes at `/api/v1/openapi.json` (OpenAP
 BombVault can appear in Home Assistant as a device, through MQTT discovery. Home Assistant needs its MQTT integration and a broker, for example the Mosquitto add-on. No custom component is involved.
 
 1. In BombVault, open **Settings, Integrations** and switch on **Home Assistant** in the **Services** card. The fields for the broker appear below it.
-2. Enter the broker's address and port, and its user name and password if it asks for them. Switch **Use TLS** on if the broker takes TLS, usually on port 8883; its certificate has to be valid for the address you entered. If you change the address, the port or the user name, enter the password again: BombVault does not pass the stored one on to another broker or user.
+2. Enter the broker's address and port, and its user name and password if it asks for them. Switch **Use TLS** on if the broker takes TLS, usually on port 8883. Its certificate has to be valid for the address you entered. If you change the address, the port or the user name, enter the password again: BombVault does not pass the stored one on to another broker or user.
 3. Click **Save**. The row shows when the connection is up.
 
 The device is called BombVault, or BombVault with the instance name in brackets, and has these entities:
@@ -90,9 +90,45 @@ The device is called BombVault, or BombVault with the instance name in brackets,
 | *Domain* repository free space | Free space where its primary repository lives, if BombVault can read it |
 | Back up *domain* | A button that backs up the whole domain |
 
-Every switched-on domain gets its own entities, and a domain you switch off loses them. The buttons appear once you switch **Buttons start backups** on; a new install has it off. They follow the same limits as [starts through the API](#errors). On top of that BombVault handles one press per domain at a time and no more than six a minute, and ignores a press the broker kept as a retained message. Anyone who can publish to the broker can press them, so give the broker a password.
+Every switched-on domain gets its own entities, and a domain you switch off loses them. The buttons appear once you switch **Buttons start backups** on. A new install has it off. They follow the same limits as [starts through the API](#errors). On top of that BombVault handles one press per domain at a time and no more than six a minute, and ignores a press the broker kept as a retained message. Anyone who can publish to the broker can press them, so give the broker a password.
 
 BombVault reads its state every 15 seconds and publishes it when something changed, as JSON under `<prefix>/<node>/state`. The prefix is `bombvault` unless you change it, and the node is a short id BombVault picks once. The discovery messages go to Home Assistant's default prefix `homeassistant`. Both are retained. A last will marks the device unavailable if BombVault stops without saying so. Switching the link off removes the device and its entities from Home Assistant.
+
+### Example: a card and an alert {#home-assistant-example}
+
+Home Assistant makes the entity ids from the names, so the device BombVault gets ids such as `sensor.bombvault_status`. With an instance name in brackets the ids carry that too, so check them under **Developer Tools, States** first. A card for the dashboard:
+
+```yaml
+type: entities
+title: Backups
+entities:
+  - sensor.bombvault_status
+  - sensor.bombvault_running_job
+  - sensor.bombvault_open_anomalies
+  - sensor.bombvault_next_scheduled_backup
+```
+
+An automation that tells your phone when the status turns to `failed`:
+
+```yaml
+alias: BombVault backup failed
+trigger:
+  - platform: state
+    entity_id: sensor.bombvault_status
+    to: failed
+action:
+  - service: notify.mobile_app_my_phone
+    data:
+      message: A BombVault backup failed. Open Needs you on the overview.
+```
+
+## Prometheus {#metrics}
+
+**Expose /metrics** in the **Services** card under **Settings, Integrations** serves backup status, sizes and timestamps for Prometheus, Grafana or Uptime Kuma, at `/metrics` on the web interface's port. It is off by default. **Scrape token (optional)** makes the scraper send a bearer token. The labels carry no secrets and no paths.
+
+## Dashboard widget {#dashboard-widget}
+
+The **Dashboard widget** card under **Settings, Integrations** generates a read-only token and gives you an address for any dashboard that shows an iframe, such as Homepage, Organizr or Heimdall. The address opens a small page at `/widget` with just the live activity log. The token grants that log and nothing else, and **Disable** revokes it at once. The embedded page is in English only.
 
 ## Find BombVault on the network {#mdns}
 

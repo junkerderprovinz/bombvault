@@ -1,6 +1,6 @@
 # Troubleshooting
 
-A short FAQ. For the full VM-over-SSH host-side troubleshooting table (permission-denied, host-key verification, missing template variables and more), see the [VM backup over SSH guide](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md) on GitHub.
+A short FAQ. For the full VM-over-SSH host-side troubleshooting table (permission-denied, host-key verification, missing template variables and more), see the [VM backup over SSH guide](vm-backup-ssh-setup.md).
 
 ## Something is not wired up correctly {#something-is-not-wired-up-correctly}
 
@@ -24,7 +24,7 @@ This server took over another server's backup key in the Emergency wizard, and `
 
 ## A phone lands on the login page {#a-phone-lands-on-the-login-page}
 
-A paired phone gets its session over the group only while **Phones can pair with the group's twelve words** is on under **Settings, Security**. A password reset turns it off. An app older than the server also gets no session until it is updated. A server added by its address always asks for the password. A phone removed from the Instances page comes back switched off when its app opens again; switch on **Poll this instance** under **Monitoring** in its details to let it in.
+A paired phone gets its session over the group only while **Phones can pair with the group's twelve words** is on under **Settings, Security**. A password reset turns it off. An app older than the server also gets no session until it is updated. A server added by its address always asks for the password. A phone removed from the Instances page comes back switched off when its app opens again. Switch on **Poll this instance** under **Monitoring** in its details to let it in.
 
 ## VM backup will not connect {#vm-backup-will-not-connect}
 
@@ -34,7 +34,7 @@ VM backup talks to libvirt over SSH, never a mount.
 - On a custom `br0.x` network, set `LIBVIRT_HOST` to your Unraid LAN IP (the container cannot reach the host via `host.docker.internal` there). Enable **Settings, Docker, Host access to custom networks**.
 - If you changed Unraid's SSH port, set `LIBVIRT_SSH_PORT` to match.
 - On TrueNAS, set `LIBVIRT_URI` with TrueNAS's own libvirt socket, give the app the `SETPCAP` capability and add the key to root under **Credentials, Users** (see [TrueNAS SCALE](getting-started.md#truenas)).
-- Full step-by-step diagnosis (reachability test, VLAN routing, `Permission denied (publickey)`, `Host key verification failed`) is in the [VM backup over SSH guide](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md).
+- Full step-by-step diagnosis (reachability test, VLAN routing, `Permission denied (publickey)`, `Host key verification failed`) is in the [VM backup over SSH guide](vm-backup-ssh-setup.md).
 
 ## A live VM snapshot did not run {#a-live-vm-snapshot-did-not-run}
 
@@ -63,10 +63,10 @@ An anonymous Docker volume is not reported. Docker creates one by itself for a f
 
 ## A backup says Deferred {#deferred-backups}
 
-The container's app was busy, so its backup waits and is tried again on its own. The line in the activity log says why and when the next try is; the **When the app is busy** card on the container's **Settings** tab says the same and when the wait ends. Nothing has to be done. To back up right away, use **Back up now**: a backup you start yourself never waits, also not for an exit code of 75.
+The container's app was busy, so its backup waits and is tried again on its own. The line in the activity log says why and when the next try is. The **When the app is busy** card on the container's **Settings** tab says the same and when the wait ends. Nothing has to be done. To back up right away, use **Back up now**: a backup you start yourself never waits, also not for an exit code of 75.
 
 - **Your own check.** Make the **Pre-backup command** exit with code 75 while the app is busy, for example `[ "$(cat /tmp/players)" = 0 ] || exit 75`. Any other code that is not 0 fails the backup as before, so a broken script still shows up under **Needs you**.
-- **Plex, Jellyfin or Emby is never asked.** BombVault first asks the server at the container's own address and, when that does not answer, runs curl or wget inside the container. An image with neither cannot be asked through itself; the log then names that. With **Back up when the server does not answer** on, such a backup runs anyway, with it off it waits.
+- **Plex, Jellyfin or Emby is never asked.** BombVault first asks the server at the container's own address and, when that does not answer, runs curl or wget inside the container. An image with neither cannot be asked through itself. The log then names that. With **Back up when the server does not answer** on, such a backup runs anyway, with it off it waits.
 - **Jellyfin or Emby refuses.** Check the **API key**. It is made in the server's dashboard under API keys.
 - **Plex refuses.** BombVault reads the token from `Preferences.xml` in the folder mounted at `/config`. A server that was never signed in has none and answers only where it allows access without one.
 - **A paused film keeps the backup waiting all night.** Set **Ignore paused sessions after (min)**, for example to 30.
@@ -85,11 +85,11 @@ If the container's network does not exist, for example because its TrueNAS app w
 
 ## A plain export failed instead of writing a file {#a-plain-export-failed-instead-of-writing-a-file}
 
-If **Encrypt exports with age** is on under **Settings, System** but no valid recipient is set, an export fails with a clear error instead of writing plaintext. Add a valid recipient (an age public key or an SSH public key), or turn encryption off if you intend the export to be plaintext. See [Features](features.md).
+If **Encrypt exports with age** is on under **Settings, System** but no valid recipient is set, an export fails with a clear error instead of writing plaintext. Add a valid recipient (an age public key or an SSH public key), or turn encryption off if you intend the export to be plaintext. See [Plain exports](backups.md#exports).
 
 ## A database dump failed {#a-database-dump-failed}
 
-A failed dump never fails the backup around it; it is recorded as its own failed run, and the reason names what to fix.
+A failed dump never fails the backup around it. It is recorded as its own failed run, and the reason names what to fix.
 
 - **Login refused.** The dump signs in with the container's own password variables (`POSTGRES_PASSWORD`, `MARIADB_ROOT_PASSWORD`, `MYSQL_ROOT_PASSWORD` or their `_FILE` versions). Check them on the database container. A `_FILE` variable pointing at a secret the container's own user cannot read fails the same way.
 - **Missing privileges.** With a random root password the dump can only sign in as the app user, so it holds that one database, and MySQL 8.4 and newer may refuse it outright. Give the container a real root password, or switch the dump off for it.
@@ -101,7 +101,7 @@ A failed dump never fails the backup around it; it is recorded as its own failed
 
 ## An import failed {#an-import-failed}
 
-An import stops the container, moves its data folder aside and lets the image create an empty one in its place. If a step before the import itself fails, the old folder is put back automatically. If the import fails, the container keeps the fresh folder and the old one stays beside it as `<data folder>.bombvault-before-import-<timestamp>`; the run's error message names the exact path.
+An import stops the container, moves its data folder aside and lets the image create an empty one in its place. If a step before the import itself fails, the old folder is put back automatically. If the import fails, the container keeps the fresh folder and the old one stays beside it as `<data folder>.bombvault-before-import-<timestamp>`. The run's error message names the exact path.
 
 A data folder that is a dataset of its own, as on TrueNAS, cannot be renamed. The import then leaves the folder in place and moves its contents into the kept folder next to it, so the dataset above needs room for them. The import checks that before it stops the container.
 
@@ -112,8 +112,8 @@ To put it back by hand: stop the container, rename the current data folder out o
 Every problem carries a reason code in brackets, and the [ZFS datasets](zfs-datasets.md#reason-codes) page lists all of them with the fix. The three most common:
 
 - **`snapshot-loop`**: the snapshot did not reach BombVault because Host Data does not pass new mounts through. Edit the container, set the Access Mode of Host Data to Read/Write - Slave and restart BombVault.
-- **`key-not-loaded`**: an encrypted dataset whose key is not loaded is skipped. Load the key with `zfs load-key` and mount the dataset; the next backup includes it.
-- **`ssh-auth`**: the server refused BombVault's key. **ZFS connection to this server**, opened with **View connection** on the Backups page, shows the command that authorizes it; run it once on the server.
+- **`key-not-loaded`**: an encrypted dataset whose key is not loaded is skipped. Load the key with `zfs load-key` and mount the dataset. The next backup includes it.
+- **`ssh-auth`**: the server refused BombVault's key. **ZFS connection to this server**, opened with **View connection** on the Backups page, shows the command that authorizes it. Run it once on the server.
 
 ## An entry stays at "Learning N/10" {#an-entry-stays-at-learning-n10}
 
@@ -143,8 +143,73 @@ The [MCP server page](mcp.md#troubleshooting) lists what each status code and ea
 
 BombVault reports healthy/unhealthy from its own `/api/health`. An auto-heal tool (such as Autoheal) can restart it automatically if the engine ever wedges. Check the container log and the **Host Integration** card for the underlying cause.
 
+## A storage location refuses to save {#location-refused}
+
+BombVault checks a location before it saves it, and the refusal says why in a sentence. The usual ones:
+
+- **"This location lies inside another repository or target, or contains one."** A repository inside a repository would break both. The message names the other place. Pick another folder, or remove that one first.
+- **It is a repository you set up.** The location is one of the rows under **Repositories**, or lies inside or around one. Choose another place, or remove that repository first.
+- **The same place as a section's own folder.** A copy on a section's own folder would copy its backups onto themselves on every run, so it is refused. Pick another place, or see [A section's own folder](offsite-recovery.md#own-folder).
+- **"That is not an off-site target of this domain"** came from a link to a location that was removed. A current version clears these at the start and in an import. If you still see it, update BombVault.
+- **A full host path** such as `/mnt/user/backups`. BombVault runs in a container, so it wants the path below Host Data, `user/backups`, and the message names the one to enter.
+
+## A remote storage location says its repository is gone {#repository-gone}
+
+A location that held backups and suddenly holds no repository does not get a new, empty one on its own, because that one would hide the real one once a disk is back. A rest-server whose disk did not mount is the usual cause, so mount the disk again and run the backup or copy once more. Only if you emptied or deleted the old repository on purpose, press **Start a new repository here** on the location's page. It starts over for every section of that location at once.
+
+## A cloud sign-in expired {#cloud-sign-in-expired}
+
+The test or the next copy then says that the sign-in expired. **Change connection** on the location's page signs in anew.
+
+- **Box, Jottacloud and others with one-time refresh tokens:** BombVault keeps the token rclone refreshed, also across restarts and in the recovery kit. After a restore from an older settings backup, the token in it may have run out, so sign in once more. The repository stays as it is.
+- **iCloud Drive:** Apple ends the sign-in after 30 days. It needs a new trust token and cookies from `rclone config`.
+- **OneDrive:** a sign-in with several drives asks which one to use, so a location left without a choice stays unusable until you pick. For OneDrive Business and Google Drive see the note on pruned data under [Storage locations](offsite-recovery.md#destinations).
+
+## "The off-site copy of the last backup is still running" {#copy-still-running}
+
+The backup before it finished, and its copy is still on its way, which blocks a new backup of that section. Wait until the status head no longer says **Off-site copy running**. The buttons that start a backup say the same while they wait. The first copy to a new location can take hours, see the [S3 example](offsite-recovery.md#example-s3).
+
+## A ZFS replica stops because the target holds newer snapshots {#replica-target-newer}
+
+The target holds snapshots newer than the newest one it shares with this server, for example because the dataset here was rolled back or the copy on the target was changed. The Replica card and the run history name the snapshot under **Roll the target back to**. Run `zfs rollback -r` to that snapshot on the target, for each dataset the run names, and press **Replicate now**. See [How long snapshots stay](zfs-datasets.md#replica-retention).
+
+## A VM with Unraid snapshots fails and names a file {#vm-chain}
+
+BombVault follows each disk's backing chain and backs up every file in it. A chain that cannot be followed to its end fails the backup rather than leave out part of the disk, and the message names the file. Check that the file exists below `/mnt` and that the snapshot is still listed in the VM Manager. A file outside Host Data cannot be read at all. See [VMs with Unraid snapshots](vm-backup-ssh-setup.md#unraid-snapshots).
+
+## Off-site copies are paused after a rebuild {#copies-paused}
+
+After **Discover backups** or the Emergency wizard without restored settings, off-site copies of every rebuilt section wait, because BombVault no longer knows which entries you left out. The overview says so. Press **Confirm default** in **Storage locations per section**, check the preview and leave out what should stay out. Importing a settings file does not end the pause. See [After a rebuild](offsite-recovery.md#after-a-rebuild).
+
+## Notifications do not arrive {#notifications-do-not-arrive}
+
+Start with **Send test** under **Settings, Notifications**. The line below the card says what happened.
+
+- **Nothing is sent at all.** Check **Notify**. With **Never** nothing goes out, and with **Only on failure** a good run stays quiet. With **Summarise scheduled runs** on, a scheduled run sends one summary at its end.
+- **A new address.** After you change the server of Matrix, Gotify or email, the field asks for the token or password again, and the new address is saved only once you type it. BombVault does not send the old secret to a new place.
+- **Gotify** says the server refused the app token: copy it again from the application in Gotify. The **Server URL** is the base address, without `/message`.
+- **Webhook:** check that **Webhook format** fits the service. A Discord address needs **Discord**, and ntfy needs **ntfy**.
+- **Unraid notifications** run over the Host SSH connection, so test that first under **Settings, Integrations**. On another platform they stay off, and the card says so.
+- **A notification mail never comes.** Check **Encryption** against the port, usually **STARTTLS** on 587 or **TLS (implicit)** on 465.
+
+Healthchecks pings do not depend on any of this, see [Healthchecks](notifications.md#healthchecks).
+
+## The Android app cannot open a server {#android-cannot-open}
+
+The start screen says why on the server's card:
+
+- **Not connected:** neither the server's address nor the relay answers. On **No relay**, the app reaches a server only at its own address.
+- **Check certificate:** the server shows another certificate than the one you trusted. The app opens it only after you trust the new one, so make sure the change is yours.
+- **Sign-in needed:** a server added by its address asks for the password. See also [A phone lands on the login page](#a-phone-lands-on-the-login-page).
+- **The key changed:** the start screen shows the new key's fingerprint, and the page opens only after you trust it. See [Away from home](android.md#away).
+
+## Another user cannot read the local repository {#repository-permissions}
+
+The local repository stays readable for other users, such as a sync user over SMB. Before 10.4.1, files that a prune, tag, pull, section move, delete or stack backup wrote could stay unreadable until the next night. Update BombVault, and they are readable right away. The self-backup repository stays readable by root only, on purpose, because it holds BombVault's settings.
+
 ## Still stuck? {#still-stuck}
 
 - Read the full [Configuration](configuration.md) and [Off-site & recovery](offsite-recovery.md) pages.
+- **Bug report** on the **Help** card under **Settings, Info** downloads a ZIP for a GitHub issue: the host check, your configuration with every secret removed, the recent runs, what is scheduled next and the recent log since the container last started. It also holds the last dump of each database, the ZFS entries with their mounts, the open anomalies and how many MCP keys exist. Passwords, tokens and the rclone configuration are stripped, and the bundle says so in its own manifest. It needs a login password. For a crash that restarted the container, look at `docker logs`.
 - Ask on the [Unraid support thread](https://forums.unraid.net/topic/199509-support-junkerderprovinz-bombvault/).
 - Open a [GitHub issue](https://github.com/junkerderprovinz/bombvault/issues).
