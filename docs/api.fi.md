@@ -23,9 +23,9 @@ Ilman kirjautumissalasanaa jokainen, joka voi avata käyttöliittymän, voi myö
 | `GET /api/v1/health` | Versio, instanssin nimi, onko varmuuskopio käynnissä ja mitä tämä token saa tehdä | luku |
 | `GET /api/v1/status` | Suojauksen tila osioittain: viimeisin onnistunut kopio, odotettu väli, tarkistukset, seuraavat ajastetut ajot | luku |
 | `GET /api/v1/activity` | Mitä on käynnissä juuri nyt, vaiheen ja prosentin kanssa | luku |
-| `GET /api/v1/items` | Jokainen suojattu merkintä aikatauluineen, mitä kopio pysäyttää ja viimeisin kopio; `?domain=` yhdelle osiolle | luku |
-| `GET /api/v1/runs` | Ajohistoria, uusimmat ensin; suodattimet `limit`, `domain`, `item`, `status`, `kind`, `since` | luku |
-| `GET /api/v1/anomalies` | Poikkeamat ja yhteenveto avoimista; suodattimet `state`, `severity`, `domain`, `limit` | luku |
+| `GET /api/v1/items` | Jokainen suojattu merkintä aikatauluineen, mitä kopio pysäyttää ja viimeisin kopio. `?domain=` yhdelle osiolle | luku |
+| `GET /api/v1/runs` | Ajohistoria, uusimmat ensin. Suodattimet `limit`, `domain`, `item`, `status`, `kind`, `since` | luku |
+| `GET /api/v1/anomalies` | Poikkeamat ja yhteenveto avoimista. Suodattimet `state`, `severity`, `domain`, `limit` | luku |
 | `GET /api/v1/anomalies/{id}` | Yksi poikkeama | luku |
 | `GET /api/v1/storage/{domain}` | Koon historia, kasvu viikossa ja vapaa tila osion jokaisessa repositoryssä | luku |
 | `POST /api/v1/backups` | Varmuuskopioi yhden merkinnän (`{"domain":"containers","item":"plex"}`) tai koko osion (`{"domain":"vms"}`) | käynnistys |
@@ -61,7 +61,7 @@ Virhe palaa muodossa `{"error": {"code": "...", "message": "..."}}` vastaavalla 
 | 403 | `not_permitted`, `forbidden_origin` | Token saa vain lukea, tai se ei käynnistänyt ajoa, tai pyyntö tuli sivulta, jolla on eri alkuperä |
 | 404 | `not_found` | Tällaista merkintää, ajoa tai poikkeamaa ei ole |
 | 409 | `busy`, `domain_off`, `nothing_to_back_up`, `not_running` | Jotain muuta on käynnissä, osio on pois päältä tai tehtävää ei ole |
-| 429 | `throttled`, `rate_limited`, `cooldown`, `retention_guard` | Raja pidättää pyynnön; `Retry-After` kertoo, milloin voi yrittää uudelleen |
+| 429 | `throttled`, `rate_limited`, `cooldown`, `retention_guard` | Raja pidättää pyynnön. `Retry-After` kertoo, milloin voi yrittää uudelleen |
 
 Käynnistyksiin pätevät samat rajat kuin [MCP:n kautta tehtyihin](mcp.md#starting-backups): 12 tunnissa tokenia kohti, 15 minuuttia saman merkinnän kahden käynnistyksen välillä, enintään 4 saman merkinnän käynnistystä 24 tunnissa sekä säilytyssuoja. Kolme viimeistä laskevat MCP:n ja API:n kautta sekä Home Assistantista tehdyt käynnistykset yhteen. Token voi tehdä 120 pyyntöä minuutissa. Viisi epäonnistunutta yritystä samasta osoitteesta lukitsee sen minuutiksi.
 
@@ -74,7 +74,7 @@ BombVault tarjoaa näiden reittien kuvauksen osoitteessa `/api/v1/openapi.json` 
 BombVault voi näkyä Home Assistantissa laitteena MQTT-löydön kautta. Home Assistant tarvitsee MQTT-integraationsa ja välittäjän, esimerkiksi Mosquitto-lisäosan. Omaa komponenttia ei tarvita.
 
 1. Avaa BombVaultissa **Asetukset, Integraatiot** ja kytke **Home Assistant** päälle **Palvelut**-kortissa. Välittäjän kentät tulevat sen alle.
-2. Anna välittäjän osoite ja portti sekä käyttäjänimi ja salasana, jos se niitä pyytää. Kytke **Käytä TLS:ää** päälle, jos välittäjä käyttää TLS:ää, yleensä portissa 8883; sen varmenteen on oltava voimassa antamallesi osoitteelle. Jos muutat osoitetta, porttia tai käyttäjänimeä, anna salasana uudelleen: BombVault ei anna tallennettua salasanaa toiselle välittäjälle tai käyttäjälle.
+2. Anna välittäjän osoite ja portti sekä käyttäjänimi ja salasana, jos se niitä pyytää. Kytke **Käytä TLS:ää** päälle, jos välittäjä käyttää TLS:ää, yleensä portissa 8883. Sen varmenteen on oltava voimassa antamallesi osoitteelle. Jos muutat osoitetta, porttia tai käyttäjänimeä, anna salasana uudelleen: BombVault ei anna tallennettua salasanaa toiselle välittäjälle tai käyttäjälle.
 3. Napsauta **Tallenna**. Rivi näyttää, kun yhteys on muodostettu.
 
 Laitteen nimi on BombVault tai BombVault, jonka perässä on instanssin nimi suluissa, ja sillä on nämä entiteetit:
@@ -90,9 +90,45 @@ Laitteen nimi on BombVault tai BombVault, jonka perässä on instanssin nimi sul
 | *Osio* repository free space | Vapaa tila siellä, missä sen ensisijainen repository on, jos BombVault pystyy lukemaan sen |
 | Back up *osio* | Painike, joka varmuuskopioi koko osion |
 
-Entiteettien nimet ovat englanniksi, koska Home Assistant ottaa ne sellaisina kuin BombVault ne lähettää. Jokainen päällä oleva osio saa omat entiteettinsä, ja pois kytketty osio menettää ne. Painikkeet tulevat näkyviin, kun kytket **Painikkeet käynnistävät varmuuskopioita** päälle; uudessa asennuksessa se on pois. Painikkeisiin pätevät samat rajat kuin [API:n kautta tehtyihin käynnistyksiin](#errors). Lisäksi BombVault ottaa kerrallaan vastaan yhden painalluksen osiota kohden ja enintään kuusi minuutissa, ja se ohittaa painalluksen, jonka välittäjä on säilyttänyt retained-viestinä. Kuka tahansa, joka voi julkaista välittäjään, voi painaa niitä, joten suojaa välittäjä salasanalla.
+Entiteettien nimet ovat englanniksi, koska Home Assistant ottaa ne sellaisina kuin BombVault ne lähettää. Jokainen päällä oleva osio saa omat entiteettinsä, ja pois kytketty osio menettää ne. Painikkeet tulevat näkyviin, kun kytket **Painikkeet käynnistävät varmuuskopioita** päälle. Uudessa asennuksessa se on pois. Painikkeisiin pätevät samat rajat kuin [API:n kautta tehtyihin käynnistyksiin](#errors). Lisäksi BombVault ottaa kerrallaan vastaan yhden painalluksen osiota kohden ja enintään kuusi minuutissa, ja se ohittaa painalluksen, jonka välittäjä on säilyttänyt retained-viestinä. Kuka tahansa, joka voi julkaista välittäjään, voi painaa niitä, joten suojaa välittäjä salasanalla.
 
 BombVault lukee tilansa 15 sekunnin välein ja julkaisee sen, kun jokin on muuttunut, JSON-muodossa aiheessa `<etuliite>/<solmu>/state`. Etuliite on `bombvault`, kunnes muutat sen, ja solmu on lyhyt tunniste, jonka BombVault valitsee kerran. Löytöviestit menevät Home Assistantin oletusetuliitteeseen `homeassistant`. Molemmat säilytetään (retained). Viimeinen viesti (last will) merkitsee laitteen saavuttamattomaksi, jos BombVault pysähtyy ilmoittamatta. Kun kytket yhteyden pois, BombVault poistaa laitteen ja sen entiteetit Home Assistantista.
+
+### Esimerkki: kortti ja hälytys {#home-assistant-example}
+
+Home Assistant muodostaa entiteettien tunnukset nimistä, joten BombVault-laite saa tunnuksia kuten `sensor.bombvault_status`. Jos suluissa on instanssin nimi, se on myös tunnuksissa, joten tarkista ne ensin kohdasta **Developer Tools, States**. Kortti kojelaudalle:
+
+```yaml
+type: entities
+title: Backups
+entities:
+  - sensor.bombvault_status
+  - sensor.bombvault_running_job
+  - sensor.bombvault_open_anomalies
+  - sensor.bombvault_next_scheduled_backup
+```
+
+Automaatio, joka ilmoittaa puhelimeesi, kun tila muuttuu arvoon `failed`:
+
+```yaml
+alias: BombVault backup failed
+trigger:
+  - platform: state
+    entity_id: sensor.bombvault_status
+    to: failed
+action:
+  - service: notify.mobile_app_my_phone
+    data:
+      message: A BombVault backup failed. Open Needs you on the overview.
+```
+
+## Prometheus {#metrics}
+
+Kun kytket **Tarjoa /metrics** päälle **Palvelut**-kortissa kohdassa **Asetukset, Integraatiot**, BombVault tarjoaa varmuuskopioiden tilan, koot ja aikaleimat Prometheukselle, Grafanalle tai Uptime Kumalle osoitteessa `/metrics` verkkokäyttöliittymän portissa. Se on oletuksena pois päältä. **Scrape-tunniste (valinnainen)** saa kaapijan lähettämään bearer-tokenin. Nimiöissä ei ole salaisuuksia eikä polkuja.
+
+## Kojelautawidget {#dashboard-widget}
+
+**Dashboard-widget**-kortti kohdassa **Asetukset, Integraatiot** luo vain luku -tokenin ja antaa osoitteen mille tahansa kojelaudalle, joka näyttää iframen, kuten Homepage, Organizr tai Heimdall. Osoite avaa pienen sivun osoitteessa `/widget`, jossa on vain live-toimintaloki. Token antaa pääsyn siihen lokiin eikä muuhun, ja **Poista käytöstä** peruu sen heti. Upotettu sivu on vain englanniksi.
 
 ## Löydä BombVault verkosta {#mdns}
 
