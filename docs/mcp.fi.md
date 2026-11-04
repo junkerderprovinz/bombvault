@@ -9,9 +9,9 @@ BombVaultissa on sisäänrakennettu palvelin Model Context Protocolille (MCP), j
 | `get_health` | Versio, instanssin nimi, onko varmuuskopio käynnissä ja mitä tämä avain saa tehdä | luku |
 | `get_status` | Suojauksen tila osioittain: viimeisin onnistunut varmuuskopio, odotettu väli, tarkistukset ja off-site-valvonta, seuraavat ajastetut ajot, joutilasta sovellusta odottavat varmuuskopiot sekä konteille uusin käynnistystesti | luku |
 | `get_coverage` | Mitä BombVault suojaa ja mitä ei, kunkin kohdalla syy | luku |
-| `list_items` | Jokainen suojattu kontti, VM ja kansiojoukko, flash-muisti ja sovelluksen asetukset, ajastuksen, varmuuskopion pysäyttämien palveluiden, viimeisimmän varmuuskopion ja sen keston kera; tietokantakonteilla myös viimeisin dumppi; mukana ovat myös ZFS-datasetit viimeisimmän tarkistuksensa tuloksen kera; jokaisella merkinnällä on viimeisin palautustarkistuksensa ja kontilla lisäksi viimeisin käynnistystesti tai syy, miksi sitä ei voi testata; kontti, joka on luotu uudelleen eri asetuksilla viimeisimmän varmuuskopion jälkeen, luettelee muutokset | luku |
-| `list_runs` | Ajohistoria uusimmat ensin, suodatettavissa osion, merkinnän, tilan, lajin ja ajan mukaan; hidas varmuuskopio, jota yksi asia jarrutti, nimeää sen | luku |
-| `list_restore_points` | Yhden merkinnän palautuspisteet sen ensisijaisesta repositoriosta, ja kontille myös sen tietokantadumpit; ZFS-datasetillä on yksi palautuspiste varmuuskopiota kohden, ja siinä on snapshot jokaisesta sen alla olevasta datasetista | luku |
+| `list_items` | Jokainen suojattu kontti, VM ja kansiojoukko, flash-muisti ja sovelluksen asetukset, ajastuksen, varmuuskopion pysäyttämien palveluiden, viimeisimmän varmuuskopion ja sen keston kera. Tietokantakonteilla on myös viimeisin dumppi. Mukana ovat myös ZFS-datasetit viimeisimmän tarkistuksensa tuloksen kera. Jokaisella merkinnällä on viimeisin palautustarkistuksensa ja kontilla lisäksi viimeisin käynnistystesti tai syy, miksi sitä ei voi testata. Kontti, joka on luotu uudelleen eri asetuksilla viimeisimmän varmuuskopion jälkeen, luettelee muutokset | luku |
+| `list_runs` | Ajohistoria uusimmat ensin, suodatettavissa osion, merkinnän, tilan, lajin ja ajan mukaan. Hidas varmuuskopio, jota yksi asia jarrutti, nimeää sen | luku |
+| `list_restore_points` | Yhden merkinnän palautuspisteet sen ensisijaisesta repositoriosta, ja kontille myös sen tietokantadumpit. ZFS-datasetillä on yksi palautuspiste varmuuskopiota kohden, ja siinä on snapshot jokaisesta sen alla olevasta datasetista | luku |
 | `get_activity` | Mikä on käynnissä juuri nyt, vaiheen ja prosentin kera | luku |
 | `get_storage_stats` | Osion ensisijaisen repositorion koon historia ja kasvu viikossa sekä käytetty, vapaa ja kokonaistila kunkin sen repositorion levyllä tai etäkohteessa | luku |
 | `get_size_breakdown` | Mitkä kansiot ja tiedostot vievät tilaa kontin, virtuaalikoneen tai kansiojoukon uusimmassa varmuuskopiossa ja kuinka paljon niistä viimeisin varmuuskopio lisäsi | luku |
@@ -24,7 +24,7 @@ BombVaultissa on sisäänrakennettu palvelin Model Context Protocolille (MCP), j
 
 Nämä jäävät verkkokäyttöliittymään: kaikenlaiset palautukset (myös tietokantadumpin lataaminen, tallentaminen tai tuonti), varmuuskopioiden poistaminen, prune, unlock, tarkistukset ja harjoitukset, off-site-replikointi, asetukset, tunnukset ja MCP-avaimet sekä sellaisen varmuuskopion peruminen, jonka ajastus, verkkokäyttöliittymä tai toinen avain käynnisti. Sama koskee poikkeaman kuittaamista tai sen merkitsemistä odotetuksi, mikä tehdään **Poikkeamat**-sivulla. Syy on se, että työkalujen vastauksissa on palvelimesi nimiä ja virheilmoituksia, ja mikä tahansa niistä voi sisältää tekstiä, joka on kirjoitettu ohjaamaan avustajaa. Avustaja, joka lankeaa sellaiseen, voi pahimmillaan käynnistää varmuuskopion alla olevien rajojen sisällä tai perua sellaisen, jonka se itse käynnisti.
 
-Jos merkinnän ensisijainen repositorio on muualla (S3, REST, SFTP, rclone), `list_restore_points` ottaa siihen yhteyttä, ja kutsu voi kestää hetken. Off-site-kopioita ei voi listata MCP:n kautta. Mitä poikkeamien tarkistukset katsovat, kerrotaan sivulla [Ominaisuudet](features.md), ja miten ZFS-merkintä pitää yhden tilannevedoksen tietojoukkoa kohden, sivulla [ZFS-tietojoukot](zfs-datasets.md#contents).
+Jos merkinnän ensisijainen repositorio on muualla (S3, REST, SFTP, rclone), `list_restore_points` ottaa siihen yhteyttä, ja kutsu voi kestää hetken. Off-site-kopioita ei voi listata MCP:n kautta. Mitä poikkeamien tarkistukset katsovat, kerrotaan sivulla [Poikkeamat](anomalies.md), ja miten ZFS-merkintä pitää yhden tilannevedoksen tietojoukkoa kohden, sivulla [ZFS-tietojoukot](zfs-datasets.md#contents).
 
 ## Mitä käynnistetty varmuuskopio tekee {#starting-backups}
 
@@ -43,9 +43,9 @@ Osion tai Täysvarmuuskopion käynnistys jättää pois merkinnät, jotka jokin 
 
 ## Ota käyttöön {#switch-on}
 
-1. Avaa **Asetukset, Integraatiot, MCP-palvelin**, napsauta **Valitse asiakasohjelma** ja valitse omasi ikkunasta; sen oikean yläkulman haku löytää sen nimellä. Luettelosta puuttuva asiakasohjelma yhdistää kohdan **Muu asiakasohjelma** kautta.
+1. Avaa **Asetukset, Integraatiot, MCP-palvelin**, napsauta **Valitse asiakasohjelma** ja valitse omasi ikkunasta. Sen oikean yläkulman haku löytää sen nimellä. Luettelosta puuttuva asiakasohjelma yhdistää kohdan **Muu asiakasohjelma** kautta.
 2. Jätä kohtaan **Avain** valinta **Uusi avain** ja ehdotettu nimi, joka on asiakasohjelman nimi, tai kirjoita nimi, joka kertoo, missä avainta käytetään, esimerkiksi ”Claude Code kannettavalla”. Yksi avain asiakasohjelmaa kohden antaa perua yhden koskematta muihin. **Olemassa oleva avain** antaa asiakasohjelmalle aiemmin luomasi avaimen.
-3. Kytke **Salli varmuuskopioiden käynnistys** päälle avaimelle, jonka pitää voida käynnistää varmuuskopioita; ilman sitä avain voi vain lukea. Voit muuttaa sitä myöhemmin avaimen kohdassa **Tiedot**, ja muutos pätee avustajan seuraavasta pyynnöstä alkaen ilman uutta yhteyttä.
+3. Kytke **Salli varmuuskopioiden käynnistys** päälle avaimelle, jonka pitää voida käynnistää varmuuskopioita. Ilman sitä avain voi vain lukea. Voit muuttaa sitä myöhemmin avaimen kohdassa **Tiedot**, ja muutos pätee avustajan seuraavasta pyynnöstä alkaen ilman uutta yhteyttä.
 4. Napsauta **Luo avain**. Avain näytetään kerran. BombVault säilyttää siitä vain sormenjäljen eikä voi näyttää sitä uudelleen, joten kopioi se nyt. Jos suljet ikkunan ennen kuin asiakasohjelma on käyttänyt avainta, kortti näyttää sitä edelleen, kunnes vahvistat kopioineesi sen.
 
 Ilman kirjautumissalasanaa itse verkkokäyttöliittymä on auki kaikille verkossasi, ja kuka tahansa, joka voi avata sen, voi myös luoda avaimen. Kortti kertoo tämän. Jos avaat BombVaultin julkiselta näyttävällä nimellä (esimerkiksi `bombvault.example.com` käänteisen välityspalvelimen takana) eikä kirjautumissalasanaa ole asetettu, siitä osoitteesta ei voi luoda eikä vaihtaa avaimia, jotta mikään internetin verkkosivu ei voi saada selaintasi luomaan sellaista. Aseta kirjautumissalasana, tai avaa BombVault sen IP-osoitteella tai paikallisella nimellä, kuten `tower` tai `tower.local`.
@@ -62,7 +62,7 @@ BombVault säilyttää kunkin avaimen merkinnät enintään 30 päivää: 500 uu
 
 ## Yhdistä asiakasohjelma {#clients}
 
-**Valitse asiakasohjelma** avaa ikkunan, jossa jokainen asiakasohjelma on ruutuna otsikon **Tällä tietokoneella** tai **Pilvessä** alla, ja oikeassa yläkulmassa on haku. Ruutu avaa asiakasohjelman määrityksen samassa ikkunassa kolmessa vaiheessa: avain; asiakasohjelman määritys osoitteella, jolla avasit kortin, kopiointipainike, määrityksen sijainti ja BombVaultin omaa varmennetta käytettäessä se, mitä asiakasohjelma tarvitsee luottaakseen siihen; sekä asiakasohjelman ensimmäisen kutsun odotus. Ikkuna seuraa avaimen viimeisintä käyttöä ja muuttuu vihreäksi, kun kutsu saapuu.
+**Valitse asiakasohjelma** avaa ikkunan, jossa jokainen asiakasohjelma on ruutuna otsikon **Tällä tietokoneella** tai **Pilvessä** alla, ja oikeassa yläkulmassa on haku. Ruutu avaa asiakasohjelman määrityksen samassa ikkunassa kolmessa vaiheessa: avain, asiakasohjelman määritys osoitteella, jolla avasit kortin, kopiointipainike, määrityksen sijainti ja BombVaultin omaa varmennetta käytettäessä se, mitä asiakasohjelma tarvitsee luottaakseen siihen, sekä asiakasohjelman ensimmäisen kutsun odotus. Ikkuna seuraa avaimen viimeisintä käyttöä ja muuttuu vihreäksi, kun kutsu saapuu.
 
 Määritys pitää avaimen poissa kaikilta komentoriveiltä. Kun asiakasohjelma osaa lukea sen ympäristömuuttujasta (`BOMBVAULT_MCP_KEY`), piilotetusta kyselystä tai omasta tiedostostaan, määritys vain mainitsee sen. Kun asiakasohjelmalla ei ole sellaista keinoa, avain on sen määritystiedostossa tai asetuksissa, ja määritys kertoo sen. Kun asiakasohjelman dokumentaatio ei kerro, miten se kohtelee tuntematonta varmennetta, määritys kirjoittaa vaiheen ohjeeksi siltä varalta, että asiakasohjelma hylkää BombVaultin varmenteen.
 
@@ -123,7 +123,7 @@ BombVaultin omalla varmenteella (katso [TLS ja varmenteet](#tls)) komento ohjaa 
 claude mcp add bombvault --scope user -e "NODE_EXTRA_CA_CERTS=<path of the downloaded bombvault-cert.pem>" -- npx -y mcp-remote@latest https://192.168.1.10:3443/mcp --header-file "<path of the file with your key>"
 ```
 
-Tarkista yhteys komennolla `/mcp` Claude Coden sisällä. `--scope user` tuo BombVaultin käyttöön kaikissa projekteissasi. Claude Code tallentaa vain avaintiedoston polun, joten avain ei näy komennossa eikä komentotulkkisi historiassa, eikä prosessiluettelossa. Pidä tiedosto paikassa, jossa vain sinä voit lukea sen, ja minkään commitoitavan kansion ulkopuolella. `@latest` saa `npx`:n hakemaan ajantasaisen `mcp-remote`n; muuten käytettäisiin vanhempaa, globaalisti asennettua versiota, joka ei tunne valitsinta `--header-file`.
+Tarkista yhteys komennolla `/mcp` Claude Coden sisällä. `--scope user` tuo BombVaultin käyttöön kaikissa projekteissasi. Claude Code tallentaa vain avaintiedoston polun, joten avain ei näy komennossa eikä komentotulkkisi historiassa, eikä prosessiluettelossa. Pidä tiedosto paikassa, jossa vain sinä voit lukea sen, ja minkään commitoitavan kansion ulkopuolella. `@latest` saa `npx`:n hakemaan ajantasaisen `mcp-remote`n. Muuten käytettäisiin vanhempaa, globaalisti asennettua versiota, joka ei tunne valitsinta `--header-file`.
 
 Älä kirjoita viittausta `${BOMBVAULT_MCP_KEY}` Claude Coden `mcp-remote`-argumentteihin. Claude Code täyttää tällaisen viittauksen omasta ympäristöstään ennen kuin se käynnistää `mcp-remote`n, joten avain päätyy sen prosessin komentoriville, josta tietokoneen muut ohjelmat ja käyttäjät voivat lukea sen.
 
@@ -170,7 +170,7 @@ Claude Desktop tavoittaa BombVaultin `mcp-remote`n kautta, joka tarvitsee Node.j
 
 ### Asiakasohjelmat pilvessä {#cloud-clients}
 
-ChatGPT, claude.ai:n Claude, Grok ja Le Chat kutsuvat BombVaultia toimittajansa palvelimilta, joten BombVaultin täytyy näkyä internetiin julkisesti luotetulla varmenteella, esimerkiksi käänteisen välityspalvelimen takana; Le Chat hylkää itse allekirjoitetut. Välityspalvelimen kirjautuminen voi suojata verkkokäyttöliittymää, mutta `/mcp`:n täytyy päästä BombVaultiin ilman sitä: nämä palvelut eivät osaa kirjautua välityspalvelimeen, ja BombVault tarkistaa niiden avaimen tai tunnuksen itse. Grok ja Le Chat lähettävät kiinteän avaimen, ja niiden painikkeet ottavat ne käyttöön kuten muutkin. ChatGPT ja useimmissa organisaatioissa myös claude.ai:n Claude yhdistävät vain OAuth-kirjautumisella, joka kuvataan seuraavaksi.
+ChatGPT, claude.ai:n Claude, Grok ja Le Chat kutsuvat BombVaultia toimittajansa palvelimilta, joten BombVaultin täytyy näkyä internetiin julkisesti luotetulla varmenteella, esimerkiksi käänteisen välityspalvelimen takana. Le Chat hylkää itse allekirjoitetut. Välityspalvelimen kirjautuminen voi suojata verkkokäyttöliittymää, mutta `/mcp`:n täytyy päästä BombVaultiin ilman sitä: nämä palvelut eivät osaa kirjautua välityspalvelimeen, ja BombVault tarkistaa niiden avaimen tai tunnuksen itse. Grok ja Le Chat lähettävät kiinteän avaimen, ja niiden painikkeet ottavat ne käyttöön kuten muutkin. ChatGPT ja useimmissa organisaatioissa myös claude.ai:n Claude yhdistävät vain OAuth-kirjautumisella, joka kuvataan seuraavaksi.
 
 ### OAuth-kirjautuminen {#oauth}
 
@@ -193,14 +193,14 @@ Mikä tahansa Streamable HTTP:tä puhuva asiakasohjelma käy:
 - URL: verkkokäyttöliittymän osoite ja perään `/mcp`, esimerkiksi `https://192.168.1.10:3443/mcp`.
 - Avain otsakkeessa `Authorization: Bearer <key>` tai `X-API-Key: <key>`. Jos molemmat lähetetään, niissä on oltava sama avain.
 - `POST`, jossa `Content-Type: application/json` ja `Accept: application/json, text/event-stream`.
-- Yksi JSON-RPC-viesti pyyntöä kohden; eräpyynnöt (batch) hylätään.
+- Yksi JSON-RPC-viesti pyyntöä kohden. Eräpyynnöt (batch) hylätään.
 - Protokollaversiot 2026-07-28, 2025-11-25, 2025-06-18 ja 2025-03-26.
 
 ## TLS ja varmenteet {#tls}
 
 BombVault tarjoaa HTTPS:n itse myöntämällään varmenteella, ja aluksi se varmenne nimeää vain `localhost`, `127.0.0.1` ja `::1`. Claude Code ja `mcp-remote` hylkäävät sen lähiverkon osoitteessa. Kiertotiet siinä järjestyksessä, joka sopii useimpiin Unraid-asennuksiin:
 
-1. **Lisää osoite MCP-kortissa.** Kun kortti avataan HTTPS:llä osoitteessa, jota varmenne ei nimeä, kortti kertoo sen ja tarjoaa painiketta **Lisää tämä osoite varmenteeseen**. BombVault myöntää silloin varmenteensa uudelleen niin, että osoite on mukana (selaimesi varoittaa vielä kerran, kuten ensimmäisellä kerralla). Napsauta sitten **Lataa varmenne**; katkelmat asettavat `NODE_EXTRA_CA_CERTS`:n ladattuun tiedostoon, joten asiakasohjelma luottaa juuri siihen varmenteeseen. Se tarkoittaa myös, että jokainen aiemmin ladatulla tiedostolla määritetty asiakasohjelma lakkaa yhdistämästä heti, kun varmenne myönnetään uudelleen, tällä tietokoneella ja kaikilla muilla, kunnes se saa uuden tiedoston.
+1. **Lisää osoite MCP-kortissa.** Kun kortti avataan HTTPS:llä osoitteessa, jota varmenne ei nimeä, kortti kertoo sen ja tarjoaa painiketta **Lisää tämä osoite varmenteeseen**. BombVault myöntää silloin varmenteensa uudelleen niin, että osoite on mukana (selaimesi varoittaa vielä kerran, kuten ensimmäisellä kerralla). Napsauta sitten **Lataa varmenne**. Katkelmat asettavat `NODE_EXTRA_CA_CERTS`:n ladattuun tiedostoon, joten asiakasohjelma luottaa juuri siihen varmenteeseen. Se tarkoittaa myös, että jokainen aiemmin ladatulla tiedostolla määritetty asiakasohjelma lakkaa yhdistämästä heti, kun varmenne myönnetään uudelleen, tällä tietokoneella ja kaikilla muilla, kunnes se saa uuden tiedoston.
 2. **Käänteinen välityspalvelin luotetulla varmenteella** (Nginx Proxy Manager, SWAG, Caddy, Traefik). Asiakasohjelma näkee silloin välityspalvelimen varmenteen eikä tarvitse muuta, eikä kortti varoita BombVaultin omasta.
 3. **Tailscale.** `tailscale serve` kontin edessä tai Unraidin Tailscale-integraatio antaa sinulle `ts.net`-nimen luotetulla varmenteella.
 4. **`HTTP_ONLY=true`**, vain TLS:n päättävän välityspalvelimen takana tai verkossa, johon luotat täysin. Se vaihtaa koko verkkokäyttöliittymän tavalliseen HTTP:hen, vaatii muutoksen kontin asetuksiin ja lähettää avaimen salaamattomana.
@@ -261,9 +261,9 @@ Kaikki, mitä avustaja lukee, menee sen takana olevalle tekoälypalvelun tarjoaj
 | `cooldown` | Tämä merkintä, tämä osio tai Täysvarmuuskopio käynnistettiin käyttöliittymän ulkopuolelta alle 15 minuuttia sitten. |
 | `retention_guard` | Vielä yksi MCP-varmuuskopio jättäisi "säilytä viimeiset N" -ikkunaan vain MCP:n tekemiä palautuspisteitä, tai merkintä on jo saanut 4 varmuuskopiota MCP:n kautta viimeisten 24 tunnin aikana, epäonnistuneet ja perutut mukaan lukien. Ensimmäisessä tapauksessa seuraava ajastettu varmuuskopio tekee tilaa, toisessa merkintä vapautuu 24 tuntia vanhimman niistä jälkeen. Verkkokäyttöliittymästä voit käynnistää sen milloin tahansa. |
 | `rate_limited` | Avain on käyttänyt tämän tunnin 12 käynnistystään. |
-| `not_permitted` käynnistyksessä | Avain saa vain lukea. Kytke **Salli varmuuskopioiden käynnistys** päälle kortissa; uutta yhteyttä ei tarvita. Peruutuksessa se tarkoittaa, että tämä avain ei käynnistänyt ajoa. |
+| `not_permitted` käynnistyksessä | Avain saa vain lukea. Kytke **Salli varmuuskopioiden käynnistys** päälle kortissa. Uutta yhteyttä ei tarvita. Peruutuksessa se tarkoittaa, että tämä avain ei käynnistänyt ajoa. |
 | `domain_off` | Se osio on kytketty pois kohdassa **Asetukset, Yleiset**. |
-| `not_found` | BombVault ei suojaa sitä merkintää. Lisää se ensin verkkokäyttöliittymässä; MCP ei koskaan luo asetuksia. |
+| `not_found` | BombVault ei suojaa sitä merkintää. Lisää se ensin verkkokäyttöliittymässä. MCP ei koskaan luo asetuksia. |
 | Asiakas ei löydä valtuutuspalvelinta | OAuth-kirjautuminen on pois päältä, kirjautumissalasanaa ei ole asetettu, tai välityspalvelin ei päästä polkua `/.well-known/` läpi BombVaultiin. |
 | Suostumussivu kertoo, ettei paluuosoitetta ole rekisteröity | Asiakas lähetti paluuosoitteen, jota se ei ole rekisteröinyt. Poista liitin asiakkaasta ja lisää se uudelleen. |
 | Kirjautunut asiakas saa vastauksen `401` | Sen lupa on peruttu, se on vanhentunut 30 käyttämättömän päivän jälkeen, tai julkinen osoite on muuttunut. Asiakas kirjautuu uudelleen. |

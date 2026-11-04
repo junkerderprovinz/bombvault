@@ -2,9 +2,12 @@
 
 Android-sovellus tuo ryhmäsi kaikki BombVault-palvelimet puhelimeesi. Se avautuu palvelinluetteloon, jonka yläpuolella on kaikkien palvelinten toimintaloki, samat rivit kuin yleiskatsauksessa, ja avaa napauttamasi palvelimen puhelinnäkymän. Sovellus itse ei varmuuskopioi mitään.
 
+![Sovelluksen aloitusnäyttö: kaikkien palvelinten toimintaloki ylhäällä, sen alla palvelinluettelo.](assets/screenshots/android/start-dark.png#only-dark)
+![Sovelluksen aloitusnäyttö: kaikkien palvelinten toimintaloki ylhäällä, sen alla palvelinluettelo.](assets/screenshots/android/start-light.png#only-light)
+
 ## Sovelluksen hankkiminen {#install}
 
-- **Asetukset, Sovellukset:** Android-sovelluksen kortti tarjoaa APK:n palvelimesi ajamalle julkaisulle, ja mukana on QR-koodi, jonka voit skannata puhelimelta.
+- **Asetukset, Sovellukset:** Android-sovelluksen kortti tarjoaa APK:n palvelimesi ajamalle julkaisulle, ja mukana on QR-koodi, jonka voit skannata puhelimelta. Kortti linkittää myös F-Droid-listauksen.
 - **APK:** jokaisen julkaisun sivulla on `bombvault-android.apk`, ja [tämä linkki](https://github.com/junkerderprovinz/bombvault/releases/latest/download/bombvault-android.apk) lataa aina uusimman version. Sovellus vaatii Android 10:n tai uudemman, ja Android kysyy kerran, saako sovellus, jolla avaat tiedoston, asentaa sovelluksia.
 - **Google Play:** sovellus on suljetussa testauksessa, kunnes se voidaan julkaista. Google Play julkaisee uuden kehittäjätilin sovelluksen vasta, kun vähintään 12 testaajaa on pitänyt sen asennettuna 14 päivän ajan. Jos haluat auttaa, liity [testaajaryhmään](https://groups.google.com/g/arrowloop-testers), avaa [testisivu](https://play.google.com/apps/testing/bombvault.halleluja.design), napauta **Ryhdy testaajaksi** ja asenna BombVault Google Playsta.
 - **F-Droid:** [BombVault F-Droidissa](https://f-droid.org/packages/bombvault.halleluja.design/). F-Droid kääntää sovelluksen itse lähdekoodista ja allekirjoittaa sen omalla avaimellaan, joten uusi julkaisu tulee sinne muutaman päivän myöhemmin. Jos haluat vaihtaa F-Droidin sovelluksen ja APK:n välillä, poista toinen ensin.
@@ -59,7 +62,7 @@ Plussan vieressä oleva ratas avaa sovelluksen asetukset:
 
 - kieli sekä nimi, jolla puhelin näkyy Ilmentymät-sivulla (tyhjä tarkoittaa puhelimen mallia),
 - ulkoasu, joka seuraa luettelon ensimmäistä palvelinta, kunnes asetat oman, sekä animaatiot, joilla on oma asetuksensa,
-- raportti kopioitavaksi, kun ilmoitat ongelmasta; se ei sisällä osoitetta, nimeä eikä lausetta,
+- raportti kopioitavaksi, kun ilmoitat ongelmasta. Se ei sisällä osoitetta, nimeä eikä lausetta,
 - Tietoja-kortti tietosuojaselosteineen,
 - **Poista kaikki palvelimet**, joka poistaa sovelluksesta kaikki palvelimet ja eroaa ryhmästä. Jokainen palvelin, jonka puhelin vielä tavoittaa, poistaa sen Ilmentymät-sivultaan.
 

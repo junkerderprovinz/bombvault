@@ -7,136 +7,300 @@ Paikalliset varmuuskopiot suojaavat kadonneelta kontilta tai huonolta päivityks
 
 ## Etäkopiot {#off-site-copies}
 
-Pidä nopea paikallinen varmuuskopio ja lisää yksi tai useampi kohde tilojen ulkopuolelle. BombVault kopioi uudet varmuuskopiot sinne `restic copy` -komennolla parhaan yrityksen periaatteella, joten etäkohteen nikottelu ei koskaan kaada paikallista varmuuskopiota. Tässä muodossa paikallinen repo pysyy ensisijaisena ja etärepo on kopio, mutta osion ensisijaisen repon ei tarvitse olla paikallinen lainkaan; katso alla [Etäsijaintiset ensisijaiset arkistot](#remote-primary-repositories), jos haluat varmuuskopioida suoraan S3:een, rest-serveriin tms. kopioimisen sijaan.
+Pidä nopea paikallinen varmuuskopio ja lisää yksi tai useampi kohde tilojen ulkopuolelle. BombVault kopioi uudet varmuuskopiot sinne `restic copy` -komennolla parhaan yrityksen periaatteella, joten etäkohteen nikottelu ei koskaan kaada paikallista varmuuskopiota. Tässä muodossa kukin osio kirjoittaa ensin omaan kansioonsa ja etärepo on kopio. Oman kansion ei tarvitse olla tällä palvelimella: katso [Osion oma kansio](#own-folder), jos haluat pitää sitä kohteessa, kuten S3:ssa tai rest-serverissä.
 
-  - **Useita kohteita per osio.** Jokainen osio (kontit, VMs, flash, Itsevarmuuskopio, kansiot ja ZFS-tietojoukot) voi kopioida useaan etäkohteeseen kerralla, joten voit pitää rinnakkain esimerkiksi rest-serverin ystävän laatikossa ja S3-bucketin. **Kohteet osioittain** -kortti Kohteet-sivulla kytkee kunkin osiosta kohteeseen vievän rivin päälle tai pois.
-  - **Milloin kopioidaan.** Kohteen **Kopioi**-kortti asettaa kohdan **Milloin kopioidaan**: **Jokaisen varmuuskopion jälkeen** tai oma aikataulu, joka kerää varmuuskopiot ja kopioi kiinteinä aikoina. Kohdassa **Asetukset, Aikataulu, Etäkopiot osioittain** **Poikkeus** antaa osiolle oman kopiointiaikataulun. **Replikoi nyt** osion **Etäkopio**-kortissa kohdassa **Asetukset, Kohteet** käynnistää kopioinnin pyynnöstä.
-  - **Säilytys** asetetaan kohdekohtaisesti kohdassa **Kuinka kauan säilytetään**, joten etäkopioita voi pitää pidempään arkistona. Osion etäkentän kopio noudattaa korttia **Etäsäilytys** kohdassa **Asetukset, Kohteet**; jätä se kaikki nollille, jotta etävarmuuskopioita ei koskaan karsita automaattisesti.
-  - **Kaistanleveyden rajat** (**Etäkaistanleveys** kohdassa **Asetukset, Kohteet** tai kohteen **Kopioi**-kortti) rajoittavat resticin lähetys-/latausnopeutta, jotta kopiot eivät tuki WAN-yhteyttäsi.
-  - Kun kopio on käynnissä, yleiskatsauksen tilarivi kertoo **Etäkopiointi käynnissä**. Se on aktiivisuusilmaisin, ei prosenttipalkki, koska `restic copy` ei tarjoa koneluettavaa etenemistietoa.
+- **Useita kohteita osiota kohti.** Jokainen osio (kontit, VM:t, flash, itsevarmuuskopio, kansiot ja ZFS-tietojoukot) voi kopioida useaan etäkohteeseen kerralla, joten voit pitää rinnakkain esimerkiksi rest-serverin ystävän laatikossa ja S3-bucketin. Kohteet-sivun kortti **Kohteet osioittain** kytkee jokaisen osiosta kohteeseen vievän rivin päälle tai pois.
+- **Milloin kopiot ajetaan.** Kohteen **Kopioi**-kortti asettaa kohdan **Milloin kopioidaan**: **Jokaisen varmuuskopion jälkeen** tai oma aikataulu, joka kerää varmuuskopiot ja kopioi kiinteinä aikoina. Kohdassa **Asetukset, Aikataulu, Etäkopiot osioittain** **Poikkeus** antaa yhdelle osiolle oman kopiointiaikataulun.
+- **Etäkopiot-kortti.** Kohdassa **Asetukset, Kohteet** jokaisella osiolla, jolla on etäkopio, on rivi kortissa **Etäkopiot**. Siinä ovat **Testaa yhteys**, **Replikoi nyt** kopioinnin käynnistämiseen pyydettäessä sekä **Määritä** tai **Muokkaa**. Osion muut kopioasetukset avautuvat sieltä sen omaan ikkunaan.
+- **Säilytys** asetetaan kohdekohtaisesti kohdassa **Kuinka kauan säilytetään**, joten etäkopioita voi pitää pidempään arkistona. Osion etäkentän kopio noudattaa sitä kuten kaikki muutkin kopiot, ja osio voi pitää omat arvonsa kohdassa **Säännöt osioittain**. Kaikki nollilla ei koskaan karsi etävarmuuskopioita. Katso [Kuinka kauan säilytetään](#keep).
+- **Kaistanleveyden rajat** (**Etäkaistanleveys** kohdassa **Asetukset, Kohteet** tai kohteen **Kopioi**-kortti) rajoittavat resticin lähetys- ja latausnopeutta, jotta kopiot eivät tuki WAN-yhteyttäsi. Ne annetaan yksikössä KiB/s, jota restic käyttää, ja jokainen kenttä näyttää saman nopeuden myös yksiköissä MB/s ja Mbit/s kirjoittaessasi: 2048 näkyy noin 2,0 MB/s (16,8 Mbit/s).
+- **Pakkaus** on **Pois**, **Automaattinen** (resticin oletus) tai **Maksimi**. Se asetetaan jokaiselle kohteelle ja yhdelle osiolle sen säännöissä siellä. Varmuuskopiot, kopiot ja karsinta kirjoittavat sillä, ja palautuspaketti nimeää sen, joten tavallinen restic voi jatkaa kirjoittamista samalla tavalla.
+- **Suoratoisto ensin.** Kun mediapalvelin, kuten Plex, Jellyfin tai Emby, suoratoistaa, kopiot lähetetään alemmalla rajalla ja palaavat normaaliin muutaman minuutin kuluttua suoratoiston päättymisestä. Kohteet-sivun kortissa **Suoratoisto** ovat **Hidasta etäkopioita suoratoiston aikana**, **Mediapalvelimet** (kontit, joiden image-nimessä on Plex, Jellyfin tai Emby, kunnes valitset itse), **Suoratoisto yli (Mbit/s)**, **Lähetysraja suoratoiston aikana (KiB/s)** ja **Takaisin normaaliin (min) jälkeen**. BombVault lukee liikenteen Dockerista, joten isäntäverkossa olevaa mediapalvelinta ei voi mitata. REST, S3, B2, Azure, Google Cloud, Swift ja rclone HTTP:n yli hidastuvat kesken kopion. SFTP sekä paikalliset tai liitetyt kansiot ottavat alemman rajan käyttöön seuraavassa kopiointivaiheessa.
+- **Kylmätallennus (S3).** S3-kohde voi käyttää edullisempaa **Tallennusluokkaa**, jonka restic pystyy yhä lukemaan heti, kuten Standard-IA, One Zone-IA, Intelligent-Tiering tai Glacier Instant Retrieval. Glacier Flexible Retrieval ja Deep Archive on jätetty pois, koska restic ei voi palauttaa niistä. Rclone-etäsijainti asettaa luokkansa rclone-määrityksessä.
+- **Kasvubudjetti.** **Kasvubudjetti (GB, 0 = pois)** osion kopioikkunassa antaa hälytyksen, kun arkisto kasvaa yli sen koon. Se ei koskaan poista mitään, joten se sopii append-only-kopiolle, jota täältä ei karsita.
+- Kun kopio on käynnissä, yleiskatsauksen tilarivi kertoo **Etäkopiointi käynnissä**. Se on aktiivisuusilmaisin, ei prosenttipalkki, koska `restic copy` ei tarjoa koneluettavaa etenemistietoa.
 
 !!! note "Palautus mistä tahansa paikasta"
-    Jokainen merkintä listaa varmuuskopionsa yhtenä aikajanana kaikkien paikkojen yli, joissa varmuuskopio on, **Varmuuskopiot**-välilehdellään. B2:een kopioitu varmuuskopio näkyy kerran, merkittynä jokaisella paikalla, joka sen pitää. Palautus ottaa ensimmäisen paikan, johon se pääsee, aloittaen repositorysta, johon merkintä kirjoitetaan, ja voit valita toisen paikan varmuuskopiokohtaisesti. Etäkohteet luetaan vasta, kun napsautat **Tarkista**, koska pilvitallennuksen listaaminen kestää. Poistaminen yhdessä paikassa tarkistaa ensin muut ja kertoo, oliko se viimeinen kopio.
+    Jokainen merkintä listaa varmuuskopionsa yhtenä aikajanana kaikkien paikkojen yli, joissa varmuuskopio on, **Varmuuskopiot**-välilehdellään. B2:een kopioitu varmuuskopio näkyy kerran, merkittynä jokaisella paikalla, joka sen pitää. Palautus ottaa ensimmäisen paikan, johon se pääsee, aloittaen arkistosta, johon merkintä kirjoitetaan, ja voit valita toisen paikan varmuuskopiokohtaisesti. Etäkohteet luetaan vasta, kun napsautat **Tarkistus**, koska pilvitallennuksen listaaminen kestää. Poistaminen yhdessä paikassa tarkistaa ensin muut ja kertoo, oliko se viimeinen kopio. Katso [Palautus](restore.md).
 
 ## Kohteet {#destinations}
 
 Kohde on paikka, johon varmuuskopiot menevät: paikallinen kansio, jako, oma palvelin tai pilvipalvelu. Se määritetään kerran ja palvelee jokaista osiota. Avaa **Kohteet** sen asetusruudusta tai kytke siellä päälle **Näytä myös sivupalkissa** kiinnittääksesi sen.
 
+![Kohteet-sivu: kohteiden luettelo ja virta, joka näyttää, mikä osio menee minne.](assets/screenshots/storage/locations-dark.png#only-dark)
+![Kohteet-sivu: kohteiden luettelo ja virta, joka näyttää, mikä osio menee minne.](assets/screenshots/storage/locations-light.png#only-light)
+
 **Lisää kohde** avaa ikkunan neljässä vaiheessa:
 
-1. **Palveluntarjoaja.** Jokainen palvelu on listattu logoineen, hakukenttä ikkunan oikeassa yläkulmassa, ryhmissä: S3-bucketteja tarjoavat tallennuspalvelut (Backblaze B2, Wasabi, Cloudflare R2, Hetzner Object Storage, Amazon S3 ja muut), oma S3-palvelimesi (Garage, SeaweedFS, RustFS, Silo, Ceph, JuiceFS, Versity S3 Gateway), oma palvelimesi ja jakosi (rest-server, Hetzner Storage Box, SFTP, SMB, WebDAV, liitetty polku), pilvitallennus (OneDrive, Google Drive, Dropbox, pCloud, Nextcloud ja muut, joita rclone tukee) sekä ryhmäsi vastaanottopalvelimet. Jokainen kertoo, kuinka hyvin se sopii varmuuskopioille: pilvilevyt hidastuvat monien pyyntöjen alla, joten ensimmäinen varmuuskopio ja karsinta kestävät siellä kauemmin.
-2. **Kirjautuminen.** Kentät riippuvat palvelusta: S3:lle käyttöavain, WebDAV:lle ja SMB:lle käyttäjä ja salasana, sovellussalasana, kun kaksivaiheinen kirjautuminen estää tavallisen, BombVaultin julkinen SSH-avain SFTP:lle ja Storage Boxille tai token palveluille, jotka kirjautuvat selaimen kautta. Niille ikkuna näyttää `rclone authorize` -komennon, joka ajetaan tietokoneella, jossa on selain; sen tulostama token liitetään kenttään. **Testaa** tarkistaa kirjautumisen ennen kuin mitään tallennetaan. Ikkuna listaa sitten kohteen kansiot, **Uusi kansio** -toiminnolla uuden luomiseen ja vapaalla tilalla, kun palvelu sen raportoi. Tyhjä kansio on turvallisin; BombVault luo siihen yhden kansion osiota kohti.
-3. **Suojaus.** Ikkuna kertoo suoraan, mihin palvelu pystyy. Rest-server append-only-tilassa kieltäytyy poistosta, ja peukalointitesti tarkistaa sen. S3-bucket voi säilyttää vanhat versiot versioinnilla ja objektilukolla, mitä BombVault ei vielä voi tarkistaa. Pilvilevy ei voi kieltäytyä poistosta lainkaan: kuka tahansa, joka pääsee palvelimelle, pääsee myös tuohon kopioon. Kytke **Poistosuoja (append-only)** päälle vain siellä, missä vastapuoli todella kieltäytyy poistosta; BombVault ei sen jälkeen koskaan karsi siellä. **Hätätilanteen varalle** kertoo, mitä palautuspaketti sisältää tästä kohteesta.
+1. **Palveluntarjoaja.** Jokainen palvelu on listattu logoineen, hakukenttä ikkunan oikeassa yläkulmassa, ryhmissä: **Paikallinen** tähän palvelimeen liitetylle levylle tai jaolle, **NAS tai palvelin** (rest-server, Hetzner Storage Box, SFTP, SMB, WebDAV ja muut), **S3-palvelu** (Backblaze B2, Wasabi, Cloudflare R2, Hetzner Object Storage, Amazon S3 ja muut), oma S3-palvelimesi (Garage, SeaweedFS, RustFS, Silo, Ceph, JuiceFS, Versity S3 Gateway), **Pilvitallennus** (OneDrive, Google Drive, Dropbox, pCloud, Nextcloud ja muut, joita rclone tukee) sekä **Ryhmästäsi**, eli ryhmäsi vastaanottopalvelimet. Jokainen kertoo, kuinka hyvin se sopii varmuuskopioille: pilvilevyt hidastuvat monien pyyntöjen alla, joten ensimmäinen varmuuskopio ja karsinta kestävät siellä kauemmin. Palvelulle, jota mikään ruutu ei kata, kohdan **Oma rclone-määritys** ruutu **Rclone** ottaa vastaan rclone.conf-tiedostosta liitetyt etäsijainnit.
+2. **Kirjaudu sisään.** Kentät riippuvat palvelusta: S3:lle käyttöavain, WebDAV:lle ja SMB:lle käyttäjä ja salasana, sovellussalasana, kun kaksivaiheinen kirjautuminen estää tavallisen, BombVaultin julkinen SSH-avain SFTP:lle ja Storage Boxille tai token palveluille, jotka kirjautuvat selaimen kautta. Niille ikkuna näyttää `rclone authorize` -komennon, joka ajetaan tietokoneella, jossa on selain, ja sen tulostama token liitetään kenttään. Jos palvelulle on jo [tallennetut tunnukset](#sign-ins), **Tallennetut tunnukset** valitsee ne kohdan **Uudet avaimet** sijaan. **Testaa yhteys** tarkistaa kirjautumisen ennen kuin mitään tallennetaan. Ikkuna listaa sitten kohteen kansiot, **Uusi kansio** -toiminnolla uuden luomiseen ja vapaalla tilalla, kun palvelu sen raportoi. Tyhjä kansio on turvallisin. BombVault luo siihen yhden kansion osiota kohti.
+3. **Suojaus.** Ikkuna kertoo suoraan, mihin palvelu pystyy. Rest-server append-only-tilassa kieltäytyy poistosta, ja peukalointitesti tarkistaa sen. S3-bucket voi säilyttää vanhat versiot versioinnilla ja objektilukolla, mitä BombVault ei vielä voi tarkistaa. Pilvilevy ei voi kieltäytyä poistosta lainkaan: kuka tahansa, joka pääsee palvelimelle, pääsee myös tuohon kopioon. Kytke **Poistosuoja (append-only)** päälle vain siellä, missä vastapuoli todella kieltäytyy poistosta. BombVault ei sen jälkeen koskaan karsi siellä. **Hätätilanteen varalle** kertoo, mitä palautuspaketti sisältää tästä kohteesta.
 4. **Mille osioille.** Valitse osiot, jotka varmuuskopioivat tänne. Ensimmäinen kopio tuo koko historian mukanaan. Merkinnät, jotka valitsivat omat kohteensa, eivät saa uutta itsestään, ja ikkuna nimeää ne.
+
+![Lisää kohde: ensimmäinen vaihe, jossa jokainen palveluntarjoaja on ruutuna.](assets/screenshots/storage/add-providers-dark.png#only-dark)
+![Lisää kohde: ensimmäinen vaihe, jossa jokainen palveluntarjoaja on ruutuna.](assets/screenshots/storage/add-providers-light.png#only-light)
+
+![Lisää kohde: kirjautumisvaihe onnistuneen testin jälkeen.](assets/screenshots/storage/add-signin-dark.png#only-dark)
+![Lisää kohde: kirjautumisvaihe onnistuneen testin jälkeen.](assets/screenshots/storage/add-signin-light.png#only-light)
 
 Jotkin palvelut kysyvät kirjautuessa hieman enemmän:
 
-- **SFTP ja Storage Box.** **Lisää avain** vie BombVaultin julkisen avaimen palvelimelle kentän **Tilin salasana** avulla; salasanaa käytetään vain tuohon yhteen kirjautumiseen eikä sitä tallenneta mihinkään. Sen alla näkyy komento, jolla saman voi tehdä käsin. Testi näyttää kohdan **Palvelimen avain** sormenjälkineen; BombVault muistaa sen ja hylkää palvelimen, jos se myöhemmin näyttää eri avaimen.
+- **SFTP ja Storage Box.** **Lisää avain** vie BombVaultin julkisen avaimen palvelimelle kentän **Tilin salasana** avulla. Salasanaa käytetään vain tuohon yhteen kirjautumiseen eikä sitä tallenneta mihinkään. Sen alla näkyy komento, jolla saman voi tehdä käsin. Testi näyttää kohdan **Palvelimen avain** sormenjälkineen. BombVault muistaa sen ja hylkää palvelimen, jos se myöhemmin näyttää eri avaimen.
 - **Yhden bucketin S3-avaimet**, kuten Cloudflare R2:n objektitoken tai rajattu AWS-avain, eivät välttämättä saa listata muita bucketteja. Kirjoita bucket kenttään **Bucket**, niin testi ja kansioluettelo avaavat juuri sen bucketin.
+- **S3:n alueet ja osoitteet.** Alue luetaan päätepisteestä, joka nimeää sen (AWS, Backblaze B2, Hetzner, Scaleway, OVH, Wasabi). Garage aloittaa omalla oletusalueellaan, ja IDrive e2 pyytää päätepistettä, jonka sen hallintapaneeli näyttää. Osoite, joka liitetään bucket-nimen kanssa niin kuin R2:n hallintapaneeli sen näyttää, täyttää palvelimen ja bucketin. Kansioselaimesta luotu bucket menee lomakkeessa nimettyyn alueeseen.
+- **Tallennusluokka.** Valitsin tarjoaa vain luokat, jotka palvelu ottaa vastaan, ja **Lisäasetukset** näyttää vain uuteen bucketiin vaikuttavat asetukset.
+- **Google Drive ja OneDrive.** Karsittu data poistetaan lopullisesti sen sijaan, että se menisi roskakoriin, jossa se kuluttaisi yhä kiintiötä. Googlen jaettu asema asetetaan kohdassa **Lisäasetukset**.
 - **SMB-palvelimet, jotka eivät listaa jakojaan,** saavat yhden jaon nimen kenttään **Jako**, ja testi avaa sen jaon suoraan.
 - **FTP** kysyy kohdassa **Salaus**: **Ei mitään**, **Eksplisiittinen TLS (FTPES)** tai **Implisiittinen TLS (FTPS, portti 990)**.
 - **OneDrive ja Zoho WorkDrive.** Kun kirjautuminen avaa useita asemia tai työtiloja, ikkuna kysyy, mihin niistä varmuuskopiot menevät.
-- **rest-server, jolla on itse allekirjoitettu varmenne.** Laita varmenne PEM-tiedostona BombVaultin datakansion kansioon `certs` (`/config/certs` kontissa, `appdata/bombvault/certs` Unraidissa). Varmuuskopiot, kopiot ja poistosuojan testi luottavat siihen ilman uudelleenkäynnistystä.
+- **Rest-server, jolla on itse allekirjoitettu varmenne.** Laita varmenne PEM-tiedostona BombVaultin datakansion kansioon `certs` (`/config/certs` kontissa, `appdata/bombvault/certs` Unraidissa). Varmuuskopiot, kopiot ja poistosuojan testi luottavat siihen ilman uudelleenkäynnistystä.
 
-S3-palvelut kulkevat resticin oman S3-taustajärjestelmän kautta, mikä mahdollistaa tallennusluokan ja objektilukon. Kaikki muut palvelut kulkevat BombVaultin mukana tulevan rclonen kautta, ja niiden etäsijainti ilmestyy **Etäsijainti (rclone)** -korttiin kohdassa **Asetukset, Kohteet**. Asetusten vienti sisältää kohteet; tunnistetiedot mukaan otettuina se sisältää myös niiden kirjautumisen.
+S3-palvelut kulkevat resticin oman S3-taustajärjestelmän kautta, mikä mahdollistaa tallennusluokan ja objektilukon. Restic tavoittaa rest-serverin suoraan. Kaikki muut palvelut kulkevat BombVaultin mukana tulevan rclonen kautta, ja niiden osa rclone-määrityksestä näkyy kohteen sivun kortissa **rclone.conf**, salaisuudet piilotettuina. Asetusten vienti sisältää kohteet, ja tunnistetiedot mukaan otettuina se sisältää myös niiden tunnukset.
 
-Tämän palvelimen kansio on kaikkialla nimeltään **Paikallinen**: kohteiden sivuilla, virrassa, merkinnässä ja Palautus-sivulla. Jos tällä palvelimella on useita kansioita, kullakin on oma nimensä. Kohde, jonka osion etäkenttä luo, nimetään paikkansa mukaan eli osoitteensa viimeisen kansion mukaan tai, jos kansiota ei ole, palvelimensa mukaan, ja se saa numeron, jos jokin toinen kohde on jo samanniminen. Nimi, jonka annat sille sen sivulla, säilyy. Kun kaksi samannimistä kohdetta on rinnakkain, kummallakin on mukana palvelimensa tai kansionsa.
+Kun tallennat kohteen, jossa on jo konttien, VM:ien tai kansioiden varmuuskopioita, esimerkiksi poistamasi ja uudelleen lisäämäsi kohteen, se lisätään näihin osioihin ruksaamattomana kopiona. Mitään ei kopioida sinne, ennen kuin ruksaat sen, mutta **Palautus** tarjoaa vanhat varmuuskopiot heti.
 
-Jokaisella kohteella on oma sivunsa:
+Tämän palvelimen kansio on kaikkialla nimeltään **Paikallinen**: kohteiden sivuilla, virrassa, merkinnässä ja Palautus-sivulla. Jos tällä palvelimella on useita kansioita, kullakin on oma nimensä. Kohde, jonka osion etäkenttä luo, nimetään paikkansa mukaan eli osoitteensa viimeisen kansion mukaan tai, jos kansiota ei ole, palvelimensa mukaan, ja se saa numeron, jos jokin toinen kohde on jo samanniminen. Jokaisen kohteen voi nimetä uudelleen kentässä **Nimi** sen **Yhteys**-kortissa, myös bucket-kansion, jota useat osiot jakavat, ja kopion, jonka osion etäkenttä kuvaa, ja antamasi nimi säilyy. Kun kaksi samannimistä kohdetta on rinnakkain, kummallakin on mukana palvelimensa tai kansionsa.
 
-- **Yhteys**: nimi, kytkin **Käytettävissä** (pois tarkoittaa, ettei BombVault enää kirjoita tänne, ja merkinnät, jotka varmuuskopioivat tänne, epäonnistuvat selkeällä viestillä sen sijaan, että päätyisivät muualle), kansio, pakkaus, tallennusluokka ja **Rakennuksen ulkopuolella**. **Muuta yhteyttä** testaa ja tallentaa uuden osoitteen tai kirjautumisen.
-- **Tunnistetiedot**: jaettu joukko tai oma joukko.
-- **Poistosuoja**, jossa **Testaa poistosuoja nyt** ja se, kuka karsii tämän kopion.
-- **Kopioi**: milloin kopioidaan, sekä lähetys- ja latausrajat.
-- **Kuinka kauan säilytetään**: **Lyhyt**, **Tasapainoinen**, **Pitkä** tai **Omat arvot**, aikajanalla siitä, mitkä varmuuskopiot sääntö säilyttää. **Kysy ennen vähemmän säilyttämistä** kysyy, ennen kuin lyhyempi sääntö poistaa varmuuskopioita, joiden ainoa kopio on täällä.
-- **Säännöt osioittain**: yhden osion oma repository, säilytys tai pakkaus tässä kohteessa. **Muuta sääntöjä** avaa ne, ja **Palauta kohteen asetukset** tuo osion takaisin.
-- **Jo tämän kohteen alla**: osiot, joiden käsin kirjoitettu osoite on tämän kohteen kansiossa. Haltuunotto jättää repositoryn paikalleen; kirjautuminen, tallennusluokka ja poistosuoja tulevat sen jälkeen kohteelta. BombVault tarkistaa ensin, että kohteen kirjautuminen avaa repositoryn, ja kieltäytyy asettamasta append-only-repositorya kohteen alle, joka ei ole append-only.
+### Kohteen sivu {#location-page}
+
+Jokaisella kohteella on oma sivunsa. Se näyttää vain kortit, jotka koskevat kyseistä kohdetta, tässä järjestyksessä:
+
+![Kohteen sivu: Omat kansiot, Yhteys ja Tunnistetiedot.](assets/screenshots/storage/location-page-dark.png#only-dark)
+![Kohteen sivu: Omat kansiot, Yhteys ja Tunnistetiedot.](assets/screenshots/storage/location-page-light.png#only-light)
+
+- **Omat kansiot**: osiot, jotka kirjoittavat varmuuskopionsa ensin tänne. Tämän kohteen tunnukset, suojaus ja rajat koskevat niitä. **Käytä omana kansiona** siirtää useamman osion oman kansion tänne, ja **Vaihda** siirtää yhden pois. Katso [Osion oma kansio](#own-folder).
+- **Varmuuskopioidaan suoraan tänne**: jokainen osio, jonka merkinnät varmuuskopioivat suoraan tähän paikkaan oman kansionsa sijaan, ja kuinka moni merkintä niin tekee. Tällainen suora arkisto ottaa kaikki asetuksensa tältä kohteelta. Sellainen, jolle mikään ei enää varmuuskopioi, kertoo sen, ja **Poista** ottaa sen pois luettelosta. Varmuuskopiot sen paikalla säilyvät. Katso [Suorat arkistot](#direct-repositories).
+- **Yhteys**: **Nimi**, kytkin **Käytettävissä** (pois tarkoittaa, ettei BombVault enää kirjoita tänne, ja merkinnät, jotka varmuuskopioivat tänne, epäonnistuvat selkeällä viestillä sen sijaan, että päätyisivät muualle), kansio, **Pakkaus**, **Tallennusluokka** ja **Toimipaikan ulkopuolella**. **Paikallinen**-kohteessa se listaa kunkin osion kansion kohdassa **Omat kansiot täällä**. **Muuta yhteyttä** testaa ja tallentaa uuden osoitteen tai kirjautumisen. Kun muut paikat kirjautuvat samoilla tallennetuilla tunnuksilla, ikkuna kertoo sen, ja muutos tässä antaa tälle kohteelle omat tunnukset jaettujen uudelleenkirjoittamisen sijaan.
+- **Tunnistetiedot**: mitkä tallennetut tunnukset se käyttää (**Kirjautuu tunnuksilla**), mitkä muut kohteet käyttävät niitä myös (**Käyttää myös**) ja **Muokkaa**, joka avaa tunnusten ikkunan. Katso [Tunnukset](#sign-ins).
+- **rclone.conf**: tämän kohteen osa rclone-määrityksestä, kohteelle, joka kulkee rclonen kautta.
+- **Poistosuoja**, jossa **Poistosuoja (append-only)**, **Hyväksy ilman poistosuojaa**, **Testaa poistosuoja nyt** ja **Kuka karsii**, joka kertoo, karsiiko BombVault kopion ja omat kansiot täällä vai jättääkö se sen vastapuolelle. Paikallinen kansio näyttää tämän kortin vain, kun sillä on suoja, jonka voi kytkeä pois. Katso [Poistosuoja](#delete-protection-append-only).
+- **Kopioi**: **Milloin kopioidaan** sekä **Lähetysraja (KiB/s)** ja **Latausraja (KiB/s)**. Kohde, jossa on vain omia kansioita eikä kopioita, näyttää rajat kortissa nimeltä **Kaistanleveys**.
+- **Kuinka kauan säilytetään**: **Lyhyt**, **Tasapainoinen**, **Pitkä** tai **Omat arvot**, aikajanalla siitä, mitkä varmuuskopiot sääntö säilyttää. Katso [Kuinka kauan säilytetään](#keep).
+- **Jo tämän kohteen alla**: osiot, joiden käsin kirjoitettu osoite on tämän kohteen kansiossa. Haltuunotto jättää arkiston paikalleen. Tunnukset, tallennusluokka ja poistosuoja tulevat sen jälkeen kohteelta. BombVault tarkistaa ensin, että kohteen tunnukset avaavat arkiston, ja kieltäytyy asettamasta append-only-arkistoa kohteen alle, joka ei ole append-only.
+- **Säännöt osioittain**: yhden osion oma arkisto, säilytys tai pakkaus tässä kohteessa. **Muuta sääntöjä** avaa ne, ja **Palauta kohteen asetukset** tuo osion takaisin. Tunnukset, kaistanleveys ja kopiointiajat tulevat aina kohteelta.
 - Astia, joka näyttää, kuinka täynnä kohde on, merkillä täyttymiskohdasta ja viikkojen määrällä, jotka jäljellä ovat viime viikkojen kasvuvauhdilla. Kohde, joka ei raportoi kokoaan, sanoo **Koko tuntematon**.
 
-Etäkohde, jossa oli varmuuskopioita ja jossa yhtäkkiä ei ole repositorya, esimerkiksi rest-server, jonka levy ei liittynyt, ei saa itsestään uutta, tyhjää repositorya. Sen sivu kertoo siitä heti, kun varmuuskopio tai kopio huomaa repositoryn kadonneen. Liitä levy uudelleen. Jos tyhjensit vanhan repositoryn tarkoituksella, **Luo tähän uusi arkisto** aloittaa alusta, kaikille kohteen osioille ja sen nimetyille repositoryille kerralla.
+**Siirrä** ja **Poista kohde** ovat sivun toimintojen joukossa, ja ne on kuvattu kohdassa [Siirtäminen ja poistaminen](#move-remove).
 
-Ryhmäsi toisen instanssin ajama vastaanottopalvelin näkyy palveluntarjoajien joukossa kohdassa **Ryhmästäsi**; katso [Vastaanottopalvelin](#receiving-server).
+Etäkohde, jossa oli varmuuskopioita ja jossa yhtäkkiä ei ole arkistoa, esimerkiksi rest-server, jonka levy ei liittynyt, ei saa itsestään uutta, tyhjää arkistoa. Sen sivu kertoo siitä heti, kun varmuuskopio tai kopio huomaa arkiston kadonneen. Liitä levy uudelleen. Jos tyhjensit vanhan arkiston tarkoituksella, **Luo tähän uusi arkisto** aloittaa alusta, kaikille kohteen osioille ja sen arkistoille kerralla.
+
+Ryhmäsi toisen instanssin ajama vastaanottopalvelin näkyy palveluntarjoajien joukossa kohdassa **Ryhmästäsi**. Katso [Vastaanottopalvelin](#receiving-server).
+
+BombVault tarkistaa kohteensa jokaisessa käynnistyksessä. Se korjaa sen, mikä ei vaadi päätöstäsi, kuten linkin kadonneeseen kopioon tai arkistoon, kopion osion omassa kansiossa tai suoran arkiston, jonka kopio on kadonnut, ja kirjoittaa lokiin rivin jokaisesta korjauksesta. Se, minkä turvallista korjausta ei ole, vain kirjataan lokiin.
+
+![Sama sivu puhelimella.](assets/screenshots/storage/location-page-phone-dark.png#only-dark)
+![Sama sivu puhelimella.](assets/screenshots/storage/location-page-phone-light.png#only-light)
+
+### Kuinka kauan säilytetään {#keep}
+
+Se, kuinka kauan varmuuskopioita säilytetään, asetetaan kohdekohtaisesti sen kortissa **Kuinka kauan säilytetään**. Sääntö koskee kyseisen kohteen kopioita ja siellä olevia omia kansioita, myös **Paikallinen**-kohdetta. Osio voi pitää omat arvonsa yhdessä kohteessa kohdassa **Säännöt osioittain**, ja ne voittavat kohteen kortin kyseisen osion osalta.
+
+Sääntö säilyttää yhden varmuuskopion päivää, viikkoa, kuukautta ja vuotta kohti niin kauas taaksepäin kuin asetat ja siivoaa loput jokaisen varmuuskopion tai kopion jälkeen:
+
+| Esiasetus | Viimeisimmät | Päivät | Viikot | Kuukaudet | Vuodet |
+|---|---|---|---|---|---|
+| **Lyhyt** | 0 | 7 | 4 | 3 | 0 |
+| **Tasapainoinen** | 0 | 7 | 4 | 6 | 1 |
+| **Pitkä** | 0 | 14 | 8 | 12 | 3 |
+
+**Omat arvot** antaa asettaa viisi lukua itse. 0 kytkee kyseisen luvun pois, ja sääntö, jossa kaikki luvut ovat 0, säilyttää kaiken. Kortin pisteet näyttävät, mitkä 40 esimerkkivarmuuskopiosta sääntö säilyttää, uusin aivan oikealla. Esimerkki on sama jokaiselle kohteelle, koska kuva piirretään ennen kuin BombVault on lukenut siellä olevat varmuuskopiot.
+
+**Kysy ennen vähemmän säilyttämistä** on oletuksena päällä. Se kysyy ennen kuin muutos, joka säilyttää vähemmän varmuuskopioita, tallennetaan, ja kertoo, kuinka monta 40 esimerkkivarmuuskopiosta uusi sääntö poistaa. Se koskee jokaista kohdetta. **Palauta kohteen asetukset** kohdassa **Säännöt osioittain** kysyy saman kysymyksen.
+
+Kohdetta, jolla on poistosuoja, ei koskaan karsita tältä laatikolta. Sen vastapuoli säilyttää tai pudottaa vanhat varmuuskopiot omien sääntöjensä mukaan. Kun merkinnällä on avoin kriittinen poikkeama kadonneesta datasta, säilytys pitää kyseisen merkinnän vanhat varmuuskopiot, kunnes kuittaat sen. Katso [Poikkeamat](anomalies.md).
+
+Nähdäksesi, mitä seuraava ajo todella poistaisi, avaa **Esikatselu** kohdassa **Asetukset, Kohteet**. Se listaa kohdan **Mitä seuraava ajo poistaisi** arkistoittain ja merkinnöittäin palautuspisteet nimettyinä. Se ei ota lukkoa eikä muuta mitään.
+
+![Kuinka kauan säilytetään, Tasapainoinen valittuna: pisteet näyttävät, mitkä 40 esimerkkivarmuuskopiosta jäävät.](assets/screenshots/storage/keep-dark.png#only-dark)
+![Kuinka kauan säilytetään, Tasapainoinen valittuna: pisteet näyttävät, mitkä 40 esimerkkivarmuuskopiosta jäävät.](assets/screenshots/storage/keep-light.png#only-light)
+
+#### Esimerkki: mitä Tasapainoinen säilyttää {#example-retention}
+
+Kontista on otettu varmuuskopio joka yö kello 03.00 1. lokakuuta 2025 lähtien, joten keskiviikkona 4. marraskuuta 2026 sillä on 400 varmuuskopiota. Sen kohteeksi on asetettu **Tasapainoinen**: 7 päivää, 4 viikkoa, 6 kuukautta ja 1 vuosi.
+
+Jokainen luku säilyttää päivänsä, viikkonsa, kuukautensa tai vuotensa uusimman varmuuskopion, ja varmuuskopio, jonka useampi luku valitsee, säilytetään kerran. Viikot kulkevat maanantaista sunnuntaihin:
+
+| Sääntö | Varmuuskopiot, jotka se valitsee | Uudet, jotka se lisää |
+|---|---|---|
+| 7 päivää | 4.11., 3.11., 2.11., 1.11., 31.10., 30.10., 29.10. | kaikki 7 |
+| 4 viikkoa | 4.11., 1.11., 25.10., 18.10. | 25.10., 18.10. |
+| 6 kuukautta | 4.11., 31.10., 30.9., 31.8., 31.7., 30.6. | 30.9., 31.8., 31.7., 30.6. |
+| 1 vuosi | 4.11. | ei yhtään |
+
+Jäljelle jää 13 varmuuskopiota 400:sta. Vanhin on 30. kesäkuulta, joten pääset taaksepäin hieman yli neljä kuukautta. Deduplikoinnin ansiosta ne vievät vain vähän enemmän tilaa kuin yksi täysi varmuuskopio ja siinä välillä muuttunut data.
+
+**Vuodet** ansaitsee toisen katseen. Se laskee kalenterivuodet, joissa on varmuuskopio, nykyisestä alkaen, ja tämän vuoden uusin varmuuskopio on tämän päivän. Siksi arvo 1 kohdassa **Vuodet** ei lisää mitään muihin lukuihin, ja tarvitset arvon 2 yltääksesi viime vuoteen. Samat 400 varmuuskopiota muilla esiasetuksilla:
+
+| Esiasetus | Säilytetyt varmuuskopiot | Vanhin varmuuskopio |
+|---|---|---|
+| **Lyhyt** | 10 | 30. syyskuuta 2026 |
+| **Tasapainoinen** | 13 | 30. kesäkuuta 2026 |
+| **Pitkä** | 29 | 31. joulukuuta 2025 |
+
+Siirtyminen arvosta **Tasapainoinen** arvoon **Lyhyt** kysyy ensin, koska **Kysy ennen vähemmän säilyttämistä** on päällä: "Kuvan 40 varmuuskopiosta uusi sääntö poistaa 3, jotka nykyinen säilyttää." Luku tulee kuvan esimerkistä, ei omista varmuuskopioistasi. Tässä se sattuu täsmäämään: 31. elokuuta, 31. heinäkuuta ja 30. kesäkuuta poistuisivat. **Tallenna silti** ottaa säännön käyttöön, ja seuraava karsinta poistaa ne kyseisestä kohteesta lopullisesti.
+
+Jos haluat säilyttää konttien varmuuskopioita pidempään kuin muiden tässä kohteessa, paina **Muuta sääntöjä** kohdassa **Säännöt osioittain**, valitse **Kontit** ja aseta **Omat arvot** kohdassa **Säännöt osiolle Kontit**, esimerkiksi 14 päivää, 8 viikkoa, 12 kuukautta ja 2 vuotta. Muut osiot seuraavat yhä kohteen korttia, ja **Palauta kohteen asetukset** tuo Kontit takaisin.
+
+### Tunnukset {#sign-ins}
+
+Tunnukset ovat avain tai salasana, jota BombVault käyttää S3-palvelussa tai rest-serverissä. Tunnukset ovat yksi luettelo, kortti **Tunnukset** kohdassa **Asetukset, Kohteet**, ja jokainen rivi kertoo, mitkä kohteet sitä käyttävät (**Käyttää**).
+
+- **Tallennetaan kohdetta lisättäessä.** Kohteen lisääminen tallentaa kirjoittamasi avaimet tunnuksiksi. Seuraava kohde samassa palvelussa voi valita ne kohdassa **Tallennetut tunnukset** kohdan **Uudet avaimet** sijaan, ja myöhempi muutos niihin koskee jokaista kohdetta, joka niitä käyttää.
+- **Oletus.** Tähti merkitsee oletustunnukset. Niitä käytetään kaikkialla, missä tunnuksia ei ole valittu, esimerkiksi käsin kirjoitetussa osoitteessa, noutolähteessä tai palautuksessa uudella asennuksella. **Aseta oletukseksi** antaa tähden toisille.
+- **Muokkaa ja Testaa.** **Muokkaa**, täällä tai kohteen kortissa **Tunnistetiedot**, avaa tunnuksille yhden ikkunan. **Testaa** kirjautuu jokaiseen niitä käyttävään kohteeseen kirjoittamillasi tiedoilla ennen kuin mitään tallennetaan. **Tallenna** tallentaa ne.
+- **Poistaminen.** Tunnukset voi poistaa vain, kun mikään kohde tai noutolähde ei käytä niitä, ja oletus poistuu vasta viimeisenä. Rivi kertoo silloin, mikä sitä vielä käyttää.
+- **Kohteen yhteyden muuttaminen** ei koskaan kirjoita uudelleen tunnuksia, joita muut paikat jakavat. Kohde saa sen sijaan omat tunnukset, ja ikkuna kertoo etukäteen, että sen tunnukset ovat jaetut. Muuttaaksesi jaettuja kaikkialla muokkaa niitä kortissa **Tunnukset**.
+
+![Tunnukset-kortti: jokainen tallennettu tunnus ja se, mikä niitä käyttää, sekä tähti oletuksella.](assets/screenshots/storage/signins-dark.png#only-dark)
+![Tunnukset-kortti: jokainen tallennettu tunnus ja se, mikä niitä käyttää, sekä tähti oletuksella.](assets/screenshots/storage/signins-light.png#only-light)
+
+Tämän palvelimen kansio ei tarvitse tunnuksia. SMB, WebDAV, SFTP, Storage Box ja pilvilevyt pitävät omansa rclone-määrityksessä, jonka kohteen kortti **rclone.conf** näyttää, joten ne eivät näy tässä luettelossa.
+
+### SMB, WebDAV ja muut rclone-etäsijainnit {#smb-webdav}
+
+Windows- tai Samba-jako ja WebDAV-palvelin (Nextcloud, ownCloud, SharePoint tai mikä tahansa muu) ovat palveluntarjoajien ruutuja kohdassa **Lisää kohde**, ryhmässä **NAS tai palvelin**. Täytä isäntä ja jako (SMB) tai osoite ja palvelintyyppi (WebDAV), käyttäjä ja salasana, niin BombVault kirjoittaa rclone-osion puolestasi. rclone hämärtää salasanan ennen tallennusta.
+
+Palvelulle, jota mikään ruutu ei kata, kohdan **Oma rclone-määritys** ruutu **Rclone** ottaa vastaan rclone.conf-tiedostosta liitetyt etäsijainnit. Ne lisätään niihin, jotka BombVaultilla jo on, eivätkä koskaan korvaa niitä, ja ne tallennetaan salattuina. Varmuuskopioidaksesi osion johonkin niistä syötä `rclone:<etäsijainti>:<kansio>` kyseisen osion etäarkistoksi, esimerkiksi `rclone:nas:backups/bombvault`. Jako tai bucket on polun ensimmäinen segmentti, ei osa nimeä.
+
+Tämä on parempi tie kuin jaon liittäminen Unraidiin: restic neuvoo olemaan pitämättä arkistoa liitetyllä CIFS-jaolla, ja täällä mitään ei liitetä. NFS:lle ei ole ruutua, koska resticillä eikä rclonella ole NFS-taustajärjestelmää. NFS:lle liitä jako isännälle ja käytä sitä paikallisena kansiona.
 
 ### Siirtäminen ja poistaminen {#move-remove}
 
-- **Siirrä** vie yhden osion kopion toiseen kohteeseen koko historioineen. Kaikki jää vanhalle paikalle; BombVault ei poista siellä mitään. Siirto ajetaan taustalla ja voi kestää: noin 9 minuuttia 100 Gt:tä kohti paikallisten levyjen välillä, tunteja hitaan yhteyden yli. Yleiskatsaus näyttää sen sen ajan.
-- **Poista kohde** tarjoaa kaksi tietä. **Poista kohde, säilytä varmuuskopiot** lopettaa kirjoittamisen sinne ja jättää varmuuskopiot paikalleen; voit lukea ne myöhemmin kohdassa **Palautus, Vanhasta varmuuskopiokansiosta**. **Poista kohde ja poista siellä olevat varmuuskopiot** lukee ensin, mitä siellä on, ja listaa sen: mitkä varmuuskopiot poistuvat, mitkä niistä eivät ole missään muualla ja mitkä repositoryt jäävät, koska poistosuoja kieltäytyy, merkinnät varmuuskopioivat yhä suoraan niihin, toinen kohde tai osio säilyttää kopionsa siellä tai niitä ei voitu lukea. Merkinnät, jotka menettäisivät ainoan varmuuskopionsa, listataan erikseen ja säilytetään, ellet kytke päälle **Poista nämäkin**. Vahvistat kirjoittamalla kohteen nimen, ja poisto ajetaan taustalla.
-- Tämä toimii kaikenlaisille kohteille: kohteelle, jota useat osiot käyttävät, yhtä osiota varten luodulle kohteelle, itse luomallesi repositorylle ja kansiolle, johon osio kirjoittaa omat varmuuskopionsa. Merkinnät, jotka varmuuskopioivat poistettuun repositoryyn, seuraavat sen jälkeen taas osiotaan, samoin osion oletus, joka osoitti sinne. Osion kansiota ei voi vain poistaa, koska jokainen osio tarvitsee sellaisen. Ikkuna kysyy siksi kansiota, johon osiot siirtyvät, ja jokainen osio säilyttää sen alla oman kansionsa nimen.
+- **Siirrä** vie yhden osion kopion toiseen kohteeseen koko historioineen. Kaikki jää vanhalle paikalle. BombVault ei poista siellä mitään. Siirto ajetaan taustalla ja voi kestää: noin 9 minuuttia 100 Gt:tä kohti paikallisten levyjen välillä, tunteja hitaan yhteyden yli. Yleiskatsaus näyttää sen sen ajan.
+- **Poista kohde** tarjoaa kaksi tietä. **Poista kohde, säilytä varmuuskopiot** lopettaa kirjoittamisen sinne ja jättää varmuuskopiot paikalleen. Voit lukea ne myöhemmin kohdassa **Palautus, Vanhasta varmuuskopiokansiosta**. **Poista kohde ja poista siellä olevat varmuuskopiot** lukee ensin, mitä siellä on, ja listaa sen: mitkä varmuuskopiot poistuvat, mitkä niistä eivät ole missään muualla ja mitkä arkistot jäävät, koska poistosuoja kieltäytyy, merkinnät varmuuskopioivat yhä suoraan niihin, toinen kohde tai osio säilyttää kopionsa siellä tai niitä ei voitu lukea. Merkinnät, jotka menettäisivät ainoan varmuuskopionsa, listataan erikseen ja säilytetään, ellet kytke päälle **Poista nämäkin**. Vahvistat kirjoittamalla kohteen nimen, ja poisto ajetaan taustalla.
+- Tämä toimii kaikenlaisille kohteille: kohteelle, jota useat osiot käyttävät, yhtä osiota varten luodulle kohteelle, itse luomallesi arkistolle ja kansiolle, johon osio kirjoittaa omat varmuuskopionsa. Merkinnät, jotka varmuuskopioivat poistettuun arkistoon, seuraavat sen jälkeen taas osiotaan, samoin osion oletus, joka osoitti sinne. Osion kansiota ei voi vain poistaa, koska jokainen osio tarvitsee sellaisen. Ikkuna kysyy siksi kansiota, johon osiot siirtyvät, ja jokainen osio säilyttää sen alla oman kansionsa nimen.
 - Kohteen varmuuskopioiden poistaminen vaatii kirjautumissalasanan ja kirjautumisen instanssissa. Ilman salasanaa kohteen voi yhä poistaa, vain sen varmuuskopioita ei voi poistaa täältä.
 
-## Sijoittelu per merkintä {#placement}
+### Esimerkki: etäkopio Backblaze B2:een {#example-s3}
+
+Konttien ja itsevarmuuskopion pitäisi olla myös Backblaze B2:ssa, jotta kuollut palvelin ei vie niitä mukanaan. Samat vaiheet sopivat Wasabille, Hetzner Object Storagelle ja useimmille muille S3-palveluille.
+
+1. **B2:ssa** luo yksityinen bucket, esimerkiksi `tower-backups`, lähellä sinua olevalle alueelle. Luo kohdassa **Application Keys** avain, jolla on luku- ja kirjoitusoikeus ja joka on rajattu tähän bucketiin, ja merkitse muistiin sen avaintunnus ja sovellusavain. B2 näyttää sovellusavaimen vain kerran. Aseta bucketin elinkaareksi säilyttää vain viimeinen versio, tai B2 pitää karsitun datan piilotettuina versioina ja laskuttaa niistä.
+2. **Palveluntarjoaja.** Avaa BombVaultissa **Kohteet**, paina **Lisää kohde** ja valitse **Backblaze B2** ryhmästä **S3-palvelu**.
+3. **Kirjaudu sisään.** Anna avaintunnus kohtaan **Käyttöavaimen tunnus** ja sovellusavain kohtaan **Salainen käyttöavain**. Anna bucketin päätepiste kohtaan **Päätepiste**, esimerkiksi `s3.eu-central-003.backblazeb2.com`, ja BombVault lukee alueen siitä. Kirjoita `tower-backups` kenttään **Bucket**, koska tämä avain avaa vain yhden bucketin.
+4. **Testaa yhteys.** Sen pitäisi sanoa **Yhteys on muodostettu** ja listata bucketin kansiot. Paina **Uusi kansio** ja nimeä se `bombvault`. BombVault luo siihen yhden kansion osiota kohti, esimerkiksi `bombvault/containers`.
+5. **Suojaus.** Ikkuna selittää, että B2 voi säilyttää vanhoja versioita objektilukolla ja ettei BombVault voi tarkistaa sitä. Jätä **Poistosuoja (append-only)** pois päältä, ellei bucket todella kieltäydy poistoista, jotta BombVault voi karsia kohteen säilytyssääntöjen mukaan.
+6. **Mille osioille.** Ruksaa **Kontit** ja **Itsevarmuuskopio**. Itsevarmuuskopio sisältää asetuksesi, jotta uusi asennus voi palauttaa ne. Ikkuna kertoo, kuinka monta merkintää ja, kun tiedetään, kuinka paljon historiaa ensimmäinen kopio tuo mukanaan.
+7. Paina **Tallenna kohde**.
+
+Ensimmäinen kopio ajetaan seuraavan varmuuskopion jälkeen. Käynnistääksesi sen heti avaa **Asetukset, Kohteet** ja paina **Replikoi nyt** osion rivillä kortissa **Etäkopiot**. Tilarivi sanoo **Etäkopiointi käynnissä**. Ensimmäinen kopio tuo koko historian, joten 200 Gt 100 Mbit/s:n lähetysyhteydellä kestää noin neljä ja puoli tuntia. Myöhemmät kopiot lähettävät vain sen, mikä on uutta.
+
+Pitääksesi yhteytesi vapaana avaa kohteen sivu ja aseta **Lähetysraja (KiB/s)** kortissa **Kopioi**, esimerkiksi arvoon `5120`, joka vastaa noin 5,0 MB/s (41,9 Mbit/s). Tarkista samalla sivulla **Kuinka kauan säilytetään**.
+
+Nähdäksesi, että se toimi, katso yleiskatsauksen **Suojaustila**-korttia, jossa **Etä** muuttuu tilaan **kopio ajan tasalla**, sekä kontin **Varmuuskopiot**-välilehteä, jossa sen varmuuskopiot nimeävät nyt `tower-backups`-kohteen toisena paikkana. Lataa sen jälkeen **Lataa palautuspaketti** uudelleen kohdassa **Asetukset, Palautus**, koska paketti listaa uuden kohteen ja sen tunnukset.
+
+**Cloudflare R2 toimii samalla tavalla,** avaimen sijaan objektitokenilla. Liitä S3-osoite, jonka R2:n hallintapaneeli näyttää, bucket mukana, ja BombVault täyttää palvelimen ja bucketin.
+
+### Esimerkki: itse ajamasi rest-server {#example-rest-server}
+
+Rest-server append-only-tilassa kieltäytyy poistoista, joten sillä oleva kopio säilyy, vaikka joku kaappaisi palvelimesi. Toinen laatikko ystävän luona tai autotallissa riittää. Pariliitetty BombVault voi pystyttää tämän puolestasi, katso [Vastaanottopalvelin](#receiving-server). Ajaaksesi sen käsin missä tahansa Docker-isännässä:
+
+```sh
+docker run -d --name rest-server --restart unless-stopped \
+  -p 8000:8000 \
+  -v /mnt/user/backups/rest-server:/data \
+  -e OPTIONS="--append-only --private-repos" \
+  restic/rest-server
+docker exec -it rest-server create_user bombvault
+```
+
+Viimeinen rivi kysyy salasanaa ja kirjoittaa käyttäjän datakansion `.htpasswd`-tiedostoon.
+
+1. Paina BombVaultissa **Lisää kohde** ja valitse **rest-server** ryhmästä **NAS tai palvelin**.
+2. Anna osoite niin, että käyttäjä on sen kansio, esimerkiksi `http://192.168.2.20:8000/bombvault`, sekä **Käyttäjätunnus** ja **Salasana**. Paina **Testaa yhteys**.
+3. Kytke kohdassa **Suojaus** päälle **Poistosuoja (append-only)**. BombVault ei sen jälkeen koskaan karsi siellä vaan jättää sen vastapuolelle.
+4. Ruksaa osiot ja paina **Tallenna kohde**.
+5. Kun ensimmäinen kopio on perillä, avaa kohteen sivu ja paina **Testaa poistosuoja nyt**. BombVault yrittää poistaa testiobjektin. Kortin pitäisi sanoa **Viimeksi: poisto estettiin**, ja yleiskatsauksen **Poistosuoja** muuttuu tilaan **tarkistettu**. Jos se sanoo **Viimeksi: poistoa ei estetty**, `--append-only` puuttuu.
+
+Koska mikään ei karsi tätä kopiota täältä, aseta **Kasvubudjetti (GB, 0 = pois)** osion ikkunassa, joka avataan kohdalla **Muokkaa** sen rivillä kortissa **Etäkopiot**, jotta kuulet siitä ennen kuin levy täyttyy. Itse allekirjoitetun varmenteen kanssa katso yllä oleva huomautus kansiosta `certs`.
+
+## Osion oma kansio {#own-folder}
+
+Jokaisella osiolla on oma kansio: arkisto, johon sen varmuuskopiot kirjoitetaan ensin. Kopiot muihin kohteisiin lähtevät sieltä. Uusi asennus pitää omat kansiot tällä palvelimella hakemiston `/mnt/user/bombvault` alla, ja yhdessä ne muodostavat **Paikallinen**-kohteen.
+
+Oma kansio voi sijaita myös kohteessa, joka sinulla jo on, kuten NAS:ssa, rest-serverissä tai S3-bucketissa. Osio varmuuskopioi silloin suoraan sinne ilman paikallista kopiota välissä, ja oma kansio noudattaa sen kohteen tunnuksia, poistosuojaa, kaistanleveyden rajoja ja säilytyssääntöjä. Kohde listaa osion kortissaan **Omat kansiot**, ja **Kohteet osioittain** näyttää kohteen osion kotina.
+
+### Oman kansion siirtäminen {#move-own-folder}
+
+1. Avaa kohde, jonka pitäisi pitää oma kansio, ja valitse **Käytä omana kansiona** tai **Lisää osioita** sen kortissa **Omat kansiot**. Siirtääksesi useita osioita kerralla valitse **Siirrä omat kansiot** kohdan **Omat kansiot täällä** vieressä Paikallinen-kohteen kortissa **Yhteys**.
+2. Valitse osiot kohdassa **Osiot** ja paikka kohdassa **Siirrä kohteeseen**. **Muu paikka** ottaa kansion tällä isännällä tai käsin kirjoitetun etäarkiston osoitteen, tallennetuista tunnuksistasi valittavilla tunnuksilla.
+3. Lue **Mitä tapahtuu**. Se kertoo jokaisesta osiosta, minne uudet varmuuskopiot menevät, muuttuuko uudessa paikassa jo oleva kopio omaksi kansioksi ja mitkä varmuuskopiot kopioidaan ensin.
+4. **Kopioi jo tehdyt varmuuskopiot** on oletuksena päällä. Pois kytkettynä vanhat varmuuskopiot jäävät paikalleen ja ne voi yhä palauttaa sieltä.
+5. Valitse **Vaihda**. Kun varmuuskopiot pitää kopioida ensin, BombVault kopioi ne ja vaihtaa sitten oman kansion. Kun ne ovat jo perillä, se tarkistaa ne ennen vaihtoa.
+
+Siirron jälkeen uudet varmuuskopiot menevät siirrettyyn omaan kansioon, myös osiolle, jolla **Paikallinen** oli kytketty pois ja joka varmuuskopioi suoraan kopioon. Kopio, joka oli jo uudessa paikassa, muuttuu omaksi kansioksi, ja sinne kopiointi päättyy. Jos kyseinen kopio piti joitakin varmuuskopioita pidempään kuin osion säilytyssäännöt, osio säilyttää kaiken, minkä jompikumpi sääntö säilyttää, joten mitään ei menetetä.
+
+Kun siirto ei voi edetä, ikkuna kertoo syyn ruudussa kohdan **Mitä tapahtuu** alla. Kun vain vanhojen varmuuskopioiden kopiointi on esteenä, kohdan **Kopioi jo tehdyt varmuuskopiot** kytkeminen pois antaa oman kansion siirtyä ilman niitä.
+
+Osio tarvitsee aina oman kansion. Sen sisältävän kohteen poistaminen kysyy kansiota, johon osio siirtyy, katso [Siirtäminen ja poistaminen](#move-remove). Oma kansio, jonka ohi uudet varmuuskopiot menevät, koska osio varmuuskopioi suoraan kopioon, on merkitty **(pois päältä)** siellä, missä kohde listaa sen käyttäjät.
+
+![Ikkuna, joka siirtää oman kansion, kohta Mitä tapahtuu täytettynä yhdelle osiolle.](assets/screenshots/storage/move-own-folder-dark.png#only-dark)
+![Ikkuna, joka siirtää oman kansion, kohta Mitä tapahtuu täytettynä yhdelle osiolle.](assets/screenshots/storage/move-own-folder-light.png#only-light)
+
+#### Esimerkki: Kontit siirtyvät NAS:lle {#example-own-folder}
+
+Cache-pooli täyttyy, ja sinulla on kohde nimeltä `nas`, SMB-jako toisessa laatikossa. Kontit-osiolla on 61 varmuuskopiota omassa kansiossaan tällä palvelimella, ja se kopioi Backblaze B2:een.
+
+1. Avaa **Kohteet**, sitten `nas`, ja paina **Käytä omana kansiona**.
+2. Ruksaa **Kontit** kohdassa **Osiot**.
+3. Lue **Mitä tapahtuu**. Se kertoo, että Konttien uudet varmuuskopiot menevät `nas`-kohteen kansioon, että Paikallinen-kohteen 61 varmuuskopiota kopioidaan sinne ensin, että kopiot jatkavat Backblaze B2:een ja että suojaus, kaistanleveyden rajat ja kasvuhälytys tulevat `nas`-kohteelta.
+4. Jätä **Kopioi jo tehdyt varmuuskopiot** päälle ja paina **Vaihda**.
+
+BombVault kopioi varmuuskopiot taustalla ja vaihtaa sitten oman kansion. `nas`-sivu listaa Kontit kohdassa **Omat kansiot**, osiotaan seuraava merkintä nimeää `nas`-kohteen kodikseen, ja seuraava varmuuskopio päätyy sinne, ja B2-kopio lähtee `nas`-kohteesta. Vanha kansio tällä palvelimella pysyy paikallaan, eikä BombVault poista siellä mitään.
+
+### Etäosoitteen kirjoittaminen käsin {#remote-primary-repositories}
+
+Paikallinen-kohteen kortti **Yhteys** ottaa yhä vastaan etäosoitteen osion omalle kansiolle: osion vieressä oleva **Vaihda** avaa ikkunan, jossa on kytkin **Paikallinen / Etä**. **Etä** ottaa restic-osoitteen, kuten `s3:...`, `rest:http://host:8000/repo`, `sftp:user@host:/repo` tai `rclone:remote:bucket/path`, ja **Etäisen ensisijaisen tietovaraston turva-asetukset** lisäävät yhteystestin, lähetys- ja latausrajat, append-only-suojan samalla peukalointitestillä, jonka etäkohde saa, sekä kasvubudjettihälytyksen.
+
+Tällainen osoite kirjautuu oletustunnuksilla. Kun se on jonkin sinulla olevan kohteen kansiossa, kyseisen kohteen sivu listaa osion kohdassa **Jo tämän kohteen alla**, ja haltuunotto antaa sille kohteen tunnukset, tallennusluokan ja poistosuojan. Oman kansion siirtäminen kohteeseen toiminnolla **Käytä omana kansiona** on yksinkertaisempi tie, koska ikkuna tarkistaa jo tehdyt varmuuskopiot ennen kuin mitään muuttuu.
+
+## Sijoittelu merkinnöittäin {#placement}
 
 Merkinnän Asetukset-välilehden kortissa **Aikataulu ja kohde** on painikerivi: **Paikallinen** ja yksi painike osion jokaista etäkohdetta kohti. Päällä olevat painikkeet saavat merkinnän varmuuskopiot.
 
-- Kun **Paikallinen** on päällä, merkintä kirjoitetaan kohdassa **Tallennuspaikka** näkyvään repositoryyn ja kopioidaan jokaiseen muuhun päällä olevaan kohteeseen. Sammuta kohde, niin se ei saa tältä merkinnältä mitään uutta. Pelkkä Paikallinen ei kopioi minnekään, mikä sopii datalle, jolla on jo toinen kopio, esimerkiksi NAS:lla olevalle jaolle.
-- Kun **Paikallinen** on pois, merkintä kirjoitetaan suoraan ensimmäisen päällä olevan kohteen suoraan repositoryyn ja kopioidaan sieltä muihin päällä oleviin. Ensimmäisellä kerralla ikkuna luo tuon suoran repositoryn.
+- Kun **Paikallinen** on päällä, merkintä kirjoitetaan kohdassa **Tallennuspaikka** näkyvään arkistoon ja kopioidaan jokaiseen muuhun päällä olevaan kohteeseen. Sammuta kohde, niin se ei saa tältä merkinnältä mitään uutta. Pelkkä Paikallinen ei kopioi minnekään, mikä sopii datalle, jolla on jo toinen kopio, esimerkiksi NAS:lla olevalle jaolle.
+- Kun **Paikallinen** on pois, merkintä kirjoitetaan suoraan ensimmäisen päällä olevan kohteen suoraan arkistoon ja kopioidaan sieltä muihin päällä oleviin. Ensimmäisellä kerralla ikkuna luo tuon suoran arkiston.
 - Yksi painike pysyy päällä, koska varmuuskopio tarvitsee paikan, minne mennä. Jättääksesi merkinnän varmuuskopioiden ulkopuolelle käytä **Älä varmuuskopioi**.
 
-BombVault ei koskaan siirrä varmuuskopioita repositoryjen välillä. Merkintä, joka seuraa osiotaan, siirtyy mukana, kun osion oletus muuttuu: sen seuraava varmuuskopio päätyy uuteen paikkaan, ja jo olemassa olevat varmuuskopiot jäävät paikalleen. Merkinnälle itselleen valittu sijainti lukitaan sen ensimmäisestä varmuuskopiosta alkaen; Asetukset-välilehden kortti **Repository** nimeää sen. Kopiot voivat muuttua milloin tahansa. Kohde, joka ei enää saa merkintää, säilyttää kopiot, jotka sillä on, ja karsii ne omaan säilytykseensä osion seuraavassa etäajossa. Append-only-kohteista ei voi poistaa.
+BombVault ei koskaan siirrä varmuuskopioita arkistojen välillä. Merkintä, joka seuraa osiotaan, siirtyy mukana, kun osion oletus muuttuu: sen seuraava varmuuskopio päätyy uuteen paikkaan, ja jo olemassa olevat varmuuskopiot jäävät paikalleen. Merkinnälle itselleen valittu sijainti lukitaan sen ensimmäisestä varmuuskopiosta alkaen. Asetukset-välilehden kortti **Repository** nimeää sen. Kopiot voivat muuttua milloin tahansa. Kohde, joka ei enää saa merkintää, säilyttää kopiot, jotka sillä on, ja karsii ne omaan säilytykseensä osion seuraavassa etäajossa. Append-only-kohteista ei voi poistaa.
 
 Paikka, jonka merkintä jätti, säilyttää varmuuskopionsa. Merkinnän **Varmuuskopiot**-välilehdellä ja Palautus-sivulla se näkyy nimellä **Vain aiemmat varmuuskopiot**, palautus voi yhä lukea sieltä, ja karsinta siellä jättää nuo varmuuskopiot rauhaan.
 
 **Noudata oletusta** tuo merkinnän, jolla on oma valinta, takaisin osioonsa. Se kysyy ensin, kertoo, minne uudet varmuuskopiot silloin menevät, ja nimeää, mitä kukin kohde lakkaa saamasta ja mitä seuraava ajo lähettäisi.
 
-Rivin alla kortti kertoo, minne merkintä menee ja mitä siellä todella on: kuinka moni paikka pitää sitä, milloin kukin kohde on viimeksi nähty ja täyttyykö 3-2-1. Paikka on palvelin alkuperäisen datan kanssa, jokainen etäkohde ja jokainen repository, joka on merkitty **Rakennuksen ulkopuolella**. BombVault tarkistaa kopiot ja paikat; se ei tarkista 3-2-1:n "kaksi tallennusvälinettä" -osaa.
+Rivin alla kortti kertoo, minne merkintä menee ja mitä siellä todella on: kuinka moni paikka pitää sitä, milloin kukin kohde on viimeksi nähty ja täyttyykö 3-2-1. Paikka on palvelin alkuperäisen datan kanssa, jokainen etäkohde ja jokainen arkisto, joka on merkitty **Toimipaikan ulkopuolella**. BombVault tarkistaa kopiot ja paikat. Se ei tarkista 3-2-1:n "kaksi tallennusvälinettä" -osaa.
 
 ### Oletukset osioittain {#placement-defaults}
 
-Kohteet-sivun kortti **Kohteet osioittain** piirtää jokaisen osion oletuksen 3-2-1-virtana. Jokainen viiva osiosta kohteeseen on kytkin, myös **Paikallinen**, ja tämä koskee jokaista osiota, myös flash-asemaa, ZFS-tietojoukkoja ja itsevarmuuskopiota. Viivan tai pisteen napsautus kytkee sen heti, kysymättä; katkoviivat ovat pois päältä. **Kaavio / Kytkimet** näyttää saman painikeriveinä. Kytkin ratkaisee, minne uudet varmuuskopiot menevät. Merkinnät, joilla ei ole omaa valintaa, ja Compose-stackien projektikansiot seuraavat heti, joten niiden seuraava varmuuskopio menee uusiin paikkoihin. Jo tallennetut varmuuskopiot jäävät paikalleen, ja ne voi yhä palauttaa sieltä. Flash, ZFS-tietojoukot ja Itsevarmuuskopio varmuuskopioivat paikalliseen kansioonsa ja kopioivat etäkohteisiin siitä varmuuskopiosta. Niiden viivan kohteeseen **Paikallinen** voi myös kytkeä pois; niiden varmuuskopiot menevät silloin suoraan niiden etäkohteisiin, ja ZFS-merkintä, jolla on replika mutta ei yhtään kohdetta, lähettää vain replikansa.
+Kohteet-sivun kortti **Kohteet osioittain** piirtää jokaisen osion oletuksen 3-2-1-virtana. Jokainen viiva osiosta kohteeseen on kytkin, myös **Paikallinen**, ja tämä koskee jokaista osiota, myös flash-asemaa, ZFS-tietojoukkoja ja itsevarmuuskopiota. Viivan tai pisteen napsautus kytkee sen heti, ja katkoviivat ovat pois päältä. Vain osion **Paikallinen**-kytkimen sammuttaminen kysyy ensin, samassa ikkunassa kuin oletuskortti, koska osio varmuuskopioi silloin suoraan kopioon. **Peruuta** jättää kaiken ennalleen. **Kaavio / Kytkimet** näyttää saman painikeriveinä. Kytkin ratkaisee, minne uudet varmuuskopiot menevät. Merkinnät, joilla ei ole omaa valintaa, ja Compose-stackien projektikansiot seuraavat heti, joten niiden seuraava varmuuskopio menee uusiin paikkoihin. Jo tallennetut varmuuskopiot jäävät paikalleen, ja ne voi yhä palauttaa sieltä. Flash, ZFS-tietojoukot ja itsevarmuuskopio varmuuskopioivat paikalliseen kansioonsa ja kopioivat etäkohteisiin siitä varmuuskopiosta. Niiden viivan kohteeseen **Paikallinen** voi myös kytkeä pois. Niiden varmuuskopiot menevät silloin suoraan niiden etäkohteisiin, ja ZFS-merkintä, jolla on replika mutta ei yhtään kohdetta, lähettää vain replikansa.
 
-Kun **Paikallinen** on pois ja vain etäkohteet ovat päällä, osio varmuuskopioi suoraan niihin, ja BombVault valitsee repositoryn siellä itse. Kontit, virtuaalikoneet ja kansiojoukot menevät ensimmäisen päällä olevan kohteen suoraan repositoryyn, jota kuvataan alempana, ja kopioidaan sieltä muihin. Flash-asema, ZFS-tietojoukot ja itsevarmuuskopio kirjoittavat jokaisen varmuuskopion jokaiseen päällä olevaan kohteeseen, ja kukin kohde säilyttää ne oman säilytyksensä mukaan.
+Kun **Paikallinen** on pois ja vain etäkohteet ovat päällä, osio varmuuskopioi suoraan niihin, ja BombVault valitsee arkiston siellä itse. Kontit, virtuaalikoneet ja kansiojoukot menevät ensimmäisen päällä olevan kohteen suoraan arkistoon, jota kuvataan alempana, ja kopioidaan sieltä muihin. Flash-asema, ZFS-tietojoukot ja itsevarmuuskopio kirjoittavat jokaisen varmuuskopion jokaiseen päällä olevaan kohteeseen, ja kukin kohde säilyttää ne oman säilytyksensä mukaan.
 
-Osio, jonka kaikki viivat ovat pois, näyttää **Ei varmuuskopioida**. Sen merkinnät eivät saa varmuuskopioita ja lasketaan suojaamattomiksi.
+Osio, jonka kaikki viivat ovat pois, näyttää **Ei varmuuskopioitu**. Sen merkinnät eivät saa varmuuskopioita ja lasketaan suojaamattomiksi.
 
 Merkinnät, jotka ovat valinneet omat kohteensa sivullaan, pitävät ne. Virta kertoo, kuinka monta niitä osiossa on, esimerkiksi **2 merkintää poikkeaa**, ja vie niiden luo: yhden kohdalla merkinnän Asetukset-välilehdelle, useamman kohdalla luetteloon, joka näyttää, minne kukin varmuuskopioi. **Noudata oletusta** tuo merkinnän siellä takaisin.
 
 Uusi etäkohde saa jokaisen merkinnän, jota ei ole asetettu Paikalliseksi. Sen lisäävä ikkuna kertoo, kuinka monta merkintää ja, kun tiedetään, kuinka paljon historiaa se on.
 
-### Suorat arkistot
+### Suorat arkistot {#direct-repositories}
 
-Suora repository on paikka, jossa merkinnät varmuuskopioidaan suoraan etäkohteeseen. BombVault sijoittaa sen kohteen kansion viereen lisäämällä nimeen `-direct` tai, kun kohde on bucketin, etäsijainnin tai rest-server-käyttäjän juuressa, sen sisällä olevaan kansioon, joka on nimetty osion mukaan, esimerkiksi `containers-direct`. Kohteet-sivun virrassa se luodaan kysymättä. Kun Paikallinen sammutetaan yksittäiseltä merkinnältä niin, että kohteesta ilman suoraa repositorya tulee sen koti, avautuu ikkuna, jossa on ehdotettu sijainti, esimerkiksi `s3:https://s3.eu-central-003.backblazeb2.com/bucket/containers-direct`, ja yhteystesti, joka ei luo mitään. **Luo ja käytä** luo repositoryn ja osoittaa merkinnän siihen. Suora repository ottaa kohteen avaimen, tallennusluokan, rajat, append-only-asetuksen ja säilytyksen ja muuttuu niiden mukana; Repositoryt-kortti näyttää sen vain luettavana. Kun kohteen uusi avain ei voi avata sitä, suora repository pitää nykyisen avaimensa ja tallennus kertoo sen. Suoralla repositoryllä oleva merkintä kopioidaan sieltä muihin päällä oleviin kohteisiin, ei koskaan kohteeseen, jolle repository kuuluu. Sen varmuuskopioilla on tunniste `bv:direct`, ja jokainen muu säilytyskierros säilyttää ne, joten suora repository, joka menetti linkkinsä kohteeseensa, ei koskaan vanhene paikallisten sääntöjen mukaan. B2 tavoitetaan sen S3-päätepisteen kautta, avaintunnus ja sovellusavain S3-tunnuksina; kohteen omaan kansioon rajattu avain ei yllä viereiseen kansioon, joten rajaa avain sen yläpuoliseen kansioon.
+Suora arkisto on paikka, jossa merkinnät varmuuskopioidaan suoraan etäkohteeseen. BombVault sijoittaa sen kohteen kansion viereen lisäämällä nimeen `-direct` tai, kun kohde on bucketin, etäsijainnin tai rest-server-käyttäjän juuressa, sen sisällä olevaan kansioon, joka on nimetty osion mukaan, esimerkiksi `containers-direct`. Kohteet-sivun virrassa se luodaan kysymättä. Kun Paikallinen sammutetaan yksittäiseltä merkinnältä niin, että kohteesta ilman suoraa arkistoa tulee sen koti, avautuu ikkuna, jossa on ehdotettu sijainti, esimerkiksi `s3:https://s3.eu-central-003.backblazeb2.com/bucket/containers-direct`, ja yhteystesti, joka ei luo mitään. **Luo ja käytä** luo arkiston ja osoittaa merkinnän siihen. Suoralla arkistolla ei ole omia asetuksia. Se seuraa kohteensa kytkintä, tunnuksia, tallennusluokkaa, rajoja, append-only-asetusta ja säilytystä ja muuttuu niiden mukana. Kohteen sivu listaa sen kohdassa **Varmuuskopioidaan suoraan tänne**, jokaisen osion kanssa, joka varmuuskopioi suoraan siihen, ja sen, kuinka moni merkintä niin tekee. Sellainen, jolle mikään ei enää varmuuskopioi, kertoo sen siellä ja sen voi poistaa, ja varmuuskopiot sen paikalla säilyvät. Kun kohteen uusi avain ei voi avata sitä, suora arkisto pitää nykyisen avaimensa ja tallennus kertoo sen. Suoralla arkistolla oleva merkintä kopioidaan sieltä muihin päällä oleviin kohteisiin, ei koskaan kohteeseen, jolle arkisto kuuluu. Sen varmuuskopioilla on tunniste `bv:direct`, ja jokainen muu säilytyskierros säilyttää ne, joten suora arkisto, joka menetti linkkinsä kohteeseensa, ei koskaan vanhene paikallisten sääntöjen mukaan. B2 tavoitetaan sen S3-päätepisteen kautta, avaintunnus ja sovellusavain S3-avaimina. Kohteen omaan kansioon rajattu avain ei yllä viereiseen kansioon, joten rajaa avain sen yläpuoliseen kansioon.
 
-### Rakennuksen ulkopuolella
+### Toimipaikan ulkopuolella {#off-the-premises}
 
-Kohde tai nimetty repository voidaan merkitä **Rakennuksen ulkopuolella** -merkillä. Etäsijainnit alkavat merkittyinä; kytke se pois rest-serveriltä samassa rakennuksessa. Merkki vain laskee paikat ja 3-2-1:n korteilla. Se ei muuta mitään kopiota.
+Kohde tai arkisto voidaan merkitä **Toimipaikan ulkopuolella** -merkillä. Etäkohteet alkavat merkittyinä. Kytke se pois rest-serveriltä samassa rakennuksessa. Merkki vain laskee paikat ja 3-2-1:n korteilla. Se ei muuta mitään kopiota.
 
 ZFS-replika on kopio tilojen ulkopuolella, mutta ei varmuuskopio historialla. Se säilyttää vain asettamasi tilannevedokset, ja vanhat versiot ja yksittäiset tiedostot tulevat yhä varmuuskopioista. Se kulkee yhdeltä ZFS-palvelimelta suoraan toiselle, SSH:n yli ZFS-palvelimelle tai pariliitetyn instanssin vastaanottopäätepisteeseen. Pariliitosryhmä kuljettaa vain pyynnön. Katso [Replika](zfs-datasets.md#replica).
 
 ### Uudelleenrakennuksen jälkeen {#after-a-rebuild}
 
-Kopiointivalinnat sijaitsevat BombVaultin omissa asetuksissa. Uudelleenrakennuksen jälkeen kohdalla **Tunnista varmuuskopiot** tai Hätäohjatulla toiminnolla ilman palautettuja asetuksia ne ovat poissa, ja kaiken kopioiminen lähettäisi pois jättämäsi merkinnät taas B2:een. Siksi jokaisen uudelleenrakennetun osion etäkopiot pysähtyvät. Yleiskatsaus kertoo sen, ja kortti **Kohteet osioittain** tarjoaa **Vahvista oletus** -toiminnon, jossa on esikatselu siitä, mitä seuraava ajo kopioi, ja nimet varmuuskopioissa, joilla ei ole merkintää, jotka voit jättää siellä pois. Vain vahvistus päättää tauon; asetustiedoston tuonti tuo takaisin säännöt ja oletukset mutta ei päätä sitä.
+Kopiointivalinnat sijaitsevat BombVaultin omissa asetuksissa. Uudelleenrakennuksen jälkeen kohdalla **Tunnista varmuuskopiot** tai Hätäohjatulla toiminnolla ilman palautettuja asetuksia ne ovat poissa, ja kaiken kopioiminen lähettäisi pois jättämäsi merkinnät taas B2:een. Siksi jokaisen uudelleenrakennetun osion etäkopiot pysähtyvät. Yleiskatsaus kertoo sen, ja kortti **Kohteet osioittain** tarjoaa **Vahvista oletus** -toiminnon, jossa on esikatselu siitä, mitä seuraava ajo kopioi, ja nimet varmuuskopioissa, joilla ei ole merkintää, jotka voit jättää siellä pois. Vain vahvistus päättää tauon. Asetustiedoston tuonti tuo takaisin säännöt ja oletukset mutta ei päätä sitä.
 
-## Etäsijaintiset ensisijaiset arkistot {#remote-primary-repositories}
-
-Osion oma polku ei rajoitu paikalliseen kansioon: osoita se suoraan restic-etäsijaintiin (`s3:...`, `rest:http://host:8000/repo`, `sftp:user@host:/repo`, `rclone:remote:bucket/path`), niin BombVault varmuuskopioi suoraan sinne, ilman erillistä paikallista kopiota ja ilman kopiointivaihetta. Tämä on aidosti eri muoto kuin yllä olevat etäkopiot: siellä paikallinen repo on ensisijainen ja etärepo parhaan yrityksen arkisto siitä; täällä etärepo **on** ensisijainen, ja se on ainoa kopio, ellet kopioi osiota lisäksi toiseen kohteeseen.
-
-Kunkin osion (Kontit, VMs, Flash, Itsevarmuuskopio, Kansiot, ZFS-tietojoukot) polku asetetaan **Paikallinen**-kohteen sivulla: **Muuta** osion vieressä sen **Yhteys**-kortissa avaa ikkunan, jossa on **Paikallinen / Etä** -kytkin:
-
-- **Paikallinen** näyttää tutun kansioselaimen.
-- **Etä** korvaa sen pelkällä URL-kentällä ja niillä yhteysasetuksilla, joita etäkohde käyttää, määritettynä tälle ensisijaiselle. Sieltä saat:
-    - **Yhteystestin** todellista polkua vasten, ennen kuin luotat siihen.
-    - **Kaistanleveyden rajat** (lähetys/lataus), jotta ajastettu varmuuskopio etäiseen ensisijaiseen ei tuki WAN-yhteyttäsi: samat `--limit-upload`/`--limit-download`-liput, joita etäkopiot käyttävät, sovellettuna itse varmuuskopioon.
-    - **Append-only-suoja**, varmennettuna samalla aktiivisella peukalointitestillä (oikea DELETE-koetin vastapuolta vasten), jonka etäkohteet saavat. Kun se on päällä, BombVault kieltäytyy karsimasta repoa itse, koska sen takana ei ole erillistä paikallista kopiota eikä tämän laatikon tunnusten saa voida poistaa varmuuskopion ainoaa kopiota.
-    - **Kasvubudjetin hälytyksen**, joka johdetaan samasta arkiston koon kehityksestä, jota Tallennus-kortti jo seuraa.
-
-Mikään tästä ei ole pakollista: käsin kirjoitettu etäpolku ilman tallennettuja turva-asetuksia varmuuskopioi rajoittamatta, sen voi karsia eikä sillä ole budjettihälytystä. Turva-asetukset ovat sitä varten, että haluat samat suojaukset kuin etäkopiolla, tarvitsematta erillistä kohdetta pelkästään niiden saamiseksi.
-
-!!! note "Pilvi- ja REST-tunnukset ovat yhteiset"
-    Etäinen ensisijainen todentaa jaetuilla pilvitunnistetiedoilla, jotka on määritetty kohdassa **Asetukset, Kohteet**; ensisijaisille repoille ei ole erillistä tunnistetietovarastoa.
-
-### SMB ja WebDAV ilman liitosta isäntään {#smb-webdav}
-
-Kortissa **Etäsijainti (rclone)** kohdassa **Asetukset, Kohteet** on lomake Windows- tai Samba-jaolle ja WebDAV-palvelimelle (Nextcloud, ownCloud, SharePoint tai mikä tahansa muu). Täytä lyhyt nimi, isäntä ja jako (SMB) tai URL ja palvelintyyppi (WebDAV), käyttäjä ja salasana, niin BombVault kirjoittaa rclone-osion puolestasi. rclone hämärtää salasanan itse ennen tallennusta; sellaisen lisääminen nimellä, joka on jo olemassa, korvaa kyseisen osion toisen lisäämisen sijaan. **Lisää kohde** tarjoaa SMB:n ja WebDAV:n palveluntarjoajina samoilla kentillä.
-
-Lomake vastaa valmiilla sijainnilla, esimerkiksi `rclone:nas:backups`. Käytä sitä osion polkuna tai kohteena ja lisää alikansio, jos haluat (`rclone:nas:backups/bombvault`). Jako on polun ensimmäinen segmentti, ei osa nimeä.
-
-Tämä on parempi tie kuin jaon liittäminen Unraidiin: restic neuvoo olemaan pitämättä repositorya liitetyllä CIFS-jaolla, ja täällä mitään ei liitetä. NFS ei ole lomakkeessa, koska resticillä eikä rclonella ole NFS-taustajärjestelmää; NFS:lle liitä jako isännälle ja käytä sitä paikallisena kansiona.
-
-## Poistosuoja (append-only)
+## Poistosuoja (append-only) {#delete-protection-append-only}
 
 Kytke poistosuoja päälle etäkohteelle, jotta kiristysohjelma tai kaapattu isäntä ei voi poistaa tai kirjoittaa uudelleen varmuuskopioitasi. Vastapuoli (`restic/rest-server` tilassa `--append-only`) **panee sen täytäntöön**. BombVault vain **varmentaa** sen eikä koskaan näytä vihreää pelkän kokoonpanoväitteen perusteella. Tämän palvelimen kansio ei voi kieltäytyä poistosta, koska se, joka hallitsee BombVaultia, hallitsee myös kansiota, joten paikalliset kohteet eivät tarjoa kytkintä.
 
-Kytkin kuuluu kohteelle: osio, joka kopioi sinne, saa sen kohteelta, joten kytke se päälle kohteen sivulla kohdassa **Kohteet**. Ajastettu **Tarkista poistosuoja** ajetaan vain, kun jokin osio kopioi kohteeseen, jossa kytkin on päällä. Toisen pään on käynnistyttävä valinnalla `--append-only`; `restic/rest-server`-imagessa se laitetaan TrueNASissa kuten missä tahansa muussa Docker-isännässä muuttujaan `OPTIONS`.
+Kytkin kuuluu kohteelle: osio, joka kopioi sinne, saa sen kohteelta, joten kytke se päälle kohteen sivulla kohdassa **Kohteet**. Ajastettu **Tarkista poistosuoja** ajetaan vain, kun jokin osio kopioi kohteeseen, jossa kytkin on päällä. Toisen pään on käynnistyttävä valinnalla `--append-only`. `restic/rest-server`-imagessa se laitetaan TrueNASissa kuten missä tahansa muussa Docker-isännässä muuttujaan `OPTIONS`.
 
 Jotkin paikat eivät voi lainkaan kieltäytyä poistosta, esimerkiksi pilviasema kuten OneDrive. Jos säilytät kopioita siellä tietoisesti, kytke paikan sivulla päälle **Hyväksy ilman poistosuojaa**. Yleiskatsaus näyttää silloin puuttuvan poistosuojan hyväksyttynä riskinä osiolle, joka kopioi vain hyväksyttyihin paikkoihin, harmaana renkaana oranssin pisteen sijaan, ja osion väri seuraa sen muita tarkistuksia. Muuta ei muutu: siellä olevat varmuuskopiot voi yhä poistaa, BombVault karsii niitä edelleen paikan sääntöjen mukaan, ja kytkin katoaa heti, kun poistosuoja on päällä. Toiseen paikkaan siirtyvä kopio menettää hyväksynnän. Myös poistosuojan kytkeminen päälle poistaa sen.
 
@@ -146,9 +310,9 @@ Nopein tie append-only-kopioon on pariliitetty BombVault, jolla on [vastaanottop
     Append-only ei tarkoita, ettei mitään voisi enää poistaa. resticin on otettava ja vapautettava omat lukkonsa, joten `/locks/` pysyy tarkoituksella kirjoitettavana ja poistettavana. Varmuuskopioita ja niiden takana olevaa dataa, eli juuri sitä mihin kiristysohjelma tähtäisi, ei voi poistaa. Jos koettelet vastapuolta itse, onnistunut poisto polussa `/locks/` on oikea toiminta eikä aukko suojauksessa.
 
 !!! warning "Append-only-repoja ei koskaan karsita tältä laatikolta"
-    Append-only-kohde ei koskaan karsi vanhoja varmuuskopioita täältä; karsinta on vastapuolen työtä. Aseta sille **kasvubudjettihälytys**, jotta saat varoituksen, ennen kuin repon koko karkaa käsistä.
+    Append-only-kohde ei koskaan karsi vanhoja varmuuskopioita täältä. Karsinta on vastapuolen työtä. Aseta sille **kasvubudjettihälytys**, jotta saat varoituksen, ennen kuin repon koko karkaa käsistä.
 
-## Peukalointitesti
+## Peukalointitesti {#tamper-test}
 
 BombVault todistaa ajoittain append-only-takeen yrittämällä oikeasti poistoa etärepoa vastaan, kohdistettuna olemattomaan objektiin. **Testaa poistosuoja nyt** kohteen sivulla ajaa sen pyynnöstä, ja **Tarkista poistosuoja** kohdassa **Asetukset, Tarkistus, Automaattiset tarkistukset** ajaa sen aikataulun mukaan.
 
@@ -162,7 +326,7 @@ Pois päältä olevaa kopiota ei testata, ja kohde kertoo sen. Yhteystesti toimi
 
 Todellinen suojatusta suojaamattomaksi -kääntyminen laukaisee yhden hälytyksen.
 
-## DR-harjoitukset
+## DR-harjoitukset {#dr-drills}
 
 BombVault tarjoaa kaksi tasoa todisteita siitä, että varmuuskopiosi ovat tosiasiassa palautuskelpoisia, eivät vain olemassa.
 
@@ -175,20 +339,23 @@ Yleiskatsauksen kortti **Suojaustila** kokoaa tämän osioittain neljäksi tarki
 
 Useat BombVaultit toimivat yhdessä ryhmänä: ne näyttävät toistensa suojaustilan, ottavat toisilleen rooleja ja voivat säilyttää toistensa avainta. Instanssi liittyy ryhmään kahdellatoista sanalla.
 
-Avaa ensimmäisellä instanssilla **Asetukset, Pariliitos** ja paina **Luo lause**. Kolme vaihekorttia näyttää, miten se menee. Kaksitoista sanaa ilmestyy ikkunaan, jossa on **Kopioi**-painike. Avaa jokaisella muulla instanssilla sama paikka, paina **Syötä lause** ja liitä tai kirjoita ne, tai paina **Liitä** siinä ikkunassa. Sana, jota ei ole luettelossa, nimetään sijaintinsa kanssa kirjoittaessasi, ja viimeisessä sanassa on tarkistussumma, joten väärin kirjoitettu tai vaihtunut sana huomataan, ennen kuin mitään pariutuu. Luo lause vain yhdellä instanssilla: kaksi instanssia, jotka kumpikin luovat sellaisen, muodostavat kaksi erillistä ryhmää. Jos kukaan ei ilmesty minuutin kuluessa, sivu tarjoaa kaksi ulospääsyä: näytä sanat uudelleen syötettäviksi toisaalla tai syötä toisen instanssin sanat ja liity sen ryhmään yhdellä kertaa. Pariliitos toimii ilman kirjautumissalasanaa, mutta aseta sellainen: ilman sitä kuka tahansa, joka voi avata verkkokäyttöliittymän, voi lukea sanat ja ryhmän kautta pyytää rooleja, jotka luovuttavat siinä olevien instanssien restic-salasanan. Pariliitoskortti kertoo sen, kunnes salasana on asetettu. Salasanan kanssa lauseen näyttäminen uudelleen kysyy sitä. **Poistu ryhmästä** ottaa instanssin pois. Pariliitossivun **Ilmentymät**-kortti listaa ryhmän jäsenet; kuva siitä, kuka tekee mitä kenelle, on Ilmentymät-sivulla.
+![Pariliitossivu ja sen kolme vaihekorttia.](assets/screenshots/offsite/pairing-dark.png#only-dark)
+![Pariliitossivu ja sen kolme vaihekorttia.](assets/screenshots/offsite/pairing-light.png#only-light)
+
+Avaa ensimmäisellä instanssilla **Asetukset, Pariliitos** ja paina **Luo lause**. Kolme vaihekorttia näyttää, miten se menee. Kaksitoista sanaa ilmestyy ikkunaan, jossa on **Kopioi**-painike. Avaa jokaisella muulla instanssilla sama paikka, paina **Syötä lause** ja liitä tai kirjoita ne, tai paina **Liitä** siinä ikkunassa. Sana, jota ei ole luettelossa, nimetään sijaintinsa kanssa kirjoittaessasi, ja viimeisessä sanassa on tarkistussumma, joten väärin kirjoitettu tai vaihtunut sana huomataan, ennen kuin mitään pariutuu. Luo lause vain yhdellä instanssilla: kaksi instanssia, jotka kumpikin luovat sellaisen, muodostavat kaksi erillistä ryhmää. Jos kukaan ei ilmesty minuutin kuluessa, sivu tarjoaa kaksi ulospääsyä: näytä sanat uudelleen syötettäviksi toisaalla tai syötä toisen instanssin sanat ja liity sen ryhmään yhdellä kertaa. Pariliitos toimii ilman kirjautumissalasanaa, mutta aseta sellainen: ilman sitä kuka tahansa, joka voi avata verkkokäyttöliittymän, voi lukea sanat ja ryhmän kautta pyytää rooleja, jotka luovuttavat siinä olevien instanssien restic-salasanan. Pariliitoskortti kertoo sen, kunnes salasana on asetettu. Salasanan kanssa lauseen näyttäminen uudelleen kysyy sitä. **Poistu ryhmästä** ottaa instanssin pois. Pariliitossivun **Ilmentymät**-kortti listaa ryhmän jäsenet. Kuva siitä, kuka tekee mitä kenelle, on Ilmentymät-sivulla.
 
 Kuka tahansa sanat tietävä voi liittyä ryhmään, joten kohtele niitä kuin salasanaa.
 
-**Miten jäsenet tavoittavat toisensa.** Jokainen instanssi oppii oman osoitteensa verkossa selaimestasi heti kirjautuessasi, listattuna kohdassa **Tunnetut osoitteet** pariliitossivun **Tämä instanssi** -kortissa yhdessä niiden kanssa, jotka instanssi löysi itse; korjaa se siellä, jos käänteinen välityspalvelin tai epätavallinen portti on edessä. Samassa verkossa jäsenet ilmoittavat tuon osoitteen multicastilla ja puhuvat suoraan, ja siellä missä multicast ei pääse konttiverkon yli, kuten Dockerin oletussillassa, instanssi hakee sen sijaan omasta aliverkostaan muita allekirjoitetulla kutsulla, johon vain ryhmän jäsen voi vastata, joten pariliitos valmistuu sekunneissa ilman relettä. Jos mitään ei löydy, **Etkö löydä sitä?** ottaa yhden osoitteen käsin, toista aliverkkoa tai epätavallista porttia varten. Eri verkoissa olevat instanssit kulkevat releen kautta, joka valitaan neljän rivissä samalla sivulla olevassa **Rele**-kortissa; jokaisella muodolla on kuva:
+**Miten jäsenet tavoittavat toisensa.** Jokainen instanssi oppii oman osoitteensa verkossa selaimestasi heti kirjautuessasi, listattuna kohdassa **Tunnetut osoitteet** pariliitossivun **Tämä instanssi** -kortissa yhdessä niiden kanssa, jotka instanssi löysi itse. Korjaa se siellä, jos käänteinen välityspalvelin tai epätavallinen portti on edessä. Samassa verkossa jäsenet ilmoittavat tuon osoitteen multicastilla ja puhuvat suoraan, ja siellä missä multicast ei pääse konttiverkon yli, kuten Dockerin oletussillassa, instanssi hakee sen sijaan omasta aliverkostaan muita allekirjoitetulla kutsulla, johon vain ryhmän jäsen voi vastata, joten pariliitos valmistuu sekunneissa ilman relettä. Jos mitään ei löydy, **Etkö löydä sitä?** ottaa yhden osoitteen käsin, toista aliverkkoa tai epätavallista porttia varten. Eri verkoissa olevat instanssit kulkevat releen kautta, joka valitaan neljän rivissä samalla sivulla olevassa **Rele**-kortissa. Jokaisella muodolla on kuva:
 
 - **Projektin rele** (oletus): `parleyport.halleluja.design`, sama rele jota myös KnightLoader käyttää. Ei mitään asennettavaa.
 - **Oma rele**: Unraidin Community Appsin [**ParleyPort**](https://github.com/junkerderprovinz/parleyport)-kontti (myös kohdassa **Asetukset, Sovellukset**). Syötä sen osoite jokaisella instanssilla, jonka pitää käyttää sitä.
 - **BombVault-instanssi**: yksi instansseistasi, joka on jo tavoitettavissa ulkoa ja jolla **Toimi releenä** on päällä. Tuo instanssi vastaa silloin polussa `/relay/connect` omassa osoitteessaan, jo olemassa olevan käänteisen välityspalvelimen ja varmenteen takana, ja päästää sisään vain ryhmäsi. Syötä sen osoite jokaisella instanssilla, jonka pitää käyttää sitä.
 - **Ei relettä**: jäsenet löytävät toisensa automaattisesti vain samassa verkossa, eivät missään muualla.
 
-**Mitä rele näkee.** Samanniminen painike neljän muodon vieressä näyttää tämän valitsemallesi muodolle. Jokainen jäsenten välinen kutsu sinetöidään AES-256-GCM:llä kahdestatoista sanasta johdetulla avaimella, eikä tuo avain koskaan poistu instansseistasi. Rele oppii tiivisteen, joka ryhmittelee yhteydet, mille instanssille viesti on tarkoitettu, kuinka suuri se on ja milloin se kulkee. Suora kutsu paikallisessa verkossa sinetöidään samoin ja allekirjoitetaan lisäksi, joten mikään ei riipu instanssin tarjoamasta itse allekirjoitetusta varmenteesta. Kutsut, jotka luovuttavat jotakin (roolivastaukset, restic-salasana, vastaanottajan tunnukset, avaintalletukset), allekirjoitetaan myös ne lähettävän jäsenen avaimella, kiinnitettynä ensimmäisellä näkemällä; katso [Turvallisuusmalli](configuration.md#security-model).
+**Mitä rele näkee.** Samanniminen painike neljän muodon vieressä näyttää tämän valitsemallesi muodolle. Jokainen jäsenten välinen kutsu sinetöidään AES-256-GCM:llä kahdestatoista sanasta johdetulla avaimella, eikä tuo avain koskaan poistu instansseistasi. Rele oppii tiivisteen, joka ryhmittelee yhteydet, mille instanssille viesti on tarkoitettu, kuinka suuri se on ja milloin se kulkee. Suora kutsu paikallisessa verkossa sinetöidään samoin ja allekirjoitetaan lisäksi, joten mikään ei riipu instanssin tarjoamasta itse allekirjoitetusta varmenteesta. Kutsut, jotka luovuttavat jotakin (roolivastaukset, restic-salasana, vastaanottajan tunnukset, avaintalletukset), allekirjoitetaan myös ne lähettävän jäsenen avaimella, kiinnitettynä ensimmäisellä näkemällä. Katso [Turvallisuusmalli](configuration.md#security-model).
 
-**Mitä ryhmässä kulkee.** Ilmentymät-sivun suojaustila, pyyntö tarkistaa yksi osio nyt, roolipyynnöt ja niiden vastaukset, kohdetarjoukset sekä se, mitä vastaanotin tai noutaja tarvitsee, kun sen rooli on sallittu: toisen instanssin repositoryjen sijainnit ja sen restic-salasana. Varmuuskopiodata ei koskaan; se kulkee yhä suoraan restic-taustajärjestelmiin. Eikä APP_KEY: restic-salasana avaa kyseisen instanssin repositoryt eikä mitään muuta, ei sen tallennettuja salaisuuksia, istuntoja tai noutokoodeja.
+**Mitä ryhmässä kulkee.** Ilmentymät-sivun suojaustila, pyyntö tarkistaa yksi osio nyt, roolipyynnöt ja niiden vastaukset, kohdetarjoukset sekä se, mitä vastaanotin tai noutaja tarvitsee, kun sen rooli on sallittu: toisen instanssin repositoryjen sijainnit ja sen restic-salasana. Varmuuskopiodata ei koskaan. Se kulkee yhä suoraan restic-taustajärjestelmiin. Eikä APP_KEY: restic-salasana avaa kyseisen instanssin repositoryt eikä mitään muuta, ei sen tallennettuja salaisuuksia, istuntoja tai noutokoodeja.
 
 **Merkinnät ennen pariliitosta.** Laiteryhmätunnuksella lisätyt instanssit sekä vastaanotetut repositoryt ja noutolähteet, jotka on asetettu toisen instanssin APP_KEY:llä, säilyvät päivityksen jälkeen ja merkitään **Pariuta uudelleen**. Ne toimivat edelleen: ensimmäisellä käynnistyksellä BombVault korvaa jokaisen tallennetun APP_KEY:n siitä johdetulla restic-salasanalla. Pariuta molemmat instanssit, muokkaa sitten merkintää ja valitse sen instanssi. Siihen asti tällaiset merkinnät ovat Ilmentymät-sivun kortissa **Ilman instanssia**.
 
@@ -198,6 +365,9 @@ Ainoa paikka, joka yhä ottaa APP_KEY:n käsin, on [Vanhasta varmuuskopiokansios
 
 **Ilmentymät**-sivu (asetusruutu, jonka voi kiinnittää sivupalkkiin) näyttää ryhmän verkkona siitä, kuka tekee mitä kenelle, kortti tälle instanssille ja kortti jokaiselle muulle jäsenelle, Android-puhelimille ja ZFS-palvelimille. **Pariliitos** oikeassa alakulmassa vie pariliitossivulle. Mitkä osat ovat päällä, asetetaan kohdassa **Asetukset, Ilmentymät, Useita palvelimia**: **Ilmentymät**, **Vastaanotin** ja **Nouto**.
 
+![Ilmentymät-sivu: ryhmä verkkona ja kortti kutakin instanssia kohti rooliruutuineen, yksi niistä Ei aktiivinen.](assets/screenshots/offsite/instances-dark.png#only-dark)
+![Ilmentymät-sivu: ryhmä verkkona ja kortti kutakin instanssia kohti rooliruutuineen, yksi niistä Ei aktiivinen.](assets/screenshots/offsite/instances-light.png#only-light)
+
 Jokainen kortti näyttää jäsenen suojaustilan ja sen roolit ruutuina. Rooli on jotakin, mitä yksi instanssi tekee toiselle:
 
 - **Vastaanotin** säilyttää tämän palvelimen etäkopiot rest-serverissä append-only-tilassa. Tämä palvelin lähettää jokaisen varmuuskopion jälkeen eikä voi poistaa siellä mitään, vaikka joku kaappaisi sen.
@@ -205,17 +375,13 @@ Jokainen kortti näyttää jäsenen suojaustilan ja sen roolit ruutuina. Rooli o
 - **ZFS-palvelin** ottaa vastaan tämän palvelimen ZFS-replikat. Jokainen ZFS-merkintä valitsee sen asetuksissaan kohdassa **Replika**.
 - **Säilyttäjä** säilyttää tämän palvelimen palautuspaketin sinetöityä kopiota. Katso [Avaimen säilyttäjä](#key-keeper).
 
-Roolin kytkeminen päälle lähettää pyynnön, eikä mikään käynnisty, ennen kuin joku toisessa instanssissa painaa **Salli**. Pyyntö näkyy sen instanssin kortilla merkkinä, ja sen **Tiedot** listaavat sen toiminnoilla **Salli** ja **Hylkää**; sallitun roolin voi peruuttaa siellä milloin tahansa. Katkoviiva verkossa on rooli, joka yhä odottaa. BombVault 9.x -versiolla oleva instanssi ei voi vastata pyyntöön, joten rooli on siellä aktiivinen heti kun kytket sen päälle, ja 9.x-instanssin pyyntö odottaa täällä **Salli**-toimintoa.
+Roolin kytkeminen päälle lähettää pyynnön, eikä mikään käynnisty, ennen kuin joku toisessa instanssissa painaa **Salli**. Pyyntö näkyy sen instanssin kortilla merkkinä, ja sen **Tiedot** listaavat sen toiminnoilla **Salli** ja **Hylkää**. Sallitun roolin voi peruuttaa siellä milloin tahansa. Katkoviiva verkossa on rooli, joka yhä odottaa. BombVault 9.x -versiolla oleva instanssi ei voi vastata pyyntöön, joten rooli on siellä aktiivinen heti kun kytket sen päälle, ja 9.x-instanssin pyyntö odottaa täällä **Salli**-toimintoa.
 
 Kortin **Tiedot** avaa loput: jäsenen vastaanotetut repositoryt ja noutolähteet, kohdetarjoukset, valvonta, **Poista** ja **Unohda avain**.
 
 Sammutetut instanssit ja puhelimet, joiden sovellus on suljettu, säilyttävät korttinsa tilassa **Ei aktiivinen**, harmaana ja tiedolla siitä, milloin ne nähtiin viimeksi, ja ne näkyvät verkossa himmennettyinä, kunnes poistat ne toiminnolla **Poista**. Heti tämän palvelimen käynnistyttyä tällainen kortti näyttää **Tarkistetaan**, kunnes ryhmä on taas tavoitettavissa. **Poista** toimii tällaisella kortilla riippumatta siitä, mitkä osat on kytketty päälle, ja se päättää myös jäsenen avoimet pyynnöt, sen käyttämättömät ZFS-vastaanottopaikat ja sen odottavat avainpyynnöt. Pariliitossivun **Ilmentymät**-kortti listaa nämä jäsenet myös tilassa **Ei aktiivinen**.
 
 ## Vastaanotin ja noutaja {#receiver}
-
-![Vastaanotettu etäkopio instanssin tiedoissa, vain luku -valvonnassa, eheystarkistuksella ajettuna tällä laitteistolla.](assets/screenshots/receiver.png)
-
-*Vastaanotettu etäkopio instanssin tiedoissa, vain luku -valvonnassa, eheystarkistuksella ajettuna tällä laitteistolla.*
 
 Laatikossa, joka **vastaanottaa** append-only-kopioita toiselta BombVaultilta, vastaanotetut repositoryt antavat riippumattoman, vain luku -tilaisen valvonnan vastaanottavalla laitteistolla, jotta äänetön vika vastapäässä ei jää huomaamatta. Kytke **Vastaanotin** päälle kohdassa **Asetukset, Ilmentymät**, avaa sitten lähettävän instanssin **Tiedot** Ilmentymät-sivulla ja lisää vastaanotettu repository (vain luku, avattuna lähettäjäinstanssin restic-salasanalla, joka tulee [pariliitosryhmän](#pairing) kautta). Saat:
 
@@ -227,26 +393,26 @@ Laatikossa, joka **vastaanottaa** append-only-kopioita toiselta BombVaultilta, v
 
 Vastaanotin on tiukasti vain luku. Se ei koskaan kirjoita vastaanotettuun repositoryyn, joten se ei voi koskaan rikkoa append-only-takuuta, johon lähettäjä luottaa.
 
-Noutaja toimii toisin päin: kun **Nouto** on päällä, instanssi lukee toisen jäsenen varmuuskopiot omalla aikataulullaan, jokaiselle lähteelle omaan repositoryynsä, joten niitä ei koskaan lasketa tämän laatikon omiksi varmuuskopioiksi. Sen lähteet ovat myös kyseisen jäsenen tiedoissa.
+Noutaja toimii toisin päin: kun **Nouto** on päällä, instanssi lukee toisen jäsenen varmuuskopiot omalla aikataulullaan, jokaiselle lähteelle omaan arkistoonsa, joten niitä ei koskaan lasketa tämän laatikon omiksi varmuuskopioiksi. Sen lähteet ovat myös kyseisen jäsenen tiedoissa: arkiston sijainti, minkä lajin varmuuskopioita se sisältää ja kuinka usein noudetaan. Restic-salasana tulee ryhmän kautta, ei koskaan APP_KEY, eikä vastapuolella ole mitään muuta määritettävää, eikä sen tarvitse olla käynnissä. Lähdettä vain luetaan, ja kumpikin puoli pitää omat tunnuksensa. `rclone:`-lähde torjutaan, koska rclone tavoittaisi sen tämän instanssin etäsijainneilla.
 
 ### Vastaanottopalvelin {#receiving-server}
 
 Vastaanottava laatikko voi myös ajaa rest-serverin, johon muut kopioivat. Se määritetään ensimmäisellä kerralla, kun sallit **Vastaanotin**-pyynnön, joka sitä pyytää: ikkuna kertoo, että palvelin tarvitsee vastaanottopalvelimen, ja kysyy kansiota jaolta, **Uusi kansio** -toiminnolla uuden luomiseen, sekä porttia (8000, ellei toinen kontti käytä sitä). BombVault sitten:
 
-1. kieltäytyy jatkamasta, jos kontti nimeltä `rest-server` on jo olemassa tai toinen kontti pitää porttia;
-2. hakee `restic/rest-server`in ja käynnistää sen Dockerin socketin kautta append-only-tilassa yksityisillä repositorioilla ja kansiossa olevalla kirjautumistiedostolla;
-3. kirjoittaa sen Unraid-mallin flash-asemalle, jolloin kontti pysyy muokattavana Docker-välilehdellä, tai tarjoaa mallin ladattavaksi, kun flash-asema ei ole saatavilla;
+1. kieltäytyy jatkamasta, jos kontti nimeltä `rest-server` on jo olemassa tai toinen kontti pitää porttia,
+2. hakee `restic/rest-server`in ja käynnistää sen Dockerin socketin kautta append-only-tilassa yksityisillä repositorioilla ja kansiossa olevalla kirjautumistiedostolla,
+3. kirjoittaa sen Unraid-mallin flash-asemalle, jolloin kontti pysyy muokattavana Docker-välilehdellä, tai tarjoaa mallin ladattavaksi, kun flash-asema ei ole saatavilla,
 4. ajaa sille peukalointitestin ja näyttää, kieltäytyykö se poistoista.
 
-Ryhmäsi instanssit löytävät palvelimen sitten palveluntarjoajien joukosta kohdassa **Ryhmästäsi**, vastaanottavan laatikon nimellä, ja **Vastaanotin**-rooli tarjoaa sen turvallisena valintana. Jokainen instanssi saa oman tunnuksen, kun se ensimmäisen kerran käyttää palvelinta, ja kirjoittaa siellä vain omaan kansioonsa. Kun **Vastaanotin** on päällä kohdassa **Asetukset, Ilmentymät**, tämän instanssin kortti **Vastaanottopalvelin** avaa palvelimen uudelleen. Sen ikkuna listaa tunnukset kohdassa **Kumppanit, joilla on tunnus**, ja **Peruuta tunnus** poistaa yhden; mitä kyseinen instanssi on jo kopioinut, jää kansioon. Käyttöönotto luo myös yhden **Tunnuksen ryhmän ulkopuolelle**, jonka salasanan ikkuna näyttää kerran.
+Ryhmäsi instanssit löytävät palvelimen sitten palveluntarjoajien joukosta kohdassa **Ryhmästäsi**, vastaanottavan laatikon nimellä, ja **Vastaanotin**-rooli tarjoaa sen turvallisena valintana. Jokainen instanssi saa oman tunnuksen, kun se ensimmäisen kerran käyttää palvelinta, ja kirjoittaa siellä vain omaan kansioonsa. Kun **Vastaanotin** on päällä kohdassa **Asetukset, Ilmentymät**, tämän instanssin kortti **Vastaanottopalvelin** avaa palvelimen uudelleen. Sen ikkuna listaa tunnukset kohdassa **Kumppanit, joilla on tunnus**, ja **Peruuta tunnus** poistaa yhden. Mitä kyseinen instanssi on jo kopioinut, jää kansioon. Käyttöönotto luo myös yhden **Tunnuksen ryhmän ulkopuolelle**, jonka salasanan ikkuna näyttää kerran.
 
 Instanssi, joka tavoittaa vastaanottavan laatikon vain releen kautta, ei voi käyttää palvelinta, koska rele ei kuljeta varmuuskopioita. Lisää vastaanottavan laatikon osoite pariliitossivulla ensin. Kun BombVault toimii omalla IP-osoitteellaan (esimerkiksi br0:ssa), täytä **Osoite kumppaneille**, koska palvelin kuuntelee isännän osoitteessa.
 
-## Läpikäyty esimerkki: kaksi Unraid-konetta, päästä päähän
+## Esimerkki: kahden Unraid-koneen pariliitos {#worked-example-two-unraid-boxes-end-to-end}
 
-Kaikki yllä kuvaa osat. Tämä on yksi täydellinen käyttöönotto, koska osat on helpompi koota, kun on nähnyt ne koottuina kerran.
+Tämä on yksi täydellinen käyttöönotto yllä kuvatuista osista, koska ne on helpompi koota, kun on nähnyt ne koottuina kerran.
 
-Kaksi laatikkoa: **TOWER** ajaa kontteja ja työntää varmuuskopioita; **VAULT** vastaanottaa ne ja panee append-only-tilan täytäntöön. Korvaa omilla nimilläsi, osoitteillasi ja jakopoluillasi.
+Kaksi laatikkoa: **TOWER** ajaa kontteja ja työntää varmuuskopioita. **VAULT** vastaanottaa ne ja panee append-only-tilan täytäntöön. Korvaa omilla nimilläsi, osoitteillasi ja jakopoluillasi.
 
 **1. Pariuta kaksi laatikkoa.** Avaa TOWERilla **Asetukset, Pariliitos**, paina **Luo lause** ja syötä kaksitoista sanaa VAULTilla kohdassa **Syötä lause**. Aseta ensin kirjautumissalasana molemmille.
 
@@ -264,28 +430,47 @@ Mitä peukalointitesti vastaa:
 | **ei suojattu** | VAULT hyväksyi poiston. `--append-only` puuttuu tai se poistettiin. |
 | **ei ratkaiseva** | Ei kumpikaan. Yleensä osoite ei ole se, jota restic itse käyttää, tai tunnukset ovat muuttuneet. Mitään ei kirjata eikä hälytystä laukaista. |
 
-**5. Seuraa saapuvaa, jos haluat.** Kytke **Vastaanotin** päälle VAULTilla kohdassa **Asetukset, Ilmentymät**, avaa TOWERin **Tiedot** ja lisää vastaanotettu repository. VAULT saa TOWERin restic-salasanan ryhmän kautta; kukaan ei kirjoita avainta.
+**5. Seuraa saapuvaa, jos haluat.** Kytke **Vastaanotin** päälle VAULTilla kohdassa **Asetukset, Ilmentymät**, avaa TOWERin **Tiedot** ja lisää vastaanotettu repository. VAULT saa TOWERin restic-salasanan ryhmän kautta. Kukaan ei kirjoita avainta.
 
 **6. Tee siitä molemminpuolinen.** Toista vaiheet toiseen suuntaan: VAULT pyytää TOWERia vastaanottajakseen. Kumpikin laatikko panee sitten append-only-tilan täytäntöön toiselle, eikä kumpikaan voi poistaa toisen varmuuskopioita.
 
-Käsin ajettu rest-server toimii myös: lisää se kohdalla **Lisää kohde** rest-serverinä, käyttäjällä ja salasanalla sen `.htpasswd`-tiedostosta, ja kytke poistosuoja päälle. Pidä `--append-only` sen asetuksissa; ilman sitä vastapuoli on taas tavallinen jako.
+Käsin ajettu rest-server toimii myös: lisää se kohdalla **Lisää kohde** rest-serverinä, käyttäjällä ja salasanalla sen `.htpasswd`-tiedostosta, ja kytke poistosuoja päälle. Pidä `--append-only` sen asetuksissa. Ilman sitä vastapuoli on taas tavallinen jako.
 
 !!! warning "Paikallinen polku on polku kontin sisällä"
-    Kun BombVault pyytää kansiota tältä palvelimelta, syötä se suhteessa isännän liitokseen, kuten `user/appdata/rest-server/bombvault-containers`, ei `/mnt/user/appdata/...`. BombVault toimii kontissa, jossa isännän `/mnt` on liitetty muualle; isännän absoluuttista polkua ei ole sen sisällä. Jos liität sellaisen, BombVault kertoo suhteellisen polun, jota käyttää sen sijaan.
+    Kun BombVault pyytää kansiota tältä palvelimelta, syötä se suhteessa isännän liitokseen, kuten `user/appdata/rest-server/bombvault-containers`, ei `/mnt/user/appdata/...`. BombVault toimii kontissa, jossa isännän `/mnt` on liitetty muualle. Isännän absoluuttista polkua ei ole sen sisällä. Jos liität sellaisen, BombVault kertoo suhteellisen polun, jota käyttää sen sijaan.
 
 ## Hätäohjattu toiminto {#emergency}
 
 **Hätäohjattu toiminto** tuo takaisin palvelimen, joka on poissa tai pystytetty uudelleen. Se alkaa **Palautus**-sivulta kohdasta **Hätätilanne** sekä uuden asennuksen tervetulosivun kohdasta **Palauta varmuuskopiosta**. Se etenee neljässä vaiheessa: **Pääsy**, **Asetukset**, **Valinta** ja **Palautus**.
 
 1. **Pääsy.** Näytä BombVaultille vanhojen varmuuskopioiden avain yhdellä kolmesta tavasta:
-    - **Lataa palautuspaketti**: käyttöönoton aikana lataamasi tiedosto. Se sisältää avaimen ja jokaisen kohteen, ja BombVault täyttää loput sen perusteella. Age-salattu paketti kysyy identiteettiä, jolle se sinetöitiin; sitä käytetään kerran eikä tallenneta.
+    - **Lataa palautuspaketti**: käyttöönoton aikana lataamasi tiedosto. Se sisältää avaimen ja jokaisen kohteen, ja BombVault täyttää loput sen perusteella. Age-salattu paketti kysyy identiteettiä, jolle se sinetöitiin. Sitä käytetään kerran eikä tallenneta.
     - **Ryhmän kautta**: ryhmäsi instanssi säilyttää avainta talletuksena. Tarvitset ryhmän kaksitoista sanaa, noutokoodisi ja jonkun kyseisessä instanssissa. Katso [Avaimen säilyttäjä](#key-keeper).
     - **Kirjoita avain**: vanhan palvelimen `APP_KEY` ja se, missä sen varmuuskopiot ovat.
 
-    BombVault kokeilee sitten avainta jokaisessa kohteessa ja kertoo kustakin, onko se luettavissa, ei löydy, on lukittu toisella avaimella, ei ole tavoitettavissa vai puuttuuko siltä vielä kirjautuminen. Mitään ei ole vielä tallennettu, ja avain pysyy muistissa rajoitetun ajan. **Ota avain haltuun** saa tämän palvelimen kirjoittamaan varmuuskopionsa tuolla avaimella tästä lähtien; **Kumoa haltuunotto** palaa sen omaan avaimeen, kunnes ensimmäinen varmuuskopio on ajettu. Palvelin, jolla on jo omia varmuuskopioita, kieltäytyy haltuunotosta ja ohjaa kohtaan [Vanhasta varmuuskopiokansiosta](#restore-from-another-bombvault-repo). **Tallenna tunnukset** tallentaa tunnukset, jotka paketti sisältää etäkohteille, ja kysyy ennen kuin korvaa tunnukset, jotka tällä palvelimella jo on.
+    BombVault kokeilee sitten avainta jokaisessa kohteessa ja kertoo kustakin, onko se luettavissa, ei löydy, on lukittu toisella avaimella, ei ole tavoitettavissa vai puuttuuko siltä vielä kirjautuminen. Mitään ei ole vielä tallennettu, ja avain pysyy muistissa rajoitetun ajan. **Ota avain haltuun** saa tämän palvelimen kirjoittamaan varmuuskopionsa tuolla avaimella tästä lähtien. **Kumoa haltuunotto** palaa sen omaan avaimeen, kunnes ensimmäinen varmuuskopio on ajettu. Palvelin, jolla on jo omia varmuuskopioita, kieltäytyy haltuunotosta ja ohjaa kohtaan [Vanhasta varmuuskopiokansiosta](#restore-from-another-bombvault-repo). **Tallenna tunnukset** tallentaa tunnukset, jotka paketti sisältää etäkohteille, ja kysyy ennen kuin korvaa tunnukset, jotka tällä palvelimella jo on.
 2. **Asetukset.** **Palauta asetukset** palauttaa BombVaultin omat asetukset uusimmasta Itsevarmuuskopiosta: kohteet, tunnistetiedot, aikataulut ja säännöt. BombVault käynnistyy uudelleen ottaakseen ne käyttöön Docker-soketin kautta, jotta käytössä olevaa asetustietokantaa ei koskaan ylikirjoiteta avoimen kahvan alla, ja ohjattu toiminto jatkuu itsestään sen jälkeen. Tämän palvelimen kirjautuminen säilyy: kirjaudut yhä nykyisellä salasanallasi. Salaisuudet, jotka vanha palvelin oli tallentanut ja joita ei voi ottaa haltuun, listataan, jotta voit syöttää ne uudelleen. Palautus päättää kaikki istunnot ja poistaa pääsyavaimet, joten ota ne sen jälkeen uudelleen käyttöön.
 3. **Valinta.** BombVault käy läpi varmuuskopiosi ja listaa löytämänsä kontit, VMs, kansiojoukot ja ZFS-tietojoukot. Uusin varmuuskopio on esivalittu kaikkialla. Se, mikä tällä palvelimella yhä on, alkaa pois päältä, koska palautus korvaisi sen. Kansiojoukot eivät enää tiedä, mistä ne tulivat uudelleenrakennuksen jälkeen, joten ne menevät valitsemaasi kansioon.
 4. **Palautus.** Kaikki valittu palaa kerralla, jätettynä pysäytetyksi, jos haluat käynnistää jokaisen kontin ja VM:n itse, mikä on turvallisinta täydellisen menetyksen jälkeen. Lataa sen jälkeen uusi palautuspaketti: vanha kuuluu edelliselle asennukselle.
+
+![Hätäohjattu toiminto ensimmäisessä vaiheessaan, kolme tapaa sisään.](assets/screenshots/offsite/emergency-dark.png#only-dark)
+![Hätäohjattu toiminto ensimmäisessä vaiheessaan, kolme tapaa sisään.](assets/screenshots/offsite/emergency-light.png#only-light)
+
+### Esimerkki: uusi palvelin palautuspaketista {#example-emergency}
+
+Palvelin TOWER kuoli levyineen. Siinä oli 23 konttia ja 2 VM:ää, ja se kopioi ne ja itsevarmuuskopionsa Backblaze B2:een. Sinulla on `bombvault-recovery-kit.md` salasanahallinnasta ja uusi laatikko, jossa on Unraid. Sen vanha `APP_KEY` on kadonnut, etkä tarvitse sitä.
+
+1. **Asenna BombVault** uuteen laatikkoon ja anna sille uusi `APP_KEY`, kuten missä tahansa uudessa asennuksessa. Määritä VM-yhteys kohdassa **Asetukset, Integraatiot, Palvelimen SSH**, jos haluat VM:t takaisin, koska VM:n palautus tarvitsee sitä.
+2. **Käynnistä ohjattu toiminto.** Valitse sivulla **Tervetuloa BombVaultiin** vaihtoehto **Palauta varmuuskopiosta**. Valitse Palautus-sivulla kohdassa **Hätätilanne** vaihtoehto **Käynnistä hätäohjattu toiminto**.
+3. **Pääsy.** Valitse **Lataa palautuspaketti** ja pudota tiedosto ikkunaan. BombVault kokeilee sen avainta jokaisessa kohteessa ja sanoo esimerkiksi **Palautuspaketti luettu. Sen avain avaa 0 kohdetta 2:sta.** Paikallinen kansio sanoo **ei löytynyt**, koska levy kuoli, ja Backblaze B2 sanoo **tunnukset puuttuvat**.
+4. **Tallenna tunnukset.** Paketti sisältää etäkohteidensa tunnukset. Paina **Tallenna tunnukset**, niin kohteita kokeillaan uudelleen, ja Backblaze B2 sanoo nyt **luettavissa**.
+5. **Ota avain haltuun.** Tämä palvelin kirjoittaa nyt varmuuskopionsa vanhalla avaimella, joten uudet varmuuskopiot sopivat vanhojen kanssa. Se pitää oman `APP_KEY`:nsä mallissa. **Kumoa haltuunotto** toimii, kunnes ensimmäinen varmuuskopio on ajettu.
+6. **Asetukset.** Valitse **Palauta asetukset**, joka lukee uusimman itsevarmuuskopion B2:sta. BombVault käynnistyy uudelleen ottaakseen sen käyttöön, ja ohjattu toiminto jatkuu itsestään. Kohteesi, aikataulusi ja sääntösi ovat takaisin, ja kirjaudut yhä tämän palvelimen salasanalla. Syötä uudelleen salaisuudet, jotka ohjattu toiminto listaa, kuten ilmoitusasetukset.
+7. **Valinta.** Aseta **Missä varmuuskopiot ovat?** arvoon etäkopiot, koska paikalliset menivät vanhan palvelimen mukana. BombVault listaa 23 konttia ja 2 VM:ää uusin varmuuskopio esivalittuna, ja voit valita toisen mille tahansa niistä.
+8. **Palautus.** Kytke päälle **Jätä pysäytetyksi jälkeenpäin**, mikä on turvallisinta täydellisen menetyksen jälkeen, ja aloita. **Mitä tapahtuu** kertoo, mitä palaa. Tulosrivi kuuluu esimerkiksi **25 palautettu, 0 epäonnistui. Käynnistä ne tarvittaessa kohdassa Varmuuskopiot.**
+9. **Viimeistely.** Käynnistä tietokantasi ensin ja sitten niitä käyttävät sovellukset. Avaa **Asetukset, Palautus** ja lataa uusi palautuspaketti, koska vanha kuuluu edelliselle asennukselle. Tarkista **Vaatii huomiota** yleiskatsauksessa ja aja **Varmuuskopioi kaikki nyt**, kun kaikki toimii.
+
+Jos itsevarmuuskopiokin puuttuu, valitse **Ohita: minulla ei ole Itsevarmuuskopiota**. Kohteet tulevat silloin pelkästään paketista, aikataulut ja säännöt asetetaan uudelleen, ja etäkopiot pysähtyvät, kunnes vahvistat osioiden oletukset, katso [Uudelleenrakennuksen jälkeen](#after-a-rebuild).
 
 !!! tip "Suunniteltu siirto vastaan katastrofi"
     Hätäohjattu toiminto palauttaa BombVaultin omat asetukset varmuuskopiosta. *Suunniteltua* siirtoa uuteen laatikkoon varten voit sen sijaan viedä kokoonpanosi suoraan **Vie / tuo asetukset** -kortilla (siirrettävä JSON-tiedosto). Katso [Asetukset](configuration.md#portable-settings-export-and-import).
@@ -300,13 +485,16 @@ Kontti, jonka verkkoa tällä palvelimella ei ole, esimerkiksi Unraidin `br0`-ve
 
 Avaimen säilyttäjä on ryhmäsi instanssi, joka pitää tämän palvelimen palautuspaketin sinetöityä kopiota. Se ei voi itse avata kopiota. Jos tämä palvelin joskus katoaa, uusi asennus, joka liittyy ryhmääsi, pyytää kopion säilyttäjältä ja avaa sen noutokoodillasi.
 
+![Noutokoodin ikkuna: kaksikymmentä merkkiä neljässä ryhmässä, näytetään kerran.](assets/screenshots/offsite/recovery-code-dark.png#only-dark)
+![Noutokoodin ikkuna: kaksikymmentä merkkiä neljässä ryhmässä, näytetään kerran.](assets/screenshots/offsite/recovery-code-light.png#only-light)
+
 1. Kytke Ilmentymät-sivulla **Säilyttäjä** päälle sen instanssin kortilla, jonka pitää säilyttää, ja valitse **Tee talletus**. Talletuksen tekeminen vaatii kirjautumissalasanan.
 2. Tämä palvelin näyttää **Noutokoodin** kerran: kaksikymmentä kirjainta ja numeroa neljässä viiden ryhmässä. Kirjoita se muistiin ja vahvista **Kirjoitin koodin muistiin**. Tämä palvelin ei tallenna koodia, vain sen, mitä se tarvitsee talletuksen sinetöintiin sille.
-3. Säilyttäjä pitää nyt talletusta, ja tämä palvelin uusii sen, kun paketti muuttuu. **Avaimen talletus** tämän instanssin kortilla listaa **Tämän palvelimen talletuksen** kunkin säilyttäjän ja sen tilan kanssa sekä **Talletukset, joita tämä palvelin säilyttää** muille. **Tee uusi koodi** korvaa koodin; jokainen säilyttäjä siirtyy uuteen, kun se saa uuden talletuksen.
+3. Säilyttäjä pitää nyt talletusta, ja tämä palvelin uusii sen, kun paketti muuttuu. **Avaimen talletus** tämän instanssin kortilla listaa **Tämän palvelimen talletuksen** kunkin säilyttäjän ja sen tilan kanssa sekä **Talletukset, joita tämä palvelin säilyttää** muille. **Tee uusi koodi** korvaa koodin. Jokainen säilyttäjä siirtyy uuteen, kun se saa uuden talletuksen.
 
-Sinä päivänä tarvitset kolme asiaa: ryhmäsi kaksitoista sanaa, noutokoodin ja pääsyn säilyttäjän käyttöliittymään, jossa jonkun täytyy painaa **Salli**. Valitse Hätäohjatussa toiminnossa **Ryhmän kautta**, valitse talletus, pyydä sitä ja kirjoita noutokoodi. Koodia käytetään uudella palvelimella, eikä sitä lähetetä säilyttäjälle. Säilyttäjällä pyyntö näkyy kohdassa **Avaimen talletus** pyytäjän, sen, onko kyseinen instanssi koskaan nähty siellä aiemmin, ja pyyntöjen määrän kanssa; **Salli** luovuttaa sinetöidyn kopion, ja sallimiseen tarvitaan kirjautumissalasana. Uudella asennuksella on 30 minuuttia aikaa noutaa se Sallimisen jälkeen, pyyntö, johon kukaan ei vastaa, vanhenee päivän kuluttua, ja instanssin, joka pyytää liian usein, täytyy odottaa tunti.
+Sinä päivänä tarvitset kolme asiaa: ryhmäsi kaksitoista sanaa, noutokoodin ja pääsyn säilyttäjän käyttöliittymään, jossa jonkun täytyy painaa **Salli**. Valitse Hätäohjatussa toiminnossa **Ryhmän kautta**, valitse talletus, pyydä sitä ja kirjoita noutokoodi. Koodia käytetään uudella palvelimella, eikä sitä lähetetä säilyttäjälle. Säilyttäjällä pyyntö näkyy kohdassa **Avaimen talletus** pyytäjän, sen, onko kyseinen instanssi koskaan nähty siellä aiemmin, ja pyyntöjen määrän kanssa. **Salli** luovuttaa sinetöidyn kopion, ja sallimiseen tarvitaan kirjautumissalasana. Uudella asennuksella on 30 minuuttia aikaa noutaa se Sallimisen jälkeen, pyyntö, johon kukaan ei vastaa, vanhenee päivän kuluttua, ja instanssin, joka pyytää liian usein, täytyy odottaa tunti.
 
-Ilman koodia kukaan ei voi avata kopiota, säilyttäjäkään. Jos koodi katoaa, tee uusi, kun tämä palvelin yhä toimii; jos palvelin on jo poissa, palautuspaketti ja kirjoitettu APP_KEY toimivat yhä. Säilyttäjä voi poistaa talletuksen milloin tahansa, ja omistajan täytyy silloin pyytää uudelleen.
+Ilman koodia kukaan ei voi avata kopiota, säilyttäjäkään. Jos koodi katoaa, tee uusi, kun tämä palvelin yhä toimii. Jos palvelin on jo poissa, palautuspaketti ja kirjoitettu APP_KEY toimivat yhä. Säilyttäjä voi poistaa talletuksen milloin tahansa, ja omistajan täytyy silloin pyytää uudelleen.
 
 ## Palautuspaketti {#recovery-kit}
 
@@ -320,26 +508,24 @@ Tämä on se pala, joka tekee katastrofista toipumisen mahdolliseksi silloinkin 
 !!! warning "Uusin varmuuskopio ei aina ole se, joka kannattaa palauttaa"
     Resticistä 0.17 lähtien `restic snapshots` näyttää kunkin tilannevedoksen koon. Tietojen menetyksen jälkeen uusin varmuuskopio voi olla tyhjennetty, joten älä palauta varmuuskopiota, joka on paljon pienempi kuin sitä edeltävät. Kiristysohjelman jälkeen se voi olla salattu tavallisen kokoinen. Jos BombVault yhä toimii, katso ensin sen **Poikkeamat**-sivu: se nimeää viimeisen hyvän varmuuskopion, ja palautusikkuna esivalitsee sen. Palautus ei tarvitse mitään BombVaultin poikkeamadataa, ja säilytyksen tauko vain säilyttää enemmän varmuuskopioita.
 
-### Paketin sinetöinti
+### Paketin sinetöinti {#sealing-the-kit}
 
 Jos olet kytkenyt päälle **Salaa viennit age:lla** kohdassa **Asetukset, Järjestelmä**, paketti sinetöidään myös sillä ja latautuu nimellä `bombvault-recovery-kit.md.age`. Se on ASCII-panssaroitu eikä binäärinen, joten se on yhä tekstiä: sen liittäminen salasanahallintaan tai tulostaminen toimii täsmälleen kuten ennen, sisältö vain on lukukelvoton ilman avaintasi.
 
 !!! warning "Älä säilytä age-avainta paketin sisällä"
-    Sinetöidyn paketin avaamiseen tarvitset age-**yksityisavaimesi**. Säilytä se paikassa, joka ei riipu itse paketista, tai sinulla on palautettavana kaksi asiaa yhden sijaan. Sinetöinti kannattaa, kun paketti on tallessa paikassa, jota et täysin hallitse (jaettu salasanojen hallinta, pilvimuistiinpanot, tuloste toimistolla); omassa kassakaapissasi oleva paketti on jo kassakaapin suojaama.
+    Sinetöidyn paketin avaamiseen tarvitset age-**yksityisavaimesi**. Säilytä se paikassa, joka ei riipu itse paketista, tai sinulla on palautettavana kaksi asiaa yhden sijaan. Sinetöinti kannattaa, kun paketti on tallessa paikassa, jota et täysin hallitse (jaettu salasanojen hallinta, pilvimuistiinpanot, tuloste toimistolla). Omassa kassakaapissasi oleva paketti on jo kassakaapin suojaama.
 
     Kun salaus on päällä eikä käyttökelpoista vastaanottajaa ole määritetty, lataus torjutaan suoraan. BombVault ei koskaan turvaudu antamaan pääavainta selkotekstinä.
 
-### Kun paketti ei ole käsillä
+### Kun paketti ei ole käsillä {#if-you-do-not-have-the-kit-to-hand}
 
 Salasanaa ei ole tallennettu minnekään, se **lasketaan** varmuuskopioiden avaimesta, joten voit toistaa sen itse pelkällä avaimella ja komentotulkilla:
 
 ```sh
-printf 'bombvault:restic-repo' \
-  | openssl dgst -sha256 -mac HMAC -macopt hexkey:$APP_KEY -r \
-  | cut -d' ' -f1
+printf 'bombvault:restic-repo'   | openssl dgst -sha256 -mac HMAC -macopt hexkey:$APP_KEY -r   | cut -d' ' -f1
 ```
 
-Se on HMAC-SHA256 kiinteälle merkkijonolle `bombvault:restic-repo`, avaimena heksa-`APP_KEY`:n raakatavut, tulostettuna 64 pienenä heksamerkkinä. Sama arvo on paketissa, listattuna johdettuna restic-salasanana; tämä on sitä päivää varten, kun paketti on jossain, missä et ole. Palvelimella, joka otti haltuunsa toisen varmuuskopiot, käytä haltuun otettua varmuuskopioavainta, joka on kyseisen palvelimen vanha APP_KEY.
+Se on HMAC-SHA256 kiinteälle merkkijonolle `bombvault:restic-repo`, avaimena heksa-`APP_KEY`:n raakatavut, tulostettuna 64 pienenä heksamerkkinä. Sama arvo on paketissa, listattuna johdettuna restic-salasanana. Tämä on sitä päivää varten, kun paketti on jossain, missä et ole. Palvelimella, joka otti haltuunsa toisen varmuuskopiot, käytä haltuun otettua varmuuskopioavainta, joka on kyseisen palvelimen vanha APP_KEY.
 
 !!! warning "Vastaanotetussa arkistossa käytä LÄHETTÄVÄN instanssin avainta"
     Repository, joka saapui tänne etäkopion kautta, on sen lähettäneen koneen luoma **sen** avaimella. Johtaminen vastaanottavan laatikon avaimesta tuottaa salasanan, jonka restic hylkää, mikä näyttää täsmälleen vioittuneelta repositorylta eikä ole sitä. Tämä on tavallinen syy siihen, että `restic check` vastaanotetulla repolla kysyy salasanaa yhä uudelleen.
@@ -348,7 +534,7 @@ Koska palautusmääritykset asuvat kunkin repon **sisällä** (`<repo>/def`, `<r
 
 ## Tietokantavedoksen hakeminen takaisin {#database-dumps}
 
-Tietokantavedos on oma palautuspisteensä konttien repositoryssä, tunnisteella `dbdump:<kontti>`, ja sisältää yhden tiedoston `/dbdump/<kontti>.sql`. BombVault listaa, lataa ja tuo ne kontin **Varmuuskopiot**-välilehdellä; alla ovat samat vaiheet pelkällä resticillä sitä päivää varten, kun BombVaultia ei ole.
+Tietokantavedos on oma palautuspisteensä konttien repositoryssä, tunnisteella `dbdump:<kontti>`, ja sisältää yhden tiedoston `/dbdump/<kontti>.sql`. BombVault listaa, lataa ja tuo ne kontin **Varmuuskopiot**-välilehdellä. Alla ovat samat vaiheet pelkällä resticillä sitä päivää varten, kun BombVaultia ei ole.
 
 ```sh
 restic -r <repo> snapshots --tag dbdump:<container>

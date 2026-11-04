@@ -6,7 +6,7 @@ Varmuuskopio ei koskaan syötä datavirtaa resticiin eikä koskaan palauta tieto
 
 ## Vaatimukset {#requirements}
 
-- **SSH-yhteys tähän palvelimeen.** ZFS-tietojoukot käyttävät samaa avainta, isäntää ja käyttäjää kuin virtuaalikoneiden varmuuskopiot. Jos ne toimivat jo, tämäkin toimii. Muuten seuraa GitHubissa olevaa [ohjetta virtuaalikoneen varmuuskopiosta SSH:n kautta](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md). Mallin kentät ovat **Host SSH: Address**, **Host SSH: Port** ja **Host SSH: User**.
+- **SSH-yhteys tähän palvelimeen.** ZFS-tietojoukot käyttävät samaa avainta, isäntää ja käyttäjää kuin virtuaalikoneiden varmuuskopiot. Jos ne toimivat jo, tämäkin toimii. Muuten seuraa GitHubissa olevaa [ohjetta virtuaalikoneen varmuuskopiosta SSH:n kautta](vm-backup-ssh-setup.md). Mallin kentät ovat **Host SSH: Address**, **Host SSH: Port** ja **Host SSH: User**.
 - **`zfs`-komento kyseisessä isännässä.** Unraid 6.12 ja uudemmat sekä TrueNAS SCALE sisältävät sen.
 - **Host Data liitettynä polkuun `/mnt` Access Mode -asetuksella Read/Write - Slave.** Se on mallin oletus. Tietojoukon tilannevedos näkyy tietojoukon kansiossa `.zfs/snapshot` vasta BombVaultin käynnistyttyä, joten kontin täytyy saada isännän myöhemmin tekemät liitokset.
 - **Tietojoukot liitettyinä polun `/mnt` alle.** Unraidissa poolit ovat polussa `/mnt/<pool>`, joten näin on jo.
@@ -17,7 +17,7 @@ Ota osio käyttöön kohdassa **Asetukset, Yleiset** (ZFS-tietojoukot). **ZFS-yh
 
 Valitse Varmuuskopiot-sivulla **Lisää** ja sitten **ZFS-tietojoukko**. Luettelo tulee palvelimelta. Valitse tietojoukko varmuuskopioitavan yläpäästä, esimerkiksi `cache/appdata`, niin merkintä kattaa sen ja jokaisen sen alapuolisen tietojoukon.
 
-- **Uudet alatietojoukot liittyvät itsestään.** Myöhemmin merkinnän alle luotu tietojoukko varmuuskopioidaan seuraavassa ajossa, ja ajo nimeää sen uudeksi. Sen ensimmäinen varmuuskopio lukee sen kokonaan kerran; sen jälkeen luetaan vain muutokset.
+- **Uudet alatietojoukot liittyvät itsestään.** Myöhemmin merkinnän alle luotu tietojoukko varmuuskopioidaan seuraavassa ajossa, ja ajo nimeää sen uudeksi. Sen ensimmäinen varmuuskopio lukee sen kokonaan kerran. Sen jälkeen luetaan vain muutokset.
 - **Yksittäisiä lapsia voi jättää pois.** Kytke lapsi pois merkinnän Asetukset-välilehdellä, niin se jätetään pois kaiken sen alapuolisen kanssa. Pois jätetty lapsi, jota ei enää ole palvelimella, merkitään sellaiseksi ja sen voi poistaa luettelosta.
 - **Lapset, joita ei voi lukea, ohitetaan, ei koskaan äänettömästi.** Ajo listaa ne, merkintä näyttää, kuinka monta ohitettiin, ja yleiskatsauksen **Ei varmuuskopioitu** -kortti laskee jokaisen suojaamattomaksi. Ajo varmuuskopioi silti kaiken muun eikä epäonnistu ohitetun lapsen vuoksi. Syyt ovat [syykoodien taulukossa](#reason-codes): tietojoukko, jota ei ole liitetty, jolla on `canmount=off`, `legacy`-liitoskohta tai ei liitoskohtaa lainkaan, salausavain on lataamatta, tilannevedospääsy on kytketty pois tai liitoskohta, jota BombVault ei näe.
 - **Ohitettu tietojoukko ei vie alatietojoukkojaan mukanaan.** Tietojoukko, jolla on `canmount=off` ja joka sisältää vain muita tietojoukkoja, ohitetaan (näytetään "vain rakenne"), ja sen liitetyt alatietojoukot varmuuskopioidaan. Salattu tietojoukko, jonka avainta ei ole ladattu, ohitetaan yhdessä niiden alatietojoukkojen kanssa, jotka jakavat sen avaimen.
@@ -44,7 +44,7 @@ Tietojoukko voi kuulua vain yhteen merkintään. BombVault hylkää uuden merkin
 
 Käynnissä olevan tietokannan tilannevedos on kuin äkillinen sähkökatko: tietokanta yleensä toipuu, mutta sen täytyy toipua. Jokainen merkintä voi tehdä asialle kaksi asiaa, ja molemmat kattavat vain tilannevedoksen hetken, eivät koko varmuuskopiota.
 
-- **Pysäytä nämä kontit tilannevedoksen ajaksi.** BombVault pysäyttää luetellut kontit, ottaa tilannevedoksen ja käynnistää ne heti uudelleen. Saman riippuvuustason kontit pysähtyvät rinnakkain, riippuvaiset ensin, joten koko ikkuna kestää yleensä muutaman sekunnin; ajo näyttää, kuinka kauan. Varmuuskopio lukee sen jälkeen jäädytettyä tilannevedosta, kun sovellukset jo toimivat taas. Vain käynnissä olleet kontit pysäytetään.
+- **Pysäytä nämä kontit tilannevedoksen ajaksi.** BombVault pysäyttää luetellut kontit, ottaa tilannevedoksen ja käynnistää ne heti uudelleen. Saman riippuvuustason kontit pysähtyvät rinnakkain, riippuvaiset ensin, joten koko ikkuna kestää yleensä muutaman sekunnin. Ajo näyttää, kuinka kauan. Varmuuskopio lukee sen jälkeen jäädytettyä tilannevedosta, kun sovellukset jo toimivat taas. Vain käynnissä olleet kontit pysäytetään.
 - **Komento ennen tilannevedosta ja sen jälkeen.** Se ajetaan valitsemassasi kontissa, esimerkiksi tietokannan vedostamiseksi tietojoukkoon juuri ennen tilannevedosta pysäyttämättä mitään. Jos komento ennen tilannevedosta epäonnistuu, varmuuskopio epäonnistuu eikä tilannevedosta oteta. Tilannevedoksen jälkeinen epäonnistunut komento näytetään ajossa, mutta se ei kaada varmuuskopiota.
 
 Mitä tapahtuu, kun jokin menee pieleen:
@@ -53,7 +53,7 @@ Mitä tapahtuu, kun jokin menee pieleen:
 - Pysäytys odottaa, kunnes käynnissä oleva konttivarmuuskopio on valmis (enintään 30 minuuttia manuaalisessa ajossa, varmuuskopion aikarajaan asti ajastetussa), jotta ne kaksi eivät koskaan pysäytä ja käynnistä samaa konttia yhtä aikaa.
 - Ennen kuin ensimmäinen kontti pysäytetään, BombVault kirjoittaa muistiin, mitkä se pysäyttää. Jos BombVault tapetaan ikkunan sisällä, se käynnistää nuo kontit uudelleen seuraavalla käynnistyskerralla, lähettää ilmoituksen, ja merkintä näyttää punaisen huomautuksen jokaisesta kontista, jota se ei pystynyt käynnistämään.
 
-Automaattiset tietokantavedokset (katso [Ominaisuudet](features.md)) ajetaan kontin oman varmuuskopion mukana, ei ZFS-merkinnän. Tietokanta, jonka kontti varmuuskopioidaan vain tietojoukkonsa kautta, ei saa vedosta, joten anna sille komento täällä.
+Automaattiset [tietokantavedokset](backups.md#database-dumps) ajetaan kontin oman varmuuskopion mukana, ei ZFS-merkinnän. Tietokanta, jonka kontti varmuuskopioidaan vain tietojoukkonsa kautta, ei saa vedosta, joten anna sille komento täällä.
 
 Kontti voi olla tällä listalla ja varmuuskopioitu konttina samaan aikaan. Sen data tallennetaan silloin kahdesti, kahteen repositoryyn, ja täysvarmuuskopio pysäyttää sen kahdesti. Merkintä kertoo sen.
 
@@ -63,15 +63,15 @@ Avaa merkintä ja valitse **Palautus**, tai valitse se **Palautus**-sivulla. Pal
 
 - **Palauta tietojoukkoon.** Varmuuskopion tiedostot kirjoitetaan tietojoukon liitoskohtaan. Samannimiset tiedostot korvataan, muut jäävät. Tietojoukkoa ei koskaan palauteta aiempaan tilaan eikä korvata. BombVault tarkistaa, että tietojoukko on liitetty, näkyvissä ja kirjoitettavissa, kerran ennen aloitusta ja uudelleen juuri ennen kirjoittamista. Kohtiin, joihin on liitetty alatietojoukko, ei kirjoiteta mitään: alatietojoukko säilyttää tiedostonsa, omistajansa ja oikeutensa, ja se palautetaan omasta varmuuskopiostaan.
 - **Kansioon.** Valitse kansio kohteen `/mnt` alta. BombVault tarkistaa, että kansio on liitetyllä poolilla tai jaolla ja että vapaata tilaa on tarpeeksi. Tämä toimii ilman SSH-yhteyttä ja tietojoukoille, joita ei enää ole.
-- **Uuteen tietojoukkoon.** Anna nimi tietojoukolle, jota ei vielä ole; ikkuna ehdottaa `<tietojoukko>-restored`. BombVault luo sen varmuuskopioon tallennetuilla ZFS-ominaisuuksilla ja palauttaa siihen, katso [Palautus uutena tietojoukkona](#new-dataset).
+- **Uuteen tietojoukkoon.** Anna nimi tietojoukolle, jota ei vielä ole. Ikkuna ehdottaa `<tietojoukko>-restored`. BombVault luo sen varmuuskopioon tallennetuilla ZFS-ominaisuuksilla ja palauttaa siihen, katso [Palautus uutena tietojoukkona](#new-dataset).
 
-Kun tietojoukoksi valitaan **Tämän varmuuskopion kaikki tietojoukot**, jokainen puun tietojoukko kirjoitetaan omaan alikansioonsa valitsemasi kansion sisään. Tietojoukot, jotka ohitettiin kyseisessä varmuuskopiossa, nimetään. Jos haluat palauttaa toisen BombVaultin repositorystä, käytä Palautus-sivun kohtaa **Vanhasta varmuuskopiokansiosta**; se palauttaa aina kansioon: yhden varmuuskopion kaikki tietojoukot kukin omaan alikansioonsa, tai yhden puun tietojoukon kokonaisena tai valituin tiedostoin.
+Kun tietojoukoksi valitaan **Tämän varmuuskopion kaikki tietojoukot**, jokainen puun tietojoukko kirjoitetaan omaan alikansioonsa valitsemasi kansion sisään. Tietojoukot, jotka ohitettiin kyseisessä varmuuskopiossa, nimetään. Jos haluat palauttaa toisen BombVaultin repositorystä, käytä Palautus-sivun kohtaa **Vanhasta varmuuskopiokansiosta**. Se palauttaa aina kansioon: yhden varmuuskopion kaikki tietojoukot kukin omaan alikansioonsa, tai yhden puun tietojoukon kokonaisena tai valituin tiedostoin.
 
 Merkinnän pysäytettävien konttien luettelo tarjotaan myös palautukselle tietojoukkoon. Nuo kontit pysyvät pysäytettyinä koko palautuksen ajan, ja konttivarmuuskopiot odottavat sillä välin.
 
 ### Turvatilannevedos {#safety-snapshot}
 
-Ennen kuin BombVault kirjoittaa tietojoukkoon, se ottaa ZFS-tilannevedoksen vain siitä yhdestä tietojoukosta nimellä `bombvault-prerestore-<aika>`. **Ota ensin ZFS-tilannevedos nykytilasta** on oletuksena päällä; sen kytkeminen pois vaatii toisen vahvistuksen. Jos tilannevedosta ei voi ottaa, mitään ei palauteta.
+Ennen kuin BombVault kirjoittaa tietojoukkoon, se ottaa ZFS-tilannevedoksen vain siitä yhdestä tietojoukosta nimellä `bombvault-prerestore-<aika>`. **Ota ensin ZFS-tilannevedos nykytilasta** on oletuksena päällä. Sen kytkeminen pois vaatii toisen vahvistuksen. Jos tilannevedosta ei voi ottaa, mitään ei palauteta.
 
 BombVault ei koskaan poista turvatilannevedosta itse. Merkintä listaa ne ikineen ja kokoineen, kullakin **Poista**-toiminto, ja varoittaa, kun vanhin on yli 30 päivän ikäinen, koska se pitää poistetun ja muuttuneen datan poolilla.
 
@@ -90,16 +90,16 @@ Varmuuskopiossa: jokaisen varmuuskopioidun tietojoukon tiedostot ja kansiot omis
 
 Ei varmuuskopiossa:
 
-- kunkin tietojoukon ylimmän kansion oma omistaja ja oikeudet (kaikki sen alla on mukana). Palautus tietojoukkoon jättää olemassa olevan ylimmän kansion ennalleen, palautus kansioon luo sen oikeuksilla `0755`;
-- olemassa olevat ZFS-tilannevedokset;
-- ohitetut tai pois jätetyt alatietojoukot;
+- kunkin tietojoukon ylimmän kansion oma omistaja ja oikeudet (kaikki sen alla on mukana). Palautus tietojoukkoon jättää olemassa olevan ylimmän kansion ennalleen, palautus kansioon luo sen oikeuksilla `0755`,
+- olemassa olevat ZFS-tilannevedokset,
+- ohitetut tai pois jätetyt alatietojoukot,
 - taltiot.
 
 Palauttaaksesi uuteen pooliin luo pool ja palauta jokainen tietojoukko uuteen tietojoukkoon. Sitä, palautuvatko NFSv4-ACL:t, joita TrueNAS käyttää SMB-tietojoukoissa, niin kuin odotat, ei ole vielä tarkistettu, joten kokeile palautusta omilla tiedoillasi ennen kuin luotat niihin.
 
 ## Salatut tietojoukot {#encryption}
 
-Salattu tietojoukko varmuuskopioidaan vain, kun sen avain on ladattu. Muuten se ohitetaan varoituksen kera; lataa avain komennolla `zfs load-key` ja liitä tietojoukko. BombVault lukee tiedot purettuina ja tallentaa ne resticin repoon, joka on salattu. Jos olet poistanut salauksen käytöstä BombVaultissa, tuo repo ei ole salattu.
+Salattu tietojoukko varmuuskopioidaan vain, kun sen avain on ladattu. Muuten se ohitetaan varoituksen kera. Lataa avain komennolla `zfs load-key` ja liitä tietojoukko. BombVault lukee tiedot purettuina ja tallentaa ne resticin repoon, joka on salattu. Jos olet poistanut salauksen käytöstä BombVaultissa, tuo repo ei ole salattu.
 
 ## Replika {#replica}
 
@@ -109,7 +109,18 @@ Replika ei koskaan korvaa varmuuskopiota. Vanhemmat versiot, yksittäiset tiedos
 
 **Vain replika, ei varmuuskopiota** Replika-kortissa saa koko ZFS-osion lähettämään replikoita eikä ottamaan varmuuskopioita. Oma kansio ja etäkohteet säilyttävät kytkimensä, joten kun asetuksen kytkee pois, osio varmuuskopioi taas niihin, ja jokaisen ZFS-merkinnän kortti näyttää osion kytkimen sellaisena kuin se on. Tällainen merkintä odottaa ensimmäistä replikaansa varmuuskopion sijaan, **Varmuuskopioi nyt** näkyy sillä muodossa **Replikoi nyt**, ja merkinnän kontit pysähtyvät ja sen komennot ajetaan tilannevedoksen ympärillä kuten varmuuskopiossa. Sen replikat lasketaan muutaman päivän välein ajettavaan aikatauluun, myöhästymishälytykseen ja kattavuuteen.
 
-Kytke se päälle merkinnän Asetukset-välilehden kortissa **Replika**. Siellä valitset, minne replika menee, milloin se ajetaan (**Jokaisen varmuuskopion jälkeen** tai **Oma aikataulu**) ja kuinka monta tilannevedosta kohteelle ja tälle palvelimelle jää. Kortti listaa jokaisen tietojoukon ja taltion tiloineen, ja **Replikoi nyt** käynnistää ajon. Replikaajolla on oma lukkonsa, joten pitkä ensimmäinen siirto ei koskaan pidätä varmuuskopioita.
+Kytke se päälle merkinnän Asetukset-välilehden kortissa **Replika**. Kortti listaa jokaisen tietojoukon ja taltion tiloineen, ja **Replikoi nyt** käynnistää ajon. Replikaajolla on oma lukkonsa, joten pitkä ensimmäinen siirto ei koskaan pidätä varmuuskopioita.
+
+| Kenttä | Mitä se asettaa |
+|---|---|
+| **Replikoidaan kohteeseen** | Kohde: ZFS-palvelin (merkitty **SSH:n kautta**) tai **pariliitetty instanssi**. **Lisää ZFS-palvelin** ottaa käyttöön uuden. |
+| **Milloin** | **Jokaisen varmuuskopion jälkeen**, eli merkinnän varmuuskopioinnin jälkeen, tai **Oma aikataulu**. |
+| **Säilytä kohteessa** | Kuinka monta tilannevedosta jää ZFS-palvelimelle: **Lyhyt**, **Tasapainoinen**, **Pitkä** tai **Omat arvot**. Pariliitetty instanssi päättää tämän itse. |
+| **Säilytä tällä palvelimella** | Kuinka monta uusinta replikan tilannevedosta jää myös tälle palvelimelle. 0 tai 1 säilyttää vain viimeisimmän. |
+| **Vain replika, ei varmuuskopiota** | Koko ZFS-osio lähettää replikoita eikä ota varmuuskopioita. |
+
+![Replika-kortti ZFS-merkinnällä.](assets/screenshots/zfs/replica-dark.png#only-dark)
+![Replika-kortti ZFS-merkinnällä.](assets/screenshots/zfs/replica-light.png#only-light)
 
 **Replikoi kaikki nyt**, joka on varmuuskopiotoimintojen vieressä, kun Varmuuskopiot-sivulla on valittu ZFS-ruutu, lähettää jokaisen ZFS-merkinnän replikan yksi kerrallaan. Palvelin ajaa erän, joten se jatkuu, kun poistut sivulta, ja merkintä, joka ei voi replikoida, nimetään ja ohitetaan.
 
@@ -160,7 +171,7 @@ Jokainen tietojoukko päätyy polkuun `<root>/<server>/<pool>/<path>`. Palvelink
 
 Kun BombVault on asennettu uudelleen, kohde hylkää kansion, jonka tämä BombVault täytti aiemmin. Replika-kortti tarjoaa silloin toiminnon **Ota kansio haltuun**, ja seuraava replika jatkaa sen sisältämistä kopioista. Ota kansio haltuun vain, jos mikään toinen BombVault ei enää replikoi siihen kansioon.
 
-Kopio kohdepalvelimella on vain luettavissa eikä liitettynä, joten se ei koskaan peitä mitään kyseisellä palvelimella. ZFS-ominaisuudet siirtyvät mukana, paitsi liitospiste sekä `sharenfs` ja `sharesmb`. Myös varaukset `reservation` ja `refreservation` jäävät pois, joten kopio vie vain sen tilan, jonka sen data tarvitsee.
+Kopio kohdepalvelimella on vain luettavissa. Oletuksena sitä ei ole liitetty, joten se ei koskaan peitä mitään kyseisellä palvelimella. SSH:n kautta yhdistetyn ZFS-palvelimen sivulla on kytkin **Liitä vain luku -tilassa palvelimella**: kun se on päällä, BombVault liittää kopiot sinne vain luku -tilassa jokaisen ajon jälkeen, jotta voit lukea ja kopioida niiden tiedostoja kohteessa. Salatut kopiot pysyvät lukittuina, kunnes niiden avain ladataan, ja kytkimen poistaminen ei irrota mitään. Pariliitettyyn instanssiin replikan vastaanottava instanssi pitää sen liittämättömänä. ZFS-ominaisuudet siirtyvät mukana, paitsi liitospiste sekä `sharenfs` ja `sharesmb`. Myös varaukset `reservation` ja `refreservation` jäävät pois, joten kopio vie vain sen tilan, jonka sen data tarvitsee.
 
 ### Mitä mukaan tulee {#replica-contents}
 
@@ -222,6 +233,39 @@ BombVault lopettaa sen jälkeen replikoinnin kyseiseen tietojoukkoon, kunnes alo
 
 Jos haluat palauttaa tilan lähteelle, paina paneelissa **Bring back as a new dataset**. BombVault lähettää tilannevedoksen uuteen tietojoukkoon alkuperäisen viereen, ja sen nimi on `<dataset>-bombvault-restore-` ja aikaleima. Se ei koskaan kirjoita alkuperäisen päälle.
 
+### Esimerkki: replika toiselle Unraid-koneelle {#example-replica}
+
+Palvelin `tower` varmuuskopioi tietojoukon `cache/appdata` ZFS-merkintänä. Toisessa Unraid-koneessa osoitteessa `192.168.1.20`, jossa ei ole BombVaultia, on pooli nimeltä `backup`, ja sen pitäisi pitää kopio, jonka voit lukea milloin tahansa.
+
+1. Avaa **Varmuuskopiot**, sitten `cache/appdata` ja sen **Asetukset**-välilehti. Valitse **Replika**-kortissa kohdassa **Replikoidaan kohteeseen** vaihtoehto **Lisää ZFS-palvelin**.
+2. Anna `192.168.1.20`, käyttäjä `root` ja portti `22`. Ikkuna näyttää replika-avaimen. Liitä se toisessa koneessa kohtaan **Users, root, SSH keys** ja paina **Apply**. Tämä avain eroaa Host SSH -avaimesta, joten lisää se, vaikka tuo avain olisi jo siellä.
+3. Testaa yhteys. Valitse pooli `backup` ja jätä ehdotettu juuri `backup/bombvault-replica`.
+4. Takaisin kortilla uusi palvelin on valittuna kohdassa **Replikoidaan kohteeseen**. Jätä **Milloin** arvoon **Jokaisen varmuuskopion jälkeen**, jätä **Säilytä kohteessa** 7 päivittäiseen ja 3 viikoittaiseen tilannevedokseen ja aseta **Säilytä tällä palvelimella** arvoon `7`.
+5. Paina **Replikoi nyt**. Ensimmäinen ajo lähettää kaiken, joten 300 Gt kestää 1 Gbit/s:n yhteydellä vähintään 40 minuuttia. Kortti ja Varmuuskopiot-luettelo sanovat **Replikoidaan**, sitten **Replikoitu** ja kellonajan. Myöhemmät ajot lähettävät vain muuttuneet lohkot.
+
+Tietojoukot ovat nyt toisessa koneessa polussa `backup/bombvault-replica/tower/cache/appdata`, vain luku -tilassa. Yleiskatsauksessa ZFS-osion **Etä** laskee replikan kopioksi tilojen ulkopuolella.
+
+Saat yhden tiedoston viime tiistailta kolmella tavalla:
+
+- **Tällä palvelimella**, koska **Säilytä tällä palvelimella** pitää seitsemän tilannevedosta:
+
+    ```
+    cp /mnt/cache/appdata/.zfs/snapshot/bombvault-replica-20261103014100/plex/Preferences.xml /mnt/user/restore/
+    ```
+
+- **Toisessa koneessa** kohteen tilannevedoksen klooniin. Merkinnän **Varmuuskopiot**-välilehti näyttää komennot oikeilla nimillä, kun napsautat **ZFS-replika**-riviä. Poista klooni komennolla `zfs destroy`, kun olet valmis.
+- **Liittämällä**, kytkemällä päälle **Liitä vain luku -tilassa palvelimella** ZFS-palvelimen sivulla. Seuraavan ajon jälkeen kopiot ovat toisessa koneessa liitettyinä vain luku -tilassa.
+
+Replikan säilyttämiä versioita vanhemmat tulevat yhä varmuuskopioista, kuten seuraava esimerkki näyttää.
+
+### Esimerkki: yksi tiedosto ZFS-varmuuskopiosta {#example-zfs-file}
+
+1. Avaa **Palautus**, valitse **ZFS**-ruutu ja napsauta `cache/appdata`.
+2. Valitse varmuuskopio ja kohdassa **Tietojoukko** tietojoukko, jossa tiedosto on.
+3. Valitse kohdassa **Mitä** vaihtoehto **Yksittäiset tiedostot** ja merkitse tiedosto.
+4. Valitse kohdassa **Minne** vaihtoehto **Kansioon** ja valitse kansio polun `/mnt` alta, esimerkiksi `user/restore`. Tämä ei tarvitse SSH-yhteyttä ja toimii myös tietojoukolle, jota ei enää ole.
+5. Paina **Palauta**. Tiedosto päätyy suoraan siihen kansioon ilman sen yläpuolista polkua.
+
 ## Jäljelle jääneet tilannevedokset {#leftover-snapshots}
 
 Varmuuskopion tilannevedoksen nimi on `<dataset>@bombvault-<14 numeroa>`, esimerkiksi `cache/appdata@bombvault-20260924021500` (UTC). BombVault poistaa sen heti varmuuskopion jälkeen. Jos se epäonnistuu, esimerkiksi koska tietojoukko on varattu tai BombVault pysäytettiin, BombVault poistaa sen:
@@ -247,7 +291,7 @@ Tietojoukko, jonka edellinen ajo varmuuskopioi ja tämä ajo ei voinut lukea, la
 
 Jokaisella tietojoukolla on oma rivinsä merkinnän valvonnassa, joka avautuu kohdalla **Valvonta** **Poikkeamat**-sivulla ja on merkinnän **Tarkistus**-välilehdellä. Avoimet havainnot näkyvät kunkin tietojoukon vieressä. Havainnon linkki avaa merkinnän palautusikkunan tietojoukon viimeisimmällä hyvällä varmuuskopiolla. Se, päättyykö ajo, arvioidaan koko merkinnälle, koska ajo onnistuu tai epäonnistuu kokonaisena.
 
-Tarkistukset itse kuvataan kohdassa [Ominaisuudet](features.md). [MCP-palvelimen](mcp.md) kautta yhdistetty avustaja voi listata ZFS-merkinnän palautuspisteet, käynnistää sen varmuuskopion ja lukea havainnot, mutta yhden kuittaaminen tehdään **Poikkeamat**-sivulla.
+Tarkistukset itse kuvataan kohdassa [Poikkeamat](anomalies.md). [MCP-palvelimen](mcp.md) kautta yhdistetty avustaja voi listata ZFS-merkinnän palautuspisteet, käynnistää sen varmuuskopion ja lukea havainnot, mutta yhden kuittaaminen tehdään **Poikkeamat**-sivulla.
 
 ## Syykoodit {#reason-codes}
 
@@ -289,7 +333,7 @@ Merkinnän sivu, ajohistoria ja ilmoitukset nimeävät ongelman jollakin näist�
 | `snapdir-disabled` | Tilannevedosten käyttö on pois päältä, ohitettu. | `zfs set snapdir=hidden <dataset>`. Kansio `.zfs` pysyy piilossa. |
 | `not-visible` | BombVault ei näe tietojoukon liitoskohtaa. | Siirrä liitoskohta Host Data -polun alle, tai liitä se konttiin samaan polkuun asetuksella Read/Write - Slave. |
 | `shfs-only` | Tietojoukko näkyy vain polun `/mnt/user` kautta, joka piilottaa tilannevedokset. | Liitä Host Dataksi `/mnt`, ei `/mnt/user`. |
-| `snapshot-not-visible` | Tilannevedos luotiin, mutta se ei ilmestynyt BombVaultiin. | Aja **Kokeile pääsyä tilannevedoksiin**; katso alta. |
+| `snapshot-not-visible` | Tilannevedos luotiin, mutta se ei ilmestynyt BombVaultiin. | Aja **Kokeile pääsyä tilannevedoksiin**. Katso alta. |
 | `snapshot-loop` | Tilannevedos ei tavoittanut BombVaultia, koska Host Data ei välitä uusia liitoksia. | Aseta Host Datan Access Mode arvoon Read/Write - Slave ja käynnistä BombVault uudelleen. |
 | `backup-failed` | restic epäonnistui tämän tietojoukon kohdalla. | Ajon tiedot kertovat syyn. |
 | `not-reached` | Ajo päättyi ennen tätä tietojoukkoa. | Aja varmuuskopio uudelleen. |
@@ -329,5 +373,5 @@ Jokainen rivi on yksi liitos kontin sisällä. Tietojoukon rivi näyttää sen p
 
   Palautus uuteen tietojoukkoon tarvitsee lisäksi `create`-oikeuden yläpuoliseen tietojoukkoon, ja tallennettujen ominaisuuksien asettaminen tarvitsee oikeudet niihin ominaisuuksiin.
 
-  TrueNASissa SSH-istunnolla ilman root-oikeuksia ei ole polussaan hakemistoa `/usr/sbin`; BombVault kutsuu silloin suoraan `/usr/sbin/zfs`.
+  TrueNASissa SSH-istunnolla ilman root-oikeuksia ei ole polussaan hakemistoa `/usr/sbin`. BombVault kutsuu silloin suoraan `/usr/sbin/zfs`.
 - Sovelluksen **Host Data** -polun on oltava isäntäpolku tietojoukkojen yläpuolella, esimerkiksi `/mnt/tank`, ei ixVolume. Isäntäpolun kanssa sovellus välittää isännän uudet liitokset BombVaultille (`rslave`), ja sitä pääsy tilannevedoksiin tarvitsee. Koko sovelluksen asennus on kuvattu kohdassa [TrueNAS SCALE](getting-started.md#truenas).

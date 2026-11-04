@@ -2,16 +2,19 @@
 
 **Datele tale Unraid, sigilate într-un seif. Depune un backup. Detonează o restaurare.**
 
-BombVault este o aplicație web self-hosted, nativă pentru Unraid, pentru **backup și recuperare completă în caz de dezastru** pentru containerele tale Docker și mașinile virtuale KVM/libvirt. Rulează ca un singur container Docker multi-arch, îți oferă o interfață web cu temă închisă, deschisă sau cea a sistemului, și gestionează întregul ciclu de viață: backup, programare, verificare și restaurare.
+![Prezentarea generală: capul de stare, ce are nevoie de tine, protecția fiecărei secțiuni, destinațiile și istoricul.](assets/screenshots/overview/home-dark.png#only-dark)
+![Prezentarea generală: capul de stare, ce are nevoie de tine, protecția fiecărei secțiuni, destinațiile și istoricul.](assets/screenshots/overview/home-light.png#only-light)
 
-Restaurările sunt automate. Containerele reapar în fila Docker din Unraid exact ca înainte, iar VM-urile sunt redefinite în VM Manager cu discurile și NVRAM-ul UEFI reatașate. Fără reinstalare manuală, fără reconfigurare, fără drame.
+BombVault este o aplicație web self-hosted pentru **backup și recuperare completă în caz de dezastru** pe Unraid și pe alte gazde Docker, precum TrueNAS SCALE, ZimaOS sau un simplu server Linux. Salvează containere Docker, mașini virtuale KVM/libvirt, foldere, seturi de date ZFS și unitatea flash Unraid. Rulează ca un singur container Docker multi-arch, îți oferă o interfață web cu temă închisă, deschisă sau cea a sistemului, și gestionează întregul ciclu de viață: backup, programare, verificare și restaurare.
 
-Bazat pe [restic](https://restic.net), așa că fiecare backup este deduplicat, incremental și mereu criptat.
+Restaurările sunt automate. Pe Unraid, containerele reapar în fila Docker exact ca înainte, iar VM-urile sunt redefinite în VM Manager cu discurile și NVRAM-ul UEFI reatașate. Fără reinstalare manuală, fără reconfigurare, fără drame. Pe TrueNAS, un container restaurat lângă original rulează ca un container Docker obișnuit, pe care ecranul Apps nu îl listează.
+
+Bazat pe [restic](https://restic.net), așa că fiecare backup este deduplicat, incremental și criptat implicit.
 
 !!! note "Păstrează-ți APP_KEY în siguranță"
     BombVault derivă parola depozitului restic dintr-un secret de 32 de octeți numit `APP_KEY`. Pierderea lui, împreună cu kitul de recuperare, face ca copiile de rezervă criptate să nu mai poată fi recuperate. Generează unul cu `openssl rand -hex 32` și păstrează-l undeva în siguranță. Vezi [Configurare](configuration.md).
 
-## Ce protejează BombVault
+## Ce protejează BombVault {#what-bombvault-protects}
 
 Fiecare container, VM, set de foldere, unitatea flash, fiecare set de date ZFS și propriile setări ale BombVault sunt un **element** cu o pagină proprie. Elementele de același fel formează o **secțiune**, pe care o activezi la **Setări, General**.
 
@@ -24,15 +27,15 @@ Fiecare container, VM, set de foldere, unitatea flash, fiecare set de date ZFS �
 | **Foldere** | Orice folder de pe server ca set de foldere, fiecare cu tipare de excludere opționale. |
 | **Seturi de date ZFS** | Un set de date cu toate seturile de sub el, citit dintr-un instantaneu ZFS și salvat ca un folder. Vezi [Seturi de date ZFS](zfs-datasets.md). |
 
-## Restaurarea este vedeta
+## Restaurarea este vedeta {#restore-is-the-star}
 
 După copierea datelor înapoi din instantaneul restic, BombVault reaplică definiția salvată a containerului prin API-ul Docker, astfel încât containerul reapare în fila Docker din Unraid ca și cum ar fi fost mereu acolo (aceeași imagine, aceleași setări, aceleași mapări de porturi). VM-urile își au XML-ul redefinit prin SSH și discurile și NVRAM-ul UEFI reatașate, chiar și după ce VM-ul a fost șters.
 
 O singură fereastră restaurează orice fel de element. Implicit alege **Lângă original**, care aduce copia de rezervă înapoi ca o copie și lasă originalul neatins. **Înlocuiește originalul** face mai întâi o copie de rezervă a stării curente, așa că o restaurare poate fi anulată. Un folder sau un set de date ZFS nou sunt celelalte ținte.
 
-Când un backup oprește containere dependente, ele revin în ordinea corectă: BombVault le repornește în ordinea `depends_on` din Compose și așteaptă ca fiecare să raporteze că este sănătos înainte de a le porni pe cele care depind de el, astfel încât nimic nu o ia înainte unei baze de date sau unui gateway care nu este încă activ. Vezi [Funcționalități](features.md).
+Când un backup oprește containere dependente, ele revin în ordinea corectă: BombVault le repornește în ordinea `depends_on` din Compose și așteaptă ca fiecare să raporteze că este sănătos înainte de a le porni pe cele care depind de el, astfel încât nimic nu o ia înainte unei baze de date sau unui gateway care nu este încă activ. Vezi [Restaurare](restore.md) și [Comenzi și alte containere](backups.md#commands).
 
-## Cum funcționează
+## Cum funcționează {#how-it-works}
 
 ```
 Browser --HTTPS--> BombVault container
@@ -43,7 +46,7 @@ Browser --HTTPS--> BombVault container
                    |- qemu+ssh://host       -> libvirt / KVM on the HOST over SSH (no mount)
                    |- /mnt/ -> /host/user   -> appdata, VM disks + restic repos (read/write)
                    |- /boot/ -> /host/boot  -> Unraid flash backup (whole USB)
-                   |- /config               -> BombVault's own settings + credentials (self-backup)
+                   |- /config               -> BombVault's own settings + sign-ins (self-backup)
                    '- <repo path>           -> restic repository (local or remote: rclone/s3/rest/sftp)
 ```
 
@@ -51,13 +54,33 @@ BombVault folosește socketul Docker pentru a opri containerele înainte de un b
 
 BombVault este stratul de orchestrare și interfață, nu motorul de stocare. Toată mișcarea reală a datelor trece prin restic.
 
-## Pornire rapidă
+## Pornire rapidă {#quick-start}
 
-Nou pe aici? Mergi la **[Primii pași](getting-started.md)** pentru a instala BombVault pe Unraid prin Community Applications și a rula primul tău backup. Apoi explorează toate **[Funcționalitățile](features.md)**, ajustează-ți **[Configurarea](configuration.md)** și configurează **[Off-site și recuperare](offsite-recovery.md)**.
+Nou pe aici? Mergi la **[Primii pași](getting-started.md)** pentru a instala BombVault și a rula primul tău backup, apoi configurează **[Off-site și recuperare](offsite-recovery.md)**. **[Exemplele lucrate](guides.md)** parcurg sarcinile obișnuite de la un capăt la altul, pagina **[Setări](settings.md)** listează fiecare placă, iar **[Funcționalitățile](features.md)** sunt catalogul scurt cu tot ce face BombVault.
 
 Fiecare secțiune poate copia simultan în mai multe destinații, un BombVault împerecheat poate păstra copiile tale externe pe un server care refuză ștergerile, iar **Asistentul de urgență** readuce un server pierdut din kitul lui de recuperare, prin grupul tău sau cu cheia tastată. Ca să-ți muți configurația pe o stație nouă, folosește cardul **Exportă / importă setările**. Vezi [Off-site și recuperare](offsite-recovery.md) și [Configurare](configuration.md#portable-settings-export-and-import).
 
 **[Aplicația Android](android.md)** pune toate serverele grupului tău pe telefon, cu jurnalul de activitate al tuturor pe un singur ecran.
+
+Documentația există în 26 de limbi, iar interfața în 42. Paginile care nu au încă traducere apar în engleză.
+
+## Cuvinte folosite aici {#glossary}
+
+Câteva cuvinte au un sens fix în BombVault și în aceste pagini.
+
+| Cuvânt | Sens |
+|---|---|
+| **Element** | Un lucru pe care BombVault îl salvează: un container, un VM, un set de foldere, unitatea flash, un set de date ZFS împreună cu cele de sub el sau propriile setări. Fiecare are o pagină proprie. |
+| **Secțiune** | Toate elementele de același fel, de exemplu Containere. Secțiunile se activează la **Setări, General**. |
+| **Destinație** | Un loc unde ajung copiile de rezervă: un folder de pe acest server, o partajare, un server al tău sau un serviciu cloud. Vezi [Destinații](offsite-recovery.md#destinations). |
+| **Local** | Destinația de pe acest server care ține folderele secțiunilor. |
+| **Dosar propriu** | Depozitul în care o secțiune își scrie mai întâi copiile. Implicit se află pe acest server și poate sta într-o destinație. Vezi [Dosarul propriu al unei secțiuni](offsite-recovery.md#own-folder). |
+| **Copie** | O copie de rezervă copiată din folderul propriu într-o altă destinație cu `restic copy`. |
+| **Depozit direct** | Un depozit la o destinație off-site în care elementele salvează direct, fără o copie locală între ele. Vezi [Depozite directe](offsite-recovery.md#direct-repositories). |
+| **Autentificare** | Cheia sau parola salvată pentru un serviciu S3 sau un rest-server. Una dintre ele este cea implicită. Vezi [Autentificări](offsite-recovery.md#sign-ins). |
+| **Amplasare** | Ce destinații primesc copiile unui element, stabilit pe element sau ca valoare implicită a secțiunii. Vezi [Amplasare per element](offsite-recovery.md#placement). |
+| **Replică** | O copie identică bloc cu bloc a unui element ZFS pe un al doilea server ZFS, făcută cu `zfs send`. Stă lângă backup și nu îl înlocuiește. Vezi [Replică](zfs-datasets.md#replica). |
+| **Rol** | Ceva ce o instanță din grupul tău face pentru alta: Receptor, Preluator, Server ZFS sau Păstrător de cheie. Vezi [Instanțe și roluri](offsite-recovery.md#roles). |
 
 ## Mulțumiri {#credits}
 
@@ -72,7 +95,7 @@ Copyright (C) 2026 Junker der Provinz. BombVault este software liber sub **GNU A
 
 Numele și identitatea vizuală nu sunt licențiate. AGPL acoperă doar codul sursă: "BombVault", logoul și identitatea sa vizuală rămân rezervate, așa că un fork trebuie să folosească un nume și o identitate vizuală proprii și nu are voie să se prezinte drept BombVault.
 
-## Linkuri
+## Linkuri {#links}
 
 - **Cod sursă:** [github.com/junkerderprovinz/bombvault](https://github.com/junkerderprovinz/bombvault)
 - **Fir de suport Unraid:** [forums.unraid.net](https://forums.unraid.net/topic/199509-support-junkerderprovinz-bombvault/)

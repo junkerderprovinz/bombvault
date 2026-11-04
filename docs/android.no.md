@@ -2,9 +2,12 @@
 
 Android-appen gir deg alle BombVault-servere i gruppen din på telefonen. Den starter med en liste over serverne dine med aktivitetsloggen for alle øverst, de samme linjene som oversikten viser, og åpner telefonvisningen for serveren du trykker på. Appen tar ingen sikkerhetskopier selv.
 
+![Startskjermen i appen: aktivitetsloggen for alle servere øverst, så listen over servere.](assets/screenshots/android/start-dark.png#only-dark)
+![Startskjermen i appen: aktivitetsloggen for alle servere øverst, så listen over servere.](assets/screenshots/android/start-light.png#only-light)
+
 ## Skaff deg appen {#install}
 
-- **Innstillinger, Apper:** kortet for Android-appen tilbyr APK-en for utgivelsen serveren din kjører, med en QR-kode du kan skanne fra telefonen.
+- **Innstillinger, Apper:** kortet for Android-appen tilbyr APK-en for utgivelsen serveren din kjører, med en QR-kode du kan skanne fra telefonen, og lenker til F-Droid-oppføringen.
 - **APK:** hver utgivelse har `bombvault-android.apk` på utgivelsessiden, og [denne lenken](https://github.com/junkerderprovinz/bombvault/releases/latest/download/bombvault-android.apk) laster alltid ned det nyeste bygget. Den krever Android 10 eller nyere, og Android spør én gang om appen du åpner filen med, kan installere apper.
 - **Google Play:** appen er i en lukket test til den kan bli offentlig. Google Play viser en app fra en ny utviklerkonto først når minst 12 testere har hatt den installert i 14 dager. Vil du hjelpe til, bli med i [testergruppen](https://groups.google.com/g/arrowloop-testers), åpne [testsiden](https://play.google.com/apps/testing/bombvault.halleluja.design), trykk på **Bli tester** og installer BombVault fra Google Play.
 - **F-Droid:** [BombVault på F-Droid](https://f-droid.org/packages/bombvault.halleluja.design/). F-Droid bygger appen selv fra kildekoden og signerer den med sin egen nøkkel, så en ny utgivelse kommer dit noen dager senere. Vil du bytte mellom F-Droid-appen og APK-en, avinstaller den andre først.
@@ -58,7 +61,7 @@ Tannhjulet ved siden av plusstegnet åpner innstillingene i appen:
 
 - språket og navnet telefonen viser på Instanser-siden (tomt betyr telefonens modell),
 - utseendet, som følger den første serveren i listen til du velger ditt eget, og animasjonene, som har en egen innstilling,
-- en rapport å kopiere når du melder fra om et problem; den inneholder ingen adresse, ikke noe navn og ingen frase,
+- en rapport å kopiere når du melder fra om et problem. Den inneholder ingen adresse, ikke noe navn og ingen frase,
 - kortet Om appen med personvernerklæringen,
 - **Fjern alle servere**, som fjerner alle servere fra appen og forlater gruppen. Hver server telefonen fortsatt når, fjerner den fra sin Instanser-side.
 

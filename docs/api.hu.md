@@ -7,7 +7,7 @@ A BombVault kis HTTP API-t kínál szkriptekhez, irányítópultokhoz és otthon
 Minden kéréshez API-token kell, akkor is, ha nincs belépési jelszó. A **Beállítások, Integrációk, API-tokenek** alatt hozhatsz létre egyet:
 
 1. Adj meg egy nevet, amely elárulja, hol használod a tokent, például „Home Assistant” vagy „Uptime Kuma”.
-2. Kapcsold be a **Mentések indításának engedélyezése** kapcsolót, ha a tokennek mentést kell indítania. Nélküle csak olvasni tud.
+2. Kapcsold be a **Biztonsági mentések indításának engedélyezése** kapcsolót, ha a tokennek mentést kell indítania. Nélküle csak olvasni tud.
 3. Kattints a **Token létrehozása** gombra. A token egyszer jelenik meg. A BombVault csak ujjlenyomatot őriz belőle, ezért most másold ki.
 
 A tokent fejlécben küldd, `Authorization: Bearer <token>` vagy `X-API-Key: <token>` formában. A token `bvapi_` előtaggal kezdődik. Csak az API-t nyitja meg: MCP-kulcs itt nem működik, és token sem működik az MCP-hez.
@@ -23,9 +23,9 @@ Belépési jelszó nélkül bárki, aki meg tudja nyitni a webes felületet, tok
 | `GET /api/v1/health` | Verzió, példánynév, fut-e mentés, és mit tehet ez a token | olvasás |
 | `GET /api/v1/status` | Védettség szakaszonként: utolsó sikeres mentés, várt időköz, ellenőrzések, következő ütemezett futások | olvasás |
 | `GET /api/v1/activity` | Mi fut éppen, fázissal és százalékkal | olvasás |
-| `GET /api/v1/items` | Minden védett elem ütemezéssel, azzal, mit állít le egy mentés, és az utolsó mentéssel; `?domain=` egy szakaszhoz | olvasás |
-| `GET /api/v1/runs` | Futási előzmények, a legújabb elöl; szűrők `limit`, `domain`, `item`, `status`, `kind`, `since` | olvasás |
-| `GET /api/v1/anomalies` | Anomáliák a nyitottak összesítésével; szűrők `state`, `severity`, `domain`, `limit` | olvasás |
+| `GET /api/v1/items` | Minden védett elem ütemezéssel, azzal, mit állít le egy mentés, és az utolsó mentéssel. `?domain=` egy szakaszhoz | olvasás |
+| `GET /api/v1/runs` | Futási előzmények, a legújabb elöl. Szűrők: `limit`, `domain`, `item`, `status`, `kind`, `since` | olvasás |
+| `GET /api/v1/anomalies` | Anomáliák a nyitottak összesítésével. Szűrők: `state`, `severity`, `domain`, `limit` | olvasás |
 | `GET /api/v1/anomalies/{id}` | Egy anomália | olvasás |
 | `GET /api/v1/storage/{domain}` | Méretelőzmények, heti növekedés és a szakasz minden tárolójának szabad helye | olvasás |
 | `POST /api/v1/backups` | Ment egy elemet (`{"domain":"containers","item":"plex"}`) vagy egy egész szakaszt (`{"domain":"vms"}`) | indítás |
@@ -39,10 +39,10 @@ Az itt indított mentés ugyanaz, mint amit a webes felület indít: a futó kon
 ## Példák {#examples}
 
 ```sh
-# Hogy állnak a mentések?
+# How are the backups doing?
 curl -s -H "Authorization: Bearer $BOMBVAULT_TOKEN" https://tower:3443/api/v1/status
 
-# Egy konténer mentése most.
+# Back up one container now.
 curl -s -X POST -H "Authorization: Bearer $BOMBVAULT_TOKEN" \
   -H "Content-Type: application/json" -d '{"domain":"containers","item":"plex"}' \
   https://tower:3443/api/v1/backups
@@ -61,7 +61,7 @@ A hiba `{"error": {"code": "...", "message": "..."}}` formában tér vissza, a m
 | 403 | `not_permitted`, `forbidden_origin` | A token csak olvashat, vagy nem ő indította a futást, vagy a kérés más eredetű oldalról jött |
 | 404 | `not_found` | Nincs ilyen elem, futás vagy anomália |
 | 409 | `busy`, `domain_off`, `nothing_to_back_up`, `not_running` | Már fut valami, a szakasz ki van kapcsolva, vagy nincs teendő |
-| 429 | `throttled`, `rate_limited`, `cooldown`, `retention_guard` | Egy korlát visszatartja a kérést; a `Retry-After` megmondja, mikor próbálkozhatsz újra |
+| 429 | `throttled`, `rate_limited`, `cooldown`, `retention_guard` | Egy korlát visszatartja a kérést. A `Retry-After` megmondja, mikor próbálkozhatsz újra |
 
 Az indításokra ugyanazok a korlátok vonatkoznak, mint az [MCP-n keresztüliekre](mcp.md#starting-backups): tokenenként óránként 12, ugyanannak az elemnek két indítása között 15 perc, egy elemnek 24 óra alatt legfeljebb 4 indítás, valamint a megőrzési védelem. Az utolsó három együtt számolja az MCP-n és az API-n keresztüli, valamint a Home Assistantből érkező indításokat. Egy token percenként 120 kérést küldhet. Egy címről öt sikertelen próbálkozás után a cím egy percre letiltódik.
 
@@ -74,7 +74,7 @@ A BombVault ezeknek az útvonalaknak a leírását a `/api/v1/openapi.json` cím
 A BombVault eszközként jelenhet meg a Home Assistantben, MQTT-felderítéssel. Ehhez a Home Assistantnek kell a saját MQTT-integrációja és egy bróker, például a Mosquitto bővítmény. Saját komponensre nincs szükség.
 
 1. A BombVaultban nyisd meg a **Beállítások, Integrációk** részt, és kapcsold be a **Home Assistant** elemet a **Szolgáltatások** kártyán. A bróker mezői alatta jelennek meg.
-2. Add meg a bróker címét és portját, és ha kéri, a felhasználónevet és a jelszót. Kapcsold be a **TLS használata** kapcsolót, ha a bróker TLS-t használ, általában a 8883-as porton; a tanúsítványának érvényesnek kell lennie a megadott címre. Ha módosítod a címet, a portot vagy a felhasználónevet, add meg újra a jelszót: a BombVault a tároltat nem adja tovább másik brókernek vagy felhasználónak.
+2. Add meg a bróker címét és portját, és ha kéri, a felhasználónevet és a jelszót. Kapcsold be a **TLS használata** kapcsolót, ha a bróker TLS-t használ, általában a 8883-as porton. A tanúsítványának érvényesnek kell lennie a megadott címre. Ha módosítod a címet, a portot vagy a felhasználónevet, add meg újra a jelszót: a BombVault a tároltat nem adja tovább másik brókernek vagy felhasználónak.
 3. Kattints a **Mentés** gombra. A sor mutatja, amikor a kapcsolat felépült.
 
 Az eszköz neve BombVault, vagy BombVault a példány nevével zárójelben, és ezek az entitásai vannak:
@@ -90,9 +90,45 @@ Az eszköz neve BombVault, vagy BombVault a példány nevével zárójelben, és
 | *Szakasz* repository free space | A szabad hely ott, ahol a fő tárolója van, ha a BombVault ki tudja olvasni |
 | Back up *szakasz* | Egy gomb, amely az egész szakaszt menti |
 
-Az entitások neve angol, mert a Home Assistant úgy veszi át őket, ahogy a BombVault küldi. Minden bekapcsolt szakasz saját entitásokat kap, a kikapcsolt elveszíti őket. A gombok akkor jelennek meg, ha bekapcsolod az **A gombok mentést indítanak** kapcsolót; új telepítésnél ez ki van kapcsolva. A gombokra ugyanazok a korlátok vonatkoznak, mint az [API-n keresztüli indításokra](#errors). Ezen felül a BombVault szakaszonként egyszerre egy nyomást fogad, percenként legfeljebb hatot, és figyelmen kívül hagyja azt a nyomást, amelyet a bróker retained üzenetként megőrzött. Bárki megnyomhatja őket, aki közzétehet a brókeren, ezért adj jelszót a brókernek.
+Minden bekapcsolt szakasz saját entitásokat kap, a kikapcsolt elveszíti őket. A gombok akkor jelennek meg, ha bekapcsolod az **A gombok biztonsági mentést indítanak** kapcsolót. Új telepítésnél ez ki van kapcsolva. A gombokra ugyanazok a korlátok vonatkoznak, mint az [API-n keresztüli indításokra](#errors). Ezen felül a BombVault szakaszonként egyszerre egy nyomást fogad, percenként legfeljebb hatot, és figyelmen kívül hagyja azt a nyomást, amelyet a bróker retained üzenetként megőrzött. Bárki megnyomhatja őket, aki közzétehet a brókeren, ezért adj jelszót a brókernek.
 
 A BombVault 15 másodpercenként beolvassa az állapotát, és közzéteszi, ha valami változott, JSON-ként a `<előtag>/<csomópont>/state` témában. Az előtag `bombvault`, amíg meg nem változtatod, a csomópont pedig egy rövid azonosító, amelyet a BombVault egyszer választ. A felderítési üzenetek a Home Assistant alapértelmezett `homeassistant` előtagjára mennek. Mindkettő megőrzött (retained). Egy utolsó üzenet (last will) elérhetetlennek jelöli az eszközt, ha a BombVault szó nélkül leáll. Ha kikapcsolod a kapcsolatot, a BombVault eltávolítja az eszközt és az entitásait a Home Assistantből.
+
+### Példa: egy kártya és egy riasztás {#home-assistant-example}
+
+A Home Assistant a nevekből képezi az entitásazonosítókat, így a BombVault eszköz azonosítói például `sensor.bombvault_status` alakúak. Ha a példány neve zárójelben szerepel, az azonosítók azt is tartalmazzák, ezért előbb nézd meg őket a **Developer Tools, States** alatt. Egy kártya az irányítópultra:
+
+```yaml
+type: entities
+title: Backups
+entities:
+  - sensor.bombvault_status
+  - sensor.bombvault_running_job
+  - sensor.bombvault_open_anomalies
+  - sensor.bombvault_next_scheduled_backup
+```
+
+Egy automatizálás, amely szól a telefonodnak, ha az állapot `failed` lesz:
+
+```yaml
+alias: BombVault backup failed
+trigger:
+  - platform: state
+    entity_id: sensor.bombvault_status
+    to: failed
+action:
+  - service: notify.mobile_app_my_phone
+    data:
+      message: A BombVault backup failed. Open Needs you on the overview.
+```
+
+## Prometheus {#metrics}
+
+A **Beállítások, Integrációk** alatti **Szolgáltatások** kártyán a **/metrics közzététele** a mentések állapotát, méreteit és időbélyegeit szolgálja ki a Prometheusnak, a Grafanának vagy az Uptime Kumának, a webes felület portjának `/metrics` címén. Alapból ki van kapcsolva. A **Lekérdezési token (opcionális)** azt éri el, hogy a lekérdező bearer tokent küldjön. A címkék nem tartalmaznak titkokat és útvonalakat.
+
+## Irányítópult-widget {#dashboard-widget}
+
+A **Beállítások, Integrációk** alatti **Irányítópult-widget** kártya csak olvasható tokent hoz létre, és ad egy címet minden olyan irányítópulthoz, amely iframe-et jelenít meg, például a Homepage, az Organizr vagy a Heimdall. A cím egy kis oldalt nyit meg a `/widget` útvonalon, csak az élő tevékenységnaplóval. A token ezt a naplót engedi, mást nem, a **Letiltás** pedig azonnal visszavonja. A beágyazott oldal csak angolul érhető el.
 
 ## A BombVault megtalálása a hálózaton {#mdns}
 
