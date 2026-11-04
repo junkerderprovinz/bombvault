@@ -1,81 +1,83 @@
 # Android uygulaması
 
-Android uygulaması, grubundaki tüm BombVault sunucularını telefonuna getirir. Sunucularının listesiyle açılır, listenin üstünde hepsinin etkinlik günlüğü durur (genel bakışın gösterdiği satırların aynısı) ve dokunduğun sunucunun telefon görünümünü açar. Uygulamanın kendisi hiçbir şeyi yedeklemez.
+Android uygulaması grubundaki her BombVault sunucusunu telefonuna getirir. Sunucularının bir listesiyle açılır, en üstte hepsinin etkinlik günlüğü, genel bakışın gösterdiği aynı satırlar bulunur, dokunduğun sunucunun telefon görünümünü açar. Uygulamanın kendisi hiçbir şey yedeklemez.
 
-## Uygulamayı edinme {#install}
+![Uygulamanın başlangıç ekranı: en üstte tüm sunucuların etkinlik günlüğü, ardından sunucu listesi.](assets/screenshots/android/start-dark.png#only-dark)
+![Uygulamanın başlangıç ekranı: en üstte tüm sunucuların etkinlik günlüğü, ardından sunucu listesi.](assets/screenshots/android/start-light.png#only-light)
 
-- **Ayarlar, Uygulamalar:** Android uygulamasının kartı, sunucunun çalıştırdığı sürümün APK'sını ve telefondan taranacak bir QR kodu sunar.
-- **APK:** her sürümün sayfasında `bombvault-android.apk` bulunur ve [bu bağlantı](https://github.com/junkerderprovinz/bombvault/releases/latest/download/bombvault-android.apk) her zaman en son derlemeyi indirir. Android 10 veya üstü gerekir; Android, dosyayı açtığın uygulamanın uygulama yükleyip yükleyemeyeceğini bir kez sorar.
-- **Google Play:** uygulama, herkese açılabilene kadar kapalı testte. Google Play, yeni bir geliştirici hesabının uygulamasını ancak en az 12 test kullanıcısı onu 14 gün boyunca yüklü tuttuktan sonra listeler. Yardım etmek istersen [test grubuna](https://groups.google.com/g/arrowloop-testers) katıl, [test sayfasını](https://play.google.com/apps/testing/bombvault.halleluja.design) aç, **Test kullanıcısı ol** düğmesine dokun ve BombVault'u Google Play'den yükle.
-- **F-Droid:** [F-Droid'de BombVault](https://f-droid.org/packages/bombvault.halleluja.design/). F-Droid uygulamayı kaynak koddan kendisi derler ve kendi anahtarıyla imzalar, bu yüzden yeni bir sürüm oraya birkaç gün sonra ulaşır. F-Droid uygulaması ile APK arasında geçiş yapmak istersen önce diğerini kaldır.
+## Uygulamayı edinmek {#install}
 
-Uygulamayı 9.7.0 veya daha yeni sürümdeki sunucularla eşleştir. Daha eski sürümdeki bir sunucu aynı grupta olabilir, ancak telefonu sıradan bir örnek olarak gösterir ve uygulama o sunucunun etkinliğini ancak oturum açtıktan sonra okur.
+- **Ayarlar, Uygulamalar:** Android uygulaması kartı, sunucunun çalıştırdığı sürümün APK'sını, telefondan taranabilecek bir QR koduyla sunar ve F-Droid sayfasına bağlanır.
+- **APK:** her sürümün sürüm sayfasında `bombvault-android.apk` bulunur ve [bu bağlantı](https://github.com/junkerderprovinz/bombvault/releases/latest/download/bombvault-android.apk) her zaman son sürümü indirir. Android 10 ya da üstü gerekir ve Android dosyayı açtığın uygulamanın uygulama kurup kuramayacağını bir kez sorar.
+- **Google Play:** uygulama herkese açılabilene kadar kapalı testte. Google Play, yeni bir geliştirici hesabından gelen bir uygulamayı ancak en az 12 test kullanıcısı onu 14 gün kurulu tuttuktan sonra listeler. Yardım etmek için [test kullanıcıları grubuna](https://groups.google.com/g/arrowloop-testers) katıl, [test sayfasını](https://play.google.com/apps/testing/bombvault.halleluja.design) aç, **Test kullanıcısı ol**'a dokun ve BombVault'u Google Play'den kur.
+- **F-Droid:** [F-Droid'de BombVault](https://f-droid.org/packages/bombvault.halleluja.design/). F-Droid uygulamayı kaynaktan derler ve kendi anahtarıyla imzalar, bu yüzden yeni bir sürüm oraya birkaç gün sonra ulaşır. F-Droid uygulaması ile APK arasında geçmek için önce diğerini kaldır.
 
-## QR koduyla eşleştirme {#pairing}
+Uygulamayı 9.7.0 ve üstü sürümdeki sunucularla eşleştir. Daha eski bir sürümdeki sunucu aynı grupta olabilir, ama telefonu sıradan bir örnek olarak gösterir ve uygulama o sunucunun etkinliğini ancak oturum açtıktan sonra okur.
 
-1. Grubundaki herhangi bir sunucuda **Ayarlar, Eşleştirme**'yi aç ve **İfadeyi göster**'i seç. On iki kelime, yanlarında bir QR koduyla görünür.
+## QR kodla eşleştirme {#pairing}
+
+1. Grubundaki herhangi bir sunucuda **Ayarlar, Eşleştirme**'yi aç ve **İfadeyi göster**'i seç. On iki kelime, yanında bir QR kodla görünür.
 2. Uygulamada **QR kodu tara**'ya dokun ve telefonu koda tut. Kelimeleri yapıştırabilir ya da yazabilirsin de.
-3. Uygulama, bir şey kaydetmeden önce o grubun sunucularını listeler. **N tanesini de ekle** hepsini birden ekler.
+3. Uygulama bir şey kaydetmeden önce o grubun sunucularını listeler. **Tümünü ekle** hepsini ekler.
 
-Telefon bundan sonra gruba başka bir örnek gibi katılır. Her sunucuda neyin çalıştığını oturum açmadan grup üzerinden okur: evde doğrudan, evden uzaktayken röle üzerinden. Grubun kendisinin nasıl çalıştığı [Örnekleri eşleştirme](offsite-recovery.md#pairing) bölümünde anlatılıyor.
+Telefon sonra gruba başka bir örnek gibi katılır. Her sunucuda ne çalıştığını oturum açmadan grup üzerinden okur, evdeyken doğrudan, evden uzaktayken röle üzerinden. Grubun kendisinin nasıl çalıştığı [Örnekleri eşleştirme](offsite-recovery.md#pairing) altında anlatılır.
 
-Uygulama, evde de olsa gruba röle üzerinden katılır. Gruptaki örnek **Röle yok** durumundaysa, kodu taramadan önce **Ayarlar, Eşleştirme**'den bir röle seç.
+Uygulama gruba, evde de, röle üzerinden katılır. Örneklerin **Röle yok** kullanıyorsa, kodu taramadan önce **Ayarlar, Eşleştirme** altında birini seç.
 
 ## Evden uzakta {#away}
 
-Uygulama bir sunucuyu önce kendi adresinde dener. Adres yanıt vermezse, örneğin mobil ağda, sunucunun arayüzünü grubun rölesi üzerinden açar. Grubun, adresini uygulamanın henüz bilmediği bir sunucusu da aynı şekilde açılır. Ne adres ne de röle yanıt verirse başlangıç ekranı bunu sunucunun kartında gösterir.
+Uygulama önce bir sunucuyu kendi adresinden dener. Bu yanıt vermediğinde, mobil ağda olduğu gibi, sunucunun arayüzünü grubun rölesi üzerinden açar. Uygulamanın adresini henüz bilmediği bir grup sunucusu da aynı şekilde açılır. Ne adres ne röle yanıt veriyorsa başlangıç ekranı bunu sunucunun kartında söyler.
 
-Röle üzerinden sayfa, eşleştirilmiş bir telefonun evde eriştiği her şeye erişir, aşağıda anlatıldığı gibi. Parolayla oturum açma ve dosya kaydetme yalnızca sunucunun kendi adresinde çalışır. İlerleme çubukları sürekli değil, iki saniyede bir güncellenir. Arayüzün dosyaları ilk ziyaretten sonra telefonda kalır, bu yüzden sonraki ziyaretler daha hızlı yüklenir. 10.0.0'dan eski bir sunucu yalnızca kendi adresinde açılır.
+Röle üzerinden sayfa, aşağıda anlatıldığı gibi, eşleşmiş bir telefonun evde ulaştığı şeye ulaşır. Parolayla oturum açma ve dosya kaydetme yalnızca sunucunun kendi adresinde çalışır. İlerleme çubukları sürekli değil iki saniyede bir güncellenir. Arayüzün dosyaları ilk ziyaretten sonra telefonda kalır, bu yüzden sonraki ziyaretler daha hızlı yüklenir. 10.0.0'dan eski bir sunucu yalnızca kendi adresinde açılır.
 
-Uygulama bir yanıtı yalnızca sunucu onu, uygulamanın bu sunucuyla ilk karşılaştığında sabitlediği anahtarla imzalamışsa kabul eder. Sunucu daha sonra başka bir anahtarla yanıt verirse başlangıç ekranı yeni anahtarın parmak izini gösterir ve sayfa ancak ona güvendikten sonra açılır.
+Uygulama bir yanıtı yalnızca sunucu onu, uygulamanın o sunucuyla ilk tanıştığında sabitlediği anahtarla imzalamışsa kabul eder. Sunucu sonradan başka bir anahtarla yanıt verirse başlangıç ekranı yeni anahtarın parmak izini gösterir ve sayfa yalnızca ona güvendikten sonra açılır.
 
-## Sunucu değiştirme {#switch}
+## Sunucu değiştirmek {#switch}
 
-Bir sunucu açıkken genel bakışının üstünde sunucunun adı, önünde de bir geri oku görünür. Ok, uygulamanın genel bakışına, yani başlangıç ekranına götürür; orada uygulamanın bildiği her sunucu durumuyla listelenir: **Bağlı**, **Bağlı değil**, **Oturum açma gerekiyor** ya da **Sertifikayı kontrol et**. Grubun yanıt vermeyen bir sunucusu gri renkte **Etkin değil** olarak görünür ve grubun onu en son ne zaman gördüğünü gösterir; uygulamanın henüz hiç haber almadığı bir sunucu ise **Denetleniyor** der. Uygulama her bağlandığında grubun listesini örneklerinden birinden okur, bu yüzden röle üzerinden hiç karşılaşmadığı bir örnek de, örneğin telefon gruba katıldığında kapalı olan bir örnek, listede yer alır. Açmak için orada başka birine dokun; evde doğrudan, aksi halde röle üzerinden açılır.
+Bir sunucu açıkken genel bakışının en üstünde, önünde bir geri okuyla birlikte sunucunun adı görünür. Ok uygulamanın genel bakışına, yani başlangıç ekranına götürür, orada uygulamanın bildiği her sunucu durumuyla listelenir: **Bağlandı**, **Bağlı değil**, **Oturum açma gerekiyor** ya da **Sertifikayı kontrol et**. Yanıt vermeyen bir grup sunucusu gri renkte **Etkin değil** olur ve grubun onu son ne zaman gördüğü yazar, uygulamanın henüz haber almadığı biri ise **Denetleniyor** der. Uygulama her bağlandığında grubun listesini örneklerinden birinden okur, böylece röle üzerinde hiç tanışmadığı bir örnek, örneğin telefon katıldığında kapalı olan, de listelenir. Birini açmak için orada dokun: evdeyken doğrudan, aksi halde röle üzerinden.
 
-## Eşleştirilmiş telefonda oturum {#sign-in}
+## Eşleşmiş bir telefonda oturum açma {#sign-in}
 
-Grubunla eşleştirilmiş bir telefon, grubun her sunucusunu oturum açılmış olarak açar. Bir sayfayı yüklemeden önce o sunucudan grup üzerinden bir oturum ister ve sunucu oturumu yalnızca telefon olan bir üyeye verir. Adresiyle eklenen bir sunucu, tarayıcıda olduğu gibi parola ister.
+Grubunla eşleşmiş bir telefon, sunucularının her birini zaten oturum açmış olarak açar. Bir sayfayı yüklemeden önce o sunucudan grup üzerinden bir oturum ister ve sunucu bunu yalnızca telefon olan bir üyeye verir. Adresiyle eklenen bir sunucu, tarayıcıda olduğu gibi parola ister.
 
-Eşleştirilmiş bir telefon, bir parolanın verdiği her şeyi almaz. Oturumu, uygulamanın gösterdiklerinden oluşan sabit bir listeye erişir: genel bakış, çalışmalar ve etkinlik günlüğü, bakılacak yedekler, başlatma ve geri yükleme, okunacak anormallikler ve bakılacak Örnekler sayfası. Hedefler ve komutlar, adresleri ve gizli bilgileri çıkarılmış olarak döner. Orijinali değiştiren bir geri yükleme önce mevcut durumu yedekler. Anahtarlar, kurtarma kiti, anahtar emanetleri, ayarlar ve yedekleri silme, sunucunun kendisindeki bir oturum açmayla kalır; geri kalan her şey bu oturum açmaya ihtiyaç duyduğunu söyler. Röle üzerinden aynı liste geçerlidir, parolasız bir sunucuda da.
+Eşleşmiş bir telefon parolanın verdiği her şeyi almaz. Oturumu, uygulamanın gösterdiği sabit bir listeye ulaşır: genel bakış, çalıştırmalar ve etkinlik günlüğü, bakılacak, başlatılacak ve geri yüklenecek yedekler, okunacak anormallikler ve bakılacak Örnekler sayfası. Hedefler ve komutlar adresleri ve gizli bilgileri kaldırılmış olarak gelir. Orijinali değiştiren bir geri yükleme önce mevcut durumu yedekler. Anahtarlar, kurtarma kiti, anahtar emanetleri, ayarlar ve yedekleri silme sunucunun kendisinde oturum açmaya bağlı kalır, geri kalan her şey o oturum açmaya ihtiyaç duyduğunu yanıtlar. Röle üzerinden aynı liste geçerlidir, parolasız bir sunucuda da.
 
-Bunun anahtarı, **Ayarlar, Güvenlik** altındaki **Android uygulaması** kartında **Telefonlar grubun on iki kelimesiyle eşleşebilir**'dir. Bir parola sıfırlama onu kapatır ve her telefonun oturumunu sonlandırır; sen orada tekrar açana kadar böyle kalır.
+Bunun anahtarı, **Ayarlar, Güvenlik** altındaki **Android uygulaması** kartında **Telefonlar grubun on iki kelimesiyle eşleşebilir**'dir. Bir parola sıfırlama onu kapatır ve her telefonun oturumunu sonlandırır, orada yeniden açana kadar.
 
 ## Grup dışındaki sunucular {#other-servers}
 
 - **Sunucu ekle**, BombVault'u tarayıcıda açtığın adresi alır, örneğin `192.168.1.10:3443`. Başında `http://` ya da `https://` yoksa uygulama https kullanır.
-- Yerel ağda kendini duyuran sunucular **Bu ağda** altında listelenir ve tek dokunuşla açılır. Bunu, **Ayarlar, Entegrasyonlar** altındaki **Hizmetler** kartında **Ağda bul** açık olduğu sürece yaparlar. Başka bir ağdaki ya da bir VPN arkasındaki sunucu orada görünmez.
-
-- Kendinden imzalı bir sertifikaya SHA-256 parmak iziyle bir kez güvenilir. Sunucu daha sonra farklı bir sertifika gösterirse uygulama seni uyarır ve sunucuyu ancak yeni sertifikaya güvendikten sonra açar.
+- Yerel ağda kendini duyuran sunucular **Bu ağda** altında listelenir ve tek dokunuşla açılır. Bunu **Ayarlar, Entegrasyonlar** altındaki **Hizmetler** kartında **Ağda bul** açık olduğu sürece yaparlar. Başka bir ağdaki ya da VPN arkasındaki bir sunucu orada görünmez.
+- Kendi kendine imzalı bir sertifikaya SHA-256 parmak iziyle bir kez güvenilir. Sunucu sonradan farklı bir tane gösterirse uygulama seni uyarır ve yalnızca yeni sertifikaya güvendikten sonra açar.
 
 ## Örnekler sayfasında telefon {#instances}
 
-Telefon, gruptaki her sunucunun Örnekler sayfasında kendi kartını alır; kart Android uygulaması olarak işaretlenir ve telefona verdiğin adı taşır. Hiçbir şeyi yedeklemediği için karnesi yoktur. **Kaldır** onu sayfadan çıkarır ve oturumunu hemen sonlandırır; ayrıntılarındaki **İzleme** altında **Bu örneği sorgula** anahtarını kapatmak da aynısını yapar. Telefon kelimeleri hâlâ bildiği için uygulaması açıldığında yeniden görünür, ama kapalı olarak, ve biri onu açana kadar oturum almaz. Kaybolan bir telefon için kartını her sunucuda kaldır, **Ayarlar, Güvenlik** altındaki **Telefonlar grubun on iki kelimesiyle eşleşebilir** anahtarını kapat ya da her örnekte **Gruptan ayrıl** seçeneğini kullan ve onları yeni kelimelerle yeniden eşleştir.
+Telefon, gruptaki her sunucunun Örnekler sayfasında kendi kartını alır, Android uygulaması olarak işaretlenmiş ve telefona verdiğin adı taşır. Hiçbir şey yedeklemediği için puan tablosu yoktur. **Kaldır** onu sayfadan alır ve oturumunu hemen sonlandırır, ayrıntılarında **İzleme** altındaki **Bu örneği sorgula**'yı kapatmak da öyle. Telefon kelimeleri hâlâ bilir, bu yüzden uygulaması yeniden açıldığında tekrar görünür, ama kapalı olarak, ve biri açana kadar oturum almaz. Kayıp bir telefon için kartını her sunucuda kaldır, ya da **Ayarlar, Güvenlik** altında **Telefonlar grubun on iki kelimesiyle eşleşebilir**'i kapat, ya da her örneğin **Gruptan ayrıl**'ını yapmasını sağla ve onları yeni kelimelerle yeniden eşleştir.
 
-10.0.0 sürümünden önce eşleştirilmiş bir telefon, güncellemeden sonraki ilk ziyaretinde çağrılarını imzalamaya başlar ve her sunucu telefon için aldığı ilk anahtarı saklar. Telefon çevrimdışıyken grubun kelimelerini bilen başka biri önce davranırsa, o sunucu o andan itibaren telefonu geri çevirir ve uygulama onu artık röle üzerinden açamaz. Düzeltmek için o sunucuda bir tarayıcıdan oturum aç, Örnekler sayfasında telefonun kartında **Anahtarı unut** seçeneğini, ardından **Unutmayı onayla** seçeneğini seç ve uygulamayı yeniden aç. Sunucu, bir sonraki çağrıda telefonun kendi anahtarını alır. Telefon yine geri çevrilirse kelimeler başkasındadır: her örnekte **Gruptan ayrıl** seçeneğini kullan ve onları yeni kelimelerle yeniden eşleştir, tıpkı kaybolan bir telefonda olduğu gibi.
+10.0.0'dan önce eşleşmiş bir telefon, güncellemeden sonraki ilk ziyaretinde çağrılarını imzalamaya başlar ve her sunucu telefon için aldığı ilk anahtarı tutar. Grubun kelimelerini bilen başka biri, telefon çevrimdışıyken oraya önce ulaşırsa, o sunucu telefonu o andan sonra geri çevirir ve uygulama onu artık röle üzerinden açamaz. Bunu düzeltmek için o sunucuda bir tarayıcıda oturum aç, Örnekler sayfasındaki telefonun kartında **Anahtarı unut**'u, sonra **Unutmayı onayla**'yı seç ve uygulamayı yeniden aç. Sunucu bir sonraki çağrıda telefonun kendi anahtarını alır. Telefon yine geri çevrilirse kelimeleri başkası biliyor demektir: her örnek **Gruptan ayrıl** yapsın ve onları kayıp bir telefonda olduğu gibi yeni kelimelerle yeniden eşleştir.
 
 ## Ayarlar {#settings}
 
-Artı işaretinin yanındaki dişli, uygulamanın ayarlarını açar:
+Artının yanındaki dişli uygulamanın ayarlarını açar:
 
-- dil ve telefonun Örnekler sayfasında gösterdiği ad (boş bırakılırsa telefonun modeli kullanılır),
-- sen kendininkini ayarlayana kadar listedeki ilk sunucuyu izleyen görünüm, ve kendi ayarı olan animasyonlar,
-- bir sorun bildirirken kopyalanacak bir rapor; içinde adres, ad ya da ifade yoktur,
-- gizlilik politikasıyla birlikte Hakkında kartı,
-- **Tüm sunucuları kaldır**: tüm sunucuları uygulamadan kaldırır ve gruptan ayrılır. Telefonun hâlâ ulaştığı her sunucu onu kendi Örnekler sayfasından kaldırır.
+- dil ve telefonun Örnekler sayfasında gösterdiği ad (boş, telefonun modeli demektir),
+- kendi görünümünü ayarlayana kadar listedeki ilk sunucuyu izleyen görünüm ve kendi ayarı olan animasyonlar,
+- bir sorun bildirirken kopyalanacak bir rapor. Adres, ad ya da ifade içermez,
+- gizlilik politikasıyla Hakkında kartı,
+- uygulamadan her sunucuyu kaldıran ve gruptan ayrılan **Tüm sunucuları kaldır**. Telefonun hâlâ ulaşabildiği her sunucu onu kendi Örnekler sayfasından alır.
 
 ## İndirmeler ve yüklemeler {#files}
 
-Dışa aktarmalar, kurtarma kitleri, flash ZIP'leri ve veritabanı dökümleri, tarayıcıdan indirildiğinde olduğu gibi telefonun İndirilenler klasörüne düşer. Ayarları içe aktarmak telefonun dosya seçicisini açar. Röle üzerinden hiçbir dosya kaydedilmez; bunun için sunucuyu kendi adresinde aç.
+Dışa aktarmalar, kurtarma kitleri, flash ZIP'leri ve veritabanı dökümleri, bir tarayıcıdan olacağı gibi telefonun İndirilenler klasörüne düşer. Bir ayar içe aktarması telefonun dosya seçicisini açar. Röle üzerinden hiçbir dosya kaydedilmez. Bunun için sunucuyu kendi adresinde aç.
 
 ## Dokunmatik ekranda {#touch}
 
-Parmağın altında üzerine gelme diye bir şey yoktur, bu yüzden bir denetim basılı tutulduğu sürece soluklaşır ve marka logosu taşıyan bir düğme, parmak kalkana kadar markasının renginde yanar. Bir düğmeye uzun basmak yavaş bir dokunuş sayılır ve bağlantı menüsü açmaz. Gri görünen bir düğmeye dokunmak, başka bir yere dokunana kadar neden gri olduğunu gösterir.
+Parmağın altında hiçbir şey üzerine gelinmez, bu yüzden bir kontrol basılı tutulurken soluklaşır ve marka logolu bir düğme, parmak kalkana kadar marka renginde parlar. Bir düğmeye uzun basmak yavaş bir dokunuş sayılır ve bağlantı menüsü açmaz. Gri bir düğmeye dokunmak, başka bir yere dokunana kadar neden gri olduğunu gösterir.
 
 ## Bunun yerine tarayıcıda {#browser}
 
-Chrome ve Edge, BombVault'un web arayüzünü kendi penceresinde bir uygulama olarak yükleyebilir, telefonda da bilgisayarda da. Hiçbir şey önbelleğe alınmaz, bu yüzden bir güncelleme hemen görünür.
+Chrome ve Edge, BombVault'un web arayüzünü kendi penceresinde bir uygulama olarak kurabilir, bilgisayarda olduğu gibi telefonda da. Hiçbir şey önbelleğe alınmaz, bu yüzden bir güncelleme hemen görünür.
 
 ## Gizlilik {#privacy}
 
-Uygulamanın hesabı, reklamı ve analitiği yoktur ve arka planda hiçbir şey çalıştırmaz. [Gizlilik politikası](https://github.com/junkerderprovinz/bombvault/blob/main/android/PRIVACY.md), neyi sakladığını ve neyi nereye gönderdiğini listeler.
+Uygulamada hesap, reklam ve analitik yoktur ve arka planda hiçbir şey çalıştırmaz. [Gizlilik politikası](https://github.com/junkerderprovinz/bombvault/blob/main/android/PRIVACY.md) neyi sakladığını ve neyi nereye gönderdiğini listeler.
