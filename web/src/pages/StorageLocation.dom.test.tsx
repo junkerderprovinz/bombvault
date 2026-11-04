@@ -464,7 +464,7 @@ describe("a destination that holds own folders", () => {
     section({ domain, use: "home", where: `rclone:storagebox:bombvault/${domain}`, retention: BALANCED });
   const NONE = { keepLast: 0, keepDaily: 0, keepWeekly: 0, keepMonthly: 0, keepYearly: 0 };
 
-  it("describes no copy when it holds only own folders, and says the sections' own rules prune them", async () => {
+  it("describes no copy when it holds only own folders, and says this location's card prunes them", async () => {
     stage(location({ sections: [own("containers"), own("flash")], retention: NONE }), []);
     await renderPage("destination:box");
 
@@ -472,7 +472,7 @@ describe("a destination that holds own folders", () => {
     expect(screen.queryByText("The first copy brings everything along, each later one only what is new.")).toBeNull();
     const prunes = card("Delete protection").textContent ?? "";
     expect(prunes).toContain(
-      "BombVault prunes the own folders of Containers and Flash after each backup, each by the keep rules of its section.",
+      "BombVault prunes the own folders of Containers and Flash after each backup, by this location's How long to keep card.",
     );
     expect(prunes).not.toContain("Nothing prunes this copy");
   });
@@ -484,7 +484,16 @@ describe("a destination that holds own folders", () => {
     expect(cardTitles()).toContain("Copy");
     const prunes = card("Delete protection").textContent ?? "";
     expect(prunes).toContain("Nothing prunes this copy.");
-    expect(prunes).toContain("BombVault prunes the own folder of VMs after each backup, by the keep rules of that section.");
+    expect(prunes).toContain("BombVault prunes the own folder of VMs after each backup, by this location's How long to keep card.");
+  });
+
+  it("names a section that prunes by values of its own apart from those on the card", async () => {
+    stage(location({ sections: [own("containers"), { ...own("vms"), own: ["retention"] }], retention: BALANCED }), []);
+    await renderPage("destination:box");
+
+    const prunes = card("Delete protection").textContent ?? "";
+    expect(prunes).toContain("BombVault prunes the own folder of Containers after each backup, by this location's How long to keep card.");
+    expect(prunes).toContain("BombVault prunes the own folder of VMs after each backup, by that section's own values under Rules per section.");
   });
 });
 

@@ -1,4 +1,4 @@
-import { tamperTestOffsiteTarget, type Provider, type RetentionKeep } from "../../lib/api";
+import { tamperTestOffsiteTarget, type Provider, type RetentionKeep, type StorageLocationSection } from "../../lib/api";
 import { useT, type TranslationKey } from "../../lib/i18n";
 import { formatList } from "../../lib/placement";
 import { relativeTime } from "../../lib/reltime";
@@ -32,11 +32,23 @@ const COPY_PRUNER: Record<Pruner, TranslationKey> = {
   here: "storage.lock.pruneHere",
 };
 
-const OWN_PRUNER: Record<Pruner, TranslationKey> = {
+/** Own folders that prune by this location's card, or by values their section
+ *  holds itself. */
+type OwnPruner = Pruner | "own";
+
+const OWN_PRUNER: Record<OwnPruner, TranslationKey> = {
   far: "storage.lock.ownPruneFar",
   none: "storage.lock.ownPruneNone",
   here: "storage.lock.ownPruneHere",
+  own: "storage.lock.ownPruneOwn",
 };
+
+const OWN_PRUNER_TONE: Record<OwnPruner, keyof typeof NOTE_TONE> = { ...PRUNER_TONE, own: "ok" };
+
+function ownPruner(section: StorageLocationSection): OwnPruner {
+  const by = pruner(section.immutable, section.retention);
+  return by === "here" && section.own.includes("retention") ? "own" : by;
+}
 
 /** Who clears old backups out of a repository, and whether anyone does. */
 function pruner(immutable: boolean, keep: RetentionKeep | undefined): Pruner {
@@ -66,11 +78,9 @@ export function ProtectionCard({ edit, provider, hueIndex }: { edit: LocationEdi
   const tamper = useTestVerdict(location.id, t("offsite.tamperError"));
   const takesCopies = location.object === "destination" || location.object === "target";
   const prunes = pruner(immutable, location.retention);
-  // An own folder ages after each backup, by this location's keep rule or by
-  // one its section holds itself, which the server has already resolved.
-  const own = new Map<Pruner, string[]>();
+  const own = new Map<OwnPruner, string[]>();
   for (const section of ownFolderSections(location)) {
-    const by = pruner(section.immutable, section.retention);
+    const by = ownPruner(section);
     own.set(by, [...(own.get(by) ?? []), t(DOMAIN_LABEL[section.domain])]);
   }
   const name = provider ? providerName(provider, t) : "";
@@ -166,7 +176,7 @@ export function ProtectionCard({ edit, provider, hueIndex }: { edit: LocationEdi
           <span className="text-xs font-semibold uppercase tracking-widest text-carbon-textSub">{t("storage.lock.whoPrunes")}</span>
           {(copies.length > 0 || own.size === 0) && <p className={`${NOTE} ${NOTE_TONE[PRUNER_TONE[prunes]]}`}>{t(COPY_PRUNER[prunes])}</p>}
           {[...own].map(([by, domains]) => (
-            <p key={by} className={`${NOTE} ${NOTE_TONE[PRUNER_TONE[by]]}`}>
+            <p key={by} className={`${NOTE} ${NOTE_TONE[OWN_PRUNER_TONE[by]]}`}>
               {t(OWN_PRUNER[by], domains.length).replace("{domains}", () => formatList(lang, domains))}
             </p>
           ))}
