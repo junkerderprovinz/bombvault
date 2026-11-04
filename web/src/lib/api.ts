@@ -629,7 +629,7 @@ export interface DomainStatus {
   replicationState: string; // "" | "never" | "overdue" | "ok" | "paused"
   drillState: string; // "" | "never" | "failed" | "overdue" | "ok"
   encryptionOn: boolean; // repo encryption is enabled
-  pruneStrategySet: boolean; // an off-site retention strategy is configured
+  pruneStrategySet: boolean; // a prune rule applies, off-site or to the own folder
   /** How the ZFS replicas stand: "" with none, "failed" when the last run of
    *  one failed, "stale" when one is not current, "ok" otherwise. */
   replicaState?: string;

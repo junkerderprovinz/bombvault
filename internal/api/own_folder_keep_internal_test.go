@@ -106,6 +106,20 @@ func TestASectionsOwnKeepRuleWinsOverItsLocationsCard(t *testing.T) {
 	}
 }
 
+func TestTheProtectionStatusCountsTheKeepRuleOfTheOwnFolder(t *testing.T) {
+	f := newPlacementFixture(t)
+	local := f.keptLocation(fortnight)
+	if st := statusFor(t, f, "containers"); st.PruneStrategySet {
+		t.Fatal("a section with no keep rule anywhere says a prune rule is set")
+	}
+
+	f.ownFoldersInto(local, "containers")
+
+	if st := statusFor(t, f, "containers"); !st.PruneStrategySet {
+		t.Fatal("a section that prunes by its location's card says no prune rule is set")
+	}
+}
+
 func TestAnOwnFolderOutsideALocationKeepsTheSharedRule(t *testing.T) {
 	f := newPlacementFixture(t)
 	f.keptLocation(fortnight)

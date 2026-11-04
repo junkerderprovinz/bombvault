@@ -3402,7 +3402,7 @@ type DomainStatusEntry struct {
 	ReplicationState string `json:"replicationState"` // "" | "never" | "overdue" | "ok" | "paused"
 	DrillState       string `json:"drillState"`       // "" | "never" | "failed" | "overdue" | "ok"
 	EncryptionOn     bool   `json:"encryptionOn"`     // repo encryption is enabled
-	PruneStrategySet bool   `json:"pruneStrategySet"` // an off-site retention strategy is configured
+	PruneStrategySet bool   `json:"pruneStrategySet"` // a prune rule applies, off-site or to the own folder
 	// TamperOff says the scheduled check of delete protection is switched
 	// off, so an unproven claim stays unproven until it is tested by hand.
 	TamperOff bool `json:"tamperOff,omitempty"`
@@ -4026,11 +4026,12 @@ func (s *Service) domainStatusFrom(settings store.Settings) ([]DomainStatusEntry
 			backupStatus = "warn"
 		}
 
-		// An off-site retention strategy is "configured" when the far side prunes
-		// (immutable), a growth budget is set, or an off-site keep policy is set.
+		// A prune rule is "set" when the far side prunes (immutable), a growth
+		// budget is set, or a keep policy applies, off-site or to the own folder.
 		pruneStrategySet := offsiteImmutableFor(d.name, settings) ||
 			settings.OffsiteGrowthBudgetGB > 0 ||
-			s.offsiteRetentionPolicy(settings, d.name).Any()
+			s.offsiteRetentionPolicy(settings, d.name).Any() ||
+			s.retentionPolicy(settings, d.name).Any()
 
 		out = append(out, DomainStatusEntry{
 			Domain:                d.name,
