@@ -1,107 +1,143 @@
 # API ve entegrasyonlar
 
-BombVault'un betikler, panolar ve ev otomasyonu için küçük bir HTTP API'si var. Genel bakışın gösterdiklerini okur ve bir yedekleme başlatabilir. Geri yükleme, yedek silme ve ayarlar gibi her şey web arayüzünde kalır.
+BombVault'un betikler, panolar ve ev otomasyonu için küçük bir HTTP API'si vardır. Genel bakışın gösterdiği şeyleri okur ve bir yedekleme başlatabilir. Geri yüklemeler, yedekleri silme ve ayarlar gibi geri kalan her şey web arayüzünde kalır.
 
 ## Belirteçler {#tokens}
 
-Her istek, giriş parolası olmasa bile bir API belirteci ister. Belirteci **Ayarlar, Entegrasyonlar, API belirteçleri** altında oluştur:
+Giriş parolası ayarlı olmasa bile her istek bir API belirteci ister. **Ayarlar, Entegrasyonlar, API belirteçleri** altında bir tane oluştur:
 
-1. Belirtecin nerede kullanıldığını söyleyen bir ad yaz, örneğin "Home Assistant" veya "Uptime Kuma".
-2. Belirteç yedekleme başlatabilsin istiyorsan **Yedekleme başlatmaya izin ver** seçeneğini aç. Açık değilse yalnızca okuyabilir.
-3. **Belirteç oluştur** düğmesine tıkla. Belirteç bir kez gösterilir. BombVault yalnızca parmak izini saklar, bu yüzden hemen kopyala.
+1. Belirtecin nerede kullanıldığını söyleyen bir ad yaz, örneğin "Home Assistant" ya da "Uptime Kuma".
+2. Belirteç yedekleme başlatabilsin istiyorsan **Yedekleme başlatmaya izin ver**'i aç. Onsuz belirteç yalnızca okuyabilir.
+3. **Belirteç oluştur**'a tıkla. Belirteç bir kez gösterilir. BombVault yalnızca parmak izini tutar, bu yüzden şimdi kopyala.
 
-Belirteci bir başlıkta gönder: `Authorization: Bearer <token>` ya da `X-API-Key: <token>`. Belirteç `bvapi_` ile başlar. Yalnızca API'yi açar: MCP anahtarı burada çalışmaz, belirteç de MCP için çalışmaz.
+Belirteci bir başlıkta gönder: `Authorization: Bearer <token>` ya da `X-API-Key: <token>`. Bir belirteç `bvapi_` ile başlar. Yalnızca API'yi açar: bir MCP anahtarı burada çalışmaz, bir belirteç de MCP için çalışmaz.
 
-Her belirtecin bir kutucuğu vardır: adı, yedekleme başlatıp başlatamayacağı, son dört karakteri, en son ne zaman ve nereden kullanıldığı ve bugünkü çağrıları. Kutucukta adını değiştirebilir, izinlerini değiştirebilir, onu değiştirebilir veya iptal edebilirsin. **Günlük** başlattığı yedeklemeleri ve son çağrılarını gösterir. BombVault'un yapılandırmasını bir yedekten geri yüklemek tüm belirteçleri iptal eder, çünkü yedek sonradan iptal ettiğin belirteçleri içerebilir.
+Her belirtecin adı, yedekleme başlatıp başlatamadığı, son dört karakteri, en son ne zaman ve nereden kullanıldığı ve bugünkü çağrıları olan bir kutucuğu vardır. Kutucukta onu yeniden adlandırabilir, yapabildiklerini değiştirebilir, değiştirebilir ya da iptal edebilirsin. **Günlük**, başlattığı yedekleri ve son çağrılarını gösterir. BombVault yapılandırmasını bir yedekten geri yüklemek her belirteci iptal eder, çünkü yedek, sonradan iptal ettiğin belirteçleri içerebilir.
 
-Giriş parolası yoksa web arayüzünü açabilen herkes belirteç de oluşturabilir. BombVault'u herkese açık görünen bir adla açarsan ve parola yoksa, o adresten belirteç oluşturulamaz; [MCP anahtarlarındaki](mcp.md#switch-on) kuralın aynısı.
+Giriş parolası olmadan web arayüzünü açabilen herkes bir belirteç de oluşturabilir. BombVault'u herkese açık gibi görünen bir adla açarsan ve parola ayarlı değilse, o adresten belirteç oluşturulamaz, [MCP anahtarları](mcp.md#switch-on) için de aynı kural geçerlidir.
 
 ## Uç noktalar {#endpoints}
 
-| Yol | Ne döndürür veya ne yapar | Belirteç |
+| Rota | Ne döndürür ya da yapar | Belirteç |
 |---|---|---|
-| `GET /api/v1/health` | Sürüm, örnek adı, yedekleme çalışıyor mu ve bu belirteç neler yapabilir | okuma |
-| `GET /api/v1/status` | Bölüm başına koruma durumu: son başarılı yedek, beklenen aralık, denetimler, sonraki planlı çalışmalar | okuma |
-| `GET /api/v1/activity` | Şu anda ne çalışıyor, aşama ve yüzdesiyle | okuma |
-| `GET /api/v1/items` | Her korunan öge, zamanlaması, bir yedeğin neyi durdurduğu ve son yedeğiyle; tek bölüm için `?domain=` | okuma |
-| `GET /api/v1/runs` | Çalışma geçmişi, en yenisi önce; filtreler `limit`, `domain`, `item`, `status`, `kind`, `since` | okuma |
-| `GET /api/v1/anomalies` | Açık olanların özetiyle anomaliler; filtreler `state`, `severity`, `domain`, `limit` | okuma |
-| `GET /api/v1/anomalies/{id}` | Tek bir anomali | okuma |
-| `GET /api/v1/storage/{domain}` | Bir bölümün her deposu için boyut geçmişi, haftalık büyüme ve boş alan | okuma |
-| `POST /api/v1/backups` | Tek bir ögeyi (`{"domain":"containers","item":"plex"}`) veya bütün bir bölümü (`{"domain":"vms"}`) yedekler | başlatma |
-| `POST /api/v1/backups/everything` | Tam yedeklemeyi çalıştırır | başlatma |
-| `POST /api/v1/runs/{id}/cancel` | Bu belirtecin başlattığı, süren bir yedeklemeyi iptal eder | başlatma |
+| `GET /api/v1/health` | Sürüm, örnek adı, bir yedeğin çalışıp çalışmadığı ve bu belirtecin neler yapabileceği | okuma |
+| `GET /api/v1/status` | Bölüm başına koruma durumu: son başarılı yedek, beklenen aralık, denetimler, sonraki zamanlanmış çalıştırmalar | okuma |
+| `GET /api/v1/activity` | Şu an ne çalışıyor, aşama ve yüzdeyle | okuma |
+| `GET /api/v1/items` | Zamanlaması, bir yedeğin neyi durdurduğu ve son yedeğiyle her korunan öge. Tek bir bölüm için `?domain=` | okuma |
+| `GET /api/v1/runs` | Çalıştırma geçmişi, en yeni önce. `limit`, `domain`, `item`, `status`, `kind`, `since` filtreleri | okuma |
+| `GET /api/v1/anomalies` | Açık olanların özetiyle anormallikler. `state`, `severity`, `domain`, `limit` filtreleri | okuma |
+| `GET /api/v1/anomalies/{id}` | Tek bir anormallik | okuma |
+| `GET /api/v1/storage/{domain}` | Bir bölümün her deposunun boyut geçmişi, haftalık büyümesi ve boş alanı | okuma |
+| `POST /api/v1/backups` | Tek bir ögeyi (`{"domain":"containers","item":"plex"}`) ya da bir bölümün tamamını (`{"domain":"vms"}`) yedekler | başlatma |
+| `POST /api/v1/backups/everything` | Şimdi tümünü yedekle geçişini çalıştırır | başlatma |
+| `POST /api/v1/runs/{id}/cancel` | Bu belirtecin başlattığı çalışan bir yedeği iptal eder | başlatma |
 
-Bölümler `containers`, `vms`, `files`, `zfs`, `flash` ve `config`. Zamanlar Unix saniyesidir. Yanıtlar aynı adlı [MCP araçlarınınkiyle](mcp.md#tools) aynıdır, böylece ikisi birlikte kalır.
+Bölümler `containers`, `vms`, `files`, `zfs`, `flash` ve `config`'tir. Zamanlar unix saniyesidir. Yanıtlar aynı adlı [MCP araçlarının](mcp.md#tools) yanıtlarıyla aynıdır, böylece ikisi de uyumlu kalır.
 
-Buradan başlatılan yedek, web arayüzünün başlattığıyla aynıdır: çalışan bir konteyner yedeği bitene kadar durdurulur. İstek hemen döner; `/api/v1/activity` ve `/api/v1/runs` nasıl gittiğini gösterir.
+Başlatılan bir yedek, web arayüzünün başlattığıyla aynı yedektir: çalışan bir konteyner yedeği bitene kadar durdurulur. İstek hemen döner, `/api/v1/activity` ve `/api/v1/runs` işin nasıl gittiğini gösterir.
 
 ## Örnekler {#examples}
 
 ```sh
-# Yedekler ne durumda?
+# How are the backups doing?
 curl -s -H "Authorization: Bearer $BOMBVAULT_TOKEN" https://tower:3443/api/v1/status
 
-# Bir konteyneri şimdi yedekle.
+# Back up one container now.
 curl -s -X POST -H "Authorization: Bearer $BOMBVAULT_TOKEN" \
   -H "Content-Type: application/json" -d '{"domain":"containers","item":"plex"}' \
   https://tower:3443/api/v1/backups
 ```
 
-BombVault'un kendi imzaladığı sertifikayla `--cacert bombvault-cert.pem` ekle (dosyayı MCP kartındaki **Sertifikayı indir** verir) ya da güvendiğin bir ağda `-k` kullan.
+BombVault'un kendi kendine imzalı sertifikasıyla `--cacert bombvault-cert.pem` (MCP kartındaki **Sertifikayı indir**'in verdiği dosya) ya da güvendiğin bir ağda `-k` ekle.
 
 ## Hatalar ve sınırlar {#errors}
 
-Hata, uygun durum koduyla `{"error": {"code": "...", "message": "..."}}` olarak döner:
+Bir hata, uygun bir durumla `{"error": {"code": "...", "message": "..."}}` olarak döner:
 
 | Durum | Kodlar | Anlamı |
 |---|---|---|
-| 400 | `invalid_argument`, `ambiguous` | Bir bağımsız değişken eksik veya yanlış |
+| 400 | `invalid_argument`, `ambiguous` | Bir argüman eksik ya da yanlış |
 | 401 | `no_token`, `invalid_token` | Belirteç yok ya da etkin değil |
-| 403 | `not_permitted`, `forbidden_origin` | Belirteç yalnızca okuyabilir ya da çalışmayı o başlatmadı ya da istek başka bir kaynaktan (origin) gelen bir sayfadan geldi |
-| 404 | `not_found` | Böyle bir öge, çalışma veya anomali yok |
+| 403 | `not_permitted`, `forbidden_origin` | Belirteç yalnızca okuyabilir, çalıştırmayı o başlatmadı ya da istek başka bir kaynaktaki (origin) bir sayfadan geldi |
+| 404 | `not_found` | Böyle bir öge, çalıştırma ya da anormallik yok |
 | 409 | `busy`, `domain_off`, `nothing_to_back_up`, `not_running` | Başka bir şey çalışıyor, bölüm kapalı ya da yapılacak bir şey yok |
-| 429 | `throttled`, `rate_limited`, `cooldown`, `retention_guard` | Bir sınır isteği bekletiyor; `Retry-After` ne zaman yeniden deneneceğini söyler |
+| 429 | `throttled`, `rate_limited`, `cooldown`, `retention_guard` | Bir sınır isteği tutuyor. `Retry-After` ne zaman yeniden deneyeceğini söyler |
 
-Başlatmalar [MCP üzerinden başlatmalarla](mcp.md#starting-backups) aynı sınırlara tabidir: belirteç başına saatte 12, aynı ögenin iki başlatması arasında 15 dakika, bir öge için 24 saatte en çok 4 başlatma ve saklama koruması. Son üçü MCP ve API üzerinden ve Home Assistant'tan başlatmaları birlikte sayar. Bir belirteç dakikada 120 istek yapabilir. Bir adresten beş başarısız deneme o adresi bir dakika kilitler.
+Başlatmalar [MCP üzerinden başlatmalar](mcp.md#starting-backups) ile aynı sınırlara tabidir: belirteç başına saatte 12, aynı ögenin iki başlatması arasında 15 dakika, 24 saatte aynı ögenin en fazla 4 başlatması ve saklama koruması. Son üçü MCP, API ve Home Assistant üzerinden başlatmaları birlikte sayar. Bir belirteç dakikada 120 istek yapabilir. Tek bir adresten beş başarısız deneme onu bir dakikalığına kilitler.
 
 ## OpenAPI {#openapi}
 
-BombVault bu yolların açıklamasını `/api/v1/openapi.json` adresinde sunar (OpenAPI 3.1). Belirteç gerekmez. Swagger UI, Postman veya bir kod üreticisine yükle.
+BombVault bu rotaların bir tanımını `/api/v1/openapi.json` adresinde sunar (OpenAPI 3.1). Belirteç gerekmez. Swagger UI'ye, Postman'a ya da bir kod üreticisine yükle.
 
 ## Home Assistant {#home-assistant}
 
-BombVault, MQTT keşfi sayesinde Home Assistant'ta bir cihaz olarak görünebilir. Home Assistant'ın bunun için MQTT entegrasyonuna ve bir aracıya, örneğin Mosquitto eklentisine ihtiyacı vardır. Ayrı bir bileşen gerekmez.
+BombVault, MQTT keşfi aracılığıyla Home Assistant'ta bir cihaz olarak görünebilir. Home Assistant'ın MQTT entegrasyonuna ve bir broker'a ihtiyacı var, örneğin Mosquitto eklentisi. Özel bir bileşen gerekmez.
 
-1. BombVault'ta **Ayarlar, Entegrasyonlar** altını aç ve **Hizmetler** kartında **Home Assistant**'ı aç. Broker alanları altında görünür.
-2. Aracının adresini ve bağlantı noktasını, isterse kullanıcı adını ve parolayı gir. Aracı TLS kullanıyorsa, genellikle 8883 numaralı bağlantı noktasında, **TLS kullan** seçeneğini aç; sertifikası girdiğin adres için geçerli olmalı. Adresi, bağlantı noktasını ya da kullanıcı adını değiştirirsen parolayı yeniden gir: BombVault kayıtlı parolayı başka bir aracıya ya da kullanıcıya iletmez.
-3. **Kaydet** düğmesine tıkla. Satır, bağlantı kurulduğunda bunu gösterir.
+1. BombVault'ta **Ayarlar, Entegrasyonlar**'ı aç ve **Hizmetler** kartında **Home Assistant**'ı aç. Broker alanları altında görünür.
+2. Broker'ın adresini ve portunu, istiyorsa kullanıcı adını ve parolasını gir. Broker TLS alıyorsa, genellikle 8883 portunda, **TLS kullan**'ı aç. Sertifikası girdiğin adres için geçerli olmalı. Adresi, portu ya da kullanıcı adını değiştirirsen parolayı yeniden gir: BombVault kayıtlı parolayı başka bir broker'a ya da kullanıcıya iletmez.
+3. **Kaydet**'e tıkla. Satır bağlantı kurulduğunda bunu gösterir.
 
-Cihazın adı BombVault'tur ya da parantez içinde örnek adıyla BombVault'tur ve şu varlıkları vardır:
+Cihaz BombVault ya da örnek adı parantez içinde olan BombVault olarak adlandırılır ve şu varlıklara sahiptir:
 
-| Varlık | Gösterdiği |
+| Varlık | Ne gösterir |
 |---|---|
-| Status | `ok`, `warning`, `failed` veya `off`, açık bölümlerin en kötüsü |
-| Running job | Şu anda ne çalışıyor, ya da `idle` |
-| Open anomalies | Kaç anomali açık |
-| Next scheduled backup | Sonraki planlı yedeğin ne zaman başladığı |
+| Status | `ok`, `warning`, `failed` ya da `off`, açık bölümlerin en kötüsü |
+| Running job | Şu an ne çalışıyor, ya da `idle` |
+| Open anomalies | Kaç anormallik açık |
+| Next scheduled backup | Sonraki zamanlanmış yedeğin ne zaman başlayacağı |
 | *Bölüm* last backup | Bölümün son başarılı yedeğinin ne zaman çalıştığı |
 | *Bölüm* last result | Son yedeğinin nasıl bittiği |
-| *Bölüm* repository free space | Ana deposunun bulunduğu yerdeki boş alan, BombVault okuyabiliyorsa |
+| *Bölüm* repository free space | BombVault okuyabiliyorsa, birincil deposunun bulunduğu yerdeki boş alan |
 | Back up *bölüm* | Tüm bölümü yedekleyen bir düğme |
 
-Varlık adları İngilizcedir, çünkü Home Assistant onları BombVault'un gönderdiği gibi alır. Açık her bölüm kendi varlıklarını alır, kapattığın bir bölüm onları kaybeder. Düğmeler, **Düğmeler yedekleme başlatır** seçeneğini açtığında görünür; yeni kurulumda bu kapalıdır. Düğmeler [API üzerinden başlatmalarla](#errors) aynı sınırlara tabidir. Bunun üstüne BombVault her bölüm için aynı anda tek bir basışı ve dakikada en fazla altı basışı kabul eder, aracının retained ileti olarak sakladığı bir basışı da yok sayar. Aracıya yayın yapabilen herkes onlara basabilir; bu yüzden aracıya bir parola ver.
+Açık olan her bölüm kendi varlıklarını alır, kapattığın bir bölüm onları kaybeder. Düğmeler **Düğmeler yedekleme başlatır**'ı açtığında görünür. Yeni bir kurulumda bu kapalıdır. [API üzerinden başlatmalar](#errors) ile aynı sınırlara tabidirler. Bunun üstüne BombVault bölüm başına aynı anda bir basışı ele alır, dakikada altıdan fazlasını almaz ve broker'ın retained mesaj olarak sakladığı bir basışı yok sayar. Broker'a yayın yapabilen herkes onlara basabilir, bu yüzden broker'a bir parola ver.
 
-BombVault durumunu her 15 saniyede bir okur ve bir şey değiştiğinde `<önek>/<düğüm>/state` altında JSON olarak yayımlar. Önek, sen değiştirmedikçe `bombvault`'tur; düğüm ise BombVault'un bir kez seçtiği kısa bir kimliktir. Keşif iletileri Home Assistant'ın varsayılan öneki `homeassistant`'a gider. İkisi de saklanır (retained). Son vasiyet (last will), BombVault haber vermeden durursa cihazı kullanılamaz olarak işaretler. Bağlantıyı kapatırsan BombVault cihazı ve varlıklarını Home Assistant'tan kaldırır.
+BombVault durumunu 15 saniyede bir okur ve bir şey değiştiğinde `<prefix>/<node>/state` altında JSON olarak yayınlar. Öneki değiştirmezsen `bombvault`'tur, düğüm ise BombVault'un bir kez seçtiği kısa bir kimliktir. Keşif mesajları Home Assistant'ın varsayılan öneki `homeassistant`'a gider. İkisi de retained'dir. Bir last will, BombVault haber vermeden durursa cihazı kullanılamaz işaretler. Bağlantıyı kapatmak cihazı ve varlıklarını Home Assistant'tan kaldırır.
 
-## BombVault'u ağda bulmak {#mdns}
+### Örnek: bir kart ve bir uyarı {#home-assistant-example}
 
-BombVault, web arayüzünü yerel ağda Bonjour ve Avahi'nin ardındaki protokol olan mDNS ile duyurur. Böylece bir tarayıcı ona `https://bombvault.local:3443` adresinden, `HTTP_ONLY` ile `http://bombvault.local:3000` adresinden ulaşır ve hizmet tarayıcıları onu `_bombvault` alt türüyle bir web hizmeti olarak listeler. TXT kayıtları sürümü ve yolu taşır. Anahtar, **Ayarlar, Entegrasyonlar** altındaki **Hizmetler** kartında **Ağda bul**'dur ve varsayılan olarak açıktır. Ad başka bir cihaz tarafından kullanılıyorsa BombVault `bombvault-2.local` gibi bir sonraki adı alır ve kart aldığı adresi gösterir. BombVault durduğunda ya da duyuruyu kapattığında bunu ağa bildirir, tarayıcılar da kaydı hemen kaldırır.
+Home Assistant varlık kimliklerini adlardan üretir, bu yüzden BombVault cihazı `sensor.bombvault_status` gibi kimlikler alır. Parantez içinde bir örnek adı varsa kimlikler onu da taşır, bu yüzden önce **Developer Tools, States** altında kontrol et. Pano için bir kart:
+
+```yaml
+type: entities
+title: Backups
+entities:
+  - sensor.bombvault_status
+  - sensor.bombvault_running_job
+  - sensor.bombvault_open_anomalies
+  - sensor.bombvault_next_scheduled_backup
+```
+
+Durum `failed` olduğunda telefonuna haber veren bir otomasyon:
+
+```yaml
+alias: BombVault backup failed
+trigger:
+  - platform: state
+    entity_id: sensor.bombvault_status
+    to: failed
+action:
+  - service: notify.mobile_app_my_phone
+    data:
+      message: A BombVault backup failed. Open Needs you on the overview.
+```
+
+## Prometheus {#metrics}
+
+**Ayarlar, Entegrasyonlar** altındaki **Hizmetler** kartında **/metrics'i yayınla**, yedekleme durumunu, boyutları ve zaman damgalarını Prometheus, Grafana ya da Uptime Kuma için web arayüzünün portundaki `/metrics` adresinde sunar. Varsayılan olarak kapalıdır. **Scrape belirteci (isteğe bağlı)**, toplayıcının bir bearer belirteci göndermesini sağlar. Etiketlerde gizli bilgi ve yol yoktur.
+
+## Panel widget'ı {#dashboard-widget}
+
+**Ayarlar, Entegrasyonlar** altındaki **Panel widget'ı** kartı salt okunur bir belirteç üretir ve Homepage, Organizr ya da Heimdall gibi iframe gösteren herhangi bir pano için bir adres verir. Adres, yalnızca canlı etkinlik günlüğünü gösteren küçük bir `/widget` sayfası açar. Belirteç o günlüğe erişim verir, başka hiçbir şeye vermez, **Devre dışı bırak** onu hemen iptal eder. Gömülü sayfa yalnızca İngilizcedir.
+
+## BombVault'u ağda bulma {#mdns}
+
+BombVault web arayüzünü yerel ağda, Bonjour ve Avahi'nin arkasındaki protokol olan mDNS ile duyurur. Bir tarayıcı ona `https://bombvault.local:3443` olarak, `HTTP_ONLY` ile ise `http://bombvault.local:3000` olarak ulaşır, servis tarayıcıları da onu `_bombvault` alt türüyle bir web servisi olarak listeler. TXT kayıtları sürümü ve yolu taşır. Anahtar **Ayarlar, Entegrasyonlar** altındaki **Hizmetler** kartında **Ağda bul**'dur ve varsayılan olarak açıktır. Ad başka bir cihaz tarafından zaten kullanılıyorsa BombVault `bombvault-2.local` gibi bir ad alır ve kart aldığı adresi gösterir. BombVault durduğunda ya da duyuruyu kapattığında ağa haber verir, böylece tarayıcılar kaydı hemen bırakır.
 
 Duyurunun ağına ulaşıp ulaşmadığı konteynerin nasıl bağlandığına bağlıdır:
 
-- **bridge**, Unraid şablonundaki varsayılan: duyuru Docker ağının içinde kalır ve yerel ağda kimse görmez. BombVault'u eskisi gibi ana makinenin adresinden aç.
-- **br0** ya da başka bir macvlan veya ipvlan ağı: konteynerin yerel ağda kendi adresi vardır ve duyuru oraya ulaşır.
-- **host**: duyuru, Unraid'in kendi duyurusunun yanında ana makinenin arayüzlerinden çıkar. Docker ve libvirt köprüleri dışarıda kalır.
+- **bridge**, Unraid şablonundaki varsayılan: duyuru Docker'ın ağının içinde kalır ve LAN'daki kimse görmez. BombVault'u eskisi gibi ana makinenin adresiyle aç.
+- **br0** ya da başka bir macvlan veya ipvlan ağı: konteynerin LAN'da kendi adresi vardır ve duyuru ona ulaşır.
+- **host**: duyuru ana makinenin arayüzlerinden, Unraid'in kendi duyurusunun yanında çıkar. Docker ve libvirt köprülerini atlar.
 
 Yalnızca IPv4 adresleri duyurulur.
