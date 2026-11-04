@@ -9,9 +9,9 @@ BombVault ma wbudowany serwer Model Context Protocol (MCP), protokołu, którym 
 | `get_health` | Wersja, nazwa instancji, czy trwa kopia i co wolno temu kluczowi | odczyt |
 | `get_status` | Stan ochrony w każdej sekcji: ostatnia udana kopia, oczekiwany odstęp, weryfikacje i kontrole off-site, kolejne zaplanowane przebiegi, kopie czekające na bezczynność aplikacji, a dla kontenerów najnowszy test uruchomienia | odczyt |
 | `get_coverage` | Co BombVault chroni, a czego nie, z podanym powodem | odczyt |
-| `list_items` | Każdy chroniony kontener, VM i zestaw folderów, pamięć flash i konfiguracja aplikacji, z harmonogramem, tym, co zatrzymuje kopia, ostatnią kopią i czasem jej trwania; kontenery baz danych podają też ostatni zrzut; są tu też zbiory danych ZFS z wynikiem ich ostatniej kontroli; każdy element ma swój ostatni test przywracania, a kontener także ostatni test uruchomienia albo powód, dla którego nie da się go przetestować; kontener utworzony ponownie z innymi ustawieniami od ostatniej kopii wymienia zmiany | odczyt |
-| `list_runs` | Historia przebiegów od najnowszych, z filtrem według sekcji, elementu, stanu, rodzaju i czasu; wolna kopia, którą hamowała jedna rzecz, ją wskazuje | odczyt |
-| `list_restore_points` | Punkty przywracania jednego elementu z jego głównego repozytorium, a dla kontenera także jego zrzuty baz danych; zbiór danych ZFS ma jeden punkt przywracania na kopię, ze snapshotem każdego zbioru danych pod nim | odczyt |
+| `list_items` | Każdy chroniony kontener, VM i zestaw folderów, pamięć flash i konfiguracja aplikacji, z harmonogramem, tym, co zatrzymuje kopia, ostatnią kopią i czasem jej trwania. Kontenery baz danych podają też ostatni zrzut. Są tu też zbiory danych ZFS z wynikiem ich ostatniej kontroli. Każdy element ma swój ostatni test przywracania, a kontener także ostatni test uruchomienia albo powód, dla którego nie da się go przetestować. Kontener utworzony ponownie z innymi ustawieniami od ostatniej kopii wymienia zmiany | odczyt |
+| `list_runs` | Historia przebiegów od najnowszych, z filtrem według sekcji, elementu, stanu, rodzaju i czasu. Wolna kopia, którą hamowała jedna rzecz, ją wskazuje | odczyt |
+| `list_restore_points` | Punkty przywracania jednego elementu z jego głównego repozytorium, a dla kontenera także jego zrzuty baz danych. Zbiór danych ZFS ma jeden punkt przywracania na kopię, ze snapshotem każdego zbioru danych pod nim | odczyt |
 | `get_activity` | Co działa w tej chwili, z etapem i procentem | odczyt |
 | `get_storage_stats` | Historia rozmiaru głównego repozytorium sekcji i jego przyrost tygodniowy oraz zajęte, wolne i całkowite miejsce na dysku lub zdalnym magazynie każdego z jej repozytoriów | odczyt |
 | `get_size_breakdown` | Które foldery i pliki zajmują miejsce w najnowszej kopii kontenera, maszyny wirtualnej lub zestawu folderów i ile z tego dodała ostatnia kopia | odczyt |
@@ -24,7 +24,7 @@ BombVault ma wbudowany serwer Model Context Protocol (MCP), protokołu, którym 
 
 W interfejsie WWW zostaje: przywracanie każdego rodzaju (także pobieranie, zapisywanie i import zrzutu bazy danych), usuwanie kopii, prune, unlock, kontrole i ćwiczenia, replikacja off-site, ustawienia, dane logowania i klucze MCP oraz anulowanie kopii uruchomionej przez harmonogram, interfejs WWW albo inny klucz. To samo dotyczy potwierdzenia anomalii lub oznaczenia jej jako oczekiwanej, co robi się na stronie **Anomalie**. Powód: odpowiedzi narzędzi zawierają nazwy i komunikaty błędów z twojego serwera, a w każdym z nich może się znaleźć tekst napisany po to, by sterować asystentem. Asystent, który się na to nabierze, może w najgorszym razie uruchomić kopię w granicach opisanych niżej albo anulować kopię, którą sam uruchomił.
 
-Jeśli główne repozytorium elementu jest zdalne (S3, REST, SFTP, rclone), `list_restore_points` się z nim łączy i wywołanie może chwilę potrwać. Kopii off-site nie da się wylistować przez MCP. Na co patrzą kontrole anomalii, opisuje strona [Funkcje](features.md), a jak element ZFS trzyma jedną migawkę na każdy zbiór danych, strona [Zbiory danych ZFS](zfs-datasets.md#contents).
+Jeśli główne repozytorium elementu jest zdalne (S3, REST, SFTP, rclone), `list_restore_points` się z nim łączy i wywołanie może chwilę potrwać. Kopii off-site nie da się wylistować przez MCP. Na co patrzą kontrole anomalii, opisuje strona [Anomalie](anomalies.md), a jak element ZFS trzyma jedną migawkę na każdy zbiór danych, strona [Zbiory danych ZFS](zfs-datasets.md#contents).
 
 ## Co robi uruchomiona kopia {#starting-backups}
 
@@ -43,9 +43,9 @@ Uruchomienia przez [API](api.md#errors) i z [Home Assistant](api.md#home-assista
 
 ## Włączanie {#switch-on}
 
-1. Otwórz **Ustawienia, Integracje, Serwer MCP** kliknij **Wybierz klienta** i wybierz swojego w oknie; wyszukiwarka w jego prawym górnym rogu znajdzie go po nazwie. Klient, którego nie ma na liście, łączy się przez **Inny klient**.
+1. Otwórz **Ustawienia, Integracje, Serwer MCP** kliknij **Wybierz klienta** i wybierz swojego w oknie. Wyszukiwarka w jego prawym górnym rogu znajdzie go po nazwie. Klient, którego nie ma na liście, łączy się przez **Inny klient**.
 2. W sekcji **Klucz** zostaw **Nowy klucz** i proponowaną nazwę, czyli nazwę klienta, albo wpisz taką, która mówi, gdzie klucz jest używany, na przykład „Claude Code na laptopie”. Jeden klucz na klienta pozwala odwołać jeden bez ruszania pozostałych. **Istniejący klucz** daje klientowi klucz utworzony wcześniej.
-3. Włącz **Pozwól uruchamiać kopie** dla klucza, który ma móc uruchamiać kopie; bez tego klucz może tylko czytać. Możesz to zmienić później w **Szczegóły** klucza, a zmiana obowiązuje od następnego żądania asystenta, bez ponownego łączenia.
+3. Włącz **Pozwól uruchamiać kopie** dla klucza, który ma móc uruchamiać kopie. Bez tego klucz może tylko czytać. Możesz to zmienić później w **Szczegóły** klucza, a zmiana obowiązuje od następnego żądania asystenta, bez ponownego łączenia.
 4. Kliknij **Utwórz klucz**. Klucz jest pokazywany raz. BombVault trzyma tylko jego odcisk i nie pokaże go ponownie, więc skopiuj go teraz. Jeśli zamkniesz okno, zanim klient użyje klucza, karta nadal go pokazuje, dopóki nie potwierdzisz, że go skopiowałeś.
 
 Bez hasła logowania sam interfejs WWW jest otwarty dla wszystkich w twojej sieci, a kto może go otworzyć, może też utworzyć klucz. Karta o tym informuje. Jeśli otworzysz BombVault pod nazwą wyglądającą na publiczną (na przykład `bombvault.example.com` za reverse proxy), a hasło logowania nie jest ustawione, z tego adresu nie da się tworzyć ani wymieniać kluczy, żeby żadna strona w internecie nie mogła skłonić twojej przeglądarki do utworzenia klucza. Ustaw hasło logowania albo otwórz BombVault przez adres IP lub lokalną nazwę, taką jak `tower` czy `tower.local`.
@@ -62,7 +62,7 @@ BombVault przechowuje wpisy każdego klucza przez najwyżej 30 dni: 500 najnowsz
 
 ## Podłączanie klienta {#clients}
 
-**Wybierz klienta** otwiera okno z każdym klientem jako kafelkiem, w grupie **Na tym komputerze** albo **W chmurze**, z wyszukiwarką w prawym górnym rogu. Kafelek otwiera konfigurację klienta w tym samym oknie, w trzech krokach: klucz; konfiguracja dla tego klienta z adresem, pod którym otworzyłeś kartę, przyciskiem do jej skopiowania, miejscem, gdzie leży konfiguracja, a przy własnym certyfikacie BombVault także tym, czego klient potrzebuje, żeby mu zaufać; oraz czekanie na pierwsze wywołanie klienta. Okno śledzi ostatnie użycie klucza i robi się zielone, gdy to wywołanie nadejdzie.
+**Wybierz klienta** otwiera okno z każdym klientem jako kafelkiem, w grupie **Na tym komputerze** albo **W chmurze**, z wyszukiwarką w prawym górnym rogu. Kafelek otwiera konfigurację klienta w tym samym oknie, w trzech krokach: klucz, konfiguracja dla tego klienta z adresem, pod którym otworzyłeś kartę, przyciskiem do jej skopiowania, miejscem, gdzie leży konfiguracja, a przy własnym certyfikacie BombVault także tym, czego klient potrzebuje, żeby mu zaufać, a na końcu czekanie na pierwsze wywołanie klienta. Okno śledzi ostatnie użycie klucza i robi się zielone, gdy to wywołanie nadejdzie.
 
 Konfiguracja trzyma klucz z dala od każdego wiersza poleceń. Gdy klient potrafi odczytać go ze zmiennej środowiskowej (`BOMBVAULT_MCP_KEY`), z ukrytego zapytania albo z własnego pliku, konfiguracja tylko go wskazuje. Gdy klient nie ma takiej możliwości, klucz leży w jego pliku konfiguracyjnym albo ustawieniach, a konfiguracja to mówi. Gdy dokumentacja klienta nie mówi, jak traktuje nieznany certyfikat, konfiguracja opisuje ten krok jako to, co zrobić, jeśli klient odrzuci certyfikat BombVault.
 
@@ -123,7 +123,7 @@ Z własnym certyfikatem BombVault (zobacz [TLS i certyfikaty](#tls)) polecenie d
 claude mcp add bombvault --scope user -e "NODE_EXTRA_CA_CERTS=<path of the downloaded bombvault-cert.pem>" -- npx -y mcp-remote@latest https://192.168.1.10:3443/mcp --header-file "<path of the file with your key>"
 ```
 
-Sprawdź połączenie poleceniem `/mcp` w Claude Code. `--scope user` udostępnia BombVault we wszystkich twoich projektach. Claude Code zapamiętuje tylko ścieżkę pliku z kluczem, więc klucz nie pojawia się ani w poleceniu i historii powłoki, ani na liście procesów. Trzymaj plik tam, gdzie tylko ty możesz go odczytać, i poza każdym folderem, który commitujesz. `@latest` sprawia, że `npx` pobiera aktualny `mcp-remote`; inaczej zostałby użyty starszy, zainstalowany globalnie, a ten nie zna `--header-file`.
+Sprawdź połączenie poleceniem `/mcp` w Claude Code. `--scope user` udostępnia BombVault we wszystkich twoich projektach. Claude Code zapamiętuje tylko ścieżkę pliku z kluczem, więc klucz nie pojawia się ani w poleceniu i historii powłoki, ani na liście procesów. Trzymaj plik tam, gdzie tylko ty możesz go odczytać, i poza każdym folderem, który commitujesz. `@latest` sprawia, że `npx` pobiera aktualny `mcp-remote`. Inaczej zostałby użyty starszy, zainstalowany globalnie, a ten nie zna `--header-file`.
 
 Nie wpisuj `${BOMBVAULT_MCP_KEY}` do argumentów `mcp-remote` dla Claude Code. Claude Code podstawia takie odwołanie ze swojego środowiska, zanim uruchomi `mcp-remote`, więc klucz trafia do wiersza poleceń tego procesu, gdzie mogą go odczytać inne programy i użytkownicy komputera.
 
@@ -170,7 +170,7 @@ Claude Desktop łączy się z BombVault przez `mcp-remote`, który wymaga Node.j
 
 ### Klienci w chmurze {#cloud-clients}
 
-ChatGPT, Claude na claude.ai, Grok i Le Chat wywołują BombVault z serwerów swojego dostawcy, więc BombVault musi być osiągalny z internetu z publicznie zaufanym certyfikatem, na przykład za odwrotnym proxy; Le Chat odrzuca certyfikaty samopodpisane. Logowanie na proxy może chronić interfejs WWW, ale `/mcp` musi docierać do BombVault bez niego: te usługi nie umieją zalogować się do proxy, a BombVault sam sprawdza ich klucz lub token. Grok i Le Chat wysyłają stały klucz, a ich przyciski konfigurują je jak pozostałe. ChatGPT, a w większości organizacji także Claude na claude.ai, łączą się tylko przez logowanie OAuth, opisane poniżej.
+ChatGPT, Claude na claude.ai, Grok i Le Chat wywołują BombVault z serwerów swojego dostawcy, więc BombVault musi być osiągalny z internetu z publicznie zaufanym certyfikatem, na przykład za odwrotnym proxy. Le Chat odrzuca certyfikaty samopodpisane. Logowanie na proxy może chronić interfejs WWW, ale `/mcp` musi docierać do BombVault bez niego: te usługi nie umieją zalogować się do proxy, a BombVault sam sprawdza ich klucz lub token. Grok i Le Chat wysyłają stały klucz, a ich przyciski konfigurują je jak pozostałe. ChatGPT, a w większości organizacji także Claude na claude.ai, łączą się tylko przez logowanie OAuth, opisane poniżej.
 
 ### Logowanie przez OAuth {#oauth}
 
@@ -193,14 +193,14 @@ Nada się każdy klient, który mówi w Streamable HTTP:
 - URL: adres interfejsu WWW plus `/mcp`, na przykład `https://192.168.1.10:3443/mcp`.
 - Klucz w `Authorization: Bearer <key>` albo w `X-API-Key: <key>`. Jeśli przyjdą oba, muszą zawierać ten sam klucz.
 - `POST` z `Content-Type: application/json` i `Accept: application/json, text/event-stream`.
-- Jedna wiadomość JSON-RPC na żądanie; paczki (batch) są odrzucane.
+- Jedna wiadomość JSON-RPC na żądanie. Paczki (batch) są odrzucane.
 - Wersje protokołu 2026-07-28, 2025-11-25, 2025-06-18 i 2025-03-26.
 
 ## TLS i certyfikaty {#tls}
 
 BombVault udostępnia HTTPS z certyfikatem, który sam wystawił, a ten na początku wymienia tylko `localhost`, `127.0.0.1` i `::1`. Claude Code i `mcp-remote` odrzucają go na adresie w sieci lokalnej. Sposoby obejścia, w kolejności pasującej do większości instalacji Unraid:
 
-1. **Dodaj adres w karcie MCP.** Gdy kartę otworzysz przez HTTPS pod adresem, którego certyfikat nie wymienia, karta o tym powie i zaproponuje **Dodaj ten adres do certyfikatu**. BombVault wystawi wtedy certyfikat ponownie z tym adresem (przeglądarka ostrzeże jeszcze raz, jak za pierwszym razem). Potem kliknij **Pobierz certyfikat**; fragmenty ustawiają `NODE_EXTRA_CA_CERTS` na pobrany plik, więc klient ufa dokładnie temu certyfikatowi. Oznacza to też, że każdy klient skonfigurowany z wcześniej pobranym plikiem przestaje się łączyć, gdy tylko certyfikat zostanie wystawiony ponownie, na tym komputerze i na każdym innym, dopóki nie dostanie nowego pliku.
+1. **Dodaj adres w karcie MCP.** Gdy kartę otworzysz przez HTTPS pod adresem, którego certyfikat nie wymienia, karta o tym powie i zaproponuje **Dodaj ten adres do certyfikatu**. BombVault wystawi wtedy certyfikat ponownie z tym adresem (przeglądarka ostrzeże jeszcze raz, jak za pierwszym razem). Potem kliknij **Pobierz certyfikat**. Fragmenty ustawiają `NODE_EXTRA_CA_CERTS` na pobrany plik, więc klient ufa dokładnie temu certyfikatowi. Oznacza to też, że każdy klient skonfigurowany z wcześniej pobranym plikiem przestaje się łączyć, gdy tylko certyfikat zostanie wystawiony ponownie, na tym komputerze i na każdym innym, dopóki nie dostanie nowego pliku.
 2. **Reverse proxy z zaufanym certyfikatem** (Nginx Proxy Manager, SWAG, Caddy, Traefik). Klient widzi wtedy certyfikat proxy i nie potrzebuje niczego więcej, a karta nie ostrzega przed certyfikatem BombVault.
 3. **Tailscale.** `tailscale serve` przed kontenerem albo integracja Tailscale w Unraid daje ci nazwę `ts.net` z zaufanym certyfikatem.
 4. **`HTTP_ONLY=true`**, tylko za proxy kończącym TLS albo w sieci, której w pełni ufasz. Przełącza cały interfejs WWW na zwykłe HTTP, wymaga zmiany ustawień kontenera i wysyła klucz bez szyfrowania.
@@ -261,9 +261,9 @@ Wszystko, co czyta asystent, trafia do dostawcy AI, który za nim stoi: nazwy el
 | `cooldown` | Ten element, ta sekcja albo Pełna kopia została uruchomiona spoza interfejsu WWW mniej niż 15 minut temu. |
 | `retention_guard` | Kolejna kopia przez MCP zostawiłaby w oknie "zachowaj ostatnie N" tylko punkty przywracania z MCP albo element dostał już 4 kopie przez MCP w ciągu ostatnich 24 godzin, licząc nieudane i anulowane. W pierwszym przypadku miejsce zrobi następna zaplanowana kopia, w drugim element zwolni się 24 godziny po najstarszej z tych kopii. W interfejsie WWW możesz ją uruchomić w każdej chwili. |
 | `rate_limited` | Klucz zużył swoje 12 uruchomień na tę godzinę. |
-| `not_permitted` przy uruchomieniu | Klucz może tylko czytać. Włącz w karcie **Pozwól uruchamiać kopie**; ponowne łączenie nie jest potrzebne. Przy anulowaniu oznacza to, że przebiegu nie uruchomił ten klucz. |
+| `not_permitted` przy uruchomieniu | Klucz może tylko czytać. Włącz w karcie **Pozwól uruchamiać kopie**. Ponowne łączenie nie jest potrzebne. Przy anulowaniu oznacza to, że przebiegu nie uruchomił ten klucz. |
 | `domain_off` | Ta sekcja jest wyłączona w **Ustawienia, Ogólne**. |
-| `not_found` | BombVault nie chroni tego elementu. Najpierw dodaj go w interfejsie WWW; MCP nigdy nie tworzy konfiguracji. |
+| `not_found` | BombVault nie chroni tego elementu. Najpierw dodaj go w interfejsie WWW. MCP nigdy nie tworzy konfiguracji. |
 | Klient nie znajduje serwera autoryzacji | Logowanie przez OAuth jest wyłączone, nie ustawiono hasła logowania albo proxy nie przepuszcza `/.well-known/` do BombVault. |
 | Strona zgody zgłasza niezarejestrowany adres powrotu | Klient wysłał adres powrotu, którego nie zarejestrował. Usuń łącznik w kliencie i dodaj go ponownie. |
 | Zalogowany klient dostaje `401` | Jego zgodę unieważniono, wygasła po 30 dniach bez użycia albo zmienił się adres publiczny. Klient zaloguje się ponownie. |

@@ -9,9 +9,9 @@ O BombVault tem um servidor integrado para o Model Context Protocol (MCP), o pro
 | `get_health` | Versão, nome da instância, se há um backup em curso e o que esta chave pode fazer | leitura |
 | `get_status` | Estado de proteção por secção: último backup bem-sucedido, intervalo esperado, verificações e controlos externos, próximas execuções agendadas, backups à espera de que a app fique inativa e, para os contentores, o teste de arranque mais recente | leitura |
 | `get_coverage` | O que o BombVault protege e o que não protege, com o motivo de cada caso | leitura |
-| `list_items` | Cada contentor, VM e conjunto de pastas protegido, a pen flash e a configuração da app, com o agendamento, o que um backup para, o último backup e quanto demorou; os contentores de base de dados indicam também o último dump; os datasets ZFS também aparecem, com o resultado da sua última verificação; cada entrada traz a sua última verificação de restauro, e um contentor o seu último teste de arranque ou o motivo por que não pode ser testado; um contêiner recriado com outras configurações desde o último backup indica o que mudou | leitura |
-| `list_runs` | Histórico de execuções, as mais recentes primeiro, filtrável por secção, entrada, estado, tipo e data; um backup lento travado por uma única coisa nomeia-a | leitura |
-| `list_restore_points` | Pontos de restauro de uma entrada no seu repositório principal e, para um contentor, os seus dumps de base de dados; um dataset ZFS tem um ponto de restauro por backup, com um snapshot de cada dataset abaixo dele | leitura |
+| `list_items` | Cada contentor, VM e conjunto de pastas protegido, a pen flash e a configuração da app, com o agendamento, o que um backup para, o último backup e quanto demorou. Os contentores de base de dados indicam também o último dump. Os datasets ZFS também aparecem, com o resultado da sua última verificação. Cada entrada traz a sua última verificação de restauro, e um contentor o seu último teste de arranque ou o motivo por que não pode ser testado. Um contêiner recriado com outras configurações desde o último backup indica o que mudou | leitura |
+| `list_runs` | Histórico de execuções, as mais recentes primeiro, filtrável por secção, entrada, estado, tipo e data. Um backup lento travado por uma única coisa nomeia-a | leitura |
+| `list_restore_points` | Pontos de restauro de uma entrada no seu repositório principal e, para um contentor, os seus dumps de base de dados. Um dataset ZFS tem um ponto de restauro por backup, com um snapshot de cada dataset abaixo dele | leitura |
 | `get_activity` | O que está a correr agora, com fase e percentagem | leitura |
 | `get_storage_stats` | Histórico de tamanho do repositório principal de uma secção e o seu crescimento semanal, com o espaço usado, livre e total no disco ou remoto de cada um dos seus repositórios | leitura |
 | `get_size_breakdown` | Que pastas e arquivos ocupam espaço no backup mais recente de um contêiner, uma VM ou um conjunto de pastas, e quanto disso o último backup acrescentou | leitura |
@@ -24,7 +24,7 @@ O BombVault tem um servidor integrado para o Model Context Protocol (MCP), o pro
 
 Fica na interface web: os restauros de qualquer tipo (incluindo descarregar, guardar ou importar um dump de base de dados), apagar backups, prune, unlock, as verificações e os exercícios, a replicação externa, as definições, as credenciais e as chaves MCP, e cancelar um backup iniciado pelo agendamento, pela interface web ou por outra chave. O mesmo vale para reconhecer uma anomalia ou marcá-la como esperada, o que se faz na página **Anomalias**. O motivo: as respostas das ferramentas contêm nomes e mensagens de erro do teu servidor, e qualquer um deles pode trazer texto escrito para manipular o assistente. Um assistente que caia nesse texto pode, no pior caso, iniciar um backup dentro dos limites abaixo ou cancelar um que ele próprio iniciou.
 
-Se o repositório principal de uma entrada for remoto (S3, REST, SFTP, rclone), `list_restore_points` contacta-o e a chamada pode demorar algum tempo. As cópias externas não podem ser listadas por MCP. O que as verificações de anomalias analisam está descrito em [Funcionalidades](features.md), e como uma entrada ZFS guarda um snapshot por conjunto de dados, em [Conjuntos de dados ZFS](zfs-datasets.md#contents).
+Se o repositório principal de uma entrada for remoto (S3, REST, SFTP, rclone), `list_restore_points` contacta-o e a chamada pode demorar algum tempo. As cópias externas não podem ser listadas por MCP. O que as verificações de anomalias analisam está descrito em [Anomalias](anomalies.md), e como uma entrada ZFS guarda um snapshot por conjunto de dados, em [Conjuntos de dados ZFS](zfs-datasets.md#contents).
 
 ## O que faz um backup iniciado {#starting-backups}
 
@@ -43,9 +43,9 @@ Os inícios pela [API](api.md#errors) e a partir do [Home Assistant](api.md#home
 
 ## Ativar {#switch-on}
 
-1. Abre **Definições, Integrações, Servidor MCP** clica em **Escolher um cliente** e escolhe o teu na janela; a pesquisa no canto superior direito encontra-o pelo nome. Um cliente que não está na lista liga-se através de **Outro cliente**.
+1. Abre **Definições, Integrações, Servidor MCP** clica em **Escolher um cliente** e escolhe o teu na janela. A pesquisa no canto superior direito encontra-o pelo nome. Um cliente que não está na lista liga-se através de **Outro cliente**.
 2. Em **Chave**, deixa **Chave nova** e o nome proposto, o do cliente, ou escreve um que diga onde a chave é usada, por exemplo «Claude Code no portátil». Uma chave por cliente permite revogar uma sem mexer nas outras. **Chave existente** dá ao cliente uma chave que criaste antes.
-3. Liga **Permitir iniciar backups** para uma chave que deva poder iniciar backups; sem isso só pode ler. Podes mudar isto mais tarde nos **Detalhes** da chave, e a alteração vale a partir do pedido seguinte do assistente, sem nova ligação.
+3. Liga **Permitir iniciar backups** para uma chave que deva poder iniciar backups. Sem isso só pode ler. Podes mudar isto mais tarde nos **Detalhes** da chave, e a alteração vale a partir do pedido seguinte do assistente, sem nova ligação.
 4. Clica em **Criar chave**. A chave é mostrada uma vez. O BombVault guarda apenas uma impressão digital dela e não a pode mostrar outra vez, por isso copia-a agora. Se fechares a janela antes de o cliente ter usado a chave, o cartão continua a mostrá-la até confirmares que a copiaste.
 
 Sem palavra-passe de início de sessão, a própria interface web está aberta a toda a tua rede, e quem a conseguir abrir também pode criar uma chave. O cartão avisa disso. Se abrires o BombVault com um nome que parece público (por exemplo `bombvault.example.com` atrás de um proxy inverso) e não houver palavra-passe de início de sessão, a partir desse endereço não é possível criar nem substituir chaves, para que nenhuma página da Internet consiga levar o teu navegador a criar uma. Define uma palavra-passe de início de sessão, ou abre o BombVault pelo endereço IP ou por um nome local como `tower` ou `tower.local`.
@@ -62,7 +62,7 @@ O BombVault guarda as entradas de cada chave durante 30 dias no máximo: os 500 
 
 ## Ligar um cliente {#clients}
 
-**Escolher um cliente** abre uma janela com cada cliente como um mosaico, em **Neste computador** ou em **Na nuvem**, e uma pesquisa no canto superior direito. Um mosaico abre a configuração do cliente na mesma janela, em três passos: a chave; a configuração para esse cliente, com o endereço com que abriste o cartão, um botão para a copiar, o sítio onde a configuração fica e, com o certificado próprio do BombVault, o que o cliente precisa para confiar nele; e a espera pela primeira chamada do cliente. A janela acompanha a última utilização da chave e fica verde quando essa chamada chega.
+**Escolher um cliente** abre uma janela com cada cliente como um mosaico, em **Neste computador** ou em **Na nuvem**, e uma pesquisa no canto superior direito. Um mosaico abre a configuração do cliente na mesma janela, em três passos: a chave, a configuração para esse cliente, com o endereço com que abriste o cartão, um botão para a copiar, o sítio onde a configuração fica e, com o certificado próprio do BombVault, o que o cliente precisa para confiar nele. E a espera pela primeira chamada do cliente. A janela acompanha a última utilização da chave e fica verde quando essa chamada chega.
 
 A configuração mantém a chave fora de qualquer linha de comandos. Quando o cliente a consegue ler de uma variável de ambiente (`BOMBVAULT_MCP_KEY`), de um pedido oculto ou de um ficheiro seu, a configuração apenas a nomeia. Quando o cliente não tem essa forma, a chave fica no ficheiro de configuração ou nas definições dele, e a configuração diz isso. Quando a documentação de um cliente não diz como trata um certificado que não conhece, a configuração escreve esse passo como o que fazer se o cliente recusar o certificado do BombVault.
 
@@ -123,7 +123,7 @@ Com o certificado próprio do BombVault (ver [TLS e certificados](#tls)), o coma
 claude mcp add bombvault --scope user -e "NODE_EXTRA_CA_CERTS=<path of the downloaded bombvault-cert.pem>" -- npx -y mcp-remote@latest https://192.168.1.10:3443/mcp --header-file "<path of the file with your key>"
 ```
 
-Verifica a ligação com `/mcp` dentro do Claude Code. `--scope user` torna o BombVault disponível em todos os teus projetos. O Claude Code guarda só o caminho do ficheiro da chave, por isso a chave não aparece no comando nem no histórico da shell, nem na lista de processos. Guarda o ficheiro onde mais ninguém o possa ler, e fora de qualquer pasta de que faças commit. `@latest` faz o `npx` ir buscar um `mcp-remote` atual; caso contrário seria usado um mais antigo instalado globalmente, que não conhece `--header-file`.
+Verifica a ligação com `/mcp` dentro do Claude Code. `--scope user` torna o BombVault disponível em todos os teus projetos. O Claude Code guarda só o caminho do ficheiro da chave, por isso a chave não aparece no comando nem no histórico da shell, nem na lista de processos. Guarda o ficheiro onde mais ninguém o possa ler, e fora de qualquer pasta de que faças commit. `@latest` faz o `npx` ir buscar um `mcp-remote` atual. Caso contrário seria usado um mais antigo instalado globalmente, que não conhece `--header-file`.
 
 Não escrevas `${BOMBVAULT_MCP_KEY}` nos argumentos do `mcp-remote` para o Claude Code. O Claude Code substitui essa referência a partir do seu próprio ambiente antes de iniciar o `mcp-remote`, por isso a chave acaba na linha de comandos desse processo, onde outros programas e utilizadores do computador a podem ler.
 
@@ -170,7 +170,7 @@ O Claude Desktop chega ao BombVault através do `mcp-remote`, que precisa de Nod
 
 ### Clientes na nuvem {#cloud-clients}
 
-O ChatGPT, o Claude em claude.ai, o Grok e o Le Chat chamam o BombVault a partir dos servidores do seu fornecedor, por isso o BombVault tem de estar acessível a partir da Internet com um certificado de confiança pública, por exemplo atrás de um proxy inverso; o Le Chat recusa certificados autoassinados. Um início de sessão no proxy pode proteger a interface web, mas `/mcp` tem de chegar ao BombVault sem ele: estes serviços não conseguem iniciar sessão num proxy, e o BombVault verifica ele próprio a chave ou o token. O Grok e o Le Chat enviam uma chave fixa, e os seus botões configuram-nos como os outros. O ChatGPT, e o Claude em claude.ai na maioria das organizações, só se ligam através de uma autenticação por OAuth, descrita a seguir.
+O ChatGPT, o Claude em claude.ai, o Grok e o Le Chat chamam o BombVault a partir dos servidores do seu fornecedor, por isso o BombVault tem de estar acessível a partir da Internet com um certificado de confiança pública, por exemplo atrás de um proxy inverso. O Le Chat recusa certificados autoassinados. Um início de sessão no proxy pode proteger a interface web, mas `/mcp` tem de chegar ao BombVault sem ele: estes serviços não conseguem iniciar sessão num proxy, e o BombVault verifica ele próprio a chave ou o token. O Grok e o Le Chat enviam uma chave fixa, e os seus botões configuram-nos como os outros. O ChatGPT, e o Claude em claude.ai na maioria das organizações, só se ligam através de uma autenticação por OAuth, descrita a seguir.
 
 ### Autenticação por OAuth {#oauth}
 
@@ -193,14 +193,14 @@ Serve qualquer cliente que fale Streamable HTTP:
 - URL: o endereço da interface web mais `/mcp`, por exemplo `https://192.168.1.10:3443/mcp`.
 - A chave em `Authorization: Bearer <key>` ou em `X-API-Key: <key>`. Se forem enviados os dois, têm de levar a mesma chave.
 - `POST` com `Content-Type: application/json` e `Accept: application/json, text/event-stream`.
-- Uma mensagem JSON-RPC por pedido; os lotes (batches) são recusados.
+- Uma mensagem JSON-RPC por pedido. Os lotes (batches) são recusados.
 - Versões do protocolo 2026-07-28, 2025-11-25, 2025-06-18 e 2025-03-26.
 
 ## TLS e certificados {#tls}
 
 O BombVault serve HTTPS com um certificado emitido por ele próprio, e de início esse certificado só nomeia `localhost`, `127.0.0.1` e `::1`. O Claude Code e o `mcp-remote` recusam-no num endereço da rede local. As saídas, pela ordem que serve à maioria das instalações Unraid:
 
-1. **Acrescentar o endereço no cartão MCP.** Se abrir o cartão por HTTPS num endereço que o certificado não nomeia, ele avisa e oferece **Acrescentar este endereço ao certificado**. O BombVault emite de novo o certificado com esse endereço (o navegador avisa mais uma vez, como da primeira). Depois clique em **Descarregar certificado**; os excertos definem `NODE_EXTRA_CA_CERTS` para o ficheiro descarregado, e o cliente passa a confiar exatamente nesse certificado. Isto também significa que qualquer cliente configurado com um ficheiro descarregado antes deixa de se ligar assim que o certificado é emitido de novo, neste computador e em todos os outros, até receber o ficheiro novo.
+1. **Acrescentar o endereço no cartão MCP.** Se abrir o cartão por HTTPS num endereço que o certificado não nomeia, ele avisa e oferece **Acrescentar este endereço ao certificado**. O BombVault emite de novo o certificado com esse endereço (o navegador avisa mais uma vez, como da primeira). Depois clica em **Descarregar certificado**. Os excertos definem `NODE_EXTRA_CA_CERTS` para o ficheiro descarregado, e o cliente passa a confiar exatamente nesse certificado. Isto também significa que qualquer cliente configurado com um ficheiro descarregado antes deixa de se ligar assim que o certificado é emitido de novo, neste computador e em todos os outros, até receber o ficheiro novo.
 2. **Um proxy inverso com um certificado de confiança** (Nginx Proxy Manager, SWAG, Caddy, Traefik). O cliente vê então o certificado do proxy e não precisa de mais nada, e o cartão não avisa sobre o do BombVault.
 3. **Tailscale.** `tailscale serve` à frente do contentor, ou a integração Tailscale do Unraid, dá-lhe um nome `ts.net` com um certificado de confiança.
 4. **`HTTP_ONLY=true`**, só atrás de um proxy que termine o TLS ou numa rede em que confie totalmente. Passa toda a interface web para HTTP simples, exige uma alteração nas definições do contentor e envia a chave sem cifra.
@@ -259,11 +259,11 @@ Tudo o que um assistente lê vai para o fornecedor de IA por trás dele: nomes d
 | Erros com "certificate", "self-signed" ou "unable to verify" | O cliente não confia no certificado do BombVault. Ver [TLS e certificados](#tls). |
 | `busy` | Outro backup ou uma tarefa de manutenção ocupa essa secção. Tenta de novo quando terminar. |
 | `cooldown` | Esta entrada, esta secção ou o Backup total foi iniciado fora da interface web há menos de 15 minutos. |
-| `retention_guard` | Mais um backup MCP deixaria só pontos de restauro vindos de MCP numa janela "manter os últimos N", ou a entrada já recebeu 4 backups por MCP nas últimas 24 horas, contando os que falharam e os cancelados. No primeiro caso o próximo backup agendado abre espaço; no segundo a entrada fica livre outra vez 24 horas depois do mais antigo desses backups. Em qualquer dos casos podes iniciá-lo na interface web. |
+| `retention_guard` | Mais um backup MCP deixaria só pontos de restauro vindos de MCP numa janela "manter os últimos N", ou a entrada já recebeu 4 backups por MCP nas últimas 24 horas, contando os que falharam e os cancelados. No primeiro caso o próximo backup agendado abre espaço, no segundo a entrada fica livre outra vez 24 horas depois do mais antigo desses backups. Em qualquer dos casos podes iniciá-lo na interface web. |
 | `rate_limited` | A chave gastou os seus 12 inícios desta hora. |
-| `not_permitted` num início | A chave é só de leitura. Liga **Permitir iniciar backups** no cartão; não é preciso voltar a ligar. Num cancelamento significa que a execução não foi iniciada por esta chave. |
+| `not_permitted` num início | A chave é só de leitura. Liga **Permitir iniciar backups** no cartão. Não é preciso voltar a ligar. Num cancelamento significa que a execução não foi iniciada por esta chave. |
 | `domain_off` | Essa secção está desligada em **Definições, Geral**. |
-| `not_found` | O BombVault não protege essa entrada. Acrescenta-a primeiro na interface web; o MCP nunca cria configuração. |
+| `not_found` | O BombVault não protege essa entrada. Acrescenta-a primeiro na interface web. O MCP nunca cria configuração. |
 | O cliente não encontra o servidor de autorização | A autenticação por OAuth está desligada, não há palavra-passe de acesso, ou o proxy não deixa passar `/.well-known/` até ao BombVault. |
 | A página de consentimento diz que o endereço de regresso não está registado | O cliente enviou um endereço de regresso que não registou. Remove o conector no cliente e volta a adicioná-lo. |
 | Um cliente autenticado recebe `401` | A sua autorização foi revogada, expirou após 30 dias sem uso, ou o endereço público mudou. O cliente autentica-se de novo. |

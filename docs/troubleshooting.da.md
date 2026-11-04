@@ -1,32 +1,32 @@
 # Fejlfinding
 
-En kort FAQ. For den fulde fejlfindingstabel for VM-over-SSH på værtssiden (permission-denied, host-key-verifikation, manglende skabelonvariabler og mere), se [VM backup over SSH-guiden](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md) på GitHub.
+En kort FAQ. For den fulde fejlfindingstabel for VM-over-SSH på værtssiden (permission-denied, host-key-verifikation, manglende skabelonvariabler og mere), se [VM backup over SSH-guiden](vm-backup-ssh-setup.md).
 
-## Noget er ikke forbundet korrekt
+## Noget er ikke forbundet korrekt {#something-is-not-wired-up-correctly}
 
 Føj kortet **Vært-integration** til oversigten under **Tilpas**. Vært-integrationstjekket prober hver montering og hvert CLI (Docker-socket, libvirt, restic, qemu-img, rclone) og rapporterer eventuelle manglende dele, og **Tjek nu** kører det igen. Start her, før du antager en fejl: en manglende montering eller en uopnåelig vært dukker op med det samme.
 
-## Jeg kan ikke nå web-UI'en
+## Jeg kan ikke nå web-UI'en {#i-cannot-reach-the-web-ui}
 
 BombVault serverer HTTPS fra start på port `3443` (selvsigneret certifikat), så åbn `https://<your-unraid-ip>:3443`. Accepter advarslen om det selvsignerede certifikat, eller sæt BombVault bag en reverse proxy med dit eget certifikat. Hvis du kører med `HTTP_ONLY=true`, serverer den i stedet almindelig HTTP på port `3000` (beregnet til brug bag en TLS-terminerende proxy).
 
-## Jeg mistede min APP_KEY
+## Jeg mistede min APP_KEY {#i-lost-my-app_key}
 
 `APP_KEY` udleder restic-repositoriets adgangskode. Uden den, uden gendannelseskittet og uden en nøgledeponering i din gruppe kan krypterede sikkerhedskopier ikke gendannes. Derfor viser oversigten **Gem dit gendannelseskit**, indtil du har downloadet det. Se [Off-site og gendannelse](offsite-recovery.md#recovery-kit). Generer en nøgle med `openssl rand -hex 32`, og opbevar den uden for serveren, før du forlader dig på nogen sikkerhedskopi.
 
-## Jeg har glemt login-adgangskoden
+## Jeg har glemt login-adgangskoden {#i-forgot-the-login-password}
 
 Vælg **Glemt adgangskode?** på loginsiden. BombVault skriver en kode på 12 tegn i sin containerlog (på Unraid: fanen Docker, BombVault-ikonet, **Logs**). Skriv den sammen med en ny adgangskode inden for 10 minutter. Nulstillingen slår også tofaktorgodkendelse fra, fjerner alle passkeys, tilbagekalder alle API-tokens, MCP-nøgler og OAuth-logins, afslutter alle andre sessioner og slår telefonparring fra. Tilføj dine passkeys igen under **Indstillinger, Sikkerhed**, slå telefonparring til igen dér, og opret nye tokens og nøgler, hvor du stadig har brug for dem. Se [Sikkerhedsmodel](configuration.md#login).
 
-## Sikkerhedskopierne stoppede og siger, at nøglen ikke længere kan åbnes
+## Sikkerhedskopierne stoppede og siger, at nøglen ikke længere kan åbnes {#backups-stopped-and-say-the-key-can-no-longer-be-opened}
 
 Denne server overtog en anden servers sikkerhedskopinøgle i Nødguiden, og `APP_KEY` blev ændret bagefter. Den overtagne nøgle er forseglet med den gamle APP_KEY, så BombVault kan ikke åbne den og tager i stedet ingen sikkerhedskopier, frem for at skrive med den forkerte nøgle. **Kræver opmærksomhed** på oversigten nævner den. Sæt APP_KEY tilbage til det, den var, eller upload gendannelseskittet igen på siden Gendannelse under **Nødsituation**.
 
-## En telefon havner på loginsiden
+## En telefon havner på loginsiden {#a-phone-lands-on-the-login-page}
 
-En parret telefon får kun sin session via gruppen, så længe **Telefoner kan parre med gruppens tolv ord** er slået til under **Indstillinger, Sikkerhed**. En nulstilling af adgangskoden slår det fra. En app, der er ældre end serveren, får heller ingen session, før den er opdateret. En server, der er tilføjet med sin adresse, beder altid om adgangskoden. En telefon, der er fjernet fra siden Instanser, kommer tilbage slået fra, når dens app åbner igen; slå **Forespørg denne instans** til under **Overvågning** i dens detaljer for at lukke den ind.
+En parret telefon får kun sin session via gruppen, så længe **Telefoner kan parre med gruppens tolv ord** er slået til under **Indstillinger, Sikkerhed**. En nulstilling af adgangskoden slår det fra. En app, der er ældre end serveren, får heller ingen session, før den er opdateret. En server, der er tilføjet med sin adresse, beder altid om adgangskoden. En telefon, der er fjernet fra siden Instanser, kommer tilbage slået fra, når dens app åbner igen. Slå **Forespørg denne instans** til under **Overvågning** i dens detaljer for at lukke den ind.
 
-## VM-sikkerhedskopiering vil ikke oprette forbindelse
+## VM-sikkerhedskopiering vil ikke oprette forbindelse {#vm-backup-will-not-connect}
 
 VM-sikkerhedskopiering taler med libvirt over SSH, aldrig en montering.
 
@@ -34,21 +34,21 @@ VM-sikkerhedskopiering taler med libvirt over SSH, aldrig en montering.
 - På et brugerdefineret `br0.x`-netværk, sæt `LIBVIRT_HOST` til din Unraid LAN-IP (containeren kan ikke nå værten via `host.docker.internal` der). Aktivér **Settings, Docker, Host access to custom networks**.
 - Hvis du ændrede Unraids SSH-port, så sæt `LIBVIRT_SSH_PORT` til at matche.
 - På TrueNAS, sæt `LIBVIRT_URI` med TrueNAS' egen libvirt-socket, giv appen capability'en `SETPCAP`, og føj nøglen til root under **Credentials, Users** (se [TrueNAS SCALE](getting-started.md#truenas)).
-- Fuld trin-for-trin-diagnose (opnåelighedstest, VLAN-routing, `Permission denied (publickey)`, `Host key verification failed`) findes i [VM backup over SSH-guiden](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md).
+- Fuld trin-for-trin-diagnose (opnåelighedstest, VLAN-routing, `Permission denied (publickey)`, `Host key verification failed`) findes i [VM backup over SSH-guiden](vm-backup-ssh-setup.md).
 
-## Et live-VM-snapshot kørte ikke
+## Et live-VM-snapshot kørte ikke {#a-live-vm-snapshot-did-not-run}
 
 Live-snapshots kræver qemu guest agent installeret i VM'en og disken på `/mnt/cache` (eller `/mnt/diskX`), ikke `/mnt/user`. På en slukket VM falder live automatisk tilbage til yndefuld. En yndefuld sikkerhedskopi lukker VM'en ned, sikkerhedskopierer diskene og genstarter den så, så den altid er konsistent. Den venter op til ti minutter på, at gæsten lukker ned, og slukker den aldrig med magt, så en Windows-gæst, der installerer opdateringer, ikke bliver afbrudt halvvejs. En gæst, der stadig kører efter det, lades i fred, og den sikkerhedskopi fejler med årsagen.
 
-## En sikkerhedskopi fejlede med "repository is already locked"
+## En sikkerhedskopi fejlede med "repository is already locked" {#a-backup-failed-with-repository-is-already-locked}
 
 Dette er som regel en forældreløs restic-lås efterladt, da containeren blev opdateret eller genstartet midt i en operation. BombVault detekterer en beviseligt forældreløs lås, tvangsrydder den og forsøger igen én gang, automatisk. Hvis den vedvarer, åbn kortet **Tjek sikkerhedskopier** under **Indstillinger, Verificering**, og vælg **Lås op** under **Mere** i det berørte områdes række for at rydde en forældet lås manuelt. Et ægte problem dukker stadig op i stedet for at blive skjult. Efter en genstart venter BombVault, til sådan en lås har været ti minutter uden fornyelse. En restic, der stadig kører, for eksempel i en anden BombVault på samme repository, fornyer sin lås hvert femte minut.
 
-## Min off-site-kopi skete ikke efter en sikkerhedskopi
+## Min off-site-kopi skete ikke efter en sikkerhedskopi {#my-off-site-copy-did-not-happen-after-a-backup}
 
-Off-site-replikering er best-effort af design, så et off-site-hikke aldrig får den lokale sikkerhedskopi til at fejle. Tjek, hvornår destinationen kopierer: dens kort **Kopier** siger **Efter hver sikkerhedskopi** eller nævner en egen plan, og **Indstillinger, Tidsplan, Off-site-kopier pr. område** kan give et område sin egen plan. Brug **Replikér nu** i områdets kort **Off-site-kopi** under **Indstillinger, Destinationer** for en on-demand-kørsel, og hold øje med statushovedet på oversigten, som siger **Off-site-kopi kører**, mens den kører. En mislykket kopi vises under **Kræver opmærksomhed**.
+Off-site-replikering er best-effort af design, så et off-site-hikke aldrig får den lokale sikkerhedskopi til at fejle. Tjek, hvornår destinationen kopierer: dens kort **Kopier** siger **Efter hver sikkerhedskopi** eller nævner en egen plan, og **Indstillinger, Tidsplan, Off-site-kopier pr. område** kan give et område sin egen plan. Brug **Replikér nu** i områdets række i kortet **Eksterne kopier** under **Indstillinger, Destinationer** for en on-demand-kørsel, og hold øje med statushovedet på oversigten, som siger **Off-site-kopi kører**, mens den kører. En mislykket kopi vises under **Kræver opmærksomhed**.
 
-## En rest-servers certifikat er ikke betroet
+## En rest-servers certifikat er ikke betroet {#a-rest-servers-certificate-is-not-trusted}
 
 restic afviser et certifikat, det ikke kender, og fejlen siger, hvor det skal ligge. Kopiér rest-serverens selvsignerede certifikat, eller certifikatet fra den udsteder, der har signeret det, som PEM-fil til mappen `certs` i BombVaults datamappe (`/config/certs` i containeren, `appdata/bombvault/certs` på Unraid), og test igen. Der kræves ingen genstart.
 
@@ -63,33 +63,33 @@ En anonym Docker-volumen bliver ikke meldt. Docker opretter den selv til en mapp
 
 ## En sikkerhedskopi står som Udsat {#deferred-backups}
 
-Containerens app var optaget, så dens sikkerhedskopi venter og prøves igen af sig selv. Linjen i aktivitetsloggen siger hvorfor, og hvornår næste forsøg er; kortet **Når appen er optaget** på containerens fane **Indstillinger** siger det samme, og hvornår ventetiden slutter. Du behøver ikke gøre noget. Vil du sikkerhedskopiere med det samme, så brug **Sikkerhedskopier nu**: en sikkerhedskopi, du selv starter, venter aldrig, heller ikke ved en afslutningskode 75.
+Containerens app var optaget, så dens sikkerhedskopi venter og prøves igen af sig selv. Linjen i aktivitetsloggen siger hvorfor, og hvornår næste forsøg er. Kortet **Når appen er optaget** på containerens fane **Indstillinger** siger det samme, og hvornår ventetiden slutter. Du behøver ikke gøre noget. Vil du sikkerhedskopiere med det samme, så brug **Sikkerhedskopier nu**: en sikkerhedskopi, du selv starter, venter aldrig, heller ikke ved en afslutningskode 75.
 
 - **Dit eget tjek.** Lad **Pre-sikkerhedskopikommando** slutte med kode 75, mens appen er optaget, for eksempel `[ "$(cat /tmp/players)" = 0 ] || exit 75`. Enhver anden kode end 0 får sikkerhedskopien til at fejle som før, så et ødelagt script stadig dukker op under **Kræver opmærksomhed**.
-- **Plex, Jellyfin eller Emby bliver aldrig spurgt.** BombVault spørger først serveren på containerens egen adresse og kører, hvis der ikke kommer svar, curl eller wget inde i containeren. Et image uden nogen af dem kan ikke spørges gennem sig selv; det nævner loggen så. Med **Sikkerhedskopier, når serveren ikke svarer** slået til kører sådan en sikkerhedskopi alligevel, slået fra venter den.
+- **Plex, Jellyfin eller Emby bliver aldrig spurgt.** BombVault spørger først serveren på containerens egen adresse og kører, hvis der ikke kommer svar, curl eller wget inde i containeren. Et image uden nogen af dem kan ikke spørges gennem sig selv. Det nævner loggen så. Med **Sikkerhedskopier, når serveren ikke svarer** slået til kører sådan en sikkerhedskopi alligevel, slået fra venter den.
 - **Jellyfin eller Emby afviser.** Tjek **API-nøgle**. Den oprettes i serverens dashboard under API-nøgler.
 - **Plex afviser.** BombVault læser tokenet fra `Preferences.xml` i mappen, der er monteret på `/config`. En server, der aldrig er blevet logget ind på, har intet token og svarer kun dér, hvor den tillader adgang uden.
 - **En film på pause får sikkerhedskopien til at vente hele natten.** Sæt **Ignorer sessioner på pause efter (min)**, for eksempel til 30.
 - **Trafiktjekket lukker aldrig sikkerhedskopien igennem.** Hæv **Optaget fra (KiB/s)** over det, containeren sender, når ingen bruger den. Lige efter BombVault starter, venter tjekket, til det har fulgt containeren i **Rolig i (min)** minutter.
 - **Sikkerhedskopien kører aldrig om natten.** Med et vindue sat kommer forsøg kun inden for det. En ventetid, der når sin frist uden for vinduet, slutter alligevel ved fristen.
 
-## En stor sikkerhedskopi blev dræbt, fordi hukommelsen slap op
+## En stor sikkerhedskopi blev dræbt, fordi hukommelsen slap op {#a-large-backup-was-killed-for-running-out-of-memory}
 
 Sæt **Hukommelsesgrænse pr. sikkerhedskopi (MiB, 0 = ingen)** i kortet **Ydeevne** under **Indstillinger, System** et godt stykke under det, containeren må bruge. Tæt på grænsen frigiver restic hukommelse oftere, hvilket koster lidt fart, så sikkerhedskopien bliver langsommere i stedet for at blive dræbt.
 
-## En gendannelse blev afbrudt, før den startede
+## En gendannelse blev afbrudt, før den startede {#a-restore-aborted-before-it-started}
 
 Før noget stoppes eller fjernes, kører gendannelsen et pre-flight-konflikttjek: den verificerer, at containerens statiske IP og publicerede værtsporte er ledige. Hvis en anden container allerede holder en, afbryder den med en klar, handlingsrettet besked i stedet for at efterlade en halvfærdig gendannelse. Frigør den konfliktende port eller IP, og prøv så igen.
 
 Findes containerens netværk ikke, for eksempel fordi dens TrueNAS-app blev slettet, nævner tjekket før gendannelsen netværket, og gendannelsen afviser, før den ændrer noget. Geninstallér appen i TrueNAS under samme navn, hvilket opretter netværket igen, og gendan derefter dens data.
 
-## En almindelig eksport fejlede i stedet for at skrive en fil
+## En almindelig eksport fejlede i stedet for at skrive en fil {#a-plain-export-failed-instead-of-writing-a-file}
 
-Hvis **Krypter eksporter med age** er slået til under **Indstillinger, System**, men ingen gyldig modtager er sat, fejler en eksport med en klar fejl i stedet for at skrive klartekst. Tilføj en gyldig modtager (en age-offentlig nøgle eller en SSH-offentlig nøgle), eller slå kryptering fra, hvis du har til hensigt, at eksporten skal være klartekst. Se [Funktioner](features.md).
+Hvis **Krypter eksporter med age** er slået til under **Indstillinger, System**, men ingen gyldig modtager er sat, fejler en eksport med en klar fejl i stedet for at skrive klartekst. Tilføj en gyldig modtager (en age-offentlig nøgle eller en SSH-offentlig nøgle), eller slå kryptering fra, hvis du har til hensigt, at eksporten skal være klartekst. Se [Almindelige eksporter](backups.md#exports).
 
-## Et databasedump mislykkedes
+## Et databasedump mislykkedes {#a-database-dump-failed}
 
-Et mislykket dump vælter aldrig sikkerhedskopien omkring det; det bogføres som sin egen mislykkede kørsel, og årsagen siger, hvad der skal rettes.
+Et mislykket dump vælter aldrig sikkerhedskopien omkring det. Det bogføres som sin egen mislykkede kørsel, og årsagen siger, hvad der skal rettes.
 
 - **Login afvist.** Dumpet logger ind med containerens egne adgangskodevariabler (`POSTGRES_PASSWORD`, `MARIADB_ROOT_PASSWORD`, `MYSQL_ROOT_PASSWORD` eller deres `_FILE`-udgaver). Tjek dem på databasecontaineren. En `_FILE`-variabel, der peger på en hemmelighed, containerens egen bruger ikke må læse, fejler på samme måde.
 - **Manglende rettigheder.** Med en tilfældig root-adgangskode kan dumpet kun logge ind som appbrugeren og rummer derfor kun den ene database, og MySQL 8.4 og nyere kan afvise det helt. Giv containeren en rigtig root-adgangskode, eller slå dumpet fra for den.
@@ -99,9 +99,9 @@ Et mislykket dump vælter aldrig sikkerhedskopien omkring det; det bogføres som
 - **Containeren er sat på pause eller genstarter.** Dumpet taler med den kørende server. Hvis containeren bliver ved med at genstarte, siger dens egen log hvorfor.
 - **Et beskadiget dump kunne ikke fjernes.** Et dump, BombVault ikke kunne gøre færdigt, slettes igen. Når den sletning fejler, bliver dumpet stående på listen markeret som beskadiget, og du kan slette det derfra.
 
-## En import mislykkedes
+## En import mislykkedes {#an-import-failed}
 
-En import stopper containeren, sætter dens datamappe til side og lader imaget oprette en tom i stedet. Fejler et trin før selve importen, lægges den gamle mappe tilbage af sig selv. Fejler importen, beholder containeren den friske mappe, og den gamle bliver liggende ved siden af som `<datamappe>.bombvault-before-import-<tidsstempel>`; kørslens fejlbesked nævner den nøjagtige sti.
+En import stopper containeren, sætter dens datamappe til side og lader imaget oprette en tom i stedet. Fejler et trin før selve importen, lægges den gamle mappe tilbage af sig selv. Fejler importen, beholder containeren den friske mappe, og den gamle bliver liggende ved siden af som `<datamappe>.bombvault-before-import-<tidsstempel>`. Kørslens fejlbesked nævner den nøjagtige sti.
 
 En datamappe, der er sit eget datasæt, som på TrueNAS, kan ikke omdøbes. Importen lader så mappen blive på sin plads og flytter dens indhold til den gemte mappe ved siden af, så datasættet ovenover skal have plads til det. Importen tjekker det, før den stopper containeren.
 
@@ -112,39 +112,104 @@ Sådan lægger du den tilbage i hånden: stop containeren, omdøb den nuværende
 Hvert problem har en årsagskode i firkantede parenteser, og siden [ZFS-datasæt](zfs-datasets.md#reason-codes) viser dem alle med løsningen. De tre mest almindelige:
 
 - **`snapshot-loop`**: snapshottet nåede ikke frem til BombVault, fordi Host Data ikke sender nye monteringer videre. Rediger containeren, sæt Access Mode for Host Data til Read/Write - Slave, og genstart BombVault.
-- **`key-not-loaded`**: et krypteret datasæt, hvis nøgle ikke er indlæst, springes over. Indlæs nøglen med `zfs load-key` og monter datasættet; næste sikkerhedskopi tager det med.
-- **`ssh-auth`**: serveren afviste BombVaults nøgle. **ZFS-forbindelse til denne server**, som åbnes med **Se forbindelsen** på siden Sikkerhedskopier, viser kommandoen, der godkender den; kør den én gang på serveren.
+- **`key-not-loaded`**: et krypteret datasæt, hvis nøgle ikke er indlæst, springes over. Indlæs nøglen med `zfs load-key` og monter datasættet. Næste sikkerhedskopi tager det med.
+- **`ssh-auth`**: serveren afviste BombVaults nøgle. **ZFS-forbindelse til denne server**, som åbnes med **Se forbindelsen** på siden Sikkerhedskopier, viser kommandoen, der godkender den. Kør den én gang på serveren.
 
-## Et element bliver stående på "Lærer N/10"
+## Et element bliver stående på "Lærer N/10" {#an-entry-stays-at-learning-n10}
 
 De fleste anomalitjek begynder efter 10 vellykkede sikkerhedskopier af et element, og optællingen starter forfra efter **Markér som forventet** og efter en ændring af elementets udvalg. Et element uden tidsplan lærer ikke, og en container uden appdata har intet at lære af, hvilket dens mærke også siger. **Læringsforløb** på siden Afvigelser viser en ring på ti dele for hvert element.
 
-## Opbevaringen sletter ikke længere gamle sikkerhedskopier af ét element
+## Opbevaringen sletter ikke længere gamle sikkerhedskopier af ét element {#retention-stopped-deleting-old-backups-of-one-entry}
 
-En åben kritisk anomali holder dem tilbage: elementets kilde er næsten tom, er skrumpet kraftigt, eller en sikkerhedskopi har gemt det meste af dataene igen. Åbn anomalien fra mærket ved elementet. Hvis der mangler data, eller de er blevet krypteret, så gendan først fra den linkede seneste gode sikkerhedskopi. Kvittér derefter for anomalien, eller markér den som forventet, hvis ændringen kom fra dig, så rydder næste kørsel op som normalt. Forhåndsvisningen af opbevaringen markerer et sådant element som beholdt. For et ZFS-element beholder kun det datasæt, anomalien nævner, sine gamle sikkerhedskopier; de øvrige datasæt i træet ryddes op som normalt.
+En åben kritisk anomali holder dem tilbage: elementets kilde er næsten tom, er skrumpet kraftigt, eller en sikkerhedskopi har gemt det meste af dataene igen. Åbn anomalien fra mærket ved elementet. Hvis der mangler data, eller de er blevet krypteret, så gendan først fra den linkede seneste gode sikkerhedskopi. Kvittér derefter for anomalien, eller markér den som forventet, hvis ændringen kom fra dig, så rydder næste kørsel op som normalt. Forhåndsvisningen af opbevaringen markerer et sådant element som beholdt. For et ZFS-element beholder kun det datasæt, anomalien nævner, sine gamle sikkerhedskopier. De øvrige datasæt i træet ryddes op som normalt.
 
-## Manuel oprydning siger, at nogle elementer blev beholdt
+## Manuel oprydning siger, at nogle elementer blev beholdt {#manual-prune-says-some-entries-were-kept}
 
 Samme årsag: oprydningen lader de gamle sikkerhedskopier af et element med sådan en anomali være og nævner elementet i sin besked. Alt andet ryddes op som normalt.
 
-## Historikimporten siger, at et repository ikke kunne læses
+## Historikimporten siger, at et repository ikke kunne læses {#history-import-says-a-repository-could-not-be-read}
 
 Efter opgraderingen læser BombVault én gang størrelsen af tidligere sikkerhedskopier fra hvert repository. Et repository, der ikke kunne nås på det tidspunkt, for eksempel en offsite-destination, der var nede, eller et share, der ikke var monteret, står i kortet **Afvigelser** under **Indstillinger, Verificering** og forsøges igen én gang om dagen. Imens lærer dets elementer af nye sikkerhedskopier.
 
-## Advarslen om diskplads passer ikke med Unraids dashboard
+## Advarslen om diskplads passer ikke med Unraids dashboard {#the-disk-space-warning-does-not-match-the-unraid-dashboard}
 
-På Unraids brugershare (`/mnt/user`) er den ledige plads hele arrayets, ikke én disks. Fjerne repositorier måles kun via rclone-remotes, der oplyser deres ledige plads; S3-, B2-, REST- og SFTP-repositorier har intet tal og står som ikke målt i kortet **Afvigelser**.
+På Unraids brugershare (`/mnt/user`) er den ledige plads hele arrayets, ikke én disks. Fjerne destinationer, som BombVault når gennem rclone, for eksempel SFTP, Hetzner Storage Box, SMB, WebDAV eller et clouddrev, måles, når den fjerne side oplyser sin ledige plads, og det gør en `sftp:`-adresse, der er skrevet ind i hånden, også. S3-, B2- og REST-repositories har intet tal: Deres destination siger **Størrelse ukendt**, og kortet **Afvigelser** viser dem som ikke målt.
 
-## En AI-assistent kan ikke oprette forbindelse
+## En AI-assistent kan ikke oprette forbindelse {#an-ai-assistant-cannot-connect}
 
 Siden [MCP-server](mcp.md#troubleshooting) viser, hvad hver statuskode og hver afvisning fra MCP-endepunktet betyder, og hvad du kan gøre ved det.
 
-## Containeren bliver ved med at genstarte eller ser usund ud
+## Containeren bliver ved med at genstarte eller ser usund ud {#the-container-keeps-restarting-or-looks-unhealthy}
 
 BombVault rapporterer sund/usund fra sin egen `/api/health`. Et auto-heal-værktøj (såsom Autoheal) kan genstarte den automatisk, hvis motoren nogensinde går i baglås. Tjek containerloggen og kortet **Vært-integration** for den underliggende årsag.
 
-## Stadig fast?
+## En destination vil ikke gemmes {#location-refused}
+
+BombVault tjekker en destination, før den gemmer den, og afvisningen siger hvorfor i en sætning. De almindelige:
+
+- **"This location lies inside another repository or target, or contains one."** Et repository inde i et repository ville ødelægge begge. Beskeden nævner det andet sted. Vælg en anden mappe, eller fjern den først.
+- **Det er et repository, du har sat op.** Destinationen er en af rækkerne under **Depoter** eller ligger inde i eller omkring en. Vælg et andet sted, eller fjern det repository først.
+- **Det samme sted som et områdes egen mappe.** En kopi til et områdes egen mappe ville kopiere dets sikkerhedskopier ind på dem selv ved hver kørsel, så den afvises. Vælg et andet sted, eller se [Et områdes egen mappe](offsite-recovery.md#own-folder).
+- **"That is not an off-site target of this domain"** kom fra et link til en destination, der var blevet fjernet. En aktuel version rydder dem ved start og i en import. Ser du den stadig, så opdatér BombVault.
+- **En fuld værtssti** som `/mnt/user/backups`. BombVault kører i en container, så den vil have stien under Host Data, `user/backups`, og beskeden nævner den, du skal skrive.
+
+## En fjern destination siger, at dens repository er væk {#repository-gone}
+
+En destination, der rummede sikkerhedskopier og pludselig ikke rummer noget repository, får ikke et nyt, tomt af sig selv, fordi det ville skjule det rigtige, når en disk er tilbage. En rest-server, hvis disk ikke blev monteret, er den sædvanlige årsag, så montér disken igen, og kør sikkerhedskopieringen eller kopien en gang til. Kun hvis du med vilje har tømt eller slettet det gamle repository, så tryk på **Opret et nyt depot her** på destinationens side. Det starter forfra for hvert område på den destination på én gang.
+
+## Et cloud-login er udløbet {#cloud-sign-in-expired}
+
+Testen eller den næste kopi siger så, at loginet er udløbet. **Skift forbindelse** på destinationens side logger ind på ny.
+
+- **Box, Jottacloud og andre med engangs-refresh-tokens:** BombVault beholder det token, rclone fornyede, også på tværs af genstarter og i gendannelseskittet. Efter en gendannelse fra en ældre indstillingssikkerhedskopi kan tokenet i den være løbet ud, så log ind en gang til. Repositoryet forbliver, som det er.
+- **iCloud Drive:** Apple afslutter loginet efter 30 dage. Det kræver et nyt trust-token og nye cookies fra `rclone config`.
+- **OneDrive:** Et login med flere drev spørger, hvilket der skal bruges, så en destination uden valg forbliver ubrugelig, til du vælger. For OneDrive Business og Google Drive se noten om beskårne data under [Destinationer](offsite-recovery.md#destinations).
+
+## "Off-site-kopien af den sidste sikkerhedskopi kører stadig" {#copy-still-running}
+
+Sikkerhedskopieringen før er færdig, og dens kopi er stadig på vej, hvilket blokerer en ny sikkerhedskopiering af det område. Vent, til statusdelen ikke længere siger **Off-site-kopi kører**. Knapperne, der starter en sikkerhedskopiering, siger det samme, mens de venter. Den første kopi til en ny destination kan tage timer, se [S3-eksemplet](offsite-recovery.md#example-s3).
+
+## En ZFS-replika stopper, fordi målet har nyere snapshots {#replica-target-newer}
+
+Målet har snapshots, der er nyere end det nyeste, det deler med denne server, for eksempel fordi datasættet her blev rullet tilbage, eller kopien på målet blev ændret. Kortet Replika og kørselshistorikken nævner snapshottet under **Rul målet tilbage til**. Kør `zfs rollback -r` til det snapshot på målet for hvert datasæt, kørslen nævner, og tryk på **Replikér nu**. Se [Hvor længe snapshots bliver](zfs-datasets.md#replica-retention).
+
+## En VM med Unraid-snapshots mislykkes og nævner en fil {#vm-chain}
+
+BombVault følger hver disks backing-kæde og sikkerhedskopierer hver fil i den. En kæde, der ikke kan følges til sin ende, får sikkerhedskopieringen til at mislykkes i stedet for at udelade en del af disken, og beskeden nævner filen. Tjek, at filen findes under `/mnt`, og at snapshottet stadig står i VM Manager. En fil uden for Host Data kan slet ikke læses. Se [VM'er med Unraid-snapshots](vm-backup-ssh-setup.md#unraid-snapshots).
+
+## Off-site-kopier står på pause efter en genopbygning {#copies-paused}
+
+Efter **Opdag sikkerhedskopier** eller nødguiden uden gendannede indstillinger venter off-site-kopier af hvert genopbygget område, fordi BombVault ikke længere ved, hvilke poster du har udeladt. Oversigten siger det. Tryk på **Bekræft standard** i **Destinationer pr. område**, se forhåndsvisningen, og udelad det, der skal udelades. At importere en indstillingsfil afslutter ikke pausen. Se [Efter en genopbygning](offsite-recovery.md#after-a-rebuild).
+
+## Notifikationer kommer ikke frem {#notifications-do-not-arrive}
+
+Start med **Send test** under **Indstillinger, Notifikationer**. Linjen under kortet siger, hvad der skete.
+
+- **Der sendes slet intet.** Tjek **Underret**. Med **Aldrig** går intet ud, og med **Kun ved fejl** forbliver en god kørsel stille. Med **Opsummer planlagte kørsler** slået til sender en planlagt kørsel én opsummering til sidst.
+- **En ny adresse.** Når du ændrer serveren for Matrix, Gotify eller e-mail, beder feltet igen om tokenet eller adgangskoden, og den nye adresse gemmes først, når du har skrevet det. BombVault sender ikke den gamle hemmelighed til et nyt sted.
+- **Gotify** siger, at serveren afviste app-tokenet: Kopiér det igen fra programmet i Gotify. **Server-URL** er basisadressen uden `/message`.
+- **Webhook:** Tjek, at **Webhook-format** passer til tjenesten. En Discord-adresse kræver **Discord**, og ntfy kræver **ntfy**.
+- **Unraid-notifikationer** kører over Værts-SSH-forbindelsen, så test den først under **Indstillinger, Integrationer**. På en anden platform forbliver de slået fra, og kortet siger det.
+- **En notifikationsmail kommer aldrig.** Tjek **Kryptering** mod porten, som regel **STARTTLS** på 587 eller **TLS (implicit)** på 465.
+
+Healthchecks-ping afhænger ikke af noget af dette, se [Healthchecks](notifications.md#healthchecks).
+
+## Android-appen kan ikke åbne en server {#android-cannot-open}
+
+Startskærmen siger hvorfor på serverens kort:
+
+- **Ikke forbundet:** Hverken serverens adresse eller relayet svarer. Ved **Ingen videresender** når appen kun en server på dens egen adresse.
+- **Tjek certifikat:** Serveren viser et andet certifikat end det, du stolede på. Appen åbner den først, når du stoler på det nye, så sørg for, at ændringen er din.
+- **Login påkrævet:** En server tilføjet med sin adresse beder om adgangskoden. Se også [En telefon havner på loginsiden](#a-phone-lands-on-the-login-page).
+- **Nøglen er ændret:** Startskærmen viser den nye nøgles fingeraftryk, og siden åbner først, når du stoler på den. Se [Væk hjemmefra](android.md#away).
+
+## En anden bruger kan ikke læse det lokale repository {#repository-permissions}
+
+Det lokale repository forbliver læsbart for andre brugere, for eksempel en synkroniseringsbruger over SMB. Før 10.4.1 kunne filer, som en beskæring, et tag, en hentning, en områdeflytning, en sletning eller en stak-sikkerhedskopi skrev, forblive ulæselige til næste nat. Opdatér BombVault, så er de læsbare med det samme. Repositoryet til auto-sikkerhedskopien kan med vilje kun læses af root, fordi det rummer BombVaults indstillinger.
+
+## Stadig fast? {#still-stuck}
 
 - Læs de fulde sider [Konfiguration](configuration.md) og [Off-site og gendannelse](offsite-recovery.md).
+- **Fejlrapport** på kortet **Hjælp** under **Indstillinger, Info** downloader en ZIP til et GitHub-issue: værtstjekket, din konfiguration med alle hemmeligheder fjernet, de seneste kørsler, hvad der er planlagt næste gang, og den seneste log, siden containeren sidst startede. Den rummer også det sidste dump af hver database, ZFS-elementerne med deres monteringer, de åbne afvigelser og hvor mange MCP-nøgler der findes. Adgangskoder, tokens og rclone-konfigurationen fjernes, og pakken siger det i sin egen manifest. Den kræver en loginadgangskode. Ved et nedbrud, der genstartede containeren, så se `docker logs`.
 - Spørg på [Unraid-supporttråden](https://forums.unraid.net/topic/199509-support-junkerderprovinz-bombvault/).
 - Åbn et [GitHub-issue](https://github.com/junkerderprovinz/bombvault/issues).

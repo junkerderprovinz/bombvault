@@ -1,0 +1,113 @@
+# Restauração
+
+Toda a restauração começa na página **Restauração**: escolhe uma secção, procura o que queres de volta e escolhe um backup. Uma só janela restaura todos os tipos de entrada e pergunta por passos. Por predefinição nada muda no original, porque o backup volta para ao lado dele.
+
+![A página Restauração com as secções como mosaicos, a pesquisa e o cartão Stacks.](assets/screenshots/restore/page-dark.png#only-dark)
+![A página Restauração com as secções como mosaicos, a pesquisa e o cartão Stacks.](assets/screenshots/restore/page-light.png#only-light)
+
+## A página Restauração {#page}
+
+- **Secções** lista as secções como mosaicos, cada um com quantas entradas têm instantâneos.
+- **O que queres trazer de volta?** pesquisa as entradas da secção escolhida. Cada linha mostra o seu instantâneo mais recente, e **Abrir entrada** leva à página da entrada.
+- **Stacks** lista os projetos Compose com pelo menos dois containers copiados, por exemplo `immich` com a sua base de dados e o Redis. A pesquisa encontra uma stack pelo nome ou por qualquer um dos seus containers.
+- **A decorrer** mostra uma restauração enquanto corre, também depois de fechares a janela.
+- **Emergência** inicia o assistente de emergência para um servidor que desapareceu ou foi configurado de novo, vê [Assistente de emergência](offsite-recovery.md#emergency).
+- **Outras origens** guarda **De uma pasta de backups antiga**, para os backups de outro BombVault, e **Importar do plugin Appdata.Backup**.
+
+![A página Restauração num telemóvel.](assets/screenshots/restore/page-phone-dark.png#only-dark)
+![A página Restauração num telemóvel.](assets/screenshots/restore/page-phone-light.png#only-light)
+
+## A janela de restauração {#window}
+
+Um clique numa entrada abre **Restaurar** com o seu nome. Pergunta por passos, e cada passo pode ser mudado antes de começares:
+
+1. **Backup**: o instantâneo recomendado vem pré-selecionado. É o mais recente, ou, depois de uma anomalia em aberto, o último antes dela. Os mais antigos estão na lista, e **Comparar** mostra o que difere entre dois deles.
+2. **Origem**: de onde vêm os ficheiros, quando um instantâneo está em vários lugares. **Local** é o mais rápido.
+3. **O quê**: **Todos**, ou **Ficheiros individuais**, onde marcas os ficheiros e as pastas que queres.
+4. **Para onde**: o destino. As opções dependem do tipo de entrada:
+
+    | Destino | O que faz |
+    |---|---|
+    | **Ao lado do original** | A predefinição. Um container volta como um segundo container chamado `<nome>-restored` com portas próprias, os discos e a NVRAM de uma VM ficam numa pasta chamada `<pasta>-restored`, e um conjunto de pastas volta como `<caminho>-restored`. Nada muda no original. |
+    | **Substituir o original** | Sobrescreve o que lá está agora. Com **Fazer antes um backup do estado atual**, que vem ligado por predefinição, o BombVault copia primeiro o estado de hoje para poderes voltar atrás. Se esse backup falhar, a restauração não começa. |
+    | **Para uma pasta** | Só os ficheiros, para os veres. |
+    | **Descarregar como ZIP** | A unidade flash, para uma pen nova. O BombVault nunca escreve na unidade flash em uso. |
+    | **Num novo conjunto de dados** e **Restaurar dentro do conjunto de dados** | Conjuntos de dados ZFS, vê [Conjuntos de dados ZFS](zfs-datasets.md#restore). |
+
+5. **O que acontece** diz por palavras o que a restauração vai fazer, e uma cena mostra o destino que escolheste.
+
+Antes de **Restaurar** se desbloquear, a janela verifica que o repositório responde, que a chave o abre, que o instantâneo existe e que o destino tem espaço. Enquanto uma verificação falha o botão fica bloqueado, e o (i) nele diz qual.
+
+A janela mostra também o que a restauração muda em comparação com o que lá está agora: ficheiros novos, substituídos e inalterados, com a lista a pedido, e os ficheiros do destino que não estão no backup e ficam onde estão. O restic calcula isto como um ensaio a partir do tamanho e da data de modificação, sem ler os ficheiros, e uma árvore muito grande pára aos 30 segundos e di-lo. Para containers e VMs compara as definições que a restauração recria com as que estão em execução: imagem e etiqueta, portas, nomes de variáveis e volumes, ou memória, vCPUs, discos e rede.
+
+Algumas coisas podem parar uma restauração antes de mudar o que for. O IP estático e as portas publicadas de um container têm de estar livres, e a sua rede tem de existir. Uma restauração no lugar nomeia todos os outros containers cujo bind mount chega a uma pasta onde ela escreve, por exemplo "este caminho também é usado por nextcloud-db", mas isso só avisa.
+
+Algumas opções aparecem onde se aplicam: **Deixar parado depois**, para veres um container ou uma VM antes de voltar a correr, e **Restaurar sem GPU e runtime** num host que não tem a GPU ou o runtime com que o backup foi feito.
+
+A restauração corre em segundo plano. Podes fechar a janela, e o progresso aparece também em **A decorrer**. Uma restauração longa mostra uma percentagem e pode ser cancelada, e uma restauração cancelada fica registada como cancelada, não como falhada.
+
+![A janela de restauração no passo O quê, com ficheiros individuais marcados.](assets/screenshots/restore/window-what-dark.png#only-dark)
+![A janela de restauração no passo O quê, com ficheiros individuais marcados.](assets/screenshots/restore/window-what-light.png#only-light)
+
+### Para onde vai uma restauração para uma pasta {#folders}
+
+**Pastas de restauro** em **Definições, Restauro** define a **Pasta de restauro predefinida**, com uma **Subpasta por secção** se quiseres, e uma **Exceção** para uma secção. Os ficheiros escolhidos ficam diretamente na pasta de destino: um ficheiro volta como só esse ficheiro, uma pasta como a pasta com o seu conteúdo, e escolhas de pastas diferentes guardam só o caminho abaixo da pasta que partilham. O BombVault recusa um destino que não esteja em armazenamento montado, porque no Unraid uma pasta dessas vive na memória e desaparece num reinício, e nunca restaura para a sua própria pasta de dados.
+
+## Exemplo: recuperar um ficheiro {#example-single-file}
+
+Alguém editou o `config.php` do Nextcloud ontem à noite e o Nextcloud já não arranca. O backup noturno das 03:00 ainda tem o ficheiro bom. Queres esse ficheiro, não o container inteiro.
+
+1. Abre **Restauração**, escolhe o mosaico **Containers** e escreve `nextcloud` em **O que queres trazer de volta?**.
+2. Clica em `nextcloud`. A janela abre com o backup das 03:00 pré-selecionado como o recomendado.
+3. Deixa a **Origem** em **Local**.
+4. Em **O quê**, escolhe **Ficheiros individuais**. Abre as pastas até `config` e marca `config.php`.
+5. Em **Para onde**, escolhe **Para uma pasta** e escolhe uma pasta, por exemplo `user/restore`, que é `/mnt/user/restore` no host.
+6. Lê **O que acontece**: o ficheiro fica na pasta de destino, e nada muda no container. Carrega em **Restaurar**.
+
+A janela termina com **Concluído: os ficheiros estão em /mnt/user/restore**. Encontras o ficheiro como `/mnt/user/restore/config.php`, sem as pastas por cima. Compara-o com o estragado, copia-o de volta para a pasta appdata e reinicia o Nextcloud.
+
+Para pôr o ficheiro diretamente de volta, escolhe **Substituir o original** no passo 5. Mantém **Fazer antes um backup do estado atual** ligado, para o BombVault copiar o estado estragado antes de escrever, escreve `nextcloud` para confirmar e carrega em **Restaurar**. O Nextcloud é parado enquanto o ficheiro escolhido é escrito de volta no seu lugar, e só os ficheiros que marcaste são escritos.
+
+![A janela de restauração em O que acontece, com Substituir o original escolhido.](assets/screenshots/restore/window-replace-dark.png#only-dark)
+![A janela de restauração em O que acontece, com Substituir o original escolhido.](assets/screenshots/restore/window-replace-light.png#only-light)
+
+## O que volta, por tipo {#kinds}
+
+Os **containers** são recriados a partir da sua definição guardada através da API do Docker, com o seu entrypoint, hostname, definições de paragem, volumes e montagens, limites de recursos, driver de registo, definições de DNS e ligações antigas. Um container volta na imagem com que corria quando o backup foi feito, não numa mais recente transferida depois, e uma imagem em falta é transferida primeiro, com o início de sessão de **Registries de containers** em **Definições, Restauro**. A sua GPU ou runtime (`--gpus`, `--runtime=nvidia`) volta também. Num host sem esse driver ou runtime, a restauração di-lo e oferece **Restaurar sem GPU e runtime**. Uma ligação a um container que falta, ou que está parado quando o restaurado arranca, é deixada de fora, e o histórico da execução di-lo. Uma restauração que falha depois de o container ter sido removido volta a pô-lo, parado.
+
+As **VMs** têm o seu XML definido outra vez por SSH e os seus discos e a NVRAM UEFI voltam a ser ligados, mesmo depois de a VM ter sido eliminada. Vê [Backups de VMs](vm-backup-ssh-setup.md) para VMs com instantâneos do Unraid e discos em zvols.
+
+Os **conjuntos de pastas** voltam com a sua propriedade, modos e datas como o restic os guarda.
+
+A **unidade flash** nunca toca no `/boot` em uso. A restauração é uma transferência chamada `flash-<id>.zip`, pronta a pôr no Unraid USB Creator. A janela lista também os plugins de cada backup do flash com a sua versão e tamanho, e pode devolver um só à flash em uso: o seu ficheiro `.plg`, a sua pasta em `config/plugins` e os ficheiros de pacote que o backup tem. O Unraid instala-o no próximo arranque, ou logo em **Plugins, Install Plugin**.
+
+Os **conjuntos de dados ZFS** têm destinos próprios e mantêm as suas propriedades ZFS, vê [Restaurar](zfs-datasets.md#restore).
+
+O **auto-backup** só volta através do assistente de emergência, que reinicia o BombVault, para que a base de dados em uso nunca seja sobrescrita com um acesso aberto.
+
+Os **despejos da base de dados** nunca são carregados de volta sozinhos. Uma linha em **Despejos da base de dados** pode ser transferida, gravada numa pasta ou importada para uma base de dados acabada de arrancar. Vê [Despejos da base de dados](backups.md#database-dumps).
+
+## Restaurar várias entradas de uma vez {#several}
+
+Na página Restauração, escolhe entradas como escolhes linhas na lista de Backups: Ctrl+clique, Shift+clique, Ctrl+A, um toque longo, ou **Selecionar**. **Restaurar** abre então uma janela para todas.
+
+- **Que backup**: **Recomendado** toma para cada entrada o backup que a sua própria janela recomendaria. **Um momento para todas** toma para cada entrada o seu backup mais recente a partir de um **Momento** que escolhes ou anterior, por exemplo a noite antes de algo correr mal.
+- **Para onde**: **Ao lado do original** ou **Substituir o original**, com **Fazer antes um backup do estado atual**.
+
+Cada entrada é verificada como numa restauração única, e depois correm uma a seguir à outra. Cada linha mostra como correu a sua: **À espera**, **Em curso**, **Restaurado**, **Falhou** ou **Deixado de fora**. **Parar depois desta** deixa a restauração em curso terminar e não inicia mais nenhuma. A unidade flash vem como um ZIP para transferir, e os conjuntos de dados ZFS e o auto-backup são restaurados um de cada vez.
+
+![Restaurar várias entradas: uma linha por entrada com o seu progresso.](assets/screenshots/restore/several-dark.png#only-dark)
+![Restaurar várias entradas: uma linha por entrada com o seu progresso.](assets/screenshots/restore/several-light.png#only-light)
+
+## Restaurar uma stack {#stacks}
+
+Um clique numa stack no cartão **Stacks** abre **Restaurar stack**. Restaura todos os membros a partir do seu último backup ao mesmo tempo, e com **Iniciar por ordem de dependências após o restauro** inicia-os pela ordem do seu `depends_on`: bases de dados e caches primeiro, depois a aplicação. Quando a pasta de projeto de um membro falta no lugar que escolheste, a janela oferece o estado do Local em vez disso.
+
+## Outras origens {#other-sources}
+
+- **De uma pasta de backups antiga** abre o repositório de outro BombVault que já não corre, num disco ou num destino externo, com o seu kit de recuperação ou o `APP_KEY` escrito à mão. A sessão é só de leitura e vive apenas na memória. Vê [De uma pasta de backups antiga](offsite-recovery.md#restore-from-another-bombvault-repo).
+- **Importar do plugin Appdata.Backup** lê a pasta de backups do plugin. Cada arquivo de container passa a ser um ponto de restauro do seu container, datado de quando o plugin o fez. Os arquivos já importados antes são ignorados, e os arquivos em si só são lidos. O container precisa primeiro de um backup no BombVault, para a restauração ter a sua definição. A retenção deixa em paz os pontos de restauro importados, por isso elimina um tu mesmo quando já não precisares dele.
+
+## Depois de uma restauração {#after}
+
+Uma cópia restaurada ao lado do original aparece em **Backups** como excluída, para não contar como tarefa em aberto. Junta-a ao agendamento se a quiseres manter. Um container ou uma VM que estava a correr quando foi copiado volta a correr, um que estava parado continua parado. No Unraid, um container restaurado reaparece no separador Docker como uma aplicação normal e editável, e uma VM no Gestor de VMs com os seus discos e a NVRAM ligados.

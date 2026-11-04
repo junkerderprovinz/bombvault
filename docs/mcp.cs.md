@@ -9,9 +9,9 @@ BombVault má vestavěný server pro Model Context Protocol (MCP), protokol, kte
 | `get_health` | Verze, název instance, zda běží záloha a co tento klíč smí | čtení |
 | `get_status` | Stav ochrany podle sekcí: poslední úspěšná záloha, očekávaný interval, ověření a kontroly off-site, další naplánované běhy, zálohy čekající na klid aplikace, u kontejnerů nejnovější test spuštění | čtení |
 | `get_coverage` | Co BombVault chrání a co ne, u každé položky s důvodem | čtení |
-| `list_items` | Každý chráněný kontejner, VM a sada složek, flash disk a konfigurace aplikace, s plánem, tím, co záloha zastaví, poslední zálohou a její délkou; databázové kontejnery uvádějí i poslední dump; uvádí i datasety ZFS s výsledkem jejich poslední kontroly; každá položka nese svou poslední kontrolu obnovy, kontejner navíc svůj poslední test spuštění nebo důvod, proč ho nelze otestovat; kontejner znovu vytvořený s jiným nastavením od poslední zálohy uvádí, co se změnilo | čtení |
-| `list_runs` | Historie běhů od nejnovějších, filtrovatelná podle sekce, položky, stavu, druhu a času; pomalá záloha, kterou brzdila jedna věc, ji jmenuje | čtení |
-| `list_restore_points` | Body obnovy jedné položky z jejího primárního repozitáře a u kontejneru i jeho databázové dumpy; dataset ZFS má jeden bod obnovy na zálohu se snapshotem každého datasetu pod ním | čtení |
+| `list_items` | Každý chráněný kontejner, VM a sada složek, flash disk a konfigurace aplikace, s plánem, tím, co záloha zastaví, poslední zálohou a její délkou. Databázové kontejnery uvádějí i poslední dump. Uvádí i datasety ZFS s výsledkem jejich poslední kontroly. Každá položka nese svou poslední kontrolu obnovy, kontejner navíc svůj poslední test spuštění nebo důvod, proč ho nelze otestovat. Kontejner znovu vytvořený s jiným nastavením od poslední zálohy uvádí, co se změnilo | čtení |
+| `list_runs` | Historie běhů od nejnovějších, filtrovatelná podle sekce, položky, stavu, druhu a času. Pomalá záloha, kterou brzdila jedna věc, ji jmenuje | čtení |
+| `list_restore_points` | Body obnovy jedné položky z jejího primárního repozitáře a u kontejneru i jeho databázové dumpy. Dataset ZFS má jeden bod obnovy na zálohu se snapshotem každého datasetu pod ním | čtení |
 | `get_activity` | Co právě běží, s fází a procenty | čtení |
 | `get_storage_stats` | Historie velikosti primárního repozitáře sekce a její týdenní růst, k tomu obsazené, volné a celkové místo na disku nebo vzdáleném úložišti každého jejího repozitáře | čtení |
 | `get_size_breakdown` | Které složky a soubory zabírají místo v nejnovější záloze kontejneru, VM nebo sady složek a kolik z nich přidala poslední záloha | čtení |
@@ -24,7 +24,7 @@ BombVault má vestavěný server pro Model Context Protocol (MCP), protokol, kte
 
 Ve webovém rozhraní zůstává: obnova jakéhokoli druhu (včetně stažení, uložení nebo importu databázového dumpu), mazání záloh, prune, unlock, kontroly a cvičení, replikace off-site, nastavení, přihlašovací údaje a klíče MCP a také zrušení zálohy, kterou spustil plán, webové rozhraní nebo jiný klíč. Totéž platí pro potvrzení anomálie nebo její označení jako očekávané, což se dělá na stránce **Anomálie**. Důvod: odpovědi nástrojů obsahují názvy a chybové zprávy z tvého serveru a kterákoli z nich může nést text napsaný tak, aby asistenta ovládl. Asistent, který na takový text naletí, může nanejvýš spustit zálohu v mezích uvedených níže nebo zrušit zálohu, kterou sám spustil.
 
-Pokud je primární repozitář položky vzdálený (S3, REST, SFTP, rclone), `list_restore_points` se k němu připojí a volání může chvíli trvat. Kopie off-site přes MCP vypsat nelze. Na co se kontroly anomálií dívají, popisuje stránka [Funkce](features.md), a jak položka ZFS drží jeden snímek pro každou datovou sadu, stránka [Datové sady ZFS](zfs-datasets.md#contents).
+Pokud je primární repozitář položky vzdálený (S3, REST, SFTP, rclone), `list_restore_points` se k němu připojí a volání může chvíli trvat. Kopie off-site přes MCP vypsat nelze. Na co se kontroly anomálií dívají, popisuje stránka [Anomálie](anomalies.md), a jak položka ZFS drží jeden snímek pro každou datovou sadu, stránka [Datové sady ZFS](zfs-datasets.md#contents).
 
 ## Co spuštěná záloha dělá {#starting-backups}
 
@@ -43,9 +43,9 @@ Spuštění přes [API](api.md#errors) a z [Home Assistant](api.md#home-assistan
 
 ## Zapnutí {#switch-on}
 
-1. Otevři **Nastavení, Integrace, Server MCP**, klikni na **Vybrat klienta** a v okně vyber svého; vyhledávání vpravo nahoře ho najde podle názvu. Klient, který v seznamu není, se připojí přes **Jiný klient**.
+1. Otevři **Nastavení, Integrace, Server MCP**, klikni na **Vybrat klienta** a v okně vyber svého. Vyhledávání vpravo nahoře ho najde podle názvu. Klient, který v seznamu není, se připojí přes **Jiný klient**.
 2. V části **Klíč** nech **Nový klíč** a navržený název, tedy název klienta, nebo napiš takový, který říká, kde se klíč používá, například „Claude Code na notebooku“. Jeden klíč na klienta ti dovolí jeden odvolat, aniž bys sahal na ostatní. **Existující klíč** dá klientovi klíč, který jsi vytvořil dřív.
-3. Zapni **Povolit spouštění záloh** u klíče, který má moci spouštět zálohy; bez toho může jen číst. Později to můžeš změnit v **Podrobnostech** klíče a změna platí od dalšího požadavku asistenta, bez nového připojení.
+3. Zapni **Povolit spouštění záloh** u klíče, který má moci spouštět zálohy. Bez toho může jen číst. Později to můžeš změnit v **Podrobnostech** klíče a změna platí od dalšího požadavku asistenta, bez nového připojení.
 4. Klikni na **Vytvořit klíč**. Klíč se zobrazí jen jednou. BombVault si nechává jen jeho otisk a znovu ho ukázat nedokáže, takže si ho hned zkopíruj. Když zavřeš okno dřív, než klient klíč použije, karta ho dál ukazuje, dokud nepotvrdíš, že sis ho zkopíroval.
 
 Bez přihlašovacího hesla je samotné webové rozhraní otevřené všem ve tvé síti a kdo ho otevře, může také vytvořit klíč. Karta na to upozorňuje. Pokud BombVault otevři pod názvem, který vypadá veřejně (například `bombvault.example.com` za reverzní proxy), a přihlašovací heslo nastavené není, nelze z této adresy klíče vytvářet ani nahrazovat, aby žádná webová stránka na internetu nemohla přimět tvůj prohlížeč, aby nějaký vytvořil. Nastav přihlašovací heslo, nebo otevři BombVault přes jeho IP adresu či místní název jako `tower` nebo `tower.local`.
@@ -62,7 +62,7 @@ BombVault uchovává záznamy každého klíče nejvýše 30 dní: nejnovější
 
 ## Připojení klienta {#clients}
 
-**Vybrat klienta** otevře okno s každým klientem jako dlaždicí, ve skupině **Na tomto počítači** nebo **V cloudu**, a s vyhledáváním vpravo nahoře. Dlaždice otevře nastavení klienta ve stejném okně ve třech krocích: klíč; konfigurace pro daného klienta s adresou, na které jsi kartu otevřel, tlačítkem pro kopírování, místem, kde konfigurace leží, a u vlastního certifikátu BombVaultu i tím, co klient potřebuje, aby mu důvěřoval; a čekání na první volání klienta. Okno sleduje poslední použití klíče a zezelená, jakmile to volání přijde.
+**Vybrat klienta** otevře okno s každým klientem jako dlaždicí, ve skupině **Na tomto počítači** nebo **V cloudu**, a s vyhledáváním vpravo nahoře. Dlaždice otevře nastavení klienta ve stejném okně ve třech krocích: klíč, konfigurace pro daného klienta s adresou, na které jsi kartu otevřel, tlačítkem pro kopírování, místem, kde konfigurace leží, a u vlastního certifikátu BombVaultu i tím, co klient potřebuje, aby mu důvěřoval. A čekání na první volání klienta. Okno sleduje poslední použití klíče a zezelená, jakmile to volání přijde.
 
 Nastavení drží klíč mimo každý příkazový řádek. Kde klient umí klíč číst z proměnné prostředí (`BOMBVAULT_MCP_KEY`), ze skrytého dotazu nebo z vlastního souboru, konfigurace ho jen jmenuje. Kde klient takovou možnost nemá, leží klíč v jeho konfiguračním souboru nebo nastavení a nastavení to řekne. Kde dokumentace klienta neříká, jak zachází s neznámým certifikátem, popíše nastavení tento krok jako to, co udělat, když klient certifikát BombVaultu odmítne.
 
@@ -123,7 +123,7 @@ S vlastním certifikátem BombVaultu (viz [TLS a certifikáty](#tls)) příkaz n
 claude mcp add bombvault --scope user -e "NODE_EXTRA_CA_CERTS=<path of the downloaded bombvault-cert.pem>" -- npx -y mcp-remote@latest https://192.168.1.10:3443/mcp --header-file "<path of the file with your key>"
 ```
 
-Připojení ověříš příkazem `/mcp` v Claude Code. `--scope user` zpřístupní BombVault ve všech tvých projektech. Claude Code si pamatuje jen cestu k souboru s klíčem, takže se klíč neobjeví v příkazu ani v historii shellu, ani v seznamu procesů. Soubor měj tam, kde ho můžeš číst jen ty, a mimo každou složku, kterou commituješ. Díky `@latest` si `npx` stáhne aktuální `mcp-remote`; jinak by se použil starší, globálně nainstalovaný, který `--header-file` nezná.
+Připojení ověříš příkazem `/mcp` v Claude Code. `--scope user` zpřístupní BombVault ve všech tvých projektech. Claude Code si pamatuje jen cestu k souboru s klíčem, takže se klíč neobjeví v příkazu ani v historii shellu, ani v seznamu procesů. Soubor měj tam, kde ho můžeš číst jen ty, a mimo každou složku, kterou commituješ. Díky `@latest` si `npx` stáhne aktuální `mcp-remote`. Jinak by se použil starší, globálně nainstalovaný, který `--header-file` nezná.
 
 Nepiš `${BOMBVAULT_MCP_KEY}` do argumentů `mcp-remote` pro Claude Code. Claude Code takový odkaz dosadí ze svého vlastního prostředí ještě před spuštěním `mcp-remote`, takže klíč skončí v příkazovém řádku tohoto procesu, kde ho mohou číst jiné programy a uživatelé počítače.
 
@@ -170,7 +170,7 @@ Claude Desktop se k BombVaultu dostane přes `mcp-remote`, který na daném poč
 
 ### Klienti v cloudu {#cloud-clients}
 
-ChatGPT, Claude na claude.ai, Grok a Le Chat volají BombVault ze serverů svého poskytovatele, takže BombVault musí být dostupný z internetu s veřejně důvěryhodným certifikátem, například za reverzní proxy; Le Chat odmítá certifikáty podepsané sebou samým. Přihlášení na proxy smí chránit webové rozhraní, ale `/mcp` musí k BombVault projít bez něj: tyto služby se k proxy přihlásit neumějí a BombVault kontroluje jejich klíč nebo token sám. Grok a Le Chat posílají pevný klíč a jejich tlačítka je nastaví jako ostatní. ChatGPT a ve většině organizací i Claude na claude.ai se připojují jen přihlášením přes OAuth, popsaným dál.
+ChatGPT, Claude na claude.ai, Grok a Le Chat volají BombVault ze serverů svého poskytovatele, takže BombVault musí být dostupný z internetu s veřejně důvěryhodným certifikátem, například za reverzní proxy. Le Chat odmítá certifikáty podepsané sebou samým. Přihlášení na proxy smí chránit webové rozhraní, ale `/mcp` musí k BombVault projít bez něj: tyto služby se k proxy přihlásit neumějí a BombVault kontroluje jejich klíč nebo token sám. Grok a Le Chat posílají pevný klíč a jejich tlačítka je nastaví jako ostatní. ChatGPT a ve většině organizací i Claude na claude.ai se připojují jen přihlášením přes OAuth, popsaným dál.
 
 ### Přihlášení přes OAuth {#oauth}
 
@@ -193,14 +193,14 @@ Funguje každý klient, který umí Streamable HTTP:
 - URL: adresa webového rozhraní plus `/mcp`, například `https://192.168.1.10:3443/mcp`.
 - Klíč v `Authorization: Bearer <key>` nebo v `X-API-Key: <key>`. Pokud přijdou obě hlavičky, musí nést stejný klíč.
 - `POST` s `Content-Type: application/json` a `Accept: application/json, text/event-stream`.
-- Jedna zpráva JSON-RPC na požadavek; dávky (batch) se odmítají.
+- Jedna zpráva JSON-RPC na požadavek. Dávky (batch) se odmítají.
 - Verze protokolu 2026-07-28, 2025-11-25, 2025-06-18 a 2025-03-26.
 
 ## TLS a certifikáty {#tls}
 
 BombVault poskytuje HTTPS s certifikátem, který si vydal sám, a ten zpočátku uvádí jen `localhost`, `127.0.0.1` a `::1`. Claude Code a `mcp-remote` ho na adrese v místní síti odmítnou. Cesty kolem toho, v pořadí, které vyhovuje většině instalací Unraid:
 
-1. **Přidat adresu v kartě MCP.** Když kartu otevři přes HTTPS na adrese, kterou certifikát neuvádí, karta to řekne a nabídne **Přidat tuto adresu do certifikátu**. BombVault pak certifikát vydá znovu i s touto adresou (prohlížeč jednou znovu varuje, stejně jako poprvé). Potom klikni na **Stáhnout certifikát**; úryvky nastaví `NODE_EXTRA_CA_CERTS` na stažený soubor, takže klient důvěřuje právě tomuto certifikátu. Znamená to také, že každý klient nastavený s dříve staženým souborem se přestane připojovat, jakmile je certifikát vydán znovu, na tomto počítači i na všech ostatních, dokud nedostane nový soubor.
+1. **Přidat adresu v kartě MCP.** Když kartu otevři přes HTTPS na adrese, kterou certifikát neuvádí, karta to řekne a nabídne **Přidat tuto adresu do certifikátu**. BombVault pak certifikát vydá znovu i s touto adresou (prohlížeč jednou znovu varuje, stejně jako poprvé). Potom klikni na **Stáhnout certifikát**. Úryvky nastaví `NODE_EXTRA_CA_CERTS` na stažený soubor, takže klient důvěřuje právě tomuto certifikátu. Znamená to také, že každý klient nastavený s dříve staženým souborem se přestane připojovat, jakmile je certifikát vydán znovu, na tomto počítači i na všech ostatních, dokud nedostane nový soubor.
 2. **Reverzní proxy s důvěryhodným certifikátem** (Nginx Proxy Manager, SWAG, Caddy, Traefik). Klient pak vidí certifikát proxy a nic dalšího nepotřebuje a karta na certifikát BombVaultu neupozorňuje.
 3. **Tailscale.** `tailscale serve` před kontejnerem nebo integrace Tailscale v Unraidu ti dá název `ts.net` s důvěryhodným certifikátem.
 4. **`HTTP_ONLY=true`**, jen za proxy, která ukončuje TLS, nebo v síti, které plně důvěřuješ. Přepne celé webové rozhraní na prosté HTTP, vyžaduje změnu nastavení kontejneru a posílá klíč nešifrovaně.
@@ -261,9 +261,9 @@ Vše, co asistent přečte, odchází k poskytovateli umělé inteligence za ní
 | `cooldown` | Tato položka, tato sekce nebo Záloha všeho byla spuštěna mimo webové rozhraní před méně než 15 minutami. |
 | `retention_guard` | Další záloha přes MCP by v okně "ponechat posledních N" nechala jen body obnovy z MCP, nebo položka už za posledních 24 hodin dostala 4 zálohy přes MCP, včetně neúspěšných a zrušených. V prvním případě udělá místo další naplánovaná záloha, ve druhém je položka znovu volná 24 hodin po nejstarší z těchto záloh. Ve webovém rozhraní ji můžeš spustit kdykoli. |
 | `rate_limited` | Klíč vyčerpal svých 12 spuštění pro tuto hodinu. |
-| `not_permitted` při spuštění | Klíč smí jen číst. Zapni v kartě **Povolit spouštění záloh**; nové připojení není potřeba. U zrušení to znamená, že běh nespustil tento klíč. |
+| `not_permitted` při spuštění | Klíč smí jen číst. Zapni v kartě **Povolit spouštění záloh**. Nové připojení není potřeba. U zrušení to znamená, že běh nespustil tento klíč. |
 | `domain_off` | Tato sekce je vypnutá v **Nastavení, Obecné**. |
-| `not_found` | BombVault tuto položku nechrání. Nejdřív ji přidej ve webovém rozhraní; MCP nikdy nevytváří konfiguraci. |
+| `not_found` | BombVault tuto položku nechrání. Nejdřív ji přidej ve webovém rozhraní. MCP nikdy nevytváří konfiguraci. |
 | Klient nenajde autorizační server | Přihlášení přes OAuth je vypnuté, není nastavené přihlašovací heslo, nebo proxy nepouští `/.well-known/` k BombVault. |
 | Stránka se souhlasem hlásí neregistrovanou návratovou adresu | Klient poslal návratovou adresu, kterou nezaregistroval. Odeber konektor v klientovi a přidej ho znovu. |
 | Přihlášený klient dostává `401` | Jeho povolení bylo zneplatněno, vypršelo po 30 dnech bez použití, nebo se změnila veřejná adresa. Klient se přihlásí znovu. |

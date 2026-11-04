@@ -2,7 +2,7 @@
 
 Denne side fører dig fra en frisk Unraid-boks til din første sikkerhedskopi.
 
-## Krav
+## Krav {#requirements}
 
 | Krav | Bemærkninger |
 |---|---|
@@ -14,7 +14,7 @@ Denne side fører dig fra en frisk Unraid-boks til din første sikkerhedskopi.
 | **ZFS-datasæt** (tilvalg) | Den samme SSH-forbindelse som til VM-sikkerhedskopier, `zfs` på værten og Host Data tilknyttet som `/mnt` med adgangstilstanden Read/Write - Slave, skabelonens standard. Se [ZFS-datasæt](zfs-datasets.md). |
 | **Android-app** (valgfri) | Android 10 eller nyere, parret med servere på version 9.7.0 eller nyere. Se [Android-app](android.md). |
 
-## Installer på Unraid
+## Installer på Unraid {#install-on-unraid}
 
 Den nemmeste vej er **Community Applications**.
 
@@ -43,7 +43,7 @@ Ikke Unraid? BombVault kører også som almindelig container på enhver Docker-v
 Hvad der er anderledes end på Unraid:
 
 - **Intet Flash-område.** Der er ingen boot-USB at indfange eller genskabe, så Flash-området har intet at lave her. I stedet tilbyder **Tilføj** på siden Sikkerhedskopier, når Host Data når værtens `/etc`, **Systemkonfiguration** som mappeforslag: et mappesæt med `/etc` til at begynde med, som du gennemgår og retter, før du gemmer.
-- **Ingen Unraid-egne meddelelser.** BombVaults egne meddelelseskanaler (webhook, advarsler om mislykket off-site og lignende) virker som sædvanlig; kun den Unraid-specifikke besked til dens eget meddelelsessystem udelades, da et sådant system ikke findes her.
+- **Ingen Unraid-egne meddelelser.** BombVaults egne meddelelseskanaler (webhook, advarsler om mislykket off-site og lignende) virker som sædvanlig. Kun den Unraid-specifikke besked til dens eget meddelelsessystem udelades, da et sådant system ikke findes her.
 - **Sikkerhedskopiering af virtuelle maskiner er valgfri og kræver en separat libvirtd-vært, der kan nås over SSH.** Se den udkommenterede blok i compose-filen. En generisk Docker-vært har ingen indbygget VM-styring.
 - **Ingen dashboard-widget.** BombVault Widget er et Unraid-plugin, så det trin springes også over.
 - **At finde en containers data.** Uden Unraids `appdata`-konvention findes en containers datamappe ud fra segmenterne i `DATA_ROOT_SEGMENTS`, navngivne Docker-volumener, et Compose-projekts arbejdsmappe og labelen `bombvault.data` (se [Genkendelse af sikkerhedskopiernes kilder](configuration.md#backup-source-detection)). Navngivne volumener og `/etc`-forudindstillingen når kun stier inden for Host Data-monteringen, så peg Host Data på en fælles overordnet mappe, der også dækker Dockers datarod.
@@ -85,13 +85,43 @@ services:
 - **Capabilities.** BombVault skal have de syv ovenfor. VM-sikkerhedskopier fejler uden `SETPCAP`, og uden `SYS_CHROOT` stoppes hver container under hele sin sikkerhedskopi i stedet for at blive læst fra et snapshot.
 - **Host Data** er en værtssti på et datasæt, her `/mnt/tank`, monteret på samme sti inde i appen. Derfor angiver `HOST_SOURCE_ROOT` og `HOST_MOUNT_ROOT` begge den sti. `rslave` sender de monteringer videre, som værten laver senere, og dem kræver sikkerhedskopier af ZFS-datasæt.
 - **Data i et ixVolume sikkerhedskopieres ikke.** En app, hvis lager er et ixVolume, gemmer sine data under `/mnt/.ix-apps`, uden for Host Data. BombVault gemmer så kun appens definition, og kørslen nævner de mapper, den udelod. Vælg **Host Path**-lager på et datasæt under Host Data for hver app, hvis data du vil have sikkerhedskopieret.
-- **Sikkerhedskopier af VM'er og ZFS-datasæt** når TrueNAS over SSH som root. Slå SSH-tjenesten til under **System, Services**, og føj den offentlige nøgle fra **Indstillinger, Integrationer, Værts-SSH** til brugeren root under **Credentials, Users**. VM-sikkerhedskopier kræver desuden `LIBVIRT_URI` som ovenfor, fordi TrueNAS' libvirtd lytter på sin egen socket. Er hverken `LIBVIRT_URI` eller `LIBVIRT_HOST` sat, bruger BombVault appens standardgateway som vært, da `host.docker.internal` ikke kan slås op i en TrueNAS-app. [VM backup-guiden](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md#truenas-scale) dækker detaljerne, også VM'er på zvols.
+- **Sikkerhedskopier af VM'er og ZFS-datasæt** når TrueNAS over SSH som root. Slå SSH-tjenesten til under **System, Services**, og føj den offentlige nøgle fra **Indstillinger, Integrationer, Værts-SSH** til brugeren root under **Credentials, Users**. VM-sikkerhedskopier kræver desuden `LIBVIRT_URI` som ovenfor, fordi TrueNAS' libvirtd lytter på sin egen socket. Er hverken `LIBVIRT_URI` eller `LIBVIRT_HOST` sat, bruger BombVault appens standardgateway som vært, da `host.docker.internal` ikke kan slås op i en TrueNAS-app. [VM-guiden](vm-backup-ssh-setup.md#truenas-scale) dækker detaljerne, også VM'er på zvols.
 - **En ZFS-replika bruger en anden nøgle.** En replika på en anden ZFS-server logger ind med den nøgle, som replikadialogen viser, ikke med Værts-SSH-nøglen. Tilføj den på den modtagende server.
 - **En slettet app kommer tilbage i to trin.** Geninstallér den først i TrueNAS under samme navn, hvilket opretter dens netværk igen, og gendan derefter dens data i BombVault. Indtil da melder tjekket før gendannelsen det manglende netværk, og gendannelsen afviser, før den ændrer noget.
 - **Ved siden af originalen** opretter en almindelig Docker-container. Den kører, men TrueNAS' skærm Apps viser den ikke.
 - **Databasedumps** virker på datasæt-monteringer. En import til en datamappe, der er sit eget datasæt, flytter det gamle indhold til en mappe ved siden af, så datasættet ovenover skal have plads til det.
 
-## Den ene påkrævede indstilling
+### ZimaOS, CasaOS og andre værter {#other-hosts}
+
+- **ZimaOS og CasaOS:** Tilføj [community-butikken](https://github.com/junkerderprovinz/zimaos-apps#install), og installér BombVault derfra. Den kører dér som `PLATFORM=generic` med Host Data på `/DATA`. ZimaOS gemmer appdata i `/DATA/AppData/<app>`, som BombVault selv finder, da `DATA_ROOT_SEGMENTS` passer på `appdata` uanset store og små bogstaver.
+- **MOS:** Installér BombVault fra [MOS Hub](https://mos-official.net/apps.html?search=BombVault). Den kører dér som `PLATFORM=generic` med Host Data på `/mnt/cache`.
+- **Synology:** Opret et projekt ud fra compose-filen i Container Manager (DSM 7.2 eller nyere).
+- **Proxmox:** Kør den i en VM eller en LXC-container med Docker.
+
+Uden kommentarer er den generiske compose-fil kort. Erstat `./data` med den værtsmappe, der rummer dine containeres data, sæt `HOST_SOURCE_ROOT` til den samme sti, og udfyld `APP_KEY`:
+
+```yaml
+services:
+  bombvault:
+    image: junkerderprovinz/bombvault:latest
+    restart: unless-stopped
+    hostname: bombvault
+    container_name: bombvault
+    volumes:
+      - ./config:/config
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./data:/host/user
+    environment:
+      APP_KEY: ""
+      PLATFORM: generic
+      HOST_SOURCE_ROOT: /host/user
+    ports:
+      - "3443:3443"
+```
+
+For også at sikkerhedskopiere navngivne Docker-volumener skal du montere en mappe, der rummer både dine data og Dockers datarod (`docker info -f '{{.DockerRootDir}}'`, som regel `/var/lib/docker`), på samme måde som Unraid-skabelonen monterer hele `/mnt`.
+
+## Den ene påkrævede indstilling {#the-one-required-setting}
 
 Den eneste variabel, du skal angive, er `APP_KEY`, en 32-byte hex-hemmelighed (64 hex-tegn), der bruges til at udlede restic-repositoriets adgangskode.
 
@@ -108,41 +138,65 @@ Indsæt resultatet i skabelonens `APP_KEY`-felt (Unraid) eller i miljøvariablen
 
 Skabelonen monterer også Docker-socket'en, flashen (`/boot`) og **Host Data**-roden (`/mnt`) for dig. Både *kilder* og *destinationer* for sikkerhedskopier lever under Host Data. For den fulde variabelreference og off-site-opsætningen, se [Konfiguration](configuration.md).
 
-## Første kørsel
+## Første kørsel {#first-run}
 
-![Oversigten efter en første sikkerhedskopi: hvad der kræver opmærksomhed, beskyttelsen af hvert område, destinationerne og historikken.](assets/screenshots/dashboard.png)
-
-*Oversigten efter en første sikkerhedskopi: hvad der kræver opmærksomhed, beskyttelsen af hvert område, destinationerne og historikken.*
+![Velkomstsiden på en ny installation med det, BombVault fandt på serveren.](assets/screenshots/getting-started/welcome-dark.png#only-dark)
+![Velkomstsiden på en ny installation med det, BombVault fandt på serveren.](assets/screenshots/getting-started/welcome-light.png#only-light)
 
 1. Åbn web-UI'en på `https://<your-unraid-ip>:3443` (selvsigneret certifikat fra start). En ny installation åbner på **Velkommen til BombVault**, som oplister, hvad BombVault fandt på serveren.
 2. Vælg **Kom i gang**. Oversigten viser så kortet **Første trin** med tre trin:
     1. **Vælg områder**: slå til, hvad BombVault sikkerhedskopierer (Containers, VMs, Flash, Mapper, ZFS-datasæt, Auto-sikkerhedskopi). **Vælg** åbner listen over et områdes elementer, hvor **Sæt tidsplan på pause** udelader ét. De områder, du slår til her, kører hver nat, hvilket du ændrer under **Indstillinger, Tidsplan**.
-    2. **Tilføj destination**: hvor sikkerhedskopierne havner. En lokal mappe er nok til at begynde med. Sikrest er en ekstra destination uden for huset, for eksempel en Storage Box eller Backblaze B2. Lokale repositories har som standard `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}` og oprettes ved den første sikkerhedskopi.
-    3. **Første sikkerhedskopi**: derefter kører det af sig selv hver nat.
+    2. **Tilføj destination**: et andet sted til sikkerhedskopierne. Hvert område har allerede en mappe på denne server, `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, som oprettes ved den første sikkerhedskopi. Sikrest er en ekstra destination uden for huset, for eksempel en Storage Box eller Backblaze B2.
+    3. **Første sikkerhedskopi**: derefter kører det af sig selv hver nat. Kortet bliver stående, indtil den første sikkerhedskopi er færdig.
 3. Åbn **Sikkerhedskopier** for at se alle elementer på én liste. **Sikkerhedskopiér alt nu** starter en kørsel over alle områder, der er slået til, og **Sikkerhedskopier nu** på et elements side tager kun det ene.
+
+![Kortet Første trin med sine tre trin, hvor det andet er åbent.](assets/screenshots/getting-started/first-steps-dark.png#only-dark)
+![Kortet Første trin med sine tre trin, hvor det andet er åbent.](assets/screenshots/getting-started/first-steps-light.png#only-light)
 
 Har du brugt BombVault før? **Gendan fra en sikkerhedskopi** på velkomstsiden åbner siden Gendannelse, hvor **Nødguide** henter indstillinger, containere, VM'er og mapper fra en tabt server tilbage. Se [Off-site og gendannelse](offsite-recovery.md#emergency).
 
 !!! tip "Valgfrit: vælg en sikkerhedskopi-rækkefølge"
-    Hvis nogle containere altid skal sikkerhedskopieres før andre (for eksempel en database før den app, der bruger den), så åbn kortet **Rækkefølge** under **Indstillinger, Tidsplan**, og træk dem ind i den ønskede rækkefølge. Planlagte kørsler og den fulde sikkerhedskopi følger den derefter; alt, du lader stå uordnet, sikkerhedskopieres mest-overskredet-først.
+    Hvis nogle containere altid skal sikkerhedskopieres før andre (for eksempel en database før den app, der bruger den), så åbn kortet **Rækkefølge** under **Indstillinger, Tidsplan**, og træk dem ind i den ønskede rækkefølge. Planlagte kørsler og den fulde sikkerhedskopi følger den derefter. Alt, du lader stå uordnet, sikkerhedskopieres med den mest forsinkede først.
+
+## Eksempel: din første containersikkerhedskopi, fra start til slut {#example-first-backup}
+
+Her følger vi en frisk Unraid-boks med nogle få containere, blandt dem `plex`, til den første sikkerhedskopi er færdig, og du ved, hvor du finder den. Det tager omkring ti minutter plus tiden for den første sikkerhedskopi.
+
+1. **Installér.** Søg efter **BombVault** i fanen **Apps** i Unraid, og tryk på **Install**.
+2. **Sæt nøglen.** Kør `openssl rand -hex 32` på en computer, og indsæt de 64 tegn i skabelonens felt `APP_KEY`. Gem en kopi i din adgangskodeadministrator nu, før noget andet. Tryk på **Apply**.
+3. **Åbn den.** Gå til `https://<your-unraid-ip>:3443`, og accepter det selvsignerede certifikat. **Velkommen til BombVault** viser, hvad den fandt, for eksempel 12 containere, 2 VM'er og flashdrevet.
+4. **Kom i gang.** Oversigten åbner med kortet **Første trin**.
+5. **Vælg områder.** **Containers** er slået til fra start. Slå til, hvad du ellers vil have, for eksempel **Flash**. **Vælg** åbner listen over de containere, den fandt, hvor **Sæt tidsplan på pause** udelader én, for eksempel en testcontainer, du ikke går op i. Områder, der er slået til, kører hver nat i den fulde sikkerhedskopi.
+6. **Tilføj destination.** Hvert område har allerede sin egen mappe på denne server under `/mnt/user/bombvault`, så den første sikkerhedskopi har et sted at havne. Dette trin tilføjer et andet sted, og det sikreste er uden for huset. Du kan gøre det nu med [S3-eksemplet](offsite-recovery.md#example-s3) eller vende tilbage til det, når den første sikkerhedskopi er færdig. Kortet bliver stående til da.
+7. **Første sikkerhedskopi.** Åbn **Sikkerhedskopier**, og tryk på **Sikkerhedskopiér alt nu**, eller vent til natten. Ringen i statusdelen bliver til en fremdriftsring og tæller posterne, for eksempel **Tager backup nu: 3 af 12**. Hver container stoppes, mens dens data læses, og startes igen lige bagefter. En container, hvis data ligger på ZFS, er kun nede i de få sekunder, et snapshot tager. Den første sikkerhedskopi læser alt, så den tager længst. Senere gemmer kun det, der er ændret.
+8. **Tjek den.** Når ringen siger **Alt er sikkerhedskopieret**, så åbn **Historik** på oversigten: Hver container har en grøn linje under **Kørsler**. Åbn **Sikkerhedskopier**, klik på `plex`, og se på dens fane **Sikkerhedskopier**: Det første gendannelsespunkt er der med **Lokal** som det sted, der rummer det. Et par minutter senere viser dens fane **Verificering** gendannelsestjekket, som gendannede en stikprøve af sikkerhedskopien og læste den tilbage.
+9. **Beskyt nøglen.** Åbn **Indstillinger, Sikkerhed**, og sæt en loginadgangskode. Åbn så **Indstillinger, Gendannelse**, og tryk på **Download gendannelseskit** under **Til nødsituationer**. Gem filen uden for serveren, ved siden af kopien af `APP_KEY` fra trin 2. Påmindelsen **Gem dit gendannelseskit** på oversigten forsvinder, når du trykker på **Jeg har gemt det sikkert**.
+
+Fra nu af bliver containerne sikkerhedskopieret hver nat. Gode næste skridt, i denne rækkefølge: en [off-site-destination](offsite-recovery.md#example-s3), så en død server ikke tager sikkerhedskopierne med sig, derefter [notifikationer](notifications.md), så en fejl når dig, og så et kig på [Tidsplaner](schedules.md), hvis kl. 03:00 ikke passer dig.
+
+![Statusdelen, mens den første sikkerhedskopi kører, med fremdriftsringen og dens stationer.](assets/screenshots/getting-started/status-ring-dark.png#only-dark)
+![Statusdelen, mens den første sikkerhedskopi kører, med fremdriftsringen og dens stationer.](assets/screenshots/getting-started/status-ring-light.png#only-light)
 
 !!! note "Vært-integrationstjek"
     Kortet **Vært-integration** på oversigten prober hver montering og hvert CLI (Docker-socket, libvirt, restic, qemu-img, rclone) og rapporterer eventuelle manglende dele, så du kan bekræfte, at containeren er korrekt forbundet, før du forlader dig på den. Det venter under **Tilpas**, til du tilføjer det.
 
 ## Find rundt {#navigation}
 
-![Indstillinger som felter, med kortene for det valgte felt ved siden af. Hver ændring skrives, mens du laver den.](assets/screenshots/settings.png)
-
-*Indstillinger som felter, med kortene for det valgte felt ved siden af. Hver ændring skrives, mens du laver den.*
+![Indstillinger som fliser, med kortene for den valgte flise ved siden af. Hver ændring skrives, mens du laver den.](assets/screenshots/getting-started/settings-rail-dark.png#only-dark)
+![Indstillinger som fliser, med kortene for den valgte flise ved siden af. Hver ændring skrives, mens du laver den.](assets/screenshots/getting-started/settings-rail-light.png#only-light)
 
 Sidepanelet har fem punkter: **Oversigt**, **Afvigelser** (så længe afvigelsesgenkendelse er slået til), **Sikkerhedskopier**, **Gendannelse** og under **Log ud** **Indstillinger**. En sides hovedhandling flyder nederst til højre, og **Mere** rummer de sjældne. På en telefon rummer bjælken Oversigt, Sikkerhedskopier, Gendannelse og Indstillinger, og **Mere** har resten.
 
 Sider og indstillinger bruger vinduets fulde bredde. Et vindue har sine knapper i bunden, og den, der går fremad, står til højre. På en telefon beholder en bund med mere end tre knapper vejen ud og hovedhandlingen og lægger resten under **Mere**.
 
-- **Sikkerhedskopier** oplister hver container, VM, hvert mappesæt, flashdrevet, hvert ZFS-datasæt og auto-sikkerhedskopien som elementer. Felter over listen vælger en slags, og **Filtre**, **Sortér** og **Søg** indsnævrer den. Hvert element har en side for sig med tre faner: **Sikkerhedskopier**, **Indstillinger** og **Verificering**. En tilbageknap til venstre for elementets ikon fører til listen.
-- **Gendannelse** er én side til alt: vælg et område, søg efter et element, og vælg en sikkerhedskopi. Nødguiden og de andre kilder starter også her.
-- **Indstillinger** er fjorten felter: Generelt, Udseende, Tidsplan, Destinationer, Gendannelse, Notifikationer, Verificering, Sikkerhed, Instanser, Parring, Integrationer, Apps, System og Info. Tryk på `/` eller Ctrl+K for at søge i dem alle, også efter de navne, siderne havde i tidligere versioner. Træk felterne i din egen rækkefølge under **Udseende**. Hvor en kolonne af felter ved siden af siden ville presse den sammen, som i et vindue omkring 1200 pixel bredt, bliver felterne en stribe over siden, der ruller sidelæns. En telefon viser den samme stribe.
-- **Destinationer** og **Instanser** er indstillingsfelter med sider for sig. **Vis også i sidepanelet** på deres felt fæstner dem til sidepanelet.
+![På en telefon: bjælken nederst med Mere åbnet.](assets/screenshots/getting-started/phone-more-dark.png#only-dark)
+![På en telefon: bjælken nederst med Mere åbnet.](assets/screenshots/getting-started/phone-more-light.png#only-light)
+
+- **Oversigt** viser, om alt er sikkerhedskopieret, og hvad der kræver opmærksomhed. Se [Oversigt](overview.md).
+- **Sikkerhedskopier** oplister hver container, VM, hvert mappesæt, flashdrevet, hvert ZFS-datasæt og auto-sikkerhedskopien som elementer. Fliser over listen vælger en slags, og **Filtre**, **Sortér** og **Søg** indsnævrer den. Hvert element har en side for sig med tre faner: **Sikkerhedskopier**, **Indstillinger** og **Verificering**. En tilbageknap til venstre for elementets ikon fører til listen. Se [Sikkerhedskopier og poster](backups.md).
+- **Gendannelse** er én side til alt: vælg et område, søg efter et element, og vælg en sikkerhedskopi. Nødguiden og de andre kilder starter også her. Se [Gendannelse](restore.md).
+- **Indstillinger** er fjorten fliser: Generelt, Udseende, Tidsplan, Destinationer, Gendannelse, Notifikationer, Verificering, Sikkerhed, Instanser, Parring, Integrationer, Apps, System og Info. Se [Indstillinger](settings.md). Tryk på `/` eller Ctrl+K for at søge i dem alle, også efter de navne, siderne havde i tidligere versioner. Træk fliserne i din egen rækkefølge under **Udseende**. Hvor en kolonne af fliser ved siden af siden ville presse den sammen, som i et vindue omkring 1200 pixel bredt, bliver fliserne en stribe over siden, der ruller sidelæns. En telefon viser den samme stribe.
+- **Destinationer** og **Instanser** er indstillingsfliser med sider for sig. **Vis også i sidepanelet** på deres flise fæstner dem til sidepanelet.
 
 Intet har en Gem-knap, og intet folder sig ud: sjældne ting har et kort eller et vindue for sig, og forklaringer står i (i)-boblerne. Efter en opdatering åbner et vindue sig selv med et kort for hver udgivelse siden din sidste version, og grønne prikker markerer, hvad der er ændret. Et klik skjuler en prik. **Nyt** i kortet Version under **Indstillinger, Info** tæller det, du endnu ikke har set, og åbner det vindue igen, med noterne for hver udgivelse og dens ændringer med **Gå derhen**.
 
@@ -161,10 +215,12 @@ go run ./cmd/bombvault         # leverer https://localhost:3443 med et selvsigne
 
 Grænsefladebygget er også nødvendigt for `go run`. Repositoriet indeholder kun en tom markør under `web/dist`, så uden `npm --prefix web run build` indlejrer binærfilen intet og svarer `500 SPA index not found`, hvilket er forventet. Docker, libvirt og Unraid kan ikke testes i CI, så kontrollér monteringer, restic og VM-SSH-forbindelsen på en rigtig vært med kortet **Vært-integration** på oversigten (eller `GET /api/spike`), før du åbner en pull request.
 
-## Næste skridt
+## Næste skridt {#next-steps}
 
-- Gennemse de fulde **[Funktioner](features.md)**.
+- Tilføj en eller flere destinationer uden for huset (hvert område kan kopiere til flere på én gang), og gem dit gendannelseskit, som beskrevet under **[Off-site og gendannelse](offsite-recovery.md)**. [S3-eksemplet](offsite-recovery.md#example-s3) gennemgår en.
+- Sørg for, at en fejl når dig, med **[Notifikationer](notifications.md)**.
+- Se, hvornår tingene kører, under **[Tidsplaner](schedules.md)**.
 - Få alle servere i din gruppe på din telefon med **[Android-appen](android.md)**.
-- Tilføj en eller flere destinationer uden for huset (hvert område kan kopiere til flere på én gang), og gem dit gendannelseskit, som beskrevet under **[Off-site og gendannelse](offsite-recovery.md)**.
+- De **[gennemgåede eksempler](guides.md)** følger de almindelige jobs, og **[Funktioner](features.md)** viser alt, BombVault kan.
 - Kloner du en opsætning eller flytter til en ny boks? Bær hele din konfiguration over med kortet **Eksportér / importér indstillinger**. Se [Konfiguration](configuration.md#portable-settings-export-and-import).
 - Løb ind i et problem? Se **[Fejlfinding](troubleshooting.md)**.

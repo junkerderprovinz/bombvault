@@ -2,7 +2,7 @@
 
 Ta strona przeprowadzi Cię od świeżej maszyny Unraid do Twojej pierwszej kopii zapasowej.
 
-## Wymagania
+## Wymagania {#requirements}
 
 | Wymaganie | Uwagi |
 |---|---|
@@ -14,7 +14,7 @@ Ta strona przeprowadzi Cię od świeżej maszyny Unraid do Twojej pierwszej kopi
 | **Zbiory danych ZFS** (opcjonalnie) | To samo połączenie SSH co przy kopiach VM, `zfs` na hoście oraz Host Data zmapowane jako `/mnt` z trybem dostępu Read/Write - Slave, domyślnym w szablonie. Zobacz [Zbiory danych ZFS](zfs-datasets.md). |
 | **Aplikacja na Androida** (opcjonalnie) | Android 10 lub nowszy, sparowana z serwerami w wersji 9.7.0 lub nowszej. Zobacz [Aplikacja na Androida](android.md). |
 
-## Instalacja na Unraid
+## Instalacja na Unraid {#install-on-unraid}
 
 Najprostsza droga to **Community Applications**.
 
@@ -43,7 +43,7 @@ Nie Unraid? BombVault działa też jako zwykły kontener na dowolnym hoście Doc
 Czym różni się to od Unraida:
 
 - **Brak sekcji Flash.** Nie ma pendrive'a rozruchowego do zabezpieczenia ani odtworzenia, więc sekcja Flash nie ma tu nic do roboty. Zamiast tego, gdy Host Data sięga do `/etc` hosta, **Dodaj** na stronie Kopie zapasowe proponuje **Konfiguracja systemu** jako podpowiedź folderu: początkowy zestaw folderów z `/etc`, który przeglądasz i poprawiasz przed zapisaniem.
-- **Brak natywnych powiadomień Unraida.** Własne kanały powiadomień BombVaulta (webhook, alerty o nieudanej replikacji poza siedzibę i tak dalej) działają normalnie; pomijane jest tylko wysłanie do systemu powiadomień Unraida, bo takiego systemu tutaj nie ma.
+- **Brak natywnych powiadomień Unraida.** Własne kanały powiadomień BombVaulta (webhook, alerty o nieudanej replikacji poza siedzibę i tak dalej) działają normalnie. Pomijane jest tylko wysłanie do systemu powiadomień Unraida, bo takiego systemu tutaj nie ma.
 - **Kopia maszyn wirtualnych jest opcjonalna i wymaga osobnego hosta libvirtd dostępnego przez SSH.** Zobacz zakomentowany blok w pliku compose. Zwykły host Dockera sam w sobie nie ma menedżera maszyn wirtualnych.
 - **Brak widżetu na pulpicie.** BombVault Widget to wtyczka Unraida, więc ten krok również jest pomijany.
 - **Odnajdywanie danych kontenera.** Bez konwencji `appdata` z Unraida folder danych kontenera jest odnajdywany na podstawie segmentów w `DATA_ROOT_SEGMENTS`, nazwanych woluminów Dockera, katalogu roboczego projektu Compose i etykiety `bombvault.data` (zobacz [Wykrywanie źródeł kopii zapasowej](configuration.md#backup-source-detection)). Nazwane woluminy i zestaw predefiniowany `/etc` sięgają tylko do ścieżek wewnątrz montowania Host Data, więc skieruj Host Data na wspólny katalog nadrzędny, który obejmuje też katalog danych Dockera.
@@ -85,13 +85,43 @@ Następnie otwórz `https://<truenas-ip>:30528/`. To, co wymieniono w [Czym ró�
 - **Uprawnienia (capabilities).** BombVault potrzebuje siedmiu powyższych. Bez `SETPCAP` kopie VM kończą się błędem, a bez `SYS_CHROOT` każdy kontener jest zatrzymywany na całą swoją kopię, zamiast być czytany z migawki.
 - **Host Data** to ścieżka hosta na zbiorze danych, tutaj `/mnt/tank`, zamontowana pod tą samą ścieżką wewnątrz aplikacji. Dlatego `HOST_SOURCE_ROOT` i `HOST_MOUNT_ROOT` podają ją obie. `rslave` przekazuje montowania, które host wykonuje później, a tego potrzebują kopie zbiorów danych ZFS.
 - **Dane w ixVolume nie są kopiowane.** Aplikacja, której pamięcią jest ixVolume, trzyma dane pod `/mnt/.ix-apps`, poza Host Data. BombVault zapisuje tylko definicję aplikacji, a przebieg podaje foldery, które pominął. Dla każdej aplikacji, której dane chcesz kopiować, wybierz pamięć **Host Path** na zbiorze danych pod Host Data.
-- **Kopie VM i zbiorów danych ZFS** łączą się z TrueNAS przez SSH jako root. Włącz usługę SSH w **System, Services** i dodaj klucz publiczny z **Ustawienia, Integracje, SSH hosta** do użytkownika root w **Credentials, Users**. Kopie VM potrzebują też `LIBVIRT_URI` jak wyżej, bo libvirtd na TrueNAS nasłuchuje na własnym gnieździe. Gdy nie ustawiono ani `LIBVIRT_URI`, ani `LIBVIRT_HOST`, BombVault używa domyślnej bramy aplikacji jako hosta, bo `host.docker.internal` nie rozwiązuje się w aplikacji TrueNAS. [Poradnik kopii VM](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md#truenas-scale) opisuje szczegóły, także dla VM na zvolach.
+- **Kopie VM i zbiorów danych ZFS** łączą się z TrueNAS przez SSH jako root. Włącz usługę SSH w **System, Services** i dodaj klucz publiczny z **Ustawienia, Integracje, SSH hosta** do użytkownika root w **Credentials, Users**. Kopie VM potrzebują też `LIBVIRT_URI` jak wyżej, bo libvirtd na TrueNAS nasłuchuje na własnym gnieździe. Gdy nie ustawiono ani `LIBVIRT_URI`, ani `LIBVIRT_HOST`, BombVault używa domyślnej bramy aplikacji jako hosta, bo `host.docker.internal` nie rozwiązuje się w aplikacji TrueNAS. [Poradnik kopii VM](vm-backup-ssh-setup.md#truenas-scale) opisuje szczegóły, także dla VM na zvolach.
 - **Replika ZFS używa innego klucza.** Replika na drugim serwerze ZFS loguje się kluczem, który pokazuje okno repliki, a nie kluczem SSH hosta. Dodaj ten klucz na serwerze odbierającym.
 - **Usunięta aplikacja wraca w dwóch krokach.** Najpierw zainstaluj ją ponownie w TrueNAS pod tą samą nazwą, co tworzy na nowo jej sieć, a potem przywróć jej dane w BombVault. Do tego czasu kontrola przed przywracaniem zgłasza brakującą sieć, a przywracanie odmawia, zanim cokolwiek zmieni.
 - **Obok oryginału** tworzy zwykły kontener Dockera. Działa, ale ekran Apps w TrueNAS go nie wymienia.
 - **Zrzuty baz danych** działają na montowaniach zbiorów danych. Import do folderu danych, który jest osobnym zbiorem danych, przenosi starą zawartość do folderu obok, więc nadrzędny zbiór danych potrzebuje na nią miejsca.
 
-## Jedno wymagane ustawienie
+### ZimaOS, CasaOS i inne hosty {#other-hosts}
+
+- **ZimaOS i CasaOS:** dodaj [sklep społeczności](https://github.com/junkerderprovinz/zimaos-apps#install) i zainstaluj z niego BombVault. Działa tam jako `PLATFORM=generic` z Host Data na `/DATA`. ZimaOS trzyma dane aplikacji w `/DATA/AppData/<app>`, co BombVault znajduje sam, bo `DATA_ROOT_SEGMENTS` pasuje do `appdata` w dowolnej wielkości liter.
+- **MOS:** zainstaluj BombVault z [MOS Hub](https://mos-official.net/apps.html?search=BombVault). Działa tam jako `PLATFORM=generic` z Host Data na `/mnt/cache`.
+- **Synology:** w Container Manager utwórz projekt z pliku compose (DSM 7.2 lub nowszy).
+- **Proxmox:** uruchom go w maszynie wirtualnej albo kontenerze LXC z Dockerem.
+
+Bez komentarzy ogólny plik compose jest krótki. Zastąp `./data` folderem hosta, który zawiera dane Twoich kontenerów, ustaw `HOST_SOURCE_ROOT` na tę samą ścieżkę i uzupełnij `APP_KEY`:
+
+```yaml
+services:
+  bombvault:
+    image: junkerderprovinz/bombvault:latest
+    restart: unless-stopped
+    hostname: bombvault
+    container_name: bombvault
+    volumes:
+      - ./config:/config
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./data:/host/user
+    environment:
+      APP_KEY: ""
+      PLATFORM: generic
+      HOST_SOURCE_ROOT: /host/user
+    ports:
+      - "3443:3443"
+```
+
+Aby kopiować także nazwane woluminy Dockera, zamontuj folder, który zawiera zarówno Twoje dane, jak i katalog główny danych Dockera (`docker info -f '{{.DockerRootDir}}'`, zwykle `/var/lib/docker`), tak jak szablon Unraid montuje całe `/mnt`.
+
+## Jedno wymagane ustawienie {#the-one-required-setting}
 
 Jedyną zmienną, którą musisz ustawić, jest `APP_KEY`, 32-bajtowy sekret w formacie hex (64 znaki hex) używany do wyprowadzenia hasła repozytorium restic.
 
@@ -108,40 +138,64 @@ Wklej wynik do pola `APP_KEY` w szablonie (Unraid) albo do zmiennej środowiskow
 
 Szablon montuje też za Ciebie gniazdo Docker, flash (`/boot`) oraz katalog główny **Host Data** (`/mnt`). Zarówno *źródła*, jak i *miejsca docelowe* kopii zapasowych znajdują się pod Host Data. Pełny opis zmiennych oraz konfigurację poza siedzibą znajdziesz w [Konfiguracja](configuration.md).
 
-## Pierwsze uruchomienie
+## Pierwsze uruchomienie {#first-run}
 
-![Przegląd po pierwszej kopii: co wymaga uwagi, ochrona każdej sekcji, miejsca docelowe i historia.](assets/screenshots/dashboard.png)
-
-*Przegląd po pierwszej kopii: co wymaga uwagi, ochrona każdej sekcji, miejsca docelowe i historia.*
+![Strona powitalna nowej instalacji, z tym, co BombVault znalazł na serwerze.](assets/screenshots/getting-started/welcome-dark.png#only-dark)
+![Strona powitalna nowej instalacji, z tym, co BombVault znalazł na serwerze.](assets/screenshots/getting-started/welcome-light.png#only-light)
 
 1. Otwórz interfejs webowy pod adresem `https://<your-unraid-ip>:3443` (certyfikat samopodpisany od razu po instalacji). Nowa instalacja otwiera się na ekranie **Witamy w BombVault**, który wymienia to, co BombVault znalazł na serwerze.
 2. Wybierz **Zaczynamy**. Przegląd pokaże wtedy kartę **Pierwsze kroki** z trzema krokami:
     1. **Wybierz sekcje**: włącz to, co BombVault ma kopiować (Containers, Maszyny wirtualne, Flash, Foldery, Zbiory danych ZFS, Autokopia). **Wybierz** otwiera listę elementów sekcji, na której **Wstrzymaj harmonogram** pomija jedną z nich. Sekcje włączone tutaj działają co noc, co zmienisz w **Ustawienia, Harmonogram**.
-    2. **Dodaj miejsce docelowe**: dokąd trafiają kopie zapasowe. Na początek wystarczy folder lokalny. Najbezpieczniej mieć drugie miejsce docelowe poza domem, na przykład Storage Box albo Backblaze B2. Repozytoria lokalne domyślnie wynoszą `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}` i są tworzone przy pierwszej kopii.
-    3. **Pierwsza kopia zapasowa**: potem działa sama co noc.
+    2. **Dodaj miejsce docelowe**: drugie miejsce na kopie. Każda sekcja ma już folder na tym serwerze, `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, tworzony przy pierwszej kopii. Najbezpieczniej mieć drugie miejsce docelowe poza domem, na przykład Storage Box albo Backblaze B2.
+    3. **Pierwsza kopia zapasowa**: potem działa sama co noc. Karta zostaje, dopóki pierwsza kopia się nie zakończy.
 3. Otwórz **Kopie zapasowe**, aby zobaczyć każdy element na jednej liście. **Utwórz kopię wszystkiego teraz** uruchamia przebieg po wszystkich włączonych sekcjach, a **Utwórz kopię teraz** na stronie elementu kopiuje tylko tę jedną.
+
+![Karta Pierwsze kroki z trzema krokami, drugi jest otwarty.](assets/screenshots/getting-started/first-steps-dark.png#only-dark)
+![Karta Pierwsze kroki z trzema krokami, drugi jest otwarty.](assets/screenshots/getting-started/first-steps-light.png#only-light)
 
 Używasz już BombVault? **Przywróć z kopii zapasowej** na stronie powitalnej otwiera stronę Przywracanie, gdzie **Kreator awaryjny** przywraca ustawienia, kontenery, maszyny wirtualne i foldery utraconego serwera. Zobacz [Kopie poza siedzibą i odzyskiwanie](offsite-recovery.md#emergency).
 
 !!! tip "Opcjonalnie: wybierz kolejność kopii zapasowych"
-    Jeśli niektóre kontenery powinny być zawsze kopiowane przed innymi (na przykład baza danych przed aplikacją, która z niej korzysta), otwórz kartę **Kolejność** w **Ustawienia, Harmonogram** i przeciągnij je w wybraną sekwencję. Uruchomienia zaplanowane i pełna kopia będą jej przestrzegać; wszystko, co pozostawisz bez kolejności, jest kopiowane od najbardziej zaległych.
+    Jeśli niektóre kontenery powinny być zawsze kopiowane przed innymi (na przykład baza danych przed aplikacją, która z niej korzysta), otwórz kartę **Kolejność** w **Ustawienia, Harmonogram** i przeciągnij je w wybraną sekwencję. Uruchomienia zaplanowane i pełna kopia będą jej przestrzegać. Wszystko, co pozostawisz bez kolejności, jest kopiowane od najbardziej spóźnionego.
+
+## Przykład: Twoja pierwsza kopia kontenera od początku do końca {#example-first-backup}
+
+Ten przykład prowadzi przez świeży serwer Unraid z kilkoma kontenerami, wśród nich `plex`, aż pierwsza kopia będzie gotowa i będziesz wiedzieć, gdzie ją znaleźć. Zajmuje około dziesięciu minut plus czas pierwszej kopii.
+
+1. **Zainstaluj.** W zakładce **Apps** w Unraid wyszukaj **BombVault** i naciśnij **Install**.
+2. **Ustaw klucz.** Na komputerze uruchom `openssl rand -hex 32` i wklej 64 znaki w pole `APP_KEY` szablonu. Zachowaj kopię w menedżerze haseł od razu, przed czymkolwiek innym. Naciśnij **Apply**.
+3. **Otwórz.** Wejdź na `https://<your-unraid-ip>:3443` i zaakceptuj certyfikat samopodpisany. **Witamy w BombVault** wymienia to, co znalazł, na przykład 12 kontenerów, 2 maszyny wirtualne i dysk flash.
+4. **Zaczynamy.** Przegląd otwiera się z kartą **Pierwsze kroki**.
+5. **Wybierz sekcje.** **Containers** są włączone od początku. Włącz, co jeszcze chcesz, na przykład **Flash**. **Wybierz** otwiera listę znalezionych kontenerów, na której **Wstrzymaj harmonogram** pomija jeden z nich, na przykład testowy kontener, na którym Ci nie zależy. Włączone sekcje działają co noc w pełnej kopii.
+6. **Dodaj miejsce docelowe.** Każda sekcja ma już własny folder na tym serwerze, pod `/mnt/user/bombvault`, więc pierwsza kopia ma dokąd trafić. Ten krok dodaje drugie miejsce, a najbezpieczniejsze jest to poza domem. Możesz to zrobić teraz według [przykładu z S3](offsite-recovery.md#example-s3) albo wrócić do tego po pierwszej kopii. Karta zostaje do tego czasu.
+7. **Pierwsza kopia.** Otwórz **Kopie zapasowe** i naciśnij **Utwórz kopię wszystkiego teraz** albo poczekaj do nocy. Pierścień w nagłówku stanu zmienia się w pierścień postępu i liczy elementy, na przykład **Trwa tworzenie kopii: 3 z 12**. Każdy kontener jest zatrzymywany na czas czytania jego danych i zaraz potem startuje z powrotem. Kontener, którego dane leżą na ZFS, jest wyłączony tylko na kilka sekund migawki. Pierwsza kopia czyta wszystko, więc trwa najdłużej. Kolejne zapisują tylko to, co się zmieniło.
+8. **Sprawdź.** Gdy pierścień mówi **Wszystko skopiowane**, otwórz **Historia** w przeglądzie: każdy kontener ma zieloną linię w **Przebiegi**. Otwórz **Kopie zapasowe**, kliknij `plex` i spójrz na jego kartę **Kopie zapasowe**: jest tam pierwsza migawka, a miejscem, które ją przechowuje, jest **Lokalne**. Kilka minut później jego karta **Weryfikacja** pokazuje sprawdzenie przywracania, które przywróciło próbkę kopii i odczytało ją z powrotem.
+9. **Ochroń klucz.** Otwórz **Ustawienia, Bezpieczeństwo** i ustaw hasło logowania. Potem otwórz **Ustawienia, Przywracanie** i naciśnij **Pobierz zestaw odzyskiwania** w **Na wypadek awarii**. Zapisz plik poza serwerem, obok kopii `APP_KEY` z kroku 2. Przypomnienie **Zapisz swój zestaw odzyskiwania** w przeglądzie znika, gdy naciśniesz **Bezpiecznie zapisałem**.
+
+Od teraz kontenery są kopiowane co noc. Dobre następne kroki, w tej kolejności: [miejsce docelowe poza siedzibą](offsite-recovery.md#example-s3), żeby martwy serwer nie zabrał ze sobą kopii, potem [powiadomienia](notifications.md), żeby błąd do Ciebie dotarł, a potem rzut oka na [Harmonogramy](schedules.md), jeśli 03:00 Ci nie odpowiada.
+
+![Nagłówek stanu podczas pierwszej kopii, z pierścieniem postępu i jego stacjami.](assets/screenshots/getting-started/status-ring-dark.png#only-dark)
+![Nagłówek stanu podczas pierwszej kopii, z pierścieniem postępu i jego stacjami.](assets/screenshots/getting-started/status-ring-light.png#only-light)
 
 !!! note "Sprawdzenie integracji z hostem"
     Karta **Integracja z hostem** w przeglądzie sonduje każdy montaż i każde CLI (gniazdo Docker, libvirt, restic, qemu-img, rclone) i zgłasza wszelkie brakujące elementy, więc możesz potwierdzić, że kontener jest poprawnie połączony, zanim na nim polegasz. Czeka w **Dostosuj**, aż ją dodasz.
 
 ## Poruszanie się po aplikacji {#navigation}
 
-![Ustawienia jako kafelki, obok nich karty wybranego kafelka. Każda zmiana jest zapisywana, gdy ją wprowadzasz.](assets/screenshots/settings.png)
-
-*Ustawienia jako kafelki, obok nich karty wybranego kafelka. Każda zmiana jest zapisywana, gdy ją wprowadzasz.*
+![Ustawienia jako kafelki, obok nich karty wybranego kafelka. Każda zmiana jest zapisywana, gdy ją wprowadzasz.](assets/screenshots/getting-started/settings-rail-dark.png#only-dark)
+![Ustawienia jako kafelki, obok nich karty wybranego kafelka. Każda zmiana jest zapisywana, gdy ją wprowadzasz.](assets/screenshots/getting-started/settings-rail-light.png#only-light)
 
 Pasek boczny ma pięć pozycji: **Przegląd**, **Anomalie** (gdy wykrywanie anomalii jest włączone), **Kopie zapasowe**, **Przywracanie** i, pod **Wyloguj się**, **Ustawienia**. Główna akcja strony unosi się w prawym dolnym rogu, a **Więcej** zawiera te rzadkie. Na telefonie pasek ma Przegląd, Kopie zapasowe, Przywracanie i Ustawienia, a **Więcej** resztę.
 
 Strony i ustawienia zajmują całą szerokość okna. Okno trzyma swoje przyciski w stopce, a ten, który prowadzi dalej, jest po prawej. Na telefonie stopka z więcej niż trzema przyciskami zostawia drogę wyjścia i główną akcję, a resztę chowa pod **Więcej**.
 
-- **Kopie zapasowe** wymieniają każdy kontener, maszynę wirtualną, zestaw folderów, nośnik flash, każdy zbiór danych ZFS i autokopię jako elementy. Kafelki nad listą wybierają rodzaj, a **Filtry**, **Sortuj** i **Szukaj** zawężają listę. Każdy element ma własną stronę z trzema kartami: **Kopie zapasowe**, **Ustawienia** i **Weryfikacja**. Przycisk wstecz po lewej stronie ikony elementu prowadzi do listy.
-- **Przywracanie** to jedna strona dla wszystkiego: wybierz sekcję, wyszukaj element i wybierz kopię zapasową. Kreator awaryjny i inne źródła zaczynają się tutaj też.
-- **Ustawienia** to czternaście kafelków: Ogólne, Wygląd, Harmonogram, Miejsca docelowe, Przywracanie, Powiadomienia, Weryfikacja, Bezpieczeństwo, Instancje, Parowanie, Integracje, Aplikacje, System i Info. Naciśnij `/` lub Ctrl+K, aby przeszukać je wszystkie, także po nazwach, które strony miały we wcześniejszych wersjach. Przeciągnij kafelki w swoją kolejność w **Wygląd**. Tam, gdzie kolumna kafelków obok strony ścisnęłaby ją, jak w oknie o szerokości około 1200 pikseli, kafelki stają się paskiem nad stroną, który przewija się na boki. Telefon pokazuje ten sam pasek.
+![Na telefonie pasek na dole z otwartym Więcej.](assets/screenshots/getting-started/phone-more-dark.png#only-dark)
+![Na telefonie pasek na dole z otwartym Więcej.](assets/screenshots/getting-started/phone-more-light.png#only-light)
+
+- **Przegląd** pokazuje, czy wszystko jest skopiowane i co wymaga uwagi. Zobacz [Przegląd](overview.md).
+- **Kopie zapasowe** wymieniają każdy kontener, maszynę wirtualną, zestaw folderów, nośnik flash, każdy zbiór danych ZFS i autokopię jako elementy. Kafelki nad listą wybierają rodzaj, a **Filtry**, **Sortuj** i **Szukaj** zawężają listę. Każdy element ma własną stronę z trzema kartami: **Kopie zapasowe**, **Ustawienia** i **Weryfikacja**. Przycisk wstecz po lewej stronie ikony elementu prowadzi do listy. Zobacz [Kopie zapasowe i elementy](backups.md).
+- **Przywracanie** to jedna strona dla wszystkiego: wybierz sekcję, wyszukaj element i wybierz kopię zapasową. Kreator awaryjny i inne źródła zaczynają się tutaj też. Zobacz [Przywracanie](restore.md).
+- **Ustawienia** to czternaście kafelków: Ogólne, Wygląd, Harmonogram, Miejsca docelowe, Przywracanie, Powiadomienia, Weryfikacja, Bezpieczeństwo, Instancje, Parowanie, Integracje, Aplikacje, System i Info. Zobacz [Ustawienia](settings.md). Naciśnij `/` lub Ctrl+K, aby przeszukać je wszystkie, także po nazwach, które strony miały we wcześniejszych wersjach. Przeciągnij kafelki w swoją kolejność w **Wygląd**. Tam, gdzie kolumna kafelków obok strony ścisnęłaby ją, jak w oknie o szerokości około 1200 pikseli, kafelki stają się paskiem nad stroną, który przewija się na boki. Telefon pokazuje ten sam pasek.
 - **Miejsca docelowe** i **Instancje** to kafelki ustawień z własnymi stronami. **Pokaż także na pasku bocznym** na ich kafelku przypina je do paska bocznego.
 
 Nic nie ma przycisku Zapisz i nic się nie rozwija: rzadkie rzeczy mają własną kartę albo okno, a wyjaśnienia są w dymkach (i). Po aktualizacji samo otwiera się okno z kartą dla każdego wydania od twojej ostatniej wersji, a zielone kropki oznaczają, co się zmieniło. Kliknięcie ukrywa kropkę. **Nowości** na karcie Wersja w **Ustawienia, Info** liczy to, czego jeszcze nie widziałeś, i otwiera to okno ponownie, z notatkami do każdego wydania i jego zmianami z **Przejdź tam**.
@@ -161,10 +215,12 @@ go run ./cmd/bombvault         # serves https://localhost:3443 with a self-signe
 
 Zbudowanie interfejsu jest potrzebne także dla `go run`. Repozytorium śledzi pod `web/dist` tylko pusty znacznik, więc bez `npm --prefix web run build` binarka niczego nie osadza i odpowiada `500 SPA index not found`, czego należy się spodziewać. Dockera, libvirt i Unraida nie da się przetestować w CI, więc przed otwarciem pull requesta sprawdź montowania, restic i połączenie SSH do VM na prawdziwym hoście za pomocą karty **Integracja z hostem** w przeglądzie (lub `GET /api/spike`).
 
-## Kolejne kroki
+## Kolejne kroki {#next-steps}
 
-- Przejrzyj pełne **[Funkcje](features.md)**.
+- Dodaj jedno lub więcej miejsc docelowych poza domem (każda sekcja może kopiować do kilku naraz) i zapisz swój zestaw odzyskiwania, jak opisano w **[Kopie poza siedzibą i odzyskiwanie](offsite-recovery.md)**. [Przykład z S3](offsite-recovery.md#example-s3) przeprowadza przez jedno z nich.
+- Zadbaj, żeby błąd do Ciebie dotarł, dzięki **[Powiadomieniom](notifications.md)**.
+- Sprawdź, kiedy co działa, w **[Harmonogramach](schedules.md)**.
 - Przenieś wszystkie serwery swojej grupy na telefon dzięki **[aplikacji na Androida](android.md)**.
-- Dodaj jedno lub więcej miejsc docelowych poza domem (każda sekcja może kopiować do kilku naraz) i zapisz swój zestaw odzyskiwania, jak opisano w **[Kopie poza siedzibą i odzyskiwanie](offsite-recovery.md)**.
+- **[Przykłady krok po kroku](guides.md)** prowadzą przez typowe zadania, a **[Funkcje](features.md)** wymieniają wszystko, co robi BombVault.
 - Klonujesz konfigurację lub przenosisz się na nową maszynę? Przenieś całą swoją konfigurację za pomocą karty **Eksport / import ustawień**. Zobacz [Konfiguracja](configuration.md#portable-settings-export-and-import).
 - Napotkałeś problem? Zobacz **[Rozwiązywanie problemów](troubleshooting.md)**.
