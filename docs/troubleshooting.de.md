@@ -1,150 +1,215 @@
-# Fehlerbehebung
+# Fehlersuche
 
-Eine kurze FAQ. Die vollständige host-seitige Fehlerbehebungstabelle für VM-über-SSH (permission-denied, Host-Key-Verifizierung, fehlende Template-Variablen und mehr) findest du in der [Anleitung zum VM-Backup über SSH](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md) auf GitHub.
+Eine kurze FAQ. Die vollständige Tabelle zur Fehlersuche auf Host-Seite bei VM über SSH (permission denied, Host-Key-Prüfung, fehlende Template-Variablen und mehr) steht in der [Anleitung zur VM-Sicherung über SSH](vm-backup-ssh-setup.md).
 
-## Etwas ist nicht richtig verdrahtet
+## Etwas ist nicht richtig verkabelt {#something-is-not-wired-up-correctly}
 
-Füge der Übersicht unter **Anpassen** die Karte **Host-Integration** hinzu. Die Prüfung der Host-Integration prüft jeden Mount und jedes CLI (Docker-Socket, libvirt, restic, qemu-img, rclone) und meldet fehlende Teile, und **Jetzt prüfen** führt sie erneut aus. Beginne hier, bevor du einen Bug vermutest: Ein fehlender Mount oder ein unerreichbarer Host fällt sofort auf.
+Füge die Karte **Host-Integration** der Übersicht unter **Anpassen** hinzu. Der Host-Integrations-Check prüft jeden Mount und jedes CLI (Docker-Socket, libvirt, restic, qemu-img, rclone) und meldet fehlende Teile, und **Jetzt prüfen** führt ihn erneut aus. Fang hier an, bevor du einen Fehler annimmst: Ein fehlender Mount oder ein nicht erreichbarer Host zeigt sich sofort.
 
-## Ich erreiche die Weboberfläche nicht
+## Ich erreiche die Web-UI nicht {#i-cannot-reach-the-web-ui}
 
-BombVault liefert HTTPS von Haus aus auf Port `3443` (selbstsigniertes Zertifikat), öffne also `https://<your-unraid-ip>:3443`. Akzeptiere die Warnung zum selbstsignierten Zertifikat, oder setze BombVault hinter einen Reverse Proxy mit deinem eigenen Zertifikat. Wenn du mit `HTTP_ONLY=true` läufst, liefert es stattdessen schlichtes HTTP auf Port `3000` (gedacht für die Verwendung hinter einem TLS-terminierenden Proxy).
+BombVault liefert ab Werk HTTPS auf Port `3443` (selbstsigniertes Zertifikat), öffne also `https://<deine-unraid-ip>:3443`. Akzeptiere die Warnung zum selbstsignierten Zertifikat, oder setze BombVault hinter einen Reverse-Proxy mit deinem eigenen Zertifikat. Läuft es mit `HTTP_ONLY=true`, liefert es stattdessen einfaches HTTP auf Port `3000` (gedacht für den Einsatz hinter einem Proxy, der TLS beendet).
 
-## Ich habe meinen APP_KEY verloren
+## Ich habe meinen APP_KEY verloren {#i-lost-my-app_key}
 
-`APP_KEY` leitet das Passwort des restic-Repositorys ab. Ohne ihn, ohne das Recovery-Kit und ohne eine Hinterlegung in deiner Gruppe können verschlüsselte Sicherungen nicht wiederhergestellt werden. Deshalb zeigt die Übersicht **Sichere dein Recovery-Kit**, bis du es heruntergeladen hast. Siehe [Off-site & Wiederherstellung](offsite-recovery.md#recovery-kit). Erzeuge einen Schlüssel mit `openssl rand -hex 32` und bewahre ihn getrennt vom Server auf, bevor du dich auf irgendeine Sicherung verlässt.
+`APP_KEY` leitet das Passwort des restic-Repositorys ab. Ohne ihn, ohne das Recovery-Kit und ohne eine Schlüsselhinterlegung in deiner Gruppe lassen sich verschlüsselte Sicherungen nicht wiederherstellen. Deshalb zeigt die Übersicht **Sichere dein Recovery-Kit**, bis du es heruntergeladen hast. Siehe [Off-site und Wiederherstellung](offsite-recovery.md#recovery-kit). Erzeuge einen Schlüssel mit `openssl rand -hex 32` und bewahre ihn außerhalb des Servers auf, bevor du dich auf irgendeine Sicherung verlässt.
 
-## Ich habe das Login-Passwort vergessen
+## Ich habe das Login-Passwort vergessen {#i-forgot-the-login-password}
 
-Wähl auf der Login-Seite **Passwort vergessen?**. BombVault schreibt einen Code aus 12 Zeichen in sein Container-Log (unter Unraid: Docker-Tab, BombVault-Symbol, **Logs**). Tipp ihn innerhalb von 10 Minuten mit einem neuen Passwort ein. Das Zurücksetzen schaltet außerdem die Zwei-Faktor-Authentifizierung ab, entfernt jeden Passkey, widerruft jedes API-Token, jeden MCP-Schlüssel und jede OAuth-Anmeldung, beendet jede andere Sitzung und schaltet die Kopplung von Handys aus. Füg deine Passkeys unter **Einstellungen, Sicherheit** wieder hinzu, schalte die Kopplung von Handys dort wieder ein und erstell neue Tokens und Schlüssel, wo du sie noch brauchst. Siehe [Sicherheitsmodell](configuration.md#login).
+Wähle auf der Login-Seite **Passwort vergessen?**. BombVault schreibt einen Code mit 12 Zeichen in sein Container-Protokoll (auf Unraid: Docker-Tab, BombVault-Symbol, **Logs**). Tippe ihn innerhalb von 10 Minuten mit einem neuen Passwort ein. Das Zurücksetzen schaltet außerdem die Zwei-Faktor-Authentifizierung aus, entfernt jeden Passkey, entzieht jedes API-Token, jeden MCP-Schlüssel und jede OAuth-Anmeldung, beendet jede andere Sitzung und schaltet die Handy-Kopplung aus. Füge deine Passkeys unter **Einstellungen, Sicherheit** wieder hinzu, schalte dort die Handy-Kopplung wieder ein und lege neue Tokens und Schlüssel an, wo du sie noch brauchst. Siehe [Sicherheitsmodell](configuration.md#login).
 
-## Sicherungen stehen still, weil sich der Schlüssel nicht mehr öffnen lässt
+## Sicherungen stehen still und sagen, der Schlüssel lasse sich nicht mehr öffnen {#backups-stopped-and-say-the-key-can-no-longer-be-opened}
 
-Dieser Server hat im Notfall-Assistenten den Sicherungsschlüssel eines anderen Servers übernommen, und danach wurde `APP_KEY` geändert. Der übernommene Schlüssel ist mit dem alten APP_KEY versiegelt, BombVault kann ihn also nicht öffnen und sichert lieber nichts, als mit dem falschen Schlüssel zu schreiben. **Braucht dich** auf der Übersicht nennt das. Setz den APP_KEY auf den alten Wert zurück oder lade das Recovery-Kit auf der Seite Wiederherstellung unter **Notfall** erneut hoch.
+Dieser Server hat im Notfall-Assistenten den Sicherungsschlüssel eines anderen Servers übernommen, und `APP_KEY` wurde danach geändert. Der übernommene Schlüssel ist mit dem alten APP_KEY versiegelt, BombVault kann ihn also nicht öffnen und sichert nichts, statt mit dem falschen Schlüssel zu schreiben. **Braucht dich** in der Übersicht nennt es. Setze APP_KEY auf den alten Wert zurück oder lade das Recovery-Kit auf der Seite Wiederherstellung unter **Notfall** erneut hoch.
 
-## Ein Handy landet auf der Login-Seite
+## Ein Handy landet auf der Login-Seite {#a-phone-lands-on-the-login-page}
 
-Ein gekoppeltes Handy bekommt seine Sitzung über die Gruppe nur, solange **Handys können sich mit den zwölf Wörtern der Gruppe koppeln** unter **Einstellungen, Sicherheit** an ist. Ein Zurücksetzen des Passworts schaltet das aus. Auch eine App, die älter ist als der Server, bekommt keine Sitzung, bis sie aktualisiert ist. Ein Server, den du über seine Adresse hinzugefügt hast, fragt immer nach dem Passwort. Ein Handy, das von der Seite Instanzen entfernt wurde, kommt ausgeschaltet zurück, wenn seine App wieder öffnet; schalte in seinen Details unter **Überwachung** **Diese Instanz abfragen** ein, um es hereinzulassen.
+Ein gekoppeltes Handy bekommt seine Sitzung über die Gruppe nur, solange **Handys können sich mit den zwölf Wörtern der Gruppe koppeln** unter **Einstellungen, Sicherheit** an ist. Ein Passwort-Reset schaltet es aus. Eine App, die älter ist als der Server, bekommt ebenfalls keine Sitzung, bis sie aktualisiert ist. Ein über seine Adresse hinzugefügter Server fragt immer nach dem Passwort. Ein Handy, das von der Seite Instanzen entfernt wurde, kommt ausgeschaltet zurück, wenn seine App wieder öffnet. Schalte **Diese Instanz abfragen** unter **Überwachung** in seinen Details ein, um es hereinzulassen.
 
-## Das VM-Backup verbindet sich nicht
+## Die VM-Sicherung verbindet sich nicht {#vm-backup-will-not-connect}
 
-Das VM-Backup spricht über SSH mit libvirt, nie über einen Mount.
+Die VM-Sicherung spricht über SSH mit libvirt, nie über einen Mount.
 
-- Bestätige, dass SSH auf dem Host aktiviert ist und BombVaults öffentlicher Schlüssel in `/root/.ssh/authorized_keys` autorisiert ist (Einstellungen, Anbindungen, Host-SSH zeigt den Schlüssel und einen Knopf **Verbindung testen**).
-- Setze in einem benutzerdefinierten `br0.x`-Netzwerk `LIBVIRT_HOST` auf deine Unraid-LAN-IP (der Container kann den Host dort nicht über `host.docker.internal` erreichen). Aktiviere **Settings, Docker, Host access to custom networks**.
-- Wenn du Unraids SSH-Port geändert hast, setze `LIBVIRT_SSH_PORT` passend.
-- Setze auf TrueNAS `LIBVIRT_URI` mit dem eigenen libvirt-Socket von TrueNAS, gib der App die Capability `SETPCAP` und füge den Schlüssel unter **Credentials, Users** bei root hinzu (siehe [TrueNAS SCALE](getting-started.md#truenas)).
-- Die vollständige Schritt-für-Schritt-Diagnose (Erreichbarkeitstest, VLAN-Routing, `Permission denied (publickey)`, `Host key verification failed`) steht in der [Anleitung zum VM-Backup über SSH](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md).
+- Prüfe, dass SSH auf dem Host aktiviert ist und der öffentliche Schlüssel von BombVault in `/root/.ssh/authorized_keys` freigegeben ist (Einstellungen, Anbindungen, Host-SSH zeigt den Schlüssel und einen Knopf **Verbindung testen**).
+- Setze in einem eigenen Netz `br0.x` `LIBVIRT_HOST` auf die LAN-IP deines Unraid (der Container erreicht den Host dort nicht über `host.docker.internal`). Aktiviere **Settings, Docker, Host access to custom networks**.
+- Hast du den SSH-Port von Unraid geändert, setze `LIBVIRT_SSH_PORT` passend.
+- Setze auf TrueNAS `LIBVIRT_URI` mit dem eigenen libvirt-Socket von TrueNAS, gib der App die Capability `SETPCAP` und füge den Schlüssel dem Benutzer root unter **Credentials, Users** hinzu (siehe [TrueNAS SCALE](getting-started.md#truenas)).
+- Die vollständige Schritt-für-Schritt-Diagnose (Erreichbarkeitstest, VLAN-Routing, `Permission denied (publickey)`, `Host key verification failed`) steht in der [Anleitung zur VM-Sicherung über SSH](vm-backup-ssh-setup.md).
 
-## Ein Live-VM-Snapshot lief nicht
+## Ein Live-VM-Snapshot lief nicht {#a-live-vm-snapshot-did-not-run}
 
-Live-Snapshots benötigen den in der VM installierten qemu-Gast-Agenten und den Datenträger auf `/mnt/cache` (oder `/mnt/diskX`), nicht `/mnt/user`. Bei einer ausgeschalteten VM fällt Live automatisch auf geordnet zurück. Eine geordnete Sicherung fährt die VM herunter, sichert die Datenträger und startet sie dann neu, sodass sie immer konsistent ist. Sie wartet bis zu zehn Minuten, bis der Gast heruntergefahren ist, und schaltet ihn nie hart aus, damit ein Windows-Gast, der gerade Updates installiert, nicht mittendrin abbricht. Ein Gast, der danach noch läuft, bleibt in Ruhe, und diese Sicherung schlägt mit dem Grund fehl.
+Live-Snapshots brauchen den qemu-Gast-Agenten in der VM und die Disk auf `/mnt/cache` (oder `/mnt/diskX`), nicht auf `/mnt/user`. Bei einer ausgeschalteten VM fällt Live automatisch auf Graceful zurück. Eine Graceful-Sicherung fährt die VM herunter, sichert die Disks und startet sie dann neu, ist also immer konsistent. Sie wartet bis zu zehn Minuten, bis der Gast heruntergefahren ist, und erzwingt das Ausschalten nie, damit ein Windows-Gast, der Updates installiert, nicht auf halbem Weg abgeschnitten wird. Ein Gast, der danach noch läuft, bleibt unberührt, und diese Sicherung scheitert mit dem Grund.
 
-## Eine Sicherung schlug mit "repository is already locked" fehl
+## Eine Sicherung scheiterte mit „repository is already locked“ {#a-backup-failed-with-repository-is-already-locked}
 
-Das ist meist ein verwaister restic-Lock, der zurückblieb, als der Container mitten im Betrieb aktualisiert oder neu gestartet wurde. BombVault erkennt einen nachweislich verwaisten Lock, löst ihn zwangsweise und wiederholt einmal, automatisch. Bleibt er bestehen, öffne die Karte **Sicherungen prüfen** unter **Einstellungen, Prüfung** und wähl in der Zeile des betroffenen Bereichs unter **Mehr** **Entsperren**, um einen veralteten Lock von Hand zu lösen. Ein echtes Problem kommt trotzdem ans Licht, statt versteckt zu werden. Nach einem Neustart wartet BombVault, bis so ein Lock zehn Minuten lang nicht erneuert wurde. Ein restic, das noch läuft, zum Beispiel in einem zweiten BombVault auf demselben Repository, erneuert seinen Lock alle fünf Minuten.
+Das ist meist eine verwaiste restic-Sperre, die zurückblieb, als der Container mitten in einem Vorgang aktualisiert oder neu gestartet wurde. BombVault erkennt eine nachweislich verwaiste Sperre, hebt sie erzwungen auf und versucht es automatisch einmal erneut. Bleibt es bestehen, öffne die Karte **Sicherungen prüfen** unter **Einstellungen, Prüfung** und wähle **Entsperren** unter **Mehr** in der Zeile des betroffenen Bereichs, um eine veraltete Sperre von Hand aufzuheben. Ein echtes Problem taucht trotzdem auf, statt versteckt zu werden. Nach einem Neustart wartet BombVault, bis eine solche Sperre zehn Minuten lang nicht aufgefrischt wurde. Ein restic, das noch läuft, etwa in einem zweiten BombVault auf demselben Repository, frischt seine Sperre alle fünf Minuten auf.
 
-## Meine Off-site-Kopie lief nach einer Sicherung nicht
+## Meine Off-site-Kopie ist nach einer Sicherung nicht passiert {#my-off-site-copy-did-not-happen-after-a-backup}
 
-Off-site-Kopien sind absichtlich Best-Effort, sodass ein Off-site-Aussetzer die lokale Sicherung nie fehlschlagen lässt. Prüfe, wann der Speicherort kopiert: Seine Karte **Kopieren** sagt **Nach jeder Sicherung** oder nennt einen eigenen Plan, und **Einstellungen, Zeitplan, Off-site-Kopien pro Bereich** kann einem Bereich einen eigenen Plan geben. **Jetzt replizieren** in der Karte **Off-site-Kopie** des Bereichs unter **Einstellungen, Speicherorte** startet eine Kopie sofort, und der Statuskopf der Übersicht sagt **Off-site-Kopie läuft**, solange sie läuft. Eine fehlgeschlagene Kopie steht unter **Braucht dich**.
+Die Off-site-Replikation ist absichtlich nach bestem Bemühen angelegt, ein Off-site-Schluckauf lässt die lokale Sicherung also nie scheitern. Prüfe, wann der Speicherort kopiert: Seine Karte **Kopieren** sagt **Nach jeder Sicherung** oder nennt einen eigenen Plan, und **Einstellungen, Zeitplan, Off-site-Kopien pro Bereich** kann einem Bereich einen eigenen Plan geben. Nutze **Jetzt replizieren** in der Zeile des Bereichs in der Karte **Off-site-Kopien** unter **Einstellungen, Speicherorte** für einen Lauf auf Abruf, und beobachte den Statuskopf der Übersicht, der **Off-site-Kopie läuft** sagt, solange sie läuft. Eine fehlgeschlagene Kopie erscheint unter **Braucht dich**.
 
-## Dem Zertifikat eines rest-servers wird nicht vertraut
+## Dem Zertifikat eines rest-servers wird nicht vertraut {#a-rest-servers-certificate-is-not-trusted}
 
-restic lehnt ein Zertifikat ab, das es nicht kennt, und die Fehlermeldung sagt, wohin es gehört. Kopier das selbstsignierte Zertifikat des rest-servers, oder das der Stelle, die es signiert hat, als PEM-Datei in den Ordner `certs` in BombVaults Datenordner (`/config/certs` im Container, `appdata/bombvault/certs` unter Unraid) und teste noch einmal. Ein Neustart ist nicht nötig.
+restic lehnt ein Zertifikat ab, das es nicht kennt, und der Fehler sagt, wohin es gehört. Kopiere das selbstsignierte Zertifikat des rest-servers oder das der Stelle, die es signiert hat, als PEM-Datei in den Ordner `certs` im Datenordner von BombVault (`/config/certs` im Container, `appdata/bombvault/certs` auf Unraid) und teste erneut. Ein Neustart ist nicht nötig.
 
-## Eine Sicherung meldet, dass Daten außerhalb von Host Data nicht gesichert wurden {#data-outside-host-data}
+## Eine Sicherung sagt, Daten außerhalb von Host Data seien nicht gesichert worden {#data-outside-host-data}
 
-Der Container hält Daten in einem Ordner, den BombVault über Host Data nicht lesen kann. Die Sicherung speichert die Definition und jeden Ordner, den sie erreicht, färbt ihre Zeile im Aktivitätsprotokoll orange und nennt die Ordner, die sie ausgelassen hat. Zwei Fälle sind häufig: ein ixVolume unter TrueNAS in `/mnt/.ix-apps` und ein benanntes Docker-Volume in `/var/lib/docker/volumes`, etwa das Datenbank-Volume eines Compose-Stacks. Die Karte **Gesicherte Ordner** auf dem Reiter **Einstellungen** des Containers zeigt jeden solchen Ordner mit seinem Pfad im Container und seinem Host-Pfad, rot markiert.
+Der Container hält Daten in einem Ordner, den BombVault über Host Data nicht lesen kann. Die Sicherung speichert die Definition und jeden Ordner, den sie erreicht, färbt ihre Zeile im Aktivitätsprotokoll orange und nennt die Ordner, die sie ausgelassen hat. Zwei Fälle sind häufig: ein ixVolume auf TrueNAS unter `/mnt/.ix-apps` und ein benanntes Docker-Volume unter `/var/lib/docker/volumes`, etwa das Datenbank-Volume eines Compose-Stacks. Die Karte **Gesicherte Ordner** auf dem Tab **Einstellungen** des Containers listet jeden solchen Ordner mit seinem Pfad im Container und seinem Host-Pfad auf, rot markiert.
 
-Ein anonymes Docker-Volume wird nicht gemeldet. Docker legt es von selbst für einen Ordner an, den das Image vorsieht und niemand zugeordnet hat, gibt ihm einen Namen aus 64 Hex-Ziffern und legt es in `/var/lib/docker/volumes` ab. Meist liegt darin ein Cache, deshalb bleibt die Sicherung grün, und die Karte führt es nur auf, mit dem Hinweis, dass es anonym ist.
+Ein anonymes Docker-Volume wird nicht gemeldet. Docker legt eines von selbst für einen Ordner an, den das Image deklariert und den niemand zugeordnet hat, benennt es mit 64 Hex-Ziffern und hält es unter `/var/lib/docker/volumes`. Es enthält meist einen Cache, daher bleibt die Sicherung grün, und die Karte listet es nur mit dem Hinweis auf, dass es anonym ist.
 
-- **Du willst diese Daten gesichert haben.** Ordne den Ordner einem Host-Pfad unterhalb von Host Data zu, etwa einem Ordner in deiner appdata-Freigabe, dann nimmt ihn die nächste Sicherung mit.
-- **Du brauchst sie nicht.** Trag einen seiner beiden Pfade als Zeile in der Karte **Ausschlussmuster** auf demselben Reiter ein: den Pfad im Container, etwa `/cache`, oder den Host-Pfad, den die Warnung nennt, etwa `/var/lib/docker/volumes/jellyfin_cache/_data`. Ab der nächsten Sicherung lässt die Warnung diesen Ordner weg, und die Vorschau unter dem Feld sagt, warum. Eine Zeile für einen Ordner darüber wirkt genauso, ein reiner Name oder `/` nicht.
+- **Du willst, dass diese Daten gesichert werden.** Ordne den Ordner einem Host-Pfad unterhalb von Host Data zu, zum Beispiel einem Ordner in deinem Appdata-Share, und die nächste Sicherung schließt ihn ein.
+- **Du brauchst sie nicht.** Füge einen seiner beiden Pfade als Zeile in der Karte **Ausschlussmuster** auf demselben Tab hinzu: den Pfad im Container, etwa `/cache`, oder den Host-Pfad, den die Warnung nennt, etwa `/var/lib/docker/volumes/jellyfin_cache/_data`. Ab der nächsten Sicherung lässt die Warnung diesen Ordner weg, und die Vorschau unter dem Feld sagt warum. Eine Zeile für einen Ordner darüber funktioniert auch, ein bloßer Name oder `/` nicht.
 
-## Eine Sicherung steht auf Zurückgestellt {#deferred-backups}
+## Eine Sicherung sagt Zurückgestellt {#deferred-backups}
 
-Die App des Containers war beschäftigt, deshalb wartet seine Sicherung und wird von selbst erneut versucht. Die Zeile im Aktivitätsprotokoll sagt, warum, und wann der nächste Versuch kommt; die Karte **Wenn die App beschäftigt ist** auf dem Tab **Einstellungen** des Containers sagt dasselbe und dazu, wann das Warten endet. Du musst nichts tun. Um sofort zu sichern, nimm **Jetzt sichern**: Eine Sicherung, die du selbst startest, wartet nie, auch nicht bei einem Exit-Code 75.
+Die App des Containers war beschäftigt, ihre Sicherung wartet also und wird von selbst wieder versucht. Die Zeile im Aktivitätsprotokoll sagt warum und wann der nächste Versuch ist. Die Karte **Wenn die App beschäftigt ist** auf dem Tab **Einstellungen** des Containers sagt dasselbe und wann die Wartezeit endet. Du musst nichts tun. Um sofort zu sichern, nutze **Jetzt sichern**: Eine Sicherung, die du selbst startest, wartet nie, auch nicht bei einem Exit-Code von 75.
 
-- **Eine eigene Prüfung.** Lass den **Befehl vor der Sicherung** mit Code 75 enden, solange die App beschäftigt ist, zum Beispiel `[ "$(cat /tmp/players)" = 0 ] || exit 75`. Jeder andere Code außer 0 lässt die Sicherung wie bisher fehlschlagen, ein kaputtes Skript taucht also weiterhin unter **Braucht dich** auf.
-- **Plex, Jellyfin oder Emby wird nie gefragt.** BombVault fragt den Server zuerst unter der Adresse des Containers und führt, wenn dort nichts antwortet, curl oder wget im Container aus. Ein Image ohne beides lässt sich nicht über sich selbst fragen; das Log nennt das dann. Mit **Sichern, wenn der Server nicht antwortet** läuft so eine Sicherung trotzdem, ohne wartet sie.
-- **Jellyfin oder Emby lehnt ab.** Prüf den **API-Schlüssel**. Du legst ihn im Dashboard des Servers unter API-Schlüssel an.
-- **Plex lehnt ab.** BombVault liest das Token aus der `Preferences.xml` im Ordner, der unter `/config` eingebunden ist. Ein Server, der nie angemeldet war, hat keins und antwortet nur dort, wo er Zugriff ohne Token erlaubt.
-- **Ein pausierter Film lässt die Sicherung die ganze Nacht warten.** Setz **Pausierte Sitzungen ignorieren nach (Min.)**, zum Beispiel auf 30.
-- **Die Verkehrsprüfung lässt die Sicherung nie durch.** Setz **Beschäftigt ab (KiB/s)** über das, was der Container sendet, wenn ihn niemand nutzt. Direkt nach dem Start von BombVault wartet die Prüfung, bis sie den Container **Ruhig für (Min.)** Minuten lang beobachtet hat.
-- **Die Sicherung läuft nachts nie.** Mit einem Zeitfenster kommen Versuche nur darin. Erreicht das Warten seine Frist außerhalb des Fensters, endet es trotzdem zur Frist.
+- **Deine eigene Prüfung.** Lass den **Befehl vor der Sicherung** mit Code 75 enden, solange die App beschäftigt ist, zum Beispiel `[ "$(cat /tmp/players)" = 0 ] || exit 75`. Jeder andere Code außer 0 lässt die Sicherung wie bisher scheitern, ein kaputtes Skript taucht also weiter unter **Braucht dich** auf.
+- **Plex, Jellyfin oder Emby wird nie gefragt.** BombVault fragt zuerst den Server unter der eigenen Adresse des Containers und führt, wenn der nicht antwortet, curl oder wget im Container aus. Ein Image mit keinem von beiden lässt sich nicht über sich selbst fragen. Das Protokoll nennt das dann. Bei eingeschaltetem **Sichern, wenn der Server nicht antwortet** läuft so eine Sicherung trotzdem, bei ausgeschaltetem wartet sie.
+- **Jellyfin oder Emby lehnt ab.** Prüfe den **API-Schlüssel**. Er wird im Dashboard des Servers unter API-Schlüssel erstellt.
+- **Plex lehnt ab.** BombVault liest das Token aus `Preferences.xml` in dem Ordner, der unter `/config` gemountet ist. Ein Server, an dem nie jemand angemeldet war, hat keines und antwortet nur dort, wo er Zugriff ohne eines erlaubt.
+- **Ein pausierter Film hält die Sicherung die ganze Nacht warten.** Setze **Pausierte Sitzungen ignorieren nach (Min.)**, zum Beispiel auf 30.
+- **Die Verkehrsprüfung lässt die Sicherung nie durch.** Erhöhe **Beschäftigt ab (KiB/s)** über das, was der Container sendet, wenn ihn niemand nutzt. Direkt nach dem Start von BombVault wartet die Prüfung, bis sie den Container **Ruhig für (Min.)** Minuten lang beobachtet hat.
+- **Die Sicherung läuft nie nachts.** Ist ein Fenster gesetzt, finden Versuche nur darin statt. Eine Wartezeit, die ihre Frist außerhalb des Fensters erreicht, endet trotzdem an der Frist.
 
-## Eine große Sicherung wurde wegen fehlenden Speichers beendet
+## Eine große Sicherung wurde wegen Speichermangels beendet {#a-large-backup-was-killed-for-running-out-of-memory}
 
-Setz **Speicherlimit pro Sicherung (MiB, 0 = keins)** auf der Karte **Leistung** unter **Einstellungen, System**, deutlich unter den Speicher, den der Container nutzen darf. Nahe am Limit gibt restic öfter Speicher frei, was etwas Tempo kostet, sodass die Sicherung langsamer wird, statt beendet zu werden.
+Setze **Speicherlimit pro Sicherung (MiB, 0 = keins)** in der Karte **Leistung** unter **Einstellungen, System** deutlich unter das, was der Container nutzen darf. Nahe am Limit gibt restic Speicher öfter frei, was etwas Tempo kostet, die Sicherung wird also langsamer, statt beendet zu werden.
 
-## Eine Wiederherstellung brach ab, bevor sie startete
+## Eine Wiederherstellung brach ab, bevor sie begann {#a-restore-aborted-before-it-started}
 
-Bevor irgendetwas gestoppt oder entfernt wird, führt die Wiederherstellung eine Vorab-Konfliktprüfung durch: Sie prüft, ob die statische IP des Containers und die veröffentlichten Host-Ports frei sind. Belegt ein anderer Container einen davon bereits, bricht sie mit einer klaren Meldung ab, statt eine halbfertige Wiederherstellung zu hinterlassen. Gib den belegten Port oder die IP frei und versuche es erneut.
+Bevor etwas angehalten oder entfernt wird, führt die Wiederherstellung eine Konfliktprüfung vorab aus: Sie prüft, ob die statische IP und die veröffentlichten Host-Ports des Containers frei sind. Hält einen schon ein anderer Container, bricht sie mit einer klaren, umsetzbaren Meldung ab, statt eine halb fertige Wiederherstellung zu hinterlassen. Gib den kollidierenden Port oder die IP frei und versuche es erneut.
 
-Gibt es das Netzwerk des Containers nicht, etwa weil seine TrueNAS-App gelöscht wurde, nennt die Prüfung vor der Wiederherstellung das Netzwerk, und die Wiederherstellung bricht ab, bevor sie etwas ändert. Installiere die App in TrueNAS unter demselben Namen neu, das legt das Netzwerk wieder an, und stelle dann ihre Daten wieder her.
+Existiert das Netzwerk des Containers nicht, zum Beispiel weil seine TrueNAS-App gelöscht wurde, nennt die Wiederherstellungsprüfung das Netzwerk, und die Wiederherstellung lehnt ab, bevor sie etwas ändert. Installiere die App in TrueNAS unter demselben Namen neu, was das Netzwerk wieder anlegt, und stelle dann ihre Daten wieder her.
 
-## Ein schlichter Export schlug fehl, statt eine Datei zu schreiben
+## Ein einfacher Export scheiterte, statt eine Datei zu schreiben {#a-plain-export-failed-instead-of-writing-a-file}
 
-Ist **Exporte mit age verschlüsseln** unter **Einstellungen, System** an, aber kein gültiger Empfänger gesetzt, schlägt ein Export mit einem klaren Fehler fehl, statt Klartext zu schreiben. Füge einen gültigen Empfänger hinzu (einen age-Public-Key oder einen SSH-Public-Key), oder schalte die Verschlüsselung aus, wenn der Export Klartext sein soll. Siehe [Funktionen](features.md).
+Ist **Exporte mit age verschlüsseln** unter **Einstellungen, System** an, aber kein gültiger Empfänger gesetzt, scheitert ein Export mit einer klaren Fehlermeldung, statt Klartext zu schreiben. Füge einen gültigen Empfänger hinzu (einen öffentlichen age-Schlüssel oder einen öffentlichen SSH-Schlüssel) oder schalte die Verschlüsselung aus, wenn der Export Klartext sein soll. Siehe [Einfache Exporte](backups.md#exports).
 
-## Ein Datenbank-Dump schlug fehl
+## Ein Datenbank-Dump ist fehlgeschlagen {#a-database-dump-failed}
 
-Ein fehlgeschlagener Dump lässt nie die Sicherung drumherum scheitern; er wird als eigener fehlgeschlagener Lauf festgehalten, und der Grund nennt, was zu tun ist.
+Ein fehlgeschlagener Dump lässt die Sicherung um ihn herum nie scheitern. Er wird als eigener fehlgeschlagener Lauf vermerkt, und der Grund nennt, was zu beheben ist.
 
-- **Anmeldung abgelehnt.** Der Dump meldet sich mit den Passwort-Variablen des Containers selbst an (`POSTGRES_PASSWORD`, `MARIADB_ROOT_PASSWORD`, `MYSQL_ROOT_PASSWORD` oder deren `_FILE`-Varianten). Prüfe sie am Datenbank-Container. Eine `_FILE`-Variable, die auf ein Secret zeigt, das der Benutzer des Containers nicht lesen darf, scheitert genauso.
-- **Fehlende Rechte.** Mit einem zufälligen Root-Passwort kann sich der Dump nur als App-Benutzer anmelden und erfasst dann nur deren eine Datenbank; MySQL 8.4 und neuer lehnt ihn unter Umständen ganz ab. Gib dem Container ein echtes Root-Passwort, oder schalte den Dump für ihn ab.
-- **Die Systemtabellen brauchen ein Upgrade.** MariaDB verweigert den Dump, wenn seine Systemtabellen aus einer älteren Version stammen (Fehler 1558). Füge die Variable `MARIADB_AUTO_UPGRADE=1` hinzu und starte den Container neu, oder führe `mariadb-upgrade` einmal darin aus.
-- **Kein Dump-Werkzeug.** Ein schlankes oder selbst gebautes Image ohne `pg_dump`, `mysqldump` oder `mariadb-dump` lässt sich nicht dumpen. Nimm das offizielle Image, oder schalte den Dump ab.
-- **Ein Zeitlimit.** Ein Dump bekommt `DB_DUMP_MAX_HOURS` (voreingestellt 6), die Sicherung drumherum `BACKUP_MAX_HOURS`, und ein Dump, der nicht mehr vorankommt, wird nach `BACKUP_STALL_HOURS` abgebrochen. Hinter dem letzten Fall steckt meist eine Sperre, die die Anwendung hält. Erhöhe das Limit, das gegriffen hat, oder dumpe, während die Anwendung ruhig ist.
-- **Der Container ist pausiert oder startet neu.** Der Dump spricht mit dem laufenden Server. Startet der Container immer wieder neu, sagt sein eigenes Log, warum.
-- **Ein beschädigter Dump ließ sich nicht entfernen.** Einen Dump, den BombVault nicht zu Ende bringen konnte, löscht es wieder. Scheitert dieses Löschen, bleibt der Dump als beschädigt markiert in der Liste stehen und du kannst ihn dort löschen.
+- **Login abgelehnt.** Der Dump meldet sich mit den eigenen Passwortvariablen des Containers an (`POSTGRES_PASSWORD`, `MARIADB_ROOT_PASSWORD`, `MYSQL_ROOT_PASSWORD` oder ihren `_FILE`-Versionen). Prüfe sie am Datenbank-Container. Eine `_FILE`-Variable, die auf ein Secret zeigt, das der eigene Benutzer des Containers nicht lesen kann, scheitert genauso.
+- **Fehlende Rechte.** Bei einem zufälligen Root-Passwort kann der Dump sich nur als App-Benutzer anmelden und hält daher nur diese eine Datenbank, und MySQL 8.4 und neuer lehnt es unter Umständen ganz ab. Gib dem Container ein echtes Root-Passwort oder schalte den Dump dafür aus.
+- **Die Systemtabellen brauchen ein Upgrade.** MariaDB lehnt den Dump ab, wenn seine Systemtabellen aus einer älteren Version stammen (Fehler 1558). Füge die Variable `MARIADB_AUTO_UPGRADE=1` hinzu und starte den Container neu, oder führe einmal `mariadb-upgrade` darin aus.
+- **Kein Dump-Werkzeug.** Ein abgespecktes oder selbst gebautes Image ohne `pg_dump`, `mysqldump` oder `mariadb-dump` lässt sich nicht dumpen. Nimm das offizielle Image oder schalte den Dump aus.
+- **Ein Zeitlimit.** Ein Dump bekommt `DB_DUMP_MAX_HOURS` (standardmäßig 6), die Sicherung um ihn herum bekommt `BACKUP_MAX_HOURS`, und ein Dump, der keinen Fortschritt mehr macht, wird nach `BACKUP_STALL_HOURS` abgeschnitten. Die übliche Ursache beim Letzten ist eine Sperre, die die Anwendung hält. Erhöhe das Limit, das gegriffen hat, oder dumpe, während die Anwendung ruhig ist.
+- **Der Container ist pausiert oder startet neu.** Der Dump spricht mit dem laufenden Server. Startet der Container ständig neu, sagt sein eigenes Protokoll warum.
+- **Ein beschädigter Dump ließ sich nicht entfernen.** Ein Dump, den BombVault nicht beenden konnte, wird wieder gelöscht. Schlägt dieses Löschen fehl, bleibt der Dump als beschädigt markiert in der Liste, und du kannst ihn dort löschen.
 
-## Ein Import schlug fehl
+## Ein Import ist fehlgeschlagen {#an-import-failed}
 
-Ein Import stoppt den Container, schiebt seinen Datenordner zur Seite und lässt das Image einen leeren an dessen Stelle anlegen. Scheitert ein Schritt vor dem eigentlichen Import, legt BombVault den alten Ordner von selbst zurück. Scheitert der Import, behält der Container den frischen Ordner, und der alte bleibt als `<Datenordner>.bombvault-before-import-<Zeitstempel>` daneben liegen; die Fehlermeldung des Laufs nennt den genauen Pfad.
+Ein Import hält den Container an, schiebt seinen Datenordner beiseite und lässt das Image einen leeren an seiner Stelle anlegen. Schlägt ein Schritt vor dem Import selbst fehl, wird der alte Ordner automatisch zurückgelegt. Schlägt der Import fehl, behält der Container den frischen Ordner, und der alte bleibt daneben als `<data folder>.bombvault-before-import-<timestamp>` stehen. Die Fehlermeldung des Laufs nennt den genauen Pfad.
 
-Ein Datenordner, der ein eigenes Dataset ist, wie auf TrueNAS, lässt sich nicht umbenennen. Der Import lässt den Ordner dann an seinem Platz und verschiebt seinen Inhalt in den aufbewahrten Ordner daneben, das Dataset darüber braucht also Platz dafür. Das prüft der Import, bevor er den Container stoppt.
+Ein Datenordner, der ein eigenes Dataset ist, wie auf TrueNAS, lässt sich nicht umbenennen. Der Import lässt den Ordner dann stehen und verschiebt seinen Inhalt in den behaltenen Ordner daneben, das darüberliegende Dataset braucht also Platz dafür. Der Import prüft das, bevor er den Container anhält.
 
-Von Hand zurücklegen: Container stoppen, den aktuellen Datenordner aus dem Weg umbenennen, den aufbewahrten Ordner auf den ursprünglichen Namen zurück umbenennen und den Container starten. Bei einem Dataset verschiebst du den Inhalt, statt die Ordner umzubenennen. Auf Unraid erledigt das der Dateimanager im Tab Shares.
+Um es von Hand zurückzulegen: Halte den Container an, benenne den jetzigen Datenordner um, damit er aus dem Weg ist, benenne den behaltenen Ordner zurück in den ursprünglichen Namen und starte den Container. Bei einem Dataset verschiebe stattdessen den Inhalt, statt die Ordner umzubenennen. Auf Unraid erledigt das der Dateimanager im Tab Shares.
 
-## Eine ZFS-Dataset-Sicherung schlug fehl oder hat ein Dataset übersprungen {#zfs-datasets}
+## Eine ZFS-Dataset-Sicherung scheiterte oder übersprang ein Dataset {#zfs-datasets}
 
-Jedes Problem trägt einen Grundcode in eckigen Klammern, und die Seite [ZFS-Datasets](zfs-datasets.md#reason-codes) listet alle mit der Abhilfe. Die drei häufigsten:
+Jedes Problem trägt einen Grundcode in Klammern, und die Seite [ZFS-Datasets](zfs-datasets.md#reason-codes) listet alle mit der Lösung auf. Die drei häufigsten:
 
-- **`snapshot-loop`**: Der Snapshot kam nicht bei BombVault an, weil Host Data neue Einhängungen nicht weiterreicht. Bearbeite den Container, setze den Access Mode von Host Data auf Read/Write - Slave und starte BombVault neu.
-- **`key-not-loaded`**: Ein verschlüsseltes Dataset, dessen Schlüssel nicht geladen ist, wird übersprungen. Lade den Schlüssel mit `zfs load-key` und hänge das Dataset ein; die nächste Sicherung nimmt es mit.
-- **`ssh-auth`**: Der Server hat BombVaults Schlüssel abgelehnt. **ZFS-Verbindung zu diesem Server**, geöffnet mit **Verbindung ansehen** auf der Seite Sicherungen, zeigt den Befehl, der ihn freischaltet; führe ihn einmal auf dem Server aus.
+- **`snapshot-loop`**: Der Snapshot erreichte BombVault nicht, weil Host Data neue Mounts nicht durchreicht. Bearbeite den Container, setze den Access Mode von Host Data auf Read/Write - Slave und starte BombVault neu.
+- **`key-not-loaded`**: Ein verschlüsseltes Dataset, dessen Schlüssel nicht geladen ist, wird übersprungen. Lade den Schlüssel mit `zfs load-key` und mounte das Dataset. Die nächste Sicherung schließt es ein.
+- **`ssh-auth`**: Der Server hat den Schlüssel von BombVault abgelehnt. **ZFS-Verbindung zu diesem Server**, geöffnet mit **Verbindung ansehen** auf der Seite Sicherungen, zeigt den Befehl, der ihn freigibt. Führe ihn einmal auf dem Server aus.
 
-## Ein Eintrag bleibt bei "Lernt N/10" stehen
+## Ein Eintrag bleibt bei „Learning N/10“ {#an-entry-stays-at-learning-n10}
 
-Die meisten Anomalie-Prüfungen beginnen nach 10 erfolgreichen Sicherungen eines Eintrags, und die Zählung beginnt neu nach **Als erwartet markieren** und nachdem sich die Auswahl des Eintrags geändert hat. Ein Eintrag ohne Zeitplan lernt nicht, und ein Container ohne Appdata hat nichts, woraus er lernen könnte, was sein Abzeichen sagt. **Lernfortschritt** auf der Seite Anomalien zeigt pro Eintrag einen Ring aus zehn Teilen.
+Die meisten Anomalieprüfungen starten nach 10 erfolgreichen Sicherungen eines Eintrags, und die Zählung beginnt nach **Als erwartet markieren** und nach einer Änderung der Auswahl des Eintrags von vorn. Ein Eintrag, der nicht im Zeitplan ist, lernt nicht, und ein Container ohne Appdata hat nichts, woraus er lernen könnte, was sein Abzeichen sagt. **Lernfortschritt** auf der Seite Anomalien zeigt pro Eintrag einen Ring aus zehn Teilen.
 
-## Die Aufbewahrung löscht bei einem Eintrag keine alten Sicherungen mehr
+## Die Aufbewahrung löscht keine alten Sicherungen eines Eintrags mehr {#retention-stopped-deleting-old-backups-of-one-entry}
 
-Eine offene kritische Anomalie hält sie fest: Die Quelle des Eintrags ist fast leer, stark geschrumpft, oder eine Sicherung hat die meisten Daten neu gespeichert. Öffne die Anomalie über das Abzeichen am Eintrag. Wenn Daten fehlen oder verschlüsselt wurden, stell zuerst aus der verlinkten letzten guten Sicherung wieder her. Quittiere die Anomalie danach oder markiere sie als erwartet, wenn die Änderung von dir kam, und der nächste Lauf räumt wie gewohnt auf. Die Vorschau der Aufbewahrung markiert so einen Eintrag als behalten. Bei einem ZFS-Eintrag behält nur das in der Anomalie genannte Dataset seine alten Sicherungen, die anderen Datasets des Baums werden wie gewohnt aufgeräumt.
+Eine offene kritische Anomalie hält sie fest: Die Quelle des Eintrags ist fast leer, stark geschrumpft, oder eine Sicherung hat den Großteil ihrer Daten noch einmal abgelegt. Öffne die Anomalie über das Abzeichen am Eintrag. Fehlen Daten oder wurden sie verschlüsselt, stelle zuerst aus der verlinkten letzten guten Sicherung wieder her. Quittiere dann die Anomalie oder markiere sie als erwartet, wenn die Änderung von dir kam, und der nächste Lauf räumt wie gewohnt auf. Die Vorschau der Aufbewahrung markiert so einen Eintrag als behalten. Bei einem ZFS-Eintrag behält nur das in der Anomalie genannte Dataset seine alten Sicherungen, die anderen Datasets des Baums werden wie gewohnt aufgeräumt.
 
-## Das manuelle Aufräumen meldet, dass einige Einträge behalten wurden
+## Das manuelle Aufräumen sagt, manche Einträge seien behalten worden {#manual-prune-says-some-entries-were-kept}
 
 Dieselbe Ursache: Das Aufräumen lässt die alten Sicherungen eines Eintrags mit so einer Anomalie in Ruhe und nennt den Eintrag in seiner Meldung. Alles andere wird wie gewohnt aufgeräumt.
 
-## Der Verlaufsimport meldet ein Repository, das nicht gelesen werden konnte
+## Der Verlaufsimport sagt, ein Repository ließ sich nicht lesen {#history-import-says-a-repository-could-not-be-read}
 
-Nach dem Update liest BombVault einmal die Größen früherer Sicherungen aus jedem Repository. Ein Repository, das zu diesem Zeitpunkt nicht erreichbar war, etwa ein ausgefallener Speicherort oder eine nicht eingehängte Freigabe, steht in der Karte **Anomalien** unter **Einstellungen, Prüfung** und wird einmal am Tag erneut versucht. Seine Einträge lernen in der Zwischenzeit aus neuen Sicherungen.
+Nach dem Upgrade liest BombVault die Größen früherer Sicherungen einmal aus jedem Repository. Ein Repository, das es zu diesem Zeitpunkt nicht erreichen konnte, etwa ein Off-site-Ziel, das ausgefallen war, oder ein Share, der nicht gemountet war, wird in der Karte **Anomalien** unter **Einstellungen, Prüfung** gezählt und einmal am Tag erneut versucht. Seine Einträge lernen in der Zwischenzeit aus neuen Sicherungen.
 
-## Die Speicherplatzwarnung passt nicht zum Unraid-Dashboard
+## Die Warnung zum Plattenplatz passt nicht zum Unraid-Dashboard {#the-disk-space-warning-does-not-match-the-unraid-dashboard}
 
-Auf dem Unraid-User-Share (`/mnt/user`) ist der freie Platz der des ganzen Arrays, nicht der einer einzelnen Platte. Entfernte Repositories werden nur über rclone-Remotes gemessen, die ihren freien Platz melden; S3-, B2-, REST- und SFTP-Repositories haben keine Angabe und stehen in der Karte **Anomalien** als nicht gemessen.
+Auf dem Unraid-User-Share (`/mnt/user`) ist der freie Platz der des ganzen Arrays, nicht einer Platte. Entfernte Speicherorte, die BombVault über rclone erreicht, etwa SFTP, die Hetzner Storage Box, SMB, WebDAV oder ein Cloud-Laufwerk, werden gemessen, wenn die Gegenseite ihren freien Platz meldet, und ebenso eine von Hand eingetippte `sftp:`-Adresse. S3-, B2- und REST-Repositories haben keinen Wert: Ihr Speicherort sagt **Größe unbekannt**, und die Karte **Anomalien** listet sie als nicht gemessen.
 
-## Ein KI-Assistent verbindet sich nicht
+## Ein KI-Assistent kann sich nicht verbinden {#an-ai-assistant-cannot-connect}
 
-Die Seite [MCP-Server](mcp.md#troubleshooting) listet auf, was jeder Statuscode und jede Ablehnung des MCP-Endpunkts bedeutet und was du dagegen tun kannst.
+Die Seite [MCP-Server](mcp.md#troubleshooting) listet auf, was jeder Statuscode und jede Ablehnung des MCP-Endpunkts bedeutet und was man dagegen tut.
 
-## Der Container startet ständig neu oder wirkt ungesund
+## Der Container startet ständig neu oder wirkt ungesund {#the-container-keeps-restarting-or-looks-unhealthy}
 
-BombVault meldet gesund/ungesund aus seinem eigenen `/api/health`. Ein Auto-Heal-Werkzeug (wie Autoheal) kann ihn automatisch neu starten, falls sich die Engine je verklemmt. Prüfe das Container-Log und die Karte **Host-Integration** auf die zugrunde liegende Ursache.
+BombVault meldet gesund/ungesund über sein eigenes `/api/health`. Ein Auto-Heal-Werkzeug (etwa Autoheal) kann es automatisch neu starten, falls die Engine je hängt. Sieh dir das Container-Protokoll und die Karte **Host-Integration** an, um die Ursache zu finden.
 
-## Immer noch festgefahren?
+## Ein Speicherort lässt sich nicht speichern {#location-refused}
 
-- Lies die vollständigen Seiten [Konfiguration](configuration.md) und [Off-site & Wiederherstellung](offsite-recovery.md).
-- Frage im [Unraid-Support-Thread](https://forums.unraid.net/topic/199509-support-junkerderprovinz-bombvault/).
-- Öffne ein [GitHub-Issue](https://github.com/junkerderprovinz/bombvault/issues).
+BombVault prüft einen Ort, bevor es ihn speichert, und die Ablehnung sagt in einem Satz warum. Die üblichen:
+
+- **„This location lies inside another repository or target, or contains one.“** Ein Repository in einem Repository würde beide kaputt machen. Die Meldung nennt den anderen Ort. Wähle einen anderen Ordner oder entferne jenen zuerst.
+- **Es ist ein Repository, das du eingerichtet hast.** Der Ort ist eine der Zeilen unter **Repositories** oder liegt in oder um eine. Wähle einen anderen Ort oder entferne dieses Repository zuerst.
+- **Derselbe Ort wie der eigene Ordner eines Bereichs.** Eine Kopie auf den eigenen Ordner eines Bereichs würde bei jedem Lauf seine Sicherungen auf sich selbst kopieren und wird daher abgelehnt. Wähle einen anderen Ort oder siehe [Der eigene Ordner eines Bereichs](offsite-recovery.md#own-folder).
+- **„That is not an off-site target of this domain“** kam von einem Link auf einen Speicherort, der entfernt wurde. Eine aktuelle Version räumt diese beim Start und bei einem Import auf. Siehst du es trotzdem, aktualisiere BombVault.
+- **Ein vollständiger Host-Pfad** wie `/mnt/user/backups`. BombVault läuft in einem Container, es will also den Pfad unterhalb von Host Data, `user/backups`, und die Meldung nennt den, der einzugeben ist.
+
+## Ein entfernter Speicherort sagt, sein Repository sei weg {#repository-gone}
+
+Ein Ort, der Sicherungen hielt und plötzlich kein Repository mehr hat, bekommt nicht von selbst ein neues, leeres, denn dieses würde das echte verdecken, sobald eine Platte wieder da ist. Ein rest-server, dessen Platte nicht gemountet wurde, ist die übliche Ursache, mounte die Platte also wieder und führe die Sicherung oder Kopie noch einmal aus. Nur wenn du das alte Repository absichtlich geleert oder gelöscht hast, drücke auf der Seite des Ortes **Hier ein neues Repository anlegen**. Es beginnt für jeden Bereich dieses Ortes auf einmal von vorn.
+
+## Eine Cloud-Anmeldung ist abgelaufen {#cloud-sign-in-expired}
+
+Der Test oder die nächste Kopie sagt dann, dass die Anmeldung abgelaufen ist. **Verbindung ändern** auf der Seite des Ortes meldet neu an.
+
+- **Box, Jottacloud und andere mit Einmal-Refresh-Tokens:** BombVault behält das Token, das rclone erneuert hat, auch über Neustarts hinweg und im Recovery-Kit. Nach einer Wiederherstellung aus einer älteren Einstellungssicherung kann das darin liegende Token abgelaufen sein, melde dich also noch einmal an. Das Repository bleibt, wie es ist.
+- **iCloud Drive:** Apple beendet die Anmeldung nach 30 Tagen. Es braucht ein neues Trust-Token und Cookies aus `rclone config`.
+- **OneDrive:** Eine Anmeldung mit mehreren Laufwerken fragt, welches genutzt werden soll, ein Ort ohne Wahl bleibt also unbrauchbar, bis du eines wählst. Zu OneDrive Business und Google Drive siehe den Hinweis zu bereinigten Daten unter [Speicherorte](offsite-recovery.md#destinations).
+
+## „The off-site copy of the last backup is still running“ {#copy-still-running}
+
+Die Sicherung davor ist fertig, und ihre Kopie ist noch unterwegs, was eine neue Sicherung dieses Bereichs blockiert. Warte, bis der Statuskopf nicht mehr **Off-site-Kopie läuft** sagt. Die Knöpfe, die eine Sicherung starten, sagen dasselbe, solange sie warten. Die erste Kopie an einen neuen Ort kann Stunden dauern, siehe das [S3-Beispiel](offsite-recovery.md#example-s3).
+
+## Eine ZFS-Replik hält an, weil das Ziel neuere Snapshots hat {#replica-target-newer}
+
+Das Ziel hält Snapshots, die neuer sind als der neueste, den es mit diesem Server teilt, zum Beispiel weil das Dataset hier zurückgerollt oder die Kopie auf dem Ziel verändert wurde. Die Karte Replik und der Laufverlauf nennen den Snapshot unter **Ziel zurückrollen auf**. Führe `zfs rollback -r` auf diesen Snapshot auf dem Ziel aus, für jedes Dataset, das der Lauf nennt, und drücke **Jetzt replizieren**. Siehe [Wie lange Snapshots bleiben](zfs-datasets.md#replica-retention).
+
+## Eine VM mit Unraid-Snapshots scheitert und nennt eine Datei {#vm-chain}
+
+BombVault folgt der Backing-Chain jeder Disk und sichert jede Datei darin. Eine Chain, der man nicht bis zum Ende folgen kann, lässt die Sicherung scheitern, statt einen Teil der Disk auszulassen, und die Meldung nennt die Datei. Prüfe, dass die Datei unterhalb von `/mnt` existiert und der Snapshot im VM Manager noch aufgelistet ist. Eine Datei außerhalb von Host Data lässt sich gar nicht lesen. Siehe [VMs mit Unraid-Snapshots](vm-backup-ssh-setup.md#unraid-snapshots).
+
+## Off-site-Kopien sind nach einem Neuaufbau pausiert {#copies-paused}
+
+Nach **Sicherungen entdecken** oder dem Notfall-Assistenten ohne wiederhergestellte Einstellungen warten die Off-site-Kopien jedes neu aufgebauten Bereichs, weil BombVault nicht mehr weiß, welche Einträge du ausgelassen hast. Die Übersicht sagt das. Drücke **Vorgabe bestätigen** in **Speicherorte je Bereich**, prüfe die Vorschau und lass aus, was draußen bleiben soll. Der Import einer Einstellungsdatei beendet die Pause nicht. Siehe [Nach einem Neuaufbau](offsite-recovery.md#after-a-rebuild).
+
+## Benachrichtigungen kommen nicht an {#notifications-do-not-arrive}
+
+Fang mit **Test senden** unter **Einstellungen, Benachrichtigungen** an. Die Zeile unter der Karte sagt, was passiert ist.
+
+- **Es wird gar nichts gesendet.** Prüfe **Benachrichtigen**. Bei **Nie** geht nichts hinaus, und bei **Nur bei Fehler** bleibt ein guter Lauf still. Bei eingeschaltetem **Geplante Läufe zusammenfassen** sendet ein geplanter Lauf an seinem Ende eine Zusammenfassung.
+- **Eine neue Adresse.** Nachdem du den Server von Matrix, Gotify oder E-Mail geändert hast, fragt das Feld wieder nach dem Token oder Passwort, und die neue Adresse wird erst gespeichert, wenn du es eintippst. BombVault sendet das alte Geheimnis nicht an einen neuen Ort.
+- **Gotify** sagt, der Server habe das App-Token abgelehnt: Kopiere es noch einmal aus der Anwendung in Gotify. Die **Server-URL** ist die Basisadresse, ohne `/message`.
+- **Webhook:** Prüfe, ob das **Webhook-Format** zum Dienst passt. Eine Discord-Adresse braucht **Discord**, und ntfy braucht **ntfy**.
+- **Unraid-Benachrichtigungen** laufen über die Host-SSH-Verbindung, teste die also zuerst unter **Einstellungen, Anbindungen**. Auf einer anderen Plattform bleiben sie aus, und die Karte sagt das.
+- **Eine Benachrichtigungsmail kommt nie an.** Prüfe **Verschlüsselung** gegen den Port, meist **STARTTLS** auf 587 oder **TLS (implicit)** auf 465.
+
+Die Healthchecks-Pings hängen von alldem nicht ab, siehe [Healthchecks](notifications.md#healthchecks).
+
+## Die Android-App kann einen Server nicht öffnen {#android-cannot-open}
+
+Der Startbildschirm sagt auf der Karte des Servers warum:
+
+- **Nicht verbunden:** Weder die Adresse des Servers noch das Relay antwortet. Bei **Kein Relay** erreicht die App einen Server nur unter seiner eigenen Adresse.
+- **Zertifikat prüfen:** Der Server zeigt ein anderes Zertifikat als das, dem du vertraut hast. Die App öffnet ihn erst, nachdem du dem neuen vertraust, stelle also sicher, dass die Änderung von dir kam.
+- **Anmeldung nötig:** Ein über seine Adresse hinzugefügter Server fragt nach dem Passwort. Siehe auch [Ein Handy landet auf der Login-Seite](#a-phone-lands-on-the-login-page).
+- **Der Schlüssel hat sich geändert:** Der Startbildschirm zeigt den Fingerabdruck des neuen Schlüssels, und die Seite öffnet sich erst, nachdem du ihm vertraust. Siehe [Unterwegs](android.md#away).
+
+## Ein anderer Benutzer kann das lokale Repository nicht lesen {#repository-permissions}
+
+Das lokale Repository bleibt für andere Benutzer lesbar, etwa einen Sync-Benutzer über SMB. Vor 10.4.1 konnten Dateien, die ein Aufräumen, Tag, Pull, Bereichsumzug, Löschen oder Stack-Sicherung geschrieben hatte, bis zur nächsten Nacht unlesbar bleiben. Aktualisiere BombVault, dann sind sie sofort lesbar. Das Selbstbackup-Repository bleibt absichtlich nur für root lesbar, weil es die Einstellungen von BombVault enthält.
+
+## Immer noch nicht weiter? {#still-stuck}
+
+- Lies die vollständigen Seiten [Konfiguration](configuration.md) und [Off-site und Wiederherstellung](offsite-recovery.md).
+- **Fehlerbericht** in der Karte **Hilfe** unter **Einstellungen, Info** lädt eine ZIP für ein GitHub-Issue herunter: den Host-Check, deine Konfiguration ohne jedes Geheimnis, die letzten Läufe, was als Nächstes geplant ist, und das jüngste Protokoll seit dem letzten Start des Containers. Sie enthält auch den letzten Dump jeder Datenbank, die ZFS-Einträge mit ihren Mounts, die offenen Anomalien und wie viele MCP-Schlüssel es gibt. Passwörter, Tokens und die rclone-Konfiguration werden entfernt, und das Paket sagt das in seinem eigenen Manifest. Sie braucht ein Login-Passwort. Bei einem Absturz, der den Container neu gestartet hat, sieh dir `docker logs` an.
+- Frag im [Unraid-Supportthread](https://forums.unraid.net/topic/199509-support-junkerderprovinz-bombvault/).
+- Eröffne ein [GitHub-Issue](https://github.com/junkerderprovinz/bombvault/issues).

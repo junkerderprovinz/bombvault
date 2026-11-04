@@ -1,260 +1,428 @@
-# Off-site & Wiederherstellung
+# Off-site und Wiederherstellung
 
 !!! note "Off-site-Kopien warten nach einem Neuaufbau"
-    Baut der Notfall-Assistent oder **Sicherungen entdecken** Einträge ohne die alten Einstellungen neu auf, pausieren die Off-site-Kopien dieser Bereiche, bis ihre Vorgabe bestätigt ist. Siehe [Nach einem Neuaufbau](#after-a-rebuild).
+    Wenn der Notfall-Assistent oder **Sicherungen entdecken** Einträge ohne die alten Einstellungen neu aufbaut, pausieren die Off-site-Kopien dieser Bereiche, bis ihre Vorgabe bestätigt ist. Siehe [Nach einem Neuaufbau](#after-a-rebuild).
 
-Lokale Sicherungen schützen dich vor einem verlorenen Container oder einem missratenen Update. Off-site-Kopien und ein getestetes Recovery-Kit schützen dich vor dem Verlust der ganzen Box, vor Ransomware oder einem Brand. Diese Seite behandelt Speicherorte und Off-site-Kopien, den Schutz einer Kopie vor Manipulation, den Nachweis, dass du wiederherstellen kannst, das Koppeln mehrerer Server und die Wiederherstellung, wenn BombVault selbst weg ist.
+Lokale Sicherungen schützen dich vor einem verlorenen Container oder einem schlechten Update. Off-site-Kopien und ein getestetes Recovery-Kit schützen dich vor dem Verlust der ganzen Box, vor Ransomware oder einem Brand. Diese Seite behandelt Speicherorte und Off-site-Kopien, wie man eine Kopie manipulationssicher macht, wie du beweist, dass du wiederherstellen kannst, das Koppeln mehrerer Server und wie du alles zurückholst, wenn BombVault selbst weg ist.
 
 ## Off-site-Kopien {#off-site-copies}
 
-Behalte die schnelle lokale Sicherung und füge einen oder mehrere Speicherorte außer Haus hinzu. BombVault kopiert neue Snapshots mit `restic copy` auf Best-Effort-Basis dorthin, sodass ein Off-site-Aussetzer die lokale Sicherung nie fehlschlagen lässt. So bleibt das lokale Repo primär und das Off-site-Repo eine Kopie, das primäre Repo eines Bereichs muss aber gar nicht lokal sein; siehe [Entfernte primäre Repositories](#remote-primary-repositories) weiter unten, um direkt auf S3, einen rest-server und Ähnliches zu sichern, statt dorthin zu kopieren.
+Behalte die schnelle lokale Sicherung und füge einen oder mehrere Speicherorte außer Haus hinzu. BombVault kopiert neue Snapshots mit `restic copy` nach bestem Bemühen dorthin, ein Off-site-Schluckauf lässt die lokale Sicherung also nie scheitern. In dieser Form schreibt jeder Bereich zuerst in seinen eigenen Ordner, und das Off-site-Repo ist eine Kopie. Der eigene Ordner muss nicht auf diesem Server liegen: Wie du ihn in einem Speicherort wie S3 oder einem rest-server hältst, steht unter [Der eigene Ordner eines Bereichs](#own-folder).
 
-- **Mehrere Speicherorte pro Bereich.** Jeder Bereich (Container, VMs, Flash, Selbstbackup, Ordner und ZFS-Datasets) kann gleichzeitig auf mehrere Speicherorte außer Haus kopieren, sodass du zum Beispiel einen rest-server bei einem Freund und einen S3-Bucket parallel halten kannst. Die Karte **Speicherorte je Bereich** auf der Seite Speicherorte schaltet jede Linie von einem Bereich zu einem Ort ein oder aus.
-- **Wann Kopien laufen.** Die Karte **Kopieren** eines Orts legt **Wann kopieren** fest: **Nach jeder Sicherung** oder nach einem eigenen Plan, der die Snapshots sammelt und zu festen Zeiten kopiert. Unter **Einstellungen, Zeitplan, Off-site-Kopien pro Bereich** gibt **Ausnahme** einem Bereich einen eigenen Kopierplan. **Jetzt replizieren** in der Karte **Off-site-Kopie** eines Bereichs unter **Einstellungen, Speicherorte** startet eine Kopie sofort.
-- **Die Aufbewahrung** stellst du pro Speicherort unter **Wie lange aufheben** ein, sodass du Off-site-Kopien länger als Archiv behalten kannst. Die Kopie im Off-site-Feld eines Bereichs folgt ihr wie jede andere Kopie, und ein Bereich kann unter **Regeln je Bereich** eigene Werte haben. Steht alles auf null, kürzt BombVault Off-site-Snapshots nie.
-- **Bandbreitenlimits** (**Off-site-Bandbreite** unter **Einstellungen, Speicherorte** oder die Karte **Kopieren** eines Orts) begrenzen die restic-Upload-/Download-Rate, damit Kopien dein WAN nicht auslasten.
-- Während eine Kopie läuft, sagt der Statuskopf der Übersicht **Off-site-Kopie läuft**. Das ist eine Aktivitätsanzeige, kein Prozentbalken, weil `restic copy` keinen maschinenlesbaren Fortschritt liefert.
+- **Mehrere Speicherorte pro Bereich.** Jeder Bereich (Container, VMs, Flash, Selbstbackup, Ordner und ZFS-Datasets) kann auf mehrere Off-site-Speicherorte zugleich kopieren, sodass du zum Beispiel einen rest-server bei einem Freund und einen S3-Bucket parallel halten kannst. Die Karte **Speicherorte je Bereich** auf der Seite Speicherorte schaltet jede Linie von einem Bereich zu einem Ort an oder aus.
+- **Wann Kopien laufen.** Die Karte **Kopieren** eines Speicherorts legt **Wann kopieren** fest: **Nach jeder Sicherung** oder nach einem eigenen Plan, der die Snapshots sammelt und zu festen Zeiten kopiert. Unter **Einstellungen, Zeitplan, Off-site-Kopien pro Bereich** gibt **Ausnahme** einem Bereich einen eigenen Kopierplan.
+- **Die Karte Off-site-Kopien.** Unter **Einstellungen, Speicherorte** hat jeder Bereich mit einer Off-site-Kopie eine Zeile in **Off-site-Kopien**, mit **Verbindung testen**, **Jetzt replizieren**, um eine Kopie auf Abruf zu starten, und **Einrichten** oder **Bearbeiten**. Die übrigen Kopiereinstellungen des Bereichs öffnen sich von dort in seinem Fenster.
+- **Aufbewahrung** wird pro Speicherort unter **Wie lange aufheben** festgelegt, sodass du Off-site-Kopien als Archiv länger behalten kannst. Die Kopie im Off-site-Feld eines Bereichs folgt ihr wie jede andere Kopie, und ein Bereich kann unter **Regeln je Bereich** eigene Werte behalten. Lauter Nullen kürzen Off-site-Snapshots nie. Siehe [Wie lange aufheben](#keep).
+- **Bandbreitenlimits** (**Off-site-Bandbreite** unter **Einstellungen, Speicherorte** oder die Karte **Kopieren** eines Speicherorts) begrenzen die Upload-/Download-Rate von restic, damit Kopien dein WAN nicht auslasten. Sie werden in KiB/s eingegeben, der Einheit, die restic nimmt, und jedes Feld zeigt dieselbe Rate beim Tippen in MB/s und Mbit/s: 2048 liest sich als etwa 2,0 MB/s (16,8 Mbit/s).
+- **Kompression** ist **Aus**, **Automatisch** (die Vorgabe von restic) oder **Maximum**, an jedem Speicherort eingestellt und für einen Bereich unter dessen Regeln dort. Sicherungen, Kopien und Aufräumen schreiben damit, und das Recovery-Kit nennt sie, damit einfaches restic genauso weiterschreiben kann.
+- **Streaming zuerst.** Während ein Mediaserver wie Plex, Jellyfin oder Emby streamt, laden Kopien mit einem niedrigeren Limit hoch und kehren einige Minuten nach dem Ende des Streams zum normalen zurück. Die Karte **Streaming** auf der Seite Speicherorte hat **Off-site-Kopien beim Streaming bremsen**, **Mediaserver** (Container mit Plex, Jellyfin oder Emby im Image-Namen, bis du wählst), **Stream ab (Mbit/s)**, **Upload-Grenze beim Streaming (KiB/s)** und **Zurück zum Normalen nach (Min.)**. BombVault liest den Datenverkehr aus Docker, ein Mediaserver im Host-Netzwerk lässt sich also nicht messen. REST, S3, B2, Azure, Google Cloud, Swift und rclone über HTTP werden mitten in einer Kopie langsamer. SFTP sowie lokale oder gemountete Ordner übernehmen das niedrigere Limit bei ihrem nächsten Kopierschritt.
+- **Cold Storage (S3).** Ein S3-Speicherort kann eine günstigere **Speicherklasse** nutzen, die restic noch sofort lesen kann, etwa Standard-IA, One Zone-IA, Intelligent-Tiering oder Glacier Instant Retrieval. Glacier Flexible Retrieval und Deep Archive bleiben außen vor, weil restic daraus nicht wiederherstellen kann. Ein rclone-Remote legt seine Klasse in der rclone-Konfiguration fest.
+- **Wachstumsbudget.** **Wachstumsbudget (GB, 0 = aus)** im Kopierfenster eines Bereichs schlägt Alarm, wenn das Repository über diese Größe hinauswächst. Es löscht nie etwas und passt daher zu einer Append-only-Kopie, die von hier aus nichts aufräumt.
+- Während eine Kopie läuft, sagt der Statuskopf der Übersicht **Off-site-Kopie läuft**. Das ist eine aktive Anzeige, kein Prozentbalken, weil `restic copy` keinen maschinenlesbaren Fortschritt liefert.
 
 !!! note "Von jedem Ort wiederherstellen"
-    Jeder Eintrag listet seine Sicherungen im Reiter **Sicherungen** als eine Zeitleiste über alle Orte, an denen eine Sicherung liegt. Eine nach B2 kopierte Sicherung erscheint einmal, markiert mit jedem Ort, der sie hält. Eine Wiederherstellung nimmt den ersten Ort, den sie erreicht, beginnend mit dem Repository, in das der Eintrag geschrieben wird, und du kannst pro Snapshot einen anderen Ort wählen. Speicherorte außer Haus werden erst gelesen, wenn du **Prüfen** klickst, weil das Auflisten von Cloud-Speicher eine Weile dauert. Das Löschen an einem Ort prüft zuerst die anderen und sagt, ob es die letzte Kopie war.
+    Jeder Eintrag listet seine Sicherungen als eine Zeitleiste über alle Orte auf, an denen eine Sicherung liegt, auf seinem Tab **Sicherungen**. Eine Sicherung, die nach B2 kopiert wurde, erscheint einmal, markiert mit jedem Ort, der sie hält. Eine Wiederherstellung nimmt den ersten Ort, den sie erreichen kann, beginnend mit dem Repository, in das der Eintrag schreibt, und du kannst pro Snapshot einen anderen Ort wählen. Off-site-Speicherorte werden nur gelesen, wenn du auf **Prüfen** klickst, weil das Auflisten von Cloud-Speicher eine Weile dauert. Das Löschen an einem Ort prüft zuerst die anderen und sagt, ob es die letzte Kopie war. Siehe [Wiederherstellung](restore.md).
 
 ## Speicherorte {#destinations}
 
-Ein Speicherort ist ein Ort, an den Sicherungen gehen: ein lokaler Ordner, eine Freigabe, ein eigener Server oder ein Cloud-Dienst. Er wird einmal eingerichtet und dient dann jedem Bereich. Öffne **Speicherorte** über ihre Einstellungskachel oder schalte dort **Auch in der Seitenleiste zeigen** ein, um sie anzuheften.
+Ein Speicherort ist ein Ort, an den Sicherungen gehen: ein lokaler Ordner, ein Share, ein eigener Server oder ein Cloud-Dienst. Er wird einmal eingerichtet und bedient dann jeden Bereich. Öffne **Speicherorte** über seine Einstellungskachel oder schalte dort **Auch in der Seitenleiste zeigen** ein, um ihn anzuheften.
 
-**Speicherort hinzufügen** öffnet ein Fenster mit vier Schritten:
+![Die Seite Speicherorte: die Liste der Orte und der Ablauf, welcher Bereich wohin geht.](assets/screenshots/storage/locations-dark.png#only-dark)
+![Die Seite Speicherorte: die Liste der Orte und der Ablauf, welcher Bereich wohin geht.](assets/screenshots/storage/locations-light.png#only-light)
 
-1. **Anbieter.** Jeder Dienst steht mit seinem Logo da, mit einer Suche oben rechts im Fenster, in Gruppen: Speicherdienste mit S3-Buckets (Backblaze B2, Wasabi, Cloudflare R2, Hetzner Object Storage, Amazon S3 und andere), eigene S3-Server (Garage, SeaweedFS, RustFS, Silo, Ceph, JuiceFS, Versity S3 Gateway), eigener Server und Freigaben (rest-server, Hetzner Storage Box, SFTP, SMB, WebDAV, ein eingehängter Pfad), Cloud-Speicher (OneDrive, Google Drive, Dropbox, pCloud, Nextcloud und der Rest, den rclone kann) und die Empfangsserver deiner Gruppe. Jeder sagt, wie gut er sich für Sicherungen eignet: Cloud-Laufwerke bremsen bei vielen Anfragen, die erste Sicherung und das Aufräumen dauern dort also länger.
-2. **Anmelden.** Die Felder hängen vom Dienst ab: ein Zugangsschlüssel für S3, Benutzer und Passwort für WebDAV und SMB, ein App-Passwort, wo die Zwei-Faktor-Anmeldung die normale blockiert, BombVaults öffentlicher SSH-Schlüssel für SFTP und die Storage Box oder ein Token für Dienste, die sich über einen Browser anmelden. Für diese zeigt das Fenster einen `rclone authorize`-Befehl, den du auf einem Rechner mit Browser ausführst; das ausgegebene Token kommt ins Feld. **Verbindung testen** prüft die Anmeldung, bevor etwas gespeichert wird. Danach listet das Fenster die Ordner am Speicherort, mit **Neuer Ordner** zum Anlegen und dem freien Platz, wo der Dienst ihn meldet. Ein leerer Ordner ist am sichersten; BombVault legt darin einen Ordner pro Bereich an.
-3. **Schutz.** Das Fenster sagt offen, was der Dienst kann. Ein rest-server im Append-only-Modus verweigert das Löschen, und der Manipulationstest prüft das. Ein S3-Bucket kann mit Versionierung und Object Lock alte Versionen halten, was BombVault noch nicht prüfen kann. Ein Cloud-Laufwerk kann das Löschen gar nicht verweigern: Wer in den Server kommt, kommt auch an diese Kopie. Schalte **Löschschutz (append-only)** nur ein, wo die Gegenseite das Löschen wirklich verweigert; BombVault räumt dort dann nie auf. **Für den Ernstfall** sagt, was das Recovery-Kit zu diesem Ort enthält.
-4. **Für welche Bereiche.** Wähl die Bereiche, die hier sichern. Die erste Kopie bringt den ganzen Verlauf mit. Einträge, die ihre Speicherorte selbst gewählt haben, bekommen den neuen nicht von selbst, und das Fenster nennt sie.
+**Speicherort hinzufügen** öffnet ein Fenster in vier Schritten:
 
-Manche Dienste brauchen bei der Anmeldung etwas mehr:
+1. **Anbieter.** Jeder Dienst wird mit seinem Logo aufgelistet, mit einer Suche oben rechts im Fenster, in Gruppen: **Lokal** für eine Platte oder einen Share, die an diesen Server angeschlossen sind, **NAS oder Server** (rest-server, Hetzner Storage Box, SFTP, SMB, WebDAV und andere), **S3-Dienst** (Backblaze B2, Wasabi, Cloudflare R2, Hetzner Object Storage, Amazon S3 und andere), dein eigener S3-Server (Garage, SeaweedFS, RustFS, Silo, Ceph, JuiceFS, Versity S3 Gateway), **Cloud-Speicher** (OneDrive, Google Drive, Dropbox, pCloud, Nextcloud und der Rest, den rclone unterstützt) und **Aus deiner Gruppe**, die Empfangsserver deiner Gruppe. Jeder sagt, wie gut er sich für Sicherungen eignet: Cloud-Laufwerke werden bei vielen Anfragen langsamer, die erste Sicherung und das Aufräumen dauern dort also länger. Für einen Dienst, den keine Kachel abdeckt, nimmt die Kachel **rclone** unter **Eigene rclone-Konfiguration** Remotes, die aus einer rclone.conf eingefügt werden.
+2. **Anmelden.** Die Felder hängen vom Dienst ab: ein Zugangsschlüssel für S3, ein Benutzer und Passwort für WebDAV und SMB, ein App-Passwort, wo die Zwei-Faktor-Anmeldung das normale blockiert, der öffentliche SSH-Schlüssel von BombVault für SFTP und die Storage Box, oder ein Token für Dienste, die sich über einen Browser anmelden. Dafür zeigt das Fenster einen Befehl `rclone authorize`, den du auf einem Rechner mit Browser ausführst, und das Token, das er ausgibt, kommt ins Feld. Hast du für den Dienst schon eine [gespeicherte Anmeldung](#sign-ins), wählt **Gespeicherte Zugangsdaten** sie statt **Neue Schlüssel**. **Verbindung testen** prüft die Anmeldung, bevor etwas gespeichert wird. Das Fenster listet dann die Ordner auf dem Speicherort auf, mit **Neuer Ordner**, um einen anzulegen, und dem freien Platz, wo der Dienst ihn meldet. Ein leerer Ordner ist am sichersten. BombVault legt darin einen Ordner pro Bereich an.
+3. **Schutz.** Das Fenster sagt deutlich, was der Dienst kann. Ein rest-server im Append-only-Modus verweigert das Löschen, und der Manipulationstest prüft das. Ein S3-Bucket kann alte Versionen mit Versionierung und Object Lock behalten, was BombVault noch nicht prüfen kann. Ein Cloud-Laufwerk kann das Löschen gar nicht verweigern: Wer in den Server kommt, kommt auch an diese Kopie. Schalte **Löschschutz (append-only)** nur dort ein, wo die Gegenseite das Löschen wirklich verweigert. BombVault räumt dort dann nie auf. **Für den Notfall** sagt, was das Recovery-Kit für diesen Ort enthält.
+4. **Für welche Bereiche.** Wähle die Bereiche, die hierher sichern. Die erste Kopie bringt den ganzen Verlauf mit. Einträge, die eigene Speicherorte gewählt haben, bekommen den neuen nicht von selbst, und das Fenster nennt sie.
 
-- **SFTP und die Storage Box.** **Schlüssel hinterlegen** legt BombVaults öffentlichen Schlüssel mit dem **Passwort des Kontos** auf dem Server ab. Das Passwort dient nur dieser einen Anmeldung und wird nirgends gespeichert. Darunter steht der Befehl, um es von Hand zu erledigen. Der Test zeigt den **Serverschlüssel** mit seinem Fingerabdruck; BombVault merkt ihn sich und lehnt den Server ab, wenn er später einen anderen zeigt.
-- **S3-Schlüssel für einen einzelnen Bucket**, etwa ein Objekt-Token von Cloudflare R2 oder ein eingeschränkter AWS-Schlüssel, dürfen die anderen Buckets nicht auflisten. Trag den Bucket unter **Bucket** ein, dann öffnen der Test und die Ordnerliste genau diesen Bucket.
-- **SMB-Server, die ihre Freigaben nicht auflisten,** bekommen unter **Freigabe** den Namen einer Freigabe, und der Test öffnet sie direkt.
-- **FTP** fragt nach der **Verschlüsselung**: **Keine**, **Explizites TLS (FTPES)** oder **Implizites TLS (FTPS, Port 990)**.
-- **OneDrive und Zoho WorkDrive.** Öffnet eine Anmeldung mehrere Laufwerke oder Arbeitsbereiche, fragt das Fenster, wohin die Sicherungen gehen.
-- **Ein rest-server mit selbstsigniertem Zertifikat.** Leg das Zertifikat als PEM-Datei in den Ordner `certs` in BombVaults Datenordner (`/config/certs` im Container, `appdata/bombvault/certs` unter Unraid). Sicherungen, Kopien und der Test des Löschschutzes vertrauen ihm ohne Neustart.
+![Speicherort hinzufügen: der erste Schritt, mit jedem Anbieter als Kachel.](assets/screenshots/storage/add-providers-dark.png#only-dark)
+![Speicherort hinzufügen: der erste Schritt, mit jedem Anbieter als Kachel.](assets/screenshots/storage/add-providers-light.png#only-light)
 
-S3-Dienste laufen über restics eigenes S3-Backend, und nur damit greifen Speicherklasse und Object Lock. Jeder andere Dienst läuft über das rclone, das BombVault mitbringt, und sein Remote erscheint dann in der Karte **Off-site (rclone)** unter **Einstellungen, Speicherorte**. Ein Einstellungsexport enthält die Speicherorte; mit Zugangsdaten enthält er auch ihre Anmeldung.
+![Speicherort hinzufügen: der Schritt Anmelden nach einem erfolgreichen Test.](assets/screenshots/storage/add-signin-dark.png#only-dark)
+![Speicherort hinzufügen: der Schritt Anmelden nach einem erfolgreichen Test.](assets/screenshots/storage/add-signin-light.png#only-light)
 
-Der Ordner auf diesem Server heißt überall **Lokal**: auf den Seiten der Speicherorte, im Fluss, an einem Eintrag und unter Wiederherstellen. Gibt es auf diesem Server mehrere Ordner, trägt jeder seinen eigenen Namen. Ein Speicherort, den das Off-site-Feld eines Bereichs anlegt, heißt nach seinem Ort, also nach dem letzten Ordner seiner Adresse oder, wenn sie keinen hat, nach seinem Server, und bekommt eine Nummer, wenn schon ein anderer Ort so heißt. Ein Name, den du ihm auf seiner Seite gibst, bleibt. Stehen zwei Orte mit gleichem Namen nebeneinander, trägt jeder seinen Server oder Ordner dazu.
+Manche Dienste verlangen bei der Anmeldung etwas mehr:
 
-Jeder Speicherort hat eine eigene Seite:
+- **SFTP und die Storage Box.** **Schlüssel hinterlegen** legt den öffentlichen Schlüssel von BombVault mit dem **Passwort des Kontos** auf dem Server ab, das für diese eine Anmeldung genutzt und nirgends gespeichert wird. Der Befehl, es von Hand zu tun, steht darunter. Der Test zeigt den **Serverschlüssel** mit seinem Fingerabdruck. BombVault merkt ihn sich und lehnt den Server ab, wenn er später einen anderen zeigt.
+- **S3-Schlüssel für einen einzelnen Bucket**, etwa ein Cloudflare-R2-Objekt-Token oder ein eingeschränkter AWS-Schlüssel, listen die anderen Buckets unter Umständen nicht auf. Tippe den Bucket in **Bucket** ein, und der Test und die Ordnerliste öffnen diesen Bucket.
+- **S3-Regionen und -Adressen.** Die Region wird aus einem Endpunkt gelesen, der sie nennt (AWS, Backblaze B2, Hetzner, Scaleway, OVH, Wasabi), Garage beginnt mit seiner eigenen Standardregion, und IDrive e2 verlangt den Endpunkt, den sein Dashboard zeigt. Eine Adresse, die mit dem Bucket darauf eingefügt wird, so wie das R2-Dashboard sie zeigt, füllt Server und Bucket aus. Ein Bucket, der aus dem Ordner-Browser angelegt wird, landet in der Region, die das Formular nennt.
+- **Speicherklasse.** Die Auswahl bietet nur die Klassen an, die der Dienst nimmt, und **Weitere Einstellungen** zeigt nur die Optionen, die einen neuen Bucket prägen.
+- **Google Drive und OneDrive.** Aufgeräumte Daten werden endgültig gelöscht, statt in den Papierkorb zu gehen, wo sie weiter auf die Quota zählen würden. Ein geteiltes Google-Laufwerk kommt unter **Weitere Einstellungen**.
+- **SMB-Server, die ihre Freigaben nicht auflisten,** nehmen unter **Freigabe** den Namen einer, und der Test öffnet diese Freigabe direkt.
+- **FTP** fragt nach seiner **Verschlüsselung**: **Keine**, **Explizites TLS (FTPES)** oder **Implizites TLS (FTPS, Port 990)**.
+- **OneDrive und Zoho WorkDrive.** Öffnet eine Anmeldung mehrere Laufwerke oder Arbeitsbereiche, fragt das Fenster, in welches die Sicherungen gehen.
+- **Ein rest-server mit selbstsigniertem Zertifikat.** Lege das Zertifikat als PEM-Datei in den Ordner `certs` im Datenordner von BombVault (`/config/certs` im Container, `appdata/bombvault/certs` auf Unraid). Sicherungen, Kopien und der Löschschutztest vertrauen ihm ohne Neustart.
 
-- **Verbindung** mit seinem Namen, dem Schalter **Verfügbar** (aus heißt, BombVault schreibt hier nicht mehr, und Einträge, die hierher sichern, schlagen mit einer klaren Meldung fehl, statt woanders zu landen), dem Ordner, der Kompression, der Speicherklasse und **Außer Haus**. **Verbindung ändern** testet und speichert eine neue Adresse oder Anmeldung.
-- **Zugangsdaten**: der geteilte Satz oder ein eigener.
-- **Löschschutz**, mit **Löschschutz jetzt testen** und der Angabe, wer diese Kopie aufräumt.
-- **Kopieren**: wann kopiert wird und die Upload- und Download-Grenzen.
-- **Wie lange aufheben**: **Kurz**, **Ausgewogen**, **Lang** oder **Eigene Werte**, mit einer Zeitleiste, welche Sicherungen die Regel behält. **Vor dem Verkürzen nachfragen** fragt, bevor eine kürzere Regel Sicherungen löscht, deren einzige Kopie hier liegt.
-- **Regeln je Bereich**: das eigene Repository, die eigene Aufbewahrung oder Kompression eines Bereichs an diesem Ort. **Regeln ändern** öffnet sie, und **Auf den Speicherort zurücksetzen** holt einen Bereich zurück.
-- **Liegt schon unter diesem Speicherort**: Bereiche, deren von Hand eingetippte Adresse in einem Ordner dieses Orts liegt. Eine Übernahme lässt das Repository, wo es ist; Anmeldung, Speicherklasse und Löschschutz kommen dann vom Ort. BombVault prüft vorher, ob die Anmeldung des Orts das Repository öffnet, und hängt ein Append-only-Repository nie unter einen Ort, der nicht append-only ist.
-- Ein Gefäß, das zeigt, wie voll der Ort ist, mit der Marke, wo er voll ist, und wie viele Wochen beim Wachstum der letzten Wochen bleiben. Ein Ort, der seine Größe nicht meldet, zeigt **Größe unbekannt**.
+S3-Dienste laufen über das eigene S3-Backend von restic, wodurch eine Speicherklasse und Object Lock greifen können. Ein rest-server wird von restic direkt erreicht. Jeder andere Dienst läuft über das rclone, das BombVault mitliefert, und sein Abschnitt der rclone-Konfiguration zeigt sich in der Karte **rclone.conf** auf der Seite des Ortes, mit verborgenen Geheimnissen. Ein Einstellungsexport trägt die Speicherorte, und mit eingeschlossenen Zugangsdaten auch deren Anmeldungen.
 
-Ein entfernter Speicherort, der Sicherungen hatte und plötzlich kein Repository mehr hat, etwa ein rest-server, dessen Platte nicht eingehängt ist, bekommt nicht von selbst ein neues, leeres. Seine Seite sagt das, sobald eine Sicherung oder Kopie das Repository vermisst. Häng die Platte wieder ein. Hast du das alte Repository absichtlich geleert, fängt **Hier ein neues Repository anlegen** neu an, für alle Bereiche des Orts und seine benannten Repositorys auf einmal.
+Wird ein Speicherort gespeichert, der schon Sicherungen von Containern, VMs oder Ordnern hält, zum Beispiel einer, den du entfernt hast und neu hinzufügst, wird er diesen Bereichen als nicht angehakte Kopie hinzugefügt. Es wird nichts dorthin kopiert, bis du ihn abhakst, aber **Wiederherstellung** bietet die alten Sicherungen sofort an.
 
-Ein Empfangsserver, den eine andere Instanz deiner Gruppe betreibt, erscheint unter den Anbietern als **Aus deiner Gruppe**; siehe [Empfangsserver](#receiving-server).
+Der Ordner auf diesem Server heißt überall **Lokal**: auf den Speicherseiten, im Ablauf, an einem Eintrag und bei der Wiederherstellung. Bei mehreren Ordnern auf diesem Server geht jeder unter seinem eigenen Namen. Ein Speicherort, den das Off-site-Feld eines Bereichs einrichtet, wird nach seinem Ort benannt, dem letzten Ordner seiner Adresse oder, ohne einen, seinem Server, und bekommt eine Nummer, wenn ein anderer Ort schon so heißt. Jeder Ort lässt sich im Feld **Name** seiner Karte **Verbindung** umbenennen, auch ein Bucket-Ordner, den mehrere Bereiche teilen, und die Kopie, die das Off-site-Feld eines Bereichs beschreibt, und ein Name, den du vergibst, bleibt. Wo zwei Orte mit demselben Namen nebeneinander stehen, trägt jeder seinen Server oder Ordner.
+
+### Die Seite eines Speicherorts {#location-page}
+
+Jeder Speicherort hat eine eigene Seite. Sie zeigt nur die Karten, die für diesen Ort gelten, in dieser Reihenfolge:
+
+![Die Seite eines Speicherorts: Eigene Ordner, Verbindung und Zugangsdaten.](assets/screenshots/storage/location-page-dark.png#only-dark)
+![Die Seite eines Speicherorts: Eigene Ordner, Verbindung und Zugangsdaten.](assets/screenshots/storage/location-page-light.png#only-light)
+
+- **Eigene Ordner**: die Bereiche, die ihre Sicherungen zuerst hierher schreiben. Anmeldung, Schutz und Limits dieses Ortes gelten für sie. **Als eigenen Ordner nutzen** verschiebt den eigenen Ordner weiterer Bereiche hierher, und **Ändern** verschiebt einen wieder weg. Siehe [Der eigene Ordner eines Bereichs](#own-folder).
+- **Sichert direkt hierher**: jeder Bereich, dessen Einträge direkt an diesen Ort sichern statt in ihren eigenen Ordner, und wie viele Einträge es tun. Ein solches direktes Repository übernimmt alle seine Einstellungen von diesem Ort. Eines, auf das nichts mehr sichert, sagt das, und **Entfernen** nimmt es aus der Liste. Die Sicherungen an seinem Ort bleiben. Siehe [Direkte Repositories](#direct-repositories).
+- **Verbindung**: der **Name**, der Schalter **Verfügbar** (aus heißt, BombVault schreibt hier nicht mehr, und Einträge, die hierher sichern, scheitern mit einer klaren Meldung, statt woanders zu landen), der Ordner, **Kompression**, **Speicherklasse** und **Außer Haus**. Auf dem Ort **Lokal** listet sie unter **Eigene Ordner hier** den Ordner jedes Bereichs auf. **Verbindung ändern** testet und speichert eine neue Adresse oder Anmeldung. Melden sich andere Orte mit denselben gespeicherten Zugangsdaten an, sagt das Fenster es, und eine Änderung hier gibt diesem Ort eigene Zugangsdaten, statt die gemeinsamen umzuschreiben.
+- **Zugangsdaten**: welche gespeicherten Zugangsdaten er nutzt (**Meldet sich an mit**), welche anderen Orte sie auch nutzen (**Auch verwendet von**) und **Bearbeiten**, was das Fenster der Zugangsdaten öffnet. Siehe [Zugangsdaten](#sign-ins).
+- **rclone.conf**: der Abschnitt dieses Ortes in der rclone-Konfiguration, für einen Ort, der über rclone läuft.
+- **Löschschutz**, mit **Löschschutz (append-only)**, **Ohne Löschschutz akzeptieren**, **Löschschutz jetzt testen** und **Wer aufräumt**, was sagt, ob BombVault die Kopie und die eigenen Ordner hier aufräumt oder das der Gegenseite überlässt. Ein lokaler Ordner zeigt diese Karte nur, wenn er einen Schutz hat, den du ausschalten kannst. Siehe [Löschschutz](#delete-protection-append-only).
+- **Kopieren**: **Wann kopieren** sowie **Upload-Limit (KiB/s)** und **Download-Limit (KiB/s)**. Ein Ort, der nur eigene Ordner und keine Kopien hält, zeigt die Limits als Karte namens **Bandbreite**.
+- **Wie lange aufheben**: **Kurz**, **Ausgewogen**, **Lang** oder **Eigene Werte**, mit einer Zeitleiste, welche Sicherungen die Regel behält. Siehe [Wie lange aufheben](#keep).
+- **Schon unter diesem Speicherort**: Bereiche, deren von Hand eingetippte Adresse in einem Ordner dieses Ortes liegt. Sie zu übernehmen lässt das Repository, wo es ist. Anmeldung, Speicherklasse und Löschschutz kommen dann vom Ort. BombVault prüft zuerst, dass die Anmeldung des Ortes das Repository öffnet, und lehnt es ab, ein Append-only-Repository unter einen Ort zu stellen, der nicht append-only ist.
+- **Regeln je Bereich**: das eigene Repository, die Aufbewahrung oder Kompression eines Bereichs an diesem Ort. **Regeln ändern** öffnet sie, und **Auf den Speicherort zurücksetzen** holt einen Bereich zurück. Anmeldung, Bandbreite und wann Kopien laufen kommen immer vom Ort.
+- Ein Gefäß, das zeigt, wie voll der Ort ist, mit der Markierung, wo er voll ist, und wie viele Wochen bei dem Wachstum der letzten Wochen übrig sind. Ein Ort, der seine Größe nicht meldet, sagt **Größe unbekannt**.
+
+**Umziehen** und **Speicherort entfernen** stehen unter den Aktionen der Seite, beschrieben unter [Umziehen und entfernen](#move-remove).
+
+Ein entfernter Speicherort, der Sicherungen hielt und plötzlich kein Repository mehr hat, etwa ein rest-server, dessen Platte nicht gemountet wurde, bekommt nicht von selbst ein neues, leeres. Seine Seite sagt das, sobald eine Sicherung oder Kopie das Repository verschwunden findet. Mounte die Platte wieder. Hast du das alte Repository absichtlich geleert, beginnt **Hier ein neues Repository anlegen** von vorn, für jeden Bereich des Ortes und seine Repositories auf einmal.
+
+Ein Empfangsserver, den eine andere Instanz deiner Gruppe betreibt, erscheint unter den Anbietern als **Aus deiner Gruppe**. Siehe [Empfangsserver](#receiving-server).
+
+BombVault prüft seine Speicherorte bei jedem Start. Es richtet, was keine Entscheidung von dir braucht, etwa einen Link auf eine Kopie oder ein Repository, das weg ist, eine Kopie auf dem eigenen Ordner eines Bereichs oder ein direktes Repository, dessen Kopie weg ist, und schreibt für jede Korrektur eine Zeile ins Protokoll. Was keine sichere Korrektur hat, wird nur protokolliert.
+
+![Dieselbe Seite auf einem Handy.](assets/screenshots/storage/location-page-phone-dark.png#only-dark)
+![Dieselbe Seite auf einem Handy.](assets/screenshots/storage/location-page-phone-light.png#only-light)
+
+### Wie lange aufheben {#keep}
+
+Wie lange Sicherungen aufgehoben werden, wird pro Speicherort in seiner Karte **Wie lange aufheben** festgelegt. Die Regel gilt für die Kopien an diesem Ort und die eigenen Ordner, die dort liegen, den Ort **Lokal** eingeschlossen. Ein Bereich kann an einem Ort unter **Regeln je Bereich** eigene Werte behalten, und die gehen der Karte des Ortes für diesen Bereich vor.
+
+Eine Regel behält eine Sicherung pro Tag, Woche, Monat und Jahr, so weit zurück, wie du einstellst, und räumt den Rest nach jeder Sicherung oder Kopie weg:
+
+| Vorgabe | Letzte Sicherungen | Tage | Wochen | Monate | Jahre |
+|---|---|---|---|---|---|
+| **Kurz** | 0 | 7 | 4 | 3 | 0 |
+| **Ausgewogen** | 0 | 7 | 4 | 6 | 1 |
+| **Lang** | 0 | 14 | 8 | 12 | 3 |
+
+**Eigene Werte** legt die fünf Zahlen selbst fest. Eine 0 schaltet diese Zahl ab, und eine Regel mit jeder Zahl auf 0 behält alles. Die Punkte in der Karte zeigen, welche von 40 Beispielsicherungen eine Regel behält, die neueste ganz rechts. Das Beispiel ist für jeden Ort dasselbe, da das Bild gezeichnet wird, bevor BombVault die Sicherungen dort gelesen hat.
+
+**Vor dem Verkürzen nachfragen**, standardmäßig an, fragt nach, bevor eine Änderung gespeichert wird, die weniger Sicherungen behält, und sagt, wie viele der 40 Beispielsicherungen die neue Regel entfernt. Es gilt für jeden Speicherort. **Auf den Speicherort zurücksetzen** unter **Regeln je Bereich** stellt dieselbe Frage.
+
+Ein Ort mit Löschschutz wird von dieser Box aus nie aufgeräumt. Seine Gegenseite behält oder verwirft alte Sicherungen nach ihren eigenen Regeln. Solange ein Eintrag eine offene kritische Anomalie über verlorene Daten hat, behält die Aufbewahrung seine alten Sicherungen, bis du sie quittierst. Siehe [Anomalien](anomalies.md).
+
+Um zu sehen, was der nächste Lauf wirklich löschen würde, öffne **Vorschau** unter **Einstellungen, Speicherorte**. Sie listet **Was der nächste Lauf entfernen würde** auf, pro Repository und pro Eintrag, mit den benannten Wiederherstellungspunkten. Sie nimmt keine Sperre und ändert nichts.
+
+![Wie lange aufheben mit gewähltem Ausgewogen: Die Punkte zeigen, welche der 40 Beispielsicherungen bleiben.](assets/screenshots/storage/keep-dark.png#only-dark)
+![Wie lange aufheben mit gewähltem Ausgewogen: Die Punkte zeigen, welche der 40 Beispielsicherungen bleiben.](assets/screenshots/storage/keep-light.png#only-light)
+
+#### Beispiel: was Ausgewogen aufbewahrt {#example-retention}
+
+Ein Container wird seit dem 1. Oktober 2025 jede Nacht um 03:00 gesichert, sodass er am Mittwoch, dem 4. November 2026, 400 Sicherungen hat. Sein Speicherort steht auf **Ausgewogen**: 7 Tage, 4 Wochen, 6 Monate und 1 Jahr.
+
+Jede Zahl behält die neueste Sicherung ihres Tages, ihrer Woche, ihres Monats oder Jahres, und eine Sicherung, die mehrere Zahlen wählen, wird einmal behalten. Wochen laufen von Montag bis Sonntag:
+
+| Regel | Sicherungen, die sie wählt | Neue, die sie hinzufügt |
+|---|---|---|
+| 7 Tage | 4. Nov, 3. Nov, 2. Nov, 1. Nov, 31. Okt, 30. Okt, 29. Okt | alle 7 |
+| 4 Wochen | 4. Nov, 1. Nov, 25. Okt, 18. Okt | 25. Okt, 18. Okt |
+| 6 Monate | 4. Nov, 31. Okt, 30. Sep, 31. Aug, 31. Jul, 30. Jun | 30. Sep, 31. Aug, 31. Jul, 30. Jun |
+| 1 Jahr | 4. Nov | keine |
+
+Das lässt 13 Sicherungen von 400 übrig. Die älteste ist vom 30. Juni, du kannst also gut vier Monate zurückgehen. Dank Deduplizierung brauchen sie kaum mehr Platz als eine volle Sicherung plus das, was sich dazwischen geändert hat.
+
+**Jahre** verdient einen zweiten Blick. Es zählt Kalenderjahre, in denen es eine Sicherung gibt, beginnend mit dem laufenden, und die neueste Sicherung dieses Jahres ist die von heute. Eine 1 bei **Jahre** fügt also nichts zu den anderen Zahlen hinzu, und du brauchst eine 2, um ins letzte Jahr zurückzureichen. Dieselben 400 Sicherungen unter den anderen Vorgaben:
+
+| Vorgabe | Behaltene Sicherungen | Älteste Sicherung |
+|---|---|---|
+| **Kurz** | 10 | 30. September 2026 |
+| **Ausgewogen** | 13 | 30. Juni 2026 |
+| **Lang** | 29 | 31. Dezember 2025 |
+
+Der Wechsel von **Ausgewogen** zu **Kurz** fragt zuerst nach, wegen **Vor dem Verkürzen nachfragen**: „Von den 40 Sicherungen im Bild entfernt die neue Regel 3, die die aktuelle behält.“ Die Zahl stammt aus dem Beispiel im Bild, nicht aus deinen eigenen Sicherungen. Hier stimmt sie zufällig überein: Der 31. August, 31. Juli und 30. Juni würden wegfallen. **Trotzdem speichern** wendet die Regel an, und das nächste Aufräumen löscht sie an diesem Ort endgültig.
+
+Willst du die Container an diesem Ort länger aufbewahren als den Rest, drücke unter **Regeln je Bereich** **Regeln ändern**, wähle **Container** und setze in **Regeln für Container** **Eigene Werte**, zum Beispiel 14 Tage, 8 Wochen, 12 Monate und 2 Jahre. Die anderen Bereiche folgen weiter der Karte des Ortes, und **Auf den Speicherort zurücksetzen** holt Container zurück.
+
+### Zugangsdaten {#sign-ins}
+
+Zugangsdaten sind der Schlüssel oder das Passwort, die BombVault für einen S3-Dienst oder einen rest-server nutzt. Zugangsdaten sind eine Liste, die Karte **Zugangsdaten** unter **Einstellungen, Speicherorte**, und jede Zeile sagt, welche Speicherorte sie nutzen (**Verwendet von**).
+
+- **Gespeichert, wenn du einen Ort hinzufügst.** Speicherort hinzufügen speichert die Schlüssel, die du eintippst, als Zugangsdaten. Der nächste Ort beim selben Dienst kann sie unter **Gespeicherte Zugangsdaten** statt **Neue Schlüssel** wählen, und eine spätere Änderung daran gilt für jeden Ort, der sie nutzt.
+- **Die Vorgabe.** Ein Stern markiert die Standard-Zugangsdaten. Sie werden überall genutzt, wo keine gewählt ist, etwa bei einer von Hand eingetippten Adresse, einer Pull-Quelle oder einer Wiederherstellung auf einer frischen Installation. **Als Standard** gibt den Stern an andere weiter.
+- **Bearbeiten und Testen.** **Bearbeiten**, hier oder in der Karte **Zugangsdaten** eines Ortes, öffnet ein Fenster für die Zugangsdaten. **Testen** meldet sich an jedem Ort an, der sie nutzt, mit dem, was du eingetippt hast, bevor etwas gespeichert wird. **Speichern** speichert sie.
+- **Entfernen.** Zugangsdaten lassen sich nur entfernen, wenn kein Speicherort und keine Pull-Quelle sie nutzt, und die Standardzugangsdaten gehen erst als letzte. Die Zeile sagt dann, was sie noch nutzt.
+- **Das Ändern der Verbindung eines Ortes** schreibt nie Zugangsdaten um, die andere Orte teilen. Der Ort bekommt stattdessen eigene, und das Fenster sagt vorher, dass seine Zugangsdaten geteilt sind. Um die geteilten überall zu ändern, bearbeite sie in der Karte **Zugangsdaten**.
+
+![Die Karte Zugangsdaten: jede gespeicherte Anmeldung mit dem, was sie nutzt, und dem Stern an der Vorgabe.](assets/screenshots/storage/signins-dark.png#only-dark)
+![Die Karte Zugangsdaten: jede gespeicherte Anmeldung mit dem, was sie nutzt, und dem Stern an der Vorgabe.](assets/screenshots/storage/signins-light.png#only-light)
+
+Ein Ordner auf diesem Server braucht keine Zugangsdaten. SMB, WebDAV, SFTP, die Storage Box und die Cloud-Laufwerke halten ihre in der rclone-Konfiguration, die die Karte **rclone.conf** des Ortes zeigt, sie erscheinen also nicht in dieser Liste.
+
+### SMB, WebDAV und andere rclone-Remotes {#smb-webdav}
+
+Ein Windows- oder Samba-Share und ein WebDAV-Server (Nextcloud, ownCloud, SharePoint oder jeder andere) sind Anbieter-Kacheln in **Speicherort hinzufügen**, unter **NAS oder Server**. Trage Host und Share (SMB) oder Adresse und Servertyp (WebDAV), den Benutzer und das Passwort ein, und BombVault schreibt den rclone-Abschnitt für dich. rclone verschleiert das Passwort, bevor es gespeichert wird.
+
+Für einen Dienst, den keine Kachel abdeckt, nimmt die Kachel **rclone** unter **Eigene rclone-Konfiguration** Remotes, die aus einer rclone.conf eingefügt werden. Sie werden zu den Remotes hinzugefügt, die BombVault schon hat, und ersetzen sie nie, und sie werden verschlüsselt gespeichert. Um einen Bereich auf eines davon zu sichern, trage `rclone:<remote>:<folder>` als Off-site-Repository dieses Bereichs ein, zum Beispiel `rclone:nas:backups/bombvault`. Der Share oder Bucket ist das erste Pfadsegment, nicht Teil des Namens.
+
+Das ist der bessere Weg, als den Share auf Unraid zu mounten: restic rät davon ab, ein Repository auf einem gemounteten CIFS-Share zu halten, und hier wird nichts gemountet. NFS hat keine Kachel, weil weder restic noch rclone ein NFS-Backend haben. Mounte bei NFS den Export auf dem Host und nutze ihn als lokalen Ordner.
 
 ### Umziehen und entfernen {#move-remove}
 
-- **Umziehen** bringt die Kopie eines Bereichs samt ganzem Verlauf an einen anderen Speicherort. Am alten Ort bleibt alles liegen; BombVault löscht dort nichts. Der Umzug läuft im Hintergrund und kann dauern: etwa 9 Minuten pro 100 GB zwischen lokalen Platten, Stunden über eine langsame Leitung. Die Übersicht zeigt ihn, solange er läuft.
-- **Speicherort entfernen** bietet zwei Wege. **Speicherort entfernen, Sicherungen behalten** hört auf, dort zu schreiben, und lässt die Sicherungen liegen; du kannst sie später unter **Wiederherstellung, Aus einem alten Sicherungsordner** lesen. **Speicherort entfernen und Sicherungen dort löschen** liest zuerst, was dort liegt, und listet es auf: welche Sicherungen gehen, welche davon nirgends sonst liegen und welche Repositories bleiben, weil der Löschschutz es verweigert, Einträge noch direkt dorthin sichern, ein anderer Ort oder Bereich dort ebenfalls Kopien hält oder sie nicht lesbar waren. Einträge, die ihre einzige Sicherung verlören, stehen eigens da und bleiben, wenn du nicht **Auch diese löschen** einschaltest. Du bestätigst, indem du den Namen des Orts eintippst, und das Löschen läuft im Hintergrund.
-- Das geht bei jeder Art von Speicherort: bei einem, den mehrere Bereiche nutzen, bei einem Ziel, das nur für einen Bereich eingerichtet ist, bei einem selbst angelegten Repository und beim Ordner, in den ein Bereich seine eigenen Sicherungen schreibt. Einträge, die in ein entferntes Repository sichern, folgen danach wieder ihrem Bereich, genauso eine Vorgabe des Bereichs, die dorthin zeigte. Den Ordner eines Bereichs kann man nicht einfach streichen, weil jeder Bereich einen braucht. Das Fenster fragt deshalb nach dem Ordner, in den die Bereiche ziehen, und jeder Bereich behält darunter seinen Ordnernamen.
-- Die Sicherungen an einem Speicherort zu löschen braucht ein Login-Passwort und eine Anmeldung an der Instanz. Ohne Passwort lässt sich der Ort trotzdem entfernen, nur seine Sicherungen lassen sich von hier aus nicht löschen.
+- **Umziehen** nimmt die Kopie eines Bereichs mit seinem ganzen Verlauf an einen anderen Speicherort mit. Alles bleibt am alten Ort. BombVault löscht dort nichts. Der Umzug läuft im Hintergrund und kann lange dauern: etwa 9 Minuten pro 100 GB zwischen lokalen Platten, Stunden über eine langsame Leitung. Die Übersicht zeigt ihn, solange er läuft.
+- **Speicherort entfernen** bietet zwei Wege. **Speicherort entfernen, Sicherungen behalten** hört auf, dort zu schreiben, und lässt die Sicherungen liegen. Du kannst sie später unter **Wiederherstellung, Aus einem alten Sicherungsordner** lesen. **Speicherort entfernen und Sicherungen dort löschen** liest zuerst, was dort gespeichert ist, und listet es auf: welche Sicherungen wegfallen, welche davon nirgends sonst liegen und welche Repositories bleiben, weil der Löschschutz es verweigert, Einträge noch direkt darauf sichern, ein anderer Ort oder Bereich dort seine Kopien hält oder sie sich nicht lesen ließen. Einträge, die ihre einzige Sicherung verlören, werden getrennt aufgelistet und bleiben erhalten, solange du nicht **Auch diese löschen** einschaltest. Du bestätigst, indem du den Namen des Ortes eintippst, und das Löschen läuft im Hintergrund.
+- Das funktioniert für jede Art von Speicherort: einen, den mehrere Bereiche nutzen, ein Ziel, das für einen Bereich eingerichtet wurde, ein Repository, das du eingerichtet hast, und den Ordner, in den ein Bereich seine eigenen Sicherungen schreibt. Einträge, die auf ein entferntes Repository sichern, folgen wieder ihrem Bereich, ebenso eine Bereichsvorgabe, die dorthin zeigte. Der Ordner eines Bereichs kann nicht einfach gehen, weil jeder Bereich einen braucht. Das Fenster fragt nach dem Ordner, in den die Bereiche umziehen, und jeder Bereich behält darunter seinen Ordnernamen.
+- Das Löschen der Sicherungen an einem Speicherort braucht ein Login-Passwort und eine Anmeldung an der Instanz. Ohne Passwort lässt sich der Ort trotzdem entfernen, nur seine Sicherungen lassen sich von hier aus nicht löschen.
 
-## Speicherort pro Eintrag {#placement}
+### Beispiel: eine Off-site-Kopie bei Backblaze B2 {#example-s3}
 
-Die Karte **Zeitplan und Speicherort** im Reiter Einstellungen eines Eintrags hat eine Zeile mit Knöpfen: **Lokal** und einer pro Speicherort außer Haus des Bereichs. Die eingeschalteten bekommen die Sicherungen des Eintrags.
+Die Container und das Selbstbackup sollen auch bei Backblaze B2 liegen, damit ein toter Server sie nicht mitnimmt. Dieselben Schritte passen zu Wasabi, Hetzner Object Storage und den meisten anderen S3-Diensten.
 
-- Mit eingeschaltetem **Lokal** wird der Eintrag in das Repository geschrieben, das unter **Gespeichert auf** steht, und auf jeden anderen eingeschalteten Ort kopiert. Schaltest du einen Ort aus, bekommt er von diesem Eintrag nichts Neues mehr. Lokal allein kopiert nirgendwohin, was für Daten passt, die schon eine zweite Kopie haben, zum Beispiel eine Freigabe auf einem NAS.
-- Mit ausgeschaltetem **Lokal** wird der Eintrag direkt in das Direkt-Repository des ersten eingeschalteten Orts geschrieben und von dort auf die anderen eingeschalteten kopiert. Beim ersten Mal legt ein Dialog dieses Direkt-Repository an.
-- Ein Knopf bleibt eingeschaltet, weil eine Sicherung einen Ort braucht. Um einen Eintrag aus den Sicherungen herauszunehmen, nimm **Nicht sichern**.
+1. **In B2** lege einen privaten Bucket an, etwa `tower-backups`, in einer Region in deiner Nähe. Lege unter **Application Keys** einen Schlüssel mit Lese- und Schreibzugriff an, beschränkt auf diesen Bucket, und notiere seine Key-ID und seinen Application Key. B2 zeigt den Application Key einmal. Stelle den Lifecycle des Buckets so ein, dass nur die letzte Version bleibt, sonst behält B2 aufgeräumte Daten als versteckte Versionen und berechnet sie dir.
+2. **Anbieter.** Öffne in BombVault **Speicherorte**, drücke **Speicherort hinzufügen** und wähle **Backblaze B2** unter **S3-Dienst**.
+3. **Anmelden.** Trage die Key-ID als **Access key ID** und den Application Key als **Secret access key** ein. Trage den Endpunkt des Buckets unter **Endpunkt** ein, etwa `s3.eu-central-003.backblazeb2.com`, und BombVault liest die Region daraus. Tippe `tower-backups` in **Bucket** ein, weil dieser Schlüssel nur einen Bucket öffnet.
+4. **Verbindung testen.** Es sollte **Verbindung steht** sagen und die Ordner des Buckets auflisten. Drücke **Neuer Ordner** und nenne ihn `bombvault`. BombVault legt darin einen Ordner pro Bereich an, etwa `bombvault/containers`.
+5. **Schutz.** Das Fenster erklärt, dass B2 alte Versionen mit Object Lock behalten kann und BombVault das nicht prüfen kann. Lass **Löschschutz (append-only)** aus, es sei denn, der Bucket verweigert Löschen wirklich, damit BombVault nach den Aufbewahrungsregeln des Ortes aufräumen kann.
+6. **Für welche Bereiche.** Hake **Container** und **Selbstbackup** ab. Das Selbstbackup trägt deine Einstellungen, damit eine Neuinstallation sie zurückholen kann. Das Fenster sagt, wie viele Einträge und, wo bekannt, wie viel Verlauf die erste Kopie mitbringt.
+7. Drücke **Speicherort speichern**.
 
-BombVault verschiebt Sicherungen nie zwischen Repositories. Ein Eintrag, der seinem Bereich folgt, zieht mit, wenn sich die Vorgabe des Bereichs ändert: Seine nächste Sicherung landet am neuen Ort, und die Sicherungen, die er schon hat, bleiben, wo sie sind. Ein Ort, den du am Eintrag selbst gewählt hast, ist ab seiner ersten Sicherung fest; die Karte **Repository** im Reiter Einstellungen nennt ihn. Die Kopien können sich jederzeit ändern. Ein Ort, der einen Eintrag nicht mehr bekommt, behält die Kopien, die er hat, und kürzt sie beim nächsten Off-site-Lauf des Bereichs nach seiner eigenen Aufbewahrung. Von Append-only-Orten kann nicht gelöscht werden.
+Die erste Kopie läuft nach der nächsten Sicherung. Um sie jetzt zu starten, öffne **Einstellungen, Speicherorte** und drücke **Jetzt replizieren** in der Zeile des Bereichs unter **Off-site-Kopien**. Der Statuskopf sagt **Off-site-Kopie läuft**. Die erste Kopie bringt den ganzen Verlauf mit, 200 GB über einen 100-Mbit/s-Uplink dauern also etwa viereinhalb Stunden. Spätere Kopien senden nur das Neue.
 
-Der Ort, den ein Eintrag verlassen hat, behält seine Sicherungen. Im Reiter **Sicherungen** des Eintrags und unter **Wiederherstellen** steht er als **Nur frühere Sicherungen**, eine Wiederherstellung kann weiter von dort lesen, und ein Prune dort lässt diese Sicherungen in Ruhe.
+Um deine Leitung freizuhalten, öffne die Seite des Ortes und setze **Upload-Limit (KiB/s)** in der Karte **Kopieren**, zum Beispiel auf `5120`, was sich als etwa 5,0 MB/s (41,9 Mbit/s) liest. Wirf dabei einen Blick auf **Wie lange aufheben** auf derselben Seite.
 
-**Vorgabe übernehmen** holt einen Eintrag mit eigener Wahl zu seinem Bereich zurück. Es fragt vorher, sagt, wohin neue Sicherungen dann gehen, und nennt, was jeder Ort nicht mehr bekommt und was der nächste Lauf hochladen würde.
+Um zu sehen, dass es geklappt hat, sieh dir den **Schutzstatus** in der Übersicht an, wo **Off-site** auf **Kopie aktuell** wechselt, und den Tab **Sicherungen** eines Containers, wo seine Snapshots jetzt `tower-backups` als zweiten Ort nennen. Drücke dann unter **Einstellungen, Wiederherstellung** noch einmal **Recovery-Kit herunterladen**, weil das Kit den neuen Ort und seine Anmeldung aufführt.
 
-Unter der Zeile sagt die Karte, wohin der Eintrag geht und was tatsächlich da ist: an wie vielen Standorten er liegt, wann jeder Ort zuletzt gesehen wurde und ob 3-2-1 erfüllt ist. Ein Standort ist der Server mit den Originaldaten, jeder Ort außer Haus und jedes als **Außer Haus** markierte Repository. BombVault prüft Kopien und Standorte; den Teil "zwei Medien" von 3-2-1 prüft es nicht.
+**Cloudflare R2 funktioniert genauso,** mit einem Objekt-Token statt eines Schlüssels. Füge die S3-Adresse ein, die das R2-Dashboard zeigt, mit dem Bucket darauf, und BombVault füllt Server und Bucket aus.
 
-### Vorgaben je Bereich {#placement-defaults}
+### Beispiel: ein rest-server, den du selbst betreibst {#example-rest-server}
 
-Die Karte **Speicherorte je Bereich** auf der Seite Speicherorte zeichnet die Vorgabe jedes Bereichs als 3-2-1-Fluss. Jede Linie von einem Bereich zu einem Speicherort ist ein Schalter, auch **Lokal**, und das für jeden Bereich, also auch für den Flash-Stick, die ZFS-Datasets und das Selbstbackup. Ein Klick auf eine Linie oder einen Punkt schaltet sie sofort um, ohne Rückfrage; gestrichelte Linien sind aus. **Grafik / Schalter** zeigt dasselbe als Knopfreihen. Ein Schalter bestimmt, wohin neue Sicherungen gehen. Einträge ohne eigene Wahl und die Projektordner von Compose-Stacks ziehen sofort mit, ihre nächste Sicherung geht also an die neuen Orte. Was schon gesichert ist, bleibt, wo es liegt, und lässt sich von dort weiter wiederherstellen. Flash, ZFS-Datasets und das Selbstbackup sichern in ihren lokalen Ordner und kopieren von dieser Sicherung nach außer Haus. Auch ihre Linie zu **Lokal** lässt sich ausschalten; ihre Sicherungen gehen dann direkt an ihre Orte außer Haus, und ein ZFS-Eintrag mit Replik und ganz ohne Ort schickt nur seine Replik.
+Ein rest-server im Append-only-Modus verweigert das Löschen, eine Kopie darauf übersteht also auch, wenn jemand deinen Server übernimmt. Eine zweite Box bei einem Freund oder in der Garage genügt. Ein gekoppeltes BombVault kann das für dich einrichten, siehe [Empfangsserver](#receiving-server). Um ihn auf einem beliebigen Docker-Host von Hand zu betreiben:
 
-Ist **Lokal** aus und sind nur Orte außer Haus an, sichert ein Bereich direkt dorthin, und BombVault sucht das Repository dort selbst aus. Container, VMs und Ordnersätze gehen in das Direkt-Repository des ersten eingeschalteten Orts, wie unten beschrieben, und werden von dort auf die anderen kopiert. Flash-Stick, ZFS-Datasets und Selbstbackup schreiben jede Sicherung an jeden eingeschalteten Ort, und jeder Ort behält sie nach seiner eigenen Aufbewahrung.
+```sh
+docker run -d --name rest-server --restart unless-stopped \
+  -p 8000:8000 \
+  -v /mnt/user/backups/rest-server:/data \
+  -e OPTIONS="--append-only --private-repos" \
+  restic/rest-server
+docker exec -it rest-server create_user bombvault
+```
 
-Ein Bereich, bei dem alle Linien aus sind, zeigt **Nicht gesichert**. Seine Einträge bekommen keine Sicherung und zählen als nicht geschützt.
+Die letzte Zeile fragt nach einem Passwort und schreibt den Benutzer in die Datei `.htpasswd` im Datenordner.
 
-Einträge, die auf ihrer Seite eigene Speicherorte gewählt haben, behalten sie. Der Fluss sagt, wie viele das in einem Bereich sind, zum Beispiel **2 Einträge weichen ab**, und führt zu ihnen: bei einem in den Reiter Einstellungen des Eintrags, bei mehreren zu einer Liste, die zeigt, wohin jeder sichert. Dort holt **Vorgabe übernehmen** einen Eintrag zurück.
+1. Drücke in BombVault **Speicherort hinzufügen** und wähle **rest-server** unter **NAS oder Server**.
+2. Trage die Adresse mit dem Benutzer als Ordner ein, etwa `http://192.168.2.20:8000/bombvault`, und den **Benutzername** und das **Passwort**. Drücke **Verbindung testen**.
+3. Schalte unter **Schutz** **Löschschutz (append-only)** ein. BombVault räumt dort dann nie auf und überlässt das der Gegenseite.
+4. Hake die Bereiche ab und drücke **Speicherort speichern**.
+5. Ist die erste Kopie da, öffne die Seite des Ortes und drücke **Löschschutz jetzt testen**. BombVault versucht, ein Testobjekt zu löschen. Die Karte sollte **Zuletzt: Löschen verweigert** sagen, und **Löschschutz** in der Übersicht wechselt auf **geprüft**. Sagt sie **Zuletzt: Löschen nicht verweigert**, fehlt `--append-only`.
 
-Ein neuer Ort außer Haus bekommt jeden Eintrag, der nicht auf Lokal steht. Das Fenster, das ihn hinzufügt, sagt, wie viele Einträge und, wo bekannt, wie viel Verlauf das ist.
+Da nichts diese Kopie von hier aus aufräumt, setze **Wachstumsbudget (GB, 0 = aus)** im Fenster des Bereichs, geöffnet mit **Bearbeiten** in seiner Zeile unter **Off-site-Kopien**, damit du es erfährst, bevor die Platte vollläuft. Bei einem selbstsignierten Zertifikat siehe den Hinweis zu `certs` oben.
 
-### Direkt-Repositories
+## Der eigene Ordner eines Bereichs {#own-folder}
 
-Ein Direkt-Repository ist der Ort, an dem Einträge direkt auf einen Speicherort außer Haus sichern. BombVault legt es neben den Ordner des Speicherorts und hängt `-direct` an dessen Namen an. Liegt der Speicherort an der Wurzel seines Buckets, seines Remotes oder eines rest-server-Benutzers, kommt es stattdessen in einen Ordner darin, der nach dem Bereich heißt, etwa `containers-direct`. Im Fluss auf der Seite Speicherorte entsteht es ohne Rückfrage. Schaltest du Lokal für einen einzelnen Eintrag aus, sodass ein Ort ohne Direkt-Repository sein Zuhause wird, öffnet sich ein Dialog mit dem vorgeschlagenen Ort, zum Beispiel `s3:https://s3.eu-central-003.backblazeb2.com/bucket/containers-direct`, und einem Verbindungstest, der nichts anlegt. **Anlegen und nutzen** legt das Repository an und richtet den Eintrag darauf. Ein Direkt-Repository übernimmt Schlüssel, Speicherklasse, Grenzen, Append-only-Einstellung und Aufbewahrung des Orts und ändert sich mit ihnen; die Karte Repositories zeigt es nur lesend. Kann ein neuer Schlüssel des Orts es nicht öffnen, behält das Direkt-Repository seinen Schlüssel, und das Speichern sagt das. Ein Eintrag auf einem Direkt-Repository wird von dort auf die anderen eingeschalteten Orte kopiert, nie auf den Ort, zu dem das Repository gehört. Seine Snapshots tragen die Marke `bv:direct`, und jeder andere Aufbewahrungslauf lässt sie stehen, sodass ein Direkt-Repository, das die Verbindung zu seinem Ort verloren hat, nie nach den lokalen Regeln altert. B2 wird über seinen S3-Endpunkt angesprochen, mit Schlüssel-ID und Anwendungsschlüssel als S3-Zugangsdaten; ein Schlüssel, der auf den Ordner des Orts beschränkt ist, erreicht den Ordner daneben nicht, beschränke den Schlüssel also auf den Ordner darüber.
+Jeder Bereich hat einen eigenen Ordner: das Repository, in das seine Sicherungen zuerst geschrieben werden. Kopien an andere Speicherorte gehen von dort aus. Eine Neuinstallation hält die eigenen Ordner auf diesem Server, unterhalb von `/mnt/user/bombvault`, und zusammen bilden sie den Speicherort **Lokal**.
 
-### Außer Haus
+Ein eigener Ordner kann auch in einem Speicherort liegen, den du schon hast, etwa einem NAS, einem rest-server oder einem S3-Bucket. Der Bereich sichert dann direkt dorthin, ohne lokale Kopie dazwischen, und der eigene Ordner folgt der Anmeldung, dem Löschschutz, den Bandbreitenlimits und den Aufbewahrungsregeln dieses Ortes. Der Ort listet den Bereich in seiner Karte **Eigene Ordner** auf, und **Speicherorte je Bereich** zeigt den Ort als Zuhause des Bereichs.
 
-Ein Speicherort oder ein benanntes Repository kann als **Außer Haus** markiert werden. Entfernte starten markiert; schalte es für einen rest-server im selben Gebäude aus. Die Markierung zählt nur Standorte und 3-2-1 auf den Karten. Sie ändert keine Kopie.
+### Einen eigenen Ordner umziehen {#move-own-folder}
 
-Eine ZFS-Replik ist eine Kopie außer Haus, aber keine Sicherung mit Verlauf. Sie behält nur die Snapshots, die du einstellst, und alte Versionen und einzelne Dateien kommen weiter aus den Sicherungen. Sie geht direkt von einem ZFS-Server zum anderen, über SSH an einen ZFS-Server oder an den Empfangs-Endpunkt einer gekoppelten Instanz. Die Kopplungsgruppe trägt nur die Anfrage. Siehe [Replik](zfs-datasets.md#replica).
+1. Öffne den Speicherort, der den eigenen Ordner halten soll, und wähle **Als eigenen Ordner nutzen** oder **Bereiche hinzufügen** in seiner Karte **Eigene Ordner**. Um mehrere Bereiche auf einmal umzuziehen, wähle **Eigene Ordner verschieben** neben **Eigene Ordner hier** in der Karte **Verbindung** des Ortes Lokal.
+2. Wähle die Bereiche unter **Bereiche** und den Ort unter **Verschieben nach**. **Ein anderer Ort** nimmt einen Ordner auf diesem Host oder die von Hand eingetippte Adresse eines entfernten Repositorys, mit Zugangsdaten aus deinen gespeicherten.
+3. Lies **Was passiert**. Es sagt für jeden Bereich, wohin neue Sicherungen gehen, ob eine Kopie, die schon am neuen Ort liegt, zum eigenen Ordner wird, und welche Sicherungen zuerst herüberkopiert werden.
+4. **Bisherige Sicherungen mitnehmen** ist standardmäßig an. Ausgeschaltet bleiben die alten Sicherungen, wo sie sind, und lassen sich von dort weiter wiederherstellen.
+5. Wähle **Umstellen**. Müssen Sicherungen zuerst kopiert werden, kopiert BombVault sie und stellt dann den eigenen Ordner um. Sind sie schon da, prüft es sie vor dem Umstellen.
+
+Nach dem Umzug gehen neue Sicherungen in den umgezogenen eigenen Ordner, auch bei einem Bereich, bei dem **Lokal** ausgeschaltet war und der direkt auf eine Kopie sicherte. Eine Kopie, die schon am neuen Ort lag, wird zum eigenen Ordner, und das Kopieren dorthin endet. Hat diese Kopie manche Sicherungen länger behalten als die Aufbewahrungsregeln des Bereichs, behält der Bereich, was eine der beiden Regeln behält, sodass keine davon verloren geht.
+
+Kann der Umzug nicht weitergehen, sagt das Fenster warum, in einem Kasten unter **Was passiert**. Ist nur das Kopieren der alten Sicherungen im Weg, lässt das Ausschalten von **Bisherige Sicherungen mitnehmen** den eigenen Ordner ohne sie umziehen.
+
+Ein Bereich braucht immer einen eigenen Ordner. Den Speicherort zu entfernen, der ihn hält, fragt nach dem Ordner, in den der Bereich umzieht, siehe [Umziehen und entfernen](#move-remove). Ein eigener Ordner, an dem neue Sicherungen vorbeigehen, weil der Bereich direkt auf eine Kopie sichert, ist dort mit **(aus)** markiert, wo ein Ort auflistet, wer ihn nutzt.
+
+![Das Fenster, das einen eigenen Ordner umzieht, mit ausgefülltem Was passiert für einen Bereich.](assets/screenshots/storage/move-own-folder-dark.png#only-dark)
+![Das Fenster, das einen eigenen Ordner umzieht, mit ausgefülltem Was passiert für einen Bereich.](assets/screenshots/storage/move-own-folder-light.png#only-light)
+
+#### Beispiel: Container ziehen auf ein NAS um {#example-own-folder}
+
+Der Cache-Pool läuft voll, und du hast einen Speicherort namens `nas`, einen SMB-Share auf einer zweiten Box. Der Bereich Container hat 61 Sicherungen in seinem eigenen Ordner auf diesem Server und kopiert zu Backblaze B2.
+
+1. Öffne **Speicherorte**, dann `nas`, und drücke **Als eigenen Ordner nutzen**.
+2. Hake **Container** unter **Bereiche** ab.
+3. Lies **Was passiert**. Es sagt, dass neue Sicherungen von Container in den Ordner auf `nas` gehen, dass die 61 Sicherungen in Lokal zuerst dorthin kopiert werden, dass Kopien weiter zu Backblaze B2 gehen und dass Schutz, Bandbreitenlimits und der Wachstumsalarm von `nas` kommen.
+4. Lass **Bisherige Sicherungen mitnehmen** an und drücke **Umstellen**.
+
+BombVault kopiert die Sicherungen im Hintergrund und stellt dann den eigenen Ordner um. Die Seite `nas` listet Container unter **Eigene Ordner** auf, ein Eintrag, der seinem Bereich folgt, nennt `nas` als sein Zuhause, und die nächste Sicherung landet dort, wobei die Kopie nach B2 von `nas` aus geht. Der alte Ordner auf diesem Server bleibt, wo er ist, und BombVault löscht dort nichts.
+
+### Eine entfernte Adresse von Hand eintippen {#remote-primary-repositories}
+
+Die Karte **Verbindung** des Ortes Lokal nimmt für den eigenen Ordner eines Bereichs weiterhin eine entfernte Adresse: **Ändern** neben dem Bereich öffnet ein Fenster mit einem Schalter **Lokal / Entfernt**. **Entfernt** nimmt eine restic-Adresse wie `s3:...`, `rest:http://host:8000/repo`, `sftp:user@host:/repo` oder `rclone:remote:bucket/path`, und **Sicherheitseinstellungen für Remote-Primärrepo** fügen einen Verbindungstest, Upload- und Download-Limits, Append-only-Schutz mit demselben Manipulationstest wie bei einem Off-site-Ort und einen Wachstumsbudget-Alarm hinzu.
+
+Eine solche Adresse meldet sich mit den Standard-Zugangsdaten an. Liegt sie in einem Ordner eines Speicherorts, den du hast, listet die Seite dieses Ortes den Bereich unter **Schon unter diesem Speicherort** auf, und ihn zu übernehmen gibt ihm die Anmeldung, Speicherklasse und den Löschschutz des Ortes. Den eigenen Ordner mit **Als eigenen Ordner nutzen** in einen Speicherort zu verschieben ist der einfachere Weg, weil das Fenster die schon gemachten Sicherungen prüft, bevor sich etwas ändert.
+
+## Zuordnung pro Eintrag {#placement}
+
+Die Karte **Zeitplan und Speicherort** auf dem Tab Einstellungen eines Eintrags hat eine Reihe von Knöpfen: **Lokal** und einen Knopf pro Off-site-Speicherort des Bereichs. Hell leuchtende Knöpfe bekommen die Sicherungen des Eintrags.
+
+- Bei leuchtendem **Lokal** wird der Eintrag in das Repository geschrieben, das unter **Gespeichert auf** steht, und an jeden anderen leuchtenden Ort kopiert. Dunkle einen Ort, und er bekommt von diesem Eintrag nichts Neues. Nur Lokal kopiert nirgendwohin, was zu Daten passt, die schon eine zweite Kopie haben, zum Beispiel ein Share, der auf einem NAS liegt.
+- Bei dunklem **Lokal** wird der Eintrag direkt in das direkte Repository des ersten leuchtenden Ortes geschrieben und von dort an die anderen leuchtenden kopiert. Beim ersten Mal legt ein Dialog dieses direkte Repository an.
+- Ein Knopf bleibt hell, weil eine Sicherung einen Ort braucht, an den sie geht. Um einen Eintrag aus den Sicherungen auszulassen, nutze **Nicht sichern**.
+
+BombVault verschiebt nie Sicherungen zwischen Repositories. Ein Eintrag, der seinem Bereich folgt, geht mit, wenn sich die Vorgabe des Bereichs ändert: Seine nächste Sicherung landet am neuen Ort, und die Sicherungen, die er hat, bleiben, wo sie sind. Ein am Eintrag selbst gewählter Ort steht ab seiner ersten Sicherung fest. Die Karte **Repository** auf dem Tab Einstellungen nennt ihn. Die Kopien können sich jederzeit ändern. Ein Ort, der einen Eintrag nicht mehr bekommt, behält die Kopien, die er hat, und kürzt sie beim nächsten Off-site-Lauf des Bereichs auf seine eigene Aufbewahrung. Aus Append-only-Orten lässt sich nicht löschen.
+
+Der Ort, den ein Eintrag verlassen hat, behält seine Sicherungen. Auf dem Tab **Sicherungen** des Eintrags und bei der **Wiederherstellung** steht er als **Nur frühere Sicherungen**, eine Wiederherstellung kann weiter davon lesen, und ein Aufräumen dort lässt diese Sicherungen in Ruhe.
+
+**Vorgabe übernehmen** bringt einen Eintrag mit eigener Wahl zu seinem Bereich zurück. Es fragt zuerst nach, sagt, wohin neue Sicherungen dann gehen, und nennt, was jeder Ort nicht mehr bekommt und was der nächste Lauf hochladen würde.
+
+Unter der Reihe sagt die Karte, wohin der Eintrag geht und was tatsächlich da ist: wie viele Standorte ihn halten, wann jeder Ort zuletzt gesehen wurde und ob 3-2-1 erfüllt ist. Ein Standort ist der Server mit den Originaldaten, jeder Off-site-Ort und jedes Repository, das mit **Außer Haus** markiert ist. BombVault prüft Kopien und Standorte. Den Teil „zwei Medien“ von 3-2-1 prüft es nicht.
+
+### Vorgaben pro Bereich {#placement-defaults}
+
+Die Karte **Speicherorte je Bereich** auf der Seite Speicherorte zeichnet die Vorgabe jedes Bereichs als 3-2-1-Ablauf. Jede Linie von einem Bereich zu einem Speicherort ist ein Schalter, **Lokal** eingeschlossen, für jeden Bereich, auch den Flash, ZFS-Datasets und das Selbstbackup. Ein Klick auf eine Linie oder einen Punkt schaltet sie sofort um, und gestrichelte Linien sind aus. Nur das Ausschalten von **Lokal** eines Bereichs fragt vorher nach, im selben Dialog wie die Vorgabekarte, weil der Bereich dann direkt auf eine Kopie sichert. **Abbrechen** lässt alles, wie es war. **Grafik / Schalter** zeigt dasselbe als Reihen von Knöpfen. Ein Schalter entscheidet, wohin neue Sicherungen gehen. Einträge ohne eigene Wahl und die Projektordner von Compose-Stacks folgen sofort, ihre nächste Sicherung geht also an die neuen Orte. Schon gespeicherte Sicherungen bleiben, wo sie sind, und lassen sich von dort weiter wiederherstellen. Flash, ZFS-Datasets und das Selbstbackup sichern in ihren lokalen Ordner und kopieren von dieser Sicherung aus nach Off-site. Auch ihre Linie zu **Lokal** lässt sich ausschalten. Ihre Sicherungen gehen dann direkt an ihre Off-site-Orte, und ein ZFS-Eintrag mit einer Replik und gar keinem Ort sendet nur seine Replik.
+
+Bei ausgeschaltetem **Lokal** und nur eingeschalteten Off-site-Orten sichert ein Bereich direkt dorthin, und BombVault wählt das Repository dort selbst. Container, VMs und Ordner-Sets gehen in das direkte Repository des ersten Ortes, der an ist, unten beschrieben, und werden von dort an die anderen kopiert. Der Flash, ZFS-Datasets und das Selbstbackup schreiben jede Sicherung an jeden Ort, der an ist, und jeder Ort behält sie nach seiner eigenen Aufbewahrung.
+
+Ein Bereich, bei dem jede Linie aus ist, sagt **Nicht gesichert**. Seine Einträge bekommen keine Sicherungen und zählen als nicht geschützt.
+
+Einträge, die auf ihrer Seite eigene Speicherorte gewählt haben, behalten sie. Der Ablauf sagt, wie viele es in einem Bereich sind, zum Beispiel **2 Einträge weichen ab**, und führt zu ihnen: zum Tab Einstellungen des Eintrags, wenn es einer ist, und zu einer Liste, wohin jeder sichert, wenn es mehrere sind. **Vorgabe übernehmen** dort bringt einen Eintrag zurück.
+
+Ein neuer Off-site-Ort bekommt jeden Eintrag, der nicht auf Lokal gesetzt ist. Das Fenster, das ihn hinzufügt, sagt, wie viele Einträge und, wo bekannt, wie viel Verlauf das ist.
+
+### Direkte Repositories {#direct-repositories}
+
+Ein direktes Repository ist dort, wo Einträge direkt an einen Off-site-Ort sichern. BombVault legt es neben den Ordner des Ortes, mit `-direct` am Namen, oder, wenn der Ort an der Wurzel seines Buckets, seines Remotes oder eines rest-server-Benutzers sitzt, in einen Ordner darin, der nach dem Bereich benannt ist, etwa `containers-direct`. Im Ablauf auf der Seite Speicherorte wird es ohne Rückfrage angelegt. Lokal für einen einzelnen Eintrag auszuschalten, sodass ein Ort ohne direktes Repository sein Zuhause wird, öffnet einen Dialog mit dem vorgeschlagenen Ort, zum Beispiel `s3:https://s3.eu-central-003.backblazeb2.com/bucket/containers-direct`, und einem Verbindungstest, der nichts anlegt. **Anlegen und nutzen** legt das Repository an und richtet den Eintrag darauf. Ein direktes Repository hat keine eigenen Einstellungen. Es folgt dem Schalter, der Anmeldung, der Speicherklasse, den Limits, der Append-only-Einstellung und der Aufbewahrung seines Ortes und ändert sich mit ihnen. Die Seite des Ortes listet es unter **Sichert direkt hierher** auf, mit jedem Bereich, der direkt darauf sichert, und wie viele Einträge es tun. Eines, auf das nichts mehr sichert, sagt das dort und lässt sich entfernen, und die Sicherungen an seinem Ort bleiben. Kann ein neuer Schlüssel für den Ort es nicht öffnen, behält das direkte Repository den Schlüssel, den es hat, und das Speichern sagt das. Ein Eintrag auf einem direkten Repository wird von dort an die anderen leuchtenden Orte kopiert, nie an den Ort, zu dem das Repository gehört. Seine Snapshots tragen den Tag `bv:direct`, und jeder andere Aufbewahrungsdurchgang behält sie, sodass ein direktes Repository, das den Link zu seinem Ort verloren hat, nie nach den lokalen Regeln altert. B2 wird über seinen S3-Endpunkt erreicht, mit der Key-ID und dem Application Key als S3-Schlüssel. Ein Schlüssel, der auf den eigenen Ordner des Ortes beschränkt ist, erreicht den Ordner daneben nicht, beschränke den Schlüssel also stattdessen auf den Ordner darüber.
+
+### Außer Haus {#off-the-premises}
+
+Ein Speicherort oder ein Repository kann mit **Außer Haus** markiert werden. Entfernte beginnen markiert. Schalte es für einen rest-server im selben Gebäude aus. Die Markierung zählt nur Standorte und 3-2-1 auf den Karten. Sie ändert keine Kopie.
+
+Eine ZFS-Replik ist eine Kopie außer Haus, aber keine Sicherung mit Verlauf. Sie behält nur die Snapshots, die du einstellst, und alte Versionen und einzelne Dateien kommen weiter aus den Sicherungen. Sie geht von einem ZFS-Server direkt zum anderen, über SSH zu einem ZFS-Server oder zum Empfangs-Endpunkt einer gekoppelten Instanz. Die Koppelgruppe trägt nur die Anfrage. Siehe [Replik](zfs-datasets.md#replica).
 
 ### Nach einem Neuaufbau {#after-a-rebuild}
 
-Die Kopierwahl liegt in BombVaults eigenen Einstellungen. Nach einem Neuaufbau über **Sicherungen entdecken** oder den Notfall-Assistenten ohne wiederhergestellte Einstellungen ist sie weg, und alles zu kopieren würde die Einträge, die du ausgelassen hattest, wieder nach B2 schicken. Deshalb pausieren die Off-site-Kopien jedes neu aufgebauten Bereichs. Die Übersicht sagt das, und die Karte **Speicherorte je Bereich** bietet **Vorgabe bestätigen** an, mit einer Vorschau dessen, was der nächste Lauf kopiert, und den Namen in den Sicherungen, die keinen Eintrag haben, die du dort auslassen kannst. Nur die Bestätigung beendet die Pause; ein Import einer Einstellungsdatei bringt Regeln und Vorgaben zurück, beendet sie aber nicht.
+Kopierentscheidungen leben in den eigenen Einstellungen von BombVault. Nach einem Neuaufbau über **Sicherungen entdecken** oder den Notfall-Assistenten ohne wiederhergestellte Einstellungen sind sie weg, und alles zu kopieren würde die Einträge, die du ausgelassen hattest, wieder nach B2 senden. Die Off-site-Kopien jedes neu aufgebauten Bereichs pausieren daher. Die Übersicht sagt das, und die Karte **Speicherorte je Bereich** bietet **Vorgabe bestätigen** an, mit einer Vorschau dessen, was der nächste Lauf kopiert, und den Namen in den Sicherungen, die keinen Eintrag haben und die du dort auslassen kannst. Nur die Bestätigung beendet die Pause. Der Import einer Einstellungsdatei bringt Regeln und Vorgaben zurück, beendet sie aber nicht.
 
-## Entfernte primäre Repositories {#remote-primary-repositories}
+## Löschschutz (append-only) {#delete-protection-append-only}
 
-Der eigene Pfad eines Bereichs ist nicht auf einen lokalen Ordner beschränkt: Richte ihn direkt auf ein restic-Remote (`s3:...`, `rest:http://host:8000/repo`, `sftp:user@host:/repo`, `rclone:remote:bucket/path`), und BombVault sichert direkt dorthin, ohne eigene lokale Kopie und ohne Kopierschritt. Das ist eine andere Form als die Off-site-Kopien oben: Dort ist das lokale Repo primär und das Off-site-Repo ein Best-Effort-Archiv davon; hier **ist** das entfernte Repo das primäre, und es ist die einzige Kopie, solange du den Bereich nicht zusätzlich auf einen anderen Speicherort kopierst.
+Schalte den Löschschutz für einen Off-site-Speicherort ein, damit Ransomware oder ein kompromittierter Host deine Sicherungen nicht löschen oder umschreiben kann. Die Gegenseite (ein `restic/rest-server`, der im Modus `--append-only` läuft) **erzwingt** ihn. BombVault **prüft** ihn nur und zeigt nie Grün allein wegen einer Konfigurationsbehauptung. Ein Ordner auf diesem Server kann das Löschen nicht verweigern, weil, wer BombVault kontrolliert, auch den Ordner kontrolliert, lokale Orte bieten den Schalter also nicht an.
 
-Den Pfad jedes Bereichs (Container, VMs, Flash, Selbstbackup, Ordner, ZFS-Datasets) setzt du auf der Seite des Speicherorts **Lokal**: **Ändern** neben dem Bereich in seiner Karte **Verbindung** öffnet ein Fenster mit einem Schalter **Lokal / Remote**:
+Der Schalter gehört zum Speicherort: Ein Bereich, der dorthin kopiert, übernimmt ihn vom Ort, schalte ihn also auf der Seite des Ortes unter **Speicherorte** ein. Das geplante **Löschschutz prüfen** läuft nur, solange ein Bereich an einen Ort mit eingeschaltetem Schalter kopiert. Die Gegenseite muss mit `--append-only` gestartet werden. Beim Image `restic/rest-server` gehört das, auf TrueNAS wie auf jedem anderen Docker-Host, in die Variable `OPTIONS`.
 
-- **Lokal** zeigt die gewohnte Ordnerauswahl.
-- **Remote** tauscht sie gegen ein schlichtes URL-Feld und die Verbindungseinstellungen, die ein Ort außer Haus nutzt, hier für dieses primäre Repo. Von dort bekommst du:
-    - **Einen Verbindungstest** gegen den echten Pfad, bevor du dich darauf verlässt.
-    - **Bandbreitenlimits** (Upload/Download), damit eine geplante Sicherung an ein entferntes primäres Repo dein WAN nicht auslastet: dieselben restic-Flags `--limit-upload`/`--limit-download` wie bei Off-site-Kopien, angewendet auf die Sicherung selbst.
-    - **Append-only-Schutz**, geprüft mit demselben aktiven Manipulationstest (ein echter DELETE-Versuch gegen die Gegenseite) wie bei Orten außer Haus. Ist er an, räumt BombVault das Repo selbst nie auf, denn dahinter liegt keine eigene lokale Kopie, und die Zugangsdaten auf dieser Box dürfen die einzige Kopie der Sicherung nicht löschen können.
-    - **Einen Wachstumsbudget-Alarm**, abgeleitet aus demselben Größenverlauf, den die Karte Speicher ohnehin verfolgt.
-
-Nichts davon ist Pflicht: Ein von Hand eingetippter entfernter Pfad ohne gespeicherte Schutzeinstellungen sichert unbegrenzt, mit Aufräumen und ohne Budget-Alarm. Die Schutzeinstellungen sind für den Fall da, dass du denselben Schutz wie bei einer Off-site-Kopie willst, ohne dafür eigens einen Speicherort anzulegen.
-
-!!! note "Cloud-/REST-Zugangsdaten sind geteilt"
-    Ein entferntes primäres Repo meldet sich mit den geteilten Cloud-Zugangsdaten unter **Einstellungen, Speicherorte** an; einen eigenen Zugangsdaten-Speicher für primäre Repos gibt es nicht.
-
-### SMB und WebDAV ohne Host-Mount {#smb-webdav}
-
-Die Karte **Off-site (rclone)** unter **Einstellungen, Speicherorte** hat ein Formular für eine Windows- oder Samba-Freigabe und für einen WebDAV-Server (Nextcloud, ownCloud, SharePoint oder einen anderen). Trag einen kurzen Namen, Host und Freigabe (SMB) oder URL und Servertyp (WebDAV), Benutzer und Passwort ein, und BombVault schreibt den rclone-Abschnitt für dich. rclone verschleiert das Passwort selbst, bevor es gespeichert wird; ein Eintrag mit einem schon vorhandenen Namen ersetzt diesen Abschnitt, statt einen zweiten anzulegen. **Speicherort hinzufügen** bietet SMB und WebDAV mit denselben Feldern als Anbieter an.
-
-Das Formular antwortet mit dem fertigen Ort, zum Beispiel `rclone:nas:backups`. Nimm ihn als Pfad eines Bereichs oder als Speicherort und häng einen Unterordner an, wenn du einen willst (`rclone:nas:backups/bombvault`). Die Freigabe ist das erste Pfadsegment, nicht Teil des Namens.
-
-Das ist der bessere Weg, als die Freigabe auf Unraid einzuhängen: restic rät davon ab, ein Repository auf einer eingehängten CIFS-Freigabe zu halten, und hier ist nichts eingehängt. NFS ist nicht im Formular, weil weder restic noch rclone ein NFS-Backend haben; häng für NFS den Export auf dem Host ein und nimm ihn als lokalen Ordner.
-
-## Löschschutz (append-only)
-
-Schalte den Löschschutz für einen Speicherort außer Haus ein, damit Ransomware oder ein kompromittierter Host deine Sicherungen nicht löschen oder überschreiben kann. Die Gegenseite (ein `restic/rest-server` im `--append-only`-Modus) **erzwingt** ihn. BombVault **prüft** ihn nur nach und zeigt nie grün allein auf eine Konfigurationsbehauptung hin. Ein Ordner auf diesem Server kann das Löschen nicht verweigern, weil, wer BombVault steuert, auch den Ordner steuert, deshalb bieten lokale Orte den Schalter nicht an.
-
-Der Schalter gehört zum Speicherort: Ein Bereich, der dorthin kopiert, übernimmt ihn vom Speicherort, also schaltest du ihn auf der Seite des Speicherorts unter **Speicherorte** ein. Das geplante **Löschschutz prüfen** läuft nur, solange ein Bereich an einen Speicherort mit eingeschaltetem Schalter kopiert. Die Gegenseite muss mit `--append-only` gestartet sein; beim Image `restic/rest-server` gehört das, auf TrueNAS wie auf jedem anderen Docker-Host, in die Variable `OPTIONS`.
-
-Manche Orte können das Löschen gar nicht verweigern, ein Cloud-Laufwerk wie OneDrive zum Beispiel. Wenn du dort bewusst Kopien ablegst, schalte auf der Seite des Speicherorts **Ohne Löschschutz akzeptieren** ein. Die Übersicht zeigt den fehlenden Löschschutz eines Bereichs, der nur an akzeptierte Speicherorte kopiert, dann als akzeptiertes Risiko, als grauen Ring statt als gelben Punkt, und die Farbe des Bereichs richtet sich nach seinen übrigen Prüfungen. Sonst ändert sich nichts: Die Sicherungen dort lassen sich weiterhin löschen, BombVault räumt sie weiter nach den Regeln des Speicherorts auf, und der Schalter verschwindet, sobald der Löschschutz an ist. Zieht eine Kopie an einen anderen Ort um, gilt die Zustimmung dort nicht mehr. Auch das Einschalten des Löschschutzes nimmt sie zurück.
+Manche Orte können ein Löschen gar nicht verweigern, ein Cloud-Laufwerk wie OneDrive zum Beispiel. Wenn du dort absichtlich Kopien hältst, schalte **Ohne Löschschutz akzeptieren** auf der Seite des Ortes ein. Die Übersicht zeigt dann den fehlenden Löschschutz eines Bereichs, der nur an akzeptierte Orte kopiert, als akzeptiertes Risiko, ein grauer Ring statt eines gelben Punkts, und die Farbe des Bereichs folgt seinen anderen Prüfungen. Sonst ändert sich nichts: Die Sicherungen dort lassen sich weiter löschen, BombVault räumt sie weiter nach den Aufbewahrungsregeln des Ortes auf, und der Schalter verschwindet, sobald der Löschschutz an ist. Eine Kopie, die an einen anderen Ort zieht, verliert die Akzeptanz. Auch das Einschalten des Löschschutzes löscht sie.
 
 Der schnellste Weg zu einer Append-only-Kopie ist ein gekoppeltes BombVault mit einem [Empfangsserver](#receiving-server): Es betreibt den rest-server für dich, im Append-only-Modus.
 
 !!! note "Ein erfolgreiches Löschen unter `/locks/` ist zu erwarten"
-    Append-only heißt nicht, dass nie etwas entfernt werden kann. restic muss seine eigenen Locks setzen und wieder freigeben, deshalb bleibt `/locks/` beschreibbar und löschbar. Snapshots und die Daten dahinter, auf die es Ransomware abgesehen hätte, lassen sich nicht entfernen. Prüfst du die Gegenseite selbst, ist ein erfolgreiches Löschen unter `/locks/` richtiges Verhalten und keine Lücke im Schutz.
+    Append-only heißt nicht, dass nie etwas entfernt werden kann. restic muss seine eigenen Sperren nehmen und freigeben, daher bleibt `/locks/` absichtlich beschreibbar und löschbar. Snapshots und die Daten dahinter, worauf Ransomware es abgesehen hätte, lassen sich nicht entfernen. Wenn du die Gegenseite selbst prüfst, ist ein Löschen, das unter `/locks/` gelingt, korrektes Verhalten und keine Lücke im Schutz.
 
 !!! warning "Append-only-Repos werden von dieser Box aus nie aufgeräumt"
-    Ein Append-only-Ort räumt alte Snapshots von hier aus nie auf; das ist Aufgabe der Gegenseite. Setz dafür einen **Wachstumsbudget-Alarm**, damit du gewarnt wirst, bevor die Repo-Größe davonläuft.
+    Ein Append-only-Ort räumt alte Snapshots von hier aus nie auf. Das Aufräumen ist Sache der Gegenseite. Setze dafür einen **Wachstumsbudget-Alarm**, damit du gewarnt wirst, bevor die Größe des Repos davonläuft.
 
-## Manipulationstest
+## Manipulationstest {#tamper-test}
 
-BombVault beweist die Append-only-Garantie regelmäßig, indem es tatsächlich einen Löschversuch gegen das Off-site-Repo unternimmt, gezielt auf ein nicht existierendes Objekt. **Löschschutz jetzt testen** auf der Seite eines Orts führt ihn sofort aus, und **Löschschutz prüfen** unter **Einstellungen, Prüfung, Automatische Prüfungen** nach Plan.
+BombVault belegt die Append-only-Garantie regelmäßig, indem es tatsächlich versucht, auf dem Off-site-Repo etwas zu löschen, gezielt auf ein nicht vorhandenes Objekt. **Löschschutz jetzt testen** auf der Seite eines Ortes führt ihn auf Abruf aus, und **Löschschutz prüfen** unter **Einstellungen, Prüfung, Automatische Prüfungen** führt ihn nach Zeitplan aus.
 
-**Löschschutz prüfen** auszuschalten versteckt keine Lücke. Ein Speicherort mit Löschschutz, der nie getestet wurde, zeigt dann „nicht nachgewiesen, die Prüfung ist aus“, und ein Speicherort ohne Löschschutz zeigt so oder so „keiner“.
+Das Ausschalten von **Löschschutz prüfen** verbirgt keine Lücke. Ein Ort mit Löschschutz, der nie getestet wurde, liest sich dann „nicht bewiesen, seine Prüfung ist aus“, und ein Ort ohne Löschschutz liest sich in beiden Fällen „keiner“.
 
-Eine ausgeschaltete Kopie wird nicht getestet, und der Speicherort sagt das. Der Verbindungstest läuft bei ihr trotzdem, weil er nur liest, so kannst du eine Kopie prüfen, bevor du sie einschaltest.
+Eine Kopie, die ausgeschaltet ist, wird nicht getestet, und der Ort sagt das. Der Verbindungstest läuft darauf trotzdem, weil er nur liest, eine Kopie lässt sich also prüfen, bevor sie eingeschaltet wird.
 
 - **Verweigert** heißt geschützt.
-- **Angenommen** heißt nicht geschützt.
-- Ein **unschlüssiges** Ergebnis (Server nicht erreichbar, Anmeldefehler) kippt das gespeicherte Urteil nie.
+- **Akzeptiert** heißt nicht geschützt.
+- Ein **nicht eindeutiges** Ergebnis (Server nicht erreichbar, Authentifizierungsfehler) kippt nie das gespeicherte Urteil.
 
-Ein echter Wechsel von geschützt zu ungeschützt löst einen einzigen Alarm aus.
+Ein echter Wechsel von geschützt zu ungeschützt löst genau einen Alarm aus.
 
-## DR-Übungen
+## DR-Tests {#dr-drills}
 
-BombVault bietet zwei Stufen des Nachweises, dass deine Sicherungen wirklich wiederherstellbar sind und nicht nur vorhanden.
+BombVault bietet zwei Stufen des Beweises, dass deine Sicherungen tatsächlich wiederherstellbar sind, nicht nur vorhanden.
 
-- **Wiederherstellungs-Prüfübungen (lokal).** BombVault führt regelmäßig `restic check --read-data-subset` aus (begrenzt, nie eine plattenfüllende Vollwiederherstellung). Der Rhythmus steht unter **Einstellungen, Prüfung, Automatische Prüfungen**, und die Karte **Sicherungen prüfen** auf derselben Kachel zeigt das Ergebnis.
-- **Probe-Wiederherstellung (Off-site).** BombVault stellt ein echtes Ziel aus dem Off-site-Repo in eine abgeschottete Sandbox wieder her, prüft es Datei für Datei und Byte für Byte und räumt dann auf. Das beweist, dass du aus dem Off-site wiederherstellen kannst, nicht nur, dass das Repo antwortet.
+- **Wiederherstellungsprüfungen (lokal).** BombVault führt regelmäßig `restic check --read-data-subset` aus (begrenzt, nie eine plattenfüllende vollständige Wiederherstellung). Der Takt steht unter **Einstellungen, Prüfung, Automatische Prüfungen**, und die Karte **Sicherungen prüfen** auf derselben Kachel zeigt das Ergebnis.
+- **Probe-Wiederherstellung (Off-site).** BombVault stellt ein echtes Ziel aus dem Off-site-Repo in einer abgeschotteten Sandbox wieder her, prüft es Datei für Datei und Byte für Byte und räumt dann auf. Das belegt, dass du von Off-site wiederherstellen kannst, nicht nur, dass das Repo antwortet.
 
-Die Karte **Schutzstatus** auf der Übersicht fasst das pro Bereich in vier Prüfungen zusammen: eine aktuelle Sicherung auf diesem Server, eine Kopie außer Haus, Löschschutz dort und eine Probe-Wiederherstellung von dort. Ein Klick auf einen Bereich zeigt die Einzelheiten, und die Karte wird nur bei verifizierten Fakten grün. Ein Speicherort, den du ohne Löschschutz akzeptiert hast, zählt dort als akzeptiertes Risiko, nicht als Warnung.
+Die Karte **Schutzstatus** in der Übersicht fasst das pro Bereich in vier Prüfungen zusammen: eine aktuelle Sicherung auf diesem Server, eine Kopie off-site, Löschschutz dort und eine Probe-Wiederherstellung von dort. Ein Klick auf einen Bereich zeigt die Einzelheiten, und die Karte wird nur auf Grundlage geprüfter Tatsachen grün. Ein Ort, den du ohne Löschschutz akzeptiert hast, zählt dort als akzeptiertes Risiko, nicht als Warnung.
 
 ## Instanzen koppeln {#pairing}
 
-Mehrere BombVaults arbeiten als eine Gruppe zusammen: Sie zeigen einander ihren Schutzstatus, übernehmen Rollen füreinander und können den Schlüssel des anderen verwahren. Eine Instanz tritt der Gruppe mit zwölf Wörtern bei.
+Mehrere BombVaults arbeiten als eine Gruppe zusammen: Sie zeigen gegenseitig ihren Schutzstatus, übernehmen Rollen füreinander und können gegenseitig ihren Schlüssel verwahren. Eine Instanz tritt der Gruppe mit zwölf Wörtern bei.
 
-Öffne auf der ersten Instanz **Einstellungen, Kopplung** und drück **Phrase generieren**. Drei Schrittkarten zeigen den Ablauf. Zwölf Wörter erscheinen in einem Fenster mit einem Knopf **Kopieren**. Öffne auf jeder anderen Instanz dieselbe Stelle, drück **Phrase eingeben** und füge sie ein oder tippe sie ab, oder drück **Einfügen** in diesem Fenster. Ein Wort, das nicht auf der Liste steht, wird schon beim Tippen mit seiner Position genannt, und das letzte Wort trägt eine Prüfsumme, sodass ein vertipptes oder vertauschtes Wort auffällt, bevor gekoppelt wird. Generiere die Phrase nur auf einer Instanz: Zwei Instanzen, die beide eine erzeugen, bilden zwei getrennte Gruppen. Taucht eine Minute lang niemand auf, bietet die Seite zwei Auswege: die Wörter noch einmal zeigen, um sie drüben einzugeben, oder die Wörter der anderen Instanz eingeben und ihrer Gruppe in einem Schritt beitreten. Die Kopplung funktioniert ohne Login-Passwort, aber setz eins: Ohne kann jeder, der die Weboberfläche öffnen kann, die Wörter lesen und über die Gruppe um Rollen bitten, die das restic-Passwort der Instanzen darin herausgeben. Die Kopplungskarte sagt das, bis ein Passwort gesetzt ist. Mit Passwort fragt das erneute Zeigen der Phrase danach. **Gruppe verlassen** nimmt eine Instanz wieder heraus. Die Karte **Instanzen** auf der Kopplungsseite listet die Mitglieder der Gruppe; das Bild, wer was für wen tut, steht auf der Seite Instanzen.
+![Die Kopplungsseite mit ihren drei Schrittkarten.](assets/screenshots/offsite/pairing-dark.png#only-dark)
+![Die Kopplungsseite mit ihren drei Schrittkarten.](assets/screenshots/offsite/pairing-light.png#only-light)
 
-Wer die Wörter kennt, kann der Gruppe beitreten, behandle sie also wie ein Passwort.
+Öffne auf der ersten Instanz **Einstellungen, Kopplung** und drücke **Phrase generieren**. Drei Schrittkarten zeigen, wie es geht. Zwölf Wörter erscheinen in einem Fenster mit einem Knopf **Kopieren**. Öffne auf jeder weiteren Instanz dieselbe Stelle, drücke **Phrase eingeben** und füge sie ein oder tippe sie ein, oder drücke **Einfügen** in diesem Fenster. Ein Wort, das nicht auf der Liste steht, wird beim Tippen mit seiner Position genannt, und das letzte Wort trägt eine Prüfsumme, sodass ein falsch getipptes oder vertauschtes Wort erkannt wird, bevor etwas koppelt. Generiere die Phrase nur auf einer Instanz: Zwei Instanzen, die beide eine generieren, bilden zwei getrennte Gruppen. Taucht eine Minute lang niemand auf, bietet die Seite zwei Auswege: die Wörter noch einmal zeigen, um sie dort einzugeben, oder die Wörter der anderen Instanz eingeben und in einem Schritt ihrer Gruppe beitreten. Die Kopplung funktioniert ohne Login-Passwort, aber setze eines: Ohne es kann jeder, der die Weboberfläche öffnen kann, die Wörter lesen und über die Gruppe Rollen anfragen, die das restic-Passwort der Instanzen darin herausgeben. Die Kopplungskarte sagt das, bis ein Passwort gesetzt ist. Mit Passwort verlangt das erneute Zeigen der Phrase es. **Gruppe verlassen** nimmt eine Instanz wieder heraus. Die Karte **Instanzen** auf der Kopplungsseite listet die Mitglieder der Gruppe auf. Das Bild, wer für wen was tut, steht auf der Seite Instanzen.
 
-**Wie Mitglieder einander erreichen.** Jede Instanz lernt ihre eigene Adresse im Netz in dem Moment von deinem Browser, in dem du dich anmeldest; sie steht unter **Bekannte Adressen** in der Karte **Diese Instanz** auf der Kopplungsseite, zusammen mit denen, die die Instanz selbst gefunden hat. Korrigiere sie dort, wenn ein Reverse Proxy oder ein ungewöhnlicher Port davorsitzt. Im selben Netz geben Mitglieder diese Adresse per Multicast bekannt und sprechen direkt miteinander, und wo Multicast ein Container-Netz nicht durchquert, etwa Dockers Standard-Bridge, durchsucht eine Instanz stattdessen ihr eigenes Subnetz mit einem signierten Aufruf, den nur ein Gruppenmitglied beantworten kann, sodass die Kopplung auch ohne Relay in Sekunden fertig ist. Taucht nichts auf, nimmt **Findest du sie nicht?** eine Adresse von Hand, für ein anderes Subnetz oder einen ungewöhnlichen Port. Instanzen in verschiedenen Netzen gehen über ein Relay, das du auf derselben Seite in der Karte **Relay** wählst, eine Reihe aus vier Formen; jede hat ein Bild:
+Jeder, der die Wörter kennt, kann der Gruppe beitreten, behandle sie also wie ein Passwort.
 
-- **Projekt-Relay** (Vorgabe): `parleyport.halleluja.design`, das Relay, das auch KnightLoader nutzt. Nichts einzurichten.
-- **Eigenes Relay**: der Container [**ParleyPort**](https://github.com/junkerderprovinz/parleyport) aus den Unraid Community Apps (auch unter **Einstellungen, Apps**). Trag seine Adresse auf jeder Instanz ein, die es nutzen soll.
-- **BombVault-Instanz**: eine deiner Instanzen, die schon von außen erreichbar ist, mit eingeschaltetem **Als Relay dienen**. Diese Instanz antwortet dann unter `/relay/connect` auf ihrer eigenen Adresse, hinter dem Reverse Proxy und Zertifikat, die sie schon hat, und lässt nur deine Gruppe herein. Trag ihre Adresse auf jeder Instanz ein, die sie nutzen soll.
-- **Kein Relay**: Mitglieder finden einander automatisch im selben Netz und nirgends sonst.
+**Wie Mitglieder einander erreichen.** Jede Instanz erfährt ihre eigene Adresse im Netzwerk von deinem Browser in dem Moment, in dem du dich anmeldest, aufgelistet unter **Bekannte Adressen** in der Karte **Diese Instanz** auf der Kopplungsseite zusammen mit denen, die die Instanz selbst gefunden hat. Korrigiere sie dort, wenn ein Reverse-Proxy oder ein ungewöhnlicher Port davorsteht. Im selben Netzwerk geben Mitglieder diese Adresse per Multicast bekannt und sprechen direkt miteinander, und wo Multicast ein Container-Netzwerk nicht überqueren kann, wie die Standard-Bridge von Docker, durchsucht eine Instanz stattdessen ihr eigenes Subnetz nach den anderen mit einem signierten Aufruf, den nur ein Gruppenmitglied beantworten kann, sodass die Kopplung auch ohne Relay in Sekunden fertig wird. Taucht nichts auf, nimmt **Findest du sie nicht?** eine Adresse von Hand, für ein anderes Subnetz oder einen nicht standardmäßigen Port. Instanzen in verschiedenen Netzwerken gehen über ein Relay, in einer Reihe von vier in der Karte **Relay** auf derselben Seite gewählt. Jede Form kommt mit einem Bild:
 
-**Was das Relay sieht.** Ein Knopf mit diesem Namen neben den vier Formen zeigt es für die gewählte Form. Jeder Aufruf zwischen Mitgliedern ist mit AES-256-GCM versiegelt, unter einem Schlüssel, der aus den zwölf Wörtern abgeleitet ist und deine Instanzen nie verlässt. Das Relay erfährt einen Hash, der die Verbindungen gruppiert, für welche Instanz eine Nachricht ist, wie groß sie ist und wann sie durchgeht. Ein direkter Aufruf im lokalen Netz ist genauso versiegelt und zusätzlich signiert, sodass nichts vom selbstsignierten Zertifikat einer Instanz abhängt. Aufrufe, die etwas herausgeben (Rollen-Antworten, ein restic-Passwort, Empfänger-Logins, Hinterlegungen), sind außerdem mit einem Schlüssel des sendenden Mitglieds signiert, den eine Instanz beim ersten Kontakt festhält; siehe [Sicherheitsmodell](configuration.md#security-model).
+- **Projekt-Relay** (die Vorgabe): `parleyport.halleluja.design`, das Relay, das auch KnightLoader nutzt. Nichts einzurichten.
+- **Eigenes Relay**: der Container [**ParleyPort**](https://github.com/junkerderprovinz/parleyport) aus den Unraid Community Apps (auch unter **Einstellungen, Apps**). Trage seine Adresse auf jeder Instanz ein, die es nutzen soll.
+- **BombVault-Instanz**: eine deiner Instanzen, die schon von außen erreichbar ist, mit eingeschaltetem **Als Relay dienen**. Diese Instanz antwortet dann unter `/relay/connect` auf ihrer eigenen Adresse, hinter dem Reverse-Proxy und Zertifikat, die sie schon hat, und lässt nur deine Gruppe hinein. Trage ihre Adresse auf jeder Instanz ein, die es nutzen soll.
+- **Kein Relay**: Mitglieder finden sich im selben Netzwerk automatisch und sonst nirgends.
 
-**Was über die Gruppe läuft.** Der Schutzstatus auf der Seite Instanzen, eine Bitte, einen Bereich jetzt zu prüfen, Rollen-Anfragen und ihre Antworten, Speicher-Angebote und was ein Empfänger oder Abholer braucht, sobald seine Rolle erlaubt ist: die Repository-Orte der anderen Instanz und ihr restic-Passwort. Sicherungsdaten nie; die gehen weiterhin direkt an die restic-Backends. Auch nicht der APP_KEY: Das restic-Passwort öffnet die Repositories dieser Instanz und sonst nichts, nicht ihre gespeicherten Geheimnisse, Sitzungen oder Notfallcodes.
+**Was das Relay sieht.** Ein Knopf gleichen Namens neben den vier Formen zeigt das für die gewählte Form. Jeder Aufruf zwischen Mitgliedern wird mit AES-256-GCM unter einem aus den zwölf Wörtern abgeleiteten Schlüssel versiegelt, und dieser Schlüssel verlässt deine Instanzen nie. Das Relay erfährt einen Hash, der die Verbindungen gruppiert, für welche Instanz eine Nachricht bestimmt ist, wie groß sie ist und wann sie durchgeht. Ein direkter Aufruf im lokalen Netzwerk wird genauso versiegelt und zusätzlich signiert, sodass nichts vom selbstsignierten Zertifikat abhängt, das eine Instanz liefert. Aufrufe, die etwas herausgeben (Rollenantworten, ein restic-Passwort, Empfänger-Logins, Schlüsselhinterlegungen), werden außerdem mit einem Schlüssel des Mitglieds signiert, das sie sendet, beim ersten Sehen festgehalten. Siehe [Sicherheitsmodell](configuration.md#security-model).
 
-**Einträge aus der Zeit vor der Kopplung.** Instanzen, die mit einem Fleet-Token hinzugefügt wurden, sowie empfangene Repositories und Abholquellen, die mit dem APP_KEY der anderen Instanz eingerichtet wurden, bleiben nach dem Update erhalten und sind mit **Neu koppeln** markiert. Sie laufen weiter: Beim ersten Start ersetzt BombVault jeden gespeicherten APP_KEY durch das daraus abgeleitete restic-Passwort. Kopple beide Instanzen, bearbeite dann den Eintrag und wähl seine Instanz. Bis dahin stehen solche Einträge in der Karte **Ohne Instanz** auf der Seite Instanzen.
+**Was über die Gruppe reist.** Der Schutzstatus auf der Seite Instanzen, eine Anfrage, einen Bereich jetzt zu prüfen, Rollenanfragen und ihre Antworten, Speicherangebote und was ein Empfänger oder Abholer braucht, sobald seine Rolle erlaubt ist: die Repository-Orte der anderen Instanz und ihr restic-Passwort. Sicherungsdaten reisen nie. Sie gehen weiter direkt an die restic-Backends. Auch der APP_KEY nicht: Das restic-Passwort öffnet die Repositories dieser Instanz und nichts sonst, nicht ihre gespeicherten Geheimnisse, Sitzungen oder Wiederherstellungscodes.
 
-Die eine Stelle, die noch einen APP_KEY von Hand nimmt, ist [Aus einem alten Sicherungsordner](#restore-from-another-bombvault-repo), für den Fall, dass die andere Instanz weg ist und in keiner Gruppe mehr antworten kann.
+**Einträge von vor der Kopplung.** Instanzen, die mit einem Fleet-Token hinzugefügt wurden, sowie empfangene Repositories und Pull-Quellen, die mit dem APP_KEY der anderen Instanz eingerichtet wurden, bleiben nach dem Update bestehen und sind mit **Neu koppeln** markiert. Sie funktionieren weiter: Beim ersten Start ersetzt BombVault jeden gespeicherten APP_KEY durch das daraus abgeleitete restic-Passwort. Koppele beide Instanzen, bearbeite dann den Eintrag und wähle seine Instanz. Bis dahin stehen solche Einträge in der Karte **Ohne Instanz** auf der Seite Instanzen.
+
+Die eine Stelle, die einen APP_KEY noch von Hand nimmt, ist [Aus einem alten Sicherungsordner](#restore-from-another-bombvault-repo), für den Fall, dass die andere Instanz weg ist und in einer Gruppe nicht antworten kann.
 
 ## Instanzen und Rollen {#roles}
 
-Die Seite **Instanzen** (eine Einstellungskachel, die sich an die Seitenleiste heften lässt) zeigt die Gruppe als Netz, wer was für wen tut, eine Karte für diese Instanz und eine Karte für jedes andere Mitglied, die Android-Handys und die ZFS-Server. **Kopplung** unten rechts führt zur Kopplungsseite. Welche Teile an sind, legst du unter **Einstellungen, Instanzen, Mehrere Server** fest: **Instanzen**, **Empfänger** und **Holen**.
+Die Seite **Instanzen** (eine Einstellungskachel, die an die Seitenleiste geheftet werden kann) zeigt die Gruppe als Netz, wer für wen was tut, eine Karte für diese Instanz und eine Karte für jedes andere Mitglied, die Android-Handys und die ZFS-Server. **Kopplung** unten rechts führt zur Kopplungsseite. Welche Teile an sind, wird unter **Einstellungen, Instanzen, Mehrere Server** festgelegt: **Instanzen**, **Empfänger** und **Holen**.
+
+![Die Seite Instanzen: die Gruppe als Netz und eine Karte pro Instanz mit ihren Rollenkacheln, eine davon Inaktiv.](assets/screenshots/offsite/instances-dark.png#only-dark)
+![Die Seite Instanzen: die Gruppe als Netz und eine Karte pro Instanz mit ihren Rollenkacheln, eine davon Inaktiv.](assets/screenshots/offsite/instances-light.png#only-light)
 
 Jede Karte zeigt den Schutzstatus des Mitglieds und seine Rollen als Kacheln. Eine Rolle ist etwas, das eine Instanz für eine andere tut:
 
-- **Empfänger** verwahrt die Off-site-Kopien dieses Servers in einem rest-server im Append-only-Modus. Dieser Server sendet nach jeder Sicherung und kann dort nichts löschen, selbst wenn ihn jemand übernimmt.
-- **Abholer** holt die Sicherungen dieses Servers nach eigenem Zeitplan. Dieser Server muss dafür nicht wach sein.
-- **ZFS-Server** nimmt die ZFS-Repliken dieses Servers. Jeder ZFS-Eintrag wählt ihn in seinen Einstellungen unter **Replik**.
+- **Empfänger** hält die Off-site-Kopien dieses Servers in einem rest-server im Append-only-Modus. Dieser Server sendet nach jeder Sicherung und kann dort nichts löschen, auch wenn ihn jemand übernimmt.
+- **Abholer** holt die Sicherungen dieses Servers nach seinem eigenen Zeitplan. Dieser Server muss dafür nicht wach sein.
+- **ZFS-Server** nimmt die ZFS-Repliken dieses Servers auf. Jeder ZFS-Eintrag wählt ihn in seinen Einstellungen unter **Replik**.
 - **Schlüsselhüter** verwahrt eine versiegelte Kopie des Recovery-Kits dieses Servers. Siehe [Schlüsselhüter](#key-keeper).
 
-Das Einschalten einer Rolle schickt eine Anfrage, und nichts beginnt, bis jemand an der anderen Instanz **Erlauben** drückt. Die Anfrage erscheint auf der Karte dieser Instanz als Abzeichen, und ihre **Details** listen sie mit **Erlauben** und **Ablehnen**; eine erlaubte Rolle lässt sich dort jederzeit entziehen. Eine gestrichelte Linie im Netz ist eine Rolle, die noch wartet. Eine Instanz mit BombVault 9.x kann eine Anfrage nicht beantworten, deshalb ist eine Rolle dort aktiv, sobald du sie einschaltest, und eine Anfrage einer 9.x-Instanz wartet hier auf **Erlauben**.
+Das Einschalten einer Rolle sendet eine Anfrage, und nichts startet, bis jemand auf der anderen Instanz **Erlauben** drückt. Die Anfrage erscheint als Abzeichen auf der Karte dieser Instanz, und ihre **Details** listen sie mit **Erlauben** und **Ablehnen** auf. Eine erlaubte Rolle lässt sich dort jederzeit entziehen. Eine gestrichelte Linie im Netz ist eine Rolle, die noch wartet. Eine Instanz mit BombVault 9.x kann eine Anfrage nicht beantworten, eine Rolle ist dort also aktiv, sobald du sie einschaltest, und eine Anfrage einer 9.x-Instanz wartet hier auf **Erlauben**.
 
-**Details** auf einer Karte öffnet den Rest: die empfangenen Repositories und Abholquellen dieses Mitglieds, Speicher-Angebote, die Überwachung, **Entfernen** und **Schlüssel vergessen**.
+**Details** auf einer Karte öffnet den Rest: die empfangenen Repositories und Pull-Quellen dieses Mitglieds, Speicherangebote, Überwachung, **Entfernen** und **Schlüssel vergessen**.
 
-Ausgeschaltete Instanzen und Handys mit geschlossener App behalten ihre Karte als **Inaktiv** in Grau, mit der Angabe, wann sie zuletzt gesehen wurden, und stehen im Netz abgeblendet, bis du sie mit **Entfernen** wegnimmst. Gleich nach dem Start dieses Servers zeigt so eine Karte **Wird geprüft**, bis die Gruppe wieder da ist. **Entfernen** geht auf so einer Karte unabhängig davon, welche Teile eingeschaltet sind, und beendet auch die offenen Anfragen des Mitglieds, seine ungenutzten ZFS-Empfangsplätze und seine wartenden Schlüsselanfragen. Die Karte **Instanzen** auf der Kopplungsseite führt diese Mitglieder ebenfalls als **Inaktiv**.
+Ein Mitglied kann einem anderen Mitglied über die Gruppe seinen eigenen Off-site-Speicher anbieten. Der andere Admin sieht das Angebot in den **Details** des Mitglieds und nimmt es an oder lehnt es ab. Annehmen legt gespeicherte Zugangsdaten und einen gewöhnlichen Speicherort an, nach denselben Prüfungen wie bei einem Ort, den du eintippst. Auf diesem Weg reisen nur Verbindungsdaten, nie Sicherungsdaten. **Jetzt prüfen** bittet ein Mitglied, das Repository eines Bereichs zu prüfen. Nichts auf der Seite kann auf einer anderen Box eine Sicherung, Wiederherstellung oder ein Löschen starten.
+
+Instanzen, die heruntergefahren sind, und Handys mit geschlossener App behalten ihre Karte als **Inaktiv**, in Grau, mit dem Zeitpunkt, zu dem sie zuletzt gesehen wurden, und stehen gedimmt im Netz, bis du sie **Entfernen**. Direkt nach dem Start dieses Servers sagt so eine Karte **Wird geprüft**, bis die Gruppe wieder da ist. **Entfernen** funktioniert auf so einer Karte, egal welche Teile eingeschaltet sind, und beendet auch die offenen Anfragen des Mitglieds, seine ungenutzten ZFS-Empfangsslots und seine wartenden Schlüsselanfragen. Die Karte **Instanzen** auf der Kopplungsseite listet diese Mitglieder ebenfalls als **Inaktiv** auf.
 
 ## Empfänger und Abholer {#receiver}
 
-![Eine empfangene Off-site-Kopie in den Details einer Instanz, schreibgeschützt überwacht, mit einer Integritätsprüfung auf dieser Hardware.](assets/screenshots/receiver.png)
+Auf der Box, die Append-only-Kopien von einem anderen BombVault **empfängt**, geben die empfangenen Repositories dir unabhängige, schreibgeschützte Überwachung auf der empfangenden Hardware, damit ein stiller Fehler am anderen Ende nicht unbemerkt bleibt. Schalte **Empfänger** unter **Einstellungen, Instanzen** ein, öffne dann die **Details** der sendenden Instanz auf der Seite Instanzen und füge das empfangene Repository hinzu (schreibgeschützt, geöffnet mit dem restic-Passwort der sendenden Instanz, das sie über die [Koppelgruppe](#pairing) bekommt). Du bekommst:
 
-*Eine empfangene Off-site-Kopie in den Details einer Instanz, schreibgeschützt überwacht, mit einer Integritätsprüfung auf dieser Hardware.*
-
-Auf der Box, die Append-only-Kopien von einem anderen BombVault **empfängt**, geben dir die empfangenen Repositories eine unabhängige, schreibgeschützte Überwachung auf der empfangenden Hardware, damit ein stiller Fehler am anderen Ende nicht unbemerkt bleibt. Schalte **Empfänger** unter **Einstellungen, Instanzen** ein, öffne dann die **Details** der sendenden Instanz auf der Seite Instanzen und füge das empfangene Repository hinzu (schreibgeschützt, geöffnet mit dem restic-Passwort der sendenden Instanz, das sie über die [Kopplungsgruppe](#pairing) bekommt). Du bekommst:
-
-- **Einen Bestand nach Quelle**, sodass du genau siehst, welche Container, VMs und Ordnersätze angekommen sind.
-- **Zuletzt empfangen** pro Quelle, sodass du weißt, wie frisch jede ist.
-- **Eine unabhängige `restic check`** auf der empfangenden Hardware, sodass die Integrität dort geprüft wird, wo die Daten wirklich liegen, nicht nur beim Sender.
-- **Einen Totmannschalter:** einen Alarm, wenn eine Quelle innerhalb eines Fensters, das du setzt, aufhört zu senden.
+- **Ein Inventar nach Quelle**, damit du genau siehst, welche Container, VMs und Ordner-Sets gelandet sind.
+- **Zuletzt empfangen** pro Quelle, damit du weißt, wie frisch jede ist.
+- **Ein unabhängiges `restic check`** auf der empfangenden Hardware, damit die Integrität dort geprüft wird, wo die Daten tatsächlich liegen, nicht nur beim Sender.
+- **Einen Totmannschalter:** einen Alarm, wenn eine Quelle innerhalb eines von dir gesetzten Fensters nicht mehr sendet.
 - **Integritätsalarme:** einen Alarm, wenn eine Prüfung auf der empfangenden Seite fehlschlägt.
 
-Der Empfänger ist strikt schreibgeschützt. Er schreibt nie in das empfangene Repository und kann so die Append-only-Garantie, auf die sich der Sender verlässt, nie brechen.
+Der Empfänger ist strikt schreibgeschützt. Er schreibt nie in das empfangene Repository und kann daher nie die Append-only-Garantie brechen, auf die sich der Sender verlässt.
 
-Ein Abholer arbeitet andersherum: Mit eingeschaltetem **Holen** liest eine Instanz die Sicherungen eines anderen Mitglieds nach eigenem Zeitplan, in ein eigenes Repository für jede Quelle, sodass sie nie als Sicherungen dieser Box zählen. Seine Quellen stehen ebenfalls in den Details dieses Mitglieds.
+Ein Abholer arbeitet andersherum: Bei eingeschaltetem **Holen** liest eine Instanz die Sicherungen eines anderen Mitglieds nach ihrem eigenen Zeitplan, in ein eigenes Repository pro Quelle, sodass sie nie als eigene Sicherungen dieser Box zählen. Seine Quellen stehen ebenfalls in den Details dieses Mitglieds: der Repository-Ort, welche Art Sicherung es hält und wie oft geholt wird. Das restic-Passwort kommt über die Gruppe, nie der APP_KEY, und die Gegenseite hat nichts weiter einzurichten und muss nicht laufen. Die Quelle wird nur gelesen, und jede Seite behält ihre eigene Anmeldung. Eine `rclone:`-Quelle wird abgelehnt, weil rclone sie mit den Remotes dieser Instanz erreichen würde.
 
 ### Empfangsserver {#receiving-server}
 
-Die empfangende Box kann auch den rest-server betreiben, auf den die anderen kopieren. Er wird eingerichtet, wenn du zum ersten Mal eine **Empfänger**-Anfrage erlaubst, die ihn braucht: Das Fenster sagt, dass der Server einen Empfangsserver braucht, und fragt nach einem Ordner auf einer Freigabe, mit **Neuer Ordner** zum Anlegen, und einem Port (8000, wenn kein anderer Container ihn belegt). BombVault dann:
+Die empfangende Box kann auch den rest-server betreiben, auf den die anderen kopieren. Er wird eingerichtet, wenn du zum ersten Mal eine **Empfänger**-Anfrage erlaubst, die danach fragt: Das Fenster sagt, dass der Server einen Empfangsserver braucht, und fragt nach einem Ordner auf einem Share, mit **Neuer Ordner**, um einen anzulegen, und einem Port (8000, sofern ihn kein anderer Container nutzt). BombVault dann:
 
-1. lehnt ab, wenn es schon einen Container namens `rest-server` gibt oder ein anderer Container den Port hält;
-2. zieht `restic/rest-server` und startet ihn über den Docker-Socket im Append-only-Modus mit privaten Repositories und einer Login-Datei im Ordner;
-3. schreibt sein Unraid-Template auf den Flash, sodass der Container im Docker-Tab bearbeitbar bleibt, oder bietet das Template zum Herunterladen an, wenn der Flash nicht erreichbar ist;
-4. führt den Manipulationstest dagegen aus und zeigt, ob er Löschen verweigert.
+1. lehnt ab, wenn schon ein Container namens `rest-server` existiert oder ein anderer Container den Port hält,
+2. zieht `restic/rest-server` und startet ihn über den Docker-Socket im Append-only-Modus mit privaten Repositories und einer Login-Datei im Ordner,
+3. schreibt sein Unraid-Template auf den Flash, damit der Container im Docker-Tab bearbeitbar bleibt, oder bietet das Template als Download an, wenn der Flash außer Reichweite ist,
+4. führt den Manipulationstest dagegen aus und zeigt, ob er das Löschen verweigert.
 
-Die Instanzen deiner Gruppe finden den Server dann unter den Anbietern bei **Aus deiner Gruppe**, benannt nach der empfangenden Box, und die Rolle **Empfänger** bietet ihn als sichere Wahl an. Jede Instanz bekommt beim ersten Benutzen ein eigenes Login und schreibt dort nur in ihren eigenen Ordner. Mit eingeschaltetem **Empfänger** unter **Einstellungen, Instanzen** öffnet **Empfangsserver** auf der Karte dieser Instanz den Server wieder. Sein Fenster listet die Logins unter **Partner mit Login**, und **Login entziehen** nimmt eines weg; was diese Instanz schon kopiert hat, bleibt im Ordner. Die Einrichtung legt außerdem ein **Login außerhalb der Gruppe** an, dessen Passwort das Fenster einmal zeigt.
+Die Instanzen deiner Gruppe finden den Server dann unter den Anbietern bei **Aus deiner Gruppe**, benannt nach der empfangenden Box, und die Rolle **Empfänger** bietet ihn als sichere Wahl an. Jede Instanz bekommt beim ersten Nutzen des Servers einen eigenen Login und schreibt dort nur in ihren eigenen Ordner. Bei eingeschaltetem **Empfänger** unter **Einstellungen, Instanzen** öffnet **Empfangsserver** auf der Karte dieser Instanz den Server wieder. Sein Fenster listet die Logins unter **Partner mit Login** auf, und **Login entziehen** nimmt einen weg. Was diese Instanz schon kopiert hat, bleibt im Ordner. Die Einrichtung legt außerdem einen **Login außerhalb der Gruppe** an, dessen Passwort das Fenster einmal zeigt.
 
-Eine Instanz, die die empfangende Box nur über das Relay erreicht, kann den Server nicht nutzen, weil das Relay keine Sicherungen trägt. Trag die Adresse der empfangenden Box vorher auf der Kopplungsseite ein. Läuft BombVault auf einer eigenen IP-Adresse (zum Beispiel auf br0), füll **Adresse für Partner** aus, weil der Server auf der Adresse des Hosts lauscht.
+Eine Instanz, die die empfangende Box nur über das Relay erreicht, kann den Server nicht nutzen, weil das Relay keine Sicherungen trägt. Füge zuerst die Adresse der empfangenden Box auf der Kopplungsseite hinzu. Läuft BombVault auf einer eigenen IP-Adresse (zum Beispiel auf br0), fülle **Adresse für Partner** aus, weil der Server auf der Adresse des Hosts lauscht.
 
-## Beispiel: zwei Unraid-Kisten, von Anfang bis Ende
+## Beispiel: zwei Unraid-Boxen koppeln {#worked-example-two-unraid-boxes-end-to-end}
 
-Oben stehen die Einzelteile. Hier ist ein vollständiger Aufbau, weil sich Teile leichter zusammensetzen lassen, wenn man sie einmal zusammengesetzt gesehen hat.
+Das ist eine vollständige Einrichtung der obigen Teile, denn sie lassen sich leichter zusammensetzen, wenn man sie einmal zusammengesetzt gesehen hat.
 
-Zwei Kisten: **TOWER** betreibt die Container und schiebt die Sicherungen, **VAULT** nimmt sie an und erzwingt append-only. Setze deine eigenen Namen, Adressen und Freigabepfade ein.
+Zwei Boxen: **TOWER** betreibt die Container und schiebt Sicherungen. **VAULT** empfängt sie und erzwingt Append-only. Setze deine eigenen Namen, Adressen und Share-Pfade ein.
 
-**1. Die beiden Kisten koppeln.** Öffne auf TOWER **Einstellungen, Kopplung**, drück **Phrase generieren** und gib die zwölf Wörter auf VAULT unter **Phrase eingeben** ein. Setz vorher auf beiden ein Login-Passwort.
+**1. Die beiden Boxen koppeln.** Öffne auf TOWER **Einstellungen, Kopplung**, drücke **Phrase generieren** und gib die zwölf Wörter auf VAULT unter **Phrase eingeben** ein. Setze vorher auf beiden ein Login-Passwort.
 
-**2. Auf TOWER VAULT als Empfänger anfragen.** Schalte auf der Seite Instanzen auf VAULTs Karte **Empfänger** ein, wähl die Bereiche und **Empfangsserver von VAULT** als Ort und schick die Anfrage.
+**2. Auf TOWER VAULT bitten, Empfänger zu sein.** Schalte auf der Seite Instanzen **Empfänger** auf der Karte von VAULT ein, wähle die Bereiche und **den Empfangsserver von VAULT** als Ort und sende die Anfrage.
 
-**3. Auf VAULT erlauben.** VAULTs Seite Instanzen zeigt die Anfrage auf TOWERs Karte. Drück **Erlauben**. Beim ersten Mal fragt VAULT nach einem Ordner für seinen Empfangsserver, etwa `user/appdata/rest-server`, startet den rest-server im Append-only-Modus und führt den Manipulationstest dagegen aus.
+**3. Auf VAULT erlauben.** Die Seite Instanzen von VAULT zeigt die Anfrage auf der Karte von TOWER. Drücke **Erlauben**. Beim ersten Mal fragt VAULT nach einem Ordner für seinen Empfangsserver, etwa `user/appdata/rest-server`, startet den rest-server im Append-only-Modus und führt den Manipulationstest dagegen aus.
 
-**4. Zurück auf TOWER.** Ab jetzt kopiert TOWER nach jeder Sicherung zu VAULT, und der neue Speicherort erscheint auf TOWERs Seite Speicherorte mit seinem Löschschutz.
+**4. Zurück auf TOWER.** Von da an kopiert TOWER nach jeder Sicherung zu VAULT, und der neue Speicherort erscheint auf der Seite Speicherorte von TOWER mit seinem Löschschutz.
 
 Was der Manipulationstest antwortet:
 
@@ -262,102 +430,122 @@ Was der Manipulationstest antwortet:
 | --- | --- |
 | **geschützt** | VAULT hat das Löschen verweigert. Das ist der einzige bestandene Zustand. |
 | **nicht geschützt** | VAULT hat ein Löschen angenommen. `--append-only` fehlt oder wurde entfernt. |
-| **unentschieden** | Weder noch. Meist ist die URL nicht die, die restic selbst benutzt, oder die Zugangsdaten haben sich geändert. Es wird nichts vermerkt und kein Alarm ausgelöst. |
+| **ohne Ergebnis** | Keins von beiden. Meist ist die URL nicht die, die restic selbst nutzt, oder die Zugangsdaten haben sich geändert. Es wird nichts vermerkt und kein Alarm ausgelöst. |
 
-**5. Wenn du magst, ansehen, was ankommt.** Schalte auf VAULT **Empfänger** unter **Einstellungen, Instanzen** ein, öffne TOWERs **Details** und füge das empfangene Repository hinzu. VAULT bekommt TOWERs restic-Passwort über die Gruppe; niemand tippt einen Schlüssel ab.
+**5. Beobachte, was ankommt, wenn du willst.** Schalte auf VAULT **Empfänger** unter **Einstellungen, Instanzen** ein, öffne die **Details** von TOWER und füge das empfangene Repository hinzu. VAULT bekommt das restic-Passwort von TOWER über die Gruppe. Niemand tippt einen Schlüssel.
 
-**6. Gegenseitig machen.** Dieselben Schritte in die andere Richtung: VAULT fragt TOWER als Empfänger an. Dann erzwingt jede Kiste append-only für die andere, und keine kann die Sicherungen der anderen löschen.
+**6. Mach es gegenseitig.** Wiederhole die Schritte in der anderen Richtung: VAULT bittet TOWER, sein Empfänger zu sein. Jede Box erzwingt dann Append-only für die andere, und keine kann die Sicherungen der anderen löschen.
 
-Ein rest-server, den du selbst betreibst, geht auch: Füg ihn mit **Speicherort hinzufügen** als rest-server hinzu, mit Benutzer und Passwort aus seiner `.htpasswd`, und schalte den Löschschutz ein. Lass `--append-only` in seinen Optionen stehen; ohne das ist die Gegenseite wieder eine gewöhnliche Freigabe.
+Ein rest-server, den du von Hand betreibst, funktioniert auch: Füge ihn mit **Speicherort hinzufügen** als rest-server hinzu, mit Benutzer und Passwort aus seiner `.htpasswd`, und schalte den Löschschutz ein. Behalte `--append-only` in seinen Optionen. Ohne es ist die Gegenseite wieder ein gewöhnlicher Share.
 
 !!! warning "Ein lokaler Pfad ist ein Pfad im Container"
-    Wo BombVault nach einem Ordner auf diesem Server fragt, trag ihn relativ zum Host-Mount ein, etwa `user/appdata/rest-server/bombvault-containers`, nicht `/mnt/user/appdata/...`. BombVault läuft in einem Container, in dem das `/mnt` des Hosts an anderer Stelle eingehängt ist; ein absoluter Host-Pfad existiert dort nicht. Fügst du trotzdem einen ein, nennt BombVault dir den relativen Pfad, den du stattdessen brauchst.
+    Wo BombVault nach einem Ordner auf diesem Server fragt, gib ihn relativ zum Host-Mount ein, etwa `user/appdata/rest-server/bombvault-containers`, nicht `/mnt/user/appdata/...`. BombVault läuft in einem Container, in dem das `/mnt` des Hosts woanders gemountet ist. Ein absoluter Host-Pfad existiert darin nicht. Fügst du einen ein, sagt dir BombVault, welchen relativen Pfad du stattdessen nehmen sollst.
 
 ## Notfall-Assistent {#emergency}
 
-Der **Notfall-Assistent** holt einen Server zurück, der weg ist oder neu aufgesetzt wurde. Er startet auf der Seite **Wiederherstellung** unter **Notfall** und über **Aus einer Sicherung wiederherstellen** auf der Willkommensseite einer neuen Installation. Er läuft in vier Schritten: **Zugang**, **Einstellungen**, **Auswahl** und **Wiederherstellen**.
+Der **Notfall-Assistent** holt einen Server zurück, der weg ist oder neu aufgesetzt wurde. Er startet auf der Seite **Wiederherstellung** unter **Notfall** und über **Aus einer Sicherung wiederherstellen** auf der Willkommensseite einer Neuinstallation. Er läuft in vier Schritten: **Zugang**, **Einstellungen**, **Auswahl** und **Wiederherstellung**.
 
-1. **Zugang.** Zeig BombVault den Schlüssel der alten Sicherungen, auf einem von drei Wegen:
-    - **Recovery-Kit hochladen**: die Datei, die du bei der Einrichtung heruntergeladen hast. Sie enthält den Schlüssel und jeden Speicherort, und BombVault füllt den Rest daraus aus. Ein mit age versiegeltes Kit fragt nach der Identität, für die es versiegelt wurde; sie wird einmal benutzt und nicht gespeichert.
-    - **Über die Gruppe**: Eine Instanz deiner Gruppe verwahrt den Schlüssel als Hinterlegung. Du brauchst die zwölf Wörter der Gruppe, deinen Wiederherstellungscode und jemanden an dieser Instanz. Siehe [Schlüsselhüter](#key-keeper).
-    - **Schlüssel eintippen**: den `APP_KEY` des alten Servers und wo seine Sicherungen liegen.
+1. **Zugang.** Zeige BombVault den Schlüssel der alten Sicherungen, auf einem von drei Wegen:
+    - **Recovery-Kit hochladen**: die Datei, die du bei der Einrichtung heruntergeladen hast. Sie enthält den Schlüssel und jeden Speicherort, und BombVault füllt den Rest daraus aus. Ein mit age versiegeltes Kit fragt nach der Identität, für die es versiegelt wurde. Sie wird einmal genutzt und nicht gespeichert.
+    - **Über die Gruppe**: Eine Instanz deiner Gruppe hält den Schlüssel als Hinterlegung. Du brauchst die zwölf Wörter der Gruppe, deinen Wiederherstellungscode und jemanden bei dieser Instanz. Siehe [Schlüsselhüter](#key-keeper).
+    - **Schlüssel eintippen**: der `APP_KEY` des alten Servers und wo seine Sicherungen liegen.
 
-    BombVault probiert den Schlüssel dann an jedem Speicherort und sagt für jeden, ob er lesbar ist, nicht gefunden wurde, mit einem anderen Schlüssel gesperrt ist, nicht erreichbar ist oder noch seine Anmeldung braucht. Gespeichert ist noch nichts, und der Schlüssel bleibt eine begrenzte Zeit im Speicher. **Schlüssel übernehmen** lässt diesen Server ab jetzt mit diesem Schlüssel sichern; **Übernahme rückgängig machen** geht zurück zum eigenen Schlüssel, bis die erste Sicherung gelaufen ist. Ein Server, der schon eigene Sicherungen hat, lehnt die Übernahme ab und verweist auf [Aus einem alten Sicherungsordner](#restore-from-another-bombvault-repo). **Zugangsdaten speichern** übernimmt die Zugangsdaten, die das Kit für entfernte Speicherorte mitbringt, und fragt, bevor es Zugangsdaten ersetzt, die dieser Server schon hat.
-2. **Einstellungen.** **Einstellungen zurückholen** stellt BombVaults eigene Einstellungen aus dem neuesten Selbstbackup wieder her: Speicherorte, Zugangsdaten, Zeitpläne und Regeln. BombVault startet dafür neu, über den Docker-Socket, sodass die laufende Einstellungsdatenbank nie unter einem offenen Handle überschrieben wird, und der Assistent macht danach von selbst weiter. Die Anmeldung dieses Servers bleibt: Du meldest dich weiter mit dem Passwort an, das du jetzt nutzt. Geheimnisse des alten Servers, die sich nicht übernehmen lassen, werden aufgelistet, damit du sie neu eingeben kannst. Die Wiederherstellung beendet jede Sitzung und entfernt die Passkeys, richte sie danach also neu ein.
-3. **Auswahl.** BombVault sieht deine Sicherungen durch und listet die Container, VMs, Ordnersätze und ZFS-Datasets, die es findet. Überall ist der neueste Snapshot vorgewählt. Was dieser Server noch hat, startet ausgeschaltet, weil eine Wiederherstellung es ersetzen würde. Ordnersätze wissen nach einem Neuaufbau nicht mehr, woher sie kamen, und gehen deshalb in einen Ordner, den du wählst.
-4. **Wiederherstellen.** Alles Gewählte kommt in einem Rutsch zurück, auf Wunsch gestoppt, damit du jeden Container und jede VM selbst startest, was nach einem Totalverlust am sichersten ist. Lade danach ein neues Recovery-Kit herunter: Das alte gehört zur vorigen Installation.
+    BombVault probiert den Schlüssel dann an jedem Speicherort aus und sagt für jeden, ob er lesbar ist, nicht gefunden wurde, mit einem anderen Schlüssel gesperrt ist, nicht erreichbar ist oder ihm noch die Anmeldung fehlt. Noch ist nichts gespeichert, und der Schlüssel bleibt für begrenzte Zeit im Arbeitsspeicher. **Schlüssel übernehmen** lässt diesen Server ab jetzt seine Sicherungen mit diesem Schlüssel schreiben. **Übernahme rückgängig machen** geht zu seinem eigenen Schlüssel zurück, bis die erste Sicherung gelaufen ist. Ein Server, der schon eigene Sicherungen hat, lehnt die Übernahme ab und verweist stattdessen auf [Aus einem alten Sicherungsordner](#restore-from-another-bombvault-repo). **Zugangsdaten speichern** speichert die Zugangsdaten, die das Kit für entfernte Speicherorte trägt, und fragt nach, bevor es Zugangsdaten ersetzt, die dieser Server schon hat.
+2. **Einstellungen.** **Einstellungen zurückholen** stellt die eigenen Einstellungen von BombVault aus dem neuesten Selbstbackup wieder her: Speicherorte, Zugangsdaten, Zeitpläne und Regeln. BombVault startet sich dafür über den Docker-Socket neu, damit die laufende Einstellungsdatenbank nie unter einem offenen Handle überschrieben wird, und der Assistent macht danach von selbst weiter. Der Login dieses Servers bleibt: Du meldest dich weiter mit dem Passwort an, das du jetzt nutzt. Geheimnisse, die der alte Server gespeichert hatte und die sich nicht übernehmen lassen, werden aufgelistet, damit du sie neu eingeben kannst. Die Wiederherstellung beendet jede Sitzung und entfernt die Passkeys, richte sie danach also neu ein.
+3. **Auswahl.** BombVault durchsucht deine Sicherungen und listet die Container, VMs, Ordner-Sets und ZFS-Datasets auf, die es findet. Der neueste Snapshot ist überall vorgewählt. Was dieser Server noch hat, beginnt ausgeschaltet, weil eine Wiederherstellung es ersetzen würde. Ordner-Sets wissen nach einem Neuaufbau nicht mehr, woher sie kamen, daher gehen sie in einen Ordner, den du wählst.
+4. **Wiederherstellung.** Alles Gewählte kommt auf einmal zurück, auf Wunsch angehalten gelassen, wenn du jeden Container und jede VM selbst starten willst, was nach einem Totalverlust am sichersten ist. Lade danach ein neues Recovery-Kit herunter: Das alte gehört zur vorigen Installation.
+
+![Der Notfall-Assistent im ersten Schritt, mit den drei Wegen hinein.](assets/screenshots/offsite/emergency-dark.png#only-dark)
+![Der Notfall-Assistent im ersten Schritt, mit den drei Wegen hinein.](assets/screenshots/offsite/emergency-light.png#only-light)
+
+### Beispiel: ein neuer Server aus dem Recovery-Kit {#example-emergency}
+
+Der Server TOWER ist mit seinen Platten gestorben. Er hielt 23 Container und 2 VMs und kopierte sie und sein Selbstbackup nach Backblaze B2. Du hast `bombvault-recovery-kit.md` aus deinem Passwortmanager und eine neue Box mit Unraid darauf. Der alte `APP_KEY` ist weg, und du brauchst ihn nicht.
+
+1. **Installiere BombVault** auf der neuen Box und gib ihm einen neuen `APP_KEY`, wie bei jeder Neuinstallation. Richte die VM-Verbindung unter **Einstellungen, Anbindungen, Host-SSH** ein, wenn du die VMs zurückhaben willst, weil eine VM-Wiederherstellung sie braucht.
+2. **Starte den Assistenten.** Wähle auf **Willkommen bei BombVault** **Aus einer Sicherung wiederherstellen**. Wähle auf der Seite Wiederherstellung unter **Notfall** **Notfall-Assistent starten**.
+3. **Zugang.** Wähle **Recovery-Kit hochladen** und lege die Datei ab. BombVault probiert seinen Schlüssel an jedem Speicherort aus und sagt zum Beispiel **Recovery-Kit gelesen. Sein Schlüssel öffnet 0 von 2 Speicherorten.** Der lokale Ordner sagt **nicht gefunden**, da die Platte gestorben ist, und Backblaze B2 sagt **Zugang fehlt**.
+4. **Zugangsdaten speichern.** Das Kit trägt die Anmeldung seiner entfernten Orte. Drücke **Zugangsdaten speichern**, und die Orte werden erneut probiert, Backblaze B2 sagt jetzt also **lesbar**.
+5. **Schlüssel übernehmen.** Dieser Server schreibt seine Sicherungen jetzt mit dem alten Schlüssel, damit die neuen Sicherungen zu den alten passen. Er behält seinen eigenen `APP_KEY` im Template. **Übernahme rückgängig machen** funktioniert, bis die erste Sicherung gelaufen ist.
+6. **Einstellungen.** Wähle **Einstellungen zurückholen**, was das neueste Selbstbackup aus B2 liest. BombVault startet sich zum Anwenden neu, und der Assistent macht von selbst weiter. Deine Speicherorte, Zeitpläne und Regeln sind zurück, und du meldest dich weiter mit dem Passwort dieses Servers an. Gib die Geheimnisse, die der Assistent auflistet, neu ein, etwa Benachrichtigungseinstellungen.
+7. **Auswahl.** Stelle **Wo liegen die Sicherungen?** auf die Off-site-Kopien, weil die lokalen mit dem alten Server untergegangen sind. BombVault listet die 23 Container und 2 VMs mit vorgewähltem neuestem Snapshot auf, und du kannst für jeden einen anderen wählen.
+8. **Wiederherstellung.** Schalte **Danach gestoppt lassen** ein, was nach einem Totalverlust am sichersten ist, und starte. **Was passiert** sagt, was zurückkommt. Die Ergebniszeile liest sich zum Beispiel **25 wiederhergestellt, 0 fehlgeschlagen. Starte sie bei Bedarf unter Sicherungen.**
+9. **Abschluss.** Starte zuerst deine Datenbanken, dann die Apps, die sie nutzen. Öffne **Einstellungen, Wiederherstellung** und lade ein neues Recovery-Kit herunter, weil das alte zur vorigen Installation gehört. Prüfe **Braucht dich** in der Übersicht, und führe **Jetzt alles sichern** aus, sobald alles funktioniert.
+
+Fehlt auch das Selbstbackup, wähle **Überspringen: ich habe kein Selbstbackup**. Die Speicherorte kommen dann allein aus dem Kit, du richtest Zeitpläne und Regeln neu ein, und die Off-site-Kopien pausieren, bis du die Vorgaben der Bereiche bestätigst, siehe [Nach einem Neuaufbau](#after-a-rebuild).
 
 !!! tip "Geplanter Umzug oder Katastrophe"
-    Der Notfall-Assistent stellt BombVaults eigene Einstellungen aus einer Sicherung wieder her. Für einen *geplanten* Umzug auf eine neue Box kannst du deine Konfiguration stattdessen direkt mit der Karte **Einstellungen exportieren / importieren** (eine portable JSON-Datei) mitnehmen. Siehe [Konfiguration](configuration.md#portable-settings-export-and-import).
+    Der Notfall-Assistent stellt die eigenen Einstellungen von BombVault aus einer Sicherung wieder her. Für einen *geplanten* Umzug auf eine neue Box kannst du stattdessen deine Konfiguration direkt mit der Karte **Einstellungen exportieren / importieren** (eine portable JSON-Datei) mitnehmen. Siehe [Konfiguration](configuration.md#portable-settings-export-and-import).
 
 ### Aus einem alten Sicherungsordner {#restore-from-another-bombvault-repo}
 
-**Aus einem alten Sicherungsordner** unter **Andere Quellen** auf der Seite Wiederherstellung öffnet das Repository einer *anderen* BombVault-Instanz (eine unter `/mnt` eingehängte Freigabe oder eine entfernte Adresse) mit dem Recovery-Kit dieser Instanz oder ihrem eingetippten `APP_KEY`, in einer einmaligen, schreibgeschützten Sitzung. Durchstöbere die dort gespeicherten Container, VMs, Ordnersätze und ZFS-Datasets, wähl einen Snapshot und stell ihn wieder her, und das Wiederhergestellte wird ein normaler lokaler Container, eine VM oder ein Ordnersatz. In das andere Repository wird nie etwas geschrieben, und deine eigenen Sicherungseinstellungen bleiben unangetastet (die Sitzung lebt im Speicher und läuft von selbst ab). Einen Container von Server A auf Server B zu bringen heißt nicht, die eigenen Einstellungen umzubiegen und danach zurückzustellen. Dieses Fenster ist einmalig: Es öffnet eine Sitzung, stellt wieder her, was du auswählst, und vergisst die andere Instanz. Willst du stattdessen eine dauerhafte Regelung, bei der diese Box die Snapshots einer anderen Instanz nach Plan in ihr eigenes Repository holt, ist das die Rolle **Abholer** auf der Seite Instanzen.
+**Aus einem alten Sicherungsordner** unter **Andere Quellen** auf der Seite Wiederherstellung öffnet das Repository einer *anderen* BombVault-Instanz (ein Share, der unter `/mnt` gemountet ist, oder eine entfernte Adresse) mit dem Recovery-Kit dieser Instanz oder ihrem eingetippten `APP_KEY`, in einer einmaligen, schreibgeschützten Sitzung. Durchsuche die dort gespeicherten Container, VMs, Ordner-Sets und ZFS-Datasets, wähle einen Snapshot und stelle ihn wieder her, und das wiederhergestellte Objekt wird zu einem normalen lokalen Container, einer VM oder einem Ordner-Set. In das andere Repository wird nie etwas geschrieben, und deine eigenen Sicherungseinstellungen bleiben unberührt (die Sitzung lebt im Arbeitsspeicher und läuft von selbst ab). Einen Container von Server A auf Server B zu holen heißt nicht, deine Einstellungen umzuleiten und danach zurückzusetzen. Dieses Fenster ist einmalig: Es öffnet eine Sitzung, stellt wieder her, was du wählst, und vergisst die andere Instanz. Willst du stattdessen eine dauerhafte Anordnung, bei der diese Box die Snapshots einer anderen Instanz nach Zeitplan in ihr eigenes Repository holt, ist das die Rolle **Abholer** auf der Seite Instanzen.
 
-Ein Container, dessen Netzwerk es auf diesem Server nicht gibt, etwa ein `br0`-Netzwerk von Unraid auf einem normalen Docker-Host, zeigt unter seiner Zeile eine Netzwerkauswahl. BombVault legt ihn im gewählten Netzwerk an, zusammen mit seinen weiteren Netzwerken. Feste IP- und MAC-Adresse gehörten zum alten Netzwerk und fallen weg, beide vergibt dann das neue Netzwerk.
+Ein Container, dessen Netzwerk auf diesem Server nicht existiert, etwa ein Unraid-Netz `br0` auf einem schlichten Docker-Host, zeigt unter seiner Zeile eine Netzwerkauswahl. BombVault legt ihn im gewählten Netzwerk an, zusammen mit seinen anderen Netzwerken. Die feste IP und MAC-Adresse gehörten zum alten Netzwerk und entfallen, das neue Netzwerk vergibt sie also.
 
 ## Schlüsselhüter {#key-keeper}
 
-Ein Schlüsselhüter ist eine Instanz deiner Gruppe, die eine versiegelte Kopie des Recovery-Kits dieses Servers verwahrt. Selbst öffnen kann sie die Kopie nicht. Geht dieser Server einmal verloren, bittet eine neue Installation, die deiner Gruppe beitritt, den Hüter um die Kopie und öffnet sie mit deinem Wiederherstellungscode.
+Ein Schlüsselhüter ist eine Instanz deiner Gruppe, die eine versiegelte Kopie des Recovery-Kits dieses Servers hält. Sie kann die Kopie selbst nicht öffnen. Geht dieser Server einmal verloren, fragt eine Neuinstallation, die deiner Gruppe beitritt, den Hüter nach der Kopie und öffnet sie mit deinem Wiederherstellungscode.
 
-1. Schalte auf der Seite Instanzen auf der Karte der Instanz, die verwahren soll, **Schlüsselhüter** ein und wähl **Hinterlegen**. Das Hinterlegen braucht ein Login-Passwort.
-2. Dieser Server zeigt den **Wiederherstellungscode** einmal: zwanzig Buchstaben und Ziffern in vier Fünfergruppen. Schreib ihn auf und bestätige mit **Ich habe den Code aufgeschrieben**. Dieser Server speichert den Code nicht, nur, was er braucht, um eine Hinterlegung für ihn zu versiegeln.
-3. Der Hüter hält jetzt die Hinterlegung, und dieser Server erneuert sie, wenn sich das Kit ändert. **Hinterlegung** auf der Karte dieser Instanz listet die **Hinterlegung dieses Servers** mit jedem Hüter und seinem Zustand und die **Hinterlegungen, die dieser Server verwahrt** für die anderen. **Neuen Code erstellen** ersetzt den Code; jeder Hüter wechselt auf den neuen, sobald er die neue Hinterlegung bekommt.
+![Das Fenster mit dem Wiederherstellungscode: zwanzig Zeichen in vier Gruppen, einmal angezeigt.](assets/screenshots/offsite/recovery-code-dark.png#only-dark)
+![Das Fenster mit dem Wiederherstellungscode: zwanzig Zeichen in vier Gruppen, einmal angezeigt.](assets/screenshots/offsite/recovery-code-light.png#only-light)
 
-An dem Tag brauchst du drei Dinge: die zwölf Wörter deiner Gruppe, den Wiederherstellungscode und Zugang zur Oberfläche des Hüters, wo jemand **Erlauben** drücken muss. Wähl im Notfall-Assistenten **Über die Gruppe**, nimm die Hinterlegung, frag sie an und tipp den Wiederherstellungscode ein. Der Code wird auf dem neuen Server benutzt und nicht an den Hüter geschickt. Auf dem Hüter steht die Anfrage unter **Hinterlegung**, mit wer fragt, ob diese Instanz dort schon einmal gesehen wurde und wie oft sie gefragt hat; **Erlauben** gibt die versiegelte Kopie heraus, und das Erlauben braucht ein Login-Passwort. Die neue Installation hat nach dem Erlauben 30 Minuten, um sie abzuholen, eine Anfrage, die niemand beantwortet, läuft nach einem Tag ab, und eine Instanz, die zu oft fragt, muss eine Stunde warten.
+1. Schalte auf der Seite Instanzen **Schlüsselhüter** auf der Karte der Instanz ein, die ihn halten soll, und wähle **Hinterlegen**. Eine Hinterlegung braucht ein Login-Passwort.
+2. Dieser Server zeigt den **Wiederherstellungscode** einmal: zwanzig Buchstaben und Ziffern in vier Fünfergruppen. Schreibe ihn auf und bestätige mit **Ich habe den Code aufgeschrieben**. Dieser Server speichert den Code nicht, nur, was er braucht, um eine Hinterlegung dafür zu versiegeln.
+3. Der Hüter hält jetzt die Hinterlegung, und dieser Server erneuert sie, wenn sich das Kit ändert. **Hinterlegung** auf der Karte dieser Instanz listet **Hinterlegung dieses Servers** mit jedem Hüter und seinem Zustand auf, und **Hinterlegungen, die dieser Server verwahrt** für die anderen. **Neuen Code erstellen** ersetzt den Code. Jeder Hüter wechselt zum neuen, wenn er die neue Hinterlegung bekommt.
 
-Ohne den Code kann niemand die Kopie öffnen, der Hüter eingeschlossen. Ist der Code verloren, erstell einen neuen, solange dieser Server noch läuft; ist der Server schon weg, gehen weiterhin das Recovery-Kit und der eingetippte APP_KEY. Der Hüter kann eine Hinterlegung jederzeit löschen, und der Besitzer muss dann erneut anfragen.
+An diesem Tag brauchst du drei Dinge: die zwölf Wörter deiner Gruppe, den Wiederherstellungscode und Zugang zur Oberfläche des Hüters, wo jemand **Erlauben** drücken muss. Wähle im Notfall-Assistenten **Über die Gruppe**, wähle die Hinterlegung, frage sie an und tippe den Wiederherstellungscode ein. Der Code wird auf dem neuen Server genutzt und nicht an den Hüter gesendet. Beim Hüter erscheint die Anfrage unter **Hinterlegung** mit dem, wer fragt, ob diese Instanz dort schon einmal gesehen wurde und wie oft sie gefragt hat. **Erlauben** gibt die versiegelte Kopie heraus, und das Erlauben braucht ein Login-Passwort. Die Neuinstallation hat nach dem Erlauben 30 Minuten Zeit, sie abzuholen, eine Anfrage, die niemand beantwortet, läuft nach einem Tag ab, und eine Instanz, die zu oft fragt, muss eine Stunde warten.
+
+Ohne den Code kann niemand die Kopie öffnen, auch der Hüter nicht. Ist der Code verloren, erstelle einen neuen, solange dieser Server noch läuft. Ist der Server schon weg, funktionieren das Recovery-Kit und der eingetippte APP_KEY weiter. Der Hüter kann eine Hinterlegung jederzeit löschen, und der Besitzer muss dann erneut fragen.
 
 ## Recovery-Kit {#recovery-kit}
 
-Dies ist das Stück, das eine Notfallwiederherstellung selbst dann möglich macht, wenn kein BombVault läuft.
+Das ist das Stück, das Notfallwiederherstellung auch dann möglich macht, wenn kein BombVault läuft.
 
-**Recovery-Kit herunterladen** in der Karte **Für den Notfall** unter **Einstellungen, Wiederherstellung** gibt dir den **Schlüssel**, das **abgeleitete restic-Passwort**, jeden **Speicherort** mit dem Repository jedes Bereichs, die Zugangsdaten, die eine neue Installation braucht, um sie zu erreichen, und die **genauen restic-Befehle**, sodass du direkt mit dem restic-CLI auf jeder Maschine wiederherstellen kannst. Es braucht ein Login-Passwort. Das Kit druckt den Schlüssel auch bei ausgeschalteter Verschlüsselung, weil die Container- und VM-Definitionen immer damit versiegelt sind. Nach einer Übernahme druckt es den übernommenen Sicherungsschlüssel und den APP_KEY dieses Servers, den eine neue Installation nur braucht, um die Einstellungen zurückzuholen. Eine Karte **Sichere dein Recovery-Kit** auf der Übersicht erinnert dich, bis du es gespeichert hast.
+**Recovery-Kit herunterladen** in der Karte **Für den Notfall** unter **Einstellungen, Wiederherstellung** gibt dir den **Schlüssel**, das **abgeleitete restic-Passwort**, jeden **Speicherort** mit dem Repository jedes Bereichs, die Zugangsdaten, die eine Neuinstallation braucht, um sie zu erreichen, und die **genauen restic-Befehle**, damit du direkt mit dem restic-CLI auf jeder Maschine wiederherstellen kannst. Es braucht ein Login-Passwort. Das Kit druckt den Schlüssel auch bei ausgeschalteter Verschlüsselung, weil die Container- und VM-Definitionen immer damit versiegelt sind. Nach einer Übernahme druckt es den übernommenen Sicherungsschlüssel und den APP_KEY dieses Servers, den eine Neuinstallation nur braucht, um die Einstellungen zurückzuholen. Eine Karte **Sichere dein Recovery-Kit** in der Übersicht erinnert dich, bis du es aufbewahrt hast.
 
-!!! danger "Bewahre das Recovery-Kit getrennt vom Server auf"
-    Das Kit enthält das Geheimnis, das deine Sicherungen entschlüsselt. Bewahre es an einem sicheren Ort getrennt vom Server auf (ein Passwortmanager, eine gedruckte Kopie im Safe). Verlierst du BombVault und `APP_KEY` ohne Recovery-Kit und ohne Hinterlegung, können deine verschlüsselten Sicherungen nicht wiederhergestellt werden.
+!!! danger "Bewahre das Recovery-Kit außerhalb des Servers auf"
+    Das Kit enthält das Geheimnis, das deine Sicherungen entschlüsselt. Bewahre es an einem sicheren Ort getrennt vom Server auf (ein Passwortmanager, ein Ausdruck in einem Safe). Verlierst du BombVault und `APP_KEY` ohne Recovery-Kit und ohne Schlüsselhinterlegung, lassen sich deine verschlüsselten Sicherungen nicht wiederherstellen.
 
-!!! warning "Der neueste Snapshot ist nicht immer der richtige"
-    Seit restic 0.17 zeigt `restic snapshots` die Größe jedes Snapshots. Nach einem Datenverlust kann der neueste Snapshot der geleerte sein, stell also keinen Snapshot wieder her, der viel kleiner ist als die davor. Nach Ransomware kann es der verschlüsselte in der üblichen Größe sein. Wenn BombVault noch läuft, sieh zuerst auf der Seite **Anomalien** nach: Sie nennt die letzte gute Sicherung, und das Wiederherstellungsfenster wählt sie vor. Für eine Wiederherstellung braucht es keine Anomalie-Daten von BombVault, und die Aufbewahrungspause behält immer nur mehr Snapshots.
+!!! warning "Der neueste Snapshot ist nicht immer der, den du wiederherstellen willst"
+    Seit restic 0.17 zeigt `restic snapshots` die Größe jedes Snapshots. Nach einem Datenverlust kann der neueste Snapshot der geleerte sein, stelle also keinen Snapshot wieder her, der weit kleiner ist als die davor. Nach Ransomware kann es der verschlüsselte in der üblichen Größe sein. Läuft BombVault noch, sieh dir zuerst seine Seite **Anomalien** an: Sie nennt die letzte gute Sicherung, und das Wiederherstellungsfenster wählt sie vor. Eine Wiederherstellung braucht keine Anomaliedaten von BombVault, und die Aufbewahrungspause behält immer nur mehr Snapshots.
 
-### Das Kit versiegeln
+### Das Kit versiegeln {#sealing-the-kit}
 
-Hast du **Exporte mit age verschlüsseln** unter **Einstellungen, System** eingeschaltet, wird das Kit ebenfalls damit versiegelt und als `bombvault-recovery-kit.md.age` heruntergeladen. Es ist ASCII-armored statt binär und bleibt damit Klartext: Einfügen in einen Passwortmanager oder Ausdrucken funktioniert genau wie vorher, nur ist der Inhalt ohne deinen Schlüssel nicht lesbar.
+Hast du **Exporte mit age verschlüsseln** unter **Einstellungen, System** eingeschaltet, wird auch das Kit damit versiegelt und als `bombvault-recovery-kit.md.age` heruntergeladen. Es ist ASCII-gepanzert statt binär und damit weiterhin Klartext: Es in einen Passwortmanager einzufügen oder auszudrucken funktioniert genau wie zuvor, der Inhalt ist ohne deinen Schlüssel unlesbar.
 
-!!! warning "Den age-Schlüssel nicht im Kit aufbewahren"
-    Zum Öffnen eines versiegelten Kits brauchst du deinen **privaten** age-Schlüssel. Bewahre ihn an einem Ort auf, der nicht vom Kit selbst abhängt, sonst hast du zwei Dinge wiederherzustellen statt einem. Das Versiegeln lohnt sich, wenn das Kit an einem Ort liegt, den du nicht ganz im Griff hast (ein geteilter Passwortmanager, Cloud-Notizen, ein Ausdruck im Büro); ein Kit in deinem eigenen Safe schützt schon der Safe.
+!!! warning "Speichere den age-Schlüssel nicht im Kit"
+    Du brauchst deinen **privaten** age-Schlüssel, um ein versiegeltes Kit zu öffnen. Bewahre ihn dort auf, wo er nicht vom Kit selbst abhängt, sonst hast du zwei Dinge wiederherzustellen statt einem. Das Versiegeln lohnt sich, wenn das Kit an einem Ort liegt, den du nicht ganz kontrollierst (ein geteilter Passwortmanager, Cloud-Notizen, ein Ausdruck in einem Büro). Ein Kit in deinem eigenen Safe ist durch den Safe schon geschützt.
 
-    Mit eingeschalteter Verschlüsselung und ohne brauchbaren Empfänger wird der Download rundweg verweigert. BombVault gibt den Master-Key nie ersatzweise im Klartext heraus.
+    Ist die Verschlüsselung an und kein brauchbarer Empfänger eingerichtet, wird der Download rundheraus abgelehnt. BombVault fällt nie darauf zurück, den Hauptschlüssel im Klartext herauszugeben.
 
-### Wenn das Kit gerade nicht zur Hand ist
+### Wenn du das Kit nicht zur Hand hast {#if-you-do-not-have-the-kit-to-hand}
 
-Das Passwort ist nirgends gespeichert, es wird aus dem Schlüssel der Sicherungen **berechnet**. Mit dem Schlüssel und einer Shell kannst du es also selbst nachbilden:
+Das Passwort wird nirgends gespeichert, es wird aus dem Schlüssel der Sicherungen **berechnet**, du kannst es also mit nichts als dem Schlüssel und einer Shell selbst reproduzieren:
 
 ```sh
-printf 'bombvault:restic-repo' \
-  | openssl dgst -sha256 -mac HMAC -macopt hexkey:$APP_KEY -r \
-  | cut -d' ' -f1
+printf 'bombvault:restic-repo'   | openssl dgst -sha256 -mac HMAC -macopt hexkey:$APP_KEY -r   | cut -d' ' -f1
 ```
 
-Das ist HMAC-SHA256 über die feste Zeichenkette `bombvault:restic-repo`, als Schlüssel die rohen Bytes des hexadezimalen `APP_KEY`, ausgegeben als 64 Hex-Zeichen in Kleinschreibung. Derselbe Wert steht im Kit als abgeleitetes restic-Passwort; das hier ist für den Tag, an dem das Kit woanders liegt als du. Auf einem Server, der die Sicherungen eines anderen übernommen hat, nimm den übernommenen Sicherungsschlüssel, also den alten APP_KEY jenes Servers.
+Das ist HMAC-SHA256 über die feste Zeichenfolge `bombvault:restic-repo`, mit den Rohbytes des Hex-`APP_KEY` als Schlüssel, ausgegeben als 64 Hex-Zeichen in Kleinbuchstaben. Derselbe Wert steht im Kit, aufgeführt als abgeleitetes restic-Passwort. Das ist für den Tag, an dem das Kit dort ist, wo du nicht bist. Nimm auf einem Server, der die Sicherungen eines anderen übernommen hat, den übernommenen Sicherungsschlüssel, das ist der alte APP_KEY jenes Servers.
 
-!!! warning "Bei einem empfangenen Repository den Schlüssel der sendenden Instanz nehmen"
-    Ein Repository, das über eine Off-site-Kopie hier gelandet ist, wurde von der sendenden Maschine mit **deren** Schlüssel angelegt. Leitest du aus dem Schlüssel der empfangenden Kiste ab, kommt ein Passwort heraus, das restic ablehnt. Das liest sich genau wie ein kaputtes Repository und ist keines. Das ist der übliche Grund, warum `restic check` auf einem empfangenen Repo immer wieder nach dem Passwort fragt.
+!!! warning "Bei einem empfangenen Repository nimm den Schlüssel der SENDENDEN Instanz"
+    Ein Repository, das über eine Off-site-Kopie hier angekommen ist, wurde von der Maschine angelegt, die es gesendet hat, mit **ihrem** Schlüssel. Eine Ableitung aus dem Schlüssel der empfangenden Box ergibt ein Passwort, das restic ablehnt, was sich genau wie ein beschädigtes Repository liest und keines ist. Das ist der übliche Grund, warum `restic check` auf einem empfangenen Repo immer wieder nach einem Passwort fragt.
 
-Weil Recovery-Definitionen **in** jedem Repo liegen (`<repo>/def`, `<repo>/vm-def`), ist ein kopierter Repo-Ordner vollständig eigenständig, sodass das Kit plus das Repo alles ist, was eine Bare-Metal-Wiederherstellung braucht.
+Weil die Wiederherstellungsdefinitionen **in** jedem Repo liegen (`<repo>/def`, `<repo>/vm-def`), ist ein kopierter Repo-Ordner vollständig in sich geschlossen, das Kit plus das Repo ist also alles, was eine Bare-Metal-Wiederherstellung braucht.
 
 ## Einen Datenbank-Dump zurückholen {#database-dumps}
 
-Ein Datenbank-Dump ist ein eigener Wiederherstellungspunkt im Container-Repository, mit der Marke `dbdump:<container>` und der einen Datei `/dbdump/<container>.sql`. BombVault listet, lädt und importiert sie im Reiter **Sicherungen** des Containers; unten stehen dieselben Schritte mit restic allein, für den Tag, an dem BombVault nicht da ist.
+Ein Datenbank-Dump ist ein eigener Wiederherstellungspunkt im Container-Repository, mit dem Tag `dbdump:<container>`, der die einzelne Datei `/dbdump/<container>.sql` enthält. BombVault listet sie auf dem Tab **Sicherungen** des Containers auf, lädt sie herunter und importiert sie. Unten stehen dieselben Schritte nur mit restic, für den Tag, an dem BombVault nicht da ist.
 
 ```sh
 restic -r <repo> snapshots --tag dbdump:<container>
 restic -r <repo> dump --tag dbdump:<container> latest /dbdump/<container>.sql > <container>.sql
 ```
 
-Die Marken `dbversion:` und `dbname:` an jedem Dump sagen, aus welcher Serverversion er stammt und welche Datenbanken er enthält. Eine vollständige Datei endet mit `-- PostgreSQL database cluster dump complete` oder `-- Dump completed`.
+Die Tags `dbversion:` und `dbname:` an jedem Dump sagen, aus welcher Serverversion er stammt und welche Datenbanken er enthält. Eine vollständige Datei endet mit `-- PostgreSQL database cluster dump complete` oder `-- Dump completed`.
 
-Spiele ihn in einen Container derselben oder einer neueren Version (PostgreSQL) beziehungsweise derselben Hauptversion (MySQL und MariaDB) ein, der einmal mit leerem Datenordner gestartet wurde, damit er sich einrichtet. Der Host braucht keinen Datenbank-Client, der Container hat einen:
+Importiere ihn in einen Container derselben oder einer neueren Version (PostgreSQL) oder derselben Hauptversion (MySQL und MariaDB), der einmal mit leerem Datenordner gestartet wurde, damit er sich initialisiert. Der Host braucht keinen Datenbank-Client, der Container hat einen:
 
 ```sh
 docker exec -i <container> sh -c 'exec psql -X -U "${POSTGRES_USER:-postgres}" -d postgres' < <container>.sql
@@ -365,7 +553,7 @@ docker exec -i <container> sh -c 'exec mariadb -uroot -p"$MARIADB_ROOT_PASSWORD"
 docker exec -i <container> sh -c 'exec mysql -uroot -p"$MYSQL_ROOT_PASSWORD"' < <container>.sql
 ```
 
-Für eine einzelne Datenbank aus einem vollen Dump nehmen MySQL und MariaDB `--one-database <name>` am Client-Befehl. Ein PostgreSQL-Dump hat je Datenbank einen Abschnitt, der mit einer Zeile `\connect <name>` beginnt: kopiere diesen Abschnitt in eine eigene Datei und spiele sie nach dem Anlegen der Datenbank mit `-d <name>` ein.
+Für eine einzelne Datenbank aus einem vollständigen Dump nehmen MySQL und MariaDB `--one-database <name>` am Client-Befehl. Ein PostgreSQL-Dump hat pro Datenbank einen Abschnitt, jeder beginnt mit einer Zeile `\connect <name>`: Kopiere diesen Abschnitt in eine eigene Datei und importiere ihn nach dem Anlegen der Datenbank mit `-d <name>`.
 
-!!! warning "Ein Root-Dump bringt die Benutzer des Servers mit"
-    Ein voller MySQL- oder MariaDB-Dump, als root genommen, enthält die Systemdatenbank `mysql`. Beim Einspielen ersetzt er damit die Konten des neuen Servers, das Root-Passwort eingeschlossen, durch die aus dem Dump. Bei PostgreSQL ist `role ... already exists` für den Benutzer, den der Container angelegt hat, zu erwarten und harmlos.
+!!! warning "Ein Root-Dump trägt die Benutzer des Servers"
+    Ein vollständiger MySQL- oder MariaDB-Dump als root enthält die Systemdatenbank `mysql`, sein Import ersetzt also die Konten des neuen Servers, das Passwort von root eingeschlossen, durch die aus dem Dump. Bei PostgreSQL ist `role ... already exists` für den Benutzer, den der Container angelegt hat, zu erwarten und harmlos.
