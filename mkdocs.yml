@@ -68,32 +68,32 @@ plugins:
       reconfigure_search: true
       languages:
         - { locale: en, name: English,       default: true }
-        - { locale: de, name: Deutsch }
-        - { locale: ar, name: العربية }
-        - { locale: cs, name: Čeština }
-        - { locale: da, name: Dansk }
-        - { locale: el, name: Ελληνικά }
-        - { locale: es, name: Español }
-        - { locale: fi, name: Suomi }
-        - { locale: fr, name: Français }
-        - { locale: he, name: עברית }
-        - { locale: hu, name: Magyar }
-        - { locale: it, name: Italiano }
-        - { locale: ja, name: 日本語 }
-        - { locale: ko, name: 한국어 }
-        - { locale: nl, name: Nederlands }
+        - { locale: de, name: Deutsch, nav_translations: { "Using BombVault": "BombVault nutzen", "Reference": "Referenz" } }
+        - { locale: ar, name: العربية, nav_translations: { "Using BombVault": "استخدام BombVault", "Reference": "المرجع" } }
+        - { locale: cs, name: Čeština, nav_translations: { "Using BombVault": "Používání BombVaultu", "Reference": "Reference" } }
+        - { locale: da, name: Dansk, nav_translations: { "Using BombVault": "Brug af BombVault", "Reference": "Reference" } }
+        - { locale: el, name: Ελληνικά, nav_translations: { "Using BombVault": "Χρήση του BombVault", "Reference": "Αναφορά" } }
+        - { locale: es, name: Español, nav_translations: { "Using BombVault": "Usar BombVault", "Reference": "Referencia" } }
+        - { locale: fi, name: Suomi, nav_translations: { "Using BombVault": "Käyttö", "Reference": "Viitetiedot" } }
+        - { locale: fr, name: Français, nav_translations: { "Using BombVault": "Utiliser BombVault", "Reference": "Référence" } }
+        - { locale: he, name: עברית, nav_translations: { "Using BombVault": "שימוש ב-BombVault", "Reference": "עיון" } }
+        - { locale: hu, name: Magyar, nav_translations: { "Using BombVault": "A BombVault használata", "Reference": "Referencia" } }
+        - { locale: it, name: Italiano, nav_translations: { "Using BombVault": "Usare BombVault", "Reference": "Riferimento" } }
+        - { locale: ja, name: 日本語, nav_translations: { "Using BombVault": "BombVault の使い方", "Reference": "リファレンス" } }
+        - { locale: ko, name: 한국어, nav_translations: { "Using BombVault": "사용하기", "Reference": "참조" } }
+        - { locale: nl, name: Nederlands, nav_translations: { "Using BombVault": "BombVault gebruiken", "Reference": "Naslag" } }
         # "no" is quoted: YAML parses the bare word no as the boolean false.
-        - { locale: "no", name: Norsk }
-        - { locale: pl, name: Polski }
-        - { locale: pt, name: Português }
-        - { locale: ro, name: Română }
-        - { locale: ru, name: Русский }
-        - { locale: sv, name: Svenska }
-        - { locale: th, name: ไทย }
-        - { locale: tr, name: Türkçe }
-        - { locale: uk, name: Українська }
-        - { locale: vi, name: Tiếng Việt }
-        - { locale: zh, name: 中文 }
+        - { locale: "no", name: Norsk, nav_translations: { "Using BombVault": "Bruk av BombVault", "Reference": "Referanse" } }
+        - { locale: pl, name: Polski, nav_translations: { "Using BombVault": "Korzystanie z BombVault", "Reference": "Dokumentacja referencyjna" } }
+        - { locale: pt, name: Português, nav_translations: { "Using BombVault": "Utilizar o BombVault", "Reference": "Referência" } }
+        - { locale: ro, name: Română, nav_translations: { "Using BombVault": "Utilizare BombVault", "Reference": "Referință" } }
+        - { locale: ru, name: Русский, nav_translations: { "Using BombVault": "Использование BombVault", "Reference": "Справочник" } }
+        - { locale: sv, name: Svenska, nav_translations: { "Using BombVault": "Använda BombVault", "Reference": "Referens" } }
+        - { locale: th, name: ไทย, nav_translations: { "Using BombVault": "การใช้งาน BombVault", "Reference": "เอกสารอ้างอิง" } }
+        - { locale: tr, name: Türkçe, nav_translations: { "Using BombVault": "BombVault'u kullanma", "Reference": "Başvuru" } }
+        - { locale: uk, name: Українська, nav_translations: { "Using BombVault": "Використання BombVault", "Reference": "Довідник" } }
+        - { locale: vi, name: Tiếng Việt, nav_translations: { "Using BombVault": "Sử dụng BombVault", "Reference": "Tham khảo" } }
+        - { locale: zh, name: 中文, nav_translations: { "Using BombVault": "使用 BombVault", "Reference": "参考" } }
 
 markdown_extensions:
   - admonition
