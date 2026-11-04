@@ -80,7 +80,7 @@ Một vài từ có nghĩa cố định trong BombVault và trong các trang nà
 | **Thông tin đăng nhập** | Khóa hoặc mật khẩu đã lưu cho một dịch vụ S3 hoặc một rest-server. Một trong số đó là mặc định. Xem [Thông tin đăng nhập](offsite-recovery.md#sign-ins). |
 | **Vị trí đặt** | Những đích sao lưu nào nhận các bản sao lưu của một mục, đặt trên mục hoặc làm mặc định của phần. Xem [Vị trí theo từng mục](offsite-recovery.md#placement). |
 | **Bản nhân bản** | Một bản sao khớp từng khối của một mục ZFS trên máy chủ ZFS thứ hai, tạo bằng `zfs send`. Nó đứng cạnh bản sao lưu và không thay thế nó. Xem [Bản nhân bản](zfs-datasets.md#replica). |
-| **Vai trò** | Việc mà một phiên bản trong nhóm của bạn làm cho phiên bản khác: Receiver, Fetcher, ZFS server hoặc Key keeper. Xem [Phiên bản và vai trò](offsite-recovery.md#roles). |
+| **Vai trò** | Việc mà một phiên bản trong nhóm của bạn làm cho phiên bản khác: Bộ nhận, Bên kéo, Máy chủ ZFS hoặc Bên giữ khóa. Xem [Phiên bản và vai trò](offsite-recovery.md#roles). |
 
 ## Ghi công {#credits}
 
