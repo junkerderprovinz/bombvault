@@ -81,7 +81,7 @@ Thiết bị có tên BombVault, hoặc BombVault kèm tên phiên bản chạy 
 
 | Thực thể | Hiển thị gì |
 |---|---|
-| Status | `ok`, `warning`, `failed` hoặc `off`, trạng thái tệ nhất trong các phần đang bật |
+| Status | `ok`, `warning`, `failed` hoặc `off`, trạng thái tệ nhất trong các phần đang bật. Phần đang chờ bản sao lưu đầu tiên chỉ được tính sau khi đến hạn của bản đó |
 | Running job | Việc đang chạy, hoặc `idle` |
 | Open anomalies | Số bất thường còn mở |
 | Next scheduled backup | Khi nào bản sao lưu theo lịch tiếp theo bắt đầu |

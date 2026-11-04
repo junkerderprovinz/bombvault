@@ -81,7 +81,7 @@ curl -s -X POST -H "Authorization: Bearer $BOMBVAULT_TOKEN" \
 
 | الكيان | ما يعرضه |
 |---|---|
-| Status | `ok` أو `warning` أو `failed` أو `off`، الأسوأ بين الأقسام المفعّلة |
+| Status | `ok` أو `warning` أو `failed` أو `off`، الأسوأ بين الأقسام المفعّلة. القسم الذي ينتظر نسخته الاحتياطية الأولى يُحتسب فقط بعد حلول موعدها |
 | Running job | ما يعمل الآن، أو `idle` |
 | Open anomalies | عدد الحالات الشاذة المفتوحة |
 | Next scheduled backup | متى تبدأ النسخة المجدولة التالية |

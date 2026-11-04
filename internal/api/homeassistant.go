@@ -77,7 +77,8 @@ func (h *Handler) haDevice() homeassistant.Device {
 
 // haState reads what the sensors show. The overall status is the worst of the
 // switched-on domains: failed for an overdue domain or a failed last backup,
-// warning for one that is late or has never been backed up.
+// warning for one that is late. One still waiting for its first run counts for
+// nothing, as on the overview.
 func (h *Handler) haState(ctx context.Context) (homeassistant.State, error) {
 	settings, err := h.store.GetSettings()
 	if err != nil {
@@ -105,8 +106,9 @@ func (h *Handler) haState(ctx context.Context) (homeassistant.State, error) {
 		switch {
 		case d.Status == "overdue" || ds.LastResult == "failed":
 			st.Status = "failed"
-		case (d.Status == "warn" || d.Status == "never") && st.Status != "failed":
+		case d.Status == "warn" && st.Status != "failed":
 			st.Status = "warning"
+		case d.Status == "never":
 		case st.Status == "off":
 			st.Status = "ok"
 		}

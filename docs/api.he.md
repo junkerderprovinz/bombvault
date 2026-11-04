@@ -81,7 +81,7 @@ BombVault יכול להופיע ב-Home Assistant כמכשיר, דרך גילו�
 
 | ישות | מה היא מציגה |
 |---|---|
-| Status | `ok`, `warning`, `failed` או `off`, הגרוע מבין התחומים הפעילים |
+| Status | `ok`, `warning`, `failed` או `off`, הגרוע מבין התחומים הפעילים. תחום שממתין לגיבוי הראשון שלו נספר רק אחרי שמועד הגיבוי הגיע |
 | Running job | מה רץ עכשיו, או `idle` |
 | Open anomalies | כמה חריגות פתוחות |
 | Next scheduled backup | מתי מתחיל הגיבוי המתוזמן הבא |

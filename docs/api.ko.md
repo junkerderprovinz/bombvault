@@ -81,7 +81,7 @@ BombVault는 MQTT 검색을 통해 Home Assistant에 기기로 나타날 수 있
 
 | 엔티티 | 보여 주는 것 |
 |---|---|
-| Status | `ok`, `warning`, `failed`, `off` 중 하나. 켜진 섹션 중 가장 나쁜 상태 |
+| Status | `ok`, `warning`, `failed`, `off` 중 하나. 켜진 섹션 중 가장 나쁜 상태. 첫 백업을 기다리는 섹션은 그 백업 예정 시각이 지난 뒤에 반영됩니다 |
 | Running job | 지금 실행 중인 작업, 또는 `idle` |
 | Open anomalies | 열린 이상 징후 수 |
 | Next scheduled backup | 다음 예약 백업이 시작되는 시각 |

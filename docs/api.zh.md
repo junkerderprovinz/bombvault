@@ -81,7 +81,7 @@ BombVault 可以通过 MQTT 发现，以设备的形式出现在 Home Assistant 
 
 | 实体 | 显示内容 |
 |---|---|
-| Status | `ok`、`warning`、`failed` 或 `off`，即已启用分区中最差的状态 |
+| Status | `ok`、`warning`、`failed` 或 `off`，即已启用分区中最差的状态。等待首次备份的分区，要到该备份应运行之后才计入 |
 | Running job | 当前正在运行的操作，或 `idle` |
 | Open anomalies | 未处理的异常数量 |
 | Next scheduled backup | 下一次计划备份的开始时间 |

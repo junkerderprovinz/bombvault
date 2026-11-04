@@ -81,7 +81,7 @@ L'appareil s'appelle BombVault, ou BombVault avec le nom de l'instance entre par
 
 | Entité | Ce qu'elle affiche |
 |---|---|
-| Status | `ok`, `warning`, `failed` ou `off`, le pire parmi les sections activées |
+| Status | `ok`, `warning`, `failed` ou `off`, le pire parmi les sections activées. Une section qui attend sa première sauvegarde ne compte qu'une fois cette sauvegarde due |
 | Running job | Ce qui tourne maintenant, ou `idle` |
 | Open anomalies | Le nombre d'anomalies ouvertes |
 | Next scheduled backup | Quand démarre la prochaine sauvegarde planifiée |

@@ -81,7 +81,7 @@ BombVault は MQTT 検出を使って、Home Assistant にデバイスとして�
 
 | エンティティ | 表示する内容 |
 |---|---|
-| Status | `ok`、`warning`、`failed`、`off` のいずれか。オンのセクションの中で最も悪い状態 |
+| Status | `ok`、`warning`、`failed`、`off` のいずれか。オンのセクションの中で最も悪い状態。最初のバックアップを待っているセクションは、その予定時刻を過ぎてから数えます |
 | Running job | いま実行中の処理、または `idle` |
 | Open anomalies | 未解決の異常の数 |
 | Next scheduled backup | 次の予定バックアップの開始時刻 |
