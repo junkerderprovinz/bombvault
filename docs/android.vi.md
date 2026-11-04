@@ -2,9 +2,12 @@
 
 Ứng dụng Android đưa mọi máy chủ BombVault trong nhóm của bạn lên điện thoại. Khi mở, ứng dụng hiện danh sách máy chủ, phía trên là nhật ký hoạt động của tất cả các máy, gồm đúng những dòng mà Tổng quan hiển thị, và chạm vào máy chủ nào thì giao diện điện thoại của máy chủ đó sẽ mở ra. Bản thân ứng dụng không sao lưu gì cả.
 
+![Màn hình bắt đầu của ứng dụng: nhật ký hoạt động của mọi máy chủ ở trên cùng, rồi đến danh sách máy chủ.](assets/screenshots/android/start-dark.png#only-dark)
+![Màn hình bắt đầu của ứng dụng: nhật ký hoạt động của mọi máy chủ ở trên cùng, rồi đến danh sách máy chủ.](assets/screenshots/android/start-light.png#only-light)
+
 ## Tải ứng dụng {#install}
 
-- **Cài đặt, Ứng dụng:** thẻ của ứng dụng Android cung cấp APK của bản phát hành mà máy chủ của bạn đang chạy, kèm một mã QR để quét từ điện thoại.
+- **Cài đặt, Ứng dụng:** thẻ của ứng dụng Android cung cấp APK của bản phát hành mà máy chủ của bạn đang chạy, kèm một mã QR để quét từ điện thoại, và liên kết tới mục F-Droid.
 - **APK:** mỗi bản phát hành đều có `bombvault-android.apk` trên trang phát hành của nó, và [liên kết này](https://github.com/junkerderprovinz/bombvault/releases/latest/download/bombvault-android.apk) luôn tải về bản dựng mới nhất. Cần Android 10 trở lên, và Android sẽ hỏi một lần xem ứng dụng bạn dùng để mở tệp có được phép cài đặt ứng dụng hay không.
 - **Google Play:** ứng dụng đang trong giai đoạn thử nghiệm kín cho đến khi có thể phát hành công khai. Google Play chỉ đưa ứng dụng từ một tài khoản nhà phát triển mới lên danh sách sau khi có ít nhất 12 người thử nghiệm giữ ứng dụng được cài trong 14 ngày. Nếu muốn giúp, hãy tham gia [nhóm người thử nghiệm](https://groups.google.com/g/arrowloop-testers), mở [trang thử nghiệm](https://play.google.com/apps/testing/bombvault.halleluja.design), chạm vào **Trở thành người thử nghiệm** rồi cài BombVault từ Google Play.
 - **F-Droid:** [BombVault trên F-Droid](https://f-droid.org/packages/bombvault.halleluja.design/). F-Droid tự build ứng dụng từ mã nguồn và ký bằng khóa riêng, nên bản phát hành mới đến đó muộn hơn vài ngày. Để chuyển giữa ứng dụng từ F-Droid và APK, hãy gỡ cài đặt bản còn lại trước.
@@ -60,13 +63,13 @@ Biểu tượng bánh răng cạnh dấu cộng mở phần cài đặt của �
 
 - ngôn ngữ, và tên mà điện thoại hiển thị trên trang Phiên bản (để trống thì dùng tên mẫu điện thoại),
 - giao diện, theo máy chủ đầu tiên trong danh sách cho đến khi bạn tự chọn, còn hiệu ứng chuyển động có cài đặt riêng,
-- một bản báo cáo để sao chép khi báo lỗi; nó không chứa địa chỉ, tên hay cụm từ nào,
+- một bản báo cáo để sao chép khi báo lỗi. Nó không chứa địa chỉ, tên hay cụm từ nào,
 - thẻ Giới thiệu kèm chính sách quyền riêng tư,
 - **Xóa tất cả máy chủ**, xóa mọi máy chủ khỏi ứng dụng và rời nhóm. Mỗi máy chủ mà điện thoại còn kết nối được sẽ gỡ điện thoại khỏi trang Phiên bản của nó.
 
 ## Tải xuống và tải lên {#files}
 
-Các bản xuất, bộ khôi phục, tệp ZIP của flash và bản dump cơ sở dữ liệu được lưu vào thư mục Tải xuống của điện thoại, giống như khi tải từ trình duyệt. Nhập cài đặt sẽ mở trình chọn tệp của điện thoại. Qua relay, không có tệp nào được lưu; muốn lưu, hãy mở máy chủ ở địa chỉ riêng của nó.
+Các bản xuất, bộ khôi phục, tệp ZIP của flash và bản dump cơ sở dữ liệu được lưu vào thư mục Tải xuống của điện thoại, giống như khi tải từ trình duyệt. Nhập cài đặt sẽ mở trình chọn tệp của điện thoại. Qua relay, không có tệp nào được lưu. Muốn lưu, hãy mở máy chủ ở địa chỉ riêng của nó.
 
 ## Trên màn hình cảm ứng {#touch}
 

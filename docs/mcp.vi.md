@@ -9,9 +9,9 @@ BombVault có sẵn một máy chủ cho Model Context Protocol (MCP), giao th�
 | `get_health` | Phiên bản, tên phiên bản cài đặt, có đang sao lưu không và khóa này được phép làm gì | đọc |
 | `get_status` | Trạng thái bảo vệ theo từng phần: lần sao lưu thành công gần nhất, khoảng thời gian dự kiến, các lần xác minh và kiểm tra off-site, các lần chạy theo lịch tiếp theo, các bản sao lưu đang chờ ứng dụng rảnh, và với container là lần kiểm tra khởi động gần nhất | đọc |
 | `get_coverage` | Những gì BombVault bảo vệ và không bảo vệ, kèm lý do cho từng mục | đọc |
-| `list_items` | Mọi container, VM và bộ thư mục được bảo vệ, ổ flash và cấu hình ứng dụng, kèm lịch, những gì một lần sao lưu sẽ dừng, lần sao lưu gần nhất và thời gian của nó; container cơ sở dữ liệu còn cho biết bản dump gần nhất; các dataset ZFS cũng được liệt kê, kèm kết quả lần kiểm tra gần nhất; mỗi mục kèm lần kiểm tra khôi phục gần nhất, còn container kèm lần kiểm tra khởi động gần nhất hoặc lý do không thể kiểm tra; container được tạo lại với cài đặt khác kể từ lần sao lưu gần nhất liệt kê những gì đã đổi | đọc |
-| `list_runs` | Lịch sử chạy, mới nhất trước, lọc được theo phần, mục, trạng thái, loại và thời gian; lần sao lưu chậm do một thứ kìm lại sẽ nêu tên thứ đó | đọc |
-| `list_restore_points` | Các điểm khôi phục của một mục trong kho chính của nó, và với container thì có cả các bản dump cơ sở dữ liệu; một dataset ZFS có một điểm khôi phục cho mỗi lần sao lưu, kèm snapshot của mọi dataset bên dưới nó | đọc |
+| `list_items` | Mọi container, VM và bộ thư mục được bảo vệ, ổ flash và cấu hình ứng dụng, kèm lịch, những gì một lần sao lưu sẽ dừng, lần sao lưu gần nhất và thời gian của nó. Container cơ sở dữ liệu còn cho biết bản dump gần nhất. Các dataset ZFS cũng được liệt kê, kèm kết quả lần kiểm tra gần nhất. Mỗi mục kèm lần kiểm tra khôi phục gần nhất, còn container kèm lần kiểm tra khởi động gần nhất hoặc lý do không thể kiểm tra. Container được tạo lại với cài đặt khác kể từ lần sao lưu gần nhất liệt kê những gì đã đổi | đọc |
+| `list_runs` | Lịch sử chạy, mới nhất trước, lọc được theo phần, mục, trạng thái, loại và thời gian. Lần sao lưu chậm do một thứ kìm lại sẽ nêu tên thứ đó | đọc |
+| `list_restore_points` | Các điểm khôi phục của một mục trong kho chính của nó, và với container thì có cả các bản dump cơ sở dữ liệu. Một dataset ZFS có một điểm khôi phục cho mỗi lần sao lưu, kèm snapshot của mọi dataset bên dưới nó | đọc |
 | `get_activity` | Những gì đang chạy ngay lúc này, kèm giai đoạn và phần trăm | đọc |
 | `get_storage_stats` | Lịch sử dung lượng kho chính của một phần và mức tăng mỗi tuần, cùng dung lượng đã dùng, còn trống và tổng trên ổ đĩa hoặc nơi lưu từ xa của từng kho | đọc |
 | `get_size_breakdown` | Thư mục và tệp nào chiếm chỗ trong bản sao lưu mới nhất của một container, VM hoặc bộ thư mục, và lần sao lưu gần nhất đã thêm bao nhiêu | đọc |
@@ -24,7 +24,7 @@ BombVault có sẵn một máy chủ cho Model Context Protocol (MCP), giao th�
 
 Những việc sau vẫn nằm trong giao diện web: mọi kiểu khôi phục (kể cả tải xuống, lưu hoặc nhập một bản dump cơ sở dữ liệu), xóa bản sao lưu, prune, unlock, kiểm tra và diễn tập, sao chép off-site, cài đặt, thông tin đăng nhập và khóa MCP, cùng việc hủy một lần sao lưu do lịch, giao diện web hoặc khóa khác bắt đầu. Việc xác nhận một bất thường hoặc đánh dấu nó là dự kiến cũng vậy, và được thực hiện trên trang **Bất thường**. Lý do: câu trả lời của công cụ chứa tên và thông báo lỗi từ máy chủ của bạn, và bất kỳ mục nào trong đó cũng có thể chứa văn bản viết ra để điều khiển trợ lý. Một trợ lý mắc bẫy văn bản như vậy, trong trường hợp xấu nhất, chỉ có thể bắt đầu một lần sao lưu trong các giới hạn bên dưới hoặc hủy một lần sao lưu do chính nó bắt đầu.
 
-Nếu kho chính của một mục nằm ở nơi khác (S3, REST, SFTP, rclone), `list_restore_points` sẽ kết nối tới đó và lệnh gọi có thể mất một lúc. Không thể liệt kê bản sao off-site qua MCP. Những gì các bước kiểm tra bất thường xem xét được mô tả trong [Tính năng](features.md), và cách một mục ZFS giữ một snapshot cho mỗi tập dữ liệu được mô tả trong [Tập dữ liệu ZFS](zfs-datasets.md#contents).
+Nếu kho chính của một mục nằm ở nơi khác (S3, REST, SFTP, rclone), `list_restore_points` sẽ kết nối tới đó và lệnh gọi có thể mất một lúc. Không thể liệt kê bản sao off-site qua MCP. Những gì các bước kiểm tra bất thường xem xét được mô tả trong [Bất thường](anomalies.md), và cách một mục ZFS giữ một snapshot cho mỗi tập dữ liệu được mô tả trong [Tập dữ liệu ZFS](zfs-datasets.md#contents).
 
 ## Một lần sao lưu được bắt đầu sẽ làm gì {#starting-backups}
 
@@ -43,9 +43,9 @@ Các lần bắt đầu qua [API](api.md#errors) và từ [Home Assistant](api.m
 
 ## Bật tính năng {#switch-on}
 
-1. Mở **Cài đặt, Tích hợp, Máy chủ MCP**, bấm **Chọn máy khách** rồi chọn máy khách của bạn trong cửa sổ; ô tìm kiếm ở góc trên bên phải tìm theo tên. Máy khách không có trong danh sách kết nối qua **Máy khách khác**.
+1. Mở **Cài đặt, Tích hợp, Máy chủ MCP**, bấm **Chọn máy khách** rồi chọn máy khách của bạn trong cửa sổ. Ô tìm kiếm ở góc trên bên phải tìm theo tên. Máy khách không có trong danh sách kết nối qua **Máy khách khác**.
 2. Trong **Khóa**, giữ **Khóa mới** và tên được đề xuất, tức tên của máy khách, hoặc gõ một tên cho biết khóa dùng ở đâu, ví dụ "Claude Code trên laptop". Mỗi máy khách một khóa giúp bạn thu hồi một khóa mà không động đến các khóa khác. **Khóa hiện có** cấp cho máy khách một khóa bạn đã tạo trước đó.
-3. Bật **Cho phép bắt đầu sao lưu** cho khóa cần bắt đầu được bản sao lưu; nếu không, khóa chỉ đọc được. Bạn có thể đổi sau trong **Chi tiết** của khóa, và thay đổi có hiệu lực từ yêu cầu tiếp theo của trợ lý mà không cần kết nối lại.
+3. Bật **Cho phép bắt đầu sao lưu** cho khóa cần bắt đầu được bản sao lưu. Nếu không, khóa chỉ đọc được. Bạn có thể đổi sau trong **Chi tiết** của khóa, và thay đổi có hiệu lực từ yêu cầu tiếp theo của trợ lý mà không cần kết nối lại.
 4. Bấm **Tạo khóa**. Khóa chỉ hiện một lần. BombVault chỉ giữ dấu vân của khóa và không thể hiện lại nó, nên hãy sao chép ngay. Nếu bạn đóng cửa sổ trước khi máy khách dùng khóa, thẻ vẫn tiếp tục hiện khóa cho đến khi bạn xác nhận đã sao chép.
 
 Khi không có mật khẩu đăng nhập, chính giao diện web đã mở cho mọi người trong mạng của bạn, và ai mở được nó cũng có thể tạo khóa. Thẻ sẽ báo điều này. Nếu bạn mở BombVault bằng một tên trông như công khai (ví dụ `bombvault.example.com` sau một reverse proxy) và chưa đặt mật khẩu đăng nhập, thì không thể tạo hay thay khóa từ địa chỉ đó, để không trang web nào trên Internet có thể khiến trình duyệt của bạn tạo khóa. Hãy đặt mật khẩu đăng nhập, hoặc mở BombVault bằng địa chỉ IP hay một tên cục bộ như `tower` hoặc `tower.local`.
@@ -62,7 +62,7 @@ BombVault giữ các mục của mỗi khóa tối đa 30 ngày: 500 lần khở
 
 ## Kết nối máy khách {#clients}
 
-**Chọn máy khách** mở một cửa sổ với mỗi máy khách là một ô, trong nhóm **Trên máy tính này** hoặc **Trên đám mây**, và một ô tìm kiếm ở góc trên bên phải. Một ô mở phần thiết lập của máy khách trong cùng cửa sổ, ba bước: khóa; cấu hình cho máy khách đó, với địa chỉ bạn đã mở thẻ, một nút để sao chép, nơi cấu hình nằm và, với chứng chỉ riêng của BombVault, những gì máy khách cần để tin nó; và chờ lần gọi đầu tiên của máy khách. Cửa sổ theo dõi lần dùng gần nhất của khóa và chuyển sang màu xanh khi lần gọi đó đến.
+**Chọn máy khách** mở một cửa sổ với mỗi máy khách là một ô, trong nhóm **Trên máy tính này** hoặc **Trên đám mây**, và một ô tìm kiếm ở góc trên bên phải. Một ô mở phần thiết lập của máy khách trong cùng cửa sổ, ba bước: khóa, cấu hình cho máy khách đó, với địa chỉ bạn đã mở thẻ, một nút để sao chép, nơi cấu hình nằm và, với chứng chỉ riêng của BombVault, những gì máy khách cần để tin nó. Và việc chờ lần gọi đầu tiên của máy khách. Cửa sổ theo dõi lần dùng gần nhất của khóa và chuyển sang màu xanh khi lần gọi đó đến.
 
 Phần thiết lập giữ khóa khỏi mọi dòng lệnh. Khi máy khách đọc được khóa từ biến môi trường (`BOMBVAULT_MCP_KEY`), từ lời nhắc ẩn hoặc từ tệp riêng, cấu hình chỉ nêu tên nó. Khi máy khách không có cách như vậy, khóa nằm trong tệp cấu hình hoặc cài đặt của nó, và phần thiết lập nói rõ điều đó. Khi tài liệu của máy khách không nói nó xử lý chứng chỉ lạ ra sao, phần thiết lập viết bước đó thành việc cần làm nếu máy khách từ chối chứng chỉ của BombVault.
 
@@ -123,7 +123,7 @@ Với chứng chỉ riêng của BombVault (xem [TLS và chứng chỉ](#tls)), 
 claude mcp add bombvault --scope user -e "NODE_EXTRA_CA_CERTS=<path of the downloaded bombvault-cert.pem>" -- npx -y mcp-remote@latest https://192.168.1.10:3443/mcp --header-file "<path of the file with your key>"
 ```
 
-Kiểm tra kết nối bằng `/mcp` bên trong Claude Code. `--scope user` giúp BombVault dùng được trong mọi dự án của bạn. Claude Code chỉ giữ đường dẫn của tệp khóa, nên khóa không xuất hiện trong lệnh và lịch sử shell, hay trong danh sách tiến trình. Hãy để tệp ở nơi chỉ bạn đọc được, và bên ngoài mọi thư mục mà bạn commit. `@latest` khiến `npx` tải một `mcp-remote` mới; nếu không có nó, một bản cũ hơn đã cài toàn cục sẽ được dùng thay vào đó, và bản này không hỗ trợ `--header-file`.
+Kiểm tra kết nối bằng `/mcp` bên trong Claude Code. `--scope user` giúp BombVault dùng được trong mọi dự án của bạn. Claude Code chỉ giữ đường dẫn của tệp khóa, nên khóa không xuất hiện trong lệnh và lịch sử shell, hay trong danh sách tiến trình. Hãy để tệp ở nơi chỉ bạn đọc được, và bên ngoài mọi thư mục mà bạn commit. `@latest` khiến `npx` tải một `mcp-remote` mới. Nếu không có nó, một bản cũ hơn đã cài toàn cục sẽ được dùng thay vào đó, và bản này không hỗ trợ `--header-file`.
 
 Đừng viết `${BOMBVAULT_MCP_KEY}` vào các đối số của `mcp-remote` cho Claude Code. Claude Code thay tham chiếu như vậy bằng giá trị từ môi trường của chính nó trước khi khởi động `mcp-remote`, nên khóa nằm trên dòng lệnh của tiến trình đó, nơi các chương trình và người dùng khác trên máy tính có thể đọc được.
 
@@ -170,7 +170,7 @@ Claude Desktop kết nối tới BombVault qua `mcp-remote`, vốn cần Node.js
 
 ### Máy khách trên đám mây {#cloud-clients}
 
-ChatGPT, Claude trên claude.ai, Grok và Le Chat gọi BombVault từ máy chủ của nhà cung cấp, nên BombVault phải truy cập được từ internet với chứng chỉ được tin cậy công khai, ví dụ phía sau một reverse proxy; Le Chat từ chối chứng chỉ tự ký. Đăng nhập trên proxy có thể bảo vệ giao diện web, nhưng `/mcp` phải tới được BombVault mà không qua nó: các dịch vụ này không đăng nhập được vào proxy, và BombVault tự kiểm tra khóa hoặc token của chúng. Grok và Le Chat gửi một khóa cố định, và nút của chúng thiết lập chúng như các máy khách khác. ChatGPT, và ở hầu hết tổ chức cả Claude trên claude.ai, chỉ kết nối qua đăng nhập bằng OAuth, được mô tả ngay sau đây.
+ChatGPT, Claude trên claude.ai, Grok và Le Chat gọi BombVault từ máy chủ của nhà cung cấp, nên BombVault phải truy cập được từ internet với chứng chỉ được tin cậy công khai, ví dụ phía sau một reverse proxy. Le Chat từ chối chứng chỉ tự ký. Đăng nhập trên proxy có thể bảo vệ giao diện web, nhưng `/mcp` phải tới được BombVault mà không qua nó: các dịch vụ này không đăng nhập được vào proxy, và BombVault tự kiểm tra khóa hoặc token của chúng. Grok và Le Chat gửi một khóa cố định, và nút của chúng thiết lập chúng như các máy khách khác. ChatGPT, và ở hầu hết tổ chức cả Claude trên claude.ai, chỉ kết nối qua đăng nhập bằng OAuth, được mô tả ngay sau đây.
 
 ### Đăng nhập qua OAuth {#oauth}
 
@@ -193,14 +193,14 @@ Bất kỳ máy khách nào nói Streamable HTTP đều dùng được:
 - URL: địa chỉ của giao diện web thêm `/mcp`, ví dụ `https://192.168.1.10:3443/mcp`.
 - Khóa trong `Authorization: Bearer <key>` hoặc trong `X-API-Key: <key>`. Nếu gửi cả hai thì phải cùng một khóa.
 - `POST` với `Content-Type: application/json` và `Accept: application/json, text/event-stream`.
-- Một thông điệp JSON-RPC cho mỗi yêu cầu; yêu cầu gộp (batch) bị từ chối.
+- Một thông điệp JSON-RPC cho mỗi yêu cầu. Yêu cầu gộp (batch) bị từ chối.
 - Các phiên bản giao thức 2026-07-28, 2025-11-25, 2025-06-18 và 2025-03-26.
 
 ## TLS và chứng chỉ {#tls}
 
 BombVault phục vụ HTTPS bằng chứng chỉ tự cấp, và ban đầu chứng chỉ này chỉ ghi `localhost`, `127.0.0.1` và `::1`. Claude Code và `mcp-remote` từ chối nó trên một địa chỉ mạng LAN. Các cách xử lý, theo thứ tự phù hợp với phần lớn các bản cài Unraid:
 
-1. **Thêm địa chỉ trong thẻ MCP.** Khi mở thẻ qua HTTPS ở một địa chỉ mà chứng chỉ không ghi, thẻ sẽ báo và đề xuất **Thêm địa chỉ này vào chứng chỉ**. BombVault sẽ cấp lại chứng chỉ có kèm địa chỉ đó (trình duyệt sẽ cảnh báo thêm một lần, như lần đầu). Sau đó nhấn **Tải chứng chỉ**; các đoạn mã đặt `NODE_EXTRA_CA_CERTS` trỏ tới tệp đã tải, nên máy khách tin cậy đúng chứng chỉ đó. Điều đó cũng có nghĩa là mọi máy khách được thiết lập bằng tệp đã tải trước đó sẽ không kết nối được nữa ngay khi chứng chỉ được cấp lại, trên máy tính này cũng như mọi máy khác, cho đến khi nhận được tệp mới.
+1. **Thêm địa chỉ trong thẻ MCP.** Khi mở thẻ qua HTTPS ở một địa chỉ mà chứng chỉ không ghi, thẻ sẽ báo và đề xuất **Thêm địa chỉ này vào chứng chỉ**. BombVault sẽ cấp lại chứng chỉ có kèm địa chỉ đó (trình duyệt sẽ cảnh báo thêm một lần, như lần đầu). Sau đó nhấn **Tải chứng chỉ**. Các đoạn mã đặt `NODE_EXTRA_CA_CERTS` trỏ tới tệp đã tải, nên máy khách tin cậy đúng chứng chỉ đó. Điều đó cũng có nghĩa là mọi máy khách được thiết lập bằng tệp đã tải trước đó sẽ không kết nối được nữa ngay khi chứng chỉ được cấp lại, trên máy tính này cũng như mọi máy khác, cho đến khi nhận được tệp mới.
 2. **Một reverse proxy với chứng chỉ đáng tin cậy** (Nginx Proxy Manager, SWAG, Caddy, Traefik). Khi đó máy khách thấy chứng chỉ của proxy và không cần gì thêm, và thẻ cũng không cảnh báo về chứng chỉ của BombVault.
 3. **Tailscale.** `tailscale serve` đặt trước container, hoặc tích hợp Tailscale của Unraid, cho bạn một tên `ts.net` với chứng chỉ đáng tin cậy.
 4. **`HTTP_ONLY=true`**, chỉ dùng sau một proxy kết thúc TLS hoặc trong mạng bạn hoàn toàn tin cậy. Nó chuyển toàn bộ giao diện web sang HTTP thường, cần sửa cài đặt container và gửi khóa không mã hóa.
@@ -259,12 +259,12 @@ Mọi thứ trợ lý đọc đều được gửi tới nhà cung cấp AI đ�
 | Lỗi có "certificate", "self-signed" hoặc "unable to verify" | Máy khách không tin cậy chứng chỉ của BombVault. Xem [TLS và chứng chỉ](#tls). |
 | `busy` | Một lần sao lưu khác hoặc tác vụ bảo trì đang chiếm phần đó. Thử lại khi nó xong. |
 | `cooldown` | Mục này, phần này hoặc Sao lưu toàn bộ đã được bắt đầu từ bên ngoài giao diện web chưa đầy 15 phút trước. |
-| `retention_guard` | Thêm một lần sao lưu qua MCP nữa sẽ khiến khoảng "giữ N bản gần nhất" chỉ còn các điểm khôi phục từ MCP, hoặc mục đó đã được sao lưu qua MCP 4 lần trong 24 giờ qua, tính cả các lần thất bại và bị hủy. Ở trường hợp đầu, lần sao lưu theo lịch tiếp theo sẽ tạo chỗ trống; ở trường hợp sau, mục đó được bắt đầu lại sau 24 giờ kể từ lần sao lưu cũ nhất trong số đó. Trong giao diện web, bạn có thể bắt đầu nó bất cứ lúc nào. |
+| `retention_guard` | Thêm một lần sao lưu qua MCP nữa sẽ khiến khoảng "giữ N bản gần nhất" chỉ còn các điểm khôi phục từ MCP, hoặc mục đó đã được sao lưu qua MCP 4 lần trong 24 giờ qua, tính cả các lần thất bại và bị hủy. Ở trường hợp đầu, lần sao lưu theo lịch tiếp theo sẽ tạo chỗ trống. Ở trường hợp sau, mục đó được bắt đầu lại sau 24 giờ kể từ lần sao lưu cũ nhất trong số đó. Trong giao diện web, bạn có thể bắt đầu nó bất cứ lúc nào. |
 | `rate_limited` | Khóa đã dùng hết 12 lần bắt đầu của giờ này. |
-| `not_permitted` khi bắt đầu | Khóa chỉ được đọc. Bật **Cho phép bắt đầu sao lưu** trong thẻ; không cần kết nối lại. Khi hủy, nó có nghĩa là lần chạy đó không do khóa này bắt đầu. |
+| `not_permitted` khi bắt đầu | Khóa chỉ được đọc. Bật **Cho phép bắt đầu sao lưu** trong thẻ. Không cần kết nối lại. Khi hủy, nó có nghĩa là lần chạy đó không do khóa này bắt đầu. |
 | `domain_off` | Phần đó đang tắt trong **Cài đặt, Chung**. |
 
-| `not_found` | BombVault không bảo vệ mục đó. Hãy thêm nó trong giao diện web trước; MCP không bao giờ tạo cấu hình. |
+| `not_found` | BombVault không bảo vệ mục đó. Hãy thêm nó trong giao diện web trước. MCP không bao giờ tạo cấu hình. |
 | Máy khách không tìm thấy máy chủ ủy quyền | Đăng nhập qua OAuth đang tắt, chưa đặt mật khẩu đăng nhập, hoặc proxy không cho `/.well-known/` đi qua tới BombVault. |
 | Trang đồng ý báo địa chỉ quay về chưa đăng ký | Máy khách gửi một địa chỉ quay về mà nó chưa đăng ký. Xóa trình kết nối trong máy khách rồi thêm lại. |
 | Máy khách đã đăng nhập nhận `401` | Quyền của nó đã bị thu hồi, hết hạn sau 30 ngày không dùng, hoặc địa chỉ công khai đã đổi. Máy khách sẽ đăng nhập lại. |
