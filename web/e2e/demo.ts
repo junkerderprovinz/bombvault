@@ -244,8 +244,7 @@ const DATASETS: Json[] = [
 
 // Storage locations
 
-const KEEP_BALANCED = { keepLast: 0, keepDaily: 7, keepWeekly: 4, keepMonthly: 6, keepYearly: 1 };
-const KEEP_LONG = { keepLast: 0, keepDaily: 14, keepWeekly: 8, keepMonthly: 12, keepYearly: 3 };
+const KEEP_BALANCED = { keepLast: 0, keepDaily: 7, keepWeekly: 4, keepMonthly: 6, keepYearly: 2 };
 
 const SECTIONS = ["containers", "vms", "flash", "files", "zfs", "config"];
 
@@ -319,11 +318,10 @@ const B2 = {
       where: `${B2_BUCKET}/${domain === "config" ? "selfbackup" : domain}`,
       primary: domain === "containers",
       immutable: true,
-      retention: KEEP_LONG,
       lastCopy: { at: night(0, 50), ok: true },
     }),
   ),
-  retention: KEEP_LONG,
+  retention: KEEP_BALANCED,
   compression: "auto",
   limitUpload: 0,
   limitDownload: 0,
@@ -377,7 +375,7 @@ function target(id: string, domain: string, destinationId: string, repo: string,
     retentionKeepDaily: 7,
     retentionKeepWeekly: 4,
     retentionKeepMonthly: 6,
-    retentionKeepYearly: 1,
+    retentionKeepYearly: 2,
     compression: "auto",
     limitUpload: 0,
     limitDownload: 0,
@@ -407,7 +405,7 @@ const B2_DESTINATION = {
   immutable: true,
   createdAt: NOW - 60 * DAY,
   domains: B2_SECTIONS,
-  retention: KEEP_LONG,
+  retention: KEEP_BALANCED,
   compression: "auto",
   limitUpload: 0,
   limitDownload: 0,
@@ -516,6 +514,8 @@ function ownFolderSteps(domains: string[]) {
       backups: 96,
       pending: copy ? 2 : 96,
       key: `own:${domain}`,
+      keep: KEEP_BALANCED,
+      keepThere: KEEP_BALANCED,
     };
   });
 }
@@ -939,8 +939,8 @@ const GROUP = {
   selfAddressManual: false,
   ownAddresses: ["192.168.1.10", "tower.home.arpa"],
   members: [
-    { id: GROUP_ID.nas, name: "Offsite NAS", version: "v10.4.1", direct: true, relay: true, address: "https://offsite-nas.home.arpa:3443" },
-    { id: GROUP_ID.office, name: "office", version: "v10.4.1", direct: false, relay: true, address: "https://office.example.net:3443" },
+    { id: GROUP_ID.nas, name: "Offsite NAS", version: "v10.4.2", direct: true, relay: true, address: "https://offsite-nas.home.arpa:3443" },
+    { id: GROUP_ID.office, name: "office", version: "v10.4.2", direct: false, relay: true, address: "https://office.example.net:3443" },
   ],
   away: [{ id: GROUP_ID.lab, name: "lab", lastSeen: NOW - 26 * HOUR, address: "https://192.168.1.40:3443" }],
   settling: false,
@@ -1026,7 +1026,7 @@ const peer = (id: string, memberId: string, name: string, over: Json) => ({
   lastPollOk: true,
   lastPollError: "",
   lastPollInstanceName: name,
-  lastPollVersion: "v10.4.1",
+  lastPollVersion: "v10.4.2",
   lastPollDomains: [statusOf("containers", "green", night(0, 10)), statusOf("files", "green", night(0, 30))],
   createdAt: NOW - 40 * DAY,
   sortOrder: 0,
@@ -1106,7 +1106,7 @@ const ZFS_SERVER = {
   reachable: true,
 };
 
-const KEEP = { preset: "balanced", own: [1, 7, 4, 6, 1] };
+const KEEP = { preset: "balanced", own: [0, 7, 4, 6, 2] };
 
 const REPLICA = {
   target: { kind: "server", id: ZFS_SERVER.id },
@@ -1361,7 +1361,7 @@ export async function stageDemo(page: Page, demo: Demo): Promise<void> {
   // A release, so the pages name a version where the harness build has none.
   await page.route("**/api/health", async (route) => {
     const res = await route.fetch();
-    await route.fulfill({ json: { ...(await res.json()), version: "v10.4.1" } });
+    await route.fulfill({ json: { ...(await res.json()), version: "v10.4.2" } });
   });
   await page.route("**/api/settings", async (route: Route) => {
     if (route.request().method() !== "GET") return route.fulfill({ json: { ok: true } });
