@@ -103,7 +103,7 @@ A rule keeps one backup per day, week, month and year, as far back as you set, a
 | **Balanced** | 0 | 7 | 4 | 6 | 2 |
 | **Long** | 0 | 14 | 8 | 12 | 3 |
 
-**Custom values** sets the five counts yourself. A 0 switches that count off, and a rule with every count at 0 keeps everything. The dots in the card show which of 40 sample backups a rule keeps, the newest on the far right. The sample is the same for every location, since the picture is drawn before BombVault has read the backups there.
+**Custom values** sets the five counts yourself. A 0 switches that count off, and a rule with every count at 0 keeps everything. The dots in the card show which of 40 sample backups a rule keeps, the newest on the far right. The sample is the same for every location, since the picture is drawn before BombVault has read the backups there. It counts back from today, so how many dots stay changes with the date.
 
 **Ask before keeping less**, on by default, asks before a change that keeps fewer backups is saved, and says how many of the 40 sample backups the new rule removes. It applies to every storage location. **Reset to the storage location** under **Rules per section** asks the same question.
 
@@ -137,7 +137,7 @@ That leaves 14 backups out of 765. The oldest is from 31 December 2025, so today
 | **Balanced** | 14 | 31 December 2025 | about 4 months in early spring, a full year on 31 December |
 | **Long** | 30 | 31 December 2024 | 1 year on 1 January, 2 years on 31 December |
 
-Going from **Balanced** to **Short** asks first, because of **Ask before keeping less**: "Of the 40 backups in the picture, the new rule removes 4 that the current one keeps." The number comes from the sample in the picture, not from your own backups. Here it happens to match: 31 August, 31 July, 30 June and 31 December 2025 would go. **Save anyway** applies the rule, and the next prune deletes them from that location for good.
+Going from **Balanced** to **Short** asks first, because of **Ask before keeping less**. The question says how many of the 40 backups in the picture the new rule removes. That number comes from the sample, so it changes with the date and does not count your own backups. Of the backups in this example, 31 August, 31 July, 30 June and 31 December 2025 would go. **Save anyway** applies the rule, and the next prune deletes them from that location for good.
 
 To keep the containers longer than the rest at this location, press **Change rules** under **Rules per section**, pick **Containers**, and set **Custom values** in **Rules for Containers**, for example 14 days, 8 weeks, 12 months and 2 years. The other sections keep following the location's card, and **Reset to the storage location** brings Containers back.
 
@@ -226,7 +226,7 @@ An own folder can also lie in a storage location you already have, such as a NAS
 2. Pick the sections under **Sections** and the place under **Move to**. **Another place** takes a folder on this host or the address of a remote repository typed by hand, with a sign-in from your saved sign-ins.
 3. Read **What happens**. For each section it says where new backups go, whether a copy that is already at the new place becomes the own folder, and which backups are copied over first.
 4. **Copy the backups already made** is on by default. Switched off, the old backups stay where they are and can still be restored from there.
-5. Choose **Switch**. When the new place's **How long to keep** card keeps less than the section's rule today, BombVault first asks **Keep less?**. **Keep the current values for** that section **under Rules per section** carries today's values along, **Save anyway** goes ahead, and **Back** leaves everything as it was. When backups have to be copied first, BombVault copies them and then switches the own folder. When they are there already, it checks them before the switch.
+5. Choose **Switch**. When the new place's **How long to keep** card keeps less than the section's rule today, BombVault first asks **Keep less?** There, **Keep the current values for** that section **under Rules per section** carries today's values along, **Save anyway** goes ahead, and **Back** leaves everything as it was. When backups have to be copied first, BombVault copies them and then switches the own folder. When they are there already, it checks them before the switch.
 
 After the move, new backups go to the moved own folder, also for a section that had **Local** switched off and backed up straight to a copy. A copy that already sat at the new place becomes the own folder, and copying there ends. Where that copy kept some backups longer than the section's keep rules, the section keeps whatever either rule keeps, so none of them is lost.
 
