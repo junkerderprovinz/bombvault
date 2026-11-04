@@ -73,7 +73,7 @@ Every storage location has a page of its own. It shows only the cards that apply
 - **Connection**: the **Name**, the switch **Available** (off means BombVault no longer writes here, and entries that back up here fail with a clear message instead of landing somewhere else), the folder, **Compression**, **Storage class** and **Off the premises**. On the **Local** location it lists the folder of each section under **Own folders here**. **Change connection** tests and saves a new address or sign-in. When other places sign in with the same saved sign-in, the window says so, and a change here gives this location a sign-in of its own instead of rewriting the shared one.
 - **Sign-in**: which saved sign-in it uses (**Signs in with**), which other locations use it too (**Also used by**), and **Edit**, which opens the sign-in window. See [Sign-ins](#sign-ins).
 - **rclone.conf**: this location's section of the rclone configuration, for a location that runs through rclone.
-- **Delete protection**, with **Delete protection (append-only)**, **Accept without delete protection**, **Test delete protection now** and **Who prunes**, which says whether BombVault prunes the copy and the own folders here or leaves that to the far side. A local folder shows this card only when it has a protection you can switch off. See [Delete protection](#delete-protection-append-only).
+- **Delete protection**, with **Delete protection (append-only)**, **Accept without delete protection**, **Test delete protection now** and **Who prunes**, which says whether BombVault prunes the copy and the own folders here, by this location's **How long to keep** card or a section's own values under **Rules per section**, or leaves that to the far side. A local folder shows this card only when it has a protection you can switch off. See [Delete protection](#delete-protection-append-only).
 - **Copy**: **When to copy**, and the **Upload limit (KiB/s)** and **Download limit (KiB/s)**. A location that holds only own folders and no copies shows the limits as a card called **Bandwidth**.
 - **How long to keep**: **Short**, **Balanced**, **Long** or **Custom values**, with a timeline of which backups the rule keeps. See [How long to keep](#keep).
 - **Already under this storage location**: sections whose hand-typed address lies in a folder of this location. Taking one over leaves the repository where it is. Sign-in, storage class and delete protection then come from the location. BombVault first checks that the location's sign-in opens the repository, and it refuses to put an append-only repository under a location that is not append-only.
@@ -100,7 +100,7 @@ A rule keeps one backup per day, week, month and year, as far back as you set, a
 | Preset | Latest backups | Days | Weeks | Months | Years |
 |---|---|---|---|---|---|
 | **Short** | 0 | 7 | 4 | 3 | 0 |
-| **Balanced** | 0 | 7 | 4 | 6 | 1 |
+| **Balanced** | 0 | 7 | 4 | 6 | 2 |
 | **Long** | 0 | 14 | 8 | 12 | 3 |
 
 **Custom values** sets the five counts yourself. A 0 switches that count off, and a rule with every count at 0 keeps everything. The dots in the card show which of 40 sample backups a rule keeps, the newest on the far right. The sample is the same for every location, since the picture is drawn before BombVault has read the backups there.
@@ -116,7 +116,7 @@ To see what the next run would really delete, open **Preview** under **Settings,
 
 #### Example: what Balanced keeps {#example-retention}
 
-A container has been backed up every night at 03:00 since 1 October 2025, so on Wednesday 4 November 2026 it has had 400 backups. Its storage location is set to **Balanced**: 7 days, 4 weeks, 6 months and 1 year.
+A container has been backed up every night at 03:00 since 1 October 2024, so on Wednesday 4 November 2026 it has had 765 backups. Its storage location is set to **Balanced**: 7 days, 4 weeks, 6 months and 2 years.
 
 Each count keeps the newest backup of its day, week, month or year, and a backup that several counts pick is kept once. Weeks run from Monday to Sunday:
 
@@ -125,19 +125,19 @@ Each count keeps the newest backup of its day, week, month or year, and a backup
 | 7 days | 4 Nov, 3 Nov, 2 Nov, 1 Nov, 31 Oct, 30 Oct, 29 Oct | all 7 |
 | 4 weeks | 4 Nov, 1 Nov, 25 Oct, 18 Oct | 25 Oct, 18 Oct |
 | 6 months | 4 Nov, 31 Oct, 30 Sep, 31 Aug, 31 Jul, 30 Jun | 30 Sep, 31 Aug, 31 Jul, 30 Jun |
-| 1 year | 4 Nov | none |
+| 2 years | 4 Nov, 31 Dec 2025 | 31 Dec 2025 |
 
-That leaves 13 backups out of 400. The oldest is from 30 June, so you can go back a little over four months. Thanks to deduplication they take little more room than one full backup plus what changed in between.
+That leaves 14 backups out of 765. The oldest is from 31 December 2025, so today you can go back a little over ten months. Thanks to deduplication they take little more room than one full backup plus what changed in between.
 
-**Years** is worth a second look. It counts calendar years with a backup in them, starting with the current one, and the newest backup of this year is today's. So a 1 in **Years** adds nothing to the other counts, and you need a 2 to reach back into last year. The same 400 backups under the other presets:
+**Years** is worth a second look. It counts calendar years with a backup in them, starting with the current one, and the newest backup of this year is today's. So the first year adds nothing to the other counts, and the second adds the last backup of the previous year. That is why the reach of a rule varies through the year. The same backups under each preset:
 
-| Preset | Backups kept | Oldest backup |
-|---|---|---|
-| **Short** | 10 | 30 September 2026 |
-| **Balanced** | 13 | 30 June 2026 |
-| **Long** | 29 | 31 December 2025 |
+| Preset | Backups kept today | Oldest backup today | Reach through the year |
+|---|---|---|---|
+| **Short** | 10 | 30 September 2026 | 1 to 2 months |
+| **Balanced** | 14 | 31 December 2025 | about 4 months in early spring, a full year on 31 December |
+| **Long** | 30 | 31 December 2024 | 1 year on 1 January, 2 years on 31 December |
 
-Going from **Balanced** to **Short** asks first, because of **Ask before keeping less**: "Of the 40 backups in the picture, the new rule removes 3 that the current one keeps." The number comes from the sample in the picture, not from your own backups. Here it happens to match: 31 August, 31 July and 30 June would go. **Save anyway** applies the rule, and the next prune deletes them from that location for good.
+Going from **Balanced** to **Short** asks first, because of **Ask before keeping less**: "Of the 40 backups in the picture, the new rule removes 4 that the current one keeps." The number comes from the sample in the picture, not from your own backups. Here it happens to match: 31 August, 31 July, 30 June and 31 December 2025 would go. **Save anyway** applies the rule, and the next prune deletes them from that location for good.
 
 To keep the containers longer than the rest at this location, press **Change rules** under **Rules per section**, pick **Containers**, and set **Custom values** in **Rules for Containers**, for example 14 days, 8 weeks, 12 months and 2 years. The other sections keep following the location's card, and **Reset to the storage location** brings Containers back.
 
@@ -218,7 +218,7 @@ Since nothing prunes this copy from here, set **Growth budget (GB, 0 = off)** in
 
 Every section has an own folder: the repository its backups are written to first. Copies to other storage locations go out from there. A new install keeps the own folders on this server, below `/mnt/user/bombvault`, and together they form the **Local** storage location.
 
-An own folder can also lie in a storage location you already have, such as a NAS, a rest-server or an S3 bucket. The section then backs up there directly, with no local copy in between, and the own folder follows that location's sign-in, delete protection, bandwidth limits and keep rules. The location lists the section in its **Own folders** card, and **Storage locations per section** shows the location as the section's home.
+An own folder can also lie in a storage location you already have, such as a NAS, a rest-server or an S3 bucket. The section then backs up there directly, with no local copy in between, and the own folder follows that location's sign-in, delete protection and bandwidth limits. BombVault prunes it after each backup by the location's **How long to keep** card, and a section's own values under **Rules per section** win over the card. The location lists the section in its **Own folders** card, and **Storage locations per section** shows the location as the section's home.
 
 ### Moving an own folder {#move-own-folder}
 
@@ -226,7 +226,7 @@ An own folder can also lie in a storage location you already have, such as a NAS
 2. Pick the sections under **Sections** and the place under **Move to**. **Another place** takes a folder on this host or the address of a remote repository typed by hand, with a sign-in from your saved sign-ins.
 3. Read **What happens**. For each section it says where new backups go, whether a copy that is already at the new place becomes the own folder, and which backups are copied over first.
 4. **Copy the backups already made** is on by default. Switched off, the old backups stay where they are and can still be restored from there.
-5. Choose **Switch**. When backups have to be copied first, BombVault copies them and then switches the own folder. When they are there already, it checks them before the switch.
+5. Choose **Switch**. When the new place's **How long to keep** card keeps less than the section's rule today, BombVault first asks **Keep less?**. **Keep the current values for** that section **under Rules per section** carries today's values along, **Save anyway** goes ahead, and **Back** leaves everything as it was. When backups have to be copied first, BombVault copies them and then switches the own folder. When they are there already, it checks them before the switch.
 
 After the move, new backups go to the moved own folder, also for a section that had **Local** switched off and backed up straight to a copy. A copy that already sat at the new place becomes the own folder, and copying there ends. Where that copy kept some backups longer than the section's keep rules, the section keeps whatever either rule keeps, so none of them is lost.
 
@@ -246,7 +246,7 @@ The cache pool is filling up, and you have a storage location called `nas`, an S
 3. Read **What happens**. It says that new backups of Containers go to the folder on `nas`, that the 61 backups in Local are copied there first, that copies keep going to Backblaze B2, and that protection, bandwidth limits and the growth alarm come from `nas`.
 4. Leave **Copy the backups already made** on and press **Switch**.
 
-BombVault copies the backups in the background and then switches the own folder. The `nas` page lists Containers under **Own folders**, an entry that follows its section names `nas` as its home, and the next backup lands there, with the copy to B2 going out from `nas`. The old folder on this server stays where it is, and BombVault deletes nothing there.
+BombVault copies the backups in the background and then switches the own folder. The `nas` page lists Containers under **Own folders**, an entry that follows its section names `nas` as its home, and the next backup lands there, with the copy to B2 going out from `nas`. From now on the **How long to keep** card of `nas` prunes the folder. The old folder on this server stays where it is, and BombVault deletes nothing there.
 
 ### Typing a remote address by hand {#remote-primary-repositories}
 

@@ -10,7 +10,7 @@ Each of these walks through one real job from start to end, with names and numbe
 
 - [An off-site copy on Backblaze B2](offsite-recovery.md#example-s3): a bucket, a key for that bucket, and the first copy. Cloudflare R2 works the same way.
 - [A rest-server you run yourself](offsite-recovery.md#example-rest-server): an off-site copy that refuses deletes, with the `docker run` line and the tamper test.
-- [What Balanced keeps](offsite-recovery.md#example-retention): retention over 400 days of nightly backups, backup by backup.
+- [What Balanced keeps](offsite-recovery.md#example-retention): retention over two years of nightly backups, backup by backup.
 - [Containers move to a NAS](offsite-recovery.md#example-own-folder): a section's own folder changes place, and what happens to the backups already made.
 
 ## Backups and schedules {#backups}

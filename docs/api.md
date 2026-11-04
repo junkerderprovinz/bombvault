@@ -81,7 +81,7 @@ The device is called BombVault, or BombVault with the instance name in brackets,
 
 | Entity | What it shows |
 |---|---|
-| Status | `ok`, `warning`, `failed` or `off`, the worst of the domains that are switched on. A domain waiting for its first backup counts once that backup was due |
+| Status | `ok`, `warning`, `failed` or `off`, the worst of the domains that are switched on. A domain waiting for its first backup counts only once that backup was due, and only a current domain makes the status `ok` |
 | Running job | What runs now, or `idle` |
 | Open anomalies | How many anomalies are open |
 | Next scheduled backup | When the next scheduled backup starts |
