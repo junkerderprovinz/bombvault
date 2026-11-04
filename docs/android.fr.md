@@ -2,9 +2,12 @@
 
 L'application Android met tous les serveurs BombVault de votre groupe sur votre téléphone. Elle s'ouvre sur la liste de vos serveurs, avec en haut le journal d'activité de tous, les mêmes lignes que celles de l'aperçu, et ouvre la vue mobile du serveur que vous touchez. L'application ne sauvegarde rien elle-même.
 
+![L'écran d'accueil de l'application : en haut le journal d'activité de tous les serveurs, puis la liste des serveurs.](assets/screenshots/android/start-dark.png#only-dark)
+![L'écran d'accueil de l'application : en haut le journal d'activité de tous les serveurs, puis la liste des serveurs.](assets/screenshots/android/start-light.png#only-light)
+
 ## Obtenir l'application {#install}
 
-- **Paramètres, Applications :** la carte de l'application Android propose l'APK de la version que votre serveur exécute, avec un code QR à scanner depuis le téléphone.
+- **Paramètres, Applications :** la carte de l'application Android propose l'APK de la version que votre serveur exécute, avec un code QR à scanner depuis le téléphone, et renvoie vers la fiche F-Droid.
 - **APK :** chaque version publie `bombvault-android.apk` sur sa page de release, et [ce lien](https://github.com/junkerderprovinz/bombvault/releases/latest/download/bombvault-android.apk) télécharge toujours la dernière version. Elle nécessite Android 10 ou ultérieur, et Android demande une fois si l'application avec laquelle vous ouvrez le fichier a le droit d'installer des applications.
 - **Google Play :** l'application est en test fermé jusqu'à ce qu'elle puisse être publiée. Google Play ne publie l'application d'un nouveau compte développeur qu'après qu'au moins 12 testeurs l'ont gardée installée pendant 14 jours. Pour aider, rejoignez le [groupe de testeurs](https://groups.google.com/g/arrowloop-testers), ouvrez la [page de test](https://play.google.com/apps/testing/bombvault.halleluja.design), touchez **Devenir testeur** et installez BombVault depuis Google Play.
 - **F-Droid :** [BombVault sur F-Droid](https://f-droid.org/packages/bombvault.halleluja.design/). F-Droid compile lui-même l'application à partir du code source et la signe avec sa propre clé, une nouvelle version y arrive donc quelques jours plus tard. Pour passer de l'application F-Droid à l'APK ou inversement, désinstallez d'abord l'autre.
@@ -59,17 +62,17 @@ La roue dentée à côté du bouton + ouvre les paramètres de l'application :
 
 - la langue, et le nom que le téléphone affiche sur la page Instances (vide, c'est le modèle du téléphone),
 - l'apparence, qui suit le premier serveur de la liste jusqu'à ce que vous définissiez la vôtre, et les animations, qui ont leur propre réglage,
-- un rapport à copier quand vous signalez un problème ; il ne contient ni adresse, ni nom, ni phrase,
+- un rapport à copier quand vous signalez un problème. Il ne contient ni adresse, ni nom, ni phrase,
 - la carte **À propos** avec la politique de confidentialité,
 - **Supprimer tous les serveurs**, qui retire tous les serveurs de l'application et quitte le groupe. Chaque serveur que le téléphone joint encore le retire de sa page Instances.
 
 ## Téléchargements et envois {#files}
 
-Les exports, les kits de récupération, les ZIP de la flash et les dumps de base de données arrivent dans le dossier Téléchargements du téléphone, comme depuis un navigateur. Un import de paramètres ouvre le sélecteur de fichiers du téléphone. Via le relais, aucun fichier n'est enregistré ; ouvrez pour cela le serveur à sa propre adresse.
+Les exports, les kits de récupération, les ZIP de la flash et les dumps de base de données arrivent dans le dossier Téléchargements du téléphone, comme depuis un navigateur. Un import de paramètres ouvre le sélecteur de fichiers du téléphone. Via le relais, aucun fichier n'est enregistré. Ouvrez pour cela le serveur à sa propre adresse.
 
 ## Sur un écran tactile {#touch}
 
-Rien ne se survole avec un doigt : un contrôle s'assombrit donc tant qu'il est maintenu, et un bouton portant le logo d'une marque s'allume dans la couleur de cette marque jusqu'à ce que le doigt se lève. Un appui long sur un bouton compte comme un toucher lent et n'ouvre aucun menu de lien. Toucher un bouton grisé affiche la raison pour laquelle il est grisé, jusqu'à ce que vous touchiez ailleurs.
+Rien ne se survole avec un doigt, un contrôle s'assombrit donc tant qu'il est maintenu, et un bouton portant le logo d'une marque s'allume dans la couleur de cette marque jusqu'à ce que le doigt se lève. Un appui long sur un bouton compte comme un toucher lent et n'ouvre aucun menu de lien. Toucher un bouton grisé affiche la raison pour laquelle il est grisé, jusqu'à ce que vous touchiez ailleurs.
 
 ## Ou dans un navigateur {#browser}
 
