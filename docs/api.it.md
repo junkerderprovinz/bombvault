@@ -81,7 +81,7 @@ Il dispositivo si chiama BombVault, oppure BombVault con il nome dell'istanza tr
 
 | Entità | Cosa mostra |
 |---|---|
-| Status | `ok`, `warning`, `failed` o `off`, il peggiore tra le sezioni attive |
+| Status | `ok`, `warning`, `failed` o `off`, il peggiore tra le sezioni attive. Una sezione in attesa del primo backup conta solo quando quel backup era previsto |
 | Running job | Cosa è in corso adesso, oppure `idle` |
 | Open anomalies | Quante anomalie sono aperte |
 | Next scheduled backup | Quando parte il prossimo backup pianificato |

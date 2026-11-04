@@ -28,7 +28,7 @@ type ZFSReplicaKeep struct {
 
 var zfsReplicaKeepPresets = map[string][5]int{
 	"short":    {0, 7, 4, 3, 0},
-	"balanced": {0, 7, 4, 6, 1},
+	"balanced": {0, 7, 4, 6, 2},
 	"long":     {0, 14, 8, 12, 3},
 }
 

@@ -54,13 +54,20 @@ const yearEnd = at(
 describe("presets", () => {
   it("names the preset a set of counts equals", () => {
     expect(presetOf([0, 7, 4, 3, 0])).toBe("short");
-    expect(presetOf([0, 7, 4, 6, 1])).toBe("balanced");
+    expect(presetOf([0, 7, 4, 6, 2])).toBe("balanced");
     expect(presetOf([0, 14, 8, 12, 3])).toBe("long");
   });
 
   it("calls every other set of counts custom", () => {
-    expect(presetOf([1, 7, 4, 6, 1])).toBe("custom");
+    expect(presetOf([0, 7, 4, 6, 1])).toBe("custom");
     expect(presetOf([0, 0, 0, 0, 0])).toBe("custom");
+  });
+
+  it("lets Balanced hold on to last year's newest backup", () => {
+    const backups = [{ time: "2024-12-31T03:00:00+01:00" }, { time: "2025-09-01T03:00:00+01:00" }];
+    const kept = keepPlan(KEEP_PRESETS.balanced, backups).marks.filter((mark) => mark.kept);
+    expect(kept.map((mark) => mark.backup.time)).toContain("2024-12-31T03:00:00+01:00");
+    expect(kept.find((mark) => mark.backup.time.startsWith("2024"))?.buckets).toContain("yearly");
   });
 
   it("maps each preset back to itself", () => {
@@ -205,7 +212,7 @@ describe("sampleBackups", () => {
   it("shows each preset keeping more than the shorter one", () => {
     const count = (counts: KeepCounts) => keepPlan(counts, sample).marks.filter((m) => m.kept).length;
     expect(count(KEEP_PRESETS.short)).toBe(11);
-    expect(count(KEEP_PRESETS.balanced)).toBe(14);
+    expect(count(KEEP_PRESETS.balanced)).toBe(15);
     expect(count(KEEP_PRESETS.long)).toBe(29);
   });
 });

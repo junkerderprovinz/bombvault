@@ -36,10 +36,15 @@ var probeLockPoll = 15 * time.Second
 
 var errProbeBusy = errors.New("a backup or another check is running for this item's domain; try again when it finishes")
 
-// errProbeSnapshotElsewhere is a backup the item's repository does not hold,
-// as after its own folder moved without the backups made before. The next
-// backup lands where the probe reads.
+// errProbeSnapshotElsewhere is a backup the item's repository does not hold
+// because its own folder moved without the backups made before. The next backup
+// lands where the probe reads.
 var errProbeSnapshotElsewhere = errors.New("the newest backup of this item stayed in its old own folder, so the restore can be checked after the next backup")
+
+// errProbeSnapshotGone is a backup the item's repository no longer holds though
+// nothing moved: a keep rule forgets the first backup of a day once a second one
+// lands, even while its probe still waits for the domain.
+var errProbeSnapshotGone = errors.New("the newest backup recorded for this item has been pruned or deleted since, so the restore can be checked after the next backup")
 
 // errProbeGaveWay is a probe stopped because somebody asked for its domain.
 var errProbeGaveWay = errors.New("the restore probe gave way to an action on its section")
@@ -176,6 +181,9 @@ func (s *Service) firstProbe(ctx context.Context, targetID string) {
 	case errors.Is(err, errProbeSnapshotElsewhere):
 		log.Printf("api: restore probe of %q waits for the next backup: its first one stayed in the old own folder", it.name) //nolint:gosec // G706: %q-quoted
 		return
+	case errors.Is(err, errProbeSnapshotGone):
+		log.Printf("api: restore probe of %q waits for the next backup: the one it was to read has been pruned or deleted since", it.name) //nolint:gosec // G706: %q-quoted
+		return
 	}
 	if !rec.OK {
 		s.notifyProbeFailure(ctx, it, rec.Detail)
@@ -268,7 +276,7 @@ func (s *Service) ProbeItem(ctx context.Context, targetID string) (store.ItemPro
 	switch {
 	case errors.Is(err, errNothingToDrill):
 		return store.ItemProbe{}, errors.New("this backup holds no files, so there is nothing to check")
-	case errors.Is(err, errProbeSnapshotElsewhere):
+	case errors.Is(err, errProbeSnapshotElsewhere), errors.Is(err, errProbeSnapshotGone):
 		return store.ItemProbe{}, err
 	}
 	return rec, nil
@@ -285,7 +293,7 @@ func (s *Service) probeAndRecord(ctx context.Context, it probeItem, run store.Ru
 		err = errProbeGaveWay
 	}
 	s.progEnd(key, "maintenance", err == nil, startedAt)
-	if errors.Is(err, errNothingToDrill) || errors.Is(err, errProbeSnapshotElsewhere) || errors.Is(err, errProbeGaveWay) {
+	if errors.Is(err, errNothingToDrill) || errors.Is(err, errProbeSnapshotElsewhere) || errors.Is(err, errProbeSnapshotGone) || errors.Is(err, errProbeGaveWay) {
 		return store.ItemProbe{}, err
 	}
 	rec := store.ItemProbe{
@@ -350,7 +358,7 @@ func (s *Service) runItemProbe(ctx context.Context, it probeItem, run store.Run)
 		})
 	}); err != nil {
 		if s.snapshotNotIn(ctx, repo, mode, snapshotID) {
-			return probeResult{}, errProbeSnapshotElsewhere
+			return probeResult{}, s.missingSnapshotErr(it, run)
 		}
 		return probeResult{}, fmt.Errorf("list the backup: %w", err)
 	}
@@ -425,7 +433,16 @@ func (s *Service) probeSnapshot(ctx context.Context, it probeItem, repo string, 
 	if id, ok := heldAs(snaps, run.SnapshotID); ok {
 		return id, nil
 	}
-	return "", errProbeSnapshotElsewhere
+	return "", s.missingSnapshotErr(it, run)
+}
+
+// missingSnapshotErr says why repo lacks the snapshot of run: it stayed behind
+// when the item's place changed, or it is gone.
+func (s *Service) missingSnapshotErr(it probeItem, run store.Run) error {
+	if changed, err := s.store.PlaceChangedSince(it.domain, it.targetID, run.StartedAt); err == nil && changed {
+		return errProbeSnapshotElsewhere
+	}
+	return errProbeSnapshotGone
 }
 
 // snapshotMayBeGone reports whether repo may not hold the snapshot of run. A

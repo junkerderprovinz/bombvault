@@ -2268,17 +2268,29 @@ func globPartsMatch(pat, parts []string) bool {
 	return ok && globPartsMatch(pat[1:], parts[1:])
 }
 
-// retentionPolicy is the local keep-policy of a domain: its own when it has
-// one, the shared one otherwise.
+// retentionPolicy is the local keep-policy of a domain, the one localKeep
+// names.
 func (s *Service) retentionPolicy(settings store.Settings, domain string) restic.RetentionPolicy {
-	return keepPolicy(localKeep(settings, domain))
+	return keepPolicy(s.localKeep(settings, domain))
 }
 
-// localKeep is the domain's own local keep-policy when it has one, the shared
-// local one otherwise.
-func localKeep(settings store.Settings, domain string) store.RetentionKeep {
+// localKeep is the domain's own local keep-policy when it has one. Without
+// one, a section whose own folder was put into a storage location ages by that
+// location's How long to keep card, as a copy there does, and any other by the
+// shared local policy.
+func (s *Service) localKeep(settings store.Settings, domain string) store.RetentionKeep {
 	if k, own := settings.OwnRetention()[domain]; own {
 		return k
+	}
+	row, _, err := s.store.PrimaryRemoteTarget(domain)
+	if err != nil {
+		// The shared policy may keep less than the location's card, so an
+		// unread link keeps everything until it can be read.
+		log.Printf("api: %s: could not read where its own folder lies, so nothing is pruned this time: %v", domain, err) //nolint:gosec // G706: domain is a fixed literal
+		return store.RetentionKeep{}
+	}
+	if d, linked := s.linkedLocation(settings, row); linked {
+		return targetKeep(d)
 	}
 	return sharedLocalKeep(settings)
 }
@@ -3390,7 +3402,7 @@ type DomainStatusEntry struct {
 	ReplicationState string `json:"replicationState"` // "" | "never" | "overdue" | "ok" | "paused"
 	DrillState       string `json:"drillState"`       // "" | "never" | "failed" | "overdue" | "ok"
 	EncryptionOn     bool   `json:"encryptionOn"`     // repo encryption is enabled
-	PruneStrategySet bool   `json:"pruneStrategySet"` // an off-site retention strategy is configured
+	PruneStrategySet bool   `json:"pruneStrategySet"` // a prune rule applies, off-site or to the own folder
 	// TamperOff says the scheduled check of delete protection is switched
 	// off, so an unproven claim stays unproven until it is tested by hand.
 	TamperOff bool `json:"tamperOff,omitempty"`
@@ -3462,51 +3474,110 @@ func domainCoverage(ownCadence, everythingCadence string) (period int64, covered
 	return 0, ""
 }
 
-// domainWindow is domainCoverage for a domain whose entries may run on
-// schedules of their own. Without a section or full-backup cadence, the
-// shortest of those is the window, so a section backed up only by per-item
-// schedules still turns overdue when its backups stop.
-func (s *Service) domainWindow(domain, ownCadence string, settings store.Settings) (period int64, coveredBy string) {
-	if period, coveredBy = domainCoverage(ownCadence, settings.EverythingSchedule); period > 0 {
-		return period, coveredBy
-	}
-	var effs []schedule.EffectiveSchedule
+// sectionEntry is one entry of a section as its schedule sees it, with when the
+// entry was set up.
+type sectionEntry struct {
+	schedule schedule.EffectiveSchedule
+	since    int64
+}
+
+// sectionEntries reads the entries of a domain. The bool is false for flash and
+// the self-backup, which have none, and when they cannot be read.
+func (s *Service) sectionEntries(domain string, settings store.Settings) ([]sectionEntry, bool) {
+	var entries []sectionEntry
 	var err error
 	switch domain {
 	case "containers":
 		var ts []store.Target
 		ts, err = s.store.ListTargets()
 		for _, t := range ts {
-			effs = append(effs, schedule.EffectiveContainerSchedule(t, settings))
+			entries = append(entries, sectionEntry{schedule.EffectiveContainerSchedule(t, settings), t.CreatedAt})
 		}
 	case "vms":
 		var vs []store.VMTarget
 		vs, err = s.store.ListVMTargets()
 		for _, v := range vs {
-			effs = append(effs, schedule.EffectiveVMSchedule(v, settings))
+			entries = append(entries, sectionEntry{schedule.EffectiveVMSchedule(v, settings), v.CreatedAt})
 		}
 	case "files":
 		var sets []store.FileSet
 		sets, err = s.store.ListFileSets()
 		for _, set := range sets {
-			effs = append(effs, schedule.EffectiveFileSetSchedule(set, settings))
+			entries = append(entries, sectionEntry{schedule.EffectiveFileSetSchedule(set, settings), set.CreatedAt})
 		}
 	case zfsDomain:
 		var ds []store.ZFSDataset
 		ds, err = s.store.ListZFSDatasets()
 		for _, d := range ds {
-			effs = append(effs, schedule.EffectiveZFSDatasetSchedule(d, settings))
+			entries = append(entries, sectionEntry{schedule.EffectiveZFSDatasetSchedule(d, settings), d.CreatedAt})
 		}
+	default:
+		return nil, false
 	}
 	if err != nil {
-		log.Printf("api: status %s: the entries could not be read, so their own schedules set no window: %v", domain, err) //nolint:gosec // G706: domain is a fixed literal
+		log.Printf("api: status %s: the entries could not be read, so only the section's cadence counts: %v", domain, err) //nolint:gosec // G706: domain is a fixed literal
+		return nil, false
 	}
-	for _, eff := range effs {
-		if p := cadencePeriodSeconds(eff.Spec); eff.Kind == schedule.EffectiveOwn && p > 0 && (period == 0 || p < period) {
+	return entries, true
+}
+
+// domainWindow is domainCoverage for a domain whose entries may run on
+// schedules of their own. Without a section or full-backup cadence, the
+// shortest of those is the window, so a section backed up only by per-item
+// schedules still turns overdue when its backups stop. A section without an
+// entry that any schedule backs up has no window, since a scheduled run finds
+// nothing to do there and no recovery point can fall behind.
+func (s *Service) domainWindow(domain, ownCadence string, settings store.Settings) (period int64, coveredBy string) {
+	entries, listed := s.sectionEntries(domain, settings)
+	scheduled := slices.ContainsFunc(entries, func(e sectionEntry) bool { return e.schedule.Kind != schedule.EffectiveNone })
+	if listed && !scheduled {
+		return 0, ""
+	}
+	if period, coveredBy = domainCoverage(ownCadence, settings.EverythingSchedule); period > 0 {
+		return period, coveredBy
+	}
+	for _, e := range entries {
+		if p := cadencePeriodSeconds(e.schedule.Spec); e.schedule.Kind == schedule.EffectiveOwn && p > 0 && (period == 0 || p < period) {
 			period = p
 		}
 	}
 	return period, ""
+}
+
+// scheduledSince is when a section first had something to back up: its oldest
+// entry on a schedule, or the start of this database for flash and the
+// self-backup. It falls back to now, so a failed read never turns a section red.
+func (s *Service) scheduledSince(domain string, settings store.Settings, now int64) int64 {
+	if entries, listed := s.sectionEntries(domain, settings); listed {
+		since := now
+		for _, e := range entries {
+			if e.schedule.Kind != schedule.EffectiveNone && e.since < since {
+				since = e.since
+			}
+		}
+		return since
+	}
+	born, err := s.store.DatabaseBornAt()
+	if err != nil {
+		log.Printf("api: status %s: when this database started could not be read: %v", domain, err) //nolint:gosec // G706: domain is a fixed literal
+		return now
+	}
+	return born.Unix()
+}
+
+// sectionStatus is rpoStatus for a section's backups. A section without one
+// stays "never" until its first scheduled run has had its chance, which one
+// period after it was set up it has, and then reads "overdue" like a section
+// whose backups stopped. A first backup under way holds that back.
+func (s *Service) sectionStatus(domain string, settings store.Settings, now, lastSuccess, period int64, scheduled bool) string {
+	status := rpoStatus(now, lastSuccess, period, scheduled)
+	if status != "never" || now <= s.scheduledSince(domain, settings, now)+period {
+		return status
+	}
+	if _, busy := s.domainBusy(domain); busy {
+		return status
+	}
+	return "overdue"
 }
 
 // protInputs carries the facts protectionLevel aggregates, so the decision is a
@@ -3950,16 +4021,17 @@ func (s *Service) domainStatusFrom(settings store.Settings) ([]DomainStatusEntry
 		protection := protectionLevel(now, in)
 		checks := protectionChecks(now, in)
 		// A backup that waits for its app is late by choice until its deadline.
-		backupStatus := rpoStatus(now, lastUnix, period, scheduled)
+		backupStatus := s.sectionStatus(d.name, settings, now, lastUnix, period, scheduled)
 		if backupStatus == "overdue" && s.deferralHolds(d.name, now) {
 			backupStatus = "warn"
 		}
 
-		// An off-site retention strategy is "configured" when the far side prunes
-		// (immutable), a growth budget is set, or an off-site keep policy is set.
+		// A prune rule is "set" when the far side prunes (immutable), a growth
+		// budget is set, or a keep policy applies, off-site or to the own folder.
 		pruneStrategySet := offsiteImmutableFor(d.name, settings) ||
 			settings.OffsiteGrowthBudgetGB > 0 ||
-			s.offsiteRetentionPolicy(settings, d.name).Any()
+			s.offsiteRetentionPolicy(settings, d.name).Any() ||
+			s.retentionPolicy(settings, d.name).Any()
 
 		out = append(out, DomainStatusEntry{
 			Domain:                d.name,

@@ -81,7 +81,7 @@ Enheden hedder BombVault, eller BombVault med instansnavnet i parentes, og har d
 
 | Entitet | Hvad den viser |
 |---|---|
-| Status | `ok`, `warning`, `failed` eller `off`, det værste af de områder, der er slået til |
+| Status | `ok`, `warning`, `failed` eller `off`, det værste af de områder, der er slået til. Et område, der venter på sin første backup, tæller først, når den backup var planlagt |
 | Running job | Hvad der kører nu, eller `idle` |
 | Open anomalies | Hvor mange anomalier der er åbne |
 | Next scheduled backup | Hvornår den næste planlagte kopi starter |

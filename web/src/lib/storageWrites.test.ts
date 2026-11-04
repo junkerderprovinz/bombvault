@@ -24,7 +24,8 @@ const updateDestination = vi.mocked(api.updateDestination);
 const updateOffsiteTarget = vi.mocked(api.updateOffsiteTarget);
 const updateRepo = vi.mocked(api.updateRepo);
 
-const { followLocation, saveLocation, settingsOwned, storageClassOf, writable } = await import("./storageWrites");
+const { followLocation, saveLocation, saveSection, sectionSettings, settingsOwned, storageClassOf, writable } = await import("./storageWrites");
+const { canFollow } = await import("./storageLocations");
 
 const KEEP = { keepLast: 0, keepDaily: 7, keepWeekly: 4, keepMonthly: 3, keepYearly: 0 };
 
@@ -225,6 +226,35 @@ describe("followLocation", () => {
     const loc = location({ id: "path:abc", object: "path" });
     await followLocation(loc, { targets: [] }, section({ domain: "vms", use: "home" }), ["retention"]);
     expect(putSettings).toHaveBeenCalledWith(expect.objectContaining({ ownRetention: { flash: KEEP } }));
+  });
+
+  it("puts an own folder in a destination back on the destination's keep card", async () => {
+    getSettings.mockResolvedValue({
+      ok: true,
+      settings: { ownRetention: { vms: KEEP } } as unknown as Settings,
+      hostMountRoot: "",
+      platform: "",
+    });
+    await followLocation(location(), { destination: DESTINATION, targets: [] }, section({ domain: "vms", use: "home" }), ["retention"]);
+    expect(putSettings).toHaveBeenCalledWith(expect.objectContaining({ ownRetention: {} }));
+    expect(updateOffsiteTarget).not.toHaveBeenCalled();
+  });
+});
+
+describe("own folders in a destination", () => {
+  const home = section({ domain: "flash", use: "home" });
+
+  it("can hold a keep rule of their own and follow the card again", () => {
+    expect(sectionSettings(location(), { destination: DESTINATION, targets: [] }, home)).toEqual(["retention"]);
+    expect(canFollow(location(), home, "retention")).toBe(true);
+    expect(canFollow(location(), home, "compression")).toBe(false);
+  });
+
+  it("keep a rule of their own in the settings", async () => {
+    getSettings.mockResolvedValue({ ok: true, settings: { ownRetention: {} } as unknown as Settings, hostMountRoot: "", platform: "" });
+    await saveSection(location(), { destination: DESTINATION, targets: [] }, home, { retention: KEEP });
+    expect(putSettings).toHaveBeenCalledWith(expect.objectContaining({ ownRetention: { flash: KEEP } }));
+    expect(updateOffsiteTarget).not.toHaveBeenCalled();
   });
 });
 

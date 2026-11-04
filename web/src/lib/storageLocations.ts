@@ -58,10 +58,15 @@ export function distinctNames(locations: StorageLocation[]): StorageLocation[] {
   });
 }
 
-/** ownFolderSection is a section's own folder at a location: a home that is
- *  neither a named repository nor a target's direct one. */
+/** isOwnFolder says whether a section is its own folder at a location: a home
+ *  that is neither a named repository nor a target's direct one. */
+export function isOwnFolder(section: StorageLocationSection): boolean {
+  return section.use === "home" && !section.repoId && !section.targetId;
+}
+
+/** ownFolderSection is a section's own folder at a location. */
 export function ownFolderSection(location: StorageLocation, domain: string): StorageLocationSection | undefined {
-  return location.sections.find((s) => s.domain === domain && s.use === "home" && !s.repoId && !s.targetId);
+  return location.sections.find((s) => s.domain === domain && isOwnFolder(s));
 }
 
 /** localName is what the storage pages call a section's own folder, read off
@@ -116,9 +121,11 @@ export function deviating(location: StorageLocation, setting: FollowedSetting): 
  *  named. A target made from a destination can follow it. The copy a domain's
  *  off-site settings describe follows only for retention, since those settings
  *  rewrite the rest on every save. A domain with a local rule of its own goes
- *  back to the shared one. */
+ *  back to the shared one, or to the rule of the location its own folder lies
+ *  in. */
 export function canFollow(location: StorageLocation, section: StorageLocationSection, setting?: FollowedSetting): boolean {
   if (location.object === "destination") {
+    if (isOwnFolder(section)) return !setting || setting === "retention";
     return section.use === "copy" && !!section.targetId && (!section.primary || setting === "retention");
   }
   return (location.object === "path" || location.object === "repo") && section.use === "home";

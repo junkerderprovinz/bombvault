@@ -65,7 +65,7 @@ func TestOffsiteRetentionPolicyFallsBackToTheSharedOne(t *testing.T) {
 			t.Errorf("offsiteRetentionPolicy(%s) = %+v, want %+v", tc.domain, got, tc.want)
 		}
 	}
-	if got := svc.retentionPolicy(s, "vms"); got != (restic.RetentionPolicy{}) {
+	if got := (&Service{store: newTestStore(t)}).retentionPolicy(s, "vms"); got != (restic.RetentionPolicy{}) {
 		t.Errorf("the local policy of vms = %+v, want the shared local one, untouched by its off-site rules", got)
 	}
 }

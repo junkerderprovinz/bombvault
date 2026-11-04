@@ -81,7 +81,7 @@ El dispositivo se llama BombVault, o BombVault con el nombre de la instancia ent
 
 | Entidad | Qué muestra |
 |---|---|
-| Status | `ok`, `warning`, `failed` u `off`, el peor entre las secciones activadas |
+| Status | `ok`, `warning`, `failed` u `off`, el peor entre las secciones activadas. Una sección que espera su primera copia cuenta solo cuando esa copia ya tocaba |
 | Running job | Lo que está en marcha ahora, o `idle` |
 | Open anomalies | Cuántas anomalías están abiertas |
 | Next scheduled backup | Cuándo empieza la próxima copia programada |

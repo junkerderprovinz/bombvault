@@ -449,7 +449,7 @@ func (b *locationBuilder) pathSection(domain, raw string) locationSection {
 	sec := locationSection{
 		Domain: domain, Use: useHome, Where: scrubRepoLocation(raw), Enabled: domainEnabled(b.settings, domain),
 		Off:         b.localOff[domain],
-		Retention:   localKeep(b.settings, domain),
+		Retention:   b.s.localKeep(b.settings, domain),
 		Compression: normalizedCompression(b.settings.CompressionFor(domain)),
 		Own:         b.ownLocalKeep(domain),
 	}
@@ -479,7 +479,7 @@ func (b *locationBuilder) repoLocation(r store.OffsiteTarget, domains []string) 
 	for _, domain := range domains {
 		loc.Sections = append(loc.Sections, locationSection{
 			Domain: domain, Use: useHome, RepoID: r.ID, Where: loc.Where, Enabled: r.Enabled, Immutable: r.Immutable,
-			Retention: localKeep(b.settings, domain), Compression: loc.Compression,
+			Retention: b.s.localKeep(b.settings, domain), Compression: loc.Compression,
 			LimitUpload: r.LimitUpload, LimitDownload: r.LimitDownload, Own: b.ownLocalKeep(domain),
 		})
 	}
@@ -526,9 +526,6 @@ func (b *locationBuilder) destinationLocation(d store.OffsiteTarget) storageLoca
 		if repo, err := b.s.resolveRepo(raw); err == nil {
 			loc.repos = append(loc.repos, repo)
 		}
-		// Its keep rule is the section's local one, which this location's
-		// keep card does not describe.
-		sec.Own = []string{}
 		loc.Sections = append(loc.Sections, sec)
 		series = append(series, sizeSeries{domain, "local"})
 	}

@@ -71,12 +71,20 @@ func (s *Service) ownFolderLocation(t store.OffsiteTarget) (store.OffsiteTarget,
 	if t.DestinationID == "" {
 		return store.OffsiteTarget{}, false
 	}
-	d, ok, err := s.store.GetDestination(t.DestinationID)
-	if err != nil || !ok {
+	settings, err := s.store.GetSettings()
+	if err != nil {
 		return store.OffsiteTarget{}, false
 	}
-	settings, err := s.store.GetSettings()
-	if err != nil || !sameRepoLocation(destinationLocation(d.Repo, t.Domain), domainPathRaw(t.Domain, settings)) {
+	return s.linkedLocation(settings, t)
+}
+
+// linkedLocation is ownFolderLocation with the settings already read.
+func (s *Service) linkedLocation(settings store.Settings, t store.OffsiteTarget) (store.OffsiteTarget, bool) {
+	if t.DestinationID == "" {
+		return store.OffsiteTarget{}, false
+	}
+	d, ok, err := s.store.GetDestination(t.DestinationID)
+	if err != nil || !ok || !sameRepoLocation(destinationLocation(d.Repo, t.Domain), domainPathRaw(t.Domain, settings)) {
 		return store.OffsiteTarget{}, false
 	}
 	return d, true

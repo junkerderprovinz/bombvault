@@ -165,3 +165,63 @@ func TestAChangedBrokerDropsTheStoredPassword(t *testing.T) {
 		}
 	}
 }
+
+func TestHomeAssistantReadsOffUntilASectionIsCurrent(t *testing.T) {
+	f := newPlacementFixture(t)
+	dailyContainers(t, f)
+	nginx := scheduledContainer(t, f, "nginx")
+	if _, err := f.st.MutateSettings(func(s *store.Settings) error {
+		s.VMsEnabled, s.FlashEnabled, s.ConfigEnabled, s.FilesEnabled, s.ZFSEnabled = false, false, false, false, true
+		return nil
+	}); err != nil {
+		t.Fatal(err)
+	}
+	status := func() string {
+		t.Helper()
+		st, err := f.h.haState(context.Background())
+		if err != nil {
+			t.Fatal(err)
+		}
+		return st.Status
+	}
+
+	if got := status(); got != "off" {
+		t.Errorf("status = %q with ZFS empty and nothing backed up yet, want off", got)
+	}
+
+	f.backupRun(nginx.ID, time.Now().Unix())
+	if got := status(); got != "ok" {
+		t.Errorf("status = %q with a current section beside an empty one, want ok", got)
+	}
+}
+
+func TestHomeAssistantStaysNeutralUntilAFirstBackupWasDue(t *testing.T) {
+	f := newPlacementFixture(t)
+	dailyContainers(t, f)
+	scheduledContainer(t, f, "nginx")
+	if _, err := f.st.MutateSettings(func(s *store.Settings) error {
+		s.VMsEnabled, s.FlashEnabled, s.ConfigEnabled, s.FilesEnabled, s.ZFSEnabled = false, false, false, false, false
+		return nil
+	}); err != nil {
+		t.Fatal(err)
+	}
+	status := func() string {
+		t.Helper()
+		st, err := f.h.haState(context.Background())
+		if err != nil {
+			t.Fatal(err)
+		}
+		return st.Status
+	}
+
+	if got := status(); got != "off" {
+		t.Errorf("status = %q before the first run was due, want off", got)
+	}
+
+	if _, err := f.db.Exec(`UPDATE targets SET created_at = created_at - ?`, 2*oneDay); err != nil {
+		t.Fatal(err)
+	}
+	if got := status(); got != "failed" {
+		t.Errorf("status = %q past the first run, want failed", got)
+	}
+}

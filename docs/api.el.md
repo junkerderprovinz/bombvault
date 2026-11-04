@@ -81,7 +81,7 @@ curl -s -X POST -H "Authorization: Bearer $BOMBVAULT_TOKEN" \
 
 | Οντότητα | Τι δείχνει |
 |---|---|
-| Status | `ok`, `warning`, `failed` ή `off`, το χειρότερο από τους ενεργούς τομείς |
+| Status | `ok`, `warning`, `failed` ή `off`, το χειρότερο από τους ενεργούς τομείς. Ένας τομέας που περιμένει το πρώτο του αντίγραφο μετρά μόνο αφού αυτό έχει καθυστερήσει |
 | Running job | Τι τρέχει τώρα, ή `idle` |
 | Open anomalies | Πόσες ανωμαλίες είναι ανοιχτές |
 | Next scheduled backup | Πότε ξεκινά το επόμενο προγραμματισμένο αντίγραφο |

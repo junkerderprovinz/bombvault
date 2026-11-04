@@ -11,13 +11,15 @@ import {
   type StorageLocation,
 } from "../../lib/api";
 import { useT } from "../../lib/i18n";
+import { lostByChange } from "../../lib/keepPlan";
 import { formatList } from "../../lib/placement";
 import { placementErrorText } from "../../lib/placementCodes";
-import { DOMAIN_LABEL } from "../../lib/storageLocations";
+import { DOMAIN_LABEL, keepCounts } from "../../lib/storageLocations";
 import { useToast } from "../../lib/toast";
 import { defaultSignIn, signInOption, useCloudCredSets } from "../../lib/useCloudCredSets";
 import { storageLocationsChanged, useStorageLocations } from "../../lib/useStorageLocations";
 import { InstanceWindow } from "../../pages/instances/InstanceWindow";
+import { ToggleRow } from "../../pages/settings/shared";
 import { Badge } from "../Badge";
 import { Button } from "../Button";
 import { IconMove } from "../glyphs";
@@ -27,6 +29,7 @@ import { isRemotePath } from "../PathModeSwitch";
 import { RadioMark } from "../RadioMark";
 import { SelectField } from "../SelectField";
 import { Toggle } from "../Toggle";
+import { useKeepLessQuestion } from "./keepFields";
 import { LocationMark } from "./LocationMark";
 import { Rows, SettingRow } from "./rows";
 import { SectionPathWindow } from "./SectionPathWindow";
@@ -91,6 +94,23 @@ function whatHappens(t: T, lang: string, steps: OwnFolderStep[], copyOver: boole
   return lines;
 }
 
+/** The offer in the keep-less question: the sections hold on to their current
+ *  values instead of taking the new place's. */
+function KeepCurrent({ names, onChange }: { names: string; onChange: (on: boolean) => void }) {
+  const { t } = useT();
+  const [on, setOn] = useState(false);
+  return (
+    <ToggleRow
+      label={t("own.keepCurrent").replace("{list}", () => names)}
+      checked={on}
+      onChange={(next) => {
+        setOn(next);
+        onChange(next);
+      }}
+    />
+  );
+}
+
 /**
  * OwnFolderWindow moves the own folders of one or more sections, the place
  * their backups are written first. It offers the storage locations there
@@ -123,6 +143,7 @@ export function OwnFolderWindow({
   const stepsFor = useRef<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [safetyFor, setSafetyFor] = useState<OffsiteDomain | null>(null);
+  const less = useKeepLessQuestion();
 
   const homes = new Map<OffsiteDomain, StorageLocation>();
   for (const location of locations) {
@@ -196,10 +217,26 @@ export function OwnFolderWindow({
     setPicked((list) => (on ? sections.filter((d) => d === domain || list.includes(d)) : list.filter((d) => d !== domain)));
   }
 
+  /** Asks before the move leaves a section keeping less. Resolves to the
+   *  sections that hold on to their current values, or null for no move. */
+  async function keptRules(): Promise<OffsiteDomain[] | null> {
+    const lost = (step: OwnFolderStep) => lostByChange(keepCounts(step.keep), keepCounts(step.keepThere), less.backups).length;
+    const losing = (steps ?? []).filter((step) => !step.same && lost(step) > 0);
+    if (losing.length === 0) return [];
+    const worst = losing.reduce((a, b) => (lost(b) > lost(a) ? b : a));
+    const names = formatList(lang, losing.map((step) => t(DOMAIN_LABEL[step.domain])));
+    let keep = false;
+    const offer = <KeepCurrent names={names} onChange={(on) => (keep = on)} />;
+    if (!(await less.agreed(keepCounts(worst.keep), keepCounts(worst.keepThere), placeName, offer))) return null;
+    return keep ? losing.map((step) => step.domain) : [];
+  }
+
   async function go() {
     if (!request) return;
+    const keepRules = await keptRules();
+    if (!keepRules) return;
     setBusy(true);
-    const res = await moveOwnFolders(request).catch((e: unknown): OkEnvelope & { steps?: OwnFolderStep[] } => ({
+    const res = await moveOwnFolders(keepRules.length > 0 ? { ...request, keepRules } : request).catch((e: unknown): OkEnvelope & { steps?: OwnFolderStep[] } => ({
       ok: false,
       error: e instanceof Error ? e.message : undefined,
     }));
@@ -247,6 +284,7 @@ export function OwnFolderWindow({
         </>
       }
     >
+      {less.dialog}
       {!loaded ? (
         <p className="text-sm text-carbon-textSub">{t("dashboard.checking")}</p>
       ) : (

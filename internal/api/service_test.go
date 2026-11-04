@@ -1284,7 +1284,7 @@ func TestDomainStatusCoupledReplicationOverdue(t *testing.T) {
 		t.Fatal(err)
 	}
 	// A recent successful container backup.
-	tg, err := st.UpsertTarget(store.Target{ContainerName: "plex", AppdataPaths: []string{"/x"}})
+	tg, err := st.UpsertTarget(store.Target{ContainerName: "plex", AppdataPaths: []string{"/x"}, IncludeInSchedule: true})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -2011,7 +2011,7 @@ func TestDomainStatus(t *testing.T) {
 	}
 
 	// Seed a successful container backup so the containers domain reads "ok".
-	tg, err := st.UpsertTarget(store.Target{ContainerName: "plex", AppdataPaths: []string{"/x"}})
+	tg, err := st.UpsertTarget(store.Target{ContainerName: "plex", AppdataPaths: []string{"/x"}, IncludeInSchedule: true})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -2020,6 +2020,9 @@ func TestDomainStatus(t *testing.T) {
 		t.Fatal(err)
 	}
 	if err := st.FinishRun(runID, "success", "deadbeef12345678", 2048, ""); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.UpsertVMTarget(store.VMTarget{Name: "win11", IncludeInSchedule: true}); err != nil {
 		t.Fatal(err)
 	}
 
@@ -2122,6 +2125,9 @@ func TestDomainStatusIncludesFiles(t *testing.T) {
 	s.FilesEnabled = true
 	s.FilesSchedule = "daily 03:00"
 	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.CreateFileSet(store.FileSet{Name: "Documents", Path: "/mnt/user/documents", Enabled: true}); err != nil {
 		t.Fatal(err)
 	}
 	entries, err = svc.DomainStatus()

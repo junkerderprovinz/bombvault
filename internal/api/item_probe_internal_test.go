@@ -528,6 +528,24 @@ func TestAProbeAfterAnOwnFolderMovedWithItsBackupsReadsTheCopy(t *testing.T) {
 	}
 }
 
+func TestTheFirstProbeOfABackupPrunedSinceDoesNotBlameAnOldFolder(t *testing.T) {
+	s, tg := newProbeService(t, &probeEngine{})
+	snapshots := filepath.Join(s.cfg.HostMountRoot, "backups", "containers", "snapshots")
+	if err := os.MkdirAll(snapshots, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	recordBackup(t, s.store, tg.ID, "abcd1234")
+
+	out := captureLog(t, func() { s.firstProbe(context.Background(), tg.ID) })
+
+	if strings.Contains(out, "old own folder") || !strings.Contains(out, "waits for the next backup: the one it was to read has been pruned or deleted since") {
+		t.Fatalf("log = %q, want the backup said to be gone, with no old folder in it", out)
+	}
+	if _, found, err := s.store.LatestItemProbe(tg.ID); err != nil || found {
+		t.Fatalf("probe recorded = %v, %v, want none so the next backup is probed", found, err)
+	}
+}
+
 func TestAProbeOfAFolderOnThisHostAsksItsSnapshotFilesFirst(t *testing.T) {
 	eng := &probeEngine{entries: []restic.FileEntry{fileEntry("/host/user/appdata/nextcloud/config.php", 1200)}}
 	s, tg := newProbeService(t, eng)
@@ -545,7 +563,7 @@ func TestAProbeOfAFolderOnThisHostAsksItsSnapshotFilesFirst(t *testing.T) {
 	}
 
 	recordBackup(t, s.store, tg.ID, "ee11ee11")
-	if _, err := s.ProbeItem(context.Background(), tg.ID); !errors.Is(err, errProbeSnapshotElsewhere) {
+	if _, err := s.ProbeItem(context.Background(), tg.ID); !errors.Is(err, errProbeSnapshotGone) {
 		t.Fatalf("err = %v, want a backup the folder has no file of to wait", err)
 	}
 	if slices.Contains(eng.read, "ee11ee11") {

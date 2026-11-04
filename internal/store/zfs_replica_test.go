@@ -64,7 +64,7 @@ func TestANewZFSItemDoesNotReplicateAndWouldKeepAboutAMonth(t *testing.T) {
 func TestZFSReplicaKeepPresetsResolveToTheirCounts(t *testing.T) {
 	for preset, want := range map[string]store.RetentionKeep{
 		"short":    {KeepDaily: 7, KeepWeekly: 4, KeepMonthly: 3},
-		"balanced": {KeepDaily: 7, KeepWeekly: 4, KeepMonthly: 6, KeepYearly: 1},
+		"balanced": {KeepDaily: 7, KeepWeekly: 4, KeepMonthly: 6, KeepYearly: 2},
 		"long":     {KeepDaily: 14, KeepWeekly: 8, KeepMonthly: 12, KeepYearly: 3},
 	} {
 		got, ok := store.ZFSReplicaKeep{Preset: preset, Own: [5]int{9, 9, 9, 9, 9}}.Counts()

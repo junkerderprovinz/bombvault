@@ -81,7 +81,7 @@ Das Gerät heißt BombVault, oder BombVault mit dem Instanznamen in Klammern, un
 
 | Entität | Was sie zeigt |
 |---|---|
-| Status | `ok`, `warning`, `failed` oder `off`, das Schlechteste der eingeschalteten Bereiche |
+| Status | `ok`, `warning`, `failed` oder `off`, das Schlechteste der eingeschalteten Bereiche. Ein Bereich, der auf seine erste Sicherung wartet, zählt erst, wenn sie fällig war |
 | Running job | Was gerade läuft, oder `idle` |
 | Open anomalies | Wie viele Anomalien offen sind |
 | Next scheduled backup | Wann die nächste geplante Sicherung startet |

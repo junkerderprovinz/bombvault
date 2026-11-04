@@ -81,7 +81,7 @@ Urządzenie nazywa się BombVault albo BombVault z nazwą instancji w nawiasie i
 
 | Encja | Co pokazuje |
 |---|---|
-| Status | `ok`, `warning`, `failed` lub `off`, najgorszy stan spośród włączonych sekcji |
+| Status | `ok`, `warning`, `failed` lub `off`, najgorszy stan spośród włączonych sekcji. Sekcja czekająca na pierwszą kopię liczy się dopiero po jej terminie |
 | Running job | Co teraz działa, albo `idle` |
 | Open anomalies | Ile anomalii jest otwartych |
 | Next scheduled backup | Kiedy zaczyna się następna zaplanowana kopia |

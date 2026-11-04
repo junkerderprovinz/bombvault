@@ -76,7 +76,7 @@ const { StorageLocationPage } = await import("./StorageLocation");
 const GB = 1024 ** 3;
 const LONG = { keepLast: 0, keepDaily: 14, keepWeekly: 8, keepMonthly: 12, keepYearly: 3 };
 const SHORT = { keepLast: 0, keepDaily: 7, keepWeekly: 4, keepMonthly: 3, keepYearly: 0 };
-const BALANCED = { keepLast: 0, keepDaily: 7, keepWeekly: 4, keepMonthly: 6, keepYearly: 1 };
+const BALANCED = { keepLast: 0, keepDaily: 7, keepWeekly: 4, keepMonthly: 6, keepYearly: 2 };
 
 function section(over: Partial<StorageLocationSection> = {}): StorageLocationSection {
   return {
@@ -392,7 +392,7 @@ describe("a destination", () => {
     await renderPage("destination:box");
 
     const keep = card("How long to keep");
-    expect(within(keep).getByText("Custom values · Keeps 0 latest, 7 daily, 4 weekly, 6 monthly, 1 yearly.")).toBeTruthy();
+    expect(within(keep).getByText("Custom values · Keeps 0 latest, 7 daily, 4 weekly, 6 monthly, 2 yearly.")).toBeTruthy();
     const back = within(keep).getAllByRole("button", { name: "Reset to the storage location" });
     // Containers, the copy its domain's off-site settings describe, goes back for its keep rules too.
     expect(back).toHaveLength(2);
@@ -464,7 +464,7 @@ describe("a destination that holds own folders", () => {
     section({ domain, use: "home", where: `rclone:storagebox:bombvault/${domain}`, retention: BALANCED });
   const NONE = { keepLast: 0, keepDaily: 0, keepWeekly: 0, keepMonthly: 0, keepYearly: 0 };
 
-  it("describes no copy when it holds only own folders, and says the sections' own rules prune them", async () => {
+  it("describes no copy when it holds only own folders, and says this location's card prunes them", async () => {
     stage(location({ sections: [own("containers"), own("flash")], retention: NONE }), []);
     await renderPage("destination:box");
 
@@ -472,7 +472,7 @@ describe("a destination that holds own folders", () => {
     expect(screen.queryByText("The first copy brings everything along, each later one only what is new.")).toBeNull();
     const prunes = card("Delete protection").textContent ?? "";
     expect(prunes).toContain(
-      "BombVault prunes the own folders of Containers and Flash after each backup, each by the keep rules of its section.",
+      "BombVault prunes the own folders of Containers and Flash after each backup, by this location's How long to keep card.",
     );
     expect(prunes).not.toContain("Nothing prunes this copy");
   });
@@ -484,7 +484,16 @@ describe("a destination that holds own folders", () => {
     expect(cardTitles()).toContain("Copy");
     const prunes = card("Delete protection").textContent ?? "";
     expect(prunes).toContain("Nothing prunes this copy.");
-    expect(prunes).toContain("BombVault prunes the own folder of VMs after each backup, by the keep rules of that section.");
+    expect(prunes).toContain("BombVault prunes the own folder of VMs after each backup, by this location's How long to keep card.");
+  });
+
+  it("names a section that prunes by values of its own apart from those on the card", async () => {
+    stage(location({ sections: [own("containers"), { ...own("vms"), own: ["retention"] }], retention: BALANCED }), []);
+    await renderPage("destination:box");
+
+    const prunes = card("Delete protection").textContent ?? "";
+    expect(prunes).toContain("BombVault prunes the own folder of Containers after each backup, by this location's How long to keep card.");
+    expect(prunes).toContain("BombVault prunes the own folder of VMs after each backup, by that section's own values under Rules per section.");
   });
 });
 
@@ -784,6 +793,47 @@ describe("rules per section", () => {
       await click(within(window).getByRole("button", { name: "Done" }));
 
       expect(screen.queryByRole("dialog")).toBeNull();
+    });
+  });
+
+  describe("on a destination that holds own folders", () => {
+    beforeEach(() =>
+      stage(
+        location({
+          sections: [
+            section({ domain: "containers", use: "home", where: "rclone:storagebox:bombvault/containers" }),
+            section({ domain: "vms", use: "home", where: "rclone:storagebox:bombvault/vms", retention: SHORT, own: ["retention"] }),
+          ],
+        }),
+        []
+      )
+    );
+
+    it("gives an own folder a keep rule of its own in the settings", async () => {
+      await renderPage("destination:box");
+      expect(ruleRow("Containers").textContent).toContain("Follows the storage location");
+      const window = await openRules("Containers");
+
+      await click(within(within(window).getByRole("radiogroup", { name: "How long to keep" })).getByRole("radio", { name: "Custom values" }));
+      vi.useFakeTimers();
+      fireEvent.change(within(window).getByRole("spinbutton", { name: "Days" }), { target: { value: "30" } });
+      await act(async () => {
+        vi.runAllTimers();
+      });
+      vi.useRealTimers();
+
+      await waitFor(() => expect(putSettings).toHaveBeenCalledTimes(1));
+      expect(putSettings.mock.calls[0][0].ownRetention).toEqual({ vms: SHORT, containers: { ...LONG, keepDaily: 30 } });
+      expect(updateOffsiteTarget).not.toHaveBeenCalled();
+    });
+
+    it("puts an own folder with its own rule back on the How long to keep card", async () => {
+      await renderPage("destination:box");
+
+      await click(within(card("How long to keep")).getByRole("button", { name: "Reset to the storage location" }));
+
+      await waitFor(() => expect(putSettings).toHaveBeenCalledTimes(1));
+      expect(putSettings.mock.calls[0][0].ownRetention).toEqual({});
     });
   });
 
