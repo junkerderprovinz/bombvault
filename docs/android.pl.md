@@ -2,6 +2,9 @@
 
 Aplikacja na Androida przenosi na telefon wszystkie serwery BombVault z Twojej grupy. Startuje od listy Twoich serwerów, nad którą widać dziennik aktywności ich wszystkich, te same wiersze, które pokazuje przegląd, i otwiera widok telefoniczny serwera, który stukniesz. Sama aplikacja nie tworzy żadnych kopii zapasowych.
 
+![Ekran startowy aplikacji: dziennik aktywności wszystkich serwerów na górze, potem lista serwerów.](assets/screenshots/android/start-dark.png#only-dark)
+![Ekran startowy aplikacji: dziennik aktywności wszystkich serwerów na górze, potem lista serwerów.](assets/screenshots/android/start-light.png#only-light)
+
 ## Instalacja aplikacji {#install}
 
 - **Ustawienia, Aplikacje:** karta aplikacji na Androida oferuje plik APK dla wydania, które uruchamia Twój serwer, wraz z kodem QR do zeskanowania z telefonu.

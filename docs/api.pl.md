@@ -90,9 +90,45 @@ Urządzenie nazywa się BombVault albo BombVault z nazwą instancji w nawiasie i
 | *Sekcja* repository free space | Wolne miejsce tam, gdzie leży jej główne repozytorium, jeśli BombVault może je odczytać |
 | Back up *sekcja* | Przycisk, który kopiuje całą sekcję |
 
-Nazwy encji są po angielsku, bo Home Assistant przejmuje je tak, jak wysyła je BombVault. Każda włączona sekcja dostaje własne encje, a wyłączona je traci. Przyciski pojawiają się, gdy włączysz **Przyciski uruchamiają kopie**; w nowej instalacji jest to wyłączone. Podlegają tym samym limitom co [uruchomienia przez API](#errors). Do tego BombVault przyjmuje naraz tylko jedno naciśnięcie na sekcję i najwyżej sześć na minutę, a naciśnięcie, które broker zachował jako wiadomość retained, pomija. Nacisnąć je może każdy, kto może publikować w brokerze, więc zabezpiecz broker hasłem.
+Każda włączona sekcja dostaje własne encje, a wyłączona je traci. Przyciski pojawiają się, gdy włączysz **Przyciski uruchamiają kopie**. W nowej instalacji jest to wyłączone. Podlegają tym samym limitom co [uruchomienia przez API](#errors). Do tego BombVault przyjmuje naraz tylko jedno naciśnięcie na sekcję i najwyżej sześć na minutę, a naciśnięcie, które broker zachował jako wiadomość retained, pomija. Nacisnąć je może każdy, kto może publikować w brokerze, więc zabezpiecz broker hasłem.
 
 BombVault odczytuje swój stan co 15 sekund i publikuje go, gdy coś się zmieniło, jako JSON pod `<prefiks>/<węzeł>/state`. Prefiks to `bombvault`, dopóki go nie zmienisz, a węzeł to krótki identyfikator, który BombVault wybiera raz. Komunikaty wykrywania trafiają pod domyślny prefiks Home Assistant, `homeassistant`. Oba są zachowywane (retained). Ostatnia wola (last will) oznacza urządzenie jako niedostępne, jeśli BombVault zatrzyma się bez uprzedzenia. Wyłączenie połączenia usuwa urządzenie i jego encje z Home Assistant.
+
+### Przykład: karta i alert {#home-assistant-example}
+
+Home Assistant tworzy identyfikatory encji z nazw, więc urządzenie BombVault dostaje identyfikatory takie jak `sensor.bombvault_status`. Z nazwą instancji w nawiasie identyfikatory też ją niosą, więc najpierw sprawdź je w **Developer Tools, States**. Karta na pulpit:
+
+```yaml
+type: entities
+title: Backups
+entities:
+  - sensor.bombvault_status
+  - sensor.bombvault_running_job
+  - sensor.bombvault_open_anomalies
+  - sensor.bombvault_next_scheduled_backup
+```
+
+Automatyzacja, która powiadamia telefon, gdy status zmieni się na `failed`:
+
+```yaml
+alias: BombVault backup failed
+trigger:
+  - platform: state
+    entity_id: sensor.bombvault_status
+    to: failed
+action:
+  - service: notify.mobile_app_my_phone
+    data:
+      message: A BombVault backup failed. Open Needs you on the overview.
+```
+
+## Prometheus {#metrics}
+
+**Udostępnij /metrics** w karcie **Usługi** w **Ustawienia, Integracje** serwuje stan kopii, rozmiary i znaczniki czasu dla Prometheusa, Grafany lub Uptime Kuma, pod `/metrics` na porcie interfejsu WWW. Domyślnie jest wyłączone. **Token scrapowania (opcjonalnie)** sprawia, że scraper wysyła token typu bearer. Etykiety nie niosą sekretów ani ścieżek.
+
+## Widżet pulpitu {#dashboard-widget}
+
+Karta **Widżet pulpitu** w **Ustawienia, Integracje** generuje token tylko do odczytu i daje adres dla dowolnego pulpitu pokazującego iframe, jak Homepage, Organizr czy Heimdall. Adres otwiera małą stronę pod `/widget` z samym dziennikiem aktywności na żywo. Token daje ten dziennik i nic więcej, a **Wyłącz** unieważnia go od razu. Osadzona strona jest tylko po angielsku.
 
 ## Znajdowanie BombVault w sieci {#mdns}
 
