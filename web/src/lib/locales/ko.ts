@@ -734,6 +734,7 @@ const ko: Partial<Translations> = {
   "own.lineCopies": "복사본은 계속 {list}(으)로 갑니다.",
   "own.lineProtection": "보호, 대역폭 제한, 증가 경보는 {name}의 설정을 따릅니다.",
   "own.lineKeepWider": "그 복사본에는 {section}의 보존 규칙보다 오래 남겨 둔 백업이 있습니다. 전환 후에는 {section}이(가) 두 규칙 중 하나라도 남기는 것을 모두 남기므로, 그 백업은 하나도 사라지지 않습니다.",
+  "own.keepCurrent": "{list}의 현재 값을 섹션별 규칙에 유지",
   "own.lineSwitchOn": "전용 폴더가 꺼져 있어 백업이 그 복사본으로 바로 갑니다. 전환하면 전용 폴더가 다시 켜집니다.",
   "own.lineHomeAgain": "지금은 대신 {name}(으)로 바로 갑니다. 전환 후에는 다시 전용 폴더에 먼저 저장됩니다.",
   "own.copyOver": "이미 만든 백업 복사",

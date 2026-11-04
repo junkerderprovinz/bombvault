@@ -739,6 +739,7 @@ const es: Partial<Translations> = {
   "own.lineCopies": "Las copias siguen yendo a {list}.",
   "own.lineProtection": "La protección, los límites de ancho de banda y la alarma de crecimiento vienen de {name}.",
   "own.lineKeepWider": "Esa copia guarda algunas copias de seguridad más tiempo que las reglas de retención de {section}. Desde el cambio, {section} guarda todo lo que guarde cualquiera de las dos, así que no se pierde ninguna de esas copias.",
+  "own.keepCurrent": "Conservar los valores actuales de {list} en Reglas por sección",
   "own.lineSwitchOn": "La carpeta propia está desactivada, así que las copias de seguridad van directamente a esa copia. El cambio vuelve a activar la carpeta propia.",
   "own.lineHomeAgain": "Ahora mismo van directamente a {name}. Tras el cambio vuelven a llegar primero a la carpeta propia.",
   "own.copyOver": "Copiar las copias de seguridad ya hechas",

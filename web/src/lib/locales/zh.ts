@@ -734,6 +734,7 @@ const zh: Partial<Translations> = {
   "own.lineCopies": "副本继续发送到 {list}。",
   "own.lineProtection": "保护、带宽限制和增长警报沿用 {name} 的设置。",
   "own.lineKeepWider": "该副本中有些备份的保留时间比 {section} 的保留规则更长。切换后，{section} 会保留任一规则保留的全部备份，因此这些备份都不会丢失。",
+  "own.keepCurrent": "在按分区划分的规则中保留 {list} 的当前值",
   "own.lineSwitchOn": "专属文件夹已关闭，所以备份直接写入该副本。切换会重新开启专属文件夹。",
   "own.lineHomeAgain": "目前它们直接写入 {name}。切换后，它们会重新先写入专属文件夹。",
   "own.copyOver": "复制已有的备份",

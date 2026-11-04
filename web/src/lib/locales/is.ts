@@ -960,6 +960,7 @@ const is: Partial<Translations> = {
   "own.lineCopies": "Afrit halda áfram að fara í {list}.",
   "own.lineProtection": "Vernd, bandvíddarmörk og vaxtarviðvörun koma frá {name}.",
   "own.lineKeepWider": "Það afrit geymir sum afrit lengur en varðveislureglur {section}. Frá skiptunum geymir {section} allt sem önnur hvor reglan geymir, svo ekkert þessara afrita glatast.",
+  "own.keepCurrent": "Halda núverandi gildum fyrir {list} undir Reglur eftir svæðum",
   "own.lineSwitchOn": "Eigin mappan er óvirk, svo afritin fara beint í það afrit. Skiptin kveikja aftur á eigin möppunni.",
   "own.lineHomeAgain": "Núna fara þau beint í {name}. Eftir skiptin fara þau aftur fyrst í eigin möppuna.",
   "own.copyOver": "Afrita þau afrit sem þegar eru til",

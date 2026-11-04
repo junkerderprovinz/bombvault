@@ -43,6 +43,9 @@ type ownFolderRequest struct {
 	CredsRef string `json:"credsRef"`
 	// CopyOver copies the backups already made before the switch.
 	CopyOver bool `json:"copyOver"`
+	// KeepRules names the sections that hold on to their current keep rule as
+	// their own instead of taking the one at the new place.
+	KeepRules []string `json:"keepRules"`
 }
 
 // ownFolderStep is what moving one section's own folder does.
@@ -73,6 +76,10 @@ type ownFolderStep struct {
 	// backup already, so a move that copies them checks it before the switch
 	// as it would after copying them itself.
 	Verify bool `json:"verify,omitempty"`
+	// Keep is the rule the section ages by today, KeepThere the one it ages by
+	// from the switch on unless it holds on to Keep.
+	Keep      store.RetentionKeep `json:"keep"`
+	KeepThere store.RetentionKeep `json:"keepThere"`
 	// WritesTo names the copy whose direct repository the section's default
 	// backs up to, past the own folder. The switch makes the own folder the
 	// default's home again and keeps the copy.
@@ -90,6 +97,8 @@ type ownFolderStep struct {
 	// into is the storage location the own folder goes into, nil for a
 	// folder that lies in none.
 	into *store.OffsiteTarget
+	// keepCurrent says the section holds on to Keep as its own rule.
+	keepCurrent bool
 	// places are the storage locations the move reads and writes, by the id
 	// an erasure there runs under.
 	places [2]string
@@ -164,7 +173,7 @@ func (s *Service) planOwnFolders(ctx context.Context, req ownFolderRequest) ([]o
 		if !validOffsiteDomain(domain) {
 			return nil, fmt.Errorf("unknown domain %q", domain)
 		}
-		step, err := s.planOwnFolder(ctx, settings, domain, place, slices.Contains(here, domain), req.CopyOver)
+		step, err := s.planOwnFolder(ctx, settings, domain, place, slices.Contains(here, domain), req)
 		if err != nil {
 			return nil, fmt.Errorf("%s: %w", domain, err)
 		}
@@ -183,7 +192,7 @@ func sectionDomains(loc storageLocation) []string {
 	return out
 }
 
-func (s *Service) planOwnFolder(ctx context.Context, settings store.Settings, domain string, place ownFolderPlace, here, copyOver bool) (ownFolderStep, error) {
+func (s *Service) planOwnFolder(ctx context.Context, settings store.Settings, domain string, place ownFolderPlace, here bool, req ownFolderRequest) (ownFolderStep, error) {
 	from := strings.TrimSpace(domainPathRaw(domain, settings))
 	to := destinationLocation(place.base, domain)
 	step := ownFolderStep{Domain: domain, From: scrubRepoLocation(from), To: scrubRepoLocation(to), Key: "own:" + domain, Copies: []string{}}
@@ -208,6 +217,9 @@ func (s *Service) planOwnFolder(ctx context.Context, settings store.Settings, do
 	}
 	step.folder = store.OwnFolder{Domain: domain, Row: s.ownFolderRow(domain, to, place)}
 	step.into = place.dest
+	step.keepCurrent = slices.Contains(req.KeepRules, domain)
+	step.Keep = s.localKeep(settings, domain)
+	step.KeepThere = step.keepAfter(settings)
 	if validPlacementDomain(domain) {
 		if step.direct, step.WritesTo, err = s.directDefault(domain); err != nil {
 			return ownFolderStep{}, err
@@ -239,8 +251,8 @@ func (s *Service) planOwnFolder(ctx context.Context, settings store.Settings, do
 		// which must not forget what the copy kept.
 		keep := targetKeep(copyAt)
 		step.copyKeep = &keep
-		there := step.keepThere(settings)
-		step.WiderKeep = widerKeep(there, keep) != there
+		step.KeepThere = widerKeep(step.KeepThere, keep)
+		step.WiderKeep = step.KeepThere != step.keepAfter(settings)
 		if r := step.folder.Row; r != nil && place.dest == nil {
 			r.Immutable = r.Immutable || copyAt.Immutable
 		}
@@ -282,7 +294,7 @@ func (s *Service) planOwnFolder(ctx context.Context, settings store.Settings, do
 	step.plan = plan
 	opens, err := s.oldOwnFolderOpens(ctx, plan)
 	switch {
-	case err != nil && copyOver:
+	case err != nil && req.CopyOver:
 		return ownFolderStep{}, fmt.Errorf("%w: %w", errOwnFolderUnreadable, err)
 	case err != nil || !opens:
 		return step, nil
@@ -291,14 +303,14 @@ func (s *Service) planOwnFolder(ctx context.Context, settings store.Settings, do
 	if err != nil {
 		// Without the copy nothing is read from the old place, so a share that
 		// is not mounted or a bucket that does not answer is no reason to stay.
-		if !copyOver {
+		if !req.CopyOver {
 			return step, nil
 		}
 		return ownFolderStep{}, fmt.Errorf("%w: %w", errOwnFolderUnreadable, err)
 	}
 	step.Backups, step.Pending = all, len(pending)
-	step.Verify = copyOver && step.CopyAt == "" && step.Pending == 0 && step.Backups > 0
-	if copyOver && step.Pending > 0 {
+	step.Verify = req.CopyOver && step.CopyAt == "" && step.Pending == 0 && step.Backups > 0
+	if req.CopyOver && step.Pending > 0 {
 		if err := step.plan.joinSignIns(); err != nil {
 			return ownFolderStep{}, err
 		}
@@ -406,11 +418,14 @@ func (s *Service) oldOwnFolderOpens(ctx context.Context, plan movePlan) (bool, e
 	return false, err
 }
 
-// keepThere is the keep rule the section's own folder ages by once it lies at
+// keepAfter is the keep rule the section's own folder ages by once it lies at
 // its new place, as localKeep reads it after the switch.
-func (step ownFolderStep) keepThere(settings store.Settings) store.RetentionKeep {
+func (step ownFolderStep) keepAfter(settings store.Settings) store.RetentionKeep {
 	if k, own := settings.OwnRetention()[step.Domain]; own {
 		return k
+	}
+	if step.keepCurrent {
+		return step.Keep
 	}
 	if step.into != nil {
 		return targetKeep(*step.into)
@@ -474,13 +489,15 @@ func (s *Service) switchOwnFolder(ctx context.Context, step ownFolderStep) (stor
 			setOffsiteRepoInSettings(st, step.Domain, "")
 			cleared = true
 		}
+		there := step.keepAfter(*st)
+		keep := there
 		if step.copyKeep != nil {
-			there := step.keepThere(*st)
-			if keep := widerKeep(there, *step.copyKeep); keep != there {
-				own := st.OwnRetention()
-				own[step.Domain] = keep
-				st.SetOwnRetention(own)
-			}
+			keep = widerKeep(there, *step.copyKeep)
+		}
+		if keep != there || step.keepCurrent {
+			own := st.OwnRetention()
+			own[step.Domain] = keep
+			st.SetOwnRetention(own)
 		}
 		return nil
 	})

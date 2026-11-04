@@ -739,6 +739,7 @@ const hu: Partial<Translations> = {
   "own.lineCopies": "A másolatok továbbra is ide mennek: {list}.",
   "own.lineProtection": "A védelem, a sávszélesség-korlátok és a növekedési riasztás innen jönnek: {name}.",
   "own.lineKeepWider": "Ez a másolat egyes mentéseket tovább őriz meg, mint {section} megőrzési szabályai. A váltástól kezdve {section} mindent megtart, amit bármelyik szabály megtart, így egyik ilyen mentés sem vész el.",
+  "own.keepCurrent": "A(z) {list} jelenlegi értékeinek megtartása a Szabályok szakaszonként részben",
   "own.lineSwitchOn": "A saját mappa ki van kapcsolva, ezért a mentések egyenesen ebbe a másolatba kerülnek. A váltás újra bekapcsolja a saját mappát.",
   "own.lineHomeAgain": "Most egyenesen ide kerülnek: {name}. A váltás után újra először a saját mappába kerülnek.",
   "own.copyOver": "A már elkészült mentések másolása",

@@ -737,6 +737,7 @@ const cs: Partial<Translations> = {
   "own.lineCopies": "Kopie dál jdou do {list}.",
   "own.lineProtection": "Ochrana, limity šířky pásma a alarm růstu pocházejí z {name}.",
   "own.lineKeepWider": "Tato kopie uchovává některé zálohy déle než pravidla uchovávání sekce {section}. Po přepnutí si {section} ponechá vše, co ponechá kterékoli z nich, takže žádná z těchto záloh se neztratí.",
+  "own.keepCurrent": "Ponechat současné hodnoty pro {list} v části Pravidla podle sekcí",
   "own.lineSwitchOn": "Vlastní složka je vypnutá, takže zálohy jdou rovnou do této kopie. Přepnutí vlastní složku znovu zapne.",
   "own.lineHomeAgain": "Teď jdou místo toho rovnou do {name}. Po přepnutí budou zase nejdřív ve vlastní složce.",
   "own.copyOver": "Zkopírovat už vytvořené zálohy",

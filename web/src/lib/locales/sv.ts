@@ -739,6 +739,7 @@ const sv: Partial<Translations> = {
   "own.lineCopies": "Kopior fortsätter att gå till {list}.",
   "own.lineProtection": "Skydd, bandbreddsgränser och tillväxtlarm kommer från {name}.",
   "own.lineKeepWider": "Den kopian sparar vissa säkerhetskopior längre än lagringsreglerna för {section}. Från bytet sparar {section} allt som någon av dem sparar, så ingen av de säkerhetskopiorna går förlorad.",
+  "own.keepCurrent": "Behåll de nuvarande värdena för {list} under Regler per avsnitt",
   "own.lineSwitchOn": "Den egna mappen är avstängd, så säkerhetskopiorna går direkt till den kopian. Bytet slår på den egna mappen igen.",
   "own.lineHomeAgain": "Just nu går de direkt till {name}. Efter bytet hamnar de igen först i den egna mappen.",
   "own.copyOver": "Kopiera de säkerhetskopior som redan finns",

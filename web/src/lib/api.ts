@@ -2941,6 +2941,8 @@ export interface OwnFolderRequest {
   address?: string;
   credsRef?: string;
   copyOver: boolean;
+  /** The sections that hold on to their current keep rule as their own. */
+  keepRules?: OffsiteDomain[];
 }
 
 /** What moving one section's own folder does. `same` means it is there
@@ -2962,6 +2964,9 @@ export interface OwnFolderStep {
   pending: number;
   key: string;
   widerKeep?: boolean;
+  /** The rule the section ages by today, and the one from the switch on. */
+  keep: RetentionKeep;
+  keepThere: RetentionKeep;
   switchesOn?: boolean;
   /** The new place, no copy of the section, holds every backup already, and a
    *  move that copies them checks it before the switch. */

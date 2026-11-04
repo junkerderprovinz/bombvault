@@ -734,6 +734,7 @@ const ja: Partial<Translations> = {
   "own.lineCopies": "コピーは引き続き {list} に送られます。",
   "own.lineProtection": "保護、帯域制限、増加アラームは {name} の設定に従います。",
   "own.lineKeepWider": "このコピーには、{section} の保持ルールより長く残しているバックアップがあります。切り替え後、{section} はどちらかのルールが残すものをすべて残すので、それらのバックアップは失われません。",
+  "own.keepCurrent": "{list} の現在の値をセクションごとのルールに残す",
   "own.lineSwitchOn": "専用フォルダーはオフになっているため、バックアップはそのコピーに直接送られています。切り替えると専用フォルダーが再びオンになります。",
   "own.lineHomeAgain": "現在は代わりに {name} へ直接送られています。切り替え後は、再び先に専用フォルダーへ保存されます。",
   "own.copyOver": "作成済みのバックアップをコピー",

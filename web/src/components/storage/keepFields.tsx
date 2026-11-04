@@ -69,7 +69,7 @@ export function useKeepLessQuestion(): {
   backups: KeepInput[];
   /** Resolves to whether the change may be saved. A change that removes
    *  nothing, or a question that was switched off, is not asked. */
-  agreed: (before: KeepCounts, after: KeepCounts, place: string) => Promise<boolean>;
+  agreed: (before: KeepCounts, after: KeepCounts, place: string, offer?: ReactNode) => Promise<boolean>;
   dialog: ReactNode;
 } {
   const { t } = useT();
@@ -77,7 +77,7 @@ export function useKeepLessQuestion(): {
   const ask = useAskKeepLess();
   const backups = useMemo(() => sampleBackups(new Date()), []);
 
-  async function agreed(before: KeepCounts, after: KeepCounts, place: string): Promise<boolean> {
+  async function agreed(before: KeepCounts, after: KeepCounts, place: string, offer?: ReactNode): Promise<boolean> {
     const lost = lostByChange(before, after, backups).length;
     if (!ask || lost === 0) return true;
     let quiet = false;
@@ -89,7 +89,12 @@ export function useKeepLessQuestion(): {
       confirmLabel: t("storage.keep.saveAnyway"),
       confirmLabelKey: "storage.keep.saveAnyway",
       cancelLabel: t("common.back"),
-      extra: <DontAskAgain onChange={(next) => (quiet = next)} />,
+      extra: (
+        <>
+          {offer}
+          <DontAskAgain onChange={(next) => (quiet = next)} />
+        </>
+      ),
     });
     if (yes && quiet) setAskKeepLess(false);
     return yes;

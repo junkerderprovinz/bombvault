@@ -736,6 +736,7 @@ const no: Partial<Translations> = {
   "own.lineCopies": "Kopier går fortsatt til {list}.",
   "own.lineProtection": "Beskyttelse, båndbreddegrenser og vekstalarm kommer fra {name}.",
   "own.lineKeepWider": "Den kopien beholder noen sikkerhetskopier lenger enn oppbevaringsreglene for {section}. Fra byttet beholder {section} alt som en av dem beholder, så ingen av de sikkerhetskopiene går tapt.",
+  "own.keepCurrent": "Behold gjeldende verdier for {list} under Regler per område",
   "own.lineSwitchOn": "Den egne mappen er slått av, så sikkerhetskopiene går rett til den kopien. Byttet slår den egne mappen på igjen.",
   "own.lineHomeAgain": "Akkurat nå går de rett til {name}. Etter byttet havner de igjen først i den egne mappen.",
   "own.copyOver": "Kopier sikkerhetskopiene som allerede finnes",

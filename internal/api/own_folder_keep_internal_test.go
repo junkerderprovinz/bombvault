@@ -115,3 +115,43 @@ func TestAnOwnFolderOutsideALocationKeepsTheSharedRule(t *testing.T) {
 		t.Fatalf("containers ages by %+v, want the shared keep-last 3", got)
 	}
 }
+
+func TestTheMovePreviewNamesTheRuleBeforeAndAfter(t *testing.T) {
+	f := newPlacementFixture(t)
+	local := f.keptLocation(fortnight)
+	localKeepLast(t, f, 30)
+
+	res := f.do("POST", "/api/storage/own-folders/preview", map[string]any{"domains": []string{"containers"}, "location": "destination:" + local.ID})
+
+	step := res["steps"].([]any)[0].(map[string]any)
+	if got := step["keep"].(map[string]any)["keepLast"]; got != float64(30) {
+		t.Errorf("keep = %v, want the shared keep-last 30", step["keep"])
+	}
+	if got := step["keepThere"].(map[string]any)["keepDaily"]; got != float64(14) {
+		t.Errorf("keepThere = %v, want the card's 14 days", step["keepThere"])
+	}
+}
+
+func TestAMoveKeepsTheCurrentRuleOfTheSectionsItNames(t *testing.T) {
+	f := newPlacementFixture(t)
+	local := f.keptLocation(fortnight)
+	localKeepLast(t, f, 30)
+
+	ownSteps(t, f.do("POST", "/api/storage/own-folders", map[string]any{
+		"domains": []string{"containers", "vms"}, "location": "destination:" + local.ID, "keepRules": []string{"containers"},
+	}))
+
+	settings, err := f.st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := f.svc.retentionPolicy(settings, "containers"); got != (restic.RetentionPolicy{KeepLast: 30}) {
+		t.Errorf("containers ages by %+v, want the keep-last 30 it asked to keep", got)
+	}
+	if got := f.svc.retentionPolicy(settings, "vms"); got != (restic.RetentionPolicy{KeepDaily: 14}) {
+		t.Errorf("vms ages by %+v, want the card it did not opt out of", got)
+	}
+	if got := sectionFor(t, locationByID(t, f.svc, "destination:"+local.ID), "containers", useHome); !slices.Equal(got.Own, []string{"retention"}) {
+		t.Errorf("containers = %+v, want the kept rule shown as its own", got)
+	}
+}
