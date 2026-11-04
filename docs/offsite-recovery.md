@@ -7,12 +7,13 @@ Local backups protect you from a lost container or a bad update. Off-site copies
 
 ## Off-site copies {#off-site-copies}
 
-Keep the fast local backup and add one or more storage locations off the premises. BombVault copies new snapshots there with `restic copy` on a best-effort basis, so an off-site hiccup never fails the local backup. In this shape the local repo stays primary and the off-site repo is a copy, but a section's primary repo does not have to be local at all; see [Remote primary repositories](#remote-primary-repositories) below for backing up straight to S3, a rest-server and the like instead of copying to it.
+Keep the fast local backup and add one or more storage locations off the premises. BombVault copies new snapshots there with `restic copy` on a best-effort basis, so an off-site hiccup never fails the local backup. In this shape each section writes to its own folder first and the off-site repo is a copy. The own folder does not have to be on this server: see [A section's own folder](#own-folder) for keeping it in a storage location such as S3 or a rest-server.
 
 - **Several storage locations per section.** Each section (containers, VMs, flash, self-backup, folders and ZFS datasets) can copy to several off-site storage locations at once, so you can keep, for example, a rest-server on a friend's box and an S3 bucket in parallel. The **Storage locations per section** card on the Storage locations page switches every line from a section to a location on or off.
-- **When copies run.** A location's **Copy** card sets **When to copy**: **After every backup**, or on a plan of its own that collects the snapshots and copies at fixed times. Under **Settings, Schedule, Off-site copies per section**, **Exception** gives one section its own copy plan. **Replicate now** in a section's **Off-site copy** card under **Settings, Storage locations** starts a copy on demand.
-- **Retention** is set per storage location under **How long to keep**, so you can keep off-site copies longer as an archive. The copy in a section's off-site field follows it like every other copy, and a section can keep its own values under **Rules per section**. All zero never trims off-site snapshots.
-- **Bandwidth limits** (**Off-site bandwidth** under **Settings, Storage locations**, or a location's **Copy** card) cap the restic upload/download rate so copies do not saturate your WAN.
+- **When copies run.** A location's **Copy** card sets **When to copy**: **After every backup**, or on a plan of its own that collects the snapshots and copies at fixed times. Under **Settings, Schedule, Off-site copies per section**, **Exception** gives one section its own copy plan.
+- **The Off-site copies card.** Under **Settings, Storage locations** every section with an off-site copy has a row in **Off-site copies**, with **Test connection**, **Replicate now** to start a copy on demand, and **Set up** or **Edit**. The rest of the section's copy settings open in its window from there.
+- **Retention** is set per storage location under **How long to keep**, so you can keep off-site copies longer as an archive. The copy in a section's off-site field follows it like every other copy, and a section can keep its own values under **Rules per section**. All zero never trims off-site snapshots. See [How long to keep](#keep).
+- **Bandwidth limits** (**Off-site bandwidth** under **Settings, Storage locations**, or a location's **Copy** card) cap the restic upload/download rate so copies do not saturate your WAN. They are entered in KiB/s, the unit restic takes, and each field shows the same rate in MB/s and Mbit/s while you type: 2048 reads as about 2.0 MB/s (16.8 Mbit/s).
 - While a copy runs, the overview's status head says **Off-site copy running**. It is an active indicator, not a percentage bar, because `restic copy` exposes no machine-readable progress.
 
 !!! note "Restore from any place"
@@ -24,38 +25,90 @@ A storage location is a place backups go: a local folder, a share, a server of y
 
 **Add storage location** opens a window in four steps:
 
-1. **Provider.** Every service is listed with its logo, with a search at the top right of the window, in groups: storage services with S3 buckets (Backblaze B2, Wasabi, Cloudflare R2, Hetzner Object Storage, Amazon S3 and others), your own S3 server (Garage, SeaweedFS, RustFS, Silo, Ceph, JuiceFS, Versity S3 Gateway), your own server and shares (rest-server, Hetzner Storage Box, SFTP, SMB, WebDAV, a mounted path), cloud storage (OneDrive, Google Drive, Dropbox, pCloud, Nextcloud and the rest rclone supports) and the receiving servers of your group. Each one says how well it suits backups: cloud drives slow down under many requests, so the first backup and pruning take longer there.
-2. **Sign in.** The fields depend on the service: an access key for S3, a user and password for WebDAV and SMB, an app password where two-factor sign-in blocks the normal one, BombVault's public SSH key for SFTP and the Storage Box, or a token for services that sign in through a browser. For those, the window shows an `rclone authorize` command to run on a computer with a browser; the token it prints goes into the field. **Test** checks the sign-in before anything is saved. The window then lists the folders on the storage location, with **New folder** to create one and the free space where the service reports it. An empty folder is safest; BombVault puts one folder per section in it.
-3. **Protection.** The window says plainly what the service can do. A rest-server in append-only mode refuses deletion, and the tamper test checks that. An S3 bucket can keep old versions with versioning and object lock, which BombVault cannot check yet. A cloud drive cannot refuse deletion at all: whoever gets into the server gets into that copy too. Switch **Delete protection (append-only)** on only where the far side really refuses deletion; BombVault then never prunes there. **For an emergency** says what the recovery kit holds for this location.
+1. **Provider.** Every service is listed with its logo, with a search at the top right of the window, in groups: **Local** for a disk or share attached to this server, **NAS or server** (rest-server, Hetzner Storage Box, SFTP, SMB, WebDAV and others), **S3 service** (Backblaze B2, Wasabi, Cloudflare R2, Hetzner Object Storage, Amazon S3 and others), your own S3 server (Garage, SeaweedFS, RustFS, Silo, Ceph, JuiceFS, Versity S3 Gateway), **Cloud storage** (OneDrive, Google Drive, Dropbox, pCloud, Nextcloud and the rest rclone supports) and **From your group**, the receiving servers of your group. Each one says how well it suits backups: cloud drives slow down under many requests, so the first backup and pruning take longer there. For a service no tile covers, the **Rclone** tile under **Own rclone configuration** takes remotes pasted from an rclone.conf.
+2. **Sign in.** The fields depend on the service: an access key for S3, a user and password for WebDAV and SMB, an app password where two-factor sign-in blocks the normal one, BombVault's public SSH key for SFTP and the Storage Box, or a token for services that sign in through a browser. For those, the window shows an `rclone authorize` command to run on a computer with a browser, and the token it prints goes into the field. Where you already have a [saved sign-in](#sign-ins) for the service, **Saved sign-in** picks it instead of **New keys**. **Test connection** checks the sign-in before anything is saved. The window then lists the folders on the storage location, with **New folder** to create one and the free space where the service reports it. An empty folder is safest. BombVault puts one folder per section in it.
+3. **Protection.** The window says plainly what the service can do. A rest-server in append-only mode refuses deletion, and the tamper test checks that. An S3 bucket can keep old versions with versioning and object lock, which BombVault cannot check yet. A cloud drive cannot refuse deletion at all: whoever gets into the server gets into that copy too. Switch **Delete protection (append-only)** on only where the far side really refuses deletion. BombVault then never prunes there. **For an emergency** says what the recovery kit holds for this location.
 4. **For which sections.** Pick the sections that back up here. The first copy brings the whole history along. Entries that chose their own storage locations do not get the new one on their own, and the window names them.
 
 Some services ask for a little more at the sign-in:
 
 - **SFTP and the Storage Box.** **Add key** puts BombVault's public key on the server with the **Account password**, which is used for that one sign-in and kept nowhere. The command for doing it by hand is shown below it. The test shows the **Server key** with its fingerprint; BombVault remembers it and refuses the server if it later shows a different one.
 - **S3 keys for a single bucket**, such as a Cloudflare R2 object token or a scoped AWS key, may not list the other buckets. Type the bucket into **Bucket**, and the test and the folder list open that bucket.
+- **S3 regions and addresses.** The region is read from an endpoint that names it (AWS, Backblaze B2, Hetzner, Scaleway, OVH, Wasabi), Garage starts with its own default region, and IDrive e2 asks for the endpoint its dashboard shows. An address pasted with the bucket on it, the way the R2 dashboard shows it, fills in the server and the bucket. A bucket made from the folder browser goes into the region the form names.
+- **Storage class.** The picker offers only the classes the service takes, and **More settings** shows only the options that shape a new bucket.
+- **Google Drive and OneDrive.** Pruned data is deleted for good instead of going to the trash or recycle bin, where it would still count against the quota. A Google shared drive goes under **More settings**.
 - **SMB servers that do not list their shares** take the name of one under **Share**, and the test opens that share directly.
 - **FTP** asks for its **Encryption**: **None**, **Explicit TLS (FTPES)** or **Implicit TLS (FTPS, port 990)**.
 - **OneDrive and Zoho WorkDrive.** When a sign-in opens several drives or workspaces, the window asks which one the backups go to.
 - **A rest-server with a self-signed certificate.** Put the certificate as a PEM file into the `certs` folder of BombVault's data folder (`/config/certs` in the container, `appdata/bombvault/certs` on Unraid). Backups, copies and the delete protection test trust it without a restart.
 
-S3 services run through restic's own S3 backend, which is what lets a storage class and object lock apply. Every other service runs through the rclone BombVault ships, and its remote then appears in the **Off-site (rclone)** card under **Settings, Storage locations**. A settings export carries the storage locations; with credentials included it carries their sign-in as well.
+S3 services run through restic's own S3 backend, which is what lets a storage class and object lock apply. A rest-server is reached by restic directly. Every other service runs through the rclone BombVault ships, and its section of the rclone configuration shows in the **rclone.conf** card on the location's page, with the secrets hidden. A settings export carries the storage locations, and with credentials included it carries their sign-ins as well.
 
-The folder on this server is called **Local** everywhere: on the storage pages, in the flow, on an entry and on Restore. With several folders on this server, each goes by its own name. A storage location that a section's off-site field sets up is named after its place, the last folder of its address or, without one, its server, and gets a number when another location already goes by that name. A name you give it on its page stays. Where two locations with the same name stand side by side, each carries its server or folder.
+Saving a storage location that already holds backups of containers, VMs or folders, for example one you removed and add again, adds it to those sections as an unticked copy. Nothing is copied there until you tick it, but **Restore** offers the old backups right away.
 
-Every storage location has a page of its own:
+The folder on this server is called **Local** everywhere: on the storage pages, in the flow, on an entry and on Restore. With several folders on this server, each goes by its own name. A storage location that a section's off-site field sets up is named after its place, the last folder of its address or, without one, its server, and gets a number when another location already goes by that name. Every location can be renamed in the **Name** field of its **Connection** card, also a bucket folder that several sections share and the copy a section's off-site field describes, and a name you give it stays. Where two locations with the same name stand side by side, each carries its server or folder.
 
-- **Connection** with its name, the switch **Available** (off means BombVault no longer writes here, and entries that back up here fail with a clear message instead of landing somewhere else), the folder, compression, storage class and **Off the premises**. **Change connection** tests and saves a new address or sign-in.
-- **Credentials**: the shared set or a set of its own.
-- **Delete protection**, with **Test delete protection now** and who prunes this copy.
-- **Copy**: when to copy, and the upload and download limits.
-- **How long to keep**: **Short**, **Balanced**, **Long** or **Custom values**, with a timeline of which backups the rule keeps. **Ask before keeping less** asks before a shorter rule deletes backups whose only copy is here.
-- **Rules per section**: one section's own repository, retention or compression at this location. **Change rules** opens them, and **Reset to the storage location** brings a section back.
-- **Already under this storage location**: sections whose hand-typed address lies in a folder of this location. Taking one over leaves the repository where it is; sign-in, storage class and delete protection then come from the location. BombVault first checks that the location's sign-in opens the repository, and it refuses to put an append-only repository under a location that is not append-only.
+### The page of a storage location {#location-page}
+
+Every storage location has a page of its own. It shows only the cards that apply to that location, in this order:
+
+- **Own folders**: the sections that write their backups here first. The sign-in, protection and limits of this location apply to them. **Use as own folder** moves the own folder of more sections here, and **Change** moves one away again. See [A section's own folder](#own-folder).
+- **Backs up straight here**: each section whose entries back up straight to this place instead of their own folder, and how many entries do. Such a direct repository takes all its settings from this location. One that nothing backs up to any more says so, and **Remove** takes it off the list. The backups at its place stay. See [Direct repositories](#direct-repositories).
+- **Connection**: the **Name**, the switch **Available** (off means BombVault no longer writes here, and entries that back up here fail with a clear message instead of landing somewhere else), the folder, **Compression**, **Storage class** and **Off the premises**. On the **Local** location it lists the folder of each section under **Own folders here**. **Change connection** tests and saves a new address or sign-in. When other places sign in with the same saved sign-in, the window says so, and a change here gives this location a sign-in of its own instead of rewriting the shared one.
+- **Sign-in**: which saved sign-in it uses (**Signs in with**), which other locations use it too (**Also used by**), and **Edit**, which opens the sign-in window. See [Sign-ins](#sign-ins).
+- **rclone.conf**: this location's section of the rclone configuration, for a location that runs through rclone.
+- **Delete protection**, with **Delete protection (append-only)**, **Accept without delete protection**, **Test delete protection now** and **Who prunes**, which says whether BombVault prunes the copy and the own folders here or leaves that to the far side. A local folder shows this card only when it has a protection you can switch off. See [Delete protection](#delete-protection-append-only).
+- **Copy**: **When to copy**, and the **Upload limit (KiB/s)** and **Download limit (KiB/s)**. A location that holds only own folders and no copies shows the limits as a card called **Bandwidth**.
+- **How long to keep**: **Short**, **Balanced**, **Long** or **Custom values**, with a timeline of which backups the rule keeps. See [How long to keep](#keep).
+- **Already under this storage location**: sections whose hand-typed address lies in a folder of this location. Taking one over leaves the repository where it is. Sign-in, storage class and delete protection then come from the location. BombVault first checks that the location's sign-in opens the repository, and it refuses to put an append-only repository under a location that is not append-only.
+- **Rules per section**: one section's own repository, retention or compression at this location. **Change rules** opens them, and **Reset to the storage location** brings a section back. Sign-in, bandwidth and when copies run always come from the location.
 - A vessel that shows how full the location is, with the mark where it is full and how many weeks are left at the growth of the last weeks. A location that does not report its size says **Size unknown**.
 
-A remote storage location that held backups and suddenly holds no repository, such as a rest-server whose disk did not mount, does not get a new, empty one on its own. Its page says so as soon as a backup or copy finds the repository gone. Mount the disk again. If you emptied the old repository on purpose, **Start a new repository here** starts over, for every section of the location and its named repositories at once.
+**Move** and **Remove storage location** stand among the page's actions, described under [Moving and removing](#move-remove).
 
-A receiving server that another instance of your group runs appears among the providers as **From your group**; see [Receiving server](#receiving-server).
+A remote storage location that held backups and suddenly holds no repository, such as a rest-server whose disk did not mount, does not get a new, empty one on its own. Its page says so as soon as a backup or copy finds the repository gone. Mount the disk again. If you emptied the old repository on purpose, **Start a new repository here** starts over, for every section of the location and its repositories at once.
+
+A receiving server that another instance of your group runs appears among the providers as **From your group**. See [Receiving server](#receiving-server).
+
+BombVault checks its storage locations at every start. It puts right what needs no decision from you, such as a link to a copy or repository that is gone, a copy on a section's own folder, or a direct repository whose copy is gone, and writes a line in the log for each fix. What has no safe fix is only logged.
+
+### How long to keep {#keep}
+
+How long backups are kept is set per storage location, in its **How long to keep** card. The rule covers the copies at that location and the own folders that lie there, the **Local** location included. A section can keep its own values at one location under **Rules per section**, and those win over the location's card for that section.
+
+A rule keeps one backup per day, week, month and year, as far back as you set, and clears out the rest after each backup or copy:
+
+| Preset | Latest backups | Days | Weeks | Months | Years |
+|---|---|---|---|---|---|
+| **Short** | 0 | 7 | 4 | 3 | 0 |
+| **Balanced** | 0 | 7 | 4 | 6 | 1 |
+| **Long** | 0 | 14 | 8 | 12 | 3 |
+
+**Custom values** sets the five counts yourself. A 0 switches that count off, and a rule with every count at 0 keeps everything. The dots in the card show which of 40 sample backups a rule keeps, the newest on the far right. The sample is the same for every location, since the picture is drawn before BombVault has read the backups there.
+
+**Ask before keeping less**, on by default, asks before a change that keeps fewer backups is saved, and says how many of the 40 sample backups the new rule removes. It applies to every storage location. **Reset to the storage location** under **Rules per section** asks the same question.
+
+A location with delete protection is never pruned from this box. Its far side keeps or drops old backups by its own rules. While an entry has an open critical anomaly about lost data, retention keeps that entry's old backups until you acknowledge it. See [Anomalies](configuration.md#anomalies).
+
+### Sign-ins {#sign-ins}
+
+A sign-in is the key or password BombVault uses for an S3 service or a rest-server. Sign-ins are one list, the **Sign-ins** card under **Settings, Storage locations**, and each row says which storage locations use it (**Used by**).
+
+- **Saved when you add a location.** Add storage location saves the keys you type as a sign-in. The next location at the same service can pick it under **Saved sign-in** instead of **New keys**, and a change to it later applies to every location that uses it.
+- **The default.** A star marks the default sign-in. It is used wherever no sign-in is picked, such as an address typed in by hand, a pull source, or a recovery on a fresh install. **Make default** gives the star to another one.
+- **Edit and Test.** **Edit**, here or in the **Sign-in** card of a location, opens one window for the sign-in. **Test** signs in to every location that uses it with what you typed, before anything is saved. **Save** stores it.
+- **Removing.** A sign-in can be removed only when no storage location or pull source uses it, and the default goes only as the last one. The row then says what still uses it.
+- **Changing a location's connection** never rewrites a sign-in other places share. The location gets a sign-in of its own instead, and the window says beforehand that its sign-in is shared. To change the shared one everywhere, edit it in the **Sign-ins** card.
+
+A folder on this server needs no sign-in. SMB, WebDAV, SFTP, the Storage Box and the cloud drives keep theirs in the rclone configuration, which the location's **rclone.conf** card shows, so they do not show up in this list.
+
+### SMB, WebDAV and other rclone remotes {#smb-webdav}
+
+A Windows or Samba share and a WebDAV server (Nextcloud, ownCloud, SharePoint or any other) are provider tiles in **Add storage location**, under **NAS or server**. Fill in the host and share (SMB) or the address and server type (WebDAV), the user and the password, and BombVault writes the rclone section for you. rclone obscures the password before it is stored.
+
+For a service no tile covers, the **Rclone** tile under **Own rclone configuration** takes remotes pasted from an rclone.conf. They are added to the remotes BombVault already has and never replace them, and they are stored encrypted. To back up a section to one of them, enter `rclone:<remote>:<folder>` as that section's off-site repository, for example `rclone:nas:backups/bombvault`. The share or bucket is the first path segment, not part of the name.
+
+This is the better route than mounting the share on Unraid: restic advises against keeping a repository on a mounted CIFS share, and here nothing is mounted. NFS has no tile because neither restic nor rclone has an NFS backend. For NFS, mount the export on the host and use it as a local folder.
 
 ### Moving and removing {#move-remove}
 
@@ -63,6 +116,32 @@ A receiving server that another instance of your group runs appears among the pr
 - **Remove storage location** offers two ways. **Remove storage location, keep the backups** stops writing there and leaves the backups in place; you can read them later under **Restore, From an old backup folder**. **Remove storage location and delete the backups there** first reads what is stored there and lists it: which backups go, which of them are nowhere else, and which repositories stay because delete protection refuses, entries still back up straight to them, another location or section keeps its copies there, or they could not be read. Entries that would lose their only backup are listed separately and are kept unless you switch on **Delete these as well**. You confirm by typing the location's name, and the deletion runs in the background.
 - This works for every kind of storage location: one that several sections use, a target set up for one section, a repository you set up, and the folder a section writes its own backups to. Entries that back up to a removed repository follow their section again, and so does a section default that pointed there. A section's folder cannot simply go, because every section needs one. The window asks for the folder the sections move to, and each section keeps its folder name under it.
 - Deleting the backups at a storage location needs a login password and a sign-in at the instance. Without a password the location can still be removed, only its backups cannot be deleted from here.
+
+## A section's own folder {#own-folder}
+
+Every section has an own folder: the repository its backups are written to first. Copies to other storage locations go out from there. A new install keeps the own folders on this server, below `/mnt/user/bombvault`, and together they form the **Local** storage location.
+
+An own folder can also lie in a storage location you already have, such as a NAS, a rest-server or an S3 bucket. The section then backs up there directly, with no local copy in between, and the own folder follows that location's sign-in, delete protection, bandwidth limits and keep rules. The location lists the section in its **Own folders** card, and **Storage locations per section** shows the location as the section's home.
+
+### Moving an own folder {#move-own-folder}
+
+1. Open the storage location that should hold the own folder and choose **Use as own folder**, or **Add sections** in its **Own folders** card. To move several sections at once, choose **Move own folders** beside **Own folders here** in the **Connection** card of the Local location.
+2. Pick the sections under **Sections** and the place under **Move to**. **Another place** takes a folder on this host or the address of a remote repository typed by hand, with a sign-in from your saved sign-ins.
+3. Read **What happens**. For each section it says where new backups go, whether a copy that is already at the new place becomes the own folder, and which backups are copied over first.
+4. **Copy the backups already made** is on by default. Switched off, the old backups stay where they are and can still be restored from there.
+5. Choose **Switch**. When backups have to be copied first, BombVault copies them and then switches the own folder. When they are there already, it checks them before the switch.
+
+After the move, new backups go to the moved own folder, also for a section that had **Local** switched off and backed up straight to a copy. A copy that already sat at the new place becomes the own folder, and copying there ends. Where that copy kept some backups longer than the section's keep rules, the section keeps whatever either rule keeps, so none of them is lost.
+
+When the move cannot go ahead, the window says why in a box under **What happens**. When only copying the old backups is in the way, switching off **Copy the backups already made** lets the own folder move without them.
+
+A section always needs an own folder. Removing the storage location that holds it asks for the folder the section moves to, see [Moving and removing](#move-remove). An own folder that new backups go past, because the section backs up straight to a copy, is marked **(off)** where a location lists who uses it.
+
+### Typing a remote address by hand {#remote-primary-repositories}
+
+The **Connection** card of the Local location still takes a remote address for a section's own folder: **Change** beside the section opens a window with a **Local / Remote** switch. **Remote** takes a restic address such as `s3:...`, `rest:http://host:8000/repo`, `sftp:user@host:/repo` or `rclone:remote:bucket/path`, and **Remote primary safety settings** add a connection test, upload and download limits, append-only protection with the same tamper test an off-site location gets, and a growth-budget alarm.
+
+Such an address signs in with the default sign-in. When it lies in a folder of a storage location you have, that location's page lists the section under **Already under this storage location**, and taking it over gives it the location's sign-in, storage class and delete protection. Moving the own folder into a storage location with **Use as own folder** is the simpler way, because the window checks the backups already made before anything changes.
 
 ## Placement per entry {#placement}
 
@@ -82,7 +161,7 @@ Under the row the card says where the entry goes and what is actually there: how
 
 ### Defaults per section {#placement-defaults}
 
-The **Storage locations per section** card on the Storage locations page draws the default of every section as a 3-2-1 flow. Every line from a section to a storage location is a switch, **Local** included, for every section, the flash drive, ZFS datasets and the self-backup as well. A click on a line or a dot switches it at once, without a question; dashed lines are off. **Graph / Switches** shows the same as rows of buttons. A switch decides where new backups go. Entries without a choice of their own, and the project folders of Compose stacks, follow at once, so their next backup goes to the new places. Backups already stored stay where they are and can still be restored from there. Flash, ZFS datasets and the self-backup back up to their local folder and copy off-site from that backup. Their line to **Local** can be switched off too; their backups then go straight to their off-site locations, and a ZFS entry with a replica and no location at all only sends its replica.
+The **Storage locations per section** card on the Storage locations page draws the default of every section as a 3-2-1 flow. Every line from a section to a storage location is a switch, **Local** included, for every section, the flash drive, ZFS datasets and the self-backup as well. A click on a line or a dot switches it at once, and dashed lines are off. Only switching a section's **Local** off asks first, in the same dialog as the default card, because the section then backs up straight to a copy. **Cancel** leaves everything as it was. **Graph / Switches** shows the same as rows of buttons. A switch decides where new backups go. Entries without a choice of their own, and the project folders of Compose stacks, follow at once, so their next backup goes to the new places. Backups already stored stay where they are and can still be restored from there. Flash, ZFS datasets and the self-backup back up to their local folder and copy off-site from that backup. Their line to **Local** can be switched off too. Their backups then go straight to their off-site locations, and a ZFS entry with a replica and no location at all only sends its replica.
 
 With **Local** off and only off-site locations on, a section backs up straight to them, and BombVault picks the repository there itself. Containers, VMs and folder sets go to the direct repository of the first location that is on, described below, and are copied from there to the others. The flash drive, ZFS datasets and the self-backup write each backup to every location that is on, and each location keeps them by its own retention.
 
@@ -92,13 +171,13 @@ Entries that chose their own storage locations on their page keep them. The flow
 
 A new off-site location receives every entry that is not set to Local. The window that adds it says how many entries and, where known, how much history that is.
 
-### Direct repositories
+### Direct repositories {#direct-repositories}
 
-A direct repository is where entries back up straight to an off-site location. BombVault puts it beside the location's folder with `-direct` added to the name, or, when the location sits at the root of its bucket, its remote or a rest-server user, in a folder inside it named after the section, such as `containers-direct`. In the flow on the Storage locations page it is created without a question. Turning Local off for a single entry, so that a location without a direct repository becomes its home, opens a dialog with the suggested location, for example `s3:https://s3.eu-central-003.backblazeb2.com/bucket/containers-direct`, and a connection test that creates nothing. **Create and use** creates the repository and points the entry at it. A direct repository takes the location's key, storage class, limits, append-only setting and retention, and changes with them; the Repositories card shows it read-only. When a new key for the location cannot open it, the direct repository keeps the key it has and the save says so. An entry on a direct repository is copied from there to the other lit locations, never to the location the repository belongs to. Its snapshots carry the tag `bv:direct`, and every other retention pass keeps them, so a direct repository that lost its link to its location never ages by the local rules. B2 is reached through its S3 endpoint, with the key ID and application key entered as the S3 credentials; a key limited to the location's own folder cannot reach the folder next to it, so limit the key to the folder above instead.
+A direct repository is where entries back up straight to an off-site location. BombVault puts it beside the location's folder with `-direct` added to the name, or, when the location sits at the root of its bucket, its remote or a rest-server user, in a folder inside it named after the section, such as `containers-direct`. In the flow on the Storage locations page it is created without a question. Turning Local off for a single entry, so that a location without a direct repository becomes its home, opens a dialog with the suggested location, for example `s3:https://s3.eu-central-003.backblazeb2.com/bucket/containers-direct`, and a connection test that creates nothing. **Create and use** creates the repository and points the entry at it. A direct repository has no settings of its own. It follows its location's switch, sign-in, storage class, limits, append-only setting and retention, and changes with them. The location's page lists it under **Backs up straight here**, with each section that backs up straight to it and how many entries do. One that nothing backs up to any more says so there and can be removed, and the backups at its place stay. When a new key for the location cannot open it, the direct repository keeps the key it has and the save says so. An entry on a direct repository is copied from there to the other lit locations, never to the location the repository belongs to. Its snapshots carry the tag `bv:direct`, and every other retention pass keeps them, so a direct repository that lost its link to its location never ages by the local rules. B2 is reached through its S3 endpoint, with the key ID and application key entered as the S3 keys. A key limited to the location's own folder cannot reach the folder next to it, so limit the key to the folder above instead.
 
-### Off the premises
+### Off the premises {#off-the-premises}
 
-A storage location or a named repository can be marked **Off the premises**. Remote ones start marked; switch it off for a rest-server in the same building. The mark only counts sites and 3-2-1 on the cards. It changes no copy.
+A storage location or a repository can be marked **Off the premises**. Remote ones start marked. Switch it off for a rest-server in the same building. The mark only counts sites and 3-2-1 on the cards. It changes no copy.
 
 A ZFS replica is a copy off the premises, but not a backup with history. It keeps only the snapshots you set, and old versions and single files still come from the backups. It goes from one ZFS server straight to the other, over SSH to a ZFS server or to the receive endpoint of a paired instance. The pairing group only carries the request. See [Replica](zfs-datasets.md#replica).
 
@@ -106,33 +185,7 @@ A ZFS replica is a copy off the premises, but not a backup with history. It keep
 
 Copy choices live in BombVault's own settings. After a rebuild through **Discover backups** or the Emergency wizard without restored settings they are gone, and copying everything would send the entries you had left out to B2 again. Off-site copies of every rebuilt section therefore pause. The overview says so, and the **Storage locations per section** card offers **Confirm default** with a preview of what the next run copies and the names in the backups that have no entry, which you can leave out there. Only the confirmation ends the pause; importing a settings file brings back rules and defaults but does not end it.
 
-## Remote primary repositories {#remote-primary-repositories}
-
-A section's own path is not limited to a local folder: point it straight at a restic remote (`s3:...`, `rest:http://host:8000/repo`, `sftp:user@host:/repo`, `rclone:remote:bucket/path`) and BombVault backs up to it directly, with no separate local copy and no copy step. This is a different shape from the off-site copies above: there the local repo is primary and the off-site repo is a best-effort archive of it; here the remote repo **is** the primary, and it is the only copy unless you also copy that section to another storage location.
-
-The path of each section (Containers, VMs, Flash, Self-backup, Folders, ZFS datasets) is set on the page of the **Local** storage location: **Change** beside the section in its **Connection** card opens a window with a **Local / Remote** switch:
-
-- **Local** shows the familiar folder browser.
-- **Remote** swaps it for a plain URL field and the connection settings an off-site location uses, configured for this primary instead. From there you get:
-    - **A connection test** against the live path, before you rely on it.
-    - **Bandwidth limits** (upload/download) so a scheduled backup to a remote primary does not saturate your WAN: the same `--limit-upload`/`--limit-download` restic flags off-site copies use, applied to the backup itself.
-    - **Append-only protection**, verified with the same active tamper test (a real DELETE probe against the far side) off-site locations get. With it on, BombVault refuses to prune the repo itself, since there is no separate local copy behind it and the credentials on this box must not be able to delete the only copy of the backup.
-    - **A growth-budget alarm**, sampled from the same repo-size trend the Storage card already tracks.
-
-None of this is required: a hand-typed remote path with no saved safety settings backs up unlimited, prunable and without a budget alarm. The safety settings are there for when you want the protections an off-site copy gets, without a separate storage location just to get them.
-
-!!! note "Cloud/REST credentials are shared"
-    A remote primary authenticates with the shared cloud credentials under **Settings, Storage locations**; there is no separate credential store for primary repos.
-
-### SMB and WebDAV without a host mount {#smb-webdav}
-
-The **Off-site (rclone)** card under **Settings, Storage locations** has a form for a Windows or Samba share and for a WebDAV server (Nextcloud, ownCloud, SharePoint or any other). Fill in a short name, the host and share (SMB) or the URL and server type (WebDAV), the user and the password, and BombVault writes the rclone section for you. rclone obscures the password itself before it is stored; adding one with a name that already exists replaces that section instead of adding a second one. **Add storage location** offers SMB and WebDAV as providers with the same fields.
-
-The form answers with the finished location, for example `rclone:nas:backups`. Use it as a section's path or a storage location and add a sub-folder if you want one (`rclone:nas:backups/bombvault`). The share is the first path segment, not part of the name.
-
-This is the better route than mounting the share on Unraid: restic advises against keeping a repository on a mounted CIFS share, and here nothing is mounted. NFS is not in the form because neither restic nor rclone has an NFS backend; for NFS, mount the export on the host and use it as a local folder.
-
-## Delete protection (append-only)
+## Delete protection (append-only) {#delete-protection-append-only}
 
 Switch on delete protection for an off-site storage location so ransomware, or a compromised host, cannot delete or rewrite your backups. The far side (a `restic/rest-server` running in `--append-only` mode) **enforces** it. BombVault only ever **verifies** it and never shows green on a configuration claim alone. A folder on this server cannot refuse deletion, because whoever controls BombVault controls the folder too, so local locations do not offer the switch.
 
@@ -148,7 +201,7 @@ The fastest way to an append-only copy is a paired BombVault with a [receiving s
 !!! warning "Append-only repos are never pruned from this box"
     An append-only location never prunes old snapshots from here; pruning is the far side's job. Set a **growth-budget alarm** for it so you are alerted before the repo size runs away.
 
-## Tamper test
+## Tamper test {#tamper-test}
 
 BombVault periodically proves the append-only guarantee by actually attempting a delete against the off-site repo, aimed at a non-existent object. **Test delete protection now** on a location's page runs it on demand, and **Check delete protection** under **Settings, Verify, Automatic checks** runs it on a schedule.
 
@@ -162,7 +215,7 @@ A copy that is switched off is not tested, and the location says so. The connect
 
 A real protected-to-unprotected flip fires a single alert.
 
-## DR drills
+## DR drills {#dr-drills}
 
 BombVault offers two levels of proof that your backups are actually restorable, not just present.
 
@@ -242,7 +295,7 @@ The instances in your group then find the server among the providers under **Fro
 
 An instance that reaches the receiving box only through the relay cannot use the server, because the relay carries no backups. Add the receiving box's address on the pairing page first. When BombVault runs on an IP address of its own (on br0, for example), fill in **Address for partners**, because the server listens on the host's address.
 
-## Worked example: two Unraid boxes, end to end
+## Worked example: two Unraid boxes, end to end {#worked-example-two-unraid-boxes-end-to-end}
 
 Everything above describes the parts. This is one complete setup, because the parts are easier to assemble when you have seen them assembled once.
 
@@ -283,7 +336,7 @@ The **Emergency wizard** brings back a server that is gone or was set up again. 
     - **Type the key**: the old server's `APP_KEY`, and where its backups are.
 
     BombVault then tries the key on every storage location and says for each one whether it is readable, not found, locked with another key, not reachable or still missing its sign-in. Nothing has been saved yet, and the key stays in memory for a limited time. **Take the key over** makes this server write its backups with that key from now on; **Undo the takeover** goes back to its own key until the first backup has run. A server that already has backups of its own refuses the takeover and points to [From an old backup folder](#restore-from-another-bombvault-repo) instead. **Save sign-ins** stores the sign-ins the kit carries for remote storage locations, and asks before it replaces sign-ins this server already has.
-2. **Settings.** **Bring back settings** restores BombVault's own settings from the newest self-backup: storage locations, credentials, schedules and rules. BombVault restarts to apply them, through the Docker socket, so the live settings database is never overwritten under an open handle, and the wizard carries on by itself afterwards. This server's login stays: you keep signing in with the password you use now. Secrets the old server had stored that cannot be taken over are listed, so you can enter them again. The restore ends every session and removes the passkeys, so set them up again afterwards.
+2. **Settings.** **Bring back settings** restores BombVault's own settings from the newest self-backup: storage locations, sign-ins, schedules and rules. BombVault restarts to apply them, through the Docker socket, so the live settings database is never overwritten under an open handle, and the wizard carries on by itself afterwards. This server's login stays: you keep signing in with the password you use now. Secrets the old server had stored that cannot be taken over are listed, so you can enter them again. The restore ends every session and removes the passkeys, so set them up again afterwards.
 3. **Selection.** BombVault looks through your backups and lists the containers, VMs, folder sets and ZFS datasets it finds. The newest snapshot is preselected everywhere. What this server still has starts switched off, because a restore would replace it. Folder sets no longer know where they came from after a rebuild, so they go into a folder you choose.
 4. **Restore.** Everything selected comes back in one go, left stopped if you want to start each container and VM yourself, which is safest after a total loss. Afterwards download a new recovery kit: the old one belongs to the previous install.
 
@@ -320,7 +373,7 @@ This is the piece that makes disaster recovery possible even when there is no ru
 !!! warning "The newest snapshot is not always the one to restore"
     Since restic 0.17, `restic snapshots` shows each snapshot's size. After data loss the newest snapshot can be the emptied one, so do not restore a snapshot that is far smaller than the ones before it. After ransomware it can be the encrypted one at the usual size. If BombVault still runs, check its **Anomalies** page first: it names the last good backup, and the restore window preselects it. A restore does not need any of BombVault's anomaly data, and the retention pause only ever keeps more snapshots.
 
-### Sealing the kit
+### Sealing the kit {#sealing-the-kit}
 
 If you have switched on **Encrypt exports with age** under **Settings, System**, the kit is sealed with it too and downloads as `bombvault-recovery-kit.md.age`. It is ASCII-armored rather than binary, so it is still plain text: pasting it into a password manager or printing it works exactly as before, the contents are simply unreadable without your key.
 
@@ -329,7 +382,7 @@ If you have switched on **Encrypt exports with age** under **Settings, System**,
 
     With encryption on and no usable recipient configured, the download is refused outright. BombVault never falls back to handing out the master key in the clear.
 
-### If you do not have the kit to hand
+### If you do not have the kit to hand {#if-you-do-not-have-the-kit-to-hand}
 
 The password is not stored anywhere, it is **computed** from the key of the backups, so you can reproduce it yourself with nothing but the key and a shell:
 

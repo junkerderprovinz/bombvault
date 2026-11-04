@@ -2,16 +2,16 @@
 
 **Your Unraid data, sealed in a vault. Drop a backup. Detonate a restore.**
 
-BombVault is a self-hosted, Unraid-native web app for **backup and full disaster recovery** of your Docker containers and KVM/libvirt VMs. It runs as a single multi-arch Docker container, gives you a web interface in a dark, light or system theme, and handles the whole lifecycle: back up, schedule, verify and restore.
+BombVault is a self-hosted web app for **backup and full disaster recovery** on Unraid and other Docker hosts, such as TrueNAS SCALE, ZimaOS or a plain Linux box. It backs up Docker containers, KVM/libvirt VMs, folders, ZFS datasets and the Unraid flash drive. It runs as a single multi-arch Docker container, gives you a web interface in a dark, light or system theme, and handles the whole lifecycle: back up, schedule, verify and restore.
 
-Restores are automatic. Containers reappear in the Unraid Docker tab exactly as before, and VMs are re-defined in the VM Manager with their disks and UEFI NVRAM reattached. No manual reinstall, no reconfiguration, no drama.
+Restores are automatic. On Unraid, containers reappear in the Docker tab exactly as before, and VMs are re-defined in the VM Manager with their disks and UEFI NVRAM reattached. No manual reinstall, no reconfiguration, no drama. On TrueNAS a container restored next to the original runs as a plain Docker container that the Apps screen does not list.
 
-Powered by [restic](https://restic.net), so every backup is deduplicated, incremental and always encrypted.
+Powered by [restic](https://restic.net), so every backup is deduplicated, incremental and encrypted by default.
 
 !!! note "Keep your APP_KEY safe"
     BombVault derives the restic repository password from a 32-byte secret named `APP_KEY`. Losing it, together with the recovery kit, makes encrypted backups unrecoverable. Generate one with `openssl rand -hex 32` and store it somewhere safe. See [Configuration](configuration.md).
 
-## What BombVault protects
+## What BombVault protects {#what-bombvault-protects}
 
 Every container, VM, folder set, the flash drive, every ZFS dataset and BombVault's own settings is an **entry** with a page of its own. Entries of one kind form a **section**, which you switch on under **Settings, General**.
 
@@ -24,7 +24,7 @@ Every container, VM, folder set, the flash drive, every ZFS dataset and BombVaul
 | **Folders** | Any folder on the server as a folder set, each with optional exclude patterns. |
 | **ZFS datasets** | A dataset and every dataset below it, read from one ZFS snapshot and stored like a folder. See [ZFS datasets](zfs-datasets.md). |
 
-## Restore is the star
+## Restore is the star {#restore-is-the-star}
 
 After copying data back from the restic snapshot, BombVault replays the saved container definition against the Docker API, so the container reappears in the Unraid Docker tab as if it had always been there (same image, same settings, same port mappings). VMs get their XML re-defined over SSH and their disks and UEFI NVRAM reattached, even after the VM was deleted.
 
@@ -32,7 +32,7 @@ One window restores every kind. By default it picks **Next to the original**, wh
 
 When a backup stops dependent containers, they come back in the right order: BombVault restarts them in their Compose `depends_on` order and waits for each to report healthy before starting the ones that depend on it, so nothing races ahead of a database or a gateway that is not up yet. See [Features](features.md).
 
-## How it works
+## How it works {#how-it-works}
 
 ```
 Browser --HTTPS--> BombVault container
@@ -43,7 +43,7 @@ Browser --HTTPS--> BombVault container
                    |- qemu+ssh://host       -> libvirt / KVM on the HOST over SSH (no mount)
                    |- /mnt/ -> /host/user   -> appdata, VM disks + restic repos (read/write)
                    |- /boot/ -> /host/boot  -> Unraid flash backup (whole USB)
-                   |- /config               -> BombVault's own settings + credentials (self-backup)
+                   |- /config               -> BombVault's own settings + sign-ins (self-backup)
                    '- <repo path>           -> restic repository (local or remote: rclone/s3/rest/sftp)
 ```
 
@@ -51,7 +51,7 @@ BombVault uses the Docker socket to stop containers before a backup and to recre
 
 BombVault is the orchestration and UI layer, not the storage engine. All actual data movement goes through restic.
 
-## Quick start
+## Quick start {#quick-start}
 
 New here? Head to **[Getting started](getting-started.md)** to install BombVault on Unraid via Community Applications and run your first backup. Then explore the full **[Features](features.md)**, tune your **[Configuration](configuration.md)**, and set up **[Off-site & recovery](offsite-recovery.md)**.
 
@@ -72,7 +72,7 @@ Copyright (C) 2026 Junker der Provinz. BombVault is free software under the **GN
 
 The name and branding are not licensed. The AGPL covers the source code only: "BombVault", its logo and its branding stay reserved, so a fork has to use a name and branding of its own and may not present itself as BombVault.
 
-## Links
+## Links {#links}
 
 - **Source code:** [github.com/junkerderprovinz/bombvault](https://github.com/junkerderprovinz/bombvault)
 - **Unraid support thread:** [forums.unraid.net](https://forums.unraid.net/topic/199509-support-junkerderprovinz-bombvault/)

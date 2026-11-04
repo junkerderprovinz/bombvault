@@ -2,7 +2,7 @@
 
 This page covers the container's environment variables, the mounts the template provides, the security model, VM backup over SSH, and the off-site setup. Where backups go is set up inside the app as **storage locations**, not via environment variables.
 
-## Environment variables
+## Environment variables {#environment-variables}
 
 | Variable | Required | Description |
 |---|---|---|
@@ -25,8 +25,10 @@ This page covers the container's environment variables, the mounts the template 
 | `BACKUP_STALL_HOURS` | No | Hours a backup may make **no progress at all** before it is cancelled. Empty (the default) uses `2`; set `0` to never cancel on a stall. This is the finer of the two guards and usually the one that fires: it watches whether anything is still happening rather than how long the run has taken, so a slow but healthy multi-terabyte backup is left alone while one wedged on an unresponsive share is stopped in hours instead of days. A warning is logged after 30 minutes of silence, before anything is cancelled. Scanning counts as progress: restic writes no bytes while it walks a large tree, and that phase is watched through its file and byte totals rather than through the bytes written. The two variables are independent, and `BACKUP_MAX_HOURS` still bounds the phases after the backup itself (retention, statistics, off-site copy), where there are no counters to watch. |
 | `DB_DUMP_MAX_HOURS` | No | Hours one automatic database dump may run before it is stopped. Empty (the default) uses `6`; allowed values are `1` to `48`, and the limit is kept an hour below `BACKUP_MAX_HOURS` (at half of it when that is under two hours), so a long dump is cut by its own limit and reported as such rather than taking the backup down with it. A dump that makes no progress is stopped earlier, after `BACKUP_STALL_HOURS`. A stopped dump fails on its own and the container backup carries on. On Unraid, add it to the BombVault container with **Add another Path, Port, Variable**. |
 | `TZ` | No | Timezone for the scheduler (for example `Europe/Berlin`). **Leave it unset and every schedule runs in UTC**: one set to 02:30 then fires at 02:30 UTC rather than on your own wall clock. On Unraid you never set this yourself: the system passes its own timezone into every container. The boot log says which zone it resolved to. A zone with daylight saving skips one run in spring and runs one twice in autumn, while UTC does neither but drifts an hour against your clock twice a year. |
+| `DATA_DIR` | No | Where BombVault keeps its database, keys and caches (default `/config`). Leave it alone in the container. It matters when you run the binary outside Docker. |
+| `FLASH_DIR`, `FLASH_TEMPLATES_DIR` | No | Where the flash drive and its Docker templates are mounted inside the container (defaults `/host/boot` and `/host/boot/config/plugins/dockerMan/templates-user`). They follow the template's `/boot` mount, so leave them unset. |
 
-## Mounts
+## Mounts {#mounts}
 
 Mount the Docker socket, the flash (`/boot`) and the **Host Data** root (`/mnt`) as shown in the CA template. Backup *sources* and *destinations* both live under Host Data, and it is mounted **slave** so a remote share that mounts after the container starts (for example under `/mnt/remotes`) becomes visible without a restart.
 
@@ -34,7 +36,9 @@ On TrueNAS, Host Data is a dataset path such as `/mnt/tank`, never an ixVolume. 
 
 ZFS dataset backups need this mode too: the host mounts a dataset's snapshot only after the container has started. See [ZFS datasets](zfs-datasets.md).
 
-Local repositories default to `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, created on the first backup. They form the **Local** storage location. On its page under **Storage locations**, the **Connection** card changes the folder of each section, and the window it opens has a **Local / Remote** switch: a section's path can be a restic remote (`s3:...`, `rest:...`, `sftp:...`, `rclone:...`) instead of a local folder, backing up straight to it with no separate local copy; see [Remote primary repositories](offsite-recovery.md#remote-primary-repositories).
+Local repositories default to `/mnt/user/bombvault/{container,vms,flash,config,files,zfs}`, created on the first backup. They are the sections' **own folders** and form the **Local** storage location. On its page under **Storage locations**, the **Connection** card changes the folder of each section.
+
+A section's own folder can also live in a storage location you already have, such as a NAS or an S3 bucket: **Use as own folder** on that location's page moves it there and says first what happens to the backups already made. See [A section's own folder](offsite-recovery.md#own-folder).
 
 !!! note "Host integration check"
     The **Host Integration** card on the overview (add it under **Customize**) probes every mount and CLI (Docker socket, libvirt, restic, qemu-img, rclone) and reports any missing pieces.
@@ -93,7 +97,7 @@ For each container, BombVault auto-selects which bind mounts and named volumes t
 
 The MCP server needs no environment variable. You switch it on by creating a key under **Settings, Integrations, MCP server**, and it answers at `/mcp` on the same port as the web interface (for example `https://192.168.1.10:3443/mcp`). Without an active key that path answers `404`. Clients, certificates and limits are described on [MCP server](mcp.md).
 
-## VM backup over SSH
+## VM backup over SSH {#vm-backup-over-ssh}
 
 BombVault backs up KVM/libvirt VMs **without mounting any libvirt path**. It runs `virsh` on the host over SSH (`qemu+ssh://`), so it can never affect your host VM Manager.
 
@@ -110,22 +114,22 @@ The template adds `--add-host=host.docker.internal:host-gateway` so the containe
 !!! important "Full VM setup and networking guide"
     The complete step-by-step guide (SSH enablement, persistent key authorization, custom-network and VLAN routing, per-VM method and host-side troubleshooting) lives at [docs/vm-backup-ssh-setup.md](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md) on GitHub.
 
-## Off-site setup
+## Off-site setup {#off-site-setup}
 
 Off-site copies go to **storage locations**. Open **Storage locations** from its settings tile (or pin it to the sidebar) and choose **Add storage location**. See [Off-site & recovery](offsite-recovery.md) for the full workflow (delete protection, tamper testing and DR drills). In short:
 
 - **Backends:** SMB/CIFS and WebDAV through rclone without a host mount, NFS (mount the export on the host and use it as a local folder), native restic backends without rclone (`s3:...`, `rest:http://host:8000/repo`, `sftp:user@host:/repo`), or any rclone remote (`rclone:<remote>:<bucket>/path`). Backblaze B2 has no native backend here: reach it through its S3 endpoint (`s3:https://s3.<region>.backblazeb2.com/<bucket>/<path>`) with the key ID and application key as the S3 credentials.
-- **Credentials** are stored encrypted, either as the shared cloud credentials or as a named set. Both are cards under **Settings, Storage locations**, and a location's own page picks the set it uses under **Credentials**.
+- **Sign-ins** are stored encrypted, as one list of saved sign-ins in the **Sign-ins** card under **Settings, Storage locations**. A star marks the default, which is used wherever no sign-in is picked. A location's own page picks the one it uses in its **Sign-in** card. See [Sign-ins](offsite-recovery.md#sign-ins).
 - **SSH targets need nothing installed on the far side.** `sftp:` only needs an SSH server. Add the public key from **Settings, Integrations, Host SSH** (also at `/config/ssh/id_ed25519.pub`) to the target user's `~/.ssh/authorized_keys`, or let **Add key** in **Add storage location** put it there with the account's password.
 - **rest-server with a self-signed certificate:** put its certificate, or the one of the authority that signed it, as a PEM file into the `certs` folder of BombVault's data folder (`/config/certs` in the container, `appdata/bombvault/certs` on Unraid). Backups, copies and the delete protection test trust it without a restart.
-- **Off-site copy:** BombVault copies new snapshots with `restic copy` on a best-effort basis, on top of a (usually local) primary. A location's **Copy** card sets whether it copies **After every backup** or on a plan of its own, and **Settings, Schedule, Off-site copies per section** gives one section its own copy plan. **Replicate now** sits in each section's **Off-site copy** card under **Settings, Storage locations**.
+- **Off-site copy:** BombVault copies new snapshots with `restic copy` on a best-effort basis, on top of a (usually local) primary. A location's **Copy** card sets whether it copies **After every backup** or on a plan of its own, and **Settings, Schedule, Off-site copies per section** gives one section its own copy plan. **Replicate now** sits in the section's row of the **Off-site copies** card under **Settings, Storage locations**.
 - **Several storage locations per section:** the **Storage locations per section** card on the Storage locations page switches each line from a section to a location on or off with one click, **Local** included. A section with only off-site locations backs up straight to them, and one with every line off is not backed up. A location's **Rules per section** give one section its own repository, retention or compression there.
 - **Placement per entry:** each container, VM and folder set lights **Local** and the locations that get its backups, in the **Schedule and storage location** card on its Settings tab. Entries without a choice of their own follow their section. See [Placement per entry](offsite-recovery.md#placement).
 - **Retention:** each storage location keeps backups by its **How long to keep** card, and a section can keep its own values there under **Rules per section**. That includes the copy in a section's off-site field. All zero never trims a location's snapshots.
-- **Bandwidth limits:** cap the restic upload/download rate in the **Off-site bandwidth** card under **Settings, Storage locations**, or per location in its **Copy** card.
+- **Bandwidth limits:** cap the restic upload/download rate in the **Off-site bandwidth** card under **Settings, Storage locations**, or per location in its **Copy** card. You enter KiB/s, and the field shows the same rate in MB/s and Mbit/s.
 - **Streaming first:** in the **Streaming** card on the Storage locations page, pick the media servers (Plex, Jellyfin and Emby are preselected by image name), the send rate from which one counts as streaming, the upload limit while it streams and how long after a stream the normal limit comes back.
 - **Cold and archival storage class (S3):** for an S3 storage location, pick a restore-readable tier (Standard, Standard-IA, One Zone-IA, Intelligent-Tiering, Glacier Instant Retrieval) on its page. rclone remotes set their class in the rclone config.
-- **Remote primary instead of local:** a section's own path can itself be one of the backends above, with no local copy and no replication step. See [Remote primary repositories](offsite-recovery.md#remote-primary-repositories) for the **Local / Remote** switch and its bandwidth, append-only and growth-budget settings.
+- **Own folder in a storage location instead of local:** a section's own folder can live in one of the storage locations above, with no local copy and no copy step. See [A section's own folder](offsite-recovery.md#own-folder).
 
 ## Anomalies {#anomalies}
 
@@ -142,7 +146,7 @@ Each entry can use its own sensitivity and notification minimum. Set them on the
 
 ## Portable settings (export and import) {#portable-settings-export-and-import}
 
-The **Export / import settings** card under **Settings, System** writes your whole BombVault configuration (section settings, storage locations, schedules, retention, notifications) to a portable JSON file you can import on another instance, so moving to a new box or cloning a setup does not mean re-entering everything by hand. Import shows a preview and asks for confirmation, and it never touches your backup data or history.
+The **Export / import settings** card under **Settings, System** writes your whole BombVault configuration (section settings, storage locations, schedules, retention, notifications) to a portable JSON file you can import on another instance, so moving to a new box or cloning a setup does not mean re-entering everything by hand. Import shows a preview and asks for confirmation, and it never touches your backup data or history. Links in the file to storage locations or repositories that no longer exist are left out, and the preview names them. While a ZFS replica runs, an import is refused before anything is written.
 
 !!! warning "The export can contain credentials"
     You choose whether to include the off-site, notification and MQTT broker credentials in the file. With credentials included, the export is as sensitive as your recovery kit, so store it somewhere safe. Without them, the file holds only non-secret settings.

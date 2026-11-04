@@ -162,7 +162,7 @@ Each dataset lands at `<root>/<server>/<pool>/<path>`. The server folder is the 
 
 After BombVault is set up again, the target refuses the folder this BombVault filled before. The Replica card then offers **Take over the folder**, and the next replica carries on from the copies in it. Take it over only when no other BombVault still replicates into that folder.
 
-The copy on the target is read-only and not mounted, so it never covers anything on that server. ZFS properties travel along, except the mountpoint and `sharenfs` and `sharesmb`. The reservations `reservation` and `refreservation` stay behind as well, so the copy only takes the space its data needs.
+The copy on the target is read-only. By default it is not mounted, so it never covers anything on that server. A ZFS server connected over SSH has a switch **Mount read only on the server** on its page: with it on, BombVault mounts the copies there read only after each run, so you can read and copy their files on the target. Encrypted copies stay locked until their key is loaded, and switching it off unmounts nothing. A paired instance that receives the replica keeps it unmounted. ZFS properties travel along, except the mountpoint and `sharenfs` and `sharesmb`. The reservations `reservation` and `refreservation` stay behind as well, so the copy only takes the space its data needs.
 
 ### What goes in {#replica-contents}
 

@@ -2,7 +2,7 @@
 
 This page walks you from a fresh Unraid box to your first backup.
 
-## Requirements
+## Requirements {#requirements}
 
 | Requirement | Notes |
 |---|---|
@@ -14,7 +14,7 @@ This page walks you from a fresh Unraid box to your first backup.
 | **ZFS datasets** (opt-in) | The same SSH link as VM backups, `zfs` on the host, and Host Data mapped as `/mnt` with access mode Read/Write - Slave, the template default. See [ZFS datasets](zfs-datasets.md). |
 | **Android app** (optional) | Android 10 or later, paired with servers on version 9.7.0 or later. See [Android app](android.md). |
 
-## Install on Unraid
+## Install on Unraid {#install-on-unraid}
 
 The easiest path is **Community Applications**.
 
@@ -88,10 +88,10 @@ Then open `https://<truenas-ip>:30528/`. What is listed under [What's different 
 - **VM and ZFS dataset backups** reach TrueNAS over SSH as root. Turn on the SSH service under **System, Services**, and add the public key from **Settings, Integrations, Host SSH** to the root user under **Credentials, Users**. VM backups also need `LIBVIRT_URI` as above, because TrueNAS's libvirtd listens on a socket of its own. With neither `LIBVIRT_URI` nor `LIBVIRT_HOST` set, BombVault uses the app's default gateway as the host, since `host.docker.internal` does not resolve in a TrueNAS app. The [VM backup guide](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md#truenas-scale) covers the details, VMs on zvols included.
 - **A ZFS replica uses a different key.** A replica on a second ZFS server logs in with the key the replica dialog shows, not with the Host SSH key. Add that one on the receiving server.
 - **A deleted app comes back in two steps.** Reinstall it in TrueNAS under the same name first, which creates its network again, then restore its data in BombVault. Until then the restore check reports the missing network, and the restore refuses before it changes anything.
-- **Restore beside** creates a plain Docker container. It runs, but the TrueNAS Apps screen does not list it.
+- **Next to the original** creates a plain Docker container. It runs, but the TrueNAS Apps screen does not list it.
 - **Database dumps** work on dataset mounts. An import into a data folder that is a dataset of its own moves the old contents into a folder next to it, so the dataset above needs room for them.
 
-## The one required setting
+## The one required setting {#the-one-required-setting}
 
 The only variable you must set is `APP_KEY`, a 32-byte hex secret (64 hex characters) used to derive the restic repository password.
 
@@ -108,7 +108,7 @@ Paste the result into the `APP_KEY` field of the template (Unraid), or the `APP_
 
 The template also mounts the Docker socket, the flash (`/boot`) and the **Host Data** root (`/mnt`) for you. Backup *sources* and *destinations* both live under Host Data. For the full variable reference and the off-site setup, see [Configuration](configuration.md).
 
-## First run
+## First run {#first-run}
 
 ![The overview after a first backup: what needs you, the protection of each section, the storage locations and the history.](assets/screenshots/dashboard.png)
 
@@ -161,7 +161,7 @@ go run ./cmd/bombvault         # serves https://localhost:3443 with a self-signe
 
 The interface build is needed for `go run` too. The repository tracks only an empty marker under `web/dist`, so without `npm --prefix web run build` the binary embeds nothing and answers `500 SPA index not found`, which is expected. Docker, libvirt and Unraid cannot be tested in CI, so check mounts, restic and the VM SSH link on a real host with the overview's **Host Integration** card (or `GET /api/spike`) before you open a pull request.
 
-## Next steps
+## Next steps {#next-steps}
 
 - Browse the full **[Features](features.md)**.
 - Put every server of your group on your phone with the **[Android app](android.md)**.
