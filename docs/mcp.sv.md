@@ -9,9 +9,9 @@ BombVault har en inbyggd server för Model Context Protocol (MCP), protokollet s
 | `get_health` | Version, instansnamn, om en säkerhetskopia pågår och vad den här nyckeln får göra | läsa |
 | `get_status` | Skyddsstatus per avsnitt: senaste lyckade säkerhetskopia, förväntat intervall, verifieringar och off-site-kontroller, nästa schemalagda körningar, säkerhetskopior som väntar på att appen ska vila, för containrar det senaste starttestet | läsa |
 | `get_coverage` | Vad BombVault skyddar och vad det inte skyddar, med skälet för varje | läsa |
-| `list_items` | Varje skyddad container, VM och mappuppsättning, flashminnet och appkonfigurationen, med schema, vad en säkerhetskopia stoppar, senaste säkerhetskopian och hur lång tid den tog; databascontainrar visar även sin senaste dump; ZFS-dataset finns också med, med resultatet av sin senaste kontroll; varje post har sin senaste återställningskontroll, och en container sitt senaste starttest eller skälet till att den inte kan testas; en container som skapats om med andra inställningar sedan sin senaste säkerhetskopia listar ändringarna | läsa |
-| `list_runs` | Körningshistorik, nyaste först, filtrerbar på avsnitt, post, status, typ och tid; en långsam säkerhetskopia som en sak höll tillbaka nämner den | läsa |
-| `list_restore_points` | Återställningspunkter för en post från dess primära repository, och för en container även dess databasdumpar; ett ZFS-dataset får en återställningspunkt per säkerhetskopia, med en snapshot av varje dataset under det | läsa |
+| `list_items` | Varje skyddad container, VM och mappuppsättning, flashminnet och appkonfigurationen, med schema, vad en säkerhetskopia stoppar, senaste säkerhetskopian och hur lång tid den tog. Databascontainrar visar även sin senaste dump. ZFS-dataset finns också med, med resultatet av sin senaste kontroll. Varje post har sin senaste återställningskontroll, och en container sitt senaste starttest eller skälet till att den inte kan testas. En container som skapats om med andra inställningar sedan sin senaste säkerhetskopia listar ändringarna | läsa |
+| `list_runs` | Körningshistorik, nyaste först, filtrerbar på avsnitt, post, status, typ och tid. En långsam säkerhetskopia som en sak höll tillbaka nämner den | läsa |
+| `list_restore_points` | Återställningspunkter för en post från dess primära repository, och för en container även dess databasdumpar. Ett ZFS-dataset får en återställningspunkt per säkerhetskopia, med en snapshot av varje dataset under det | läsa |
 | `get_activity` | Vad som körs just nu, med fas och procent | läsa |
 | `get_storage_stats` | Storlekshistorik för ett avsnitts primära repository och dess tillväxt per vecka, plus använt, ledigt och totalt utrymme på disken eller fjärrlagringen för vart och ett av dess repositories | läsa |
 | `get_size_breakdown` | Vilka mappar och filer som tar plats i den senaste säkerhetskopian av en container, en VM eller en mappuppsättning, och hur mycket av det den senaste säkerhetskopian lade till | läsa |
@@ -24,7 +24,7 @@ BombVault har en inbyggd server för Model Context Protocol (MCP), protokollet s
 
 Detta stannar i webbgränssnittet: återställningar av alla slag (även att ladda ner, spara eller importera en databasdump), att radera säkerhetskopior, prune, unlock, kontroller och övningar, off-site-replikering, inställningar, inloggningsuppgifter och MCP-nycklar, samt att avbryta en säkerhetskopia som schemat, webbgränssnittet eller en annan nyckel har startat. Detsamma gäller att kvittera en avvikelse eller markera den som förväntad, vilket görs på sidan **Avvikelser**. Skälet är att verktygens svar innehåller namn och felmeddelanden från din server, och vilket som helst av dem kan innehålla text som skrivits för att styra assistenten. En assistent som går på sådan text kan i värsta fall starta en säkerhetskopia inom gränserna nedan eller avbryta en som den själv startat.
 
-Om en posts primära repository ligger någon annanstans (S3, REST, SFTP, rclone) kontaktar `list_restore_points` det, och anropet kan ta en stund. Off-site-kopior kan inte listas via MCP. Vad avvikelsekontrollerna tittar på beskrivs under [Funktioner](features.md), och hur en ZFS-post har en ögonblicksbild per datauppsättning under [ZFS-datauppsättningar](zfs-datasets.md#contents).
+Om en posts primära repository ligger någon annanstans (S3, REST, SFTP, rclone) kontaktar `list_restore_points` det, och anropet kan ta en stund. Off-site-kopior kan inte listas via MCP. Vad avvikelsekontrollerna tittar på beskrivs under [Avvikelser](anomalies.md), och hur en ZFS-post har en ögonblicksbild per datauppsättning under [ZFS-datauppsättningar](zfs-datasets.md#contents).
 
 ## Vad en startad säkerhetskopia gör {#starting-backups}
 
@@ -43,9 +43,9 @@ Starter via [API:t](api.md#errors) och från [Home Assistant](api.md#home-assist
 
 ## Slå på det {#switch-on}
 
-1. Öppna **Inställningar, Integrationer, MCP-server** klicka på **Välj en klient** och välj din i fönstret; sökningen uppe till höger hittar den på namn. En klient som inte finns i listan ansluter via **Annan klient**.
+1. Öppna **Inställningar, Integrationer, MCP-server**, klicka på **Välj en klient** och välj din i fönstret. Sökningen uppe till höger hittar den på namn. En klient som inte finns i listan ansluter via **Annan klient**.
 2. Behåll under **Nyckel** valet **Ny nyckel** och det föreslagna namnet, klientens, eller skriv ett som säger var nyckeln används, till exempel ”Claude Code på laptopen”. En nyckel per klient låter dig återkalla en utan att röra de andra. **Befintlig nyckel** ger klienten en nyckel som du skapat tidigare.
-3. Slå på **Tillåt att starta säkerhetskopior** för en nyckel som ska kunna starta säkerhetskopior; utan det kan den bara läsa. Du kan ändra det senare i nyckelns **Detaljer**, och ändringen gäller från assistentens nästa förfrågan utan ny anslutning.
+3. Slå på **Tillåt att starta säkerhetskopior** för en nyckel som ska kunna starta säkerhetskopior. Utan det kan den bara läsa. Du kan ändra det senare i nyckelns **Detaljer**, och ändringen gäller från assistentens nästa förfrågan utan ny anslutning.
 4. Klicka på **Skapa nyckel**. Nyckeln visas en gång. BombVault behåller bara ett fingeravtryck av den och kan inte visa den igen, så kopiera den nu. Stänger du fönstret innan klienten har använt nyckeln fortsätter kortet att visa den tills du bekräftar att du har kopierat den.
 
 Utan inloggningslösenord är själva webbgränssnittet öppet för alla i ditt nätverk, och den som kan öppna det kan också skapa en nyckel. Kortet säger det. Öppnar du BombVault under ett namn som ser offentligt ut (till exempel `bombvault.example.com` bakom en omvänd proxy) och inget inloggningslösenord är satt, går det inte att skapa eller byta nycklar från den adressen, så att ingen webbsida på internet kan få din webbläsare att skapa en. Sätt ett inloggningslösenord, eller öppna BombVault via dess IP-adress eller ett lokalt namn som `tower` eller `tower.local`.
@@ -62,7 +62,7 @@ BombVault sparar varje nyckels poster i upp till 30 dagar: de senaste 500 lyckad
 
 ## Anslut en klient {#clients}
 
-**Välj en klient** öppnar ett fönster med varje klient som en bricka, under **På den här datorn** eller **I molnet**, och en sökning uppe till höger. En bricka öppnar klientens installation i samma fönster, i tre steg: nyckeln; konfigurationen för den klienten, med adressen du öppnade kortet på, en knapp för att kopiera den, var konfigurationen ligger och, med BombVaults eget certifikat, vad klienten behöver för att lita på det; och väntan på klientens första anrop. Fönstret följer nyckelns senaste användning och blir grön när anropet kommer.
+**Välj en klient** öppnar ett fönster med varje klient som en bricka, under **På den här datorn** eller **I molnet**, och en sökning uppe till höger. En bricka öppnar klientens installation i samma fönster, i tre steg: nyckeln, konfigurationen för den klienten, med adressen du öppnade kortet på, en knapp för att kopiera den, var konfigurationen ligger och, med BombVaults eget certifikat, vad klienten behöver för att lita på det. Och väntan på klientens första anrop. Fönstret följer nyckelns senaste användning och blir grön när anropet kommer.
 
 Installationen håller nyckeln borta från varje kommandorad. Där klienten kan läsa den från en miljövariabel (`BOMBVAULT_MCP_KEY`), en dold fråga eller en egen fil nämner konfigurationen den bara. Där klienten saknar ett sådant sätt ligger nyckeln i dess konfigurationsfil eller inställningar, och installationen säger det. Där en klients dokumentation inte säger hur den hanterar ett okänt certifikat skriver installationen det steget som vad du gör om klienten avvisar BombVaults certifikat.
 
@@ -123,7 +123,7 @@ Med BombVaults eget certifikat (se [TLS och certifikat](#tls)) pekar kommandot d
 claude mcp add bombvault --scope user -e "NODE_EXTRA_CA_CERTS=<path of the downloaded bombvault-cert.pem>" -- npx -y mcp-remote@latest https://192.168.1.10:3443/mcp --header-file "<path of the file with your key>"
 ```
 
-Kontrollera anslutningen med `/mcp` i Claude Code. `--scope user` gör BombVault tillgängligt i alla dina projekt. Claude Code sparar bara sökvägen till nyckelfilen, så nyckeln syns varken i kommandot och din skalhistorik eller i processlistan. Lägg filen där bara du kan läsa den och utanför alla mappar som du checkar in. `@latest` får `npx` att hämta en aktuell `mcp-remote`; annars skulle en äldre, globalt installerad version användas, och den känner inte till `--header-file`.
+Kontrollera anslutningen med `/mcp` i Claude Code. `--scope user` gör BombVault tillgängligt i alla dina projekt. Claude Code sparar bara sökvägen till nyckelfilen, så nyckeln syns varken i kommandot och din skalhistorik eller i processlistan. Lägg filen där bara du kan läsa den och utanför alla mappar som du checkar in. `@latest` får `npx` att hämta en aktuell `mcp-remote`. Annars skulle en äldre, globalt installerad version användas, och den känner inte till `--header-file`.
 
 Skriv inte `${BOMBVAULT_MCP_KEY}` i argumenten till `mcp-remote` för Claude Code. Claude Code fyller i en sådan referens från sin egen miljö innan den startar `mcp-remote`, så nyckeln hamnar på den processens kommandorad, där andra program och användare på datorn kan läsa den.
 
@@ -170,7 +170,7 @@ Claude Desktop når BombVault via `mcp-remote`, som behöver Node.js på den dat
 
 ### Klienter i molnet {#cloud-clients}
 
-ChatGPT, Claude på claude.ai, Grok och Le Chat anropar BombVault från sin leverantörs servrar, så BombVault måste nås från internet med ett offentligt betrott certifikat, till exempel bakom en omvänd proxy; Le Chat avvisar självsignerade. En inloggning på proxyn kan skydda webbgränssnittet, men `/mcp` måste nå BombVault utan den: de här tjänsterna kan inte logga in på en proxy, och BombVault kontrollerar själv deras nyckel eller token. Grok och Le Chat skickar en fast nyckel, och deras knappar ställer in dem som de andra. ChatGPT, och i de flesta organisationer även Claude på claude.ai, ansluter bara via inloggning med OAuth, som beskrivs härnäst.
+ChatGPT, Claude på claude.ai, Grok och Le Chat anropar BombVault från sin leverantörs servrar, så BombVault måste nås från internet med ett offentligt betrott certifikat, till exempel bakom en omvänd proxy. Le Chat avvisar självsignerade. En inloggning på proxyn kan skydda webbgränssnittet, men `/mcp` måste nå BombVault utan den: de här tjänsterna kan inte logga in på en proxy, och BombVault kontrollerar själv deras nyckel eller token. Grok och Le Chat skickar en fast nyckel, och deras knappar ställer in dem som de andra. ChatGPT, och i de flesta organisationer även Claude på claude.ai, ansluter bara via inloggning med OAuth, som beskrivs härnäst.
 
 ### Inloggning via OAuth {#oauth}
 
@@ -193,14 +193,14 @@ Alla klienter som talar Streamable HTTP fungerar:
 - URL: webbgränssnittets adress plus `/mcp`, till exempel `https://192.168.1.10:3443/mcp`.
 - Nyckeln i `Authorization: Bearer <key>` eller i `X-API-Key: <key>`. Skickas båda måste de innehålla samma nyckel.
 - `POST` med `Content-Type: application/json` och `Accept: application/json, text/event-stream`.
-- Ett JSON-RPC-meddelande per förfrågan; batchar nekas.
+- Ett JSON-RPC-meddelande per förfrågan. Batchar nekas.
 - Protokollversionerna 2026-07-28, 2025-11-25, 2025-06-18 och 2025-03-26.
 
 ## TLS och certifikat {#tls}
 
 BombVault levererar HTTPS med ett certifikat som det har utfärdat själv, och från början nämner det certifikatet bara `localhost`, `127.0.0.1` och `::1`. Claude Code och `mcp-remote` nekar det på en LAN-adress. Vägarna runt det, i den ordning som passar de flesta Unraid-installationer:
 
-1. **Lägg till adressen i MCP-kortet.** Öppnar du kortet över HTTPS på en adress som certifikatet inte nämner, säger kortet det och erbjuder **Lägg till den här adressen i certifikatet**. BombVault utfärdar då sitt certifikat igen med den adressen (din webbläsare varnar en gång till, precis som första gången). Klicka sedan på **Ladda ner certifikat**; utdragen sätter `NODE_EXTRA_CA_CERTS` till den nedladdade filen, så att klienten litar på just det certifikatet. Det betyder också att varje klient som är konfigurerad med en tidigare nedladdad fil slutar ansluta så snart certifikatet utfärdas igen, på den här datorn och på alla andra, tills den får den nya filen.
+1. **Lägg till adressen i MCP-kortet.** Öppnar du kortet över HTTPS på en adress som certifikatet inte nämner, säger kortet det och erbjuder **Lägg till den här adressen i certifikatet**. BombVault utfärdar då sitt certifikat igen med den adressen (din webbläsare varnar en gång till, precis som första gången). Klicka sedan på **Ladda ner certifikat**. Utdragen sätter `NODE_EXTRA_CA_CERTS` till den nedladdade filen, så att klienten litar på just det certifikatet. Det betyder också att varje klient som är konfigurerad med en tidigare nedladdad fil slutar ansluta så snart certifikatet utfärdas igen, på den här datorn och på alla andra, tills den får den nya filen.
 2. **En omvänd proxy med ett betrott certifikat** (Nginx Proxy Manager, SWAG, Caddy, Traefik). Klienten ser då proxyns certifikat och behöver inget mer, och kortet varnar inte för BombVaults eget.
 3. **Tailscale.** `tailscale serve` framför containern, eller Unraids Tailscale-integration, ger dig ett `ts.net`-namn med ett betrott certifikat.
 4. **`HTTP_ONLY=true`**, bara bakom en proxy som avslutar TLS eller i ett nätverk som du litar helt på. Det byter hela webbgränssnittet till vanlig HTTP, kräver en ändring i containerinställningarna och skickar nyckeln okrypterad.
@@ -261,9 +261,9 @@ Det som en assistent läser går till AI-leverantören bakom den: postnamn, sche
 | `cooldown` | Den här posten, det här avsnittet eller Total säkerhetskopia startades utanför webbgränssnittet för mindre än 15 minuter sedan. |
 | `retention_guard` | Ytterligare en MCP-säkerhetskopia skulle bara lämna återställningspunkter från MCP i ett fönster med "behåll de senaste N", eller så har posten redan fått 4 säkerhetskopior via MCP de senaste 24 timmarna, misslyckade och avbrutna medräknade. I det första fallet gör nästa schemalagda säkerhetskopia plats, i det andra är posten ledig igen 24 timmar efter den äldsta av dem. Du kan alltid starta den i webbgränssnittet. |
 | `rate_limited` | Nyckeln har använt sina 12 starter för den här timmen. |
-| `not_permitted` vid en start | Nyckeln får bara läsa. Slå på **Tillåt att starta säkerhetskopior** i kortet; ingen ny anslutning behövs. Vid ett avbrott betyder det att den här nyckeln inte startade körningen. |
+| `not_permitted` vid en start | Nyckeln får bara läsa. Slå på **Tillåt att starta säkerhetskopior** i kortet. Ingen ny anslutning behövs. Vid ett avbrott betyder det att den här nyckeln inte startade körningen. |
 | `domain_off` | Det avsnittet är avstängt under **Inställningar, Allmänt**. |
-| `not_found` | BombVault skyddar inte den posten. Lägg först till den i webbgränssnittet; MCP skapar aldrig konfiguration. |
+| `not_found` | BombVault skyddar inte den posten. Lägg först till den i webbgränssnittet. MCP skapar aldrig konfiguration. |
 | Klienten hittar inte auktoriseringsservern | Inloggning via OAuth är avslagen, inget inloggningslösenord är satt, eller proxyn släpper inte igenom `/.well-known/` till BombVault. |
 | Samtyckessidan säger att returadressen inte är registrerad | Klienten skickade en returadress som den inte har registrerat. Ta bort connectorn i klienten och lägg till den igen. |
 | En inloggad klient får `401` | Dess tillstånd har återkallats, gått ut efter 30 dagar utan användning, eller så har den offentliga adressen ändrats. Klienten loggar in igen. |

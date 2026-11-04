@@ -23,9 +23,9 @@ Utan inloggningslösenord kan alla som kan öppna webbgränssnittet också skapa
 | `GET /api/v1/health` | Version, instansnamn, om en kopia körs och vad det här tokenet får göra | läsa |
 | `GET /api/v1/status` | Skyddsstatus per avsnitt: senaste lyckade kopia, förväntat intervall, kontroller, nästa schemalagda körningar | läsa |
 | `GET /api/v1/activity` | Vad som körs just nu, med fas och procent | läsa |
-| `GET /api/v1/items` | Varje skyddad post med schema, vad en kopia stoppar och senaste kopia; `?domain=` för ett avsnitt | läsa |
-| `GET /api/v1/runs` | Körhistorik, nyast först; filter `limit`, `domain`, `item`, `status`, `kind`, `since` | läsa |
-| `GET /api/v1/anomalies` | Avvikelser med en sammanfattning av de öppna; filter `state`, `severity`, `domain`, `limit` | läsa |
+| `GET /api/v1/items` | Varje skyddad post med schema, vad en kopia stoppar och senaste kopia. `?domain=` för ett avsnitt | läsa |
+| `GET /api/v1/runs` | Körhistorik, nyast först. Filter `limit`, `domain`, `item`, `status`, `kind`, `since` | läsa |
+| `GET /api/v1/anomalies` | Avvikelser med en sammanfattning av de öppna. Filter `state`, `severity`, `domain`, `limit` | läsa |
 | `GET /api/v1/anomalies/{id}` | En avvikelse | läsa |
 | `GET /api/v1/storage/{domain}` | Storlekshistorik, tillväxt per vecka och ledigt utrymme för varje repository i ett avsnitt | läsa |
 | `POST /api/v1/backups` | Säkerhetskopierar en post (`{"domain":"containers","item":"plex"}`) eller ett helt avsnitt (`{"domain":"vms"}`) | starta |
@@ -61,7 +61,7 @@ Ett fel kommer tillbaka som `{"error": {"code": "...", "message": "..."}}` med m
 | 403 | `not_permitted`, `forbidden_origin` | Tokenet får bara läsa, eller det startade inte körningen, eller så kom begäran från en sida med ett annat ursprung |
 | 404 | `not_found` | Ingen sådan post, körning eller avvikelse |
 | 409 | `busy`, `domain_off`, `nothing_to_back_up`, `not_running` | Något annat körs, avsnittet är avstängt eller det finns inget att göra |
-| 429 | `throttled`, `rate_limited`, `cooldown`, `retention_guard` | En gräns håller tillbaka förfrågan; `Retry-After` säger när du kan försöka igen |
+| 429 | `throttled`, `rate_limited`, `cooldown`, `retention_guard` | En gräns håller tillbaka förfrågan. `Retry-After` säger när du kan försöka igen |
 
 Starter följer samma gränser som [starter via MCP](mcp.md#starting-backups): 12 i timmen per token, 15 minuter mellan två starter av samma post, högst 4 starter av en post på 24 timmar och lagringsskyddet. De tre sista räknar starter via MCP, via API:t och från Home Assistant tillsammans. Ett token får göra 120 förfrågningar i minuten. Fem misslyckade försök från en adress spärrar den i en minut.
 
@@ -74,7 +74,7 @@ BombVault levererar en beskrivning av de här rutterna på `/api/v1/openapi.json
 BombVault kan dyka upp i Home Assistant som en enhet via MQTT-discovery. Home Assistant behöver sin MQTT-integration och en broker, till exempel tillägget Mosquitto. Ingen egen komponent behövs.
 
 1. Öppna **Inställningar, Integrationer** i BombVault och slå på **Home Assistant** på kortet **Tjänster**. Fälten för brokern visas under.
-2. Ange brokerns adress och port, och användarnamn och lösenord om den kräver det. Slå på **Använd TLS** om brokern använder TLS, oftast på port 8883; dess certifikat måste gälla för adressen du angav. Om du ändrar adressen, porten eller användarnamnet måste du ange lösenordet igen: BombVault skickar inte det sparade vidare till en annan broker eller användare.
+2. Ange brokerns adress och port, och användarnamn och lösenord om den kräver det. Slå på **Använd TLS** om brokern använder TLS, oftast på port 8883. Dess certifikat måste gälla för adressen du angav. Om du ändrar adressen, porten eller användarnamnet måste du ange lösenordet igen: BombVault skickar inte det sparade vidare till en annan broker eller användare.
 3. Klicka på **Spara**. Raden visar när anslutningen är uppe.
 
 Enheten heter BombVault, eller BombVault med instansnamnet inom parentes, och har de här entiteterna:
@@ -90,9 +90,45 @@ Enheten heter BombVault, eller BombVault med instansnamnet inom parentes, och ha
 | *Avsnitt* repository free space | Ledigt utrymme där dess primära repository ligger, om BombVault kan läsa det |
 | Back up *avsnitt* | En knapp som säkerhetskopierar hela avsnittet |
 
-Entiteternas namn är på engelska, eftersom Home Assistant tar dem som BombVault skickar dem. Varje påslaget avsnitt får egna entiteter, och ett avsnitt du stänger av förlorar dem. Knapparna dyker upp när du slår på **Knappar startar säkerhetskopior**, som är avslaget i en ny installation. De följer samma gränser som [starter via API:t](#errors). Dessutom tar BombVault emot ett tryck i taget per avsnitt och högst sex per minut, och bortser från ett tryck som brokern har sparat som retained-meddelande. Alla som får publicera på brokern kan trycka på dem, så ge brokern ett lösenord.
+Entiteternas namn är på engelska, eftersom Home Assistant tar dem som BombVault skickar dem. Varje påslaget avsnitt får egna entiteter, och ett avsnitt du stänger av förlorar dem. Knapparna dyker upp när du slår på **Knappar startar säkerhetskopior**, Den är avslagen i en ny installation. De följer samma gränser som [starter via API:t](#errors). Dessutom tar BombVault emot ett tryck i taget per avsnitt och högst sex per minut, och bortser från ett tryck som brokern har sparat som retained-meddelande. Alla som får publicera på brokern kan trycka på dem, så ge brokern ett lösenord.
 
 BombVault läser sin status var 15:e sekund och publicerar den när något har ändrats, som JSON under `<prefix>/<nod>/state`. Prefixet är `bombvault` så länge du inte ändrar det, och noden är ett kort id som BombVault väljer en gång. Discovery-meddelandena går till Home Assistants standardprefix `homeassistant`. Båda behålls (retained). En last will markerar enheten som otillgänglig om BombVault stannar utan att säga till. Stänger du av kopplingen tar BombVault bort enheten och dess entiteter från Home Assistant.
+
+### Exempel: ett kort och en avisering {#home-assistant-example}
+
+Home Assistant gör entitets-id:n av namnen, så enheten BombVault får id:n som `sensor.bombvault_status`. Med ett instansnamn inom parentes bär id:n även det, så kontrollera dem först under **Developer Tools, States**. Ett kort för instrumentpanelen:
+
+```yaml
+type: entities
+title: Backups
+entities:
+  - sensor.bombvault_status
+  - sensor.bombvault_running_job
+  - sensor.bombvault_open_anomalies
+  - sensor.bombvault_next_scheduled_backup
+```
+
+En automation som talar om för din telefon när statusen blir `failed`:
+
+```yaml
+alias: BombVault backup failed
+trigger:
+  - platform: state
+    entity_id: sensor.bombvault_status
+    to: failed
+action:
+  - service: notify.mobile_app_my_phone
+    data:
+      message: A BombVault backup failed. Open Needs you on the overview.
+```
+
+## Prometheus {#metrics}
+
+**Exponera /metrics** på kortet **Tjänster** under **Inställningar, Integrationer** serverar säkerhetskopieringsstatus, storlekar och tidsstämplar för Prometheus, Grafana eller Uptime Kuma, på `/metrics` på webbgränssnittets port. Det är avstängt som standard. **Scrape-token (valfritt)** får skrapan att skicka en bearer-token. Etiketterna innehåller inga hemligheter och inga sökvägar.
+
+## Dashboard-widget {#dashboard-widget}
+
+Kortet **Dashboard-widget** under **Inställningar, Integrationer** genererar en skrivskyddad token och ger dig en adress för vilken instrumentpanel som helst som visar en iframe, till exempel Homepage, Organizr eller Heimdall. Adressen öppnar en liten sida på `/widget` med bara den levande aktivitetsloggen. Token ger den loggen och inget annat, och **Inaktivera** återkallar den direkt. Den inbäddade sidan finns bara på engelska.
 
 ## Hitta BombVault i nätverket {#mdns}
 
