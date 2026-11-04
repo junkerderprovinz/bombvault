@@ -87,6 +87,9 @@ type ownFolderStep struct {
 	from, path string
 	// copyKeep is the keep rule of CopyAt, nil without one.
 	copyKeep *store.RetentionKeep
+	// into is the storage location the own folder goes into, nil for a
+	// folder that lies in none.
+	into *store.OffsiteTarget
 	// places are the storage locations the move reads and writes, by the id
 	// an erasure there runs under.
 	places [2]string
@@ -204,6 +207,7 @@ func (s *Service) planOwnFolder(ctx context.Context, settings store.Settings, do
 		step.places[1] = place.dest.ID
 	}
 	step.folder = store.OwnFolder{Domain: domain, Row: s.ownFolderRow(domain, to, place)}
+	step.into = place.dest
 	if validPlacementDomain(domain) {
 		if step.direct, step.WritesTo, err = s.directDefault(domain); err != nil {
 			return ownFolderStep{}, err
@@ -235,7 +239,8 @@ func (s *Service) planOwnFolder(ctx context.Context, settings store.Settings, do
 		// which must not forget what the copy kept.
 		keep := targetKeep(copyAt)
 		step.copyKeep = &keep
-		step.WiderKeep = widerKeep(localKeep(settings, domain), keep) != localKeep(settings, domain)
+		there := step.keepThere(settings)
+		step.WiderKeep = widerKeep(there, keep) != there
 		if r := step.folder.Row; r != nil && place.dest == nil {
 			r.Immutable = r.Immutable || copyAt.Immutable
 		}
@@ -401,6 +406,18 @@ func (s *Service) oldOwnFolderOpens(ctx context.Context, plan movePlan) (bool, e
 	return false, err
 }
 
+// keepThere is the keep rule the section's own folder ages by once it lies at
+// its new place, as localKeep reads it after the switch.
+func (step ownFolderStep) keepThere(settings store.Settings) store.RetentionKeep {
+	if k, own := settings.OwnRetention()[step.Domain]; own {
+		return k
+	}
+	if step.into != nil {
+		return targetKeep(*step.into)
+	}
+	return sharedLocalKeep(settings)
+}
+
 // widerKeep keeps every backup that a or b keeps. All zero keeps them all.
 func widerKeep(a, b store.RetentionKeep) store.RetentionKeep {
 	if a == (store.RetentionKeep{}) || b == (store.RetentionKeep{}) {
@@ -458,7 +475,8 @@ func (s *Service) switchOwnFolder(ctx context.Context, step ownFolderStep) (stor
 			cleared = true
 		}
 		if step.copyKeep != nil {
-			if keep := widerKeep(localKeep(*st, step.Domain), *step.copyKeep); keep != localKeep(*st, step.Domain) {
+			there := step.keepThere(*st)
+			if keep := widerKeep(there, *step.copyKeep); keep != there {
 				own := st.OwnRetention()
 				own[step.Domain] = keep
 				st.SetOwnRetention(own)

@@ -787,6 +787,47 @@ describe("rules per section", () => {
     });
   });
 
+  describe("on a destination that holds own folders", () => {
+    beforeEach(() =>
+      stage(
+        location({
+          sections: [
+            section({ domain: "containers", use: "home", where: "rclone:storagebox:bombvault/containers" }),
+            section({ domain: "vms", use: "home", where: "rclone:storagebox:bombvault/vms", retention: SHORT, own: ["retention"] }),
+          ],
+        }),
+        []
+      )
+    );
+
+    it("gives an own folder a keep rule of its own in the settings", async () => {
+      await renderPage("destination:box");
+      expect(ruleRow("Containers").textContent).toContain("Follows the storage location");
+      const window = await openRules("Containers");
+
+      await click(within(within(window).getByRole("radiogroup", { name: "How long to keep" })).getByRole("radio", { name: "Custom values" }));
+      vi.useFakeTimers();
+      fireEvent.change(within(window).getByRole("spinbutton", { name: "Days" }), { target: { value: "30" } });
+      await act(async () => {
+        vi.runAllTimers();
+      });
+      vi.useRealTimers();
+
+      await waitFor(() => expect(putSettings).toHaveBeenCalledTimes(1));
+      expect(putSettings.mock.calls[0][0].ownRetention).toEqual({ vms: SHORT, containers: { ...LONG, keepDaily: 30 } });
+      expect(updateOffsiteTarget).not.toHaveBeenCalled();
+    });
+
+    it("puts an own folder with its own rule back on the How long to keep card", async () => {
+      await renderPage("destination:box");
+
+      await click(within(card("How long to keep")).getByRole("button", { name: "Reset to the storage location" }));
+
+      await waitFor(() => expect(putSettings).toHaveBeenCalledTimes(1));
+      expect(putSettings.mock.calls[0][0].ownRetention).toEqual({});
+    });
+  });
+
   describe("on a folder of this host", () => {
     beforeEach(() => stage(LOCAL, []));
 

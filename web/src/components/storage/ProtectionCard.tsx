@@ -66,8 +66,8 @@ export function ProtectionCard({ edit, provider, hueIndex }: { edit: LocationEdi
   const tamper = useTestVerdict(location.id, t("offsite.tamperError"));
   const takesCopies = location.object === "destination" || location.object === "target";
   const prunes = pruner(immutable, location.retention);
-  // An own folder ages by its section's keep rule after each backup, not by
-  // this location's rule for copies.
+  // An own folder ages after each backup, by this location's keep rule or by
+  // one its section holds itself, which the server has already resolved.
   const own = new Map<Pruner, string[]>();
   for (const section of ownFolderSections(location)) {
     const by = pruner(section.immutable, section.retention);
