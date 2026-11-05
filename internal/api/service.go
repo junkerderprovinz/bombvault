@@ -159,7 +159,7 @@ type ResticEngine interface {
 	// and tag, without changing the repository and without taking a lock, so it
 	// can answer while a backup is running. Inert when the policy has no
 	// dimension set, for the same reason ForgetPolicy is.
-	ForgetPreview(ctx context.Context, repo string, p restic.RetentionPolicy, mode restic.Mode, tag string) ([]restic.ForgetGroup, error)
+	ForgetPreview(ctx context.Context, repo string, p restic.RetentionPolicy, mode restic.Mode, tags ...string) ([]restic.ForgetGroup, error)
 	// Ls lists the files in a snapshot (for file-level restore).
 	Ls(ctx context.Context, repo, snapshotID string, mode restic.Mode) ([]restic.FileEntry, error)
 	// LsStream lists a snapshot's nodes like Ls but hands each entry to onEntry
@@ -2915,9 +2915,10 @@ func (s *Service) foldTag(tag string, snaps []restic.Snapshot, domains []aliasFo
 
 // previewRetentionPerIdentity is the read-only twin of
 // applyRetentionPerIdentity: it reports what that pass WOULD remove, asking the
-// same question in the same shape: one tag-scoped preview per identity, with
-// the same repo-wide fallback when the listing fails or carries no identity
-// tags. The mirroring is what makes it right. A single repo-wide dry run is
+// same question in the same shape: one tag-scoped preview per identity, a renamed
+// entry's names as one, with the same repo-wide fallback when the listing fails or
+// carries no identity tags, and what that pass leaves alone listed as kept. The
+// mirroring is what makes it right. A single repo-wide dry run is
 // cheaper and answers a DIFFERENT question: it would show removals that never
 // happen and hide ones that do, because the per-identity pass is what actually
 // runs.
@@ -2930,7 +2931,7 @@ func (s *Service) foldTag(tag string, snaps []restic.Snapshot, domains []aliasFo
 // previewed and the failures come back alongside the groups that succeeded, so
 // an operator learns about the repositories that answered instead of seeing a
 // bare error for all of them.
-func (s *Service) previewRetentionPerIdentity(ctx context.Context, repo, domain string, p restic.RetentionPolicy, mode restic.Mode) ([]restic.ForgetGroup, []string, error) {
+func (s *Service) previewRetentionPerIdentity(ctx context.Context, repo, domain string, p restic.RetentionPolicy, mode restic.Mode, spared ...string) ([]restic.ForgetGroup, []string, error) {
 	if !p.Any() {
 		return nil, nil, nil
 	}
@@ -2947,24 +2948,41 @@ func (s *Service) previewRetentionPerIdentity(ctx context.Context, repo, domain 
 		if len(held) > 0 {
 			return nil, held.names(), errRetentionPaused(len(held))
 		}
-		groups, pErr := s.engine.ForgetPreview(ctx, repo, p, mode, "")
+		groups, pErr := s.engine.ForgetPreview(ctx, repo, p, mode)
 		return groups, nil, pErr
 	}
 	var out []restic.ForgetGroup
 	var paused []string
 	var errs []error
-	for _, tag := range domainIdentityTags(tags, domain) {
-		if held.holds(tag) {
-			paused = append(paused, tag)
-			out = append(out, restic.ForgetGroup{Tags: []string{tag}, Keep: snapshotsTagged(snaps, tag)})
+	keepAll := func(tag string) {
+		out = append(out, restic.ForgetGroup{Tags: []string{tag}, Keep: snapshotsTagged(snaps, tag)})
+	}
+	kept := slices.DeleteFunc(domainIdentityTags(tags, domain), func(t string) bool {
+		if slices.Contains(spared, t) {
+			keepAll(t)
+			return true
+		}
+		return false
+	})
+	groups, skipped := s.foldAliasedIdentityTags(kept, snaps)
+	for _, tag := range skipped {
+		keepAll(tag)
+	}
+	for _, group := range groups {
+		if held.holdsAny(group) {
+			paused = append(paused, group...)
+			for _, tag := range group {
+				keepAll(tag)
+			}
 			continue
 		}
-		groups, pErr := s.engine.ForgetPreview(ctx, repo, p, mode, tag)
+		name := strings.Join(group, ", ")
+		answer, pErr := s.engine.ForgetPreview(ctx, repo, p, mode, group...)
 		if pErr != nil {
 			errs = append(errs, fmt.Errorf("%s: %w", tag, pErr))
 			continue
 		}
-		for _, g := range groups {
+		for _, g := range answer {
 			// restic reports an ungrouped forget's group with no tags of its own
 			// (cmd_forget.go copies the grouping key, and --group-by "" has none),
 			// so without this every item is labelled as the whole repository.

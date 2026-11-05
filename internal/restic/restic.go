@@ -1315,15 +1315,22 @@ func ForgetPolicyArgs(repo string, p RetentionPolicy, m Mode, tags []string, pru
 // Left out on purpose: --prune (restic would run a full prune dry run, reading
 // the whole index, which is expensive and goes over the network for a remote
 // repo) and --retry-lock (there is no lock to wait for).
-func ForgetPreviewArgs(repo string, p RetentionPolicy, m Mode, tag string) []string {
+func ForgetPreviewArgs(repo string, p RetentionPolicy, m Mode, tags ...string) []string {
 	args := repoFlag(repo)
 	args = append(args, "forget")
 	if !m.Encrypted {
 		args = append(args, insecureFlag)
 	}
 	args = append(args, "--dry-run", "--no-lock", "--json")
-	if tag != "" {
-		args = append(args, "--tag", tag, "--group-by", "")
+	selected := false
+	for _, tag := range tags {
+		if tag != "" {
+			args = append(args, "--tag", tag)
+			selected = true
+		}
+	}
+	if selected {
+		args = append(args, "--group-by", "")
 	} else {
 		args = append(args, "--group-by", "paths")
 	}
@@ -3085,11 +3092,11 @@ func (r Restic) ForgetPolicy(ctx context.Context, repo string, p RetentionPolicy
 // switched off removes nothing, and asking restic anyway would report the whole
 // repository as about to be deleted (forget with no --keep-* flag keeps
 // nothing).
-func (r Restic) ForgetPreview(ctx context.Context, repo string, p RetentionPolicy, m Mode, tag string) ([]ForgetGroup, error) {
+func (r Restic) ForgetPreview(ctx context.Context, repo string, p RetentionPolicy, m Mode, tags ...string) ([]ForgetGroup, error) {
 	if !p.Any() {
 		return nil, nil
 	}
-	out, err := r.run(ctx, ForgetPreviewArgs(repo, p, m, tag), m)
+	out, err := r.run(ctx, ForgetPreviewArgs(repo, p, m, tags...), m)
 	if err != nil {
 		return nil, err
 	}

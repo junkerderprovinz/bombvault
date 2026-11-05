@@ -4,13 +4,11 @@ import { InfoBubble } from "../../../components/InfoBubble";
 import { RetentionPreview } from "../../../components/RetentionPreview";
 import { useT } from "../../../lib/i18n";
 import { Card } from "../shared";
-import { useSettings } from "../settingsStore";
 
 /** RetentionCards point to the storage locations, which hold every keep rule,
  *  and preview what the next run deletes. */
 export function RetentionCards({ nextHue }: { nextHue: () => number }) {
   const { t } = useT();
-  const { settings } = useSettings();
 
   return (
     <div id="retention" className="flex scroll-mt-6 flex-col gap-6 md:gap-10">
@@ -31,7 +29,7 @@ export function RetentionCards({ nextHue }: { nextHue: () => number }) {
           {t("retentionPreview.title")}
           <InfoBubble tip={t("retentionPreview.hint")} />
         </div>
-        <RetentionPreview t={t} hasOffsite={(domain) => settings[`${domain}Offsite`] !== ""} />
+        <RetentionPreview t={t} />
       </Card>
     </div>
   );

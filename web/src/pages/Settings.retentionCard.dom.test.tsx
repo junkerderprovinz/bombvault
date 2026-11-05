@@ -63,6 +63,7 @@ vi.mock("../lib/api", async (importOriginal) => {
     listZFSDatasets: () => Promise.resolve({ ok: true, datasets: [] }),
     getStatus: () => Promise.resolve({ ok: true }),
     listStorageLocations: () => Promise.reject(new Error("offline")),
+    listOffsiteTargets: () => Promise.resolve({ ok: true, targets: [{ id: "t1", name: "B2", repo: "", enabled: true }] }),
     previewRetention: (domain: string, source?: string) => {
       previews.push([domain, source]);
       return Promise.resolve({
@@ -157,7 +158,7 @@ describe("the retention cards of the Storage locations tile", () => {
       fireEvent.click(buttons[0]);
     });
     await waitFor(() => expect(previews).toHaveLength(2));
-    expect(previews).toEqual(expect.arrayContaining([["containers", undefined], ["containers", "offsite"]]));
+    expect(previews).toEqual(expect.arrayContaining([["containers", undefined], ["containers", "offsite:t1"]]));
   });
 });
 

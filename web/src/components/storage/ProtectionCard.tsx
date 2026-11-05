@@ -80,7 +80,14 @@ export function ProtectionCard({ edit, provider, hueIndex }: { edit: LocationEdi
   const targets = copies.flatMap((section) => (section.enabled && section.targetId ? [section.targetId] : []));
   const tamper = useTestVerdict(location.id, t("offsite.tamperError"));
   const takesCopies = location.object === "destination" || location.object === "target";
-  const prunes = pruner(immutable, location.retention);
+  // A section's copy goes by the values the section has, which are the card's
+  // until it holds its own.
+  const copyPruners = new Map<Pruner, string[]>();
+  for (const section of copies) {
+    const by = pruner(section.immutable, section.retention);
+    copyPruners.set(by, [...(copyPruners.get(by) ?? []), t(DOMAIN_LABEL[section.domain])]);
+  }
+  if (copyPruners.size === 0) copyPruners.set(pruner(immutable, location.retention), []);
   const own = new Map<OwnPruner, string[]>();
   for (const section of ownFolderSections(location)) {
     const by = ownPruner(section);
@@ -177,7 +184,13 @@ export function ProtectionCard({ edit, provider, hueIndex }: { edit: LocationEdi
       {takesCopies && (
         <div className="flex flex-col gap-2">
           <span className="text-xs font-semibold uppercase tracking-widest text-carbon-textSub">{t("storage.lock.whoPrunes")}</span>
-          {(copies.length > 0 || own.size === 0) && <p className={`${NOTE} ${NOTE_TONE[PRUNER_TONE[prunes]]}`}>{t(COPY_PRUNER[prunes])}</p>}
+          {(copies.length > 0 || own.size === 0) &&
+            [...copyPruners].map(([by, domains]) => (
+              <p key={by} className={`${NOTE} ${NOTE_TONE[PRUNER_TONE[by]]}`}>
+                {copyPruners.size > 1 && `${formatList(lang, domains)}: `}
+                {t(COPY_PRUNER[by])}
+              </p>
+            ))}
           {[...own].map(([by, domains]) => (
             <p key={by} className={`${NOTE} ${NOTE_TONE[OWN_PRUNER_TONE[by]]}`}>
               {t(OWN_PRUNER[by], domains.length).replace("{domains}", () => formatList(lang, domains))}

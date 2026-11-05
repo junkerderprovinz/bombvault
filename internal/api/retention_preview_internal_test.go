@@ -59,9 +59,9 @@ func (e *previewEngine) Snapshots(_ context.Context, _ string, _ restic.Mode) ([
 	return e.snaps, e.snapsErr
 }
 
-func (e *previewEngine) ForgetPreview(_ context.Context, repo string, _ restic.RetentionPolicy, _ restic.Mode, tag string) ([]restic.ForgetGroup, error) {
+func (e *previewEngine) ForgetPreview(_ context.Context, repo string, _ restic.RetentionPolicy, _ restic.Mode, tags ...string) ([]restic.ForgetGroup, error) {
 	e.previewRepos = append(e.previewRepos, repo)
-	e.previewTags = append(e.previewTags, tag)
+	e.previewTags = append(e.previewTags, strings.Join(tags, ","))
 	return e.previewGroups, e.previewErr
 }
 

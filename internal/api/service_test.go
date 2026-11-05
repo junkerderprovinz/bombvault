@@ -5946,13 +5946,13 @@ func (f *fakeResticEngine) ForgetPolicy(_ context.Context, repo string, p restic
 // recorders rather than reusing forgetTags/prunedRepos: those pin that
 // retention REALLY ran, and a preview must never be able to satisfy an
 // assertion about the repository having been changed.
-func (f *fakeResticEngine) ForgetPreview(_ context.Context, repo string, p restic.RetentionPolicy, m restic.Mode, tag string) ([]restic.ForgetGroup, error) {
+func (f *fakeResticEngine) ForgetPreview(_ context.Context, repo string, p restic.RetentionPolicy, m restic.Mode, tags ...string) ([]restic.ForgetGroup, error) {
 	if !p.Any() {
 		return nil, nil
 	}
 	f.previewRepos = append(f.previewRepos, repo)
 	f.previewModes = append(f.previewModes, m)
-	f.previewTags = append(f.previewTags, tag)
+	f.previewTags = append(f.previewTags, strings.Join(tags, ","))
 	return f.previewGroups, f.previewErr
 }
 

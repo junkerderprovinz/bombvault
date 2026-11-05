@@ -739,10 +739,14 @@ func (e *placementEngine) Prune(_ context.Context, repo string, _ restic.Mode) e
 }
 
 // ForgetPreview keeps every snapshot under the tag.
-func (e *placementEngine) ForgetPreview(_ context.Context, repo string, _ restic.RetentionPolicy, _ restic.Mode, tag string) ([]restic.ForgetGroup, error) {
+func (e *placementEngine) ForgetPreview(_ context.Context, repo string, _ restic.RetentionPolicy, _ restic.Mode, tags ...string) ([]restic.ForgetGroup, error) {
 	e.mu.Lock()
 	defer e.mu.Unlock()
-	return []restic.ForgetGroup{{Tags: []string{tag}, Keep: snapshotsTagged(e.snaps[filepath.ToSlash(repo)], tag)}}, nil
+	var keep []restic.Snapshot
+	for _, tag := range tags {
+		keep = append(keep, snapshotsTagged(e.snaps[filepath.ToSlash(repo)], tag)...)
+	}
+	return []restic.ForgetGroup{{Tags: tags, Keep: keep}}, nil
 }
 
 func (e *placementEngine) Unlock(context.Context, string, bool, restic.Mode) error {

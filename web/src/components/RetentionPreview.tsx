@@ -1,6 +1,6 @@
 import { useId, useState } from "react";
 
-import { previewRetention, type OffsiteDomain, type RetentionPreview as Preview } from "../lib/api";
+import { listOffsiteTargets, previewRetention, type OffsiteDomain, type RetentionPreview as Preview } from "../lib/api";
 import { dbDumpNameOf, isDbDumpIdentity } from "../lib/dbdump";
 import { useT } from "../lib/i18n";
 
@@ -54,8 +54,8 @@ function stamp(iso: string): string {
 type Source = "local" | "offsite";
 
 /** One copy's answer: the preview, the server's refusal, or no off-site copy
- *  to ask about at all. */
-type Part = { preview?: Preview; error?: string; none?: boolean };
+ *  to ask about at all. A copy goes by its name, as a section can have several. */
+type Part = { preview?: Preview; error?: string; none?: boolean; name?: string };
 
 const SOURCES = [
   ["local", "source.local"],
@@ -63,8 +63,8 @@ const SOURCES = [
 ] as const;
 
 /**
- * Shows what the next retention run would remove from a source's local and
- * built-in off-site copies, each beside the policy that decides it.
+ * Shows what the next retention run would remove from a source's local folder
+ * and from each of its off-site copies, each beside the policy that decides it.
  *
  * It asks only when the button is pressed, for two reasons. The cheap one: the
  * Settings page's own tests mock the API module by spreading the real one, so a
@@ -73,23 +73,15 @@ const SOURCES = [
  * a large domain over a cloud backend is minutes. That is a question an
  * operator asks on purpose, not something a page polls.
  */
-export function RetentionPreview({
-  t,
-  hasOffsite,
-}: {
-  t: ReturnType<typeof useT>["t"];
-  /** Whether the domain has a built-in off-site repository to ask about. */
-  hasOffsite: (domain: Domain) => boolean;
-}) {
+export function RetentionPreview({ t }: { t: ReturnType<typeof useT>["t"] }) {
   const sourceId = useId();
   const [domain, setDomain] = useState<Domain>("containers");
   const [busy, setBusy] = useState(false);
-  const [parts, setParts] = useState<Record<Source, Part> | null>(null);
+  const [parts, setParts] = useState<Record<Source, Part[]> | null>(null);
 
-  async function ask(source: Source): Promise<Part> {
-    if (source === "offsite" && !hasOffsite(domain)) return { none: true };
+  async function ask(source?: string): Promise<Part> {
     try {
-      const res = await previewRetention(domain, source === "offsite" ? "offsite" : undefined);
+      const res = await previewRetention(domain, source);
       // The server's own sentence, shown as it came. A refusal like "no
       // backups yet" is the answer, not a failure to report generically.
       if (!res.ok) return { error: res.error || t("retentionPreview.failed") };
@@ -99,11 +91,23 @@ export function RetentionPreview({
     }
   }
 
+  async function askCopies(): Promise<Part[]> {
+    try {
+      const res = await listOffsiteTargets(domain);
+      if (!res.ok) return [{ error: res.error || t("retentionPreview.failed") }];
+      const copies = (res.targets ?? []).filter((target) => target.enabled);
+      if (copies.length === 0) return [{ none: true }];
+      return await Promise.all(copies.map(async (target) => ({ ...(await ask(`offsite:${target.id}`)), name: target.name || target.repo })));
+    } catch (e) {
+      return [{ error: e instanceof Error ? e.message : t("retentionPreview.failed") }];
+    }
+  }
+
   async function run() {
     setBusy(true);
     setParts(null);
-    const [local, offsite] = await Promise.all([ask("local"), ask("offsite")]);
-    setParts({ local, offsite });
+    const [local, offsite] = await Promise.all([ask(), askCopies()]);
+    setParts({ local: [local], offsite });
     setBusy(false);
   }
 
@@ -137,7 +141,9 @@ export function RetentionPreview({
         SOURCES.map(([source, titleKey]) => (
           <section key={source} aria-label={t(titleKey)} className="flex flex-col gap-2">
             <h4 className="text-xs font-semibold text-carbon-textSub uppercase tracking-widest">{t(titleKey)}</h4>
-            <PartView part={parts[source]} t={t} />
+            {parts[source].map((part, i) => (
+              <PartView key={part.name ?? i} part={part} t={t} />
+            ))}
           </section>
         ))}
     </div>
@@ -157,6 +163,7 @@ function PartView({ part, t }: { part: Part; t: ReturnType<typeof useT>["t"] }) 
 
   return (
     <>
+      {part.name && <p className="text-sm font-medium text-carbon-text">{part.name}</p>}
       {preview.policy.on && <p className="text-xs text-carbon-textSub">{policyLine(preview.policy, t)}</p>}
 
       {!preview.policy.on && <p className="text-sm text-carbon-textSub">{t(preview.policy.own ? "retentionPreview.offOwn" : "retentionPreview.off")}</p>}
