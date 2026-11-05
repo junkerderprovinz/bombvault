@@ -126,6 +126,9 @@ func TestSigningInByHandOpensThePlacesOfAKitThatCarriesNone(t *testing.T) {
 	if view.Session.Refusal != "" {
 		t.Errorf("the key still cannot be taken over: %q", view.Session.Refusal)
 	}
+	if view.Session.CloudSignIn {
+		t.Error("a sign-in entered by hand reads as one from the kit, which hides the form for correcting it")
+	}
 }
 
 func TestARefusedSignInReadsAsOneToEnterAgain(t *testing.T) {

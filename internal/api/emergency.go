@@ -92,10 +92,11 @@ type emergencySession struct {
 	rcloneConf            string
 	// signIns are the saved sign-ins of the kit. byHand names the places the
 	// person entered a sign-in for after the kit's did not open them, so those
-	// go by this server's default from then on.
-	signIns []kitSignIn
-	byHand  map[string]bool
-	places  []emergencyPlace
+	// go by handCreds, this server's default, from then on.
+	signIns   []kitSignIn
+	byHand    map[string]bool
+	handCreds CloudCreds
+	places    []emergencyPlace
 	// signInsStored says the kit's sign-ins are this server's, so a place
 	// behind an rclone remote can be looked into.
 	signInsStored bool
@@ -119,6 +120,9 @@ func (sess *emergencySession) signInFor(place string) *kitSignIn {
 
 // credsFor are the keys place is tried with.
 func (sess *emergencySession) credsFor(place string) CloudCreds {
+	if sess.byHand[place] && sess.handCreds != (CloudCreds{}) {
+		return sess.handCreds
+	}
 	if in := sess.signInFor(place); in != nil {
 		return in.creds
 	}
@@ -765,12 +769,8 @@ func (s *Service) TryEmergencyPlacesAgain(ctx context.Context, id string) error 
 	if err != nil {
 		return err
 	}
-	own, err := s.decodeCloud(settings)
-	if err != nil {
+	if sess.handCreds, err = s.decodeCloud(settings); err != nil {
 		return err
-	}
-	if own != (CloudCreds{}) {
-		sess.creds = own
 	}
 	if sess.byHand == nil {
 		sess.byHand = map[string]bool{}
