@@ -27,7 +27,7 @@ Kortet **Vecka** ritar varje planerad körning från måndag till söndag, en ra
 
 Den **Totala säkerhetskopian** är standardplanen för allt. **När säkerhetskopiorna körs** ställer in den: ett pass som säkerhetskopierar varje avsnitt i tur och ordning, containrar, VM:ar, flash, mappar, ZFS-datauppsättningar och auto-säkerhetskopian sist. Raden under säger vilka avsnitt den omfattar. **Av** stänger av den, och då körs bara det som har en egen plan.
 
-- **Kör ikapp missade säkerhetskopieringar efter start**: när servern var avstängd vid en planerad tid kör BombVault den säkerhetskopieringen ungefär två minuter efter att den startat.
+- **Kör ikapp missade säkerhetskopieringar efter start**: när servern var avstängd vid en planerad tid kör BombVault den säkerhetskopieringen ungefär två minuter efter att den startat. En posts egen plan och en off-site-plan väntar på sin nästa planerade tid, och det gör även en plan som aldrig har lyckats.
 - **Kommandon före och efter**: **Kommando före den totala säkerhetskopian** körs på servern med `sh -c` innan passet startar, till exempel ett skript som stoppar en tjänst. Om det misslyckas körs den totala säkerhetskopian ändå. **Kommando efter den totala säkerhetskopian** körs en gång efter att varje avsnitt har provats, även om något av dem misslyckades, vilket passar en ping som bekräftar att hela servern är skyddad. Kommandon för en enskild container finns på dess sida.
 
 **Säkerhetskopiera allt nu** på sidan Säkerhetskopior startar samma pass för hand, över varje påslaget avsnitt.
@@ -58,7 +58,7 @@ Säkerhetskopian hamnar under samma sökvägar och taggar som en som tagits med 
 
 ## Uppdateringar efter säkerhetskopian {#updates}
 
-- **Uppdatera containrar efter en lyckad säkerhetskopiering** hämtar en nyare image först när säkerhetskopian före den är klar, så en färsk återställningspunkt finns alltid först. Det är av som standard, och en enskild container kan ställas in annorlunda på sin sida under **Uppdatera efter en lyckad säkerhetskopiering**.
+- **Uppdatera containrar efter en lyckad säkerhetskopiering** hämtar en nyare image först när säkerhetskopian före den är klar, så en färsk återställningspunkt finns alltid först. Det är av som standard, och en enskild container kan ställas in annorlunda på sin sida under **Uppdatera efter en lyckad säkerhetskopiering**. Bara det du har ställt in följer med till den nya imagen: variabler, etiketter, kommandot, användaren och healthchecken som fortfarande ser ut som i den gamla imagen följer den nya. Om containern inte kan skapas eller startas med den nya imagen går den tillbaka till den image den körde, uppdateringen visas som misslyckad, och nästa säkerhetskopiering försöker igen. En container som blir stående nere av det nämns i säkerhetskopians körning och i en avisering.
 - **Ta bort den gamla imagen efter en uppdatering** raderar den image som containern lämnade. En basimage som andra containrar delar raderas aldrig.
 - **Uppdatera Unraids uppdateringsstatus efter att en container uppdaterats** rensar Unraids uppdateringsbanderoll för den containern.
 

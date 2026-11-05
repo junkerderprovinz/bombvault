@@ -9,10 +9,10 @@ Allt som BombVault säkerhetskopierar står i en enda lista under **Säkerhetsko
 
 | Avsnitt | Vad som sparas |
 |---|---|
-| **Containers** | Appdata-mappen plus containerdefinitionen: image, variabler, portar, etiketter och volymer. Kortet **Säkerhetskopierade mappar** på containerns flik **Inställningar** bockar exakt vilka mappar säkerhetskopian täcker, med en levande räkning av sökvägarna och en lista över det du lämnat utanför. Data som en container håller utanför Host Data, till exempel i en TrueNAS ixVolume, säkerhetskopieras inte, och körningen nämner de mappar den lämnade utanför. |
+| **Containers** | Appdata-mappen plus containerdefinitionen: image, variabler, portar, etiketter och volymer. Kortet **Säkerhetskopierade mappar** på containerns flik **Inställningar** bockar exakt vilka mappar säkerhetskopian täcker, med en levande räkning av sökvägarna och en lista över det du lämnat utanför. Data som en container håller utanför Host Data, till exempel i en TrueNAS ixVolume eller ett Compose-projekt under `/opt`, säkerhetskopieras inte, och körningen nämner de mappar den lämnade utanför. Körningen nämner också en mapp i Host Data som inte finns just nu. Systemsökvägar som `/etc/localtime` eller Docker-socketen räknas inte som data. |
 | **VMs** | Diskavbilderna, XML-definitionen och UEFI NVRAM, med en kontrollerad avstängning eller en live-ögonblicksbild, över SSH. Se [VM-säkerhetskopior](vm-backup-ssh-setup.md). |
 | **Flash** | Bara Unraid. Hela USB-flashen (`/boot`): OS, licens, array-config, resurser, nätverks- och plugin-config. |
-| **Auto-säkerhetskopia** | BombVaults egen `/config`: dess inställningsdatabas, inloggningarna till lagringsmålen och libvirt-SSH-nyckelparet, tagna med SQLites `VACUUM INTO` så att databasen aldrig fångas mitt i en skrivning. |
+| **Auto-säkerhetskopia** | BombVaults egen `/config`: dess inställningsdatabas, inloggningarna till lagringsmålen, libvirt-SSH-nyckelparet, ZFS-servrarnas nyckel och fästa värdnycklar samt certifikaten, tagna med SQLites `VACUUM INTO` så att databasen aldrig fångas mitt i en skrivning. |
 | **Mappar** | Valfri mapp på servern som en mappuppsättning, till exempel en delad resurs, dina dokument eller ett fotobibliotek, med valfria exkluderingsmönster. Mappuppsättningar har scheman, gallring, externa kopior, kontroller och återställningsövningar som allt annat. |
 | **ZFS-datauppsättningar** | En datauppsättning med alla uppsättningar under den, läst från en ZFS-ögonblicksbild så att alla kommer från samma ögonblick, och sparad med restic som en mapp. En ZFS-post kan också hålla en blockexakt replik på en andra ZFS-server. Se [ZFS-datauppsättningar](zfs-datasets.md). |
 
@@ -35,7 +35,7 @@ Poster som inte längre är installerade men som fortfarande har säkerhetskopio
 Sidans huvudåtgärd svävar nere till höger: **Säkerhetskopiera allt nu** startar en körning över varje påslaget avsnitt. **Mer** innehåller resten:
 
 - **Markera** startar ett urval, se nedan.
-- **Identifiera säkerhetskopior** läser vad lagringsmålen innehåller och bygger upp poster av det, till exempel efter en ny installation. Externa kopior av återuppbyggda avsnitt pausas sedan tills du bekräftar deras standard, se [Efter en återuppbyggnad](offsite-recovery.md#after-a-rebuild).
+- **Identifiera säkerhetskopior** läser vad lagringsmålen innehåller och bygger upp poster av det, till exempel efter en ny installation. En container utan egna data har ingen ögonblicksbild, och den kommer tillbaka från definitionen som speglas bredvid repositoriet. Externa kopior av återuppbyggda avsnitt väntar sedan tills du tar över deras säkerhetskopior som den här serverns egna, se [Efter en återuppbyggnad](offsite-recovery.md#after-a-rebuild).
 - **ZFS-anslutning till den här servern** öppnar SSH-testet för ZFS-avsnittet, se [ZFS-datauppsättningar](zfs-datasets.md#requirements).
 - **Replikera allt nu**, med brickan ZFS vald, skickar repliken för varje ZFS-post.
 
@@ -98,7 +98,7 @@ Korten nedanför beror på typen av post:
 | Container | **Säkerhetskopierade mappar** (vilka mappade mappar som säkerhetskopieras, med **Hoppa över cachemappar (CACHEDIR.TAG)**), **Uteslutningsmönster**, **Stoppa andra containrar**, **Kommandon före och efter**, **Databas**, **När appen är upptagen**, **Uppdatera efter en lyckad säkerhetskopiering**, **Ögonblicksbild i stället för stopp**, **Tidigare namn** |
 | VM | **VM** med **Metod** (**Mjuk (avstängning)** eller **Live-ögonblicksbild**) och **Endast ändrade block**, se [guiden för VM-säkerhetskopiering](vm-backup-ssh-setup.md#per-vm-method) |
 | Mappuppsättning | **Mapp** och **Uteslutningsmönster** |
-| Flashenhet | **Flash-ZIP-export**, som skriver ut varje flash-säkerhetskopia som en vanlig `.zip` till en mapp du väljer |
+| Flashenhet | **Flash-ZIP-export**, som skriver ut varje flash-säkerhetskopia som en vanlig `.zip` till en mapp du väljer, i ett enda steg så att ett synkverktyg aldrig ser en halv fil. En flash-säkerhetskopia som innehåller mindre än den borde lämnar den senaste ZIP-filen på plats, och exportens körning säger det. |
 | ZFS-datauppsättning | de underordnade datauppsättningarna, containrarna som ska stoppas och kommandona kring ögonblicksbilden, **Replik** och **Testa åtkomsten till ögonblicksbilder**, se [ZFS-datauppsättningar](zfs-datasets.md) |
 
 Inställningarna sparas av sig själva medan du ändrar dem.
@@ -119,7 +119,7 @@ Inställningarna sparas av sig själva medan du ändrar dem.
 
 ## Uteslutningsmönster {#excludes}
 
-Kortet **Uteslutningsmönster** tar ett mönster per rad. Skriv sökvägar som du ser dem inne i containern, till exempel `/config/Library/Application Support/Plex Media Server/Cache`, eller ett enkelt namn som `.git`, som matchar på vilket djup som helst. En förhandsvisning under fältet visar vad varje rad blir, och varnar när en rad inte matchar något eller skulle utesluta allt. En rad med `/` eller `*`, eller en som nämner en hel säkerhetskopierad mapp, ignoreras, så en uteslutning kan aldrig tömma en säkerhetskopia. För att lämna en hel mapp utanför bockar du ur den under **Säkerhetskopierade mappar** i stället.
+Kortet **Uteslutningsmönster** tar ett mönster per rad. Skriv sökvägar som du ser dem inne i containern, till exempel `/config/Library/Application Support/Plex Media Server/Cache`, eller ett enkelt namn som `.git`, som matchar på vilket djup som helst. För en mappuppsättning skriver du sökvägen som värden känner den, till exempel `/mnt/user/data/cache`. En förhandsvisning under fältet visar vad varje rad blir, och varnar när en rad inte matchar något eller skulle utesluta allt. En rad med `/` eller `*`, eller en som nämner en hel säkerhetskopierad mapp, ignoreras, så en uteslutning kan aldrig tömma en säkerhetskopia. För att lämna en hel mapp utanför bockar du ur den under **Säkerhetskopierade mappar** i stället.
 
 För välkända images som Plex, Jellyfin, Sonarr, Radarr, Immich och Nextcloud erbjuder kortet de mappar som appen fyller på igen av sig själv, till exempel cachar, loggar och miniatyrer. Ingenting utesluts förrän du trycker på **Undanta markerade**.
 
@@ -137,6 +137,8 @@ En misslyckad dump får inte säkerhetskopian att misslyckas. Den visas som en e
 
 - **Kommandon före och efter** körs inuti containern med `sh -c`, till exempel för att tömma en cache till disk. Ett kommando före säkerhetskopian som misslyckas avbryter den. Ett kommando före säkerhetskopian som avslutas med kod 75 skjuter i stället upp en schemalagd säkerhetskopiering, se nedan.
 - **Stoppa andra containrar** nämner containrar som ska stoppas medan den här säkerhetskopieras, till exempel dess databas. Efteråt startar de igen i sin Compose-`depends_on`-ordning, och som standard måste var och en rapportera frisk innan nästa startar. Väntan och dess tidsgräns finns under **Starta om efter säkerhetskopiering** i kortet **Ordning** under **Inställningar, Schema**.
+- En container som delar nätverks-, PID- eller IPC-namnrymd med en som stoppas, genom `--net=container:` eller Composes `network_mode: service:`, stoppas och startas med den även när den inte står på listan, och den startar efter containern den ansluter till. En omstartad container får ett nytt nätverk, och en som lämnades igång på det gamla nätverket skulle bara ha sin loopback. Själva listan förblir som du ställde in den. Om en sådan container inte kunde stoppas säger körningen att den saknar nätverk tills den startas om. Detsamma gäller BombVaults egen container, som aldrig stoppar sig själv och inte kan läggas på listan.
+- En container som inte körs igen efteråt nämns i körningen och i en avisering, även när själva säkerhetskopieringen misslyckades.
 
 ## När appen är upptagen {#app-busy}
 
@@ -177,7 +179,7 @@ För din egen kontroll låter du **Kommando före säkerhetskopiering** avsluta 
 restic förblir motorn, men en export ger dig en kopia som varken behöver BombVault eller restic.
 
 - **Exportera container** och **Exportera VM** under **Mer** på en posts sida skriver en kopia som den är just nu, bredvid repositoriet: containerns säkerhetskopierade mappar plus dess Unraid-mall, eller VM:ens diskavbilder plus dess definition, möjlig att återställa med `virsh define`.
-- **Exportera** på en ögonblicksbild skriver en lagrad säkerhetskopia till exportmappen på servern, som tar, zip eller ett eget restic-repositorium, och kan ta en ögonblicksbild eller alla.
+- **Exportera** på en ögonblicksbild skriver en lagrad säkerhetskopia till exportmappen på servern, som tar, zip eller ett eget restic-repositorium, och kan ta en ögonblicksbild eller alla. En flash-säkerhetskopia och en auto-säkerhetskopia innehåller nycklar, så export av en sådan kräver ett inloggningslösenord och en inloggning på instansen.
 
 Exporter är vanliga filer som standard. **Kryptera exporter med age** under **Inställningar, System** förseglar dem, flash-ZIP-filen inkluderad, för de mottagare du listar, var och en en publik age-nyckel eller en publik SSH-nyckel. Du dekrypterar dem senare utanför lådan med den matchande privata nyckeln. Med kryptering på och utan giltig mottagare misslyckas en export med ett tydligt fel i stället för att någonsin skriva vanliga filer.
 

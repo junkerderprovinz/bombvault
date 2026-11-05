@@ -11,7 +11,7 @@ Den här sidan listar varje bricka och dess kort, och länkar till sidan som fö
 
 ## Allmänt {#general}
 
-- **Avsnitt** slår på eller av varje avsnitt: **Containers**, **VMs**, **Flash**, **Mappar**, **ZFS-datauppsättningar** och **Auto-säkerhetskopia**. Ett avsnitt som är av säkerhetskopieras inte, och dess poster räknas inte. **Flash** visas bara på Unraid.
+- **Avsnitt** slår på eller av varje avsnitt: **Containers**, **VMs**, **Flash**, **Mappar**, **ZFS-datauppsättningar** och **Auto-säkerhetskopia**. Ett avsnitt som är av säkerhetskopieras inte enligt något schema, inte heller enligt en posts egen plan, och dess poster räknas inte. **Säkerhetskopiera nu** fungerar fortfarande. **Flash** visas bara på Unraid.
 - **Containers** innehåller det som gäller för alla containrar, till exempel **Automatiska databasdumpar**. Allt som rör en enda container finns på dess sida. Se [Databasdumpar](backups.md#database-dumps).
 
 ## Utseende {#look}
@@ -97,6 +97,6 @@ Flera saker kräver ett inloggningslösenord, till exempel återställningskitet
 
 ## Info {#info}
 
-- **Version**: BombVault, GlimStone, restic och rclone, med **Sök efter uppdateringar** och **Ny**, som räknar de ändringar du inte sett än och öppnar **Nyheter**.
+- **Version**: BombVault, GlimStone, restic och rclone, med **Sök efter uppdateringar** och **Ny**, som räknar de ändringar du inte sett än och öppnar ett fönster som listar dem.
 - **Hjälp**: **Manual** öppnar den här dokumentationen, och **Felrapport** laddar ner en redigerad ZIP-fil för ett GitHub-ärende. Den kräver ett inloggningslösenord.
 - **Om BombVault**: projektet, dess licens och hur du når upphovsmannen.

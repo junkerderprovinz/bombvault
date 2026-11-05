@@ -81,8 +81,25 @@ docker exec BombVault virsh -c "qemu+ssh://root@192.168.1.10:22/system?keyfile=/
 
 Varje VM har en **Metod** i kortet **VM** på sin flik Inställningar (öppna VM:en under **Säkerhetskopior**):
 
-- **Mjuk (avstängning)** är standard. Den stänger av VM:en, säkerhetskopierar diskarna och startar den igen, så säkerhetskopian är alltid konsekvent. Den väntar upp till tio minuter på att gästen ska stängas av och tvingar den aldrig. En gäst som fortfarande kör efter det lämnas ifred, och den säkerhetskopian misslyckas med orsaken.
-- **Live-ögonblicksbild** säkerhetskopierar en körande VM via en extern ögonblicksbild och `blockcommit`. Den behöver qemu guest agent i VM:en, för en vilande ögonblicksbild, och disken på `/mnt/cache` eller `/mnt/diskX`, inte `/mnt/user`. På en VM som är avstängd faller Live tillbaka på Mjuk av sig själv, och när ögonblicksbilden inte kan göras faller den också tillbaka.
+- **Mjuk (avstängning)** är standard. Den stänger av VM:en, säkerhetskopierar diskarna och startar den igen, så säkerhetskopian är alltid konsekvent. Den väntar upp till tio minuter på att gästen ska stängas av och tvingar den aldrig. En gäst som fortfarande kör efter det lämnas ifred, och den säkerhetskopian misslyckas med orsaken. Om gästen stängs av inom den närmaste timmen startar BombVault den igen. Om den starten misslyckas säger den misslyckade körningen det.
+- **Live-ögonblicksbild** säkerhetskopierar en körande VM via en extern ögonblicksbild och `blockcommit`. Den behöver disken på `/mnt/cache` eller `/mnt/diskX`, inte `/mnt/user`. Med qemu guest agent i VM:en blir ögonblicksbilden vilande, och utan den är ögonblicksbilden kraschkonsistent. På en VM som är avstängd faller Live tillbaka på Mjuk av sig själv. När ögonblicksbilden inte kan göras misslyckas den säkerhetskopian och VM:en fortsätter att köra, eftersom en VM som du valt att säkerhetskopiera live aldrig stängs av för det.
+
+## Vad en säkerhetskopia utelämnar {#left-out}
+
+En säkerhetskopiering kan lyckas och ändå inte innehålla hela VM:en. Körningen har då en anteckning i varningston som nämner vad som saknas:
+
+- **Diskar som BombVault inte läser.** En skrivskyddad disk, en `lun` och en `network`- eller `volume`-disk utelämnas, och anteckningen nämner var och en med sin målenhet och typ. Definitionen i säkerhetskopian listar dem fortfarande. En cdrom och en diskett nämns inte. En vanlig blockenhet som inte är en ZFS-zvol får i stället säkerhetskopieringen att misslyckas.
+- **Tillståndet för en emulerad TPM.** Det har ingen sökväg i domänens XML. Unraid VM Manager sätter upp en sådan TPM för en VM med BIOS:et **OVMF TPM**, så anteckningen visas även på Unraid. En gäst som har en hemlighet i sin TPM, som BitLocker kan ha, kan fråga efter sin återställningsnyckel efter en återställning som förlorar det tillståndet, så ha den nyckeln till hands.
+
+## Tunna diskar {#thin-disks}
+
+En återställning håller en tunn disk tunn, oavsett om den ersätter disken eller skriver en ny: restic skriver nollsekvenser som hål i en ny fil, och BombVault lämnar tillbaka nollblocken i en ersatt fil med `fallocate --dig-holes` när den är skriven. Medan restic ersätter en fil tar filen sin fulla storlek, om poolen har plats för det. Ett filsystem utan stöd för hålstansning behåller disken i full storlek, och loggen säger det. Platskontrollen räknar ändå en ny disk med full storlek.
+
+## En återställning som misslyckas {#restore-fails}
+
+En återställning på plats stänger av VM:en, skriver diskarna och ersätter definitionen och NVRAM först när diskarna är skrivna. En återställning som misslyckas lämnar VM:en definierad med sitt NVRAM. Om dess diskar inte ändrades och den körde, körs den igen. Om de kan ha ändrats förblir den avstängd, eftersom en uppstart från en halvskriven disk skulle skriva ovanpå den, och körningen säger det. Att återställa samma säkerhetskopia igen gör klart jobbet.
+
+Ögonblicksbilder som libvirt har registrerade, vilket inte är så Unraid VM Manager gör dem, stoppar en återställning på plats innan VM:en rörs, eftersom libvirt inte kan ta bort en VM som har sådana. Radera dem först.
 
 ## Endast ändrade block {#changed-blocks}
 
@@ -112,6 +129,7 @@ BombVault säkerhetskopierar en sådan VM fullständigt:
 - **En live-säkerhetskopia behåller ögonblicksbilderna.** **Live-ögonblicksbild** lägger ett tillfälligt överlägg överst medan den läser disken och slår ihop det igen efteråt, bara in i avbilden precis under. Kedjan är densamma efter säkerhetskopian som före den. En VM utan ögonblicksbilder beter sig som den alltid gjort.
 - **En återställning för tillbaka kedjan.** En återställning på plats skriver tillbaka varje fil där den låg och lägger tillbaka Unraids ögonblicksbildslista, så VM Manager listar ögonblicksbilderna igen. En återställning bredvid originalet skriver filerna i kopians mapp och pekar de återställda diskarna på de återställda filerna, så kopian aldrig läser från originalets avbilder. Unraids ögonblicksbildslista kommer tillbaka bara med en återställning på plats, eftersom den nämner filerna där de säkerhetskopierades. Utan den startar kopian likadant, och VM Manager listar bara inga ögonblicksbilder för den.
 - **Endast ändrade block** läser det gästen ser, så dess återställning kommer tillbaka som en tillplattad qcow2-fil utan ögonblicksbilderna.
+- **En återställning ger tillbaka disken från den säkerhetskopia du väljer.** Ögonblicksbilder som tagits eller slagits ihop sedan den säkerhetskopian ändrar inte det. En säkerhetskopia från före en ögonblicksbild definierar VM:en på filen den innehåller, och en säkerhetskopia från före en sammanslagning ger tillbaka sitt överlägg och kör på det. Nyare filer blir kvar där de är, oanvända och oförändrade. En säkerhetskopia som innehåller ett överlägg men inte filen under det nekas innan VM:en rörs. VM:ens definition listar ingen kedja efter en återställning, så libvirt läser kedjan från de återställda filerna.
 
 ### Exempel: en VM med två ögonblicksbilder {#example-unraid-snapshots}
 
@@ -199,10 +217,10 @@ Fildiskar, som Unraid använder, påverkas inte alls av detta.
 En VM kan ha en virtuell TPM, som Secure Boot och Windows 11-gäster behöver. Dess tillstånd ligger utanför disken och NVRAM, så en säkerhetskopia av bara de två skulle ge tillbaka en gäst med en ny, tom TPM.
 
 - **En genomkopplad TPM**, ett riktigt chip som släpps igenom till gästen, nämner sin sökväg i domänens XML. BombVault sparar dess tillstånd bredvid NVRAM över SSH och skriver tillbaka det före `virsh define`, efter bästa förmåga som NVRAM: en misslyckad läsning eller skrivning loggas och får inte säkerhetskopian eller återställningen att misslyckas.
-- **En emulerad vTPM**, den sort TrueNAS sätter upp för Windows 11- och Secure Boot-gäster, publicerar ingen tillståndssökväg i domänens XML. BombVault rapporterar då "no TPM path found" i stället för att gissa en sökväg. Ha en sådan gästs återställningsnyckel, till exempel dess BitLocker-nyckel, till hands innan du återställer den.
+- **En emulerad vTPM**, den sort TrueNAS sätter upp för Windows 11- och Secure Boot-gäster, publicerar ingen tillståndssökväg i domänens XML, så dess tillstånd säkerhetskopieras inte. BombVault gissar ingen sökväg, och säkerhetskopieringen avslutas med en anteckning om att tillståndet för VM:ens TPM inte finns i den. Ha en sådan gästs återställningsnyckel, till exempel dess BitLocker-nyckel, till hands innan du återställer den.
 - **Du kan inte själv koppla en TPM till en TrueNAS-VM.** TrueNAS SCALE 25.10:s API för VM-enheter accepterar bara `CDROM`, `DISPLAY`, `NIC`, `PCI`, `RAW`, `DISK` och `USB`, och nekar `TPM` som en okänd typ.
 
-TPM-hanteringen är bara enhetstestad och har inte körts mot en riktig TrueNAS-gäst med en vTPM. En VM utan TPM, som på Unraid, säkerhetskopieras och återställs precis som förut.
+TPM-hanteringen är bara enhetstestad och har inte körts mot en riktig TrueNAS-gäst med en vTPM. En VM utan TPM säkerhetskopieras och återställs precis som förut.
 
 NVRAM fångas som vanligt. TrueNAS håller det per VM på `/var/db/system/vm/nvram/<id>_<name>_VARS.fd`, och domänens XML nämner den sökvägen.
 

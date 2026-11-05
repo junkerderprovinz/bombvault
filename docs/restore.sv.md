@@ -21,7 +21,7 @@ Varje återställning börjar på sidan **Återställning**: välj ett avsnitt, 
 
 Ett klick på en post öppnar **Återställning** med dess namn. Det frågar i steg, och varje steg kan ändras innan du startar:
 
-1. **Säkerhetskopia**: den rekommenderade ögonblicksbilden är förvald. Det är den nyaste, eller efter en öppen avvikelse den sista före den. Äldre finns i listan, och **Jämför** visar vad som skiljer mellan två av dem.
+1. **Säkerhetskopia**: den rekommenderade ögonblicksbilden är förvald. Det är den nyaste, eller efter en öppen avvikelse den sista före den. Säkerhetskopian som togs före en tidigare återställning innehåller det läge som den återställningen ersatte, så den hoppas över om det inte finns någon annan. Äldre finns i listan, och **Jämför** visar vad som skiljer mellan två av dem.
 2. **Källa**: var filerna kommer ifrån, när en ögonblicksbild ligger på flera ställen. **Lokal** är snabbast.
 3. **Vad**: **Alla**, eller **Enskilda filer**, där du bockar för de filer och mappar du vill ha.
 4. **Vart**: målet. Valen beror på typen av post:
@@ -29,7 +29,7 @@ Ett klick på en post öppnar **Återställning** med dess namn. Det frågar i s
     | Mål | Vad det gör |
     |---|---|
     | **Bredvid originalet** | Standard. En container kommer tillbaka som en andra container med namnet `<name>-restored` och egna portar, en VM:s diskar och NVRAM hamnar i en mapp som heter `<folder>-restored`, och en mappuppsättning kommer tillbaka som `<path>-restored`. Ingenting ändras på originalet. |
-    | **Ersätt originalet** | Skriver över det som finns nu. Med **Säkerhetskopiera nuvarande läge först**, som är på som standard, säkerhetskopierar BombVault först dagens läge så att du kan gå tillbaka. Om den säkerhetskopian misslyckas startar inte återställningen. |
+    | **Ersätt originalet** | Skriver över det som finns nu. Med **Säkerhetskopiera nuvarande läge först**, som är på som standard, säkerhetskopierar BombVault först dagens läge så att du kan gå tillbaka. Om den säkerhetskopian misslyckas startar inte återställningen. Det fungerar också för en container eller VM som inte längre finns på servern: mapparna som återställningen skriver över säkerhetskopieras var för sig. |
     | **Till en mapp** | Bara filerna, för att bläddra bland dem. |
     | **Ladda ned som ZIP** | Flashenheten, för en ny sticka. BombVault skriver aldrig in i den körande flashenheten. |
     | **Till en ny datauppsättning** och **Återställ in i datauppsättningen** | ZFS-datauppsättningar, se [ZFS-datauppsättningar](zfs-datasets.md#restore). |
@@ -40,11 +40,11 @@ Innan **Återställ** låses upp kontrollerar fönstret att repositoriet svarar,
 
 Fönstret visar också vad återställningen ändrar jämfört med det som finns nu: nya, ersatta och oförändrade filer, med listan på begäran, och de filer på målet som inte finns i säkerhetskopian och som stannar där de är. restic räknar ut det som en torrkörning från storlek och ändringstid, utan att läsa filerna, och ett mycket stort träd avbryts efter 30 sekunder och säger det. För containrar och VM:ar jämför det de inställningar som återställningen återskapar med de körande: image och tagg, portar, variabelnamn och volymer, eller minne, vCPU:er, diskar och nätverk.
 
-Några saker kan stoppa en återställning innan den ändrar något. En containers statiska IP och publicerade portar måste vara lediga, och dess nätverk måste finnas. En återställning på plats nämner varje annan container vars bind-montering når in i en mapp som den skriver till, till exempel "den här sökvägen används också av nextcloud-db", men det är bara en varning.
+Några saker kan stoppa en återställning innan den ändrar något. En containers statiska IP och publicerade portar måste vara lediga, och dess nätverk måste finnas. På Unraid nekar varje återställning på plats en mapp som inte ligger på en monterad pool eller share, eftersom filerna skulle hamna i minnet och vara borta efter en omstart. En återställning på plats nämner varje annan container vars bind-montering når in i en mapp som den skriver till, till exempel "den här sökvägen används också av nextcloud-db", men det är bara en varning.
 
 Några alternativ visas där de gäller: **Lämna stoppad efteråt**, för att titta på en container eller VM innan den körs igen, och **Återställ utan GPU och runtime** på en värd som saknar den GPU eller runtime som säkerhetskopian gjordes med.
 
-Återställningen körs i bakgrunden. Du kan stänga fönstret, och förloppet visas också under **Körs nu**. En lång återställning visar en procentsats och kan avbrytas, och en avbruten återställning loggas som avbruten, inte som misslyckad.
+Återställningen körs i bakgrunden. Du kan stänga fönstret, och förloppet visas också under **Körs nu**. En lång återställning visar en procentsats och kan avbrytas, och en avbruten återställning loggas som avbruten, inte som misslyckad. En återställning som avbryts medan containern stoppas, eller en som inte kan ta bort containern, har inte återställt något än, så containern startar igen. En container som tar sina volymer från en annan med `--volumes-from` behåller dem, och återställningen vägrar att börja så länge den andra containern inte finns.
 
 ![Återställningsfönstret vid steget Vad, med enskilda filer ibockade.](assets/screenshots/restore/window-what-dark.png#only-dark)
 ![Återställningsfönstret vid steget Vad, med enskilda filer ibockade.](assets/screenshots/restore/window-what-light.png#only-light)
@@ -66,7 +66,7 @@ Någon redigerade Nextclouds `config.php` i natt och Nextcloud startar inte län
 
 Fönstret slutar med **Klart: filerna ligger i /mnt/user/restore**. Du hittar filen som `/mnt/user/restore/config.php`, utan mapparna ovanför. Jämför den med den trasiga, kopiera tillbaka den till appdata-mappen och starta om Nextcloud.
 
-Om du hellre vill lägga tillbaka filen direkt väljer du **Ersätt originalet** i steg 5. Låt **Säkerhetskopiera nuvarande läge först** vara på, så att BombVault säkerhetskopierar det trasiga läget innan det skriver, skriv `nextcloud` för att bekräfta och tryck på **Återställ**. Nextcloud stoppas medan den valda filen skrivs tillbaka till sin plats, och bara de filer du bockat för skrivs.
+Om du hellre vill lägga tillbaka filen direkt väljer du **Ersätt originalet** i steg 5. Låt **Säkerhetskopiera nuvarande läge först** vara på, så att BombVault säkerhetskopierar det trasiga läget innan det skriver, skriv `nextcloud` för att bekräfta och tryck på **Återställ**. Nextcloud stoppas medan den valda filen skrivs tillbaka till sin plats och startas igen efteråt, och bara de filer du bockat för skrivs. En återställning som misslyckas halvvägs lämnar Nextcloud stoppad, eftersom filen den läser kan vara halvskriven, och körningen säger det.
 
 ![Återställningsfönstret vid Vad som händer, med Ersätt originalet valt.](assets/screenshots/restore/window-replace-dark.png#only-dark)
 ![Återställningsfönstret vid Vad som händer, med Ersätt originalet valt.](assets/screenshots/restore/window-replace-light.png#only-light)
@@ -75,11 +75,13 @@ Om du hellre vill lägga tillbaka filen direkt väljer du **Ersätt originalet**
 
 **Containrar** återskapas från sin sparade definition via Docker-API:et, med sin entrypoint, värdnamn, stoppinställningar, volymer och monteringar, resursgränser, loggdrivrutin, DNS-inställningar och äldre länkar. En container kommer tillbaka på den image den körde när säkerhetskopian togs, inte på en nyare som hämtats senare, och en image som saknas hämtas först, med inloggningen från **Container-register** under **Inställningar, Återställning**. Dess GPU eller runtime (`--gpus`, `--runtime=nvidia`) kommer också tillbaka. På en värd utan den drivrutinen eller runtime säger återställningen det och erbjuder **Återställ utan GPU och runtime**. En länk till en container som saknas, eller som är stoppad när den återställda startar, utelämnas, och körhistoriken säger det. En återställning som misslyckas efter att containern tagits bort lägger tillbaka den, stoppad.
 
+En säkerhetskopia kan innehålla mappar som containern inte längre har valda, till exempel en äldre som togs innan en mapp försvann. En mapp som är borta eller tom kommer tillbaka. En som innehåller filer nu förblir som den är, eftersom du kan ha bockat ur den med avsikt, och kontrollen före återställningen och körhistoriken nämner den. Få tillbaka den med **Enskilda filer** eller **Till en mapp**.
+
 **VM:ar** får sin XML definierad på nytt över SSH och sina diskar och UEFI NVRAM återkopplade, även efter att VM:en har raderats. Se [VM-säkerhetskopior](vm-backup-ssh-setup.md) för VM:ar med Unraid-ögonblicksbilder och diskar på zvols.
 
-**Mappuppsättningar** kommer tillbaka med sitt ägarskap, sina behörigheter och sina tidsstämplar som restic lagrar dem.
+**Mappuppsättningar** kommer tillbaka med sitt ägarskap, sina behörigheter och sina tidsstämplar som restic lagrar dem. Där målet bara vägrar ägarskapet, som `/mnt/user` gör, slutar körningen med en anteckning som säger det. BombVault jämför sedan filerna med säkerhetskopian, och en fil som inte kom fram får återställningen att misslyckas.
 
-**Flashenheten** rör aldrig den levande `/boot`. Återställningen är en nedladdning som heter `flash-<id>.zip`, redo att släppas in i Unraid USB Creator. Fönstret listar också pluginen i varje flash-säkerhetskopia med version och storlek, och kan lägga tillbaka ett enskilt i den körande flashen: dess `.plg`-fil, dess mapp under `config/plugins` och de paketfiler som säkerhetskopian innehåller. Unraid installerar det vid nästa uppstart, eller direkt under **Plugins, Install Plugin**.
+**Flashenheten** rör aldrig den levande `/boot`. Återställningen är en nedladdning som heter `flash-<id>.zip`, redo att släppas in i Unraid USB Creator. ZIP-filen innehåller `APP_KEY`, så att ladda ner den kräver ett inloggningslösenord och en inloggning på instansen. Fönstret listar också pluginen i varje flash-säkerhetskopia med version och storlek, och kan lägga tillbaka ett enskilt i den körande flashen: dess `.plg`-fil, dess mapp under `config/plugins` och de paketfiler som säkerhetskopian innehåller. Unraid installerar det vid nästa uppstart, eller direkt under **Plugins, Install Plugin**.
 
 **ZFS-datauppsättningar** har egna mål och behåller sina ZFS-egenskaper, se [Återställning](zfs-datasets.md#restore).
 
@@ -102,6 +104,10 @@ Varje post kontrolleras som en enskild återställning, och sedan körs de en ef
 ## Återställa en stack {#stacks}
 
 Ett klick på en stack i kortet **Stackar** öppnar **Återställ stack**. Den återställer varje medlem från sin senaste säkerhetskopia samtidigt, och med **Starta i beroendeordning efter återställning** startar den dem i deras `depends_on`-ordning: databaser och cachar först, sedan appen. När en medlems projektmapp saknas på den plats du valt erbjuder fönstret läget från Lokal i stället.
+
+BombVault kontrollerar medlemmarna och projektmappen först, och en återställning som inte kunde fungera ändrar ingenting. Annars stoppar den de körande medlemmarna, apparna före deras databaser, skriver sedan projektmappen och återställer sedan medlemmarna. Om projektmappen inte kommer tillbaka återställs medlemmarna ändå men förblir stoppade, eftersom mappen kan vara halvskriven och det är där en medlems bind-monteringar oftast ligger. Varje medlems körning säger det.
+
+En databas som bara har databasdumpar och ingen filsäkerhetskopia, och vars container och namngivna volym är borta, kommer tillbaka utan sina data. Kontrollen säger det före återställningen. Den förblir stoppad, och det gör även containrarna som beror på den, så att ingen app kör sin installation mot en tom databas. Starta den, importera en dump och starta de andra. Se [Databasdumpar](backups.md#database-dumps).
 
 ## Andra källor {#other-sources}
 

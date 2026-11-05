@@ -23,7 +23,7 @@ Varje container, VM, mappuppsättning, flashenheten, varje ZFS-datauppsättning 
 | **Containers** | Appdata-katalogen plus containerdefinitionen (image, miljövariabler, portar, etiketter, volymer). |
 | **VMs** | VM-diskavbild(er), XML-definitionen och UEFI NVRAM, säkerhetskopierade över SSH (ingen libvirt-montering). |
 | **Flash** | Hela USB-flashen (`/boot`): OS, licens, array-config, resurser, nätverks- och plugin-config. |
-| **Auto-säkerhetskopia** | BombVaults egen `/config`: dess inställningsdatabas, inloggningarna till dess mål och libvirt-SSH-nyckelparet. |
+| **Auto-säkerhetskopia** | BombVaults egen `/config`: dess inställningsdatabas, inloggningarna till dess mål, libvirt-SSH-nyckelparet, ZFS-servrarnas nyckel och fästa värdnycklar samt certifikaten. |
 | **Mappar** | Valfri mapp på servern som en mappuppsättning, var och en med valfria exkluderingsmönster. |
 | **ZFS-datauppsättningar** | En datauppsättning med alla uppsättningar under den, läst från en ZFS-ögonblicksbild och sparad som en mapp. Se [ZFS-datauppsättningar](zfs-datasets.md). |
 
@@ -102,4 +102,4 @@ Namnet och varumärket omfattas inte av licensen. AGPL täcker endast källkoden
 - **Ärenden:** [github.com/junkerderprovinz/bombvault/issues](https://github.com/junkerderprovinz/bombvault/issues)
 
 !!! warning "Root-likvärdig kontroll över värden"
-    Via Docker-socketen kan BombVault stoppa, ta bort och återskapa containrar och läsa/skriva appdata, och för VM-säkerhetskopiering loggar den in på värden över SSH för att köra `virsh`. Vem som helst som kan nå dess webbgränssnitt har i praktiken root på värden. Kör BombVault endast på ett betrott, icke-exponerat nätverk, och sätt ett inloggningslösenord under **Inställningar, Säkerhet**. Återställningskitet, nyckeldepositioner och borttagning av säkerhetskopior på ett mål kräver ett. Se [Konfiguration](configuration.md#security-model) för hela säkerhetsmodellen.
+    Via Docker-socketen kan BombVault stoppa, ta bort och återskapa containrar och läsa/skriva appdata, och för VM-säkerhetskopiering loggar den in på värden över SSH för att köra `virsh`. Vem som helst som kan nå dess webbgränssnitt har i praktiken root på värden. Kör BombVault endast på ett betrott, icke-exponerat nätverk, och sätt ett inloggningslösenord under **Inställningar, Säkerhet**. Återställningskitet, nyckeldepositioner, flash-ZIP-filen, export av en flash- eller auto-säkerhetskopia och borttagning av säkerhetskopior på ett mål kräver ett. Se [Konfiguration](configuration.md#security-model) för hela säkerhetsmodellen.
