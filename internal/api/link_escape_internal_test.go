@@ -38,6 +38,20 @@ func TestARestoreStopsAtALinkPlantedAfterItsPlan(t *testing.T) {
 	}
 }
 
+// stackSvcWithRepo is stackSvc with its containers repository on disk.
+func stackSvcWithRepo(t *testing.T, eng *stackEngine) *Service {
+	t.Helper()
+	s := stackSvc(t, eng)
+	repo := filepath.Join(filepath.FromSlash(s.cfg.HostMountRoot), "backups", "containers")
+	if err := os.MkdirAll(repo, 0o750); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(repo, "config"), []byte("x"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	return s
+}
+
 func TestStackRestoreRefusesARecordedPathOutsideTheMount(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("paths.Within only reads Linux paths")
@@ -46,7 +60,7 @@ func TestStackRestoreRefusesARecordedPathOutsideTheMount(t *testing.T) {
 		ID: strings.Repeat("a", 64), Time: "2026-11-05T00:00:00Z", Tags: []string{stackSnapshotTag("immich")}, Paths: []string{"/host/boot/config"},
 	}}}
 
-	ok, err := stackSvc(t, eng).RestoreStackDir(context.Background(), "immich", "")
+	ok, err := stackSvcWithRepo(t, eng).RestoreStackDir(context.Background(), "immich", "")
 
 	if ok || err == nil || !strings.Contains(err.Error(), "outside the host mount") {
 		t.Fatalf("RestoreStackDir = %v, %v, want a refusal", ok, err)
@@ -61,7 +75,7 @@ func TestStackRestoreStillRestoresAPathInsideTheMount(t *testing.T) {
 		t.Skip("paths.Within only reads Linux paths")
 	}
 	eng := &stackEngine{}
-	s := stackSvc(t, eng)
+	s := stackSvcWithRepo(t, eng)
 	eng.snaps = []restic.Snapshot{{
 		ID: strings.Repeat("a", 64), Time: "2026-11-05T00:00:00Z", Tags: []string{stackSnapshotTag("immich")}, Paths: []string{s.cfg.HostMountRoot + "/appdata/immich"},
 	}}
