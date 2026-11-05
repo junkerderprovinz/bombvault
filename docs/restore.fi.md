@@ -21,7 +21,7 @@ Jokainen palautus alkaa **Palautus**-sivulta: valitse osio, hae haluamasi ja val
 
 Merkinnän napsautus avaa **Palauta**-ikkunan, jossa on sen nimi. Ikkuna kysyy vaiheittain, ja jokaista vaihetta voi muuttaa ennen aloitusta:
 
-1. **Varmuuskopio**: suositeltu tilannevedos on valittu valmiiksi. Se on uusin tai avoimen poikkeaman jälkeen viimeinen ennen sitä. Vanhemmat ovat listassa, ja **Vertaa** näyttää, mikä kahden välillä eroaa.
+1. **Varmuuskopio**: suositeltu tilannevedos on valittu valmiiksi. Se on uusin tai avoimen poikkeaman jälkeen viimeinen ennen sitä. Aiempaa palautusta ennen otettu varmuuskopio sisältää tilan, jonka se palautus korvasi, joten se ohitetaan, ellei muuta ole. Vanhemmat ovat listassa, ja **Vertaa** näyttää, mikä kahden välillä eroaa.
 2. **Lähde**: mistä tiedostot tulevat, kun tilannevedos on useassa paikassa. **Paikallinen** on nopein.
 3. **Mitä**: **Kaikki** tai **Yksittäiset tiedostot**, jolloin valitset haluamasi tiedostot ja kansiot.
 4. **Minne**: kohde. Vaihtoehdot riippuvat merkinnän lajista:
@@ -29,7 +29,7 @@ Merkinnän napsautus avaa **Palauta**-ikkunan, jossa on sen nimi. Ikkuna kysyy v
     | Kohde | Mitä se tekee |
     |---|---|
     | **Alkuperäisen viereen** | Oletus. Kontti palautuu toisena konttina nimellä `<name>-restored` omilla porteillaan, virtuaalikoneen levyt ja NVRAM päätyvät kansioon nimeltä `<folder>-restored`, ja kansiojoukko palautuu polkuun `<path>-restored`. Alkuperäiseen ei muutu mitään. |
-    | **Korvaa alkuperäinen** | Ylikirjoittaa sen, mitä siellä nyt on. Kun **Varmuuskopioi nykytila ensin** on päällä, mikä on oletus, BombVault varmuuskopioi ensin tämän hetken tilan, jotta voit palata. Jos varmuuskopiointi epäonnistuu, palautusta ei aloiteta. |
+    | **Korvaa alkuperäinen** | Ylikirjoittaa sen, mitä siellä nyt on. Kun **Varmuuskopioi nykytila ensin** on päällä, mikä on oletus, BombVault varmuuskopioi ensin tämän hetken tilan, jotta voit palata. Jos varmuuskopiointi epäonnistuu, palautusta ei aloiteta. Se toimii myös kontille tai VM:lle, jota ei enää ole palvelimella: kansiot, joiden päälle palautus kirjoittaa, varmuuskopioidaan erikseen. |
     | **Kansioon** | Vain tiedostot selattavaksi. |
     | **Lataa ZIP-tiedostona** | Flash-asema uutta tikkua varten. BombVault ei koskaan kirjoita käynnissä olevalle flash-asemalle. |
     | **Uuteen tietojoukkoon** ja **Palauta tietojoukkoon** | ZFS-tietojoukot, katso [ZFS-tietojoukot](zfs-datasets.md#restore). |
@@ -40,11 +40,11 @@ Ennen kuin **Palauta** aukeaa, ikkuna tarkistaa, että repo vastaa, että avain 
 
 Ikkuna näyttää myös, mitä palautus muuttaa verrattuna siihen, mitä nyt on: uudet, korvatut ja muuttumattomat tiedostot, lista pyynnöstä, sekä kohteen tiedostot, joita ei ole varmuuskopiossa ja jotka jäävät paikalleen. restic laskee tämän kuivaajona koon ja muokkausajan perusteella lukematta tiedostoja, ja erittäin suuri puu pysähtyy 30 sekunnin kuluttua ja kertoo sen. Konteille ja virtuaalikoneille se vertaa asetuksia, jotka palautus luo uudelleen, käynnissä oleviin: image ja tunniste, portit, muuttujien nimet ja taltiot, tai muisti, vCPU:t, levyt ja verkko.
 
-Jotkin asiat voivat pysäyttää palautuksen ennen kuin se muuttaa mitään. Kontin staattisen IP:n ja julkaistujen porttien on oltava vapaina, ja sen verkon on oltava olemassa. Paikalleen tehtävä palautus nimeää jokaisen muun kontin, jonka bind mount ylettyy kansioon, johon se kirjoittaa, esimerkiksi "tätä polkua käyttää myös nextcloud-db", mutta se vain varoittaa.
+Jotkin asiat voivat pysäyttää palautuksen ennen kuin se muuttaa mitään. Kontin staattisen IP:n ja julkaistujen porttien on oltava vapaina, ja sen verkon on oltava olemassa. Unraidissa jokainen paikalleen tehtävä palautus kieltäytyy kansiosta, joka ei ole liitetyllä poolilla tai jaolla, koska tiedostot päätyisivät muistiin ja katoaisivat uudelleenkäynnistyksessä. Paikalleen tehtävä palautus nimeää jokaisen muun kontin, jonka bind mount ylettyy kansioon, johon se kirjoittaa, esimerkiksi "tätä polkua käyttää myös nextcloud-db", mutta se vain varoittaa.
 
 Muutama valinta ilmestyy siellä, missä se on käyttökelpoinen: **Jätä pysäytetyksi jälkeenpäin**, jotta voit katsoa konttia tai virtuaalikonetta ennen kuin se käynnistyy uudelleen, ja **Palauta ilman GPU:ta ja ajoympäristöä** isännällä, jolta puuttuu GPU tai ajoympäristö, jolla varmuuskopio tehtiin.
 
-Palautus ajetaan taustalla. Voit sulkea ikkunan, ja edistyminen näkyy myös kohdassa **Käynnissä nyt**. Pitkä palautus näyttää prosentin ja sen voi peruuttaa, ja peruutettu palautus kirjataan peruutetuksi, ei epäonnistuneeksi.
+Palautus ajetaan taustalla. Voit sulkea ikkunan, ja edistyminen näkyy myös kohdassa **Käynnissä nyt**. Pitkä palautus näyttää prosentin ja sen voi peruuttaa, ja peruutettu palautus kirjataan peruutetuksi, ei epäonnistuneeksi. Palautus, joka peruutetaan kontin pysähtyessä, tai palautus, joka ei pysty poistamaan konttia, ei ole vielä palauttanut mitään, joten kontti käynnistyy uudelleen. Kontti, joka ottaa taltionsa toiselta kontilta `--volumes-from`-valinnalla, säilyttää ne, eikä palautus suostu alkamaan niin kauan kuin sitä toista konttia ei ole.
 
 ![Palautusikkuna Mitä-vaiheessa, yksittäiset tiedostot valittuina.](assets/screenshots/restore/window-what-dark.png#only-dark)
 ![Palautusikkuna Mitä-vaiheessa, yksittäiset tiedostot valittuina.](assets/screenshots/restore/window-what-light.png#only-light)
@@ -66,7 +66,7 @@ Joku muokkasi viime yönä Nextcloudin `config.php`-tiedostoa, eikä Nextcloud e
 
 Ikkuna päättyy tekstiin **Valmis: tiedostot ovat kansiossa /mnt/user/restore**. Löydät tiedoston polusta `/mnt/user/restore/config.php`, ilman sen yläpuolella olevia kansioita. Vertaa sitä rikkinäiseen, kopioi se takaisin appdata-kansioon ja käynnistä Nextcloud uudelleen.
 
-Jos haluat laittaa tiedoston suoraan takaisin, valitse vaiheessa 5 **Korvaa alkuperäinen**. Pidä **Varmuuskopioi nykytila ensin** päällä, jotta BombVault varmuuskopioi rikkinäisen tilan ennen kirjoittamista, kirjoita vahvistukseksi `nextcloud` ja paina **Palauta**. Nextcloud pysäytetään, kun valittu tiedosto kirjoitetaan takaisin paikalleen, ja vain valitsemasi tiedostot kirjoitetaan.
+Jos haluat laittaa tiedoston suoraan takaisin, valitse vaiheessa 5 **Korvaa alkuperäinen**. Pidä **Varmuuskopioi nykytila ensin** päällä, jotta BombVault varmuuskopioi rikkinäisen tilan ennen kirjoittamista, kirjoita vahvistukseksi `nextcloud` ja paina **Palauta**. Nextcloud pysäytetään, kun valittu tiedosto kirjoitetaan takaisin paikalleen, ja käynnistetään jälkeenpäin uudelleen. Vain valitsemasi tiedostot kirjoitetaan. Kesken epäonnistuva palautus jättää Nextcloudin pysäytetyksi, koska sen lukema tiedosto voi olla puoliksi kirjoitettu, ja ajo kertoo sen.
 
 ![Palautusikkuna Mitä tapahtuu -vaiheessa, Korvaa alkuperäinen valittuna.](assets/screenshots/restore/window-replace-dark.png#only-dark)
 ![Palautusikkuna Mitä tapahtuu -vaiheessa, Korvaa alkuperäinen valittuna.](assets/screenshots/restore/window-replace-light.png#only-light)
@@ -75,11 +75,13 @@ Jos haluat laittaa tiedoston suoraan takaisin, valitse vaiheessa 5 **Korvaa alku
 
 **Kontit** luodaan uudelleen tallennetusta määrityksestään Docker-rajapinnan kautta, mukana entrypoint, isäntänimi, pysäytysasetukset, taltiot ja liitokset, resurssirajat, lokiajuri, DNS-asetukset ja vanhat linkit. Kontti palautuu imageen, jota se ajoi varmuuskopiota otettaessa, ei myöhemmin haettuun uudempaan, ja puuttuva image haetaan ensin kohdan **Asetukset, Palautus** **Container-rekisterit**-kirjautumisella. Myös sen GPU tai ajoympäristö (`--gpus`, `--runtime=nvidia`) palautuu. Isännällä, jolla ei ole kyseistä ajuria tai ajoympäristöä, palautus kertoo sen ja tarjoaa vaihtoehdon **Palauta ilman GPU:ta ja ajoympäristöä**. Linkki konttiin, jota ei ole tai joka on pysäytetty palautetun käynnistyessä, jätetään pois, ja ajohistoria kertoo sen. Palautus, joka epäonnistuu sen jälkeen, kun kontti oli poistettu, laittaa sen takaisin pysäytettynä.
 
+Varmuuskopio voi sisältää kansioita, joita kontilla ei enää ole valittuna, esimerkiksi vanhempi varmuuskopio, joka otettiin ennen kuin kansio katosi. Kansio, joka on poissa tai tyhjä, palautuu. Kansio, jossa on nyt tiedostoja, pysyy ennallaan, koska olet ehkä poistanut sen valinnan tarkoituksella, ja palautusta edeltävä tarkistus ja ajohistoria nimeävät sen. Saat sen takaisin valinnalla **Yksittäiset tiedostot** tai **Kansioon**.
+
 **Virtuaalikoneille** määritellään XML uudelleen SSH:n yli ja niiden levyt ja UEFI NVRAM liitetään takaisin, vaikka virtuaalikone olisi poistettu. Katso [VM-varmuuskopiot](vm-backup-ssh-setup.md) virtuaalikoneista, joilla on Unraid-tilannevedoksia ja zvol-levyjä.
 
-**Kansiojoukot** palautuvat omistajuuksineen, oikeuksineen ja aikaleimoineen sellaisina kuin restic ne tallentaa.
+**Kansiojoukot** palautuvat omistajuuksineen, oikeuksineen ja aikaleimoineen sellaisina kuin restic ne tallentaa. Kun kohde kieltäytyy vain omistajuudesta, kuten `/mnt/user` tekee, ajo päättyy huomautukseen, joka kertoo sen. BombVault vertaa sitten tiedostoja varmuuskopioon, ja tiedosto, joka ei saapunut perille, saa palautuksen epäonnistumaan.
 
-**Flash-asema** ei koskaan kosketa elävää `/boot`-kansiota. Palautus on lataus nimeltä `flash-<id>.zip`, valmis pudotettavaksi Unraid USB Creatoriin. Ikkuna listaa myös jokaisen flash-varmuuskopion liitännäiset versioineen ja kokoineen ja voi laittaa yksittäisen takaisin käynnissä olevalle flash-asemalle: sen `.plg`-tiedoston, sen kansion polussa `config/plugins` ja varmuuskopion sisältämät pakettitiedostot. Unraid asentaa sen seuraavassa käynnistyksessä tai heti kohdassa **Plugins, Install Plugin**.
+**Flash-asema** ei koskaan kosketa elävää `/boot`-kansiota. Palautus on lataus nimeltä `flash-<id>.zip`, valmis pudotettavaksi Unraid USB Creatoriin. ZIP sisältää `APP_KEY`:n, joten sen lataaminen vaatii kirjautumissalasanan ja kirjautumisen instanssissa. Ikkuna listaa myös jokaisen flash-varmuuskopion liitännäiset versioineen ja kokoineen ja voi laittaa yksittäisen takaisin käynnissä olevalle flash-asemalle: sen `.plg`-tiedoston, sen kansion polussa `config/plugins` ja varmuuskopion sisältämät pakettitiedostot. Unraid asentaa sen seuraavassa käynnistyksessä tai heti kohdassa **Plugins, Install Plugin**.
 
 **ZFS-tietojoukoilla** on omat kohteensa, ja ne säilyttävät ZFS-ominaisuutensa, katso [Palautus](zfs-datasets.md#restore).
 
@@ -102,6 +104,10 @@ Jokainen merkintä tarkistetaan kuten yksittäinen palautus, ja sitten ne ajetaa
 ## Stackin palautus {#stacks}
 
 Stackin napsautus **Stackit**-kortissa avaa **Palauta stack** -ikkunan. Se palauttaa jokaisen jäsenen sen viimeisimmästä varmuuskopiosta samaan aikaan, ja valinnalla **Käynnistä riippuvuusjärjestyksessä palautuksen jälkeen** se käynnistää ne `depends_on`-järjestyksessä: tietokannat ja välimuistit ensin, sitten sovellus. Kun jäsenen projektikansio puuttuu valitsemastasi paikasta, ikkuna tarjoaa sen sijaan Paikallisen tilan.
+
+BombVault tarkistaa ensin jäsenet ja projektikansion, eikä palautus, joka ei voisi onnistua, muuta mitään. Muuten se pysäyttää käynnissä olevat jäsenet, sovellukset ennen niiden tietokantoja, kirjoittaa sitten projektikansion ja palauttaa sen jälkeen jäsenet. Jos projektikansio ei palaudu, jäsenet palautetaan silti, mutta ne jäävät pysäytetyiksi, koska kansio voi olla puoliksi kirjoitettu ja jäsenen bind mountit ovat yleensä juuri siellä. Jokaisen jäsenen ajo kertoo sen.
+
+Tietokanta, jolla on vain tietokantavedoksia eikä tiedostovarmuuskopiota ja jonka kontti ja nimetty taltio ovat poissa, palautuu ilman dataansa. Tarkistus kertoo sen ennen palautusta. Tietokanta jää pysäytetyksi, ja niin jäävät myös siitä riippuvat kontit, jotta mikään sovellus ei aja asennustaan tyhjää tietokantaa vasten. Käynnistä se, tuo vedos ja käynnistä muut. Katso [Tietokantavedokset](backups.md#database-dumps).
 
 ## Muut lähteet {#other-sources}
 

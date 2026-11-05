@@ -23,7 +23,7 @@ Jokainen kontti, virtuaalikone, kansiojoukko, flash, ZFS-tietojoukko ja BombVaul
 | **Kontit** | Appdata-hakemisto sekä kontin määritys (image, ympäristömuuttujat, portit, tunnisteet, taltiot). |
 | **VMs** | VM:n levykuva(t), XML-määritys ja UEFI NVRAM, varmuuskopioituna SSH:n yli (ei libvirt-liitosta). |
 | **Flash** | Koko USB-flash (`/boot`): käyttöjärjestelmä, lisenssi, array-määritys, jaot, verkko ja laajennusten määritys. |
-| **Itsevarmuuskopio** | BombVaultin oma `/config`: sen asetustietokanta, kohteidensa tunnukset ja libvirt-SSH-avainpari. |
+| **Itsevarmuuskopio** | BombVaultin oma `/config`: sen asetustietokanta, kohteidensa tunnukset, libvirt-SSH-avainpari, ZFS-palvelinten avain ja kiinnitetyt isäntäavaimet sekä varmenteet. |
 | **Kansiot** | Mikä tahansa palvelimen kansio kansiojoukkona, kukin valinnaisin poissulkukuvioin. |
 | **ZFS-tietojoukot** | Tietojoukko kaikkine alapuolisine tietojoukkoineen, luettuna yhdestä ZFS-tilannevedoksesta ja tallennettuna kuten kansio. Katso [ZFS-tietojoukot](zfs-datasets.md). |
 
@@ -102,4 +102,4 @@ Nimeä ja brändiä ei ole lisensoitu. AGPL kattaa vain lähdekoodin: "BombVault
 - **Ongelmat:** [github.com/junkerderprovinz/bombvault/issues](https://github.com/junkerderprovinz/bombvault/issues)
 
 !!! warning "Root-tasoinen isännän hallinta"
-    Docker-soketin kautta BombVault voi pysäyttää, poistaa ja luoda uudelleen kontteja sekä lukea ja kirjoittaa appdataa, ja VM-varmuuskopiointia varten se kirjautuu isäntään SSH:n yli ajaakseen `virsh`-komennon. Kuka tahansa, joka pääsee sen verkkokäyttöliittymään, hallitsee käytännössä isäntää root-oikeuksin. Aja BombVaultia vain luotetussa, altistamattomassa verkossa, ja aseta kirjautumissalasana kohdassa **Asetukset, Turvallisuus**. Palautuspaketti, avaintalletukset ja kohteen varmuuskopioiden poistaminen vaativat sen. Katso koko turvallisuusmalli kohdasta [Asetukset](configuration.md#security-model).
+    Docker-soketin kautta BombVault voi pysäyttää, poistaa ja luoda uudelleen kontteja sekä lukea ja kirjoittaa appdataa, ja VM-varmuuskopiointia varten se kirjautuu isäntään SSH:n yli ajaakseen `virsh`-komennon. Kuka tahansa, joka pääsee sen verkkokäyttöliittymään, hallitsee käytännössä isäntää root-oikeuksin. Aja BombVaultia vain luotetussa, altistamattomassa verkossa, ja aseta kirjautumissalasana kohdassa **Asetukset, Turvallisuus**. Palautuspaketti, avaintalletukset, flashin ZIP-tiedosto, flash- tai itsevarmuuskopion vienti ja kohteen varmuuskopioiden poistaminen vaativat sen. Katso koko turvallisuusmalli kohdasta [Asetukset](configuration.md#security-model).

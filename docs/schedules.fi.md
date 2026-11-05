@@ -27,7 +27,7 @@ Kaikki ajat ovat palvelimen aikavyöhykkeellä. Unraidissa se on järjestelmän 
 
 **Täysvarmuuskopio** on kaiken oletusaikataulu. Sen asettaa **Milloin varmuuskopiot ajetaan**: yksi läpiajo, joka varmuuskopioi jokaisen osion vuorollaan, kontit, virtuaalikoneet, flash, kansiot, ZFS-tietojoukot ja viimeisenä itsevarmuuskopion. Sen alla oleva rivi kertoo, mitkä osiot siihen kuuluvat. **Pois** kytkee sen pois, ja silloin ajetaan vain se, jolla on oma aikataulu.
 
-- **Aja väliin jääneet varmuuskopiot käynnistyksen jälkeen**: kun palvelin oli sammutettuna suunniteltuna aikana, BombVault ajaa kyseisen varmuuskopion noin kaksi minuuttia käynnistyksen jälkeen.
+- **Aja väliin jääneet varmuuskopiot käynnistyksen jälkeen**: kun palvelin oli sammutettuna suunniteltuna aikana, BombVault ajaa kyseisen varmuuskopion noin kaksi minuuttia käynnistyksen jälkeen. Merkinnän oma aikataulu ja etäkopioiden aikataulu odottavat seuraavaa suunniteltua aikaansa, ja niin odottaa myös aikataulu, joka ei ole koskaan onnistunut.
 - **Komennot ennen ja jälkeen**: **Komento ennen täysvarmuuskopiota** ajetaan palvelimella komennolla `sh -c` ennen läpiajon alkua, esimerkiksi skripti, joka pysäyttää palvelun. Jos se epäonnistuu, täysvarmuuskopio ajetaan silti. **Komento täysvarmuuskopion jälkeen** ajetaan kerran sen jälkeen, kun jokaista osiota on yritetty, vaikka jokin niistä epäonnistuisi, mikä sopii pingille, joka vahvistaa koko palvelimen olevan suojattu. Yksittäisen kontin komennot ovat sen omalla sivulla.
 
 **Varmuuskopioi kaikki nyt** Varmuuskopiot-sivulla käynnistää saman läpiajon käsin kaikille päällä oleville osioille.
@@ -58,7 +58,7 @@ Varmuuskopio päätyy samoihin polkuihin ja tunnisteisiin kuin kontin ollessa py
 
 ## Päivitykset varmuuskopion jälkeen {#updates}
 
-- **Päivitä kontit onnistuneen varmuuskopioinnin jälkeen** hakee uudemman imagen vasta, kun sitä edeltävä varmuuskopio on valmis, joten tuore palautuspiste on aina olemassa ensin. Se on oletuksena pois päältä, ja yksittäiselle kontille voi asettaa toisin sen sivulla kohdassa **Päivitä onnistuneen varmuuskopioinnin jälkeen**.
+- **Päivitä kontit onnistuneen varmuuskopioinnin jälkeen** hakee uudemman imagen vasta, kun sitä edeltävä varmuuskopio on valmis, joten tuore palautuspiste on aina olemassa ensin. Se on oletuksena pois päältä, ja yksittäiselle kontille voi asettaa toisin sen sivulla kohdassa **Päivitä onnistuneen varmuuskopioinnin jälkeen**. Uuteen imageen siirtyy vain se, minkä olet itse asettanut: muuttujat, tunnisteet, komento, käyttäjä ja terveystarkistus, jotka ovat yhä samat kuin vanhassa imagessa, seuraavat uutta. Jos konttia ei voi luoda tai käynnistää uudella imagella, kontti palaa imageen, jota se ajoi, päivitys näkyy epäonnistuneena ja seuraava varmuuskopio yrittää uudelleen. Kontti, joka jää tämän vuoksi alas, nimetään varmuuskopion ajossa ja ilmoituksessa.
 - **Poista vanha image päivityksen jälkeen** poistaa imagen, jonka kontti jätti. Perusimagea, jota muut kontit käyttävät yhdessä, ei koskaan poisteta.
 - **Päivitä Unraidin päivitystila säiliön päivittämisen jälkeen** tyhjentää Unraidin päivitysbannerin kyseiseltä kontilta.
 

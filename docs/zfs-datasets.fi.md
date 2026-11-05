@@ -136,13 +136,13 @@ Mikä tahansa kone, jossa on ZFS ja SSH, voi vastaanottaa, esimerkiksi toinen Un
 Rootilla muuta ei tarvita. Omalla käyttäjällä tarvitaan nämä oikeudet kohdepalvelimen poolissa, jotka ikkuna myös näyttää:
 
 ```
-zfs allow <user> receive,create,mount,rollback,destroy,userprop <pool>
+zfs allow <user> receive,create,mount,rollback,destroy,userprop,readonly,canmount <pool>
 ```
 
 Lähteellä samanlainen käyttäjä tarvitsee nämä merkinnän ylimmälle tietojoukolle:
 
 ```
-zfs allow <user> send,snapshot,hold,release,bookmark,destroy <dataset>
+zfs allow <user> send,snapshot,hold,release,bookmark,destroy,mount <dataset>
 ```
 
 Tässä suunnassa BombVault, jolla merkintä on, pitää myös avainta, joka voi kirjoittaa palvelimelle.
@@ -159,7 +159,7 @@ Pariliitetty BombVault voi vastaanottaa replikan itse. Kukaan ei saa SSH-pääsy
 2. Avaa vastaanottavassa instanssissa **Ilmentymät**. Pyyntö näkyy lähettävän instanssin kortilla merkkinä, ja sen **Tiedot** listaavat sen. Valitse kyseisen palvelimen pooli ja juuri sekä kuinka monta tilannevedosta jää, paina sitten **Salli** tai **Hylkää**.
 3. **Allow**-painalluksen jälkeen lähde lähettää oman aikataulunsa mukaan, kuten mihin tahansa muuhun kohteeseen.
 
-Vastaanottava instanssi hyväksyy vain sen, mitä hyväksyntä kattaa: merkinnän tietojoukot, omaan juureensa. Se ajaa `zfs receive` -komennon itse, eikä lähteellä ole mitään keinoa poistaa tai palauttaa mitään siellä. Kopio säilyy siis, vaikka joku olisi ottanut lähteen haltuunsa. Vastaanottava instanssi pitää oman säilytyksensä. Lähde vain ehdottaa sääntöä pyytäessään.
+Vastaanottava instanssi hyväksyy vain sen, mitä hyväksyntä kattaa: merkinnän tietojoukot, omaan juureensa. Se ajaa `zfs receive` -komennon itse, eikä lähteellä ole mitään keinoa poistaa tai palauttaa mitään siellä. Kopio säilyy siis, vaikka joku olisi ottanut lähteen haltuunsa. Vastaanottava instanssi pitää oman säilytyksensä. Lähde vain ehdottaa sääntöä pyytäessään. Tällainen lähde voi silti lähettää uusia tilannevedoksia, ja ajan myötä ne työntävät vanhempia pois säännön mukaan kuten mitkä tahansa muut. Tilannevedosta, jonka nimen päiväys on vastaanottavan instanssin kelloon nähden tulevaisuudessa, ei lasketa sääntöön ennen kuin se aika on tullut.
 
 **Revoke access** vastaanottavassa instanssissa päättää hyväksynnän milloin tahansa ja kertoo siitä lähteelle, joka näyttää sitten hyväksynnän peruutetuksi ja lopettaa. Se, mitä vastaanottava instanssi jo pitää hallussaan, jää sinne. Hylätty pyyntö pysyy hylättynä. Lisää tietojoukkoja tai pyyntö peruutuksen jälkeen kysyvät uudelleen.
 
@@ -177,13 +177,15 @@ Kopio kohdepalvelimella on vain luettavissa. Oletuksena sitä ei ole liitetty, j
 
 Mukaan tulee kaikki, minkä merkintä varmuuskopioi, ja sen alapuoliset taltiot myös, jotka varmuuskopio ohittaa. Alatietojoukko, jonka kytkit pois merkinnässä, jää pois. Kaikki ajon tietojoukot tulevat yhdestä tilannevedoksesta, kuten varmuuskopiossa.
 
+Kopiota, jonka toinen BombVault replikoi tälle palvelimelle, ei lähetetä eteenpäin, koska se harventaisi historiaa, jota sen lähde vielä tarvitsee. Kun merkinnän puussa on sellainen, ajo epäonnistuu sen tietojoukon kohdalla ja kertoo syyn, kunnes kytket sen pois merkinnässä. Merkintä, joka on itse tällainen kopio, ei voi replikoida lainkaan. Merkinnän poistaminen tai sen replikan kytkeminen pois jättää nämä kopiot ja niiden tilannevedokset rauhaan. Kun otat kopion käyttöön kohdassa [Replikan käyttö](#replica-use) kuvatulla tavalla, se lasketaan tavalliseksi tietojoukoksi.
+
 ### Kuinka kauan tilannevedokset säilyvät {#replica-retention}
 
-Kohdepalvelimella uusi replika säilyttää 7 päivittäistä ja 3 viikoittaista tilannevedosta. Valitse sen sijaan **Short**, **Balanced** tai **Long**, tai aseta **Custom values**. Siellä poistetaan vain tilannevedoksia, joiden nimi on `bombvault-replica-<14 numeroa>`, eikä koskaan uusinta, jonka molemmat puolet jakavat.
+Kohdepalvelimella uusi replika säilyttää 7 päivittäistä ja 3 viikoittaista tilannevedosta. Valitse sen sijaan **Short**, **Balanced** tai **Long**, tai aseta **Custom values**. Jos kaikki omat arvot ovat nollia, jokainen tilannevedos säilytetään, ja kortti kertoo sen. Siellä poistetaan vain tilannevedoksia, joiden nimi on `bombvault-replica-<14 numeroa>`, eikä koskaan uusinta, jonka molemmat puolet jakavat.
 
 Lähteellä BombVault säilyttää viimeisimmän replika-tilannevedoksen sekä kirjanmerkin jokaiselle lähettämälleen tilalle. Kirjanmerkit eivät vie tilaa. Seuraava siirto alkaa niistä.
 
-Jos haluat säilyttää enemmän myös lähteellä, aseta Replika-kortissa **Säilytä tällä palvelimella**, esimerkiksi arvoon 7. Silloin niin monta uusinta replika-tilannevedosta jää tälle palvelimelle jokaisen replikan jälkeen, sen lisäksi mitä kohde säilyttää. 0 tai 1 säilyttää vain viimeisimmän. Viimeisimmässä on hold, jotta seuraavan siirron pohjaa ei poisteta vahingossa. Vanhemmissa sitä ei ole. Jokainen tilannevedos pitää kiinni lohkoista, jotka muuttuivat sen jälkeen, joten jokainen säilyttämäsi vie tilaa poolissa. Jos kytket replikan pois tai vaihdat sen toiseen kohteeseen tai poistat merkinnän, nekin poistuvat tältä palvelimelta.
+Jos haluat säilyttää enemmän myös lähteellä, aseta Replika-kortissa **Säilytä tällä palvelimella**, esimerkiksi arvoon 7. Silloin niin monta uusinta replika-tilannevedosta jää tälle palvelimelle jokaisen replikan jälkeen, sen lisäksi mitä kohde säilyttää. 0 tai 1 säilyttää vain viimeisimmän. Viimeisimmässä on hold, jotta seuraavan siirron pohjaa ei poisteta vahingossa. Vanhemmissa sitä ei ole. Jokainen tilannevedos pitää kiinni lohkoista, jotka muuttuivat sen jälkeen, joten jokainen säilyttämäsi vie tilaa poolissa. Jos kytket replikan pois tai vaihdat sen toiseen kohteeseen tai poistat merkinnän, nekin poistuvat tältä palvelimelta. Sen alla olevan toisen merkinnän tilannevedokset jäävät. Jos isäntää ei tavoiteta merkintää poistettaessa, myös tilannevedokset jäävät, ja sivu kertoo sen. Poista ne käsin: `zfs release -r bombvault-replica <dataset>@<snapshot>`, sitten `zfs destroy`.
 
 Säilytetyn tilannevedoksen tiedostoja voit lukea tai kopioida heti, tietojoukon sisällä olevasta `.zfs/snapshot`-kansiosta tai kloonista, koskematta tietojoukkoon tai replikaan:
 
@@ -226,12 +228,12 @@ zfs clone backup/bombvault-replica/tower/cache/appdata@bombvault-replica-2026100
 Jos lähde pettää, muuta kopio tavalliseksi, kirjoitettavaksi tietojoukoksi kohdepalvelimella:
 
 ```
-zfs inherit -r readonly backup/bombvault-replica/tower/cache/appdata && zfs inherit -r canmount backup/bombvault-replica/tower/cache/appdata && zfs mount -a
+zfs inherit -r readonly backup/bombvault-replica/tower/cache/appdata && zfs list -rH -o name -t filesystem backup/bombvault-replica/tower/cache/appdata | xargs zfs set canmount=on && zfs mount -a
 ```
 
-BombVault lopettaa sen jälkeen replikoinnin kyseiseen tietojoukkoon, kunnes aloitat uuden ensimmäisen ajon.
+BombVault lopettaa sen jälkeen replikoinnin kyseiseen tietojoukkoon ja sen alatietojoukkoihin. Seuraava ajo epäonnistuu ja kertoo syyn, ja kirjoittamasi jää paikalleen. Sama koskee kaikkea muuta, mitä kopioon on kirjoitettu sen uusimman tilannevedoksen jälkeen: BombVault ei koskaan palauta kopiota taaksepäin. Jotta voit replikoida sinne taas, siirrä tarvitsemasi pois kopiosta ja tuhoa kopio kohteessa. Seuraava ajo lähettää sitten kaiken alusta.
 
-Jos haluat palauttaa tilan lähteelle, paina paneelissa **Bring back as a new dataset**. BombVault lähettää tilannevedoksen uuteen tietojoukkoon alkuperäisen viereen, ja sen nimi on `<dataset>-bombvault-restore-` ja aikaleima. Se ei koskaan kirjoita alkuperäisen päälle.
+Jos haluat palauttaa tilan lähteelle, paina paneelissa **Bring back as a new dataset**. BombVault lähettää tilannevedoksen uuteen tietojoukkoon alkuperäisen viereen, ja sen nimi on `<dataset>-bombvault-restore-` ja aikaleima. Se ei koskaan kirjoita alkuperäisen päälle. Lähteellä kadonnut alatietojoukko palautuu myös, kunhan kopiossa on yhä se tilannevedos. Alatietojoukko, jossa sitä ei ole, jätetään pois, ja ajo kertoo sen.
 
 ### Esimerkki: replika toiselle Unraid-koneelle {#example-replica}
 

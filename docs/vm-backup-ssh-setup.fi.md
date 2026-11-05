@@ -81,8 +81,25 @@ docker exec BombVault virsh -c "qemu+ssh://root@192.168.1.10:22/system?keyfile=/
 
 Jokaisella virtuaalikoneella on **Menetelmä** sen Asetukset-välilehden **VM**-kortissa (avaa virtuaalikone kohdasta **Varmuuskopiot**):
 
-- **Hallittu (sammutus)** on oletus. Se sammuttaa virtuaalikoneen, varmuuskopioi levyt ja käynnistää sen uudelleen, joten varmuuskopio on aina yhdenmukainen. Se odottaa jopa kymmenen minuuttia vieraan sammumista eikä koskaan pakota sitä pois. Vieras, joka silti pyörii sen jälkeen, jätetään rauhaan, ja kyseinen varmuuskopio epäonnistuu syyn kanssa.
-- **Live-tilannekuva** varmuuskopioi käynnissä olevan virtuaalikoneen ulkoisen tilannevedoksen ja `blockcommit`-komennon kautta. Se tarvitsee qemu guest agentin virtuaalikoneessa hiljennettyä tilannevedosta varten ja levyn polussa `/mnt/cache` tai `/mnt/diskX`, ei `/mnt/user`. Sammutetulla virtuaalikoneella Live palaa itsestään Hallittuun, ja samoin tapahtuu, kun tilannevedosta ei voida tehdä.
+- **Hallittu (sammutus)** on oletus. Se sammuttaa virtuaalikoneen, varmuuskopioi levyt ja käynnistää sen uudelleen, joten varmuuskopio on aina yhdenmukainen. Se odottaa jopa kymmenen minuuttia vieraan sammumista eikä koskaan pakota sitä pois. Vieras, joka silti pyörii sen jälkeen, jätetään rauhaan, ja kyseinen varmuuskopio epäonnistuu syyn kanssa. Jos vieras sammuu seuraavan tunnin aikana, BombVault käynnistää sen uudelleen. Jos käynnistys epäonnistuu, epäonnistunut ajo kertoo sen.
+- **Live-tilannekuva** varmuuskopioi käynnissä olevan virtuaalikoneen ulkoisen tilannevedoksen ja `blockcommit`-komennon kautta. Se tarvitsee levyn polussa `/mnt/cache` tai `/mnt/diskX`, ei `/mnt/user`. Kun virtuaalikoneessa on qemu guest agent, tilannevedos on hiljennetty, ja ilman sitä tilannevedos on kaatumisyhdenmukainen (crash-consistent). Sammutetulla virtuaalikoneella Live palaa itsestään Hallittuun. Kun tilannevedosta ei voida tehdä, kyseinen varmuuskopio epäonnistuu ja virtuaalikone jatkaa käyntiään, koska virtuaalikonetta, jonka valitsit varmuuskopioitavaksi livenä, ei koskaan sammuteta sen vuoksi.
+
+## Mitä varmuuskopio jättää pois {#left-out}
+
+Varmuuskopiointi voi onnistua, vaikka varmuuskopio ei sisällä koko virtuaalikonetta. Ajossa on silloin varoitussävyinen huomautus, joka nimeää puuttuvan:
+
+- **Levyt, joita BombVault ei lue.** Vain luku -levy, `lun` sekä `network`- tai `volume`-levy jätetään pois, ja huomautus nimeää jokaisen kohdelaitteineen ja lajeineen. Varmuuskopion määritys listaa ne yhä. Cdromia ja levykettä ei nimetä. Tavallinen lohkolaite, joka ei ole ZFS-zvol, kaataa sen sijaan varmuuskopioinnin.
+- **Emuloidun TPM:n tila.** Sillä ei ole polkua domain-XML:ssä. Unraidin VM Manager asettaa tällaisen TPM:n virtuaalikoneelle, jonka BIOS on **OVMF TPM**, joten huomautus näkyy myös Unraidissa. Vieras, joka säilyttää salaisuutta TPM:ssään, kuten BitLocker voi tehdä, saattaa kysyä palautusavaintaan palautuksen jälkeen, jossa tila menetetään, joten pidä se avain saatavilla.
+
+## Ohuet levyt {#thin-disks}
+
+Palautus pitää ohuen levyn ohuena, korvasipa se levyn tai kirjoitti uuden: restic kirjoittaa nollajaksot reikinä uuteen tiedostoon, ja BombVault vapauttaa korvatun tiedoston nollalohkot komennolla `fallocate --dig-holes`, kun tiedosto on kirjoitettu. Sillä aikaa, kun restic korvaa tiedostoa, tiedosto vie täyden kokonsa, jos poolilla on tilaa. Tiedostojärjestelmä, joka ei osaa tehdä tiedostoihin reikiä, pitää levyn täysikokoisena, ja loki kertoo sen. Tilatarkistus laskee uuden levyn silti täysikokoisena.
+
+## Epäonnistuva palautus {#restore-fails}
+
+Paikalleen tehtävä palautus sammuttaa virtuaalikoneen, kirjoittaa levyt ja korvaa määrityksen ja NVRAMin vasta, kun levyt on kirjoitettu. Epäonnistunut palautus jättää virtuaalikoneen määritellyksi NVRAMineen. Jos sen levyt eivät muuttuneet ja se oli käynnissä, se käynnistyy uudelleen. Jos ne ovat voineet muuttua, se pysyy sammutettuna, koska puoliksi kirjoitetulta levyltä käynnistäminen kirjoittaisi sen päälle, ja ajo kertoo sen. Saman varmuuskopion palauttaminen uudelleen vie työn loppuun.
+
+Tilannevedokset, jotka on kirjattu libvirtiin (Unraidin VM Manager ei tee niitä näin), pysäyttävät paikalleen tehtävän palautuksen ennen kuin virtuaalikoneeseen kosketaan, koska libvirt ei voi poistaa virtuaalikonetta, jolla niitä on. Poista ne ensin.
 
 ## Vain muuttuneet lohkot {#changed-blocks}
 
@@ -112,6 +129,7 @@ BombVault varmuuskopioi tällaisen virtuaalikoneen kokonaan:
 - **Live-varmuuskopio säilyttää tilannevedokset.** **Live-tilannekuva** laittaa väliaikaisen peittokuvan päälle levyä lukiessaan ja yhdistää sen takaisin jälkeenpäin, vain heti sen alla olevaan kuvaan. Ketju on varmuuskopioinnin jälkeen sama kuin ennen sitä. Virtuaalikone ilman tilannevedoksia käyttäytyy kuten aina.
 - **Palautus tuo ketjun takaisin.** Paikalleen tehtävä palautus kirjoittaa jokaisen tiedoston takaisin sinne, missä se oli, ja laittaa Unraidin tilannevedoslistan takaisin, joten VM Manager listaa tilannevedokset taas. Alkuperäisen viereen tehtävä palautus kirjoittaa tiedostot kopion kansioon ja osoittaa palautetut levyt palautettuihin tiedostoihin, joten kopio ei koskaan lue alkuperäisen kuvista. Unraidin tilannevedoslista palaa vain paikalleen tehtävässä palautuksessa, koska se nimeää tiedostot sellaisina kuin ne olivat varmuuskopioitaessa. Ilman sitä kopio käynnistyy samoin, ja VM Manager vain ei listaa sille tilannevedoksia.
 - **Vain muuttuneet lohkot** lukee sen, minkä vieras näkee, joten sen palautus palaa yhtenä litistettynä qcow2-tiedostona ilman tilannevedoksia.
+- **Palautus tuo takaisin valitsemasi varmuuskopion levyn.** Sen varmuuskopion jälkeen otetut tai yhdistetyt tilannevedokset eivät muuta sitä. Tilannevedosta edeltävä varmuuskopio määrittää virtuaalikoneen sisältämänsä tiedoston varaan, ja yhdistämistä edeltävä varmuuskopio tuo peittokuvansa takaisin ja ajaa sen päällä. Uudemmat tiedostot jäävät paikalleen käyttämättöminä ja muuttumattomina. Varmuuskopio, jossa on peittokuva mutta ei sen alla olevaa tiedostoa, hylätään ennen kuin virtuaalikoneeseen kosketaan. Virtuaalikoneen määritys ei listaa ketjua palautuksen jälkeen, joten libvirt lukee ketjun palautetuista tiedostoista.
 
 ### Esimerkki: virtuaalikone kahdella tilannevedoksella {#example-unraid-snapshots}
 
@@ -199,10 +217,10 @@ Tiedostolevyt, kuten Unraid niitä käyttää, eivät kärsi tästä mitenkään
 Virtuaalikoneella voi olla virtuaalinen TPM, jota Secure Boot ja Windows 11 -vieraat tarvitsevat. Sen tila on levyn ja NVRAMin ulkopuolella, joten pelkästään niiden varmuuskopio toisi vieraan takaisin uudella, tyhjällä TPM:llä.
 
 - **Läpivientinä oleva TPM**, oikea siru annettuna vieraalle, nimeää polkunsa domain-XML:ssä. BombVault tallentaa sen tilan NVRAMin viereen SSH:n yli ja kirjoittaa sen takaisin ennen `virsh define` -komentoa, parhaan yrityksen periaatteella kuten NVRAM: epäonnistunut luku tai kirjoitus kirjataan lokiin eikä kaada varmuuskopiota tai palautusta.
-- **Emuloitu vTPM**, sellainen jonka TrueNAS asettaa Windows 11- ja Secure Boot -vieraille, ei julkaise tilapolkua domain-XML:ssä. BombVault raportoi silloin "no TPM path found" sen sijaan, että arvaisi polun. Pidä tällaisen vieraan palautusavain, kuten sen BitLocker-avain, saatavilla ennen kuin palautat sen.
+- **Emuloitu vTPM**, sellainen jonka TrueNAS asettaa Windows 11- ja Secure Boot -vieraille, ei julkaise tilapolkua domain-XML:ssä, joten sen tilaa ei varmuuskopioida. BombVault ei arvaa polkua, ja varmuuskopiointi päättyy huomautukseen siitä, ettei virtuaalikoneen TPM:n tila ole mukana. Pidä tällaisen vieraan palautusavain, kuten sen BitLocker-avain, saatavilla ennen kuin palautat sen.
 - **Et voi liittää TPM:ää TrueNAS-virtuaalikoneeseen itse.** TrueNAS SCALE 25.10:n VM-laite-API hyväksyy vain `CDROM`, `DISPLAY`, `NIC`, `PCI`, `RAW`, `DISK` ja `USB` ja hylkää `TPM`:n tuntemattomana tyyppinä.
 
-TPM-käsittely on vain yksikkötestattu, eikä sitä ole ajettu oikeaa TrueNAS-vierasta vastaan vTPM:llä. Virtuaalikone ilman TPM:ää, kuten Unraidissa, varmuuskopioituu ja palautuu täsmälleen kuten ennenkin.
+TPM-käsittely on vain yksikkötestattu, eikä sitä ole ajettu oikeaa TrueNAS-vierasta vastaan vTPM:llä. Virtuaalikone ilman TPM:ää varmuuskopioituu ja palautuu täsmälleen kuten ennenkin.
 
 NVRAM tallennetaan tavalliseen tapaan. TrueNAS pitää sen virtuaalikonetta kohti polussa `/var/db/system/vm/nvram/<id>_<name>_VARS.fd`, ja domain-XML nimeää kyseisen polun.
 

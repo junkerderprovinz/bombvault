@@ -11,7 +11,7 @@ Tällä sivulla listataan jokainen ruutu ja sen kortit sekä linkit sivulle, jok
 
 ## Yleiset {#general}
 
-- **Osiot** kytkee jokaisen osion päälle tai pois: **Kontit**, **VMs**, **Flash**, **Kansiot**, **ZFS-tietojoukot** ja **Itsevarmuuskopio**. Pois päältä olevaa osiota ei varmuuskopioida, eivätkä sen merkinnät lasketa mukaan. **Flash** näkyy vain Unraidissa.
+- **Osiot** kytkee jokaisen osion päälle tai pois: **Kontit**, **VMs**, **Flash**, **Kansiot**, **ZFS-tietojoukot** ja **Itsevarmuuskopio**. Pois päältä olevaa osiota ei varmuuskopioida millään aikataululla, ei myöskään merkinnän omalla aikataululla, eivätkä sen merkinnät lasketa mukaan. **Varmuuskopioi nyt** toimii silti. **Flash** näkyy vain Unraidissa.
 - **Kontit** sisältää sen, mikä koskee jokaista konttia, kuten **Automaattiset tietokantavedokset**. Kaikki, mikä vaikuttaa yhteen konttiin, on sen omalla sivulla. Katso [Tietokantavedokset](backups.md#database-dumps).
 
 ## Ulkoasu {#look}
@@ -97,6 +97,6 @@ Useat asiat vaativat kirjautumissalasanan, kuten palautuspaketti, avainten talle
 
 ## Tietoja {#info}
 
-- **Versio**: BombVault, GlimStone, restic ja rclone, kohdilla **Hae päivityksiä** ja **Uutta**, joka laskee muutokset, joita et ole vielä nähnyt, ja avaa **Uutta**-ikkunan.
+- **Versio**: BombVault, GlimStone, restic ja rclone, kohdilla **Hae päivityksiä** ja **Uutta**, joka laskee muutokset, joita et ole vielä nähnyt, ja avaa ikkunan, joka listaa ne.
 - **Ohje**: **Käyttöopas** avaa tämän dokumentaation, ja **Virheraportti** lataa sensuroidun ZIP-tiedoston GitHub-issuea varten. Se vaatii kirjautumissalasanan.
 - **Tietoja BombVaultista**: projekti, sen lisenssi ja miten tavoitat tekijän.
