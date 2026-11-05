@@ -589,6 +589,12 @@ function finishedLineText(resolveName: ResolveName, run: Run, domain: LogDomain,
         : { status: "info", text: resolveName("activityLog.lineOther", { name, kind: run.kind, status: run.status }) };
   }
 
+  if (run.kind === "pull") {
+    return run.status === "failed"
+      ? { status: "failed", text: resolveName("activityLog.linePullFailed", { name: run.subject || domainText, error: reasonText(run.error, resolveName) }) }
+      : { status: "info", text: resolveName("activityLog.lineOther", { name: run.subject || domainText, kind: run.kind, status: run.status }) };
+  }
+
   if (run.kind === "replica") {
     return run.status === "success"
       ? { status: "success", text: resolveName("activityLog.lineReplicaSuccess", { name, bytes: humanBytes(run.bytes), duration }) }
@@ -629,6 +635,8 @@ function asLogKind(kind: string): LogKind {
   if (kind === "dbdump") return "dbdump";
   // An import writes restore points, which is what the backup filter finds.
   if (kind === "import" || kind === "replica") return "backup";
+  // A pull is an off-site copy with the ends swapped.
+  if (kind === "pull") return "offsite";
   if (
     kind === "backup" ||
     kind === "restore" ||
@@ -650,7 +658,7 @@ function asLogKind(kind: string): LogKind {
  *  domainRunTargetID): their targetId is the domain literal or the flash or
  *  config singleton id, never an item id. */
 function isDomainOpKind(kind: string): boolean {
-  return kind === "prune" || kind === "verify" || kind === "offsite" || kind === "drill" || kind === "drdrill" || kind === "tamper" || kind === "export";
+  return kind === "prune" || kind === "verify" || kind === "offsite" || kind === "pull" || kind === "drill" || kind === "drdrill" || kind === "tamper" || kind === "export";
 }
 
 /** The suffixes that name what started a run from outside the web interface. */

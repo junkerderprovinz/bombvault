@@ -13,6 +13,7 @@ import (
 
 	"database/sql"
 
+	"github.com/junkerderprovinz/bombvault/internal/notify"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/schedule"
 	"github.com/junkerderprovinz/bombvault/internal/store"
@@ -137,6 +138,11 @@ func (s *Service) PullFromSource(ctx context.Context, ps store.PullSource) (int,
 	}
 	defer s.releasePull(ps.ID)
 	n, err := s.pullFromSource(ctx, ps)
+	// A pull a stop cut off says nothing about the source, and as a failure it
+	// would mute the alert of the next real one.
+	if err != nil && ctx.Err() != nil {
+		return n, err
+	}
 	ok := sql.NullBool{Bool: err == nil, Valid: true}
 	msg := ""
 	if err != nil {
@@ -145,7 +151,39 @@ func (s *Service) PullFromSource(ctx context.Context, ps store.PullSource) (int,
 	if rErr := s.store.UpdatePullSourceResult(ps.ID, time.Now().Unix(), ok, msg, n); rErr != nil {
 		log.Printf("api: pull source %s: could not record the result: %v", ps.ID, rErr) //nolint:gosec // G706: ps.ID is an opaque store-generated id
 	}
+	if err != nil {
+		s.reportPullFailure(ctx, ps, err, msg)
+	}
 	return n, err
+}
+
+// reportPullFailure puts a failed pull in the activity log and alerts once when
+// a source goes from working to failing. A source that is not there before its
+// first pull is the normal setup order: the other instance has not made its
+// first copy yet, and the source's card says so.
+func (s *Service) reportPullFailure(ctx context.Context, ps store.PullSource, err error, msg string) {
+	if !(ps.LastPullOK.Valid && ps.LastPullOK.Bool) && errors.As(err, new(notThereYetError)) {
+		return
+	}
+	s.recordDomainRunOf(strings.TrimSpace(ps.Domain), "pull", false, msg, ps.Name, "")
+	if ps.LastPullOK.Valid && !ps.LastPullOK.Bool {
+		return
+	}
+	c, cErr := s.NotifyConfig()
+	if cErr != nil {
+		log.Printf("api: pull source %s: read notify config: %v", ps.ID, cErr) //nolint:gosec // G706: ps.ID is an opaque store-generated id
+		return
+	}
+	if c.On != "always" && c.On != "failure" {
+		return
+	}
+	text := fmt.Sprintf("Pull from %s failed: %s", ps.Name, msg)
+	notify.Send(notify.WithHealthchecksSuppressed(ctx), c, "pull", notify.Event{Title: "BombVault", Message: text, OK: false})
+	if s.unraidGate(c.Unraid) {
+		if e := s.sendUnraidNotify(ctx, "BombVault: pull failed", text, "warning"); e != nil {
+			log.Printf("notify: unraid: %v", e)
+		}
+	}
 }
 
 func (s *Service) pullFromSource(ctx context.Context, ps store.PullSource) (int, error) {
@@ -193,12 +231,11 @@ func (s *Service) pullFromSource(ctx context.Context, ps store.PullSource) (int,
 	if len(srcSnaps) == 0 {
 		return 0, nil
 	}
-	pending := 0
-	if dstSnaps, dErr := s.listSnapshots(ctx, dest, destMode); dErr != nil {
-		log.Printf("api: pull %s: could not estimate how much is pending (continuing): %v", domain, dErr) //nolint:gosec // G706: domain comes from a fixed set
-	} else {
-		pending = len(restic.PendingCopyIDs(srcSnaps, dstSnaps))
+	dstSnaps, err := s.listSnapshots(ctx, dest, destMode)
+	if err != nil {
+		return 0, fmt.Errorf("list what was pulled here before: %w", err)
 	}
+	pending := len(restic.PendingCopyIDs(srcSnaps, dstSnaps))
 	if pending == 0 {
 		// Nothing new is the ordinary outcome between two backups, not a failure.
 		s.movePullLeftovers(ctx, ps, settings, domain, domainRepo, dest, destMode, srcSnaps, true)

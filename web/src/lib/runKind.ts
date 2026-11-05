@@ -37,6 +37,8 @@ export function runKindLabel(t: T, kind: string): string {
       return t("run.kindDRDrill");
     case "tamper":
       return t("activityLog.jobTamper");
+    case "pull":
+      return t("activityLog.jobPull");
     case "replica":
       return t("zfs.replica.title");
     case "export":

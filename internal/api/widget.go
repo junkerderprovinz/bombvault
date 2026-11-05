@@ -108,7 +108,7 @@ type widgetRun struct {
 // than an item id.
 func widgetDomainOpKind(kind string) bool {
 	switch kind {
-	case "prune", "verify", "offsite", "drill", "drdrill", "tamper", "export":
+	case "prune", "verify", "offsite", "pull", "drill", "drdrill", "tamper", "export":
 		return true
 	}
 	return false
