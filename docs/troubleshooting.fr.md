@@ -38,7 +38,7 @@ La sauvegarde de VM parle à libvirt via SSH, jamais par un montage.
 
 ## Un instantané de VM à chaud n'a pas eu lieu {#a-live-vm-snapshot-did-not-run}
 
-Les instantanés à chaud demandent l'agent invité qemu installé dans la VM et le disque sur `/mnt/cache` (ou `/mnt/diskX`), pas sur `/mnt/user`. Sur une VM éteinte, le mode à chaud retombe automatiquement sur le mode propre. Une sauvegarde propre arrête la VM, sauvegarde les disques, puis la redémarre, elle est donc toujours cohérente. Elle attend jusqu'à dix minutes que l'invité s'arrête et ne force jamais l'extinction, si bien qu'un invité Windows qui installe des mises à jour n'est pas coupé en plein milieu. Un invité qui tourne encore après cela est laissé tranquille, et cette sauvegarde échoue avec la raison.
+Les instantanés à chaud demandent le disque sur `/mnt/cache` (ou `/mnt/diskX`), pas sur `/mnt/user`. Avec l'agent invité qemu dans la VM, l'instantané est figé, et sans lui, il est cohérent en cas de plantage. Sur une VM éteinte, le mode à chaud retombe automatiquement sur le mode propre. Une sauvegarde propre arrête la VM, sauvegarde les disques, puis la redémarre, elle est donc toujours cohérente. Elle attend jusqu'à dix minutes que l'invité s'arrête et ne force jamais l'extinction, si bien qu'un invité Windows qui installe des mises à jour n'est pas coupé en plein milieu. Un invité qui tourne encore après cela est laissé tranquille, et cette sauvegarde échoue avec la raison.
 
 ## Une sauvegarde a échoué avec « repository is already locked » {#a-backup-failed-with-repository-is-already-locked}
 
@@ -127,6 +127,10 @@ Une anomalie critique ouverte les retient : la source de l'élément est presque
 
 La même cause : l'élagage laisse tranquilles les anciennes sauvegardes d'un élément qui a une telle anomalie et nomme l'élément dans son message. Tout le reste est élagué comme d'habitude.
 
+## Une sauvegarde échoue avec « on no mounted pool or share » {#no-mounted-pool}
+
+Sur Unraid, `/mnt` réside en mémoire, si bien qu'un dossier qui s'y trouve sans pool monté dessus disparaît au redémarrage suivant et reste masqué une fois le pool revenu. BombVault refuse d'y écrire une sauvegarde ou un ZIP flash, même quand un dépôt d'une écriture précédente se trouve déjà dans ce dossier. Montez le pool et relancez la sauvegarde.
+
 ## L'import de l'historique dit qu'un dépôt n'a pas pu être lu {#history-import-says-a-repository-could-not-be-read}
 
 Après la mise à niveau, BombVault lit une fois les tailles des sauvegardes antérieures dans chaque dépôt. Un dépôt qu'il n'a pas pu joindre à ce moment-là, comme une cible hors site hors service ou un partage qui n'était pas monté, est compté dans la carte **Anomalies** sous **Paramètres, Vérification** et retenté une fois par jour. Ses éléments apprennent entre-temps des nouvelles sauvegardes.
@@ -177,15 +181,15 @@ La cible contient des instantanés plus récents que le plus récent qu'elle par
 
 BombVault suit la chaîne de fichiers de base de chaque disque et sauvegarde chaque fichier qui en fait partie. Une chaîne qu'on ne peut pas suivre jusqu'au bout fait échouer la sauvegarde plutôt que de laisser de côté une partie du disque, et le message nomme le fichier. Vérifiez que le fichier existe sous `/mnt` et que l'instantané est toujours listé dans le VM Manager. Un fichier en dehors de Host Data ne peut pas du tout être lu. Voir [VMs avec des instantanés Unraid](vm-backup-ssh-setup.md#unraid-snapshots).
 
-## Les copies hors site sont en pause après une reconstruction {#copies-paused}
+## Les copies hors site attendent votre décision après une reconstruction {#copies-paused}
 
-Après **Découvrir les sauvegardes** ou l'assistant d'urgence sans réglages restaurés, les copies hors site de chaque section reconstruite attendent, car BombVault ne sait plus quels éléments vous avez laissés de côté. L'aperçu le dit. Appuyez sur **Confirmer la valeur par défaut** dans **Destinations par section**, vérifiez l'aperçu et laissez de côté ce qui doit l'être. Importer un fichier de réglages ne met pas fin à la pause. Voir [Après une reconstruction](offsite-recovery.md#after-a-rebuild).
+Après **Découvrir les sauvegardes** ou l'assistant d'urgence sans réglages restaurés, ou quand une section trouve ses propres sauvegardes datant d'avant cette base de données, les copies hors site de cette section attendent, car BombVault ne sait plus quels éléments vous avez laissés de côté. **À traiter** et la page de la destination posent la question. Appuyez sur **Les adopter pour ce serveur** pour continuer, ou sur **Vérifier d'abord les règles** pour regarder les règles de la section avant de le faire. Importer un fichier de réglages ne prend pas la décision à votre place. Voir [Après une reconstruction](offsite-recovery.md#after-a-rebuild).
 
 ## Les notifications n'arrivent pas {#notifications-do-not-arrive}
 
 Commencez par **Envoyer un test** sous **Paramètres, Notifications**. La ligne sous la carte dit ce qui s'est passé.
 
-- **Rien n'est envoyé du tout.** Vérifiez **Notifier**. Avec **Jamais**, rien ne part, et avec **Uniquement en cas d'échec**, une bonne exécution reste silencieuse. Avec **Résumer les exécutions planifiées** activé, une exécution planifiée envoie un résumé à sa fin.
+- **Rien n'est envoyé du tout.** Vérifiez **Notifier**. Avec **Jamais**, aucun message ne part, seulement les pings d'une URL Healthchecks, et avec **Uniquement en cas d'échec**, une bonne exécution reste silencieuse. Avec **Résumer les exécutions planifiées** activé, une exécution planifiée envoie un résumé à sa fin.
 - **Une nouvelle adresse.** Après un changement du serveur de Matrix, de Gotify ou du courriel, le champ redemande le jeton ou le mot de passe, et la nouvelle adresse n'est enregistrée qu'une fois que vous l'avez saisi. BombVault n'envoie pas l'ancien secret à un nouvel endroit.
 - **Gotify** dit que le serveur a refusé le jeton de l'application : copiez-le de nouveau depuis l'application dans Gotify. L'**URL du serveur** est l'adresse de base, sans `/message`.
 - **Webhook :** vérifiez que **Format du Webhook** correspond au service. Une adresse Discord demande **Discord**, et ntfy demande **ntfy**.

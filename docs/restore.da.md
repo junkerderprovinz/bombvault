@@ -21,7 +21,7 @@ Hver gendannelse starter på siden **Gendannelse**: Vælg et område, søg efter
 
 Et klik på en post åbner **Gendan** med dens navn. Vinduet spørger trin for trin, og hvert trin kan ændres, før du starter:
 
-1. **Sikkerhedskopi**: Det anbefalede gendannelsespunkt er valgt på forhånd. Det er det nyeste, eller efter en åben afvigelse det sidste før den. Ældre ligger på listen, og **Sammenlign** viser, hvad der adskiller to af dem.
+1. **Sikkerhedskopi**: Det anbefalede gendannelsespunkt er valgt på forhånd. Det er det nyeste, eller efter en åben afvigelse det sidste før den. Den sikkerhedskopi, der blev taget før en tidligere gendannelse, rummer den tilstand, den gendannelse erstattede, så den springes over, medmindre der ikke er nogen anden. Ældre ligger på listen, og **Sammenlign** viser, hvad der adskiller to af dem.
 2. **Kilde**: Hvor filerne kommer fra, når et gendannelsespunkt ligger flere steder. **Lokal** er hurtigst.
 3. **Hvad**: **Alle** eller **Enkelte filer**, hvor du sætter flueben ved de filer og mapper, du vil have.
 4. **Hvorhen**: Målet. Valgene afhænger af postens slags:
@@ -29,7 +29,7 @@ Et klik på en post åbner **Gendan** med dens navn. Vinduet spørger trin for t
     | Mål | Hvad det gør |
     |---|---|
     | **Ved siden af originalen** | Standarden. En container kommer tilbage som en anden container ved navn `<name>-restored` med egne porte, en VMs diske og NVRAM havner i en mappe ved navn `<folder>-restored`, og et mappesæt kommer tilbage som `<path>-restored`. Intet ændres på originalen. |
-    | **Erstat originalen** | Overskriver det, der er der nu. Med **Tag først en sikkerhedskopi af den nuværende tilstand**, som er slået til som standard, tager BombVault først en sikkerhedskopi af dagens tilstand, så du kan gå tilbage. Mislykkes den sikkerhedskopi, starter gendannelsen ikke. |
+    | **Erstat originalen** | Overskriver det, der er der nu. Med **Tag først en sikkerhedskopi af den nuværende tilstand**, som er slået til som standard, tager BombVault først en sikkerhedskopi af dagens tilstand, så du kan gå tilbage. Mislykkes den sikkerhedskopi, starter gendannelsen ikke. Det virker også for en container eller VM, der er væk fra serveren: de mapper, gendannelsen skriver over, sikkerhedskopieres for sig. |
     | **Til en mappe** | Kun filerne, til at kigge i. |
     | **Download som ZIP** | Flashdrevet, til en ny pind. BombVault skriver aldrig ind i det kørende flashdrev. |
     | **Til et nyt datasæt** og **Gendan ind i datasættet** | ZFS-datasæt, se [ZFS-datasæt](zfs-datasets.md#restore). |
@@ -40,11 +40,11 @@ Før **Gendan** låses op, tjekker vinduet, at repositoryet svarer, at nøglen �
 
 Vinduet viser også, hvad gendannelsen ændrer i forhold til det, der er der nu: nye, erstattede og uændrede filer, med listen på forlangende, og de filer på målet, som ikke er i sikkerhedskopien og bliver liggende. restic regner det ud som en tørkørsel ud fra størrelse og ændringstidspunkt uden at læse filerne, og et meget stort træ stopper efter 30 sekunder og siger det. For containere og VM'er sammenligner det de indstillinger, gendannelsen genskaber, med de kørende: image og tag, porte, variabelnavne og volumener, eller hukommelse, vCPU'er, diske og netværk.
 
-Nogle ting kan stoppe en gendannelse, før den ændrer noget. En containers statiske IP og udgivne porte skal være frie, og dens netværk skal findes. En gendannelse på stedet nævner hver anden container, hvis bind mount rækker ind i en mappe, den skriver til, for eksempel "denne sti bruges også af nextcloud-db", men det er kun en advarsel.
+Nogle ting kan stoppe en gendannelse, før den ændrer noget. En containers statiske IP og udgivne porte skal være frie, og dens netværk skal findes. På Unraid afviser enhver gendannelse på stedet en mappe, der ikke ligger på en monteret pool eller share, fordi filerne ville havne i hukommelsen og være væk efter en genstart. En gendannelse på stedet nævner hver anden container, hvis bind mount rækker ind i en mappe, den skriver til, for eksempel "denne sti bruges også af nextcloud-db", men det er kun en advarsel.
 
 Nogle få valg dukker op, hvor de passer: **Lad den stå stoppet bagefter**, for at se på en container eller VM, før den kører igen, og **Gendan uden GPU og runtime** på en vært, der mangler den GPU eller runtime, sikkerhedskopien blev taget med.
 
-Gendannelsen kører i baggrunden. Du kan lukke vinduet, og fremdriften vises også under **Kører nu**. En lang gendannelse viser en procent og kan annulleres, og en annulleret gendannelse registreres som annulleret, ikke som mislykket.
+Gendannelsen kører i baggrunden. Du kan lukke vinduet, og fremdriften vises også under **Kører nu**. En lang gendannelse viser en procent og kan annulleres, og en annulleret gendannelse registreres som annulleret, ikke som mislykket. En gendannelse, der annulleres, mens containeren er ved at stoppe, eller en, der ikke kan fjerne containeren, har ikke gendannet noget endnu, så containeren starter igen. En container, der tager sine volumener fra en anden med `--volumes-from`, beholder dem, og gendannelsen begynder ikke, så længe den anden container ikke findes.
 
 ![Gendannelsesvinduet ved trinnet Hvad med enkelte filer afkrydset.](assets/screenshots/restore/window-what-dark.png#only-dark)
 ![Gendannelsesvinduet ved trinnet Hvad med enkelte filer afkrydset.](assets/screenshots/restore/window-what-light.png#only-light)
@@ -66,7 +66,7 @@ Nogen har redigeret Nextclouds `config.php` i nat, og Nextcloud starter ikke læ
 
 Vinduet slutter med **Færdig: filerne ligger i /mnt/user/restore**. Du finder filen som `/mnt/user/restore/config.php`, uden mapperne over den. Sammenlign den med den ødelagte, kopiér den tilbage i appdata-mappen, og genstart Nextcloud.
 
-Vil du i stedet lægge filen direkte tilbage, så vælg **Erstat originalen** i trin 5. Lad **Tag først en sikkerhedskopi af den nuværende tilstand** stå slået til, så BombVault sikkerhedskopierer den ødelagte tilstand, før den skriver, skriv `nextcloud` for at bekræfte, og tryk på **Gendan**. Nextcloud stoppes, mens den valgte fil skrives tilbage på sin plads, og kun de filer, du satte flueben ved, skrives.
+Vil du i stedet lægge filen direkte tilbage, så vælg **Erstat originalen** i trin 5. Lad **Tag først en sikkerhedskopi af den nuværende tilstand** stå slået til, så BombVault sikkerhedskopierer den ødelagte tilstand, før den skriver, skriv `nextcloud` for at bekræfte, og tryk på **Gendan**. Nextcloud stoppes, mens den valgte fil skrives tilbage på sin plads, og startes igen bagefter, og kun de filer, du satte flueben ved, skrives. En gendannelse, der mislykkes undervejs, lader Nextcloud stå stoppet, da den fil, den læser, kan være halvt skrevet, og kørslen siger det.
 
 ![Gendannelsesvinduet ved Hvad der sker med Erstat originalen valgt.](assets/screenshots/restore/window-replace-dark.png#only-dark)
 ![Gendannelsesvinduet ved Hvad der sker med Erstat originalen valgt.](assets/screenshots/restore/window-replace-light.png#only-light)
@@ -75,11 +75,13 @@ Vil du i stedet lægge filen direkte tilbage, så vælg **Erstat originalen** i 
 
 **Containere** genskabes ud fra deres gemte definition gennem Docker-API'et med deres entrypoint, værtsnavn, stopindstillinger, volumener og mounts, ressourcegrænser, log-driver, DNS-indstillinger og ældre links. En container kommer tilbage på det image, den kørte på, da sikkerhedskopien blev taget, ikke på et nyere, der blev hentet senere, og et image, der mangler, hentes først, med adgangsoplysningerne fra **Container-registre** under **Indstillinger, Gendannelse**. Dens GPU eller runtime (`--gpus`, `--runtime=nvidia`) kommer også tilbage. På en vært uden den driver eller runtime siger gendannelsen det og tilbyder **Gendan uden GPU og runtime**. Et link til en container, der mangler, eller som er stoppet, mens den gendannede starter, udelades, og kørselshistorikken siger det. En gendannelse, der mislykkes, efter at containeren blev fjernet, sætter den tilbage, stoppet.
 
+En sikkerhedskopi kan rumme mapper, som containeren ikke længere har valgt, for eksempel en ældre, taget før en mappe forsvandt. En mappe, der er væk eller tom, kommer tilbage. En, der rummer filer nu, bliver, som den er, fordi du måske har fjernet fluebenet med vilje, og tjekket før gendannelsen og kørselshistorikken nævner den. Hent den tilbage med **Enkelte filer** eller **Til en mappe**.
+
 **VM'er** får deres XML defineret igen over SSH og deres diske og UEFI-NVRAM sat til igen, selv efter at VM'en blev slettet. Se [VM-sikkerhedskopier](vm-backup-ssh-setup.md) for VM'er med Unraid-snapshots og diske på zvols.
 
-**Mappesæt** kommer tilbage med deres ejerskab, tilladelser og tidsstempler, som restic gemmer dem.
+**Mappesæt** kommer tilbage med deres ejerskab, tilladelser og tidsstempler, som restic gemmer dem. Hvor målet kun afviser ejerskabet, som `/mnt/user` gør, slutter kørslen med en note, der siger det. BombVault sammenligner så filerne med sikkerhedskopien, og en fil, der ikke kom frem, får gendannelsen til at mislykkes.
 
-**Flashdrevet** rører aldrig den kørende `/boot`. Gendannelsen er en download ved navn `flash-<id>.zip`, klar til at lægge i Unraid USB Creator. Vinduet viser også pluginnene i hver flash-sikkerhedskopi med version og størrelse og kan lægge et enkelt tilbage i det kørende flashdrev: dets `.plg`-fil, dets mappe under `config/plugins` og de pakkefiler, sikkerhedskopien rummer. Unraid installerer det ved næste opstart, eller med det samme under **Plugins, Install Plugin**.
+**Flashdrevet** rører aldrig den kørende `/boot`. Gendannelsen er en download ved navn `flash-<id>.zip`, klar til at lægge i Unraid USB Creator. ZIP'en rummer `APP_KEY`, så download af den kræver en login-adgangskode og en login på instansen. Vinduet viser også pluginnene i hver flash-sikkerhedskopi med version og størrelse og kan lægge et enkelt tilbage i det kørende flashdrev: dets `.plg`-fil, dets mappe under `config/plugins` og de pakkefiler, sikkerhedskopien rummer. Unraid installerer det ved næste opstart, eller med det samme under **Plugins, Install Plugin**.
 
 **ZFS-datasæt** har egne mål og beholder deres ZFS-egenskaber, se [Gendannelse](zfs-datasets.md#restore).
 
@@ -102,6 +104,10 @@ Hver post tjekkes, som en enkelt gendannelse tjekkes, og så kører de efter hin
 ## Gendan en stak {#stacks}
 
 Et klik på en stak på kortet **Stakke** åbner **Gendan stack**. Den gendanner hvert medlem fra dets seneste sikkerhedskopi på samme tid, og med **Start i afhængighedsrækkefølge efter gendannelse** starter den dem i deres `depends_on`-rækkefølge: databaser og caches først, så appen. Mangler et medlems projektmappe på det sted, du valgte, tilbyder vinduet tilstanden fra Lokal i stedet.
+
+BombVault tjekker først medlemmerne og projektmappen, og en gendannelse, der ikke kunne lykkes, ændrer intet. Ellers stopper den de kørende medlemmer, apps før deres databaser, skriver så projektmappen og gendanner derefter medlemmerne. Kommer projektmappen ikke tilbage, gendannes medlemmerne alligevel, men bliver stående stoppet, fordi mappen kan være halvt skrevet, og det er dér, et medlems bind mounts som regel ligger. Hvert medlems kørsel siger det.
+
+En database, der kun har databasedumps og ingen sikkerhedskopi af filer, og hvis container og navngivne volumen er væk, kommer tilbage uden sine data. Tjekket siger det før gendannelsen. Den bliver stående stoppet, og det samme gør de containere, der afhænger af den, så ingen app kører sin opsætning på en tom database. Start den, importér et dump, og start de andre. Se [Databasedumps](backups.md#database-dumps).
 
 ## Andre kilder {#other-sources}
 

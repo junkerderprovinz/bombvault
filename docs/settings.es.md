@@ -11,7 +11,7 @@ Esta página lista cada mosaico y sus tarjetas, y enlaza con la página que expl
 
 ## General {#general}
 
-- **Secciones** activa o desactiva cada sección: **Contenedores**, **VMs**, **Flash**, **Carpetas**, **Conjuntos de datos ZFS** y **Autocopia**. Una sección desactivada no se copia, y sus elementos no cuentan. **Flash** solo aparece en Unraid.
+- **Secciones** activa o desactiva cada sección: **Contenedores**, **VMs**, **Flash**, **Carpetas**, **Conjuntos de datos ZFS** y **Autocopia**. Una sección desactivada no se copia con ningún calendario, tampoco con el calendario propio de un elemento, y sus elementos no cuentan. **Copiar ahora** sigue funcionando. **Flash** solo aparece en Unraid.
 - **Contenedores** contiene lo que se aplica a todos los contenedores, como **Volcados automáticos de bases de datos**. Todo lo que afecta a un solo contenedor está en su página. Consulta [Volcados de bases de datos](backups.md#database-dumps).
 
 ## Aspecto {#look}
@@ -97,6 +97,6 @@ Varias cosas requieren una contraseña de acceso, como el kit de recuperación, 
 
 ## Info {#info}
 
-- **Versión**: BombVault, GlimStone, restic y rclone, con **Buscar actualizaciones** y **Novedades**, que cuenta los cambios que aún no has visto y abre **Novedades**.
+- **Versión**: BombVault, GlimStone, restic y rclone, con **Buscar actualizaciones** y **Novedades**, que cuenta los cambios que aún no has visto y abre una ventana que los muestra.
 - **Ayuda**: **Manual** abre esta documentación, e **Informe de error** descarga un ZIP con los datos sensibles tapados para una incidencia de GitHub. Requiere una contraseña de acceso.
 - **Acerca de BombVault**: el proyecto, su licencia y cómo contactar con el autor.

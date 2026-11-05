@@ -136,13 +136,13 @@ Qualquer máquina com ZFS e SSH pode receber, por exemplo um segundo Unraid ou u
 Com root não é preciso mais nada. Um utilizador próprio precisa destas permissões no pool do destino, que a caixa de diálogo também mostra:
 
 ```
-zfs allow <user> receive,create,mount,rollback,destroy,userprop <pool>
+zfs allow <user> receive,create,mount,rollback,destroy,userprop,readonly,canmount <pool>
 ```
 
 Na origem, um utilizador do mesmo tipo precisa destas no conjunto de dados de topo da entrada:
 
 ```
-zfs allow <user> send,snapshot,hold,release,bookmark,destroy <dataset>
+zfs allow <user> send,snapshot,hold,release,bookmark,destroy,mount <dataset>
 ```
 
 Neste sentido, o BombVault que detém a entrada também detém uma chave que pode escrever no servidor.
@@ -159,7 +159,7 @@ Um BombVault emparelhado pode receber a réplica ele próprio. Ninguém recebe a
 2. Na instância recetora, abre **Instâncias**. O pedido aparece no cartão da instância emissora como distintivo, e os seus **Detalhes** listam-no. Escolhe o pool e a raiz nesse servidor e quantos instantâneos ficam, depois prime **Permitir** ou **Recusar**.
 3. Depois de **Permitir**, a origem envia segundo o seu próprio plano, como para qualquer outro destino.
 
-A instância recetora aceita apenas o que a aprovação cobre: os conjuntos de dados da entrada, na sua própria raiz. É ela que executa `zfs receive`, e a origem não tem forma de apagar nem de reverter nada aí. Por isso a cópia sobrevive a uma origem que alguém tenha tomado. A instância recetora mantém a sua própria retenção. A origem só sugere uma regra quando faz o pedido.
+A instância recetora aceita apenas o que a aprovação cobre: os conjuntos de dados da entrada, na sua própria raiz. É ela que executa `zfs receive`, e a origem não tem forma de apagar nem de reverter nada aí. Por isso a cópia sobrevive a uma origem que alguém tenha tomado. A instância recetora mantém a sua própria retenção. A origem só sugere uma regra quando faz o pedido. Uma origem destas pode continuar a enviar instantâneos novos, e com o tempo eles empurram os mais antigos para fora segundo a regra, como quaisquer outros. Um instantâneo cujo nome tenha uma data à frente do relógio da instância recetora não conta para a regra até essa hora chegar.
 
 **Revoke access** na instância recetora termina a aprovação a qualquer momento e avisa a origem, que então mostra que a aprovação foi retirada e para. O que a instância recetora já tem fica lá. Um pedido recusado continua recusado. Mais conjuntos de dados, ou um pedido depois de uma revogação, voltam a perguntar.
 
@@ -177,13 +177,15 @@ A cópia no destino é só de leitura. Por predefinição não está montada, po
 
 Entra tudo o que a entrada guarda no backup, e também os volumes abaixo dele, que o backup ignora. Um conjunto de dados filho que desativou na entrada fica de fora. Todos os conjuntos de dados de uma execução vêm de um único instantâneo, como no backup.
 
+Uma cópia que outro BombVault replica para este servidor não é enviada adiante, porque isso desbastaria o histórico de que a sua origem ainda precisa. Quando a árvore de uma entrada contém uma, a execução falha para esse conjunto de dados e diz porquê, até a desligares na entrada. Uma entrada que seja ela própria uma cópia destas não pode replicar de todo. Apagar uma entrada ou desligar a sua réplica deixa essas cópias e os seus instantâneos em paz. Depois de assumires uma cópia, como descrito em [Usar a réplica](#replica-use), ela conta como um conjunto de dados normal.
+
 ### Quanto tempo ficam os instantâneos {#replica-retention}
 
-No destino, uma réplica nova guarda 7 instantâneos diários e 3 semanais. Escolhe antes **Short**, **Balanced** ou **Long**, ou define **Custom values**. Só são removidos aí os instantâneos com o nome `bombvault-replica-<14 digits>`, e nunca o mais recente que os dois lados partilham.
+No destino, uma réplica nova guarda 7 instantâneos diários e 3 semanais. Escolhe antes **Short**, **Balanced** ou **Long**, ou define **Custom values**. Valores próprios todos a zero guardam todos os instantâneos, e o cartão di-lo. Só são removidos aí os instantâneos com o nome `bombvault-replica-<14 digits>`, e nunca o mais recente que os dois lados partilham.
 
 Na origem, o BombVault guarda o instantâneo de réplica mais recente, mais um marcador para cada estado que enviou. Os marcadores não ocupam espaço. A transferência seguinte parte deles.
 
-Para guardares mais também na origem, define **Manter neste servidor** no cartão Réplica, por exemplo para 7. Depois de cada réplica ficam então neste servidor tantos dos instantâneos de réplica mais recentes quantos indicares, além do que o alvo guarda. 0 ou 1 guarda só o mais recente. O mais recente tem um hold, para que a base da transferência seguinte não seja apagada por engano. Os mais antigos não têm nenhum. Cada instantâneo prende os blocos que mudaram depois dele, por isso cada um que guardas ocupa espaço no pool. Desligar a réplica ou mudá-la para outro alvo, ou apagar a entrada, também os remove deste servidor.
+Para guardares mais também na origem, define **Manter neste servidor** no cartão Réplica, por exemplo para 7. Depois de cada réplica ficam então neste servidor tantos dos instantâneos de réplica mais recentes quantos indicares, além do que o alvo guarda. 0 ou 1 guarda só o mais recente. O mais recente tem um hold, para que a base da transferência seguinte não seja apagada por engano. Os mais antigos não têm nenhum. Cada instantâneo prende os blocos que mudaram depois dele, por isso cada um que guardas ocupa espaço no pool. Desligar a réplica ou mudá-la para outro alvo, ou apagar a entrada, também os remove deste servidor. Os instantâneos de outra entrada aninhada por baixo ficam. Se o anfitrião não estiver acessível enquanto apagas a entrada, os instantâneos também ficam e a página di-lo. Remove-os à mão: `zfs release -r bombvault-replica <dataset>@<snapshot>`, depois `zfs destroy`.
 
 Podes ler ou copiar de imediato os ficheiros de um instantâneo guardado, a partir da pasta `.zfs/snapshot` dentro do conjunto de dados ou de um clone, sem tocar no conjunto de dados nem na réplica:
 
@@ -226,12 +228,12 @@ zfs clone backup/bombvault-replica/tower/cache/appdata@bombvault-replica-2026100
 Se a origem falhar, transforma a cópia num conjunto de dados normal e gravável no destino:
 
 ```
-zfs inherit -r readonly backup/bombvault-replica/tower/cache/appdata && zfs inherit -r canmount backup/bombvault-replica/tower/cache/appdata && zfs mount -a
+zfs inherit -r readonly backup/bombvault-replica/tower/cache/appdata && zfs list -rH -o name -t filesystem backup/bombvault-replica/tower/cache/appdata | xargs zfs set canmount=on && zfs mount -a
 ```
 
-Depois disso, o BombVault deixa de replicar para esse conjunto de dados, até iniciar uma nova primeira execução.
+Depois disso, o BombVault deixa de replicar para esse conjunto de dados e para os seus filhos. A execução seguinte falha com um motivo, e o que escreveste fica. O mesmo vale para qualquer outra coisa escrita na cópia desde o seu instantâneo mais recente: o BombVault nunca reverte uma cópia. Para voltar a replicar para lá, tira da cópia o que precisas e destrói-a no destino. A execução seguinte envia então tudo de novo.
 
-Para recuperar um estado na origem, carrega em **Bring back as a new dataset** na folha. O BombVault envia o instantâneo para um conjunto de dados novo ao lado do original, com o nome `<dataset>-bombvault-restore-` mais uma marca temporal. Nunca escreve por cima do original.
+Para recuperar um estado na origem, carrega em **Bring back as a new dataset** na folha. O BombVault envia o instantâneo para um conjunto de dados novo ao lado do original, com o nome `<dataset>-bombvault-restore-` mais uma marca temporal. Nunca escreve por cima do original. Um conjunto de dados filho perdido na origem também volta, desde que a cópia ainda tenha esse instantâneo. Um filho que não o tenha fica de fora, e a execução di-lo.
 
 ### Exemplo: uma réplica para uma segunda caixa Unraid {#example-replica}
 

@@ -40,13 +40,13 @@ Jokaisella päällä olevalla osiolla on rivi, jossa on neljä tarkistusta:
 | Tarkistus | Se muuttuu vihreäksi, kun | Muita sanoja, jotka saatat nähdä |
 |---|---|---|
 | **Paikallinen** | viimeinen varmuuskopio on ajan tasalla | ei vielä varmuuskopiota, ei aikataulua, viimeinen ajo epäonnistui, varmuuskopio myöhässä, kaikki merkinnät eivät ole suojattuja, varmuuskopio erääntyy pian |
-| **Etä** | viimeinen kopio tiloista ulos on ajan tasalla | ei etäkopiota, kopiointi käynnissä, kopio myöhässä, kopiointi tauolla, ei vielä kopiota, replika epäonnistui |
+| **Etä** | viimeinen kopio tiloista ulos on ajan tasalla | ei etäkopiota, kopiointi käynnissä, kopio myöhässä, odottaa päätöstäsi, ei vielä kopiota, replika epäonnistui |
 | **Poistosuoja** | peukalointitesti osoitti, että toinen pää kieltäytyy poistoista | ei mitään, ei mitään ja riski hyväksytty, ei vielä todistettu, testi epäonnistui, ei todistettu, koska sen tarkistus on pois päältä |
 | **Koepalautus** | palautus etäkopiosta onnistui | ei koskaan ajettu, käynnissä, epäonnistui, myöhässä, vain käsin, ei mahdollinen tälle osiolle |
 
 Osio on vihreä vain varmennetuilla tosiasioilla. Kopio tällä palvelimella ei ole etäkopio, ja kohde, jonka merkitsit valinnalla **Hyväksy ilman poistosuojaa**, näyttää harmaan renkaan keltaisen pisteen sijaan, joten osion väri seuraa sen muita tarkistuksia.
 
-Ajoitettu osio näyttää **Ei vielä varmuuskopiota** ja pysyy neutraalina, kunnes sen ensimmäisen ajon aika on tullut. Sen jälkeen siinä lukee **Myöhässä**, ja se hälyttää kerran. Osio, jossa ei ole mitään varmuuskopioitavaa, koska mikään aikataulu ei ulotu sen merkintöihin, näyttää **Ei aikataulutettu** eikä ole koskaan myöhässä.
+Ajoitettu osio näyttää **Ei vielä varmuuskopiota** ja pysyy neutraalina, kunnes sen ensimmäisen ajon aika on tullut, laskettuna siitä, milloin sen aikataulu viimeksi asetettiin. Sen jälkeen siinä lukee **Myöhässä**, ja se hälyttää kerran. **Myöhässä** määräytyy sen merkinnän mukaan, joka on jäänyt eniten jälkeen omasta aikataulustaan, joten käynnissä oleva naapuri ei piilota pysähtynyttä. Merkintää, jonka kontti on poissa tai johon mikään aikataulu ei ulotu, ei lasketa. Merkintää, jolla on oma viikoittainen aikataulu, ei arvioida osion päivittäisen aikataulun mukaan. Osio, jossa ei ole mitään varmuuskopioitavaa, koska mikään aikataulu ei ulotu sen merkintöihin, näyttää **Ei aikataulutettu** eikä ole koskaan myöhässä.
 
 Osion napsautus avaa sen ikkunan, jossa jokainen tarkistus on kirjoitettu auki, mukana ovat sen laskemat merkinnät sekä **Aloita koepalautus** tai **Aja koepalautus uudelleen**. Se näyttää myös **Karsintasääntö asetettu** tai **Ei karsintasääntöä**, ja osion oman kansion säilytyssääntö lasketaan siinä missä sen etäkopioiden säännötkin.
 

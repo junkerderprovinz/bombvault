@@ -81,8 +81,25 @@ docker exec BombVault virsh -c "qemu+ssh://root@192.168.1.10:22/system?keyfile=/
 
 Minden VM-nek van egy **Módszer** beállítása a **VM** kártyán a Beállítások lapján (nyisd meg a VM-et a **Biztonsági mentések** alatt):
 
-- A **Szabályos (leállítás)** az alapértelmezett. Leállítja a VM-et, lementi a lemezeket, és újra elindítja, így a mentés mindig konzisztens. Legfeljebb tíz percet vár a vendég leállására, és soha nem kényszeríti ki. Az a vendég, amely ezután is fut, békén marad, és az a mentés az okával meghiúsul.
-- Az **Élő pillanatkép** egy futó VM-et ment le egy külső pillanatképen és `blockcommit` használatával. Szüksége van a qemu guest agentre a VM-ben a nyugalmi pillanatképhez, és arra, hogy a lemez a `/mnt/cache` vagy `/mnt/diskX` alatt legyen, ne a `/mnt/user` alatt. Egy leállított VM-nél az Élő magától Szabályosra vált, és akkor is, ha a pillanatképet nem lehet elkészíteni.
+- A **Szabályos (leállítás)** az alapértelmezett. Leállítja a VM-et, lementi a lemezeket, és újra elindítja, így a mentés mindig konzisztens. Legfeljebb tíz percet vár a vendég leállására, és soha nem kényszeríti ki. Az a vendég, amely ezután is fut, békén marad, és az a mentés az okával meghiúsul. Ha a vendég a következő órán belül leáll, a BombVault újra elindítja. Ha ez az indítás meghiúsul, a sikertelen futás ezt jelzi.
+- Az **Élő pillanatkép** egy futó VM-et ment le egy külső pillanatképen és `blockcommit` használatával. Szüksége van arra, hogy a lemez a `/mnt/cache` vagy `/mnt/diskX` alatt legyen, ne a `/mnt/user` alatt. A VM-ben lévő qemu guest agenttel a pillanatkép nyugalmi, nélküle összeomlás-konzisztens. Egy leállított VM-nél az Élő magától Szabályosra vált. Ha a pillanatképet nem lehet elkészíteni, az a mentés meghiúsul, és a VM tovább fut, mert egy élő mentésre választott VM-et emiatt soha nem állít le.
+
+## Amit a mentés kihagy {#left-out}
+
+Egy mentés úgy is sikerülhet, hogy nem tartalmazza a teljes VM-et. A futás ekkor figyelmeztető hangvételű megjegyzést kap, amely megnevezi, mi hiányzik:
+
+- **Lemezek, amelyeket a BombVault nem olvas.** A csak olvasható lemez, a `lun`, valamint a `network` vagy `volume` típusú lemez kimarad, és a megjegyzés mindegyiket megnevezi a céleszközével és a fajtájával. A mentésben lévő definíció továbbra is felsorolja őket. A cdromot és a floppyt nem nevezi meg. Az a sima blokkeszköz, amely nem ZFS zvol, ehelyett elbuktatja a mentést.
+- **Az emulált TPM állapota.** Nincs útvonala a domain XML-ben. Az Unraid VM Manager az **OVMF TPM** BIOS-szal rendelkező VM-eknek ilyen TPM-et állít be, így a megjegyzés Unraidon is megjelenik. Az a vendég, amely titkot tart a TPM-jében, ahogy a BitLocker is teheti, egy ezt az állapotot elvesztő visszaállítás után kérheti a helyreállítási kulcsát, ezért tartsd kéznél azt a kulcsot.
+
+## Vékony lemezek {#thin-disks}
+
+A visszaállítás a vékony lemezt vékonyan tartja, akár lecseréli a lemezt, akár újat ír: a restic a nullás szakaszokat lyukakként írja egy új fájlba, a BombVault pedig egy lecserélt fájl nullás blokkjait a megírása után a `fallocate --dig-holes` segítségével adja vissza. Amíg a restic lecserél egy fájlt, az a fájl a teljes méretét foglalja, ha a poolon van rá hely. A lyukasztást (hole punching) nem ismerő fájlrendszer a teljes méretén hagyja a lemezt, és a napló ezt jelzi. A helyellenőrzés egy új lemezt továbbra is a teljes méretével számol.
+
+## Sikertelen visszaállítás {#restore-fails}
+
+A helyben történő visszaállítás kikapcsolja a VM-et, megírja a lemezeket, és a definíciót meg az NVRAM-ot csak akkor cseréli le, amikor a lemezek már megvannak. A sikertelen visszaállítás a VM-et definiálva hagyja az NVRAM-jával együtt. Ha a lemezei nem változtak, és futott, újra fut. Ha változhattak, kikapcsolva marad, mert egy félig írt lemez indítása ráírna, és a futás ezt jelzi. Ugyanannak a mentésnek az újbóli visszaállítása befejezi a munkát.
+
+A libvirtben nyilvántartott pillanatképek (az Unraid VM Manager nem így készíti a sajátjait) még a VM érintése előtt leállítják a helyben történő visszaállítást, mert a libvirt nem tud eltávolítani olyan VM-et, amelynek vannak ilyenek. Előbb töröld őket.
 
 ## Csak a változott blokkok {#changed-blocks}
 
@@ -112,6 +129,7 @@ A BombVault az ilyen VM-et teljes egészében menti:
 - **Az élő mentés megtartja a pillanatképeket.** Az **Élő pillanatkép** egy ideiglenes overlayt tesz a tetejére, amíg a lemezt olvassa, és utána visszaolvasztja, csak a közvetlenül alatta lévő képbe. A lánc a mentés után ugyanaz, mint előtte. A pillanatkép nélküli VM úgy viselkedik, mint mindig.
 - **A visszaállítás visszahozza a láncot.** A helyben történő visszaállítás minden fájlt oda ír vissza, ahol volt, és visszateszi az Unraid pillanatkép-listáját, így a VM Manager újra listázza a pillanatképeket. Az eredeti mellé történő visszaállítás a fájlokat a másolat mappájába írja, és a visszaállított lemezeket a visszaállított fájlokra irányítja, így a másolat soha nem olvas az eredeti képeiből. Az Unraid pillanatkép-listája csak a helyben történő visszaállítással kerül vissza, mert azokat a fájlokat nevezi meg, ahol a mentéskor voltak. Nélküle a másolat ugyanúgy elindul, és a VM Manager egyszerűen nem listáz hozzá pillanatképeket.
 - A **Csak a változott blokkok** azt olvassa, amit a vendég lát, ezért a visszaállítása egyetlen laposított qcow2 fájlként jön vissza a pillanatképek nélkül.
+- **A visszaállítás a kiválasztott mentés lemezét hozza vissza.** Az azóta készült vagy összeolvasztott pillanatképek ezen nem változtatnak. Egy pillanatkép előtti mentés a benne lévő fájlra definiálja a VM-et, egy összeolvasztás előtti mentés pedig visszahozza az overlayét, és azon fut. Az újabb fájlok ott maradnak, ahol vannak, használatlanul és változatlanul. Az a mentés, amely tartalmaz egy overlayt, de az alatta lévő fájlt nem, a VM érintése előtt elutasításra kerül. A VM definíciója a visszaállítás után nem sorol fel láncot, így a libvirt a visszaállított fájlokból olvassa ki a láncot.
 
 ### Példa: egy VM két pillanatképpel {#example-unraid-snapshots}
 
@@ -199,10 +217,10 @@ A fájllemezeket, ahogy az Unraid használja őket, ebből semmi nem érinti.
 Egy VM-nek lehet virtuális TPM-je, amelyre a Secure Boot és a Windows 11 vendégek igényt tartanak. Az állapota a lemezen és az NVRAM-on kívül él, így csak e kettő mentése új, üres TPM-mel hozná vissza a vendéget.
 
 - Egy **átengedett TPM**, egy valódi chip, amelyet a vendégnek adtak át, megnevezi az útvonalát a domain XML-ben. A BombVault az állapotát az NVRAM mellett menti SSH-n át, és a `virsh define` előtt visszaírja, legjobb szándékkal, mint az NVRAM-ot: a sikertelen olvasás vagy írás naplózódik, és nem buktatja el a mentést vagy a visszaállítást.
-- Egy **emulált vTPM**, amilyet a TrueNAS a Windows 11 és a Secure Boot vendégeknek állít be, nem tesz közzé állapotútvonalat a domain XML-ben. A BombVault ekkor „no TPM path found” üzenetet jelent, ahelyett hogy útvonalat találgatna. Tartsd kéznél egy ilyen vendég helyreállítási kulcsát, például a BitLocker-kulcsát, mielőtt visszaállítod.
+- Egy **emulált vTPM**, amilyet a TrueNAS a Windows 11 és a Secure Boot vendégeknek állít be, nem tesz közzé állapotútvonalat a domain XML-ben, ezért az állapota nem kerül mentésre. A BombVault nem találgat útvonalat, és a mentés egy megjegyzéssel zárul, hogy a VM TPM-jének állapota nincs benne. Tartsd kéznél egy ilyen vendég helyreállítási kulcsát, például a BitLocker-kulcsát, mielőtt visszaállítod.
 - **Nem tudsz TPM-et csatolni egy TrueNAS VM-hez magad.** A TrueNAS SCALE 25.10 VM-eszköz API-ja csak a `CDROM`, `DISPLAY`, `NIC`, `PCI`, `RAW`, `DISK` és `USB` típust fogadja el, a `TPM`-et ismeretlen típusként utasítja vissza.
 
-A TPM-kezelést csak egységtesztelték, valódi, vTPM-es TrueNAS-vendéggel még nem futott. A TPM nélküli VM, mint az Unraidon, pontosan a korábbiak szerint menthető és állítható vissza.
+A TPM-kezelést csak egységtesztelték, valódi, vTPM-es TrueNAS-vendéggel még nem futott. A TPM nélküli VM pontosan a korábbiak szerint menthető és állítható vissza.
 
 Az NVRAM-ot a szokott módon menti. A TrueNAS VM-enként a `/var/db/system/vm/nvram/<id>_<name>_VARS.fd` helyen tartja, és a domain XML megnevezi ezt az útvonalat.
 

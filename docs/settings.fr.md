@@ -11,7 +11,7 @@ Cette page liste chaque tuile et ses cartes, et renvoie vers la page qui expliqu
 
 ## Général {#general}
 
-- **Sections** active ou désactive chaque section : **Conteneurs**, **VMs**, **Flash**, **Dossiers**, **Jeux de données ZFS** et **Auto-sauvegarde**. Une section désactivée n'est pas sauvegardée, et ses éléments ne comptent pas. **Flash** n'apparaît que sur Unraid.
+- **Sections** active ou désactive chaque section : **Conteneurs**, **VMs**, **Flash**, **Dossiers**, **Jeux de données ZFS** et **Auto-sauvegarde**. Une section désactivée n'est sauvegardée par aucun planning, propre planning d'un élément compris, et ses éléments ne comptent pas. **Sauvegarder maintenant** fonctionne toujours. **Flash** n'apparaît que sur Unraid.
 - **Conteneurs** contient ce qui s'applique à tous les conteneurs, comme **Exports SQL automatiques**. Tout ce qui concerne un seul conteneur se trouve sur sa page. Voir [Dumps de base de données](backups.md#database-dumps).
 
 ## Apparence {#look}
@@ -97,6 +97,6 @@ Plusieurs choses demandent un mot de passe de connexion, comme le kit de récup�
 
 ## Info {#info}
 
-- **Version** : BombVault, GlimStone, restic et rclone, avec **Rechercher des mises à jour** et **Nouveau**, qui compte les changements que vous n'avez pas encore vus et ouvre **Nouveautés**.
+- **Version** : BombVault, GlimStone, restic et rclone, avec **Rechercher des mises à jour** et **Nouveau**, qui compte les changements que vous n'avez pas encore vus et ouvre une fenêtre qui les liste.
 - **Aide** : **Manuel** ouvre cette documentation, et **Rapport de bug** télécharge un ZIP expurgé pour un ticket GitHub. Il demande un mot de passe de connexion.
 - **À propos de BombVault** : le projet, sa licence et comment joindre l'auteur.

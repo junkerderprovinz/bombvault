@@ -11,7 +11,7 @@ Denne side viser hver flise og dens kort og linker til den side, der forklarer h
 
 ## Generelt {#general}
 
-- **Områder** slår hvert område til eller fra: **Containers**, **VMs**, **Flash**, **Mapper**, **ZFS-datasæt** og **Auto-sikkerhedskopi**. Et område, der er slået fra, sikkerhedskopieres ikke, og dets poster tæller ikke. **Flash** vises kun på Unraid.
+- **Områder** slår hvert område til eller fra: **Containers**, **VMs**, **Flash**, **Mapper**, **ZFS-datasæt** og **Auto-sikkerhedskopi**. Et område, der er slået fra, sikkerhedskopieres ikke efter nogen tidsplan, heller ikke efter en posts egen plan, og dets poster tæller ikke. **Sikkerhedskopier nu** virker stadig. **Flash** vises kun på Unraid.
 - **Containers** rummer det, der gælder for hver container, for eksempel **Automatiske databasedumps**. Alt, der påvirker én container, står på dens side. Se [Databasedumps](backups.md#database-dumps).
 
 ## Udseende {#look}
@@ -97,6 +97,6 @@ Flere ting kræver en loginadgangskode, for eksempel gendannelseskittet, nøgled
 
 ## Info {#info}
 
-- **Version**: BombVault, GlimStone, restic og rclone, med **Søg efter opdateringer** og **Ny**, som tæller de ændringer, du endnu ikke har set, og åbner **Nyt**.
+- **Version**: BombVault, GlimStone, restic og rclone, med **Søg efter opdateringer** og **Ny**, som tæller de ændringer, du endnu ikke har set, og åbner et vindue, der viser dem.
 - **Hjælp**: **Manual** åbner denne dokumentation, og **Fejlrapport** downloader en redigeret ZIP til et GitHub-issue. Den kræver en loginadgangskode.
 - **Om BombVault**: projektet, dets licens og hvordan du når forfatteren.

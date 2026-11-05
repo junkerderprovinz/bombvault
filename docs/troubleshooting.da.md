@@ -38,7 +38,7 @@ VM-sikkerhedskopiering taler med libvirt over SSH, aldrig en montering.
 
 ## Et live-VM-snapshot kørte ikke {#a-live-vm-snapshot-did-not-run}
 
-Live-snapshots kræver qemu guest agent installeret i VM'en og disken på `/mnt/cache` (eller `/mnt/diskX`), ikke `/mnt/user`. På en slukket VM falder live automatisk tilbage til yndefuld. En yndefuld sikkerhedskopi lukker VM'en ned, sikkerhedskopierer diskene og genstarter den så, så den altid er konsistent. Den venter op til ti minutter på, at gæsten lukker ned, og slukker den aldrig med magt, så en Windows-gæst, der installerer opdateringer, ikke bliver afbrudt halvvejs. En gæst, der stadig kører efter det, lades i fred, og den sikkerhedskopi fejler med årsagen.
+Live-snapshots kræver disken på `/mnt/cache` (eller `/mnt/diskX`), ikke `/mnt/user`. Med qemu guest agent i VM'en er snapshottet stilnet, og uden den er det crash-konsistent. På en slukket VM falder live automatisk tilbage til yndefuld. En yndefuld sikkerhedskopi lukker VM'en ned, sikkerhedskopierer diskene og genstarter den så, så den altid er konsistent. Den venter op til ti minutter på, at gæsten lukker ned, og slukker den aldrig med magt, så en Windows-gæst, der installerer opdateringer, ikke bliver afbrudt halvvejs. En gæst, der stadig kører efter det, lades i fred, og den sikkerhedskopi fejler med årsagen.
 
 ## En sikkerhedskopi fejlede med "repository is already locked" {#a-backup-failed-with-repository-is-already-locked}
 
@@ -127,6 +127,10 @@ En åben kritisk anomali holder dem tilbage: elementets kilde er næsten tom, er
 
 Samme årsag: oprydningen lader de gamle sikkerhedskopier af et element med sådan en anomali være og nævner elementet i sin besked. Alt andet ryddes op som normalt.
 
+## En sikkerhedskopi fejler med "on no mounted pool or share" {#no-mounted-pool}
+
+På Unraid ligger `/mnt` i hukommelsen, så en mappe dér, hvor ingen pool er monteret, er væk ved næste genstart og skjult, når poolen er tilbage. BombVault nægter at skrive en sikkerhedskopi eller en flash-ZIP dér, også når et repository fra en tidligere skrivning allerede ligger i mappen. Montér poolen, og kør sikkerhedskopieringen igen.
+
 ## Historikimporten siger, at et repository ikke kunne læses {#history-import-says-a-repository-could-not-be-read}
 
 Efter opgraderingen læser BombVault én gang størrelsen af tidligere sikkerhedskopier fra hvert repository. Et repository, der ikke kunne nås på det tidspunkt, for eksempel en offsite-destination, der var nede, eller et share, der ikke var monteret, står i kortet **Afvigelser** under **Indstillinger, Verificering** og forsøges igen én gang om dagen. Imens lærer dets elementer af nye sikkerhedskopier.
@@ -177,15 +181,15 @@ Målet har snapshots, der er nyere end det nyeste, det deler med denne server, f
 
 BombVault følger hver disks backing-kæde og sikkerhedskopierer hver fil i den. En kæde, der ikke kan følges til sin ende, får sikkerhedskopieringen til at mislykkes i stedet for at udelade en del af disken, og beskeden nævner filen. Tjek, at filen findes under `/mnt`, og at snapshottet stadig står i VM Manager. En fil uden for Host Data kan slet ikke læses. Se [VM'er med Unraid-snapshots](vm-backup-ssh-setup.md#unraid-snapshots).
 
-## Off-site-kopier står på pause efter en genopbygning {#copies-paused}
+## Off-site-kopier venter på din beslutning efter en genopbygning {#copies-paused}
 
-Efter **Opdag sikkerhedskopier** eller nødguiden uden gendannede indstillinger venter off-site-kopier af hvert genopbygget område, fordi BombVault ikke længere ved, hvilke poster du har udeladt. Oversigten siger det. Tryk på **Bekræft standard** i **Destinationer pr. område**, se forhåndsvisningen, og udelad det, der skal udelades. At importere en indstillingsfil afslutter ikke pausen. Se [Efter en genopbygning](offsite-recovery.md#after-a-rebuild).
+Efter **Opdag sikkerhedskopier** eller nødguiden uden gendannede indstillinger, eller når et område finder sine egne sikkerhedskopier fra før denne database, venter off-site-kopier af det område, fordi BombVault ikke længere ved, hvilke poster du har udeladt. **Kræver opmærksomhed** og destinationens side spørger om det. Tryk på **Overtag dem som denne servers egne** for at fortsætte, eller på **Tjek reglerne først** for at se på områdets regler, før du gør det. At importere en indstillingsfil træffer ikke beslutningen for dig. Se [Efter en genopbygning](offsite-recovery.md#after-a-rebuild).
 
 ## Notifikationer kommer ikke frem {#notifications-do-not-arrive}
 
 Start med **Send test** under **Indstillinger, Notifikationer**. Linjen under kortet siger, hvad der skete.
 
-- **Der sendes slet intet.** Tjek **Underret**. Med **Aldrig** går intet ud, og med **Kun ved fejl** forbliver en god kørsel stille. Med **Opsummer planlagte kørsler** slået til sender en planlagt kørsel én opsummering til sidst.
+- **Der sendes slet intet.** Tjek **Underret**. Med **Aldrig** går ingen besked ud, kun pingene til en Healthchecks-URL, og med **Kun ved fejl** forbliver en god kørsel stille. Med **Opsummer planlagte kørsler** slået til sender en planlagt kørsel én opsummering til sidst.
 - **En ny adresse.** Når du ændrer serveren for Matrix, Gotify eller e-mail, beder feltet igen om tokenet eller adgangskoden, og den nye adresse gemmes først, når du har skrevet det. BombVault sender ikke den gamle hemmelighed til et nyt sted.
 - **Gotify** siger, at serveren afviste app-tokenet: Kopiér det igen fra programmet i Gotify. **Server-URL** er basisadressen uden `/message`.
 - **Webhook:** Tjek, at **Webhook-format** passer til tjenesten. En Discord-adresse kræver **Discord**, og ntfy kræver **ntfy**.

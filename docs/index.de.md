@@ -23,7 +23,7 @@ Jeder Container, jede VM, jedes Ordner-Set, der Flash, jedes ZFS-Dataset und die
 | **Container** | Appdata-Verzeichnis plus die Container-Definition (Image, Umgebungsvariablen, Ports, Labels, Volumes). |
 | **VMs** | Disk-Image(s) der VM, die XML-Definition und das UEFI-NVRAM, gesichert über SSH (kein libvirt-Mount). |
 | **Flash** | Der gesamte USB-Flash (`/boot`): Betriebssystem, Lizenz, Array-Konfiguration, Shares, Netzwerk- und Plugin-Konfiguration. |
-| **Selbstbackup** | Das eigene `/config` von BombVault: seine Einstellungsdatenbank, die Zugangsdaten seiner Speicherorte und das libvirt-SSH-Schlüsselpaar. |
+| **Selbstbackup** | Das eigene `/config` von BombVault: seine Einstellungsdatenbank, die Zugangsdaten seiner Speicherorte, das libvirt-SSH-Schlüsselpaar, der Schlüssel und die festgehaltenen Host-Schlüssel der ZFS-Server und die Zertifikate. |
 | **Ordner** | Jeder Ordner auf dem Server als Ordner-Set, jeweils mit optionalen Ausschlussmustern. |
 | **ZFS-Datasets** | Ein Dataset mit allen Datasets darunter, gelesen aus einem ZFS-Snapshot und gespeichert wie ein Ordner. Siehe [ZFS-Datasets](zfs-datasets.md). |
 
@@ -102,4 +102,4 @@ Name und Markenauftritt sind nicht lizenziert. Die AGPL deckt nur den Quellcode 
 - **Issues:** [github.com/junkerderprovinz/bombvault/issues](https://github.com/junkerderprovinz/bombvault/issues)
 
 !!! warning "Root-gleiche Kontrolle über den Host"
-    Über den Docker-Socket kann BombVault Container anhalten, entfernen und neu anlegen und Appdata lesen und schreiben, und für die VM-Sicherung meldet es sich per SSH am Host an, um `virsh` auszuführen. Wer seine Weboberfläche erreicht, hat damit praktisch Root auf dem Host. Betreibe BombVault nur in einem vertrauenswürdigen, nicht offenen Netzwerk und setze ein Login-Passwort unter **Einstellungen, Sicherheit**. Das Recovery-Kit, Schlüsselhinterlegungen und das Löschen der Sicherungen eines Speicherorts brauchen eines. Das vollständige Sicherheitsmodell steht unter [Konfiguration](configuration.md#security-model).
+    Über den Docker-Socket kann BombVault Container anhalten, entfernen und neu anlegen und Appdata lesen und schreiben, und für die VM-Sicherung meldet es sich per SSH am Host an, um `virsh` auszuführen. Wer seine Weboberfläche erreicht, hat damit praktisch Root auf dem Host. Betreibe BombVault nur in einem vertrauenswürdigen, nicht offenen Netzwerk und setze ein Login-Passwort unter **Einstellungen, Sicherheit**. Das Recovery-Kit, Schlüsselhinterlegungen, das Flash-ZIP, das Exportieren einer Flash-Sicherung oder eines Selbstbackups und das Löschen der Sicherungen eines Speicherorts brauchen eines. Das vollständige Sicherheitsmodell steht unter [Konfiguration](configuration.md#security-model).

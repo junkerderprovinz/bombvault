@@ -40,13 +40,13 @@ Hvert område som er slått på har en rad med fire kontroller:
 | Kontroll | Den blir grønn når | Andre ord du kan se |
 |---|---|---|
 | **Lokal** | siste sikkerhetskopi er oppdatert | ingen sikkerhetskopi ennå, ingen tidsplan, siste kjøring feilet, sikkerhetskopi forsinket, ikke alle elementer er beskyttet, sikkerhetskopi snart påkrevd |
-| **Off-site** | siste kopi utenfor huset er oppdatert | ingen off-site-kopi, kopi pågår, kopi forsinket, kopi satt på pause, ingen kopi ennå, replikering mislyktes |
+| **Off-site** | siste kopi utenfor huset er oppdatert | ingen off-site-kopi, kopi pågår, kopi forsinket, venter på avgjørelsen din, ingen kopi ennå, replikering mislyktes |
 | **Beskyttelse mot sletting** | en tamper-test beviste at den andre siden nekter sletting | ingen, ingen og risiko akseptert, ikke bevist ennå, testen feilet, ikke bevist fordi kontrollen er slått av |
 | **Prøvegjenoppretting** | en gjenoppretting fra off-site-kopien bestod | aldri kjørt, pågår, feilet, forsinket, kun manuelt, ikke mulig for dette området |
 
 Et område er grønt bare på bekreftede fakta. En kopi på denne serveren regnes ikke som off-site, og et mål du merket **Godta uten beskyttelse mot sletting** viser en grå ring i stedet for en gul prikk, så områdets farge følger de andre kontrollene.
 
-Et planlagt område viser **Ingen sikkerhetskopi ennå** og forblir nøytralt til tidspunktet for den første kjøringen er nådd. Etter det står det **Forfalt**, og det varsler én gang. Et område uten noe å sikkerhetskopiere, fordi ingen tidsplan når noen av elementene, viser **Ikke planlagt** og er aldri forfalt.
+Et planlagt område viser **Ingen sikkerhetskopi ennå** og forblir nøytralt til tidspunktet for den første kjøringen er nådd, regnet fra da planen sist ble satt. Etter det står det **Forfalt**, og det varsler én gang. **Forfalt** går etter elementet som har kommet lengst etter sin egen plan, så en nabo som kjører, ikke skjuler en som har stoppet. Et element der containeren er borte, eller som ingen tidsplan når, teller ikke. Et element med en egen ukentlig plan holdes ikke til den daglige planen til området. Et område uten noe å sikkerhetskopiere, fordi ingen tidsplan når noen av elementene, viser **Ikke planlagt** og er aldri forfalt.
 
 Et klikk på et område åpner vinduet med alle kontrollene forklart, elementene det teller og **Start testgjenoppretting** eller **Kjør testgjenoppretting på nytt**. Det viser også **Beskjæringsregel satt** eller **Ingen beskjæringsregel**, og oppbevaringsregelen for et områdes egen mappe teller like mye som off-site-reglene.
 

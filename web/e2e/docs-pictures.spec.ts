@@ -14,6 +14,7 @@ import { dirname, join } from "node:path";
 
 import { settle } from "./entries";
 import {
+  AWAITING_DECISION,
   CRITICAL,
   FRESH_DOMAINS,
   FRESH_LOCAL,
@@ -195,6 +196,18 @@ picture("getting-started/phone-more", PHONE, async (page) => {
   await page.getByTestId("bottom-nav").getByRole("button", { name: t("nav.more") }).click();
   await expect(page.getByTestId("more-sheet")).toBeInViewport({ ratio: 1 });
 });
+
+picture(
+  "offsite/copy-decision",
+  DESKTOP,
+  async (page) => {
+    await overview(page);
+    const decision = page.getByTestId("need-copy-decision");
+    await expect(decision).toBeVisible();
+    return page.locator(".glim-notch-card").filter({ has: decision }).last();
+  },
+  { locations: AWAITING_DECISION, findings: [] },
+);
 
 picture("overview/customize", DESKTOP, async (page) => {
   await overview(page);

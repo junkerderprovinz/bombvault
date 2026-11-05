@@ -38,7 +38,7 @@ A VM-mentés SSH-n át beszél a libvirttel, soha nem csatoláson keresztül.
 
 ## Egy élő VM-pillanatkép nem futott le {#a-live-vm-snapshot-did-not-run}
 
-Az élő pillanatképekhez szükség van a VM-ben telepített qemu guest agentre, és arra, hogy a lemez a `/mnt/cache` (vagy `/mnt/diskX`) alatt legyen, ne a `/mnt/user` alatt. Egy leállított VM-nél az élő automatikusan szabályosra vált. A szabályos mentés leállítja a VM-et, lementi a lemezeket, majd újraindítja, ezért mindig konzisztens. Legfeljebb tíz percet vár a vendég leállására, és soha nem kényszeríti ki, így egy frissítéseket telepítő Windows-vendéget nem szakít félbe. Az a vendég, amely ezután is fut, békén marad, és az a mentés az okával meghiúsul.
+Az élő pillanatképekhez a lemeznek a `/mnt/cache` (vagy `/mnt/diskX`) alatt kell lennie, nem a `/mnt/user` alatt. A VM-ben lévő qemu guest agenttel a pillanatkép nyugalmi, nélküle összeomlás-konzisztens. Egy leállított VM-nél az élő automatikusan szabályosra vált. A szabályos mentés leállítja a VM-et, lementi a lemezeket, majd újraindítja, ezért mindig konzisztens. Legfeljebb tíz percet vár a vendég leállására, és soha nem kényszeríti ki, így egy frissítéseket telepítő Windows-vendéget nem szakít félbe. Az a vendég, amely ezután is fut, békén marad, és az a mentés az okával meghiúsul.
 
 ## Egy mentés a „repository is already locked” hibával hiúsult meg {#a-backup-failed-with-repository-is-already-locked}
 
@@ -127,6 +127,10 @@ Egy nyitott kritikus anomália tartja vissza őket: az elem forrása szinte üre
 
 Ugyanaz az ok: a nyesés békén hagyja az ilyen anomáliával rendelkező elem régi mentéseit, és az üzenetében megnevezi az elemet. Minden mást a szokásos módon nyes.
 
+## Egy mentés az „on no mounted pool or share” hibával hiúsul meg {#no-mounted-pool}
+
+Unraidon a `/mnt` a memóriában él, így egy ottani mappa, amelyre nincs pool csatolva, a következő újraindításkor eltűnik, a visszatérő pool pedig eltakarja. A BombVault nem ír oda mentést vagy flash ZIP-et, akkor sem, ha egy korábbi írásból már ott van egy tároló abban a mappában. Csatold a poolt, és futtasd újra a mentést.
+
 ## Az előzmények importja szerint egy tárolót nem sikerült beolvasni {#history-import-says-a-repository-could-not-be-read}
 
 A frissítés után a BombVault egyszer beolvassa a korábbi mentések méretét minden tárolóból. Azt a tárolót, amelyet ekkor nem ért el, például egy leállt telephelyen kívüli célt vagy egy nem csatolt megosztást, a **Beállítások, Ellenőrzés** alatti **Anomáliák** kártya megszámolja, és naponta egyszer újra megpróbálja. Az elemei addig az új mentésekből tanulnak.
@@ -177,15 +181,15 @@ A cél olyan pillanatképeket tart, amelyek újabbak, mint a legújabb, amelyet 
 
 A BombVault követi minden lemez háttérláncát, és a benne lévő összes fájlt lementi. Az a lánc, amelyet nem lehet a végéig követni, elbuktatja a mentést ahelyett, hogy a lemez egy részét kihagyná, és az üzenet megnevezi a fájlt. Ellenőrizd, hogy a fájl létezik a `/mnt` alatt, és a pillanatkép még szerepel a VM-kezelőben. A Host Data-n kívüli fájl egyáltalán nem olvasható. Lásd: [Unraid-pillanatképes VM-ek](vm-backup-ssh-setup.md#unraid-snapshots).
 
-## A telephelyen kívüli másolatok szünetelnek egy újraépítés után {#copies-paused}
+## A telephelyen kívüli másolatok egy újraépítés után a döntésedre várnak {#copies-paused}
 
-A **Biztonsági mentések felfedezése** vagy a visszaállított beállítások nélküli Vészvarázsló után minden újraépített szakasz telephelyen kívüli másolata vár, mert a BombVault már nem tudja, mely elemeket hagytad ki. Az áttekintés ezt jelzi. Nyomd meg az **Alapértelmezés megerősítése** gombot a **Célok szakaszonként** kártyán, nézd át az előnézetet, és hagyd ki, aminek ki kell maradnia. Egy beállításfájl importálása nem ér véget a szünetnek. Lásd: [Újraépítés után](offsite-recovery.md#after-a-rebuild).
+A **Biztonsági mentések felfedezése** vagy a visszaállított beállítások nélküli Vészvarázsló után, vagy ha egy szakasz ennél az adatbázisnál régebbi saját mentéseket talál, annak a szakasznak a telephelyen kívüli másolatai várnak, mert a BombVault már nem tudja, mely elemeket hagytad ki. A **Figyelmet igényel** és a cél oldala rákérdez. Nyomd meg az **Átvétel a szerver saját mentéseiként** gombot a folytatáshoz, vagy az **Előbb a szabályok ellenőrzése** gombot, hogy előtte megnézd a szakasz szabályait. Egy beállításfájl importálása nem hozza meg helyetted a döntést. Lásd: [Újraépítés után](offsite-recovery.md#after-a-rebuild).
 
 ## Az értesítések nem érkeznek meg {#notifications-do-not-arrive}
 
 Kezdd a **Teszt küldése** gombbal a **Beállítások, Értesítések** alatt. A kártya alatti sor megmondja, mi történt.
 
-- **Egyáltalán nem megy ki semmi.** Ellenőrizd az **Értesítés** beállítást. A **Soha** mellett semmi nem megy ki, a **Csak hiba esetén** mellett pedig egy sikeres futás csendben marad. Bekapcsolt **Ütemezett futások összegzése** mellett az ütemezett futás a végén egy összegzést küld.
+- **Egyáltalán nem megy ki semmi.** Ellenőrizd az **Értesítés** beállítást. A **Soha** mellett nem megy ki üzenet, csak egy Healthchecks URL pingjei, a **Csak hiba esetén** mellett pedig egy sikeres futás csendben marad. Bekapcsolt **Ütemezett futások összegzése** mellett az ütemezett futás a végén egy összegzést küld.
 - **Új cím.** Miután megváltoztatod a Matrix, a Gotify vagy az e-mail szerverét, a mező újra kéri a tokent vagy a jelszót, és az új cím csak akkor mentődik, ha beírod. A BombVault nem küldi el a régi titkot egy új helyre.
 - **A Gotify** azt mondja, hogy a szerver visszautasította az alkalmazás-tokent: másold ki újra a Gotify alkalmazásából. A **Szerver URL** az alapcím, a `/message` nélkül.
 - **Webhook:** ellenőrizd, hogy a **Webhook formátum** illik-e a szolgáltatáshoz. Egy Discord-cím a **Discord** formátumot kéri, az ntfy pedig az **ntfy**-t.

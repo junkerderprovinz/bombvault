@@ -40,13 +40,13 @@ Varje påslaget avsnitt har en rad med fyra kontroller:
 | Kontroll | Den blir grön när | Andra ord du kan se |
 |---|---|---|
 | **Lokal** | den senaste säkerhetskopian är aktuell | ingen säkerhetskopia än, inget schema, senaste körningen misslyckades, säkerhetskopian är försenad, inte varje post är skyddad, säkerhetskopia snart |
-| **Extern** | den senaste kopian utanför lokalen är aktuell | ingen extern kopia, kopiering pågår, kopian är försenad, kopiering pausad, ingen kopia än, repliken misslyckades |
+| **Extern** | den senaste kopian utanför lokalen är aktuell | ingen extern kopia, kopiering pågår, kopian är försenad, väntar på ditt beslut, ingen kopia än, repliken misslyckades |
 | **Skydd mot radering** | ett manipuleringstest har visat att andra sidan vägrar radering | inget, inget och risken accepterad, inte bevisat än, testet misslyckades, inte bevisat eftersom kontrollen är av |
 | **Teståterställning** | en återställning från den externa kopian lyckades | aldrig körd, pågår, misslyckades, försenad, bara manuellt, inte möjligt för det här avsnittet |
 
 Ett avsnitt är grönt bara på kontrollerade fakta. En kopia på den här servern räknas inte som extern, och ett mål som du markerat **Acceptera utan skydd mot radering** får en grå ring i stället för en gul punkt, så avsnittets färg följer dess andra kontroller.
 
-Ett schemalagt avsnitt visar **Ingen säkerhetskopia ännu** och förblir neutralt tills det är dags för dess första körning. Därefter står det **Försenad** och det larmar en gång. Ett avsnitt utan något att säkerhetskopiera, eftersom inget schema når någon av dess poster, visar **Ej schemalagd** och är aldrig försenat.
+Ett schemalagt avsnitt visar **Ingen säkerhetskopia ännu** och förblir neutralt tills det är dags för dess första körning, räknat från när dess plan senast ställdes in. Därefter står det **Försenad** och det larmar en gång. **Försenad** utgår från den post som har hamnat längst efter sin egen plan, så att en granne som körs inte döljer en som har stannat. En post vars container är borta eller som inget schema når räknas inte. En post med en egen veckoplan hålls inte till avsnittets dagliga plan. Ett avsnitt utan något att säkerhetskopiera, eftersom inget schema når någon av dess poster, visar **Ej schemalagd** och är aldrig försenat.
 
 Ett klick på ett avsnitt öppnar dess fönster med varje kontroll utskriven, de poster den räknar och **Starta teståterställning** eller **Kör teståterställningen igen**. Det visar också **Rensningsregel angiven** eller **Ingen rensningsregel**, och behållregeln för ett avsnitts egna mapp räknas lika väl som dess externa regler.
 

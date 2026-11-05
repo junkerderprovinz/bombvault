@@ -40,13 +40,13 @@ Cada sección activada tiene una fila con cuatro comprobaciones:
 | Comprobación | Se pone en verde cuando | Otras palabras que puedes ver |
 |---|---|---|
 | **Local** | la última copia está al día | todavía sin copia, sin programación, la última ejecución falló, copia atrasada, no todos los elementos están protegidos, copia próxima |
-| **Externo** | la última copia fuera de las instalaciones está al día | sin copia externa, copia en curso, copia atrasada, copia en pausa, aún no hay copia, la réplica falló |
+| **Externo** | la última copia fuera de las instalaciones está al día | sin copia externa, copia en curso, copia atrasada, espera tu decisión, aún no hay copia, la réplica falló |
 | **Protección contra borrado** | una prueba de manipulación demostró que el otro lado rechaza los borrados | ninguna, ninguna y riesgo aceptado, aún sin demostrar, la prueba falló, sin demostrar porque su comprobación está desactivada |
 | **Restauración de prueba** | pasó una restauración desde la copia externa | nunca ejecutada, en curso, fallida, atrasada, solo manual, no es posible para esta sección |
 
 Una sección solo se pone en verde con hechos verificados. Una copia en este servidor no cuenta como externa, y un destino que marcaste con **Aceptar sin protección contra borrado** muestra un anillo gris en lugar de un punto ámbar, de modo que el color de la sección sigue a sus otras comprobaciones.
 
-Una sección programada dice **Aún no hay copia de seguridad** y sigue neutral hasta que llega la hora de su primera ejecución. Después dice **Atrasado** y avisa una vez. Una sección sin nada que copiar, porque ninguna programación alcanza a sus elementos, dice **Sin programar** y nunca está atrasada.
+Una sección programada dice **Aún no hay copia de seguridad** y sigue neutral hasta que llega la hora de su primera ejecución, contada desde la última vez que se fijó su calendario. Después dice **Atrasado** y avisa una vez. **Atrasado** se guía por el elemento que más se ha retrasado respecto a su propio calendario, así que un vecino que se ejecuta no oculta a uno que se detuvo. Un elemento cuyo contenedor ya no existe, o al que no alcanza ninguna programación, no cuenta. Un elemento con un calendario semanal propio no se mide con el calendario diario de la sección. Una sección sin nada que copiar, porque ninguna programación alcanza a sus elementos, dice **Sin programar** y nunca está atrasada.
 
 Un clic en una sección abre su ventana con cada comprobación detallada, los elementos que cuenta y **Iniciar la restauración de prueba** o **Repetir la restauración de prueba**. También dice **Regla de poda definida** o **Sin regla de poda**, y la regla de conservación de la carpeta propia de una sección cuenta igual que sus reglas externas.
 

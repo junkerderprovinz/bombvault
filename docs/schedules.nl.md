@@ -27,7 +27,7 @@ De kaart **Week** tekent elke geplande run van maandag tot zondag, één regel p
 
 De **Volledige back-up** is de standaardplanning voor alles. **Wanneer back-ups draaien** stelt haar in: één ronde die elk onderdeel om beurt back-upt, containers, VM's, flash, mappen, ZFS-datasets en de zelf-back-up als laatste. De regel eronder zegt welke onderdelen erin zitten. **Uit** schakelt haar uit, en dan draait alleen wat een eigen planning heeft.
 
-- **Gemiste back-ups na de start inhalen**: was de server uit op een geplande tijd, dan voert BombVault die back-up ongeveer twee minuten na zijn start uit.
+- **Gemiste back-ups na de start inhalen**: was de server uit op een geplande tijd, dan voert BombVault die back-up ongeveer twee minuten na zijn start uit. Een eigen planning van een item en een off-site-planning wachten op hun volgende geplande tijd, net als een planning die nog nooit is geslaagd.
 - **Opdrachten ervoor en erna**: **Opdracht vóór de volledige back-up** draait op de server met `sh -c` voordat de ronde begint, bijvoorbeeld een script dat een dienst stopt. Mislukt die, dan draait de volledige back-up toch. **Opdracht na de volledige back-up** draait één keer nadat elk onderdeel is geprobeerd, ook als er een mislukte, wat past bij een ping die bevestigt dat de hele server beschermd is. Opdrachten voor één container staan op zijn pagina.
 
 **Nu alles back-uppen** op de pagina Back-ups start dezelfde ronde met de hand, over elk ingeschakeld onderdeel.
@@ -58,7 +58,7 @@ De back-up komt onder dezelfde paden en tags terecht als een die met de containe
 
 ## Updates na de back-up {#updates}
 
-- **Containers bijwerken na een geslaagde back-up** haalt pas een nieuwere image op nadat de back-up ervoor klaar is, zodat er altijd eerst een vers herstelpunt bestaat. Het staat standaard uit, en een enkele container kan op zijn pagina anders worden ingesteld onder **Bijwerken na een geslaagde back-up**.
+- **Containers bijwerken na een geslaagde back-up** haalt pas een nieuwere image op nadat de back-up ervoor klaar is, zodat er altijd eerst een vers herstelpunt bestaat. Het staat standaard uit, en een enkele container kan op zijn pagina anders worden ingesteld onder **Bijwerken na een geslaagde back-up**. Alleen wat je zelf hebt ingesteld, gaat mee naar de nieuwe image: variabelen, labels, het commando, de gebruiker en de healthcheck die nog zo luiden als in de oude image, volgen de nieuwe. Kan de nieuwe image niet worden aangemaakt of gestart, dan gaat de container terug naar de image waarop hij draaide, staat de update als mislukt, en probeert de volgende back-up het opnieuw. Een container die daardoor niet meer draait, wordt genoemd in de run van de back-up en in een melding.
 - **Oude image verwijderen na een update** verwijdert de image die de container achterliet. Een basisimage die andere containers delen, wordt nooit verwijderd.
 - **Unraids updatestatus vernieuwen na het bijwerken van een container** wist de updatebanner van Unraid voor die container.
 

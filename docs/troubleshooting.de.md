@@ -38,7 +38,7 @@ Die VM-Sicherung spricht über SSH mit libvirt, nie über einen Mount.
 
 ## Ein Live-VM-Snapshot lief nicht {#a-live-vm-snapshot-did-not-run}
 
-Live-Snapshots brauchen den qemu-Gast-Agenten in der VM und die Disk auf `/mnt/cache` (oder `/mnt/diskX`), nicht auf `/mnt/user`. Bei einer ausgeschalteten VM fällt Live automatisch auf Graceful zurück. Eine Graceful-Sicherung fährt die VM herunter, sichert die Disks und startet sie dann neu, ist also immer konsistent. Sie wartet bis zu zehn Minuten, bis der Gast heruntergefahren ist, und erzwingt das Ausschalten nie, damit ein Windows-Gast, der Updates installiert, nicht auf halbem Weg abgeschnitten wird. Ein Gast, der danach noch läuft, bleibt unberührt, und diese Sicherung scheitert mit dem Grund.
+Live-Snapshots brauchen die Disk auf `/mnt/cache` (oder `/mnt/diskX`), nicht auf `/mnt/user`. Mit dem qemu-Gast-Agenten in der VM ist der Snapshot stillgelegt, ohne ihn ist er absturzkonsistent. Bei einer ausgeschalteten VM fällt Live automatisch auf Graceful zurück. Eine Graceful-Sicherung fährt die VM herunter, sichert die Disks und startet sie dann neu, ist also immer konsistent. Sie wartet bis zu zehn Minuten, bis der Gast heruntergefahren ist, und erzwingt das Ausschalten nie, damit ein Windows-Gast, der Updates installiert, nicht auf halbem Weg abgeschnitten wird. Ein Gast, der danach noch läuft, bleibt unberührt, und diese Sicherung scheitert mit dem Grund.
 
 ## Eine Sicherung scheiterte mit „repository is already locked“ {#a-backup-failed-with-repository-is-already-locked}
 
@@ -127,6 +127,10 @@ Eine offene kritische Anomalie hält sie fest: Die Quelle des Eintrags ist fast 
 
 Dieselbe Ursache: Das Aufräumen lässt die alten Sicherungen eines Eintrags mit so einer Anomalie in Ruhe und nennt den Eintrag in seiner Meldung. Alles andere wird wie gewohnt aufgeräumt.
 
+## Eine Sicherung scheitert mit „on no mounted pool or share“ {#no-mounted-pool}
+
+Auf Unraid liegt `/mnt` im Arbeitsspeicher, ein Ordner dort, auf dem kein Pool eingehängt ist, ist also beim nächsten Neustart weg und verdeckt, sobald der Pool wieder da ist. BombVault weigert sich, dort eine Sicherung oder ein Flash-ZIP zu schreiben, auch wenn in diesem Ordner schon ein Repository von einem früheren Schreiben liegt. Hänge den Pool ein und starte die Sicherung erneut.
+
 ## Der Verlaufsimport sagt, ein Repository ließ sich nicht lesen {#history-import-says-a-repository-could-not-be-read}
 
 Nach dem Upgrade liest BombVault die Größen früherer Sicherungen einmal aus jedem Repository. Ein Repository, das es zu diesem Zeitpunkt nicht erreichen konnte, etwa ein Off-site-Ziel, das ausgefallen war, oder ein Share, der nicht gemountet war, wird in der Karte **Anomalien** unter **Einstellungen, Prüfung** gezählt und einmal am Tag erneut versucht. Seine Einträge lernen in der Zwischenzeit aus neuen Sicherungen.
@@ -177,15 +181,15 @@ Das Ziel hält Snapshots, die neuer sind als der neueste, den es mit diesem Serv
 
 BombVault folgt der Backing-Chain jeder Disk und sichert jede Datei darin. Eine Chain, der man nicht bis zum Ende folgen kann, lässt die Sicherung scheitern, statt einen Teil der Disk auszulassen, und die Meldung nennt die Datei. Prüfe, dass die Datei unterhalb von `/mnt` existiert und der Snapshot im VM Manager noch aufgelistet ist. Eine Datei außerhalb von Host Data lässt sich gar nicht lesen. Siehe [VMs mit Unraid-Snapshots](vm-backup-ssh-setup.md#unraid-snapshots).
 
-## Off-site-Kopien sind nach einem Neuaufbau pausiert {#copies-paused}
+## Off-site-Kopien warten nach einem Neuaufbau auf deine Entscheidung {#copies-paused}
 
-Nach **Sicherungen entdecken** oder dem Notfall-Assistenten ohne wiederhergestellte Einstellungen warten die Off-site-Kopien jedes neu aufgebauten Bereichs, weil BombVault nicht mehr weiß, welche Einträge du ausgelassen hast. Die Übersicht sagt das. Drücke **Vorgabe bestätigen** in **Speicherorte je Bereich**, prüfe die Vorschau und lass aus, was draußen bleiben soll. Der Import einer Einstellungsdatei beendet die Pause nicht. Siehe [Nach einem Neuaufbau](offsite-recovery.md#after-a-rebuild).
+Nach **Sicherungen entdecken** oder dem Notfall-Assistenten ohne wiederhergestellte Einstellungen, oder wenn ein Bereich eigene Sicherungen aus der Zeit vor dieser Datenbank findet, warten die Off-site-Kopien dieses Bereichs, weil BombVault nicht mehr weiß, welche Einträge du ausgelassen hast. **Braucht dich** und die Seite des Speicherorts fragen danach. Drücke **Als eigene dieses Servers übernehmen**, um weiterzumachen, oder **Erst die Regeln prüfen**, um dir vorher die Regeln des Bereichs anzusehen. Der Import einer Einstellungsdatei nimmt dir die Entscheidung nicht ab. Siehe [Nach einem Neuaufbau](offsite-recovery.md#after-a-rebuild).
 
 ## Benachrichtigungen kommen nicht an {#notifications-do-not-arrive}
 
 Fang mit **Test senden** unter **Einstellungen, Benachrichtigungen** an. Die Zeile unter der Karte sagt, was passiert ist.
 
-- **Es wird gar nichts gesendet.** Prüfe **Benachrichtigen**. Bei **Nie** geht nichts hinaus, und bei **Nur bei Fehler** bleibt ein guter Lauf still. Bei eingeschaltetem **Geplante Läufe zusammenfassen** sendet ein geplanter Lauf an seinem Ende eine Zusammenfassung.
+- **Es wird gar nichts gesendet.** Prüfe **Benachrichtigen**. Bei **Nie** geht keine Nachricht hinaus, nur die Pings einer Healthchecks-URL, und bei **Nur bei Fehler** bleibt ein guter Lauf still. Bei eingeschaltetem **Geplante Läufe zusammenfassen** sendet ein geplanter Lauf an seinem Ende eine Zusammenfassung.
 - **Eine neue Adresse.** Nachdem du den Server von Matrix, Gotify oder E-Mail geändert hast, fragt das Feld wieder nach dem Token oder Passwort, und die neue Adresse wird erst gespeichert, wenn du es eintippst. BombVault sendet das alte Geheimnis nicht an einen neuen Ort.
 - **Gotify** sagt, der Server habe das App-Token abgelehnt: Kopiere es noch einmal aus der Anwendung in Gotify. Die **Server-URL** ist die Basisadresse, ohne `/message`.
 - **Webhook:** Prüfe, ob das **Webhook-Format** zum Dienst passt. Eine Discord-Adresse braucht **Discord**, und ntfy braucht **ntfy**.

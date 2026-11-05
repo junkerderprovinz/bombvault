@@ -38,7 +38,7 @@ VM yedekleme libvirt ile SSH üzerinden konuşur, hiçbir zaman bir bağlama ile
 
 ## Canlı bir VM anlık görüntüsü çalışmadı {#a-live-vm-snapshot-did-not-run}
 
-Canlı anlık görüntüler için VM'de qemu guest agent kurulu olmalı ve disk `/mnt/user` üzerinde değil `/mnt/cache` (ya da `/mnt/diskX`) üzerinde olmalıdır. Kapalı bir VM'de canlı kip kendiliğinden düzgün kapatmaya döner. Düzgün kapatmalı bir yedek VM'i kapatır, diskleri yedekler, sonra yeniden başlatır, bu yüzden her zaman tutarlıdır. Konuğun kapanmasını on dakikaya kadar bekler ve onu hiçbir zaman zorla kapatmaz, böylece güncelleme kuran bir Windows konuğu yarıda kesilmez. Bundan sonra hâlâ çalışan bir konuğa dokunulmaz ve o yedek nedeniyle başarısız olur.
+Canlı anlık görüntüler için disk `/mnt/user` üzerinde değil `/mnt/cache` (ya da `/mnt/diskX`) üzerinde olmalıdır. VM'de qemu guest agent varsa anlık görüntü tutarlı (quiesced) alınır, yoksa çökme tutarlıdır (crash-consistent). Kapalı bir VM'de canlı kip kendiliğinden düzgün kapatmaya döner. Düzgün kapatmalı bir yedek VM'i kapatır, diskleri yedekler, sonra yeniden başlatır, bu yüzden her zaman tutarlıdır. Konuğun kapanmasını on dakikaya kadar bekler ve onu hiçbir zaman zorla kapatmaz, böylece güncelleme kuran bir Windows konuğu yarıda kesilmez. Bundan sonra hâlâ çalışan bir konuğa dokunulmaz ve o yedek nedeniyle başarısız olur.
 
 ## Bir yedek "repository is already locked" ile başarısız oldu {#a-backup-failed-with-repository-is-already-locked}
 
@@ -127,6 +127,10 @@ Onları açık bir kritik anormallik tutuyor: ögenin kaynağı neredeyse boş, 
 
 Aynı neden: budama, böyle bir anormalliği olan bir ögenin eski yedeklerine dokunmaz ve mesajında ögeyi adlandırır. Geri kalan her şey her zamanki gibi budanır.
 
+## Bir yedek "on no mounted pool or share" ile başarısız oluyor {#no-mounted-pool}
+
+Unraid'de `/mnt` bellekte yaşar, bu yüzden orada üzerine havuz bağlanmamış bir klasör sonraki yeniden başlatmada kaybolur ve havuz geri geldiğinde gizlenir. BombVault oraya bir yedek ya da flash ZIP'i yazmayı reddeder, önceki bir yazmadan kalan bir depo o klasörde zaten duruyor olsa bile. Havuzu bağla ve yedeği yeniden çalıştır.
+
 ## Geçmiş içe aktarma bir deponun okunamadığını söylüyor {#history-import-says-a-repository-could-not-be-read}
 
 Yükseltmeden sonra BombVault önceki yedeklerin boyutlarını her depodan bir kez okur. O sırada ulaşamadığı bir depo, örneğin kapalı olan bir site dışı hedef ya da bağlı olmayan bir paylaşım, **Ayarlar, Doğrulama** altındaki **Anormallikler** kartında sayılır ve günde bir kez yeniden denenir. Ögeleri bu arada yeni yedeklerden öğrenir.
@@ -177,15 +181,15 @@ Hedef, bu sunucuyla paylaştığı en yeni olandan daha yeni anlık görüntüle
 
 BombVault her diskin dayanak zincirini izler ve içindeki her dosyayı yedekler. Sonuna kadar izlenemeyen bir zincir, diskin bir kısmını dışarıda bırakmak yerine yedeği başarısız kılar ve mesaj dosyayı adlandırır. Dosyanın `/mnt` altında var olduğunu ve anlık görüntünün VM Manager'da hâlâ listelendiğini kontrol et. Host Data dışındaki bir dosya hiç okunamaz. Bkz. [Unraid anlık görüntülü VM'ler](vm-backup-ssh-setup.md#unraid-snapshots).
 
-## Site dışı kopyalar yeniden kurulumdan sonra duraklatıldı {#copies-paused}
+## Site dışı kopyalar yeniden kurulumdan sonra kararını bekliyor {#copies-paused}
 
-**Yedekleri keşfet**'ten ya da geri yüklenmiş ayarlar olmadan Acil durum sihirbazından sonra, yeniden kurulan her bölümün site dışı kopyaları bekler, çünkü BombVault artık hangi ögeleri dışarıda bıraktığını bilmez. Genel bakış bunu söyler. **Bölüme göre hedefler** içinde **Varsayılanı onayla**'ya bas, önizlemeye bak ve dışarıda kalması gerekenleri dışarıda bırak. Bir ayar dosyası içe aktarmak duraklamayı bitirmez. Bkz. [Yeniden kurulumdan sonra](offsite-recovery.md#after-a-rebuild).
+**Yedekleri keşfet**'ten ya da geri yüklenmiş ayarlar olmadan Acil durum sihirbazından sonra ya da bir bölüm bu veritabanından önceki kendi yedeklerini bulduğunda, o bölümün site dışı kopyaları bekler, çünkü BombVault artık hangi ögeleri dışarıda bıraktığını bilmez. **İlgi bekliyor** ve hedefin sayfası bunu sorar. Devam etmek için **Bu sunucunun kendi yedekleri olarak al**'a, ya da önce bölümün kurallarına bakmak için **Önce kuralları kontrol et**'e bas. Bir ayar dosyası içe aktarmak kararı senin yerine vermez. Bkz. [Yeniden kurulumdan sonra](offsite-recovery.md#after-a-rebuild).
 
 ## Bildirimler gelmiyor {#notifications-do-not-arrive}
 
 **Ayarlar, Bildirimler** altında **Test gönder** ile başla. Kartın altındaki satır ne olduğunu söyler.
 
-- **Hiçbir şey gönderilmiyor.** **Bildir**'i kontrol et. **Hiç** ile hiçbir şey gitmez, **Yalnızca başarısızlıkta** ile de iyi bir çalıştırma sessiz kalır. **Zamanlanmış çalıştırmaları özetle** açıkken zamanlanmış bir çalıştırma sonunda tek bir özet gönderir.
+- **Hiçbir şey gönderilmiyor.** **Bildir**'i kontrol et. **Hiç** ile hiçbir mesaj gitmez, yalnızca bir Healthchecks URL'sinin ping'leri gider, **Yalnızca başarısızlıkta** ile de iyi bir çalıştırma sessiz kalır. **Zamanlanmış çalıştırmaları özetle** açıkken zamanlanmış bir çalıştırma sonunda tek bir özet gönderir.
 - **Yeni bir adres.** Matrix, Gotify ya da e-posta sunucusunu değiştirdikten sonra alan belirteci ya da parolayı yeniden ister ve yeni adres yalnızca sen yazınca kaydedilir. BombVault eski gizli bilgiyi yeni yere göndermez.
 - **Gotify**, sunucunun uygulama belirtecini reddettiğini söylüyor: onu Gotify'daki uygulamadan yeniden kopyala. **Sunucu URL'si** `/message` olmadan temel adrestir.
 - **Webhook:** **Webhook biçimi**'nin servise uyduğunu kontrol et. Bir Discord adresi **Discord**, ntfy ise **ntfy** ister.

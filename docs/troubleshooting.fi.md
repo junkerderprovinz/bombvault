@@ -38,7 +38,7 @@ VM-varmuuskopiointi puhuu libvirtille SSH:n yli, ei koskaan liitoksen kautta.
 
 ## Live-tilannekuva virtuaalikoneesta ei ajettu {#a-live-vm-snapshot-did-not-run}
 
-Live-tilannekuvat tarvitsevat qemu guest agentin asennettuna virtuaalikoneeseen ja levyn polussa `/mnt/cache` (tai `/mnt/diskX`), ei `/mnt/user`. Sammutetulla virtuaalikoneella live palaa automaattisesti hallittuun. Hallittu varmuuskopio sammuttaa virtuaalikoneen, varmuuskopioi levyt ja käynnistää sen uudelleen, joten se on aina yhdenmukainen. Se odottaa jopa kymmenen minuuttia vieraan sammumista eikä koskaan pakota sitä pois, joten päivityksiä asentavaa Windows-vierasta ei katkaista kesken kaiken. Vieras, joka silti pyörii sen jälkeen, jätetään rauhaan, ja kyseinen varmuuskopio epäonnistuu syyn kanssa.
+Live-tilannekuvat tarvitsevat levyn polussa `/mnt/cache` (tai `/mnt/diskX`), ei `/mnt/user`. Kun virtuaalikoneessa on qemu guest agent, tilannevedos on hiljennetty, ja ilman sitä tilannevedos on kaatumisyhdenmukainen (crash-consistent). Sammutetulla virtuaalikoneella live palaa automaattisesti hallittuun. Hallittu varmuuskopio sammuttaa virtuaalikoneen, varmuuskopioi levyt ja käynnistää sen uudelleen, joten se on aina yhdenmukainen. Se odottaa jopa kymmenen minuuttia vieraan sammumista eikä koskaan pakota sitä pois, joten päivityksiä asentavaa Windows-vierasta ei katkaista kesken kaiken. Vieras, joka silti pyörii sen jälkeen, jätetään rauhaan, ja kyseinen varmuuskopio epäonnistuu syyn kanssa.
 
 ## Varmuuskopio epäonnistui viestillä "repository is already locked" {#a-backup-failed-with-repository-is-already-locked}
 
@@ -127,6 +127,10 @@ Avoin kriittinen poikkeama pitää niitä: merkinnän lähde on lähes tyhjä, k
 
 Sama syy: karsinta jättää rauhaan merkinnän vanhat varmuuskopiot, kun sillä on tällainen poikkeama, ja nimeää merkinnän viestissään. Kaikki muu karsitaan tavalliseen tapaan.
 
+## Varmuuskopio epäonnistuu viestillä "on no mounted pool or share" {#no-mounted-pool}
+
+Unraidissa `/mnt` on muistissa, joten siellä oleva kansio, johon ei ole liitetty poolia, katoaa seuraavassa uudelleenkäynnistyksessä ja jää piiloon, kun pooli on taas paikallaan. BombVault kieltäytyy kirjoittamasta sinne varmuuskopiota tai flashin ZIP-tiedostoa, myös silloin, kun kansiossa on jo aiemman kirjoituksen repo. Liitä pooli ja aja varmuuskopio uudelleen.
+
 ## Historian tuonti sanoo, ettei reposta voitu lukea {#history-import-says-a-repository-could-not-be-read}
 
 Päivityksen jälkeen BombVault lukee aiempien varmuuskopioiden koot jokaisesta reposta kerran. Repo, jota se ei tavoittanut tuolloin, esimerkiksi etäkohde, joka oli alhaalla, tai jako, jota ei ollut liitetty, lasketaan **Poikkeamat**-kortissa kohdassa **Asetukset, Tarkista** ja yritetään uudelleen kerran päivässä. Sen merkinnät oppivat sillä välin uusista varmuuskopioista.
@@ -177,15 +181,15 @@ Kohteessa on tilannevedoksia, jotka ovat uudempia kuin uusin, jonka se jakaa tä
 
 BombVault seuraa jokaisen levyn taustaketjua ja varmuuskopioi jokaisen sen tiedoston. Ketju, jota ei voi seurata loppuun, kaataa varmuuskopion sen sijaan, että jättäisi osan levystä pois, ja viesti nimeää tiedoston. Tarkista, että tiedosto on olemassa polun `/mnt` alla ja että tilannevedos on yhä listattuna VM Managerissa. Tiedostoa Host Datan ulkopuolella ei voi lukea lainkaan. Katso [Unraid-tilannevedoksilla varustetut VM:t](vm-backup-ssh-setup.md#unraid-snapshots).
 
-## Etäkopiot ovat tauolla uudelleenrakennuksen jälkeen {#copies-paused}
+## Etäkopiot odottavat päätöstäsi uudelleenrakennuksen jälkeen {#copies-paused}
 
-Toiminnon **Tunnista varmuuskopiot** tai Hätäohjatun toiminnon jälkeen, kun asetuksia ei palautettu, jokaisen uudelleenrakennetun osion etäkopiot odottavat, koska BombVault ei enää tiedä, mitkä merkinnät jätit pois. Yleiskatsaus kertoo sen. Paina **Vahvista oletus** kohdassa **Kohteet osioittain**, tarkista esikatselu ja jätä pois se, minkä pitää jäädä pois. Asetustiedoston tuonti ei lopeta taukoa. Katso [Uudelleenrakennuksen jälkeen](offsite-recovery.md#after-a-rebuild).
+Toiminnon **Tunnista varmuuskopiot** tai Hätäohjatun toiminnon jälkeen, kun asetuksia ei palautettu, tai kun osio löytää omia varmuuskopioitaan ajalta ennen tätä tietokantaa, osion etäkopiot odottavat, koska BombVault ei enää tiedä, mitkä merkinnät jätit pois. **Vaatii huomiota** ja kohteen sivu kysyvät asiasta. Paina **Ota ne tämän palvelimen omiksi** jatkaaksesi tai **Tarkista ensin säännöt** katsoaksesi osion sääntöjä ennen sitä. Asetustiedoston tuonti ei tee päätöstä puolestasi. Katso [Uudelleenrakennuksen jälkeen](offsite-recovery.md#after-a-rebuild).
 
 ## Ilmoitukset eivät saavu perille {#notifications-do-not-arrive}
 
 Aloita kohdasta **Lähetä testi** kohdassa **Asetukset, Ilmoitukset**. Kortin alla oleva rivi kertoo, mitä tapahtui.
 
-- **Mitään ei lähde lainkaan.** Tarkista **Ilmoita**. Arvolla **Ei koskaan** mitään ei lähde, ja arvolla **Vain epäonnistuessa** onnistunut ajo pysyy hiljaa. Kun **Tiivistä ajastetut ajot** on päällä, ajastettu ajo lähettää yhden yhteenvedon loppuunsa.
+- **Mitään ei lähde lainkaan.** Tarkista **Ilmoita**. Arvolla **Ei koskaan** mitään viestiä ei lähde, vain Healthchecks-URL:n pingit, ja arvolla **Vain epäonnistuessa** onnistunut ajo pysyy hiljaa. Kun **Tiivistä ajastetut ajot** on päällä, ajastettu ajo lähettää yhden yhteenvedon loppuunsa.
 - **Uusi osoite.** Kun vaihdat Matrixin, Gotifyn tai sähköpostin palvelimen, kenttä kysyy tunnistetta tai salasanaa uudelleen, ja uusi osoite tallentuu vasta, kun kirjoitat sen. BombVault ei lähetä vanhaa salaisuutta uuteen paikkaan.
 - **Gotify** sanoo, että palvelin hylkäsi sovellustunnuksen: kopioi se uudelleen Gotifyn sovelluksesta. **Palvelimen URL** on perusosoite ilman `/message`.
 - **Webhook:** tarkista, että **Webhook-muoto** sopii palveluun. Discord-osoite tarvitsee arvon **Discord** ja ntfy arvon **ntfy**.

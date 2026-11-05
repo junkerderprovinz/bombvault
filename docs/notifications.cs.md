@@ -9,20 +9,20 @@ BombVault ti dokáže říct, když záloha selže, když uspěje, když je něj
 
 Karta **Oznámení** nastavuje pravidla pro všechny kanály najednou:
 
-- **Oznámit**: **Nikdy**, **Pouze při selhání** nebo **Při úspěchu i selhání**, pro každý kanál níže.
+- **Oznámit**: **Nikdy**, **Pouze při selhání** nebo **Při úspěchu i selhání**, pro každý kanál níže. Čerstvá instalace začíná na **Pouze při selhání**, takže kanál, který vyplníš, ti dá vědět, když se záloha pokazí.
 - **Shrnout naplánované běhy**: jedna zpráva za naplánovaný běh, třeba *42 z 45 uspělo*, místo jedné za kontejner nebo VM. Záloha, kterou spustíš ručně, pořád pošle vlastní zprávu. Zamrzlý host, neúspěšné uchovávání nebo překročený rozpočet růstu odejdou hned, i když jsou souhrny zapnuté.
 - **Upozornit na aktualizaci kontejneru**: jedna zpráva za každý kontejner, který **Aktualizovat kontejnery po úspěšné záloze** posunulo na novější image, abys mohl ověřit, že pořád funguje.
-- **Hlásit zálohy po termínu**: jednou denně v 09:00 BombVault zkontroluje, zda některá zapnutá záloha není po termínu, tedy starší než dvojnásobek jejího plánu, a pošle jednu zprávu za každý případ. Příští úspěšná záloha ji zruší.
+- **Hlásit zálohy po termínu**: jednou denně v 09:00 BombVault zkontroluje, zda některá zapnutá záloha není po termínu, tedy starší než dvojnásobek jejího plánu, a pošle jednu zprávu za každý případ, se jménem položky, která se opozdila. Příští úspěšná záloha ji zruší.
 - **Oznámení Unraid**: posílá do vlastního systému oznámení Unraidu, který umí přeposílat na Pushover, e-mail nebo Discord. Běží přes spojení SSH z **Nastavení, Integrace, SSH k hostiteli**, takže ten klíč musí být autorizovaný. Na TrueNAS a jiných hostitelích zůstává vypnuté.
-- **Týdenní souhrn**: jeden souhrn týdně s počty běhů, novými daty záloh, zda jsou kopie mimo lokalitu aktuální, a nejčastějšími selháními. Jeho plán je tlačítko jako každý jiný plán a **Vypnuto** ho vypne. Viz [Plány](schedules.md#plans).
+- **Týdenní souhrn**: jeden souhrn týdně s počty běhů, novými daty záloh, tím, které sekce jsou po termínu, zda jsou kopie mimo lokalitu aktuální, a nejčastějšími selháními. Jeho plán je tlačítko jako každý jiný plán a **Vypnuto** ho vypne. Viz [Plány](schedules.md#plans).
 
 Které anomálie pošlou zprávu, se nastavuje v **Nastavení, Ověření**, viz [Anomálie](anomalies.md). Odložená záloha pošle jednu zprávu, když začne čekat, a jednu, když čekání skončí, ne jednu za pokus.
 
-**Odeslat test** dole v kartě pošle zkušební zprávu každým zapnutým kanálem, s hodnotami tak, jak právě stojí ve formuláři.
+**Odeslat test** dole v kartě pošle zkušební zprávu každým zapnutým kanálem, s hodnotami tak, jak právě stojí ve formuláři, a jmenuje každý, který selhal. Kontrola Healthchecks dostane záznam do svého logu, který její stav nezmění.
 
 ## Kanály {#channels}
 
-Každý kanál má v kartě **Kanály** vlastní přepínač a jeho pole se objeví, jakmile je zapnutý. Každý kanál posílá sám, s vlastním časovým limitem, takže jeden hostitel, který nikdy neodpoví, ostatní nezdrží, a zpráva, kterou žádný kanál nepřijal, se zkusí znovu.
+Každý kanál má v kartě **Kanály** vlastní přepínač a jeho pole se objeví, jakmile je zapnutý. Každý kanál posílá sám, s vlastním časovým limitem, takže jeden hostitel, který nikdy neodpoví, ostatní nezdrží. Upozornění na zpoždění, rozpočet nebo anomálii, které žádný kanál nepřijal, se zkusí znovu, stejně jako týdenní souhrn. Zpráva o jednotlivé záloze nebo souhrn se pošle jednou.
 
 | Kanál | Pole | Poznámky |
 |---|---|---|
@@ -36,7 +36,9 @@ Tajné údaje jako token Matrixu, token aplikace Gotify a heslo SMTP se ukládaj
 
 ## Healthchecks {#healthchecks}
 
-Služba jako [Healthchecks.io](https://healthchecks.io) spustí poplach, když BombVault přestane hlásit, že žije. Vlož **URL pingu** té kontroly a BombVault ji pinguje po celý životní cyklus každé zálohy: na začátku, pak při úspěchu nebo s `/fail`. Dělá to vždy, když je URL nastavená, ať říká **Oznámit** cokoli, takže kontrola zůstane zelená při úspěchu i se zprávami jen o selhání.
+Služba jako [Healthchecks.io](https://healthchecks.io) spustí poplach, když BombVault přestane hlásit, že žije. Vlož **URL pingu** té kontroly a BombVault ji pinguje po celý životní cyklus každé zálohy: na začátku, pak při úspěchu nebo s `/fail`. Dělá to vždy, když je URL nastavená, ať říká **Oznámit** cokoli, takže kontrola zůstane zelená při úspěchu i se zprávami jen o selhání. Sekce, která nemá kam zálohovat, se počítá jako selhaná, takže její kontrola zčervená, místo aby slyšela úspěch.
+
+Sekce na stejné URL sdílejí jednu kontrolu. Jakmile záloha jedné z nich selže, dobré zálohy ostatních pingnou také `/fail` a jmenují ji, takže kontrola zůstane červená, dokud ta položka zase nemá dobrou zálohu nebo dokud selhání nepotvrdíš pod **Vyžaduje pozornost**.
 
 Sekce může pingovat vlastní adresu: **Výjimka** v kartě ji přidá a řádek říká **Všechny ostatní sekce pingují tuto URL.**
 

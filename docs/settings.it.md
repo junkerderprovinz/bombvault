@@ -11,7 +11,7 @@ Questa pagina elenca ogni riquadro e le sue schede, e rimanda alla pagina che sp
 
 ## Generale {#general}
 
-- **Sezioni** attiva o disattiva ogni sezione: **Container**, **VM**, **Flash**, **Cartelle**, **Dataset ZFS** e **Auto-backup**. Una sezione disattivata non viene salvata, e i suoi elementi non contano. **Flash** compare solo su Unraid.
+- **Sezioni** attiva o disattiva ogni sezione: **Container**, **VM**, **Flash**, **Cartelle**, **Dataset ZFS** e **Auto-backup**. Una sezione disattivata non viene salvata da nessuna pianificazione, compreso il piano proprio di un elemento, e i suoi elementi non contano. **Esegui backup ora** funziona comunque. **Flash** compare solo su Unraid.
 - **Container** contiene ciò che vale per ogni container, come i **Dump automatici dei database**. Tutto ciò che riguarda un singolo container sta nella sua pagina. Vedi [Dump dei database](backups.md#database-dumps).
 
 ## Aspetto {#look}
@@ -97,6 +97,6 @@ Diverse cose richiedono una password di accesso, come il kit di ripristino, i de
 
 ## Info {#info}
 
-- **Versione**: BombVault, GlimStone, restic e rclone, con **Cerca aggiornamenti** e **Novità**, che conta le modifiche che non hai ancora visto e apre **Novità**.
+- **Versione**: BombVault, GlimStone, restic e rclone, con **Cerca aggiornamenti** e **Novità**, che conta le modifiche che non hai ancora visto e apre una finestra che le elenca.
 - **Aiuto**: **Manuale** apre questa documentazione, e **Segnala bug** scarica uno ZIP ripulito per una issue su GitHub. Richiede una password di accesso.
 - **Informazioni su BombVault**: il progetto, la sua licenza e come raggiungere l'autore.

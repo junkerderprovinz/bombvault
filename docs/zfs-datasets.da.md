@@ -136,13 +136,13 @@ Enhver maskine med ZFS og SSH kan modtage, for eksempel en anden Unraid eller en
 Med root skal der ikke mere til. En bruger af sit eget skal bruge disse rettigheder på målets pool, som dialogen også viser:
 
 ```
-zfs allow <user> receive,create,mount,rollback,destroy,userprop <pool>
+zfs allow <user> receive,create,mount,rollback,destroy,userprop,readonly,canmount <pool>
 ```
 
 På kilden skal den samme slags bruger have disse på elementets øverste datasæt:
 
 ```
-zfs allow <user> send,snapshot,hold,release,bookmark,destroy <dataset>
+zfs allow <user> send,snapshot,hold,release,bookmark,destroy,mount <dataset>
 ```
 
 I denne retning har den BombVault, der ejer elementet, også en nøgle, der kan skrive på serveren.
@@ -159,7 +159,7 @@ En parret BombVault kan modtage replikaen selv. Ingen får SSH-adgang til den an
 2. På den modtagende instans åbner du **Instanser**. Anmodningen vises på den sendende instans' kort som et mærke, og dens **Detaljer** oplister den. Vælg pool og rod på den server og hvor mange snapshots der bliver, og tryk derefter på **Tillad** eller **Afvis**.
 3. Efter **Tillad** sender kilden efter sin egen tidsplan, som til ethvert andet mål.
 
-Den modtagende instans accepterer kun det, godkendelsen dækker: elementets datasæt, ind i dens egen rod. Den kører selv `zfs receive`, og kilden kan ikke slette eller rulle noget tilbage dér. Kopien overlever altså en kilde, som nogen har overtaget. Den modtagende instans beholder sin egen opbevaring. Kilden foreslår kun en regel, når den spørger.
+Den modtagende instans accepterer kun det, godkendelsen dækker: elementets datasæt, ind i dens egen rod. Den kører selv `zfs receive`, og kilden kan ikke slette eller rulle noget tilbage dér. Kopien overlever altså en kilde, som nogen har overtaget. Den modtagende instans beholder sin egen opbevaring. Kilden foreslår kun en regel, når den spørger. Sådan en kilde kan stadig sende nye snapshots, og med tiden skubber de ældre ud efter reglen som alle andre. Et snapshotnavn, der efter den modtagende instans' ur ligger i fremtiden, tæller først med i reglen, når det tidspunkt er kommet.
 
 **Træk adgang tilbage** på den modtagende instans afslutter godkendelsen når som helst og giver kilden besked, som så viser, at godkendelsen er trukket tilbage, og stopper. Det, den modtagende instans allerede har, bliver liggende. En afvist anmodning forbliver afvist. Flere datasæt, eller en anmodning efter en tilbagekaldelse, spørger igen.
 
@@ -177,13 +177,15 @@ Kopien på målet er skrivebeskyttet. Som standard er den ikke monteret, så den
 
 Alt, hvad elementet sikkerhedskopierer, kommer med, og volumenerne under det også, som sikkerhedskopien springer over. Et underdatasæt, du har slået fra i elementet, bliver udenfor. Alle datasæt i en kørsel stammer fra ét snapshot, som i sikkerhedskopien.
 
+En kopi, som en anden BombVault replikerer til denne server, sendes ikke videre, fordi det ville udtynde den historik, kilden stadig har brug for. Når et elements træ rummer en, fejler kørslen for det datasæt og siger hvorfor, indtil du slår det fra i elementet. Et element, der selv er sådan en kopi, kan slet ikke replikere. At slette et element eller slå dets replika fra lader de kopier og deres snapshots være. Når du overtager en kopi, som beskrevet under [Brug af replikaen](#replica-use), tæller den som et normalt datasæt.
+
 ### Hvor længe snapshots bliver {#replica-retention}
 
-På målet beholder en ny replika 7 daglige og 3 ugentlige snapshots. Vælg i stedet **Kort**, **Afbalanceret** eller **Lang**, eller angiv **Egne værdier**. Kun snapshots med navnet `bombvault-replica-<14 digits>` fjernes dér, og aldrig det nyeste, som begge sider deler.
+På målet beholder en ny replika 7 daglige og 3 ugentlige snapshots. Vælg i stedet **Kort**, **Afbalanceret** eller **Lang**, eller angiv **Egne værdier**. Egne værdier, der alle er nul, beholder hvert snapshot, og kortet siger det. Kun snapshots med navnet `bombvault-replica-<14 digits>` fjernes dér, og aldrig det nyeste, som begge sider deler.
 
 På kilden beholder BombVault det seneste replika-snapshot plus et bogmærke for hver tilstand, det har sendt. Bogmærker koster ingen plads. Næste overførsel starter fra dem.
 
-Vil du også beholde flere på kilden, så sæt **Behold på denne server** på kortet Replika, for eksempel til 7. Så mange af de nyeste replika-snapshots bliver så på denne server efter hver replika, ud over dem, målet beholder. 0 eller 1 beholder kun det seneste. Det seneste har et hold, så grundlaget for næste overførsel ikke slettes ved et uheld. De ældre har intet. Hvert snapshot holder fast i de blokke, der er ændret efter det, så hvert snapshot, du beholder, optager plads i poolen. Slår du replikaen fra eller over på et andet mål, eller sletter du elementet, forsvinder de også fra denne server.
+Vil du også beholde flere på kilden, så sæt **Behold på denne server** på kortet Replika, for eksempel til 7. Så mange af de nyeste replika-snapshots bliver så på denne server efter hver replika, ud over dem, målet beholder. 0 eller 1 beholder kun det seneste. Det seneste har et hold, så grundlaget for næste overførsel ikke slettes ved et uheld. De ældre har intet. Hvert snapshot holder fast i de blokke, der er ændret efter det, så hvert snapshot, du beholder, optager plads i poolen. Slår du replikaen fra eller over på et andet mål, eller sletter du elementet, forsvinder de også fra denne server. Snapshots af et andet element, der ligger under det, bliver. Kan værten ikke nås, mens du sletter elementet, bliver snapshottene også, og siden siger det. Fjern dem i hånden: `zfs release -r bombvault-replica <dataset>@<snapshot>`, derefter `zfs destroy`.
 
 Filerne i et beholdt snapshot kan du læse eller kopiere med det samme, fra mappen `.zfs/snapshot` inde i datasættet eller fra en klon, uden at røre datasættet eller replikaen:
 
@@ -226,12 +228,12 @@ zfs clone backup/bombvault-replica/tower/cache/appdata@bombvault-replica-2026100
 Hvis kilden svigter, gør du kopien på målet til et almindeligt datasæt, der kan skrives til:
 
 ```
-zfs inherit -r readonly backup/bombvault-replica/tower/cache/appdata && zfs inherit -r canmount backup/bombvault-replica/tower/cache/appdata && zfs mount -a
+zfs inherit -r readonly backup/bombvault-replica/tower/cache/appdata && zfs list -rH -o name -t filesystem backup/bombvault-replica/tower/cache/appdata | xargs zfs set canmount=on && zfs mount -a
 ```
 
-BombVault holder derefter op med at replikere til det datasæt, indtil du starter en ny første kørsel.
+BombVault holder derefter op med at replikere til det datasæt og dets underdatasæt. Den næste kørsel fejler med en årsag, og det, du har skrevet, bliver. Det samme gælder alt andet, der er skrevet til kopien siden dens nyeste snapshot: BombVault ruller aldrig en kopi tilbage. For at replikere dertil igen flytter du det, du har brug for, væk fra kopien og sletter den på målet. Den næste kørsel sender så alt på ny.
 
-For at få en tilstand tilbage til kilden trykker du på **Hent tilbage som nyt datasæt** i arket. BombVault sender snapshottet ind i et nyt datasæt ved siden af originalen, med navnet `<dataset>-bombvault-restore-` plus et tidsstempel. Det skriver aldrig oven på originalen.
+For at få en tilstand tilbage til kilden trykker du på **Hent tilbage som nyt datasæt** i arket. BombVault sender snapshottet ind i et nyt datasæt ved siden af originalen, med navnet `<dataset>-bombvault-restore-` plus et tidsstempel. Det skriver aldrig oven på originalen. Et underdatasæt, der er gået tabt på kilden, kommer også tilbage, så længe kopien stadig rummer det snapshot. Et underdatasæt, der ikke rummer det, udelades, og kørslen siger det.
 
 ### Eksempel: en replika til en anden Unraid-boks {#example-replica}
 

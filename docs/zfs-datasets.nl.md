@@ -138,13 +138,13 @@ Elke machine met ZFS en SSH kan ontvangen, bijvoorbeeld een tweede Unraid of een
 Met root is niets anders nodig. Een eigen gebruiker heeft deze rechten nodig op de pool van het doel, die het venster ook toont:
 
 ```
-zfs allow <user> receive,create,mount,rollback,destroy,userprop <pool>
+zfs allow <user> receive,create,mount,rollback,destroy,userprop,readonly,canmount <pool>
 ```
 
 Op de bron heeft dezelfde soort gebruiker deze nodig op de bovenste dataset van het item:
 
 ```
-zfs allow <user> send,snapshot,hold,release,bookmark,destroy <dataset>
+zfs allow <user> send,snapshot,hold,release,bookmark,destroy,mount <dataset>
 ```
 
 In deze richting houdt de BombVault die het item heeft ook een sleutel die op de server kan schrijven.
@@ -161,7 +161,7 @@ Een gekoppelde BombVault kan de replica zelf ontvangen. Niemand krijgt SSH-toega
 2. Open op de ontvangende instantie **Instanties**. Het verzoek staat op de kaart van de verzendende instantie als badge, en zijn **Details** tonen het. Kies de pool en root op die server en hoeveel snapshots blijven, en druk dan op **Toestaan** of **Afwijzen**.
 3. Na **Toestaan** verstuurt de bron volgens zijn eigen planning, zoals voor elk ander doel.
 
-De ontvangende instantie accepteert alleen wat de goedkeuring dekt: de datasets van het item, in haar eigen root. Ze voert `zfs receive` zelf uit, en de bron kan daar niets verwijderen of terugdraaien. Zo overleeft de kopie een bron die iemand heeft overgenomen. De ontvangende instantie houdt haar eigen bewaarbeleid. De bron stelt alleen een regel voor als hij erom vraagt.
+De ontvangende instantie accepteert alleen wat de goedkeuring dekt: de datasets van het item, in haar eigen root. Ze voert `zfs receive` zelf uit, en de bron kan daar niets verwijderen of terugdraaien. Zo overleeft de kopie een bron die iemand heeft overgenomen. De ontvangende instantie houdt haar eigen bewaarbeleid. De bron stelt alleen een regel voor als hij erom vraagt. Zo'n bron kan nog steeds nieuwe snapshots sturen, en na verloop van tijd drukken die volgens de regel oudere eruit, net als alle andere. Een snapshotnaam die volgens de klok van de ontvangende instantie in de toekomst ligt, telt pas mee voor de regel als die tijd gekomen is.
 
 **Toegang intrekken** op de ontvangende instantie beëindigt de goedkeuring op elk moment en meldt het aan de bron, die dan toont dat de goedkeuring is ingetrokken en stopt. Wat de ontvangende instantie al heeft, blijft daar. Een afgewezen verzoek blijft afgewezen. Meer datasets, of een verzoek na een intrekking, vragen opnieuw.
 
@@ -179,13 +179,15 @@ De kopie op het doel is alleen-lezen. Standaard is ze niet gemount, zodat ze op 
 
 Alles wat het item back-upt gaat erin, en de volumes eronder ook, die de back-up overslaat. Een onderliggende dataset die je in het item hebt uitgeschakeld, blijft erbuiten. Alle datasets van een run komen uit één snapshot, zoals in de back-up.
 
+Een kopie die een andere BombVault naar deze server repliceert, wordt niet doorgestuurd, omdat dat de geschiedenis zou uitdunnen die de bron nog nodig heeft. Zit er zo'n kopie in de boom van een item, dan mislukt de run voor die dataset en zegt waarom, tot je hem in het item uitschakelt. Een item dat zelf zo'n kopie is, kan helemaal niet repliceren. Een item verwijderen of zijn replica uitschakelen laat die kopieën en hun snapshots met rust. Zodra je een kopie overneemt, zoals beschreven onder [De replica gebruiken](#replica-use), telt ze als een gewone dataset.
+
 ### Hoe lang snapshots blijven {#replica-retention}
 
-Op het doel bewaart een nieuwe replica 7 dagelijkse en 3 wekelijkse snapshots. Kies in plaats daarvan **Kort**, **Gebalanceerd** of **Lang**, of stel **Eigen waarden** in. Alleen snapshots met de naam `bombvault-replica-<14 digits>` worden daar ooit verwijderd, en nooit de nieuwste die beide kanten delen.
+Op het doel bewaart een nieuwe replica 7 dagelijkse en 3 wekelijkse snapshots. Kies in plaats daarvan **Kort**, **Gebalanceerd** of **Lang**, of stel **Eigen waarden** in. Eigen waarden die allemaal nul zijn, bewaren elke snapshot, en de kaart zegt dat. Alleen snapshots met de naam `bombvault-replica-<14 digits>` worden daar ooit verwijderd, en nooit de nieuwste die beide kanten delen.
 
 Op de bron bewaart BombVault de laatste replicasnapshot, plus een bladwijzer voor elke toestand die het heeft verstuurd. Bladwijzers kosten geen ruimte. De volgende overdracht begint ervan.
 
-Om ook op de bron meer te bewaren, stel je **Bewaren op deze server** in op de kaart Replica in, bijvoorbeeld op 7. Zoveel van de nieuwste replicasnapshots blijven dan na elke replica ook op deze server staan, naast wat het doel bewaart. 0 of 1 bewaart alleen de laatste. De laatste draagt een hold, zodat de basis van de volgende overdracht niet per ongeluk wordt vernietigd. De oudere hebben er geen. Elke snapshot houdt de blokken vast die erna veranderden, dus elke die je bewaart, neemt ruimte op de pool in. De replica uitschakelen of naar een ander doel zetten, of het item verwijderen, verwijdert ze ook van deze server.
+Om ook op de bron meer te bewaren, stel je **Bewaren op deze server** in op de kaart Replica in, bijvoorbeeld op 7. Zoveel van de nieuwste replicasnapshots blijven dan na elke replica ook op deze server staan, naast wat het doel bewaart. 0 of 1 bewaart alleen de laatste. De laatste draagt een hold, zodat de basis van de volgende overdracht niet per ongeluk wordt vernietigd. De oudere hebben er geen. Elke snapshot houdt de blokken vast die erna veranderden, dus elke die je bewaart, neemt ruimte op de pool in. De replica uitschakelen of naar een ander doel zetten, of het item verwijderen, verwijdert ze ook van deze server. Snapshots van een ander item dat eronder ligt, blijven staan. Is de host niet bereikbaar terwijl je het item verwijdert, dan blijven de snapshots ook staan en zegt de pagina dat. Verwijder ze met de hand: `zfs release -r bombvault-replica <dataset>@<snapshot>`, daarna `zfs destroy`.
 
 De bestanden van een bewaarde snapshot kunnen meteen worden gelezen of gekopieerd, uit de map `.zfs/snapshot` in de dataset of uit een clone, zonder de dataset of de replica aan te raken:
 
@@ -228,12 +230,12 @@ zfs clone backup/bombvault-replica/tower/cache/appdata@bombvault-replica-2026100
 Valt de bron uit, maak de kopie dan op het doel een gewone, beschrijfbare dataset:
 
 ```
-zfs inherit -r readonly backup/bombvault-replica/tower/cache/appdata && zfs inherit -r canmount backup/bombvault-replica/tower/cache/appdata && zfs mount -a
+zfs inherit -r readonly backup/bombvault-replica/tower/cache/appdata && zfs list -rH -o name -t filesystem backup/bombvault-replica/tower/cache/appdata | xargs zfs set canmount=on && zfs mount -a
 ```
 
-BombVault stopt daarna met repliceren naar die dataset, tot je een nieuwe eerste run start.
+BombVault stopt daarna met repliceren naar die dataset en zijn onderliggende datasets. De volgende run mislukt met een reden, en wat je hebt geschreven, blijft staan. Hetzelfde geldt voor al het andere dat sinds de nieuwste snapshot naar de kopie is geschreven: BombVault draait een kopie nooit terug. Wil je daar weer naartoe repliceren, haal dan wat je nodig hebt van de kopie af en vernietig haar op het doel. De volgende run stuurt dan alles opnieuw.
 
-Om een toestand terug te krijgen op de bron, druk je in het blad op **Terugzetten als nieuwe dataset**. BombVault stuurt de snapshot naar een nieuwe dataset naast het origineel, genaamd `<dataset>-bombvault-restore-` plus een tijdstempel. Het schrijft nooit over het origineel.
+Om een toestand terug te krijgen op de bron, druk je in het blad op **Terugzetten als nieuwe dataset**. BombVault stuurt de snapshot naar een nieuwe dataset naast het origineel, genaamd `<dataset>-bombvault-restore-` plus een tijdstempel. Het schrijft nooit over het origineel. Een onderliggende dataset die op de bron verloren is, komt ook terug, zolang de kopie die snapshot nog bevat. Een onderliggende dataset die hem niet bevat, wordt weggelaten, en de run meldt dat.
 
 ### Voorbeeld: een replica naar een tweede Unraid-machine {#example-replica}
 

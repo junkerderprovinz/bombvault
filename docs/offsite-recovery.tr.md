@@ -1,7 +1,7 @@
 # Site dışı ve kurtarma
 
 !!! note "Yeniden kurulumdan sonra site dışı kopyalar bekler"
-    Acil durum sihirbazı ya da **Yedekleri keşfet** ögeleri eski ayarlar olmadan yeniden kurduğunda, o bölümlerin site dışı kopyaları varsayılanları onaylanana kadar duraklar. Bkz. [Yeniden kurulumdan sonra](#after-a-rebuild).
+    Acil durum sihirbazı ya da **Yedekleri keşfet** ögeleri eski ayarlar olmadan yeniden kurduğunda, o bölümlerin site dışı kopyaları, sen onların yedeklerini bu sunucunun kendi yedekleri olarak alana kadar bekler. Bkz. [Yeniden kurulumdan sonra](#after-a-rebuild).
 
 Yerel yedekler seni kaybolmuş bir konteynerden ya da kötü bir güncellemeden korur. Site dışı kopyalar ve denenmiş bir kurtarma kiti seni tüm makineden, fidye yazılımından ya da bir yangından korur. Bu sayfa hedefleri ve site dışı kopyaları, bir kopyayı kurcalamaya karşı korumayı, geri yükleyebildiğini kanıtlamayı, birkaç sunucuyu eşleştirmeyi ve BombVault'un kendisi gittiğinde her şeyi geri almayı kapsar.
 
@@ -82,7 +82,9 @@ Her hedefin kendi sayfası vardır. Yalnızca o hedef için geçerli kartları �
 
 **Taşı** ve **Hedefi kaldır** sayfanın eylemleri arasında durur ve [Taşıma ve kaldırma](#move-remove) altında anlatılır.
 
-Yedek tutan ve birdenbire hiç depo tutmayan uzak bir hedef, örneğin diski bağlanmayan bir rest-server, kendiliğinden yeni, boş bir tane almaz. Sayfası, bir yedek ya da kopya deponun kaybolduğunu bulur bulmaz bunu söyler. Diski yeniden bağla. Eski depoyu bilerek boşalttıysan **Burada yeni bir depo oluştur** hedefin ve depolarının her bölümü için bir kerede baştan başlar.
+Yedek tutan ve birdenbire hiç depo tutmayan uzak bir hedef, örneğin diski bağlanmayan bir rest-server, kendiliğinden yeni, boş bir tane almaz. Sayfası, bir yedek ya da kopya deponun kaybolduğunu bulur bulmaz bunu söyler. Diski yeniden bağla. Eski depoyu bilerek boşalttıysan **Burada yeni bir depo oluştur** hedefin ve depolarının her bölümü için bir kerede baştan başlar. Bu koruma yerinde kalmış bir hedef içindir. Eklediğin bir hedef ya da bir hedefte işaretlediğin bir bölüm temiz başlar: o adreste depo yoksa ilk kopya bir tane oluşturur, daha önce kaldırılmış bir hedefin orada bir deposu olmuş olsa bile.
+
+İki ret, neyin düzeltilmesi gerektiğini kopyanın çalıştırmasında ve hedefin sayfasında söyler. **Bu bucket sunucuda yok**, bir S3 sunucusu bunu söyler söylemez gelir ve BombVault orada hiçbir şey oluşturmaz, böylece yanlış yazılmış bir bucket adı görünür kalır. Hiç yanıt vermeyen bir sunucu başka bir durumdur: restic, sunucu geri gelir diye çağrı başına yaklaşık 15 dakika yeniden denemeye devam eder. **Burada zaten bir restic deposu var ve bu örneğin anahtarı onu açmıyor**, oradaki yedeklerin başka bir `APP_KEY`'e ait olduğu anlamına gelir.
 
 Grubunun başka bir örneğinin çalıştırdığı bir alıcı sunucu sağlayıcılar arasında **Grubundan** olarak görünür. Bkz. [Alıcı sunucu](#receiving-server).
 
@@ -105,11 +107,15 @@ Bir kural, ayarladığın kadar geriye, gün, hafta, ay ve yıl başına bir yed
 
 **Özel değerler** beş sayıyı kendin ayarlar. 0 o sayıyı kapatır ve her sayısı 0 olan bir kural her şeyi tutar. Kartın noktaları, 40 örnek yedeğin hangilerini bir kuralın tuttuğunu gösterir, en yenisi en sağda. Örnek her hedef için aynıdır, çünkü resim BombVault oradaki yedekleri okumadan önce çizilir. Bugünden geriye doğru sayar, bu yüzden kaç noktanın kaldığı tarihe göre değişir.
 
+Bu ana makinedeki bir klasörün ve el ile yazılmış uzak bir klasörün de kendi kartı vardır. Bu kart o klasördeki kendi klasörlerini kapsar, başkasını değil. Sen kaydedene kadar böyle bir klasör, BombVault'un onun için zaten sahip olduğu kurala göre budanır.
+
 Varsayılan olarak açık **Daha az saklamadan önce sor**, daha az yedek tutan bir değişiklik kaydedilmeden önce sorar ve yeni kuralın 40 örnek yedeğin kaçını kaldırdığını söyler. Her hedef için geçerlidir. **Bölüme göre kurallar** altındaki **Hedefin değerlerine dön** aynı soruyu sorar.
 
 Silmeye karşı koruması olan bir hedef bu makineden hiçbir zaman budanmaz. Karşı tarafı eski yedekleri kendi kurallarına göre tutar ya da bırakır. Bir ögede kaybolan veriyle ilgili açık bir kritik anormallik varken saklama, sen onu onaylayana kadar o ögenin eski yedeklerini tutar. Bkz. [Anormallikler](anomalies.md).
 
-Sonraki çalıştırmanın gerçekte neyi sileceğini görmek için **Ayarlar, Hedefler** altındaki **Önizleme**'yi aç. **Sonraki çalışmanın kaldıracakları**'nı depo başına ve öge başına, geri yükleme noktaları adlandırılmış olarak listeler. Kilit almaz ve hiçbir şeyi değiştirmez.
+Olması gerekenden az şey tutan bir yedek yüzünden önceki yedekler hiçbir zaman eskiyip silinmez. Bu, önceki yedeklerde dosya varken hiç dosya okumayan, seçili bir klasörü kaçıran ya da bazı dosyaları okuyamayan bir yedektir. Çalıştırması, neyin eksik olduğunu söyleyen ve eski yedeklerin tutulduğunu belirten bir uyarıyla biter. Aynı mesaj bildirim kanallarına da gelir. Eksiksiz bir yedek gelene kadar hiçbir budama, ne ögenin kendi klasöründe ne de kopyalarında, o ögenin eski yedeklerine dokunmaz. İlk yedek ve hep boş olmuş seçili bir klasör eksiksiz sayılır.
+
+Sonraki çalıştırmanın gerçekte neyi sileceğini görmek için **Ayarlar, Hedefler** altındaki **Önizleme**'yi aç. **Sonraki çalışmanın kaldıracakları**'nı bölümün kendi klasörü ve kopyalarının her biri için, depo başına ve öge başına, geri yükleme noktaları adlandırılmış olarak listeler. Kilit almaz ve hiçbir şeyi değiştirmez.
 
 ![Dengeli seçili Ne kadar saklanır: noktalar 40 örnek yedeğin hangilerinin kaldığını gösterir.](assets/screenshots/storage/keep-dark.png#only-dark)
 ![Dengeli seçili Ne kadar saklanır: noktalar 40 örnek yedeğin hangilerinin kaldığını gösterir.](assets/screenshots/storage/keep-light.png#only-light)
@@ -146,9 +152,9 @@ Bu hedefte konteynerleri diğerlerinden daha uzun tutmak için **Bölüme göre 
 Bir oturum açma bilgisi, BombVault'un bir S3 servisi ya da rest-server için kullandığı anahtar veya paroladır. Oturum açma bilgileri tek bir listedir, **Ayarlar, Hedefler** altındaki **Oturum açma bilgileri** kartı, ve her satır hangi hedeflerin onu kullandığını söyler (**Kullanan**).
 
 - **Bir hedef eklerken kaydedilir.** Hedef ekle yazdığın anahtarları bir oturum açma bilgisi olarak kaydeder. Aynı servisteki sonraki hedef onu **Yeni anahtarlar** yerine **Kaydedilmiş oturum açma** altında seçebilir ve onda sonradan yapılan bir değişiklik onu kullanan her hedefe uygulanır.
-- **Varsayılan.** Bir yıldız varsayılan oturum açma bilgisini işaretler. El ile yazılmış bir adres, bir çekme kaynağı ya da temiz bir kurulumda kurtarma gibi hiçbirinin seçilmediği her yerde kullanılır. **Varsayılan yap** yıldızı başkasına verir.
+- **Varsayılan.** Bir yıldız varsayılan oturum açma bilgisini işaretler. El ile yazılmış bir adres ya da temiz bir kurulumda kurtarma gibi hiçbirinin seçilmediği her yerde kullanılır. Bir çekme kaynağı onu ödünç almaz. **Varsayılan yap** yıldızı başkasına verir.
 - **Düzenle ve test et.** Burada ya da bir hedefin **Oturum açma** kartında **Düzenle**, oturum açma bilgisi için tek bir pencere açar. **Test**, hiçbir şey kaydedilmeden önce yazdığınla onu kullanan her hedefte oturum açar. **Kaydet** saklar.
-- **Kaldırma.** Bir oturum açma bilgisi yalnızca hiçbir hedef ya da çekme kaynağı onu kullanmıyorsa kaldırılabilir ve varsayılan yalnızca sonuncu olarak gider. Satır o zaman onu hâlâ neyin kullandığını söyler.
+- **Kaldırma.** Bir oturum açma bilgisi yalnızca hiçbir hedef, çekme kaynağı ya da alınan depo onu kullanmıyorsa ve hiçbir eski yedek ona ihtiyaç duymuyorsa kaldırılabilir ve varsayılan yalnızca sonuncu olarak gider. Eski yedekler, kendi klasörü bu bilgiyle oturum açan bir yerden taşınıp onları orada bıraktığında ona ihtiyaç duyar. BombVault o zaman bunun hangi yer olduğunu söyler.
 - **Bir hedefin bağlantısını değiştirmek** başka yerlerin paylaştığı bir oturum açma bilgisini asla yeniden yazmaz. Hedef bunun yerine kendi oturum açma bilgisini alır ve pencere önceden onun oturum açma bilgisinin paylaşıldığını söyler. Paylaşılanı her yerde değiştirmek için **Oturum açma bilgileri** kartında düzenle.
 
 ![Oturum açma bilgileri kartı: her kayıtlı oturum açma bilgisi, onu neyin kullandığıyla ve varsayılanda yıldızla.](assets/screenshots/storage/signins-dark.png#only-dark)
@@ -225,7 +231,7 @@ Bir kendi klasörü, bir NAS, bir rest-server ya da bir S3 bucket'ı gibi, zaten
 1. Kendi klasörünü tutacak hedefi aç ve **Kendi klasörü olarak kullan**'ı ya da **Kendi klasörleri** kartında **Bölüm ekle**'yi seç. Birkaç bölümü bir kerede taşımak için Yerel hedefin **Bağlantı** kartında **Burada kendi klasörleri** yanındaki **Kendi klasörlerini taşı**'yı seç.
 2. **Bölümler** altında bölümleri ve **Şuraya taşı** altında yeri seç. **Başka bir yer** bu ana makinedeki bir klasörü ya da kayıtlı oturum açma bilgilerinden biriyle elle yazılan uzak bir deponun adresini alır.
 3. **Ne olur**'u oku. Her bölüm için yeni yedeklerin nereye gideceğini, yeni yerde zaten olan bir kopyanın kendi klasörü olup olmayacağını ve hangi yedeklerin önce kopyalanacağını söyler.
-4. **Önceden alınmış yedekleri kopyala** varsayılan olarak açıktır. Kapalıyken eski yedekler olduğu yerde kalır ve yine de oradan geri yüklenebilir.
+4. **Önceden alınmış yedekleri kopyala** varsayılan olarak açıktır. Kapalıyken eski yedekler olduğu yerde kalır, ama öge artık onları listelemez. Geri yükleme sayfasındaki **Eski bir yedek klasöründen** onları yine de klasörün adresiyle ve uzak bir klasör için onun oturum açma bilgisiyle okur.
 5. **Geç**'i seç. Yeni yerin **Ne kadar saklanır** kartı bölümün bugünkü kuralından daha az saklıyorsa BombVault önce **Daha az saklansın mı?** diye sorar. Orada o bölüm **için geçerli değerleri Bölüme göre kurallar altında koru** seçeneği bugünkü değerleri beraberinde taşır, **Yine de kaydet** devam eder ve **Geri** her şeyi olduğu gibi bırakır. Yedeklerin önce kopyalanması gerektiğinde BombVault onları kopyalar ve sonra kendi klasörünü değiştirir. Zaten oradalarsa değiştirmeden önce onları denetler.
 
 Taşımadan sonra yeni yedekler taşınan kendi klasörüne gider, **Yerel**'i kapalı olan ve doğrudan bir kopyaya yedekleyen bir bölüm için de. Yeni yerde zaten duran bir kopya kendi klasörü olur ve oraya kopyalama biter. O kopyanın bölümün saklama kurallarından daha uzun yedek tuttuğu yerde bölüm iki kuraldan birinin tuttuğu her şeyi tutar, yani hiçbiri kaybolmaz.
@@ -252,7 +258,7 @@ BombVault yedekleri arka planda kopyalar ve sonra kendi klasörünü değiştiri
 
 Yerel hedefin **Bağlantı** kartı hâlâ bir bölümün kendi klasörü için uzak bir adres alır: bölümün yanındaki **Değiştir**, **Yerel / Uzak** anahtarlı bir pencere açar. **Uzak**, `s3:...`, `rest:http://host:8000/repo`, `sftp:user@host:/repo` ya da `rclone:remote:bucket/path` gibi bir restic adresi alır ve **Uzak birincil depo güvenlik ayarları** bir bağlantı testi, yükleme ve indirme sınırları, bir site dışı hedefin aldığı aynı kurcalama testiyle append-only koruma ve bir büyüme bütçesi alarmı ekler.
 
-Böyle bir adres varsayılan oturum açma bilgisiyle oturum açar. Sahip olduğun bir hedefin bir klasöründe durduğunda o hedefin sayfası bölümü **Zaten bu hedefin altında** altında listeler ve onu devralmak ona hedefin oturum açmasını, depolama sınıfını ve silmeye karşı korumasını verir. Kendi klasörü **Kendi klasörü olarak kullan** ile bir hedefe taşımak daha basit yoldur, çünkü pencere bir şey değişmeden önce önceden alınmış yedekleri denetler.
+Böyle bir adres varsayılan oturum açma bilgisiyle oturum açar. Tam olarak sahip olduğun bir hedefin bölüm için tuttuğu klasörse, farklı oturum açmadığı ya da hedef öyle değilken salt ekleme olmadığı sürece, hedefin kartı ve **Kullanılabilir** anahtarı dahil o hedefi kendiliğinden izler. O zamana kadar klasörü budayan bir kural, **Bölüme göre kurallar** altında bölümün kendi kuralı olarak kalır. O hedefin başka bir klasöründe durduğunda o hedefin sayfası bölümü **Zaten bu hedefin altında** altında listeler ve onu devralmak ona hedefin oturum açmasını, depolama sınıfını ve silmeye karşı korumasını verir. Kendi klasörü **Kendi klasörü olarak kullan** ile bir hedefe taşımak daha basit yoldur, çünkü pencere bir şey değişmeden önce önceden alınmış yedekleri denetler.
 
 ## Öge başına yerleşim {#placement}
 
@@ -294,7 +300,12 @@ Bir ZFS replikası tesis dışı bir kopyadır, ama geçmişi olan bir yedek de�
 
 ### Yeniden kurulumdan sonra {#after-a-rebuild}
 
-Kopya seçimleri BombVault'un kendi ayarlarında yaşar. **Yedekleri keşfet** ya da geri yüklenmiş ayarlar olmadan Acil durum sihirbazı ile bir yeniden kurulumdan sonra kaybolurlar ve her şeyi kopyalamak dışarıda bıraktığın ögeleri B2'ye yeniden gönderirdi. Bu yüzden yeniden kurulan her bölümün site dışı kopyaları duraklar. Genel bakış bunu söyler ve **Bölüme göre hedefler** kartı sonraki çalıştırmanın kopyalayacağının önizlemesi ve orada dışarıda bırakabileceğin ögesiz yedeklerdeki adlarla **Varsayılanı onayla**'yı sunar. Duraklamayı yalnızca onay bitirir. Bir ayar dosyası içe aktarmak kuralları ve varsayılanları geri getirir ama duraklamayı bitirmez.
+Kopya seçimleri BombVault'un kendi ayarlarında yaşar. **Yedekleri keşfet** ya da geri yüklenmiş ayarlar olmadan Acil durum sihirbazı ile bir yeniden kurulumdan sonra kaybolurlar ve her şeyi kopyalamak dışarıda bıraktığın ögeleri B2'ye yeniden gönderirdi. Aynısı, bu veritabanından hiç site dışına kopyalamamış bir bölüm bir hedefte kendi yedeklerini ya da kendi klasöründe daha eskilerini bulduğunda da geçerlidir, örneğin aynı `APP_KEY` ile önceki bir kurulumun yedeklerinin üzerine bir hedef eklendikten sonra. O bölümün site dışı kopyaları o zaman senin kararını bekler.
+
+Genel bakıştaki **İlgi bekliyor** ve bölümün kopyaladığı her hedefin sayfası, yedeklerin bu sunucunun kendi yedekleri olup olmadığını sorar. **Bu sunucunun kendi yedekleri olarak al** bölümün varsayılanını onaylar ve kopyaları sonraki geçişten itibaren yeniden çalışır. **Önce kuralları kontrol et**, bölümün **Bölüme göre hedefler** içindeki satırına götürür. Orada her ögenin nereye gittiğini görürsün ve kaybolan bir kuralı ögenin sayfasında yeniden ayarlayabilirsin. Kopyalama orada sen **Bu sunucunun kendi yedekleri olarak al**'a basana kadar beklemeye devam eder. Bu düğme önce sonraki çalıştırmanın neyi kopyalayacağını ve yedeklerde ögesi olmayan, dışarıda bırakabileceğin adları gösterir. Bekleyen her ögenin en yeni yedeği bunu, karara bir bağlantıyla, kendi çalıştırmasında söyler ve bildirimler açıksa bir bildirim gider. Bir ayar dosyası içe aktarmak kuralları ve varsayılanları geri getirir ama kararı senin yerine vermez.
+
+![Yeniden kurulumdan sonra İlgi bekliyor: klasör kümeleri bu veritabanından önceye ait yedekler buldu ve site dışı kopyaları kararı bekliyor.](assets/screenshots/offsite/copy-decision-dark.png#only-dark)
+![Yeniden kurulumdan sonra İlgi bekliyor: klasör kümeleri bu veritabanından önceye ait yedekler buldu ve site dışı kopyaları kararı bekliyor.](assets/screenshots/offsite/copy-decision-light.png#only-light)
 
 ## Silmeye karşı koruma (append-only) {#delete-protection-append-only}
 
@@ -371,7 +382,7 @@ Hâlâ elle bir APP_KEY alan tek yer, diğer örneğin gittiği ve bir grupta ya
 Her kart üyenin koruma durumunu ve rollerini kutucuk olarak gösterir. Bir rol, bir örneğin başka bir örnek için yaptığı şeydir:
 
 - **Alıcı**, bu sunucunun site dışı kopyalarını append-only kipindeki bir rest-server'da tutar. Bu sunucu her yedekten sonra gönderir ve biri onu ele geçirse bile orada hiçbir şeyi silemez.
-- **Çeken**, bu sunucunun yedeklerini kendi zamanlamasında çeker. Bunun için bu sunucunun uyanık olması gerekmez.
+- **Çeken**, bu sunucunun yedeklerini kendi zamanlamasında çeker. Bunun için bu sunucunun uyanık olması gerekmez. Çeken örnekte isteğe izin verebilmeden önce **Çekme** açık olmalıdır.
 - **ZFS sunucusu**, bu sunucunun ZFS replikalarını alır. Her ZFS ögesi onu ayarlarındaki **Replika** altında seçer.
 - **Anahtar bekçisi**, bu sunucunun kurtarma kitinin mühürlü bir kopyasını tutar. Bkz. [Anahtar bekçisi](#key-keeper).
 
@@ -379,7 +390,7 @@ Bir rolü açmak bir istek gönderir ve diğer örnekte biri **İzin ver**'e bas
 
 Bir karttaki **Ayrıntılar** gerisini açar: o üyenin alınan depoları ve çekme kaynakları, depolama teklifleri, izleme, **Kaldır** ve **Anahtarı unut**.
 
-Bir üye kendi site dışı depolamasını grup üzerinden başka bir üyeye sunabilir. Diğer yönetici teklifi üyenin **Ayrıntılar**'ında görür ve kabul eder ya da reddeder. Kabul etmek, yazdığın bir hedefle aynı denetimlerden sonra kayıtlı bir oturum açma bilgisi ve sıradan bir hedef oluşturur. Bu yolla yalnızca bağlantı ayrıntıları gider, yedek verisi asla. **Şimdi denetle**, bir üyeden bir bölümün deposunu doğrulamasını ister. Sayfadaki hiçbir şey başka bir makinede bir yedek, geri yükleme başlatamaz ya da bir şey silemez.
+Bir üye kendi site dışı depolamasını grup üzerinden başka bir üyeye sunabilir. Diğer yönetici teklifi üyenin **Ayrıntılar**'ında görür ve kabul eder ya da reddeder. Kabul etmek, yazdığın bir hedefle aynı denetimlerden sonra kayıtlı bir oturum açma bilgisi ve sıradan bir hedef oluşturur. Hedef silmeye karşı koruma açık olarak gelir, çünkü teklifin gösterdiği tarif salt ekleme yapan bir rest-server'dır, bu yüzden orada **Ne kadar saklanır** geçerli değildir. Her teklifin kendi oturum açması ve kendi klasörü vardır, bu yüzden bir bölümü aynı üyeye ya da başka birine yeniden sunmak ilk ortağın kopyalarına dokunmaz: `.htpasswd` dosyasına yeni satırı ekle ve sunucuyu çalışır bırak. Bu yolla yalnızca bağlantı ayrıntıları gider, yedek verisi asla. **Şimdi denetle**, bir üyeden bir bölümün deposunu doğrulamasını ister. Sayfadaki hiçbir şey başka bir makinede bir yedek, geri yükleme başlatamaz ya da bir şey silemez.
 
 Kapatılmış örnekler ve uygulaması kapalı telefonlar kartlarını gri olarak **Etkin değil** diye, en son ne zaman görüldükleriyle korurlar ve sen onları **Kaldır**'a kadar ağda soluk dururlar. Bu sunucu başlar başlamaz böyle bir kart grup dönene kadar **Denetleniyor** der. **Kaldır** hangi parçalar açık olursa olsun böyle bir kartta çalışır ve ayrıca üyenin açık isteklerini, boşta ZFS alma yuvalarını ve bekleyen anahtar isteklerini de sonlandırır. Eşleştirme sayfasındaki **Örnekler** kartı bu üyeleri de **Etkin değil** olarak listeler.
 
@@ -390,12 +401,16 @@ Başka bir BombVault'tan append-only kopyaları **alan** makinede, alınan depol
 - **Kaynağa göre bir envanter**, hangi konteynerlerin, VM'lerin ve klasör kümelerinin indiğini tam olarak görmen için.
 - Kaynak başına **Son alınan**, her birinin ne kadar taze olduğunu bilmen için.
 - Alıcı donanımda çalışan **bağımsız bir `restic check`**, bütünlüğün yalnızca gönderende değil, verinin gerçekten durduğu yerde doğrulanması için.
-- **Bir ölü adam anahtarı:** bir kaynak senin ayarladığın bir pencere içinde göndermeyi bıraktığında bir uyarı.
-- **Bütünlük uyarıları:** alıcı tarafta bir denetim başarısız olduğunda bir uyarı.
+- **Bir ölü adam anahtarı:** bir kaynak senin ayarladığın bir pencere içinde göndermeyi bıraktığında bir uyarı. Günde bir kez, 09:15'te bakar. Denetim zamanlaması ne derse desin, depo hiç okunamadığında ve onu ekledikten sonra tam bir pencere boyunca hiçbir şey gelmediğinde de bir uyarı alırsın. Gönderenin ilk kopyasından önce eklediğin bir depo o zamana kadar sorun sayılmaz.
+- **Bütünlük uyarıları:** alıcı tarafta bir denetim başarısız olduğunda bir uyarı. Depoyu açamayan bir denetim bütünlük hakkında bir şey söylemez, bu yüzden bir hüküm bırakmaz ve ertesi gün aynı saatte yeniden dener.
+
+Başka bir sunucudaki bir depo o sunucunun oturum açmasını ister: onu bir [oturum açma bilgisi](#sign-ins) olarak kaydet ve iletişim kutusunda **Kimlik bilgileri** altında seç.
 
 Alıcı kesinlikle salt okunurdur. Alınan depoya asla yazmaz, bu yüzden göndericinin dayandığı append-only garantisini asla bozamaz.
 
-Çeken tersine çalışır: **Çekme** açıkken bir örnek başka bir üyenin yedeklerini kendi zamanlamasında, her kaynak için kendi deposuna okur, böylece bu makinenin kendi yedekleri sayılmazlar. Kaynakları da o üyenin ayrıntılarında durur: depo konumu, hangi tür yedeği tuttuğu ve ne sıklıkla çekileceği. restic parolası grup üzerinden gelir, APP_KEY asla, ve karşı tarafın kurması gereken başka bir şey yoktur ve çalışıyor olması gerekmez. Kaynak yalnızca okunur ve her taraf kendi oturum açmasını korur. Bir `rclone:` kaynağı reddedilir, çünkü rclone ona bu örneğin remote'larıyla ulaşırdı.
+Çeken tersine çalışır: **Çekme** açıkken bir örnek başka bir üyenin yedeklerini kendi zamanlamasında, her kaynak için kendi deposuna okur, böylece bu makinenin kendi yedekleri sayılmazlar. Kaynakları da o üyenin ayrıntılarında durur: depo konumu, hangi tür yedeği tuttuğu ve ne sıklıkla çekileceği. restic parolası grup üzerinden gelir, APP_KEY asla, ve karşı tarafın kurması gereken başka bir şey yoktur ve çalışıyor olması gerekmez. Kaynak yalnızca okunur ve her taraf kendi oturum açmasını korur. Bir çekme, zamanlamasının söylediği gün ve saatte çalışır ve yeni bir kaynak da o saati bekler. **Şimdi çek** beklemez. Bu makine kapalı olduğu için kaçırılan bir çekme, makine geri gelince çalışır. Başarısız olan bir çekme, haftalık bir zamanlamada da, ertesi gün aynı saatte yeniden dener. Başarısız bir çekme etkinlik günlüğünde görünür ve bir çekme yeniden başarılı olana kadar bir uyarı gönderir. Bir `rclone:` kaynağı reddedilir, çünkü rclone ona bu örneğin remote'larıyla ulaşırdı.
+
+Çekilen bir kopya yalnızca büyür. BombVault ona ekler, ama onu ne budar ne de denetler, bu yüzden kaynağın çoktan unuttuğu şeyler sen klasörü silene kadar burada kalır ve Hedefler sayfası onu saymaz. Bölümün kendi klasörünün içinde `pulled/<source id>` altında durur. O klasör taşındığında kopya olduğu yerde kalır ve sonraki çekmeler her şeyi yeniden kopyalamak yerine orada devam eder. Onu silersen sonraki çekme, bölümün o zamanki kendi klasöründe baştan başlar.
 
 ### Alıcı sunucu {#receiving-server}
 
@@ -432,7 +447,7 @@ Kurcalama testinin yanıtladığı:
 | **korumasız** | VAULT bir silmeyi kabul etti. `--append-only` eksik ya da kaldırılmış. |
 | **kesin olmayan** | İkisi de değil. Genellikle URL restic'in kendisinin kullandığı değil ya da kimlik bilgileri değişti. Hiçbir şey kaydedilmez ve uyarı tetiklenmez. |
 
-**5. İstersen gelenleri izle.** VAULT'ta **Ayarlar, Örnekler** altında **Alıcı**'yı aç, TOWER'ın **Ayrıntılar**'ını aç ve alınan depoyu ekle. VAULT, TOWER'ın restic parolasını grup üzerinden alır. Kimse bir anahtar yazmaz.
+**5. İstersen gelenleri izle.** VAULT'ta **Ayarlar, Örnekler** altında **Alıcı**'yı aç, TOWER'ın **Ayrıntılar**'ını aç ve alınan depoyu ekle: iletişim kutusunun listelediği hedeflerden birine tıkla. VAULT, TOWER'ın restic parolasını grup üzerinden alır ve hedef VAULT'un kendi alıcı sunucusunda durduğu için klasörü doğrudan okur. Kimse bir anahtar ya da bir oturum açma bilgisi yazmaz.
 
 **6. Karşılıklı yap.** Adımları diğer yönde tekrarla: VAULT, TOWER'dan alıcısı olmasını ister. Her makine o zaman diğeri için append-only'yi uygular ve hiçbiri ötekinin yedeklerini silemez.
 
@@ -465,14 +480,14 @@ TOWER sunucusu disklerinin yanı sıra öldü. 23 konteyner ve 2 VM tutuyordu ve
 1. Yeni makineye **BombVault'u kur** ve ona her yeni kurulumda olduğu gibi yeni bir `APP_KEY` ver. VM'leri geri istiyorsan VM bağlantısını **Ayarlar, Entegrasyonlar, Ana makine SSH** altında kur, çünkü bir VM geri yüklemesi buna ihtiyaç duyar.
 2. **Sihirbazı başlat.** **BombVault'a hoş geldin** üzerinde **Yedekten geri yükle**'yi seç. Geri yükleme sayfasında **Acil durum** altında **Acil durum sihirbazını başlat**'ı seç.
 3. **Erişim.** **Kurtarma kitini yükle**'yi seç ve dosyayı bırak. BombVault anahtarını her hedefte dener ve örneğin **Kurtarma kiti okundu. Anahtarı 2 hedeften 0'ını açıyor.** der. Yerel klasör, disk öldüğü için **bulunamadı** der ve Backblaze B2 **kimlik bilgisi yok** der.
-4. **Oturum bilgilerini kaydet.** Kit uzak hedeflerinin oturum açma bilgisini taşır. **Oturum bilgilerini kaydet**'e bas, hedefler yeniden denenir ve Backblaze B2 artık **okunabilir** der.
+4. **Oturum bilgilerini kaydet.** Kit her hedefin oturum açma bilgisini taşır. **Oturum bilgilerini kaydet**'e bas, hedefler yeniden denenir ve Backblaze B2 artık **okunabilir** der. 10.5'ten önce yazılmış bir kit yalnızca varsayılan oturum açma bilgisini tutar. Bir hedef hâlâ **kimlik bilgisi yok** diyorsa, oturum açma bilgisini **Eksik kimlik bilgisini gir** altında gir ve **Hedefleri yeniden dene**'ye bas.
 5. **Anahtarı devral.** Bu sunucu şimdi yedeklerini eski anahtarla yazar, bu yüzden yeni yedekler eskilere uyar. Şablondaki kendi `APP_KEY`'ini korur. **Devralmayı geri al** ilk yedek çalışana kadar işler.
-6. **Ayarlar.** B2'den en yeni öz yedeği okuyan **Ayarları geri getir**'i seç. BombVault onu uygulamak için yeniden başlar ve sihirbaz kendi kendine sürer. Hedeflerin, zamanlamaların ve kuralların geri geldi ve bu sunucunun parolasıyla oturum açmaya devam edersin. Sihirbazın listelediği gizli bilgileri, örneğin bildirim ayarlarını, yeniden gir.
-7. **Seçim.** **Yedekler nerede?**'yi site dışı kopyalara ayarla, çünkü yerel olanlar eski sunucuyla gitti. BombVault 23 konteyneri ve 2 VM'i en yeni anlık görüntü önceden seçili olarak listeler ve herhangi biri için başka birini seçebilirsin.
+6. **Ayarlar.** Adım, anahtarın öz yedeği bulduğu yerde, burada B2'de, adresi doldurulmuş olarak açılır. Oradan en yeni öz yedeği okuyan **Ayarları geri getir**'i seç. BombVault onu uygulamak için yeniden başlar ve sihirbaz kendi kendine sürer. Hedeflerin, zamanlamaların ve kuralların geri geldi ve bu sunucunun parolasıyla oturum açmaya devam edersin. Sihirbazın listelediği gizli bilgileri, örneğin bildirim ayarlarını, yeniden gir.
+7. **Seçim.** Yerelde hiçbir şey kalmadığında **Yedekler nerede?** site dışı kopyalarda açılır. BombVault her hedefi okur, böylece ölü bir hedef diğerlerini gizlemez, 23 konteyneri ve 2 VM'i listeler ve her birini en yeni anlık görüntüsünü tutan hedeften geri yükler.
 8. **Geri yükleme.** Toplam bir kayıptan sonra en güvenlisi olan **Sonra durmuş bırak**'ı aç ve başlat. **Ne olur** neyin geri geldiğini söyler. Sonuç satırı örneğin **25 geri yüklendi, 0 başarısız. Gerektiğinde Yedekler altında başlat.** diye okunur.
 9. **Bitir.** Önce veritabanlarını, sonra onları kullanan uygulamaları başlat. **Ayarlar, Geri yükleme**'yi aç ve yeni bir kurtarma kiti indir, çünkü eskisi önceki kuruluma aittir. Genel bakışta **İlgi bekliyor**'a bak ve her şey çalıştığında **Şimdi tümünü yedekle**'yi çalıştır.
 
-Öz yedek de eksikse **Atla, bende Öz yedek yok**'u seç. Hedefler o zaman yalnızca kitten gelir, zamanlamaları ve kuralları yeniden kurarsın ve bölüm varsayılanlarını onaylayana kadar site dışı kopyalar duraklar, bkz. [Yeniden kurulumdan sonra](#after-a-rebuild).
+Öz yedek de eksikse adım **Atla, bende Öz yedek yok** üzerinde açılır ve bunu söyler. Hedefler o zaman yalnızca kitten gelir, zamanlamaları ve kuralları yeniden kurarsın ve sen onların yedeklerini bu sunucunun kendi yedekleri olarak alana kadar site dışı kopyalar bekler, bkz. [Yeniden kurulumdan sonra](#after-a-rebuild). **Seçim** yine de site dışı kopyaların tuttuklarını listeler. Klasör kümeleri seçtiğin bir klasöre gider. Konteynerler ve VM'ler **Yalnızca dosyalar geri gelebilir** altında bir klasöre düz dosyalar olarak geri gelir, çünkü tanımları yerel deponun yanında ve öz yedekte durur, site dışı bir kopya ise ikisini de tutmaz.
 
 !!! tip "Planlı taşıma ile felaket"
     Acil durum sihirbazı BombVault'un kendi ayarlarını bir yedekten geri yükler. Yeni bir makineye *planlı* bir taşıma için bunun yerine yapılandırmanı doğrudan **Ayarları dışa / içe aktar** kartıyla (taşınabilir bir JSON dosyası) taşıyabilirsin. Bkz. [Yapılandırma](configuration.md#portable-settings-export-and-import).
@@ -480,6 +495,10 @@ TOWER sunucusu disklerinin yanı sıra öldü. 23 konteyner ve 2 VM tutuyordu ve
 ### Eski bir yedek klasöründen {#restore-from-another-bombvault-repo}
 
 Geri yükleme sayfasında **Diğer kaynaklar** altındaki **Eski bir yedek klasöründen**, *başka* bir BombVault örneğinin deposunu (`/mnt` altına bağlı bir paylaşım ya da uzak bir adres) o örneğin kurtarma kiti ya da yazılmış `APP_KEY` ile, tek seferlik, salt okunur bir oturumda açar. Orada saklanan konteynerlere, VM'lere, klasör kümelerine ve ZFS veri kümelerine göz at, bir anlık görüntü seç ve geri yükle, geri yüklenen nesne normal bir yerel konteyner, VM ya da klasör kümesi olur. Diğer depoya hiçbir zaman bir şey yazılmaz ve kendi yedekleme ayarların dokunulmadan kalır (oturum bellekte yaşar ve kendiliğinden sona erer). Bir konteyneri A sunucusundan B sunucusuna taşımak, ayarlarını yeniden yönlendirmek ve sonra geri almak anlamına gelmez. Bu pencere tek seferliktir: bir oturum açar, seçtiğini geri yükler ve diğer örneği unutur. Bunun yerine sürekli bir düzen istiyorsan, yani bu makinenin başka bir örneğin anlık görüntülerini kendi deposuna bir zamanlamayla çekmesini, bu Örnekler sayfasındaki **Çeken** rolüdür.
+
+### Bu sunucunun çektikleri {#restore-what-was-fetched}
+
+Bu sunucunun çektiği her kaynağın, Geri yükleme sayfasında **Diğer kaynaklar** altında kendi **… kaynağından alındı** satırı vardır. Çekilen bir kopya kaynağın anahtarıyla değil, bu sunucunun kendi anahtarıyla kilitlidir, bu yüzden hiçbir şey sorulmaz: kaynağın anahtarı onu açmaz. Klasör kümeleri ve ZFS veri kümeleri seçtiğin bir klasöre gider. Konteynerler ve VM'ler bir klasöre düz dosyalar olarak geri gelir, çünkü bir çekme anlık görüntüleri taşır, tanımları değil. Onları yeniden oluşturmak için Acil durum sihirbazında kaynağın kurtarma kitini ve öz yedeğini kullan.
 
 Ağı bu sunucuda olmayan bir konteyner, örneğin düz bir Docker ana makinesinde bir Unraid `br0` ağı, satırının altında bir ağ seçici gösterir. BombVault onu seçtiğin ağda, diğer ağlarıyla birlikte oluşturur. Sabit IP ve MAC adresi eski ağa aitti ve bırakılır, yani yeni ağ onları atar.
 
@@ -532,7 +551,7 @@ Bu, sabit `bombvault:restic-repo` dizesi üzerinde, onaltılık `APP_KEY`'in ham
 !!! warning "Alınan bir depo için GÖNDEREN örneğin anahtarını kullan"
     Buraya bir site dışı kopyayla gelen bir depo, onu gönderen makine tarafından **onun** anahtarıyla oluşturuldu. Alıcı makinenin anahtarından türetmek restic'in reddedeceği bir parola üretir, bu da tam olarak bozuk bir depo gibi görünür ve değildir. Alınan bir depoda `restic check`'in tekrar tekrar parola istemesinin olağan nedeni budur.
 
-Kurtarma tanımları her deponun **içinde** durduğundan (`<repo>/def`, `<repo>/vm-def`), kopyalanmış bir depo klasörü tamamen kendi kendine yeterlidir, bu yüzden kit artı depo, çıplak donanım geri yüklemesinin ihtiyaç duyduğu her şeydir.
+Kurtarma tanımları her deponun **içinde** durduğundan (`<repo>/def`, `<repo>/vm-def`), kopyalanmış bir depo klasörü tamamen kendi kendine yeterlidir, bu yüzden kit artı depo, çıplak donanım geri yüklemesinin ihtiyaç duyduğu her şeydir. Site dışı bir kopya ve çekilen bir kopya anlık görüntüleri tanımlar olmadan tutar: dosyaları geri verirler, bir konteyner ya da VM ise öz yedekten yeniden oluşturulur.
 
 ## Bir veritabanı dökümünü geri almak {#database-dumps}
 

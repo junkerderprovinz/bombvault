@@ -136,13 +136,13 @@ Orice mașină cu ZFS și SSH poate primi, de exemplu un al doilea Unraid sau un
 Cu root nu mai trebuie nimic. Un utilizator propriu are nevoie de aceste permisiuni pe pool-ul țintei, pe care le arată și dialogul:
 
 ```
-zfs allow <user> receive,create,mount,rollback,destroy,userprop <pool>
+zfs allow <user> receive,create,mount,rollback,destroy,userprop,readonly,canmount <pool>
 ```
 
 Pe sursă, același fel de utilizator are nevoie de acestea pe setul de date de sus al elementului:
 
 ```
-zfs allow <user> send,snapshot,hold,release,bookmark,destroy <dataset>
+zfs allow <user> send,snapshot,hold,release,bookmark,destroy,mount <dataset>
 ```
 
 În această direcție BombVault-ul care deține elementul deține și o cheie care poate scrie pe server.
@@ -159,7 +159,7 @@ Un BombVault împerecheat poate primi singur replica. Nimeni nu primește acces 
 2. Pe instanța care primește, deschide **Instanțe**. Cererea apare pe cardul instanței care trimite ca insignă, iar **Detalii** o listează. Alege pool-ul și rădăcina de pe acel server și câte instantanee rămân, apoi apasă **Permite** sau **Refuză**.
 3. După **Permite**, sursa trimite după propriul plan, ca la orice altă țintă.
 
-Instanța care primește acceptă doar ce acoperă aprobarea: seturile de date ale elementului, în propria rădăcină. Rulează ea însăși `zfs receive`, iar sursa nu are cum să șteargă sau să deruleze înapoi ceva acolo. Astfel copia supraviețuiește unei surse pe care a preluat-o cineva. Instanța care primește își păstrează propria retenție. Sursa doar sugerează o regulă când cere.
+Instanța care primește acceptă doar ce acoperă aprobarea: seturile de date ale elementului, în propria rădăcină. Rulează ea însăși `zfs receive`, iar sursa nu are cum să șteargă sau să deruleze înapoi ceva acolo. Astfel copia supraviețuiește unei surse pe care a preluat-o cineva. Instanța care primește își păstrează propria retenție. Sursa doar sugerează o regulă când cere. O astfel de sursă poate trimite în continuare instantanee noi, iar cu timpul acestea le împing afară pe cele mai vechi după regulă, ca pe oricare altele. Un instantaneu al cărui nume are o dată înaintea ceasului instanței care primește nu contează pentru regulă până nu vine acel moment.
 
 **Revoke access** pe instanța care primește încheie oricând aprobarea și anunță sursa, care arată atunci că aprobarea a fost retrasă și se oprește. Ce deține deja instanța care primește rămâne acolo. O cerere refuzată rămâne refuzată. Mai multe seturi de date, sau o cerere după o revocare, întreabă din nou.
 
@@ -177,13 +177,15 @@ Copia de pe țintă este doar în citire. Implicit nu este montată, deci nu aco
 
 Tot ce salvează elementul intră, iar și volumele de sub el, pe care copia de rezervă le sare. Un set de date copil pe care l-ai oprit în element rămâne în afară. Toate seturile de date ale unei rulări provin dintr-un singur instantaneu, ca la copia de rezervă.
 
+O copie pe care un alt BombVault o replică pe acest server nu este trimisă mai departe, pentru că asta ar subția istoricul de care sursa ei mai are nevoie. Când arborele unui element conține una, rularea eșuează pentru acel set de date și spune de ce, până când o oprești în element. Un element care este el însuși o astfel de copie nu poate replica deloc. Ștergerea unui element sau oprirea replicii lui lasă în pace acele copii și instantaneele lor. Odată ce preiei o copie, cum este descris la [Folosirea replicii](#replica-use), ea contează ca un set de date obișnuit.
+
 ### Cât rămân instantaneele {#replica-retention}
 
-Pe țintă, o replică nouă păstrează 7 instantanee zilnice și 3 săptămânale. Alege în loc **Short**, **Balanced** sau **Long**, sau setează **Custom values**. Acolo se șterg doar instantaneele numite `bombvault-replica-<14 digits>`, și niciodată cel mai nou pe care îl au în comun ambele părți.
+Pe țintă, o replică nouă păstrează 7 instantanee zilnice și 3 săptămânale. Alege în loc **Short**, **Balanced** sau **Long**, sau setează **Custom values**. Valori proprii numai cu zerouri păstrează toate instantaneele, iar cardul spune asta. Acolo se șterg doar instantaneele numite `bombvault-replica-<14 digits>`, și niciodată cel mai nou pe care îl au în comun ambele părți.
 
 Pe sursă, BombVault păstrează ultimul instantaneu de replică, plus un semn de carte pentru fiecare stare trimisă. Semnele de carte nu ocupă spațiu. Următorul transfer pornește de la ele.
 
-Ca să păstrezi mai multe și pe sursă, setează **Păstrează pe acest server** în cardul Replică, de exemplu la 7. După fiecare replică rămân atunci pe acest server atâtea dintre cele mai noi instantanee de replică, pe lângă ce păstrează ținta. 0 sau 1 păstrează doar ultimul. Ultimul are un hold, ca baza următorului transfer să nu fie ștearsă din greșeală. Cele mai vechi nu au. Fiecare instantaneu ține blocurile care s-au schimbat după el, așa că fiecare pe care îl păstrezi ocupă spațiu în pool. Dacă oprești replica sau o muți pe altă țintă, ori ștergi elementul, dispar și ele de pe acest server.
+Ca să păstrezi mai multe și pe sursă, setează **Păstrează pe acest server** în cardul Replică, de exemplu la 7. După fiecare replică rămân atunci pe acest server atâtea dintre cele mai noi instantanee de replică, pe lângă ce păstrează ținta. 0 sau 1 păstrează doar ultimul. Ultimul are un hold, ca baza următorului transfer să nu fie ștearsă din greșeală. Cele mai vechi nu au. Fiecare instantaneu ține blocurile care s-au schimbat după el, așa că fiecare pe care îl păstrezi ocupă spațiu în pool. Dacă oprești replica sau o muți pe altă țintă, ori ștergi elementul, dispar și ele de pe acest server. Instantaneele unui alt element aflat sub el rămân. Dacă gazda nu poate fi contactată cât ștergi elementul, instantaneele rămân și ele, iar pagina spune asta. Elimină-le manual: `zfs release -r bombvault-replica <dataset>@<snapshot>`, apoi `zfs destroy`.
 
 Poți citi sau copia imediat fișierele unui instantaneu păstrat, din dosarul `.zfs/snapshot` din interiorul setului de date sau dintr-o clonă, fără să atingi setul de date sau replica:
 
@@ -226,12 +228,12 @@ zfs clone backup/bombvault-replica/tower/cache/appdata@bombvault-replica-2026100
 Dacă sursa cedează, transformă copia într-un set de date obișnuit, care poate fi scris, pe țintă:
 
 ```
-zfs inherit -r readonly backup/bombvault-replica/tower/cache/appdata && zfs inherit -r canmount backup/bombvault-replica/tower/cache/appdata && zfs mount -a
+zfs inherit -r readonly backup/bombvault-replica/tower/cache/appdata && zfs list -rH -o name -t filesystem backup/bombvault-replica/tower/cache/appdata | xargs zfs set canmount=on && zfs mount -a
 ```
 
-După aceea, BombVault nu mai replică pe acel set de date, până pornești o nouă primă rulare.
+După aceea, BombVault nu mai replică pe acel set de date și pe copiii lui. Următoarea rulare eșuează cu un motiv, iar ce ai scris rămâne. La fel e și pentru orice altceva scris pe copie de la cel mai nou instantaneu al ei: BombVault nu derulează niciodată o copie înapoi. Ca să replici din nou acolo, mută de pe copie ce îți trebuie și distruge-o pe țintă. Următoarea rulare trimite apoi totul din nou.
 
-Ca să aduci o stare înapoi pe sursă, apasă **Bring back as a new dataset** în foaie. BombVault trimite instantaneul într-un set de date nou, lângă cel original, cu numele `<dataset>-bombvault-restore-` plus o marcă de timp. Nu scrie niciodată peste original.
+Ca să aduci o stare înapoi pe sursă, apasă **Bring back as a new dataset** în foaie. BombVault trimite instantaneul într-un set de date nou, lângă cel original, cu numele `<dataset>-bombvault-restore-` plus o marcă de timp. Nu scrie niciodată peste original. Un set de date copil pierdut pe sursă revine și el, atâta timp cât copia mai are acel instantaneu. Un copil care nu îl are rămâne deoparte, iar rularea spune asta.
 
 ### Exemplu: o replică pe un al doilea server Unraid {#example-replica}
 

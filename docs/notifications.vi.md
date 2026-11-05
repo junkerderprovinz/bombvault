@@ -9,20 +9,20 @@ BombVault có thể báo cho bạn khi một bản sao lưu thất bại, khi n�
 
 Thẻ **Thông báo** đặt quy tắc cho mọi kênh cùng lúc:
 
-- **Thông báo**: **Không bao giờ**, **Chỉ khi thất bại** hoặc **Khi thành công và thất bại**, cho mọi kênh bên dưới.
+- **Thông báo**: **Không bao giờ**, **Chỉ khi thất bại** hoặc **Khi thành công và thất bại**, cho mọi kênh bên dưới. Một bản cài mới bắt đầu với **Chỉ khi thất bại**, nên một kênh bạn điền vào sẽ báo cho bạn khi một bản sao lưu bị hỏng.
 - **Tóm tắt các lần chạy theo lịch**: một tin nhắn cho mỗi lần chạy theo lịch, chẳng hạn *42 trên 45 thành công*, thay vì một tin cho mỗi container hay VM. Một bản sao lưu bạn tự bắt đầu vẫn gửi tin nhắn riêng. Một máy khách bị đóng băng, một lần lưu giữ thất bại hoặc một ngân sách tăng trưởng bị vượt sẽ được gửi ngay cả khi bật tóm tắt.
 - **Thông báo khi container được cập nhật**: một tin nhắn cho mỗi container mà **Cập nhật container sau khi sao lưu thành công** đã chuyển sang image mới hơn, để bạn kiểm tra nó còn chạy tốt không.
-- **Báo cáo bản sao lưu bị trễ**: mỗi ngày một lần lúc 09:00, BombVault kiểm tra xem có bản sao lưu nào đang bật bị trễ không, nghĩa là cũ hơn hai lần chu kỳ lịch của nó, và gửi một tin nhắn cho mỗi trường hợp. Bản sao lưu thành công kế tiếp sẽ xóa cảnh báo.
+- **Báo cáo bản sao lưu bị trễ**: mỗi ngày một lần lúc 09:00, BombVault kiểm tra xem có bản sao lưu nào đang bật bị trễ không, nghĩa là cũ hơn hai lần chu kỳ lịch của nó, và gửi một tin nhắn cho mỗi trường hợp, nêu tên mục bị tụt lại. Bản sao lưu thành công kế tiếp sẽ xóa cảnh báo.
 - **Thông báo Unraid**: gửi tới hệ thống thông báo riêng của Unraid, nơi có thể chuyển tiếp tới Pushover, email hoặc Discord. Nó chạy qua kết nối SSH từ **Cài đặt, Tích hợp, SSH máy chủ**, nên khóa đó phải được cấp quyền. Trên TrueNAS và các máy chủ khác, nó vẫn tắt.
-- **Tóm tắt hằng tuần**: một bản tóm tắt mỗi tuần với số lần chạy, dữ liệu sao lưu mới, các bản sao ngoài site có còn mới không và những lỗi hàng đầu. Kế hoạch của nó là một nút như mọi kế hoạch khác, và **Tắt** sẽ tắt nó. Xem [Lịch trình](schedules.md#plans).
+- **Tóm tắt hằng tuần**: một bản tóm tắt mỗi tuần với số lần chạy, dữ liệu sao lưu mới, những phần nào đang bị trễ, các bản sao ngoài site có còn mới không và những lỗi hàng đầu. Kế hoạch của nó là một nút như mọi kế hoạch khác, và **Tắt** sẽ tắt nó. Xem [Lịch trình](schedules.md#plans).
 
 Những bất thường nào gửi tin nhắn được đặt trong **Cài đặt, Xác minh**, xem [Bất thường](anomalies.md). Một bản sao lưu bị hoãn gửi một tin nhắn khi nó bắt đầu chờ và một tin khi việc chờ kết thúc, chứ không phải một tin cho mỗi lần thử.
 
-**Gửi thử** ở cuối thẻ gửi một tin nhắn thử qua mọi kênh đang bật, với các giá trị đúng như trong biểu mẫu.
+**Gửi thử** ở cuối thẻ gửi một tin nhắn thử qua mọi kênh đang bật, với các giá trị đúng như trong biểu mẫu, và nêu tên từng kênh bị lỗi. Một kiểm tra Healthchecks sẽ có thêm một mục trong nhật ký của nó, và trạng thái của kiểm tra vẫn giữ nguyên.
 
 ## Kênh {#channels}
 
-Mỗi kênh có công tắc riêng trong thẻ **Kênh**, và các trường của nó xuất hiện khi bật. Mỗi kênh gửi độc lập với giới hạn thời gian riêng, nên một máy chủ không bao giờ trả lời sẽ không giữ chân các kênh khác, và một tin nhắn mà không kênh nào nhận sẽ được thử lại.
+Mỗi kênh có công tắc riêng trong thẻ **Kênh**, và các trường của nó xuất hiện khi bật. Mỗi kênh gửi độc lập với giới hạn thời gian riêng, nên một máy chủ không bao giờ trả lời sẽ không giữ chân các kênh khác. Một cảnh báo trễ hạn, vượt ngân sách tăng trưởng hoặc bất thường mà không kênh nào nhận sẽ được thử lại, và bản tóm tắt hằng tuần cũng vậy. Tin nhắn của một bản sao lưu đơn lẻ hoặc một bản tóm tắt lần chạy chỉ được gửi một lần.
 
 | Kênh | Các trường | Ghi chú |
 |---|---|---|
@@ -36,7 +36,9 @@ Các bí mật như mã Matrix, token ứng dụng Gotify và mật khẩu SMTP 
 
 ## Healthchecks {#healthchecks}
 
-Một dịch vụ như [Healthchecks.io](https://healthchecks.io) báo động khi BombVault ngừng báo còn sống. Dán **URL ping** của kiểm tra, và BombVault ping nó trong suốt vòng đời của mọi bản sao lưu: lúc bắt đầu, rồi khi thành công hoặc với `/fail`. Nó làm vậy bất cứ khi nào có URL, bất kể **Thông báo** đặt gì, nên kiểm tra vẫn xanh khi thành công ngay cả với tin nhắn chỉ khi thất bại.
+Một dịch vụ như [Healthchecks.io](https://healthchecks.io) báo động khi BombVault ngừng báo còn sống. Dán **URL ping** của kiểm tra, và BombVault ping nó trong suốt vòng đời của mọi bản sao lưu: lúc bắt đầu, rồi khi thành công hoặc với `/fail`. Nó làm vậy bất cứ khi nào có URL, bất kể **Thông báo** đặt gì, nên kiểm tra vẫn xanh khi thành công ngay cả với tin nhắn chỉ khi thất bại. Một phần không có nơi nào để sao lưu tới được tính là thất bại, nên kiểm tra của nó chuyển đỏ thay vì nhận tín hiệu thành công.
+
+Các phần dùng cùng một URL chia sẻ một kiểm tra. Khi bản sao lưu của một phần đã thất bại, các bản sao lưu tốt của những phần khác cũng ping `/fail` và nêu tên phần đó, nên kiểm tra vẫn đỏ cho đến khi mục đó có lại một bản sao lưu tốt hoặc bạn xác nhận lỗi dưới **Cần chú ý**.
 
 Một phần có thể ping một địa chỉ riêng: **Ngoại lệ** trong thẻ thêm một địa chỉ, và dòng ghi **Mọi phần khác ping URL này.**
 

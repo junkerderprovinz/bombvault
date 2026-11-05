@@ -136,13 +136,13 @@ Alle maskiner med ZFS og SSH kan ta imot, for eksempel en andre Unraid eller en 
 Med root trengs ingenting mer. En egen bruker trenger disse rettighetene på poolen til målet, som dialogen også viser:
 
 ```
-zfs allow <user> receive,create,mount,rollback,destroy,userprop <pool>
+zfs allow <user> receive,create,mount,rollback,destroy,userprop,readonly,canmount <pool>
 ```
 
 På kilden trenger samme type bruker disse rettighetene på elementets øverste datasett:
 
 ```
-zfs allow <user> send,snapshot,hold,release,bookmark,destroy <dataset>
+zfs allow <user> send,snapshot,hold,release,bookmark,destroy,mount <dataset>
 ```
 
 I denne retningen har BombVault-en som eier elementet også en nøkkel som kan skrive på serveren.
@@ -159,7 +159,7 @@ En paret BombVault kan ta imot replikaen selv. Ingen får SSH-tilgang til den an
 2. På den mottakende instansen åpner du **Instanser**. Forespørselen vises på kortet til den sendende instansen som et merke, og **Detaljer** lister den. Velg pool og rot på den serveren og hvor mange øyeblikksbilder som blir, og trykk deretter **Tillat** eller **Avslå**.
 3. Etter **Tillat** sender kilden etter sin egen plan, som for ethvert annet mål.
 
-Den mottakende instansen godtar bare det godkjenningen dekker: elementets datasett, inn i sin egen rot. Den kjører `zfs receive` selv, og kilden har ingen måte å slette eller rulle tilbake noe der på. Derfor overlever kopien en kilde som noen har tatt over. Den mottakende instansen har sin egen oppbevaring. Kilden foreslår bare en regel når den ber om godkjenning.
+Den mottakende instansen godtar bare det godkjenningen dekker: elementets datasett, inn i sin egen rot. Den kjører `zfs receive` selv, og kilden har ingen måte å slette eller rulle tilbake noe der på. Derfor overlever kopien en kilde som noen har tatt over. Den mottakende instansen har sin egen oppbevaring. Kilden foreslår bare en regel når den ber om godkjenning. En slik kilde kan fortsatt sende nye øyeblikksbilder, og med tiden skyver de ut eldre etter regelen, akkurat som alle andre. Et øyeblikksbildenavn som er datert fram i tid etter klokken til den mottakende instansen, teller ikke med i regelen før den tiden er kommet.
 
 **Revoke access** på den mottakende instansen avslutter godkjenningen når som helst og forteller det til kilden, som da viser at godkjenningen er trukket tilbake og stopper. Det den mottakende instansen allerede har, blir liggende. En avslått forespørsel forblir avslått. Flere datasett, eller en forespørsel etter en tilbaketrekking, spør på nytt.
 
@@ -177,13 +177,15 @@ Kopien på målet er skrivebeskyttet. Som standard er den ikke montert, så den 
 
 Alt elementet sikkerhetskopierer tas med, og volumene under det også, som sikkerhetskopien hopper over. Et underordnet datasett du har slått av i elementet, blir utelatt. Alle datasett i en kjøring kommer fra ett øyeblikksbilde, som i sikkerhetskopien.
 
+En kopi som en annen BombVault replikerer til denne serveren, sendes ikke videre, fordi det ville tynne ut historikken kilden fortsatt trenger. Når treet til et element inneholder en slik kopi, feiler kjøringen for det datasettet og sier hvorfor, til du slår det av i elementet. Et element som selv er en slik kopi, kan ikke replikere i det hele tatt. Å slette et element eller slå av replikaen lar de kopiene og øyeblikksbildene deres være i fred. Når du tar over en kopi, slik det står under [Bruke replikaen](#replica-use), regnes den som et vanlig datasett.
+
 ### Hvor lenge øyeblikksbilder blir liggende {#replica-retention}
 
-På målet beholder en ny replika 7 daglige og 3 ukentlige øyeblikksbilder. Velg heller **Kort**, **Balansert** eller **Lang**, eller angi **Egne verdier**. Bare øyeblikksbilder som heter `bombvault-replica-<14 digits>` blir noen gang fjernet der, og aldri det nyeste som begge sider deler.
+På målet beholder en ny replika 7 daglige og 3 ukentlige øyeblikksbilder. Velg heller **Kort**, **Balansert** eller **Lang**, eller angi **Egne verdier**. Egne verdier med bare nuller beholder alle øyeblikksbilder, og kortet sier det. Bare øyeblikksbilder som heter `bombvault-replica-<14 digits>` blir noen gang fjernet der, og aldri det nyeste som begge sider deler.
 
 På kilden beholder BombVault det siste replika-øyeblikksbildet, pluss et bokmerke for hver tilstand det har sendt. Bokmerker koster ingen plass. Neste overføring starter fra dem.
 
-Vil du beholde flere på kilden også, stiller du inn **Behold på denne serveren** på kortet Replica, for eksempel til 7. Så mange av de nyeste replika-øyeblikksbildene blir da liggende på denne serveren etter hver replika, i tillegg til det målet beholder. 0 eller 1 beholder bare det siste. Det siste har en hold, så grunnlaget for neste overføring ikke blir slettet ved et uhell. De eldre har ingen. Hvert øyeblikksbilde holder på blokkene som endret seg etter det, så alle du beholder, tar plass i poolen. Slår du av replikaen eller bytter til et annet mål, eller sletter du elementet, forsvinner de også fra denne serveren.
+Vil du beholde flere på kilden også, stiller du inn **Behold på denne serveren** på kortet Replica, for eksempel til 7. Så mange av de nyeste replika-øyeblikksbildene blir da liggende på denne serveren etter hver replika, i tillegg til det målet beholder. 0 eller 1 beholder bare det siste. Det siste har en hold, så grunnlaget for neste overføring ikke blir slettet ved et uhell. De eldre har ingen. Hvert øyeblikksbilde holder på blokkene som endret seg etter det, så alle du beholder, tar plass i poolen. Slår du av replikaen eller bytter til et annet mål, eller sletter du elementet, forsvinner de også fra denne serveren. Øyeblikksbilder av et annet element som ligger under det, blir liggende. Kan ikke verten nås mens du sletter elementet, blir øyeblikksbildene også liggende, og siden sier det. Fjern dem for hånd: `zfs release -r bombvault-replica <dataset>@<snapshot>`, deretter `zfs destroy`.
 
 Filene i et beholdt øyeblikksbilde kan du lese eller kopiere med en gang, fra mappen `.zfs/snapshot` inne i datasettet eller fra en klone, uten å røre datasettet eller replikaen:
 
@@ -226,12 +228,12 @@ zfs clone backup/bombvault-replica/tower/cache/appdata@bombvault-replica-2026100
 Hvis kilden svikter, gjør du kopien på målet om til et vanlig, skrivbart datasett:
 
 ```
-zfs inherit -r readonly backup/bombvault-replica/tower/cache/appdata && zfs inherit -r canmount backup/bombvault-replica/tower/cache/appdata && zfs mount -a
+zfs inherit -r readonly backup/bombvault-replica/tower/cache/appdata && zfs list -rH -o name -t filesystem backup/bombvault-replica/tower/cache/appdata | xargs zfs set canmount=on && zfs mount -a
 ```
 
-BombVault slutter etterpå å replikere til det datasettet, helt til du starter en ny første kjøring.
+BombVault slutter etterpå å replikere til det datasettet og de underordnede. Neste kjøring feiler med en årsak, og det du skrev, blir værende. Det samme gjelder alt annet som er skrevet til kopien siden det nyeste øyeblikksbildet: BombVault ruller aldri en kopi tilbake. For å replikere dit igjen flytter du det du trenger, bort fra kopien og sletter den på målet. Neste kjøring sender da alt på nytt.
 
-For å få en tilstand tilbake til kilden trykker du **Hent tilbake som nytt datasett** i arket. BombVault sender øyeblikksbildet til et nytt datasett ved siden av originalen, med navnet `<dataset>-bombvault-restore-` pluss et tidsstempel. Originalen blir aldri overskrevet.
+For å få en tilstand tilbake til kilden trykker du **Hent tilbake som nytt datasett** i arket. BombVault sender øyeblikksbildet til et nytt datasett ved siden av originalen, med navnet `<dataset>-bombvault-restore-` pluss et tidsstempel. Originalen blir aldri overskrevet. Et underordnet datasett som er tapt på kilden, kommer også tilbake, så lenge kopien fortsatt har det øyeblikksbildet. Et underordnet datasett som ikke har det, blir utelatt, og kjøringen sier det.
 
 ### Eksempel: en replika til en andre Unraid-boks {#example-replica}
 

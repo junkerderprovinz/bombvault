@@ -21,7 +21,7 @@ Każde przywracanie zaczyna się na stronie **Przywracanie**: wybierz sekcję, w
 
 Kliknięcie elementu otwiera **Przywróć** z jego nazwą. Okno pyta krok po kroku, a każdy krok można zmienić, zanim zaczniesz:
 
-1. **Kopia zapasowa**: zalecana migawka jest wybrana z góry. To najnowsza albo, po otwartej anomalii, ostatnia sprzed niej. Starsze są na liście, a **Porównaj** pokazuje, czym różnią się dwie z nich.
+1. **Kopia zapasowa**: zalecana migawka jest wybrana z góry. To najnowsza albo, po otwartej anomalii, ostatnia sprzed niej. Kopia zrobiona przed wcześniejszym przywróceniem zawiera stan, który to przywrócenie zastąpiło, więc jest pomijana, chyba że nie ma innej. Starsze są na liście, a **Porównaj** pokazuje, czym różnią się dwie z nich.
 2. **Źródło**: skąd pochodzą pliki, gdy migawka leży w kilku miejscach. **Lokalne** jest najszybsze.
 3. **Co**: **Wszystko** albo **Pojedyncze pliki**, gdzie zaznaczasz pliki i foldery, które chcesz.
 4. **Dokąd**: cel. Wybór zależy od rodzaju elementu:
@@ -29,7 +29,7 @@ Kliknięcie elementu otwiera **Przywróć** z jego nazwą. Okno pyta krok po kro
     | Cel | Co robi |
     |---|---|
     | **Obok oryginału** | Domyślny. Kontener wraca jako drugi kontener o nazwie `<name>-restored` z własnymi portami, dyski i NVRAM maszyny wirtualnej trafiają do folderu `<folder>-restored`, a zestaw folderów wraca jako `<path>-restored`. Oryginał się nie zmienia. |
-    | **Zastąp oryginał** | Nadpisuje to, co jest teraz. Z **Najpierw zrób kopię obecnego stanu**, włączonym domyślnie, BombVault najpierw kopiuje dzisiejszy stan, żebyś mógł wrócić. Jeśli ta kopia się nie uda, przywracanie nie startuje. |
+    | **Zastąp oryginał** | Nadpisuje to, co jest teraz. Z **Najpierw zrób kopię obecnego stanu**, włączonym domyślnie, BombVault najpierw kopiuje dzisiejszy stan, żebyś mógł wrócić. Jeśli ta kopia się nie uda, przywracanie nie startuje. Działa to też dla kontenera lub maszyny wirtualnej, których nie ma już na serwerze: foldery, które przywracanie nadpisuje, dostają własną kopię. |
     | **Do folderu** | Tylko pliki, do przejrzenia. |
     | **Pobierz jako ZIP** | Dysk flash, na nowy pendrive. BombVault nigdy nie zapisuje na działający dysk flash. |
     | **Do nowego zbioru danych** i **Przywróć do samego zbioru danych** | Zbiory danych ZFS, zobacz [Zbiory danych ZFS](zfs-datasets.md#restore). |
@@ -40,11 +40,11 @@ Zanim **Przywróć** się odblokuje, okno sprawdza, czy repozytorium odpowiada, 
 
 Okno pokazuje też, co przywracanie zmienia w porównaniu z tym, co jest teraz: nowe, zastąpione i niezmienione pliki, z listą na życzenie, oraz pliki w celu, których nie ma w kopii i które zostają, gdzie są. restic wylicza to jako próbny przebieg z rozmiaru i czasu modyfikacji, bez czytania plików, a bardzo duże drzewo zatrzymuje się po 30 sekundach i mówi o tym. Dla kontenerów i maszyn wirtualnych porównuje ustawienia, które przywracanie tworzy na nowo, z działającymi: obraz i tag, porty, nazwy zmiennych i wolumeny albo pamięć, vCPU, dyski i sieć.
 
-Niektóre rzeczy mogą zatrzymać przywracanie, zanim cokolwiek zmieni. Statyczny IP kontenera i opublikowane porty muszą być wolne, a jego sieć musi istnieć. Przywracanie na miejscu wymienia każdy inny kontener, którego bind mount sięga do folderu, do którego zapisuje, na przykład „ta ścieżka jest używana także przez nextcloud-db”, ale to tylko ostrzega.
+Niektóre rzeczy mogą zatrzymać przywracanie, zanim cokolwiek zmieni. Statyczny IP kontenera i opublikowane porty muszą być wolne, a jego sieć musi istnieć. Na Unraid każde przywracanie na miejscu odmawia folderu, który nie leży na zamontowanej puli lub udziale, bo pliki trafiłyby do pamięci i zniknęły po restarcie. Przywracanie na miejscu wymienia każdy inny kontener, którego bind mount sięga do folderu, do którego zapisuje, na przykład „ta ścieżka jest używana także przez nextcloud-db”, ale to tylko ostrzega.
 
 Kilka opcji pojawia się tam, gdzie mają zastosowanie: **Zostaw zatrzymane po przywróceniu**, żeby obejrzeć kontener lub maszynę wirtualną, zanim znów ruszą, oraz **Przywróć bez GPU i środowiska uruchomieniowego** na hoście, któremu brakuje GPU lub środowiska, z którym zrobiono kopię.
 
-Przywracanie działa w tle. Możesz zamknąć okno, a postęp widać też pod **W toku**. Długie przywracanie pokazuje procent i można je anulować, a anulowane przywracanie jest zapisane jako anulowane, nie jako nieudane.
+Przywracanie działa w tle. Możesz zamknąć okno, a postęp widać też pod **W toku**. Długie przywracanie pokazuje procent i można je anulować, a anulowane przywracanie jest zapisane jako anulowane, nie jako nieudane. Przywracanie anulowane w trakcie zatrzymywania kontenera albo takie, które nie może usunąć kontenera, jeszcze niczego nie przywróciło, więc kontener startuje ponownie. Kontener, który bierze wolumeny od innego przez `--volumes-from`, zachowuje je, a przywracanie nie zacznie się, dopóki tamten kontener nie istnieje.
 
 ![Okno przywracania w kroku Co, z zaznaczonymi pojedynczymi plikami.](assets/screenshots/restore/window-what-dark.png#only-dark)
 ![Okno przywracania w kroku Co, z zaznaczonymi pojedynczymi plikami.](assets/screenshots/restore/window-what-light.png#only-light)
@@ -66,7 +66,7 @@ Ktoś wczoraj edytował `config.php` Nextcloud i Nextcloud już nie startuje. No
 
 Okno kończy się komunikatem **Gotowe: pliki są w /mnt/user/restore**. Plik znajdziesz jako `/mnt/user/restore/config.php`, bez folderów nad nim. Porównaj go z uszkodzonym, skopiuj z powrotem do folderu appdata i uruchom Nextcloud ponownie.
 
-Żeby zamiast tego od razu odłożyć plik na miejsce, wybierz w kroku 5 **Zastąp oryginał**. Zostaw włączone **Najpierw zrób kopię obecnego stanu**, żeby BombVault skopiował uszkodzony stan, zanim cokolwiek zapisze, wpisz `nextcloud` dla potwierdzenia i naciśnij **Przywróć**. Nextcloud jest zatrzymany, gdy wybrany plik wraca na swoje miejsce, i zapisywane są tylko zaznaczone pliki.
+Żeby zamiast tego od razu odłożyć plik na miejsce, wybierz w kroku 5 **Zastąp oryginał**. Zostaw włączone **Najpierw zrób kopię obecnego stanu**, żeby BombVault skopiował uszkodzony stan, zanim cokolwiek zapisze, wpisz `nextcloud` dla potwierdzenia i naciśnij **Przywróć**. Nextcloud jest zatrzymany, gdy wybrany plik wraca na swoje miejsce, a potem startuje ponownie, i zapisywane są tylko zaznaczone pliki. Przywracanie, które nie powiedzie się w połowie, zostawia Nextcloud zatrzymany, bo plik, który czyta, może być zapisany tylko w połowie, a przebieg to mówi.
 
 ![Okno przywracania w kroku Co się stanie, z wybraną opcją Zastąp oryginał.](assets/screenshots/restore/window-replace-dark.png#only-dark)
 ![Okno przywracania w kroku Co się stanie, z wybraną opcją Zastąp oryginał.](assets/screenshots/restore/window-replace-light.png#only-light)
@@ -75,11 +75,13 @@ Okno kończy się komunikatem **Gotowe: pliki są w /mnt/user/restore**. Plik zn
 
 **Kontenery** są tworzone na nowo z zapisanej definicji przez API Docker, z entrypointem, nazwą hosta, ustawieniami zatrzymania, wolumenami i montowaniami, limitami zasobów, sterownikiem logów, ustawieniami DNS i starymi linkami. Kontener wraca na obrazie, na którym działał w chwili kopii, a nie na nowszym pobranym później, a brakujący obraz jest najpierw pobierany, z logowaniem z **Rejestry kontenerów** w **Ustawienia, Przywracanie**. Wraca też jego GPU lub środowisko (`--gpus`, `--runtime=nvidia`). Na hoście bez tego sterownika lub środowiska przywracanie mówi o tym i oferuje **Przywróć bez GPU i środowiska uruchomieniowego**. Link do kontenera, którego brakuje albo który jest zatrzymany, gdy przywrócony startuje, jest pomijany, a historia przebiegu to mówi. Przywracanie, które zawodzi po usunięciu kontenera, odkłada go z powrotem, zatrzymanego.
 
+Kopia może zawierać foldery, których kontener nie ma już zaznaczonych, na przykład starsza kopia sprzed zniknięcia folderu. Folder, którego nie ma albo który jest pusty, wraca. Folder, w którym są teraz pliki, zostaje taki, jaki jest, bo mogłeś go odznaczyć celowo, a kontrola przed przywróceniem i historia przebiegu go wymieniają. Odzyskasz go przez **Pojedyncze pliki** albo **Do folderu**.
+
 **Maszyny wirtualne** dostają ponownie zdefiniowany XML przez SSH oraz podłączone dyski i UEFI NVRAM, nawet po usunięciu maszyny. Zobacz [Kopie maszyn wirtualnych](vm-backup-ssh-setup.md) dla maszyn z migawkami Unraid i dyskami na zvol.
 
-**Zestawy folderów** wracają z właścicielami, uprawnieniami i znacznikami czasu, tak jak zapisuje je restic.
+**Zestawy folderów** wracają z właścicielami, uprawnieniami i znacznikami czasu, tak jak zapisuje je restic. Gdy cel odmawia tylko właściciela, jak robi to `/mnt/user`, przebieg kończy się uwagą, która o tym mówi. BombVault porównuje wtedy pliki z kopią, a plik, który nie dotarł, sprawia, że przywracanie się nie udaje.
 
-**Dysk flash** nigdy nie dotyka działającego `/boot`. Przywracanie to pobranie pliku `flash-<id>.zip`, gotowego do wrzucenia w Unraid USB Creator. Okno wymienia też wtyczki w każdej kopii flash z ich wersją i rozmiarem i potrafi odłożyć jedną z nich na działający dysk flash: jej plik `.plg`, jej folder w `config/plugins` i pliki pakietów, które ma kopia. Unraid instaluje ją przy następnym uruchomieniu albo od razu w **Plugins, Install Plugin**.
+**Dysk flash** nigdy nie dotyka działającego `/boot`. Przywracanie to pobranie pliku `flash-<id>.zip`, gotowego do wrzucenia w Unraid USB Creator. ZIP zawiera `APP_KEY`, więc jego pobranie wymaga hasła logowania i zalogowania na samej instancji. Okno wymienia też wtyczki w każdej kopii flash z ich wersją i rozmiarem i potrafi odłożyć jedną z nich na działający dysk flash: jej plik `.plg`, jej folder w `config/plugins` i pliki pakietów, które ma kopia. Unraid instaluje ją przy następnym uruchomieniu albo od razu w **Plugins, Install Plugin**.
 
 **Zbiory danych ZFS** mają własne cele i zachowują swoje właściwości ZFS, zobacz [Przywracanie](zfs-datasets.md#restore).
 
@@ -102,6 +104,10 @@ Każdy element jest sprawdzany tak jak pojedyncze przywracanie, a potem idą jed
 ## Przywracanie stacku {#stacks}
 
 Kliknięcie stacku na karcie **Stacki** otwiera **Przywróć stack**. Przywraca każdego członka z jego ostatniej kopii jednocześnie, a z **Uruchom w kolejności zależności po przywróceniu** startuje ich w kolejności `depends_on`: najpierw bazy danych i pamięci podręczne, potem aplikację. Gdy folderu projektu członka brakuje w wybranym miejscu, okno oferuje zamiast niego stan z Lokalne.
+
+BombVault najpierw sprawdza członków i folder projektu, a przywracanie, które nie mogłoby się udać, niczego nie zmienia. W przeciwnym razie zatrzymuje działających członków, aplikacje przed ich bazami danych, potem zapisuje folder projektu, a potem przywraca członków. Jeśli folder projektu nie wróci, członkowie i tak są przywracani, ale zostają zatrzymani, bo folder może być zapisany tylko w połowie, a to w nim zwykle leżą bind mounty członka. Przebieg każdego członka to mówi.
+
+Baza danych, która ma tylko zrzuty bazy, bez kopii plików, i której kontenera i nazwanego wolumenu już nie ma, wraca bez swoich danych. Kontrola mówi o tym przed przywróceniem. Baza zostaje zatrzymana, podobnie jak kontenery, które od niej zależą, żeby żadna aplikacja nie uruchomiła swojej konfiguracji na pustej bazie. Uruchom ją, zaimportuj zrzut i uruchom pozostałe. Zobacz [Zrzuty baz danych](backups.md#database-dumps).
 
 ## Inne źródła {#other-sources}
 

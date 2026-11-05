@@ -27,7 +27,7 @@ La tarjeta **Semana** dibuja cada ejecución prevista de lunes a domingo, una l�
 
 La **Copia total** es el calendario predeterminado para todo. Lo fija **Cuándo se ejecutan las copias**: una pasada que copia cada sección por turno, contenedores, VMs, flash, carpetas, conjuntos de datos ZFS y la autocopia al final. La línea de debajo dice qué secciones incluye. **Desactivado** la apaga, y entonces solo se ejecuta lo que tiene un calendario propio.
 
-- **Recuperar copias perdidas tras el arranque**: cuando el servidor estaba apagado a la hora prevista, BombVault ejecuta esa copia unos dos minutos después de arrancar.
+- **Recuperar copias perdidas tras el arranque**: cuando el servidor estaba apagado a la hora prevista, BombVault ejecuta esa copia unos dos minutos después de arrancar. El calendario propio de un elemento y un calendario de copia externa esperan a su siguiente hora prevista, y lo mismo hace un calendario que nunca ha salido bien.
 - **Comandos antes y después**: **Comando antes de la copia total** se ejecuta en el servidor con `sh -c` antes de que empiece la pasada, por ejemplo un script que detiene un servicio. Si falla, la copia total se ejecuta igualmente. **Comando después de la copia total** se ejecuta una vez tras intentar todas las secciones, aunque una de ellas haya fallado, lo que sirve para un ping que confirme que todo el servidor está protegido. Los comandos para un solo contenedor están en su página.
 
 **Copiar todo ahora** en la página Copias de seguridad inicia a mano la misma pasada, sobre todas las secciones activadas.
@@ -58,7 +58,7 @@ La copia queda bajo las mismas rutas y etiquetas que una hecha con el contenedor
 
 ## Actualizaciones tras la copia {#updates}
 
-- **Actualizar los contenedores tras una copia de seguridad correcta** descarga una imagen más nueva solo después de que haya terminado la copia anterior, de modo que siempre existe antes un punto de restauración reciente. Está desactivado por defecto, y un solo contenedor puede configurarse de otra manera en su página, en **Actualizar tras una copia de seguridad correcta**.
+- **Actualizar los contenedores tras una copia de seguridad correcta** descarga una imagen más nueva solo después de que haya terminado la copia anterior, de modo que siempre existe antes un punto de restauración reciente. Está desactivado por defecto, y un solo contenedor puede configurarse de otra manera en su página, en **Actualizar tras una copia de seguridad correcta**. Solo lo que configuraste pasa a la imagen nueva: las variables, las etiquetas, el comando, el usuario y el healthcheck que aún coinciden con la imagen antigua toman los de la nueva. Si la imagen nueva no se puede crear ni arrancar, el contenedor vuelve a la imagen con la que funcionaba, la actualización aparece como fallida y la siguiente copia lo vuelve a intentar. Un contenedor que se quede parado por ello se nombra en la ejecución de la copia y en una notificación.
 - **Eliminar la imagen antigua tras una actualización** borra la imagen que dejó el contenedor. Una imagen base que comparten otros contenedores nunca se borra.
 - **Actualizar el estado de actualización de Unraid tras actualizar un contenedor** borra el aviso de actualización de Unraid para ese contenedor.
 

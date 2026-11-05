@@ -1,7 +1,7 @@
 # Kopie poza siedzibą i odzyskiwanie
 
 !!! note "Kopie poza siedzibą czekają po odbudowie"
-    Gdy Kreator awaryjny lub **Odkryj kopie zapasowe** odbudowuje elementy bez dawnych ustawień, kopie poza siedzibą tych sekcji są wstrzymane, dopóki ich ustawienie domyślne nie zostanie potwierdzone. Zobacz [Po odbudowie](#after-a-rebuild).
+    Gdy Kreator awaryjny lub **Odkryj kopie zapasowe** odbudowuje elementy bez dawnych ustawień, kopie poza siedzibą tych sekcji czekają, dopóki nie przejmiesz ich kopii jako własnych kopii tego serwera. Zobacz [Po odbudowie](#after-a-rebuild).
 
 Lokalne kopie zapasowe chronią przed utraconym kontenerem lub złą aktualizacją. Kopie poza siedzibą i przetestowany zestaw odzyskiwania chronią przed utratą całej maszyny, ransomware albo pożarem. Ta strona omawia miejsca docelowe i kopie poza siedzibą, zabezpieczanie kopii przed manipulacją, dowodzenie, że potrafisz przywrócić dane, parowanie kilku serwerów i odzyskanie wszystkiego, gdy samego BombVault już nie ma.
 
@@ -80,7 +80,9 @@ Każde miejsce docelowe ma własną stronę. Pokazuje tylko te karty, które go 
 
 **Przenieś** i **Usuń miejsce docelowe** stoją wśród akcji strony i są opisane w [Przenoszenie i usuwanie](#move-remove).
 
-Zdalne miejsce docelowe, które miało kopie i nagle nie ma repozytorium, na przykład rest-server, którego dysk się nie zamontował, nie dostaje samo z siebie nowego, pustego. Jego strona mówi o tym, gdy tylko kopia lub kopiowanie zauważy brak repozytorium. Zamontuj dysk ponownie. Jeśli celowo opróżniłeś stare repozytorium, **Utwórz tu nowe repozytorium** zaczyna od nowa, dla wszystkich sekcji tego miejsca i jego repozytoriów naraz.
+Zdalne miejsce docelowe, które miało kopie i nagle nie ma repozytorium, na przykład rest-server, którego dysk się nie zamontował, nie dostaje samo z siebie nowego, pustego. Jego strona mówi o tym, gdy tylko kopia lub kopiowanie zauważy brak repozytorium. Zamontuj dysk ponownie. Jeśli celowo opróżniłeś stare repozytorium, **Utwórz tu nowe repozytorium** zaczyna od nowa, dla wszystkich sekcji tego miejsca i jego repozytoriów naraz. Ta ochrona dotyczy miejsca docelowego, które zostało tam, gdzie było. Miejsce docelowe, które dodajesz, albo sekcja, którą w nim zaznaczasz, zaczyna od czysta: gdy pod tym adresem nie ma repozytorium, pierwsze kopiowanie je tworzy, nawet tam, gdzie miało je wcześniej usunięte miejsce.
+
+Dwie odmowy mówią, co trzeba poprawić, w przebiegu kopiowania i na stronie miejsca docelowego. **Ten bucket nie istnieje na serwerze** pojawia się, gdy tylko serwer S3 to zgłosi, a BombVault niczego tam nie tworzy, więc błędnie wpisana nazwa koszyka pozostaje widoczna. Serwer, który w ogóle nie odpowiada, to inny przypadek: restic ponawia próby przez około 15 minut przy każdym wywołaniu, na wypadek gdyby wrócił. **Tu już jest repozytorium restic, a klucz tej instancji go nie otwiera** oznacza, że kopie w tym miejscu należą do innego `APP_KEY`.
 
 Serwer odbiorczy, który uruchamia inna instancja Twojej grupy, pojawia się wśród dostawców jako **Z twojej grupy**. Zobacz [Serwer odbiorczy](#receiving-server).
 
@@ -103,11 +105,15 @@ Reguła zachowuje jedną kopię na dzień, tydzień, miesiąc i rok, tak daleko 
 
 **Własne wartości** pozwalają ustawić pięć liczb samodzielnie. 0 wyłącza daną liczbę, a reguła ze wszystkimi zerami zachowuje wszystko. Kropki na karcie pokazują, które z 40 przykładowych kopii reguła zachowuje, z najnowszą po prawej. Przykład jest taki sam dla każdego miejsca, bo obrazek powstaje, zanim BombVault przeczyta tamtejsze kopie. Liczy on wstecz od dzisiaj, więc to, ile kropek zostaje, zmienia się wraz z datą.
 
+Folder na tym hoście i zdalny folder wpisany ręcznie też mają własną kartę, która obejmuje własne foldery w tym folderze i żadne inne. Dopóki jej nie zapiszesz, kopie w takim folderze wygasają według reguły, którą BombVault już dla niego miał.
+
 **Pytaj przed zachowaniem mniej**, domyślnie włączone, pyta przed zapisaniem zmiany, która zachowuje mniej kopii, i mówi, ile z 40 przykładowych kopii nowa reguła usuwa. Dotyczy każdego miejsca docelowego. **Przywróć ustawienia miejsca docelowego** w **Reguły według sekcji** zadaje to samo pytanie.
 
 Miejsce z ochroną przed usunięciem nigdy nie jest przycinane z tej maszyny. Jego druga strona zachowuje lub porzuca stare kopie według własnych reguł. Dopóki element ma otwartą krytyczną anomalię o utraconych danych, przechowywanie zachowuje jego stare kopie, aż ją potwierdzisz. Zobacz [Anomalie](anomalies.md).
 
-Aby zobaczyć, co następne uruchomienie naprawdę usunie, otwórz **Podgląd** w **Ustawienia, Miejsca docelowe**. Wymienia **Co usunęłoby następne uruchomienie**, dla każdego repozytorium i elementu, z nazwanymi punktami przywracania. Nie zakłada blokady i niczego nie zmienia.
+Kopia, która zawiera mniej, niż powinna, nigdy nie sprawia, że wcześniejsze wygasają. To kopia, która nie czyta żadnych plików tam, gdzie wcześniejsze jakieś miały, pomija zaznaczony folder albo nie mogła odczytać części plików. Jej przebieg kończy się ostrzeżeniem, które wymienia, czego brakuje, i mówi, że starsze kopie zostały zachowane, tę samą wiadomość dostajesz na swoich kanałach powiadomień, a żadne przycinanie, ani we własnym folderze elementu, ani w jego kopiach, nie rusza starych kopii tego elementu, dopóki nie przejdzie pełna kopia. Pierwsza kopia oraz zaznaczony folder, który zawsze był pusty, liczą się jako pełne.
+
+Aby zobaczyć, co następne uruchomienie naprawdę usunie, otwórz **Podgląd** w **Ustawienia, Miejsca docelowe**. Wymienia **Co usunęłoby następne uruchomienie** dla własnego folderu sekcji i dla każdej z jej kopii, dla każdego repozytorium i elementu, z nazwanymi punktami przywracania. Nie zakłada blokady i niczego nie zmienia.
 
 ![Jak długo przechowywać z wybranym Zrównoważone: kropki pokazują, które z 40 przykładowych kopii zostają.](assets/screenshots/storage/keep-dark.png#only-dark)
 ![Jak długo przechowywać z wybranym Zrównoważone: kropki pokazują, które z 40 przykładowych kopii zostają.](assets/screenshots/storage/keep-light.png#only-light)
@@ -144,9 +150,9 @@ Aby w tym miejscu trzymać kontenery dłużej niż resztę, naciśnij **Zmień r
 Dane logowania to klucz albo hasło, którego BombVault używa dla usługi S3 lub rest-servera. Są jedną listą, kartą **Dane logowania** w **Ustawienia, Miejsca docelowe**, a każdy wiersz mówi, które miejsca docelowe z nich korzystają (**Używane przez**).
 
 - **Zapisane przy dodawaniu miejsca.** Dodaj miejsce docelowe zapisuje wpisane klucze jako dane logowania. Następne miejsce w tej samej usłudze może je wybrać w **Zapisane dane logowania** zamiast **Nowe klucze**, a późniejsza zmiana dotyczy każdego miejsca, które ich używa.
-- **Domyślne.** Gwiazdka oznacza domyślne dane logowania. Są używane wszędzie tam, gdzie nie wybrano żadnych, na przykład przy adresie wpisanym ręcznie, źródle pobierania albo odzyskiwaniu na świeżej instalacji. **Ustaw jako domyślne** daje gwiazdkę innym.
+- **Domyślne.** Gwiazdka oznacza domyślne dane logowania. Są używane wszędzie tam, gdzie nie wybrano żadnych, na przykład przy adresie wpisanym ręcznie albo odzyskiwaniu na świeżej instalacji. Źródło pobierania ich nie pożycza. **Ustaw jako domyślne** daje gwiazdkę innym.
 - **Edytuj i Testuj.** **Edytuj**, tutaj lub w karcie **Dane logowania** miejsca, otwiera jedno okno dla danych logowania. **Testuj** loguje się do każdego miejsca, które ich używa, tym, co wpisałeś, zanim cokolwiek zostanie zapisane. **Zapisz** je zachowuje.
-- **Usuwanie.** Dane logowania można usunąć tylko wtedy, gdy nie używa ich żadne miejsce docelowe ani źródło pobierania, a domyślne odchodzą dopiero jako ostatnie. Wiersz mówi wtedy, co jeszcze z nich korzysta.
+- **Usuwanie.** Dane logowania można usunąć tylko wtedy, gdy nie używa ich żadne miejsce docelowe, źródło pobierania ani odbierane repozytorium i nie potrzebują ich żadne stare kopie, a domyślne odchodzą dopiero jako ostatnie. Stare kopie ich potrzebują, gdy własny folder przeniósł się z miejsca, które loguje się tymi danymi, i zostawił je tam. BombVault mówi wtedy, które to miejsce.
 - **Zmiana połączenia miejsca** nigdy nie przepisuje danych logowania, które dzielą inne miejsca. Miejsce dostaje zamiast tego własne, a okno mówi wcześniej, że jego dane logowania są wspólne. Aby zmienić wspólne wszędzie, edytuj je w karcie **Dane logowania**.
 
 ![Karta Dane logowania: każde zapisane logowanie z tym, co z niego korzysta, i gwiazdka na domyślnym.](assets/screenshots/storage/signins-dark.png#only-dark)
@@ -223,7 +229,7 @@ Własny folder może też leżeć w miejscu docelowym, które już masz, takim j
 1. Otwórz miejsce docelowe, które ma przechowywać własny folder, i wybierz **Użyj jako własnego folderu** albo **Dodaj sekcje** w jego karcie **Własne foldery**. Aby przenieść kilka sekcji naraz, wybierz **Przenieś własne foldery** obok **Własne foldery tutaj** w karcie **Połączenie** miejsca Lokalne.
 2. Wybierz sekcje w **Sekcje** i miejsce w **Przenieś do**. **Inne miejsce** przyjmuje folder na tym hoście albo ręcznie wpisany adres zdalnego repozytorium, z logowaniem spośród Twoich zapisanych danych logowania.
 3. Przeczytaj **Co się stanie**. Dla każdej sekcji mówi, dokąd trafiają nowe kopie, czy kopia, która już jest w nowym miejscu, staje się własnym folderem, i które kopie są najpierw kopiowane.
-4. **Skopiuj już wykonane kopie zapasowe** jest domyślnie włączone. Po wyłączeniu stare kopie zostają tam, gdzie są, i nadal można z nich przywracać.
+4. **Skopiuj już wykonane kopie zapasowe** jest domyślnie włączone. Po wyłączeniu stare kopie zostają tam, gdzie są, ale element przestaje je wymieniać. **Ze starego folderu z kopiami** na stronie Przywracanie nadal je odczytuje z adresem folderu i, dla zdalnego folderu, z jego danymi logowania.
 5. Wybierz **Przełącz**. Gdy karta **Jak długo przechowywać** nowego miejsca zachowuje mniej niż dzisiejsza reguła sekcji, BombVault najpierw pyta **Zachować mniej?** Tam **Zachowaj obecne wartości dla** tej sekcji **w Reguły według sekcji** przenosi dzisiejsze wartości, **Zapisz mimo to** idzie dalej, a **Wstecz** zostawia wszystko tak, jak było. Gdy kopie trzeba najpierw skopiować, BombVault je kopiuje, a potem przełącza własny folder. Gdy już tam są, sprawdza je przed przełączeniem.
 
 Po przeniesieniu nowe kopie trafiają do przeniesionego własnego folderu, także dla sekcji, która miała **Lokalne** wyłączone i kopiowała prosto do kopii. Kopia, która już leżała w nowym miejscu, staje się własnym folderem, a kopiowanie tam się kończy. Gdy ta kopia trzymała niektóre kopie dłużej niż reguły przechowywania sekcji, sekcja zachowuje to, co zachowuje którakolwiek z reguł, więc żadna nie przepada.
@@ -250,7 +256,7 @@ BombVault kopiuje kopie w tle, a potem przełącza własny folder. Strona `nas` 
 
 Karta **Połączenie** miejsca Lokalne nadal przyjmuje zdalny adres dla własnego folderu sekcji: **Zmień** obok sekcji otwiera okno z przełącznikiem **Lokalne / Zdalne**. **Zdalne** przyjmuje adres restic, taki jak `s3:...`, `rest:http://host:8000/repo`, `sftp:user@host:/repo` albo `rclone:remote:bucket/path`, a **Ustawienia bezpieczeństwa zdalnego repozytorium podstawowego** dodają test połączenia, limity wysyłania i pobierania, ochronę append-only z tym samym testem manipulacji, jaki dostaje miejsce poza siedzibą, oraz alarm budżetu wzrostu.
 
-Taki adres loguje się domyślnymi danymi logowania. Gdy leży w folderze miejsca docelowego, które masz, strona tego miejsca wymienia sekcję w **Już pod tym miejscem docelowym**, a przejęcie daje jej logowanie, klasę magazynu i ochronę przed usunięciem miejsca. Przeniesienie własnego folderu do miejsca docelowego przez **Użyj jako własnego folderu** jest prostszą drogą, bo okno sprawdza wykonane kopie, zanim cokolwiek się zmieni.
+Taki adres loguje się domyślnymi danymi logowania. Gdy jest dokładnie tym folderem, który Twoje miejsce docelowe trzyma dla sekcji, sam podąża za tym miejscem, łącznie z kartą miejsca i jego przełącznikiem **Dostępne**, chyba że loguje się inaczej albo jest append-only tam, gdzie miejsce nie jest. Reguła, która do tej pory przycinała ten folder, zostaje jako własna reguła sekcji w **Reguły według sekcji**. Gdy leży w innym folderze tego miejsca, strona tego miejsca wymienia sekcję w **Już pod tym miejscem docelowym**, a przejęcie daje jej logowanie, klasę magazynu i ochronę przed usunięciem miejsca. Przeniesienie własnego folderu do miejsca docelowego przez **Użyj jako własnego folderu** jest prostszą drogą, bo okno sprawdza wykonane kopie, zanim cokolwiek się zmieni.
 
 ## Ustawienie dla elementu {#placement}
 
@@ -292,7 +298,12 @@ Replika ZFS jest kopią poza lokalizacją, ale nie kopią zapasową z historią.
 
 ### Po odbudowie {#after-a-rebuild}
 
-Wybory dotyczące kopii żyją w własnych ustawieniach BombVault. Po odbudowie przez **Odkryj kopie zapasowe** albo Kreator awaryjny bez przywróconych ustawień ich nie ma, a kopiowanie wszystkiego znowu wysłałoby do B2 elementy, które pominąłeś. Kopie poza siedzibą każdej odbudowanej sekcji są więc wstrzymane. Mówi o tym przegląd, a karta **Miejsca docelowe według sekcji** oferuje **Potwierdź domyślne** z podglądem tego, co skopiuje następny przebieg, i nazw w kopiach, które nie mają elementu, a które możesz tam pominąć. Tylko potwierdzenie kończy wstrzymanie. Import pliku ustawień przywraca reguły i ustawienia domyślne, ale go nie kończy.
+Wybory dotyczące kopii żyją w własnych ustawieniach BombVault. Po odbudowie przez **Odkryj kopie zapasowe** albo Kreator awaryjny bez przywróconych ustawień ich nie ma, a kopiowanie wszystkiego znowu wysłałoby do B2 elementy, które pominąłeś. To samo dzieje się, gdy sekcja, która z tej bazy danych nigdy nie kopiowała poza siedzibę, znajduje własne kopie w miejscu docelowym albo starsze we własnym folderze, na przykład po dodaniu miejsca na kopie wcześniejszej instalacji z tym samym `APP_KEY`. Kopie poza siedzibą tej sekcji czekają wtedy na twoją decyzję.
+
+**Wymaga uwagi** w przeglądzie i strona każdego miejsca docelowego, do którego sekcja kopiuje, pytają, czy te kopie należą do tego serwera. **Przejmij jako własne kopie tego serwera** potwierdza ustawienie domyślne sekcji, a jej kopie ruszają znowu od następnego przejścia. **Najpierw sprawdź reguły** prowadzi do wiersza sekcji w **Miejsca docelowe według sekcji**, gdzie widzisz, dokąd trafia każdy element, i możesz ponownie ustawić utraconą regułę na stronie elementu. Kopiowanie czeka tam, dopóki nie naciśniesz **Przejmij jako własne kopie tego serwera**, co najpierw pokazuje, co skopiuje następny przebieg, i nazwy w kopiach, które nie mają elementu, a które możesz pominąć. Najnowsza kopia każdego czekającego elementu mówi o tym w swoim przebiegu, z linkiem do decyzji, a gdy powiadomienia są włączone, wychodzi też powiadomienie. Import pliku ustawień przywraca reguły i ustawienia domyślne, ale nie podejmuje decyzji za Ciebie.
+
+![Wymaga uwagi po odbudowie: zestawy folderów znalazły kopie sprzed tej bazy danych, a ich kopie poza siedzibą czekają na decyzję.](assets/screenshots/offsite/copy-decision-dark.png#only-dark)
+![Wymaga uwagi po odbudowie: zestawy folderów znalazły kopie sprzed tej bazy danych, a ich kopie poza siedzibą czekają na decyzję.](assets/screenshots/offsite/copy-decision-light.png#only-light)
 
 ## Ochrona przed usunięciem (append-only) {#delete-protection-append-only}
 
@@ -369,7 +380,7 @@ Strona **Instancje** (kafelek ustawień, który można przypiąć do paska boczn
 Każda karta pokazuje stan ochrony członka i jego role jako kafelki. Rola to coś, co jedna instancja robi dla drugiej:
 
 - **Odbiornik** trzyma kopie tego serwera poza siedzibą w rest-serverze w trybie append-only. Ten serwer wysyła po każdej kopii i nie może tam niczego usunąć, nawet jeśli ktoś go przejmie.
-- **Pobierający** pobiera kopie tego serwera według własnego harmonogramu. Ten serwer nie musi być do tego włączony.
+- **Pobierający** pobiera kopie tego serwera według własnego harmonogramu. Ten serwer nie musi być do tego włączony. Instancja, która pobiera, musi mieć włączone **Pobieranie**, zanim będzie mogła zezwolić na prośbę.
 - **Serwer ZFS** przyjmuje repliki ZFS tego serwera. Każdy element ZFS wybiera go w **Replika** w swoich ustawieniach.
 - **Przechowawca klucza** trzyma zapieczętowaną kopię zestawu odzyskiwania tego serwera. Zobacz [Przechowawca klucza](#key-keeper).
 
@@ -377,7 +388,7 @@ Włączenie roli wysyła prośbę, a nic nie startuje, dopóki ktoś na drugiej 
 
 **Szczegóły** na karcie otwierają resztę: odbierane repozytoria i źródła pobierania tego członka, oferty pamięci, monitorowanie, **Usuń** i **Zapomnij klucz**.
 
-Członek może zaoferować drugiemu przez grupę własną pamięć poza siedzibą. Drugi administrator widzi ofertę w **Szczegóły** członka i ją przyjmuje albo odrzuca. Przyjęcie tworzy zapisane dane logowania i zwykłe miejsce docelowe, po tych samych kontrolach co miejsce, które wpisujesz. W ten sposób podróżują tylko dane połączenia, nigdy dane kopii. **Sprawdź teraz** prosi członka o weryfikację repozytorium jednej sekcji. Nic na stronie nie może uruchomić kopii, przywracania ani usunięcia na innej maszynie.
+Członek może zaoferować drugiemu przez grupę własną pamięć poza siedzibą. Drugi administrator widzi ofertę w **Szczegóły** członka i ją przyjmuje albo odrzuca. Przyjęcie tworzy zapisane dane logowania i zwykłe miejsce docelowe, po tych samych kontrolach co miejsce, które wpisujesz. Miejsce dostaje włączoną ochronę przed usunięciem, bo przepis, który pokazuje oferta, to rest-server append-only, więc **Jak długo przechowywać** tam nie obowiązuje. Każda oferta ma własne logowanie i własny folder, więc ponowne zaoferowanie sekcji, temu samemu członkowi albo innemu, nie rusza kopii pierwszego partnera: dopisz nową linię do `.htpasswd` i zostaw serwer uruchomiony. W ten sposób podróżują tylko dane połączenia, nigdy dane kopii. **Sprawdź teraz** prosi członka o weryfikację repozytorium jednej sekcji. Nic na stronie nie może uruchomić kopii, przywracania ani usunięcia na innej maszynie.
 
 Wyłączone instancje i telefony z zamkniętą aplikacją zachowują swoją kartę jako **Nieaktywne**, na szaro, z informacją, kiedy ostatnio je widziano, i stoją przyciemnione w sieci, dopóki ich nie **Usuń**. Zaraz po starcie tego serwera taka karta mówi **Sprawdzanie**, dopóki grupa nie wróci. **Usuń** działa na takiej karcie niezależnie od tego, które części są włączone, i kończy też otwarte prośby członka, jego bezczynne gniazda odbioru ZFS i oczekujące prośby o klucz. Karta **Instancje** na stronie parowania wymienia tych członków także jako **Nieaktywne**.
 
@@ -388,12 +399,16 @@ Na maszynie, która **odbiera** kopie append-only od innego BombVault, odbierane
 - **Inwentarz według źródła**, żebyś widział dokładnie, które kontenery, maszyny wirtualne i zestawy folderów dotarły.
 - **Ostatnio odebrano** dla każdego źródła, żebyś wiedział, jak świeże jest każde z nich.
 - **Niezależny `restic check`** uruchamiany na sprzęcie odbiorcy, żeby integralność była weryfikowana tam, gdzie dane naprawdę leżą, a nie tylko u nadawcy.
-- **Wyłącznik martwego człowieka:** alert, gdy źródło przestaje wysyłać w ustawionym oknie.
-- **Alerty integralności:** alert, gdy kontrola po stronie odbiorcy się nie powiedzie.
+- **Wyłącznik martwego człowieka:** alert, gdy źródło przestaje wysyłać w ustawionym oknie. Sprawdza raz dziennie, o 09:15. Alert dostajesz też wtedy, gdy repozytorium w ogóle nie da się odczytać, bez względu na harmonogram kontroli, i gdy przez całe okno od jego dodania nic nie dotarło. Repozytorium dodane przed pierwszą kopią nadawcy jest do tego czasu w porządku.
+- **Alerty integralności:** alert, gdy kontrola po stronie odbiorcy się nie powiedzie. Kontrola, która nie mogła otworzyć repozytorium, nic nie mówi o integralności, więc nie wydaje werdyktu i próbuje ponownie następnego dnia o tej samej porze.
+
+Repozytorium na innym serwerze potrzebuje logowania tego serwera: zapisz je jako [dane logowania](#sign-ins) i wybierz je w **Poświadczenia** w oknie dialogowym.
 
 Odbiornik jest ściśle tylko do odczytu. Nigdy nie zapisuje do odbieranego repozytorium, więc nigdy nie może złamać gwarancji append-only, na której polega nadawca.
 
-Pobierający działa w drugą stronę: z włączonym **Pobieranie** instancja czyta kopie innego członka według własnego harmonogramu, do osobnego repozytorium dla każdego źródła, więc nigdy nie liczą się jako własne kopie tej maszyny. Jego źródła stoją także w szczegółach tego członka: lokalizacja repozytorium, rodzaj kopii, jaką zawiera, i jak często pobierać. Hasło restic przychodzi przez grupę, nigdy APP_KEY, a druga strona nie ma nic więcej do ustawienia i nie musi działać. Źródło jest tylko czytane, a każda strona zachowuje własne dane logowania. Źródło `rclone:` jest odrzucane, bo rclone dotarłoby do niego zasobami tej instancji.
+Pobierający działa w drugą stronę: z włączonym **Pobieranie** instancja czyta kopie innego członka według własnego harmonogramu, do osobnego repozytorium dla każdego źródła, więc nigdy nie liczą się jako własne kopie tej maszyny. Jego źródła stoją także w szczegółach tego członka: lokalizacja repozytorium, rodzaj kopii, jaką zawiera, i jak często pobierać. Hasło restic przychodzi przez grupę, nigdy APP_KEY, a druga strona nie ma nic więcej do ustawienia i nie musi działać. Źródło jest tylko czytane, a każda strona zachowuje własne dane logowania. Pobieranie odbywa się w dniu i o godzinie, które podaje jego harmonogram, a nowe źródło też czeka na tę porę. **Pobierz teraz** nie czeka. Pobieranie pominięte, bo ta maszyna była wyłączona, rusza, gdy tylko wróci. Takie, które się nie powiodło, próbuje ponownie następnego dnia o tej samej porze, także przy harmonogramie tygodniowym, a nieudane pobieranie widać w dzienniku aktywności i wysyła ono jeden alert, dopóki pobieranie znów nie zadziała. Źródło `rclone:` jest odrzucane, bo rclone dotarłoby do niego zasobami tej instancji.
+
+Pobrana kopia tylko rośnie. BombVault dopisuje do niej, ale ani jej nie przycina, ani nie sprawdza, więc to, co źródło dawno zapomniało, zostaje tutaj, dopóki nie usuniesz folderu, a strona Miejsca docelowe jej nie liczy. Leży w `pulled/<source id>` we własnym folderze sekcji, a gdy ten folder się przeniesie, kopia zostaje tam, gdzie jest, i kolejne pobrania trafiają dalej do niej, zamiast kopiować wszystko od nowa. Jeśli ją usuniesz, następne pobranie zaczyna od nowa we własnym folderze, który sekcja będzie wtedy miała.
 
 ### Serwer odbiorczy {#receiving-server}
 
@@ -430,7 +445,7 @@ Co odpowiada test manipulacji:
 | **niechroniony** | VAULT przyjął usunięcie. `--append-only` brakuje albo go usunięto. |
 | **niejednoznaczny** | Ani jedno, ani drugie. Zwykle adres nie jest tym, którego używa sam restic, albo zmieniły się dane logowania. Nic nie jest zapisywane i żaden alert nie wychodzi. |
 
-**5. Obserwuj, co dociera, jeśli chcesz.** Włącz **Odbiornik** w **Ustawienia, Instancje** na VAULT, otwórz **Szczegóły** TOWER i dodaj odbierane repozytorium. VAULT dostaje hasło restic TOWER przez grupę. Nikt nie wpisuje klucza.
+**5. Obserwuj, co dociera, jeśli chcesz.** Włącz **Odbiornik** w **Ustawienia, Instancje** na VAULT, otwórz **Szczegóły** TOWER i dodaj odbierane repozytorium: kliknij jedną z lokalizacji, które wymienia okno. VAULT dostaje hasło restic TOWER przez grupę, a ponieważ lokalizacja leży na własnym serwerze odbiorczym VAULT, czyta folder bezpośrednio. Nikt nie wpisuje klucza ani danych logowania.
 
 **6. Zrób to wzajemnie.** Powtórz kroki w drugą stronę: VAULT prosi TOWER, by został jego odbiornikiem. Każda maszyna wymusza wtedy append-only dla drugiej i żadna nie może usunąć kopii drugiej.
 
@@ -463,14 +478,14 @@ Serwer TOWER zginął razem z dyskami. Miał 23 kontenery i 2 maszyny wirtualne,
 1. **Zainstaluj BombVault** na nowej maszynie i nadaj mu nowy `APP_KEY`, jak przy każdej nowej instalacji. Ustaw połączenie dla maszyn wirtualnych w **Ustawienia, Integracje, SSH hosta**, jeśli chcesz je odzyskać, bo przywracanie maszyny go wymaga.
 2. **Uruchom kreator.** Na **Witamy w BombVault** wybierz **Przywróć z kopii zapasowej**. Na stronie Przywracanie wybierz **Uruchom kreator awaryjny** w **Awaria**.
 3. **Dostęp.** Wybierz **Wgraj zestaw odzyskiwania** i upuść plik. BombVault próbuje jego klucza w każdym miejscu docelowym i mówi na przykład **Zestaw odzyskiwania odczytany. Jego klucz otwiera 0 z 2 miejsc docelowych.** Folder lokalny mówi **nie znaleziono**, bo dysk zginął, a Backblaze B2 mówi **brak danych dostępowych**.
-4. **Zapisz dane dostępowe.** Zestaw niesie dane logowania swoich zdalnych miejsc. Naciśnij **Zapisz dane dostępowe**, a miejsca zostaną sprawdzone ponownie, więc Backblaze B2 mówi teraz **czytelne**.
+4. **Zapisz dane dostępowe.** Zestaw niesie dane logowania każdego miejsca. Naciśnij **Zapisz dane dostępowe**, a miejsca zostaną sprawdzone ponownie, więc Backblaze B2 mówi teraz **czytelne**. Zestaw zapisany przed 10.5 zawiera tylko domyślne dane logowania. Tam, gdzie miejsce nadal pokazuje **brak danych dostępowych**, wpisz jego dane logowania w **Wpisz brakujące dane dostępowe** i naciśnij **Sprawdź miejsca docelowe ponownie**.
 5. **Przejmij klucz.** Ten serwer zapisuje teraz swoje kopie starym kluczem, więc nowe kopie pasują do starych. Zachowuje własny `APP_KEY` w szablonie. **Cofnij przejęcie** działa, dopóki nie wykona się pierwsza kopia.
-6. **Ustawienia.** Wybierz **Przywróć ustawienia**, co czyta najnowszą autokopię z B2. BombVault restartuje się, żeby ją zastosować, a kreator sam idzie dalej. Twoje miejsca docelowe, harmonogramy i reguły wracają, a Ty nadal logujesz się hasłem tego serwera. Wpisz ponownie sekrety, które wymienia kreator, na przykład ustawienia powiadomień.
-7. **Wybór.** Ustaw **Gdzie są kopie zapasowe?** na kopie poza siedzibą, bo lokalne zginęły ze starym serwerem. BombVault wymienia 23 kontenery i 2 maszyny wirtualne z najnowszą migawką zaznaczoną z góry, a dla każdej możesz wybrać inną.
+6. **Ustawienia.** Krok otwiera się na miejscu, w którym klucz znalazł autokopię, tutaj B2, z już wpisanym adresem. Wybierz **Przywróć ustawienia**, co czyta najnowszą autokopię stamtąd. BombVault restartuje się, żeby ją zastosować, a kreator sam idzie dalej. Twoje miejsca docelowe, harmonogramy i reguły wracają, a Ty nadal logujesz się hasłem tego serwera. Wpisz ponownie sekrety, które wymienia kreator, na przykład ustawienia powiadomień.
+7. **Wybór.** **Gdzie są kopie zapasowe?** otwiera się na kopiach poza siedzibą, gdy nic lokalnego nie zostało. BombVault czyta każde miejsce, żeby jedno martwe nie zasłoniło pozostałych, wymienia 23 kontenery i 2 maszyny wirtualne i przywraca każdy element z miejsca, które ma jego najnowszą migawkę.
 8. **Przywracanie.** Włącz **Zostaw zatrzymane po przywróceniu**, co jest najbezpieczniejsze po całkowitej utracie, i uruchom. **Co się stanie** mówi, co wróci. Linia wyniku brzmi na przykład **Przywrócono 25, 0 niepowodzeń. Uruchom je w Kopie zapasowe, gdy będzie trzeba.**
 9. **Zakończ.** Najpierw uruchom bazy danych, potem aplikacje, które z nich korzystają. Otwórz **Ustawienia, Przywracanie** i pobierz nowy zestaw odzyskiwania, bo stary należy do poprzedniej instalacji. Sprawdź **Wymaga uwagi** w przeglądzie i raz uruchom **Utwórz kopię wszystkiego teraz**, gdy wszystko działa.
 
-Jeśli brakuje też autokopii, wybierz **Pomiń, nie mam autokopii**. Miejsca docelowe pochodzą wtedy tylko z zestawu, harmonogramy i reguły ustawiasz od nowa, a kopie poza siedzibą są wstrzymane, dopóki nie potwierdzisz ustawień domyślnych sekcji, zobacz [Po odbudowie](#after-a-rebuild).
+Jeśli brakuje też autokopii, krok otwiera się na **Pomiń, nie mam autokopii** i o tym mówi. Miejsca docelowe pochodzą wtedy tylko z zestawu, harmonogramy i reguły ustawiasz od nowa, a kopie poza siedzibą czekają, dopóki nie przejmiesz ich kopii jako własnych kopii tego serwera, zobacz [Po odbudowie](#after-a-rebuild). **Wybór** nadal wymienia, co zawierają kopie poza siedzibą. Zestawy folderów trafiają do wybranego folderu. Kontenery i maszyny wirtualne wracają jako zwykłe pliki w folderze w **Wrócić mogą tylko pliki**, bo ich definicje leżą obok lokalnego repozytorium i w autokopii, a kopia poza siedzibą nie ma żadnej z nich.
 
 !!! tip "Planowana migracja a awaria"
     Kreator awaryjny przywraca własne ustawienia BombVault z kopii zapasowej. Przy *planowanej* przeprowadzce na nową maszynę możesz zamiast tego przenieść konfigurację bezpośrednio za pomocą karty **Eksport / import ustawień** (przenośny plik JSON). Zobacz [Konfiguracja](configuration.md#portable-settings-export-and-import).
@@ -478,6 +493,10 @@ Jeśli brakuje też autokopii, wybierz **Pomiń, nie mam autokopii**. Miejsca do
 ### Ze starego folderu z kopiami {#restore-from-another-bombvault-repo}
 
 **Ze starego folderu z kopiami** w **Inne źródła** na stronie Przywracanie otwiera repozytorium *innej* instancji BombVault (udział zamontowany pod `/mnt` albo zdalny adres) z zestawem odzyskiwania tej instancji lub wpisanym jej `APP_KEY`, w jednorazowej sesji tylko do odczytu. Przeglądaj zapisane tam kontenery, maszyny wirtualne, zestawy folderów i zbiory danych ZFS, wybierz migawkę i przywróć ją, a przywrócony obiekt staje się zwykłym lokalnym kontenerem, maszyną wirtualną lub zestawem folderów. Do drugiego repozytorium nigdy nic nie jest zapisywane, a Twoje własne ustawienia kopii pozostają nietknięte (sesja żyje w pamięci i wygasa sama). Przeniesienie kontenera z serwera A na serwer B nie oznacza przestawiania ustawień i cofania ich potem. To okno jest jednorazowe: otwiera sesję, przywraca to, co wybierzesz, i zapomina drugą instancję. Jeśli zamiast tego chcesz stałego układu, w którym ta maszyna według harmonogramu pobiera migawki innej instancji do własnego repozytorium, to rola **Pobierający** na stronie Instancje.
+
+### Co ten serwer pobrał {#restore-what-was-fetched}
+
+Każde źródło, z którego ten serwer pobierał, ma własny wiersz **Pobrano z** w **Inne źródła** na stronie Przywracanie. Pobrana kopia jest zamknięta własnym kluczem tego serwera, nie kluczem źródła, więc o nic się nie pyta: klucz źródła jej nie otwiera. Zestawy folderów i zbiory danych ZFS trafiają do wybranego folderu. Kontenery i maszyny wirtualne wracają jako zwykłe pliki w folderze, bo pobieranie przenosi migawki, a nie definicje. Aby je odtworzyć, użyj zestawu odzyskiwania i autokopii źródła w Kreatorze awaryjnym.
 
 Kontener, którego sieć nie istnieje na tym serwerze, jak sieć `br0` z Unraid na zwykłym hoście Docker, pokazuje pod swoim wierszem wybór sieci. BombVault tworzy go w wybranej sieci, razem z jego pozostałymi sieciami. Stały IP i adres MAC należały do starej sieci i są odrzucane, więc nowa sieć przydziela je sama.
 
@@ -530,7 +549,7 @@ To HMAC-SHA256 ze stałego ciągu `bombvault:restic-repo`, z kluczem będącym s
 !!! warning "Dla odebranego repozytorium użyj klucza instancji WYSYŁAJĄCEJ"
     Repozytorium, które trafiło tu przez kopię poza siedzibą, utworzyła maszyna, która je wysłała, ze **swoim** kluczem. Wyprowadzenie z klucza maszyny odbierającej daje hasło, które restic odrzuci, co wygląda dokładnie jak uszkodzone repozytorium, a nim nie jest. To zwykły powód, dla którego `restic check` na odebranym repozytorium raz po raz prosi o hasło.
 
-Ponieważ definicje odzyskiwania leżą **wewnątrz** każdego repozytorium (`<repo>/def`, `<repo>/vm-def`), skopiowany folder repozytorium jest w pełni samodzielny, więc zestaw plus repozytorium to wszystko, czego potrzebuje przywracanie na pustym sprzęcie.
+Ponieważ definicje odzyskiwania leżą **wewnątrz** każdego repozytorium (`<repo>/def`, `<repo>/vm-def`), skopiowany folder repozytorium jest w pełni samodzielny, więc zestaw plus repozytorium to wszystko, czego potrzebuje przywracanie na pustym sprzęcie. Kopia poza siedzibą i kopia pobrana zawierają migawki bez definicji: oddają pliki, a kontener albo maszyna wirtualna jest odtwarzana z autokopii.
 
 ## Odzyskiwanie zrzutu bazy danych {#database-dumps}
 

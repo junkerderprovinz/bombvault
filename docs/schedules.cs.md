@@ -27,7 +27,7 @@ Karta **Týden** kreslí každý plánovaný běh od pondělí do neděle, jeden
 
 **Úplná záloha** je výchozí plán pro všechno. Nastavuje ho **Kdy zálohy běží**: jeden průchod, který zálohuje každou sekci postupně, kontejnery, VM, flashku, složky, datové sady ZFS a nakonec autozálohu. Řádek pod ním říká, které sekce zahrnuje. **Vypnuto** ho vypne a pak běží jen to, co má vlastní plán.
 
-- **Dohnat zmeškané zálohy po startu**: když byl server v plánovaný čas vypnutý, BombVault tu zálohu spustí asi dvě minuty po svém startu.
+- **Dohnat zmeškané zálohy po startu**: když byl server v plánovaný čas vypnutý, BombVault tu zálohu spustí asi dvě minuty po svém startu. Vlastní plán položky a plán mimo lokalitu čekají na svůj další plánovaný čas a stejně tak plán, který ještě nikdy neuspěl.
 - **Příkazy před a po**: **Příkaz před úplnou zálohou** běží na serveru přes `sh -c` před začátkem průchodu, například skript, který zastaví službu. Když selže, úplná záloha přesto proběhne. **Příkaz po úplné záloze** běží jednou po tom, co se zkusila každá sekce, i když některá selhala, což se hodí pro ping potvrzující, že celý server je chráněn. Příkazy pro jeden kontejner jsou na jeho stránce.
 
 **Zálohovat vše nyní** na stránce Zálohy spustí stejný průchod ručně, přes všechny zapnuté sekce.
@@ -58,7 +58,7 @@ Záloha skončí pod stejnými cestami a štítky jako ta pořízená se zastave
 
 ## Aktualizace po záloze {#updates}
 
-- **Aktualizovat kontejnery po úspěšné záloze** stáhne novější image až poté, co skončila záloha před ním, takže vždy nejdřív existuje čerstvý bod obnovy. Je ve výchozím stavu vypnuté a jeden kontejner lze na jeho stránce nastavit jinak pod **Aktualizovat po úspěšné záloze**.
+- **Aktualizovat kontejnery po úspěšné záloze** stáhne novější image až poté, co skončila záloha před ním, takže vždy nejdřív existuje čerstvý bod obnovy. Je ve výchozím stavu vypnuté a jeden kontejner lze na jeho stránce nastavit jinak pod **Aktualizovat po úspěšné záloze**. Na nový image přejde jen to, co jsi nastavil: proměnné, štítky, příkaz, uživatel a healthcheck, které stále odpovídají starému image, se řídí novým. Pokud nový image nejde vytvořit nebo spustit, kontejner se vrátí na image, na kterém běžel, aktualizace se ukáže jako neúspěšná a další záloha to zkusí znovu. Kontejner, který tím zůstane neběžící, jmenuje běh zálohy i oznámení.
 - **Odstranit starý image po aktualizaci** smaže image, který kontejner opustil. Základní image sdílený s jinými kontejnery se nikdy nesmaže.
 - **Po aktualizaci kontejneru obnovit stav aktualizací Unraid** smaže u tohoto kontejneru banner aktualizace Unraidu.
 

@@ -23,7 +23,7 @@ Fiecare container, VM, set de foldere, unitatea flash, fiecare set de date ZFS �
 | **Containere** | Directorul appdata plus definiția containerului (imagine, variabile de mediu, porturi, etichete, volume). |
 | **VM-uri** | Imaginea (imaginile) de disc a VM-ului, definiția XML și NVRAM-ul UEFI, salvate prin SSH (fără montare libvirt). |
 | **Flash** | Întregul flash USB (`/boot`): sistemul de operare, licența, configurația array-ului, partajările, rețeaua și configurația plugin-urilor. |
-| **Auto-backup** | Propriul `/config` al BombVault: baza sa de date de setări, datele de autentificare ale destinațiilor sale și perechea de chei SSH pentru libvirt. |
+| **Auto-backup** | Propriul `/config` al BombVault: baza sa de date de setări, datele de autentificare ale destinațiilor sale, perechea de chei SSH pentru libvirt, cheia și cheile de gazdă fixate ale serverelor ZFS și certificatele. |
 | **Foldere** | Orice folder de pe server ca set de foldere, fiecare cu tipare de excludere opționale. |
 | **Seturi de date ZFS** | Un set de date cu toate seturile de sub el, citit dintr-un instantaneu ZFS și salvat ca un folder. Vezi [Seturi de date ZFS](zfs-datasets.md). |
 
@@ -102,4 +102,4 @@ Numele și identitatea vizuală nu sunt licențiate. AGPL acoperă doar codul su
 - **Probleme:** [github.com/junkerderprovinz/bombvault/issues](https://github.com/junkerderprovinz/bombvault/issues)
 
 !!! warning "Control al gazdei echivalent cu root"
-    Prin socket-ul Docker, BombVault poate opri, elimina și recrea containere și poate citi/scrie appdata, iar pentru backupul VM se autentifică pe gazdă prin SSH pentru a rula `virsh`. Oricine poate ajunge la interfața sa web are efectiv root pe gazdă. Rulează BombVault doar într-o rețea de încredere, neexpusă, și setează o parolă de conectare la **Setări, Securitate**. Kitul de recuperare, depunerile de chei și ștergerea copiilor de rezervă de la o destinație au nevoie de una. Vezi [Configurare](configuration.md#security-model) pentru modelul complet de securitate.
+    Prin socket-ul Docker, BombVault poate opri, elimina și recrea containere și poate citi/scrie appdata, iar pentru backupul VM se autentifică pe gazdă prin SSH pentru a rula `virsh`. Oricine poate ajunge la interfața sa web are efectiv root pe gazdă. Rulează BombVault doar într-o rețea de încredere, neexpusă, și setează o parolă de conectare la **Setări, Securitate**. Kitul de recuperare, depunerile de chei, ZIP-ul flash, exportul unui backup flash sau al unui auto-backup și ștergerea copiilor de rezervă de la o destinație au nevoie de una. Vezi [Configurare](configuration.md#security-model) pentru modelul complet de securitate.

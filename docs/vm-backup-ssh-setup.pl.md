@@ -81,8 +81,25 @@ docker exec BombVault virsh -c "qemu+ssh://root@192.168.1.10:22/system?keyfile=/
 
 Każda maszyna ma **Metoda** w karcie **VM** na swojej karcie Ustawienia (otwórz maszynę w **Kopie zapasowe**):
 
-- **Graceful (zamknięcie)** jest domyślna. Zamyka maszynę, kopiuje dyski i uruchamia ją z powrotem, więc kopia jest zawsze spójna. Czeka do dziesięciu minut, aż gość się zamknie, i nigdy nie wyłącza go siłą. Gość, który nadal działa po tym czasie, zostaje w spokoju, a ta kopia kończy się błędem z powodem.
-- **Migawka na żywo** kopiuje działającą maszynę przez zewnętrzną migawkę i `blockcommit`. Wymaga agenta gościa qemu w maszynie, dla migawki z wyciszeniem, oraz dysku na `/mnt/cache` albo `/mnt/diskX`, a nie `/mnt/user`. Na wyłączonej maszynie Migawka na żywo sama cofa się do Graceful, i tak samo, gdy migawki nie da się wykonać.
+- **Graceful (zamknięcie)** jest domyślna. Zamyka maszynę, kopiuje dyski i uruchamia ją z powrotem, więc kopia jest zawsze spójna. Czeka do dziesięciu minut, aż gość się zamknie, i nigdy nie wyłącza go siłą. Gość, który nadal działa po tym czasie, zostaje w spokoju, a ta kopia kończy się błędem z powodem. Jeśli gość wyłączy się w ciągu następnej godziny, BombVault uruchomi go ponownie. Jeśli to uruchomienie się nie uda, mówi o tym nieudany przebieg.
+- **Migawka na żywo** kopiuje działającą maszynę przez zewnętrzną migawkę i `blockcommit`. Wymaga dysku na `/mnt/cache` albo `/mnt/diskX`, a nie `/mnt/user`. Z agentem gościa qemu w maszynie migawka jest wykonywana z wyciszeniem, a bez niego jest spójna na poziomie awarii. Na wyłączonej maszynie Migawka na żywo sama cofa się do Graceful. Gdy migawki nie da się wykonać, ta kopia kończy się błędem, a maszyna działa dalej, bo maszyna, którą wybrałeś do kopii na żywo, nigdy nie jest dla niej zamykana.
+
+## Czego kopia nie obejmuje {#left-out}
+
+Kopia może się udać, a mimo to nie zawierać całej maszyny. Przebieg ma wtedy uwagę w tonie ostrzeżenia, która wymienia, czego brakuje:
+
+- **Dyski, których BombVault nie czyta.** Dysk tylko do odczytu, `lun` oraz dysk `network` lub `volume` są pomijane, a uwaga wymienia każdy z nich z jego urządzeniem docelowym i rodzajem. Definicja w kopii nadal je wymienia. Napęd cdrom i stacja dyskietek nie są wymieniane. Zwykłe urządzenie blokowe, które nie jest zvol ZFS, zamiast tego kończy kopię błędem.
+- **Stan emulowanego TPM.** Nie ma ścieżki w XML domeny. VM Manager w Unraid ustawia taki TPM dla maszyny z BIOS-em **OVMF TPM**, więc uwaga pojawia się także na Unraid. Gość, który trzyma sekret w swoim TPM, jak potrafi BitLocker, może po przywróceniu, które traci ten stan, poprosić o swój klucz odzyskiwania, więc miej ten klucz pod ręką.
+
+## Cienkie dyski {#thin-disks}
+
+Przywracanie zachowuje cienki dysk jako cienki, czy zastępuje dysk, czy zapisuje nowy: restic zapisuje ciągi zer jako dziury w nowym pliku, a BombVault zwalnia bloki zer zastąpionego pliku przez `fallocate --dig-holes`, gdy plik jest już zapisany. Gdy restic zastępuje plik, ten plik zajmuje pełny rozmiar, jeśli pula ma na to miejsce. System plików bez wybijania dziur zostawia dysk w pełnym rozmiarze, a log o tym mówi. Sprawdzenie miejsca nadal liczy nowy dysk w pełnym rozmiarze.
+
+## Przywracanie, które się nie udaje {#restore-fails}
+
+Przywracanie na miejscu wyłącza maszynę, zapisuje dyski i zastępuje definicję oraz NVRAM dopiero wtedy, gdy dyski są zapisane. Przywracanie, które się nie uda, zostawia maszynę zdefiniowaną razem z jej NVRAM. Jeśli jej dyski się nie zmieniły, a działała, uruchamia się ponownie. Jeśli mogły się zmienić, zostaje wyłączona, bo uruchomienie z zapisanego w połowie dysku pisałoby po nim, a przebieg to mówi. Ponowne przywrócenie tej samej kopii kończy robotę.
+
+Migawki zapisane w libvirt (VM Manager w Unraid tworzy je inaczej) zatrzymują przywracanie na miejscu, zanim maszyna zostanie ruszona, bo libvirt nie potrafi usunąć maszyny, która je ma. Najpierw je usuń.
 
 ## Tylko zmienione bloki {#changed-blocks}
 
@@ -112,6 +129,7 @@ BombVault kopiuje taką maszynę w całości:
 - **Kopia na żywo zachowuje migawki.** **Migawka na żywo** kładzie na wierzchu tymczasową nakładkę podczas czytania dysku i potem scala ją z powrotem, tylko do obrazu tuż pod nią. Łańcuch po kopii jest taki sam jak przed nią. Maszyna bez migawek zachowuje się jak zawsze.
 - **Przywracanie przywraca łańcuch.** Przywracanie na miejscu zapisuje każdy plik tam, gdzie był, i odkłada listę migawek Unraid, więc VM Manager znów wymienia migawki. Przywracanie obok oryginału zapisuje pliki do folderu kopii i kieruje przywrócone dyski na przywrócone pliki, więc kopia nigdy nie czyta z obrazów oryginału. Lista migawek Unraid wraca tylko przy przywracaniu na miejscu, bo wymienia pliki tam, gdzie je skopiowano. Bez niej kopia startuje tak samo, a VM Manager po prostu nie wymienia dla niej migawek.
 - **Tylko zmienione bloki** czyta to, co widzi gość, więc jego przywracanie wraca jako jeden spłaszczony plik qcow2 bez migawek.
+- **Przywracanie przywraca dysk z kopii, którą wybierzesz.** Migawki zrobione albo scalone od tej kopii tego nie zmieniają. Kopia sprzed migawki definiuje maszynę na pliku, który zawiera, a kopia sprzed scalenia przywraca swoją nakładkę i działa na niej. Nowsze pliki zostają tam, gdzie są, nieużywane i niezmienione. Kopia, która zawiera nakładkę, ale nie plik pod nią, jest odrzucana, zanim maszyna zostanie ruszona. Definicja maszyny po przywróceniu nie wymienia łańcucha, więc libvirt odczytuje łańcuch z przywróconych plików.
 
 ### Przykład: maszyna z dwiema migawkami {#example-unraid-snapshots}
 
@@ -199,10 +217,10 @@ Dyski plikowe, tak jak używa ich Unraid, nie są niczym z tego dotknięte.
 Maszyna może mieć wirtualny TPM, którego potrzebują goście z Secure Boot i Windows 11. Jego stan leży poza dyskiem i NVRAM, więc kopia samych tych dwóch rzeczy przywróciłaby gościa z nowym, pustym TPM.
 
 - **TPM przekazany (passthrough)**, prawdziwy układ przekazany gościowi, podaje swoją ścieżkę w XML domeny. BombVault zapisuje jego stan obok NVRAM przez SSH i odkłada przed `virsh define`, w trybie best effort jak NVRAM: nieudany odczyt lub zapis jest logowany i nie psuje kopii ani przywracania.
-- **Emulowany vTPM**, taki, jaki TrueNAS ustawia dla gości Windows 11 i Secure Boot, nie publikuje w XML domeny ścieżki stanu. BombVault zgłasza wtedy „no TPM path found” zamiast zgadywać ścieżkę. Miej pod ręką klucz odzyskiwania takiego gościa, na przykład klucz BitLocker, zanim go przywrócisz.
+- **Emulowany vTPM**, taki, jaki TrueNAS ustawia dla gości Windows 11 i Secure Boot, nie publikuje w XML domeny ścieżki stanu, więc jego stan nie trafia do kopii. BombVault nie zgaduje ścieżki, a kopia kończy się uwagą, że nie ma w niej stanu TPM maszyny. Miej pod ręką klucz odzyskiwania takiego gościa, na przykład klucz BitLocker, zanim go przywrócisz.
 - **Nie możesz sam dołączyć TPM do maszyny TrueNAS.** API urządzeń maszyn wirtualnych w TrueNAS SCALE 25.10 przyjmuje tylko `CDROM`, `DISPLAY`, `NIC`, `PCI`, `RAW`, `DISK` i `USB`, a `TPM` odrzuca jako nieznany typ.
 
-Obsługa TPM jest przetestowana tylko jednostkowo i nie była uruchamiana na prawdziwym gościu TrueNAS z vTPM. Maszyna bez TPM, jak na Unraid, kopiuje się i przywraca dokładnie jak dotąd.
+Obsługa TPM jest przetestowana tylko jednostkowo i nie była uruchamiana na prawdziwym gościu TrueNAS z vTPM. Maszyna bez TPM kopiuje się i przywraca dokładnie jak dotąd.
 
 NVRAM jest zapisywany jak zwykle. TrueNAS trzyma go dla każdej maszyny w `/var/db/system/vm/nvram/<id>_<name>_VARS.fd`, a XML domeny podaje tę ścieżkę.
 

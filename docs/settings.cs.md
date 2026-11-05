@@ -11,7 +11,7 @@ Tato stránka vypisuje každou dlaždici a její karty a odkazuje na stránku, k
 
 ## Obecné {#general}
 
-- **Sekce** zapíná a vypíná každou sekci: **Kontejnery**, **VM**, **Flash**, **Složky**, **Datové sady ZFS** a **Autozáloha**. Sekce, která je vypnutá, se nezálohuje a její položky se nepočítají. **Flash** se ukazuje jen na Unraidu.
+- **Sekce** zapíná a vypíná každou sekci: **Kontejnery**, **VM**, **Flash**, **Složky**, **Datové sady ZFS** a **Autozáloha**. Sekce, která je vypnutá, se nezálohuje podle žádného plánu, ani podle vlastního plánu položky, a její položky se nepočítají. **Zálohovat nyní** pořád funguje. **Flash** se ukazuje jen na Unraidu.
 - **Kontejnery** drží to, co platí pro každý kontejner, například **Automatické výpisy databází**. Cokoli, co se týká jednoho kontejneru, je na jeho stránce. Viz [Výpisy databází](backups.md#database-dumps).
 
 ## Vzhled {#look}
@@ -97,6 +97,6 @@ Několik věcí vyžaduje přihlašovací heslo, například sada pro obnovu, ul
 
 ## Info {#info}
 
-- **Verze**: BombVault, GlimStone, restic a rclone, s **Hledat aktualizace** a **Nové**, které počítá změny, jež jsi ještě neviděl, a otevře **What's new**.
+- **Verze**: BombVault, GlimStone, restic a rclone, s **Hledat aktualizace** a **Nové**, které počítá změny, jež jsi ještě neviděl, a otevře okno, které je vypíše.
 - **Nápověda**: **Příručka** otevře tuto dokumentaci a **Hlášení chyby** stáhne vyčištěné ZIP pro issue na GitHubu. Vyžaduje přihlašovací heslo.
 - **O aplikaci BombVault**: projekt, jeho licence a jak autora zastihnout.

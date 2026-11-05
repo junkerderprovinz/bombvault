@@ -9,20 +9,20 @@ A BombVault szólhat, ha egy mentés sikertelen, ha sikerül, ha késik, és het
 
 Az **Értesítések** kártya egyszerre állítja be a szabályokat az összes csatornára:
 
-- **Értesítés**: **Soha**, **Csak hiba esetén** vagy **Sikernél és hibánál**, az alábbi összes csatornára.
+- **Értesítés**: **Soha**, **Csak hiba esetén** vagy **Sikernél és hibánál**, az alábbi összes csatornára. Egy friss telepítés a **Csak hiba esetén** beállítással indul, így egy kitöltött csatorna szól, ha egy mentés elromlik.
 - **Ütemezett futások összegzése**: ütemezett futásonként egy üzenet, például *45-ből 42 sikerült*, konténerenként vagy VM-enként egy helyett. A kézzel indított mentés továbbra is saját üzenetet küld. Egy befagyasztott vendég, egy sikertelen megőrzés vagy egy átlépett növekedési keret az összegzések mellett is azonnal kimegy.
 - **Értesítés container frissítésekor**: egy üzenet minden olyan konténerről, amelyet a **Konténerek frissítése egy sikeres biztonsági mentés után** újabb image-re léptetett, hogy ellenőrizhesd, még működik-e.
-- **Késő mentések jelentése**: naponta egyszer 09:00-kor a BombVault megnézi, késik-e egy bekapcsolt mentés, vagyis régebbi-e az ütemezése kétszeresénél, és esetenként egy üzenetet küld. A következő sikeres mentés törli.
+- **Késő mentések jelentése**: naponta egyszer 09:00-kor a BombVault megnézi, késik-e egy bekapcsolt mentés, vagyis régebbi-e az ütemezése kétszeresénél, és esetenként egy üzenetet küld, amely megnevezi a lemaradt elemet. A következő sikeres mentés törli.
 - **Unraid-értesítések**: az Unraid saját értesítési rendszerébe küld, amely továbbíthat Pushoverre, e-mailre vagy Discordra. A **Beállítások, Integrációk, Gazdagép SSH** alatti SSH-kapcsolaton fut, ezért annak a kulcsnak engedélyezettnek kell lennie. TrueNAS-on és más hosztokon kikapcsolva marad.
-- **Heti összefoglaló**: hetente egy összegzés a futások számával, az új mentési adattal, azzal, hogy a telephelyen kívüli másolatok frissek-e, és a leggyakoribb hibákkal. Az ütemezése ugyanolyan gomb, mint bármelyik másik terv, és a **Ki** kikapcsolja. Lásd: [Ütemezések](schedules.md#plans).
+- **Heti összefoglaló**: hetente egy összegzés a futások számával, az új mentési adattal, a késésben lévő szakaszokkal, azzal, hogy a telephelyen kívüli másolatok frissek-e, és a leggyakoribb hibákkal. Az ütemezése ugyanolyan gomb, mint bármelyik másik terv, és a **Ki** kikapcsolja. Lásd: [Ütemezések](schedules.md#plans).
 
 Hogy mely anomáliák küldenek üzenetet, a **Beállítások, Ellenőrzés** alatt állítható, lásd: [Anomáliák](anomalies.md). Egy elhalasztott mentés egy üzenetet küld, amikor várakozni kezd, és egyet, amikor a várakozás véget ér, nem próbálkozásonként egyet.
 
-A kártya alján a **Teszt küldése** próbaüzenetet küld minden bekapcsolt csatornán, az űrlapon éppen látható értékekkel.
+A kártya alján a **Teszt küldése** próbaüzenetet küld minden bekapcsolt csatornán, az űrlapon éppen látható értékekkel, és megnevez minden csatornát, amelyik sikertelen volt. Egy Healthchecks-ellenőrzés bejegyzést kap a naplójába, amely az állapotát változatlanul hagyja.
 
 ## Csatornák {#channels}
 
-Minden csatornának saját kapcsolója van a **Csatornák** kártyán, és a mezői akkor jelennek meg, ha be van kapcsolva. Minden csatorna magától és saját időkorláttal küld, így egy hoszt, amely sosem válaszol, nem tartja fel a többit, és az üzenetet, amelyet egyik csatorna sem vett át, újra megpróbálja.
+Minden csatornának saját kapcsolója van a **Csatornák** kártyán, és a mezői akkor jelennek meg, ha be van kapcsolva. Minden csatorna magától és saját időkorláttal küld, így egy hoszt, amely sosem válaszol, nem tartja fel a többit. A késésről, a növekedési keretről vagy egy anomáliáról szóló riasztást, amelyet egyik csatorna sem vett át, újra megpróbálja, és ugyanígy a heti összefoglalót is. Egyetlen mentés üzenetét vagy egy összegzést egyszer küld el.
 
 | Csatorna | Mezők | Megjegyzések |
 |---|---|---|
@@ -36,7 +36,9 @@ A titkos adatok, például a Matrix-token, a Gotify alkalmazás-token és az SMT
 
 ## Healthchecks {#healthchecks}
 
-Egy olyan szolgáltatás, mint a [Healthchecks.io](https://healthchecks.io), riaszt, ha a BombVault abbahagyja a bejelentkezést. Illeszd be az ellenőrzés **Ping URL**-jét, és a BombVault minden mentés teljes életciklusa alatt pingeli: az elején, majd sikernél vagy `/fail` címmel. Ezt minden alkalommal megteszi, ha van beállított URL, függetlenül attól, mit mond az **Értesítés**, így az ellenőrzés sikernél akkor is zöld marad, ha csak hibáról jönnek üzenetek.
+Egy olyan szolgáltatás, mint a [Healthchecks.io](https://healthchecks.io), riaszt, ha a BombVault abbahagyja a bejelentkezést. Illeszd be az ellenőrzés **Ping URL**-jét, és a BombVault minden mentés teljes életciklusa alatt pingeli: az elején, majd sikernél vagy `/fail` címmel. Ezt minden alkalommal megteszi, ha van beállított URL, függetlenül attól, mit mond az **Értesítés**, így az ellenőrzés sikernél akkor is zöld marad, ha csak hibáról jönnek üzenetek. Az a szakasz, amelynek nincs hová mentenie, sikertelennek számít, így az ellenőrzése piros lesz, ahelyett hogy sikert kapna.
+
+Az ugyanazon az URL-en lévő szakaszok egy ellenőrzésen osztoznak. Ha az egyik mentése meghiúsult, a többiek sikeres mentései is a `/fail` címet pingelik, és megnevezik, így az ellenőrzés piros marad, amíg annak az elemnek újra sikeres mentése nem lesz, vagy amíg nem nyugtázod a hibát a **Figyelmet igényel** alatt.
 
 Egy szakasz saját címet is pingelhet: a kártyán a **Kivétel** hoz létre egyet, és a sor ezt írja: **Az összes többi szakasz erre az URL-re pingel.**
 

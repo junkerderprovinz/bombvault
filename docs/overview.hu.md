@@ -40,13 +40,13 @@ Minden bekapcsolt szakaszhoz tartozik egy sor négy ellenőrzéssel:
 | Ellenőrzés | Mikor lesz zöld | Más szavak, amelyeket láthatsz |
 |---|---|---|
 | **Helyi** | az utolsó mentés friss | még nincs mentés, nincs ütemezés, az utolsó futás sikertelen, a mentés késik, nem minden elem védett, a mentés hamarosan esedékes |
-| **Telephelyen kívüli** | a telephelyen kívüli utolsó másolat friss | nincs telephelyen kívüli másolat, másolás fut, a másolat késik, a másolás szünetel, még nincs másolat, a replika sikertelen |
+| **Telephelyen kívüli** | a telephelyen kívüli utolsó másolat friss | nincs telephelyen kívüli másolat, másolás fut, a másolat késik, a döntésedre vár, még nincs másolat, a replika sikertelen |
 | **Törlés elleni védelem** | egy manipulációs teszt igazolta, hogy a túloldal visszautasítja a törlést | nincs, nincs és a kockázat elfogadva, még nem bizonyított, a teszt sikertelen, nem bizonyított, mert az ellenőrzése ki van kapcsolva |
 | **Próba-visszaállítás** | a telephelyen kívüli másolatból a visszaállítás sikerült | soha nem futott, fut, sikertelen, késik, csak kézzel, ennél a szakasznál nem lehetséges |
 
 Egy szakasz csak ellenőrzött tények alapján zöld. Az ezen a szerveren lévő másolat nem számít telephelyen kívülinek, és az a cél, amelyet **Elfogadás törlés elleni védelem nélkül** jelöléssel láttál el, borostyánsárga pont helyett szürke gyűrűt mutat, így a szakasz színe a többi ellenőrzését követi.
 
-Egy ütemezett szakasz a **Még nincs biztonsági mentés** feliratot mutatja, és semleges marad, amíg az első futása esedékessé nem válik. Ezután a **Lejárt** feliratot mutatja, és egyszer riaszt. Az a szakasz, amelyben nincs mit menteni, mert egyetlen ütemezés sem éri el egyik elemét sem, a **Nincs ütemezve** feliratot mutatja, és sosem jár le.
+Egy ütemezett szakasz a **Még nincs biztonsági mentés** feliratot mutatja, és semleges marad, amíg az első futása esedékessé nem válik, attól számítva, hogy a tervét utoljára beállították. Ezután a **Lejárt** feliratot mutatja, és egyszer riaszt. A **Lejárt** ahhoz az elemhez igazodik, amelyik a legjobban lemaradt a saját tervéhez képest, így egy futó szomszéd nem takarja el azt, amelyik leállt. Az az elem, amelynek a konténere eltűnt, vagy amelyet egyetlen ütemezés sem ér el, nem számít. A saját heti tervvel rendelkező elemet nem mérik a szakasz napi tervéhez. Az a szakasz, amelyben nincs mit menteni, mert egyetlen ütemezés sem éri el egyik elemét sem, a **Nincs ütemezve** feliratot mutatja, és sosem jár le.
 
 A szakaszra kattintva megnyílik az ablaka az összes ellenőrzéssel szavakba öntve, a beleszámított elemekkel és a **Próba-visszaállítás indítása** vagy **Próba-visszaállítás újraindítása** gombbal. Azt is kiírja, hogy **Nyesési szabály beállítva** vagy **Nincs nyesési szabály**, és a szakasz saját mappájának megőrzési szabálya ugyanúgy számít, mint a telephelyen kívüli szabályai.
 

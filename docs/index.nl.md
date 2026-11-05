@@ -23,7 +23,7 @@ Elke container, VM, mappenset, de flash, elke ZFS-dataset en de eigen instelling
 | **Containers** | Appdata-map plus de containerdefinitie (image, env-variabelen, poorten, labels, volumes). |
 | **VM's** | VM-schijfimage(s), de XML-definitie en UEFI NVRAM, geback-upt via SSH (geen libvirt-mount). |
 | **Flash** | De hele USB-flash (`/boot`): OS, licentie, array-configuratie, shares, netwerk- en plugin-configuratie. |
-| **Zelf-back-up** | BombVaults eigen `/config`: de instellingendatabase, de inloggegevens van de bestemmingen en het libvirt SSH-sleutelpaar. |
+| **Zelf-back-up** | BombVaults eigen `/config`: de instellingendatabase, de inloggegevens van de bestemmingen, het libvirt SSH-sleutelpaar, de sleutel en de vastgezette hostsleutels van de ZFS-servers en de certificaten. |
 | **Mappen** | Elke map op de server als mappenset, elk met optionele uitsluitpatronen. |
 | **ZFS-datasets** | Een dataset met alle datasets eronder, gelezen uit één ZFS-snapshot en opgeslagen als een map. Zie [ZFS-datasets](zfs-datasets.md). |
 
@@ -102,4 +102,4 @@ De naam en de huisstijl zijn niet gelicentieerd. De AGPL dekt alleen de broncode
 - **Issues:** [github.com/junkerderprovinz/bombvault/issues](https://github.com/junkerderprovinz/bombvault/issues)
 
 !!! warning "Controle op het niveau van root over de host"
-    Via de Docker-socket kan BombVault containers stoppen, verwijderen en opnieuw aanmaken en appdata lezen en schrijven, en voor VM-back-up logt het via SSH in op de host om `virsh` uit te voeren. Wie bij de webinterface kan, heeft in feite root op de host. Draai BombVault alleen op een vertrouwd netwerk dat niet blootstaat, en stel een inlogwachtwoord in onder **Instellingen, Beveiliging**. De herstelkit, bewaarkopieën van de sleutel en het verwijderen van de back-ups bij een bestemming hebben er een nodig. Zie [Configuratie](configuration.md#security-model) voor het volledige beveiligingsmodel.
+    Via de Docker-socket kan BombVault containers stoppen, verwijderen en opnieuw aanmaken en appdata lezen en schrijven, en voor VM-back-up logt het via SSH in op de host om `virsh` uit te voeren. Wie bij de webinterface kan, heeft in feite root op de host. Draai BombVault alleen op een vertrouwd netwerk dat niet blootstaat, en stel een inlogwachtwoord in onder **Instellingen, Beveiliging**. De herstelkit, bewaarkopieën van de sleutel, de flash-ZIP, het exporteren van een flashback-up of zelf-back-up en het verwijderen van de back-ups bij een bestemming hebben er een nodig. Zie [Configuratie](configuration.md#security-model) voor het volledige beveiligingsmodel.

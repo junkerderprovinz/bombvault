@@ -9,20 +9,20 @@ BombVault puede avisarte cuando una copia falla, cuando tiene éxito, cuando una
 
 La tarjeta **Notificaciones** fija las reglas de todos los canales a la vez:
 
-- **Notificar**: **Nunca**, **Solo en caso de fallo** o **En éxito y en fallo**, para todos los canales de abajo.
+- **Notificar**: **Nunca**, **Solo en caso de fallo** o **En éxito y en fallo**, para todos los canales de abajo. Una instalación nueva empieza en **Solo en caso de fallo**, así que un canal que rellenes te avisa cuando una copia falla.
 - **Resumir las ejecuciones programadas**: un mensaje por ejecución programada, como *42 de 45 correctas*, en lugar de uno por contenedor o VM. Una copia que inicias a mano sigue enviando su propio mensaje. Un invitado congelado, una retención fallida o un presupuesto de crecimiento superado salen de inmediato incluso con los resúmenes activados.
 - **Notificar al actualizar un contenedor**: un mensaje por cada contenedor que **Actualizar los contenedores tras una copia de seguridad correcta** pasó a una imagen más nueva, para que puedas comprobar que sigue funcionando.
-- **Avisar de copias atrasadas**: una vez al día a las 09:00 BombVault comprueba si una copia activada va con retraso, es decir, si es más antigua que el doble de su calendario, y envía un mensaje por caso. La siguiente copia correcta lo borra.
+- **Avisar de copias atrasadas**: una vez al día a las 09:00 BombVault comprueba si una copia activada va con retraso, es decir, si es más antigua que el doble de su calendario, y envía un mensaje por caso, con el nombre del elemento que se quedó atrás. La siguiente copia correcta lo borra.
 - **Notificaciones de Unraid**: envía al propio sistema de notificaciones de Unraid, que puede reenviar a Pushover, correo o Discord. Funciona por la conexión SSH de **Ajustes, Integraciones, SSH del host**, así que esa clave tiene que estar autorizada. En TrueNAS y otros hosts se queda desactivado.
-- **Resumen semanal**: un resumen a la semana con el número de ejecuciones, los datos de copia nuevos, si las copias externas están al día y los principales fallos. Su calendario es un botón como cualquier otro calendario, y **Desactivado** lo apaga. Consulta [Calendarios](schedules.md#plans).
+- **Resumen semanal**: un resumen a la semana con el número de ejecuciones, los datos de copia nuevos, qué secciones van atrasadas, si las copias externas están al día y los principales fallos. Su calendario es un botón como cualquier otro calendario, y **Desactivado** lo apaga. Consulta [Calendarios](schedules.md#plans).
 
 Qué anomalías envían un mensaje se fija en **Ajustes, Verificación**, consulta [Anomalías](anomalies.md). Una copia aplazada envía un mensaje cuando empieza a esperar y otro cuando termina la espera, no uno por intento.
 
-**Enviar prueba**, al pie de la tarjeta, envía un mensaje de prueba por cada canal activado, con los valores tal como están en el formulario.
+**Enviar prueba**, al pie de la tarjeta, envía un mensaje de prueba por cada canal activado, con los valores tal como están en el formulario, y nombra cada canal que falló. Una comprobación de Healthchecks recibe una entrada en su registro, lo que deja su estado como está.
 
 ## Canales {#channels}
 
-Cada canal tiene su propio interruptor en la tarjeta **Canales**, y sus campos aparecen cuando está activado. Cada canal envía por su cuenta con su propio límite de tiempo, así que un host que nunca responde no frena a los demás, y un mensaje que ningún canal aceptó se vuelve a intentar.
+Cada canal tiene su propio interruptor en la tarjeta **Canales**, y sus campos aparecen cuando está activado. Cada canal envía por su cuenta con su propio límite de tiempo, así que un host que nunca responde no frena a los demás. Una alerta de retraso, de presupuesto o de anomalía que ningún canal aceptó se vuelve a intentar, y lo mismo pasa con un resumen semanal. El mensaje de una sola copia o de un resumen se envía una vez.
 
 | Canal | Campos | Notas |
 |---|---|---|
@@ -36,7 +36,9 @@ Los secretos como el token de Matrix, el token de la aplicación de Gotify y la 
 
 ## Healthchecks {#healthchecks}
 
-Un servicio como [Healthchecks.io](https://healthchecks.io) da la alarma cuando BombVault deja de fichar. Pega la **URL de ping** de la comprobación, y BombVault le hace ping durante todo el ciclo de vida de cada copia: al empezar, y luego al terminar bien o con `/fail`. Lo hace siempre que haya una URL definida, diga lo que diga **Notificar**, así que la comprobación se mantiene en verde al tener éxito incluso con mensajes solo de fallos.
+Un servicio como [Healthchecks.io](https://healthchecks.io) da la alarma cuando BombVault deja de fichar. Pega la **URL de ping** de la comprobación, y BombVault le hace ping durante todo el ciclo de vida de cada copia: al empezar, y luego al terminar bien o con `/fail`. Lo hace siempre que haya una URL definida, diga lo que diga **Notificar**, así que la comprobación se mantiene en verde al tener éxito incluso con mensajes solo de fallos. Una sección sin ningún sitio al que copiar cuenta como fallida, así que su comprobación se pone en rojo en lugar de recibir un éxito.
+
+Las secciones con la misma URL comparten una comprobación. En cuanto falla una copia de una de ellas, las copias correctas de las demás también hacen ping a `/fail` y nombran el elemento que falló, así que la comprobación sigue en rojo hasta que ese elemento vuelva a tener una copia correcta o confirmes el fallo en **Necesita atención**.
 
 Una sección puede hacer ping a una dirección propia: **Excepción** en la tarjeta añade una, y la línea dice **Todas las demás secciones hacen ping a esta URL.**
 

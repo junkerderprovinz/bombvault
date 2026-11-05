@@ -138,13 +138,13 @@ Qualsiasi macchina con ZFS e SSH può ricevere, per esempio un secondo Unraid o 
 Con root non serve altro. Un utente proprio ha bisogno di questi permessi sul pool della destinazione, che la finestra mostra anch'essa:
 
 ```
-zfs allow <user> receive,create,mount,rollback,destroy,userprop <pool>
+zfs allow <user> receive,create,mount,rollback,destroy,userprop,readonly,canmount <pool>
 ```
 
 Sulla sorgente lo stesso tipo di utente ha bisogno di questi sul dataset in cima all'elemento:
 
 ```
-zfs allow <user> send,snapshot,hold,release,bookmark,destroy <dataset>
+zfs allow <user> send,snapshot,hold,release,bookmark,destroy,mount <dataset>
 ```
 
 In questa direzione il BombVault che possiede l'elemento possiede anche una chiave che può scrivere sul server.
@@ -161,7 +161,7 @@ Un BombVault associato può ricevere da solo la replica. Nessuno ottiene accesso
 2. Sull'istanza ricevente apri **Istanze**. La richiesta compare sulla scheda dell'istanza che invia come badge, e i suoi **Dettagli** la elencano. Scegli il pool e la radice su quel server e quanti snapshot restano, poi premi **Consenti** o **Rifiuta**.
 3. Dopo **Consenti** la sorgente invia con il proprio piano, come per qualsiasi altra destinazione.
 
-L'istanza ricevente accetta solo ciò che l'approvazione copre: i dataset dell'elemento, nella propria radice. Esegue lei stessa `zfs receive`, e la sorgente non ha modo di eliminare o riportare indietro nulla lì. Quindi la copia sopravvive a una sorgente di cui qualcuno ha preso il controllo. L'istanza ricevente mantiene la propria conservazione. La sorgente suggerisce una regola soltanto quando la chiede.
+L'istanza ricevente accetta solo ciò che l'approvazione copre: i dataset dell'elemento, nella propria radice. Esegue lei stessa `zfs receive`, e la sorgente non ha modo di eliminare o riportare indietro nulla lì. Quindi la copia sopravvive a una sorgente di cui qualcuno ha preso il controllo. L'istanza ricevente mantiene la propria conservazione. La sorgente suggerisce una regola soltanto quando la chiede. Una sorgente simile può comunque inviare nuovi snapshot, e col tempo questi fanno uscire quelli più vecchi secondo la regola, come tutti gli altri. Uno snapshot con un nome datato più avanti dell'orologio dell'istanza ricevente non conta per la regola finché quell'ora non è arrivata.
 
 **Revoca accesso** sull'istanza ricevente termina l'approvazione in qualsiasi momento e lo comunica alla sorgente, che mostra allora che l'approvazione è stata ritirata e si ferma. Ciò che l'istanza ricevente già contiene resta lì. Una richiesta rifiutata resta rifiutata. Altri dataset, o una richiesta dopo una revoca, chiedono di nuovo.
 
@@ -179,13 +179,15 @@ La copia sulla destinazione è di sola lettura. Di default non è montata, quind
 
 Entra tutto ciò che l'elemento salva, e anche i volumi sotto di esso, che il backup salta. Un dataset figlio che hai disattivato nell'elemento resta fuori. Tutti i dataset di un'esecuzione vengono da un unico snapshot, come nel backup.
 
+Una copia che un altro BombVault replica su questo server non viene inoltrata, perché sfoltirebbe la cronologia di cui la sua sorgente ha ancora bisogno. Quando l'albero di un elemento ne contiene una, l'esecuzione fallisce per quel dataset e dice perché, finché non lo disattivi nell'elemento. Un elemento che è esso stesso una copia del genere non può replicare affatto. Eliminare un elemento o disattivarne la replica lascia in pace quelle copie e i loro snapshot. Una volta che prendi in carico una copia, come descritto in [Usare la replica](#replica-use), conta come un dataset normale.
+
 ### Per quanto tempo restano gli snapshot {#replica-retention}
 
-Sulla destinazione, una nuova replica conserva 7 snapshot giornalieri e 3 settimanali. Scegli invece **Breve**, **Equilibrato** o **Lungo**, oppure imposta **Valori personalizzati**. Lì vengono rimossi solo gli snapshot chiamati `bombvault-replica-<14 digits>`, e mai il più recente che entrambi i lati condividono.
+Sulla destinazione, una nuova replica conserva 7 snapshot giornalieri e 3 settimanali. Scegli invece **Breve**, **Equilibrato** o **Lungo**, oppure imposta **Valori personalizzati**. Valori personalizzati tutti a zero conservano ogni snapshot, e la scheda lo dice. Lì vengono rimossi solo gli snapshot chiamati `bombvault-replica-<14 digits>`, e mai il più recente che entrambi i lati condividono.
 
 Sulla sorgente, BombVault conserva l'ultimo snapshot della replica, più un bookmark per ogni stato che ha inviato. I bookmark non costano spazio. Il trasferimento successivo parte da essi.
 
-Per conservare di più anche sulla sorgente, imposta **Conserva su questo server** nella scheda Replica, per esempio su 7. Tanti degli snapshot di replica più recenti restano allora su questo server dopo ogni replica, accanto a ciò che conserva la destinazione. 0 o 1 conserva solo l'ultimo. L'ultimo porta un hold, così la base del trasferimento successivo non viene distrutta per sbaglio. I più vecchi non ne hanno. Ogni snapshot trattiene i blocchi cambiati dopo di lui, quindi ognuno che conservi occupa spazio sul pool. Disattivare la replica o passare a un'altra destinazione, o eliminare l'elemento, li rimuove anche da questo server.
+Per conservare di più anche sulla sorgente, imposta **Conserva su questo server** nella scheda Replica, per esempio su 7. Tanti degli snapshot di replica più recenti restano allora su questo server dopo ogni replica, accanto a ciò che conserva la destinazione. 0 o 1 conserva solo l'ultimo. L'ultimo porta un hold, così la base del trasferimento successivo non viene distrutta per sbaglio. I più vecchi non ne hanno. Ogni snapshot trattiene i blocchi cambiati dopo di lui, quindi ognuno che conservi occupa spazio sul pool. Disattivare la replica o passare a un'altra destinazione, o eliminare l'elemento, li rimuove anche da questo server. Gli snapshot di un altro elemento annidato sotto di esso restano. Se l'host non è raggiungibile mentre elimini l'elemento, restano anche gli snapshot e la pagina lo dice. Rimuovili a mano: `zfs release -r bombvault-replica <dataset>@<snapshot>`, poi `zfs destroy`.
 
 I file di uno snapshot conservato si possono leggere o copiare subito, dalla cartella `.zfs/snapshot` dentro il dataset o da un clone, senza toccare il dataset né la replica:
 
@@ -228,12 +230,12 @@ zfs clone backup/bombvault-replica/tower/cache/appdata@bombvault-replica-2026100
 Se la sorgente si guasta, trasforma la copia in un normale dataset scrivibile sulla destinazione:
 
 ```
-zfs inherit -r readonly backup/bombvault-replica/tower/cache/appdata && zfs inherit -r canmount backup/bombvault-replica/tower/cache/appdata && zfs mount -a
+zfs inherit -r readonly backup/bombvault-replica/tower/cache/appdata && zfs list -rH -o name -t filesystem backup/bombvault-replica/tower/cache/appdata | xargs zfs set canmount=on && zfs mount -a
 ```
 
-BombVault smette poi di replicare su quel dataset, finché non avvii una nuova prima esecuzione.
+BombVault smette poi di replicare su quel dataset e sui suoi figli. L'esecuzione successiva fallisce con un motivo, e ciò che hai scritto resta. Lo stesso vale per qualsiasi altra cosa scritta nella copia dopo il suo snapshot più recente: BombVault non riporta mai indietro una copia. Per replicare di nuovo lì, sposta fuori dalla copia ciò che ti serve e distruggila sulla destinazione. L'esecuzione successiva invia allora tutto da capo.
 
-Per riportare uno stato sulla sorgente, premi **Ripristina come nuovo dataset** nel foglio. BombVault invia lo snapshot in un nuovo dataset accanto all'originale, chiamato `<dataset>-bombvault-restore-` più un timestamp. Non scrive mai sopra l'originale.
+Per riportare uno stato sulla sorgente, premi **Ripristina come nuovo dataset** nel foglio. BombVault invia lo snapshot in un nuovo dataset accanto all'originale, chiamato `<dataset>-bombvault-restore-` più un timestamp. Non scrive mai sopra l'originale. Torna anche un dataset figlio perso sulla sorgente, purché la copia contenga ancora quello snapshot. Un figlio che non lo contiene viene lasciato fuori, e l'esecuzione lo dice.
 
 ### Esempio: una replica su un secondo server Unraid {#example-replica}
 

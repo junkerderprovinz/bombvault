@@ -9,20 +9,20 @@ O BombVault pode avisar-te quando um backup falha, quando tem êxito, quando há
 
 O cartão **Notificações** define as regras para todos os canais de uma vez:
 
-- **Notificar**: **Nunca**, **Apenas em caso de falha** ou **Em sucesso e falha**, para todos os canais abaixo.
+- **Notificar**: **Nunca**, **Apenas em caso de falha** ou **Em sucesso e falha**, para todos os canais abaixo. Uma instalação nova começa em **Apenas em caso de falha**, para que um canal que preenchas te avise quando um backup falha.
 - **Resumir execuções agendadas**: uma mensagem por execução agendada, por exemplo *42 de 45 com êxito*, em vez de uma por container ou VM. Um backup que inicias à mão continua a enviar a sua própria mensagem. Um convidado congelado, uma retenção falhada ou um orçamento de crescimento ultrapassado seguem logo, mesmo com os resumos ligados.
 - **Notificar ao atualizar container**: uma mensagem por cada container que **Atualizar contêineres após um backup bem-sucedido** passou para uma imagem mais recente, para poderes ver se continua a funcionar.
-- **Comunicar backups em atraso**: uma vez por dia, às 09:00, o BombVault verifica se algum backup ligado está em atraso, ou seja, mais velho do que o dobro do seu agendamento, e envia uma mensagem por caso. O backup bem-sucedido seguinte limpa-o.
+- **Comunicar backups em atraso**: uma vez por dia, às 09:00, o BombVault verifica se algum backup ligado está em atraso, ou seja, mais velho do que o dobro do seu agendamento, e envia uma mensagem por caso, com o nome da entrada que ficou para trás. O backup bem-sucedido seguinte limpa-o.
 - **Notificações do Unraid**: envia para o sistema de notificações do próprio Unraid, que pode reencaminhar para o Pushover, e-mail ou Discord. Corre pela ligação SSH de **Definições, Integrações, SSH do anfitrião**, por isso essa chave tem de estar autorizada. No TrueNAS e noutros hosts fica desligada.
-- **Resumo semanal**: um resumo por semana com o número de execuções, os novos dados de backup, se as cópias externas estão atuais e as principais falhas. O seu plano é um botão como todos os outros planos, e **Desativado** desliga-o. Vê [Agendamentos](schedules.md#plans).
+- **Resumo semanal**: um resumo por semana com o número de execuções, os novos dados de backup, as secções em atraso, se as cópias externas estão atuais e as principais falhas. O seu plano é um botão como todos os outros planos, e **Desativado** desliga-o. Vê [Agendamentos](schedules.md#plans).
 
 Que anomalias enviam uma mensagem define-se em **Definições, Verificação**, vê [Anomalias](anomalies.md). Um backup adiado envia uma mensagem quando começa a esperar e outra quando a espera termina, não uma por tentativa.
 
-**Enviar teste**, no fundo do cartão, envia uma mensagem de teste por todos os canais que estão ligados, com os valores tal como estão no formulário.
+**Enviar teste**, no fundo do cartão, envia uma mensagem de teste por todos os canais que estão ligados, com os valores tal como estão no formulário, e indica cada um que falhou. Uma verificação do Healthchecks recebe uma entrada no seu registo, o que deixa o estado dela como está.
 
 ## Canais {#channels}
 
-Cada canal tem o seu próprio interruptor no cartão **Canais**, e os seus campos aparecem quando está ligado. Cada canal envia por si, com o seu próprio limite de tempo, por isso um host que nunca responde não atrasa os outros, e uma mensagem que nenhum canal aceitou é tentada outra vez.
+Cada canal tem o seu próprio interruptor no cartão **Canais**, e os seus campos aparecem quando está ligado. Cada canal envia por si, com o seu próprio limite de tempo, por isso um host que nunca responde não atrasa os outros. Um alerta de atraso, de orçamento ou de anomalia que nenhum canal aceitou é tentado outra vez, e o mesmo vale para o resumo semanal. A mensagem de um único backup ou de um resumo é enviada uma só vez.
 
 | Canal | Campos | Notas |
 |---|---|---|
@@ -36,7 +36,9 @@ Os segredos, como o token do Matrix, o token da aplicação do Gotify e a palavr
 
 ## Healthchecks {#healthchecks}
 
-Um serviço como o [Healthchecks.io](https://healthchecks.io) dá o alarme quando o BombVault deixa de se apresentar. Cola o **URL de ping** da verificação, e o BombVault faz-lhe ping durante todo o ciclo de vida de cada backup: no início, depois no sucesso ou com `/fail`. Fá-lo sempre que há um URL definido, seja o que for que **Notificar** diga, por isso a verificação fica verde no sucesso mesmo com mensagens só de falha.
+Um serviço como o [Healthchecks.io](https://healthchecks.io) dá o alarme quando o BombVault deixa de se apresentar. Cola o **URL de ping** da verificação, e o BombVault faz-lhe ping durante todo o ciclo de vida de cada backup: no início, depois no sucesso ou com `/fail`. Fá-lo sempre que há um URL definido, seja o que for que **Notificar** diga, por isso a verificação fica verde no sucesso mesmo com mensagens só de falha. Uma secção sem nenhum sítio para onde fazer backup conta como falhada, por isso a sua verificação fica vermelha em vez de receber um sucesso.
+
+As secções com o mesmo URL partilham uma verificação. Depois de um backup de uma delas falhar, os backups bem-sucedidos das outras também fazem ping a `/fail` e indicam-na, por isso a verificação fica vermelha até essa entrada voltar a ter um backup bem-sucedido ou até confirmares a falha em **Precisa de atenção**.
 
 Uma secção pode fazer ping a um endereço próprio: **Exceção** no cartão junta um, e a linha diz **Todas as outras secções fazem ping a este URL.**
 

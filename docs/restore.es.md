@@ -21,7 +21,7 @@ Toda restauración empieza en la página **Restauración**: elige una sección, 
 
 Un clic en un elemento abre **Restaurar** con su nombre. Pregunta por pasos, y cada paso se puede cambiar antes de empezar:
 
-1. **Copia**: la instantánea recomendada viene preseleccionada. Es la más reciente o, tras una anomalía abierta, la última anterior a ella. Las más antiguas están en la lista, y **Comparar** muestra qué difiere entre dos de ellas.
+1. **Copia**: la instantánea recomendada viene preseleccionada. Es la más reciente o, tras una anomalía abierta, la última anterior a ella. La copia hecha antes de una restauración anterior guarda el estado que esa restauración reemplazó, así que se descarta salvo que no haya otra. Las más antiguas están en la lista, y **Comparar** muestra qué difiere entre dos de ellas.
 2. **Origen**: de dónde salen los archivos, cuando una instantánea está en varios sitios. **Local** es lo más rápido.
 3. **Qué**: **Todo**, o **Archivos individuales**, donde marcas los archivos y carpetas que quieres.
 4. **Dónde**: el destino de la restauración. Las opciones dependen del tipo de elemento:
@@ -29,7 +29,7 @@ Un clic en un elemento abre **Restaurar** con su nombre. Pregunta por pasos, y c
     | Destino | Qué hace |
     |---|---|
     | **Junto al original** | El valor predeterminado. Un contenedor vuelve como un segundo contenedor llamado `<name>-restored` con puertos propios, los discos y la NVRAM de una VM acaban en una carpeta llamada `<folder>-restored`, y un conjunto de carpetas vuelve como `<path>-restored`. No cambia nada en el original. |
-    | **Reemplazar original** | Sobrescribe lo que hay ahora. Con **Antes, copia del estado actual**, que está activado por defecto, BombVault copia primero el estado de hoy para que puedas volver atrás. Si esa copia falla, la restauración no empieza. |
+    | **Reemplazar original** | Sobrescribe lo que hay ahora. Con **Antes, copia del estado actual**, que está activado por defecto, BombVault copia primero el estado de hoy para que puedas volver atrás. Si esa copia falla, la restauración no empieza. Esto también funciona con un contenedor o una VM que ya no está en el servidor: las carpetas que la restauración sobrescribe se copian por separado. |
     | **En una carpeta** | Solo los archivos, para examinarlos. |
     | **Descargar como ZIP** | La unidad flash, para un lápiz nuevo. BombVault nunca escribe en la unidad flash en funcionamiento. |
     | **En un conjunto de datos nuevo** y **Restaurar dentro del conjunto de datos** | Conjuntos de datos ZFS, consulta [Conjuntos de datos ZFS](zfs-datasets.md#restore). |
@@ -40,11 +40,11 @@ Antes de que **Restaurar** se desbloquee, la ventana comprueba que el repositori
 
 La ventana también muestra qué cambia la restauración respecto a lo que hay ahora: archivos nuevos, reemplazados y sin cambios, con la lista si la pides, y los archivos del destino que no están en la copia y se quedan donde están. restic lo calcula como una simulación a partir del tamaño y de la hora de modificación, sin leer los archivos, y un árbol muy grande se detiene a los 30 segundos y lo dice. Para contenedores y VMs compara los ajustes que recrea la restauración con los que están en ejecución: imagen y etiqueta, puertos, nombres de variables y volúmenes, o memoria, vCPUs, discos y red.
 
-Algunas cosas pueden detener una restauración antes de que cambie nada. La IP estática de un contenedor y sus puertos publicados tienen que estar libres, y su red tiene que existir. Una restauración in situ nombra cada otro contenedor cuyo bind mount llega a una carpeta en la que escribe, por ejemplo "this path is also used by nextcloud-db", pero eso solo avisa.
+Algunas cosas pueden detener una restauración antes de que cambie nada. La IP estática de un contenedor y sus puertos publicados tienen que estar libres, y su red tiene que existir. En Unraid, toda restauración in situ rechaza una carpeta que no esté en un pool o recurso compartido montado, porque los archivos acabarían en la memoria y desaparecerían tras un reinicio. Una restauración in situ nombra cada otro contenedor cuyo bind mount llega a una carpeta en la que escribe, por ejemplo "this path is also used by nextcloud-db", pero eso solo avisa.
 
 Algunas opciones aparecen donde se aplican: **Dejar detenido después**, para mirar un contenedor o una VM antes de que vuelva a ejecutarse, y **Restaurar sin GPU ni entorno de ejecución** en un host que carece de la GPU o del entorno de ejecución con que se hizo la copia.
 
-La restauración se ejecuta en segundo plano. Puedes cerrar la ventana, y el progreso también se muestra en **En curso**. Una restauración larga muestra un porcentaje y se puede cancelar, y una restauración cancelada se registra como cancelada, no como fallida.
+La restauración se ejecuta en segundo plano. Puedes cerrar la ventana, y el progreso también se muestra en **En curso**. Una restauración larga muestra un porcentaje y se puede cancelar, y una restauración cancelada se registra como cancelada, no como fallida. Una restauración cancelada mientras el contenedor se detiene, o una que no puede eliminar el contenedor, todavía no ha restaurado nada, así que el contenedor vuelve a arrancar. Un contenedor que toma sus volúmenes de otro con `--volumes-from` los conserva, y la restauración se niega a empezar mientras ese otro contenedor no exista.
 
 ![La ventana de restauración en el paso Qué, con archivos sueltos marcados.](assets/screenshots/restore/window-what-dark.png#only-dark)
 ![La ventana de restauración en el paso Qué, con archivos sueltos marcados.](assets/screenshots/restore/window-what-light.png#only-light)
@@ -66,7 +66,7 @@ Alguien editó anoche el `config.php` de Nextcloud y Nextcloud ya no arranca. La
 
 La ventana termina con **Listo: los archivos están en /mnt/user/restore**. Encuentras el archivo como `/mnt/user/restore/config.php`, sin las carpetas de encima. Compáralo con el roto, cópialo de vuelta en la carpeta appdata y reinicia Nextcloud.
 
-Para devolver el archivo directamente a su sitio, elige **Reemplazar original** en el paso 5. Deja activado **Antes, copia del estado actual**, para que BombVault copie el estado roto antes de escribir, escribe `nextcloud` para confirmar y pulsa **Restaurar**. Nextcloud se detiene mientras el archivo elegido se escribe de vuelta en su sitio, y solo se escriben los archivos que marcaste.
+Para devolver el archivo directamente a su sitio, elige **Reemplazar original** en el paso 5. Deja activado **Antes, copia del estado actual**, para que BombVault copie el estado roto antes de escribir, escribe `nextcloud` para confirmar y pulsa **Restaurar**. Nextcloud se detiene mientras el archivo elegido se escribe de vuelta en su sitio y vuelve a arrancar después, y solo se escriben los archivos que marcaste. Una restauración que falla a medias deja Nextcloud detenido, porque el archivo que lee puede estar a medio escribir, y la ejecución lo indica.
 
 ![La ventana de restauración en Qué pasa, con Reemplazar original elegido.](assets/screenshots/restore/window-replace-dark.png#only-dark)
 ![La ventana de restauración en Qué pasa, con Reemplazar original elegido.](assets/screenshots/restore/window-replace-light.png#only-light)
@@ -75,11 +75,13 @@ Para devolver el archivo directamente a su sitio, elige **Reemplazar original** 
 
 Los **contenedores** se recrean a partir de su definición guardada mediante la API de Docker, con su entrypoint, nombre de host, ajustes de parada, volúmenes y montajes, límites de recursos, controlador de registros, ajustes de DNS y enlaces heredados. Un contenedor vuelve con la imagen con que se ejecutaba cuando se hizo la copia, no con una más nueva descargada después, y una imagen que falta se descarga primero, con las credenciales de **Registros de contenedores** en **Ajustes, Restauración**. Su GPU o entorno de ejecución (`--gpus`, `--runtime=nvidia`) también vuelve. En un host sin ese controlador o entorno de ejecución la restauración lo dice y ofrece **Restaurar sin GPU ni entorno de ejecución**. Un enlace a un contenedor que falta, o que está detenido mientras arranca el restaurado, se deja fuera, y el historial de ejecuciones lo dice. Una restauración que falla después de eliminar el contenedor lo devuelve, detenido.
 
+Una copia puede contener carpetas que el contenedor ya no tiene seleccionadas, por ejemplo una más antigua hecha antes de que desapareciera una carpeta. Una carpeta que ya no existe o que está vacía vuelve. Una que ahora contiene archivos se queda como está, porque puede que la desmarcaras a propósito, y la comprobación previa a la restauración y el historial de ejecuciones la nombran. Recupérala con **Archivos individuales** o **En una carpeta**.
+
 A las **VMs** se les vuelve a definir el XML por SSH y se les reconectan los discos y la NVRAM UEFI, incluso después de eliminar la VM. Consulta [Copias de VMs](vm-backup-ssh-setup.md) para las VMs con instantáneas de Unraid y discos en zvols.
 
-Los **conjuntos de carpetas** vuelven con su propietario, modos y marcas de tiempo tal como los guarda restic.
+Los **conjuntos de carpetas** vuelven con su propietario, modos y marcas de tiempo tal como los guarda restic. Donde el destino solo rechaza el propietario, como hace `/mnt/user`, la ejecución termina con una nota que lo indica. BombVault compara entonces los archivos con la copia, y un archivo que no llegó hace fallar la restauración.
 
-La **unidad flash** nunca toca el `/boot` real. La restauración es una descarga llamada `flash-<id>.zip`, lista para soltar en el USB Creator de Unraid. La ventana también lista los plugins de cada copia del flash con su versión y tamaño, y puede devolver uno solo al flash en funcionamiento: su archivo `.plg`, su carpeta bajo `config/plugins` y los archivos de paquete que contiene la copia. Unraid lo instala en el siguiente arranque, o enseguida en **Plugins, Install Plugin**.
+La **unidad flash** nunca toca el `/boot` real. La restauración es una descarga llamada `flash-<id>.zip`, lista para soltar en el USB Creator de Unraid. El ZIP contiene `APP_KEY`, así que descargarlo requiere una contraseña de acceso e iniciar sesión en la instancia. La ventana también lista los plugins de cada copia del flash con su versión y tamaño, y puede devolver uno solo al flash en funcionamiento: su archivo `.plg`, su carpeta bajo `config/plugins` y los archivos de paquete que contiene la copia. Unraid lo instala en el siguiente arranque, o enseguida en **Plugins, Install Plugin**.
 
 Los **conjuntos de datos ZFS** tienen destinos propios y conservan sus propiedades ZFS, consulta [Restaurar](zfs-datasets.md#restore).
 
@@ -102,6 +104,10 @@ Cada elemento se comprueba como una restauración individual, y luego se ejecuta
 ## Restaurar un stack {#stacks}
 
 Un clic en un stack de la tarjeta **Stacks** abre **Restaurar stack**. Restaura todos los miembros a la vez desde su última copia, y con **Iniciar en orden de dependencias tras la restauración** los inicia en su orden `depends_on`: primero las bases de datos y cachés, luego la app. Cuando falta la carpeta del proyecto de un miembro en el lugar que elegiste, la ventana ofrece en su lugar el estado de Local.
+
+BombVault comprueba primero los miembros y la carpeta del proyecto, y una restauración que no podría salir bien no cambia nada. Si no, detiene los miembros en marcha, las apps antes que sus bases de datos, luego escribe la carpeta del proyecto y después restaura los miembros. Si la carpeta del proyecto no vuelve, los miembros se restauran igualmente pero se quedan detenidos, porque la carpeta puede estar a medio escribir y es donde suelen estar los bind mounts de un miembro. La ejecución de cada miembro lo indica.
+
+Una base de datos que solo tiene volcados de base de datos y ninguna copia de archivos, y cuyo contenedor y volumen con nombre ya no existen, vuelve sin sus datos. La comprobación lo avisa antes de la restauración. Se queda detenida, igual que los contenedores que dependen de ella, para que ninguna app ejecute su configuración inicial sobre una base de datos vacía. Arráncala, importa un volcado y arranca los demás. Consulta [Volcados de bases de datos](backups.md#database-dumps).
 
 ## Otras fuentes {#other-sources}
 

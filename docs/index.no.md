@@ -23,7 +23,7 @@ Hver container, VM, mappesett, flashen, hvert ZFS-datasett og BombVaults egne in
 | **Kontainere** | Appdata-katalogen pluss container-definisjonen (image, miljøvariabler, porter, etiketter, volumer). |
 | **VM-er** | VM-diskimage(r), XML-definisjonen og UEFI-NVRAM, sikkerhetskopiert over SSH (ingen libvirt-montering). |
 | **Flash** | Hele USB-flashen (`/boot`): OS, lisens, array-config, delinger, nettverks- og plugin-config. |
-| **Auto-sikkerhetskopi** | BombVaults egen `/config`: innstillingsdatabasen, påloggingene til målene og libvirt-SSH-nøkkelparet. |
+| **Auto-sikkerhetskopi** | BombVaults egen `/config`: innstillingsdatabasen, påloggingene til målene, libvirt-SSH-nøkkelparet, nøkkelen og de festede vertsnøklene til ZFS-serverne og sertifikatene. |
 | **Mapper** | En hvilken som helst mappe på serveren som mappesett, hver med valgfrie ekskluderingsmønstre. |
 | **ZFS-datasett** | Et datasett med alle datasett under det, lest fra ett ZFS-øyeblikksbilde og lagret som en mappe. Se [ZFS-datasett](zfs-datasets.md). |
 
@@ -102,4 +102,4 @@ Navnet og merkevaren er ikke lisensiert. AGPL dekker bare kildekoden: "BombVault
 - **Feilrapporter:** [github.com/junkerderprovinz/bombvault/issues](https://github.com/junkerderprovinz/bombvault/issues)
 
 !!! warning "Root-ekvivalent kontroll over hosten"
-    Gjennom Docker-socketen kan BombVault stoppe, fjerne og gjenskape containere og lese/skrive appdata, og for VM-sikkerhetskopiering logger den seg inn på hosten over SSH for å kjøre `virsh`. Alle som når webgrensesnittet, har i praksis root på hosten. Kjør BombVault kun på et betrodd, ikke-eksponert nettverk, og sett et påloggingspassord under **Innstillinger, Sikkerhet**. Gjenopprettingssettet, nøkkeldeponeringer og sletting av sikkerhetskopiene på et mål krever det. Se [Konfigurasjon](configuration.md#security-model) for hele sikkerhetsmodellen.
+    Gjennom Docker-socketen kan BombVault stoppe, fjerne og gjenskape containere og lese/skrive appdata, og for VM-sikkerhetskopiering logger den seg inn på hosten over SSH for å kjøre `virsh`. Alle som når webgrensesnittet, har i praksis root på hosten. Kjør BombVault kun på et betrodd, ikke-eksponert nettverk, og sett et påloggingspassord under **Innstillinger, Sikkerhet**. Gjenopprettingssettet, nøkkeldeponeringer, flash-ZIP-filen, eksport av en flash- eller auto-sikkerhetskopi og sletting av sikkerhetskopiene på et mål krever det. Se [Konfigurasjon](configuration.md#security-model) for hele sikkerhetsmodellen.

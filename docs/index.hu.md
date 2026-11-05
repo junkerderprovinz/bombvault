@@ -23,7 +23,7 @@ Minden konténer, VM, mappakészlet, a flash, minden ZFS-adatkészlet és a Bomb
 | **Konténerek** | Az appdata könyvtár, valamint a konténer definíciója (image, környezeti változók, portok, címkék, kötetek). |
 | **VM-ek** | A VM lemezképe(i), az XML-definíció és az UEFI NVRAM, SSH-n keresztül mentve (nincs libvirt-csatolás). |
 | **Flash** | A teljes USB flash (`/boot`): operációs rendszer, licenc, tömbkonfiguráció, megosztások, hálózati és bővítmény-konfiguráció. |
-| **Önmentés** | A BombVault saját `/config` mappája: a beállítás-adatbázisa, a mentési célok bejelentkezései és a libvirt SSH-kulcspár. |
+| **Önmentés** | A BombVault saját `/config` mappája: a beállítás-adatbázisa, a mentési célok bejelentkezései, a libvirt SSH-kulcspár, a ZFS-szerverek kulcsa és rögzített hosztkulcsai, valamint a tanúsítványok. |
 | **Mappák** | A szerver bármely mappája mappakészletként, mindegyik opcionális kizárási mintákkal. |
 | **ZFS-adatkészletek** | Egy adatkészlet az összes alatta lévővel, egy ZFS pillanatképből olvasva és mappaként tárolva. Lásd: [ZFS-adatkészletek](zfs-datasets.md). |
 
@@ -102,4 +102,4 @@ A név és az arculat nem tartozik a licenc alá. Az AGPL csak a forráskódra v
 - **Hibajegyek:** [github.com/junkerderprovinz/bombvault/issues](https://github.com/junkerderprovinz/bombvault/issues)
 
 !!! warning "Root-szintű vezérlés a hoszt felett"
-    A Docker socketen keresztül a BombVault le tud állítani, el tud távolítani és újra létre tud hozni konténereket, valamint olvasni és írni tudja az appdatát, a VM-mentéshez pedig SSH-n keresztül bejelentkezik a hosztra, hogy futtassa a `virsh` parancsot. Aki eléri a webes felületét, annak gyakorlatilag root-jogosultsága van a hoszton. A BombVaultot csak megbízható, nem kitett hálózaton futtasd, és állíts be bejelentkezési jelszót a **Beállítások, Biztonság** alatt. A helyreállítási csomaghoz, a kulcsletétekhez és egy mentési cél mentéseinek törléséhez kell egy. A teljes biztonsági modellhez lásd: [Konfiguráció](configuration.md#security-model).
+    A Docker socketen keresztül a BombVault le tud állítani, el tud távolítani és újra létre tud hozni konténereket, valamint olvasni és írni tudja az appdatát, a VM-mentéshez pedig SSH-n keresztül bejelentkezik a hosztra, hogy futtassa a `virsh` parancsot. Aki eléri a webes felületét, annak gyakorlatilag root-jogosultsága van a hoszton. A BombVaultot csak megbízható, nem kitett hálózaton futtasd, és állíts be bejelentkezési jelszót a **Beállítások, Biztonság** alatt. A helyreállítási csomaghoz, a kulcsletétekhez, a flash ZIP-hez, egy flash-mentés vagy önmentés exportálásához és egy mentési cél mentéseinek törléséhez kell egy. A teljes biztonsági modellhez lásd: [Konfiguráció](configuration.md#security-model).

@@ -40,13 +40,13 @@ Jeder eingeschaltete Bereich hat eine Zeile mit vier Prüfungen:
 | Prüfung | Sie wird grün, wenn | Andere Worte, die du sehen kannst |
 |---|---|---|
 | **Lokal** | die letzte Sicherung aktuell ist | noch keine Sicherung, kein Zeitplan, letzter Lauf fehlgeschlagen, Sicherung überfällig, nicht jeder Eintrag ist geschützt, Sicherung bald fällig |
-| **Off-site** | die letzte Kopie außer Haus aktuell ist | keine Off-site-Kopie, Kopie läuft, Kopie überfällig, Kopie pausiert, noch keine Kopie, Replik fehlgeschlagen |
+| **Off-site** | die letzte Kopie außer Haus aktuell ist | keine Off-site-Kopie, Kopie läuft, Kopie überfällig, wartet auf deine Entscheidung, noch keine Kopie, Replik fehlgeschlagen |
 | **Löschschutz** | ein Manipulationstest bewiesen hat, dass die Gegenseite Löschen verweigert | keiner, keiner und Risiko akzeptiert, noch nicht bewiesen, Test fehlgeschlagen, nicht bewiesen, weil die Prüfung aus ist |
 | **Probe-Wiederherstellung** | eine Wiederherstellung aus der Off-site-Kopie bestanden hat | nie gelaufen, läuft, fehlgeschlagen, überfällig, nur manuell, für diesen Bereich nicht möglich |
 
 Ein Bereich ist nur auf Grundlage geprüfter Tatsachen grün. Eine Kopie auf diesem Server zählt nicht als Off-site, und ein Speicherort, den du mit **Ohne Löschschutz akzeptieren** markiert hast, zeigt einen grauen Ring statt eines gelben Punkts, sodass die Farbe des Bereichs seinen anderen Prüfungen folgt.
 
-Ein geplanter Bereich zeigt **Noch keine Sicherung** und bleibt neutral, bis sein erster Lauf fällig ist. Danach zeigt er **Überfällig** und warnt einmal. Ein Bereich, in dem es nichts zu sichern gibt, weil kein Zeitplan einen seiner Einträge erreicht, zeigt **Kein Zeitplan** und ist nie überfällig.
+Ein geplanter Bereich zeigt **Noch keine Sicherung** und bleibt neutral, bis sein erster Lauf fällig ist, gerechnet ab dem Zeitpunkt, an dem sein Plan zuletzt gesetzt wurde. Danach zeigt er **Überfällig** und warnt einmal. **Überfällig** richtet sich nach dem Eintrag, der am weitesten hinter seinem eigenen Plan zurückliegt, ein Nachbar, der läuft, verdeckt also keinen, der stehen geblieben ist. Ein Eintrag, dessen Container weg ist oder den kein Zeitplan erreicht, zählt nicht. Ein Eintrag mit einem eigenen Wochenplan wird nicht am Tagesplan des Bereichs gemessen. Ein Bereich, in dem es nichts zu sichern gibt, weil kein Zeitplan einen seiner Einträge erreicht, zeigt **Kein Zeitplan** und ist nie überfällig.
 
 Ein Klick auf einen Bereich öffnet sein Fenster mit jeder Prüfung im Klartext, den Einträgen, die er zählt, und **Probe-Wiederherstellung starten** oder **Probe-Wiederherstellung erneut starten**. Dort steht auch **Aufräumregel gesetzt** oder **Keine Aufräumregel gesetzt**, und die Aufbewahrungsregel des eigenen Ordners eines Bereichs zählt genauso wie seine Off-site-Regeln.
 

@@ -40,13 +40,13 @@ Hvert aktiveret område har en række med fire kontroller:
 | Kontrol | Den bliver grøn, når | Andre ord, du kan se |
 |---|---|---|
 | **Lokal** | den sidste sikkerhedskopi er aktuel | ingen sikkerhedskopi endnu, ingen tidsplan, sidste kørsel mislykkedes, sikkerhedskopi overskredet, ikke alle poster er beskyttet, sikkerhedskopi snart forfalden |
-| **Off-site** | den sidste kopi uden for huset er aktuel | ingen off-site-kopi, kopi kører, kopi overskredet, kopi sat på pause, ingen kopi endnu, replika mislykkedes |
+| **Off-site** | den sidste kopi uden for huset er aktuel | ingen off-site-kopi, kopi kører, kopi overskredet, venter på din beslutning, ingen kopi endnu, replika mislykkedes |
 | **Beskyttelse mod sletning** | en manipulationstest har vist, at den fjerne side afviser sletninger | ingen, ingen og risiko accepteret, ikke bevist endnu, test mislykkedes, ikke bevist, fordi dens kontrol er slået fra |
 | **Testgendannelse** | en gendannelse fra off-site-kopien er bestået | aldrig kørt, kører, mislykkedes, overskredet, kun manuelt, ikke mulig for dette område |
 
 Et område er kun grønt på bekræftede kendsgerninger. En kopi på denne server tæller ikke som off-site, og en destination, du har markeret **Accepter uden beskyttelse mod sletning**, viser en grå ring i stedet for en gul prik, så områdets farve følger dets øvrige kontroller.
 
-Et planlagt område viser **Endnu ingen sikkerhedskopi** og forbliver neutralt, indtil tidspunktet for dets første kørsel er nået. Derefter står der **Forfalden**, og det advarer én gang. Et område uden noget at sikkerhedskopiere, fordi ingen tidsplan når nogen af dets poster, viser **Ikke planlagt** og er aldrig forfaldent.
+Et planlagt område viser **Endnu ingen sikkerhedskopi** og forbliver neutralt, indtil tidspunktet for dets første kørsel er nået, regnet fra da dets plan sidst blev sat. Derefter står der **Forfalden**, og det advarer én gang. **Forfalden** går efter den post, der er kommet længst bagud i forhold til sin egen plan, så en nabo, der kører, skjuler ikke en, der er gået i stå. En post, hvis container er væk, eller som ingen tidsplan når, tæller ikke med. En post med sin egen ugentlige plan bliver ikke målt mod områdets daglige plan. Et område uden noget at sikkerhedskopiere, fordi ingen tidsplan når nogen af dets poster, viser **Ikke planlagt** og er aldrig forfaldent.
 
 Et klik på et område åbner dets vindue med hver kontrol udskrevet, de poster, den tæller, og **Start testgendannelse** eller **Kør testgendannelse igen**. Det viser også **Beskæringsregel angivet** eller **Ingen beskæringsregel**, og behold-reglen for et områdes egen mappe tæller lige så vel som dets off-site-regler.
 

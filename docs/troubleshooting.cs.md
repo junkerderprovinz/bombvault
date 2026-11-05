@@ -38,7 +38,7 @@ Záloha VM komunikuje s libvirt přes SSH, nikdy přes připojení.
 
 ## Živý snímek VM neproběhl {#a-live-vm-snapshot-did-not-run}
 
-Živé snímky potřebují qemu guest agent nainstalovaný ve VM a disk na `/mnt/cache` (nebo `/mnt/diskX`), nikoli `/mnt/user`. Na vypnuté VM se živý automaticky vrátí k šetrnému. Šetrná záloha VM vypne, zálohuje disky, poté ji znovu spustí, takže je vždy konzistentní. Čeká až deset minut, než se host vypne, a nikdy ho nevypíná násilím, takže host s Windows, který zrovna instaluje aktualizace, se nepřeruší v půlce. Host, který potom stále běží, zůstane nedotčen a tato záloha selže s uvedením důvodu.
+Živé snímky potřebují disk na `/mnt/cache` (nebo `/mnt/diskX`), nikoli `/mnt/user`. S qemu guest agentem ve VM je snímek klidný a bez něj je crash-konzistentní. Na vypnuté VM se živý automaticky vrátí k šetrnému. Šetrná záloha VM vypne, zálohuje disky, poté ji znovu spustí, takže je vždy konzistentní. Čeká až deset minut, než se host vypne, a nikdy ho nevypíná násilím, takže host s Windows, který zrovna instaluje aktualizace, se nepřeruší v půlce. Host, který potom stále běží, zůstane nedotčen a tato záloha selže s uvedením důvodu.
 
 ## Záloha selhala s "repository is already locked" {#a-backup-failed-with-repository-is-already-locked}
 
@@ -127,6 +127,10 @@ Drží je otevřená kritická anomálie: zdroj položky je téměř prázdný, 
 
 Stejná příčina: čištění nechá staré zálohy položky s takovou anomálií na pokoji a uvede ji ve své zprávě. Všechno ostatní se vyčistí jako obvykle.
 
+## Záloha selže s "on no mounted pool or share" {#no-mounted-pool}
+
+Na Unraidu žije `/mnt` v paměti, takže složka tam, na které není připojený žádný pool, při dalším restartu zmizí, a jakmile je pool zpět, zakryje ji. BombVault do ní odmítne zapsat zálohu nebo ZIP flashky, i když v té složce už leží repozitář z dřívějšího zápisu. Připoj pool a spusť zálohu znovu.
+
 ## Import historie hlásí, že repozitář nešlo přečíst {#history-import-says-a-repository-could-not-be-read}
 
 Po aktualizaci BombVault jednou načte velikosti dřívějších záloh z každého repozitáře. Repozitář, který v tu chvíli nebyl dostupný, například nefunkční cíl mimo lokalitu nebo nepřipojená sdílená složka, je započítán na kartě **Anomálie** v **Nastavení, Ověření** a zkouší se znovu jednou denně. Jeho položky se mezitím učí z nových záloh.
@@ -177,15 +181,15 @@ Cíl drží snímky novější, než je ten nejnovější, který sdílí s tím
 
 BombVault sleduje řetěz podkladových souborů každého disku a zálohuje každý soubor v něm. Řetěz, který nejde sledovat až do konce, zálohu raději shodí, než aby vynechal část disku, a zpráva jmenuje soubor. Zkontroluj, že soubor existuje pod `/mnt` a že snapshot je pořád vypsán ve VM Manageru. Soubor mimo Host Data nejde přečíst vůbec. Viz [VM se snapshoty Unraidu](vm-backup-ssh-setup.md#unraid-snapshots).
 
-## Kopie mimo lokalitu jsou po opětovném sestavení pozastavené {#copies-paused}
+## Kopie mimo lokalitu po opětovném sestavení čekají na tvé rozhodnutí {#copies-paused}
 
-Po **Objevit zálohy** nebo po Nouzovém průvodci bez obnovených nastavení kopie mimo lokalitu každé znovu sestavené sekce čekají, protože BombVault už neví, které položky jsi vynechal. Přehled to říká. Stiskni **Potvrdit výchozí nastavení** v **Cíle podle sekcí**, zkontroluj náhled a vynech, co má zůstat venku. Import souboru s nastavením pozastavení neukončí. Viz [Po opětovném sestavení](offsite-recovery.md#after-a-rebuild).
+Po **Objevit zálohy** nebo po Nouzovém průvodci bez obnovených nastavení, nebo když sekce najde vlastní zálohy z doby před touto databází, čekají kopie mimo lokalitu této sekce, protože BombVault už neví, které položky jsi vynechal. **Vyžaduje pozornost** a stránka cíle se na to ptají. Stiskni **Převzít pro tento server**, aby kopie pokračovaly, nebo **Nejdřív zkontrolovat pravidla**, abys předtím prohlédl pravidla sekce. Import souboru s nastavením za tebe nerozhodne. Viz [Po opětovném sestavení](offsite-recovery.md#after-a-rebuild).
 
 ## Oznámení nedorazí {#notifications-do-not-arrive}
 
 Začni s **Odeslat test** v **Nastavení, Oznámení**. Řádek pod kartou říká, co se stalo.
 
-- **Neodchází vůbec nic.** Zkontroluj **Oznámit**. S **Nikdy** nic neodchází a s **Pouze při selhání** zůstává dobrý běh potichu. Se zapnutým **Shrnout naplánované běhy** pošle naplánovaný běh na svém konci jeden souhrn.
+- **Neodchází vůbec nic.** Zkontroluj **Oznámit**. S **Nikdy** neodejde žádná zpráva, jen pingy URL Healthchecks, a s **Pouze při selhání** zůstává dobrý běh potichu. Se zapnutým **Shrnout naplánované běhy** pošle naplánovaný běh na svém konci jeden souhrn.
 - **Nová adresa.** Po změně serveru u Matrixu, Gotify nebo e-mailu se pole znovu zeptá na token nebo heslo a nová adresa se uloží, až ho napíšeš. BombVault staré tajemství na nové místo neposílá.
 - **Gotify** říká, že server odmítl token aplikace: zkopíruj ho znovu z aplikace v Gotify. **URL serveru** je základní adresa, bez `/message`.
 - **Webhook:** zkontroluj, že **Formát Webhook** odpovídá službě. Adresa Discordu potřebuje **Discord** a ntfy potřebuje **ntfy**.

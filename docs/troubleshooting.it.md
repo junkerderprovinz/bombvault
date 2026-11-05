@@ -38,7 +38,7 @@ Il backup delle VM parla con libvirt via SSH, mai tramite un mount.
 
 ## Uno snapshot a caldo di una VM non è partito {#a-live-vm-snapshot-did-not-run}
 
-Gli snapshot a caldo richiedono il guest agent di qemu installato nella VM e il disco su `/mnt/cache` (o `/mnt/diskX`), non su `/mnt/user`. Su una VM spenta, il metodo a caldo ripiega automaticamente su quello ordinato. Un backup ordinato spegne la VM, salva i dischi e poi la riavvia, quindi è sempre coerente. Aspetta fino a dieci minuti che il guest si spenga e non lo forza mai, così un guest Windows che sta installando aggiornamenti non viene interrotto a metà. Un guest che gira ancora dopo quel tempo viene lasciato in pace, e quel backup fallisce con il motivo.
+Gli snapshot a caldo richiedono il disco su `/mnt/cache` (o `/mnt/diskX`), non su `/mnt/user`. Con il guest agent di qemu nella VM lo snapshot è quiescente, e senza è coerente come dopo un crash. Su una VM spenta, il metodo a caldo ripiega automaticamente su quello ordinato. Un backup ordinato spegne la VM, salva i dischi e poi la riavvia, quindi è sempre coerente. Aspetta fino a dieci minuti che il guest si spenga e non lo forza mai, così un guest Windows che sta installando aggiornamenti non viene interrotto a metà. Un guest che gira ancora dopo quel tempo viene lasciato in pace, e quel backup fallisce con il motivo.
 
 ## Un backup è fallito con "repository is already locked" {#a-backup-failed-with-repository-is-already-locked}
 
@@ -127,6 +127,10 @@ Li tiene fermi un'anomalia critica aperta: la sorgente dell'elemento è quasi vu
 
 Stessa causa: la potatura lascia in pace i backup vecchi di un elemento con un'anomalia simile e nomina l'elemento nel suo messaggio. Tutto il resto viene potato come al solito.
 
+## Un backup fallisce con "on no mounted pool or share" {#no-mounted-pool}
+
+Su Unraid `/mnt` vive in memoria, quindi una cartella lì dentro senza un pool montato sopra sparisce al riavvio successivo e resta nascosta quando il pool torna. BombVault si rifiuta di scriverci un backup o uno ZIP della flash, anche quando in quella cartella c'è già un repository di una scrittura precedente. Monta il pool ed esegui di nuovo il backup.
+
 ## L'importazione della cronologia dice che un repository non si è potuto leggere {#history-import-says-a-repository-could-not-be-read}
 
 Dopo l'aggiornamento BombVault legge una volta da ogni repository le dimensioni dei backup precedenti. Un repository che in quel momento non ha potuto raggiungere, come una destinazione off-site spenta o una condivisione non montata, viene contato nella scheda **Anomalie** in **Impostazioni, Verifica** e riprovato una volta al giorno. Nel frattempo i suoi elementi imparano dai nuovi backup.
@@ -177,15 +181,15 @@ La destinazione contiene snapshot più recenti del più recente che condivide co
 
 BombVault segue la catena di backing di ogni disco e salva ogni file al suo interno. Una catena che non si può seguire fino in fondo fa fallire il backup invece di lasciare fuori parte del disco, e il messaggio nomina il file. Controlla che il file esista sotto `/mnt` e che lo snapshot sia ancora elencato nel VM Manager. Un file fuori da Host Data non si può leggere affatto. Vedi [VM con snapshot Unraid](vm-backup-ssh-setup.md#unraid-snapshots).
 
-## Le copie off-site sono in pausa dopo una ricostruzione {#copies-paused}
+## Le copie off-site attendono la tua decisione dopo una ricostruzione {#copies-paused}
 
-Dopo **Scopri backup** o la Procedura guidata di emergenza senza impostazioni ripristinate, le copie off-site di ogni sezione ricostruita aspettano, perché BombVault non sa più quali elementi hai lasciato fuori. La panoramica lo dice. Premi **Conferma valore predefinito** in **Destinazioni per sezione**, controlla l'anteprima e lascia fuori ciò che deve restare fuori. Importare un file di impostazioni non termina la pausa. Vedi [Dopo una ricostruzione](offsite-recovery.md#after-a-rebuild).
+Dopo **Scopri backup** o la Procedura guidata di emergenza senza impostazioni ripristinate, o quando una sezione trova backup propri di prima di questo database, le copie off-site di quella sezione aspettano, perché BombVault non sa più quali elementi hai lasciato fuori. **Richiede attenzione** e la pagina della destinazione lo chiedono. Premi **Adottali per questo server** per proseguire, o **Prima controlla le regole** per guardare le regole della sezione prima di farlo. Importare un file di impostazioni non prende la decisione al posto tuo. Vedi [Dopo una ricostruzione](offsite-recovery.md#after-a-rebuild).
 
 ## Le notifiche non arrivano {#notifications-do-not-arrive}
 
 Comincia con **Invia test** in **Impostazioni, Notifiche**. La riga sotto la scheda dice cosa è successo.
 
-- **Non viene inviato proprio nulla.** Controlla **Notifica**. Con **Mai** non esce nulla, e con **Solo in caso di errore** un'esecuzione riuscita resta silenziosa. Con **Riepiloga le esecuzioni pianificate** attivo, un'esecuzione pianificata invia un riepilogo alla fine.
+- **Non viene inviato proprio nulla.** Controlla **Notifica**. Con **Mai** non esce nessun messaggio, solo i ping di un URL di Healthchecks, e con **Solo in caso di errore** un'esecuzione riuscita resta silenziosa. Con **Riepiloga le esecuzioni pianificate** attivo, un'esecuzione pianificata invia un riepilogo alla fine.
 - **Un nuovo indirizzo.** Dopo che cambi il server di Matrix, Gotify o email, il campo chiede di nuovo il token o la password, e il nuovo indirizzo viene salvato solo quando li digiti. BombVault non invia il vecchio segreto a un posto nuovo.
 - **Gotify** dice che il server ha rifiutato il token dell'applicazione: copialo di nuovo dall'applicazione in Gotify. L'**URL del server** è l'indirizzo di base, senza `/message`.
 - **Webhook:** controlla che il **Formato del Webhook** corrisponda al servizio. Un indirizzo Discord richiede **Discord**, e ntfy richiede **ntfy**.

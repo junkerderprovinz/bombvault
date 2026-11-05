@@ -40,13 +40,13 @@ Každá zapnutá sekce má řádek se čtyřmi kontrolami:
 | Kontrola | Zezelená, když | Jiná slova, která můžeš vidět |
 |---|---|---|
 | **Místní** | poslední záloha je aktuální | zatím žádná záloha, žádný plán, poslední běh selhal, záloha je po termínu, není chráněna každá položka, záloha brzy přijde na řadu |
-| **Mimo lokalitu** | poslední kopie mimo lokalitu je aktuální | žádná kopie mimo lokalitu, kopie běží, kopie je po termínu, kopie je pozastavená, zatím žádná kopie, replika selhala |
+| **Mimo lokalitu** | poslední kopie mimo lokalitu je aktuální | žádná kopie mimo lokalitu, kopie běží, kopie je po termínu, čeká na tvé rozhodnutí, zatím žádná kopie, replika selhala |
 | **Ochrana proti smazání** | zkouška odolnosti prokázala, že druhá strana mazání odmítá | žádná, žádná a riziko přijato, zatím neprokázáno, zkouška selhala, neprokázáno, protože její kontrola je vypnutá |
 | **Zkušební obnova** | obnova z kopie mimo lokalitu prošla | nikdy nespuštěna, běží, selhala, po termínu, jen ručně, pro tuto sekci není možná |
 
 Sekce je zelená jen na základě ověřených faktů. Kopie na tomto serveru se za kopii mimo lokalitu nepočítá a cíl, který jsi označil **Přijmout bez ochrany proti smazání**, ukazuje šedý kruh místo oranžové tečky, takže barvu sekce určují její ostatní kontroly.
 
-Naplánovaná sekce ukazuje **Zatím žádná záloha** a zůstává neutrální, dokud nepřijde termín jejího prvního běhu. Potom ukazuje **Po termínu** a jednou upozorní. Sekce, ve které není co zálohovat, protože žádný plán nezasahuje žádnou z jejích položek, ukazuje **Neplánováno** a nikdy není po termínu.
+Naplánovaná sekce ukazuje **Zatím žádná záloha** a zůstává neutrální, dokud nepřijde termín jejího prvního běhu, počítáno od chvíle, kdy byl její plán naposledy nastaven. Potom ukazuje **Po termínu** a jednou upozorní. **Po termínu** se řídí položkou, která se nejvíc opozdila za vlastním plánem, takže soused, který běží, neskryje tu, která se zastavila. Položka, jejíž kontejner zmizel nebo kterou nezasahuje žádný plán, se nepočítá. Položka s vlastním týdenním plánem se neměří denním plánem sekce. Sekce, ve které není co zálohovat, protože žádný plán nezasahuje žádnou z jejích položek, ukazuje **Neplánováno** a nikdy není po termínu.
 
 Klik na sekci otevře její okno se všemi kontrolami rozepsanými, s položkami, které počítá, a s tlačítkem **Spustit zkušební obnovu** nebo **Spustit zkušební obnovu znovu**. Uvádí také **Pravidlo pro vyčištění je nastaveno** nebo **Žádné pravidlo pro vyčištění** a pravidlo uchovávání vlastní složky sekce se počítá stejně jako její pravidla mimo lokalitu.
 

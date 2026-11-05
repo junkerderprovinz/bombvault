@@ -27,7 +27,7 @@ Karta **Tydzień** rysuje każdy zaplanowany przebieg od poniedziałku do niedzi
 
 **Pełna kopia** to domyślny plan dla wszystkiego. Ustawia ją **Kiedy działają kopie**: jeden przebieg, który kopiuje po kolei każdą sekcję, kontenery, maszyny wirtualne, flash, foldery, zbiory danych ZFS, a autokopię na końcu. Linia pod spodem mówi, które sekcje obejmuje. **Wyłączone** wyłącza ją, a wtedy działa tylko to, co ma własny plan.
 
-- **Nadrabiaj pominięte kopie zapasowe po starcie**: gdy serwer był wyłączony w zaplanowanej porze, BombVault wykonuje tę kopię mniej więcej dwie minuty po starcie.
+- **Nadrabiaj pominięte kopie zapasowe po starcie**: gdy serwer był wyłączony w zaplanowanej porze, BombVault wykonuje tę kopię mniej więcej dwie minuty po starcie. Własny plan elementu i plan poza siedzibą czekają na swoją następną zaplanowaną porę, tak samo jak plan, który nigdy się nie powiódł.
 - **Polecenia przed i po**: **Polecenie przed pełną kopią** działa na serwerze przez `sh -c`, zanim przebieg ruszy, na przykład skrypt zatrzymujący usługę. Jeśli się nie powiedzie, pełna kopia i tak się wykona. **Polecenie po pełnej kopii** działa raz, gdy każda sekcja została spróbowana, nawet jeśli któraś zawiodła, co pasuje do pingu potwierdzającego, że cały serwer jest chroniony. Polecenia dla pojedynczego kontenera są na jego stronie.
 
 **Utwórz kopię wszystkiego teraz** na stronie Kopie zapasowe uruchamia ten sam przebieg ręcznie, dla każdej włączonej sekcji.
@@ -58,7 +58,7 @@ Kopia ląduje pod tymi samymi ścieżkami i tagami co kopia zrobiona przy zatrzy
 
 ## Aktualizacje po kopii {#updates}
 
-- **Aktualizuj kontenery po udanej kopii zapasowej** pobiera nowszy obraz dopiero po zakończeniu poprzedzającej go kopii, więc świeży punkt przywracania zawsze istnieje wcześniej. Jest domyślnie wyłączone, a pojedynczy kontener można ustawić inaczej na jego stronie w **Aktualizuj po udanej kopii zapasowej**.
+- **Aktualizuj kontenery po udanej kopii zapasowej** pobiera nowszy obraz dopiero po zakończeniu poprzedzającej go kopii, więc świeży punkt przywracania zawsze istnieje wcześniej. Jest domyślnie wyłączone, a pojedynczy kontener można ustawić inaczej na jego stronie w **Aktualizuj po udanej kopii zapasowej**. Na nowy obraz przechodzi tylko to, co sam ustawiłeś: zmienne, etykiety, polecenie, użytkownik i healthcheck, które nadal wyglądają jak w starym obrazie, idą za nowym. Jeśli nowego obrazu nie da się utworzyć ani uruchomić, kontener wraca na obraz, na którym działał, aktualizacja jest pokazana jako nieudana, a następna kopia próbuje ponownie. Kontener, który przez to nie działa, jest wymieniony w przebiegu kopii i w powiadomieniu.
 - **Usuń stary obraz po aktualizacji** usuwa obraz, który kontener opuścił. Obraz bazowy, który współdzielą inne kontenery, nigdy nie jest usuwany.
 - **Odśwież status aktualizacji Unraid po zaktualizowaniu kontenera** czyści baner aktualizacji Unraid dla tego kontenera.
 

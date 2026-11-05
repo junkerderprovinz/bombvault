@@ -1,7 +1,7 @@
 # Off-site og gendannelse
 
 !!! note "Off-site-kopier venter efter en genopbygning"
-    Når nødguiden eller **Opdag sikkerhedskopier** genopbygger poster uden de gamle indstillinger, holder off-site-kopier af de områder pause, til deres standard er bekræftet. Se [Efter en genopbygning](#after-a-rebuild).
+    Når nødguiden eller **Opdag sikkerhedskopier** genopbygger poster uden de gamle indstillinger, venter off-site-kopier af de områder, til du overtager deres sikkerhedskopier som denne servers egne. Se [Efter en genopbygning](#after-a-rebuild).
 
 Lokale sikkerhedskopier beskytter dig mod en tabt container eller en dårlig opdatering. Off-site-kopier og et afprøvet gendannelseskit beskytter dig mod hele boksen, ransomware eller en brand. Denne side dækker destinationer og off-site-kopier, hvordan du gør en kopi manipulationssikker, hvordan du beviser, at du kan gendanne, parring af flere servere og hvordan du får alt tilbage, når BombVault selv er væk.
 
@@ -82,7 +82,9 @@ Hver destination har en side for sig. Den viser kun de kort, der gælder for den
 
 **Flyt** og **Fjern destination** står blandt sidens handlinger, beskrevet under [Flyt og fjern](#move-remove).
 
-En fjern destination, som rummede sikkerhedskopier og pludselig ikke rummer noget repository, for eksempel en rest-server, hvis disk ikke blev monteret, får ikke et nyt, tomt af sig selv. Dens side siger det, så snart en sikkerhedskopiering eller kopi finder repositoryet væk. Montér disken igen. Hvis du med vilje har tømt det gamle repository, starter **Opret et nyt depot her** forfra, for hvert område på destinationen og dens repositories på én gang.
+En fjern destination, som rummede sikkerhedskopier og pludselig ikke rummer noget repository, for eksempel en rest-server, hvis disk ikke blev monteret, får ikke et nyt, tomt af sig selv. Dens side siger det, så snart en sikkerhedskopiering eller kopi finder repositoryet væk. Montér disken igen. Hvis du med vilje har tømt det gamle repository, starter **Opret et nyt depot her** forfra, for hvert område på destinationen og dens repositories på én gang. Beskyttelsen gælder en destination, der er blevet på sin plads. En destination, du tilføjer, eller et område, du sætter flueben ved på en destination, starter rent: er der intet repository på den adresse, opretter den første kopi et, også hvor en tidligere fjernet destination havde et.
+
+To afvisninger nævner, hvad der skal rettes, i kopiens kørsel og på destinationens side. **Denne bucket findes ikke på serveren** kommer, så snart en S3-server siger det, og BombVault opretter ikke noget dér, så et forkert skrevet bucketnavn forbliver synligt. En server, der slet ikke svarer, er et andet tilfælde: restic bliver ved med at prøve igen i omkring 15 minutter pr. kald, hvis den skulle komme tilbage. **Her ligger allerede et restic-depot, og denne instans' nøgle åbner det ikke** betyder, at sikkerhedskopierne dér hører til en anden `APP_KEY`.
 
 En modtagende server, som en anden instans i din gruppe kører, vises blandt udbyderne som **Fra din gruppe**. Se [Modtageserver](#receiving-server).
 
@@ -105,11 +107,15 @@ En regel beholder én sikkerhedskopi pr. dag, uge, måned og år, så langt tilb
 
 **Egne værdier** sætter de fem tal selv. Et 0 slår det tal fra, og en regel med alle tal på 0 beholder alt. Prikkerne i kortet viser, hvilke af 40 eksempelsikkerhedskopier en regel beholder, med den nyeste yderst til højre. Eksemplet er det samme for hver destination, da billedet tegnes, før BombVault har læst sikkerhedskopierne dér. Det tæller tilbage fra i dag, så hvor mange prikker der bliver, ændrer sig med datoen.
 
+En mappe på denne vært og en fjern mappe, der er skrevet i hånden, har også deres eget kort, som dækker de egne mapper i den mappe og ingen andre. Indtil du gemmer det, beskærer BombVault sådan en mappe efter den regel, den allerede havde for den.
+
 **Spørg før der gemmes mindre**, slået til som standard, spørger, før en ændring, der beholder færre sikkerhedskopier, gemmes, og siger, hvor mange af de 40 eksempelsikkerhedskopier den nye regel fjerner. Den gælder for hver destination. **Tilbage til destinationen** under **Regler pr. område** stiller det samme spørgsmål.
 
 En destination med beskyttelse mod sletning beskæres aldrig fra denne boks. Dens fjerne side beholder eller dropper gamle sikkerhedskopier efter sine egne regler. Mens en post har en åben kritisk afvigelse om tabte data, beholder opbevaringen postens gamle sikkerhedskopier, til du kvitterer for den. Se [Afvigelser](anomalies.md).
 
-For at se, hvad den næste kørsel virkelig ville slette, åbn **Forhåndsvisning** under **Indstillinger, Destinationer**. Den viser **Hvad den næste kørsel ville fjerne**, pr. repository og pr. post med gendannelsespunkterne nævnt. Den tager ingen lås og ændrer intet.
+En sikkerhedskopi, der rummer mindre, end den burde, får aldrig de foregående til at udløbe. Det er en sikkerhedskopi, der ikke læser nogen filer, hvor tidligere rummede nogle, mangler en valgt mappe eller ikke kunne læse nogle filer. Dens kørsel slutter med en advarsel, der nævner, hvad der mangler, og siger, at de ældre sikkerhedskopier blev beholdt. Du får den samme besked på dine notifikationskanaler, og ingen beskæring, hverken i postens egen mappe eller ved dens kopier, rører postens gamle sikkerhedskopier, før en komplet sikkerhedskopi kommer igennem. En første sikkerhedskopi og en valgt mappe, der altid var tom, tæller som komplette.
+
+For at se, hvad den næste kørsel virkelig ville slette, åbn **Forhåndsvisning** under **Indstillinger, Destinationer**. Den viser **Hvad den næste kørsel ville fjerne** for områdets egen mappe og for hver af dets kopier, pr. repository og pr. post med gendannelsespunkterne nævnt. Den tager ingen lås og ændrer intet.
 
 ![Hvor længe der gemmes med Afbalanceret valgt: Prikkerne viser, hvilke af de 40 eksempelsikkerhedskopier der bliver.](assets/screenshots/storage/keep-dark.png#only-dark)
 ![Hvor længe der gemmes med Afbalanceret valgt: Prikkerne viser, hvilke af de 40 eksempelsikkerhedskopier der bliver.](assets/screenshots/storage/keep-light.png#only-light)
@@ -146,9 +152,9 @@ For at beholde containerne længere end resten på denne destination skal du try
 Adgangsoplysninger er den nøgle eller adgangskode, BombVault bruger til en S3-tjeneste eller en rest-server. Adgangsoplysninger er én liste, kortet **Adgangsoplysninger** under **Indstillinger, Destinationer**, og hver række siger, hvilke destinationer der bruger dem (**Bruges af**).
 
 - **Gemt, når du tilføjer en destination.** Tilføj destination gemmer de nøgler, du skriver, som adgangsoplysninger. Den næste destination hos samme tjeneste kan vælge dem under **Gemte adgangsoplysninger** i stedet for **Nye nøgler**, og en senere ændring af dem gælder for hver destination, der bruger dem.
-- **Standarden.** En stjerne markerer standardadgangsoplysningerne. De bruges, hvor ingen er valgt, for eksempel en adresse skrevet i hånden, en hentningskilde eller en genopretning på en frisk installation. **Gør til standard** giver stjernen til andre.
+- **Standarden.** En stjerne markerer standardadgangsoplysningerne. De bruges, hvor ingen er valgt, for eksempel en adresse skrevet i hånden eller en genopretning på en frisk installation. En hentningskilde låner dem ikke. **Gør til standard** giver stjernen til andre.
 - **Rediger og Test.** **Rediger**, her eller i kortet **Legitimationsoplysninger** på en destination, åbner ét vindue til adgangsoplysningerne. **Test** logger ind på hver destination, der bruger dem, med det, du har skrevet, før noget gemmes. **Gem** gemmer dem.
-- **Fjernes.** Adgangsoplysninger kan kun fjernes, når ingen destination eller hentningskilde bruger dem, og standarden kan kun gå som den sidste. Rækken siger så, hvad der stadig bruger dem.
+- **Fjernes.** Adgangsoplysninger kan kun fjernes, når ingen destination, hentningskilde eller modtaget repository bruger dem, og ingen gamle sikkerhedskopier har brug for dem, og standarden kan kun gå som den sidste. Gamle sikkerhedskopier har brug for dem, når en egen mappe er flyttet væk fra et sted, der logger ind med dem, og har ladet dem blive liggende dér. BombVault siger så, hvilket sted det er.
 - **At ændre en destinations forbindelse** omskriver aldrig adgangsoplysninger, som andre steder deler. Destinationen får i stedet egne adgangsoplysninger, og vinduet siger på forhånd, at dens adgangsoplysninger er delt. For at ændre de delte overalt skal du redigere dem i kortet **Adgangsoplysninger**.
 
 ![Kortet Adgangsoplysninger: hver gemt adgangsoplysning med det, der bruger den, og stjernen ved standarden.](assets/screenshots/storage/signins-dark.png#only-dark)
@@ -225,7 +231,7 @@ En egen mappe kan også ligge på en destination, du allerede har, for eksempel 
 1. Åbn den destination, der skal rumme den egne mappe, og vælg **Brug som egen mappe** eller **Tilføj sektioner** i dens kort **Egne mapper**. For at flytte flere områder på én gang skal du vælge **Flyt egne mapper** ved siden af **Egne mapper her** i kortet **Forbindelse** på destinationen Lokal.
 2. Vælg områderne under **Områder** og stedet under **Flyt til**. **Et andet sted** tager en mappe på denne vært eller adressen på et fjernt repository skrevet i hånden, med et login fra dine gemte adgangsoplysninger.
 3. Læs **Hvad der sker**. For hvert område siger det, hvor nye sikkerhedskopier havner, om en kopi, der allerede ligger på det nye sted, bliver den egne mappe, og hvilke sikkerhedskopier der kopieres over først.
-4. **Kopiér de allerede lavede sikkerhedskopier** er slået til som standard. Slået fra bliver de gamle sikkerhedskopier, hvor de er, og kan stadig gendannes derfra.
+4. **Kopiér de allerede lavede sikkerhedskopier** er slået til som standard. Slået fra bliver de gamle sikkerhedskopier, hvor de er, men posten viser dem ikke længere. **Fra en gammel sikkerhedskopimappe** på siden Gendannelse læser dem stadig, med mappens adresse og, for en fjern mappe, dens login.
 5. Vælg **Skift**. Når det nye steds kort **Hvor længe der gemmes** beholder mindre end områdets regel i dag, spørger BombVault først **Gemme mindre?** Her tager **Behold de nuværende værdier for** det område **under Regler pr. område** dagens værdier med, **Gem alligevel** fortsætter, og **Tilbage** lader alt være, som det var. Når sikkerhedskopier først skal kopieres, kopierer BombVault dem og skifter så den egne mappe. Når de allerede er der, tjekker den dem før skiftet.
 
 Efter flytningen havner nye sikkerhedskopier i den flyttede egne mappe, også for et område, der havde **Lokal** slået fra og sikkerhedskopierede direkte til en kopi. En kopi, der allerede lå på det nye sted, bliver den egne mappe, og kopieringen dertil ophører. Hvor den kopi beholdt nogle sikkerhedskopier længere end områdets behold-regler, beholder området alt det, begge regler beholder, så ingen af dem går tabt.
@@ -252,7 +258,7 @@ BombVault kopierer sikkerhedskopierne i baggrunden og skifter så den egne mappe
 
 Kortet **Forbindelse** på destinationen Lokal tager stadig en fjern adresse til et områdes egen mappe: **Skift** ved siden af området åbner et vindue med en kontakt **Lokal / Fjern**. **Fjern** tager en restic-adresse som `s3:...`, `rest:http://host:8000/repo`, `sftp:user@host:/repo` eller `rclone:remote:bucket/path`, og **Sikkerhedsindstillinger for fjern primær-repo** tilføjer en forbindelsestest, upload- og downloadgrænser, append-only-beskyttelse med den samme manipulationstest, en off-site-destination får, og en vækstbudgetalarm.
 
-En sådan adresse logger ind med standardadgangsoplysningerne. Når den ligger i en mappe på en destination, du har, lister den destinations side området under **Ligger allerede under denne destination**, og at overtage det giver det destinationens login, lagerklasse og beskyttelse mod sletning. At flytte den egne mappe ind på en destination med **Brug som egen mappe** er den enklere vej, fordi vinduet tjekker de allerede lavede sikkerhedskopier, før noget ændres.
+En sådan adresse logger ind med standardadgangsoplysningerne. Er den præcis den mappe, som en destination, du har, holder til området, følger den selv den destination, destinationens kort og dens kontakt **Tilgængeligt** medregnet, medmindre den logger ind på en anden måde eller er append-only, hvor destinationen ikke er det. En regel, der indtil da beskar mappen, bliver stående som områdets egen under **Regler pr. område**. Når den ligger i en anden mappe på den destination, lister den destinations side området under **Ligger allerede under denne destination**, og at overtage det giver det destinationens login, lagerklasse og beskyttelse mod sletning. At flytte den egne mappe ind på en destination med **Brug som egen mappe** er den enklere vej, fordi vinduet tjekker de allerede lavede sikkerhedskopier, før noget ændres.
 
 ## Placering pr. element {#placement}
 
@@ -294,7 +300,12 @@ En ZFS-replika er en kopi uden for huset, men ikke en sikkerhedskopi med histori
 
 ### Efter en genopbygning {#after-a-rebuild}
 
-Kopivalg ligger i BombVaults egne indstillinger. Efter en genopbygning gennem **Opdag sikkerhedskopier** eller nødguiden uden gendannede indstillinger er de væk, og at kopiere alt ville sende de poster, du havde udeladt, til B2 igen. Off-site-kopier af hvert genopbygget område holder derfor pause. Oversigten siger det, og kortet **Destinationer pr. område** tilbyder **Bekræft standard** med en forhåndsvisning af det, den næste kørsel kopierer, og navnene i de sikkerhedskopier, der ikke har nogen post, som du kan udelade dér. Kun bekræftelsen afslutter pausen. At importere en indstillingsfil bringer regler og standarder tilbage, men afslutter den ikke.
+Kopivalg ligger i BombVaults egne indstillinger. Efter en genopbygning gennem **Opdag sikkerhedskopier** eller nødguiden uden gendannede indstillinger er de væk, og at kopiere alt ville sende de poster, du havde udeladt, til B2 igen. Det samme gælder, når et område, der aldrig har kopieret off-site fra denne database, finder sine egne sikkerhedskopier på en destination eller ældre i sin egen mappe, for eksempel efter at en destination blev tilføjet oven på sikkerhedskopierne fra en tidligere installation med samme `APP_KEY`. Off-site-kopier af det område venter så på din beslutning.
+
+**Kræver opmærksomhed** på oversigten og siden for hver destination, området kopierer til, spørger, om sikkerhedskopierne er denne servers egne. **Overtag dem som denne servers egne** bekræfter områdets standard, og dets kopier kører igen fra næste gennemløb. **Tjek reglerne først** fører til områdets linje i **Destinationer pr. område**, hvor du ser, hvor hver post går hen, og kan sætte en tabt regel igen på postens side. Kopieringen bliver ved med at vente dér, til du trykker på **Overtag dem som denne servers egne**, som først viser, hvad den næste kørsel kopierer, og navnene i de sikkerhedskopier, der ikke har nogen post, som du kan udelade. Den nyeste sikkerhedskopi af hver post, der venter, siger det i sin kørsel, med et link til beslutningen, og der går en notifikation ud, når notifikationer er slået til. At importere en indstillingsfil bringer regler og standarder tilbage, men træffer ikke beslutningen for dig.
+
+![Kræver opmærksomhed efter en genopbygning: Mappesættene fandt sikkerhedskopier fra før denne database, og deres off-site-kopier venter på beslutningen.](assets/screenshots/offsite/copy-decision-dark.png#only-dark)
+![Kræver opmærksomhed efter en genopbygning: Mappesættene fandt sikkerhedskopier fra før denne database, og deres off-site-kopier venter på beslutningen.](assets/screenshots/offsite/copy-decision-light.png#only-light)
 
 ## Beskyttelse mod sletning (append-only) {#delete-protection-append-only}
 
@@ -371,7 +382,7 @@ Siden **Instanser** (et indstillingsfelt, der kan fæstnes til sidepanelet) vise
 Hvert kort viser medlemmets beskyttelsesstatus og dets roller som felter. En rolle er noget, en instans gør for en anden:
 
 - **Modtager** opbevarer denne servers off-site-kopier i en rest-server i append-only-tilstand. Denne server sender efter hver sikkerhedskopi og kan ikke slette noget dér, selv om nogen overtager den.
-- **Henter** henter denne servers sikkerhedskopier efter sin egen tidsplan. Denne server behøver ikke være vågen til det.
+- **Henter** henter denne servers sikkerhedskopier efter sin egen tidsplan. Denne server behøver ikke være vågen til det. Den instans, der henter, skal have **Hentning** slået til, før den kan tillade anmodningen.
 - **ZFS-server** tager imod denne servers ZFS-replikaer. Hvert ZFS-element vælger den under **Replika** i sine indstillinger.
 - **Nøgleholder** opbevarer en forseglet kopi af denne servers gendannelseskit. Se [Nøgleholder](#key-keeper).
 
@@ -379,7 +390,7 @@ At slå en rolle til sender en anmodning, og intet starter, før nogen på den a
 
 **Detaljer** på et kort åbner resten: det medlems modtagne repositories og hentekilder, destinationstilbud, overvågning, **Fjern** og **Glem nøglen**.
 
-Et medlem kan tilbyde sin egen off-site-lagring til et andet medlem over gruppen. Den anden administrator ser tilbuddet i medlemmets **Detaljer** og accepterer eller afviser det. Hvis tilbuddet accepteres, oprettes gemte adgangsoplysninger og en almindelig destination efter de samme tjek som en destination, du selv skriver ind. Kun forbindelsesoplysninger rejser på den måde, aldrig sikkerhedskopidata. **Tjek nu** beder et medlem om at verificere ét områdes repository. Intet på siden kan starte en sikkerhedskopiering, en gendannelse eller en sletning på en anden boks.
+Et medlem kan tilbyde sin egen off-site-lagring til et andet medlem over gruppen. Den anden administrator ser tilbuddet i medlemmets **Detaljer** og accepterer eller afviser det. Hvis tilbuddet accepteres, oprettes gemte adgangsoplysninger og en almindelig destination efter de samme tjek som en destination, du selv skriver ind. Destinationen kommer med beskyttelse mod sletning slået til, da opskriften, tilbuddet viser, er en append-only rest-server, så **Hvor længe der gemmes** gælder ikke dér. Hvert tilbud har sit eget login og sin egen mappe. Tilbyder du et område igen, til det samme medlem eller et andet, får den første partners kopier altså lov at være: tilføj den nye linje til `.htpasswd`, og lad serveren køre. Kun forbindelsesoplysninger rejser på den måde, aldrig sikkerhedskopidata. **Tjek nu** beder et medlem om at verificere ét områdes repository. Intet på siden kan starte en sikkerhedskopiering, en gendannelse eller en sletning på en anden boks.
 
 Instanser, der er lukket ned, og telefoner med appen lukket beholder deres kort som **Inaktiv**, i gråt, med hvornår de sidst blev set, og står dæmpet i nettet, indtil du fjerner dem med **Fjern**. Lige efter at denne server er startet, viser sådan et kort **Kontrollerer**, indtil gruppen er tilbage. **Fjern** virker på sådan et kort, uanset hvilke dele der er slået til, og afslutter også medlemmets åbne anmodninger, dets ubrugte ZFS-modtagepladser og dets ventende nøgleanmodninger. Kortet **Instanser** på parringssiden viser også disse medlemmer som **Inaktiv**.
 
@@ -390,12 +401,16 @@ På den boks, der **modtager** append-only-kopier fra en anden BombVault, giver 
 - **En beholdning efter kilde**, så du kan se præcis, hvilke containere, VM'er og mappesæt der er landet.
 - **Sidst modtaget** pr. kilde, så du ved, hvor frisk hver er.
 - **Et uafhængigt `restic check`** kørt på den modtagende hardware, så integritet verificeres, hvor data faktisk sidder, ikke kun på afsenderen.
-- **En dødmandsknap:** en advarsel, når en kilde holder op med at sende inden for et vindue, du sætter.
-- **Integritetsadvarsler:** en advarsel, når et tjek på den modtagende side fejler.
+- **En dødmandsknap:** en advarsel, når en kilde holder op med at sende inden for et vindue, du sætter. Den kigger én gang om dagen, kl. 09:15. Du får også én advarsel, når repositoryet slet ikke kan læses, uanset hvad tjekplanen siger, og når intet er kommet et helt vindue efter, at du tilføjede det. Et repository, du tilføjer før afsenderens første kopi, er i orden indtil da.
+- **Integritetsadvarsler:** en advarsel, når et tjek på den modtagende side fejler. Et tjek, der ikke kunne åbne repositoryet, siger intet om integriteten, så det efterlader ingen dom og prøver igen næste dag på samme tidspunkt.
+
+Et repository på en anden server kræver den servers login: gem det som [adgangsoplysninger](#sign-ins), og vælg det under **Legitimationsoplysninger** i dialogen.
 
 Modtageren er strengt skrivebeskyttet. Den skriver aldrig til det modtagne repository, så den kan aldrig bryde den append-only-garanti, afsenderen støtter sig til.
 
-En henter virker den anden vej: med **Hentning** slået til læser en instans et andet medlems sikkerhedskopier efter sin egen tidsplan, ind i et eget repository for hver kilde, så de aldrig tæller som denne boks' egne sikkerhedskopier. Dens kilder står også i det medlems detaljer: repositoryets sted, hvilken slags sikkerhedskopi det rummer, og hvor ofte der hentes. Restic-adgangskoden kommer over gruppen, aldrig APP_KEY, og den anden side har intet mere at sætte op og behøver ikke køre. Kilden bliver kun læst, og hver side beholder sit eget login. En `rclone:`-kilde afvises, fordi rclone ville nå den med denne instans' remotes.
+En henter virker den anden vej: med **Hentning** slået til læser en instans et andet medlems sikkerhedskopier efter sin egen tidsplan, ind i et eget repository for hver kilde, så de aldrig tæller som denne boks' egne sikkerhedskopier. Dens kilder står også i det medlems detaljer: repositoryets sted, hvilken slags sikkerhedskopi det rummer, og hvor ofte der hentes. Restic-adgangskoden kommer over gruppen, aldrig APP_KEY, og den anden side har intet mere at sætte op og behøver ikke køre. Kilden bliver kun læst, og hver side beholder sit eget login. En hentning kører på den dag og det tidspunkt, dens tidsplan siger, og også en ny kilde venter på det tidspunkt. **Hent nu** venter ikke. En hentning, der blev sprunget over, fordi denne boks var slukket, kører, så snart den er tilbage. En mislykket hentning prøver igen næste dag på samme tidspunkt, også på en ugentlig tidsplan, vises i aktivitetsloggen og sender én advarsel, indtil en hentning virker igen. En `rclone:`-kilde afvises, fordi rclone ville nå den med denne instans' remotes.
+
+En hentet kopi vokser kun. BombVault føjer til den og hverken beskærer eller tjekker den, så det, kilden for længst har glemt, bliver her, til du sletter mappen, og siden Destinationer tæller den ikke med. Den ligger i `pulled/<source id>` inde i områdets egen mappe, og når den mappe flytter, bliver kopien, hvor den er, og senere hentninger fortsætter dér i stedet for at kopiere alt igen. Sletter du den, starter den næste hentning forfra i den egne mappe, området har til den tid.
 
 ### Modtageserver {#receiving-server}
 
@@ -432,7 +447,7 @@ Hvad tamper-testen svarer:
 | **ikke beskyttet** | VAULT accepterede en sletning. `--append-only` mangler eller blev fjernet. |
 | **ikke entydigt** | Hverken eller. Som regel er adressen ikke den, restic selv bruger, eller legitimationen er ændret. Intet registreres, og ingen advarsel udløses. |
 
-**5. Følg med i, hvad der kommer, hvis du vil.** Slå **Modtager** til under **Indstillinger, Instanser** på VAULT, åbn TOWERs **Detaljer** og tilføj det modtagne repository. VAULT får TOWERs restic-adgangskode over gruppen. Ingen taster en nøgle.
+**5. Følg med i, hvad der kommer, hvis du vil.** Slå **Modtager** til under **Indstillinger, Instanser** på VAULT, åbn TOWERs **Detaljer** og tilføj det modtagne repository: klik på et af de steder, dialogen viser. VAULT får TOWERs restic-adgangskode over gruppen, og fordi stedet ligger på VAULTs egen modtageserver, læser den mappen direkte. Ingen taster en nøgle eller et login.
 
 **6. Gør det gensidigt.** Gentag trinnene i den anden retning: VAULT beder TOWER om at være dens modtager. Hver boks håndhæver så append-only for den anden, og ingen af dem kan slette den andens sikkerhedskopier.
 
@@ -465,14 +480,14 @@ Serveren TOWER døde sammen med sine diske. Den havde 23 containere og 2 VM'er o
 1. **Installér BombVault** på den nye boks, og giv den en ny `APP_KEY`, som ved enhver ny installation. Sæt VM-linket op under **Indstillinger, Integrationer, Værts-SSH**, hvis du vil have VM'erne tilbage, fordi en VM-gendannelse har brug for det.
 2. **Start guiden.** Vælg **Gendan fra en sikkerhedskopi** på **Velkommen til BombVault**. På siden Gendannelse vælger du **Start nødguiden** under **Nødsituation**.
 3. **Adgang.** Vælg **Upload gendannelseskit**, og slip filen. BombVault prøver sin nøgle på hver destination og siger for eksempel **Gendannelseskit læst. Dets nøgle åbner 0 af 2 destinationer.** Den lokale mappe siger **ikke fundet**, da disken døde, og Backblaze B2 siger **adgangsoplysninger mangler**.
-4. **Gem adgangsoplysninger.** Kittet bærer loginet til sine fjerne destinationer. Tryk på **Gem adgangsoplysninger**, så prøves destinationerne igen, og Backblaze B2 siger nu **læsbar**.
+4. **Gem adgangsoplysninger.** Kittet bærer loginet til hver destination. Tryk på **Gem adgangsoplysninger**, så prøves destinationerne igen, og Backblaze B2 siger nu **læsbar**. Et kit, der er skrevet før 10.5, rummer kun standardadgangsoplysningerne. Hvor en destination stadig siger **adgangsoplysninger mangler**, så indtast dens adgangsoplysninger under **Indtast manglende adgangsoplysninger**, og tryk på **Prøv destinationerne igen**.
 5. **Overtag nøglen.** Denne server skriver nu sine sikkerhedskopier med den gamle nøgle, så de nye sikkerhedskopier passer til de gamle. Den beholder sin egen `APP_KEY` i skabelonen. **Fortryd overtagelsen** virker, til den første sikkerhedskopiering har kørt.
-6. **Indstillinger.** Vælg **Hent indstillinger tilbage**, som læser den nyeste auto-sikkerhedskopi fra B2. BombVault genstarter for at anvende den, og guiden fortsætter af sig selv. Dine destinationer, tidsplaner og regler er tilbage, og du bliver ved med at logge ind med denne servers adgangskode. Skriv de hemmeligheder, guiden oplister, ind igen, for eksempel notifikationsindstillinger.
-7. **Valg.** Sæt **Hvor er sikkerhedskopierne?** til off-site-kopierne, fordi de lokale gik ned sammen med den gamle server. BombVault oplister de 23 containere og 2 VM'er med den nyeste sikkerhedskopi valgt på forhånd, og du kan vælge en anden til hver af dem.
+6. **Indstillinger.** Trinnet åbner på det sted, hvor nøglen fandt auto-sikkerhedskopien, her B2, med adressen udfyldt. Vælg **Hent indstillinger tilbage**, som læser den nyeste auto-sikkerhedskopi derfra. BombVault genstarter for at anvende den, og guiden fortsætter af sig selv. Dine destinationer, tidsplaner og regler er tilbage, og du bliver ved med at logge ind med denne servers adgangskode. Skriv de hemmeligheder, guiden oplister, ind igen, for eksempel notifikationsindstillinger.
+7. **Valg.** **Hvor er sikkerhedskopierne?** åbner på off-site-kopierne, når intet er tilbage lokalt. BombVault læser hver destination, så en død ikke skjuler de andre, oplister de 23 containere og 2 VM'er og gendanner hver fra den destination, der rummer dens nyeste sikkerhedskopi.
 8. **Gendannelse.** Slå **Lad den stå stoppet bagefter** til, hvilket er sikrest efter et totalt tab, og start. **Hvad der sker** siger, hvad der kommer tilbage. Resultatlinjen lyder for eksempel **25 gendannet, 0 mislykkedes. Start dem under Sikkerhedskopier, når det er nødvendigt.**
 9. **Afslut.** Start dine databaser først, så de apps der bruger dem. Åbn **Indstillinger, Gendannelse**, og download et nyt gendannelseskit, fordi det gamle hører til den forrige installation. Se efter under **Kræver opmærksomhed** på oversigten, og kør **Sikkerhedskopiér alt nu**, når alt virker.
 
-Mangler auto-sikkerhedskopien også, så vælg **Spring over: jeg har ingen auto-sikkerhedskopi**. Destinationerne kommer så kun fra kittet, du sætter tidsplaner og regler op igen, og off-site-kopier holder pause, til du bekræfter områdernes standarder, se [Efter en genopbygning](#after-a-rebuild).
+Mangler auto-sikkerhedskopien også, åbner trinnet på **Spring over: jeg har ingen auto-sikkerhedskopi** og siger det. Destinationerne kommer så kun fra kittet, du sætter tidsplaner og regler op igen, og off-site-kopier venter, til du overtager deres sikkerhedskopier som denne servers egne, se [Efter en genopbygning](#after-a-rebuild). **Valg** viser stadig, hvad off-site-kopierne rummer. Mappesæt går til en mappe, du vælger. Containere og VM'er kommer tilbage som almindelige filer i en mappe under **Kun filerne kan komme tilbage**, fordi deres definitioner ligger ved siden af det lokale repository og i auto-sikkerhedskopien, og en off-site-kopi rummer ingen af delene.
 
 
 !!! tip "Planlagt migrering versus katastrofe"
@@ -481,6 +496,10 @@ Mangler auto-sikkerhedskopien også, så vælg **Spring over: jeg har ingen auto
 ### Fra en gammel sikkerhedskopimappe {#restore-from-another-bombvault-repo}
 
 **Fra en gammel sikkerhedskopimappe** under **Andre kilder** på siden Gendannelse åbner en *anden* BombVault-instans' repository (en share monteret under `/mnt` eller en fjernadresse) med den instans' gendannelseskit eller dens indtastede `APP_KEY`, i en engangssession, skrivebeskyttet. Gennemse de containere, VM'er, mappesæt og ZFS-datasæt, der er gemt dér, vælg en sikkerhedskopi og gendan den, og det gendannede objekt bliver en almindelig lokal container, VM eller et almindeligt mappesæt. Der skrives aldrig noget til det andet repository, og dine egne backupindstillinger forbliver urørte (sessionen lever i hukommelsen og udløber af sig selv). At flytte en container fra server A til server B betyder ikke at omdirigere dine indstillinger og vende dem tilbage bagefter. Dette vindue er et engangsvindue: det åbner en session, gendanner det, du vælger, og glemmer den anden instans. Hvis du i stedet vil have en stående ordning, hvor denne boks efter en tidsplan henter en anden instans' sikkerhedskopier ind i sit eget repository, er det rollen **Henter** på siden Instanser.
+
+### Det, denne server har hentet {#restore-what-was-fetched}
+
+Hver kilde, denne server har hentet fra, har sin egen linje **Hentet fra** under **Andre kilder** på siden Gendannelse. En hentet kopi er låst med denne servers egen nøgle, ikke kildens, så der bliver ikke spurgt om noget: kildens nøgle åbner den ikke. Mappesæt og ZFS-datasæt går til en mappe, du vælger. Containere og VM'er kommer tilbage som almindelige filer i en mappe, fordi en hentning bærer snapshots med og ikke definitionerne. For at genskabe dem bruger du kildens gendannelseskit og auto-sikkerhedskopi i nødguiden.
 
 En container, hvis netværk ikke findes på denne server, for eksempel et Unraid-`br0`-netværk på en almindelig Docker-vært, viser en netværksvælger under sin række. BombVault opretter den på det netværk, du vælger, sammen med dens andre netværk. Den faste IP- og MAC-adresse hørte til det gamle netværk og falder væk, så det nye netværk tildeler dem.
 
@@ -533,7 +552,7 @@ Det er HMAC-SHA256 over den faste streng `bombvault:restic-repo`, med de rå byt
 !!! warning "Brug den AFSENDENDE instans' nøgle ved et modtaget arkiv"
     Et repository, der kom hertil gennem en off-site-kopi, blev oprettet af maskinen, der sendte det, med **dens** nøgle. At udlede fra modtagerboksens nøgle giver en adgangskode, restic afviser, hvilket ser nøjagtig ud som et beskadiget repository og ikke er det. Det er den sædvanlige grund til, at `restic check` på et modtaget repo bliver ved med at bede om en adgangskode.
 
-Fordi gendannelsesdefinitioner lever **inde** i hvert repo (`<repo>/def`, `<repo>/vm-def`), er en kopieret repo-mappe fuldt selvstændig, så kittet plus repoet er alt, hvad en bare-metal-gendannelse har brug for.
+Fordi gendannelsesdefinitioner lever **inde** i hvert repo (`<repo>/def`, `<repo>/vm-def`), er en kopieret repo-mappe fuldt selvstændig, så kittet plus repoet er alt, hvad en bare-metal-gendannelse har brug for. En off-site-kopi og en hentet kopi rummer snapshots uden definitionerne: de giver filer tilbage, og en container eller VM genskabes fra auto-sikkerhedskopien.
 
 ## Hent et databasedump tilbage {#database-dumps}
 

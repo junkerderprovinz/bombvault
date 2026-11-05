@@ -9,10 +9,10 @@ Kaikki, minkä BombVault varmuuskopioi, on yhdessä listassa kohdassa **Varmuusk
 
 | Osio | Mitä tallennetaan |
 |---|---|
-| **Kontit** | Appdata-kansio sekä kontin määritys: image, muuttujat, portit, tunnisteet ja taltiot. Kontin **Asetukset**-välilehden **Varmuuskopioitavat kansiot** -kortti valitsee tarkasti, mitkä kansiot varmuuskopio kattaa, ja näyttää polkujen määrän reaaliajassa sekä listan siitä, minkä jätit pois. Dataa, jonka kontti pitää Host Datan ulkopuolella, esimerkiksi TrueNASin ixVolumessa, ei varmuuskopioida, ja ajo nimeää kansiot, jotka se jätti pois. |
+| **Kontit** | Appdata-kansio sekä kontin määritys: image, muuttujat, portit, tunnisteet ja taltiot. Kontin **Asetukset**-välilehden **Varmuuskopioitavat kansiot** -kortti valitsee tarkasti, mitkä kansiot varmuuskopio kattaa, ja näyttää polkujen määrän reaaliajassa sekä listan siitä, minkä jätit pois. Dataa, jonka kontti pitää Host Datan ulkopuolella, esimerkiksi TrueNASin ixVolumessa tai Compose-projektissa `/opt`-hakemiston alla, ei varmuuskopioida, ja ajo nimeää kansiot, jotka se jätti pois. Ajo nimeää myös Host Datan sisällä olevan kansion, jota ei juuri nyt ole. Järjestelmäpolkuja, kuten `/etc/localtime` tai Dockerin socketia, ei lasketa dataksi. |
 | **VMs** | Levykuvat, XML-määritys ja UEFI NVRAM, hallitulla sammutuksella tai live-tilannekuvalla, SSH:n yli. Katso [VM-varmuuskopiot](vm-backup-ssh-setup.md). |
 | **Flash** | Vain Unraid. Koko USB-flash (`/boot`): käyttöjärjestelmä, lisenssi, arrayn asetukset, jaot, verkko ja liitännäisten asetukset. |
-| **Itsevarmuuskopio** | BombVaultin oma `/config`: asetustietokanta, kohteiden tunnukset ja libvirt-SSH-avainpari, otettu SQLiten `VACUUM INTO` -komennolla, jotta tietokantaa ei koskaan kopioida kesken kirjoituksen. |
+| **Itsevarmuuskopio** | BombVaultin oma `/config`: asetustietokanta, kohteiden tunnukset, libvirt-SSH-avainpari, ZFS-palvelinten avain ja kiinnitetyt isäntäavaimet sekä varmenteet, otettu SQLiten `VACUUM INTO` -komennolla, jotta tietokantaa ei koskaan kopioida kesken kirjoituksen. |
 | **Kansiot** | Mikä tahansa palvelimen kansio kansiojoukkona, esimerkiksi jako, asiakirjasi tai kuvakirjasto, valinnaisin poissulkumallein. Kansiojoukoilla on aikataulut, säilytys, etäkopiot, tarkistukset ja palautusharjoitukset kuten kaikella muullakin. |
 | **ZFS-tietojoukot** | Tietojoukko ja jokainen sen alla oleva tietojoukko luettuna yhdestä ZFS-tilannevedoksesta, jotta kaikki ovat samalta hetkeltä, ja tallennettuna resticillä kuten kansio. ZFS-merkinnällä voi myös olla lohkotarkka replika toisella ZFS-palvelimella. Katso [ZFS-tietojoukot](zfs-datasets.md). |
 
@@ -35,7 +35,7 @@ Merkinnät, joita ei enää ole asennettuna mutta joilla on vielä varmuuskopioi
 Sivun pääasiallinen toiminto leijuu oikeassa alakulmassa: **Varmuuskopioi kaikki nyt** käynnistää ajon kaikille päällä oleville osioille. **Lisää** sisältää loput:
 
 - **Valitse** aloittaa valinnan, katso alla.
-- **Tunnista varmuuskopiot** lukee, mitä kohteet sisältävät, ja rakentaa merkinnät siitä uudelleen, esimerkiksi uuden asennuksen jälkeen. Uudelleenrakennettujen osioiden etäkopiot pysähtyvät sitten, kunnes vahvistat niiden oletuksen, katso [Uudelleenrakennuksen jälkeen](offsite-recovery.md#after-a-rebuild).
+- **Tunnista varmuuskopiot** lukee, mitä kohteet sisältävät, ja rakentaa merkinnät siitä uudelleen, esimerkiksi uuden asennuksen jälkeen. Kontilla, jolla ei ole omaa dataa, ei ole tilannevedosta, ja se palautuu repon viereen peilatusta määrityksestä. Uudelleenrakennettujen osioiden etäkopiot odottavat sitten, kunnes otat niiden varmuuskopiot tämän palvelimen omiksi, katso [Uudelleenrakennuksen jälkeen](offsite-recovery.md#after-a-rebuild).
 - **ZFS-yhteys tähän palvelimeen** avaa ZFS-osion SSH-testin, katso [ZFS-tietojoukot](zfs-datasets.md#requirements).
 - **Replikoi kaikki nyt**, ZFS-ruudun ollessa valittuna, lähettää jokaisen ZFS-merkinnän replikan.
 
@@ -98,7 +98,7 @@ Alla olevat kortit riippuvat merkinnän lajista:
 | Kontti | **Varmuuskopioitavat kansiot** (mitkä liitetyt kansiot varmuuskopioidaan, kohdalla **Ohita välimuistikansiot (CACHEDIR.TAG)**), **Poissulkumallit**, **Pysäytä muut säiliöt**, **Komennot ennen ja jälkeen**, **Tietokanta**, **Kun sovellus on kiireinen**, **Päivitä onnistuneen varmuuskopioinnin jälkeen**, **Tilannevedos pysäytyksen sijaan**, **Aiemmat nimet** |
 | VM | **VM** kohdilla **Menetelmä** (**Hallittu (sammutus)** tai **Live-tilannekuva**) ja **Vain muuttuneet lohkot**, katso [VM-varmuuskopiointiopas](vm-backup-ssh-setup.md#per-vm-method) |
 | Kansiojoukko | **Kansio** ja **Poissulkumallit** |
-| Flash-asema | **Flashin zip-vienti**, joka kirjoittaa jokaisen flash-varmuuskopion tavallisena `.zip`-tiedostona valitsemaasi kansioon |
+| Flash-asema | **Flashin zip-vienti**, joka kirjoittaa jokaisen flash-varmuuskopion tavallisena `.zip`-tiedostona valitsemaasi kansioon yhdellä kertaa, jotta synkronointityökalu ei koskaan näe puolikasta tiedostoa. Jos flash-varmuuskopiossa on vähemmän kuin pitäisi, viimeisin ZIP jää paikalleen, ja viennin ajo kertoo sen. |
 | ZFS-tietojoukko | alatietojoukot, pysäytettävät kontit ja tilannevedoksen ympärillä olevat komennot, **Replika** ja **Kokeile pääsyä tilannevedoksiin**, katso [ZFS-tietojoukot](zfs-datasets.md) |
 
 Asetukset tallentuvat itsestään, kun muutat niitä.
@@ -119,7 +119,7 @@ Asetukset tallentuvat itsestään, kun muutat niitä.
 
 ## Poissulkumallit {#excludes}
 
-**Poissulkumallit**-kortti ottaa yhden mallin riviä kohti. Kirjoita polut sellaisina kuin ne näet kontin sisällä, esimerkiksi `/config/Library/Application Support/Plex Media Server/Cache`, tai pelkkä nimi, kuten `.git`, joka täsmää millä tahansa syvyydellä. Kentän alla oleva esikatselu näyttää, mihin kukin rivi johtaa, ja varoittaa, kun rivi ei täsmää mihinkään tai sulkisi pois kaiken. Rivi `/` tai `*` tai rivi, joka nimeää kokonaisen varmuuskopioitavan kansion, ohitetaan, joten poissulku ei voi koskaan tyhjentää varmuuskopiota. Jättääksesi kokonaisen kansion pois poista sen valinta kohdassa **Varmuuskopioitavat kansiot**.
+**Poissulkumallit**-kortti ottaa yhden mallin riviä kohti. Kirjoita polut sellaisina kuin ne näet kontin sisällä, esimerkiksi `/config/Library/Application Support/Plex Media Server/Cache`, tai pelkkä nimi, kuten `.git`, joka täsmää millä tahansa syvyydellä. Kansiojoukolle kirjoitetaan polku sellaisena kuin isäntä sen tuntee, esimerkiksi `/mnt/user/data/cache`. Kentän alla oleva esikatselu näyttää, mihin kukin rivi johtaa, ja varoittaa, kun rivi ei täsmää mihinkään tai sulkisi pois kaiken. Rivi `/` tai `*` tai rivi, joka nimeää kokonaisen varmuuskopioitavan kansion, ohitetaan, joten poissulku ei voi koskaan tyhjentää varmuuskopiota. Jättääksesi kokonaisen kansion pois poista sen valinta kohdassa **Varmuuskopioitavat kansiot**.
 
 Tunnetuille imageille, kuten Plex, Jellyfin, Sonarr, Radarr, Immich ja Nextcloud, kortti tarjoaa kansiot, jotka sovellus täyttää itse uudelleen, kuten välimuistit, lokit ja pikkukuvat. Mitään ei suljeta pois, ennen kuin painat **Sulje valitut pois**.
 
@@ -137,6 +137,8 @@ Epäonnistunut vedos ei kaada varmuuskopiota. Se näkyy omana epäonnistuneena a
 
 - **Komennot ennen ja jälkeen** ajetaan kontin sisällä komennolla `sh -c`, esimerkiksi välimuistin tyhjentämiseksi levylle. Epäonnistuva komento ennen varmuuskopiota keskeyttää sen. Komento ennen varmuuskopiota, joka päättyy koodiin 75, lykkää ajastetun varmuuskopion, katso alla.
 - **Pysäytä muut säiliöt** nimeää kontit, jotka pysäytetään tämän varmuuskopioinnin ajaksi, kuten sen tietokannan. Jälkeenpäin ne käynnistyvät uudelleen Composen `depends_on`-järjestyksessä, ja oletuksena jokaisen on raportoitava olevansa kunnossa, ennen kuin seuraava käynnistyy. Odotus ja sen aikakatkaisu ovat kortissa **Järjestys** kohdassa **Uudelleenkäynnistys varmuuskopioinnin jälkeen**, joka on kohdassa **Asetukset, Aikataulut**.
+- Kontti, joka jakaa pysäytettävän kontin verkko-, PID- tai IPC-nimiavaruuden `--net=container:`- tai Composen `network_mode: service:` -asetuksella, pysähtyy ja käynnistyy sen mukana, vaikka se ei olisi listalla, ja se käynnistyy sen kontin jälkeen, johon se liittyy. Uudelleen käynnistetty kontti saa uuden verkon, ja vanhaan verkkoon käyntiin jätetyllä kontilla olisi vain loopback. Itse lista pysyy sellaisena kuin sen asetit. Jos tällaista konttia ei voitu pysäyttää, ajo kertoo, ettei sillä ole verkkoa ennen kuin se käynnistetään uudelleen. Sama koskee BombVaultin omaa konttia, joka ei koskaan pysäytä itseään eikä sitä voi lisätä listalle.
+- Kontti, joka ei käynnisty uudelleen jälkeenpäin, nimetään ajossa ja ilmoituksessa, myös silloin, kun itse varmuuskopiointi epäonnistui.
 
 ## Kun sovellus on kiireinen {#app-busy}
 
@@ -177,7 +179,7 @@ Omaa tarkistustasi varten tee **Varmuuskopiota edeltävästä komennosta** sella
 restic pysyy moottorina, mutta vienti antaa kopion, joka ei tarvitse BombVaultia eikä resticiä.
 
 - **Vie kontti** ja **Vie VM** kohdassa **Lisää** merkinnän sivulla kirjoittavat kopion sellaisena kuin se on juuri nyt, repon viereen: kontin varmuuskopioitavat kansiot ja sen Unraid-malli tai virtuaalikoneen levykuvat ja sen määritys, palautettavissa komennolla `virsh define`.
-- **Vie** tilannevedoksella kirjoittaa tallennetun varmuuskopion palvelimen vientikansioon tar-, zip- tai oman restic-repon muodossa, ja voi ottaa yhden tilannevedoksen tai kaikki.
+- **Vie** tilannevedoksella kirjoittaa tallennetun varmuuskopion palvelimen vientikansioon tar-, zip- tai oman restic-repon muodossa, ja voi ottaa yhden tilannevedoksen tai kaikki. Flash-varmuuskopio ja itsevarmuuskopio sisältävät avaimia, joten niiden vienti vaatii kirjautumissalasanan ja kirjautumisen instanssissa.
 
 Viennit ovat oletuksena selkeitä tiedostoja. **Salaa viennit age:lla** kohdassa **Asetukset, Järjestelmä** sinetöi ne, myös flash-ZIPin, listaamillesi vastaanottajille, joista jokainen on age-julkinen avain tai SSH-julkinen avain. Puret ne myöhemmin laatikon ulkopuolella vastaavalla yksityisellä avaimella. Salauksen ollessa päällä ja ilman kelvollista vastaanottajaa vienti epäonnistuu selvään virheeseen sen sijaan, että kirjoittaisi koskaan selkeitä tiedostoja.
 

@@ -138,13 +138,13 @@ Bármely gép fogadhat, amelyen van ZFS és SSH, például egy második Unraid v
 Rootként semmi más nem kell. Saját felhasználónak ezekre a jogosultságokra van szüksége a cél poolján, amelyeket a párbeszédablak szintén megmutat:
 
 ```
-zfs allow <user> receive,create,mount,rollback,destroy,userprop <pool>
+zfs allow <user> receive,create,mount,rollback,destroy,userprop,readonly,canmount <pool>
 ```
 
 A forráson ugyanilyen felhasználónak ezekre van szüksége az elem legfelső adatkészletén:
 
 ```
-zfs allow <user> send,snapshot,hold,release,bookmark,destroy <dataset>
+zfs allow <user> send,snapshot,hold,release,bookmark,destroy,mount <dataset>
 ```
 
 Ebben az irányban az elemet tároló BombVault olyan kulcsot is tárol, amellyel írni lehet a kiszolgálón.
@@ -161,7 +161,7 @@ Egy párosított BombVault maga is fogadhatja a replikát. Senki nem kap SSH-hoz
 2. A fogadó példányon nyisd meg a **Példányok** oldalt. A kérés jelvényként jelenik meg a küldő példány kártyáján, és a **Részletek** felsorolja. Válaszd ki a poolt és a gyökeret azon a kiszolgálón, és hogy hány pillanatkép maradjon, majd nyomd meg az **Engedélyezés** vagy az **Elutasítás** gombot.
 3. Az **Engedélyezés** után a forrás a saját ütemezése szerint küld, mint bármelyik másik célra.
 
-A fogadó példány csak azt fogadja el, amit a jóváhagyás lefed: az elem adatkészleteit, a saját gyökerébe. Maga futtatja a `zfs receive` parancsot, és a forrásnak nincs módja arra, hogy ott bármit töröljön vagy visszagörgessen. A másolat így akkor is túléli, ha valaki átvette a forrás feletti irányítást. A fogadó példány a saját megőrzését alkalmazza. A forrás csak javasol egy szabályt, amikor kéri a küldést.
+A fogadó példány csak azt fogadja el, amit a jóváhagyás lefed: az elem adatkészleteit, a saját gyökerébe. Maga futtatja a `zfs receive` parancsot, és a forrásnak nincs módja arra, hogy ott bármit töröljön vagy visszagörgessen. A másolat így akkor is túléli, ha valaki átvette a forrás feletti irányítást. A fogadó példány a saját megőrzését alkalmazza. A forrás csak javasol egy szabályt, amikor kéri a küldést. Egy ilyen forrás továbbra is küldhet új pillanatképeket, és ezek idővel a szabály szerint kiszorítják a régebbieket, mint bármely más pillanatkép. Az a pillanatkép, amelynek a neve a fogadó példány órájánál későbbi dátumot visel, addig nem számít bele a szabályba, amíg az az idő el nem jön.
 
 A fogadó példányon a **Hozzáférés visszavonása** bármikor megszünteti a jóváhagyást, és értesíti a forrást, amely ekkor jelzi, hogy a jóváhagyást visszavonták, és leáll. Amit a fogadó példány már tart, az ott marad. Az elutasított kérés elutasított marad. További adatkészletek, vagy egy visszavonás utáni kérés újra jóváhagyást kérnek.
 
@@ -179,13 +179,15 @@ A másolat a célon csak olvasható. Alapból nincs csatolva, így soha nem taka
 
 Minden bekerül, amit az elem ment, és az alatta lévő kötetek is, amelyeket a mentés kihagy. Az a gyermek-adatkészlet, amelyet az elemben kikapcsoltál, kimarad. Egy futás összes adatkészlete egyetlen pillanatképből származik, mint a mentésnél.
 
+Az a másolat, amelyet egy másik BombVault replikál erre a szerverre, nem megy tovább, mert az megritkítaná azt az előzményt, amelyre a forrásának még szüksége van. Ha egy elem fája tartalmaz ilyet, a futás arra az adatkészletre meghiúsul, és megmondja, miért, amíg ki nem kapcsolod az elemben. Az az elem, amely maga is ilyen másolat, egyáltalán nem replikálhat. Egy elem törlése vagy a replikájának kikapcsolása békén hagyja ezeket a másolatokat és a pillanatképeiket. Amint átveszel egy másolatot, ahogy [A replika használata](#replica-use) alatt le van írva, normál adatkészletnek számít.
+
 ### Meddig maradnak meg a pillanatképek {#replica-retention}
 
-A célon egy új replika 7 napi és 3 heti pillanatképet tart meg. Válaszd inkább a **Rövid**, **Kiegyensúlyozott** vagy **Hosszú** lehetőséget, vagy állítsd be a **Saját értékek** értékeket. Ott csak a `bombvault-replica-<14 számjegy>` nevű pillanatképek törlődnek, és soha nem a legújabb, amelyen mindkét oldal osztozik.
+A célon egy új replika 7 napi és 3 heti pillanatképet tart meg. Válaszd inkább a **Rövid**, **Kiegyensúlyozott** vagy **Hosszú** lehetőséget, vagy állítsd be a **Saját értékek** értékeket. A csupa nulla saját értékek minden pillanatképet megtartanak, és a kártya ezt jelzi. Ott csak a `bombvault-replica-<14 számjegy>` nevű pillanatképek törlődnek, és soha nem a legújabb, amelyen mindkét oldal osztozik.
 
 A forráson a BombVault a legutóbbi replika-pillanatképet tartja meg, plusz egy könyvjelzőt minden elküldött állapothoz. A könyvjelzők nem foglalnak helyet. A következő átvitel ezekből indul.
 
-Ha a forráson is többet szeretnél megtartani, állítsd be a Replika kártyán a **Megőrzés ezen a kiszolgálón** értékét, például 7-re. Ekkor minden replika után ennyi marad a legújabb replika-pillanatképek közül ezen a kiszolgálón, a célon megtartottak mellett. A 0 vagy az 1 csak a legutóbbit tartja meg. A legutóbbin zárolás (hold) van, hogy a következő átvitel alapját senki ne törölje véletlenül. A régebbieken nincs. Minden pillanatkép megtartja az utána megváltozott blokkokat, ezért minden megtartott pillanatkép helyet foglal a poolban. Ha kikapcsolod a replikát, másik célra váltasz, vagy törlöd az elemet, ezek is eltűnnek erről a kiszolgálóról.
+Ha a forráson is többet szeretnél megtartani, állítsd be a Replika kártyán a **Megőrzés ezen a kiszolgálón** értékét, például 7-re. Ekkor minden replika után ennyi marad a legújabb replika-pillanatképek közül ezen a kiszolgálón, a célon megtartottak mellett. A 0 vagy az 1 csak a legutóbbit tartja meg. A legutóbbin zárolás (hold) van, hogy a következő átvitel alapját senki ne törölje véletlenül. A régebbieken nincs. Minden pillanatkép megtartja az utána megváltozott blokkokat, ezért minden megtartott pillanatkép helyet foglal a poolban. Ha kikapcsolod a replikát, másik célra váltasz, vagy törlöd az elemet, ezek is eltűnnek erről a kiszolgálóról. Az alatta beágyazott másik elem pillanatképei megmaradnak. Ha a hoszt nem érhető el, amikor törlöd az elemet, a pillanatképek is megmaradnak, és az oldal ezt jelzi. Távolítsd el őket kézzel: `zfs release -r bombvault-replica <dataset>@<snapshot>`, aztán `zfs destroy`.
 
 Egy megtartott pillanatkép fájljait azonnal olvashatod vagy másolhatod, az adatkészletben lévő `.zfs/snapshot` mappából vagy egy klónból, anélkül hogy az adatkészlethez vagy a replikához nyúlnál:
 
@@ -228,12 +230,12 @@ zfs clone backup/bombvault-replica/tower/cache/appdata@bombvault-replica-2026100
 Ha a forrás meghibásodik, tedd a másolatot normális, írható adatkészletté a célon:
 
 ```
-zfs inherit -r readonly backup/bombvault-replica/tower/cache/appdata && zfs inherit -r canmount backup/bombvault-replica/tower/cache/appdata && zfs mount -a
+zfs inherit -r readonly backup/bombvault-replica/tower/cache/appdata && zfs list -rH -o name -t filesystem backup/bombvault-replica/tower/cache/appdata | xargs zfs set canmount=on && zfs mount -a
 ```
 
-A BombVault ezután leáll a replikálással erre az adatkészletre, amíg új első futást nem indítasz.
+A BombVault ezután leáll a replikálással erre az adatkészletre és a gyermekeire. A következő futás egy okkal meghiúsul, és amit írtál, megmarad. Ugyanez érvényes bármi másra, amit a legújabb pillanatképe óta a másolatra írtak: a BombVault soha nem görgeti vissza a másolatot. Ha újra oda akarsz replikálni, vidd le a másolatról, amire szükséged van, és semmisítsd meg a célon. A következő futás ezután mindent újra elküld.
 
-Egy állapot forrásra való visszahozásához nyomd meg a **Visszaállítás új adatkészletként** gombot a lapon. A BombVault a pillanatképet egy új adatkészletbe küldi az eredeti mellé, amelynek neve `<dataset>-bombvault-restore-` és egy időbélyeg. Az eredetit soha nem írja felül.
+Egy állapot forrásra való visszahozásához nyomd meg a **Visszaállítás új adatkészletként** gombot a lapon. A BombVault a pillanatképet egy új adatkészletbe küldi az eredeti mellé, amelynek neve `<dataset>-bombvault-restore-` és egy időbélyeg. Az eredetit soha nem írja felül. A forráson elveszett gyermek-adatkészlet is visszatér, amíg a másolat még tartalmazza azt a pillanatképet. Az a gyermek, amelyik nem tartalmazza, kimarad, és a futás ezt jelzi.
 
 ### Példa: replika egy második Unraid-gépre {#example-replica}
 

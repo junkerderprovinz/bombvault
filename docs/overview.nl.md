@@ -40,13 +40,13 @@ Elk ingeschakeld onderdeel heeft een rij met vier controles:
 | Controle | Ze wordt groen wanneer | Andere woorden die je kunt zien |
 |---|---|---|
 | **Lokaal** | de laatste back-up actueel is | nog geen back-up, geen planning, laatste run mislukt, back-up achterstallig, niet elk item is beschermd, back-up binnenkort aan de beurt |
-| **Off-site** | de laatste kopie buiten de locatie actueel is | geen off-site-kopie, kopie loopt, kopie achterstallig, kopie gepauzeerd, nog geen kopie, replica mislukt |
+| **Off-site** | de laatste kopie buiten de locatie actueel is | geen off-site-kopie, kopie loopt, kopie achterstallig, wacht op je beslissing, nog geen kopie, replica mislukt |
 | **Bescherming tegen verwijderen** | een sabotagetest bewees dat de andere kant verwijderen weigert | geen, geen en risico geaccepteerd, nog niet bewezen, test mislukt, niet bewezen omdat de controle uitstaat |
 | **Testherstel** | een herstel vanaf de off-site-kopie slaagde | nooit uitgevoerd, loopt, mislukt, achterstallig, alleen handmatig, niet mogelijk voor dit onderdeel |
 
 Een onderdeel is alleen groen op geverifieerde feiten. Een kopie op deze server telt niet als off-site, en een bestemming die je markeerde met **Accepteren zonder bescherming tegen verwijderen** toont een grijze ring in plaats van een amberkleurige stip, zodat de kleur van het onderdeel zijn andere controles volgt.
 
-Een onderdeel met een planning toont **Nog geen back-up** en blijft neutraal tot zijn eerste run aan de beurt was. Daarna staat er **Te laat** en waarschuwt het één keer. Een onderdeel zonder iets om te back-uppen, omdat geen planning een van zijn items bereikt, toont **Niet gepland** en is nooit te laat.
+Een onderdeel met een planning toont **Nog geen back-up** en blijft neutraal tot zijn eerste run aan de beurt was, gerekend vanaf het moment dat zijn planning voor het laatst is ingesteld. Daarna staat er **Te laat** en waarschuwt het één keer. **Te laat** gaat uit van het item dat het verst achter zijn eigen planning ligt, dus een buur die draait, verbergt geen item dat is blijven staan. Een item waarvan de container weg is of dat geen planning bereikt, telt niet mee. Een item met een eigen wekelijkse planning wordt niet aan de dagelijkse planning van het onderdeel gehouden. Een onderdeel zonder iets om te back-uppen, omdat geen planning een van zijn items bereikt, toont **Niet gepland** en is nooit te laat.
 
 Een klik op een onderdeel opent zijn venster met elke controle uitgeschreven, de items die het telt en **Testherstel starten** of **Testherstel opnieuw uitvoeren**. Het toont ook **Opschoonregel ingesteld** of **Geen opschoonregel**, en de bewaarregel van de eigen map van een onderdeel telt net zo goed mee als zijn off-site-regels.
 

@@ -9,10 +9,10 @@ Wszystko, co BombVault kopiuje, stoi na jednej liście pod **Kopie zapasowe**: k
 
 | Sekcja | Co jest zapisywane |
 |---|---|
-| **Containers** | Folder appdata oraz definicja kontenera: obraz, zmienne, porty, etykiety i wolumeny. Karta **Foldery do kopii** na karcie **Ustawienia** kontenera zaznacza dokładnie, które foldery obejmuje kopia, z bieżącą liczbą ścieżek i listą tego, co pominąłeś. Dane, które kontener trzyma poza Host Data, na przykład w ixVolume na TrueNAS, nie są kopiowane, a przebieg wymienia pominięte foldery. |
+| **Containers** | Folder appdata oraz definicja kontenera: obraz, zmienne, porty, etykiety i wolumeny. Karta **Foldery do kopii** na karcie **Ustawienia** kontenera zaznacza dokładnie, które foldery obejmuje kopia, z bieżącą liczbą ścieżek i listą tego, co pominąłeś. Dane, które kontener trzyma poza Host Data, na przykład w ixVolume na TrueNAS albo w projekcie Compose pod `/opt`, nie są kopiowane, a przebieg wymienia pominięte foldery. Przebieg wymienia też folder wewnątrz Host Data, którego w tej chwili nie ma. Ścieżki systemowe, takie jak `/etc/localtime` czy gniazdo Docker, nie liczą się jako dane. |
 | **Maszyny wirtualne** | Obrazy dysków, definicja XML i UEFI NVRAM, z łagodnym zamknięciem albo migawką na żywo, przez SSH. Zobacz [Kopie maszyn wirtualnych](vm-backup-ssh-setup.md). |
 | **Flash** | Tylko Unraid. Cały dysk USB flash (`/boot`): system, licencja, konfiguracja macierzy, udziały, sieć i konfiguracja wtyczek. |
-| **Autokopia** | Własny `/config` BombVault: jego baza ustawień, logowania do miejsc docelowych i para kluczy SSH libvirt, zapisane migawką SQLite `VACUUM INTO`, żeby baza nigdy nie została skopiowana w trakcie zapisu. |
+| **Autokopia** | Własny `/config` BombVault: jego baza ustawień, logowania do miejsc docelowych, para kluczy SSH libvirt, klucz i przypięte klucze hosta serwerów ZFS oraz certyfikaty, zapisane migawką SQLite `VACUUM INTO`, żeby baza nigdy nie została skopiowana w trakcie zapisu. |
 | **Foldery** | Dowolny folder na serwerze jako zestaw folderów, na przykład udział, Twoje dokumenty albo biblioteka zdjęć, z opcjonalnymi wzorcami wykluczeń. Zestawy folderów mają harmonogramy, przechowywanie, kopie poza siedzibą, kontrole i próby przywracania jak wszystko inne. |
 | **Zbiory danych ZFS** | Zbiór danych i każdy zbiór poniżej niego, odczytane z jednej migawki ZFS, żeby wszystkie pochodziły z tej samej chwili, i zapisane przez restic jak folder. Element ZFS może też trzymać replikę co do bloku na drugim serwerze ZFS. Zobacz [Zbiory danych ZFS](zfs-datasets.md). |
 
@@ -35,7 +35,7 @@ Elementy, które nie są już zainstalowane, ale nadal mają kopie, stoją osobn
 Główna akcja strony unosi się w prawym dolnym rogu: **Utwórz kopię wszystkiego teraz** uruchamia przebieg obejmujący każdą włączoną sekcję. **Więcej** zawiera resztę:
 
 - **Zaznacz** zaczyna zaznaczanie, zobacz niżej.
-- **Odkryj kopie zapasowe** czyta, co przechowują miejsca docelowe, i odbudowuje z tego elementy, na przykład po świeżej instalacji. Kopie poza siedzibą odbudowanych sekcji są wtedy wstrzymane, dopóki nie potwierdzisz ich ustawienia domyślnego, zobacz [Po odbudowie](offsite-recovery.md#after-a-rebuild).
+- **Odkryj kopie zapasowe** czyta, co przechowują miejsca docelowe, i odbudowuje z tego elementy, na przykład po świeżej instalacji. Kontener bez własnych danych nie ma migawki i wraca z definicji zapisanej obok repozytorium. Kopie poza siedzibą odbudowanych sekcji czekają wtedy, dopóki nie przejmiesz ich kopii jako własnych kopii tego serwera, zobacz [Po odbudowie](offsite-recovery.md#after-a-rebuild).
 - **Połączenie ZFS z tym serwerem** otwiera test SSH sekcji ZFS, zobacz [Zbiory danych ZFS](zfs-datasets.md#requirements).
 - **Replikuj wszystko teraz**, przy wybranym kafelku ZFS, wysyła replikę każdego elementu ZFS.
 
@@ -98,7 +98,7 @@ Karty poniżej zależą od rodzaju elementu:
 | Kontener | **Foldery do kopii** (które zmapowane foldery są kopiowane, z **Pomiń foldery pamięci podręcznej (CACHEDIR.TAG)**), **Wzorce wykluczeń**, **Zatrzymaj inne kontenery**, **Polecenia przed i po**, **Baza danych**, **Gdy aplikacja jest zajęta**, **Aktualizuj po udanej kopii zapasowej**, **Migawka zamiast zatrzymania**, **Dawne nazwy** |
 | Maszyna wirtualna | **VM** z polami **Metoda** (**Graceful (zamknięcie)** albo **Migawka na żywo**) i **Tylko zmienione bloki**, zobacz [przewodnik po kopiach maszyn wirtualnych](vm-backup-ssh-setup.md#per-vm-method) |
 | Zestaw folderów | **Folder** i **Wzorce wykluczeń** |
-| Dysk flash | **Eksport zip Flash**, który zapisuje każdą kopię flash jako zwykły `.zip` w wybranym folderze |
+| Dysk flash | **Eksport zip Flash**, który zapisuje każdą kopię flash jako zwykły `.zip` w wybranym folderze, w jednym kroku, żeby narzędzie do synchronizacji nigdy nie zobaczyło połowy pliku. Kopia flash, która zawiera mniej, niż powinna, zostawia ostatni ZIP na miejscu, a przebieg eksportu o tym mówi. |
 | Zbiór danych ZFS | zbiory podrzędne, kontenery do zatrzymania i polecenia wokół migawki, **Replika** i **Sprawdź dostęp do migawek**, zobacz [Zbiory danych ZFS](zfs-datasets.md) |
 
 Ustawienia zapisują się same, gdy je zmieniasz.
@@ -119,7 +119,7 @@ Ustawienia zapisują się same, gdy je zmieniasz.
 
 ## Wzorce wykluczeń {#excludes}
 
-Karta **Wzorce wykluczeń** przyjmuje jeden wzorzec na linię. Wpisuj ścieżki tak, jak widać je w kontenerze, na przykład `/config/Library/Application Support/Plex Media Server/Cache`, albo samą nazwę, jak `.git`, która pasuje na dowolnej głębokości. Podgląd pod polem pokazuje, na co rozwija się każda linia, i ostrzega, gdy linia nie pasuje do niczego albo wykluczyłaby wszystko. Linia `/` lub `*` albo taka, która wskazuje cały kopiowany folder, jest ignorowana, więc wykluczenie nigdy nie opróżni kopii. Żeby pominąć cały folder, odznacz go zamiast tego pod **Foldery do kopii**.
+Karta **Wzorce wykluczeń** przyjmuje jeden wzorzec na linię. Wpisuj ścieżki tak, jak widać je w kontenerze, na przykład `/config/Library/Application Support/Plex Media Server/Cache`, albo samą nazwę, jak `.git`, która pasuje na dowolnej głębokości. W zestawie folderów wpisz ścieżkę tak, jak zna ją host, na przykład `/mnt/user/data/cache`. Podgląd pod polem pokazuje, na co rozwija się każda linia, i ostrzega, gdy linia nie pasuje do niczego albo wykluczyłaby wszystko. Linia `/` lub `*` albo taka, która wskazuje cały kopiowany folder, jest ignorowana, więc wykluczenie nigdy nie opróżni kopii. Żeby pominąć cały folder, odznacz go zamiast tego pod **Foldery do kopii**.
 
 Dla znanych obrazów, takich jak Plex, Jellyfin, Sonarr, Radarr, Immich i Nextcloud, karta proponuje foldery, które aplikacja sama wypełnia na nowo, na przykład pamięci podręczne, logi i miniatury. Nic nie jest wykluczone, dopóki nie naciśniesz **Wyklucz zaznaczone**.
 
@@ -137,6 +137,8 @@ Nieudany zrzut nie psuje kopii. Pojawia się jako osobny nieudany przebieg z pow
 
 - **Polecenia przed i po** działają wewnątrz kontenera przez `sh -c`, na przykład żeby zrzucić pamięć podręczną na dysk. Polecenie przed kopią, które się nie powiedzie, przerywa kopię. Polecenie przed kopią, które kończy się kodem 75, zamiast tego odracza zaplanowaną kopię, zobacz niżej.
 - **Zatrzymaj inne kontenery** wymienia kontenery, które mają być zatrzymane na czas kopii tego, na przykład jego bazę danych. Potem startują z powrotem w kolejności `depends_on` z Compose i domyślnie każdy musi zgłosić się jako zdrowy, zanim wystartuje następny. Czas oczekiwania i jego limit są pod **Ponowne uruchomienie po kopii zapasowej** na karcie **Kolejność** w **Ustawienia, Harmonogram**.
+- Kontener, który dzieli przestrzeń nazw sieci, PID lub IPC z zatrzymywanym kontenerem, przez `--net=container:` albo `network_mode: service:` w Compose, zatrzymuje się i startuje razem z nim, nawet jeśli nie ma go na liście, i startuje po kontenerze, do którego dołącza. Kontener po restarcie dostaje nową sieć, a ten, który działałby dalej w starej sieci, miałby tylko swój loopback. Sama lista zostaje taka, jaką ustawiłeś. Jeśli takiego kontenera nie dało się zatrzymać, przebieg mówi, że nie ma on sieci, dopóki nie zostanie uruchomiony ponownie. To samo dotyczy własnego kontenera BombVault, który nigdy nie zatrzymuje sam siebie i nie może trafić na listę.
+- Kontener, który potem nie działa ponownie, jest wymieniony w przebiegu i w powiadomieniu, także wtedy, gdy sama kopia się nie powiodła.
 
 ## Gdy aplikacja jest zajęta {#app-busy}
 
@@ -177,7 +179,7 @@ Do własnej kontroli spraw, by **Polecenie przed kopią** kończyło się kodem 
 restic pozostaje silnikiem, ale eksport daje kopię, która nie potrzebuje ani BombVault, ani restic.
 
 - **Eksportuj kontener** i **Eksportuj maszynę wirtualną** pod **Więcej** na stronie elementu zapisują kopię taką, jaka jest w tej chwili, obok repozytorium: foldery kontenera do kopii wraz z jego szablonem Unraid albo obrazy dysków maszyny wraz z jej definicją, do przywrócenia przez `virsh define`.
-- **Eksport** na migawce zapisuje zapisaną kopię do folderu eksportu na serwerze, jako tar, zip albo własne repozytorium restic, i może objąć jedną migawkę albo wszystkie.
+- **Eksport** na migawce zapisuje zapisaną kopię do folderu eksportu na serwerze, jako tar, zip albo własne repozytorium restic, i może objąć jedną migawkę albo wszystkie. Kopia flash i autokopia zawierają klucze, więc ich eksport wymaga hasła logowania i zalogowania na samej instancji.
 
 Eksporty są domyślnie zwykłymi plikami. **Szyfruj eksporty za pomocą age** w **Ustawienia, System** zabezpiecza je, razem z ZIP-em flash, dla wymienionych odbiorców, z których każdy to klucz publiczny age albo klucz publiczny SSH. Odszyfrujesz je później poza serwerem pasującym kluczem prywatnym. Gdy szyfrowanie jest włączone, a nie ma ważnego odbiorcy, eksport kończy się wyraźnym błędem, zamiast kiedykolwiek zapisać zwykłe pliki.
 

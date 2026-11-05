@@ -9,20 +9,20 @@ BombVault può avvisarti quando un backup fallisce, quando riesce, quando uno è
 
 La scheda **Notifiche** imposta le regole per tutti i canali insieme:
 
-- **Notifica**: **Mai**, **Solo in caso di errore** oppure **In caso di successo ed errore**, per tutti i canali sotto.
+- **Notifica**: **Mai**, **Solo in caso di errore** oppure **In caso di successo ed errore**, per tutti i canali sotto. Una nuova installazione parte da **Solo in caso di errore**, così un canale che compili ti avvisa quando un backup fallisce.
 - **Riepiloga le esecuzioni pianificate**: un messaggio per ogni esecuzione pianificata, per esempio *42 su 45 riusciti*, invece di uno per ogni container o VM. Un backup che avvii a mano invia comunque il suo messaggio. Un guest congelato, una conservazione fallita o un budget di crescita superato partono subito anche con i riepiloghi attivi.
 - **Notifica all'aggiornamento del container**: un messaggio per ogni container che **Aggiorna i container dopo un backup riuscito** ha portato a un'immagine più recente, così puoi controllare che funzioni ancora.
-- **Segnala i backup in ritardo**: una volta al giorno alle 09:00 BombVault controlla se un backup attivato è in ritardo, cioè più vecchio del doppio della sua pianificazione, e invia un messaggio per ogni caso. Il successivo backup riuscito lo cancella.
+- **Segnala i backup in ritardo**: una volta al giorno alle 09:00 BombVault controlla se un backup attivato è in ritardo, cioè più vecchio del doppio della sua pianificazione, e invia un messaggio per ogni caso, con il nome dell'elemento rimasto indietro. Il successivo backup riuscito lo cancella.
 - **Notifiche Unraid**: invia al sistema di notifiche di Unraid, che può inoltrare a Pushover, email o Discord. Passa dalla connessione SSH di **Impostazioni, Integrazioni, SSH dell'host**, quindi quella chiave deve essere autorizzata. Su TrueNAS e altri host resta disattivato.
-- **Riepilogo settimanale**: un riepilogo a settimana con il numero di esecuzioni, i nuovi dati di backup, se le copie off-site sono aggiornate e gli errori principali. La sua pianificazione è un pulsante come ogni altra pianificazione, e **Disattivato** la spegne. Vedi [Pianificazioni](schedules.md#plans).
+- **Riepilogo settimanale**: un riepilogo a settimana con il numero di esecuzioni, i nuovi dati di backup, quali sezioni sono in ritardo, se le copie off-site sono aggiornate e gli errori principali. La sua pianificazione è un pulsante come ogni altra pianificazione, e **Disattivato** la spegne. Vedi [Pianificazioni](schedules.md#plans).
 
 Quali anomalie inviano un messaggio si imposta in **Impostazioni, Verifica**, vedi [Anomalie](anomalies.md). Un backup rinviato invia un messaggio quando comincia ad attendere e uno quando l'attesa finisce, non uno per ogni tentativo.
 
-**Invia test** in fondo alla scheda invia un messaggio di prova attraverso ogni canale attivo, con i valori così come stanno nel modulo.
+**Invia test** in fondo alla scheda invia un messaggio di prova attraverso ogni canale attivo, con i valori così come stanno nel modulo, e nomina ogni canale che non è riuscito. Un controllo di Healthchecks riceve una voce nel suo registro, che lascia il suo stato com'è.
 
 ## Canali {#channels}
 
-Ogni canale ha un interruttore proprio nella scheda **Canali**, e i suoi campi compaiono quando è attivo. Ogni canale invia per conto suo con un proprio limite di tempo, così un host che non risponde mai non blocca gli altri, e un messaggio che nessun canale ha preso viene riprovato.
+Ogni canale ha un interruttore proprio nella scheda **Canali**, e i suoi campi compaiono quando è attivo. Ogni canale invia per conto suo con un proprio limite di tempo, così un host che non risponde mai non blocca gli altri. Un avviso di ritardo, di budget o di anomalia che nessun canale ha preso viene riprovato, e lo stesso vale per un riepilogo settimanale. Il messaggio di un singolo backup o di un riepilogo viene inviato una volta sola.
 
 | Canale | Campi | Note |
 |---|---|---|
@@ -36,7 +36,9 @@ I segreti come il token Matrix, il token dell'applicazione Gotify e la password 
 
 ## Healthchecks {#healthchecks}
 
-Un servizio come [Healthchecks.io](https://healthchecks.io) dà l'allarme quando BombVault smette di farsi sentire. Incolla l'**URL di ping** del controllo, e BombVault lo contatta per l'intero ciclo di vita di ogni backup: all'avvio, poi al successo oppure con `/fail`. Lo fa sempre quando è impostato un URL, qualunque cosa dica **Notifica**, così il controllo resta verde in caso di successo anche con messaggi solo per gli errori.
+Un servizio come [Healthchecks.io](https://healthchecks.io) dà l'allarme quando BombVault smette di farsi sentire. Incolla l'**URL di ping** del controllo, e BombVault lo contatta per l'intero ciclo di vita di ogni backup: all'avvio, poi al successo oppure con `/fail`. Lo fa sempre quando è impostato un URL, qualunque cosa dica **Notifica**, così il controllo resta verde in caso di successo anche con messaggi solo per gli errori. Una sezione senza un posto in cui salvare conta come fallita, così il suo controllo diventa rosso invece di ricevere un successo.
+
+Le sezioni con lo stesso URL condividono un unico controllo. Quando un backup di una di esse fallisce, anche i backup riusciti delle altre contattano `/fail` e nominano l'elemento fallito, così il controllo resta rosso finché quell'elemento non ha di nuovo un backup riuscito o finché non confermi di aver preso visione dell'errore in **Richiede attenzione**.
 
 Una sezione può contattare un indirizzo proprio: **Eccezione** nella scheda ne aggiunge uno, e la riga dice **Tutte le altre sezioni inviano un ping a questo URL.**
 

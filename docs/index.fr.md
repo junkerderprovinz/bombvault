@@ -23,7 +23,7 @@ Chaque conteneur, VM, ensemble de dossiers, la clé flash, chaque jeu de donnée
 | **Conteneurs** | Le répertoire appdata plus la définition du conteneur (image, variables d'environnement, ports, étiquettes, volumes). |
 | **VMs** | La ou les images disque de la VM, la définition XML et la NVRAM UEFI, sauvegardées via SSH (sans montage libvirt). |
 | **Flash** | Toute la clé USB flash (`/boot`) : système, licence, configuration de la grappe, partages, réseau et configuration des plugins. |
-| **Auto-sauvegarde** | Le `/config` de BombVault lui-même : sa base de réglages, les identifiants de ses destinations et la paire de clés SSH libvirt. |
+| **Auto-sauvegarde** | Le `/config` de BombVault lui-même : sa base de réglages, les identifiants de ses destinations, la paire de clés SSH libvirt, la clé et les clés d'hôte épinglées des serveurs ZFS et les certificats. |
 | **Dossiers** | N'importe quel dossier du serveur comme ensemble de dossiers, chacun avec des motifs d'exclusion facultatifs. |
 | **Jeux de données ZFS** | Un jeu de données et tous ceux qu'il contient, lus à partir d'un seul instantané ZFS et stockés comme un dossier. Voir [Jeux de données ZFS](zfs-datasets.md). |
 
@@ -102,4 +102,4 @@ Le nom et l'identité visuelle ne sont pas sous licence. L'AGPL ne couvre que le
 - **Tickets :** [github.com/junkerderprovinz/bombvault/issues](https://github.com/junkerderprovinz/bombvault/issues)
 
 !!! warning "Contrôle équivalent à root sur l'hôte"
-    Via le socket Docker, BombVault peut arrêter, supprimer et recréer des conteneurs et lire et écrire appdata, et pour la sauvegarde de VM il se connecte à l'hôte via SSH pour exécuter `virsh`. Toute personne qui peut atteindre son interface web a en pratique root sur l'hôte. N'exécutez BombVault que sur un réseau de confiance et non exposé, et définissez un mot de passe de connexion sous **Paramètres, Sécurité**. Le kit de récupération, les dépôts de clés et la suppression des sauvegardes d'une destination en demandent un. Voir [Configuration](configuration.md#security-model) pour le modèle de sécurité complet.
+    Via le socket Docker, BombVault peut arrêter, supprimer et recréer des conteneurs et lire et écrire appdata, et pour la sauvegarde de VM il se connecte à l'hôte via SSH pour exécuter `virsh`. Toute personne qui peut atteindre son interface web a en pratique root sur l'hôte. N'exécutez BombVault que sur un réseau de confiance et non exposé, et définissez un mot de passe de connexion sous **Paramètres, Sécurité**. Le kit de récupération, les dépôts de clés, le ZIP flash, l'export d'une sauvegarde flash ou d'une auto-sauvegarde et la suppression des sauvegardes d'une destination en demandent un. Voir [Configuration](configuration.md#security-model) pour le modèle de sécurité complet.

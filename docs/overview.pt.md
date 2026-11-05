@@ -40,13 +40,13 @@ Cada secção ligada tem uma linha com quatro verificações:
 | Verificação | Fica verde quando | Outras palavras que podes ver |
 |---|---|---|
 | **Local** | o último backup está atual | ainda sem backup, sem agendamento, a última execução falhou, backup em atraso, nem todas as entradas estão protegidas, backup a vencer em breve |
-| **Externo** | a última cópia fora das instalações está atual | sem cópia externa, cópia em curso, cópia em atraso, cópia em pausa, ainda sem cópia, réplica falhada |
+| **Externo** | a última cópia fora das instalações está atual | sem cópia externa, cópia em curso, cópia em atraso, aguarda a tua decisão, ainda sem cópia, réplica falhada |
 | **Proteção contra eliminação** | um teste de adulteração provou que o outro lado recusa eliminações | nenhuma, nenhuma e risco aceite, ainda não provada, teste falhado, não provada porque a verificação está desligada |
 | **Restauro de teste** | passou um restauro a partir da cópia externa | nunca executado, em curso, falhado, em atraso, só manual, não é possível para esta secção |
 
 Uma secção só fica verde com factos verificados. Uma cópia neste servidor não conta como externa, e um destino que marcaste com **Aceitar sem proteção contra eliminação** mostra um anel cinzento em vez de um ponto âmbar, por isso a cor da secção segue as suas outras verificações.
 
-Uma secção agendada diz **Ainda sem backup** e fica neutra até chegar a hora da primeira execução. Depois diz **Em atraso** e avisa uma vez. Uma secção sem nada para copiar, porque nenhum agendamento chega às suas entradas, diz **Não agendado** e nunca fica em atraso.
+Uma secção agendada diz **Ainda sem backup** e fica neutra até chegar a hora da primeira execução, contada a partir da última vez que o seu plano foi definido. Depois diz **Em atraso** e avisa uma vez. **Em atraso** segue a entrada que mais ficou para trás em relação ao seu próprio plano, por isso uma vizinha que corre não esconde uma que parou. Uma entrada cujo container desapareceu ou a que nenhum agendamento chega não conta. Uma entrada com um plano semanal próprio não é medida pelo plano diário da secção. Uma secção sem nada para copiar, porque nenhum agendamento chega às suas entradas, diz **Não agendado** e nunca fica em atraso.
 
 Um clique numa secção abre a sua janela com todas as verificações explicadas, as entradas que conta e **Iniciar o restauro de teste** ou **Executar o restauro de teste novamente**. Diz também **Regra de poda definida** ou **Sem regra de poda**, e a regra de retenção da pasta própria de uma secção conta tanto como as suas regras externas.
 

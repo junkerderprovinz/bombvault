@@ -38,7 +38,7 @@ VM-säkerhetskopiering pratar med libvirt över SSH, aldrig en montering.
 
 ## En live-ögonblicksbild av en VM kördes inte {#a-live-vm-snapshot-did-not-run}
 
-Live-ögonblicksbilder kräver att qemu guest agent är installerad i VM:en och att disken ligger på `/mnt/cache` (eller `/mnt/diskX`), inte `/mnt/user`. På en avstängd VM faller live automatiskt tillbaka på kontrollerad avstängning. En kontrollerad säkerhetskopiering stänger av VM:en, säkerhetskopierar diskarna och startar den sedan igen, så den är alltid konsekvent. Den väntar upp till tio minuter på att gästen ska stängas av och tvingar den aldrig, så en Windows-gäst som installerar uppdateringar avbryts inte halvvägs. En gäst som fortfarande kör efter det lämnas ifred, och den säkerhetskopian misslyckas med orsaken.
+Live-ögonblicksbilder kräver att disken ligger på `/mnt/cache` (eller `/mnt/diskX`), inte `/mnt/user`. Med qemu guest agent i VM:en blir ögonblicksbilden vilande, och utan den är ögonblicksbilden kraschkonsistent. På en avstängd VM faller live automatiskt tillbaka på kontrollerad avstängning. En kontrollerad säkerhetskopiering stänger av VM:en, säkerhetskopierar diskarna och startar den sedan igen, så den är alltid konsekvent. Den väntar upp till tio minuter på att gästen ska stängas av och tvingar den aldrig, så en Windows-gäst som installerar uppdateringar avbryts inte halvvägs. En gäst som fortfarande kör efter det lämnas ifred, och den säkerhetskopian misslyckas med orsaken.
 
 ## En säkerhetskopiering misslyckades med "repository is already locked" {#a-backup-failed-with-repository-is-already-locked}
 
@@ -127,6 +127,10 @@ En öppen kritisk avvikelse håller kvar dem: postens källa är nästan tom, ha
 
 Samma orsak: rensningen lämnar gamla säkerhetskopior av en post med en sådan avvikelse ifred och nämner posten i sitt meddelande. Allt annat rensas som vanligt.
 
+## En säkerhetskopiering misslyckas med "on no mounted pool or share" {#no-mounted-pool}
+
+På Unraid ligger `/mnt` i minnet, så en mapp där utan en monterad pool är borta vid nästa omstart och dold när poolen är tillbaka. BombVault vägrar att skriva en säkerhetskopia eller en flash-ZIP dit, även när ett repositorium från en tidigare skrivning redan ligger i den mappen. Montera poolen och kör säkerhetskopieringen igen.
+
 ## Historikimporten säger att ett repositorium inte kunde läsas {#history-import-says-a-repository-could-not-be-read}
 
 Efter uppgraderingen läser BombVault storlekarna på tidigare säkerhetskopior från varje repositorium en gång. Ett repositorium som inte gick att nå då, till exempel ett off-site-mål som var nere eller en delad resurs som inte var monterad, räknas på kortet **Avvikelser** under **Inställningar, Verifiera** och provas igen en gång om dagen. Dess poster lär sig av nya säkerhetskopior under tiden.
@@ -177,15 +181,15 @@ Målet har ögonblicksbilder som är nyare än den nyaste det delar med den här
 
 BombVault följer varje disks stödkedja och säkerhetskopierar varje fil i den. En kedja som inte går att följa till slutet får säkerhetskopian att misslyckas i stället för att utelämna en del av disken, och meddelandet nämner filen. Kontrollera att filen finns under `/mnt` och att ögonblicksbilden fortfarande listas i VM Manager. En fil utanför Host Data går inte att läsa alls. Se [VM:ar med Unraid-ögonblicksbilder](vm-backup-ssh-setup.md#unraid-snapshots).
 
-## Off-site-kopior är pausade efter en återuppbyggnad {#copies-paused}
+## Off-site-kopior väntar på ditt beslut efter en återuppbyggnad {#copies-paused}
 
-Efter **Identifiera säkerhetskopior** eller Nödguiden utan återställda inställningar väntar off-site-kopior av varje återuppbyggt avsnitt, eftersom BombVault inte längre vet vilka poster du lämnat utanför. Översikten säger det. Tryck på **Bekräfta standard** i **Mål per avsnitt**, kontrollera förhandsvisningen och lämna utanför det som ska stå utanför. Att importera en inställningsfil avslutar inte pausen. Se [Efter en återuppbyggnad](offsite-recovery.md#after-a-rebuild).
+Efter **Identifiera säkerhetskopior** eller Nödguiden utan återställda inställningar, eller när ett avsnitt hittar egna säkerhetskopior från tiden före den här databasen, väntar off-site-kopior av det avsnittet, eftersom BombVault inte längre vet vilka poster du lämnat utanför. **Behöver uppmärksamhet** och lagringsmålets sida frågar om det. Tryck på **Ta över dem som den här serverns egna** för att fortsätta, eller på **Kontrollera reglerna först** för att titta på avsnittets regler innan du gör det. Att importera en inställningsfil fattar inte beslutet åt dig. Se [Efter en återuppbyggnad](offsite-recovery.md#after-a-rebuild).
 
 ## Aviseringar kommer inte fram {#notifications-do-not-arrive}
 
 Börja med **Skicka test** under **Inställningar, Aviseringar**. Raden under kortet säger vad som hände.
 
-- **Ingenting skickas alls.** Kontrollera **Avisera**. Med **Aldrig** går ingenting ut, och med **Endast vid fel** förblir en lyckad körning tyst. Med **Sammanfatta schemalagda körningar** på skickar en schemalagd körning en sammanfattning vid sitt slut.
+- **Ingenting skickas alls.** Kontrollera **Avisera**. Med **Aldrig** går inget meddelande ut, bara pingarna till en Healthchecks-URL, och med **Endast vid fel** förblir en lyckad körning tyst. Med **Sammanfatta schemalagda körningar** på skickar en schemalagd körning en sammanfattning vid sitt slut.
 - **En ny adress.** Efter att du ändrat servern för Matrix, Gotify eller e-post frågar fältet efter token eller lösenord igen, och den nya adressen sparas först när du skrivit det. BombVault skickar inte den gamla hemligheten till ett nytt ställe.
 - **Gotify** säger att servern nekade app-token: kopiera den igen från applikationen i Gotify. **Serverns URL** är basadressen, utan `/message`.
 - **Webhook:** kontrollera att **Webhook-format** passar tjänsten. En Discord-adress behöver **Discord**, och ntfy behöver **ntfy**.

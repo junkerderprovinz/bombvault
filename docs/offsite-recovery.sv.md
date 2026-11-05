@@ -1,7 +1,7 @@
 # Off-site och återställning
 
 !!! note "Off-site-kopior väntar efter en återuppbyggnad"
-    När Nödguiden eller **Identifiera säkerhetskopior** bygger upp poster utan de gamla inställningarna pausas off-site-kopiorna av de avsnitten tills deras standard är bekräftad. Se [Efter en återuppbyggnad](#after-a-rebuild).
+    När Nödguiden eller **Identifiera säkerhetskopior** bygger upp poster utan de gamla inställningarna väntar off-site-kopiorna av de avsnitten tills du tar över deras säkerhetskopior som den här serverns egna. Se [Efter en återuppbyggnad](#after-a-rebuild).
 
 Lokala säkerhetskopior skyddar dig mot en förlorad container eller en dålig uppdatering. Off-site-kopior och ett testat återställningskit skyddar dig mot hela lådan, ransomware eller en brand. Den här sidan täcker lagringsmål och off-site-kopior, hur du gör en kopia manipuleringssäker, hur du bevisar att du kan återställa, hur du parkopplar flera servrar och hur du får tillbaka allt när BombVault självt är borta.
 
@@ -82,7 +82,9 @@ Varje lagringsmål har en egen sida. Den visar bara de kort som gäller för det
 
 **Flytta** och **Ta bort mål** står bland sidans åtgärder, beskrivna under [Flytta och ta bort](#move-remove).
 
-Ett lagringsmål på distans som höll säkerhetskopior och plötsligt inte håller något repositorium, till exempel en rest-server vars disk inte monterades, får inget nytt, tomt av sig självt. Dess sida säger det så fort en säkerhetskopiering eller kopiering hittar repositoriet borta. Montera disken igen. Om du tömde det gamla repositoriet med avsikt börjar **Skapa ett nytt arkiv här** om, för varje avsnitt i målet och dess repositorier på en gång.
+Ett lagringsmål på distans som höll säkerhetskopior och plötsligt inte håller något repositorium, till exempel en rest-server vars disk inte monterades, får inget nytt, tomt av sig självt. Dess sida säger det så fort en säkerhetskopiering eller kopiering hittar repositoriet borta. Montera disken igen. Om du tömde det gamla repositoriet med avsikt börjar **Skapa ett nytt arkiv här** om, för varje avsnitt i målet och dess repositorier på en gång. Skyddet gäller ett lagringsmål som har stått kvar på sin plats. Ett lagringsmål du lägger till, eller ett avsnitt du bockar för vid ett mål, börjar från början: finns det inget repositorium på den adressen skapar den första kopieringen ett, även där ett mål som togs bort tidigare hade ett.
+
+Två avslag säger vad som behöver rättas, i kopieringens körning och på målets sida. **Den här bucketen finns inte på servern** kommer så fort en S3-server säger det, och BombVault skapar ingenting där, så att ett felskrivet bucketnamn syns. En server som inte svarar alls är ett annat fall: restic fortsätter att försöka i ungefär 15 minuter per anrop, ifall den kommer tillbaka. **Här finns redan ett restic-arkiv, och den här instansens nyckel öppnar det inte** betyder att säkerhetskopiorna där hör till en annan `APP_KEY`.
 
 En mottagande server som en annan instans i din grupp kör visas bland leverantörerna som **Från din grupp**. Se [Mottagande server](#receiving-server).
 
@@ -105,11 +107,15 @@ En regel behåller en säkerhetskopia per dag, vecka, månad och år, så långt
 
 **Egna värden** ställer in de fem antalen själv. Ett 0 slår av det antalet, och en regel med alla antal på 0 behåller allt. Prickarna i kortet visar vilka av 40 exempelsäkerhetskopior en regel behåller, den nyaste längst till höger. Exemplet är detsamma för varje mål, eftersom bilden ritas innan BombVault har läst säkerhetskopiorna där. Det räknar bakåt från i dag, så hur många prickar som blir kvar ändras med datumet.
 
+En mapp på den här värden och en fjärrmapp som skrivits in för hand har också ett eget kort, som gäller de egna mapparna i just den mappen och inga andra. Tills du sparar det följer en sådan mapp den regel BombVault redan hade för den.
+
 **Fråga innan mindre bevaras**, på som standard, frågar innan en ändring som behåller färre säkerhetskopior sparas, och säger hur många av de 40 exempelsäkerhetskopiorna den nya regeln tar bort. Den gäller för varje lagringsmål. **Tillbaka till målet** under **Regler per avsnitt** ställer samma fråga.
 
 Ett mål med skydd mot radering rensas aldrig från den här lådan. Dess andra sida behåller eller släpper gamla säkerhetskopior enligt sina egna regler. Medan en post har en öppen kritisk avvikelse om förlorad data behåller gallringen den postens gamla säkerhetskopior tills du kvitterar den. Se [Avvikelser](anomalies.md).
 
-För att se vad nästa körning verkligen skulle radera öppnar du **Förhandsgranska** under **Inställningar, Lagringsmål**. Den listar **Vad nästa körning skulle ta bort**, per repositorium och per post med återställningspunkterna nämnda. Den tar inget lås och ändrar ingenting.
+En säkerhetskopia som innehåller mindre än den borde tränger aldrig ut dem som kom före den. Det är en säkerhetskopia som inte läser några filer där tidigare säkerhetskopior hade några, som saknar en vald mapp eller som inte kunde läsa vissa filer. Dess körning slutar med en varning som nämner vad som saknas och säger att de äldre säkerhetskopiorna behölls, du får samma meddelande i dina aviseringskanaler, och ingen gallring, i postens egna mapp eller i dess kopior, rör postens gamla säkerhetskopior förrän en fullständig säkerhetskopia har kommit igenom. En första säkerhetskopia, och en vald mapp som alltid har varit tom, räknas som fullständiga.
+
+För att se vad nästa körning verkligen skulle radera öppnar du **Förhandsgranska** under **Inställningar, Lagringsmål**. Den listar **Vad nästa körning skulle ta bort** för avsnittets egna mapp och för var och en av dess kopior, per repositorium och per post med återställningspunkterna nämnda. Den tar inget lås och ändrar ingenting.
 
 ![Hur länge det bevaras med Balanserad vald: prickarna visar vilka av de 40 exempelsäkerhetskopiorna som stannar.](assets/screenshots/storage/keep-dark.png#only-dark)
 ![Hur länge det bevaras med Balanserad vald: prickarna visar vilka av de 40 exempelsäkerhetskopiorna som stannar.](assets/screenshots/storage/keep-light.png#only-light)
@@ -146,9 +152,9 @@ För att behålla containrarna längre än resten på det här målet trycker du
 En inloggning är nyckeln eller lösenordet BombVault använder för en S3-tjänst eller en rest-server. Inloggningar är en enda lista, kortet **Inloggningar** under **Inställningar, Lagringsmål**, och varje rad säger vilka lagringsmål som använder den (**Används av**).
 
 - **Sparad när du lägger till ett mål.** Lägg till mål sparar nycklarna du skriver som en inloggning. Nästa mål hos samma tjänst kan välja den under **Sparad inloggning** i stället för **Nya nycklar**, och en ändring av den senare gäller för varje mål som använder den.
-- **Standarden.** En stjärna markerar standardinloggningen. Den används överallt där ingen inloggning är vald, till exempel en adress skriven för hand, en hämtningskälla eller en återställning på en ny installation. **Gör till standard** ger stjärnan till en annan.
+- **Standarden.** En stjärna markerar standardinloggningen. Den används överallt där ingen inloggning är vald, till exempel en adress skriven för hand eller en återställning på en ny installation. En hämtningskälla lånar den inte. **Gör till standard** ger stjärnan till en annan.
 - **Redigera och Testa.** **Redigera**, här eller i kortet **Autentiseringsuppgifter** för ett mål, öppnar ett fönster för inloggningen. **Testa** loggar in på varje mål som använder den med det du skrivit, innan något sparas. **Spara** lagrar den.
-- **Ta bort.** En inloggning kan tas bort bara när inget lagringsmål eller ingen hämtningskälla använder den, och standarden går bara som den sista. Raden säger då vad som fortfarande använder den.
+- **Ta bort.** En inloggning kan tas bort bara när inget lagringsmål, ingen hämtningskälla och inget mottaget repositorium använder den och inga gamla säkerhetskopior behöver den, och standarden går bara som den sista. Gamla säkerhetskopior behöver den när en egen mapp flyttade bort från en plats som loggar in med den och lämnade dem kvar där. BombVault säger då vilken plats det är.
 - **Att ändra ett måls anslutning** skriver aldrig om en inloggning som andra platser delar. Målet får en egen inloggning i stället, och fönstret säger i förväg att dess inloggning är delad. För att ändra den delade överallt redigerar du den i kortet **Inloggningar**.
 
 ![Kortet Inloggningar: varje sparad inloggning med vad som använder den, och stjärnan på standarden.](assets/screenshots/storage/signins-dark.png#only-dark)
@@ -225,7 +231,7 @@ En egen mapp kan också ligga i ett lagringsmål du redan har, till exempel en N
 1. Öppna lagringsmålet som ska hålla den egna mappen och välj **Använd som egen mapp**, eller **Lägg till sektioner** i dess kort **Egna mappar**. För att flytta flera avsnitt på en gång väljer du **Flytta egna mappar** bredvid **Egna mappar här** i kortet **Anslutning** för målet Lokal.
 2. Välj avsnitten under **Avsnitt** och platsen under **Flytta till**. **En annan plats** tar en mapp på den här värden eller adressen till ett repositorium på distans skriven för hand, med en inloggning bland dina sparade inloggningar.
 3. Läs **Vad som händer**. För varje avsnitt säger den vart nya säkerhetskopior går, om en kopia som redan finns på den nya platsen blir den egna mappen, och vilka säkerhetskopior som kopieras över först.
-4. **Kopiera de säkerhetskopior som redan finns** är på som standard. Avslaget blir de gamla säkerhetskopiorna där de är och kan fortfarande återställas därifrån.
+4. **Kopiera de säkerhetskopior som redan finns** är på som standard. Avslaget blir de gamla säkerhetskopiorna där de är, men posten listar dem inte längre. **Från en gammal säkerhetskopiemapp** på sidan Återställning läser dem fortfarande med mappens adress och, för en fjärrmapp, dess inloggning.
 5. Välj **Byt**. När den nya platsens kort **Hur länge det bevaras** behåller mindre än avsnittets regel i dag frågar BombVault först **Bevara mindre?** Där tar **Behåll de nuvarande värdena för** det avsnittet **under Regler per avsnitt** med dagens värden, **Spara ändå** går vidare, och **Tillbaka** lämnar allt som det var. När säkerhetskopior måste kopieras först kopierar BombVault dem och byter sedan den egna mappen. När de redan finns där kontrollerar den dem före bytet.
 
 Efter flytten går nya säkerhetskopior till den flyttade egna mappen, även för ett avsnitt som hade **Lokal** avslaget och säkerhetskopierade rakt till en kopia. En kopia som redan låg på den nya platsen blir den egna mappen, och kopieringen dit upphör. Där den kopian behållit några säkerhetskopior längre än avsnittets behållregler behåller avsnittet det som någon av reglerna behåller, så ingen av dem går förlorad.
@@ -252,7 +258,7 @@ BombVault kopierar säkerhetskopiorna i bakgrunden och byter sedan den egna mapp
 
 Kortet **Anslutning** för målet Lokal tar fortfarande en fjärradress för ett avsnitts egna mapp: **Ändra** bredvid avsnittet öppnar ett fönster med en omkopplare **Lokal / Fjärran**. **Fjärran** tar en restic-adress som `s3:...`, `rest:http://host:8000/repo`, `sftp:user@host:/repo` eller `rclone:remote:bucket/path`, och **Säkerhetsinställningar för fjärransluten primärrepo** lägger till ett anslutningstest, upp- och nedladdningsgränser, append-only-skydd med samma manipuleringstest som ett externt mål får, och ett larm för tillväxtbudget.
 
-En sådan adress loggar in med standardinloggningen. När den ligger i en mapp i ett lagringsmål du har listar det målets sida avsnittet under **Ligger redan under det här målet**, och att ta över det ger det målets inloggning, lagringsklass och skydd mot radering. Att flytta den egna mappen in i ett lagringsmål med **Använd som egen mapp** är det enklare sättet, eftersom fönstret kontrollerar de säkerhetskopior som redan finns innan något ändras.
+En sådan adress loggar in med standardinloggningen. När den är exakt den mapp som ett lagringsmål du har håller för avsnittet följer den det målet av sig själv, målets kort och dess omkopplare **Tillgängligt** inräknade, om den inte loggar in på ett annat sätt eller är append-only där målet inte är det. En regel som gallrade mappen fram till dess blir kvar som avsnittets egen under **Regler per avsnitt**. När den ligger i en annan mapp i det målet listar målets sida avsnittet under **Ligger redan under det här målet**, och att ta över det ger det målets inloggning, lagringsklass och skydd mot radering. Att flytta den egna mappen in i ett lagringsmål med **Använd som egen mapp** är det enklare sättet, eftersom fönstret kontrollerar de säkerhetskopior som redan finns innan något ändras.
 
 ## Placering per post {#placement}
 
@@ -294,7 +300,12 @@ En ZFS-replik är en kopia utanför lokalen, men inte en säkerhetskopia med his
 
 ### Efter en återuppbyggnad {#after-a-rebuild}
 
-Kopieringsvalen finns i BombVaults egna inställningar. Efter en återuppbyggnad via **Identifiera säkerhetskopior** eller Nödguiden utan återställda inställningar är de borta, och att kopiera allt skulle skicka de poster du lämnat utanför till B2 igen. Off-site-kopior av varje återuppbyggt avsnitt pausas därför. Översikten säger det, och kortet **Mål per avsnitt** erbjuder **Bekräfta standard** med en förhandsvisning av vad nästa körning kopierar och namnen i säkerhetskopiorna som saknar post, som du kan lämna utanför där. Bara bekräftelsen avslutar pausen. Att importera en inställningsfil för tillbaka regler och standarder men avslutar den inte.
+Kopieringsvalen finns i BombVaults egna inställningar. Efter en återuppbyggnad via **Identifiera säkerhetskopior** eller Nödguiden utan återställda inställningar är de borta, och att kopiera allt skulle skicka de poster du lämnat utanför till B2 igen. Detsamma gäller när ett avsnitt som aldrig har kopierat off-site från den här databasen hittar egna säkerhetskopior på ett lagringsmål, eller äldre i sin egna mapp, till exempel efter att ett mål lagts till ovanpå säkerhetskopiorna från en tidigare installation med samma `APP_KEY`. Off-site-kopior av det avsnittet väntar då på ditt beslut.
+
+**Behöver uppmärksamhet** på översikten och sidan för varje lagringsmål som avsnittet kopierar till frågar om säkerhetskopiorna är den här serverns egna. **Ta över dem som den här serverns egna** bekräftar avsnittets standard, och dess kopior körs igen från nästa omgång. **Kontrollera reglerna först** leder till avsnittets rad i **Mål per avsnitt**, där du ser vart varje post går och kan ställa in en förlorad regel igen på postens sida. Kopieringen fortsätter att vänta där tills du trycker på **Ta över dem som den här serverns egna**, som först visar vad nästa körning kopierar och namnen i säkerhetskopiorna som saknar post, som du kan lämna utanför. Den nyaste säkerhetskopian av varje post som väntar säger det i sin körning, med en länk till beslutet, och en avisering går ut när aviseringar är på. Att importera en inställningsfil för tillbaka regler och standarder men fattar inte beslutet åt dig.
+
+![Behöver uppmärksamhet efter en återuppbyggnad: mappuppsättningarna hittade säkerhetskopior från tiden före den här databasen, och deras off-site-kopior väntar på beslutet.](assets/screenshots/offsite/copy-decision-dark.png#only-dark)
+![Behöver uppmärksamhet efter en återuppbyggnad: mappuppsättningarna hittade säkerhetskopior från tiden före den här databasen, och deras off-site-kopior väntar på beslutet.](assets/screenshots/offsite/copy-decision-light.png#only-light)
 
 ## Skydd mot radering (append-only) {#delete-protection-append-only}
 
@@ -371,7 +382,7 @@ Sidan **Instanser** (en inställningsbricka som kan fästas i sidofältet) visar
 Varje kort visar medlemmens skyddsstatus och dess roller som brickor. En roll är något som en instans gör åt en annan:
 
 - **Mottagare** håller den här serverns off-site-kopior i en rest-server i append-only-läge. Den här servern skickar efter varje säkerhetskopiering och kan inte radera något där, även om någon tar över den.
-- **Hämtare** hämtar den här serverns säkerhetskopior enligt sitt eget schema. Den här servern behöver inte vara vaken för det.
+- **Hämtare** hämtar den här serverns säkerhetskopior enligt sitt eget schema. Den här servern behöver inte vara vaken för det. Instansen som hämtar behöver ha **Hämtning** påslaget innan den kan tillåta begäran.
 - **ZFS-server** tar emot den här serverns ZFS-repliker. Varje ZFS-post väljer den under **Replik** i sina inställningar.
 - **Nyckelförvarare** håller en förseglad kopia av den här serverns återställningskit. Se [Nyckelförvarare](#key-keeper).
 
@@ -379,7 +390,7 @@ Att slå på en roll skickar en begäran, och ingenting startar förrän någon 
 
 **Detaljer** på ett kort öppnar resten: den medlemmens mottagna repositorier och hämtningskällor, lagringserbjudanden, övervakning, **Ta bort** och **Glöm nyckeln**.
 
-En medlem kan erbjuda sin egen off-site-lagring till en annan medlem via gruppen. Den andra administratören ser erbjudandet i medlemmens **Detaljer** och accepterar eller avvisar det. Att acceptera skapar en sparad inloggning och ett vanligt lagringsmål, efter samma kontroller som ett mål du skriver in. Bara anslutningsuppgifter reser så, aldrig säkerhetskopieringsdata. **Kontrollera nu** ber en medlem verifiera ett avsnitts repositorium. Inget på sidan kan starta en säkerhetskopiering, återställning eller radera något på en annan låda.
+En medlem kan erbjuda sin egen off-site-lagring till en annan medlem via gruppen. Den andra administratören ser erbjudandet i medlemmens **Detaljer** och accepterar eller avvisar det. Att acceptera skapar en sparad inloggning och ett vanligt lagringsmål, efter samma kontroller som ett mål du skriver in. Målet kommer med skydd mot radering påslaget, eftersom receptet som erbjudandet visar är en rest-server i append-only-läge, så **Hur länge det bevaras** gäller inte där. Varje erbjudande har en egen inloggning och en egen mapp, så att erbjuda ett avsnitt igen, till samma medlem eller en annan, lämnar den första partnerns kopior i fred: lägg till den nya raden i `.htpasswd` och låt servern fortsätta köra. Bara anslutningsuppgifter reser så, aldrig säkerhetskopieringsdata. **Kontrollera nu** ber en medlem verifiera ett avsnitts repositorium. Inget på sidan kan starta en säkerhetskopiering, återställning eller radera något på en annan låda.
 
 Instanser som är avstängda och telefoner med appen stängd behåller sitt kort som **Inaktiv**, i grått, med när de senast sågs, och står dämpade i nätet tills du **Tar bort** dem. Direkt efter att den här servern startat säger ett sådant kort **Kontrollerar** tills gruppen är tillbaka. **Ta bort** fungerar på ett sådant kort vilka delar som än är påslagna, och det avslutar också medlemmens öppna begäranden, dess lediga ZFS-mottagarplatser och dess väntande nyckelbegäranden. Kortet **Instanser** på parkopplingssidan listar de här medlemmarna som **Inaktiv** också.
 
@@ -390,12 +401,16 @@ På lådan som **tar emot** append-only-kopior från en annan BombVault ger de m
 - **En inventering per källa**, så att du ser exakt vilka containrar, VM:ar och mappuppsättningar som har landat.
 - **Senast mottagen** per källa, så att du vet hur färsk var och en är.
 - **En oberoende `restic check`** som körs på mottagarhårdvaran, så att integriteten verifieras där datan faktiskt ligger, inte bara hos avsändaren.
-- **En död mans knapp:** ett larm när en källa slutar skicka inom ett fönster du ställer in.
-- **Integritetslarm:** ett larm när en kontroll på mottagarsidan misslyckas.
+- **En död mans knapp:** ett larm när en källa slutar skicka inom ett fönster du ställer in. Den tittar en gång om dagen, klockan 09:15. Du får också ett larm när repositoriet inte går att läsa alls, oavsett vad kontrollschemat säger, och när inget har kommit fram ett helt fönster efter att du lade till det. Ett repositorium du lägger till före avsändarens första kopia är i ordning fram till dess.
+- **Integritetslarm:** ett larm när en kontroll på mottagarsidan misslyckas. En kontroll som inte kunde öppna repositoriet säger ingenting om integriteten, så den lämnar inget utlåtande och försöker igen nästa dag vid samma tid.
+
+Ett repositorium på en annan server behöver den serverns inloggning: spara den som en [inloggning](#sign-ins) och välj den under **Autentiseringsuppgifter** i dialogen.
 
 Mottagaren är strikt skrivskyddad. Den skriver aldrig till det mottagna repositoriet, så den kan aldrig bryta append-only-garantin som avsändaren förlitar sig på.
 
-En hämtare fungerar åt andra hållet: med **Hämtning** påslaget läser en instans en annan medlems säkerhetskopior enligt sitt eget schema, in i ett eget repositorium för varje källa, så att de aldrig räknas som den här lådans egna säkerhetskopior. Dess källor står också i den medlemmens detaljer: repositoriets plats, vilken sorts säkerhetskopia det håller och hur ofta det ska hämtas. Restic-lösenordet kommer över gruppen, aldrig APP_KEY, och andra sidan har inget mer att sätta upp och behöver inte köra. Källan läses bara, aldrig mer, och varje sida behåller sin egen inloggning. En `rclone:`-källa nekas, eftersom rclone skulle nå den med den här instansens remotes.
+En hämtare fungerar åt andra hållet: med **Hämtning** påslaget läser en instans en annan medlems säkerhetskopior enligt sitt eget schema, in i ett eget repositorium för varje källa, så att de aldrig räknas som den här lådans egna säkerhetskopior. Dess källor står också i den medlemmens detaljer: repositoriets plats, vilken sorts säkerhetskopia det håller och hur ofta det ska hämtas. Restic-lösenordet kommer över gruppen, aldrig APP_KEY, och andra sidan har inget mer att sätta upp och behöver inte köra. Källan läses bara, aldrig mer, och varje sida behåller sin egen inloggning. En hämtning körs den dag och vid den tid som dess schema säger, och en ny källa väntar också på den tiden. **Hämta nu** väntar inte. En hämtning som missades för att den här lådan var avstängd körs så fort den är tillbaka. En som misslyckades försöker igen nästa dag vid samma tid, även med ett veckoschema, och en misslyckad hämtning syns i aktivitetsloggen och skickar ett larm tills en hämtning fungerar igen. En `rclone:`-källa nekas, eftersom rclone skulle nå den med den här instansens remotes.
+
+En hämtad kopia bara växer. BombVault lägger till i den och varken gallrar eller kontrollerar den, så det som källan sedan länge har glömt blir kvar här tills du raderar mappen, och sidan Lagringsmål räknar inte med den. Den ligger i `pulled/<source id>` inuti avsnittets egna mapp, och när den mappen flyttas blir kopian kvar där den är och senare hämtningar fortsätter där i stället för att kopiera allt igen. Om du raderar den börjar nästa hämtning om i den egna mapp som avsnittet har då.
 
 ### Mottagande server {#receiving-server}
 
@@ -432,7 +447,7 @@ Vad manipuleringstestet svarar:
 | **inte skyddad** | VAULT accepterade en radering. `--append-only` saknas eller har tagits bort. |
 | **ofullständigt** | Ingetdera. Oftast är URL:en inte den restic själv använder, eller så har inloggningsuppgifterna ändrats. Inget registreras och inget larm utlöses. |
 
-**5. Titta på vad som kommer fram, om du vill.** Slå på **Mottagare** under **Inställningar, Instanser** på VAULT, öppna TOWERs **Detaljer** och lägg till det mottagna repositoriet. VAULT får TOWERs restic-lösenord över gruppen. Ingen skriver in en nyckel.
+**5. Titta på vad som kommer fram, om du vill.** Slå på **Mottagare** under **Inställningar, Instanser** på VAULT, öppna TOWERs **Detaljer** och lägg till det mottagna repositoriet: klicka på en av platserna som dialogen listar. VAULT får TOWERs restic-lösenord över gruppen, och eftersom platsen ligger på VAULTs egen mottagande server läser den mappen direkt. Ingen skriver in en nyckel eller en inloggning.
 
 **6. Gör det ömsesidigt.** Upprepa stegen i andra riktningen: VAULT ber TOWER bli dess mottagare. Varje låda upprätthåller då append-only för den andra, och ingen kan radera den andras säkerhetskopior.
 
@@ -465,14 +480,14 @@ Servern TOWER dog med sina diskar. Den hade 23 containrar och 2 VM:ar, och kopie
 1. **Installera BombVault** på den nya lådan och ge den en ny `APP_KEY`, som på vilken ny installation som helst. Sätt upp VM-länken under **Inställningar, Integrationer, Värd-SSH** om du vill ha tillbaka VM:arna, eftersom en VM-återställning behöver den.
 2. **Starta guiden.** Välj **Återställ från en säkerhetskopia** på **Välkommen till BombVault**. Välj **Starta nödguiden** under **Nödläge** på sidan Återställning.
 3. **Åtkomst.** Välj **Ladda upp återställningskit** och släpp filen. BombVault provar sin nyckel på varje lagringsmål och säger till exempel **Återställningskitet lästes. Dess nyckel öppnar 0 av 2 lagringsmål.** Den lokala mappen säger **hittades inte**, eftersom disken dog, och Backblaze B2 säger **inloggning saknas**.
-4. **Spara inloggningsuppgifter.** Kitet bär inloggningen till sina fjärrmål. Tryck på **Spara inloggningsuppgifter**, så provas målen igen och Backblaze B2 säger nu **läsbar**.
+4. **Spara inloggningsuppgifter.** Kitet bär inloggningen till varje mål. Tryck på **Spara inloggningsuppgifter**, så provas målen igen och Backblaze B2 säger nu **läsbar**. Ett kit som skrevs före 10.5 innehåller bara standardinloggningen. Där ett mål fortfarande säger **inloggning saknas** anger du dess inloggning under **Ange saknade inloggningsuppgifter** och trycker på **Försök med målen igen**.
 5. **Ta över nyckeln.** Den här servern skriver nu sina säkerhetskopior med den gamla nyckeln, så att de nya säkerhetskopiorna passar de gamla. Den behåller sin egen `APP_KEY` i mallen. **Ångra övertagandet** fungerar tills den första säkerhetskopian har körts.
-6. **Inställningar.** Välj **Återställ inställningar**, som läser den nyaste auto-säkerhetskopian från B2. BombVault startar om för att tillämpa den, och guiden fortsätter av sig själv. Dina lagringsmål, scheman och regler är tillbaka, och du fortsätter logga in med den här serverns lösenord. Skriv in hemligheterna som guiden listar igen, till exempel aviseringsinställningar.
-7. **Urval.** Sätt **Var finns säkerhetskopiorna?** på off-site-kopiorna, eftersom de lokala gick under med den gamla servern. BombVault listar de 23 containrarna och 2 VM:arna med den nyaste ögonblicksbilden förvald, och du kan välja en annan för vilken som helst av dem.
+6. **Inställningar.** Steget öppnas på platsen där nyckeln hittade auto-säkerhetskopian, här B2, med adressen redan ifylld. Välj **Återställ inställningar**, som läser den nyaste auto-säkerhetskopian därifrån. BombVault startar om för att tillämpa den, och guiden fortsätter av sig själv. Dina lagringsmål, scheman och regler är tillbaka, och du fortsätter logga in med den här serverns lösenord. Skriv in hemligheterna som guiden listar igen, till exempel aviseringsinställningar.
+7. **Urval.** **Var finns säkerhetskopiorna?** öppnas på off-site-kopiorna när inget lokalt finns kvar. BombVault läser varje mål, så att ett dött mål inte döljer de andra, listar de 23 containrarna och 2 VM:arna och återställer var och en från det mål som har dess nyaste ögonblicksbild.
 8. **Återställning.** Slå på **Lämna stoppad efteråt**, vilket är tryggast efter en total förlust, och starta. **Vad som händer** säger vad som kommer tillbaka. Resultatraden lyder till exempel **25 återställda, 0 misslyckade. Starta dem under Säkerhetskopior vid behov.**
 9. **Avsluta.** Starta dina databaser först, sedan apparna som använder dem. Öppna **Inställningar, Återställning** och ladda ner ett nytt återställningskit, eftersom det gamla hör till den förra installationen. Kontrollera **Behöver uppmärksamhet** på översikten, och kör **Säkerhetskopiera allt nu** när allt fungerar.
 
-Om auto-säkerhetskopian också saknas väljer du **Hoppa över: jag har ingen auto-säkerhetskopia**. Lagringsmålen kommer då från kitet ensamt, du sätter upp scheman och regler igen, och off-site-kopior pausas tills du bekräftar avsnittens standarder, se [Efter en återuppbyggnad](#after-a-rebuild).
+Om auto-säkerhetskopian också saknas öppnas steget på **Hoppa över: jag har ingen auto-säkerhetskopia** och säger det. Lagringsmålen kommer då från kitet ensamt, du sätter upp scheman och regler igen, och off-site-kopior väntar tills du tar över deras säkerhetskopior som den här serverns egna, se [Efter en återuppbyggnad](#after-a-rebuild). **Urval** listar fortfarande vad off-site-kopiorna innehåller. Mappuppsättningar hamnar i en mapp du väljer. Containrar och VM:ar kommer tillbaka som vanliga filer i en mapp under **Bara filerna kan komma tillbaka**, eftersom deras definitioner ligger bredvid det lokala repositoriet och i auto-säkerhetskopian, och en off-site-kopia innehåller ingetdera.
 
 !!! tip "Planerad flytt kontra katastrof"
     Nödguiden återställer BombVaults egna inställningar från en säkerhetskopia. För en *planerad* flytt till en ny låda kan du i stället ta med din konfiguration direkt med kortet **Exportera / importera inställningar** (en portabel JSON-fil). Se [Konfiguration](configuration.md#portable-settings-export-and-import).
@@ -480,6 +495,10 @@ Om auto-säkerhetskopian också saknas väljer du **Hoppa över: jag har ingen a
 ### Från en gammal säkerhetskopiemapp {#restore-from-another-bombvault-repo}
 
 **Från en gammal säkerhetskopiemapp** under **Andra källor** på sidan Återställning öppnar en *annan* BombVault-instans repositorium (en delad resurs monterad under `/mnt`, eller en fjärradress) med den instansens återställningskit eller dess inskrivna `APP_KEY`, i en engångssession som är skrivskyddad. Bläddra bland containrar, VM:ar, mappuppsättningar och ZFS-datauppsättningar som finns lagrade där, välj en ögonblicksbild och återställ den, så blir det återställda objektet en vanlig lokal container, VM eller mappuppsättning. Ingenting skrivs någonsin till det andra repositoriet, och dina egna säkerhetskopieringsinställningar förblir orörda (sessionen lever i minnet och går ut av sig själv). Att flytta en container från server A till server B betyder inte att du pekar om dina inställningar och sedan ändrar tillbaka dem. Det här fönstret är en engångsgrej: det öppnar en session, återställer det du väljer och glömmer den andra instansen. Om du i stället vill ha ett stående arrangemang, där den här lådan hämtar en annan instans ögonblicksbilder till ett eget repositorium enligt ett schema, är det rollen **Hämtare** på sidan Instanser.
+
+### Det den här servern hämtade {#restore-what-was-fetched}
+
+Varje källa som den här servern har hämtat från har en egen rad **Hämtat från** under **Andra källor** på sidan Återställning. En hämtad kopia är låst med den här serverns egen nyckel, inte källans, så ingenting efterfrågas: källans nyckel öppnar den inte. Mappuppsättningar och ZFS-datauppsättningar hamnar i en mapp du väljer. Containrar och VM:ar kommer tillbaka som vanliga filer i en mapp, eftersom en hämtning bär ögonblicksbilderna men inte definitionerna. För att återskapa dem använder du källans återställningskit och auto-säkerhetskopia i Nödguiden.
 
 En container vars nätverk inte finns på den här servern, till exempel ett Unraid-`br0`-nätverk på en vanlig Docker-värd, visar en nätverksväljare under sin rad. BombVault skapar den på nätverket du väljer, tillsammans med dess andra nätverk. Den fasta IP-adressen och MAC-adressen hörde till det gamla nätverket och släpps, så det nya nätverket tilldelar dem.
 
@@ -532,7 +551,7 @@ Det är HMAC-SHA256 över den fasta strängen `bombvault:restic-repo`, nyckelad 
 !!! warning "För ett mottaget repositorium, använd den SKICKANDE instansens nyckel"
     Ett repositorium som kom hit genom en off-site-kopia skapades av maskinen som skickade det, med **dess** nyckel. Att härleda från den mottagande lådans nyckel ger ett lösenord som restic avvisar, vilket läses precis som ett skadat repositorium och inte är det. Det här är den vanliga orsaken till att `restic check` på ett mottaget repositorium frågar efter ett lösenord om och om igen.
 
-Eftersom återställningsdefinitionerna ligger **inuti** varje repositorium (`<repo>/def`, `<repo>/vm-def`) är en kopierad repositoriemapp fullständigt självförsörjande, så kitet plus repositoriet är allt en återställning från noll behöver.
+Eftersom återställningsdefinitionerna ligger **inuti** varje repositorium (`<repo>/def`, `<repo>/vm-def`) är en kopierad repositoriemapp fullständigt självförsörjande, så kitet plus repositoriet är allt en återställning från noll behöver. En off-site-kopia och en hämtad kopia innehåller ögonblicksbilderna utan definitionerna: de ger tillbaka filer, och en container eller VM återskapas från auto-säkerhetskopian.
 
 ## Få tillbaka en databasdump {#database-dumps}
 

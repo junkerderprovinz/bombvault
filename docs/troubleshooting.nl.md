@@ -38,7 +38,7 @@ VM-back-up praat met libvirt via SSH, nooit via een mount.
 
 ## Een live VM-snapshot liep niet {#a-live-vm-snapshot-did-not-run}
 
-Live-snapshots hebben de qemu guest agent nodig, geïnstalleerd in de VM, en de schijf op `/mnt/cache` (of `/mnt/diskX`), niet `/mnt/user`. Bij een uitgeschakelde VM valt live automatisch terug op netjes afsluiten. Een back-up met netjes afsluiten sluit de VM af, maakt een back-up van de schijven en start hem daarna weer, dus hij is altijd consistent. Hij wacht tot tien minuten tot de gast is afgesloten en forceert hem nooit uit, zodat een Windows-gast die updates installeert niet halverwege wordt afgekapt. Een gast die daarna nog draait, wordt met rust gelaten, en die back-up mislukt met de reden.
+Live-snapshots hebben de schijf op `/mnt/cache` (of `/mnt/diskX`) nodig, niet `/mnt/user`. Met de qemu guest agent in de VM is de snapshot gequiesceerd, en zonder agent is hij crashconsistent. Bij een uitgeschakelde VM valt live automatisch terug op netjes afsluiten. Een back-up met netjes afsluiten sluit de VM af, maakt een back-up van de schijven en start hem daarna weer, dus hij is altijd consistent. Hij wacht tot tien minuten tot de gast is afgesloten en forceert hem nooit uit, zodat een Windows-gast die updates installeert niet halverwege wordt afgekapt. Een gast die daarna nog draait, wordt met rust gelaten, en die back-up mislukt met de reden.
 
 ## Een back-up mislukte met "repository is already locked" {#a-backup-failed-with-repository-is-already-locked}
 
@@ -127,6 +127,10 @@ Een openstaande kritieke anomalie houdt ze vast: de bron van het item is bijna l
 
 Dezelfde oorzaak: opschonen laat de oude back-ups van een item met zo'n anomalie met rust en noemt het item in zijn bericht. Al het andere wordt gewoon opgeschoond.
 
+## Een back-up mislukt met "on no mounted pool or share" {#no-mounted-pool}
+
+Op Unraid leeft `/mnt` in het geheugen, dus een map daar waarop geen pool is gemount, is bij de volgende herstart weg en verborgen zodra de pool terug is. BombVault weigert daar een back-up of een flash-ZIP te schrijven, ook als er in die map al een repository van een eerdere schrijfactie staat. Mount de pool en start de back-up opnieuw.
+
 ## Geschiedenisimport zegt dat een repository niet kon worden gelezen {#history-import-says-a-repository-could-not-be-read}
 
 Na de upgrade leest BombVault de groottes van eerdere back-ups eenmalig uit elk repository. Een repository dat het op dat moment niet kon bereiken, zoals een off-site-doel dat uit stond of een share die niet gemount was, wordt geteld op de kaart **Anomalieën** onder **Instellingen, Verificatie** en eenmaal per dag opnieuw geprobeerd. De items leren intussen van nieuwe back-ups.
@@ -177,15 +181,15 @@ Het doel heeft snapshots die nieuwer zijn dan de nieuwste die het met deze serve
 
 BombVault volgt de backingketen van elke schijf en maakt een back-up van elk bestand erin. Een keten die niet tot het einde gevolgd kan worden, laat de back-up mislukken in plaats van een deel van de schijf weg te laten, en de melding noemt het bestand. Controleer of het bestand onder `/mnt` bestaat en of de snapshot nog in de VM Manager staat. Een bestand buiten Host Data kan helemaal niet worden gelezen. Zie [VM's met Unraid-snapshots](vm-backup-ssh-setup.md#unraid-snapshots).
 
-## Off-site-kopieën staan stil na een herinstallatie {#copies-paused}
+## Off-site-kopieën wachten na een herinstallatie op je beslissing {#copies-paused}
 
-Na **Back-ups ontdekken** of de Noodassistent zonder herstelde instellingen wachten de off-site-kopieën van elk opnieuw opgebouwd onderdeel, omdat BombVault niet meer weet welke items je wegliet. Het overzicht zegt dat. Druk in **Bestemmingen per onderdeel** op **Standaard bevestigen**, bekijk het voorbeeld en laat weg wat weg moet blijven. Het importeren van een instellingenbestand beëindigt de pauze niet. Zie [Na een herinstallatie](offsite-recovery.md#after-a-rebuild).
+Na **Back-ups ontdekken** of de Noodassistent zonder herstelde instellingen, of als een onderdeel eigen back-ups van vóór deze database vindt, wachten de off-site-kopieën van dat onderdeel, omdat BombVault niet meer weet welke items je wegliet. **Aandacht nodig** en de pagina van de bestemming vragen ernaar. Druk op **Als back-ups van deze server overnemen** om verder te gaan, of op **Eerst de regels controleren** om eerst naar de regels van het onderdeel te kijken. Het importeren van een instellingenbestand neemt de beslissing niet voor je. Zie [Na een herinstallatie](offsite-recovery.md#after-a-rebuild).
 
 ## Meldingen komen niet aan {#notifications-do-not-arrive}
 
 Begin met **Test versturen** onder **Instellingen, Meldingen**. De regel onder de kaart zegt wat er gebeurde.
 
-- **Er wordt helemaal niets verstuurd.** Controleer **Melden**. Met **Nooit** gaat er niets uit, en met **Alleen bij mislukking** blijft een goede run stil. Met **Geplande runs samenvatten** aan stuurt een geplande run aan het einde één samenvatting.
+- **Er wordt helemaal niets verstuurd.** Controleer **Melden**. Met **Nooit** gaat er geen bericht uit, alleen de pings van een Healthchecks-URL, en met **Alleen bij mislukking** blijft een goede run stil. Met **Geplande runs samenvatten** aan stuurt een geplande run aan het einde één samenvatting.
 - **Een nieuw adres.** Nadat je de server van Matrix, Gotify of e-mail wijzigt, vraagt het veld opnieuw om het token of wachtwoord, en het nieuwe adres wordt pas opgeslagen zodra je het intypt. BombVault stuurt het oude geheim niet naar een nieuwe plek.
 - **Gotify** zegt dat de server het app-token weigerde: kopieer het opnieuw uit de applicatie in Gotify. De **Server-URL** is het basisadres, zonder `/message`.
 - **Webhook:** controleer of het **Webhook-formaat** bij de dienst past. Een Discord-adres heeft **Discord** nodig, en ntfy heeft **ntfy** nodig.

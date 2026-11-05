@@ -23,7 +23,7 @@ Každý kontejner, VM, sada složek, flash disk, každá datová sada ZFS a vlas
 | **Kontejnery** | Adresář appdata plus definice kontejneru (image, proměnné prostředí, porty, štítky, svazky). |
 | **VMs** | Diskové image VM, definice XML a UEFI NVRAM, zálohováno přes SSH (bez připojení libvirt). |
 | **Flash** | Celý USB flash (`/boot`): OS, licence, konfigurace pole, sdílené složky, síť a konfigurace pluginů. |
-| **Autozáloha** | Vlastní `/config` BombVaultu: jeho databáze nastavení, přihlašovací údaje jeho cílů a pár klíčů SSH pro libvirt. |
+| **Autozáloha** | Vlastní `/config` BombVaultu: jeho databáze nastavení, přihlašovací údaje jeho cílů, pár klíčů SSH pro libvirt, klíč a připnuté klíče hostitelů serverů ZFS a certifikáty. |
 | **Složky** | Libovolná složka na serveru jako sada složek, každá s volitelnými vylučovacími vzory. |
 | **Datové sady ZFS** | Datová sada se všemi sadami pod ní, čtená z jednoho snímku ZFS a uložená jako složka. Viz [Datové sady ZFS](zfs-datasets.md). |
 
@@ -102,4 +102,4 @@ Název a vizuální identita nejsou licencovány. AGPL pokrývá pouze zdrojový
 - **Problémy:** [github.com/junkerderprovinz/bombvault/issues](https://github.com/junkerderprovinz/bombvault/issues)
 
 !!! warning "Kontrola nad hostitelem na úrovni root"
-    Skrze Docker socket může BombVault zastavovat, odebírat a znovu vytvářet kontejnery a číst/zapisovat appdata, a pro zálohu VM se přihlašuje k hostiteli přes SSH, aby spustil `virsh`. Kdokoli, kdo se dostane k jeho webovému rozhraní, má fakticky root na hostiteli. Provozuj BombVault pouze v důvěryhodné, nevystavené síti a nastav přihlašovací heslo v **Nastavení, Zabezpečení**. Sada pro obnovu, úschova klíčů a mazání záloh v cíli ho vyžadují. Kompletní bezpečnostní model najdeš v [Konfiguraci](configuration.md#security-model).
+    Skrze Docker socket může BombVault zastavovat, odebírat a znovu vytvářet kontejnery a číst/zapisovat appdata, a pro zálohu VM se přihlašuje k hostiteli přes SSH, aby spustil `virsh`. Kdokoli, kdo se dostane k jeho webovému rozhraní, má fakticky root na hostiteli. Provozuj BombVault pouze v důvěryhodné, nevystavené síti a nastav přihlašovací heslo v **Nastavení, Zabezpečení**. Sada pro obnovu, úschova klíčů, ZIP flashky, export zálohy flashky nebo autozálohy a mazání záloh v cíli ho vyžadují. Kompletní bezpečnostní model najdeš v [Konfiguraci](configuration.md#security-model).

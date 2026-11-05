@@ -9,20 +9,20 @@ BombVault voi kertoa sinulle, kun varmuuskopio epäonnistuu, onnistuu tai on my�
 
 **Ilmoitukset**-kortti asettaa säännöt kaikille kanaville kerralla:
 
-- **Ilmoita**: **Ei koskaan**, **Vain epäonnistuessa** tai **Onnistuessa ja epäonnistuessa**, kaikille alla oleville kanaville.
+- **Ilmoita**: **Ei koskaan**, **Vain epäonnistuessa** tai **Onnistuessa ja epäonnistuessa**, kaikille alla oleville kanaville. Uusi asennus alkaa asetuksella **Vain epäonnistuessa**, joten täyttämäsi kanava kertoo, kun varmuuskopiointi menee rikki.
 - **Tiivistä ajastetut ajot**: yksi viesti ajastettua ajoa kohti, esimerkiksi *42 / 45 onnistui*, yhden viestin sijaan jokaista konttia tai virtuaalikonetta kohti. Itse käynnistämäsi varmuuskopio lähettää silti oman viestinsä. Jäätynyt vieras, epäonnistunut säilytys tai ylitetty kasvubudjetti lähtee heti, vaikka tiivistelmät olisivat päällä.
 - **Ilmoita containerin päivityksestä**: yksi viesti jokaisesta kontista, jonka **Päivitä kontit onnistuneen varmuuskopioinnin jälkeen** siirsi uudempaan imageen, jotta voit tarkistaa, että se toimii edelleen.
-- **Ilmoita myöhässä olevista varmuuskopioista**: kerran päivässä kello 09.00 BombVault tarkistaa, onko päällä oleva varmuuskopio myöhässä eli vanhempi kuin kaksi kertaa sen aikataulun väli, ja lähettää yhden viestin tapausta kohti. Seuraava onnistunut varmuuskopio poistaa ilmoituksen.
+- **Ilmoita myöhässä olevista varmuuskopioista**: kerran päivässä kello 09.00 BombVault tarkistaa, onko päällä oleva varmuuskopio myöhässä eli vanhempi kuin kaksi kertaa sen aikataulun väli, ja lähettää tapausta kohti yhden viestin, joka nimeää jälkeen jääneen merkinnän. Seuraava onnistunut varmuuskopio poistaa ilmoituksen.
 - **Unraid-ilmoitukset**: lähettää Unraidin omaan ilmoitusjärjestelmään, joka voi välittää viestit Pushoveriin, sähköpostiin tai Discordiin. Se toimii kohdan **Asetukset, Integraatiot, Palvelimen SSH** SSH-yhteyden kautta, joten avain on valtuutettava. TrueNASissa ja muilla isännillä se pysyy pois päältä.
-- **Viikkokooste**: yksi yhteenveto viikossa ajojen määristä, uudesta varmuuskopiodatasta, ovatko etäkopiot ajan tasalla ja yleisimmistä epäonnistumisista. Sen aikataulu on painike kuten jokainen muukin aikataulu, ja **Pois** kytkee sen pois. Katso [Aikataulut](schedules.md#plans).
+- **Viikkokooste**: yksi yhteenveto viikossa ajojen määristä, uudesta varmuuskopiodatasta, mitkä osiot ovat myöhässä, ovatko etäkopiot ajan tasalla ja yleisimmistä epäonnistumisista. Sen aikataulu on painike kuten jokainen muukin aikataulu, ja **Pois** kytkee sen pois. Katso [Aikataulut](schedules.md#plans).
 
 Mitkä poikkeamat lähettävät viestin, asetetaan kohdassa **Asetukset, Tarkista**, katso [Poikkeamat](anomalies.md). Lykätty varmuuskopio lähettää yhden viestin, kun se alkaa odottaa, ja yhden, kun odotus päättyy, ei yhtä jokaisesta yrityksestä.
 
-**Lähetä testi** kortin alareunassa lähettää testiviestin jokaisen päällä olevan kanavan kautta lomakkeessa olevilla arvoilla.
+**Lähetä testi** kortin alareunassa lähettää testiviestin jokaisen päällä olevan kanavan kautta lomakkeessa olevilla arvoilla ja nimeää jokaisen kanavan, joka epäonnistui. Healthchecks-tarkistus saa merkinnän lokiinsa, eikä sen tila muutu.
 
 ## Kanavat {#channels}
 
-Jokaisella kanavalla on oma kytkimensä **Kanavat**-kortissa, ja sen kentät näkyvät, kun se on päällä. Jokainen kanava lähettää itsenäisesti omalla aikarajallaan, joten yksi isäntä, joka ei koskaan vastaa, ei hidasta muita, ja viestiä, jonka mikään kanava ei ottanut vastaan, yritetään uudelleen.
+Jokaisella kanavalla on oma kytkimensä **Kanavat**-kortissa, ja sen kentät näkyvät, kun se on päällä. Jokainen kanava lähettää itsenäisesti omalla aikarajallaan, joten yksi isäntä, joka ei koskaan vastaa, ei hidasta muita. Myöhästymis-, budjetti- tai poikkeamahälytystä, jota mikään kanava ei ottanut vastaan, yritetään uudelleen, ja samoin viikkokoostetta. Yksittäisen varmuuskopion tai yhteenvedon viesti lähetetään kerran.
 
 | Kanava | Kentät | Huomiot |
 |---|---|---|
@@ -36,7 +36,9 @@ Salaisuudet, kuten Matrix-tunniste, Gotifyn sovellustunnus ja SMTP-salasana, tal
 
 ## Healthchecks {#healthchecks}
 
-Palvelu, kuten [Healthchecks.io](https://healthchecks.io), hälyttää, kun BombVault lakkaa kirjautumasta. Liitä tarkistuksen **Ping-URL**, ja BombVault pingaa sitä jokaisen varmuuskopion koko elinkaaren ajan: alussa, sitten onnistuessa tai `/fail`-polulla. Se tekee niin aina, kun URL on asetettu, riippumatta siitä, mitä **Ilmoita** sanoo, joten tarkistus pysyy vihreänä onnistumisessa myös silloin, kun viestit tulevat vain epäonnistumisista.
+Palvelu, kuten [Healthchecks.io](https://healthchecks.io), hälyttää, kun BombVault lakkaa kirjautumasta. Liitä tarkistuksen **Ping-URL**, ja BombVault pingaa sitä jokaisen varmuuskopion koko elinkaaren ajan: alussa, sitten onnistuessa tai `/fail`-polulla. Se tekee niin aina, kun URL on asetettu, riippumatta siitä, mitä **Ilmoita** sanoo, joten tarkistus pysyy vihreänä onnistumisessa myös silloin, kun viestit tulevat vain epäonnistumisista. Osio, jolla ei ole minne varmuuskopioida, lasketaan epäonnistuneeksi, joten sen tarkistus muuttuu punaiseksi sen sijaan, että se saisi onnistumisviestin.
+
+Saman URL:n osiot jakavat yhden tarkistuksen. Kun yhden niistä varmuuskopio on epäonnistunut, myös muiden onnistuneet varmuuskopiot pingaavat `/fail` ja nimeävät sen, joten tarkistus pysyy punaisena, kunnes kyseisellä merkinnällä on taas onnistunut varmuuskopio tai kuittaat epäonnistumisen kohdassa **Vaatii huomiota**.
 
 Osio voi pingata omaa osoitettaan: kortin **Poikkeus** lisää sellaisen, ja rivillä lukee **Kaikki muut osiot pingaavat tätä URL-osoitetta.**
 

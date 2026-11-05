@@ -9,10 +9,10 @@ Alt, hvad BombVault sikkerhedskopierer, står i én liste under **Sikkerhedskopi
 
 | Område | Hvad der gemmes |
 |---|---|
-| **Containers** | Appdata-mappen plus containerens definition: image, variabler, porte, labels og volumener. Kortet **Sikkerhedskopierede mapper** på containerens fane **Indstillinger** sætter flueben ved præcis de mapper, sikkerhedskopien dækker, med en live optælling af stierne og en liste over det, du har udeladt. Data, en container gemmer uden for Host Data, for eksempel i et TrueNAS ixVolume, sikkerhedskopieres ikke, og kørslen nævner de mapper, den udelod. |
+| **Containers** | Appdata-mappen plus containerens definition: image, variabler, porte, labels og volumener. Kortet **Sikkerhedskopierede mapper** på containerens fane **Indstillinger** sætter flueben ved præcis de mapper, sikkerhedskopien dækker, med en live optælling af stierne og en liste over det, du har udeladt. Data, en container gemmer uden for Host Data, for eksempel i et TrueNAS ixVolume eller et Compose-projekt under `/opt`, sikkerhedskopieres ikke, og kørslen nævner de mapper, den udelod. Kørslen nævner også en mappe inde i Host Data, der ikke findes lige nu. Systemstier som `/etc/localtime` eller Docker-socketten tæller ikke som data. |
 | **VMs** | Diskimages, XML-definitionen og UEFI-NVRAM, med en pæn nedlukning eller et live-snapshot, over SSH. Se [VM-sikkerhedskopier](vm-backup-ssh-setup.md). |
 | **Flash** | Kun Unraid. Hele USB-flashdrevet (`/boot`): OS, licens, array-konfiguration, shares, netværk og plugin-konfiguration. |
-| **Auto-sikkerhedskopi** | BombVaults egen `/config`: dens indstillingsdatabase, destinationernes adgangsoplysninger og libvirt-SSH-nøglenparret, taget som snapshot med SQLite `VACUUM INTO`, så databasen aldrig fanges midt i en skrivning. |
+| **Auto-sikkerhedskopi** | BombVaults egen `/config`: dens indstillingsdatabase, destinationernes adgangsoplysninger, libvirt-SSH-nøglenparret, nøglen og de gemte værtsnøgler til ZFS-serverne og certifikaterne, taget som snapshot med SQLite `VACUUM INTO`, så databasen aldrig fanges midt i en skrivning. |
 | **Mapper** | Enhver mappe på serveren som et mappesæt, for eksempel en share, dine dokumenter eller et fotobibliotek, med valgfrie udelukkelsesmønstre. Mappesæt har tidsplaner, opbevaring, off-site-kopier, tjek og gendannelsestest som alt andet. |
 | **ZFS-datasæt** | Et datasæt og alle datasæt under det, læst fra ét ZFS-snapshot, så alle kommer fra samme øjeblik, og gemt med restic som en mappe. En ZFS-post kan også holde en blokpræcis replika på en anden ZFS-server. Se [ZFS-datasæt](zfs-datasets.md). |
 
@@ -35,7 +35,7 @@ Poster, der ikke længere er installeret, men stadig har sikkerhedskopier, står
 Sidens hovedhandling svæver nederst til højre: **Sikkerhedskopiér alt nu** starter en kørsel over hvert aktiveret område. **Mere** rummer resten:
 
 - **Vælg** starter et valg, se nedenfor.
-- **Opdag sikkerhedskopier** læser, hvad destinationerne rummer, og genopbygger poster ud fra det, for eksempel efter en frisk installation. Off-site-kopier af genopbyggede områder holder så pause, til du bekræfter deres standard, se [Efter en genopbygning](offsite-recovery.md#after-a-rebuild).
+- **Opdag sikkerhedskopier** læser, hvad destinationerne rummer, og genopbygger poster ud fra det, for eksempel efter en frisk installation. En container uden egne data har intet snapshot og kommer tilbage fra den definition, der er spejlet ved siden af repositoryet. Off-site-kopier af genopbyggede områder venter så, til du overtager deres sikkerhedskopier som denne servers egne, se [Efter en genopbygning](offsite-recovery.md#after-a-rebuild).
 - **ZFS-forbindelse til denne server** åbner SSH-testen for ZFS-området, se [ZFS-datasæt](zfs-datasets.md#requirements).
 - **Replikér alt nu**, med fligen ZFS valgt, sender replikaen af hver ZFS-post.
 
@@ -98,7 +98,7 @@ Kortene nedenfor afhænger af postens slags:
 | Container | **Sikkerhedskopierede mapper** (hvilke tilknyttede mapper der sikkerhedskopieres, med **Spring cachemapper over (CACHEDIR.TAG)**), **Udelukkelsesmønstre**, **Stop andre containere**, **Kommandoer før og efter**, **Database**, **Når appen er optaget**, **Opdater efter en vellykket sikkerhedskopiering**, **Snapshot i stedet for stop**, **Tidligere navne** |
 | VM | **VM** med **Metode** (**Pænt (nedlukning)** eller **Live-snapshot**) og **Kun ændrede blokke**, se [VM-guiden](vm-backup-ssh-setup.md#per-vm-method) |
 | Mappesæt | **Mappe** og **Udelukkelsesmønstre** |
-| Flashdrev | **Flash-zip-eksport**, som skriver hver flash-sikkerhedskopi ud som en almindelig `.zip` til en mappe, du vælger |
+| Flashdrev | **Flash-zip-eksport**, som skriver hver flash-sikkerhedskopi ud som en almindelig `.zip` til en mappe, du vælger, i ét trin, så et synkroniseringsværktøj aldrig ser en halv fil. En flash-sikkerhedskopi, der rummer mindre, end den burde, lader den sidste ZIP blive liggende, og eksportens kørsel siger det. |
 | ZFS-datasæt | underdatasæt, containere der skal stoppes, og kommandoerne omkring snapshottet, **Replika** og **Test adgangen til snapshots**, se [ZFS-datasæt](zfs-datasets.md) |
 
 Indstillinger gemmer sig selv, mens du ændrer dem.
@@ -119,7 +119,7 @@ Indstillinger gemmer sig selv, mens du ændrer dem.
 
 ## Udelukkelsesmønstre {#excludes}
 
-Kortet **Udelukkelsesmønstre** tager ét mønster pr. linje. Skriv stier, som du ser dem inde i containeren, for eksempel `/config/Library/Application Support/Plex Media Server/Cache`, eller et blotte navn som `.git`, der passer på enhver dybde. En forhåndsvisning under feltet viser, hvad hver linje løses til, og advarer, når en linje ikke passer på noget eller ville udelukke alt. En linje med `/` eller `*`, eller en, der nævner en hel sikkerhedskopieret mappe, ignoreres, så en udelukkelse aldrig kan tømme en sikkerhedskopi. For at udelade en hel mappe fjerner du i stedet fluebenet ved den under **Sikkerhedskopierede mapper**.
+Kortet **Udelukkelsesmønstre** tager ét mønster pr. linje. Skriv stier, som du ser dem inde i containeren, for eksempel `/config/Library/Application Support/Plex Media Server/Cache`, eller et blotte navn som `.git`, der passer på enhver dybde. På et mappesæt skriver du en sti, som værten kender den, for eksempel `/mnt/user/data/cache`. En forhåndsvisning under feltet viser, hvad hver linje løses til, og advarer, når en linje ikke passer på noget eller ville udelukke alt. En linje med `/` eller `*`, eller en, der nævner en hel sikkerhedskopieret mappe, ignoreres, så en udelukkelse aldrig kan tømme en sikkerhedskopi. For at udelade en hel mappe fjerner du i stedet fluebenet ved den under **Sikkerhedskopierede mapper**.
 
 For velkendte images som Plex, Jellyfin, Sonarr, Radarr, Immich og Nextcloud tilbyder kortet de mapper, appen selv fylder op igen, for eksempel caches, logs og miniaturebilleder. Intet udelukkes, før du trykker på **Udeluk valgte**.
 
@@ -137,6 +137,8 @@ Et mislykket dump får ikke sikkerhedskopieringen til at mislykkes. Det vises so
 
 - **Kommandoer før og efter** kører inde i containeren med `sh -c`, for eksempel for at skrive en cache ud til disk. En kommando før sikkerhedskopieringen, der mislykkes, afbryder den. En kommando før sikkerhedskopieringen, der slutter med kode 75, udskyder i stedet en planlagt sikkerhedskopiering, se nedenfor.
 - **Stop andre containere** nævner containere, der skal stoppes, mens denne sikkerhedskopieres, for eksempel dens database. Bagefter starter de igen i deres Compose-`depends_on`-rækkefølge, og som standard skal hver melde sund, før den næste starter. Ventetiden og dens timeout står under **Genstart efter sikkerhedskopiering** på kortet **Rækkefølge** under **Indstillinger, Tidsplan**.
+- En container, der deler netværks-, PID- eller IPC-namespace med en container, der stoppes, via `--net=container:` eller `network_mode: service:` i Compose, stopper og starter med den, også når den ikke står på listen, og den starter efter den container, den slutter sig til. En genstartet container får et nyt netværk, og en, der blev ved med at køre på det gamle netværk, ville kun have sin loopback. Selve listen bliver, som du har sat den. Kunne sådan en container ikke stoppes, siger kørslen, at den ikke har netværk, før den bliver genstartet. Det samme gælder BombVaults egen container, som aldrig stopper sig selv og ikke kan sættes på listen.
+- En container, der ikke kører igen bagefter, nævnes i kørslen og i en notifikation, også når selve sikkerhedskopieringen mislykkedes.
 
 ## Når appen er optaget {#app-busy}
 
@@ -177,7 +179,7 @@ Til dit eget tjek kan du få **Pre-sikkerhedskopikommando** til at slutte med ko
 restic forbliver motoren, men en eksport giver dig en kopi, der hverken kræver BombVault eller restic.
 
 - **Eksporter container** og **Eksporter VM** under **Mere** på en posts side skriver en kopi, som den er lige nu, ved siden af repositoryet: containerens sikkerhedskopierede mapper plus dens Unraid-skabelon, eller VM'ens diskimages plus dens definition, som kan gendannes med `virsh define`.
-- **Eksporter** på et gendannelsespunkt skriver en gemt sikkerhedskopi til eksportmappen på serveren, som tar, zip eller et restic-repository for sig, og kan tage ét gendannelsespunkt eller alle.
+- **Eksporter** på et gendannelsespunkt skriver en gemt sikkerhedskopi til eksportmappen på serveren, som tar, zip eller et restic-repository for sig, og kan tage ét gendannelsespunkt eller alle. En flash-sikkerhedskopi og en auto-sikkerhedskopi indeholder nøgler, så eksport af dem kræver en login-adgangskode og en login på instansen.
 
 Eksporter er almindelige filer som standard. **Krypter eksporter med age** under **Indstillinger, System** forsegler dem, flash-ZIP'en inklusive, til de modtagere, du angiver, hver en offentlig age-nøgle eller en offentlig SSH-nøgle. Du dekrypterer dem senere uden for boksen med den tilhørende private nøgle. Med kryptering slået til og uden en gyldig modtager mislykkes en eksport med en tydelig fejl i stedet for nogensinde at skrive almindelige filer.
 

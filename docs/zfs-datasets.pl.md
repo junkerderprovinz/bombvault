@@ -136,13 +136,13 @@ Odbierać może każda maszyna z ZFS i SSH, na przykład drugi Unraid albo TrueN
 Dla roota nic więcej nie jest potrzebne. Osobny użytkownik potrzebuje tych uprawnień na puli celu, które okno również pokazuje:
 
 ```
-zfs allow <user> receive,create,mount,rollback,destroy,userprop <pool>
+zfs allow <user> receive,create,mount,rollback,destroy,userprop,readonly,canmount <pool>
 ```
 
 Na źródle taki sam użytkownik potrzebuje tych uprawnień na najwyższym zbiorze danych elementu:
 
 ```
-zfs allow <user> send,snapshot,hold,release,bookmark,destroy <dataset>
+zfs allow <user> send,snapshot,hold,release,bookmark,destroy,mount <dataset>
 ```
 
 W tym kierunku BombVault, który przechowuje element, ma też klucz pozwalający pisać na serwerze.
@@ -159,7 +159,7 @@ Sparowany BombVault może sam odebrać replikę. Nikt nie dostaje dostępu SSH d
 2. Na instancji odbierającej otwórz **Instancje**. Prośba pojawia się na karcie instancji wysyłającej jako odznaka, a jej **Szczegóły** ją wymieniają. Wybierz pulę i korzeń na tym serwerze oraz ile migawek zostaje, potem naciśnij **Zezwól** lub **Odrzuć**.
 3. Po **Zezwól** źródło wysyła według własnego harmonogramu, jak do każdego innego celu.
 
-Instancja odbierająca przyjmuje tylko to, co obejmuje zatwierdzenie: zbiory danych elementu, do własnego katalogu głównego. Sama uruchamia `zfs receive`, a źródło nie ma żadnej możliwości usunięcia ani cofnięcia czegokolwiek na niej. Kopia przetrwa więc przejęcie źródła przez kogoś innego. Instancja odbierająca stosuje własną retencję. Źródło tylko proponuje regułę, gdy wysyła prośbę.
+Instancja odbierająca przyjmuje tylko to, co obejmuje zatwierdzenie: zbiory danych elementu, do własnego katalogu głównego. Sama uruchamia `zfs receive`, a źródło nie ma żadnej możliwości usunięcia ani cofnięcia czegokolwiek na niej. Kopia przetrwa więc przejęcie źródła przez kogoś innego. Instancja odbierająca stosuje własną retencję. Źródło tylko proponuje regułę, gdy wysyła prośbę. Takie źródło może nadal wysyłać nowe migawki, a z czasem wypychają one starsze zgodnie z regułą, jak każde inne. Migawka, której nazwa ma datę wyprzedzającą zegar instancji odbierającej, nie liczy się do reguły, dopóki ten czas nie nadejdzie.
 
 **Cofnij dostęp** na instancji odbierającej w każdej chwili kończy zatwierdzenie i informuje o tym źródło, które pokazuje wtedy, że zatwierdzenie wycofano, i przestaje wysyłać. To, co instancja odbierająca już ma, zostaje u niej. Odrzucona prośba pozostaje odrzucona. Dodatkowe zbiory danych albo prośba po cofnięciu dostępu wymagają ponownego pytania.
 
@@ -177,13 +177,15 @@ Kopia na celu jest tylko do odczytu. Domyślnie nie jest zamontowana, więc nicz
 
 Uwzględnione jest wszystko, co element kopiuje, a także znajdujące się pod nim wolumeny, które kopia zapasowa pomija. Zbiór danych podrzędny, który wyłączyłeś w elemencie, zostaje pominięty. Wszystkie zbiory danych jednego przebiegu pochodzą z jednej migawki, tak jak w kopii zapasowej.
 
+Kopia, którą inny BombVault replikuje na ten serwer, nie jest wysyłana dalej, bo to przerzedziłoby historię, której jej źródło wciąż potrzebuje. Gdy drzewo elementu zawiera taką kopię, przebieg kończy się błędem dla tego zbioru danych i podaje powód, dopóki nie wyłączysz jej w elemencie. Element, który sam jest taką kopią, nie może replikować wcale. Usunięcie elementu albo wyłączenie jego repliki nie rusza tych kopii ani ich migawek. Gdy przejmiesz kopię, jak opisano w [Korzystanie z repliki](#replica-use), liczy się ona jako zwykły zbiór danych.
+
 ### Jak długo migawki zostają {#replica-retention}
 
-Na celu nowa replika zachowuje 7 migawek dziennych i 3 tygodniowe. Możesz zamiast tego wybrać **Krótko**, **Zrównoważone** albo **Długo**, albo ustawić **Własne wartości**. Usuwane są tam wyłącznie migawki o nazwie `bombvault-replica-<14 digits>`, i nigdy najnowsza, którą obie strony mają wspólną.
+Na celu nowa replika zachowuje 7 migawek dziennych i 3 tygodniowe. Możesz zamiast tego wybrać **Krótko**, **Zrównoważone** albo **Długo**, albo ustawić **Własne wartości**. Własne wartości ustawione na same zera zachowują każdą migawkę, a karta o tym mówi. Usuwane są tam wyłącznie migawki o nazwie `bombvault-replica-<14 digits>`, i nigdy najnowsza, którą obie strony mają wspólną.
 
 Na źródle BombVault zachowuje najnowszą migawkę repliki oraz zakładkę (bookmark) dla każdego wysłanego stanu. Zakładki nie zajmują miejsca. Następny transfer zaczyna się od nich.
 
-Aby zachować więcej także na źródle, ustaw **Zachowaj na tym serwerze** w karcie Replika, na przykład na 7. Tyle najnowszych migawek repliki zostaje wtedy na tym serwerze po każdej replice, obok tego, co zachowuje cel. 0 lub 1 zachowuje tylko najnowszą. Na najnowszej założony jest hold, żeby nikt przypadkiem nie usunął podstawy następnego transferu. Starsze go nie mają. Każda migawka trzyma bloki, które zmieniły się po niej, więc każda, którą zachowujesz, zajmuje miejsce w puli. Wyłączenie repliki, przełączenie jej na inny cel albo usunięcie elementu usuwa je również z tego serwera.
+Aby zachować więcej także na źródle, ustaw **Zachowaj na tym serwerze** w karcie Replika, na przykład na 7. Tyle najnowszych migawek repliki zostaje wtedy na tym serwerze po każdej replice, obok tego, co zachowuje cel. 0 lub 1 zachowuje tylko najnowszą. Na najnowszej założony jest hold, żeby nikt przypadkiem nie usunął podstawy następnego transferu. Starsze go nie mają. Każda migawka trzyma bloki, które zmieniły się po niej, więc każda, którą zachowujesz, zajmuje miejsce w puli. Wyłączenie repliki, przełączenie jej na inny cel albo usunięcie elementu usuwa je również z tego serwera. Migawki innego elementu zagnieżdżonego pod nim zostają. Jeśli host jest nieosiągalny, gdy usuwasz element, migawki też zostają, a strona o tym mówi. Usuń je ręcznie: `zfs release -r bombvault-replica <dataset>@<snapshot>`, potem `zfs destroy`.
 
 Pliki zachowanej migawki możesz od razu odczytać lub skopiować z folderu `.zfs/snapshot` w zbiorze danych albo z klonu, bez dotykania zbioru danych i repliki:
 
@@ -226,12 +228,12 @@ zfs clone backup/bombvault-replica/tower/cache/appdata@bombvault-replica-2026100
 Jeśli źródło ulegnie awarii, zamień kopię na celu w zwykły zbiór danych z możliwością zapisu:
 
 ```
-zfs inherit -r readonly backup/bombvault-replica/tower/cache/appdata && zfs inherit -r canmount backup/bombvault-replica/tower/cache/appdata && zfs mount -a
+zfs inherit -r readonly backup/bombvault-replica/tower/cache/appdata && zfs list -rH -o name -t filesystem backup/bombvault-replica/tower/cache/appdata | xargs zfs set canmount=on && zfs mount -a
 ```
 
-BombVault przestaje potem replikować do tego zbioru danych, dopóki nie uruchomisz nowego pierwszego przebiegu.
+BombVault przestaje potem replikować do tego zbioru danych i jego zbiorów podrzędnych. Następny przebieg kończy się błędem z powodem, a to, co zapisałeś, zostaje. To samo dotyczy wszystkiego innego, co zapisano w kopii od jej najnowszej migawki: BombVault nigdy nie cofa kopii. Żeby znów replikować w to miejsce, przenieś z kopii to, czego potrzebujesz, i zniszcz ją na celu. Następny przebieg wyśle wtedy wszystko od nowa.
 
-Aby przywrócić stan na źródło, naciśnij w arkuszu **Przywróć jako nowy zbiór danych**. BombVault wysyła migawkę do nowego zbioru danych obok oryginału, o nazwie `<dataset>-bombvault-restore-` z dopisanym znacznikiem czasu. Nigdy nie nadpisuje oryginału.
+Aby przywrócić stan na źródło, naciśnij w arkuszu **Przywróć jako nowy zbiór danych**. BombVault wysyła migawkę do nowego zbioru danych obok oryginału, o nazwie `<dataset>-bombvault-restore-` z dopisanym znacznikiem czasu. Nigdy nie nadpisuje oryginału. Zbiór podrzędny utracony na źródle też wraca, o ile kopia wciąż ma tę migawkę. Zbiór podrzędny, który jej nie ma, zostaje pominięty, a przebieg to mówi.
 
 ### Przykład: replika na drugi serwer Unraid {#example-replica}
 

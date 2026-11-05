@@ -21,7 +21,7 @@ Ogni ripristino parte dalla pagina **Ripristino**: scegli una sezione, cerca ci�
 
 Un clic su un elemento apre **Ripristino** con il suo nome. Chiede per passaggi, e ciascuno si può cambiare prima di cominciare:
 
-1. **Backup**: lo snapshot consigliato è già selezionato. È il più recente oppure, dopo un'anomalia aperta, l'ultimo prima di essa. Quelli più vecchi sono nell'elenco, e **Confronta** mostra cosa differisce tra due di essi.
+1. **Backup**: lo snapshot consigliato è già selezionato. È il più recente oppure, dopo un'anomalia aperta, l'ultimo prima di essa. Il backup fatto prima di un ripristino precedente contiene lo stato che quel ripristino ha sostituito, quindi viene scartato a meno che non ce ne siano altri. Quelli più vecchi sono nell'elenco, e **Confronta** mostra cosa differisce tra due di essi.
 2. **Sorgente**: da dove vengono i file, quando uno snapshot si trova in più posti. **Locale** è il più veloce.
 3. **Cosa**: **Tutto**, oppure **File singoli**, dove spunti i file e le cartelle che vuoi.
 4. **Dove**: la destinazione del ripristino. Le scelte dipendono dal tipo di elemento:
@@ -29,7 +29,7 @@ Un clic su un elemento apre **Ripristino** con il suo nome. Chiede per passaggi,
     | Destinazione | Cosa fa |
     |---|---|
     | **Accanto all'originale** | Il valore predefinito. Un container torna come secondo container chiamato `<name>-restored` con porte proprie, i dischi e la NVRAM di una VM finiscono in una cartella chiamata `<folder>-restored`, e un set di cartelle torna come `<path>-restored`. Nulla cambia sull'originale. |
-    | **Sostituisci l'originale** | Sovrascrive ciò che c'è ora. Con **Prima fai il backup dello stato attuale**, attivo di default, BombVault salva prima lo stato di oggi così puoi tornare indietro. Se quel backup fallisce, il ripristino non parte. |
+    | **Sostituisci l'originale** | Sovrascrive ciò che c'è ora. Con **Prima fai il backup dello stato attuale**, attivo di default, BombVault salva prima lo stato di oggi così puoi tornare indietro. Se quel backup fallisce, il ripristino non parte. Funziona anche per un container o una VM che non c'è più sul server: le cartelle che il ripristino sovrascrive vengono salvate a parte. |
     | **In una cartella** | Solo i file, da sfogliare. |
     | **Scarica come ZIP** | La chiavetta flash, per una chiavetta nuova. BombVault non scrive mai nella flash in funzione. |
     | **In un nuovo dataset** e **Ripristina dentro il dataset** | Dataset ZFS, vedi [Dataset ZFS](zfs-datasets.md#restore). |
@@ -40,11 +40,11 @@ Prima che **Ripristina** si sblocchi, la finestra verifica che il repository ris
 
 La finestra mostra anche cosa cambia il ripristino rispetto a ciò che c'è ora: file nuovi, sostituiti e invariati, con l'elenco a richiesta, e i file nella destinazione che non sono nel backup e restano dove sono. restic lo calcola come prova a vuoto da dimensione e data di modifica, senza leggere i file, e un albero molto grande si ferma dopo 30 secondi e lo dice. Per container e VM confronta le impostazioni che il ripristino ricrea con quelle in esecuzione: immagine e tag, porte, nomi delle variabili e volumi, oppure memoria, vCPU, dischi e rete.
 
-Alcune cose possono fermare un ripristino prima che cambi qualsiasi cosa. L'IP statico di un container e le porte pubblicate devono essere liberi, e la sua rete deve esistere. Un ripristino sul posto nomina ogni altro container il cui bind mount arriva dentro una cartella in cui scrive, per esempio "questo percorso è usato anche da nextcloud-db", ma si limita ad avvisare.
+Alcune cose possono fermare un ripristino prima che cambi qualsiasi cosa. L'IP statico di un container e le porte pubblicate devono essere liberi, e la sua rete deve esistere. Su Unraid ogni ripristino sul posto rifiuta una cartella che non si trova su un pool o una condivisione montati, perché i file finirebbero in memoria e sparirebbero dopo un riavvio. Un ripristino sul posto nomina ogni altro container il cui bind mount arriva dentro una cartella in cui scrive, per esempio "questo percorso è usato anche da nextcloud-db", ma si limita ad avvisare.
 
 Alcune opzioni compaiono dove servono: **Poi lascia fermo**, per guardare un container o una VM prima che riparta, e **Ripristina senza GPU e runtime** su un host che non ha la GPU o il runtime con cui è stato fatto il backup.
 
-Il ripristino gira in background. Puoi chiudere la finestra, e l'avanzamento si vede anche sotto **In esecuzione**. Un ripristino lungo mostra una percentuale e si può annullare, e un ripristino annullato viene registrato come annullato, non come fallito.
+Il ripristino gira in background. Puoi chiudere la finestra, e l'avanzamento si vede anche sotto **In esecuzione**. Un ripristino lungo mostra una percentuale e si può annullare, e un ripristino annullato viene registrato come annullato, non come fallito. Un ripristino annullato mentre il container si sta fermando, o uno che non riesce a rimuovere il container, non ha ancora ripristinato nulla, quindi il container riparte. Un container che prende i suoi volumi da un altro con `--volumes-from` li mantiene, e il ripristino si rifiuta di iniziare finché quell'altro container non esiste.
 
 ![La finestra di ripristino al passaggio Cosa, con file singoli selezionati.](assets/screenshots/restore/window-what-dark.png#only-dark)
 ![La finestra di ripristino al passaggio Cosa, con file singoli selezionati.](assets/screenshots/restore/window-what-light.png#only-light)
@@ -66,7 +66,7 @@ Qualcuno ha modificato ieri notte il `config.php` di Nextcloud e Nextcloud non p
 
 La finestra termina con **Fatto: i file sono in /mnt/user/restore**. Trovi il file come `/mnt/user/restore/config.php`, senza le cartelle sopra di esso. Confrontalo con quello rotto, copialo di nuovo nella cartella appdata e riavvia Nextcloud.
 
-Per rimettere il file direttamente al suo posto, al passaggio 5 scegli invece **Sostituisci l'originale**. Tieni attivo **Prima fai il backup dello stato attuale**, così BombVault salva lo stato rotto prima di scrivere, digita `nextcloud` per confermare e premi **Ripristina**. Nextcloud viene fermato mentre il file scelto viene riscritto al suo posto, e vengono scritti solo i file che hai spuntato.
+Per rimettere il file direttamente al suo posto, al passaggio 5 scegli invece **Sostituisci l'originale**. Tieni attivo **Prima fai il backup dello stato attuale**, così BombVault salva lo stato rotto prima di scrivere, digita `nextcloud` per confermare e premi **Ripristina**. Nextcloud viene fermato mentre il file scelto viene riscritto al suo posto e poi riavviato, e vengono scritti solo i file che hai spuntato. Un ripristino che fallisce a metà lascia Nextcloud fermo, perché il file che legge potrebbe essere scritto solo in parte, e l'esecuzione lo segnala.
 
 ![La finestra di ripristino a Cosa succede, con Sostituisci l'originale scelto.](assets/screenshots/restore/window-replace-dark.png#only-dark)
 ![La finestra di ripristino a Cosa succede, con Sostituisci l'originale scelto.](assets/screenshots/restore/window-replace-light.png#only-light)
@@ -75,11 +75,13 @@ Per rimettere il file direttamente al suo posto, al passaggio 5 scegli invece **
 
 I **container** vengono ricreati dalla loro definizione salvata tramite l'API Docker, con entrypoint, hostname, impostazioni di arresto, volumi e mount, limiti di risorse, log driver, impostazioni DNS e link legacy. Un container torna sull'immagine su cui girava quando è stato fatto il backup, non su una più recente scaricata dopo, e un'immagine mancante viene scaricata prima, con le credenziali di **Registry dei container** in **Impostazioni, Ripristino**. Tornano anche la sua GPU o il suo runtime (`--gpus`, `--runtime=nvidia`). Su un host senza quel driver o runtime il ripristino lo dice e offre **Ripristina senza GPU e runtime**. Un link a un container che manca, o che è fermo mentre quello ripristinato parte, viene lasciato fuori, e la cronologia delle esecuzioni lo dice. Un ripristino che fallisce dopo che il container è stato rimosso lo rimette a posto, fermo.
 
+Un backup può contenere cartelle che il container non ha più selezionate, per esempio uno più vecchio fatto prima che una cartella sparisse. Una cartella che non c'è più o che è vuota torna. Una che ora contiene file resta com'è, perché potresti averla deselezionata apposta, e il controllo prima del ripristino e la cronologia delle esecuzioni la nominano. Recuperala con **File singoli** o **In una cartella**.
+
 Le **VM** hanno di nuovo definito il loro XML via SSH e ricollegati i loro dischi e la NVRAM UEFI, anche dopo che la VM è stata eliminata. Vedi [Backup delle VM](vm-backup-ssh-setup.md) per le VM con snapshot Unraid e dischi su zvol.
 
-I **set di cartelle** tornano con proprietà, permessi e date come li salva restic.
+I **set di cartelle** tornano con proprietà, permessi e date come li salva restic. Dove la destinazione rifiuta solo la proprietà, come fa `/mnt/user`, l'esecuzione termina con una nota che lo dice. BombVault confronta allora i file con il backup, e un file che non è arrivato fa fallire il ripristino.
 
-La **chiavetta flash** non tocca mai il `/boot` in funzione. Il ripristino è un download chiamato `flash-<id>.zip`, pronto da usare con Unraid USB Creator. La finestra elenca anche i plugin presenti in ogni backup della flash con la loro versione e dimensione, e può rimettere un singolo plugin nella flash in funzione: il suo file `.plg`, la sua cartella sotto `config/plugins` e i file di pacchetto che il backup contiene. Unraid lo installa al prossimo avvio, oppure subito in **Plugins, Install Plugin**.
+La **chiavetta flash** non tocca mai il `/boot` in funzione. Il ripristino è un download chiamato `flash-<id>.zip`, pronto da usare con Unraid USB Creator. Lo ZIP contiene `APP_KEY`, quindi per scaricarlo servono una password di accesso e un accesso sull'istanza. La finestra elenca anche i plugin presenti in ogni backup della flash con la loro versione e dimensione, e può rimettere un singolo plugin nella flash in funzione: il suo file `.plg`, la sua cartella sotto `config/plugins` e i file di pacchetto che il backup contiene. Unraid lo installa al prossimo avvio, oppure subito in **Plugins, Install Plugin**.
 
 I **dataset ZFS** hanno destinazioni proprie e mantengono le loro proprietà ZFS, vedi [Ripristinare](zfs-datasets.md#restore).
 
@@ -102,6 +104,10 @@ Ogni elemento viene verificato come un ripristino singolo, e poi girano uno dopo
 ## Ripristinare uno stack {#stacks}
 
 Un clic su uno stack nella scheda **Stack** apre **Ripristina stack**. Ripristina ogni membro dal suo ultimo backup nello stesso momento, e con **Avvia in ordine di dipendenza dopo il ripristino** li avvia nel loro ordine `depends_on`: prima database e cache, poi l'app. Quando la cartella del progetto di un membro manca nel posto che hai scelto, la finestra offre invece lo stato da Locale.
+
+BombVault controlla prima i membri e la cartella del progetto, e un ripristino che non potrebbe riuscire non cambia nulla. Altrimenti ferma i membri in esecuzione, le app prima dei loro database, poi scrive la cartella del progetto, poi ripristina i membri. Se la cartella del progetto non torna, i membri vengono ripristinati comunque ma restano fermi, perché la cartella potrebbe essere scritta solo in parte ed è lì che di solito si trovano i bind mount di un membro. L'esecuzione di ogni membro lo segnala.
+
+Un database che ha solo dump del database e nessun backup dei file, e il cui container e volume con nome non ci sono più, torna senza i suoi dati. Il controllo lo segnala prima del ripristino. Resta fermo, e così i container che dipendono da lui, perché nessuna app esegua la sua configurazione iniziale su un database vuoto. Avvialo, importa un dump e avvia gli altri. Vedi [Dump dei database](backups.md#database-dumps).
 
 ## Altre sorgenti {#other-sources}
 

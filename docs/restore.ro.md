@@ -21,7 +21,7 @@ Fiecare restaurare începe pe pagina **Restaurare**: alege o secțiune, caută c
 
 Un clic pe un element deschide **Restaurare** cu numele lui. Întreabă pas cu pas, iar fiecare pas poate fi schimbat înainte să pornești:
 
-1. **Copie de rezervă**: instantaneul recomandat este preselectat. Este cel mai nou sau, după o anomalie deschisă, ultimul dinaintea ei. Cele mai vechi sunt în listă, iar **Compară** arată ce diferă între două dintre ele.
+1. **Copie de rezervă**: instantaneul recomandat este preselectat. Este cel mai nou sau, după o anomalie deschisă, ultimul dinaintea ei. Backupul făcut înaintea unei restaurări anterioare păstrează starea pe care acea restaurare a înlocuit-o, așa că este sărit, dacă nu există altul. Cele mai vechi sunt în listă, iar **Compară** arată ce diferă între două dintre ele.
 2. **Sursă**: de unde vin fișierele, când un instantaneu se află în mai multe locuri. **Local** este cel mai rapid.
 3. **Ce**: **Toate** sau **Fișiere individuale**, unde bifezi fișierele și folderele dorite.
 4. **Unde**: ținta. Alegerile depind de tipul elementului:
@@ -29,7 +29,7 @@ Un clic pe un element deschide **Restaurare** cu numele lui. Întreabă pas cu p
     | Țintă | Ce face |
     |---|---|
     | **Lângă original** | Implicit. Un container revine ca un al doilea container numit `<name>-restored`, cu porturi proprii, discurile și NVRAM-ul unei VM ajung într-un folder numit `<folder>-restored`, iar un set de foldere revine ca `<path>-restored`. Nimic nu se schimbă la original. |
-    | **Înlocuiește originalul** | Suprascrie ce există acum. Cu **Fă mai întâi o copie a stării actuale**, pornit implicit, BombVault salvează mai întâi starea de azi, ca să te poți întoarce. Dacă acel backup eșuează, restaurarea nu pornește. |
+    | **Înlocuiește originalul** | Suprascrie ce există acum. Cu **Fă mai întâi o copie a stării actuale**, pornit implicit, BombVault salvează mai întâi starea de azi, ca să te poți întoarce. Dacă acel backup eșuează, restaurarea nu pornește. Asta merge și pentru un container sau un VM care nu mai este pe server: folderele peste care scrie restaurarea primesc un backup separat. |
     | **Într-un folder** | Doar fișierele, pentru răsfoit. |
     | **Descarcă ca ZIP** | Unitatea flash, pentru un stick nou. BombVault nu scrie niciodată în unitatea flash aflată în uz. |
     | **Într-un set de date nou** și **Restaurează în setul de date** | Seturi de date ZFS, vezi [Seturi de date ZFS](zfs-datasets.md#restore). |
@@ -40,11 +40,11 @@ Un clic pe un element deschide **Restaurare** cu numele lui. Întreabă pas cu p
 
 Fereastra arată și ce schimbă restaurarea față de ce există acum: fișiere noi, înlocuite și neschimbate, cu lista la cerere, plus fișierele de la țintă care nu sunt în backup și rămân unde sunt. restic calculează asta ca simulare, din dimensiune și data modificării, fără să citească fișierele, iar un arbore foarte mare se oprește după 30 de secunde și spune asta. Pentru containere și VM-uri compară setările pe care restaurarea le recreează cu cele care rulează: imagine și etichetă, porturi, nume de variabile și volume, sau memorie, vCPU, discuri și rețea.
 
-Unele lucruri pot opri o restaurare înainte să schimbe ceva. IP-ul static al unui container și porturile publicate trebuie să fie libere, iar rețeaua lui trebuie să existe. O restaurare pe loc numește fiecare alt container al cărui bind mount ajunge într-un folder în care scrie, de exemplu „această cale este folosită și de nextcloud-db”, dar doar avertizează.
+Unele lucruri pot opri o restaurare înainte să schimbe ceva. IP-ul static al unui container și porturile publicate trebuie să fie libere, iar rețeaua lui trebuie să existe. Pe Unraid, orice restaurare pe loc refuză un folder care nu este pe un pool sau share montat, pentru că fișierele ar ajunge în memorie și ar dispărea după o repornire. O restaurare pe loc numește fiecare alt container al cărui bind mount ajunge într-un folder în care scrie, de exemplu „această cale este folosită și de nextcloud-db”, dar doar avertizează.
 
 Câteva opțiuni apar unde se aplică: **Lasă oprit după aceea**, ca să te uiți la un container sau la o VM înainte să ruleze din nou, și **Restaurează fără GPU și runtime** pe o gazdă care nu are GPU-ul sau runtime-ul cu care a fost făcut backupul.
 
-Restaurarea rulează în fundal. Poți închide fereastra, iar progresul apare și la **În desfășurare**. O restaurare lungă arată un procent și poate fi anulată, iar una anulată este înregistrată ca anulată, nu ca eșuată.
+Restaurarea rulează în fundal. Poți închide fereastra, iar progresul apare și la **În desfășurare**. O restaurare lungă arată un procent și poate fi anulată, iar una anulată este înregistrată ca anulată, nu ca eșuată. O restaurare anulată cât containerul se oprește, sau una care nu poate elimina containerul, încă nu a restaurat nimic, așa că containerul pornește din nou. Un container care își ia volumele de la altul cu `--volumes-from` le păstrează, iar restaurarea refuză să înceapă cât acel alt container nu există.
 
 ![Fereastra de restaurare la pasul Ce, cu fișiere individuale bifate.](assets/screenshots/restore/window-what-dark.png#only-dark)
 ![Fereastra de restaurare la pasul Ce, cu fișiere individuale bifate.](assets/screenshots/restore/window-what-light.png#only-light)
@@ -66,7 +66,7 @@ Cineva a editat aseară `config.php` din Nextcloud și Nextcloud nu mai porneșt
 
 Fereastra se încheie cu **Gata: fișierele sunt în /mnt/user/restore**. Găsești fișierul ca `/mnt/user/restore/config.php`, fără folderele de deasupra. Compară-l cu cel stricat, copiază-l înapoi în folderul appdata și repornește Nextcloud.
 
-Ca să pui fișierul direct la loc, alege la pasul 5 **Înlocuiește originalul**. Ține **Fă mai întâi o copie a stării actuale** pornit, ca BombVault să salveze starea stricată înainte să scrie, scrie `nextcloud` pentru confirmare și apasă **Restaurare**. Nextcloud este oprit cât fișierul ales este scris înapoi la locul lui, și se scriu doar fișierele bifate de tine.
+Ca să pui fișierul direct la loc, alege la pasul 5 **Înlocuiește originalul**. Ține **Fă mai întâi o copie a stării actuale** pornit, ca BombVault să salveze starea stricată înainte să scrie, scrie `nextcloud` pentru confirmare și apasă **Restaurare**. Nextcloud este oprit cât fișierul ales este scris înapoi la locul lui și pornit din nou după aceea, și se scriu doar fișierele bifate de tine. O restaurare care eșuează la jumătate lasă Nextcloud oprit, pentru că fișierul pe care îl citește poate fi scris doar pe jumătate, iar rularea spune asta.
 
 ![Fereastra de restaurare la Ce se întâmplă, cu Înlocuiește originalul ales.](assets/screenshots/restore/window-replace-dark.png#only-dark)
 ![Fereastra de restaurare la Ce se întâmplă, cu Înlocuiește originalul ales.](assets/screenshots/restore/window-replace-light.png#only-light)
@@ -75,11 +75,13 @@ Ca să pui fișierul direct la loc, alege la pasul 5 **Înlocuiește originalul*
 
 **Containerele** sunt recreate din definiția lor salvată prin API-ul Docker, cu entrypoint, hostname, setările de oprire, volume și montări, limite de resurse, driverul de log, setările DNS și legăturile vechi. Un container revine pe imaginea pe care rula când s-a făcut backupul, nu pe una mai nouă trasă ulterior, iar o imagine lipsă este trasă mai întâi, cu autentificarea din **Registre de containere** de la **Setări, Restaurare**. Revin și GPU-ul sau runtime-ul lui (`--gpus`, `--runtime=nvidia`). Pe o gazdă fără acel driver sau runtime, restaurarea spune asta și oferă **Restaurează fără GPU și runtime**. O legătură către un container care lipsește sau este oprit când cel restaurat pornește este omisă, iar istoricul rulărilor spune asta. O restaurare care eșuează după ce containerul a fost eliminat îl pune la loc, oprit.
 
+Un backup poate conține foldere pe care containerul nu le mai are selectate, de exemplu unul mai vechi, făcut înainte să dispară un folder. Un folder care a dispărut sau este gol revine. Unul care conține acum fișiere rămâne cum este, pentru că s-ar putea să-l fi debifat intenționat, iar verificarea dinaintea restaurării și istoricul rulărilor îl numesc. Readu-l cu **Fișiere individuale** sau **Într-un folder**.
+
 **VM-urile** își primesc din nou XML-ul definit prin SSH, iar discurile și NVRAM-ul UEFI sunt reatașate, chiar și după ce VM-ul a fost șters. Vezi [Backupuri VM](vm-backup-ssh-setup.md) pentru VM-urile cu instantanee Unraid și discuri pe zvol-uri.
 
-**Seturile de foldere** revin cu proprietarul, permisiunile și marcajele de timp așa cum le stochează restic.
+**Seturile de foldere** revin cu proprietarul, permisiunile și marcajele de timp așa cum le stochează restic. Acolo unde ținta refuză doar proprietarul, cum face `/mnt/user`, rularea se încheie cu o notă care spune asta. BombVault compară apoi fișierele cu backupul, iar un fișier care nu a ajuns face restaurarea să eșueze.
 
-**Unitatea flash** nu atinge niciodată `/boot` aflat în uz. Restaurarea este o descărcare numită `flash-<id>.zip`, gata de pus în Unraid USB Creator. Fereastra listează și pluginurile din fiecare backup flash cu versiunea și dimensiunea lor și poate pune unul singur înapoi în unitatea flash aflată în uz: fișierul lui `.plg`, folderul lui de sub `config/plugins` și fișierele pachetului pe care le conține backupul. Unraid îl instalează la următoarea pornire sau pe loc, la **Plugins, Install Plugin**.
+**Unitatea flash** nu atinge niciodată `/boot` aflat în uz. Restaurarea este o descărcare numită `flash-<id>.zip`, gata de pus în Unraid USB Creator. ZIP-ul conține `APP_KEY`, așa că descărcarea lui cere o parolă de conectare și o autentificare chiar pe instanță. Fereastra listează și pluginurile din fiecare backup flash cu versiunea și dimensiunea lor și poate pune unul singur înapoi în unitatea flash aflată în uz: fișierul lui `.plg`, folderul lui de sub `config/plugins` și fișierele pachetului pe care le conține backupul. Unraid îl instalează la următoarea pornire sau pe loc, la **Plugins, Install Plugin**.
 
 **Seturile de date ZFS** au ținte proprii și își păstrează proprietățile ZFS, vezi [Restaurare](zfs-datasets.md#restore).
 
@@ -102,6 +104,10 @@ Fiecare element este verificat ca la o restaurare singulară, apoi rulează unul
 ## Restaurarea unui stack {#stacks}
 
 Un clic pe un stack din cardul **Stack-uri** deschide **Restaurează stack-ul**. Restaurează toți membrii din ultimul lor backup în același timp, iar cu **Pornește în ordinea dependențelor după restaurare** îi pornește în ordinea `depends_on`: întâi bazele de date și cache-urile, apoi aplicația. Când folderul de proiect al unui membru lipsește de la locul ales, fereastra oferă în schimb starea de la Local.
+
+BombVault verifică întâi membrii și folderul de proiect, iar o restaurare care nu ar putea reuși nu schimbă nimic. Altfel oprește membrii care rulează, aplicațiile înaintea bazelor lor de date, apoi scrie folderul de proiect, apoi restaurează membrii. Dacă folderul de proiect nu revine, membrii sunt totuși restaurați, dar rămân opriți, pentru că folderul poate fi scris doar pe jumătate și acolo stau de obicei bind mounturile unui membru. Rularea fiecărui membru spune asta.
+
+O bază de date care are doar dumpuri de baze de date și niciun backup de fișiere, și al cărei container și volum numit au dispărut, revine fără datele ei. Verificarea spune asta înainte de restaurare. Rămâne oprită, la fel și containerele care depind de ea, ca nicio aplicație să nu își ruleze configurarea pe o bază de date goală. Pornește-o, importă un dump și pornește-le pe celelalte. Vezi [Dumpuri de baze de date](backups.md#database-dumps).
 
 ## Alte surse {#other-sources}
 

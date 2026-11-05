@@ -9,10 +9,10 @@ Tout ce que BombVault sauvegarde figure dans une seule liste sous **Sauvegardes*
 
 | Section | Ce qui est sauvegardé |
 |---|---|
-| **Conteneurs** | Le dossier appdata plus la définition du conteneur : image, variables, ports, étiquettes et volumes. La carte **Dossiers à sauvegarder** de l'onglet **Paramètres** du conteneur coche exactement quels dossiers la sauvegarde couvre, avec un décompte en direct des chemins et la liste de ce que vous avez laissé de côté. Les données qu'un conteneur garde en dehors de Host Data, par exemple dans un ixVolume TrueNAS, ne sont pas sauvegardées, et l'exécution nomme les dossiers qu'elle a laissés de côté. |
+| **Conteneurs** | Le dossier appdata plus la définition du conteneur : image, variables, ports, étiquettes et volumes. La carte **Dossiers à sauvegarder** de l'onglet **Paramètres** du conteneur coche exactement quels dossiers la sauvegarde couvre, avec un décompte en direct des chemins et la liste de ce que vous avez laissé de côté. Les données qu'un conteneur garde en dehors de Host Data, par exemple dans un ixVolume TrueNAS ou un projet Compose sous `/opt`, ne sont pas sauvegardées, et l'exécution nomme les dossiers qu'elle a laissés de côté. L'exécution nomme aussi un dossier de Host Data qui n'existe pas en ce moment. Les chemins système comme `/etc/localtime` ou le socket Docker ne comptent pas comme des données. |
 | **VMs** | Les images disque, la définition XML et la NVRAM UEFI, avec un arrêt propre ou un instantané à chaud, via SSH. Voir [Sauvegardes de VM](vm-backup-ssh-setup.md). |
 | **Flash** | Unraid seulement. Toute la clé USB flash (`/boot`) : système, licence, configuration de la grappe, partages, réseau et configuration des plugins. |
-| **Auto-sauvegarde** | Le `/config` de BombVault lui-même : sa base de réglages, les identifiants des destinations et la paire de clés SSH libvirt, capturés avec `VACUUM INTO` de SQLite pour que la base ne soit jamais saisie au milieu d'une écriture. |
+| **Auto-sauvegarde** | Le `/config` de BombVault lui-même : sa base de réglages, les identifiants des destinations, la paire de clés SSH libvirt, la clé et les clés d'hôte épinglées des serveurs ZFS et les certificats, capturés avec `VACUUM INTO` de SQLite pour que la base ne soit jamais saisie au milieu d'une écriture. |
 | **Dossiers** | N'importe quel dossier du serveur comme ensemble de dossiers, par exemple un partage, vos documents ou une photothèque, avec des motifs d'exclusion facultatifs. Les ensembles de dossiers ont des plannings, une rétention, des copies hors site, des vérifications et des exercices de restauration comme tout le reste. |
 | **Jeux de données ZFS** | Un jeu de données et tous ceux qu'il contient, lus à partir d'un seul instantané ZFS pour que tous viennent du même instant, et stockés avec restic comme un dossier. Un élément ZFS peut aussi garder une réplique exacte au bloc près sur un second serveur ZFS. Voir [Jeux de données ZFS](zfs-datasets.md). |
 
@@ -35,7 +35,7 @@ Les éléments qui ne sont plus installés mais ont encore des sauvegardes sont 
 L'action principale de la page flotte en bas à droite : **Tout sauvegarder maintenant** lance une exécution sur toutes les sections activées. **Plus** contient le reste :
 
 - **Sélectionner** démarre une sélection, voir plus bas.
-- **Découvrir les sauvegardes** lit ce que contiennent les destinations et reconstruit des éléments à partir de là, par exemple après une installation neuve. Les copies hors site des sections reconstruites se mettent alors en pause jusqu'à ce que vous confirmiez leur réglage par défaut, voir [Après une reconstruction](offsite-recovery.md#after-a-rebuild).
+- **Découvrir les sauvegardes** lit ce que contiennent les destinations et reconstruit des éléments à partir de là, par exemple après une installation neuve. Un conteneur sans données propres n'a pas d'instantané, et il revient à partir de la définition recopiée à côté du dépôt. Les copies hors site des sections reconstruites attendent alors que vous adoptiez leurs sauvegardes pour ce serveur, voir [Après une reconstruction](offsite-recovery.md#after-a-rebuild).
 - **Connexion ZFS à ce serveur** ouvre le test SSH de la section ZFS, voir [Jeux de données ZFS](zfs-datasets.md#requirements).
 - **Tout répliquer maintenant**, avec la tuile ZFS choisie, envoie la réplique de chaque élément ZFS.
 
@@ -98,7 +98,7 @@ Les cartes en dessous dépendent du type d'élément :
 | Conteneur | **Dossiers à sauvegarder** (quels dossiers montés sont sauvegardés, avec **Ignorer les dossiers de cache (CACHEDIR.TAG)**), **Motifs d'exclusion**, **Arrêter d'autres conteneurs**, **Commandes avant et après**, **Base de données**, **Quand l'application est occupée**, **Mettre à jour après une sauvegarde réussie**, **Instantané plutôt qu'arrêt**, **Anciens noms** |
 | VM | **VM** avec **Méthode** (**Propre (arrêt)** ou **Instantané à chaud**) et **Blocs modifiés uniquement**, voir le [guide des sauvegardes de VM](vm-backup-ssh-setup.md#per-vm-method) |
 | Ensemble de dossiers | **Dossier** et **Motifs d'exclusion** |
-| Clé flash | **Export Flash en zip**, qui écrit chaque sauvegarde de la clé flash en `.zip` simple dans un dossier de votre choix |
+| Clé flash | **Export Flash en zip**, qui écrit chaque sauvegarde de la clé flash en `.zip` simple dans un dossier de votre choix, en une seule étape pour qu'un outil de synchronisation ne voie jamais un fichier à moitié écrit. Une sauvegarde flash qui contient moins qu'elle ne le devrait laisse le dernier ZIP en place, et l'exécution de l'export le signale. |
 | Jeu de données ZFS | les jeux de données enfants, les conteneurs à arrêter et les commandes autour de l'instantané, **Réplique** et **Tester l'accès aux instantanés**, voir [Jeux de données ZFS](zfs-datasets.md) |
 
 Les réglages s'enregistrent d'eux-mêmes quand vous les modifiez.
@@ -119,7 +119,7 @@ Les réglages s'enregistrent d'eux-mêmes quand vous les modifiez.
 
 ## Motifs d'exclusion {#excludes}
 
-La carte **Motifs d'exclusion** prend un motif par ligne. Saisissez les chemins tels que vous les voyez dans le conteneur, comme `/config/Library/Application Support/Plex Media Server/Cache`, ou un simple nom comme `.git`, qui correspond à n'importe quelle profondeur. Un aperçu sous le champ montre ce que devient chaque ligne et prévient quand une ligne ne correspond à rien ou exclurait tout. Une ligne `/` ou `*`, ou une ligne qui nomme un dossier sauvegardé en entier, est ignorée, si bien qu'une exclusion ne peut jamais vider une sauvegarde. Pour laisser de côté un dossier entier, décochez-le plutôt sous **Dossiers à sauvegarder**.
+La carte **Motifs d'exclusion** prend un motif par ligne. Saisissez les chemins tels que vous les voyez dans le conteneur, comme `/config/Library/Application Support/Plex Media Server/Cache`, ou un simple nom comme `.git`, qui correspond à n'importe quelle profondeur. Sur un ensemble de dossiers, saisissez un chemin tel que l'hôte le connaît, comme `/mnt/user/data/cache`. Un aperçu sous le champ montre ce que devient chaque ligne et prévient quand une ligne ne correspond à rien ou exclurait tout. Une ligne `/` ou `*`, ou une ligne qui nomme un dossier sauvegardé en entier, est ignorée, si bien qu'une exclusion ne peut jamais vider une sauvegarde. Pour laisser de côté un dossier entier, décochez-le plutôt sous **Dossiers à sauvegarder**.
 
 Pour les images bien connues comme Plex, Jellyfin, Sonarr, Radarr, Immich et Nextcloud, la carte propose les dossiers que l'application remplit de nouveau toute seule, comme les caches, les journaux et les miniatures. Rien n'est exclu tant que vous n'appuyez pas sur **Exclure la sélection**.
 
@@ -137,6 +137,8 @@ Un dump qui échoue ne fait pas échouer la sauvegarde. Il apparaît comme sa pr
 
 - **Commandes avant et après** s'exécutent dans le conteneur avec `sh -c`, par exemple pour vider un cache sur le disque. Une commande qui échoue avant la sauvegarde l'interrompt. Une commande avant la sauvegarde qui se termine avec le code 75 reporte plutôt une sauvegarde planifiée, voir plus bas.
 - **Arrêter d'autres conteneurs** nomme les conteneurs à arrêter pendant que celui-ci est sauvegardé, comme sa base de données. Ensuite ils redémarrent dans l'ordre `depends_on` de leur Compose, et par défaut chacun doit se déclarer sain avant que le suivant démarre. L'attente et son délai se règlent sous **Redémarrage après la sauvegarde** dans la carte **Ordre** sous **Paramètres, Planning**.
+- Un conteneur qui partage l'espace de noms réseau, PID ou IPC d'un conteneur qui s'arrête, via `--net=container:` ou `network_mode: service:` de Compose, s'arrête et redémarre avec lui même s'il n'est pas dans la liste, et il démarre après le conteneur qu'il rejoint. Un conteneur redémarré reçoit un nouveau réseau, et un conteneur resté en marche sur l'ancien réseau n'aurait plus que son interface loopback. La liste elle-même reste telle que vous l'avez réglée. Si un tel conteneur n'a pas pu être arrêté, l'exécution indique qu'il n'a pas de réseau tant qu'il n'est pas redémarré. Il en va de même pour le conteneur de BombVault lui-même, qui ne s'arrête jamais de lui-même et ne peut pas être mis dans la liste.
+- Un conteneur qui ne repart pas ensuite est nommé dans l'exécution et dans une notification, même quand la sauvegarde elle-même a échoué.
 
 ## Quand l'application est occupée {#app-busy}
 
@@ -177,7 +179,7 @@ Pour votre propre contrôle, faites terminer la **Commande pré-sauvegarde** ave
 restic reste le moteur, mais un export vous donne une copie qui n'a besoin ni de BombVault ni de restic.
 
 - **Exporter le conteneur** et **Exporter la VM** sous **Plus** sur la page d'un élément écrivent une copie telle qu'elle est maintenant, à côté du dépôt : les dossiers sauvegardés du conteneur plus son modèle Unraid, ou les images disque de la VM plus sa définition, restaurable avec `virsh define`.
-- **Exporter** sur un instantané écrit une sauvegarde stockée dans le dossier d'export du serveur, en tar, en zip ou en dépôt restic à part, et peut prendre un instantané ou tous.
+- **Exporter** sur un instantané écrit une sauvegarde stockée dans le dossier d'export du serveur, en tar, en zip ou en dépôt restic à part, et peut prendre un instantané ou tous. Une sauvegarde flash et une auto-sauvegarde contiennent des clés, donc en exporter une demande un mot de passe de connexion et une connexion sur l'instance.
 
 Les exports sont des fichiers simples par défaut. **Chiffrer les exports avec age** sous **Paramètres, Système** les scelle, le zip de la clé flash compris, pour les destinataires que vous listez, chacun une clé publique age ou une clé publique SSH. Vous les déchiffrez plus tard hors du serveur avec la clé privée correspondante. Avec le chiffrement activé et aucun destinataire valide, un export échoue avec une erreur claire au lieu d'écrire jamais des fichiers simples.
 

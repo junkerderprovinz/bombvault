@@ -138,13 +138,13 @@ ZFS ve SSH olan her makine alabilir, örneğin ikinci bir Unraid ya da bir TrueN
 root ile başka bir şey gerekmez. Kendi kullanıcısı olan biri, pencerenin de gösterdiği, hedefin havuzunda şu izinlere ihtiyaç duyar:
 
 ```
-zfs allow <user> receive,create,mount,rollback,destroy,userprop <pool>
+zfs allow <user> receive,create,mount,rollback,destroy,userprop,readonly,canmount <pool>
 ```
 
 Kaynakta aynı türden bir kullanıcının ögenin en üst veri kümesinde şunlara ihtiyacı vardır:
 
 ```
-zfs allow <user> send,snapshot,hold,release,bookmark,destroy <dataset>
+zfs allow <user> send,snapshot,hold,release,bookmark,destroy,mount <dataset>
 ```
 
 Bu yönde, ögeyi tutan BombVault sunucuda yazabilen bir anahtarı da tutar.
@@ -161,7 +161,7 @@ Eşleşmiş bir BombVault replikayı kendisi alabilir. Kimse diğer ana makineye
 2. Alıcı örnekte **Örnekler**'i aç. İstek, gönderen örneğin kartında bir rozet olarak görünür ve **Ayrıntılar**'ı onu listeler. O sunucuda havuzu ve kökü ve kaç anlık görüntünün kalacağını seç, sonra **İzin ver** ya da **Reddet**'e bas.
 3. **İzin ver**'den sonra kaynak, diğer her hedefte olduğu gibi kendi planıyla gönderir.
 
-Alıcı örnek yalnızca onayın kapsadığını kabul eder: ögenin veri kümeleri, kendi köküne. `zfs receive`'i kendisi çalıştırır ve kaynağın orada hiçbir şeyi silmesinin ya da geri sarmasının yolu yoktur. Böylece kopya, birinin ele geçirdiği bir kaynaktan sağ çıkar. Alıcı örnek kendi saklamasını tutar. Kaynak yalnızca sorarken bir kural önerir.
+Alıcı örnek yalnızca onayın kapsadığını kabul eder: ögenin veri kümeleri, kendi köküne. `zfs receive`'i kendisi çalıştırır ve kaynağın orada hiçbir şeyi silmesinin ya da geri sarmasının yolu yoktur. Böylece kopya, birinin ele geçirdiği bir kaynaktan sağ çıkar. Alıcı örnek kendi saklamasını tutar. Kaynak yalnızca sorarken bir kural önerir. Böyle bir kaynak yine de yeni anlık görüntüler gönderebilir ve zamanla bunlar, diğerleri gibi, kurala göre daha eskileri dışarı iter. Adındaki tarih alıcı örneğin saatinden ileride olan bir anlık görüntü, o zaman gelene kadar kurala sayılmaz.
 
 Alıcı örnekteki **Erişimi iptal et** onayı her an sonlandırır ve kaynağa haber verir, kaynak o zaman onayın geri çekildiğini gösterir ve durur. Alıcı örneğin zaten tuttukları orada kalır. Reddedilen bir istek reddedilmiş kalır. Daha fazla veri kümesi ya da bir iptalden sonra bir istek yeniden sorar.
 
@@ -179,13 +179,15 @@ Hedefteki kopya salt okunurdur. Varsayılan olarak bağlı değildir, bu yüzden
 
 Ögenin yedeklediği her şey girer, altındaki yedeğin atladığı birimler de. Ögede kapattığın bir alt veri kümesi dışarıda kalır. Bir çalıştırmanın tüm veri kümeleri, yedekteki gibi, tek bir anlık görüntüden gelir.
 
+Başka bir BombVault'un bu sunucuya replika ettiği bir kopya daha öteye gönderilmez, çünkü bu, kaynağının hâlâ ihtiyaç duyduğu geçmişi seyreltirdi. Bir ögenin ağacı böyle bir kopya tutuyorsa, sen onu ögede kapatana kadar çalıştırma o veri kümesi için başarısız olur ve nedenini söyler. Kendisi böyle bir kopya olan bir öge hiç replika yapamaz. Bir ögeyi silmek ya da replikasını kapatmak bu kopyalara ve anlık görüntülerine dokunmaz. Bir kopyayı [Replikayı kullanmak](#replica-use) altında anlatıldığı gibi devraldığında normal bir veri kümesi sayılır.
+
 ### Anlık görüntüler ne kadar kalır {#replica-retention}
 
-Hedefte yeni bir replika 7 günlük ve 3 haftalık anlık görüntü tutar. Bunun yerine **Kısa**, **Dengeli** ya da **Uzun**'u seç ya da **Özel değerler**'i ayarla. Orada yalnızca `bombvault-replica-<14 digits>` adlı anlık görüntüler kaldırılır ve iki tarafın paylaştığı en yeni olan hiçbir zaman.
+Hedefte yeni bir replika 7 günlük ve 3 haftalık anlık görüntü tutar. Bunun yerine **Kısa**, **Dengeli** ya da **Uzun**'u seç ya da **Özel değerler**'i ayarla. Hepsi sıfır olan özel değerler her anlık görüntüyü tutar ve kart bunu söyler. Orada yalnızca `bombvault-replica-<14 digits>` adlı anlık görüntüler kaldırılır ve iki tarafın paylaştığı en yeni olan hiçbir zaman.
 
 Kaynakta BombVault son replika anlık görüntüsünü ve gönderdiği her durum için bir yer imi tutar. Yer imleri yer kaplamaz. Sonraki aktarım onlardan başlar.
 
-Kaynakta da daha fazlasını tutmak için Replika kartında **Bu sunucuda sakla**'yı ayarla, örneğin 7'ye. O kadar en yeni replika anlık görüntüsü, hedefin tuttuğunun yanında, her replikadan sonra bu sunucuda kalır. 0 ya da 1 yalnızca sonuncuyu tutar. Sonuncunun bir tutması (hold) vardır, böylece sonraki aktarımın tabanı yanlışlıkla yok edilmez. Eskilerde yoktur. Her anlık görüntü kendinden sonra değişen blokları tutar, bu yüzden tuttuğun her biri havuzda yer kaplar. Replikayı kapatmak ya da başka bir hedefe geçmek veya ögeyi silmek onları bu sunucudan da kaldırır.
+Kaynakta da daha fazlasını tutmak için Replika kartında **Bu sunucuda sakla**'yı ayarla, örneğin 7'ye. O kadar en yeni replika anlık görüntüsü, hedefin tuttuğunun yanında, her replikadan sonra bu sunucuda kalır. 0 ya da 1 yalnızca sonuncuyu tutar. Sonuncunun bir tutması (hold) vardır, böylece sonraki aktarımın tabanı yanlışlıkla yok edilmez. Eskilerde yoktur. Her anlık görüntü kendinden sonra değişen blokları tutar, bu yüzden tuttuğun her biri havuzda yer kaplar. Replikayı kapatmak ya da başka bir hedefe geçmek veya ögeyi silmek onları bu sunucudan da kaldırır. Altına iç içe yerleşmiş başka bir ögenin anlık görüntüleri kalır. Ögeyi silerken ana makineye ulaşılamıyorsa anlık görüntüler de kalır ve sayfa bunu söyler. Onları el ile kaldır: `zfs release -r bombvault-replica <dataset>@<snapshot>`, sonra `zfs destroy`.
 
 Tutulan bir anlık görüntünün dosyaları, veri kümesine ya da replikaya dokunmadan, veri kümesinin içindeki `.zfs/snapshot` klasöründen ya da bir klondan hemen okunabilir veya kopyalanabilir:
 
@@ -228,12 +230,12 @@ zfs clone backup/bombvault-replica/tower/cache/appdata@bombvault-replica-2026100
 Kaynak çökerse kopyayı hedefte normal, yazılabilir bir veri kümesine çevir:
 
 ```
-zfs inherit -r readonly backup/bombvault-replica/tower/cache/appdata && zfs inherit -r canmount backup/bombvault-replica/tower/cache/appdata && zfs mount -a
+zfs inherit -r readonly backup/bombvault-replica/tower/cache/appdata && zfs list -rH -o name -t filesystem backup/bombvault-replica/tower/cache/appdata | xargs zfs set canmount=on && zfs mount -a
 ```
 
-BombVault sonra yeni bir ilk çalıştırma başlatana kadar o veri kümesine replika yapmayı bırakır.
+BombVault sonra o veri kümesine ve alt veri kümelerine replika yapmayı bırakır. Sonraki çalıştırma bir nedenle başarısız olur ve senin yazdıkların kalır. Aynısı kopyaya en yeni anlık görüntüsünden beri yazılan her şey için de geçerlidir: BombVault bir kopyayı hiçbir zaman geri sarmaz. Oraya yeniden replika yapmak için ihtiyacın olanı kopyadan taşı ve kopyayı hedefte yok et. Sonraki çalıştırma o zaman her şeyi yeniden gönderir.
 
-Bir durumu kaynağa geri almak için sayfadaki **Yeni veri kümesi olarak geri getir**'e bas. BombVault anlık görüntüyü orijinalin yanında, `<dataset>-bombvault-restore-` artı bir zaman damgası adlı yeni bir veri kümesine gönderir. Orijinalin üzerine hiçbir zaman yazmaz.
+Bir durumu kaynağa geri almak için sayfadaki **Yeni veri kümesi olarak geri getir**'e bas. BombVault anlık görüntüyü orijinalin yanında, `<dataset>-bombvault-restore-` artı bir zaman damgası adlı yeni bir veri kümesine gönderir. Orijinalin üzerine hiçbir zaman yazmaz. Kaynakta kaybolan bir alt veri kümesi de, kopya o anlık görüntüyü hâlâ tutuyorsa geri gelir. Onu tutmayan bir alt veri kümesi dışarıda bırakılır ve çalıştırma bunu söyler.
 
 ### Örnek: ikinci bir Unraid makinesine replika {#example-replica}
 

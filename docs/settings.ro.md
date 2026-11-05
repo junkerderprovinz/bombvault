@@ -11,7 +11,7 @@ Această pagină listează fiecare placă și cardurile ei și trimite la pagina
 
 ## General {#general}
 
-- **Secțiuni** pornește sau oprește fiecare secțiune: **Containere**, **VM-uri**, **Flash**, **Foldere**, **Seturi de date ZFS** și **Auto-backup**. O secțiune oprită nu este salvată, iar elementele ei nu se numără. **Flash** apare doar pe Unraid.
+- **Secțiuni** pornește sau oprește fiecare secțiune: **Containere**, **VM-uri**, **Flash**, **Foldere**, **Seturi de date ZFS** și **Auto-backup**. O secțiune oprită nu este salvată de niciun program, nici de planul propriu al unui element, iar elementele ei nu se numără. **Copiază acum** funcționează în continuare. **Flash** apare doar pe Unraid.
 - **Containere** conține ce se aplică tuturor containerelor, de exemplu **Copii SQL automate ale bazelor de date**. Tot ce afectează un singur container se află pe pagina lui. Vezi [Dumpuri de baze de date](backups.md#database-dumps).
 
 ## Aspect {#look}
@@ -97,6 +97,6 @@ Mai multe lucruri cer o parolă de conectare, de exemplu kitul de recuperare, de
 
 ## Info {#info}
 
-- **Versiune**: BombVault, GlimStone, restic și rclone, cu **Caută actualizări** și **Nou**, care numără schimbările pe care nu le-ai văzut încă și deschide **Noutăți**.
+- **Versiune**: BombVault, GlimStone, restic și rclone, cu **Caută actualizări** și **Nou**, care numără schimbările pe care nu le-ai văzut încă și deschide o fereastră care le listează.
 - **Ajutor**: **Manual** deschide această documentație, iar **Raport de eroare** descarcă un ZIP cu date șterse pentru un issue GitHub. Cere o parolă de conectare.
 - **Despre BombVault**: proiectul, licența lui și cum îl poți contacta pe autor.

@@ -138,13 +138,13 @@ Jede Maschine mit ZFS und SSH kann empfangen, zum Beispiel ein zweites Unraid od
 Mit root ist nichts weiter nötig. Ein eigener Benutzer braucht diese Rechte auf dem Pool des Ziels, die der Dialog auch zeigt:
 
 ```
-zfs allow <user> receive,create,mount,rollback,destroy,userprop <pool>
+zfs allow <user> receive,create,mount,rollback,destroy,userprop,readonly,canmount <pool>
 ```
 
 Auf der Quelle braucht derselbe Benutzertyp diese auf dem obersten Dataset des Eintrags:
 
 ```
-zfs allow <user> send,snapshot,hold,release,bookmark,destroy <dataset>
+zfs allow <user> send,snapshot,hold,release,bookmark,destroy,mount <dataset>
 ```
 
 In dieser Richtung hält das BombVault, das den Eintrag hält, auch einen Schlüssel, der auf dem Server schreiben kann.
@@ -161,7 +161,7 @@ Ein gekoppeltes BombVault kann die Replik selbst empfangen. Niemand bekommt SSH-
 2. Öffne auf der empfangenden Instanz **Instanzen**. Die Anfrage erscheint als Abzeichen auf der Karte der sendenden Instanz, und ihre **Details** listen sie auf. Wähle auf diesem Server Pool und Wurzel und wie viele Snapshots bleiben, dann drücke **Erlauben** oder **Ablehnen**.
 3. Nach **Erlauben** sendet die Quelle nach ihrem eigenen Plan, wie bei jedem anderen Ziel.
 
-Die empfangende Instanz akzeptiert nur, was die Freigabe abdeckt: die Datasets des Eintrags, in ihre eigene Wurzel. Sie führt `zfs receive` selbst aus, und die Quelle hat keine Möglichkeit, dort etwas zu löschen oder zurückzurollen. Die Kopie übersteht also eine Quelle, die jemand übernommen hat. Die empfangende Instanz behält ihre eigene Aufbewahrung. Die Quelle schlägt nur eine Regel vor, wenn sie anfragt.
+Die empfangende Instanz akzeptiert nur, was die Freigabe abdeckt: die Datasets des Eintrags, in ihre eigene Wurzel. Sie führt `zfs receive` selbst aus, und die Quelle hat keine Möglichkeit, dort etwas zu löschen oder zurückzurollen. Die Kopie übersteht also eine Quelle, die jemand übernommen hat. Die empfangende Instanz behält ihre eigene Aufbewahrung. Die Quelle schlägt nur eine Regel vor, wenn sie anfragt. So eine Quelle kann trotzdem neue Snapshots senden, und mit der Zeit verdrängen diese ältere nach der Regel wie alle anderen. Ein Snapshotname, der nach der Uhr der empfangenden Instanz in der Zukunft liegt, zählt für die Regel erst, wenn diese Zeit gekommen ist.
 
 **Freigabe entziehen** auf der empfangenden Instanz beendet die Freigabe jederzeit und sagt es der Quelle, die dann zeigt, dass die Freigabe zurückgezogen wurde, und anhält. Was die empfangende Instanz schon hält, bleibt dort. Eine abgelehnte Anfrage bleibt abgelehnt. Weitere Datasets oder eine Anfrage nach einem Entzug fragen erneut.
 
@@ -179,13 +179,15 @@ Die Kopie auf dem Ziel ist schreibgeschützt. Standardmäßig ist sie nicht gemo
 
 Alles, was der Eintrag sichert, geht hinein, und auch die Volumes darunter, die die Sicherung überspringt. Ein untergeordnetes Dataset, das du im Eintrag ausgeschaltet hast, bleibt draußen. Alle Datasets eines Laufs stammen aus einem Snapshot, wie bei der Sicherung.
 
+Eine Kopie, die eine andere BombVault auf diesen Server repliziert, wird nicht weitergesendet, weil das die Historie ausdünnen würde, die ihre Quelle noch braucht. Enthält der Baum eines Eintrags so eine Kopie, scheitert der Lauf für dieses Dataset und sagt warum, bis du es im Eintrag ausschaltest. Ein Eintrag, der selbst so eine Kopie ist, kann gar nicht replizieren. Das Löschen eines Eintrags oder das Ausschalten seiner Replik lässt diese Kopien und ihre Snapshots in Ruhe. Sobald du eine Kopie übernimmst, wie unter [Die Replik nutzen](#replica-use) beschrieben, zählt sie als normales Dataset.
+
 ### Wie lange Snapshots bleiben {#replica-retention}
 
-Auf dem Ziel behält eine neue Replik 7 tägliche und 3 wöchentliche Snapshots. Wähle stattdessen **Kurz**, **Ausgewogen** oder **Lang**, oder setze **Eigene Werte**. Dort werden nur Snapshots mit dem Namen `bombvault-replica-<14 digits>` je entfernt, und nie der neueste, den beide Seiten teilen.
+Auf dem Ziel behält eine neue Replik 7 tägliche und 3 wöchentliche Snapshots. Wähle stattdessen **Kurz**, **Ausgewogen** oder **Lang**, oder setze **Eigene Werte**. Eigene Werte, die alle null sind, behalten jeden Snapshot, und die Karte sagt das. Dort werden nur Snapshots mit dem Namen `bombvault-replica-<14 digits>` je entfernt, und nie der neueste, den beide Seiten teilen.
 
 Auf der Quelle behält BombVault den letzten Replik-Snapshot, dazu ein Lesezeichen für jeden Zustand, den es gesendet hat. Lesezeichen kosten keinen Platz. Die nächste Übertragung startet von ihnen.
 
-Um auch auf der Quelle mehr zu behalten, setze **Auf diesem Server behalten** in der Karte Replik, zum Beispiel auf 7. So viele der neuesten Replik-Snapshots bleiben dann nach jeder Replik auf diesem Server, neben dem, was das Ziel behält. 0 oder 1 behält nur den letzten. Der letzte trägt einen Hold, sodass die Basis der nächsten Übertragung nicht versehentlich zerstört wird. Die älteren haben keinen. Jeder Snapshot hält die Blöcke fest, die sich danach geändert haben, jeder, den du behältst, belegt also Platz auf dem Pool. Das Ausschalten der Replik, der Wechsel auf ein anderes Ziel oder das Löschen des Eintrags entfernt sie auch von diesem Server.
+Um auch auf der Quelle mehr zu behalten, setze **Auf diesem Server behalten** in der Karte Replik, zum Beispiel auf 7. So viele der neuesten Replik-Snapshots bleiben dann nach jeder Replik auf diesem Server, neben dem, was das Ziel behält. 0 oder 1 behält nur den letzten. Der letzte trägt einen Hold, sodass die Basis der nächsten Übertragung nicht versehentlich zerstört wird. Die älteren haben keinen. Jeder Snapshot hält die Blöcke fest, die sich danach geändert haben, jeder, den du behältst, belegt also Platz auf dem Pool. Das Ausschalten der Replik, der Wechsel auf ein anderes Ziel oder das Löschen des Eintrags entfernt sie auch von diesem Server. Snapshots eines anderen Eintrags, der darunter liegt, bleiben. Ist der Host nicht erreichbar, während du den Eintrag löschst, bleiben die Snapshots ebenfalls, und die Seite sagt das. Entferne sie von Hand: `zfs release -r bombvault-replica <dataset>@<snapshot>`, dann `zfs destroy`.
 
 Die Dateien eines behaltenen Snapshots lassen sich sofort lesen oder kopieren, aus dem Ordner `.zfs/snapshot` im Dataset oder aus einem Klon, ohne das Dataset oder die Replik anzufassen:
 
@@ -228,12 +230,12 @@ zfs clone backup/bombvault-replica/tower/cache/appdata@bombvault-replica-2026100
 Fällt die Quelle aus, mach die Kopie auf dem Ziel zu einem normalen, beschreibbaren Dataset:
 
 ```
-zfs inherit -r readonly backup/bombvault-replica/tower/cache/appdata && zfs inherit -r canmount backup/bombvault-replica/tower/cache/appdata && zfs mount -a
+zfs inherit -r readonly backup/bombvault-replica/tower/cache/appdata && zfs list -rH -o name -t filesystem backup/bombvault-replica/tower/cache/appdata | xargs zfs set canmount=on && zfs mount -a
 ```
 
-BombVault hört danach auf, in dieses Dataset zu replizieren, bis du einen neuen ersten Lauf startest.
+BombVault hört danach auf, in dieses Dataset und seine untergeordneten Datasets zu replizieren. Der nächste Lauf scheitert mit einem Grund, und was du geschrieben hast, bleibt. Dasselbe gilt für alles andere, was seit ihrem neuesten Snapshot auf die Kopie geschrieben wurde: BombVault rollt eine Kopie nie zurück. Um wieder dorthin zu replizieren, hol dir, was du brauchst, von der Kopie herunter und zerstöre sie auf dem Ziel. Der nächste Lauf sendet dann alles neu.
 
-Um einen Zustand zur Quelle zurückzuholen, drücke im Blatt **Als neues Dataset zurückholen**. BombVault sendet den Snapshot in ein neues Dataset neben dem Original, benannt `<dataset>-bombvault-restore-` plus Zeitstempel. Es schreibt nie über das Original.
+Um einen Zustand zur Quelle zurückzuholen, drücke im Blatt **Als neues Dataset zurückholen**. BombVault sendet den Snapshot in ein neues Dataset neben dem Original, benannt `<dataset>-bombvault-restore-` plus Zeitstempel. Es schreibt nie über das Original. Ein untergeordnetes Dataset, das auf der Quelle verloren ist, kommt ebenfalls zurück, solange die Kopie diesen Snapshot noch hat. Eines, das ihn nicht hat, bleibt draußen, und der Lauf sagt das.
 
 ### Beispiel: eine Replik auf eine zweite Unraid-Box {#example-replica}
 

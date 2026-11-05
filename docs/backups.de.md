@@ -9,10 +9,10 @@ Alles, was BombVault sichert, steht in einer Liste unter **Sicherungen**: Contai
 
 | Bereich | Was gesichert wird |
 |---|---|
-| **Container** | Der Appdata-Ordner plus die Container-Definition: Image, Variablen, Ports, Labels und Volumes. Die Karte **Gesicherte Ordner** auf dem Tab **Einstellungen** des Containers hakt genau ab, welche Ordner die Sicherung abdeckt, mit einer laufenden Zählung der Pfade und einer Liste dessen, was du ausgelassen hast. Daten, die ein Container außerhalb von Host Data ablegt, etwa in einem TrueNAS-ixVolume, werden nicht gesichert, und der Lauf nennt die Ordner, die er ausgelassen hat. |
+| **Container** | Der Appdata-Ordner plus die Container-Definition: Image, Variablen, Ports, Labels und Volumes. Die Karte **Gesicherte Ordner** auf dem Tab **Einstellungen** des Containers hakt genau ab, welche Ordner die Sicherung abdeckt, mit einer laufenden Zählung der Pfade und einer Liste dessen, was du ausgelassen hast. Daten, die ein Container außerhalb von Host Data ablegt, etwa in einem TrueNAS-ixVolume oder einem Compose-Projekt unter `/opt`, werden nicht gesichert, und der Lauf nennt die Ordner, die er ausgelassen hat. Der Lauf nennt auch einen Ordner innerhalb von Host Data, den es gerade nicht gibt. Systempfade wie `/etc/localtime` oder der Docker-Socket zählen nicht als Daten. |
 | **VMs** | Die Disk-Images, die XML-Definition und das UEFI-NVRAM, mit einem Graceful-Shutdown oder einem Live-Snapshot, über SSH. Siehe [VM-Sicherungen](vm-backup-ssh-setup.md). |
 | **Flash** | Nur Unraid. Der ganze USB-Flash (`/boot`): Betriebssystem, Lizenz, Array-Konfiguration, Shares, Netzwerk und Plugin-Konfiguration. |
-| **Selbstbackup** | Das eigene `/config` von BombVault: seine Einstellungsdatenbank, die Zugangsdaten der Speicherorte und das libvirt-SSH-Schlüsselpaar, als Snapshot mit SQLite `VACUUM INTO`, damit die Datenbank nie mitten in einem Schreibvorgang erfasst wird. |
+| **Selbstbackup** | Das eigene `/config` von BombVault: seine Einstellungsdatenbank, die Zugangsdaten der Speicherorte, das libvirt-SSH-Schlüsselpaar, der Schlüssel und die festgehaltenen Host-Schlüssel der ZFS-Server und die Zertifikate, als Snapshot mit SQLite `VACUUM INTO`, damit die Datenbank nie mitten in einem Schreibvorgang erfasst wird. |
 | **Ordner** | Jeder Ordner auf dem Server als Ordner-Set, etwa ein Share, deine Dokumente oder eine Fotobibliothek, mit optionalen Ausschlussmustern. Ordner-Sets haben Zeitpläne, Aufbewahrung, Off-site-Kopien, Prüfungen und Wiederherstellungsproben wie alles andere auch. |
 | **ZFS-Datasets** | Ein Dataset und jedes Dataset darunter, gelesen aus einem ZFS-Snapshot, sodass alle vom selben Augenblick stammen, und mit restic wie ein Ordner gespeichert. Ein ZFS-Eintrag kann außerdem eine blockgenaue Replik auf einem zweiten ZFS-Server halten. Siehe [ZFS-Datasets](zfs-datasets.md). |
 
@@ -35,7 +35,7 @@ Einträge, die nicht mehr installiert sind, aber noch Sicherungen haben, stehen 
 Die Hauptaktion der Seite schwebt unten rechts: **Jetzt alles sichern** startet einen Lauf über alle eingeschalteten Bereiche. **Mehr** enthält den Rest:
 
 - **Auswählen** startet eine Auswahl, siehe unten.
-- **Sicherungen entdecken** liest, was die Speicherorte enthalten, und baut daraus Einträge neu auf, zum Beispiel nach einer frischen Installation. Off-site-Kopien wiederhergestellter Bereiche pausieren dann, bis du ihre Vorgabe bestätigst, siehe [Nach einem Neuaufbau](offsite-recovery.md#after-a-rebuild).
+- **Sicherungen entdecken** liest, was die Speicherorte enthalten, und baut daraus Einträge neu auf, zum Beispiel nach einer frischen Installation. Ein Container ohne eigene Daten hat keinen Snapshot und kommt aus der Definition zurück, die neben dem Repository gespiegelt liegt. Off-site-Kopien wiederhergestellter Bereiche warten dann, bis du ihre Sicherungen als eigene dieses Servers übernimmst, siehe [Nach einem Neuaufbau](offsite-recovery.md#after-a-rebuild).
 - **ZFS-Verbindung zu diesem Server** öffnet den SSH-Test des ZFS-Bereichs, siehe [ZFS-Datasets](zfs-datasets.md#requirements).
 - **Alle jetzt replizieren** sendet bei gewählter ZFS-Kachel die Replik jedes ZFS-Eintrags.
 
@@ -98,7 +98,7 @@ Die Karten darunter hängen von der Art des Eintrags ab:
 | Container | **Gesicherte Ordner** (welche gemappten Ordner gesichert werden, mit **Cache-Ordner überspringen (CACHEDIR.TAG)**), **Ausschlussmuster**, **Andere Container stoppen**, **Befehle vorher und nachher**, **Datenbank**, **Wenn die App beschäftigt ist**, **Nach erfolgreicher Sicherung aktualisieren**, **Snapshot statt Stopp**, **Frühere Namen** |
 | VM | **VM** mit **Methode** (**Graceful (Herunterfahren)** oder **Live-Snapshot**) und **Nur geänderte Blöcke**, siehe die [Anleitung zur VM-Sicherung](vm-backup-ssh-setup.md#per-vm-method) |
 | Ordner-Set | **Ordner** und **Ausschlussmuster** |
-| Flash | **Flash-ZIP-Export**, das jede Flash-Sicherung als einfache `.zip` in einen Ordner deiner Wahl schreibt |
+| Flash | **Flash-ZIP-Export**, das jede Flash-Sicherung als einfache `.zip` in einen Ordner deiner Wahl schreibt, in einem Schritt, sodass ein Sync-Werkzeug nie eine halbe Datei sieht. Eine Flash-Sicherung, die weniger enthält, als sie sollte, lässt das letzte ZIP an seinem Platz, und der Lauf des Exports sagt das. |
 | ZFS-Dataset | die untergeordneten Datasets, die zu stoppenden Container und die Befehle rund um den Snapshot, **Replik** und **Snapshot-Zugriff testen**, siehe [ZFS-Datasets](zfs-datasets.md) |
 
 Einstellungen speichern sich selbst, während du sie änderst.
@@ -119,7 +119,7 @@ Einstellungen speichern sich selbst, während du sie änderst.
 
 ## Ausschlussmuster {#excludes}
 
-Die Karte **Ausschlussmuster** nimmt ein Muster pro Zeile. Gib Pfade so ein, wie du sie im Container siehst, etwa `/config/Library/Application Support/Plex Media Server/Cache`, oder einen bloßen Namen wie `.git`, der in jeder Tiefe passt. Eine Vorschau unter dem Feld zeigt, wozu jede Zeile aufgelöst wird, und warnt, wenn eine Zeile nichts trifft oder alles ausschließen würde. Eine Zeile mit `/` oder `*` oder eine, die einen ganzen gesicherten Ordner nennt, wird ignoriert, ein Ausschluss kann also nie eine Sicherung leeren. Um einen ganzen Ordner auszulassen, nimm stattdessen den Haken unter **Gesicherte Ordner** heraus.
+Die Karte **Ausschlussmuster** nimmt ein Muster pro Zeile. Gib Pfade so ein, wie du sie im Container siehst, etwa `/config/Library/Application Support/Plex Media Server/Cache`, oder einen bloßen Namen wie `.git`, der in jeder Tiefe passt. Bei einem Ordner-Set gibst du einen Pfad so ein, wie der Host ihn kennt, etwa `/mnt/user/data/cache`. Eine Vorschau unter dem Feld zeigt, wozu jede Zeile aufgelöst wird, und warnt, wenn eine Zeile nichts trifft oder alles ausschließen würde. Eine Zeile mit `/` oder `*` oder eine, die einen ganzen gesicherten Ordner nennt, wird ignoriert, ein Ausschluss kann also nie eine Sicherung leeren. Um einen ganzen Ordner auszulassen, nimm stattdessen den Haken unter **Gesicherte Ordner** heraus.
 
 Für bekannte Images wie Plex, Jellyfin, Sonarr, Radarr, Immich und Nextcloud bietet die Karte die Ordner an, die die App von selbst wieder füllt, etwa Caches, Logs und Vorschaubilder. Ausgeschlossen wird nichts, bis du **Auswahl ausschließen** drückst.
 
@@ -137,6 +137,8 @@ Ein fehlgeschlagener Dump lässt die Sicherung nicht fehlschlagen. Er erscheint 
 
 - **Befehle vorher und nachher** laufen mit `sh -c` im Container, zum Beispiel um einen Cache auf die Platte zu schreiben. Ein fehlschlagender Befehl vor der Sicherung bricht sie ab. Ein Befehl vor der Sicherung, der mit Code 75 endet, stellt stattdessen eine geplante Sicherung zurück, siehe unten.
 - **Andere Container stoppen** nennt Container, die angehalten werden, während dieser gesichert wird, etwa seine Datenbank. Danach starten sie in der Reihenfolge ihres Compose-`depends_on` wieder, und standardmäßig muss jeder gesund melden, bevor der nächste startet. Die Wartezeit und ihr Zeitlimit stehen unter **Neustart nach der Sicherung** in der Karte **Reihenfolge** unter **Einstellungen, Zeitplan**.
+- Ein Container, der den Netzwerk-, PID- oder IPC-Namespace eines angehaltenen Containers teilt, über `--net=container:` oder `network_mode: service:` in Compose, stoppt und startet mit ihm, auch wenn er nicht auf der Liste steht, und er startet nach dem Container, dem er sich anschließt. Ein neu gestarteter Container bekommt ein neues Netzwerk, und einer, der im alten Netzwerk weiterliefe, hätte nur noch sein Loopback. Die Liste selbst bleibt, wie du sie eingestellt hast. Ließ sich so ein Container nicht stoppen, sagt der Lauf, dass er bis zu seinem Neustart kein Netzwerk hat. Dasselbe gilt für den Container von BombVault selbst, der sich nie selbst stoppt und nicht auf die Liste gesetzt werden kann.
+- Ein Container, der danach nicht wieder läuft, wird im Lauf und in einer Benachrichtigung genannt, auch wenn die Sicherung selbst fehlgeschlagen ist.
 
 ## Wenn die App beschäftigt ist {#app-busy}
 
@@ -177,7 +179,7 @@ Für eine eigene Prüfung lass den **Befehl vor der Sicherung** mit Code 75 ende
 restic bleibt die Engine, aber ein Export gibt dir eine Kopie, die weder BombVault noch restic braucht.
 
 - **Container exportieren** und **VM exportieren** unter **Mehr** auf der Seite eines Eintrags schreiben eine Kopie des jetzigen Stands neben das Repository: die Sicherungsordner des Containers plus sein Unraid-Template, oder die Disk-Images der VM plus ihre Definition, wiederherstellbar mit `virsh define`.
-- **Exportieren** an einem Snapshot schreibt eine gespeicherte Sicherung in den Export-Ordner auf dem Server, als tar, zip oder als eigenes restic-Repository, und kann einen Snapshot oder alle nehmen.
+- **Exportieren** an einem Snapshot schreibt eine gespeicherte Sicherung in den Export-Ordner auf dem Server, als tar, zip oder als eigenes restic-Repository, und kann einen Snapshot oder alle nehmen. Eine Flash-Sicherung und ein Selbstbackup enthalten Schlüssel, darum braucht ihr Export ein Login-Passwort und eine Anmeldung an der Instanz.
 
 Exporte sind standardmäßig einfache Dateien. **Exporte mit age verschlüsseln** unter **Einstellungen, System** versiegelt sie, das Flash-ZIP eingeschlossen, für die Empfänger, die du aufführst, jeweils ein öffentlicher age-Schlüssel oder ein öffentlicher SSH-Schlüssel. Du entschlüsselst sie später außerhalb der Box mit dem passenden privaten Schlüssel. Ist die Verschlüsselung an und es gibt keinen gültigen Empfänger, schlägt ein Export mit einer klaren Fehlermeldung fehl, statt je einfache Dateien zu schreiben.
 

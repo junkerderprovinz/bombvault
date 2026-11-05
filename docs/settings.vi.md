@@ -11,7 +11,7 @@ Trang này liệt kê mọi ô cùng các thẻ của nó, và liên kết tới
 
 ## Chung {#general}
 
-- **Phần** bật hoặc tắt từng phần: **Containers**, **VMs**, **Flash**, **Thư mục**, **Tập dữ liệu ZFS** và **Tự sao lưu**. Một phần đã tắt thì không được sao lưu, và các mục của nó không được tính. **Flash** chỉ hiện trên Unraid.
+- **Phần** bật hoặc tắt từng phần: **Containers**, **VMs**, **Flash**, **Thư mục**, **Tập dữ liệu ZFS** và **Tự sao lưu**. Một phần đã tắt thì không được sao lưu theo bất kỳ lịch nào, kể cả kế hoạch riêng của một mục, và các mục của nó không được tính. **Sao lưu ngay** vẫn hoạt động. **Flash** chỉ hiện trên Unraid.
 - **Containers** chứa những gì áp dụng cho mọi container, chẳng hạn **Tự động kết xuất cơ sở dữ liệu**. Bất cứ thứ gì ảnh hưởng tới một container thì nằm trên trang của nó. Xem [Kết xuất cơ sở dữ liệu](backups.md#database-dumps).
 
 ## Giao diện {#look}
@@ -97,6 +97,6 @@ Một số việc cần mật khẩu đăng nhập, chẳng hạn bộ khôi ph�
 
 ## Thông tin {#info}
 
-- **Phiên bản**: BombVault, GlimStone, restic và rclone, với **Kiểm tra cập nhật** và **Mới**, đếm những thay đổi bạn chưa xem và mở **Có gì mới**.
+- **Phiên bản**: BombVault, GlimStone, restic và rclone, với **Kiểm tra cập nhật** và **Mới**, đếm những thay đổi bạn chưa xem và mở một cửa sổ liệt kê chúng.
 - **Trợ giúp**: **Hướng dẫn** mở tài liệu này, và **Báo lỗi** tải về một tệp ZIP đã che thông tin nhạy cảm cho một issue trên GitHub. Nó cần mật khẩu đăng nhập.
 - **Giới thiệu về BombVault**: dự án, giấy phép của nó và cách liên lạc với tác giả.

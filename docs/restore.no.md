@@ -21,7 +21,7 @@ Hver gjenoppretting starter på siden **Gjenoppretting**: velg et område, søk 
 
 Et klikk på et element åpner **Gjenopprett** med navnet. Vinduet spør i trinn, og hvert trinn kan endres før du starter:
 
-1. **Sikkerhetskopi**: det anbefalte øyeblikksbildet er forhåndsvalgt. Det er det nyeste, eller etter et åpent avvik det siste før det. Eldre ligger i listen, og **Sammenlign** viser hva som skiller to av dem.
+1. **Sikkerhetskopi**: det anbefalte øyeblikksbildet er forhåndsvalgt. Det er det nyeste, eller etter et åpent avvik det siste før det. Sikkerhetskopien som ble tatt før en tidligere gjenoppretting, inneholder tilstanden den gjenopprettingen erstattet, så den hoppes over med mindre det ikke finnes noen annen. Eldre ligger i listen, og **Sammenlign** viser hva som skiller to av dem.
 2. **Kilde**: hvor filene kommer fra, når et øyeblikksbilde ligger flere steder. **Lokal** er raskest.
 3. **Hva**: **Alt**, eller **Enkeltfiler**, der du krysser av filene og mappene du vil ha.
 4. **Hvor til**: målet. Valgene avhenger av typen element:
@@ -29,7 +29,7 @@ Et klikk på et element åpner **Gjenopprett** med navnet. Vinduet spør i trinn
     | Mål | Hva det gjør |
     |---|---|
     | **Ved siden av originalen** | Standarden. En container kommer tilbake som en ekstra container med navnet `<name>-restored` og egne porter, en VMs disker og NVRAM havner i en mappe som heter `<folder>-restored`, og en mappesamling kommer tilbake som `<path>-restored`. Ingenting endres på originalen. |
-    | **Erstatt originalen** | Overskriver det som ligger der nå. Med **Ta sikkerhetskopi av dagens tilstand først**, som er på som standard, tar BombVault først sikkerhetskopi av dagens tilstand, så du kan gå tilbake. Hvis den sikkerhetskopien feiler, starter ikke gjenopprettingen. |
+    | **Erstatt originalen** | Overskriver det som ligger der nå. Med **Ta sikkerhetskopi av dagens tilstand først**, som er på som standard, tar BombVault først sikkerhetskopi av dagens tilstand, så du kan gå tilbake. Hvis den sikkerhetskopien feiler, starter ikke gjenopprettingen. Det virker også for en container eller VM som ikke lenger finnes på serveren: mappene gjenopprettingen skriver over, sikkerhetskopieres hver for seg. |
     | **Til en mappe** | Bare filene, til gjennomsyn. |
     | **Last ned som ZIP** | Flash-disken, til en ny minnepinne. BombVault skriver aldri inn i den kjørende flash-disken. |
     | **Til et nytt dataset** og **Gjenopprett inn i datasettet** | ZFS-datasett, se [ZFS-datasett](zfs-datasets.md#restore). |
@@ -40,11 +40,11 @@ Før **Gjenopprett** låses opp, sjekker vinduet at depotet svarer, at nøkkelen
 
 Vinduet viser også hva gjenopprettingen endrer sammenlignet med det som ligger der nå: nye, erstattede og uendrede filer, med listen på forespørsel, og filene på målet som ikke er i sikkerhetskopien og blir liggende. restic regner dette ut som en tørrkjøring fra størrelse og endringstid, uten å lese filene, og et veldig stort tre stopper etter 30 sekunder og sier fra om det. For containere og VM-er sammenligner det innstillingene gjenopprettingen oppretter på nytt med de som kjører: image og tag, porter, variabelnavn og volumer, eller minne, vCPU-er, disker og nettverk.
 
-Noen ting kan stoppe en gjenoppretting før den endrer noe. En containers statiske IP og publiserte porter må være ledige, og nettverket må finnes. En gjenoppretting på stedet nevner hver annen container hvis bind-montering når inn i en mappe den skriver til, for eksempel «denne stien brukes også av nextcloud-db», men det er bare en advarsel.
+Noen ting kan stoppe en gjenoppretting før den endrer noe. En containers statiske IP og publiserte porter må være ledige, og nettverket må finnes. På Unraid avviser hver gjenoppretting på stedet en mappe som ikke ligger på en montert pool eller share, fordi filene ville havnet i minnet og vært borte etter en omstart. En gjenoppretting på stedet nevner hver annen container hvis bind-montering når inn i en mappe den skriver til, for eksempel «denne stien brukes også av nextcloud-db», men det er bare en advarsel.
 
 Noen valg dukker opp der de passer: **La stå stoppet etterpå**, for å se over en container eller VM før den kjører igjen, og **Gjenopprett uten GPU og runtime** på en vert som mangler GPU-en eller runtime-en sikkerhetskopien ble laget med.
 
-Gjenopprettingen kjører i bakgrunnen. Du kan lukke vinduet, og framdriften vises også under **Pågår nå**. En lang gjenoppretting viser en prosent og kan avbrytes, og en avbrutt gjenoppretting registreres som avbrutt, ikke som mislykket.
+Gjenopprettingen kjører i bakgrunnen. Du kan lukke vinduet, og framdriften vises også under **Pågår nå**. En lang gjenoppretting viser en prosent og kan avbrytes, og en avbrutt gjenoppretting registreres som avbrutt, ikke som mislykket. En gjenoppretting som avbrytes mens containeren stopper, eller en som ikke kan fjerne containeren, har ikke gjenopprettet noe ennå, så containeren starter igjen. En container som tar volumene sine fra en annen med `--volumes-from`, beholder dem, og gjenopprettingen nekter å begynne så lenge den andre containeren ikke finnes.
 
 ![Gjenopprettingsvinduet ved trinnet Hva, med enkeltfiler avkrysset.](assets/screenshots/restore/window-what-dark.png#only-dark)
 ![Gjenopprettingsvinduet ved trinnet Hva, med enkeltfiler avkrysset.](assets/screenshots/restore/window-what-light.png#only-light)
@@ -66,7 +66,7 @@ Noen redigerte Nextclouds `config.php` i går kveld, og Nextcloud starter ikke l
 
 Vinduet ender med **Ferdig: filene ligger i /mnt/user/restore**. Du finner filen som `/mnt/user/restore/config.php`, uten mappene over. Sammenlign den med den ødelagte, kopier den tilbake til appdata-mappen og start Nextcloud på nytt.
 
-For å legge filen rett tilbake i stedet velger du **Erstatt originalen** i trinn 5. La **Ta sikkerhetskopi av dagens tilstand først** stå på, så BombVault tar sikkerhetskopi av den ødelagte tilstanden før den skriver, skriv `nextcloud` for å bekrefte og trykk på **Gjenopprett**. Nextcloud stoppes mens den valgte filen skrives tilbake på plassen sin, og bare filene du krysset av, skrives.
+For å legge filen rett tilbake i stedet velger du **Erstatt originalen** i trinn 5. La **Ta sikkerhetskopi av dagens tilstand først** stå på, så BombVault tar sikkerhetskopi av den ødelagte tilstanden før den skriver, skriv `nextcloud` for å bekrefte og trykk på **Gjenopprett**. Nextcloud stoppes mens den valgte filen skrives tilbake på plassen sin, og startes igjen etterpå, og bare filene du krysset av, skrives. En gjenoppretting som feiler underveis, lar Nextcloud stå stoppet, fordi filen den leser, kan være halvskrevet, og kjøringen sier det.
 
 ![Gjenopprettingsvinduet ved Hva som skjer, med Erstatt originalen valgt.](assets/screenshots/restore/window-replace-dark.png#only-dark)
 ![Gjenopprettingsvinduet ved Hva som skjer, med Erstatt originalen valgt.](assets/screenshots/restore/window-replace-light.png#only-light)
@@ -75,11 +75,13 @@ For å legge filen rett tilbake i stedet velger du **Erstatt originalen** i trin
 
 **Containere** opprettes på nytt fra den lagrede definisjonen gjennom Docker-APIet, med entrypoint, vertsnavn, stoppinnstillinger, volumer og monteringer, ressursgrenser, loggdriver, DNS-innstillinger og gamle lenker. En container kommer tilbake på imaget den kjørte da sikkerhetskopien ble tatt, ikke på et nyere som ble hentet senere, og et image som mangler, hentes først, med påloggingen fra **Container-registre** under **Innstillinger, Gjenoppretting**. GPU-en eller runtime-en (`--gpus`, `--runtime=nvidia`) kommer også tilbake. På en vert uten den driveren eller runtime-en sier gjenopprettingen fra om det og tilbyr **Gjenopprett uten GPU og runtime**. En lenke til en container som mangler, eller som er stoppet mens den gjenopprettede starter, utelates, og kjørehistorikken sier fra om det. En gjenoppretting som feiler etter at containeren ble fjernet, setter den tilbake, stoppet.
 
+En sikkerhetskopi kan inneholde mapper containeren ikke lenger har valgt, for eksempel en eldre som ble tatt før en mappe forsvant. En mappe som er borte eller tom, kommer tilbake. En som inneholder filer nå, blir som den er, fordi du kan ha fjernet avkrysningen med vilje, og kontrollen før gjenopprettingen og kjørehistorikken nevner den. Få den tilbake med **Enkeltfiler** eller **Til en mappe**.
+
 **VM-er** får XML-en sin definert på nytt over SSH og diskene og UEFI-NVRAM tilkoblet igjen, selv etter at VM-en ble slettet. Se [VM-sikkerhetskopier](vm-backup-ssh-setup.md) for VM-er med Unraid-øyeblikksbilder og disker på zvols.
 
-**Mappesamlinger** kommer tilbake med eierskap, tilgangsmoduser og tidsstempler slik restic lagrer dem.
+**Mappesamlinger** kommer tilbake med eierskap, tilgangsmoduser og tidsstempler slik restic lagrer dem. Der målet bare avviser eierskapet, slik `/mnt/user` gjør, ender kjøringen med en merknad som sier det. BombVault sammenligner så filene med sikkerhetskopien, og en fil som ikke kom fram, får gjenopprettingen til å feile.
 
-**Flash-disken** rører aldri den levende `/boot`. Gjenopprettingen er en nedlasting som heter `flash-<id>.zip`, klar til å slippes inn i Unraid USB Creator. Vinduet lister også programtilleggene i hver flash-sikkerhetskopi med versjon og størrelse, og kan legge ett enkelt tilbake på den kjørende flash-disken: `.plg`-filen, mappen under `config/plugins` og pakkefilene sikkerhetskopien har. Unraid installerer det ved neste oppstart, eller med en gang under **Plugins, Install Plugin**.
+**Flash-disken** rører aldri den levende `/boot`. Gjenopprettingen er en nedlasting som heter `flash-<id>.zip`, klar til å slippes inn i Unraid USB Creator. ZIP-filen inneholder `APP_KEY`, så nedlastingen krever et påloggingspassord og en pålogging på instansen. Vinduet lister også programtilleggene i hver flash-sikkerhetskopi med versjon og størrelse, og kan legge ett enkelt tilbake på den kjørende flash-disken: `.plg`-filen, mappen under `config/plugins` og pakkefilene sikkerhetskopien har. Unraid installerer det ved neste oppstart, eller med en gang under **Plugins, Install Plugin**.
 
 **ZFS-datasett** har egne mål og beholder ZFS-egenskapene sine, se [Gjenoppretting](zfs-datasets.md#restore).
 
@@ -102,6 +104,10 @@ Hvert element sjekkes på samme måte som en enkeltgjenoppretting, og deretter k
 ## Gjenopprette en stack {#stacks}
 
 Et klikk på en stack i kortet **Stacker** åpner **Gjenopprett stack**. Den gjenoppretter hvert medlem fra siste sikkerhetskopi samtidig, og med **Start i avhengighetsrekkefølge etter gjenoppretting** starter den dem i `depends_on`-rekkefølge: databaser og cacher først, så appen. Når et medlems prosjektmappe mangler på stedet du valgte, tilbyr vinduet tilstanden fra Lokal i stedet.
+
+BombVault sjekker medlemmene og prosjektmappen først, og en gjenoppretting som ikke kunne fungere, endrer ingenting. Ellers stopper den medlemmene som kjører, appene før databasene deres, skriver så prosjektmappen og gjenoppretter så medlemmene. Kommer ikke prosjektmappen tilbake, blir medlemmene likevel gjenopprettet, men de forblir stoppet, fordi mappen kan være halvskrevet og det er der bind-monteringene til et medlem vanligvis ligger. Kjøringen til hvert medlem sier det.
+
+En database som bare har databasedumper og ingen filsikkerhetskopi, og der containeren og det navngitte volumet er borte, kommer tilbake uten dataene sine. Kontrollen sier det før gjenopprettingen. Den forblir stoppet, og det samme gjør containerne som er avhengige av den, så ingen app kjører oppsettet sitt mot en tom database. Start den, importer en dump og start de andre. Se [Databasedumper](backups.md#database-dumps).
 
 ## Andre kilder {#other-sources}
 

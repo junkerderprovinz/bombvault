@@ -11,7 +11,7 @@ Esta página lista cada mosaico e os seus cartões, e liga à página que explic
 
 ## Geral {#general}
 
-- **Secções** liga ou desliga cada secção: **Containers**, **VMs**, **Flash**, **Pastas**, **Conjuntos de dados ZFS** e **Auto-backup**. Uma secção desligada não é copiada, e as suas entradas não contam. O **Flash** só aparece no Unraid.
+- **Secções** liga ou desliga cada secção: **Containers**, **VMs**, **Flash**, **Pastas**, **Conjuntos de dados ZFS** e **Auto-backup**. Uma secção desligada não é copiada por nenhum agendamento, nem pelo plano próprio de uma entrada, e as suas entradas não contam. **Fazer backup agora** continua a funcionar. O **Flash** só aparece no Unraid.
 - **Containers** guarda o que se aplica a todos os containers, por exemplo **Despejos automáticos das bases de dados**. Tudo o que afeta um só container está na página dele. Vê [Despejos da base de dados](backups.md#database-dumps).
 
 ## Aspeto {#look}
@@ -97,6 +97,6 @@ Várias coisas precisam de uma palavra-passe de acesso, como o kit de recuperaç
 
 ## Info {#info}
 
-- **Versão**: BombVault, GlimStone, restic e rclone, com **Procurar atualizações** e **Novo**, que conta as alterações que ainda não viste e abre **Novidades**.
+- **Versão**: BombVault, GlimStone, restic e rclone, com **Procurar atualizações** e **Novo**, que conta as alterações que ainda não viste e abre uma janela que as lista.
 - **Ajuda**: o **Manual** abre esta documentação, e o **Relatório de erro** descarrega um ZIP com dados ocultados para um issue do GitHub. Precisa de uma palavra-passe de acesso.
 - **Sobre o BombVault**: o projeto, a sua licença e como contactar o autor.
