@@ -144,7 +144,7 @@ zfs allow <user> receive,create,mount,rollback,destroy,userprop,readonly,canmoun
 On the source the same kind of user needs these on the entry's top dataset:
 
 ```
-zfs allow <user> send,snapshot,hold,release,bookmark,destroy <dataset>
+zfs allow <user> send,snapshot,hold,release,bookmark,destroy,mount <dataset>
 ```
 
 In this direction the BombVault that holds the entry also holds a key that can write on the server.
