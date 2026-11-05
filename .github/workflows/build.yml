@@ -139,7 +139,7 @@ jobs:
         if: github.ref_type == 'tag'
         run: |
           git fetch --tags --force --quiet
-          newest=$(git tag -l 'v[0-9]*.[0-9]*.[0-9]*' | sort -V | tail -1)
+          newest=$(git tag -l 'v*' | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -1)
           echo "this tag: ${GITHUB_REF_NAME}"
           echo "newest:   ${newest}"
           if [ "$newest" = "${GITHUB_REF_NAME}" ]; then
@@ -160,13 +160,16 @@ jobs:
             ${{ env.IMAGE }}
             name=docker.io/${{ vars.DOCKERHUB_USERNAME }}/${{ github.event.repository.name }},enable=${{ vars.DOCKERHUB_USERNAME != '' && (github.ref_type == 'tag' || github.ref_name == github.event.repository.default_branch) }}
           # latest is the newest release, so an unreleased merge never reaches
-          # people who pull it. The tip of main goes to edge, and any other
+          # people who pull it. The action adds latest to every semver tag unless
+          # the flavor turns that off. The tip of main goes to edge, and any other
           # branch gets a tag of its own name and nothing else.
           #
           # {{major}} and {{major}}.{{minor}} follow whichever tag built last,
           # so re-cutting an old version moves them back. After that, re-run
           # the newest tag's build and check that latest, 8 and 8.<minor> share
           # a digest.
+          flavor: |
+            latest=false
           tags: |
             type=sha,format=short
             type=ref,event=branch,enable=${{ github.ref_type == 'branch' && github.ref_name != github.event.repository.default_branch }}
