@@ -3638,6 +3638,14 @@ UPDATE zfs_datasets SET schedule_cadence = '' WHERE (SELECT per_item_schedules F
   keep_yearly  INTEGER NOT NULL
 );`,
 	},
+	{
+		// A received repository on a server with a login needs that login, as a
+		// pull source does.
+		version:          receivedRepoSignInMigration,
+		name:             "received_repo_sign_in",
+		alreadySatisfied: columnPresent("received_repos", "creds_ref"),
+		sql:              `ALTER TABLE received_repos ADD COLUMN creds_ref TEXT NOT NULL DEFAULT '';`,
+	},
 }
 
 // hiddenZeroRuleRows are the sections with an all-zero own keep rule whose own
@@ -4216,6 +4224,9 @@ const hiddenZeroRuleMigration = 700
 // locationKeepMigration numbers the How long to keep cards of folders that have
 // no row of their own.
 const locationKeepMigration = 720
+
+// receivedRepoSignInMigration numbers the saved sign-in of a received repository.
+const receivedRepoSignInMigration = 790
 
 // oneLineColumns are the names and locations the recovery kit prints.
 var oneLineColumns = []struct {

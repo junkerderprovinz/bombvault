@@ -24,6 +24,7 @@ type receivedRepoView struct {
 	ID                string `json:"id"`
 	Name              string `json:"name"`
 	Repo              string `json:"repo"`
+	CredsRef          string `json:"credsRef"`
 	DeadManHours      int    `json:"deadManHours"`
 	CheckCadence      string `json:"checkCadence"`
 	ReadDataPercent   int    `json:"readDataPercent"`
@@ -57,6 +58,7 @@ type receivedRepoInput struct {
 	Name            string `json:"name"`
 	Repo            string `json:"repo"`
 	MemberID        string `json:"memberId"`
+	CredsRef        string `json:"credsRef"`
 	DeadManHours    int    `json:"deadManHours"`
 	CheckCadence    string `json:"checkCadence"`
 	ReadDataPercent int    `json:"readDataPercent"`
@@ -74,6 +76,7 @@ func receivedRepoToView(rr store.ReceivedRepo) receivedRepoView {
 		ID:                rr.ID,
 		Name:              rr.Name,
 		Repo:              scrubRepoLocation(rr.Repo),
+		CredsRef:          rr.CredsRef,
 		DeadManHours:      rr.DeadManHours,
 		CheckCadence:      rr.CheckCadence,
 		ReadDataPercent:   rr.ReadDataPercent,
@@ -122,6 +125,7 @@ func (h *Handler) buildReceivedRepo(ctx context.Context, in receivedRepoInput, e
 	rr := existing
 	rr.Name = strings.TrimSpace(in.Name)
 	rr.Repo = repo
+	rr.CredsRef = strings.TrimSpace(in.CredsRef)
 
 	// Naming a member pairs the row with it: the member's restic password is
 	// fetched over the group now. An edit that names none keeps the password

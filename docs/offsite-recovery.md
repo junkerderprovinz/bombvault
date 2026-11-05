@@ -152,7 +152,7 @@ A sign-in is the key or password BombVault uses for an S3 service or a rest-serv
 - **Saved when you add a location.** Add storage location saves the keys you type as a sign-in. The next location at the same service can pick it under **Saved sign-in** instead of **New keys**, and a change to it later applies to every location that uses it.
 - **The default.** A star marks the default sign-in. It is used wherever no sign-in is picked, such as an address typed in by hand, a pull source, or a recovery on a fresh install. **Make default** gives the star to another one.
 - **Edit and Test.** **Edit**, here or in the **Sign-in** card of a location, opens one window for the sign-in. **Test** signs in to every location that uses it with what you typed, before anything is saved. **Save** stores it.
-- **Removing.** A sign-in can be removed only when no storage location or pull source uses it and no old backups need it, and the default goes only as the last one. Old backups need it when an own folder moved away from a place that signs in with it and left them there. BombVault then says which place it is.
+- **Removing.** A sign-in can be removed only when no storage location, pull source or received repository uses it and no old backups need it, and the default goes only as the last one. Old backups need it when an own folder moved away from a place that signs in with it and left them there. BombVault then says which place it is.
 - **Changing a location's connection** never rewrites a sign-in other places share. The location gets a sign-in of its own instead, and the window says beforehand that its sign-in is shared. To change the shared one everywhere, edit it in the **Sign-ins** card.
 
 ![The Sign-ins card: each saved sign-in with what uses it, and the star on the default.](assets/screenshots/storage/signins-dark.png#only-dark)
@@ -397,6 +397,8 @@ On the box that **receives** append-only copies from another BombVault, the rece
 - **A dead-man's switch:** an alert when a source stops sending within a window you set.
 - **Integrity alerts:** an alert when a check on the receiving side fails.
 
+A repository on another server needs that server's login: save it as a [sign-in](#sign-ins) and pick it under **Credentials** in the dialog.
+
 The receiver is strictly read-only. It never writes to the received repository, so it can never break the append-only guarantee the sender relies on.
 
 A fetcher works the other way round: with **Pull** switched on, an instance reads another member's backups on its own schedule, into a repository of its own for each source, so they never count as this box's own backups. Its sources stand in that member's details as well: the repository location, which kind of backup it holds and how often to fetch. The restic password comes over the group, never the APP_KEY, and the far side has nothing more to set up and does not have to be running. The source is only ever read, and each side keeps its own sign-in. An `rclone:` source is refused, because rclone would reach it with this instance's remotes.
@@ -436,7 +438,7 @@ What the tamper test answers:
 | **not protected** | VAULT accepted a delete. `--append-only` is missing or was removed. |
 | **inconclusive** | Neither. Usually the URL is not the one restic itself uses, or the credentials changed. Nothing is recorded and no alert fires. |
 
-**5. Watch what arrives, if you want.** Switch on **Receiver** under **Settings, Instances** on VAULT, open TOWER's **Details** and add the received repository. VAULT gets TOWER's restic password over the group. Nobody types a key.
+**5. Watch what arrives, if you want.** Switch on **Receiver** under **Settings, Instances** on VAULT, open TOWER's **Details** and add the received repository: click one of the locations the dialog lists. VAULT gets TOWER's restic password over the group, and because the location lies on VAULT's own receiving server it reads the folder directly. Nobody types a key or a login.
 
 **6. Make it mutual.** Repeat the steps in the other direction: VAULT asks TOWER to be its receiver. Each box then enforces append-only for the other, and neither can delete the other's backups.
 

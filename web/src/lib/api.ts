@@ -6157,6 +6157,8 @@ export interface ReceivedRepoView {
   enabled: boolean;
   createdAt: number;
   sortOrder: number;
+  /** The saved sign-in for the storage the repository lies on, "" for none. */
+  credsRef: string;
   /** The sending instance in the pairing group. */
   memberId: string;
   /** Set up before pairing existed: pair it with its instance again. */
@@ -6178,6 +6180,7 @@ export interface ReceivedRepoInput {
   name: string;
   repo: string;
   memberId: string;
+  credsRef: string;
   deadManHours: number;
   checkCadence: string;
   readDataPercent: number;
