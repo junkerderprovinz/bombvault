@@ -332,7 +332,7 @@ func (s *Service) BackupZFSDataset(ctx context.Context, id string) (backup.Summa
 		return backup.Summary{}, fmt.Errorf("zfs backup: load dataset: %w", err)
 	}
 	if s.zfsReplicaOnly(d) {
-		return backup.Summary{}, s.replicateZFSItem(ctx, d)
+		return backup.Summary{}, s.replicateReplicaOnlyItem(ctx, d)
 	}
 	sum, err := s.backupZFSToRepo(ctx, id)
 	if IsBackupCancelled(err) || ctx.Err() != nil {

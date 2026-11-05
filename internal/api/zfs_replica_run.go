@@ -126,6 +126,28 @@ func (s *Service) replicateZFSItem(ctx context.Context, d store.ZFSDataset) erro
 	return err
 }
 
+// replicateReplicaOnlyItem is the backup run of an item whose replica is all it
+// has. A section switched off or a replica already running is left alone, but
+// a server switched off means this run protected nothing, which the round has to
+// count and the run list has to show.
+func (s *Service) replicateReplicaOnlyItem(ctx context.Context, d store.ZFSDataset) error {
+	refused, err := s.replicateZFSNow(ctx, d)
+	if !refused {
+		return err
+	}
+	if code, _ := zfsRefusalCode(err); code == "" || code == "domain-off" {
+		log.Printf("api: zfs replica: %s skipped: %v", d.Dataset, err)
+		return nil
+	}
+	runID, sErr := s.startRun(ctx, d.ID, store.ZFSReplicaRunKind)
+	if sErr != nil {
+		log.Printf("api: zfs replica: recording the refused run of %s failed: %v", d.Dataset, sErr)
+		return err
+	}
+	s.finishZFSReplicaRun(ctx, d, runID, zfsrepl.Result{}, err)
+	return err
+}
+
 // replicateZFSNow runs one item's replica and waits for it. refused is true
 // when the item may not replicate or is replicating already, and err says
 // why.

@@ -548,3 +548,28 @@ func TestAReplicaOnlyItemIsReachedByAReplicaOnAPlanOfItsOwn(t *testing.T) {
 		t.Errorf("coverage = %+v, want the item unprotected", got)
 	}
 }
+
+func TestAReplicaOnlyItemWithItsServerOffIsNoSuccessOfTheRound(t *testing.T) {
+	r := replicaOnlyRig(t)
+	r.srv.Enabled = false
+	if err := r.st.UpdateZFSReplicaServer(r.srv); err != nil {
+		t.Fatal(err)
+	}
+	attempted, failed, _ := schedule.RunZFSJob([]store.ZFSDataset{r.item}, func(id string) error {
+		_, err := r.s.BackupZFSDataset(context.Background(), id)
+		return err
+	})
+	if attempted != 1 || failed != 1 {
+		t.Errorf("attempted %d, failed %d, want the item counted as failed", attempted, failed)
+	}
+	runs, err := r.st.RecentRunsOfKind(r.item.ID, store.ZFSReplicaRunKind, 5)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(runs) != 1 || runs[0].Status != "failed" || zfsRunCode(runs[0].Error) != "server-disabled" {
+		t.Errorf("runs = %+v, want one failed with server-disabled", runs)
+	}
+	if len(r.entries) != 0 {
+		t.Errorf("the engine ran %d times for a server that is off", len(r.entries))
+	}
+}
