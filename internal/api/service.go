@@ -18599,6 +18599,13 @@ func (s *Service) pruneDomain(ctx context.Context, domain, source string, afterB
 	// and the operator who clears that one comes straight back here for the next.
 	refusal := error(nil)
 	for _, r := range repos {
+		if off := s.pruneLocationOff(settings, domain, source, r); off != nil {
+			if refusal == nil {
+				refusal = off
+			}
+			skipped = append(skipped, repoSkip{Name: s.refName(r), Reason: off.Error(), Note: true})
+			continue
+		}
 		if isOffsiteSource(source) {
 			immutable, iErr := s.offsiteSourceImmutable(settings, domain, source)
 			if iErr != nil {
@@ -18738,6 +18745,28 @@ func (s *Service) pruneDomain(ctx context.Context, domain, source string, afterB
 	}
 	err = skippedError("this prune", skipped)
 	return paused, err
+}
+
+// pruneLocationOff is the refusal for pruning a repository in a storage location
+// that is switched off: a section's own folder there, or a copy there.
+func (s *Service) pruneLocationOff(settings store.Settings, domain, source string, r domainRepoRef) error {
+	if isOffsiteSource(source) {
+		t, err := s.offsiteTargetForSource(settings, domain, source)
+		if err != nil || t.Enabled {
+			return nil //nolint:nilerr // the append-only check right after reports a target it cannot read
+		}
+		return locationOffErr{name: placementTargetName(t)}
+	}
+	if !r.Own {
+		return nil
+	}
+	if err := s.refuseOwnFolderOff(settings, domain); err != nil {
+		if off, ok := errors.AsType[locationOffErr](err); ok {
+			return off
+		}
+		log.Printf("api: prune %s: could not read where its own folder lies: %v", domain, err) //nolint:gosec // G706: domain is a fixed literal
+	}
+	return nil
 }
 
 // DeleteSnapshot forgets a single snapshot by id from a domain's repo (restic
