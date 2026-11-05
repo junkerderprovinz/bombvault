@@ -8309,6 +8309,10 @@ func (s *Service) writeDefToStorage(settings store.Settings, name, itemRepo stri
 		// /config backup carries every definition and remains the real answer.
 		log.Printf("api: %q is on a remote repository, so its recreate definition is mirrored only on this box; the /config backup is what carries it off site", name) //nolint:gosec // G706: name is %q-quoted
 	}
+	// A section whose own folder is remote has no folder to mirror into at all.
+	if domainRepo, err := s.containersRepoPath(settings); err == nil && dir == domainDir && restic.IsRemoteRepo(domainRepo) {
+		return nil
+	}
 	if err := ensureDefsDir(dir); err != nil {
 		return fmt.Errorf("ensure defs dir: %w", err)
 	}
@@ -8708,6 +8712,9 @@ func (s *Service) writeVMDefToStorage(settings store.Settings, name, itemRepo st
 		// See writeDefToStorage: a bucket has no folder to put the sidecar in, and
 		// for a VM the definition is the domain XML and the NVRAM.
 		log.Printf("api: vm %q is on a remote repository, so its recreate definition is mirrored only on this box; the /config backup is what carries it off site", name) //nolint:gosec // G706: name is %q-quoted
+	}
+	if domainRepo, err := s.vmsRepoPath(settings); err == nil && dir == domainDir && restic.IsRemoteRepo(domainRepo) {
+		return nil
 	}
 	if err := ensureDefsDir(dir); err != nil {
 		return fmt.Errorf("ensure vm defs dir: %w", err)
@@ -20227,7 +20234,7 @@ func (s *Service) RecoveryKit() (string, error) {
 		configLocal = loc
 	}
 	w("- config (local): %s%s\n", orNone(configLocal), kitCompression(settings.CompressionFor("config")))
-	if off := s.offsiteRepoFor("config", settings); off != "" {
+	if off := cmp.Or(s.offsiteRepoFor("config", settings), settings.ConfigOffsite); off != "" {
 		w("- config (off-site): %s%s\n", off, kitCompression(settings.CompressionFor(offsiteCompressionKey("config"))))
 	}
 	w("\n")

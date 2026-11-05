@@ -3,9 +3,12 @@ package api
 import (
 	"context"
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
+	"sync/atomic"
 	"testing"
 
 	"github.com/junkerderprovinz/bombvault/internal/restic"
@@ -341,6 +344,107 @@ func TestDiscoverDoesNotBringBackAFormerName(t *testing.T) {
 	}
 	if _, err := f.st.GetTargetByContainer("new"); err != nil {
 		t.Errorf("the container itself did not: %v", err)
+	}
+}
+
+// metadataOnlyEngine restores as restic does and then answers as it does on a
+// share that refuses only the ownership.
+type metadataOnlyEngine struct{ ResticEngine }
+
+func (e metadataOnlyEngine) RestoreSubtreeTo(ctx context.Context, repo, id, subtree, target string, mode restic.Mode) error {
+	if err := e.ResticEngine.RestoreSubtreeTo(ctx, repo, id, subtree, target, mode); err != nil {
+		return err
+	}
+	return fmt.Errorf("restic restore failed: %w", restic.ErrRestoreMetadataOnly)
+}
+
+func TestAContainerBesideTheOriginalSurvivesAShareThatRefusesTheOwnership(t *testing.T) {
+	r := newRestoreRig(t)
+	tg, snap := r.seedPlex(t)
+	r.svc.engine = metadataOnlyEngine{r.svc.engine}
+	if started, err := r.svc.StartRestore(context.Background(), "plex", snap, "local", RestoreOptions{Beside: true}); err != nil || !started {
+		t.Fatalf("StartRestore: started=%v err=%v", started, err)
+	}
+	r.wait(t)
+	run := r.lastRun(t, tg.ID, "restore")
+	if run.Status != "success" || !strings.Contains(run.Error, restic.RestoreMetadataWarning) {
+		t.Fatalf("run = %+v", run)
+	}
+	if _, err := os.Stat(filepath.Join(r.root, "appdata", "plex"+besideSuffix)); err != nil {
+		t.Fatalf("the finished copy is gone: %v", err)
+	}
+	if _, made := r.docker.container("plex-restored"); !made {
+		t.Fatal("the copy was not created")
+	}
+}
+
+func TestAnErrorThatIsMoreThanTheOwnershipStillFailsTheRestore(t *testing.T) {
+	refused := new(atomic.Bool)
+	a := &resticAdapter{metadataRefused: refused}
+	cause := errors.New("no space left on device")
+	if err := a.restored(cause); !errors.Is(err, cause) || refused.Load() {
+		t.Fatalf("err=%v refused=%v", err, refused.Load())
+	}
+	if err := a.restored(fmt.Errorf("x: %w", restic.ErrRestoreMetadataOnly)); err != nil || !refused.Load() {
+		t.Fatalf("err=%v refused=%v", err, refused.Load())
+	}
+}
+
+// otherDataFolderEngine restores the way restic does: the snapshot's absolute
+// path comes back below the target.
+type otherDataFolderEngine struct {
+	ResticEngine
+	include string
+}
+
+func (e *otherDataFolderEngine) RestoreInclude(_ context.Context, _, _, include, target string, _ restic.Mode) error {
+	e.include = include
+	dir := filepath.Join(target, filepath.FromSlash(include))
+	if err := os.MkdirAll(dir, 0o700); err != nil {
+		return err
+	}
+	return os.WriteFile(filepath.Join(dir, "bombvault.sqlite"), []byte("x"), 0o600)
+}
+
+func TestASelfBackupFromAnotherDataFolderLandsWhereTheBootLooks(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("the staging path nests the absolute data folder, which Windows refuses")
+	}
+	f := newPlacementFixture(t)
+	eng := &otherDataFolderEngine{ResticEngine: f.svc.engine}
+	f.svc.engine = eng
+	root := selfrestore.StagingRoot(f.svc.cfg.DataDir)
+	snaps := []restic.Snapshot{{ID: "aaaaaaaa11111111", Paths: []string{"/appconf/.snapshot"}}}
+	if err := f.svc.stageConfigRestore(context.Background(), "repo", "aaaaaaaa11111111", snaps, root, restic.Mode{}); err != nil {
+		t.Fatal(err)
+	}
+	if eng.include != "/appconf/.snapshot" {
+		t.Errorf("restored %q", eng.include)
+	}
+	if _, err := os.Stat(filepath.Join(selfrestore.RestoredSnapshotDir(f.svc.cfg.DataDir), "bombvault.sqlite")); err != nil {
+		t.Fatalf("the boot would find nothing: %v", err)
+	}
+}
+
+func TestARemoteOwnFolderMirrorsNoDefinition(t *testing.T) {
+	f := newPlacementFixture(t)
+	if _, err := f.st.MutateSettings(func(s *store.Settings) error {
+		s.ContainersPath = "s3:https://s3.example/bucket/containers"
+		return nil
+	}); err != nil {
+		t.Fatal(err)
+	}
+	settings, err := f.st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Chdir(t.TempDir())
+	if err := f.svc.writeDefToStorage(settings, "nextcloud", settings.ContainersPath, []byte(`{}`), nil); err != nil {
+		t.Fatal(err)
+	}
+	left, err := os.ReadDir(".")
+	if err != nil || len(left) != 0 {
+		t.Fatalf("the mirror wrote %v below the working folder, %v", left, err)
 	}
 }
 

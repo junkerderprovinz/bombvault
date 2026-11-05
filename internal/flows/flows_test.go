@@ -40,7 +40,6 @@ var knownFailures = []knownFailure{
 	{"TestCopyThatNeverRanDoesNotReadOk", "an off-site copy that never ran reads ok", "reads ok"},
 	{"TestOwnWeeklyPlanIsNotOverdueByTheSectionPlan", "the section's plan makes an entry on its own weekly plan read overdue", "overdue"},
 	{"TestNewPlanIsNotOverdueAtOnce", "a plan set on an older database reads overdue at once", "overdue"},
-	{"TestSettingsRestoreThatRestoredNothingFails", "a self-backup from another data folder restores nothing and reports success", "recorded as success"},
 }
 
 // folderSets are the two sets every flow backs up.

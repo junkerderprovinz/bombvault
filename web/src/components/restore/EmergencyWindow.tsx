@@ -209,6 +209,8 @@ export function EmergencyWindow({
 
   const [queue, setQueue] = useState<Picked[]>([]);
   const [outcomes, setOutcomes] = useState<Record<string, Outcome>>({});
+  // Why an entry failed, which is what the person acts on next.
+  const [reasons, setReasons] = useState<Record<string, string>>({});
   const [finished, setFinished] = useState(false);
   const [runtimeRefused, setRuntimeRefused] = useState<string[]>([]);
   const [kitError, setKitError] = useState<string | null>(null);
@@ -576,6 +578,7 @@ export function EmergencyWindow({
     const list = picked;
     setQueue(list);
     setOutcomes(Object.fromEntries(list.map((p) => [keyOf(p), "waiting" as Outcome])));
+    setReasons({});
     setFinished(false);
     setRuntimeRefused([]);
     setStep("restore");
@@ -592,6 +595,7 @@ export function EmergencyWindow({
       const res = await restoreOne(p).catch((err: unknown) => ({ ok: false, error: err instanceof Error ? err.message : String(err) }));
       if (gone.current) return;
       setOutcomes((prev) => ({ ...prev, [keyOf(p)]: res.ok ? "done" : "failed" }));
+      if (!res.ok && res.error) setReasons((prev) => ({ ...prev, [keyOf(p)]: res.error as string }));
       if (p.kind === "container" && isRuntimeRefusal(res.error)) refused.push(p.id);
     }
     clearNotStarted();
@@ -986,7 +990,10 @@ export function EmergencyWindow({
                   <span className="flex h-9 w-9 flex-none items-center justify-center rounded-control bg-carbon-surface2 text-accentText [&_svg]:h-[18px] [&_svg]:w-[18px]">
                     <KindGlyph kind={p.kind} />
                   </span>
-                  <span className="min-w-0 flex-1 text-sm text-carbon-text wrap-anywhere">{p.name}</span>
+                  <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                    <span className="text-sm text-carbon-text wrap-anywhere">{p.name}</span>
+                    {reasons[keyOf(p)] && <span className="text-xs leading-relaxed text-carbon-textMuted wrap-break-word">{reasons[keyOf(p)]}</span>}
+                  </span>
                   {outcome === "done" ? (
                     <span className="text-sm text-statusOk">{t("common.done")}</span>
                   ) : outcome === "failed" ? (

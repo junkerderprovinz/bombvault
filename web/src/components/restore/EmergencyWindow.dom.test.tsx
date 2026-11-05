@@ -1192,6 +1192,19 @@ describe("the restore", () => {
     expect(restoreFileSet.mock.calls[0]).toEqual([setsOnServer[0].id, "f-new", true, "user/bombvault/restore/Photos", "offsite:c"]);
   });
 
+  it("says why an entry could not come back", async () => {
+    containersOnServer = [gone()];
+    restore.mockImplementationOnce((name: string) => {
+      runsOnServer = [...runsOnServer, finishedRun("restore", "container", name, "the target folder is full")];
+      return Promise.resolve({ ok: true, started: true });
+    });
+    vi.useFakeTimers();
+    await open("selection");
+    fireEvent.click(button(en["snapshots.restore"]));
+    await act(() => vi.advanceTimersByTimeAsync(30_000));
+    expect(screen.getByTestId("emergency-run").textContent).toContain("the target folder is full");
+  });
+
   it("does not leave the local backups when some are there", async () => {
     containersOnServer = [gone()];
     offsiteOnServer = { ...NOTHING_OFFSITE, fileSets: { Photos: 1_790_000_000 }, from: { ...NOTHING_OFFSITE.from, fileSets: { Photos: "offsite:c" } } };

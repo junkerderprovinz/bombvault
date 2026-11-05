@@ -23,7 +23,7 @@ Every container, VM, folder set, the flash drive, every ZFS dataset and BombVaul
 | **Containers** | Appdata directory plus the container definition (image, env vars, ports, labels, volumes). |
 | **VMs** | VM disk image(s), the XML definition and UEFI NVRAM, backed up over SSH (no libvirt mount). |
 | **Flash** | The whole USB flash (`/boot`): OS, license, array config, shares, network and plugin config. |
-| **Self-backup** | BombVault's own `/config`: its settings database, the sign-ins of its storage locations and the libvirt SSH keypair. |
+| **Self-backup** | BombVault's own `/config`: its settings database, the sign-ins of its storage locations, the libvirt SSH keypair, the key and host pins of the ZFS servers and the certificates. |
 | **Folders** | Any folder on the server as a folder set, each with optional exclude patterns. |
 | **ZFS datasets** | A dataset and every dataset below it, read from one ZFS snapshot and stored like a folder. See [ZFS datasets](zfs-datasets.md). |
 
