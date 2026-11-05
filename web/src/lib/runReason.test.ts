@@ -6,7 +6,6 @@ import {
   backupNotes,
   isOwnReason,
   dataOutsideHost,
-  backupNotes,
   isWarningNote,
   runReason,
   runReasonParts,
