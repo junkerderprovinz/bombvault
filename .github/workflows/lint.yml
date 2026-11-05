@@ -52,6 +52,26 @@ jobs:
       # internal/api alone takes around a quarter of an hour on a hosted runner,
       # well past go test's default ten-minute limit per package.
       - run: go test -timeout 30m ./...
+  flows:
+    # The real server against real restic and real folders, see
+    # internal/flows. fetch-depth 0 brings the tags: the update flows build the
+    # release before this tree and start on what it leaves behind.
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with: { fetch-depth: 0 }
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7
+        with: { go-version: '1.27' }
+      - name: install restic
+        run: |
+          version=$(sed -n 's/^ARG RESTIC_VERSION=//p' Dockerfile)
+          sh scripts/fetch-tool.sh restic "$version" amd64 "$RUNNER_TEMP/bin"
+          sudo install -m 0755 "$RUNNER_TEMP/bin/restic" /usr/local/bin/restic
+          restic version
+      - run: go vet -tags flows ./internal/flows/
+      # -v for the list of known failures the suite ends on.
+      - run: go test -tags flows -count=1 -timeout 25m -v ./internal/flows/
   playwright:
     # The responsive-regression gate: the specs under web/e2e/ boot the real
     # binary over a wiped fresh DB (see web/playwright.config.ts) and hold the
