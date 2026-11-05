@@ -1241,6 +1241,7 @@ const fr: Partial<Translations> = {
   "runReason.restoredWithoutRuntime": "restauré sans le GPU ni le runtime du conteneur",
   "runReason.restoredWithoutLinks": "restauré sans les liens vers des conteneurs qui ne tournent pas",
   "runReason.containersNotBack": "certains conteneurs n'ont pas redémarré",
+  "runReason.noNetworkUntilRestart": "certains conteneurs n'ont pas de réseau tant qu'ils n'ont pas redémarré",
   "runReason.vmRestoreHalfDone": "la restauration s'est arrêtée en cours de route. La VM existe toujours mais reste éteinte, car ses disques ne sont peut-être restaurés qu'en partie. Restaurez-la à nouveau avant de la démarrer",
   "runReason.restoreFilesHalfDone": "la restauration s'est arrêtée en cours de route. Le conteneur reste arrêté, car les fichiers choisis ne sont peut-être écrits qu'en partie. Restaurez-les à nouveau avant de le démarrer",
   "runReason.restoreFilesNotWritten": "certains fichiers n'ont pas pu être écrits",

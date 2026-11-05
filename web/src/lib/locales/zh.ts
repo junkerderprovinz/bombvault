@@ -1240,6 +1240,7 @@ const zh: Partial<Translations> = {
   "runReason.restoredWithoutRuntime": "已恢复，但未包含容器的 GPU 或运行时",
   "runReason.restoredWithoutLinks": "已恢复，但未包含指向未运行容器的链接",
   "runReason.containersNotBack": "部分容器未能重新启动",
+  "runReason.noNetworkUntilRestart": "部分容器在重新启动前没有网络",
   "runReason.vmRestoreHalfDone": "还原中途停止。虚拟机还在，但保持关闭，因为它的磁盘可能只还原了一部分。启动前请再还原一次",
   "runReason.restoreFilesHalfDone": "还原中途停止。容器保持停止，因为选中的文件可能只写入了一部分。启动前请再还原一次这些文件",
   "runReason.restoreFilesNotWritten": "有些文件无法写入",

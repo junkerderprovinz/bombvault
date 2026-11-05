@@ -303,6 +303,17 @@ describe("a backup that saw less than it should", () => {
   });
 });
 
+describe("containers left without a network", () => {
+  const note = "some containers have no network until they are restarted: bombvault";
+
+  it("is a warning, translated up to the names", () => {
+    expect(isWarningNote(note)).toBe(true);
+    const parts = runReasonParts(note, t);
+    expect(parts.head).toBe("runReason.noNetworkUntilRestart");
+    expect(parts.detail).toBe("bombvault");
+  });
+});
+
 describe("containers that did not start again", () => {
   const note = "some containers did not start again: qbittorrent, prowlarr";
 

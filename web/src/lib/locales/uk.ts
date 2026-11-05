@@ -1246,6 +1246,7 @@ const uk: Partial<Translations> = {
   "runReason.restoredWithoutRuntime": "відновлено без GPU та середовища виконання контейнера",
   "runReason.restoredWithoutLinks": "відновлено без посилань на контейнери, які не працюють",
   "runReason.containersNotBack": "деякі контейнери не запустилися знову",
+  "runReason.noNetworkUntilRestart": "деякі контейнери не мають мережі до перезапуску",
   "runReason.vmRestoreHalfDone": "відновлення зупинилося на півдорозі. ВМ досі є, але лишається вимкненою, бо її диски можуть бути відновлені лише частково. Відновіть її ще раз перед запуском",
   "runReason.restoreFilesHalfDone": "відновлення зупинилося на півдорозі. Контейнер лишається зупиненим, бо вибрані файли могли записатися лише частково. Відновіть їх ще раз перед запуском",
   "runReason.restoreFilesNotWritten": "деякі файли не вдалося записати",

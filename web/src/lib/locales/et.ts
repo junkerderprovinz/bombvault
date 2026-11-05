@@ -1282,6 +1282,7 @@ const et: Partial<Translations> = {
   "runReason.restoredWithoutRuntime": "taastati ilma konteineri GPU ja käituskeskkonnata",
   "runReason.restoredWithoutLinks": "taastati ilma linkideta konteineritele, mis ei tööta",
   "runReason.containersNotBack": "mõned konteinerid ei käivitunud uuesti",
+  "runReason.noNetworkUntilRestart": "mõnel konteineril pole võrku enne uuesti käivitamist",
   "runReason.vmRestoreHalfDone": "taastamine peatus poole peal. VM on endiselt olemas, kuid jääb väljalülitatuks, sest selle kettad võivad olla taastatud vaid osaliselt. Taasta see uuesti, enne kui selle käivitad",
   "runReason.restoreFilesHalfDone": "taastamine peatus poole peal. Konteiner jääb peatatuks, sest valitud failid võivad olla kirjutatud vaid osaliselt. Taasta need uuesti, enne kui konteineri käivitad",
   "runReason.restoreFilesNotWritten": "mõnda faili ei õnnestunud kirjutada",

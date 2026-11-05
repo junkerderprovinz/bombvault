@@ -1242,6 +1242,7 @@ const hu: Partial<Translations> = {
   "runReason.restoredWithoutRuntime": "a konténer GPU-ja és futtatókörnyezete nélkül visszaállítva",
   "runReason.restoredWithoutLinks": "a nem futó konténerekre mutató linkek nélkül visszaállítva",
   "runReason.containersNotBack": "néhány konténer nem indult el újra",
+  "runReason.noNetworkUntilRestart": "néhány konténernek nincs hálózata az újraindításig",
   "runReason.vmRestoreHalfDone": "a visszaállítás félúton megállt. A VM még megvan, de kikapcsolva marad, mert a lemezei talán csak részben álltak vissza. Állítsd vissza újra, mielőtt elindítod",
   "runReason.restoreFilesHalfDone": "a visszaállítás félúton megállt. A konténer leállítva marad, mert a kiválasztott fájlok csak részben íródtak ki. Állítsd vissza őket újra, mielőtt elindítod",
   "runReason.restoreFilesNotWritten": "néhány fájlt nem sikerült kiírni",

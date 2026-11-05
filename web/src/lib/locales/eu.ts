@@ -1282,6 +1282,7 @@ const eu: Partial<Translations> = {
   "runReason.restoredWithoutRuntime": "edukiontziaren GPUrik eta exekuzio-ingurunerik gabe leheneratua",
   "runReason.restoredWithoutLinks": "martxan ez dauden edukiontzietarako estekarik gabe leheneratua",
   "runReason.containersNotBack": "edukiontzi batzuk ez dira berriz abiarazi",
+  "runReason.noNetworkUntilRestart": "edukiontzi batzuek ez dute sarerik berriz abiarazi arte",
   "runReason.vmRestoreHalfDone": "berrezarpena erdibidean gelditu da. VMa hor dago oraindik, baina itzalita geratzen da, bere diskoak partzialki bakarrik berrezarrita egon daitezkeelako. Berrezarri berriro abiarazi aurretik",
   "runReason.restoreFilesHalfDone": "berrezarpena erdibidean gelditu da. Edukiontzia geldituta jarraitzen du, aukeratutako fitxategiak partzialki idatzita egon baitaitezke. Berrezarri itzazu berriro abiarazi aurretik",
   "runReason.restoreFilesNotWritten": "fitxategi batzuk ezin izan dira idatzi",

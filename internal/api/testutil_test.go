@@ -164,6 +164,10 @@ func (f *fakeServiceDocker) ImageID(_ context.Context, ref string) (string, erro
 	return f.imageID, f.imageIDErr
 }
 
+func (f *fakeServiceDocker) FromNewImage(_ context.Context, in model.Inspect) model.Inspect {
+	return in
+}
+
 func (f *fakeServiceDocker) ImageTag(_ context.Context, id, ref string) error {
 	f.calls = append(f.calls, "imageTag:"+id+"->"+ref)
 	return nil

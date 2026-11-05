@@ -1240,6 +1240,7 @@ const vi: Partial<Translations> = {
   "runReason.restoredWithoutRuntime": "đã khôi phục mà không có GPU hoặc runtime của container",
   "runReason.restoredWithoutLinks": "đã khôi phục mà không có liên kết tới các container không chạy",
   "runReason.containersNotBack": "một số container không khởi động lại",
+  "runReason.noNetworkUntilRestart": "một số container không có mạng cho đến khi khởi động lại",
   "runReason.vmRestoreHalfDone": "việc khôi phục dừng giữa chừng. VM vẫn còn nhưng tiếp tục tắt, vì các đĩa của nó có thể chỉ được khôi phục một phần. Hãy khôi phục lại trước khi khởi động",
   "runReason.restoreFilesHalfDone": "việc khôi phục dừng giữa chừng. Container vẫn dừng, vì các tệp đã chọn có thể mới được ghi một phần. Hãy khôi phục lại các tệp đó trước khi khởi động container",
   "runReason.restoreFilesNotWritten": "không ghi được một số tệp",

@@ -2,6 +2,7 @@ package dockercli
 
 import (
 	"encoding/json"
+	"maps"
 	"slices"
 	"strings"
 	"testing"
@@ -524,5 +525,66 @@ func TestRestoreFromAnOlderDefinitionLeavesLimitsUnset(t *testing.T) {
 	}
 	if hc.DNS != nil || hc.Links != nil || hc.StorageOpt != nil || hc.UTSMode != "" || hc.CgroupnsMode != "" || hc.BlkioWeight != 0 {
 		t.Fatalf("dns, links, namespaces and io limits must stay unset: %+v", hc)
+	}
+}
+
+func TestRecreateKeepsVolumesFrom(t *testing.T) {
+	in := mapInspect(container.InspectResponse{
+		ContainerJSONBase: &container.ContainerJSONBase{
+			HostConfig: &container.HostConfig{VolumesFrom: []string{"vfsrc", "other:ro"}},
+		},
+	})
+	_, hc := buildCreateConfig(in)
+	if !slices.Equal(hc.VolumesFrom, []string{"vfsrc", "other:ro"}) {
+		t.Fatalf("VolumesFrom = %v", hc.VolumesFrom)
+	}
+}
+
+func TestFromNewImageLeavesOutWhatTheOldImageGave(t *testing.T) {
+	img := imageDefaults{
+		Env:         []string{"PATH=/opt/v1/bin", "APP_VERSION=1", "TZ=UTC"},
+		Labels:      map[string]string{"org.probe.version": "1", "maintainer": "a"},
+		Cmd:         []string{"run"},
+		User:        "app",
+		Healthcheck: &model.Healthcheck{Test: []string{"CMD", "true"}},
+	}
+	cfg := model.Config{
+		Env:         []string{"PATH=/opt/v1/bin", "APP_VERSION=1", "TZ=Europe/Vienna", "PUID=99"},
+		Labels:      map[string]string{"org.probe.version": "1", "maintainer": "me", "net.unraid.docker.icon": "x"},
+		Cmd:         []string{"run"},
+		User:        "app",
+		Healthcheck: &model.Healthcheck{Test: []string{"CMD", "true"}},
+	}
+	withoutInherited(&cfg, img)
+	if !slices.Equal(cfg.Env, []string{"TZ=Europe/Vienna", "PUID=99"}) {
+		t.Errorf("Env = %v, want only what differs from the image", cfg.Env)
+	}
+	if !maps.Equal(cfg.Labels, map[string]string{"maintainer": "me", "net.unraid.docker.icon": "x"}) {
+		t.Errorf("Labels = %v, want only what differs from the image", cfg.Labels)
+	}
+	if cfg.Cmd != nil || cfg.User != "" || cfg.Healthcheck != nil {
+		t.Errorf("command, user and healthcheck of the image must follow the new one: %+v", cfg)
+	}
+}
+
+func TestFromNewImageKeepsWhatTheUserSet(t *testing.T) {
+	img := imageDefaults{Cmd: []string{"run"}, User: "app", Healthcheck: &model.Healthcheck{Test: []string{"CMD", "true"}}}
+	cfg := model.Config{
+		Cmd: []string{"serve", "--port=1"}, User: "99:100",
+		Healthcheck: &model.Healthcheck{Test: []string{"CMD", "curl", "x"}},
+	}
+	withoutInherited(&cfg, img)
+	if !slices.Equal(cfg.Cmd, []string{"serve", "--port=1"}) || cfg.User != "99:100" || cfg.Healthcheck == nil {
+		t.Fatalf("the container's own values must stay: %+v", cfg)
+	}
+}
+
+// An entrypoint the container set makes Docker ignore the image's command, so
+// a command given next to it stays even when it reads the same.
+func TestFromNewImageKeepsTheCommandNextToAnOwnEntrypoint(t *testing.T) {
+	cfg := model.Config{Entrypoint: []string{"/custom"}, Cmd: []string{"run"}}
+	withoutInherited(&cfg, imageDefaults{Entrypoint: []string{"/init"}, Cmd: []string{"run"}})
+	if !slices.Equal(cfg.Cmd, []string{"run"}) {
+		t.Fatalf("Cmd = %v", cfg.Cmd)
 	}
 }

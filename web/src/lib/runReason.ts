@@ -92,6 +92,11 @@ export const RESTORED_WITHOUT_LINKS = "restored without links to containers that
  *  NoteContainersNotBack. */
 export const CONTAINERS_NOT_BACK = "some containers did not start again";
 
+/** The note of a backup that left containers running on the network of one it
+ *  stopped and started, followed by ": " and their names. Keep in step with
+ *  NoteNoNetworkUntilRestart. */
+export const NO_NETWORK_UNTIL_RESTART = "some containers have no network until they are restarted";
+
 /** The note of a container backup whose data folders sit outside Host Data,
  *  followed by ": " and their host paths. Keep in step with NoteDataOutsideHost. */
 export const DATA_OUTSIDE_HOST = "data folders outside Host Data were not backed up";
@@ -240,6 +245,7 @@ export const RUN_REASON_PREFIXES: Record<string, TranslationKey> = {
   [RESTORED_WITHOUT_RUNTIME]: "runReason.restoredWithoutRuntime",
   [RESTORED_WITHOUT_LINKS]: "runReason.restoredWithoutLinks",
   [CONTAINERS_NOT_BACK]: "runReason.containersNotBack",
+  [NO_NETWORK_UNTIL_RESTART]: "runReason.noNetworkUntilRestart",
   "the pre-backup command says the app is busy": "runReason.deferredHook",
 };
 
@@ -309,6 +315,7 @@ const WARNING_NOTES = [
   DATA_OUTSIDE_HOST,
   FILES_UNREADABLE,
   CONTAINERS_NOT_BACK,
+  NO_NETWORK_UNTIL_RESTART,
   FOLDERS_MISSING,
   BACKUP_EMPTY,
   OLDER_BACKUPS_KEPT,
@@ -327,7 +334,7 @@ const WARNING_NOTES = [
  * below; any other "; " belongs to the note before it.
  */
 export function backupNotes(raw: string): string[] {
-  const heads = [FILES_UNREADABLE, DATA_OUTSIDE_HOST, CONTAINERS_NOT_BACK, FOLDERS_MISSING, BACKUP_EMPTY, OLDER_BACKUPS_KEPT, STACK_FOLDER_EMPTY, VM_TPM_LEFT_OUT, VM_DISKS_LEFT_OUT];
+  const heads = [FILES_UNREADABLE, DATA_OUTSIDE_HOST, CONTAINERS_NOT_BACK, NO_NETWORK_UNTIL_RESTART, FOLDERS_MISSING, BACKUP_EMPTY, OLDER_BACKUPS_KEPT, STACK_FOLDER_EMPTY, VM_TPM_LEFT_OUT, VM_DISKS_LEFT_OUT];
   const notes: string[] = [];
   for (const part of raw.split("; ")) {
     const starts = part.startsWith("database dump ") || heads.some((h) => part === h || part.startsWith(h + ": "));

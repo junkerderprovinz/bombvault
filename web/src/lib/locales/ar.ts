@@ -1250,6 +1250,7 @@ const ar: Partial<Translations> = {
   "runReason.restoredWithoutRuntime": "استُعيدت دون المعالج الرسومي أو بيئة التشغيل التي استخدمتها الحاوية",
   "runReason.restoredWithoutLinks": "استُعيدت دون الروابط إلى حاويات لا تعمل",
   "runReason.containersNotBack": "لم تبدأ بعض الحاويات من جديد",
+  "runReason.noNetworkUntilRestart": "بعض الحاويات بلا شبكة حتى يُعاد تشغيلها",
   "runReason.vmRestoreHalfDone": "توقفت الاستعادة في منتصفها. الجهاز الافتراضي ما زال موجودًا لكنه يبقى متوقفًا، لأن أقراصه قد تكون مستعادة جزئيًا فقط. استعده مرة أخرى قبل تشغيله",
   "runReason.restoreFilesHalfDone": "توقفت الاستعادة في منتصفها. تبقى الحاوية متوقفة، لأن الملفات المختارة قد تكون مكتوبة جزئيًا فقط. أعد استعادة الملفات قبل تشغيل الحاوية",
   "runReason.restoreFilesNotWritten": "تعذّرت كتابة بعض الملفات",

@@ -1282,6 +1282,7 @@ const hr: Partial<Translations> = {
   "runReason.restoredWithoutRuntime": "vraćeno bez GPU-a i okruženja za izvođenje kontejnera",
   "runReason.restoredWithoutLinks": "vraćeno bez poveznica na kontejnere koji ne rade",
   "runReason.containersNotBack": "neki se kontejneri nisu ponovno pokrenuli",
+  "runReason.noNetworkUntilRestart": "neki kontejneri nemaju mrežu dok se ponovno ne pokrenu",
   "runReason.vmRestoreHalfDone": "vraćanje je stalo na pola puta. VM još postoji, ali ostaje isključen jer su mu diskovi možda vraćeni samo djelomično. Vratite ga ponovno prije nego što ga pokrenete",
   "runReason.restoreFilesHalfDone": "vraćanje je stalo na pola puta. Kontejner ostaje zaustavljen jer odabrane datoteke možda nisu do kraja zapisane. Vratite ih ponovno prije nego što ga pokrenete",
   "runReason.restoreFilesNotWritten": "neke datoteke nije bilo moguće zapisati",

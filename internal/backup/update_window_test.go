@@ -48,11 +48,16 @@ func runBackupWithHook(t *testing.T, d *fakeDocker, deps []backup.StopContainer,
 
 // updateFound is an update step that always finds a newer image and applies
 // it with recreate. A nil recreate means no update step at all.
-func updateFound(recreate func()) func() func() {
+func updateFound(recreate func()) func() func() []string {
 	if recreate == nil {
 		return nil
 	}
-	return func() func() { return recreate }
+	return func() func() []string {
+		return func() []string {
+			recreate()
+			return nil
+		}
+	}
 }
 
 // recreateTargetHook stops, removes and recreates the target the way the update

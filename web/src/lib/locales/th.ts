@@ -1250,6 +1250,7 @@ const th: Partial<Translations> = {
   "runReason.restoredWithoutRuntime": "กู้คืนโดยไม่มี GPU หรือรันไทม์ของคอนเทนเนอร์",
   "runReason.restoredWithoutLinks": "กู้คืนโดยไม่มีลิงก์ไปยังคอนเทนเนอร์ที่ไม่ได้ทำงาน",
   "runReason.containersNotBack": "คอนเทนเนอร์บางตัวไม่ได้เริ่มทำงานอีกครั้ง",
+  "runReason.noNetworkUntilRestart": "คอนเทนเนอร์บางตัวไม่มีเครือข่ายจนกว่าจะเริ่มทำงานอีกครั้ง",
   "runReason.vmRestoreHalfDone": "การกู้คืนหยุดกลางคัน VM ยังอยู่ แต่ยังคงปิดอยู่ เพราะดิสก์ของมันอาจกู้คืนได้เพียงบางส่วน กู้คืนอีกครั้งก่อนเริ่มใช้งาน",
   "runReason.restoreFilesHalfDone": "การกู้คืนหยุดกลางคัน คอนเทนเนอร์ยังคงหยุดอยู่ เพราะไฟล์ที่เลือกอาจถูกเขียนเพียงบางส่วน กู้คืนไฟล์เหล่านั้นอีกครั้งก่อนเริ่มคอนเทนเนอร์",
   "runReason.restoreFilesNotWritten": "เขียนไฟล์บางไฟล์ไม่ได้",

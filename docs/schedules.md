@@ -58,7 +58,7 @@ The backup lands under the same paths and tags as one taken with the container s
 
 ## Updates after the backup {#updates}
 
-- **Update containers after a successful backup** pulls a newer image only after the backup before it has finished, so a fresh restore point always exists first. It is off by default, and a single container can be set differently on its page under **Update after a successful backup**.
+- **Update containers after a successful backup** pulls a newer image only after the backup before it has finished, so a fresh restore point always exists first. It is off by default, and a single container can be set differently on its page under **Update after a successful backup**. Only what you set carries over to the new image: variables, labels, the command, the user and the healthcheck that still read as in the old image follow the new one. If the new image cannot be created or started, the container goes back to the image it ran, the update shows as failed, and the next backup tries again. A container left down by that is named on the backup's run and in a notification.
 - **Remove the old image after an update** deletes the image the container left. A base image other containers share is never deleted.
 - **Refresh Unraid's update status after updating a container** clears Unraid's update banner for that container.
 

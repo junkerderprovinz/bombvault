@@ -87,6 +87,9 @@ type Docker interface {
 	// ImageTag points ref at the local image id. A restore uses it to bring
 	// back the image a container ran when it was backed up.
 	ImageTag(ctx context.Context, id, ref string) error
+	// FromNewImage returns the definition to recreate a container from once its
+	// tag has moved to a newer image, without what it took over from the old one.
+	FromNewImage(ctx context.Context, in model.Inspect) model.Inspect
 	// ImageRemove removes a local image by ID (sha256:…) with force=false, so the
 	// daemon refuses if another container still references it. Used to prune the
 	// superseded image after an update-after-backup when the user opts in (#56).

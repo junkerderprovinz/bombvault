@@ -1282,6 +1282,7 @@ const hi: Partial<Translations> = {
   "runReason.restoredWithoutRuntime": "कंटेनर के GPU या रनटाइम के बिना रीस्टोर किया गया",
   "runReason.restoredWithoutLinks": "उन कंटेनरों के लिंक के बिना रीस्टोर किया गया जो चल नहीं रहे हैं",
   "runReason.containersNotBack": "कुछ कंटेनर फिर से शुरू नहीं हुए",
+  "runReason.noNetworkUntilRestart": "कुछ कंटेनरों में फिर से शुरू होने तक नेटवर्क नहीं है",
   "runReason.vmRestoreHalfDone": "रीस्टोर बीच में रुक गया। VM अभी भी मौजूद है, लेकिन बंद रहता है, क्योंकि उसकी डिस्क शायद केवल आंशिक रूप से रीस्टोर हुई हैं। शुरू करने से पहले उसे फिर से रीस्टोर करें",
   "runReason.restoreFilesHalfDone": "रीस्टोर बीच में रुक गया। कंटेनर रुका रहता है, क्योंकि चुनी हुई फ़ाइलें शायद आधी ही लिखी गई हों। उसे शुरू करने से पहले इन फ़ाइलों को फिर से रीस्टोर करें",
   "runReason.restoreFilesNotWritten": "कुछ फ़ाइलें लिखी नहीं जा सकीं",

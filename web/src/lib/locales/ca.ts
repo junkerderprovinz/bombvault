@@ -1282,6 +1282,7 @@ const ca: Partial<Translations> = {
   "runReason.restoredWithoutRuntime": "restaurat sense la GPU ni l'entorn d'execució del contenidor",
   "runReason.restoredWithoutLinks": "restaurat sense els enllaços a contenidors que no s'executen",
   "runReason.containersNotBack": "alguns contenidors no s'han tornat a iniciar",
+  "runReason.noNetworkUntilRestart": "alguns contenidors no tenen xarxa fins que es tornin a iniciar",
   "runReason.vmRestoreHalfDone": "la restauració s'ha aturat a mitges. La VM encara hi és, però queda aturada perquè els seus discos poden estar restaurats només en part. Torna-la a restaurar abans d'iniciar-la",
   "runReason.restoreFilesHalfDone": "la restauració s'ha aturat a mitges. El contenidor queda aturat, perquè els fitxers triats poden estar escrits només en part. Torna a restaurar-los abans d'iniciar-lo",
   "runReason.restoreFilesNotWritten": "alguns fitxers no s'han pogut escriure",

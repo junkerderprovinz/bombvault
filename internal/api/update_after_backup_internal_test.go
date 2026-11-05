@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -63,6 +64,10 @@ func (f *updateFakeDocker) Remove(_ context.Context, name string) error {
 func (f *updateFakeDocker) CreateAndStart(_ context.Context, in model.Inspect, _ bool) error {
 	f.calls = append(f.calls, "createAndStart:"+in.Name)
 	return nil
+}
+
+func (f *updateFakeDocker) FromNewImage(_ context.Context, in model.Inspect) model.Inspect {
+	return in
 }
 
 func (f *updateFakeDocker) ImageRemove(_ context.Context, id string) error {
@@ -481,5 +486,180 @@ func TestRestorePullCarriesTheRegistrySignIn(t *testing.T) {
 	}
 	if len(f.pullAuths) != 1 || f.pullAuths[0] != want {
 		t.Fatalf("restore pull auths = %q, want the stored ghcr.io sign-in", f.pullAuths)
+	}
+}
+
+// refusingUpdateDocker refuses the create or start of the new image, and of
+// the old one when asked, the way Docker answers an image that does not run.
+type refusingUpdateDocker struct {
+	*updateFakeDocker
+	removeErr  error
+	createErrs []error
+	created    []model.Inspect
+	live       bool
+	ctxErrs    []error
+}
+
+func (f *refusingUpdateDocker) Remove(ctx context.Context, name string) error {
+	f.ctxErrs = append(f.ctxErrs, ctx.Err())
+	f.calls = append(f.calls, "remove:"+name)
+	if f.removeErr != nil {
+		return f.removeErr
+	}
+	f.live = false
+	return nil
+}
+
+func (f *refusingUpdateDocker) CreateAndStart(ctx context.Context, in model.Inspect, _ bool) error {
+	f.ctxErrs = append(f.ctxErrs, ctx.Err())
+	f.calls = append(f.calls, "createAndStart:"+in.Name)
+	f.created = append(f.created, in)
+	if len(f.createErrs) == 0 {
+		f.live = true
+		return nil
+	}
+	err := f.createErrs[0]
+	f.createErrs = f.createErrs[1:]
+	return err
+}
+
+func (f *refusingUpdateDocker) Start(_ context.Context, name string) error {
+	f.calls = append(f.calls, "start:"+name)
+	return nil
+}
+
+func (f *refusingUpdateDocker) InspectName(_ context.Context, name string) (string, error) {
+	if f.live {
+		return name, nil
+	}
+	return "", nil
+}
+
+func (f *refusingUpdateDocker) ContainerID(context.Context, string) (string, error) { return "", nil }
+
+func (f *refusingUpdateDocker) RejoinNamespace(_ context.Context, oldID, parent string) ([]string, error) {
+	f.calls = append(f.calls, "rejoin:"+oldID+"->"+parent)
+	return nil, nil
+}
+
+func (f *refusingUpdateDocker) FromNewImage(_ context.Context, in model.Inspect) model.Inspect {
+	in.Config.Env = []string{"ONLY=mine"}
+	return in
+}
+
+func failedUpdate(t *testing.T, f *refusingUpdateDocker) (store.Run, []string, *store.Repo) {
+	t.Helper()
+	svc, st := newUpdateTestSvc(t)
+	svc.docker = f
+	tg, err := st.UpsertTarget(store.Target{ContainerName: "plex"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	in := model.Inspect{
+		ID: "old-plex", Name: "/plex", Image: "sha256:OLD",
+		Config: model.Config{Image: "plex:latest", Env: []string{"APP_VERSION=1", "ONLY=mine"}},
+	}
+	apply := svc.checkUpdateAfterBackup(context.Background(), "plex", in, tg.ID)
+	if apply == nil {
+		t.Fatal("want an update")
+	}
+	left := apply()
+	runs, err := st.ListRuns(10)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, r := range runs {
+		if r.Kind == "update" {
+			return r, left, st
+		}
+	}
+	t.Fatal("no update run")
+	return store.Run{}, nil, nil
+}
+
+func TestAnUpdateThatCannotCreateTheContainerPutsTheOldImageBack(t *testing.T) {
+	f := &refusingUpdateDocker{
+		updateFakeDocker: &updateFakeDocker{imageID: "sha256:NEW"},
+		createErrs:       []error{errors.New("port is already allocated")},
+	}
+	run, left, st := failedUpdate(t, f)
+
+	if len(left) != 0 {
+		t.Fatalf("left = %v, the container runs again", left)
+	}
+	calls := strings.Join(f.calls, ",")
+	if !strings.Contains(calls, "createAndStart:/plex,remove:plex,tag:sha256:OLD->plex:latest,createAndStart:/plex,rejoin:old-plex->plex") {
+		t.Fatalf("want the old image tagged and the container created from it, its sharers moved over: %v", f.calls)
+	}
+	if !slices.Equal(f.created[0].Config.Env, []string{"ONLY=mine"}) {
+		t.Fatalf("the new image gets only what the user set: %v", f.created[0].Config.Env)
+	}
+	if !slices.Equal(f.created[1].Config.Env, []string{"APP_VERSION=1", "ONLY=mine"}) {
+		t.Fatalf("the old image comes back as it ran: %v", f.created[1].Config.Env)
+	}
+	if run.Status != "failed" || !strings.Contains(run.Error, "port is already allocated") || !strings.Contains(run.Error, "runs its previous image again") {
+		t.Fatalf("run = %q %q", run.Status, run.Error)
+	}
+	if marks, _ := st.ListRestoreRemovals(); len(marks) != 0 {
+		t.Fatalf("still marked: %+v", marks)
+	}
+}
+
+func TestAnUpdateThatCannotRemoveTheContainerStartsItAgain(t *testing.T) {
+	f := &refusingUpdateDocker{
+		updateFakeDocker: &updateFakeDocker{imageID: "sha256:NEW"},
+		removeErr:        errors.New("removal in progress"),
+		live:             true,
+	}
+	run, left, st := failedUpdate(t, f)
+	if len(left) != 0 || !slices.Contains(f.calls, "start:plex") || slices.Contains(f.calls, "createAndStart:/plex") {
+		t.Fatalf("left %v, calls %v", left, f.calls)
+	}
+	if run.Status != "failed" || !strings.Contains(run.Error, "removal in progress") {
+		t.Fatalf("run = %q %q", run.Status, run.Error)
+	}
+	if marks, _ := st.ListRestoreRemovals(); len(marks) != 0 {
+		t.Fatalf("still marked: %+v", marks)
+	}
+}
+
+func TestAnUpdateThatCannotBringTheOldImageBackNamesTheContainer(t *testing.T) {
+	f := &refusingUpdateDocker{
+		updateFakeDocker: &updateFakeDocker{imageID: "sha256:NEW"},
+		createErrs:       []error{errors.New("no such network"), errors.New("no such network")},
+	}
+	run, left, st := failedUpdate(t, f)
+	if !slices.Equal(left, []string{"plex"}) {
+		t.Fatalf("left = %v", left)
+	}
+	if run.Status != "failed" || !strings.Contains(run.Error, store.NoteContainersNotBack+": plex") {
+		t.Fatalf("run = %q %q", run.Status, run.Error)
+	}
+	marks, err := st.ListRestoreRemovals()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(marks) != 1 || marks[0].Name != "plex" || !marks[0].Update {
+		t.Fatalf("marks = %+v, want the next boot to try again", marks)
+	}
+}
+
+func TestACancelDoesNotReachARunningUpdate(t *testing.T) {
+	svc, st := newUpdateTestSvc(t)
+	f := &refusingUpdateDocker{updateFakeDocker: &updateFakeDocker{imageID: "sha256:NEW"}}
+	svc.docker = f
+	tg, err := st.UpsertTarget(store.Target{ContainerName: "plex"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	in := model.Inspect{Name: "/plex", Image: "sha256:OLD", Config: model.Config{Image: "plex:latest"}}
+	apply := svc.checkUpdateAfterBackup(ctx, "plex", in, tg.ID)
+	cancel()
+	apply()
+	for _, e := range f.ctxErrs {
+		if e != nil {
+			t.Fatalf("a call ran on the cancelled context: %v", f.ctxErrs)
+		}
 	}
 }

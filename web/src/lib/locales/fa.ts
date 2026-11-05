@@ -1282,6 +1282,7 @@ const fa: Partial<Translations> = {
   "runReason.restoredWithoutRuntime": "بدون GPU یا محیط اجرایی کانتینر بازیابی شد",
   "runReason.restoredWithoutLinks": "بدون پیوند به کانتینرهایی که در حال اجرا نیستند بازیابی شد",
   "runReason.containersNotBack": "برخی کانتینرها دوباره اجرا نشدند",
+  "runReason.noNetworkUntilRestart": "برخی کانتینرها تا اجرای دوباره شبکه ندارند",
   "runReason.vmRestoreHalfDone": "بازیابی نیمه‌کاره متوقف شد. ماشین مجازی هنوز هست اما خاموش می‌ماند، چون ممکن است دیسک‌هایش فقط تا حدی بازیابی شده باشند. پیش از راه‌اندازی، آن را دوباره بازیابی کنید",
   "runReason.restoreFilesHalfDone": "بازیابی نیمه‌کاره متوقف شد. کانتینر متوقف می‌ماند، چون ممکن است فایل‌های انتخاب‌شده فقط بخشی نوشته شده باشند. پیش از اجرا، فایل‌ها را دوباره بازیابی کن",
   "runReason.restoreFilesNotWritten": "نوشتن بعضی فایل‌ها ممکن نشد",

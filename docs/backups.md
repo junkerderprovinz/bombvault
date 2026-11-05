@@ -137,6 +137,8 @@ A failed dump does not fail the backup. It shows up as its own failed run with t
 
 - **Commands before and after** run inside the container with `sh -c`, for example to flush a cache to disk. A failing command before the backup aborts it. A command before the backup that exits with code 75 defers a scheduled backup instead, see below.
 - **Stop other containers** names containers to stop while this one is backed up, such as its database. Afterwards they start again in their Compose `depends_on` order, and by default each one has to report healthy before the next starts. The wait and its timeout are under **Restart after backup** in the **Order** card under **Settings, Schedule**.
+- A container that shares the network, PID or IPC namespace of one that goes down, through `--net=container:` or Compose's `network_mode: service:`, stops and starts with it even when it is not on the list, and it starts after the container it joins. A restarted container gets a new network, and one left running on the old network would have only its loopback. The list itself stays as you set it. If such a container could not be stopped, the run says it has no network until it is restarted. The same goes for BombVault's own container, which never stops itself and cannot be put on the list.
+- A container that does not run again afterwards is named on the run and in a notification, also when the backup itself failed.
 
 ## When the app is busy {#app-busy}
 

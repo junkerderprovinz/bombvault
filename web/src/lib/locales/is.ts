@@ -1282,6 +1282,7 @@ const is: Partial<Translations> = {
   "runReason.restoredWithoutRuntime": "endurheimt án GPU og keyrsluumhverfis gámsins",
   "runReason.restoredWithoutLinks": "endurheimt án tengla við gáma sem eru ekki í gangi",
   "runReason.containersNotBack": "sumir gámar ræstust ekki aftur",
+  "runReason.noNetworkUntilRestart": "sumir gámar hafa ekkert net fyrr en þeir eru ræstir aftur",
   "runReason.vmRestoreHalfDone": "endurheimtin stöðvaðist í miðjum klíðum. Sýndarvélin er enn til en er áfram slökkt, því diskar hennar gætu aðeins verið endurheimtir að hluta. Endurheimtu hana aftur áður en þú ræsir hana",
   "runReason.restoreFilesHalfDone": "endurheimtin stöðvaðist í miðjum klíðum. Gámurinn helst stöðvaður, því valdar skrár gætu aðeins verið skrifaðar að hluta. Endurheimtu þær aftur áður en þú ræsir hann",
   "runReason.restoreFilesNotWritten": "ekki tókst að skrifa sumar skrár",

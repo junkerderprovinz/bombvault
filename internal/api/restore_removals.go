@@ -27,7 +27,8 @@ func (r restoreRemovals) Clear(name string) error { return r.st.ClearRestoreRemo
 
 // RecoverInterruptedRestores creates the containers again, stopped, that a
 // restore removed when BombVault stopped in the middle of it, and moves the
-// containers sharing their namespaces onto them. It runs at boot next to
+// containers sharing their namespaces onto them. One an update removed starts
+// as well, since its data is untouched. It runs at boot next to
 // RecoverContainerRestarts. Each gets one attempt, as a restore that fails
 // does, and is forgotten after it.
 func (s *Service) RecoverInterruptedRestores(ctx context.Context) {
@@ -36,9 +37,12 @@ func (s *Service) RecoverInterruptedRestores(ctx context.Context) {
 		log.Printf("api: could not read which containers a restore removed: %v", err)
 		return
 	}
-	var back, failed []string
+	var back, updated, failed []string
 	for _, m := range removed {
 		if live, err := s.docker.InspectName(ctx, m.Name); err == nil && live != "" {
+			if m.Update {
+				s.finishCutOffUpdate(ctx, m.Name, m.OldID)
+			}
 			s.forgetRestoreRemoval(m.Name)
 			continue
 		}
@@ -49,7 +53,7 @@ func (s *Service) RecoverInterruptedRestores(ctx context.Context) {
 			s.forgetRestoreRemoval(m.Name)
 			continue
 		}
-		if err := s.docker.CreateAndStart(ctx, in, false); err != nil {
+		if err := s.docker.CreateAndStart(ctx, in, m.Update); err != nil {
 			log.Printf("api: %q, removed by an interrupted restore, could not be created again: %v", m.Name, err) //nolint:gosec // G706: %q-quoted
 			failed = append(failed, m.Name)
 			s.forgetRestoreRemoval(m.Name)
@@ -60,7 +64,11 @@ func (s *Service) RecoverInterruptedRestores(ctx context.Context) {
 				log.Printf("api: containers sharing a namespace with %q: %v", m.Name, err) //nolint:gosec // G706: %q-quoted
 			}
 		}
-		back = append(back, m.Name)
+		if m.Update {
+			updated = append(updated, m.Name)
+		} else {
+			back = append(back, m.Name)
+		}
 		s.forgetRestoreRemoval(m.Name)
 	}
 	if len(back) > 0 {
@@ -70,11 +78,32 @@ func (s *Service) RecoverInterruptedRestores(ctx context.Context) {
 				"and their data may be only partly restored, so restore them once more: " + strings.Join(back, ", "),
 		})
 	}
+	if len(updated) > 0 {
+		s.notifyZFSUnsuppressed(notify.Event{
+			Title:   "BombVault",
+			Message: "A restart cut off an update after it had removed these containers. They were created again and started: " + strings.Join(updated, ", "),
+			OK:      true,
+		})
+	}
 	if len(failed) > 0 {
 		s.notifyZFSUnsuppressed(notify.Event{
 			Title:   "BombVault",
 			Message: "A restart cut off a restore after it had removed these containers, and they could not be created again: " + strings.Join(failed, ", "),
 		})
+	}
+}
+
+// finishCutOffUpdate handles a container that exists although its update did
+// not finish: the update stopped it and may have replaced it, and those sharing
+// its namespaces may still be bound to the old ID.
+func (s *Service) finishCutOffUpdate(ctx context.Context, name, oldID string) {
+	if err := s.docker.Start(ctx, name); err != nil {
+		log.Printf("api: %q, stopped by an interrupted update, did not start again: %v", name, err) //nolint:gosec // G706: %q-quoted
+	}
+	if rejoiner, ok := s.docker.(backup.NamespaceRejoiner); ok && oldID != "" {
+		if _, err := rejoiner.RejoinNamespace(ctx, oldID, name); err != nil {
+			log.Printf("api: containers sharing a namespace with %q: %v", name, err) //nolint:gosec // G706: %q-quoted
+		}
 	}
 }
 

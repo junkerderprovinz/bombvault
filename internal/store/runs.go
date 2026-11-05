@@ -457,6 +457,10 @@ const (
 	// stopped although it ran when it was backed up.
 	NoteStackNotStarted = "restored and left stopped"
 
+	// NoteNoNetworkUntilRestart names after ": " the containers left running on
+	// the network of a container a backup stopped and started, which is gone.
+	NoteNoNetworkUntilRestart = "some containers have no network until they are restarted"
+
 	// NoteDBDumpOneDatabase says the credentials in the container reach one
 	// database rather than the whole server.
 	NoteDBDumpOneDatabase = "database dump covers one database only"

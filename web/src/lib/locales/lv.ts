@@ -1282,6 +1282,7 @@ const lv: Partial<Translations> = {
   "runReason.restoredWithoutRuntime": "atjaunots bez konteinera GPU un izpildes vides",
   "runReason.restoredWithoutLinks": "atjaunots bez saitēm uz konteineriem, kas nedarbojas",
   "runReason.containersNotBack": "daži konteineri netika atkal palaisti",
+  "runReason.noNetworkUntilRestart": "dažiem konteineriem nav tīkla, līdz tie tiek atkal palaisti",
   "runReason.vmRestoreHalfDone": "atjaunošana apstājās pusceļā. VM joprojām ir, bet paliek izslēgta, jo tās diski varētu būt atjaunoti tikai daļēji. Pirms palaišanas atjaunojiet to vēlreiz",
   "runReason.restoreFilesHalfDone": "atjaunošana apstājās pusceļā. Konteiners paliek apturēts, jo izvēlētie faili var būt ierakstīti tikai daļēji. Pirms palaišanas atjaunojiet tos vēlreiz",
   "runReason.restoreFilesNotWritten": "dažus failus nevarēja ierakstīt",

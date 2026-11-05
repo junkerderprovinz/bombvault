@@ -232,6 +232,12 @@ type StopContainer struct {
 	// The others start after it: the list may as well hold apps that need
 	// the target, and some share its network and cannot start before it.
 	BeforeTarget bool
+	// Joins names the containers whose network, PID or IPC namespace this one
+	// shares. Docker refuses to start it while they are stopped.
+	Joins []string
+	// Sharer marks a container that is stopped only because it shares a
+	// namespace of another that goes down.
+	Sharer bool
 }
 
 func (c StopContainer) ref() string {
@@ -332,7 +338,7 @@ type BackupDeps struct {
 	// or they break against the target while it is torn down (#119); after a
 	// snapshot read they are stopped once more for it. Skipped when the backup
 	// failed. Both functions own their errors and must not panic.
-	UpdateAfterBackup func() (apply func())
+	UpdateAfterBackup func() (apply func() []string)
 	// Snapshot, when set, holds the containers down only while it takes a ZFS
 	// snapshot of their data, and the backup is read from that snapshot. Nil
 	// stops them for the whole backup. Used only for a running container.
@@ -346,6 +352,13 @@ type BackupDeps struct {
 	// that dies before starting them again does it at its next start. Nil
 	// remembers nothing.
 	Restarts RestartMarker
+	// CutOff names the containers that share a namespace of one that goes down
+	// and are left running, so they end up on a network that is gone. The run
+	// says so.
+	CutOff []string
+	// OnNotBack receives the containers that do not run again or are cut off,
+	// once the run's outcome is known.
+	OnNotBack func(names []string)
 	// Excludes are restic --exclude patterns for this container's backup
 	// (already resolved to the paths restic stores).
 	Excludes []string
@@ -378,23 +391,65 @@ func markDown(d BackupDeps, down []StopContainer) {
 }
 
 // clearDown drops the record of every container in down once the backup has
-// tried to start them again. The record is only for a process that dies
-// first: one that did not come back is the user's to look at, and starting it
-// at some later boot would override whatever they decided in between.
-func clearDown(ctx context.Context, d BackupDeps, down []StopContainer) {
-	if d.Restarts == nil || len(down) == 0 {
-		return
+// tried to start them again, and returns those that do not run. The record is
+// only for a process that dies first: one that did not come back is the user's
+// to look at, and starting it at some later boot would override whatever they
+// decided in between.
+func clearDown(ctx context.Context, d BackupDeps, down []StopContainer) (notRunning []string) {
+	if len(down) == 0 {
+		return nil
 	}
 	names := make([]string, len(down))
 	for i, c := range down {
 		names[i] = c.Name
 		if h, err := d.Docker.Health(ctx, c.ref()); err == nil && !h.Running {
 			log.Printf("backup: %q did not come back after the backup", c.Name)
+			notRunning = append(notRunning, c.Name)
 		}
 	}
-	if err := d.Restarts.Clear(names); err != nil {
-		log.Printf("backup: clearing the record of the restarted containers failed: %v", err)
+	if d.Restarts != nil {
+		if err := d.Restarts.Clear(names); err != nil {
+			log.Printf("backup: clearing the record of the restarted containers failed: %v", err)
+		}
 	}
+	return notRunning
+}
+
+// leftDownNotes are the notes of a run that left containers down or cut off.
+func leftDownNotes(notBack, cutOff []string) []string {
+	var notes []string
+	if len(notBack) > 0 {
+		notes = append(notes, store.NoteContainersNotBack+": "+strings.Join(notBack, ", "))
+	}
+	if len(cutOff) > 0 {
+		notes = append(notes, store.NoteNoNetworkUntilRestart+": "+strings.Join(cutOff, ", "))
+	}
+	return notes
+}
+
+// uniqueNames keeps the first of each name.
+func uniqueNames(names []string) []string {
+	seen := make(map[string]bool, len(names))
+	return slices.DeleteFunc(slices.Clone(names), func(n string) bool {
+		dup := seen[n]
+		seen[n] = true
+		return dup
+	})
+}
+
+// failureNote is the reason of a failed run with the notes it still has to
+// give. The notes survive the length limit of the reason: they name what is
+// down now, while the error is about what already went wrong.
+func failureNote(err error, notes []string) string {
+	reason := truncateErr(err)
+	if len(notes) == 0 {
+		return reason
+	}
+	tail := "; " + strings.Join(notes, "; ")
+	if room := maxRunReason - len(tail); len(reason) > room {
+		reason = reason[:max(room, 0)]
+	}
+	return reason + tail
 }
 
 // splitAroundTarget parts the stopped containers into those the target
@@ -542,6 +597,8 @@ type RestoreDeps struct {
 	// Removals keeps the container the restore removed until it exists again,
 	// so the next boot creates it when the process dies in between. Optional.
 	Removals RemovalMarker
+	// OnNotBack receives the containers that do not run again after the restore.
+	OnNotBack func(names []string)
 }
 
 // RemovalMarker records a container a restore removed, with the definition
@@ -577,6 +634,8 @@ const (
 	statusCancelled = "cancelled"
 
 	defaultStopTimeout = 30 * time.Second
+	// maxRunReason is the bound of what a run records as its reason.
+	maxRunReason = 500
 	// recreateAfterFailureTimeout bounds putting a container back after its
 	// restore stopped partway, which runs after the restore's own context may
 	// have ended.
@@ -700,6 +759,7 @@ func BackupContainer(ctx context.Context, d BackupDeps) (Summary, error) {
 		backupErr   error
 		summarySeen bool
 		notBack     []string
+		cutOff      = slices.Clone(d.CutOff)
 	)
 
 	readLive := func() {
@@ -740,7 +800,7 @@ func BackupContainer(ctx context.Context, d BackupDeps) (Summary, error) {
 			startBefore()
 			_, after := splitAroundTarget(stoppedDeps)
 			notBack = append(notBack, RestartInOrder(restartCtx, d.Docker, after, d.HealthWait, d.HealthTimeout)...)
-			clearDown(restartCtx, d, goingDown(d))
+			notBack = append(notBack, clearDown(restartCtx, d, goingDown(d))...)
 		}()
 
 		// Registered SECOND, so it runs FIRST on unwind. Order matters: bring the
@@ -776,15 +836,14 @@ func BackupContainer(ctx context.Context, d BackupDeps) (Summary, error) {
 			}
 			if backupErr == nil && d.UpdateAfterBackup != nil {
 				if apply := d.UpdateAfterBackup(); apply != nil {
-					apply()
+					left := apply()
+					notBack = append(notBack, left...)
 					refreshIDs(restartCtx, d.Docker, stoppedDeps)
 					refreshIDs(restartCtx, d.Docker, d.StopContainers)
 					// The target was recreated; it has to be Running before its netns
 					// dependents are restarted.
 					if targetUp {
-						if waitErr := d.Docker.WaitRunning(restartCtx, d.ContainerRef, runningWaitTimeout); waitErr != nil {
-							log.Printf("backup: wait container %q running after post-backup step: %v", d.ContainerRef, waitErr)
-						}
+						notBack = append(notBack, waitAfterUpdate(restartCtx, d, left)...)
 					}
 				}
 			}
@@ -821,6 +880,9 @@ func BackupContainer(ctx context.Context, d BackupDeps) (Summary, error) {
 			}
 			if stopErr := d.Docker.Stop(restartCtx, dep.ref(), stopTimeout); stopErr != nil {
 				log.Printf("backup: stop dependency %q failed (continuing): %v", dep.Name, stopErr)
+				if dep.Sharer {
+					cutOff = append(cutOff, dep.Name)
+				}
 				continue
 			}
 			stoppedDeps = append(stoppedDeps, dep)
@@ -855,13 +917,18 @@ func BackupContainer(ctx context.Context, d BackupDeps) (Summary, error) {
 
 	fromSnapshot := d.Snapshot != nil && d.WasRunning
 	if fromSnapshot {
-		summary, summarySeen, notBack, backupErr = backupFromSnapshot(ctx, d, tags, stopTimeout)
+		summary, summarySeen, notBack, backupErr = backupFromSnapshot(ctx, d, tags, stopTimeout, &cutOff)
 	} else {
 		readLive()
 	}
 
+	notBack, cutOff = uniqueNames(notBack), uniqueNames(cutOff)
+	if d.OnNotBack != nil && len(notBack)+len(cutOff) > 0 {
+		defer d.OnNotBack(uniqueNames(append(slices.Clone(notBack), cutOff...)))
+	}
+	leftDown := leftDownNotes(notBack, cutOff)
 	if backupErr != nil {
-		_ = d.Runs.Finish(runID, statusFailed, Summary{}, truncateErr(backupErr))
+		_ = d.Runs.Finish(runID, statusFailed, Summary{}, failureNote(backupErr, leftDown))
 		return Summary{}, backupErr
 	}
 
@@ -888,9 +955,7 @@ func BackupContainer(ctx context.Context, d BackupDeps) (Summary, error) {
 	if len(d.UnreachableData) > 0 {
 		notes = append(notes, store.NoteDataOutsideHost+": "+strings.Join(d.UnreachableData, ", "))
 	}
-	if len(notBack) > 0 {
-		notes = append(notes, store.NoteContainersNotBack+": "+strings.Join(notBack, ", "))
-	}
+	notes = append(notes, leftDown...)
 	if err := d.Runs.Finish(runID, statusSuccess, recorded, strings.Join(notes, "; ")); err != nil {
 		return summary, fmt.Errorf("backup: record run finish: %w", err)
 	}
@@ -920,7 +985,7 @@ func keepTemplate(d BackupDeps, snapshotID string) error {
 // they are back, and restic reads the snapshot at the container's own paths
 // afterwards. Whatever happens, the containers that were stopped are started
 // again, and the snapshot is released.
-func backupFromSnapshot(ctx context.Context, d BackupDeps, tags []string, stopTimeout time.Duration) (summary Summary, seen bool, notBack []string, err error) {
+func backupFromSnapshot(ctx context.Context, d BackupDeps, tags []string, stopTimeout time.Duration, cutOff *[]string) (summary Summary, seen bool, notBack []string, err error) {
 	clock := d.Clock
 	if clock == nil {
 		clock = time.Now
@@ -954,7 +1019,7 @@ func backupFromSnapshot(ctx context.Context, d BackupDeps, tags []string, stopTi
 		if d.OnWindow != nil {
 			d.OnWindow(clock().Sub(downSince))
 		}
-		clearDown(restartCtx, d, goingDown(d))
+		notBack = append(notBack, clearDown(restartCtx, d, goingDown(d))...)
 	}
 	defer restart()
 
@@ -970,6 +1035,9 @@ func backupFromSnapshot(ctx context.Context, d BackupDeps, tags []string, stopTi
 		}
 		if stopErr := d.Docker.Stop(restartCtx, dep.ref(), stopTimeout); stopErr != nil {
 			log.Printf("backup: stop dependency %q failed (continuing): %v", dep.Name, stopErr)
+			if dep.Sharer {
+				*cutOff = append(*cutOff, dep.Name)
+			}
 			continue
 		}
 		stoppedDeps = append(stoppedDeps, dep)
@@ -1037,14 +1105,26 @@ func updateAfterSnapshot(ctx context.Context, d BackupDeps, deps []StopContainer
 		stopped = append(stopped, dep)
 	}
 	defer func() {
-		notBack = RestartInOrder(ctx, d.Docker, stopped, d.HealthWait, d.HealthTimeout)
-		clearDown(ctx, d, deps)
+		notBack = append(notBack, RestartInOrder(ctx, d.Docker, stopped, d.HealthWait, d.HealthTimeout)...)
+		notBack = append(notBack, clearDown(ctx, d, deps)...)
 	}()
-	apply()
+	left := apply()
 	refreshIDs(ctx, d.Docker, stopped)
 	refreshIDs(ctx, d.Docker, deps)
+	return append(left, waitAfterUpdate(ctx, d, left)...)
+}
+
+// waitAfterUpdate waits for the target an update recreated, unless the update
+// already named it as down in left, in which case nothing will bring it up
+// and the wait would only hold the run and its lock. It returns the target
+// when it did not come up.
+func waitAfterUpdate(ctx context.Context, d BackupDeps, left []string) []string {
+	if slices.Contains(left, d.ContainerName) {
+		return nil
+	}
 	if err := d.Docker.WaitRunning(ctx, d.ContainerRef, runningWaitTimeout); err != nil {
 		log.Printf("backup: wait container %q running after post-backup step: %v", d.ContainerRef, err)
+		return []string{d.ContainerName}
 	}
 	return nil
 }
@@ -1167,6 +1247,20 @@ func composeIdentity(deps []StopContainer) (services []string, dependsOn [][]str
 		services[i] = dep.Service
 		dependsOn[i] = dep.DependsOn
 	}
+	for i, dep := range deps {
+		for _, owner := range dep.Joins {
+			j := slices.IndexFunc(deps, func(c StopContainer) bool { return c.Name == owner })
+			if j < 0 {
+				continue
+			}
+			// Unraid templates and plain docker run have no compose service to
+			// point an edge at, so the owner gets a stand-in.
+			if services[j] == "" {
+				services[j] = "container:" + owner
+			}
+			dependsOn[i] = append(slices.Clip(dependsOn[i]), services[j])
+		}
+	}
 	return services, dependsOn
 }
 
@@ -1253,8 +1347,11 @@ func RestoreContainer(ctx context.Context, d RestoreDeps) error {
 	var unlinked []string
 	d.Inspect.HostConfig.Links, unlinked = usableLinks(ctx, d.Docker, d.Inspect.HostConfig.Links, d.Inspect.Running && !d.LeaveStopped)
 	notBack, restoreErr := runRestore(ctx, d)
+	if d.OnNotBack != nil && len(notBack) > 0 {
+		defer d.OnNotBack(notBack)
+	}
 	if restoreErr != nil {
-		_ = d.Runs.Finish(runID, restoreOutcome(restoreErr), Summary{}, truncateErr(restoreErr))
+		_ = d.Runs.Finish(runID, restoreOutcome(restoreErr), Summary{}, failureNote(restoreErr, leftDownNotes(notBack, nil)))
 		return restoreErr
 	}
 
@@ -1326,6 +1423,9 @@ func runRestore(ctx context.Context, d RestoreDeps) ([]string, error) {
 	if err := CheckRestoreNetwork(ctx, d.Docker, d.Inspect); err != nil {
 		return nil, err
 	}
+	if err := checkVolumesFrom(ctx, d.Docker, d.Inspect); err != nil {
+		return nil, err
+	}
 
 	// PRE-FLIGHT: when restoring data, confirm the snapshot is readable BEFORE the
 	// destructive stop/remove, so a missing snapshot or an unreadable repo never
@@ -1363,19 +1463,29 @@ func runRestore(ctx context.Context, d RestoreDeps) ([]string, error) {
 		}
 	}
 
-	// Stop & remove the existing container — absent/already-stopped is acceptable.
-	if err := d.Docker.Stop(ctx, d.ContainerRef, defaultStopTimeout); err != nil {
-		// ignore: container may be absent or already stopped — a genuinely
-		// still-running container surfaces as a Remove failure below.
-		_ = err
+	// The stop and the remove run on a context a cancel does not reach: the
+	// daemon finishes a stop its client gave up on, and a remove on the dead
+	// context would then leave the container down with nothing to bring it back.
+	teardownCtx := context.WithoutCancel(ctx)
+	wasRunning := false
+	if h, err := d.Docker.Health(teardownCtx, d.ContainerRef); err == nil {
+		wasRunning = h.Running
 	}
-	if err := d.Docker.Remove(ctx, d.ContainerRef); err != nil {
+
+	// An absent or already stopped container fails the stop harmlessly, and one
+	// that still runs surfaces as a Remove failure below.
+	_ = d.Docker.Stop(teardownCtx, d.ContainerRef, defaultStopTimeout)
+	if err := ctx.Err(); err != nil {
+		clearRemoval(d, name)
+		return startAgain(teardownCtx, d, wasRunning, oldID), fmt.Errorf("restore: cancelled while stopping the container: %w", err)
+	}
+	if err := d.Docker.Remove(teardownCtx, d.ContainerRef); err != nil {
 		// Docker.Remove returns nil when the container is already gone, so a real
 		// error here means it still exists and could not be removed (e.g. Stop
-		// timed out and it is still running). Abort BEFORE restic overwrites the
-		// appdata — overwriting a live container's data would corrupt it.
+		// timed out and it is still running). The restore ends before restic
+		// overwrites the appdata, since that would corrupt a live container's data.
 		clearRemoval(d, name)
-		return nil, fmt.Errorf("restore: remove existing container: %w", err)
+		return startAgain(teardownCtx, d, wasRunning, oldID), fmt.Errorf("restore: remove existing container: %w", err)
 	}
 
 	if err := restoreData(ctx, d); err != nil {
@@ -1394,11 +1504,41 @@ func runRestore(ctx context.Context, d RestoreDeps) ([]string, error) {
 			return nil, putBack(ctx, d, in, oldID, err)
 		}
 		clearRemoval(d, name)
-		rejoinShared(context.WithoutCancel(ctx), d, oldID)
-		return nil, err
+		return rejoinShared(context.WithoutCancel(ctx), d, oldID), err
 	}
 	clearRemoval(d, name)
 	return rejoinShared(ctx, d, oldID), nil
+}
+
+// startAgain brings back a container whose restore gave up before removing it,
+// so nothing was restored and its data is as it was. The stop took the network
+// from under the containers sharing it, so they move to the new one. It returns
+// the containers that do not run again.
+func startAgain(ctx context.Context, d RestoreDeps, wasRunning bool, oldID string) []string {
+	if !wasRunning {
+		return nil
+	}
+	if err := d.Docker.Start(ctx, d.ContainerRef); err != nil {
+		log.Printf("restore: starting %q again failed: %v", d.ContainerName, err) //nolint:gosec // G706: names from Docker
+		return []string{normalizeName(d.ContainerName)}
+	}
+	return rejoinShared(ctx, d, oldID)
+}
+
+// checkVolumesFrom refuses a recreate Docker would refuse, while the container
+// is still untouched: --volumes-from needs the other container to exist.
+func checkVolumesFrom(ctx context.Context, docker Docker, in model.Inspect) error {
+	for _, ref := range in.HostConfig.VolumesFrom {
+		name, _, _ := strings.Cut(ref, ":")
+		live, err := docker.InspectName(ctx, name)
+		if err != nil {
+			return fmt.Errorf("restore: inspect %q: %w", name, err)
+		}
+		if live == "" {
+			return fmt.Errorf("restore: the container takes its volumes from %q, which does not exist; restore that one first", name)
+		}
+	}
+	return nil
 }
 
 // putBack creates the container again, stopped, after its restore stopped
@@ -1809,9 +1949,8 @@ func truncateErr(err error) string {
 	} else {
 		msg = scrubRunErr(msg)
 	}
-	const max = 500
-	if len(msg) > max {
-		return msg[:max]
+	if len(msg) > maxRunReason {
+		return msg[:maxRunReason]
 	}
 	return msg
 }

@@ -109,7 +109,10 @@ type HostConfig struct {
 	Binds []string
 	// Mounts are the volumes given in the long form (--mount, or compose's
 	// long syntax with options a bind string cannot carry).
-	Mounts         []MountSpec `json:",omitempty"`
+	Mounts []MountSpec `json:",omitempty"`
+	// VolumesFrom names the containers whose volumes this one takes over, each
+	// with an optional ":ro" or ":rw".
+	VolumesFrom    []string `json:",omitempty"`
 	PortBindings   map[string][]PortBinding
 	RestartPolicy  RestartPolicy
 	CapAdd         []string

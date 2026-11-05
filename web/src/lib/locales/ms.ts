@@ -1282,6 +1282,7 @@ const ms: Partial<Translations> = {
   "runReason.restoredWithoutRuntime": "dipulihkan tanpa GPU atau runtime bekas",
   "runReason.restoredWithoutLinks": "dipulihkan tanpa pautan ke bekas yang tidak berjalan",
   "runReason.containersNotBack": "sesetengah bekas tidak bermula semula",
+  "runReason.noNetworkUntilRestart": "sesetengah bekas tiada rangkaian sehingga dimulakan semula",
   "runReason.vmRestoreHalfDone": "pemulihan terhenti separuh jalan. VM masih ada, tetapi kekal mati kerana cakeranya mungkin dipulihkan sebahagian sahaja. Pulihkan semula sebelum anda memulakannya",
   "runReason.restoreFilesHalfDone": "pemulihan terhenti separuh jalan. Bekas kekal berhenti, kerana fail yang dipilih mungkin hanya separuh ditulis. Pulihkan fail itu semula sebelum anda memulakannya",
   "runReason.restoreFilesNotWritten": "sesetengah fail tidak dapat ditulis",

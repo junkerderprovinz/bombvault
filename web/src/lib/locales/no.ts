@@ -1238,6 +1238,7 @@ const no: Partial<Translations> = {
   "runReason.restoredWithoutRuntime": "gjenopprettet uten kontainerens GPU eller runtime",
   "runReason.restoredWithoutLinks": "gjenopprettet uten lenker til kontainere som ikke kjører",
   "runReason.containersNotBack": "noen containere startet ikke igjen",
+  "runReason.noNetworkUntilRestart": "noen containere har ikke nettverk før de startes igjen",
   "runReason.vmRestoreHalfDone": "gjenopprettingen stoppet halvveis. VM-en finnes fortsatt, men forblir av, fordi diskene kanskje bare er delvis gjenopprettet. Gjenopprett den igjen før du starter den",
   "runReason.restoreFilesHalfDone": "gjenopprettingen stoppet halvveis. Containeren forblir stoppet, fordi de valgte filene kanskje bare er delvis skrevet. Gjenopprett dem igjen før du starter den",
   "runReason.restoreFilesNotWritten": "noen filer kunne ikke skrives",

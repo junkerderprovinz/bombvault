@@ -183,6 +183,7 @@ func isolatedConfig(spec IsolatedSpec) (*container.Config, *container.HostConfig
 	// The long-form volumes reach the original's files as well; spec.Binds
 	// holds their copies. Only scratch space stays.
 	hostCfg.Mounts = slices.DeleteFunc(hostCfg.Mounts, func(m mount.Mount) bool { return m.Type != mount.TypeTmpfs })
+	hostCfg.VolumesFrom = nil
 	hostCfg.PortBindings = nil
 	hostCfg.PublishAllPorts = false
 	hostCfg.NetworkMode = container.NetworkMode(spec.Network)

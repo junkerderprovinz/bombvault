@@ -1249,6 +1249,7 @@ const fi: Partial<Translations> = {
   "runReason.restoredWithoutRuntime": "palautettiin ilman kontin GPU:ta ja ajoympäristöä",
   "runReason.restoredWithoutLinks": "palautettiin ilman linkkejä kontteihin, jotka eivät ole käynnissä",
   "runReason.containersNotBack": "osa säiliöistä ei käynnistynyt uudelleen",
+  "runReason.noNetworkUntilRestart": "osalla säiliöistä ei ole verkkoa ennen uudelleenkäynnistystä",
   "runReason.vmRestoreHalfDone": "palautus pysähtyi kesken. Virtuaalikone on yhä olemassa, mutta se pysyy sammutettuna, koska sen levyt voivat olla palautettuja vain osittain. Palauta se uudelleen ennen kuin käynnistät sen",
   "runReason.restoreFilesHalfDone": "palautus pysähtyi kesken. Kontti jää pysäytetyksi, koska valitut tiedostot voivat olla vain osittain kirjoitettuja. Palauta ne uudelleen ennen kuin käynnistät sen",
   "runReason.restoreFilesNotWritten": "joitakin tiedostoja ei voitu kirjoittaa",

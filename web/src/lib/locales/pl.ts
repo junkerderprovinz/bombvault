@@ -1235,6 +1235,7 @@ const pl: Partial<Translations> = {
   "runReason.restoredWithoutRuntime": "przywrócono bez GPU i środowiska uruchomieniowego kontenera",
   "runReason.restoredWithoutLinks": "przywrócono bez powiązań z kontenerami, które nie działają",
   "runReason.containersNotBack": "niektóre kontenery nie uruchomiły się ponownie",
+  "runReason.noNetworkUntilRestart": "niektóre kontenery nie mają sieci do czasu ponownego uruchomienia",
   "runReason.vmRestoreHalfDone": "przywracanie zatrzymało się w połowie. Maszyna wirtualna nadal istnieje, ale pozostaje wyłączona, bo jej dyski mogą być przywrócone tylko częściowo. Przywróć ją ponownie, zanim ją uruchomisz",
   "runReason.restoreFilesHalfDone": "przywracanie zatrzymało się w połowie. Kontener pozostaje zatrzymany, bo wybrane pliki mogły zostać zapisane tylko częściowo. Przywróć je ponownie, zanim go uruchomisz",
   "runReason.restoreFilesNotWritten": "nie udało się zapisać niektórych plików",
