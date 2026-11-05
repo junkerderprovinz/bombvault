@@ -406,6 +406,16 @@ const ReasonRestoreNoRuntime = "restore failed: the container used a GPU or runt
 // created again but left stopped, and the detail says why the restore stopped.
 const ReasonRestoreHalfDone = "restore did not finish: the container was created again, stopped, on partly restored data"
 
+// ReasonRestoreFilesNotWritten begins the reason of a restore that only reported
+// ownership errors while files of the backup did not arrive, followed by how
+// many. restic.ReasonFilesNotWritten writes it.
+const ReasonRestoreFilesNotWritten = "restore failed: some files could not be written"
+
+// ReasonRestoreFilesHalfDone begins the reason of a restore of picked files into
+// a container's folders that stopped partway, with the detail saying why. The
+// container stays stopped, since a file it reads may be partly written.
+const ReasonRestoreFilesHalfDone = "restore did not finish: the container was left stopped, because the picked files may be partly written"
+
 // ReasonFlashZipKept is the export run of a flash backup that held less than it
 // should. The ZIP from the last complete backup stays in place.
 const ReasonFlashZipKept = "the flash backup held less than it should, so the last ZIP was kept"
@@ -429,6 +439,23 @@ const (
 	// NoteContainersNotBack names after ": " the containers a backup, an
 	// update or a restore took down or recreated and that do not run again.
 	NoteContainersNotBack = "some containers did not start again"
+
+	// NoteRestoreLeftOut names after ": " the folders a backup holds and a restore
+	// did not write, since they hold files now and are no longer in the selection.
+	NoteRestoreLeftOut = "folders in this backup were left out, because they hold files now and are no longer selected"
+
+	// NoteStackFolderFailed is on the restore run of every member, with restic's
+	// reason after ": ", when the project folder of its stack did not come back.
+	// The members stay stopped, since the folder may be half written.
+	NoteStackFolderFailed = "the project folder of this stack did not come back, so the container was left stopped"
+
+	// NoteRestoredWithoutData is a stack member with database dumps and no files
+	// backup, recreated without its data and left stopped.
+	NoteRestoredWithoutData = "restored without its data, because only database dumps of it exist: start it and import a dump"
+
+	// NoteStackNotStarted says after ": " why a restored stack member stays
+	// stopped although it ran when it was backed up.
+	NoteStackNotStarted = "restored and left stopped"
 
 	// NoteDBDumpOneDatabase says the credentials in the container reach one
 	// database rather than the whole server.
@@ -600,6 +627,24 @@ func (r *Repo) AddRunNote(id, note string) error {
 		return fmt.Errorf("AddRunNote: %w", err)
 	}
 	return nil
+}
+
+// LastRestoreRun returns the most recent restore run for targetID, or nil.
+func (r *Repo) LastRestoreRun(targetID string) (*Run, error) {
+	row := r.db.QueryRow(`
+		SELECT `+runCols+`
+		FROM runs
+		WHERE target_id = ? AND kind = 'restore'
+		ORDER BY started_at DESC, rowid DESC
+		LIMIT 1`, targetID)
+	run, err := scanRun(row)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, fmt.Errorf("LastRestoreRun: %w", err)
+	}
+	return &run, nil
 }
 
 // LastRunForTarget returns the most recent backup run for targetID whatever its

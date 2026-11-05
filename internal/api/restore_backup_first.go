@@ -5,11 +5,16 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"log"
 	"os"
+	"slices"
 	"strings"
 	"time"
 
+	"github.com/junkerderprovinz/bombvault/internal/backup"
 	"github.com/junkerderprovinz/bombvault/internal/paths"
+	"github.com/junkerderprovinz/bombvault/internal/restic"
+	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
 // beforeRestoreTag marks the backup a restore took of the state it was about
@@ -68,23 +73,111 @@ func (s *Service) backupBeforeRestore(ctx context.Context, key, targetID, snapsh
 	return err
 }
 
-// saveContainerState backs up a container that has state a backup could
-// save, see containerNothingToSave.
-func (s *Service) saveContainerState(ctx context.Context, name string) error {
-	if why, err := s.containerNothingToSave(ctx, name); err != nil || why != "" {
-		return err
+// newestToRestore is the newest of snaps, which restic lists oldest first, for a
+// restore that names no snapshot. One taken before a restore holds the state that
+// restore set out to replace, so it only counts when there is no other.
+func newestToRestore(snaps []restic.Snapshot) restic.Snapshot {
+	for _, sn := range slices.Backward(snaps) {
+		if !slices.ContainsFunc(sn.Tags, isBeforeRestoreTag) {
+			return sn
+		}
 	}
-	_, err := s.Backup(ctx, name)
+	return snaps[len(snaps)-1]
+}
+
+func isBeforeRestoreTag(tag string) bool {
+	return tag == beforeRestoreTag || strings.HasPrefix(tag, beforeRestoreTag+":")
+}
+
+// saveContainerState backs up a container that has state a backup could save,
+// see containerNothingToSave. A container gone from the host cannot be backed up
+// as one, while the folders the restore writes over can still hold its data.
+func (s *Service) saveContainerState(ctx context.Context, name string, folders []string) error {
+	why, err := s.containerNothingToSave(ctx, name)
+	switch {
+	case err != nil:
+		return err
+	case why == reasonGone:
+		tg, err := s.store.GetTargetByContainer(name)
+		if err != nil {
+			return err
+		}
+		return s.saveFoldersOfGone(ctx, store.ItemRef{Domain: "containers", Key: name}, []string{"container:" + name, "p1"}, tg.ID, folders)
+	case why != "":
+		return nil
+	}
+	_, err = s.Backup(ctx, name)
 	return err
 }
 
 // saveVMState is saveContainerState for a VM.
-func (s *Service) saveVMState(ctx context.Context, name string) error {
-	if state, err := s.virsh.State(ctx, name); err != nil || state == "" {
+func (s *Service) saveVMState(ctx context.Context, name string, folders []string) error {
+	state, err := s.virsh.State(ctx, name)
+	if err != nil {
 		return err
 	}
-	_, err := s.BackupVM(ctx, name)
+	if state == "" {
+		tg, err := s.store.GetVMTargetByName(name)
+		if err != nil {
+			return err
+		}
+		return s.saveFoldersOfGone(ctx, store.ItemRef{Domain: "vms", Key: name}, []string{"vm:" + name, "p2"}, tg.ID, folders)
+	}
+	_, err = s.BackupVM(ctx, name)
 	return err
+}
+
+// foldersHoldingFiles keeps the paths a restore would overwrite something at.
+func foldersHoldingFiles(folders []string) []string {
+	var held []string
+	for _, p := range folders {
+		if !paths.EmptyOrMissing(p) {
+			held = append(held, p)
+		}
+	}
+	return held
+}
+
+// saveFoldersOfGone backs up the folders of an entry that is gone from the host
+// under the entry's own tags, as the backup taken before its restore.
+func (s *Service) saveFoldersOfGone(ctx context.Context, item store.ItemRef, identity []string, targetID string, folders []string) error {
+	held := foldersHoldingFiles(folders)
+	if len(held) == 0 {
+		return nil
+	}
+	if err := s.refuseLinkOutOfMount(held); err != nil {
+		return err
+	}
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return fmt.Errorf("read settings: %w", err)
+	}
+	step, err := s.prepareHome(ctx, settings, item)
+	if err != nil {
+		return err
+	}
+	if step, err = s.recordHome(ctx, settings, item, step); err != nil {
+		return err
+	}
+	unlock := s.lockDomainFor(item.Domain, "backup")
+	defer unlock()
+	runs := runsAdapter{st: s.store, ctx: ctx}
+	runID, err := runs.Start(targetID, "backup")
+	if err != nil {
+		return fmt.Errorf("record run start: %w", err)
+	}
+	tags := withTags(identity, withTags(s.directTags(settings, item.Domain, step.repo), beforeRestoreTags(ctx)))
+	sum, err := step.engine.Backup(ctx, step.repo, held, tags, step.mode)
+	if err != nil {
+		if fErr := runs.Finish(runID, "failed", backup.Summary{}, truncateRunErr(err)); fErr != nil {
+			log.Printf("api: backup before restore: record run finish: %v", fErr)
+		}
+		return err
+	}
+	if fErr := runs.Finish(runID, "success", backupSummaryFrom(sum), ""); fErr != nil {
+		log.Printf("api: backup before restore: record run finish: %v", fErr)
+	}
+	return nil
 }
 
 // saveFileSetState is saveContainerState for a file set.
@@ -163,7 +256,7 @@ func (s *Service) backupFirstPlan(ctx context.Context, req RestoreCheckRequest, 
 	var why, targetID string
 	var err error
 	switch req.Kind {
-	case checkContainer:
+	case checkContainer, checkContainerFiles:
 		if self := s.selfContainerName(ctx); self != "" && self == req.Name {
 			return &BackupFirstPlan{Status: lineFail, Detail: ErrSelfBackup.Error()}
 		}
@@ -185,6 +278,9 @@ func (s *Service) backupFirstPlan(ctx context.Context, req RestoreCheckRequest, 
 		targetID = req.Name
 	default:
 		return nil
+	}
+	if why == reasonGone && req.Kind != checkFileSet && len(foldersHoldingFiles(sc.written)) > 0 {
+		why = ""
 	}
 	switch {
 	case err != nil:

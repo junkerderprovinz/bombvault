@@ -17,6 +17,7 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/config"
 	"github.com/junkerderprovinz/bombvault/internal/dockercli"
 	"github.com/junkerderprovinz/bombvault/internal/model"
+	"github.com/junkerderprovinz/bombvault/internal/platform"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
@@ -497,6 +498,41 @@ func TestCheckRestoreStackLeavesItsOwnMembersOutOfTheSharedFolders(t *testing.T)
 	shared := res.Members[0].Plan.Shared
 	if len(shared) != 1 || !slices.Equal(shared[0].Containers, []string{"nextcloud-db"}) {
 		t.Fatalf("plex shared = %+v, want only nextcloud-db", shared)
+	}
+}
+
+func TestCheckRestoreStackChecksTheProjectFolderToo(t *testing.T) {
+	f := stackFixture(t)
+	folder := f.svc.cfg.HostMountRoot + "/stacks/media"
+	f.eng.snaps = append(f.eng.snaps, restic.Snapshot{ID: "dddd4444", Tags: []string{stackSnapshotTag("media")}, Paths: []string{folder}})
+	f.eng.preview = map[string][]restic.PreviewItem{folder: {{Action: "restored", Item: "/compose.yaml", Size: 10}}}
+
+	res := f.check(t, RestoreCheckRequest{Kind: checkStack, Name: "media"})
+
+	if len(res.Members) != 3 || res.Members[2].Plan == nil || res.Members[2].Plan.Added != 1 {
+		t.Fatalf("members = %+v, want the project folder with its plan last", res.Members)
+	}
+	if c := lineOf(t, RestoreCheck{Checks: res.Members[2].Checks}, lineSnapshot); c.Status != lineOK {
+		t.Fatalf("folder snapshot = %+v", c)
+	}
+}
+
+func TestCheckRestoreStackRefusesAProjectFolderOnAPoolThatIsDown(t *testing.T) {
+	f := stackFixture(t)
+	root := f.svc.cfg.HostMountRoot
+	writeMountFixture(t, "/", root)
+	f.svc.SetPlatform(platform.Unraid{})
+	t.Cleanup(func() { f.svc.SetPlatform(nil) })
+	f.eng.snaps = append(f.eng.snaps, restic.Snapshot{ID: "dddd4444", Tags: []string{stackSnapshotTag("media")}, Paths: []string{root + "/nvme/stacks/media"}})
+
+	res := f.check(t, RestoreCheckRequest{Kind: checkStack, Name: "media"})
+
+	folder := res.Members[len(res.Members)-1]
+	if folder.Ready || res.Ready {
+		t.Fatalf("ready = %v, folder %+v, want the stack held back", res.Ready, folder)
+	}
+	if c := lineOf(t, RestoreCheck{Checks: folder.Checks}, lineSpace); c.Reason != reasonRefused {
+		t.Fatalf("folder space = %+v", c)
 	}
 }
 

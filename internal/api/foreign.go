@@ -1059,7 +1059,7 @@ func (s *Service) prepareForeignFileSetRestore(ctx context.Context, sess foreign
 		if len(snaps) == 0 {
 			return fileSetRestorePlan{}, errors.New("no backups found for this file set")
 		}
-		snapshotID = snaps[len(snaps)-1].ID
+		snapshotID = newestToRestore(snaps).ID
 	}
 
 	// Adopt the name locally when unknown (disabled and path-less, exactly like
@@ -1131,7 +1131,7 @@ func (s *Service) prepareForeignFileSetFilesRestore(ctx context.Context, sess fo
 		if len(snaps) == 0 {
 			return fileSetFilesRestorePlan{}, errors.New("no backups found for this file set")
 		}
-		snapshotID = snaps[len(snaps)-1].ID
+		snapshotID = newestToRestore(snaps).ID
 	}
 
 	// Adopt the name locally when unknown (disabled + path-less, like DiscoverFileSets)
@@ -1197,7 +1197,7 @@ func (s *Service) ListForeignFiles(ctx context.Context, sessionID, domain, item,
 		if len(snaps) == 0 {
 			return nil, errors.New("no backups found for this file set")
 		}
-		snapshotID = snaps[len(snaps)-1].ID
+		snapshotID = newestToRestore(snaps).ID
 	}
 	return s.engine.Ls(ctx, sess.repo, snapshotID, sess.mode)
 }

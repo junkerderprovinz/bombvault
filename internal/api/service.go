@@ -8827,7 +8827,12 @@ type containerRestorePlan struct {
 	// skippedPaths carries stored paths that had no mapping in the chosen
 	// snapshot (RESTORE-01): they are skipped individually — scrubbed log +
 	// orchestrator run-record note — never a global abort.
-	skippedPaths   []string
+	skippedPaths []string
+	// leftOut are the host paths of folders the snapshot holds that the restore
+	// does not write, see foldersBeyondSelection.
+	leftOut []string
+	// notes go onto the run of a restore that worked.
+	notes          []string
 	inspect        model.Inspect
 	templateXML    string
 	withoutRuntime bool
@@ -8973,7 +8978,7 @@ func (s *Service) prepareRestoreForTarget(ctx context.Context, ref repoRef, name
 			return containerRestorePlan{}, notInListing{snapshotID, "container"}
 		}
 	case len(snaps) > 0:
-		snapshotID = snaps[len(snaps)-1].ID
+		snapshotID = newestToRestore(snaps).ID
 	case tg.Definition != "" && len(tg.AppdataPaths) == 0:
 		recreateOnly = true
 	case tg.Definition != "":
@@ -8988,7 +8993,7 @@ func (s *Service) prepareRestoreForTarget(ctx context.Context, ref repoRef, name
 	var appdataForRestore []string
 	var restoreDirs []backup.RestoreDir
 	var bindRemap map[string]string
-	var planSkipped []string
+	var planSkipped, leftOut []string
 	var snapshotImage string
 	if recreateOnly {
 		appdataForRestore = nil
@@ -9015,7 +9020,8 @@ func (s *Service) prepareRestoreForTarget(ctx context.Context, ref repoRef, name
 		// orchestrator only ever receives a list it has checked.
 		chosen := chosenSnapshot(snaps, snapshotID)
 		snapshotImage = taggedImage(chosen.Tags)
-		mapped, skipped, narrowed := mapRestorePaths(tg.AppdataPaths, s.restoreRootsOf(*chosen))
+		recorded := s.restoreRootsOf(*chosen)
+		mapped, skipped, narrowed := mapRestorePaths(tg.AppdataPaths, recorded)
 		// A pass-2 result is a stored path that only an ANCESTOR of it was
 		// recorded for. That proves it lies under a backed-up root; it does NOT
 		// prove it is in the snapshot. The branch may have been carved out by a
@@ -9044,6 +9050,9 @@ func (s *Service) prepareRestoreForTarget(ctx context.Context, ref repoRef, name
 		if len(tg.AppdataPaths) > 0 && len(mapped) == 0 {
 			return containerRestorePlan{}, errors.New("nothing to restore for this item from this snapshot")
 		}
+		broughtBack, kept := s.foldersBeyondSelection(tg.AppdataPaths, recorded)
+		mapped = append(mapped, broughtBack...)
+		leftOut = kept
 		if len(skipped) > 0 {
 			// Per-path skip (D-14): an orphan stored path is never fatal. The
 			// reason is scrubbed (paths → [path] FIRST, house order) and the
@@ -9158,6 +9167,10 @@ func (s *Service) prepareRestoreForTarget(ctx context.Context, ref repoRef, name
 		xml = template.RewriteHostPaths(xml, bindRemap)
 	}
 
+	var notes []string
+	if len(leftOut) > 0 {
+		notes = append(notes, store.NoteRestoreLeftOut+": "+strings.Join(leftOut, ", "))
+	}
 	return containerRestorePlan{
 		repo:         ref.repo,
 		mode:         ref.mode,
@@ -9167,6 +9180,8 @@ func (s *Service) prepareRestoreForTarget(ctx context.Context, ref repoRef, name
 		appdataPaths: appdataForRestore,
 		restoreDirs:  restoreDirs,
 		skippedPaths: planSkipped,
+		leftOut:      leftOut,
+		notes:        notes,
 		inspect:      in,
 		templateXML:  xml,
 	}, nil
@@ -9215,6 +9230,7 @@ func (s *Service) executeRestore(ctx context.Context, name string, plan containe
 		AppdataPaths:      plan.appdataPaths, // restored per-path back to origin, snapshot-path form (nil = recreate-only)
 		RestoreDirs:       plan.restoreDirs,  // cross-pool remap (foreign restore); empty = in-place
 		SkippedPaths:      plan.skippedPaths, // RESTORE-01: unmapped stored paths → run-record note, never an abort
+		Notes:             plan.notes,
 		TemplateXML:       plan.templateXML,
 		FlashTemplatesDir: s.cfg.FlashTemplatesDir,
 		Inspect:           plan.inspect,
@@ -9406,7 +9422,7 @@ func (s *Service) StartRestore(ctx context.Context, name, snapshotID, source str
 				restored = ""
 			}
 			rerr = s.backupBeforeRestore(rctx, key, plan.targetID, restored, func(ctx context.Context) error {
-				return s.saveContainerState(ctx, name)
+				return s.saveContainerState(ctx, name, plan.appdataPaths)
 			})
 			if rerr == nil {
 				rerr = s.executeRestore(rctx, name, plan, opts.LeaveStopped)
@@ -10791,7 +10807,7 @@ func (s *Service) RestoreContainerFiles(ctx context.Context, name, source, snaps
 	if err != nil {
 		return "", err
 	}
-	if err := s.runRestoreFiles(ctx, plan); err != nil {
+	if _, err := s.restoreFilesWithContainerDown(ctx, name, plan); err != nil {
 		return "", err
 	}
 	return plan.resolved, nil
@@ -10881,6 +10897,12 @@ func (s *Service) prepareRestoreFiles(ctx context.Context, name, source, snapsho
 		if err := s.refuseLinkOutOfMount(cleaned); err != nil {
 			return filesRestorePlan{}, err
 		}
+		if err := s.guardInPlaceRestore(cleaned); err != nil {
+			return filesRestorePlan{}, err
+		}
+		if self := s.selfContainerName(ctx); self != "" && self == name {
+			return filesRestorePlan{}, destinationRefusal("BombVault cannot stop itself to write into its own folders. Restore into a folder instead")
+		}
 	}
 
 	settings, err := s.store.GetSettings()
@@ -10934,7 +10956,7 @@ func (s *Service) runRestoreFiles(ctx context.Context, plan filesRestorePlan) er
 //
 // Shares batchActive with backups and the other restores; returns
 // ("", false, nil) when one is already running.
-func (s *Service) StartRestoreFiles(ctx context.Context, name, source, snapshotID string, filePaths []string, targetSubPath string, confirm bool) (string, bool, error) {
+func (s *Service) StartRestoreFiles(ctx context.Context, name, source, snapshotID string, filePaths []string, targetSubPath string, confirm bool, opts RestoreOptions) (string, bool, error) {
 	if !s.batchActive.CompareAndSwap(false, true) {
 		return "", false, nil
 	}
@@ -10963,16 +10985,66 @@ func (s *Service) StartRestoreFiles(ctx context.Context, name, source, snapshotI
 		defer cancel()
 		s.registerCancel(rkey, cancel)
 		defer s.unregisterCancel(rkey)
+		if opts.BackupFirst && plan.resolved == "" {
+			if tg, tErr := s.store.GetTargetByContainer(name); tErr == nil {
+				err := s.backupBeforeRestore(rctx, rkey, tg.ID, plan.snapshotID, func(ctx context.Context) error {
+					return s.saveContainerState(ctx, name, plan.paths)
+				})
+				if err != nil {
+					log.Printf("api: restore files: %q failed: %v", name, err) //nolint:gosec // G706: name is %q-quoted
+					return
+				}
+			}
+		}
 		runID = s.beginRestoreRun(name)
 		pctx, startedAt := s.progBegin(rctx, rkey, "restore")
-		rerr := s.runRestoreFiles(pctx, plan)
+		notBack, rerr := s.restoreFilesWithContainerDown(pctx, name, plan)
 		s.progEnd(rkey, "restore", rerr == nil, startedAt)
-		s.finishRestoreRun(runID, plan.snapshotID, rerr)
+		if notBack {
+			s.finishRestoreRunWarn(runID, plan.snapshotID, store.NoteContainersNotBack+": "+name)
+		} else {
+			s.finishRestoreRun(runID, plan.snapshotID, rerr)
+		}
 		if rerr != nil {
 			log.Printf("api: restore files: %q failed: %v", name, rerr) //nolint:gosec // G706: name is %q-quoted
 		}
 	}()
 	return plan.resolved, true, nil
+}
+
+// restoreFilesWithContainerDown restores the picks of plan. In place a running
+// container is stopped first, because restic writing into its folder corrupts
+// what the app holds open, and started again afterwards. A restore that fails
+// leaves it stopped on what may be partly written, as a whole restore does, and
+// one that could not stop it has written nothing. notBack says the container did
+// not start again after the files arrived.
+func (s *Service) restoreFilesWithContainerDown(ctx context.Context, name string, plan filesRestorePlan) (notBack bool, err error) {
+	if plan.resolved != "" {
+		return false, s.runRestoreFiles(ctx, plan)
+	}
+	in, err := s.docker.Inspect(ctx, name)
+	switch {
+	case dockercli.IsNotFound(err):
+		return false, s.runRestoreFiles(ctx, plan)
+	case err != nil:
+		return false, fmt.Errorf("inspect %s: %w", name, err)
+	case !in.Running:
+		return false, s.runRestoreFiles(ctx, plan)
+	}
+	if err := s.docker.Stop(ctx, name, restoreStopTimeout); err != nil {
+		s.startStoppedAgain(ctx, []string{name})
+		return false, fmt.Errorf("nothing was restored: stop %s: %w", name, err)
+	}
+	if err := s.runRestoreFiles(ctx, plan); err != nil {
+		return false, fmt.Errorf("%s: %w", store.ReasonRestoreFilesHalfDone, err)
+	}
+	cctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), restoreRestartTimeout)
+	defer cancel()
+	if err := s.docker.Start(cctx, name); err != nil {
+		log.Printf("api: restore files: start %q again: %v", name, err) //nolint:gosec // G706: name is %q-quoted
+		return true, nil
+	}
+	return false, nil
 }
 
 // beginRestoreRun best-effort records the start of a service-layer restore run
@@ -11026,7 +11098,11 @@ func (s *Service) finishRestoreRun(runID, snapshotID string, rerr error) {
 		// A user cancel is an intentional, recorded outcome — NOT a failure: record
 		// it as "cancelled" and fire no failure alert (restores have no failure
 		// notifier today; the terminal progEnd already fired to clear the bar).
-		err = runsAdapter{st: s.store, ctx: context.Background()}.Finish(runID, "cancelled", backup.Summary{}, "cancelled by user")
+		reason := "cancelled by user"
+		if strings.HasPrefix(rerr.Error(), store.ReasonRestoreFilesHalfDone) {
+			reason = truncateRunErr(rerr)
+		}
+		err = runsAdapter{st: s.store, ctx: context.Background()}.Finish(runID, "cancelled", backup.Summary{}, reason)
 	default:
 		err = runsAdapter{st: s.store, ctx: context.Background()}.Finish(runID, "failed", backup.Summary{}, truncateRunErr(rerr))
 	}
@@ -14236,7 +14312,8 @@ func (s *Service) prepareRestoreVMForTarget(ctx context.Context, ref repoRef, na
 		if len(snaps) == 0 {
 			return vmRestorePlan{}, errors.New("no backups found for this vm")
 		}
-		snap = &snaps[len(snaps)-1]
+		newest := newestToRestore(snaps)
+		snap = &newest
 		snapshotID = snap.ID
 	}
 
@@ -15020,7 +15097,7 @@ func (s *Service) StartRestoreVM(ctx context.Context, name, snapshotID, source s
 			rerr = s.executeRestoreVMBeside(rctx, name, plan)
 		case opts.BackupFirst:
 			rerr = s.backupBeforeRestore(rctx, key, plan.targetID, plan.snapshotID, func(ctx context.Context) error {
-				return s.saveVMState(ctx, name)
+				return s.saveVMState(ctx, name, vmScope(plan, name).written)
 			})
 			if rerr == nil {
 				rerr = s.executeRestoreVM(rctx, name, plan, opts.LeaveStopped)
@@ -16161,6 +16238,9 @@ func (s *Service) prepareRestoreFileSet(ctx context.Context, id, snapshotID, sou
 		if err := s.refuseLinkOutOfMount([]string{src}); err != nil {
 			return fileSetRestorePlan{}, err
 		}
+		if err := s.guardInPlaceRestore([]string{src}); err != nil {
+			return fileSetRestorePlan{}, err
+		}
 		plan.inPlace = src
 	}
 
@@ -16521,6 +16601,9 @@ func (s *Service) buildFileSetFilesPlan(ctx context.Context, snaps []restic.Snap
 			}
 		}
 		if err := s.refuseLinkOutOfMount(cleaned); err != nil {
+			return fileSetFilesRestorePlan{}, err
+		}
+		if err := s.guardInPlaceRestore(cleaned); err != nil {
 			return fileSetFilesRestorePlan{}, err
 		}
 	}
