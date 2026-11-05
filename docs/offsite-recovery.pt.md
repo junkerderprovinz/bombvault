@@ -1,7 +1,7 @@
 # Externo e recuperação
 
 !!! note "As cópias externas esperam depois de uma reconstrução"
-    Quando o assistente de emergência ou **Descobrir backups** reconstrói entradas sem as definições antigas, as cópias externas dessas secções ficam em pausa até a predefinição delas ser confirmada. Vê [Depois de uma reconstrução](#after-a-rebuild).
+    Quando o assistente de emergência ou **Descobrir backups** reconstrói entradas sem as definições antigas, as cópias externas dessas secções ficam à espera até assumires os backups delas como deste servidor. Vê [Depois de uma reconstrução](#after-a-rebuild).
 
 Os backups locais protegem-te de um container perdido ou de uma má atualização. As cópias externas e um kit de recuperação testado protegem-te da máquina inteira, de ransomware ou de um incêndio. Esta página cobre os destinos e as cópias externas, tornar uma cópia à prova de adulteração, provar que consegues restaurar, emparelhar vários servidores e recuperar tudo quando o próprio BombVault desapareceu.
 
@@ -82,7 +82,9 @@ Cada destino tem uma página própria. Mostra só os cartões que se aplicam a e
 
 **Mover** e **Remover destino** estão entre as ações da página, descritos em [Mover e remover](#move-remove).
 
-Um destino remoto que guardava backups e de repente não tem repositório, como um rest-server cujo disco não montou, não recebe sozinho um novo, vazio. A sua página di-lo assim que um backup ou uma cópia encontra o repositório desaparecido. Monta o disco outra vez. Se esvaziaste o repositório antigo de propósito, **Criar aqui um repositório novo** recomeça, para todas as secções do destino e dos seus repositórios de uma vez.
+Um destino remoto que guardava backups e de repente não tem repositório, como um rest-server cujo disco não montou, não recebe sozinho um novo, vazio. A sua página di-lo assim que um backup ou uma cópia encontra o repositório desaparecido. Monta o disco outra vez. Se esvaziaste o repositório antigo de propósito, **Criar aqui um repositório novo** recomeça, para todas as secções do destino e dos seus repositórios de uma vez. A proteção é para um destino que ficou no mesmo sítio. Um destino que adicionas, ou uma secção que marcas num destino, começa do zero: sem repositório nesse endereço, a primeira cópia cria um, mesmo onde um destino removido antes tinha um.
+
+Duas recusas dizem o que tens de corrigir, na execução da cópia e na página do destino. **Este bucket não existe no servidor** aparece assim que um servidor S3 o diz, e o BombVault não cria nada lá, por isso um nome de bucket mal escrito fica à vista. Um servidor que não responde de todo é outro caso: o restic continua a tentar durante cerca de 15 minutos por chamada, para o caso de ele voltar. **Já existe aqui um repositório restic, e a chave desta instância não o abre** quer dizer que os backups lá pertencem a outra `APP_KEY`.
 
 Um servidor recetor que outra instância do teu grupo executa aparece entre os fornecedores como **Do teu grupo**. Vê [Servidor recetor](#receiving-server).
 
@@ -105,11 +107,15 @@ Uma regra guarda um backup por dia, semana, mês e ano, tão para trás quanto d
 
 **Valores próprios** define tu mesmo as cinco contagens. Um 0 desliga essa contagem, e uma regra com todas as contagens a 0 guarda tudo. Os pontos no cartão mostram quais de 40 backups de exemplo uma regra guarda, o mais recente na ponta direita. A amostra é a mesma para todos os destinos, já que a imagem é desenhada antes de o BombVault ter lido os backups lá. Conta para trás a partir de hoje, por isso o número de pontos que ficam muda com a data.
 
+Uma pasta neste anfitrião e uma pasta remota escrita à mão também têm um cartão próprio, que abrange as pastas próprias nessa pasta e nenhuma outra. Até o guardares, os backups de uma pasta destas expiram segundo a regra que o BombVault já tinha para ela.
+
 **Perguntar antes de guardar menos**, ligado por predefinição, pergunta antes de se guardar uma alteração que guarda menos backups, e diz quantos dos 40 backups de exemplo a nova regra remove. Aplica-se a todos os destinos. **Repor o do destino** em **Regras por secção** faz a mesma pergunta.
 
 Um destino com proteção contra eliminação nunca é podado a partir desta máquina. O outro lado guarda ou larga os backups antigos segundo as suas próprias regras. Enquanto uma entrada tem uma anomalia crítica em aberto sobre dados perdidos, a retenção mantém os backups antigos dessa entrada até a confirmares. Vê [Anomalias](anomalies.md).
 
-Para ver o que a próxima execução apagaria de verdade, abre **Pré-visualizar** em **Definições, Destinos**. Lista **O que a próxima execução iria remover**, por repositório e por entrada, com os pontos de restauro nomeados. Não bloqueia nada e não muda nada.
+Um backup que contém menos do que devia nunca faz expirar os anteriores. É um backup que não lê nenhum ficheiro onde os anteriores tinham alguns, que falha uma pasta selecionada ou que não conseguiu ler alguns ficheiros. A sua execução termina com um aviso que diz o que falta e que os backups mais antigos foram mantidos, recebes a mesma mensagem nos teus canais de notificação, e nenhuma poda, na pasta própria da entrada ou nas suas cópias, toca nos backups antigos dessa entrada até chegar um backup completo. Um primeiro backup, e uma pasta selecionada que esteve sempre vazia, contam como completos.
+
+Para ver o que a próxima execução apagaria de verdade, abre **Pré-visualizar** em **Definições, Destinos**. Lista **O que a próxima execução iria remover** para a pasta própria da secção e para cada uma das suas cópias, por repositório e por entrada, com os pontos de restauro nomeados. Não bloqueia nada e não muda nada.
 
 ![Durante quanto tempo guardar com Equilibrado escolhido: os pontos mostram quais dos 40 backups de exemplo ficam.](assets/screenshots/storage/keep-dark.png#only-dark)
 ![Durante quanto tempo guardar com Equilibrado escolhido: os pontos mostram quais dos 40 backups de exemplo ficam.](assets/screenshots/storage/keep-light.png#only-light)
@@ -146,9 +152,9 @@ Para manter os containers mais tempo do que o resto neste destino, carrega em **
 Umas credenciais são a chave ou palavra-passe que o BombVault usa para um serviço S3 ou um rest-server. As credenciais formam uma só lista, o cartão **Credenciais** em **Definições, Destinos**, e cada linha diz que destinos as usam (**Usadas por**).
 
 - **Guardadas quando juntas um destino.** Adicionar destino guarda as chaves que escreves como credenciais. O destino seguinte no mesmo serviço pode escolhê-las em **Credenciais guardadas** em vez de **Novas chaves**, e uma alteração posterior aplica-se a todos os destinos que as usam.
-- **A predefinida.** Uma estrela marca as credenciais predefinidas. São usadas onde não se escolhe nenhuma, como um endereço escrito à mão, uma origem de recolha, ou uma recuperação numa instalação nova. **Tornar padrão** dá a estrela a outras.
+- **A predefinida.** Uma estrela marca as credenciais predefinidas. São usadas onde não se escolhe nenhuma, como um endereço escrito à mão ou uma recuperação numa instalação nova. Uma origem de recolha não as pede emprestadas. **Tornar padrão** dá a estrela a outras.
 - **Editar e Testar.** **Editar**, aqui ou no cartão **Credenciais** de um destino, abre uma só janela para as credenciais. **Testar** inicia sessão em todos os destinos que as usam com o que escreveste, antes de se guardar o que quer que seja. **Guardar** grava-as.
-- **Remover.** Umas credenciais só podem ser removidas quando nenhum destino ou origem de recolha as usa, e as predefinidas só saem como as últimas. A linha diz então o que ainda as usa.
+- **Remover.** Umas credenciais só podem ser removidas quando nenhum destino, origem de recolha ou repositório recebido as usa e nenhuns backups antigos precisam delas, e as predefinidas só saem como as últimas. Os backups antigos precisam delas quando uma pasta própria se mudou de um lugar que inicia sessão com elas e os deixou lá. O BombVault diz então que lugar é.
 - **Mudar a ligação de um destino** nunca reescreve credenciais que outros lugares partilham. O destino recebe antes credenciais próprias, e a janela diz de antemão que as suas credenciais são partilhadas. Para mudar as partilhadas em todo o lado, edita-as no cartão **Credenciais**.
 
 ![O cartão Credenciais: cada credencial guardada com o que a usa, e a estrela na predefinida.](assets/screenshots/storage/signins-dark.png#only-dark)
@@ -225,7 +231,7 @@ Uma pasta própria também pode ficar num destino que já tenhas, como um NAS, u
 1. Abre o destino que deve guardar a pasta própria e escolhe **Usar como pasta própria**, ou **Adicionar secções** no seu cartão **Pastas próprias**. Para mudar várias secções de uma vez, escolhe **Mover pastas próprias** ao lado de **Pastas próprias aqui** no cartão **Ligação** do destino Local.
 2. Escolhe as secções em **Secções** e o lugar em **Mover para**. **Outro lugar** aceita uma pasta neste anfitrião ou o endereço de um repositório remoto escrito à mão, com umas credenciais das tuas credenciais guardadas.
 3. Lê **O que acontece**. Para cada secção diz para onde vão os novos backups, se uma cópia que já está no novo lugar passa a ser a pasta própria, e que backups são copiados primeiro.
-4. **Copiar os backups já feitos** vem ligado por predefinição. Desligado, os backups antigos ficam onde estão e ainda se podem restaurar de lá.
+4. **Copiar os backups já feitos** vem ligado por predefinição. Desligado, os backups antigos ficam onde estão, mas a entrada deixa de os listar. **De uma pasta de backups antiga** na página Restauração continua a lê-los com o endereço da pasta e, para uma pasta remota, as suas credenciais.
 5. Escolhe **Mudar**. Quando o cartão **Durante quanto tempo guardar** do novo lugar guarda menos do que a regra atual da secção, o BombVault pergunta primeiro **Guardar menos?** Aí, **Manter os valores atuais** dessa secção **em Regras por secção** leva os valores de hoje, **Guardar mesmo assim** segue em frente e **Voltar** deixa tudo como estava. Quando os backups têm de ser copiados primeiro, o BombVault copia-os e depois muda a pasta própria. Quando já lá estão, verifica-os antes da mudança.
 
 Depois da mudança, os novos backups vão para a pasta própria mudada, também para uma secção que tinha o **Local** desligado e fazia backup diretamente para uma cópia. Uma cópia que já estava no novo lugar passa a ser a pasta própria, e a cópia para lá termina. Onde essa cópia guardava alguns backups mais tempo do que as regras de retenção da secção, a secção guarda o que qualquer das duas regras guarde, para que nenhum se perca.
@@ -252,7 +258,7 @@ O BombVault copia os backups em segundo plano e depois muda a pasta própria. A 
 
 O cartão **Ligação** do destino Local ainda aceita um endereço remoto para a pasta própria de uma secção: **Alterar** ao lado da secção abre uma janela com um interruptor **Local / Remoto**. **Remoto** aceita um endereço restic como `s3:...`, `rest:http://host:8000/repo`, `sftp:user@host:/repo` ou `rclone:remote:bucket/path`, e as **Definições de segurança do repositório primário remoto** acrescentam um teste de ligação, limites de envio e receção, proteção append-only com o mesmo teste de adulteração que um destino externo recebe, e um alarme de orçamento de crescimento.
 
-Um endereço destes inicia sessão com as credenciais predefinidas. Quando está numa pasta de um destino que tens, a página desse destino lista a secção em **Já está sob este destino**, e assumi-la dá-lhe as credenciais, a classe de armazenamento e a proteção contra eliminação do destino. Mudar a pasta própria para um destino com **Usar como pasta própria** é o caminho mais simples, porque a janela verifica os backups já feitos antes de mudar o que quer que seja.
+Um endereço destes inicia sessão com as credenciais predefinidas. Quando é exatamente a pasta que um destino que tens guarda para a secção, segue esse destino sozinho, incluindo o cartão do destino e o seu interruptor **Disponível**, a não ser que inicie sessão de outra forma ou seja append-only onde o destino não é. Uma regra que podava a pasta até então fica como regra própria da secção em **Regras por secção**. Quando está noutra pasta desse destino, a página desse destino lista a secção em **Já está sob este destino**, e assumi-la dá-lhe as credenciais, a classe de armazenamento e a proteção contra eliminação do destino. Mudar a pasta própria para um destino com **Usar como pasta própria** é o caminho mais simples, porque a janela verifica os backups já feitos antes de mudar o que quer que seja.
 
 ## Localização por entrada {#placement}
 
@@ -294,7 +300,12 @@ Uma réplica ZFS é uma cópia fora das instalações, mas não um backup com hi
 
 ### Depois de uma reconstrução {#after-a-rebuild}
 
-As escolhas de cópia vivem nas definições do próprio BombVault. Depois de uma reconstrução por **Descobrir backups** ou pelo assistente de emergência sem definições restauradas, desaparecem, e copiar tudo mandaria outra vez para o B2 as entradas que tinhas deixado de fora. As cópias externas de todas as secções reconstruídas ficam por isso em pausa. A visão geral di-lo, e o cartão **Destinos por secção** oferece **Confirmar padrão** com uma pré-visualização do que a próxima execução copia e os nomes nos backups que não têm entrada, que podes deixar de fora aí. Só a confirmação termina a pausa. Importar um ficheiro de definições traz de volta regras e predefinições, mas não a termina.
+As escolhas de cópia vivem nas definições do próprio BombVault. Depois de uma reconstrução por **Descobrir backups** ou pelo assistente de emergência sem definições restauradas, desaparecem, e copiar tudo mandaria outra vez para o B2 as entradas que tinhas deixado de fora. O mesmo acontece quando uma secção que nunca copiou para fora a partir desta base de dados encontra backups seus num destino, ou outros mais antigos na sua pasta própria, por exemplo depois de um destino ter sido adicionado por cima dos backups de uma instalação anterior com a mesma `APP_KEY`. As cópias externas dessa secção esperam então pela tua decisão.
+
+**Precisa de atenção** na visão geral e a página de cada destino para onde a secção copia perguntam se os backups são deste servidor. **Assumir como backups deste servidor** confirma a predefinição da secção, e as suas cópias voltam a correr a partir da passagem seguinte. **Verificar primeiro as regras** leva à linha da secção em **Destinos por secção**, onde vês para onde vai cada entrada e podes voltar a definir uma regra perdida na página da entrada. A cópia continua à espera até carregares em **Assumir como backups deste servidor**, que mostra primeiro o que a próxima execução copia e os nomes nos backups que não têm entrada, que podes deixar de fora. O backup mais recente de cada entrada que espera di-lo na sua execução, com uma ligação para a decisão, e sai uma notificação quando as notificações estão ligadas. Importar um ficheiro de definições traz de volta regras e predefinições, mas não toma a decisão por ti.
+
+![Precisa de atenção depois de uma reconstrução: os conjuntos de pastas encontraram backups de antes desta base de dados, e as suas cópias externas esperam pela decisão.](assets/screenshots/offsite/copy-decision-dark.png#only-dark)
+![Precisa de atenção depois de uma reconstrução: os conjuntos de pastas encontraram backups de antes desta base de dados, e as suas cópias externas esperam pela decisão.](assets/screenshots/offsite/copy-decision-light.png#only-light)
 
 ## Proteção contra eliminação (append-only) {#delete-protection-append-only}
 
@@ -371,7 +382,7 @@ A página **Instâncias** (um mosaico de definições que pode ser fixado na bar
 Cada cartão mostra o estado de proteção do membro e as suas funções como mosaicos. Uma função é algo que uma instância faz por outra:
 
 - **Recetor** guarda as cópias externas deste servidor num rest-server em modo append-only. Este servidor envia depois de cada backup e não pode eliminar nada lá, mesmo que alguém tome conta dele.
-- **Recolhedor** vai buscar os backups deste servidor no seu próprio agendamento. Este servidor não tem de estar acordado para isso.
+- **Recolhedor** vai buscar os backups deste servidor no seu próprio agendamento. Este servidor não tem de estar acordado para isso. A instância que recolhe precisa da **Recolha** ligada antes de poder permitir o pedido.
 - **Servidor ZFS** recebe as réplicas ZFS deste servidor. Cada entrada ZFS escolhe-o em **Réplica** nas suas definições.
 - **Guardião da chave** guarda uma cópia selada do kit de recuperação deste servidor. Vê [Guardião da chave](#key-keeper).
 
@@ -379,7 +390,7 @@ Ligar uma função envia um pedido, e nada começa até alguém na outra instân
 
 Os **Detalhes** num cartão abrem o resto: os repositórios recebidos e as origens de recolha desse membro, ofertas de armazenamento, monitorização, **Remover** e **Esquecer a chave**.
 
-Um membro pode oferecer o seu próprio armazenamento externo a outro membro pelo grupo. O outro administrador vê a oferta nos **Detalhes** do membro e aceita-a ou recusa-a. Aceitar cria umas credenciais guardadas e um destino normal, depois das mesmas verificações de um destino que escreves tu. Só viajam assim os dados de ligação, nunca dados de backup. **Verificar agora** pede a um membro que verifique o repositório de uma secção. Nada na página pode iniciar um backup, uma restauração ou eliminar o que quer que seja noutra máquina.
+Um membro pode oferecer o seu próprio armazenamento externo a outro membro pelo grupo. O outro administrador vê a oferta nos **Detalhes** do membro e aceita-a ou recusa-a. Aceitar cria umas credenciais guardadas e um destino normal, depois das mesmas verificações de um destino que escreves tu. O destino vem com a proteção contra eliminação ligada, já que a receita que a oferta mostra é um rest-server append-only, por isso **Durante quanto tempo guardar** não se aplica lá. Cada oferta tem credenciais e uma pasta próprias, por isso oferecer outra vez uma secção, ao mesmo membro ou a outro, deixa em paz as cópias do primeiro parceiro: junta a nova linha ao `.htpasswd` e mantém o servidor a correr. Só viajam assim os dados de ligação, nunca dados de backup. **Verificar agora** pede a um membro que verifique o repositório de uma secção. Nada na página pode iniciar um backup, uma restauração ou eliminar o que quer que seja noutra máquina.
 
 As instâncias que estão desligadas e os telemóveis com a aplicação fechada mantêm o seu cartão como **Inativa**, em cinzento, com quando foram vistos pela última vez, e ficam esbatidos na rede até os **Remover**es. Logo depois de este servidor arrancar, um cartão assim diz **A verificar** até o grupo voltar. **Remover** funciona num cartão destes sejam quais forem as partes ligadas, e termina também os pedidos em aberto do membro, os seus espaços de receção ZFS inativos e os seus pedidos de chave à espera. O cartão **Instâncias** na página de emparelhamento lista também esses membros como **Inativa**.
 
@@ -390,12 +401,16 @@ Na máquina que **recebe** cópias append-only de outro BombVault, os repositór
 - **Um inventário por origem**, para veres exatamente que containers, VMs e conjuntos de pastas chegaram.
 - **Última receção** por origem, para saberes quão recente é cada uma.
 - **Um `restic check` independente** executado no hardware recetor, para que a integridade seja verificada onde os dados estão de facto, e não só no emissor.
-- **Um interruptor de homem morto:** um alerta quando uma origem deixa de enviar dentro de uma janela que definires.
-- **Alertas de integridade:** um alerta quando uma verificação do lado recetor falha.
+- **Um interruptor de homem morto:** um alerta quando uma origem deixa de enviar dentro de uma janela que definires. Verifica uma vez por dia, às 09:15. Também recebes um alerta quando o repositório não pode ser lido de todo, diga o que disser o agendamento da verificação, e quando não chegou nada uma janela inteira depois de o adicionares. Um repositório que adiciones antes da primeira cópia do emissor está bem até lá.
+- **Alertas de integridade:** um alerta quando uma verificação do lado recetor falha. Uma verificação que não conseguiu abrir o repositório não diz nada sobre a integridade, por isso não deixa veredicto e tenta outra vez no dia seguinte à mesma hora.
+
+Um repositório noutro servidor precisa das credenciais desse servidor: guarda-as como [credenciais](#sign-ins) e escolhe-as em **Credenciais** na janela.
 
 O recetor é estritamente só de leitura. Nunca escreve no repositório recebido, por isso nunca pode quebrar a garantia append-only de que o emissor depende.
 
-Um recolhedor funciona ao contrário: com a **Recolha** ligada, uma instância lê os backups de outro membro no seu próprio agendamento, para um repositório próprio por cada origem, por isso nunca contam como backups desta máquina. As suas origens ficam também nos detalhes desse membro: a localização do repositório, que tipo de backup guarda e com que frequência recolher. A palavra-passe do restic vem pelo grupo, nunca a APP_KEY, e o outro lado não tem mais nada para configurar e não tem de estar a correr. A origem é apenas lida, e cada lado mantém as suas próprias credenciais. Uma origem `rclone:` é recusada, porque o rclone a alcançaria com os remotes desta instância.
+Um recolhedor funciona ao contrário: com a **Recolha** ligada, uma instância lê os backups de outro membro no seu próprio agendamento, para um repositório próprio por cada origem, por isso nunca contam como backups desta máquina. As suas origens ficam também nos detalhes desse membro: a localização do repositório, que tipo de backup guarda e com que frequência recolher. A palavra-passe do restic vem pelo grupo, nunca a APP_KEY, e o outro lado não tem mais nada para configurar e não tem de estar a correr. A origem é apenas lida, e cada lado mantém as suas próprias credenciais. Uma recolha corre no dia e à hora que o seu agendamento diz, e uma origem nova também espera por essa hora. **Recolher agora** não espera. Uma recolha perdida porque esta máquina estava desligada corre assim que ela volta. Uma que falhou tenta outra vez no dia seguinte à mesma hora, também num agendamento semanal, e uma recolha falhada aparece no registo de atividade e envia um alerta até uma recolha voltar a funcionar. Uma origem `rclone:` é recusada, porque o rclone a alcançaria com os remotes desta instância.
+
+Uma cópia recolhida só cresce. O BombVault acrescenta-lhe dados e não a poda nem a verifica, por isso o que a origem já esqueceu há muito fica aqui até apagares a pasta, e a página Destinos não a conta. Fica em `pulled/<source id>` dentro da pasta própria da secção, e quando essa pasta se muda, a cópia fica onde está e as recolhas seguintes continuam lá em vez de copiarem tudo outra vez. Se a apagares, a recolha seguinte recomeça na pasta própria que a secção tiver nessa altura.
 
 ### Servidor recetor {#receiving-server}
 
@@ -432,7 +447,7 @@ O que responde o teste de adulteração:
 | **não protegida** | A VAULT aceitou uma eliminação. Falta o `--append-only` ou foi removido. |
 | **inconclusivo** | Nenhum dos dois. Normalmente o URL não é o que o próprio restic usa, ou as credenciais mudaram. Nada é registado e nenhum alerta dispara. |
 
-**5. Vê o que chega, se quiseres.** Liga o **Recetor** em **Definições, Instâncias** na VAULT, abre os **Detalhes** da TOWER e junta o repositório recebido. A VAULT recebe a palavra-passe do restic da TOWER pelo grupo. Ninguém escreve uma chave.
+**5. Vê o que chega, se quiseres.** Liga o **Recetor** em **Definições, Instâncias** na VAULT, abre os **Detalhes** da TOWER e junta o repositório recebido: clica numa das localizações que a janela lista. A VAULT recebe a palavra-passe do restic da TOWER pelo grupo, e como a localização está no próprio servidor recetor da VAULT, ela lê a pasta diretamente. Ninguém escreve uma chave nem credenciais.
 
 **6. Torna-o mútuo.** Repete os passos no outro sentido: a VAULT pede à TOWER que seja o seu recetor. Cada máquina impõe então o append-only à outra, e nenhuma pode eliminar os backups da outra.
 
@@ -465,14 +480,14 @@ O servidor TOWER morreu com os seus discos. Tinha 23 containers e 2 VMs, e copio
 1. **Instala o BombVault** na máquina nova e dá-lhe uma `APP_KEY` nova, como em qualquer instalação nova. Configura a ligação das VMs em **Definições, Integrações, SSH do anfitrião** se quiseres as VMs de volta, porque uma restauração de VM precisa dela.
 2. **Inicia o assistente.** Em **Damos-te as boas-vindas ao BombVault**, escolhe **Restaurar a partir de um backup**. Na página Restauração, escolhe **Iniciar o assistente de emergência** em **Emergência**.
 3. **Acesso.** Escolhe **Carregar kit de recuperação** e larga o ficheiro. O BombVault experimenta a sua chave em todos os destinos e diz, por exemplo, **Kit de recuperação lido. A sua chave abre 0 de 2 destinos.** A pasta local diz **não encontrado**, já que o disco morreu, e o Backblaze B2 diz **faltam credenciais**.
-4. **Guardar credenciais.** O kit traz as credenciais dos seus destinos remotos. Carrega em **Guardar credenciais**, e os destinos são experimentados de novo, por isso o Backblaze B2 diz agora **legível**.
+4. **Guardar credenciais.** O kit traz as credenciais de todos os destinos. Carrega em **Guardar credenciais**, e os destinos são experimentados de novo, por isso o Backblaze B2 diz agora **legível**. Um kit escrito antes da 10.5 só contém as credenciais predefinidas. Onde um destino ainda diz **faltam credenciais**, introduz as suas credenciais em **Introduzir credenciais em falta** e carrega em **Tentar os destinos de novo**.
 5. **Adotar a chave.** Este servidor escreve agora os seus backups com a chave antiga, para que os novos backups encaixem nos antigos. Mantém a sua própria `APP_KEY` no template. **Anular a adoção** funciona até o primeiro backup ter corrido.
-6. **Definições.** Escolhe **Trazer de volta as definições**, que lê o auto-backup mais recente do B2. O BombVault reinicia-se para o aplicar, e o assistente continua sozinho. Os teus destinos, agendamentos e regras estão de volta, e continuas a entrar com a palavra-passe deste servidor. Escreve outra vez os segredos que o assistente lista, como as definições de notificações.
-7. **Seleção.** Põe **Onde estão os backups?** nas cópias externas, porque as locais foram abaixo com o servidor antigo. O BombVault lista os 23 containers e as 2 VMs com o instantâneo mais recente pré-selecionado, e podes escolher outro para qualquer um.
+6. **Definições.** O passo abre no lugar onde a chave encontrou o auto-backup, aqui o B2, com o seu endereço preenchido. Escolhe **Trazer de volta as definições**, que lê o auto-backup mais recente de lá. O BombVault reinicia-se para o aplicar, e o assistente continua sozinho. Os teus destinos, agendamentos e regras estão de volta, e continuas a entrar com a palavra-passe deste servidor. Escreve outra vez os segredos que o assistente lista, como as definições de notificações.
+7. **Seleção.** **Onde estão os backups?** abre nas cópias externas quando não resta nada local. O BombVault lê todos os destinos, para que um destino morto não esconda os outros, lista os 23 containers e as 2 VMs e restaura cada um a partir do destino que guarda o seu instantâneo mais recente.
 8. **Restauração.** Liga **Deixar parado depois**, o que é o mais seguro depois de uma perda total, e começa. **O que acontece** diz o que volta. A linha de resultado lê-se, por exemplo, **25 restaurados, 0 falhados. Inicia-os em Backups quando for preciso.**
 9. **Terminar.** Arranca primeiro as tuas bases de dados, depois as aplicações que as usam. Abre **Definições, Restauro** e descarrega um kit de recuperação novo, porque o antigo pertence à instalação anterior. Vê **Precisa de atenção** na visão geral, e corre **Fazer backup de tudo agora** quando tudo funcionar.
 
-Se o auto-backup também faltar, escolhe **Ignorar, não tenho Auto-backup**. Os destinos vêm então só do kit, configuras os agendamentos e as regras de novo, e as cópias externas ficam em pausa até confirmares as predefinições das secções, vê [Depois de uma reconstrução](#after-a-rebuild).
+Se o auto-backup também faltar, o passo abre em **Ignorar, não tenho Auto-backup** e di-lo. Os destinos vêm então só do kit, configuras os agendamentos e as regras de novo, e as cópias externas ficam à espera até assumires os backups delas como deste servidor, vê [Depois de uma reconstrução](#after-a-rebuild). A **Seleção** continua a listar o que as cópias externas guardam. Os conjuntos de pastas vão para uma pasta que escolhes. Os containers e as VMs voltam como ficheiros simples numa pasta em **Só os ficheiros podem voltar**, porque as suas definições vivem junto ao repositório local e no auto-backup, e uma cópia externa não guarda nenhum dos dois.
 
 !!! tip "Migração planeada ou desastre"
     O assistente de emergência restaura as definições do próprio BombVault a partir de um backup. Para uma mudança *planeada* para uma máquina nova, podes antes levar a tua configuração diretamente com o cartão **Exportar / importar configurações** (um ficheiro JSON portátil). Vê [Configuração](configuration.md#portable-settings-export-and-import).
@@ -480,6 +495,10 @@ Se o auto-backup também faltar, escolhe **Ignorar, não tenho Auto-backup**. Os
 ### De uma pasta de backups antiga {#restore-from-another-bombvault-repo}
 
 **De uma pasta de backups antiga**, em **Outras origens** na página Restauração, abre o repositório de uma instância BombVault *diferente* (uma partilha montada em `/mnt`, ou um endereço remoto) com o kit de recuperação dessa instância ou a sua `APP_KEY` escrita à mão, numa sessão única e só de leitura. Percorre os containers, VMs, conjuntos de pastas e conjuntos de dados ZFS guardados lá, escolhe um instantâneo e restaura-o, e o objeto restaurado passa a ser um container, VM ou conjunto de pastas local normal. Nunca se escreve nada no outro repositório, e as tuas definições de backup ficam intactas (a sessão vive na memória e expira sozinha). Mudar um container do servidor A para o servidor B não obriga a reapontar as tuas definições e a revertê-las depois. Esta janela é de uma só vez: abre uma sessão, restaura o que escolheres e esquece a outra instância. Se queres antes uma disposição permanente, em que esta máquina vai buscar os instantâneos de outra instância para o seu próprio repositório num agendamento, essa é a função **Recolhedor** na página Instâncias.
+
+### O que este servidor recolheu {#restore-what-was-fetched}
+
+Cada origem de que este servidor recolheu tem a sua própria linha **Obtido de** em **Outras origens** na página Restauração. Uma cópia recolhida está fechada com a chave do próprio servidor, não com a da origem, por isso não se pede nada: a chave da origem não a abre. Os conjuntos de pastas e os conjuntos de dados ZFS vão para uma pasta que escolhes. Os containers e as VMs voltam como ficheiros simples numa pasta, porque uma recolha traz os instantâneos e não as definições. Para os recriar, usa o kit de recuperação e o auto-backup da origem no assistente de emergência.
 
 Um container cuja rede não existe neste servidor, como uma rede `br0` do Unraid num anfitrião Docker simples, mostra um seletor de rede por baixo da sua linha. O BombVault cria-o na rede que escolheres, juntamente com as suas outras redes. O IP fixo e o endereço MAC pertenciam à rede antiga e são deixados cair, por isso a nova rede atribui-os.
 
@@ -532,7 +551,7 @@ Isto é HMAC-SHA256 sobre a string fixa `bombvault:restic-repo`, com a chave dos
 !!! warning "Para um repositório recebido, usa a chave da instância que ENVIA"
     Um repositório que chegou aqui por uma cópia externa foi criado pela máquina que o enviou, com a **sua** chave. Derivar da chave da máquina recetora produz uma palavra-passe que o restic rejeita, o que se lê exatamente como um repositório corrompido e não é. Este é o motivo habitual de o `restic check` num repositório recebido pedir uma palavra-passe vezes sem conta.
 
-Como as definições de recuperação vivem **dentro** de cada repositório (`<repo>/def`, `<repo>/vm-def`), uma pasta de repositório copiada é totalmente autónoma, por isso o kit mais o repositório é tudo o que uma restauração em hardware novo precisa.
+Como as definições de recuperação vivem **dentro** de cada repositório (`<repo>/def`, `<repo>/vm-def`), uma pasta de repositório copiada é totalmente autónoma, por isso o kit mais o repositório é tudo o que uma restauração em hardware novo precisa. Uma cópia externa e uma cópia recolhida guardam os instantâneos sem as definições: devolvem ficheiros, e um container ou uma VM é recriado a partir do auto-backup.
 
 ## Recuperar um despejo da base de dados {#database-dumps}
 

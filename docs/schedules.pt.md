@@ -27,7 +27,7 @@ O cartão **Semana** desenha todas as execuções planeadas de segunda a domingo
 
 O **Backup total** é o plano predefinido para tudo. **Quando os backups correm** define-o: uma passagem que copia cada secção por sua vez, containers, VMs, flash, pastas, conjuntos de dados ZFS e o auto-backup no fim. A linha por baixo diz que secções inclui. **Desativado** desliga-o, e então só corre o que tem um plano próprio.
 
-- **Recuperar backups perdidos após o arranque**: quando o servidor estava desligado a uma hora planeada, o BombVault faz esse backup cerca de dois minutos depois de arrancar.
+- **Recuperar backups perdidos após o arranque**: quando o servidor estava desligado a uma hora planeada, o BombVault faz esse backup cerca de dois minutos depois de arrancar. O plano próprio de uma entrada e um plano externo esperam pela sua próxima hora planeada, e o mesmo acontece com um plano que nunca teve êxito.
 - **Comandos antes e depois**: o **Comando antes do backup total** corre no servidor com `sh -c` antes de a passagem começar, por exemplo um script que pára um serviço. Se falhar, o backup total corre na mesma. O **Comando depois do backup total** corre uma vez depois de todas as secções terem sido tentadas, mesmo que uma tenha falhado, o que serve para um ping que confirma que o servidor inteiro está protegido. Os comandos para um só container estão na página dele.
 
 **Fazer backup de tudo agora** na página Backups inicia a mesma passagem à mão, sobre todas as secções ligadas.
@@ -58,7 +58,7 @@ O backup fica sob os mesmos caminhos e etiquetas de um feito com o container par
 
 ## Atualizações após o backup {#updates}
 
-- **Atualizar contêineres após um backup bem-sucedido** só transfere uma imagem mais recente depois de o backup anterior ter terminado, por isso existe sempre primeiro um ponto de restauro novo. Vem desligado por predefinição, e um só container pode ser configurado de outra forma na sua página em **Atualizar após um backup bem-sucedido**.
+- **Atualizar contêineres após um backup bem-sucedido** só transfere uma imagem mais recente depois de o backup anterior ter terminado, por isso existe sempre primeiro um ponto de restauro novo. Vem desligado por predefinição, e um só container pode ser configurado de outra forma na sua página em **Atualizar após um backup bem-sucedido**. Só o que definiste passa para a imagem nova: as variáveis, as etiquetas, o comando, o utilizador e o healthcheck que continuam iguais aos da imagem antiga seguem a nova. Se a imagem nova não puder ser criada ou arrancada, o container volta à imagem com que corria, a atualização aparece como falhada e o backup seguinte tenta outra vez. Um container que fique parado por causa disso é indicado na execução do backup e numa notificação.
 - **Remover a image antiga após uma atualização** elimina a imagem que o container deixou. Uma imagem de base que outros containers partilham nunca é eliminada.
 - **Atualizar o estado de atualizações do Unraid depois de atualizar um contentor** limpa o aviso de atualização do Unraid para esse container.
 

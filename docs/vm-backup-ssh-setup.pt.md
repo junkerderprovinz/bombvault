@@ -81,8 +81,25 @@ docker exec BombVault virsh -c "qemu+ssh://root@192.168.1.10:22/system?keyfile=/
 
 Cada VM tem um **Método** no cartão **VM** do seu separador Definições (abre a VM em **Backups**):
 
-- **Ordenado (encerramento)** é o predefinido. Desliga a VM, faz backup dos discos e volta a arrancá-la, por isso o backup é sempre consistente. Espera até dez minutos que o convidado se desligue e nunca o força a desligar. Um convidado que ainda esteja a correr depois disso fica em paz, e esse backup falha com o motivo.
-- **Instantâneo a quente** faz backup de uma VM em execução através de um instantâneo externo e de `blockcommit`. Precisa do agente convidado qemu na VM, para um instantâneo em repouso, e do disco em `/mnt/cache` ou `/mnt/diskX`, não em `/mnt/user`. Numa VM desligada, o a quente recorre sozinho ao ordenado, e quando o instantâneo não pode ser criado, recorre também.
+- **Ordenado (encerramento)** é o predefinido. Desliga a VM, faz backup dos discos e volta a arrancá-la, por isso o backup é sempre consistente. Espera até dez minutos que o convidado se desligue e nunca o força a desligar. Um convidado que ainda esteja a correr depois disso fica em paz, e esse backup falha com o motivo. Se o convidado se desligar dentro da hora seguinte, o BombVault volta a arrancá-lo. Se esse arranque falhar, a execução falhada di-lo.
+- **Instantâneo a quente** faz backup de uma VM em execução através de um instantâneo externo e de `blockcommit`. Precisa do disco em `/mnt/cache` ou `/mnt/diskX`, não em `/mnt/user`. Com o agente convidado qemu na VM, o instantâneo fica em repouso, e sem ele o instantâneo é consistente em caso de falha. Numa VM desligada, o a quente recorre sozinho ao ordenado. Quando o instantâneo não pode ser criado, esse backup falha e a VM continua a correr, porque uma VM que escolheste copiar a quente nunca é desligada para isso.
+
+## O que um backup deixa de fora {#left-out}
+
+Um backup pode ter êxito e mesmo assim não conter a VM inteira. A execução traz então uma nota em tom de aviso que indica o que falta:
+
+- **Discos que o BombVault não lê.** Um disco só de leitura, um `lun` e um disco `network` ou `volume` ficam de fora, e a nota indica cada um com o seu dispositivo de destino e o seu tipo. A definição no backup continua a listá-los. Um cdrom e uma disquete não são indicados. Um dispositivo de blocos simples que não seja um zvol ZFS faz antes o backup falhar.
+- **O estado de um TPM emulado.** Não tem caminho no XML do domínio. O Gestor de VMs do Unraid configura um TPM destes para uma VM com a BIOS **OVMF TPM**, por isso a nota também aparece no Unraid. Um convidado que guarde um segredo no seu TPM, como o BitLocker pode fazer, pode pedir a sua chave de recuperação depois de uma restauração que perca esse estado, por isso tem essa chave à mão.
+
+## Discos finos {#thin-disks}
+
+Uma restauração mantém fino um disco fino, quer substitua o disco quer escreva um novo: o restic escreve as sequências de zeros como buracos num ficheiro novo, e o BombVault devolve os blocos de zeros de um ficheiro substituído com `fallocate --dig-holes` depois de o escrever. Enquanto o restic substitui um ficheiro, esse ficheiro ocupa o seu tamanho total, se o pool tiver espaço para isso. Um sistema de ficheiros que não consiga abrir buracos mantém o disco no tamanho total, e o registo di-lo. A verificação de espaço continua a contar um disco novo pelo tamanho total.
+
+## Uma restauração que falha {#restore-fails}
+
+Uma restauração no lugar desliga a VM, escreve os discos e só substitui a definição e a NVRAM depois de os discos estarem escritos. Uma restauração que falha deixa a VM definida com a sua NVRAM. Se os discos não mudaram e a VM estava a correr, volta a correr. Se podem ter mudado, fica desligada, porque arrancar com um disco meio escrito escreveria por cima dele, e a execução di-lo. Restaurar outra vez o mesmo backup acaba o trabalho.
+
+Instantâneos registados no libvirt (o Gestor de VMs do Unraid não os cria assim) param uma restauração no lugar antes de a VM ser tocada, porque o libvirt não consegue remover uma VM que os tenha. Elimina-os primeiro.
 
 ## Só blocos alterados {#changed-blocks}
 
@@ -112,6 +129,7 @@ O BombVault faz backup de uma VM destas por inteiro:
 - **Um backup a quente mantém os instantâneos.** O **Instantâneo a quente** põe uma sobreposição temporária por cima enquanto lê o disco e junta-a de volta depois, só à imagem mesmo por baixo. A cadeia é a mesma depois do backup e antes dele. Uma VM sem instantâneos comporta-se como sempre.
 - **Uma restauração traz a cadeia de volta.** Uma restauração no lugar escreve cada ficheiro de volta onde estava e repõe a lista de instantâneos do Unraid, por isso o Gestor de VMs volta a listar os instantâneos. Uma restauração ao lado do original escreve os ficheiros na pasta da cópia e aponta os discos restaurados para os ficheiros restaurados, por isso a cópia nunca lê das imagens do original. A lista de instantâneos do Unraid só volta com uma restauração no lugar, porque nomeia os ficheiros onde estavam quando foram copiados. Sem ela a cópia arranca na mesma, e o Gestor de VMs apenas não lista instantâneos para ela.
 - **Só blocos alterados** lê o que o convidado vê, por isso a sua restauração volta como um só ficheiro qcow2 achatado, sem os instantâneos.
+- **Uma restauração traz de volta o disco do backup que escolhes.** Os instantâneos tirados ou juntados desde esse backup não mudam isso. Um backup de antes de um instantâneo define a VM sobre o ficheiro que contém, e um backup de antes de uma junção traz de volta a sua sobreposição e corre sobre ela. Os ficheiros mais recentes ficam onde estão, sem uso e sem alterações. Um backup que contém uma sobreposição mas não o ficheiro por baixo dela é recusado antes de a VM ser tocada. A definição da VM não lista nenhuma cadeia depois de uma restauração, por isso o libvirt lê a cadeia a partir dos ficheiros restaurados.
 
 ### Exemplo: uma VM com dois instantâneos {#example-unraid-snapshots}
 
@@ -199,10 +217,10 @@ Os discos de ficheiros, como o Unraid usa, não são afetados por nada disto.
 Uma VM pode ter um TPM virtual, de que o Secure Boot e os convidados Windows 11 precisam. O seu estado vive fora do disco e da NVRAM, por isso um backup só desses dois traria o convidado de volta com um TPM novo e vazio.
 
 - **Um TPM de passthrough**, um chip real passado ao convidado, nomeia o seu caminho no XML do domínio. O BombVault guarda o seu estado junto à NVRAM por SSH e escreve-o de volta antes do `virsh define`, em melhor esforço como a NVRAM: uma leitura ou escrita falhada fica registada e não faz o backup nem a restauração falhar.
-- **Um vTPM emulado**, do tipo que o TrueNAS configura para convidados Windows 11 e Secure Boot, não publica nenhum caminho de estado no XML do domínio. O BombVault comunica então "no TPM path found" em vez de adivinhar um caminho. Tem à mão a chave de recuperação desse convidado, como a sua chave BitLocker, antes de o restaurares.
+- **Um vTPM emulado**, do tipo que o TrueNAS configura para convidados Windows 11 e Secure Boot, não publica nenhum caminho de estado no XML do domínio, por isso o seu estado não é copiado. O BombVault não adivinha um caminho, e o backup termina com uma nota de que o estado do TPM da VM não está nele. Tem à mão a chave de recuperação desse convidado, como a sua chave BitLocker, antes de o restaurares.
 - **Não podes anexar tu próprio um TPM a uma VM do TrueNAS.** A API de dispositivos de VM do TrueNAS SCALE 25.10 só aceita `CDROM`, `DISPLAY`, `NIC`, `PCI`, `RAW`, `DISK` e `USB`, e recusa `TPM` como tipo desconhecido.
 
-O tratamento do TPM só foi testado com testes unitários e não correu contra um convidado TrueNAS real com um vTPM. Uma VM sem TPM, como no Unraid, copia e restaura-se exatamente como antes.
+O tratamento do TPM só foi testado com testes unitários e não correu contra um convidado TrueNAS real com um vTPM. Uma VM sem TPM copia e restaura-se exatamente como antes.
 
 A NVRAM é captada como de costume. O TrueNAS guarda-a por VM em `/var/db/system/vm/nvram/<id>_<name>_VARS.fd`, e o XML do domínio nomeia esse caminho.
 

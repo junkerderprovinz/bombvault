@@ -38,7 +38,7 @@ O backup de VMs comunica com o libvirt por SSH, nunca por uma montagem.
 
 ## Um instantâneo a quente de VM não correu {#a-live-vm-snapshot-did-not-run}
 
-Os instantâneos a quente precisam do agente convidado qemu instalado na VM e do disco em `/mnt/cache` (ou `/mnt/diskX`), não em `/mnt/user`. Numa VM desligada, o a quente recorre automaticamente ao ordenado. Um backup ordenado desliga a VM, faz backup dos discos e depois reinicia-a, por isso é sempre consistente. Espera até dez minutos que o convidado se desligue e nunca o força a desligar, para que um convidado Windows a instalar atualizações não seja cortado a meio. Um convidado que ainda esteja a correr depois disso fica em paz, e esse backup falha com o motivo.
+Os instantâneos a quente precisam do disco em `/mnt/cache` (ou `/mnt/diskX`), não em `/mnt/user`. Com o agente convidado qemu na VM, o instantâneo fica em repouso, e sem ele o instantâneo é consistente em caso de falha. Numa VM desligada, o a quente recorre automaticamente ao ordenado. Um backup ordenado desliga a VM, faz backup dos discos e depois reinicia-a, por isso é sempre consistente. Espera até dez minutos que o convidado se desligue e nunca o força a desligar, para que um convidado Windows a instalar atualizações não seja cortado a meio. Um convidado que ainda esteja a correr depois disso fica em paz, e esse backup falha com o motivo.
 
 ## Um backup falhou com "repository is already locked" {#a-backup-failed-with-repository-is-already-locked}
 
@@ -127,6 +127,10 @@ Uma anomalia crítica em aberto está a segurá-los: a origem da entrada está q
 
 A mesma causa: a poda deixa em paz os backups antigos de uma entrada com uma anomalia destas e indica a entrada na sua mensagem. Tudo o resto é podado como de costume.
 
+## Um backup falha com "on no mounted pool or share" {#no-mounted-pool}
+
+No Unraid, o `/mnt` vive na memória, por isso uma pasta lá sem nenhum pool montado por cima desaparece no reinício seguinte e fica escondida quando o pool volta. O BombVault recusa escrever lá um backup ou um ZIP do flash, também quando já está nessa pasta um repositório de uma escrita anterior. Monta o pool e corre o backup outra vez.
+
 ## A importação do histórico diz que um repositório não pôde ser lido {#history-import-says-a-repository-could-not-be-read}
 
 Depois da atualização, o BombVault lê uma vez o tamanho dos backups anteriores de cada repositório. Um repositório que não estava acessível nesse momento, como um destino externo em baixo ou uma partilha não montada, é contado no cartão **Anomalias** em **Definições, Verificação** e tentado de novo uma vez por dia. Entretanto, as suas entradas aprendem com os backups novos.
@@ -177,15 +181,15 @@ O destino tem instantâneos mais recentes do que o mais recente que partilha com
 
 O BombVault segue a cadeia de backing de cada disco e faz backup de todos os ficheiros dela. Uma cadeia que não se consegue seguir até ao fim faz o backup falhar em vez de deixar de fora parte do disco, e a mensagem nomeia o ficheiro. Verifica que o ficheiro existe abaixo de `/mnt` e que o instantâneo ainda está listado no Gestor de VMs. Um ficheiro fora do Host Data não pode ser lido de todo. Vê [VMs com instantâneos do Unraid](vm-backup-ssh-setup.md#unraid-snapshots).
 
-## As cópias externas estão em pausa depois de uma reconstrução {#copies-paused}
+## As cópias externas aguardam a tua decisão depois de uma reconstrução {#copies-paused}
 
-Depois de **Descobrir backups** ou do assistente de emergência sem definições restauradas, as cópias externas de todas as secções reconstruídas esperam, porque o BombVault já não sabe que entradas deixaste de fora. A visão geral di-lo. Carrega em **Confirmar padrão** em **Destinos por secção**, vê a pré-visualização e deixa de fora o que deve ficar de fora. Importar um ficheiro de definições não termina a pausa. Vê [Depois de uma reconstrução](offsite-recovery.md#after-a-rebuild).
+Depois de **Descobrir backups** ou do assistente de emergência sem definições restauradas, ou quando uma secção encontra backups seus de antes desta base de dados, as cópias externas dessa secção esperam, porque o BombVault já não sabe que entradas deixaste de fora. **Precisa de atenção** e a página do destino perguntam por isso. Carrega em **Assumir como backups deste servidor** para continuar, ou em **Verificar primeiro as regras** para veres as regras da secção antes disso. Importar um ficheiro de definições não toma a decisão por ti. Vê [Depois de uma reconstrução](offsite-recovery.md#after-a-rebuild).
 
 ## As notificações não chegam {#notifications-do-not-arrive}
 
 Começa por **Enviar teste** em **Definições, Notificações**. A linha por baixo do cartão diz o que aconteceu.
 
-- **Nada é enviado.** Verifica **Notificar**. Com **Nunca** nada sai, e com **Apenas em caso de falha** uma execução boa fica em silêncio. Com **Resumir execuções agendadas** ligado, uma execução agendada envia um resumo no fim.
+- **Nada é enviado.** Verifica **Notificar**. Com **Nunca** não sai nenhuma mensagem, só os pings de um URL do Healthchecks, e com **Apenas em caso de falha** uma execução boa fica em silêncio. Com **Resumir execuções agendadas** ligado, uma execução agendada envia um resumo no fim.
 - **Um endereço novo.** Depois de mudares o servidor do Matrix, do Gotify ou do e-mail, o campo pede outra vez o token ou a palavra-passe, e o novo endereço só fica guardado quando o escreves. O BombVault não envia o segredo antigo para um sítio novo.
 - **O Gotify** diz que o servidor recusou o token da aplicação: copia-o outra vez da aplicação no Gotify. O **URL do servidor** é o endereço base, sem `/message`.
 - **Webhook:** verifica se o **Formato do Webhook** se ajusta ao serviço. Um endereço do Discord precisa de **Discord**, e o ntfy precisa de **ntfy**.

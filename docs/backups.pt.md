@@ -9,10 +9,10 @@ Tudo o que o BombVault copia está numa só lista em **Backups**: containers, VM
 
 | Secção | O que é guardado |
 |---|---|
-| **Containers** | A pasta appdata mais a definição do container: imagem, variáveis, portas, etiquetas e volumes. O cartão **Pastas a copiar** no separador **Definições** do container marca exatamente as pastas que o backup cobre, com uma contagem em direto dos caminhos e uma lista do que deixaste de fora. Os dados que um container guarda fora do Host Data, por exemplo num ixVolume do TrueNAS, não são copiados, e a execução diz que pastas deixou de fora. |
+| **Containers** | A pasta appdata mais a definição do container: imagem, variáveis, portas, etiquetas e volumes. O cartão **Pastas a copiar** no separador **Definições** do container marca exatamente as pastas que o backup cobre, com uma contagem em direto dos caminhos e uma lista do que deixaste de fora. Os dados que um container guarda fora do Host Data, por exemplo num ixVolume do TrueNAS ou num projeto Compose em `/opt`, não são copiados, e a execução diz que pastas deixou de fora. A execução também indica uma pasta dentro do Host Data que neste momento não existe. Caminhos de sistema como `/etc/localtime` ou o socket do Docker não contam como dados. |
 | **VMs** | As imagens de disco, a definição XML e a NVRAM UEFI, com um encerramento ordenado ou um instantâneo a quente, por SSH. Vê [Backups de VMs](vm-backup-ssh-setup.md). |
 | **Flash** | Só no Unraid. Toda a flash USB (`/boot`): sistema, licença, configuração do array, partilhas, rede e configuração dos plugins. |
-| **Auto-backup** | O `/config` do próprio BombVault: a sua base de dados de definições, os inícios de sessão dos destinos de armazenamento e o par de chaves SSH do libvirt, captados com `VACUUM INTO` do SQLite para que a base de dados nunca seja copiada a meio de uma escrita. |
+| **Auto-backup** | O `/config` do próprio BombVault: a sua base de dados de definições, os inícios de sessão dos destinos de armazenamento, o par de chaves SSH do libvirt, a chave e as chaves de anfitrião fixadas dos servidores ZFS e os certificados, captados com `VACUUM INTO` do SQLite para que a base de dados nunca seja copiada a meio de uma escrita. |
 | **Pastas** | Qualquer pasta do servidor como conjunto de pastas, por exemplo uma partilha, os teus documentos ou uma fototeca, com padrões de exclusão opcionais. Os conjuntos de pastas têm agendamentos, retenção, cópias externas, verificações e testes de restauro como tudo o resto. |
 | **Conjuntos de dados ZFS** | Um conjunto de dados e todos os que estão por baixo dele, lidos a partir de um só instantâneo ZFS para que todos venham do mesmo instante, e guardados com o restic como uma pasta. Uma entrada ZFS pode também manter uma réplica exata ao bloco num segundo servidor ZFS. Vê [Conjuntos de dados ZFS](zfs-datasets.md). |
 
@@ -35,7 +35,7 @@ As entradas que já não estão instaladas mas ainda têm backups ficam à parte
 A ação principal da página flutua em baixo à direita: **Fazer backup de tudo agora** inicia uma execução sobre todas as secções ligadas. **Mais** guarda o resto:
 
 - **Selecionar** inicia uma seleção, vê abaixo.
-- **Descobrir backups** lê o que os destinos de armazenamento guardam e reconstrói entradas a partir daí, por exemplo depois de uma instalação nova. As cópias externas das secções reconstruídas ficam então em pausa até confirmares a predefinição delas, vê [Depois de uma reconstrução](offsite-recovery.md#after-a-rebuild).
+- **Descobrir backups** lê o que os destinos de armazenamento guardam e reconstrói entradas a partir daí, por exemplo depois de uma instalação nova. Um container sem dados próprios não tem instantâneo e volta a partir da definição espelhada junto ao repositório. As cópias externas das secções reconstruídas ficam então à espera até assumires os backups delas como deste servidor, vê [Depois de uma reconstrução](offsite-recovery.md#after-a-rebuild).
 - **Ligação ZFS a este servidor** abre o teste SSH da secção ZFS, vê [Conjuntos de dados ZFS](zfs-datasets.md#requirements).
 - **Replicar tudo agora**, com o mosaico ZFS escolhido, envia a réplica de todas as entradas ZFS.
 
@@ -98,7 +98,7 @@ Os cartões abaixo dependem do tipo de entrada:
 | Container | **Pastas a copiar** (que pastas mapeadas são copiadas, com **Ignorar pastas de cache (CACHEDIR.TAG)**), **Padrões de exclusão**, **Parar outros contentores**, **Comandos antes e depois**, **Base de dados**, **Quando a app está ocupada**, **Atualizar após um backup bem-sucedido**, **Instantâneo em vez de parar**, **Nomes anteriores** |
 | VM | **VM** com **Método** (**Ordenado (encerramento)** ou **Instantâneo a quente**) e **Só blocos alterados**, vê o [guia de backup de VMs](vm-backup-ssh-setup.md#per-vm-method) |
 | Conjunto de pastas | **Pasta** e **Padrões de exclusão** |
-| Unidade flash | **Exportação zip do flash**, que escreve cada backup do flash como um `.zip` simples para uma pasta à tua escolha |
+| Unidade flash | **Exportação zip do flash**, que escreve cada backup do flash como um `.zip` simples para uma pasta à tua escolha, num só passo, para que uma ferramenta de sincronização nunca veja meio ficheiro. Um backup do flash com menos do que devia ter mantém o último ZIP no lugar, e a execução da exportação avisa disso. |
 | Conjunto de dados ZFS | os conjuntos de dados filhos, os containers a parar e os comandos à volta do instantâneo, **Réplica** e **Testar o acesso aos instantâneos**, vê [Conjuntos de dados ZFS](zfs-datasets.md) |
 
 As definições guardam-se sozinhas à medida que as mudas.
@@ -119,7 +119,7 @@ As definições guardam-se sozinhas à medida que as mudas.
 
 ## Padrões de exclusão {#excludes}
 
-O cartão **Padrões de exclusão** aceita um padrão por linha. Escreve os caminhos como os vês dentro do container, por exemplo `/config/Library/Application Support/Plex Media Server/Cache`, ou um nome simples como `.git`, que corresponde a qualquer profundidade. Uma pré-visualização por baixo do campo mostra a que resolve cada linha, e avisa quando uma linha não corresponde a nada ou excluiria tudo. Uma linha com `/` ou `*`, ou uma que nomeie uma pasta inteira copiada, é ignorada, por isso uma exclusão nunca pode esvaziar um backup. Para deixar uma pasta inteira de fora, desmarca-a em **Pastas a copiar**.
+O cartão **Padrões de exclusão** aceita um padrão por linha. Escreve os caminhos como os vês dentro do container, por exemplo `/config/Library/Application Support/Plex Media Server/Cache`, ou um nome simples como `.git`, que corresponde a qualquer profundidade. Num conjunto de pastas, escreve o caminho como o anfitrião o conhece, por exemplo `/mnt/user/data/cache`. Uma pré-visualização por baixo do campo mostra a que resolve cada linha, e avisa quando uma linha não corresponde a nada ou excluiria tudo. Uma linha com `/` ou `*`, ou uma que nomeie uma pasta inteira copiada, é ignorada, por isso uma exclusão nunca pode esvaziar um backup. Para deixar uma pasta inteira de fora, desmarca-a em **Pastas a copiar**.
 
 Para imagens conhecidas como Plex, Jellyfin, Sonarr, Radarr, Immich e Nextcloud, o cartão oferece as pastas que a aplicação volta a encher sozinha, como caches, registos e miniaturas. Nada é excluído até carregares em **Excluir seleção**.
 
@@ -137,6 +137,8 @@ Um despejo falhado não faz o backup falhar. Aparece como uma execução falhada
 
 - Os **Comandos antes e depois** correm dentro do container com `sh -c`, por exemplo para gravar uma cache em disco. Um comando falhado antes do backup aborta-o. Um comando antes do backup que termine com o código 75 adia um backup agendado, vê abaixo.
 - **Parar outros contentores** nomeia containers a parar enquanto este é copiado, como a sua base de dados. Depois arrancam outra vez pela ordem do `depends_on` do Compose, e por predefinição cada um tem de se declarar saudável antes de o seguinte arrancar. A espera e o seu limite estão em **Reiniciar após o backup** no cartão **Ordem** em **Definições, Agendamento**.
+- Um container que partilha o espaço de nomes de rede, PID ou IPC de outro que é parado, através de `--net=container:` ou do `network_mode: service:` do Compose, para e arranca com ele mesmo que não esteja na lista, e arranca depois do container a que se junta. Um container reiniciado recebe uma rede nova, e um que ficasse a correr na rede antiga teria só o seu loopback. A lista em si fica como a definiste. Se um container destes não pôde ser parado, a execução diz que ele fica sem rede até ser reiniciado. O mesmo vale para o container do próprio BombVault, que nunca se para a si mesmo e não pode ser posto na lista.
+- Um container que não volta a correr depois é indicado na execução e numa notificação, também quando o próprio backup falhou.
 
 ## Quando a aplicação está ocupada {#app-busy}
 
@@ -177,7 +179,7 @@ Para uma verificação tua, faz o **Comando pré-backup** terminar com o código
 O restic continua a ser o motor, mas uma exportação dá-te uma cópia que não precisa nem do BombVault nem do restic.
 
 - **Exportar container** e **Exportar VM** em **Mais** na página de uma entrada escrevem uma cópia tal como está agora, junto ao repositório: as pastas copiadas do container mais o seu template Unraid, ou as imagens de disco da VM mais a sua definição, restauráveis com `virsh define`.
-- **Exportação** num instantâneo escreve um backup guardado na pasta de exportação do servidor, como tar, zip ou um repositório restic próprio, e pode levar um instantâneo ou todos.
+- **Exportação** num instantâneo escreve um backup guardado na pasta de exportação do servidor, como tar, zip ou um repositório restic próprio, e pode levar um instantâneo ou todos. Um backup do flash e um auto-backup contêm chaves, por isso exportar um deles precisa de uma palavra-passe de início de sessão e de um início de sessão na instância.
 
 As exportações são ficheiros simples por predefinição. **Cifrar exportações com age** em **Definições, Sistema** sela-as, o ZIP do flash incluído, para os destinatários que listares, cada um uma chave pública age ou uma chave pública SSH. Descifra-las mais tarde fora do servidor com a chave privada correspondente. Com a cifragem ligada e sem nenhum destinatário válido, uma exportação falha com um erro claro em vez de alguma vez escrever ficheiros simples.
 
