@@ -5,6 +5,7 @@ import { useT, type TranslationKey } from "../../lib/i18n";
 import { placementErrorText } from "../../lib/placementCodes";
 import { useProgress } from "../../lib/progress";
 import { useToast } from "../../lib/toast";
+import { restoreNotes } from "../../lib/runReason";
 import { useLocalName } from "../../lib/useLocalName";
 import { offsiteTargetLabel, useOffsiteTargets } from "../../lib/useOffsiteTargets";
 import { restoreBlockReason, useRestoreCheck } from "../../lib/useRestoreCheck";
@@ -62,7 +63,9 @@ export function StackWindow({
   const stack = stacks.find((s) => s.project === project) ?? stacks[0];
   const names = stack.members.map((m) => m.name);
   const restore = useStackRestore(stack.project, names);
-  const check = useRestoreCheck(step === "check" ? { kind: "stack", name: stack.project, source } : null);
+  const check = useRestoreCheck(
+    step === "check" ? { kind: "stack", name: stack.project, source, stackDirSource: folder === "local" ? "local" : undefined } : null
+  );
   const refusal = restoreBlockReason(check, t);
   const progress = useProgress();
   const local = useLocalName("containers");
@@ -121,6 +124,8 @@ export function StackWindow({
       setBusy(false);
     }
   }
+
+  const folderFailed = [...restore.outcomes.values()].map((run) => restoreNotes(run.error).folderFailed).find((reason) => reason !== undefined);
 
   let footer: ReactNode;
   if (step === "pick") {
@@ -233,6 +238,7 @@ export function StackWindow({
               const restoring = !!live && live.active && live.phase === "restore";
               const outcome = restore.outcomes.get(name);
               const ok = outcome?.status === "success";
+              const left = ok ? restoreNotes(outcome.error) : undefined;
               return (
                 <li key={name} className="flex min-h-11 items-center gap-3 border-t border-carbon-border py-2 first:border-t-0">
                   <span className={`h-2 w-2 flex-none rounded-pill ${ok ? "bg-statusOkSolid" : "bg-carbon-surface3"}`} />
@@ -243,7 +249,7 @@ export function StackWindow({
                     </span>
                   ) : ok ? (
                     <span className="text-sm text-carbon-textSub">
-                      {t(startInOrder ? "stack.memberStarted" : "stack.memberRestored")}
+                      {t(left?.stayedStopped ? "stack.memberStopped" : startInOrder ? "stack.memberStarted" : "stack.memberRestored")}
                     </span>
                   ) : (
                     outcome?.status === "failed" && <Badge tone="fail">{t("run.statusFailed")}</Badge>
@@ -252,6 +258,11 @@ export function StackWindow({
               );
             })}
           </ul>
+          {folderFailed !== undefined && (
+            <ListNote tone="warn">
+              <span className="min-w-0 wrap-break-word">{t("stack.folderFailed").replace("{reason}", () => folderFailed)}</span>
+            </ListNote>
+          )}
           {restore.finished ? (
             <ListNote tone="ok">{t("stack.restoreFinished")}</ListNote>
           ) : (

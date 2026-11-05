@@ -1212,6 +1212,8 @@ export interface RestoreCheckRequest {
   source?: string;
   paths?: string[];
   targetPath?: string;
+  /** Where a stack's project folder comes from, when not from source. */
+  stackDirSource?: string;
   zfs?: ZFSRestoreRequest;
   session?: string;
   domain?: string;
@@ -1272,6 +1274,11 @@ export interface RestorePlan {
   backupFirst?: BackupFirstPlan;
   /** The VM disks on ZFS volumes, which the restore writes whole. */
   zvols?: PlanZvol[];
+  /** A stack member that comes back without its data, since only database dumps
+   *  of it exist. */
+  dumpOnly?: boolean;
+  /** Folders the backup holds that the restore does not write. */
+  leftOut?: string[];
 }
 
 /** A zvol a VM restore writes whole. change is "changed" for one it
@@ -1437,11 +1444,12 @@ export function restoreContainerFiles(
   paths: string[],
   targetPath: string,
   confirm: boolean,
-  source?: string
+  source?: string,
+  backupFirst?: boolean
 ): Promise<RestoreFilesResponse> {
   return fetchKeyJSON(`/api/containers/${encodeURIComponent(name)}/restore-files${srcParam(source)}`, {
     method: "POST",
-    body: JSON.stringify({ snapshotId, paths, targetPath, confirm }),
+    body: JSON.stringify(backupFirst ? { snapshotId, paths, targetPath, confirm, backupFirst } : { snapshotId, paths, targetPath, confirm }),
   });
 }
 

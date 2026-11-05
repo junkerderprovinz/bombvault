@@ -436,6 +436,9 @@ func walkSeeds(t *testing.T) []uint64 {
 func TestRandomStorageStepsKeepTheLocationModelSound(t *testing.T) {
 	for _, seed := range walkSeeds(t) {
 		t.Run("seed"+strconv.FormatUint(seed, 10), func(t *testing.T) {
+			// Every walk has a store and folders of its own, and hundreds of
+			// them in a row take minutes.
+			t.Parallel()
 			w := newLocationWalk(t, seed)
 			for w.n = 0; w.n < 30; w.n++ {
 				w.step()

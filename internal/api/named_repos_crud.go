@@ -337,6 +337,7 @@ func (h *Handler) handleCreateNamedRepo(w http.ResponseWriter, r *http.Request) 
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
+	h.svc.locationAddedAt(saved.Repo)
 	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "repo": h.namedRepoViews([]store.OffsiteTarget{saved})[0]})
 }
 
@@ -430,6 +431,7 @@ func (h *Handler) handleUpdateNamedRepo(w http.ResponseWriter, r *http.Request) 
 			return
 		}
 		saved.Repo, saved.OffPremises = newLocation, mark
+		h.svc.locationAddedAt(newLocation)
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "repo": h.namedRepoViews([]store.OffsiteTarget{saved})[0]})
 }

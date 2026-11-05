@@ -11,7 +11,9 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"maps"
 	"os"
+	"reflect"
 	"regexp"
 	"slices"
 	"strings"
@@ -171,6 +173,9 @@ func (c *Client) Inspect(ctx context.Context, name string) (model.Inspect, error
 	if err != nil {
 		return model.Inspect{}, fmt.Errorf("dockercli: inspect: %w", err)
 	}
+	if !answersFor(name, resp) {
+		return model.Inspect{}, fmt.Errorf("dockercli: inspect: %w", noSuchContainer{name})
+	}
 	c.fillVolumeMountSources(ctx, name, resp.Mounts)
 	out := mapInspect(resp)
 	// Without the image the values stay as they are, which recreates the
@@ -185,6 +190,25 @@ func (c *Client) Inspect(ctx context.Context, name string) (model.Inspect, error
 	out.HostConfig.PidMode = c.namespaceByName(ctx, out.HostConfig.PidMode)
 	out.HostConfig.IpcMode = c.namespaceByName(ctx, out.HostConfig.IpcMode)
 	return out, nil
+}
+
+// FromNewImage returns the definition a container is recreated from when its
+// tag has moved to a newer image: only what the user set carries over, and what
+// came from the image it runs now follows the new one. Without that image the
+// definition stays as it is, which recreates the container as it ran.
+func (c *Client) FromNewImage(ctx context.Context, in model.Inspect) model.Inspect {
+	img, err := c.api.ImageInspect(ctx, in.Image)
+	if err != nil || img.Config == nil {
+		return in
+	}
+	own := imageDefaults{Env: img.Config.Env, Labels: img.Config.Labels, Cmd: img.Config.Cmd, User: img.Config.User}
+	if hc := img.Config.Healthcheck; hc != nil && len(hc.Test) > 0 {
+		own.Healthcheck = &model.Healthcheck{
+			Test: hc.Test, Interval: hc.Interval, Timeout: hc.Timeout, StartPeriod: hc.StartPeriod, Retries: hc.Retries,
+		}
+	}
+	withoutInherited(&in.Config, own)
+	return in
 }
 
 // namespaceByName turns "container:<id>" into "container:<name>". Docker
@@ -262,8 +286,13 @@ func (c *Client) Stop(ctx context.Context, name string, timeout time.Duration) e
 	if secs == 0 && timeout > 0 {
 		secs = 1
 	}
-	if resp, err := c.api.ContainerInspect(ctx, name); err == nil && resp.Config != nil {
-		secs = stopGrace(secs, resp.Config.StopTimeout)
+	if resp, err := c.api.ContainerInspect(ctx, name); err == nil {
+		if !answersFor(name, resp) {
+			return fmt.Errorf("dockercli: stop: %w", noSuchContainer{name})
+		}
+		if resp.Config != nil {
+			secs = stopGrace(secs, resp.Config.StopTimeout)
+		}
 	}
 	if err := c.api.ContainerStop(ctx, name, container.StopOptions{Timeout: &secs}); err != nil {
 		return fmt.Errorf("dockercli: stop: %w", err)
@@ -284,6 +313,9 @@ func stopGrace(secs int, own *int) int {
 
 // Start starts a container by name or ID.
 func (c *Client) Start(ctx context.Context, name string) error {
+	if err := c.refuseIDPrefixMatch(ctx, name); err != nil {
+		return fmt.Errorf("dockercli: start: %w", err)
+	}
 	if err := c.api.ContainerStart(ctx, name, container.StartOptions{}); err != nil {
 		return fmt.Errorf("dockercli: start: %w", err)
 	}
@@ -297,6 +329,9 @@ func (c *Client) Start(ctx context.Context, name string) error {
 // grace period is expressed in whole seconds, mirroring Stop.
 func (c *Client) Restart(ctx context.Context, name string, timeout time.Duration) error {
 	secs := int(timeout.Seconds())
+	if err := c.refuseIDPrefixMatch(ctx, name); err != nil {
+		return fmt.Errorf("dockercli: restart %q: %w", name, err)
+	}
 	if err := c.api.ContainerRestart(ctx, name, container.StopOptions{Timeout: &secs}); err != nil {
 		return fmt.Errorf("dockercli: restart %q: %w", name, err)
 	}
@@ -512,6 +547,9 @@ func statsSample(st container.StatsResponse, at time.Time) traffic.Sample {
 
 // Remove removes a container by name or ID.
 func (c *Client) Remove(ctx context.Context, name string) error {
+	if err := c.refuseIDPrefixMatch(ctx, name); err != nil {
+		return nil // already gone, like the answer below
+	}
 	if err := c.api.ContainerRemove(ctx, name, container.RemoveOptions{}); err != nil {
 		if isNoSuchContainer(err) {
 			return nil // already gone — a restore/recreate can proceed
@@ -524,6 +562,9 @@ func (c *Client) Remove(ctx context.Context, name string) error {
 // Signal sends signal, such as "SIGHUP", to the main process of a running
 // container.
 func (c *Client) Signal(ctx context.Context, name, signal string) error {
+	if err := c.refuseIDPrefixMatch(ctx, name); err != nil {
+		return fmt.Errorf("dockercli: signal: %w", err)
+	}
 	if err := c.api.ContainerKill(ctx, name, signal); err != nil {
 		return fmt.Errorf("dockercli: signal: %w", err)
 	}
@@ -656,7 +697,41 @@ func (c *Client) InspectName(ctx context.Context, name string) (string, error) {
 		}
 		return "", fmt.Errorf("dockercli: inspect-name: %w", err)
 	}
+	if !answersFor(name, resp) {
+		return "", nil
+	}
 	return normalizeName(resp.Name), nil
+}
+
+// shortIDLen is the shortest id reference BombVault passes: what docker ps shows.
+const shortIDLen = 12
+
+// answersFor reports whether Docker's answer is about the container ref names.
+// Docker falls back to an id prefix for a name no container has, so a removed
+// "db" would otherwise resolve to whichever container's id starts with db, and
+// that container would be backed up, stopped or removed in its place. A real id
+// reference is never as short as such a name.
+func answersFor(ref string, resp container.InspectResponse) bool {
+	if resp.ContainerJSONBase == nil {
+		return false
+	}
+	return normalizeName(resp.Name) == normalizeName(ref) || (len(ref) >= shortIDLen && strings.HasPrefix(resp.ID, ref))
+}
+
+// noSuchContainer is what answersFor turns an id prefix match into, the error
+// Docker gives for a name it does not know.
+type noSuchContainer struct{ name string }
+
+func (e noSuchContainer) Error() string { return "no such container: " + e.name }
+
+// refuseIDPrefixMatch fails with noSuchContainer when name only reaches a
+// container through its id. Any other answer is left to the call that follows.
+func (c *Client) refuseIDPrefixMatch(ctx context.Context, name string) error {
+	resp, err := c.api.ContainerInspect(ctx, name)
+	if err == nil && !answersFor(name, resp) {
+		return noSuchContainer{name}
+	}
+	return nil
 }
 
 // Self returns the name of the container this process runs in, or "" when it
@@ -827,6 +902,10 @@ func ownHostname(resp container.InspectResponse) (string, string) {
 type imageDefaults struct {
 	Entrypoint, Cmd        []string
 	WorkingDir, StopSignal string
+	Env                    []string
+	Labels                 map[string]string
+	User                   string
+	Healthcheck            *model.Healthcheck
 }
 
 // withoutImageDefaults clears what the container took over from its image
@@ -844,6 +923,31 @@ func withoutImageDefaults(cfg *model.Config, img imageDefaults) {
 	}
 	if cfg.StopSignal == img.StopSignal {
 		cfg.StopSignal = ""
+	}
+}
+
+// withoutInherited clears what the container took over from the image it runs,
+// which withoutImageDefaults keeps because the rest of BombVault reads it, such
+// as a database's variables. Docker copies the image's variables and labels
+// into the container, so one that still reads as in the image counts as the
+// image's. The command goes only when no entrypoint stays: next to one, Docker
+// would not fill it back in.
+func withoutInherited(cfg *model.Config, img imageDefaults) {
+	cfg.Env = slices.DeleteFunc(slices.Clone(cfg.Env), func(e string) bool { return slices.Contains(img.Env, e) })
+	labels := maps.Clone(cfg.Labels)
+	maps.DeleteFunc(labels, func(k, v string) bool {
+		own, ok := img.Labels[k]
+		return ok && own == v
+	})
+	cfg.Labels = labels
+	if len(cfg.Entrypoint) == 0 && slices.Equal(cfg.Cmd, img.Cmd) {
+		cfg.Cmd = nil
+	}
+	if cfg.User == img.User {
+		cfg.User = ""
+	}
+	if cfg.Healthcheck != nil && reflect.DeepEqual(cfg.Healthcheck, img.Healthcheck) {
+		cfg.Healthcheck = nil
 	}
 }
 
@@ -903,6 +1007,7 @@ func mapPrimaryNetwork(resp container.InspectResponse) model.NetworkEndpoint {
 func mapHostConfig(hc *container.HostConfig) model.HostConfig {
 	out := model.HostConfig{
 		Binds:          hc.Binds,
+		VolumesFrom:    hc.VolumesFrom,
 		CapAdd:         []string(hc.CapAdd),
 		CapDrop:        []string(hc.CapDrop),
 		Privileged:     hc.Privileged,
@@ -1086,6 +1191,7 @@ func buildCreateConfig(in model.Inspect) (*container.Config, *container.HostConf
 	hc := in.HostConfig
 	hostCfg := &container.HostConfig{
 		Binds:          hc.Binds,
+		VolumesFrom:    hc.VolumesFrom,
 		Privileged:     hc.Privileged,
 		ReadonlyRootfs: hc.ReadonlyRootfs,
 		SecurityOpt:    hc.SecurityOpt,

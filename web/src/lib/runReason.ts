@@ -92,6 +92,11 @@ export const RESTORED_WITHOUT_LINKS = "restored without links to containers that
  *  NoteContainersNotBack. */
 export const CONTAINERS_NOT_BACK = "some containers did not start again";
 
+/** The note of a backup that left containers running on the network of one it
+ *  stopped and started, followed by ": " and their names. Keep in step with
+ *  NoteNoNetworkUntilRestart. */
+export const NO_NETWORK_UNTIL_RESTART = "some containers have no network until they are restarted";
+
 /** The note of a container backup whose data folders sit outside Host Data,
  *  followed by ": " and their host paths. Keep in step with NoteDataOutsideHost. */
 export const DATA_OUTSIDE_HOST = "data folders outside Host Data were not backed up";
@@ -116,6 +121,23 @@ export const OLDER_BACKUPS_KEPT = "older backups were kept";
  *  followed by ": " and the folder. Keep in step with NoteStackFolderEmpty. */
 export const STACK_FOLDER_EMPTY = "the project folder of this stack holds no files and was not backed up";
 
+/** The note of a restore that left folders of the backup alone, followed by
+ *  ": " and the folders. Keep in step with NoteRestoreLeftOut. */
+export const RESTORE_LEFT_OUT = "folders in this backup were left out, because they hold files now and are no longer selected";
+
+/** The note on a member's restore when the project folder of its stack did not
+ *  come back, followed by ": " and the reason. Keep in step with
+ *  NoteStackFolderFailed. */
+export const STACK_FOLDER_FAILED = "the project folder of this stack did not come back, so the container was left stopped";
+
+/** The note on a stack member recreated without its data. Keep in step with
+ *  NoteRestoredWithoutData. */
+export const RESTORED_WITHOUT_DATA = "restored without its data, because only database dumps of it exist: start it and import a dump";
+
+/** The note on a restored stack member that stays stopped, followed by ": " and
+ *  why. Keep in step with NoteStackNotStarted. */
+export const STACK_NOT_STARTED = "restored and left stopped";
+
 /** The note of a VM backup that does not hold the state of the VM's TPM. Keep
  *  in step with NoteVMTPMLeftOut. */
 export const VM_TPM_LEFT_OUT = "the state of the VM's TPM is not in this backup";
@@ -137,11 +159,31 @@ export function isRuntimeRefusal(raw: string | null | undefined): boolean {
 }
 
 /** What a successful container restore left out, read from its notes, which
- *  it joins with "; ". */
-export function restoreNotes(raw: string | null | undefined): { withoutRuntime: boolean; unlinked: string[]; notBack: string[] } {
-  const out = { withoutRuntime: false, unlinked: [] as string[], notBack: [] as string[] };
+ *  it joins with "; ". folderFailed is the first part of restic's reason. */
+export function restoreNotes(raw: string | null | undefined): {
+  withoutRuntime: boolean;
+  unlinked: string[];
+  notBack: string[];
+  folderFailed?: string;
+  stayedStopped: boolean;
+  leftOut?: string;
+} {
+  const out = {
+    withoutRuntime: false,
+    unlinked: [] as string[],
+    notBack: [] as string[],
+    folderFailed: undefined as string | undefined,
+    stayedStopped: false,
+    leftOut: undefined as string | undefined,
+  };
   for (const note of (raw ?? "").split("; ")) {
     if (note === RESTORED_WITHOUT_RUNTIME) out.withoutRuntime = true;
+    else if (note.startsWith(RESTORE_LEFT_OUT + ": ")) out.leftOut = note;
+    else if (note === RESTORED_WITHOUT_DATA || note === STACK_NOT_STARTED || note.startsWith(STACK_NOT_STARTED + ": ")) out.stayedStopped = true;
+    else if (note === STACK_FOLDER_FAILED || note.startsWith(STACK_FOLDER_FAILED + ": ")) {
+      out.stayedStopped = true;
+      out.folderFailed = note.slice(STACK_FOLDER_FAILED.length + 2);
+    }
     else if (note.startsWith(RESTORED_WITHOUT_LINKS + ": ")) out.unlinked = note.slice(RESTORED_WITHOUT_LINKS.length + 2).split(", ");
     else if (note.startsWith(CONTAINERS_NOT_BACK + ": ")) out.notBack = note.slice(CONTAINERS_NOT_BACK.length + 2).split(", ");
   }
@@ -192,11 +234,18 @@ export const RUN_REASON_PREFIXES: Record<string, TranslationKey> = {
   [RESTORE_NO_RUNTIME]: "runReason.restoreNoRuntime",
   "restore did not finish: the container was created again, stopped, on partly restored data": "runReason.restoreHalfDone",
   "restore did not finish: the VM was left off on partly restored disks": "runReason.vmRestoreHalfDone",
+  "restore did not finish: the container was left stopped, because the picked files may be partly written": "runReason.restoreFilesHalfDone",
+  "restore failed: some files could not be written": "runReason.restoreFilesNotWritten",
+  [RESTORE_LEFT_OUT]: "runReason.restoreLeftOut",
+  [STACK_FOLDER_FAILED]: "runReason.stackFolderFailed",
+  [RESTORED_WITHOUT_DATA]: "runReason.restoredWithoutData",
+  [STACK_NOT_STARTED]: "runReason.stackNotStarted",
   [VM_TPM_LEFT_OUT]: "runReason.vmTpmLeftOut",
   [VM_DISKS_LEFT_OUT]: "runReason.vmDisksLeftOut",
   [RESTORED_WITHOUT_RUNTIME]: "runReason.restoredWithoutRuntime",
   [RESTORED_WITHOUT_LINKS]: "runReason.restoredWithoutLinks",
   [CONTAINERS_NOT_BACK]: "runReason.containersNotBack",
+  [NO_NETWORK_UNTIL_RESTART]: "runReason.noNetworkUntilRestart",
   "the pre-backup command says the app is busy": "runReason.deferredHook",
 };
 
@@ -266,10 +315,15 @@ const WARNING_NOTES = [
   DATA_OUTSIDE_HOST,
   FILES_UNREADABLE,
   CONTAINERS_NOT_BACK,
+  NO_NETWORK_UNTIL_RESTART,
   FOLDERS_MISSING,
   BACKUP_EMPTY,
   OLDER_BACKUPS_KEPT,
   STACK_FOLDER_EMPTY,
+  RESTORE_LEFT_OUT,
+  STACK_FOLDER_FAILED,
+  RESTORED_WITHOUT_DATA,
+  STACK_NOT_STARTED,
   VM_TPM_LEFT_OUT,
   VM_DISKS_LEFT_OUT,
 ];
@@ -280,7 +334,7 @@ const WARNING_NOTES = [
  * below; any other "; " belongs to the note before it.
  */
 export function backupNotes(raw: string): string[] {
-  const heads = [FILES_UNREADABLE, DATA_OUTSIDE_HOST, CONTAINERS_NOT_BACK, FOLDERS_MISSING, BACKUP_EMPTY, OLDER_BACKUPS_KEPT, STACK_FOLDER_EMPTY, VM_TPM_LEFT_OUT, VM_DISKS_LEFT_OUT];
+  const heads = [FILES_UNREADABLE, DATA_OUTSIDE_HOST, CONTAINERS_NOT_BACK, NO_NETWORK_UNTIL_RESTART, FOLDERS_MISSING, BACKUP_EMPTY, OLDER_BACKUPS_KEPT, STACK_FOLDER_EMPTY, VM_TPM_LEFT_OUT, VM_DISKS_LEFT_OUT];
   const notes: string[] = [];
   for (const part of raw.split("; ")) {
     const starts = part.startsWith("database dump ") || heads.some((h) => part === h || part.startsWith(h + ": "));

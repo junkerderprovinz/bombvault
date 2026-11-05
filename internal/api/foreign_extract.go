@@ -61,7 +61,7 @@ func (s *Service) prepareForeignExtract(ctx context.Context, sess foreignSession
 	case !explicitID && len(snaps) == 0:
 		return fileSetRestorePlan{}, fmt.Errorf("no backups found for %s", item)
 	case !explicitID:
-		snapshotID = snaps[len(snaps)-1].ID
+		snapshotID = newestToRestore(snaps).ID
 	}
 	plan := fileSetRestorePlan{
 		repo:       sess.repo,

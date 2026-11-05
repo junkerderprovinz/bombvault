@@ -441,6 +441,8 @@ type zfsFakeContainer struct {
 	running   bool
 	service   string
 	dependsOn string
+	// joins is the container whose network this one shares.
+	joins string
 	// startLeavesDown makes Start succeed while the container stays down, the
 	// way a container that crashes on start behaves.
 	startLeavesDown bool
@@ -524,10 +526,28 @@ func (d *zfsFakeDocker) Inspect(_ context.Context, ref string) (model.Inspect, e
 	}
 	d.mu.Lock()
 	defer d.mu.Unlock()
-	return model.Inspect{
+	in := model.Inspect{
 		ID: c.id, Name: "/" + name, Running: c.running,
 		Config: model.Config{Labels: labels},
-	}, nil
+	}
+	if c.joins != "" {
+		in.HostConfig.NetworkMode = "container:" + c.joins
+	}
+	return in, nil
+}
+
+func (d *zfsFakeDocker) List(context.Context) ([]dockercli.ContainerInfo, error) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	var infos []dockercli.ContainerInfo
+	for name, c := range d.containers {
+		state := "exited"
+		if c.running {
+			state = "running"
+		}
+		infos = append(infos, dockercli.ContainerInfo{ID: c.id, Name: name, State: state})
+	}
+	return infos, nil
 }
 
 func (d *zfsFakeDocker) Stop(ctx context.Context, ref string, _ time.Duration) error {

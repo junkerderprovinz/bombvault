@@ -80,8 +80,8 @@ func TestRestartOrdersByDependsOnWithoutWaitingWhenDisabled(t *testing.T) {
 	if db >= app || app >= web {
 		t.Fatalf("restart order must follow depends_on (db < app < web): %v", d.log)
 	}
-	if countOf(d.log, "health:db")+countOf(d.log, "health:app")+countOf(d.log, "health:web") != 0 {
-		t.Fatalf("health wait disabled must not poll health: %v", d.log)
+	if h := idxOf(d.log, "health:db"); h >= 0 && h < web {
+		t.Fatalf("health wait disabled must not poll health between the starts: %v", d.log)
 	}
 }
 
@@ -197,8 +197,8 @@ func TestRestartHealthInspectErrorDegrades(t *testing.T) {
 	if idxOf(d.log, "start:app") < 0 || idxOf(d.log, "start:db") < 0 {
 		t.Fatalf("an inspect error must not stop the restart: both must start: %v", d.log)
 	}
-	if countOf(d.log, "health:db") != 1 {
-		t.Fatalf("an inspect error must abandon the wait after one poll, got %d: %v", countOf(d.log, "health:db"), d.log)
+	if n := countOf(d.log[:idxOf(d.log, "start:app")], "health:db"); n != 1 {
+		t.Fatalf("an inspect error must abandon the wait after one poll, got %d: %v", n, d.log)
 	}
 }
 

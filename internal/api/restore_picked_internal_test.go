@@ -134,7 +134,7 @@ func TestPickedContainerFilesLandDirectlyInTheFolder(t *testing.T) {
 				t.Fatalf("the plan lists %v, want %v", planned, c.want)
 			}
 
-			if _, started, err := r.svc.StartRestoreFiles(context.Background(), "dockhand", "local", snap, picks, "temp/restores", true); err != nil || !started {
+			if _, started, err := r.svc.StartRestoreFiles(context.Background(), "dockhand", "local", snap, picks, "temp/restores", true, RestoreOptions{}); err != nil || !started {
 				t.Fatalf("StartRestoreFiles: started=%v err=%v", started, err)
 			}
 			r.wait(t)

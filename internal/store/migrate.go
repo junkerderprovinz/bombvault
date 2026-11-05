@@ -3639,6 +3639,12 @@ UPDATE zfs_datasets SET schedule_cadence = '' WHERE (SELECT per_item_schedules F
 );`,
 	},
 	{
+		version:          removalByUpdateMigration,
+		name:             "container_removal_by_update",
+		alreadySatisfied: columnPresent("container_restore_removals", "by_update"),
+		sql:              `ALTER TABLE container_restore_removals ADD COLUMN by_update INTEGER NOT NULL DEFAULT 0;`,
+	},
+	{
 		// A received repository on a server with a login needs that login, as a
 		// pull source does.
 		version:          receivedRepoSignInMigration,
@@ -3674,6 +3680,21 @@ WHERE last_check_ok = 0 AND (
 		name:             "pull_source_landing",
 		alreadySatisfied: columnPresent("pull_sources", "landing"),
 		sql:              `ALTER TABLE pull_sources ADD COLUMN landing TEXT NOT NULL DEFAULT '';`,
+	},
+	{
+		// A record older than its target, with no copy to that target that ever
+		// worked, is about a location removed before the target was added, and it
+		// keeps every copy from starting. A named repository has no such runs to
+		// tell by, and keeps its record.
+		version: staleEstablishedMigration,
+		name:    "established_repos_forget_earlier_locations",
+		sql: `DELETE FROM established_repos
+ WHERE repo NOT LIKE '/%'
+   AND EXISTS (SELECT 1 FROM offsite_targets t
+                WHERE t.repo = established_repos.repo
+                  AND t.role = 'offsite'
+                  AND t.created_at > established_repos.created_at
+                  AND NOT EXISTS (SELECT 1 FROM offsite_runs r WHERE r.offsite_target_id = t.id AND r.ok = 1));`,
 	},
 }
 
@@ -4254,6 +4275,10 @@ const hiddenZeroRuleMigration = 700
 // no row of their own.
 const locationKeepMigration = 720
 
+// removalByUpdateMigration tells a container an update removed from one a
+// restore removed.
+const removalByUpdateMigration = 760
+
 // receivedRepoSignInMigration numbers the saved sign-in of a received repository.
 const receivedRepoSignInMigration = 790
 
@@ -4266,6 +4291,10 @@ const receivedRepoUnreadVerdictMigration = 792
 
 // pullLandingMigration numbers the repository a pull source's snapshots lie in.
 const pullLandingMigration = 793
+
+// staleEstablishedMigration numbers the clean-up of records of repositories
+// that were at a location's address before the location was added.
+const staleEstablishedMigration = 800
 
 // oneLineColumns are the names and locations the recovery kit prints.
 var oneLineColumns = []struct {

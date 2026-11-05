@@ -68,6 +68,11 @@ type RestorePlan struct {
 	BackupFirst *BackupFirstPlan `json:"backupFirst,omitempty"`
 	// Zvols are the VM disks on ZFS volumes, which the restore writes whole.
 	Zvols []PlanZvol `json:"zvols,omitempty"`
+	// DumpOnly is a stack member that comes back without its data, since only
+	// database dumps of it exist.
+	DumpOnly bool `json:"dumpOnly,omitempty"`
+	// LeftOut are folders the backup holds that the restore does not write.
+	LeftOut []string `json:"leftOut,omitempty"`
 }
 
 // PlanZvol is a zvol a VM restore writes whole. Change is "changed" for a zvol
@@ -102,7 +107,7 @@ type SharedFolder struct {
 // grows. Directories are left out; restic reports one after its contents,
 // which is how they are recognised.
 func (s *Service) previewRestore(ctx context.Context, sc restoreScope) (RestorePlan, map[string]int64, error) {
-	plan := RestorePlan{InPlace: sc.inPlace, Files: []PlanFile{}}
+	plan := RestorePlan{InPlace: sc.inPlace, Files: []PlanFile{}, LeftOut: sc.leftOut}
 	need := map[string]int64{}
 	listed := map[string]int{}
 	add := func(hostPath, change string) {

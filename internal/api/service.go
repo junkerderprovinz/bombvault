@@ -6943,7 +6943,12 @@ func (s *Service) Backup(ctx context.Context, name string) (out backup.Summary, 
 	// carry WasRunning (mirroring the target's in.Running). A dependency we
 	// cannot inspect (e.g. removed) is logged and left untouched.
 	var deps []backup.StopContainer
+	self := s.selfContainerName(ctx)
 	for _, dep := range tg.StopContainers {
+		if dep == self {
+			log.Printf("api: backup: %q is BombVault itself, leaving it out of the stop list of %q", dep, name) //nolint:gosec // G706: %q-quoted
+			continue
+		}
 		di, dErr := s.inspectNamed(ctx, dep)
 		if dErr != nil {
 			log.Printf("api: backup: inspect dependency %q: %v (leaving as-is)", dep, dErr) //nolint:gosec // G706: dep is %q-quoted
@@ -6952,15 +6957,13 @@ func (s *Service) Backup(ctx context.Context, name string) (out backup.Summary, 
 		// Carry the dependency's compose identity so the restart-after-backup phase
 		// can bring the stopped set back up in depends_on order (dependencies first)
 		// and, when enabled, wait for each to be healthy before its dependents (#119).
-		deps = append(deps, backup.StopContainer{
-			Name:         dep,
-			ID:           di.ID,
-			WasRunning:   di.Running,
-			Service:      composeService(di.Config.Labels),
-			DependsOn:    parseDependsOn(di.Config.Labels),
-			BeforeTarget: startsBefore(in, dep, di),
-		})
+		sc := stopContainerOf(dep, di)
+		sc.WasRunning = di.Running
+		sc.BeforeTarget = startsBefore(in, dep, di)
+		deps = append(deps, sc)
 	}
+	deps, cutOff := s.withSharers(ctx, name, in, deps)
+	settleAroundTarget(name, deps)
 
 	// #119 follow-up: "update after successful backup" RECREATES the container
 	// (stop/remove/create) after the backup. If the stopped dependents were already
@@ -6970,9 +6973,9 @@ func (s *Service) Backup(ctx context.Context, name string) (out backup.Summary, 
 	// UpdateAfterBackup step so the recreate happens while the dependents are
 	// down. Only for a running, opted-in container; otherwise nil, so the
 	// dependents restart right after the backup.
-	var updateStep func() func()
+	var updateStep func() func() []string
 	if tg.UpdatesAfterBackup(settings.UpdateContainersAfterBackup) && in.Running && !isBeforeRestore(ctx) {
-		updateStep = func() func() { return s.checkUpdateAfterBackup(ctx, name, in, tg.ID) }
+		updateStep = func() func() []string { return s.checkUpdateAfterBackup(ctx, name, in, tg.ID) }
 	}
 
 	// A container on ZFS is held down only for a snapshot of its data. Without
@@ -7040,12 +7043,16 @@ func (s *Service) Backup(ctx context.Context, name string) (out backup.Summary, 
 		Busy:                 s.busyCheck(tg, in),
 		Regardless:           !waitsForApp(ctx) || isBeforeRestore(ctx) || backsUpRegardless(ctx),
 		StopContainers:       deps,
-		HealthWait:           settings.RestartHealthWait,
-		HealthTimeout:        time.Duration(settings.RestartHealthTimeoutSec) * time.Second,
-		UpdateAfterBackup:    updateStep,
-		Snapshot:             snapshot,
-		OnWindow:             func(w time.Duration) { window = &w },
-		Restarts:             containerRestarts{st: s.store},
+		CutOff:               cutOff,
+		OnNotBack: func(names []string) {
+			s.notifyContainersNotBack(ctx, fmt.Sprintf("the backup of %q", name), names)
+		},
+		HealthWait:        settings.RestartHealthWait,
+		HealthTimeout:     time.Duration(settings.RestartHealthTimeoutSec) * time.Second,
+		UpdateAfterBackup: updateStep,
+		Snapshot:          snapshot,
+		OnWindow:          func(w time.Duration) { window = &w },
+		Restarts:          containerRestarts{st: s.store},
 		// User-owned exclude patterns stay first; the selection-derived tail
 		// enforces the stored exclusion branches strictly below an included
 		// root on the argv (review finding WR-01, gap closure per the
@@ -7143,7 +7150,7 @@ func (s *Service) Backup(ctx context.Context, name string) (out backup.Summary, 
 // recorded as its own "update" run so it is visible in Run History.
 // Best-effort: a failure here never fails the backup, and the fresh snapshot
 // lets the user roll back a bad update.
-func (s *Service) checkUpdateAfterBackup(ctx context.Context, name string, in model.Inspect, targetID string) func() {
+func (s *Service) checkUpdateAfterBackup(ctx context.Context, name string, in model.Inspect, targetID string) func() []string {
 	ref := in.Config.Image
 	if ref == "" {
 		ref = in.Image
@@ -7192,12 +7199,13 @@ func (s *Service) checkUpdateAfterBackup(ctx context.Context, name string, in mo
 			log.Printf("api: update-after-backup: lift the hold of %q: %v", name, err) //nolint:gosec // G706: name is %q-quoted
 		}
 	}
-	return func() { s.applyUpdateAfterBackup(ctx, name, in, targetID, ref) }
+	return func() []string { return s.applyUpdateAfterBackup(ctx, name, in, targetID, ref) }
 }
 
 // applyUpdateAfterBackup recreates the container from the newer image the
-// check pulled, as its own "update" run.
-func (s *Service) applyUpdateAfterBackup(ctx context.Context, name string, in model.Inspect, targetID, ref string) {
+// check pulled, as its own "update" run, and returns the containers that do not
+// run afterwards.
+func (s *Service) applyUpdateAfterBackup(ctx context.Context, name string, in model.Inspect, targetID, ref string) []string {
 	// context.Background(), not ctx: an "update" run is a side effect of the
 	// container backup, not one of the five domain steps a "Backup Everything"
 	// pass groups (see runGroupKey's doc comment) — deliberately excluded here,
@@ -7208,14 +7216,20 @@ func (s *Service) applyUpdateAfterBackup(ctx context.Context, name string, in mo
 	runID, rErr := runsAdapter{st: s.store, ctx: context.Background()}.Start(targetID, "update")
 	if rErr != nil {
 		log.Printf("api: update-after-backup: start run for %q: %v", name, rErr) //nolint:gosec // G706: name is %q-quoted
-		return
+		return nil
 	}
-	notBack, err := s.recreateForUpdate(ctx, name, in)
+	// A cancel from here on would land between the remove and the create.
+	ctx = context.WithoutCancel(ctx)
+	notBack, err := s.recreateForUpdate(ctx, name, in, ref)
 	if err != nil {
-		_ = runsAdapter{st: s.store, ctx: context.Background()}.Finish(runID, "failed", backup.Summary{}, truncateRunErr(err))
+		reason := truncateRunErr(err)
+		if len(notBack) > 0 {
+			reason += "; " + store.NoteContainersNotBack + ": " + strings.Join(notBack, ", ")
+		}
+		_ = runsAdapter{st: s.store, ctx: context.Background()}.Finish(runID, "failed", backup.Summary{}, reason)
 		s.setUpdateCheck(name, "failed")
 		log.Printf("api: update-after-backup: recreate %q failed (backup is safe): %v", name, err) //nolint:gosec // G706: name is %q-quoted
-		return
+		return notBack
 	}
 	note := ""
 	if len(notBack) > 0 {
@@ -7258,33 +7272,86 @@ func (s *Service) applyUpdateAfterBackup(ctx context.Context, name string, in mo
 			}
 		}
 	}
+	return notBack
 }
 
 // recreateForUpdate stops, removes and recreates+starts the container from its
-// captured inspect — which, after the preceding Pull, resolves to the newer
-// image. Mirrors the restore recreate path minus the appdata restore (the data
-// is already current). The containers that share this one's namespaces are
-// recreated after it, since Docker binds them to its old ID; it returns those
-// that could not be.
-func (s *Service) recreateForUpdate(ctx context.Context, name string, in model.Inspect) ([]string, error) {
+// captured inspect, which after the preceding Pull resolves to the newer image.
+// Mirrors the restore recreate path minus the appdata restore (the data is
+// already current). The containers that share this one's namespaces are
+// recreated after it, since Docker binds them to its old ID. When the new image
+// does not come up, the container goes back to the old one. It returns the
+// containers that do not run afterwards.
+func (s *Service) recreateForUpdate(ctx context.Context, name string, in model.Inspect, ref string) ([]string, error) {
+	fresh := s.docker.FromNewImage(ctx, in)
+	s.markUpdateRemoval(name, fresh, in.ID)
 	if err := s.docker.Stop(ctx, name, 30*time.Second); err != nil {
 		_ = err // absent/already-stopped is fine; a real problem surfaces at Remove
 	}
 	if err := s.docker.Remove(ctx, name); err != nil {
-		return nil, fmt.Errorf("remove container: %w", err)
+		s.forgetRestoreRemoval(name)
+		err = fmt.Errorf("remove container: %w", err)
+		if startErr := s.docker.Start(ctx, name); startErr != nil {
+			log.Printf("api: update-after-backup: starting %q again: %v", name, startErr) //nolint:gosec // G706: name is %q-quoted
+			return []string{name}, err
+		}
+		return nil, fmt.Errorf("%w; it runs its previous image again", err)
+	}
+	if err := s.docker.CreateAndStart(ctx, fresh, true); err != nil {
+		return s.rollBackUpdate(ctx, name, in, ref, fmt.Errorf("recreate container: %w", err))
+	}
+	s.forgetRestoreRemoval(name)
+	return s.rejoinAfterUpdate(ctx, name, in.ID), nil
+}
+
+// rollBackUpdate creates the container again on the image it ran, after the
+// new one could not be created or started. A refused start leaves the new
+// container behind, and the tag has to point at the old image before the
+// container can be created from it. While the container is gone, the record of
+// its removal stays for the next boot.
+func (s *Service) rollBackUpdate(ctx context.Context, name string, in model.Inspect, ref string, cause error) ([]string, error) {
+	if err := s.docker.Remove(ctx, name); err != nil {
+		s.forgetRestoreRemoval(name)
+		return []string{name}, fmt.Errorf("%w; the new container could not be removed: %w", cause, err)
+	}
+	if err := s.docker.ImageTag(ctx, in.Image, ref); err != nil {
+		log.Printf("api: update-after-backup: point %s back at the image of %q: %v", ref, name, err) //nolint:gosec // G706: name is %q-quoted
 	}
 	if err := s.docker.CreateAndStart(ctx, in, true); err != nil {
-		return nil, fmt.Errorf("recreate container: %w", err)
+		if live, lErr := s.docker.InspectName(ctx, name); lErr == nil && live != "" {
+			s.forgetRestoreRemoval(name)
+		}
+		return []string{name}, fmt.Errorf("%w; the previous image did not start either: %w", cause, err)
 	}
+	s.forgetRestoreRemoval(name)
+	return s.rejoinAfterUpdate(ctx, name, in.ID), fmt.Errorf("%w; it runs its previous image again", cause)
+}
+
+// rejoinAfterUpdate moves the containers bound to the old ID onto the recreated
+// container and returns those it could not bring over.
+func (s *Service) rejoinAfterUpdate(ctx context.Context, name, oldID string) []string {
 	r, ok := s.docker.(backup.NamespaceRejoiner)
 	if !ok {
-		return nil, nil
+		return nil
 	}
-	notBack, err := r.RejoinNamespace(ctx, in.ID, name)
+	notBack, err := r.RejoinNamespace(ctx, oldID, name)
 	if err != nil {
 		log.Printf("api: update-after-backup: containers sharing a namespace with %q: %v", name, err) //nolint:gosec // G706: name is %q-quoted
 	}
-	return notBack, nil
+	return notBack
+}
+
+// markUpdateRemoval records the container an update is about to remove, so the
+// next boot creates it when the process dies before the update has. Failing to
+// record it costs only that.
+func (s *Service) markUpdateRemoval(name string, in model.Inspect, oldID string) {
+	def, err := json.Marshal(in)
+	if err == nil {
+		err = s.store.MarkRestoreRemoval(store.RestoreRemoval{Name: name, Definition: string(def), OldID: oldID, At: time.Now().Unix(), Update: true})
+	}
+	if err != nil {
+		log.Printf("api: update-after-backup: record the removal of %q: %v", name, err) //nolint:gosec // G706: name is %q-quoted
+	}
 }
 
 // reconcileUnraidUpdateStatus asks the platform to refresh its own cached
@@ -8828,7 +8895,12 @@ type containerRestorePlan struct {
 	// skippedPaths carries stored paths that had no mapping in the chosen
 	// snapshot (RESTORE-01): they are skipped individually — scrubbed log +
 	// orchestrator run-record note — never a global abort.
-	skippedPaths   []string
+	skippedPaths []string
+	// leftOut are the host paths of folders the snapshot holds that the restore
+	// does not write, see foldersBeyondSelection.
+	leftOut []string
+	// notes go onto the run of a restore that worked.
+	notes          []string
 	inspect        model.Inspect
 	templateXML    string
 	withoutRuntime bool
@@ -8974,7 +9046,7 @@ func (s *Service) prepareRestoreForTarget(ctx context.Context, ref repoRef, name
 			return containerRestorePlan{}, notInListing{snapshotID, "container"}
 		}
 	case len(snaps) > 0:
-		snapshotID = snaps[len(snaps)-1].ID
+		snapshotID = newestToRestore(snaps).ID
 	case tg.Definition != "" && len(tg.AppdataPaths) == 0:
 		recreateOnly = true
 	case tg.Definition != "":
@@ -8989,7 +9061,7 @@ func (s *Service) prepareRestoreForTarget(ctx context.Context, ref repoRef, name
 	var appdataForRestore []string
 	var restoreDirs []backup.RestoreDir
 	var bindRemap map[string]string
-	var planSkipped []string
+	var planSkipped, leftOut []string
 	var snapshotImage string
 	if recreateOnly {
 		appdataForRestore = nil
@@ -9016,7 +9088,8 @@ func (s *Service) prepareRestoreForTarget(ctx context.Context, ref repoRef, name
 		// orchestrator only ever receives a list it has checked.
 		chosen := chosenSnapshot(snaps, snapshotID)
 		snapshotImage = taggedImage(chosen.Tags)
-		mapped, skipped, narrowed := mapRestorePaths(tg.AppdataPaths, s.restoreRootsOf(*chosen))
+		recorded := s.restoreRootsOf(*chosen)
+		mapped, skipped, narrowed := mapRestorePaths(tg.AppdataPaths, recorded)
 		// A pass-2 result is a stored path that only an ANCESTOR of it was
 		// recorded for. That proves it lies under a backed-up root; it does NOT
 		// prove it is in the snapshot. The branch may have been carved out by a
@@ -9045,6 +9118,9 @@ func (s *Service) prepareRestoreForTarget(ctx context.Context, ref repoRef, name
 		if len(tg.AppdataPaths) > 0 && len(mapped) == 0 {
 			return containerRestorePlan{}, errors.New("nothing to restore for this item from this snapshot")
 		}
+		broughtBack, kept := s.foldersBeyondSelection(tg.AppdataPaths, recorded)
+		mapped = append(mapped, broughtBack...)
+		leftOut = kept
 		if len(skipped) > 0 {
 			// Per-path skip (D-14): an orphan stored path is never fatal. The
 			// reason is scrubbed (paths → [path] FIRST, house order) and the
@@ -9159,6 +9235,10 @@ func (s *Service) prepareRestoreForTarget(ctx context.Context, ref repoRef, name
 		xml = template.RewriteHostPaths(xml, bindRemap)
 	}
 
+	var notes []string
+	if len(leftOut) > 0 {
+		notes = append(notes, store.NoteRestoreLeftOut+": "+strings.Join(leftOut, ", "))
+	}
 	return containerRestorePlan{
 		repo:         ref.repo,
 		mode:         ref.mode,
@@ -9168,6 +9248,8 @@ func (s *Service) prepareRestoreForTarget(ctx context.Context, ref repoRef, name
 		appdataPaths: appdataForRestore,
 		restoreDirs:  restoreDirs,
 		skippedPaths: planSkipped,
+		leftOut:      leftOut,
+		notes:        notes,
 		inspect:      in,
 		templateXML:  xml,
 	}, nil
@@ -9216,6 +9298,7 @@ func (s *Service) executeRestore(ctx context.Context, name string, plan containe
 		AppdataPaths:      plan.appdataPaths, // restored per-path back to origin, snapshot-path form (nil = recreate-only)
 		RestoreDirs:       plan.restoreDirs,  // cross-pool remap (foreign restore); empty = in-place
 		SkippedPaths:      plan.skippedPaths, // RESTORE-01: unmapped stored paths → run-record note, never an abort
+		Notes:             plan.notes,
 		TemplateXML:       plan.templateXML,
 		FlashTemplatesDir: s.cfg.FlashTemplatesDir,
 		Inspect:           plan.inspect,
@@ -9228,6 +9311,9 @@ func (s *Service) executeRestore(ctx context.Context, name string, plan containe
 		Templates:         templatesAdapter{},
 		Runs:              runsAdapter{st: s.store, ctx: ctx},
 		Removals:          restoreRemovals{st: s.store},
+		OnNotBack: func(names []string) {
+			s.notifyContainersNotBack(ctx, fmt.Sprintf("the restore of %q", name), names)
+		},
 	})
 	if rerr == nil {
 		if leftImage != "" {
@@ -9407,7 +9493,7 @@ func (s *Service) StartRestore(ctx context.Context, name, snapshotID, source str
 				restored = ""
 			}
 			rerr = s.backupBeforeRestore(rctx, key, plan.targetID, restored, func(ctx context.Context) error {
-				return s.saveContainerState(ctx, name)
+				return s.saveContainerState(ctx, name, plan.appdataPaths)
 			})
 			if rerr == nil {
 				rerr = s.executeRestore(rctx, name, plan, opts.LeaveStopped)
@@ -10792,7 +10878,7 @@ func (s *Service) RestoreContainerFiles(ctx context.Context, name, source, snaps
 	if err != nil {
 		return "", err
 	}
-	if err := s.runRestoreFiles(ctx, plan); err != nil {
+	if _, err := s.restoreFilesWithContainerDown(ctx, name, plan); err != nil {
 		return "", err
 	}
 	return plan.resolved, nil
@@ -10882,6 +10968,12 @@ func (s *Service) prepareRestoreFiles(ctx context.Context, name, source, snapsho
 		if err := s.refuseLinkOutOfMount(cleaned); err != nil {
 			return filesRestorePlan{}, err
 		}
+		if err := s.guardInPlaceRestore(cleaned); err != nil {
+			return filesRestorePlan{}, err
+		}
+		if self := s.selfContainerName(ctx); self != "" && self == name {
+			return filesRestorePlan{}, destinationRefusal("BombVault cannot stop itself to write into its own folders. Restore into a folder instead")
+		}
 	}
 
 	settings, err := s.store.GetSettings()
@@ -10935,7 +11027,7 @@ func (s *Service) runRestoreFiles(ctx context.Context, plan filesRestorePlan) er
 //
 // Shares batchActive with backups and the other restores; returns
 // ("", false, nil) when one is already running.
-func (s *Service) StartRestoreFiles(ctx context.Context, name, source, snapshotID string, filePaths []string, targetSubPath string, confirm bool) (string, bool, error) {
+func (s *Service) StartRestoreFiles(ctx context.Context, name, source, snapshotID string, filePaths []string, targetSubPath string, confirm bool, opts RestoreOptions) (string, bool, error) {
 	if !s.batchActive.CompareAndSwap(false, true) {
 		return "", false, nil
 	}
@@ -10964,16 +11056,66 @@ func (s *Service) StartRestoreFiles(ctx context.Context, name, source, snapshotI
 		defer cancel()
 		s.registerCancel(rkey, cancel)
 		defer s.unregisterCancel(rkey)
+		if opts.BackupFirst && plan.resolved == "" {
+			if tg, tErr := s.store.GetTargetByContainer(name); tErr == nil {
+				err := s.backupBeforeRestore(rctx, rkey, tg.ID, plan.snapshotID, func(ctx context.Context) error {
+					return s.saveContainerState(ctx, name, plan.paths)
+				})
+				if err != nil {
+					log.Printf("api: restore files: %q failed: %v", name, err) //nolint:gosec // G706: name is %q-quoted
+					return
+				}
+			}
+		}
 		runID = s.beginRestoreRun(name)
 		pctx, startedAt := s.progBegin(rctx, rkey, "restore")
-		rerr := s.runRestoreFiles(pctx, plan)
+		notBack, rerr := s.restoreFilesWithContainerDown(pctx, name, plan)
 		s.progEnd(rkey, "restore", rerr == nil, startedAt)
-		s.finishRestoreRun(runID, plan.snapshotID, rerr)
+		if notBack {
+			s.finishRestoreRunWarn(runID, plan.snapshotID, store.NoteContainersNotBack+": "+name)
+		} else {
+			s.finishRestoreRun(runID, plan.snapshotID, rerr)
+		}
 		if rerr != nil {
 			log.Printf("api: restore files: %q failed: %v", name, rerr) //nolint:gosec // G706: name is %q-quoted
 		}
 	}()
 	return plan.resolved, true, nil
+}
+
+// restoreFilesWithContainerDown restores the picks of plan. In place a running
+// container is stopped first, because restic writing into its folder corrupts
+// what the app holds open, and started again afterwards. A restore that fails
+// leaves it stopped on what may be partly written, as a whole restore does, and
+// one that could not stop it has written nothing. notBack says the container did
+// not start again after the files arrived.
+func (s *Service) restoreFilesWithContainerDown(ctx context.Context, name string, plan filesRestorePlan) (notBack bool, err error) {
+	if plan.resolved != "" {
+		return false, s.runRestoreFiles(ctx, plan)
+	}
+	in, err := s.docker.Inspect(ctx, name)
+	switch {
+	case dockercli.IsNotFound(err):
+		return false, s.runRestoreFiles(ctx, plan)
+	case err != nil:
+		return false, fmt.Errorf("inspect %s: %w", name, err)
+	case !in.Running:
+		return false, s.runRestoreFiles(ctx, plan)
+	}
+	if err := s.docker.Stop(ctx, name, restoreStopTimeout); err != nil {
+		s.startStoppedAgain(ctx, []string{name})
+		return false, fmt.Errorf("nothing was restored: stop %s: %w", name, err)
+	}
+	if err := s.runRestoreFiles(ctx, plan); err != nil {
+		return false, fmt.Errorf("%s: %w", store.ReasonRestoreFilesHalfDone, err)
+	}
+	cctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), restoreRestartTimeout)
+	defer cancel()
+	if err := s.docker.Start(cctx, name); err != nil {
+		log.Printf("api: restore files: start %q again: %v", name, err) //nolint:gosec // G706: name is %q-quoted
+		return true, nil
+	}
+	return false, nil
 }
 
 // beginRestoreRun best-effort records the start of a service-layer restore run
@@ -11027,7 +11169,11 @@ func (s *Service) finishRestoreRun(runID, snapshotID string, rerr error) {
 		// A user cancel is an intentional, recorded outcome — NOT a failure: record
 		// it as "cancelled" and fire no failure alert (restores have no failure
 		// notifier today; the terminal progEnd already fired to clear the bar).
-		err = runsAdapter{st: s.store, ctx: context.Background()}.Finish(runID, "cancelled", backup.Summary{}, "cancelled by user")
+		reason := "cancelled by user"
+		if strings.HasPrefix(rerr.Error(), store.ReasonRestoreFilesHalfDone) {
+			reason = truncateRunErr(rerr)
+		}
+		err = runsAdapter{st: s.store, ctx: context.Background()}.Finish(runID, "cancelled", backup.Summary{}, reason)
 	default:
 		err = runsAdapter{st: s.store, ctx: context.Background()}.Finish(runID, "failed", backup.Summary{}, truncateRunErr(rerr))
 	}
@@ -14237,7 +14383,8 @@ func (s *Service) prepareRestoreVMForTarget(ctx context.Context, ref repoRef, na
 		if len(snaps) == 0 {
 			return vmRestorePlan{}, errors.New("no backups found for this vm")
 		}
-		snap = &snaps[len(snaps)-1]
+		newest := newestToRestore(snaps)
+		snap = &newest
 		snapshotID = snap.ID
 	}
 
@@ -15021,7 +15168,7 @@ func (s *Service) StartRestoreVM(ctx context.Context, name, snapshotID, source s
 			rerr = s.executeRestoreVMBeside(rctx, name, plan)
 		case opts.BackupFirst:
 			rerr = s.backupBeforeRestore(rctx, key, plan.targetID, plan.snapshotID, func(ctx context.Context) error {
-				return s.saveVMState(ctx, name)
+				return s.saveVMState(ctx, name, vmScope(plan, name).written)
 			})
 			if rerr == nil {
 				rerr = s.executeRestoreVM(rctx, name, plan, opts.LeaveStopped)
@@ -16162,6 +16309,9 @@ func (s *Service) prepareRestoreFileSet(ctx context.Context, id, snapshotID, sou
 		if err := s.refuseLinkOutOfMount([]string{src}); err != nil {
 			return fileSetRestorePlan{}, err
 		}
+		if err := s.guardInPlaceRestore([]string{src}); err != nil {
+			return fileSetRestorePlan{}, err
+		}
 		plan.inPlace = src
 	}
 
@@ -16522,6 +16672,9 @@ func (s *Service) buildFileSetFilesPlan(ctx context.Context, snaps []restic.Snap
 			}
 		}
 		if err := s.refuseLinkOutOfMount(cleaned); err != nil {
+			return fileSetFilesRestorePlan{}, err
+		}
+		if err := s.guardInPlaceRestore(cleaned); err != nil {
 			return fileSetFilesRestorePlan{}, err
 		}
 	}
@@ -17310,14 +17463,19 @@ func (s *Service) SetUpdateAfterBackup(_ context.Context, name string, updateAft
 }
 
 // SetStopContainers stores the other container names to stop during this
-// container's backup. Names are trimmed + de-duplicated; blanks are dropped.
-func (s *Service) SetStopContainers(_ context.Context, name string, stop []string) error {
+// container's backup. Names are trimmed + de-duplicated; blanks are dropped, and
+// BombVault's own container is refused.
+func (s *Service) SetStopContainers(ctx context.Context, name string, stop []string) error {
 	var clean []string
 	seen := map[string]bool{}
+	self := s.selfContainerName(ctx)
 	for _, c := range stop {
 		c = strings.TrimSpace(c)
 		if c == "" || c == name || seen[c] {
-			continue // skip blanks, self, and duplicates
+			continue // skip blanks, the target itself, and duplicates
+		}
+		if c == self {
+			return fmt.Errorf("%q is BombVault's own container, which a backup never stops", c)
 		}
 		seen[c] = true
 		clean = append(clean, c)

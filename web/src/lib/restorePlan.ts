@@ -2,7 +2,7 @@
 // backup it starts on, what of it can come back, and where that can go.
 
 import { anomalyShortLine } from "./anomalies";
-import type { AnomalyView, OffsiteDomain, Settings, TimelineRow } from "./api";
+import { BEFORE_RESTORE_TAG, type AnomalyView, type OffsiteDomain, type Settings, type TimelineRow } from "./api";
 import { entryKey, kindOfDomain, type EntryKind } from "./backupEntry";
 import { rowHolds, rowTime } from "./entry";
 import type { TranslationKey } from "./i18n";
@@ -72,10 +72,20 @@ export function defaultWhere(wheres: RestoreWhere[], hasOriginal: boolean): Rest
   return wheres.find((where) => where !== "replace") ?? wheres[0];
 }
 
-/** A backup can be taken first where a whole entry is replaced. ZFS keeps a
- *  snapshot of its own instead. */
+/** A backup can be taken first where a whole entry or a container's picked
+ *  files are replaced. ZFS keeps a snapshot of its own instead. */
 export function backsUpFirst(kind: EntryKind, what: RestoreWhat, where: RestoreWhere, hasOriginal: boolean): boolean {
-  return where === "replace" && what === "all" && hasOriginal && (kind === "container" || kind === "vm" || kind === "files");
+  if (where !== "replace" || !hasOriginal) return false;
+  if (what === "files") return kind === "container";
+  return what === "all" && (kind === "container" || kind === "vm" || kind === "files");
+}
+
+/** phoneRestoreFolder is where a paired phone restores an entry: a new folder
+ *  inside the restore folder, since the phone only fills folders that hold
+ *  nothing yet. */
+export function phoneRestoreFolder(restoreFolder: string, name: string, at: Date): string {
+  const stamp = at.toISOString().slice(0, 19).replace(/[-:]/g, "").replace("T", "-");
+  return `${restoreFolder}/${name.replace(/[^\w.-]+/g, "-")}-${stamp}`;
 }
 
 const SECTION: Record<EntryKind, OffsiteDomain> = {
@@ -114,9 +124,19 @@ export interface Recommendation {
   finding?: AnomalyView;
 }
 
+/** takenBeforeRestore is a backup BombVault took of what a restore was about
+ *  to replace, which every copy of it is tagged with. */
+export function takenBeforeRestore(row: TimelineRow): boolean {
+  return (
+    row.places.length > 0 &&
+    row.places.every((mark) => mark.tags.some((tag) => tag === BEFORE_RESTORE_TAG || tag.startsWith(`${BEFORE_RESTORE_TAG}:`)))
+  );
+}
+
 /**
- * recommend picks the backup to restore from: the newest one, unless an open
- * finding says data was lost. Then it is the last good backup the finding
+ * recommend picks the backup to restore from: the newest one that was not taken
+ * before a restore, which holds the state that restore set out to replace, unless
+ * an open finding says data was lost. Then it is the last good backup the finding
  * names, or the one before the oldest backup it was raised on.
  */
 export function recommend(rows: TimelineRow[], findings: AnomalyView[]): Recommendation {
@@ -142,7 +162,7 @@ export function recommend(rows: TimelineRow[], findings: AnomalyView[]): Recomme
     }
   });
   if (raisedBy && oldest + 1 < rows.length) return { index: oldest + 1, finding: raisedBy };
-  return { index: 0 };
+  return { index: Math.max(rows.findIndex((row) => !takenBeforeRestore(row)), 0) };
 }
 
 /** The row a restore link asks for, or the one closest to its time. */

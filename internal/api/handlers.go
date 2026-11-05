@@ -1584,7 +1584,15 @@ func (h *Handler) handleRestoreCheck(w http.ResponseWriter, r *http.Request) {
 		refusePaired(w)
 		return
 	}
+	for _, target := range []string{req.TargetPath, req.ZFS.TargetPath} {
+		if strings.TrimSpace(target) != "" && h.refusePairedFolder(w, r, checkSection(req.Kind), target) {
+			return
+		}
+	}
 	req.Source = normalizeSource(req.Source)
+	if req.StackDirSource != "" {
+		req.StackDirSource = normalizeSource(req.StackDirSource)
+	}
 	res, err := h.svc.CheckRestore(r.Context(), req)
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
@@ -1708,20 +1716,24 @@ func (h *Handler) handleRestoreFiles(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var body struct {
-		SnapshotID string   `json:"snapshotId"`
-		Paths      []string `json:"paths"`
-		TargetPath string   `json:"targetPath"`
-		Confirm    bool     `json:"confirm"`
+		SnapshotID  string   `json:"snapshotId"`
+		Paths       []string `json:"paths"`
+		TargetPath  string   `json:"targetPath"`
+		Confirm     bool     `json:"confirm"`
+		BackupFirst bool     `json:"backupFirst"`
 	}
 	if !decodeBody(w, r, &body) {
 		return
 	}
-	// An in-place selection has no backup first to undo it with.
+	// A paired phone restores picked files into a folder only.
 	if isPaired(r) && strings.TrimSpace(body.TargetPath) == "" {
 		refusePaired(w)
 		return
 	}
-	target, started, err := h.svc.StartRestoreFiles(r.Context(), name, sourceParam(r), body.SnapshotID, body.Paths, body.TargetPath, body.Confirm)
+	if strings.TrimSpace(body.TargetPath) != "" && h.refusePairedFolder(w, r, "containers", body.TargetPath) {
+		return
+	}
+	target, started, err := h.svc.StartRestoreFiles(r.Context(), name, sourceParam(r), body.SnapshotID, body.Paths, body.TargetPath, body.Confirm, RestoreOptions{BackupFirst: body.BackupFirst})
 	if err != nil {
 		restoreFail(w, sourceParam(r), err)
 		return
@@ -1752,6 +1764,9 @@ func (h *Handler) handleRestoreContainerTo(w http.ResponseWriter, r *http.Reques
 		TargetPath string `json:"targetPath"`
 	}
 	if !decodeBody(w, r, &body) {
+		return
+	}
+	if h.refusePairedFolder(w, r, "containers", body.TargetPath) {
 		return
 	}
 	target, started, err := h.svc.StartRestoreToPath(r.Context(), name, sourceParam(r), body.SnapshotID, body.TargetPath)
@@ -3458,6 +3473,13 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 	}
 	h.svc.syncAllPrimaryOffsiteTargets(s)
 	h.svc.LinkTypedOwnFolders()
+	for _, domain := range offsiteConfigDomains {
+		for _, field := range []func(string, store.Settings) string{domainPathRaw, offsiteRepoFromSettings} {
+			if loc := field(domain, s); !sameRepoLocation(strings.TrimSpace(loc), strings.TrimSpace(field(domain, existing))) {
+				h.svc.locationAddedAt(loc)
+			}
+		}
+	}
 	// The CPU cap reaches restic through the process environment of the NEXT
 	// child it starts ([558]), so applying it here takes effect without a
 	// restart — a backup already in flight keeps the value it began with.
@@ -6521,6 +6543,10 @@ func (h *Handler) handleBrowse(w http.ResponseWriter, r *http.Request) {
 	// mistyped value.
 	includeHidden := r.URL.Query().Get("hidden") == "1"
 
+	if h.refusePairedFolder(w, r, "", subpath) {
+		return
+	}
+
 	// Lexical containment check. An empty subpath lists the mount root itself —
 	// paths.Resolve requires a non-empty child (strict containment). Only the
 	// verdict is used here; Root.Open below does the actual resolution, so the
@@ -7168,6 +7194,9 @@ func (h *Handler) handleRestoreFileSet(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
+	if strings.TrimSpace(body.TargetPath) != "" && h.refusePairedFolder(w, r, "files", body.TargetPath) {
+		return
+	}
 	target, started, err := h.svc.StartRestoreFileSet(r.Context(), id, body.SnapshotID, sourceParam(r), body.TargetPath, body.Confirm, RestoreOptions{Beside: beside, BackupFirst: body.BackupFirst || isPaired(r)})
 	if err != nil {
 		restoreFail(w, sourceParam(r), err)
@@ -7223,6 +7252,9 @@ func (h *Handler) handleRestoreFileSetFiles(w http.ResponseWriter, r *http.Reque
 	}
 	if isPaired(r) && strings.TrimSpace(body.TargetPath) == "" {
 		refusePaired(w)
+		return
+	}
+	if strings.TrimSpace(body.TargetPath) != "" && h.refusePairedFolder(w, r, "files", body.TargetPath) {
 		return
 	}
 	target, started, err := h.svc.StartRestoreFileSetFiles(r.Context(), id, sourceParam(r), body.SnapshotID, body.Paths, body.TargetPath, body.Confirm)
