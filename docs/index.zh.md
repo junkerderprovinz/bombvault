@@ -23,7 +23,7 @@ BombVault 是一款自托管的 Web 应用，用于在 Unraid 和其他 Docker �
 | **容器** | Appdata 目录，加上容器定义（镜像、环境变量、端口、标签、卷）。 |
 | **虚拟机** | 虚拟机磁盘映像、XML 定义和 UEFI NVRAM，通过 SSH 备份（不挂载 libvirt）。 |
 | **闪存** | 整个 USB 闪存（`/boot`）：系统、许可证、阵列配置、共享、网络和插件配置。 |
-| **自我备份** | BombVault 自己的 `/config`：设置数据库、各存储位置的登录凭据和 libvirt SSH 密钥对。 |
+| **自我备份** | BombVault 自己的 `/config`：设置数据库、各存储位置的登录凭据、libvirt SSH 密钥对、ZFS 服务器的密钥和固定的主机密钥以及证书。 |
 | **文件夹** | 服务器上的任意文件夹，作为一个文件夹集，每个集可以设置排除模式。 |
 | **ZFS 数据集** | 一个数据集及其下的所有数据集，从一个 ZFS 快照读取，像文件夹一样保存。参见 [ZFS 数据集](zfs-datasets.md)。 |
 
@@ -102,4 +102,4 @@ Copyright (C) 2026 Junker der Provinz. BombVault 是自由软件，采用 **GNU 
 - **问题反馈：** [github.com/junkerderprovinz/bombvault/issues](https://github.com/junkerderprovinz/bombvault/issues)
 
 !!! warning "等同于主机 root 的控制权"
-    通过 Docker 套接字，BombVault 可以停止、删除和重新创建容器，并读写 appdata。做虚拟机备份时，它还会通过 SSH 登录主机来运行 `virsh`。任何能访问它的 Web 界面的人，实际上都拥有主机的 root 权限。请只在受信任、不对外暴露的网络上运行 BombVault，并在**设置、安全**中设置登录密码。恢复工具包、密钥托管和删除某个存储位置上的备份都需要密码。完整的安全模型参见[配置](configuration.md#security-model)。
+    通过 Docker 套接字，BombVault 可以停止、删除和重新创建容器，并读写 appdata。做虚拟机备份时，它还会通过 SSH 登录主机来运行 `virsh`。任何能访问它的 Web 界面的人，实际上都拥有主机的 root 权限。请只在受信任、不对外暴露的网络上运行 BombVault，并在**设置、安全**中设置登录密码。恢复工具包、密钥托管、闪存 ZIP、导出闪存备份或自我备份，以及删除某个存储位置上的备份，都需要密码。完整的安全模型参见[配置](configuration.md#security-model)。
