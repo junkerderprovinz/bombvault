@@ -9,20 +9,20 @@ BombVault kan give dig besked, når en sikkerhedskopiering mislykkes, når den l
 
 Kortet **Notifikationer** sætter reglerne for alle kanaler på én gang:
 
-- **Underret**: **Aldrig**, **Kun ved fejl** eller **Ved succes og fejl**, for alle kanalerne nedenfor.
+- **Underret**: **Aldrig**, **Kun ved fejl** eller **Ved succes og fejl**, for alle kanalerne nedenfor. En frisk installation starter på **Kun ved fejl**, så en kanal, du udfylder, siger til, når en sikkerhedskopiering går galt.
 - **Opsummer planlagte kørsler**: én besked pr. planlagt kørsel, for eksempel *42 af 45 lykkedes*, i stedet for én pr. container eller VM. En sikkerhedskopiering, du starter i hånden, sender stadig sin egen besked. En frosset gæst, en mislykket opbevaring eller et overskredet vækstbudget går ud med det samme, selv når opsummeringer er slået til.
 - **Giv besked ved containeropdatering**: én besked for hver container, som **Opdater containere efter en vellykket sikkerhedskopiering** har flyttet til et nyere image, så du kan se efter, at den stadig virker.
-- **Meld forsinkede sikkerhedskopier**: én gang om dagen kl. 09:00 tjekker BombVault, om en aktiveret sikkerhedskopiering er forsinket, altså ældre end dobbelt så lang tid som sin tidsplan, og sender én besked pr. tilfælde. Den næste vellykkede sikkerhedskopiering rydder den.
+- **Meld forsinkede sikkerhedskopier**: én gang om dagen kl. 09:00 tjekker BombVault, om en aktiveret sikkerhedskopiering er forsinket, altså ældre end dobbelt så lang tid som sin tidsplan, og sender én besked pr. tilfælde, der nævner den post, der er kommet bagud. Den næste vellykkede sikkerhedskopiering rydder den.
 - **Unraid-notifikationer**: sender til Unraids eget notifikationssystem, som kan videresende til Pushover, e-mail eller Discord. Det kører over SSH-forbindelsen fra **Indstillinger, Integrationer, Værts-SSH**, så den nøgle skal være godkendt. På TrueNAS og andre værter forbliver det slået fra.
-- **Ugentlig oversigt**: én opsummering om ugen med antal kørsler, nye sikkerhedskopidata, om off-site-kopierne er aktuelle, og de hyppigste fejl. Dens plan er en knap som alle andre planer, og **Fra** slår den fra. Se [Tidsplaner](schedules.md#plans).
+- **Ugentlig oversigt**: én opsummering om ugen med antal kørsler, nye sikkerhedskopidata, hvilke områder der er forsinkede, om off-site-kopierne er aktuelle, og de hyppigste fejl. Dens plan er en knap som alle andre planer, og **Fra** slår den fra. Se [Tidsplaner](schedules.md#plans).
 
 Hvilke afvigelser der sender en besked, indstiller du under **Indstillinger, Verificering**, se [Afvigelser](anomalies.md). En udskudt sikkerhedskopiering sender én besked, når den begynder at vente, og én, når ventetiden slutter, ikke én pr. forsøg.
 
-**Send test** nederst på kortet sender en testbesked gennem hver kanal, der er slået til, med værdierne, som de står i formularen.
+**Send test** nederst på kortet sender en testbesked gennem hver kanal, der er slået til, med værdierne, som de står i formularen, og nævner hver kanal, der fejlede. Et Healthchecks-tjek får en linje i sin log, og dets tilstand bliver, som den er.
 
 ## Kanaler {#channels}
 
-Hver kanal har sin egen kontakt på kortet **Kanaler**, og dens felter dukker op, når den er slået til. Hver kanal sender for sig selv med sin egen tidsgrænse, så en vært, der aldrig svarer, ikke holder de andre op, og en besked, ingen kanal tog imod, prøves igen.
+Hver kanal har sin egen kontakt på kortet **Kanaler**, og dens felter dukker op, når den er slået til. Hver kanal sender for sig selv med sin egen tidsgrænse, så en vært, der aldrig svarer, ikke holder de andre op. En advarsel om forsinkelse, budget eller en anomali, som ingen kanal tog imod, prøves igen, og det samme gør en ugentlig oversigt. Beskeden om en enkelt sikkerhedskopiering eller en opsummering sendes én gang.
 
 | Kanal | Felter | Bemærkninger |
 |---|---|---|
@@ -36,7 +36,9 @@ Hemmeligheder som Matrix-tokenet, Gotifys app-token og SMTP-adgangskoden gemmes 
 
 ## Healthchecks {#healthchecks}
 
-En tjeneste som [Healthchecks.io](https://healthchecks.io) slår alarm, når BombVault holder op med at tjekke ind. Indsæt tjekkets **Ping-URL**, og BombVault pinger den under hele forløbet af hver sikkerhedskopiering: ved start, derefter ved succes eller med `/fail`. Det sker, så snart en URL er sat, uanset hvad **Underret** siger, så tjekket forbliver grønt ved succes, selv når kun fejl giver besked.
+En tjeneste som [Healthchecks.io](https://healthchecks.io) slår alarm, når BombVault holder op med at tjekke ind. Indsæt tjekkets **Ping-URL**, og BombVault pinger den under hele forløbet af hver sikkerhedskopiering: ved start, derefter ved succes eller med `/fail`. Det sker, så snart en URL er sat, uanset hvad **Underret** siger, så tjekket forbliver grønt ved succes, selv når kun fejl giver besked. Et område uden et sted at sikkerhedskopiere til tæller som mislykket, så dets tjek bliver rødt i stedet for at høre om en succes.
+
+Områder på samme URL deler ét tjek. Er en sikkerhedskopiering af ét af dem mislykkedes, pinger de gode sikkerhedskopieringer af de andre også `/fail` og nævner det, så tjekket forbliver rødt, indtil den post har en god sikkerhedskopi igen, eller du kvitterer for fejlen under **Kræver opmærksomhed**.
 
 Et område kan pinge en adresse for sig selv: **Undtagelse** på kortet tilføjer en, og linjen siger **Alle andre områder pinger denne URL.**
 

@@ -81,8 +81,25 @@ docker exec BombVault virsh -c "qemu+ssh://root@192.168.1.10:22/system?keyfile=/
 
 Hver VM har en **Metode** på kortet **VM** på sin fane Indstillinger (åbn VM'en under **Sikkerhedskopier**):
 
-- **Pænt (nedlukning)** er standarden. Den lukker VM'en ned, sikkerhedskopierer diskene og starter den igen, så sikkerhedskopien altid er konsistent. Den venter op til ti minutter på, at gæsten lukker ned, og tvinger den aldrig fra. En gæst, der stadig kører efter det, lades i fred, og sikkerhedskopieringen mislykkes med årsagen.
-- **Live-snapshot** sikkerhedskopierer en kørende VM gennem et eksternt snapshot og `blockcommit`. Den kræver qemu-gæsteagenten i VM'en, for et stilnet snapshot, og disken på `/mnt/cache` eller `/mnt/diskX`, ikke `/mnt/user`. På en VM, der er slukket, falder Live af sig selv tilbage til Pænt, og det gør den også, når snapshottet ikke kan laves.
+- **Pænt (nedlukning)** er standarden. Den lukker VM'en ned, sikkerhedskopierer diskene og starter den igen, så sikkerhedskopien altid er konsistent. Den venter op til ti minutter på, at gæsten lukker ned, og tvinger den aldrig fra. En gæst, der stadig kører efter det, lades i fred, og sikkerhedskopieringen mislykkes med årsagen. Slukker gæsten inden for den næste time, starter BombVault den igen. Mislykkes den start, siger den mislykkede kørsel det.
+- **Live-snapshot** sikkerhedskopierer en kørende VM gennem et eksternt snapshot og `blockcommit`. Den kræver disken på `/mnt/cache` eller `/mnt/diskX`, ikke `/mnt/user`. Med qemu-gæsteagenten i VM'en er snapshottet stilnet, og uden den er det crash-konsistent. På en VM, der er slukket, falder Live af sig selv tilbage til Pænt. Når snapshottet ikke kan laves, mislykkes den sikkerhedskopiering, og VM'en bliver ved med at køre, da en VM, du har valgt at sikkerhedskopiere live, aldrig lukkes ned for det.
+
+## Det, en sikkerhedskopi udelader {#left-out}
+
+En sikkerhedskopi kan lykkes og alligevel ikke rumme hele VM'en. Kørslen får så en note i advarselsfarve, der nævner, hvad der mangler:
+
+- **Diske, BombVault ikke læser.** En skrivebeskyttet disk, en `lun` og en `network`- eller `volume`-disk udelades, og noten nævner hver af dem med målenhed og type. Definitionen i sikkerhedskopien oplister dem stadig. Et cd-rom-drev og et diskettedrev nævnes ikke. En almindelig blokenhed, der ikke er en ZFS-zvol, får i stedet sikkerhedskopieringen til at mislykkes.
+- **Tilstanden for en emuleret TPM.** Den har ingen sti i domæne-XML'en. Unraid VM Manager sætter sådan en TPM op til en VM med BIOS'en **OVMF TPM**, så noten vises også på Unraid. En gæst, der gemmer en hemmelighed i sin TPM, som BitLocker kan, kan bede om sin gendannelsesnøgle efter en gendannelse, der mister den tilstand, så hav den nøgle ved hånden.
+
+## Tynde diske {#thin-disks}
+
+En gendannelse holder en tynd disk tynd, uanset om den erstatter disken eller skriver en ny: restic skriver serier af nuller som huller i en ny fil, og BombVault frigiver nulblokkene i en erstattet fil med `fallocate --dig-holes`, når den er skrevet. Mens restic erstatter en fil, fylder den fil sin fulde størrelse, hvis poolen har pladsen. Et filsystem uden hole punching beholder disken i fuld størrelse, og loggen siger det. Pladstjekket regner stadig en ny disk med fuld størrelse.
+
+## En gendannelse, der mislykkes {#restore-fails}
+
+En gendannelse på stedet slukker VM'en, skriver diskene og erstatter først definitionen og NVRAM, når diskene er skrevet. En gendannelse, der mislykkes, lader VM'en være defineret med sin NVRAM. Er dens diske ikke ændret, og kørte den, kører den igen. Kan de være ændret, forbliver den slukket, da en opstart fra en halvt skrevet disk ville skrive oven i den, og kørslen siger det. Gendan den samme sikkerhedskopi igen for at gøre arbejdet færdigt.
+
+Snapshots registreret i libvirt, hvilket ikke er den måde, Unraid VM Manager laver dem på, stopper en gendannelse på stedet, før VM'en røres, fordi libvirt ikke kan fjerne en VM, der har dem. Slet dem først.
 
 ## Kun ændrede blokke {#changed-blocks}
 
@@ -112,6 +129,7 @@ BombVault sikkerhedskopierer sådan en VM fuldt ud:
 - **En live-sikkerhedskopi beholder snapshottene.** **Live-snapshot** lægger et midlertidigt overlay øverst, mens den læser disken, og fletter det tilbage bagefter, kun ind i det image, der ligger lige under. Kæden er den samme efter sikkerhedskopieringen som før. En VM uden snapshots opfører sig, som den altid har gjort.
 - **En gendannelse bringer kæden tilbage.** En gendannelse på stedet skriver hver fil tilbage, hvor den var, og lægger Unraids snapshotliste tilbage, så VM Manager igen viser snapshottene. En gendannelse ved siden af originalen skriver filerne i kopiens mappe og peger de gendannede diske på de gendannede filer, så kopien aldrig læser fra originalens images. Unraids snapshotliste kommer kun tilbage med en gendannelse på stedet, fordi den nævner filerne, hvor de blev sikkerhedskopieret. Uden den starter kopien på samme måde, og VM Manager viser blot ingen snapshots for den.
 - **Kun ændrede blokke** læser det, gæsten ser, så dens gendannelse kommer tilbage som én fladtrykt qcow2-fil uden snapshottene.
+- **En gendannelse bringer disken fra den sikkerhedskopi, du vælger, tilbage.** Snapshots, der er taget eller flettet siden den sikkerhedskopi, ændrer ikke på det. En sikkerhedskopi fra før et snapshot definerer VM'en på den fil, den rummer, og en sikkerhedskopi fra før en fletning bringer sit overlay tilbage og kører på det. Nyere filer bliver, hvor de er, ubrugte og uændrede. En sikkerhedskopi, der rummer et overlay, men ikke filen under det, afvises, før VM'en røres. VM'ens definition oplister ingen kæde efter en gendannelse, så libvirt læser kæden fra de gendannede filer.
 
 ### Eksempel: en VM med to snapshots {#example-unraid-snapshots}
 
@@ -199,10 +217,10 @@ Fildiske, som Unraid bruger, berøres ikke af noget af dette.
 En VM kan have en virtuel TPM, som Secure Boot og Windows 11-gæster har brug for. Dens tilstand ligger uden for disken og NVRAM, så en sikkerhedskopi af kun de to ville bringe en gæst tilbage med en ny, tom TPM.
 
 - **En gennemstillet TPM**, en rigtig chip sendt videre til gæsten, nævner sin sti i domæne-XML'en. BombVault gemmer dens tilstand ved siden af NVRAM over SSH og skriver den tilbage før `virsh define`, efter bedste evne som NVRAM: En læsning eller skrivning, der mislykkes, logges og får ikke sikkerhedskopieringen eller gendannelsen til at mislykkes.
-- **En emuleret vTPM**, den slags TrueNAS sætter op til Windows 11- og Secure Boot-gæster, udgiver ingen tilstandssti i domæne-XML'en. BombVault melder så "no TPM path found" i stedet for at gætte en sti. Hav sådan en gæsts gendannelsesnøgle, for eksempel dens BitLocker-nøgle, ved hånden, før du gendanner den.
+- **En emuleret vTPM**, den slags TrueNAS sætter op til Windows 11- og Secure Boot-gæster, udgiver ingen tilstandssti i domæne-XML'en, så dens tilstand sikkerhedskopieres ikke. BombVault gætter ikke en sti, og sikkerhedskopien slutter med en note om, at tilstanden af VM'ens TPM ikke er med i den. Hav sådan en gæsts gendannelsesnøgle, for eksempel dens BitLocker-nøgle, ved hånden, før du gendanner den.
 - **Du kan ikke selv sætte en TPM på en TrueNAS-VM.** TrueNAS SCALE 25.10's VM-enheds-API accepterer kun `CDROM`, `DISPLAY`, `NIC`, `PCI`, `RAW`, `DISK` og `USB` og afviser `TPM` som en ukendt type.
 
-TPM-håndteringen er kun enhedstestet og har ikke kørt mod en rigtig TrueNAS-gæst med en vTPM. En VM uden TPM, som på Unraid, sikkerhedskopieres og gendannes præcis som før.
+TPM-håndteringen er kun enhedstestet og har ikke kørt mod en rigtig TrueNAS-gæst med en vTPM. En VM uden TPM sikkerhedskopieres og gendannes præcis som før.
 
 NVRAM fanges som sædvanligt. TrueNAS gemmer den pr. VM i `/var/db/system/vm/nvram/<id>_<name>_VARS.fd`, og domæne-XML'en nævner den sti.
 

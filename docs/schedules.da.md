@@ -27,7 +27,7 @@ Kortet **Uge** tegner hver planlagt kørsel fra mandag til søndag, én linje pr
 
 Den **Fulde sikkerhedskopi** er standardplanen for alt. **Hvornår sikkerhedskopierne kører** sætter den: ét gennemløb, der sikkerhedskopierer hvert område efter tur, containere, VM'er, flash, mapper, ZFS-datasæt og til sidst auto-sikkerhedskopien. Linjen under siger, hvilke områder den omfatter. **Fra** slår den fra, og så kører kun det, der har en plan for sig selv.
 
-- **Indhent forpassede sikkerhedskopieringer efter start**: Når serveren var slukket på et planlagt tidspunkt, kører BombVault den sikkerhedskopiering omkring to minutter efter start.
+- **Indhent forpassede sikkerhedskopieringer efter start**: Når serveren var slukket på et planlagt tidspunkt, kører BombVault den sikkerhedskopiering omkring to minutter efter start. En posts egen plan og en off-site-plan venter på deres næste planlagte tidspunkt, og det gør en plan, der aldrig er lykkedes, også.
 - **Kommandoer før og efter**: **Kommando før den fulde sikkerhedskopi** kører på serveren med `sh -c`, før gennemløbet starter, for eksempel et script, der stopper en tjeneste. Mislykkes den, kører den fulde sikkerhedskopi alligevel. **Kommando efter den fulde sikkerhedskopi** kører én gang, efter at hvert område er prøvet, selv om et af dem mislykkedes, hvilket passer til en ping, der bekræfter, at hele serveren er beskyttet. Kommandoer til en enkelt container står på dens side.
 
 **Sikkerhedskopiér alt nu** på siden Sikkerhedskopier starter det samme gennemløb i hånden, over hvert aktiveret område.
@@ -58,7 +58,7 @@ Sikkerhedskopien havner under de samme stier og tags som en, der er taget med co
 
 ## Opdateringer efter sikkerhedskopien {#updates}
 
-- **Opdater containere efter en vellykket sikkerhedskopiering** henter et nyere image først, når sikkerhedskopieringen før er færdig, så der altid findes et frisk gendannelsespunkt først. Den er slået fra som standard, og en enkelt container kan indstilles anderledes på sin side under **Opdater efter en vellykket sikkerhedskopiering**.
+- **Opdater containere efter en vellykket sikkerhedskopiering** henter et nyere image først, når sikkerhedskopieringen før er færdig, så der altid findes et frisk gendannelsespunkt først. Den er slået fra som standard, og en enkelt container kan indstilles anderledes på sin side under **Opdater efter en vellykket sikkerhedskopiering**. Kun det, du har sat, følger med til det nye image: variabler, labels, kommandoen, brugeren og healthchecket, der stadig lyder som i det gamle image, følger det nye. Kan det nye image ikke oprettes eller startes, går containeren tilbage til det image, den kørte, opdateringen vises som mislykket, og den næste sikkerhedskopiering prøver igen. En container, der bliver nede af den grund, nævnes i sikkerhedskopieringens kørsel og i en notifikation.
 - **Fjern det gamle image efter en opdatering** sletter det image, containeren forlod. Et basisimage, som andre containere deler, slettes aldrig.
 - **Opdater Unraids opdateringsstatus efter opdatering af en container** rydder Unraids opdateringsbanner for den container.
 
