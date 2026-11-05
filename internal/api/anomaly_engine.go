@@ -1088,6 +1088,79 @@ func (e *anomalyEngine) HeldIdentityTags() (heldIdentityTags, error) {
 	return out, nil
 }
 
+// heldIdentityTags is every identity tag a pass has to leave alone: those a
+// finding is keeping, whatever the switches of anomaly detection say about the
+// rest, and those of items whose newest backup held less than it should.
+func (s *Service) heldIdentityTags() (heldIdentityTags, error) {
+	held, err := s.anomalies.HeldIdentityTags()
+	if err != nil {
+		return nil, err
+	}
+	targets, err := s.store.TargetsWithOlderBackupsKept()
+	if err != nil || len(targets) == 0 {
+		return held, err
+	}
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return nil, err
+	}
+	items, err := s.readAnomalyItems(settings)
+	if err != nil {
+		return nil, err
+	}
+	if held == nil {
+		held = heldIdentityTags{}
+	}
+	for id := range targets {
+		for _, tag := range s.itemIdentityTags(items[id]) {
+			held[tag] = struct{}{}
+		}
+	}
+	return held, nil
+}
+
+// itemIdentityTags is every tag the snapshots of an item can carry. A ZFS tree
+// ages under one tag per dataset.
+func (s *Service) itemIdentityTags(ref anomalyItemRef) []string {
+	switch ref.Domain {
+	case anomalyDomainContainer:
+		return s.containerIdentity(ref.Name).listTags()
+	case anomalyDomainVM:
+		return s.vmIdentity(ref.Name).listTags()
+	case "files":
+		return []string{"fileset:" + ref.Name}
+	case "flash", "config":
+		return []string{ref.Domain}
+	case zfsDomain:
+		members, err := s.store.ListZFSMembers(ref.TargetID)
+		if err != nil {
+			log.Printf("api: the datasets of %s could not be read, so their old backups are not held: %v", ref.Name, err)
+			return nil
+		}
+		tags := make([]string, 0, len(members))
+		for _, m := range members {
+			tags = append(tags, "zfs:"+m.Dataset)
+		}
+		return tags
+	}
+	return nil
+}
+
+// lastBackupSawLess reports whether the newest backup of the item a retention
+// pass is about held less than it should. The row of that backup says so, and
+// one that cannot be read keeps the old backups as well.
+func (s *Service) lastBackupSawLess(hold anomalyScope) bool {
+	if hold.Kind != anomalyScopeItem {
+		return false
+	}
+	last, err := s.store.LastSuccessfulBackup(hold.ID)
+	if err != nil {
+		log.Printf("api: could not read whether the last backup of %s was complete: %v", hold.ID, err) //nolint:gosec // G706: the id is the row's own
+		return true
+	}
+	return last != nil && strings.Contains(last.Error, store.NoteOlderBackupsKept)
+}
+
 // heldScopes are the series whose old backups a finding is keeping.
 type heldScopes map[anomalyScope]bool
 
@@ -1151,17 +1224,10 @@ func (s *Service) heldTagsOf(row store.Anomaly, items map[string]anomalyItemRef)
 	if row.ScopeKind != anomalyScopeItem {
 		return nil
 	}
-	switch ref.Domain {
-	case anomalyDomainContainer:
-		return s.containerIdentity(ref.Name).listTags()
-	case anomalyDomainVM:
-		return s.vmIdentity(ref.Name).listTags()
-	case "files":
-		return []string{"fileset:" + ref.Name}
-	case "flash", "config":
-		return []string{ref.Domain}
+	if ref.Domain == zfsDomain {
+		return nil
 	}
-	return nil
+	return s.itemIdentityTags(ref)
 }
 
 // errRetentionPaused is what the repository-wide pass returns instead of

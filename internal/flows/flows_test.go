@@ -34,31 +34,14 @@ type knownFailure struct {
 // knownFailures names the cells that fail today, as go test names them, with * for
 // one level of the name.
 var knownFailures = []knownFailure{
-	{"TestBulkRunPrunesByTheCardRule/*/typed-on-named", typedOnNamed, "want 2"},
-	{"TestKeepDaysFromTheCardReachTheJob/*/typed-on-named", typedOnNamed, "the Preview says the rule is on: false"},
-	{"TestBulkRunPrunesByTheRuleOfTheSection/*/typed-on-named", typedOnNamed, "want 1"},
-	{"TestPreviewNamesWhatThePruneRemoves/*/typed-on-named", typedOnNamed, "names nothing to remove"},
-	{"TestRuleSetBeforeTheUpdateStillDecides/typed-on-named", typedOnNamed, "want 2"},
-	{"TestFlashAndSelfBackupPruneByTheirRule/*/*/typed-on-named", typedOnNamed, "want 1"},
-	{"TestUseAsOwnFolderGivesATypedPathTheCardOfItsLocation/*/typed-on-named", "Use as own folder takes a typed path on the location's folder as there already and links nothing", "want 1"},
-
-	{"TestEmptiedSelectionKeepsTheGoodBackups", "an emptied selected folder gives green empty backups that age out the good ones", "no backup holds"},
-	{"TestMissingSelectedFolderKeepsTheCompleteBackup", "a selected folder that is gone gives a green backup that ages out the complete one", "no backup holds"},
-	{"TestEmptyFlashKeepsTheGoodZipAndBackups", "an emptied flash folder replaces the ZIP and ages out the good backups", "flash-latest.zip holds no files"},
 	{"TestZipExportWithoutARecipientSaysSo", "with export encryption on and no recipient the ZIP stops without a word", "no export run"},
-	{"TestSwitchedOffLocationTakesNoBackups", "a location switched off still takes own-folder backups and prunes them", "while it is switched off"},
 	{"TestPreviewOfADirectRepositoryKnowsItsRule", "the Preview of a section that writes straight to a location finds no backups", "no backups"},
 	{"TestStatusKnowsACopyPrunes", "the status says no prune rule is set while a copy prunes by its card", "pruneStrategySet"},
 	{"TestCopyThatNeverRanDoesNotReadOk", "an off-site copy that never ran reads ok", "reads ok"},
-	{"TestOwnPlanSetWhileSwitchedOffIsScheduled", "an own plan set while the entry was off gets no cron entry", "not on the schedule"},
-	{"TestSwitchedOffSectionSchedulesNothing", "a switched-off section keeps running entries with an own plan", "still on the schedule"},
-	{"TestNowhereToBackUpIsNoSuccess", "a full backup of a section with nowhere to go reports success", "recorded as success"},
 	{"TestOwnWeeklyPlanIsNotOverdueByTheSectionPlan", "the section's plan makes an entry on its own weekly plan read overdue", "overdue"},
 	{"TestNewPlanIsNotOverdueAtOnce", "a plan set on an older database reads overdue at once", "overdue"},
 	{"TestSettingsRestoreThatRestoredNothingFails", "a self-backup from another data folder restores nothing and reports success", "recorded as success"},
 }
-
-const typedOnNamed = "a location's card does not reach an own folder typed on its folder"
 
 // folderSets are the two sets every flow backs up.
 type folderSets struct {

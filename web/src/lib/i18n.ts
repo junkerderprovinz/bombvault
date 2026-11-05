@@ -1475,6 +1475,11 @@ export const en = {
   "runReason.dbimportKeptOld": "the previous data folder was kept",
   "runReason.dataOutsideHost": "the data sits outside Host Data and was not backed up",
   "runReason.filesUnreadable": "some files could not be read and are missing from this backup",
+  "runReason.foldersMissing": "selected folders are missing from this backup",
+  "runReason.backupEmpty": "this backup holds no files, while earlier backups held some",
+  "runReason.olderBackupsKept": "older backups were kept",
+  "runReason.stackFolderEmpty": "the project folder of this stack holds no files and was not backed up",
+  "runReason.flashZipKept": "the flash backup held less than it should, so the last ZIP was kept",
   "runReason.dbimportErrors":
     "one={n} error, the previous data folder was kept|other={n} errors, the previous data folder was kept",
   "runReason.dbimportAppsDown":
@@ -6612,6 +6617,11 @@ export const de: Translations = {
   "runReason.dbimportKeptOld": "der bisherige Datenordner wurde behalten",
   "runReason.dataOutsideHost": "die Daten liegen außerhalb von Host Data und wurden nicht gesichert",
   "runReason.filesUnreadable": "einige Dateien ließen sich nicht lesen und fehlen in dieser Sicherung",
+  "runReason.foldersMissing": "ausgewählte Ordner fehlen in dieser Sicherung",
+  "runReason.backupEmpty": "diese Sicherung enthält keine Dateien, frühere Sicherungen enthielten welche",
+  "runReason.olderBackupsKept": "ältere Sicherungen wurden behalten",
+  "runReason.stackFolderEmpty": "der Projektordner dieses Stacks enthält keine Dateien und wurde nicht gesichert",
+  "runReason.flashZipKept": "die Flash-Sicherung enthielt weniger als erwartet, deshalb blieb das letzte ZIP erhalten",
   "runReason.dbimportErrors": "{n} Fehler, der bisherige Datenordner wurde behalten",
   "runReason.dbimportAppsDown":
     "one=diese App ließ sich nicht wieder starten: {apps}|other=diese Apps ließen sich nicht wieder starten: {apps}",

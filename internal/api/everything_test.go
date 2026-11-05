@@ -128,6 +128,26 @@ func everythingTestService(t *testing.T, eng api.ResticEngine) (svc *api.Service
 	return svc, st, docker, tg
 }
 
+func TestAContainerBackupNamesASelectedFolderThatIsGone(t *testing.T) {
+	svc, st, _, tg := everythingTestService(t, &fakeResticEngine{})
+	gone := filepath.ToSlash(filepath.Join(filepath.Dir(tg.SelectedPaths[0]), "gone"))
+	tg.SelectedPaths = append(tg.SelectedPaths, gone)
+	if err := st.SetBackupPaths(tg.ContainerName, tg.SelectedPaths); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := svc.Backup(context.Background(), tg.ContainerName); err != nil {
+		t.Fatalf("Backup: %v", err)
+	}
+	last, err := st.LastSuccessfulBackup(tg.ID)
+	if err != nil || last == nil {
+		t.Fatalf("no run: %v", err)
+	}
+	if !strings.Contains(last.Error, store.NoteFoldersMissing+": ") || !strings.Contains(last.Error, "gone") ||
+		!strings.Contains(last.Error, store.NoteOlderBackupsKept) {
+		t.Fatalf("the run reads %q, want the gone folder named and the older backups kept", last.Error)
+	}
+}
+
 // waitForEverythingDone blocks until StartBackupEverything's goroutine has
 // released the guard.
 func waitForEverythingDone(t *testing.T, svc *api.Service) {

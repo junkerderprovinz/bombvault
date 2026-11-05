@@ -3,6 +3,7 @@
 // returns the key, which makes the chosen translation assertable.
 import { describe, expect, it } from "vitest";
 import {
+  backupNotes,
   isOwnReason,
   dataOutsideHost,
   isWarningNote,
@@ -258,6 +259,27 @@ describe("files restic could not read", () => {
     const parts = runReasonParts(note, t);
     expect(parts.head).toBe("runReason.filesUnreadable");
     expect(parts.detail).toBe("error: open /data/key.pem: permission denied");
+  });
+});
+
+describe("a backup that saw less than it should", () => {
+  const note = "selected folders are missing from this backup: /mnt/user/data/pics; older backups were kept";
+
+  it("is a warning that names the folder and says what happened to the older backups", () => {
+    expect(isWarningNote(note)).toBe(true);
+    expect(backupNotes(note)).toEqual(["selected folders are missing from this backup: /mnt/user/data/pics", "older backups were kept"]);
+    const parts = runReasonParts(backupNotes(note)[0], t);
+    expect(parts.head).toBe("runReason.foldersMissing");
+    expect(parts.detail).toBe("/mnt/user/data/pics");
+    expect(runReasonParts("older backups were kept", t).head).toBe("runReason.olderBackupsKept");
+  });
+
+  it("is a warning when the backup read nothing", () => {
+    expect(isWarningNote("this backup holds no files, while earlier backups held some; older backups were kept")).toBe(true);
+  });
+
+  it("is a warning on the run of a stack's member", () => {
+    expect(isWarningNote("the project folder of this stack holds no files and was not backed up: /mnt/user/stacks/site")).toBe(true);
   });
 });
 

@@ -127,6 +127,10 @@ An open critical anomaly is holding them: the entry's source is almost empty, sh
 
 The same cause: prune leaves the old backups of an entry with such an anomaly alone and names the entry in its message. Everything else is pruned as usual.
 
+## A backup fails with "is on no mounted pool or share" {#no-mounted-pool}
+
+On Unraid `/mnt` lives in memory, so a folder there with no pool mounted on it is gone at the next reboot and hidden once the pool is back. BombVault refuses to write a backup or a flash ZIP there, also when a repository from an earlier write is already lying in that folder. Mount the pool and run the backup again.
+
 ## History import says a repository could not be read {#history-import-says-a-repository-could-not-be-read}
 
 After the upgrade BombVault reads the sizes of earlier backups from each repository once. A repository it could not reach at that time, such as an off-site target that was down or a share that was not mounted, is counted on the **Anomalies** card under **Settings, Verify** and tried again once a day. Its entries learn from new backups in the meantime.

@@ -242,7 +242,7 @@ func TestAStackBackupLeavesWhatItWroteReadableByOthers(t *testing.T) {
 	f := newPlacementFixture(t)
 	f.svc.engine = rootWritesEngine{placementEngine: f.eng, t: t}
 	dir := t.TempDir()
-	if err := f.svc.backupStackDir(WithBulkReplicateSuppressed(context.Background()), "media", dir); err != nil {
+	if err := f.svc.backupStackDir(WithBulkReplicateSuppressed(context.Background()), "media", stackFolder{dir: dir}); err != nil {
 		t.Fatal(err)
 	}
 	repo := f.domainPath("containers")

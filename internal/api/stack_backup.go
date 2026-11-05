@@ -9,8 +9,11 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/junkerderprovinz/bombvault/internal/backup"
 	"github.com/junkerderprovinz/bombvault/internal/model"
+	"github.com/junkerderprovinz/bombvault/internal/notify"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
+	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
 // stackSnapshotTag is the snapshot tag of a stack's project directory. It has
@@ -40,8 +43,8 @@ func (s *Service) stackDirFor(in model.Inspect) (project, dir string, ok bool) {
 
 // stackDirsFor maps each compose project among the named containers to its
 // directory, so a backup round visits each project once.
-func (s *Service) stackDirsFor(ctx context.Context, names []string) map[string]string {
-	dirs := map[string]string{}
+func (s *Service) stackDirsFor(ctx context.Context, names []string) map[string]stackFolder {
+	dirs := map[string]stackFolder{}
 	for _, name := range names {
 		in, err := s.docker.Inspect(ctx, name)
 		if err != nil {
@@ -54,16 +57,24 @@ func (s *Service) stackDirsFor(ctx context.Context, names []string) map[string]s
 		if !ok {
 			continue
 		}
-		dirs[project] = dir
+		if _, known := dirs[project]; !known {
+			dirs[project] = stackFolder{dir: dir, member: name}
+		}
 	}
 	return dirs
+}
+
+// stackFolder is a project's directory and the member of the round whose run
+// speaks for it, since the folder has no run of its own.
+type stackFolder struct {
+	dir, member string
 }
 
 // backupStackDir snapshots one project directory into the containers repo under
 // the stack tag. It stops nothing: the directory holds the compose file and the
 // stack's shared files, and each member has already been stopped and started
 // around its own data.
-func (s *Service) backupStackDir(ctx context.Context, project, dir string) error {
+func (s *Service) backupStackDir(ctx context.Context, project string, folder stackFolder) error {
 	settings, err := s.store.GetSettings()
 	if err != nil {
 		return fmt.Errorf("stack %s: read settings: %w", project, err)
@@ -77,14 +88,58 @@ func (s *Service) backupStackDir(ctx context.Context, project, dir string) error
 		return fmt.Errorf("stack %s: %w", project, err)
 	}
 	tag := stackSnapshotTag(project)
-	if _, err := s.engine.Backup(ctx, repo, []string{dir}, []string{tag, "p1"}, mode); err != nil {
+	if s.stackFolderEmptied(ctx, repo, mode, tag, folder.dir) {
+		log.Printf("api: stack backup: %s: the project folder holds no files, while earlier backups held some; no backup made", project)
+		s.noteOnStackMember(folder.member, store.NoteStackFolderEmpty+": "+s.toHostPath(folder.dir))
+		s.notifyBackup(notify.WithHealthchecksSuppressed(ctx), "stack", project, "", true, backup.Summary{Emptied: true}, nil)
+		return nil
+	}
+	sum, err := s.engine.Backup(ctx, repo, []string{folder.dir}, []string{tag, "p1"}, mode)
+	if err != nil {
 		return fmt.Errorf("stack %s: %w", project, err)
 	}
-	s.applyRetention(ctx, repo, settings, mode, tagIdentity(tag), "containers", anomalyScope{})
+	if sum.Unreadable != "" {
+		s.noteOnStackMember(folder.member, store.NoteFilesUnreadable+": "+s.hostPathsIn(sum.Unreadable))
+		s.notifyBackup(notify.WithHealthchecksSuppressed(ctx), "stack", project, "", true, backupSummaryFrom(sum), nil)
+	} else {
+		s.applyRetention(ctx, repo, settings, mode, tagIdentity(tag), "containers", anomalyScope{})
+	}
 	// A round backs the stacks up after its last container, and without a
 	// keep-policy no batched prune follows to relax what this wrote.
 	makeLocalRepoReadable(repo, s.cfg.DataDir)
 	return nil
+}
+
+// stackFolderEmptied reports whether a project folder has no file left while an
+// earlier backup of it held some, as when the disk under it did not mount. No
+// snapshot is written then, so no pass has a reason to age the good ones.
+func (s *Service) stackFolderEmptied(ctx context.Context, repo string, mode restic.Mode, tag, dir string) bool {
+	if empty, err := fileSetSourceEmpty(dir); err != nil || !empty {
+		return false
+	}
+	snaps, err := s.snapshotsForTag(ctx, repo, mode, tag)
+	if err != nil {
+		log.Printf("api: stack backup: could not read the earlier backups of %s: %v", tag, err)
+		return true
+	}
+	return slices.ContainsFunc(snaps, heldData)
+}
+
+// noteOnStackMember puts a warning on the newest backup run of a stack's member.
+func (s *Service) noteOnStackMember(member, note string) {
+	tg, err := s.store.GetTargetByContainer(member)
+	if err != nil {
+		log.Printf("api: stack backup: no target for %q to carry the note: %v", member, err) //nolint:gosec // G706: name is %q-quoted
+		return
+	}
+	run, err := s.store.LastSuccessfulBackup(tg.ID)
+	if err != nil || run == nil {
+		log.Printf("api: stack backup: no run of %q to carry the note: %v", member, err) //nolint:gosec // G706: name is %q-quoted
+		return
+	}
+	if err := s.store.AddRunNote(run.ID, note); err != nil {
+		log.Printf("api: stack backup: %v", err)
+	}
 }
 
 // BackupStacks backs up the project directory of every compose stack in names,
@@ -109,7 +164,7 @@ func (s *Service) BackupStacks(ctx context.Context, names []string) error {
 			failed = append(failed, p)
 			continue
 		}
-		log.Printf("api: stack backup: %s (%s) done", p, dirs[p])
+		log.Printf("api: stack backup: %s (%s) done", p, dirs[p].dir)
 	}
 	if len(failed) > 0 {
 		return fmt.Errorf("stack backup failed for: %s", strings.Join(failed, ", "))

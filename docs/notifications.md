@@ -36,7 +36,7 @@ Secrets such as the Matrix token, the Gotify app token and the SMTP password are
 
 ## Healthchecks {#healthchecks}
 
-A service such as [Healthchecks.io](https://healthchecks.io) raises the alarm when BombVault stops checking in. Paste the check's **Ping URL**, and BombVault pings it for the whole lifecycle of every backup: at the start, then on success or with `/fail`. It does so whenever a URL is set, whatever **Notify** says, so the check stays green on success even with failure-only messages.
+A service such as [Healthchecks.io](https://healthchecks.io) raises the alarm when BombVault stops checking in. Paste the check's **Ping URL**, and BombVault pings it for the whole lifecycle of every backup: at the start, then on success or with `/fail`. It does so whenever a URL is set, whatever **Notify** says, so the check stays green on success even with failure-only messages. A section with nowhere to back up to counts as failed, so its check goes red instead of hearing a success.
 
 A section can ping an address of its own: **Exception** in the card adds one, and the line says **All other sections ping this URL.**
 

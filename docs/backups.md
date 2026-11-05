@@ -98,7 +98,7 @@ The cards below depend on the kind of entry:
 | Container | **Backup folders** (which mapped folders are backed up, with **Skip cache folders (CACHEDIR.TAG)**), **Exclude patterns**, **Stop other containers**, **Commands before and after**, **Database**, **When the app is busy**, **Update after a successful backup**, **Snapshot instead of stop**, **Former names** |
 | VM | **VM** with **Method** (**Graceful (shutdown)** or **Live snapshot**) and **Changed blocks only**, see the [VM backup guide](vm-backup-ssh-setup.md#per-vm-method) |
 | Folder set | **Folder** and **Exclude patterns** |
-| Flash drive | **Flash zip export**, which writes every flash backup out as a plain `.zip` to a folder you pick |
+| Flash drive | **Flash zip export**, which writes every flash backup out as a plain `.zip` to a folder you pick, in one step so a sync tool never sees half a file. A flash backup that holds less than it should keeps the last ZIP in place, and the export's run says so. |
 | ZFS dataset | the child datasets, the containers to stop and the commands around the snapshot, **Replica** and **Test snapshot access**, see [ZFS datasets](zfs-datasets.md) |
 
 Settings save themselves as you change them.

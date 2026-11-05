@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"errors"
+	"os"
 	"path/filepath"
 	"slices"
 	"strings"
@@ -16,11 +17,89 @@ import (
 
 // stackEngine records the retention a stack backup asks restic for.
 type stackEngine struct {
+	backups    int
+	unreadable string
 	ResticEngine
 	backupErr error
 	snaps     []restic.Snapshot
 	forgets   []stackForget
 	prunes    int
+}
+
+// emptiedStack is a stack whose member has a finished backup run, with an empty
+// project folder and a repository that holds the snaps of eng.
+func emptiedStack(t *testing.T, eng *stackEngine) (*Service, string, store.Target) {
+	t.Helper()
+	svc := stackSvc(t, eng)
+	repo := filepath.Join(svc.cfg.HostMountRoot, "backups", "containers")
+	if err := os.MkdirAll(repo, 0o750); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(repo, "config"), []byte("x"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	tg, err := svc.store.UpsertTarget(store.Target{ContainerName: "immich-server"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	id, err := svc.store.StartRun(tg.ID, "backup")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := svc.store.FinishRun(id, "success", "aa11", 1, ""); err != nil {
+		t.Fatal(err)
+	}
+	return svc, t.TempDir(), tg
+}
+
+func TestAnEmptiedProjectFolderIsNotBackedUpAndAgesNothing(t *testing.T) {
+	eng := &stackEngine{snaps: []restic.Snapshot{{Tags: []string{"stack:immich"}, Summary: &restic.SnapshotSummary{TotalBytesProcessed: 10}}}}
+	svc, dir, tg := emptiedStack(t, eng)
+	if err := svc.backupStackDir(context.Background(), "immich", stackFolder{dir: dir, member: "immich-server"}); err != nil {
+		t.Fatalf("backupStackDir: %v", err)
+	}
+	if eng.backups != 0 || len(eng.forgets) != 0 {
+		t.Fatalf("backups = %d, forgets = %v, want neither", eng.backups, eng.forgets)
+	}
+	last, err := svc.store.LastSuccessfulBackup(tg.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.HasPrefix(last.Error, store.NoteStackFolderEmpty+": ") {
+		t.Fatalf("the member's run reads %q, want the warning", last.Error)
+	}
+	if svc.lastBackupSawLess(anomalyScope{Kind: anomalyScopeItem, ID: tg.ID}) {
+		t.Fatal("the member's own data is complete, and its backups are held")
+	}
+}
+
+func TestAProjectFolderThatWasAlwaysEmptyIsStillBackedUp(t *testing.T) {
+	eng := &stackEngine{snaps: []restic.Snapshot{{Tags: []string{"stack:immich"}, Summary: &restic.SnapshotSummary{}}}}
+	svc, dir, _ := emptiedStack(t, eng)
+	if err := svc.backupStackDir(context.Background(), "immich", stackFolder{dir: dir, member: "immich-server"}); err != nil {
+		t.Fatalf("backupStackDir: %v", err)
+	}
+	if eng.backups != 1 || len(eng.forgets) != 1 {
+		t.Fatalf("backups = %d, forgets = %v, want one of each", eng.backups, eng.forgets)
+	}
+}
+
+func TestAProjectFolderWithUnreadableFilesAgesNothing(t *testing.T) {
+	eng := &stackEngine{unreadable: "open /appdata/immich/secret: permission denied"}
+	svc, _, tg := emptiedStack(t, eng)
+	if err := svc.backupStackDir(context.Background(), "immich", stackFolder{dir: "/host/appdata/immich", member: "immich-server"}); err != nil {
+		t.Fatalf("backupStackDir: %v", err)
+	}
+	if len(eng.forgets) != 0 {
+		t.Fatalf("forgets = %v, want none", eng.forgets)
+	}
+	last, err := svc.store.LastSuccessfulBackup(tg.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.HasPrefix(last.Error, store.NoteFilesUnreadable+": ") {
+		t.Fatalf("the member's run reads %q, want the warning", last.Error)
+	}
 }
 
 type stackForget struct {
@@ -33,7 +112,8 @@ func (e *stackEngine) RepoOpens(context.Context, string, restic.Mode) bool { ret
 func (e *stackEngine) Unlock(context.Context, string, bool, restic.Mode) error { return nil }
 
 func (e *stackEngine) Backup(context.Context, string, []string, []string, restic.Mode, ...string) (restic.Summary, error) {
-	return restic.Summary{}, e.backupErr
+	e.backups++
+	return restic.Summary{Unreadable: e.unreadable}, e.backupErr
 }
 
 func (e *stackEngine) Snapshots(context.Context, string, restic.Mode) ([]restic.Snapshot, error) {
@@ -83,7 +163,7 @@ func stackSvc(t *testing.T, eng *stackEngine) *Service {
 
 func TestAStackBackupAppliesTheLocalRetentionToItsProject(t *testing.T) {
 	eng := &stackEngine{}
-	if err := stackSvc(t, eng).backupStackDir(context.Background(), "immich", "/host/appdata/immich"); err != nil {
+	if err := stackSvc(t, eng).backupStackDir(context.Background(), "immich", stackFolder{dir: "/host/appdata/immich"}); err != nil {
 		t.Fatalf("backupStackDir: %v", err)
 	}
 	if want := []stackForget{{Tag: "stack:immich", Prune: true}}; !slices.Equal(eng.forgets, want) {
@@ -94,7 +174,7 @@ func TestAStackBackupAppliesTheLocalRetentionToItsProject(t *testing.T) {
 func TestAStackBackupInARoundLeavesThePruneToTheRound(t *testing.T) {
 	eng := &stackEngine{}
 	ctx := WithBulkReplicateSuppressed(context.Background())
-	if err := stackSvc(t, eng).backupStackDir(ctx, "immich", "/host/appdata/immich"); err != nil {
+	if err := stackSvc(t, eng).backupStackDir(ctx, "immich", stackFolder{dir: "/host/appdata/immich"}); err != nil {
 		t.Fatalf("backupStackDir: %v", err)
 	}
 	if want := []stackForget{{Tag: "stack:immich", Prune: false}}; !slices.Equal(eng.forgets, want) {
@@ -104,7 +184,7 @@ func TestAStackBackupInARoundLeavesThePruneToTheRound(t *testing.T) {
 
 func TestAFailedStackBackupForgetsNothing(t *testing.T) {
 	eng := &stackEngine{backupErr: errors.New("permission denied")}
-	if err := stackSvc(t, eng).backupStackDir(context.Background(), "immich", "/host/appdata/immich"); err == nil {
+	if err := stackSvc(t, eng).backupStackDir(context.Background(), "immich", stackFolder{dir: "/host/appdata/immich"}); err == nil {
 		t.Fatal("backupStackDir succeeded over a failed backup")
 	}
 	if len(eng.forgets) != 0 {

@@ -59,9 +59,9 @@ func WrapWriter(dst io.Writer, recipients []age.Recipient) (io.WriteCloser, erro
 }
 
 // EncryptFile streams the plaintext file at srcPath into a new age-encrypted file
-// at dstPath (created/truncated, 0600). It does NOT remove srcPath (the caller
-// owns the temp-file lifecycle). On any failure the partial dstPath is removed so
-// no half-written ciphertext is left behind.
+// at dstPath (0600), written beside it and renamed into place, so a failure leaves
+// the file that was there and a sync tool never sees half of one. The caller owns
+// srcPath and removes it.
 func EncryptFile(srcPath, dstPath string, recipients []age.Recipient) (err error) {
 	if len(recipients) == 0 {
 		return errors.New("ageseal: no recipients")
@@ -72,14 +72,15 @@ func EncryptFile(srcPath, dstPath string, recipients []age.Recipient) (err error
 	}
 	defer src.Close() //nolint:errcheck // read-only source
 
-	dst, err := os.OpenFile(dstPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o600) //nolint:gosec // G304: dstPath is under the operator-configured export dir
+	tmp := dstPath + ".tmp"
+	dst, err := os.OpenFile(tmp, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o600) //nolint:gosec // G304: dstPath is under the operator-configured export dir
 	if err != nil {
 		return err
 	}
 	defer func() {
 		if err != nil {
 			_ = dst.Close()
-			_ = os.Remove(dstPath)
+			_ = os.Remove(tmp)
 		}
 	}()
 
@@ -93,7 +94,10 @@ func EncryptFile(srcPath, dstPath string, recipients []age.Recipient) (err error
 	if err = w.Close(); err != nil { // flush the age stream
 		return err
 	}
-	return dst.Close()
+	if err = dst.Close(); err != nil {
+		return err
+	}
+	return os.Rename(tmp, dstPath)
 }
 
 // SealArmored encrypts plain to recipients and returns ASCII-armored ciphertext

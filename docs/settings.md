@@ -11,7 +11,7 @@ This page lists every tile and its cards, and links to the page that explains ea
 
 ## General {#general}
 
-- **Sections** switches each section on or off: **Containers**, **VMs**, **Flash**, **Folders**, **ZFS datasets** and **Self-backup**. A section that is off is not backed up, and its entries do not count. **Flash** shows on Unraid only.
+- **Sections** switches each section on or off: **Containers**, **VMs**, **Flash**, **Folders**, **ZFS datasets** and **Self-backup**. A section that is off is not backed up on any schedule, an entry's own plan included, and its entries do not count. **Back up now** still works. **Flash** shows on Unraid only.
 - **Containers** holds what applies to every container, such as **Automatic database dumps**. Anything that affects one container is on its page. See [Database dumps](backups.md#database-dumps).
 
 ## Look {#look}

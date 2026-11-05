@@ -205,7 +205,7 @@ func (s *Service) placesAdapter(settings store.Settings, domain string, places [
 			engine = unlockOnLockErr{ResticEngine: s.engine, s: s}
 		}
 		a.adapters = append(a.adapters, &resticAdapter{
-			engine: engine, mode: pl.mode, selectionFP: selectionFP, extraTags: s.directTags(settings, domain, pl.repo),
+			engine: engine, mode: pl.mode, selectionFP: selectionFP, extraTags: s.directTags(settings, domain, pl.repo), watchEmpty: true,
 		})
 	}
 	return a
