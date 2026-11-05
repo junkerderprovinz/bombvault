@@ -14,7 +14,7 @@ import { EmptyStateIcon } from "../components/EmptyStateIcon";
 import { IconArchive, IconForward, IconSearch, IconSelectAll } from "../components/glyphs";
 import { InfoBubble } from "../components/InfoBubble";
 import { InstanceWindow } from "./instances/InstanceWindow";
-import { IconCheck, IconContainers, IconDownload, IconFolder, IconRecovery, IconRestore } from "../components/navGlyphs";
+import { IconCheck, IconContainers, IconDownload, IconFleet, IconFolder, IconRecovery, IconRestore } from "../components/navGlyphs";
 import { PageAction, PageActions } from "../components/PageActions";
 import { PageTitle } from "../components/PageTitle";
 import { ProgressBar } from "../components/ProgressBar";
@@ -31,7 +31,17 @@ import { RestoreWindow, type RestoreAsk } from "../components/restore/RestoreWin
 import { StackWindow, membersLine } from "../components/restore/StackWindow";
 import { RestoreCancelButton } from "../components/RestoreCancelButton";
 import { Rows } from "../components/storage/rows";
-import { getEmergency, getSettings, listItems, type BackupItem, type EmergencyState } from "../lib/api";
+import {
+  getEmergency,
+  getSettings,
+  listItems,
+  listPullSources,
+  openPulledCopy,
+  type BackupItem,
+  type EmergencyState,
+  type ForeignInventory,
+  type PullSourceView,
+} from "../lib/api";
 import { ATTENTION_CHANGED_EVENT } from "../lib/attention";
 import { hueVars } from "../lib/appearance";
 import { ENTRY_KIND, ENTRY_KINDS, type EntryKind } from "../lib/backupEntry";
@@ -42,6 +52,7 @@ import { anyActive, useProgress, type ProgressState } from "../lib/progress";
 import { formatRecent } from "../lib/reltime";
 import { joinsMany, leftOut, type LeftOut } from "../lib/restoreMany";
 import { findingsOf, parseEmergencyStep, parseEmergencyWay, recommend, recommendationWhy } from "../lib/restorePlan";
+import { useToast } from "../lib/toast";
 import { useLongPress } from "../lib/useLongPress";
 import { useOpenAnomalies } from "../lib/useAnomalies";
 import { leaveLayers } from "../lib/useBackCloses";
@@ -335,6 +346,10 @@ export function Restore() {
   const [query, setQuery] = useState("");
   const [pick, setPick] = useState<string | null>(null);
   const [source, setSource] = useState<"oldFolder" | "appdata" | null>(null);
+  const { push } = useToast();
+  // What this server fetched from other instances, one way back per source.
+  const [fetched, setFetched] = useState<PullSourceView[]>([]);
+  const [fetchedOpen, setFetchedOpen] = useState<{ id: string; name: string; session: string; inventory: ForeignInventory } | null>(null);
   const [hostMountRoot, setHostMountRoot] = useState("/host/user");
   const [keyState, setKeyState] = useState<EmergencyState | null>(null);
   const [many, setMany] = useState<BackupItem[] | null>(null);
@@ -370,7 +385,28 @@ export function Restore() {
         if (res.ok && res.hostMountRoot) setHostMountRoot(res.hostMountRoot);
       })
       .catch(() => undefined);
+    listPullSources()
+      .then((res) => {
+        if (res.ok) setFetched((res.sources ?? []).filter((pull) => pull.snapshotsPulled > 0 || pull.lastPullOk === true));
+      })
+      .catch(() => undefined);
   }, []);
+
+  async function openFetched(id: string, name: string) {
+    const res = await openPulledCopy(id).catch((err: unknown) => ({
+      ok: false,
+      error: err instanceof Error ? err.message : String(err),
+      session: undefined,
+      inventory: undefined,
+    }));
+    if (!res.ok || !res.session || !res.inventory) {
+      push(res.error ?? t("settings.error"), "fail");
+      return null;
+    }
+    const opened = { id, name, session: res.session, inventory: res.inventory };
+    setFetchedOpen(opened);
+    return opened;
+  }
 
   const load = useCallback(() => {
     listItems()
@@ -461,6 +497,19 @@ export function Restore() {
         />
       )}
       {source === "oldFolder" && <OldFolderWindow hostMountRoot={hostMountRoot} onClose={() => setSource(null)} />}
+      {fetchedOpen && (
+        <OldFolderWindow
+          hostMountRoot={hostMountRoot}
+          onClose={() => setFetchedOpen(null)}
+          opened={{
+            title: t("restorePage.fetched").replace("{name}", () => fetchedOpen.name),
+            intro: t("restorePage.fetchedIntro").replaceAll("{name}", () => fetchedOpen.name),
+            session: fetchedOpen.session,
+            inventory: fetchedOpen.inventory,
+            reopen: () => openFetched(fetchedOpen.id, fetchedOpen.name),
+          }}
+        />
+      )}
       {source === "appdata" && <AppdataWindow hostMountRoot={hostMountRoot} onClose={() => setSource(null)} />}
       {many && <RestoreManyWindow items={many} onClose={() => setMany(null)} />}
       {stackOpen !== null && stacks.length > 0 && (
@@ -633,6 +682,15 @@ export function Restore() {
               sub={t("restorePage.appdataHint")}
               onOpen={() => setSource("appdata")}
             />
+            {fetched.map((pull) => (
+              <Way
+                key={pull.id}
+                glyph={<IconFleet />}
+                name={t("restorePage.fetched").replace("{name}", () => pull.name)}
+                sub={t("restorePage.fetchedHint")}
+                onOpen={() => void openFetched(pull.id, pull.name)}
+              />
+            ))}
           </Rows>
         </Card>
       </div>

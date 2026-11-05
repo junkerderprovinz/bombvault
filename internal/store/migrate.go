@@ -3638,6 +3638,14 @@ UPDATE zfs_datasets SET schedule_cadence = '' WHERE (SELECT per_item_schedules F
   keep_yearly  INTEGER NOT NULL
 );`,
 	},
+	{
+		// What an emergency added beside what it replaced, for an undo: the
+		// saved sign-ins of a recovery kit and the targets of its places.
+		version:          emergencyAddedMigration,
+		name:             "replaced_sign_ins_added",
+		alreadySatisfied: columnPresent("replaced_sign_ins", "added"),
+		sql:              `ALTER TABLE replaced_sign_ins ADD COLUMN added TEXT NOT NULL DEFAULT '';`,
+	},
 }
 
 // hiddenZeroRuleRows are the sections with an all-zero own keep rule whose own
@@ -4216,6 +4224,10 @@ const hiddenZeroRuleMigration = 700
 // locationKeepMigration numbers the How long to keep cards of folders that have
 // no row of their own.
 const locationKeepMigration = 720
+
+// emergencyAddedMigration records what an emergency added beside what it
+// replaced.
+const emergencyAddedMigration = 770
 
 // oneLineColumns are the names and locations the recovery kit prints.
 var oneLineColumns = []struct {

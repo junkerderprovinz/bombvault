@@ -1887,9 +1887,11 @@ func (s *Service) stageConfigSnapshot() (string, error) {
 			return "", fmt.Errorf("config snapshot: copy rclone.conf: %w", err)
 		}
 	}
-	if src := filepath.Join(s.cfg.DataDir, "ssh"); dirExists(src) {
-		if err := copyTree(src, filepath.Join(dir, "ssh")); err != nil {
-			return "", fmt.Errorf("config snapshot: copy ssh: %w", err)
+	for _, name := range selfrestore.StagedDirs {
+		if src := filepath.Join(s.cfg.DataDir, name); dirExists(src) {
+			if err := copyTree(src, filepath.Join(dir, name)); err != nil {
+				return "", fmt.Errorf("config snapshot: copy %s: %w", name, err)
+			}
 		}
 	}
 	ok = true
@@ -8465,6 +8467,9 @@ func (s *Service) Discover(ctx context.Context, dryRun bool) (DiscoverResult, er
 			res.Found++
 		}
 	}
+	// A container with no data of its own, or with all of it in its stack's
+	// folder, has no snapshot to name it. Only its mirrored definition does.
+	res.Found += s.rebuildMirroredOnly([]string{dir, legacyDir}, names, storedDef, dryRun)
 	// The fold runs once the loop above has rebuilt what it could, and never on
 	// a dry run, which writes nothing.
 	if !dryRun {
@@ -8483,6 +8488,60 @@ func (s *Service) Discover(ctx context.Context, dryRun bool) (DiscoverResult, er
 	// The result first, the read failure last: a caller that branches on err
 	// still sees it, and one that shows a partial rebuild has something to show.
 	return res, readErr
+}
+
+// rebuildMirroredOnly makes a row for each definition in dirs that no snapshot
+// names and no row holds yet, and returns how many it found. Its location stays
+// open: nothing says where it was kept, and no backups of it lie anywhere. A
+// name a mirrored definition records as a former name is that container's past.
+func (s *Service) rebuildMirroredOnly(dirs []string, names map[string]string,
+	stored func(name, repoID string) ([]byte, containerDefinition, error), dryRun bool) int {
+	mirrored := map[string]bool{}
+	for _, dir := range dirs {
+		entries, err := os.ReadDir(dir)
+		if err != nil {
+			continue
+		}
+		for _, e := range entries {
+			if name, ok := strings.CutSuffix(e.Name(), ".def"); ok && !e.IsDir() && validResourceName(name) {
+				mirrored[name] = true
+			}
+		}
+	}
+	former := map[string]bool{}
+	for name := range mirrored {
+		if _, def, err := stored(name, ""); err == nil {
+			for _, a := range def.Aliases {
+				former[a.Name] = true
+			}
+		}
+	}
+	found := 0
+	for _, name := range slices.Sorted(maps.Keys(mirrored)) {
+		if _, tagged := names[name]; tagged || former[name] {
+			continue
+		}
+		if _, err := s.store.GetTargetByContainer(name); err == nil {
+			continue
+		}
+		plain, def, err := stored(name, "")
+		if err != nil {
+			log.Printf("api: discover: skipping the mirrored definition of %q, which cannot be recreated: %v", name, err) //nolint:gosec // G706: %q-quoted
+			continue
+		}
+		if dryRun {
+			found++
+			continue
+		}
+		if _, err := s.store.UpsertTarget(store.Target{
+			ContainerName: name, AppdataPaths: def.AppdataPaths, Definition: string(plain), RepoChosen: store.RepoOpen,
+		}); err != nil {
+			log.Printf("api: discover: could not upsert target %q: %v", name, err) //nolint:gosec // G706: %q-quoted
+			continue
+		}
+		found++
+	}
+	return found
 }
 
 // foldFormerNames links each name a rebuilt name's stored definition records
@@ -9205,6 +9264,7 @@ func (s *Service) executeRestore(ctx context.Context, name string, plan containe
 	rctx, startedAt := s.progBegin(ctx, rkey, "restore")
 	docker := s.restoreDocker()
 	leftImage := s.imageARestoreLeaves(rctx, plan.inspect)
+	refused := new(atomic.Bool)
 	rerr := backup.RestoreContainer(rctx, backup.RestoreDeps{
 		Confirmed:         true, // prepareRestore rejected unconfirmed requests
 		RecreateOnly:      plan.recreateOnly,
@@ -9223,9 +9283,9 @@ func (s *Service) executeRestore(ctx context.Context, name string, plan containe
 		TargetID:          plan.targetID,
 		Docker:            docker,
 		Images:            docker,
-		Restic:            &resticAdapter{engine: s.engine, mode: plan.mode, refuseWrite: s.refuseLinkOutOfMount},
+		Restic:            &resticAdapter{engine: s.engine, mode: plan.mode, refuseWrite: s.refuseLinkOutOfMount, metadataRefused: refused},
 		Templates:         templatesAdapter{},
-		Runs:              runsAdapter{st: s.store, ctx: ctx},
+		Runs:              metadataNoteRuns{runsAdapter{st: s.store, ctx: ctx}, refused},
 		Removals:          restoreRemovals{st: s.store},
 	})
 	if rerr == nil {
@@ -12681,6 +12741,9 @@ type resticAdapter struct {
 	// more right before restic writes there, since the plan was checked before the
 	// container had stopped.
 	refuseWrite func(targets []string) error
+	// metadataRefused, set on the restore of a container or VM, is raised when
+	// the target took the data and refused only the ownership.
+	metadataRefused *atomic.Bool
 	// missing and watchEmpty are for the backup of a selection: the folders the
 	// run found gone or emptied, and whether a run that reads nothing is news.
 	missing    string
@@ -12821,11 +12884,36 @@ func (a *resticAdapter) RestorePaths(ctx context.Context, repo, snapshotID strin
 		}
 	}
 	for _, p := range paths {
-		if err := a.engine.RestorePath(ctx, repo, snapshotID, p, a.mode); err != nil {
+		if err := a.restored(a.engine.RestorePath(ctx, repo, snapshotID, p, a.mode)); err != nil {
 			return err
 		}
 	}
 	return nil
+}
+
+// restored is what the restore of a container or VM makes of restic's answer. A
+// share that only refuses the owner or the mode has every file's data, so the
+// restore goes on, as a folder set's does, and the run says so.
+func (a *resticAdapter) restored(err error) error {
+	if a.metadataRefused != nil && errors.Is(err, restic.ErrRestoreMetadataOnly) {
+		a.metadataRefused.Store(true)
+		return nil
+	}
+	return err
+}
+
+// metadataNoteRuns records on a successful restore that the target refused the
+// ownership.
+type metadataNoteRuns struct {
+	runsAdapter
+	refused *atomic.Bool
+}
+
+func (r metadataNoteRuns) Finish(runID, status string, sum backup.Summary, errMsg string) error {
+	if status == "success" && r.refused.Load() {
+		errMsg = strings.TrimPrefix(errMsg+"; "+restic.RestoreMetadataWarning, "; ")
+	}
+	return r.runsAdapter.Finish(runID, status, sum, errMsg)
 }
 
 func (a *resticAdapter) RestoreSubtreeTo(ctx context.Context, repo, snapshotID, subtreePath, target string) error {
@@ -12834,7 +12922,7 @@ func (a *resticAdapter) RestoreSubtreeTo(ctx context.Context, repo, snapshotID, 
 			return err
 		}
 	}
-	return a.engine.RestoreSubtreeTo(ctx, repo, snapshotID, subtreePath, target, a.mode)
+	return a.restored(a.engine.RestoreSubtreeTo(ctx, repo, snapshotID, subtreePath, target, a.mode))
 }
 
 // VerifySnapshot lists the repo (which also proves it is reachable and the key
@@ -14932,6 +15020,7 @@ func (s *Service) executeRestoreVM(ctx context.Context, name string, plan vmRest
 	}
 	rkey := "vm:" + name
 	rctx, startedAt := s.progBegin(ctx, rkey, "restore")
+	refused := new(atomic.Bool)
 	rerr := backup.RestoreVM(rctx, backup.VMRestoreDeps{
 		Confirmed:    true, // prepareRestoreVM rejected unconfirmed requests
 		Name:         name,
@@ -14949,8 +15038,8 @@ func (s *Service) executeRestoreVM(ctx context.Context, name string, plan vmRest
 		TargetID:    plan.targetID,
 		DataDir:     s.cfg.DataDir,
 		VM:          s.virsh,
-		Restic:      &resticAdapter{engine: s.engine, mode: sparseMode(plan.mode)},
-		Runs:        runsAdapter{st: s.store, ctx: ctx},
+		Restic:      &resticAdapter{engine: s.engine, mode: sparseMode(plan.mode), metadataRefused: refused},
+		Runs:        metadataNoteRuns{runsAdapter{st: s.store, ctx: ctx}, refused},
 		BlockDisks:  plan.blockDisks,
 		ZFSHost:     sshZFSHost{ssh: s.ssh},
 		ZvolRestic:  &resticZvolAdapter{engine: s.engine, mode: plan.mode},
@@ -17078,11 +17167,12 @@ func (s *Service) RestoreConfig(ctx context.Context, snapshotID, source string) 
 	if err != nil {
 		return fmt.Errorf("config restore: start run: %w", err)
 	}
-	// Restore ONLY the config snapshot's subtree (<DataDir>/.snapshot) into the
-	// staging root; restic recreates that absolute path beneath --target, landing
-	// it at selfrestore.RestoredSnapshotDir(DataDir) — the exact path the boot swap
-	// reads. The swap applies it on the next restart.
-	if rerr := s.engine.RestoreInclude(ctx, repo, id, s.configSnapshotDir(), root, mode); rerr != nil {
+	// Only the config snapshot's subtree goes into the staging root, where restic
+	// recreates its absolute path beneath --target. A self-backup holds the folder
+	// it was read from, which is another one when it was made under another data
+	// folder, so the tree moves to selfrestore.RestoredSnapshotDir(DataDir), the
+	// path the boot swap reads. The swap applies it on the next restart.
+	if rerr := s.stageConfigRestore(ctx, repo, id, snaps, root, mode); rerr != nil {
 		_ = s.store.FinishRun(runID, "failed", "", 0, rerr.Error())
 		return rerr
 	}
@@ -17096,6 +17186,28 @@ func (s *Service) RestoreConfig(ctx context.Context, snapshotID, source string) 
 		return merr
 	}
 	_ = s.store.FinishRun(runID, "success", id, 0, "")
+	return nil
+}
+
+// stageConfigRestore writes a self-backup's tree to where the boot swap reads it.
+func (s *Service) stageConfigRestore(ctx context.Context, repo, id string, snaps []restic.Snapshot, root string, mode restic.Mode) error {
+	from := s.configSnapshotDir()
+	if held := snapshotRestoreRoot(snaps, id); held != "" {
+		from = held
+	}
+	if err := s.engine.RestoreInclude(ctx, repo, id, from, root, mode); err != nil {
+		return err
+	}
+	if from == s.configSnapshotDir() {
+		return nil
+	}
+	to := selfrestore.RestoredSnapshotDir(s.cfg.DataDir)
+	if err := os.MkdirAll(filepath.Dir(to), 0o700); err != nil {
+		return fmt.Errorf("config restore: prepare staging: %w", err)
+	}
+	if err := os.Rename(filepath.Join(root, from), to); err != nil && !errors.Is(err, fs.ErrNotExist) {
+		return fmt.Errorf("config restore: move the snapshot into place: %w", err)
+	}
 	return nil
 }
 
@@ -19902,6 +20014,29 @@ type recoveryRepo struct {
 	Offsite string // "" when none configured
 }
 
+// savedSignInsInKit lists the saved sign-ins some repository names, with those
+// repositories. The default is left out: the kit prints it on its own, and
+// whatever names no sign-in uses it.
+func (s *Service) savedSignInsInKit(settings store.Settings) []kitSignIn {
+	sets, err := s.decodeCloudCredSets(settings)
+	if err != nil {
+		log.Printf("api: recovery kit: the saved sign-ins could not be read: %v", err)
+		return nil
+	}
+	users, err := s.store.ReposBySignIn()
+	if err != nil {
+		log.Printf("api: recovery kit: the repositories of the saved sign-ins could not be read: %v", err)
+		return nil
+	}
+	var out []kitSignIn
+	for _, set := range sets {
+		if repos := users[set.ID]; len(repos) > 0 && !set.Default {
+			out = append(out, kitSignIn{name: set.Name, repos: repos, creds: set.CloudCreds})
+		}
+	}
+	return out
+}
+
 // RecoveryKit builds the plain-text/markdown recovery document the authenticated
 // owner downloads to survive a loss of BombVault itself. With encryption ON it
 // contains the master APP_KEY and the SAME APP_KEY-derived restic repository
@@ -20061,14 +20196,12 @@ func (s *Service) RecoveryKit() (string, error) {
 	}
 
 	// A destination's domain repositories exist only in the database, like a
-	// named repository's location. The sign-in to reach them is not here: it
-	// comes back with the settings backup below.
+	// named repository's location.
 	if dests, dErr := s.store.ListDestinations(); dErr == nil && len(dests) > 0 {
 		w("## Destinations\n\n")
 		w("Each domain that copies to a destination has its own restic repository under\n")
-		w("it, with the SAME password as the rest. The rclone remotes and credential sets\n")
-		w("that reach them come back with the settings backup below; on a fresh install\n")
-		w("without it, set the destination up again at the same place.\n\n")
+		w("it, with the SAME password as the rest. The sign-ins that reach them are in the\n")
+		w("sections Repository credentials and Saved sign-ins below.\n\n")
 		for _, d := range dests {
 			w("- %s: %s\n", d.Name, d.Repo)
 			derived, _ := s.store.DestinationTargets(d.ID)
@@ -20094,8 +20227,8 @@ func (s *Service) RecoveryKit() (string, error) {
 		configLocal = loc
 	}
 	w("- config (local): %s%s\n", orNone(configLocal), kitCompression(settings.CompressionFor("config")))
-	if settings.ConfigOffsite != "" {
-		w("- config (off-site): %s%s\n", settings.ConfigOffsite, kitCompression(settings.CompressionFor(offsiteCompressionKey("config"))))
+	if off := s.offsiteRepoFor("config", settings); off != "" {
+		w("- config (off-site): %s%s\n", off, kitCompression(settings.CompressionFor(offsiteCompressionKey("config"))))
 	}
 	w("\n")
 	if compressed {
@@ -20121,11 +20254,16 @@ func (s *Service) RecoveryKit() (string, error) {
 	hasREST := creds.RESTUser != "" || creds.RESTPassword != ""
 	hasS3 := creds.S3KeyID != "" || creds.S3Secret != "" || creds.S3Region != ""
 	hasRclone := strings.TrimSpace(rcloneConf) != ""
+	saved := s.savedSignInsInKit(settings)
 
 	w("## Repository credentials\n\n")
-	if !hasREST && !hasS3 && !hasRclone {
+	switch {
+	case !hasREST && !hasS3 && !hasRclone && len(saved) == 0:
 		w("No off-site/cloud credentials are stored in BombVault.\n\n")
-	} else {
+	case !hasREST && !hasS3 && !hasRclone:
+		w("There is no default sign-in. The storage locations sign in with the ones under\n")
+		w("Saved sign-ins below.\n\n")
+	default:
 		w("These are the stored off-site backend credentials — the same secrets restic\n")
 		w("reads from its environment (or the rclone config) to reach a remote repository.\n")
 		w("They are as sensitive as the APP_KEY above; keep them just as safe.\n\n")
@@ -20165,6 +20303,24 @@ func (s *Service) RecoveryKit() (string, error) {
 				broken = section
 			}
 			b.WriteString(kitFence + "\n" + strings.TrimRight(rcloneConf, "\n") + "\n" + kitFence + "\n\n")
+		}
+	}
+
+	if len(saved) > 0 {
+		w("## " + kitSignInsSection + "\n\n")
+		w("Each sign-in below opens the repositories listed under its name. A new BombVault\n")
+		w("reads them from this kit, and restic takes them from the environment. They are as\n")
+		w("sensitive as the APP_KEY above; keep them just as safe.\n\n")
+		for _, in := range saved {
+			w("### %s\n\n", in.name)
+			for _, repo := range in.repos {
+				w("- %s\n", repo)
+			}
+			w("\n")
+			for _, kv := range cloudEnv(in.creds) {
+				w("    %s\n", kv)
+			}
+			w("\n")
 		}
 	}
 

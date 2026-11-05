@@ -21,6 +21,12 @@ const stagingDirName = ".restore-staging"
 const markerName = ".restore-pending"
 const appliedMarkerName = ".restore-applied"
 
+// StagedDirs are the folders of the data directory a self-backup carries beside
+// the database and rclone.conf: the keypair for the host, the key and host pins
+// of the ZFS replica servers, and the certificates the web interface serves and
+// trusts.
+var StagedDirs = []string{"ssh", "ssh-replica", "certs"}
+
 // StagingRoot is the directory a staged config restore is restic-restored into.
 func StagingRoot(dataDir string) string { return filepath.Join(dataDir, stagingDirName) }
 
@@ -74,10 +80,14 @@ func ApplyPending(dataDir string) (bool, error) {
 			return false, err
 		}
 	}
-	if src := filepath.Join(staged, "ssh"); dirExists(src) {
-		_ = os.RemoveAll(filepath.Join(dataDir, "ssh"))
-		if err := os.Rename(src, filepath.Join(dataDir, "ssh")); err != nil {
-			return false, fmt.Errorf("selfrestore: move ssh into place: %w", err)
+	for _, name := range StagedDirs {
+		src := filepath.Join(staged, name)
+		if !dirExists(src) {
+			continue
+		}
+		_ = os.RemoveAll(filepath.Join(dataDir, name))
+		if err := os.Rename(src, filepath.Join(dataDir, name)); err != nil {
+			return false, fmt.Errorf("selfrestore: move %s into place: %w", name, err)
 		}
 	}
 	live := filepath.Join(dataDir, "bombvault.sqlite")

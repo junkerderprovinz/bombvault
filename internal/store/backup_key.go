@@ -3,6 +3,7 @@ package store
 import (
 	"database/sql"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
@@ -123,6 +124,14 @@ func (r *Repo) RepoEstablishedSince(since int64) ([]string, error) {
 type ReplacedSignIns struct {
 	CloudConf  string
 	RcloneConf string
+	Added      AddedInEmergency
+}
+
+// AddedInEmergency names what an emergency added to this install beside what
+// it replaced, by id, so that an undo can take it away again.
+type AddedInEmergency struct {
+	SignIns []string `json:"signIns,omitempty"`
+	Targets []string `json:"targets,omitempty"`
 }
 
 func sealedOrNull(stored string) (any, error) {
@@ -156,7 +165,8 @@ func (r *Repo) KeepReplacedSignIns(before ReplacedSignIns) error {
 // when no emergency replaced anything.
 func (r *Repo) ReplacedSignIns() (ReplacedSignIns, bool, error) {
 	var cloud, rclone []byte
-	err := r.db.QueryRow(`SELECT cloud_conf_enc, rclone_conf_enc FROM replaced_sign_ins WHERE id = 1`).Scan(&cloud, &rclone)
+	var added string
+	err := r.db.QueryRow(`SELECT cloud_conf_enc, rclone_conf_enc, added FROM replaced_sign_ins WHERE id = 1`).Scan(&cloud, &rclone, &added)
 	if errors.Is(err, sql.ErrNoRows) {
 		return ReplacedSignIns{}, false, nil
 	}
@@ -170,7 +180,31 @@ func (r *Repo) ReplacedSignIns() (ReplacedSignIns, bool, error) {
 	if len(rclone) > 0 {
 		out.RcloneConf = base64.StdEncoding.EncodeToString(rclone)
 	}
+	if added != "" {
+		if err := json.Unmarshal([]byte(added), &out.Added); err != nil {
+			return ReplacedSignIns{}, false, fmt.Errorf("ReplacedSignIns: %w", err)
+		}
+	}
 	return out, true, nil
+}
+
+// NoteAddedInEmergency adds to what the emergency in progress added. The row
+// KeepReplacedSignIns wrote carries it.
+func (r *Repo) NoteAddedInEmergency(more AddedInEmergency) error {
+	before, found, err := r.ReplacedSignIns()
+	if err != nil || !found {
+		return err
+	}
+	before.Added.SignIns = append(before.Added.SignIns, more.SignIns...)
+	before.Added.Targets = append(before.Added.Targets, more.Targets...)
+	blob, err := json.Marshal(before.Added)
+	if err != nil {
+		return fmt.Errorf("NoteAddedInEmergency: %w", err)
+	}
+	if _, err := r.db.Exec(`UPDATE replaced_sign_ins SET added = ? WHERE id = 1`, string(blob)); err != nil {
+		return fmt.Errorf("NoteAddedInEmergency: %w", err)
+	}
+	return nil
 }
 
 // ClearReplacedSignIns forgets them, once the emergency is finished or undone.

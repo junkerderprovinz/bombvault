@@ -822,6 +822,28 @@ func (r *Repo) CredsRefsInUse() (map[string]bool, error) {
 	return out, rows.Err()
 }
 
+// ReposBySignIn lists, by credential set id, the repositories that sign in with
+// it: storage locations and their sections, named repositories, own folders and
+// the folders an own folder left.
+func (r *Repo) ReposBySignIn() (map[string][]string, error) {
+	rows, err := r.db.Query(`SELECT creds_ref, repo FROM offsite_targets WHERE creds_ref <> '' AND repo <> ''
+		UNION SELECT creds_ref, repo FROM former_own_folders WHERE creds_ref <> '' AND repo <> ''
+		ORDER BY 1, 2`)
+	if err != nil {
+		return nil, fmt.Errorf("ReposBySignIn: %w", err)
+	}
+	defer rows.Close() //nolint:errcheck // rows.Close on a completed query is always nil for SQLite
+	out := map[string][]string{}
+	for rows.Next() {
+		var id, repo string
+		if err := rows.Scan(&id, &repo); err != nil {
+			return nil, fmt.Errorf("ReposBySignIn: %w", err)
+		}
+		out[id] = append(out[id], repo)
+	}
+	return out, rows.Err()
+}
+
 // CredsRefNamedBeyond reports whether a row other than the destination
 // destID, its domain targets and their direct repositories, or a pull source,
 // names the credential set ref.

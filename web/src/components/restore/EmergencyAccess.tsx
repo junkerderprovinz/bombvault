@@ -12,6 +12,7 @@ import {
   readEmergencyKey,
   readEmergencyKit,
   storeEmergencySignIns,
+  tryEmergencyPlacesAgain,
   type EmergencyPlace,
   type EmergencyRefusal,
   type EmergencyState,
@@ -290,6 +291,7 @@ export function EmergencyAccess({
   if (session) {
     const readable = session.places.filter((place) => place.state === "readable").length;
     const needsSignIn = session.places.some((place) => place.state === "sign-in");
+    const kitCarries = session.cloudSignIn || session.rcloneConfig;
     const count = t(session.source === "kit" ? "emergency.readKit" : session.source === "group" ? "emergency.readGroup" : "emergency.readKey")
       .replace("{n}", String(readable))
       .replace("{total}", String(session.places.length));
@@ -359,10 +361,12 @@ export function EmergencyAccess({
             </span>
           </Note>
         )}
-        {!inUse && session.refusal === "adopt-nothing-readable" && <Note tone="warn">{t("emergency.code.adopt-nothing-readable")}</Note>}
+        {!inUse && session.refusal === "adopt-nothing-readable" && (
+          <Note tone="warn">{t(needsSignIn ? "emergency.signInFirst" : "emergency.code.adopt-nothing-readable")}</Note>
+        )}
         {refused}
 
-        {taken && (session.cloudSignIn || session.rcloneConfig) && (
+        {kitCarries && (taken || needsSignIn || signInsSaved) && (
           <Section title={t("emergency.signIns")}>
             <p className="text-sm text-carbon-text">{t("emergency.signInsText")}</p>
             <div className="flex flex-wrap items-center gap-3">
@@ -383,10 +387,20 @@ export function EmergencyAccess({
             )}
           </Section>
         )}
-        {inUse && needsSignIn && (
+        {needsSignIn && (inUse || signInsSaved || !kitCarries) && (
           <Section title={t("emergency.signInByHand")} hint={`${t("recovery.cloudCredsHint")} ${t("recovery.credsSaveHint")}`}>
             <CloudCard t={t} hueIndex={5} nested />
             <RcloneCard t={t} hueIndex={6} nested />
+            <div>
+              <Button
+                label={t("emergency.signInRetry")}
+                labelKey={null}
+                glyph={<IconCheck />}
+                onClick={() => void ask(() => tryEmergencyPlacesAgain(session.id))}
+                disabled={busy}
+                busy={busy}
+              />
+            </div>
           </Section>
         )}
 

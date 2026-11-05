@@ -35,6 +35,10 @@ var (
 // kitFence opens and closes the block a kit prints the rclone config in.
 const kitFence = "```"
 
+// kitSignInsSection is the heading of the saved sign-ins in a kit. A version
+// that does not know it reads over it.
+const kitSignInsSection = "Saved sign-ins"
+
 // spansLines reports whether one of the values would take more than its own
 // line in a recovery kit.
 func spansLines(values ...string) bool {
@@ -93,9 +97,28 @@ type recoveryKit struct {
 	// install's backups.
 	appKey, sealingKey string
 	// creds and rcloneConf are the shared sign-ins the kit prints for its
-	// remote repositories.
+	// remote repositories, and signIns the saved ones a location names.
 	creds      CloudCreds
 	rcloneConf string
+	signIns    []kitSignIn
+}
+
+// kitSignIn is a saved sign-in a recovery kit prints, with the repositories
+// that sign in with it. id is what it is called on this server once stored.
+type kitSignIn struct {
+	name  string
+	repos []string
+	creds CloudCreds
+	id    string
+}
+
+// holds reports whether repo is one of the repositories of the sign-in or lies
+// below one, which is where a storage location keeps its sections.
+func (k kitSignIn) holds(repo string) bool {
+	return slices.ContainsFunc(k.repos, func(loc string) bool {
+		loc = strings.TrimRight(loc, "/")
+		return repo == loc || strings.HasPrefix(repo, loc+"/")
+	})
 }
 
 // The secrets the Encryption section of a kit prints, by the line that
@@ -200,6 +223,17 @@ func readRecoveryKit(text string) (recoveryKit, error) {
 		case "Repository credentials":
 			if m := kitEnvRe.FindStringSubmatch(line); m != nil {
 				kit.creds.set(m[1], m[2])
+			}
+		case kitSignInsSection:
+			if name, ok := strings.CutPrefix(line, "### "); ok {
+				kit.signIns = append(kit.signIns, kitSignIn{name: name})
+			} else if len(kit.signIns) > 0 {
+				in := &kit.signIns[len(kit.signIns)-1]
+				if repo, ok := strings.CutPrefix(line, "- "); ok {
+					in.repos = append(in.repos, repo)
+				} else if m := kitEnvRe.FindStringSubmatch(line); m != nil {
+					in.creds.set(m[1], m[2])
+				}
 			}
 		case "Destinations":
 			if m := kitLineRe.FindStringSubmatch(line); m != nil {

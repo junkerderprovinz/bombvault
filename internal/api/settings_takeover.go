@@ -125,6 +125,9 @@ func (s *Service) RecordKeyCheck() error {
 
 var errSettingsOtherKey = errors.New("these settings were sealed with the APP_KEY of another server, which its recovery kit names. Start the emergency with that kit on the Restore page under Emergency, then restore the settings again")
 
+// errNothingStaged is a self-backup that brought no settings database along.
+var errNothingStaged = errors.New("this self-backup holds no settings database, so nothing was restored and BombVault keeps its current settings. Choose an older self-backup, or go on without one")
+
 // takeOverStagedSettings makes a staged settings database usable under this
 // server's APP_KEY before the next boot swaps it in.
 //
@@ -138,7 +141,7 @@ var errSettingsOtherKey = errors.New("these settings were sealed with the APP_KE
 func (s *Service) takeOverStagedSettings(ctx context.Context) error {
 	path := filepath.Join(selfrestore.RestoredSnapshotDir(s.cfg.DataDir), "bombvault.sqlite")
 	if _, err := os.Stat(path); err != nil {
-		return nil //nolint:nilerr // without a staged database the boot has nothing to swap in
+		return errNothingStaged
 	}
 	db, err := store.OpenStaged(path)
 	if err != nil {

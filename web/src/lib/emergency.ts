@@ -147,11 +147,16 @@ const PATH_KEY = {
 
 export type PlaceSettings = Partial<Pick<Settings, (typeof PATH_KEY)[keyof typeof PATH_KEY][number]>>;
 
+function remotePlace(place: EmergencyPlace): boolean {
+  return !place.folder && /^[a-z0-9+.-]+:/i.test(place.location) && !place.location.startsWith("/");
+}
+
 /**
  * settingsOfPlaces turns the places a recovery kit names per section into the
- * settings that point this server at them. A named repository and a
- * destination are no setting of a section and come back with the settings
- * backup.
+ * settings that point this server at them. A section's own folder can lie at a
+ * remote address, which the path field holds as well. A named repository and a
+ * destination are no setting of a section. The self-backup's place is
+ * selfBackupPlace's to say.
  */
 export function settingsOfPlaces(places: EmergencyPlace[]): PlaceSettings {
   const patch: PlaceSettings = {};
@@ -159,9 +164,36 @@ export function settingsOfPlaces(places: EmergencyPlace[]): PlaceSettings {
     const keys = place.domain ? PATH_KEY[place.domain as keyof typeof PATH_KEY] : undefined;
     if (!keys) continue;
     if (place.kind === "local" && place.folder) patch[keys[0]] = place.folder;
+    else if (place.domain === "config") continue;
+    else if (place.kind === "local" && remotePlace(place)) patch[keys[0]] = place.location;
     else if (place.kind === "offsite") patch[keys[1]] = place.location;
   }
   return patch;
+}
+
+/** Where the self-backup can be read from, as the settings step takes it. */
+export interface SelfBackupPlace {
+  source: "local" | "offsite";
+  /** The address of an off-site place. A local one is in configPath already. */
+  address?: string;
+  /** The key opened this place in the first step. */
+  readable: boolean;
+}
+
+/**
+ * selfBackupPlace picks the place the settings step starts on: one the key
+ * opened, a local folder first, or else the local folder the kit names, and
+ * undefined when it names none. A self-backup whose own folder lies in a storage
+ * location is read the way an off-site copy is.
+ */
+export function selfBackupPlace(places: EmergencyPlace[]): SelfBackupPlace | undefined {
+  const config = places.filter((place) => place.domain === "config");
+  const shape = (place: EmergencyPlace, readable: boolean): SelfBackupPlace =>
+    place.folder ? { source: "local", readable } : { source: "offsite", address: place.location, readable };
+  const opened = config.filter((place) => place.state === "readable");
+  const first = opened.find((place) => place.folder) ?? opened[0];
+  if (first) return shape(first, true);
+  return config.length > 0 ? shape(config.find((place) => place.folder) ?? config[0], false) : undefined;
 }
 
 /** minutesLeft is how long the key of an emergency stays in the server's
