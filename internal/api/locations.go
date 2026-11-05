@@ -418,7 +418,7 @@ func (b *locationBuilder) pathLocations() []storageLocation {
 					name = root[cut+1:]
 				}
 			}
-			keep := sharedLocalKeep(b.settings)
+			keep := b.s.folderKeep(b.settings, raw)
 			out = append(out, storageLocation{
 				ID: locationPath + ":" + key, Object: locationPath,
 				Kind: locationKind(raw), Backend: backendOf(raw), Name: name, Renamed: b.names[key] != "", Where: root,
@@ -767,6 +767,39 @@ func (h *Handler) handleGetStorageLocation(w http.ResponseWriter, r *http.Reques
 // and so has no row of its own. Every other kind is renamed through the route
 // of the object it is read from. An empty name gives back the folder's name.
 // PUT /api/storage/locations/{id}/name
+// handleSaveFolderCard saves the How long to keep card of a folder on this host
+// or a typed remote folder. It covers the own folders that lie in that folder
+// and no other.
+func (h *Handler) handleSaveFolderCard(w http.ResponseWriter, r *http.Request) {
+	loc, err := h.svc.StorageLocation(r.PathValue("id"))
+	if errors.Is(err, errNoSuchLocation) {
+		writeJSON(w, http.StatusNotFound, map[string]any{"ok": false, "error": err.Error()})
+		return
+	}
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	if loc.Object != locationPath {
+		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "this storage location keeps its rule where it is saved, not here"})
+		return
+	}
+	var body store.RetentionKeep
+	if !decodeBody(w, r, &body) {
+		return
+	}
+	key := strings.TrimPrefix(loc.ID, locationPath+":")
+	if err := h.store.SetLocationKeep(key, clampKeep(body)); err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	if loc, err = h.svc.StorageLocation(loc.ID); err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"location": loc}))
+}
+
 func (h *Handler) handleRenameStorageLocation(w http.ResponseWriter, r *http.Request) {
 	loc, err := h.svc.StorageLocation(r.PathValue("id"))
 	if errors.Is(err, errNoSuchLocation) {

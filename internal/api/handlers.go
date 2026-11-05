@@ -3441,6 +3441,7 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		h.svc.anomalies.settingsChanged()
 	}
 	h.svc.syncAllPrimaryOffsiteTargets(s)
+	h.svc.LinkTypedOwnFolders()
 	// The CPU cap reaches restic through the process environment of the NEXT
 	// child it starts ([558]), so applying it here takes effect without a
 	// restart — a backup already in flight keeps the value it began with.

@@ -8,6 +8,7 @@ vi.mock("./api", async (importOriginal) => {
     getSettings: vi.fn(),
     putSettings: vi.fn(),
     renameStorageLocation: vi.fn(),
+    saveFolderCard: vi.fn(),
     acceptDeleteRisk: vi.fn(),
     updateDestination: vi.fn(),
     updateOffsiteTarget: vi.fn(),
@@ -19,6 +20,7 @@ const api = await import("./api");
 const getSettings = vi.mocked(api.getSettings);
 const putSettings = vi.mocked(api.putSettings);
 const renameStorageLocation = vi.mocked(api.renameStorageLocation);
+const saveFolderCard = vi.mocked(api.saveFolderCard);
 const acceptDeleteRisk = vi.mocked(api.acceptDeleteRisk);
 const updateDestination = vi.mocked(api.updateDestination);
 const updateOffsiteTarget = vi.mocked(api.updateOffsiteTarget);
@@ -178,12 +180,12 @@ describe("saveLocation", () => {
     expect(updateRepo).toHaveBeenCalledWith("r1", { immutable: true });
   });
 
-  it("writes the local folder's rule into the settings as they stand", async () => {
-    getSettings.mockResolvedValue({ ok: true, settings: { retentionKeepDaily: 14, containersPath: "/a" } as Settings, hostMountRoot: "", platform: "" });
+  it("saves the card of a folder through its own route and leaves the settings alone", async () => {
+    saveFolderCard.mockResolvedValue({ ok: true });
     await saveLocation(location({ id: "path:abc", object: "path" }), { targets: [] }, { retention: KEEP });
-    expect(putSettings).toHaveBeenCalledWith(
-      expect.objectContaining({ containersPath: "/a", retentionKeepDaily: 7, retentionKeepWeekly: 4, retentionKeepMonthly: 3 })
-    );
+    expect(saveFolderCard).toHaveBeenCalledWith("path:abc", KEEP);
+    expect(getSettings).not.toHaveBeenCalled();
+    expect(putSettings).not.toHaveBeenCalled();
   });
 
   it("names a folder of domain paths through its own route and leaves the settings alone", async () => {
@@ -201,12 +203,6 @@ describe("saveLocation", () => {
     expect(updateDestination).not.toHaveBeenCalled();
   });
 
-  it("writes nothing when the settings cannot be read", async () => {
-    getSettings.mockResolvedValue({ ok: false, error: "locked" } as Awaited<ReturnType<typeof api.getSettings>>);
-    const res = await saveLocation(location({ id: "path:abc", object: "path" }), { targets: [] }, { retention: KEEP });
-    expect(res.ok).toBe(false);
-    expect(putSettings).not.toHaveBeenCalled();
-  });
 });
 
 describe("followLocation", () => {

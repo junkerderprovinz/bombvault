@@ -60,7 +60,6 @@ export function KeepCard({ edit, retention, hueIndex }: { edit: LocationEdit; re
     setDraft(stored);
   }
   const editable = can("retention");
-  const asks = location.kind !== "local";
 
   function revert() {
     setDraft(stored);
@@ -69,7 +68,7 @@ export function KeepCard({ edit, retention, hueIndex }: { edit: LocationEdit; re
 
   async function apply(next: KeepCounts) {
     setDraft(next);
-    if (asks && !(await less.agreed(stored, next, location.name))) {
+    if (!(await less.agreed(stored, next, location.name))) {
       revert();
       return;
     }
@@ -78,7 +77,7 @@ export function KeepCard({ edit, retention, hueIndex }: { edit: LocationEdit; re
 
   // Going back to the location's rule can keep less, as a changed count can.
   async function followLocation(section: StorageLocationSection) {
-    if (asks && !(await less.agreed(keepCounts(section.retention), stored, location.name))) return;
+    if (!(await less.agreed(keepCounts(section.retention), stored, location.name))) return;
     follow(section, "retention");
   }
 
@@ -130,7 +129,7 @@ export function KeepCard({ edit, retention, hueIndex }: { edit: LocationEdit; re
           onFollow={(section) => void followLocation(section)}
           busy={busy}
         />
-        {editable && asks && (
+        {editable && (
           <SettingRow label={t("storage.keep.ask")} hint={t("storage.keep.askHint")}>
             <Toggle hideLabel label={t("storage.keep.ask")} checked={ask} onChange={setAskKeepLess} />
           </SettingRow>

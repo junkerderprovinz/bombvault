@@ -3624,6 +3624,20 @@ UPDATE zfs_datasets SET schedule_cadence = '' WHERE (SELECT per_item_schedules F
 		report:  hiddenZeroRuleLines,
 		sql:     hiddenZeroRuleSQL(),
 	},
+	{
+		// The cards of the folders the domain paths share. A folder with none
+		// ages by the shared local rule, as it did.
+		version: locationKeepMigration,
+		name:    "location_keep",
+		sql: `CREATE TABLE IF NOT EXISTS location_keep (
+  location     TEXT PRIMARY KEY,
+  keep_last    INTEGER NOT NULL,
+  keep_daily   INTEGER NOT NULL,
+  keep_weekly  INTEGER NOT NULL,
+  keep_monthly INTEGER NOT NULL,
+  keep_yearly  INTEGER NOT NULL
+);`,
+	},
 }
 
 // hiddenZeroRuleRows are the sections with an all-zero own keep rule whose own
@@ -4198,6 +4212,10 @@ const balancedKeepMigration = 690
 // hiddenZeroRuleMigration numbers the clean-up of all-zero keep rules a move into
 // a storage location wrote where no page showed them.
 const hiddenZeroRuleMigration = 700
+
+// locationKeepMigration numbers the How long to keep cards of folders that have
+// no row of their own.
+const locationKeepMigration = 720
 
 // oneLineColumns are the names and locations the recovery kit prints.
 var oneLineColumns = []struct {

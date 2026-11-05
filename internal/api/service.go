@@ -2302,7 +2302,31 @@ func (s *Service) localKeep(settings store.Settings, domain string) store.Retent
 	if d, linked := s.linkedLocation(settings, row); linked {
 		return targetKeep(d)
 	}
+	return s.folderKeep(settings, domainPathRaw(domain, settings))
+}
+
+// folderKeep is what a typed own folder ages by: the card of the folder it lies
+// in once that was saved, the shared local rule until then.
+func (s *Service) folderKeep(settings store.Settings, raw string) store.RetentionKeep {
+	if k := s.folderCard(raw); k != nil {
+		return *k
+	}
 	return sharedLocalKeep(settings)
+}
+
+// folderCard reads the card saved for the folder a typed own folder lies in, nil
+// when it has none. Without the answer nothing can say what may go, so a failed
+// read keeps everything.
+func (s *Service) folderCard(raw string) *store.RetentionKeep {
+	cards, err := s.store.LocationKeeps()
+	if err != nil {
+		log.Printf("api: could not read the card of %s, so nothing is pruned there this time: %v", scrubRepoLocation(pathRoot(raw)), err) //nolint:gosec // G706: the location is scrubbed
+		return &store.RetentionKeep{}
+	}
+	if k, ok := cards[repoLocationKey(scrubRepoLocation(pathRoot(raw)))]; ok {
+		return &k
+	}
+	return nil
 }
 
 func sharedLocalKeep(settings store.Settings) store.RetentionKeep {

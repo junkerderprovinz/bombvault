@@ -104,16 +104,19 @@ func (s *Service) ConvertSharedSignIns() error {
 			return err
 		}
 	}
-	note.Linked = s.linkTypedOwnFolders()
+	note.Linked = s.LinkTypedOwnFolders()
 	return s.store.FinishSignIns(note)
 }
 
-// linkTypedOwnFolders hangs each remote own folder typed in by hand on the
-// storage location whose folder for the section it is. A folder that signs in
-// differently, or that is append-only where the location is not, stays as
+// LinkTypedOwnFolders hangs each own folder typed in by hand on the storage
+// location whose folder for the section it is, so the location's card, sign-in
+// and switch reach it as they reach one put there with Use as own folder. It
+// runs at every start and after every settings save. A remote folder that signs
+// in differently, or that is append-only where the location is not, stays as
 // typed, since following the location would change how it is reached or let
-// retention prune it.
-func (s *Service) linkTypedOwnFolders() []string {
+// retention prune it. A rule that pruned the folder until now stays as the
+// section's own unless the card says the same.
+func (s *Service) LinkTypedOwnFolders() []string {
 	settings, err := s.store.GetSettings()
 	if err != nil {
 		log.Printf("api: sign-ins: could not read the settings to link own folders: %v", err)
