@@ -266,7 +266,7 @@ func (e *parentProbeEngine) SnapshotParent(context.Context, string, string, rest
 func TestTheUnreadableFilesOfARunAreNamedAsTheHostKnowsThem(t *testing.T) {
 	s := &Service{cfg: config.Config{HostMountRoot: "/host/user", HostSourceRoot: "/mnt"}}
 	got := s.withUnreadableNote("success", "", backup.Summary{Unreadable: "open /host/user/appdata/nc/key.pem: permission denied"})
-	if want := store.NoteFilesUnreadable + ": open /mnt/appdata/nc/key.pem: permission denied"; got != want {
+	if want := store.NoteFilesUnreadable + ": open /mnt/appdata/nc/key.pem: permission denied; " + store.NoteOlderBackupsKept; got != want {
 		t.Fatalf("note = %q, want %q", got, want)
 	}
 }
@@ -289,7 +289,7 @@ func TestABackupThatLeftOutUnreadableFilesSaysSoOnItsRun(t *testing.T) {
 		t.Fatal(err)
 	}
 	got := onlyRun(t, st, "tg1")
-	if want := store.NoteFilesUnreadable + ": " + reason + "; " + outside; got.Status != "success" || got.Error != want {
+	if want := store.NoteFilesUnreadable + ": " + reason + "; " + store.NoteOlderBackupsKept + "; " + outside; got.Status != "success" || got.Error != want {
 		t.Fatalf("run = %s %q, want a success that names the unreadable files first", got.Status, got.Error)
 	}
 }

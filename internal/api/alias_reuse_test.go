@@ -248,6 +248,9 @@ func retentionBackupService(t *testing.T, name string, snaps []restic.Snapshot, 
 	if err := os.MkdirAll(appdata, 0o750); err != nil {
 		t.Fatal(err)
 	}
+	if err := os.WriteFile(filepath.Join(appdata, "app.db"), []byte("data"), 0o600); err != nil {
+		t.Fatal(err)
+	}
 	d := &fakeServiceDocker{inspect: model.Inspect{
 		Name:    "/" + name,
 		Image:   name + ":latest",

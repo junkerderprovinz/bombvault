@@ -18774,13 +18774,6 @@ func (s *Service) pruneDomain(ctx context.Context, domain, source string, afterB
 	// and the operator who clears that one comes straight back here for the next.
 	refusal := error(nil)
 	for _, r := range repos {
-		if off := s.pruneLocationOff(settings, domain, source, r); off != nil {
-			if refusal == nil {
-				refusal = off
-			}
-			skipped = append(skipped, repoSkip{Name: s.refName(r), Reason: off.Error(), Note: true})
-			continue
-		}
 		if isOffsiteSource(source) {
 			immutable, iErr := s.offsiteSourceImmutable(settings, domain, source)
 			if iErr != nil {
@@ -18796,6 +18789,13 @@ func (s *Service) pruneDomain(ctx context.Context, domain, source string, afterB
 			if refusal == nil {
 				refusal = appendOnlyRefusal(f)
 			}
+			continue
+		}
+		if off := s.pruneLocationOff(settings, domain, source, r); off != nil {
+			if refusal == nil {
+				refusal = off
+			}
+			skipped = append(skipped, repoSkip{Name: s.refName(r), Reason: off.Error(), Note: true})
 			continue
 		}
 		prunable = append(prunable, r)

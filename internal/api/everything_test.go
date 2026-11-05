@@ -361,7 +361,7 @@ func TestBackupEverythingRunsZFSAfterFiles(t *testing.T) {
 	}
 }
 
-func TestBackupEverythingPassesOverSectionsWithNoPlace(t *testing.T) {
+func TestBackupEverythingCountsSectionsWithNoPlaceAsFailed(t *testing.T) {
 	svc, st, _, _ := everythingTestService(t, &fakeResticEngine{})
 	if _, err := st.PutPlacementDefault("containers", store.HomeNowhere, nil); err != nil {
 		t.Fatal(err)
@@ -374,12 +374,12 @@ func TestBackupEverythingPassesOverSectionsWithNoPlace(t *testing.T) {
 	if err != nil {
 		t.Fatalf("BackupEverything: %v", err)
 	}
-	if sum.Status != "success" {
-		t.Fatalf("Status = %q, want success for sections switched off on purpose (domains: %+v)", sum.Status, sum.Domains)
+	if sum.Status != "failed" {
+		t.Fatalf("Status = %q, want failed with nothing backed up in two sections (domains: %+v)", sum.Status, sum.Domains)
 	}
 	for _, d := range sum.Domains {
-		if (d.Domain == "containers" || d.Domain == "flash") && d.Failed != 0 {
-			t.Fatalf("%s counted %d failures, want none", d.Domain, d.Failed)
+		if (d.Domain == "containers" || d.Domain == "flash") && d.Failed != 1 {
+			t.Fatalf("%s counted %d failures, want 1", d.Domain, d.Failed)
 		}
 	}
 }
