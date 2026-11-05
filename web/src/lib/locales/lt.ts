@@ -2505,6 +2505,7 @@ const lt: Partial<Translations> = {
   "zfs.safety.deleteConfirm": "Ištrinti saugos momentinę kopiją {name} iš {dataset}? Būsenos prieš tą atkūrimą nebebus galima susigrąžinti.",
   "zfs.deleteBackupsConfirm": "Ištrinti visas šio įrašo ir jo duomenų rinkinių kopijas? Momentinės kopijos pašalinamos visam laikui, saugykla išvaloma, o įrašas dingsta iš sąrašo. To atšaukti nebus galima.",
   "zfs.deleteKeptSafety": "one={n} saugos momentinė kopija liko serveryje|few={n} saugos momentinės kopijos liko serveryje|other={n} saugos momentinių kopijų liko serveryje",
+  "zfs.deleteKeptReplica": "Kai kurių replikos momentinių kopijų nepavyko pašalinti, ir jos vis dar yra serveryje.",
   // ZFS add dialog and restore panel
   "zfs.add.title": "ZFS duomenų rinkinių pridėjimas",
   "zfs.add.hint": "Sąrašas ateina iš šio kompiuterio. Įrašas yra duomenų rinkinys kartu su visais po juo esančiais rinkiniais, kopijuojamais iš vienos momentinės kopijos. Pasirink viršutinį to, ko nori, rinkinį, o paskui išjunk tuos vaikinius rinkinius, kurie turi likti nuošalyje.",
@@ -2593,6 +2594,7 @@ const lt: Partial<Translations> = {
   "zfs.replica.keepSummary.weekly": "{n} savaitės",
   "zfs.replica.keepSummary.monthly": "{n} mėnesio",
   "zfs.replica.keepSummary.yearly": "{n} metų",
+  "zfs.replica.keepSummary.all": "lieka visos momentinės kopijos",
   "zfs.replica.members": "Duomenų rinkiniai replikoje",
   "zfs.replica.membersHint": "Viskas, ką šis įrašas archyvuoja, ir po juo esantys tomai. Išjungti vidiniai duomenų rinkiniai čia taip pat praleidžiami. Paskirties vietoje kiekvienas duomenų rinkinys yra tik skaitomas ir neprijungtas, todėl jis niekada nieko neuždengia tame serveryje.",
   "zfs.replica.lastRun": "Paskutinis paleidimas {when}: išsiųsta {sent} per {took}.",

@@ -73,6 +73,10 @@ type ZFSRunDetail struct {
 type ZFSDeleteResult struct {
 	LeftoversRemaining int `json:"leftoversRemaining"`
 	SafetyRemaining    int `json:"safetyRemaining"`
+	// ReplicaKept says that an item with a replica could not take its snapshots
+	// off the source. No later clean finds them, and a held one blocks a zfs
+	// destroy -r of the tree.
+	ReplicaKept bool `json:"replicaKept"`
 }
 
 // zfsRefuse builds a refusal that carries its reason code to the page, which
@@ -360,8 +364,8 @@ func (s *Service) deleteZFSDatasetLocked(ctx context.Context, id string, removeS
 		return ZFSDeleteResult{}, errZFSReplicaBusy
 	}
 	defer unlock()
-	s.cleanZFSReplicaSource(ctx, d)
 	var res ZFSDeleteResult
+	res.ReplicaKept = !s.cleanZFSReplicaSource(ctx, d) && d.Replica.TargetKind != store.ZFSReplicaTargetNone
 	safety, sErr := s.store.ListZFSSafetySnapshots(id)
 	if sErr != nil {
 		log.Printf("api: zfs: could not read the safety snapshots of %s: %v", d.Dataset, sErr)

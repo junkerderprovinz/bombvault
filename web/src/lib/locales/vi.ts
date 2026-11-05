@@ -1976,6 +1976,7 @@ const vi: Partial<Translations> = {
   "zfs.safety.deleteConfirm": "Xóa ảnh chụp an toàn {name} của {dataset}? Trạng thái trước lần khôi phục đó sau này không lấy lại được.",
   "zfs.deleteBackupsConfirm": "Xóa tất cả bản sao của mục này và các tập dữ liệu của nó? Các bản sao lưu mất hẳn, kho được dọn sạch, và mục biến khỏi danh sách. Việc này không hoàn tác được.",
   "zfs.deleteKeptSafety": "{n} ảnh chụp an toàn còn lại trên máy chủ",
+  "zfs.deleteKeptReplica": "Không thể xóa một số ảnh chụp của bản sao và chúng vẫn còn trên máy chủ.",
   // ZFS add dialog and restore panel
   "zfs.add.title": "Thêm tập dữ liệu ZFS",
   "zfs.add.hint": "Danh sách này lấy từ máy chủ này. Một mục là một tập dữ liệu cùng với mọi tập dữ liệu bên dưới nó, được sao lưu từ một ảnh chụp duy nhất. Hãy chọn tập dữ liệu trên cùng của phần bạn muốn, rồi tắt những tập dữ liệu con muốn bỏ ra.",
@@ -2064,6 +2065,7 @@ const vi: Partial<Translations> = {
   "zfs.replica.keepSummary.weekly": "{n} theo tuần",
   "zfs.replica.keepSummary.monthly": "{n} theo tháng",
   "zfs.replica.keepSummary.yearly": "{n} theo năm",
+  "zfs.replica.keepSummary.all": "giữ lại mọi ảnh chụp",
   "zfs.replica.members": "Các tập dữ liệu trong bản nhân bản",
   "zfs.replica.membersHint": "Mọi thứ mục này sao lưu, cùng các volume bên dưới. Những tập dữ liệu con bạn đã tắt cũng bị bỏ qua ở đây. Trên đích, mỗi tập dữ liệu chỉ đọc và không được gắn kết, nên nó không che khuất gì trên máy chủ đó.",
   "zfs.replica.lastRun": "Lần chạy gần nhất {when}: đã gửi {sent} trong {took}.",

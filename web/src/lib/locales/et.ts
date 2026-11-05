@@ -2505,6 +2505,7 @@ const et: Partial<Translations> = {
   "zfs.safety.deleteConfirm": "Kas kustutada turvahetktõmmis {name} andmestikust {dataset}? Selle taastamise eelset olekut ei saa pärast enam tagasi.",
   "zfs.deleteBackupsConfirm": "Kas kustutada kõik selle kirje ja selle andmestike varundused? Hetktõmmised kaovad jäädavalt, hoidla puhastatakse ja kirje kaob nimekirjast. Seda ei saa tagasi võtta.",
   "zfs.deleteKeptSafety": "one={n} turvahetktõmmis jäi serverisse|other={n} turvahetktõmmist jäi serverisse",
+  "zfs.deleteKeptReplica": "Mõnda replika hetktõmmist ei saanud eemaldada ja need on endiselt serveris.",
   // ZFS add dialog and restore panel
   "zfs.add.title": "ZFS-andmestike lisamine",
   "zfs.add.hint": "Nimekiri tuleb sellest hostist. Kirje on andmestik koos kõigi selle all olevate andmestikega, varundatuna ühest hetktõmmisest. Vali kõige ülemine andmestik sellest, mida soovid, ja lülita siis välja alamandmestikud, mis peavad välja jääma.",
@@ -2593,6 +2594,7 @@ const et: Partial<Translations> = {
   "zfs.replica.keepSummary.weekly": "{n} nädalast",
   "zfs.replica.keepSummary.monthly": "{n} kuist",
   "zfs.replica.keepSummary.yearly": "{n} aastast",
+  "zfs.replica.keepSummary.all": "kõik hetktõmmised jäävad alles",
   "zfs.replica.members": "Replika andmestikud",
   "zfs.replica.membersHint": "Kõik, mida see kirje varundab, ja selle all olevad köited. Ka välja lülitatud alamandmestikud jäetakse siin välja. Sihtkohas on iga andmestik kirjutuskaitstud ja haakimata, nii et see ei varja selles serveris midagi.",
   "zfs.replica.lastRun": "Viimane käivitus {when}: {sent} saadetud ajaga {took}.",

@@ -2505,6 +2505,7 @@ const is: Partial<Translations> = {
   "zfs.safety.deleteConfirm": "Eyða öryggisskyndimyndinni {name} af {dataset}? Staðan á undan þeirri endurheimt næst ekki aftur eftir það.",
   "zfs.deleteBackupsConfirm": "Eyða öllum afritum þessarar færslu og gagnasafna hennar? Afritunum er eytt endanlega, geymslan er hreinsuð og færslan fer af listanum. Þetta verður ekki afturkallað.",
   "zfs.deleteKeptSafety": "one={n} öryggisskyndimynd varð eftir á þjóninum|other={n} öryggisskyndimyndir urðu eftir á þjóninum",
+  "zfs.deleteKeptReplica": "Ekki tókst að fjarlægja sumar skyndimyndir afritsins og þær eru enn á þjóninum.",
   // ZFS add dialog and restore panel
   "zfs.add.title": "Bæta við ZFS-gagnasöfnum",
   "zfs.add.hint": "Listinn kemur frá þessum hýsli. Færsla er gagnasafn ásamt öllum gagnasöfnum undir því, afritað úr einni skyndimynd. Veldu efsta gagnasafnið í því sem þú vilt og slökktu svo á undirgagnasöfnunum sem eiga að vera utan við.",
@@ -2593,6 +2594,7 @@ const is: Partial<Translations> = {
   "zfs.replica.keepSummary.weekly": "{n} vikulega",
   "zfs.replica.keepSummary.monthly": "{n} mánaðarlega",
   "zfs.replica.keepSummary.yearly": "{n} árlega",
+  "zfs.replica.keepSummary.all": "allar skyndimyndir halda sér",
   "zfs.replica.members": "Gagnasöfn í eftirmyndinni",
   "zfs.replica.membersHint": "Allt sem þessi færsla afritar, auk rúmmálanna undir henni. Undirgagnasöfn sem þú slökktir á eru líka sleppt hér. Á ZFS-þjóninum er hvert gagnasafn skrifvarið og ekki tengt, svo það felur aldrei neitt á þeim þjóni.",
   "zfs.replica.lastRun": "Síðasta keyrsla {when}: {sent} sent á {took}.",

@@ -1985,6 +1985,7 @@ const sv: Partial<Translations> = {
   "zfs.safety.deleteConfirm": "Ta bort säkerhetsögonblicksbilden {name} av {dataset}? Läget före den återställningen går inte att få tillbaka efteråt.",
   "zfs.deleteBackupsConfirm": "Ta bort alla säkerhetskopior av den här posten och dess datauppsättningar? Ögonblicksbilderna försvinner för gott, förrådet rensas och posten tas bort från listan. Det går inte att ångra.",
   "zfs.deleteKeptSafety": "one={n} säkerhetsögonblicksbild blev kvar på servern|other={n} säkerhetsögonblicksbilder blev kvar på servern",
+  "zfs.deleteKeptReplica": "Vissa ögonblicksbilder av repliken gick inte att ta bort och finns kvar på servern.",
   // ZFS add dialog and restore panel
   "zfs.add.title": "Lägg till ZFS-datauppsättningar",
   "zfs.add.hint": "Listan kommer från den här värden. En post är en datauppsättning tillsammans med alla datauppsättningar under den, säkerhetskopierade från en enda ögonblicksbild. Välj den översta datauppsättningen i det du vill ha och stäng sedan av de underliggande som ska lämnas utanför.",
@@ -2073,6 +2074,7 @@ const sv: Partial<Translations> = {
   "zfs.replica.keepSummary.weekly": "{n} veckovisa",
   "zfs.replica.keepSummary.monthly": "{n} månadsvisa",
   "zfs.replica.keepSummary.yearly": "{n} årsvisa",
+  "zfs.replica.keepSummary.all": "alla ögonblicksbilder blir kvar",
   "zfs.replica.members": "Datauppsättningar i repliken",
   "zfs.replica.membersHint": "Allt som den här posten säkerhetskopierar, plus volymerna under den. Underdatauppsättningar som du har stängt av utelämnas också här. På målet är varje datauppsättning skrivskyddad och inte monterad, så den döljer aldrig något på den servern.",
   "zfs.replica.lastRun": "Senaste körning {when}: {sent} skickat på {took}.",

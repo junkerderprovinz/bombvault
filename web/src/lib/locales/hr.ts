@@ -2505,6 +2505,7 @@ const hr: Partial<Translations> = {
   "zfs.safety.deleteConfirm": "Obrisati sigurnosnu snimku {name} skupa {dataset}? Stanje od prije tog vraćanja poslije se više ne može dobiti natrag.",
   "zfs.deleteBackupsConfirm": "Obrisati sve kopije ove stavke i njezinih skupova podataka? Sigurnosne kopije nestaju zauvijek, repozitorij se pročišćava, a stavka nestaje s popisa. To se ne može poništiti.",
   "zfs.deleteKeptSafety": "one={n} sigurnosna snimka ostala je na poslužitelju|few={n} sigurnosne snimke ostale su na poslužitelju|other={n} sigurnosnih snimaka ostalo je na poslužitelju",
+  "zfs.deleteKeptReplica": "Neke snimke replike nije bilo moguće ukloniti i još su na poslužitelju.",
   // ZFS add dialog and restore panel
   "zfs.add.title": "Dodavanje ZFS skupova podataka",
   "zfs.add.hint": "Popis dolazi s ovog poslužitelja. Stavka je skup podataka zajedno sa svim skupovima ispod njega, kopiran iz jedne snimke. Odaberite skup na vrhu onoga što želite, pa isključite podskupove koji trebaju ostati vani.",
@@ -2593,6 +2594,7 @@ const hr: Partial<Translations> = {
   "zfs.replica.keepSummary.weekly": "{n} tjednih",
   "zfs.replica.keepSummary.monthly": "{n} mjesečnih",
   "zfs.replica.keepSummary.yearly": "{n} godišnjih",
+  "zfs.replica.keepSummary.all": "sve snimke ostaju",
   "zfs.replica.members": "Skupovi podataka u replici",
   "zfs.replica.membersHint": "Sve što ova stavka kopira, plus volumeni ispod nje. Podskupovi koje ste isključili ovdje su također izostavljeni. Na odredištu je svaki skup podataka samo za čitanje i nije montiran, pa ondje ništa ne zaklanja.",
   "zfs.replica.lastRun": "Zadnje pokretanje {when}: poslano {sent} u {took}.",

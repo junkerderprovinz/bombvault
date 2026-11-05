@@ -69,6 +69,7 @@ export function RemoveWindow({
       push(t(way === "keep" ? "entry.remove.kept" : "entry.remove.dropped").replace("{name}", () => name), "success");
       if (res.safetyRemaining) push(t("zfs.deleteKeptSafety", res.safetyRemaining), "warn");
       if (res.leftoversRemaining) push(t("zfs.sweepRemaining", res.leftoversRemaining), "warn");
+      if (res.replicaKept) push(t("zfs.deleteKeptReplica"), "warn");
       onRemoved();
     } catch (err) {
       push(err instanceof Error ? err.message : t("common.removeFailed"), "fail");

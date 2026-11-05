@@ -1984,6 +1984,7 @@ const nl: Partial<Translations> = {
   "zfs.safety.deleteConfirm": "Veiligheidssnapshot {name} van {dataset} verwijderen? De toestand van voor dat terugzetten is daarna niet meer terug te halen.",
   "zfs.deleteBackupsConfirm": "Alle back-ups van dit item en zijn datasets verwijderen? De snapshots gaan definitief weg, de repository wordt opgeruimd en het item verdwijnt uit de lijst. Dit kan niet ongedaan worden gemaakt.",
   "zfs.deleteKeptSafety": "one={n} veiligheidssnapshot bleef op de server|other={n} veiligheidssnapshots bleven op de server",
+  "zfs.deleteKeptReplica": "Sommige replica-snapshots konden niet worden verwijderd en staan nog op de server.",
   // ZFS add dialog and restore panel
   "zfs.add.title": "ZFS-datasets toevoegen",
   "zfs.add.hint": "De lijst komt van deze host. Een item is een dataset samen met alle datasets eronder, geback-upt vanuit één snapshot. Kies de bovenste dataset van wat je wilt en zet daarna de onderliggende datasets uit die je wilt weglaten.",
@@ -2072,6 +2073,7 @@ const nl: Partial<Translations> = {
   "zfs.replica.keepSummary.weekly": "{n} wekelijks",
   "zfs.replica.keepSummary.monthly": "{n} maandelijks",
   "zfs.replica.keepSummary.yearly": "{n} jaarlijks",
+  "zfs.replica.keepSummary.all": "alle snapshots blijven",
   "zfs.replica.members": "Datasets in de replica",
   "zfs.replica.membersHint": "Alles wat dit item back-upt, plus de volumes eronder. Onderliggende datasets die je hebt uitgezet, blijven hier ook weg. Op het doel is elke dataset alleen-lezen en niet gekoppeld, dus hij verbergt niets op die server.",
   "zfs.replica.lastRun": "Laatste run {when}: {sent} verstuurd in {took}.",

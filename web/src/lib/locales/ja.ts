@@ -1976,6 +1976,7 @@ const ja: Partial<Translations> = {
   "zfs.safety.deleteConfirm": "{dataset} の安全用スナップショット {name} を削除しますか。その復元より前の状態は、あとから取り戻せなくなります。",
   "zfs.deleteBackupsConfirm": "この項目とそのデータセットのバックアップをすべて削除しますか。バックアップは完全に消え、リポジトリは整理され、項目は一覧から外れます。元には戻せません。",
   "zfs.deleteKeptSafety": "サーバーに安全用スナップショットが {n} 件残りました",
+  "zfs.deleteKeptReplica": "一部のレプリカのスナップショットを削除できず、サーバーに残っています。",
   // ZFS add dialog and restore panel
   "zfs.add.title": "ZFS データセットの追加",
   "zfs.add.hint": "この一覧はこのホストから読み取ったものです。項目とは、あるデータセットとその下にあるすべてのデータセットのことで、ひとつのスナップショットからまとめてバックアップされます。ほしい範囲のいちばん上のデータセットを選び、外したい子データセットをオフにしてください。",
@@ -2064,6 +2065,7 @@ const ja: Partial<Translations> = {
   "zfs.replica.keepSummary.weekly": "週次 {n}",
   "zfs.replica.keepSummary.monthly": "月次 {n}",
   "zfs.replica.keepSummary.yearly": "年次 {n}",
+  "zfs.replica.keepSummary.all": "すべてのスナップショットを保持",
   "zfs.replica.members": "レプリカに含まれるデータセット",
   "zfs.replica.membersHint": "この項目がバックアップするすべてと、その下のボリュームです。オフにした子データセットはここでも除外されます。複製先では各データセットが読み取り専用でマウントされないため、そのサーバー上の既存のものを隠すことはありません。",
   "zfs.replica.lastRun": "前回の実行 {when}: {took}で {sent} を送信。",

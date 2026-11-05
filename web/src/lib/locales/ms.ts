@@ -2505,6 +2505,7 @@ const ms: Partial<Translations> = {
   "zfs.safety.deleteConfirm": "Padam syot kilat keselamatan {name} bagi {dataset}? Keadaan sebelum pemulihan itu tidak boleh diambil semula selepas ini.",
   "zfs.deleteBackupsConfirm": "Padam semua sandaran entri ini dan set datanya? Sandaran hilang selamanya, repositori dibersihkan, dan entri keluar daripada senarai. Ini tidak boleh dibatalkan.",
   "zfs.deleteKeptSafety": "{n} syot kilat keselamatan tinggal pada pelayan",
+  "zfs.deleteKeptReplica": "Sesetengah syot kilat replika tidak dapat dialih keluar dan masih berada pada pelayan.",
   // ZFS add dialog and restore panel
   "zfs.add.title": "Menambah set data ZFS",
   "zfs.add.hint": "Senarai ini datang dari hos ini. Satu entri ialah satu set data bersama semua set data di bawahnya, disandarkan daripada satu syot kilat. Pilih set data paling atas bagi apa yang anda mahu, kemudian matikan set data anak yang hendak ditinggalkan.",
@@ -2593,6 +2594,7 @@ const ms: Partial<Translations> = {
   "zfs.replica.keepSummary.weekly": "{n} mingguan",
   "zfs.replica.keepSummary.monthly": "{n} bulanan",
   "zfs.replica.keepSummary.yearly": "{n} tahunan",
+  "zfs.replica.keepSummary.all": "semua syot kilat kekal",
   "zfs.replica.members": "Set data dalam replika",
   "zfs.replica.membersHint": "Semua yang disandarkan oleh entri ini, serta volum di bawahnya. Set data anak yang anda matikan juga ditinggalkan di sini. Pada sasaran, setiap set data hanya boleh dibaca dan tidak dilekapkan, jadi ia tidak menutup apa-apa pada pelayan itu.",
   "zfs.replica.lastRun": "Larian terakhir {when}: {sent} dihantar dalam {took}.",

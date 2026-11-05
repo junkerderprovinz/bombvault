@@ -1986,6 +1986,7 @@ const hu: Partial<Translations> = {
   "zfs.safety.deleteConfirm": "Törlöd a(z) {dataset} készlet {name} biztonsági pillanatképét? Az azt a visszaállítást megelőző állapot ezután nem nyerhető vissza.",
   "zfs.deleteBackupsConfirm": "Törlöd ennek az elemnek és adatkészleteinek minden biztonsági mentését? A pillanatképek véglegesen eltűnnek, a tároló kitakarítódik, az elem pedig lekerül a listáról. Ezt nem lehet visszavonni.",
   "zfs.deleteKeptSafety": "{n} biztonsági pillanatkép maradt a kiszolgálón",
+  "zfs.deleteKeptReplica": "A replika néhány pillanatképét nem sikerült eltávolítani, és még a kiszolgálón vannak.",
   // ZFS add dialog and restore panel
   "zfs.add.title": "ZFS adatkészletek hozzáadása",
   "zfs.add.hint": "A lista erről a gépről jön. Egy elem egy adatkészlet az alatta lévő összes adatkészlettel együtt, egyetlen pillanatképből mentve. Válaszd ki a legfelső adatkészletet abból, amit szeretnél, aztán kapcsold ki azokat az alsóbb adatkészleteket, amelyek kimaradnak.",
@@ -2074,6 +2075,7 @@ const hu: Partial<Translations> = {
   "zfs.replica.keepSummary.weekly": "{n} heti",
   "zfs.replica.keepSummary.monthly": "{n} havi",
   "zfs.replica.keepSummary.yearly": "{n} éves",
+  "zfs.replica.keepSummary.all": "minden pillanatkép megmarad",
   "zfs.replica.members": "A replika adatkészletei",
   "zfs.replica.membersHint": "Minden, amit ez az elem ment, plusz az alatta lévő kötetek. A kikapcsolt gyermek-adatkészletek itt is kimaradnak. A célon minden adatkészlet csak olvasható és nincs csatolva, így ott semmit nem takar el.",
   "zfs.replica.lastRun": "Utolsó futás {when}: {sent} elküldve ennyi idő alatt: {took}.",

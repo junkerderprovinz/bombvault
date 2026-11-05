@@ -272,19 +272,22 @@ func (s *Service) ForgetZFSReplicaHostKey(id string) error {
 }
 
 // cleanZFSReplicaSource removes the replica snapshots and bookmarks from an
-// item's tree. What it cannot remove is logged: the setting changes either
-// way, and the leftovers are BombVault's own names a later clean finds again.
-func (s *Service) cleanZFSReplicaSource(ctx context.Context, d store.ZFSDataset) {
+// item's tree and reports whether that worked. What it cannot remove is logged:
+// the setting changes either way, and a later clean finds BombVault's own names
+// again as long as the item is there.
+func (s *Service) cleanZFSReplicaSource(ctx context.Context, d store.ZFSDataset) bool {
 	end, err := s.zfsReplicaHostEnd()
 	if err != nil {
 		log.Printf("api: zfs replica: the replica snapshots of %s stay, the host cannot be reached: %v", d.Dataset, err)
-		return
+		return false
 	}
 	cctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), zfsReplicaCleanTimeout)
 	defer cancel()
 	if err := zfsrepl.Clean(cctx, end, d.Dataset, d.ExcludedChildren); err != nil {
 		log.Printf("api: zfs replica: removing the replica snapshots of %s failed: %v", d.Dataset, err)
+		return false
 	}
+	return true
 }
 
 // TestZFSReplicaConnection connects to a server that is not stored yet and

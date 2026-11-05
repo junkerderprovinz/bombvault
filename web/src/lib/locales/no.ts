@@ -1985,6 +1985,7 @@ const no: Partial<Translations> = {
   "zfs.safety.deleteConfirm": "Slette sikkerhetsøyeblikksbildet {name} av {dataset}? Tilstanden før den gjenopprettingen kan ikke hentes tilbake etterpå.",
   "zfs.deleteBackupsConfirm": "Slette alle sikkerhetskopier av dette elementet og datasettene under? Øyeblikksbildene fjernes for godt, depotet ryddes, og elementet forsvinner fra listen. Dette kan ikke angres.",
   "zfs.deleteKeptSafety": "one={n} sikkerhetsøyeblikksbilde ble igjen på serveren|other={n} sikkerhetsøyeblikksbilder ble igjen på serveren",
+  "zfs.deleteKeptReplica": "Noen øyeblikksbilder av replikaen kunne ikke fjernes og ligger fortsatt på serveren.",
   // ZFS add dialog and restore panel
   "zfs.add.title": "Legg til ZFS-datasett",
   "zfs.add.hint": "Listen kommer fra denne verten. Et element er et datasett sammen med alle datasett under det, sikkerhetskopiert fra ett øyeblikksbilde. Velg datasettet øverst i det du vil ha, og slå så av underdatasettene som skal holdes utenfor.",
@@ -2073,6 +2074,7 @@ const no: Partial<Translations> = {
   "zfs.replica.keepSummary.weekly": "{n} ukentlige",
   "zfs.replica.keepSummary.monthly": "{n} månedlige",
   "zfs.replica.keepSummary.yearly": "{n} årlige",
+  "zfs.replica.keepSummary.all": "alle øyeblikksbilder blir",
   "zfs.replica.members": "Datasett i replikaen",
   "zfs.replica.membersHint": "Alt dette elementet sikkerhetskopierer, pluss volumene under det. Underdatasett du har slått av, er også utelatt her. På målet er hvert datasett skrivebeskyttet og ikke montert, så det aldri skjuler noe på den serveren.",
   "zfs.replica.lastRun": "Siste kjøring {when}: {sent} sendt på {took}.",

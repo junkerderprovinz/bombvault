@@ -183,11 +183,11 @@ A copy that another BombVault replicates to this server is not sent on, because 
 
 ### How long snapshots stay {#replica-retention}
 
-On the target, a new replica keeps 7 daily and 3 weekly snapshots. Pick **Short**, **Balanced** or **Long** instead, or set **Custom values**. Only snapshots named `bombvault-replica-<14 digits>` are ever removed there, and never the newest one that both sides share.
+On the target, a new replica keeps 7 daily and 3 weekly snapshots. Pick **Short**, **Balanced** or **Long** instead, or set **Custom values**. Custom values of all zeros keep every snapshot, and the card says so. Only snapshots named `bombvault-replica-<14 digits>` are ever removed there, and never the newest one that both sides share.
 
 On the source, BombVault keeps the latest replica snapshot, plus a bookmark for every state it has sent. Bookmarks cost no space. The next transfer starts from them.
 
-To keep more on the source as well, set **Keep on this server** on the Replica card, for example to 7. That many of the newest replica snapshots then stay on this server after every replica, next to what the target keeps. 0 or 1 keeps only the latest. The latest carries a hold, so the base of the next transfer is not destroyed by accident. The older ones have none. Each snapshot holds on to the blocks that changed after it, so every one you keep takes space on the pool. Switching the replica off or to another target, or deleting the entry, removes them from this server too. Snapshots of another entry nested below it stay.
+To keep more on the source as well, set **Keep on this server** on the Replica card, for example to 7. That many of the newest replica snapshots then stay on this server after every replica, next to what the target keeps. 0 or 1 keeps only the latest. The latest carries a hold, so the base of the next transfer is not destroyed by accident. The older ones have none. Each snapshot holds on to the blocks that changed after it, so every one you keep takes space on the pool. Switching the replica off or to another target, or deleting the entry, removes them from this server too. Snapshots of another entry nested below it stay. If the host cannot be reached while you delete the entry, the snapshots stay too and the page says so. Remove them by hand: `zfs release -r bombvault-replica <dataset>@<snapshot>`, then `zfs destroy`.
 
 The files of a kept snapshot can be read or copied right away, from the `.zfs/snapshot` folder inside the dataset or from a clone, without touching the dataset or the replica:
 

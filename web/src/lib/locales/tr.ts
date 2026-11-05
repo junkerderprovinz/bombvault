@@ -1985,6 +1985,7 @@ const tr: Partial<Translations> = {
   "zfs.safety.deleteConfirm": "{dataset} kümesinin {name} güvenlik anlık görüntüsü silinsin mi? O geri yüklemeden önceki durum sonrasında geri getirilemez.",
   "zfs.deleteBackupsConfirm": "Bu ögenin ve veri kümelerinin bütün yedekleri silinsin mi? Yedekler kalıcı olarak gider, depo temizlenir ve öge listeden çıkar. Bu geri alınamaz.",
   "zfs.deleteKeptSafety": "Sunucuda {n} güvenlik anlık görüntüsü kaldı",
+  "zfs.deleteKeptReplica": "Replikanın bazı anlık görüntüleri kaldırılamadı ve hâlâ sunucuda.",
   // ZFS add dialog and restore panel
   "zfs.add.title": "ZFS veri kümesi ekleme",
   "zfs.add.hint": "Liste bu sunucudan geliyor. Bir öge, bir veri kümesi ile altındaki bütün veri kümeleridir ve tek bir anlık görüntüden yedeklenir. İstediğin şeyin en üstündeki veri kümesini seç, sonra dışarıda kalacak alt veri kümelerini kapat.",
@@ -2073,6 +2074,7 @@ const tr: Partial<Translations> = {
   "zfs.replica.keepSummary.weekly": "{n} haftalık",
   "zfs.replica.keepSummary.monthly": "{n} aylık",
   "zfs.replica.keepSummary.yearly": "{n} yıllık",
+  "zfs.replica.keepSummary.all": "tüm anlık görüntüler kalır",
   "zfs.replica.members": "Replikadaki veri kümeleri",
   "zfs.replica.membersHint": "Bu ögenin yedeklediği her şey ve altındaki birimler. Kapattığın alt veri kümeleri burada da dışarıda kalır. Hedefte her veri kümesi salt okunurdur ve bağlı değildir, bu yüzden o sunucuda hiçbir şeyi gizlemez.",
   "zfs.replica.lastRun": "Son çalıştırma {when}: {took} içinde {sent} gönderildi.",

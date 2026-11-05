@@ -510,9 +510,12 @@ func (r *Repo) ImportZFSReplica(in ZFSReplicaImport) error {
 			if err != nil {
 				return fmt.Errorf("ImportZFSReplica %s keep: %w", dataset, err)
 			}
+			// A folder this instance fixed itself stays, its copies lie there.
 			if _, err := tx.Exec(`UPDATE zfs_datasets
-				SET replica_after_backup = ?, replica_cadence = ?, replica_keep = ?, replica_keep_source = ? WHERE id = ?`,
-				boolInt(rep.AfterBackup), rep.Cadence, string(raw), rep.KeepOnSource, id); err != nil {
+				SET replica_after_backup = ?, replica_cadence = ?, replica_keep = ?, replica_keep_source = ?,
+					replica_folder = CASE WHEN replica_folder = '' THEN ? ELSE replica_folder END
+				WHERE id = ?`,
+				boolInt(rep.AfterBackup), rep.Cadence, string(raw), rep.KeepOnSource, rep.Folder, id); err != nil {
 				return fmt.Errorf("ImportZFSReplica %s: %w", dataset, err)
 			}
 		}

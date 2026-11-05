@@ -2505,6 +2505,7 @@ const gl: Partial<Translations> = {
   "zfs.safety.deleteConfirm": "Queres borrar a instantánea de seguranza {name} de {dataset}? O estado anterior a esa restauración xa non se poderá recuperar.",
   "zfs.deleteBackupsConfirm": "Queres borrar todas as copias deste elemento e dos seus conxuntos de datos? As copias elimínanse para sempre, o repositorio límpase e o elemento sae da lista. Isto non se pode desfacer.",
   "zfs.deleteKeptSafety": "one={n} instantánea de seguranza quedou no servidor|other={n} instantáneas de seguranza quedaron no servidor",
+  "zfs.deleteKeptReplica": "Algunhas instantáneas da réplica non se puideron quitar e seguen no servidor.",
   // ZFS add dialog and restore panel
   "zfs.add.title": "Engadir conxuntos de datos ZFS",
   "zfs.add.hint": "A lista vén deste servidor. Un elemento é un conxunto de datos xunto con todos os conxuntos que hai debaixo, copiados dunha soa instantánea. Escolle o conxunto de máis arriba do que queiras e despois apaga os conxuntos fillos que queiras deixar fóra.",
@@ -2593,6 +2594,7 @@ const gl: Partial<Translations> = {
   "zfs.replica.keepSummary.weekly": "{n} semanais",
   "zfs.replica.keepSummary.monthly": "{n} mensuais",
   "zfs.replica.keepSummary.yearly": "{n} anuais",
+  "zfs.replica.keepSummary.all": "quedan todas as instantáneas",
   "zfs.replica.members": "Conxuntos de datos na réplica",
   "zfs.replica.membersHint": "Todo o que garda este elemento, máis os volumes que penden del. Os conxuntos fillos que desactivaches tamén quedan fóra aquí. No destino cada conxunto de datos é de só lectura e non está montado, así que non tapa nada nese servidor.",
   "zfs.replica.lastRun": "Última execución {when}: {sent} enviados en {took}.",

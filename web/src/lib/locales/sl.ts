@@ -2489,6 +2489,7 @@ const sl: Partial<Translations> = {
   "zfs.safety.deleteConfirm": "Izbrišem varnostni posnetek {name} zbirke {dataset}? Stanja pred tisto obnovo potem ne bo več mogoče dobiti nazaj.",
   "zfs.deleteBackupsConfirm": "Izbrišem vse kopije tega vnosa in njegovih zbirk podatkov? Varnostne kopije dokončno izginejo, odložišče se počisti, vnos pa izgine s seznama. Tega ni mogoče razveljaviti.",
   "zfs.deleteKeptSafety": "one={n} varnostni posnetek je ostal na strežniku|two={n} varnostna posnetka sta ostala na strežniku|few={n} varnostni posnetki so ostali na strežniku|other={n} varnostnih posnetkov je ostalo na strežniku",
+  "zfs.deleteKeptReplica": "Nekaterih posnetkov replike ni bilo mogoče odstraniti in so še vedno na strežniku.",
   // ZFS add dialog and restore panel
   "zfs.add.title": "Dodajanje zbirk podatkov ZFS",
   "zfs.add.hint": "Seznam prihaja s tega gostitelja. Vnos je zbirka podatkov skupaj z vsemi zbirkami pod njo, kopirana iz enega posnetka. Izberi zbirko na vrhu tistega, kar hočeš, nato pa izklopi podrejene zbirke, ki naj ostanejo zunaj.",
@@ -2577,6 +2578,7 @@ const sl: Partial<Translations> = {
   "zfs.replica.keepSummary.weekly": "{n} tedenskih",
   "zfs.replica.keepSummary.monthly": "{n} mesečnih",
   "zfs.replica.keepSummary.yearly": "{n} letnih",
+  "zfs.replica.keepSummary.all": "vsi posnetki ostanejo",
   "zfs.replica.members": "Zbirke podatkov v repliki",
   "zfs.replica.membersHint": "Vse, kar ta vnos varnostno kopira, in nosilci pod njim. Podrejene zbirke podatkov, ki si jih izklopil, so tu prav tako izpuščene. Na cilju je vsaka zbirka podatkov samo za branje in ni priklopljena, zato tam ničesar ne prekriva.",
   "zfs.replica.lastRun": "Zadnji tek {when}: poslano {sent} v {took}.",

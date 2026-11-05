@@ -1976,6 +1976,7 @@ const ko: Partial<Translations> = {
   "zfs.safety.deleteConfirm": "{dataset}의 안전 스냅샷 {name}을(를) 지울까요? 그 복원 전의 상태는 뒤에 되찾을 수 없습니다.",
   "zfs.deleteBackupsConfirm": "이 항목과 그 데이터세트의 백업을 모두 지울까요? 백업은 완전히 사라지고, 저장소는 정리되며, 항목은 목록에서 빠집니다. 되돌릴 수 없습니다.",
   "zfs.deleteKeptSafety": "서버에 안전 스냅샷 {n}개가 남았습니다",
+  "zfs.deleteKeptReplica": "일부 복제본 스냅샷을 제거하지 못해 서버에 그대로 남아 있습니다.",
   // ZFS add dialog and restore panel
   "zfs.add.title": "ZFS 데이터세트 추가",
   "zfs.add.hint": "목록은 이 호스트에서 읽어 온 것입니다. 항목이란 어떤 데이터세트와 그 아래의 모든 데이터세트를 말하며, 스냅샷 하나에서 함께 백업됩니다. 원하는 범위의 맨 위 데이터세트를 고른 다음 빼고 싶은 하위 데이터세트를 끄세요.",
@@ -2064,6 +2065,7 @@ const ko: Partial<Translations> = {
   "zfs.replica.keepSummary.weekly": "주별 {n}개",
   "zfs.replica.keepSummary.monthly": "월별 {n}개",
   "zfs.replica.keepSummary.yearly": "연별 {n}개",
+  "zfs.replica.keepSummary.all": "모든 스냅샷 유지",
   "zfs.replica.members": "복제본의 데이터세트",
   "zfs.replica.membersHint": "이 항목이 백업하는 모든 것과 그 아래의 볼륨입니다. 꺼 둔 하위 데이터세트는 여기서도 제외됩니다. 대상에서는 각 데이터세트가 읽기 전용이고 마운트되지 않으므로 그 서버의 기존 내용을 가리지 않습니다.",
   "zfs.replica.lastRun": "마지막 실행 {when}: {took} 동안 {sent} 전송.",

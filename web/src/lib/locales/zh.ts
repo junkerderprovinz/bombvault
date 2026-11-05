@@ -1976,6 +1976,7 @@ const zh: Partial<Translations> = {
   "zfs.safety.deleteConfirm": "删除 {dataset} 的安全快照 {name}？那次恢复之前的状态之后就取不回来了。",
   "zfs.deleteBackupsConfirm": "删除这个条目及其数据集的全部备份？备份会彻底消失，仓库会被清理，条目也会从列表里移除。此操作无法撤销。",
   "zfs.deleteKeptSafety": "服务器上剩下 {n} 个安全快照",
+  "zfs.deleteKeptReplica": "部分副本快照无法移除，仍留在服务器上。",
   // ZFS add dialog and restore panel
   "zfs.add.title": "添加 ZFS 数据集",
   "zfs.add.hint": "这个列表来自本机。一个条目就是一个数据集连同它下面的所有数据集，从同一个快照里备份出来。先选中你要的那一片里最上面的数据集，再把不想带上的子数据集关掉。",
@@ -2064,6 +2065,7 @@ const zh: Partial<Translations> = {
   "zfs.replica.keepSummary.weekly": "每周 {n} 个",
   "zfs.replica.keepSummary.monthly": "每月 {n} 个",
   "zfs.replica.keepSummary.yearly": "每年 {n} 个",
+  "zfs.replica.keepSummary.all": "保留所有快照",
   "zfs.replica.members": "副本中的数据集",
   "zfs.replica.membersHint": "这个条目备份的全部内容，加上它下面的卷。你关闭的子数据集在这里同样不包含。在目标上，每个数据集都是只读且不挂载的，所以不会遮住那台服务器上的任何内容。",
   "zfs.replica.lastRun": "上次运行 {when}：用时 {took} 发送了 {sent}。",

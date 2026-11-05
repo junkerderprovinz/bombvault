@@ -2505,6 +2505,7 @@ const sk: Partial<Translations> = {
   "zfs.safety.deleteConfirm": "Zmazať bezpečnostný snímok {name} dátovej sady {dataset}? Stav pred tou obnovou sa už potom nedá získať späť.",
   "zfs.deleteBackupsConfirm": "Zmazať všetky zálohy tejto položky a jej dátových sád? Zálohy nenávratne zmiznú, repozitár sa prečistí a položka zmizne zo zoznamu. Toto sa nedá vrátiť.",
   "zfs.deleteKeptSafety": "one={n} bezpečnostná snímka zostala na serveri|few={n} bezpečnostné snímky zostali na serveri|other={n} bezpečnostných snímok zostalo na serveri",
+  "zfs.deleteKeptReplica": "Niektoré snímky repliky sa nepodarilo odstrániť a stále sú na serveri.",
   // ZFS add dialog and restore panel
   "zfs.add.title": "Pridanie ZFS dátových sád",
   "zfs.add.hint": "Zoznam prichádza z tohto hostiteľa. Položka je dátová sada spolu so všetkými sadami pod ňou, zálohovaná z jednej snímky. Vyber sadu na vrchu toho, čo chceš, a potom vypni podradené sady, ktoré majú ostať bokom.",
@@ -2593,6 +2594,7 @@ const sk: Partial<Translations> = {
   "zfs.replica.keepSummary.weekly": "{n} týždenných",
   "zfs.replica.keepSummary.monthly": "{n} mesačných",
   "zfs.replica.keepSummary.yearly": "{n} ročných",
+  "zfs.replica.keepSummary.all": "všetky snímky zostávajú",
   "zfs.replica.members": "Dátové sady v replike",
   "zfs.replica.membersHint": "Všetko, čo táto položka zálohuje, plus zväzky pod ňou. Podradené dátové sady, ktoré sú vypnuté, sa tu tiež vynechajú. Na cieli je každá dátová sada len na čítanie a nepripojená, takže tam nič nezakrýva.",
   "zfs.replica.lastRun": "Posledný beh {when}: odoslané {sent} za {took}.",

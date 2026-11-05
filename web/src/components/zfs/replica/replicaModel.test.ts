@@ -25,6 +25,10 @@ describe("replica keep rules", () => {
     expect(keepSummary(t, { preset: "balanced", own: [0, 0, 0, 0, 0] })).toBe("7 daily, 4 weekly, 6 monthly, 2 yearly");
   });
 
+  it("say that a rule of all zeros keeps every snapshot", () => {
+    expect(keepSummary(t, { preset: "own", own: [0, 0, 0, 0, 0] })).toBe(en["zfs.replica.keepSummary.all"]);
+  });
+
   it("clamp an own number to a whole count of at least zero", () => {
     expect(withOwnCount([0, 7, 3, 0, 0], 1, "-4")).toEqual([0, 0, 3, 0, 0]);
     expect(withOwnCount([0, 7, 3, 0, 0], 4, "2.7")).toEqual([0, 7, 3, 0, 2]);

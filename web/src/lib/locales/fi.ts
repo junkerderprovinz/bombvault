@@ -1985,6 +1985,7 @@ const fi: Partial<Translations> = {
   "zfs.safety.deleteConfirm": "Poistetaanko turvatilannevedos {name} tietojoukosta {dataset}? Sitä palautusta edeltävää tilaa ei saa enää takaisin.",
   "zfs.deleteBackupsConfirm": "Poistetaanko kaikki tämän merkinnän ja sen tietojoukkojen varmuuskopiot? Varmuuskopiot poistetaan lopullisesti, säilö siivotaan ja merkintä häviää listalta. Tätä ei voi perua.",
   "zfs.deleteKeptSafety": "one={n} turvatilannevedos jäi palvelimelle|other={n} turvatilannevedosta jäi palvelimelle",
+  "zfs.deleteKeptReplica": "Joitakin replikan tilannevedoksia ei voitu poistaa, ja ne ovat yhä palvelimella.",
   // ZFS add dialog and restore panel
   "zfs.add.title": "ZFS-tietojoukkojen lisääminen",
   "zfs.add.hint": "Lista tulee tältä palvelimelta. Merkintä on tietojoukko ja kaikki sen alla olevat tietojoukot, varmuuskopioituna yhdestä tilannevedoksesta. Valitse haluamasi kokonaisuuden ylin tietojoukko ja sammuta sitten ne alatietojoukot, jotka jäävät pois.",
@@ -2073,6 +2074,7 @@ const fi: Partial<Translations> = {
   "zfs.replica.keepSummary.weekly": "{n} viikoittain",
   "zfs.replica.keepSummary.monthly": "{n} kuukausittain",
   "zfs.replica.keepSummary.yearly": "{n} vuosittain",
+  "zfs.replica.keepSummary.all": "kaikki tilannevedokset säilyvät",
   "zfs.replica.members": "Replikan tietojoukot",
   "zfs.replica.membersHint": "Kaikki, mitä tämä merkintä varmuuskopioi, sekä sen alla olevat taltiot. Myös pois kytkemäsi alitietojoukot jätetään tässä pois. ZFS-palvelimella jokainen tietojoukko on vain luku -tilassa eikä ole liitetty, joten se ei koskaan peitä mitään kyseisellä palvelimella.",
   "zfs.replica.lastRun": "Viime ajo {when}: {sent} lähetetty ajassa {took}.",

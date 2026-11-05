@@ -2505,6 +2505,7 @@ const lv: Partial<Translations> = {
   "zfs.safety.deleteConfirm": "Dzēst drošības momentuzņēmumu {name} no {dataset}? Stāvokli pirms tās atjaunošanas pēc tam vairs nevarēs atgūt.",
   "zfs.deleteBackupsConfirm": "Dzēst visus šī ieraksta un tā datu kopu dublējumus? Momentuzņēmumi tiek noņemti pavisam, krātuve tiek iztīrīta, un ieraksts pazūd no saraksta. To nevar atsaukt.",
   "zfs.deleteKeptSafety": "one={n} drošības momentuzņēmums palika serverī|other={n} drošības momentuzņēmumi palika serverī",
+  "zfs.deleteKeptReplica": "Dažus replikas momentuzņēmumus neizdevās noņemt, un tie joprojām ir serverī.",
   // ZFS add dialog and restore panel
   "zfs.add.title": "ZFS datu kopu pievienošana",
   "zfs.add.hint": "Saraksts nāk no šī resursdatora. Ieraksts ir datu kopa kopā ar visām datu kopām zem tās, dublēta no viena momentuzņēmuma. Izvēlieties augšējo datu kopu tam, ko vēlaties, un tad izslēdziet tās apakškopas, kurām jāpaliek ārpusē.",
@@ -2593,6 +2594,7 @@ const lv: Partial<Translations> = {
   "zfs.replica.keepSummary.weekly": "{n} iknedēļas",
   "zfs.replica.keepSummary.monthly": "{n} ikmēneša",
   "zfs.replica.keepSummary.yearly": "{n} ikgadējie",
+  "zfs.replica.keepSummary.all": "paliek visi momentuzņēmumi",
   "zfs.replica.members": "Datu kopas replikā",
   "zfs.replica.membersHint": "Viss, ko šis ieraksts dublē, un sējumi zem tā. Arī izslēgtās apakšdatu kopas šeit tiek izlaistas. Mērķī katra datu kopa ir tikai lasāma un nav montēta, tāpēc tā nekad neko neaizsedz šajā serverī.",
   "zfs.replica.lastRun": "Pēdējā palaišana {when}: {sent} nosūtīts {took}.",

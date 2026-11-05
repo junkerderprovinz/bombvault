@@ -1985,6 +1985,7 @@ const pt: Partial<Translations> = {
   "zfs.safety.deleteConfirm": "Apagar o instantâneo de segurança {name} de {dataset}? O estado anterior a esse restauro deixa de ser recuperável.",
   "zfs.deleteBackupsConfirm": "Apagar todos os backups desta entrada e dos conjuntos de dados dela? Os backups são removidos em definitivo, o repositório é limpo e a entrada sai da lista. Isto não se pode desfazer.",
   "zfs.deleteKeptSafety": "one={n} instantâneo de segurança ficou no servidor|other={n} instantâneos de segurança ficaram no servidor",
+  "zfs.deleteKeptReplica": "Alguns instantâneos da réplica não puderam ser removidos e continuam no servidor.",
   // ZFS add dialog and restore panel
   "zfs.add.title": "Adicionar conjuntos de dados ZFS",
   "zfs.add.hint": "A lista vem deste anfitrião. Uma entrada é um conjunto de dados juntamente com todos os conjuntos abaixo dele, copiados a partir de um único instantâneo. Escolhe o conjunto mais acima do que queres e depois desliga os conjuntos filhos que queres deixar de fora.",
@@ -2073,6 +2074,7 @@ const pt: Partial<Translations> = {
   "zfs.replica.keepSummary.weekly": "{n} semanais",
   "zfs.replica.keepSummary.monthly": "{n} mensais",
   "zfs.replica.keepSummary.yearly": "{n} anuais",
+  "zfs.replica.keepSummary.all": "todos os instantâneos ficam",
   "zfs.replica.members": "Conjuntos de dados na réplica",
   "zfs.replica.membersHint": "Tudo o que esta entrada guarda, mais os volumes por baixo. Os conjuntos filhos que desligaste também ficam de fora aqui. No destino cada conjunto de dados é só de leitura e não está montado, por isso não tapa nada nesse servidor.",
   "zfs.replica.lastRun": "Última execução {when}: {sent} enviados em {took}.",

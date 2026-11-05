@@ -256,3 +256,29 @@ func TestAnImportRefusedForAReplicaRunWritesNothingElse(t *testing.T) {
 		t.Errorf("the refused import wrote %d off-site targets", len(targets))
 	}
 }
+
+func TestTheFixedReplicaFolderTravelsWithTheSettingsFile(t *testing.T) {
+	src, srcStore := newPortableHandler(t, appKeyA)
+	seedSource(t, src, srcStore)
+	_, item := seedReplica(t, srcStore)
+	if err := srcStore.FixZFSReplicaFolder(item.ID, "old-name"); err != nil {
+		t.Fatal(err)
+	}
+	body, _ := doExport(t, src, "?includeCredentials=true")
+
+	dst, dstStore := newPortableHandler(t, appKeyB)
+	target, err := dstStore.CreateZFSDataset(store.ZFSDataset{Dataset: "cache/appdata", Enabled: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if env := doImport(t, dst, body, "?apply=true"); env["ok"] != true {
+		t.Fatalf("apply envelope wrong: %v", env)
+	}
+	got, err := dstStore.GetZFSDataset(target.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.Replica.Folder != "old-name" {
+		t.Errorf("the folder after the import = %q, want old-name", got.Replica.Folder)
+	}
+}

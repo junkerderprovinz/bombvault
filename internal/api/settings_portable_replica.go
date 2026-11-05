@@ -48,6 +48,10 @@ type zfsReplicaItemExport struct {
 	// KeepOnSource is absent from a file of an older build, which reads as
 	// keeping only the newest.
 	KeepOnSource int `json:"keepOnSource"`
+	// Folder is where the item's copies lie on the target, fixed at its first
+	// transfer. It outlives a rename of the instance, so a setup from this file
+	// finds the copies. A file of an older build has none.
+	Folder string `json:"folder,omitempty"`
 }
 
 // exportZFSReplica adds the ZFS servers and every item's replica settings to
@@ -76,6 +80,7 @@ func (h *Handler) exportZFSReplica(exp *settingsExport) error {
 			Cadence:      rep.Cadence,
 			Keep:         rep.Keep,
 			KeepOnSource: rep.KeepOnSource,
+			Folder:       rep.Folder,
 		})
 	}
 	exp.ZFSReplica = out
@@ -171,6 +176,9 @@ func zfsReplicaRefusal(exp settingsExport) error {
 			return rowProblem("import-row-invalid", importPartZFSReplica, i, nil, "ZFS replica #%d: needs a dataset of its own", i+1)
 		}
 		seen[it.Dataset] = true
+		if it.Folder != "" && (zfs.ValidateDatasetName(it.Folder) != nil || strings.Contains(it.Folder, "/")) {
+			return rowProblem("import-row-invalid", importPartZFSReplica, i, nil, "ZFS replica of %s: folder %q is not one dataset name", it.Dataset, it.Folder)
+		}
 		if msg := zfsReplicaItemRefusal(it.Target, it.Cadence, it.Keep, it.KeepOnSource, ids); msg != "" {
 			return rowProblem("import-row-invalid", importPartZFSReplica, i, nil, "ZFS replica of %s: %s", it.Dataset, msg)
 		}
@@ -216,7 +224,7 @@ func (h *Handler) claimImportedZFSReplica(exp settingsExport) (write func() erro
 	for _, it := range rep.Items {
 		in.Items[it.Dataset] = store.ZFSReplica{
 			TargetKind: it.Target.Kind, TargetID: it.Target.ID,
-			AfterBackup: it.AfterBackup, Cadence: it.Cadence, Keep: it.Keep, KeepOnSource: it.KeepOnSource,
+			AfterBackup: it.AfterBackup, Cadence: it.Cadence, Keep: it.Keep, KeepOnSource: it.KeepOnSource, Folder: it.Folder,
 		}
 	}
 	return h.svc.claimZFSReplicaImport(in)

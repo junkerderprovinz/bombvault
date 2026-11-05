@@ -1982,6 +1982,7 @@ const pl: Partial<Translations> = {
   "zfs.safety.deleteConfirm": "Skasować migawkę zabezpieczającą {name} zbioru {dataset}? Stanu sprzed tamtego odtwarzania nie da się już potem odzyskać.",
   "zfs.deleteBackupsConfirm": "Skasować wszystkie kopie tej pozycji i jej zbiorów danych? Kopie zapasowe znikną na dobre, repozytorium zostanie oczyszczone, a pozycja zniknie z listy. Tego nie da się cofnąć.",
   "zfs.deleteKeptSafety": "one={n} migawka zabezpieczająca została na serwerze|few={n} migawki zabezpieczające zostały na serwerze|many={n} migawek zabezpieczających zostało na serwerze|other={n} migawek zabezpieczających zostało na serwerze",
+  "zfs.deleteKeptReplica": "Niektórych migawek repliki nie udało się usunąć i nadal są na serwerze.",
   // ZFS add dialog and restore panel
   "zfs.add.title": "Dodawanie zbiorów danych ZFS",
   "zfs.add.hint": "Lista pochodzi z tego hosta. Pozycja to zbiór danych wraz ze wszystkimi zbiorami pod nim, kopiowany z jednej migawki. Wybierz zbiór na szczycie tego, czego chcesz, a potem wyłącz zbiory podrzędne, które mają zostać poza kopią.",
@@ -2070,6 +2071,7 @@ const pl: Partial<Translations> = {
   "zfs.replica.keepSummary.weekly": "{n} tygodniowych",
   "zfs.replica.keepSummary.monthly": "{n} miesięcznych",
   "zfs.replica.keepSummary.yearly": "{n} rocznych",
+  "zfs.replica.keepSummary.all": "wszystkie migawki zostają",
   "zfs.replica.members": "Zbiory danych w replice",
   "zfs.replica.membersHint": "Wszystko, co ta pozycja kopiuje, plus woluminy pod nią. Zbiory podrzędne, które są wyłączone, też są tu pominięte. Na celu każdy zbiór danych jest tylko do odczytu i niezamontowany, więc nic tam nie zasłania.",
   "zfs.replica.lastRun": "Ostatni przebieg {when}: wysłano {sent} w {took}.",

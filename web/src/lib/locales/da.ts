@@ -1985,6 +1985,7 @@ const da: Partial<Translations> = {
   "zfs.safety.deleteConfirm": "Slet sikkerhedssnapshottet {name} af {dataset}? Tilstanden før den gendannelse kan ikke hentes tilbage bagefter.",
   "zfs.deleteBackupsConfirm": "Slet alle sikkerhedskopier af dette element og dets datasæt? Snapshottene fjernes permanent, depotet ryddes op, og elementet fjernes fra listen. Det kan ikke fortrydes.",
   "zfs.deleteKeptSafety": "one={n} sikkerhedssnapshot blev tilbage på serveren|other={n} sikkerhedssnapshots blev tilbage på serveren",
+  "zfs.deleteKeptReplica": "Nogle replika-snapshots kunne ikke fjernes og ligger stadig på serveren.",
   // ZFS add dialog and restore panel
   "zfs.add.title": "Tilføj ZFS-datasæt",
   "zfs.add.hint": "Listen kommer fra denne server. Et element er et datasæt sammen med alle datasæt under det, sikkerhedskopieret fra ét snapshot. Vælg datasættet øverst i det, du vil have, og sluk så for de underdatasæt, der skal holdes udenfor.",
@@ -2073,6 +2074,7 @@ const da: Partial<Translations> = {
   "zfs.replica.keepSummary.weekly": "{n} ugentlige",
   "zfs.replica.keepSummary.monthly": "{n} månedlige",
   "zfs.replica.keepSummary.yearly": "{n} årlige",
+  "zfs.replica.keepSummary.all": "alle snapshots bliver",
   "zfs.replica.members": "Datasæt i replikaen",
   "zfs.replica.membersHint": "Alt, hvad dette element sikkerhedskopierer, plus volumenerne under det. Underdatasæt, du har slået fra, er også udeladt her. På målet er hvert datasæt skrivebeskyttet og ikke monteret, så det aldrig skjuler noget på den server.",
   "zfs.replica.lastRun": "Sidste kørsel {when}: {sent} sendt på {took}.",

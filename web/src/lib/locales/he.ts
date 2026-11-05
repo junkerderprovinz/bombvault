@@ -1985,6 +1985,7 @@ const he: Partial<Translations> = {
   "zfs.safety.deleteConfirm": "למחוק את תצלום הביטחון {name} של {dataset}? את המצב שלפני אותו שחזור כבר לא יהיה אפשר להחזיר.",
   "zfs.deleteBackupsConfirm": "למחוק את כל הגיבויים של הפריט הזה ושל מערכי הנתונים שלו? התצלומים נעלמים לתמיד, המאגר מנוקה, והפריט יורד מהרשימה. אי אפשר לבטל את זה.",
   "zfs.deleteKeptSafety": "one=תצלום ביטחון אחד נשאר בשרת|other={n} תצלומי ביטחון נשארו בשרת",
+  "zfs.deleteKeptReplica": "חלק מתצלומי השכפול לא הוסרו ועדיין נמצאים בשרת.",
   // ZFS add dialog and restore panel
   "zfs.add.title": "הוספת מערכי נתונים של ZFS",
   "zfs.add.hint": "הרשימה מגיעה מהשרת הזה. פריט הוא מערך נתונים יחד עם כל מערך שמתחתיו, מגובה מתצלום אחד. בוחרים את מערך הנתונים שבראש מה שצריך, ואחר כך מכבים את מערכי הבן שצריכים להישאר בחוץ.",
@@ -2073,6 +2074,7 @@ const he: Partial<Translations> = {
   "zfs.replica.keepSummary.weekly": "{n} שבועיים",
   "zfs.replica.keepSummary.monthly": "{n} חודשיים",
   "zfs.replica.keepSummary.yearly": "{n} שנתיים",
+  "zfs.replica.keepSummary.all": "כל התצלומים נשארים",
   "zfs.replica.members": "מערכי נתונים ברפליקה",
   "zfs.replica.membersHint": "כל מה שהפריט הזה מגבה, ובנוסף האחסונים שמתחתיו. מערכי בן מושבתים נשארים מחוץ לרשימה גם כאן. ביעד כל מערך נתונים הוא לקריאה בלבד ואינו מעוגן, כך שהוא לא מסתיר דבר בשרת ההוא.",
   "zfs.replica.lastRun": "הרצה אחרונה {when}: נשלחו {sent} תוך {took}.",

@@ -1500,3 +1500,30 @@ func TestANewServerCanBeCreatedMounting(t *testing.T) {
 		t.Errorf("stored server = %+v", got)
 	}
 }
+
+func TestRemovingAnEntrySaysWhenItsReplicaSnapshotsStayOnTheSource(t *testing.T) {
+	r := newReplicaRig(t)
+	r.s.replica.hostEnd = func() (zfsrepl.End, error) { return nil, errors.New("the host does not answer") }
+	res, err := r.s.deleteZFSDatasetLocked(context.Background(), r.item.ID, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !res.ReplicaKept {
+		t.Error("the result does not say the replica snapshots stayed")
+	}
+}
+
+func TestRemovingAnEntryThatNeverReplicatedSaysNothingOfAReplica(t *testing.T) {
+	r := newReplicaRig(t)
+	if err := r.st.SetZFSReplicaTarget(r.item.ID, store.ZFSReplicaTargetNone, ""); err != nil {
+		t.Fatal(err)
+	}
+	r.s.replica.hostEnd = func() (zfsrepl.End, error) { return nil, errors.New("the host does not answer") }
+	res, err := r.s.deleteZFSDatasetLocked(context.Background(), r.item.ID, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if res.ReplicaKept {
+		t.Error("an entry without a replica reports replica snapshots left behind")
+	}
+}

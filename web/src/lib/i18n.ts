@@ -3047,6 +3047,7 @@ export const en = {
   "zfs.safety.deleteConfirm": "Delete the safety snapshot {name} of {dataset}? The state before that restore cannot be recovered afterwards.",
   "zfs.deleteBackupsConfirm": "Delete all backups of this item and its datasets? The snapshots are permanently removed, the repository is pruned and the item is removed from the list. This cannot be undone.",
   "zfs.deleteKeptSafety": "one={n} safety snapshot was left on the server|other={n} safety snapshots were left on the server",
+  "zfs.deleteKeptReplica": "Some replica snapshots could not be removed and are still on the server.",
   // ZFS add dialog and restore panel
   "zfs.add.title": "Add ZFS datasets",
   "zfs.add.hint": "The list comes from this server. An item is a dataset together with every dataset below it, backed up from one snapshot. Pick the dataset at the top of what you want, then switch off the child datasets you want to leave out.",
@@ -3136,6 +3137,7 @@ export const en = {
   "zfs.replica.keepSummary.weekly": "{n} weekly",
   "zfs.replica.keepSummary.monthly": "{n} monthly",
   "zfs.replica.keepSummary.yearly": "{n} yearly",
+  "zfs.replica.keepSummary.all": "every snapshot stays",
   "zfs.replica.members": "Datasets in the replica",
   "zfs.replica.membersHint": "Everything this entry backs up, plus the volumes below it. Child datasets you switched off are left out here too. On the target each dataset is read-only and not mounted, so it never hides anything on that server.",
   "zfs.replica.lastRun": "Last run {when}: {sent} sent in {took}.",
@@ -8122,6 +8124,7 @@ export const de: Translations = {
   "zfs.safety.deleteConfirm": "Sicherheits-Snapshot {name} von {dataset} löschen? Der Stand vor dieser Wiederherstellung ist danach nicht mehr zurückholbar.",
   "zfs.deleteBackupsConfirm": "Alle Sicherungen dieses Eintrags und seiner Datasets löschen? Die Snapshots verschwinden endgültig, das Repository wird aufgeräumt und der Eintrag aus der Liste genommen. Das lässt sich nicht rückgängig machen.",
   "zfs.deleteKeptSafety": "one={n} Sicherheits-Snapshot ist auf dem Server geblieben|other={n} Sicherheits-Snapshots sind auf dem Server geblieben",
+  "zfs.deleteKeptReplica": "Einige Replik-Snapshots ließen sich nicht entfernen und liegen noch auf dem Server.",
   // ZFS add dialog and restore panel
   "zfs.add.title": "ZFS-Datasets hinzufügen",
   "zfs.add.hint": "Die Liste kommt von diesem Server. Ein Eintrag ist ein Dataset zusammen mit allen Datasets darunter, gesichert aus einem einzigen Snapshot. Wähl das Dataset ganz oben aus und schalte danach die Unter-Datasets ab, die draußen bleiben sollen.",
@@ -8211,6 +8214,7 @@ export const de: Translations = {
   "zfs.replica.keepSummary.weekly": "{n} wöchentliche",
   "zfs.replica.keepSummary.monthly": "{n} monatliche",
   "zfs.replica.keepSummary.yearly": "{n} jährliche",
+  "zfs.replica.keepSummary.all": "alle Snapshots bleiben",
   "zfs.replica.members": "Datasets in der Replik",
   "zfs.replica.membersHint": "Alles, was dieser Eintrag sichert, plus die Volumes darunter. Abgeschaltete Unter-Datasets fehlen auch hier. Auf dem Ziel liegt jedes Dataset nur lesbar und nicht eingehängt, damit es nichts überdeckt.",
   "zfs.replica.lastRun": "Letzter Lauf {when}: {sent} in {took} übertragen.",

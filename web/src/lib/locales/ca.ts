@@ -2505,6 +2505,7 @@ const ca: Partial<Translations> = {
   "zfs.safety.deleteConfirm": "Vols esborrar la instantània de seguretat {name} de {dataset}? L'estat anterior a aquella restauració ja no es podrà recuperar.",
   "zfs.deleteBackupsConfirm": "Vols esborrar totes les còpies d'aquest element i dels seus conjunts de dades? Les còpies desapareixen definitivament, el repositori es neteja i l'element surt de la llista. Això no es pot desfer.",
   "zfs.deleteKeptSafety": "one={n} instantània de seguretat ha quedat al servidor|other={n} instantànies de seguretat han quedat al servidor",
+  "zfs.deleteKeptReplica": "Algunes instantànies de la rèplica no s'han pogut eliminar i encara són al servidor.",
   // ZFS add dialog and restore panel
   "zfs.add.title": "Afegeix conjunts de dades ZFS",
   "zfs.add.hint": "La llista ve d'aquest servidor. Un element és un conjunt de dades amb tots els conjunts que hi ha a sota, copiats des d'una sola instantània. Tria el conjunt de més amunt del que vulguis i després apaga els conjunts fills que vulguis deixar fora.",
@@ -2593,6 +2594,7 @@ const ca: Partial<Translations> = {
   "zfs.replica.keepSummary.weekly": "{n} setmanals",
   "zfs.replica.keepSummary.monthly": "{n} mensuals",
   "zfs.replica.keepSummary.yearly": "{n} anuals",
+  "zfs.replica.keepSummary.all": "es queden totes les instantànies",
   "zfs.replica.members": "Conjunts de dades a la rèplica",
   "zfs.replica.membersHint": "Tot el que desa aquest element, més els volums que en pengen. Els conjunts fills que has desactivat també queden fora aquí. A la destinació cada conjunt de dades és de només lectura i no està muntat, així que no tapa res en aquell servidor.",
   "zfs.replica.lastRun": "Última execució {when}: {sent} enviats en {took}.",

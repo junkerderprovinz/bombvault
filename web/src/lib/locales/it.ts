@@ -1985,6 +1985,7 @@ const it: Partial<Translations> = {
   "zfs.safety.deleteConfirm": "Eliminare lo snapshot di sicurezza {name} di {dataset}? Lo stato precedente a quel ripristino non sarà più recuperabile.",
   "zfs.deleteBackupsConfirm": "Eliminare tutti i backup di questo elemento e dei suoi dataset? Gli snapshot spariscono definitivamente, il repository viene ripulito e l'elemento esce dall'elenco. Non si può annullare.",
   "zfs.deleteKeptSafety": "one={n} snapshot di sicurezza è rimasto sul server|other={n} snapshot di sicurezza sono rimasti sul server",
+  "zfs.deleteKeptReplica": "Alcuni snapshot della replica non sono stati rimossi e sono ancora sul server.",
   // ZFS add dialog and restore panel
   "zfs.add.title": "Aggiungere dataset ZFS",
   "zfs.add.hint": "L'elenco arriva da questo server. Un elemento è un dataset insieme a tutti i dataset che stanno sotto, salvati da un solo snapshot. Scegli il dataset più in alto di quello che vuoi, poi spegni i dataset figli da lasciare fuori.",
@@ -2073,6 +2074,7 @@ const it: Partial<Translations> = {
   "zfs.replica.keepSummary.weekly": "{n} settimanali",
   "zfs.replica.keepSummary.monthly": "{n} mensili",
   "zfs.replica.keepSummary.yearly": "{n} annuali",
+  "zfs.replica.keepSummary.all": "restano tutti gli snapshot",
   "zfs.replica.members": "Dataset nella replica",
   "zfs.replica.membersHint": "Tutto ciò che questo elemento salva, più i volumi sotto di esso. Anche i dataset figli che hai disattivato restano fuori. Sulla destinazione ogni dataset è in sola lettura e non montato, quindi non nasconde nulla su quel server.",
   "zfs.replica.lastRun": "Ultima esecuzione {when}: {sent} inviati in {took}.",

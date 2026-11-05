@@ -2505,6 +2505,7 @@ const id: Partial<Translations> = {
   "zfs.safety.deleteConfirm": "Hapus snapshot pengaman {name} dari {dataset}? Keadaan sebelum pemulihan itu tidak bisa diambil kembali setelahnya.",
   "zfs.deleteBackupsConfirm": "Hapus semua cadangan entri ini dan set datanya? Cadangan hilang selamanya, repositori dibersihkan, dan entri keluar dari daftar. Ini tidak bisa dibatalkan.",
   "zfs.deleteKeptSafety": "{n} snapshot pengaman tertinggal di server",
+  "zfs.deleteKeptReplica": "Beberapa snapshot replika tidak bisa dihapus dan masih ada di server.",
   // ZFS add dialog and restore panel
   "zfs.add.title": "Menambah set data ZFS",
   "zfs.add.hint": "Daftar ini datang dari host ini. Satu entri adalah satu set data beserta semua set data di bawahnya, dicadangkan dari satu snapshot. Pilih set data paling atas dari yang Anda mau, lalu matikan set data anak yang ingin Anda tinggalkan.",
@@ -2593,6 +2594,7 @@ const id: Partial<Translations> = {
   "zfs.replica.keepSummary.weekly": "{n} mingguan",
   "zfs.replica.keepSummary.monthly": "{n} bulanan",
   "zfs.replica.keepSummary.yearly": "{n} tahunan",
+  "zfs.replica.keepSummary.all": "semua snapshot tetap ada",
   "zfs.replica.members": "Set data dalam replika",
   "zfs.replica.membersHint": "Semua yang dicadangkan entri ini, ditambah volume di bawahnya. Set data anak yang Anda matikan juga dilewati di sini. Di tujuan, setiap set data hanya bisa dibaca dan tidak di-mount, jadi tidak menutupi apa pun di server itu.",
   "zfs.replica.lastRun": "Proses terakhir {when}: {sent} terkirim dalam {took}.",

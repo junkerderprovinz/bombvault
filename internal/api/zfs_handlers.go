@@ -202,7 +202,7 @@ func (h *Handler) handleDeleteZFSDataset(w http.ResponseWriter, r *http.Request)
 		log.Printf("api: zfs: reloading the scheduler after a delete failed: %v", rErr)
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{
-		"leftoversRemaining": res.LeftoversRemaining, "safetyRemaining": res.SafetyRemaining,
+		"leftoversRemaining": res.LeftoversRemaining, "safetyRemaining": res.SafetyRemaining, "replicaKept": res.ReplicaKept,
 	}))
 }
 

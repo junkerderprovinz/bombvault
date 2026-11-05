@@ -2505,6 +2505,7 @@ const eu: Partial<Translations> = {
   "zfs.safety.deleteConfirm": "{dataset} multzoaren {name} segurtasun argazkia ezabatu? Berrezartze horren aurreko egoera ezin izango da gero berreskuratu.",
   "zfs.deleteBackupsConfirm": "Elementu honen eta haren datu multzoen babeskopia guztiak ezabatu? Babeskopiak betiko joango dira, biltegia garbituko da eta elementua zerrendatik aterako da. Hau ezin da desegin.",
   "zfs.deleteKeptSafety": "one={n} segurtasun argazki geratu da zerbitzarian|other={n} segurtasun argazki geratu dira zerbitzarian",
+  "zfs.deleteKeptReplica": "Erreplikaren argazki batzuk ezin izan dira kendu, eta zerbitzarian daude oraindik.",
   // ZFS add dialog and restore panel
   "zfs.add.title": "Gehitu ZFS datu multzoak",
   "zfs.add.hint": "Zerrenda ostalari honetatik dator. Elementu bat datu multzo bat da, azpian dituen datu multzo guztiekin batera, argazki bakar batetik kopiatuta. Aukeratu nahi duzunaren goiko datu multzoa eta gero itzali kanpoan utzi nahi dituzun azpiko multzoak.",
@@ -2593,6 +2594,7 @@ const eu: Partial<Translations> = {
   "zfs.replica.keepSummary.weekly": "{n} astekoak",
   "zfs.replica.keepSummary.monthly": "{n} hilekoak",
   "zfs.replica.keepSummary.yearly": "{n} urtekoak",
+  "zfs.replica.keepSummary.all": "argazki guztiak geratzen dira",
   "zfs.replica.members": "Erreplikako datu multzoak",
   "zfs.replica.membersHint": "Elementu honek babeskopia egiten duen guztia, eta haren azpiko bolumenak. Desaktibatu dituzun datu azpimultzoak ere kanpoan geratzen dira hemen. Helmugan datu multzo bakoitza irakurtzeko soilik dago eta ez dago muntatuta, beraz ez du zerbitzari horretan ezer estaltzen.",
   "zfs.replica.lastRun": "Azken exekuzioa {when}: {sent} bidali dira {took}ean.",

@@ -1986,6 +1986,7 @@ const ro: Partial<Translations> = {
   "zfs.safety.deleteConfirm": "Ștergi instantaneul de siguranță {name} al {dataset}? Starea dinaintea acelei restaurări nu va mai putea fi recuperată.",
   "zfs.deleteBackupsConfirm": "Ștergi toate copiile de rezervă ale acestui element și ale seturilor lui de date? Ele dispar definitiv, depozitul este curățat, iar elementul iese din listă. Asta nu se poate anula.",
   "zfs.deleteKeptSafety": "one={n} instantaneu de siguranță a rămas pe server|few={n} instantanee de siguranță au rămas pe server|other={n} de instantanee de siguranță au rămas pe server",
+  "zfs.deleteKeptReplica": "Unele instantanee ale replicii nu au putut fi eliminate și sunt încă pe server.",
   // ZFS add dialog and restore panel
   "zfs.add.title": "Adăugarea seturilor de date ZFS",
   "zfs.add.hint": "Lista vine de la această gazdă. Un element este un set de date împreună cu toate seturile de sub el, copiate dintr-un singur instantaneu. Alege setul de date din vârful a ceea ce vrei, apoi stinge seturile copil pe care vrei să le lași afară.",
@@ -2074,6 +2075,7 @@ const ro: Partial<Translations> = {
   "zfs.replica.keepSummary.weekly": "{n} săptămânale",
   "zfs.replica.keepSummary.monthly": "{n} lunare",
   "zfs.replica.keepSummary.yearly": "{n} anuale",
+  "zfs.replica.keepSummary.all": "toate instantaneele rămân",
   "zfs.replica.members": "Seturi de date în replică",
   "zfs.replica.membersHint": "Tot ce copiază acest element, plus volumele de sub el. Seturile copil pe care le-ai oprit sunt omise și aici. Pe destinație fiecare set de date este doar pentru citire și nemontat, așa că nu acoperă nimic pe acel server.",
   "zfs.replica.lastRun": "Ultima rulare {when}: {sent} trimis în {took}.",

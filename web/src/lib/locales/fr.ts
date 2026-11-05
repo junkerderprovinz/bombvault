@@ -1985,6 +1985,7 @@ const fr: Partial<Translations> = {
   "zfs.safety.deleteConfirm": "Supprimer l'instantané de sécurité {name} de {dataset} ? L'état d'avant cette restauration ne sera plus récupérable.",
   "zfs.deleteBackupsConfirm": "Supprimer toutes les sauvegardes de cet élément et de ses jeux de données ? Elles sont retirées définitivement, le dépôt est nettoyé et l'élément est retiré de la liste. C'est irréversible.",
   "zfs.deleteKeptSafety": "one={n} instantané de sécurité est resté sur le serveur|other={n} instantanés de sécurité sont restés sur le serveur",
+  "zfs.deleteKeptReplica": "Certains instantanés de la réplique n'ont pas pu être supprimés et restent sur le serveur.",
   // ZFS add dialog and restore panel
   "zfs.add.title": "Ajouter des jeux de données ZFS",
   "zfs.add.hint": "La liste vient de ce serveur. Un élément est un jeu de données avec tous les jeux qui se trouvent en dessous, sauvegardés depuis un seul instantané. Choisissez le jeu de données tout en haut de ce que vous voulez, puis désactivez les jeux enfants à laisser de côté.",
@@ -2073,6 +2074,7 @@ const fr: Partial<Translations> = {
   "zfs.replica.keepSummary.weekly": "{n} hebdomadaires",
   "zfs.replica.keepSummary.monthly": "{n} mensuels",
   "zfs.replica.keepSummary.yearly": "{n} annuels",
+  "zfs.replica.keepSummary.all": "tous les instantanés restent",
   "zfs.replica.members": "Jeux de données dans la réplique",
   "zfs.replica.membersHint": "Tout ce que cet élément sauvegarde, plus les volumes en dessous. Les jeux enfants que vous avez désactivés sont aussi laissés de côté ici. Sur la cible, chaque jeu de données est en lecture seule et non monté, il ne masque donc rien sur ce serveur.",
   "zfs.replica.lastRun": "Dernière exécution {when} : {sent} envoyés en {took}.",

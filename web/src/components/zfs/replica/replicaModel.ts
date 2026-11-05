@@ -47,12 +47,13 @@ export function keepCounts(keep: ZFSReplicaKeep): ZFSReplicaKeepCounts {
   return keep.preset === "own" ? keep.own : KEEP_PRESETS[keep.preset];
 }
 
-/** keepSummary words a rule as "7 daily, 3 weekly", leaving out the zeros. */
+/** keepSummary words a rule as "7 daily, 3 weekly", leaving out the zeros. All
+ *  zeros keep every snapshot, which a target that grows without limit has to say. */
 export function keepSummary(t: Translate, keep: ZFSReplicaKeep): string {
-  return keepCounts(keep)
+  const parts = keepCounts(keep)
     .map((n, i) => (n > 0 ? t(KEEP_SUMMARY_KEYS[i], n) : ""))
-    .filter(Boolean)
-    .join(", ");
+    .filter(Boolean);
+  return parts.length > 0 ? parts.join(", ") : t("zfs.replica.keepSummary.all");
 }
 
 /** keepCount reads a typed count as a whole number of snapshots. */
