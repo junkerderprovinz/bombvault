@@ -91,6 +91,31 @@ func TestThePreviewKeepsATagThePruneLeavesOut(t *testing.T) {
 	}
 }
 
+func TestDeleteProtectionOnAFolderHereCoversAnOwnFolderInIt(t *testing.T) {
+	f := newPlacementFixture(t)
+	if _, err := f.st.MutateSettings(func(s *store.Settings) error {
+		s.ConfigEnabled, s.ConfigPath = true, "backups/config"
+		return nil
+	}); err != nil {
+		t.Fatal(err)
+	}
+	d, err := f.svc.SaveNewDestination(context.Background(), draftRequest{Provider: "path", Settings: map[string]string{"path": "backups/here"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	f.ownFoldersInto(d, "config")
+	repo := f.domainPath("config")
+	if got := f.svc.primaryAppendOnly("config", repo); got != appendOnlyNone {
+		t.Fatalf("a location without protection reads %v", got)
+	}
+	if res := f.do("PUT", "/api/offsite/destinations/"+d.ID, map[string]any{"name": d.Name, "immutable": true, "retention": store.RetentionKeep{KeepLast: 1}}); res["ok"] != true {
+		t.Fatal(res)
+	}
+	if got := f.svc.primaryAppendOnly("config", repo); got == appendOnlyNone {
+		t.Fatal("an own folder in a location that refuses deletes still reads as prunable")
+	}
+}
+
 func TestAStatusCountsTheRuleOfACopyMadeThroughALocation(t *testing.T) {
 	f := newPlacementFixture(t)
 	d := f.keptLocation(store.RetentionKeep{KeepDaily: 7})

@@ -454,6 +454,7 @@ func (b *locationBuilder) pathSection(domain, raw string) locationSection {
 		Own:         b.ownLocalKeep(domain),
 	}
 	if !restic.IsRemoteRepo(raw) {
+		sec.Immutable = b.s.primaryAppendOnly(domain, raw) != appendOnlyNone
 		return sec
 	}
 	if row, ok := b.s.primaryRemoteTarget(domain); ok && row.Enabled {
