@@ -63,6 +63,7 @@ let settingsOnServer = baseSettings();
 let itemsOnServer: BackupItem[] | Error = [];
 let settingsReads = 0;
 let settingsFailFor = 0;
+let putAnswer: Record<string, unknown> = { ok: true };
 
 vi.mock("../lib/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../lib/api")>();
@@ -74,7 +75,7 @@ vi.mock("../lib/api", async (importOriginal) => {
         : Promise.resolve({ ok: true, settings: settingsOnServer, hostMountRoot: "/host/user", platform: "unraid" }),
     putSettings: (s: Settings) => {
       putBodies.push(s);
-      return Promise.resolve({ ok: true });
+      return Promise.resolve(putAnswer);
     },
     getAuth: () => Promise.resolve({ enabled: false, authed: false }),
     listContainers: () => Promise.resolve({ ok: true, containers: [] }),
@@ -111,10 +112,10 @@ function stubBrowser() {
   } as unknown as typeof ResizeObserver;
 }
 
-async function renderPage() {
+async function renderPage(page = "schedules") {
   await act(async () => {
     render(
-      <MemoryRouter initialEntries={["/settings/schedules"]}>
+      <MemoryRouter initialEntries={[`/settings/${page}`]}>
         <Routes>
           <Route
             path="/settings/:page"
@@ -143,6 +144,7 @@ beforeEach(() => {
   stubBrowser();
   putBodies.length = 0;
   patches.length = 0;
+  putAnswer = { ok: true };
   settingsOnServer = baseSettings();
   itemsOnServer = [];
   settingsReads = 0;
@@ -320,6 +322,37 @@ describe("commands before and after", () => {
     await waitFor(() => expect(putBodies.length).toBeGreaterThan(0), SAVED);
     expect(putBodies.at(-1)?.everythingPreHookClear).toBeFalsy();
     expect(within(hooks).getByRole("button", { name: en["offsite.targets.remove"] })).toBeTruthy();
+  });
+});
+
+describe("what a save answers", () => {
+  it("puts a refused value back to what the server holds", async () => {
+    putAnswer = { ok: false, error: "refused" };
+    await renderPage();
+    const field = within(card("schedules.hooks")).getByRole("textbox", { name: en["schedules.hookPre"] }) as HTMLInputElement;
+    fireEvent.change(field, { target: { value: "/boot/refused.sh" } });
+    await waitFor(() => expect(putBodies.at(-1)?.everythingPreHook).toBe("/boot/refused.sh"), SAVED);
+    await waitFor(() => expect(field.value).toBe(""));
+  });
+
+  it("keeps what was typed after a refused save went out", async () => {
+    await renderPage();
+    const field = within(card("schedules.hooks")).getByRole("textbox", { name: en["schedules.hookPre"] }) as HTMLInputElement;
+    putAnswer = { ok: false, error: "refused" };
+    fireEvent.change(field, { target: { value: "/boot/first.sh" } });
+    await waitFor(() => expect(putBodies.at(-1)?.everythingPreHook).toBe("/boot/first.sh"), SAVED);
+    fireEvent.change(field, { target: { value: "/boot/second.sh" } });
+    expect(field.value).toBe("/boot/second.sh");
+  });
+
+  it("shows the number the server holds a value to", async () => {
+    settingsOnServer = baseSettings({ backupCores: 0 });
+    putAnswer = { ok: true, applied: { backupCores: 8 } };
+    await renderPage("system");
+    const cores = screen.getByLabelText(en["settings.coresLabel"]) as HTMLInputElement;
+    fireEvent.change(cores, { target: { value: "512" } });
+    await waitFor(() => expect(putBodies.at(-1)?.backupCores).toBe(512), SAVED);
+    await waitFor(() => expect(cores.value).toBe("8"));
   });
 });
 
