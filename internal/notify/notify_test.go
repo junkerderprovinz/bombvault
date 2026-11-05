@@ -235,34 +235,66 @@ func TestSendStartPingsStart(t *testing.T) {
 	}
 }
 
-func TestSendStartSuppressed(t *testing.T) {
+func TestSendStartNeedsAURL(t *testing.T) {
 	var hits int
 	srv := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) { hits++ }))
 	defer srv.Close()
 
-	notify.SendStart(context.Background(), notify.Config{On: "never", HealthchecksURL: srv.URL}, "")
-	if hits != 0 {
-		t.Fatalf("SendStart under On=never should not ping, hits=%d", hits)
-	}
-	notify.SendStart(context.Background(), notify.Config{On: "always"}, "") // no URL
+	notify.SendStart(context.Background(), notify.Config{On: "always"}, "")
 	if hits != 0 {
 		t.Fatalf("SendStart with no URL should not ping, hits=%d", hits)
 	}
 }
 
-// TestSendUnknownPolicySuppressed checks that an unrecognized On value sends
-// nothing, not even the Healthchecks ping.
-func TestSendUnknownPolicySuppressed(t *testing.T) {
+func TestAnUnknownPolicySendsNoMessage(t *testing.T) {
 	var hits int
 	srv := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) { hits++ }))
 	defer srv.Close()
 
-	cfg := notify.Config{On: "bogus", HealthchecksURL: srv.URL, WebhookURL: srv.URL, WebhookFormat: "generic"}
+	cfg := notify.Config{On: "bogus", WebhookEnabled: true, WebhookURL: srv.URL, WebhookFormat: "generic"}
 	notify.Send(context.Background(), cfg, "", notify.Event{OK: true})
 	notify.Send(context.Background(), cfg, "", notify.Event{OK: false})
 	notify.SendStart(context.Background(), cfg, "")
 	if hits != 0 {
-		t.Fatalf("unknown On policy must ping nothing, hits=%d", hits)
+		t.Fatalf("an unknown On policy sent %d messages", hits)
+	}
+}
+
+func TestAConfigThatNeverChoseReadsAsFailureOnly(t *testing.T) {
+	for _, stored := range []string{`{"webhookUrl":"http://x"}`, `{"on":"","webhookUrl":"http://x"}`} {
+		var c notify.Config
+		if err := json.Unmarshal([]byte(stored), &c); err != nil {
+			t.Fatal(err)
+		}
+		if c.On != "failure" {
+			t.Fatalf("%s reads On=%q", stored, c.On)
+		}
+	}
+	var chosen notify.Config
+	if err := json.Unmarshal([]byte(`{"on":"never"}`), &chosen); err != nil {
+		t.Fatal(err)
+	}
+	if chosen.On != "never" {
+		t.Fatalf("a chosen Never reads On=%q", chosen.On)
+	}
+	if !notify.Defaults().IsDefault() {
+		t.Fatal("the defaults are not default")
+	}
+	if (notify.Config{On: "never", GotifyPriorityFailure: notify.GotifyPriorityFailure, GotifyPrioritySuccess: notify.GotifyPrioritySuccess}).IsDefault() {
+		t.Fatal("a chosen Never counts as saying nothing")
+	}
+}
+
+func TestAHeldSuccessPingsFailWithItsReason(t *testing.T) {
+	var path, body string
+	srv := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
+		b, _ := io.ReadAll(r.Body)
+		path, body = r.URL.Path, string(b)
+	}))
+	defer srv.Close()
+	notify.Send(context.Background(), notify.Config{On: "failure", HealthchecksURL: srv.URL}, "flash", notify.Event{OK: true, CheckHeld: "files u1 failed"})
+	if path != "/fail" || body != "files u1 failed" {
+		t.Fatalf("ping = %q %q", path, body)
 	}
 }
 
@@ -520,17 +552,20 @@ func TestPingDomainStartAndResultEndpoints(t *testing.T) {
 	}
 }
 
-func TestPingDomainSuppressedWhenNeverOrNoURL(t *testing.T) {
+func TestPingDomainNeedsOnlyAURL(t *testing.T) {
 	var hits int
 	srv := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) { hits++ }))
 	defer srv.Close()
 
-	notify.PingDomainStart(context.Background(), notify.Config{On: "never", HealthchecksURL: srv.URL}, "containers")
-	notify.PingDomainResult(context.Background(), notify.Config{On: "never", HealthchecksURL: srv.URL}, "containers", true, "x")
-	notify.PingDomainStart(context.Background(), notify.Config{On: "always"}, "containers") // no URL
+	notify.PingDomainStart(context.Background(), notify.Config{On: "always"}, "containers")
 	notify.PingDomainResult(context.Background(), notify.Config{On: "always"}, "containers", true, "x")
 	if hits != 0 {
-		t.Fatalf("aggregate pings must be a no-op under never/no-URL, hits=%d", hits)
+		t.Fatalf("aggregate pings without a URL went somewhere, hits=%d", hits)
+	}
+	notify.PingDomainStart(context.Background(), notify.Config{On: "never", HealthchecksURL: srv.URL}, "containers")
+	notify.PingDomainResult(context.Background(), notify.Config{On: "never", HealthchecksURL: srv.URL}, "containers", true, "x")
+	if hits != 2 {
+		t.Fatalf("a check under Never heard %d pings, want 2: Notify is about messages", hits)
 	}
 }
 
@@ -717,8 +752,6 @@ func TestSendOnUnsetNotifiesFailures(t *testing.T) {
 		ok       bool
 		wantSent bool
 	}{
-		{"unset sends a failure", "", false, true},
-		{"unset stays quiet on success", "", true, false},
 		{"explicit never stays silent on failure", "never", false, false},
 		{"explicit never stays silent on success", "never", true, false},
 		{"failure sends a failure", "failure", false, true},

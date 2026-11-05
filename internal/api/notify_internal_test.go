@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
+	"slices"
 	"strings"
 	"sync"
 	"testing"
@@ -294,18 +295,195 @@ func TestNotifyBackupStartPingsHealthchecks(t *testing.T) {
 	}
 }
 
-func TestNotifyBackupStartSuppressedWhenNever(t *testing.T) {
-	var hits int
-	srv := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) { hits++ }))
+func TestAHealthCheckHearsAWholeBackupWhateverNotifySays(t *testing.T) {
+	for _, on := range []string{"", "never", "failure"} {
+		t.Run("on="+on, func(t *testing.T) {
+			var paths []string
+			srv := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) { paths = append(paths, r.URL.Path) }))
+			defer srv.Close()
+
+			s := unraidNotifyService(t, nil)
+			if err := s.SetNotifyConfig(notify.Config{On: on, HealthchecksURL: srv.URL}); err != nil {
+				t.Fatal(err)
+			}
+			s.notifyBackupStart(context.Background(), "flash")
+			s.notifyBackup(context.Background(), "flash", "", "flash", true, backup.Summary{SnapshotID: "deadbeef"}, nil)
+			s.notifyBackupStart(context.Background(), "flash")
+			s.notifyBackup(context.Background(), "flash", "", "flash", false, backup.Summary{}, errors.New("boom"))
+			if got, want := strings.Join(paths, " "), "/start / /start /fail"; got != want {
+				t.Fatalf("pings = %q, want %q", got, want)
+			}
+		})
+	}
+}
+
+func TestANeverChosenPolicySendsAFailedBackupsMessage(t *testing.T) {
+	var messages []string
+	srv := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
+		b, _ := io.ReadAll(r.Body)
+		messages = append(messages, string(b))
+	}))
 	defer srv.Close()
 
 	s := unraidNotifyService(t, nil)
-	if err := s.SetNotifyConfig(notify.Config{On: "never", HealthchecksURL: srv.URL}); err != nil {
+	if err := s.SetNotifyConfig(notify.Config{WebhookEnabled: true, WebhookURL: srv.URL}); err != nil {
 		t.Fatal(err)
 	}
-	s.notifyBackupStart(context.Background(), "container")
-	if hits != 0 {
-		t.Fatalf("notifyBackupStart under On=never should not ping, hits=%d", hits)
+	c, err := s.NotifyConfig()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if c.On != "failure" {
+		t.Fatalf("a config that never chose reads On=%q, want failure", c.On)
+	}
+	s.notifyBackup(context.Background(), "flash", "", "flash", true, backup.Summary{SnapshotID: "deadbeef"}, nil)
+	if len(messages) != 0 {
+		t.Fatalf("a good backup sent %v", messages)
+	}
+	s.notifyBackup(context.Background(), "flash", "", "flash", false, backup.Summary{}, errors.New("boom"))
+	if len(messages) != 1 || !strings.Contains(messages[0], "FAILED") {
+		t.Fatalf("a failed backup sent %v", messages)
+	}
+}
+
+func TestChosenPoliciesStayAfterASaveWithNoChannel(t *testing.T) {
+	for _, on := range []string{"never", "failure", "always"} {
+		s := unraidNotifyService(t, nil)
+		if err := s.SetNotifyConfig(notify.Config{On: on, GotifyPriorityFailure: notify.GotifyPriorityFailure, GotifyPrioritySuccess: notify.GotifyPrioritySuccess}); err != nil {
+			t.Fatal(err)
+		}
+		c, err := s.NotifyConfig()
+		if err != nil {
+			t.Fatal(err)
+		}
+		if c.On != on {
+			t.Fatalf("saved %q, read %q", on, c.On)
+		}
+	}
+}
+
+func TestAFreshInstallReadsTheDefaultPolicy(t *testing.T) {
+	c, err := unraidNotifyService(t, nil).NotifyConfig()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if c.On != "failure" {
+		t.Fatalf("fresh install reads On=%q, want failure", c.On)
+	}
+}
+
+// pingRecorder collects a check's pings as "path body".
+func pingRecorder(t *testing.T) (url string, pings func() []string) {
+	t.Helper()
+	var mu sync.Mutex
+	var got []string
+	srv := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
+		b, _ := io.ReadAll(r.Body)
+		mu.Lock()
+		defer mu.Unlock()
+		got = append(got, strings.TrimSpace(r.URL.Path+" "+string(b)))
+	}))
+	t.Cleanup(srv.Close)
+	return srv.URL, func() []string {
+		mu.Lock()
+		defer mu.Unlock()
+		return slices.Clone(got)
+	}
+}
+
+func recordFinishedBackup(t *testing.T, s *Service, targetID, status string) string {
+	t.Helper()
+	id, err := s.store.StartRun(targetID, "backup")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := s.store.FinishRun(id, status, "", 0, ""); err != nil {
+		t.Fatal(err)
+	}
+	return id
+}
+
+func TestASectionsSuccessDoesNotGreenAFailureOnASharedCheck(t *testing.T) {
+	url, pings := pingRecorder(t)
+	s := unraidNotifyService(t, nil)
+	if err := s.SetNotifyConfig(notify.Config{On: "failure", HealthchecksURL: url}); err != nil {
+		t.Fatal(err)
+	}
+	switchSectionsOn(t, s)
+	id := recordFinishedBackup(t, s, store.FlashTargetID, "failed")
+	recordFinishedBackup(t, s, store.ConfigTargetID, "success")
+
+	s.notifyBackup(context.Background(), "config", "", "config", true, backup.Summary{SnapshotID: "deadbeef"}, nil)
+	got := pings()
+	if len(got) != 1 || !strings.HasPrefix(got[0], "/fail Still failing") || !strings.Contains(got[0], "flash") {
+		t.Fatalf("pings after a success beside a failed section = %q", got)
+	}
+
+	if _, err := s.store.AcknowledgeRuns([]string{id}); err != nil {
+		t.Fatal(err)
+	}
+	s.notifyBackup(context.Background(), "config", "", "config", true, backup.Summary{SnapshotID: "deadbeef"}, nil)
+	if got := pings(); got[len(got)-1] != "/" {
+		t.Fatalf("an acknowledged failure still holds the check: %q", got)
+	}
+}
+
+func TestAGoodBackupOfTheFailedEntryGreensTheCheck(t *testing.T) {
+	url, pings := pingRecorder(t)
+	s := unraidNotifyService(t, nil)
+	if err := s.SetNotifyConfig(notify.Config{On: "failure", HealthchecksURL: url}); err != nil {
+		t.Fatal(err)
+	}
+	switchSectionsOn(t, s)
+	recordFinishedBackup(t, s, store.FlashTargetID, "failed")
+	recordFinishedBackup(t, s, store.FlashTargetID, "success")
+
+	s.notifyBackup(context.Background(), "flash", "", "flash", true, backup.Summary{SnapshotID: "deadbeef"}, nil)
+	if got := pings(); len(got) != 1 || got[0] != "/" {
+		t.Fatalf("pings = %q, want one success", got)
+	}
+}
+
+func TestAFailureOnAnotherCheckHoldsNothing(t *testing.T) {
+	url, pings := pingRecorder(t)
+	own, _ := pingRecorder(t)
+	s := unraidNotifyService(t, nil)
+	if err := s.SetNotifyConfig(notify.Config{On: "failure", HealthchecksURL: url, HealthchecksByDomain: map[string]string{"flash": own}}); err != nil {
+		t.Fatal(err)
+	}
+	switchSectionsOn(t, s)
+	recordFinishedBackup(t, s, store.FlashTargetID, "failed")
+
+	s.ScheduledHealthchecksResult(context.Background(), "config", 1, 0)
+	if got := pings(); len(got) != 1 || !strings.HasPrefix(got[0], "/ ") {
+		t.Fatalf("pings = %q, want one success", got)
+	}
+}
+
+func TestAScheduledRoundReportsAnEarlierFailureOfItsCheck(t *testing.T) {
+	url, pings := pingRecorder(t)
+	s := unraidNotifyService(t, nil)
+	if err := s.SetNotifyConfig(notify.Config{On: "failure", HealthchecksURL: url}); err != nil {
+		t.Fatal(err)
+	}
+	switchSectionsOn(t, s)
+	recordFinishedBackup(t, s, store.FlashTargetID, "failed")
+
+	s.ScheduledHealthchecksResult(context.Background(), "containers", 2, 0)
+	got := pings()
+	if len(got) != 1 || !strings.HasPrefix(got[0], "/fail 2 of 2 items succeeded. Still failing") {
+		t.Fatalf("pings = %q", got)
+	}
+}
+
+// switchSectionsOn switches on the sections the tests of a shared check use.
+func switchSectionsOn(t *testing.T, s *Service) {
+	t.Helper()
+	if _, err := s.store.MutateSettings(func(st *store.Settings) error {
+		st.FlashEnabled, st.ConfigEnabled, st.ContainersEnabled = true, true, true
+		return nil
+	}); err != nil {
+		t.Fatal(err)
 	}
 }
 

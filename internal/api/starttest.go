@@ -621,7 +621,7 @@ func (s *Service) sandboxLeftBehind(sandbox string) bool {
 // notifyStartTestFailure reports a failed scheduled start test.
 func (s *Service) notifyStartTestFailure(ctx context.Context, rec store.StartTest) {
 	c, err := s.NotifyConfig()
-	if err != nil || c.On == "" || c.On == "never" {
+	if err != nil || !c.Active() {
 		return
 	}
 	msg := fmt.Sprintf("The start test of %s failed: a copy restored from its backup did not come up (%s).", rec.Container, rec.Detail)

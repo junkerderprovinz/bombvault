@@ -141,7 +141,7 @@ func (s *Service) runReceiverChecksAt(ctx context.Context, now int64) error {
 		log.Printf("api: receiver: read notify config: %v (alerts muted this run)", cErr)
 		c = notify.Config{}
 	}
-	alertsOn := c.On == "always" || c.On == "failure"
+	alertsOn := c.Active()
 
 	repos, err := s.store.ListReceivedRepos()
 	if err != nil {

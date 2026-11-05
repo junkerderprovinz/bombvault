@@ -123,7 +123,7 @@ func (s *Service) deferBackup(ctx context.Context, tg store.Target, runID, reaso
 	log.Printf("api: backup of %s deferred (%s), next try %s", tg.ContainerName, reason, next.Format(time.RFC3339)) //nolint:gosec // G706: container names from Docker
 	if waiting {
 		if c, cErr := s.NotifyConfig(); cErr == nil {
-			notify.Ping(ctx, c, "container", true)
+			notify.Ping(ctx, c, "container", s.healthcheckHold(c, "container") == "")
 		}
 	} else {
 		s.notifyDeferred(ctx, tg.ContainerName, reason, next, schedule.RetryDeadline(p, now), p.AtDeadline)
@@ -386,7 +386,7 @@ func (s *Service) notifyDeferred(ctx context.Context, name, reason string, next,
 	if tally := roundTallyFrom(ctx); tally != nil && summary {
 		tally.addDeferred(fmt.Sprintf("- %s: %s, next try %s", name, reason, clockAt(next, now)))
 	}
-	notify.Send(ctx, c, "container", notify.Event{Title: "BombVault", Message: msg, OK: true, ItemResult: true, Warning: true})
+	notify.Send(ctx, c, "container", notify.Event{Title: "BombVault", Message: msg, OK: true, ItemResult: true, Warning: true, CheckHeld: s.healthcheckHold(c, "container")})
 	if s.unraidGate(c.Unraid) && !summary {
 		if e := s.sendUnraidNotify(ctx, "BombVault: backup deferred", msg, "normal"); e != nil {
 			log.Printf("notify: unraid: %v", e)
@@ -411,7 +411,7 @@ func (s *Service) notifyDeferralDone(ctx context.Context, name string, d store.D
 	}
 	msg := fmt.Sprintf("Backup of container %q went through %s (snapshot %s, %s). It had waited since %s.",
 		name, how, shortID(sum.SnapshotID), humanBytes(sum.Bytes), clockAt(time.Unix(d.Since, 0), time.Now()))
-	s.sendAlert(ctx, c, "container", notify.Event{Title: "BombVault", Message: msg, OK: true, Warning: true},
+	s.sendAlert(ctx, c, "container", notify.Event{Title: "BombVault", Message: msg, OK: true, Warning: true, CheckHeld: s.healthcheckHold(c, "container")},
 		"BombVault: deferred backup done", msg, "normal")
 }
 

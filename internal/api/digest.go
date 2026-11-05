@@ -309,7 +309,7 @@ func (s *Service) SendDigest(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("read notify config: %w", err)
 	}
-	if c.On == "" || c.On == "never" {
+	if !c.Active() {
 		return nil
 	}
 	stats, err := s.collectDigestStats(time.Now())

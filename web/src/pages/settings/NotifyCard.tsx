@@ -54,7 +54,7 @@ const PRIORITIES = Array.from({ length: 11 }, (_, i) => ({ value: String(i), lab
 
 // emptyNotify is the default notification config shown before the saved one loads.
 const emptyNotify: NotifyConfig = {
-  on: "never",
+  on: "failure",
   webhookEnabled: false,
   webhookUrl: "",
   webhookFormat: "generic",
@@ -157,7 +157,15 @@ export function NotifyCard({
     getNotify()
       .then((r) => {
         if (r.ok && r.notify) {
-          const merged = { ...emptyNotify, ...r.notify };
+          // The server's blank for a choice it never stored would light no
+          // option of the select.
+          const merged = {
+            ...emptyNotify,
+            ...r.notify,
+            webhookFormat: r.notify.webhookFormat || emptyNotify.webhookFormat,
+            smtpPort: r.notify.smtpPort || emptyNotify.smtpPort,
+            smtpTls: r.notify.smtpTls || emptyNotify.smtpTls,
+          };
           setCfg(merged);
           lastGoodRef.current = merged;
           setLoaded(true);
@@ -194,6 +202,13 @@ export function NotifyCard({
         setState("idle");
         push(t("settings.saved"), "success");
         lastGoodRef.current = merged;
+        // The server keeps a secret until another replaces it, so one typed
+        // here is as stored as one that came with the load.
+        setSecretSet((set) => ({
+          smtp: set.smtp || !!merged.smtpPassword,
+          matrix: set.matrix || !!merged.matrixToken,
+          gotify: set.gotify || !!merged.gotifyToken,
+        }));
         return true;
       } else {
         setState("idle");
@@ -299,10 +314,7 @@ export function NotifyCard({
           // Its own start, so it does not repeat the tab strip's colours
           // column for column one card above it.
           select="one"
-          // Configs saved before this setting existed hold "" here, which
-          // Config.shouldSend treats as "never". Show it as such instead of
-          // lighting no segment at all.
-          active={cfg.on || "never"}
+          active={cfg.on}
           onChange={(id) => setImmediate("on", id)}
           inline
           className={fieldShake.on ? "glim-shake" : undefined}

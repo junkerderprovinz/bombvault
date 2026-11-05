@@ -556,7 +556,7 @@ var pauseReasons = map[pauseReason]string{
 // to be confirmed, and where. Same gate and fan-out as notifyReplicationFailed.
 func (s *Service) notifyPlacementPaused(ctx context.Context, domain string, why pauseReason) {
 	c, err := s.NotifyConfig()
-	if err != nil || c.On == "" || c.On == "never" {
+	if err != nil || !c.Active() {
 		return
 	}
 	subject := "Off-site replication paused for " + domain
@@ -644,6 +644,7 @@ func (s *Service) listTargetOnce(ctx context.Context, domain, targetID string) e
 type targetCurrency struct {
 	lastBackupAt      int64 // newest successful backup among the items copied there
 	lastReplicationAt int64 // its last successful copy
+	since             int64 // when the target was set up
 }
 
 // placementCurrency is what the status needs from a domain's placement: whether
@@ -686,7 +687,7 @@ func (s *Service) targetCurrencies(domain string, p placementRead, items []place
 		if len(ids) == 0 {
 			continue
 		}
-		var c targetCurrency
+		c := targetCurrency{since: t.CreatedAt}
 		if last, err := s.store.LastSuccessfulBackupAmong(ids); err == nil && !last.IsZero() {
 			c.lastBackupAt = last.Unix()
 		}

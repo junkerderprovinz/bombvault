@@ -57,7 +57,7 @@ func (s *Service) runWatchdogAt(ctx context.Context, now int64) error {
 	if err != nil {
 		return fmt.Errorf("read notify config: %w", err)
 	}
-	if c.On == "" || c.On == "never" {
+	if !c.Active() {
 		return nil
 	}
 	settings, err := s.store.GetSettings()

@@ -861,7 +861,7 @@ func (s *Service) notifyDBDumpFailed(ctx context.Context, targetID, name string,
 	// The backup after the dump may have been cancelled, which ends ctx.
 	ctx = context.WithoutCancel(ctx)
 	c, err := s.NotifyConfig()
-	if err != nil || (c.On != "always" && c.On != "failure") {
+	if err != nil || !c.Active() {
 		return
 	}
 	if s.dbDumpFailedBefore(targetID, o) {

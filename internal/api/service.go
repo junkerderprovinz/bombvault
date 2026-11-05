@@ -3020,7 +3020,7 @@ func (s *Service) notifyRetentionFailed(ctx context.Context, domain, tag, detail
 // it has on its tile.
 func (s *Service) notifyMCPKeyChange(ctx context.Context, event string, k store.MCPKey, addr string) {
 	c, err := s.NotifyConfig()
-	if err != nil || c.On == "" || c.On == "never" {
+	if err != nil || !c.Active() {
 		return
 	}
 	title := "BombVault: MCP key " + event
@@ -5291,7 +5291,7 @@ func (s *Service) applyGrowthBudget(ctx context.Context, domain, latchKey string
 // channel that could carry the alert failed.
 func (s *Service) notifyOverBudget(ctx context.Context, domain string, size, budget int64, kind string) (undelivered bool) {
 	c, err := s.NotifyConfig()
-	if err != nil || c.On == "" || c.On == "never" {
+	if err != nil || !c.Active() {
 		return false
 	}
 	subject := strings.ToUpper(kind[:1]) + kind[1:] + " backup over budget for " + domain
@@ -5643,7 +5643,7 @@ func (s *Service) ScheduledReplicateOffsite(ctx context.Context, domain string) 
 // when notifications are off.
 func (s *Service) notifyReplicationFailed(ctx context.Context, domain, detail string) {
 	c, err := s.NotifyConfig()
-	if err != nil || c.On == "" || c.On == "never" {
+	if err != nil || !c.Active() {
 		return
 	}
 	subject := "Off-site replication FAILED for " + domain
@@ -15573,6 +15573,19 @@ func (s *Service) BackupFileSet(ctx context.Context, id string) (_ backup.Summar
 	item := store.ItemRef{Domain: "files", Key: set.ID}
 	step, err := s.prepareHome(ctx, settings, item)
 	if err != nil {
+// notifyFlashExportFailed tells that the ZIP meant to leave the server was not
+// written. The backup is fine, so the health check stays out of it.
+func (s *Service) notifyFlashExportFailed(ctx context.Context, cause error) {
+	c, err := s.NotifyConfig()
+	if err != nil || !c.Active() {
+		return
+	}
+	msg := fmt.Sprintf("The flash ZIP was not written, the backup itself is safe: %s", scrubError(cause))
+	s.sendAlert(notify.WithHealthchecksSuppressed(context.WithoutCancel(ctx)), c, "flash",
+		notify.Event{Title: "BombVault", Message: msg, OK: false},
+		"BombVault: flash ZIP export FAILED", msg, "warning")
+}
+
 		return backup.Summary{}, err
 	}
 	if step, err = s.recordHome(ctx, settings, item, step); err != nil {
@@ -18495,7 +18508,7 @@ func (s *Service) Drills(domain, source string, limit int) ([]store.RestoreDrill
 // policy + Unraid fan-out; a no-op when notifications are off.
 func (s *Service) notifyDrillFailure(ctx context.Context, domain, source, detail string) {
 	c, err := s.NotifyConfig()
-	if err != nil || c.On == "" || c.On == "never" {
+	if err != nil || !c.Active() {
 		return
 	}
 	target := "Unraid flash"
@@ -19550,7 +19563,7 @@ func (s *Service) NotifyConfig() (notify.Config, error) {
 // channel and no policy clears it.
 func (s *Service) SetNotifyConfig(c notify.Config) error {
 	stored := ""
-	if c.Configured() || (c.On != "" && c.On != "never") {
+	if !c.IsDefault() {
 		blob, mErr := json.Marshal(c)
 		if mErr != nil {
 			return fmt.Errorf("marshal notify conf: %w", mErr)
@@ -20456,15 +20469,15 @@ func singletonItemName(domain string) string {
 }
 
 // notifyBackup sends a best-effort notification for a completed backup. It reads
-// the stored config each call (cheap; backups are infrequent) and is a no-op when
-// notifications are off. cancelKey is the key the backup registered its cancel
+// the stored config each call (cheap; backups are infrequent). With notifications
+// off only a health check hears of it. cancelKey is the key the backup registered its cancel
 // under, empty for a failure before it could be cancelled.
 func (s *Service) notifyBackup(ctx context.Context, domain, name, cancelKey string, ok bool, sum backup.Summary, backupErr error) {
 	stalled, isStall := stalledReason(ctx, scrubError(backupErr))
 	// A cancelled or stalled run is reported on the context that just ended.
 	ctx = context.WithoutCancel(ctx)
 	c, err := s.NotifyConfig()
-	if err != nil || c.On == "" || c.On == "never" {
+	if err != nil {
 		return
 	}
 	target := singletonItemName(domain)
@@ -20507,14 +20520,17 @@ func (s *Service) notifyBackup(ctx context.Context, domain, name, cancelKey stri
 	if o := runOriginFromContext(ctx); o.Via != "" {
 		msg += " " + s.originSentence(o)
 	}
-	notify.Send(ctx, c, domain, notify.Event{Title: "BombVault", Message: msg, OK: ok || cancelled || interrupted, ItemResult: true, Warning: incomplete})
+	ev := notify.Event{Title: "BombVault", Message: msg, OK: ok || cancelled || interrupted, ItemResult: true, Warning: incomplete}
+	if ev.OK {
+		ev.CheckHeld = s.healthcheckHold(c, domain)
+	}
+	notify.Send(ctx, c, domain, ev)
 
 	// Unraid native notification (delivered over SSH; notify.Send is HTTP-only).
-	// Honour the same policy: notifyBackup already returned for "never", so send
-	// on "always" or on any failure. In scheduled summary mode, drop the per-item
-	// Unraid push too — ScheduledNotifyResult sends the one aggregate (#56).
+	// Honour the same policy. In scheduled summary mode, drop the per-item Unraid
+	// push too, since ScheduledNotifyResult sends the one aggregate (#56).
 	failed := !ok && !cancelled && !interrupted
-	if s.unraidGate(c.Unraid) && (c.On == "always" || failed || incomplete) &&
+	if c.Active() && s.unraidGate(c.Unraid) && (c.On == "always" || failed || incomplete) &&
 		(!notify.MessagesSuppressed(ctx) || !c.ScheduledSummary) {
 		level := "normal"
 		subject := "BombVault: backup OK"
@@ -20589,10 +20605,10 @@ func (s *Service) recordAndNotifyContainerSkip(ctx context.Context, name string)
 	}
 	c, err := s.NotifyConfig()
 	// Honour the notify policy on BOTH channels (message + Unraid): when muted
-	// ("never"/unset) the skipped run row and the dashboard chip already surface it,
+	// the skipped run row and the dashboard chip already surface it,
 	// so no push should fire — otherwise a benign skip would be noisier than a real
 	// backup failure (which notifyBackup stays silent about under the same policy).
-	if err != nil || (c.On != "always" && c.On != "failure") {
+	if err != nil || !c.Active() {
 		return
 	}
 	// #111: the old wording ("…is still a scheduled backup target. It was skipped…")
@@ -20703,10 +20719,9 @@ func (s *Service) ScheduledHealthchecksResult(ctx context.Context, domain string
 // count that leaves the user with no idea what to fix (#64).
 func (s *Service) ScheduledNotifyResult(ctx context.Context, domain string, attempted, failed int, failures []schedule.ItemFailure) {
 	c, err := s.NotifyConfig()
-	// Honour the notify policy on ALL channels (message + Unraid): muted ("never"/
-	// unset) sends nothing, so the Unraid push below can't leak past a muted policy.
-	if err != nil || !c.ScheduledSummary || attempted == 0 ||
-		(c.On != "always" && c.On != "failure") {
+	// Honour the notify policy on ALL channels (message + Unraid): muted sends
+	// nothing, so the Unraid push below can't leak past a muted policy.
+	if err != nil || !c.ScheduledSummary || attempted == 0 || !c.Active() {
 		return
 	}
 	ok := failed == 0
@@ -20833,3 +20848,6 @@ func humanBytes(b int64) string {
 	}
 	return fmt.Sprintf("%.1f %ciB", float64(b)/float64(div), "KMGTPE"[exp])
 }
+		if held := s.healthcheckHold(c, domain); held != "" {
+			ok, summary = false, summary+". "+held
+		}

@@ -1650,10 +1650,11 @@ func cloudCredsMeaningful(c CloudCreds) bool {
 	return c != CloudCreds{}
 }
 
-// notifyMeaningful reports whether a notify config carries any channel or policy —
-// i.e. whether storing it would do anything (SetNotifyConfig clears an empty one).
+// notifyMeaningful reports whether a notify config says anything beyond the
+// defaults, i.e. whether storing it would do anything (SetNotifyConfig clears one
+// that does not).
 func notifyMeaningful(c notify.Config) bool {
-	return c.Configured() || (c.On != "" && c.On != "never")
+	return !c.IsDefault()
 }
 
 // truthy parses the export/import boolean query flags. Empty (absent) is false;
