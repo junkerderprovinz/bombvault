@@ -38,6 +38,9 @@ type OffsiteSources struct {
 	FileSets   map[string]string `json:"fileSets"`
 }
 
+// errOffsiteSilent is a copy that did not answer in time. The others still count.
+var errOffsiteSilent = errors.New("it did not answer within a minute, so it was left out")
+
 // offsiteCopy is what one off-site copy of a section lists.
 type offsiteCopy struct {
 	source string
@@ -72,7 +75,7 @@ func (s *Service) EmergencyOffsiteEntries(ctx context.Context) (OffsiteEntries, 
 		targets := s.offsiteReplicationTargets(sec.domain, settings)
 		for i, list := range s.listOffsiteCopies(ctx, settings, targets, sec.prefix) {
 			if list.err != nil {
-				unread = append(unread, targets[i].Name+": "+scrubError(list.err))
+				unread = append(unread, fmt.Sprintf("%s (%s): %s.", targets[i].Name, scrubRepoLocation(targets[i].Repo), scrubError(list.err)))
 				continue
 			}
 			for name, ts := range list.newest {
@@ -101,6 +104,9 @@ func (s *Service) listOffsiteCopies(ctx context.Context, settings store.Settings
 			lctx, cancel := context.WithTimeout(ctx, offsiteListTimeout)
 			defer cancel()
 			out[i] = s.listOffsiteCopy(lctx, settings, target, prefix)
+			if out[i].err != nil && lctx.Err() != nil {
+				out[i].err = errOffsiteSilent
+			}
 		})
 	}
 	wg.Wait()

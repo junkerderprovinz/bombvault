@@ -302,6 +302,7 @@ func TestStartRestoreStackMemberPanicRecordsFailedRunAndContinues(t *testing.T) 
 // run itself, so the panic path closes it through ConfigTargetID. It releases
 // batchActive too, because a successful restore can keep that held.
 func TestStartRestoreConfigPanicRecordsFailedRunAndReleasesGuard(t *testing.T) {
+	skipStagingOnWindows(t)
 	t.Setenv("BOMBVAULT_SELF_CONTAINER", "")
 	dir := t.TempDir()
 	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: filepath.ToSlash(dir)}
@@ -312,7 +313,7 @@ func TestStartRestoreConfigPanicRecordsFailedRunAndReleasesGuard(t *testing.T) {
 	if err := st.UpdateSettings(s); err != nil {
 		t.Fatal(err)
 	}
-	eng := &fakeResticEngine{snaps: []restic.Snapshot{{ID: "aaaa1111bbbb2222"}}, restorePanic: true}
+	eng := &fakeResticEngine{snaps: []restic.Snapshot{{ID: "aaaa1111bbbb2222"}}, restorePanic: true, stageFrom: st}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
 
 	started, auto, err := svc.StartRestoreConfig(context.Background(), "", "local")

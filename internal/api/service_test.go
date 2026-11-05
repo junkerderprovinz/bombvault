@@ -13,6 +13,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"runtime"
 	"slices"
 	"strings"
 	"testing"
@@ -5475,6 +5476,9 @@ type commandBackup struct {
 }
 
 type fakeResticEngine struct {
+	// stageFrom gives a settings restore a database to stage, as a self-backup
+	// holds one.
+	stageFrom *store.Repo
 	inited    []string
 	backedUp  []string
 	lastPaths []string
@@ -6037,6 +6041,15 @@ func (f *fakeResticEngine) RestoreInclude(ctx context.Context, repo, snapshotID,
 	}
 	if f.restoreErrPath != "" && includePath == f.restoreErrPath {
 		return errors.New("restore boom")
+	}
+	if f.stageFrom != nil {
+		dir := filepath.Join(target, includePath)
+		if err := os.MkdirAll(dir, 0o700); err != nil {
+			return err
+		}
+		if err := f.stageFrom.VacuumInto(filepath.Join(dir, "bombvault.sqlite")); err != nil {
+			return err
+		}
 	}
 	f.restored = append(f.restored, repo+":"+snapshotID+":"+includePath+"->"+target)
 	// For a whole-tree restore into a real target dir (the DR-drill sandbox path),
@@ -8011,12 +8024,22 @@ func TestBackupConfigEndToEnd(t *testing.T) {
 	}
 }
 
+// skipStagingOnWindows skips a test that stages a settings database: the staging
+// path nests the absolute data folder, which Windows refuses.
+func skipStagingOnWindows(t *testing.T) {
+	t.Helper()
+	if runtime.GOOS == "windows" {
+		t.Skip("BombVault ships for Linux, and staging its own database does not work on Windows")
+	}
+}
+
 // TestRestoreConfigStagesAndWritesMarker checks that RestoreConfig stages a
 // config restore rather than overwriting the live DB: it restic-restores the
 // config snapshot subtree (<DataDir>/.snapshot) into the staging root and writes
 // the boot-swap marker. The live DB is swapped on the next boot by
 // selfrestore.ApplyPending.
 func TestRestoreConfigStagesAndWritesMarker(t *testing.T) {
+	skipStagingOnWindows(t)
 	dir := t.TempDir()
 	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: filepath.ToSlash(dir)}
 	st := newMemStore(t)
@@ -8027,7 +8050,7 @@ func TestRestoreConfigStagesAndWritesMarker(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	eng := &fakeResticEngine{snaps: []restic.Snapshot{{ID: "aaaa1111bbbb2222"}}}
+	eng := &fakeResticEngine{snaps: []restic.Snapshot{{ID: "aaaa1111bbbb2222"}}, stageFrom: st}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
 
 	if err := svc.RestoreConfig(context.Background(), "", "local"); err != nil {
@@ -8066,6 +8089,7 @@ func TestRestoreConfigStagesAndWritesMarker(t *testing.T) {
 // synchronously, because Recovery.tsx needs it to decide whether to wait for
 // the self-restart.
 func TestStartRestoreConfigSurvivesCancelledContext(t *testing.T) {
+	skipStagingOnWindows(t)
 	t.Setenv("BOMBVAULT_SELF_CONTAINER", "") // force docker.Self resolution, not an ambient override
 	dir := t.TempDir()
 	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: filepath.ToSlash(dir)}
@@ -8077,7 +8101,7 @@ func TestStartRestoreConfigSurvivesCancelledContext(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	eng := &fakeResticEngine{snaps: []restic.Snapshot{{ID: "aaaa1111bbbb2222"}}}
+	eng := &fakeResticEngine{snaps: []restic.Snapshot{{ID: "aaaa1111bbbb2222"}}, stageFrom: st}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
 
 	ctx, cancel := context.WithCancel(context.Background())
