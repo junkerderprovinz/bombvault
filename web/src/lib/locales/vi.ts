@@ -3328,6 +3328,9 @@ const vi: Partial<Translations> = {
   "placementCode.restoreFolderRemote": "Thư mục khôi phục phải là một thư mục trên máy chủ này, dưới Host Data.",
   "placementCode.pathAbsolute": "Đây là đường dẫn đầy đủ trên máy chủ. Đường dẫn ở đây bắt đầu từ Host Data, nên hãy bỏ phần đến đó, hoặc dùng remote restic như rest:, s3: hay rclone:.",
   "placementCode.pathOutside": "Đường dẫn này đi ra ngoài Host Data. Hãy nhập đường dẫn bên trong hoặc remote restic như rest:, s3: hay rclone:.",
+  "placementCode.locationPasswordHidden": "Mật khẩu của vị trí này được ẩn và ở lại với máy chủ của nó. Để dùng máy chủ khác, hãy nhập toàn bộ vị trí kèm mật khẩu.",
+  "placementCode.locationDash": "Máy chủ hoặc remote rclone của vị trí lưu trữ không thể bắt đầu bằng dấu gạch nối. Hãy nhập tên thật.",
+  "placementCode.linkOutOfMount": "Một liên kết phía trên đường dẫn này đi ra ngoài Host Data, nên không có gì được đọc hoặc ghi qua nó. Hãy xóa liên kết hoặc chọn đường dẫn khác.",
   "placementCode.pathAbsoluteTo": "Đây là đường dẫn đầy đủ trên máy chủ. Đường dẫn ở đây bắt đầu từ Host Data, nên hãy nhập {path} thay vào đó, hoặc dùng remote restic như rest:, s3: hay rclone:.",
 
   // Warnings

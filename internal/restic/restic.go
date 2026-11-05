@@ -1466,6 +1466,9 @@ func (r Restic) run(ctx context.Context, args []string, m Mode) ([]byte, error) 
 // says so. Go's exec fills PWD in by itself only when Env is nil, which it
 // never is here.
 func (r Restic) runIn(ctx context.Context, dir string, args []string, m Mode) ([]byte, error) {
+	if err := checkRepoArgs(args); err != nil {
+		return nil, err
+	}
 	cmd := exec.CommandContext(ctx, r.bin(), args...) //nolint:gosec // G204: argv is constructed by typed builders in this package; no user input reaches here
 	configureProcGroup(cmd)
 	env := r.authEnv(m)
@@ -1762,6 +1765,9 @@ func streamLines(cmd *exec.Cmd, args []string, onLine func(line []byte)) error {
 // line and any non-node line are skipped, exactly as parseFileEntries does.
 func (r Restic) LsStream(ctx context.Context, repo, snapshotID string, m Mode, onEntry func(FileEntry)) error {
 	args := LsArgs(repo, snapshotID, m)
+	if err := checkRepoArgs(args); err != nil {
+		return err
+	}
 	cmd := exec.CommandContext(ctx, r.bin(), args...) //nolint:gosec // G204: argv is constructed by typed builders in this package; no user input reaches here
 	configureProcGroup(cmd)
 	cmd.Env = r.authEnv(m)
@@ -2631,6 +2637,9 @@ func (r Restic) DumpTar(ctx context.Context, repo, snapshotID, subfolder string,
 }
 
 func (r Restic) dumpArchive(ctx context.Context, args []string, w io.Writer, m Mode) error {
+	if err := checkRepoArgs(args); err != nil {
+		return err
+	}
 	cmd := exec.CommandContext(ctx, r.bin(), args...) //nolint:gosec // G204: argv from typed builders; snapshot id validated against the repo by the caller
 	configureProcGroup(cmd)
 	cmd.Env = r.authEnv(m)
@@ -2651,6 +2660,9 @@ func (r Restic) dumpArchive(ctx context.Context, args []string, w io.Writer, m M
 // back unchanged.
 func (r Restic) BackupStdin(ctx context.Context, repo string, rd io.Reader, path string, tags []string, m Mode) (Summary, error) {
 	args := BackupStdinArgs(repo, path, tags, m)
+	if err := checkRepoArgs(args); err != nil {
+		return Summary{}, err
+	}
 	cmd := exec.CommandContext(ctx, r.bin(), args...) //nolint:gosec // G204: argv from typed builders; path/tags are internal values (a zvol dataset/snapshot identifier), never raw user input
 	configureProcGroup(cmd)
 	cmd.Env = r.authEnv(m)
@@ -2703,6 +2715,9 @@ const dumpProtocolPrefix = "bombvault-dbdump-"
 // stage-less event from this call would wipe the card's dump stage.
 func (r Restic) BackupFromCommand(ctx context.Context, repo, stdinPath string, tags, command []string, m Mode) (Summary, []string, error) {
 	args := BackupCommandArgs(repo, stdinPath, tags, m, command)
+	if err := checkRepoArgs(args); err != nil {
+		return Summary{}, nil, err
+	}
 	cmd := exec.CommandContext(ctx, r.bin(), args...) //nolint:gosec // G204: argv from typed builders; the command is this binary with validated flags
 	configureProcGroup(cmd)
 	// restic emits periodic --json status only to a TTY or with this set, and
@@ -2751,6 +2766,9 @@ func subprocessLines(stderr string) []string {
 // string BackupStdin was given as its stdin-filename.
 func (r Restic) DumpRaw(ctx context.Context, repo, snapshotID, path string, w io.Writer, m Mode) error {
 	args := DumpRawArgs(repo, snapshotID, path, m)
+	if err := checkRepoArgs(args); err != nil {
+		return err
+	}
 	cmd := exec.CommandContext(ctx, r.bin(), args...) //nolint:gosec // G204: argv from typed builders; snapshot id validated by caller against the repo, path is an internal value
 	configureProcGroup(cmd)
 	cmd.Env = r.authEnv(m)
@@ -2796,6 +2814,9 @@ func (r Restic) DumpRaw(ctx context.Context, repo, snapshotID, path string, w io
 // estimate (restic.PendingCopyIDs) for a "snapshot k of N" display.
 func (r Restic) Copy(ctx context.Context, destRepo, srcRepo string, snapshotIDs []string, lim Limits, m Mode) error {
 	args := CopyArgs(destRepo, srcRepo, snapshotIDs, lim, m)
+	if err := checkRepoArgs(args); err != nil {
+		return err
+	}
 	cmd := exec.CommandContext(ctx, r.bin(), args...) //nolint:gosec // G204: argv from typed builders; repos are operator-configured
 	configureProcGroup(cmd)
 	env := r.authEnv(m)
@@ -3087,6 +3108,9 @@ func (r Restic) runCounted(ctx context.Context, args []string, m Mode) error {
 	sink := progress.CountSinkFrom(ctx)
 	if sink == nil {
 		_, err := r.run(ctx, args, m)
+		return err
+	}
+	if err := checkRepoArgs(args); err != nil {
 		return err
 	}
 	cmd := exec.CommandContext(ctx, r.bin(), args...) //nolint:gosec // G204: argv is constructed by typed builders in this package; no user input reaches here

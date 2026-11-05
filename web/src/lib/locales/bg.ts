@@ -3347,6 +3347,9 @@ const bg: Partial<Translations> = {
   "placementCode.restoreFolderRemote": "Папката за възстановяване трябва да е папка на този хост, под Host Data.",
   "placementCode.pathAbsolute": "Това е пълен път на хоста. Пътищата тук започват от Host Data, затова махни частта дотам или използвай отдалечено restic място като rest:, s3: или rclone:.",
   "placementCode.pathOutside": "Този път извежда извън Host Data. Въведи път в него или отдалечено restic място като rest:, s3: или rclone:.",
+  "placementCode.locationPasswordHidden": "Паролата на това място е скрита и остава при неговия сървър. За друг сървър въведи цялото място с паролата му.",
+  "placementCode.locationDash": "Хостът или rclone отдалеченото място на място за съхранение не може да започва с тире. Въведи истинското му име.",
+  "placementCode.linkOutOfMount": "Връзка над този път извежда извън Host Data, затова през нея нищо не се чете и не се записва. Премахни връзката или избери друг път.",
   "placementCode.pathAbsoluteTo": "Това е пълен път на хоста. Пътищата тук започват от Host Data, затова въведи {path} вместо това или използвай отдалечено restic място като rest:, s3: или rclone:.",
 
   // Warnings

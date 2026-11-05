@@ -397,7 +397,7 @@ type primaryRemoteView struct {
 func primaryRemoteToView(t store.OffsiteTarget, configured bool) primaryRemoteView {
 	return primaryRemoteView{
 		Configured:     configured,
-		Repo:           t.Repo,
+		Repo:           scrubRepoLocation(t.Repo),
 		Immutable:      t.Immutable,
 		LimitUpload:    t.LimitUpload,
 		LimitDownload:  t.LimitDownload,

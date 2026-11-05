@@ -3347,6 +3347,9 @@ const hi: Partial<Translations> = {
   "placementCode.restoreFolderRemote": "रीस्टोर फ़ोल्डर इसी होस्ट पर, Host Data के नीचे का फ़ोल्डर होना चाहिए।",
   "placementCode.pathAbsolute": "यह होस्ट का पूरा पाथ है। यहाँ पाथ Host Data से शुरू होते हैं, इसलिए वहाँ तक का हिस्सा हटा दें, या rest:, s3: या rclone: जैसा restic रिमोट इस्तेमाल करें।",
   "placementCode.pathOutside": "यह पाथ Host Data से बाहर जाता है। उसके अंदर का पाथ दें, या rest:, s3: या rclone: जैसा restic रिमोट।",
+  "placementCode.locationPasswordHidden": "इस जगह का पासवर्ड छिपा है और अपने सर्वर के साथ ही रहता है। दूसरा सर्वर इस्तेमाल करने के लिए पूरी जगह पासवर्ड के साथ लिखें।",
+  "placementCode.locationDash": "स्टोरेज जगह का होस्ट या rclone रिमोट डैश से शुरू नहीं हो सकता। उसका असली नाम लिखें।",
+  "placementCode.linkOutOfMount": "इस पाथ के ऊपर का एक लिंक Host Data से बाहर जाता है, इसलिए उसके ज़रिए कुछ पढ़ा या लिखा नहीं जाता। लिंक हटाएँ या कोई दूसरा पाथ चुनें।",
   "placementCode.pathAbsoluteTo": "यह होस्ट का पूरा पाथ है। यहाँ पाथ Host Data से शुरू होते हैं, इसलिए इसकी जगह {path} डालें, या rest:, s3: या rclone: जैसा restic रिमोट इस्तेमाल करें।",
 
   // Warnings

@@ -3336,6 +3336,9 @@ const nl: Partial<Translations> = {
   "placementCode.restoreFolderRemote": "Een herstelmap moet een map op deze host zijn, onder Host Data.",
   "placementCode.pathAbsolute": "Dit is een volledig pad op de host. Paden beginnen hier bij Host Data, dus laat het deel tot daar weg, of gebruik een restic-remote zoals rest:, s3: of rclone:.",
   "placementCode.pathOutside": "Dit pad leidt uit Host Data. Geef een pad daarbinnen op of een restic-remote zoals rest:, s3: of rclone:.",
+  "placementCode.locationPasswordHidden": "Het wachtwoord van deze locatie is verborgen en blijft bij zijn server. Typ voor een andere server de hele locatie met het wachtwoord.",
+  "placementCode.locationDash": "De host of rclone-remote van een opslaglocatie kan niet met een streepje beginnen. Geef de echte naam op.",
+  "placementCode.linkOutOfMount": "Een koppeling boven dit pad leidt uit Host Data, dus er wordt niets doorheen gelezen of geschreven. Verwijder de koppeling of kies een ander pad.",
   "placementCode.pathAbsoluteTo": "Dit is een volledig pad op de host. Paden beginnen hier bij Host Data, dus vul in plaats daarvan {path} in, of gebruik een restic-remote zoals rest:, s3: of rclone:.",
 
   // Warnings

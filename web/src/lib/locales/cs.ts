@@ -3335,6 +3335,9 @@ const cs: Partial<Translations> = {
   "placementCode.restoreFolderRemote": "Složka pro obnovení musí být složka na tomto hostiteli, pod Host Data.",
   "placementCode.pathAbsolute": "Tohle je úplná cesta na hostiteli. Cesty tu začínají v Host Data, takže část až tam vynech, nebo použij vzdálené úložiště restic jako rest:, s3: nebo rclone:.",
   "placementCode.pathOutside": "Tato cesta vede ven z Host Data. Zadej cestu uvnitř, nebo vzdálené úložiště restic jako rest:, s3: nebo rclone:.",
+  "placementCode.locationPasswordHidden": "Heslo tohoto umístění je skryté a zůstává u svého serveru. Pro jiný server zadej celé umístění i s heslem.",
+  "placementCode.locationDash": "Hostitel nebo vzdálené úložiště rclone nemůže začínat pomlčkou. Zadej skutečný název.",
+  "placementCode.linkOutOfMount": "Odkaz nad touto cestou vede ven z Host Data, takže se přes něj nic nečte ani nezapisuje. Odstraň odkaz nebo zvol jinou cestu.",
   "placementCode.pathAbsoluteTo": "Tohle je úplná cesta na hostiteli. Cesty tu začínají v Host Data, takže zadej {path}, nebo použij vzdálené úložiště restic jako rest:, s3: nebo rclone:.",
 
   // Warnings

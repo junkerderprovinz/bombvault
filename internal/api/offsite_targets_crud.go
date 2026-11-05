@@ -13,7 +13,8 @@ import (
 )
 
 // offsiteTargetView is an off-site target as the SPA sees it; store.OffsiteTarget
-// has no json tags. No field is secret: CredsRef only names a credential set.
+// has no json tags. CredsRef only names a credential set, and Repo can hold a
+// password, which shownTarget hides from an answer.
 type offsiteTargetView struct {
 	ID                   string `json:"id"`
 	Domain               string `json:"domain"`
@@ -275,11 +276,9 @@ func (h *Handler) handleListOffsiteTargets(w http.ResponseWriter, r *http.Reques
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
-	views := offsiteTargetsToViews(targets)
-	if isPaired(r) {
-		for i := range views {
-			views[i].Repo = scrubRepoLocation(views[i].Repo)
-		}
+	views := make([]offsiteTargetView, 0, len(targets))
+	for _, t := range targets {
+		views = append(views, shownTarget(t))
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"targets": views}))
 }
@@ -293,6 +292,10 @@ func (h *Handler) handleCreateOffsiteTarget(w http.ResponseWriter, r *http.Reque
 		return
 	}
 	t := v.toStoreTarget()
+	if err := restic.CheckLocation(t.Repo); err != nil {
+		placementFail(w, err, nil)
+		return
+	}
 	if msg := validateOffsiteTargetInput(t); msg != "" {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": msg})
 		return
@@ -333,7 +336,7 @@ func (h *Handler) handleCreateOffsiteTarget(w http.ResponseWriter, r *http.Reque
 		}
 	}
 	h.replanAfterTargetChange()
-	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"target": offsiteTargetToView(stored)}))
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"target": shownTarget(stored)}))
 }
 
 // replanAfterTargetChange reloads the schedule, which plans the tamper job
@@ -366,6 +369,14 @@ func (h *Handler) handleUpdateOffsiteTarget(w http.ResponseWriter, r *http.Reque
 		return
 	}
 	t := v.toStoreTarget()
+	if t.Repo, err = unhideLocation(t.Repo, existing.Repo); err != nil {
+		placementFail(w, err, nil)
+		return
+	}
+	if err := restic.CheckLocation(t.Repo); err != nil {
+		placementFail(w, err, nil)
+		return
+	}
 	t.SortOrder = existing.SortOrder
 	if v.SortOrder != nil {
 		t.SortOrder = *v.SortOrder
@@ -460,7 +471,7 @@ func (h *Handler) handleUpdateOffsiteTarget(w http.ResponseWriter, r *http.Reque
 	}
 	h.replanAfterTargetChange()
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{
-		"target":   offsiteTargetToView(stored),
+		"target":   shownTarget(stored),
 		"warnings": h.svc.targetSaveWarnings(r.Context(), existing, stored),
 	}))
 }

@@ -3347,6 +3347,9 @@ const lt: Partial<Translations> = {
   "placementCode.restoreFolderRemote": "Atkūrimo aplankas turi būti aplankas šiame pagrindiniame kompiuteryje, po Host Data.",
   "placementCode.pathAbsolute": "Tai pilnas kelias pagrindiniame kompiuteryje. Keliai čia prasideda nuo Host Data, tad praleisk dalį iki ten arba naudok restic nuotolinę vietą, pvz., rest:, s3: ar rclone:.",
   "placementCode.pathOutside": "Šis kelias veda už Host Data ribų. Įvesk kelią jo viduje arba restic nuotolinę vietą, pvz., rest:, s3: ar rclone:.",
+  "placementCode.locationPasswordHidden": "Šios vietos slaptažodis paslėptas ir lieka su jos serveriu. Norėdamas naudoti kitą serverį, įvesk visą vietą su slaptažodžiu.",
+  "placementCode.locationDash": "Saugojimo vietos pagrindinis kompiuteris ar rclone nuotolinė vieta negali prasidėti brūkšneliu. Įvesk tikrą pavadinimą.",
+  "placementCode.linkOutOfMount": "Nuoroda virš šio kelio veda už Host Data ribų, todėl per ją niekas neskaitoma ir nerašoma. Pašalink nuorodą arba pasirink kitą kelią.",
   "placementCode.pathAbsoluteTo": "Tai pilnas kelias pagrindiniame kompiuteryje. Keliai čia prasideda nuo Host Data, tad vietoje jo įvesk {path} arba naudok restic nuotolinę vietą, pvz., rest:, s3: ar rclone:.",
 
   // Warnings

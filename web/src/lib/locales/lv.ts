@@ -3347,6 +3347,9 @@ const lv: Partial<Translations> = {
   "placementCode.restoreFolderRemote": "Atjaunošanas mapei jābūt mapei šajā resursdatorā, zem Host Data.",
   "placementCode.pathAbsolute": "Šis ir pilns ceļš resursdatorā. Ceļi šeit sākas no Host Data, tāpēc izlaidiet daļu līdz turienei vai izmantojiet restic attālo vietu, piemēram, rest:, s3: vai rclone:.",
   "placementCode.pathOutside": "Šis ceļš ved ārpus Host Data. Ievadiet ceļu tās iekšpusē vai restic attālo vietu, piemēram, rest:, s3: vai rclone:.",
+  "placementCode.locationPasswordHidden": "Šīs atrašanās vietas parole ir paslēpta un paliek pie tās servera. Lai izmantotu citu serveri, ievadiet visu atrašanās vietu ar paroli.",
+  "placementCode.locationDash": "Krātuves vietas resursdators vai rclone attālā vieta nevar sākties ar domuzīmi. Ievadiet īsto nosaukumu.",
+  "placementCode.linkOutOfMount": "Saite virs šī ceļa ved ārpus Host Data, tāpēc caur to nekas netiek lasīts vai rakstīts. Noņemiet saiti vai izvēlieties citu ceļu.",
   "placementCode.pathAbsoluteTo": "Šis ir pilns ceļš resursdatorā. Ceļi šeit sākas no Host Data, tāpēc tā vietā ievadiet {path} vai izmantojiet restic attālo vietu, piemēram, rest:, s3: vai rclone:.",
 
   // Warnings

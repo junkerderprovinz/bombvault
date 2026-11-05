@@ -3347,6 +3347,9 @@ const eu: Partial<Translations> = {
   "placementCode.restoreFolderRemote": "Leheneratze-karpeta ostalari honetako karpeta bat izan behar da, Host Data azpian.",
   "placementCode.pathAbsolute": "Hau ostalariko bide oso bat da. Hemen bideak Host Data-n hasten dira, beraz kendu hara arteko zatia edo erabili restic urruneko bat, rest:, s3: edo rclone: bezalakoa.",
   "placementCode.pathOutside": "Bide honek Host Data-tik kanpora darama. Idatzi barruko bide bat edo restic urruneko bat, rest:, s3: edo rclone: bezalakoa.",
+  "placementCode.locationPasswordHidden": "Kokapen honen pasahitza ezkutatuta dago eta bere zerbitzariarekin geratzen da. Beste zerbitzari bat erabiltzeko, idatzi kokapen osoa pasahitzarekin.",
+  "placementCode.locationDash": "Biltegiratze-kokapen baten ostalaria edo rclone urrunekoa ezin da marratxo batekin hasi. Idatzi benetako izena.",
+  "placementCode.linkOutOfMount": "Bide honen gaineko esteka batek Host Data-tik kanpora darama, beraz ez da ezer irakurtzen edo idazten haren bidez. Kendu esteka edo aukeratu beste bide bat.",
   "placementCode.pathAbsoluteTo": "Hau ostalariko bide oso bat da. Hemen bideak Host Data-n hasten dira, beraz idatzi {path} haren ordez, edo erabili restic urruneko bat, rest:, s3: edo rclone: bezalakoa.",
 
   // Warnings

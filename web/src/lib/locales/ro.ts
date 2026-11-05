@@ -3338,6 +3338,9 @@ const ro: Partial<Translations> = {
   "placementCode.restoreFolderRemote": "Un dosar de restaurare trebuie să fie un dosar pe această gazdă, sub Host Data.",
   "placementCode.pathAbsolute": "Aceasta este o cale completă pe gazdă. Căile de aici încep de la Host Data, așa că omite partea până acolo sau folosește o destinație restic la distanță, ca rest:, s3: sau rclone:.",
   "placementCode.pathOutside": "Această cale iese din Host Data. Introdu o cale din interiorul lui sau o destinație restic la distanță, ca rest:, s3: sau rclone:.",
+  "placementCode.locationPasswordHidden": "Parola acestei locații este ascunsă și rămâne la serverul ei. Pentru alt server, scrie toată locația împreună cu parola.",
+  "placementCode.locationDash": "Gazda sau destinația rclone a unei locații de stocare nu poate începe cu o liniuță. Introdu numele real.",
+  "placementCode.linkOutOfMount": "O legătură de deasupra acestei căi iese din Host Data, așa că nimic nu se citește și nu se scrie prin ea. Elimină legătura sau alege altă cale.",
   "placementCode.pathAbsoluteTo": "Aceasta este o cale completă pe gazdă. Căile de aici încep de la Host Data, așa că introdu {path} în schimb sau folosește o destinație restic la distanță, ca rest:, s3: sau rclone:.",
 
   // Warnings

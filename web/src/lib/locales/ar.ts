@@ -3338,6 +3338,9 @@ const ar: Partial<Translations> = {
   "placementCode.restoreFolderRemote": "يجب أن يكون مجلد الاستعادة مجلدًا على هذا المضيف تحت Host Data.",
   "placementCode.pathAbsolute": "هذا مسار كامل على المضيف. المسارات هنا تبدأ من Host Data، لذا احذف الجزء حتى هناك، أو استخدم مستودع restic بعيدًا مثل rest: أو s3: أو rclone:.",
   "placementCode.pathOutside": "يقود هذا المسار إلى خارج Host Data. أدخل مسارًا داخله أو مستودع restic بعيدًا مثل rest: أو s3: أو rclone:.",
+  "placementCode.locationPasswordHidden": "كلمة مرور هذا الموقع مخفية وتبقى مع خادمه. لاستخدام خادم آخر، اكتب الموقع كاملًا مع كلمة المرور.",
+  "placementCode.locationDash": "لا يمكن أن يبدأ مضيف موقع التخزين أو ريموت rclone الخاص به بشرطة. أدخل اسمه الحقيقي.",
+  "placementCode.linkOutOfMount": "يقود رابط فوق هذا المسار إلى خارج Host Data، لذلك لا تتم القراءة أو الكتابة عبره. أزل الرابط أو اختر مسارًا آخر.",
   "placementCode.pathAbsoluteTo": "هذا مسار كامل على المضيف. المسارات هنا تبدأ من Host Data، لذا أدخل {path} بدلًا منه، أو استخدم مستودع restic بعيدًا مثل rest: أو s3: أو rclone:.",
 
   // Warnings

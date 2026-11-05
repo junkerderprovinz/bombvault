@@ -200,6 +200,7 @@ func redactExportLocations(exp *settingsExport) {
 	exp.Settings.ConfigOffsite = scrubRepoLocation(exp.Settings.ConfigOffsite)
 	exp.Settings.FilesOffsite = scrubRepoLocation(exp.Settings.FilesOffsite)
 	exp.Settings.ZFSOffsite = scrubRepoLocation(exp.Settings.ZFSOffsite)
+	exp.Settings.FlashZipExportPath = scrubRepoLocation(exp.Settings.FlashZipExportPath)
 	for i := range exp.OffsiteTargets {
 		exp.OffsiteTargets[i].Repo = scrubRepoLocation(exp.OffsiteTargets[i].Repo)
 	}
@@ -738,6 +739,9 @@ func validateExport(exp settingsExport, mountRoot, sourceRoot string) error {
 		if msg := validateOffsiteTargetInput(t); msg != "" {
 			return rowProblem("import-row-invalid", importPartTarget, i, nil, "off-site target #%d: %s", i+1, msg)
 		}
+		if err := restic.CheckLocation(t.Repo); err != nil {
+			return rowProblem("import-row-location", importPartTarget, i, err, "off-site target #%d: %s", i+1, err)
+		}
 	}
 	// Named repositories (#204) carry NO domain - that is the point of them, an
 	// item picks one regardless of its domain - so they are checked against their
@@ -775,6 +779,9 @@ func validateExport(exp settingsExport, mountRoot, sourceRoot string) error {
 		if strings.TrimSpace(tv.Repo) == "" {
 			return rowProblem("import-row-location", importPartDestination, i, errLocationNeeded, "destination #%d (%s): needs a location", i+1, tv.Name)
 		}
+		if err := restic.CheckLocation(tv.Repo); err != nil {
+			return rowProblem("import-row-location", importPartDestination, i, err, "destination #%d (%s): %s", i+1, tv.Name, err)
+		}
 		if _, err := restic.ParseCompression(tv.Compression); err != nil {
 			return rowProblem("import-row-compression", importPartDestination, i, nil, "destination #%d (%s): %s", i+1, tv.Name, err)
 		}
@@ -805,6 +812,9 @@ func validateExport(exp settingsExport, mountRoot, sourceRoot string) error {
 	// The user could not change ANY setting, including the path itself, without
 	// editing the database.
 	if err := rejectInvalidSettingsPaths(exp.Settings, mountRoot, sourceRoot); err != nil {
+		return &importProblem{code: "import-path", cause: err, msg: "invalid path in settings: " + scrubError(err)}
+	}
+	if err := rejectOptionLikeSettingsLocations(exp.Settings, store.Settings{}); err != nil {
 		return &importProblem{code: "import-path", cause: err, msg: "invalid path in settings: " + scrubError(err)}
 	}
 	// The DR-drill targets, which had the same asymmetry: validated on PUT,
@@ -1569,7 +1579,7 @@ func mergeImportedSettings(existing store.Settings, v settingsView) store.Settin
 	// switched Backup Everything off on the instance it was applied to.
 	out.EverythingSchedule = v.EverythingSchedule
 	out.FlashZipExportEnabled = v.FlashZipExportEnabled
-	out.FlashZipExportPath = v.FlashZipExportPath
+	out.FlashZipExportPath = importedLocation(existing.FlashZipExportPath, v.FlashZipExportPath)
 	out.FlashZipExportKeep = max(0, v.FlashZipExportKeep)
 	out.DefaultLanguage = v.DefaultLanguage
 	out.RetentionKeepLast = max(0, v.RetentionKeepLast)

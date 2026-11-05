@@ -1242,7 +1242,7 @@ func (h *Handler) handleDestinationForDomain(w http.ResponseWriter, r *http.Requ
 	t := store.OffsiteTarget{Domain: domain, Repo: destinationLocation(d.Repo, domain)}
 	if existing, err := h.store.DestinationTargets(d.ID); err == nil {
 		if i := slices.IndexFunc(existing, func(x store.OffsiteTarget) bool { return x.Domain == domain }); i >= 0 {
-			writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"target": offsiteTargetToView(existing[i]), "created": false}))
+			writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"target": shownTarget(existing[i]), "created": false}))
 			return
 		}
 	}
@@ -1260,7 +1260,7 @@ func (h *Handler) handleDestinationForDomain(w http.ResponseWriter, r *http.Requ
 		return
 	}
 	h.replanAfterTargetChange()
-	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"target": offsiteTargetToView(stored), "created": created}))
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"target": shownTarget(stored), "created": created}))
 }
 
 // handleAdoptIntoDestination hangs a target typed in by hand on the
@@ -1330,7 +1330,7 @@ func (h *Handler) handlePrimaryFromDestination(w http.ResponseWriter, r *http.Re
 		return
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{
-		"target":    offsiteTargetToView(stored),
+		"target":    shownTarget(stored),
 		"location":  scrubRepoLocation(offsiteRepoFromSettings(domain, s)),
 		"immutable": offsiteImmutableFor(domain, s),
 	}))

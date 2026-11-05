@@ -3337,6 +3337,9 @@ const it: Partial<Translations> = {
   "placementCode.restoreFolderRemote": "Una cartella di ripristino deve essere una cartella su questo host, sotto Host Data.",
   "placementCode.pathAbsolute": "Questo è un percorso completo dell'host. Qui i percorsi partono da Host Data, quindi togli la parte fin lì, oppure usa un remoto restic come rest:, s3: o rclone:.",
   "placementCode.pathOutside": "Questo percorso esce da Host Data. Inserisci un percorso al suo interno o un remoto restic come rest:, s3: o rclone:.",
+  "placementCode.locationPasswordHidden": "La password di questa posizione è nascosta e resta con il suo server. Per usare un altro server, scrivi l'intera posizione con la password.",
+  "placementCode.locationDash": "L'host o il remoto rclone di una posizione di archiviazione non può iniziare con un trattino. Inserisci il suo vero nome.",
+  "placementCode.linkOutOfMount": "Un collegamento sopra questo percorso esce da Host Data, quindi attraverso di esso non si legge né si scrive nulla. Rimuovi il collegamento o scegli un altro percorso.",
   "placementCode.pathAbsoluteTo": "Questo è un percorso completo dell'host. Qui i percorsi partono da Host Data, quindi inserisci {path}, oppure usa un remoto restic come rest:, s3: o rclone:.",
 
   // Warnings

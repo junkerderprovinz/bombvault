@@ -16,8 +16,8 @@ import (
 // route that is not here answers own-login-needed to such a session, so a new
 // one stays out until somebody puts it here.
 var pairedRoutes = map[string]bool{
-	// Signing out, and what the shell of every page reads. The settings answer
-	// a paired session with every location and hook scrubbed.
+	// Signing out, and what the shell of every page reads. The settings hide
+	// every location's password from any caller and a hook from a paired session.
 	"POST /api/logout":                true,
 	"GET /api/settings":               true,
 	"GET /api/display-prefs":          true,
@@ -44,8 +44,8 @@ var pairedRoutes = map[string]bool{
 	"GET /api/progress":                 true,
 	"GET /api/zfs/runs/{runId}/members": true,
 
-	// The backups and their entries, to look at. Lists that carry a location
-	// or a hook answer a paired session with those scrubbed.
+	// The backups and their entries, to look at. A list that carries a location
+	// hides its password from any caller, and a hook from a paired session.
 	"GET /api/items":                              true,
 	"GET /api/items/{kind}/{key}":                 true,
 	"GET /api/items/{domain}/{name}/timeline":     true,
@@ -145,7 +145,7 @@ func withPaired(r *http.Request) *http.Request {
 }
 
 // isPaired reports whether a request was made with the session of a paired
-// phone, which an answer that carries a location or a hook scrubs them for.
+// phone, which an answer that carries a hook hides it from.
 func isPaired(r *http.Request) bool {
 	return pairedContext(r.Context())
 }

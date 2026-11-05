@@ -112,6 +112,9 @@ var placementCodes = []struct {
 	{store.ErrDomainHasDestinationTarget, "move-section-there"},
 	{errOwnFolderUnreadable, "own-folder-unreadable"},
 	{errOwnFolderThere, "own-folder-there"},
+	{errHiddenPasswordMoved, "location-password-hidden"},
+	{restic.ErrLocationReadsAsOption, "location-dash"},
+	{errLinkOutOfMount, "link-out-of-mount"},
 }
 
 // placementCode returns the code the interface translates err by, "" for none.

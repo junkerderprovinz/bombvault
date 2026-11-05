@@ -3328,6 +3328,9 @@ const ja: Partial<Translations> = {
   "placementCode.restoreFolderRemote": "復元フォルダーは、このホスト上の Host Data の下にあるフォルダーにしてください。",
   "placementCode.pathAbsolute": "これはホスト上のフルパスです。ここでのパスは Host Data から始まるので、そこまでの部分を省くか、rest:、s3:、rclone: などの restic リモートを使ってください。",
   "placementCode.pathOutside": "このパスは Host Data の外へ出ています。その中のパスか、rest:、s3:、rclone: などの restic リモートを入力してください。",
+  "placementCode.locationPasswordHidden": "この場所のパスワードは非表示で、そのサーバーに結び付いたままです。別のサーバーを使うには、場所全体をパスワードごと入力してください。",
+  "placementCode.locationDash": "保存場所のホストや rclone リモートはハイフンで始めることができません。実際の名前を入力してください。",
+  "placementCode.linkOutOfMount": "このパスより上のリンクが Host Data の外へ出ているため、そのリンクを通した読み書きは行いません。リンクを削除するか、別のパスを選んでください。",
   "placementCode.pathAbsoluteTo": "これはホスト上のフルパスです。ここでのパスは Host Data から始まるので、代わりに {path} と入力するか、rest:、s3:、rclone: などの restic リモートを使ってください。",
 
   // Warnings

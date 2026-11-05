@@ -12,6 +12,8 @@ import (
 	"path"
 	"strings"
 	"time"
+
+	"github.com/junkerderprovinz/bombvault/internal/restic"
 )
 
 // sftpProbeTimeout bounds the whole probe, handshake included, like
@@ -74,9 +76,8 @@ func parseSFTPLocation(loc string) (sftpLocation, error) {
 	if out.host == "" {
 		return out, errors.New("this sftp location names no host")
 	}
-	// ssh would read such a host as an option.
-	if strings.HasPrefix(out.host, "-") {
-		return out, errors.New("an sftp host must not start with a dash")
+	if err := restic.CheckLocation(loc); err != nil {
+		return out, err
 	}
 	if out.path != "" {
 		out.path = path.Clean(out.path)

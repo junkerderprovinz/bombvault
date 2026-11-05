@@ -3338,6 +3338,9 @@ const hu: Partial<Translations> = {
   "placementCode.restoreFolderRemote": "A visszaállítási mappának ezen a gépen, a Host Data alatt kell lennie.",
   "placementCode.pathAbsolute": "Ez egy teljes útvonal a gépen. Az útvonalak itt a Host Datától indulnak, ezért hagyd el az odáig tartó részt, vagy használj restic távoli helyet, például rest:, s3: vagy rclone:.",
   "placementCode.pathOutside": "Ez az útvonal kivezet a Host Datából. Adj meg egy benne lévő útvonalat vagy egy restic távoli helyet, például rest:, s3: vagy rclone:.",
+  "placementCode.locationPasswordHidden": "Ennek a helynek a jelszava rejtett, és a szerverénél marad. Másik szerverhez írd be a teljes helyet a jelszóval együtt.",
+  "placementCode.locationDash": "Egy tárolóhely gazdagépe vagy rclone távoli helye nem kezdődhet kötőjellel. Add meg a valódi nevét.",
+  "placementCode.linkOutOfMount": "Az útvonal feletti hivatkozás kivezet a Host Datából, ezért rajta keresztül semmit nem olvasunk és nem írunk. Töröld a hivatkozást, vagy válassz másik útvonalat.",
   "placementCode.pathAbsoluteTo": "Ez egy teljes útvonal a gépen. Az útvonalak itt a Host Datától indulnak, ezért írd be helyette ezt: {path}, vagy használj restic távoli helyet, például rest:, s3: vagy rclone:.",
 
   // Warnings

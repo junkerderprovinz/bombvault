@@ -700,17 +700,19 @@ func TestAPairedSessionSeesNoLocationOrHookInWhatItReads(t *testing.T) {
 		}
 		return "abc"
 	}
-	leaks := []string{"s3cr", "AKIDLEAK", "LEAK,KEY", "hooksecret"}
-	seen := map[string]bool{}
-	for _, body := range pairedReads(in, fill) {
-		for _, leak := range leaks {
-			seen[leak] = seen[leak] || strings.Contains(body, leak)
+	passwords := []string{"s3cr", "AKIDLEAK", "LEAK,KEY"}
+	leaks := append(slices.Clone(passwords), "hooksecret")
+	hookSeen := false
+	for route, body := range pairedReads(in, fill) {
+		hookSeen = hookSeen || strings.Contains(body, "hooksecret")
+		for _, leak := range passwords {
+			if strings.Contains(body, leak) {
+				t.Errorf("%s answered the person's own session with %q", route, leak)
+			}
 		}
 	}
-	for _, leak := range leaks {
-		if !seen[leak] {
-			t.Fatalf("the person's own session does not read %q anywhere, so this test proves nothing", leak)
-		}
+	if !hookSeen {
+		t.Fatal("the person's own session does not read the hook anywhere, so this test proves nothing")
 	}
 	hash, epoch, _ := in.h.authEnabled()
 	in.session = listedPhoneSession(t, in.st, in.appKey, hash, epoch)

@@ -3347,6 +3347,9 @@ const fa: Partial<Translations> = {
   "placementCode.restoreFolderRemote": "پوشه‌ی بازیابی باید پوشه‌ای روی همین میزبان، زیر Host Data باشد.",
   "placementCode.pathAbsolute": "این یک مسیر کامل روی میزبان است. مسیرها این‌جا از Host Data شروع می‌شوند، پس بخش تا آن‌جا را ننویس یا از ریموت restic مثل rest:، s3: یا rclone: استفاده کن.",
   "placementCode.pathOutside": "این مسیر از Host Data بیرون می‌رود. مسیری داخل آن یا ریموت restic مثل rest:، s3: یا rclone: وارد کن.",
+  "placementCode.locationPasswordHidden": "گذرواژهٔ این مکان پنهان است و نزد سرور خودش می‌ماند. برای استفاده از سرور دیگر، کل مکان را همراه گذرواژه بنویسید.",
+  "placementCode.locationDash": "میزبان یا ریموت rclone یک مکان ذخیره‌سازی نمی‌تواند با خط تیره شروع شود. نام واقعی آن را وارد کنید.",
+  "placementCode.linkOutOfMount": "پیوندی بالای این مسیر از Host Data بیرون می‌رود، پس چیزی از طریق آن خوانده یا نوشته نمی‌شود. پیوند را حذف کنید یا مسیر دیگری انتخاب کنید.",
   "placementCode.pathAbsoluteTo": "این یک مسیر کامل روی میزبان است. مسیرها این‌جا از Host Data شروع می‌شوند، پس به جایش {path} را وارد کن یا از ریموت restic مثل rest:، s3: یا rclone: استفاده کن.",
 
   // Warnings

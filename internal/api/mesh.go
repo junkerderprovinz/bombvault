@@ -10,6 +10,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/secret"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
@@ -61,6 +62,10 @@ func (s *Service) handlePeerMeshOffer(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "every value of an offer must be on one line"})
 		return
 	}
+	if err := restic.CheckLocation(repo); err != nil {
+		placementFail(w, err, nil)
+		return
+	}
 	enc, err := secret.Encrypt(s.cfg.AppKey, []byte(in.RESTPassword))
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
@@ -97,7 +102,7 @@ func meshOfferToView(o store.MeshOffer) meshOfferView {
 		ID:              o.ID,
 		From:            o.From,
 		SuggestedDomain: o.SuggestedDomain,
-		Repo:            o.Repo,
+		Repo:            scrubRepoLocation(o.Repo),
 		RESTUser:        o.RESTUser,
 		Status:          o.Status,
 		ReceivedAt:      o.ReceivedAt,
@@ -248,7 +253,7 @@ func (h *Handler) handleAcceptMeshOffer(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	h.replanAfterTargetChange()
-	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"target": offsiteTargetToView(stored)}))
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"target": shownTarget(stored)}))
 }
 
 // handleDeclineMeshOffer marks an offer declined. An unknown id answers 404.
