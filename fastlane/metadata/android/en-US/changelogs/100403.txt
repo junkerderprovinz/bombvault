@@ -1,0 +1,1 @@
+BombVault 10.4.3 stops a named repository from quietly losing backups to another location's keep rule, and clears out the hidden all-zero rule that made moved own folders ignore their card.
