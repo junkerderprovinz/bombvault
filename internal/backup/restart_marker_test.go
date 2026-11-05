@@ -100,7 +100,7 @@ func TestSnapshotUpdateRecordsTheDependentsItStopsAgain(t *testing.T) {
 	m := &fakeMarker{d: d, marked: map[string]bool{}}
 	deps := markerDeps(d, m)
 	deps.Snapshot = &fakeSnapshot{d: d}
-	deps.UpdateAfterBackup = func() func() { return func() {} }
+	deps.UpdateAfterBackup = func() func() []string { return func() []string { return nil } }
 	deps.Clock = func() time.Time { return time.Unix(0, 0) }
 	if _, err := backup.BackupContainer(t.Context(), deps); err != nil {
 		t.Fatal(err)

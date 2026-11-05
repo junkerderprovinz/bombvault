@@ -37,6 +37,39 @@ function zvolPlan(counts: { changed?: number }): RestoreCheckResponse["plan"] {
   };
 }
 
+describe("what a restore leaves as it is", () => {
+  const plan = {
+    inPlace: true,
+    added: 0,
+    changed: 0,
+    unchanged: 0,
+    extra: 0,
+    files: [],
+    listCapped: false,
+    partial: false,
+    missing: false,
+    definition: [],
+    shared: [],
+  };
+
+  it("names the folders of the backup that stay out", () => {
+    show({ ok: true, ready: true, checks, plan: { ...plan, leftOut: ["/mnt/user/appdata/app-media"] } });
+    expect(screen.getByText(en["restoreCheck.plan.leftOut"])).toBeTruthy();
+    expect(screen.getByText("/mnt/user/appdata/app-media")).toBeTruthy();
+  });
+
+  it("says a member comes back without its data", () => {
+    show({ ok: true, ready: true, checks, plan: { ...plan, dumpOnly: true } });
+    expect(screen.getByText(en["restoreCheck.plan.dumpOnly"])).toBeTruthy();
+  });
+
+  it("says neither when there is nothing to say", () => {
+    show({ ok: true, ready: true, checks, plan });
+    expect(screen.queryByText(en["restoreCheck.plan.leftOut"])).toBeNull();
+    expect(screen.queryByText(en["restoreCheck.plan.dumpOnly"])).toBeNull();
+  });
+});
+
 describe("the restore plan", () => {
   it("counts what changes and lists the files on request", () => {
     show({

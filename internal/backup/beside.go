@@ -115,6 +115,8 @@ func runContainerBeside(ctx context.Context, d BesideContainerDeps) error {
 		}
 	}
 	in.HostConfig.Links, _ = usableLinks(ctx, d.Docker, in.HostConfig.Links, false)
+	// These would mount the live data of the other container into the copy.
+	in.HostConfig.VolumesFrom = nil
 	if d.WithoutRuntime {
 		in.HostConfig.Runtime = ""
 		in.HostConfig.DeviceRequests = nil

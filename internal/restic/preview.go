@@ -4,8 +4,13 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
+	"fmt"
+	"io/fs"
+	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strings"
 )
 
@@ -71,6 +76,60 @@ func (r Restic) RestorePreview(ctx context.Context, repo string, st PreviewStep,
 		}
 	}
 	return r.preview(ctx, repo, st, m, onItem)
+}
+
+// ReasonFilesNotWritten begins the failure of a restore that left files of the
+// snapshot unwritten. store.ReasonRestoreFilesNotWritten is the same sentence.
+const ReasonFilesNotWritten = "restore failed: some files could not be written"
+
+// runRestore runs a restore into target. restic counts a file it cannot write as
+// restored and reports only the chmod and lchown that follow, so a run with
+// nothing but such errors may have written all of its data, as on a share that
+// refuses ownership, or none of it. The same restore as a dry run tells them
+// apart, because it compares the target with the snapshot by content.
+func (r Restic) runRestore(ctx context.Context, args []string, target string, m Mode) error {
+	_, err := r.run(ctx, args, m)
+	if !errors.Is(err, ErrRestoreMetadataOnly) {
+		return err
+	}
+	unwritten, checkErr := r.unwrittenFiles(ctx, args, target, m)
+	switch {
+	case checkErr != nil:
+		return fmt.Errorf("%s: the target could not be compared with the backup: %w", ReasonFilesNotWritten, checkErr)
+	case unwritten > 0:
+		return fmt.Errorf("%s: %d still hold other content or are missing", ReasonFilesNotWritten, unwritten)
+	}
+	return err
+}
+
+// unwrittenFiles counts the files a dry run of the restore args would still
+// write. restic says "restored" for every directory and link as well, whether it
+// is there or not, so that word only counts for a path that is missing.
+func (r Restic) unwrittenFiles(ctx context.Context, args []string, target string, m Mode) (int, error) {
+	at := slices.Index(args, "restore") + 1
+	dry := slices.Insert(slices.Clone(args), at, "--dry-run", "--no-lock", "--verbose=2")
+	cmd := exec.CommandContext(ctx, r.bin(), dry...) //nolint:gosec // G204: argv is constructed by typed builders in this package; no user input reaches here
+	configureProcGroup(cmd)
+	cmd.Env = r.authEnv(m)
+	unwritten := 0
+	err := streamLines(cmd, dry, func(line []byte) {
+		var msg struct {
+			MessageType string `json:"message_type"`
+			PreviewItem
+		}
+		if json.Unmarshal(bytes.TrimSpace(line), &msg) != nil || msg.MessageType != "verbose_status" {
+			return
+		}
+		switch msg.Action {
+		case "updated":
+			unwritten++
+		case "restored":
+			if _, err := os.Lstat(filepath.Join(filepath.FromSlash(target), filepath.FromSlash(msg.Item))); errors.Is(err, fs.ErrNotExist) {
+				unwritten++
+			}
+		}
+	})
+	return unwritten, ctxCancelErr(ctx, dry, err)
 }
 
 func (r Restic) preview(ctx context.Context, repo string, st PreviewStep, m Mode, onItem func(PreviewItem)) error {

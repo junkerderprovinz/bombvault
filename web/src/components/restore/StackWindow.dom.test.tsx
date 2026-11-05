@@ -280,6 +280,38 @@ describe("the stack window", () => {
     expect(win().getByRole("button", { name: "Back" })).toBeTruthy();
   });
 
+  it("says a member stayed stopped and why, when the project folder did not come back", async () => {
+    await open();
+    await press("Next");
+    await waitFor(() => expect((win().getByRole("button", { name: "Restore stack" }) as HTMLButtonElement).disabled).toBe(false));
+    vi.useFakeTimers();
+    await press("Restore stack");
+    const note = "the project folder of this stack did not come back, so the container was left stopped: restic restore failed";
+    calls.listRuns.mockResolvedValue({
+      ok: true,
+      runs: [restoreRun("immich", { error: note }), restoreRun("immich_postgres", { error: note })],
+    });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(2500);
+    });
+    expect(win().getAllByRole("listitem").map((row) => row.textContent)).toEqual([
+      `immich${en["stack.memberStopped"]}`,
+      `immich_postgres${en["stack.memberStopped"]}`,
+    ]);
+    expect(win().getByText(en["stack.folderFailed"].replace("{reason}", "restic restore failed"))).toBeTruthy();
+  });
+
+  it("checks the project folder at the place the window settled on", async () => {
+    calls.getStackDir.mockResolvedValue({ ok: true, found: false });
+    calls.listOffsiteTargets.mockResolvedValue({ ok: true, targets: [{ id: "t1", name: "Storage Box", repo: "sftp:box", enabled: true }] });
+    await open();
+    fireEvent.click(await win().findByRole("tab", { name: "Off-site" }));
+    await press("Next");
+    await press("Use Local");
+    await waitFor(() => expect(calls.checkRestore).toHaveBeenCalled());
+    expect(calls.checkRestore.mock.calls[0][0]).toMatchObject({ kind: "stack", stackDirSource: "local" });
+  });
+
   it("follows each member, says when the stack is back and offers a member Docker refused again", async () => {
     await open();
     await press("Next");

@@ -246,6 +246,19 @@ function PlanView({ plan, t }: { plan: RestorePlan; t: T }) {
         </div>
       )}
       {plan.zvols && plan.zvols.length > 0 && <ZvolList zvols={plan.zvols} t={t} />}
+      {plan.dumpOnly && (
+        <p className="rounded-card bg-statusWarnBg p-2 text-sm text-carbon-text wrap-break-word">{t("restoreCheck.plan.dumpOnly")}</p>
+      )}
+      {plan.leftOut && plan.leftOut.length > 0 && (
+        <div className="flex flex-col gap-1 rounded-card bg-statusWarnBg p-2 text-sm text-carbon-text">
+          <p className="wrap-break-word">{t("restoreCheck.plan.leftOut")}</p>
+          {plan.leftOut.map((folder) => (
+            <p key={folder} className="break-all font-mono" dir="ltr">
+              {folder}
+            </p>
+          ))}
+        </div>
+      )}
       {plan.missing && <p className="text-sm text-carbon-text">{t("restoreCheck.def.missing")}</p>}
       {plan.definition.length > 0 && (
         <div className="flex flex-col gap-1">

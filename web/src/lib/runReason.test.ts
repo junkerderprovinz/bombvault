@@ -27,6 +27,26 @@ function children(node: unknown): unknown[] {
   return Array.isArray(kids) ? kids : [kids];
 }
 
+describe("the notes of a restored stack member", () => {
+  it("say it stayed stopped and why the project folder failed", () => {
+    const left = restoreNotes("the project folder of this stack did not come back, so the container was left stopped: restic restore failed");
+    expect(left.stayedStopped).toBe(true);
+    expect(left.folderFailed).toBe("restic restore failed");
+  });
+
+  it("name the folders a restore left out", () => {
+    const note = "folders in this backup were left out, because they hold files now and are no longer selected: /mnt/user/appdata/media";
+    expect(restoreNotes(note).leftOut).toBe(note);
+    expect(isWarningNote(note)).toBe(true);
+  });
+
+  it("say it stayed stopped for a database without its data and for its dependents", () => {
+    expect(restoreNotes("restored without its data, because only database dumps of it exist: start it and import a dump").stayedStopped).toBe(true);
+    expect(restoreNotes('restored and left stopped: not started: dependency "pg" was not restored/started').stayedStopped).toBe(true);
+    expect(restoreNotes("").stayedStopped).toBe(false);
+  });
+});
+
 describe("runReason", () => {
   it("translates database dump reasons with detail", () => {
     expect(runReason("database dump failed: the database refused the login: FATAL x", t)).toBe(
@@ -280,6 +300,17 @@ describe("a backup that saw less than it should", () => {
 
   it("is a warning on the run of a stack's member", () => {
     expect(isWarningNote("the project folder of this stack holds no files and was not backed up: /mnt/user/stacks/site")).toBe(true);
+  });
+});
+
+describe("containers left without a network", () => {
+  const note = "some containers have no network until they are restarted: bombvault";
+
+  it("is a warning, translated up to the names", () => {
+    expect(isWarningNote(note)).toBe(true);
+    const parts = runReasonParts(note, t);
+    expect(parts.head).toBe("runReason.noNetworkUntilRestart");
+    expect(parts.detail).toBe("bombvault");
   });
 });
 

@@ -463,6 +463,9 @@ func (h *Handler) handleRestoreZFS(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		req.SafetySnapshot = true
+		if strings.TrimSpace(req.TargetPath) != "" && h.refusePairedFolder(w, r, zfsDomain, req.TargetPath) {
+			return
+		}
 	}
 	ack, started, err := h.svc.StartRestoreZFS(r.Context(), id, sourceParam(r), req)
 	if err != nil {

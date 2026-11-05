@@ -69,6 +69,7 @@ func newFolderRestoreRig(t *testing.T) *folderRestoreRig {
 	}
 	settings.ContainersPath = "backups/containers"
 	settings.FilesPath = "backups/files"
+	settings.RestoreFolder = "restore"
 	if err := st.UpdateSettings(settings); err != nil {
 		t.Fatal(err)
 	}
@@ -148,17 +149,85 @@ func (r *folderRestoreRig) restore(t *testing.T, route, folder string) (int, map
 
 var folderRestoreRoutes = []string{"file set", "file set files", "container files", "container"}
 
+func TestAPairedSessionRestoresOnlyIntoTheRestoreFolder(t *testing.T) {
+	for _, route := range folderRestoreRoutes {
+		for _, folder := range []string{"user/public/leak", "restored", "restore/../leak", "appdata/plex/new"} {
+			r := newFolderRestoreRig(t)
+			code, out := r.restore(t, route, folder)
+			if code != http.StatusForbidden || out["code"] != codeOwnLoginNeeded {
+				t.Errorf("%s into %s: %d %v", route, folder, code, out)
+			}
+			if msg, _ := out["error"].(string); !strings.Contains(msg, "restore folder") {
+				t.Errorf("%s into %s says %q, want the reason", route, folder, msg)
+			}
+			if got := r.eng.written(); len(got) != 0 {
+				t.Errorf("%s wrote into %v", route, got)
+			}
+			if _, err := os.Stat(r.root + "/" + folder); !os.IsNotExist(err) {
+				t.Errorf("%s created %s: %v", route, folder, err)
+			}
+		}
+	}
+}
+
+func TestAPairedSessionFollowsTheSectionsOwnRestoreFolder(t *testing.T) {
+	r := newFolderRestoreRig(t)
+	settings, err := r.svc.store.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	settings.SetOwnRestoreFolders(map[string]string{"containers": "restore-containers"})
+	if err := r.svc.store.UpdateSettings(settings); err != nil {
+		t.Fatal(err)
+	}
+
+	if code, out := r.restore(t, "container", "restore-containers/new"); code != http.StatusOK || out["ok"] != true {
+		t.Errorf("the section's own folder: %d %v", code, out)
+	}
+	if code, out := r.restore(t, "container", "restore/new"); code != http.StatusForbidden {
+		t.Errorf("the shared folder, which this section does not use: %d %v", code, out)
+	}
+	if code, out := r.restore(t, "file set", "restore/fotos"); code != http.StatusOK || out["ok"] != true {
+		t.Errorf("another section in the shared folder: %d %v", code, out)
+	}
+}
+
+func TestAPairedSessionBrowsesOnlyTheRestoreFolder(t *testing.T) {
+	r := newFolderRestoreRig(t)
+	if err := os.MkdirAll(r.root+"/restore/old", 0o750); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(r.root+"/appdata/vaultwarden", 0o750); err != nil {
+		t.Fatal(err)
+	}
+	browse := func(sub string) *httptest.ResponseRecorder {
+		req := httptest.NewRequest(http.MethodGet, "/api/browse?path="+sub, nil)
+		w := httptest.NewRecorder()
+		r.h.handleBrowse(w, withPaired(req.WithContext(context.Background())))
+		return w
+	}
+
+	for _, sub := range []string{"", "appdata", "appdata/vaultwarden", "restore/../appdata"} {
+		if w := browse(sub); w.Code != http.StatusForbidden || strings.Contains(w.Body.String(), "vaultwarden") {
+			t.Errorf("browse %q: %d %s", sub, w.Code, w.Body)
+		}
+	}
+	if w := browse("restore"); w.Code != http.StatusOK || !strings.Contains(w.Body.String(), "old") {
+		t.Errorf("browse the restore folder: %d %s", w.Code, w.Body)
+	}
+}
+
 func TestAPairedSessionCannotRestoreIntoAFolderThatHoldsFiles(t *testing.T) {
 	for _, route := range folderRestoreRoutes {
 		r := newFolderRestoreRig(t)
-		live := r.root + "/appdata/vaultwarden"
+		live := r.root + "/restore/old"
 		if err := os.MkdirAll(live, 0o750); err != nil {
 			t.Fatal(err)
 		}
 		if err := os.WriteFile(live+"/db.sqlite3", []byte("live"), 0o600); err != nil {
 			t.Fatal(err)
 		}
-		code, out := r.restore(t, route, "appdata/vaultwarden")
+		code, out := r.restore(t, route, "restore/old")
 		if code != http.StatusForbidden || out["code"] != codeOwnLoginNeeded {
 			t.Errorf("%s into a live folder: %d %v", route, code, out)
 		}
@@ -214,6 +283,14 @@ func TestAPairedSessionCannotRestoreAZFSMemberIntoAFolderThatHoldsFiles(t *testi
 	if err := os.WriteFile(live+"/doc.txt", []byte("live"), 0o600); err != nil {
 		t.Fatal(err)
 	}
+	settings, err := st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	settings.RestoreFolder = zfsMountedSub
+	if err := st.UpdateSettings(settings); err != nil {
+		t.Fatal(err)
+	}
 	h := NewHandler(s.cfg, st, nil, s, nil, nil)
 	send := func(folder string) (int, string) {
 		req := pairedPost(t, ZFSRestoreRequest{Stamp: zfsStamp, Dataset: zfsChild, TargetPath: zfsMountedSub + "/" + folder})
@@ -253,6 +330,9 @@ func TestARestoreCheckByAPairedSessionNamesNothingInAFolderThatHoldsFiles(t *tes
 	w := check("appdata/vaultwarden")
 	if w.Code != http.StatusForbidden || strings.Contains(w.Body.String(), "db.sqlite3") {
 		t.Errorf("a folder that holds files: %d %s", w.Code, w.Body)
+	}
+	if w := check("appdata/new"); w.Code != http.StatusForbidden {
+		t.Errorf("a new folder outside the restore folder: %d %s", w.Code, w.Body)
 	}
 	if w := check("restore/new"); w.Code != http.StatusOK {
 		t.Errorf("a new folder: %d %s", w.Code, w.Body)

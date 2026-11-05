@@ -21,7 +21,7 @@ Every restore starts on the **Restore** page: pick a section, search for what yo
 
 A click on an entry opens **Restore** with its name. It asks in steps, and each step can be changed before you start:
 
-1. **Backup**: the recommended snapshot is preselected. That is the newest one, or after an open anomaly the last one before it. Older ones are in the list, and **Compare** shows what differs between two of them.
+1. **Backup**: the recommended snapshot is preselected. That is the newest one, or after an open anomaly the last one before it. The backup taken before an earlier restore holds the state that restore replaced, so it is passed over unless there is no other. Older ones are in the list, and **Compare** shows what differs between two of them.
 2. **Source**: where the files come from, when a snapshot lies in several places. **Local** is fastest.
 3. **What**: **All**, or **Individual files**, where you tick the files and folders you want.
 4. **Where to**: the target. The choices depend on the kind of entry:
@@ -29,7 +29,7 @@ A click on an entry opens **Restore** with its name. It asks in steps, and each 
     | Target | What it does |
     |---|---|
     | **Next to the original** | The default. A container comes back as a second container named `<name>-restored` with ports of its own, a VM's disks and NVRAM land in a folder named `<folder>-restored`, and a folder set comes back as `<path>-restored`. Nothing changes on the original. |
-    | **Replace original** | Overwrites what is there now. With **Back up the current state first**, which is on by default, BombVault first backs up today's state so you can go back. If that backup fails, the restore does not start. |
+    | **Replace original** | Overwrites what is there now. With **Back up the current state first**, which is on by default, BombVault first backs up today's state so you can go back. If that backup fails, the restore does not start. That also works for a container or VM that is gone from the server: the folders the restore writes over are backed up on their own. |
     | **To a folder** | Just the files, for browsing. |
     | **Download as ZIP** | The flash drive, for a new stick. BombVault never writes into the running flash drive. |
     | **Into a new dataset** and **Restore into the dataset** | ZFS datasets, see [ZFS datasets](zfs-datasets.md#restore). |
@@ -40,11 +40,11 @@ Before **Restore** unlocks, the window checks that the repository answers, that 
 
 The window also shows what the restore changes compared with what is there now: new, replaced and unchanged files, with the list on request, and the files at the target that are not in the backup and stay where they are. restic works this out as a dry run from size and modification time, without reading the files, and a very large tree stops after 30 seconds and says so. For containers and VMs it compares the settings the restore recreates with the running ones: image and tag, ports, variable names and volumes, or memory, vCPUs, disks and network.
 
-Some things can stop a restore before it changes anything. A container's static IP and published ports have to be free, and its network has to exist. A restore in place names every other container whose bind mount reaches into a folder it writes to, for example "this path is also used by nextcloud-db", but that only warns.
+Some things can stop a restore before it changes anything. A container's static IP and published ports have to be free, and its network has to exist. On Unraid every restore in place refuses a folder that is not on a mounted pool or share, because the files would land in memory and be gone after a reboot. A restore in place names every other container whose bind mount reaches into a folder it writes to, for example "this path is also used by nextcloud-db", but that only warns.
 
 A few options appear where they apply: **Leave stopped afterwards**, to look at a container or VM before it runs again, and **Restore without GPU and runtime** on a host that lacks the GPU or runtime the backup was made with.
 
-The restore runs in the background. You can close the window, and the progress also shows under **Running now**. A long restore shows a percentage and can be cancelled, and a cancelled restore is recorded as cancelled, not as failed.
+The restore runs in the background. You can close the window, and the progress also shows under **Running now**. A long restore shows a percentage and can be cancelled, and a cancelled restore is recorded as cancelled, not as failed. A restore cancelled while the container is stopping, or one that cannot remove the container, has restored nothing yet, so the container starts again. A container that takes its volumes from another with `--volumes-from` keeps them, and the restore refuses to begin while that other container does not exist.
 
 ![The restore window at the What step, with single files ticked.](assets/screenshots/restore/window-what-dark.png#only-dark)
 ![The restore window at the What step, with single files ticked.](assets/screenshots/restore/window-what-light.png#only-light)
@@ -66,7 +66,7 @@ Someone edited Nextcloud's `config.php` last night and Nextcloud no longer start
 
 The window ends with **Done: the files are in /mnt/user/restore**. You find the file as `/mnt/user/restore/config.php`, without the folders above it. Compare it with the broken one, copy it back into the appdata folder and restart Nextcloud.
 
-To put the file straight back instead, choose **Replace original** in step 5. Keep **Back up the current state first** on, so BombVault backs up the broken state before it writes, type `nextcloud` to confirm and press **Restore**. Nextcloud is stopped while the picked file is written back to its place, and only the files you ticked are written.
+To put the file straight back instead, choose **Replace original** in step 5. Keep **Back up the current state first** on, so BombVault backs up the broken state before it writes, type `nextcloud` to confirm and press **Restore**. Nextcloud is stopped while the picked file is written back to its place and started again afterwards, and only the files you ticked are written. A restore that fails partway leaves Nextcloud stopped, since the file it reads may be half written, and the run says so.
 
 ![The restore window at What happens, with Replace original picked.](assets/screenshots/restore/window-replace-dark.png#only-dark)
 ![The restore window at What happens, with Replace original picked.](assets/screenshots/restore/window-replace-light.png#only-light)
@@ -75,9 +75,11 @@ To put the file straight back instead, choose **Replace original** in step 5. Ke
 
 **Containers** are recreated from their saved definition through the Docker API, with their entrypoint, hostname, stop settings, volumes and mounts, resource limits, log driver, DNS settings and legacy links. A container comes back on the image it ran when the backup was taken, not on a newer one pulled later, and an image that is missing is pulled first, with the sign-in from **Container registries** under **Settings, Restore**. Its GPU or runtime (`--gpus`, `--runtime=nvidia`) comes back too. On a host without that driver or runtime the restore says so and offers **Restore without GPU and runtime**. A link to a container that is missing, or stopped while the restored one starts, is left out, and the run history says so. A restore that fails after the container was removed puts it back, stopped.
 
+A backup can hold folders the container no longer has selected, for example an older one taken before a folder vanished. A folder that is gone or empty comes back. One that holds files now stays as it is, because you may have unticked it on purpose, and the check before the restore and the run history name it. Get it back with **Individual files** or **To a folder**.
+
 **VMs** get their XML defined again over SSH and their disks and UEFI NVRAM reattached, even after the VM was deleted. See [VM backups](vm-backup-ssh-setup.md) for VMs with Unraid snapshots and disks on zvols.
 
-**Folder sets** come back with their ownership, modes and timestamps as restic stores them.
+**Folder sets** come back with their ownership, modes and timestamps as restic stores them. Where the target only refuses the ownership, as `/mnt/user` does, the run ends with a note that says so. BombVault then compares the files with the backup, and a file that did not arrive makes the restore fail.
 
 **The flash drive** never touches the live `/boot`. The restore is a download called `flash-<id>.zip`, ready to drop into the Unraid USB Creator. The ZIP holds `APP_KEY`, so downloading it needs a login password and a sign-in at the instance. The window also lists the plugins in each flash backup with their version and size, and can put a single one back into the running flash: its `.plg` file, its folder under `config/plugins` and the package files the backup holds. Unraid installs it on the next boot, or right away under **Plugins, Install Plugin**.
 
@@ -102,6 +104,10 @@ Each entry is checked the way a single restore is, and then they run one after t
 ## Restoring a stack {#stacks}
 
 A click on a stack in the **Stacks** card opens **Restore stack**. It restores every member from its latest backup at the same time, and with **Start in dependency order after restore** it starts them in their `depends_on` order: databases and caches first, then the app. When a member's project folder is missing at the place you picked, the window offers the state from Local instead.
+
+BombVault checks the members and the project folder first, and a restore that could not work changes nothing. Otherwise it stops the running members, the apps before their databases, then writes the project folder, then restores the members. If the project folder does not come back, the members are still restored but stay stopped, because the folder may be half written and it is where a member's bind mounts usually lie. Each member's run says so.
+
+A database that has only database dumps and no files backup, and whose container and named volume are gone, comes back without its data. The check says so before the restore. It stays stopped, and so do the containers that depend on it, so no app runs its setup on an empty database. Start it, import a dump and start the others. See [Database dumps](backups.md#database-dumps).
 
 ## Other sources {#other-sources}
 

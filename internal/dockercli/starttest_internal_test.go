@@ -216,3 +216,12 @@ func TestIsolatedConfigLeavesOutLinksNamespacesAndIOLimits(t *testing.T) {
 		t.Fatalf("dns = %v, want the recipe's", hc.DNS)
 	}
 }
+
+func TestIsolatedConfigLeavesOutVolumesFromAnotherContainer(t *testing.T) {
+	var from model.Inspect
+	from.HostConfig.VolumesFrom = []string{"vfsrc"}
+	_, hc := isolatedConfig(IsolatedSpec{From: from, Network: "none"})
+	if len(hc.VolumesFrom) != 0 {
+		t.Fatalf("a start test must not reach the other container's data: %v", hc.VolumesFrom)
+	}
+}

@@ -88,6 +88,7 @@ export function useStackRestore(project: string, names: string[]): StackRestore 
     if (!watchFrom) return;
     const members = new Set(memberKey.split(","));
     let alive = true;
+    let settled = false;
     let timer: ReturnType<typeof setTimeout>;
     const poll = async () => {
       const res = await listRuns().catch(() => null);
@@ -103,8 +104,13 @@ export function useStackRestore(project: string, names: string[]): StackRestore 
       const done = [...latest.values()].filter((r) => r.status !== "running");
       if (done.length === members.size || done.some((r) => r.status === "cancelled") || finished) {
         setRuntimeRefused(done.filter((r) => isRuntimeRefusal(r.error)).map((r) => r.target));
-        setWatchFrom(null);
-        return;
+        // The server notes on a member's closed run why it stays stopped once the
+        // start loop has run, so the last answer is read once more.
+        if (settled) {
+          setWatchFrom(null);
+          return;
+        }
+        settled = true;
       }
       timer = setTimeout(() => void poll(), RUNS_POLL_MS);
     };
