@@ -27,7 +27,7 @@ Cardul **Săptămâna** desenează fiecare rulare planificată de luni până du
 
 **Backup total** este planul implicit pentru tot. Îl setează **Când rulează backupurile**: o singură trecere care face backup fiecărei secțiuni pe rând, containere, VM-uri, flash, foldere, seturi de date ZFS și, la sfârșit, backupul propriu. Rândul de dedesubt spune ce secțiuni include. **Oprit** îl dezactivează, iar atunci rulează doar ce are un plan propriu.
 
-- **Recuperează backupurile ratate după pornire**: dacă serverul era oprit la o oră planificată, BombVault rulează acel backup la aproximativ două minute după ce pornește.
+- **Recuperează backupurile ratate după pornire**: dacă serverul era oprit la o oră planificată, BombVault rulează acel backup la aproximativ două minute după ce pornește. Planul propriu al unui element și un plan off-site așteaptă următoarea lor oră planificată, la fel și un plan care nu a reușit niciodată.
 - **Comenzi înainte și după**: **Comandă înainte de backupul total** rulează pe server cu `sh -c` înainte să înceapă trecerea, de exemplu un script care oprește un serviciu. Dacă eșuează, backupul total rulează oricum. **Comandă după backupul total** rulează o singură dată după ce fiecare secțiune a fost încercată, chiar dacă una a eșuat, ceea ce se potrivește cu un ping care confirmă că întregul server este protejat. Comenzile pentru un singur container se află pe pagina lui.
 
 **Copiază tot acum** din pagina Copii de rezervă pornește manual aceeași trecere, peste fiecare secțiune pornită.
@@ -58,7 +58,7 @@ Backupul ajunge sub aceleași căi și etichete ca unul făcut cu containerul op
 
 ## Actualizări după backup {#updates}
 
-- **Actualizează containerele după o copie de rezervă reușită** trage o imagine mai nouă abia după ce backupul dinaintea ei s-a terminat, așa că există mereu mai întâi un punct de restaurare proaspăt. Este oprit implicit, iar un singur container poate fi setat altfel pe pagina lui, la **Actualizează după o copie de rezervă reușită**.
+- **Actualizează containerele după o copie de rezervă reușită** trage o imagine mai nouă abia după ce backupul dinaintea ei s-a terminat, așa că există mereu mai întâi un punct de restaurare proaspăt. Este oprit implicit, iar un singur container poate fi setat altfel pe pagina lui, la **Actualizează după o copie de rezervă reușită**. Doar ce ai setat tu trece pe imaginea nouă: variabilele, etichetele, comanda, utilizatorul și healthcheckul care arată încă la fel ca în imaginea veche o urmează pe cea nouă. Dacă imaginea nouă nu poate fi creată sau pornită, containerul revine la imaginea pe care rula, actualizarea apare ca eșuată, iar următorul backup încearcă din nou. Un container rămas oprit din cauza asta este numit în rularea backupului și într-o notificare.
 - **Elimină imaginea veche după o actualizare** șterge imaginea pe care containerul a părăsit-o. O imagine de bază pe care o împart alte containere nu este ștearsă niciodată.
 - **Reîmprospătează starea actualizărilor Unraid după actualizarea unui container** șterge bannerul de actualizare al Unraid pentru acel container.
 

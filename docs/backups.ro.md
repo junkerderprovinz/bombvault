@@ -9,10 +9,10 @@ Tot ce salvează BombVault se află într-o singură listă la **Copii de rezerv
 
 | Secțiune | Ce se salvează |
 |---|---|
-| **Containere** | Folderul appdata plus definiția containerului: imagine, variabile, porturi, etichete și volume. Cardul **Foldere de salvat** din fila **Setări** a containerului bifează exact ce foldere acoperă backupul, cu un număr în direct al căilor și o listă cu ce ai lăsat deoparte. Datele pe care un container le ține în afara Host Data, de exemplu într-un ixVolume TrueNAS, nu sunt salvate, iar rularea numește folderele pe care le-a lăsat deoparte. |
+| **Containere** | Folderul appdata plus definiția containerului: imagine, variabile, porturi, etichete și volume. Cardul **Foldere de salvat** din fila **Setări** a containerului bifează exact ce foldere acoperă backupul, cu un număr în direct al căilor și o listă cu ce ai lăsat deoparte. Datele pe care un container le ține în afara Host Data, de exemplu într-un ixVolume TrueNAS sau într-un proiect Compose sub `/opt`, nu sunt salvate, iar rularea numește folderele pe care le-a lăsat deoparte. Rularea numește și un folder din Host Data care nu există chiar acum. Căile de sistem precum `/etc/localtime` sau socketul Docker nu contează ca date. |
 | **VM-uri** | Imaginile de disc, definiția XML și NVRAM-ul UEFI, cu o oprire controlată sau un instantaneu live, prin SSH. Vezi [Backupuri VM](vm-backup-ssh-setup.md). |
 | **Flash** | Doar Unraid. Întregul stick USB flash (`/boot`): sistemul de operare, licența, configurația array-ului, share-urile, rețeaua și configurația pluginurilor. |
-| **Auto-backup** | `/config` al BombVault: baza lui de date de setări, autentificările destinațiilor și perechea de chei SSH libvirt, capturate cu SQLite `VACUUM INTO`, ca baza de date să nu fie niciodată prinsă în mijlocul unei scrieri. |
+| **Auto-backup** | `/config` al BombVault: baza lui de date de setări, autentificările destinațiilor, perechea de chei SSH libvirt, cheia și cheile de gazdă fixate ale serverelor ZFS și certificatele, capturate cu SQLite `VACUUM INTO`, ca baza de date să nu fie niciodată prinsă în mijlocul unei scrieri. |
 | **Foldere** | Orice folder de pe server ca set de foldere, de exemplu un share, documentele tale sau o bibliotecă foto, cu modele de excludere opționale. Seturile de foldere au programări, retenție, copii off-site, verificări și teste de restaurare ca orice altceva. |
 | **Seturi de date ZFS** | Un set de date și toate seturile de sub el, citite dintr-un singur instantaneu ZFS, ca toate să vină din același moment, și stocate cu restic ca un folder. Un element ZFS poate ține și o replică exactă la nivel de bloc pe un al doilea server ZFS. Vezi [Seturi de date ZFS](zfs-datasets.md). |
 
@@ -35,7 +35,7 @@ Elementele care nu mai sunt instalate, dar au încă backupuri, stau deoparte su
 Acțiunea principală a paginii plutește jos în dreapta: **Copiază tot acum** pornește o rulare peste fiecare secțiune pornită. **Mai mult** conține restul:
 
 - **Selectează** începe o selecție, vezi mai jos.
-- **Descoperă copii de rezervă** citește ce conțin destinațiile și reconstruiește elemente din asta, de exemplu după o instalare nouă. Copiile off-site ale secțiunilor reconstruite sunt apoi puse în pauză până confirmi valoarea lor implicită, vezi [După o reconstruire](offsite-recovery.md#after-a-rebuild).
+- **Descoperă copii de rezervă** citește ce conțin destinațiile și reconstruiește elemente din asta, de exemplu după o instalare nouă. Un container fără date proprii nu are instantaneu și revine din definiția oglindită lângă depozit. Copiile off-site ale secțiunilor reconstruite așteaptă apoi până preiei backupurile lor ca fiind ale acestui server, vezi [După o reconstruire](offsite-recovery.md#after-a-rebuild).
 - **Conexiune ZFS la acest server** deschide testul SSH al secțiunii ZFS, vezi [Seturi de date ZFS](zfs-datasets.md#requirements).
 - **Replică tot acum**, cu placa ZFS aleasă, trimite replica fiecărui element ZFS.
 
@@ -98,7 +98,7 @@ Cardurile de dedesubt depind de tipul elementului:
 | Container | **Foldere de salvat** (ce foldere mapate sunt salvate, cu **Omite folderele de cache (CACHEDIR.TAG)**), **Modele de excludere**, **Oprește alte containere**, **Comenzi înainte și după**, **Bază de date**, **Când aplicația e ocupată**, **Actualizează după o copie de rezervă reușită**, **Instantaneu în loc de oprire**, **Nume anterioare** |
 | VM | **VM** cu **Metodă** (**Controlat (oprire)** sau **Instantaneu live**) și **Doar blocurile modificate**, vezi [ghidul de backup VM](vm-backup-ssh-setup.md#per-vm-method) |
 | Set de foldere | **Folder** și **Modele de excludere** |
-| Unitatea flash | **Export ZIP flash**, care scrie fiecare backup flash ca `.zip` simplu într-un folder ales de tine |
+| Unitatea flash | **Export ZIP flash**, care scrie fiecare backup flash ca `.zip` simplu într-un folder ales de tine, dintr-un singur pas, ca un instrument de sincronizare să nu vadă niciodată un fișier pe jumătate. Un backup flash care conține mai puțin decât ar trebui păstrează ultimul ZIP pe loc, iar rularea exportului spune asta. |
 | Set de date ZFS | seturile de date copil, containerele de oprit și comenzile din jurul instantaneului, **Replică** și **Testează accesul la instantanee**, vezi [Seturi de date ZFS](zfs-datasets.md) |
 
 Setările se salvează singure pe măsură ce le schimbi.
@@ -119,7 +119,7 @@ Setările se salvează singure pe măsură ce le schimbi.
 
 ## Modele de excludere {#excludes}
 
-Cardul **Modele de excludere** primește un model pe rând. Scrie căile așa cum le vezi în interiorul containerului, de exemplu `/config/Library/Application Support/Plex Media Server/Cache`, sau un nume simplu ca `.git`, care se potrivește la orice adâncime. O previzualizare sub câmp arată în ce se rezolvă fiecare rând și avertizează când un rând nu se potrivește cu nimic sau ar exclude totul. Un rând cu `/` sau `*`, sau unul care numește un întreg folder salvat, este ignorat, așa că o excludere nu poate goli niciodată un backup. Ca să lași deoparte un folder întreg, debifează-l în schimb la **Foldere de salvat**.
+Cardul **Modele de excludere** primește un model pe rând. Scrie căile așa cum le vezi în interiorul containerului, de exemplu `/config/Library/Application Support/Plex Media Server/Cache`, sau un nume simplu ca `.git`, care se potrivește la orice adâncime. La un set de foldere, scrie calea așa cum o cunoaște gazda, de exemplu `/mnt/user/data/cache`. O previzualizare sub câmp arată în ce se rezolvă fiecare rând și avertizează când un rând nu se potrivește cu nimic sau ar exclude totul. Un rând cu `/` sau `*`, sau unul care numește un întreg folder salvat, este ignorat, așa că o excludere nu poate goli niciodată un backup. Ca să lași deoparte un folder întreg, debifează-l în schimb la **Foldere de salvat**.
 
 Pentru imaginile cunoscute, cum sunt Plex, Jellyfin, Sonarr, Radarr, Immich și Nextcloud, cardul oferă folderele pe care aplicația le umple din nou singură, de exemplu cache-uri, jurnale și miniaturi. Nimic nu este exclus până nu apeși **Exclude selecția**.
 
@@ -137,6 +137,8 @@ Un dump eșuat nu face să eșueze backupul. Apare ca o rulare eșuată separat�
 
 - **Comenzi înainte și după** rulează în interiorul containerului cu `sh -c`, de exemplu ca să scrie un cache pe disc. O comandă care eșuează înainte de backup îl oprește. O comandă de dinaintea backupului care iese cu codul 75 amână în schimb un backup programat, vezi mai jos.
 - **Oprește alte containere** numește containere de oprit cât acesta este salvat, de exemplu baza lui de date. După aceea pornesc din nou în ordinea `depends_on` din Compose, iar implicit fiecare trebuie să raporteze că e sănătos înainte ca următorul să pornească. Așteptarea și limita ei de timp se află la **Repornire după backup** în cardul **Ordine** de la **Setări, Programare**.
+- Un container care împarte spațiul de nume de rețea, PID sau IPC cu unul care este oprit, prin `--net=container:` sau prin `network_mode: service:` din Compose, se oprește și pornește odată cu el chiar dacă nu este pe listă, și pornește după containerul la care se alătură. Un container repornit primește o rețea nouă, iar unul lăsat să ruleze pe rețeaua veche ar avea doar loopbackul lui. Lista însăși rămâne cum ai setat-o. Dacă un astfel de container nu a putut fi oprit, rularea spune că nu are rețea până nu este repornit. La fel e și pentru containerul BombVault, care nu se oprește niciodată singur și nu poate fi pus pe listă.
+- Un container care nu mai rulează după aceea este numit în rulare și într-o notificare, și atunci când backupul însuși a eșuat.
 
 ## Când aplicația e ocupată {#app-busy}
 
@@ -177,7 +179,7 @@ Pentru propria verificare, fă **Comandă pre-backup** să iasă cu codul 75 câ
 restic rămâne motorul, dar un export îți dă o copie care nu are nevoie nici de BombVault, nici de restic.
 
 - **Exportă containerul** și **Exportă VM-ul** sub **Mai mult** pe pagina unui element scriu o copie așa cum este chiar acum, lângă depozit: folderele de backup ale containerului plus șablonul lui Unraid, sau imaginile de disc ale VM-ului plus definiția lui, restaurabile cu `virsh define`.
-- **Exportă** pe un instantaneu scrie un backup stocat în folderul de export de pe server, ca tar, zip sau un depozit restic propriu, și poate lua un instantaneu sau pe toate.
+- **Exportă** pe un instantaneu scrie un backup stocat în folderul de export de pe server, ca tar, zip sau un depozit restic propriu, și poate lua un instantaneu sau pe toate. Un backup flash și un auto-backup conțin chei, așa că exportul unuia cere o parolă de conectare și o autentificare chiar pe instanță.
 
 Exporturile sunt implicit fișiere simple. **Criptează exporturile cu age** de la **Setări, Sistem** le sigilează, inclusiv ZIP-ul flash, pentru destinatarii pe care îi listezi, fiecare o cheie publică age sau o cheie publică SSH. Le decriptezi mai târziu în afara serverului, cu cheia privată corespunzătoare. Cu criptarea pornită și fără niciun destinatar valid, un export eșuează cu o eroare clară, în loc să scrie vreodată fișiere simple.
 

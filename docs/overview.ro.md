@@ -40,13 +40,13 @@ Fiecare secțiune pornită are un rând cu patru verificări:
 | Verificare | Devine verde când | Alte cuvinte pe care le poți vedea |
 |---|---|---|
 | **Local** | ultimul backup este curent | încă niciun backup, fără programare, ultima rulare a eșuat, backup întârziat, nu fiecare element este protejat, backup scadent curând |
-| **Extern** | ultima copie din afara locației este curentă | fără copie off-site, copiere în curs, copie întârziată, copie în pauză, încă nicio copie, replică eșuată |
+| **Extern** | ultima copie din afara locației este curentă | fără copie off-site, copiere în curs, copie întârziată, așteaptă decizia ta, încă nicio copie, replică eșuată |
 | **Protecție împotriva ștergerii** | un test de manipulare a dovedit că partea îndepărtată refuză ștergerile | niciuna, niciuna și risc acceptat, încă nedovedită, testul a eșuat, nedovedită pentru că verificarea ei este oprită |
 | **Restaurare de test** | o restaurare din copia off-site a reușit | niciodată rulată, rulează, eșuată, întârziată, doar manual, imposibilă pentru această secțiune |
 
 O secțiune este verde doar pe fapte verificate. O copie pe acest server nu contează ca off-site, iar o destinație marcată **Acceptă fără protecție împotriva ștergerii** arată un inel gri în loc de un punct chihlimbariu, așa că culoarea secțiunii urmează celelalte verificări ale ei.
 
-O secțiune programată arată **Încă nicio copie de rezervă** și rămâne neutră până când vine termenul primei ei rulări. După aceea arată **Restant** și alertează o singură dată. O secțiune fără nimic de salvat, pentru că niciun program nu ajunge la vreunul dintre elementele ei, arată **Neprogramat** și nu este niciodată restantă.
+O secțiune programată arată **Încă nicio copie de rezervă** și rămâne neutră până când vine termenul primei ei rulări, socotit de la ultima setare a planului ei. După aceea arată **Restant** și alertează o singură dată. **Restant** se ia după elementul rămas cel mai mult în urmă față de propriul plan, așa că un vecin care rulează nu ascunde unul care s-a oprit. Un element al cărui container a dispărut sau la care nu ajunge niciun program nu contează. Un element cu un plan săptămânal propriu nu este măsurat după planul zilnic al secțiunii. O secțiune fără nimic de salvat, pentru că niciun program nu ajunge la vreunul dintre elementele ei, arată **Neprogramat** și nu este niciodată restantă.
 
 Un clic pe o secțiune deschide fereastra ei cu fiecare verificare explicată, elementele pe care le numără și **Pornește restaurarea de test** sau **Rulează din nou restaurarea de test**. Arată și **Regulă de curățare setată** sau **Fără regulă de curățare**, iar regula de păstrare a dosarului propriu al unei secțiuni contează la fel ca regulile ei off-site.
 

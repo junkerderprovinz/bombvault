@@ -38,7 +38,7 @@ Backupul VM comunică cu libvirt prin SSH, niciodată printr-o montare.
 
 ## Un instantaneu VM live nu a rulat {#a-live-vm-snapshot-did-not-run}
 
-Instantaneele live au nevoie de qemu guest agent instalat în VM și de discul pe `/mnt/cache` (sau `/mnt/diskX`), nu `/mnt/user`. Pe o VM oprită, live revine automat la controlat. Un backup controlat oprește VM-ul, face backup discurilor, apoi îl repornește, așa că este mereu consistent. Așteaptă până la zece minute ca oaspetele să se oprească și nu îl oprește niciodată forțat, așa că un oaspete Windows care instalează actualizări nu este întrerupt la jumătate. Un oaspete care încă rulează după aceea este lăsat în pace, iar acel backup eșuează cu motivul.
+Instantaneele live au nevoie de discul pe `/mnt/cache` (sau `/mnt/diskX`), nu `/mnt/user`. Cu qemu guest agent în VM instantaneul este liniștit, iar fără el instantaneul este consistent la nivel de crash. Pe o VM oprită, live revine automat la controlat. Un backup controlat oprește VM-ul, face backup discurilor, apoi îl repornește, așa că este mereu consistent. Așteaptă până la zece minute ca oaspetele să se oprească și nu îl oprește niciodată forțat, așa că un oaspete Windows care instalează actualizări nu este întrerupt la jumătate. Un oaspete care încă rulează după aceea este lăsat în pace, iar acel backup eșuează cu motivul.
 
 ## Un backup a eșuat cu „repository is already locked” {#a-backup-failed-with-repository-is-already-locked}
 
@@ -127,6 +127,10 @@ O anomalie critică deschisă le ține: sursa elementului este aproape goală, s
 
 Aceeași cauză: curățarea (prune) lasă în pace backupurile vechi ale unui element cu o asemenea anomalie și numește elementul în mesajul ei. Tot restul este curățat ca de obicei.
 
+## Un backup eșuează cu „on no mounted pool or share” {#no-mounted-pool}
+
+Pe Unraid, `/mnt` trăiește în memorie, așa că un folder de acolo peste care nu este montat niciun pool dispare la următoarea repornire și rămâne ascuns după ce poolul revine. BombVault refuză să scrie acolo un backup sau un ZIP flash, chiar și atunci când în acel folder se află deja un depozit de la o scriere anterioară. Montează poolul și rulează din nou backupul.
+
 ## Importul istoricului spune că un depozit nu a putut fi citit {#history-import-says-a-repository-could-not-be-read}
 
 După actualizare, BombVault citește o dată dimensiunile backupurilor anterioare din fiecare depozit. Un depozit pe care nu l-a putut atinge atunci, de exemplu o destinație off-site căzută sau un share nemontat, este numărat în cardul **Anomalii** de la **Setări, Verificare** și reîncercat o dată pe zi. Elementele lui învață între timp din backupurile noi.
@@ -177,15 +181,15 @@ Backupul dinainte s-a terminat, iar copia lui încă este pe drum, ceea ce bloch
 
 BombVault urmărește lanțul de bază al fiecărui disc și face backup fiecărui fișier din el. Un lanț care nu poate fi urmărit până la capăt face backupul să eșueze, în loc să lase deoparte o parte din disc, iar mesajul numește fișierul. Verifică dacă fișierul există sub `/mnt` și dacă instantaneul este încă listat în VM Manager. Un fișier din afara Host Data nu poate fi citit deloc. Vezi [VM-uri cu instantanee Unraid](vm-backup-ssh-setup.md#unraid-snapshots).
 
-## Copiile off-site sunt în pauză după o reconstruire {#copies-paused}
+## Copiile off-site așteaptă decizia ta după o reconstruire {#copies-paused}
 
-După **Descoperă copii de rezervă** sau după Asistentul de urgență fără setări restaurate, copiile off-site ale fiecărei secțiuni reconstruite așteaptă, pentru că BombVault nu mai știe ce elemente ai lăsat deoparte. Prezentarea spune asta. Apasă **Confirmă valoarea implicită** în **Destinații pe secțiuni**, verifică previzualizarea și lasă deoparte ce trebuie să rămână deoparte. Importul unui fișier de setări nu încheie pauza. Vezi [După o reconstruire](offsite-recovery.md#after-a-rebuild).
+După **Descoperă copii de rezervă** sau după Asistentul de urgență fără setări restaurate, sau când o secțiune găsește backupuri proprii de dinaintea acestei baze de date, copiile off-site ale acelei secțiuni așteaptă, pentru că BombVault nu mai știe ce elemente ai lăsat deoparte. **Necesită atenție** și pagina destinației te întreabă despre asta. Apasă **Preia-le ca fiind ale acestui server** ca să continui, sau **Verifică mai întâi regulile** ca să te uiți la regulile secțiunii înainte. Importul unui fișier de setări nu ia decizia în locul tău. Vezi [După o reconstruire](offsite-recovery.md#after-a-rebuild).
 
 ## Notificările nu ajung {#notifications-do-not-arrive}
 
 Începe cu **Trimite test** la **Setări, Notificări**. Rândul de sub card spune ce s-a întâmplat.
 
-- **Nu se trimite nimic.** Verifică **Notifică**. Cu **Niciodată** nu pleacă nimic, iar cu **Doar la eșec** o rulare reușită rămâne tăcută. Cu **Rezumă rulările programate** pornit, o rulare programată trimite un singur rezumat la sfârșit.
+- **Nu se trimite nimic.** Verifică **Notifică**. Cu **Niciodată** nu pleacă niciun mesaj, doar pingurile unui URL Healthchecks, iar cu **Doar la eșec** o rulare reușită rămâne tăcută. Cu **Rezumă rulările programate** pornit, o rulare programată trimite un singur rezumat la sfârșit.
 - **O adresă nouă.** După ce schimbi serverul Matrix, Gotify sau al e-mailului, câmpul cere din nou tokenul sau parola, iar noua adresă se salvează abia după ce le scrii. BombVault nu trimite vechiul secret către un loc nou.
 - **Gotify** spune că serverul a refuzat tokenul aplicației: copiază-l din nou din aplicația din Gotify. **URL-ul serverului** este adresa de bază, fără `/message`.
 - **Webhook:** verifică dacă **Format Webhook** se potrivește serviciului. O adresă Discord cere **Discord**, iar ntfy cere **ntfy**.
