@@ -77,7 +77,7 @@ describe("adding a ZFS server", () => {
   it("adds the zfs allow line for a user other than root", async () => {
     renderDialog();
     fireEvent.change(screen.getByLabelText(en["zfs.replica.add.user"]), { target: { value: "bv" } });
-    expect(await screen.findByText("zfs allow bv receive,create,mount,rollback,destroy,userprop <pool>")).toBeTruthy();
+    expect(await screen.findByText("zfs allow bv receive,create,mount,rollback,destroy,userprop,readonly,canmount <pool>")).toBeTruthy();
     expect(screen.getByText("Without root, bv needs these permissions on the pool:")).toBeTruthy();
   });
 

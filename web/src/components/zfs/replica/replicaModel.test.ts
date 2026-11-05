@@ -48,12 +48,12 @@ describe("target commands", () => {
 
   it("make the replica writable and mounted for a takeover", () => {
     expect(takeoverCommand(path)).toBe(
-      `zfs inherit -r readonly ${path} && zfs inherit -r canmount ${path} && zfs mount -a`,
+      `zfs inherit -r readonly ${path} && zfs list -rH -o name -t filesystem ${path} | xargs zfs set canmount=on && zfs mount -a`,
     );
   });
 
   it("delegate only what a receive needs to a user other than root", () => {
-    expect(allowLine("bv")).toBe("zfs allow bv receive,create,mount,rollback,destroy,userprop <pool>");
+    expect(allowLine("bv")).toBe("zfs allow bv receive,create,mount,rollback,destroy,userprop,readonly,canmount <pool>");
   });
 });
 

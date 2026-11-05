@@ -92,7 +92,7 @@ export function cloneCommand(targetPath: string, dataset: string, snapshot: stri
 }
 
 export function takeoverCommand(targetPath: string): string {
-  return `zfs inherit -r readonly ${targetPath} && zfs inherit -r canmount ${targetPath} && zfs mount -a`;
+  return `zfs inherit -r readonly ${targetPath} && zfs list -rH -o name -t filesystem ${targetPath} | xargs zfs set canmount=on && zfs mount -a`;
 }
 
 /** restorePreview is the dataset a bring back creates, as the question names
@@ -111,7 +111,7 @@ export function testFailure(t: Translate, result: { code: string; error?: string
 
 /** The delegation a user other than root needs on the receiving pool. */
 export function allowLine(user: string): string {
-  return `zfs allow ${user} receive,create,mount,rollback,destroy,userprop <pool>`;
+  return `zfs allow ${user} receive,create,mount,rollback,destroy,userprop,readonly,canmount <pool>`;
 }
 
 /** An example path below a root, for the hint beside the root field. */
