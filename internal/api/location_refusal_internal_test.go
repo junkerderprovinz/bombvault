@@ -42,7 +42,7 @@ func missingBucket() error {
 	return fmt.Errorf("restic cat failed: %w", restic.ErrBucketMissing)
 }
 
-var wrongPassword = errors.New("restic snapshots failed: Fatal: wrong password or no key found")
+var errWrongPassword = errors.New("restic snapshots failed: Fatal: wrong password or no key found")
 
 func (f *placementFixture) refusedCode(d store.OffsiteTarget) string {
 	f.t.Helper()
@@ -101,7 +101,7 @@ func TestTheLocationTestNamesWhatRefusedIt(t *testing.T) {
 		code  string
 	}{
 		"a missing bucket": {missingBucket(), "bucket-missing"},
-		"another key":      {wrongPassword, "repo-wrong-key"},
+		"another key":      {errWrongPassword, "repo-wrong-key"},
 	} {
 		t.Run(name, func(t *testing.T) {
 			f := newPlacementFixture(t)
@@ -122,7 +122,7 @@ func TestACopyThatFindsItsPlaceRefusedSaysWhyOnTheRunAndThePage(t *testing.T) {
 		says, code string
 	}{
 		"a missing bucket": {missingBucket(), "bucket does not exist", "bucket-missing"},
-		"another key":      {wrongPassword, "key does not open it", "repo-wrong-key"},
+		"another key":      {errWrongPassword, "key does not open it", "repo-wrong-key"},
 	} {
 		t.Run(name, func(t *testing.T) {
 			f := newPlacementFixture(t)
@@ -146,7 +146,7 @@ func TestACopyThatFindsItsPlaceRefusedSaysWhyOnTheRunAndThePage(t *testing.T) {
 func TestARefusalLeavesThePageOnceACopyWorks(t *testing.T) {
 	f := newPlacementFixture(t)
 	d := f.copyingLocation()
-	f.refusing(refusalRepo, wrongPassword)
+	f.refusing(refusalRepo, errWrongPassword)
 	if err := f.svc.ReplicateOffsite(context.Background(), "files"); err == nil {
 		t.Fatal("the copy went through")
 	}
