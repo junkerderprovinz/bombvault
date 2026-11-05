@@ -76,6 +76,18 @@ func ResolveForWrite(root, sub string) (string, error) {
 	}
 }
 
+// CheckStoredPath is ResolveForWrite for an absolute path stored earlier, which
+// a link can lead out of root at any time after it was checked. A path outside
+// root is left to the checks that know what it is.
+func CheckStoredPath(root, absPath string) error {
+	sub, ok := strings.CutPrefix(filepath.ToSlash(path.Clean(absPath)), filepath.ToSlash(path.Clean(root))+"/")
+	if !ok {
+		return nil
+	}
+	_, err := ResolveForWrite(root, sub)
+	return err
+}
+
 // Within reports whether absPath is absolute and lies strictly inside root.
 // Restore uses it to re-check stored appdata paths before writing to them.
 func Within(root, absPath string) bool {
@@ -139,4 +151,10 @@ func EnsureEmptyDir(dir string) error {
 		return err
 	}
 	return nil
+}
+
+// EmptyOrMissing reports whether nothing is at dir, or an empty directory.
+func EmptyOrMissing(dir string) bool {
+	entries, err := os.ReadDir(dir)
+	return errors.Is(err, fs.ErrNotExist) || (err == nil && len(entries) == 0)
 }

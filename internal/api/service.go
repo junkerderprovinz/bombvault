@@ -6828,6 +6828,10 @@ func (s *Service) Backup(ctx context.Context, name string) (out backup.Summary, 
 
 	// Guard against a SILENT no-op: if a PREVIOUS backup captured data (or the user
 	// selected folders) but every path now resolves away — e.g. the appdata share
+	if err := s.refuseLinkOutOfMount(effective); err != nil {
+		s.notifyBackup(ctx, "container", name, "", false, backup.Summary{}, err)
+		return backup.Summary{}, err
+	}
 	// isn't mounted right now, or HOST_SOURCE_ROOT is misconfigured — refuse instead
 	// of recording an empty backup that looks successful and overwrites the stored
 	// path list. A first backup of a new/stateless container is unaffected.
@@ -8964,6 +8968,9 @@ func (s *Service) prepareRestoreForTarget(ctx context.Context, ref repoRef, name
 		// RESTORE-01: map the stored selection onto THIS snapshot's recorded Paths
 		// (longest-prefix) BEFORE anything destructive. The stored list is the
 		// selection as of the LATEST backup; the chosen snapshot may be an older
+		if err := s.refuseLinkOutOfMount(tg.AppdataPaths); err != nil {
+			return containerRestorePlan{}, err
+		}
 		// one whose Paths hold a different shape. Replaying the stored list
 		// verbatim used to fail the restore mid-loop at the adapter — AFTER this
 		// function's caller had already stopped and removed the container. All
@@ -9030,6 +9037,9 @@ func (s *Service) prepareRestoreForTarget(ctx context.Context, ref repoRef, name
 		appdataForRestore = mapped
 		planSkipped = skipped
 		// Cross-instance / cross-pool remap (destBase set: foreign restore, #123/#125).
+		if err := s.refuseLinkOutOfMount(mapped); err != nil {
+			return containerRestorePlan{}, err
+		}
 		// A foreign recipe carries the SOURCE host's absolute appdata paths; if this
 		// host lacks that pool the in-place write would land in an unmounted dir under
 		// the host mount (the array/RAM rootfs), silently writing appdata to the wrong
@@ -9052,6 +9062,9 @@ func (s *Service) prepareRestoreForTarget(ctx context.Context, ref repoRef, name
 			// Host-brick guard on the DESTINATION dirs (not the source), BEFORE
 			// executeRestore's destructive Stop/Remove: prove each target is on a real
 			// mounted pool so a cross-pool restore can never fill the RAM rootfs.
+			if err := s.refuseLinkOutOfMount(destDirs); err != nil {
+				return containerRestorePlan{}, err
+			}
 			if err := s.guardContainerRestoreDestination(ctx, ref, snapshotID, destDirs); err != nil {
 				return containerRestorePlan{}, err
 			}
@@ -9173,7 +9186,7 @@ func (s *Service) executeRestore(ctx context.Context, name string, plan containe
 		TargetID:          plan.targetID,
 		Docker:            docker,
 		Images:            docker,
-		Restic:            &resticAdapter{engine: s.engine, mode: plan.mode},
+		Restic:            &resticAdapter{engine: s.engine, mode: plan.mode, refuseWrite: s.refuseLinkOutOfMount},
 		Templates:         templatesAdapter{},
 		Runs:              runsAdapter{st: s.store, ctx: ctx},
 		Removals:          restoreRemovals{st: s.store},
@@ -10831,6 +10844,9 @@ func (s *Service) prepareRestoreFiles(ctx context.Context, name, source, snapsho
 	}
 
 	settings, err := s.store.GetSettings()
+		if err := s.refuseLinkOutOfMount(cleaned); err != nil {
+			return filesRestorePlan{}, err
+		}
 	if err != nil {
 		return filesRestorePlan{}, fmt.Errorf("read settings: %w", err)
 	}
@@ -12627,6 +12643,10 @@ type resticAdapter struct {
 }
 
 var (
+	// refuseWrite, set on a restore over a container's data, looks at a target once
+	// more right before restic writes there, since the plan was checked before the
+	// container had stopped.
+	refuseWrite func(targets []string) error
 	_ backup.Restic    = (*resticAdapter)(nil)
 	_ backup.ZFSRestic = (*resticAdapter)(nil)
 )
@@ -12731,6 +12751,11 @@ func (a *resticAdapter) RestorePaths(ctx context.Context, repo, snapshotID strin
 	for _, p := range paths {
 		if err := a.engine.RestorePath(ctx, repo, snapshotID, p, a.mode); err != nil {
 			return err
+	if a.refuseWrite != nil {
+		if err := a.refuseWrite(paths); err != nil {
+			return err
+		}
+	}
 		}
 	}
 	return nil
@@ -12740,6 +12765,11 @@ func (a *resticAdapter) RestoreSubtreeTo(ctx context.Context, repo, snapshotID, 
 	return a.engine.RestoreSubtreeTo(ctx, repo, snapshotID, subtreePath, target, a.mode)
 }
 
+	if a.refuseWrite != nil {
+		if err := a.refuseWrite([]string{target}); err != nil {
+			return err
+		}
+	}
 // VerifySnapshot lists the repo (which also proves it is reachable and the key
 // is right) and confirms snapshotID is present, so a restore aborts before any
 // destructive teardown if the snapshot is missing or the repo is unreadable.
@@ -15237,6 +15267,9 @@ func (s *Service) BackupFileSet(ctx context.Context, id string) (_ backup.Summar
 	// The set's OWN repository if it has one (#204), otherwise the domain's.
 	// Everything below takes `repo` as a parameter - EnsureRepo, the run record,
 	// applyRetention, makeRepoReadable, checkPrimaryRemoteBudget - so a per-set
+	if err := s.refuseLinkOutOfMount(append([]string{src}, fileSetPositionals(set.SelectedPaths, src)...)); err != nil {
+		return backup.Summary{}, fmt.Errorf("files backup: %q: %w", set.Name, err)
+	}
 	// repository carries through the whole backup without a second decision
 	// point. replicateOffsite is the deliberate exception and stays per domain:
 	// an off-site copy is configured for the Folders domain, and a set's own
@@ -15904,6 +15937,9 @@ func (s *Service) prepareRestoreFileSet(ctx context.Context, id, snapshotID, sou
 		plan.inPlace = src
 	}
 
+		if err := s.refuseLinkOutOfMount([]string{src}); err != nil {
+			return fileSetRestorePlan{}, err
+		}
 	// Scope to THIS set: the snapshot must be one of ITS snapshots.
 	snaps, err := s.SnapshotsFileSet(ctx, id, source)
 	if err != nil {
@@ -15996,6 +16032,9 @@ func (s *Service) runRestoreFileSet(ctx context.Context, plan fileSetRestorePlan
 		return s.engine.RestorePath(ctx, plan.repo, plan.snapshotID, plan.inPlace, plan.mode)
 	}
 	if plan.subtree != "" {
+		if err := s.refuseLinkOutOfMount([]string{plan.inPlace}); err != nil {
+			return err
+		}
 		// Restore the snapshot's OWN subtree directly INTO the chosen folder, so its
 		// contents land at <target>/… — not <target>/host/user/… (issue #62's nested
 		// restore, which a bare RestoreInclude("/") produces).
@@ -16260,6 +16299,9 @@ func (s *Service) buildFileSetFilesPlan(ctx context.Context, snaps []restic.Snap
 	}
 
 	// Create the alternate target dir ONLY after every validation passed — readable
+		if err := s.refuseLinkOutOfMount(cleaned); err != nil {
+			return fileSetFilesRestorePlan{}, err
+		}
 	// (0o755) variant, so the operator's non-root SMB user can read what root
 	// restored to the synced share (see EnsureDirReadable / the v6.0.0 files fix).
 	if plan.target != "" && !isPlanOnly(ctx) {
