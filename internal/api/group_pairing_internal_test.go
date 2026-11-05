@@ -86,6 +86,7 @@ func newInstance(t *testing.T, name, appKey string) *instance {
 		s.InstanceName = name
 		s.AuthPasswordHash = hash
 		s.FleetEnabled = true
+		s.PullEnabled = true
 		s.ContainersOffsite = ""
 		return nil
 	}); err != nil {

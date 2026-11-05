@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { useReceiveRequests } from "../../components/zfs/replica/replicaStore";
 import {
+  ApiError,
   getGroup,
   getHealth,
   getReceiverServer,
@@ -83,6 +84,12 @@ const NO_DEPOSITS: Deposits = { codeSince: "", sent: [], kept: [], releases: [] 
 
 function message(err: unknown, fallback: string): string {
   return err instanceof Error ? err.message : fallback;
+}
+
+/** What a list that failed to load shows on the page. A paired phone is refused
+ *  the received repositories and pull sources, and has nothing to do about it. */
+export function listError(err: unknown, fallback: string): string | null {
+  return err instanceof ApiError && err.code === "own-login-needed" ? null : message(err, fallback);
 }
 
 /** useInstances reads what the modules that are on know about the group and
@@ -174,7 +181,7 @@ export function useInstances(modules: Modules | null): InstancesState {
           if (res.ok) setReceived(res.repos ?? []);
           note("received", res.ok ? null : (res.error ?? t("receiver.loadError")));
         })
-        .catch((err) => note("received", message(err, t("receiver.loadError")))),
+        .catch((err) => note("received", listError(err, t("receiver.loadError")))),
     [note, t],
   );
 
@@ -185,7 +192,7 @@ export function useInstances(modules: Modules | null): InstancesState {
           if (res.ok) setPulls(res.sources ?? []);
           note("pulls", res.ok ? null : (res.error ?? t("pull.saveError")));
         })
-        .catch((err) => note("pulls", message(err, t("pull.saveError")))),
+        .catch((err) => note("pulls", listError(err, t("pull.saveError")))),
     [note, t],
   );
 

@@ -159,6 +159,15 @@ func (h *Handler) handleCreatePullSource(w http.ResponseWriter, r *http.Request)
 	if !decodeBody(w, r, &in) {
 		return
 	}
+	settings, err := h.store.GetSettings()
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	if !settings.PullEnabled {
+		writeJSON(w, http.StatusOK, failEnvelope(errRoleNeedsPull))
+		return
+	}
 	ps, offered, msg := h.buildPullSource(r.Context(), in, store.PullSource{}, true)
 	if msg != "" {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": msg})

@@ -40,6 +40,8 @@ var allRoleSections = []string{"config", "containers", "files", "flash", "vms", 
 
 var errRoleNeedsReceiver = errors.New("set up a receiver first: it is where the other instance's copies go")
 
+var errRoleNeedsPull = errors.New("switch on Pull under Settings, Instances first: with it off this instance never fetches anything")
+
 // predatesRoleRequests reports whether a member said it runs a release from
 // before role requests. An unstamped build counts as current, and so does a
 // build between releases: it carries the last release's number with its branch
@@ -481,6 +483,15 @@ func (s *Service) decideRole(ctx context.Context, id string, d store.RoleDecisio
 			return store.RoleRequest{}, false, err
 		} else if !running {
 			return store.RoleRequest{}, false, errRoleNeedsReceiver
+		}
+	}
+	if d.State == store.RoleAllowed && req.State != store.RoleAllowed && req.Role == store.RoleFetcher {
+		settings, err := s.store.GetSettings()
+		if err != nil {
+			return store.RoleRequest{}, false, err
+		}
+		if !settings.PullEnabled {
+			return store.RoleRequest{}, false, errRoleNeedsPull
 		}
 	}
 	req, err = s.store.DecideRoleRequest(id, d)

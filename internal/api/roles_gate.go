@@ -17,6 +17,9 @@ var errPeerNotAllowed = errors.New("this instance has not allowed that for the a
 
 var errPeerNotAsked = errors.New("this instance has not asked that one to keep or to fetch its backups")
 
+// errMemberNotAsked is errPeerNotAsked as the instance on the other end says it.
+var errMemberNotAsked = errors.New("that instance has not asked this one to keep or to fetch its backups. It asks on its own Instances page: switch on Receiver or Fetcher on this instance's card there")
+
 var errPasswordHeld = errors.New("that instance has not released its restic password to this one: it first has to ask this instance to be its Receiver or Fetcher")
 
 var errPasswordLocked = errors.New("that instance allows this, but cannot read its restic password right now: its backup key is locked there. Unlock it on that instance's Restore page under Emergency, then try again")
@@ -79,6 +82,18 @@ func (s *Service) pairingGrantFor(memberID string) (pairingGrant, error) {
 		g.password = g.password || req.State == store.RoleAllowed
 	}
 	return g, nil
+}
+
+// memberAsked reports whether a member has a Receiver or Fetcher request with
+// this instance that lets it hand out where its repositories are.
+func (s *Service) memberAsked(memberID string) bool {
+	for _, role := range []string{store.RoleReceiver, store.RoleFetcher} {
+		req, ok, err := s.store.FindRoleRequest(store.RoleRequestIn, memberID, role)
+		if err == nil && ok && (req.State == store.RoleAsked || req.State == store.RoleAllowed) {
+			return true
+		}
+	}
+	return false
 }
 
 // retellRoleAnswer tells a member once more that this instance allowed its
