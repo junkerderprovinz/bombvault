@@ -482,12 +482,25 @@ func (s *Service) finishExportRun(runID string, written int64, xErr error) {
 	}
 }
 
+// exportAllowed gates the exports that hold keys: the flash its template with
+// APP_KEY, the self-backup the database, the rclone config and the SSH key. The
+// preview refuses too, so the window says so as it opens.
+func (h *Handler) exportAllowed(w http.ResponseWriter, r *http.Request, domain string) bool {
+	if domain != "flash" && domain != "config" {
+		return true
+	}
+	return h.requireAuthForSecrets(w, r, "exporting a "+domain+" backup")
+}
+
 // handleExportPreview serves POST /api/items/{domain}/{name}/export/preview?source=
 // with the body {form, snapshotId, folder} and names the folder and the files
 // the export would write.
 func (h *Handler) handleExportPreview(w http.ResponseWriter, r *http.Request) {
 	domain, key, ok := h.itemParam(w, r, itemDomains...)
 	if !ok {
+		return
+	}
+	if !h.exportAllowed(w, r, domain) {
 		return
 	}
 	var req ExportRequest
@@ -507,6 +520,9 @@ func (h *Handler) handleExportPreview(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) handleExportBackup(w http.ResponseWriter, r *http.Request) {
 	domain, key, ok := h.itemParam(w, r, itemDomains...)
 	if !ok {
+		return
+	}
+	if !h.exportAllowed(w, r, domain) {
 		return
 	}
 	var req ExportRequest

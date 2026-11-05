@@ -6,6 +6,7 @@ import (
 
 func TestRestoringAtATargetThatNoLongerHoldsTheIDSaysSnapshotMissing(t *testing.T) {
 	f := newPlacementFixture(t)
+	f.signIn()
 	f.container("nginx", "")
 	f.vm("web", "")
 	set := f.fileSet("Photos", "")

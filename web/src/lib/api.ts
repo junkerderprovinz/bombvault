@@ -818,6 +818,7 @@ export class ApiError extends Error {
 
 let throughRelay = false;
 let pairedSession = false;
+let noLoginPassword = false;
 
 /** Whether this page was opened through the relay, as GET /api/auth said. */
 export function openedThroughRelay(): boolean {
@@ -827,6 +828,11 @@ export function openedThroughRelay(): boolean {
 /** Whether this page runs on a paired phone's session, as GET /api/auth said. */
 export function openedAsPairedPhone(): boolean {
   return pairedSession;
+}
+
+/** Whether this server has no login password, as GET /api/auth said. */
+export function openedWithoutPassword(): boolean {
+  return noLoginPassword;
 }
 
 /** The sentence of a failure this client can explain: a code it knows, a
@@ -7083,6 +7089,7 @@ export async function getAuth(): Promise<AuthStatusResponse> {
   const res = await fetchJSON<AuthStatusResponse>("/api/auth");
   throughRelay = res.relayed === true;
   pairedSession = res.paired === true;
+  noLoginPassword = !res.enabled;
   return res;
 }
 
@@ -7154,11 +7161,13 @@ export function logoutAll(): Promise<OkEnvelope> {
  * Passing an empty string disables authentication. Once a login exists the
  * server wants the current password, and the code while two-factor is on.
  */
-export function setAuthPassword(password: string, current = "", code = ""): Promise<SetPasswordResponse> {
-  return fetchJSON("/api/auth/password", {
+export async function setAuthPassword(password: string, current = "", code = ""): Promise<SetPasswordResponse> {
+  const res = await fetchJSON<SetPasswordResponse>("/api/auth/password", {
     method: "POST",
     body: JSON.stringify({ password, current, code }),
   });
+  if (res.enabled !== undefined) noLoginPassword = !res.enabled;
+  return res;
 }
 
 /** GET /api/auth/phone-pairing: whether a phone of the group may pair. */

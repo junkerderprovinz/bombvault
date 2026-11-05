@@ -177,7 +177,7 @@ For your own check, make the **Pre-backup command** exit with code 75 while the 
 restic stays the engine, but an export gives you a copy that needs neither BombVault nor restic.
 
 - **Export container** and **Export VM** under **More** on an entry's page write a copy as it is right now, next to the repository: the container's backup folders plus its Unraid template, or the VM's disk images plus its definition, restorable with `virsh define`.
-- **Export** on a snapshot writes a stored backup to the export folder on the server, as tar, zip or a restic repository of its own, and can take one snapshot or all of them.
+- **Export** on a snapshot writes a stored backup to the export folder on the server, as tar, zip or a restic repository of its own, and can take one snapshot or all of them. A flash backup and a self-backup hold keys, so exporting one needs a login password and a sign-in at the instance.
 
 Exports are plain files by default. **Encrypt exports with age** under **Settings, System** seals them, the flash ZIP included, for the recipients you list, each an age public key or an SSH public key. You decrypt them later off the box with the matching private key. With encryption on and no valid recipient, an export fails with a clear error instead of ever writing plain files.
 

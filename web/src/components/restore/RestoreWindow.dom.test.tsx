@@ -37,6 +37,7 @@ vi.mock("../../lib/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../lib/api")>();
   return {
     ...actual,
+    openedWithoutPassword: vi.fn(() => false),
     checkRestore: vi.fn(),
     restore: vi.fn(),
     restoreVM: vi.fn(),
@@ -567,6 +568,13 @@ describe("a folder set", () => {
 });
 
 describe("the flash drive", () => {
+  it("tells a server without a password to set one first, in the words of the recovery kit", async () => {
+    vi.mocked(api.openedWithoutPassword).mockReturnValue(true);
+    await open(entryOf("flash"));
+    expect(within(dialog()).getByText(en["secrets.passwordNotSet"])).toBeTruthy();
+    vi.mocked(api.openedWithoutPassword).mockReturnValue(false);
+  });
+
   it("leaves as a ZIP and writes nothing", async () => {
     await open(entryOf("flash"));
     expect(target("zip")?.getAttribute("aria-checked")).toBe("true");

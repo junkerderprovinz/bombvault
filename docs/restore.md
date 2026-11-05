@@ -79,7 +79,7 @@ To put the file straight back instead, choose **Replace original** in step 5. Ke
 
 **Folder sets** come back with their ownership, modes and timestamps as restic stores them.
 
-**The flash drive** never touches the live `/boot`. The restore is a download called `flash-<id>.zip`, ready to drop into the Unraid USB Creator. The window also lists the plugins in each flash backup with their version and size, and can put a single one back into the running flash: its `.plg` file, its folder under `config/plugins` and the package files the backup holds. Unraid installs it on the next boot, or right away under **Plugins, Install Plugin**.
+**The flash drive** never touches the live `/boot`. The restore is a download called `flash-<id>.zip`, ready to drop into the Unraid USB Creator. The ZIP holds `APP_KEY`, so downloading it needs a login password and a sign-in at the instance. The window also lists the plugins in each flash backup with their version and size, and can put a single one back into the running flash: its `.plg` file, its folder under `config/plugins` and the package files the backup holds. Unraid installs it on the next boot, or right away under **Plugins, Install Plugin**.
 
 **ZFS datasets** have targets of their own and keep their ZFS properties, see [Restoring](zfs-datasets.md#restore).
 

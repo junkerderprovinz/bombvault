@@ -4,7 +4,6 @@ import {
   flashDownloadURL,
   getTimeline,
   getTimelinePlace,
-  openedAsPairedPhone,
   type AnomalyView,
   type BackupItem,
   type TimelinePlace,
@@ -33,7 +32,7 @@ import {
 } from "../../lib/restoreMany";
 import { findingsOf, recommendationWhy, snapshotIds } from "../../lib/restorePlan";
 import { isRuntimeRefusal, RunReasonText } from "../../lib/runReason";
-import { secretsSentence } from "../../lib/secretsRefusal";
+import { flashZipRefusal, secretsSentence } from "../../lib/secretsRefusal";
 import { mergePlaceRows } from "../../lib/timeline";
 import { useToast } from "../../lib/toast";
 import { useOpenAnomalies } from "../../lib/useAnomalies";
@@ -208,7 +207,7 @@ function EntryLine({
   if (outcome === undefined && plan && (coverage === "none" || coverage === "live")) {
     notes.push({ text: t(coverage === "none" ? "restoreWindow.dbNone" : "restoreWindow.dbLive"), warn: true });
   }
-  const paired = openedAsPairedPhone();
+  const zipRefused = flashZipRefusal(t);
 
   return (
     <li
@@ -253,9 +252,9 @@ function EntryLine({
             <RunReasonText reason={outcome.error} t={t} />
           </span>
         )}
-        {flash && plan && paired && <span className="text-xs text-carbon-textMuted">{t("restoreMany.flashOwnLogin")}</span>}
+        {flash && plan && zipRefused && <span className="text-xs text-carbon-textMuted">{zipRefused}</span>}
       </span>
-      {flash && plan && !paired ? (
+      {flash && plan && !zipRefused ? (
         <Button
           label={t("tile.info.download")}
           labelKey={null}

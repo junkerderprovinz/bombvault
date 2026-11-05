@@ -6246,6 +6246,9 @@ func (h *headerOnFirstWrite) Write(p []byte) (int, error) {
 func (h *Handler) handleDownloadFlash(w http.ResponseWriter, r *http.Request) {
 	id := r.URL.Query().Get("snapshot")
 	// When export encryption is on, DownloadFlashZip age-seals the stream, so the
+	if !h.requireAuthForSecrets(w, r, "downloading a flash backup") {
+		return
+	}
 	// attachment is <name>.zip.age and the browser must save it under that name.
 	encrypted := h.svc.ExportEncryptionOn()
 	var resolved string
