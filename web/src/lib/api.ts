@@ -2369,7 +2369,7 @@ export function getSettings(): Promise<GetSettingsResponse> {
   return fetchJSON("/api/settings");
 }
 
-export type PutSettingsResponse = OkEnvelope & { warnings?: SaveWarning[]; notes?: string[]; revision?: string };
+export type PutSettingsResponse = OkEnvelope & { applied?: Partial<Settings>; warnings?: SaveWarning[]; notes?: string[]; revision?: string };
 
 /**
  * PUT /api/settings: persist the settings object. `warnings` says what the

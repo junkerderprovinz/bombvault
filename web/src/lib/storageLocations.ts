@@ -84,12 +84,14 @@ export function sectionDomains(location: StorageLocation): OffsiteDomain[] {
   return [...new Set(location.sections.map((section) => section.domain))];
 }
 
-/** Which sections keep backups at a location, as one line. A section whose
- *  only part there is an own folder that takes no new backups reads as off. */
+/** Which sections keep backups at a location, as one line. A section that is
+ *  switched off there does not count, and one whose only part there is an own
+ *  folder that takes no new backups reads as off. */
 export function usedByText(t: T, lang: string, location: StorageLocation): string {
-  const domains = sectionDomains(location).map((domain) => {
+  const inUse = location.sections.filter((section) => section.enabled);
+  const domains = [...new Set(inUse.map((section) => section.domain))].map((domain) => {
     const label = t(DOMAIN_LABEL[domain]);
-    const off = location.sections.every((section) => section.domain !== domain || section.off);
+    const off = inUse.every((section) => section.domain !== domain || section.off);
     return off ? t("placement.off").replace("{name}", () => label) : label;
   });
   return domains.length > 0 ? t("dest.usedBy").replace("{domains}", () => formatList(lang, domains)) : t("dest.unused");

@@ -30,6 +30,14 @@ export function ConfigSettingsCard({
 }) {
   const { push } = useToast();
   const [, setSaveState] = useState<SaveState>("idle");
+  const [shake, setShake] = useState(0);
+
+  function refused(enabled: boolean, message: string) {
+    setSaveState("idle");
+    setSettings((prev) => ({ ...prev, configEnabled: !enabled }));
+    setShake((n) => n + 1);
+    push(message, "fail");
+  }
 
   async function persist(enabled: boolean) {
     setSaveState("saving");
@@ -40,8 +48,7 @@ export function ConfigSettingsCard({
       // A failed fetch comes back as {ok:false}, not a throw. Saving the stale
       // copy instead would cause exactly that revert, so give up.
       if (!latest.ok) {
-        setSaveState("idle");
-        push(latest.error ?? t("config.loadSettingsFailed"), "fail");
+        refused(enabled, latest.error ?? t("config.loadSettingsFailed"));
         return;
       }
       const merged: Settings = {
@@ -51,14 +58,14 @@ export function ConfigSettingsCard({
       const res = await putSettings(merged);
       if (res.ok) {
         setSaveState("idle");
+        // The shell shows or hides the section by this switch.
+        window.dispatchEvent(new Event("bv:settings-changed"));
         push(t("settings.saved"), "success");
       } else {
-        setSaveState("idle");
-        push(res.error ?? t("common.saveFailed"), "fail");
+        refused(enabled, res.error ?? t("common.saveFailed"));
       }
     } catch (err) {
-      setSaveState("idle");
-      push(err instanceof Error ? err.message : t("common.saveFailed"), "fail");
+      refused(enabled, err instanceof Error ? err.message : t("common.saveFailed"));
     }
   }
 
@@ -84,6 +91,7 @@ export function ConfigSettingsCard({
         label={t("config.enabled")}
         hint={tLtr(t, "config.enabledHint")}
         checked={settings.configEnabled}
+        shakeNonce={shake}
         onChange={(v) => {
           setSettings((prev) => ({ ...prev, configEnabled: v }));
           void persist(v);

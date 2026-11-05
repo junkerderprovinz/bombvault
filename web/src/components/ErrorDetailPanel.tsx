@@ -11,6 +11,7 @@ import { createPortal } from "react-dom";
 import { listRuns, ackRuns } from "../lib/api";
 import { ATTENTION_CHANGED_EVENT } from "../lib/attention";
 import { useBackCloses } from "../lib/useBackCloses";
+import { useToast } from "../lib/toast";
 import type { Run } from "../lib/api";
 import { useT } from "../lib/i18n";
 import type { TranslationKey } from "../lib/i18n";
@@ -55,6 +56,7 @@ interface ErrorGroup {
 
 export function ErrorDetailPanel({ onClose }: { onClose: () => void }) {
   const { t } = useT();
+  const { push } = useToast();
   const [runs, setRuns] = useState<Run[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -156,13 +158,15 @@ export function ErrorDetailPanel({ onClose }: { onClose: () => void }) {
   const acknowledge = (body: { ids?: string[]; all?: boolean }) => {
     setBusy(true);
     ackRuns(body)
-      .then(() => {
+      .then((res) => {
+        if (!res.ok) {
+          push(t("common.saveFailed"), "fail");
+          return;
+        }
         load();
         window.dispatchEvent(new Event(ATTENTION_CHANGED_EVENT));
       })
-      .catch(() => {
-        /* leave the list as it is */
-      })
+      .catch((err) => push(err instanceof Error ? err.message : t("common.saveFailed"), "fail"))
       .finally(() => setBusy(false));
   };
 

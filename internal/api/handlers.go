@@ -3503,7 +3503,13 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 			warnings = append(warnings, h.svc.targetSaveWarnings(r.Context(), b, a)...)
 		}
 	}
-	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"warnings": warnings, "notes": notes, "revision": settingsRevision(s)}))
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"warnings": warnings, "notes": notes, "revision": settingsRevision(s), "applied": map[string]int{
+		// The numbers the server holds to a limit, so the page shows what is in force.
+		"backupCores":             s.BackupCores,
+		"backupMemoryMB":          s.BackupMemoryMB,
+		"drillsSubsetPct":         s.DrillsSubsetPct,
+		"restartHealthTimeoutSec": s.RestartHealthTimeoutSec,
+	}}))
 }
 
 // handleDetectEncryption probes the configured repositories and reports which
@@ -4116,6 +4122,8 @@ func (h *Handler) handleSetNotify(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
+	// "Nothing is sent right now" follows this config.
+	h.svc.anomalies.settingsChanged()
 	writeJSON(w, http.StatusOK, okEnvelope(nil))
 }
 

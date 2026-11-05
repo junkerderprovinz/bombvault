@@ -29,8 +29,8 @@ function settleHooks(s: Settings): Settings {
   const { everythingPreHookClear, everythingPostHookClear, ...rest } = s;
   return {
     ...rest,
-    everythingPreHookSet: everythingPreHookClear ? false : s.everythingPreHookSet,
-    everythingPostHookSet: everythingPostHookClear ? false : s.everythingPostHookSet,
+    everythingPreHookSet: !everythingPreHookClear && (s.everythingPreHookSet || !!s.everythingPreHook),
+    everythingPostHookSet: !everythingPostHookClear && (s.everythingPostHookSet || !!s.everythingPostHook),
   };
 }
 
@@ -313,13 +313,29 @@ export function useSettingsStore() {
         return true;
       }
       setSaveState("idle");
+      showRefused(patch, fresh ?? base);
       push(placementErrorText(t, lang, res, "settings.error"), "fail");
       return false;
     } catch (err) {
       setSaveState("idle");
+      showRefused(patch, base);
       push(err instanceof Error ? err.message : t("settings.error"), "fail");
       return false;
     }
+  }
+
+  // showRefused puts a refused value back to what the server holds, or the field
+  // goes on showing a value that is not in force. A field the person has typed in
+  // since keeps what they typed.
+  function showRefused(patch: Partial<Settings>, held: Settings) {
+    setSettings((prev) => {
+      if (!prev) return prev;
+      const next: Record<string, unknown> = { ...prev };
+      for (const key of Object.keys(patch) as (keyof Settings)[]) {
+        if (JSON.stringify(prev[key]) === JSON.stringify(patch[key])) next[key] = held[key];
+      }
+      return next as unknown as Settings;
+    });
   }
 
   // toggleDomainEnabled saves a domain row the moment it is clicked (#142): an
@@ -425,9 +441,8 @@ export function useSettingsStore() {
 
   // debouncedSave runs `run` DEBOUNCE_MS after the last edit to the same `key`,
   // for text and number fields that should not be persisted on every
-  // keystroke. There is no revert on failure: save() toasts it, and reverting a
-  // field the user may still be typing into would fight them. The key is chosen
-  // by the caller, so one debounce can cover fields saved together (every
+  // keystroke. A refused save toasts and puts the field back, unless the person
+  // has typed on since. The key is chosen by the caller, so one debounce can cover fields saved together (every
   // registry row shares "registryAuths").
   //
   // Each entry keeps the pending write next to its timer, so a debounce can be
