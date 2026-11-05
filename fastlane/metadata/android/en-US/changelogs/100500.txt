@@ -1,1 +1,1 @@
-BombVault 10.5.0 stops a named repository from quietly losing backups to another location's keep rule, and clears out the hidden all-zero rule that made moved own folders ignore their card.
+BombVault 10.5.0 went through the whole app looking for ways to quietly lose or mangle a backup, and fixed every one it found. Green now means green, a wobbly restore says so, and the ZFS failover finally works on real ZFS.

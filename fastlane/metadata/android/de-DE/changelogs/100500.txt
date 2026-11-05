@@ -1,1 +1,1 @@
-BombVault 10.5.0 hält ein benanntes Repository davon ab, still Sicherungen nach der Regel eines fremden Orts zu verlieren, und räumt die versteckte Nullregel weg, wegen der umgezogene eigene Ordner ihre Karte ignoriert haben.
+BombVault 10.5.0 hat die ganze App nach Wegen abgesucht, still eine Sicherung zu verlieren oder zu verbiegen, und jeden gefundenen behoben. Grün heißt jetzt wirklich grün, ein wackliger Restore sagt es, und der ZFS-Failover klappt endlich auf echtem ZFS.
