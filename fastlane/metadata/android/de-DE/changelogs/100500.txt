@@ -1,0 +1,1 @@
+BombVault 10.5.0 hält ein benanntes Repository davon ab, still Sicherungen nach der Regel eines fremden Orts zu verlieren, und räumt die versteckte Nullregel weg, wegen der umgezogene eigene Ordner ihre Karte ignoriert haben.

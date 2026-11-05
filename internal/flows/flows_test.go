@@ -34,9 +34,6 @@ type knownFailure struct {
 // knownFailures names the cells that fail today, as go test names them, with * for
 // one level of the name.
 var knownFailures = []knownFailure{
-	{"TestOwnFolderMovedOntoACopyFollowsTheCardAfterAnUpdate", "#407, a move in 10.4.1 left a hidden rule of all zeros that outranks the card", "holds 3 snapshots"},
-	{"TestNamedRepositoryKeepsWhatItsPageSays", "a named repository is pruned by the card of a location it has nothing to do with", "want 3"},
-
 	{"TestBulkRunPrunesByTheCardRule/*/typed-on-named", typedOnNamed, "want 2"},
 	{"TestKeepDaysFromTheCardReachTheJob/*/typed-on-named", typedOnNamed, "the Preview says the rule is on: false"},
 	{"TestBulkRunPrunesByTheRuleOfTheSection/*/typed-on-named", typedOnNamed, "want 1"},
