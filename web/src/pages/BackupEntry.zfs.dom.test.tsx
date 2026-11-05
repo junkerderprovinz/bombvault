@@ -538,6 +538,16 @@ describe("removing a ZFS entry", () => {
     expect(await screen.findByText("at /backups?kind=zfs")).toBeTruthy();
   });
 
+  it("says when the replica snapshots of a removed entry stayed on the server", async () => {
+    serve();
+    deleteZFSDataset.mockResolvedValue({ ok: true, replicaKept: true } as never);
+    await renderPage();
+    const dialog = await openRemoval();
+    await press(within(dialog).getByRole("button", { name: en["entry.remove.keepGo"] }));
+    await waitFor(() => expect(deleteZFSDataset).toHaveBeenCalled());
+    expect(pushed).toContainEqual({ message: en["zfs.deleteKeptReplica"], severity: "warn" });
+  });
+
   it("takes the safety snapshots along when asked", async () => {
     serve({ safetyCount: 2 });
     await renderPage();

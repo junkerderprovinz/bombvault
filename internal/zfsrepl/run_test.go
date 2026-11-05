@@ -257,8 +257,8 @@ func TestIncrementalStartsFromTheNewestCommonSnapshot(t *testing.T) {
 	if !hasSeq(send, "-p", "-i", "@"+second.Snapshot) || slices.Contains(send, "-I") {
 		t.Errorf("send = %q", send)
 	}
-	if recv := callFor(t, r.dst, "receive", rootTarget); !slices.Contains(recv, "-F") || slices.Contains(recv, "readonly=on") {
-		t.Errorf("an increment onto an unchanged replica = %q, want -F and no creation properties", recv)
+	if recv := callFor(t, r.dst, "receive", rootTarget); slices.Contains(recv, "-F") || slices.Contains(recv, "readonly=on") {
+		t.Errorf("an increment onto an unchanged replica = %q, want no -F and no creation properties", recv)
 	}
 
 	src := r.src.get("cache/appdata")
@@ -487,8 +487,8 @@ func TestAFailedResumeDropsTheNewSnapshotAndKeepsTheOneItResumesTowards(t *testi
 	r.dst.refuseReceive[rootTarget] = "cannot receive: permission denied"
 
 	failed := r.run()
-	if m := member(t, failed, "cache/appdata"); m.Code != "stream-cut" {
-		t.Fatalf("code = %q, err %v, want stream-cut", m.Code, m.Err)
+	if m := member(t, failed, "cache/appdata"); m.Code != "zfs-permission" {
+		t.Fatalf("code = %q, err %v, want zfs-permission", m.Code, m.Err)
 	}
 	got := r.src.snapNames("cache/appdata")
 	if slices.Contains(got, failed.Snapshot) || !slices.Contains(got, cut.Snapshot) {
@@ -582,14 +582,94 @@ func TestAStaleTokenOnAFirstStreamStartsItAgain(t *testing.T) {
 	}
 }
 
-func TestAWriteOnTheReplicaIsRolledBack(t *testing.T) {
+func TestAnIncrementNeverRollsTheCopyBack(t *testing.T) {
+	r := newRig(t)
+	r.ok(r.run())
+	r.dst.resetCalls()
+	r.ok(r.run())
+	if recv := callFor(t, r.dst, "receive", rootTarget); slices.Contains(recv, "-F") {
+		t.Errorf("receive = %q, which would throw away whatever was written to the copy", recv)
+	}
+}
+
+func TestAWriteOnTheCopyStopsTheRunAndStays(t *testing.T) {
 	r := newRig(t)
 	r.ok(r.run())
 	r.dst.get(rootTarget).modified = true
-	r.dst.resetCalls()
+
+	res := r.run()
+	m := member(t, res, "cache/appdata")
+	if m.Code != "target-written" {
+		t.Fatalf("code = %q, err %v, want target-written", m.Code, m.Err)
+	}
+	if !r.dst.get(rootTarget).modified {
+		t.Error("the writes on the copy are gone")
+	}
+	if got := r.src.snapNames("cache/appdata"); slices.Contains(got, res.Snapshot) {
+		t.Errorf("source snapshots = %q, the run's own should go when nothing landed", got)
+	}
+}
+
+func TestATakenOverCopyStopsTheRunForParentAndChild(t *testing.T) {
+	r := newRig(t)
 	r.ok(r.run())
-	if recv := callFor(t, r.dst, "receive", rootTarget); !slices.Contains(recv, "-F") {
-		t.Errorf("receive = %q, want -F", recv)
+	before := len(r.dst.snapNames(rootTarget))
+	// What the failover command on the sheet leaves behind.
+	for _, ds := range []string{rootTarget, rootTarget + "/plex"} {
+		d := r.dst.get(ds)
+		delete(d.props, "readonly")
+		d.props["canmount"] = "on"
+		d.mounted = true
+	}
+	r.dst.resetCalls()
+
+	res := r.run()
+	for _, ds := range []string{"cache/appdata", "cache/appdata/plex"} {
+		if m := member(t, res, ds); m.Code != "target-written" {
+			t.Errorf("%s: code %q, err %v, want target-written", ds, m.Code, m.Err)
+		}
+	}
+	if calls := r.dst.callsOf("receive"); len(calls) != 0 {
+		t.Errorf("receives after the takeover = %q, want none", calls)
+	}
+	if got := len(r.dst.snapNames(rootTarget)); got != before {
+		t.Errorf("the copy holds %d snapshots, want the %d it had", got, before)
+	}
+}
+
+func TestACopyWithoutReadonlyThatIsNotMountedStillReceives(t *testing.T) {
+	r := newRig(t)
+	r.ok(r.run())
+	// A user without the readonly permission gets copies like this.
+	delete(r.dst.get(rootTarget).props, "readonly")
+	r.ok(r.run())
+}
+
+func TestAResumeIntoACopyWrittenToStopsWithThatReason(t *testing.T) {
+	r := newRig(t)
+	r.ok(r.run())
+	r.src.payload["cache/appdata"] = 8192
+	r.src.cutAfter["cache/appdata"] = 3000
+	r.run()
+	delete(r.src.cutAfter, "cache/appdata")
+	r.dst.refuseReceive[rootTarget] = "cannot receive resume stream: destination " + rootTarget + " has been modified\nsince most recent snapshot"
+
+	if m := member(t, r.run(), "cache/appdata"); m.Code != "target-written" {
+		t.Fatalf("code = %q, err %v, want target-written", m.Code, m.Err)
+	}
+}
+
+func TestAFailureThatLeavesAPartialReceiveKeepsItsOwnCause(t *testing.T) {
+	r := newRig(t)
+	r.ok(r.run())
+	r.src.payload["cache/appdata"] = 8192
+	r.src.cutAfter["cache/appdata"] = 3000
+	r.run()
+	delete(r.src.cutAfter, "cache/appdata")
+	r.dst.refuseReceive[rootTarget] = "cannot receive resume stream: out of space"
+
+	if m := member(t, r.run(), "cache/appdata"); m.Code != "not-enough-space" {
+		t.Fatalf("code = %q, err %v, want not-enough-space", m.Code, m.Err)
 	}
 }
 

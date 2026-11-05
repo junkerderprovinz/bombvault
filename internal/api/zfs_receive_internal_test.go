@@ -253,11 +253,7 @@ func TestAFullRunLandsUnderTheReceiversRootAndItPrunesItself(t *testing.T) {
 	if _, owned := r.dstPool.dataset(receiveRoot).props[zfs.SourceProperty]; owned {
 		t.Error("the root shared by every source was marked as one source's")
 	}
-	receives := r.dstPool.callsOf("receive")
-	if last := receives[len(receives)-1]; !slices.Contains(last, "-F") {
-		t.Errorf("the increment onto the newest snapshot was received with %q, want -F", last)
-	}
-	for _, argv := range receives {
+	for _, argv := range r.dstPool.callsOf("receive") {
 		if !slices.Contains(argv, "reservation") || !slices.Contains(argv, "refreservation") {
 			t.Errorf("%q takes the source's reservations into this pool", argv)
 		}
@@ -850,7 +846,7 @@ func TestPinnedTLSChecksAChainAgainstTheHostItDialled(t *testing.T) {
 	}
 }
 
-func TestAnIncrementFromAnOlderBaseIsNeverRolledBackOnto(t *testing.T) {
+func TestAnIncrementIntoASlotIsNeverRolledBackOnto(t *testing.T) {
 	pool := newFakePool(&atomic.Uint64{}, "tank", receiveRoot, receiveRoot+"/tower", receiveRoot+"/tower/cache")
 	target := receiveRoot + "/tower/cache/appdata"
 	pool.ds[target] = newFakeDataset("filesystem")
@@ -858,16 +854,13 @@ func TestAnIncrementFromAnOlderBaseIsNeverRolledBackOnto(t *testing.T) {
 	host := zfsrepl.NewSSHEnd(zfs.NewSSHHost(pool), pool)
 	slot := store.ZFSReceiveSlot{PeerID: "0a0a0a0a", Root: receiveRoot, SourceServer: "tower"}
 
-	for _, c := range []struct {
-		from  uint64
-		force bool
-	}{{12, true}, {11, false}} {
-		args, err := zfsSlotReceiveArgs(context.Background(), host, slot, target, zfs.StreamBegin{FromGUID: c.from, ToGUID: 13})
+	for _, from := range []uint64{12, 11} {
+		args, err := zfsSlotReceiveArgs(context.Background(), host, slot, target, zfs.StreamBegin{FromGUID: from, ToGUID: 13})
 		if err != nil {
 			t.Fatal(err)
 		}
-		if slices.Contains(args, "-F") != c.force {
-			t.Errorf("an increment from guid %d got %q, want -F %v", c.from, args, c.force)
+		if slices.Contains(args, "-F") {
+			t.Errorf("an increment from guid %d got %q, which would throw away what was written to the copy", from, args)
 		}
 	}
 	if _, err := zfsSlotReceiveArgs(context.Background(), host, slot, target, zfs.StreamBegin{ToGUID: 13}); zfsrepl.Code(err) != "dataset-exists" {
@@ -899,8 +892,8 @@ func TestASlotTakesOneSnapshotPerStream(t *testing.T) {
 	target := receiveRoot + "/tower/cache/appdata"
 	pool.ds[target].snaps = []fakeSnap{{"bombvault-replica-20261008030000", 11, 1}, {"bombvault-replica-20261009030000", 12, 2}}
 
-	// The first stream builds on the newest snapshot and earns -F; the
-	// second one would take that -F back to the older one.
+	// The second stream would start from a snapshot the flags were not chosen
+	// for.
 	stream := slices.Concat(
 		fakeStream(streamRecord("cache/appdata@bombvault-replica-20261010030000", 13, 12, false)),
 		fakeStream(streamRecord("cache/appdata@bombvault-replica-20261011030000", 14, 11, false)),
@@ -960,5 +953,121 @@ func TestASlotLeavesATenthOfThePoolFree(t *testing.T) {
 	pool.free["tank"] = 1<<40 + int64(len(stream))
 	if got := put(); !strings.Contains(got, `"ok":true`) {
 		t.Fatalf("a stream that fits = %s", got)
+	}
+}
+
+func TestASlotStopsAtACopyInUseAndLeavesItsSnapshots(t *testing.T) {
+	r := newReceiveRig(t)
+	end := r.allowed(t, [5]int{0, 7, 3, 0, 0})
+	r.run(t, end)
+	targets := []string{receiveRoot + "/tower/cache/appdata", receiveRoot + "/tower/cache/appdata/db"}
+	for _, target := range targets {
+		d := r.dstPool.dataset(target)
+		d.props["readonly"], d.props["mounted"] = "off", "yes"
+	}
+	before := r.dstPool.snapNames(targets[0])
+	receives := len(r.dstPool.callsOf("receive"))
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	res, err := zfsrepl.Run(ctx, r.srcEnd(), end, zfsrepl.Entry{Root: "cache/appdata", TargetBase: "tower", Now: func() time.Time { return r.now }})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, m := range res.Members {
+		if m.Code != "target-written" {
+			t.Errorf("%s: code %q, err %v, want target-written", m.Dataset, m.Code, m.Err)
+		}
+	}
+	if got := r.dstPool.snapNames(targets[0]); !slices.Equal(got, before) {
+		t.Errorf("the copy holds %q, want %q", got, before)
+	}
+	if got := len(r.dstPool.callsOf("receive")); got != receives {
+		t.Errorf("%d more receives into a copy in use, want none", got-receives)
+	}
+}
+
+func TestDeletingAnEntryOnTheReceiverLeavesTheCopyItsSourceNeeds(t *testing.T) {
+	for name, excluded := range map[string][]string{"excluding the copies": {receiveRoot}, "with the copies in its tree": nil} {
+		t.Run(name, func(t *testing.T) {
+			r := newReceiveRig(t)
+			end := r.allowed(t, [5]int{0, 7, 3, 0, 0})
+			r.run(t, end)
+			r.run(t, end)
+			target := receiveRoot + "/tower/cache/appdata"
+			before := r.dstPool.snapNames(target)
+			item, err := r.dst.st.CreateZFSDataset(store.ZFSDataset{Dataset: "tank", Enabled: true, ExcludedChildren: excluded})
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if _, err := r.dst.svc.DeleteZFSDataset(context.Background(), item.ID, false); err != nil {
+				t.Fatal(err)
+			}
+			if got := r.dstPool.snapNames(target); !slices.Equal(got, before) {
+				t.Fatalf("the copy holds %q, want %q", got, before)
+			}
+			for _, m := range r.run(t, end).Members {
+				if m.Code != "" {
+					t.Errorf("the source's next run: %s code %q, err %v", m.Dataset, m.Code, m.Err)
+				}
+			}
+		})
+	}
+}
+
+func TestBringBackFromAPeerBringsAChildLostOnTheSource(t *testing.T) {
+	r := newReceiveRig(t)
+	end := r.allowed(t, [5]int{0, 7, 3, 0, 0})
+	res := r.run(t, end)
+
+	r.srcPool.mu.Lock()
+	delete(r.srcPool.ds, "cache/appdata/db")
+	r.srcPool.mu.Unlock()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	item := r.item(t)
+	_, from, to, replica, err := r.src.svc.prepareZFSReplicaRestore(ctx, item, res.Snapshot)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := r.src.svc.restoreZFSReplica(ctx, from, to, zfsrepl.Restore{
+		Replica: replica, Snapshot: res.Snapshot, Dataset: item.Dataset, Now: func() time.Time { return r.now },
+	}); err != nil {
+		t.Fatal(err)
+	}
+	landed := zfsrepl.RestoreName(item.Dataset, r.now) + "/db"
+	if got := r.srcPool.snapNames(landed); !slices.Equal(got, []string{res.Snapshot}) {
+		t.Errorf("%s holds %q, want the child brought back", landed, got)
+	}
+}
+
+func TestASlotsKeepRuleDoesNotCountNamesDatedInTheFuture(t *testing.T) {
+	in := newInstance(t, "attic", strings.Repeat("b2", 32))
+	pool := newFakePool(&atomic.Uint64{}, "tank")
+	in.svc.SetZFSHost(zfs.NewSSHHost(pool))
+	in.svc.SetHostSSH(pool)
+	host, err := in.svc.zfsReceiveHost()
+	if err != nil {
+		t.Fatal(err)
+	}
+	const target = "tank/copy"
+	pool.ds[target] = newFakeDataset("filesystem")
+	past := time.Now().UTC().AddDate(0, 0, -3)
+	var older, future []string
+	for i := range 3 {
+		older = append(older, zfs.ReplicaSnapshotName(past.AddDate(0, 0, i)))
+		pool.ds[target].snaps = append(pool.ds[target].snaps, fakeSnap{older[i], uint64(i + 1), uint64(i + 1)})
+	}
+	for i := range 3 {
+		future = append(future, zfs.ReplicaSnapshotName(past.AddDate(5, 0, i)))
+		pool.ds[target].snaps = append(pool.ds[target].snaps, fakeSnap{future[i], uint64(i + 10), uint64(i + 10)})
+	}
+	slot := store.ZFSReceiveSlot{Keep: store.ZFSReplicaKeep{Preset: "own", Own: [5]int{2, 0, 0, 0, 0}}}
+
+	pruned := zfsSlotPrune(context.Background(), host, slot, target)
+	if !slices.Equal(pruned, older[:1]) {
+		t.Errorf("pruned %q, want only %q, the one the rule leaves of the snapshots dated so far", pruned, older[0])
 	}
 }

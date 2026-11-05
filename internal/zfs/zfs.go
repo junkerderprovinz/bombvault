@@ -72,10 +72,18 @@ type DatasetState struct {
 	Type        string
 	Encryption  string
 	ResumeToken string
+	ReadOnly    bool
+	Mounted     bool
 }
 
 // Encrypted reports whether the dataset has to travel as a raw stream.
 func (s DatasetState) Encrypted() bool { return s.Encryption != "off" }
+
+// InUse reports whether a replica on this dataset has become someone's working
+// copy. A replica lands read only and stays unmounted or mounted read only, so
+// one mounted writable was taken over. A user without the readonly permission
+// gets a writable copy, but nothing mounts that.
+func (s DatasetState) InUse() bool { return !s.ReadOnly && s.Mounted }
 
 // MemberCode decides whether one tree entry can be read, from its properties
 // and the item's exclusions. "" means readable; anything else is a member code
@@ -199,6 +207,8 @@ func Classify(stderr string, err error) string {
 	// branch above only returns on ssh's own words.
 	case strings.Contains(low, "cannot resume send"):
 		return "resume-token-stale"
+	case strings.Contains(low, "cannot receive") && (strings.Contains(low, "out of space") || strings.Contains(low, "quota exceeded")):
+		return "not-enough-space"
 	case strings.Contains(low, "partially received snapshot is saved"):
 		return "stream-cut"
 	case strings.Contains(low, "has been modified since most recent snapshot"):

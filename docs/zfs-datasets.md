@@ -138,13 +138,13 @@ Any machine with ZFS and SSH can receive, for example a second Unraid or a TrueN
 With root nothing else is needed. A user of their own needs these permissions on the pool of the target, which the dialog also shows:
 
 ```
-zfs allow <user> receive,create,mount,rollback,destroy,userprop <pool>
+zfs allow <user> receive,create,mount,rollback,destroy,userprop,readonly,canmount <pool>
 ```
 
 On the source the same kind of user needs these on the entry's top dataset:
 
 ```
-zfs allow <user> send,snapshot,hold,release,bookmark,destroy <dataset>
+zfs allow <user> send,snapshot,hold,release,bookmark,destroy,mount <dataset>
 ```
 
 In this direction the BombVault that holds the entry also holds a key that can write on the server.
@@ -161,7 +161,7 @@ A paired BombVault can receive the replica itself. Nobody gets SSH access to the
 2. On the receiving instance, open **Instances**. The request shows on the sending instance's card as a badge, and its **Details** list it. Pick the pool and root on that server and how many snapshots stay, then press **Allow** or **Decline**.
 3. After **Allow** the source sends by its own plan, like for any other target.
 
-The receiving instance accepts only what the approval covers: the entry's datasets, into its own root. It runs `zfs receive` itself, and the source has no way to delete or roll back anything there. So the copy survives a source that someone has taken over. The receiving instance keeps its own retention. The source only suggests a rule when it asks.
+The receiving instance accepts only what the approval covers: the entry's datasets, into its own root. It runs `zfs receive` itself, and the source has no way to delete or roll back anything there. So the copy survives a source that someone has taken over. The receiving instance keeps its own retention. The source only suggests a rule when it asks. Such a source can still send new snapshots, and over time they push older ones out under the rule like any others. A snapshot name dated ahead of the receiving instance's clock does not count towards the rule until that time has come.
 
 **Revoke access** on the receiving instance ends the approval at any time and tells the source, which then shows that the approval was withdrawn and stops. What the receiving instance already holds stays there. A declined request stays declined. More datasets, or a request after a revoke, ask again.
 
@@ -179,13 +179,15 @@ The copy on the target is read-only. By default it is not mounted, so it never c
 
 Everything the entry backs up goes in, and the volumes below it too, which the backup skips. A child dataset you switched off in the entry stays out. All datasets of a run come from one snapshot, as in the backup.
 
+A copy that another BombVault replicates to this server is not sent on, because that would thin the history its source still needs. When an entry's tree holds one, the run fails for that dataset and says why, until you switch it off in the entry. An entry that is such a copy itself cannot replicate at all. Deleting an entry or switching its replica off leaves those copies and their snapshots alone. Once you take a copy over, as described under [Using the replica](#replica-use), it counts as a normal dataset.
+
 ### How long snapshots stay {#replica-retention}
 
-On the target, a new replica keeps 7 daily and 3 weekly snapshots. Pick **Short**, **Balanced** or **Long** instead, or set **Custom values**. Only snapshots named `bombvault-replica-<14 digits>` are ever removed there, and never the newest one that both sides share.
+On the target, a new replica keeps 7 daily and 3 weekly snapshots. Pick **Short**, **Balanced** or **Long** instead, or set **Custom values**. Custom values of all zeros keep every snapshot, and the card says so. Only snapshots named `bombvault-replica-<14 digits>` are ever removed there, and never the newest one that both sides share.
 
 On the source, BombVault keeps the latest replica snapshot, plus a bookmark for every state it has sent. Bookmarks cost no space. The next transfer starts from them.
 
-To keep more on the source as well, set **Keep on this server** on the Replica card, for example to 7. That many of the newest replica snapshots then stay on this server after every replica, next to what the target keeps. 0 or 1 keeps only the latest. The latest carries a hold, so the base of the next transfer is not destroyed by accident. The older ones have none. Each snapshot holds on to the blocks that changed after it, so every one you keep takes space on the pool. Switching the replica off or to another target, or deleting the entry, removes them from this server too.
+To keep more on the source as well, set **Keep on this server** on the Replica card, for example to 7. That many of the newest replica snapshots then stay on this server after every replica, next to what the target keeps. 0 or 1 keeps only the latest. The latest carries a hold, so the base of the next transfer is not destroyed by accident. The older ones have none. Each snapshot holds on to the blocks that changed after it, so every one you keep takes space on the pool. Switching the replica off or to another target, or deleting the entry, removes them from this server too. Snapshots of another entry nested below it stay. If the host cannot be reached while you delete the entry, the snapshots stay too and the page says so. Remove them by hand: `zfs release -r bombvault-replica <dataset>@<snapshot>`, then `zfs destroy`.
 
 The files of a kept snapshot can be read or copied right away, from the `.zfs/snapshot` folder inside the dataset or from a clone, without touching the dataset or the replica:
 
@@ -228,12 +230,12 @@ zfs clone backup/bombvault-replica/tower/cache/appdata@bombvault-replica-2026100
 If the source fails, turn the copy into a normal, writable dataset on the target:
 
 ```
-zfs inherit -r readonly backup/bombvault-replica/tower/cache/appdata && zfs inherit -r canmount backup/bombvault-replica/tower/cache/appdata && zfs mount -a
+zfs inherit -r readonly backup/bombvault-replica/tower/cache/appdata && zfs list -rH -o name -t filesystem backup/bombvault-replica/tower/cache/appdata | xargs zfs set canmount=on && zfs mount -a
 ```
 
-BombVault stops replicating to that dataset afterwards, until you start a new first run.
+BombVault stops replicating to that dataset and its children afterwards. The next run fails with a reason, and what you wrote stays. The same goes for anything else written to the copy since its newest snapshot: BombVault never rolls a copy back. To replicate there again, move what you need off the copy and destroy it on the target. The next run then sends everything anew.
 
-To get a state back to the source, press **Bring back as a new dataset** in the sheet. BombVault sends the snapshot into a new dataset next to the original, named `<dataset>-bombvault-restore-` plus a timestamp. It never writes over the original.
+To get a state back to the source, press **Bring back as a new dataset** in the sheet. BombVault sends the snapshot into a new dataset next to the original, named `<dataset>-bombvault-restore-` plus a timestamp. It never writes over the original. A child dataset lost on the source comes back too, as long as the copy still holds that snapshot. A child that does not hold it is left out, and the run says so.
 
 ### Example: a replica to a second Unraid box {#example-replica}
 

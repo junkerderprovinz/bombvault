@@ -5156,6 +5156,7 @@ export interface ZFSDatasetPatch {
 export interface ZFSDeleteResult extends OkEnvelope {
   leftoversRemaining?: number;
   safetyRemaining?: number;
+  replicaKept?: boolean;
 }
 
 /** One dataset of the tree as a restore point left it. A member with no

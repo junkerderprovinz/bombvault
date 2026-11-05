@@ -25,6 +25,10 @@ describe("replica keep rules", () => {
     expect(keepSummary(t, { preset: "balanced", own: [0, 0, 0, 0, 0] })).toBe("7 daily, 4 weekly, 6 monthly, 2 yearly");
   });
 
+  it("say that a rule of all zeros keeps every snapshot", () => {
+    expect(keepSummary(t, { preset: "own", own: [0, 0, 0, 0, 0] })).toBe(en["zfs.replica.keepSummary.all"]);
+  });
+
   it("clamp an own number to a whole count of at least zero", () => {
     expect(withOwnCount([0, 7, 3, 0, 0], 1, "-4")).toEqual([0, 0, 3, 0, 0]);
     expect(withOwnCount([0, 7, 3, 0, 0], 4, "2.7")).toEqual([0, 7, 3, 0, 2]);
@@ -48,12 +52,12 @@ describe("target commands", () => {
 
   it("make the replica writable and mounted for a takeover", () => {
     expect(takeoverCommand(path)).toBe(
-      `zfs inherit -r readonly ${path} && zfs inherit -r canmount ${path} && zfs mount -a`,
+      `zfs inherit -r readonly ${path} && zfs list -rH -o name -t filesystem ${path} | xargs zfs set canmount=on && zfs mount -a`,
     );
   });
 
   it("delegate only what a receive needs to a user other than root", () => {
-    expect(allowLine("bv")).toBe("zfs allow bv receive,create,mount,rollback,destroy,userprop <pool>");
+    expect(allowLine("bv")).toBe("zfs allow bv receive,create,mount,rollback,destroy,userprop,readonly,canmount <pool>");
   });
 });
 

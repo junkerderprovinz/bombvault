@@ -2,6 +2,7 @@ package zfsrepl
 
 import (
 	"context"
+	"maps"
 	"slices"
 	"strings"
 	"testing"
@@ -158,6 +159,7 @@ func TestCleanBookmarksNothingOnAnExcludedDataset(t *testing.T) {
 	r.ok(last)
 	// A run that stopped early leaves its recursive snapshot on the excluded
 	// dataset, and plex was sent before the item excluded it.
+	r.src.snapshot("cache/appdata", "bombvault-replica-20261020030000")
 	r.src.snapshot("cache/appdata/cache", "bombvault-replica-20261020030000")
 
 	if err := Clean(context.Background(), r.src, "cache/appdata", []string{"cache/appdata/cache", "cache/appdata/plex"}); err != nil {
@@ -171,5 +173,138 @@ func TestCleanBookmarksNothingOnAnExcludedDataset(t *testing.T) {
 	}
 	if got := r.src.markNames("cache/appdata/plex"); !slices.Equal(got, []string{last.Snapshot}) {
 		t.Errorf("plex bookmarks = %q, want the one it had from being sent", got)
+	}
+}
+
+// receivedCopy gives the host a copy of another BombVault's dataset below cache,
+// in a folder marked the way that instance's run marks it.
+func receivedCopy(h *fakeHost) string {
+	const folder, dataset = "cache/bombvault-replica/other", "cache/bombvault-replica/other/tank/data"
+	for _, ds := range []string{"cache/bombvault-replica", folder, folder + "/tank"} {
+		h.add(ds, "filesystem", false)
+	}
+	h.get(folder).props[zfs.SourceProperty] = "the-other-instance"
+	h.add(dataset, "filesystem", false)
+	h.get(dataset).props["readonly"] = "on"
+	for _, s := range []string{"bombvault-replica-20261001030000", "bombvault-replica-20261002030000"} {
+		h.snapshot(dataset, s)
+	}
+	return dataset
+}
+
+func TestCleanLeavesAReceivedCopyAlone(t *testing.T) {
+	for _, excludes := range [][]string{nil, {"cache/bombvault-replica"}} {
+		r := newRig(t)
+		dataset := receivedCopy(r.src)
+		before := r.src.snapNames(dataset)
+
+		if err := Clean(context.Background(), r.src, "cache", excludes); err != nil {
+			t.Fatal(err)
+		}
+		if got := r.src.snapNames(dataset); !slices.Equal(got, before) {
+			t.Errorf("excluding %q: the copy holds %q, want %q", excludes, got, before)
+		}
+	}
+}
+
+func TestCleanOfAnEntryInsideAReceivedCopyLeavesItsHistory(t *testing.T) {
+	r := newRig(t)
+	dataset := receivedCopy(r.src)
+	before := r.src.snapNames(dataset)
+
+	if err := Clean(context.Background(), r.src, dataset, nil); err != nil {
+		t.Fatal(err)
+	}
+	if got := r.src.snapNames(dataset); !slices.Equal(got, before) {
+		t.Errorf("the copy holds %q, want %q", got, before)
+	}
+}
+
+func TestCleanOfAParentLeavesTheKeptSnapshotsOfANestedEntry(t *testing.T) {
+	r := newRig(t)
+	r.entry.KeepOnSource = 3
+	for range 3 {
+		r.ok(r.run())
+	}
+	before := r.src.snapNames("cache/appdata")
+	held := maps.Clone(r.src.get("cache/appdata").holds)
+	marks := r.src.markNames("cache/appdata")
+	// The parent's own snapshot, and the one a run of it left on the dataset it
+	// excludes.
+	own := zfs.ReplicaSnapshotName(r.now)
+	r.src.snapshot("cache", own)
+	r.src.snapshot("cache/appdata", own)
+
+	if err := Clean(context.Background(), r.src, "cache", []string{"cache/appdata"}); err != nil {
+		t.Fatal(err)
+	}
+	if got := r.src.snapNames("cache/appdata"); !slices.Equal(got, before) {
+		t.Errorf("the nested entry holds %q, want %q without the parent's leftover", got, before)
+	}
+	if got := r.src.get("cache/appdata").holds; !maps.Equal(got, held) {
+		t.Errorf("the nested entry's holds = %v, want %v", got, held)
+	}
+	if got := r.src.markNames("cache/appdata"); !slices.Equal(got, marks) {
+		t.Errorf("the nested entry's bookmarks = %q, want %q", got, marks)
+	}
+}
+
+func TestARunLeavesAReceivedCopyInItsTreeAloneAndSaysSo(t *testing.T) {
+	r := newRig(t)
+	dataset := receivedCopy(r.src)
+	before := r.src.snapNames(dataset)
+	r.entry.Root = "cache"
+
+	res := r.run()
+	if m := member(t, res, dataset); m.Code != "received-copy" {
+		t.Errorf("the copy: code %q, err %v, want received-copy", m.Code, m.Err)
+	}
+	if got := r.src.snapNames(dataset); !slices.Equal(got, before) {
+		t.Errorf("the copy holds %q, want %q", got, before)
+	}
+	if m := member(t, res, "cache/appdata"); m.Code != "" {
+		t.Errorf("a dataset of the entry itself: code %q, err %v", m.Code, m.Err)
+	}
+	if got := r.dst.get(base + "/" + dataset); got != nil {
+		t.Errorf("the copy was sent on: %+v", got)
+	}
+}
+
+func TestARunOfAnEntryInsideAReceivedCopyIsRefusedBeforeItsSnapshot(t *testing.T) {
+	r := newRig(t)
+	dataset := receivedCopy(r.src)
+	before := r.src.snapNames(dataset)
+	r.entry.Root = dataset
+
+	_, err := Run(context.Background(), r.src, r.dst, r.entry)
+	if Code(err) != "received-copy" {
+		t.Fatalf("Run = %v, want received-copy", err)
+	}
+	if got := r.src.snapNames(dataset); !slices.Equal(got, before) {
+		t.Errorf("the copy holds %q, want %q", got, before)
+	}
+}
+
+func TestACopyTakenOverIsNoLongerAReceivedCopy(t *testing.T) {
+	r := newRig(t)
+	dataset := receivedCopy(r.src)
+	d := r.src.get(dataset)
+	delete(d.props, "readonly")
+	d.mounted = true
+	r.entry.Root = dataset
+
+	r.ok(r.run())
+}
+
+func TestARunThinsOnlyTheSnapshotsOfItsOwnEntry(t *testing.T) {
+	r := newRig(t)
+	r.ok(r.run())
+	// A replica name this entry neither took nor bookmarked, on a dataset
+	// nothing marks as a copy.
+	r.src.snapshot("cache/appdata/plex", "bombvault-replica-20261001030000")
+
+	r.ok(r.run())
+	if got := r.src.snapNames("cache/appdata/plex"); !slices.Contains(got, "bombvault-replica-20261001030000") {
+		t.Errorf("plex holds %q, the snapshot that is not this entry's is gone", got)
 	}
 }

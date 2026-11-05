@@ -12,26 +12,41 @@ import (
 // newest bookmark of each dataset, and one for every replica snapshot taken
 // after it. Datasets the item excludes are cleaned too, since it may have
 // excluded less earlier, but none of their snapshots was sent, so they keep
-// only the newest bookmark they already have. It tries every point and
-// reports what failed.
+// only the newest bookmark they already have, and only this entry's names count
+// there: another entry may keep its own snapshots on them. A received copy keeps
+// everything. It tries every point and reports what failed.
 func Clean(ctx context.Context, source End, root string, excludes []string) error {
 	tree, err := listTree(ctx, source, root)
 	if err != nil {
 		return err
 	}
+	copies, err := receivedCopies(ctx, source, root)
+	if err != nil {
+		return err
+	}
+	pts, err := points(ctx, source, root)
+	if err != nil {
+		return err
+	}
+	// Every snapshot of this entry is on its root, and the root's are about to
+	// go, so its names are read first.
+	own := map[string]bool{}
+	for _, p := range pts {
+		own[p.Name] = true
+	}
 	var errs []error
 	for _, d := range tree {
-		if RestoreLanding(d.Name, root) {
+		if RestoreLanding(d.Name, root) || copies[d.Name] {
 			continue
 		}
-		if err := cleanDataset(ctx, source, d.Name, !excluded(d.Name, excludes)); err != nil {
+		if err := cleanDataset(ctx, source, d.Name, !excluded(d.Name, excludes), own); err != nil {
 			errs = append(errs, err)
 		}
 	}
 	return errors.Join(errs...)
 }
 
-func cleanDataset(ctx context.Context, source End, dataset string, sent bool) error {
+func cleanDataset(ctx context.Context, source End, dataset string, sent bool, own map[string]bool) error {
 	pts, err := points(ctx, source, dataset)
 	if err != nil {
 		return err
@@ -40,7 +55,8 @@ func cleanDataset(ctx context.Context, source End, dataset string, sent bool) er
 	var mark zfs.ReplicaPoint
 	marked := false
 	for _, p := range pts {
-		if !zfs.IsReplicaSnapshot(p.Name) {
+		ours := own[p.Name] || (sent && bookmarked(pts, p.Name))
+		if !zfs.IsReplicaSnapshot(p.Name) || !ours {
 			continue
 		}
 		replica = append(replica, p)

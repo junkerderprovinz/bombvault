@@ -200,8 +200,7 @@ func zfsSlotMemberView(ctx context.Context, host zfsrepl.End, slot store.ZFSRece
 // handleZFSSlotReceive takes one member's stream into this host. The flags
 // are this side's own choice from what the stream and the target say, and the
 // stream carries no more than the one snapshot they were chosen for, so a
-// source can add snapshots but never roll back or replace anything that is
-// not its own.
+// source can add snapshots but never roll back or replace anything.
 // PUT /api/zfs/receive/{slot}/members/{member}
 func (s *Service) handleZFSSlotReceive(w http.ResponseWriter, r *http.Request) {
 	slot, ok := s.zfsSlotFor(w, r)
@@ -275,9 +274,9 @@ func (s *Service) handleZFSSlotReceive(w http.ResponseWriter, r *http.Request) {
 }
 
 // zfsSlotReceiveArgs picks the receive flags for one stream. -F lands a full
-// stream only on a placeholder this instance made for the same source, and
-// rolls an incremental back only when its base is the target's newest
-// snapshot, so it never destroys a snapshot.
+// stream only on a placeholder this instance made for the same source. An
+// incremental never rolls back, so what someone wrote here after taking the copy
+// over stays and zfs refuses the stream.
 func zfsSlotReceiveArgs(ctx context.Context, host zfsrepl.End, slot store.ZFSReceiveSlot, target string, b zfs.StreamBegin) ([]string, error) {
 	st, err := zfsEndState(ctx, host, target)
 	if zfs.IsNotFound(err) {
@@ -298,6 +297,8 @@ func zfsSlotReceiveArgs(ctx context.Context, host zfsrepl.End, slot store.ZFSRec
 	}
 	volume := st.Type == "volume"
 	switch {
+	case st.InUse():
+		return nil, &zfsrepl.Refusal{Code: "target-written", Detail: target + " is mounted writable"}
 	case st.ResumeToken != "":
 		return zfs.ReceiveArgs(zfs.ReceiveSpec{Target: target, Full: len(snaps) == 0, Volume: volume})
 	case b.FromGUID == 0:
@@ -313,11 +314,10 @@ func zfsSlotReceiveArgs(ctx context.Context, host zfsrepl.End, slot store.ZFSRec
 		}
 		return zfs.ReceiveArgs(zfs.ReceiveSpec{Target: target, Full: true, Replace: true, Volume: b.Volume})
 	}
-	i := slices.IndexFunc(snaps, func(p zfs.ReplicaPoint) bool { return p.GUID == b.FromGUID })
-	if i < 0 {
+	if !slices.ContainsFunc(snaps, func(p zfs.ReplicaPoint) bool { return p.GUID == b.FromGUID }) {
 		return nil, &zfsrepl.Refusal{Code: "no-common-base", Detail: target + " does not hold the base of the stream"}
 	}
-	return zfs.ReceiveArgs(zfs.ReceiveSpec{Target: target, Volume: volume, Rollback: i == len(snaps)-1})
+	return zfs.ReceiveArgs(zfs.ReceiveSpec{Target: target, Volume: volume})
 }
 
 // zfsSlotParents creates what is missing of dir and above, top down. Levels
@@ -352,9 +352,14 @@ func zfsSlotParents(ctx context.Context, host zfsrepl.End, slot store.ZFSReceive
 	return nil
 }
 
+// zfsSlotClockSkew is how far ahead of this host's clock a source's stamp may
+// lie and still count as its time.
+const zfsSlotClockSkew = time.Hour
+
 // zfsSlotPrune applies the slot's keep rule to one member after a stream
 // landed. The newest snapshot is the base of the source's next run and always
-// stays.
+// stays. The source picks the names the rule goes by, so a name dated ahead of
+// this host's clock takes no place in the rule until that time has come.
 func zfsSlotPrune(ctx context.Context, host zfsrepl.End, slot store.ZFSReceiveSlot, target string) []string {
 	keep, ok := slot.Keep.Counts()
 	if !ok {
@@ -364,12 +369,15 @@ func zfsSlotPrune(ctx context.Context, host zfsrepl.End, slot store.ZFSReceiveSl
 	if err != nil || len(snaps) == 0 {
 		return nil
 	}
+	latest := time.Now().Add(zfsSlotClockSkew)
 	names := make([]string, 0, len(snaps))
 	for _, p := range snaps {
-		names = append(names, p.Name)
+		if at, ok := zfs.StampTime(p.Name); !ok || !at.After(latest) {
+			names = append(names, p.Name)
+		}
 	}
 	var pruned []string
-	for _, name := range zfsrepl.Expired(names, keep, names[len(names)-1], time.Local) {
+	for _, name := range zfsrepl.Expired(names, keep, snaps[len(snaps)-1].Name, time.Local) {
 		args, err := zfs.DestroyReplicaArgs(target, name)
 		if err == nil {
 			_, err = host.Run(ctx, args)

@@ -68,6 +68,8 @@ var AllCodes = []string{
 	// Replica
 	"resume-token-stale",
 	"target-changed",
+	"target-written",
+	"received-copy",
 	"no-common-base",
 	"encryption-mismatch",
 	"in-use",

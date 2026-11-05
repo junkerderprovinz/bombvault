@@ -313,27 +313,27 @@ func TestParseEstimate(t *testing.T) {
 }
 
 func TestParseDatasetState(t *testing.T) {
-	got, err := ParseDatasetState("type\tvolume\nencryption\taes-256-gcm\nreceive_resume_token\t" + resumeToken + "\n")
+	got, err := ParseDatasetState("type\tvolume\nencryption\taes-256-gcm\nreceive_resume_token\t" + resumeToken + "\nreadonly\ton\nmounted\t-\n")
 	if err != nil {
 		t.Fatal(err)
 	}
-	if want := (DatasetState{Type: "volume", Encryption: "aes-256-gcm", ResumeToken: resumeToken}); got != want || !got.Encrypted() {
+	if want := (DatasetState{Type: "volume", Encryption: "aes-256-gcm", ResumeToken: resumeToken, ReadOnly: true}); got != want || !got.Encrypted() {
 		t.Errorf("ParseDatasetState = %+v, want %+v", got, want)
 	}
-	got, err = ParseDatasetState("type\tfilesystem\nencryption\toff\nreceive_resume_token\t-\n")
+	got, err = ParseDatasetState("type\tfilesystem\nencryption\toff\nreceive_resume_token\t-\nreadonly\toff\nmounted\tyes\n")
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got.ResumeToken != "" || got.Encrypted() {
-		t.Errorf("a plain dataset without a token = %+v", got)
+	if got.ResumeToken != "" || got.Encrypted() || !got.InUse() {
+		t.Errorf("a plain writable mounted dataset without a token = %+v", got)
 	}
 
 	for _, out := range []string{
 		"",
 		"type\tfilesystem\nencryption\toff\n",
-		"type\tfilesystem\nencryption\toff\nreceive_resume_token\tnone\n",
-		"type\tfilesystem\nencryption\toff\nreceive_resume_token\t" + resumeToken + " extra\n",
-		"type\tfilesystem\nencryption\toff\nreceive_resume_token\t-\nmounted\tyes\n",
+		"type\tfilesystem\nencryption\toff\nreceive_resume_token\tnone\nreadonly\ton\nmounted\tno\n",
+		"type\tfilesystem\nencryption\toff\nreceive_resume_token\t" + resumeToken + " extra\nreadonly\ton\nmounted\tno\n",
+		"type\tfilesystem\nencryption\toff\nreceive_resume_token\t-\nmounted\tyes\ncanmount\ton\n",
 		"cannot open 'tank/x': dataset does not exist",
 	} {
 		if s, err := ParseDatasetState(out); err == nil {

@@ -9,7 +9,7 @@ import (
 // replicaListProps are what base resolution compares across the two hosts.
 const replicaListProps = "name,guid,createtxg"
 
-const stateProps = "type,encryption,receive_resume_token"
+const stateProps = "type,encryption,receive_resume_token,readonly,mounted"
 
 // resumeTokenRe is the shape zfs prints for receive_resume_token: a version,
 // a checksum, the payload length and the compressed payload, all in hex.
@@ -36,9 +36,6 @@ type ReceiveSpec struct {
 	// for a filesystem, never mounts by itself.
 	Full   bool
 	Volume bool
-	// Rollback throws away whatever changed on the replica since its newest
-	// snapshot. It only applies to an incremental.
-	Rollback bool
 	// Replace lets a full stream land on an empty parent BombVault created
 	// earlier for another entry, which is what a pool root finds at its path.
 	Replace bool
@@ -147,14 +144,11 @@ func ReceiveArgs(r ReceiveSpec) ([]string, error) {
 	if err := receiveTarget(r.Target); err != nil {
 		return nil, err
 	}
-	if r.Full && r.Rollback {
-		return nil, fmt.Errorf("zfs: a full receive into %q cannot roll anything back", r.Target)
-	}
 	if r.Replace && !r.Full {
 		return nil, fmt.Errorf("zfs: only a full receive into %q can replace it", r.Target)
 	}
 	args := []string{zfsBinary, "receive", "-s", "-u"}
-	if r.Rollback || r.Replace {
+	if r.Replace {
 		args = append(args, "-F")
 	}
 	if r.Full {
@@ -287,8 +281,9 @@ func ReplicaPointsArgs(dataset string) ([]string, error) {
 }
 
 // DatasetStateArgs reads what a replica run needs to know about one dataset
-// before it streams: its type, its encryption and the token an interrupted
-// receive -s left on it. A dataset that does not exist fails as not-found.
+// before it streams: its type, its encryption, the token an interrupted receive
+// -s left on it, and whether it is in use as a writable dataset. A dataset that
+// does not exist fails as not-found.
 func DatasetStateArgs(dataset string) ([]string, error) {
 	if err := validateNameChars(dataset); err != nil {
 		return nil, err
@@ -357,6 +352,48 @@ func ParseSourcePropertyTree(out string) map[string]string {
 		}
 	}
 	return owners
+}
+
+// ReceivedCopiesArgs reads what ParseReceivedCopies needs of root and every
+// dataset and volume below it. Unlike SourcePropertyTreeArgs it takes an
+// inherited mark too, since a copy lies below the folder that carries it.
+func ReceivedCopiesArgs(root string) ([]string, error) {
+	if err := validateNameChars(root); err != nil {
+		return nil, err
+	}
+	return []string{zfsBinary, "get", "-r", "-H", "-p", "-t", "filesystem,volume", "-o", "name,property,value", SourceProperty + ",readonly,mounted", root}, nil
+}
+
+// ParseReceivedCopies reads the output of ReceivedCopiesArgs into the datasets
+// that hold another run's replica snapshots: those below a folder of a source.
+// One someone took over, writable and mounted, is theirs to use like any other.
+func ParseReceivedCopies(out string) (map[string]bool, error) {
+	type seen struct{ marked, readOnly, mounted bool }
+	all := map[string]*seen{}
+	for _, line := range splitLines(out) {
+		f := strings.Split(line, "\t")
+		if len(f) != 3 {
+			return nil, fmt.Errorf("zfs get %s: %q is not a property line", SourceProperty, line)
+		}
+		if all[f[0]] == nil {
+			all[f[0]] = &seen{}
+		}
+		switch f[1] {
+		case SourceProperty:
+			all[f[0]].marked = f[2] != "-"
+		case "readonly":
+			all[f[0]].readOnly = f[2] == "on"
+		case "mounted":
+			all[f[0]].mounted = f[2] == "yes"
+		}
+	}
+	copies := map[string]bool{}
+	for name, s := range all {
+		if s.marked && (s.readOnly || !s.mounted) {
+			copies[name] = true
+		}
+	}
+	return copies, nil
 }
 
 // SetSourcePropertyArgs marks dataset as the folder of the instance owner.

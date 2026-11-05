@@ -47,12 +47,13 @@ export function keepCounts(keep: ZFSReplicaKeep): ZFSReplicaKeepCounts {
   return keep.preset === "own" ? keep.own : KEEP_PRESETS[keep.preset];
 }
 
-/** keepSummary words a rule as "7 daily, 3 weekly", leaving out the zeros. */
+/** keepSummary words a rule as "7 daily, 3 weekly", leaving out the zeros. All
+ *  zeros keep every snapshot, which a target that grows without limit has to say. */
 export function keepSummary(t: Translate, keep: ZFSReplicaKeep): string {
-  return keepCounts(keep)
+  const parts = keepCounts(keep)
     .map((n, i) => (n > 0 ? t(KEEP_SUMMARY_KEYS[i], n) : ""))
-    .filter(Boolean)
-    .join(", ");
+    .filter(Boolean);
+  return parts.length > 0 ? parts.join(", ") : t("zfs.replica.keepSummary.all");
 }
 
 /** keepCount reads a typed count as a whole number of snapshots. */
@@ -92,7 +93,7 @@ export function cloneCommand(targetPath: string, dataset: string, snapshot: stri
 }
 
 export function takeoverCommand(targetPath: string): string {
-  return `zfs inherit -r readonly ${targetPath} && zfs inherit -r canmount ${targetPath} && zfs mount -a`;
+  return `zfs inherit -r readonly ${targetPath} && zfs list -rH -o name -t filesystem ${targetPath} | xargs zfs set canmount=on && zfs mount -a`;
 }
 
 /** restorePreview is the dataset a bring back creates, as the question names
@@ -111,7 +112,7 @@ export function testFailure(t: Translate, result: { code: string; error?: string
 
 /** The delegation a user other than root needs on the receiving pool. */
 export function allowLine(user: string): string {
-  return `zfs allow ${user} receive,create,mount,rollback,destroy,userprop <pool>`;
+  return `zfs allow ${user} receive,create,mount,rollback,destroy,userprop,readonly,canmount <pool>`;
 }
 
 /** An example path below a root, for the hint beside the root field. */

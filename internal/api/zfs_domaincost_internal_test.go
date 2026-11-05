@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"slices"
 	"strings"
 	"sync"
 	"testing"
@@ -414,5 +415,56 @@ func TestDiscoverCountsRootsThatMayBeChildren(t *testing.T) {
 	}
 	if got := h.zfsRootsToCheck(); got != 2 {
 		t.Fatalf("roots to check = %d, an item alone under its parent is not in doubt", got)
+	}
+}
+
+// targetPruneRecorder notes which repository each prune ran at.
+type targetPruneRecorder struct {
+	*zfsFakeEngine
+	prunes []string
+}
+
+func (e *targetPruneRecorder) Prune(ctx context.Context, repo string, m restic.Mode) error {
+	e.prunes = append(e.prunes, repo)
+	return e.zfsFakeEngine.Prune(ctx, repo, m)
+}
+
+func (e *targetPruneRecorder) RepoOpensErr(context.Context, string, restic.Mode) error { return nil }
+
+func TestAScheduledRoundWithTheOwnFolderOffPrunesAtTheTargets(t *testing.T) {
+	const (
+		kept      = "rest:http://attic:8000/kept"
+		noRule    = "rest:http://attic:8000/norule"
+		immutable = "rest:http://attic:8000/immutable"
+		off       = "rest:http://attic:8000/off"
+	)
+	s, st, _, eng := zfsRunFixture(t, zfsTwoDatasetTree())
+	rec := &targetPruneRecorder{zfsFakeEngine: eng}
+	s.engine = rec
+	if err := st.SetLocal(zfsDomain, false); err != nil {
+		t.Fatal(err)
+	}
+	for i, target := range []store.OffsiteTarget{
+		{Name: "kept", Repo: kept, Enabled: true, RetentionKeepLast: 3},
+		{Name: "norule", Repo: noRule, Enabled: true},
+		{Name: "immutable", Repo: immutable, Enabled: true, RetentionKeepLast: 3, Immutable: true},
+		{Name: "off", Repo: off, RetentionKeepLast: 3},
+	} {
+		target.Domain, target.SortOrder = zfsDomain, i+1
+		if _, err := st.UpsertOffsiteTarget(target); err != nil {
+			t.Fatal(err)
+		}
+	}
+	d := zfsSeedItem(t, st, zfsRoot)
+
+	if _, err := s.BackupZFSDataset(WithBulkReplicateSuppressed(context.Background()), d.ID); err != nil {
+		t.Fatalf("backup: %v", err)
+	}
+	if len(rec.prunes) != 0 {
+		t.Fatalf("the item pruned %q itself, the round is what prunes once", rec.prunes)
+	}
+	s.PruneAfterBulk(context.Background(), zfsDomain)
+	if !slices.Equal(rec.prunes, []string{kept}) {
+		t.Errorf("prunes = %q, want only the target that ages by a rule and may delete", rec.prunes)
 	}
 }

@@ -22,6 +22,13 @@ func Run(ctx context.Context, source, target End, e Entry) (Result, error) {
 	if err != nil {
 		return Result{}, err
 	}
+	copies, err := receivedCopies(ctx, source, e.Root)
+	if err != nil {
+		return Result{}, err
+	}
+	if copies[e.Root] {
+		return Result{}, &Refusal{Code: "received-copy", Detail: e.Root + " is a copy another run replicates here"}
+	}
 	// One descendant whose name does not fit fails the recursive snapshot of
 	// the whole tree, excluded or not.
 	for _, d := range tree {
@@ -71,6 +78,11 @@ func Run(ctx context.Context, source, target End, e Entry) (Result, error) {
 			r.destroyNew(cleanup, d.Name)
 		case excluded(d.Name, e.Excluded):
 			r.sweepExcluded(cleanup, d.Name)
+		case copies[d.Name]:
+			// Sending it on would add a snapshot its source does not know and
+			// thin the history that source still needs.
+			r.sweepExcluded(cleanup, d.Name)
+			r.finished(&res, MemberResult{Dataset: d.Name, Target: r.target(d.Name), Code: "received-copy", Err: &Refusal{Code: "received-copy", Detail: d.Name}})
 		case ctx.Err() != nil:
 			r.destroyNew(cleanup, d.Name)
 			r.finished(&res, MemberResult{Dataset: d.Name, Target: r.target(d.Name), Code: "not-reached", Err: ctx.Err()})
@@ -113,9 +125,10 @@ func (r *run) member(ctx context.Context, d zfs.ListEntry) MemberResult {
 		if ctx.Err() != nil {
 			m.Code = "not-reached"
 		}
-		// However the stream ended, a partial receive left on the target is
-		// what the next run resumes.
-		if r.keepOrDrop(context.WithoutCancel(ctx), m, sent) {
+		// A stream that merely stopped leaves a partial receive for the next
+		// run to resume. Any other failure with one on the target keeps its
+		// cause, which the next run would run into again.
+		if r.keepOrDrop(context.WithoutCancel(ctx), m, sent) && (m.Code == "zfs-error" || m.Code == "not-reached") {
 			m.Code = "stream-cut"
 		}
 		log.Printf("zfs replica: %s to %s failed: %v", m.Dataset, m.Target, err)
@@ -151,6 +164,9 @@ func (r *run) replicate(ctx context.Context, m *MemberResult) (src, tgt []zfs.Re
 	if err != nil {
 		return nil, nil, false, err
 	}
+	if view.inUse {
+		return nil, nil, false, &Refusal{Code: "target-written", Detail: m.Target + " is mounted writable"}
+	}
 	if view.token != "" {
 		if view, err = r.resume(ctx, m, view, src); err != nil {
 			return nil, nil, false, err
@@ -159,7 +175,8 @@ func (r *run) replicate(ctx context.Context, m *MemberResult) (src, tgt []zfs.Re
 
 	send := zfs.SendSpec{Member: m.Dataset, Snap: r.snap, Raw: m.Raw}
 	recv := zfs.ReceiveSpec{Target: m.Target, Volume: m.Volume}
-	switch base, newer := commonBase(src, view.snaps, r.snap); {
+	base, newer := commonBase(src, view.snaps, r.snap)
+	switch {
 	case !view.exists:
 		recv.Full = true
 		if m.Dataset == r.e.Root {
@@ -169,9 +186,6 @@ func (r *run) replicate(ctx context.Context, m *MemberResult) (src, tgt []zfs.Re
 		}
 	case base != nil:
 		send.Base, send.FromBookmark = base.Name, base.Bookmark
-		// -F rolls back writes on the replica, but with a newer snapshot on
-		// the target it would destroy that snapshot too.
-		recv.Rollback = !newer
 	case len(view.snaps) == 0 && r.placeholders[m.Target]:
 		recv.Full, recv.Replace = true, true
 	default:
@@ -194,10 +208,15 @@ func (r *run) replicate(ctx context.Context, m *MemberResult) (src, tgt []zfs.Re
 	n, err := r.stream(ctx, m.Dataset, sendArgs, recvArgs, estimate(ctx, r.src, estArgs))
 	m.Bytes += n
 	if err != nil {
-		// The way out is rolling the target back to the base, so the error
-		// names it.
+		// zfs says the same for a newer snapshot and for writes. With a newer
+		// snapshot the way out is rolling the target back to the base, so the
+		// error names it. Writes are someone's work and no such advice applies.
 		if send.Base != "" && Code(err) == "target-changed" {
-			err = &Refusal{Code: "target-changed", Detail: m.Target + " holds snapshots newer than " + m.Target + "@" + send.Base, Err: err}
+			if newer {
+				err = &Refusal{Code: "target-changed", Detail: m.Target + " holds snapshots newer than " + m.Target + "@" + send.Base, Err: err}
+			} else {
+				err = writtenTo(m.Target, err)
+			}
 		}
 		return nil, nil, true, err
 	}
@@ -249,6 +268,8 @@ func (r *run) resume(ctx context.Context, m *MemberResult, view targetView, src 
 		m.Resumed = true
 	case Code(err) == "resume-token-stale":
 		log.Printf("zfs replica: the interrupted stream into %s cannot be resumed, dropping it: %v", m.Target, err)
+	case Code(err) == "target-changed":
+		return view, writtenTo(m.Target, err)
 	default:
 		return view, err
 	}
@@ -307,8 +328,13 @@ func tokenMismatch(out string, m MemberResult, src []zfs.ReplicaPoint) string {
 	return ""
 }
 
+func writtenTo(target string, err error) error {
+	return &Refusal{Code: "target-written", Detail: target + " changed since its newest snapshot", Err: err}
+}
+
 type targetView struct {
 	exists bool
+	inUse  bool
 	token  string
 	snaps  []zfs.ReplicaPoint
 }
@@ -325,7 +351,7 @@ func (r *run) view(ctx context.Context, target string) (targetView, error) {
 	if err != nil {
 		return targetView{}, err
 	}
-	return targetView{exists: true, token: st.ResumeToken, snaps: snapshots(pts)}, nil
+	return targetView{exists: true, inUse: st.InUse(), token: st.ResumeToken, snaps: snapshots(pts)}, nil
 }
 
 // ensureParents creates the missing levels above the entry's root on the
@@ -447,11 +473,12 @@ func (r *run) destroyNew(ctx context.Context, dataset string) {
 // newest Entry.KeepOnSource, the run's own among them. The run's own keeps its
 // hold as the base of the next run; the older ones that stay lose theirs, so
 // they can be rolled back to or destroyed by hand. Bookmarks stay: they cost
-// nothing and are the base once a snapshot is gone.
+// nothing and are the base once a snapshot is gone. A replica name that is
+// neither on the root nor bookmarked here is no snapshot of this entry.
 func (r *run) clear(ctx context.Context, dataset string, pts []zfs.ReplicaPoint) {
 	var older []zfs.ReplicaPoint
 	for _, p := range snapshots(pts) {
-		if p.Name != r.snap && zfs.IsReplicaSnapshot(p.Name) {
+		if p.Name != r.snap && zfs.IsReplicaSnapshot(p.Name) && (r.own[p.Name] || bookmarked(pts, p.Name)) {
 			older = append(older, p)
 		}
 	}
@@ -579,6 +606,10 @@ func find(pts []zfs.ReplicaPoint, name string) (zfs.ReplicaPoint, bool) {
 		mark, found = p, true
 	}
 	return mark, found
+}
+
+func bookmarked(pts []zfs.ReplicaPoint, name string) bool {
+	return slices.ContainsFunc(pts, func(p zfs.ReplicaPoint) bool { return p.Bookmark && p.Name == name })
 }
 
 func snapshots(pts []zfs.ReplicaPoint) []zfs.ReplicaPoint {

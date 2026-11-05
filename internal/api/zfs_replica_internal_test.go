@@ -74,12 +74,14 @@ func (h *replicaHost) Run(_ context.Context, args []string) (string, error) {
 			return "", &zfs.CmdError{Args: args, Code: "not-found", Stderr: "cannot open '" + last + "': dataset does not exist"}
 		}
 		return owner + "\n", nil
+	case args[1] == "get" && slices.Contains(args, "-r"):
+		return "", nil
 	case args[1] == "get":
 		enc := "off"
 		if h.locked[last] {
 			enc = "aes-256-gcm"
 		}
-		return "type\tfilesystem\nencryption\t" + enc + "\nreceive_resume_token\t-\n", nil
+		return "type\tfilesystem\nencryption\t" + enc + "\nreceive_resume_token\t-\nreadonly\ton\nmounted\tno\n", nil
 	case args[1] == "list" && slices.Contains(args, "0"):
 		return h.pools, nil
 	case args[1] == "list" && slices.Contains(args, "snapshot,bookmark"):
@@ -1496,5 +1498,32 @@ func TestANewServerCanBeCreatedMounting(t *testing.T) {
 	}
 	if got, ok, _ := r.st.GetZFSReplicaServer(id); !ok || !got.MountReadOnly {
 		t.Errorf("stored server = %+v", got)
+	}
+}
+
+func TestRemovingAnEntrySaysWhenItsReplicaSnapshotsStayOnTheSource(t *testing.T) {
+	r := newReplicaRig(t)
+	r.s.replica.hostEnd = func() (zfsrepl.End, error) { return nil, errors.New("the host does not answer") }
+	res, err := r.s.deleteZFSDatasetLocked(context.Background(), r.item.ID, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !res.ReplicaKept {
+		t.Error("the result does not say the replica snapshots stayed")
+	}
+}
+
+func TestRemovingAnEntryThatNeverReplicatedSaysNothingOfAReplica(t *testing.T) {
+	r := newReplicaRig(t)
+	if err := r.st.SetZFSReplicaTarget(r.item.ID, store.ZFSReplicaTargetNone, ""); err != nil {
+		t.Fatal(err)
+	}
+	r.s.replica.hostEnd = func() (zfsrepl.End, error) { return nil, errors.New("the host does not answer") }
+	res, err := r.s.deleteZFSDatasetLocked(context.Background(), r.item.ID, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if res.ReplicaKept {
+		t.Error("an entry without a replica reports replica snapshots left behind")
 	}
 }
