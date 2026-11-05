@@ -1,1 +1,0 @@
-BombVault 10.4.2 hört endlich auf die Karte „Wie lange aufheben“ am Speicherort eines eigenen Ordners, eine frische Installation hortet also nicht mehr ewig. Ein Bereich ohne Einträge ruft nicht mehr „Überfällig“, und ein ganz neuer sagt einfach „Noch keine Sicherung“.

@@ -76,11 +76,6 @@ export const RELEASES: Release[] = [
       // download, so neither has an element to carry a dot.
       { id: "copy-decision", text: "whatsNew.copyDecision" },
       { id: "kit-sign-ins", text: "whatsNew.kitSignIns" },
-    ],
-  },
-  {
-    version: "10.4.1",
-    changes: [
       { id: "restore-stacks", page: "/restore", where: ["nav.restore"], way: ["/restore"], text: "whatsNew.restoreStacks" },
       {
         id: "entry-own-plan",

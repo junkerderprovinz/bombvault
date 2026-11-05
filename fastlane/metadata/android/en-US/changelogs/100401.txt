@@ -1,1 +1,0 @@
-BombVault 10.4.1 packs up a VM with Unraid snapshots down to its last backing file and keeps its paws off those snapshots during a live backup. OneDrive and friends can be accepted without delete protection, every entry gets its own plan right on its page, and stacks come back from the Restore page.
