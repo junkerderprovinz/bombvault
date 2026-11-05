@@ -27,7 +27,7 @@ Die Karte **Woche** zeichnet jeden geplanten Lauf von Montag bis Sonntag, eine Z
 
 Das **Gesamt-Backup** ist der Standardplan für alles. **Wann gesichert wird** legt ihn fest: ein Durchgang, der nacheinander jeden Bereich sichert, Container, VMs, Flash, Ordner, ZFS-Datasets und zuletzt das Selbstbackup. Die Zeile darunter sagt, welche Bereiche er umfasst. **Aus** schaltet ihn ab, und dann läuft nur, was einen eigenen Plan hat.
 
-- **Verpasste Sicherungen nach dem Start nachholen**: Wenn der Server zu einem geplanten Zeitpunkt aus war, führt BombVault diese Sicherung etwa zwei Minuten nach dem Start aus.
+- **Verpasste Sicherungen nach dem Start nachholen**: Wenn der Server zu einem geplanten Zeitpunkt aus war, führt BombVault diese Sicherung etwa zwei Minuten nach dem Start aus. Der eigene Plan eines Eintrags und ein Off-site-Plan warten auf ihren nächsten geplanten Zeitpunkt, ebenso ein Plan, der noch nie erfolgreich war.
 - **Befehle vorher und nachher**: **Befehl vor dem Gesamt-Backup** läuft mit `sh -c` auf dem Server, bevor der Durchgang beginnt, zum Beispiel ein Skript, das einen Dienst anhält. Schlägt er fehl, läuft das Gesamt-Backup trotzdem. **Befehl nach dem Gesamt-Backup** läuft einmal, nachdem jeder Bereich versucht wurde, auch wenn einer fehlgeschlagen ist, was zu einem Ping passt, der bestätigt, dass der ganze Server geschützt ist. Befehle für einen einzelnen Container stehen auf seiner Seite.
 
 **Jetzt alles sichern** auf der Seite Sicherungen startet denselben Durchgang von Hand, über alle eingeschalteten Bereiche.
@@ -58,7 +58,7 @@ Die Sicherung landet unter denselben Pfaden und Tags wie eine, die bei angehalte
 
 ## Updates nach der Sicherung {#updates}
 
-- **Container nach erfolgreicher Sicherung aktualisieren** zieht ein neueres Image erst, nachdem die Sicherung davor fertig ist, sodass zuerst immer ein frischer Wiederherstellungspunkt existiert. Es ist standardmäßig aus, und ein einzelner Container lässt sich auf seiner Seite unter **Nach erfolgreicher Sicherung aktualisieren** anders einstellen.
+- **Container nach erfolgreicher Sicherung aktualisieren** zieht ein neueres Image erst, nachdem die Sicherung davor fertig ist, sodass zuerst immer ein frischer Wiederherstellungspunkt existiert. Es ist standardmäßig aus, und ein einzelner Container lässt sich auf seiner Seite unter **Nach erfolgreicher Sicherung aktualisieren** anders einstellen. Auf das neue Image geht nur über, was du eingestellt hast: Variablen, Labels, der Befehl, der Benutzer und der Healthcheck, die noch so lauten wie im alten Image, folgen dem neuen. Lässt sich das neue Image nicht anlegen oder starten, geht der Container auf das Image zurück, mit dem er lief, das Update zeigt sich als fehlgeschlagen, und die nächste Sicherung versucht es erneut. Ein Container, der dadurch nicht mehr läuft, wird im Lauf der Sicherung und in einer Benachrichtigung genannt.
 - **Altes Image nach Update entfernen** löscht das Image, das der Container verlassen hat. Ein Basis-Image, das andere Container teilen, wird nie gelöscht.
 - **Unraids Update-Status nach dem Aktualisieren eines Containers auffrischen** räumt Unraids Update-Hinweis für diesen Container weg.
 

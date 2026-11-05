@@ -9,20 +9,20 @@ BombVault kann dir Bescheid geben, wenn eine Sicherung fehlschlägt, wenn sie kl
 
 Die Karte **Benachrichtigungen** legt die Regeln für alle Kanäle auf einmal fest:
 
-- **Benachrichtigen**: **Nie**, **Nur bei Fehler** oder **Bei Erfolg und Fehler**, für alle Kanäle weiter unten.
+- **Benachrichtigen**: **Nie**, **Nur bei Fehler** oder **Bei Erfolg und Fehler**, für alle Kanäle weiter unten. Eine frische Installation startet mit **Nur bei Fehler**, ein Kanal, den du ausfüllst, sagt dir also Bescheid, wenn eine Sicherung schiefgeht.
 - **Geplante Läufe zusammenfassen**: eine Nachricht pro geplantem Lauf, etwa *42 von 45 erfolgreich*, statt einer pro Container oder VM. Eine Sicherung, die du von Hand startest, schickt weiter ihre eigene Nachricht. Ein eingefrorener Gast, eine fehlgeschlagene Aufbewahrung oder ein überschrittenes Wachstumsbudget gehen auch bei eingeschalteten Zusammenfassungen sofort hinaus.
 - **Bei Container-Update benachrichtigen**: eine Nachricht für jeden Container, den **Container nach erfolgreicher Sicherung aktualisieren** auf ein neueres Image gehoben hat, damit du prüfen kannst, ob er noch läuft.
-- **Überfällige Sicherungen melden**: Einmal am Tag um 09:00 prüft BombVault, ob eine eingeschaltete Sicherung überfällig ist, das heißt älter als das Doppelte ihres Zeitplans, und schickt pro Fall eine Nachricht. Die nächste erfolgreiche Sicherung hebt die Meldung auf.
+- **Überfällige Sicherungen melden**: Einmal am Tag um 09:00 prüft BombVault, ob eine eingeschaltete Sicherung überfällig ist, das heißt älter als das Doppelte ihres Zeitplans, und schickt pro Fall eine Nachricht, die den Eintrag nennt, der zurückgefallen ist. Die nächste erfolgreiche Sicherung hebt die Meldung auf.
 - **Unraid-Benachrichtigungen**: sendet an das eigene Benachrichtigungssystem von Unraid, das an Pushover, E-Mail oder Discord weiterleiten kann. Das läuft über die SSH-Verbindung unter **Einstellungen, Anbindungen, Host-SSH**, dieser Schlüssel muss also freigegeben sein. Auf TrueNAS und anderen Hosts bleibt es aus.
-- **Wochenbericht**: eine Zusammenfassung pro Woche mit Laufzahlen, neuen Sicherungsdaten, ob die Off-site-Kopien aktuell sind, und den häufigsten Fehlern. Sein Plan ist ein Knopf wie jeder andere Plan, und **Aus** schaltet ihn ab. Siehe [Zeitpläne](schedules.md#plans).
+- **Wochenbericht**: eine Zusammenfassung pro Woche mit Laufzahlen, neuen Sicherungsdaten, welche Bereiche überfällig sind, ob die Off-site-Kopien aktuell sind, und den häufigsten Fehlern. Sein Plan ist ein Knopf wie jeder andere Plan, und **Aus** schaltet ihn ab. Siehe [Zeitpläne](schedules.md#plans).
 
 Welche Anomalien eine Nachricht schicken, wird unter **Einstellungen, Prüfung** festgelegt, siehe [Anomalien](anomalies.md). Eine zurückgestellte Sicherung schickt eine Nachricht, wenn sie zu warten beginnt, und eine, wenn die Wartezeit endet, nicht eine pro Versuch.
 
-**Test senden** am Ende der Karte schickt eine Testnachricht über jeden eingeschalteten Kanal, mit den Werten, wie sie gerade im Formular stehen.
+**Test senden** am Ende der Karte schickt eine Testnachricht über jeden eingeschalteten Kanal, mit den Werten, wie sie gerade im Formular stehen, und nennt jeden, der fehlgeschlagen ist. Ein Healthchecks-Check bekommt einen Eintrag in seinem Log, der seinen Zustand lässt, wie er ist.
 
 ## Kanäle {#channels}
 
-Jeder Kanal hat in der Karte **Kanäle** einen eigenen Schalter, und seine Felder erscheinen, sobald er an ist. Jeder Kanal sendet für sich mit eigenem Zeitlimit, sodass ein Host, der nie antwortet, die anderen nicht aufhält, und eine Nachricht, die kein Kanal angenommen hat, wird erneut versucht.
+Jeder Kanal hat in der Karte **Kanäle** einen eigenen Schalter, und seine Felder erscheinen, sobald er an ist. Jeder Kanal sendet für sich mit eigenem Zeitlimit, sodass ein Host, der nie antwortet, die anderen nicht aufhält. Eine Warnung zu Überfälligem, zum Budget oder zu einer Anomalie, die kein Kanal angenommen hat, wird erneut versucht, und ein Wochenbericht ebenso. Die Nachricht zu einer einzelnen Sicherung oder eine Zusammenfassung wird einmal gesendet.
 
 | Kanal | Felder | Hinweise |
 |---|---|---|
@@ -36,7 +36,9 @@ Geheimnisse wie das Matrix-Token, das Gotify-App-Token und das SMTP-Passwort wer
 
 ## Healthchecks {#healthchecks}
 
-Ein Dienst wie [Healthchecks.io](https://healthchecks.io) schlägt Alarm, wenn sich BombVault nicht mehr meldet. Füge die **Ping-URL** des Checks ein, und BombVault pingt sie über den ganzen Ablauf jeder Sicherung: beim Start, dann bei Erfolg oder mit `/fail`. Das passiert immer, wenn eine URL gesetzt ist, egal was bei **Benachrichtigen** steht, damit der Check bei Erfolg auch mit reinen Fehlermeldungen grün bleibt.
+Ein Dienst wie [Healthchecks.io](https://healthchecks.io) schlägt Alarm, wenn sich BombVault nicht mehr meldet. Füge die **Ping-URL** des Checks ein, und BombVault pingt sie über den ganzen Ablauf jeder Sicherung: beim Start, dann bei Erfolg oder mit `/fail`. Das passiert immer, wenn eine URL gesetzt ist, egal was bei **Benachrichtigen** steht, damit der Check bei Erfolg auch mit reinen Fehlermeldungen grün bleibt. Ein Bereich, der nirgendwohin sichern kann, zählt als fehlgeschlagen, sein Check wird also rot, statt einen Erfolg zu hören.
+
+Bereiche mit derselben URL teilen sich einen Check. Ist eine Sicherung des einen fehlgeschlagen, pingen auch die guten Sicherungen der anderen `/fail` und nennen ihn, sodass der Check rot bleibt, bis dieser Eintrag wieder eine gute Sicherung hat oder du den Fehler unter **Braucht dich** quittierst.
 
 Ein Bereich kann eine eigene Adresse pingen: **Ausnahme** in der Karte fügt eine hinzu, und die Zeile sagt **Alle anderen Bereiche pingen diese URL.**
 

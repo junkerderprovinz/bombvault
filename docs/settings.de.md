@@ -11,7 +11,7 @@ Diese Seite listet jede Kachel und ihre Karten auf und verlinkt auf die Seite, d
 
 ## Allgemein {#general}
 
-- **Bereiche** schaltet jeden Bereich ein oder aus: **Container**, **VMs**, **Flash**, **Ordner**, **ZFS-Datasets** und **Selbstbackup**. Ein Bereich, der aus ist, wird nicht gesichert, und seine Einträge zählen nicht. **Flash** erscheint nur auf Unraid.
+- **Bereiche** schaltet jeden Bereich ein oder aus: **Container**, **VMs**, **Flash**, **Ordner**, **ZFS-Datasets** und **Selbstbackup**. Ein Bereich, der aus ist, wird nach keinem Zeitplan gesichert, auch nicht nach dem eigenen Plan eines Eintrags, und seine Einträge zählen nicht. **Jetzt sichern** funktioniert trotzdem. **Flash** erscheint nur auf Unraid.
 - **Container** enthält, was für alle Container gilt, etwa **Automatische Datenbank-Dumps**. Alles, was einen einzelnen Container betrifft, steht auf seiner Seite. Siehe [Datenbank-Dumps](backups.md#database-dumps).
 
 ## Aussehen {#look}
@@ -97,6 +97,6 @@ Mehreres braucht ein Login-Passwort, etwa das Recovery-Kit, Schlüsselhinterlegu
 
 ## Info {#info}
 
-- **Version**: BombVault, GlimStone, restic und rclone, mit **Nach Updates suchen** und **Neu**, das die Änderungen zählt, die du noch nicht gesehen hast, und **Was ist neu** öffnet.
+- **Version**: BombVault, GlimStone, restic und rclone, mit **Nach Updates suchen** und **Neu**, das die Änderungen zählt, die du noch nicht gesehen hast, und ein Fenster öffnet, das sie auflistet.
 - **Hilfe**: **Handbuch** öffnet diese Dokumentation, und **Fehlerbericht** lädt eine bereinigte ZIP für ein GitHub-Issue herunter. Es braucht ein Login-Passwort.
 - **Über BombVault**: das Projekt, seine Lizenz und wie du den Autor erreichst.

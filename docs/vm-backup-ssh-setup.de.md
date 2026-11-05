@@ -81,8 +81,25 @@ docker exec BombVault virsh -c "qemu+ssh://root@192.168.1.10:22/system?keyfile=/
 
 Jede VM hat eine **Methode** in der Karte **VM** auf ihrem Tab Einstellungen (öffne die VM unter **Sicherungen**):
 
-- **Graceful (Herunterfahren)** ist die Vorgabe. Sie fährt die VM herunter, sichert die Disks und startet sie wieder, die Sicherung ist also immer konsistent. Sie wartet bis zu zehn Minuten, bis der Gast heruntergefahren ist, und erzwingt das Ausschalten nie. Ein Gast, der danach noch läuft, bleibt unberührt, und diese Sicherung scheitert mit dem Grund.
-- **Live-Snapshot** sichert eine laufende VM über einen externen Snapshot und `blockcommit`. Sie braucht den qemu-Gast-Agenten in der VM, für einen stillgelegten Snapshot, und die Disk auf `/mnt/cache` oder `/mnt/diskX`, nicht `/mnt/user`. Bei einer ausgeschalteten VM fällt Live von selbst auf Graceful zurück, und auch dann, wenn der Snapshot sich nicht machen lässt.
+- **Graceful (Herunterfahren)** ist die Vorgabe. Sie fährt die VM herunter, sichert die Disks und startet sie wieder, die Sicherung ist also immer konsistent. Sie wartet bis zu zehn Minuten, bis der Gast heruntergefahren ist, und erzwingt das Ausschalten nie. Ein Gast, der danach noch läuft, bleibt unberührt, und diese Sicherung scheitert mit dem Grund. Schaltet sich der Gast innerhalb der nächsten Stunde aus, startet BombVault ihn wieder. Schlägt dieser Start fehl, sagt das der fehlgeschlagene Lauf.
+- **Live-Snapshot** sichert eine laufende VM über einen externen Snapshot und `blockcommit`. Sie braucht die Disk auf `/mnt/cache` oder `/mnt/diskX`, nicht `/mnt/user`. Mit dem qemu-Gast-Agenten in der VM ist der Snapshot stillgelegt, ohne ihn ist er absturzkonsistent. Bei einer ausgeschalteten VM fällt Live von selbst auf Graceful zurück. Lässt sich der Snapshot nicht machen, scheitert diese Sicherung, und die VM läuft weiter, denn eine VM, die du live sichern lässt, wird dafür nie heruntergefahren.
+
+## Was eine Sicherung auslässt {#left-out}
+
+Eine Sicherung kann gelingen und trotzdem nicht die ganze VM enthalten. Der Lauf trägt dann einen Hinweis in Warnfarbe, der nennt, was fehlt:
+
+- **Disks, die BombVault nicht liest.** Eine schreibgeschützte Disk, eine `lun` und eine `network`- oder `volume`-Disk werden ausgelassen, und der Hinweis nennt jede mit ihrem Zielgerät und ihrer Art. Die Definition in der Sicherung listet sie trotzdem auf. Ein CD-ROM- und ein Diskettenlaufwerk werden nicht genannt. Ein einfaches Blockgerät, das kein ZFS-zvol ist, lässt die Sicherung stattdessen scheitern.
+- **Der Zustand eines emulierten TPM.** Er hat keinen Pfad im Domain-XML. Der Unraid VM Manager richtet so ein TPM für eine VM mit dem BIOS **OVMF TPM** ein, der Hinweis erscheint also auch auf Unraid. Ein Gast, der ein Geheimnis in seinem TPM aufbewahrt, wie es BitLocker kann, fragt nach einer Wiederherstellung, die diesen Zustand verliert, womöglich nach seinem Wiederherstellungsschlüssel. Halte diesen Schlüssel also bereit.
+
+## Dünn belegte Disks {#thin-disks}
+
+Eine Wiederherstellung hält eine dünn belegte Disk dünn, ob sie die Disk ersetzt oder eine neue schreibt: restic schreibt Folgen von Nullen als Löcher in eine neue Datei, und BombVault gibt die Nullblöcke einer ersetzten Datei mit `fallocate --dig-holes` frei, sobald sie geschrieben ist. Während restic eine Datei ersetzt, belegt diese Datei ihre volle Größe, wenn der Pool den Platz hat. Ein Dateisystem ohne Hole Punching behält die Disk in voller Größe, und das Protokoll sagt das. Die Platzprüfung rechnet eine neue Disk weiterhin mit voller Größe.
+
+## Eine Wiederherstellung, die fehlschlägt {#restore-fails}
+
+Eine Wiederherstellung an Ort und Stelle schaltet die VM aus, schreibt die Disks und ersetzt die Definition und das NVRAM erst, wenn die Disks geschrieben sind. Eine Wiederherstellung, die fehlschlägt, lässt die VM mit ihrem NVRAM definiert. Haben sich ihre Disks nicht geändert und lief sie, läuft sie wieder. Können sie sich geändert haben, bleibt sie aus, denn ein Start von einer halb geschriebenen Disk würde darüber schreiben, und der Lauf sagt das. Stellst du dieselbe Sicherung noch einmal wieder her, wird die Arbeit fertig.
+
+Snapshots, die libvirt verzeichnet hat, was nicht die Art ist, wie der Unraid VM Manager sie anlegt, stoppen eine Wiederherstellung an Ort und Stelle, bevor die VM angefasst wird, weil libvirt eine VM mit solchen Snapshots nicht entfernen kann. Lösch sie zuerst.
 
 ## Nur geänderte Blöcke {#changed-blocks}
 
@@ -112,6 +129,7 @@ BombVault sichert so eine VM vollständig:
 - **Eine Live-Sicherung behält die Snapshots.** **Live-Snapshot** legt ein temporäres Overlay obenauf, während es die Disk liest, und führt es danach zurück, nur in das Image direkt darunter. Die Chain ist nach der Sicherung dieselbe wie davor. Eine VM ohne Snapshots verhält sich wie immer.
 - **Eine Wiederherstellung bringt die Chain zurück.** Eine Wiederherstellung an Ort und Stelle schreibt jede Datei dorthin zurück, wo sie war, und legt die Snapshot-Liste von Unraid zurück, sodass der VM Manager die Snapshots wieder auflistet. Eine Wiederherstellung neben das Original schreibt die Dateien in den Ordner der Kopie und lässt die wiederhergestellten Disks auf die wiederhergestellten Dateien zeigen, sodass die Kopie nie aus den Images des Originals liest. Die Snapshot-Liste von Unraid kommt nur bei einer Wiederherstellung an Ort und Stelle zurück, weil sie die Dateien dort nennt, wo sie gesichert wurden. Ohne sie bootet die Kopie genauso, und der VM Manager listet für sie nur keine Snapshots auf.
 - **Nur geänderte Blöcke** liest, was der Gast sieht, seine Wiederherstellung kommt also als eine abgeflachte qcow2-Datei ohne die Snapshots zurück.
+- **Eine Wiederherstellung bringt die Disk der Sicherung zurück, die du wählst.** Snapshots, die seit dieser Sicherung angelegt oder zusammengeführt wurden, ändern daran nichts. Eine Sicherung von vor einem Snapshot definiert die VM auf der Datei, die sie enthält, und eine Sicherung von vor einem Zusammenführen bringt ihr Overlay zurück und läuft darauf. Neuere Dateien bleiben, wo sie sind, ungenutzt und unverändert. Eine Sicherung, die ein Overlay enthält, aber nicht die Datei darunter, wird abgelehnt, bevor die VM angefasst wird. Die Definition der VM listet nach einer Wiederherstellung keine Chain auf, libvirt liest die Chain also aus den wiederhergestellten Dateien.
 
 ### Beispiel: eine VM mit zwei Snapshots {#example-unraid-snapshots}
 
@@ -199,10 +217,10 @@ Datei-Disks, wie Unraid sie nutzt, sind von alledem nicht betroffen.
 Eine VM kann ein virtuelles TPM haben, das Secure Boot und Windows-11-Gäste brauchen. Sein Zustand liegt außerhalb der Disk und des NVRAM, eine Sicherung nur dieser beiden würde einen Gast also mit einem neuen, leeren TPM zurückbringen.
 
 - **Ein Passthrough-TPM**, ein echter Chip, der an den Gast durchgereicht wird, nennt seinen Pfad im Domain-XML. BombVault speichert seinen Zustand neben dem NVRAM über SSH und schreibt ihn vor `virsh define` zurück, nach bestem Bemühen wie das NVRAM: Ein fehlgeschlagenes Lesen oder Schreiben wird protokolliert und lässt die Sicherung oder Wiederherstellung nicht scheitern.
-- **Ein emuliertes vTPM**, wie TrueNAS es für Windows-11- und Secure-Boot-Gäste einrichtet, veröffentlicht keinen Zustandspfad im Domain-XML. BombVault meldet dann „no TPM path found“, statt einen Pfad zu raten. Halte den Wiederherstellungsschlüssel eines solchen Gasts, etwa seinen BitLocker-Schlüssel, bereit, bevor du ihn wiederherstellst.
+- **Ein emuliertes vTPM**, wie TrueNAS es für Windows-11- und Secure-Boot-Gäste einrichtet, veröffentlicht keinen Zustandspfad im Domain-XML, sein Zustand wird also nicht gesichert. BombVault rät keinen Pfad, und die Sicherung endet mit einem Hinweis, dass der Zustand des TPM der VM nicht darin ist. Halte den Wiederherstellungsschlüssel eines solchen Gasts, etwa seinen BitLocker-Schlüssel, bereit, bevor du ihn wiederherstellst.
 - **Du kannst einer TrueNAS-VM nicht selbst ein TPM anhängen.** Die VM-Geräte-API von TrueNAS SCALE 25.10 akzeptiert nur `CDROM`, `DISPLAY`, `NIC`, `PCI`, `RAW`, `DISK` und `USB` und lehnt `TPM` als unbekannten Typ ab.
 
-Die TPM-Behandlung ist nur per Unit-Test geprüft und lief nicht gegen einen echten TrueNAS-Gast mit vTPM. Eine VM ohne TPM, wie auf Unraid, wird genau wie bisher gesichert und wiederhergestellt.
+Die TPM-Behandlung ist nur per Unit-Test geprüft und lief nicht gegen einen echten TrueNAS-Gast mit vTPM. Eine VM ohne TPM wird genau wie bisher gesichert und wiederhergestellt.
 
 Das NVRAM wird wie gewohnt erfasst. TrueNAS hält es pro VM unter `/var/db/system/vm/nvram/<id>_<name>_VARS.fd`, und das Domain-XML nennt diesen Pfad.
 
