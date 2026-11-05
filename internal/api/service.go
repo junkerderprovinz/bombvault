@@ -5858,6 +5858,9 @@ func (s *Service) ensureRepo(ctx context.Context, repo string, mode restic.Mode)
 	if _, err := s.backupKey(); err != nil {
 		return false, err
 	}
+	if s.inHostMemory(repo) {
+		return false, fmt.Errorf("%w: %s is on no mounted pool or share, so a backup there would be written into the host's memory", ErrBackupPathNotMounted, s.toHostPath(repo))
+	}
 	if s.engine.RepoOpens(ctx, repo, mode) {
 		s.markRepoEstablished(repo) // remember it for the not-mounted guard (#55)
 		return true, nil
@@ -15123,6 +15126,9 @@ func (s *Service) exportFlashZip(ctx context.Context, settings store.Settings, s
 	dir, err := s.flashZipExportDir(settings)
 	if err != nil {
 		return err
+	}
+	if s.inHostMemory(dir) {
+		return fmt.Errorf("flash zip export: %s is on no mounted pool or share, so the ZIP would be written into the host's memory", s.toHostPath(dir))
 	}
 	if err := os.MkdirAll(dir, 0o755); err != nil { //nolint:gosec // G301: operator-configured sync folder must be readable by the off-server sync tool
 		return fmt.Errorf("flash zip export: mkdir: %w", err)
