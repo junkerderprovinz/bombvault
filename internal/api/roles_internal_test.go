@@ -10,7 +10,9 @@ import (
 	"slices"
 	"strings"
 	"testing"
+	"time"
 
+	"github.com/junkerderprovinz/bombvault/internal/keydeposit"
 	"github.com/junkerderprovinz/bombvault/internal/relay"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
@@ -336,7 +338,9 @@ func TestARoleCallIsBoundToTheSenderTheChannelNames(t *testing.T) {
 		t.Fatal("a call without a sender left a request behind")
 	}
 
-	if out := peerCallAs(t, attic, tower, "/api/group/peer/roles/ask", ask); out["ok"] != true || out["state"] != store.RoleAsked {
+	seed := pinnedRoleSeed(t, attic, tower)
+	signed := signedRoleAsk(t, attic, seed, tower, peerRoleAsk{Name: "tower", Role: store.RoleFetcher, Sections: []string{"containers"}}, time.Now().UnixMilli())
+	if out := peerCallAs(t, attic, tower, "/api/group/peer/roles/ask", signed); out["ok"] != true || out["state"] != store.RoleAsked {
 		t.Fatalf("ask = %v", out)
 	}
 	all, _ := attic.st.ListRoleRequests()
@@ -344,13 +348,15 @@ func TestARoleCallIsBoundToTheSenderTheChannelNames(t *testing.T) {
 		t.Fatalf("requests = %+v, want one under the sender the channel named", all)
 	}
 
-	for name, bad := range map[string]map[string]any{
-		"an unknown role":    {"role": "admin", "sections": []string{"containers"}},
-		"no section":         {"role": store.RoleFetcher, "sections": []string{}},
-		"an unknown section": {"role": store.RoleFetcher, "sections": []string{"settings"}},
-		"an unknown store":   {"role": store.RoleReceiver, "sections": []string{"containers"}, "store": "tape"},
+	counter := time.Now().UnixMilli()
+	for name, bad := range map[string]peerRoleAsk{
+		"an unknown role":    {Role: "admin", Sections: []string{"containers"}},
+		"no section":         {Role: store.RoleFetcher, Sections: []string{}},
+		"an unknown section": {Role: store.RoleFetcher, Sections: []string{"settings"}},
+		"an unknown store":   {Role: store.RoleReceiver, Sections: []string{"containers"}, Store: "tape"},
 	} {
-		if out := peerCallAs(t, attic, tower, "/api/group/peer/roles/ask", bad); out["ok"] != false {
+		counter++
+		if out := peerCallAs(t, attic, tower, "/api/group/peer/roles/ask", signedRoleAsk(t, attic, seed, tower, bad, counter)); out["ok"] != false {
 			t.Errorf("an ask with %s = %v, want it refused", name, out)
 		}
 	}
@@ -392,7 +398,17 @@ func TestADirectCallCarriesItsSenderFromTheSignedHeader(t *testing.T) {
 	}
 	tower.svc.pairing().NoteAddress(attic.id(t), srv.URL)
 
+	seed, err := tower.svc.depositSeed()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := attic.st.PinMemberKey(tower.id(t), keydeposit.OwnerKey(seed)); err != nil {
+		t.Fatal(err)
+	}
 	ask := peerRoleAsk{Name: "tower", Role: store.RoleFetcher, Sections: []string{"containers"}, Renew: true}
+	if ask.peerProof, err = tower.svc.signCall(keydeposit.ProofRoleAsk, attic.id(t), ask.signed()); err != nil {
+		t.Fatal(err)
+	}
 	var ans peerRoleState
 	if err := tower.svc.callMember(context.Background(), attic.id(t), http.MethodPost, "/api/group/peer/roles/ask", ask, &ans); err != nil {
 		t.Fatal(err)

@@ -20,6 +20,7 @@ const (
 	ProofDrop = "drop"
 	// ProofKey is a member's answer to the question which key it signs with.
 	ProofKey           = "key"
+	ProofRoleAsk       = "role-ask"
 	ProofRoleAnswer    = "role-answer"
 	ProofRoleWithdraw  = "role-withdraw"
 	ProofPairing       = "pairing"
