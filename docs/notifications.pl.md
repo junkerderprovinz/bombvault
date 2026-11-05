@@ -9,20 +9,20 @@ BombVault potrafi powiedzieć Ci, kiedy kopia się nie udała, kiedy się udała
 
 Karta **Powiadomienia** ustawia reguły dla wszystkich kanałów naraz:
 
-- **Powiadom**: **Nigdy**, **Tylko przy niepowodzeniu** albo **Przy sukcesie i niepowodzeniu**, dla każdego kanału poniżej.
+- **Powiadom**: **Nigdy**, **Tylko przy niepowodzeniu** albo **Przy sukcesie i niepowodzeniu**, dla każdego kanału poniżej. Świeża instalacja zaczyna od **Tylko przy niepowodzeniu**, więc kanał, który wypełnisz, powie Ci, gdy kopia się zepsuje.
 - **Podsumowuj zaplanowane przebiegi**: jedna wiadomość na zaplanowany przebieg, na przykład *42 z 45 się udało*, zamiast jednej na kontener lub maszynę wirtualną. Kopia uruchomiona ręcznie nadal wysyła własną wiadomość. Zamrożony gość, nieudane przechowywanie albo przekroczony budżet wzrostu wychodzą od razu, nawet przy włączonych podsumowaniach.
 - **Powiadamiaj o aktualizacji kontenera**: jedna wiadomość dla każdego kontenera, który **Aktualizuj kontenery po udanej kopii zapasowej** przeniosło na nowszy obraz, żebyś mógł sprawdzić, czy nadal działa.
-- **Zgłaszaj opóźnione kopie zapasowe**: raz dziennie o 09:00 BombVault sprawdza, czy włączona kopia jest spóźniona, czyli starsza niż dwukrotność jej harmonogramu, i wysyła jedną wiadomość na każdy przypadek. Następna udana kopia to czyści.
+- **Zgłaszaj opóźnione kopie zapasowe**: raz dziennie o 09:00 BombVault sprawdza, czy włączona kopia jest spóźniona, czyli starsza niż dwukrotność jej harmonogramu, i wysyła jedną wiadomość na każdy przypadek, z nazwą elementu, który został w tyle. Następna udana kopia to czyści.
 - **Powiadomienia Unraid**: wysyła do własnego systemu powiadomień Unraid, który może przekazywać dalej do Pushover, e-maila albo Discorda. Działa przez połączenie SSH z **Ustawienia, Integracje, SSH hosta**, więc ten klucz musi być autoryzowany. Na TrueNAS i innych hostach pozostaje wyłączone.
-- **Cotygodniowe podsumowanie**: jedno podsumowanie tygodniowo z liczbą przebiegów, nowymi danymi kopii, informacją, czy kopie poza siedzibą są aktualne, i najczęstszymi błędami. Jego plan jest przyciskiem jak każdy inny plan, a **Wyłączone** go wyłącza. Zobacz [Harmonogramy](schedules.md#plans).
+- **Cotygodniowe podsumowanie**: jedno podsumowanie tygodniowo z liczbą przebiegów, nowymi danymi kopii, spóźnionymi sekcjami, informacją, czy kopie poza siedzibą są aktualne, i najczęstszymi błędami. Jego plan jest przyciskiem jak każdy inny plan, a **Wyłączone** go wyłącza. Zobacz [Harmonogramy](schedules.md#plans).
 
 To, które anomalie wysyłają wiadomość, ustawia się w **Ustawienia, Weryfikacja**, zobacz [Anomalie](anomalies.md). Odroczona kopia wysyła jedną wiadomość, gdy zaczyna czekać, i jedną, gdy oczekiwanie się kończy, a nie jedną na każdą próbę.
 
-**Wyślij test** na dole karty wysyła testową wiadomość przez każdy włączony kanał, z wartościami takimi, jakie stoją w formularzu.
+**Wyślij test** na dole karty wysyła testową wiadomość przez każdy włączony kanał, z wartościami takimi, jakie stoją w formularzu, i wymienia każdy kanał, który zawiódł. Kontrola Healthchecks dostaje wpis w swoim dzienniku, który nie zmienia jej stanu.
 
 ## Kanały {#channels}
 
-Każdy kanał ma własny przełącznik w karcie **Kanały**, a jego pola pojawiają się po włączeniu. Każdy kanał wysyła osobno, z własnym limitem czasu, więc jeden host, który nigdy nie odpowiada, nie wstrzymuje pozostałych, a wiadomość, której żaden kanał nie przyjął, jest próbowana ponownie.
+Każdy kanał ma własny przełącznik w karcie **Kanały**, a jego pola pojawiają się po włączeniu. Każdy kanał wysyła osobno, z własnym limitem czasu, więc jeden host, który nigdy nie odpowiada, nie wstrzymuje pozostałych. Alert o opóźnieniu, budżecie albo anomalii, którego żaden kanał nie przyjął, jest wysyłany ponownie, tak samo jak cotygodniowe podsumowanie. Wiadomość o pojedynczej kopii albo podsumowanie przebiegu wychodzi tylko raz.
 
 | Kanał | Pola | Uwagi |
 |---|---|---|
@@ -36,7 +36,9 @@ Sekrety, takie jak token Matrix, token aplikacji Gotify i hasło SMTP, są przec
 
 ## Healthchecks {#healthchecks}
 
-Usługa taka jak [Healthchecks.io](https://healthchecks.io) podnosi alarm, gdy BombVault przestaje się meldować. Wklej **Adres URL pingu** tej kontroli, a BombVault będzie ją pingował przez cały cykl życia każdej kopii: na początku, a potem po sukcesie albo z `/fail`. Robi to zawsze, gdy adres jest ustawiony, bez względu na **Powiadom**, więc kontrola pozostaje zielona po sukcesie nawet przy wiadomościach tylko o niepowodzeniach.
+Usługa taka jak [Healthchecks.io](https://healthchecks.io) podnosi alarm, gdy BombVault przestaje się meldować. Wklej **Adres URL pingu** tej kontroli, a BombVault będzie ją pingował przez cały cykl życia każdej kopii: na początku, a potem po sukcesie albo z `/fail`. Robi to zawsze, gdy adres jest ustawiony, bez względu na **Powiadom**, więc kontrola pozostaje zielona po sukcesie nawet przy wiadomościach tylko o niepowodzeniach. Sekcja, która nie ma dokąd robić kopii, liczy się jako nieudana, więc jej kontrola robi się czerwona, zamiast dostać sukces.
+
+Sekcje z tym samym adresem dzielą jedną kontrolę. Gdy kopia jednej z nich się nie powiedzie, udane kopie pozostałych też pingują `/fail` i ją wymieniają, więc kontrola zostaje czerwona, dopóki ten element znów nie będzie miał udanej kopii albo dopóki nie potwierdzisz niepowodzenia w **Wymaga uwagi**.
 
 Sekcja może pingować własny adres: **Wyjątek** w karcie dodaje taki, a linia mówi **Wszystkie pozostałe sekcje pingują ten adres URL.**
 

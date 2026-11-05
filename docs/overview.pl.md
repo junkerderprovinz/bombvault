@@ -40,13 +40,13 @@ Każda włączona sekcja ma wiersz z czterema kontrolami:
 | Kontrola | Robi się zielona, gdy | Inne słowa, które możesz zobaczyć |
 |---|---|---|
 | **Lokalne** | ostatnia kopia jest aktualna | brak kopii, brak harmonogramu, ostatni przebieg się nie udał, kopia spóźniona, nie każdy element jest chroniony, kopia wkrótce |
-| **Poza siedzibą** | ostatnia kopia poza siedzibą jest aktualna | brak kopii poza siedzibą, kopiowanie trwa, kopia spóźniona, kopiowanie wstrzymane, jeszcze bez kopii, replika się nie udała |
+| **Poza siedzibą** | ostatnia kopia poza siedzibą jest aktualna | brak kopii poza siedzibą, kopiowanie trwa, kopia spóźniona, czeka na twoją decyzję, jeszcze bez kopii, replika się nie udała |
 | **Ochrona przed usunięciem** | test manipulacji dowiódł, że druga strona odmawia usuwania | brak, brak i ryzyko zaakceptowane, jeszcze nie udowodniona, test się nie udał, nie udowodniona, bo jej kontrola jest wyłączona |
 | **Testowe odtwarzanie** | przywracanie z kopii poza siedzibą się powiodło | nigdy nie uruchomione, trwa, nie powiodło się, spóźnione, tylko ręcznie, niemożliwe dla tej sekcji |
 
 Sekcja jest zielona tylko na podstawie sprawdzonych faktów. Kopia na tym serwerze nie liczy się jako poza siedzibą, a miejsce oznaczone **Akceptuj bez ochrony przed usunięciem** pokazuje szary pierścień zamiast bursztynowej kropki, więc kolor sekcji wynika z jej pozostałych kontroli.
 
-Sekcja z harmonogramem pokazuje **Jeszcze bez kopii zapasowej** i pozostaje neutralna, dopóki nie nadejdzie termin jej pierwszego przebiegu. Potem pokazuje **Zaległe** i alarmuje jeden raz. Sekcja, która nie ma czego kopiować, bo żaden harmonogram nie obejmuje żadnego z jej elementów, pokazuje **Bez harmonogramu** i nigdy nie jest zaległa.
+Sekcja z harmonogramem pokazuje **Jeszcze bez kopii zapasowej** i pozostaje neutralna, dopóki nie nadejdzie termin jej pierwszego przebiegu, liczony od ostatniego ustawienia jej planu. Potem pokazuje **Zaległe** i alarmuje jeden raz. **Zaległe** kieruje się elementem, który najbardziej został w tyle za własnym planem, więc sąsiad, który działa, nie zasłania tego, który stanął. Element, którego kontenera już nie ma albo którego nie obejmuje żaden harmonogram, się nie liczy. Element z własnym planem tygodniowym nie jest rozliczany z dziennego planu sekcji. Sekcja, która nie ma czego kopiować, bo żaden harmonogram nie obejmuje żadnego z jej elementów, pokazuje **Bez harmonogramu** i nigdy nie jest zaległa.
 
 Kliknięcie sekcji otwiera jej okno z opisem każdej kontroli, policzonymi elementami i przyciskiem **Uruchom testowe odtwarzanie** albo **Uruchom testowe odtwarzanie ponownie**. Pokazuje też **Reguła przycinania ustawiona** albo **Brak reguły przycinania**, a reguła przechowywania własnego folderu sekcji liczy się tak samo jak jej reguły poza siedzibą.
 

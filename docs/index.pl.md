@@ -23,7 +23,7 @@ Każdy kontener, każda maszyna wirtualna, zestaw folderów, dysk flash, każdy 
 | **Containers** | Katalog appdata wraz z definicją kontenera (obraz, zmienne środowiskowe, porty, etykiety, wolumeny). |
 | **Maszyny wirtualne** | Obraz(y) dysku VM, definicja XML oraz pamięć UEFI NVRAM, kopia tworzona przez SSH (bez montowania libvirt). |
 | **Flash** | Cały dysk USB flash (`/boot`): system operacyjny, licencja, konfiguracja macierzy, udziały, sieć i konfiguracja wtyczek. |
-| **Autokopia** | Własny katalog `/config` BombVault: baza ustawień, dane logowania do miejsc docelowych oraz para kluczy SSH libvirt. |
+| **Autokopia** | Własny katalog `/config` BombVault: baza ustawień, dane logowania do miejsc docelowych, para kluczy SSH libvirt, klucz i przypięte klucze hosta serwerów ZFS oraz certyfikaty. |
 | **Foldery** | Dowolny folder na serwerze jako zestaw folderów, każdy z opcjonalnymi wzorcami wykluczeń. |
 | **Zbiory danych ZFS** | Zbiór danych ze wszystkimi zbiorami pod nim, odczytany z jednej migawki ZFS i zapisany jak folder. Zobacz [Zbiory danych ZFS](zfs-datasets.md). |
 
@@ -102,4 +102,4 @@ Nazwa i identyfikacja wizualna nie są objęte licencją. AGPL obejmuje wyłącz
 - **Zgłoszenia:** [github.com/junkerderprovinz/bombvault/issues](https://github.com/junkerderprovinz/bombvault/issues)
 
 !!! warning "Kontrola nad hostem równoważna uprawnieniom root"
-    Poprzez gniazdo Docker BombVault może zatrzymywać, usuwać i odtwarzać kontenery oraz odczytywać i zapisywać appdata, a przy kopii maszyn wirtualnych loguje się do hosta przez SSH, aby uruchomić `virsh`. Każdy, kto może dotrzeć do jego interfejsu webowego, ma faktycznie uprawnienia root na hoście. Uruchamiaj BombVault wyłącznie w zaufanej, nieudostępnianej na zewnątrz sieci i ustaw hasło logowania w **Ustawienia, Bezpieczeństwo**. Zestaw odzyskiwania, depozyty kluczy i usuwanie kopii zapasowych w miejscu docelowym go wymagają. Zobacz [Konfiguracja](configuration.md#security-model), aby poznać pełny model bezpieczeństwa.
+    Poprzez gniazdo Docker BombVault może zatrzymywać, usuwać i odtwarzać kontenery oraz odczytywać i zapisywać appdata, a przy kopii maszyn wirtualnych loguje się do hosta przez SSH, aby uruchomić `virsh`. Każdy, kto może dotrzeć do jego interfejsu webowego, ma faktycznie uprawnienia root na hoście. Uruchamiaj BombVault wyłącznie w zaufanej, nieudostępnianej na zewnątrz sieci i ustaw hasło logowania w **Ustawienia, Bezpieczeństwo**. Zestaw odzyskiwania, depozyty kluczy, ZIP z flash, eksport kopii flash lub autokopii oraz usuwanie kopii zapasowych w miejscu docelowym go wymagają. Zobacz [Konfiguracja](configuration.md#security-model), aby poznać pełny model bezpieczeństwa.

@@ -11,7 +11,7 @@ Ta strona wymienia każdy kafelek i jego karty oraz odsyła do strony, która ob
 
 ## Ogólne {#general}
 
-- **Sekcje** włączają lub wyłączają każdą sekcję: **Containers**, **Maszyny wirtualne**, **Flash**, **Foldery**, **Zbiory danych ZFS** i **Autokopia**. Sekcja, która jest wyłączona, nie jest kopiowana, a jej elementy się nie liczą. **Flash** widać tylko na Unraid.
+- **Sekcje** włączają lub wyłączają każdą sekcję: **Containers**, **Maszyny wirtualne**, **Flash**, **Foldery**, **Zbiory danych ZFS** i **Autokopia**. Sekcja, która jest wyłączona, nie jest kopiowana według żadnego harmonogramu, także według własnego planu elementu, a jej elementy się nie liczą. **Utwórz kopię teraz** nadal działa. **Flash** widać tylko na Unraid.
 - **Containers** zawierają to, co dotyczy każdego kontenera, jak **Automatyczne zrzuty baz danych**. Wszystko, co dotyczy jednego kontenera, jest na jego stronie. Zobacz [Zrzuty baz danych](backups.md#database-dumps).
 
 ## Wygląd {#look}
@@ -97,6 +97,6 @@ Kilka rzeczy wymaga hasła logowania, jak zestaw odzyskiwania, depozyty kluczy i
 
 ## Info {#info}
 
-- **Wersja**: BombVault, GlimStone, restic i rclone, z **Sprawdź aktualizacje** i **Nowości**, które liczą zmiany, jakich jeszcze nie widziałeś, i otwierają listę zmian.
+- **Wersja**: BombVault, GlimStone, restic i rclone, z **Sprawdź aktualizacje** i **Nowości**, które liczą zmiany, jakich jeszcze nie widziałeś, i otwierają okno, które je wymienia.
 - **Pomoc**: **Podręcznik** otwiera tę dokumentację, a **Zgłoszenie błędu** pobiera ZIP z usuniętymi danymi wrażliwymi do zgłoszenia na GitHubie. Wymaga hasła logowania.
 - **O programie BombVault**: projekt, jego licencja i jak skontaktować się z autorem.

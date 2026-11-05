@@ -38,7 +38,7 @@ Kopia VM komunikuje się z libvirt przez SSH, nigdy przez montaż.
 
 ## Migawka VM na żywo nie została uruchomiona {#a-live-vm-snapshot-did-not-run}
 
-Migawki na żywo wymagają agenta gościa qemu zainstalowanego w VM oraz dysku na `/mnt/cache` (lub `/mnt/diskX`), nie `/mnt/user`. Na wyłączonej VM tryb na żywo automatycznie wraca do płynnego. Płynna kopia wyłącza VM, tworzy kopię dysków, a następnie ją restartuje, więc jest zawsze spójna. Czeka do dziesięciu minut, aż gość się wyłączy, i nigdy nie wyłącza go siłą, więc gość Windows instalujący aktualizacje nie zostaje przerwany w połowie. Gość, który po tym czasie wciąż działa, nie jest ruszany, a ta kopia kończy się błędem z podaniem przyczyny.
+Migawki na żywo wymagają dysku na `/mnt/cache` (lub `/mnt/diskX`), nie `/mnt/user`. Z agentem gościa qemu w VM migawka jest wykonywana z wyciszeniem, a bez niego jest spójna na poziomie awarii. Na wyłączonej VM tryb na żywo automatycznie wraca do płynnego. Płynna kopia wyłącza VM, tworzy kopię dysków, a następnie ją restartuje, więc jest zawsze spójna. Czeka do dziesięciu minut, aż gość się wyłączy, i nigdy nie wyłącza go siłą, więc gość Windows instalujący aktualizacje nie zostaje przerwany w połowie. Gość, który po tym czasie wciąż działa, nie jest ruszany, a ta kopia kończy się błędem z podaniem przyczyny.
 
 ## Kopia zapasowa zawiodła z "repository is already locked" {#a-backup-failed-with-repository-is-already-locked}
 
@@ -127,6 +127,10 @@ Wstrzymuje je otwarta krytyczna anomalia: źródło elementu jest prawie puste, 
 
 Ta sama przyczyna: czyszczenie nie rusza starych kopii elementu z taką anomalią i wymienia go w swoim komunikacie. Wszystko inne jest czyszczone jak zwykle.
 
+## Kopia kończy się błędem „on no mounted pool or share” {#no-mounted-pool}
+
+Na Unraid `/mnt` żyje w pamięci, więc folder w nim, na którym nie jest zamontowana żadna pula, znika przy następnym restarcie i jest ukryty, gdy pula wróci. BombVault odmawia zapisania tam kopii albo ZIP z flash, także wtedy, gdy w tym folderze leży już repozytorium z wcześniejszego zapisu. Zamontuj pulę i uruchom kopię ponownie.
+
 ## Import historii mówi, że nie udało się odczytać repozytorium {#history-import-says-a-repository-could-not-be-read}
 
 Po aktualizacji BombVault raz odczytuje rozmiary wcześniejszych kopii z każdego repozytorium. Repozytorium, które było wtedy nieosiągalne, na przykład niedziałające zdalne miejsce docelowe albo niezamontowany udział, pojawia się na karcie **Anomalie** w **Ustawienia, Weryfikacja** i jest ponawiane raz dziennie. W tym czasie jego elementy uczą się na nowych kopiach.
@@ -177,15 +181,15 @@ Cel ma migawki nowsze niż najnowsza, którą dzieli z tym serwerem, na przykła
 
 BombVault podąża za łańcuchem bazowym każdego dysku i kopiuje każdy plik w nim. Łańcuch, za którym nie da się dojść do końca, kończy kopię błędem zamiast pominąć część dysku, a komunikat podaje plik. Sprawdź, czy plik istnieje pod `/mnt` i czy migawka jest nadal wymieniona w VM Manager. Pliku spoza Host Data nie da się odczytać w ogóle. Zobacz [Maszyny wirtualne z migawkami Unraid](vm-backup-ssh-setup.md#unraid-snapshots).
 
-## Kopie poza siedzibą są wstrzymane po odbudowie {#copies-paused}
+## Kopie poza siedzibą czekają na twoją decyzję po odbudowie {#copies-paused}
 
-Po **Odkryj kopie zapasowe** albo Kreatorze awaryjnym bez przywróconych ustawień kopie poza siedzibą każdej odbudowanej sekcji czekają, bo BombVault nie wie już, które elementy pominąłeś. Mówi o tym przegląd. Naciśnij **Potwierdź domyślne** w **Miejsca docelowe według sekcji**, sprawdź podgląd i pomiń to, co ma zostać pominięte. Import pliku ustawień nie kończy wstrzymania. Zobacz [Po odbudowie](offsite-recovery.md#after-a-rebuild).
+Po **Odkryj kopie zapasowe** albo Kreatorze awaryjnym bez przywróconych ustawień, albo gdy sekcja znajduje własne kopie sprzed tej bazy danych, kopie poza siedzibą tej sekcji czekają, bo BombVault nie wie już, które elementy pominąłeś. **Wymaga uwagi** i strona miejsca docelowego pytają o to. Naciśnij **Przejmij jako własne kopie tego serwera**, żeby kontynuować, albo **Najpierw sprawdź reguły**, żeby wcześniej przejrzeć reguły sekcji. Import pliku ustawień nie podejmuje decyzji za Ciebie. Zobacz [Po odbudowie](offsite-recovery.md#after-a-rebuild).
 
 ## Powiadomienia nie docierają {#notifications-do-not-arrive}
 
 Zacznij od **Wyślij test** w **Ustawienia, Powiadomienia**. Linia pod kartą mówi, co się stało.
 
-- **Nic nie jest wysyłane.** Sprawdź **Powiadom**. Przy **Nigdy** nic nie wychodzi, a przy **Tylko przy niepowodzeniu** udany przebieg milczy. Przy włączonym **Podsumowuj zaplanowane przebiegi** zaplanowany przebieg wysyła na końcu jedno podsumowanie.
+- **Nic nie jest wysyłane.** Sprawdź **Powiadom**. Przy **Nigdy** nie wychodzi żadna wiadomość, tylko pingi adresu Healthchecks, a przy **Tylko przy niepowodzeniu** udany przebieg milczy. Przy włączonym **Podsumowuj zaplanowane przebiegi** zaplanowany przebieg wysyła na końcu jedno podsumowanie.
 - **Nowy adres.** Po zmianie serwera Matrix, Gotify albo poczty pole prosi o token lub hasło ponownie, a nowy adres zapisuje się dopiero po ich wpisaniu. BombVault nie wysyła starego sekretu w nowe miejsce.
 - **Gotify** mówi, że serwer odrzucił token aplikacji: skopiuj go ponownie z aplikacji w Gotify. **URL serwera** to adres bazowy, bez `/message`.
 - **Webhook:** sprawdź, czy **Format Webhook** pasuje do usługi. Adres Discorda wymaga **Discord**, a ntfy wymaga **ntfy**.
