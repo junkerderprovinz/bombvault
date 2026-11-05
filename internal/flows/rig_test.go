@@ -30,6 +30,7 @@ import (
 	"slices"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"syscall"
 	"testing"
 	"time"
@@ -251,14 +252,25 @@ func (b *bombvault) stop() {
 	b.proc = nil
 }
 
+// firstPort is below the range Linux and Windows hand out for port 0.
+const firstPort = 20000
+
+var portsHanded atomic.Int32
+
+// freePort gives every install a port of its own. A port the system picks is
+// free again as soon as the listener closes, so two cells starting together
+// could get the same one and then talk to each other's server.
 func freePort(t *testing.T) string {
 	t.Helper()
-	l, err := net.Listen("tcp", "127.0.0.1:0")
-	if err != nil {
-		t.Fatal(err)
+	for range 10000 {
+		port := fmt.Sprint(firstPort + portsHanded.Add(1))
+		if l, err := net.Listen("tcp", "127.0.0.1:"+port); err == nil {
+			_ = l.Close()
+			return port
+		}
 	}
-	defer func() { _ = l.Close() }()
-	return fmt.Sprint(l.Addr().(*net.TCPAddr).Port)
+	t.Fatal("no free port")
+	return ""
 }
 
 // syncBuffer collects the output of a process that writes while a test reads.
