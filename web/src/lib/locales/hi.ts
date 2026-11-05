@@ -1268,6 +1268,7 @@ const hi: Partial<Translations> = {
   "runReason.dbimportFailed": "आयात उपकरण ने एक त्रुटि बताई",
   "runReason.dbimportKeptOld": "पिछला डेटा फ़ोल्डर रखा गया",
   "runReason.dataOutsideHost": "डेटा Host Data के बाहर है और उसका बैकअप नहीं लिया गया",
+  "runReason.dataMissing": "डेटा फ़ोल्डर नहीं मिले और उनका बैकअप नहीं लिया गया",
   "runReason.filesUnreadable": "कुछ फ़ाइलें पढ़ी नहीं जा सकीं और इस बैकअप में नहीं हैं",
   "runReason.foldersMissing": "चुने गए फ़ोल्डर इस बैकअप में नहीं हैं",
   "runReason.backupEmpty": "इस बैकअप में कोई फ़ाइल नहीं है, जबकि पिछले बैकअप में थीं",

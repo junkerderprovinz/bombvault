@@ -70,16 +70,39 @@ type stackFolder struct {
 	dir, member string
 }
 
-// backupStackDir snapshots one project directory into the containers repo under
-// the stack tag. It stops nothing: the directory holds the compose file and the
-// stack's shared files, and each member has already been stopped and started
-// around its own data.
+// stackHome is where a project folder's next backup goes: where the section's
+// default points, since the folder follows the section like an entry that made
+// no choice of its own.
+func (s *Service) stackHome(settings store.Settings) (string, error) {
+	p, err := s.readPlacement(settings, "containers")
+	if err != nil {
+		return "", err
+	}
+	repoID, _ := p.effectiveHome(store.HomeState{Choice: store.RepoOpen})
+	if repoID == store.HomeNowhere {
+		return "", ErrNoPlace
+	}
+	repo, err := s.itemRepoPath(repoID, func() (string, error) { return s.containersRepoPath(settings) })
+	if err != nil {
+		return "", err
+	}
+	if repoID == "" {
+		if err := s.refuseOwnFolderOff(settings, "containers"); err != nil {
+			return "", err
+		}
+	}
+	return repo, nil
+}
+
+// backupStackDir snapshots one project directory under the stack tag. It stops
+// nothing: the directory holds the compose file and the stack's shared files, and
+// each member has already been stopped and started around its own data.
 func (s *Service) backupStackDir(ctx context.Context, project string, folder stackFolder) error {
 	settings, err := s.store.GetSettings()
 	if err != nil {
 		return fmt.Errorf("stack %s: read settings: %w", project, err)
 	}
-	repo, err := s.containersRepoPath(settings)
+	repo, err := s.stackHome(settings)
 	if err != nil {
 		return fmt.Errorf("stack %s: %w", project, err)
 	}
@@ -97,7 +120,7 @@ func (s *Service) backupStackDir(ctx context.Context, project string, folder sta
 		s.notifyBackup(notify.WithHealthchecksSuppressed(ctx), "stack", project, "", true, backup.Summary{Emptied: true}, nil)
 		return nil
 	}
-	sum, err := s.engine.Backup(ctx, repo, []string{folder.dir}, []string{tag, "p1"}, mode)
+	sum, err := s.engine.Backup(ctx, repo, []string{folder.dir}, withTags([]string{tag, "p1"}, s.directTags(settings, "containers", repo)), mode)
 	if err != nil {
 		return fmt.Errorf("stack %s: %w", project, err)
 	}
@@ -126,6 +149,24 @@ func (s *Service) stackFolderEmptied(ctx context.Context, repo string, mode rest
 		return true
 	}
 	return slices.ContainsFunc(snaps, heldData)
+}
+
+// recordStackFailure makes a project folder that was not backed up as visible as
+// an entry that was not. It has no run of its own, so the member whose run speaks
+// for it gets a failed one, and whoever hears of failed backups hears of it.
+func (s *Service) recordStackFailure(ctx context.Context, project string, folder stackFolder, cause error) {
+	if ctx.Err() != nil {
+		return
+	}
+	tg, err := s.store.GetTargetByContainer(folder.member)
+	if err != nil {
+		log.Printf("api: stack backup: no target for %q to carry the failure: %v", folder.member, err) //nolint:gosec // G706: name is %q-quoted
+		return
+	}
+	s.recordPreflightFailure(ctx, "Stack backup", project, tg.ID, cause)
+	// Not on ctx: a round has sent its summary and its ping by now, and a summary
+	// would swallow the message on a scheduled context.
+	s.notifyBackup(context.Background(), "stack", project, "", false, backup.Summary{}, cause)
 }
 
 // noteOnStackMember puts a warning on the newest backup run of a stack's member.
@@ -164,6 +205,7 @@ func (s *Service) BackupStacks(ctx context.Context, names []string) error {
 	for _, p := range projects {
 		if err := s.backupStackDir(ctx, p, dirs[p]); err != nil {
 			log.Printf("api: stack backup: %v", err)
+			s.recordStackFailure(ctx, p, dirs[p], err)
 			failed = append(failed, p)
 			continue
 		}
@@ -177,10 +219,12 @@ func (s *Service) BackupStacks(ctx context.Context, names []string) error {
 
 // BackupStacksAfterBulk backs up the stacks of a scheduled container round. Their
 // retention forgets without --prune, because the round prunes once afterwards.
-func (s *Service) BackupStacksAfterBulk(ctx context.Context, names []string) {
-	if err := s.BackupStacks(WithBulkReplicateSuppressed(ctx), names); err != nil {
+func (s *Service) BackupStacksAfterBulk(ctx context.Context, names []string) error {
+	err := s.BackupStacks(WithBulkReplicateSuppressed(ctx), names)
+	if err != nil {
 		log.Printf("api: %v", err)
 	}
+	return err
 }
 
 // stackDir is the newest snapshot of a project's folder at one source, and what
@@ -193,26 +237,54 @@ type stackDir struct {
 }
 
 // latestStackDir looks for the project's folder at the containers repository
-// the source names. found is false for a project never backed up as a stack.
+// the source names and, for the local source, also where the section's default
+// points, since a folder follows that and its older backups stay behind. found
+// is false for a project never backed up as a stack.
 func (s *Service) latestStackDir(ctx context.Context, project, source string) (stackDir, error) {
 	settings, repo, err := s.domainRepoSource("containers", source)
 	if err != nil {
 		return stackDir{}, err
 	}
-	d := stackDir{repo: repo, mode: s.repoModeFor(settings, "containers", source, repo)}
-	snaps, err := s.listRepo(ctx, repo, d.mode)
-	if err != nil {
-		return stackDir{}, err
-	}
-	want := stackSnapshotTag(project)
-	for _, sn := range snaps {
-		// Times are RFC3339 from restic, so a string compare orders them; taking
-		// the max avoids depending on the listing order.
-		if slices.Contains(sn.Tags, want) && (!d.found || sn.Time > d.snap.Time) {
-			d.snap, d.found = sn, true
+	best := stackDir{}
+	home := ""
+	if !isOffsiteSource(source) {
+		if home, err = s.stackHome(settings); err != nil {
+			home = ""
 		}
 	}
-	return d, nil
+	for _, r := range []string{repo, home} {
+		if r == "" || (r == repo && best.repo != "") {
+			continue
+		}
+		d := stackDir{repo: r, mode: s.repoModeFor(settings, "containers", source, r)}
+		if r != repo {
+			d.mode = s.primaryModeFor(settings, "containers", r)
+		}
+		snaps, lErr := s.listRepo(ctx, r, d.mode)
+		if lErr != nil {
+			// The own folder of a section that backs up elsewhere may not exist
+			// at all, which says nothing about the folder's backups there.
+			if home == "" || home == repo {
+				return stackDir{}, lErr
+			}
+			continue
+		}
+		want := stackSnapshotTag(project)
+		for _, sn := range snaps {
+			// Times are RFC3339 from restic, so a string compare orders them; taking
+			// the max avoids depending on the listing order.
+			if slices.Contains(sn.Tags, want) && (!d.found || sn.Time > d.snap.Time) {
+				d.snap, d.found = sn, true
+			}
+		}
+		if d.found && (!best.found || d.snap.Time > best.snap.Time) {
+			best = d
+		}
+		if best.repo == "" {
+			best.repo, best.mode = d.repo, d.mode
+		}
+	}
+	return best, nil
 }
 
 // guardStackDir is what the restore of a project's folder refuses on. The

@@ -1224,6 +1224,7 @@ const no: Partial<Translations> = {
   "runReason.dbimportFailed": "importverktøyet meldte en feil",
   "runReason.dbimportKeptOld": "den forrige datamappen ble beholdt",
   "runReason.dataOutsideHost": "dataene ligger utenfor Host Data og ble ikke sikkerhetskopiert",
+  "runReason.dataMissing": "datamappene ble ikke funnet og ble ikke sikkerhetskopiert",
   "runReason.filesUnreadable": "noen filer kunne ikke leses og mangler i denne sikkerhetskopien",
   "runReason.foldersMissing": "valgte mapper mangler i denne sikkerhetskopien",
   "runReason.backupEmpty": "denne sikkerhetskopien inneholder ingen filer, mens tidligere sikkerhetskopier gjorde det",

@@ -1233,6 +1233,7 @@ const cs: Partial<Translations> = {
   "runReason.dbimportFailed": "nástroj pro import ohlásil chybu",
   "runReason.dbimportKeptOld": "předchozí složka s daty byla ponechána",
   "runReason.dataOutsideHost": "data jsou mimo Host Data a nebyla zálohována",
+  "runReason.dataMissing": "složky s daty nebyly nalezeny a nebyly zálohovány",
   "runReason.filesUnreadable": "některé soubory nešlo přečíst a v této záloze chybí",
   "runReason.foldersMissing": "vybrané složky v této záloze chybí",
   "runReason.backupEmpty": "tato záloha neobsahuje žádné soubory, dřívější zálohy je obsahovaly",

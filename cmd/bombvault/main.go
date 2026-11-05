@@ -318,6 +318,7 @@ func run() error {
 		log.Printf("main: turning the shared cloud sign-in into a saved one (tried again at the next start): %v", err)
 	}
 	svc.LinkTypedOwnFolders()
+	svc.NoteSectionPlans()
 	svc.StartGroup()
 	defer svc.StopGroup()
 	// Detect (or honor cfg.PlatformOverride, i.e. the PLATFORM env var) which
@@ -469,7 +470,9 @@ func run() error {
 	// container round rather than once per member. The scheduler runs it before
 	// the batched prune above, which reclaims what its retention forgets.
 	scheduler.SetStacksAfterBulkJob(func(names []string) {
-		svc.BackupStacksAfterBulk(context.Background(), names)
+		// The stack's failure is on record and sent already, and it does not stop
+		// the round's prune.
+		_ = svc.BackupStacksAfterBulk(context.Background(), names)
 	})
 	// A scheduled container whose app is busy waits outside its run, and is
 	// backed up on its own once the app is idle or the wait is over.

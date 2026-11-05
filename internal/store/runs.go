@@ -509,6 +509,10 @@ const (
 	// definition only.
 	NoteDataOutsideHost = "data folders outside Host Data were not backed up"
 
+	// NoteDataMissing names after ": " the data folders of a container that lie
+	// inside Host Data and are not there right now.
+	NoteDataMissing = "data folders that could not be found were not backed up"
+
 	// NoteFilesUnreadable is followed by ": " and restic's reason, which names
 	// a file it could not read.
 	NoteFilesUnreadable = "some files could not be read and are missing from this backup"

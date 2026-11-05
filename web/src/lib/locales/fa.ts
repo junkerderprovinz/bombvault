@@ -1268,6 +1268,7 @@ const fa: Partial<Translations> = {
   "runReason.dbimportFailed": "ابزار درون‌ریزی خطایی گزارش کرد",
   "runReason.dbimportKeptOld": "پوشه داده پیشین نگه داشته شد",
   "runReason.dataOutsideHost": "داده‌ها خارج از Host Data هستند و پشتیبان‌گیری نشدند",
+  "runReason.dataMissing": "پوشه‌های داده پیدا نشدند و پشتیبان‌گیری نشدند",
   "runReason.filesUnreadable": "برخی فایل‌ها خوانده نشدند و در این پشتیبان نیستند",
   "runReason.foldersMissing": "پوشه‌های انتخاب‌شده در این پشتیبان نیستند",
   "runReason.backupEmpty": "این پشتیبان هیچ فایلی ندارد، در حالی که پشتیبان‌های قبلی داشتند",

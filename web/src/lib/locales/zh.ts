@@ -1226,6 +1226,7 @@ const zh: Partial<Translations> = {
   "runReason.dbimportFailed": "导入工具报告了一个错误",
   "runReason.dbimportKeptOld": "已保留之前的数据文件夹",
   "runReason.dataOutsideHost": "数据位于 Host Data 之外，未备份",
+  "runReason.dataMissing": "找不到数据文件夹，未备份",
   "runReason.filesUnreadable": "部分文件无法读取，本次备份中缺少这些文件",
   "runReason.foldersMissing": "所选文件夹不在本次备份中",
   "runReason.backupEmpty": "本次备份没有文件，而之前的备份有",

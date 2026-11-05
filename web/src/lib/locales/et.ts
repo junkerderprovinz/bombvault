@@ -1268,6 +1268,7 @@ const et: Partial<Translations> = {
   "runReason.dbimportFailed": "imporditööriist teatas veast",
   "runReason.dbimportKeptOld": "varasem andmekaust jäeti alles",
   "runReason.dataOutsideHost": "andmed asuvad väljaspool Host Datat ega ole varundatud",
+  "runReason.dataMissing": "andmekaustu ei leitud ega varundatud",
   "runReason.filesUnreadable": "mõnda faili ei saanud lugeda ja need puuduvad sellest varukoopiast",
   "runReason.foldersMissing": "valitud kaustad puuduvad sellest varukoopiast",
   "runReason.backupEmpty": "selles varukoopias pole faile, varasemates olid",

@@ -1227,6 +1227,7 @@ const fr: Partial<Translations> = {
   "runReason.dbimportFailed": "l'outil d'import a signalé une erreur",
   "runReason.dbimportKeptOld": "le dossier de données précédent a été conservé",
   "runReason.dataOutsideHost": "les données sont hors de Host Data et n'ont pas été sauvegardées",
+  "runReason.dataMissing": "les dossiers de données sont introuvables et n'ont pas été sauvegardés",
   "runReason.filesUnreadable": "certains fichiers n'ont pas pu être lus et manquent dans cette sauvegarde",
   "runReason.foldersMissing": "des dossiers sélectionnés manquent dans cette sauvegarde",
   "runReason.backupEmpty": "cette sauvegarde ne contient aucun fichier, alors que les précédentes en contenaient",

@@ -1268,6 +1268,7 @@ const lt: Partial<Translations> = {
   "runReason.dbimportFailed": "importo įrankis pranešė apie klaidą",
   "runReason.dbimportKeptOld": "ankstesnis duomenų aplankas paliktas",
   "runReason.dataOutsideHost": "duomenys yra už Host Data ribų ir nebuvo sukurtos jų atsarginės kopijos",
+  "runReason.dataMissing": "duomenų aplankai nerasti ir nebuvo sukurtos jų atsarginės kopijos",
   "runReason.filesUnreadable": "kai kurių failų nepavyko perskaityti, todėl jų nėra šioje atsarginėje kopijoje",
   "runReason.foldersMissing": "pasirinktų aplankų nėra šioje atsarginėje kopijoje",
   "runReason.backupEmpty": "šioje atsarginėje kopijoje nėra failų, nors ankstesnėse buvo",

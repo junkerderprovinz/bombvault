@@ -1268,6 +1268,7 @@ const ca: Partial<Translations> = {
   "runReason.dbimportFailed": "l'eina d'importació ha informat d'un error",
   "runReason.dbimportKeptOld": "s'ha conservat la carpeta de dades anterior",
   "runReason.dataOutsideHost": "les dades són fora de Host Data i no s'han copiat",
+  "runReason.dataMissing": "no s'han trobat les carpetes de dades i no s'han copiat",
   "runReason.filesUnreadable": "alguns fitxers no s'han pogut llegir i falten en aquesta còpia de seguretat",
   "runReason.foldersMissing": "falten carpetes seleccionades en aquesta còpia de seguretat",
   "runReason.backupEmpty": "aquesta còpia de seguretat no conté fitxers, mentre que les anteriors en contenien",

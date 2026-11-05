@@ -1224,6 +1224,7 @@ const pt: Partial<Translations> = {
   "runReason.dbimportFailed": "a ferramenta de importação comunicou um erro",
   "runReason.dbimportKeptOld": "a pasta de dados anterior foi mantida",
   "runReason.dataOutsideHost": "os dados estão fora de Host Data e não foram copiados",
+  "runReason.dataMissing": "as pastas de dados não foram encontradas e não foram copiadas",
   "runReason.filesUnreadable": "alguns ficheiros não puderam ser lidos e faltam neste backup",
   "runReason.foldersMissing": "faltam pastas selecionadas neste backup",
   "runReason.backupEmpty": "este backup não contém ficheiros, enquanto os anteriores continham",

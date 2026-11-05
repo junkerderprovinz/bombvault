@@ -1228,6 +1228,7 @@ const hu: Partial<Translations> = {
   "runReason.dbimportFailed": "az importáló eszköz hibát jelzett",
   "runReason.dbimportKeptOld": "a korábbi adatmappa megmaradt",
   "runReason.dataOutsideHost": "az adatok a Host Data területén kívül vannak, és nem készült róluk mentés",
+  "runReason.dataMissing": "az adatmappák nem találhatók, és nem készült róluk mentés",
   "runReason.filesUnreadable": "néhány fájlt nem sikerült beolvasni, és hiányoznak ebből a mentésből",
   "runReason.foldersMissing": "kiválasztott mappák hiányoznak ebből a mentésből",
   "runReason.backupEmpty": "ez a mentés nem tartalmaz fájlokat, a korábbiak viszont igen",

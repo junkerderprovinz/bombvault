@@ -1218,6 +1218,7 @@ const ko: Partial<Translations> = {
   "runReason.dbimportFailed": "가져오기 도구가 오류를 알렸습니다",
   "runReason.dbimportKeptOld": "이전 데이터 폴더를 남겨 두었습니다",
   "runReason.dataOutsideHost": "데이터가 Host Data 밖에 있어 백업되지 않았습니다",
+  "runReason.dataMissing": "데이터 폴더를 찾을 수 없어 백업되지 않았습니다",
   "runReason.filesUnreadable": "일부 파일을 읽지 못해 이 백업에서 빠졌습니다",
   "runReason.foldersMissing": "선택한 폴더가 이 백업에서 빠졌습니다",
   "runReason.backupEmpty": "이 백업에는 파일이 없지만 이전 백업에는 있었습니다",

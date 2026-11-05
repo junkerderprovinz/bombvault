@@ -1268,6 +1268,7 @@ const is: Partial<Translations> = {
   "runReason.dbimportFailed": "innflutningstólið tilkynnti villu",
   "runReason.dbimportKeptOld": "fyrri gagnamöppunni var haldið",
   "runReason.dataOutsideHost": "gögnin eru utan Host Data og voru ekki afrituð",
+  "runReason.dataMissing": "gagnamöppurnar fundust ekki og voru ekki afritaðar",
   "runReason.filesUnreadable": "ekki tókst að lesa sumar skrár og þær vantar í þetta afrit",
   "runReason.foldersMissing": "valdar möppur vantar í þetta afrit",
   "runReason.backupEmpty": "þetta afrit inniheldur engar skrár en fyrri afrit gerðu það",

@@ -1268,6 +1268,7 @@ const eu: Partial<Translations> = {
   "runReason.dbimportFailed": "inportazio-tresnak errore bat eman du",
   "runReason.dbimportKeptOld": "aurreko datu-karpeta gorde da",
   "runReason.dataOutsideHost": "datuak Host Data-tik kanpo daude eta ez dira babeskopiatu",
+  "runReason.dataMissing": "ez dira datu-karpetak aurkitu eta ez dira babeskopiatu",
   "runReason.filesUnreadable": "fitxategi batzuk ezin izan dira irakurri eta babeskopia honetatik falta dira",
   "runReason.foldersMissing": "hautatutako karpetak falta dira babeskopia honetatik",
   "runReason.backupEmpty": "babeskopia honek ez du fitxategirik, aurrekoek bazuten",

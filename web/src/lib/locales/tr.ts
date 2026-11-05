@@ -1235,6 +1235,7 @@ const tr: Partial<Translations> = {
   "runReason.dbimportFailed": "içe aktarma aracı bir hata bildirdi",
   "runReason.dbimportKeptOld": "önceki veri klasörü korundu",
   "runReason.dataOutsideHost": "veriler Host Data dışında ve yedeklenmedi",
+  "runReason.dataMissing": "veri klasörleri bulunamadı ve yedeklenmedi",
   "runReason.filesUnreadable": "bazı dosyalar okunamadı ve bu yedekte yok",
   "runReason.foldersMissing": "seçilen klasörler bu yedekte yok",
   "runReason.backupEmpty": "bu yedekte dosya yok, önceki yedeklerde vardı",

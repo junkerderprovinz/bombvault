@@ -1233,6 +1233,7 @@ const es: Partial<Translations> = {
   "runReason.dbimportFailed": "la herramienta de importación informó de un error",
   "runReason.dbimportKeptOld": "se conservó la carpeta de datos anterior",
   "runReason.dataOutsideHost": "los datos están fuera de Host Data y no se copiaron",
+  "runReason.dataMissing": "no se encontraron las carpetas de datos y no se copiaron",
   "runReason.filesUnreadable": "algunos archivos no se pudieron leer y faltan en esta copia de seguridad",
   "runReason.foldersMissing": "faltan carpetas seleccionadas en esta copia de seguridad",
   "runReason.backupEmpty": "esta copia de seguridad no contiene archivos, mientras que las anteriores sí",

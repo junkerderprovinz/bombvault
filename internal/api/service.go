@@ -6204,7 +6204,8 @@ func (s *Service) resolveAppdataPaths(name string, in model.Inspect) []string {
 // creates a missing bind source, so a path it reports that BombVault cannot see
 // lies on storage the host mount does not carry, such as TrueNAS ixVolume data
 // under /mnt/.ix-apps. System mounts (/etc/localtime, the Docker socket) are not
-// data and stay out. A Docker volume is data wherever it lives, and the
+// data and stay out. A Compose project's own folder outside Host Data counts, as
+// no stack backup reaches it. A Docker volume is data wherever it lives, and the
 // daemon's own volumes under /var/lib/docker are out of reach of a Host Data
 // at /mnt. An anonymous volume stays out, and so does a mount that one of the
 // container's exclude lines covers by either of its paths: the user has said
@@ -6238,7 +6239,8 @@ func (s *Service) unreachableDataMounts(in model.Inspect) []model.Mount {
 			continue
 		}
 		src := path.Clean(m.Source)
-		if m.Type == "bind" && !labelOverride && !matchesAnyDataRootSegment(src, s.cfg.DataRootSegments) && !strings.HasPrefix(src, "/mnt/") {
+		if m.Type == "bind" && !labelOverride && !matchesAnyDataRootSegment(src, s.cfg.DataRootSegments) && !strings.HasPrefix(src, "/mnt/") &&
+			isSystemPath(src) && !underComposeProject(src, in.Config.Labels) {
 			continue
 		}
 		if cp, ok := s.toContainerPath(src); ok {
@@ -6370,10 +6372,52 @@ func (s *Service) hostPathsIn(msg string) string {
 }
 
 func (s *Service) toHostPath(cp string) string {
+	if project, ok := composeProjectDataDir(in.Config.Labels); ok && !isSystemPath(path.Clean(project)) {
+		clean := path.Clean(project)
+		_, inHostData := s.toContainerPath(clean)
+		if !inHostData && !seen[clean] && !slices.ContainsFunc(excludes, func(line string) bool { return s.excludeNamesHostSource(line, clean) }) {
+			out = append(out, clean)
+		}
+	}
 	mountRoot := path.Clean(s.cfg.HostMountRoot)
 	srcRoot := path.Clean(s.cfg.HostSourceRoot)
 	p := path.Clean(cp)
 	if p == mountRoot {
+// partitionDataOutside splits what dataOutsideHostMount found into folders outside
+// Host Data and folders inside it that are not there right now, which take
+// different fixes.
+func (s *Service) partitionDataOutside(unreachable []string) (outside, missing []string) {
+	for _, src := range unreachable {
+		if _, inHostData := s.toContainerPath(src); inHostData {
+			missing = append(missing, src)
+		} else {
+			outside = append(outside, src)
+		}
+	}
+	return outside, missing
+}
+
+// isSystemPath reports whether a bind source belongs to the operating system
+// rather than to an app's data.
+func isSystemPath(src string) bool {
+	for _, root := range []string{"/bin", "/boot", "/dev", "/etc", "/lib", "/lib64", "/proc", "/run", "/sbin", "/sys", "/tmp", "/usr", "/var"} {
+		if src == root || strings.HasPrefix(src, root+"/") {
+			return true
+		}
+	}
+	return false
+}
+
+// underComposeProject reports whether a bind source lies in the container's
+// Compose project folder, which holds that stack's data wherever it is.
+func underComposeProject(src string, labels map[string]string) bool {
+	project, ok := composeProjectDataDir(labels)
+	if !ok {
+		return false
+	}
+	return isUnderAny(src, []string{path.Clean(project)})
+}
+
 		return srcRoot
 	}
 	if rest := strings.TrimPrefix(p, mountRoot+"/"); rest != p {
@@ -7059,7 +7103,8 @@ func (s *Service) Backup(ctx context.Context, name string) (out backup.Summary, 
 		ContainerName:        name,
 		RepoPath:             repo,
 		AppdataPaths:         effective,
-		UnreachableData:      s.dataOutsideHostMount(in, tg.Excludes),
+		UnreachableData:      dataOutside,
+		MissingData:          dataMissing,
 		StopTimeout:          30 * time.Second,
 		TargetID:             tg.ID,
 		SnapshotTemplatesDir: filepath.Join(s.cfg.DataDir, "templates"),
@@ -7199,6 +7244,7 @@ func (s *Service) checkUpdateAfterBackup(ctx context.Context, name string, in mo
 		log.Printf("api: update-after-backup: resolve image id for %q failed: %v", name, err) //nolint:gosec // G706: name is %q-quoted
 		s.recordUpdateFailure(name, targetID, fmt.Errorf("resolve image id: %w", err))
 		return nil
+	dataOutside, dataMissing := s.partitionDataOutside(s.dataOutsideHostMount(in, tg.Excludes))
 	}
 	// Nothing newer arrived → no recreate, and deliberately still NO run record
 	// (44 "nothing happened" rows a night would drown Run History). The check DID

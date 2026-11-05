@@ -1235,6 +1235,7 @@ const fi: Partial<Translations> = {
   "runReason.dbimportFailed": "tuontityökalu ilmoitti virheestä",
   "runReason.dbimportKeptOld": "aiempi datakansio säilytettiin",
   "runReason.dataOutsideHost": "tiedot ovat Host Datan ulkopuolella eikä niistä otettu varmuuskopiota",
+  "runReason.dataMissing": "tietokansioita ei löytynyt eikä niistä otettu varmuuskopiota",
   "runReason.filesUnreadable": "joitakin tiedostoja ei voitu lukea, ja ne puuttuvat tästä varmuuskopiosta",
   "runReason.foldersMissing": "valitut kansiot puuttuvat tästä varmuuskopiosta",
   "runReason.backupEmpty": "tässä varmuuskopiossa ei ole tiedostoja, aiemmissa oli",

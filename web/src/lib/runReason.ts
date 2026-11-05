@@ -101,6 +101,11 @@ export const NO_NETWORK_UNTIL_RESTART = "some containers have no network until t
  *  followed by ": " and their host paths. Keep in step with NoteDataOutsideHost. */
 export const DATA_OUTSIDE_HOST = "data folders outside Host Data were not backed up";
 
+/** The note of a container backup whose data folders inside Host Data are not
+ *  there right now, followed by ": " and their host paths. Keep in step with
+ *  NoteDataMissing. */
+export const DATA_MISSING = "data folders that could not be found were not backed up";
+
 /** The note of a backup that left out files restic could not read, followed by
  *  ": " and restic's reason. Keep in step with NoteFilesUnreadable. */
 export const FILES_UNREADABLE = "some files could not be read and are missing from this backup";
@@ -150,6 +155,12 @@ export const VM_DISKS_LEFT_OUT = "some disks of the VM are not in this backup";
 export function dataOutsideHost(raw: string | null | undefined): boolean {
   const text = raw?.trim() ?? "";
   return text === DATA_OUTSIDE_HOST || text.startsWith(DATA_OUTSIDE_HOST + ": ");
+}
+
+/** Whether a run's note says data folders inside Host Data were not there. */
+export function dataMissing(raw: string | null | undefined): boolean {
+  const text = raw?.trim() ?? "";
+  return text === DATA_MISSING || text.startsWith(DATA_MISSING + ": ");
 }
 
 /** Whether a restore failed because this host lacks the GPU or runtime of the
@@ -223,6 +234,7 @@ export const RUN_REASON_PREFIXES: Record<string, TranslationKey> = {
   "database import failed and the old data could not be put back": "runReason.dbimportRollback",
   "database import failed: the import tool reported an error": "runReason.dbimportFailed",
   [DATA_OUTSIDE_HOST]: "runReason.dataOutsideHost",
+  [DATA_MISSING]: "runReason.dataMissing",
   [FILES_UNREADABLE]: "runReason.filesUnreadable",
   [FOLDERS_MISSING]: "runReason.foldersMissing",
   [BACKUP_EMPTY]: "runReason.backupEmpty",
@@ -313,6 +325,7 @@ const WARNING_NOTES = [
   "database dump skipped: its run could not be recorded",
   "database imported with errors",
   DATA_OUTSIDE_HOST,
+  DATA_MISSING,
   FILES_UNREADABLE,
   CONTAINERS_NOT_BACK,
   NO_NETWORK_UNTIL_RESTART,
@@ -334,7 +347,7 @@ const WARNING_NOTES = [
  * below; any other "; " belongs to the note before it.
  */
 export function backupNotes(raw: string): string[] {
-  const heads = [FILES_UNREADABLE, DATA_OUTSIDE_HOST, CONTAINERS_NOT_BACK, NO_NETWORK_UNTIL_RESTART, FOLDERS_MISSING, BACKUP_EMPTY, OLDER_BACKUPS_KEPT, STACK_FOLDER_EMPTY, VM_TPM_LEFT_OUT, VM_DISKS_LEFT_OUT];
+  const heads = [FILES_UNREADABLE, DATA_OUTSIDE_HOST, DATA_MISSING, CONTAINERS_NOT_BACK, NO_NETWORK_UNTIL_RESTART, FOLDERS_MISSING, BACKUP_EMPTY, OLDER_BACKUPS_KEPT, STACK_FOLDER_EMPTY, VM_TPM_LEFT_OUT, VM_DISKS_LEFT_OUT];
   const notes: string[] = [];
   for (const part of raw.split("; ")) {
     const starts = part.startsWith("database dump ") || heads.some((h) => part === h || part.startsWith(h + ": "));

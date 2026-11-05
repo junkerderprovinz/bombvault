@@ -1266,6 +1266,7 @@ const sl: Partial<Translations> = {
   "runReason.dbimportFailed": "orodje za uvoz je javilo napako",
   "runReason.dbimportKeptOld": "prejšnja mapa s podatki je bila ohranjena",
   "runReason.dataOutsideHost": "podatki so zunaj Host Data in niso bili varnostno kopirani",
+  "runReason.dataMissing": "map s podatki ni bilo mogoče najti in niso bile varnostno kopirane",
   "runReason.filesUnreadable": "nekaterih datotek ni bilo mogoče prebrati in manjkajo v tej varnostni kopiji",
   "runReason.foldersMissing": "izbrane mape manjkajo v tej varnostni kopiji",
   "runReason.backupEmpty": "ta varnostna kopija ne vsebuje datotek, prejšnje pa so jih",

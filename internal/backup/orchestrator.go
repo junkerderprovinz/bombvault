@@ -264,6 +264,9 @@ type BackupDeps struct {
 	// UnreachableData are host paths of the container's data folders that sit
 	// outside the Host Data mount. They are not backed up, and the run says so.
 	UnreachableData []string
+	// MissingData are host paths of its data folders inside Host Data that are
+	// not there right now.
+	MissingData []string
 	// StopTimeout is how long to wait for a graceful stop before SIGKILL.
 	StopTimeout time.Duration
 	// TargetID is the run-recording target id.
@@ -954,6 +957,9 @@ func BackupContainer(ctx context.Context, d BackupDeps) (Summary, error) {
 	}
 	if len(d.UnreachableData) > 0 {
 		notes = append(notes, store.NoteDataOutsideHost+": "+strings.Join(d.UnreachableData, ", "))
+	}
+	if len(d.MissingData) > 0 {
+		notes = append(notes, store.NoteDataMissing+": "+strings.Join(d.MissingData, ", "))
 	}
 	notes = append(notes, leftDown...)
 	if err := d.Runs.Finish(runID, statusSuccess, recorded, strings.Join(notes, "; ")); err != nil {

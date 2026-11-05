@@ -1236,6 +1236,7 @@ const ar: Partial<Translations> = {
   "runReason.dbimportFailed": "أبلغت أداة الاستيراد عن خطأ",
   "runReason.dbimportKeptOld": "جرى الاحتفاظ بمجلد البيانات السابق",
   "runReason.dataOutsideHost": "البيانات خارج Host Data ولم يُنسخ منها احتياطيًا",
+  "runReason.dataMissing": "لم يُعثر على مجلدات البيانات ولم يُنسخ منها احتياطيًا",
   "runReason.filesUnreadable": "تعذّرت قراءة بعض الملفات، وهي غير موجودة في هذه النسخة الاحتياطية",
   "runReason.foldersMissing": "مجلدات محددة غير موجودة في هذه النسخة الاحتياطية",
   "runReason.backupEmpty": "لا تحتوي هذه النسخة الاحتياطية على ملفات، بينما احتوت النسخ السابقة على ملفات",
