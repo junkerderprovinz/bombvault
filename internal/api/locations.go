@@ -67,6 +67,9 @@ type storageLocation struct {
 	// Gone says a remote repository here that held backups was found empty,
 	// and nothing is written there until the user starts over.
 	Gone bool `json:"gone,omitempty"`
+	// Refused is the code of the refusal the last copy here ended on, while the
+	// user has something to put right: a missing bucket or a key that does not fit.
+	Refused string `json:"refused,omitempty"`
 
 	// volumes are the repositories whose volume stands for the location's
 	// room, the first one that can be measured counting.
@@ -292,8 +295,30 @@ func (s *Service) StorageLocations() ([]storageLocation, error) {
 			out[i].Sections = []locationSection{}
 		}
 		out[i].Gone = slices.ContainsFunc(out[i].repos, s.repoFoundGone)
+		out[i].Refused = s.lastCopyRefusal(out[i].Sections)
 	}
 	return out, nil
+}
+
+// lastCopyRefusal is the code of the refusal a section's last copy here ended
+// on, "" when none did. A run row holds the refusal's text, which stays whole
+// under its truncation.
+func (s *Service) lastCopyRefusal(sections []locationSection) string {
+	for _, section := range sections {
+		if section.TargetID == "" || section.Use != useCopy {
+			continue
+		}
+		last, err := s.store.LastOffsiteRunError(section.TargetID)
+		if err != nil {
+			continue
+		}
+		for _, refusal := range []error{errBucketMissing, errRepoWrongKey} {
+			if strings.Contains(last, refusal.Error()) {
+				return placementCode(refusal)
+			}
+		}
+	}
+	return ""
 }
 
 func (s *Service) repoFoundGone(repo string) bool {

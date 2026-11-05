@@ -8121,6 +8121,9 @@ export interface StorageLocation {
   /** A remote repository here that held backups was found empty, and nothing
    *  is written there until the user starts over. */
   gone?: boolean;
+  /** The code of the refusal the last copy here ended on, while there is
+   *  something to put right: a missing bucket or a key that does not fit. */
+  refused?: string;
 }
 
 /**

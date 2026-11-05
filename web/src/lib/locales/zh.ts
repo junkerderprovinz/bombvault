@@ -3329,6 +3329,7 @@ const zh: Partial<Translations> = {
   "placementCode.directAccessDenied": "密钥无法读取此位置。限定在目标自身文件夹的密钥无法到达它旁边的文件夹；应把密钥限定在目标上一级的文件夹。",
   "placementCode.restPathTooDeep": "rest-server 最多只能在两层文件夹深处创建存储库，例如 /files-direct 或 /user/files-direct。请选择更短的路径。",
   "placementCode.repoWrongKey": "这里已有一个 restic 存储库，本实例的密钥无法打开它。请选择一个空的位置，或使用创建它时的 APP_KEY。",
+  "placementCode.bucketMissing": "服务器上没有这个桶，因此无法向其中复制任何内容。请在服务器上创建该桶，或选择一个已有的桶。",
   "placementCode.repoUnopened": "存储库已创建但无法打开，因此没有保存任何内容。请检查该位置及其登录信息，然后重试。",
   "placementCode.repoGone": "这里原有的存储库已经不见了，或者它所在的磁盘没有在服务器上挂载。BombVault 不会在原处新建一个空存储库。请重新挂载磁盘；如果你是有意清空旧存储库，也可以在这里新建一个存储库。",
   "placementCode.destinationHoldsBackups": "只要还在向这里备份，位置就不能移动：目前已写入的内容会留在原处，下一次备份会遇到一个空的存储库。请再添加一个目标，并把条目指向它。",

@@ -2628,6 +2628,7 @@ export const en = {
   "placementCode.directAccessDenied": "The key cannot read this place. A key limited to the target's own folder cannot reach the folder next to it; limit the key to the folder above the target instead.",
   "placementCode.restPathTooDeep": "A rest-server creates repositories at most two folders deep, such as /files-direct or /user/files-direct. Choose a shorter path.",
   "placementCode.repoWrongKey": "There is already a restic repository here, and this instance's key does not open it. Choose an empty place, or use the APP_KEY it was created with.",
+  "placementCode.bucketMissing": "This bucket does not exist on the server, so nothing can be copied to it. Create the bucket on the server, or choose one that exists.",
   "placementCode.repoUnopened": "The repository was set up but does not open, so nothing was saved. Check the place and its login, then try again.",
   "placementCode.repoGone":
     "The repository that was here is gone, or its disk is not mounted on the server. BombVault does not put a new, empty one in its place. Mount the disk again, or start a new repository here if you emptied the old one on purpose.",
@@ -7746,6 +7747,7 @@ export const de: Translations = {
   "placementCode.directAccessDenied": "Der Schlüssel kann diesen Ort nicht lesen. Ein Schlüssel, der auf den eigenen Ordner des Speicherorts beschränkt ist, erreicht den Ordner daneben nicht; beschränke den Schlüssel stattdessen auf den Ordner darüber.",
   "placementCode.restPathTooDeep": "Ein rest-server legt Repositorys höchstens zwei Ordner tief an, etwa /files-direct oder /user/files-direct. Wähle einen kürzeren Pfad.",
   "placementCode.repoWrongKey": "Hier liegt schon ein restic-Repository, und der Schlüssel dieser Instanz öffnet es nicht. Wähle einen leeren Ort oder nimm den APP_KEY, mit dem es angelegt wurde.",
+  "placementCode.bucketMissing": "Diesen Bucket gibt es auf dem Server nicht, darum kann nichts dorthin kopiert werden. Leg den Bucket auf dem Server an oder wähle einen, den es gibt.",
   "placementCode.repoUnopened": "Das Repository wurde angelegt, lässt sich aber nicht öffnen, deshalb wurde nichts gespeichert. Prüfe den Ort und seine Anmeldung und versuch es noch einmal.",
   "placementCode.repoGone":
     "Das Repository, das hier lag, ist weg, oder seine Platte ist auf dem Server nicht eingehängt. BombVault legt an seiner Stelle kein neues, leeres an. Häng die Platte wieder ein, oder leg hier ein neues Repository an, wenn du das alte absichtlich geleert hast.",

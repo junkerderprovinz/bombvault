@@ -3338,6 +3338,7 @@ const fi: Partial<Translations> = {
   "placementCode.directAccessDenied": "Avain ei voi lukea tätä paikkaa. Kohteen omaan kansioon rajattu avain ei pääse sen vieressä olevaan kansioon; rajaa avain sen sijaan kohteen yläpuolella olevaan kansioon.",
   "placementCode.restPathTooDeep": "rest-server luo arkistoja enintään kahden kansion syvyyteen, esimerkiksi /files-direct tai /user/files-direct. Valitse lyhyempi polku.",
   "placementCode.repoWrongKey": "Täällä on jo restic-arkisto, eikä tämän instanssin avain avaa sitä. Valitse tyhjä paikka tai käytä APP_KEY-avainta, jolla se luotiin.",
+  "placementCode.bucketMissing": "Tätä bucketia ei ole palvelimella, joten siihen ei voi kopioida mitään. Luo bucket palvelimelle tai valitse sellainen, joka on olemassa.",
   "placementCode.repoUnopened": "Arkisto luotiin, mutta se ei aukea, joten mitään ei tallennettu. Tarkista paikka ja sen kirjautumistiedot ja yritä uudelleen.",
   "placementCode.repoGone": "Täällä ollut arkisto on poissa, tai sen levyä ei ole liitetty palvelimella. BombVault ei luo sen tilalle uutta, tyhjää arkistoa. Liitä levy uudelleen tai luo tähän uusi arkisto, jos tyhjensit vanhan tarkoituksella.",
   "placementCode.destinationHoldsBackups": "Sijaintia ei voi siirtää, kun tänne varmuuskopioidaan: kaikki tähän mennessä kirjoitettu jäisi taakse, ja seuraava varmuuskopio törmäisi tyhjään arkistoon. Lisää toinen kohde ja osoita merkinnät siihen.",

@@ -88,6 +88,7 @@ var placementCodes = []struct {
 	{store.ErrDirectRepo, "direct-repo"},
 	{errDirectAccessDenied, "direct-access-denied"},
 	{errRepoWrongKey, "repo-wrong-key"},
+	{errBucketMissing, "bucket-missing"},
 	{errRepoUnopened, "repo-unopened"},
 	{errRemoteRepoGone, codeRepoGone},
 	{errRestPathTooDeep, "rest-path-too-deep"},

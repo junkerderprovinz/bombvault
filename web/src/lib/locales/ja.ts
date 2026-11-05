@@ -3329,6 +3329,7 @@ const ja: Partial<Translations> = {
   "placementCode.directAccessDenied": "キーはこの場所を読み取れません。保存先自身のフォルダーに限定したキーは、隣のフォルダーには届きません。代わりにキーを保存先の一つ上のフォルダーに限定してください。",
   "placementCode.restPathTooDeep": "rest-server がリポジトリを作成できるのはフォルダー2階層までです（例: /files-direct、/user/files-direct）。もっと短いパスを選んでください。",
   "placementCode.repoWrongKey": "ここにはすでに restic リポジトリがあり、このインスタンスのキーでは開けません。空の場所を選ぶか、作成時の APP_KEY を使ってください。",
+  "placementCode.bucketMissing": "このバケットはサーバーにないため、何もコピーできません。サーバーでバケットを作成するか、存在するバケットを選んでください。",
   "placementCode.repoUnopened": "リポジトリは作成されましたが開けないため、何も保存されていません。場所とそのログイン情報を確認して、もう一度お試しください。",
   "placementCode.repoGone": "ここにあったリポジトリがなくなったか、そのディスクがサーバーにマウントされていません。BombVault はその場所に新しい空のリポジトリを作りません。ディスクをもう一度マウントするか、古いリポジトリを意図的に空にした場合はここに新しいリポジトリを作成してください。",
   "placementCode.destinationHoldsBackups": "ここにバックアップしている間は、場所を移せません。これまでに書き込まれたものが取り残され、次のバックアップは空のリポジトリに行き当たります。保存先をもう1つ追加して、項目をそちらに向けてください。",

@@ -703,11 +703,11 @@ func (r replicationPass) copyingRepos() map[string]bool {
 // stays out of it for good: the confirmation is what ends the pause, and a
 // target still unlisted after it must not start a new one.
 //
-// pending names the targets the check could not list: left out of this pass
-// entirely, with a failed run row of their own, so the check runs again at the
-// next one instead of the normal copy loop listing the target itself and
-// closing the check for good.
-func (s *Service) pauseOnFirstListing(ctx context.Context, settings store.Settings, r replicationPass, targets []store.OffsiteTarget, sources []domainRepoRef) (paused bool, pending []string, err error) {
+// pending names the targets the check could not list, with what stopped each:
+// left out of this pass entirely, with a failed run row of their own, so the
+// check runs again at the next one instead of the normal copy loop listing the
+// target itself and closing the check for good.
+func (s *Service) pauseOnFirstListing(ctx context.Context, settings store.Settings, r replicationPass, targets []store.OffsiteTarget, sources []domainRepoRef) (paused bool, pending map[string]error, err error) {
 	if !validPlacementDomain(r.p.Domain) {
 		return false, nil, nil
 	}
@@ -731,7 +731,10 @@ func (s *Service) pauseOnFirstListing(ctx context.Context, settings store.Settin
 		if lErr != nil {
 			log.Printf("api: offsite %s: could not list %s for its first-listing check, trying again next pass: %v", r.p.Domain, placementTargetName(t), scrubError(lErr)) //nolint:gosec // G706: domain is a fixed literal, the name is the row's own and the error scrubbed here
 			_ = s.failPass(r.p.Domain, []store.OffsiteTarget{t}, lErr)
-			pending = append(pending, t.ID)
+			if pending == nil {
+				pending = map[string]error{}
+			}
+			pending[t.ID] = lErr
 			continue
 		}
 		s.recordListing(r.p.Domain, t, r.owners, held, nil)
@@ -793,7 +796,15 @@ func (s *Service) listTarget(ctx context.Context, settings store.Settings, t sto
 	if localRepoMissing(dest) {
 		return nil, nil
 	}
-	return s.listSnapshots(ctx, dest, s.offsiteModeForTarget(settings, t))
+	mode := s.offsiteModeForTarget(settings, t)
+	snaps, err := s.listSnapshots(ctx, dest, mode)
+	if refusal := refusalOf(err); refusal != nil {
+		if errors.Is(refusal, errRepoWrongKey) && s.engine.RepoOpens(ctx, dest, s.oppositeMode(mode)) {
+			return nil, &otherEncryptionErr{encrypted: !mode.Encrypted}
+		}
+		return nil, refusal
+	}
+	return snaps, err
 }
 
 // stillHeld reports whether an enabled target may still hold items of the

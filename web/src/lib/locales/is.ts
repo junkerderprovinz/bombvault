@@ -3348,6 +3348,7 @@ const is: Partial<Translations> = {
   "placementCode.directAccessDenied": "Lykillinn getur ekki lesið þennan stað. Lykill sem er takmarkaður við möppu áfangastaðarins sjálfs nær ekki í möppuna við hliðina á henni; takmarkaðu lykilinn þess í stað við möppuna fyrir ofan áfangastaðinn.",
   "placementCode.restPathTooDeep": "rest-server býr til geymslur í mesta lagi tveimur möppum niður, t.d. /files-direct eða /user/files-direct. Veldu styttri slóð.",
   "placementCode.repoWrongKey": "Hér er þegar restic-geymsla og lykill þessa tilviks opnar hana ekki. Veldu tóman stað eða notaðu APP_KEY sem hún var búin til með.",
+  "placementCode.bucketMissing": "Þetta bucket er ekki til á þjóninum, svo ekkert er hægt að afrita þangað. Búðu til bucketið á þjóninum eða veldu eitt sem er til.",
   "placementCode.repoUnopened": "Geymslan var búin til en opnast ekki, svo ekkert var vistað. Athugaðu staðinn og innskráningu hans og reyndu aftur.",
   "placementCode.repoGone": "Geymslan sem var hér er horfin, eða diskurinn hennar er ekki tengdur á þjóninum. BombVault býr ekki til nýja, tóma geymslu í hennar stað. Tengdu diskinn aftur, eða búðu til nýja geymslu hér ef þú tæmdir þá gömlu viljandi.",
   "placementCode.destinationHoldsBackups": "Ekki er hægt að færa staðsetninguna á meðan afritað er hingað: allt sem hefur verið skrifað til þessa yrði eftir og næsta afrit rækist á tómt safn. Bættu við öðrum áfangastað og beindu færslunum þangað.",

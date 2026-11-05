@@ -1008,6 +1008,29 @@ describe("a location whose repository went away", () => {
     expect(screen.queryByRole("button", { name: "Start a new repository here" })).toBeNull();
   });
 
+  it.each([
+    ["repo-wrong-key", /this instance's key does not open it/],
+    ["bucket-missing", /This bucket does not exist on the server/],
+  ])("says why the last copy was refused before any test, %s", async (refused, says) => {
+    stage(location({ refused }));
+    await renderPage("destination:box");
+
+    expect(screen.getByText(says)).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Start a new repository here" })).toBeNull();
+  });
+
+  it.each([
+    ["repo-wrong-key", /this instance's key does not open it/],
+    ["bucket-missing", /This bucket does not exist on the server/],
+  ])("translates what the test was refused for, %s", async (code, says) => {
+    testOffsiteTarget.mockResolvedValueOnce({ ok: false, code, error: "server text" });
+    await renderPage("destination:box");
+
+    await click(screen.getByRole("button", { name: "Test connection" }));
+    expect(await screen.findByText(says)).toBeTruthy();
+    expect(screen.queryByText("server text")).toBeNull();
+  });
+
   it("says so before any test when a run found it gone, also for a named repository", async () => {
     const bucket = location({
       id: "repo:r1",

@@ -84,6 +84,8 @@ Every storage location has a page of its own. It shows only the cards that apply
 
 A remote storage location that held backups and suddenly holds no repository, such as a rest-server whose disk did not mount, does not get a new, empty one on its own. Its page says so as soon as a backup or copy finds the repository gone. Mount the disk again. If you emptied the old repository on purpose, **Start a new repository here** starts over, for every section of the location and its repositories at once. The guard is for a location that stayed in place. A storage location you add, or a section you tick at one, starts clean: with no repository at that address, the first copy creates one, even where a location removed earlier had one.
 
+Two refusals name what to put right, on the copy's run and on the location's page. **This bucket does not exist on the server** comes as soon as an S3 server says so, and BombVault creates nothing there, so a bucket name typed wrong stays visible. A server that does not answer at all is a different case: restic keeps retrying for about 15 minutes per call, in case it comes back. **There is already a restic repository here, and this instance's key does not open it** means the backups there belong to another `APP_KEY`.
+
 A receiving server that another instance of your group runs appears among the providers as **From your group**. See [Receiving server](#receiving-server).
 
 BombVault checks its storage locations at every start. It puts right what needs no decision from you, such as a link to a copy or repository that is gone, a copy on a section's own folder, or a direct repository whose copy is gone, and writes a line in the log for each fix. What has no safe fix is only logged.

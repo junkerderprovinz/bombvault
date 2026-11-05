@@ -3348,6 +3348,7 @@ const eu: Partial<Translations> = {
   "placementCode.directAccessDenied": "Gakoak ezin du leku hau irakurri. Helmugaren beraren karpetara mugatutako gako batek ezin du haren alboko karpeta atzitu; horren ordez, mugatu gakoa helmugaren gaineko karpetara.",
   "placementCode.restPathTooDeep": "rest-server batek gehienez bi karpetako sakoneran sortzen ditu biltegiak, adibidez /files-direct edo /user/files-direct. Aukeratu bide laburrago bat.",
   "placementCode.repoWrongKey": "Hemen badago jada restic biltegi bat, eta instantzia honen gakoak ez du irekitzen. Aukeratu leku huts bat, edo erabili sortu zeneko APP_KEY.",
+  "placementCode.bucketMissing": "Bucket hau ez dago zerbitzarian, beraz, ezin da ezer kopiatu bertara. Sortu bucketa zerbitzarian, edo aukeratu dagoen bat.",
   "placementCode.repoUnopened": "Biltegia sortu da, baina ez da irekitzen, beraz ez da ezer gorde. Egiaztatu lekua eta bere saio-hasierako datuak, eta saiatu berriro.",
   "placementCode.repoGone": "Hemen zegoen biltegia desagertu da, edo bere diskoa ez dago zerbitzarian muntatuta. BombVault-ek ez du haren lekuan biltegi berri huts bat sortzen. Muntatu berriro diskoa, edo sortu hemen biltegi berri bat zaharra nahita hustu baduzu.",
   "placementCode.destinationHoldsBackups": "Kokapena ezin da mugitu hona babeskopiak egiten diren bitartean: orain arte idatzitako guztia atzean geratuko litzateke, eta hurrengo babeskopiak biltegi huts bat aurkituko luke. Gehitu bigarren helmuga bat eta zuzendu elementuak hara.",

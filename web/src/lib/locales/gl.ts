@@ -3348,6 +3348,7 @@ const gl: Partial<Translations> = {
   "placementCode.directAccessDenied": "A clave non pode ler este lugar. Unha clave limitada ao propio cartafol do destino non pode acadar o cartafol veciño; limita a clave ao cartafol superior ao destino no seu lugar.",
   "placementCode.restPathTooDeep": "Un rest-server crea repositorios como máximo a dous cartafoles de profundidade, como /files-direct ou /user/files-direct. Escolle unha ruta máis curta.",
   "placementCode.repoWrongKey": "Aquí xa hai un repositorio de restic e a clave desta instancia non o abre. Escolle un lugar baleiro ou usa a APP_KEY coa que se creou.",
+  "placementCode.bucketMissing": "Este bucket non existe no servidor, así que non se pode copiar nada nel. Crea o bucket no servidor ou escolle un que exista.",
   "placementCode.repoUnopened": "O repositorio creouse pero non se abre, así que non se gardou nada. Comproba o lugar e as súas credenciais e téntao de novo.",
   "placementCode.repoGone": "O repositorio que había aquí desapareceu, ou o seu disco non está montado no servidor. BombVault non crea un novo e baleiro no seu lugar. Volve montar o disco, ou crea aquí un repositorio novo se baleiraches o antigo a propósito.",
   "placementCode.destinationHoldsBackups": "O lugar non se pode mover mentres aquí se fagan copias de seguranza: todo o escrito ata agora quedaría atrás e a seguinte copia atoparía un repositorio baleiro. Engade un segundo destino e apunta os elementos cara a el.",

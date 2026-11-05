@@ -3338,6 +3338,7 @@ const fr: Partial<Translations> = {
   "placementCode.directAccessDenied": "La clé ne peut pas lire cet emplacement. Une clé limitée au dossier propre de la destination ne peut pas atteindre le dossier voisin ; limitez plutôt la clé au dossier au-dessus de la destination.",
   "placementCode.restPathTooDeep": "Un rest-server crée des dépôts à deux dossiers de profondeur au plus, comme /files-direct ou /user/files-direct. Choisissez un chemin plus court.",
   "placementCode.repoWrongKey": "Un dépôt restic existe déjà ici, et la clé de cette instance ne l'ouvre pas. Choisissez un emplacement vide, ou utilisez l'APP_KEY avec laquelle il a été créé.",
+  "placementCode.bucketMissing": "Ce bucket n'existe pas sur le serveur, donc rien ne peut y être copié. Créez le bucket sur le serveur ou choisissez-en un qui existe.",
   "placementCode.repoUnopened": "Le dépôt a été créé mais ne s'ouvre pas, donc rien n'a été enregistré. Vérifiez l'emplacement et ses identifiants, puis réessayez.",
   "placementCode.repoGone": "Le dépôt qui se trouvait ici a disparu, ou son disque n'est pas monté sur le serveur. BombVault n'en crée pas un nouveau, vide, à sa place. Remontez le disque, ou créez ici un nouveau dépôt si vous avez vidé l'ancien volontairement.",
   "placementCode.destinationHoldsBackups": "L'emplacement ne peut pas être déplacé tant que l'on sauvegarde ici : tout ce qui a été écrit jusqu'ici resterait en arrière, et la prochaine sauvegarde tomberait sur un dépôt vide. Ajoutez une deuxième destination et dirigez les éléments vers elle.",
