@@ -129,6 +129,7 @@ func TestASourceEditedToAnotherSectionLandsInThatSectionsFolder(t *testing.T) {
 
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest(http.MethodPut, "/api/pull/sources/"+ps.ID, strings.NewReader(`{"name":"Tower","repo":"`+pullSrcLoc+`","domain":"files","cadence":"off"}`))
+	r.Header.Set("Content-Type", "application/json")
 	r.SetPathValue("id", ps.ID)
 	h.handleUpdatePullSource(w, r)
 	if !strings.Contains(w.Body.String(), `"ok":true`) {
