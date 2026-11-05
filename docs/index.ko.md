@@ -23,7 +23,7 @@ BombVault는 Unraid와 TrueNAS SCALE, ZimaOS, 일반 Linux 장비 같은 다른 
 | **컨테이너** | Appdata 디렉터리와 컨테이너 정의(이미지, 환경 변수, 포트, 레이블, 볼륨). |
 | **가상 머신** | VM 디스크 이미지, XML 정의, UEFI NVRAM. SSH를 통해 백업됩니다(libvirt 마운트 없음). |
 | **플래시** | USB 플래시 전체(`/boot`): OS, 라이선스, 배열 구성, 공유, 네트워크 및 플러그인 구성. |
-| **셀프 백업** | BombVault 자체 `/config`: 설정 데이터베이스, 대상의 로그인 정보, libvirt SSH 키 쌍. |
+| **셀프 백업** | BombVault 자체 `/config`: 설정 데이터베이스, 대상의 로그인 정보, libvirt SSH 키 쌍, ZFS 서버의 키와 고정된 호스트 키, 인증서. |
 | **폴더** | 서버의 모든 폴더를 폴더 세트로 저장합니다. 각각 선택적으로 제외 패턴을 가질 수 있습니다. |
 | **ZFS 데이터세트** | 데이터세트와 그 아래의 모든 데이터세트를 하나의 ZFS 스냅샷에서 읽어 폴더처럼 저장합니다. [ZFS 데이터세트](zfs-datasets.md)를 참고하세요. |
 
@@ -102,4 +102,4 @@ Copyright (C) 2026 Junker der Provinz. BombVault는 **GNU Affero General Public 
 - **이슈:** [github.com/junkerderprovinz/bombvault/issues](https://github.com/junkerderprovinz/bombvault/issues)
 
 !!! warning "호스트에 대한 root 수준의 제어"
-    Docker 소켓을 통해 BombVault는 컨테이너를 중지, 제거, 재생성하고 appdata를 읽고 쓸 수 있으며, VM 백업을 위해 호스트에 SSH로 로그인해 `virsh`를 실행합니다. 웹 UI에 접근할 수 있는 사람은 사실상 호스트의 root 권한을 가집니다. BombVault는 신뢰할 수 있고 외부에 노출되지 않은 네트워크에서만 실행하고, **설정, 보안**에서 로그인 비밀번호를 설정하세요. 복구 키트, 키 보관, 대상의 백업 삭제에는 비밀번호가 필요합니다. 전체 보안 모델은 [구성](configuration.md#security-model)을 참고하세요.
+    Docker 소켓을 통해 BombVault는 컨테이너를 중지, 제거, 재생성하고 appdata를 읽고 쓸 수 있으며, VM 백업을 위해 호스트에 SSH로 로그인해 `virsh`를 실행합니다. 웹 UI에 접근할 수 있는 사람은 사실상 호스트의 root 권한을 가집니다. BombVault는 신뢰할 수 있고 외부에 노출되지 않은 네트워크에서만 실행하고, **설정, 보안**에서 로그인 비밀번호를 설정하세요. 복구 키트, 키 보관, 플래시 ZIP, 플래시 백업이나 셀프 백업 내보내기, 대상의 백업 삭제에는 비밀번호가 필요합니다. 전체 보안 모델은 [구성](configuration.md#security-model)을 참고하세요.
