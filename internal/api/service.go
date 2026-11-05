@@ -3608,7 +3608,15 @@ func (s *Service) sectionEntries(domain string, settings store.Settings) ([]sect
 // run finds nothing to do there and no recovery point can fall behind.
 func (s *Service) domainWindow(domain, ownCadence string, settings store.Settings) (period int64, coveredBy string) {
 	entries, listed := s.sectionEntries(domain, settings)
-	scheduled := slices.ContainsFunc(entries, func(e sectionEntry) bool { return e.schedule.Kind != schedule.EffectiveNone })
+	// An entry every run skips, since its container is gone, has nothing to fall
+	// behind on.
+	stamps, stampErr := s.store.LatestBackupsByTarget()
+	if stampErr != nil {
+		log.Printf("api: status %s: the entries' last backups could not be read: %v", domain, stampErr) //nolint:gosec // G706: domain is a fixed literal
+	}
+	scheduled := slices.ContainsFunc(entries, func(e sectionEntry) bool {
+		return e.schedule.Kind != schedule.EffectiveNone && stamps[e.id].LastRunStatus != statusSkipped
+	})
 	if listed && !scheduled {
 		return 0, ""
 	}
@@ -3809,9 +3817,9 @@ type protInputs struct {
 //     the last successful replication exceeds a grace of 2× the backup period
 //     (conservative: a backup replicating shortly after is fine). Amber, never red.
 //   - A copy that never succeeded reads "never" while it has its first chance. It
-//     reads "overdue" once its attempt failed or the target has waited beyond the
-//     grace, counted from when the target was set up, since daily backups renew
-//     the last backup's stamp and would keep it from ever falling behind.
+//     reads "overdue" once its attempt failed, or the last backup or the target has
+//     waited beyond the grace. The target counts because daily backups renew the
+//     last backup's stamp and would keep the copy from ever falling behind.
 //
 // A paused domain reports "paused". With copy rules each enabled target is judged
 // by the items copied there, and the worst of them counts; a target no item is
@@ -3840,7 +3848,7 @@ func replicationState(now int64, in protInputs) string {
 // target was set up (0 when that is not known).
 func targetReplicationState(now int64, in protInputs, lastBackupAt, lastReplicationAt, since int64) string {
 	neverCopied := func(grace int64) string {
-		if in.copyFailed || (since > 0 && now-since > grace) {
+		if in.copyFailed || (since > 0 && now-since > grace) || (lastBackupAt > 0 && now-lastBackupAt > grace) {
 			return "overdue"
 		}
 		return "never"
@@ -3929,7 +3937,7 @@ func protectionLevel(now int64, in protInputs) string {
 	// a conservative grace (see replicationState) so off-site health is no longer
 	// invisible in the config most users run.
 	// A paused replication copies nothing at all, which is amber as well.
-	if st := replicationState(now, in); st == "overdue" || st == "paused" {
+	if st := replicationState(now, in); st == "overdue" || st == "paused" || (st == "never" && in.lastBackupAt > 0) {
 		return "amber"
 	}
 	// A recorded DR drill that FAILED downgrades the chip to amber (never green over
@@ -4222,7 +4230,7 @@ func (s *Service) domainStatusFrom(settings store.Settings) ([]DomainStatusEntry
 		checks := protectionChecks(now, in)
 		// A backup that waits for its app is late by choice until its deadline.
 		backupStatus := verdict.status
-		if backupStatus == "overdue" && s.deferralHolds(d.name, now) {
+		if backupStatus == "overdue" && s.deferralHolds(d.name, verdict.stale, now) {
 			backupStatus = "warn"
 		}
 		// The sentence on screen is about what fell behind, not its neighbour.

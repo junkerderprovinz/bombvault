@@ -445,16 +445,17 @@ func (s *Service) DeferredBackups() []DeferredBackup {
 	return out
 }
 
-// deferralHolds reports whether a backup of domain waits for its app within
-// its deadline at now. The overdue alert and the protection status wait for
-// it as well; once the deadline has passed the wait has ended and they count
-// as before.
-func (s *Service) deferralHolds(domain string, now int64) bool {
+// deferralHolds reports whether the backup that makes domain late waits for its
+// app within its deadline at now. The overdue alert and the protection status
+// wait for it as well; once the deadline has passed the wait has ended and they
+// count as before. With entry named, only that entry's wait holds them, so one
+// busy app does not keep quiet about a neighbour that stopped.
+func (s *Service) deferralHolds(domain, entry string, now int64) bool {
 	if domain != "containers" {
 		return false
 	}
 	for _, d := range s.DeferredBackups() {
-		if d.Deadline > now {
+		if d.Deadline > now && (entry == "" || d.Name == entry) {
 			return true
 		}
 	}

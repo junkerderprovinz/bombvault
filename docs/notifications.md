@@ -18,11 +18,11 @@ The **Notifications** card sets the rules for every channel at once:
 
 Which anomalies send a message is set under **Settings, Verify**, see [Anomalies](anomalies.md). A deferred backup sends one message when it starts to wait and one when the wait ends, not one per try.
 
-**Send test** at the bottom of the card sends a test message through every channel that is switched on, with the values as they stand in the form.
+**Send test** at the bottom of the card sends a test message through every channel that is switched on, with the values as they stand in the form, and names each one that failed. A Healthchecks check gets an entry in its log, which leaves its state as it is.
 
 ## Channels {#channels}
 
-Each channel has its own switch in the **Channels** card, and its fields appear once it is on. Every channel sends on its own with its own time limit, so one host that never answers does not hold up the others, and a message no channel took is tried again.
+Each channel has its own switch in the **Channels** card, and its fields appear once it is on. Every channel sends on its own with its own time limit, so one host that never answers does not hold up the others. An overdue, budget or anomaly alert no channel took is tried again, and so is a weekly digest. The message of a single backup or a summary is sent once.
 
 | Channel | Fields | Notes |
 |---|---|---|

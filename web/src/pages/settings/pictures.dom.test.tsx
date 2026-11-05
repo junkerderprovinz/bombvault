@@ -41,11 +41,11 @@ function settings(over: Partial<Settings> = {}): Settings {
 }
 
 async function renderWeek(s: Settings, next: ScheduleNext[] = []) {
-  api.getScheduleNext.mockResolvedValue(next);
+  api.getScheduleNext.mockResolvedValue([...next, { job: "tamper", domain: "", next: "2026-10-14T02:00:00Z" }]);
   await act(async () => {
     render(
       <I18nProvider>
-        <WeekCard settings={s} hueIndex={0} />
+        <WeekCard settings={s} items={[]} hueIndex={0} />
       </I18nProvider>
     );
   });
@@ -69,8 +69,22 @@ describe("plansOf", () => {
   const t = (key: string) => key;
 
   it("lists the full backup, each domain that is on with its off-site copy, and the checks", () => {
-    const keys = plansOf(settings({ drillsEnabled: true }), [], t as never).map((p) => p.key);
+    const keys = plansOf(settings({ drillsEnabled: true }), [{ job: "tamper", domain: "", next: "2026-10-14T02:00:00Z" }], t as never).map((p) => p.key);
     expect(keys).toEqual(["everything", "containers", "containers-offsite", "vms", "vms-offsite", "drills", "tamper"]);
+  });
+
+  it("leaves the delete protection check out where no job is planned for it", () => {
+    expect(plansOf(settings(), [], t as never).map((p) => p.key)).not.toContain("tamper");
+  });
+
+  it("draws an entry's own plan and leaves out an entry that follows its section", () => {
+    const items = [
+      { kind: "container", key: "immich", name: "immich", effectiveSchedule: { kind: "own", spec: "every 6h" } },
+      { kind: "container", key: "plex", name: "plex", effectiveSchedule: { kind: "domain", spec: "daily 03:00" } },
+    ] as never;
+    const plans = plansOf(settings(), [], t as never, items);
+    expect(plans.find((p) => p.key === "own-container-immich")?.cadence).toBe("every 6h");
+    expect(plans.some((p) => p.key === "own-container-plex")).toBe(false);
   });
 
   it("leaves the trial restore out while it is switched off", () => {

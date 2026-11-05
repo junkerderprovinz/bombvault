@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/junkerderprovinz/bombvault/internal/notify"
@@ -411,6 +412,29 @@ func TestConfiguredWithOnlyPerDomainURL(t *testing.T) {
 	cfg := notify.Config{HealthchecksByDomain: map[string]string{"flash": "https://hc/flash"}}
 	if !cfg.Configured() {
 		t.Fatal("Configured() should be true when only a per-domain Healthchecks URL is set")
+	}
+}
+
+func TestSendTestLeavesAHealthCheckItsStateAndTriesEveryChannel(t *testing.T) {
+	var mu sync.Mutex
+	var paths []string
+	hc := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
+		mu.Lock()
+		defer mu.Unlock()
+		paths = append(paths, r.URL.Path)
+	}))
+	defer hc.Close()
+	refused := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusBadRequest) }))
+	defer refused.Close()
+
+	err := notify.SendTest(context.Background(), notify.Config{HealthchecksURL: hc.URL, WebhookEnabled: true, WebhookURL: refused.URL, WebhookFormat: "generic"})
+	if err == nil || !strings.Contains(err.Error(), "webhook") {
+		t.Fatalf("err = %v, want the refused webhook named", err)
+	}
+	mu.Lock()
+	defer mu.Unlock()
+	if len(paths) != 1 || paths[0] != "/log" {
+		t.Fatalf("the check heard %v, want one entry in its log", paths)
 	}
 }
 

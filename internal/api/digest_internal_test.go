@@ -4,6 +4,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
 func TestTheDigestNamesBackupsThatStopped(t *testing.T) {
@@ -22,6 +24,40 @@ func TestTheDigestNamesBackupsThatStopped(t *testing.T) {
 	}
 	if !stats.needsAttention() {
 		t.Fatal("a digest with stopped backups does not reach somebody who hears only about failures")
+	}
+}
+
+func TestTheDigestOffSiteLineReadsTheOldestCopyAsTheStatusDoes(t *testing.T) {
+	s, st, _, seeded := watchdogTestService(t)
+	if _, err := st.MutateSettings(func(set *store.Settings) error {
+		set.ContainersOffsite = "backups/copy"
+		return nil
+	}); err != nil {
+		t.Fatal(err)
+	}
+	second, err := st.UpsertOffsiteTarget(store.OffsiteTarget{Domain: "containers", Name: "second", Repo: "backups/second", Enabled: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	first, err := st.UpsertOffsiteTarget(store.OffsiteTarget{Domain: "containers", Name: "first", Repo: "backups/first", Enabled: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	run, err := st.RecordOffsiteRunForTarget("containers", first.ID, seeded)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := st.FinishOffsiteRun(run, true, ""); err != nil {
+		t.Fatal(err)
+	}
+	_ = second
+
+	stats, err := s.collectDigestStats(time.Unix(seeded+60, 0))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if msg := composeDigest(stats); !strings.Contains(msg, "containers: no successful copy yet") {
+		t.Fatalf("a second copy that never ran reads:\n%s", msg)
 	}
 }
 

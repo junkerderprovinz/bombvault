@@ -245,6 +245,45 @@ func TestTheOverdueAlertNamesTheEntryThatFellBehind(t *testing.T) {
 	}
 }
 
+func TestASectionOfRemovedContainersIsNotOverdue(t *testing.T) {
+	s, st, db := statusFixture(t, func(*store.Settings) {})
+	container(t, st, db, "gone", statusSkipped, time.Hour)
+	if got := statusOf(t, s, "containers"); got.Status != "off" {
+		t.Fatalf("a section of removed containers reads %q", got.Status)
+	}
+}
+
+func TestOneBusyAppDoesNotHoldBackANeighbourThatStopped(t *testing.T) {
+	s, st, db := statusFixture(t, func(*store.Settings) {})
+	waiting := container(t, st, db, "plex", "success", 3*24*time.Hour)
+	container(t, st, db, "sonarr", "success", 5*24*time.Hour)
+	if err := st.SaveDeferral(store.Deferral{TargetID: waiting, Container: "plex", Reason: "busy", Since: time.Now().Unix()}); err != nil {
+		t.Fatal(err)
+	}
+	if got := statusOf(t, s, "containers"); got.Status != "overdue" || got.StaleEntry != "sonarr" {
+		t.Fatalf("status %q, stale %q, want overdue for sonarr", got.Status, got.StaleEntry)
+	}
+}
+
+func TestACopyThatNeverCameIsNoGreenProtection(t *testing.T) {
+	now := time.Now().Unix()
+	in := protInputs{enabled: true, offsiteConfigured: true, lastBackupAt: now - 60, backupPeriod: 86400, copySince: now - 60}
+	if got := replicationState(now, in); got != "never" {
+		t.Fatalf("a copy with its first chance ahead reads %q", got)
+	}
+	if got := protectionLevel(now, in); got != "amber" {
+		t.Fatalf("protection with nothing copied reads %q", got)
+	}
+	in.copySince = now - 3*86400
+	if got := replicationState(now, in); got != "overdue" {
+		t.Fatalf("a copy past its grace reads %q", got)
+	}
+	in.copySince, in.copyFailed = now-60, true
+	if got := replicationState(now, in); got != "overdue" {
+		t.Fatalf("a first copy that failed reads %q", got)
+	}
+}
+
 func TestHomeAssistantReadsEveryEntryOfASection(t *testing.T) {
 	s, st, db := statusFixture(t, func(*store.Settings) {})
 	h := &Handler{svc: s, store: st}

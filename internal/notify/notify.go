@@ -534,7 +534,8 @@ func PingDomainResult(ctx context.Context, c Config, domain string, ok bool, sum
 }
 
 // SendTest sends a fixed test event to every configured channel (ignoring the On
-// policy) and returns the first error so the UI can explain a failed test.
+// policy) and returns what failed so the UI can explain a failed test. A health
+// check gets a log entry, as a success ping would turn a red check green.
 func SendTest(ctx context.Context, c Config) error {
 	if !c.Configured() {
 		return fmt.Errorf("no notification channel configured")
@@ -542,14 +543,15 @@ func SendTest(ctx context.Context, c Config) error {
 	ev := Event{Title: "BombVault", Message: "Test notification: notifications are working.", OK: true}
 	chans := c.messageChannels(ev)
 	for _, u := range c.healthchecksURLs() {
-		chans = append(chans, healthchecksChannel("healthchecks", u, "success"))
+		chans = append(chans, healthchecksChannel("healthchecks", u, "log"))
 	}
+	var errs []error
 	for _, ch := range chans {
 		if err := ch.run(ctx); err != nil {
-			return fmt.Errorf("%s: %w", ch.name, err)
+			errs = append(errs, fmt.Errorf("%s: %w", ch.name, err))
 		}
 	}
-	return nil
+	return errors.Join(errs...)
 }
 
 // sendApprise posts ev to the Apprise /notify/<key> endpoint with the type
@@ -654,7 +656,7 @@ func sendMatrix(ctx context.Context, client *http.Client, c Config, ev Event) er
 }
 
 // pingHealthchecks sends a GET for the phase "start" (<base>/start), "success"
-// (<base>) or "fail" (<base>/fail).
+// (<base>), "fail" (<base>/fail) or "log" (<base>/log).
 func pingHealthchecks(ctx context.Context, client *http.Client, base, phase string) error {
 	return pingHealthchecksBody(ctx, client, base, phase, "")
 }
@@ -668,6 +670,8 @@ func pingHealthchecksBody(ctx context.Context, client *http.Client, base, phase,
 		u += "/start"
 	case "fail":
 		u += "/fail"
+	case "log":
+		u += "/log"
 	}
 	method := http.MethodGet
 	var reqBody io.Reader
