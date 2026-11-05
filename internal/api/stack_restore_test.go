@@ -193,7 +193,9 @@ func dumpOnlyStack(t *testing.T) *shopStack {
 		{ID: "dddd0001", Time: "2026-11-01T00:00:00Z", Tags: []string{"dbdump:db"}, Paths: []string{"/dbdump/db.sql"}},
 		memberSnapshot("aaaa1111", "app"),
 	}
-	def, err := marshalDefinition(composeInspect("db", "shop", "db", ""), "")
+	in := composeInspect("db", "shop", "db", "")
+	in.Mounts = []model.Mount{{Type: "volume", Name: "shop_dbdata", Destination: "/var/lib/postgresql/data"}}
+	def, err := marshalDefinition(in, "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -227,21 +229,30 @@ func TestADumpOnlyDatabaseComesBackStoppedAndHoldsItsAppsBack(t *testing.T) {
 	}
 }
 
-func TestADumpOnlyDatabaseThatIsStillThereStartsAsBefore(t *testing.T) {
-	s := dumpOnlyStack(t)
-	s.docker.listOut = []dockercli.ContainerInfo{{Name: "db"}}
+func TestADumpOnlyDatabaseWithItsDataStillOnTheHostStartsAsBefore(t *testing.T) {
+	for name, keep := range map[string]func(*shopStack){
+		"the container": func(s *shopStack) { s.docker.listOut = []dockercli.ContainerInfo{{Name: "db"}} },
+		"its volume": func(s *shopStack) {
+			s.docker.volumes = map[string]string{"shop_dbdata": "/var/lib/docker/volumes/shop_dbdata/_data"}
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			s := dumpOnlyStack(t)
+			keep(s)
 
-	res, err := s.restore()
-	if err != nil {
-		t.Fatal(err)
-	}
+			res, err := s.restore()
+			if err != nil {
+				t.Fatal(err)
+			}
 
-	for _, m := range res.Members {
-		if !m.Started {
-			t.Errorf("%s did not start: %q", m.Name, m.Error)
-		}
-	}
-	if run := s.lastRestoreRun("db"); strings.Contains(run.Error, store.NoteRestoredWithoutData) {
-		t.Errorf("db's run says %q, though its data is still on the host", run.Error)
+			for _, m := range res.Members {
+				if !m.Started {
+					t.Errorf("%s did not start: %q", m.Name, m.Error)
+				}
+			}
+			if run := s.lastRestoreRun("db"); strings.Contains(run.Error, store.NoteRestoredWithoutData) {
+				t.Errorf("db's run says %q, though its data is still on the host", run.Error)
+			}
+		})
 	}
 }

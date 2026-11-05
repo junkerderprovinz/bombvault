@@ -498,6 +498,47 @@ func TestRestoreOfAFileSetWhoseFolderWasEmptiedHasNoStateToBackUpFirst(t *testin
 	}
 }
 
+func TestRestoreOfAVMThatIsGoneBacksUpTheDisksItWritesOver(t *testing.T) {
+	r := newRestoreRig(t)
+	tg, snap := r.seedWin(t)
+	r.write(t, map[string]string{"domains/win/vdisk2.img": "the data disk moved on"})
+	r.virsh.state = ""
+
+	res := r.check(t, RestoreCheckRequest{Kind: checkVM, Name: "win", SnapshotID: snap, BackupFirst: true})
+	if b := backupFirstOf(t, res); b.Status != lineOK || !res.Ready {
+		t.Fatalf("backup first = %+v ready=%v", b, res.Ready)
+	}
+
+	if started, err := r.svc.StartRestoreVM(context.Background(), "win", snap, "local", RestoreOptions{BackupFirst: true}); err != nil || !started {
+		t.Fatalf("StartRestoreVM: started=%v err=%v", started, err)
+	}
+	r.wait(t)
+
+	if run := r.lastRun(t, tg.ID, "restore"); run.Status != "success" {
+		t.Fatalf("run = %+v", run)
+	}
+	if r.backupRuns(t, tg.ID) != 2 {
+		t.Fatalf("backup runs = %d, want the seed and the one taken first", r.backupRuns(t, tg.ID))
+	}
+	before := r.stateBefore(t, "vms", "vm:win", snap)
+	settings, err := r.st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	repo, err := r.svc.repoFor(settings, "vms", "local")
+	if err != nil {
+		t.Fatal(err)
+	}
+	disk := filepath.ToSlash(filepath.Join(r.root, "domains/win/vdisk2.img"))
+	out := filepath.ToSlash(filepath.Join(r.root, "out"))
+	if err := r.svc.engine.RestoreInclude(context.Background(), repo, before.ID, restic.EscapeGlob(disk), out, restic.Mode{}); err != nil {
+		t.Fatal(err)
+	}
+	if got := read(t, filepath.Join(r.root, "out", disk)); got != "the data disk moved on" {
+		t.Errorf("the backup taken first holds %q", got)
+	}
+}
+
 func TestRestoreVMBacksUpTheCurrentStateFirstSoTheReplaceCanBeUndone(t *testing.T) {
 	r := newRestoreRig(t)
 	tg, snap := r.seedWin(t)

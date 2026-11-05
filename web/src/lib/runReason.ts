@@ -161,6 +161,7 @@ export function restoreNotes(raw: string | null | undefined): {
   notBack: string[];
   folderFailed?: string;
   stayedStopped: boolean;
+  leftOut?: string;
 } {
   const out = {
     withoutRuntime: false,
@@ -168,9 +169,11 @@ export function restoreNotes(raw: string | null | undefined): {
     notBack: [] as string[],
     folderFailed: undefined as string | undefined,
     stayedStopped: false,
+    leftOut: undefined as string | undefined,
   };
   for (const note of (raw ?? "").split("; ")) {
     if (note === RESTORED_WITHOUT_RUNTIME) out.withoutRuntime = true;
+    else if (note.startsWith(RESTORE_LEFT_OUT + ": ")) out.leftOut = note;
     else if (note === RESTORED_WITHOUT_DATA || note === STACK_NOT_STARTED || note.startsWith(STACK_NOT_STARTED + ": ")) out.stayedStopped = true;
     else if (note === STACK_FOLDER_FAILED || note.startsWith(STACK_FOLDER_FAILED + ": ")) {
       out.stayedStopped = true;
@@ -310,6 +313,10 @@ const WARNING_NOTES = [
   BACKUP_EMPTY,
   OLDER_BACKUPS_KEPT,
   STACK_FOLDER_EMPTY,
+  RESTORE_LEFT_OUT,
+  STACK_FOLDER_FAILED,
+  RESTORED_WITHOUT_DATA,
+  STACK_NOT_STARTED,
   VM_TPM_LEFT_OUT,
   VM_DISKS_LEFT_OUT,
 ];

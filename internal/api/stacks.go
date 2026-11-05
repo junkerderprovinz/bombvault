@@ -96,7 +96,8 @@ type stackMember struct {
 	comesBackEmpty bool
 }
 
-// volumeInspector finds a named volume on the host.
+// volumeInspector finds a named volume on the host, with "" for one that is not
+// there.
 type volumeInspector interface {
 	VolumeInspect(ctx context.Context, name string) (string, error)
 }
@@ -221,7 +222,7 @@ func (s *Service) memberComesBackEmpty(ctx context.Context, name, source string,
 			if m.Name == "" {
 				continue
 			}
-			if _, err := volumes.VolumeInspect(ctx, m.Name); err == nil {
+			if at, err := volumes.VolumeInspect(ctx, m.Name); err != nil || at != "" {
 				return false
 			}
 		}
