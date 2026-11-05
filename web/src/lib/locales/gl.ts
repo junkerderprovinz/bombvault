@@ -2390,6 +2390,8 @@ const gl: Partial<Translations> = {
   "zfs.code.set-limits-failed": "Os ficheiros restauráronse, pero non se puido definir a cota ou a reserva gardada.",
   "zfs.code.resume-token-stale": "A transferencia interrompida non se pode retomar e ten que comezar de novo.",
   "zfs.code.target-changed": "O destino ten instantáneas máis novas ca a máis recente que comparte con este servidor, que é da que parte esta transferencia. Isto pasa cando a copia do destino cambiou ou cando este servidor se reverteu a unha instantánea máis antiga. Reverte a copia do destino a esa instantánea compartida con zfs rollback -r e despois executa de novo a réplica.",
+  "zfs.code.target-written": "A copia do destino está en uso: fíxose escribible e montouse, ou escribiuse algo nela, por exemplo tras unha falla. BombVault detense aquí para que non se perda nada. Para volver replicar alí, saca da copia o que precises e destrúea no destino. A seguinte execución envialo todo de novo.",
+  "zfs.code.received-copy": "Este conxunto de datos é unha copia que outro BombVault replica a este servidor, así que esta entrada non toca nin a copia nin as súas instantáneas. Desactívao nesta entrada, ou quita a entrada se só contén a copia.",
   "zfs.code.no-common-base": "A orixe e a réplica xa non teñen ningunha instantánea en común, así que a réplica precisa outra transferencia completa.",
   "zfs.code.encryption-mismatch": "A réplica non está cifrada do mesmo xeito ca orixe.",
   "zfs.code.in-use": "Aínda hai elementos ZFS que se replican neste servidor.",

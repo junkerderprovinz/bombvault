@@ -2390,6 +2390,8 @@ const eu: Partial<Translations> = {
   "zfs.code.set-limits-failed": "Fitxategiak leheneratu dira, baina ezin izan da gordetako kuota edo erreserba ezarri.",
   "zfs.code.resume-token-stale": "Etendutako transferentzia ezin da berrekin, eta hasieratik hasi behar da.",
   "zfs.code.target-changed": "Helburuak zerbitzari honekin partekatzen duen argazkirik berriena baino argazki berriagoak ditu, eta argazki horretatik abiatzen da transferentzia hau. Hori gertatzen da helburuko kopia aldatu denean, edo zerbitzari hau argazki zaharrago batera atzera eraman denean. Eraman helburuko kopia atzera partekatutako argazki horretara zfs rollback -r erabiliz, eta exekutatu erreplika berriro.",
+  "zfs.code.target-written": "Helburuko kopia erabiltzen ari da: idazteko moduan jarri eta muntatu da, edo zerbait idatzi da bertan, adibidez hutsegite baten ondoren. BombVault hemen gelditzen da ezer gal ez dadin. Hara berriro erreplikatzeko, atera kopiatik behar duzuna eta suntsitu kopia helburuan. Hurrengo exekuzioak dena berriro bidaliko du.",
+  "zfs.code.received-copy": "Datu multzo hau beste BombVault batek zerbitzari honetara erreplikatzen duen kopia bat da, beraz sarrera honek ez ditu ukitzen ez kopia ez bere argazkiak. Desaktibatu sarrera honetan, edo kendu sarrera kopia besterik ez badu.",
   "zfs.code.no-common-base": "Iturburuak eta erreplikak ez dute jada argazki komunik, eta erreplikak transferentzia oso bat behar du berriro.",
   "zfs.code.encryption-mismatch": "Erreplika ez dago iturburua bezala zifratuta.",
   "zfs.code.in-use": "ZFS elementuak zerbitzari honetara erreplikatzen ari dira oraindik.",

@@ -1861,6 +1861,8 @@ const zh: Partial<Translations> = {
   "zfs.code.set-limits-failed": "文件已恢复，但无法设置保存的配额或预留。",
   "zfs.code.resume-token-stale": "中断的传输无法继续，需要从头开始。",
   "zfs.code.target-changed": "目标上有比它与这台服务器共有的最新快照更新的快照，而本次传输正是从那个共有快照开始的。目标上的副本被改动过，或者这台服务器被回滚到了更旧的快照，都会出现这种情况。请用 zfs rollback -r 把目标上的副本回滚到那个共有快照，然后重新运行副本。",
+  "zfs.code.target-written": "目标上的副本正在使用中：它已被设为可写并挂载，或者已有内容写入，例如在故障切换之后。BombVault 在此停止，以免丢失任何内容。要再次复制到那里，请先从副本中移走需要的内容，再在目标上销毁副本。下一次运行会重新发送全部内容。",
+  "zfs.code.received-copy": "此数据集是另一个 BombVault 复制到这台服务器的副本，因此本条目不会触碰它及其快照。请在本条目中关闭它，或者如果条目只包含这个副本，就移除该条目。",
   "zfs.code.no-common-base": "源和副本已没有共同的快照，副本需要重新进行完整传输。",
   "zfs.code.encryption-mismatch": "副本的加密方式与源不一致。",
   "zfs.code.in-use": "仍有 ZFS 条目正在复制到此服务器。",

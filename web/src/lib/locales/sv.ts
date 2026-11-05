@@ -1870,6 +1870,8 @@ const sv: Partial<Translations> = {
   "zfs.code.set-limits-failed": "Filerna återställdes, men den sparade kvoten eller reservationen kunde inte sättas.",
   "zfs.code.resume-token-stale": "Den avbrutna överföringen kan inte återupptas och måste börja om.",
   "zfs.code.target-changed": "Målet har ögonblicksbilder som är nyare än den nyaste som det delar med den här servern och som den här överföringen utgår från. Det händer när kopian på målet har ändrats eller när den här servern har rullats tillbaka till en äldre ögonblicksbild. Rulla tillbaka kopian på målet till den gemensamma ögonblicksbilden med zfs rollback -r och kör sedan repliken igen.",
+  "zfs.code.target-written": "Kopian på målet används: den har gjorts skrivbar och monterats, eller så har något skrivits till den, till exempel efter ett avbrott. BombVault stannar här så att inget på den går förlorat. För att replikera dit igen flyttar du det du behöver från kopian och förstör den på målet. Nästa körning skickar då allt på nytt.",
+  "zfs.code.received-copy": "Den här datamängden är en kopia som en annan BombVault replikerar till den här servern, så den här posten lämnar den och dess ögonblicksbilder i fred. Stäng av den i den här posten, eller ta bort posten om den bara innehåller den här kopian.",
   "zfs.code.no-common-base": "Källan och replikan har inte längre någon gemensam ögonblicksbild, så replikan behöver en fullständig överföring igen.",
   "zfs.code.encryption-mismatch": "Replikan är inte krypterad på samma sätt som källan.",
   "zfs.code.in-use": "ZFS-poster replikeras fortfarande till den här servern.",

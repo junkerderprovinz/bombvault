@@ -1861,6 +1861,8 @@ const vi: Partial<Translations> = {
   "zfs.code.set-limits-failed": "Đã khôi phục các tệp, nhưng không đặt được hạn mức (quota) hoặc dung lượng đặt trước (reservation) đã lưu.",
   "zfs.code.resume-token-stale": "Không thể tiếp tục lần truyền bị gián đoạn, cần bắt đầu lại từ đầu.",
   "zfs.code.target-changed": "Đích có các ảnh chụp mới hơn ảnh chụp mới nhất mà nó có chung với máy chủ này, cũng là ảnh chụp mà lần truyền này bắt đầu từ đó. Điều này xảy ra khi bản sao trên đích đã bị thay đổi, hoặc khi máy chủ này đã được đưa về một ảnh chụp cũ hơn. Hãy đưa bản sao trên đích về ảnh chụp chung đó bằng zfs rollback -r, rồi chạy lại bản nhân bản.",
+  "zfs.code.target-written": "Bản sao trên đích đang được dùng: nó đã được chuyển sang cho phép ghi và được gắn, hoặc đã có dữ liệu ghi vào, chẳng hạn sau một sự cố. BombVault dừng ở đây để không mất gì. Để sao chép đến đó lại, hãy chuyển những gì bạn cần ra khỏi bản sao rồi hủy nó trên đích. Lần chạy tiếp theo sẽ gửi lại mọi thứ.",
+  "zfs.code.received-copy": "Tập dữ liệu này là bản sao mà một BombVault khác sao chép đến máy chủ này, nên mục này không đụng đến nó và các ảnh chụp của nó. Hãy tắt nó trong mục này, hoặc xóa mục nếu chỉ chứa bản sao này.",
   "zfs.code.no-common-base": "Nguồn và bản sao không còn ảnh chụp chung nào, nên bản sao cần được truyền đầy đủ lại.",
   "zfs.code.encryption-mismatch": "Bản sao không được mã hóa giống như nguồn.",
   "zfs.code.in-use": "Vẫn còn các mục ZFS đang được sao chép sang máy chủ này.",

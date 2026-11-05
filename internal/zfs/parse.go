@@ -209,13 +209,17 @@ func ParseDatasetState(out string) (DatasetState, error) {
 				return DatasetState{}, err
 			}
 			s.ResumeToken = tok
+		case "readonly":
+			s.ReadOnly = value == "on"
+		case "mounted":
+			s.Mounted = value == "yes"
 		default:
 			return DatasetState{}, fmt.Errorf("zfs get %s: unexpected property %q", stateProps, prop)
 		}
 		seen++
 	}
-	if seen != 3 {
-		return DatasetState{}, fmt.Errorf("zfs get %s: %d properties, want 3", stateProps, seen)
+	if seen != 5 {
+		return DatasetState{}, fmt.Errorf("zfs get %s: %d properties, want 5", stateProps, seen)
 	}
 	return s, nil
 }

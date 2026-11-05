@@ -2390,6 +2390,8 @@ const ms: Partial<Translations> = {
   "zfs.code.set-limits-failed": "Fail telah dipulihkan, tetapi kuota atau tempahan yang disimpan tidak dapat ditetapkan.",
   "zfs.code.resume-token-stale": "Pemindahan yang terganggu tidak dapat disambung semula dan perlu bermula dari awal.",
   "zfs.code.target-changed": "Sasaran mempunyai syot kilat yang lebih baharu daripada syot kilat terbaharu yang dikongsinya dengan pelayan ini, iaitu titik mula pemindahan ini. Ini berlaku apabila salinan di sasaran telah diubah, atau apabila pelayan ini telah dikembalikan kepada syot kilat yang lebih lama. Kembalikan salinan di sasaran kepada syot kilat yang dikongsi itu dengan zfs rollback -r, kemudian jalankan replika sekali lagi.",
+  "zfs.code.target-written": "Salinan di sasaran sedang digunakan: ia dijadikan boleh ditulis dan dilekapkan, atau sesuatu ditulis padanya, contohnya selepas kegagalan. BombVault berhenti di sini supaya tiada apa yang hilang. Untuk mereplikasi ke sana lagi, alihkan apa yang anda perlukan daripada salinan itu dan musnahkannya di sasaran. Larian seterusnya akan menghantar semuanya semula.",
+  "zfs.code.received-copy": "Set data ini ialah salinan yang direplikasi oleh BombVault lain ke pelayan ini, jadi entri ini tidak menyentuhnya atau syot kilatnya. Matikannya dalam entri ini, atau alih keluar entri jika ia hanya mengandungi salinan ini.",
   "zfs.code.no-common-base": "Sumber dan replika tidak lagi berkongsi syot kilat yang sama, jadi replika memerlukan pemindahan penuh sekali lagi.",
   "zfs.code.encryption-mismatch": "Replika tidak disulitkan dengan cara yang sama seperti sumber.",
   "zfs.code.in-use": "Masih ada entri ZFS yang direplikasi ke pelayan ini.",

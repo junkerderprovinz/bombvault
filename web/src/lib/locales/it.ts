@@ -1870,6 +1870,8 @@ const it: Partial<Translations> = {
   "zfs.code.set-limits-failed": "I file sono stati ripristinati, ma non è stato possibile impostare la quota o la prenotazione salvata.",
   "zfs.code.resume-token-stale": "Il trasferimento interrotto non può essere ripreso e deve ricominciare da capo.",
   "zfs.code.target-changed": "La destinazione ha snapshot più recenti dell'ultimo che condivide con questo server, cioè quello da cui parte questo trasferimento. Succede quando la copia sulla destinazione è stata modificata, o quando questo server è stato riportato a uno snapshot più vecchio. Riporta la copia sulla destinazione a quello snapshot comune con zfs rollback -r, poi avvia di nuovo la replica.",
+  "zfs.code.target-written": "La copia sulla destinazione è in uso: è stata resa scrivibile e montata, oppure ci è stato scritto qualcosa, per esempio dopo un guasto. BombVault si ferma qui perché non vada perso nulla. Per replicare di nuovo lì, sposta dalla copia ciò che ti serve e distruggila sulla destinazione. L'esecuzione successiva invierà di nuovo tutto.",
+  "zfs.code.received-copy": "Questo dataset è una copia che un altro BombVault replica su questo server, quindi questa voce non tocca né la copia né i suoi snapshot. Disattivalo in questa voce, oppure rimuovi la voce se contiene solo questa copia.",
   "zfs.code.no-common-base": "L'origine e la replica non hanno più uno snapshot in comune, quindi la replica ha di nuovo bisogno di un trasferimento completo.",
   "zfs.code.encryption-mismatch": "La replica non è cifrata allo stesso modo dell'origine.",
   "zfs.code.in-use": "Alcuni elementi ZFS vengono ancora replicati su questo server.",

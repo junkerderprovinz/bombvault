@@ -1869,6 +1869,8 @@ const nl: Partial<Translations> = {
   "zfs.code.set-limits-failed": "De bestanden zijn hersteld, maar het opgeslagen quotum of de reservering kon niet worden ingesteld.",
   "zfs.code.resume-token-stale": "De onderbroken overdracht kan niet worden hervat en moet opnieuw beginnen.",
   "zfs.code.target-changed": "Het doel heeft snapshots die nieuwer zijn dan het nieuwste snapshot dat het met deze server deelt en waar deze overdracht van uitgaat. Dat gebeurt als de kopie op het doel is gewijzigd, of als deze server is teruggezet naar een ouder snapshot. Zet de kopie op het doel met zfs rollback -r terug naar dat gedeelde snapshot en start de replica daarna opnieuw.",
+  "zfs.code.target-written": "De kopie op het doel is in gebruik: ze is schrijfbaar gemaakt en aangekoppeld, of er is iets naar geschreven, bijvoorbeeld na een uitval. BombVault stopt hier zodat er niets verloren gaat. Om er weer naartoe te repliceren, haal je wat je nodig hebt van de kopie en vernietig je haar op het doel. De volgende run stuurt dan alles opnieuw.",
+  "zfs.code.received-copy": "Deze dataset is een kopie die een andere BombVault naar deze server repliceert, dus dit item laat haar en haar snapshots met rust. Schakel de dataset uit in dit item, of verwijder het item als het alleen deze kopie bevat.",
   "zfs.code.no-common-base": "Bron en replica hebben geen gemeenschappelijk snapshot meer, dus de replica heeft weer een volledige overdracht nodig.",
   "zfs.code.encryption-mismatch": "De replica is niet op dezelfde manier versleuteld als de bron.",
   "zfs.code.in-use": "Er worden nog ZFS-items naar deze server gerepliceerd.",

@@ -194,6 +194,9 @@ func (h *fakeHost) Run(_ context.Context, args []string) (string, error) {
 		}
 		return h.points(args, last)
 	case "get":
+		if index(args, "-r") >= 0 {
+			return h.propertyTree(last), nil
+		}
 		d := h.ds[last]
 		if d == nil {
 			return "", missing(args, last)
@@ -208,7 +211,12 @@ func (h *fakeHost) Run(_ context.Context, args []string) (string, error) {
 		if d.token != "" {
 			tok = d.token
 		}
-		return "type\t" + d.typ + "\nencryption\t" + enc + "\nreceive_resume_token\t" + tok + "\n", nil
+		values := map[string]string{"type": d.typ, "encryption": enc, "receive_resume_token": tok, "readonly": d.readonly(), "mounted": d.mountedValue()}
+		var out strings.Builder
+		for _, prop := range strings.Split(args[len(args)-2], ",") {
+			out.WriteString(prop + "\t" + values[prop] + "\n")
+		}
+		return out.String(), nil
 	case "mount":
 		return "", h.mount(args, last)
 	case "set":
@@ -283,6 +291,48 @@ func (h *fakeHost) Run(_ context.Context, args []string) (string, error) {
 		return h.estimate(args)
 	}
 	return "", fail(args, 2, "fake: unknown command %q", args)
+}
+
+func (d *fakeDS) readonly() string {
+	if d.props["readonly"] == "on" {
+		return "on"
+	}
+	return "off"
+}
+
+func (d *fakeDS) mountedValue() string {
+	if d.mounted {
+		return "yes"
+	}
+	return "no"
+}
+
+// propertyTree answers the read of who marked each dataset below root, with the
+// mark inherited down the tree the way zfs does.
+func (h *fakeHost) propertyTree(root string) string {
+	var names []string
+	for name := range h.ds {
+		if name == root || zfs.DescendantOf(name, root) {
+			names = append(names, name)
+		}
+	}
+	sort.Strings(names)
+	var out strings.Builder
+	for _, name := range names {
+		mark := "-"
+		for up := name; ; up = up[:strings.LastIndexByte(up, '/')] {
+			if a := h.ds[up]; a != nil && a.props[zfs.SourceProperty] != "" {
+				mark = a.props[zfs.SourceProperty]
+				break
+			}
+			if !strings.Contains(up, "/") {
+				break
+			}
+		}
+		d := h.ds[name]
+		fmt.Fprintf(&out, "%s\t%s\t%s\n%s\treadonly\t%s\n%s\tmounted\t%s\n", name, zfs.SourceProperty, mark, name, d.readonly(), name, d.mountedValue())
+	}
+	return out.String()
 }
 
 // mountState answers the property read the mounting of a replica starts with.

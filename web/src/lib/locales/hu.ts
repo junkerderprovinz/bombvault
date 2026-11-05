@@ -1871,6 +1871,8 @@ const hu: Partial<Translations> = {
   "zfs.code.set-limits-failed": "A fájlok visszaálltak, de a tárolt kvótát vagy foglalást nem sikerült beállítani.",
   "zfs.code.resume-token-stale": "A megszakadt átvitel nem folytatható, elölről kell kezdeni.",
   "zfs.code.target-changed": "A célon olyan pillanatképek vannak, amelyek újabbak annál a legújabb pillanatképnél, amely közös ezzel a kiszolgálóval, és amelyből ez az átvitel indul. Ez akkor fordul elő, ha a célon lévő másolat megváltozott, vagy ha ezt a kiszolgálót egy régebbi pillanatképre állították vissza. Állítsd vissza a célon lévő másolatot erre a közös pillanatképre a zfs rollback -r paranccsal, majd futtasd újra a replikát.",
+  "zfs.code.target-written": "A célon lévő másolat használatban van: írhatóvá tették és csatolták, vagy írtak rá valamit, például egy leállás után. A BombVault itt megáll, hogy semmi ne vesszen el róla. Ha újra oda szeretnél replikálni, vidd le a másolatról, amire szükséged van, és semmisítsd meg a célon. A következő futás mindent újra elküld.",
+  "zfs.code.received-copy": "Ez az adatkészlet egy másolat, amelyet egy másik BombVault replikál erre a kiszolgálóra, ezért ez a bejegyzés sem hozzá, sem a pillanatképeihez nem nyúl. Kapcsold ki ebben a bejegyzésben, vagy töröld a bejegyzést, ha csak ez a másolat van benne.",
   "zfs.code.no-common-base": "A forrásnak és a replikának már nincs közös pillanatképe, ezért a replikának újra teljes átvitel kell.",
   "zfs.code.encryption-mismatch": "A replika titkosítása nem egyezik a forráséval.",
   "zfs.code.in-use": "Erre a kiszolgálóra még ZFS-elemek replikálódnak.",

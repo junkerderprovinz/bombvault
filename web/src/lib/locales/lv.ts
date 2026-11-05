@@ -2390,6 +2390,8 @@ const lv: Partial<Translations> = {
   "zfs.code.set-limits-failed": "Faili tika atjaunoti, bet saglabāto kvotu vai rezervāciju neizdevās iestatīt.",
   "zfs.code.resume-token-stale": "Pārtraukto pārsūtīšanu nevar atsākt, tā jāsāk no jauna.",
   "zfs.code.target-changed": "Mērķī ir momentuzņēmumi, kas ir jaunāki par jaunāko, kas tam ir kopīgs ar šo serveri un no kura sākas šī pārsūtīšana. Tā notiek, ja kopija mērķī ir mainīta vai šis serveris ir atritināts atpakaļ uz vecāku momentuzņēmumu. Atritini kopiju mērķī atpakaļ uz šo kopīgo momentuzņēmumu ar zfs rollback -r un pēc tam palaid repliku vēlreiz.",
+  "zfs.code.target-written": "Kopija mērķī tiek izmantota: tā ir padarīta rakstāma un piemontēta, vai tajā kaut kas ierakstīts, piemēram, pēc atteices. BombVault šeit apstājas, lai nekas nepazustu. Lai tur atkal replicētu, pārvieto no kopijas vajadzīgo un iznīcini to mērķī. Nākamā izpilde tad nosūtīs visu no jauna.",
+  "zfs.code.received-copy": "Šī datu kopa ir kopija, ko uz šo serveri replicē cits BombVault, tāpēc šis ieraksts neaiztiek ne to, ne tās momentuzņēmumus. Izslēdz to šajā ierakstā vai noņem ierakstu, ja tajā ir tikai šī kopija.",
   "zfs.code.no-common-base": "Avotam un replikai vairs nav kopīga momentuzņēmuma, tāpēc replikai atkal vajadzīga pilna pārsūtīšana.",
   "zfs.code.encryption-mismatch": "Replika nav šifrēta tāpat kā avots.",
   "zfs.code.in-use": "Uz šo serveri joprojām tiek replicēti ZFS ieraksti.",

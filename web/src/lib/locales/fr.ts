@@ -1870,6 +1870,8 @@ const fr: Partial<Translations> = {
   "zfs.code.set-limits-failed": "Les fichiers ont été restaurés, mais le quota ou la réservation enregistré n'a pas pu être appliqué.",
   "zfs.code.resume-token-stale": "Le transfert interrompu ne peut pas reprendre et doit recommencer depuis le début.",
   "zfs.code.target-changed": "La cible contient des instantanés plus récents que le dernier qu'elle partage avec ce serveur, celui dont part ce transfert. Cela arrive quand la copie sur la cible a été modifiée, ou quand ce serveur a été ramené à un instantané plus ancien. Ramène la copie sur la cible à cet instantané commun avec zfs rollback -r, puis relance la réplique.",
+  "zfs.code.target-written": "La copie sur la cible est utilisée : elle a été rendue accessible en écriture et montée, ou quelque chose y a été écrit, par exemple après une panne. BombVault s'arrête ici pour que rien ne soit perdu. Pour répliquer à nouveau vers elle, retire de la copie ce dont tu as besoin et détruis-la sur la cible. La prochaine exécution enverra alors tout de nouveau.",
+  "zfs.code.received-copy": "Ce jeu de données est une copie qu'un autre BombVault réplique vers ce serveur, donc cette entrée ne touche ni à la copie ni à ses instantanés. Désactive-le dans cette entrée, ou supprime l'entrée si elle ne contient que cette copie.",
   "zfs.code.no-common-base": "La source et la réplique n'ont plus d'instantané en commun, la réplique a donc de nouveau besoin d'un transfert complet.",
   "zfs.code.encryption-mismatch": "La réplique n'est pas chiffrée de la même façon que la source.",
   "zfs.code.in-use": "Des éléments ZFS sont encore répliqués vers ce serveur.",

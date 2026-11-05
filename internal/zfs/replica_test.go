@@ -2,6 +2,7 @@ package zfs
 
 import (
 	"errors"
+	"maps"
 	"strings"
 	"testing"
 )
@@ -210,9 +211,9 @@ func TestReceiveArgs(t *testing.T) {
 			[]string{"zfs", "receive", "-s", "-u", "-x", "reservation", "-x", "refreservation", target + "/vm"},
 		},
 		{
-			"incremental over a changed replica",
-			ReceiveSpec{Target: target, Rollback: true},
-			[]string{"zfs", "receive", "-s", "-u", "-F", "-x", "mountpoint", "-x", "sharenfs", "-x", "sharesmb", "-x", "reservation", "-x", "refreservation", target},
+			"incremental, which never rolls the copy back",
+			ReceiveSpec{Target: target},
+			[]string{"zfs", "receive", "-s", "-u", "-x", "mountpoint", "-x", "sharenfs", "-x", "sharesmb", "-x", "reservation", "-x", "refreservation", target},
 		},
 	}
 	for _, c := range cases {
@@ -226,10 +227,6 @@ func TestReceiveArgs(t *testing.T) {
 		}
 	}
 
-	// -F on a full stream would overwrite whatever dataset sits at the path.
-	if args, err := ReceiveArgs(ReceiveSpec{Target: target, Full: true, Rollback: true}); err == nil || args != nil {
-		t.Errorf("ReceiveArgs rolled back on a full stream: %q, %v", args, err)
-	}
 	if args, err := ReceiveArgs(ReceiveSpec{Target: target, Replace: true}); err == nil || args != nil {
 		t.Errorf("ReceiveArgs replaced a dataset with an incremental: %q, %v", args, err)
 	}
@@ -372,7 +369,7 @@ func TestReplicaBuildersEmitDashROnlyOnTheSourceTreeSnapshot(t *testing.T) {
 		must(SendArgs(SendSpec{Member: "cache/appdata", Snap: replicaSnap, Base: replicaBase})),
 		must(EstimateArgs(SendSpec{Member: "cache/appdata", Snap: replicaSnap})),
 		must(ResumeSendArgs(resumeToken)),
-		must(ReceiveArgs(ReceiveSpec{Target: "tank/r/cache/appdata", Rollback: true})),
+		must(ReceiveArgs(ReceiveSpec{Target: "tank/r/cache/appdata"})),
 		must(AbortReceiveArgs("tank/r/cache/appdata")),
 		must(HoldArgs("cache/appdata", replicaSnap)),
 		must(ReleaseArgs("cache/appdata", replicaSnap)),
@@ -413,7 +410,7 @@ func TestReplicaListingArgs(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	want = []string{"zfs", "get", "-H", "-p", "-o", "property,value", "type,encryption,receive_resume_token", "tank/r/cache/appdata"}
+	want = []string{"zfs", "get", "-H", "-p", "-o", "property,value", "type,encryption,receive_resume_token,readonly,mounted", "tank/r/cache/appdata"}
 	if !equalArgs(got, want) {
 		t.Fatalf("DatasetStateArgs = %q, want %q", got, want)
 	}
@@ -559,5 +556,27 @@ func TestMountStateAndTheCommandsThatChangeIt(t *testing.T) {
 		if _, err := ParseMountState(bad); err == nil {
 			t.Errorf("ParseMountState took %q", bad)
 		}
+	}
+}
+
+func TestParseReceivedCopies(t *testing.T) {
+	out := strings.Join([]string{
+		"tank\tbombvault:source\t-", "tank\treadonly\toff", "tank\tmounted\tyes",
+		"tank/folder\tbombvault:source\tother", "tank/folder\treadonly\toff", "tank/folder\tmounted\tno",
+		"tank/folder/copy\tbombvault:source\tother", "tank/folder/copy\treadonly\ton", "tank/folder/copy\tmounted\tyes",
+		"tank/folder/unset\tbombvault:source\tother", "tank/folder/unset\treadonly\toff", "tank/folder/unset\tmounted\tno",
+		"tank/folder/vol\tbombvault:source\tother", "tank/folder/vol\treadonly\ton", "tank/folder/vol\tmounted\t-",
+		"tank/folder/taken\tbombvault:source\tother", "tank/folder/taken\treadonly\toff", "tank/folder/taken\tmounted\tyes",
+	}, "\n") + "\n"
+	got, err := ParseReceivedCopies(out)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := map[string]bool{"tank/folder": true, "tank/folder/copy": true, "tank/folder/unset": true, "tank/folder/vol": true}
+	if !maps.Equal(got, want) {
+		t.Errorf("ParseReceivedCopies = %v, want %v", got, want)
+	}
+	if _, err := ParseReceivedCopies("cannot open 'tank': dataset does not exist\n"); err == nil {
+		t.Error("an error message was read as properties")
 	}
 }

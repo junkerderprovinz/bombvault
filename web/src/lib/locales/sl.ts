@@ -2374,6 +2374,8 @@ const sl: Partial<Translations> = {
   "zfs.code.set-limits-failed": "Datoteke so obnovljene, vendar shranjene kvote ali rezervacije ni bilo mogoče nastaviti.",
   "zfs.code.resume-token-stale": "Prekinjenega prenosa ni mogoče nadaljevati in se mora začeti znova.",
   "zfs.code.target-changed": "Na cilju so posnetki, novejši od najnovejšega, ki ga ima skupnega s tem strežnikom in iz katerega izhaja ta prenos. To se zgodi, ko se je kopija na cilju spremenila ali ko je bil ta strežnik vrnjen na starejši posnetek. Kopijo na cilju z zfs rollback -r vrni na ta skupni posnetek in nato repliko zaženi še enkrat.",
+  "zfs.code.target-written": "Kopija na cilju je v uporabi: postala je zapisljiva in priklopljena ali pa je bilo nanjo nekaj zapisano, na primer po izpadu. BombVault se tu ustavi, da se nič ne izgubi. Če želiš tja znova replicirati, s kopije prenesi, kar potrebuješ, in jo na cilju uniči. Naslednji zagon bo nato vse poslal znova.",
+  "zfs.code.received-copy": "Ta nabor podatkov je kopija, ki jo na ta strežnik replicira drug BombVault, zato ta vnos ne spreminja ne nje ne njenih posnetkov. Izklopi ga v tem vnosu ali odstrani vnos, če vsebuje samo to kopijo.",
   "zfs.code.no-common-base": "Vir in replika nimata več skupnega posnetka, zato replika znova potrebuje popoln prenos.",
   "zfs.code.encryption-mismatch": "Replika ni šifrirana na enak način kot vir.",
   "zfs.code.in-use": "Na ta strežnik se še vedno replicirajo vnosi ZFS.",

@@ -1867,6 +1867,8 @@ const pl: Partial<Translations> = {
   "zfs.code.set-limits-failed": "Pliki zostały przywrócone, ale nie udało się ustawić zapisanego limitu (quota) ani rezerwacji.",
   "zfs.code.resume-token-stale": "Przerwanego transferu nie da się wznowić i trzeba go zacząć od nowa.",
   "zfs.code.target-changed": "W miejscu docelowym są migawki nowsze niż najnowsza migawka wspólna z tym serwerem, od której zaczyna się ten transfer. Dzieje się tak, gdy kopię w miejscu docelowym zmieniono albo gdy ten serwer cofnięto do starszej migawki. Cofnij kopię w miejscu docelowym do tej wspólnej migawki za pomocą zfs rollback -r, a potem uruchom replikę jeszcze raz.",
+  "zfs.code.target-written": "Kopia w miejscu docelowym jest w użyciu: stała się zapisywalna i zamontowana albo coś na niej zapisano, na przykład po awarii. BombVault zatrzymuje się tutaj, żeby nic z niej nie przepadło. Aby znów tam replikować, przenieś z kopii to, czego potrzebujesz, i zniszcz ją w miejscu docelowym. Następne uruchomienie wyśle wtedy wszystko od nowa.",
+  "zfs.code.received-copy": "Ten zbiór danych to kopia, którą inny BombVault replikuje na ten serwer, więc ten wpis nie rusza ani jej, ani jej migawek. Wyłącz go w tym wpisie albo usuń wpis, jeśli zawiera tylko tę kopię.",
   "zfs.code.no-common-base": "Źródło i replika nie mają już wspólnej migawki, więc replika znów potrzebuje pełnego transferu.",
   "zfs.code.encryption-mismatch": "Replika nie jest zaszyfrowana tak samo jak źródło.",
   "zfs.code.in-use": "Na ten serwer nadal replikowane są wpisy ZFS.",

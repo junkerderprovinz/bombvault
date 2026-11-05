@@ -2390,6 +2390,8 @@ const et: Partial<Translations> = {
   "zfs.code.set-limits-failed": "Failid taastati, kuid salvestatud kvooti või reservatsiooni ei õnnestunud seada.",
   "zfs.code.resume-token-stale": "Katkenud ülekannet ei saa jätkata ja see peab algama otsast.",
   "zfs.code.target-changed": "Sihtkohas on hetktõmmiseid, mis on uuemad kui uusim selle serveriga ühine hetktõmmis, millest see ülekanne lähtub. Nii juhtub, kui sihtkoha koopiat on muudetud või kui see server on keeratud tagasi vanemale hetktõmmisele. Keera sihtkoha koopia zfs rollback -r abil sellele ühisele hetktõmmisele tagasi ja käivita siis replika uuesti.",
+  "zfs.code.target-written": "Sihtkoha koopia on kasutusel: see on tehtud kirjutatavaks ja haagitud või sinna on midagi kirjutatud, näiteks pärast tõrget. BombVault peatub siin, et sellest midagi ei kaoks. Et sinna uuesti replitseerida, vii vajalik koopialt ära ja hävita koopia sihtkohas. Järgmine käivitus saadab siis kõik uuesti.",
+  "zfs.code.received-copy": "See andmekogum on koopia, mida teine BombVault sellesse serverisse replitseerib, seega see kirje ei puutu seda ega selle hetktõmmiseid. Lülita see selles kirjes välja või eemalda kirje, kui selles on ainult see koopia.",
   "zfs.code.no-common-base": "Allikal ja koopial pole enam ühist hetktõmmist, seega vajab koopia uuesti täielikku ülekannet.",
   "zfs.code.encryption-mismatch": "Koopia pole krüpteeritud samamoodi nagu allikas.",
   "zfs.code.in-use": "Sellesse serverisse replitseeritakse veel ZFS-kirjeid.",

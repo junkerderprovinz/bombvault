@@ -1868,6 +1868,8 @@ const cs: Partial<Translations> = {
   "zfs.code.set-limits-failed": "Soubory se obnovily, ale uloženou kvótu nebo rezervaci se nepodařilo nastavit.",
   "zfs.code.resume-token-stale": "Přerušený přenos nelze obnovit a musí začít znovu.",
   "zfs.code.target-changed": "Cíl má snímky novější než ten nejnovější, který sdílí s tímto serverem a ze kterého tento přenos vychází. Stává se to, když se kopie v cíli změnila nebo když byl tento server vrácen na starší snímek. Vrať kopii v cíli na tento společný snímek pomocí zfs rollback -r a pak repliku spusť znovu.",
+  "zfs.code.target-written": "Kopie v cíli se používá: byla nastavena jako zapisovatelná a připojena, nebo se do ní zapisovalo, například po výpadku serveru. BombVault se tady zastaví, aby se z ní nic neztratilo. Chceš-li tam znovu replikovat, přesuň z kopie, co potřebuješ, a v cíli ji znič. Další běh pak pošle všechno znovu.",
+  "zfs.code.received-copy": "Tato datová sada je kopie, kterou na tento server replikuje jiný BombVault, proto ji tato položka ani její snímky nemění. Vypni ji v této položce, nebo položku odstraň, pokud obsahuje jen tuto kopii.",
   "zfs.code.no-common-base": "Zdroj a replika už nemají žádný společný snímek, replika proto potřebuje znovu úplný přenos.",
   "zfs.code.encryption-mismatch": "Replika není šifrovaná stejně jako zdroj.",
   "zfs.code.in-use": "Na tento server se stále replikují položky ZFS.",

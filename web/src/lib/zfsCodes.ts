@@ -76,6 +76,8 @@ export const ZFS_CODE_KEY = {
   "set-limits-failed": "zfs.code.set-limits-failed",
   "resume-token-stale": "zfs.code.resume-token-stale",
   "target-changed": "zfs.code.target-changed",
+  "target-written": "zfs.code.target-written",
+  "received-copy": "zfs.code.received-copy",
   "no-common-base": "zfs.code.no-common-base",
   "encryption-mismatch": "zfs.code.encryption-mismatch",
   "in-use": "zfs.code.in-use",

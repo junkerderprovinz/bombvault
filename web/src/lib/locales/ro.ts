@@ -1871,6 +1871,8 @@ const ro: Partial<Translations> = {
   "zfs.code.set-limits-failed": "Fișierele au fost restaurate, dar cota sau rezervarea salvată nu a putut fi setată.",
   "zfs.code.resume-token-stale": "Transferul întrerupt nu mai poate fi reluat și trebuie început de la capăt.",
   "zfs.code.target-changed": "Destinația are instantanee mai noi decât cel mai nou pe care îl are în comun cu acest server și de la care pornește acest transfer. Asta se întâmplă când copia de pe destinație a fost modificată sau când acest server a fost readus la un instantaneu mai vechi. Readu copia de pe destinație la acel instantaneu comun cu zfs rollback -r, apoi rulează replica din nou.",
+  "zfs.code.target-written": "Copia de pe destinație este în uz: a fost făcută inscriptibilă și montată sau s-a scris ceva pe ea, de exemplu după o defecțiune. BombVault se oprește aici ca să nu se piardă nimic. Ca să replici din nou acolo, mută de pe copie ce ai nevoie și distruge-o pe destinație. Următoarea rulare va trimite totul din nou.",
+  "zfs.code.received-copy": "Acest set de date este o copie pe care un alt BombVault o replică pe acest server, așa că această intrare nu atinge nici copia, nici instantaneele ei. Dezactivează-l în această intrare sau elimină intrarea dacă nu conține decât această copie.",
   "zfs.code.no-common-base": "Sursa și replica nu mai au niciun instantaneu comun, așa că replica are din nou nevoie de un transfer complet.",
   "zfs.code.encryption-mismatch": "Replica nu este criptată la fel ca sursa.",
   "zfs.code.in-use": "Pe acest server încă se replică elemente ZFS.",

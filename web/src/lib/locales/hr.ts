@@ -2390,6 +2390,8 @@ const hr: Partial<Translations> = {
   "zfs.code.set-limits-failed": "Datoteke su vraćene, ali spremljenu kvotu ili rezervaciju nije bilo moguće postaviti.",
   "zfs.code.resume-token-stale": "Prekinuti prijenos ne može se nastaviti i mora krenuti ispočetka.",
   "zfs.code.target-changed": "Odredište ima snimke novije od najnovije snimke koju dijeli s ovim poslužiteljem i od koje ovaj prijenos polazi. To se događa kad je kopija na odredištu promijenjena ili kad je ovaj poslužitelj vraćen unatrag na stariju snimku. Vrati kopiju na odredištu na tu zajedničku snimku sa zfs rollback -r, a zatim ponovno pokreni repliku.",
+  "zfs.code.target-written": "Kopija na odredištu je u upotrebi: postala je zapisiva i montirana je, ili je na nju nešto zapisano, primjerice nakon kvara. BombVault ovdje staje kako se ništa ne bi izgubilo. Za ponovno repliciranje onamo premjesti s kopije što ti treba i uništi je na odredištu. Sljedeće pokretanje tada sve šalje iznova.",
+  "zfs.code.received-copy": "Ovaj skup podataka je kopija koju drugi BombVault replicira na ovaj poslužitelj, pa ova stavka ne dira ni nju ni njezine snimke. Isključi ga u ovoj stavci ili ukloni stavku ako sadrži samo tu kopiju.",
   "zfs.code.no-common-base": "Izvor i replika više nemaju zajedničku snimku, pa replici ponovno treba potpuni prijenos.",
   "zfs.code.encryption-mismatch": "Replika nije šifrirana na isti način kao izvor.",
   "zfs.code.in-use": "Na ovaj se poslužitelj još repliciraju ZFS stavke.",

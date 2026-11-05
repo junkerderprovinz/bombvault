@@ -2390,6 +2390,8 @@ const ca: Partial<Translations> = {
   "zfs.code.set-limits-failed": "Els fitxers s'han restaurat, però no s'ha pogut definir la quota o la reserva desada.",
   "zfs.code.resume-token-stale": "La transferència interrompuda no es pot reprendre i ha de tornar a començar.",
   "zfs.code.target-changed": "La destinació té instantànies més noves que la més recent que comparteix amb aquest servidor, que és la de la qual parteix aquesta transferència. Passa quan la còpia de la destinació s'ha modificat o quan aquest servidor s'ha tornat enrere a una instantània més antiga. Torna enrere la còpia de la destinació fins a aquesta instantània compartida amb zfs rollback -r i després torna a executar la rèplica.",
+  "zfs.code.target-written": "La còpia de la destinació està en ús: s'ha fet escrivible i s'ha muntat, o s'hi ha escrit alguna cosa, per exemple després d'una fallada. BombVault s'atura aquí perquè no se'n perdi res. Per tornar a replicar-hi, treu de la còpia el que necessitis i destrueix-la a la destinació. La següent execució ho enviarà tot de nou.",
+  "zfs.code.received-copy": "Aquest conjunt de dades és una còpia que un altre BombVault replica a aquest servidor, així que aquesta entrada no toca ni la còpia ni les seves instantànies. Desactiva'l en aquesta entrada, o elimina l'entrada si només conté la còpia.",
   "zfs.code.no-common-base": "L'origen i la rèplica ja no tenen cap instantània en comú, així que la rèplica necessita una altra transferència completa.",
   "zfs.code.encryption-mismatch": "La rèplica no està xifrada de la mateixa manera que l'origen.",
   "zfs.code.in-use": "Encara hi ha elements ZFS que es repliquen en aquest servidor.",

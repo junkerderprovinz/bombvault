@@ -2390,6 +2390,8 @@ const id: Partial<Translations> = {
   "zfs.code.set-limits-failed": "Berkas sudah dipulihkan, tetapi kuota atau reservasi tersimpan tidak dapat diatur.",
   "zfs.code.resume-token-stale": "Transfer yang terputus tidak bisa dilanjutkan dan harus dimulai dari awal.",
   "zfs.code.target-changed": "Tujuan punya snapshot yang lebih baru daripada snapshot terbaru yang sama-sama dimilikinya dengan server ini, yang menjadi titik awal transfer ini. Ini terjadi kalau salinan di tujuan diubah, atau kalau server ini dikembalikan ke snapshot yang lebih lama. Kembalikan salinan di tujuan ke snapshot bersama itu dengan zfs rollback -r, lalu jalankan replika lagi.",
+  "zfs.code.target-written": "Salinan di tujuan sedang dipakai: salinan itu dibuat bisa ditulis dan dipasang, atau ada yang ditulis ke sana, misalnya setelah failover. BombVault berhenti di sini agar tidak ada yang hilang. Untuk mereplikasi ke sana lagi, pindahkan yang kamu perlukan dari salinan itu lalu hancurkan salinannya di tujuan. Eksekusi berikutnya akan mengirim semuanya dari awal.",
+  "zfs.code.received-copy": "Dataset ini adalah salinan yang direplikasi BombVault lain ke server ini, jadi entri ini tidak menyentuhnya maupun snapshot-nya. Matikan di entri ini, atau hapus entrinya kalau isinya hanya salinan ini.",
   "zfs.code.no-common-base": "Sumber dan replika tidak lagi memiliki snapshot yang sama, jadi replika perlu transfer penuh lagi.",
   "zfs.code.encryption-mismatch": "Replika tidak dienkripsi dengan cara yang sama seperti sumbernya.",
   "zfs.code.in-use": "Masih ada entri ZFS yang direplikasi ke server ini.",

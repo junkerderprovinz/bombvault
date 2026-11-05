@@ -1870,6 +1870,8 @@ const fi: Partial<Translations> = {
   "zfs.code.set-limits-failed": "Tiedostot palautettiin, mutta tallennettua kiintiötä tai varausta ei voitu asettaa.",
   "zfs.code.resume-token-stale": "Keskeytynyttä siirtoa ei voi jatkaa, vaan se on aloitettava alusta.",
   "zfs.code.target-changed": "Kohteessa on tilannevedoksia, jotka ovat uudempia kuin uusin tilannevedos, joka sillä on yhteinen tämän palvelimen kanssa ja josta tämä siirto alkaa. Näin käy, kun kohteen kopiota on muutettu tai tämä palvelin on palautettu vanhempaan tilannevedokseen. Palauta kohteen kopio siihen yhteiseen tilannevedokseen komennolla zfs rollback -r ja aja replika sitten uudelleen.",
+  "zfs.code.target-written": "Kohteen kopio on käytössä: se on tehty kirjoitettavaksi ja liitetty, tai siihen on kirjoitettu, esimerkiksi vikatilanteen jälkeen. BombVault pysähtyy tähän, jotta mitään ei katoa. Jos haluat replikoida sinne uudelleen, siirrä tarvitsemasi pois kopiolta ja tuhoa se kohteesta. Seuraava ajo lähettää sitten kaiken uudelleen.",
+  "zfs.code.received-copy": "Tämä tietojoukko on kopio, jonka toinen BombVault replikoi tälle palvelimelle, joten tämä kohta ei koske siihen eikä sen tilannevedoksiin. Poista se käytöstä tässä kohdassa, tai poista kohta, jos siinä on vain tämä kopio.",
   "zfs.code.no-common-base": "Lähteellä ja replikalla ei ole enää yhteistä tilannevedosta, joten replika tarvitsee taas täyden siirron.",
   "zfs.code.encryption-mismatch": "Replikaa ei ole salattu samalla tavalla kuin lähdettä.",
   "zfs.code.in-use": "Tälle palvelimelle replikoidaan yhä ZFS-merkintöjä.",

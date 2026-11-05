@@ -74,12 +74,14 @@ func (h *replicaHost) Run(_ context.Context, args []string) (string, error) {
 			return "", &zfs.CmdError{Args: args, Code: "not-found", Stderr: "cannot open '" + last + "': dataset does not exist"}
 		}
 		return owner + "\n", nil
+	case args[1] == "get" && slices.Contains(args, "-r"):
+		return "", nil
 	case args[1] == "get":
 		enc := "off"
 		if h.locked[last] {
 			enc = "aes-256-gcm"
 		}
-		return "type\tfilesystem\nencryption\t" + enc + "\nreceive_resume_token\t-\n", nil
+		return "type\tfilesystem\nencryption\t" + enc + "\nreceive_resume_token\t-\nreadonly\ton\nmounted\tno\n", nil
 	case args[1] == "list" && slices.Contains(args, "0"):
 		return h.pools, nil
 	case args[1] == "list" && slices.Contains(args, "snapshot,bookmark"):

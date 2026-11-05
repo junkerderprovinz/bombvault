@@ -59,6 +59,13 @@ func newFakeDataset(typ string) *fakeDataset {
 	return &fakeDataset{typ: typ, holds: map[string]bool{}, props: map[string]string{}}
 }
 
+func (d *fakeDataset) value(prop, unset string) string {
+	if v, ok := d.props[prop]; ok {
+		return v
+	}
+	return unset
+}
+
 func (p *fakePool) dataset(name string) *fakeDataset {
 	p.mu.Lock()
 	defer p.mu.Unlock()
@@ -119,6 +126,9 @@ func (p *fakePool) run(args []string) (string, string) {
 		}
 		return p.points(last)
 	case "get":
+		if slices.Contains(args, "-r") {
+			return p.propertyTree(last), ""
+		}
 		d := p.ds[last]
 		if d == nil {
 			return "", missingDataset(last)
@@ -129,7 +139,7 @@ func (p *fakePool) run(args []string) (string, string) {
 			}
 			return "-\n", ""
 		}
-		return "type\t" + d.typ + "\nencryption\toff\nreceive_resume_token\t-\n", ""
+		return "type\t" + d.typ + "\nencryption\toff\nreceive_resume_token\t-\nreadonly\t" + d.value("readonly", "off") + "\nmounted\t" + d.value("mounted", "no") + "\n", ""
 	case "snapshot":
 		root, snap, _ := strings.Cut(last, "@")
 		if p.ds[root] == nil {
@@ -212,6 +222,34 @@ func (p *fakePool) tree(root string) (string, string) {
 		fmt.Fprintf(&b, "%s\t%s\t/mnt/%s\tyes\ton\toff\t-\thidden\t1024\t1024\n", name, p.ds[name].typ, name)
 	}
 	return b.String(), ""
+}
+
+// propertyTree answers the read of who marked each dataset below root, with the
+// mark inherited down the tree the way zfs does.
+func (p *fakePool) propertyTree(root string) string {
+	var names []string
+	for name := range p.ds {
+		if name == root || zfs.DescendantOf(name, root) {
+			names = append(names, name)
+		}
+	}
+	sort.Strings(names)
+	var b strings.Builder
+	for _, name := range names {
+		mark := "-"
+		for up := name; ; up = up[:strings.LastIndexByte(up, '/')] {
+			if a := p.ds[up]; a != nil && a.props[zfs.SourceProperty] != "" {
+				mark = a.props[zfs.SourceProperty]
+				break
+			}
+			if !strings.Contains(up, "/") {
+				break
+			}
+		}
+		d := p.ds[name]
+		fmt.Fprintf(&b, "%s\t%s\t%s\n%s\treadonly\t%s\n%s\tmounted\t%s\n", name, zfs.SourceProperty, mark, name, d.value("readonly", "off"), name, d.value("mounted", "no"))
+	}
+	return b.String()
 }
 
 func (p *fakePool) pools() string {

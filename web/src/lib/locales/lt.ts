@@ -2390,6 +2390,8 @@ const lt: Partial<Translations> = {
   "zfs.code.set-limits-failed": "Failai atkurti, bet išsaugotos kvotos ar rezervacijos nustatyti nepavyko.",
   "zfs.code.resume-token-stale": "Nutraukto perdavimo negalima pratęsti, jį reikia pradėti iš naujo.",
   "zfs.code.target-changed": "Paskirties vietoje yra momentinių kopijų, naujesnių už naujausią, kurią ji turi bendrą su šiuo serveriu ir nuo kurios prasideda šis perdavimas. Taip nutinka, kai kopija paskirties vietoje buvo pakeista arba šis serveris buvo atsuktas atgal į senesnę momentinę kopiją. Atsuk kopiją paskirties vietoje atgal į tą bendrą momentinę kopiją su zfs rollback -r, tada vėl paleisk repliką.",
+  "zfs.code.target-written": "Kopija paskirties vietoje naudojama: ji padaryta rašoma ir prijungta arba į ją kažkas įrašyta, pavyzdžiui, po gedimo. BombVault čia sustoja, kad niekas nedingtų. Norėdamas vėl ten replikuoti, perkelk iš kopijos, ko reikia, ir sunaikink ją paskirties vietoje. Kitas paleidimas tada viską išsiųs iš naujo.",
+  "zfs.code.received-copy": "Šis duomenų rinkinys yra kopija, kurią į šį serverį replikuoja kitas BombVault, todėl šis įrašas neliečia nei jos, nei jos momentinių kopijų. Išjunk jį šiame įraše arba pašalink įrašą, jei jame yra tik ši kopija.",
   "zfs.code.no-common-base": "Šaltinis ir replika nebeturi bendros momentinės kopijos, todėl replikai vėl reikia viso perdavimo.",
   "zfs.code.encryption-mismatch": "Replika užšifruota ne taip, kaip šaltinis.",
   "zfs.code.in-use": "Į šį serverį vis dar replikuojami ZFS įrašai.",

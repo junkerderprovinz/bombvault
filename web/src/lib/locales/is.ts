@@ -2390,6 +2390,8 @@ const is: Partial<Translations> = {
   "zfs.code.set-limits-failed": "Skrárnar voru endurheimtar, en ekki tókst að stilla vistaðan kvóta eða frátekt.",
   "zfs.code.resume-token-stale": "Ekki er hægt að halda rofnum flutningi áfram og hann þarf að byrja upp á nýtt.",
   "zfs.code.target-changed": "Á áfangastaðnum eru skyndimyndir sem eru nýrri en sú nýjasta sem hann á sameiginlega með þessum þjóni og sem þessi flutningur byggir á. Það gerist þegar afritinu á áfangastaðnum hefur verið breytt, eða þegar þessi þjónn hefur verið færður til baka á eldri skyndimynd. Færðu afritið á áfangastaðnum til baka á þá sameiginlegu skyndimynd með zfs rollback -r og keyrðu svo eftirmyndina aftur.",
+  "zfs.code.target-written": "Afritið á áfangastaðnum er í notkun: það var gert skrifanlegt og tengt, eða eitthvað var skrifað á það, til dæmis eftir bilun. BombVault stoppar hér svo ekkert af því glatist. Til að afrita þangað aftur skaltu færa það sem þú þarft af afritinu og eyða því á áfangastaðnum. Næsta keyrsla sendir þá allt upp á nýtt.",
+  "zfs.code.received-copy": "Þetta gagnasafn er afrit sem annað BombVault afritar á þennan þjón, svo þessi færsla snertir hvorki það né skyndimyndir þess. Slökktu á því í þessari færslu, eða fjarlægðu færsluna ef hún geymir aðeins þetta afrit.",
   "zfs.code.no-common-base": "Uppruninn og afritið eiga ekki lengur sameiginlega skyndimynd, svo afritið þarf aftur fullan flutning.",
   "zfs.code.encryption-mismatch": "Afritið er ekki dulkóðað á sama hátt og uppruninn.",
   "zfs.code.in-use": "ZFS-færslur eru enn afritaðar á þennan þjón.",

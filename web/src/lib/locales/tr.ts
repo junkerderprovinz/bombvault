@@ -1870,6 +1870,8 @@ const tr: Partial<Translations> = {
   "zfs.code.set-limits-failed": "Dosyalar geri yüklendi, ancak saklanan kota ya da rezervasyon ayarlanamadı.",
   "zfs.code.resume-token-stale": "Kesintiye uğrayan aktarım sürdürülemiyor ve baştan başlaması gerekiyor.",
   "zfs.code.target-changed": "Hedefte, bu sunucuyla paylaştığı en yeni anlık görüntüden daha yeni anlık görüntüler var. Bu aktarım o ortak anlık görüntüden başlar. Bu durum, hedefteki kopya değiştirildiğinde ya da bu sunucu daha eski bir anlık görüntüye geri alındığında olur. Hedefteki kopyayı zfs rollback -r ile o ortak anlık görüntüye geri al, ardından replikayı yeniden çalıştır.",
+  "zfs.code.target-written": "Hedefteki kopya kullanımda: yazılabilir yapılıp bağlandı ya da üzerine bir şey yazıldı, örneğin bir arızadan sonra. BombVault hiçbir şey kaybolmasın diye burada durur. Oraya yeniden çoğaltmak için gerekenleri kopyadan alıp kopyayı hedefte yok et. Sonraki çalışma her şeyi baştan gönderir.",
+  "zfs.code.received-copy": "Bu veri kümesi, başka bir BombVault'un bu sunucuya çoğalttığı bir kopya, bu yüzden bu öge ona ve anlık görüntülerine dokunmaz. Onu bu ögede kapat ya da öge yalnızca bu kopyayı içeriyorsa ögeyi kaldır.",
   "zfs.code.no-common-base": "Kaynak ile replikanın artık ortak bir anlık görüntüsü yok, bu yüzden replikanın yeniden tam aktarıma ihtiyacı var.",
   "zfs.code.encryption-mismatch": "Replika, kaynakla aynı şekilde şifrelenmemiş.",
   "zfs.code.in-use": "Bu sunucuya hâlâ ZFS ögeleri çoğaltılıyor.",

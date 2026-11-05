@@ -266,9 +266,10 @@ func (e *peerEnd) Run(ctx context.Context, args []string) (string, error) {
 		if token == "" {
 			token = "-"
 		}
-		return "type\t" + v.Type + "\nencryption\t" + v.Encryption + "\nreceive_resume_token\t" + token + "\n", nil
+		// The receiving instance refuses a stream into a copy in use itself.
+		return "type\t" + v.Type + "\nencryption\t" + v.Encryption + "\nreceive_resume_token\t" + token + "\nreadonly\ton\nmounted\tno\n", nil
 	case args[1] == "get" && e.above(target):
-		return "type\tfilesystem\nencryption\toff\nreceive_resume_token\t-\n", nil
+		return "type\tfilesystem\nencryption\toff\nreceive_resume_token\t-\nreadonly\ton\nmounted\tno\n", nil
 	case args[1] == "list" && slices.Contains(args, "snapshot,bookmark") && isMember:
 		v, err := e.view(ctx, args, m)
 		if err != nil {

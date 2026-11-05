@@ -260,3 +260,15 @@ func release(ctx context.Context, end End, dataset, snap string) error {
 	_, err = end.Run(ctx, args)
 	return ignore(err, zfs.IsNotFound)
 }
+
+func receivedCopies(ctx context.Context, end End, root string) (map[string]bool, error) {
+	args, err := zfs.ReceivedCopiesArgs(root)
+	if err != nil {
+		return nil, err
+	}
+	out, err := end.Run(ctx, args)
+	if err != nil {
+		return nil, err
+	}
+	return zfs.ParseReceivedCopies(out)
+}
