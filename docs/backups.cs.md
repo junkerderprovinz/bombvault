@@ -9,10 +9,10 @@ Všechno, co BombVault zálohuje, stojí v jednom seznamu pod **Zálohy**: konte
 
 | Sekce | Co se ukládá |
 |---|---|
-| **Kontejnery** | Složka appdata plus definice kontejneru: image, proměnné, porty, štítky a svazky. Karta **Zálohované složky** na záložce **Nastavení** kontejneru zaškrtává přesně ty složky, které záloha pokrývá, s živým počtem cest a seznamem toho, co jsi vynechal. Data, která kontejner drží mimo Host Data, například v ixVolume na TrueNAS, se nezálohují a běh jmenuje složky, které vynechal. |
+| **Kontejnery** | Složka appdata plus definice kontejneru: image, proměnné, porty, štítky a svazky. Karta **Zálohované složky** na záložce **Nastavení** kontejneru zaškrtává přesně ty složky, které záloha pokrývá, s živým počtem cest a seznamem toho, co jsi vynechal. Data, která kontejner drží mimo Host Data, například v ixVolume na TrueNAS nebo v projektu Compose pod `/opt`, se nezálohují a běh jmenuje složky, které vynechal. Běh jmenuje i složku uvnitř Host Data, která tam právě teď není. Systémové cesty jako `/etc/localtime` nebo socket Dockeru se za data nepočítají. |
 | **VM** | Obrazy disků, definice XML a UEFI NVRAM, s řádným vypnutím nebo živým snímkem, přes SSH. Viz [Zálohy VM](vm-backup-ssh-setup.md). |
 | **Flash** | Jen Unraid. Celá flashka USB (`/boot`): OS, licence, konfigurace pole, sdílené složky, síť a konfigurace pluginů. |
-| **Autozáloha** | Vlastní `/config` BombVaultu: jeho databáze nastavení, přihlašovací údaje cílů a pár klíčů SSH pro libvirt, zachycené pomocí SQLite `VACUUM INTO`, aby se databáze nikdy nezachytila uprostřed zápisu. |
+| **Autozáloha** | Vlastní `/config` BombVaultu: jeho databáze nastavení, přihlašovací údaje cílů, pár klíčů SSH pro libvirt, klíč a připnuté klíče hostitelů serverů ZFS a certifikáty, zachycené pomocí SQLite `VACUUM INTO`, aby se databáze nikdy nezachytila uprostřed zápisu. |
 | **Složky** | Libovolná složka na serveru jako sada složek, třeba sdílená složka, tvoje dokumenty nebo knihovna fotek, s volitelnými vzory vyloučení. Sady složek mají plány, uchovávání, kopie mimo lokalitu, kontroly a zkoušky obnovy jako všechno ostatní. |
 | **Datové sady ZFS** | Datová sada a každá pod ní, čtené z jednoho snapshotu ZFS, takže všechny pocházejí ze stejného okamžiku, a uložené resticem jako složka. Položka ZFS může navíc držet blokově přesnou repliku na druhém serveru ZFS. Viz [Datové sady ZFS](zfs-datasets.md). |
 
@@ -35,7 +35,7 @@ Položky, které už nejsou nainstalované, ale mají ještě zálohy, stojí st
 Hlavní akce stránky plave vpravo dole: **Zálohovat vše nyní** spustí běh přes všechny zapnuté sekce. **Více** drží zbytek:
 
 - **Vybrat** zahájí výběr, viz níže.
-- **Objevit zálohy** přečte, co cíle drží, a z toho znovu postaví položky, například po čerstvé instalaci. Kopie mimo lokalitu znovu postavených sekcí se pak pozastaví, dokud nepotvrdíš jejich výchozí nastavení, viz [Po opětovném sestavení](offsite-recovery.md#after-a-rebuild).
+- **Objevit zálohy** přečte, co cíle drží, a z toho znovu postaví položky, například po čerstvé instalaci. Kontejner bez vlastních dat nemá žádný snapshot a vrátí se z definice zrcadlené vedle repozitáře. Kopie mimo lokalitu znovu postavených sekcí pak čekají, dokud jejich zálohy nepřevezmeš jako vlastní zálohy tohoto serveru, viz [Po opětovném sestavení](offsite-recovery.md#after-a-rebuild).
 - **Připojení ZFS k tomuto serveru** otevře test SSH sekce ZFS, viz [Datové sady ZFS](zfs-datasets.md#requirements).
 - **Replikovat vše teď** pošle s vybranou dlaždicí ZFS repliku každé položky ZFS.
 
@@ -98,7 +98,7 @@ Karty níže závisejí na druhu položky:
 | Kontejner | **Zálohované složky** (které namapované složky se zálohují, s **Přeskočit složky mezipaměti (CACHEDIR.TAG)**), **Vzory vyloučení**, **Zastavit ostatní kontejnery**, **Příkazy před a po**, **Databáze**, **Když je aplikace zaneprázdněná**, **Aktualizovat po úspěšné záloze**, **Snímek místo zastavení**, **Dřívější názvy** |
 | VM | **VM** s **Metoda** (**Graceful (vypnutí)** nebo **Živý snímek**) a **Jen změněné bloky**, viz [průvodce zálohou VM](vm-backup-ssh-setup.md#per-vm-method) |
 | Sada složek | **Složka** a **Vzory vyloučení** |
-| Flashka | **Export Flash do zip**, který zapíše každou zálohu flashky jako obyčejné `.zip` do složky, kterou vybereš |
+| Flashka | **Export Flash do zip**, který zapíše každou zálohu flashky jako obyčejné `.zip` do složky, kterou vybereš, v jednom kroku, takže synchronizační nástroj nikdy neuvidí půlku souboru. Záloha flashky, která obsahuje méně, než by měla, ponechá poslední ZIP na místě a běh exportu to řekne. |
 | Datová sada ZFS | podřízené datové sady, kontejnery k zastavení a příkazy kolem snapshotu, **Replika** a **Vyzkoušet přístup ke snímkům**, viz [Datové sady ZFS](zfs-datasets.md) |
 
 Nastavení se ukládají samy, jak je měníš.
@@ -119,7 +119,7 @@ Nastavení se ukládají samy, jak je měníš.
 
 ## Vzory vyloučení {#excludes}
 
-Karta **Vzory vyloučení** bere jeden vzor na řádek. Piš cesty tak, jak je vidíš uvnitř kontejneru, například `/config/Library/Application Support/Plex Media Server/Cache`, nebo holé jméno jako `.git`, které odpovídá v jakékoli hloubce. Náhled pod polem ukazuje, na co se každý řádek rozloží, a upozorní, když řádek neodpovídá ničemu nebo by vyloučil všechno. Řádek `/` nebo `*` či ten, který jmenuje celou zálohovanou složku, se ignoruje, takže vyloučení nikdy nemůže zálohu vyprázdnit. Chceš-li vynechat celou složku, odškrtni ji raději pod **Zálohované složky**.
+Karta **Vzory vyloučení** bere jeden vzor na řádek. Piš cesty tak, jak je vidíš uvnitř kontejneru, například `/config/Library/Application Support/Plex Media Server/Cache`, nebo holé jméno jako `.git`, které odpovídá v jakékoli hloubce. U sady složek piš cestu tak, jak ji zná hostitel, například `/mnt/user/data/cache`. Náhled pod polem ukazuje, na co se každý řádek rozloží, a upozorní, když řádek neodpovídá ničemu nebo by vyloučil všechno. Řádek `/` nebo `*` či ten, který jmenuje celou zálohovanou složku, se ignoruje, takže vyloučení nikdy nemůže zálohu vyprázdnit. Chceš-li vynechat celou složku, odškrtni ji raději pod **Zálohované složky**.
 
 U známých image, jako jsou Plex, Jellyfin, Sonarr, Radarr, Immich a Nextcloud, karta nabízí složky, které aplikace sama znovu naplní, například mezipaměti, logy a náhledy. Nic se nevyloučí, dokud nestiskneš **Vyloučit vybrané**.
 
@@ -137,6 +137,8 @@ Neúspěšný výpis nezpůsobí selhání zálohy. Objeví se jako vlastní ne�
 
 - **Příkazy před a po** běží uvnitř kontejneru přes `sh -c`, například aby vyprázdnily mezipaměť na disk. Příkaz před zálohou, který selže, zálohu přeruší. Příkaz před zálohou, který skončí s kódem 75, plánovanou zálohu místo toho odloží, viz níže.
 - **Zastavit ostatní kontejnery** jmenuje kontejnery, které se mají zastavit, zatímco se zálohuje tento, třeba jeho databáze. Potom se spustí znovu v pořadí podle `depends_on` v Compose a ve výchozím stavu musí každý hlásit, že je zdravý, než nastartuje další. Čekání a jeho časový limit jsou pod **Restart po záloze** na kartě **Pořadí** v **Nastavení, Plán**.
+- Kontejner, který sdílí síťový, PID nebo IPC namespace s kontejnerem, který se zastavuje, přes `--net=container:` nebo `network_mode: service:` v Compose, se zastaví a spustí s ním, i když není na seznamu, a spustí se až po kontejneru, ke kterému se připojuje. Restartovaný kontejner dostane novou síť a ten, který by zůstal běžet ve staré síti, by měl jen svůj loopback. Samotný seznam zůstane, jak jsi ho nastavil. Pokud takový kontejner nešlo zastavit, běh řekne, že nemá síť, dokud se nerestartuje. Totéž platí pro vlastní kontejner BombVaultu, který se nikdy sám nezastaví a nelze ho dát na seznam.
+- Kontejner, který potom znovu neběží, jmenuje běh i oznámení, i když samotná záloha selhala.
 
 ## Když je aplikace zaneprázdněná {#app-busy}
 
@@ -177,7 +179,7 @@ Pro vlastní kontrolu nech **Příkaz před zálohou** skončit s kódem 75, dok
 Restic zůstává motorem, ale export ti dá kopii, která nepotřebuje ani BombVault, ani restic.
 
 - **Exportovat kontejner** a **Exportovat VM** pod **Více** na stránce položky zapíšou kopii tak, jak je právě teď, vedle repozitáře: zálohované složky kontejneru plus jeho šablonu Unraidu, nebo obrazy disků VM plus její definici, obnovitelnou přes `virsh define`.
-- **Export** u snapshotu zapíše uloženou zálohu do exportní složky na serveru, jako tar, zip nebo vlastní repozitář resticu, a může vzít jeden snapshot nebo všechny.
+- **Export** u snapshotu zapíše uloženou zálohu do exportní složky na serveru, jako tar, zip nebo vlastní repozitář resticu, a může vzít jeden snapshot nebo všechny. Záloha flashky a autozáloha obsahují klíče, takže jejich export vyžaduje přihlašovací heslo a přihlášení přímo na instanci.
 
 Exporty jsou ve výchozím stavu obyčejné soubory. **Šifrovat exporty pomocí age** v **Nastavení, Systém** je zapečetí, včetně ZIPu flashky, pro příjemce, které vypíšeš, každý je veřejný klíč age nebo veřejný klíč SSH. Později je mimo server dešifruješ odpovídajícím soukromým klíčem. Se zapnutým šifrováním a bez platného příjemce export selže s jasnou chybou, místo aby kdy zapsal obyčejné soubory.
 

@@ -136,13 +136,13 @@ Přijímat může každý stroj se ZFS a SSH, například druhý Unraid nebo Tru
 S rootem není potřeba nic dalšího. Vlastní uživatel potřebuje tato oprávnění na poolu cíle, která dialog také ukazuje:
 
 ```
-zfs allow <user> receive,create,mount,rollback,destroy,userprop <pool>
+zfs allow <user> receive,create,mount,rollback,destroy,userprop,readonly,canmount <pool>
 ```
 
 Na zdroji potřebuje stejný druh uživatele tato oprávnění na nejvyšší datové sadě položky:
 
 ```
-zfs allow <user> send,snapshot,hold,release,bookmark,destroy <dataset>
+zfs allow <user> send,snapshot,hold,release,bookmark,destroy,mount <dataset>
 ```
 
 V tomto směru drží BombVault, který položku vlastní, také klíč, který může na server zapisovat.
@@ -159,7 +159,7 @@ Spárovaný BombVault umí repliku přijmout sám. Nikdo nedostane přístup SSH
 2. Na přijímající instanci otevři **Instance**. Žádost se ukáže na kartě odesílající instance jako odznak a vypisují ji její **Podrobnosti**. Vyber pool a kořen na tom serveru a kolik snímků zůstane, potom stiskni **Povolit** nebo **Odmítnout**.
 3. Po **Povolit** zdroj odesílá podle vlastního plánu, jako u každého jiného cíle.
 
-Přijímající instance přijme jen to, co schválení pokrývá: datové sady položky, do vlastního kořene. Příkaz `zfs receive` spouští sama a zdroj tam nemůže nic smazat ani vrátit zpět. Kopie tedy přežije i zdroj, který někdo převzal. Přijímající instance si drží vlastní uchovávání. Zdroj při žádosti jen navrhne pravidlo.
+Přijímající instance přijme jen to, co schválení pokrývá: datové sady položky, do vlastního kořene. Příkaz `zfs receive` spouští sama a zdroj tam nemůže nic smazat ani vrátit zpět. Kopie tedy přežije i zdroj, který někdo převzal. Přijímající instance si drží vlastní uchovávání. Zdroj při žádosti jen navrhne pravidlo. Takový zdroj může dál posílat nové snímky a ty časem podle pravidla vytlačí starší jako jakékoli jiné. Snímek, jehož jméno nese pozdější datum, než ukazují hodiny přijímající instance, se do pravidla nepočítá, dokud ten čas nenastane.
 
 **Odebrat přístup** na přijímající instanci kdykoli ukončí schválení a oznámí to zdroji, který pak zobrazí, že schválení bylo odvoláno, a přestane odesílat. Co přijímající instance už má, tam zůstane. Zamítnutá žádost zůstává zamítnutá. Další datové sady nebo žádost po odvolání se ptají znovu.
 
@@ -177,13 +177,15 @@ Kopie na cíli je jen pro čtení. Ve výchozím stavu není připojená, takže
 
 Zahrnuje se všechno, co položka zálohuje, a také svazky pod ní, které záloha přeskakuje. Podřízená datová sada, kterou jsi v položce vypnul, zůstane venku. Všechny datové sady jednoho běhu pocházejí z jednoho snímku, stejně jako u zálohy.
 
+Kopie, kterou na tento server replikuje jiný BombVault, se dál neposílá, protože by to prořídilo historii, kterou její zdroj ještě potřebuje. Když strom položky takovou kopii obsahuje, běh pro tu datovou sadu selže a řekne proč, dokud ji v položce nevypneš. Položka, která sama je takovou kopií, nemůže replikovat vůbec. Smazání položky nebo vypnutí její repliky nechá tyto kopie a jejich snímky na pokoji. Jakmile kopii převezmeš, jak je popsáno v [Použití repliky](#replica-use), počítá se jako běžná datová sada.
+
 ### Jak dlouho snímky zůstávají {#replica-retention}
 
-Na cíli drží nová replika 7 denních a 3 týdenní snímky. Místo toho vyber **Krátké**, **Vyvážené** nebo **Dlouhé**, nebo nastav **Vlastní hodnoty**. Odstraňují se tam jen snímky pojmenované `bombvault-replica-<14 digits>`, a nikdy ne nejnovější, který mají obě strany společný.
+Na cíli drží nová replika 7 denních a 3 týdenní snímky. Místo toho vyber **Krátké**, **Vyvážené** nebo **Dlouhé**, nebo nastav **Vlastní hodnoty**. Vlastní hodnoty samé nuly ponechají každý snímek a karta to řekne. Odstraňují se tam jen snímky pojmenované `bombvault-replica-<14 digits>`, a nikdy ne nejnovější, který mají obě strany společný.
 
 Na zdroji drží BombVault poslední snímek repliky a k tomu záložku pro každý odeslaný stav. Záložky nezabírají místo. Další přenos od nich vychází.
 
-Chceš-li i na zdroji držet víc, nastav na kartě Replika **Ponechat na tomto serveru**, třeba na 7. Tolik nejnovějších snímků repliky pak po každé replice zůstane na tomto serveru, vedle toho, co drží cíl. 0 nebo 1 ponechá jen poslední. Poslední nese hold, aby se základ dalšího přenosu omylem nesmazal. Starší ho nemají. Každý snímek drží bloky, které se po něm změnily, takže každý, který ponecháš, zabírá místo v poolu. Když repliku vypneš nebo přepneš na jiný cíl, nebo položku smažeš, zmizí z tohoto serveru i ony.
+Chceš-li i na zdroji držet víc, nastav na kartě Replika **Ponechat na tomto serveru**, třeba na 7. Tolik nejnovějších snímků repliky pak po každé replice zůstane na tomto serveru, vedle toho, co drží cíl. 0 nebo 1 ponechá jen poslední. Poslední nese hold, aby se základ dalšího přenosu omylem nesmazal. Starší ho nemají. Každý snímek drží bloky, které se po něm změnily, takže každý, který ponecháš, zabírá místo v poolu. Když repliku vypneš nebo přepneš na jiný cíl, nebo položku smažeš, zmizí z tohoto serveru i ony. Snímky jiné položky vnořené pod ní zůstanou. Pokud hostitel při mazání položky není dosažitelný, snímky zůstanou také a stránka to řekne. Odstraň je ručně: `zfs release -r bombvault-replica <dataset>@<snapshot>`, potom `zfs destroy`.
 
 Soubory ponechaného snímku můžeš hned číst nebo kopírovat, ze složky `.zfs/snapshot` uvnitř datové sady nebo z klonu, bez zásahu do datové sady nebo repliky:
 
@@ -226,12 +228,12 @@ zfs clone backup/bombvault-replica/tower/cache/appdata@bombvault-replica-2026100
 Pokud zdroj selže, změň kopii na cíli na normální zapisovatelnou datovou sadu:
 
 ```
-zfs inherit -r readonly backup/bombvault-replica/tower/cache/appdata && zfs inherit -r canmount backup/bombvault-replica/tower/cache/appdata && zfs mount -a
+zfs inherit -r readonly backup/bombvault-replica/tower/cache/appdata && zfs list -rH -o name -t filesystem backup/bombvault-replica/tower/cache/appdata | xargs zfs set canmount=on && zfs mount -a
 ```
 
-BombVault pak do této datové sady přestane replikovat, dokud nespustíš nový první běh.
+BombVault pak do této datové sady a jejích podřízených přestane replikovat. Další běh selže s důvodem a to, co jsi zapsal, zůstane. Totéž platí pro cokoli jiného zapsaného do kopie od jejího nejnovějšího snímku: BombVault kopii nikdy nevrací zpět. Chceš-li tam znovu replikovat, přesuň z kopie, co potřebuješ, a na cíli ji smaž. Další běh pak pošle všechno znovu.
 
-Chceš-li stav vrátit na zdroj, stiskni v listu **Vrátit jako novou datovou sadu**. BombVault pošle snímek do nové datové sady vedle originálu, pojmenované `<dataset>-bombvault-restore-` plus časové razítko. Originál nikdy nepřepisuje.
+Chceš-li stav vrátit na zdroj, stiskni v listu **Vrátit jako novou datovou sadu**. BombVault pošle snímek do nové datové sady vedle originálu, pojmenované `<dataset>-bombvault-restore-` plus časové razítko. Originál nikdy nepřepisuje. Podřízená datová sada, která se na zdroji ztratila, se vrátí také, pokud kopie ten snímek ještě drží. Podřízená sada, která ho nedrží, se vynechá a běh to řekne.
 
 ### Příklad: replika na druhý Unraid {#example-replica}
 

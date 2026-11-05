@@ -81,8 +81,25 @@ docker exec BombVault virsh -c "qemu+ssh://root@192.168.1.10:22/system?keyfile=/
 
 Každá VM má **Metoda** v kartě **VM** na své záložce Nastavení (otevři VM pod **Zálohy**):
 
-- **Graceful (vypnutí)** je výchozí. VM vypne, zazálohuje disky a znovu ji spustí, takže je záloha vždy konzistentní. Čeká až deset minut, než se host vypne, a nikdy ho nevypíná násilím. Host, který potom stále běží, zůstane nedotčen a tato záloha selže s uvedením důvodu.
-- **Živý snímek** zálohuje běžící VM přes externí snapshot a `blockcommit`. Potřebuje qemu guest agent ve VM, kvůli klidnému snapshotu, a disk na `/mnt/cache` nebo `/mnt/diskX`, ne na `/mnt/user`. U VM, která je vypnutá, se Živý snímek vrátí ke Graceful sám, a když se snapshot nedá vytvořit, vrátí se také.
+- **Graceful (vypnutí)** je výchozí. VM vypne, zazálohuje disky a znovu ji spustí, takže je záloha vždy konzistentní. Čeká až deset minut, než se host vypne, a nikdy ho nevypíná násilím. Host, který potom stále běží, zůstane nedotčen a tato záloha selže s uvedením důvodu. Pokud se host vypne během další hodiny, BombVault ho znovu spustí. Pokud to spuštění selže, neúspěšný běh to řekne.
+- **Živý snímek** zálohuje běžící VM přes externí snapshot a `blockcommit`. Potřebuje disk na `/mnt/cache` nebo `/mnt/diskX`, ne na `/mnt/user`. S qemu guest agentem ve VM je snapshot klidný a bez něj je crash-konzistentní. U VM, která je vypnutá, se Živý snímek vrátí ke Graceful sám. Když se snapshot nedá vytvořit, tato záloha selže a VM běží dál, protože VM, kterou sis vybral zálohovat živě, se kvůli tomu nikdy nevypne.
+
+## Co záloha vynechá {#left-out}
+
+Záloha může uspět, a přesto neobsahovat celou VM. Běh pak nese poznámku ve varovném tónu, která jmenuje, co chybí:
+
+- **Disky, které BombVault nečte.** Disk jen pro čtení, `lun` a disk typu `network` nebo `volume` se vynechají a poznámka každý z nich jmenuje s cílovým zařízením a druhem. Definice v záloze je stále vypisuje. Cdrom a disketa se nejmenují. Obyčejné blokové zařízení, které není ZFS zvol, místo toho zálohu shodí.
+- **Stav emulovaného TPM.** V XML domény nemá žádnou cestu. VM Manager Unraidu nastavuje takové TPM pro VM s BIOSem **OVMF TPM**, takže se poznámka objevuje i na Unraidu. Host, který drží tajemství ve svém TPM, jako to umí BitLocker, si po obnově, která ten stav ztratí, může říct o obnovovací klíč, takže ten klíč měj po ruce.
+
+## Tenké disky {#thin-disks}
+
+Obnova ponechá tenký disk tenký, ať disk nahrazuje, nebo zapisuje nový: restic zapisuje úseky nul jako díry v novém souboru a BombVault u nahrazeného souboru vrátí nulové bloky pomocí `fallocate --dig-holes`, jakmile je zapsaný. Zatímco restic soubor nahrazuje, zabírá ten soubor plnou velikost, pokud na to má pool místo. Souborový systém, který neumí vyrážet díry (hole punching), ponechá disk v plné velikosti a log to řekne. Kontrola místa i tak počítá nový disk v plné velikosti.
+
+## Obnova, která selže {#restore-fails}
+
+Obnova na místě VM vypne, zapíše disky a definici a NVRAM nahradí, až když jsou disky zapsané. Obnova, která selže, nechá VM definovanou i s její NVRAM. Pokud se její disky nezměnily a běžela, poběží znovu. Pokud se změnit mohly, zůstane vypnutá, protože nabootování napůl zapsaného disku by do něj zapisovalo, a běh to řekne. Opětovná obnova téže zálohy práci dokončí.
+
+Snapshoty evidované v libvirtu, což není způsob, jakým je vytváří VM Manager Unraidu, zastaví obnovu na místě dřív, než na VM sáhne, protože libvirt nemůže odebrat VM, která je má. Nejdřív je smaž.
 
 ## Jen změněné bloky {#changed-blocks}
 
@@ -112,6 +129,7 @@ BombVault takovou VM zálohuje celou:
 - **Živá záloha snapshoty zachová.** **Živý snímek** položí při čtení disku nahoru dočasný overlay a poté ho sloučí zpět, jen do obrazu těsně pod ním. Řetěz je po záloze stejný jako před ní. VM bez snapshotů se chová jako vždy.
 - **Obnova vrátí řetěz.** Obnova na místě zapíše každý soubor zpátky, kde byl, a vrátí seznam snapshotů Unraidu, takže VM Manager snapshoty zase vypíše. Obnova vedle originálu zapíše soubory do složky kopie a obnovené disky nasměruje na obnovené soubory, takže kopie nikdy nečte z obrazů originálu. Seznam snapshotů Unraidu se vrací jen při obnově na místě, protože jmenuje soubory tam, kde byly zálohovány. Bez něj kopie nabootuje stejně, jen ji VM Manager vypíše bez snapshotů.
 - **Jen změněné bloky** čte to, co host vidí, takže její obnova přijde jako jeden zploštělý soubor qcow2 bez snapshotů.
+- **Obnova vrátí disk zálohy, kterou vybereš.** Snapshoty pořízené nebo sloučené od té zálohy na tom nic nemění. Záloha z doby před snapshotem definuje VM na souboru, který obsahuje, a záloha z doby před sloučením vrátí svůj overlay a běží na něm. Novější soubory zůstanou, kde jsou, nepoužité a nezměněné. Záloha, která obsahuje overlay, ale ne soubor pod ním, se odmítne dřív, než obnova na VM sáhne. Definice VM po obnově nevypisuje žádný řetěz, takže libvirt řetěz přečte z obnovených souborů.
 
 ### Příklad: VM se dvěma snapshoty {#example-unraid-snapshots}
 
@@ -199,10 +217,10 @@ Souborové disky, jaké používá Unraid, se z toho nedotýká nic.
 VM může mít virtuální TPM, které potřebují hosté se Secure Boot a Windows 11. Jeho stav žije mimo disk a NVRAM, takže záloha jen těchto dvou by vrátila hosta s novým, prázdným TPM.
 
 - **Průchozí TPM**, skutečný čip předaný hostu, jmenuje svou cestu v XML domény. BombVault jeho stav uloží vedle NVRAM přes SSH a zapíše ho zpět před `virsh define`, na základě nejlepší snahy jako NVRAM: selhání čtení nebo zápisu se zaloguje a nezpůsobí selhání zálohy ani obnovy.
-- **Emulované vTPM**, jaké TrueNAS nastavuje pro hosty s Windows 11 a Secure Boot, nezveřejňuje v XML domény žádnou cestu ke stavu. BombVault pak hlásí „no TPM path found“, místo aby cestu hádal. Obnovovací klíč takového hosta, například jeho klíč BitLockeru, měj po ruce, než ho obnovíš.
+- **Emulované vTPM**, jaké TrueNAS nastavuje pro hosty s Windows 11 a Secure Boot, nezveřejňuje v XML domény žádnou cestu ke stavu, takže se jeho stav nezálohuje. BombVault cestu nehádá a záloha skončí s poznámkou, že stav TPM této VM v ní není. Obnovovací klíč takového hosta, například jeho klíč BitLockeru, měj po ruce, než ho obnovíš.
 - **TPM k VM v TrueNAS sám připojit nemůžeš.** API zařízení VM v TrueNAS SCALE 25.10 přijímá jen `CDROM`, `DISPLAY`, `NIC`, `PCI`, `RAW`, `DISK` a `USB` a `TPM` odmítá jako neznámý typ.
 
-Zacházení s TPM je testované jen jednotkovými testy a neběželo proti skutečnému hostu TrueNAS s vTPM. VM bez TPM, jako na Unraidu, se zálohuje a obnovuje přesně jako dřív.
+Zacházení s TPM je testované jen jednotkovými testy a neběželo proti skutečnému hostu TrueNAS s vTPM. VM bez TPM se zálohuje a obnovuje přesně jako dřív.
 
 NVRAM se zachytí jako obvykle. TrueNAS ji drží pro každou VM v `/var/db/system/vm/nvram/<id>_<name>_VARS.fd` a XML domény tuto cestu jmenuje.
 

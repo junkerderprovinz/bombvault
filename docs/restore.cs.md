@@ -21,7 +21,7 @@ Každá obnova začíná na stránce **Obnova**: vyber sekci, vyhledej, co chce�
 
 Klik na položku otevře **Obnova** s jejím jménem. Ptá se po krocích a každý krok se dá před spuštěním změnit:
 
-1. **Záloha**: doporučený snapshot je předvybraný. Je to ten nejnovější, nebo po otevřené anomálii poslední před ní. Starší jsou v seznamu a **Porovnat** ukáže, čím se dva z nich liší.
+1. **Záloha**: doporučený snapshot je předvybraný. Je to ten nejnovější, nebo po otevřené anomálii poslední před ní. Záloha pořízená před dřívější obnovou obsahuje stav, který ta obnova nahradila, takže se přeskočí, pokud není žádná jiná. Starší jsou v seznamu a **Porovnat** ukáže, čím se dva z nich liší.
 2. **Zdroj**: odkud soubory pocházejí, když snapshot leží na více místech. **Místní** je nejrychlejší.
 3. **Co**: **Vše**, nebo **Jednotlivé soubory**, kde zaškrtneš soubory a složky, které chceš.
 4. **Kam**: cíl. Možnosti závisejí na druhu položky:
@@ -29,7 +29,7 @@ Klik na položku otevře **Obnova** s jejím jménem. Ptá se po krocích a kaž
     | Cíl | Co dělá |
     |---|---|
     | **Vedle originálu** | Výchozí. Kontejner se vrátí jako druhý kontejner jménem `<jméno>-restored` s vlastními porty, disky a NVRAM VM skončí ve složce `<složka>-restored` a sada složek se vrátí jako `<cesta>-restored`. Na originálu se nic nemění. |
-    | **Nahradit originál** | Přepíše to, co tam je teď. S **Nejdřív zálohovat současný stav**, které je ve výchozím stavu zapnuté, BombVault nejdřív zazálohuje dnešní stav, abys mohl zpět. Pokud ta záloha selže, obnova se nespustí. |
+    | **Nahradit originál** | Přepíše to, co tam je teď. S **Nejdřív zálohovat současný stav**, které je ve výchozím stavu zapnuté, BombVault nejdřív zazálohuje dnešní stav, abys mohl zpět. Pokud ta záloha selže, obnova se nespustí. Funguje to i pro kontejner nebo VM, které ze serveru zmizely: složky, které obnova přepíše, se zazálohují samostatně. |
     | **Do složky** | Jen soubory, k prohlížení. |
     | **Stáhnout jako ZIP** | Flashka, pro novou flashku. BombVault nikdy nezapisuje do běžící flashky. |
     | **Do nové datové sady** a **Obnovit do datové sady** | Datové sady ZFS, viz [Datové sady ZFS](zfs-datasets.md#restore). |
@@ -40,11 +40,11 @@ Než se **Obnova** odemkne, okno zkontroluje, že repozitář odpovídá, že ho
 
 Okno také ukazuje, co obnova mění oproti tomu, co tam je teď: nové, nahrazené a nezměněné soubory, se seznamem na požádání, a soubory na cíli, které v záloze nejsou a zůstanou tam, kde jsou. Restic to spočítá jako zkušební běh podle velikosti a času změny, aniž by soubory četl, a velmi velký strom se po 30 sekundách zastaví a řekne to. U kontejnerů a VM porovnává nastavení, která obnova znovu vytváří, s běžícími: image a tag, porty, jména proměnných a svazky, nebo paměť, vCPU, disky a síť.
 
-Některé věci mohou obnovu zastavit dřív, než cokoli změní. Statická IP kontejneru a jeho publikované porty musí být volné a jeho síť musí existovat. Obnova na místě jmenuje každý další kontejner, jehož bind mount sahá do složky, do které se zapisuje, například „tato cesta se používá i v nextcloud-db“, ale to jen varuje.
+Některé věci mohou obnovu zastavit dřív, než cokoli změní. Statická IP kontejneru a jeho publikované porty musí být volné a jeho síť musí existovat. Na Unraidu každá obnova na místě odmítne složku, která není na připojeném poolu nebo sdílené složce, protože soubory by skončily v paměti a po restartu by byly pryč. Obnova na místě jmenuje každý další kontejner, jehož bind mount sahá do složky, do které se zapisuje, například „tato cesta se používá i v nextcloud-db“, ale to jen varuje.
 
 Několik voleb se objeví tam, kde dávají smysl: **Poté nechat zastavené**, abys kontejner nebo VM mohl prohlédnout, než poběží znovu, a **Obnovit bez GPU a běhového prostředí** na hostiteli, kterému chybí GPU nebo běhové prostředí, s nímž byla záloha vytvořena.
 
-Obnova běží na pozadí. Okno můžeš zavřít a průběh se ukazuje i pod **Právě běží**. Dlouhá obnova ukazuje procenta a dá se zrušit a zrušená obnova se zapíše jako zrušená, ne jako neúspěšná.
+Obnova běží na pozadí. Okno můžeš zavřít a průběh se ukazuje i pod **Právě běží**. Dlouhá obnova ukazuje procenta a dá se zrušit a zrušená obnova se zapíše jako zrušená, ne jako neúspěšná. Obnova zrušená, zatímco se kontejner zastavuje, nebo obnova, která nemůže kontejner odstranit, ještě nic neobnovila, takže se kontejner znovu spustí. Kontejner, který bere svazky z jiného přes `--volumes-from`, si je ponechá a obnova odmítne začít, dokud ten druhý kontejner neexistuje.
 
 ![Okno obnovy v kroku Co, se zaškrtnutými jednotlivými soubory.](assets/screenshots/restore/window-what-dark.png#only-dark)
 ![Okno obnovy v kroku Co, se zaškrtnutými jednotlivými soubory.](assets/screenshots/restore/window-what-light.png#only-light)
@@ -66,7 +66,7 @@ Někdo včera v noci upravil `config.php` Nextcloudu a Nextcloud už nenastartuj
 
 Okno skončí hláškou **Hotovo: soubory jsou v /mnt/user/restore**. Soubor najdeš jako `/mnt/user/restore/config.php`, bez složek nad ním. Porovnej ho s rozbitým, zkopíruj ho zpět do složky appdata a restartuj Nextcloud.
 
-Chceš-li soubor vrátit rovnou na místo, zvol v kroku 5 **Nahradit originál**. Nech zapnuté **Nejdřív zálohovat současný stav**, aby BombVault zazálohoval rozbitý stav dřív, než zapíše, napiš `nextcloud` pro potvrzení a stiskni **Obnova**. Nextcloud se zastaví, zatímco se vybraný soubor zapisuje zpět na své místo, a zapíšou se jen soubory, které jsi zaškrtl.
+Chceš-li soubor vrátit rovnou na místo, zvol v kroku 5 **Nahradit originál**. Nech zapnuté **Nejdřív zálohovat současný stav**, aby BombVault zazálohoval rozbitý stav dřív, než zapíše, napiš `nextcloud` pro potvrzení a stiskni **Obnova**. Nextcloud se zastaví, zatímco se vybraný soubor zapisuje zpět na své místo, a potom se znovu spustí, a zapíšou se jen soubory, které jsi zaškrtl. Obnova, která selže v půlce, nechá Nextcloud zastavený, protože soubor, který čte, může být napůl zapsaný, a běh to řekne.
 
 ![Okno obnovy v kroku Co se stane, s vybraným Nahradit originál.](assets/screenshots/restore/window-replace-dark.png#only-dark)
 ![Okno obnovy v kroku Co se stane, s vybraným Nahradit originál.](assets/screenshots/restore/window-replace-light.png#only-light)
@@ -75,11 +75,13 @@ Chceš-li soubor vrátit rovnou na místo, zvol v kroku 5 **Nahradit originál**
 
 **Kontejnery** se znovu vytvářejí z uložené definice přes API Dockeru, s entrypointem, hostname, nastavením zastavení, svazky a mounty, limity prostředků, ovladačem logů, nastavením DNS a staršími linky. Kontejner se vrátí na image, na kterém běžel v době zálohy, ne na novějším, stáhnutém později, a chybějící image se nejdřív stáhne, s přihlášením z **Registry kontejnerů** v **Nastavení, Obnova**. Vrací se i jeho GPU nebo runtime (`--gpus`, `--runtime=nvidia`). Na hostiteli bez tohoto ovladače nebo runtime to obnova řekne a nabídne **Obnovit bez GPU a běhového prostředí**. Link na kontejner, který chybí nebo je zastavený, když startuje obnovený, se vynechá a historie běhu to řekne. Obnova, která selže poté, co byl kontejner odstraněn, ho vrátí zpět, zastavený.
 
+Záloha může obsahovat složky, které kontejner už nemá vybrané, například starší záloha pořízená dřív, než nějaká složka zmizela. Složka, která zmizela nebo je prázdná, se vrátí. Ta, ve které teď jsou soubory, zůstane, jak je, protože jsi ji možná odškrtl záměrně, a kontrola před obnovou i historie běhů ji jmenují. Vrátíš ji pomocí **Jednotlivé soubory** nebo **Do složky**.
+
 **VM** dostanou své XML znovu definované přes SSH a své disky a UEFI NVRAM znovu připojené, i když byla VM smazána. Pro VM se snapshoty Unraidu a disky na zvolech viz [Zálohy VM](vm-backup-ssh-setup.md).
 
-**Sady složek** se vrací s vlastnictvím, režimy a časovými značkami, jak je restic ukládá.
+**Sady složek** se vrací s vlastnictvím, režimy a časovými značkami, jak je restic ukládá. Kde cílová složka odmítne jen vlastnictví, jako to dělá `/mnt/user`, běh skončí poznámkou, která to říká. BombVault pak porovná soubory se zálohou a soubor, který nedorazil, způsobí selhání obnovy.
 
-**Flashka** se nikdy nedotkne živého `/boot`. Obnova je stažení s názvem `flash-<id>.zip`, připravené k vložení do Unraid USB Creator. Okno také vypisuje pluginy v každé záloze flashky s jejich verzí a velikostí a umí vrátit jediný z nich do běžící flashky: jeho soubor `.plg`, jeho složku pod `config/plugins` a soubory balíčků, které záloha drží. Unraid ho nainstaluje při dalším startu, nebo hned pod **Plugins, Install Plugin**.
+**Flashka** se nikdy nedotkne živého `/boot`. Obnova je stažení s názvem `flash-<id>.zip`, připravené k vložení do Unraid USB Creator. ZIP obsahuje `APP_KEY`, takže jeho stažení vyžaduje přihlašovací heslo a přihlášení přímo na instanci. Okno také vypisuje pluginy v každé záloze flashky s jejich verzí a velikostí a umí vrátit jediný z nich do běžící flashky: jeho soubor `.plg`, jeho složku pod `config/plugins` a soubory balíčků, které záloha drží. Unraid ho nainstaluje při dalším startu, nebo hned pod **Plugins, Install Plugin**.
 
 **Datové sady ZFS** mají vlastní cíle a zachovávají své vlastnosti ZFS, viz [Obnova](zfs-datasets.md#restore).
 
@@ -102,6 +104,10 @@ Každá položka se zkontroluje tak jako jednotlivá obnova a pak běží jedna 
 ## Obnova stacku {#stacks}
 
 Klik na stack v kartě **Stacky** otevře **Obnovit stack**. Obnoví každého člena z jeho nejnovější zálohy současně a s **Po obnovení spustit v pořadí závislostí** je spustí v pořadí podle `depends_on`: nejdřív databáze a cache, pak aplikace. Když složka projektu některého člena na vybraném místě chybí, okno nabídne místo toho stav z Místní.
+
+BombVault nejdřív zkontroluje členy a složku projektu a obnova, která by nemohla fungovat, nic nezmění. Jinak zastaví běžící členy, aplikace před jejich databázemi, potom zapíše složku projektu a potom obnoví členy. Pokud se složka projektu nevrátí, členové se přesto obnoví, ale zůstanou zastavení, protože složka může být napůl zapsaná a obvykle v ní leží bind mounty členů. Běh každého člena to řekne.
+
+Databáze, která má jen výpisy databáze a žádnou zálohu souborů a jejíž kontejner i pojmenovaný svazek zmizely, se vrátí bez svých dat. Kontrola to řekne před obnovou. Zůstane zastavená a stejně tak kontejnery, které na ní závisí, aby žádná aplikace nespustila úvodní nastavení nad prázdnou databází. Spusť ji, naimportuj výpis a spusť ostatní. Viz [Výpisy databází](backups.md#database-dumps).
 
 ## Další zdroje {#other-sources}
 
