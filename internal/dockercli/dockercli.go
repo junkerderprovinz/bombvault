@@ -171,6 +171,9 @@ func (c *Client) Inspect(ctx context.Context, name string) (model.Inspect, error
 	if err != nil {
 		return model.Inspect{}, fmt.Errorf("dockercli: inspect: %w", err)
 	}
+	if !answersFor(name, resp) {
+		return model.Inspect{}, fmt.Errorf("dockercli: inspect: %w", noSuchContainer{name})
+	}
 	c.fillVolumeMountSources(ctx, name, resp.Mounts)
 	out := mapInspect(resp)
 	// Without the image the values stay as they are, which recreates the
@@ -262,8 +265,13 @@ func (c *Client) Stop(ctx context.Context, name string, timeout time.Duration) e
 	if secs == 0 && timeout > 0 {
 		secs = 1
 	}
-	if resp, err := c.api.ContainerInspect(ctx, name); err == nil && resp.Config != nil {
-		secs = stopGrace(secs, resp.Config.StopTimeout)
+	if resp, err := c.api.ContainerInspect(ctx, name); err == nil {
+		if !answersFor(name, resp) {
+			return fmt.Errorf("dockercli: stop: %w", noSuchContainer{name})
+		}
+		if resp.Config != nil {
+			secs = stopGrace(secs, resp.Config.StopTimeout)
+		}
 	}
 	if err := c.api.ContainerStop(ctx, name, container.StopOptions{Timeout: &secs}); err != nil {
 		return fmt.Errorf("dockercli: stop: %w", err)
@@ -284,6 +292,9 @@ func stopGrace(secs int, own *int) int {
 
 // Start starts a container by name or ID.
 func (c *Client) Start(ctx context.Context, name string) error {
+	if err := c.refuseIDPrefixMatch(ctx, name); err != nil {
+		return fmt.Errorf("dockercli: start: %w", err)
+	}
 	if err := c.api.ContainerStart(ctx, name, container.StartOptions{}); err != nil {
 		return fmt.Errorf("dockercli: start: %w", err)
 	}
@@ -297,6 +308,9 @@ func (c *Client) Start(ctx context.Context, name string) error {
 // grace period is expressed in whole seconds, mirroring Stop.
 func (c *Client) Restart(ctx context.Context, name string, timeout time.Duration) error {
 	secs := int(timeout.Seconds())
+	if err := c.refuseIDPrefixMatch(ctx, name); err != nil {
+		return fmt.Errorf("dockercli: restart %q: %w", name, err)
+	}
 	if err := c.api.ContainerRestart(ctx, name, container.StopOptions{Timeout: &secs}); err != nil {
 		return fmt.Errorf("dockercli: restart %q: %w", name, err)
 	}
@@ -512,6 +526,9 @@ func statsSample(st container.StatsResponse, at time.Time) traffic.Sample {
 
 // Remove removes a container by name or ID.
 func (c *Client) Remove(ctx context.Context, name string) error {
+	if err := c.refuseIDPrefixMatch(ctx, name); err != nil {
+		return nil // already gone, like the answer below
+	}
 	if err := c.api.ContainerRemove(ctx, name, container.RemoveOptions{}); err != nil {
 		if isNoSuchContainer(err) {
 			return nil // already gone — a restore/recreate can proceed
@@ -524,6 +541,9 @@ func (c *Client) Remove(ctx context.Context, name string) error {
 // Signal sends signal, such as "SIGHUP", to the main process of a running
 // container.
 func (c *Client) Signal(ctx context.Context, name, signal string) error {
+	if err := c.refuseIDPrefixMatch(ctx, name); err != nil {
+		return fmt.Errorf("dockercli: signal: %w", err)
+	}
 	if err := c.api.ContainerKill(ctx, name, signal); err != nil {
 		return fmt.Errorf("dockercli: signal: %w", err)
 	}
@@ -656,7 +676,41 @@ func (c *Client) InspectName(ctx context.Context, name string) (string, error) {
 		}
 		return "", fmt.Errorf("dockercli: inspect-name: %w", err)
 	}
+	if !answersFor(name, resp) {
+		return "", nil
+	}
 	return normalizeName(resp.Name), nil
+}
+
+// shortIDLen is the shortest id reference BombVault passes: what docker ps shows.
+const shortIDLen = 12
+
+// answersFor reports whether Docker's answer is about the container ref names.
+// Docker falls back to an id prefix for a name no container has, so a removed
+// "db" would otherwise resolve to whichever container's id starts with db, and
+// that container would be backed up, stopped or removed in its place. A real id
+// reference is never as short as such a name.
+func answersFor(ref string, resp container.InspectResponse) bool {
+	if resp.ContainerJSONBase == nil {
+		return false
+	}
+	return normalizeName(resp.Name) == normalizeName(ref) || (len(ref) >= shortIDLen && strings.HasPrefix(resp.ID, ref))
+}
+
+// noSuchContainer is what answersFor turns an id prefix match into, the error
+// Docker gives for a name it does not know.
+type noSuchContainer struct{ name string }
+
+func (e noSuchContainer) Error() string { return "no such container: " + e.name }
+
+// refuseIDPrefixMatch fails with noSuchContainer when name only reaches a
+// container through its id. Any other answer is left to the call that follows.
+func (c *Client) refuseIDPrefixMatch(ctx context.Context, name string) error {
+	resp, err := c.api.ContainerInspect(ctx, name)
+	if err == nil && !answersFor(name, resp) {
+		return noSuchContainer{name}
+	}
+	return nil
 }
 
 // Self returns the name of the container this process runs in, or "" when it

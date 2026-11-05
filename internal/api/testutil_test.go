@@ -49,6 +49,8 @@ type fakeServiceDocker struct {
 	// inspect.
 	inspects   map[string]model.Inspect
 	inspectErr error
+	// volumes are the named volumes on the fake host, by name.
+	volumes map[string]string
 
 	liveName    string
 	inspNameErr error
@@ -105,6 +107,10 @@ func (f *fakeServiceDocker) Inspect(_ context.Context, name string) (model.Inspe
 		return in, nil
 	}
 	return f.inspect, nil
+}
+
+func (f *fakeServiceDocker) VolumeInspect(_ context.Context, name string) (string, error) {
+	return f.volumes[name], nil
 }
 
 func (f *fakeServiceDocker) Stop(_ context.Context, name string, _ time.Duration) error {

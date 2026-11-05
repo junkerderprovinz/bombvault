@@ -7,9 +7,11 @@ package api
 
 import (
 	"path"
+	"slices"
 	"sort"
 	"strings"
 
+	"github.com/junkerderprovinz/bombvault/internal/paths"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 )
 
@@ -240,6 +242,30 @@ func mapRestorePaths(stored, snapshotPaths []string) (mapped, skipped, narrowed 
 		}
 	}
 	return mapped, skipped, narrowed
+}
+
+// foldersBeyondSelection sorts the folders a snapshot recorded that the stored
+// selection, rewritten by every backup, no longer reaches. A folder that is gone
+// or holds nothing comes back, which overwrites nothing and is what an older
+// backup of a vanished folder is restored for. One that holds files now stays as
+// it is: it may have been unticked on purpose, so it is named as host path rather
+// than overwritten with old content. A recorded path outside the host mount
+// or on a pool that is down is never brought back.
+func (s *Service) foldersBeyondSelection(stored, recorded []string) (back, kept []string) {
+	for _, q := range recorded {
+		related := slices.ContainsFunc(stored, func(p string) bool {
+			return q == p || isStrictDescendant(q, p) || isStrictDescendant(p, q)
+		})
+		if related {
+			continue
+		}
+		if paths.Within(s.cfg.HostMountRoot, q) && paths.EmptyOrMissing(q) && s.guardInPlaceRestore([]string{q}) == nil {
+			back = append(back, q)
+			continue
+		}
+		kept = append(kept, s.toHostPath(q))
+	}
+	return back, kept
 }
 
 // dedupe removes exact duplicates, preserving first-occurrence order.

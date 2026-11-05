@@ -55,8 +55,7 @@ func (r Restic) restoreFileTo(ctx context.Context, repo, snapshotID, p, target s
 	}
 	st := fileStep(snapshotID, p, path.Dir(target))
 	if path.Base(target) == path.Base(p) {
-		_, err := r.run(ctx, RestoreSubtreeIncludeArgs(repo, snapshotID, st.Subtree, st.Include, st.Target, m), m)
-		return err
+		return r.runRestore(ctx, RestoreSubtreeIncludeArgs(repo, snapshotID, st.Subtree, st.Include, st.Target, m), st.Target, m)
 	}
 	dir := filepath.FromSlash(st.Target)
 	if err := os.MkdirAll(dir, 0o700); err != nil {
@@ -67,7 +66,7 @@ func (r Restic) restoreFileTo(ctx context.Context, repo, snapshotID, p, target s
 		return err
 	}
 	defer func() { _ = os.RemoveAll(scratch) }()
-	if _, err := r.run(ctx, RestoreSubtreeIncludeArgs(repo, snapshotID, st.Subtree, st.Include, filepath.ToSlash(scratch), m), m); err != nil {
+	if err := r.runRestore(ctx, RestoreSubtreeIncludeArgs(repo, snapshotID, st.Subtree, st.Include, filepath.ToSlash(scratch), m), filepath.ToSlash(scratch), m); err != nil {
 		return err
 	}
 	return os.Rename(filepath.Join(scratch, path.Base(p)), to)

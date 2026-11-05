@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"path"
 	"strings"
 
 	"github.com/junkerderprovinz/bombvault/internal/paths"
@@ -182,6 +183,52 @@ func refusePaired(w http.ResponseWriter) {
 		"error": "sign in at this instance's web interface to do this; the session of a paired phone does not reach it",
 		"code":  codeOwnLoginNeeded,
 	})
+}
+
+// refusePairedFolder answers a paired phone's restore or look into a folder
+// outside the restore folder of section, and reports whether it did. An empty
+// section stands for any section's folder. The phone's words are all it takes to
+// reach this, and the folders it could otherwise pick include whatever another
+// service hands out.
+func (h *Handler) refusePairedFolder(w http.ResponseWriter, r *http.Request, section, sub string) bool {
+	if !isPaired(r) {
+		return false
+	}
+	allowed, err := h.svc.inRestoreFolder(section, sub)
+	if err == nil && allowed {
+		return false
+	}
+	writeJSON(w, http.StatusForbidden, map[string]any{
+		"ok":    false,
+		"error": "a paired phone restores only into the restore folder set under Settings; sign in at this instance's web interface to choose another",
+		"code":  codeOwnLoginNeeded,
+	})
+	return true
+}
+
+// inRestoreFolder reports whether sub, relative to the host mount, is the restore
+// folder of section or lies below it.
+func (s *Service) inRestoreFolder(section, sub string) (bool, error) {
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return false, err
+	}
+	sections := []string{section}
+	if section == "" {
+		sections = offsiteConfigDomains
+	}
+	sub = path.Clean(strings.TrimSpace(sub))
+	for _, sec := range sections {
+		folder := strings.TrimSpace(settings.RestoreFolderFor(sec))
+		if folder == "" {
+			continue
+		}
+		folder = path.Clean(folder)
+		if sub == folder || strings.HasPrefix(sub, folder+"/") {
+			return true, nil
+		}
+	}
+	return false, nil
 }
 
 // targetHoldsFiles reports whether the restore folder sub names holds anything.

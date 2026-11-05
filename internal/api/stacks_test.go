@@ -71,7 +71,7 @@ func seedStackTarget(t *testing.T, st *store.Repo, mountRoot, name, project, ser
 // so RestoreStack's "latest" resolves the fake engine's snapshots. A local repo
 // under the "/host/user" placeholder would resolve as missing, and the mount
 // root stays a Linux path for paths.Within.
-func stackTestService(t *testing.T, eng *fakeResticEngine, d *fakeServiceDocker) (*api.Service, *store.Repo, string) {
+func stackTestService(t *testing.T, eng api.ResticEngine, d *fakeServiceDocker) (*api.Service, *store.Repo, string) {
 	t.Helper()
 	dir := t.TempDir()
 	const mountRoot = "/host/user"
@@ -485,9 +485,9 @@ func TestRestoreStackTakesTheProjectFolderFromTheSourceItIsGiven(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	seedStackTarget(t, st, "/host/user", "svc-a", "media", "a", "")
+	seedStackTarget(t, st, dir, "svc-a", "media", "a", "")
 	eng := &fakeResticEngine{snaps: []restic.Snapshot{
-		{ID: "aaaa1111", Time: "2026-09-18T03:00:00Z", Tags: []string{"container:svc-a"}},
+		{ID: "aaaa1111", Time: "2026-09-18T03:00:00Z", Tags: []string{"container:svc-a"}, Paths: []string{dir + "/appdata/svc-a"}},
 		{ID: "eeee5555", Time: "2026-09-18T03:00:00Z", Tags: []string{"stack:media"}, Paths: []string{dir + "/appdata/media"}},
 	}}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)

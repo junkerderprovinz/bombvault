@@ -515,6 +515,8 @@ type RestoreDeps struct {
 	// synchronous prepare phase, before the destructive Stop/Remove). The zero
 	// value changes nothing.
 	SkippedPaths []string
+	// Notes go onto the record of a successful run as they are.
+	Notes []string
 	// TemplateXML is the captured template flashed back on restore.
 	TemplateXML string
 	// FlashTemplatesDir is where the live Unraid templates live.
@@ -1318,7 +1320,7 @@ func runRestore(ctx context.Context, d RestoreDeps) ([]string, error) {
 	// fail because the container's static IP or a published host port is held by
 	// ANOTHER running container. Reported BEFORE pull/stop/remove so nothing is
 	// changed — the user frees the resource and retries.
-	if err := checkRestoreConflicts(ctx, d); err != nil {
+	if err := CheckRestoreConflicts(ctx, d.Docker, d.ContainerName, d.Inspect); err != nil {
 		return nil, err
 	}
 	if err := CheckRestoreNetwork(ctx, d.Docker, d.Inspect); err != nil {
@@ -1533,26 +1535,26 @@ func (e *runtimeRefusal) Error() string { return store.ReasonRestoreNoRuntime + 
 
 func (e *runtimeRefusal) Unwrap() error { return e.err }
 
-// checkRestoreConflicts runs the restore pre-flight: it refuses to proceed when
+// CheckRestoreConflicts runs the restore pre-flight: it refuses to proceed when
 // the container's requested static IP or a published host port is already held
 // by ANOTHER container (the container being restored is excluded — its own
 // resources free up when it is removed). It returns ErrRestoreConflict wrapping
 // a human-readable, actionable list. A container with no static IP and no
 // published ports (DHCP / host networking / no ports) has nothing to conflict
 // on and skips the Docker call entirely.
-func checkRestoreConflicts(ctx context.Context, d RestoreDeps) error {
-	targetIP := d.Inspect.Network.IPv4Address
-	targetPorts := publishedHostPorts(d.Inspect)
+func CheckRestoreConflicts(ctx context.Context, docker Docker, name string, in model.Inspect) error {
+	targetIP := in.Network.IPv4Address
+	targetPorts := publishedHostPorts(in)
 	if targetIP == "" && len(targetPorts) == 0 {
 		return nil
 	}
 
-	allocs, err := d.Docker.Allocations(ctx)
+	allocs, err := docker.Allocations(ctx)
 	if err != nil {
 		return fmt.Errorf("restore: check ip/port conflicts: %w", err)
 	}
 
-	self := normalizeName(d.ContainerName)
+	self := normalizeName(name)
 	var conflicts []string
 	for _, a := range allocs {
 		if normalizeName(a.Name) == self {
@@ -1767,7 +1769,7 @@ func scrubRunErrOutsideARepoLocation(s string) string {
 // bypassMessage reports whether err carries one of the sentinels whose message
 // is already safe to show and has to reach the run row unscrubbed.
 //
-// checkRestoreConflicts' message ("host port 8080/tcp is already used by
+// CheckRestoreConflicts' message ("host port 8080/tcp is already used by
 // container ...") holds IP addresses, host ports and container names, never a
 // host filesystem path. A ZFSRefusal is built from validated dataset names and
 // reason codes, with the host's own paths already taken out, and the run
@@ -1845,6 +1847,7 @@ func restoreNote(d RestoreDeps, unlinked, notBack []string) string {
 	if skipped := skippedPathsNote(d.SkippedPaths); skipped != "" {
 		notes = append(notes, skipped)
 	}
+	notes = append(notes, d.Notes...)
 	return strings.Join(notes, "; ")
 }
 

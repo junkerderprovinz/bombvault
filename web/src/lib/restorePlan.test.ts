@@ -7,6 +7,7 @@ import {
   backsUpFirst,
   defaultWhere,
   findingsOf,
+  phoneRestoreFolder,
   recommend,
   requestedRow,
   restoreFolderFor,
@@ -80,9 +81,9 @@ describe("where a restore can go", () => {
     expect(defaultWhere(["folder"], false)).toBe("folder");
   });
 
-  it("backs up first only where a whole entry is replaced", () => {
+  it("backs up first where a whole entry or a container's picked files are replaced", () => {
     expect(backsUpFirst("container", "all", "replace", true)).toBe(true);
-    expect(backsUpFirst("container", "files", "replace", true)).toBe(false);
+    expect(backsUpFirst("container", "files", "replace", true)).toBe(true);
     expect(backsUpFirst("container", "all", "beside", true)).toBe(false);
     expect(backsUpFirst("container", "all", "replace", false)).toBe(false);
     expect(backsUpFirst("zfs", "all", "replace", true)).toBe(false);
@@ -147,6 +148,47 @@ describe("the recommended backup", () => {
 
   it("stays the newest when every backup was flagged", () => {
     expect(recommend(ROWS, [finding({ flaggedSnapshots: ["a"] })])).toEqual({ index: 0 });
+  });
+});
+
+describe("the backup taken before a restore", () => {
+  const before = (key: string, daysAgo: number): TimelineRow => ({
+    ...row(key, daysAgo),
+    places: [{ place: "local", snapshotIds: [key], tags: ["bv:before-restore:abcd1234"] }],
+  });
+
+  it("is passed over for the backup before it", () => {
+    expect(recommend([before("e", 0), ...ROWS], [])).toEqual({ index: 1 });
+  });
+
+  it("is taken when there is no other", () => {
+    expect(recommend([before("e", 0), before("f", 1)], [])).toEqual({ index: 0 });
+  });
+
+  it("stands behind a backup made after it", () => {
+    expect(recommend([row("g", 0), before("e", 1), ...ROWS], [])).toEqual({ index: 0 });
+  });
+});
+
+describe("what can be backed up first", () => {
+  it("covers a whole entry and a container's picked files", () => {
+    expect(backsUpFirst("container", "files", "replace", true)).toBe(true);
+    expect(backsUpFirst("container", "all", "replace", true)).toBe(true);
+    expect(backsUpFirst("vm", "all", "replace", true)).toBe(true);
+  });
+
+  it("leaves out what replaces nothing", () => {
+    expect(backsUpFirst("container", "files", "folder", true)).toBe(false);
+    expect(backsUpFirst("container", "files", "replace", false)).toBe(false);
+    expect(backsUpFirst("zfs", "files", "replace", true)).toBe(false);
+  });
+});
+
+describe("where a paired phone restores", () => {
+  it("is a new folder inside the restore folder", () => {
+    const at = new Date(Date.UTC(2026, 10, 5, 13, 4, 9));
+    expect(phoneRestoreFolder("user/restore", "immich", at)).toBe("user/restore/immich-20261105-130409");
+    expect(phoneRestoreFolder("user/restore", "My photos/2024", at)).toBe("user/restore/My-photos-2024-20261105-130409");
   });
 });
 

@@ -9,11 +9,23 @@ import (
 	"log"
 	"slices"
 	"strings"
+	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/backup"
 	"github.com/junkerderprovinz/bombvault/internal/compose"
 	"github.com/junkerderprovinz/bombvault/internal/dbdump"
+	"github.com/junkerderprovinz/bombvault/internal/dockercli"
 	"github.com/junkerderprovinz/bombvault/internal/model"
+	"github.com/junkerderprovinz/bombvault/internal/store"
+)
+
+const (
+	// restoreStopTimeout is what a container gets to stop before files it uses are
+	// written, the grace a backup gives it.
+	restoreStopTimeout = 30 * time.Second
+	// restoreRestartTimeout bounds starting containers again once a restore has
+	// finished with them, after the request and any cancel.
+	restoreRestartTimeout = 2 * time.Minute
 )
 
 // composeProject and composeService read the compose project and service labels,
@@ -66,9 +78,11 @@ type StackMemberResult struct {
 }
 
 // StackRestoreResult is the result of RestoreStack: one entry per backed-up
-// member, in enumeration order.
+// member, in enumeration order. FolderError says why the project folder did not
+// come back.
 type StackRestoreResult struct {
-	Members []StackMemberResult `json:"members"`
+	Members     []StackMemberResult `json:"members"`
+	FolderError string              `json:"folderError,omitempty"`
 }
 
 // stackMember is one container of a stack being restored.
@@ -77,6 +91,26 @@ type stackMember struct {
 	service    string
 	deps       []string // compose service names this member depends_on
 	wasRunning bool     // run-state captured at backup (def.Inspect.Running)
+	// comesBackEmpty is a database a recreate brings back without its data,
+	// see memberComesBackEmpty.
+	comesBackEmpty bool
+}
+
+// volumeInspector finds a named volume on the host, with "" for one that is not
+// there.
+type volumeInspector interface {
+	VolumeInspect(ctx context.Context, name string) (string, error)
+}
+
+// stackRestorePlan is a stack restore that passed its checks.
+type stackRestorePlan struct {
+	project string
+	members []stackMember
+	source  string
+	// dirSource is where the project folder comes from, and hasDir whether it
+	// holds one: older backups bring the folder back with the first member.
+	dirSource string
+	hasDir    bool
 }
 
 // prepareRestoreStack validates a stack restore and lists its members, so a bad
@@ -130,6 +164,82 @@ func (s *Service) prepareRestoreStack(project, source string, confirm bool) ([]s
 	return members, nil
 }
 
+// planStackRestore runs everything that would make the restore of a member or
+// of the project folder fail before anything is stopped or written, so a restore
+// that cannot work leaves the stack as it is.
+func (s *Service) planStackRestore(ctx context.Context, project string, members []stackMember, source, stackDirSource string) (stackRestorePlan, error) {
+	ctx = planOnly(ctx)
+	for i := range members {
+		m := &members[i]
+		plan, err := s.prepareRestore(ctx, m.name, "latest", true, source)
+		if err == nil {
+			err = s.guardStackMember(ctx, m.name, plan)
+		}
+		if err != nil {
+			return stackRestorePlan{}, fmt.Errorf("%s: %w", m.name, err)
+		}
+		m.comesBackEmpty = s.memberComesBackEmpty(ctx, m.name, source, plan)
+	}
+	plan := stackRestorePlan{project: project, members: members, source: source, dirSource: cmp.Or(stackDirSource, source)}
+	d, err := s.latestStackDir(ctx, project, plan.dirSource)
+	if err != nil {
+		return stackRestorePlan{}, fmt.Errorf("restore stack %s: %w", project, err)
+	}
+	plan.hasDir = d.found && len(d.snap.Paths) > 0
+	if plan.hasDir {
+		if err := s.guardStackDir(project, d); err != nil {
+			return stackRestorePlan{}, err
+		}
+	}
+	return plan, nil
+}
+
+// guardStackMember is what a member's restore refuses on once it has a plan.
+func (s *Service) guardStackMember(ctx context.Context, name string, plan containerRestorePlan) error {
+	if err := s.guardRecreateOverRunning(ctx, name, plan); err != nil {
+		return err
+	}
+	if err := backup.CheckRestoreConflicts(ctx, s.docker, name, plan.inspect); err != nil {
+		return err
+	}
+	return backup.CheckRestoreNetwork(ctx, s.docker, plan.inspect)
+}
+
+// memberComesBackEmpty reports a member a recreate brings back without its data:
+// it has database dumps and no files backup, and neither the container nor a
+// named volume of it is left on this host to hold the database. A dump only goes
+// back through an import, which needs the started server, so such a member and
+// what depends on it stay stopped and the run says so.
+func (s *Service) memberComesBackEmpty(ctx context.Context, name, source string, plan containerRestorePlan) bool {
+	if !plan.recreateOnly {
+		return false
+	}
+	if _, found, err := s.liveContainer(ctx, name); err != nil || found {
+		return false
+	}
+	if volumes, ok := s.docker.(volumeInspector); ok {
+		for _, m := range plan.inspect.Mounts {
+			if m.Name == "" {
+				continue
+			}
+			if at, err := volumes.VolumeInspect(ctx, m.Name); err != nil || at != "" {
+				return false
+			}
+		}
+	}
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		log.Printf("api: restore stack: read settings: %v", err)
+		return false
+	}
+	dumps, _, err := s.dbDumpsOf(ctx, settings, name, source)
+	if err != nil {
+		log.Printf("api: restore stack: the database dumps of %q: %v", name, err) //nolint:gosec // G706: name is %q-quoted
+		return false
+	}
+	return len(dumps) > 0
+}
+
 // RestoreStack restores every backed-up container of a compose project from its
 // latest snapshot and leaves it stopped, so no dependent starts early. With
 // startAfter, the members that restored are then started in depends_on order;
@@ -142,37 +252,105 @@ func (s *Service) RestoreStack(ctx context.Context, project, source, stackDirSou
 	if err != nil {
 		return StackRestoreResult{}, err
 	}
-	return s.runRestoreStack(ctx, members, source, stackDirSource, startAfter), nil
+	plan, err := s.planStackRestore(ctx, strings.TrimSpace(project), members, source, stackDirSource)
+	if err != nil {
+		return StackRestoreResult{}, err
+	}
+	return s.runRestoreStack(ctx, plan, startAfter), nil
 }
 
 // restoreStackMember restores one member and turns a panic into that member's
-// error, so the members behind it and the start loop still run. Restore calls
+// error, so the members behind it and the start loop still run. A restore calls
 // store.StartRun without a defer, so the handler also fails the run that would
 // otherwise stay "running".
-func (s *Service) restoreStackMember(ctx context.Context, name, source string) (err error) {
+func (s *Service) restoreStackMember(ctx context.Context, name, source string, notes []string) (err error) {
 	// recoverOperation must be deferred directly (see backupOneForBatch).
 	defer s.recoverOperation("restore stack: "+name, &err, func(msg string) {
 		if tg, tErr := s.store.GetTargetByContainer(name); tErr == nil {
 			s.failStuckRun(tg.ID, msg)
 		}
 	})
-	return s.Restore(ctx, name, "latest", true, source, true)
+	plan, err := s.prepareRestore(ctx, name, "latest", true, source)
+	if err != nil {
+		return err
+	}
+	plan.notes = append(plan.notes, notes...)
+	return s.executeRestore(ctx, name, plan, true)
 }
 
-// runRestoreStack restores the members, then with startAfter starts them in
-// dependency order. Each member's restore records its own run, so the outcomes
-// stay visible when this runs detached from the request.
-func (s *Service) runRestoreStack(ctx context.Context, members []stackMember, source, stackDirSource string, startAfter bool) StackRestoreResult {
-	// The project directory comes first: it holds the compose file and shared
-	// files a member may read on start. Older backups have no stack snapshot and
-	// bring the folder back with the first member instead.
-	if len(members) > 0 {
-		if project := s.projectOfMember(ctx, members[0].name); project != "" {
-			if _, err := s.RestoreStackDir(ctx, project, cmp.Or(stackDirSource, source)); err != nil {
-				// Not fatal: failing every member over the shared folder would
-				// turn a partial problem into a total one.
-				log.Printf("api: restore stack: %v", err)
+// stopStackMembers stops the running members, the dependents first, and returns
+// the ones it stopped. A member that keeps running is an error: restic must not
+// write under it.
+func (s *Service) stopStackMembers(ctx context.Context, members []stackMember) ([]string, error) {
+	self := s.selfContainerName(ctx)
+	order := stackStartOrder(members)
+	slices.Reverse(order)
+	var stopped []string
+	for _, i := range order {
+		name := members[i].name
+		if name == self {
+			continue
+		}
+		in, err := s.docker.Inspect(ctx, name)
+		switch {
+		case dockercli.IsNotFound(err):
+			continue
+		case err != nil:
+			return stopped, fmt.Errorf("inspect %s: %w", name, err)
+		case !in.Running:
+			continue
+		}
+		stopped = append(stopped, name)
+		if err := s.docker.Stop(ctx, name, restoreStopTimeout); err != nil {
+			return stopped, fmt.Errorf("stop %s: %w", name, err)
+		}
+	}
+	return stopped, nil
+}
+
+// startStoppedAgain starts stopped containers in the opposite order, when a
+// restore ends before it wrote anything.
+func (s *Service) startStoppedAgain(ctx context.Context, stopped []string) {
+	cctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), restoreRestartTimeout)
+	defer cancel()
+	for _, name := range slices.Backward(stopped) {
+		if err := s.docker.Start(cctx, name); err != nil {
+			log.Printf("api: restore stack: start %q again: %v", name, err) //nolint:gosec // G706: name is %q-quoted
+		}
+	}
+}
+
+// endStackBeforeMembers records err as the outcome of every member, whose
+// restores never ran, so the run history and the open window hear about it.
+func (s *Service) endStackBeforeMembers(members []stackMember, err error) StackRestoreResult {
+	results := make([]StackMemberResult, len(members))
+	for i, m := range members {
+		results[i] = StackMemberResult{Name: m.name, Service: m.service, Error: err.Error()}
+		s.finishRestoreRun(s.beginRestoreRun(m.name), "", err)
+	}
+	return StackRestoreResult{Members: results}
+}
+
+// runRestoreStack restores the project folder and the members, then with
+// startAfter starts them in dependency order. Each member's restore records its
+// own run, so the outcomes stay visible when this runs detached from the request.
+func (s *Service) runRestoreStack(ctx context.Context, plan stackRestorePlan, startAfter bool) StackRestoreResult {
+	members, source := plan.members, plan.source
+	var folderErr error
+	if plan.hasDir {
+		// The folder can hold a member's data as a bind mount, which must not
+		// change under a running database. It comes before the members: it holds
+		// the compose file and shared files one may read on start.
+		stopped, err := s.stopStackMembers(ctx, members)
+		if err != nil {
+			s.startStoppedAgain(ctx, stopped)
+			return s.endStackBeforeMembers(members, fmt.Errorf("nothing was restored: %w", err))
+		}
+		if _, folderErr = s.RestoreStackDir(ctx, plan.project, plan.dirSource); folderErr != nil {
+			if errors.Is(folderErr, context.Canceled) {
+				return s.endStackBeforeMembers(members, folderErr)
 			}
+			log.Printf("api: restore stack: %v", folderErr)
 		}
 	}
 
@@ -184,7 +362,14 @@ func (s *Service) runRestoreStack(ctx context.Context, members []stackMember, so
 	for _, i := range stackStartOrder(members) {
 		m := members[i]
 		res := StackMemberResult{Name: m.name, Service: m.service}
-		rErr := s.restoreStackMember(ctx, m.name, source)
+		var notes []string
+		if folderErr != nil {
+			notes = append(notes, store.NoteStackFolderFailed+": "+truncateRunErr(folderErr))
+		}
+		if m.comesBackEmpty {
+			notes = append(notes, store.NoteRestoredWithoutData)
+		}
+		rErr := s.restoreStackMember(ctx, m.name, source, notes)
 		switch {
 		case rErr == nil:
 			res.Restored = true
@@ -213,6 +398,12 @@ func (s *Service) runRestoreStack(ctx context.Context, members []stackMember, so
 				blocked[i] = true // the restore already recorded the error
 				continue
 			}
+			// Their runs already say why: the folder may be half written, or the
+			// database has no data for the apps to run on.
+			if folderErr != nil || members[i].comesBackEmpty {
+				blocked[i] = true
+				continue
+			}
 			if dep := firstBlockedDep(deps[i], blocked); dep >= 0 {
 				blocked[i] = true
 				if results[i].Error == "" {
@@ -234,9 +425,36 @@ func (s *Service) runRestoreStack(ctx context.Context, members []stackMember, so
 			}
 			results[i].Started = true
 		}
+		for i, r := range results {
+			if restoredOK[i] && blocked[i] && r.Error != "" {
+				s.noteOnRestoreRun(r.Name, store.NoteStackNotStarted+": "+r.Error)
+			}
+		}
 	}
 
-	return StackRestoreResult{Members: results}
+	out := StackRestoreResult{Members: results}
+	if folderErr != nil {
+		out.FolderError = truncateRunErr(folderErr)
+	}
+	return out
+}
+
+// noteOnRestoreRun puts a note on the newest restore run of a stack's member,
+// which has closed by the time the start loop knows what became of it.
+func (s *Service) noteOnRestoreRun(name, note string) {
+	tg, err := s.store.GetTargetByContainer(name)
+	if err != nil {
+		log.Printf("api: restore stack: no target for %q to carry the note: %v", name, err) //nolint:gosec // G706: name is %q-quoted
+		return
+	}
+	run, err := s.store.LastRestoreRun(tg.ID)
+	if err != nil || run == nil {
+		log.Printf("api: restore stack: no run of %q to carry the note: %v", name, err) //nolint:gosec // G706: name is %q-quoted
+		return
+	}
+	if err := s.store.AddRunNote(run.ID, note); err != nil {
+		log.Printf("api: restore stack: %v", err)
+	}
 }
 
 // StartRestoreStack validates a stack restore and runs it in a background
@@ -255,6 +473,11 @@ func (s *Service) StartRestoreStack(ctx context.Context, project, source, stackD
 		s.batchActive.Store(false)
 		return false, err
 	}
+	plan, err := s.planStackRestore(ctx, strings.TrimSpace(project), members, source, stackDirSource)
+	if err != nil {
+		s.batchActive.Store(false)
+		return false, err
+	}
 	bctx := context.WithoutCancel(ctx)
 	// The frontend's cancel button stops the whole stack restore under this key.
 	key := "stack:" + project
@@ -269,7 +492,7 @@ func (s *Service) StartRestoreStack(ctx context.Context, project, source, stackD
 		defer cancel()
 		s.registerCancel(key, cancel)
 		defer s.unregisterCancel(key)
-		res := s.runRestoreStack(rctx, members, source, stackDirSource, startAfter)
+		res := s.runRestoreStack(rctx, plan, startAfter)
 		for _, m := range res.Members {
 			if m.Error != "" {
 				log.Printf("api: restore stack: member %q failed: %v", m.Name, m.Error) //nolint:gosec // G706: name is %q-quoted; the error is service/restic-generated

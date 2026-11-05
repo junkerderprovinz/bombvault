@@ -19,6 +19,7 @@ import {
   type TimelineRow,
   type ZFSHostDataset,
   type ZFSRestorePoint,
+  openedAsPairedPhone,
 } from "../../lib/api";
 import { ENTRY_KIND } from "../../lib/backupEntry";
 import { isGone, itemProgressKey } from "../../lib/backupList";
@@ -40,6 +41,7 @@ import {
   recommend,
   recommendationWhy,
   requestedRow,
+  phoneRestoreFolder,
   restoreFolderFor,
   snapshotIds,
   whatsFor,
@@ -351,7 +353,9 @@ function RestoreForm({
   const [filter, setFilter] = useState("");
   const [folderPick, setFolder] = useState<string | null>(null);
   const defaultFolder = entry ? restoreFolderFor(entry.settings, kind) : "";
-  const folder = folderPick ?? defaultFolder;
+  const onPhone = openedAsPairedPhone();
+  const [openedAt] = useState(() => new Date());
+  const folder = onPhone && entry ? phoneRestoreFolder(defaultFolder, item.name, openedAt) : (folderPick ?? defaultFolder);
   const [leaveStopped, setLeaveStopped] = useState(false);
   const [withoutRuntime, setWithoutRuntime] = useState(false);
   const [backupFirst, setBackupFirst] = useState(true);
@@ -1031,8 +1035,15 @@ function RestoreForm({
                 {blocked !== null && <p className="text-xs text-statusWarn">{tLtr(t, blocked)}</p>}
               </div>
 
-              {where === "folder" && entry && (
+              {where === "folder" && entry && !onPhone && (
                 <FolderBrowser label={t("restore.targetPath")} value={folder} hostMountRoot={entry.hostMountRoot} onChange={setFolder} />
+              )}
+              {where === "folder" && entry && onPhone && (
+                <SettingRow label={t("restore.targetPath")} hint={t("restore.phoneFolderHint")}>
+                  <span className="min-w-0 break-all font-mono text-xs text-carbon-text" dir="ltr">
+                    {folder}
+                  </span>
+                </SettingRow>
               )}
               {where === "newDataset" && (
                 <SettingRow label={t("zfs.restore.newDatasetName")} hint={t("zfs.restore.newDatasetHint")} htmlFor="restore-new-dataset">

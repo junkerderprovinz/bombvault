@@ -23,6 +23,8 @@ import {
   RESTORED_WITHOUT_LINKS,
   RESTORED_WITHOUT_RUNTIME,
   restoreNotes,
+  STACK_FOLDER_FAILED,
+  STACK_NOT_STARTED,
   runReason,
   runReasonParts,
 } from "./runReason";
@@ -574,6 +576,9 @@ function finishedLineText(resolveName: ResolveName, run: Run, domain: LogDomain,
       if (left.withoutRuntime) parts.push(reasonText(RESTORED_WITHOUT_RUNTIME, resolveName));
       if (left.unlinked.length > 0) parts.push(reasonText(`${RESTORED_WITHOUT_LINKS}: ${left.unlinked.join(", ")}`, resolveName));
       if (left.notBack.length > 0) parts.push(reasonText(`${CONTAINERS_NOT_BACK}: ${left.notBack.join(", ")}`, resolveName));
+      if (left.leftOut) parts.push(reasonText(left.leftOut, resolveName));
+      if (left.folderFailed !== undefined) parts.push(reasonText(`${STACK_FOLDER_FAILED}: ${left.folderFailed}`, resolveName));
+      else if (left.stayedStopped) parts.push(reasonText(STACK_NOT_STARTED, resolveName));
       return { status: "success", text: parts.join("; ") };
     }
     return run.status === "failed"

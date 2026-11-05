@@ -1,6 +1,7 @@
 package api
 
 import (
+	"cmp"
 	"context"
 	"errors"
 	"fmt"
@@ -73,6 +74,9 @@ type RestoreCheckRequest struct {
 	// ToFolder is a foreign container's or VM's files restored into
 	// TargetPath instead of the item recreated.
 	ToFolder bool `json:"toFolder"`
+	// StackDirSource is where a stack's project folder comes from, empty for
+	// Source.
+	StackDirSource string `json:"stackDirSource"`
 }
 
 // Check line ids, statuses and the reasons the page turns into sentences.
@@ -126,7 +130,8 @@ type RestoreCheck struct {
 	Members []StackMemberCheck `json:"members,omitempty"`
 }
 
-// StackMemberCheck is the check of one container of a stack restore.
+// StackMemberCheck is the check of one container of a stack restore, or of the
+// stack's project folder, named by its path.
 type StackMemberCheck struct {
 	Name   string       `json:"name"`
 	Ready  bool         `json:"ready"`
@@ -170,6 +175,9 @@ type restoreScope struct {
 	beside *BesidePlan
 	// extraFiles are small files the restore writes itself, as container paths.
 	extraFiles []string
+	// leftOut are the host paths of folders the backup holds and the restore
+	// does not write.
+	leftOut []string
 }
 
 // CheckRestore runs the pre-flight checks for a restore and, when they get
@@ -300,11 +308,52 @@ func (s *Service) checkStack(ctx context.Context, req RestoreCheckRequest) (Rest
 		}
 		if res.Plan != nil {
 			res.Plan.Shared = withoutContainers(res.Plan.Shared, names)
+			if plan, err := s.prepareRestore(planOnly(ctx), m.name, "latest", true, req.Source); err == nil {
+				res.Plan.DumpOnly = s.memberComesBackEmpty(ctx, m.name, req.Source, plan)
+			}
 		}
 		out.Members = append(out.Members, StackMemberCheck{Name: m.name, Ready: res.Ready, Checks: res.Checks, Plan: res.Plan})
 		out.Ready = out.Ready && res.Ready
 	}
+	folder, err := s.checkStackFolder(withPreviewBudget(ctx, budget), strings.TrimSpace(req.Name), cmp.Or(req.StackDirSource, req.Source), names)
+	if err != nil {
+		return RestoreCheck{}, err
+	}
+	if folder != nil {
+		out.Members = append(out.Members, *folder)
+		out.Ready = out.Ready && folder.Ready
+	}
 	return out, nil
+}
+
+// checkStackFolder checks the restore of a stack's project folder, or returns
+// nil for a stack whose backups hold it inside the members.
+func (s *Service) checkStackFolder(ctx context.Context, project, source string, members []string) (*StackMemberCheck, error) {
+	d, err := s.latestStackDir(ctx, project, source)
+	if err != nil {
+		return &StackMemberCheck{Name: project, Checks: []CheckLine{{ID: lineRepository, Status: lineFail, Detail: scrubError(err)}}}, nil
+	}
+	if !d.found || len(d.snap.Paths) == 0 {
+		return nil, nil
+	}
+	dir := d.snap.Paths[0]
+	lines := []CheckLine{{ID: lineSnapshot, Status: lineOK, Detail: shortID(d.snap.ID)}}
+	if err := s.guardStackDir(project, d); err != nil {
+		lines = append(lines, CheckLine{ID: lineSpace, Status: lineFail, Reason: reasonRefused, Detail: scrubError(err)})
+		return &StackMemberCheck{Name: s.toHostPath(dir), Checks: lines}, nil
+	}
+	scope := restoreScope{
+		ref: repoRef{d.repo, d.mode}, snapshotID: d.snap.ID, inPlace: true, written: []string{dir},
+		steps: []restic.PreviewStep{{SnapshotID: d.snap.ID, Subtree: dir, Target: dir}},
+	}
+	plan, measured, err := s.previewRestore(ctx, scope)
+	if err != nil {
+		return nil, err
+	}
+	space := s.spaceLine(scope, measured, nil, plan.Partial || plan.Error != "")
+	plan.Definition = []DefinitionChange{}
+	plan.Shared = withoutContainers(s.sharedFolders(ctx, scope), members)
+	return &StackMemberCheck{Name: s.toHostPath(dir), Ready: space.Status != lineFail, Checks: append(lines, space), Plan: &plan}, nil
 }
 
 // withoutContainers drops the named containers from each shared folder, and a
@@ -348,6 +397,19 @@ func isDestinationRefusal(err error) bool {
 	}
 	code, ok := zfsRefusalCode(err)
 	return ok && (code == "destination-not-mounted" || code == "not-enough-space")
+}
+
+// checkSection is the section whose restore folder a check of kind writes into.
+func checkSection(kind string) string {
+	switch kind {
+	case checkContainerFiles, checkContainerTo:
+		return "containers"
+	case checkFileSet, checkFileSetFiles:
+		return "files"
+	case checkZFS:
+		return zfsDomain
+	}
+	return ""
 }
 
 // restoreCheckRepo resolves only the repository a restore reads, so a check
@@ -502,7 +564,7 @@ func (s *Service) restoreCheckScope(ctx context.Context, req RestoreCheckRequest
 // itself, or each remapped subtree into its destination.
 func containerScope(plan containerRestorePlan, name string) restoreScope {
 	in := plan.inspect
-	sc := restoreScope{ref: repoRef{plan.repo, plan.mode}, snapshotID: plan.snapshotID, owner: name, inPlace: true, container: &in}
+	sc := restoreScope{ref: repoRef{plan.repo, plan.mode}, snapshotID: plan.snapshotID, owner: name, inPlace: true, container: &in, leftOut: plan.leftOut}
 	switch {
 	case plan.recreateOnly:
 	case len(plan.restoreDirs) > 0:

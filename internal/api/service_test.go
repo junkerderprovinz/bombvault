@@ -4008,7 +4008,7 @@ func TestStartRestoreSingleFlight(t *testing.T) {
 	if _, started, err := svc.StartRestoreToPath(ctx, "plex", "local", "aaaa1111", "user/restore/plex2"); err != nil || started {
 		t.Fatalf("second to-folder restore must be rejected busy: started=%v err=%v", started, err)
 	}
-	if _, started, err := svc.StartRestoreFiles(ctx, "plex", "local", "aaaa1111", []string{fileA}, "user/restore/plex", true); err != nil || started {
+	if _, started, err := svc.StartRestoreFiles(ctx, "plex", "local", "aaaa1111", []string{fileA}, "user/restore/plex", true, api.RestoreOptions{}); err != nil || started {
 		t.Fatalf("a files restore must be rejected busy: started=%v err=%v", started, err)
 	}
 	if started, err := svc.StartRestore(ctx, "plex", "aaaa1111", "local", api.RestoreOptions{}); err != nil || started {
@@ -4042,7 +4042,7 @@ func TestStartRestoreValidationFailsFast(t *testing.T) {
 	if _, started, err := svc.StartRestoreToPath(ctx, "plex", "local", "not-hex!", "user/restore/plex"); !errors.Is(err, backup.ErrInvalidSnapshotID) || started {
 		t.Fatalf("to-folder: want ErrInvalidSnapshotID + not started, got started=%v err=%v", started, err)
 	}
-	if _, started, err := svc.StartRestoreFiles(ctx, "plex", "local", "not-hex!", []string{fileA}, "user/restore/plex", true); !errors.Is(err, backup.ErrInvalidSnapshotID) || started {
+	if _, started, err := svc.StartRestoreFiles(ctx, "plex", "local", "not-hex!", []string{fileA}, "user/restore/plex", true, api.RestoreOptions{}); !errors.Is(err, backup.ErrInvalidSnapshotID) || started {
 		t.Fatalf("files: want ErrInvalidSnapshotID + not started, got started=%v err=%v", started, err)
 	}
 	if started, err := svc.StartRestore(ctx, "plex", "not-hex!", "local", api.RestoreOptions{}); !errors.Is(err, backup.ErrInvalidSnapshotID) || started {
@@ -4088,7 +4088,7 @@ func TestStartRestoreFilesRecordsRun(t *testing.T) {
 	// real restic error text. Into a folder the include is the file below its
 	// own folder.
 	eng.restoreErrPath = "/a.conf"
-	if _, started, err := svc.StartRestoreFiles(ctx, "plex", "local", "aaaa1111", []string{fileA}, "user/restore/plex", true); err != nil || !started {
+	if _, started, err := svc.StartRestoreFiles(ctx, "plex", "local", "aaaa1111", []string{fileA}, "user/restore/plex", true, api.RestoreOptions{}); err != nil || !started {
 		t.Fatalf("restore should start: started=%v err=%v", started, err)
 	}
 	waitForBackupDone(t, svc)
@@ -4109,7 +4109,7 @@ func TestStartRestoreFilesRecordsRun(t *testing.T) {
 
 	// Success: the run must be success and carry the snapshot id.
 	eng.restoreErrPath = ""
-	if _, started, err := svc.StartRestoreFiles(ctx, "plex", "local", "aaaa1111", []string{fileA}, "user/restore/plex", true); err != nil || !started {
+	if _, started, err := svc.StartRestoreFiles(ctx, "plex", "local", "aaaa1111", []string{fileA}, "user/restore/plex", true, api.RestoreOptions{}); err != nil || !started {
 		t.Fatalf("second restore should start: started=%v err=%v", started, err)
 	}
 	waitForBackupDone(t, svc)

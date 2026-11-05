@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log"
 	"slices"
@@ -216,10 +215,26 @@ func (s *Service) latestStackDir(ctx context.Context, project, source string) (s
 	return d, nil
 }
 
+// guardStackDir is what the restore of a project's folder refuses on. The
+// recorded path comes from the repository, which is less to be trusted than what
+// is stored here, as for the mapped paths of a container restore.
+func (s *Service) guardStackDir(project string, d stackDir) error {
+	if !paths.Within(s.cfg.HostMountRoot, d.snap.Paths[0]) {
+		return fmt.Errorf("restore stack %s: the backup names a path outside the host mount, so refusing to restore", project)
+	}
+	if err := s.refuseLinkOutOfMount(d.snap.Paths); err != nil {
+		return fmt.Errorf("restore stack %s: %w", project, err)
+	}
+	if err := s.guardInPlaceRestore(d.snap.Paths[:1]); err != nil {
+		return fmt.Errorf("restore stack %s: %w", project, err)
+	}
+	return nil
+}
+
 // RestoreStackDir restores a compose project's working directory in place from
 // its stack snapshot. It returns false and no error when there is none: older
 // backups keep the folder inside each member's snapshot, so it comes back with
-// the members.
+// the members. Whatever runs out of the folder has to be stopped first.
 func (s *Service) RestoreStackDir(ctx context.Context, project, source string) (ok bool, err error) {
 	d, err := s.latestStackDir(ctx, project, source)
 	if err != nil {
@@ -228,40 +243,14 @@ func (s *Service) RestoreStackDir(ctx context.Context, project, source string) (
 	if !d.found || len(d.snap.Paths) == 0 {
 		return false, nil
 	}
-	// The recorded path comes from the repository, which is less to be trusted than
-	// what is stored here, as for the mapped paths of a container restore.
-	if !paths.Within(s.cfg.HostMountRoot, d.snap.Paths[0]) {
-		return false, fmt.Errorf("restore stack %s: the backup names a path outside the host mount, so refusing to restore", project)
+	if err := s.guardStackDir(project, d); err != nil {
+		return false, err
 	}
-	if err := s.refuseLinkOutOfMount(d.snap.Paths); err != nil {
-		return false, fmt.Errorf("restore stack %s: %w", project, err)
-	}
+	unlock := s.lockDomainFor("containers", "restore")
+	defer unlock()
 	if err := s.engine.RestorePath(ctx, d.repo, d.snap.ID, d.snap.Paths[0], d.mode); err != nil {
 		return false, fmt.Errorf("restore stack %s: %w", project, err)
 	}
 	log.Printf("api: stack restore: %s from %s", project, d.snap.ID[:8])
 	return true, nil
-}
-
-// projectOfMember reports the compose project a container belongs to, or "" if
-// it is not part of one. Reads the live container first and falls back to the
-// stored definition, so a stack restore onto a box where the containers no
-// longer exist can still find the project name.
-func (s *Service) projectOfMember(ctx context.Context, name string) string {
-	if in, err := s.docker.Inspect(ctx, name); err == nil {
-		if p := composeProject(in.Config.Labels); p != "" {
-			return p
-		}
-	}
-	tg, err := s.store.GetTargetByContainer(name)
-	if err != nil || len(tg.Definition) == 0 {
-		return ""
-	}
-	var def struct {
-		Inspect model.Inspect `json:"inspect"`
-	}
-	if err := json.Unmarshal([]byte(tg.Definition), &def); err != nil {
-		return ""
-	}
-	return composeProject(def.Inspect.Config.Labels)
 }

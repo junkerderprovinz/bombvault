@@ -126,6 +126,11 @@ export function RestoreProgress({
           <RunReasonText reason={`${CONTAINERS_NOT_BACK}: ${left.notBack.join(", ")}`} t={t} />
         </p>
       )}
+      {left?.leftOut && (
+        <p className="text-xs text-statusWarn wrap-break-word">
+          <RunReasonText reason={left.leftOut} t={t} />
+        </p>
+      )}
       {state.phase === "cancelled" && (
         <p className="text-xs text-carbon-textSub wrap-break-word">{t("restore.cancelled")}</p>
       )}

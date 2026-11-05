@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -37,6 +38,8 @@ func TestMain(m *testing.M) {
 		fmt.Println(`[{"id":"aa11","time":"2026-11-05T07:16:14Z","paths":["/s"]}]`)
 		fmt.Fprintln(os.Stderr, `Ignoring "00": failed to load snapshot 00: LoadRaw(<snapshot/00>): invalid data returned`)
 		os.Exit(0)
+	case "restore-unwritten", "restore-owner-only":
+		fakeRestoreAnswer(os.Getenv(fakeResticEnv))
 	case "exit3":
 		fmt.Println(`{"message_type":"summary","snapshot_id":"5e1f","files_new":2}`)
 		fmt.Fprintln(os.Stderr, unreadableLines)
@@ -44,6 +47,50 @@ func TestMain(m *testing.M) {
 		os.Exit(3)
 	}
 	os.Exit(m.Run())
+}
+
+// fakeRestoreAnswer is restic 0.19.1 on a target that refuses chown: the restore
+// fails on metadata errors alone. Its dry run then says whether the files arrived.
+func fakeRestoreAnswer(mode string) {
+	if !slices.Contains(os.Args, "--dry-run") {
+		fmt.Fprintln(os.Stderr, `{"message_type":"error","error":{"message":"lchown /t/a.txt: operation not permitted"},"during":"restore","item":"/a.txt"}`)
+		fmt.Fprintln(os.Stderr, `{"message_type":"exit_error","code":1,"message":"Fatal: There were 1 errors"}`)
+		os.Exit(1)
+	}
+	if mode == "restore-unwritten" {
+		fmt.Println(`{"message_type":"verbose_status","action":"updated","item":"/a.txt","size":4}`)
+	} else {
+		fmt.Println(`{"message_type":"verbose_status","action":"unchanged","item":"/a.txt","size":4}`)
+	}
+	// A directory that is there and a link that is there read "restored" in every
+	// dry run.
+	fmt.Println(`{"message_type":"verbose_status","action":"restored","item":"/","size":0}`)
+	os.Exit(0)
+}
+
+func TestARestoreThatOnlyReportsOwnershipErrorsAndWroteNothingFails(t *testing.T) {
+	r := Restic{Bin: os.Args[0]}
+	t.Setenv(fakeResticEnv, "restore-unwritten")
+
+	err := r.RestoreInclude(context.Background(), "/repo", "aa11", "/a.txt", t.TempDir(), Mode{})
+
+	if errors.Is(err, ErrRestoreMetadataOnly) {
+		t.Fatalf("err = %v, which reads as all data present", err)
+	}
+	if err == nil || !strings.HasPrefix(err.Error(), ReasonFilesNotWritten+": 1 ") {
+		t.Fatalf("err = %v, want it to say one file did not arrive", err)
+	}
+}
+
+func TestARestoreWhereOnlyOwnershipIsRefusedStaysAWarning(t *testing.T) {
+	r := Restic{Bin: os.Args[0]}
+	t.Setenv(fakeResticEnv, "restore-owner-only")
+
+	err := r.RestoreInclude(context.Background(), "/repo", "aa11", "/a.txt", t.TempDir(), Mode{})
+
+	if !errors.Is(err, ErrRestoreMetadataOnly) {
+		t.Fatalf("err = %v, want the metadata-only warning", err)
+	}
 }
 
 func TestACancelledCopyUnwrapsToContextCanceled(t *testing.T) {
