@@ -92,8 +92,9 @@ const zfsReceiveSlotCols = `id, peer_id, peer_name, item_id, dataset, source_ser
 
 // AskZFSReceive records a source's request for one of its items and returns
 // the slot as it now stands. A request for the members the slot already
-// holds, or for fewer, keeps the answer it has, so a refusal stands and an
-// allowed slot narrows; more members wait for a person again. A revoked slot
+// holds, or for fewer, keeps the answer it has, so a refusal stands. An allowed
+// slot keeps every member it has: a dataset gone from the source is what a bring
+// back from here is for. More members wait for a person again. A revoked slot
 // stays revoked unless renew says a person on the source asked anew. Until a
 // person first answers, the keep follows the proposal; after that the keep
 // is this side's.
@@ -114,8 +115,8 @@ func (r *Repo) AskZFSReceive(ask ZFSReceiveSlot, renew bool) (ZFSReceiveSlot, er
 		narrower := prev.Dataset == ask.Dataset && subset(ask.Members, prev.Members)
 		switch {
 		case prev.State == ZFSReceiveRevoked && !renew:
-		case prev.State == ZFSReceiveAllowed && narrower,
-			prev.State == ZFSReceiveRefused && narrower:
+		case prev.State == ZFSReceiveAllowed && narrower:
+		case prev.State == ZFSReceiveRefused && narrower:
 			out.Members = ask.Members
 		default:
 			out.Dataset, out.Members, out.ProposedKeep = ask.Dataset, ask.Members, ask.ProposedKeep

@@ -85,9 +85,9 @@ func TestRepeatedReceiveRequestsKeepTheirAnswer(t *testing.T) {
 	if err != nil || again.ID != s.ID || again.State != store.ZFSReceiveAllowed || string(again.TokenEnc) != "sealed" {
 		t.Fatalf("the same request again = %+v, %v; want the allowed slot", again, err)
 	}
-	narrow, err := r.AskZFSReceive(aReceiveAsk("cache/appdata"), false)
-	if err != nil || narrow.State != store.ZFSReceiveAllowed || !slices.Equal(narrow.Members, []string{"cache/appdata"}) {
-		t.Fatalf("fewer members = %+v, %v; want the slot allowed for the remaining one", narrow, err)
+	lost, err := r.AskZFSReceive(aReceiveAsk("cache/appdata"), false)
+	if err != nil || lost.State != store.ZFSReceiveAllowed || !slices.Equal(lost.Members, []string{"cache/appdata", "cache/appdata/db"}) {
+		t.Fatalf("fewer members = %+v, %v; want the slot allowed for all it had, the copy of the lost one is still here", lost, err)
 	}
 
 	wider, err := r.AskZFSReceive(aReceiveAsk("cache/appdata", "cache/appdata/new"), false)
