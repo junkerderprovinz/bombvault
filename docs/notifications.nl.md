@@ -9,20 +9,20 @@ BombVault kan je laten weten wanneer een back-up mislukt, wanneer er een slaagt,
 
 De kaart **Meldingen** bepaalt de regels voor alle kanalen tegelijk:
 
-- **Melden**: **Nooit**, **Alleen bij mislukking** of **Bij succes en mislukking**, voor elk kanaal hieronder.
+- **Melden**: **Nooit**, **Alleen bij mislukking** of **Bij succes en mislukking**, voor elk kanaal hieronder. Een verse installatie begint op **Alleen bij mislukking**, dus een kanaal dat je invult, laat je weten wanneer een back-up misgaat.
 - **Geplande runs samenvatten**: één bericht per geplande run, zoals *42 van de 45 geslaagd*, in plaats van één per container of VM. Een back-up die je met de hand start, stuurt nog steeds een eigen bericht. Een bevroren gast, een mislukte bewaarronde of een overschreden groeibudget gaat meteen de deur uit, ook met samenvattingen aan.
 - **Melden bij containerupdate**: één bericht voor elke container die **Containers bijwerken na een geslaagde back-up** naar een nieuwere image heeft verplaatst, zodat je kunt nagaan dat hij nog werkt.
-- **Achterstallige back-ups melden**: eenmaal per dag om 09:00 controleert BombVault of een ingeschakelde back-up achterstallig is, dus ouder dan twee keer zijn planning, en stuurt het per geval één bericht. De volgende geslaagde back-up ruimt het op.
+- **Achterstallige back-ups melden**: eenmaal per dag om 09:00 controleert BombVault of een ingeschakelde back-up achterstallig is, dus ouder dan twee keer zijn planning, en stuurt het per geval één bericht, met de naam van het item dat achterloopt. De volgende geslaagde back-up ruimt het op.
 - **Unraid-meldingen**: stuurt naar het eigen meldingssysteem van Unraid, dat kan doorsturen naar Pushover, e-mail of Discord. Het loopt over de SSH-verbinding uit **Instellingen, Integraties, Host-SSH**, dus die sleutel moet zijn geautoriseerd. Op TrueNAS en andere hosts blijft het uit.
-- **Wekelijkse samenvatting**: één samenvatting per week met het aantal runs, nieuwe back-updata, of de off-site-kopieën actueel zijn en de belangrijkste mislukkingen. De planning ervan is een knop zoals elke andere planning, en **Uit** schakelt haar uit. Zie [Planningen](schedules.md#plans).
+- **Wekelijkse samenvatting**: één samenvatting per week met het aantal runs, nieuwe back-updata, welke onderdelen achterstallig zijn, of de off-site-kopieën actueel zijn en de belangrijkste mislukkingen. De planning ervan is een knop zoals elke andere planning, en **Uit** schakelt haar uit. Zie [Planningen](schedules.md#plans).
 
 Welke anomalieën een bericht sturen, stel je in onder **Instellingen, Verificatie**, zie [Anomalieën](anomalies.md). Een uitgestelde back-up stuurt één bericht als hij begint te wachten en één als het wachten eindigt, niet één per poging.
 
-**Test versturen** onderaan de kaart stuurt een testbericht via elk kanaal dat aanstaat, met de waarden zoals ze in het formulier staan.
+**Test versturen** onderaan de kaart stuurt een testbericht via elk kanaal dat aanstaat, met de waarden zoals ze in het formulier staan, en noemt elk kanaal dat mislukte. Een Healthchecks-check krijgt een regel in zijn log, en zijn status blijft zoals hij is.
 
 ## Kanalen {#channels}
 
-Elk kanaal heeft een eigen schakelaar in de kaart **Kanalen**, en zijn velden verschijnen zodra hij aanstaat. Elk kanaal verstuurt zelfstandig met een eigen tijdslimiet, dus één host die nooit antwoordt, houdt de andere niet op, en een bericht dat geen kanaal aannam, wordt opnieuw geprobeerd.
+Elk kanaal heeft een eigen schakelaar in de kaart **Kanalen**, en zijn velden verschijnen zodra hij aanstaat. Elk kanaal verstuurt zelfstandig met een eigen tijdslimiet, dus één host die nooit antwoordt, houdt de andere niet op. Een melding over een achterstand, het budget of een anomalie die geen kanaal aannam, wordt opnieuw geprobeerd, en een wekelijkse samenvatting ook. Het bericht over een enkele back-up of een samenvatting wordt één keer verstuurd.
 
 | Kanaal | Velden | Opmerkingen |
 |---|---|---|
@@ -36,7 +36,9 @@ Geheimen zoals het Matrix-token, het Gotify-app-token en het SMTP-wachtwoord wor
 
 ## Healthchecks {#healthchecks}
 
-Een dienst zoals [Healthchecks.io](https://healthchecks.io) slaat alarm als BombVault niet meer incheckt. Plak de **Ping-URL** van de check, en BombVault pingt die tijdens de hele levenscyclus van elke back-up: bij de start, daarna bij succes of met `/fail`. Dat gebeurt zodra er een URL is ingesteld, wat **Melden** ook zegt, dus de check blijft bij succes groen, ook met berichten alleen bij mislukking.
+Een dienst zoals [Healthchecks.io](https://healthchecks.io) slaat alarm als BombVault niet meer incheckt. Plak de **Ping-URL** van de check, en BombVault pingt die tijdens de hele levenscyclus van elke back-up: bij de start, daarna bij succes of met `/fail`. Dat gebeurt zodra er een URL is ingesteld, wat **Melden** ook zegt, dus de check blijft bij succes groen, ook met berichten alleen bij mislukking. Een onderdeel dat nergens heen een back-up kan maken, telt als mislukt, dus zijn check wordt rood in plaats van een succes te horen.
+
+Onderdelen met dezelfde URL delen één check. Is een back-up van het ene mislukt, dan pingen de geslaagde back-ups van de andere ook `/fail` en noemen ze het, zodat de check rood blijft tot dat item weer een geslaagde back-up heeft of je de mislukking bevestigt onder **Aandacht nodig**.
 
 Een onderdeel kan een eigen adres pingen: **Uitzondering** in de kaart voegt er een toe, en de regel zegt **Alle andere onderdelen pingen deze URL.**
 

@@ -81,8 +81,25 @@ docker exec BombVault virsh -c "qemu+ssh://root@192.168.1.10:22/system?keyfile=/
 
 Elke VM heeft een **Methode** in de kaart **VM** op zijn tabblad Instellingen (open de VM onder **Back-ups**):
 
-- **Net (afsluiten)** is de standaard. Het sluit de VM af, maakt een back-up van de schijven en start hem weer, dus de back-up is altijd consistent. Het wacht tot tien minuten tot de gast is afgesloten en forceert hem nooit uit. Een gast die daarna nog draait, wordt met rust gelaten, en die back-up mislukt met de reden.
-- **Live-snapshot** maakt een back-up van een draaiende VM via een externe snapshot en `blockcommit`. Het heeft de qemu guest agent in de VM nodig, voor een gequiesceerde snapshot, en de schijf op `/mnt/cache` of `/mnt/diskX`, niet `/mnt/user`. Bij een VM die uitstaat valt Live vanzelf terug op Net (afsluiten), en als de snapshot niet kan worden gemaakt, valt het ook terug.
+- **Net (afsluiten)** is de standaard. Het sluit de VM af, maakt een back-up van de schijven en start hem weer, dus de back-up is altijd consistent. Het wacht tot tien minuten tot de gast is afgesloten en forceert hem nooit uit. Een gast die daarna nog draait, wordt met rust gelaten, en die back-up mislukt met de reden. Gaat de gast binnen het volgende uur uit, dan start BombVault hem weer. Mislukt die start, dan meldt de mislukte run dat.
+- **Live-snapshot** maakt een back-up van een draaiende VM via een externe snapshot en `blockcommit`. Het heeft de schijf op `/mnt/cache` of `/mnt/diskX` nodig, niet `/mnt/user`. Met de qemu guest agent in de VM is de snapshot gequiesceerd, en zonder agent is hij crashconsistent. Bij een VM die uitstaat valt Live vanzelf terug op Net (afsluiten). Kan de snapshot niet worden gemaakt, dan mislukt die back-up en blijft de VM draaien, omdat een VM die je live laat back-uppen daarvoor nooit wordt afgesloten.
+
+## Wat een back-up weglaat {#left-out}
+
+Een back-up kan slagen en toch niet de hele VM bevatten. De run krijgt dan een opmerking in een waarschuwingskleur die noemt wat er ontbreekt:
+
+- **Schijven die BombVault niet leest.** Een alleen-lezen schijf, een `lun` en een `network`- of `volume`-schijf worden weggelaten, en de opmerking noemt elk ervan met zijn doelapparaat en soort. De definitie in de back-up vermeldt ze wel. Een cd-rom en een diskette worden niet genoemd. Een gewoon blokapparaat dat geen ZFS-zvol is, laat de back-up in plaats daarvan mislukken.
+- **De status van een geëmuleerde TPM.** Die heeft geen pad in de domein-XML. De Unraid VM Manager stelt zo'n TPM in voor een VM met het BIOS **OVMF TPM**, dus de opmerking verschijnt ook op Unraid. Een gast die een geheim in zijn TPM bewaart, zoals BitLocker kan doen, kan na een herstel dat die status kwijtraakt om zijn herstelsleutel vragen, dus houd die sleutel bij de hand.
+
+## Dunne schijven {#thin-disks}
+
+Een herstel houdt een dunne schijf dun, of het de schijf nu vervangt of een nieuwe schrijft: restic schrijft reeksen nullen als gaten in een nieuw bestand, en BombVault geeft de nulblokken van een vervangen bestand vrij met `fallocate --dig-holes` zodra het geschreven is. Terwijl restic een bestand vervangt, neemt dat bestand zijn volle grootte in, als de pool de ruimte heeft. Een bestandssysteem zonder hole punching houdt de schijf op volle grootte, en het logboek meldt dat. De ruimtecontrole rekent een nieuwe schijf nog steeds op volle grootte.
+
+## Een herstel dat mislukt {#restore-fails}
+
+Een herstel op zijn plaats zet de VM uit, schrijft de schijven en vervangt de definitie en de NVRAM pas als de schijven geschreven zijn. Een herstel dat mislukt, laat de VM gedefinieerd met zijn NVRAM. Zijn de schijven niet veranderd en draaide hij, dan draait hij weer. Kunnen ze veranderd zijn, dan blijft hij uit, omdat opstarten van een half geschreven schijf eroverheen zou schrijven, en de run meldt dat. Herstel dezelfde back-up opnieuw om het werk af te maken.
+
+Snapshots die in libvirt geregistreerd staan, wat niet de manier is waarop de Unraid VM Manager ze maakt, stoppen een herstel op zijn plaats voordat de VM wordt aangeraakt, omdat libvirt een VM met zulke snapshots niet kan verwijderen. Verwijder ze eerst.
 
 ## Alleen gewijzigde blokken {#changed-blocks}
 
@@ -112,6 +129,7 @@ BombVault maakt van zo'n VM een volledige back-up:
 - **Een live back-up bewaart de snapshots.** **Live-snapshot** zet een tijdelijke overlay erbovenop terwijl het de schijf leest en voegt hem daarna weer samen, alleen in het image er direct onder. De keten is na de back-up dezelfde als ervoor. Een VM zonder snapshots gedraagt zich zoals altijd.
 - **Een herstel brengt de keten terug.** Een herstel op zijn plaats schrijft elk bestand terug waar het stond en zet de snapshotlijst van Unraid terug, zodat de VM Manager de snapshots weer toont. Een herstel naast het origineel schrijft de bestanden in de map van de kopie en wijst de herstelde schijven naar de herstelde bestanden, zodat de kopie nooit uit de images van het origineel leest. De snapshotlijst van Unraid komt alleen terug bij een herstel op zijn plaats, omdat ze de bestanden noemt waar ze zijn geback-upt. Zonder haar start de kopie hetzelfde op, en de VM Manager toont er alleen geen snapshots voor.
 - **Alleen gewijzigde blokken** leest wat de gast ziet, dus het herstel komt terug als één afgevlakt qcow2-bestand zonder de snapshots.
+- **Een herstel brengt de schijf terug van de back-up die je kiest.** Snapshots die sinds die back-up zijn gemaakt of samengevoegd, veranderen daar niets aan. Een back-up van vóór een snapshot definieert de VM op het bestand dat hij bevat, en een back-up van vóór een samenvoeging brengt zijn overlay terug en draait daarop. Nieuwere bestanden blijven waar ze zijn, ongebruikt en onveranderd. Een back-up die een overlay bevat maar niet het bestand eronder, wordt geweigerd voordat de VM wordt aangeraakt. De definitie van de VM vermeldt na een herstel geen keten, dus libvirt leest de keten uit de herstelde bestanden.
 
 ### Voorbeeld: een VM met twee snapshots {#example-unraid-snapshots}
 
@@ -199,10 +217,10 @@ Bestandsschijven, zoals Unraid ze gebruikt, worden hierdoor niet geraakt.
 Een VM kan een virtuele TPM hebben, die Secure Boot en Windows 11-gasten nodig hebben. De status ervan leeft buiten de schijf en de NVRAM, dus een back-up van alleen die twee zou een gast terugbrengen met een nieuwe, lege TPM.
 
 - **Een passthrough-TPM**, een echte chip die aan de gast wordt doorgegeven, noemt zijn pad in de domein-XML. BombVault bewaart zijn status naast de NVRAM via SSH en schrijft hem terug vóór `virsh define`, op best-effort-basis zoals de NVRAM: een mislukte lees- of schrijfactie wordt gelogd en laat de back-up of het herstel niet mislukken.
-- **Een geëmuleerde vTPM**, het soort dat TrueNAS instelt voor Windows 11- en Secure Boot-gasten, publiceert geen statuspad in de domein-XML. BombVault meldt dan "no TPM path found" in plaats van een pad te raden. Houd de herstelsleutel van zo'n gast, zoals zijn BitLocker-sleutel, bij de hand voordat je hem herstelt.
+- **Een geëmuleerde vTPM**, het soort dat TrueNAS instelt voor Windows 11- en Secure Boot-gasten, publiceert geen statuspad in de domein-XML, dus zijn status wordt niet geback-upt. BombVault raadt geen pad, en de back-up eindigt met een opmerking dat de status van de TPM van de VM er niet in zit. Houd de herstelsleutel van zo'n gast, zoals zijn BitLocker-sleutel, bij de hand voordat je hem herstelt.
 - **Je kunt zelf geen TPM aan een TrueNAS-VM koppelen.** De VM-device-API van TrueNAS SCALE 25.10 accepteert alleen `CDROM`, `DISPLAY`, `NIC`, `PCI`, `RAW`, `DISK` en `USB`, en weigert `TPM` als onbekend type.
 
-De TPM-afhandeling is alleen met unit-tests getest en is niet gedraaid tegen een echte TrueNAS-gast met een vTPM. Een VM zonder TPM, zoals op Unraid, wordt precies als voorheen geback-upt en hersteld.
+De TPM-afhandeling is alleen met unit-tests getest en is niet gedraaid tegen een echte TrueNAS-gast met een vTPM. Een VM zonder TPM wordt precies als voorheen geback-upt en hersteld.
 
 NVRAM wordt zoals gewoonlijk bewaard. TrueNAS bewaart hem per VM op `/var/db/system/vm/nvram/<id>_<name>_VARS.fd`, en de domein-XML noemt dat pad.
 

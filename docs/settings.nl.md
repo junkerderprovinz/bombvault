@@ -11,7 +11,7 @@ Deze pagina toont elke tegel en zijn kaarten, en linkt naar de pagina die elk er
 
 ## Algemeen {#general}
 
-- **Onderdelen** schakelt elk onderdeel in of uit: **Containers**, **VM's**, **Flash**, **Mappen**, **ZFS-datasets** en **Zelf-back-up**. Een onderdeel dat uitstaat, wordt niet geback-upt, en zijn items tellen niet mee. **Flash** verschijnt alleen op Unraid.
+- **Onderdelen** schakelt elk onderdeel in of uit: **Containers**, **VM's**, **Flash**, **Mappen**, **ZFS-datasets** en **Zelf-back-up**. Een onderdeel dat uitstaat, wordt volgens geen enkele planning geback-upt, ook niet volgens de eigen planning van een item, en zijn items tellen niet mee. **Nu back-up maken** werkt nog steeds. **Flash** verschijnt alleen op Unraid.
 - **Containers** bevat wat voor elke container geldt, zoals **Automatische databasedumps**. Alles wat één container raakt, staat op zijn pagina. Zie [Databasedumps](backups.md#database-dumps).
 
 ## Uiterlijk {#look}
@@ -97,6 +97,6 @@ Een aantal dingen vraagt om een inlogwachtwoord, zoals de herstelkit, bewaarkopi
 
 ## Info {#info}
 
-- **Versie**: BombVault, GlimStone, restic en rclone, met **Controleren op updates** en **Nieuw**, dat telt hoeveel wijzigingen je nog niet hebt gezien en **Wat is er nieuw** opent.
+- **Versie**: BombVault, GlimStone, restic en rclone, met **Controleren op updates** en **Nieuw**, dat telt hoeveel wijzigingen je nog niet hebt gezien en een venster opent dat ze toont.
 - **Help**: **Handleiding** opent deze documentatie, en **Bugrapport** downloadt een geredigeerde ZIP voor een GitHub-issue. Het vereist een inlogwachtwoord.
 - **Over BombVault**: het project, zijn licentie en hoe je de auteur bereikt.

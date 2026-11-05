@@ -9,10 +9,10 @@ Alles wat BombVault back-upt, staat in één lijst onder **Back-ups**: container
 
 | Onderdeel | Wat wordt opgeslagen |
 |---|---|
-| **Containers** | De appdata-map plus de containerdefinitie: image, variabelen, poorten, labels en volumes. De kaart **Back-upmappen** op het tabblad **Instellingen** van de container vinkt precies aan welke mappen de back-up omvat, met een live telling van de paden en een lijst van wat je hebt weggelaten. Data die een container buiten Host Data bewaart, bijvoorbeeld in een TrueNAS-ixVolume, wordt niet geback-upt, en de run noemt de mappen die hij heeft overgeslagen. |
+| **Containers** | De appdata-map plus de containerdefinitie: image, variabelen, poorten, labels en volumes. De kaart **Back-upmappen** op het tabblad **Instellingen** van de container vinkt precies aan welke mappen de back-up omvat, met een live telling van de paden en een lijst van wat je hebt weggelaten. Data die een container buiten Host Data bewaart, bijvoorbeeld in een TrueNAS-ixVolume of een Compose-project onder `/opt`, wordt niet geback-upt, en de run noemt de mappen die hij heeft overgeslagen. De run noemt ook een map binnen Host Data die er op dit moment niet is. Systeempaden zoals `/etc/localtime` of de Docker-socket tellen niet als data. |
 | **VM's** | De schijfimages, de XML-definitie en de UEFI NVRAM, met een nette afsluiting of een live-snapshot, via SSH. Zie [VM-back-ups](vm-backup-ssh-setup.md). |
 | **Flash** | Alleen Unraid. De hele USB-flash (`/boot`): OS, licentie, array-configuratie, shares, netwerk- en plugin-configuratie. |
-| **Zelf-back-up** | BombVaults eigen `/config`: de instellingendatabase, de inloggegevens van de bestemmingen en het libvirt SSH-sleutelpaar, vastgelegd met SQLite `VACUUM INTO`, zodat de database nooit midden in een schrijfactie wordt gekopieerd. |
+| **Zelf-back-up** | BombVaults eigen `/config`: de instellingendatabase, de inloggegevens van de bestemmingen, het libvirt SSH-sleutelpaar, de sleutel en de vastgezette hostsleutels van de ZFS-servers en de certificaten, vastgelegd met SQLite `VACUUM INTO`, zodat de database nooit midden in een schrijfactie wordt gekopieerd. |
 | **Mappen** | Elke map op de server als mappenset, zoals een share, je documenten of een fotobibliotheek, met optionele uitsluitpatronen. Mappensets hebben planningen, bewaarbeleid, off-site-kopieën, controles en herstelproeven zoals al het andere. |
 | **ZFS-datasets** | Een dataset en elke dataset eronder, gelezen uit één ZFS-snapshot zodat alles van hetzelfde moment komt, en met restic opgeslagen als een map. Een ZFS-item kan ook een blokgetrouwe replica op een tweede ZFS-server bewaren. Zie [ZFS-datasets](zfs-datasets.md). |
 
@@ -35,7 +35,7 @@ Items die niet meer geïnstalleerd zijn maar nog back-ups hebben, staan apart on
 De hoofdactie van de pagina zweeft rechtsonder: **Nu alles back-uppen** start een run over elk ingeschakeld onderdeel. **Meer** bevat de rest:
 
 - **Selecteren** begint een selectie, zie hieronder.
-- **Back-ups ontdekken** leest wat de bestemmingen bevatten en bouwt daaruit items opnieuw op, bijvoorbeeld na een verse installatie. Off-site-kopieën van opnieuw opgebouwde onderdelen staan dan stil tot je hun standaard bevestigt, zie [Na een herinstallatie](offsite-recovery.md#after-a-rebuild).
+- **Back-ups ontdekken** leest wat de bestemmingen bevatten en bouwt daaruit items opnieuw op, bijvoorbeeld na een verse installatie. Een container zonder eigen data heeft geen snapshot en komt terug uit de definitie die naast het repository gespiegeld staat. Off-site-kopieën van opnieuw opgebouwde onderdelen wachten dan tot je hun back-ups overneemt als back-ups van deze server, zie [Na een herinstallatie](offsite-recovery.md#after-a-rebuild).
 - **ZFS-verbinding met deze server** opent de SSH-test van het onderdeel ZFS, zie [ZFS-datasets](zfs-datasets.md#requirements).
 - **Nu alles repliceren**, met de tegel ZFS gekozen, verstuurt de replica van elk ZFS-item.
 
@@ -98,7 +98,7 @@ De kaarten daaronder hangen af van het soort item:
 | Container | **Back-upmappen** (welke gekoppelde mappen worden geback-upt, met **Cachemappen overslaan (CACHEDIR.TAG)**), **Uitsluitpatronen**, **Andere containers stoppen**, **Opdrachten ervoor en erna**, **Database**, **Als de app bezig is**, **Bijwerken na een geslaagde back-up**, **Snapshot in plaats van stoppen**, **Eerdere namen** |
 | VM | **VM** met **Methode** (**Net (afsluiten)** of **Live-snapshot**) en **Alleen gewijzigde blokken**, zie de [VM-back-upgids](vm-backup-ssh-setup.md#per-vm-method) |
 | Mappenset | **Map** en **Uitsluitpatronen** |
-| Flash | **Flash-zip-export**, die elke flashback-up als gewone `.zip` wegschrijft naar een map die je kiest |
+| Flash | **Flash-zip-export**, die elke flashback-up als gewone `.zip` wegschrijft naar een map die je kiest, in één stap, zodat een synchronisatieprogramma nooit een half bestand ziet. Een flashback-up die minder bevat dan zou moeten, laat de laatste ZIP staan, en de run van de export meldt dat. |
 | ZFS-dataset | de onderliggende datasets, de containers die gestopt worden en de opdrachten rond de snapshot, **Replica** en **Toegang tot snapshots testen**, zie [ZFS-datasets](zfs-datasets.md) |
 
 Instellingen worden vanzelf opgeslagen terwijl je ze wijzigt.
@@ -119,7 +119,7 @@ Instellingen worden vanzelf opgeslagen terwijl je ze wijzigt.
 
 ## Uitsluitpatronen {#excludes}
 
-De kaart **Uitsluitpatronen** neemt één patroon per regel. Typ paden zoals je ze binnen de container ziet, zoals `/config/Library/Application Support/Plex Media Server/Cache`, of een kale naam zoals `.git`, die op elke diepte past. Een voorbeeld onder het veld toont waartoe elke regel leidt en waarschuwt als een regel niets raakt of alles zou uitsluiten. Een regel met `/` of `*`, of een die een hele geback-upte map noemt, wordt genegeerd, zodat een uitsluiting een back-up nooit leeg kan maken. Wil je een hele map weglaten, haal dan het vinkje weg onder **Back-upmappen**.
+De kaart **Uitsluitpatronen** neemt één patroon per regel. Typ paden zoals je ze binnen de container ziet, zoals `/config/Library/Application Support/Plex Media Server/Cache`, of een kale naam zoals `.git`, die op elke diepte past. Bij een mappenset typ je een pad zoals de host het kent, zoals `/mnt/user/data/cache`. Een voorbeeld onder het veld toont waartoe elke regel leidt en waarschuwt als een regel niets raakt of alles zou uitsluiten. Een regel met `/` of `*`, of een die een hele geback-upte map noemt, wordt genegeerd, zodat een uitsluiting een back-up nooit leeg kan maken. Wil je een hele map weglaten, haal dan het vinkje weg onder **Back-upmappen**.
 
 Voor bekende images zoals Plex, Jellyfin, Sonarr, Radarr, Immich en Nextcloud biedt de kaart de mappen aan die de app zelf weer vult, zoals caches, logs en miniaturen. Er wordt niets uitgesloten tot je op **Selectie uitsluiten** drukt.
 
@@ -137,6 +137,8 @@ Een mislukte dump laat de back-up niet mislukken. Hij verschijnt als een eigen m
 
 - **Opdrachten ervoor en erna** draaien in de container met `sh -c`, bijvoorbeeld om een cache naar schijf te schrijven. Een opdracht vóór de back-up die mislukt, breekt de back-up af. Een opdracht vóór de back-up die met code 75 eindigt, stelt in plaats daarvan een geplande back-up uit, zie hieronder.
 - **Andere containers stoppen** noemt containers die gestopt worden zolang deze wordt geback-upt, zoals zijn database. Daarna starten ze weer in hun Compose-volgorde `depends_on`, en standaard moet elke container healthy melden voordat de volgende start. Het wachten en de time-out staan onder **Herstarten na back-up** in de kaart **Volgorde** onder **Instellingen, Planning**.
+- Een container die de netwerk-, PID- of IPC-namespace deelt van een container die stopt, via `--net=container:` of `network_mode: service:` in Compose, stopt en start mee, ook als hij niet op de lijst staat, en hij start na de container waarbij hij zich aansluit. Een herstarte container krijgt een nieuw netwerk, en een container die op het oude netwerk bleef draaien, zou alleen zijn loopback hebben. De lijst zelf blijft zoals je hem hebt ingesteld. Kon zo'n container niet gestopt worden, dan meldt de run dat hij geen netwerk heeft tot hij opnieuw is gestart. Hetzelfde geldt voor de eigen container van BombVault, die zichzelf nooit stopt en niet op de lijst kan worden gezet.
+- Een container die daarna niet meer draait, wordt genoemd in de run en in een melding, ook als de back-up zelf is mislukt.
 
 ## Als de app bezig is {#app-busy}
 
@@ -177,7 +179,7 @@ Voor je eigen controle laat je het **Pre-back-upcommando** met code 75 eindigen 
 restic blijft de motor, maar een export geeft je een kopie die noch BombVault noch restic nodig heeft.
 
 - **Container exporteren** en **VM exporteren** onder **Meer** op de pagina van een item schrijven een kopie weg zoals het nu is, naast het repository: de back-upmappen van de container plus zijn Unraid-template, of de schijfimages van de VM plus zijn definitie, te herstellen met `virsh define`.
-- **Exporteren** op een snapshot schrijft een opgeslagen back-up weg naar de exportmap op de server, als tar, zip of een eigen restic-repository, en kan één snapshot of alle snapshots nemen.
+- **Exporteren** op een snapshot schrijft een opgeslagen back-up weg naar de exportmap op de server, als tar, zip of een eigen restic-repository, en kan één snapshot of alle snapshots nemen. Een flashback-up en een zelf-back-up bevatten sleutels, dus het exporteren ervan vraagt een inlogwachtwoord en een aanmelding op de instantie.
 
 Exports zijn standaard gewone bestanden. **Exports versleutelen met age** onder **Instellingen, Systeem** verzegelt ze, de flash-ZIP inbegrepen, voor de ontvangers die je opgeeft, elk een publieke age-sleutel of een publieke SSH-sleutel. Je ontsleutelt ze later buiten de server met de bijbehorende privésleutel. Staat versleuteling aan en is er geen geldige ontvanger, dan mislukt een export met een duidelijke fout in plaats van ooit gewone bestanden te schrijven.
 
