@@ -1,0 +1,169 @@
+{
+ "step": "07-updated",
+ "settings": {
+  "retentionKeepLast": 0,
+  "retentionKeepDaily": 14,
+  "retentionKeepWeekly": 0,
+  "retentionKeepMonthly": 0,
+  "retentionKeepYearly": 0,
+  "ownRetention": {
+   "config": {
+    "keepLast": 0,
+    "keepDaily": 0,
+    "keepWeekly": 0,
+    "keepMonthly": 0,
+    "keepYearly": 0
+   },
+   "containers": {
+    "keepLast": 0,
+    "keepDaily": 0,
+    "keepWeekly": 0,
+    "keepMonthly": 0,
+    "keepYearly": 0
+   },
+   "files": {
+    "keepLast": 0,
+    "keepDaily": 0,
+    "keepWeekly": 0,
+    "keepMonthly": 0,
+    "keepYearly": 0
+   },
+   "flash": {
+    "keepLast": 0,
+    "keepDaily": 0,
+    "keepWeekly": 0,
+    "keepMonthly": 0,
+    "keepYearly": 0
+   },
+   "vms": {
+    "keepLast": 0,
+    "keepDaily": 0,
+    "keepWeekly": 0,
+    "keepMonthly": 0,
+    "keepYearly": 0
+   },
+   "zfs": {
+    "keepLast": 0,
+    "keepDaily": 0,
+    "keepWeekly": 0,
+    "keepMonthly": 0,
+    "keepYearly": 0
+   }
+  }
+ },
+ "paths": {
+  "containersPath": "cache/test/bombvault-test/ve/zfs/bombvault/dxp480t/containers",
+  "vmsPath": "cache/test/bombvault-test/ve/zfs/bombvault/dxp480t/vms",
+  "flashPath": "cache/test/bombvault-test/ve/zfs/bombvault/dxp480t/flash",
+  "configPath": "cache/test/bombvault-test/ve/zfs/bombvault/dxp480t/selfbackup",
+  "filesPath": "cache/test/bombvault-test/ve/zfs/bombvault/dxp480t/files",
+  "zfsPath": "cache/test/bombvault-test/ve/zfs/bombvault/dxp480t/zfs"
+ },
+ "locations": [
+  {
+   "id": "destination:06eb508c68205ee37c47432bf6d44d9d",
+   "object": "destination",
+   "name": "Local folder",
+   "where": "cache/test/bombvault-test/ve/zfs/bombvault/dxp480t",
+   "retention": {
+    "keepLast": 0,
+    "keepDaily": 14,
+    "keepWeekly": 0,
+    "keepMonthly": 0,
+    "keepYearly": 0
+   },
+   "sections": [
+    {
+     "domain": "containers",
+     "use": "home",
+     "retention": {
+      "keepLast": 0,
+      "keepDaily": 0,
+      "keepWeekly": 0,
+      "keepMonthly": 0,
+      "keepYearly": 0
+     },
+     "own": [
+      "retention"
+     ],
+     "where": "cache/test/bombvault-test/ve/zfs/bombvault/dxp480t/containers"
+    },
+    {
+     "domain": "vms",
+     "use": "home",
+     "retention": {
+      "keepLast": 0,
+      "keepDaily": 0,
+      "keepWeekly": 0,
+      "keepMonthly": 0,
+      "keepYearly": 0
+     },
+     "own": [
+      "retention"
+     ],
+     "where": "cache/test/bombvault-test/ve/zfs/bombvault/dxp480t/vms"
+    },
+    {
+     "domain": "flash",
+     "use": "home",
+     "retention": {
+      "keepLast": 0,
+      "keepDaily": 0,
+      "keepWeekly": 0,
+      "keepMonthly": 0,
+      "keepYearly": 0
+     },
+     "own": [
+      "retention"
+     ],
+     "where": "cache/test/bombvault-test/ve/zfs/bombvault/dxp480t/flash"
+    },
+    {
+     "domain": "config",
+     "use": "home",
+     "retention": {
+      "keepLast": 0,
+      "keepDaily": 0,
+      "keepWeekly": 0,
+      "keepMonthly": 0,
+      "keepYearly": 0
+     },
+     "own": [
+      "retention"
+     ],
+     "where": "cache/test/bombvault-test/ve/zfs/bombvault/dxp480t/selfbackup"
+    },
+    {
+     "domain": "files",
+     "use": "home",
+     "retention": {
+      "keepLast": 0,
+      "keepDaily": 0,
+      "keepWeekly": 0,
+      "keepMonthly": 0,
+      "keepYearly": 0
+     },
+     "own": [
+      "retention"
+     ],
+     "where": "cache/test/bombvault-test/ve/zfs/bombvault/dxp480t/files"
+    },
+    {
+     "domain": "zfs",
+     "use": "home",
+     "retention": {
+      "keepLast": 0,
+      "keepDaily": 0,
+      "keepWeekly": 0,
+      "keepMonthly": 0,
+      "keepYearly": 0
+     },
+     "own": [
+      "retention"
+     ],
+     "where": "cache/test/bombvault-test/ve/zfs/bombvault/dxp480t/zfs"
+    }
+   ]
+  }
+ ]
+}

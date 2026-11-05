@@ -120,6 +120,51 @@ func TestTheProtectionStatusCountsTheKeepRuleOfTheOwnFolder(t *testing.T) {
 	}
 }
 
+func TestAMoveOntoACopyOfAZeroCardLeavesARuleTheCardCanChangeLater(t *testing.T) {
+	f := newPlacementFixture(t)
+	local := f.keptLocation(store.RetentionKeep{})
+	f.tickDestination(local, "containers")
+	localKeepLast(t, f, 14)
+
+	f.ownFoldersInto(local, "containers")
+
+	settings, err := f.st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := settings.OwnRetention(); len(got) != 0 {
+		t.Fatalf("own rules = %+v, want none, so the card goes on deciding", got)
+	}
+	if res := f.do("PUT", "/api/offsite/destinations/"+local.ID, map[string]any{"name": local.Name, "retention": fortnight}); res["ok"] != true {
+		t.Fatalf("keep card save = %v", res)
+	}
+	if settings, err = f.st.GetSettings(); err != nil {
+		t.Fatal(err)
+	}
+	if got := f.svc.retentionPolicy(settings, "containers"); got != (restic.RetentionPolicy{KeepDaily: 14}) {
+		t.Fatalf("containers ages by %+v, want the card's 14 days", got)
+	}
+}
+
+func TestAMoveOntoACopyThatKeepsEverythingKeepsItAsAVisibleRule(t *testing.T) {
+	f := newPlacementFixture(t)
+	local := f.keptLocation(fortnight)
+	kept := f.tickDestination(local, "containers")
+	kept.RetentionKeepDaily = 0
+	if _, err := f.st.UpsertOffsiteTarget(kept); err != nil {
+		t.Fatal(err)
+	}
+
+	steps := ownSteps(t, f.do("POST", "/api/storage/own-folders", map[string]any{"domains": []string{"containers"}, "location": "destination:" + local.ID}))
+
+	if !steps[0].WiderKeep {
+		t.Errorf("step = %+v, want the move to say the copy keeps more", steps[0])
+	}
+	if got := sectionFor(t, locationByID(t, f.svc, "destination:"+local.ID), "containers", useHome); got.Retention != (store.RetentionKeep{}) || !slices.Equal(got.Own, []string{"retention"}) {
+		t.Errorf("containers = %+v, want the rule that keeps everything shown as its own", got)
+	}
+}
+
 func TestAnOwnFolderOutsideALocationKeepsTheSharedRule(t *testing.T) {
 	f := newPlacementFixture(t)
 	f.keptLocation(fortnight)

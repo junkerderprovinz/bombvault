@@ -3613,6 +3613,86 @@ UPDATE zfs_datasets SET schedule_cadence = '' WHERE (SELECT per_item_schedules F
 		report:  balancedKeepLines,
 		sql:     balancedKeepSQL(),
 	},
+	{
+		// Moving an own folder onto a copy whose card was 0 wrote an all-zero keep
+		// rule the location's page did not show, and that rule outranks the card
+		// set later. It goes where the card has values, so the section follows it.
+		// A named repository would start to prune by the shared rule without it,
+		// so a section with one keeps the rule and the log says so.
+		version: hiddenZeroRuleMigration,
+		name:    "own_folder_drops_hidden_zero_rule",
+		report:  hiddenZeroRuleLines,
+		sql:     hiddenZeroRuleSQL(),
+	},
+}
+
+// hiddenZeroRuleRows are the sections with an all-zero own keep rule whose own
+// folder lies in a location with values on its card, with that location's name
+// and whether dropping the rule would start to prune a named repository.
+func hiddenZeroRuleRows() string {
+	var path strings.Builder
+	path.WriteString("CASE p.domain")
+	for _, d := range offsiteFieldDomains {
+		fmt.Fprintf(&path, " WHEN '%[1]s' THEN s.%[1]s_path", d)
+	}
+	path.WriteString(" END")
+	base := `rtrim(trim(d.repo), '/')`
+	return `
+SELECT p.domain AS domain, d.name AS name,
+       s.retention_keep_last + s.retention_keep_daily + s.retention_keep_weekly + s.retention_keep_monthly + s.retention_keep_yearly > 0
+       AND EXISTS (SELECT 1 FROM (
+                     SELECT repo AS id, 'containers' AS domain FROM targets
+                     UNION SELECT repo, 'vms' FROM vms
+                     UNION SELECT repo, 'files' FROM file_sets
+                     UNION SELECT repo, 'zfs' FROM zfs_datasets
+                     UNION SELECT home, domain FROM placement_defaults) u
+                     JOIN offsite_targets r ON r.id = u.id AND r.role = 'repo' AND r.companion_of = ''
+                    WHERE u.domain = p.domain) AS held
+  FROM offsite_targets p
+  JOIN offsite_targets d ON d.id = p.destination_id AND d.role = 'destination'
+  JOIN settings s ON s.id = 1
+  JOIN json_each(CASE WHEN json_valid(s.retention_overrides) THEN s.retention_overrides ELSE '{}' END) rule ON rule.key = p.domain
+ WHERE p.role = 'primary'
+   AND COALESCE(json_extract(rule.value, '$.keepLast'), 0) = 0 AND COALESCE(json_extract(rule.value, '$.keepDaily'), 0) = 0
+   AND COALESCE(json_extract(rule.value, '$.keepWeekly'), 0) = 0 AND COALESCE(json_extract(rule.value, '$.keepMonthly'), 0) = 0
+   AND COALESCE(json_extract(rule.value, '$.keepYearly'), 0) = 0
+   AND d.retention_keep_last + d.retention_keep_daily + d.retention_keep_weekly + d.retention_keep_monthly + d.retention_keep_yearly > 0
+   AND rtrim(trim(` + path.String() + `), '/') = ` + base + ` || CASE WHEN ` + base + ` LIKE '%:' THEN '' ELSE '/' END
+       || CASE p.domain WHEN 'config' THEN 'selfbackup' ELSE p.domain END`
+}
+
+// hiddenZeroRuleSQL drops the rules of hiddenZeroRuleRows that hold no named
+// repository back.
+func hiddenZeroRuleSQL() string {
+	dropped := `SELECT domain FROM (` + hiddenZeroRuleRows() + `) WHERE NOT held`
+	return `UPDATE settings SET retention_overrides = (
+  SELECT json_group_object(key, json(value)) FROM json_each(settings.retention_overrides)
+   WHERE key NOT IN (` + dropped + `))
+ WHERE id = 1 AND EXISTS (` + dropped + `);`
+}
+
+// hiddenZeroRuleLines says for each section of hiddenZeroRuleRows what became of
+// its rule.
+func hiddenZeroRuleLines(tx *sql.Tx) ([]string, error) {
+	rows, err := tx.Query(hiddenZeroRuleRows() + ` ORDER BY p.domain`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close() //nolint:errcheck // read-only
+	var lines []string
+	for rows.Next() {
+		var domain, name string
+		var held bool
+		if err := rows.Scan(&domain, &name, &held); err != nil {
+			return nil, err
+		}
+		if held {
+			lines = append(lines, fmt.Sprintf("retention: %s keeps its all-zero keep rule, since a named repository of it would start to prune by the shared rule without it", domain))
+			continue
+		}
+		lines = append(lines, fmt.Sprintf("retention: %s lost its all-zero keep rule, and its own folder in %s ages by that location's How long to keep card", domain, name))
+	}
+	return lines, rows.Err()
 }
 
 // oldBalancedColumns is the condition that the keep columns starting with prefix
@@ -4114,6 +4194,10 @@ const ownFolderKeepMigration = 680
 
 // balancedKeepMigration numbers the second year of the Balanced keep preset.
 const balancedKeepMigration = 690
+
+// hiddenZeroRuleMigration numbers the clean-up of all-zero keep rules a move into
+// a storage location wrote where no page showed them.
+const hiddenZeroRuleMigration = 700
 
 // oneLineColumns are the names and locations the recovery kit prints.
 var oneLineColumns = []struct {
